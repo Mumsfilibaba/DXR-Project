@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/CoreTypes.h"
 
-enum EInPlace
+enum class EInPlace
 {
     InPlace = 0
 };

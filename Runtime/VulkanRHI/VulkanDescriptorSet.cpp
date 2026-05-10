@@ -239,7 +239,7 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
 
         for (int32 BindingIndex = 0; BindingIndex < SetRemappingInfo.RemappingInfo.Size(); BindingIndex++)
         {
-            if (SetRemappingInfo.RemappingInfo[BindingIndex].BindingType == VulkanBindingType_ImmutableSampler)
+            if (SetRemappingInfo.RemappingInfo[BindingIndex].BindingType == EVulkanBindingType::ImmutableSampler)
             {
                 DescriptorSetBuilders[DescriptorSetIndex].MarkBindingAsImmutable(BindingIndex);
             }

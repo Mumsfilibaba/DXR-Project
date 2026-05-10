@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Core.h"
 
-namespace EKeyName
+struct EKeyName
 {
     enum Type : uint8
     {
@@ -176,7 +176,7 @@ namespace EKeyName
 
         Count = Last + 1
     };
-}
+};
 
 constexpr const CHAR* ToString(EKeyName::Type KeyName)
 {

@@ -21,18 +21,21 @@
  * On macOS, it can be useful to distinguish between left/right keys, such as Control or Shift.
  * EMacModifierKey enumerates these specific variants as well as CapsLock and NumLock.
  */
-enum EMacModifierKey
+struct EMacModifierKey
 {
-    MacModifierKey_LeftControl = 0,
-    MacModifierKey_RightControl,
-    MacModifierKey_LeftShift,
-    MacModifierKey_RightShift,
-    MacModifierKey_LeftCommand,
-    MacModifierKey_RightCommand,
-    MacModifierKey_LeftAlt,
-    MacModifierKey_RightAlt,
-    MacModifierKey_CapsLock,
-    MacModifierKey_NumLock,
+    enum Type
+    {
+        LeftControl = 0,
+        RightControl,
+        LeftShift,
+        RightShift,
+        LeftCommand,
+        RightCommand,
+        LeftAlt,
+        RightAlt,
+        CapsLock,
+        NumLock,
+    };
 };
 
 /**
@@ -337,7 +340,7 @@ private:
     void ProcessMouseHoverEvent(const FDeferredMacEvent& DeferredEvent);
     void ProcessKeyEvent(const FDeferredMacEvent& DeferredEvent);
     void ProcessUpdatedModfierFlags(const FDeferredMacEvent& DeferredEvent);
-    void ProcessModfierKey(EMacModifierKey MacModifierKey, uint64 ModifierKeyFlags);
+    void ProcessModfierKey(EMacModifierKey::Type MacModifierKey, uint64 ModifierKeyFlags);
     void ProcessWindowResized(const FDeferredMacEvent& DeferredEvent);
     void ProcessWindowMoved(const FDeferredMacEvent& DeferredEvent);
 

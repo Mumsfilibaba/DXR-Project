@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Core.h"
 
-namespace EKeyboardKeyName
+struct EKeyboardKeyName
 {
     enum Type : uint8
     {
@@ -143,7 +143,7 @@ namespace EKeyboardKeyName
         Last  = Menu,
         Count = Last + 1
     };
-} 
+};
 
 constexpr const CHAR* ToString(EKeyboardKeyName::Type key)
 {
@@ -273,7 +273,7 @@ constexpr const CHAR* ToString(EKeyboardKeyName::Type key)
     }
 }
 
-namespace EMouseButtonName
+struct EMouseButtonName
 {
     enum Type : uint8
     {
@@ -288,7 +288,7 @@ namespace EMouseButtonName
         Last  = Thumb2,
         Count = Last + 1
     };
-} 
+};
 
 constexpr const CHAR* ToString(EMouseButtonName::Type Button)
 {
@@ -303,7 +303,7 @@ constexpr const CHAR* ToString(EMouseButtonName::Type Button)
     }
 }
 
-namespace EGamepadButtonName
+struct EGamepadButtonName
 {
     enum Type : uint8
     {
@@ -327,7 +327,7 @@ namespace EGamepadButtonName
         Last  = Back,
         Count = Last + 1
     };
-}
+};
 
 constexpr const CHAR* ToString(EGamepadButtonName::Type Button)
 {
@@ -351,7 +351,7 @@ constexpr const CHAR* ToString(EGamepadButtonName::Type Button)
     }
 }
 
-namespace EAnalogSourceName
+struct EAnalogSourceName
 {
     enum Type : uint8
     {
@@ -367,7 +367,7 @@ namespace EAnalogSourceName
         Last  = LeftTrigger,
         Count = Last + 1
     };
-}
+};
 
 constexpr const CHAR* ToString(EAnalogSourceName::Type AnalogSourceName)
 {

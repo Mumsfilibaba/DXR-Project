@@ -99,7 +99,7 @@ enum class EEnumClass
 {
 };
 
-enum EEnum
+enum class EEnum
 {
 };
 

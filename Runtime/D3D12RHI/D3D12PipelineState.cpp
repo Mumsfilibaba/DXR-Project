@@ -19,18 +19,18 @@ static TAutoConsoleVariable<int32> CVarPipelineCacheSaveInterval(
     "Minimum interval in seconds between automatic pipeline cache saves",
     30);
 
-static EResourceType GetResourceTypeFromBindingType(ED3D12BindingType BindingType)
+static EResourceType::Type GetResourceTypeFromBindingType(ED3D12BindingType BindingType)
 {
     switch (BindingType)
     {
-    case D3D12BindingType_ConstantBuffer: return ResourceType_CBV;
-    case D3D12BindingType_SRV:            return ResourceType_SRV;
-    case D3D12BindingType_UAV:            return ResourceType_UAV;
-    case D3D12BindingType_Sampler:        return ResourceType_Sampler;
+    case ED3D12BindingType::ConstantBuffer: return EResourceType::CBV;
+    case ED3D12BindingType::SRV:            return EResourceType::SRV;
+    case ED3D12BindingType::UAV:            return EResourceType::UAV;
+    case ED3D12BindingType::Sampler:        return EResourceType::Sampler;
     
     default:
         CHECK(false);
-        return ResourceType_Unknown;
+        return EResourceType::Unknown;
     }
 }
 
@@ -42,7 +42,7 @@ static FD3D12RootSignatureLayout BuildLocalLayoutFromBindingInfo(const FD3D12Sha
 
     for (const FD3D12ShaderBindingInfo::FResourceBinding& Binding : LocalBindingInfo.ResourceBindings)
     {
-        Layout.AddRegister(ShaderVisibility_All, GetResourceTypeFromBindingType(Binding.BindingType), Binding.OriginalBindingIndex);
+        Layout.AddRegister(EShaderVisibility::All, GetResourceTypeFromBindingType(Binding.BindingType), Binding.OriginalBindingIndex);
     }
 
     Layout.SetNumPushConstants(static_cast<uint8>(LocalBindingInfo.NumPushConstants));
@@ -232,15 +232,15 @@ void FD3D12PipelineState::ComputeEffectiveDescriptorCounts(FD3D12Shader* const* 
             continue;
         }
 
-        const EShaderVisibility        Stage       = Shader->GetShaderVisibility();
+        const EShaderVisibility::Type  Stage       = Shader->GetShaderVisibility();
         const FD3D12ShaderBindingInfo& BindingInfo = Shader->GetBindingInfo();
 
         for (const FD3D12ShaderBindingInfo::FResourceBinding& Binding : BindingInfo.ResourceBindings)
         {
-            const uint16        Register     = Binding.OriginalBindingIndex;
-            const EResourceType ResourceType = static_cast<EResourceType>(Binding.BindingType);
+            const uint16              Register     = Binding.OriginalBindingIndex;
+            const EResourceType::Type ResourceType = static_cast<EResourceType::Type>(Binding.BindingType);
             
-            if (ResourceType == ResourceType_CBV && RootSignature->IsRootCBV(Stage, Register))
+            if (ResourceType == EResourceType::CBV && RootSignature->IsRootCBV(Stage, Register))
             {
                 continue;
             }
@@ -500,12 +500,12 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
             uint8 NumPushConstants = 0;
             for (FD3D12Shader* Shader : BaseShaders)
             {
-                const EShaderVisibility        Stage       = Shader->GetShaderVisibility();
+                const EShaderVisibility::Type  Stage       = Shader->GetShaderVisibility();
                 const FD3D12ShaderBindingInfo& BindingInfo = Shader->GetBindingInfo();
 
                 for (const FD3D12ShaderBindingInfo::FResourceBinding& Binding : BindingInfo.ResourceBindings)
                 {
-                    RootSignatureLayout.AddRegister(Stage, static_cast<EResourceType>(Binding.BindingType), Binding.OriginalBindingIndex);
+                    RootSignatureLayout.AddRegister(Stage, static_cast<EResourceType::Type>(Binding.BindingType), Binding.OriginalBindingIndex);
                 }
                 
                 NumPushConstants = Math::Max<uint8>(NumPushConstants, static_cast<uint8>(BindingInfo.NumPushConstants));
@@ -562,7 +562,7 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
 
         for (FD3D12Shader* Shader : BaseShaders)
         {
-            const EShaderVisibility        Stage       = Shader->GetShaderVisibility();
+            const EShaderVisibility::Type  Stage       = Shader->GetShaderVisibility();
             const FD3D12ShaderBindingInfo& BindingInfo = Shader->GetBindingInfo();
 
             const bool bShaderHasRootBindings = !BindingInfo.ResourceBindings.IsEmpty() || BindingInfo.NumPushConstants > 0;
@@ -574,7 +574,7 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
 
             for (const FD3D12ShaderBindingInfo::FResourceBinding& Binding : BindingInfo.ResourceBindings)
             {
-                const EResourceType ResType = static_cast<EResourceType>(Binding.BindingType);
+                const EResourceType::Type ResType = static_cast<EResourceType::Type>(Binding.BindingType);
                 if (RootSignature->GetSlotForRegister(Stage, ResType, Binding.OriginalBindingIndex) < 0 &&
                     RootSignature->GetShaderStage(Stage).GetRootDescriptorParameterIndex(ResType, Binding.OriginalBindingIndex) < 0)
                 {
@@ -822,7 +822,7 @@ bool FD3D12ComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
         const FD3D12ShaderBindingInfo& BindingInfo = Shader->GetBindingInfo();
         for (const FD3D12ShaderBindingInfo::FResourceBinding& Binding : BindingInfo.ResourceBindings)
         {
-            Layout.AddRegister(ShaderVisibility_All, static_cast<EResourceType>(Binding.BindingType), Binding.OriginalBindingIndex);
+            Layout.AddRegister(EShaderVisibility::All, static_cast<EResourceType::Type>(Binding.BindingType), Binding.OriginalBindingIndex);
         }
 
         for (const FRHIStaticSamplerInfo& StaticSampler : Desc.StaticSamplers)
@@ -853,9 +853,9 @@ bool FD3D12ComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
         const FD3D12ShaderBindingInfo& BindingInfo = Shader->GetBindingInfo();
         for (const FD3D12ShaderBindingInfo::FResourceBinding& Binding : BindingInfo.ResourceBindings)
         {
-            const EResourceType ResType = static_cast<EResourceType>(Binding.BindingType);
-            if (RootSignature->GetSlotForRegister(ShaderVisibility_All, ResType, Binding.OriginalBindingIndex) < 0 &&
-                RootSignature->GetShaderStage(ShaderVisibility_All).GetRootDescriptorParameterIndex(ResType, Binding.OriginalBindingIndex) < 0)
+            const EResourceType::Type ResType = static_cast<EResourceType::Type>(Binding.BindingType);
+            if (RootSignature->GetSlotForRegister(EShaderVisibility::All, ResType, Binding.OriginalBindingIndex) < 0 &&
+                RootSignature->GetShaderStage(EShaderVisibility::All).GetRootDescriptorParameterIndex(ResType, Binding.OriginalBindingIndex) < 0)
             {
                 D3D12_ERROR_CRITICAL("Custom compute root signature missing register %u (type %u)",
                     Binding.OriginalBindingIndex, Binding.BindingType);
@@ -1292,7 +1292,7 @@ bool FD3D12RayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineSt
         const FD3D12ShaderBindingInfo& BindingInfo = Shader->GetBindingInfo();
         for (const FD3D12ShaderBindingInfo::FResourceBinding& Binding : BindingInfo.ResourceBindings)
         {
-            GlobalLayout.AddRegister(ShaderVisibility_All, static_cast<EResourceType>(Binding.BindingType), Binding.OriginalBindingIndex);
+            GlobalLayout.AddRegister(EShaderVisibility::All, static_cast<EResourceType::Type>(Binding.BindingType), Binding.OriginalBindingIndex);
         }
 
         MaxPushConstants = Math::Max<uint8>(MaxPushConstants, static_cast<uint8>(BindingInfo.NumPushConstants));

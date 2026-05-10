@@ -18,7 +18,7 @@ FThreadManager::~FThreadManager()
 
 static TOptional<FThreadManager>& GetThreadManagerInstance()
 {
-    static TOptional<FThreadManager> StaticThreadManager(InPlace);
+    static TOptional<FThreadManager> StaticThreadManager(EInPlace::InPlace);
     return StaticThreadManager;
 }
 

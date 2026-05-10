@@ -44,8 +44,8 @@ public:
     FD3D12RootSignatureLayout();
     ~FD3D12RootSignatureLayout() = default;
 
-    void AddRegister(EShaderVisibility Stage, EResourceType ResType, uint16 Register);
-    void AddContiguousRegisters(EShaderVisibility Stage, EResourceType ResType, uint8 Count);
+    void AddRegister(EShaderVisibility::Type Stage, EResourceType::Type ResType, uint16 Register);
+    void AddContiguousRegisters(EShaderVisibility::Type Stage, EResourceType::Type ResType, uint8 Count);
     void AddStaticSampler(const FRHIStaticSamplerInfo& StaticSampler);
 
     bool IsCompatible(const FD3D12RootSignatureLayout& Other) const;
@@ -53,8 +53,8 @@ public:
     void ComputeRootCBVs();
     uint32 ComputeCost() const;
 
-    const FD3D12RegisterSet& GetRootCBVRegisters(EShaderVisibility Stage)                 const { return RootCBVSets[Stage]; }
-    const FD3D12RegisterSet& GetRegisters(EShaderVisibility Stage, EResourceType ResType) const { return RegisterSets[Stage][ResType]; }
+    const FD3D12RegisterSet& GetRootCBVRegisters(EShaderVisibility::Type Stage)                       const { return RootCBVSets[Stage]; }
+    const FD3D12RegisterSet& GetRegisters(EShaderVisibility::Type Stage, EResourceType::Type ResType) const { return RegisterSets[Stage][ResType]; }
 
     FORCEINLINE void SetType(ERootSignatureType InType) 
     {
@@ -102,8 +102,8 @@ public:
     }
 
 private:
-    FD3D12RegisterSet            RegisterSets[ShaderVisibility_Count][ResourceType_Count];
-    FD3D12RegisterSet            RootCBVSets[ShaderVisibility_Count];
+    FD3D12RegisterSet            RegisterSets[EShaderVisibility::Count][EResourceType::Count];
+    FD3D12RegisterSet            RootCBVSets[EShaderVisibility::Count];
     TArray<FRHIStaticSamplerInfo> StaticSamplers;
     uint8                       NumPushConstants;
     bool                        bAllowInputAssembler;
@@ -214,24 +214,24 @@ public:
     FD3D12ShaderStage();
     ~FD3D12ShaderStage() = default;
 
-    void AddRootDescriptor(EResourceType Type, int8 RootParameterIndex, uint16 Register);
+    void AddRootDescriptor(EResourceType::Type Type, int8 RootParameterIndex, uint16 Register);
     void AddRootCBV(int8 RootParameterIndex, uint16 Register);
     
     bool IsRootCBV(uint16 Register) const;
 
-    void SetDescriptorTableIndex(EResourceType Type, int8 RootParameterIndex, int8 DescriptorCount);
+    void SetDescriptorTableIndex(EResourceType::Type Type, int8 RootParameterIndex, int8 DescriptorCount);
 
     int8   GetRootCBVParameterIndex(uint16 Register)   const;
     int8   GetRootCBVParameterIndexBySlot(uint8 Index) const;
     uint16 GetRootCBVRegister(uint8 Index)             const;
-    int8   GetRootDescriptorParameterIndex(EResourceType Type, uint16 Register) const;
+    int8   GetRootDescriptorParameterIndex(EResourceType::Type Type, uint16 Register) const;
     
-    FORCEINLINE int8 GetRootParameterIndex(EResourceType Type) const
+    FORCEINLINE int8 GetRootParameterIndex(EResourceType::Type Type) const
     {
         return RootParameterIndicies[Type];
     }
 
-    FORCEINLINE int8 GetNumResources(EResourceType Type) const
+    FORCEINLINE int8 GetNumResources(EResourceType::Type Type) const
     {
         return ResourceCounts[Type];
     }
@@ -241,19 +241,19 @@ public:
         return NumRootCBVs;
     }
     
-    FORCEINLINE uint8 GetNumRootDescriptors(EResourceType Type) const
+    FORCEINLINE uint8 GetNumRootDescriptors(EResourceType::Type Type) const
     {
         return NumRootDescriptors[Type];
     }
 
 private:
-    int8                 RootParameterIndicies[ResourceType_Count];
-    int8                 ResourceCounts[ResourceType_Count];
+    int8                 RootParameterIndicies[EResourceType::Count];
+    int8                 ResourceCounts[EResourceType::Count];
     int8                 RootCBVParameterIndex[MaxRootCBVsPerStage];
     uint16               RootCBVRegister[MaxRootCBVsPerStage];
     uint8                NumRootCBVs;
-    FRootDescriptorEntry RootDescriptors[ResourceType_Count][MaxRootDescriptorsPerStage];
-    uint8                NumRootDescriptors[ResourceType_Count];
+    FRootDescriptorEntry RootDescriptors[EResourceType::Count][MaxRootDescriptorsPerStage];
+    uint8                NumRootDescriptors[EResourceType::Count];
 };
 
 class FD3D12RootSignature : public FD3D12DeviceChild, public FRefCountedBase
@@ -276,9 +276,9 @@ public:
 #endif
     bool Initialize(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
 
-    bool HasDenyFlag(EShaderVisibility Stage) const;
+    bool HasDenyFlag(EShaderVisibility::Type Stage) const;
 
-    FORCEINLINE bool IsRootCBV(EShaderVisibility Stage, uint16 Register) const
+    FORCEINLINE bool IsRootCBV(EShaderVisibility::Type Stage, uint16 Register) const
     {
         return ShaderStages[Stage].IsRootCBV(Register);
     }
@@ -292,12 +292,12 @@ public:
     ID3D12RootSignature*  GetD3D12RootSignature() const  { return RootSignature.Get(); }
     ID3D12RootSignature** GetD3D12RootSignatureAddress() { return RootSignature.GetAddressOf(); }
 
-    FORCEINLINE int32 GetRootParameterIndex(EShaderVisibility Visibility, EResourceType Type) const
+    FORCEINLINE int32 GetRootParameterIndex(EShaderVisibility::Type Visibility, EResourceType::Type Type) const
     {
         return static_cast<int32>(ShaderStages[Visibility].GetRootParameterIndex(Type));
     }
 
-    FORCEINLINE int32 GetMaxResourceCount(EShaderVisibility Visibility, EResourceType Type) const
+    FORCEINLINE int32 GetMaxResourceCount(EShaderVisibility::Type Visibility, EResourceType::Type Type) const
     {
         return static_cast<int32>(ShaderStages[Visibility].GetNumResources(Type));
     }
@@ -312,12 +312,12 @@ public:
         return Num32BitConstants;
     }
 
-    FORCEINLINE int8 GetSlotForRegister(EShaderVisibility Stage, EResourceType Type, uint16 Register) const
+    FORCEINLINE int8 GetSlotForRegister(EShaderVisibility::Type Stage, EResourceType::Type Type, uint16 Register) const
     {
         return TableMappings[Stage][Type].GetSlotForRegister(Register);
     }
 
-    FORCEINLINE int32 GetRootCBVParameterIndex(EShaderVisibility Stage, uint16 Register) const
+    FORCEINLINE int32 GetRootCBVParameterIndex(EShaderVisibility::Type Stage, uint16 Register) const
     {
         return ShaderStages[Stage].GetRootCBVParameterIndex(Register);
     }
@@ -332,12 +332,12 @@ public:
         return Hash;
     }
 
-    FORCEINLINE const FD3D12DescriptorTableMapping& GetDescriptorTableMapping(EShaderVisibility Stage, EResourceType Type) const
+    FORCEINLINE const FD3D12DescriptorTableMapping& GetDescriptorTableMapping(EShaderVisibility::Type Stage, EResourceType::Type Type) const
     {
         return TableMappings[Stage][Type];
     }
 
-    FORCEINLINE const FD3D12ShaderStage& GetShaderStage(EShaderVisibility Visibility) const
+    FORCEINLINE const FD3D12ShaderStage& GetShaderStage(EShaderVisibility::Type Visibility) const
     {
         return ShaderStages[Visibility];
     }
@@ -353,8 +353,8 @@ private:
     bool InternalInit(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
 
     TComPtr<ID3D12RootSignature> RootSignature;
-    FD3D12ShaderStage            ShaderStages[ShaderVisibility_Count];
-    FD3D12DescriptorTableMapping TableMappings[ShaderVisibility_Count][ResourceType_Count];
+    FD3D12ShaderStage            ShaderStages[EShaderVisibility::Count];
+    FD3D12DescriptorTableMapping TableMappings[EShaderVisibility::Count][EResourceType::Count];
     int32                        ConstantRootParameterIndex;
     uint32                       Num32BitConstants;
     D3D12_ROOT_SIGNATURE_FLAGS   Flags;

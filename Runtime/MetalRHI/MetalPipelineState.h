@@ -139,12 +139,12 @@ public:
     FMetalDepthStencilStateRHI* GetMetalDepthStencilState() const { return DepthStencilState.Get(); }
     FMetalRasterizerStateRHI*   GetMetalRasterizerState()   const { return RasterizerState.Get(); }
 
-    uint32 GetBufferBinding(EShaderVisibility ShaderVisibility, uint32 BufferIndex) const
+    uint32 GetBufferBinding(EShaderVisibility::Type ShaderVisibility, uint32 BufferIndex) const
     {
         return BufferBindings[ShaderVisibility][BufferIndex];
     }
     
-    uint32 GetNumBuffers(EShaderVisibility ShaderVisibility) const
+    uint32 GetNumBuffers(EShaderVisibility::Type ShaderVisibility) const
     {
         return NumBuffers[ShaderVisibility];
     }
@@ -155,16 +155,16 @@ public:
     }
 
 private:
-    FRHIGraphicsPipelineStateDesc               Desc;
-    TSharedRef<FMetalBlendStateRHI>             BlendState;
-    TSharedRef<FMetalDepthStencilStateRHI>      DepthStencilState;
-    TSharedRef<FMetalRasterizerStateRHI>        RasterizerState;
-    id<MTLRenderPipelineState>                  PipelineState;
-    TArray<FMetalResourceBinding>               VertexBuffers;
-    TStaticArray<uint8, kMaxConstantBuffers>    BufferBindings[ShaderVisibility_Count];
-    TStaticArray<uint8, ShaderVisibility_Count> NumBuffers;
-    TArray<FMetalResourceBinding>               TextureBindings[ShaderVisibility_Count];
-    TArray<FMetalResourceBinding>               SamplerBindings[ShaderVisibility_Count];
+    FRHIGraphicsPipelineStateDesc                 Desc;
+    TSharedRef<FMetalBlendStateRHI>               BlendState;
+    TSharedRef<FMetalDepthStencilStateRHI>        DepthStencilState;
+    TSharedRef<FMetalRasterizerStateRHI>          RasterizerState;
+    id<MTLRenderPipelineState>                    PipelineState;
+    TArray<FMetalResourceBinding>                 VertexBuffers;
+    TStaticArray<uint8, kMaxConstantBuffers>      BufferBindings[EShaderVisibility::Count];
+    TStaticArray<uint8, EShaderVisibility::Count> NumBuffers;
+    TArray<FMetalResourceBinding>                 TextureBindings[EShaderVisibility::Count];
+    TArray<FMetalResourceBinding>                 SamplerBindings[EShaderVisibility::Count];
 };
 
 class FMetalComputePipelineStateRHI : public FRHIComputePipelineState

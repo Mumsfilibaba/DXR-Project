@@ -7,17 +7,17 @@
 #include "VulkanRHI/VulkanShader.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
 
-static inline EShaderVisibility GetShaderVisibilityFromShaderFlag(VkShaderStageFlags ShaderStage)
+static inline EShaderVisibility::Type GetShaderVisibilityFromShaderFlag(VkShaderStageFlags ShaderStage)
 {
     switch(ShaderStage)
     {
-    case VK_SHADER_STAGE_VERTEX_BIT:                  return ShaderVisibility_Vertex;
-    case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:    return ShaderVisibility_Hull;
-    case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT: return ShaderVisibility_Domain;
-    case VK_SHADER_STAGE_GEOMETRY_BIT:                return ShaderVisibility_Geometry;
-    case VK_SHADER_STAGE_FRAGMENT_BIT:                return ShaderVisibility_Pixel;
-    case VK_SHADER_STAGE_COMPUTE_BIT:                 return ShaderVisibility_Compute;
-    default:                                          return ShaderVisibility_Compute;
+    case VK_SHADER_STAGE_VERTEX_BIT:                  return EShaderVisibility::Vertex;
+    case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:    return EShaderVisibility::Hull;
+    case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT: return EShaderVisibility::Domain;
+    case VK_SHADER_STAGE_GEOMETRY_BIT:                return EShaderVisibility::Geometry;
+    case VK_SHADER_STAGE_FRAGMENT_BIT:                return EShaderVisibility::Pixel;
+    case VK_SHADER_STAGE_COMPUTE_BIT:                 return EShaderVisibility::Compute;
+    default:                                          return EShaderVisibility::Compute;
     }
 }
 
@@ -103,7 +103,7 @@ void FVulkanPipelineLayoutInfo::PromoteUniformBuffersToDynamic()
             }
 
             Binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-            SetRemappingInfo.RemappingInfo[BindingIndex].BindingType = VulkanBindingType_UniformBufferDynamic;
+            SetRemappingInfo.RemappingInfo[BindingIndex].BindingType = EVulkanBindingType::UniformBufferDynamic;
             RemainingBudget -= DynamicUBCostDwords;
         }
     }
@@ -163,7 +163,7 @@ void FVulkanPipelineLayoutInfo::ApplyImmutableSamplers(FVulkanDevice* Device, co
                 }
 
                 SetLayout.ImmutableSamplers[BindingIndex] = Sampler;
-                SetRemap.RemappingInfo[BindingIndex].BindingType = VulkanBindingType_ImmutableSampler;
+                SetRemap.RemappingInfo[BindingIndex].BindingType = EVulkanBindingType::ImmutableSampler;
             }
         }
     }
@@ -306,7 +306,7 @@ void FVulkanPipelineLayout::SetDebugName(const CHAR* InName)
     }
 }
 
-bool FVulkanPipelineLayout::GetDescriptorBinding(EShaderVisibility ShaderStage, EResourceType ResourceType, int32 ResourceIndex, uint32& OutDescriptorSetIndex, uint32& OutBinding)
+bool FVulkanPipelineLayout::GetDescriptorBinding(EShaderVisibility::Type ShaderStage, EResourceType::Type ResourceType, int32 ResourceIndex, uint32& OutDescriptorSetIndex, uint32& OutBinding)
 {
     FStageDescriptorMap& StageMapping = DescriptorBindMap[ShaderStage];
     if (StageMapping.DescriptorSetIndex == UINT8_MAX)
@@ -316,19 +316,19 @@ bool FVulkanPipelineLayout::GetDescriptorBinding(EShaderVisibility ShaderStage, 
 
     switch(ResourceType)
     {
-    case ResourceType_SRV:
+    case EResourceType::SRV:
         OutBinding = ResourceIndex < VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT ? StageMapping.SRVMappings[ResourceIndex] : UINT8_MAX;
         break;
 
-    case ResourceType_UAV:
+    case EResourceType::UAV:
         OutBinding = ResourceIndex < VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT ? StageMapping.UAVMappings[ResourceIndex] : UINT8_MAX;
         break;
 
-    case ResourceType_UniformBuffer:
+    case EResourceType::UniformBuffer:
         OutBinding = ResourceIndex < VULKAN_DEFAULT_UNIFORM_BUFFER_COUNT ? StageMapping.UniformMappings[ResourceIndex] : UINT8_MAX;
         break;
 
-    case ResourceType_Sampler:
+    case EResourceType::Sampler:
         OutBinding = ResourceIndex < VULKAN_DEFAULT_SAMPLER_STATE_COUNT ? StageMapping.SamplerMappings[ResourceIndex] : UINT8_MAX;
         break;
     };
@@ -342,7 +342,7 @@ bool FVulkanPipelineLayout::GetDescriptorBinding(EShaderVisibility ShaderStage, 
     return true;
 }
 
-bool FVulkanPipelineLayout::GetDescriptorSetIndex(EShaderVisibility ShaderStage, uint32& OutDescriptorSetIndex)
+bool FVulkanPipelineLayout::GetDescriptorSetIndex(EShaderVisibility::Type ShaderStage, uint32& OutDescriptorSetIndex)
 {
     FStageDescriptorMap& StageMapping = DescriptorBindMap[ShaderStage];
     if (StageMapping.DescriptorSetIndex != UINT8_MAX)
@@ -380,7 +380,7 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
         CHECK(SetLayoutInfo.Bindings.Size() == StageMappingInfo.RemappingInfo.Size());
         for (int32 BindingIndex = 0; BindingIndex < SetLayoutInfo.Bindings.Size(); BindingIndex++)
         {
-            const EShaderVisibility ShaderVisibility = GetShaderVisibilityFromShaderFlag(SetLayoutInfo.Bindings[BindingIndex].stageFlags);
+            const EShaderVisibility::Type ShaderVisibility = GetShaderVisibilityFromShaderFlag(SetLayoutInfo.Bindings[BindingIndex].stageFlags);
 
             FStageDescriptorMap& StageMapping = DescriptorBindMap[ShaderVisibility];
             StageMapping.DescriptorSetIndex = static_cast<uint8>(SetIndex);
@@ -388,27 +388,27 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
             const FVulkanDescriptorRemappingInfo::FRemappingInfo& RemappingInfo = StageMappingInfo.RemappingInfo[BindingIndex];
             switch(RemappingInfo.BindingType)
             {
-            case VulkanBindingType_UniformBuffer:
-            case VulkanBindingType_UniformBufferDynamic:
+            case EVulkanBindingType::UniformBuffer:
+            case EVulkanBindingType::UniformBufferDynamic:
                 StageMapping.UniformMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
 
-            case VulkanBindingType_Sampler:
+            case EVulkanBindingType::Sampler:
                 StageMapping.SamplerMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
 
-            case VulkanBindingType_SampledImage:
-            case VulkanBindingType_StorageBufferRead:
-            case VulkanBindingType_AccelerationStructure:
+            case EVulkanBindingType::SampledImage:
+            case EVulkanBindingType::StorageBufferRead:
+            case EVulkanBindingType::AccelerationStructure:
                 StageMapping.SRVMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
 
-            case VulkanBindingType_StorageImage:
-            case VulkanBindingType_StorageBufferReadWrite:
+            case EVulkanBindingType::StorageImage:
+            case EVulkanBindingType::StorageBufferReadWrite:
                 StageMapping.UAVMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
 
-            case VulkanBindingType_ImmutableSampler:
+            case EVulkanBindingType::ImmutableSampler:
                 break;
 
             default:

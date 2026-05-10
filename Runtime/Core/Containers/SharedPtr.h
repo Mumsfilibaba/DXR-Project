@@ -4,7 +4,7 @@
 #include "Core/Templates/Utility.h"
 #include "Core/Threading/Atomic.h"
 
-enum EThreadAccess
+enum class EThreadAccess
 {
     // Reference counting is not thread-safe
     Unsafe,

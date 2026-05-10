@@ -720,11 +720,11 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     FScene* CurrentScene = static_cast<FScene*>(SceneRenderView.Scene);
     PrepareResources(SceneRenderView, CurrentScene);
 
-    CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Albedo].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget));
-    CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Normal].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget));
-    CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Material].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget));
-    CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Velocity].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget));
-    CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::DepthWrite));
+    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Albedo].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget));
+    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Normal].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget));
+    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Material].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget));
+    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Velocity].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget));
+    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Depth].Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::DepthWrite));
 
     // PrePass
     if (GPrePassEnabled)
@@ -733,7 +733,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     }
     else
     {
-        FRHIDepthStencilView* DepthStencilView = Resources.GBuffer[GBufferIndex_Depth]->GetDepthStencilView();
+        FRHIDepthStencilView* DepthStencilView = Resources.GBuffer[EGBufferIndex::Depth]->GetDepthStencilView();
         CommandList.ClearDepthStencilView(DepthStencilView, 1.0f, 0);
     }
 
@@ -781,11 +781,11 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
         RayTracer.PreRender(CommandList, Resources, CurrentScene);
     }
 
-    CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Albedo].Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource));
-    CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Normal].Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource));
-    CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Velocity].Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource));
-    CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Material].Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource));
-    CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Albedo].Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Normal].Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Velocity].Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Material].Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource));
     CommandList.TransitionTextureState(Resources.SSAOBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
 
     // SSAO
@@ -896,7 +896,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     TiledLightPass->Execute(CommandList, Resources, CurrentScene);
 
     // The skybox pass binds depth as a ReadOnlyDepth DSV (bDepthWriteEnable = false)
-    CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthRead));
+    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Depth].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthRead));
     CommandList.TransitionTextureState(Resources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::RenderTarget));
 
     // Skybox Pass
@@ -929,17 +929,17 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     if (GEnableTemporalAA)
     {
         // Source state matches the ReadOnlyDepth transition done before the skybox pass above.
-        CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthRead, EResourceAccess::NonPixelShaderResource));
+        CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthRead, EResourceAccess::NonPixelShaderResource));
         CommandList.TransitionTextureState(Resources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::UnorderedAccess));
 
         TemporalAA->Execute(CommandList, Resources);
 
-        CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
+        CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Depth].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
         CommandList.TransitionTextureState(Resources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource));
     }
     else
     {
-        CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthRead, EResourceAccess::PixelShaderResource));
+        CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthRead, EResourceAccess::PixelShaderResource));
         CommandList.TransitionTextureState(Resources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
     }
 
@@ -987,7 +987,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
         #if EDITOR_BUILD
             FRHITexture* DebugDepthTarget = Resources.EditorNoJitterDepth.Get();
         #else
-            FRHITexture* DebugDepthTarget = Resources.GBuffer[GBufferIndex_Depth].Get();
+            FRHITexture* DebugDepthTarget = Resources.GBuffer[EGBufferIndex::Depth].Get();
         #endif
 
             CommandList.RequireTextureState(SceneRenderView.RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::RenderTarget));

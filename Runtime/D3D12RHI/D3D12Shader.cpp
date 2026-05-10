@@ -193,7 +193,7 @@ FD3D12ShaderBytecode::~FD3D12ShaderBytecode()
     ByteCode.BytecodeLength  = 0;
 }
 
-FD3D12Shader::FD3D12Shader(FD3D12Device* InDevice, EShaderVisibility InShaderVisibility)
+FD3D12Shader::FD3D12Shader(FD3D12Device* InDevice, EShaderVisibility::Type InShaderVisibility)
     : FD3D12DeviceChild(InDevice)
     , ByteCodeHash()
     , ShaderVisibility(InShaderVisibility)
@@ -206,7 +206,7 @@ FD3D12Shader::~FD3D12Shader()
 {
 }
 
-FD3D12GraphicsShader::FD3D12GraphicsShader(FD3D12Device* InDevice, EShaderVisibility InShaderVisibility)
+FD3D12GraphicsShader::FD3D12GraphicsShader(FD3D12Device* InDevice, EShaderVisibility::Type InShaderVisibility)
     : FD3D12Shader(InDevice, InShaderVisibility)
 {
 }
@@ -214,7 +214,7 @@ FD3D12GraphicsShader::FD3D12GraphicsShader(FD3D12Device* InDevice, EShaderVisibi
 FD3D12GraphicsShader::~FD3D12GraphicsShader() = default;
 
 FD3D12RayTracingShader::FD3D12RayTracingShader(FD3D12Device* InDevice)
-    : FD3D12Shader(InDevice, ShaderVisibility_All)
+    : FD3D12Shader(InDevice, EShaderVisibility::All)
 {
 }
 
@@ -350,20 +350,20 @@ bool FD3D12Shader::GetShaderResourceBindings(ID3D12ShaderReflection* Reflection,
             }
             else
             {
-                NewBindingInfo.AddBinding(D3D12BindingType_ConstantBuffer, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
+                NewBindingInfo.AddBinding(ED3D12BindingType::ConstantBuffer, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
             }
         }
         else if (ShaderBindDesc.Type == D3D_SIT_SAMPLER)
         {
-            NewBindingInfo.AddBinding(D3D12BindingType_Sampler, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
+            NewBindingInfo.AddBinding(ED3D12BindingType::Sampler, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
         }
         else if (IsShaderResourceView(ShaderBindDesc.Type))
         {
-            NewBindingInfo.AddBinding(D3D12BindingType_SRV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
+            NewBindingInfo.AddBinding(ED3D12BindingType::SRV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
         }
         else if (IsUnorderedAccessView(ShaderBindDesc.Type))
         {
-            NewBindingInfo.AddBinding(D3D12BindingType_UAV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
+            NewBindingInfo.AddBinding(ED3D12BindingType::UAV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
         }
         else
         {
@@ -422,11 +422,11 @@ bool FD3D12RayTracingShader::GetShaderResourceBindings(ID3D12FunctionReflection*
             }
             else if (bIsLocalSpace)
             {
-                NewLocalBindingInfo.AddBinding(D3D12BindingType_ConstantBuffer, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
+                NewLocalBindingInfo.AddBinding(ED3D12BindingType::ConstantBuffer, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
             }
             else
             {
-                NewBindingInfo.AddBinding(D3D12BindingType_ConstantBuffer, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
+                NewBindingInfo.AddBinding(ED3D12BindingType::ConstantBuffer, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
             }
         }
         else if (ShaderBindDesc.Type == D3D_SIT_SAMPLER)
@@ -437,7 +437,7 @@ bool FD3D12RayTracingShader::GetShaderResourceBindings(ID3D12FunctionReflection*
                 return false;
             }
 
-            NewBindingInfo.AddBinding(D3D12BindingType_Sampler, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
+            NewBindingInfo.AddBinding(ED3D12BindingType::Sampler, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
         }
         else if (IsShaderResourceView(ShaderBindDesc.Type))
         {
@@ -449,11 +449,11 @@ bool FD3D12RayTracingShader::GetShaderResourceBindings(ID3D12FunctionReflection*
                     return false;
                 }
 
-                NewLocalBindingInfo.AddBinding(D3D12BindingType_SRV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
+                NewLocalBindingInfo.AddBinding(ED3D12BindingType::SRV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
             }
             else
             {
-                NewBindingInfo.AddBinding(D3D12BindingType_SRV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
+                NewBindingInfo.AddBinding(ED3D12BindingType::SRV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
             }
         }
         else if (IsUnorderedAccessView(ShaderBindDesc.Type))
@@ -466,11 +466,11 @@ bool FD3D12RayTracingShader::GetShaderResourceBindings(ID3D12FunctionReflection*
                     return false;
                 }
 
-                NewLocalBindingInfo.AddBinding(D3D12BindingType_UAV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
+                NewLocalBindingInfo.AddBinding(ED3D12BindingType::UAV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
             }
             else
             {
-                NewBindingInfo.AddBinding(D3D12BindingType_UAV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
+                NewBindingInfo.AddBinding(ED3D12BindingType::UAV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
             }
         }
     }
@@ -616,7 +616,7 @@ bool FD3D12RayTracingShader::Initialize(const TArray<uint8>& InCode)
 
 FD3D12VertexShaderRHI::FD3D12VertexShaderRHI(FD3D12Device* InDevice)
     : FRHIVertexShader()
-    , FD3D12GraphicsShader(InDevice, ShaderVisibility_Vertex)
+    , FD3D12GraphicsShader(InDevice, EShaderVisibility::Vertex)
 {
 }
 
@@ -624,7 +624,7 @@ FD3D12VertexShaderRHI::~FD3D12VertexShaderRHI() = default;
 
 FD3D12HullShaderRHI::FD3D12HullShaderRHI(FD3D12Device* InDevice)
     : FRHIHullShader()
-    , FD3D12GraphicsShader(InDevice, ShaderVisibility_Hull)
+    , FD3D12GraphicsShader(InDevice, EShaderVisibility::Hull)
 {
 }
 
@@ -632,7 +632,7 @@ FD3D12HullShaderRHI::~FD3D12HullShaderRHI() = default;
 
 FD3D12DomainShaderRHI::FD3D12DomainShaderRHI(FD3D12Device* InDevice)
     : FRHIDomainShader()
-    , FD3D12GraphicsShader(InDevice, ShaderVisibility_Domain)
+    , FD3D12GraphicsShader(InDevice, EShaderVisibility::Domain)
 {
 }
 
@@ -640,7 +640,7 @@ FD3D12DomainShaderRHI::~FD3D12DomainShaderRHI() = default;
 
 FD3D12GeometryShaderRHI::FD3D12GeometryShaderRHI(FD3D12Device* InDevice)
     : FRHIGeometryShader()
-    , FD3D12GraphicsShader(InDevice, ShaderVisibility_Geometry)
+    , FD3D12GraphicsShader(InDevice, EShaderVisibility::Geometry)
 {
 }
 
@@ -648,7 +648,7 @@ FD3D12GeometryShaderRHI::~FD3D12GeometryShaderRHI() = default;
 
 FD3D12PixelShaderRHI::FD3D12PixelShaderRHI(FD3D12Device* InDevice)
     : FRHIPixelShader()
-    , FD3D12GraphicsShader(InDevice, ShaderVisibility_Pixel)
+    , FD3D12GraphicsShader(InDevice, EShaderVisibility::Pixel)
 {
 }
 
@@ -688,7 +688,7 @@ FD3D12RayMissShaderRHI::~FD3D12RayMissShaderRHI() = default;
 
 FD3D12ComputeShaderRHI::FD3D12ComputeShaderRHI(FD3D12Device* InDevice)
     : FRHIComputeShader()
-    , FD3D12Shader(InDevice, ShaderVisibility_All)
+    , FD3D12Shader(InDevice, EShaderVisibility::All)
     , ThreadGroupXYZ(0, 0, 0)
 {
 }

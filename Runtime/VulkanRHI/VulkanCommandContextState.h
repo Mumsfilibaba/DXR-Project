@@ -166,10 +166,10 @@ public:
     void SetVertexBuffer(FVulkanBufferRHI* VertexBuffer, uint32 VertexBufferSlot);
     void SetIndexBuffer(FVulkanBufferRHI* IndexBuffer, VkIndexType IndexFormat);
     void SetPushConstants(const uint32* ShaderConstants, uint32 NumShaderConstants);
-    void SetSRV(FVulkanShaderResourceViewRHI* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
-    void SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
-    void SetUniformBuffer(FVulkanBufferRHI* UniformBuffer, EShaderVisibility ShaderStage, uint32 ResourceIndex);
-    void SetSampler(FVulkanSamplerStateRHI* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex);
+    void SetSRV(FVulkanShaderResourceViewRHI* ShaderResourceView, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex);
+    void SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAccessView, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex);
+    void SetUniformBuffer(FVulkanBufferRHI* UniformBuffer, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex);
+    void SetSampler(FVulkanSamplerStateRHI* SamplerState, EShaderVisibility::Type ShaderStage, uint32 SamplerIndex);
 
     FORCEINLINE void OnStartRecording()
     {

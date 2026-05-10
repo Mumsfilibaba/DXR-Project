@@ -79,61 +79,61 @@ ENUM_CLASS_OPERATORS(ED3D12DescriptorState)
 
 struct FD3D12ResourceCache
 {
-    bool IsResourcesDirty(EShaderVisibility ShaderStage) const
+    bool IsResourcesDirty(EShaderVisibility::Type ShaderStage) const
     {
         return IsEnumFlagSet(DescriptorState[ShaderStage], ED3D12DescriptorState::ResourcesDirty);
     }
 
-    bool IsDescriptorTableDirty(EShaderVisibility ShaderStage) const
+    bool IsDescriptorTableDirty(EShaderVisibility::Type ShaderStage) const
     {
         return IsEnumFlagSet(DescriptorState[ShaderStage], ED3D12DescriptorState::DescriptorTableDirty);
     }
 
-    void DirtyResources(EShaderVisibility ShaderStage)
+    void DirtyResources(EShaderVisibility::Type ShaderStage)
     {
         DescriptorState[ShaderStage] |= ED3D12DescriptorState::ResourcesDirty;
     }
 
     void DirtyResourcesAll()
     {
-        for (uint32 i = ShaderVisibility_All; i < ShaderVisibility_Count; i++)
+        for (uint32 i = EShaderVisibility::All; i < EShaderVisibility::Count; i++)
         {
             DescriptorState[i] |= ED3D12DescriptorState::ResourcesDirty;
         }
     }
 
-    void DirtyDescriptorTable(EShaderVisibility ShaderStage)
+    void DirtyDescriptorTable(EShaderVisibility::Type ShaderStage)
     {
         DescriptorState[ShaderStage] |= ED3D12DescriptorState::DescriptorTableDirty;
     }
 
     void DirtyDescriptorTableAll()
     {
-        for (uint32 i = ShaderVisibility_All; i < ShaderVisibility_Count; i++)
+        for (uint32 i = EShaderVisibility::All; i < EShaderVisibility::Count; i++)
         {
             DescriptorState[i] |= ED3D12DescriptorState::DescriptorTableDirty;
         }
     }
 
-    void ClearResourcesDirty(EShaderVisibility ShaderStage)
+    void ClearResourcesDirty(EShaderVisibility::Type ShaderStage)
     {
         DescriptorState[ShaderStage] &= ~ED3D12DescriptorState::ResourcesDirty;
     }
 
-    void ClearDescriptorTableDirty(EShaderVisibility ShaderStage)
+    void ClearDescriptorTableDirty(EShaderVisibility::Type ShaderStage)
     {
         DescriptorState[ShaderStage] &= ~ED3D12DescriptorState::DescriptorTableDirty;
     }
 
     void ClearAll()
     {
-        for (uint32 i = ShaderVisibility_All; i < ShaderVisibility_Count; i++)
+        for (uint32 i = EShaderVisibility::All; i < EShaderVisibility::Count; i++)
         {
             DescriptorState[i] = ED3D12DescriptorState::None;
         }
     }
 
-    ED3D12DescriptorState DescriptorState[ShaderVisibility_Count];
+    ED3D12DescriptorState DescriptorState[EShaderVisibility::Count];
 };
 
 struct FD3D12ConstantBufferCache : public FD3D12ResourceCache
@@ -147,7 +147,7 @@ struct FD3D12ConstantBufferCache : public FD3D12ResourceCache
     {
         DirtyResourcesAll();
 
-        for (int32 Index = 0; Index < ShaderVisibility_Count; Index++)
+        for (int32 Index = 0; Index < EShaderVisibility::Count; Index++)
         {
             auto& StageViews = ResourceViews[Index];
             FMemory::Memzero(&StageViews, sizeof(StageViews));
@@ -156,9 +156,9 @@ struct FD3D12ConstantBufferCache : public FD3D12ResourceCache
         }
     }
 
-    FD3D12BufferRHI* ResourceViews[ShaderVisibility_Count][D3D12_DEFAULT_CONSTANT_BUFFER_COUNT];
-    uint32           ViewVersions[ShaderVisibility_Count][D3D12_DEFAULT_CONSTANT_BUFFER_COUNT];
-    uint8            NumBuffers[ShaderVisibility_Count];
+    FD3D12BufferRHI* ResourceViews[EShaderVisibility::Count][D3D12_DEFAULT_CONSTANT_BUFFER_COUNT];
+    uint32           ViewVersions[EShaderVisibility::Count][D3D12_DEFAULT_CONSTANT_BUFFER_COUNT];
+    uint8            NumBuffers[EShaderVisibility::Count];
 };
 
 struct FD3D12ShaderResourceViewCache : public FD3D12ResourceCache
@@ -172,7 +172,7 @@ struct FD3D12ShaderResourceViewCache : public FD3D12ResourceCache
     {
         DirtyResourcesAll();
 
-        for (int32 Index = 0; Index < ShaderVisibility_Count; Index++)
+        for (int32 Index = 0; Index < EShaderVisibility::Count; Index++)
         {
             auto& StageViews = ResourceViews[Index];
             FMemory::Memzero(&StageViews, sizeof(StageViews));
@@ -181,9 +181,9 @@ struct FD3D12ShaderResourceViewCache : public FD3D12ResourceCache
         }
     }
 
-    FD3D12ShaderResourceViewRHI* ResourceViews[ShaderVisibility_Count][D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
-    uint32                       ViewVersions[ShaderVisibility_Count][D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
-    uint8                        NumViews[ShaderVisibility_Count];
+    FD3D12ShaderResourceViewRHI* ResourceViews[EShaderVisibility::Count][D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
+    uint32                       ViewVersions[EShaderVisibility::Count][D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
+    uint8                        NumViews[EShaderVisibility::Count];
 };
 
 struct FD3D12UnorderedAccessViewCache : public FD3D12ResourceCache
@@ -197,7 +197,7 @@ struct FD3D12UnorderedAccessViewCache : public FD3D12ResourceCache
     {
         DirtyResourcesAll();
 
-        for (int32 Index = 0; Index < ShaderVisibility_Count; Index++)
+        for (int32 Index = 0; Index < EShaderVisibility::Count; Index++)
         {
             auto& StageViews = ResourceViews[Index];
             FMemory::Memzero(&StageViews, sizeof(StageViews));
@@ -206,9 +206,9 @@ struct FD3D12UnorderedAccessViewCache : public FD3D12ResourceCache
         }
     }
 
-    FD3D12UnorderedAccessViewRHI* ResourceViews[ShaderVisibility_Count][D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
-    uint32                        ViewVersions[ShaderVisibility_Count][D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
-    uint8                         NumViews[ShaderVisibility_Count];
+    FD3D12UnorderedAccessViewRHI* ResourceViews[EShaderVisibility::Count][D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
+    uint32                        ViewVersions[EShaderVisibility::Count][D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
+    uint8                         NumViews[EShaderVisibility::Count];
 };
 
 struct FD3D12ShaderConstantsCache
@@ -269,7 +269,7 @@ struct FD3D12SamplerStateCache : public FD3D12ResourceCache
     {
         DirtyResourcesAll();
 
-        for (int32 Index = 0; Index < ShaderVisibility_Count; Index++)
+        for (int32 Index = 0; Index < EShaderVisibility::Count; Index++)
         {
             auto& StageSamplers = SamplerStates[Index];
             NumSamplers[Index] = 0;
@@ -277,8 +277,8 @@ struct FD3D12SamplerStateCache : public FD3D12ResourceCache
         }
     }
 
-    FD3D12SamplerStateRHI* SamplerStates[ShaderVisibility_Count][D3D12_DEFAULT_SAMPLER_STATE_COUNT];
-    uint8                  NumSamplers[ShaderVisibility_Count];
+    FD3D12SamplerStateRHI* SamplerStates[EShaderVisibility::Count][D3D12_DEFAULT_SAMPLER_STATE_COUNT];
+    uint8                  NumSamplers[EShaderVisibility::Count];
 };
 
 template<typename KeyType, typename ValueType>
@@ -354,7 +354,7 @@ struct FD3D12DescriptorHandleCache
 
     void Clear(uint32 StartStage, uint32 EndStage)
     {
-        CHECK(StartStage < EndStage && EndStage < ShaderVisibility_Count);
+        CHECK(StartStage < EndStage && EndStage < EShaderVisibility::Count);
 
         for (uint32 Index = StartStage; Index < EndStage; Index++)
         {
@@ -367,7 +367,7 @@ struct FD3D12DescriptorHandleCache
         FMemory::Memzero(Handles, sizeof(Handles));
     }
 
-    D3D12_GPU_DESCRIPTOR_HANDLE Handles[ShaderVisibility_Count];
+    D3D12_GPU_DESCRIPTOR_HANDLE Handles[EShaderVisibility::Count];
 };
 
 class FD3D12LocalDescriptorHeap : public FD3D12DeviceChild
@@ -426,15 +426,15 @@ public:
     void SetVertexBuffers(FD3D12VertexBufferCache& VertexBuffers);
     void SetIndexBuffer(FD3D12IndexBufferCache& IndexBuffer);
 
-    void PrepareCBVs(FD3D12ConstantBufferCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage, uint32 NumCBVs, uint32& DescriptorHandleOffset);
-    void PrepareSRVs(FD3D12ShaderResourceViewCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage, uint32 NumSRVs, uint32& DescriptorHandleOffset);
-    void PrepareUAVs(FD3D12UnorderedAccessViewCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage, uint32 NumUAVs, uint32& DescriptorHandleOffset);
-    void PrepareSamplers(FD3D12SamplerStateCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage, uint32 NumSamplers, uint32& DescriptorHandleOffset);
+    void PrepareCBVs(FD3D12ConstantBufferCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage, uint32 NumCBVs, uint32& DescriptorHandleOffset);
+    void PrepareSRVs(FD3D12ShaderResourceViewCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage, uint32 NumSRVs, uint32& DescriptorHandleOffset);
+    void PrepareUAVs(FD3D12UnorderedAccessViewCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage, uint32 NumUAVs, uint32& DescriptorHandleOffset);
+    void PrepareSamplers(FD3D12SamplerStateCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage, uint32 NumSamplers, uint32& DescriptorHandleOffset);
 
-    void BindCBVs(FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage);
-    void BindSRVs(FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage);
-    void BindUAVs(FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage);
-    void BindSamplers(FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage);
+    void BindCBVs(FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage);
+    void BindSRVs(FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage);
+    void BindUAVs(FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage);
+    void BindSamplers(FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage);
 
     void SetDescriptorHeaps();
 

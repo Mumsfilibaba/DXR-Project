@@ -1,6 +1,6 @@
 #include "MetalRHI/MetalShader.h"
 
-FMetalShader::FMetalShader(FMetalDevice* InDevice, EShaderVisibility InVisibility)
+FMetalShader::FMetalShader(FMetalDevice* InDevice, EShaderVisibility::Type InVisibility)
     : FMetalDeviceChild(InDevice)
     , Library(nil)
     , FunctionName(nil)
@@ -60,7 +60,7 @@ bool FMetalShader::Initialize(const TArray<uint8>& InCode)
 
 FMetalVertexShaderRHI::FMetalVertexShaderRHI(FMetalDevice* InDevice)
     : FRHIVertexShader()
-    , FMetalShader(InDevice, ShaderVisibility_Vertex)
+    , FMetalShader(InDevice, EShaderVisibility::Vertex)
 {
 }
 
@@ -68,7 +68,7 @@ FMetalVertexShaderRHI::~FMetalVertexShaderRHI() = default;
 
 FMetalPixelShaderRHI::FMetalPixelShaderRHI(FMetalDevice* InDevice)
     : FRHIPixelShader()
-    , FMetalShader(InDevice, ShaderVisibility_Pixel)
+    , FMetalShader(InDevice, EShaderVisibility::Pixel)
 {
 }
 
@@ -76,14 +76,14 @@ FMetalPixelShaderRHI::~FMetalPixelShaderRHI() = default;
 
 FMetalComputeShaderRHI::FMetalComputeShaderRHI(FMetalDevice* InDevice)
     : FRHIComputeShader()
-    , FMetalShader(InDevice, ShaderVisibility_Compute)
+    , FMetalShader(InDevice, EShaderVisibility::Compute)
 {
 }
 
 FMetalComputeShaderRHI::~FMetalComputeShaderRHI() = default;
 
 FMetalRayTracingShader::FMetalRayTracingShader(FMetalDevice* InDevice)
-    : FMetalShader(InDevice, ShaderVisibility_Compute)
+    : FMetalShader(InDevice, EShaderVisibility::Compute)
 {
 }
 

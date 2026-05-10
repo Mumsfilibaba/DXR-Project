@@ -138,7 +138,7 @@ public:
         return RootSignature.Get();
     }
 
-    uint8 GetEffectiveDescriptorCount(EShaderVisibility Stage, EResourceType Type) const
+    uint8 GetEffectiveDescriptorCount(EShaderVisibility::Type Stage, EResourceType::Type Type) const
     {
         return EffectiveDescriptorCounts[Stage][Type];
     }
@@ -146,7 +146,7 @@ public:
 protected:
     void ComputeEffectiveDescriptorCounts(FD3D12Shader* const* Shaders, uint32 NumShaders);
 
-    uint8                        EffectiveDescriptorCounts[ShaderVisibility_Count][ResourceType_Count];
+    uint8                        EffectiveDescriptorCounts[EShaderVisibility::Count][EResourceType::Count];
     TComPtr<ID3D12PipelineState> PipelineState;
     FD3D12RootSignatureRef       RootSignature;
     FString                      DebugName;

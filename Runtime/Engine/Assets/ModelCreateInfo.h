@@ -8,7 +8,7 @@
 #include "Engine/Resources/Texture.h"
 #include "RHI/RHITypes.h"
 
-namespace EMaterialTexture
+struct EMaterialTexture
 {
     enum Type
     {
@@ -22,7 +22,7 @@ namespace EMaterialTexture
         AlphaMask,
         Count
     };
-}
+};
 
 struct FSubMeshInfo
 {

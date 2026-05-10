@@ -25,10 +25,10 @@ public:
 private:
     void UpdateShortcuts(bool bViewportHovered);
 
-    FEditorEngine*           EditorEngine;
-    FDelegateHandle          ImGuiEndFrameDelegateHandle;
-    bool                     bVisible;
-    EditorGuizmo::EOperation Operation;
-    EditorGuizmo::EMode      Mode;
+    FEditorEngine*                 EditorEngine;
+    FDelegateHandle                ImGuiEndFrameDelegateHandle;
+    bool                           bVisible;
+    EditorGuizmo::EOperation::Type Operation;
+    EditorGuizmo::EMode            Mode;
 };
 

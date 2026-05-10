@@ -6,7 +6,7 @@
 #include "D3D12RHI/D3D12Loader.h"
 #include "D3D12RHI/D3D12RHI.h"
 
-static D3D12_SHADER_VISIBILITY GD3D12ShaderVisibility[ShaderVisibility_Count] =
+static D3D12_SHADER_VISIBILITY GD3D12ShaderVisibility[EShaderVisibility::Count] =
 {
     D3D12_SHADER_VISIBILITY_ALL,
     D3D12_SHADER_VISIBILITY_VERTEX,
@@ -18,23 +18,23 @@ static D3D12_SHADER_VISIBILITY GD3D12ShaderVisibility[ShaderVisibility_Count] =
 
 static D3D12_SHADER_VISIBILITY GetD3D12ShaderVisibility(uint32 Visbility)
 {
-    CHECK(Visbility < ShaderVisibility_Count);
+    CHECK(Visbility < EShaderVisibility::Count);
     return GD3D12ShaderVisibility[Visbility];
 }
 
-static EShaderVisibility GShaderVisibility[ShaderVisibility_Count] =
+static EShaderVisibility::Type GShaderVisibility[EShaderVisibility::Count] =
 {
-    ShaderVisibility_All,
-    ShaderVisibility_Vertex,
-    ShaderVisibility_Hull,
-    ShaderVisibility_Domain,
-    ShaderVisibility_Geometry,
-    ShaderVisibility_Pixel
+    EShaderVisibility::All,
+    EShaderVisibility::Vertex,
+    EShaderVisibility::Hull,
+    EShaderVisibility::Domain,
+    EShaderVisibility::Geometry,
+    EShaderVisibility::Pixel
 };
 
-static EShaderVisibility GetShaderVisibility(uint32 Visbility)
+static EShaderVisibility::Type GetShaderVisibility(uint32 Visbility)
 {
-    CHECK(Visbility < ShaderVisibility_Count);
+    CHECK(Visbility < EShaderVisibility::Count);
     return GShaderVisibility[Visbility];
 }
 
@@ -51,29 +51,29 @@ static D3D12_SHADER_VISIBILITY GetD3D12ShaderVisibilityFromShaderStage(EShaderSt
     }
 }
 
-static EResourceType GetResourceType(D3D12_DESCRIPTOR_RANGE_TYPE Type)
+static EResourceType::Type GetResourceType(D3D12_DESCRIPTOR_RANGE_TYPE Type)
 {
     switch (Type)
     {
-    case D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_CBV:     return ResourceType_CBV;
-    case D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_SRV:     return ResourceType_SRV;
-    case D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_UAV:     return ResourceType_UAV;
-    case D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER: return ResourceType_Sampler;
+    case D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_CBV:     return EResourceType::CBV;
+    case D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_SRV:     return EResourceType::SRV;
+    case D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_UAV:     return EResourceType::UAV;
+    case D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER: return EResourceType::Sampler;
     
     default:
         CHECK(false);
-        return ResourceType_Unknown;
+        return EResourceType::Unknown;
     }
 }
 
-static D3D12_DESCRIPTOR_RANGE_TYPE GetD3D12DescriptorRangeType(EResourceType Type)
+static D3D12_DESCRIPTOR_RANGE_TYPE GetD3D12DescriptorRangeType(EResourceType::Type Type)
 {
     switch (Type)
     {
-    case ResourceType_CBV:     return D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-    case ResourceType_SRV:     return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-    case ResourceType_UAV:     return D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-    case ResourceType_Sampler: return D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+    case EResourceType::CBV:     return D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+    case EResourceType::SRV:     return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    case EResourceType::UAV:     return D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+    case EResourceType::Sampler: return D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
     
     default:
         CHECK(false);
@@ -82,14 +82,14 @@ static D3D12_DESCRIPTOR_RANGE_TYPE GetD3D12DescriptorRangeType(EResourceType Typ
 }
 
 #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
-static D3D12_DESCRIPTOR_RANGE_FLAGS GetDescriptorRangeFlags(EResourceType ResType)
+static D3D12_DESCRIPTOR_RANGE_FLAGS GetDescriptorRangeFlags(EResourceType::Type ResType)
 {
 #if D3D12_ENABLE_STATIC_DESCRIPTORS
-    if (ResType == ResourceType_Sampler)
+    if (ResType == EResourceType::Sampler)
     {
         return D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
     }
-    else if (ResType == ResourceType_UAV)
+    else if (ResType == EResourceType::UAV)
     {
         return D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE;
     }
@@ -98,11 +98,11 @@ static D3D12_DESCRIPTOR_RANGE_FLAGS GetDescriptorRangeFlags(EResourceType ResTyp
         return D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE;
     }
 #else
-    if (ResType == ResourceType_Sampler)
+    if (ResType == EResourceType::Sampler)
     {
         return D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE;
     }
-    else if (ResType == ResourceType_UAV)
+    else if (ResType == EResourceType::UAV)
     {
         return D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE | D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE;
     }
@@ -114,14 +114,14 @@ static D3D12_DESCRIPTOR_RANGE_FLAGS GetDescriptorRangeFlags(EResourceType ResTyp
 }
 #endif
 
-static const EShaderVisibility GRootCBVStagePriority[] =
+static const EShaderVisibility::Type GRootCBVStagePriority[] =
 {
-    ShaderVisibility_Vertex,
-    ShaderVisibility_Pixel,
-    ShaderVisibility_Geometry,
-    ShaderVisibility_Hull,
-    ShaderVisibility_Domain,
-    ShaderVisibility_All,
+    EShaderVisibility::Vertex,
+    EShaderVisibility::Pixel,
+    EShaderVisibility::Geometry,
+    EShaderVisibility::Hull,
+    EShaderVisibility::Domain,
+    EShaderVisibility::All,
 };
 
 static constexpr uint32 GRootCBVStagePriorityCount = sizeof(GRootCBVStagePriority) / sizeof(GRootCBVStagePriority[0]);
@@ -276,21 +276,21 @@ void FD3D12RootSignatureLayout::AddStaticSampler(const FRHIStaticSamplerInfo& St
 {
     StaticSamplers.Emplace(StaticSampler);
 
-    for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
+    for (uint32 Stage = 0; Stage < EShaderVisibility::Count; Stage++)
     {
-        RegisterSets[Stage][ResourceType_Sampler].Remove(StaticSampler.ShaderRegister);
+        RegisterSets[Stage][EResourceType::Sampler].Remove(StaticSampler.ShaderRegister);
     }
 }
 
-void FD3D12RootSignatureLayout::AddRegister(EShaderVisibility Stage, EResourceType ResType, uint16 Register)
+void FD3D12RootSignatureLayout::AddRegister(EShaderVisibility::Type Stage, EResourceType::Type ResType, uint16 Register)
 {
-    CHECK(Stage < ShaderVisibility_Count);
-    CHECK(ResType < ResourceType_Count);
+    CHECK(Stage < EShaderVisibility::Count);
+    CHECK(ResType < EResourceType::Count);
     
     RegisterSets[Stage][ResType].Insert(Register);
 }
 
-void FD3D12RootSignatureLayout::AddContiguousRegisters(EShaderVisibility Stage, EResourceType ResType, uint8 Count)
+void FD3D12RootSignatureLayout::AddContiguousRegisters(EShaderVisibility::Type Stage, EResourceType::Type ResType, uint8 Count)
 {
     for (uint8 i = 0; i < Count; i++)
     {
@@ -308,9 +308,9 @@ void FD3D12RootSignatureLayout::ComputeRootCBVs()
         Budget -= Math::Min<uint32>(Budget, NumPushConstants);
     }
 
-    for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
+    for (uint32 Stage = 0; Stage < EShaderVisibility::Count; Stage++)
     {
-        for (uint32 ResType = ResourceType_SRV; ResType < ResourceType_Count; ResType++)
+        for (uint32 ResType = EResourceType::SRV; ResType < EResourceType::Count; ResType++)
         {
             if (!RegisterSets[Stage][ResType].IsEmpty())
             {
@@ -321,8 +321,8 @@ void FD3D12RootSignatureLayout::ComputeRootCBVs()
 
     for (uint32 PriorityIdx = 0; PriorityIdx < GRootCBVStagePriorityCount && Budget >= 2; PriorityIdx++)
     {
-        const EShaderVisibility  Stage        = GRootCBVStagePriority[PriorityIdx];
-        const FD3D12RegisterSet& CBVRegisters = RegisterSets[Stage][ResourceType_CBV];
+        const EShaderVisibility::Type Stage        = GRootCBVStagePriority[PriorityIdx];
+        const FD3D12RegisterSet&      CBVRegisters = RegisterSets[Stage][EResourceType::CBV];
 
         for (int32 RegIdx = 0; RegIdx < static_cast<int32>(CBVRegisters.GetCount()) && Budget >= 2; RegIdx++)
         {
@@ -336,9 +336,9 @@ void FD3D12RootSignatureLayout::ComputeRootCBVs()
         }
     }
 
-    for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
+    for (uint32 Stage = 0; Stage < EShaderVisibility::Count; Stage++)
     {
-        const FD3D12RegisterSet& CBVRegisters = RegisterSets[Stage][ResourceType_CBV];
+        const FD3D12RegisterSet& CBVRegisters = RegisterSets[Stage][EResourceType::CBV];
 
         bool bHasNonRootCBVs = false;
         for (int32 i = 0; i < static_cast<int32>(CBVRegisters.GetCount()); i++)
@@ -362,13 +362,13 @@ uint32 FD3D12RootSignatureLayout::ComputeCost() const
 {
     uint32 Cost = NumPushConstants;
 
-    for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
+    for (uint32 Stage = 0; Stage < EShaderVisibility::Count; Stage++)
     {
         Cost += RootCBVSets[Stage].GetCount() * 2;
 
-        for (uint32 ResType = 0; ResType < ResourceType_Count; ResType++)
+        for (uint32 ResType = 0; ResType < EResourceType::Count; ResType++)
         {
-            if (ResType == ResourceType_CBV)
+            if (ResType == EResourceType::CBV)
             {
                 bool bHasNonRootCBVs = false;
 
@@ -426,9 +426,9 @@ bool FD3D12RootSignatureLayout::IsCompatible(const FD3D12RootSignatureLayout& Ot
         }
     }
 
-    for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
+    for (uint32 Stage = 0; Stage < EShaderVisibility::Count; Stage++)
     {
-        for (uint32 ResType = 0; ResType < ResourceType_Count; ResType++)
+        for (uint32 ResType = 0; ResType < EResourceType::Count; ResType++)
         {
             if (!RegisterSets[Stage][ResType].IsSubsetOf(Other.RegisterSets[Stage][ResType]))
             {
@@ -493,7 +493,7 @@ uint16 FD3D12DescriptorTableMapping::GetRegisterForSlot(uint8 Slot) const
 FD3D12ShaderStage::FD3D12ShaderStage()
     : NumRootCBVs(0)
 {
-    for (int32 i = 0; i < ResourceType_Count; i++)
+    for (int32 i = 0; i < EResourceType::Count; i++)
     {
         RootParameterIndicies[i] = -1;
         ResourceCounts[i]        = 0;
@@ -509,7 +509,7 @@ FD3D12ShaderStage::FD3D12ShaderStage()
     FMemory::Memzero(RootDescriptors, sizeof(RootDescriptors));
 }
 
-void FD3D12ShaderStage::SetDescriptorTableIndex(EResourceType Type, int8 RootParameterIndex, int8 DescriptorCount)
+void FD3D12ShaderStage::SetDescriptorTableIndex(EResourceType::Type Type, int8 RootParameterIndex, int8 DescriptorCount)
 {
     RootParameterIndicies[Type] = RootParameterIndex;
     ResourceCounts[Type]        = DescriptorCount;
@@ -554,9 +554,9 @@ int8 FD3D12ShaderStage::GetRootCBVParameterIndexBySlot(uint8 Index) const
     return RootCBVParameterIndex[Index];
 }
 
-void FD3D12ShaderStage::AddRootDescriptor(EResourceType Type, int8 RootParameterIndex, uint16 Register)
+void FD3D12ShaderStage::AddRootDescriptor(EResourceType::Type Type, int8 RootParameterIndex, uint16 Register)
 {
-    CHECK(Type < ResourceType_Count);
+    CHECK(Type < EResourceType::Count);
     CHECK(NumRootDescriptors[Type] < MaxRootDescriptorsPerStage);
 
     FRootDescriptorEntry& Entry = RootDescriptors[Type][NumRootDescriptors[Type]];
@@ -565,9 +565,9 @@ void FD3D12ShaderStage::AddRootDescriptor(EResourceType Type, int8 RootParameter
     NumRootDescriptors[Type]++;
 }
 
-int8 FD3D12ShaderStage::GetRootDescriptorParameterIndex(EResourceType Type, uint16 Register) const
+int8 FD3D12ShaderStage::GetRootDescriptorParameterIndex(EResourceType::Type Type, uint16 Register) const
 {
-    CHECK(Type < ResourceType_Count);
+    CHECK(Type < EResourceType::Count);
     for (uint8 i = 0; i < NumRootDescriptors[Type]; i++)
     {
         if (RootDescriptors[Type][i].Register == Register)
@@ -590,7 +590,7 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
     , NumDescriptorRanges(0)
     , RootSignatureCost(0)
 {
-    const D3D12_ROOT_SIGNATURE_FLAGS RootSignatureFlags[ShaderVisibility_Count] =
+    const D3D12_ROOT_SIGNATURE_FLAGS RootSignatureFlags[EShaderVisibility::Count] =
     {
         D3D12_ROOT_SIGNATURE_FLAG_NONE,
         D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS,
@@ -613,14 +613,14 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
 
     const bool bIsLocalRootSignature = (Layout.GetType() == ERootSignatureType::RayTracingLocal);
 
-    for (uint32 ShaderStage = 0; ShaderStage < ShaderVisibility_Count; ++ShaderStage)
+    for (uint32 ShaderStage = 0; ShaderStage < EShaderVisibility::Count; ++ShaderStage)
     {
         bool bIsStageUsed = false;
         
         const D3D12_SHADER_VISIBILITY D3D12Visibility = GetD3D12ShaderVisibility(ShaderStage);
         if (bIsLocalRootSignature)
         {
-            const FD3D12RegisterSet& CBVRegisters = Layout.GetRegisters(static_cast<EShaderVisibility>(ShaderStage), ResourceType_CBV);
+            const FD3D12RegisterSet& CBVRegisters = Layout.GetRegisters(static_cast<EShaderVisibility::Type>(ShaderStage), EResourceType::CBV);
             for (uint32 i = 0; i < CBVRegisters.GetCount(); i++)
             {
                 CHECK(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
@@ -632,7 +632,7 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
                 bIsStageUsed = true;
             }
 
-            const FD3D12RegisterSet& SRVRegisters = Layout.GetRegisters(static_cast<EShaderVisibility>(ShaderStage), ResourceType_SRV);
+            const FD3D12RegisterSet& SRVRegisters = Layout.GetRegisters(static_cast<EShaderVisibility::Type>(ShaderStage), EResourceType::SRV);
             for (uint32 i = 0; i < SRVRegisters.GetCount(); i++)
             {
                 CHECK(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
@@ -644,7 +644,7 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
                 bIsStageUsed = true;
             }
 
-            const FD3D12RegisterSet& UAVRegisters = Layout.GetRegisters(static_cast<EShaderVisibility>(ShaderStage), ResourceType_UAV);
+            const FD3D12RegisterSet& UAVRegisters = Layout.GetRegisters(static_cast<EShaderVisibility::Type>(ShaderStage), EResourceType::UAV);
             for (uint32 i = 0; i < UAVRegisters.GetCount(); i++)
             {
                 CHECK(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
@@ -656,14 +656,14 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
                 bIsStageUsed = true;
             }
 
-            CHECK(Layout.GetRegisters(static_cast<EShaderVisibility>(ShaderStage), ResourceType_Sampler).IsEmpty());
+            CHECK(Layout.GetRegisters(static_cast<EShaderVisibility::Type>(ShaderStage), EResourceType::Sampler).IsEmpty());
         }
         else
         {
-            const EResourceType DescriptorTableTypes[] = { ResourceType_SRV, ResourceType_UAV, ResourceType_Sampler };
-            for (EResourceType ResType : DescriptorTableTypes)
+            const EResourceType::Type DescriptorTableTypes[] = { EResourceType::SRV, EResourceType::UAV, EResourceType::Sampler };
+            for (EResourceType::Type ResType : DescriptorTableTypes)
             {
-                const FD3D12RegisterSet& Registers = Layout.GetRegisters(static_cast<EShaderVisibility>(ShaderStage), ResType);
+                const FD3D12RegisterSet& Registers = Layout.GetRegisters(static_cast<EShaderVisibility::Type>(ShaderStage), ResType);
                 if (!Registers.IsEmpty())
                 {
                     const uint32 RangeStart = NumDescriptorRanges;
@@ -677,7 +677,7 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
                 }
             }
 
-            const FD3D12RegisterSet& RootCBVRegisters = Layout.GetRootCBVRegisters(static_cast<EShaderVisibility>(ShaderStage));
+            const FD3D12RegisterSet& RootCBVRegisters = Layout.GetRootCBVRegisters(static_cast<EShaderVisibility::Type>(ShaderStage));
             for (uint32 i = 0; i < RootCBVRegisters.GetCount(); i++)
             {
                 CHECK(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
@@ -689,7 +689,7 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
                 bIsStageUsed = true;
             }
 
-            const FD3D12RegisterSet& CBVRegisters = Layout.GetRegisters(static_cast<EShaderVisibility>(ShaderStage), ResourceType_CBV);
+            const FD3D12RegisterSet& CBVRegisters = Layout.GetRegisters(static_cast<EShaderVisibility::Type>(ShaderStage), EResourceType::CBV);
             FD3D12RegisterSet TableCBVRegisters;
             for (uint32 i = 0; i < CBVRegisters.GetCount(); i++)
             {
@@ -703,7 +703,7 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
             {
                 const uint32 RangeStart = NumDescriptorRanges;
         #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
-                const uint32 NumRanges = BuildDescriptorRangesForRegisterSet(TableCBVRegisters, D3D12_DESCRIPTOR_RANGE_TYPE_CBV, Space, GetDescriptorRangeFlags(ResourceType_CBV));
+                const uint32 NumRanges = BuildDescriptorRangesForRegisterSet(TableCBVRegisters, D3D12_DESCRIPTOR_RANGE_TYPE_CBV, Space, GetDescriptorRangeFlags(EResourceType::CBV));
         #else
                 const uint32 NumRanges = BuildDescriptorRangesForRegisterSet(TableCBVRegisters, D3D12_DESCRIPTOR_RANGE_TYPE_CBV, Space);
         #endif
@@ -726,14 +726,14 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
         uint32 NumTables       = 0;
         uint32 NumRootCBVTotal = 0;
 
-        for (uint32 s = 0; s < ShaderVisibility_Count; s++)
+        for (uint32 s = 0; s < EShaderVisibility::Count; s++)
         {
-            NumRootCBVTotal += Layout.GetRootCBVRegisters(static_cast<EShaderVisibility>(s)).GetCount();
-            for (uint32 t = 0; t < ResourceType_Count; t++)
+            NumRootCBVTotal += Layout.GetRootCBVRegisters(static_cast<EShaderVisibility::Type>(s)).GetCount();
+            for (uint32 t = 0; t < EResourceType::Count; t++)
             {
-                if (!Layout.GetRegisters(static_cast<EShaderVisibility>(s), static_cast<EResourceType>(t)).IsEmpty())
+                if (!Layout.GetRegisters(static_cast<EShaderVisibility::Type>(s), static_cast<EResourceType::Type>(t)).IsEmpty())
                 {
-                    if (t != ResourceType_CBV || !Layout.GetRegisters(static_cast<EShaderVisibility>(s), static_cast<EResourceType>(t)).IsSubsetOf(Layout.GetRootCBVRegisters(static_cast<EShaderVisibility>(s))))
+                    if (t != EResourceType::CBV || !Layout.GetRegisters(static_cast<EShaderVisibility::Type>(s), static_cast<EResourceType::Type>(t)).IsSubsetOf(Layout.GetRootCBVRegisters(static_cast<EShaderVisibility::Type>(s))))
                     {
                         NumTables++;
                     }
@@ -1026,9 +1026,9 @@ void FD3D12RootSignatureDescHelper::Insert32BitConstantRange(D3D12_SHADER_VISIBI
     RootSignatureCost += NumShaderConstants;
 }
 
-bool FD3D12RootSignature::HasDenyFlag(EShaderVisibility Stage) const
+bool FD3D12RootSignature::HasDenyFlag(EShaderVisibility::Type Stage) const
 {
-    static const D3D12_ROOT_SIGNATURE_FLAGS DenyFlags[ShaderVisibility_Count] =
+    static const D3D12_ROOT_SIGNATURE_FLAGS DenyFlags[EShaderVisibility::Count] =
     {
         D3D12_ROOT_SIGNATURE_FLAG_NONE,
         D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS,
@@ -1038,7 +1038,7 @@ bool FD3D12RootSignature::HasDenyFlag(EShaderVisibility Stage) const
         D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS,
     };
 
-    CHECK(Stage < ShaderVisibility_Count);
+    CHECK(Stage < EShaderVisibility::Count);
     return (Flags & DenyFlags[Stage]) != 0;
 }
 
@@ -1071,16 +1071,16 @@ bool FD3D12RootSignature::Initialize(const FD3D12RootSignatureLayout& Layout)
         return true;
     }
 
-    for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
+    for (uint32 Stage = 0; Stage < EShaderVisibility::Count; Stage++)
     {
-        for (uint32 ResType = 0; ResType < ResourceType_Count; ResType++)
+        for (uint32 ResType = 0; ResType < EResourceType::Count; ResType++)
         {
-            const FD3D12RegisterSet& Registers = Layout.GetRegisters(static_cast<EShaderVisibility>(Stage), static_cast<EResourceType>(ResType));
-            if (ResType == ResourceType_CBV)
+            const FD3D12RegisterSet& Registers = Layout.GetRegisters(static_cast<EShaderVisibility::Type>(Stage), static_cast<EResourceType::Type>(ResType));
+            if (ResType == EResourceType::CBV)
             {
                 FD3D12RegisterSet TableRegisters;
 
-                const FD3D12RegisterSet& RootCBVs = Layout.GetRootCBVRegisters(static_cast<EShaderVisibility>(Stage));
+                const FD3D12RegisterSet& RootCBVs = Layout.GetRootCBVRegisters(static_cast<EShaderVisibility::Type>(Stage));
                 for (uint32 i = 0; i < Registers.GetCount(); i++)
                 {
                     if (!RootCBVs.Contains(Registers.Registers[i]))
@@ -1246,7 +1246,7 @@ void FD3D12RootSignature::InternalInitRootParameterMap(const D3D12_ROOT_PARAMETE
 
             const uint32 ResourceType     = GetResourceType(TableRangeType);
             const uint32 ShaderVisibility = GetShaderVisibility(Parameter.ShaderVisibility);
-            ShaderStages[ShaderVisibility].SetDescriptorTableIndex(static_cast<EResourceType>(ResourceType), static_cast<int8>(Index), static_cast<int8>(Math::Min<uint32>(TotalDescriptors, 127)));
+            ShaderStages[ShaderVisibility].SetDescriptorTableIndex(static_cast<EResourceType::Type>(ResourceType), static_cast<int8>(Index), static_cast<int8>(Math::Min<uint32>(TotalDescriptors, 127)));
         }
         else if (Parameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS)
         {
@@ -1258,25 +1258,25 @@ void FD3D12RootSignature::InternalInitRootParameterMap(const D3D12_ROOT_PARAMETE
         {
             const uint32 ShaderVisibility = GetShaderVisibility(Parameter.ShaderVisibility);
             ShaderStages[ShaderVisibility].AddRootCBV(static_cast<int8>(Index), static_cast<uint16>(Parameter.Descriptor.ShaderRegister));
-            ShaderStages[ShaderVisibility].AddRootDescriptor(ResourceType_CBV, static_cast<int8>(Index), static_cast<uint16>(Parameter.Descriptor.ShaderRegister));
+            ShaderStages[ShaderVisibility].AddRootDescriptor(EResourceType::CBV, static_cast<int8>(Index), static_cast<uint16>(Parameter.Descriptor.ShaderRegister));
         }
         else if (Parameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_SRV)
         {
             const uint32 ShaderVisibility = GetShaderVisibility(Parameter.ShaderVisibility);
-            ShaderStages[ShaderVisibility].AddRootDescriptor(ResourceType_SRV, static_cast<int8>(Index), static_cast<uint16>(Parameter.Descriptor.ShaderRegister));
+            ShaderStages[ShaderVisibility].AddRootDescriptor(EResourceType::SRV, static_cast<int8>(Index), static_cast<uint16>(Parameter.Descriptor.ShaderRegister));
         }
         else if (Parameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_UAV)
         {
             const uint32 ShaderVisibility = GetShaderVisibility(Parameter.ShaderVisibility);
-            ShaderStages[ShaderVisibility].AddRootDescriptor(ResourceType_UAV, static_cast<int8>(Index), static_cast<uint16>(Parameter.Descriptor.ShaderRegister));
+            ShaderStages[ShaderVisibility].AddRootDescriptor(EResourceType::UAV, static_cast<int8>(Index), static_cast<uint16>(Parameter.Descriptor.ShaderRegister));
         }
     }
 }
 
 void FD3D12RootSignature::InternalInitTableMappingsFromDesc(const D3D12_ROOT_PARAMETER1* Parameters, uint32 NumParameters)
 {
-    FD3D12RegisterSet RegisterSets[ShaderVisibility_Count][ResourceType_Count];
-    FD3D12RegisterSet RootCBVRegisters[ShaderVisibility_Count];
+    FD3D12RegisterSet RegisterSets[EShaderVisibility::Count][EResourceType::Count];
+    FD3D12RegisterSet RootCBVRegisters[EShaderVisibility::Count];
 
     for (uint32 Index = 0; Index < NumParameters; Index++)
     {
@@ -1302,11 +1302,11 @@ void FD3D12RootSignature::InternalInitTableMappingsFromDesc(const D3D12_ROOT_PAR
         }
     }
 
-    for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
+    for (uint32 Stage = 0; Stage < EShaderVisibility::Count; Stage++)
     {
-        for (uint32 ResType = 0; ResType < ResourceType_Count; ResType++)
+        for (uint32 ResType = 0; ResType < EResourceType::Count; ResType++)
         {
-            if (ResType == ResourceType_CBV)
+            if (ResType == EResourceType::CBV)
             {
                 FD3D12RegisterSet TableRegisters;
                 const FD3D12RegisterSet& Registers = RegisterSets[Stage][ResType];
@@ -1348,7 +1348,7 @@ void FD3D12RootSignature::InternalInitRootParameterMap(const D3D12_ROOT_SIGNATUR
 
             const uint32 ResourceType     = GetResourceType(TableRangeType);
             const uint32 ShaderVisibility = GetShaderVisibility(Parameter.ShaderVisibility);
-            ShaderStages[ShaderVisibility].SetDescriptorTableIndex(static_cast<EResourceType>(ResourceType), static_cast<int8>(Index), static_cast<int8>(Math::Min<uint32>(TotalDescriptors, 127)));
+            ShaderStages[ShaderVisibility].SetDescriptorTableIndex(static_cast<EResourceType::Type>(ResourceType), static_cast<int8>(Index), static_cast<int8>(Math::Min<uint32>(TotalDescriptors, 127)));
         }
         else if (Parameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS)
         {
@@ -1360,25 +1360,25 @@ void FD3D12RootSignature::InternalInitRootParameterMap(const D3D12_ROOT_SIGNATUR
         {
             const uint32 ShaderVisibility = GetShaderVisibility(Parameter.ShaderVisibility);
             ShaderStages[ShaderVisibility].AddRootCBV(static_cast<int8>(Index), static_cast<uint16>(Parameter.Descriptor.ShaderRegister));
-            ShaderStages[ShaderVisibility].AddRootDescriptor(ResourceType_CBV, static_cast<int8>(Index), static_cast<uint16>(Parameter.Descriptor.ShaderRegister));
+            ShaderStages[ShaderVisibility].AddRootDescriptor(EResourceType::CBV, static_cast<int8>(Index), static_cast<uint16>(Parameter.Descriptor.ShaderRegister));
         }
         else if (Parameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_SRV)
         {
             const uint32 ShaderVisibility = GetShaderVisibility(Parameter.ShaderVisibility);
-            ShaderStages[ShaderVisibility].AddRootDescriptor(ResourceType_SRV, static_cast<int8>(Index), static_cast<uint16>(Parameter.Descriptor.ShaderRegister));
+            ShaderStages[ShaderVisibility].AddRootDescriptor(EResourceType::SRV, static_cast<int8>(Index), static_cast<uint16>(Parameter.Descriptor.ShaderRegister));
         }
         else if (Parameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_UAV)
         {
             const uint32 ShaderVisibility = GetShaderVisibility(Parameter.ShaderVisibility);
-            ShaderStages[ShaderVisibility].AddRootDescriptor(ResourceType_UAV, static_cast<int8>(Index), static_cast<uint16>(Parameter.Descriptor.ShaderRegister));
+            ShaderStages[ShaderVisibility].AddRootDescriptor(EResourceType::UAV, static_cast<int8>(Index), static_cast<uint16>(Parameter.Descriptor.ShaderRegister));
         }
     }
 }
 
 void FD3D12RootSignature::InternalInitTableMappingsFromDesc(const D3D12_ROOT_SIGNATURE_DESC& Desc)
 {
-    FD3D12RegisterSet RegisterSets[ShaderVisibility_Count][ResourceType_Count];
-    FD3D12RegisterSet RootCBVRegisters[ShaderVisibility_Count];
+    FD3D12RegisterSet RegisterSets[EShaderVisibility::Count][EResourceType::Count];
+    FD3D12RegisterSet RootCBVRegisters[EShaderVisibility::Count];
 
     for (uint32 Index = 0; Index < Desc.NumParameters; Index++)
     {
@@ -1404,11 +1404,11 @@ void FD3D12RootSignature::InternalInitTableMappingsFromDesc(const D3D12_ROOT_SIG
         }
     }
 
-    for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
+    for (uint32 Stage = 0; Stage < EShaderVisibility::Count; Stage++)
     {
-        for (uint32 ResType = 0; ResType < ResourceType_Count; ResType++)
+        for (uint32 ResType = 0; ResType < EResourceType::Count; ResType++)
         {
-            if (ResType == ResourceType_CBV)
+            if (ResType == EResourceType::CBV)
             {
                 FD3D12RegisterSet TableRegisters;
                 const FD3D12RegisterSet& Registers = RegisterSets[Stage][ResType];

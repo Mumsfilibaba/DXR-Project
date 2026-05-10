@@ -269,13 +269,13 @@ struct FDirectionalShadowSettingsHLSL
 
 MARK_AS_REALLOCATABLE(FDirectionalShadowSettingsHLSL);
 
-enum ECSMFilterMode : uint8
+enum class ECSMFilterMode : uint8
 {
     PCF  = 0,
     PCSS = 1,
 };
 
-enum ECSMFilterFunction : uint8
+enum class ECSMFilterFunction : uint8
 {
     Grid        = 0,
     PoissonDisk = 1,

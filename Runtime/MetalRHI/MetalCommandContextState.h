@@ -27,38 +27,38 @@ struct FMetalResourceCache
         ClearAll();
     }
 
-    bool IsResourcesDirty(EShaderVisibility ShaderStage) const
+    bool IsResourcesDirty(EShaderVisibility::Type ShaderStage) const
     {
         return IsEnumFlagSet(DescriptorState[ShaderStage], EMetalDescriptorState::ResourcesDirty);
     }
 
-    void DirtyResources(EShaderVisibility ShaderStage)
+    void DirtyResources(EShaderVisibility::Type ShaderStage)
     {
         DescriptorState[ShaderStage] |= EMetalDescriptorState::ResourcesDirty;
     }
 
     void DirtyResourcesAll()
     {
-        for (uint32 Index = 0; Index < ShaderVisibility_Count; Index++)
+        for (uint32 Index = 0; Index < EShaderVisibility::Count; Index++)
         {
             DescriptorState[Index] |= EMetalDescriptorState::ResourcesDirty;
         }
     }
 
-    void ClearResourcesDirty(EShaderVisibility ShaderStage)
+    void ClearResourcesDirty(EShaderVisibility::Type ShaderStage)
     {
         DescriptorState[ShaderStage] &= ~EMetalDescriptorState::ResourcesDirty;
     }
 
     void ClearAll()
     {
-        for (uint32 Index = 0; Index < ShaderVisibility_Count; Index++)
+        for (uint32 Index = 0; Index < EShaderVisibility::Count; Index++)
         {
             DescriptorState[Index] = EMetalDescriptorState::None;
         }
     }
 
-    EMetalDescriptorState DescriptorState[ShaderVisibility_Count];
+    EMetalDescriptorState DescriptorState[EShaderVisibility::Count];
 };
 
 struct FMetalVertexBufferCache
@@ -141,7 +141,7 @@ struct FMetalConstantBufferCache : public FMetalResourceCache
     {
         DirtyResourcesAll();
 
-        for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
+        for (uint32 Stage = 0; Stage < EShaderVisibility::Count; Stage++)
         {
             for (uint32 Index = 0; Index < kMaxConstantBuffers; Index++)
             {
@@ -152,8 +152,8 @@ struct FMetalConstantBufferCache : public FMetalResourceCache
         }
     }
 
-    FMetalBufferRHI* ConstantBuffers[ShaderVisibility_Count][kMaxConstantBuffers];
-    uint8            NumBuffers[ShaderVisibility_Count];
+    FMetalBufferRHI* ConstantBuffers[EShaderVisibility::Count][kMaxConstantBuffers];
+    uint8            NumBuffers[EShaderVisibility::Count];
 };
 
 struct FMetalShaderResourceViewCache : public FMetalResourceCache
@@ -167,7 +167,7 @@ struct FMetalShaderResourceViewCache : public FMetalResourceCache
     {
         DirtyResourcesAll();
 
-        for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
+        for (uint32 Stage = 0; Stage < EShaderVisibility::Count; Stage++)
         {
             for (uint32 Index = 0; Index < kMaxSRVs; Index++)
             {
@@ -178,8 +178,8 @@ struct FMetalShaderResourceViewCache : public FMetalResourceCache
         }
     }
 
-    FMetalShaderResourceViewRHI* ResourceViews[ShaderVisibility_Count][kMaxSRVs];
-    uint8                        NumViews[ShaderVisibility_Count];
+    FMetalShaderResourceViewRHI* ResourceViews[EShaderVisibility::Count][kMaxSRVs];
+    uint8                        NumViews[EShaderVisibility::Count];
 };
 
 struct FMetalUnorderedAccessViewCache : public FMetalResourceCache
@@ -193,7 +193,7 @@ struct FMetalUnorderedAccessViewCache : public FMetalResourceCache
     {
         DirtyResourcesAll();
 
-        for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
+        for (uint32 Stage = 0; Stage < EShaderVisibility::Count; Stage++)
         {
             for (uint32 Index = 0; Index < kMaxUAVs; Index++)
             {
@@ -204,8 +204,8 @@ struct FMetalUnorderedAccessViewCache : public FMetalResourceCache
         }
     }
 
-    FMetalUnorderedAccessViewRHI* ResourceViews[ShaderVisibility_Count][kMaxUAVs];
-    uint8                         NumViews[ShaderVisibility_Count];
+    FMetalUnorderedAccessViewRHI* ResourceViews[EShaderVisibility::Count][kMaxUAVs];
+    uint8                         NumViews[EShaderVisibility::Count];
 };
 
 struct FMetalSamplerStateCache : public FMetalResourceCache
@@ -219,7 +219,7 @@ struct FMetalSamplerStateCache : public FMetalResourceCache
     {
         DirtyResourcesAll();
 
-        for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
+        for (uint32 Stage = 0; Stage < EShaderVisibility::Count; Stage++)
         {
             for (uint32 Index = 0; Index < kMaxSamplerStates; Index++)
             {
@@ -230,8 +230,8 @@ struct FMetalSamplerStateCache : public FMetalResourceCache
         }
     }
 
-    FMetalSamplerStateRHI* SamplerStates[ShaderVisibility_Count][kMaxSamplerStates];
-    uint8                  NumSamplers[ShaderVisibility_Count];
+    FMetalSamplerStateRHI* SamplerStates[EShaderVisibility::Count][kMaxSamplerStates];
+    uint8                  NumSamplers[EShaderVisibility::Count];
 };
 
 struct FMetalShaderConstantsCache
@@ -243,15 +243,15 @@ struct FMetalShaderConstantsCache
 
     void Clear()
     {
-        for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
+        for (uint32 Stage = 0; Stage < EShaderVisibility::Count; Stage++)
         {
             FMemory::Memzero(Constants[Stage], sizeof(Constants[Stage]));
             NumConstants[Stage] = 0;
         }
     }
 
-    uint32 Constants[ShaderVisibility_Count][kMaxShaderConstants];
-    uint32 NumConstants[ShaderVisibility_Count];
+    uint32 Constants[EShaderVisibility::Count][kMaxShaderConstants];
+    uint32 NumConstants[EShaderVisibility::Count];
 };
 
 class FMetalCommandContextState : public FMetalDeviceChild
@@ -268,7 +268,7 @@ public:
     void BindGraphicsState();
     void BindComputeState();
 
-    void BindShaderConstants(EShaderVisibility ShaderStage);
+    void BindShaderConstants(EShaderVisibility::Type ShaderStage);
 
     void ResetState();
     void ResetStateResources();
@@ -285,11 +285,11 @@ public:
     void SetVertexBuffer(FMetalBufferRHI* VertexBuffer, uint32 VertexBufferSlot);
     void SetIndexBuffer(FMetalBufferRHI* IndexBuffer, MTLIndexType IndexType);
     void SetPrimitiveType(MTLPrimitiveType PrimitiveType);
-    void SetSRV(FMetalShaderResourceViewRHI* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
-    void SetUAV(FMetalUnorderedAccessViewRHI* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
-    void SetCBV(FMetalBufferRHI* Buffer, EShaderVisibility ShaderStage, uint32 ResourceIndex);
-    void SetSampler(FMetalSamplerStateRHI* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex);
-    void SetShaderConstants(EShaderVisibility ShaderStage, const uint32* ShaderConstants, uint32 NumShaderConstants);
+    void SetSRV(FMetalShaderResourceViewRHI* ShaderResourceView, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex);
+    void SetUAV(FMetalUnorderedAccessViewRHI* UnorderedAccessView, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex);
+    void SetCBV(FMetalBufferRHI* Buffer, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex);
+    void SetSampler(FMetalSamplerStateRHI* SamplerState, EShaderVisibility::Type ShaderStage, uint32 SamplerIndex);
+    void SetShaderConstants(EShaderVisibility::Type ShaderStage, const uint32* ShaderConstants, uint32 NumShaderConstants);
 
     FORCEINLINE FMetalCommandContext& GetContext()
     {
@@ -361,9 +361,9 @@ public:
     }
 
 private:
-    void BindGraphicsResources(EShaderVisibility ShaderStage);
-    void BindGraphicsSamplers(EShaderVisibility ShaderStage);
-    void BindGraphicsShaderConstants(EShaderVisibility ShaderStage);
+    void BindGraphicsResources(EShaderVisibility::Type ShaderStage);
+    void BindGraphicsSamplers(EShaderVisibility::Type ShaderStage);
+    void BindGraphicsShaderConstants(EShaderVisibility::Type ShaderStage);
 
     void BindComputeResources();
     void BindComputeSamplers();

@@ -189,10 +189,10 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
         }
     };
 
-    RequirePixelIfNotRT(FrameResources.GBuffer[GBufferIndex_Albedo].Get());
-    RequirePixelIfNotRT(FrameResources.GBuffer[GBufferIndex_Normal].Get());
-    RequirePixelIfNotRT(FrameResources.GBuffer[GBufferIndex_Material].Get());
-    RequirePixelIfNotRT(FrameResources.GBuffer[GBufferIndex_Velocity].Get());
+    RequirePixelIfNotRT(FrameResources.GBuffer[EGBufferIndex::Albedo].Get());
+    RequirePixelIfNotRT(FrameResources.GBuffer[EGBufferIndex::Normal].Get());
+    RequirePixelIfNotRT(FrameResources.GBuffer[EGBufferIndex::Material].Get());
+    RequirePixelIfNotRT(FrameResources.GBuffer[EGBufferIndex::Velocity].Get());
     RequirePixelIfNotRT(FrameResources.DirectionalShadowMask.Get());
     RequirePixelIfNotRT(FrameResources.SSAOBuffer.Get());
     RequirePixelIfNotRT(FrameResources.ShadowCascades.Get());
@@ -214,11 +214,11 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
 
     CommandList.SetGraphicsPipelineState(DebugPSO.Get());
 
-    CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.GBuffer[GBufferIndex_Albedo]->GetShaderResourceView(), 0);
-    CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView(), 1);
-    CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.GBuffer[GBufferIndex_Material]->GetShaderResourceView(), 2);
-    CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.GBuffer[GBufferIndex_Velocity]->GetShaderResourceView(), 3);
-    CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 4);
+    CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.GBuffer[EGBufferIndex::Albedo]->GetShaderResourceView(), 0);
+    CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.GBuffer[EGBufferIndex::Normal]->GetShaderResourceView(), 1);
+    CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.GBuffer[EGBufferIndex::Material]->GetShaderResourceView(), 2);
+    CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.GBuffer[EGBufferIndex::Velocity]->GetShaderResourceView(), 3);
+    CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.GBuffer[EGBufferIndex::Depth]->GetShaderResourceView(), 4);
 
     if (FrameResources.DirectionalShadowMask)
     {

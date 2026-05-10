@@ -717,7 +717,7 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
     TRACE_SCOPE("AABB DebugPass");
 
     FRHITexture* RenderTarget = InRenderTarget ? InRenderTarget : Resources.SceneTarget.Get();
-    FRHITexture* DepthTex = InDepthTarget ? InDepthTarget : Resources.GBuffer[GBufferIndex_Depth].Get();
+    FRHITexture* DepthTex = InDepthTarget ? InDepthTarget : Resources.GBuffer[EGBufferIndex::Depth].Get();
 
     FRHIRenderTargetView* RenderTargetView = RenderTarget->GetRenderTargetView();
     FRHIDepthStencilView* DepthStencilView = DepthTex->GetDepthStencilView();
@@ -765,7 +765,7 @@ void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResou
     TRACE_SCOPE("PointLight DebugPass");
 
     FRHITexture* RenderTarget = InRenderTarget ? InRenderTarget : Resources.SceneTarget.Get();
-    FRHITexture* DepthTex = InDepthTarget ? InDepthTarget : Resources.GBuffer[GBufferIndex_Depth].Get();
+    FRHITexture* DepthTex = InDepthTarget ? InDepthTarget : Resources.GBuffer[EGBufferIndex::Depth].Get();
 
     FRHIRenderTargetView* RenderTargetView = RenderTarget->GetRenderTargetView();
     FRHIDepthStencilView* DepthStencilView = DepthTex->GetDepthStencilView();
@@ -810,7 +810,7 @@ void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResou
     TRACE_SCOPE("LightProbe DebugPass");
 
     FRHITexture* RenderTarget = InRenderTarget ? InRenderTarget : Resources.SceneTarget.Get();
-    FRHITexture* DepthTex     = InDepthTarget ? InDepthTarget : Resources.GBuffer[GBufferIndex_Depth].Get();
+    FRHITexture* DepthTex     = InDepthTarget ? InDepthTarget : Resources.GBuffer[EGBufferIndex::Depth].Get();
 
     FRHIRenderTargetView* RenderTargetView = RenderTarget->GetRenderTargetView();
     FRHIDepthStencilView* DepthStencilView = DepthTex->GetDepthStencilView();

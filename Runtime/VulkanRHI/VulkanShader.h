@@ -18,20 +18,23 @@ typedef TSharedRef<class FVulkanRayAnyHitShaderRHI>     FVulkanRayAnyHitShaderRH
 typedef TSharedRef<class FVulkanRayClosestHitShaderRHI> FVulkanRayClosestHitShaderRHIRef;
 typedef TSharedRef<class FVulkanRayMissShaderRHI>       FVulkanRayMissShaderRHIRef;
 
-enum EShaderVisibility : uint32
+struct EShaderVisibility
 {
-    ShaderVisibility_Vertex = 0,
-    ShaderVisibility_Hull,
-    ShaderVisibility_Domain,
-    ShaderVisibility_Geometry,
-    ShaderVisibility_Pixel,
-    ShaderVisibility_Compute,
-    ShaderVisibility_Count = ShaderVisibility_Compute + 1
+    enum Type : uint32
+    {
+        Vertex = 0,
+        Hull,
+        Domain,
+        Geometry,
+        Pixel,
+        Compute,
+        Count = Compute + 1
+    };
 };
 
-inline const CHAR* ToString(EShaderVisibility ShaderVisibility)
+inline const CHAR* ToString(EShaderVisibility::Type ShaderVisibility)
 {
-    CHECK(ShaderVisibility < ShaderVisibility_Count);
+    CHECK(ShaderVisibility < EShaderVisibility::Count);
     
     static constexpr const char* ShaderVisibilityStrings[]
     {
@@ -43,27 +46,30 @@ inline const CHAR* ToString(EShaderVisibility ShaderVisibility)
         "Compute",
     };
     
-    static_assert(ARRAY_COUNT(ShaderVisibilityStrings) == ShaderVisibility_Count, "ShaderVisibilityStrings is out of date");
+    static_assert(ARRAY_COUNT(ShaderVisibilityStrings) == EShaderVisibility::Count, "ShaderVisibilityStrings is out of date");
     return ShaderVisibilityStrings[ShaderVisibility];
 }
 
-enum EVulkanBindingType : uint8
+struct EVulkanBindingType
 {
-    VulkanBindingType_UniformBuffer = 0,
-    VulkanBindingType_UniformBufferDynamic,
-    VulkanBindingType_SampledImage,
-    VulkanBindingType_StorageImage,
-    VulkanBindingType_StorageBufferRead,
-    VulkanBindingType_StorageBufferReadWrite,
-    VulkanBindingType_Sampler,
-    VulkanBindingType_TexelBufferRead,
-    VulkanBindingType_TexelBufferReadWrite,
-    VulkanBindingType_ImmutableSampler,
-    VulkanBindingType_AccelerationStructure,
-    VulkanBindingType_Count = VulkanBindingType_AccelerationStructure + 1,
+    enum Type : uint8
+    {
+        UniformBuffer = 0,
+        UniformBufferDynamic,
+        SampledImage,
+        StorageImage,
+        StorageBufferRead,
+        StorageBufferReadWrite,
+        Sampler,
+        TexelBufferRead,
+        TexelBufferReadWrite,
+        ImmutableSampler,
+        AccelerationStructure,
+        Count = AccelerationStructure + 1,
+    };
 };
 
-inline const CHAR* ToString(EVulkanBindingType Binding)
+inline const CHAR* ToString(EVulkanBindingType::Type Binding)
 {
     static constexpr const char* const BindingTypeStrings[]
     {
@@ -80,11 +86,11 @@ inline const CHAR* ToString(EVulkanBindingType Binding)
         "AccelerationStructure",
     };
     
-    static_assert(ARRAY_COUNT(BindingTypeStrings) == VulkanBindingType_Count, "BindingTypeStrings is out of date");
-    return Binding < VulkanBindingType_Count ? BindingTypeStrings[Binding] : "Unknown BindingType";
+    static_assert(ARRAY_COUNT(BindingTypeStrings) == EVulkanBindingType::Count, "BindingTypeStrings is out of date");
+    return Binding < EVulkanBindingType::Count ? BindingTypeStrings[Binding] : "Unknown BindingType";
 }
 
-inline VkDescriptorType GetDescriptorTypeFromBindingType(EVulkanBindingType BindingType)
+inline VkDescriptorType GetDescriptorTypeFromBindingType(EVulkanBindingType::Type BindingType)
 {
     // DescriptorType Lookup-table
     static constexpr VkDescriptorType DescriptorTypes[] =
@@ -113,7 +119,7 @@ inline VkDescriptorType GetDescriptorTypeFromBindingType(EVulkanBindingType Bind
         VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
     };
 
-    static_assert(ARRAY_COUNT(DescriptorTypes) == VulkanBindingType_Count, "The DescriptorTypes array is out of date");
+    static_assert(ARRAY_COUNT(DescriptorTypes) == EVulkanBindingType::Count, "The DescriptorTypes array is out of date");
     return DescriptorTypes[BindingType];
 }
 
@@ -127,11 +133,11 @@ struct FVulkanShaderInfo
     
     struct FResourceBinding
     {
-        EVulkanBindingType BindingType;
-        uint8              BindingIndex;
-        uint16             OriginalBindingIndex;
+        EVulkanBindingType::Type BindingType;
+        uint8                    BindingIndex;
+        uint16                   OriginalBindingIndex;
     #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
-        FString            DebugName;
+        FString                  DebugName;
     #endif
     };
     
@@ -167,7 +173,7 @@ typedef TArray<uint32> FSpirvArray;
 class FVulkanShader : public FVulkanDeviceChild
 {
 public:
-    FVulkanShader(FVulkanDevice* InDevice, EShaderVisibility InShaderVisibility);
+    FVulkanShader(FVulkanDevice* InDevice, EShaderVisibility::Type InShaderVisibility);
     ~FVulkanShader();
 
     bool Initialize(const TArray<uint8>& InCode);
@@ -177,7 +183,7 @@ public:
     bool StripGoogleSpirvRequirements(const FSpirvArray& InWords, FSpirvArray& OutWords);
     bool ValidateNoGoogleSpirvRequirements(const FSpirvArray& Words, FString* OutErrorMessage = nullptr);
 
-    EShaderVisibility GetShaderVisibility() const
+    EShaderVisibility::Type GetShaderVisibility() const
     {
         return ShaderVisibility;
     }
@@ -195,10 +201,10 @@ public:
 protected:
     bool InitializeShaderLayout();
     
-    FSpirvArray       SpirvCode;
-    FVulkanShaderInfo ShaderInfo;
-    EShaderVisibility ShaderVisibility;
-    FString           EntryPointName;
+    FSpirvArray             SpirvCode;
+    FVulkanShaderInfo       ShaderInfo;
+    EShaderVisibility::Type ShaderVisibility;
+    FString                 EntryPointName;
     
     TMap<uint32, TSharedRef<FVulkanShaderModule>> ShaderModules;
     FCriticalSection ShaderModulesCS;

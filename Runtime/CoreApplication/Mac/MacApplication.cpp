@@ -783,16 +783,16 @@ void FMacApplication::ProcessUpdatedModfierFlags(const FDeferredMacEvent& Deferr
     const uint64 ModifierFlags = DeferredEvent.ModifierFlags;
     if (ModifierFlags != CurrentModifierFlags)
     {
-        ProcessModfierKey(MacModifierKey_LeftControl, ModifierFlags);
-        ProcessModfierKey(MacModifierKey_RightControl, ModifierFlags);
-        ProcessModfierKey(MacModifierKey_LeftShift, ModifierFlags);
-        ProcessModfierKey(MacModifierKey_RightShift, ModifierFlags);
-        ProcessModfierKey(MacModifierKey_LeftCommand, ModifierFlags);
-        ProcessModfierKey(MacModifierKey_RightCommand, ModifierFlags);
-        ProcessModfierKey(MacModifierKey_LeftAlt, ModifierFlags);
-        ProcessModfierKey(MacModifierKey_RightAlt, ModifierFlags);
-        ProcessModfierKey(MacModifierKey_CapsLock, ModifierFlags);
-        ProcessModfierKey(MacModifierKey_NumLock, ModifierFlags);
+        ProcessModfierKey(EMacModifierKey::LeftControl, ModifierFlags);
+        ProcessModfierKey(EMacModifierKey::RightControl, ModifierFlags);
+        ProcessModfierKey(EMacModifierKey::LeftShift, ModifierFlags);
+        ProcessModfierKey(EMacModifierKey::RightShift, ModifierFlags);
+        ProcessModfierKey(EMacModifierKey::LeftCommand, ModifierFlags);
+        ProcessModfierKey(EMacModifierKey::RightCommand, ModifierFlags);
+        ProcessModfierKey(EMacModifierKey::LeftAlt, ModifierFlags);
+        ProcessModfierKey(EMacModifierKey::RightAlt, ModifierFlags);
+        ProcessModfierKey(EMacModifierKey::CapsLock, ModifierFlags);
+        ProcessModfierKey(EMacModifierKey::NumLock, ModifierFlags);
         
         // Save the modifier flag so that we can change what is changed
         CurrentModifierFlags = ModifierFlags;
@@ -801,7 +801,7 @@ void FMacApplication::ProcessUpdatedModfierFlags(const FDeferredMacEvent& Deferr
 
 #include <IOKit/hidsystem/ev_keymap.h>
 
-void FMacApplication::ProcessModfierKey(EMacModifierKey MacModifierKey, uint64 ModifierKeyFlags)
+void FMacApplication::ProcessModfierKey(EMacModifierKey::Type MacModifierKey, uint64 ModifierKeyFlags)
 {
     // Quick access to the modifer key masks. The values for these can be found inside the IOKit/hidsystem/ev_keymap.h
     // header but we have redefined them here to avoid including IOKit.
@@ -843,7 +843,7 @@ void FMacApplication::ProcessModfierKey(EMacModifierKey MacModifierKey, uint64 M
     };
 
     // Ensure that the modifier key is within the allowed range
-    CHECK(MacModifierKey >= MacModifierKey_LeftControl && MacModifierKey <= MacModifierKey_NumLock);
+    CHECK(MacModifierKey >= EMacModifierKey::LeftControl && MacModifierKey <= EMacModifierKey::NumLock);
     
     // Retrieve the key-name
     const EKeyboardKeyName::Type KeyName = KeyBoardNames[MacModifierKey];

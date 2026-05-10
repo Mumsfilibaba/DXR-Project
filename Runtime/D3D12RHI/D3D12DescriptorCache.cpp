@@ -200,9 +200,9 @@ void FD3D12DescriptorCache::SetIndexBuffer(FD3D12IndexBufferCache& IndexBuffer)
     Context.GetCommandList()->IASetIndexBuffer(&IndexBuffer.IndexBuffer);
 }
 
-void FD3D12DescriptorCache::PrepareCBVs(FD3D12ConstantBufferCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage, uint32 NumCBVs, uint32& DescriptorHandleOffset)
+void FD3D12DescriptorCache::PrepareCBVs(FD3D12ConstantBufferCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage, uint32 NumCBVs, uint32& DescriptorHandleOffset)
 {
-    int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderStage, EResourceType::ResourceType_CBV);
+    int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderStage, EResourceType::CBV);
     if (ParameterIndex < 0)
     {
         Cache.ClearResourcesDirty(ShaderStage);
@@ -219,7 +219,7 @@ void FD3D12DescriptorCache::PrepareCBVs(FD3D12ConstantBufferCache& Cache, FD3D12
 
     D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandles[D3D12_DEFAULT_CONSTANT_BUFFER_COUNT];
 
-    const FD3D12DescriptorTableMapping& Mapping = RootSignature->GetDescriptorTableMapping(ShaderStage, ResourceType_CBV);
+    const FD3D12DescriptorTableMapping& Mapping = RootSignature->GetDescriptorTableMapping(ShaderStage, EResourceType::CBV);
     auto& CBVCache = Cache.ResourceViews[ShaderStage];
     for (uint32 Slot = 0; Slot < NumCBVs; Slot++)
     {
@@ -262,9 +262,9 @@ void FD3D12DescriptorCache::PrepareCBVs(FD3D12ConstantBufferCache& Cache, FD3D12
     Cache.DirtyDescriptorTable(ShaderStage);
 }
 
-void FD3D12DescriptorCache::BindCBVs(FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage)
+void FD3D12DescriptorCache::BindCBVs(FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage)
 {
-    int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderStage, EResourceType::ResourceType_CBV);
+    int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderStage, EResourceType::CBV);
     if (ParameterIndex < 0)
     {
         return;
@@ -276,7 +276,7 @@ void FD3D12DescriptorCache::BindCBVs(FD3D12RootSignature* RootSignature, EShader
         return;
     }
 
-    if (ShaderStage == ShaderVisibility_All)
+    if (ShaderStage == EShaderVisibility::All)
     {
         Context.GetCommandList()->SetComputeRootDescriptorTable(ParameterIndex, GPUDescriptorHandle);
     }
@@ -286,9 +286,9 @@ void FD3D12DescriptorCache::BindCBVs(FD3D12RootSignature* RootSignature, EShader
     }
 }
 
-void FD3D12DescriptorCache::PrepareSRVs(FD3D12ShaderResourceViewCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage, uint32 NumSRVs, uint32& DescriptorHandleOffset)
+void FD3D12DescriptorCache::PrepareSRVs(FD3D12ShaderResourceViewCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage, uint32 NumSRVs, uint32& DescriptorHandleOffset)
 {
-    int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderStage, EResourceType::ResourceType_SRV);
+    int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderStage, EResourceType::SRV);
     if (ParameterIndex < 0)
     {
         Cache.ClearResourcesDirty(ShaderStage);
@@ -305,7 +305,7 @@ void FD3D12DescriptorCache::PrepareSRVs(FD3D12ShaderResourceViewCache& Cache, FD
 
     D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandles[D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
 
-    const FD3D12DescriptorTableMapping& Mapping = RootSignature->GetDescriptorTableMapping(ShaderStage, ResourceType_SRV);
+    const FD3D12DescriptorTableMapping& Mapping = RootSignature->GetDescriptorTableMapping(ShaderStage, EResourceType::SRV);
     auto& SRVCache = Cache.ResourceViews[ShaderStage];
     for (uint32 Slot = 0; Slot < NumSRVs; Slot++)
     {
@@ -341,9 +341,9 @@ void FD3D12DescriptorCache::PrepareSRVs(FD3D12ShaderResourceViewCache& Cache, FD
     Cache.DirtyDescriptorTable(ShaderStage);
 }
 
-void FD3D12DescriptorCache::BindSRVs(FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage)
+void FD3D12DescriptorCache::BindSRVs(FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage)
 {
-    int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderStage, EResourceType::ResourceType_SRV);
+    int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderStage, EResourceType::SRV);
     if (ParameterIndex < 0)
     {
         return;
@@ -355,7 +355,7 @@ void FD3D12DescriptorCache::BindSRVs(FD3D12RootSignature* RootSignature, EShader
         return;
     }
 
-    if (ShaderStage == ShaderVisibility_All)
+    if (ShaderStage == EShaderVisibility::All)
     {
         Context.GetCommandList()->SetComputeRootDescriptorTable(ParameterIndex, GPUDescriptorHandle);
     }
@@ -365,9 +365,9 @@ void FD3D12DescriptorCache::BindSRVs(FD3D12RootSignature* RootSignature, EShader
     }
 }
 
-void FD3D12DescriptorCache::PrepareUAVs(FD3D12UnorderedAccessViewCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage, uint32 NumUAVs, uint32& DescriptorHandleOffset)
+void FD3D12DescriptorCache::PrepareUAVs(FD3D12UnorderedAccessViewCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage, uint32 NumUAVs, uint32& DescriptorHandleOffset)
 {
-    int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderStage, EResourceType::ResourceType_UAV);
+    int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderStage, EResourceType::UAV);
     if (ParameterIndex < 0)
     {
         Cache.ClearResourcesDirty(ShaderStage);
@@ -384,7 +384,7 @@ void FD3D12DescriptorCache::PrepareUAVs(FD3D12UnorderedAccessViewCache& Cache, F
 
     D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandles[D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
 
-    const FD3D12DescriptorTableMapping& Mapping = RootSignature->GetDescriptorTableMapping(ShaderStage, ResourceType_UAV);
+    const FD3D12DescriptorTableMapping& Mapping = RootSignature->GetDescriptorTableMapping(ShaderStage, EResourceType::UAV);
     auto& UAVCache = Cache.ResourceViews[ShaderStage];
     for (uint32 Slot = 0; Slot < NumUAVs; Slot++)
     {
@@ -420,9 +420,9 @@ void FD3D12DescriptorCache::PrepareUAVs(FD3D12UnorderedAccessViewCache& Cache, F
     Cache.DirtyDescriptorTable(ShaderStage);
 }
 
-void FD3D12DescriptorCache::BindUAVs(FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage)
+void FD3D12DescriptorCache::BindUAVs(FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage)
 {
-    int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderStage, EResourceType::ResourceType_UAV);
+    int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderStage, EResourceType::UAV);
     if (ParameterIndex < 0)
     {
         return;
@@ -434,7 +434,7 @@ void FD3D12DescriptorCache::BindUAVs(FD3D12RootSignature* RootSignature, EShader
         return;
     }
 
-    if (ShaderStage == ShaderVisibility_All)
+    if (ShaderStage == EShaderVisibility::All)
     {
         Context.GetCommandList()->SetComputeRootDescriptorTable(ParameterIndex, GPUDescriptorHandle);
     }
@@ -444,9 +444,9 @@ void FD3D12DescriptorCache::BindUAVs(FD3D12RootSignature* RootSignature, EShader
     }
 }
 
-void FD3D12DescriptorCache::PrepareSamplers(FD3D12SamplerStateCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage, uint32 NumSamplers, uint32& DescriptorHandleOffset)
+void FD3D12DescriptorCache::PrepareSamplers(FD3D12SamplerStateCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage, uint32 NumSamplers, uint32& DescriptorHandleOffset)
 {
-    int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderStage, EResourceType::ResourceType_Sampler);
+    int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderStage, EResourceType::Sampler);
     if (ParameterIndex < 0)
     {
         Cache.ClearResourcesDirty(ShaderStage);
@@ -463,7 +463,7 @@ void FD3D12DescriptorCache::PrepareSamplers(FD3D12SamplerStateCache& Cache, FD3D
 
     FD3D12UniqueSamplerTable UniqueTable;
 
-    const FD3D12DescriptorTableMapping& Mapping = RootSignature->GetDescriptorTableMapping(ShaderStage, ResourceType_Sampler);
+    const FD3D12DescriptorTableMapping& Mapping = RootSignature->GetDescriptorTableMapping(ShaderStage, EResourceType::Sampler);
     auto& SamplerStates = Cache.SamplerStates[ShaderStage];
     for (uint32 Slot = 0; Slot < NumSamplers; Slot++)
     {
@@ -525,9 +525,9 @@ void FD3D12DescriptorCache::PrepareSamplers(FD3D12SamplerStateCache& Cache, FD3D
     Cache.DirtyDescriptorTable(ShaderStage);
 }
 
-void FD3D12DescriptorCache::BindSamplers(FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage)
+void FD3D12DescriptorCache::BindSamplers(FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage)
 {
-    int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderStage, EResourceType::ResourceType_Sampler);
+    int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderStage, EResourceType::Sampler);
     if (ParameterIndex < 0)
     {
         return;
@@ -539,7 +539,7 @@ void FD3D12DescriptorCache::BindSamplers(FD3D12RootSignature* RootSignature, ESh
         return;
     }
 
-    if (ShaderStage == ShaderVisibility_All)
+    if (ShaderStage == EShaderVisibility::All)
     {
         Context.GetCommandList()->SetComputeRootDescriptorTable(ParameterIndex, GPUDescriptorHandle);
     }

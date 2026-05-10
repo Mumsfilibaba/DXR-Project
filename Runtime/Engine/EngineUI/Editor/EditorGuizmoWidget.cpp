@@ -11,8 +11,8 @@ FEditorGuizmoWidget::FEditorGuizmoWidget(FEditorEngine* InEditorEngine)
     : EditorEngine(InEditorEngine)
     , ImGuiEndFrameDelegateHandle()
     , bVisible(true)
-    , Operation(EditorGuizmo::Translate)
-    , Mode(EditorGuizmo::World)
+    , Operation(EditorGuizmo::EOperation::Translate)
+    , Mode(EditorGuizmo::EMode::World)
 {
     if (IImguiPlugin::IsEnabled())
     {
@@ -48,19 +48,19 @@ void FEditorGuizmoWidget::UpdateShortcuts(bool bViewportHovered)
 
     if (ImGui::IsKeyPressed(ImGuiKey_1))
     {
-        Operation = EditorGuizmo::Translate;
+        Operation = EditorGuizmo::EOperation::Translate;
     }
     else if (ImGui::IsKeyPressed(ImGuiKey_2))
     {
-        Operation = EditorGuizmo::Rotate;
+        Operation = EditorGuizmo::EOperation::Rotate;
     }
     else if (ImGui::IsKeyPressed(ImGuiKey_3))
     {
-        Operation = EditorGuizmo::Scale;
+        Operation = EditorGuizmo::EOperation::Scale;
     }
     else if (ImGui::IsKeyPressed(ImGuiKey_4))
     {
-        Mode = (Mode == EditorGuizmo::Local) ? EditorGuizmo::World : EditorGuizmo::Local;
+        Mode = (Mode == EditorGuizmo::EMode::Local) ? EditorGuizmo::EMode::World : EditorGuizmo::EMode::Local;
     }
 }
 
@@ -159,15 +159,15 @@ void FEditorGuizmoWidget::Draw()
 
             // Only commit the components that the current gizmo operation is expected to modify.
             // This prevents Decompose->Recompose drift (e.g. translation/scale changing rotation).
-            if (Operation == EditorGuizmo::Translate) 
+            if (Operation == EditorGuizmo::EOperation::Translate) 
             {
                 SelectedActor->GetTransform().SetTranslation(Translation); 
             }
-            else if (Operation == EditorGuizmo::Rotate) 
+            else if (Operation == EditorGuizmo::EOperation::Rotate) 
             { 
                 SelectedActor->GetTransform().SetRotation(FVector3::DegreesToRadians(RotationDegrees)); 
             }
-            else if (Operation == EditorGuizmo::Scale) 
+            else if (Operation == EditorGuizmo::EOperation::Scale) 
             { 
                 SelectedActor->GetTransform().SetScale(Scale); 
             } 
@@ -201,11 +201,11 @@ void FEditorGuizmoWidget::Draw()
             FVector3 Scale; 
             EditorGuizmo::DecomposeMatrixToComponents(Model, Translation, RotationDegrees, Scale); 
  
-            if (Operation == EditorGuizmo::Translate) 
+            if (Operation == EditorGuizmo::EOperation::Translate) 
             { 
                 SelectedCamera->SetPosition(Translation.X, Translation.Y, Translation.Z); 
             } 
-            else if (Operation == EditorGuizmo::Rotate) 
+            else if (Operation == EditorGuizmo::EOperation::Rotate) 
             { 
                 const FVector3 RotationRadians = FVector3::DegreesToRadians(RotationDegrees); 
                 SelectedCamera->SetRotation(RotationRadians.X, RotationRadians.Y, RotationRadians.Z); 
@@ -231,7 +231,7 @@ void FEditorGuizmoWidget::Draw()
         const FVector3 Pos = SelectedLightProbe->GetPosition();
         FMatrix4 Model = FMatrix4::Translation(Pos);
 
-        const bool bChanged = EditorGuizmo::Manipulate(Camera->GetViewMatrix(), Camera->GetProjectionMatrix(), EditorGuizmo::Translate, EditorGuizmo::World, Model);
+        const bool bChanged = EditorGuizmo::Manipulate(Camera->GetViewMatrix(), Camera->GetProjectionMatrix(), EditorGuizmo::EOperation::Translate, EditorGuizmo::EMode::World, Model);
         if (bChanged || EditorGuizmo::IsUsing())
         {
             FVector3 Translation;
@@ -256,7 +256,7 @@ void FEditorGuizmoWidget::Draw()
             const FVector3 Pos = PointLight->GetPosition();
             FMatrix4 Model = FMatrix4::Translation(Pos);
 
-            const bool bChanged = EditorGuizmo::Manipulate(Camera->GetViewMatrix(), Camera->GetProjectionMatrix(), EditorGuizmo::Translate, EditorGuizmo::World, Model);
+            const bool bChanged = EditorGuizmo::Manipulate(Camera->GetViewMatrix(), Camera->GetProjectionMatrix(), EditorGuizmo::EOperation::Translate, EditorGuizmo::EMode::World, Model);
             if (bChanged || EditorGuizmo::IsUsing())
             {
                 FVector3 Translation;

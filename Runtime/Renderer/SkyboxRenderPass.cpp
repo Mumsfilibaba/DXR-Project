@@ -227,7 +227,7 @@ void FSkyboxRenderPass::Execute(FRHICommandList& CommandList, const FFrameResour
     const FFloatColor ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     const EAttachmentLoadAction LoadAction = GClearBeforeSkyboxEnabled ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
     
-    FRHITexture*          DepthTarget      = FrameResources.GBuffer[GBufferIndex_Depth].Get();
+    FRHITexture*          DepthTarget      = FrameResources.GBuffer[EGBufferIndex::Depth].Get();
     FRHIRenderTargetView* RenderTargetView = FrameResources.SceneTarget->GetRenderTargetView();
 
     if (CachedReadOnlyDepthTarget != DepthTarget)

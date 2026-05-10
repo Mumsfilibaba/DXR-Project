@@ -570,11 +570,11 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
 
     FMemory::Memcpy(OutShaderBindingEntry.ShaderIdentifier, PipelineState->GetShaderIdentifier(Resources.Identifier), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
-    const FD3D12ShaderStage& Stage = RootSignature->GetShaderStage(ShaderVisibility_All);
+    const FD3D12ShaderStage& Stage = RootSignature->GetShaderStage(EShaderVisibility::All);
 
     for (int32 i = 0; i < Resources.ConstantBuffers.Size(); i++)
     {
-        const int8 ParamIndex = Stage.GetRootDescriptorParameterIndex(ResourceType_CBV, static_cast<uint16>(i));
+        const int8 ParamIndex = Stage.GetRootDescriptorParameterIndex(EResourceType::CBV, static_cast<uint16>(i));
         if (ParamIndex >= 0 && ParamIndex < D3D12_MAX_LOCAL_ROOT_DESCRIPTORS)
         {
             FD3D12BufferRHI* Buffer = FD3D12DeviceRHI::ResourceCast(Resources.ConstantBuffers[i]);
@@ -584,7 +584,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
 
     for (int32 i = 0; i < Resources.ShaderResourceViews.Size(); i++)
     {
-        const int8 ParamIndex = Stage.GetRootDescriptorParameterIndex(ResourceType_SRV, static_cast<uint16>(i));
+        const int8 ParamIndex = Stage.GetRootDescriptorParameterIndex(EResourceType::SRV, static_cast<uint16>(i));
         if (ParamIndex >= 0 && ParamIndex < D3D12_MAX_LOCAL_ROOT_DESCRIPTORS)
         {
             FD3D12ShaderResourceViewRHI* SRV = FD3D12DeviceRHI::ResourceCast(Resources.ShaderResourceViews[i]);
@@ -595,7 +595,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
 
     for (int32 i = 0; i < Resources.UnorderedAccessViews.Size(); i++)
     {
-        const int8 ParamIndex = Stage.GetRootDescriptorParameterIndex(ResourceType_UAV, static_cast<uint16>(i));
+        const int8 ParamIndex = Stage.GetRootDescriptorParameterIndex(EResourceType::UAV, static_cast<uint16>(i));
         if (ParamIndex >= 0 && ParamIndex < D3D12_MAX_LOCAL_ROOT_DESCRIPTORS)
         {
             FD3D12UnorderedAccessViewRHI* UAV = FD3D12DeviceRHI::ResourceCast(Resources.UnorderedAccessViews[i]);

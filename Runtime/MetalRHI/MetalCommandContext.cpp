@@ -293,7 +293,7 @@ void FMetalCommandContext::SetShaderResourceViews(FRHIShader* Shader, const TArr
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
 
-    const EShaderVisibility Visibility = MetalShader->GetVisibility();
+    const EShaderVisibility::Type Visibility = MetalShader->GetVisibility();
     for (int32 Index = 0; Index < InShaderResourceViews.Size(); ++Index)
     {
         FMetalShaderResourceViewRHI* MetalSRV = static_cast<FMetalShaderResourceViewRHI*>(InShaderResourceViews[Index]);
@@ -315,7 +315,7 @@ void FMetalCommandContext::SetUnorderedAccessViews(FRHIShader* Shader, const TAr
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
 
-    const EShaderVisibility Visibility = MetalShader->GetVisibility();
+    const EShaderVisibility::Type Visibility = MetalShader->GetVisibility();
     for (int32 Index = 0; Index < InUnorderedAccessViews.Size(); ++Index)
     {
         FMetalUnorderedAccessViewRHI* MetalUAV = static_cast<FMetalUnorderedAccessViewRHI*>(InUnorderedAccessViews[Index]);
@@ -337,7 +337,7 @@ void FMetalCommandContext::SetConstantBuffers(FRHIShader* Shader, const TArrayVi
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
 
-    const EShaderVisibility Visibility = MetalShader->GetVisibility();
+    const EShaderVisibility::Type Visibility = MetalShader->GetVisibility();
     for (int32 Index = 0; Index < InConstantBuffers.Size(); ++Index)
     {
         FMetalBufferRHI* MetalBuffer = static_cast<FMetalBufferRHI*>(InConstantBuffers[Index]);
@@ -359,7 +359,7 @@ void FMetalCommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
 
-    const EShaderVisibility Visibility = MetalShader->GetVisibility();
+    const EShaderVisibility::Type Visibility = MetalShader->GetVisibility();
     for (int32 Index = 0; Index < InSamplerStates.Size(); ++Index)
     {
         FMetalSamplerStateRHI* MetalSamplerState = static_cast<FMetalSamplerStateRHI*>(InSamplerStates[Index]);

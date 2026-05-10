@@ -16,18 +16,21 @@ typedef TSharedRef<class FMetalRayAnyHitShaderRHI>     FMetalRayAnyHitShaderRef;
 typedef TSharedRef<class FMetalRayClosestHitShaderRHI> FMetalRayClosestHitShaderRef;
 typedef TSharedRef<class FMetalRayMissShaderRHI>       FMetalRayMissShaderRef;
 
-enum EShaderVisibility : uint8
+struct EShaderVisibility
 {
-    ShaderVisibility_Compute  = 0,
-    ShaderVisibility_Vertex   = 1,
-    ShaderVisibility_Pixel    = 2,
-    ShaderVisibility_Count    = ShaderVisibility_Pixel + 1
+    enum Type : uint8
+    {
+        Compute = 0,
+        Vertex  = 1,
+        Pixel   = 2,
+        Count   = Pixel + 1
+    };
 };
 
 class FMetalShader : public FMetalDeviceChild
 {
 public:
-    FMetalShader(FMetalDevice* InDevice, EShaderVisibility InVisibility);
+    FMetalShader(FMetalDevice* InDevice, EShaderVisibility::Type InVisibility);
     ~FMetalShader();
     
     bool Initialize(const TArray<uint8>& InCode);
@@ -42,17 +45,17 @@ public:
         return Function;
     }
 
-    EShaderVisibility GetVisibility() const
+    EShaderVisibility::Type GetVisibility() const
     {
         return Visibility;
     }
 
 protected:
-    id<MTLLibrary>    Library;
-    NSString*         FunctionName;
-    EShaderVisibility Visibility;
+    id<MTLLibrary>          Library;
+    NSString*               FunctionName;
+    EShaderVisibility::Type Visibility;
     // TODO: Release after use, high memory usage to keep this
-    id<MTLFunction>   Function;
+    id<MTLFunction>         Function;
 };
 
 class FMetalVertexShaderRHI : public FRHIVertexShader, public FMetalShader

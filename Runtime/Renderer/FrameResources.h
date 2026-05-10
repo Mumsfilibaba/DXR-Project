@@ -14,16 +14,19 @@
 #define NUM_SHADOW_CASTING_POINT_LIGHTS (8)
 #define NUM_LIGHT_PROBES (4)
 
-enum EGBufferIndex
+struct EGBufferIndex
 {
-    GBufferIndex_Albedo   = 0,
-    GBufferIndex_Normal   = 1,
-    GBufferIndex_Material = 2,
-    GBufferIndex_Velocity = 3,
-    GBufferIndex_Depth    = 4,
+    enum Type
+    {
+        Albedo   = 0,
+        Normal   = 1,
+        Material = 2,
+        Velocity = 3,
+        Depth    = 4,
 
-    GBuffer_NumBuffers,
-    GBuffer_NumRenderTargets = GBufferIndex_Velocity + 1,
+        Count,
+        NumRenderTargets = Velocity + 1,
+    };
 };
 
 template<typename TResource>
@@ -213,7 +216,7 @@ struct FFrameResources
     FRHITextureRef      SSAOBuffer;
     FRHITextureRef      SceneTarget;
     FRHITextureRef      TonemappedTarget;
-    FRHITextureRef      GBuffer[GBuffer_NumBuffers];
+    FRHITextureRef      GBuffer[EGBufferIndex::Count];
 
 #if EDITOR_BUILD
     // Editor-only: non-jittered depth + ObjectID buffers (used for stable selection outlines and picking).

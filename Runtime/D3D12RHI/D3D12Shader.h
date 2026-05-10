@@ -19,25 +19,31 @@ typedef TSharedRef<class FD3D12RayAnyHitShaderRHI>     FD3D12RayAnyHitShaderRHIR
 typedef TSharedRef<class FD3D12RayClosestHitShaderRHI> FD3D12RayClosestHitShaderRHIRef;
 typedef TSharedRef<class FD3D12RayMissShaderRHI>       FD3D12RayMissShaderRHIRef;
 
-enum EShaderVisibility : int32
+struct EShaderVisibility
 {
-    ShaderVisibility_All = 0,
-    ShaderVisibility_Vertex,
-    ShaderVisibility_Hull,
-    ShaderVisibility_Domain,
-    ShaderVisibility_Geometry,
-    ShaderVisibility_Pixel,
-    ShaderVisibility_Count = ShaderVisibility_Pixel + 1
+    enum Type : int32
+    {
+        All = 0,
+        Vertex,
+        Hull,
+        Domain,
+        Geometry,
+        Pixel,
+        Count = Pixel + 1
+    };
 };
 
-enum EResourceType : int32
+struct EResourceType
 {
-    ResourceType_CBV     = 0,
-    ResourceType_SRV     = 1,
-    ResourceType_UAV     = 2,
-    ResourceType_Sampler = 3,
-    ResourceType_Count   = ResourceType_Sampler + 1,
-    ResourceType_Unknown = 5,
+    enum Type : int32
+    {
+        CBV     = 0,
+        SRV     = 1,
+        UAV     = 2,
+        Sampler = 3,
+        Count   = Sampler + 1,
+        Unknown = 5,
+    };
 };
 
 struct FD3D12ShaderHash
@@ -93,13 +99,13 @@ private:
     D3D12_SHADER_BYTECODE ByteCode;
 };
 
-enum ED3D12BindingType : uint8
+enum class ED3D12BindingType : uint8
 {
-    D3D12BindingType_ConstantBuffer = 0,
-    D3D12BindingType_SRV,
-    D3D12BindingType_UAV,
-    D3D12BindingType_Sampler,
-    D3D12BindingType_Count = D3D12BindingType_Sampler + 1,
+    ConstantBuffer = 0,
+    SRV,
+    UAV,
+    Sampler,
+    Count,
 };
 
 struct FD3D12ShaderBindingInfo
@@ -107,9 +113,9 @@ struct FD3D12ShaderBindingInfo
     struct FResourceBinding
     {
         ED3D12BindingType BindingType;
-        uint8             BindingIndex;
-        uint16            OriginalBindingIndex;
-        FString           DebugName;
+        uint8                   BindingIndex;
+        uint16                  OriginalBindingIndex;
+        FString                 DebugName;
     };
     
     void AddBinding(ED3D12BindingType InType, uint16 InOriginalBindingIndex, const FString& InDebugName)
@@ -128,7 +134,7 @@ struct FD3D12ShaderBindingInfo
 class FD3D12Shader : public FD3D12DeviceChild
 {
 public:
-    FD3D12Shader(FD3D12Device* InDevice, EShaderVisibility InShaderVisibility);
+    FD3D12Shader(FD3D12Device* InDevice, EShaderVisibility::Type InShaderVisibility);
     ~FD3D12Shader();
 
 	virtual bool Initialize(const TArray<uint8>& InCode);
@@ -138,7 +144,7 @@ public:
     const FD3D12ShaderBytecode&    GetByteCode()    const { return ByteCode; }
     const FD3D12ShaderBindingInfo& GetBindingInfo() const { return BindingInfo; }
     
-    EShaderVisibility GetShaderVisibility() const { return ShaderVisibility; }
+    EShaderVisibility::Type GetShaderVisibility() const { return ShaderVisibility; }
 
     FORCEINLINE FD3D12ShaderHash GetHash() const
     {
@@ -153,7 +159,7 @@ protected:
 
     FD3D12ShaderBytecode     ByteCode;
     FD3D12ShaderHash         ByteCodeHash;
-    EShaderVisibility        ShaderVisibility;
+    EShaderVisibility::Type  ShaderVisibility;
     FD3D12ShaderBindingInfo  BindingInfo;
     bool                     bContainsRootSignature;
 };
@@ -161,7 +167,7 @@ protected:
 class FD3D12GraphicsShader : public FD3D12Shader
 {
 public:
-    FD3D12GraphicsShader(FD3D12Device* InDevice, EShaderVisibility InShaderVisibility);
+    FD3D12GraphicsShader(FD3D12Device* InDevice, EShaderVisibility::Type InShaderVisibility);
     virtual ~FD3D12GraphicsShader();
 
     // FD3D12Shader Interface

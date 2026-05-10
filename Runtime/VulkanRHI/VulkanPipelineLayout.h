@@ -70,9 +70,9 @@ struct FVulkanDescriptorRemappingInfo
 {
     struct FRemappingInfo
     {
-        EVulkanBindingType BindingType;
-        uint8              BindingIndex;
-        uint16             OriginalBindingIndex;
+        EVulkanBindingType::Type BindingType;
+        uint8                    BindingIndex;
+        uint16                   OriginalBindingIndex;
     };
 
     FVulkanDescriptorRemappingInfo()
@@ -210,12 +210,15 @@ struct FVulkanPipelineLayoutInfo
     uint64                                 Hash;
 };
 
-enum EResourceType
+struct EResourceType
 {
-    ResourceType_SRV = 0,
-    ResourceType_UAV,
-    ResourceType_UniformBuffer,
-    ResourceType_Sampler,
+    enum Type
+    {
+        SRV = 0,
+        UAV,
+        UniformBuffer,
+        Sampler,
+    };
 };
 
 struct FStageDescriptorMap
@@ -239,8 +242,8 @@ public:
     bool Initialize(const FVulkanPipelineLayoutInfo& LayoutInfo);
     void SetDebugName(const CHAR* InName);
 
-    bool GetDescriptorBinding(EShaderVisibility ShaderStage, EResourceType ResourceType, int32 ResourceIndex, uint32& OutDescriptorSetIndex, uint32& OutBinding);
-    bool GetDescriptorSetIndex(EShaderVisibility ShaderStage, uint32& OutDescriptorSetIndex);
+    bool GetDescriptorBinding(EShaderVisibility::Type ShaderStage, EResourceType::Type ResourceType, int32 ResourceIndex, uint32& OutDescriptorSetIndex, uint32& OutBinding);
+    bool GetDescriptorSetIndex(EShaderVisibility::Type ShaderStage, uint32& OutDescriptorSetIndex);
 
     VkPipelineLayout GetVkPipelineLayout() const
     {
@@ -298,7 +301,7 @@ private:
     TArray<uint32>                         DynamicOffsetCounts;
     uint32                                 TotalDynamicOffsets;
     FPushConstantsInfo                     ConstantsInfo;
-    FStageDescriptorMap                    DescriptorBindMap[ShaderVisibility_Count];
+    FStageDescriptorMap                    DescriptorBindMap[EShaderVisibility::Count];
 #if VULKAN_STORE_DEBUG_NAMES
     FString                                DebugName;
 #endif

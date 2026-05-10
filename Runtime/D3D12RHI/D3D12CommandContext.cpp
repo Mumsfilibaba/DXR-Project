@@ -1542,7 +1542,7 @@ void FD3D12CommandContext::SetRayTracingBindings(FRHISceneAccelerationStructure*
             for (int32 i = 0; i < GlobalResource->ConstantBuffers.Size(); i++)
             {
                 FD3D12BufferRHI* D3D12Buffer = FD3D12DeviceRHI::ResourceCast(GlobalResource->ConstantBuffers[i]);
-                ContextState.SetCBV(D3D12Buffer, ShaderVisibility_All, i);
+                ContextState.SetCBV(D3D12Buffer, EShaderVisibility::All, i);
             }
         }
         
@@ -1551,7 +1551,7 @@ void FD3D12CommandContext::SetRayTracingBindings(FRHISceneAccelerationStructure*
             for (int32 i = 0; i < GlobalResource->ShaderResourceViews.Size(); i++)
             {
                 FD3D12ShaderResourceViewRHI* D3D12ShaderResourceView = FD3D12DeviceRHI::ResourceCast(GlobalResource->ShaderResourceViews[i]);
-                ContextState.DescriptorCache.SetShaderResourceView(ShaderVisibility_All, D3D12ShaderResourceView, i);
+                ContextState.DescriptorCache.SetShaderResourceView(EShaderVisibility::All, D3D12ShaderResourceView, i);
             }
         }
         
@@ -1560,7 +1560,7 @@ void FD3D12CommandContext::SetRayTracingBindings(FRHISceneAccelerationStructure*
             for (int32 i = 0; i < GlobalResource->UnorderedAccessViews.Size(); i++)
             {
                 FD3D12UnorderedAccessViewRHI* D3D12UnorderedAccessView = FD3D12DeviceRHI::ResourceCast(GlobalResource->UnorderedAccessViews[i]);
-                ContextState.DescriptorCache.SetUnorderedAccessView(ShaderVisibility_All, D3D12UnorderedAccessView, i);
+                ContextState.DescriptorCache.SetUnorderedAccessView(EShaderVisibility::All, D3D12UnorderedAccessView, i);
             }
         }
 
@@ -1569,7 +1569,7 @@ void FD3D12CommandContext::SetRayTracingBindings(FRHISceneAccelerationStructure*
             for (int32 i = 0; i < GlobalResource->SamplerStates.Size(); i++)
             {
                 FD3D12SamplerStateRHI* DxSampler = FD3D12DeviceRHI::ResourceCast(GlobalResource->SamplerStates[i]);
-                ContextState.DescriptorCache.SetSamplerState(ShaderVisibility_All, DxSampler, i);
+                ContextState.DescriptorCache.SetSamplerState(EShaderVisibility::All, DxSampler, i);
             }
         }
     }

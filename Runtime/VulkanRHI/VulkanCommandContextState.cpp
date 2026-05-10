@@ -973,14 +973,14 @@ void FVulkanCommandContextState::SetPushConstants(const uint32* ShaderConstants,
     }
 }
 
-void FVulkanCommandContextState::SetSRV(FVulkanShaderResourceViewRHI* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex)
+void FVulkanCommandContextState::SetSRV(FVulkanShaderResourceViewRHI* ShaderResourceView, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex)
 {
     CHECK(ResourceIndex < VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
     
     FVulkanPipelineLayout*  Layout          = nullptr;
     FVulkanDescriptorState* DescriptorState = nullptr;
 
-    if (ShaderStage == ShaderVisibility_Compute)
+    if (ShaderStage == EShaderVisibility::Compute)
     {
         Layout          = ComputeState.CurrentLayout;
         DescriptorState = ComputeState.CurrentDescriptorState;
@@ -1001,7 +1001,7 @@ void FVulkanCommandContextState::SetSRV(FVulkanShaderResourceViewRHI* ShaderReso
     uint32 BindingIndex;
     uint32 DescriptorSetIndex;
 
-    if (!Layout->GetDescriptorBinding(ShaderStage, ResourceType_SRV, ResourceIndex, DescriptorSetIndex, BindingIndex))
+    if (!Layout->GetDescriptorBinding(ShaderStage, EResourceType::SRV, ResourceIndex, DescriptorSetIndex, BindingIndex))
     {
     #if VULKAN_ENABLE_BINDING_VALIDATION
         VULKAN_WARNING("SetShaderResourceView: Slot %u does not exist in %s shader", ResourceIndex, ToString(ShaderStage));
@@ -1012,14 +1012,14 @@ void FVulkanCommandContextState::SetSRV(FVulkanShaderResourceViewRHI* ShaderReso
     DescriptorState->SetSRV(ShaderResourceView, DescriptorSetIndex, BindingIndex);
 }
 
-void FVulkanCommandContextState::SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex)
+void FVulkanCommandContextState::SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAccessView, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex)
 {
     CHECK(ResourceIndex < VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
 
     FVulkanPipelineLayout*  Layout          = nullptr;
     FVulkanDescriptorState* DescriptorState = nullptr;
 
-    if (ShaderStage == ShaderVisibility_Compute)
+    if (ShaderStage == EShaderVisibility::Compute)
     {
         Layout          = ComputeState.CurrentLayout;
         DescriptorState = ComputeState.CurrentDescriptorState;
@@ -1040,7 +1040,7 @@ void FVulkanCommandContextState::SetUAV(FVulkanUnorderedAccessViewRHI* Unordered
     uint32 BindingIndex;
     uint32 DescriptorSetIndex;
 
-    if (!Layout->GetDescriptorBinding(ShaderStage, ResourceType_UAV, ResourceIndex, DescriptorSetIndex, BindingIndex))
+    if (!Layout->GetDescriptorBinding(ShaderStage, EResourceType::UAV, ResourceIndex, DescriptorSetIndex, BindingIndex))
     {
     #if VULKAN_ENABLE_BINDING_VALIDATION
         VULKAN_WARNING("SetUnorderedAccessView: Slot %u does not exist in %s shader", ResourceIndex, ToString(ShaderStage));
@@ -1051,14 +1051,14 @@ void FVulkanCommandContextState::SetUAV(FVulkanUnorderedAccessViewRHI* Unordered
     DescriptorState->SetUAV(UnorderedAccessView, DescriptorSetIndex, BindingIndex);
 }
 
-void FVulkanCommandContextState::SetUniformBuffer(FVulkanBufferRHI* UniformBuffer, EShaderVisibility ShaderStage, uint32 ResourceIndex)
+void FVulkanCommandContextState::SetUniformBuffer(FVulkanBufferRHI* UniformBuffer, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex)
 {
     CHECK(ResourceIndex < VULKAN_DEFAULT_UNIFORM_BUFFER_COUNT);
     
     FVulkanPipelineLayout*  Layout          = nullptr;
     FVulkanDescriptorState* DescriptorState = nullptr;
 
-    if (ShaderStage == ShaderVisibility_Compute)
+    if (ShaderStage == EShaderVisibility::Compute)
     {
         Layout          = ComputeState.CurrentLayout;
         DescriptorState = ComputeState.CurrentDescriptorState;
@@ -1079,7 +1079,7 @@ void FVulkanCommandContextState::SetUniformBuffer(FVulkanBufferRHI* UniformBuffe
     uint32 BindingIndex;
     uint32 DescriptorSetIndex;
 
-    if (!Layout->GetDescriptorBinding(ShaderStage, ResourceType_UniformBuffer, ResourceIndex, DescriptorSetIndex, BindingIndex))
+    if (!Layout->GetDescriptorBinding(ShaderStage, EResourceType::UniformBuffer, ResourceIndex, DescriptorSetIndex, BindingIndex))
     {
     #if VULKAN_ENABLE_BINDING_VALIDATION
         VULKAN_WARNING("SetConstantBuffer: Slot %u does not exist in %s shader", ResourceIndex, ToString(ShaderStage));
@@ -1090,14 +1090,14 @@ void FVulkanCommandContextState::SetUniformBuffer(FVulkanBufferRHI* UniformBuffe
     DescriptorState->SetUniformBuffer(UniformBuffer, DescriptorSetIndex, BindingIndex);
 }
 
-void FVulkanCommandContextState::SetSampler(FVulkanSamplerStateRHI* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex)
+void FVulkanCommandContextState::SetSampler(FVulkanSamplerStateRHI* SamplerState, EShaderVisibility::Type ShaderStage, uint32 SamplerIndex)
 {
     CHECK(SamplerIndex < VULKAN_DEFAULT_SAMPLER_STATE_COUNT);
 
     FVulkanPipelineLayout*  Layout          = nullptr;
     FVulkanDescriptorState* DescriptorState = nullptr;
 
-    if (ShaderStage == ShaderVisibility_Compute)
+    if (ShaderStage == EShaderVisibility::Compute)
     {
         Layout          = ComputeState.CurrentLayout;
         DescriptorState = ComputeState.CurrentDescriptorState;
@@ -1118,7 +1118,7 @@ void FVulkanCommandContextState::SetSampler(FVulkanSamplerStateRHI* SamplerState
     uint32 BindingIndex;
     uint32 DescriptorSetIndex;
 
-    if (!Layout->GetDescriptorBinding(ShaderStage, ResourceType_Sampler, SamplerIndex, DescriptorSetIndex, BindingIndex))
+    if (!Layout->GetDescriptorBinding(ShaderStage, EResourceType::Sampler, SamplerIndex, DescriptorSetIndex, BindingIndex))
     {
     #if VULKAN_ENABLE_BINDING_VALIDATION
         VULKAN_WARNING("SetSamplerState: Slot %u does not exist in %s shader", SamplerIndex, ToString(ShaderStage));

@@ -80,7 +80,7 @@ FVulkanShaderModule::~FVulkanShaderModule()
     }
 }
 
-FVulkanShader::FVulkanShader(FVulkanDevice* InDevice, EShaderVisibility InShaderVisibility)
+FVulkanShader::FVulkanShader(FVulkanDevice* InDevice, EShaderVisibility::Type InShaderVisibility)
     : FVulkanDeviceChild(InDevice)
     , ShaderVisibility(InShaderVisibility)
 {
@@ -93,7 +93,7 @@ FVulkanShader::~FVulkanShader()
 }
 
 FVulkanRayTracingShader::FVulkanRayTracingShader(FVulkanDevice* InDevice)
-    : FVulkanShader(InDevice, ShaderVisibility_Compute)
+    : FVulkanShader(InDevice, EShaderVisibility::Compute)
 {
 }
 
@@ -294,7 +294,7 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumSampledImages; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType          = VulkanBindingType_SampledImage;
+            Binding.BindingType          = EVulkanBindingType::SampledImage;
             Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
             Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, SampledImages[Index].id, SpvDecorationBinding));
             
@@ -332,7 +332,7 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumSamplers; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType          = VulkanBindingType_Sampler;
+            Binding.BindingType          = EVulkanBindingType::Sampler;
             Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
             Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, Samplers[Index].id, SpvDecorationBinding));
             
@@ -370,7 +370,7 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumStorageImages; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType          = VulkanBindingType_StorageImage;
+            Binding.BindingType          = EVulkanBindingType::StorageImage;
             Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
             Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, StorageImages[Index].id, SpvDecorationBinding));
             
@@ -408,7 +408,7 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumUniformBuffers; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType          = VulkanBindingType_UniformBuffer;
+            Binding.BindingType          = EVulkanBindingType::UniformBuffer;
             Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
             Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, UniformBuffers[Index].id, SpvDecorationBinding));
             
@@ -466,11 +466,11 @@ bool FVulkanShader::InitializeShaderLayout()
             const bool bIsUAV = BaseTypeName.Contains("RWStructuredBuffer");
             if (bIsUAV)
             {
-                Binding.BindingType = VulkanBindingType_StorageBufferReadWrite;
+                Binding.BindingType = EVulkanBindingType::StorageBufferReadWrite;
             }
             else
             {
-                Binding.BindingType = VulkanBindingType_StorageBufferRead;
+                Binding.BindingType = EVulkanBindingType::StorageBufferRead;
             }
 
         #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
@@ -681,7 +681,7 @@ bool FVulkanShader::ValidateNoGoogleSpirvRequirements(const FSpirvArray& Words, 
 
 FVulkanVertexShaderRHI::FVulkanVertexShaderRHI(FVulkanDevice* InDevice)
     : FRHIVertexShader()
-    , FVulkanShader(InDevice, ShaderVisibility_Vertex)
+    , FVulkanShader(InDevice, EShaderVisibility::Vertex)
 {
 }
 
@@ -689,7 +689,7 @@ FVulkanVertexShaderRHI::~FVulkanVertexShaderRHI() = default;
 
 FVulkanHullShaderRHI::FVulkanHullShaderRHI(FVulkanDevice* InDevice)
     : FRHIHullShader()
-    , FVulkanShader(InDevice, ShaderVisibility_Hull)
+    , FVulkanShader(InDevice, EShaderVisibility::Hull)
 {
 }
 
@@ -697,7 +697,7 @@ FVulkanHullShaderRHI::~FVulkanHullShaderRHI() = default;
 
 FVulkanDomainShaderRHI::FVulkanDomainShaderRHI(FVulkanDevice* InDevice)
     : FRHIDomainShader()
-    , FVulkanShader(InDevice, ShaderVisibility_Domain)
+    , FVulkanShader(InDevice, EShaderVisibility::Domain)
 {
 }
 
@@ -705,7 +705,7 @@ FVulkanDomainShaderRHI::~FVulkanDomainShaderRHI() = default;
 
 FVulkanGeometryShaderRHI::FVulkanGeometryShaderRHI(FVulkanDevice* InDevice)
     : FRHIGeometryShader()
-    , FVulkanShader(InDevice, ShaderVisibility_Geometry)
+    , FVulkanShader(InDevice, EShaderVisibility::Geometry)
 {
 }
 
@@ -713,7 +713,7 @@ FVulkanGeometryShaderRHI::~FVulkanGeometryShaderRHI() = default;
 
 FVulkanPixelShaderRHI::FVulkanPixelShaderRHI(FVulkanDevice* InDevice)
     : FRHIPixelShader()
-    , FVulkanShader(InDevice, ShaderVisibility_Pixel)
+    , FVulkanShader(InDevice, EShaderVisibility::Pixel)
 {
 }
 
@@ -753,7 +753,7 @@ FVulkanRayMissShaderRHI::~FVulkanRayMissShaderRHI() = default;
 
 FVulkanComputeShaderRHI::FVulkanComputeShaderRHI(FVulkanDevice* InDevice)
     : FRHIComputeShader()
-    , FVulkanShader(InDevice, ShaderVisibility_Compute)
+    , FVulkanShader(InDevice, EShaderVisibility::Compute)
 {
 }
 

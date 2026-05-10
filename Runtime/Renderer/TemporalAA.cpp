@@ -121,8 +121,8 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
     CommandList.SetUnorderedAccessView(TemporalAAShader.Get(), FrameResources.SceneTarget->GetUnorderedAccessView(), 0);
     CommandList.SetUnorderedAccessView(TemporalAAShader.Get(), CurrentBuffer->GetUnorderedAccessView(), 1);
     
-    CommandList.SetShaderResourceView(TemporalAAShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 0);
-    CommandList.SetShaderResourceView(TemporalAAShader.Get(), FrameResources.GBuffer[GBufferIndex_Velocity]->GetShaderResourceView(), 1);
+    CommandList.SetShaderResourceView(TemporalAAShader.Get(), FrameResources.GBuffer[EGBufferIndex::Depth]->GetShaderResourceView(), 0);
+    CommandList.SetShaderResourceView(TemporalAAShader.Get(), FrameResources.GBuffer[EGBufferIndex::Velocity]->GetShaderResourceView(), 1);
     
     FRHITextureRef CurrentReadBuffer = TAAHistoryBuffers[CurrentBufferIndex];
     CommandList.SetShaderResourceView(TemporalAAShader.Get(), CurrentReadBuffer->GetShaderResourceView(), 2);

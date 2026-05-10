@@ -304,10 +304,10 @@ void FVulkanGraphicsPipelineStateRHI::GetDebugName(FString& OutDebugName) const
 bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateDesc& InDesc)
 {
     // Gather Shaders for PipelineLayout
-    FVulkanShader* Shaders[ShaderVisibility_Count];
+    FVulkanShader* Shaders[EShaderVisibility::Count];
     if (FVulkanVertexShaderRHI* VulkanVertexShader = FVulkanDeviceRHI::ResourceCast(InDesc.VertexShader))
     {
-        Shaders[ShaderVisibility_Vertex] = VulkanVertexShader;
+        Shaders[EShaderVisibility::Vertex] = VulkanVertexShader;
     }
     else
     {
@@ -315,34 +315,34 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
         return false;
     }
 
-    Shaders[ShaderVisibility_Hull]     = FVulkanDeviceRHI::ResourceCast(InDesc.HullShader);
-    Shaders[ShaderVisibility_Domain]   = FVulkanDeviceRHI::ResourceCast(InDesc.DomainShader);
-    Shaders[ShaderVisibility_Geometry] = FVulkanDeviceRHI::ResourceCast(InDesc.GeometryShader);
-    Shaders[ShaderVisibility_Pixel]    = FVulkanDeviceRHI::ResourceCast(InDesc.PixelShader);
+    Shaders[EShaderVisibility::Hull]     = FVulkanDeviceRHI::ResourceCast(InDesc.HullShader);
+    Shaders[EShaderVisibility::Domain]   = FVulkanDeviceRHI::ResourceCast(InDesc.DomainShader);
+    Shaders[EShaderVisibility::Geometry] = FVulkanDeviceRHI::ResourceCast(InDesc.GeometryShader);
+    Shaders[EShaderVisibility::Pixel]    = FVulkanDeviceRHI::ResourceCast(InDesc.PixelShader);
     
     FVulkanPipelineLayoutInfo LayoutInfo;
-    LayoutInfo.AddSetForStage(VK_SHADER_STAGE_VERTEX_BIT, Shaders[ShaderVisibility_Vertex]->GetShaderInfo());
-    LayoutInfo.UpdateConstantsForStage(VK_SHADER_STAGE_VERTEX_BIT, Shaders[ShaderVisibility_Vertex]->GetShaderInfo());
+    LayoutInfo.AddSetForStage(VK_SHADER_STAGE_VERTEX_BIT, Shaders[EShaderVisibility::Vertex]->GetShaderInfo());
+    LayoutInfo.UpdateConstantsForStage(VK_SHADER_STAGE_VERTEX_BIT, Shaders[EShaderVisibility::Vertex]->GetShaderInfo());
 
-    if (Shaders[ShaderVisibility_Hull])
+    if (Shaders[EShaderVisibility::Hull])
     {
-        LayoutInfo.AddSetForStage(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, Shaders[ShaderVisibility_Hull]->GetShaderInfo());
-        LayoutInfo.UpdateConstantsForStage(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, Shaders[ShaderVisibility_Hull]->GetShaderInfo());
+        LayoutInfo.AddSetForStage(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, Shaders[EShaderVisibility::Hull]->GetShaderInfo());
+        LayoutInfo.UpdateConstantsForStage(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, Shaders[EShaderVisibility::Hull]->GetShaderInfo());
     }
-    if (Shaders[ShaderVisibility_Domain])
+    if (Shaders[EShaderVisibility::Domain])
     {
-        LayoutInfo.AddSetForStage(VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, Shaders[ShaderVisibility_Domain]->GetShaderInfo());
-        LayoutInfo.UpdateConstantsForStage(VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, Shaders[ShaderVisibility_Domain]->GetShaderInfo());
+        LayoutInfo.AddSetForStage(VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, Shaders[EShaderVisibility::Domain]->GetShaderInfo());
+        LayoutInfo.UpdateConstantsForStage(VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, Shaders[EShaderVisibility::Domain]->GetShaderInfo());
     }
-    if (Shaders[ShaderVisibility_Geometry])
+    if (Shaders[EShaderVisibility::Geometry])
     {
-        LayoutInfo.AddSetForStage(VK_SHADER_STAGE_GEOMETRY_BIT, Shaders[ShaderVisibility_Geometry]->GetShaderInfo());
-        LayoutInfo.UpdateConstantsForStage(VK_SHADER_STAGE_GEOMETRY_BIT, Shaders[ShaderVisibility_Geometry]->GetShaderInfo());
+        LayoutInfo.AddSetForStage(VK_SHADER_STAGE_GEOMETRY_BIT, Shaders[EShaderVisibility::Geometry]->GetShaderInfo());
+        LayoutInfo.UpdateConstantsForStage(VK_SHADER_STAGE_GEOMETRY_BIT, Shaders[EShaderVisibility::Geometry]->GetShaderInfo());
     }
-    if (Shaders[ShaderVisibility_Pixel])
+    if (Shaders[EShaderVisibility::Pixel])
     {
-        LayoutInfo.AddSetForStage(VK_SHADER_STAGE_FRAGMENT_BIT, Shaders[ShaderVisibility_Pixel]->GetShaderInfo());
-        LayoutInfo.UpdateConstantsForStage(VK_SHADER_STAGE_FRAGMENT_BIT, Shaders[ShaderVisibility_Pixel]->GetShaderInfo());
+        LayoutInfo.AddSetForStage(VK_SHADER_STAGE_FRAGMENT_BIT, Shaders[EShaderVisibility::Pixel]->GetShaderInfo());
+        LayoutInfo.UpdateConstantsForStage(VK_SHADER_STAGE_FRAGMENT_BIT, Shaders[EShaderVisibility::Pixel]->GetShaderInfo());
     }
     
 #if VULKAN_ENABLE_DYNAMIC_UNIFORM_BUFFERS
@@ -370,11 +370,11 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
     ShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     
     TArray<VkPipelineShaderStageCreateInfo> ShaderStages;
-    if (TSharedRef<FVulkanShaderModule> ShaderModule = Shaders[ShaderVisibility_Vertex]->GetOrCreateShaderModule(PipelineLayout))
+    if (TSharedRef<FVulkanShaderModule> ShaderModule = Shaders[EShaderVisibility::Vertex]->GetOrCreateShaderModule(PipelineLayout))
     {
         ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_VERTEX_BIT;
         ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
-        ShaderStageCreateInfo.pName  = *Shaders[ShaderVisibility_Vertex]->GetEntryPointName();
+        ShaderStageCreateInfo.pName  = *Shaders[EShaderVisibility::Vertex]->GetEntryPointName();
         ShaderStages.Add(ShaderStageCreateInfo);
     }
     else
@@ -383,13 +383,13 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
         return false;
     }
     
-    if (Shaders[ShaderVisibility_Hull])
+    if (Shaders[EShaderVisibility::Hull])
     {
-        if (TSharedRef<FVulkanShaderModule> ShaderModule = Shaders[ShaderVisibility_Hull]->GetOrCreateShaderModule(PipelineLayout))
+        if (TSharedRef<FVulkanShaderModule> ShaderModule = Shaders[EShaderVisibility::Hull]->GetOrCreateShaderModule(PipelineLayout))
         {
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
             ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
-            ShaderStageCreateInfo.pName  = *Shaders[ShaderVisibility_Hull]->GetEntryPointName();
+            ShaderStageCreateInfo.pName  = *Shaders[EShaderVisibility::Hull]->GetEntryPointName();
             ShaderStages.Add(ShaderStageCreateInfo);
         }
         else
@@ -398,13 +398,13 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
             return false;
         }
     }
-    if (Shaders[ShaderVisibility_Domain])
+    if (Shaders[EShaderVisibility::Domain])
     {
-        if (TSharedRef<FVulkanShaderModule> ShaderModule = Shaders[ShaderVisibility_Domain]->GetOrCreateShaderModule(PipelineLayout))
+        if (TSharedRef<FVulkanShaderModule> ShaderModule = Shaders[EShaderVisibility::Domain]->GetOrCreateShaderModule(PipelineLayout))
         {
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
             ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
-            ShaderStageCreateInfo.pName  = *Shaders[ShaderVisibility_Domain]->GetEntryPointName();
+            ShaderStageCreateInfo.pName  = *Shaders[EShaderVisibility::Domain]->GetEntryPointName();
             ShaderStages.Add(ShaderStageCreateInfo);
         }
         else
@@ -413,13 +413,13 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
             return false;
         }
     }
-    if (Shaders[ShaderVisibility_Geometry])
+    if (Shaders[EShaderVisibility::Geometry])
     {
-        if (TSharedRef<FVulkanShaderModule> ShaderModule = Shaders[ShaderVisibility_Geometry]->GetOrCreateShaderModule(PipelineLayout))
+        if (TSharedRef<FVulkanShaderModule> ShaderModule = Shaders[EShaderVisibility::Geometry]->GetOrCreateShaderModule(PipelineLayout))
         {
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_GEOMETRY_BIT;
             ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
-            ShaderStageCreateInfo.pName  = *Shaders[ShaderVisibility_Geometry]->GetEntryPointName();
+            ShaderStageCreateInfo.pName  = *Shaders[EShaderVisibility::Geometry]->GetEntryPointName();
             ShaderStages.Add(ShaderStageCreateInfo);
         }
         else
@@ -428,13 +428,13 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
             return false;
         }
     }
-    if (Shaders[ShaderVisibility_Pixel])
+    if (Shaders[EShaderVisibility::Pixel])
     {
-        if (TSharedRef<FVulkanShaderModule> ShaderModule = Shaders[ShaderVisibility_Pixel]->GetOrCreateShaderModule(PipelineLayout))
+        if (TSharedRef<FVulkanShaderModule> ShaderModule = Shaders[EShaderVisibility::Pixel]->GetOrCreateShaderModule(PipelineLayout))
         {
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
             ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
-            ShaderStageCreateInfo.pName  = *Shaders[ShaderVisibility_Pixel]->GetEntryPointName();
+            ShaderStageCreateInfo.pName  = *Shaders[EShaderVisibility::Pixel]->GetEntryPointName();
             ShaderStages.Add(ShaderStageCreateInfo);
         }
         else

@@ -1,5 +1,4 @@
 #pragma once
-#include "Core/Templates/Utility/EnumOperators.h"
 #include "ImGuiPlugin/ImGuiCore.h"
 
 struct ImGuiContext;
@@ -11,60 +10,66 @@ class FVector3;
 struct ENGINE_API EditorGuizmo
 {
 public:
-    enum EOperation
+    struct EOperation
     {
-        TranslateX   = (1u << 0),
-        TranslateY   = (1u << 1),
-        TranslateZ   = (1u << 2),
-        RotateX      = (1u << 3),
-        RotateY      = (1u << 4),
-        RotateZ      = (1u << 5),
-        RotateScreen = (1u << 6),
-        ScaleX       = (1u << 7),
-        ScaleY       = (1u << 8),
-        ScaleZ       = (1u << 9),
-        Bounds       = (1u << 10),
-        ScaleXU      = (1u << 11),
-        ScaleYU      = (1u << 12),
-        ScaleZU      = (1u << 13),
-    
-        Translate = TranslateX | TranslateY | TranslateZ,
-        Rotate    = RotateX | RotateY | RotateZ | RotateScreen,
-        Scale     = ScaleX | ScaleY | ScaleZ,
-        ScaleU    = ScaleXU | ScaleYU | ScaleZU,
-        Universal = Translate | Rotate | ScaleU
+        enum Type : uint32
+        {
+            TranslateX   = (1u << 0),
+            TranslateY   = (1u << 1),
+            TranslateZ   = (1u << 2),
+            RotateX      = (1u << 3),
+            RotateY      = (1u << 4),
+            RotateZ      = (1u << 5),
+            RotateScreen = (1u << 6),
+            ScaleX       = (1u << 7),
+            ScaleY       = (1u << 8),
+            ScaleZ       = (1u << 9),
+            Bounds       = (1u << 10),
+            ScaleXU      = (1u << 11),
+            ScaleYU      = (1u << 12),
+            ScaleZU      = (1u << 13),
+        
+            Translate = TranslateX | TranslateY | TranslateZ,
+            Rotate    = RotateX | RotateY | RotateZ | RotateScreen,
+            Scale     = ScaleX | ScaleY | ScaleZ,
+            ScaleU    = ScaleXU | ScaleYU | ScaleZU,
+            Universal = Translate | Rotate | ScaleU
+        };
     };
 
-    enum EMode 
-    { 
-        Local, 
-        World 
-    }; 
-    
-    enum EScaleHandleShape
+    enum class EMode
     {
-        ScaleHandleShape_Circle,
-        ScaleHandleShape_Square
+        Local,
+        World
     };
 
-    enum EColor
+    enum class EScaleHandleShape
     {
-        DirectionX,      // directionColor[0]
-        DirectionY,      // directionColor[1]
-        DirectionZ,      // directionColor[2]
-        PlaneX,          // planeColor[0]
-        PlaneY,          // planeColor[1]
-        PlaneZ,          // planeColor[2]
-        Selection,       // selectionColor
-        Inactive,        // inactiveColor
-        TranslationLine, // translationLineColor
-        ScaleLine,
-        RotationUsingBorder,
-        RotationUsingFill,
-        HatchedAxisLines,
-        Text,
-        TextShadow,
-        Count
+        Circle,
+        Square
+    };
+
+    struct EColor
+    {
+        enum Type
+        {
+            DirectionX,      // directionColor[0]
+            DirectionY,      // directionColor[1]
+            DirectionZ,      // directionColor[2]
+            PlaneX,          // planeColor[0]
+            PlaneY,          // planeColor[1]
+            PlaneZ,          // planeColor[2]
+            Selection,       // selectionColor
+            Inactive,        // inactiveColor
+            TranslationLine, // translationLineColor
+            ScaleLine,
+            RotationUsingBorder,
+            RotationUsingFill,
+            HatchedAxisLines,
+            Text,
+            TextShadow,
+            Count
+        };
     };
 
 public:
@@ -81,7 +86,7 @@ public:
         EScaleHandleShape ScaleHandleShape;           // Shape of axis handles for scale gizmo
         float             HatchedAxisLineThickness;   // Thickness of hatched axis lines 
         float             CenterCircleSize;           // Size of circle at the center of the translate/scale gizmo 
-        ImVec4            Colors[Count]; 
+        ImVec4            Colors[EColor::Count]; 
     }; 
 
 public:
@@ -96,7 +101,7 @@ public:
 
     // State queries / enable
     static bool IsOver();
-    static bool IsOver(EOperation Op);
+    static bool IsOver(EOperation::Type Op);
     static bool IsOver(float* Position, float PixelRadius);
     static bool IsOver(FVector3& Position, float PixelRadius);
     static bool IsUsing();
@@ -116,17 +121,17 @@ public:
     static void DrawGrid(const FMatrix4& View, const FMatrix4& Projection, const FMatrix4& Matrix, float GridSize);
 
     // Manipulation
-    static bool Manipulate(const float* View, const float* Projection, EOperation Operation, EMode Mode, float* InOutMatrix, float* OutDeltaMatrix = nullptr,
+    static bool Manipulate(const float* View, const float* Projection, EOperation::Type Operation, EMode Mode, float* InOutMatrix, float* OutDeltaMatrix = nullptr,
         const float* Snap = nullptr, const float* LocalBounds = nullptr, const float* BoundsSnap = nullptr);
-    static bool Manipulate(const FMatrix4& View, const FMatrix4& Projection, EOperation Operation, EMode Mode, FMatrix4& InOutMatrix, FMatrix4* OutDeltaMatrix = nullptr,
+    static bool Manipulate(const FMatrix4& View, const FMatrix4& Projection, EOperation::Type Operation, EMode Mode, FMatrix4& InOutMatrix, FMatrix4* OutDeltaMatrix = nullptr,
         const float* Snap = nullptr, const float* LocalBounds = nullptr, const float* BoundsSnap = nullptr);
 
     // View manipulator
     static void ViewManipulate(float* InOutView, float Length, ImVec2 Position, ImVec2 Size, ImU32 BackgroundColor);
-    static void ViewManipulate(float* InOutView, const float* Projection, EOperation Operation, EMode Mode, float* InOutMatrix, float Length, ImVec2 Position,
+    static void ViewManipulate(float* InOutView, const float* Projection, EOperation::Type Operation, EMode Mode, float* InOutMatrix, float Length, ImVec2 Position,
         ImVec2 Size, ImU32 BackgroundColor);
     static void ViewManipulate(FMatrix4& InOutView, float Length, ImVec2 Position, ImVec2 Size, ImU32 BackgroundColor);
-    static void ViewManipulate(FMatrix4& InOutView, const FMatrix4& Projection, EOperation Operation, EMode Mode, FMatrix4& InOutMatrix, float Length, ImVec2 Position,
+    static void ViewManipulate(FMatrix4& InOutView, const FMatrix4& Projection, EOperation::Type Operation, EMode Mode, FMatrix4& InOutMatrix, float Length, ImVec2 Position,
         ImVec2 Size, ImU32 BackgroundColor);
 
     static void PushID(const char* StrID);
@@ -151,4 +156,3 @@ public:
     static Style& GetStyle();
 };
 
-ENUM_CLASS_OPERATORS(EditorGuizmo::EOperation);

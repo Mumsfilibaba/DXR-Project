@@ -166,13 +166,24 @@ struct IMyInterface
 ### Enums
 * Enums should use the capital letter 'E' as prefix
 
-* Enum class should be preferred, unless they mostly will be used as integers.
+* `enum class` is the default and should be used unless implicit conversion to an integer is required. Concretely, struct-wrap is needed only for:
+  * Array indexing or array sizing (`Arr[EFoo::Bar]`, `T Arr[EFoo::Count]`).
+  * Arithmetic on enum values (`EFoo::A + N`, `Type - EFoo::A`).
+  * Bitwise shifts (`EFoo::A << N`, `EFoo::A >> N`).
+  * Bitwise OR/AND on values without `ENUM_CLASS_OPERATORS`.
+  * Other APIs that take an integer where `enum class` would require an explicit cast at every call site.
+
+  Cases that look like they need int conversion but actually do *not* (use `enum class`):
+  * Template non-type parameters (`template<EFoo F>` works fine for `enum class`).
+  * Tag dispatch (a parameter of `enum class` type is just a type tag).
+  * Bitfield members (`enum class` as a bitfield is valid C++11+).
+  * Equality and ordering comparisons.
 
 * Enum classes with flags can use the 'ENUM_CLASS_OPERATORS' macro to make operations such as 'and', 'or' etc to work.
 
-* Example can be seen below:
+* Example of the default `enum class` form:
 ```
-enum class EMyEnum
+enum class EMyEnum : uint8
 {
   Car   = 0,
   Apple = 1,
@@ -180,14 +191,19 @@ enum class EMyEnum
 ENUM_CLASS_OPERATORS(EMyEnum);
 ```
 
-* Enums **not** using the class keyword should prefix all enumerators with the name of the enum:
+* When implicit conversion to an integer is required, the enum must be wrapped in a struct that exposes an inner `enum Type`. This makes the enum a typed name while still allowing the inner enumerators to convert to integers:
 ```
-enum EMyEnum
+struct EMyEnum
 {
-  MyEnum_Something0 = 0,
-  MyEnum_Something1 = 1,
+  enum Type : uint8
+  {
+    Something0 = 0,
+    Something1 = 1,
+  };
 };
 ```
+
+* Note that enumerators in the wrapped form do **not** repeat the enum name as a prefix - the wrapping struct already provides the namespace. Use `EMyEnum::Something0` at the call site, and `EMyEnum::Type` when naming the type of a variable, parameter, return value or template non-type parameter.
 
 ### Union
 * Unions use 'F' as prefix, for example

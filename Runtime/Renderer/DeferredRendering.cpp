@@ -205,10 +205,10 @@ bool FDepthPrePass::CreateResources(FFrameResources& FrameResources, uint32 Widt
     const FClearValue DepthClearValue(FGlobalTextureFormats::DepthBufferFormat, 1.0f, 0);
 
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::DepthBufferFormat, Width, Height, 1, 1, Usage, DepthClearValue);
-    FrameResources.GBuffer[GBufferIndex_Depth] = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
-    if (FrameResources.GBuffer[GBufferIndex_Depth])
+    FrameResources.GBuffer[EGBufferIndex::Depth] = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
+    if (FrameResources.GBuffer[EGBufferIndex::Depth])
     {
-        FrameResources.GBuffer[GBufferIndex_Depth]->SetDebugName("GBuffer DepthStencil");
+        FrameResources.GBuffer[EGBufferIndex::Depth]->SetDebugName("GBuffer DepthStencil");
     }
     else
     {
@@ -226,7 +226,7 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
 
     GPU_TRACE_SCOPE(CommandList, "Depth Pre-Pass");
 
-    FRHIDepthStencilView* DepthStencilView = FrameResources.GBuffer[GBufferIndex_Depth]->GetDepthStencilView();
+    FRHIDepthStencilView* DepthStencilView = FrameResources.GBuffer[EGBufferIndex::Depth]->GetDepthStencilView();
 
     FRHIBeginRenderPassDesc RenderPassDesc;
     RenderPassDesc.DepthStencilAttachment = FRHIDepthStencilAttachment(DepthStencilView);
@@ -442,7 +442,7 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FFrameRe
         }
 
         FRHIBlendStateDesc BlendStateDesc;
-        BlendStateDesc.NumRenderTargets = GBuffer_NumRenderTargets;
+        BlendStateDesc.NumRenderTargets = EGBufferIndex::NumRenderTargets;
 
         NewPipelineInstance.BlendState = RHI::Device->CreateBlendState(BlendStateDesc);
         if (!NewPipelineInstance.BlendState)
@@ -465,7 +465,7 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FFrameRe
         PSODesc.RasterizerOutputFormats.RenderTargetFormats[1] = FGlobalTextureFormats::NormalFormat;
         PSODesc.RasterizerOutputFormats.RenderTargetFormats[2] = FGlobalTextureFormats::MaterialFormat;
         PSODesc.RasterizerOutputFormats.RenderTargetFormats[3] = FGlobalTextureFormats::VelocityFormat;
-        PSODesc.RasterizerOutputFormats.NumRenderTargets       = GBuffer_NumRenderTargets;
+        PSODesc.RasterizerOutputFormats.NumRenderTargets       = EGBufferIndex::NumRenderTargets;
         PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
 
         NewPipelineInstance.PipelineState = RHI::Device->CreateGraphicsPipelineState(PSODesc);
@@ -500,10 +500,10 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::AlbedoFormat, Width, Height, 1, 1, Usage);
 
     // Albedo
-    FrameResources.GBuffer[GBufferIndex_Albedo] = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
-    if (FrameResources.GBuffer[GBufferIndex_Albedo])
+    FrameResources.GBuffer[EGBufferIndex::Albedo] = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+    if (FrameResources.GBuffer[EGBufferIndex::Albedo])
     {
-        FrameResources.GBuffer[GBufferIndex_Albedo]->SetDebugName("GBuffer Albedo");
+        FrameResources.GBuffer[EGBufferIndex::Albedo]->SetDebugName("GBuffer Albedo");
     }
     else
     {
@@ -513,10 +513,10 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     // Normal
     TextureDesc.Format = FGlobalTextureFormats::NormalFormat;
 
-    FrameResources.GBuffer[GBufferIndex_Normal] = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
-    if (FrameResources.GBuffer[GBufferIndex_Normal])
+    FrameResources.GBuffer[EGBufferIndex::Normal] = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+    if (FrameResources.GBuffer[EGBufferIndex::Normal])
     {
-        FrameResources.GBuffer[GBufferIndex_Normal]->SetDebugName("GBuffer Normal");
+        FrameResources.GBuffer[EGBufferIndex::Normal]->SetDebugName("GBuffer Normal");
     }
     else
     {
@@ -526,10 +526,10 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     // Material Properties
     TextureDesc.Format = FGlobalTextureFormats::MaterialFormat;
 
-    FrameResources.GBuffer[GBufferIndex_Material] = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
-    if (FrameResources.GBuffer[GBufferIndex_Material])
+    FrameResources.GBuffer[EGBufferIndex::Material] = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+    if (FrameResources.GBuffer[EGBufferIndex::Material])
     {
-        FrameResources.GBuffer[GBufferIndex_Material]->SetDebugName("GBuffer Material");
+        FrameResources.GBuffer[EGBufferIndex::Material]->SetDebugName("GBuffer Material");
     }
     else
     {
@@ -539,10 +539,10 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     // Velocity
     TextureDesc.Format = FGlobalTextureFormats::VelocityFormat;
 
-    FrameResources.GBuffer[GBufferIndex_Velocity] = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
-    if (FrameResources.GBuffer[GBufferIndex_Velocity])
+    FrameResources.GBuffer[EGBufferIndex::Velocity] = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+    if (FrameResources.GBuffer[EGBufferIndex::Velocity])
     {
-        FrameResources.GBuffer[GBufferIndex_Velocity]->SetDebugName("GBuffer Velocity");
+        FrameResources.GBuffer[EGBufferIndex::Velocity]->SetDebugName("GBuffer Velocity");
     }
     else
     {
@@ -565,18 +565,18 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
 
     const EAttachmentLoadAction LoadAction = GBasePassClearAllTargets ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
 
-    FRHIRenderTargetView* AlbedoRenderTargetView   = FrameResources.GBuffer[GBufferIndex_Albedo]->GetRenderTargetView();
-    FRHIRenderTargetView* NormalRenderTargetView   = FrameResources.GBuffer[GBufferIndex_Normal]->GetRenderTargetView();
-    FRHIRenderTargetView* MaterialRenderTargetView = FrameResources.GBuffer[GBufferIndex_Material]->GetRenderTargetView();
-    FRHIRenderTargetView* VelocityRenderTargetView = FrameResources.GBuffer[GBufferIndex_Velocity]->GetRenderTargetView();
-    FRHIDepthStencilView* DepthStencilView         = FrameResources.GBuffer[GBufferIndex_Depth]->GetDepthStencilView();
+    FRHIRenderTargetView* AlbedoRenderTargetView   = FrameResources.GBuffer[EGBufferIndex::Albedo]->GetRenderTargetView();
+    FRHIRenderTargetView* NormalRenderTargetView   = FrameResources.GBuffer[EGBufferIndex::Normal]->GetRenderTargetView();
+    FRHIRenderTargetView* MaterialRenderTargetView = FrameResources.GBuffer[EGBufferIndex::Material]->GetRenderTargetView();
+    FRHIRenderTargetView* VelocityRenderTargetView = FrameResources.GBuffer[EGBufferIndex::Velocity]->GetRenderTargetView();
+    FRHIDepthStencilView* DepthStencilView         = FrameResources.GBuffer[EGBufferIndex::Depth]->GetDepthStencilView();
 
     FRHIBeginRenderPassDesc RenderPassDesc;
-    RenderPassDesc.NumRenderTargets                     = GBuffer_NumRenderTargets;
-    RenderPassDesc.RenderTargets[GBufferIndex_Albedo]   = FRHIRenderPassAttachment(AlbedoRenderTargetView, LoadAction);
-    RenderPassDesc.RenderTargets[GBufferIndex_Normal]   = FRHIRenderPassAttachment(NormalRenderTargetView, EAttachmentLoadAction::Clear);
-    RenderPassDesc.RenderTargets[GBufferIndex_Material] = FRHIRenderPassAttachment(MaterialRenderTargetView, LoadAction);
-    RenderPassDesc.RenderTargets[GBufferIndex_Velocity] = FRHIRenderPassAttachment(VelocityRenderTargetView, LoadAction);
+    RenderPassDesc.NumRenderTargets                     = EGBufferIndex::NumRenderTargets;
+    RenderPassDesc.RenderTargets[EGBufferIndex::Albedo]   = FRHIRenderPassAttachment(AlbedoRenderTargetView, LoadAction);
+    RenderPassDesc.RenderTargets[EGBufferIndex::Normal]   = FRHIRenderPassAttachment(NormalRenderTargetView, EAttachmentLoadAction::Clear);
+    RenderPassDesc.RenderTargets[EGBufferIndex::Material] = FRHIRenderPassAttachment(MaterialRenderTargetView, LoadAction);
+    RenderPassDesc.RenderTargets[EGBufferIndex::Velocity] = FRHIRenderPassAttachment(VelocityRenderTargetView, LoadAction);
     RenderPassDesc.DepthStencilAttachment               = FRHIDepthStencilAttachment(DepthStencilView, EAttachmentLoadAction::Load);
 
     CommandList.BeginRenderPass(RenderPassDesc);
@@ -952,10 +952,10 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
         CommandList.SetComputePipelineState(TiledLightPassPSO.Get());
     }
 
-    CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Albedo]->GetShaderResourceView(), 0);
-    CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView(), 1);
-    CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Material]->GetShaderResourceView(), 2);
-    CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 3);
+    CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[EGBufferIndex::Albedo]->GetShaderResourceView(), 0);
+    CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[EGBufferIndex::Normal]->GetShaderResourceView(), 1);
+    CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[EGBufferIndex::Material]->GetShaderResourceView(), 2);
+    CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[EGBufferIndex::Depth]->GetShaderResourceView(), 3);
 #if 0 // DXR-Reflection (currently unused)
     CommandList.SetShaderResourceView(LightPassShader, nullptr, 4);
 #endif
@@ -1209,13 +1209,13 @@ void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& Fr
     ReductionConstants.FarPlane      = Camera->GetFarPlane();
 
     // Perform the first reduction
-    CommandList.TransitionTextureState(FrameResources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionTextureState(FrameResources.GBuffer[EGBufferIndex::Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource));
     CommandList.TransitionTextureState(FrameResources.ReducedDepthBuffer[0].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
     CommandList.TransitionTextureState(FrameResources.ReducedDepthBuffer[1].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
 
     CommandList.SetComputePipelineState(ReduceDepthInitalPSO.Get());
 
-    CommandList.SetShaderResourceView(ReduceDepthInitalShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 0);
+    CommandList.SetShaderResourceView(ReduceDepthInitalShader.Get(), FrameResources.GBuffer[EGBufferIndex::Depth]->GetShaderResourceView(), 0);
     CommandList.SetUnorderedAccessView(ReduceDepthInitalShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0);
 
     constexpr uint32 NumConstants = sizeof(FReductionConstants) / sizeof(uint32);
@@ -1226,7 +1226,7 @@ void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& Fr
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
     CommandList.TransitionTextureState(FrameResources.ReducedDepthBuffer[0].Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
-    CommandList.TransitionTextureState(FrameResources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite));
+    CommandList.TransitionTextureState(FrameResources.GBuffer[EGBufferIndex::Depth].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite));
 
     // Perform the other reductions
     CommandList.SetComputePipelineState(ReduceDepthPSO.Get());

@@ -18,7 +18,7 @@ public:
     void BindGraphicsState();
     void BindComputeState();
 
-    void BindShaderConstants(FD3D12RootSignature* InRootSignature, EShaderVisibility ShaderStage);
+    void BindShaderConstants(FD3D12RootSignature* InRootSignature, EShaderVisibility::Type ShaderStage);
     void ResetState();
     void ResetStateResources();
     void ResetStateForNewCommandList();
@@ -36,10 +36,10 @@ public:
     void SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets);
     void SetVertexBuffer(FD3D12BufferRHI* VertexBuffer, uint32 VertexBufferSlot);
     void SetIndexBuffer(FD3D12BufferRHI* IndexBuffer, DXGI_FORMAT IndexFormat);
-    void SetSRV(FD3D12ShaderResourceViewRHI* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
-    void SetUAV(FD3D12UnorderedAccessViewRHI* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
-    void SetCBV(FD3D12BufferRHI* Buffer, EShaderVisibility ShaderStage, uint32 ResourceIndex);
-    void SetSampler(FD3D12SamplerStateRHI* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex);
+    void SetSRV(FD3D12ShaderResourceViewRHI* ShaderResourceView, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex);
+    void SetUAV(FD3D12UnorderedAccessViewRHI* UnorderedAccessView, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex);
+    void SetCBV(FD3D12BufferRHI* Buffer, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex);
+    void SetSampler(FD3D12SamplerStateRHI* SamplerState, EShaderVisibility::Type ShaderStage, uint32 SamplerIndex);
     void SetShaderConstants(const uint32* ShaderConstants, uint32 NumShaderConstants);
 
     FORCEINLINE FD3D12CommandContext& GetContext()
@@ -117,13 +117,13 @@ public:
     }
 
 private:
-    bool PrepareResources(FD3D12RootSignature* InRootSignature, FD3D12PipelineState* InPipelineState, EShaderVisibility StartStage, EShaderVisibility EndStage);
-    bool PrepareSamplers(FD3D12RootSignature* InRootSignature, FD3D12PipelineState* InPipelineState, EShaderVisibility StartStage, EShaderVisibility EndStage);
+    bool PrepareResources(FD3D12RootSignature* InRootSignature, FD3D12PipelineState* InPipelineState, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
+    bool PrepareSamplers(FD3D12RootSignature* InRootSignature, FD3D12PipelineState* InPipelineState, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
 
-    void BindResources(FD3D12RootSignature* InRootSignature, EShaderVisibility StartStage, EShaderVisibility EndStage);
-    void BindSamplers(FD3D12RootSignature* InRootSignature, EShaderVisibility StartStage, EShaderVisibility EndStage);
+    void BindResources(FD3D12RootSignature* InRootSignature, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
+    void BindSamplers(FD3D12RootSignature* InRootSignature, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
 
-    void InternalSetRootSignature(FD3D12RootSignature* InRootSignature, EShaderVisibility ShaderStage);
+    void InternalSetRootSignature(FD3D12RootSignature* InRootSignature, EShaderVisibility::Type ShaderStage);
 
     FD3D12CommandContext& Context;
 

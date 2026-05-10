@@ -151,7 +151,7 @@ FMetalGraphicsPipelineStateRHI::FMetalGraphicsPipelineStateRHI(FMetalDevice* InD
 {
     NumBuffers.Memzero();
 
-    for (EShaderVisibility ShaderStage = ShaderVisibility_Compute; ShaderStage < ShaderVisibility_Count; ShaderStage = EShaderVisibility(ShaderStage + 1))
+    for (EShaderVisibility::Type ShaderStage = EShaderVisibility::Compute; ShaderStage < EShaderVisibility::Count; ShaderStage = static_cast<EShaderVisibility::Type>(ShaderStage + 1))
     {
         BufferBindings[ShaderStage].Memzero();
         TextureBindings[ShaderStage].Fill(FMetalResourceBinding(0));
@@ -235,25 +235,25 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
             }
             else
             {
-                const auto Index = NumBuffers[ShaderVisibility_Vertex]++;
-                CHECK(Index < BufferBindings[ShaderVisibility_Vertex].Size());
+                const auto Index = NumBuffers[EShaderVisibility::Vertex]++;
+                CHECK(Index < BufferBindings[EShaderVisibility::Vertex].Size());
 
-                BufferBindings[ShaderVisibility_Vertex][Index] = static_cast<uint8>(Argument.index);
+                BufferBindings[EShaderVisibility::Vertex][Index] = static_cast<uint8>(Argument.index);
             }
         }
         else if (Argument.type == MTLArgumentTypeTexture)
         {
-            TextureBindings[ShaderVisibility_Vertex].Emplace(static_cast<uint8>(Argument.index));
+            TextureBindings[EShaderVisibility::Vertex].Emplace(static_cast<uint8>(Argument.index));
         }
         else if (Argument.type == MTLArgumentTypeSampler)
         {
-            SamplerBindings[ShaderVisibility_Vertex].Emplace(static_cast<uint8>(Argument.index));
+            SamplerBindings[EShaderVisibility::Vertex].Emplace(static_cast<uint8>(Argument.index));
         }
     }
 
     VertexBuffers.Shrink();
-    TextureBindings[ShaderVisibility_Vertex].Shrink();
-    SamplerBindings[ShaderVisibility_Vertex].Shrink();
+    TextureBindings[EShaderVisibility::Vertex].Shrink();
+    SamplerBindings[EShaderVisibility::Vertex].Shrink();
 
     // Pixel function resources
     for (MTLArgument* Argument in PipelineReflection.fragmentArguments)
@@ -265,23 +265,23 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
 
         if (Argument.type == MTLArgumentTypeBuffer)
         {
-            const auto Index = NumBuffers[ShaderVisibility_Pixel]++;
-            CHECK(Index < BufferBindings[ShaderVisibility_Pixel].Size());
+            const auto Index = NumBuffers[EShaderVisibility::Pixel]++;
+            CHECK(Index < BufferBindings[EShaderVisibility::Pixel].Size());
 
-            BufferBindings[ShaderVisibility_Pixel][Index] = static_cast<uint8>(Argument.index);
+            BufferBindings[EShaderVisibility::Pixel][Index] = static_cast<uint8>(Argument.index);
         }
         else if (Argument.type == MTLArgumentTypeTexture)
         {
-            TextureBindings[ShaderVisibility_Pixel].Emplace(static_cast<uint8>(Argument.index));
+            TextureBindings[EShaderVisibility::Pixel].Emplace(static_cast<uint8>(Argument.index));
         }
         else if (Argument.type == MTLArgumentTypeSampler)
         {
-            SamplerBindings[ShaderVisibility_Pixel].Emplace(static_cast<uint8>(Argument.index));
+            SamplerBindings[EShaderVisibility::Pixel].Emplace(static_cast<uint8>(Argument.index));
         }
     }
 
-    TextureBindings[ShaderVisibility_Pixel].Shrink();
-    SamplerBindings[ShaderVisibility_Pixel].Shrink();
+    TextureBindings[EShaderVisibility::Pixel].Shrink();
+    SamplerBindings[EShaderVisibility::Pixel].Shrink();
 
     return true;
 }

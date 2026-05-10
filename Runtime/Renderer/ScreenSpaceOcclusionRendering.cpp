@@ -177,8 +177,8 @@ void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameReso
 
     const uint32 Width         = FrameResources.SSAOBuffer->GetDesc().Extent.X;
     const uint32 Height        = FrameResources.SSAOBuffer->GetDesc().Extent.Y;
-    const uint32 GBufferWidth  = FrameResources.GBuffer[GBufferIndex_Depth]->GetDesc().Extent.X;
-    const uint32 GBufferHeight = FrameResources.GBuffer[GBufferIndex_Depth]->GetDesc().Extent.Y;
+    const uint32 GBufferWidth  = FrameResources.GBuffer[EGBufferIndex::Depth]->GetDesc().Extent.X;
+    const uint32 GBufferHeight = FrameResources.GBuffer[EGBufferIndex::Depth]->GetDesc().Extent.Y;
 
     SSAOSettings.ScreenSize  = FVector2(float(Width), float(Height));
     SSAOSettings.NoiseSize   = FVector2(4.0f, 4.0f);
@@ -191,8 +191,8 @@ void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameReso
     CommandList.SetComputePipelineState(PipelineState.Get());
     CommandList.SetConstantBuffer(SSAOShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-    CommandList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView(), 0);
-    CommandList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 1);
+    CommandList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[EGBufferIndex::Normal]->GetShaderResourceView(), 0);
+    CommandList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[EGBufferIndex::Depth]->GetShaderResourceView(), 1);
 
     CommandList.SetSamplerState(SSAOShader.Get(), FrameResources.GBufferSampler.Get(), 0);
 
