@@ -60,7 +60,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    SSAOShader = FRHI::Get()->CreateComputeShader(ShaderCode);
+    SSAOShader = RHI::Device->CreateComputeShader(ShaderCode);
     if (!SSAOShader)
     {
         DEBUG_BREAK();
@@ -70,7 +70,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
     FRHIComputePipelineStateDesc PSODesc;
     PSODesc.Shader = SSAOShader.Get();
 
-    PipelineState = FRHI::Get()->CreateComputePipelineState(PSODesc);
+    PipelineState = RHI::Device->CreateComputePipelineState(PSODesc);
     if (!PipelineState)
     {
         DEBUG_BREAK();
@@ -93,7 +93,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    BlurHorizontalShader = FRHI::Get()->CreateComputeShader(ShaderCode);
+    BlurHorizontalShader = RHI::Device->CreateComputeShader(ShaderCode);
     if (!BlurHorizontalShader)
     {
         DEBUG_BREAK();
@@ -101,7 +101,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
     }
 
     PSODesc.Shader = BlurHorizontalShader.Get();
-    BlurHorizontalPSO = FRHI::Get()->CreateComputePipelineState(PSODesc);
+    BlurHorizontalPSO = RHI::Device->CreateComputePipelineState(PSODesc);
 
     if (!BlurHorizontalPSO)
     {
@@ -123,7 +123,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    BlurVerticalShader = FRHI::Get()->CreateComputeShader(ShaderCode);
+    BlurVerticalShader = RHI::Device->CreateComputeShader(ShaderCode);
     if (!BlurVerticalShader)
     {
         DEBUG_BREAK();
@@ -132,7 +132,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
 
     PSODesc.Shader = BlurVerticalShader.Get();
 
-    BlurVerticalPSO = FRHI::Get()->CreateComputePipelineState(PSODesc);
+    BlurVerticalPSO = RHI::Device->CreateComputePipelineState(PSODesc);
     if (!BlurVerticalPSO)
     {
         DEBUG_BREAK();
@@ -148,7 +148,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
 
 void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources)
 {
-    if (FrameResources.SSAOBuffer->GetWidth() == 0 || FrameResources.SSAOBuffer->GetHeight() == 0)
+    if (FrameResources.SSAOBuffer->GetDesc().Extent.X == 0 || FrameResources.SSAOBuffer->GetDesc().Extent.Y == 0)
     {
         return;
     }
@@ -175,10 +175,10 @@ void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameReso
         uint32 FrameIndex;
     } SSAOSettings;
 
-    const uint32 Width         = FrameResources.SSAOBuffer->GetWidth();
-    const uint32 Height        = FrameResources.SSAOBuffer->GetHeight();
-    const uint32 GBufferWidth  = FrameResources.GBuffer[GBufferIndex_Depth]->GetWidth();
-    const uint32 GBufferHeight = FrameResources.GBuffer[GBufferIndex_Depth]->GetHeight();
+    const uint32 Width         = FrameResources.SSAOBuffer->GetDesc().Extent.X;
+    const uint32 Height        = FrameResources.SSAOBuffer->GetDesc().Extent.Y;
+    const uint32 GBufferWidth  = FrameResources.GBuffer[GBufferIndex_Depth]->GetDesc().Extent.X;
+    const uint32 GBufferHeight = FrameResources.GBuffer[GBufferIndex_Depth]->GetDesc().Extent.Y;
 
     SSAOSettings.ScreenSize  = FVector2(float(Width), float(Height));
     SSAOSettings.NoiseSize   = FVector2(4.0f, 4.0f);
@@ -246,7 +246,7 @@ bool FScreenSpaceOcclusionPass::CreateResources(FFrameResources& FrameResources,
     const ETextureUsageFlags Flags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
 
     FRHITextureDesc SSAOBufferDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::SSAOBufferFormat, Width, Height, 1, 1, Flags);
-    FrameResources.SSAOBuffer = FRHI::Get()->CreateTexture(SSAOBufferDesc, EResourceAccess::NonPixelShaderResource);
+    FrameResources.SSAOBuffer = RHI::Device->CreateTexture(SSAOBufferDesc, EResourceAccess::NonPixelShaderResource);
     if (!FrameResources.SSAOBuffer)
     {
         DEBUG_BREAK();

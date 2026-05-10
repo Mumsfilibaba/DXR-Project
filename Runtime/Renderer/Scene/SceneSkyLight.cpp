@@ -39,7 +39,7 @@ void FSceneSkyLight::FilterStaticCubeMaps()
     const ETextureUsageFlags TextureFlags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
     FRHITextureDesc SpecularCubeMapDesc = FRHITextureDesc::CreateTextureCube(TempCubeMapFormat, SpecularCubeMapSize, SpecularIrradianceMiplevels, 1,TextureFlags);
 
-    FRHITextureRef TempSpecularCubeMap = FRHI::Get()->CreateTexture(SpecularCubeMapDesc, EResourceAccess::PixelShaderResource);
+    FRHITextureRef TempSpecularCubeMap = RHI::Device->CreateTexture(SpecularCubeMapDesc, EResourceAccess::PixelShaderResource);
     if (!TempSpecularCubeMap)
     {
         DEBUG_BREAK();
@@ -54,7 +54,7 @@ void FSceneSkyLight::FilterStaticCubeMaps()
     const uint32 DiffuseCubeMapSize = 32;
     FRHITextureDesc DiffuseCubeMapDesc = FRHITextureDesc::CreateTextureCube(TempCubeMapFormat, DiffuseCubeMapSize, 1, 1, TextureFlags);
 
-    FRHITextureRef TempDiffuseCubeMap = FRHI::Get()->CreateTexture(DiffuseCubeMapDesc, EResourceAccess::PixelShaderResource);
+    FRHITextureRef TempDiffuseCubeMap = RHI::Device->CreateTexture(DiffuseCubeMapDesc, EResourceAccess::PixelShaderResource);
     if (!TempDiffuseCubeMap)
     {
         DEBUG_BREAK();

@@ -30,7 +30,7 @@
 
 static void TryCompressBC1(FTextureCompressor& Compressor, FRHITextureRef& Texture)
 {
-    if (Texture && !IsBlockCompressed(Texture->GetFormat()) && IsBlockCompressedAligned(Texture->GetDesc().Extent.X) && IsBlockCompressedAligned(Texture->GetDesc().Extent.Y))
+    if (Texture && !IsBlockCompressed(Texture->GetDesc().Format) && IsBlockCompressedAligned(Texture->GetDesc().Extent.X) && IsBlockCompressedAligned(Texture->GetDesc().Extent.Y))
     {
         FRHITextureRef Compressed;
         if (Compressor.CompressBC1(Texture, Compressed))
@@ -42,7 +42,7 @@ static void TryCompressBC1(FTextureCompressor& Compressor, FRHITextureRef& Textu
 
 static void TryCompressBC5(FTextureCompressor& Compressor, FRHITextureRef& Texture)
 {
-    if (Texture && !IsBlockCompressed(Texture->GetFormat()) && IsBlockCompressedAligned(Texture->GetDesc().Extent.X) && IsBlockCompressedAligned(Texture->GetDesc().Extent.Y))
+    if (Texture && !IsBlockCompressed(Texture->GetDesc().Format) && IsBlockCompressedAligned(Texture->GetDesc().Extent.X) && IsBlockCompressedAligned(Texture->GetDesc().Extent.Y))
     {
         FRHITextureRef Compressed;
         if (Compressor.CompressBC5(Texture, Compressed))
@@ -1200,7 +1200,7 @@ FRHITextureRef FSandbox::LoadCubeMapFromPanorama(const FString& Filename)
     constexpr ETextureUsageFlags TextureFlags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTextureCube(EFormat::R16G16B16A16_Float, SkyboxSize, NumMiplevels, 1, TextureFlags);
 
-    FRHITextureRef Skybox = FRHI::Get()->CreateTexture(TextureDesc);
+    FRHITextureRef Skybox = RHI::Device->CreateTexture(TextureDesc);
     if (!Skybox)
     {
         DEBUG_BREAK();

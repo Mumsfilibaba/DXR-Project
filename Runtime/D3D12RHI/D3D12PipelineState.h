@@ -57,8 +57,6 @@ public:
     // FRHIDepthStencilState Interface
     virtual void* GetRHINativeState() const override final;
 
-    virtual FRHIDepthStencilStateDesc GetDesc() const override final;
-
     const D3D12_DEPTH_STENCIL_DESC& GetD3D12Desc() const
     {
         return D3D12Desc;
@@ -70,7 +68,6 @@ public:
     }
 
 private:
-    FRHIDepthStencilStateDesc Desc;
     D3D12_DEPTH_STENCIL_DESC  D3D12Desc;
     uint64                    Hash;
 };
@@ -84,8 +81,6 @@ public:
     // FRHIRasterizerState Interface
     virtual void* GetRHINativeState() const override final;
 
-    virtual FRHIRasterizerStateDesc GetDesc() const override final;
-
     const D3D12_RASTERIZER_DESC& GetD3D12Desc() const
     {
         return D3D12Desc;
@@ -97,7 +92,6 @@ public:
     }
 
 private:
-    FRHIRasterizerStateDesc Desc;
     D3D12_RASTERIZER_DESC   D3D12Desc;
     uint64                  Hash;
 };
@@ -111,8 +105,6 @@ public:
     // FRHIBlendState Interface
     virtual void* GetRHINativeState() const override final;
 
-    virtual FRHIBlendStateDesc GetDesc() const override final;
-
     const D3D12_BLEND_DESC& GetD3D12Desc() const
     {
         return D3D12Desc;
@@ -124,7 +116,6 @@ public:
     }
 
 private:
-    FRHIBlendStateDesc Desc;
     D3D12_BLEND_DESC   D3D12Desc;
     uint64             Hash;
 };

@@ -4,6 +4,152 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
+inline FRHIShaderResourceViewDesc GetDefaultShaderResourceViewDescForTexture(const FRHITextureDesc& TextureDesc)
+{
+    const EFormat Format    = TextureDesc.Format;
+    const uint8   NumMips   = static_cast<uint8>(TextureDesc.NumMipLevels);
+    const uint16  NumSlices = static_cast<uint16>(TextureDesc.NumArraySlices);
+
+    if (TextureDesc.IsTexture1D())
+    {
+        return FRHIShaderResourceViewDesc::CreateTexture1D(Format, 0, NumMips);
+    }
+
+    if (TextureDesc.IsTexture1DArray())
+    {
+        return FRHIShaderResourceViewDesc::CreateTexture1DArray(Format, 0, NumMips, 0, NumSlices);
+    }
+
+    if (TextureDesc.IsTexture2D())
+    {
+        return FRHIShaderResourceViewDesc::CreateTexture2D(Format, 0, NumMips);
+    }
+
+    if (TextureDesc.IsTexture2DArray())
+    {
+        return FRHIShaderResourceViewDesc::CreateTexture2DArray(Format, 0, NumMips, 0, NumSlices);
+    }
+
+    if (TextureDesc.IsTextureCube())
+    {
+        return FRHIShaderResourceViewDesc::CreateTextureCube(Format, 0, NumMips);
+    }
+
+    if (TextureDesc.IsTextureCubeArray())
+    {
+        return FRHIShaderResourceViewDesc::CreateTextureCubeArray(Format, 0, NumMips, 0, NumSlices);
+    }
+
+    if (TextureDesc.IsTexture3D())
+    {
+        return FRHIShaderResourceViewDesc::CreateTexture3D(Format, 0, NumMips);
+    }
+
+    return FRHIShaderResourceViewDesc{};
+}
+
+inline FRHIUnorderedAccessViewDesc GetDefaultUnorderedAccessViewDescForTexture(const FRHITextureDesc& TextureDesc)
+{
+    const EFormat Format    = TextureDesc.Format;
+    const uint16  NumSlices = static_cast<uint16>(TextureDesc.NumArraySlices);
+
+    if (TextureDesc.IsTexture1D())
+    {
+        return FRHIUnorderedAccessViewDesc::CreateTexture1D(Format, 0);
+    }
+
+    if (TextureDesc.IsTexture1DArray())
+    {
+        return FRHIUnorderedAccessViewDesc::CreateTexture1DArray(Format, 0, 0, NumSlices);
+    }
+
+    if (TextureDesc.IsTexture2D())
+    {
+        return FRHIUnorderedAccessViewDesc::CreateTexture2D(Format, 0);
+    }
+
+    if (TextureDesc.IsTexture2DArray())
+    {
+        return FRHIUnorderedAccessViewDesc::CreateTexture2DArray(Format, 0, 0, NumSlices);
+    }
+
+    if (TextureDesc.IsTextureCube() || TextureDesc.IsTextureCubeArray())
+    {
+        const uint16 ArraySize = static_cast<uint16>(RHIDimensionArrayLayers(TextureDesc.Dimension, TextureDesc.NumArraySlices));
+        return FRHIUnorderedAccessViewDesc::CreateTexture2DArray(Format, 0, 0, ArraySize);
+    }
+
+    if (TextureDesc.IsTexture3D())
+    {
+        return FRHIUnorderedAccessViewDesc::CreateTexture3D(Format, 0, 0, static_cast<uint16>(TextureDesc.Extent.Z));
+    }
+
+    return FRHIUnorderedAccessViewDesc{};
+}
+
+inline FRHIRenderTargetViewDesc GetDefaultRenderTargetViewDescForTexture(const FRHITextureDesc& TextureDesc)
+{
+    const EFormat Format    = TextureDesc.Format;
+    const uint16  NumSlices = static_cast<uint16>(TextureDesc.NumArraySlices);
+
+    if (TextureDesc.IsTexture1D())
+    {
+        return FRHIRenderTargetViewDesc::CreateTexture1D(Format, 0);
+    }
+
+    if (TextureDesc.IsTexture1DArray())
+    {
+        return FRHIRenderTargetViewDesc::CreateTexture1DArray(Format, 0, 0, NumSlices);
+    }
+
+    if (TextureDesc.IsTexture2D())
+    {
+        return FRHIRenderTargetViewDesc::CreateTexture2D(Format, 0);
+    }
+
+    if (TextureDesc.IsTexture2DArray() || TextureDesc.IsTextureCube() || TextureDesc.IsTextureCubeArray())
+    {
+        const uint16 ArraySize = static_cast<uint16>(RHIDimensionArrayLayers(TextureDesc.Dimension, TextureDesc.NumArraySlices));
+        return FRHIRenderTargetViewDesc::CreateTexture2DArray(Format, 0, 0, ArraySize);
+    }
+
+    if (TextureDesc.IsTexture3D())
+    {
+        return FRHIRenderTargetViewDesc::CreateTexture3D(Format, 0, 0, static_cast<uint16>(TextureDesc.Extent.Z));
+    }
+
+    return FRHIRenderTargetViewDesc{};
+}
+
+inline FRHIDepthStencilViewDesc GetDefaultDepthStencilViewDescForTexture(const FRHITextureDesc& TextureDesc)
+{
+    const EFormat Format    = TextureDesc.ClearValue.Format != EFormat::Unknown ? TextureDesc.ClearValue.Format : TextureDesc.Format;
+    const uint16  NumSlices = static_cast<uint16>(TextureDesc.NumArraySlices);
+
+    if (TextureDesc.IsTexture1D())
+    {
+        return FRHIDepthStencilViewDesc::CreateTexture1D(Format, 0);
+    }
+
+    if (TextureDesc.IsTexture1DArray())
+    {
+        return FRHIDepthStencilViewDesc::CreateTexture1DArray(Format, 0, 0, NumSlices);
+    }
+
+    if (TextureDesc.IsTexture2D())
+    {
+        return FRHIDepthStencilViewDesc::CreateTexture2D(Format, 0);
+    }
+
+    if (TextureDesc.IsTexture2DArray() || TextureDesc.IsTextureCube() || TextureDesc.IsTextureCubeArray())
+    {
+        const uint16 ArraySize = static_cast<uint16>(RHIDimensionArrayLayers(TextureDesc.Dimension, TextureDesc.NumArraySlices));
+        return FRHIDepthStencilViewDesc::CreateTexture2DArray(Format, 0, 0, ArraySize);
+    }
+
+    return FRHIDepthStencilViewDesc{};
+}
+
 class FNullBufferRHI : public FRHIBuffer
 {
 public:
@@ -47,8 +193,8 @@ private:
 
 struct FNullShaderResourceViewRHI : public FRHIShaderResourceView
 {
-    FNullShaderResourceViewRHI(FRHIResource* InResource)
-        : FRHIShaderResourceView(InResource)
+    FNullShaderResourceViewRHI(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InRHIDesc)
+        : FRHIShaderResourceView(InResource, InRHIDesc)
     {
     }
 
@@ -65,8 +211,8 @@ struct FNullShaderResourceViewRHI : public FRHIShaderResourceView
 
 struct FNullUnorderedAccessViewRHI : public FRHIUnorderedAccessView
 {
-    FNullUnorderedAccessViewRHI(FRHIResource* InResource)
-        : FRHIUnorderedAccessView(InResource)
+    FNullUnorderedAccessViewRHI(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InRHIDesc)
+        : FRHIUnorderedAccessView(InResource, InRHIDesc)
     {
     }
 
@@ -83,8 +229,8 @@ struct FNullUnorderedAccessViewRHI : public FRHIUnorderedAccessView
 
 struct FNullRenderTargetViewRHI : public FRHIRenderTargetView
 {
-    FNullRenderTargetViewRHI(FRHIResource* InResource)
-        : FRHIRenderTargetView(InResource)
+    FNullRenderTargetViewRHI(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InRHIDesc)
+        : FRHIRenderTargetView(InResource, InRHIDesc)
     {
     }
 
@@ -96,9 +242,8 @@ struct FNullRenderTargetViewRHI : public FRHIRenderTargetView
 
 struct FNullDepthStencilViewRHI : public FRHIDepthStencilView
 {
-    FNullDepthStencilViewRHI(FRHIResource* InResource, EDepthStencilViewFlags InFlags = EDepthStencilViewFlags::None)
-        : FRHIDepthStencilView(InResource)
-        , Flags(InFlags)
+    FNullDepthStencilViewRHI(FRHIResource* InResource, const FRHIDepthStencilViewDesc& InRHIDesc)
+        : FRHIDepthStencilView(InResource, InRHIDesc)
     {
     }
 
@@ -109,11 +254,8 @@ struct FNullDepthStencilViewRHI : public FRHIDepthStencilView
 
     EDepthStencilViewFlags GetFlags() const
     {
-        return Flags;
+        return Desc.Flags;
     }
-
-private:
-    EDepthStencilViewFlags Flags;
 };
 
 class FNullTextureRHI : public FRHITexture
@@ -128,22 +270,22 @@ public:
     {
         if (Desc.IsShaderResourceTexture() && !Desc.IsNoDefaultSRV())
         {
-            ShaderResourceView = new FNullShaderResourceViewRHI(this);
+            ShaderResourceView = new FNullShaderResourceViewRHI(this, GetDefaultShaderResourceViewDescForTexture(Desc));
         }
 
         if (Desc.IsUnorderedAccessTexture() && !Desc.IsNoDefaultUAV())
         {
-            UnorderedAccessView = new FNullUnorderedAccessViewRHI(this);
+            UnorderedAccessView = new FNullUnorderedAccessViewRHI(this, GetDefaultUnorderedAccessViewDescForTexture(Desc));
         }
 
         if (Desc.IsRenderTarget() && !Desc.IsNoDefaultRTV())
         {
-            RenderTargetView = new FNullRenderTargetViewRHI(this);
+            RenderTargetView = new FNullRenderTargetViewRHI(this, GetDefaultRenderTargetViewDescForTexture(Desc));
         }
 
         if (Desc.IsDepthStencil() && !Desc.IsNoDefaultDSV())
         {
-            DepthStencilView = new FNullDepthStencilViewRHI(this);
+            DepthStencilView = new FNullDepthStencilViewRHI(this, GetDefaultDepthStencilViewDescForTexture(Desc));
         }
     }
 
@@ -232,7 +374,7 @@ class FNullRayTracingSceneRHI : public FRHISceneAccelerationStructure
 public:
     FNullRayTracingSceneRHI(const FRHISceneAccelerationStructureDesc& InSceneDesc)
         : FRHISceneAccelerationStructure(InSceneDesc)
-        , View(new FNullShaderResourceViewRHI(this))
+        , View(new FNullShaderResourceViewRHI(this, FRHIShaderResourceViewDesc::CreateAccelerationStructure()))
     {
     }
 
@@ -485,8 +627,7 @@ class FNullDepthStencilStateRHI : public FRHIDepthStencilState
 {
 public:
     FNullDepthStencilStateRHI(const FRHIDepthStencilStateDesc& InDesc)
-        : FRHIDepthStencilState()
-        , Desc(InDesc)
+        : FRHIDepthStencilState(InDesc)
     {
     }
 
@@ -494,22 +635,13 @@ public:
     {
         return nullptr;
     }
-
-    virtual FRHIDepthStencilStateDesc GetDesc() const override final
-    {
-        return Desc;
-    }
-
-private:
-    FRHIDepthStencilStateDesc Desc;
 };
 
 class FNullRasterizerStateRHI : public FRHIRasterizerState
 {
 public:
     FNullRasterizerStateRHI(const FRHIRasterizerStateDesc& InDesc)
-        : FRHIRasterizerState()
-        , Desc(InDesc)
+        : FRHIRasterizerState(InDesc)
     {
     }
 
@@ -517,22 +649,13 @@ public:
     {
         return nullptr;
     }
-
-    virtual FRHIRasterizerStateDesc GetDesc() const override final
-    {
-        return Desc;
-    }
-
-private:
-    FRHIRasterizerStateDesc Desc;
 };
 
 struct FNullBlendStateRHI : public FRHIBlendState
 {
 public:
     FNullBlendStateRHI(const FRHIBlendStateDesc& InDesc)
-        : FRHIBlendState()
-        , Desc(InDesc)
+        : FRHIBlendState(InDesc)
     {
     }
 
@@ -540,14 +663,6 @@ public:
     {
         return nullptr;
     }
-
-    virtual FRHIBlendStateDesc GetDesc() const override final
-    {
-        return Desc;
-    }
-
-private:
-    FRHIBlendStateDesc Desc;
 };
 
 struct FNullGraphicsPipelineStateRHI : public FRHIGraphicsPipelineState

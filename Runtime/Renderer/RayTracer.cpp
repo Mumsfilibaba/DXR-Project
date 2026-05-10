@@ -20,7 +20,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
         }
     }
 
-    RayGenShader = FRHI::Get()->CreateRayGenShader(Code);
+    RayGenShader = RHI::Device->CreateRayGenShader(Code);
     if (!RayGenShader)
     {
         DEBUG_BREAK();
@@ -36,7 +36,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
         }
     }
 
-    RayClosestHitShader = FRHI::Get()->CreateRayClosestHitShader(Code);
+    RayClosestHitShader = RHI::Device->CreateRayClosestHitShader(Code);
     if (!RayClosestHitShader)
     {
         DEBUG_BREAK();
@@ -52,7 +52,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
         }
     }
 
-    RayMissShader = FRHI::Get()->CreateRayMissShader(Code);
+    RayMissShader = RHI::Device->CreateRayMissShader(Code);
     if (!RayMissShader)
     {
         DEBUG_BREAK();
@@ -67,7 +67,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
     PSODesc.MaxAttributeSizeInBytes = sizeof(FRayIntersectionAttributes);
     PSODesc.MaxPayloadSizeInBytes   = sizeof(FRayPayload);
 
-    Pipeline = FRHI::Get()->CreateRayTracingPipelineState(PSODesc);
+    Pipeline = RHI::Device->CreateRayTracingPipelineState(PSODesc);
     if (!Pipeline)
     {
         DEBUG_BREAK();
@@ -78,7 +78,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
 	const uint32 Height = Resources.CurrentRenderHeight;
 
     FRHITextureDesc RTOutputDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::RTOutputFormat, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture);
-    Resources.RTOutput = FRHI::Get()->CreateTexture(RTOutputDesc, EResourceAccess::UnorderedAccess);
+    Resources.RTOutput = RHI::Device->CreateTexture(RTOutputDesc, EResourceAccess::UnorderedAccess);
     if (!Resources.RTOutput)
     {
         DEBUG_BREAK();
@@ -163,7 +163,7 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
     if (!Resources.RTScene)
     {
         FRHISceneAccelerationStructureDesc SceneDesc(MakeArrayView(Resources.RTGeometryInstances), EAccelerationStructureBuildFlags::None);
-        Resources.RTScene = FRHI::Get()->CreateSceneAccelerationStructure(SceneDesc);
+        Resources.RTScene = RHI::Device->CreateSceneAccelerationStructure(SceneDesc);
     }
     else
     {
@@ -211,8 +211,8 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
         Resources.RTHitGroupResources.Data(),
         Resources.RTHitGroupResources.Size());
 
-    uint32 Width  = Resources.RTOutput->GetWidth();
-    uint32 Height = Resources.RTOutput->GetHeight();
+    uint32 Width  = Resources.RTOutput->GetDesc().Extent.X;
+    uint32 Height = Resources.RTOutput->GetDesc().Extent.Y;
     CommandList.DispatchRays(Resources.RTScene.Get(), Pipeline.Get(), Width, Height, 1);
 
     CommandList.UnorderedAccessTextureBarrier(Resources.RTOutput.Get());

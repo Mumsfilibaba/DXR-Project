@@ -2,13 +2,13 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-IMPLEMENT_ENGINE_MODULE(FMetalRHIModule, MetalRHI);
+IMPLEMENT_ENGINE_MODULE(FMetalModuleRHI, MetalRHI);
 
-FMetalRHI* FMetalRHI::GMetalRHI = nullptr;
+FMetalDeviceRHI* FMetalDeviceRHI::GMetalDeviceRHI = nullptr;
 
-FRHI* FMetalRHIModule::CreateRHI()
+FRHIDevice* FMetalModuleRHI::CreateDevice()
 {
-    TUniquePtr<FMetalRHI> NewRHI = MakeUniquePtr<FMetalRHI>();
+    TUniquePtr<FMetalDeviceRHI> NewRHI = MakeUniquePtr<FMetalDeviceRHI>();
     if (NewRHI->Initialize())
     {
         return nullptr;
@@ -19,29 +19,34 @@ FRHI* FMetalRHIModule::CreateRHI()
     }
 }
 
-FMetalRHI::FMetalRHI()
-    : FRHI(ERHIType::Metal)
+ERHIType FMetalDeviceRHI::GetRHIType() const
+{
+    return ERHIType::Metal;
+}
+
+FMetalDeviceRHI::FMetalDeviceRHI()
+    : FRHIDevice()
     , Device(nullptr)
     , CommandContext(nullptr)
 {
-    if (!GMetalRHI)
+    if (!GMetalDeviceRHI)
     {
-        GMetalRHI = this;
+        GMetalDeviceRHI = this;
     }
 }
 
-FMetalRHI::~FMetalRHI()
+FMetalDeviceRHI::~FMetalDeviceRHI()
 {
     SAFE_DELETE(CommandContext);
     SAFE_DELETE(Device);
 
-    if (GMetalRHI == this)
+    if (GMetalDeviceRHI == this)
     {
-        GMetalRHI = nullptr;
+        GMetalDeviceRHI = nullptr;
     }
 }
 
-bool FMetalRHI::Initialize()
+bool FMetalDeviceRHI::Initialize()
 {
     Device = new FMetalDevice();
     if (!Device->Initialize())
@@ -62,7 +67,7 @@ bool FMetalRHI::Initialize()
     return true;
 }
 
-FRHITexture* FMetalRHI::CreateTexture(const FRHITextureDesc& InTextureDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
+FRHITexture* FMetalDeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
     FMetalTextureRef NewTexture = new FMetalTextureRHI(GetMetalDevice(), InTextureDesc);
     if (!NewTexture->Initialize(InInitialState, InInitialData))
@@ -75,7 +80,7 @@ FRHITexture* FMetalRHI::CreateTexture(const FRHITextureDesc& InTextureDesc, ERes
     }
 }
 
-FRHIBuffer* FMetalRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, EResourceAccess InInitialState, const void* InInitialData)
+FRHIBuffer* FMetalDeviceRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, EResourceAccess InInitialState, const void* InInitialData)
 {
     FMetalBufferRef NewBuffer = new FMetalBufferRHI(GetMetalDevice(), InBufferDesc);
     if (!NewBuffer->Initialize(InInitialState, InInitialData))
@@ -88,7 +93,7 @@ FRHIBuffer* FMetalRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, EResourc
     }
 }
 
-FRHISamplerState* FMetalRHI::CreateSamplerState(const FRHISamplerStateDesc& InSamplerDesc)
+FRHISamplerState* FMetalDeviceRHI::CreateSamplerState(const FRHISamplerStateDesc& InSamplerDesc)
 {
     FMetalSamplerStateRef NewSamplerState = new FMetalSamplerStateRHI(GetMetalDevice(), InSamplerDesc);
     if (!NewSamplerState->Initialize())
@@ -101,17 +106,17 @@ FRHISamplerState* FMetalRHI::CreateSamplerState(const FRHISamplerStateDesc& InSa
     }
 }
 
-FRHISceneAccelerationStructure* FMetalRHI::CreateSceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& Desc)
+FRHISceneAccelerationStructure* FMetalDeviceRHI::CreateSceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& Desc)
 {
     return new FMetalSceneAccelerationStructureRHI(GetMetalDevice(), Desc);
 }
 
-FRHIGeometryAccelerationStructure* FMetalRHI::CreateGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
+FRHIGeometryAccelerationStructure* FMetalDeviceRHI::CreateGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
 {
     return new FMetalGeometryAccelerationStructureRHI(InGeometryDesc);
 }
 
-FRHIShaderResourceView* FMetalRHI::CreateShaderResourceView(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc)
+FRHIShaderResourceView* FMetalDeviceRHI::CreateShaderResourceView(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc)
 {
     if (!InResource)
     {
@@ -120,13 +125,13 @@ FRHIShaderResourceView* FMetalRHI::CreateShaderResourceView(FRHIResource* InReso
 
     if (InDesc.IsBufferSRV() || InDesc.IsTextureSRV() || InDesc.IsAccelerationStructureSRV())
     {
-        return new FMetalShaderResourceViewRHI(GetMetalDevice(), InResource);
+        return new FMetalShaderResourceViewRHI(GetMetalDevice(), InResource, InDesc);
     }
 
     return nullptr;
 }
 
-FRHIRenderTargetView* FMetalRHI::CreateRenderTargetView(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc)
+FRHIRenderTargetView* FMetalDeviceRHI::CreateRenderTargetView(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc)
 {
     if (!InResource || InResource->GetResourceType() != ERHIResourceType::Texture)
     {
@@ -137,7 +142,7 @@ FRHIRenderTargetView* FMetalRHI::CreateRenderTargetView(FRHIResource* InResource
     return new FMetalRenderTargetViewRHI(GetMetalDevice(), Texture, InDesc);
 }
 
-FRHIDepthStencilView* FMetalRHI::CreateDepthStencilView(FRHIResource* InResource, const FRHIDepthStencilViewDesc& InDesc)
+FRHIDepthStencilView* FMetalDeviceRHI::CreateDepthStencilView(FRHIResource* InResource, const FRHIDepthStencilViewDesc& InDesc)
 {
     if (!InResource || InResource->GetResourceType() != ERHIResourceType::Texture)
     {
@@ -148,7 +153,7 @@ FRHIDepthStencilView* FMetalRHI::CreateDepthStencilView(FRHIResource* InResource
     return new FMetalDepthStencilViewRHI(GetMetalDevice(), Texture, InDesc);
 }
 
-FRHIUnorderedAccessView* FMetalRHI::CreateUnorderedAccessView(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc)
+FRHIUnorderedAccessView* FMetalDeviceRHI::CreateUnorderedAccessView(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc)
 {
     if (!InResource)
     {
@@ -157,13 +162,13 @@ FRHIUnorderedAccessView* FMetalRHI::CreateUnorderedAccessView(FRHIResource* InRe
 
     if (InDesc.IsBufferUAV() || InDesc.IsTextureUAV())
     {
-        return new FMetalUnorderedAccessViewRHI(GetMetalDevice(), InResource);
+        return new FMetalUnorderedAccessViewRHI(GetMetalDevice(), InResource, InDesc);
     }
 
     return nullptr;
 }
 
-FRHIComputeShader* FMetalRHI::CreateComputeShader(const TArray<uint8>& ShaderCode)
+FRHIComputeShader* FMetalDeviceRHI::CreateComputeShader(const TArray<uint8>& ShaderCode)
 {
     FMetalComputeShaderRef NewShader = new FMetalComputeShaderRHI(GetMetalDevice());
     if (!NewShader->Initialize(ShaderCode))
@@ -176,7 +181,7 @@ FRHIComputeShader* FMetalRHI::CreateComputeShader(const TArray<uint8>& ShaderCod
     }
 }
 
-FRHIVertexShader* FMetalRHI::CreateVertexShader(const TArray<uint8>& ShaderCode)
+FRHIVertexShader* FMetalDeviceRHI::CreateVertexShader(const TArray<uint8>& ShaderCode)
 {
     FMetalVertexShaderRef NewShader = new FMetalVertexShaderRHI(GetMetalDevice());
     if (!NewShader->Initialize(ShaderCode))
@@ -189,32 +194,32 @@ FRHIVertexShader* FMetalRHI::CreateVertexShader(const TArray<uint8>& ShaderCode)
     }
 }
 
-FRHIHullShader* FMetalRHI::CreateHullShader(const TArray<uint8>& ShaderCode)
+FRHIHullShader* FMetalDeviceRHI::CreateHullShader(const TArray<uint8>& ShaderCode)
 {
     return nullptr;
 }
 
-FRHIDomainShader* FMetalRHI::CreateDomainShader(const TArray<uint8>& ShaderCode)
+FRHIDomainShader* FMetalDeviceRHI::CreateDomainShader(const TArray<uint8>& ShaderCode)
 {
     return nullptr;
 }
 
-FRHIGeometryShader* FMetalRHI::CreateGeometryShader(const TArray<uint8>& ShaderCode)
+FRHIGeometryShader* FMetalDeviceRHI::CreateGeometryShader(const TArray<uint8>& ShaderCode)
 {
     return nullptr;
 }
 
-FRHIMeshShader* FMetalRHI::CreateMeshShader(const TArray<uint8>& ShaderCode)
+FRHIMeshShader* FMetalDeviceRHI::CreateMeshShader(const TArray<uint8>& ShaderCode)
 {
     return nullptr;
 }
 
-FRHIAmplificationShader* FMetalRHI::CreateAmplificationShader(const TArray<uint8>& ShaderCode)
+FRHIAmplificationShader* FMetalDeviceRHI::CreateAmplificationShader(const TArray<uint8>& ShaderCode)
 {
     return nullptr;
 }
 
-FRHIPixelShader* FMetalRHI::CreatePixelShader(const TArray<uint8>& ShaderCode)
+FRHIPixelShader* FMetalDeviceRHI::CreatePixelShader(const TArray<uint8>& ShaderCode)
 {
     FMetalPixelShaderRef NewShader = new FMetalPixelShaderRHI(GetMetalDevice());
     if (!NewShader->Initialize(ShaderCode))
@@ -227,7 +232,7 @@ FRHIPixelShader* FMetalRHI::CreatePixelShader(const TArray<uint8>& ShaderCode)
     }
 }
 
-FRHIRayGenShader* FMetalRHI::CreateRayGenShader(const TArray<uint8>& ShaderCode)
+FRHIRayGenShader* FMetalDeviceRHI::CreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
     FMetalRayGenShaderRef NewShader = new FMetalRayGenShaderRHI(GetMetalDevice());
     if (!NewShader->Initialize(ShaderCode))
@@ -240,7 +245,7 @@ FRHIRayGenShader* FMetalRHI::CreateRayGenShader(const TArray<uint8>& ShaderCode)
     }
 }
 
-FRHIRayAnyHitShader* FMetalRHI::CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
+FRHIRayAnyHitShader* FMetalDeviceRHI::CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
     FMetalRayAnyHitShaderRef NewShader = new FMetalRayAnyHitShaderRHI(GetMetalDevice());
     if (!NewShader->Initialize(ShaderCode))
@@ -253,7 +258,7 @@ FRHIRayAnyHitShader* FMetalRHI::CreateRayAnyHitShader(const TArray<uint8>& Shade
     }
 }
 
-FRHIRayClosestHitShader* FMetalRHI::CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
+FRHIRayClosestHitShader* FMetalDeviceRHI::CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
     FMetalRayClosestHitShaderRef NewShader = new FMetalRayClosestHitShaderRHI(GetMetalDevice());
     if (!NewShader->Initialize(ShaderCode))
@@ -266,7 +271,7 @@ FRHIRayClosestHitShader* FMetalRHI::CreateRayClosestHitShader(const TArray<uint8
     }
 }
 
-FRHIRayMissShader* FMetalRHI::CreateRayMissShader(const TArray<uint8>& ShaderCode)
+FRHIRayMissShader* FMetalDeviceRHI::CreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
     FMetalRayMissShaderRef NewShader = new FMetalRayMissShaderRHI(GetMetalDevice());
     if (!NewShader->Initialize(ShaderCode))
@@ -279,7 +284,7 @@ FRHIRayMissShader* FMetalRHI::CreateRayMissShader(const TArray<uint8>& ShaderCod
     }
 }
 
-FRHIDepthStencilState* FMetalRHI::CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
+FRHIDepthStencilState* FMetalDeviceRHI::CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
 {
     FMetalDepthStencilStateRef NewDepthStencilState = new FMetalDepthStencilStateRHI(GetMetalDevice(), InDesc);
     if (!NewDepthStencilState->Initialize())
@@ -292,22 +297,22 @@ FRHIDepthStencilState* FMetalRHI::CreateDepthStencilState(const FRHIDepthStencil
     }
 }
 
-FRHIRasterizerState* FMetalRHI::CreateRasterizerState(const FRHIRasterizerStateDesc& InDesc)
+FRHIRasterizerState* FMetalDeviceRHI::CreateRasterizerState(const FRHIRasterizerStateDesc& InDesc)
 {
     return new FMetalRasterizerStateRHI(InDesc);
 }
 
-FRHIBlendState* FMetalRHI::CreateBlendState(const FRHIBlendStateDesc& InDesc)
+FRHIBlendState* FMetalDeviceRHI::CreateBlendState(const FRHIBlendStateDesc& InDesc)
 {
     return new FMetalBlendStateRHI(InDesc);
 }
 
-FRHIInputLayout* FMetalRHI::CreateInputLayout(const TArray<FRHIInputElementDesc>& InInputElements)
+FRHIInputLayout* FMetalDeviceRHI::CreateInputLayout(const TArray<FRHIInputElementDesc>& InInputElements)
 {
     return new FMetalInputLayoutRHI(InInputElements);
 }
 
-FRHIGraphicsPipelineState* FMetalRHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc)
+FRHIGraphicsPipelineState* FMetalDeviceRHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc)
 {
     FMetalGraphicsPipelineStateRef NewPipelineState = new FMetalGraphicsPipelineStateRHI(GetMetalDevice(), InDesc);
     if (!NewPipelineState->Initialize())
@@ -318,22 +323,22 @@ FRHIGraphicsPipelineState* FMetalRHI::CreateGraphicsPipelineState(const FRHIGrap
     return NewPipelineState.ReleaseOwnership();
 }
 
-FRHIComputePipelineState* FMetalRHI::CreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc)
+FRHIComputePipelineState* FMetalDeviceRHI::CreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc)
 {
     return new FMetalComputePipelineStateRHI();
 }
 
-FRHIRayTracingPipelineState* FMetalRHI::CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& Desc)
+FRHIRayTracingPipelineState* FMetalDeviceRHI::CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& Desc)
 {
     return new FMetalRayTracingPipelineStateRHI();
 }
 
-FRHIQuery* FMetalRHI::CreateQuery(EQueryType InQueryType)
+FRHIQuery* FMetalDeviceRHI::CreateQuery(EQueryType InQueryType)
 {
     return new FMetalQueryRHI(InQueryType);
 }
 
-FRHISwapChain* FMetalRHI::CreateSwapChain(const FRHISwapChainDesc& SwapChainDesc)
+FRHISwapChain* FMetalDeviceRHI::CreateSwapChain(const FRHISwapChainDesc& SwapChainDesc)
 {
     FCocoaWindow* Window = reinterpret_cast<FCocoaWindow*>(SwapChainDesc.WindowHandle);
     if (!Window)
@@ -367,83 +372,83 @@ FRHISwapChain* FMetalRHI::CreateSwapChain(const FRHISwapChainDesc& SwapChainDesc
     }
 }
 
-bool FMetalRHI::QueryUAVFormatSupport(EFormat Format) const
+bool FMetalDeviceRHI::QueryUAVFormatSupport(EFormat Format) const
 {
     return true;
 }
 
-bool FMetalRHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryInfo) const
+bool FMetalDeviceRHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryInfo) const
 {
     OutMemoryInfo = FRHIVideoMemoryInfo();
     return false;
 }
 
-bool FMetalRHI::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelineStatistics& OutResult, EQueryResultMode Mode)
+bool FMetalDeviceRHI::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelineStatistics& OutResult, EQueryResultMode Mode)
 {
     OutResult = FRHIPipelineStatistics();
     return false;
 }
 
-void FMetalRHI::BeginFrame()
+void FMetalDeviceRHI::BeginFrame()
 {
 }
 
-void FMetalRHI::EndFrame()
+void FMetalDeviceRHI::EndFrame()
 {
 }
 
-FRHIFence* FMetalRHI::CreateFence()
+FRHIFence* FMetalDeviceRHI::CreateFence()
 {
     return new FMetalFenceRHI();
 }
 
-IRHICommandContext* FMetalRHI::ObtainCommandContext()
+IRHICommandContext* FMetalDeviceRHI::ObtainCommandContext()
 {
     return CommandContext;
 }
 
-bool FMetalRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode)
+bool FMetalDeviceRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode)
 {
     OutResult = 0;
     return true;
 }
 
-void FMetalRHI::EnqueueResourceDeletion(FRHIResource* Resource)
+void FMetalDeviceRHI::EnqueueResourceDeletion(FRHIResource* Resource)
 {
     // delete Resource;
 }
 
-void* FMetalRHI::GetRHINativeAdapter()
+void* FMetalDeviceRHI::GetRHINativeAdapter()
 {
     // TODO: Finish
     return nullptr;
 }
 
-void* FMetalRHI::GetRHINativeDevice()
+void* FMetalDeviceRHI::GetRHINativeDevice()
 {
     CHECK(Device != nullptr);
     return reinterpret_cast<void*>(Device->GetMTLDevice());
 }
 
-void* FMetalRHI::GetRHINativeDirectCommandQueue()
+void* FMetalDeviceRHI::GetRHINativeDirectCommandQueue()
 {
     CHECK(Device != nullptr);
     return reinterpret_cast<void*>(Device->GetMTLCommandQueue());
 }
 
-void* FMetalRHI::GetRHINativeComputeCommandQueue()
+void* FMetalDeviceRHI::GetRHINativeComputeCommandQueue()
 {
     // TODO: Finish
     return nullptr;
 }
 
-void* FMetalRHI::GetRHINativeCopyCommandQueue()
+void* FMetalDeviceRHI::GetRHINativeCopyCommandQueue()
 {
     // TODO: Finish
     return nullptr;
 }
 
-FString FMetalRHI::GetAdapterName() const
+FString FMetalDeviceRHI::GetAdapterName() const
 {
     // TODO: Finish
     return FString();

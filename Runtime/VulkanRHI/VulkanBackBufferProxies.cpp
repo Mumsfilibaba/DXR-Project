@@ -119,7 +119,7 @@ void FVulkanBackBufferProxyTextureRHI::GetDebugName(FString& OutDebugName) const
 }
 
 FVulkanBackBufferProxyRenderTargetViewRHI::FVulkanBackBufferProxyRenderTargetViewRHI(FVulkanSwapChainRHI* InSwapChain, FVulkanBackBufferProxyTextureRHI* InProxyTexture)
-    : FVulkanRenderTargetViewBase(InProxyTexture)
+    : FVulkanRenderTargetViewBase(InProxyTexture, FRHIRenderTargetViewDesc::CreateTexture2D(InProxyTexture ? InProxyTexture->GetDesc().Format : EFormat::Unknown, 0))
     , SwapChain(InSwapChain)
 {
 }
@@ -141,7 +141,7 @@ void* FVulkanBackBufferProxyRenderTargetViewRHI::GetRHINativeHandle() const
 }
 
 FVulkanBackBufferProxyUnorderedAccessViewRHI::FVulkanBackBufferProxyUnorderedAccessViewRHI(FVulkanSwapChainRHI* InSwapChain, FVulkanBackBufferProxyTextureRHI* InProxyTexture)
-    : FVulkanUnorderedAccessViewBase(InProxyTexture)
+    : FVulkanUnorderedAccessViewBase(InProxyTexture, FRHIUnorderedAccessViewDesc::CreateTexture2D(InProxyTexture ? InProxyTexture->GetDesc().Format : EFormat::Unknown, 0))
     , SwapChain(InSwapChain)
 {
 }

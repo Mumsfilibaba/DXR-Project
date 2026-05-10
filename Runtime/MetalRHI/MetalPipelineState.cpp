@@ -38,21 +38,15 @@ void* FMetalInputLayoutRHI::GetRHINativeState() const
 }
 
 FMetalDepthStencilStateRHI::FMetalDepthStencilStateRHI(FMetalDevice* InDevice, const FRHIDepthStencilStateDesc& InDesc)
-    : FRHIDepthStencilState()
+    : FRHIDepthStencilState(InDesc)
     , FMetalDeviceChild(InDevice)
     , DepthStencilState(nullptr)
-    , Desc(InDesc)
 {
 }
 
 FMetalDepthStencilStateRHI::~FMetalDepthStencilStateRHI()
 {
     [DepthStencilState release];
-}
-
-FRHIDepthStencilStateDesc FMetalDepthStencilStateRHI::GetDesc() const
-{
-    return Desc;
 }
 
 void* FMetalDepthStencilStateRHI::GetRHINativeState() const
@@ -106,20 +100,14 @@ bool FMetalDepthStencilStateRHI::Initialize()
 }
 
 FMetalRasterizerStateRHI::FMetalRasterizerStateRHI(const FRHIRasterizerStateDesc& InDesc)
-    : FRHIRasterizerState()
+    : FRHIRasterizerState(InDesc)
     , FillMode(ConvertFillMode(InDesc.FillMode))
     , FrontFaceWinding(InDesc.bFrontCounterClockwise ? MTLWindingCounterClockwise : MTLWindingClockwise)
-    , Desc(InDesc)
 {
 }
 
 FMetalRasterizerStateRHI::~FMetalRasterizerStateRHI()
 {
-}
-
-FRHIRasterizerStateDesc FMetalRasterizerStateRHI::GetDesc() const
-{
-    return Desc;
 }
 
 void* FMetalRasterizerStateRHI::GetRHINativeState() const
@@ -128,8 +116,7 @@ void* FMetalRasterizerStateRHI::GetRHINativeState() const
 }
 
 FMetalBlendStateRHI::FMetalBlendStateRHI(const FRHIBlendStateDesc& InDesc)
-    : FRHIBlendState()
-    , Desc(InDesc)
+    : FRHIBlendState(InDesc)
 {
     for (int32 Index = 0; Index < InDesc.NumRenderTargets; Index++)
     {
@@ -146,11 +133,6 @@ FMetalBlendStateRHI::FMetalBlendStateRHI(const FRHIBlendStateDesc& InDesc)
 
 FMetalBlendStateRHI::~FMetalBlendStateRHI()
 {
-}
-
-FRHIBlendStateDesc FMetalBlendStateRHI::GetDesc() const
-{
-    return Desc;
 }
 
 void* FMetalBlendStateRHI::GetRHINativeState() const

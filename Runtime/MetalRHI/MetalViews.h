@@ -23,7 +23,7 @@ private:
 class FMetalShaderResourceViewRHI : public FRHIShaderResourceView, public FMetalView
 {
 public:
-    FMetalShaderResourceViewRHI(FMetalDevice* InDevice, FRHIResource* InResource);
+    FMetalShaderResourceViewRHI(FMetalDevice* InDevice, FRHIResource* InResource, const FRHIShaderResourceViewDesc& InRHIDesc);
     virtual ~FMetalShaderResourceViewRHI();
 
     // FRHIShaderResourceView Interface
@@ -35,7 +35,7 @@ public:
 class FMetalUnorderedAccessViewRHI : public FRHIUnorderedAccessView, public FMetalView
 {
 public:
-    FMetalUnorderedAccessViewRHI(FMetalDevice* InDevice, FRHIResource* InResource);
+    FMetalUnorderedAccessViewRHI(FMetalDevice* InDevice, FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InRHIDesc);
     virtual ~FMetalUnorderedAccessViewRHI();
 
     // FRHIUnorderedAccessView Interface

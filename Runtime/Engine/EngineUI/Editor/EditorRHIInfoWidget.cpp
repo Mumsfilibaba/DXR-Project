@@ -55,9 +55,9 @@ void FEditorRHIInfoWidget::DrawAdapterInfo()
 {
     ImGui::SeparatorText("Adapter");
 
-    if (FRHI* RHI = FRHI::Get())
+    if (FRHIDevice* Device = RHI::Device)
     {
-        const FString AdapterName = RHI->GetAdapterName();
+        const FString AdapterName = Device->GetAdapterName();
         ImGui::Text("Adapter: %s", *AdapterName);
     }
 }

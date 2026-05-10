@@ -1404,7 +1404,7 @@ bool FD3D12Device::CreateDefaultResources()
     UAVDesc.Texture2D.MipSlice   = 0;
     UAVDesc.Texture2D.PlaneSlice = 0;
 
-    DefaultDescriptors.DefaultUAV = new FD3D12UnorderedAccessViewRHI(this, GetResourceOfflineDescriptorHeap(), nullptr);
+    DefaultDescriptors.DefaultUAV = new FD3D12UnorderedAccessViewRHI(this, GetResourceOfflineDescriptorHeap(), nullptr, FRHIUnorderedAccessViewDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, 0));
     if (!DefaultDescriptors.DefaultUAV->Initialize(nullptr, nullptr, UAVDesc))
     {
         return false;
@@ -1419,7 +1419,7 @@ bool FD3D12Device::CreateDefaultResources()
     SRVDesc.Texture2D.ResourceMinLODClamp = 0.0f;
     SRVDesc.Texture2D.PlaneSlice          = 0;
 
-    DefaultDescriptors.DefaultSRV = new FD3D12ShaderResourceViewRHI(this, GetResourceOfflineDescriptorHeap(), nullptr);
+    DefaultDescriptors.DefaultSRV = new FD3D12ShaderResourceViewRHI(this, GetResourceOfflineDescriptorHeap(), nullptr, FRHIShaderResourceViewDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, 0, 1));
     if (!DefaultDescriptors.DefaultSRV->Initialize(nullptr, SRVDesc))
     {
         return false;
@@ -1431,7 +1431,7 @@ bool FD3D12Device::CreateDefaultResources()
     RTVDesc.Texture2D.MipSlice   = 0;
     RTVDesc.Texture2D.PlaneSlice = 0;
 
-    DefaultDescriptors.DefaultRTV = new FD3D12RenderTargetViewRHI(this, GetRenderTargetOfflineDescriptorHeap(), nullptr);
+    DefaultDescriptors.DefaultRTV = new FD3D12RenderTargetViewRHI(this, GetRenderTargetOfflineDescriptorHeap(), nullptr, FRHIRenderTargetViewDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, 0));
     if (!DefaultDescriptors.DefaultRTV->Initialize(nullptr, RTVDesc))
     {
         return false;

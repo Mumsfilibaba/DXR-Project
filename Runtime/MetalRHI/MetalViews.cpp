@@ -90,16 +90,16 @@ FMetalView::FMetalView(FMetalDevice* InDevice)
 
 FMetalView::~FMetalView() = default;
 
-FMetalShaderResourceViewRHI::FMetalShaderResourceViewRHI(FMetalDevice* InDevice, FRHIResource* InResource)
-    : FRHIShaderResourceView(InResource)
+FMetalShaderResourceViewRHI::FMetalShaderResourceViewRHI(FMetalDevice* InDevice, FRHIResource* InResource, const FRHIShaderResourceViewDesc& InRHIDesc)
+    : FRHIShaderResourceView(InResource, InRHIDesc)
     , FMetalView(InDevice)
 {
 }
 
 FMetalShaderResourceViewRHI::~FMetalShaderResourceViewRHI() = default;
 
-FMetalUnorderedAccessViewRHI::FMetalUnorderedAccessViewRHI(FMetalDevice* InDevice, FRHIResource* InResource)
-    : FRHIUnorderedAccessView(InResource)
+FMetalUnorderedAccessViewRHI::FMetalUnorderedAccessViewRHI(FMetalDevice* InDevice, FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InRHIDesc)
+    : FRHIUnorderedAccessView(InResource, InRHIDesc)
     , FMetalView(InDevice)
 {
 }
@@ -107,7 +107,7 @@ FMetalUnorderedAccessViewRHI::FMetalUnorderedAccessViewRHI(FMetalDevice* InDevic
 FMetalUnorderedAccessViewRHI::~FMetalUnorderedAccessViewRHI() = default;
 
 FMetalRenderTargetViewRHI::FMetalRenderTargetViewRHI(FMetalDevice* InDevice, FRHITexture* InTexture, const FRHIRenderTargetViewDesc& InDesc)
-    : FRHIRenderTargetView(InTexture)
+    : FRHIRenderTargetView(InTexture, InDesc)
     , FMetalView(InDevice)
     , MipLevel(0)
     , ArrayIndex(0)
@@ -118,7 +118,7 @@ FMetalRenderTargetViewRHI::FMetalRenderTargetViewRHI(FMetalDevice* InDevice, FRH
 FMetalRenderTargetViewRHI::~FMetalRenderTargetViewRHI() = default;
 
 FMetalDepthStencilViewRHI::FMetalDepthStencilViewRHI(FMetalDevice* InDevice, FRHITexture* InTexture, const FRHIDepthStencilViewDesc& InDesc)
-    : FRHIDepthStencilView(InTexture)
+    : FRHIDepthStencilView(InTexture, InDesc)
     , FMetalView(InDevice)
     , MipLevel(0)
     , ArrayIndex(0)

@@ -7,7 +7,7 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class FRHI;
+class FRHIDevice;
 class FRHIGeometryAccelerationStructure;
 class FRHISceneAccelerationStructure;
 class FRHIFence;
@@ -43,10 +43,10 @@ struct RHI_API FRHIModule : public FModuleInterface
     virtual ~FRHIModule() = default;
 
     /**
-     * @brief Creates the RHI instance
-     * @return Returns the newly created RHI instance
+     * @brief Creates the RHI device instance
+     * @return Returns the newly created RHI device instance
      */
-    virtual FRHI* CreateRHI() { return nullptr; }
+    virtual FRHIDevice* CreateDevice() { return nullptr; }
 };
 
 enum class EVideoMemoryType
@@ -67,32 +67,12 @@ struct FRHIVideoMemoryInfo
     uint64 MemoryBudget = 0;
 };
 
-class FRHI
+class FRHIDevice
 {
 public:
 
-    /** @brief Initializes the RHI Interface */
-    static RHI_API bool Initialize();
-
-    /** @brief Releases the RHI Interface */
-    static RHI_API void Release();
-
-    /** @return Returns the true if the RHI is initialized */
-    static FORCEINLINE bool IsInitialized()
-    {
-        return GRHI != nullptr;
-    }
-
-    /** @return Returns the current RHI Interface */
-    static FORCEINLINE FRHI* Get()
-    {
-        return GRHI;
-    }
-
-public:
-
     /** @brief Releases the RHI interface */
-    virtual ~FRHI() = default;
+    virtual ~FRHIDevice() = default;
 
     /** @brief Called on the RHI thread to begin a new frame. */
     virtual void BeginFrame() = 0;
@@ -367,34 +347,19 @@ public:
     /** @brief Defers destruction of an RHI resource to the deferred deletion code. */
     virtual void EnqueueResourceDeletion(FRHIResource* Resource) = 0;
 
-    /**
-     * @brief Gets the native adapter.
-     * @return D3D12: IDXGIAdapter*. Vulkan: VkPhysicalDevice. Metal/Null: nullptr (TODO on Metal).
-     */
+    /** @return D3D12: IDXGIAdapter*. Vulkan: VkPhysicalDevice. Metal: nullptr (TODO). Null: nullptr. */
     virtual void* GetRHINativeAdapter() = 0;
 
-    /**
-     * @brief Gets the native device.
-     * @return D3D12: ID3D12Device*. Vulkan: VkDevice. Metal: id<MTLDevice>. Null: nullptr.
-     */
+    /** @return D3D12: ID3D12Device*. Vulkan: VkDevice. Metal: id<MTLDevice>. Null: nullptr. */
     virtual void* GetRHINativeDevice() = 0;
 
-    /**
-     * @brief Gets the native direct (graphics) command queue.
-     * @return D3D12: ID3D12CommandQueue* (direct). Vulkan: VkQueue (graphics). Metal: id<MTLCommandQueue>. Null: nullptr.
-     */
+    /** @return D3D12: ID3D12CommandQueue* (direct). Vulkan: VkQueue (graphics). Metal: id<MTLCommandQueue>. Null: nullptr. */
     virtual void* GetRHINativeDirectCommandQueue() = 0;
 
-    /**
-     * @brief Gets the native compute command queue.
-     * @return D3D12: ID3D12CommandQueue* (compute). Vulkan/Metal: nullptr (TODO). Null: nullptr.
-     */
+    /** @return D3D12: ID3D12CommandQueue* (compute). Vulkan: nullptr (TODO). Metal: nullptr (TODO). Null: nullptr. */
     virtual void* GetRHINativeComputeCommandQueue() = 0;
 
-    /**
-     * @brief Gets the native copy command queue.
-     * @return D3D12: ID3D12CommandQueue* (copy). Vulkan/Metal: nullptr (TODO). Null: nullptr.
-     */
+    /** @return D3D12: ID3D12CommandQueue* (copy). Vulkan: nullptr (TODO). Metal: nullptr (TODO). Null: nullptr. */
     virtual void* GetRHINativeCopyCommandQueue() = 0;
 
     /**
@@ -407,21 +372,7 @@ public:
      * @brief Gets the current RHI's API type.
      * @return The current RHI's API type.
      */
-    ERHIType GetType() const
-    {
-        return RHIType;
-    }
-
-protected:
-    FRHI(ERHIType InRHIType)
-        : RHIType(InRHIType)
-    {
-    }
-
-private:
-    ERHIType RHIType;
-
-    static RHI_API FRHI* GRHI;
+    virtual ERHIType GetRHIType() const = 0;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -716,8 +716,8 @@ void FEditorViewportWidget::Draw()
                         {
                             FRHITexture* ViewportTexture = ViewportImage.GetTexture();
 
-                            const uint32 RenderWidth  = ViewportTexture ? ViewportTexture->GetWidth() : static_cast<uint32>(ContentSize.x);
-                            const uint32 RenderHeight = ViewportTexture ? ViewportTexture->GetHeight() : static_cast<uint32>(ContentSize.y);
+                            const uint32 RenderWidth  = ViewportTexture ? ViewportTexture->GetDesc().Extent.X : static_cast<uint32>(ContentSize.x);
+                            const uint32 RenderHeight = ViewportTexture ? ViewportTexture->GetDesc().Extent.Y : static_cast<uint32>(ContentSize.y);
 
                             const float SafeW = ImageSize.x > 0.0f ? ImageSize.x : 1.0f;
                             const float SafeH = ImageSize.y > 0.0f ? ImageSize.y : 1.0f;

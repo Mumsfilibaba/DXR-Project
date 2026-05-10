@@ -96,8 +96,8 @@ void FGPUProfiler::CollectResults()
         uint64 BeginResult = 0;
         uint64 EndResult   = 0;
 
-        FRHI::Get()->GetQueryResult(FrameBeginQuery[ReadIndex].Get(), BeginResult);
-        FRHI::Get()->GetQueryResult(FrameEndQuery[ReadIndex].Get(), EndResult);
+        RHI::Device->GetQueryResult(FrameBeginQuery[ReadIndex].Get(), BeginResult);
+        RHI::Device->GetQueryResult(FrameEndQuery[ReadIndex].Get(), EndResult);
 
         if (BeginResult != 0 && EndResult != 0 && EndResult > BeginResult)
         {
@@ -124,8 +124,8 @@ void FGPUProfiler::CollectResults()
             uint64 BeginResult = 0;
             uint64 EndResult   = 0;
 
-            FRHI::Get()->GetQueryResult(ScopeQuery.Second.BeginQuery[ReadIndex].Get(), BeginResult);
-            FRHI::Get()->GetQueryResult(ScopeQuery.Second.EndQuery[ReadIndex].Get(), EndResult);
+            RHI::Device->GetQueryResult(ScopeQuery.Second.BeginQuery[ReadIndex].Get(), BeginResult);
+            RHI::Device->GetQueryResult(ScopeQuery.Second.EndQuery[ReadIndex].Get(), EndResult);
 
             if (BeginResult != 0 && EndResult != 0 && EndResult > BeginResult)
             {
@@ -137,7 +137,7 @@ void FGPUProfiler::CollectResults()
         if (bPipelineStatsEnabled && ScopeQuery.Second.PipelineStatsQuery[ReadIndex])
         {
             FRHIPipelineStatistics ScopeStats;
-            if (FRHI::Get()->GetPipelineStatisticsResult(ScopeQuery.Second.PipelineStatsQuery[ReadIndex].Get(), ScopeStats))
+            if (RHI::Device->GetPipelineStatisticsResult(ScopeQuery.Second.PipelineStatsQuery[ReadIndex].Get(), ScopeStats))
             {
                 FrameTotalStats.IAVertices    += ScopeStats.IAVertices;
                 FrameTotalStats.IAPrimitives  += ScopeStats.IAPrimitives;
@@ -175,7 +175,7 @@ void FGPUProfiler::BeginGPUFrame(FRHICommandList& CmdList)
 
         if (!FrameBeginQuery[WriteIndex])
         {
-            FrameBeginQuery[WriteIndex] = FRHI::Get()->CreateQuery(EQueryType::Timestamp);
+            FrameBeginQuery[WriteIndex] = RHI::Device->CreateQuery(EQueryType::Timestamp);
         }
 
         CmdList.QueryTimestamp(FrameBeginQuery[WriteIndex].Get());
@@ -188,7 +188,7 @@ void FGPUProfiler::EndGPUFrame(FRHICommandList& CmdList)
     {
         if (!FrameEndQuery[WriteIndex])
         {
-            FrameEndQuery[WriteIndex] = FRHI::Get()->CreateQuery(EQueryType::Timestamp);
+            FrameEndQuery[WriteIndex] = RHI::Device->CreateQuery(EQueryType::Timestamp);
         }
 
         CmdList.QueryTimestamp(FrameEndQuery[WriteIndex].Get());
@@ -207,8 +207,8 @@ void FGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
             FGPUProfileScopeQueries& NewQueries = ScopeQueries.Add(ScopeName);
             for (int32 i = 0; i < GPU_PROFILER_BUFFER_COUNT; i++)
             {
-                NewQueries.BeginQuery[i] = FRHI::Get()->CreateQuery(EQueryType::Timestamp);
-                NewQueries.EndQuery[i]   = FRHI::Get()->CreateQuery(EQueryType::Timestamp);
+                NewQueries.BeginQuery[i] = RHI::Device->CreateQuery(EQueryType::Timestamp);
+                NewQueries.EndQuery[i]   = RHI::Device->CreateQuery(EQueryType::Timestamp);
             }
             
             Queries = &NewQueries;
@@ -224,7 +224,7 @@ void FGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
         {
             if (!Queries->PipelineStatsQuery[WriteIndex])
             {
-                Queries->PipelineStatsQuery[WriteIndex] = FRHI::Get()->CreateQuery(EQueryType::PipelineStatistics);
+                Queries->PipelineStatsQuery[WriteIndex] = RHI::Device->CreateQuery(EQueryType::PipelineStatistics);
             }
 
             CmdList.BeginQuery(Queries->PipelineStatsQuery[WriteIndex].Get());

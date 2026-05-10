@@ -243,7 +243,7 @@ void FRHICommandListExecutor::ReleaseRHIThread()
 
 bool FRHICommandListExecutor::Initialize()
 {
-    IRHICommandContext* Context = FRHI::Get()->ObtainCommandContext();
+    IRHICommandContext* Context = RHI::Device->ObtainCommandContext();
     if (!Context)
     {
         return false;
@@ -302,7 +302,7 @@ void FRHICommandListExecutor::FlushDeletedResources()
     {
         for (FRHIResource* Resource : DeletedResources)
         {
-            FRHI::Get()->EnqueueResourceDeletion(Resource);
+            RHI::Device->EnqueueResourceDeletion(Resource);
         }
 
         DeletedResources.Clear();

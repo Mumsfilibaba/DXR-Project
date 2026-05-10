@@ -42,7 +42,7 @@ bool FTemporalAA::Initialize(FFrameResources& FrameResources)
             return false;
         }
 
-        TemporalAAShader = FRHI::Get()->CreateComputeShader(ShaderCode);
+        TemporalAAShader = RHI::Device->CreateComputeShader(ShaderCode);
         if (!TemporalAAShader)
         {
             DEBUG_BREAK();
@@ -52,7 +52,7 @@ bool FTemporalAA::Initialize(FFrameResources& FrameResources)
         FRHIComputePipelineStateDesc TemporalAA_PSODesc;
         TemporalAA_PSODesc.Shader = TemporalAAShader.Get();
         
-        TemporalAAPSO = FRHI::Get()->CreateComputePipelineState(TemporalAA_PSODesc);
+        TemporalAAPSO = RHI::Device->CreateComputePipelineState(TemporalAA_PSODesc);
         if (!TemporalAAPSO)
         {
             DEBUG_BREAK();
@@ -65,7 +65,7 @@ bool FTemporalAA::Initialize(FFrameResources& FrameResources)
     }
 
     FRHISamplerStateDesc SamplerDesc = FRHISamplerStateDesc::Create(ESamplerMode::Clamp, ESamplerFilter::MinMagMipLinear);
-    LinearSampler = FRHI::Get()->CreateSamplerState(SamplerDesc);
+    LinearSampler = RHI::Device->CreateSamplerState(SamplerDesc);
     if (!LinearSampler)
     {
         DEBUG_BREAK();
@@ -78,7 +78,7 @@ bool FTemporalAA::Initialize(FFrameResources& FrameResources)
 void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources)
 {
     FRHITextureRef CurrentBuffer = TAAHistoryBuffers[CurrentBufferIndex];
-    if (CurrentBuffer->GetWidth() == 0 || CurrentBuffer->GetHeight() == 0)
+    if (CurrentBuffer->GetDesc().Extent.X == 0 || CurrentBuffer->GetDesc().Extent.Y == 0)
     {
         return;
     }
@@ -130,8 +130,8 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
     CommandList.SetSamplerState(TemporalAAShader.Get(), LinearSampler.Get(), 0);
 
     constexpr uint32 NumThreads = 16;
-    const uint32 ThreadsX = Math::DivideByMultiple(CurrentBuffer->GetWidth(), NumThreads);
-    const uint32 ThreadsY = Math::DivideByMultiple(CurrentBuffer->GetHeight(), NumThreads);
+    const uint32 ThreadsX = Math::DivideByMultiple(CurrentBuffer->GetDesc().Extent.X, NumThreads);
+    const uint32 ThreadsY = Math::DivideByMultiple(CurrentBuffer->GetDesc().Extent.Y, NumThreads);
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
     CommandList.TransitionTextureState(CurrentBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
@@ -146,7 +146,7 @@ bool FTemporalAA::CreateResources(FFrameResources& /* FrameResources */, uint32 
     uint32 Index = 0;
     for (FRHITextureRef& TAABuffer : TAAHistoryBuffers)
     {
-        TAABuffer = FRHI::Get()->CreateTexture(TAABufferDesc, EResourceAccess::NonPixelShaderResource);
+        TAABuffer = RHI::Device->CreateTexture(TAABufferDesc, EResourceAccess::NonPixelShaderResource);
         if (TAABuffer)
         {
             TAABuffer->SetDebugName(FString::CreateFormatted("TAA History-Buffer[%u]", Index++));

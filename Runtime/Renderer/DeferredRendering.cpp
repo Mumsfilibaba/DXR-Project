@@ -68,7 +68,7 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FFrameResour
         }
 
         FGraphicsPipelineStateInstance NewPipelineInstance;
-        NewPipelineInstance.VertexShader = FRHI::Get()->CreateVertexShader(ShaderCode);
+        NewPipelineInstance.VertexShader = RHI::Device->CreateVertexShader(ShaderCode);
         if (!NewPipelineInstance.VertexShader)
         {
             DEBUG_BREAK();
@@ -85,7 +85,7 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FFrameResour
                 return;
             }
 
-            NewPipelineInstance.PixelShader = FRHI::Get()->CreatePixelShader(ShaderCode);
+            NewPipelineInstance.PixelShader = RHI::Device->CreatePixelShader(ShaderCode);
             if (!NewPipelineInstance.PixelShader)
             {
                 DEBUG_BREAK();
@@ -98,7 +98,7 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FFrameResour
         DepthStencilStateDesc.bDepthEnable      = true;
         DepthStencilStateDesc.bDepthWriteEnable = true;
 
-        NewPipelineInstance.DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateDesc);
+        NewPipelineInstance.DepthStencilState = RHI::Device->CreateDepthStencilState(DepthStencilStateDesc);
         if (!NewPipelineInstance.DepthStencilState)
         {
             DEBUG_BREAK();
@@ -115,7 +115,7 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FFrameResour
             RasterizerStateDesc.CullMode = ECullMode::Back;
         }
 
-        NewPipelineInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateDesc);
+        NewPipelineInstance.RasterizerState = RHI::Device->CreateRasterizerState(RasterizerStateDesc);
         if (!NewPipelineInstance.RasterizerState)
         {
             DEBUG_BREAK();
@@ -123,7 +123,7 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FFrameResour
         }
 
         FRHIBlendStateDesc BlendStateDesc;
-        NewPipelineInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateDesc);
+        NewPipelineInstance.BlendState = RHI::Device->CreateBlendState(BlendStateDesc);
         if (!NewPipelineInstance.BlendState)
         {
             DEBUG_BREAK();
@@ -142,7 +142,7 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FFrameResour
                 { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertexTexCoord), 1, 0, 1, EVertexInputClass::Vertex, 0 }
             };
 
-            NewPipelineInstance.InputLayout = FRHI::Get()->CreateInputLayout(InputElements);
+            NewPipelineInstance.InputLayout = RHI::Device->CreateInputLayout(InputElements);
             if (!NewPipelineInstance.InputLayout)
             {
                 DEBUG_BREAK();
@@ -156,7 +156,7 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FFrameResour
                 { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 }
             };
 
-            NewPipelineInstance.InputLayout = FRHI::Get()->CreateInputLayout(InputElements);
+            NewPipelineInstance.InputLayout = RHI::Device->CreateInputLayout(InputElements);
             if (!NewPipelineInstance.InputLayout)
             {
                 DEBUG_BREAK();
@@ -173,7 +173,7 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FFrameResour
         PSODesc.PixelShader                                = NewPipelineInstance.PixelShader.Get();
         PSODesc.RasterizerOutputFormats.DepthStencilFormat = FGlobalTextureFormats::DepthBufferFormat;
 
-        NewPipelineInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
+        NewPipelineInstance.PipelineState = RHI::Device->CreateGraphicsPipelineState(PSODesc);
         if (!NewPipelineInstance.PipelineState)
         {
             DEBUG_BREAK();
@@ -205,7 +205,7 @@ bool FDepthPrePass::CreateResources(FFrameResources& FrameResources, uint32 Widt
     const FClearValue DepthClearValue(FGlobalTextureFormats::DepthBufferFormat, 1.0f, 0);
 
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::DepthBufferFormat, Width, Height, 1, 1, Usage, DepthClearValue);
-    FrameResources.GBuffer[GBufferIndex_Depth] = FRHI::Get()->CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
+    FrameResources.GBuffer[GBufferIndex_Depth] = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Depth])
     {
         FrameResources.GBuffer[GBufferIndex_Depth]->SetDebugName("GBuffer DepthStencil");
@@ -391,7 +391,7 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FFrameRe
         }
 
         FGraphicsPipelineStateInstance NewPipelineInstance;
-        NewPipelineInstance.VertexShader = FRHI::Get()->CreateVertexShader(ShaderCode);
+        NewPipelineInstance.VertexShader = RHI::Device->CreateVertexShader(ShaderCode);
         if (!NewPipelineInstance.VertexShader)
         {
             DEBUG_BREAK();
@@ -405,7 +405,7 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FFrameRe
             return;
         }
 
-        NewPipelineInstance.PixelShader = FRHI::Get()->CreatePixelShader(ShaderCode);
+        NewPipelineInstance.PixelShader = RHI::Device->CreatePixelShader(ShaderCode);
         if (!NewPipelineInstance.PixelShader)
         {
             DEBUG_BREAK();
@@ -417,7 +417,7 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FFrameRe
         DepthStencilStateDesc.bDepthEnable      = true;
         DepthStencilStateDesc.bDepthWriteEnable = false;
 
-        NewPipelineInstance.DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateDesc);
+        NewPipelineInstance.DepthStencilState = RHI::Device->CreateDepthStencilState(DepthStencilStateDesc);
         if (!NewPipelineInstance.DepthStencilState)
         {
             DEBUG_BREAK();
@@ -434,7 +434,7 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FFrameRe
             RasterizerStateDesc.CullMode = ECullMode::Back;
         }
 
-        NewPipelineInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateDesc);
+        NewPipelineInstance.RasterizerState = RHI::Device->CreateRasterizerState(RasterizerStateDesc);
         if (!NewPipelineInstance.RasterizerState)
         {
             DEBUG_BREAK();
@@ -444,7 +444,7 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FFrameRe
         FRHIBlendStateDesc BlendStateDesc;
         BlendStateDesc.NumRenderTargets = GBuffer_NumRenderTargets;
 
-        NewPipelineInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateDesc);
+        NewPipelineInstance.BlendState = RHI::Device->CreateBlendState(BlendStateDesc);
         if (!NewPipelineInstance.BlendState)
         {
             DEBUG_BREAK();
@@ -468,7 +468,7 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FFrameRe
         PSODesc.RasterizerOutputFormats.NumRenderTargets       = GBuffer_NumRenderTargets;
         PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
 
-        NewPipelineInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
+        NewPipelineInstance.PipelineState = RHI::Device->CreateGraphicsPipelineState(PSODesc);
         if (!NewPipelineInstance.PipelineState)
         {
             DEBUG_BREAK();
@@ -500,7 +500,7 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::AlbedoFormat, Width, Height, 1, 1, Usage);
 
     // Albedo
-    FrameResources.GBuffer[GBufferIndex_Albedo] = FRHI::Get()->CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+    FrameResources.GBuffer[GBufferIndex_Albedo] = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Albedo])
     {
         FrameResources.GBuffer[GBufferIndex_Albedo]->SetDebugName("GBuffer Albedo");
@@ -513,7 +513,7 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     // Normal
     TextureDesc.Format = FGlobalTextureFormats::NormalFormat;
 
-    FrameResources.GBuffer[GBufferIndex_Normal] = FRHI::Get()->CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+    FrameResources.GBuffer[GBufferIndex_Normal] = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Normal])
     {
         FrameResources.GBuffer[GBufferIndex_Normal]->SetDebugName("GBuffer Normal");
@@ -526,7 +526,7 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     // Material Properties
     TextureDesc.Format = FGlobalTextureFormats::MaterialFormat;
 
-    FrameResources.GBuffer[GBufferIndex_Material] = FRHI::Get()->CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+    FrameResources.GBuffer[GBufferIndex_Material] = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Material])
     {
         FrameResources.GBuffer[GBufferIndex_Material]->SetDebugName("GBuffer Material");
@@ -539,7 +539,7 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     // Velocity
     TextureDesc.Format = FGlobalTextureFormats::VelocityFormat;
 
-    FrameResources.GBuffer[GBufferIndex_Velocity] = FRHI::Get()->CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+    FrameResources.GBuffer[GBufferIndex_Velocity] = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Velocity])
     {
         FrameResources.GBuffer[GBufferIndex_Velocity]->SetDebugName("GBuffer Velocity");
@@ -684,7 +684,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
     SamplerDesc.AddressW = ESamplerMode::Clamp;
     SamplerDesc.Filter   = ESamplerFilter::MinMagMipPoint;
 
-    FrameResources.GBufferSampler = FRHI::Get()->CreateSamplerState(SamplerDesc);
+    FrameResources.GBufferSampler = RHI::Device->CreateSamplerState(SamplerDesc);
     if (!FrameResources.GBufferSampler)
     {
         return false;
@@ -700,14 +700,14 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
     // BRDF LUT Generation
     constexpr uint32  LUTSize   = 512;
     constexpr EFormat LUTFormat = EFormat::R16G16_Float;
-    if (!FRHI::Get()->QueryUAVFormatSupport(LUTFormat))
+    if (!RHI::Device->QueryUAVFormatSupport(LUTFormat))
     {
         LOG_ERROR("[FSceneRenderer]: R16G16_Float is not supported for UAVs");
         return false;
     }
 
     FRHITextureDesc LUTDesc = FRHITextureDesc::CreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, ETextureUsageFlags::UnorderedAccessTexture);
-    FRHITextureRef StagingTexture = FRHI::Get()->CreateTexture(LUTDesc, EResourceAccess::Common);
+    FRHITextureRef StagingTexture = RHI::Device->CreateTexture(LUTDesc, EResourceAccess::Common);
 
     if (!StagingTexture)
     {
@@ -721,7 +721,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
 
     LUTDesc.UsageFlags = ETextureUsageFlags::ShaderResourceTexture;
 
-    FrameResources.IntegrationLUT = FRHI::Get()->CreateTexture(LUTDesc, EResourceAccess::Common);
+    FrameResources.IntegrationLUT = RHI::Device->CreateTexture(LUTDesc, EResourceAccess::Common);
     if (!FrameResources.IntegrationLUT)
     {
         DEBUG_BREAK();
@@ -737,7 +737,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
     SamplerDesc.AddressW = ESamplerMode::Clamp;
     SamplerDesc.Filter   = ESamplerFilter::MinMagMipPoint;
 
-    FrameResources.IntegrationLUTSampler = FRHI::Get()->CreateSamplerState(SamplerDesc);
+    FrameResources.IntegrationLUTSampler = RHI::Device->CreateSamplerState(SamplerDesc);
     if (!FrameResources.IntegrationLUTSampler)
     {
         DEBUG_BREAK();
@@ -751,7 +751,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIComputeShaderRef BRDFShader = FRHI::Get()->CreateComputeShader(ShaderCode);
+    FRHIComputeShaderRef BRDFShader = RHI::Device->CreateComputeShader(ShaderCode);
     if (!BRDFShader)
     {
         DEBUG_BREAK();
@@ -761,7 +761,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
     FRHIComputePipelineStateDesc PSODesc;
     PSODesc.Shader = BRDFShader.Get();
 
-    FRHIComputePipelineStateRef BRDFPipelineState = FRHI::Get()->CreateComputePipelineState(PSODesc);
+    FRHIComputePipelineStateRef BRDFPipelineState = RHI::Device->CreateComputePipelineState(PSODesc);
     if (!BRDFPipelineState)
     {
         DEBUG_BREAK();
@@ -803,7 +803,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    TiledLightShader = FRHI::Get()->CreateComputeShader(ShaderCode);
+    TiledLightShader = RHI::Device->CreateComputeShader(ShaderCode);
     if (!TiledLightShader)
     {
         DEBUG_BREAK();
@@ -813,7 +813,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
     FRHIComputePipelineStateDesc DeferredLightPassPSODesc;
     DeferredLightPassPSODesc.Shader = TiledLightShader.Get();
 
-    TiledLightPassPSO = FRHI::Get()->CreateComputePipelineState(DeferredLightPassPSODesc);
+    TiledLightPassPSO = RHI::Device->CreateComputePipelineState(DeferredLightPassPSODesc);
     if (!TiledLightPassPSO)
     {
         DEBUG_BREAK();
@@ -837,7 +837,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    TiledLightShader_TileDebug = FRHI::Get()->CreateComputeShader(ShaderCode);
+    TiledLightShader_TileDebug = RHI::Device->CreateComputeShader(ShaderCode);
     if (!TiledLightShader_TileDebug)
     {
         DEBUG_BREAK();
@@ -846,7 +846,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
 
     DeferredLightPassPSODesc.Shader = TiledLightShader_TileDebug.Get();
 
-    TiledLightPassPSO_TileDebug = FRHI::Get()->CreateComputePipelineState(DeferredLightPassPSODesc);
+    TiledLightPassPSO_TileDebug = RHI::Device->CreateComputePipelineState(DeferredLightPassPSODesc);
     if (!TiledLightPassPSO_TileDebug)
     {
         DEBUG_BREAK();
@@ -870,7 +870,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    TiledLightShader_CascadeDebug = FRHI::Get()->CreateComputeShader(ShaderCode);
+    TiledLightShader_CascadeDebug = RHI::Device->CreateComputeShader(ShaderCode);
     if (!TiledLightShader_CascadeDebug)
     {
         DEBUG_BREAK();
@@ -879,7 +879,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
 
     DeferredLightPassPSODesc.Shader = TiledLightShader_CascadeDebug.Get();
 
-    TiledLightPassPSO_CascadeDebug = FRHI::Get()->CreateComputePipelineState(DeferredLightPassPSODesc);
+    TiledLightPassPSO_CascadeDebug = RHI::Device->CreateComputePipelineState(DeferredLightPassPSODesc);
     if (!TiledLightPassPSO_CascadeDebug)
     {
         DEBUG_BREAK();
@@ -902,7 +902,7 @@ bool FTiledLightPass::CreateResources(FFrameResources& FrameResources, uint32 Wi
 
     const ETextureUsageFlags Usage = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
     FRHITextureDesc SceneTargetDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::SceneTargetFormat, Width, Height, 1, 1, Usage);
-    FrameResources.SceneTarget = FRHI::Get()->CreateTexture(SceneTargetDesc, EResourceAccess::PixelShaderResource);
+    FrameResources.SceneTarget = RHI::Device->CreateTexture(SceneTargetDesc, EResourceAccess::PixelShaderResource);
     
     if (FrameResources.SceneTarget)
     {
@@ -1038,7 +1038,7 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
     {
         if (FSceneSkyLight* SkyLight = Scene->SkyLight)
         {
-            LightPassSettings.NumSkyLightMips = SkyLight->SpecularCubeMap->GetNumMipLevels();
+            LightPassSettings.NumSkyLightMips = SkyLight->SpecularCubeMap->GetDesc().NumMipLevels;
         }
     }
 
@@ -1097,7 +1097,7 @@ bool FDepthReducePass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    ReduceDepthInitalShader = FRHI::Get()->CreateComputeShader(ShaderCode);
+    ReduceDepthInitalShader = RHI::Device->CreateComputeShader(ShaderCode);
     if (!ReduceDepthInitalShader)
     {
         DEBUG_BREAK();
@@ -1107,7 +1107,7 @@ bool FDepthReducePass::Initialize(FFrameResources& FrameResources)
     FRHIComputePipelineStateDesc PSODesc;
     PSODesc.Shader = ReduceDepthInitalShader.Get();
 
-    ReduceDepthInitalPSO = FRHI::Get()->CreateComputePipelineState(PSODesc);
+    ReduceDepthInitalPSO = RHI::Device->CreateComputePipelineState(PSODesc);
     if (!ReduceDepthInitalPSO)
     {
         DEBUG_BREAK();
@@ -1126,7 +1126,7 @@ bool FDepthReducePass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    ReduceDepthShader = FRHI::Get()->CreateComputeShader(ShaderCode);
+    ReduceDepthShader = RHI::Device->CreateComputeShader(ShaderCode);
     if (!ReduceDepthShader)
     {
         DEBUG_BREAK();
@@ -1135,7 +1135,7 @@ bool FDepthReducePass::Initialize(FFrameResources& FrameResources)
 
     PSODesc.Shader = ReduceDepthShader.Get();
 
-    ReduceDepthPSO = FRHI::Get()->CreateComputePipelineState(PSODesc);
+    ReduceDepthPSO = RHI::Device->CreateComputePipelineState(PSODesc);
     if (!ReduceDepthPSO)
     {
         DEBUG_BREAK();
@@ -1169,7 +1169,7 @@ bool FDepthReducePass::CreateResources(FFrameResources& FrameResources, uint32 W
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(EFormat::R32G32_Float, ReducedWidth, ReducedHeight, 1, 1, Usage);
     for (int32 Index = 0; Index < FrameResources.NumReducedDepthBuffers; Index++)
     {
-        FrameResources.ReducedDepthBuffer[Index] = FRHI::Get()->CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+        FrameResources.ReducedDepthBuffer[Index] = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
         if (FrameResources.ReducedDepthBuffer[Index])
         {
             FrameResources.ReducedDepthBuffer[Index]->SetDebugName("Reduced DepthStencil[" + TTypeToString<int32>::ToString(Index) + "]");
@@ -1185,7 +1185,7 @@ bool FDepthReducePass::CreateResources(FFrameResources& FrameResources, uint32 W
 
 void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene)
 {
-    if (FrameResources.ReducedDepthBuffer[0]->GetWidth() == 0 || FrameResources.ReducedDepthBuffer[0]->GetHeight() == 0)
+    if (FrameResources.ReducedDepthBuffer[0]->GetDesc().Extent.X == 0 || FrameResources.ReducedDepthBuffer[0]->GetDesc().Extent.Y == 0)
     {
         return;
     }
@@ -1221,8 +1221,8 @@ void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& Fr
     constexpr uint32 NumConstants = sizeof(FReductionConstants) / sizeof(uint32);
     CommandList.SetShaderConstants(ReduceDepthInitalShader.Get(), &ReductionConstants, NumConstants);
 
-    uint32 ThreadsX = FrameResources.ReducedDepthBuffer[0]->GetWidth();
-    uint32 ThreadsY = FrameResources.ReducedDepthBuffer[0]->GetHeight();
+    uint32 ThreadsX = FrameResources.ReducedDepthBuffer[0]->GetDesc().Extent.X;
+    uint32 ThreadsY = FrameResources.ReducedDepthBuffer[0]->GetDesc().Extent.Y;
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
     CommandList.TransitionTextureState(FrameResources.ReducedDepthBuffer[0].Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));

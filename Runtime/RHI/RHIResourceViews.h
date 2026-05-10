@@ -151,7 +151,7 @@ NODISCARD inline bool IsViewDimensionCompatible(ETextureDimension TextureDimensi
 
 NODISCARD constexpr EFormat SafeGetFormat(FRHITexture* Texture)
 {
-    return Texture ? Texture->GetFormat() : EFormat::Unknown;
+    return Texture ? Texture->GetDesc().Format : EFormat::Unknown;
 }
 
 NODISCARD constexpr uint16 SafeGetFullResourceSliceCount(FRHITexture* Texture, EViewDimension ViewDimension)
@@ -1569,8 +1569,9 @@ private:
 class FRHIShaderResourceView : public FRHIResourceView
 {
 protected:
-    explicit FRHIShaderResourceView(FRHIResource* InResource)
+    FRHIShaderResourceView(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc)
         : FRHIResourceView(ERHIResourceType::ShaderResourceView, InResource)
+        , Desc(InDesc)
     {
     }
 
@@ -1578,17 +1579,27 @@ protected:
 
 public:
 
-    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView / VkBufferView / VkAccelerationStructureKHR. Metal/Null: nullptr. */
+    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView / VkBufferView / VkAccelerationStructureKHR. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeHandle() const = 0;
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const = 0;
+
+    /** @brief Returns the descriptor used to create this view. */
+    NODISCARD const FRHIShaderResourceViewDesc& GetDesc() const
+    {
+        return Desc;
+    }
+
+protected:
+    FRHIShaderResourceViewDesc Desc;
 };
 
 class FRHIUnorderedAccessView : public FRHIResourceView
 {
 protected:
-    explicit FRHIUnorderedAccessView(FRHIResource* InResource)
+    FRHIUnorderedAccessView(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc)
         : FRHIResourceView(ERHIResourceType::UnorderedAccessView, InResource)
+        , Desc(InDesc)
     {
     }
 
@@ -1596,17 +1607,27 @@ protected:
 
 public:
 
-    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView / VkBufferView. Metal/Null: nullptr. */
+    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView / VkBufferView. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeHandle() const = 0;
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const = 0;
+
+    /** @brief Returns the descriptor used to create this view. */
+    NODISCARD const FRHIUnorderedAccessViewDesc& GetDesc() const
+    {
+        return Desc;
+    }
+
+protected:
+    FRHIUnorderedAccessViewDesc Desc;
 };
 
 class FRHIRenderTargetView : public FRHIResourceView
 {
 protected:
-    explicit FRHIRenderTargetView(FRHIResource* InResource)
+    FRHIRenderTargetView(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc)
         : FRHIResourceView(ERHIResourceType::RenderTargetView, InResource)
+        , Desc(InDesc)
     {
     }
 
@@ -1614,15 +1635,25 @@ protected:
 
 public:
 
-    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView. Metal/Null: nullptr. */
+    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeHandle() const = 0;
+
+    /** @brief Returns the descriptor used to create this view. */
+    NODISCARD const FRHIRenderTargetViewDesc& GetDesc() const
+    {
+        return Desc;
+    }
+
+protected:
+    FRHIRenderTargetViewDesc Desc;
 };
 
 class FRHIDepthStencilView : public FRHIResourceView
 {
 protected:
-    explicit FRHIDepthStencilView(FRHIResource* InResource)
+    FRHIDepthStencilView(FRHIResource* InResource, const FRHIDepthStencilViewDesc& InDesc)
         : FRHIResourceView(ERHIResourceType::DepthStencilView, InResource)
+        , Desc(InDesc)
     {
     }
 
@@ -1630,8 +1661,17 @@ protected:
 
 public:
 
-    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView. Metal/Null: nullptr. */
+    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeHandle() const = 0;
+
+    /** @brief Returns the descriptor used to create this view. */
+    NODISCARD const FRHIDepthStencilViewDesc& GetDesc() const
+    {
+        return Desc;
+    }
+
+protected:
+    FRHIDepthStencilViewDesc Desc;
 };
 
 struct FRHIRenderPassAttachment

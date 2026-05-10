@@ -86,8 +86,9 @@ struct FRHIDepthStencilStateDesc
 class FRHIDepthStencilState : public FRHIResource
 {
 protected:
-    FRHIDepthStencilState()
+    FRHIDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
         : FRHIResource(ERHIResourceType::DepthStencilState)
+        , Desc(InDesc)
     {
     }
 
@@ -95,10 +96,17 @@ protected:
 
 public:
 
-    // All backends: nullptr (modern APIs expose no native depth-stencil state object).
+    /** @return D3D12: nullptr. Vulkan: nullptr. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeState() const = 0;
 
-    virtual FRHIDepthStencilStateDesc GetDesc() const = 0;
+    /** @brief Returns the descriptor used to create this state. */
+    NODISCARD const FRHIDepthStencilStateDesc& GetDesc() const
+    {
+        return Desc;
+    }
+
+protected:
+    FRHIDepthStencilStateDesc Desc;
 };
 
 enum class ECullMode : uint8
@@ -174,8 +182,9 @@ struct FRHIRasterizerStateDesc
 class FRHIRasterizerState : public FRHIResource
 {
 protected:
-    FRHIRasterizerState()
+    FRHIRasterizerState(const FRHIRasterizerStateDesc& InDesc)
         : FRHIResource(ERHIResourceType::RasterizerState)
+        , Desc(InDesc)
     {
     }
 
@@ -183,10 +192,17 @@ protected:
 
 public:
 
-    // All backends: nullptr (modern APIs expose no native rasterizer state object).
+    /** @return D3D12: nullptr. Vulkan: nullptr. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeState() const = 0;
 
-    virtual FRHIRasterizerStateDesc GetDesc() const = 0;
+    /** @brief Returns the descriptor used to create this state. */
+    NODISCARD const FRHIRasterizerStateDesc& GetDesc() const
+    {
+        return Desc;
+    }
+
+protected:
+    FRHIRasterizerStateDesc Desc;
 };
 
 enum class EBlendType : uint8
@@ -375,8 +391,9 @@ struct FRHIBlendStateDesc
 class FRHIBlendState : public FRHIResource
 {
 protected:
-    FRHIBlendState()
+    FRHIBlendState(const FRHIBlendStateDesc& InDesc)
         : FRHIResource(ERHIResourceType::BlendState)
+        , Desc(InDesc)
     {
     }
 
@@ -384,10 +401,17 @@ protected:
 
 public:
 
-    // All backends: nullptr (modern APIs expose no native blend state object).
+    /** @return D3D12: nullptr. Vulkan: nullptr. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeState() const = 0;
 
-    virtual FRHIBlendStateDesc GetDesc() const = 0;
+    /** @brief Returns the descriptor used to create this state. */
+    NODISCARD const FRHIBlendStateDesc& GetDesc() const
+    {
+        return Desc;
+    }
+
+protected:
+    FRHIBlendStateDesc Desc;
 };
 
 enum class EVertexInputClass : uint8
@@ -448,7 +472,8 @@ protected:
     virtual ~FRHIInputLayout() = default;
     
 public:
-    // All backends: nullptr (input layout baked into the pipeline state).
+
+    /** @return D3D12: nullptr. Vulkan: nullptr. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeState() const = 0;
 
     virtual const FRHIInputElementDesc* GetInputElementDesc(uint32 Index) const = 0;
@@ -467,9 +492,7 @@ protected:
 
 public:
 
-    // D3D12: ID3D12PipelineState* (graphics/compute) or ID3D12StateObject* (ray tracing). 
-    // Vulkan: VkPipeline (graphics/compute) or nullptr (RT). 
-    // Metal: id<MTLRenderPipelineState> (graphics) or nullptr. Null: nullptr.
+    /** @return D3D12: ID3D12PipelineState* (graphics/compute) or ID3D12StateObject* (ray tracing). Vulkan: VkPipeline (graphics/compute) or nullptr (ray tracing). Metal: id<MTLRenderPipelineState> (graphics) or nullptr. Null: nullptr. */
     virtual void* GetRHINativeState() const = 0;
 
     virtual void SetDebugName(const FString& InName) { }

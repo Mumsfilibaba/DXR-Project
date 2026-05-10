@@ -554,7 +554,7 @@ bool FVulkanSwapChainRHI::Initialize()
         BackBufferUsageFlags |= ETextureUsageFlags::UnorderedAccessTexture;
     }
 
-    const FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, BackBufferUsageFlags);
+    const FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(Desc.ColorFormat, Desc.Width, Desc.Height, 1, 1, BackBufferUsageFlags);
     BackBufferProxy = new FVulkanBackBufferProxyTextureRHI(this, BackBufferDesc);
 
     if (!BackBufferProxy)
@@ -578,7 +578,7 @@ bool FVulkanSwapChainRHI::Initialize()
     // We need to start the context since that locks it to this thread
     CommandContext->StartContext();
 
-    if (!CreateSwapChain(GetWidth(), GetHeight()))
+    if (!CreateSwapChain(Desc.Width, Desc.Height))
     {
         return false;
     }
@@ -682,7 +682,7 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
 	SwapChainCreateInfo.BufferCount       = CVarBackbufferCount.GetValue();
 	SwapChainCreateInfo.Extent.width      = CreateWidth;
 	SwapChainCreateInfo.Extent.height     = CreateHeight;
-	SwapChainCreateInfo.Format            = GetColorFormat();
+	SwapChainCreateInfo.Format            = Desc.ColorFormat;
 	SwapChainCreateInfo.Usage             = Desc.Usage;
 	SwapChainCreateInfo.bVerticalSync     = CVarEnableVSync.GetValue();
 
@@ -767,7 +767,7 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
     {
         UsageFlags |= ETextureUsageFlags::UnorderedAccessTexture;
     }
-    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), SwapChainExtent.width, SwapChainExtent.height, 1, 1, UsageFlags);
+    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(Desc.ColorFormat, SwapChainExtent.width, SwapChainExtent.height, 1, 1, UsageFlags);
 
     for (uint32 i = 0; i < BufferCount; ++i)
     {
@@ -824,9 +824,9 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
 
         if (Desc.IsRenderTarget())
         {
-            const FRHIRenderTargetViewDesc RTVDesc = FRHIRenderTargetViewDesc::CreateTexture2D(GetColorFormat(), 0);
+            const FRHIRenderTargetViewDesc RTVDesc = FRHIRenderTargetViewDesc::CreateTexture2D(Desc.ColorFormat, 0);
 
-            FVulkanRenderTargetViewRHIRef NewRTV = new FVulkanRenderTargetViewRHI(GetDevice(), BackBufferTexture);
+            FVulkanRenderTargetViewRHIRef NewRTV = new FVulkanRenderTargetViewRHI(GetDevice(), BackBufferTexture, RTVDesc);
             if (!NewRTV->Initialize(BackBufferTexture, RTVDesc))
             {
                 VULKAN_ERROR_CRITICAL("FVulkanSwapChainRHI: Failed to create back-buffer RTV for index %d", Index);
@@ -838,9 +838,9 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
 
         if (Desc.IsUnorderedAccess())
         {
-            const FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateTexture2D(GetColorFormat(), 0);
+            const FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateTexture2D(Desc.ColorFormat, 0);
 
-            FVulkanUnorderedAccessViewRHIRef NewUAV = new FVulkanUnorderedAccessViewRHI(GetDevice(), BackBufferTexture);
+            FVulkanUnorderedAccessViewRHIRef NewUAV = new FVulkanUnorderedAccessViewRHI(GetDevice(), BackBufferTexture, UAVDesc);
             if (!NewUAV->Initialize(BackBufferTexture, UAVDesc))
             {
                 VULKAN_ERROR_CRITICAL("FVulkanSwapChainRHI: Failed to create back-buffer UAV for index %d", Index);
@@ -979,7 +979,7 @@ bool FVulkanSwapChainRHI::Present(bool bVerticalSync)
 
     bool bNeedsRecreation = false;
 
-    FVulkanQueue* PresentQueue = FVulkanRHI::Get()->GetPresentQueue();
+    FVulkanQueue* PresentQueue = FVulkanDeviceRHI::Get()->GetPresentQueue();
     VkResult Result = SwapChainResource->Present(CommandContext->GetCommandQueue(), PresentQueue, RenderSemaphore.Get());
     if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR || Result == VK_ERROR_SURFACE_LOST_KHR)
     {
@@ -1025,7 +1025,7 @@ bool FVulkanSwapChainRHI::Present(bool bVerticalSync)
         // signaling a semaphore without a matching wait.
         CommandContext->GetCommandQueue().ClearPendingSemaphores();
 
-        if (!CreateSwapChain(GetWidth(), GetHeight()))
+        if (!CreateSwapChain(Desc.Width, Desc.Height))
         {
             VULKAN_WARNING("FVulkanSwapChainRHI::Present CreateSwapChain Failed");
             return false;

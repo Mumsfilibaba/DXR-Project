@@ -105,7 +105,7 @@ bool FImGuiRenderer::InitializeRHI()
         return false;
     }
 
-    VShader = FRHI::Get()->CreateVertexShader(ShaderCode);
+    VShader = RHI::Device->CreateVertexShader(ShaderCode);
     if (!VShader)
     {
         DEBUG_BREAK();
@@ -119,7 +119,7 @@ bool FImGuiRenderer::InitializeRHI()
         return false;
     }
 
-    PShader = FRHI::Get()->CreatePixelShader(ShaderCode);
+    PShader = RHI::Device->CreatePixelShader(ShaderCode);
     if (!PShader)
     {
         DEBUG_BREAK();
@@ -133,7 +133,7 @@ bool FImGuiRenderer::InitializeRHI()
         { "COLOR",    0, EFormat::R8G8B8A8_Unorm, sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, col)), 2, EVertexInputClass::Vertex, 0 },
     };
 
-    InputLayout = FRHI::Get()->CreateInputLayout(InputElements);
+    InputLayout = RHI::Device->CreateInputLayout(InputElements);
     if (!InputLayout)
     {
         DEBUG_BREAK();
@@ -144,7 +144,7 @@ bool FImGuiRenderer::InitializeRHI()
     DepthStencilStateDesc.bDepthEnable      = false;
     DepthStencilStateDesc.bDepthWriteEnable = false;
 
-    DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateDesc);
+    DepthStencilState = RHI::Device->CreateDepthStencilState(DepthStencilStateDesc);
     if (!DepthStencilState)
     {
         DEBUG_BREAK();
@@ -155,7 +155,7 @@ bool FImGuiRenderer::InitializeRHI()
     RasterizerStateDesc.CullMode               = ECullMode::None;
     RasterizerStateDesc.bAntialiasedLineEnable = true;
 
-    RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateDesc);
+    RasterizerState = RHI::Device->CreateRasterizerState(RasterizerStateDesc);
     if (!RasterizerState)
     {
         DEBUG_BREAK();
@@ -173,7 +173,7 @@ bool FImGuiRenderer::InitializeRHI()
     BlendStateDesc.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
     BlendStateDesc.RenderTargets[0].BlendOp       = EBlendOp::Add;
 
-    BlendStateBlending = FRHI::Get()->CreateBlendState(BlendStateDesc);
+    BlendStateBlending = RHI::Device->CreateBlendState(BlendStateDesc);
     if (!BlendStateBlending)
     {
         DEBUG_BREAK();
@@ -182,7 +182,7 @@ bool FImGuiRenderer::InitializeRHI()
 
     BlendStateDesc.RenderTargets[0].bBlendEnable = false;
 
-    BlendStateNoBlending = FRHI::Get()->CreateBlendState(BlendStateDesc);
+    BlendStateNoBlending = RHI::Device->CreateBlendState(BlendStateDesc);
     if (!BlendStateNoBlending)
     {
         DEBUG_BREAK();
@@ -195,7 +195,7 @@ bool FImGuiRenderer::InitializeRHI()
     SamplerDesc.AddressW = ESamplerMode::Clamp;
     SamplerDesc.Filter   = ESamplerFilter::MinMagMipLinear;
 
-    LinearSampler = FRHI::Get()->CreateSamplerState(SamplerDesc);
+    LinearSampler = RHI::Device->CreateSamplerState(SamplerDesc);
     if (!LinearSampler)
     {
         return false;
@@ -203,7 +203,7 @@ bool FImGuiRenderer::InitializeRHI()
 
     SamplerDesc.Filter = ESamplerFilter::MinMagMipPoint;
 
-    PointSampler = FRHI::Get()->CreateSamplerState(SamplerDesc);
+    PointSampler = RHI::Device->CreateSamplerState(SamplerDesc);
     if (!PointSampler)
     {
         return false;
@@ -283,7 +283,7 @@ void FImGuiRenderer::PreparePipelineState(EFormat OutputFormat)
     PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = OutputFormat;
     PSODesc.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
 
-    FRHIGraphicsPipelineStateRef NewBlending = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
+    FRHIGraphicsPipelineStateRef NewBlending = RHI::Device->CreateGraphicsPipelineState(PSODesc);
     if (!NewBlending)
     {
         DEBUG_BREAK();
@@ -292,7 +292,7 @@ void FImGuiRenderer::PreparePipelineState(EFormat OutputFormat)
 
     PSODesc.BlendState = BlendStateNoBlending.Get();
 
-    FRHIGraphicsPipelineStateRef NewNoBlending = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
+    FRHIGraphicsPipelineStateRef NewNoBlending = RHI::Device->CreateGraphicsPipelineState(PSODesc);
     if (!NewNoBlending)
     {
         DEBUG_BREAK();
@@ -314,7 +314,7 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
         FRHISwapChainRef RHISwapChain = MainViewportData->SwapChain;
         CHECK(RHISwapChain != nullptr);
 
-        PreparePipelineState(RHISwapChain->GetColorFormat());
+        PreparePipelineState(RHISwapChain->GetDesc().ColorFormat);
 
         // Render
         ImGui::Render();
@@ -347,7 +347,7 @@ void FImGuiRenderer::RenderViewport(FRHICommandList& CommandList, ImDrawData* Dr
     FRHITexture* BackBuffer = ViewportData.SwapChain->GetBackBuffer();
     CommandList.TransitionTextureState(BackBuffer, FRHITextureTransition::Make(EResourceAccess::Present, EResourceAccess::RenderTarget));
 
-    PreparePipelineState(ViewportData.SwapChain->GetColorFormat());
+    PreparePipelineState(ViewportData.SwapChain->GetDesc().ColorFormat);
     PrepareDrawData(CommandList, DrawData);
 
     FRHIRenderTargetView* BackBufferRTV = ViewportData.SwapChain->GetBackBufferRenderTargetView();
@@ -379,7 +379,7 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
         VertexBufferDesc.Size   = VertexBufferDesc.Stride * NewVertexCount;
         VertexBufferDesc.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::Default;
 
-        TSharedRef<FRHIBuffer> NewVertexBuffer = FRHI::Get()->CreateBuffer(VertexBufferDesc, EResourceAccess::GenericRead, nullptr);
+        TSharedRef<FRHIBuffer> NewVertexBuffer = RHI::Device->CreateBuffer(VertexBufferDesc, EResourceAccess::GenericRead, nullptr);
         if (NewVertexBuffer)
         {
             NewVertexBuffer->SetDebugName("ImGui VertexBuffer");
@@ -401,7 +401,7 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
         IndexBufferDesc.Size   = IndexBufferDesc.Stride * NewIndexCount;
         IndexBufferDesc.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::Default;
 
-        TSharedRef<FRHIBuffer> NewIndexBuffer = FRHI::Get()->CreateBuffer(IndexBufferDesc, EResourceAccess::GenericRead, nullptr);
+        TSharedRef<FRHIBuffer> NewIndexBuffer = RHI::Device->CreateBuffer(IndexBufferDesc, EResourceAccess::GenericRead, nullptr);
         if (NewIndexBuffer)
         {
             NewIndexBuffer->SetDebugName("ImGui IndexBuffer");
@@ -655,7 +655,7 @@ void FImGuiRenderer::OnCreateWindow(ImGuiViewport* Viewport)
     SwapChainDesc.Width        = static_cast<uint16>(Viewport->Size.x);
     SwapChainDesc.Height       = static_cast<uint16>(Viewport->Size.y);
         
-    ViewportData->SwapChain = FRHI::Get()->CreateSwapChain(SwapChainDesc);
+    ViewportData->SwapChain = RHI::Device->CreateSwapChain(SwapChainDesc);
     if (ViewportData->SwapChain)
     {
         ViewportData->Width  = SwapChainDesc.Width;

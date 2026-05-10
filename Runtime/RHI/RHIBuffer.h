@@ -53,7 +53,7 @@ protected:
 
 public: 
     
-    // D3D12: ID3D12Resource*. Vulkan: VkBuffer. Metal: id<MTLBuffer>. Null: nullptr.
+    /** @return D3D12: ID3D12Resource*. Vulkan: VkBuffer. Metal: id<MTLBuffer>. Null: nullptr. */
     virtual void* GetRHINativeResource() const = 0; 
     
     virtual FRHIDescriptorHandle GetBindlessHandle() const = 0; 
@@ -64,7 +64,7 @@ public:
     virtual void SetDebugName(const FString& InName) = 0; 
     virtual void GetDebugName(FString& OutDebugName) const = 0; 
  
-    const FRHIBufferDesc& GetDesc() const 
+    NODISCARD const FRHIBufferDesc& GetDesc() const 
     { 
         return Desc; 
     } 

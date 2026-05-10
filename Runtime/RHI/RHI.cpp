@@ -22,8 +22,6 @@ static TAutoConsoleVariable<FString> CVarType(
     "Selects the RHI Layer to use",
     "Unknown");
 
-RHI_API FRHI* GRHI = nullptr;
-
 static FRHIModule* LoadNullRHI()
 {
     return FModuleManager::Get().LoadModule<FRHIModule>("NullRHI");
@@ -227,9 +225,9 @@ static void LogRHI()
 }
 
 
-FRHI* FRHI::GRHI = nullptr;
+RHI_API FRHIDevice* RHI::Device = nullptr;
 
-bool FRHI::Initialize()
+bool RHI::Initialize()
 {
     // Select RHI
     ERHIType RHIType = GetRHIType();
@@ -265,7 +263,7 @@ bool FRHI::Initialize()
         }
     }
 
-    FRHI* LocalRHI = RHIModule->CreateRHI();
+    FRHIDevice* LocalRHI = RHIModule->CreateDevice();
     if (!LocalRHI)
     {
         LOG_ERROR("[RHIInitialize] Failed to create RHIInterface, the application has to terminate");
@@ -279,7 +277,7 @@ bool FRHI::Initialize()
         LocalRHI = ValidationRHI;
     }
 
-    GRHI = LocalRHI;
+    Device = LocalRHI;
 
     // Initialize the CommandListExecutor
     if (!FRHICommandListExecutor::Initialize())
@@ -292,7 +290,7 @@ bool FRHI::Initialize()
     return true;
 }
 
-void FRHI::Release()
+void RHI::Release()
 {
     // The RHI-implementation might need the executor in the destructor so we flush before we delete it
     if (FRHICommandListExecutor::IsInitialized())
@@ -300,7 +298,7 @@ void FRHI::Release()
         FRHICommandListExecutor::Get().FlushDeletedResources();
     }
 
-    SAFE_DELETE(GRHI);
+    SAFE_DELETE(Device);
 
     FRHICommandListExecutor::Release();
 }

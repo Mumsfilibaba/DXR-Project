@@ -45,7 +45,7 @@ bool FTexture2D::CreateRHITexture(bool bGenerateMips)
     }
 
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(Format, Width, Height, NumMipsRHI, 1, ETextureUsageFlags::ShaderResourceTexture);
-    TextureRHI = FRHI::Get()->CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource, TextureData);
+    TextureRHI = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource, TextureData);
     if (!TextureRHI)
     {
         DEBUG_BREAK();

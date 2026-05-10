@@ -108,8 +108,7 @@ uint32 FVulkanInputLayoutRHI::GetNumInputElementDescs() const
 }
 
 FVulkanDepthStencilStateRHI::FVulkanDepthStencilStateRHI(const FRHIDepthStencilStateDesc& InDesc)
-    : FRHIDepthStencilState()
-    , Desc(InDesc)
+    : FRHIDepthStencilState(InDesc)
 {
     FMemory::Memzero(&CreateInfo);
     
@@ -137,15 +136,9 @@ void* FVulkanDepthStencilStateRHI::GetRHINativeState() const
     return nullptr;
 }
 
-FRHIDepthStencilStateDesc FVulkanDepthStencilStateRHI::GetDesc() const
-{
-    return Desc;
-}
-
 FVulkanRasterizerStateRHI::FVulkanRasterizerStateRHI(FVulkanDevice* InDevice, const FRHIRasterizerStateDesc& InDesc)
-    : FRHIRasterizerState()
+    : FRHIRasterizerState(InDesc)
     , FVulkanDeviceChild(InDevice)
-    , Desc(InDesc)
 {
     FMemory::Memzero(&CreateInfo);
     
@@ -218,14 +211,8 @@ void* FVulkanRasterizerStateRHI::GetRHINativeState() const
     return nullptr;
 }
 
-FRHIRasterizerStateDesc FVulkanRasterizerStateRHI::GetDesc() const
-{
-    return Desc;
-}
-
 FVulkanBlendStateRHI::FVulkanBlendStateRHI(const FRHIBlendStateDesc& InDesc)
-    : FRHIBlendState()
-    , Desc(InDesc)
+    : FRHIBlendState(InDesc)
 {
     FMemory::Memzero(&CreateInfo);
 
@@ -256,11 +243,6 @@ FVulkanBlendStateRHI::~FVulkanBlendStateRHI()
 void* FVulkanBlendStateRHI::GetRHINativeState() const
 {
     return nullptr;
-}
-
-FRHIBlendStateDesc FVulkanBlendStateRHI::GetDesc() const
-{
-    return Desc;
 }
 
 FVulkanPipeline::FVulkanPipeline(FVulkanDevice* InDevice)
@@ -323,7 +305,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
 {
     // Gather Shaders for PipelineLayout
     FVulkanShader* Shaders[ShaderVisibility_Count];
-    if (FVulkanVertexShaderRHI* VulkanVertexShader = FVulkanRHI::ResourceCast(InDesc.VertexShader))
+    if (FVulkanVertexShaderRHI* VulkanVertexShader = FVulkanDeviceRHI::ResourceCast(InDesc.VertexShader))
     {
         Shaders[ShaderVisibility_Vertex] = VulkanVertexShader;
     }
@@ -333,10 +315,10 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
         return false;
     }
 
-    Shaders[ShaderVisibility_Hull]     = FVulkanRHI::ResourceCast(InDesc.HullShader);
-    Shaders[ShaderVisibility_Domain]   = FVulkanRHI::ResourceCast(InDesc.DomainShader);
-    Shaders[ShaderVisibility_Geometry] = FVulkanRHI::ResourceCast(InDesc.GeometryShader);
-    Shaders[ShaderVisibility_Pixel]    = FVulkanRHI::ResourceCast(InDesc.PixelShader);
+    Shaders[ShaderVisibility_Hull]     = FVulkanDeviceRHI::ResourceCast(InDesc.HullShader);
+    Shaders[ShaderVisibility_Domain]   = FVulkanDeviceRHI::ResourceCast(InDesc.DomainShader);
+    Shaders[ShaderVisibility_Geometry] = FVulkanDeviceRHI::ResourceCast(InDesc.GeometryShader);
+    Shaders[ShaderVisibility_Pixel]    = FVulkanDeviceRHI::ResourceCast(InDesc.PixelShader);
     
     FVulkanPipelineLayoutInfo LayoutInfo;
     LayoutInfo.AddSetForStage(VK_SHADER_STAGE_VERTEX_BIT, Shaders[ShaderVisibility_Vertex]->GetShaderInfo());
@@ -464,7 +446,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
     
     // VertexInputStateCreateInfo
     VkPipelineVertexInputStateCreateInfo VertexInputStateCreateInfo;
-    if (FVulkanInputLayoutRHI* InputLayout = FVulkanRHI::ResourceCast(InDesc.InputLayout))
+    if (FVulkanInputLayoutRHI* InputLayout = FVulkanDeviceRHI::ResourceCast(InDesc.InputLayout))
     {
         VertexInputStateCreateInfo = InputLayout->GetVkCreateInfo();
     }
@@ -488,7 +470,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
 
     // RasterizerState CreateInfo
     VkPipelineRasterizationStateCreateInfo RasterizerStateCreateInfo;
-    if (FVulkanRasterizerStateRHI* RasterizerState = FVulkanRHI::ResourceCast(InDesc.RasterizerState))
+    if (FVulkanRasterizerStateRHI* RasterizerState = FVulkanDeviceRHI::ResourceCast(InDesc.RasterizerState))
     {
         RasterizerStateCreateInfo = RasterizerState->GetVkCreateInfo();
     }
@@ -510,7 +492,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
 
     // DepthStencilState CreateInfo
     VkPipelineDepthStencilStateCreateInfo DepthStencilStateCreateInfo;
-    if (FVulkanDepthStencilStateRHI* DepthStencilState = FVulkanRHI::ResourceCast(InDesc.DepthStencilState))
+    if (FVulkanDepthStencilStateRHI* DepthStencilState = FVulkanDeviceRHI::ResourceCast(InDesc.DepthStencilState))
     {
         DepthStencilStateCreateInfo = DepthStencilState->GetVkCreateInfo();
     }
@@ -522,7 +504,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
 
     // BlendState CreateInfo
     VkPipelineColorBlendStateCreateInfo BlendStateCreateInfo;
-    if (FVulkanBlendStateRHI* BlendState = FVulkanRHI::ResourceCast(InDesc.BlendState))
+    if (FVulkanBlendStateRHI* BlendState = FVulkanDeviceRHI::ResourceCast(InDesc.BlendState))
     {
         BlendStateCreateInfo = BlendState->GetVkCreateInfo();
     }
@@ -692,7 +674,7 @@ void FVulkanComputePipelineStateRHI::GetDebugName(FString& OutDebugName) const
 
 bool FVulkanComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDesc& InDesc)
 {
-    FVulkanComputeShaderRHI* VulkanComputeShader = FVulkanRHI::ResourceCast(InDesc.Shader);
+    FVulkanComputeShaderRHI* VulkanComputeShader = FVulkanDeviceRHI::ResourceCast(InDesc.Shader);
     if (!VulkanComputeShader)
     {
         VULKAN_ERROR_CRITICAL("Compute Shader cannot be nullptr");

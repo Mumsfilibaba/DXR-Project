@@ -306,7 +306,7 @@ FVulkanRenderPassKey FVulkanCommandContextState::BuildRenderPassKey(const FVulka
         RenderPassKey.RenderTargetFormats[Index]             = Texture->GetDesc().Format;
         RenderPassKey.RenderTargetActions[Index].LoadAction  = EAttachmentLoadAction::Load;
         RenderPassKey.RenderTargetActions[Index].StoreAction = RenderTargetState.ColorStoreActions[Index];
-        NumSamples = Math::Max<uint8>(static_cast<uint8>(Texture->GetNumSamples()), NumSamples);
+        NumSamples = Math::Max<uint8>(static_cast<uint8>(Texture->GetDesc().NumSamples), NumSamples);
     }
 
     if (FVulkanResourceView* DepthView = RenderTargetState.DepthStencilView)
@@ -318,7 +318,7 @@ FVulkanRenderPassKey FVulkanCommandContextState::BuildRenderPassKey(const FVulka
         RenderPassKey.DepthStencilActions.LoadAction  = EAttachmentLoadAction::Load;
         RenderPassKey.DepthStencilActions.StoreAction = RenderTargetState.DepthStencilStoreAction;
         RenderPassKey.DepthStencilFlags               = DepthStencilView->GetFlags();
-        NumSamples = Math::Max<uint8>(static_cast<uint8>(Texture->GetNumSamples()), NumSamples);
+        NumSamples = Math::Max<uint8>(static_cast<uint8>(Texture->GetDesc().NumSamples), NumSamples);
     }
 
     RenderPassKey.NumSamples = NumSamples;
@@ -357,7 +357,7 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
     for (uint32 Index = 0; Index < RenderPassDesc.NumRenderTargets; Index++)
     {
         const FRHIRenderPassAttachment& Attachment = RenderPassDesc.RenderTargets[Index];
-        FVulkanRenderTargetViewRHI* VulkanRenderTargetView = FVulkanRHI::ResourceCast(Attachment.View);
+        FVulkanRenderTargetViewRHI* VulkanRenderTargetView = FVulkanDeviceRHI::ResourceCast(Attachment.View);
         if (!VulkanRenderTargetView)
         {
             VULKAN_ERROR("BeginRenderPass: RenderTargetView at slot %u is null (NumRenderTargets=%u)",
@@ -374,10 +374,10 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
 
         const FVulkanResourceView::FImageView& ImageViewInfo = VulkanRenderTargetView->GetImageViewInfo();
 
-        Width          = Math::Min<uint32>(VulkanTexture->GetWidth(), Width);
-        Height         = Math::Min<uint32>(VulkanTexture->GetHeight(), Height);
+        Width          = Math::Min<uint32>(VulkanTexture->GetDesc().Extent.X, Width);
+        Height         = Math::Min<uint32>(VulkanTexture->GetDesc().Extent.Y, Height);
         NumArrayLayers = Math::Max<uint32>(ImageViewInfo.SubresourceRange.layerCount, NumArrayLayers);
-        NumSamples     = Math::Max<uint8>(static_cast<uint8>(VulkanTexture->GetNumSamples()), NumSamples);
+        NumSamples     = Math::Max<uint8>(static_cast<uint8>(VulkanTexture->GetDesc().NumSamples), NumSamples);
 
         RenderTargetState.RenderTargetViews[Index] = VulkanRenderTargetView;
         RenderTargetState.ColorStoreActions[Index] = Attachment.StoreAction;
@@ -394,7 +394,7 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
     VkClearValue DepthStencilClearValue = {};
 
     const FRHIDepthStencilAttachment& DepthStencilAttachment = RenderPassDesc.DepthStencilAttachment;
-    FVulkanDepthStencilViewRHI* VulkanDepthStencilView = FVulkanRHI::ResourceCast(DepthStencilAttachment.View);
+    FVulkanDepthStencilViewRHI* VulkanDepthStencilView = FVulkanDeviceRHI::ResourceCast(DepthStencilAttachment.View);
     if (VulkanDepthStencilView)
     {
         FVulkanTextureRHI* VulkanTexture = static_cast<FVulkanTextureRHI*>(VulkanDepthStencilView->GetOwnerResource());
@@ -406,10 +406,10 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
         {
             const FVulkanResourceView::FImageView& ImageViewInfo = VulkanDepthStencilView->GetImageViewInfo();
 
-            Width          = Math::Min<uint32>(VulkanTexture->GetWidth(), Width);
-            Height         = Math::Min<uint32>(VulkanTexture->GetHeight(), Height);
+            Width          = Math::Min<uint32>(VulkanTexture->GetDesc().Extent.X, Width);
+            Height         = Math::Min<uint32>(VulkanTexture->GetDesc().Extent.Y, Height);
             NumArrayLayers = Math::Max<uint32>(ImageViewInfo.SubresourceRange.layerCount, NumArrayLayers);
-            NumSamples     = Math::Max<uint8>(static_cast<uint8>(VulkanTexture->GetNumSamples()), NumSamples);
+            NumSamples     = Math::Max<uint8>(static_cast<uint8>(VulkanTexture->GetDesc().NumSamples), NumSamples);
 
             RenderTargetState.DepthStencilView        = VulkanDepthStencilView;
             RenderTargetState.DepthStencilStoreAction = DepthStencilAttachment.StoreAction;
@@ -883,7 +883,7 @@ void FVulkanCommandContextState::SetStreamOutputTargets(const TArrayView<FRHIBuf
     GraphicsState.StreamOutputCache.NumBuffers = Math::Min(static_cast<uint32>(Buffers.Size()), static_cast<uint32>(VULKAN_MAX_STREAM_OUTPUT_BUFFER_COUNT));
     for (uint32 Index = 0; Index < GraphicsState.StreamOutputCache.NumBuffers; ++Index)
     {
-        FVulkanBufferRHI* VulkanBuffer = FVulkanRHI::ResourceCast(Buffers[Index]);
+        FVulkanBufferRHI* VulkanBuffer = FVulkanDeviceRHI::ResourceCast(Buffers[Index]);
         if (VulkanBuffer)
         {
             GraphicsState.StreamOutputCache.Buffers[Index] = VulkanBuffer->GetVkBuffer();

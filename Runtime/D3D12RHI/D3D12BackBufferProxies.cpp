@@ -117,7 +117,7 @@ void FD3D12BackBufferProxyTextureRHI::GetDebugName(FString& OutDebugName) const
 }
 
 FD3D12BackBufferProxyRenderTargetViewRHI::FD3D12BackBufferProxyRenderTargetViewRHI(FD3D12SwapChainRHI* InSwapChain, FD3D12BackBufferProxyTextureRHI* InProxyTexture)
-    : FD3D12RenderTargetViewBase(InProxyTexture)
+    : FD3D12RenderTargetViewBase(InProxyTexture, FRHIRenderTargetViewDesc::CreateTexture2D(InProxyTexture ? InProxyTexture->GetDesc().Format : EFormat::Unknown, 0))
     , SwapChain(InSwapChain)
 {
 }
@@ -139,7 +139,7 @@ FD3D12RenderTargetViewRHI* FD3D12BackBufferProxyRenderTargetViewRHI::GetRenderTa
 }
 
 FD3D12BackBufferProxyUnorderedAccessViewRHI::FD3D12BackBufferProxyUnorderedAccessViewRHI(FD3D12SwapChainRHI* InSwapChain, FD3D12BackBufferProxyTextureRHI* InProxyTexture)
-    : FD3D12UnorderedAccessViewBase(InProxyTexture)
+    : FD3D12UnorderedAccessViewBase(InProxyTexture, FRHIUnorderedAccessViewDesc::CreateTexture2D(InProxyTexture ? InProxyTexture->GetDesc().Format : EFormat::Unknown, 0))
     , SwapChain(InSwapChain)
 {
 }

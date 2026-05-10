@@ -159,7 +159,7 @@ protected:
 class FVulkanShaderResourceViewRHI : public FRHIShaderResourceView, public FVulkanResourceView
 {
 public:
-    FVulkanShaderResourceViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource);
+    FVulkanShaderResourceViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource, const FRHIShaderResourceViewDesc& InRHIDesc);
     virtual ~FVulkanShaderResourceViewRHI() = default;
 
     // FRHIShaderResourceView Interface
@@ -176,8 +176,8 @@ public:
 class FVulkanUnorderedAccessViewBase : public FRHIUnorderedAccessView
 {
 protected:
-    explicit FVulkanUnorderedAccessViewBase(FRHIResource* InResource)
-        : FRHIUnorderedAccessView(InResource)
+    FVulkanUnorderedAccessViewBase(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc)
+        : FRHIUnorderedAccessView(InResource, InDesc)
     {
     }
 
@@ -190,7 +190,7 @@ public:
 class FVulkanUnorderedAccessViewRHI : public FVulkanUnorderedAccessViewBase, public FVulkanResourceView
 {
 public:
-    FVulkanUnorderedAccessViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource);
+    FVulkanUnorderedAccessViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InRHIDesc);
     virtual ~FVulkanUnorderedAccessViewRHI() = default;
 
     // FVulkanUnorderedAccessViewBase Interface
@@ -210,8 +210,8 @@ public:
 class FVulkanRenderTargetViewBase : public FRHIRenderTargetView
 {
 protected:
-    explicit FVulkanRenderTargetViewBase(FRHIResource* InResource)
-        : FRHIRenderTargetView(InResource)
+    FVulkanRenderTargetViewBase(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc)
+        : FRHIRenderTargetView(InResource, InDesc)
     {
     }
 
@@ -224,7 +224,7 @@ public:
 class FVulkanRenderTargetViewRHI : public FVulkanRenderTargetViewBase, public FVulkanResourceView
 {
 public:
-    FVulkanRenderTargetViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource);
+    FVulkanRenderTargetViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource, const FRHIRenderTargetViewDesc& InRHIDesc);
     virtual ~FVulkanRenderTargetViewRHI() = default;
 
     // FVulkanRenderTargetViewBase Interface
@@ -242,7 +242,7 @@ public:
 class FVulkanDepthStencilViewRHI : public FRHIDepthStencilView, public FVulkanResourceView
 {
 public:
-    FVulkanDepthStencilViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource);
+    FVulkanDepthStencilViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource, const FRHIDepthStencilViewDesc& InRHIDesc);
     virtual ~FVulkanDepthStencilViewRHI() = default;
 
     // FRHIDepthStencilView Interface

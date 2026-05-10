@@ -16,7 +16,7 @@
 
 class FD3D12Device;
 class FD3D12Adapter;
-class FD3D12RHI;
+class FD3D12DeviceRHI;
 class FD3D12RootSignature;
 class FD3D12ComputePipelineStateRHI;
 class FD3D12OnlineDescriptorHeap;

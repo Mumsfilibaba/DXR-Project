@@ -29,7 +29,7 @@ void FMetalGeometryAccelerationStructureRHI::GetDebugName(FString& OutDebugName)
 
 FMetalSceneAccelerationStructureRHI::FMetalSceneAccelerationStructureRHI(FMetalDevice* InDevice, const FRHISceneAccelerationStructureDesc& InSceneDesc)
     : FRHISceneAccelerationStructure(InSceneDesc)
-    , View(new FMetalShaderResourceViewRHI(InDevice, this))
+    , View(new FMetalShaderResourceViewRHI(InDevice, this, FRHIShaderResourceViewDesc::CreateAccelerationStructure()))
 {
 }
 

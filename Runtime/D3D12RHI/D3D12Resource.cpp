@@ -190,7 +190,7 @@ void FD3D12Resource::EndResidencyTracking()
 
 void FD3D12Resource::DeferredRelease()
 {
-    FD3D12RHI::DeferDeletion(this);
+    FD3D12DeviceRHI::DeferDeletion(this);
 }
 
 FD3D12ResourceStorage::FD3D12ResourceStorage(FD3D12Device* InDevice)

@@ -4,15 +4,17 @@
 
 class FRHIFence : public FRHIResource 
 { 
-public: 
+protected: 
     FRHIFence()
         : FRHIResource(ERHIResourceType::Fence)
     {
     }
 
     virtual ~FRHIFence() = default; 
- 
-    // D3D12: ID3D12Fence*. Vulkan: VkSemaphore (timeline). Metal/Null: nullptr.
+    
+public:
+
+    /** @return D3D12: ID3D12Fence*. Vulkan: VkSemaphore (timeline). Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeFence() const = 0;
 
     virtual bool IsSignaled() const = 0; 

@@ -6,16 +6,16 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct NULLRHI_API FNullRHIModule final : public FRHIModule
+struct NULLRHI_API FNullModuleRHI final : public FRHIModule
 {
-    virtual FRHI* CreateRHI() override final;
+    virtual FRHIDevice* CreateDevice() override final;
 };
 
-class NULLRHI_API FNullRHI final : public FRHI
+class NULLRHI_API FNullDeviceRHI final : public FRHIDevice
 {
 public:
-    FNullRHI();
-    ~FNullRHI();
+    FNullDeviceRHI();
+    ~FNullDeviceRHI();
 
     virtual void BeginFrame() override final { }
     virtual void EndFrame()   override final { }
@@ -52,22 +52,22 @@ public:
 
     virtual FRHIShaderResourceView* CreateShaderResourceView(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc) override final
     {
-        return new FNullShaderResourceViewRHI(InResource);
+        return new FNullShaderResourceViewRHI(InResource, InDesc);
     }
 
     virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc) override final
     {
-        return new FNullUnorderedAccessViewRHI(InResource);
+        return new FNullUnorderedAccessViewRHI(InResource, InDesc);
     }
 
     virtual FRHIRenderTargetView* CreateRenderTargetView(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc) override final
     {
-        return new FNullRenderTargetViewRHI(InResource);
+        return new FNullRenderTargetViewRHI(InResource, InDesc);
     }
 
     virtual FRHIDepthStencilView* CreateDepthStencilView(FRHIResource* InResource, const FRHIDepthStencilViewDesc& InDesc) override final
     {
-        return new FNullDepthStencilViewRHI(InResource, InDesc.Flags);
+        return new FNullDepthStencilViewRHI(InResource, InDesc);
     }
 
     virtual class FRHIComputeShader* CreateComputeShader(const TArray<uint8>& ShaderCode) override final
@@ -241,6 +241,8 @@ public:
     {
         return FString("NullRHI Adapter");
     }
+
+    virtual ERHIType GetRHIType() const override final;
 
 private:
     FNullRHICommandContext* CommandContext;

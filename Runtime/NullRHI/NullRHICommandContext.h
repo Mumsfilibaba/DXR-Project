@@ -78,8 +78,8 @@ struct FNullRHICommandContext final : public IRHICommandContext
     virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace) override final
     {
         FNullSwapChainRHI* NullSwapChain = static_cast<FNullSwapChainRHI*>(SwapChain);
-        const uint32 ResolvedWidth  = (Width  > 0u) ? Width  : NullSwapChain->GetWidth();
-        const uint32 ResolvedHeight = (Height > 0u) ? Height : NullSwapChain->GetHeight();
+        const uint32 ResolvedWidth  = (Width  > 0u) ? Width  : NullSwapChain->GetDesc().Width;
+        const uint32 ResolvedHeight = (Height > 0u) ? Height : NullSwapChain->GetDesc().Height;
         NullSwapChain->Resize(ResolvedWidth, ResolvedHeight, Format, ColorSpace);
     }
 

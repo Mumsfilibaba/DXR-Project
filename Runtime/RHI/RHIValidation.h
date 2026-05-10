@@ -4,13 +4,11 @@
 
 class FRHIValidationCommandContext;
 
-class RHI_API FRHIValidation : public FRHI
+class RHI_API FRHIValidation : public FRHIDevice
 {
 public:
-    FRHIValidation(FRHI* InRealRHI);
+    FRHIValidation(FRHIDevice* InRealRHI);
     ~FRHIValidation();
-
-    bool Initialize();
 
     virtual void BeginFrame() override final;
     virtual void EndFrame()   override final;
@@ -65,8 +63,10 @@ public:
 
     virtual FString GetAdapterName() const override final;
 
+    virtual ERHIType GetRHIType() const override final;
+
 private:
-    FRHI* RealRHI;
+    FRHIDevice* RealRHI;
     TMap<IRHICommandContext*, FRHIValidationCommandContext*> RealContextToValidationContextMap;
 };
 

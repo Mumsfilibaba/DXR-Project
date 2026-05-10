@@ -316,13 +316,13 @@ bool FD3D12SwapChainRHI::Resize(FD3D12CommandContext* InCommandContext, uint32 I
 {
     const uint32      ResolvedWidth          = (InWidth  > 0u) ? InWidth  : Desc.Width;
     const uint32      ResolvedHeight         = (InHeight > 0u) ? InHeight : Desc.Height;
-    const EFormat     EffectiveFormat        = (NewFormat     == EFormat::Unknown)     ? GetColorFormat()    : NewFormat;
+    const EFormat     EffectiveFormat        = (NewFormat     == EFormat::Unknown)     ? Desc.ColorFormat    : NewFormat;
     const EColorSpace EffectiveColorSpace    = (NewColorSpace == EColorSpace::Unknown) ? CurrentColorSpace   : NewColorSpace;
     const uint32      DesiredBackBufferCount = Math::Clamp<int32>(CVarSwapChainBackBufferCount.GetValue(), 2, 8);
 
     const bool bSizeChanged        = (ResolvedWidth != Desc.Width || ResolvedHeight != Desc.Height) && ResolvedWidth > 0u && ResolvedHeight > 0u;
     const bool bBufferCountChanged = DesiredBackBufferCount != NumBackBuffers;
-    const bool bFormatChanged      = (NewFormat     != EFormat::Unknown)     && (EffectiveFormat     != GetColorFormat());
+    const bool bFormatChanged      = (NewFormat     != EFormat::Unknown)     && (EffectiveFormat     != Desc.ColorFormat);
     const bool bColorSpaceChanged  = (NewColorSpace != EColorSpace::Unknown) && (EffectiveColorSpace != CurrentColorSpace);
 
     if (bFormatChanged || bColorSpaceChanged)
@@ -394,7 +394,7 @@ bool FD3D12SwapChainRHI::Resize(FD3D12CommandContext* InCommandContext, uint32 I
         }
 
         D3D12_INFO("[FD3D12SwapChainRHI]: Resized Width=%u Height=%u Format=%s Colorspace=%s BackBuffers=%u",
-            Desc.Width, Desc.Height, ToString(ConvertFormat(GetColorFormat())), ToString(ConvertColorSpace(EffectiveColorSpace)), NumBackBuffers);
+            Desc.Width, Desc.Height, ToString(ConvertFormat(Desc.ColorFormat)), ToString(ConvertColorSpace(EffectiveColorSpace)), NumBackBuffers);
     }
 
     if (bColorSpaceChanged)
@@ -608,7 +608,7 @@ bool FD3D12SwapChainRHI::RetrieveBackBuffers()
         UsageFlags |= ETextureUsageFlags::UnorderedAccessTexture;
     }
 
-    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, UsageFlags);
+    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(Desc.ColorFormat, Desc.Width, Desc.Height, 1, 1, UsageFlags);
     
     BackBuffers.Resize(NumBackBuffers);
     for (int32 Index = 0; Index < BackBuffers.Size(); ++Index)
@@ -618,7 +618,7 @@ bool FD3D12SwapChainRHI::RetrieveBackBuffers()
 
     if (BackBufferProxy)
     {
-        BackBufferProxy->Resize(GetWidth(), GetHeight());
+        BackBufferProxy->Resize(Desc.Width, Desc.Height);
     }
     else
     {
@@ -663,12 +663,12 @@ bool FD3D12SwapChainRHI::RetrieveBackBuffers()
         if (Desc.IsRenderTarget())
         {
             D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = {};
-            RTVDesc.Format               = ConvertFormat(GetColorFormat());
+            RTVDesc.Format               = ConvertFormat(Desc.ColorFormat);
             RTVDesc.ViewDimension        = D3D12_RTV_DIMENSION_TEXTURE2D;
             RTVDesc.Texture2D.MipSlice   = 0;
             RTVDesc.Texture2D.PlaneSlice = 0;
 
-            FD3D12RenderTargetViewRHIRef NewRTV = new FD3D12RenderTargetViewRHI(GetDevice(), GetDevice()->GetRenderTargetOfflineDescriptorHeap(), BackBufferTexture);
+            FD3D12RenderTargetViewRHIRef NewRTV = new FD3D12RenderTargetViewRHI(GetDevice(), GetDevice()->GetRenderTargetOfflineDescriptorHeap(), BackBufferTexture, FRHIRenderTargetViewDesc::CreateTexture2D(Desc.ColorFormat, 0));
             if (!NewRTV->Initialize(BackBufferTexture->GetResource(), RTVDesc))
             {
                 D3D12_ERROR("[FD3D12SwapChainRHI]: Failed to create back-buffer RTV for index %u", Index);
@@ -681,12 +681,12 @@ bool FD3D12SwapChainRHI::RetrieveBackBuffers()
         if (Desc.IsUnorderedAccess())
         {
             D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
-            UAVDesc.Format                = ConvertFormat(GetColorFormat());
+            UAVDesc.Format                = ConvertFormat(Desc.ColorFormat);
             UAVDesc.ViewDimension         = D3D12_UAV_DIMENSION_TEXTURE2D;
             UAVDesc.Texture2D.MipSlice    = 0;
             UAVDesc.Texture2D.PlaneSlice  = 0;
 
-            FD3D12UnorderedAccessViewRHIRef NewUAV = new FD3D12UnorderedAccessViewRHI(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), BackBufferTexture);
+            FD3D12UnorderedAccessViewRHIRef NewUAV = new FD3D12UnorderedAccessViewRHI(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), BackBufferTexture, FRHIUnorderedAccessViewDesc::CreateTexture2D(Desc.ColorFormat, 0));
             if (!NewUAV->Initialize(nullptr, BackBufferTexture->GetResource(), UAVDesc))
             {
                 D3D12_ERROR("[FD3D12SwapChainRHI]: Failed to create back-buffer UAV for index %u", Index);

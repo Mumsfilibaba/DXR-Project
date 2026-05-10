@@ -42,15 +42,12 @@ public:
     // FRHIDepthStencilState Interface
     virtual void* GetRHINativeState() const override final;
 
-    virtual FRHIDepthStencilStateDesc GetDesc() const override final;
-
     const VkPipelineDepthStencilStateCreateInfo& GetVkCreateInfo() const
     {
         return CreateInfo;
     }
 
 private:
-    FRHIDepthStencilStateDesc             Desc;
     VkPipelineDepthStencilStateCreateInfo CreateInfo;
 };
 
@@ -63,15 +60,12 @@ public:
     // FRHIRasterizerState Interface
     virtual void* GetRHINativeState() const override final;
 
-    virtual FRHIRasterizerStateDesc GetDesc() const override final;
-
     const VkPipelineRasterizationStateCreateInfo& GetVkCreateInfo() const
     {
         return CreateInfo;
     }
     
 private:
-    FRHIRasterizerStateDesc                Desc;
     VkPipelineRasterizationStateCreateInfo CreateInfo;
 #if VK_EXT_depth_clip_enable
     VkPipelineRasterizationDepthClipStateCreateInfoEXT    DepthClipStateCreateInfo;
@@ -90,15 +84,12 @@ public:
     // FRHIBlendState Interface
     virtual void* GetRHINativeState() const override final;
 
-    virtual FRHIBlendStateDesc GetDesc() const override final;
-
     const VkPipelineColorBlendStateCreateInfo& GetVkCreateInfo() const
     {
         return CreateInfo;
     }
 
 private:
-    FRHIBlendStateDesc                  Desc;
     VkPipelineColorBlendStateCreateInfo CreateInfo;
     VkPipelineColorBlendAttachmentState BlendAttachmentStates[VULKAN_MAX_RENDER_TARGET_COUNT];
 };

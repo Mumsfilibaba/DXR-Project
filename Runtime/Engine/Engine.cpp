@@ -167,7 +167,7 @@ bool FEngine::CreateSceneViewport()
 
     // Communicate the render resolution to the renderer
     FRHISwapChainRef SwapChain = SceneViewport->GetRHISwapChain();
-    RenderSettings::ChangeRenderResolution(SwapChain->GetWidth(), SwapChain->GetHeight());
+    RenderSettings::ChangeRenderResolution(SwapChain->GetDesc().Width, SwapChain->GetDesc().Height);
 
     return true;
 }
@@ -258,7 +258,7 @@ bool FEngine::Init()
     SamplerDesc.MinLOD         = 0.0f;
     SamplerDesc.MipLODBias     = 0.0f;
 
-    BaseMaterialSampler = FRHI::Get()->CreateSamplerState(SamplerDesc);
+    BaseMaterialSampler = RHI::Device->CreateSamplerState(SamplerDesc);
 
     // Base material
     FMaterialInfo MaterialDesc;

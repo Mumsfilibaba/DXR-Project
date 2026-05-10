@@ -72,7 +72,7 @@ void FD3D12View::InvalidateAndFreeHandle()
 
 FD3D12ConstantBufferView::FD3D12ConstantBufferView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap)
     : FD3D12View(InDevice, InOfflineHeap)
-    , Desc()
+    , D3D12Desc()
 {
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
@@ -83,7 +83,7 @@ void FD3D12ConstantBufferView::OnResourceRelocated(FD3D12ResourceBase* Relocated
 
     if (NewResourceStorage)
     {
-        D3D12_CONSTANT_BUFFER_VIEW_DESC NewDesc = Desc;
+        D3D12_CONSTANT_BUFFER_VIEW_DESC NewDesc = D3D12Desc;
         NewDesc.BufferLocation = NewResourceStorage->GetGPUVirtualAddress();
 
         UpdateView(NewResourceStorage->GetResource(), NewDesc);
@@ -108,19 +108,19 @@ bool FD3D12ConstantBufferView::UpdateView(FD3D12Resource* InResource, const D3D1
         return false;
     }
 
-    Desc         = InDesc;
+    D3D12Desc    = InDesc;
     ViewResource = MakeSharedRef<FD3D12Resource>(InResource);
 
-    GetDevice()->GetD3D12Device()->CreateConstantBufferView(&Desc, GetOfflineHandle());
-    
+    GetDevice()->GetD3D12Device()->CreateConstantBufferView(&D3D12Desc, GetOfflineHandle());
+
     IncrementDescriptorVersion();
     return true;
 }
 
-FD3D12ShaderResourceViewRHI::FD3D12ShaderResourceViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource)
-    : FRHIShaderResourceView(InResource)
+FD3D12ShaderResourceViewRHI::FD3D12ShaderResourceViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource, const FRHIShaderResourceViewDesc& InRHIDesc)
+    : FRHIShaderResourceView(InResource, InRHIDesc)
     , FD3D12View(InDevice, InOfflineHeap)
-    , Desc()
+    , D3D12Desc()
 {
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
@@ -141,7 +141,7 @@ void FD3D12ShaderResourceViewRHI::OnResourceRelocated(FD3D12ResourceBase* Reloca
 
     if (NewResourceStorage)
     {
-        UpdateView(NewResourceStorage->GetResource(), Desc);
+        UpdateView(NewResourceStorage->GetResource(), D3D12Desc);
     }
 }
 
@@ -163,7 +163,7 @@ bool FD3D12ShaderResourceViewRHI::UpdateView(FD3D12Resource* InResource, const D
         return false;
     }
 
-    Desc         = InDesc;
+    D3D12Desc    = InDesc;
     ViewResource = MakeSharedRef<FD3D12Resource>(InResource);
 
     ID3D12Resource* D3DResource = nullptr;
@@ -173,17 +173,17 @@ bool FD3D12ShaderResourceViewRHI::UpdateView(FD3D12Resource* InResource, const D
         D3DResource = ViewResource->GetD3D12Resource();
     }
 
-    GetDevice()->GetD3D12Device()->CreateShaderResourceView(D3DResource, &Desc, GetOfflineHandle());
+    GetDevice()->GetD3D12Device()->CreateShaderResourceView(D3DResource, &D3D12Desc, GetOfflineHandle());
 
     IncrementDescriptorVersion();
     return true;
 }
 
-FD3D12UnorderedAccessViewRHI::FD3D12UnorderedAccessViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource)
-    : FD3D12UnorderedAccessViewBase(InResource)
+FD3D12UnorderedAccessViewRHI::FD3D12UnorderedAccessViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InRHIDesc)
+    : FD3D12UnorderedAccessViewBase(InResource, InRHIDesc)
     , FD3D12View(InDevice, InOfflineHeap)
-    , Desc()
     , CounterResource(nullptr)
+    , D3D12Desc()
 {
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
@@ -209,7 +209,7 @@ void FD3D12UnorderedAccessViewRHI::OnResourceRelocated(FD3D12ResourceBase* Reloc
 
     if (NewResourceStorage)
     {
-        UpdateView(CounterResource.Get(), NewResourceStorage->GetResource(), Desc);
+        UpdateView(CounterResource.Get(), NewResourceStorage->GetResource(), D3D12Desc);
     }
 }
 
@@ -231,7 +231,7 @@ bool FD3D12UnorderedAccessViewRHI::UpdateView(FD3D12Resource* InCounterResource,
         return false;
     }
 
-    Desc            = InDesc;
+    D3D12Desc       = InDesc;
     CounterResource = MakeSharedRef<FD3D12Resource>(InCounterResource);
     ViewResource    = MakeSharedRef<FD3D12Resource>(InResource);
 
@@ -248,16 +248,16 @@ bool FD3D12UnorderedAccessViewRHI::UpdateView(FD3D12Resource* InCounterResource,
         D3DResource = ViewResource->GetD3D12Resource();
     }
 
-    GetDevice()->GetD3D12Device()->CreateUnorderedAccessView(D3DResource, D3DCounterResource, &Desc, GetOfflineHandle());
+    GetDevice()->GetD3D12Device()->CreateUnorderedAccessView(D3DResource, D3DCounterResource, &D3D12Desc, GetOfflineHandle());
 
     IncrementDescriptorVersion();
     return true;
 }
 
-FD3D12RenderTargetViewRHI::FD3D12RenderTargetViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource)
-    : FD3D12RenderTargetViewBase(InResource)
+FD3D12RenderTargetViewRHI::FD3D12RenderTargetViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource, const FRHIRenderTargetViewDesc& InRHIDesc)
+    : FD3D12RenderTargetViewBase(InResource, InRHIDesc)
     , FD3D12View(InDevice, InOfflineHeap)
-    , Desc()
+    , D3D12Desc()
 {
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 }
@@ -278,7 +278,7 @@ void FD3D12RenderTargetViewRHI::OnResourceRelocated(FD3D12ResourceBase* Relocate
 
     if (NewResourceStorage)
     {
-        UpdateView(NewResourceStorage->GetResource(), Desc);
+        UpdateView(NewResourceStorage->GetResource(), D3D12Desc);
     }
 }
 
@@ -300,7 +300,7 @@ bool FD3D12RenderTargetViewRHI::UpdateView(FD3D12Resource* InResource, const D3D
         return false;
     }
 
-    Desc         = InDesc;
+    D3D12Desc    = InDesc;
     ViewResource = MakeSharedRef<FD3D12Resource>(InResource);
 
     ID3D12Resource* D3DResource = nullptr;
@@ -310,16 +310,16 @@ bool FD3D12RenderTargetViewRHI::UpdateView(FD3D12Resource* InResource, const D3D
         D3DResource = ViewResource->GetD3D12Resource();
     }
 
-    GetDevice()->GetD3D12Device()->CreateRenderTargetView(D3DResource, &Desc, GetOfflineHandle());
-    
+    GetDevice()->GetD3D12Device()->CreateRenderTargetView(D3DResource, &D3D12Desc, GetOfflineHandle());
+
     IncrementDescriptorVersion();
     return true;
 }
 
-FD3D12DepthStencilViewRHI::FD3D12DepthStencilViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource)
-    : FRHIDepthStencilView(InResource)
+FD3D12DepthStencilViewRHI::FD3D12DepthStencilViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource, const FRHIDepthStencilViewDesc& InRHIDesc)
+    : FRHIDepthStencilView(InResource, InRHIDesc)
     , FD3D12View(InDevice, InOfflineHeap)
-    , Desc()
+    , D3D12Desc()
     , bHasStencil(false)
 {
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
@@ -336,7 +336,7 @@ void FD3D12DepthStencilViewRHI::OnResourceRelocated(FD3D12ResourceBase* Relocate
 
     if (NewResourceStorage)
     {
-        UpdateView(NewResourceStorage->GetResource(), Desc);
+        UpdateView(NewResourceStorage->GetResource(), D3D12Desc);
     }
 }
 
@@ -358,7 +358,7 @@ bool FD3D12DepthStencilViewRHI::UpdateView(FD3D12Resource* InResource, const D3D
         return false;
     }
 
-    Desc         = InDesc;
+    D3D12Desc    = InDesc;
     bHasStencil  = IsStencilFormat(InDesc.Format);
     ViewResource = MakeSharedRef<FD3D12Resource>(InResource);
 
@@ -369,7 +369,7 @@ bool FD3D12DepthStencilViewRHI::UpdateView(FD3D12Resource* InResource, const D3D
         D3DResource = ViewResource->GetD3D12Resource();
     }
 
-    GetDevice()->GetD3D12Device()->CreateDepthStencilView(D3DResource, &Desc, GetOfflineHandle());
+    GetDevice()->GetD3D12Device()->CreateDepthStencilView(D3DResource, &D3D12Desc, GetOfflineHandle());
 
     IncrementDescriptorVersion();
     return true;

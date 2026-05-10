@@ -190,7 +190,7 @@ protected:
 
 public:
     
-    // D3D12: ID3D12Resource*. Vulkan: VkImage. Metal: id<MTLTexture>. Null: nullptr.
+    /** @return D3D12: ID3D12Resource*. Vulkan: VkImage. Metal: id<MTLTexture>. Null: nullptr. */
     virtual void* GetRHINativeResource() const = 0;
 
     virtual FRHIShaderResourceView*  GetShaderResourceView()  const { return nullptr; }
@@ -204,59 +204,9 @@ public:
     virtual void SetDebugName(const FString&) { }
     virtual void GetDebugName(FString& OutDebugName) const { OutDebugName.Clear(); }
 
-    const FRHITextureDesc& GetDesc() const
+    NODISCARD const FRHITextureDesc& GetDesc() const
     {
         return Desc;
-    }
-
-    ETextureDimension GetDimension() const
-    {
-        return Desc.Dimension;
-    }
-    
-    EFormat GetFormat() const
-    {
-        return Desc.Format;
-    }
-    
-    ETextureUsageFlags GetFlags() const
-    {
-        return Desc.UsageFlags;
-    }
-    
-    const FIntVector3& GetExtent() const
-    {
-        return Desc.Extent;
-    }
-
-    uint32 GetWidth() const
-    {
-        return Desc.Extent.X;
-    }
-    
-    uint32 GetHeight() const
-    {
-        return Desc.Extent.Y;
-    }
-    
-    uint32 GetDepth() const
-    {
-        return Desc.Extent.Z;
-    }
-    
-    uint32 GetNumArraySlices() const
-    {
-        return Desc.NumArraySlices;
-    }
-    
-    uint32 GetNumMipLevels() const
-    {
-        return Desc.NumMipLevels;
-    }
-    
-    uint32 GetNumSamples() const
-    {
-        return Desc.NumSamples;
     }
 
 protected:

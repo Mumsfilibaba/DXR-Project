@@ -130,7 +130,7 @@ void FVulkanMemoryLocation::ReleaseMemory()
         {
             if (LocationType == EVulkanMemoryLocationType::Dedicated)
             {
-                FVulkanRHI::DeferDeletion(Memory, BackingBuffer);
+                FVulkanDeviceRHI::DeferDeletion(Memory, BackingBuffer);
             }
 
             break;
@@ -574,7 +574,7 @@ bool FVulkanBuddyAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, FV
 
 void FVulkanBuddyAllocator::Deallocate(const FVulkanMemoryLocation& Location)
 {
-    FVulkanRHI::DeferDeletion(this, Location.GetBuddyAllocationData());
+    FVulkanDeviceRHI::DeferDeletion(this, Location.GetBuddyAllocationData());
 }
 
 void FVulkanBuddyAllocator::RecycleAllocation(const FVulkanBuddyAllocatorAllocationData& AllocationData)
@@ -1233,7 +1233,7 @@ bool FVulkanPoolAllocator::TryAllocateForDefrag(uint64 SizeInBytes, uint64 InAli
 
 void FVulkanPoolAllocator::Deallocate(const FVulkanMemoryLocation& Location)
 {
-    FVulkanRHI::DeferDeletion(this, Location.GetPoolAllocationData());
+    FVulkanDeviceRHI::DeferDeletion(this, Location.GetPoolAllocationData());
 }
 
 void FVulkanPoolAllocator::RecycleAllocation(const FVulkanPoolAllocatorAllocationData& AllocationData)
@@ -1520,7 +1520,7 @@ void* FVulkanLinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FVu
     {
         if (CurrentPage)
         {
-            FVulkanRHI::DeferDeletion(this, CurrentPage);
+            FVulkanDeviceRHI::DeferDeletion(this, CurrentPage);
             CurrentPage = nullptr;
         }
 
@@ -2107,7 +2107,7 @@ void FVulkanBufferAllocator::DefragmentAllocations(FVulkanCommandContext* InComm
         FVulkanPoolAllocatorAllocationData OldData = Move.OldAllocationData;
         OldData.Owner = nullptr;
 
-        FVulkanRHI::DeferDeletion(Move.Allocator, OldData);
+        FVulkanDeviceRHI::DeferDeletion(Move.Allocator, OldData);
 
         STAT_ADD(STAT_Vulkan_BufferDefragMovesCompleted, 1);
         PendingDefragMoves.RemoveAtSwap(Index);
@@ -2200,7 +2200,7 @@ void FVulkanBufferAllocator::CancelPendingDefragMoves(FVulkanResource* Owner)
             FVulkanPoolAllocatorAllocationData NewData = Move.NewAllocationData;
             NewData.Owner = nullptr;
 
-            FVulkanRHI::DeferDeletion(Move.Allocator, NewData);
+            FVulkanDeviceRHI::DeferDeletion(Move.Allocator, NewData);
 
             if (VULKAN_CHECK_HANDLE(Move.NewBuffer))
             {
@@ -2515,7 +2515,7 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
         FVulkanPoolAllocatorAllocationData OldData = Move.OldAllocationData;
         OldData.Owner = nullptr;
         
-        FVulkanRHI::DeferDeletion(Move.Allocator, OldData);
+        FVulkanDeviceRHI::DeferDeletion(Move.Allocator, OldData);
 
         if (VULKAN_CHECK_HANDLE(OldImage))
         {
@@ -2692,7 +2692,7 @@ void FVulkanTextureAllocator::CancelPendingDefragMoves(FVulkanResource* Owner)
             FVulkanPoolAllocatorAllocationData NewData = Move.NewAllocationData;
             NewData.Owner = nullptr;
 
-            FVulkanRHI::DeferDeletion(Move.Allocator, NewData);
+            FVulkanDeviceRHI::DeferDeletion(Move.Allocator, NewData);
 
             if (VULKAN_CHECK_HANDLE(Move.NewImage))
             {

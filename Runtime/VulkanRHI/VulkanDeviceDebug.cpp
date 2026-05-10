@@ -405,7 +405,7 @@ bool VulkanCheckDeviceLost(VkResult Result)
     if (Result == VK_ERROR_DEVICE_LOST)
     {
     #if VULKAN_ENABLE_CRASH_MARKERS
-        if (FVulkanRHI* RHI = FVulkanRHI::Get())
+        if (FVulkanDeviceRHI* RHI = FVulkanDeviceRHI::Get())
         {
             if (FVulkanCrashMarkers* CrashMarkers = RHI->GetCrashMarkers())
             {
@@ -415,7 +415,7 @@ bool VulkanCheckDeviceLost(VkResult Result)
     #endif
 
     #if VK_EXT_device_fault
-        if (FVulkanRHI* RHI = FVulkanRHI::Get())
+        if (FVulkanDeviceRHI* RHI = FVulkanDeviceRHI::Get())
         {
             FVulkanDevice* Device = RHI->GetDevice();
             if (Device && Device->IsExtensionEnabled(VK_EXT_DEVICE_FAULT_EXTENSION_NAME) && vkGetDeviceFaultInfoEXT)

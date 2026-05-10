@@ -950,7 +950,7 @@ void FD3D12CommandContextState::SetStreamOutputTargets(const TArrayView<FRHIBuff
 
     for (uint32 Index = 0; Index < GraphicsState.NumSOBuffers; ++Index)
     {
-        FD3D12BufferRHI* D3DBuffer = FD3D12RHI::ResourceCast(Buffers[Index]);
+        FD3D12BufferRHI* D3DBuffer = FD3D12DeviceRHI::ResourceCast(Buffers[Index]);
         GraphicsState.SOBuffers[Index] = D3DBuffer;
 
         if (D3DBuffer)

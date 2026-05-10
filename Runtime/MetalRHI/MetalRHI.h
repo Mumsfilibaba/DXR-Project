@@ -16,18 +16,18 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct FMetalRHIModule final : public FRHIModule
+struct FMetalModuleRHI final : public FRHIModule
 {
-    virtual class FRHI* CreateRHI() override final;
+    virtual class FRHIDevice* CreateDevice() override final;
 };
 
-class FMetalRHI : public FRHI
+class FMetalDeviceRHI : public FRHIDevice
 {
 public:
-    static FORCEINLINE FMetalRHI* Get()
+    static FORCEINLINE FMetalDeviceRHI* Get()
     {
-        CHECK(GMetalRHI != nullptr);
-        return GMetalRHI;
+        CHECK(GMetalDeviceRHI != nullptr);
+        return GMetalDeviceRHI;
     }
 
     template<typename TRHIType>
@@ -43,12 +43,12 @@ public:
     }
 
 public:
-    FMetalRHI();
-    ~FMetalRHI();
+    FMetalDeviceRHI();
+    ~FMetalDeviceRHI();
 
     bool Initialize();
 
-    // FRHI Interface
+    // FRHIDevice interface
     virtual void BeginFrame() override final;
     virtual void EndFrame()   override final;
 
@@ -102,6 +102,8 @@ public:
 
     virtual FString GetAdapterName() const override final;
 
+    virtual ERHIType GetRHIType() const override final;
+
     FMetalDevice* GetMetalDevice() const
     {
         return Device;
@@ -116,7 +118,7 @@ private:
     FMetalDevice*         Device;
     FMetalCommandContext* CommandContext;
 
-    static FMetalRHI* GMetalRHI;
+    static FMetalDeviceRHI* GMetalDeviceRHI;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -288,7 +288,7 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERes
             return false;
         }
 
-        FVulkanShaderResourceViewRHIRef DefaultSRV = new FVulkanShaderResourceViewRHI(GetDevice(), this);
+        FVulkanShaderResourceViewRHIRef DefaultSRV = new FVulkanShaderResourceViewRHI(GetDevice(), this, ViewDesc);
         if (!DefaultSRV->Initialize(this, ViewDesc))
         {
             return false;
@@ -333,7 +333,7 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERes
             return false;
         }
 
-        FVulkanUnorderedAccessViewRHIRef DefaultUAV = new FVulkanUnorderedAccessViewRHI(GetDevice(), this);
+        FVulkanUnorderedAccessViewRHIRef DefaultUAV = new FVulkanUnorderedAccessViewRHI(GetDevice(), this, ViewDesc);
         if (!DefaultUAV->Initialize(this, ViewDesc))
         {
             return false;
@@ -376,7 +376,7 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERes
             return false;
         }
 
-        FVulkanRenderTargetViewRHIRef DefaultRTV = new FVulkanRenderTargetViewRHI(GetDevice(), this);
+        FVulkanRenderTargetViewRHIRef DefaultRTV = new FVulkanRenderTargetViewRHI(GetDevice(), this, ViewDesc);
         if (!DefaultRTV->Initialize(this, ViewDesc))
         {
             return false;
@@ -413,7 +413,7 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERes
             return false;
         }
 
-        FVulkanDepthStencilViewRHIRef DefaultDSV = new FVulkanDepthStencilViewRHI(GetDevice(), this);
+        FVulkanDepthStencilViewRHIRef DefaultDSV = new FVulkanDepthStencilViewRHI(GetDevice(), this, ViewDesc);
         if (!DefaultDSV->Initialize(this, ViewDesc))
         {
             return false;
@@ -602,7 +602,7 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERes
         InCommandContext->FinishContext();
     }
 
-    const VkImageLayout InitialLayout = FVulkanRHI::ResourceStateToImageLayout(InInitialAccess);
+    const VkImageLayout InitialLayout = FVulkanDeviceRHI::ResourceStateToImageLayout(InInitialAccess);
     const uint32 NumSubresources = ImageCreateInfo.mipLevels * ImageCreateInfo.arrayLayers;
     ImageLayoutState.SetImageLayout(InitialLayout);
     ImageLayoutState.Initialize(Math::Max(NumSubresources, 1u));

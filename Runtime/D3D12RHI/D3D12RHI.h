@@ -14,18 +14,18 @@
 
 class FD3D12CommandContext;
 
-struct D3D12RHI_API FD3D12RHIModule final : public FRHIModule
+struct D3D12RHI_API FD3D12ModuleRHI final : public FRHIModule
 {
-    virtual FRHI* CreateRHI() override final;
+    virtual FRHIDevice* CreateDevice() override final;
 };
 
-class D3D12RHI_API FD3D12RHI : public FRHI
+class D3D12RHI_API FD3D12DeviceRHI : public FRHIDevice
 {
 public:
-    static FORCEINLINE FD3D12RHI* Get()
+    static FORCEINLINE FD3D12DeviceRHI* Get()
     {
-        CHECK(GD3D12RHI != nullptr);
-        return GD3D12RHI;
+        CHECK(GD3D12DeviceRHI != nullptr);
+        return GD3D12DeviceRHI;
     }
 
     template<typename... ArgTypes>
@@ -56,14 +56,14 @@ public:
     }
 
 public:
-    FD3D12RHI();
-    ~FD3D12RHI();
+    FD3D12DeviceRHI();
+    ~FD3D12DeviceRHI();
 
     bool Initialize();
 
     void BeginFrame(FD3D12CommandContext* InCommandContext);
     
-    // FRHI Interface
+    // FRHIDevice interface
     virtual void BeginFrame() override final;
     virtual void EndFrame()   override final;
 
@@ -116,7 +116,9 @@ public:
     virtual void* GetRHINativeCopyCommandQueue()    override final;
     
     virtual FString GetAdapterName() const override final;
-    
+
+    virtual ERHIType GetRHIType() const override final;
+
     void FlushDeletionQueue(FD3D12Commands* Commands);
     void FlushCompletedSubmissions();
 
@@ -156,5 +158,5 @@ private:
     FSamplerStateMap             SamplerStateMap;
     FCriticalSection             SamplerStateMapCS;
 
-    static FD3D12RHI* GD3D12RHI;
+    static FD3D12DeviceRHI* GD3D12DeviceRHI;
 };

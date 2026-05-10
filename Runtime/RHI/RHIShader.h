@@ -95,7 +95,7 @@ protected:
 
 public:
 
-    // D3D12: D3D12_SHADER_BYTECODE*. Vulkan: TArray<uint32>* (SPIR-V). Metal: id<MTLFunction>. Null: nullptr.
+    /** @return D3D12: D3D12_SHADER_BYTECODE*. Vulkan: TArray<uint32>* (SPIR-V). Metal: id<MTLFunction>. Null: nullptr. */
     virtual void* GetRHINativeHandle() = 0;
 
     // Retrieve the base-interface for the backend

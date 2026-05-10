@@ -277,7 +277,7 @@ bool FSceneRenderer::Initialize()
     ConstantBufferDesc.Stride = sizeof(FCameraHLSL);
     ConstantBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
 
-    Resources.CameraBuffer = FRHI::Get()->CreateBuffer(ConstantBufferDesc, EResourceAccess::Common, nullptr);
+    Resources.CameraBuffer = RHI::Device->CreateBuffer(ConstantBufferDesc, EResourceAccess::Common, nullptr);
     if (!Resources.CameraBuffer)
     {
         LOG_ERROR("[Renderer]: Failed to create CameraBuffer");
@@ -293,7 +293,7 @@ bool FSceneRenderer::Initialize()
     TransformConstantBufferDesc.Stride = sizeof(FTransformBufferHLSL);
     TransformConstantBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Transient;
 
-    Resources.TransformBuffer = FRHI::Get()->CreateBuffer(TransformConstantBufferDesc, EResourceAccess::Common, nullptr);
+    Resources.TransformBuffer = RHI::Device->CreateBuffer(TransformConstantBufferDesc, EResourceAccess::Common, nullptr);
     if (!Resources.TransformBuffer)
     {
         LOG_ERROR("[Renderer]: Failed to create TransformBuffer");
@@ -313,7 +313,7 @@ bool FSceneRenderer::Initialize()
         { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertexTexCoord), 2, 0,  3, EVertexInputClass::Vertex, 0 },
     };
 
-    Resources.MeshInputLayout = FRHI::Get()->CreateInputLayout(InputElements);
+    Resources.MeshInputLayout = RHI::Device->CreateInputLayout(InputElements);
     if (!Resources.MeshInputLayout)
     {
         DEBUG_BREAK();
@@ -330,7 +330,7 @@ bool FSceneRenderer::Initialize()
         SamplerStateDesc.MinLOD         = 0.0f;
         SamplerStateDesc.BorderColor    = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-        Resources.ShadowSamplerPoint = FRHI::Get()->CreateSamplerState(SamplerStateDesc);
+        Resources.ShadowSamplerPoint = RHI::Device->CreateSamplerState(SamplerStateDesc);
         if (!Resources.ShadowSamplerPoint)
         {
             DEBUG_BREAK();
@@ -348,7 +348,7 @@ bool FSceneRenderer::Initialize()
         SamplerStateDesc.MinLOD         = 0.0f;
         SamplerStateDesc.BorderColor    = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-        Resources.ShadowSamplerPointCmp = FRHI::Get()->CreateSamplerState(SamplerStateDesc);
+        Resources.ShadowSamplerPointCmp = RHI::Device->CreateSamplerState(SamplerStateDesc);
         if (!Resources.ShadowSamplerPointCmp)
         {
             DEBUG_BREAK();
@@ -357,7 +357,7 @@ bool FSceneRenderer::Initialize()
 
         SamplerStateDesc.Filter = ESamplerFilter::Comparison_MinMagMipLinear;
 
-        Resources.ShadowSamplerLinearCmp = FRHI::Get()->CreateSamplerState(SamplerStateDesc);
+        Resources.ShadowSamplerLinearCmp = RHI::Device->CreateSamplerState(SamplerStateDesc);
         if (!Resources.ShadowSamplerLinearCmp)
         {
             DEBUG_BREAK();
@@ -375,7 +375,7 @@ bool FSceneRenderer::Initialize()
         SamplerStateDesc.MinLOD         = 0.0f;
         SamplerStateDesc.BorderColor    = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-        Resources.PointLightShadowSampler = FRHI::Get()->CreateSamplerState(SamplerStateDesc);
+        Resources.PointLightShadowSampler = RHI::Device->CreateSamplerState(SamplerStateDesc);
         if (!Resources.PointLightShadowSampler)
         {
             DEBUG_BREAK();
@@ -631,7 +631,7 @@ void FSceneRenderer::PrepareResources(const FSceneRenderView& SceneRenderView, F
         }
     }
 
-    const EFormat OutputFormat = SceneRenderView.RenderTarget->GetFormat();
+    const EFormat OutputFormat = SceneRenderView.RenderTarget->GetDesc().Format;
 
 #if EDITOR_BUILD
     TonemapPass->PreparePipelineState(FGlobalTextureFormats::SceneTargetFormat);
@@ -738,7 +738,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     }
 
 #if SUPPORT_VARIABLE_RATE_SHADING
-    if (ShadingImage && GEnableVariableRateShading && ShadingImage->GetWidth() > 0 && ShadingImage->GetHeight() > 0)
+    if (ShadingImage && GEnableVariableRateShading && ShadingImage->GetDesc().Extent.X > 0 && ShadingImage->GetDesc().Extent.Y > 0)
     {
         RHI_EVENT_SCOPE(CommandList, "VRS Image");
         CommandList.SetShadingRate(EShadingRate::VRS_1x1);
@@ -750,7 +750,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
         FRHIUnorderedAccessView* ShadingImageUAV = ShadingImage->GetUnorderedAccessView();
         CommandList.SetUnorderedAccessView(ShadingRateShader.Get(), ShadingImageUAV, 0);
 
-        CommandList.Dispatch(ShadingImage->GetWidth(), ShadingImage->GetHeight(), 1);
+        CommandList.Dispatch(ShadingImage->GetDesc().Extent.X, ShadingImage->GetDesc().Extent.Y, 1);
 
         CommandList.TransitionTextureState(ShadingImage.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::ShadingRateSource));
 
@@ -1025,8 +1025,8 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
         FRHITexture* RenderTarget = SceneRenderView.RenderTarget;
         if (RenderTarget)
         {
-            const int32 TargetWidth   = static_cast<int32>(RenderTarget->GetWidth());
-            const int32 TargetHeight  = static_cast<int32>(RenderTarget->GetHeight());
+            const int32 TargetWidth   = static_cast<int32>(RenderTarget->GetDesc().Extent.X);
+            const int32 TargetHeight  = static_cast<int32>(RenderTarget->GetDesc().Extent.Y);
             const int32 OverlayWidth  = Math::Max(TargetWidth / 2, 1);
             const int32 OverlayHeight = Math::Max(TargetHeight / 2, 1);
             const int32 OverlayX      = TargetWidth - OverlayWidth;
@@ -1058,8 +1058,8 @@ void FSceneRenderer::ProcessEditorObjectPickRequests(FRHICommandList& InCommandL
         return;
     }
 
-    const uint32 TexWidth  = InResources.EditorObjectID_NoJitter->GetWidth();
-    const uint32 TexHeight = InResources.EditorObjectID_NoJitter->GetHeight();
+    const uint32 TexWidth  = InResources.EditorObjectID_NoJitter->GetDesc().Extent.X;
+    const uint32 TexHeight = InResources.EditorObjectID_NoJitter->GetDesc().Extent.Y;
     if (TexWidth == 0 || TexHeight == 0)
     {
         return;
@@ -1068,7 +1068,7 @@ void FSceneRenderer::ProcessEditorObjectPickRequests(FRHICommandList& InCommandL
     const uint32 PixelX = Math::Min(Request.PixelX, TexWidth - 1);
     const uint32 PixelY = Math::Min(Request.PixelY, TexHeight - 1);
 
-    const uint32 BytesPerPixel = GetByteStrideFromFormat(InResources.EditorObjectID_NoJitter->GetFormat());
+    const uint32 BytesPerPixel = GetByteStrideFromFormat(InResources.EditorObjectID_NoJitter->GetDesc().Format);
     if (BytesPerPixel == 0)
     {
         // Unsupported format; skip pick.
@@ -1132,8 +1132,8 @@ void FSceneRenderer::ProcessEditorObjectPickRequests(FRHICommandList& InCommandL
     ReadbackDesc.Stride = BytesPerPixel;
     ReadbackDesc.Size   = bTryFlipY ? (FlippedBaseOffset + FlippedRequiredSize) : NormalRequiredSize;
 
-    FRHIFenceRef  Fence          = FRHI::Get()->CreateFence();
-    FRHIBufferRef ReadbackBuffer = FRHI::Get()->CreateBuffer(ReadbackDesc, EResourceAccess::CopyDest, nullptr);
+    FRHIFenceRef  Fence          = RHI::Device->CreateFence();
+    FRHIBufferRef ReadbackBuffer = RHI::Device->CreateBuffer(ReadbackDesc, EResourceAccess::CopyDest, nullptr);
 
     if (!(ReadbackBuffer && Fence))
     {
@@ -1574,7 +1574,7 @@ void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
                 const ETextureUsageFlags UsageFlags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::ShadingRateTexture;
                 FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8_Uint, ShadingWidth, ShadingHeight, 1, 1, UsageFlags);
 
-                ShadingImage = FRHI::Get()->CreateTexture(TextureDesc, EResourceAccess::ShadingRateSource);
+                ShadingImage = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::ShadingRateSource);
                 if (ShadingImage)
                 {
                     ShadingImage->SetDebugName("Shading Rate Image");
@@ -1620,7 +1620,7 @@ bool FSceneRenderer::InitShadingImage()
     const ETextureUsageFlags UsageFlags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::ShadingRateTexture;
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, UsageFlags);
 
-    ShadingImage = FRHI::Get()->CreateTexture(TextureDesc, EResourceAccess::ShadingRateSource);
+    ShadingImage = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::ShadingRateSource);
     if (!ShadingImage)
     {
         DEBUG_BREAK();
@@ -1640,7 +1640,7 @@ bool FSceneRenderer::InitShadingImage()
         return false;
     }
 
-    ShadingRateShader = FRHI::Get()->CreateComputeShader(ShaderCode);
+    ShadingRateShader = RHI::Device->CreateComputeShader(ShaderCode);
     if (!ShadingRateShader)
     {
         DEBUG_BREAK();
@@ -1650,7 +1650,7 @@ bool FSceneRenderer::InitShadingImage()
     FRHIComputePipelineStateDesc PSODesc;
     PSODesc.Shader = ShadingRateShader.Get();
 
-    ShadingRatePipeline = FRHI::Get()->CreateComputePipelineState(PSODesc);
+    ShadingRatePipeline = RHI::Device->CreateComputePipelineState(PSODesc);
     if (!ShadingRatePipeline)
     {
         DEBUG_BREAK();

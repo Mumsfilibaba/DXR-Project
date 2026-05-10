@@ -42,8 +42,6 @@ public:
     // FRHIDepthStencilState Interface
     virtual void* GetRHINativeState() const override final;
     
-    virtual FRHIDepthStencilStateDesc GetDesc() const override final;
-    
     bool Initialize();
 
     id<MTLDepthStencilState> GetMTLDepthStencilState() const 
@@ -53,7 +51,6 @@ public:
     
 private:
     id<MTLDepthStencilState>  DepthStencilState;
-    FRHIDepthStencilStateDesc Desc;
 };
 
 class FMetalRasterizerStateRHI : public FRHIRasterizerState
@@ -64,8 +61,6 @@ public:
 
     // FRHIRasterizerState Interface
     virtual void* GetRHINativeState() const override final;
-
-    virtual FRHIRasterizerStateDesc GetDesc() const override final;
 
     MTLTriangleFillMode GetMTLFillMode() const
     {
@@ -80,7 +75,6 @@ public:
 private:
     MTLTriangleFillMode     FillMode;
     MTLWinding              FrontFaceWinding;
-    FRHIRasterizerStateDesc Desc;
 };
 
 class FMetalBlendStateRHI : public FRHIBlendState
@@ -106,8 +100,6 @@ public:
     // FRHIBlendState Interface
     virtual void* GetRHINativeState() const override final;
 
-    virtual FRHIBlendStateDesc GetDesc() const override final;
-
     const FBlendAttachment& GetColorAttachment(uint32 Index) const
     {
          return ColorAttachments[Index];
@@ -115,7 +107,6 @@ public:
 
 private:
     FBlendAttachment   ColorAttachments[RHI_MAX_RENDER_TARGETS];
-    FRHIBlendStateDesc Desc;
 };
 
 struct FMetalResourceBinding

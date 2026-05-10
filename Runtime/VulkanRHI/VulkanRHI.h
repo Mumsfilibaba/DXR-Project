@@ -11,18 +11,18 @@
 #include "VulkanRHI/VulkanDeviceDebug.h"
 #include "VulkanRHI/VulkanTypeTraits.h"
 
-struct VULKANRHI_API FVulkanRHIModule final : public FRHIModule
+struct VULKANRHI_API FVulkanModuleRHI final : public FRHIModule
 {
-    virtual FRHI* CreateRHI() override final;
+    virtual FRHIDevice* CreateDevice() override final;
 };
 
-class VULKANRHI_API FVulkanRHI : public FRHI
+class VULKANRHI_API FVulkanDeviceRHI : public FRHIDevice
 {
 public:
-    static FORCEINLINE FVulkanRHI* Get()
+    static FORCEINLINE FVulkanDeviceRHI* Get()
     {
-        CHECK(GVulkanRHI != nullptr);
-        return GVulkanRHI;
+        CHECK(GVulkanDeviceRHI != nullptr);
+        return GVulkanDeviceRHI;
     }
 
     template<typename... ArgTypes>
@@ -62,12 +62,12 @@ public:
     }
 
 public:
-    FVulkanRHI();
-    ~FVulkanRHI();
+    FVulkanDeviceRHI();
+    ~FVulkanDeviceRHI();
 
     bool Initialize();
 
-    // FRHI Interface
+    // FRHIDevice interface
     virtual void BeginFrame() override final;
     virtual void EndFrame()   override final;
 
@@ -120,6 +120,8 @@ public:
     virtual void* GetRHINativeCopyCommandQueue()    override final;
 
     virtual FString GetAdapterName() const override final;
+
+    virtual ERHIType GetRHIType() const override final;
 
     void FlushDeletionQueue(FVulkanCommands* Commands);
     void FlushCompletedSubmissions();
@@ -192,5 +194,5 @@ private:
     FVulkanCrashMarkers*          CrashMarkers;
 #endif
 
-    static FVulkanRHI* GVulkanRHI;
+    static FVulkanDeviceRHI* GVulkanDeviceRHI;
 };

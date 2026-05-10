@@ -18,7 +18,7 @@
 #include "VulkanRHI/VulkanDeviceDebug.h"
 #include "VulkanRHI/Platform/VulkanPlatform.h"
 
-IMPLEMENT_ENGINE_MODULE(FVulkanRHIModule, VulkanRHI);
+IMPLEMENT_ENGINE_MODULE(FVulkanModuleRHI, VulkanRHI);
 
 static TAutoConsoleVariable<int32> CVarMaxDefragMovesPerFrame(
     "VulkanRHI.MaxDefragMovesPerFrame",
@@ -49,9 +49,9 @@ static TAutoConsoleVariable<bool> CVarVulkanEnableCrashMarkers(
     true);
 #endif
 
-FRHI* FVulkanRHIModule::CreateRHI()
+FRHIDevice* FVulkanModuleRHI::CreateDevice()
 {
-    TUniquePtr<FVulkanRHI> NewRHI = MakeUniquePtr<FVulkanRHI>();
+    TUniquePtr<FVulkanDeviceRHI> NewRHI = MakeUniquePtr<FVulkanDeviceRHI>();
     if (!NewRHI->Initialize())
     {
         return nullptr;
@@ -62,9 +62,14 @@ FRHI* FVulkanRHIModule::CreateRHI()
     }
 }
 
-FVulkanRHI* FVulkanRHI::GVulkanRHI = nullptr;
+ERHIType FVulkanDeviceRHI::GetRHIType() const
+{
+    return ERHIType::Vulkan;
+}
 
-FVulkanTextureRHI* FVulkanRHI::ResourceCast(FRHITexture* Texture)
+FVulkanDeviceRHI* FVulkanDeviceRHI::GVulkanDeviceRHI = nullptr;
+
+FVulkanTextureRHI* FVulkanDeviceRHI::ResourceCast(FRHITexture* Texture)
 {
     if (Texture)
     {
@@ -74,7 +79,7 @@ FVulkanTextureRHI* FVulkanRHI::ResourceCast(FRHITexture* Texture)
     return nullptr;
 }
 
-FVulkanRenderTargetViewRHI* FVulkanRHI::ResourceCast(FRHIRenderTargetView* RenderTargetView)
+FVulkanRenderTargetViewRHI* FVulkanDeviceRHI::ResourceCast(FRHIRenderTargetView* RenderTargetView)
 {
     if (RenderTargetView)
     {
@@ -84,7 +89,7 @@ FVulkanRenderTargetViewRHI* FVulkanRHI::ResourceCast(FRHIRenderTargetView* Rende
     return nullptr;
 }
 
-FVulkanUnorderedAccessViewRHI* FVulkanRHI::ResourceCast(FRHIUnorderedAccessView* UnorderedAccessView)
+FVulkanUnorderedAccessViewRHI* FVulkanDeviceRHI::ResourceCast(FRHIUnorderedAccessView* UnorderedAccessView)
 {
     if (UnorderedAccessView)
     {
@@ -94,7 +99,7 @@ FVulkanUnorderedAccessViewRHI* FVulkanRHI::ResourceCast(FRHIUnorderedAccessView*
     return nullptr;
 }
 
-const FVulkanTextureRHI* FVulkanRHI::ResourceCast(const FRHITexture* Texture)
+const FVulkanTextureRHI* FVulkanDeviceRHI::ResourceCast(const FRHITexture* Texture)
 {
     if (Texture)
     {
@@ -104,7 +109,7 @@ const FVulkanTextureRHI* FVulkanRHI::ResourceCast(const FRHITexture* Texture)
     return nullptr;
 }
 
-const FVulkanRenderTargetViewRHI* FVulkanRHI::ResourceCast(const FRHIRenderTargetView* RenderTargetView)
+const FVulkanRenderTargetViewRHI* FVulkanDeviceRHI::ResourceCast(const FRHIRenderTargetView* RenderTargetView)
 {
     if (RenderTargetView)
     {
@@ -114,7 +119,7 @@ const FVulkanRenderTargetViewRHI* FVulkanRHI::ResourceCast(const FRHIRenderTarge
     return nullptr;
 }
 
-const FVulkanUnorderedAccessViewRHI* FVulkanRHI::ResourceCast(const FRHIUnorderedAccessView* UnorderedAccessView)
+const FVulkanUnorderedAccessViewRHI* FVulkanDeviceRHI::ResourceCast(const FRHIUnorderedAccessView* UnorderedAccessView)
 {
     if (UnorderedAccessView)
     {
@@ -124,8 +129,8 @@ const FVulkanUnorderedAccessViewRHI* FVulkanRHI::ResourceCast(const FRHIUnordere
     return nullptr;
 }
 
-FVulkanRHI::FVulkanRHI()
-    : FRHI(ERHIType::Vulkan)
+FVulkanDeviceRHI::FVulkanDeviceRHI()
+    : FRHIDevice()
     , Instance()
 #if VK_EXT_debug_utils
     , DebugMessenger(VK_NULL_HANDLE)
@@ -139,13 +144,13 @@ FVulkanRHI::FVulkanRHI()
     , CrashMarkers(nullptr)
 #endif
 {
-    if (!GVulkanRHI)
+    if (!GVulkanDeviceRHI)
     {
-        GVulkanRHI = this;
+        GVulkanDeviceRHI = this;
     }
 }
 
-FVulkanRHI::~FVulkanRHI()
+FVulkanDeviceRHI::~FVulkanDeviceRHI()
 {
     const auto FlushDeletionQueue = [this]()
     {
@@ -223,13 +228,13 @@ FVulkanRHI::~FVulkanRHI()
     
     Instance.Release();
 
-    if (GVulkanRHI == this)
+    if (GVulkanDeviceRHI == this)
     {
-        GVulkanRHI = nullptr;
+        GVulkanDeviceRHI = nullptr;
     }
 }
 
-bool FVulkanRHI::Initialize()
+bool FVulkanDeviceRHI::Initialize()
 {
     // -------------------------------------------------------------------------------------------
     // Build instance create info
@@ -407,7 +412,7 @@ bool FVulkanRHI::Initialize()
     return true;
 }
 
-void FVulkanRHI::BeginFrame()
+void FVulkanDeviceRHI::BeginFrame()
 {
     // Update timestamp period, this is necessary on MoltenVK in order to get correct measurements
     {
@@ -446,7 +451,7 @@ void FVulkanRHI::BeginFrame()
     Device->GetFrameFence().Signal(*GraphicsQueue);
 }
 
-void FVulkanRHI::EndFrame()
+void FVulkanDeviceRHI::EndFrame()
 {
     if (Device)
     {
@@ -474,7 +479,7 @@ void FVulkanRHI::EndFrame()
     }
 }
 
-FRHITexture* FVulkanRHI::CreateTexture(const FRHITextureDesc& InTextureDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
+FRHITexture* FVulkanDeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
     FVulkanTextureRHIRef NewTexture = new FVulkanTextureRHI(GetDevice(), InTextureDesc);
     if (!NewTexture->Initialize(GraphicsCommandContext, InInitialState, InInitialData))
@@ -500,7 +505,7 @@ FRHITexture* FVulkanRHI::CreateTexture(const FRHITextureDesc& InTextureDesc, ERe
     return NewTexture.ReleaseOwnership();
 }
 
-FRHIBuffer* FVulkanRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, EResourceAccess InInitialState, const void* InInitialData)
+FRHIBuffer* FVulkanDeviceRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, EResourceAccess InInitialState, const void* InInitialData)
 {
     FVulkanBufferRHIRef NewBuffer = new FVulkanBufferRHI(GetDevice(), InBufferDesc);
     if (!NewBuffer->Initialize(GraphicsCommandContext, InInitialState, InInitialData))
@@ -547,7 +552,7 @@ FRHIBuffer* FVulkanRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, EResour
     return NewBuffer.ReleaseOwnership();
 }
 
-FRHISamplerState* FVulkanRHI::CreateSamplerState(const FRHISamplerStateDesc& InSamplerDesc)
+FRHISamplerState* FVulkanDeviceRHI::CreateSamplerState(const FRHISamplerStateDesc& InSamplerDesc)
 {
     TScopedLock Lock(SamplerStateMapCS);
 
@@ -574,7 +579,7 @@ FRHISamplerState* FVulkanRHI::CreateSamplerState(const FRHISamplerStateDesc& InS
     return Result.ReleaseOwnership();
 }
 
-FRHISwapChain* FVulkanRHI::CreateSwapChain(const FRHISwapChainDesc& InSwapChainDesc)
+FRHISwapChain* FVulkanDeviceRHI::CreateSwapChain(const FRHISwapChainDesc& InSwapChainDesc)
 {
     CHECK(InSwapChainDesc.WindowHandle != nullptr);
 
@@ -588,7 +593,7 @@ FRHISwapChain* FVulkanRHI::CreateSwapChain(const FRHISwapChainDesc& InSwapChainD
     return NewSwapChain.ReleaseOwnership();
 }
 
-bool FVulkanRHI::EnsurePresentQueue()
+bool FVulkanDeviceRHI::EnsurePresentQueue()
 {
     if (PresentQueue)
     {
@@ -620,12 +625,12 @@ bool FVulkanRHI::EnsurePresentQueue()
     return true;
 }
 
-FRHIQuery* FVulkanRHI::CreateQuery(EQueryType InQueryType)
+FRHIQuery* FVulkanDeviceRHI::CreateQuery(EQueryType InQueryType)
 {
     return new FVulkanQueryRHI(Device, InQueryType);
 }
 
-FRHIFence* FVulkanRHI::CreateFence()
+FRHIFence* FVulkanDeviceRHI::CreateFence()
 {
     FVulkanFenceRHI* NewFence = new FVulkanFenceRHI(Device);
     if (!NewFence->Initialize())
@@ -637,14 +642,14 @@ FRHIFence* FVulkanRHI::CreateFence()
     return NewFence;
 }
 
-FRHISceneAccelerationStructure* FVulkanRHI::CreateSceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& InSceneDesc)
+FRHISceneAccelerationStructure* FVulkanDeviceRHI::CreateSceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& InSceneDesc)
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE(InSceneDesc);
     return nullptr;
 }
 
-FRHIGeometryAccelerationStructure* FVulkanRHI::CreateGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
+FRHIGeometryAccelerationStructure* FVulkanDeviceRHI::CreateGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
 {
     FRHIGeometryAccelerationStructureBuildDesc BuildDesc;
     BuildDesc.VertexBuffer = InGeometryDesc.VertexBuffer;
@@ -669,7 +674,7 @@ FRHIGeometryAccelerationStructure* FVulkanRHI::CreateGeometryAccelerationStructu
     return NewGeometry.ReleaseOwnership();
 }
 
-FRHIShaderResourceView* FVulkanRHI::CreateShaderResourceView(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc)
+FRHIShaderResourceView* FVulkanDeviceRHI::CreateShaderResourceView(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc)
 {
     if (!InResource)
     {
@@ -686,7 +691,7 @@ FRHIShaderResourceView* FVulkanRHI::CreateShaderResourceView(FRHIResource* InRes
     {
         VULKAN_ERROR_COND(InResource->GetResourceType() == ERHIResourceType::Texture,
             "CreateShaderResourceView: texture view requires an FRHITexture resource");
-        CHECK(IsViewDimensionCompatible(static_cast<FRHITexture*>(InResource)->GetDimension(), InDesc.ViewDimension));
+        CHECK(IsViewDimensionCompatible(static_cast<FRHITexture*>(InResource)->GetDesc().Dimension, InDesc.ViewDimension));
     }
     else if (InDesc.IsAccelerationStructureSRV())
     {
@@ -698,7 +703,7 @@ FRHIShaderResourceView* FVulkanRHI::CreateShaderResourceView(FRHIResource* InRes
         return nullptr;
     }
 
-    FVulkanShaderResourceViewRHIRef NewShaderResourceView = new FVulkanShaderResourceViewRHI(GetDevice(), InResource);
+    FVulkanShaderResourceViewRHIRef NewShaderResourceView = new FVulkanShaderResourceViewRHI(GetDevice(), InResource, InDesc);
     if (!NewShaderResourceView->Initialize(InResource, InDesc))
     {
         return nullptr;
@@ -709,7 +714,7 @@ FRHIShaderResourceView* FVulkanRHI::CreateShaderResourceView(FRHIResource* InRes
     }
 }
 
-FRHIUnorderedAccessView* FVulkanRHI::CreateUnorderedAccessView(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc)
+FRHIUnorderedAccessView* FVulkanDeviceRHI::CreateUnorderedAccessView(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc)
 {
     if (!InResource)
     {
@@ -726,14 +731,14 @@ FRHIUnorderedAccessView* FVulkanRHI::CreateUnorderedAccessView(FRHIResource* InR
     {
         VULKAN_ERROR_COND(InResource->GetResourceType() == ERHIResourceType::Texture,
             "CreateUnorderedAccessView: texture view requires an FRHITexture resource");
-        CHECK(IsViewDimensionCompatible(static_cast<FRHITexture*>(InResource)->GetDimension(), InDesc.ViewDimension));
+        CHECK(IsViewDimensionCompatible(static_cast<FRHITexture*>(InResource)->GetDesc().Dimension, InDesc.ViewDimension));
     }
     else
     {
         return nullptr;
     }
 
-    FVulkanUnorderedAccessViewRHIRef NewUnorderedAccessView = new FVulkanUnorderedAccessViewRHI(GetDevice(), InResource);
+    FVulkanUnorderedAccessViewRHIRef NewUnorderedAccessView = new FVulkanUnorderedAccessViewRHI(GetDevice(), InResource, InDesc);
     if (!NewUnorderedAccessView->Initialize(InResource, InDesc))
     {
         return nullptr;
@@ -744,7 +749,7 @@ FRHIUnorderedAccessView* FVulkanRHI::CreateUnorderedAccessView(FRHIResource* InR
     }
 }
 
-FRHIRenderTargetView* FVulkanRHI::CreateRenderTargetView(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc)
+FRHIRenderTargetView* FVulkanDeviceRHI::CreateRenderTargetView(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc)
 {
     if (!InResource)
     {
@@ -754,9 +759,9 @@ FRHIRenderTargetView* FVulkanRHI::CreateRenderTargetView(FRHIResource* InResourc
 
     VULKAN_ERROR_COND(InResource->GetResourceType() == ERHIResourceType::Texture,
         "CreateRenderTargetView: requires an FRHITexture resource");
-    CHECK(IsViewDimensionCompatible(static_cast<FRHITexture*>(InResource)->GetDimension(), InDesc.ViewDimension));
+    CHECK(IsViewDimensionCompatible(static_cast<FRHITexture*>(InResource)->GetDesc().Dimension, InDesc.ViewDimension));
 
-    FVulkanRenderTargetViewRHIRef NewRenderTargetView = new FVulkanRenderTargetViewRHI(GetDevice(), InResource);
+    FVulkanRenderTargetViewRHIRef NewRenderTargetView = new FVulkanRenderTargetViewRHI(GetDevice(), InResource, InDesc);
     if (!NewRenderTargetView->Initialize(static_cast<FRHITexture*>(InResource), InDesc))
     {
         return nullptr;
@@ -765,7 +770,7 @@ FRHIRenderTargetView* FVulkanRHI::CreateRenderTargetView(FRHIResource* InResourc
     return NewRenderTargetView.ReleaseOwnership();
 }
 
-FRHIDepthStencilView* FVulkanRHI::CreateDepthStencilView(FRHIResource* InResource, const FRHIDepthStencilViewDesc& InDesc)
+FRHIDepthStencilView* FVulkanDeviceRHI::CreateDepthStencilView(FRHIResource* InResource, const FRHIDepthStencilViewDesc& InDesc)
 {
     if (!InResource)
     {
@@ -775,9 +780,9 @@ FRHIDepthStencilView* FVulkanRHI::CreateDepthStencilView(FRHIResource* InResourc
 
     VULKAN_ERROR_COND(InResource->GetResourceType() == ERHIResourceType::Texture,
         "CreateDepthStencilView: requires an FRHITexture resource");
-    CHECK(IsViewDimensionCompatible(static_cast<FRHITexture*>(InResource)->GetDimension(), InDesc.ViewDimension));
+    CHECK(IsViewDimensionCompatible(static_cast<FRHITexture*>(InResource)->GetDesc().Dimension, InDesc.ViewDimension));
 
-    FVulkanDepthStencilViewRHIRef NewDepthStencilView = new FVulkanDepthStencilViewRHI(GetDevice(), InResource);
+    FVulkanDepthStencilViewRHIRef NewDepthStencilView = new FVulkanDepthStencilViewRHI(GetDevice(), InResource, InDesc);
     if (!NewDepthStencilView->Initialize(static_cast<FRHITexture*>(InResource), InDesc))
     {
         return nullptr;
@@ -786,7 +791,7 @@ FRHIDepthStencilView* FVulkanRHI::CreateDepthStencilView(FRHIResource* InResourc
     return NewDepthStencilView.ReleaseOwnership();
 }
 
-FRHIComputeShader* FVulkanRHI::CreateComputeShader(const TArray<uint8>& ShaderCode)
+FRHIComputeShader* FVulkanDeviceRHI::CreateComputeShader(const TArray<uint8>& ShaderCode)
 {
     FVulkanComputeShaderRHIRef NewShader = new FVulkanComputeShaderRHI(GetDevice());
     if (!NewShader->Initialize(ShaderCode))
@@ -799,7 +804,7 @@ FRHIComputeShader* FVulkanRHI::CreateComputeShader(const TArray<uint8>& ShaderCo
     }
 }
 
-FRHIVertexShader* FVulkanRHI::CreateVertexShader(const TArray<uint8>& ShaderCode)
+FRHIVertexShader* FVulkanDeviceRHI::CreateVertexShader(const TArray<uint8>& ShaderCode)
 {
     FVulkanVertexShaderRHIRef NewShader = new FVulkanVertexShaderRHI(GetDevice());
     if (!NewShader->Initialize(ShaderCode))
@@ -812,7 +817,7 @@ FRHIVertexShader* FVulkanRHI::CreateVertexShader(const TArray<uint8>& ShaderCode
     }
 }
 
-FRHIHullShader* FVulkanRHI::CreateHullShader(const TArray<uint8>& ShaderCode)
+FRHIHullShader* FVulkanDeviceRHI::CreateHullShader(const TArray<uint8>& ShaderCode)
 {
     FVulkanHullShaderRHIRef NewShader = new FVulkanHullShaderRHI(GetDevice());
     if (!NewShader->Initialize(ShaderCode))
@@ -825,7 +830,7 @@ FRHIHullShader* FVulkanRHI::CreateHullShader(const TArray<uint8>& ShaderCode)
     }
 }
 
-FRHIDomainShader* FVulkanRHI::CreateDomainShader(const TArray<uint8>& ShaderCode)
+FRHIDomainShader* FVulkanDeviceRHI::CreateDomainShader(const TArray<uint8>& ShaderCode)
 {
     FVulkanDomainShaderRHIRef NewShader = new FVulkanDomainShaderRHI(GetDevice());
     if (!NewShader->Initialize(ShaderCode))
@@ -838,7 +843,7 @@ FRHIDomainShader* FVulkanRHI::CreateDomainShader(const TArray<uint8>& ShaderCode
     }
 }
 
-FRHIGeometryShader* FVulkanRHI::CreateGeometryShader(const TArray<uint8>& ShaderCode)
+FRHIGeometryShader* FVulkanDeviceRHI::CreateGeometryShader(const TArray<uint8>& ShaderCode)
 {
     FVulkanGeometryShaderRHIRef NewShader = new FVulkanGeometryShaderRHI(GetDevice());
     if (!NewShader->Initialize(ShaderCode))
@@ -851,21 +856,21 @@ FRHIGeometryShader* FVulkanRHI::CreateGeometryShader(const TArray<uint8>& Shader
     }
 }
 
-FRHIMeshShader* FVulkanRHI::CreateMeshShader(const TArray<uint8>& ShaderCode)
+FRHIMeshShader* FVulkanDeviceRHI::CreateMeshShader(const TArray<uint8>& ShaderCode)
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE(ShaderCode);
     return nullptr;
 }
 
-FRHIAmplificationShader* FVulkanRHI::CreateAmplificationShader(const TArray<uint8>& ShaderCode)
+FRHIAmplificationShader* FVulkanDeviceRHI::CreateAmplificationShader(const TArray<uint8>& ShaderCode)
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE(ShaderCode);
     return nullptr;
 }
 
-FRHIPixelShader* FVulkanRHI::CreatePixelShader(const TArray<uint8>& ShaderCode)
+FRHIPixelShader* FVulkanDeviceRHI::CreatePixelShader(const TArray<uint8>& ShaderCode)
 {
     FVulkanPixelShaderRHIRef NewShader = new FVulkanPixelShaderRHI(GetDevice());
     if (!NewShader->Initialize(ShaderCode))
@@ -878,7 +883,7 @@ FRHIPixelShader* FVulkanRHI::CreatePixelShader(const TArray<uint8>& ShaderCode)
     }
 }
 
-FRHIRayGenShader* FVulkanRHI::CreateRayGenShader(const TArray<uint8>& ShaderCode)
+FRHIRayGenShader* FVulkanDeviceRHI::CreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
     FVulkanRayGenShaderRHIRef NewShader = new FVulkanRayGenShaderRHI(GetDevice());
     if (!NewShader->Initialize(ShaderCode))
@@ -891,7 +896,7 @@ FRHIRayGenShader* FVulkanRHI::CreateRayGenShader(const TArray<uint8>& ShaderCode
     }
 }
 
-FRHIRayAnyHitShader* FVulkanRHI::CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
+FRHIRayAnyHitShader* FVulkanDeviceRHI::CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
     FVulkanRayAnyHitShaderRHIRef NewShader = new FVulkanRayAnyHitShaderRHI(GetDevice());
     if (!NewShader->Initialize(ShaderCode))
@@ -904,7 +909,7 @@ FRHIRayAnyHitShader* FVulkanRHI::CreateRayAnyHitShader(const TArray<uint8>& Shad
     }
 }
 
-FRHIRayClosestHitShader* FVulkanRHI::CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
+FRHIRayClosestHitShader* FVulkanDeviceRHI::CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
     FVulkanRayClosestHitShaderRHIRef NewShader = new FVulkanRayClosestHitShaderRHI(GetDevice());
     if (!NewShader->Initialize(ShaderCode))
@@ -917,7 +922,7 @@ FRHIRayClosestHitShader* FVulkanRHI::CreateRayClosestHitShader(const TArray<uint
     }
 }
 
-FRHIRayMissShader* FVulkanRHI::CreateRayMissShader(const TArray<uint8>& ShaderCode)
+FRHIRayMissShader* FVulkanDeviceRHI::CreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
     FVulkanRayMissShaderRHIRef NewShader = new FVulkanRayMissShaderRHI(GetDevice());
     if (!NewShader->Initialize(ShaderCode))
@@ -930,27 +935,27 @@ FRHIRayMissShader* FVulkanRHI::CreateRayMissShader(const TArray<uint8>& ShaderCo
     }
 }
 
-FRHIDepthStencilState* FVulkanRHI::CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
+FRHIDepthStencilState* FVulkanDeviceRHI::CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
 {
     return new FVulkanDepthStencilStateRHI(InDesc);
 }
 
-FRHIRasterizerState* FVulkanRHI::CreateRasterizerState(const FRHIRasterizerStateDesc& InDesc)
+FRHIRasterizerState* FVulkanDeviceRHI::CreateRasterizerState(const FRHIRasterizerStateDesc& InDesc)
 {
     return new FVulkanRasterizerStateRHI(GetDevice(), InDesc);
 }
 
-FRHIBlendState* FVulkanRHI::CreateBlendState(const FRHIBlendStateDesc& InDesc)
+FRHIBlendState* FVulkanDeviceRHI::CreateBlendState(const FRHIBlendStateDesc& InDesc)
 {
     return new FVulkanBlendStateRHI(InDesc);
 }
 
-FRHIInputLayout* FVulkanRHI::CreateInputLayout(const TArray<FRHIInputElementDesc>& InInputElements)
+FRHIInputLayout* FVulkanDeviceRHI::CreateInputLayout(const TArray<FRHIInputElementDesc>& InInputElements)
 {
     return new FVulkanInputLayoutRHI(InInputElements);
 }
 
-FRHIGraphicsPipelineState* FVulkanRHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc)
+FRHIGraphicsPipelineState* FVulkanDeviceRHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc)
 {
     FVulkanGraphicsPipelineStateRHIRef NewPipeline = new FVulkanGraphicsPipelineStateRHI(GetDevice());
     if (!NewPipeline->Initialize(InDesc))
@@ -963,7 +968,7 @@ FRHIGraphicsPipelineState* FVulkanRHI::CreateGraphicsPipelineState(const FRHIGra
     }
 }
 
-FRHIComputePipelineState* FVulkanRHI::CreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc)
+FRHIComputePipelineState* FVulkanDeviceRHI::CreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc)
 {
     FVulkanComputePipelineStateRHIRef NewPipeline = new FVulkanComputePipelineStateRHI(GetDevice());
     if (!NewPipeline->Initialize(InDesc))
@@ -976,16 +981,16 @@ FRHIComputePipelineState* FVulkanRHI::CreateComputePipelineState(const FRHICompu
     }
 }
 
-FRHIRayTracingPipelineState* FVulkanRHI::CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& /*InDesc*/ )
+FRHIRayTracingPipelineState* FVulkanDeviceRHI::CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& /*InDesc*/ )
 {
     return new FVulkanRayTracingPipelineStateRHI();
 }
 
-bool FVulkanRHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryInfo) const 
+bool FVulkanDeviceRHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryInfo) const 
 {
     if (!Device->IsExtensionEnabled(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME))
     {
-        VULKAN_WARNING("[FVulkanRHI] VK_EXT_memory_budget is required to query video-memory information");
+        VULKAN_WARNING("[FVulkanDeviceRHI] VK_EXT_memory_budget is required to query video-memory information");
         return false;
     }
 
@@ -1021,7 +1026,7 @@ bool FVulkanRHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemo
     return true;
 }
 
-bool FVulkanRHI::QueryUAVFormatSupport(EFormat Format) const
+bool FVulkanDeviceRHI::QueryUAVFormatSupport(EFormat Format) const
 {
     VkFormat VulkanFormat = ConvertFormat(Format);
     if (VulkanFormat != VK_FORMAT_UNDEFINED)
@@ -1040,9 +1045,9 @@ bool FVulkanRHI::QueryUAVFormatSupport(EFormat Format) const
     return false;
 }
 
-bool FVulkanRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode)
+bool FVulkanDeviceRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode)
 {
-    FVulkanQueryRHI* VulkanQuery = FVulkanRHI::ResourceCast(Query);
+    FVulkanQueryRHI* VulkanQuery = FVulkanDeviceRHI::ResourceCast(Query);
     if (!VulkanQuery)
     {
         return false;
@@ -1062,9 +1067,9 @@ bool FVulkanRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResul
     return true;
 }
 
-bool FVulkanRHI::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelineStatistics& OutResult, EQueryResultMode Mode)
+bool FVulkanDeviceRHI::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelineStatistics& OutResult, EQueryResultMode Mode)
 {
-    FVulkanQueryRHI* VulkanQuery = FVulkanRHI::ResourceCast(Query);
+    FVulkanQueryRHI* VulkanQuery = FVulkanDeviceRHI::ResourceCast(Query);
     if (!VulkanQuery)
     {
         return false;
@@ -1084,7 +1089,7 @@ bool FVulkanRHI::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelineStati
     return true;
 }
 
-FString FVulkanRHI::GetAdapterName() const
+FString FVulkanDeviceRHI::GetAdapterName() const
 {
     if (!PhysicalDevice)
     {
@@ -1096,45 +1101,45 @@ FString FVulkanRHI::GetAdapterName() const
     return FString(DeviceProperties.deviceName);
 }
 
-IRHICommandContext* FVulkanRHI::ObtainCommandContext()
+IRHICommandContext* FVulkanDeviceRHI::ObtainCommandContext()
 {
     CHECK(GraphicsCommandContext != nullptr);
     return GraphicsCommandContext;
 }
 
-void* FVulkanRHI::GetRHINativeAdapter()
+void* FVulkanDeviceRHI::GetRHINativeAdapter()
 {
     CHECK(PhysicalDevice != nullptr);
     return reinterpret_cast<void*>(PhysicalDevice->GetVkPhysicalDevice());
 }
 
-void* FVulkanRHI::GetRHINativeDevice()
+void* FVulkanDeviceRHI::GetRHINativeDevice()
 {
     CHECK(Device != nullptr);
     return reinterpret_cast<void*>(Device->GetVkDevice());
 }
 
-void* FVulkanRHI::GetRHINativeDirectCommandQueue()
+void* FVulkanDeviceRHI::GetRHINativeDirectCommandQueue()
 {
     CHECK(GraphicsQueue != nullptr);
     return reinterpret_cast<void*>(GraphicsQueue->GetVkQueue());
 }
 
-void* FVulkanRHI::GetRHINativeComputeCommandQueue()
+void* FVulkanDeviceRHI::GetRHINativeComputeCommandQueue()
 {
     // TODO: Finish
     CHECK(false);
     return nullptr;
 }
 
-void* FVulkanRHI::GetRHINativeCopyCommandQueue()
+void* FVulkanDeviceRHI::GetRHINativeCopyCommandQueue()
 {
     // TODO: Finish
     CHECK(false);
     return nullptr;
 }
 
-void FVulkanRHI::EnqueueResourceDeletion(FRHIResource* Resource)
+void FVulkanDeviceRHI::EnqueueResourceDeletion(FRHIResource* Resource)
 {
     if (Resource)
     {
@@ -1142,18 +1147,18 @@ void FVulkanRHI::EnqueueResourceDeletion(FRHIResource* Resource)
     }
 }
 
-void FVulkanRHI::TickCoreProgression()
+void FVulkanDeviceRHI::TickCoreProgression()
 {
     GraphicsQueue->ProcessCommandQueue();
     Device->GetMemoryManager().CleanUpAllocators();
 }
 
-void FVulkanRHI::FlushCompletedSubmissions()
+void FVulkanDeviceRHI::FlushCompletedSubmissions()
 {
     GraphicsQueue->ProcessCommandQueue();
 }
 
-void FVulkanRHI::FlushDeletionQueue(FVulkanCommands* Commands)
+void FVulkanDeviceRHI::FlushDeletionQueue(FVulkanCommands* Commands)
 {
     CHECK(Commands != nullptr);
     if (Commands->IsEmpty())
@@ -1165,7 +1170,7 @@ void FVulkanRHI::FlushDeletionQueue(FVulkanCommands* Commands)
     Commands->DeferredObjects = Move(DeferredObjects);
 }
 
-VkPipelineStageFlags2 FVulkanRHI::ResourceStateToPipelineStageFlags(EResourceAccess ResourceState)
+VkPipelineStageFlags2 FVulkanDeviceRHI::ResourceStateToPipelineStageFlags(EResourceAccess ResourceState)
 {
     VkPipelineStageFlags2 AllShaderBits =
         VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT |
@@ -1211,7 +1216,7 @@ VkPipelineStageFlags2 FVulkanRHI::ResourceStateToPipelineStageFlags(EResourceAcc
     }
 }
 
-VkAccessFlags2 FVulkanRHI::ResourceStateToAccessFlags(EResourceAccess ResourceState)
+VkAccessFlags2 FVulkanDeviceRHI::ResourceStateToAccessFlags(EResourceAccess ResourceState)
 {
     switch (ResourceState)
     {
@@ -1236,7 +1241,7 @@ VkAccessFlags2 FVulkanRHI::ResourceStateToAccessFlags(EResourceAccess ResourceSt
     }
 }
 
-VkImageLayout FVulkanRHI::ResourceStateToImageLayout(EResourceAccess ResourceState)
+VkImageLayout FVulkanDeviceRHI::ResourceStateToImageLayout(EResourceAccess ResourceState)
 {
     switch (ResourceState)
     {

@@ -928,13 +928,13 @@ void FVulkanTransientDescriptorAllocator::FlushPools()
         FPoolSet& Set = Entry.Second;
         if (Set.ActivePool)
         {
-            FVulkanRHI::DeferDeletion(&PoolManager, Set.ActivePool);
+            FVulkanDeviceRHI::DeferDeletion(&PoolManager, Set.ActivePool);
             Set.ActivePool = nullptr;
         }
 
         for (FVulkanDescriptorPool* Pool : Set.UsedPools)
         {
-            FVulkanRHI::DeferDeletion(&PoolManager, Pool);
+            FVulkanDeviceRHI::DeferDeletion(&PoolManager, Pool);
         }
 
         Set.UsedPools.Clear();

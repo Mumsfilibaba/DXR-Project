@@ -89,19 +89,19 @@ public:
     bool Initialize(FD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
     bool UpdateView(FD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
 
-    NODISCARD FORCEINLINE const D3D12_CONSTANT_BUFFER_VIEW_DESC& GetDesc() const 
+    NODISCARD FORCEINLINE const D3D12_CONSTANT_BUFFER_VIEW_DESC& GetD3D12Desc() const
     {
-        return Desc;
+        return D3D12Desc;
     }
 
 private:
-    D3D12_CONSTANT_BUFFER_VIEW_DESC Desc;
+    D3D12_CONSTANT_BUFFER_VIEW_DESC D3D12Desc;
 };
 
 class FD3D12ShaderResourceViewRHI : public FRHIShaderResourceView, public FD3D12View
 {
 public:
-    FD3D12ShaderResourceViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource);
+    FD3D12ShaderResourceViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource, const FRHIShaderResourceViewDesc& InRHIDesc);
     virtual ~FD3D12ShaderResourceViewRHI() = default;
 
     // FRHIShaderResourceView Interface
@@ -115,20 +115,20 @@ public:
     bool Initialize(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
     bool UpdateView(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
 
-    NODISCARD FORCEINLINE const D3D12_SHADER_RESOURCE_VIEW_DESC& GetDesc() const
+    NODISCARD FORCEINLINE const D3D12_SHADER_RESOURCE_VIEW_DESC& GetD3D12Desc() const
     {
-        return Desc;
+        return D3D12Desc;
     }
 
 private:
-    D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
+    D3D12_SHADER_RESOURCE_VIEW_DESC D3D12Desc;
 };
 
 class FD3D12UnorderedAccessViewBase : public FRHIUnorderedAccessView
 {
 protected:
-    explicit FD3D12UnorderedAccessViewBase(FRHIResource* InResource)
-        : FRHIUnorderedAccessView(InResource)
+    FD3D12UnorderedAccessViewBase(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc)
+        : FRHIUnorderedAccessView(InResource, InDesc)
     {
     }
 
@@ -141,7 +141,7 @@ public:
 class FD3D12UnorderedAccessViewRHI : public FD3D12UnorderedAccessViewBase, public FD3D12View
 {
 public:
-    FD3D12UnorderedAccessViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource);
+    FD3D12UnorderedAccessViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InRHIDesc);
     virtual ~FD3D12UnorderedAccessViewRHI() = default;
  
     // FRHIUnorderedAccessView Interface
@@ -158,9 +158,9 @@ public:
     bool Initialize(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
     bool UpdateView(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
 
-    NODISCARD FORCEINLINE const D3D12_UNORDERED_ACCESS_VIEW_DESC& GetDesc() const
-    { 
-        return Desc;
+    NODISCARD FORCEINLINE const D3D12_UNORDERED_ACCESS_VIEW_DESC& GetD3D12Desc() const
+    {
+        return D3D12Desc;
     }
 
     NODISCARD FORCEINLINE const FD3D12Resource* GetCounterResource() const
@@ -170,14 +170,14 @@ public:
 
 private:
     FD3D12ResourceRef                CounterResource;
-    D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
+    D3D12_UNORDERED_ACCESS_VIEW_DESC D3D12Desc;
 };
 
 class FD3D12RenderTargetViewBase : public FRHIRenderTargetView
 {
 protected:
-    explicit FD3D12RenderTargetViewBase(FRHIResource* InResource)
-        : FRHIRenderTargetView(InResource)
+    FD3D12RenderTargetViewBase(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc)
+        : FRHIRenderTargetView(InResource, InDesc)
     {
     }
 
@@ -190,7 +190,7 @@ public:
 class FD3D12RenderTargetViewRHI : public FD3D12RenderTargetViewBase, public FD3D12View
 {
 public:
-    FD3D12RenderTargetViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource);
+    FD3D12RenderTargetViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource, const FRHIRenderTargetViewDesc& InRHIDesc);
     virtual ~FD3D12RenderTargetViewRHI() = default;
 
     // FRHIRenderTargetView Interface
@@ -205,19 +205,19 @@ public:
     bool Initialize(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
     bool UpdateView(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
 
-    NODISCARD FORCEINLINE const D3D12_RENDER_TARGET_VIEW_DESC& GetDesc() const 
+    NODISCARD FORCEINLINE const D3D12_RENDER_TARGET_VIEW_DESC& GetD3D12Desc() const
     {
-        return Desc;
+        return D3D12Desc;
     }
 
 private:
-    D3D12_RENDER_TARGET_VIEW_DESC Desc;
+    D3D12_RENDER_TARGET_VIEW_DESC D3D12Desc;
 };
 
 class FD3D12DepthStencilViewRHI : public FRHIDepthStencilView, public FD3D12View
 {
 public:
-    FD3D12DepthStencilViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource);
+    FD3D12DepthStencilViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource, const FRHIDepthStencilViewDesc& InRHIDesc);
     virtual ~FD3D12DepthStencilViewRHI() = default;
 
     // FRHIDepthStencilView Interface
@@ -229,9 +229,9 @@ public:
     bool Initialize(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
     bool UpdateView(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
 
-    NODISCARD FORCEINLINE const D3D12_DEPTH_STENCIL_VIEW_DESC& GetDesc() const 
-    { 
-        return Desc;
+    NODISCARD FORCEINLINE const D3D12_DEPTH_STENCIL_VIEW_DESC& GetD3D12Desc() const
+    {
+        return D3D12Desc;
     }
 
     NODISCARD FORCEINLINE bool HasStencilFormat() const
@@ -246,15 +246,15 @@ public:
 
     NODISCARD FORCEINLINE bool IsDepthReadOnly() const
     {
-        return (Desc.Flags & D3D12_DSV_FLAG_READ_ONLY_DEPTH) != 0;
+        return (D3D12Desc.Flags & D3D12_DSV_FLAG_READ_ONLY_DEPTH) != 0;
     }
 
     NODISCARD FORCEINLINE bool IsStencilReadOnly() const
     {
-        return (Desc.Flags & D3D12_DSV_FLAG_READ_ONLY_STENCIL) != 0;
+        return (D3D12Desc.Flags & D3D12_DSV_FLAG_READ_ONLY_STENCIL) != 0;
     }
 
 private:
-    D3D12_DEPTH_STENCIL_VIEW_DESC Desc;
+    D3D12_DEPTH_STENCIL_VIEW_DESC D3D12Desc;
     bool                          bHasStencil;
 };

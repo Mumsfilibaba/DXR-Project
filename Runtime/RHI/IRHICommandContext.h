@@ -477,9 +477,6 @@ struct IRHICommandContext
      */
     virtual void PopEvent() = 0;
 
-    /**
-     * @brief Returns the native command list
-     * @return D3D12: ID3D12GraphicsCommandList*. Vulkan: VkCommandBuffer*. Metal/Null: nullptr.
-     */
+    /** @return D3D12: ID3D12GraphicsCommandList*. Vulkan: VkCommandBuffer*. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeCommandList() = 0;
 };

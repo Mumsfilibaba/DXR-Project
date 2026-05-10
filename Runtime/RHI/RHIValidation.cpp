@@ -22,9 +22,9 @@ static TAutoConsoleVariable<bool> CVarEnableValidationDebugBreak(
     "Enables debug-breaks when detecting errors in the custom RHI-validation layer",
     true);
 
-static ERHIType SafeGetRHIType(FRHI* RealRHI)
+static ERHIType SafeGetRHIType(FRHIDevice* RealRHI)
 {
-    return RealRHI ? RealRHI->GetType() : ERHIType::Unknown;
+    return RealRHI ? RealRHI->GetRHIType() : ERHIType::Unknown;
 }
 
 static bool ValidateTextureSlicesAndMips(const TCHAR* Caller, const FRHITextureDesc& TextureDesc, uint32 BaseLayer, uint32 LayerCount, uint32 FirstMip, uint32 NumMips, EFormat ViewFormat, EViewDimension ViewDimension)
@@ -63,21 +63,21 @@ static bool ValidateTextureSlicesAndMips(const TCHAR* Caller, const FRHITextureD
     return true;
 }
 
-FRHIValidation::FRHIValidation(FRHI* InRealRHI)
-    : FRHI(SafeGetRHIType(InRealRHI))
+FRHIValidation::FRHIValidation(FRHIDevice* InRealRHI)
+    : FRHIDevice()
     , RealRHI(InRealRHI)
 {
+}
+
+ERHIType FRHIValidation::GetRHIType() const
+{
+    return SafeGetRHIType(RealRHI);
 }
 
 FRHIValidation::~FRHIValidation()
 {
     delete RealRHI;
     RealRHI = nullptr;
-}
-
-bool FRHIValidation::Initialize()
-{
-    return RealRHI->Initialize();
 }
 
 void FRHIValidation::BeginFrame()

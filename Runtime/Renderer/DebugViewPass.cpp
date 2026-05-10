@@ -37,7 +37,7 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
         return false;
     }
 
-    DebugVertexShader = FRHI::Get()->CreateVertexShader(ShaderCode);
+    DebugVertexShader = RHI::Device->CreateVertexShader(ShaderCode);
     if (!DebugVertexShader)
     {
         DEBUG_BREAK();
@@ -51,7 +51,7 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
         return false;
     }
 
-    DebugPixelShader = FRHI::Get()->CreatePixelShader(ShaderCode);
+    DebugPixelShader = RHI::Device->CreatePixelShader(ShaderCode);
     if (!DebugPixelShader)
     {
         DEBUG_BREAK();
@@ -63,7 +63,7 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
     DepthStencilDesc.bDepthEnable      = false;
     DepthStencilDesc.bDepthWriteEnable = false;
 
-    DebugDepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilDesc);
+    DebugDepthStencilState = RHI::Device->CreateDepthStencilState(DepthStencilDesc);
     if (!DebugDepthStencilState)
     {
         DEBUG_BREAK();
@@ -73,7 +73,7 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
     FRHIRasterizerStateDesc RasterizerDesc;
     RasterizerDesc.CullMode = ECullMode::None;
 
-    DebugRasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerDesc);
+    DebugRasterizerState = RHI::Device->CreateRasterizerState(RasterizerDesc);
     if (!DebugRasterizerState)
     {
         DEBUG_BREAK();
@@ -83,7 +83,7 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
     FRHIBlendStateDesc BlendStateDesc;
     BlendStateDesc.NumRenderTargets = 1;
 
-    DebugBlendState = FRHI::Get()->CreateBlendState(BlendStateDesc);
+    DebugBlendState = RHI::Device->CreateBlendState(BlendStateDesc);
     if (!DebugBlendState)
     {
         DEBUG_BREAK();
@@ -112,7 +112,7 @@ void FDebugViewPass::PreparePipelineState(EFormat OutputFormat)
     PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = OutputFormat;
     PSODesc.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
 
-    FRHIGraphicsPipelineStateRef NewPSO = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
+    FRHIGraphicsPipelineStateRef NewPSO = RHI::Device->CreateGraphicsPipelineState(PSODesc);
     if (!NewPSO)
     {
         DEBUG_BREAK();
@@ -149,8 +149,8 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
     TRACE_SCOPE("DebugView");
     GPU_TRACE_SCOPE(CommandList, "DebugView");
 
-    const int32 TargetWidth  = static_cast<int32>(RenderTarget->GetWidth());
-    const int32 TargetHeight = static_cast<int32>(RenderTarget->GetHeight());
+    const int32 TargetWidth  = static_cast<int32>(RenderTarget->GetDesc().Extent.X);
+    const int32 TargetHeight = static_cast<int32>(RenderTarget->GetDesc().Extent.Y);
     const int32 ViewX        = Math::Clamp(X, 0, TargetWidth);
     const int32 ViewY        = Math::Clamp(Y, 0, TargetHeight);
 
@@ -277,14 +277,14 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
     } Constants;
 
     Constants.DebugMode          = static_cast<int32>(DebugView);
-    Constants.ShadowMapSize      = FrameResources.ShadowCascades ? static_cast<int32>(FrameResources.ShadowCascades->GetWidth()) : 0;
+    Constants.ShadowMapSize      = FrameResources.ShadowCascades ? static_cast<int32>(FrameResources.ShadowCascades->GetDesc().Extent.X) : 0;
     Constants.OutputWidth        = ViewWidth;
     Constants.OutputHeight       = ViewHeight;
     Constants.ViewX              = ViewX;
     Constants.ViewY              = ViewY;
     Constants.TargetWidth        = TargetWidth;
     Constants.TargetHeight       = TargetHeight;
-    Constants.bIsOutputSceneTarget = (RenderTarget->GetFormat() == FGlobalTextureFormats::SceneTargetFormat) ? 1 : 0;
+    Constants.bIsOutputSceneTarget = (RenderTarget->GetDesc().Format == FGlobalTextureFormats::SceneTargetFormat) ? 1 : 0;
 
     constexpr uint32 NumConstants = sizeof(FDebugViewConstants) / sizeof(uint32);
     CommandList.SetShaderConstants(DebugPixelShader.Get(), &Constants, NumConstants);

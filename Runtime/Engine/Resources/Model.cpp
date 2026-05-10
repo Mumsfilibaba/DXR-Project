@@ -45,7 +45,7 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
     VertexBufferDesc.Size   = VertexCount * VertexBufferDesc.Stride;
     VertexBufferDesc.Flags  = BufferFlags | EBufferFlags::VertexBuffer;
 
-    VertexBuffer = FRHI::Get()->CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, CreateInfo.Vertices.Data());
+    VertexBuffer = RHI::Device->CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, CreateInfo.Vertices.Data());
     if (!VertexBuffer)
     {
         return false;
@@ -66,7 +66,7 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
 	VertexBufferDesc.Stride = sizeof(FVertexPosition);
 	VertexBufferDesc.Size   = VertexCount * VertexBufferDesc.Stride;
 
-    VertexPositionBuffer = FRHI::Get()->CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, VertexPositions.Data());
+    VertexPositionBuffer = RHI::Device->CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, VertexPositions.Data());
     if (!VertexPositionBuffer)
     {
         return false;
@@ -87,7 +87,7 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
 	VertexBufferDesc.Stride = sizeof(FVertexNormal);
 	VertexBufferDesc.Size   = VertexCount * VertexBufferDesc.Stride;
 
-    VertexNormalBuffer = FRHI::Get()->CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, VertexNormals.Data());
+    VertexNormalBuffer = RHI::Device->CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, VertexNormals.Data());
     if (!VertexNormalBuffer)
     {
         return false;
@@ -108,7 +108,7 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
     VertexBufferDesc.Stride = sizeof(FVertexTexCoord);
     VertexBufferDesc.Size   = VertexCount * VertexBufferDesc.Stride;
 
-    VertexTexCoordBuffer = FRHI::Get()->CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, VertexTexCoords.Data());
+    VertexTexCoordBuffer = RHI::Device->CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, VertexTexCoords.Data());
     if (!VertexTexCoordBuffer)
     {
         return false;
@@ -146,7 +146,7 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
     IndexBufferDesc.Size   = IndexCount * IndexBufferDesc.Stride;
     IndexBufferDesc.Flags  = BufferFlags | EBufferFlags::IndexBuffer;
 
-    IndexBuffer = FRHI::Get()->CreateBuffer(IndexBufferDesc, EResourceAccess::IndexBuffer, InitialIndicies);
+    IndexBuffer = RHI::Device->CreateBuffer(IndexBufferDesc, EResourceAccess::IndexBuffer, InitialIndicies);
     if (!IndexBuffer)
     {
         return false;
@@ -159,7 +159,7 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
     if (bEnableRayTracing)
     {
         FRHIGeometryAccelerationStructureDesc GeometryDesc(VertexBuffer.Get(), VertexCount, IndexBuffer.Get(), IndexCount, IndexFormat, EAccelerationStructureBuildFlags::None);
-        RTGeometry = FRHI::Get()->CreateGeometryAccelerationStructure(GeometryDesc);
+        RTGeometry = RHI::Device->CreateGeometryAccelerationStructure(GeometryDesc);
 
         if (!RTGeometry)
         {
@@ -171,35 +171,35 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
         }
 
         FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, VertexCount);
-        VertexBufferSRV = FRHI::Get()->CreateShaderResourceView(VertexBuffer.Get(), SRVDesc);
+        VertexBufferSRV = RHI::Device->CreateShaderResourceView(VertexBuffer.Get(), SRVDesc);
         if (!VertexBufferSRV)
         {
             return false;
         }
 
         SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, VertexCount);
-        VertexPositionBufferSRV = FRHI::Get()->CreateShaderResourceView(VertexPositionBuffer.Get(), SRVDesc);
+        VertexPositionBufferSRV = RHI::Device->CreateShaderResourceView(VertexPositionBuffer.Get(), SRVDesc);
         if (!VertexPositionBufferSRV)
         {
             return false;
         }
 
         SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, VertexCount);
-        VertexNormalBufferSRV = FRHI::Get()->CreateShaderResourceView(VertexNormalBuffer.Get(), SRVDesc);
+        VertexNormalBufferSRV = RHI::Device->CreateShaderResourceView(VertexNormalBuffer.Get(), SRVDesc);
         if (!VertexNormalBufferSRV)
         {
             return false;
         }
 
         SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, VertexCount);
-        VertexTexCoordBufferSRV = FRHI::Get()->CreateShaderResourceView(VertexTexCoordBuffer.Get(), SRVDesc);
+        VertexTexCoordBufferSRV = RHI::Device->CreateShaderResourceView(VertexTexCoordBuffer.Get(), SRVDesc);
         if (!VertexTexCoordBufferSRV)
         {
             return false;
         }
 
         SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, IndexCount, EBufferViewType::ByteAddress);
-        IndexBufferSRV = FRHI::Get()->CreateShaderResourceView(IndexBuffer.Get(), SRVDesc);
+        IndexBufferSRV = RHI::Device->CreateShaderResourceView(IndexBuffer.Get(), SRVDesc);
         if (!IndexBufferSRV)
         {
             return false;
@@ -417,12 +417,12 @@ bool FModel::Init(const FModelCreateInfo& CreateInfo)
 
         auto TryCompressBC1 = [&](FRHITextureRef& Texture)
         {
-            if (Texture && !IsBlockCompressed(Texture->GetFormat()) && IsBlockCompressedAligned(Texture->GetDesc().Extent.X) && IsBlockCompressedAligned(Texture->GetDesc().Extent.Y))
+            if (Texture && !IsBlockCompressed(Texture->GetDesc().Format) && IsBlockCompressedAligned(Texture->GetDesc().Extent.X) && IsBlockCompressedAligned(Texture->GetDesc().Extent.Y))
             {
                 FRHITextureRef Compressed;
                 if (Compressor.CompressBC1(Texture, Compressed))
                 {
-                    LOG_INFO("[FModel] Compressed texture (%dx%d) %s -> BC1", Texture->GetDesc().Extent.X, Texture->GetDesc().Extent.Y, ToString(Texture->GetFormat()));
+                    LOG_INFO("[FModel] Compressed texture (%dx%d) %s -> BC1", Texture->GetDesc().Extent.X, Texture->GetDesc().Extent.Y, ToString(Texture->GetDesc().Format));
                     Texture = Compressed;
                 }
             }
@@ -430,12 +430,12 @@ bool FModel::Init(const FModelCreateInfo& CreateInfo)
 
         auto TryCompressBC3 = [&](FRHITextureRef& Texture)
         {
-            if (Texture && !IsBlockCompressed(Texture->GetFormat()) && IsBlockCompressedAligned(Texture->GetDesc().Extent.X) && IsBlockCompressedAligned(Texture->GetDesc().Extent.Y))
+            if (Texture && !IsBlockCompressed(Texture->GetDesc().Format) && IsBlockCompressedAligned(Texture->GetDesc().Extent.X) && IsBlockCompressedAligned(Texture->GetDesc().Extent.Y))
             {
                 FRHITextureRef Compressed;
                 if (Compressor.CompressBC3(Texture, Compressed))
                 {
-                    LOG_INFO("[FModel] Compressed texture (%dx%d) %s -> BC3", Texture->GetDesc().Extent.X, Texture->GetDesc().Extent.Y, ToString(Texture->GetFormat()));
+                    LOG_INFO("[FModel] Compressed texture (%dx%d) %s -> BC3", Texture->GetDesc().Extent.X, Texture->GetDesc().Extent.Y, ToString(Texture->GetDesc().Format));
                     Texture = Compressed;
                 }
             }
@@ -443,12 +443,12 @@ bool FModel::Init(const FModelCreateInfo& CreateInfo)
 
         auto TryCompressBC5 = [&](FRHITextureRef& Texture)
         {
-            if (Texture && !IsBlockCompressed(Texture->GetFormat()) && IsBlockCompressedAligned(Texture->GetDesc().Extent.X) && IsBlockCompressedAligned(Texture->GetDesc().Extent.Y))
+            if (Texture && !IsBlockCompressed(Texture->GetDesc().Format) && IsBlockCompressedAligned(Texture->GetDesc().Extent.X) && IsBlockCompressedAligned(Texture->GetDesc().Extent.Y))
             {
                 FRHITextureRef Compressed;
                 if (Compressor.CompressBC5(Texture, Compressed))
                 {
-                    LOG_INFO("[FModel] Compressed texture (%dx%d) %s -> BC5", Texture->GetDesc().Extent.X, Texture->GetDesc().Extent.Y, ToString(Texture->GetFormat()));
+                    LOG_INFO("[FModel] Compressed texture (%dx%d) %s -> BC5", Texture->GetDesc().Extent.X, Texture->GetDesc().Extent.Y, ToString(Texture->GetDesc().Format));
                     Texture = Compressed;
                 }
             }

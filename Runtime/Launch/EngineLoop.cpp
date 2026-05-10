@@ -200,7 +200,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
         return -1;
     }
 
-    if (!FRHI::Initialize())
+    if (!RHI::Initialize())
     {
         return -1;
     }
@@ -326,7 +326,7 @@ void FEngineLoop::Release()
     FTextureFactory::Release();
 
     // Wait for RHI thread and shutdown RHI Layer
-    FRHI::Release();
+    RHI::Release();
 
     FShaderCompiler::Destroy();
 

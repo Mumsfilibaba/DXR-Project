@@ -205,7 +205,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
             return false;
         }
 
-        FD3D12ShaderResourceViewRHIRef DefaultSRV = new FD3D12ShaderResourceViewRHI(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), this);
+        FD3D12ShaderResourceViewRHIRef DefaultSRV = new FD3D12ShaderResourceViewRHI(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), this, GetDefaultShaderResourceViewDescForTexture(Desc));
         if (!DefaultSRV->Initialize(GetResource(), ViewDesc))
         {
             return false;
@@ -268,7 +268,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
             return false;
         }
 
-        FD3D12UnorderedAccessViewRHIRef DefaultUAV = new FD3D12UnorderedAccessViewRHI(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), this);
+        FD3D12UnorderedAccessViewRHIRef DefaultUAV = new FD3D12UnorderedAccessViewRHI(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), this, GetDefaultUnorderedAccessViewDescForTexture(Desc));
         if (!DefaultUAV->Initialize(nullptr, GetResource(), ViewDesc))
         {
             return false;
@@ -341,7 +341,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
             return false;
         }
 
-        FD3D12RenderTargetViewRHIRef DefaultRTV = new FD3D12RenderTargetViewRHI(GetDevice(), GetDevice()->GetRenderTargetOfflineDescriptorHeap(), this);
+        FD3D12RenderTargetViewRHIRef DefaultRTV = new FD3D12RenderTargetViewRHI(GetDevice(), GetDevice()->GetRenderTargetOfflineDescriptorHeap(), this, GetDefaultRenderTargetViewDescForTexture(Desc));
         if (!DefaultRTV->Initialize(GetResource(), RTVDesc))
         {
             return false;
@@ -406,7 +406,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
             return false;
         }
 
-        FD3D12DepthStencilViewRHIRef DefaultDSV = new FD3D12DepthStencilViewRHI(GetDevice(), GetDevice()->GetDepthStencilOfflineDescriptorHeap(), this);
+        FD3D12DepthStencilViewRHIRef DefaultDSV = new FD3D12DepthStencilViewRHI(GetDevice(), GetDevice()->GetDepthStencilOfflineDescriptorHeap(), this, GetDefaultDepthStencilViewDescForTexture(Desc));
         if (!DefaultDSV->Initialize(GetResource(), DSVDesc))
         {
             return false;
@@ -616,7 +616,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
                     return false;
                 }
 
-                FD3D12RenderTargetViewRHIRef NewRTV = new FD3D12RenderTargetViewRHI(GetDevice(), GetDevice()->GetRenderTargetOfflineDescriptorHeap(), this);
+                FD3D12RenderTargetViewRHIRef NewRTV = new FD3D12RenderTargetViewRHI(GetDevice(), GetDevice()->GetRenderTargetOfflineDescriptorHeap(), this, GetDefaultRenderTargetViewDescForTexture(Desc));
                 if (!NewRTV->Initialize(GetResource(), RTVDesc))
                 {
                     D3D12_ERROR("Clear: Failed to create temporary RTV");
@@ -713,7 +713,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
                     return false;
                 }
 
-                FD3D12DepthStencilViewRHIRef NewDSV = new FD3D12DepthStencilViewRHI(GetDevice(), GetDevice()->GetDepthStencilOfflineDescriptorHeap(), this);
+                FD3D12DepthStencilViewRHIRef NewDSV = new FD3D12DepthStencilViewRHI(GetDevice(), GetDevice()->GetDepthStencilOfflineDescriptorHeap(), this, GetDefaultDepthStencilViewDescForTexture(Desc));
                 if (!NewDSV->Initialize(GetResource(), DSVDesc))
                 {
                     D3D12_ERROR("Clear: Failed to create temporary DSV");

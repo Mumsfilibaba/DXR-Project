@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Core.h"
 
+class FRHIDevice;
 enum class EFormat : uint8;
 
 // -------------------------------------------------------------------------------------------
@@ -80,6 +81,25 @@ NODISCARD constexpr const CHAR* ToString(EShadingRateTier ShadingRateTier)
 
 struct RHI
 {
+    // -------------------------------------------------------------------------------------------
+    // Lifecycle
+    // -------------------------------------------------------------------------------------------
+
+    /** @brief Initializes the RHI Interface */
+    static RHI_API bool Initialize();
+
+    /** @brief Releases the RHI Interface */
+    static RHI_API void Release();
+
+    /** @return Returns true if the RHI is initialized */
+    static FORCEINLINE bool IsInitialized()
+    {
+        return Device != nullptr;
+    }
+
+    /** @brief The active RHI device. Set during RHI::Initialize() and cleared by RHI::Release(). */
+    static RHI_API FRHIDevice* Device;
+
     // -------------------------------------------------------------------------------------------
     // Shader / Pipeline Features
     // -------------------------------------------------------------------------------------------

@@ -130,6 +130,152 @@ NODISCARD inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
     return HeapProperties;
 }
 
+NODISCARD inline FRHIShaderResourceViewDesc GetDefaultShaderResourceViewDescForTexture(const FRHITextureDesc& TextureDesc)
+{
+    const EFormat Format    = TextureDesc.Format;
+    const uint8   NumMips   = static_cast<uint8>(TextureDesc.NumMipLevels);
+    const uint16  NumSlices = static_cast<uint16>(TextureDesc.NumArraySlices);
+
+    if (TextureDesc.IsTexture1D())
+    {
+        return FRHIShaderResourceViewDesc::CreateTexture1D(Format, 0, NumMips);
+    }
+
+    if (TextureDesc.IsTexture1DArray())
+    {
+        return FRHIShaderResourceViewDesc::CreateTexture1DArray(Format, 0, NumMips, 0, NumSlices);
+    }
+
+    if (TextureDesc.IsTexture2D())
+    {
+        return FRHIShaderResourceViewDesc::CreateTexture2D(Format, 0, NumMips);
+    }
+
+    if (TextureDesc.IsTexture2DArray())
+    {
+        return FRHIShaderResourceViewDesc::CreateTexture2DArray(Format, 0, NumMips, 0, NumSlices);
+    }
+
+    if (TextureDesc.IsTextureCube())
+    {
+        return FRHIShaderResourceViewDesc::CreateTextureCube(Format, 0, NumMips);
+    }
+
+    if (TextureDesc.IsTextureCubeArray())
+    {
+        return FRHIShaderResourceViewDesc::CreateTextureCubeArray(Format, 0, NumMips, 0, NumSlices);
+    }
+
+    if (TextureDesc.IsTexture3D())
+    {
+        return FRHIShaderResourceViewDesc::CreateTexture3D(Format, 0, NumMips);
+    }
+
+    return FRHIShaderResourceViewDesc{};
+}
+
+NODISCARD inline FRHIUnorderedAccessViewDesc GetDefaultUnorderedAccessViewDescForTexture(const FRHITextureDesc& TextureDesc)
+{
+    const EFormat Format    = TextureDesc.Format;
+    const uint16  NumSlices = static_cast<uint16>(TextureDesc.NumArraySlices);
+
+    if (TextureDesc.IsTexture1D())
+    {
+        return FRHIUnorderedAccessViewDesc::CreateTexture1D(Format, 0);
+    }
+
+    if (TextureDesc.IsTexture1DArray())
+    {
+        return FRHIUnorderedAccessViewDesc::CreateTexture1DArray(Format, 0, 0, NumSlices);
+    }
+
+    if (TextureDesc.IsTexture2D())
+    {
+        return FRHIUnorderedAccessViewDesc::CreateTexture2D(Format, 0);
+    }
+
+    if (TextureDesc.IsTexture2DArray())
+    {
+        return FRHIUnorderedAccessViewDesc::CreateTexture2DArray(Format, 0, 0, NumSlices);
+    }
+
+    if (TextureDesc.IsTextureCube() || TextureDesc.IsTextureCubeArray())
+    {
+        const uint16 ArraySize = static_cast<uint16>(RHIDimensionArrayLayers(TextureDesc.Dimension, TextureDesc.NumArraySlices));
+        return FRHIUnorderedAccessViewDesc::CreateTexture2DArray(Format, 0, 0, ArraySize);
+    }
+
+    if (TextureDesc.IsTexture3D())
+    {
+        return FRHIUnorderedAccessViewDesc::CreateTexture3D(Format, 0, 0, static_cast<uint16>(TextureDesc.Extent.Z));
+    }
+
+    return FRHIUnorderedAccessViewDesc{};
+}
+
+NODISCARD inline FRHIRenderTargetViewDesc GetDefaultRenderTargetViewDescForTexture(const FRHITextureDesc& TextureDesc)
+{
+    const EFormat Format    = TextureDesc.Format;
+    const uint16  NumSlices = static_cast<uint16>(TextureDesc.NumArraySlices);
+
+    if (TextureDesc.IsTexture1D())
+    {
+        return FRHIRenderTargetViewDesc::CreateTexture1D(Format, 0);
+    }
+
+    if (TextureDesc.IsTexture1DArray())
+    {
+        return FRHIRenderTargetViewDesc::CreateTexture1DArray(Format, 0, 0, NumSlices);
+    }
+
+    if (TextureDesc.IsTexture2D())
+    {
+        return FRHIRenderTargetViewDesc::CreateTexture2D(Format, 0);
+    }
+
+    if (TextureDesc.IsTexture2DArray() || TextureDesc.IsTextureCube() || TextureDesc.IsTextureCubeArray())
+    {
+        const uint16 ArraySize = static_cast<uint16>(RHIDimensionArrayLayers(TextureDesc.Dimension, TextureDesc.NumArraySlices));
+        return FRHIRenderTargetViewDesc::CreateTexture2DArray(Format, 0, 0, ArraySize);
+    }
+
+    if (TextureDesc.IsTexture3D())
+    {
+        return FRHIRenderTargetViewDesc::CreateTexture3D(Format, 0, 0, static_cast<uint16>(TextureDesc.Extent.Z));
+    }
+
+    return FRHIRenderTargetViewDesc{};
+}
+
+NODISCARD inline FRHIDepthStencilViewDesc GetDefaultDepthStencilViewDescForTexture(const FRHITextureDesc& TextureDesc)
+{
+    const EFormat Format    = TextureDesc.ClearValue.Format != EFormat::Unknown ? TextureDesc.ClearValue.Format : TextureDesc.Format;
+    const uint16  NumSlices = static_cast<uint16>(TextureDesc.NumArraySlices);
+
+    if (TextureDesc.IsTexture1D())
+    {
+        return FRHIDepthStencilViewDesc::CreateTexture1D(Format, 0);
+    }
+
+    if (TextureDesc.IsTexture1DArray())
+    {
+        return FRHIDepthStencilViewDesc::CreateTexture1DArray(Format, 0, 0, NumSlices);
+    }
+
+    if (TextureDesc.IsTexture2D())
+    {
+        return FRHIDepthStencilViewDesc::CreateTexture2D(Format, 0);
+    }
+
+    if (TextureDesc.IsTexture2DArray() || TextureDesc.IsTextureCube() || TextureDesc.IsTextureCubeArray())
+    {
+        const uint16 ArraySize = static_cast<uint16>(RHIDimensionArrayLayers(TextureDesc.Dimension, TextureDesc.NumArraySlices));
+        return FRHIDepthStencilViewDesc::CreateTexture2DArray(Format, 0, 0, ArraySize);
+    }
+
+    return FRHIDepthStencilViewDesc{};
+}
+
 enum class ED3D12CommandQueueType
 {
     Direct  = 0,

@@ -28,7 +28,7 @@ void FMaterial::Initialize()
     BufferDesc.Size   = sizeof(FMaterialHLSL);
     BufferDesc.Flags  = EBufferFlags::Default | EBufferFlags::ConstantBuffer;
 
-    MaterialBuffer = FRHI::Get()->CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
+    MaterialBuffer = RHI::Device->CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
     if (MaterialBuffer)
     {
         MaterialBuffer->SetDebugName("MaterialBuffer");

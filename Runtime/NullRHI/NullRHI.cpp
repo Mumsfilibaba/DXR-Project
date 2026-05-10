@@ -1,15 +1,15 @@
 #include "NullRHI.h"
 #include "RHI/RHICore.h"
 
-IMPLEMENT_ENGINE_MODULE(FNullRHIModule, NullRHI);
+IMPLEMENT_ENGINE_MODULE(FNullModuleRHI, NullRHI);
 
-FRHI* FNullRHIModule::CreateRHI()
+FRHIDevice* FNullModuleRHI::CreateDevice()
 {
-    return new FNullRHI();
+    return new FNullDeviceRHI();
 }
 
-FNullRHI::FNullRHI()
-    : FRHI(ERHIType::Null)
+FNullDeviceRHI::FNullDeviceRHI()
+    : FRHIDevice()
     , CommandContext(new FNullRHICommandContext())
 {
     // -------------------------------------------------------------------------------------------
@@ -93,7 +93,12 @@ FNullRHI::FNullRHI()
     RHI::bSupportsGPUTimestampBubblesRemoval = true;
 }
 
-FNullRHI::~FNullRHI()
+FNullDeviceRHI::~FNullDeviceRHI()
 {
     SAFE_DELETE(CommandContext);
+}
+
+ERHIType FNullDeviceRHI::GetRHIType() const
+{
+    return ERHIType::Null;
 }

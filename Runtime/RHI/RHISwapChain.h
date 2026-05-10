@@ -63,9 +63,17 @@ protected:
     virtual ~FRHISwapChain() = default;
 
 public:
-    virtual void* GetRHINativeHandle()                                             const = 0;
-    virtual void* GetRHINativeBackBufferResourceFromIndex(uint32 Index)            const = 0;
-    virtual void* GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 Index)    const = 0;
+
+    /** @return D3D12: IDXGISwapChain*. Vulkan: VkSwapchainKHR. Metal: CAMetalLayer*. Null: nullptr. */
+    virtual void* GetRHINativeHandle() const = 0;
+
+    /** @return D3D12: ID3D12Resource*. Vulkan: VkImage. Metal: id<CAMetalDrawable>. Null: nullptr. */
+    virtual void* GetRHINativeBackBufferResourceFromIndex(uint32 Index) const = 0;
+
+    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView. Metal: nullptr. Null: nullptr. */
+    virtual void* GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 Index) const = 0;
+
+    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeBackBufferUnorderedAccessViewFromIndex(uint32 Index) const = 0;
 
     virtual FRHITexture* GetBackBuffer()                              const = 0;
@@ -76,31 +84,6 @@ public:
     virtual FRHIUnorderedAccessView* GetBackBufferUnorderedAccessView() const = 0;
     
     virtual bool IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const = 0;
-    
-    NODISCARD EColorSpace GetColorSpace() const
-    {
-        return Desc.ColorSpace;
-    }
-    
-    NODISCARD EFormat GetColorFormat() const
-    {
-        return Desc.ColorFormat;
-    }
-    
-    NODISCARD uint32 GetWidth() const
-    {
-        return Desc.Width;
-    }
-    
-    NODISCARD uint32 GetHeight() const
-    {
-        return Desc.Height;
-    }
-    
-    NODISCARD ESwapChainUsageFlags GetUsage() const
-    {
-        return Desc.Usage;
-    }
 
     NODISCARD const FRHISwapChainDesc& GetDesc() const
     {

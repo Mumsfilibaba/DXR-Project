@@ -58,5 +58,5 @@ void FD3D12Heap::EndResidencyTracking()
 
 void FD3D12Heap::DeferredRelease()
 {
-    FD3D12RHI::DeferDeletion(this);
+    FD3D12DeviceRHI::DeferDeletion(this);
 }

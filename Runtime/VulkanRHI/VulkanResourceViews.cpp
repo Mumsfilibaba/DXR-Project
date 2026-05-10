@@ -214,8 +214,8 @@ void FVulkanResourceView::SetDebugName(const FString& InName)
     }
 }
 
-FVulkanShaderResourceViewRHI::FVulkanShaderResourceViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource)
-    : FRHIShaderResourceView(InResource)
+FVulkanShaderResourceViewRHI::FVulkanShaderResourceViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource, const FRHIShaderResourceViewDesc& InRHIDesc)
+    : FRHIShaderResourceView(InResource, InRHIDesc)
     , FVulkanResourceView(InDevice)
 {
 }
@@ -283,7 +283,7 @@ bool FVulkanShaderResourceViewRHI::Initialize(FRHIResource* InResource, const FR
 {
     if (InDesc.IsBufferSRV())
     {
-        FVulkanBufferRHI* VulkanBuffer = FVulkanRHI::ResourceCast(static_cast<FRHIBuffer*>(InResource));
+        FVulkanBufferRHI* VulkanBuffer = FVulkanDeviceRHI::ResourceCast(static_cast<FRHIBuffer*>(InResource));
         if (!VulkanBuffer)
         {
             VULKAN_ERROR_CRITICAL("Buffer cannot be nullptr");
@@ -322,7 +322,7 @@ bool FVulkanShaderResourceViewRHI::Initialize(FRHIResource* InResource, const FR
     }
     else if (InDesc.IsTextureSRV())
     {
-        FVulkanTextureRHI* VulkanTexture = FVulkanRHI::ResourceCast(static_cast<FRHITexture*>(InResource));
+        FVulkanTextureRHI* VulkanTexture = FVulkanDeviceRHI::ResourceCast(static_cast<FRHITexture*>(InResource));
         if (!VulkanTexture)
         {
             VULKAN_ERROR_CRITICAL("Texture cannot be nullptr");
@@ -487,8 +487,8 @@ bool FVulkanShaderResourceViewRHI::Initialize(FRHIResource* InResource, const FR
     }
 }
 
-FVulkanUnorderedAccessViewRHI::FVulkanUnorderedAccessViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource)
-    : FVulkanUnorderedAccessViewBase(InResource)
+FVulkanUnorderedAccessViewRHI::FVulkanUnorderedAccessViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InRHIDesc)
+    : FVulkanUnorderedAccessViewBase(InResource, InRHIDesc)
     , FVulkanResourceView(InDevice)
 {
 }
@@ -561,7 +561,7 @@ bool FVulkanUnorderedAccessViewRHI::Initialize(FRHIResource* InResource, const F
 {
     if (InDesc.IsBufferUAV())
     {
-        FVulkanBufferRHI* VulkanBuffer = FVulkanRHI::ResourceCast(static_cast<FRHIBuffer*>(InResource));
+        FVulkanBufferRHI* VulkanBuffer = FVulkanDeviceRHI::ResourceCast(static_cast<FRHIBuffer*>(InResource));
         if (!VulkanBuffer)
         {
             VULKAN_ERROR_CRITICAL("Buffer cannot be nullptr");
@@ -600,7 +600,7 @@ bool FVulkanUnorderedAccessViewRHI::Initialize(FRHIResource* InResource, const F
     }
     else if (InDesc.IsTextureUAV())
     {
-        FVulkanTextureRHI* VulkanTexture = FVulkanRHI::ResourceCast(static_cast<FRHITexture*>(InResource));
+        FVulkanTextureRHI* VulkanTexture = FVulkanDeviceRHI::ResourceCast(static_cast<FRHITexture*>(InResource));
         if (!VulkanTexture)
         {
             VULKAN_ERROR_CRITICAL("Texture cannot be nullptr");
@@ -746,8 +746,8 @@ bool FVulkanUnorderedAccessViewRHI::Initialize(FRHIResource* InResource, const F
     }
 }
 
-FVulkanRenderTargetViewRHI::FVulkanRenderTargetViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource)
-    : FVulkanRenderTargetViewBase(InResource)
+FVulkanRenderTargetViewRHI::FVulkanRenderTargetViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource, const FRHIRenderTargetViewDesc& InRHIDesc)
+    : FVulkanRenderTargetViewBase(InResource, InRHIDesc)
     , FVulkanResourceView(InDevice)
 {
 }
@@ -795,7 +795,7 @@ void FVulkanRenderTargetViewRHI::OnResourceRelocated(FVulkanResource* RelocatedR
 
 bool FVulkanRenderTargetViewRHI::Initialize(FRHITexture* InTexture, const FRHIRenderTargetViewDesc& InDesc)
 {
-    FVulkanTextureRHI* VulkanTexture = FVulkanRHI::ResourceCast(InTexture);
+    FVulkanTextureRHI* VulkanTexture = FVulkanDeviceRHI::ResourceCast(InTexture);
     if (!VulkanTexture)
     {
         VULKAN_ERROR_CRITICAL("Texture cannot be nullptr");
@@ -917,8 +917,8 @@ bool FVulkanRenderTargetViewRHI::Initialize(FRHITexture* InTexture, const FRHIRe
     return true;
 }
 
-FVulkanDepthStencilViewRHI::FVulkanDepthStencilViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource)
-    : FRHIDepthStencilView(InResource)
+FVulkanDepthStencilViewRHI::FVulkanDepthStencilViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource, const FRHIDepthStencilViewDesc& InRHIDesc)
+    : FRHIDepthStencilView(InResource, InRHIDesc)
     , FVulkanResourceView(InDevice)
     , Flags(EDepthStencilViewFlags::None)
     , bHasStencil(false)
@@ -963,7 +963,7 @@ void FVulkanDepthStencilViewRHI::OnResourceRelocated(FVulkanResource* RelocatedR
 
 bool FVulkanDepthStencilViewRHI::Initialize(FRHITexture* InTexture, const FRHIDepthStencilViewDesc& InDesc)
 {
-    FVulkanTextureRHI* VulkanTexture = FVulkanRHI::ResourceCast(InTexture);
+    FVulkanTextureRHI* VulkanTexture = FVulkanDeviceRHI::ResourceCast(InTexture);
     if (!VulkanTexture)
     {
         VULKAN_ERROR_CRITICAL("Texture cannot be nullptr");

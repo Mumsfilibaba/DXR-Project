@@ -183,8 +183,8 @@ bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, EReso
     }
 
     BufferState.SetState(
-        FVulkanRHI::ResourceStateToAccessFlags(InInitialAccess),
-        FVulkanRHI::ResourceStateToPipelineStageFlags(InInitialAccess));
+        FVulkanDeviceRHI::ResourceStateToAccessFlags(InInitialAccess),
+        FVulkanDeviceRHI::ResourceStateToPipelineStageFlags(InInitialAccess));
 
     if (InInitialData)
     {

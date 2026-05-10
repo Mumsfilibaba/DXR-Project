@@ -139,7 +139,7 @@ protected:
 
 public:
 
-    // D3D12: ID3D12Resource* (result heap). Vulkan: VkAccelerationStructureKHR. Metal/Null: nullptr.
+    /** @return D3D12: ID3D12Resource* (result heap). Vulkan: VkAccelerationStructureKHR. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeResource() const = 0;
 
     virtual void SetDebugName(const FString& InName) = 0;
@@ -167,7 +167,7 @@ protected:
 
 public:
 
-    // D3D12: ID3D12Resource* (result heap). Vulkan: VkAccelerationStructureKHR. Metal/Null: nullptr.
+    /** @return D3D12: ID3D12Resource* (result heap). Vulkan: VkAccelerationStructureKHR. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeResource() const = 0;
 
     virtual FRHIShaderResourceView* GetShaderResourceView() const = 0;
