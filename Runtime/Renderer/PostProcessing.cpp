@@ -7,21 +7,24 @@
 #include "Renderer/EditorGridSettings.h"
 #include "Renderer/SelectionOutlineSettings.h"
 
-static TAutoConsoleVariable<bool> CVarFXAADebug(
+static bool GFXAADebug = false;
+static FAutoConsoleVariableRef CVarFXAADebug(
     "Renderer.Debug.FXAADebug",
     "Enables FXAA (Anti-Aliasing) Debugging mode",
-    false);
+    GFXAADebug);
 
-static TAutoConsoleVariable<int32> CVarTonemappingFunction(
+static int32 GTonemappingFunction = 1;
+static FAutoConsoleVariableRef CVarTonemappingFunction(
     "Renderer.Tonemapping.Function",
     "Select function to use during tonemapping. 0: Default 1: ACES 2: Reinhard 3: Uncharted 2",
-    1,
+    GTonemappingFunction,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarTonemappingReinhardIntensity(
+static float GTonemappingReinhardIntensity = 1.0f;
+static FAutoConsoleVariableRef CVarTonemappingReinhardIntensity(
     "Renderer.Tonemapping.ReinhardIntensity",
     "Intensity/\"Exposure\" when using Reinhard tonemapping",
-    1.0f,
+    GTonemappingReinhardIntensity,
     EConsoleVariableFlags::Default);
 
 FTonemapPass::FTonemapPass(FSceneRenderer* InRenderer)
@@ -180,7 +183,7 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     // Function to return a enum from the tonemap cvar
     const auto GetTonemappingFunctionCVar = []()
     {
-        const int32 Function = CVarTonemappingFunction.GetValue();
+        const int32 Function = GTonemappingFunction;
         switch (Function)
         {
             case 0:
@@ -236,7 +239,7 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     FTonemapInfoHLSL TonemapInfo;
     TonemapInfo.TonemappingType   = GetTonemappingFunctionCVar();
     TonemapInfo.bOutputSRGB       = bOutputSRGB ? 1 : 0;
-    TonemapInfo.ReinhardIntensity = Math::Clamp<float>(CVarTonemappingReinhardIntensity.GetValue(), 0.1f, 10.0f);
+    TonemapInfo.ReinhardIntensity = Math::Clamp<float>(GTonemappingReinhardIntensity, 0.1f, 10.0f);
     TonemapInfo.Padding0          = 0.0f;
 
     constexpr uint32 NumConstants = sizeof(FTonemapInfoHLSL) / sizeof(uint32);
@@ -680,7 +683,7 @@ void FFXAAPass::Execute(FRHICommandList& CommandList, const FSceneRenderView& Sc
     CommandList.BeginRenderPass(RenderPassDesc);
 
     FRHIShaderResourceView* SceneTargetSRV = FrameResources.SceneTarget->GetShaderResourceView();
-    if (CVarFXAADebug.GetValue())
+    if (GFXAADebug)
     {
         CommandList.SetGraphicsPipelineState(FXAADebugPSO.Get());
         CommandList.SetShaderResourceView(FXAADebugShader.Get(), SceneTargetSRV, 0);

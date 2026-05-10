@@ -4,11 +4,48 @@
 #include "Core/Containers/StringView.h"
 #include "Core/Containers/String.h"
 #include "Core/Delegates/MulticastDelegate.h"
+#include "Core/Templates/Utility/NonCopyable.h"
+
+#ifndef CONSOLE_DEFAULT_HISTORY_LENGTH
+    #define CONSOLE_DEFAULT_HISTORY_LENGTH (50)
+#endif
 
 DECLARE_DELEGATE(FConsoleCommandDelegate, FStringView);
 DECLARE_DELEGATE(FConsoleVariableDelegate, struct IConsoleVariable*);
 
 struct IOutputDevice;
+
+template<typename T>
+class TConsoleVariableData;
+
+enum class EConsoleVariableFlags : int32
+{
+    None                  = 0,
+    ReadOnly              = FLAG(1), // Variable cannot be changed from the console
+    DoNotSetViaConfigFile = FLAG(2), // Variable cannot be set from config files
+    SetByConstructor      = FLAG(3), // Indicates that the ConsoleVariable was last set by the default value
+    SetByConfigFile       = FLAG(4), // Indicates that the ConsoleVariable was last set by a config-file
+    SetByCommandLine      = FLAG(5), // Indicates that the ConsoleVariable was last set by the CommandLine
+    SetByConsole          = FLAG(6), // Indicates that the ConsoleVariable was last set by the console
+    SetByCode             = FLAG(7), // Indicates that the ConsoleVariable was last set by code
+    SetByMask             = SetByConstructor | SetByConfigFile | SetByCommandLine | SetByConsole | SetByCode,
+    Default               = None,
+};
+
+ENUM_CLASS_OPERATORS(EConsoleVariableFlags);
+
+constexpr const CHAR* SetByFlagToString(EConsoleVariableFlags Flag)
+{
+    switch (Flag)
+    {
+        case EConsoleVariableFlags::SetByConstructor: return "Constructor";
+        case EConsoleVariableFlags::SetByConfigFile:  return "ConfigFile";
+        case EConsoleVariableFlags::SetByCommandLine: return "CommandLine";
+        case EConsoleVariableFlags::SetByConsole:     return "Console";
+        case EConsoleVariableFlags::SetByCode:        return "Code";
+        default:                                      return "Unknown";
+    }
+}
 
 struct IConsoleObject
 {
@@ -33,7 +70,6 @@ struct IConsoleObject
     virtual const CHAR* GetHelpString() const = 0;
 };
 
-
 struct IConsoleCommand : public IConsoleObject
 {
     /**
@@ -42,51 +78,6 @@ struct IConsoleCommand : public IConsoleObject
      */
     virtual void Execute(FStringView Args) = 0;
 };
-
-
-enum class EConsoleVariableFlags : int32
-{
-    None = 0,
-
-    // Variable cannot be changed from the console
-    ReadOnly              = BIT(1),
-    // Variable can be set from the config files
-    DoNotSetViaConfigFile = BIT(2),
-    
-    // Indicates that the ConsoleVariable was last set by the default value
-    SetByConstructor = BIT(3),
-    // Indicates that the ConsoleVariable was last set by a config-file
-    SetByConfigFile  = BIT(4),
-	// Indicates that the ConsoleVariable was last set by the CommandLine
-	SetByCommandLine = BIT(5),
-    // Indicates that the ConsoleVariable was last set by the console
-    SetByConsole     = BIT(6),
-    // Indicates that the ConsoleVariable was last set by code
-    SetByCode        = BIT(7),
-
-    SetByMask = SetByConstructor | SetByConfigFile | SetByCommandLine | SetByConsole | SetByCode,
-
-    Default = None,
-};
-
-ENUM_CLASS_OPERATORS(EConsoleVariableFlags);
-
-constexpr const CHAR* SetByFlagToString(EConsoleVariableFlags Flag)
-{
-    switch (Flag)
-    {
-        case EConsoleVariableFlags::SetByConstructor: return "Constructor";
-        case EConsoleVariableFlags::SetByConfigFile:  return "ConfigFile";
-        case EConsoleVariableFlags::SetByCommandLine: return "CommandLine";
-        case EConsoleVariableFlags::SetByConsole:     return "Console";
-        case EConsoleVariableFlags::SetByCode:        return "Code";
-        default:                                      return "Unknown";
-    }
-}
-
-
-template<typename T>
-class TConsoleVariableData;
 
 struct IConsoleVariable : public IConsoleObject
 {
@@ -203,6 +194,78 @@ struct IConsoleVariable : public IConsoleObject
      * @return Returns the on changed delegate
      */
     virtual FConsoleVariableDelegate& GetOnChangedDelegate() = 0;
+
+    /**
+     * @brief Retrieve the lower bound (clamp range) for an int32 ConsoleVariable
+     * @param OutValue Receives the min value when one is set
+     * @return Returns true if a min bound is currently set on this variable
+     */
+    virtual bool TryGetMinValueInt(int32& OutValue) const { return false; }
+
+    /**
+     * @brief Retrieve the upper bound (clamp range) for an int32 ConsoleVariable
+     * @param OutValue Receives the max value when one is set
+     * @return Returns true if a max bound is currently set on this variable
+     */
+    virtual bool TryGetMaxValueInt(int32& OutValue) const { return false; }
+
+    /**
+     * @brief Set the lower bound (clamp range) for an int32 ConsoleVariable
+     *        No-op for non-int variants. Re-clamps the stored value if it falls below the new bound.
+     */
+    virtual void SetMinValueInt(int32 InValue) {}
+
+    /**
+     * @brief Set the upper bound (clamp range) for an int32 ConsoleVariable
+     *        No-op for non-int variants. Re-clamps the stored value if it exceeds the new bound.
+     */
+    virtual void SetMaxValueInt(int32 InValue) {}
+
+    /**
+     * @brief Clear the lower bound for an int32 ConsoleVariable. No-op for non-int variants.
+     */
+    virtual void ClearMinValueInt() {}
+
+    /**
+     * @brief Clear the upper bound for an int32 ConsoleVariable. No-op for non-int variants.
+     */
+    virtual void ClearMaxValueInt() {}
+
+    /**
+     * @brief Retrieve the lower bound (clamp range) for a float ConsoleVariable
+     * @param OutValue Receives the min value when one is set
+     * @return Returns true if a min bound is currently set on this variable
+     */
+    virtual bool TryGetMinValueFloat(float& OutValue) const { return false; }
+
+    /**
+     * @brief Retrieve the upper bound (clamp range) for a float ConsoleVariable
+     * @param OutValue Receives the max value when one is set
+     * @return Returns true if a max bound is currently set on this variable
+     */
+    virtual bool TryGetMaxValueFloat(float& OutValue) const { return false; }
+
+    /**
+     * @brief Set the lower bound (clamp range) for a float ConsoleVariable
+     *        No-op for non-float variants. Re-clamps the stored value if it falls below the new bound.
+     */
+    virtual void SetMinValueFloat(float InValue) {}
+
+    /**
+     * @brief Set the upper bound (clamp range) for a float ConsoleVariable
+     *        No-op for non-float variants. Re-clamps the stored value if it exceeds the new bound.
+     */
+    virtual void SetMaxValueFloat(float InValue) {}
+
+    /**
+     * @brief Clear the lower bound for a float ConsoleVariable. No-op for non-float variants.
+     */
+    virtual void ClearMinValueFloat() {}
+
+    /**
+     * @brief Clear the upper bound for a float ConsoleVariable. No-op for non-float variants.
+     */
+    virtual void ClearMaxValueFloat() {}
 };
 
 
@@ -247,6 +310,13 @@ public:
     IConsoleVariable* RegisterVariable(const CHAR* InName, const CHAR* HelpString, int32 DefaultValue, EConsoleVariableFlags Flags);
 
     /**
+     * @brief Register a new int32 ConsoleVariable with a clamp range
+     * @param MinValue Lower bound applied to all writes
+     * @param MaxValue Upper bound applied to all writes
+     */
+    IConsoleVariable* RegisterVariable(const CHAR* InName, const CHAR* HelpString, int32 DefaultValue, int32 MinValue, int32 MaxValue, EConsoleVariableFlags Flags);
+
+    /**
      * @brief Register a new float ConsoleVariable
      * @param Name Name of the ConsoleVariable
      * @param DefaultValue Default value for the ConsoleVariable
@@ -254,11 +324,52 @@ public:
     IConsoleVariable* RegisterVariable(const CHAR* InName, const CHAR* HelpString, float DefaultValue, EConsoleVariableFlags Flags);
 
     /**
+     * @brief Register a new float ConsoleVariable with a clamp range
+     * @param MinValue Lower bound applied to all writes
+     * @param MaxValue Upper bound applied to all writes
+     */
+    IConsoleVariable* RegisterVariable(const CHAR* InName, const CHAR* HelpString, float DefaultValue, float MinValue, float MaxValue, EConsoleVariableFlags Flags);
+
+    /**
      * @brief Register a new bool ConsoleVariable
      * @param Name Name of the ConsoleVariable
      * @param bDefaultValue Default value for the ConsoleVariable
      */
     IConsoleVariable* RegisterVariable(const CHAR* InName, const CHAR* HelpString, bool bDefaultValue, EConsoleVariableFlags Flags);
+
+    /**
+     * @brief Register a new int32 ConsoleVariable that references an externally-owned variable
+     * @param InName     Name of the ConsoleVariable
+     * @param HelpString Help string describing the variable
+     * @param RefValue   Reference to the externally-owned variable (the ConsoleVariable does not own this storage)
+     * @param Flags      ConsoleVariable flags
+     */
+    IConsoleVariable* RegisterVariableRef(const CHAR* InName, const CHAR* HelpString, int32&   RefValue, EConsoleVariableFlags Flags);
+
+    /**
+     * @brief Register a new int32 ConsoleVariable reference with a clamp range
+     */
+    IConsoleVariable* RegisterVariableRef(const CHAR* InName, const CHAR* HelpString, int32&   RefValue, int32 MinValue, int32 MaxValue, EConsoleVariableFlags Flags);
+
+    /**
+     * @brief Register a new float ConsoleVariable that references an externally-owned variable
+     */
+    IConsoleVariable* RegisterVariableRef(const CHAR* InName, const CHAR* HelpString, float&   RefValue, EConsoleVariableFlags Flags);
+
+    /**
+     * @brief Register a new float ConsoleVariable reference with a clamp range
+     */
+    IConsoleVariable* RegisterVariableRef(const CHAR* InName, const CHAR* HelpString, float&   RefValue, float MinValue, float MaxValue, EConsoleVariableFlags Flags);
+
+    /**
+     * @brief Register a new bool ConsoleVariable that references an externally-owned variable
+     */
+    IConsoleVariable* RegisterVariableRef(const CHAR* InName, const CHAR* HelpString, bool&    RefValue, EConsoleVariableFlags Flags);
+
+    /**
+     * @brief Register a new String ConsoleVariable that references an externally-owned variable
+     */
+    IConsoleVariable* RegisterVariableRef(const CHAR* InName, const CHAR* HelpString, FString& RefValue, EConsoleVariableFlags Flags);
 
     /**
      * @brief Unregister a ConsoleObject
@@ -343,31 +454,24 @@ public:
     }
 
 private:
-    
-    // Hide destructor
-    ~FConsoleManager();
-
     static void SafeCreateConsoleManager();
+
+    FConsoleManager();
+    ~FConsoleManager();
 
     IConsoleObject* RegisterObject(const CHAR* Name, IConsoleObject* Variable);
 
+    int32                          HistoryLength;
+    TArray<FString>                History;
     TMap<FString, IConsoleObject*> ConsoleObjects;
-
-    TArray<FString> History;
-    int32           HistoryLength = 50;
 
     static FConsoleManager* ConsoleManager;
 };
 
 
-class FAutoConsoleObject
+class FAutoConsoleObject : public FNonCopyAndNonMovable
 {
-public: 
-    FAutoConsoleObject(FAutoConsoleObject&&) = delete;
-    FAutoConsoleObject(const FAutoConsoleObject&) = delete;
-    FAutoConsoleObject& operator=(FAutoConsoleObject&&) = delete;
-    FAutoConsoleObject& operator=(const FAutoConsoleObject&) = delete;
-
+public:
     FAutoConsoleObject(IConsoleObject* ConsoleObject)
         : ConsoleObject(ConsoleObject)
     { 
@@ -436,8 +540,7 @@ public:
 
     FORCEINLINE T GetValue() const
     {
-        // Return by value is intentional
-        return Data;
+        return Data; // Return by value is intentional
     }
 
     FORCEINLINE T& operator*()
@@ -469,6 +572,21 @@ public:
         AsVariable()->SetOnChangedDelegate(VariableChangedDelegate);
     }
 
+    /**
+     * @brief Construct a value-owning ConsoleVariable with a clamp range. Available only for int32 and float specializations.
+     * @param MinValue Lower bound applied to all writes
+     * @param MaxValue Upper bound applied to all writes
+     */
+    TAutoConsoleVariable(const CHAR* InName, const CHAR* InHelpString, const T& DefaultValue, const T& MinValue, const T& MaxValue, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default);
+
+    TAutoConsoleVariable(const CHAR* InName, const CHAR* InHelpString, const T& DefaultValue, const T& MinValue, const T& MaxValue, const FConsoleVariableDelegate& VariableChangedDelegate, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
+        : TAutoConsoleVariable(InName, InHelpString, DefaultValue, MinValue, MaxValue, InFlags)
+    {
+        AsVariable()->SetOnChangedDelegate(VariableChangedDelegate);
+    }
+
+    void SetVariable(const T& InValue, EConsoleVariableFlags InFlags = EConsoleVariableFlags::SetByCode);
+    
     FORCEINLINE T GetValue() const
     {
         CHECK(Data != nullptr);
@@ -477,12 +595,12 @@ public:
 
     FORCEINLINE IConsoleVariable& operator*()
     {
-        return AsVariable();
+        return *AsVariable();
     }
 
     FORCEINLINE const IConsoleVariable& operator*() const
     {
-        return AsVariable();
+        return *AsVariable();
     }
 
     FORCEINLINE IConsoleVariable* operator->()
@@ -530,3 +648,154 @@ FORCEINLINE TAutoConsoleVariable<bool>::TAutoConsoleVariable(const CHAR* InName,
     Data = static_cast<FConsoleVariableData*>(AsVariable()->GetBoolData());
     CHECK(Data != nullptr);
 }
+
+template<>
+FORCEINLINE TAutoConsoleVariable<int32>::TAutoConsoleVariable(const CHAR* InName, const CHAR* InHelpString, const int32& DefaultValue, const int32& MinValue, const int32& MaxValue, EConsoleVariableFlags InFlags)
+    : FAutoConsoleObject(FConsoleManager::Get().RegisterVariable(InName, InHelpString, DefaultValue, MinValue, MaxValue, InFlags))
+{
+    Data = static_cast<FConsoleVariableData*>(AsVariable()->GetIntData());
+    CHECK(Data != nullptr);
+}
+
+template<>
+FORCEINLINE TAutoConsoleVariable<float>::TAutoConsoleVariable(const CHAR* InName, const CHAR* InHelpString, const float& DefaultValue, const float& MinValue, const float& MaxValue, EConsoleVariableFlags InFlags)
+    : FAutoConsoleObject(FConsoleManager::Get().RegisterVariable(InName, InHelpString, DefaultValue, MinValue, MaxValue, InFlags))
+{
+    Data = static_cast<FConsoleVariableData*>(AsVariable()->GetFloatData());
+    CHECK(Data != nullptr);
+}
+
+template<>
+FORCEINLINE void TAutoConsoleVariable<int32>::SetVariable(const int32& InValue, EConsoleVariableFlags InFlags)
+{
+    AsVariable()->SetAsInt(InValue, InFlags);
+}
+
+template<>
+FORCEINLINE void TAutoConsoleVariable<float>::SetVariable(const float& InValue, EConsoleVariableFlags InFlags)
+{
+    AsVariable()->SetAsFloat(InValue, InFlags);
+}
+
+template<>
+FORCEINLINE void TAutoConsoleVariable<bool>::SetVariable(const bool& bInValue, EConsoleVariableFlags InFlags)
+{
+    AsVariable()->SetAsBool(bInValue, InFlags);
+}
+
+template<>
+FORCEINLINE void TAutoConsoleVariable<FString>::SetVariable(const FString& InValue, EConsoleVariableFlags InFlags)
+{
+    AsVariable()->SetString(InValue, InFlags);
+}
+
+
+class FAutoConsoleVariableRef : public FAutoConsoleObject
+{
+public:
+    FAutoConsoleVariableRef(const CHAR* InName, const CHAR* InHelpString, int32&   RefValue, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
+        : FAutoConsoleObject(FConsoleManager::Get().RegisterVariableRef(InName, InHelpString, RefValue, InFlags))
+    {
+    }
+
+    FAutoConsoleVariableRef(const CHAR* InName, const CHAR* InHelpString, float&   RefValue, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
+        : FAutoConsoleObject(FConsoleManager::Get().RegisterVariableRef(InName, InHelpString, RefValue, InFlags))
+    {
+    }
+
+    FAutoConsoleVariableRef(const CHAR* InName, const CHAR* InHelpString, bool&    RefValue, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
+        : FAutoConsoleObject(FConsoleManager::Get().RegisterVariableRef(InName, InHelpString, RefValue, InFlags))
+    {
+    }
+
+    FAutoConsoleVariableRef(const CHAR* InName, const CHAR* InHelpString, FString& RefValue, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
+        : FAutoConsoleObject(FConsoleManager::Get().RegisterVariableRef(InName, InHelpString, RefValue, InFlags))
+    {
+    }
+
+    FAutoConsoleVariableRef(const CHAR* InName, const CHAR* InHelpString, int32&   RefValue, const FConsoleVariableDelegate& VariableChangedDelegate, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
+        : FAutoConsoleVariableRef(InName, InHelpString, RefValue, InFlags)
+    {
+        AsVariable()->SetOnChangedDelegate(VariableChangedDelegate);
+    }
+
+    FAutoConsoleVariableRef(const CHAR* InName, const CHAR* InHelpString, float&   RefValue, const FConsoleVariableDelegate& VariableChangedDelegate, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
+        : FAutoConsoleVariableRef(InName, InHelpString, RefValue, InFlags)
+    {
+        AsVariable()->SetOnChangedDelegate(VariableChangedDelegate);
+    }
+
+    FAutoConsoleVariableRef(const CHAR* InName, const CHAR* InHelpString, bool&    RefValue, const FConsoleVariableDelegate& VariableChangedDelegate, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
+        : FAutoConsoleVariableRef(InName, InHelpString, RefValue, InFlags)
+    {
+        AsVariable()->SetOnChangedDelegate(VariableChangedDelegate);
+    }
+
+    FAutoConsoleVariableRef(const CHAR* InName, const CHAR* InHelpString, FString& RefValue, const FConsoleVariableDelegate& VariableChangedDelegate, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
+        : FAutoConsoleVariableRef(InName, InHelpString, RefValue, InFlags)
+    {
+        AsVariable()->SetOnChangedDelegate(VariableChangedDelegate);
+    }
+
+    FAutoConsoleVariableRef(const CHAR* InName, const CHAR* InHelpString, int32& RefValue, int32 MinValue, int32 MaxValue, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
+        : FAutoConsoleObject(FConsoleManager::Get().RegisterVariableRef(InName, InHelpString, RefValue, MinValue, MaxValue, InFlags))
+    {
+    }
+
+    FAutoConsoleVariableRef(const CHAR* InName, const CHAR* InHelpString, float& RefValue, float MinValue, float MaxValue, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
+        : FAutoConsoleObject(FConsoleManager::Get().RegisterVariableRef(InName, InHelpString, RefValue, MinValue, MaxValue, InFlags))
+    {
+    }
+
+    FAutoConsoleVariableRef(const CHAR* InName, const CHAR* InHelpString, int32& RefValue, int32 MinValue, int32 MaxValue, const FConsoleVariableDelegate& VariableChangedDelegate, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
+        : FAutoConsoleVariableRef(InName, InHelpString, RefValue, MinValue, MaxValue, InFlags)
+    {
+        AsVariable()->SetOnChangedDelegate(VariableChangedDelegate);
+    }
+
+    FAutoConsoleVariableRef(const CHAR* InName, const CHAR* InHelpString, float& RefValue, float MinValue, float MaxValue, const FConsoleVariableDelegate& VariableChangedDelegate, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
+        : FAutoConsoleVariableRef(InName, InHelpString, RefValue, MinValue, MaxValue, InFlags)
+    {
+        AsVariable()->SetOnChangedDelegate(VariableChangedDelegate);
+    }
+
+    FORCEINLINE void SetVariable(int32 InValue, EConsoleVariableFlags InFlags = EConsoleVariableFlags::SetByCode)
+    {
+        AsVariable()->SetAsInt(InValue, InFlags);
+    }
+
+    FORCEINLINE void SetVariable(float InValue, EConsoleVariableFlags InFlags = EConsoleVariableFlags::SetByCode)
+    {
+        AsVariable()->SetAsFloat(InValue, InFlags);
+    }
+
+    FORCEINLINE void SetVariable(bool bInValue, EConsoleVariableFlags InFlags = EConsoleVariableFlags::SetByCode)
+    {
+        AsVariable()->SetAsBool(bInValue, InFlags);
+    }
+
+    FORCEINLINE void SetVariable(const FString& InValue, EConsoleVariableFlags InFlags = EConsoleVariableFlags::SetByCode)
+    {
+        AsVariable()->SetString(InValue, InFlags);
+    }
+
+    FORCEINLINE IConsoleVariable& operator*()
+    {
+        return *AsVariable();
+    }
+
+    FORCEINLINE const IConsoleVariable& operator*() const
+    {
+        return *AsVariable();
+    }
+
+    FORCEINLINE IConsoleVariable* operator->()
+    {
+        return AsVariable();
+    }
+
+    FORCEINLINE const IConsoleVariable* operator->() const
+    {
+        return AsVariable();
+    }
+};

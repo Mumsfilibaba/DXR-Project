@@ -2,147 +2,162 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Math/Math.h"
 
-static TAutoConsoleVariable<bool> CVarEditorGridEnabled(
+// File-scope settings instance. The bound CVars below write directly into these fields,
+// so the console / config files / command-line and the renderer all read/write the same memory.
+static FEditorGridSettings GEditorGridSettings =
+{
+    /* bEnabled         */ true,
+    /* PlaneY           */ 0.0f,
+    /* MinorSize        */ 1.0f,
+    /* MajorSize        */ 10.0f,
+    /* MinorWidth       */ 1.0f,
+    /* MajorWidth       */ 1.5f,
+    /* MaxTraceDistance */ 0.0f,
+    /* FadeDistance     */ 5000.0f,
+    /* HorizonFade      */ 4.0f,
+    /* DepthBias        */ 0.01f,
+    /* MinorColor       */ FVector3(0.1f, 0.1f, 0.1f),
+    /* MinorAlpha       */ 0.6f,
+    /* MajorColor       */ FVector3(0.14f, 0.14f, 0.14f),
+    /* MajorAlpha       */ 0.7f,
+};
+
+static FAutoConsoleVariableRef CVarEditorGridEnabled(
     "Renderer.Editor.Grid.Enable",
     "Enables editor viewport grid overlay (procedural infinite plane)",
-    true,
+    GEditorGridSettings.bEnabled,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarEditorGridPlaneY(
+static FAutoConsoleVariableRef CVarEditorGridPlaneY(
     "Renderer.Editor.Grid.PlaneY",
     "World-space plane height for the grid (Y = PlaneY)",
-    0.0f,
+    GEditorGridSettings.PlaneY,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarEditorGridMinorSize(
+static FAutoConsoleVariableRef CVarEditorGridMinorSize(
     "Renderer.Editor.Grid.MinorSize",
     "Minor grid spacing in world units (Meters)",
-    1.0f,
+    GEditorGridSettings.MinorSize,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarEditorGridMajorSize(
+static FAutoConsoleVariableRef CVarEditorGridMajorSize(
     "Renderer.Editor.Grid.MajorSize",
     "Major grid spacing in world units (Meters)",
-    10.0f,
+    GEditorGridSettings.MajorSize,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarEditorGridMinorWidth(
+static FAutoConsoleVariableRef CVarEditorGridMinorWidth(
     "Renderer.Editor.Grid.MinorWidth",
     "Minor grid line width multiplier (anti-aliased using fwidth)",
-    1.0f,
+    GEditorGridSettings.MinorWidth,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarEditorGridMajorWidth(
+static FAutoConsoleVariableRef CVarEditorGridMajorWidth(
     "Renderer.Editor.Grid.MajorWidth",
     "Major grid line width multiplier (anti-aliased using fwidth)",
-    1.5f,
+    GEditorGridSettings.MajorWidth,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarEditorGridMaxTraceDistance(
+static FAutoConsoleVariableRef CVarEditorGridMaxTraceDistance(
     "Renderer.Editor.Grid.MaxTraceDistance",
     "Maximum ray-plane trace distance (along the view ray). 0 = infinite",
-    0.0f,
+    GEditorGridSettings.MaxTraceDistance,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarEditorGridFadeDistance(
+static FAutoConsoleVariableRef CVarEditorGridFadeDistance(
     "Renderer.Editor.Grid.FadeDistance",
     "Distance (along view ray) where the grid fades out (0 = no fade)",
-    5000.0f,
+    GEditorGridSettings.FadeDistance,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarEditorGridHorizonFade(
+static FAutoConsoleVariableRef CVarEditorGridHorizonFade(
     "Renderer.Editor.Grid.HorizonFade",
     "Horizon fade strength (multiplies abs(rayDir.y))",
-    4.0f,
+    GEditorGridSettings.HorizonFade,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarEditorGridDepthBias(
+static FAutoConsoleVariableRef CVarEditorGridDepthBias(
     "Renderer.Editor.Grid.DepthBias",
     "Depth compare bias (world units along view ray) to prevent grid bleeding through geometry",
-    0.01f,
+    GEditorGridSettings.DepthBias,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarEditorGridMinorColorR(
+static FAutoConsoleVariableRef CVarEditorGridMinorColorR(
     "Renderer.Editor.Grid.MinorColorR",
     "Minor grid color (linear) - Red channel (0-1)",
-    0.1f,
+    GEditorGridSettings.MinorColor.X,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarEditorGridMinorColorG(
+static FAutoConsoleVariableRef CVarEditorGridMinorColorG(
     "Renderer.Editor.Grid.MinorColorG",
     "Minor grid color (linear) - Green channel (0-1)",
-    0.1f,
+    GEditorGridSettings.MinorColor.Y,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarEditorGridMinorColorB(
+static FAutoConsoleVariableRef CVarEditorGridMinorColorB(
     "Renderer.Editor.Grid.MinorColorB",
     "Minor grid color (linear) - Blue channel (0-1)",
-    0.1f,
+    GEditorGridSettings.MinorColor.Z,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarEditorGridMinorAlpha(
+static FAutoConsoleVariableRef CVarEditorGridMinorAlpha(
     "Renderer.Editor.Grid.MinorAlpha",
     "Minor grid alpha (0-1)",
-    0.6f,
+    GEditorGridSettings.MinorAlpha,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarEditorGridMajorColorR(
+static FAutoConsoleVariableRef CVarEditorGridMajorColorR(
     "Renderer.Editor.Grid.MajorColorR",
     "Major grid color (linear) - Red channel (0-1)",
-    0.14f,
+    GEditorGridSettings.MajorColor.X,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarEditorGridMajorColorG(
+static FAutoConsoleVariableRef CVarEditorGridMajorColorG(
     "Renderer.Editor.Grid.MajorColorG",
     "Major grid color (linear) - Green channel (0-1)",
-    0.14f,
+    GEditorGridSettings.MajorColor.Y,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarEditorGridMajorColorB(
+static FAutoConsoleVariableRef CVarEditorGridMajorColorB(
     "Renderer.Editor.Grid.MajorColorB",
     "Major grid color (linear) - Blue channel (0-1)",
-    0.14f,
+    GEditorGridSettings.MajorColor.Z,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarEditorGridMajorAlpha(
+static FAutoConsoleVariableRef CVarEditorGridMajorAlpha(
     "Renderer.Editor.Grid.MajorAlpha",
     "Major grid alpha (0-1)",
-    0.7f,
+    GEditorGridSettings.MajorAlpha,
     EConsoleVariableFlags::Default);
 
 FEditorGridSettings GetEditorGridSettings()
 {
-    FEditorGridSettings Settings;
-    Settings.bEnabled = CVarEditorGridEnabled.GetValue();
+    FEditorGridSettings Settings = GEditorGridSettings;
 
-    Settings.PlaneY = CVarEditorGridPlaneY.GetValue();
-
-    Settings.MinorSize = Math::Clamp<float>(CVarEditorGridMinorSize.GetValue(), 0.001f, 1000000.0f);
-    Settings.MajorSize = Math::Clamp<float>(CVarEditorGridMajorSize.GetValue(), 0.001f, 1000000.0f);
+    Settings.MinorSize = Math::Clamp<float>(Settings.MinorSize, 0.001f, 1000000.0f);
+    Settings.MajorSize = Math::Clamp<float>(Settings.MajorSize, 0.001f, 1000000.0f);
     if (Settings.MajorSize < Settings.MinorSize)
     {
         Settings.MajorSize = Settings.MinorSize;
     }
 
-    Settings.MinorWidth = Math::Clamp<float>(CVarEditorGridMinorWidth.GetValue(), 0.25f, 16.0f);
-    Settings.MajorWidth = Math::Clamp<float>(CVarEditorGridMajorWidth.GetValue(), 0.25f, 16.0f);
+    Settings.MinorWidth = Math::Clamp<float>(Settings.MinorWidth, 0.25f, 16.0f);
+    Settings.MajorWidth = Math::Clamp<float>(Settings.MajorWidth, 0.25f, 16.0f);
 
-    Settings.MaxTraceDistance = Math::Clamp<float>(CVarEditorGridMaxTraceDistance.GetValue(), 0.0f, 10000000.0f);
-    Settings.FadeDistance = Math::Clamp<float>(CVarEditorGridFadeDistance.GetValue(), 0.0f, 10000000.0f);
-    Settings.HorizonFade  = Math::Clamp<float>(CVarEditorGridHorizonFade.GetValue(), 0.0f, 128.0f);
-    Settings.DepthBias    = Math::Clamp<float>(CVarEditorGridDepthBias.GetValue(), 0.0f, 1000.0f);
+    Settings.MaxTraceDistance = Math::Clamp<float>(Settings.MaxTraceDistance, 0.0f, 10000000.0f);
+    Settings.FadeDistance     = Math::Clamp<float>(Settings.FadeDistance, 0.0f, 10000000.0f);
+    Settings.HorizonFade      = Math::Clamp<float>(Settings.HorizonFade, 0.0f, 128.0f);
+    Settings.DepthBias        = Math::Clamp<float>(Settings.DepthBias, 0.0f, 1000.0f);
 
-    const float MinorR = Math::Clamp<float>(CVarEditorGridMinorColorR.GetValue(), 0.0f, 1.0f);
-    const float MinorG = Math::Clamp<float>(CVarEditorGridMinorColorG.GetValue(), 0.0f, 1.0f);
-    const float MinorB = Math::Clamp<float>(CVarEditorGridMinorColorB.GetValue(), 0.0f, 1.0f);
-    Settings.MinorColor  = FVector3(MinorR, MinorG, MinorB);
-    Settings.MinorAlpha  = Math::Clamp<float>(CVarEditorGridMinorAlpha.GetValue(), 0.0f, 1.0f);
+    Settings.MinorColor.X = Math::Clamp<float>(Settings.MinorColor.X, 0.0f, 1.0f);
+    Settings.MinorColor.Y = Math::Clamp<float>(Settings.MinorColor.Y, 0.0f, 1.0f);
+    Settings.MinorColor.Z = Math::Clamp<float>(Settings.MinorColor.Z, 0.0f, 1.0f);
+    Settings.MinorAlpha   = Math::Clamp<float>(Settings.MinorAlpha, 0.0f, 1.0f);
 
-    const float MajorR = Math::Clamp<float>(CVarEditorGridMajorColorR.GetValue(), 0.0f, 1.0f);
-    const float MajorG = Math::Clamp<float>(CVarEditorGridMajorColorG.GetValue(), 0.0f, 1.0f);
-    const float MajorB = Math::Clamp<float>(CVarEditorGridMajorColorB.GetValue(), 0.0f, 1.0f);
-    Settings.MajorColor  = FVector3(MajorR, MajorG, MajorB);
-    Settings.MajorAlpha  = Math::Clamp<float>(CVarEditorGridMajorAlpha.GetValue(), 0.0f, 1.0f);
+    Settings.MajorColor.X = Math::Clamp<float>(Settings.MajorColor.X, 0.0f, 1.0f);
+    Settings.MajorColor.Y = Math::Clamp<float>(Settings.MajorColor.Y, 0.0f, 1.0f);
+    Settings.MajorColor.Z = Math::Clamp<float>(Settings.MajorColor.Z, 0.0f, 1.0f);
+    Settings.MajorAlpha   = Math::Clamp<float>(Settings.MajorAlpha, 0.0f, 1.0f);
 
     return Settings;
 }

@@ -4,6 +4,7 @@
 #include "Core/Misc/FileOutputDevice.h"
 #include "Core/Misc/CommandLine.h"
 #include "Core/Platform/PlatformMisc.h"
+#include "Core/Templates/TypeTraits/EqualTraits.h"
 
 static FAutoConsoleCommand CmdClearHistory(
     "ClearHistory",
@@ -41,6 +42,29 @@ static TAutoConsoleVariable<FString> CVarEcho(
             OutputDevice->Log(ELogSeverity::Info, InVariable->GetString());
         }
     }));
+
+template<typename T>
+class TConsoleVariable;
+
+template<typename T>
+class TConsoleVariableRef;
+
+template<typename T>
+class TBoundedConsoleVariable;
+
+template<typename T>
+class TBoundedConsoleVariableRef;
+
+typedef TConsoleVariable<bool>         FConsoleVariableBool;
+typedef TConsoleVariable<FString>      FConsoleVariableString;
+typedef TBoundedConsoleVariable<int32> FConsoleVariableInt32;
+typedef TBoundedConsoleVariable<float> FConsoleVariableFloat;
+
+typedef TConsoleVariableRef<bool>           FConsoleVariableBoolRef;
+typedef TConsoleVariableRef<FString>        FConsoleVariableStringRef;
+typedef TBoundedConsoleVariableRef<int32>   FConsoleVariableInt32Ref;
+typedef TBoundedConsoleVariableRef<float>   FConsoleVariableFloatRef;
+
 
 class FConsoleCommand  : public IConsoleCommand
 {
@@ -149,16 +173,9 @@ protected:
 
 
 template<typename T>
-class TConsoleVariable;
-
-typedef TConsoleVariable<int32>   FConsoleVariableInt32;
-typedef TConsoleVariable<float>   FConsoleVariableFloat;
-typedef TConsoleVariable<bool>    FConsoleVariableBool;
-typedef TConsoleVariable<FString> FConsoleVariableString;
-
-template<typename T>
 class TConsoleVariable  : public FConsoleVariableBase
 {
+protected:
     using FConsoleVariableBase::OnChanged;
 
 public:
@@ -178,11 +195,11 @@ public:
     virtual bool IsVariableBool()   const override final { return false; }
     virtual bool IsVariableString() const override final { return false; }
 
-    virtual void SetAsInt(int32 InValue, EConsoleVariableFlags InFlags)   override final;
-    virtual void SetAsFloat(float InValue, EConsoleVariableFlags InFlags) override final;
-    virtual void SetAsBool(bool bValue, EConsoleVariableFlags InFlags)    override final;
+    virtual void SetAsInt(int32 InValue, EConsoleVariableFlags InFlags)   override;
+    virtual void SetAsFloat(float InValue, EConsoleVariableFlags InFlags) override;
+    virtual void SetAsBool(bool bValue, EConsoleVariableFlags InFlags)    override;
 
-    virtual void SetString(const FString& InValue, EConsoleVariableFlags InFlags) override final
+    virtual void SetString(const FString& InValue, EConsoleVariableFlags InFlags) override
     {
         if (CanBeSet(InFlags))
         {
@@ -198,17 +215,19 @@ public:
     virtual int32 GetInt()   const override final;
     virtual float GetFloat() const override final;
     virtual bool  GetBool()  const override final;
-    
+
     virtual FString GetString() const override final
     {
         return TTypeToString<T>::ToString(*Data);
     }
 
-private:
+protected:
     TConsoleVariableData<T> Data;
 };
 
+// -------------------------------------------------------------------------------------------
 // Int32
+// -------------------------------------------------------------------------------------------
 
 template<>
 TConsoleVariableData<int32>* TConsoleVariable<int32>::GetIntData()
@@ -270,7 +289,9 @@ bool TConsoleVariable<int32>::GetBool() const
     return (*Data != 0);
 }
 
+// -------------------------------------------------------------------------------------------
 // Float
+// -------------------------------------------------------------------------------------------
 
 template<>
 TConsoleVariableData<float>* TConsoleVariable<float>::GetFloatData()
@@ -332,7 +353,9 @@ bool TConsoleVariable<float>::GetBool() const
     return (*Data != 0.0f);
 }
 
+// -------------------------------------------------------------------------------------------
 // Bool
+// -------------------------------------------------------------------------------------------
 
 template<>
 TConsoleVariableData<bool>* TConsoleVariable<bool>::GetBoolData()
@@ -394,7 +417,9 @@ bool TConsoleVariable<bool>::GetBool() const
     return *Data;
 }
 
+// -------------------------------------------------------------------------------------------
 // FString
+// -------------------------------------------------------------------------------------------
 
 template<>
 TConsoleVariableData<FString>* TConsoleVariable<FString>::GetStringData()
@@ -479,6 +504,834 @@ FString TConsoleVariable<FString>::GetString() const
 }
 
 
+template<typename T>
+class TBoundedConsoleVariable : public TConsoleVariable<T>
+{
+public:
+    explicit TBoundedConsoleVariable(const T& InDefaultValue, EConsoleVariableFlags InFlags, const CHAR* InHelpString)
+        : TConsoleVariable<T>(InDefaultValue, InFlags, InHelpString)
+        , MinValue(T{})
+        , MaxValue(T{})
+        , bHasMin(false)
+        , bHasMax(false)
+    {
+    }
+
+    virtual void SetAsInt(int32 InValue, EConsoleVariableFlags InFlags) override final
+    {
+        if (this->CanBeSet(InFlags))
+        {
+            *this->Data = ClampToRange(static_cast<T>(InValue));
+            this->OnChanged(InFlags);
+        }
+    }
+
+    virtual void SetAsFloat(float InValue, EConsoleVariableFlags InFlags) override final
+    {
+        if (this->CanBeSet(InFlags))
+        {
+            *this->Data = ClampToRange(static_cast<T>(InValue));
+            this->OnChanged(InFlags);
+        }
+    }
+
+    virtual void SetAsBool(bool bValue, EConsoleVariableFlags InFlags) override final
+    {
+        if (this->CanBeSet(InFlags))
+        {
+            *this->Data = ClampToRange(static_cast<T>(bValue ? 1 : 0));
+            this->OnChanged(InFlags);
+        }
+    }
+
+    virtual void SetString(const FString& InValue, EConsoleVariableFlags InFlags) override final
+    {
+        if (this->CanBeSet(InFlags))
+        {
+            T NewValue = 0;
+            if (TTypeFromString<T>::FromString(InValue, NewValue))
+            {
+                *this->Data = ClampToRange(::Move(NewValue));
+                this->OnChanged(InFlags);
+            }
+        }
+    }
+
+    virtual bool TryGetMinValueInt(int32& OutValue)   const override final;
+    virtual bool TryGetMaxValueInt(int32& OutValue)   const override final;
+    virtual void SetMinValueInt(int32 InValue)              override final;
+    virtual void SetMaxValueInt(int32 InValue)              override final;
+    virtual void ClearMinValueInt()                         override final;
+    virtual void ClearMaxValueInt()                         override final;
+
+    virtual bool TryGetMinValueFloat(float& OutValue) const override final;
+    virtual bool TryGetMaxValueFloat(float& OutValue) const override final;
+    virtual void SetMinValueFloat(float InValue)            override final;
+    virtual void SetMaxValueFloat(float InValue)            override final;
+    virtual void ClearMinValueFloat()                       override final;
+    virtual void ClearMaxValueFloat()                       override final;
+
+private:
+
+    // Clamps to [MinValue, MaxValue] when either bound is set; pass-through otherwise.
+    T ClampToRange(T InValue) const
+    {
+        if (bHasMin && InValue < MinValue)
+        {
+            return MinValue;
+        }
+
+        if (bHasMax && InValue > MaxValue)
+        {
+            return MaxValue;
+        }
+
+        return InValue;
+    }
+
+    T    MinValue;
+    T    MaxValue;
+    bool bHasMin;
+    bool bHasMax;
+};
+
+template<typename T>
+bool TBoundedConsoleVariable<T>::TryGetMinValueInt(int32& OutValue) const
+{
+    if constexpr (TIsSame<T, int32>::Value)
+    {
+        if (bHasMin)
+        {
+            OutValue = MinValue;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+template<typename T>
+bool TBoundedConsoleVariable<T>::TryGetMaxValueInt(int32& OutValue) const
+{
+    if constexpr (TIsSame<T, int32>::Value)
+    {
+        if (bHasMax)
+        {
+            OutValue = MaxValue;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+template<typename T>
+void TBoundedConsoleVariable<T>::SetMinValueInt(int32 InValue)
+{
+    if constexpr (TIsSame<T, int32>::Value)
+    {
+        MinValue = InValue;
+        bHasMin  = true;
+
+        if (bHasMax && MaxValue < MinValue)
+        {
+            MaxValue = MinValue;
+        }
+
+        *this->Data = ClampToRange(*this->Data);
+    }
+}
+
+template<typename T>
+void TBoundedConsoleVariable<T>::SetMaxValueInt(int32 InValue)
+{
+    if constexpr (TIsSame<T, int32>::Value)
+    {
+        MaxValue = InValue;
+        bHasMax  = true;
+
+        if (bHasMin && MinValue > MaxValue)
+        {
+            MinValue = MaxValue;
+        }
+
+        *this->Data = ClampToRange(*this->Data);
+    }
+}
+
+template<typename T>
+void TBoundedConsoleVariable<T>::ClearMinValueInt()
+{
+    if constexpr (TIsSame<T, int32>::Value)
+    {
+        bHasMin  = false;
+        MinValue = T{};
+    }
+}
+
+template<typename T>
+void TBoundedConsoleVariable<T>::ClearMaxValueInt()
+{
+    if constexpr (TIsSame<T, int32>::Value)
+    {
+        bHasMax  = false;
+        MaxValue = T{};
+    }
+}
+
+template<typename T>
+bool TBoundedConsoleVariable<T>::TryGetMinValueFloat(float& OutValue) const
+{
+    if constexpr (TIsSame<T, float>::Value)
+    {
+        if (bHasMin)
+        {
+            OutValue = MinValue;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+template<typename T>
+bool TBoundedConsoleVariable<T>::TryGetMaxValueFloat(float& OutValue) const
+{
+    if constexpr (TIsSame<T, float>::Value)
+    {
+        if (bHasMax)
+        {
+            OutValue = MaxValue;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+template<typename T>
+void TBoundedConsoleVariable<T>::SetMinValueFloat(float InValue)
+{
+    if constexpr (TIsSame<T, float>::Value)
+    {
+        MinValue = InValue;
+        bHasMin  = true;
+
+        if (bHasMax && MaxValue < MinValue)
+        {
+            MaxValue = MinValue;
+        }
+
+        *this->Data = ClampToRange(*this->Data);
+    }
+}
+
+template<typename T>
+void TBoundedConsoleVariable<T>::SetMaxValueFloat(float InValue)
+{
+    if constexpr (TIsSame<T, float>::Value)
+    {
+        MaxValue = InValue;
+        bHasMax  = true;
+
+        if (bHasMin && MinValue > MaxValue)
+        {
+            MinValue = MaxValue;
+        }
+
+        *this->Data = ClampToRange(*this->Data);
+    }
+}
+
+template<typename T>
+void TBoundedConsoleVariable<T>::ClearMinValueFloat()
+{
+    if constexpr (TIsSame<T, float>::Value)
+    {
+        bHasMin  = false;
+        MinValue = T{};
+    }
+}
+
+template<typename T>
+void TBoundedConsoleVariable<T>::ClearMaxValueFloat()
+{
+    if constexpr (TIsSame<T, float>::Value)
+    {
+        bHasMax  = false;
+        MaxValue = T{};
+    }
+}
+
+
+template<typename T>
+class TConsoleVariableRef : public FConsoleVariableBase
+{
+protected:
+    using FConsoleVariableBase::OnChanged;
+
+public:
+    explicit TConsoleVariableRef(T& InRef, EConsoleVariableFlags InFlags, const CHAR* InHelpString)
+        : FConsoleVariableBase(InFlags, InHelpString)
+        , DataPtr(&InRef)
+    {
+    }
+
+    virtual TConsoleVariableData<int32>*   GetIntData()    override final { return nullptr; }
+    virtual TConsoleVariableData<float>*   GetFloatData()  override final { return nullptr; }
+    virtual TConsoleVariableData<bool>*    GetBoolData()   override final { return nullptr; }
+    virtual TConsoleVariableData<FString>* GetStringData() override final { return nullptr; }
+
+    virtual bool IsVariableInt()    const override final { return false; }
+    virtual bool IsVariableFloat()  const override final { return false; }
+    virtual bool IsVariableBool()   const override final { return false; }
+    virtual bool IsVariableString() const override final { return false; }
+
+    virtual void SetAsInt(int32 InValue, EConsoleVariableFlags InFlags)   override;
+    virtual void SetAsFloat(float InValue, EConsoleVariableFlags InFlags) override;
+    virtual void SetAsBool(bool bValue, EConsoleVariableFlags InFlags)    override;
+
+    virtual void SetString(const FString& InValue, EConsoleVariableFlags InFlags) override
+    {
+        if (CanBeSet(InFlags))
+        {
+            T NewValue = 0;
+            if (TTypeFromString<T>::FromString(InValue, NewValue))
+            {
+                *DataPtr = ::Move(NewValue);
+                OnChanged(InFlags);
+            }
+        }
+    }
+
+    virtual int32 GetInt()   const override final;
+    virtual float GetFloat() const override final;
+    virtual bool  GetBool()  const override final;
+
+    virtual FString GetString() const override final
+    {
+        return TTypeToString<T>::ToString(*DataPtr);
+    }
+
+protected:
+    T* DataPtr;
+};
+
+// -------------------------------------------------------------------------------------------
+// Int32 ref
+// -------------------------------------------------------------------------------------------
+
+template<>
+bool TConsoleVariableRef<int32>::IsVariableInt() const
+{
+    return true;
+}
+
+template<>
+void TConsoleVariableRef<int32>::SetAsInt(int32 InValue, EConsoleVariableFlags InFlags)
+{
+    if (CanBeSet(InFlags))
+    {
+        *DataPtr = InValue;
+        OnChanged(InFlags);
+    }
+}
+
+template<>
+void TConsoleVariableRef<int32>::SetAsFloat(float InValue, EConsoleVariableFlags InFlags)
+{
+    if (CanBeSet(InFlags))
+    {
+        *DataPtr = static_cast<int32>(InValue);
+        OnChanged(InFlags);
+    }
+}
+
+template<>
+void TConsoleVariableRef<int32>::SetAsBool(bool bValue, EConsoleVariableFlags InFlags)
+{
+    if (CanBeSet(InFlags))
+    {
+        *DataPtr = bValue ? 1 : 0;
+        OnChanged(InFlags);
+    }
+}
+
+template<>
+int32 TConsoleVariableRef<int32>::GetInt() const
+{
+    return *DataPtr;
+}
+
+template<>
+float TConsoleVariableRef<int32>::GetFloat() const
+{
+    return static_cast<float>(*DataPtr);
+}
+
+template<>
+bool TConsoleVariableRef<int32>::GetBool() const
+{
+    return (*DataPtr != 0);
+}
+
+// -------------------------------------------------------------------------------------------
+// Float ref
+// -------------------------------------------------------------------------------------------
+
+template<>
+bool TConsoleVariableRef<float>::IsVariableFloat() const
+{
+    return true;
+}
+
+template<>
+void TConsoleVariableRef<float>::SetAsInt(int32 InValue, EConsoleVariableFlags InFlags)
+{
+    if (CanBeSet(InFlags))
+    {
+        *DataPtr = static_cast<float>(InValue);
+        OnChanged(InFlags);
+    }
+}
+
+template<>
+void TConsoleVariableRef<float>::SetAsFloat(float InValue, EConsoleVariableFlags InFlags)
+{
+    if (CanBeSet(InFlags))
+    {
+        *DataPtr = InValue;
+        OnChanged(InFlags);
+    }
+}
+
+template<>
+void TConsoleVariableRef<float>::SetAsBool(bool bValue, EConsoleVariableFlags InFlags)
+{
+    if (CanBeSet(InFlags))
+    {
+        *DataPtr = bValue ? 1.0f : 0.0f;
+        OnChanged(InFlags);
+    }
+}
+
+template<>
+int32 TConsoleVariableRef<float>::GetInt() const
+{
+    return static_cast<int32>(*DataPtr);
+}
+
+template<>
+float TConsoleVariableRef<float>::GetFloat() const
+{
+    return *DataPtr;
+}
+
+template<>
+bool TConsoleVariableRef<float>::GetBool() const
+{
+    return (*DataPtr != 0.0f);
+}
+
+// -------------------------------------------------------------------------------------------
+// Bool ref
+// -------------------------------------------------------------------------------------------
+
+template<>
+bool TConsoleVariableRef<bool>::IsVariableBool() const
+{
+    return true;
+}
+
+template<>
+void TConsoleVariableRef<bool>::SetAsInt(int32 InValue, EConsoleVariableFlags InFlags)
+{
+    if (CanBeSet(InFlags))
+    {
+        *DataPtr = (InValue != 0);
+        OnChanged(InFlags);
+    }
+}
+
+template<>
+void TConsoleVariableRef<bool>::SetAsFloat(float InValue, EConsoleVariableFlags InFlags)
+{
+    if (CanBeSet(InFlags))
+    {
+        *DataPtr = (InValue != 0.0f);
+        OnChanged(InFlags);
+    }
+}
+
+template<>
+void TConsoleVariableRef<bool>::SetAsBool(bool bValue, EConsoleVariableFlags InFlags)
+{
+    if (CanBeSet(InFlags))
+    {
+        *DataPtr = bValue;
+        OnChanged(InFlags);
+    }
+}
+
+template<>
+int32 TConsoleVariableRef<bool>::GetInt() const
+{
+    return *DataPtr ? 1 : 0;
+}
+
+template<>
+float TConsoleVariableRef<bool>::GetFloat() const
+{
+    return *DataPtr ? 1.0f : 0.0f;
+}
+
+template<>
+bool TConsoleVariableRef<bool>::GetBool() const
+{
+    return *DataPtr;
+}
+
+// -------------------------------------------------------------------------------------------
+// FString ref
+// -------------------------------------------------------------------------------------------
+
+template<>
+bool TConsoleVariableRef<FString>::IsVariableString() const
+{
+    return true;
+}
+
+template<>
+inline void TConsoleVariableRef<FString>::SetAsInt(int32 InValue, EConsoleVariableFlags InFlags)
+{
+    if (CanBeSet(InFlags))
+    {
+        *DataPtr = TTypeToString<int32>::ToString(InValue);
+        OnChanged(InFlags);
+    }
+}
+
+template<>
+inline void TConsoleVariableRef<FString>::SetAsFloat(float InValue, EConsoleVariableFlags InFlags)
+{
+    if (CanBeSet(InFlags))
+    {
+        *DataPtr = TTypeToString<float>::ToString(InValue);
+        OnChanged(InFlags);
+    }
+}
+
+template<>
+inline void TConsoleVariableRef<FString>::SetAsBool(bool InValue, EConsoleVariableFlags InFlags)
+{
+    if (CanBeSet(InFlags))
+    {
+        *DataPtr = TTypeToString<bool>::ToString(InValue);
+        OnChanged(InFlags);
+    }
+}
+
+template<>
+inline void TConsoleVariableRef<FString>::SetString(const FString& InValue, EConsoleVariableFlags InFlags)
+{
+    if (CanBeSet(InFlags))
+    {
+        *DataPtr = InValue;
+        OnChanged(InFlags);
+    }
+}
+
+template<>
+int32 TConsoleVariableRef<FString>::GetInt() const
+{
+    int32 Value = 0;
+    TTypeFromString<int32>::FromString(*DataPtr, Value);
+    return Value;
+}
+
+template<>
+float TConsoleVariableRef<FString>::GetFloat() const
+{
+    float Value = 0.0f;
+    TTypeFromString<float>::FromString(*DataPtr, Value);
+    return Value;
+}
+
+template<>
+bool TConsoleVariableRef<FString>::GetBool() const
+{
+    bool bValue = false;
+    TTypeFromString<bool>::FromString(*DataPtr, bValue);
+    return bValue;
+}
+
+template<>
+FString TConsoleVariableRef<FString>::GetString() const
+{
+    return *DataPtr;
+}
+
+
+template<typename T>
+class TBoundedConsoleVariableRef : public TConsoleVariableRef<T>
+{
+public:
+    explicit TBoundedConsoleVariableRef(T& InRef, EConsoleVariableFlags InFlags, const CHAR* InHelpString)
+        : TConsoleVariableRef<T>(InRef, InFlags, InHelpString)
+        , MinValue(T{})
+        , MaxValue(T{})
+        , bHasMin(false)
+        , bHasMax(false)
+    {
+    }
+
+    virtual void SetAsInt(int32 InValue, EConsoleVariableFlags InFlags) override final
+    {
+        if (this->CanBeSet(InFlags))
+        {
+            *this->DataPtr = ClampToRange(static_cast<T>(InValue));
+            this->OnChanged(InFlags);
+        }
+    }
+
+    virtual void SetAsFloat(float InValue, EConsoleVariableFlags InFlags) override final
+    {
+        if (this->CanBeSet(InFlags))
+        {
+            *this->DataPtr = ClampToRange(static_cast<T>(InValue));
+            this->OnChanged(InFlags);
+        }
+    }
+
+    virtual void SetAsBool(bool bValue, EConsoleVariableFlags InFlags) override final
+    {
+        if (this->CanBeSet(InFlags))
+        {
+            *this->DataPtr = ClampToRange(static_cast<T>(bValue ? 1 : 0));
+            this->OnChanged(InFlags);
+        }
+    }
+
+    virtual void SetString(const FString& InValue, EConsoleVariableFlags InFlags) override final
+    {
+        if (this->CanBeSet(InFlags))
+        {
+            T NewValue = 0;
+            if (TTypeFromString<T>::FromString(InValue, NewValue))
+            {
+                *this->DataPtr = ClampToRange(::Move(NewValue));
+                this->OnChanged(InFlags);
+            }
+        }
+    }
+
+    virtual bool TryGetMinValueInt(int32& OutValue)   const override final;
+    virtual bool TryGetMaxValueInt(int32& OutValue)   const override final;
+    virtual void SetMinValueInt(int32 InValue)              override final;
+    virtual void SetMaxValueInt(int32 InValue)              override final;
+    virtual void ClearMinValueInt()                         override final;
+    virtual void ClearMaxValueInt()                         override final;
+
+    virtual bool TryGetMinValueFloat(float& OutValue) const override final;
+    virtual bool TryGetMaxValueFloat(float& OutValue) const override final;
+    virtual void SetMinValueFloat(float InValue)            override final;
+    virtual void SetMaxValueFloat(float InValue)            override final;
+    virtual void ClearMinValueFloat()                       override final;
+    virtual void ClearMaxValueFloat()                       override final;
+
+private:
+
+    // Clamps to [MinValue, MaxValue] when either bound is set; pass-through otherwise.
+    T ClampToRange(T InValue) const
+    {
+        if (bHasMin && InValue < MinValue)
+        {
+            return MinValue;
+        }
+
+        if (bHasMax && InValue > MaxValue)
+        {
+            return MaxValue;
+        }
+
+        return InValue;
+    }
+
+    T    MinValue;
+    T    MaxValue;
+    bool bHasMin;
+    bool bHasMax;
+};
+
+template<typename T>
+bool TBoundedConsoleVariableRef<T>::TryGetMinValueInt(int32& OutValue) const
+{
+    if constexpr (TIsSame<T, int32>::Value)
+    {
+        if (bHasMin)
+        {
+            OutValue = MinValue;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+template<typename T>
+bool TBoundedConsoleVariableRef<T>::TryGetMaxValueInt(int32& OutValue) const
+{
+    if constexpr (TIsSame<T, int32>::Value)
+    {
+        if (bHasMax)
+        {
+            OutValue = MaxValue;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+template<typename T>
+void TBoundedConsoleVariableRef<T>::SetMinValueInt(int32 InValue)
+{
+    if constexpr (TIsSame<T, int32>::Value)
+    {
+        MinValue = InValue;
+        bHasMin  = true;
+
+        if (bHasMax && MaxValue < MinValue)
+        {
+            MaxValue = MinValue;
+        }
+
+        *this->DataPtr = ClampToRange(*this->DataPtr);
+    }
+}
+
+template<typename T>
+void TBoundedConsoleVariableRef<T>::SetMaxValueInt(int32 InValue)
+{
+    if constexpr (TIsSame<T, int32>::Value)
+    {
+        MaxValue = InValue;
+        bHasMax  = true;
+
+        if (bHasMin && MinValue > MaxValue)
+        {
+            MinValue = MaxValue;
+        }
+
+        *this->DataPtr = ClampToRange(*this->DataPtr);
+    }
+}
+
+template<typename T>
+void TBoundedConsoleVariableRef<T>::ClearMinValueInt()
+{
+    if constexpr (TIsSame<T, int32>::Value)
+    {
+        bHasMin  = false;
+        MinValue = T{};
+    }
+}
+
+template<typename T>
+void TBoundedConsoleVariableRef<T>::ClearMaxValueInt()
+{
+    if constexpr (TIsSame<T, int32>::Value)
+    {
+        bHasMax  = false;
+        MaxValue = T{};
+    }
+}
+
+template<typename T>
+bool TBoundedConsoleVariableRef<T>::TryGetMinValueFloat(float& OutValue) const
+{
+    if constexpr (TIsSame<T, float>::Value)
+    {
+        if (bHasMin)
+        {
+            OutValue = MinValue;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+template<typename T>
+bool TBoundedConsoleVariableRef<T>::TryGetMaxValueFloat(float& OutValue) const
+{
+    if constexpr (TIsSame<T, float>::Value)
+    {
+        if (bHasMax)
+        {
+            OutValue = MaxValue;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+template<typename T>
+void TBoundedConsoleVariableRef<T>::SetMinValueFloat(float InValue)
+{
+    if constexpr (TIsSame<T, float>::Value)
+    {
+        MinValue = InValue;
+        bHasMin  = true;
+
+        if (bHasMax && MaxValue < MinValue)
+        {
+            MaxValue = MinValue;
+        }
+
+        *this->DataPtr = ClampToRange(*this->DataPtr);
+    }
+}
+
+template<typename T>
+void TBoundedConsoleVariableRef<T>::SetMaxValueFloat(float InValue)
+{
+    if constexpr (TIsSame<T, float>::Value)
+    {
+        MaxValue = InValue;
+        bHasMax  = true;
+
+        if (bHasMin && MinValue > MaxValue)
+        {
+            MinValue = MaxValue;
+        }
+
+        *this->DataPtr = ClampToRange(*this->DataPtr);
+    }
+}
+
+template<typename T>
+void TBoundedConsoleVariableRef<T>::ClearMinValueFloat()
+{
+    if constexpr (TIsSame<T, float>::Value)
+    {
+        bHasMin  = false;
+        MinValue = T{};
+    }
+}
+
+template<typename T>
+void TBoundedConsoleVariableRef<T>::ClearMaxValueFloat()
+{
+    if constexpr (TIsSame<T, float>::Value)
+    {
+        bHasMax  = false;
+        MaxValue = T{};
+    }
+}
+
+
 FConsoleManager* FConsoleManager::ConsoleManager;
 
 void FConsoleManager::SafeCreateConsoleManager()
@@ -491,6 +1344,13 @@ void FConsoleManager::SafeCreateConsoleManager()
     }
 
     CHECK(ConsoleManager != nullptr);
+}
+
+FConsoleManager::FConsoleManager()
+    : ConsoleObjects()
+    , History()
+    , HistoryLength(CONSOLE_DEFAULT_HISTORY_LENGTH)
+{
 }
 
 FConsoleManager::~FConsoleManager()
@@ -533,6 +1393,18 @@ IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CH
     return nullptr;
 }
 
+IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* HelpString, int32 DefaultValue, int32 MinValue, int32 MaxValue, EConsoleVariableFlags Flags)
+{
+    IConsoleVariable* NewVariable = RegisterVariable(InName, HelpString, DefaultValue, Flags);
+    if (NewVariable)
+    {
+        NewVariable->SetMinValueInt(MinValue);
+        NewVariable->SetMaxValueInt(MaxValue);
+    }
+
+    return NewVariable;
+}
+
 IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* HelpString, float DefaultValue, EConsoleVariableFlags Flags)
 {
     if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableFloat(DefaultValue, Flags, HelpString)))
@@ -543,9 +1415,85 @@ IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CH
     return nullptr;
 }
 
+IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* HelpString, float DefaultValue, float MinValue, float MaxValue, EConsoleVariableFlags Flags)
+{
+    IConsoleVariable* NewVariable = RegisterVariable(InName, HelpString, DefaultValue, Flags);
+    if (NewVariable)
+    {
+        NewVariable->SetMinValueFloat(MinValue);
+        NewVariable->SetMaxValueFloat(MaxValue);
+    }
+
+    return NewVariable;
+}
+
 IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CHAR* HelpString, bool bDefaultValue, EConsoleVariableFlags Flags)
 {
     if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableBool(bDefaultValue, Flags, HelpString)))
+    {
+        return NewObject->AsVariable();
+    }
+
+    return nullptr;
+}
+
+IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR* InName, const CHAR* HelpString, int32& RefValue, EConsoleVariableFlags Flags)
+{
+    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableInt32Ref(RefValue, Flags, HelpString)))
+    {
+        return NewObject->AsVariable();
+    }
+
+    return nullptr;
+}
+
+IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR* InName, const CHAR* HelpString, int32& RefValue, int32 MinValue, int32 MaxValue, EConsoleVariableFlags Flags)
+{
+    IConsoleVariable* NewVariable = RegisterVariableRef(InName, HelpString, RefValue, Flags);
+    if (NewVariable)
+    {
+        NewVariable->SetMinValueInt(MinValue);
+        NewVariable->SetMaxValueInt(MaxValue);
+    }
+
+    return NewVariable;
+}
+
+IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR* InName, const CHAR* HelpString, float& RefValue, EConsoleVariableFlags Flags)
+{
+    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableFloatRef(RefValue, Flags, HelpString)))
+    {
+        return NewObject->AsVariable();
+    }
+
+    return nullptr;
+}
+
+IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR* InName, const CHAR* HelpString, float& RefValue, float MinValue, float MaxValue, EConsoleVariableFlags Flags)
+{
+    IConsoleVariable* NewVariable = RegisterVariableRef(InName, HelpString, RefValue, Flags);
+    if (NewVariable)
+    {
+        NewVariable->SetMinValueFloat(MinValue);
+        NewVariable->SetMaxValueFloat(MaxValue);
+    }
+
+    return NewVariable;
+}
+
+IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR* InName, const CHAR* HelpString, bool& RefValue, EConsoleVariableFlags Flags)
+{
+    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableBoolRef(RefValue, Flags, HelpString)))
+    {
+        return NewObject->AsVariable();
+    }
+
+    return nullptr;
+}
+
+IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR* InName, const CHAR* HelpString, FString& RefValue, EConsoleVariableFlags Flags)
+{
+    if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableStringRef(RefValue, Flags, HelpString)))
     {
         return NewObject->AsVariable();
     }
@@ -668,6 +1616,7 @@ void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString&
         {
             CommandObject->Execute(FStringView());
         }
+        
         return;
     }
 
@@ -691,28 +1640,64 @@ void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString&
     }
 
     const FString Value(TrimmedArgs);
-    if (TTryParseType<int64>::TryParse(Value))
+    const EConsoleVariableFlags SetByConsole = EConsoleVariableFlags::SetByConsole;
+
+    bool bHandled = false;
+
+    int64 Int64Value = 0;
+    if (TTypeFromString<int64>::FromString(Value, Int64Value))
     {
-        VariableObject->SetString(Value, EConsoleVariableFlags::SetByConsole);
-    }
-    else if (TTryParseType<float>::TryParse(Value) && VariableObject->IsVariableFloat())
-    {
-        VariableObject->SetString(Value, EConsoleVariableFlags::SetByConsole);
-    }
-    else if (TTryParseType<bool>::TryParse(Value) && VariableObject->IsVariableBool())
-    {
-        VariableObject->SetString(Value, EConsoleVariableFlags::SetByConsole);
-    }
-    else
-    {
-        if (VariableObject->IsVariableString())
+        if (VariableObject->IsVariableInt())
         {
-            VariableObject->SetString(Value, EConsoleVariableFlags::SetByConsole);
+            VariableObject->SetAsInt(static_cast<int32>(Int64Value), SetByConsole);
+            bHandled = true;
         }
-        else
+        else if (VariableObject->IsVariableFloat())
         {
-            OutputDevice.Log(ELogSeverity::Error, "'" + Value + "' Is an invalid value for '" + CommandName + "'");
+            VariableObject->SetAsFloat(static_cast<float>(Int64Value), SetByConsole);
+            bHandled = true;
         }
+        else if (VariableObject->IsVariableBool())
+        {
+            VariableObject->SetAsBool(Int64Value != 0, SetByConsole);
+            bHandled = true;
+        }
+        else if (VariableObject->IsVariableString())
+        {
+            VariableObject->SetString(Value, SetByConsole);
+            bHandled = true;
+        }
+    }
+
+    if (!bHandled && VariableObject->IsVariableFloat())
+    {
+        float FloatValue = 0.0f;
+        if (TTypeFromString<float>::FromString(Value, FloatValue))
+        {
+            VariableObject->SetAsFloat(FloatValue, SetByConsole);
+            bHandled = true;
+        }
+    }
+
+    if (!bHandled && VariableObject->IsVariableBool())
+    {
+        bool bBoolValue = false;
+        if (TTypeFromString<bool>::FromString(Value, bBoolValue))
+        {
+            VariableObject->SetAsBool(bBoolValue, SetByConsole);
+            bHandled = true;
+        }
+    }
+
+    if (!bHandled && VariableObject->IsVariableString())
+    {
+        VariableObject->SetString(Value, SetByConsole);
+        bHandled = true;
+    }
+
+    if (!bHandled)
+    {
+        OutputDevice.Log(ELogSeverity::Error, "'" + Value + "' Is an invalid value for '" + CommandName + "'");
     }
 }
 

@@ -2,60 +2,67 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Math/Math.h"
 
-static TAutoConsoleVariable<bool> CVarSelectionOutlineEnabled(
+// File-scope settings instance. The bound CVars below write directly into these fields,
+// so the console / config files / command-line and the renderer all read/write the same memory.
+static FSelectionOutlineSettings GSelectionOutlineSettings =
+{
+    /* bEnabled    */ true,
+    /* ThicknessPx */ 2,
+    /* Alpha       */ 0.8f,
+    /* Smoothness  */ 1.0f,
+    /* Color       */ FVector3(1.0f, 0.6f, 0.0f),
+};
+
+static FAutoConsoleVariableRef CVarSelectionOutlineEnabled(
     "Renderer.Editor.SelectionOutline.Enable",
     "Enables screen-space selection outline in the editor",
-    true,
+    GSelectionOutlineSettings.bEnabled,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<int32> CVarSelectionOutlineThicknessPx(
+static FAutoConsoleVariableRef CVarSelectionOutlineThicknessPx(
     "Renderer.Editor.SelectionOutline.ThicknessPx",
     "Selection outline thickness in pixels",
-    2,
+    GSelectionOutlineSettings.ThicknessPx,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarSelectionOutlineAlpha(
+static FAutoConsoleVariableRef CVarSelectionOutlineAlpha(
     "Renderer.Editor.SelectionOutline.Alpha",
     "Selection outline alpha (0-1)",
-    0.8f,
+    GSelectionOutlineSettings.Alpha,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarSelectionOutlineSmoothness(
+static FAutoConsoleVariableRef CVarSelectionOutlineSmoothness(
     "Renderer.Editor.SelectionOutline.Smoothness",
     "Selection outline smoothing/AA amount (0 = off, 1 = default)",
-    1.0f,
+    GSelectionOutlineSettings.Smoothness,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarSelectionOutlineColorR(
+static FAutoConsoleVariableRef CVarSelectionOutlineColorR(
     "Renderer.Editor.SelectionOutline.ColorR",
     "Selection outline color (linear) - Red channel (0-1)",
-    1.0f,
+    GSelectionOutlineSettings.Color.X,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarSelectionOutlineColorG(
+static FAutoConsoleVariableRef CVarSelectionOutlineColorG(
     "Renderer.Editor.SelectionOutline.ColorG",
     "Selection outline color (linear) - Green channel (0-1)",
-    0.6f,
+    GSelectionOutlineSettings.Color.Y,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<float> CVarSelectionOutlineColorB(
+static FAutoConsoleVariableRef CVarSelectionOutlineColorB(
     "Renderer.Editor.SelectionOutline.ColorB",
     "Selection outline color (linear) - Blue channel (0-1)",
-    0.0f,
+    GSelectionOutlineSettings.Color.Z,
     EConsoleVariableFlags::Default);
 
 FSelectionOutlineSettings GetSelectionOutlineSettings()
 {
-    const float R = Math::Clamp<float>(CVarSelectionOutlineColorR.GetValue(), 0.0f, 1.0f);
-    const float G = Math::Clamp<float>(CVarSelectionOutlineColorG.GetValue(), 0.0f, 1.0f);
-    const float B = Math::Clamp<float>(CVarSelectionOutlineColorB.GetValue(), 0.0f, 1.0f);
-
-    FSelectionOutlineSettings Settings;
-    Settings.bEnabled    = CVarSelectionOutlineEnabled.GetValue();
-    Settings.ThicknessPx = Math::Clamp<int32>(CVarSelectionOutlineThicknessPx.GetValue(), 1, 16);
-    Settings.Alpha       = Math::Clamp<float>(CVarSelectionOutlineAlpha.GetValue(), 0.0f, 1.0f);
-    Settings.Smoothness  = Math::Clamp<float>(CVarSelectionOutlineSmoothness.GetValue(), 0.0f, 8.0f);
-    Settings.Color       = FVector3(R, G, B);
-
+    FSelectionOutlineSettings Settings = GSelectionOutlineSettings;
+    Settings.ThicknessPx = Math::Clamp<int32>(Settings.ThicknessPx, 1, 16);
+    Settings.Alpha       = Math::Clamp<float>(Settings.Alpha, 0.0f, 1.0f);
+    Settings.Smoothness  = Math::Clamp<float>(Settings.Smoothness, 0.0f, 8.0f);
+    Settings.Color.X     = Math::Clamp<float>(Settings.Color.X, 0.0f, 1.0f);
+    Settings.Color.Y     = Math::Clamp<float>(Settings.Color.Y, 0.0f, 1.0f);
+    Settings.Color.Z     = Math::Clamp<float>(Settings.Color.Z, 0.0f, 1.0f);
     return Settings;
 }

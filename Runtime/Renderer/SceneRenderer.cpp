@@ -22,132 +22,153 @@
 
 #define SUPPORT_VARIABLE_RATE_SHADING (0)
 
-static TAutoConsoleVariable<bool> CVarEnableSSAO(
+static bool GEnableSSAO = true;
+static FAutoConsoleVariableRef CVarEnableSSAO(
     "Renderer.Feature.SSAO",
     "Enables Screen-Space Ambient Occlusion",
-    true,
+    GEnableSSAO,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarEnableFXAA(
+static bool GEnableFXAA = false;
+static FAutoConsoleVariableRef CVarEnableFXAA(
     "Renderer.Feature.FXAA",
     "Enables FXAA for Anti-Aliasing",
-    false,
+    GEnableFXAA,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarEnableTemporalAA(
+static bool GEnableTemporalAA = true;
+static FAutoConsoleVariableRef CVarEnableTemporalAA(
     "Renderer.Feature.TemporalAA",
     "Enables Temporal Anti-Aliasing",
-    true,
+    GEnableTemporalAA,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarEnableVariableRateShading(
+static bool GEnableVariableRateShading = false;
+static FAutoConsoleVariableRef CVarEnableVariableRateShading(
     "Renderer.Feature.VariableRateShading",
     "Enables VRS (Variable Rate Shading)",
-    false,
+    GEnableVariableRateShading,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarPrePassEnabled(
+static bool GPrePassEnabled = true;
+static FAutoConsoleVariableRef CVarPrePassEnabled(
     "Renderer.Feature.PrePass",
     "Enables Pre-Pass",
-    true,
+    GPrePassEnabled,
     EConsoleVariableFlags::Default);
 
 #if EDITOR_BUILD
-static TAutoConsoleVariable<int32> CVarEditorPickSearchRadius(
+static int32 GEditorPickSearchRadius = 1;
+static FAutoConsoleVariableRef CVarEditorPickSearchRadius(
     "Editor.Pick.SearchRadius",
     "When the center pixel returns ObjectID=0, search within this radius (in pixels) for a non-zero ObjectID.",
-    1,
+    GEditorPickSearchRadius,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarEditorPickTryFlipY( 
-    "Editor.Pick.TryFlipY", 
-    "Debug-only: If you suspect the pick coordinates are vertically inverted, also sample a vertically flipped Y window when the normal sample returns ObjectID=0.", 
-    false, 
-    EConsoleVariableFlags::Default); 
+static bool GEditorPickTryFlipY = false;
+static FAutoConsoleVariableRef CVarEditorPickTryFlipY(
+    "Editor.Pick.TryFlipY",
+    "Debug-only: If you suspect the pick coordinates are vertically inverted, also sample a vertically flipped Y window when the normal sample returns ObjectID=0.",
+    GEditorPickTryFlipY,
+    EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarEditorPickDebug(
+static bool GEditorPickDebug = false;
+static FAutoConsoleVariableRef CVarEditorPickDebug(
     "Editor.Pick.Debug",
     "Logs editor picking requests and readback results.",
-    false,
+    GEditorPickDebug,
     EConsoleVariableFlags::Default);
 #endif
 
-static TAutoConsoleVariable<bool> CVarBasePassEnabled(
+static bool GBasePassEnabled = true;
+static FAutoConsoleVariableRef CVarBasePassEnabled(
     "Renderer.Feature.BasePass",
     "Enables BasePass (Disabling this disables most rendering)",
-    true,
+    GBasePassEnabled,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarShadowsEnabled(
+static bool GShadowsEnabled = true;
+static FAutoConsoleVariableRef CVarShadowsEnabled(
     "Renderer.Feature.Shadows",
     "Enables Rendering of ShadowMaps",
-    true,
+    GShadowsEnabled,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarShadowMaskEnabled(
+static bool GShadowMaskEnabled = true;
+static FAutoConsoleVariableRef CVarShadowMaskEnabled(
     "Renderer.Feature.ShadowMask",
     "Enables Rendering of ShadowMask for SunShadows",
-    true,
+    GShadowMaskEnabled,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarPointLightShadowsEnabled(
+static bool GPointLightShadowsEnabled = true;
+static FAutoConsoleVariableRef CVarPointLightShadowsEnabled(
     "Renderer.Feature.PointLightShadows",
     "Enables Rendering of PointLight ShadowMaps",
-    true,
+    GPointLightShadowsEnabled,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarSunShadowsEnabled(
+static bool GSunShadowsEnabled = true;
+static FAutoConsoleVariableRef CVarSunShadowsEnabled(
     "Renderer.Feature.SunShadows",
     "Enables Rendering of SunLight/DirectionalLight ShadowMaps",
-    true,
+    GSunShadowsEnabled,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarSkyboxEnabled(
+static bool GSkyboxEnabled = true;
+static FAutoConsoleVariableRef CVarSkyboxEnabled(
     "Renderer.Feature.Skybox",
     "Enables Rendering of the Skybox",
-    true,
+    GSkyboxEnabled,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarDrawAABBs(
+static bool GDrawAABBs = false;
+static FAutoConsoleVariableRef CVarDrawAABBs(
     "Renderer.Debug.DrawAABBs",
     "Draws all the objects bounding boxes (AABB)",
-    false,
+    GDrawAABBs,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarDrawPointLights(
-    "Renderer.Debug.DrawPointLights", 
+static bool GDrawPointLights = false;
+static FAutoConsoleVariableRef CVarDrawPointLights(
+    "Renderer.Debug.DrawPointLights",
     "Draws all the point-lights as spheres with the light-color",
-    false,
+    GDrawPointLights,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarDrawLightProbes(
+static bool GDrawLightProbes = false;
+static FAutoConsoleVariableRef CVarDrawLightProbes(
     "Renderer.Debug.LightProbes",
     "Draws all the light-probes as spheres with the cube-map",
-    false,
+    GDrawLightProbes,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarVSyncEnabled(
+static bool GVSyncEnabled = false;
+static FAutoConsoleVariableRef CVarVSyncEnabled(
     "Renderer.Feature.VerticalSync",
-    "Enables Vertical-Sync", 
-    false,
+    "Enables Vertical-Sync",
+    GVSyncEnabled,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarFrustumCullEnabled(
+static bool GFrustumCullEnabled = true;
+static FAutoConsoleVariableRef CVarFrustumCullEnabled(
     "Renderer.Feature.FrustumCulling",
     "Enables Frustum Culling (CPU) for the main scene and for all shadow frustums",
-    true,
+    GFrustumCullEnabled,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarRayTracingEnabled(
+static bool GRayTracingEnabled = false;
+static FAutoConsoleVariableRef CVarRayTracingEnabled(
     "Renderer.Feature.RayTracing",
     "Enables Ray Tracing (Currently broken)",
-    false,
+    GRayTracingEnabled,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarCSMTightFrustum(
+static bool GCSMTightFrustum = true;
+static FAutoConsoleVariableRef CVarCSMTightFrustum(
     "Renderer.CSM.TightFrustum",
     "Set to true to reduce the DepthBuffer to find the Min- and Max Depth in the DepthBuffer to be able to create a tight frustum that fits the scene",
-    true,
+    GCSMTightFrustum,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleCommand CVarFreezeRendering(
@@ -654,7 +675,7 @@ void FSceneRenderer::PrepareCameraData(const FSceneRenderView& /*SceneRenderView
     CameraBuffer.ViewportWidth               = float(Resources.CurrentRenderWidth);
     CameraBuffer.ViewportHeight              = float(Resources.CurrentRenderHeight);
 
-    if (CVarEnableTemporalAA.GetValue())
+    if (GEnableTemporalAA)
     {
         const FVector2 CameraJitter    = HaltonState.NextSample();
         const FVector2 ClipSpaceJitter = CameraJitter / FVector2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
@@ -706,7 +727,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::DepthWrite));
 
     // PrePass
-    if (CVarPrePassEnabled.GetValue())
+    if (GPrePassEnabled)
     {
         DepthPrePass->Execute(CommandList, Resources, CurrentScene);
     }
@@ -717,7 +738,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     }
 
 #if SUPPORT_VARIABLE_RATE_SHADING
-    if (ShadingImage && CVarEnableVariableRateShading.GetValue() && ShadingImage->GetWidth() > 0 && ShadingImage->GetHeight() > 0)
+    if (ShadingImage && GEnableVariableRateShading && ShadingImage->GetWidth() > 0 && ShadingImage->GetHeight() > 0)
     {
         RHI_EVENT_SCOPE(CommandList, "VRS Image");
         CommandList.SetShadingRate(EShadingRate::VRS_1x1);
@@ -742,13 +763,13 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
 #endif
 
     // BasePass
-    if (CVarBasePassEnabled.GetValue())
+    if (GBasePassEnabled)
     {
         BasePass->Execute(CommandList, Resources, CurrentScene);
     }
 
     // Depth Reduce
-    if (CVarCSMTightFrustum.GetValue())
+    if (GCSMTightFrustum)
     {
         DepthReducePass->Execute(CommandList, Resources, CurrentScene);
     }
@@ -768,7 +789,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     CommandList.TransitionTextureState(Resources.SSAOBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
 
     // SSAO
-    if (CVarEnableSSAO.GetValue())
+    if (GEnableSSAO)
     {
         ScreenSpaceOcclusionPass->Execute(CommandList, Resources);
     }
@@ -808,13 +829,13 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     }
 
     // Render Shadows
-    const bool bEnableShadows    = CVarShadowsEnabled.GetValue();
-    const bool bEnableSunShadows = CVarSunShadowsEnabled.GetValue();
+    const bool bEnableShadows    = GShadowsEnabled;
+    const bool bEnableSunShadows = GSunShadowsEnabled;
 
     if (bEnableShadows)
     {
         // Point Lights
-        if (CVarPointLightShadowsEnabled.GetValue())
+        if (GPointLightShadowsEnabled)
         {
             PointLightRenderPass->Execute(CommandList, Resources, CurrentScene);
         }
@@ -845,7 +866,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     }
 
     // In order to render the shadow-mask, we want all these features to be enabled
-    const bool bEnableShadowMask = CVarShadowMaskEnabled.GetValue();
+    const bool bEnableShadowMask = GShadowMaskEnabled;
     const bool bNeedsCascadeDebug =
         SceneRenderView.DebugView == FSceneRenderView::EDebugView::ShadowCascadeIndex ||
         SceneRenderView.DebugView == FSceneRenderView::EDebugView::ShadowCascadeOverlay ||
@@ -879,7 +900,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     CommandList.TransitionTextureState(Resources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::RenderTarget));
 
     // Skybox Pass
-    if (CVarSkyboxEnabled.GetValue())
+    if (GSkyboxEnabled)
     {
         SkyboxRenderPass->Execute(CommandList, Resources, CurrentScene);
     }
@@ -905,7 +926,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     // }
 
     // Temporal AA
-    if (CVarEnableTemporalAA.GetValue())
+    if (GEnableTemporalAA)
     {
         // Source state matches the ReadOnlyDepth transition done before the skybox pass above.
         CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthRead, EResourceAccess::NonPixelShaderResource));
@@ -945,7 +966,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
 #endif 
 
     // FXAA
-    if (CVarEnableFXAA.GetValue())
+    if (GEnableFXAA)
     {
         FXAAPass->Execute(CommandList, SceneRenderView, Resources);
     }
@@ -960,7 +981,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
 
     // Debug geometry draws after composite so they render on top of the editor grid
     {
-        const bool bAnyDebugDraw = CVarDrawPointLights.GetValue() || CVarDrawLightProbes.GetValue() || CVarDrawAABBs.GetValue();
+        const bool bAnyDebugDraw = GDrawPointLights || GDrawLightProbes || GDrawAABBs;
         if (bAnyDebugDraw)
         {
         #if EDITOR_BUILD
@@ -973,17 +994,17 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
 
             CommandList.TransitionTextureState(DebugDepthTarget, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::DepthWrite));
 
-            if (CVarDrawPointLights.GetValue())
+            if (GDrawPointLights)
             {
                 DebugRenderer->RenderPointLights(CommandList, Resources, CurrentScene, SceneRenderView.RenderTarget, DebugDepthTarget);
             }
             
-            if (CVarDrawLightProbes.GetValue())
+            if (GDrawLightProbes)
             {
                 DebugRenderer->RenderLightProbes(CommandList, Resources, CurrentScene, SceneRenderView.RenderTarget, DebugDepthTarget);
             }
 
-            if (CVarDrawAABBs.GetValue())
+            if (GDrawAABBs)
             {
                 DebugRenderer->RenderObjectAABBs(CommandList, Resources, CurrentScene, SceneRenderView.RenderTarget, DebugDepthTarget);
             }
@@ -1054,9 +1075,9 @@ void FSceneRenderer::ProcessEditorObjectPickRequests(FRHICommandList& InCommandL
         return;
     }
 
-    const int32 RequestedRadius = CVarEditorPickSearchRadius.GetValue();
+    const int32 RequestedRadius = GEditorPickSearchRadius;
     const int32 SampleRadius    = Math::Clamp(RequestedRadius, 0, 64);
-    const bool  bTryFlipY       = CVarEditorPickTryFlipY.GetValue();
+    const bool  bTryFlipY       = GEditorPickTryFlipY;
 
     const int32 X0 = Math::Clamp<int32>(int32(PixelX) - SampleRadius, 0, int32(TexWidth) - 1);
     const int32 X1 = Math::Clamp<int32>(int32(PixelX) + SampleRadius, 0, int32(TexWidth) - 1);
@@ -1122,7 +1143,7 @@ void FSceneRenderer::ProcessEditorObjectPickRequests(FRHICommandList& InCommandL
     Fence->SetDebugName("EditorObjectPick Fence");
     ReadbackBuffer->SetDebugName("EditorObjectPick Readback");
 
-    if (CVarEditorPickDebug.GetValue())
+    if (GEditorPickDebug)
     {
         LOG_INFO("[EditorPick] Request. Pixel=(%u,%u) Tex=%ux%u Radius=%d TryFlipY=%s Region=(%u,%u) CenterLocal=(%u,%u)",
             PixelX, PixelY, TexWidth, TexHeight, SampleRadius, bTryFlipY ? "true" : "false",
@@ -1298,7 +1319,7 @@ bool FSceneRenderer::PollEditorObjectPickResult(FScene* Scene, uint32& OutObject
                             InFlight.FlippedCenterY);
                     }
 
-                    if (CVarEditorPickDebug.GetValue())
+                    if (GEditorPickDebug)
                     {
                         const uint32 NormalCenter = ReadPixel(
                             InFlight.NormalBaseOffset,
@@ -1394,7 +1415,7 @@ void FSceneRenderer::EndFrame()
     {
         TRACE_SCOPE("Present SwapChains");
 
-        const bool bEnableVSync = CVarVSyncEnabled.GetValue();
+        const bool bEnableVSync = GVSyncEnabled;
         for (FRHISwapChainRef SwapChain : SwapChainsToPresent)
         {
             FRHITexture* BackBuffer = SwapChain->GetBackBuffer();

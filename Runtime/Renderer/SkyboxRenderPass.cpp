@@ -9,10 +9,11 @@
 #include "Renderer/SkyboxRenderPass.h"
 #include "Renderer/Scene/Scene.h"
 
-static TAutoConsoleVariable<bool> CVarClearBeforeSkyboxEnabled(
+static bool GClearBeforeSkyboxEnabled = false;
+static FAutoConsoleVariableRef CVarClearBeforeSkyboxEnabled(
     "Renderer.Skybox.ClearBeforeSkybox",
     "Clear the final target before rendering the Skybox (Used for debugging)",
-    false);
+    GClearBeforeSkyboxEnabled);
 
 FSkyboxRenderPass::FSkyboxRenderPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -224,7 +225,7 @@ void FSkyboxRenderPass::Execute(FRHICommandList& CommandList, const FFrameResour
     const float RenderHeight = float(FrameResources.CurrentRenderHeight);
 
     const FFloatColor ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    const EAttachmentLoadAction LoadAction = CVarClearBeforeSkyboxEnabled.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
+    const EAttachmentLoadAction LoadAction = GClearBeforeSkyboxEnabled ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
     
     FRHITexture*          DepthTarget      = FrameResources.GBuffer[GBufferIndex_Depth].Get();
     FRHIRenderTargetView* RenderTargetView = FrameResources.SceneTarget->GetRenderTargetView();

@@ -8,20 +8,23 @@
 #include "Renderer/SceneRenderer.h"
 #include "Renderer/ScreenSpaceOcclusionRendering.h"
 
-static TAutoConsoleVariable<float> CVarSSAORadius(
+static float GSSAORadius = 0.2f;
+static FAutoConsoleVariableRef CVarSSAORadius(
     "Renderer.SSAO.Radius",
     "Specifies the radius of the Screen-Space Ray-Trace in SSAO",
-    0.2f);
+    GSSAORadius);
 
-static TAutoConsoleVariable<float> CVarSSAOBias(
-    "Renderer.SSAO.Bias", 
+static float GSSAOBias = 0.04f;
+static FAutoConsoleVariableRef CVarSSAOBias(
+    "Renderer.SSAO.Bias",
     "Specifies the bias when testing the Screen-Space Rays against the depth-buffer",
-    0.04f);
+    GSSAOBias);
 
-static TAutoConsoleVariable<int32> CVarSSAOKernelSize(
+static int32 GSSAOKernelSize = 8;
+static FAutoConsoleVariableRef CVarSSAOKernelSize(
     "Renderer.SSAO.KernelSize",
     "Specifies the number of samples for each pixel",
-    8);
+    GSSAOKernelSize);
 
 FScreenSpaceOcclusionPass::FScreenSpaceOcclusionPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -180,9 +183,9 @@ void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameReso
     SSAOSettings.ScreenSize  = FVector2(float(Width), float(Height));
     SSAOSettings.NoiseSize   = FVector2(4.0f, 4.0f);
     SSAOSettings.GBufferSize = FIntVector2(GBufferWidth, GBufferHeight);
-    SSAOSettings.Radius      = CVarSSAORadius.GetValue();
-    SSAOSettings.KernelSize  = CVarSSAOKernelSize.GetValue();
-    SSAOSettings.Bias        = CVarSSAOBias.GetValue();
+    SSAOSettings.Radius      = GSSAORadius;
+    SSAOSettings.KernelSize  = GSSAOKernelSize;
+    SSAOSettings.Bias        = GSSAOBias;
     SSAOSettings.FrameIndex  = GetRenderer()->GetFrameCounter().GetFrameIndex();
 
     CommandList.SetComputePipelineState(PipelineState.Get());

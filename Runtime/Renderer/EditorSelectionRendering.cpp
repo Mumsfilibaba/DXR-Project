@@ -10,10 +10,11 @@
 
 #if EDITOR_BUILD
 
-static TAutoConsoleVariable<bool> CVarEditorSelectionUseUnjitteredCamera(
+static bool GEditorSelectionUseUnjitteredCamera = true;
+static FAutoConsoleVariableRef CVarEditorSelectionUseUnjitteredCamera(
     "Renderer.Editor.Selection.UseUnjitteredCamera",
     "Use unjittered camera matrices for editor selection buffers (depth/ObjectID). Disable to better match TAA-jittered shading at the cost of more outline jitter.",
-    true,
+    GEditorSelectionUseUnjitteredCamera,
     EConsoleVariableFlags::Default);
 
 FEditorNoJitterDepthPass::FEditorNoJitterDepthPass(FSceneRenderer* InRenderer)
@@ -40,7 +41,7 @@ void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const F
     TArray<uint8>         ShaderCode;
     TArray<FShaderDefine> ShaderDefines;
 
-    ShaderDefines.Emplace("USE_UNJITTERED_CAMERA", CVarEditorSelectionUseUnjitteredCamera.GetValue() ? "(1)" : "(0)");
+    ShaderDefines.Emplace("USE_UNJITTERED_CAMERA", GEditorSelectionUseUnjitteredCamera ? "(1)" : "(0)");
 
     if (Material->HasHeightMap())
     {
@@ -347,7 +348,7 @@ void FEditorSelectionIDPass::PreparePipelineState(FMaterial* Material, const FFr
     TArray<uint8>         ShaderCode;
     TArray<FShaderDefine> ShaderDefines;
 
-    ShaderDefines.Emplace("USE_UNJITTERED_CAMERA", CVarEditorSelectionUseUnjitteredCamera.GetValue() ? "(1)" : "(0)");
+    ShaderDefines.Emplace("USE_UNJITTERED_CAMERA", GEditorSelectionUseUnjitteredCamera ? "(1)" : "(0)");
 
     if (Material->HasHeightMap())
     {

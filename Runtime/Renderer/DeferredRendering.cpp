@@ -9,15 +9,17 @@
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
 
-static TAutoConsoleVariable<bool> CVarDrawTileDebug(
-    "Renderer.Debug.DrawTiledLightning", 
-    "Draws the tiled lightning overlay, that displays how many lights are used in a certain tile", 
-    false);
+static bool GDrawTileDebug = false;
+static FAutoConsoleVariableRef CVarDrawTileDebug(
+    "Renderer.Debug.DrawTiledLightning",
+    "Draws the tiled lightning overlay, that displays how many lights are used in a certain tile",
+    GDrawTileDebug);
 
-static TAutoConsoleVariable<bool> CVarBasePassClearAllTargets(
+static bool GBasePassClearAllTargets = true;
+static FAutoConsoleVariableRef CVarBasePassClearAllTargets(
     "Renderer.BasePass.ClearAllTargets",
     "Set to true to clear all the GBuffer RenderTargets inside of the BasePass, otherwise only a few targets are cleared to save bandwidth",
-    true);
+    GBasePassClearAllTargets);
 
 FDepthPrePass::FDepthPrePass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -561,7 +563,7 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
     const float RenderWidth  = float(FrameResources.CurrentRenderWidth);
     const float RenderHeight = float(FrameResources.CurrentRenderHeight);
 
-    const EAttachmentLoadAction LoadAction = CVarBasePassClearAllTargets.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
+    const EAttachmentLoadAction LoadAction = GBasePassClearAllTargets ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
 
     FRHIRenderTargetView* AlbedoRenderTargetView   = FrameResources.GBuffer[GBufferIndex_Albedo]->GetRenderTargetView();
     FRHIRenderTargetView* NormalRenderTargetView   = FrameResources.GBuffer[GBufferIndex_Normal]->GetRenderTargetView();
@@ -934,7 +936,7 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
     }
 
     FRHIComputeShader* LightPassShader;
-    if (CVarDrawTileDebug.GetValue())
+    if (GDrawTileDebug)
     {
         LightPassShader = TiledLightShader_TileDebug.Get();
         CommandList.SetComputePipelineState(TiledLightPassPSO_TileDebug.Get());
