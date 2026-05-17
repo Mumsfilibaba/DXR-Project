@@ -95,12 +95,12 @@ FRHIDepthStencilView* FVulkanTextureRHI::GetDepthStencilView() const
 
 FRHIDescriptorHandle FVulkanTextureRHI::GetBindlessUAVHandle() const
 {
-    return FRHIDescriptorHandle();
+    return UnorderedAccessView ? UnorderedAccessView->GetBindlessHandle() : FRHIDescriptorHandle();
 }
 
 FRHIDescriptorHandle FVulkanTextureRHI::GetBindlessSRVHandle() const
 {
-    return FRHIDescriptorHandle();
+    return ShaderResourceView ? ShaderResourceView->GetBindlessHandle() : FRHIDescriptorHandle();
 }
 
 FVulkanTextureRHI::~FVulkanTextureRHI()

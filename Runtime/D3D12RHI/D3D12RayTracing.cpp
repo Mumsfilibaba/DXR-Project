@@ -217,7 +217,7 @@ FRHIShaderResourceView* FD3D12SceneAccelerationStructureRHI::GetShaderResourceVi
 
 FRHIDescriptorHandle FD3D12SceneAccelerationStructureRHI::GetBindlessHandle() const
 {
-    return FRHIDescriptorHandle();
+    return View ? View->GetBindlessHandle() : FRHIDescriptorHandle();
 }
 
 bool FD3D12SceneAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext, const FRHISceneAccelerationStructureBuildDesc& BuildDesc)

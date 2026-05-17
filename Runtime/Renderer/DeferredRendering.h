@@ -6,6 +6,8 @@
 #include "Renderer/FrameResources.h"
 #include "Renderer/RenderPass.h"
 
+extern bool GPrePassBindless;
+
 class FDepthPrePass : public FRenderPass
 {
 public:
@@ -19,7 +21,7 @@ public:
     void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene);
 
 private:
-    TMap<int32, FGraphicsPipelineStateInstance> MaterialPSOs;
+    TMap<uint64, FGraphicsPipelineStateInstance> MaterialPSOs;
 };
 
 class FDeferredBasePass : public FRenderPass
@@ -35,7 +37,7 @@ public:
     void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene);
 
 private:
-    TMap<int32, FGraphicsPipelineStateInstance> MaterialPSOs;
+    TMap<uint64, FGraphicsPipelineStateInstance> MaterialPSOs;
 };
 
 class FTiledLightPass : public FRenderPass
@@ -70,7 +72,6 @@ public:
 private:
     FRHIComputePipelineStateRef ReduceDepthInitalPSO;
     FRHIComputeShaderRef        ReduceDepthInitalShader;
-
     FRHIComputePipelineStateRef ReduceDepthPSO;
     FRHIComputeShaderRef        ReduceDepthShader;
 };

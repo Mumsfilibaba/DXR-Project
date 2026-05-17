@@ -8,6 +8,10 @@
     #define ENABLE_PARALLAX_MAPPING 0
 #endif
 
+#ifndef BINDLESS_SHADOWS
+    #define BINDLESS_SHADOWS (0)
+#endif
+
 #define NUM_CUBE_FACES 6
 
 #ifndef ENABLE_POINTLIGHT_VS_INSTANCING
@@ -24,14 +28,20 @@
 ConstantBuffer<FTransform> TransformBuffer : register(b1);
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
-    SamplerState MaterialSampler : register(s0);
     ConstantBuffer<FMaterial> MaterialBuffer : register(b2);
 
-    #if ENABLE_ALPHA_MASK
-        Texture2D<float4> AlbedoAlphaTex : register(t0);
-    #endif
-    #if ENABLE_PARALLAX_MAPPING
-        Texture2D<float> HeightMap : register(t1);
+    #if BINDLESS_SHADOWS
+        #define MATERIAL_BINDLESS_REGISTER b3
+        #include "../MaterialBindless.hlsli"
+    #else
+        SamplerState MaterialSampler : register(s0);
+
+        #if ENABLE_ALPHA_MASK
+            Texture2D<float4> AlbedoAlphaTex : register(t0);
+        #endif
+        #if ENABLE_PARALLAX_MAPPING
+            Texture2D<float> HeightMap : register(t1);
+        #endif
     #endif
 #endif
 
@@ -178,7 +188,11 @@ float Point_PSMain(FPSPointInput Input) : SV_DepthLessEqual
     // TODO: Do parallax-mapping
 
 #if ENABLE_ALPHA_MASK 
+#if BINDLESS_SHADOWS
+    const float AlphaMask = GetAlbedoBindless().Sample(GetMaterialSamplerBindless(), TexCoords).a;
+#else
     const float AlphaMask = AlbedoAlphaTex.Sample(MaterialSampler, TexCoords).a;
+#endif
 
     [[branch]]
     if (AlphaMask < 0.5)

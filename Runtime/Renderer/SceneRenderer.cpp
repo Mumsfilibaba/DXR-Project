@@ -13,6 +13,7 @@
 #include "Engine/Resources/Model.h"
 #include "Engine/World/Lights/PointLight.h"
 #include "Engine/World/Lights/DirectionalLight.h"
+#include "Renderer/MaterialBindless.h"
 #include "Renderer/SceneRenderer.h"
 #include "Renderer/EditorSelectionRendering.h"
 #include "Renderer/Performance/GPUProfiler.h"
@@ -302,6 +303,22 @@ bool FSceneRenderer::Initialize()
     else
     {
         Resources.TransformBuffer->SetDebugName("TransformBuffer");
+    }
+
+    FRHIBufferDesc MaterialIndicesBufferDesc;
+    MaterialIndicesBufferDesc.Size   = sizeof(FMaterialBindlessIndicesHLSL);
+    MaterialIndicesBufferDesc.Stride = sizeof(FMaterialBindlessIndicesHLSL);
+    MaterialIndicesBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Transient;
+
+    Resources.MaterialIndicesBuffer = RHI::CreateBuffer(MaterialIndicesBufferDesc, EResourceAccess::Common, nullptr);
+    if (!Resources.MaterialIndicesBuffer)
+    {
+        LOG_ERROR("[Renderer]: Failed to create MaterialIndicesBuffer");
+        return false;
+    }
+    else
+    {
+        Resources.MaterialIndicesBuffer->SetDebugName("MaterialBindless Indices");
     }
 
     // Initialize standard input layout

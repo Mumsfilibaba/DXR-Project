@@ -199,6 +199,7 @@ struct FFrameResources
     // Global Buffers
     FRHIBufferRef       CameraBuffer;
     FRHIBufferRef       TransformBuffer;
+    FRHIBufferRef       MaterialIndicesBuffer;
 
     // Global Samplers
     FRHISamplerStateRef PointLightShadowSampler;

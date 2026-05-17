@@ -17,7 +17,19 @@ void* FD3D12BufferRHI::GetRHINativeResource() const
 
 FRHIDescriptorHandle FD3D12BufferRHI::GetBindlessHandle() const
 {
-    return FRHIDescriptorHandle();
+    if (!Desc.IsConstantBuffer())
+    {
+        CHECK(false && "GetBindlessHandle called on a non-constant-buffer FD3D12BufferRHI");
+        return FRHIDescriptorHandle();
+    }
+
+    FD3D12ConstantBufferView* LocalConstantBufferView = const_cast<FD3D12BufferRHI*>(this)->GetOrCreateConstantBufferView();
+    if (!LocalConstantBufferView)
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    return LocalConstantBufferView->GetBindlessHandle();
 }
 
 FD3D12BufferRHI::~FD3D12BufferRHI()

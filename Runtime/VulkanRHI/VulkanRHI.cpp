@@ -334,7 +334,18 @@ bool FVulkanDeviceRHI::Initialize()
     DeviceCreateInfo.RequiredFeatures.Features12.timelineSemaphore   = VK_TRUE; 
     
     // Vulkan 1.2 Optional 
-    DeviceCreateInfo.OptionalFeatures.Features12.descriptorIndexing  = VK_TRUE; 
+    DeviceCreateInfo.OptionalFeatures.Features12.descriptorIndexing = VK_TRUE;
+
+    DeviceCreateInfo.OptionalFeatures.Features12.runtimeDescriptorArray                             = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features12.descriptorBindingPartiallyBound                    = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features12.descriptorBindingVariableDescriptorCount           = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features12.descriptorBindingSampledImageUpdateAfterBind       = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features12.descriptorBindingStorageImageUpdateAfterBind       = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features12.descriptorBindingUniformBufferUpdateAfterBind      = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features12.descriptorBindingStorageBufferUpdateAfterBind      = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features12.descriptorBindingUniformTexelBufferUpdateAfterBind = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features12.descriptorBindingStorageTexelBufferUpdateAfterBind = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features12.descriptorBindingUpdateUnusedWhilePending          = VK_TRUE;
 
     // Vulkan 1.3 Required
     DeviceCreateInfo.RequiredFeatures.Features13.dynamicRendering = VK_TRUE;

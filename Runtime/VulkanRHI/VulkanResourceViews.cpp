@@ -2,6 +2,7 @@
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanTexture.h"
 #include "VulkanRHI/VulkanBuffer.h"
+#include "VulkanRHI/VulkanDescriptorSet.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
 #include "VulkanRHI/VulkanRHI.h"
 #include "VulkanRHI/VulkanSwapChain.h"
@@ -12,6 +13,8 @@ FVulkanResourceView::FVulkanResourceView(FVulkanDevice* InDevice)
     , Type(EType::None)
     , OwnerResource(nullptr)
     , DescriptorVersion(0)
+    , BindlessHandle()
+    , bBindlessIsWritable(false)
 {
     FMemory::Memzero(&ImageViewInfo);
 }
@@ -19,14 +22,15 @@ FVulkanResourceView::FVulkanResourceView(FVulkanDevice* InDevice)
 FVulkanResourceView::~FVulkanResourceView()
 {
     UnregisterFromResource();
+    FreeBindlessHandle();
 
     if (Type == EType::ImageView)
     {
         if (VULKAN_CHECK_HANDLE(ImageViewInfo.ImageView))
         {
-#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
+        #if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
             GetDevice()->GetRenderPassCache().OnReleaseImageView(ImageViewInfo.ImageView);
-#endif
+        #endif
             vkDestroyImageView(GetDevice()->GetVkDevice(), ImageViewInfo.ImageView, nullptr);
         }
 
@@ -132,6 +136,8 @@ bool FVulkanResourceView::InitializeImageView(VkImage InImage, VkFormat InFormat
     ImageViewInfo.SubresourceRange.layerCount     = InLayerCount;
     ImageViewInfo.SubresourceRange.baseMipLevel   = InBaseMipLevel;
     ImageViewInfo.SubresourceRange.levelCount     = InLevelCount;
+    
+    IncrementDescriptorVersion();
     return true;
 }
 
@@ -148,6 +154,8 @@ bool FVulkanResourceView::InitializeStructuredBufferView(VkBuffer InBuffer, VkDe
     StructuredBufferInfo.Offset     = InOffset;
     StructuredBufferInfo.Range      = InRange;
     StructuredBufferInfo.ViewOffset = InViewOffset;
+
+    IncrementDescriptorVersion();
     return true;
 }
 
@@ -183,6 +191,8 @@ bool FVulkanResourceView::InitializeTypedBufferView(VkBuffer InBuffer, VkFormat 
     TypedBufferInfo.Format     = InFormat;
     TypedBufferInfo.Range      = (InRange == 0) ? VK_WHOLE_SIZE : InRange;
     TypedBufferInfo.ViewOffset = InOffset;
+
+    IncrementDescriptorVersion();
     return true;
 }
 
@@ -196,7 +206,158 @@ bool FVulkanResourceView::InitializeAccelerationStructureView(VkAccelerationStru
 
     Type                                            = EType::AccelerationStructureView;
     AccelerationStructureInfo.AccelerationStructure = InAccelerationStructure;
+
+    IncrementDescriptorVersion();
     return true;
+}
+
+FRHIDescriptorHandle FVulkanResourceView::EnsureBindlessHandle(EDescriptorType InType, bool bWritable) const
+{
+    FVulkanBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager();
+    if (!BindlessManager || !BindlessManager->IsEnabled())
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    if (BindlessHandle.IsValid())
+    {
+        return BindlessHandle;
+    }
+
+    if (Type == EType::None)
+    {
+        // The view has not been initialized yet -- nothing to mirror.
+        return FRHIDescriptorHandle();
+    }
+
+    BindlessHandle = BindlessManager->Allocate(InType);
+    if (!BindlessHandle.IsValid())
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    bBindlessIsWritable = bWritable;
+    switch (Type)
+    {
+        case EType::ImageView:
+        {
+            const VkImageLayout Layout = bWritable
+                ? VK_IMAGE_LAYOUT_GENERAL
+                : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+            const VkDescriptorType DescriptorType = bWritable
+                ? VK_DESCRIPTOR_TYPE_STORAGE_IMAGE
+                : VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+
+            BindlessManager->EnqueueImageWrite(BindlessHandle, ImageViewInfo.ImageView, Layout, DescriptorType);
+            break;
+        }
+
+        case EType::StructuredBufferView:
+        {
+            BindlessManager->EnqueueBufferWrite(BindlessHandle, StructuredBufferInfo.Buffer,
+                StructuredBufferInfo.Offset, StructuredBufferInfo.Range, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+            break;
+        }
+
+        case EType::TypedBufferView:
+        {
+            const VkDescriptorType DescriptorType = bWritable
+                ? VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER
+                : VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
+
+            BindlessManager->EnqueueTexelBufferWrite(BindlessHandle, TypedBufferInfo.BufferView, DescriptorType);
+            break;
+        }
+        
+        case EType::AccelerationStructureView:
+        {
+            BindlessManager->EnqueueAccelerationStructureWrite(BindlessHandle, AccelerationStructureInfo.AccelerationStructure);
+            break;
+        }
+
+        default:
+        {
+            break;
+        }
+    }
+
+    return BindlessHandle;
+}
+
+void FVulkanResourceView::RefreshBindlessIfBound()
+{
+    if (!BindlessHandle.IsValid())
+    {
+        return;
+    }
+
+    FVulkanBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager();
+    if (!BindlessManager || !BindlessManager->IsEnabled())
+    {
+        return;
+    }
+
+    switch (Type)
+    {
+        case EType::ImageView:
+        {
+            const VkImageLayout Layout = bBindlessIsWritable
+                ? VK_IMAGE_LAYOUT_GENERAL
+                : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+            const VkDescriptorType DescriptorType = bBindlessIsWritable
+                ? VK_DESCRIPTOR_TYPE_STORAGE_IMAGE
+                : VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+
+            BindlessManager->EnqueueImageWrite(BindlessHandle, ImageViewInfo.ImageView, Layout, DescriptorType);
+            break;
+        }
+        
+        case EType::StructuredBufferView:
+        {
+            BindlessManager->EnqueueBufferWrite(BindlessHandle, StructuredBufferInfo.Buffer,
+                StructuredBufferInfo.Offset, StructuredBufferInfo.Range, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+            break;
+        }
+        
+        case EType::TypedBufferView:
+        {
+            const VkDescriptorType DescriptorType = bBindlessIsWritable
+                ? VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER
+                : VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
+
+            BindlessManager->EnqueueTexelBufferWrite(BindlessHandle, TypedBufferInfo.BufferView, DescriptorType);
+            break;
+        }
+        
+        case EType::AccelerationStructureView:
+        {
+            BindlessManager->EnqueueAccelerationStructureWrite(BindlessHandle, AccelerationStructureInfo.AccelerationStructure);
+            break;
+        }
+
+        default:
+        {
+            break;
+        }
+    }
+}
+
+void FVulkanResourceView::FreeBindlessHandle()
+{
+    if (!BindlessHandle.IsValid())
+    {
+        return;
+    }
+
+    if (FVulkanBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager())
+    {
+        BindlessManager->Free(BindlessHandle);
+    }
+
+    BindlessHandle      = FRHIDescriptorHandle();
+    bBindlessIsWritable = false;
 }
 
 void FVulkanResourceView::SetDebugName(const FString& InName)
@@ -222,7 +383,7 @@ FVulkanShaderResourceViewRHI::FVulkanShaderResourceViewRHI(FVulkanDevice* InDevi
 
 FRHIDescriptorHandle FVulkanShaderResourceViewRHI::GetBindlessHandle() const
 {
-    return FRHIDescriptorHandle();
+    return EnsureBindlessHandle(EDescriptorType::ShaderResource, /*bWritable=*/ false);
 }
 
 void* FVulkanShaderResourceViewRHI::GetRHINativeHandle() const
@@ -263,6 +424,7 @@ void FVulkanShaderResourceViewRHI::OnResourceRelocated(FVulkanResource* Relocate
             FVulkanBufferRHI* VulkanBuffer = static_cast<FVulkanBufferRHI*>(RelocatedResource);
             StructuredBufferInfo.Buffer = VulkanBuffer->GetBindVkBuffer();
             StructuredBufferInfo.Offset = VulkanBuffer->GetBindOffset() + StructuredBufferInfo.ViewOffset;
+            IncrementDescriptorVersion();
         }
         else if (Type == EType::TypedBufferView)
         {
@@ -500,7 +662,7 @@ FVulkanUnorderedAccessViewRHI* FVulkanUnorderedAccessViewRHI::GetUnorderedAccess
 
 FRHIDescriptorHandle FVulkanUnorderedAccessViewRHI::GetBindlessHandle() const
 {
-    return FRHIDescriptorHandle();
+    return EnsureBindlessHandle(EDescriptorType::UnorderedAccess, /*bWritable=*/ true);
 }
 
 void* FVulkanUnorderedAccessViewRHI::GetRHINativeHandle() const
@@ -541,6 +703,7 @@ void FVulkanUnorderedAccessViewRHI::OnResourceRelocated(FVulkanResource* Relocat
             FVulkanBufferRHI* VulkanBuffer = static_cast<FVulkanBufferRHI*>(RelocatedResource);
             StructuredBufferInfo.Buffer = VulkanBuffer->GetBindVkBuffer();
             StructuredBufferInfo.Offset = VulkanBuffer->GetBindOffset() + StructuredBufferInfo.ViewOffset;
+            IncrementDescriptorVersion();
         }
         else if (Type == EType::TypedBufferView)
         {

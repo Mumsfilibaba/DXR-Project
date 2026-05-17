@@ -2,6 +2,7 @@
 #include "Core/Templates/NumericLimits.h"
 #include "VulkanRHI/VulkanRHI.h"
 #include "VulkanRHI/VulkanBuffer.h"
+#include "VulkanRHI/VulkanDescriptorSet.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanCommandContext.h"
 #include "RHI/RHIStats.h"
@@ -11,6 +12,7 @@ FVulkanBufferRHI::FVulkanBufferRHI(FVulkanDevice* InDevice, const FRHIBufferDesc
     , FVulkanResource(InDevice)
     , OwnedBuffer(VK_NULL_HANDLE)
     , RequiredAlignment(0)
+    , BindlessHandle()
     , DebugName()
 {
 }
@@ -22,11 +24,50 @@ void* FVulkanBufferRHI::GetRHINativeResource() const
 
 FRHIDescriptorHandle FVulkanBufferRHI::GetBindlessHandle() const
 {
-    return FRHIDescriptorHandle();
+    FVulkanBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager();
+    if (!BindlessManager || !BindlessManager->IsEnabled())
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    if (BindlessHandle.IsValid())
+    {
+        return BindlessHandle;
+    }
+
+    if (!Desc.IsConstantBuffer())
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    BindlessHandle = BindlessManager->Allocate(EDescriptorType::ConstantBuffer);
+    if (!BindlessHandle.IsValid())
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    BindlessManager->EnqueueBufferWrite(
+        BindlessHandle,
+        GetBindVkBuffer(),
+        GetBindOffset(),
+        GetBindRange(),
+        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+
+    return BindlessHandle;
 }
 
 FVulkanBufferRHI::~FVulkanBufferRHI()
 {
+    if (BindlessHandle.IsValid())
+    {
+        if (FVulkanBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager())
+        {
+            BindlessManager->Free(BindlessHandle);
+        }
+        
+        BindlessHandle = FRHIDescriptorHandle();
+    }
+
 #if VULKAN_ENABLE_STATS
     const int64 AllocatedSize = static_cast<int64>(MemoryLocation.GetSize());
     if (AllocatedSize > 0)

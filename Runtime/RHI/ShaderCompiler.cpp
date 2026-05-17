@@ -487,6 +487,15 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         CompileArgs.Emplace(L"-spirv");
         CompileArgs.Emplace(L"-fspv-target-env=vulkan1.2");
         CompileArgs.Emplace(L"-fspv-reduce-load-size");
+
+        // Set must match VULKAN_BINDLESS_HEAP_MARKER_SET in VulkanConstants.h.
+        CompileArgs.Emplace(L"-fvk-bind-resource-heap");
+        CompileArgs.Emplace(L"0");
+        CompileArgs.Emplace(L"31");
+
+        CompileArgs.Emplace(L"-fvk-bind-sampler-heap");
+        CompileArgs.Emplace(L"1");
+        CompileArgs.Emplace(L"31");
     }
 
     // Build the arguments for the compiler

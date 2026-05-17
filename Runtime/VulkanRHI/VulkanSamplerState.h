@@ -23,5 +23,6 @@ public:
     }
     
 private:
-    VkSampler Sampler;
+    VkSampler                    Sampler;
+    mutable FRHIDescriptorHandle BindlessHandle;
 };

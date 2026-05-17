@@ -21,24 +21,91 @@
     #define ENABLE_DOUBLE_SIDED (1)
 #endif
 
+#ifndef BINDLESS_BASE_PASS
+    #define BINDLESS_BASE_PASS (0)
+#endif
+
 // PerFrame
 ConstantBuffer<FCamera> CameraBuffer : register(b0);
 
-// PerObject Samplers
-SamplerState MaterialSampler : register(s0);
-
 ConstantBuffer<FTransform> TransformBuffer : register(b1);
 ConstantBuffer<FMaterial>  MaterialBuffer  : register(b1);
+
+#if BINDLESS_BASE_PASS
+
+#define MATERIAL_BINDLESS_REGISTER b2
+#include "MaterialBindless.hlsli"
+
+#else
+
+SamplerState MaterialSampler : register(s0);
 
 // Unified texture layout: AlbedoMap (RGBA), NormalMap, MaterialMap (R=AO, G=Roughness, B=Metallic), HeightMap
 Texture2D<float4> AlbedoMap   : register(t0);
 #if ENABLE_NORMAL_MAPPING
 Texture2D<float3> NormalTex   : register(t1);
-#endif
+#endif // ENABLE_NORMAL_MAPPING
 Texture2D<float3> MaterialMap : register(t2);
 #if ENABLE_PARALLAX_MAPPING
 Texture2D<float>  HeightTex   : register(t3);
+#endif // ENABLE_PARALLAX_MAPPING
+
+#endif // BINDLESS_BASE_PASS
+
+SamplerState GetMaterialSampler()
+{
+#if BINDLESS_BASE_PASS
+    return GetMaterialSamplerBindless();
+#else
+    return MaterialSampler;
 #endif
+}
+
+float4 GetAlbedo(float2 TexCoord)
+{
+#if BINDLESS_BASE_PASS
+    return GetAlbedoBindless().Sample(GetMaterialSampler(), TexCoord);
+#else
+    return AlbedoMap.Sample(MaterialSampler, TexCoord);
+#endif
+}
+
+#if ENABLE_NORMAL_MAPPING
+float3 GetNormal(float2 TexCoord)
+{
+#if BINDLESS_BASE_PASS
+    return GetNormalBindless().Sample(GetMaterialSampler(), TexCoord);
+#else
+    return NormalTex.Sample(MaterialSampler, TexCoord);
+#endif
+}
+#endif
+
+float3 GetMaterialParams(float2 TexCoord)
+{
+#if BINDLESS_BASE_PASS
+    return GetMaterialBindless().Sample(GetMaterialSampler(), TexCoord);
+#else
+    return MaterialMap.Sample(MaterialSampler, TexCoord);
+#endif
+}
+
+#if ENABLE_PARALLAX_MAPPING
+
+float2 ApplyParallax(float2 TexCoords, float3 ViewDir, float2 TexCoordsDx, float2 TexCoordsDy, out uint bParallaxDiscard)
+{
+#if BINDLESS_BASE_PASS
+    return ParallaxMapUV(GetHeightBindless(), GetMaterialSampler(), TexCoords, ViewDir, TexCoordsDx, TexCoordsDy,
+        MaterialBuffer.ParallaxHeightScale, MaterialBuffer.ParallaxMinLayers, MaterialBuffer.ParallaxMaxLayers,
+        bParallaxDiscard);
+#else
+    return ParallaxMapUV(HeightTex, MaterialSampler, TexCoords, ViewDir, TexCoordsDx, TexCoordsDy,
+        MaterialBuffer.ParallaxHeightScale, MaterialBuffer.ParallaxMinLayers, MaterialBuffer.ParallaxMaxLayers,
+        bParallaxDiscard);
+#endif
+}
+
+#endif // ENABLE_PARALLAX_MAPPING
 
 // VertexShader
 
@@ -143,7 +210,7 @@ FPSOutput PSMain(FPSInput Input)
     float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
 
     uint bParallaxDiscard = 0;
-    TexCoords = ParallaxMapUV(HeightTex, MaterialSampler, TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, MaterialBuffer.ParallaxHeightScale, MaterialBuffer.ParallaxMinLayers, MaterialBuffer.ParallaxMaxLayers, bParallaxDiscard);
+    TexCoords = ApplyParallax(TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, bParallaxDiscard);
     if (bParallaxDiscard != 0)
     {
         discard;
@@ -151,7 +218,7 @@ FPSOutput PSMain(FPSInput Input)
 #endif
 
     // Sample albedo (alpha in .a channel)
-    const float4 AlbedoSample = AlbedoMap.Sample(MaterialSampler, TexCoords);
+    const float4 AlbedoSample = GetAlbedo(TexCoords);
 
 #if ENABLE_ALPHA_MASK
     [[branch]]
@@ -165,7 +232,7 @@ FPSOutput PSMain(FPSInput Input)
 
     // Sample normal
 #if ENABLE_NORMAL_MAPPING
-    float3 SampledNormal = NormalTex.Sample(MaterialSampler, TexCoords);
+    float3 SampledNormal = GetNormal(TexCoords);
     SampledNormal = UnpackNormalBC5(SampledNormal);
 
     // Ensure Tangent frame is orthogonal
@@ -195,7 +262,7 @@ FPSOutput PSMain(FPSInput Input)
     Normal = PackNormal(Normal);
 
     // Sample material params from packed materialparam texture (R=AO, G=Roughness, B=Metallic)
-    const float3 MaterialParams = MaterialMap.Sample(MaterialSampler, TexCoords);
+    const float3 MaterialParams = GetMaterialParams(TexCoords);
     const float  Occlusion      = MaterialParams.r * MaterialBuffer.AO;
     float        Roughness      = MaterialParams.g * MaterialBuffer.Roughness;
     const float  Metallic       = MaterialParams.b * MaterialBuffer.Metallic;

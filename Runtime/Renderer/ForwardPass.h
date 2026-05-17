@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Containers/Map.h"
 #include "RHI/RHIShader.h"
 #include "RHI/RHICommandList.h"
 #include "Renderer/RenderPass.h"
@@ -14,7 +15,7 @@ public:
     void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene);
 
 private:
-    FRHIGraphicsPipelineStateRef PipelineState;
-    FRHIVertexShaderRef          VShader;
-    FRHIPixelShaderRef           PShader;
+    bool CompilePipelineState(FFrameResources& FrameResources, bool bBindless);
+
+    TMap<uint64, FGraphicsPipelineStateInstance> PipelineStates;
 };

@@ -1,13 +1,21 @@
 #include "Core/Misc/FrameProfiler.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Renderer/ForwardPass.h"
+#include "Renderer/MaterialBindless.h"
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
+
+static bool GForwardPassBindless = false;
+static FAutoConsoleVariableRef CVarForwardPassBindless(
+    "Renderer.ForwardPass.Bindless",
+    "When true, the forward pass samples per-material textures (Albedo / Normal / Material / Height) and the material sampler via SM 6.6 ResourceDescriptorHeap[] / SamplerDescriptorHeap[] and a per-material indices buffer instead of register bindings. Full-frame SRVs / samplers (sky, integration LUT, shadow maps) remain non-bindless.",
+    GForwardPassBindless);
 
 FForwardPass::FForwardPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -16,44 +24,47 @@ FForwardPass::FForwardPass(FSceneRenderer* InRenderer)
 
 FForwardPass::~FForwardPass()
 {
-    PipelineState.Reset();
-    VShader.Reset();
-    PShader.Reset();
+    PipelineStates.Clear();
 }
 
-bool FForwardPass::Initialize(FFrameResources& FrameResources)
+bool FForwardPass::CompilePipelineState(FFrameResources& FrameResources, bool bBindless)
 {
     TArray<FShaderDefine> Defines =
     {
         { "ENABLE_PARALLAX_MAPPING", "1" },
         { "ENABLE_NORMAL_MAPPING",   "1" },
+        { "BINDLESS_FORWARD_PASS", bBindless ? "(1)" : "(0)" },
     };
 
+    const EShaderModel TargetShaderModel = bBindless ? EShaderModel::SM_6_6 : EShaderModel::SM_6_2;
+
     TArray<uint8> ShaderCode;
-    
-    FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
+
+    FGraphicsPipelineStateInstance NewInstance;
+
+    FShaderCompileInfo CompileInfo("VSMain", TargetShaderModel, EShaderStage::Vertex, Defines);
     if (!FShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
         DEBUG_BREAK();
         return false;
     }
 
-    VShader = RHI::CreateVertexShader(ShaderCode);
-    if (!VShader)
+    NewInstance.VertexShader = RHI::CreateVertexShader(ShaderCode);
+    if (!NewInstance.VertexShader)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+    CompileInfo = FShaderCompileInfo("PSMain", TargetShaderModel, EShaderStage::Pixel, Defines);
     if (!FShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
         DEBUG_BREAK();
         return false;
     }
 
-    PShader = RHI::CreatePixelShader(ShaderCode);
-    if (!PShader)
+    NewInstance.PixelShader = RHI::CreatePixelShader(ShaderCode);
+    if (!NewInstance.PixelShader)
     {
         DEBUG_BREAK();
         return false;
@@ -64,8 +75,8 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
     DepthStencilStateDesc.bDepthEnable      = true;
     DepthStencilStateDesc.bDepthWriteEnable = true;
 
-    FRHIDepthStencilStateRef DepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
-    if (!DepthStencilState)
+    NewInstance.DepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
+    if (!NewInstance.DepthStencilState)
     {
         DEBUG_BREAK();
         return false;
@@ -74,8 +85,8 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
     FRHIRasterizerStateDesc RasterizerStateDesc;
     RasterizerStateDesc.CullMode = ECullMode::None;
 
-    FRHIRasterizerStateRef RasterizerState = RHI::CreateRasterizerState(RasterizerStateDesc);
-    if (!RasterizerState)
+    NewInstance.RasterizerState = RHI::CreateRasterizerState(RasterizerStateDesc);
+    if (!NewInstance.RasterizerState)
     {
         DEBUG_BREAK();
         return false;
@@ -87,29 +98,50 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
     BlendStateDesc.RenderTargets[0].SrcBlend = EBlendType::One;
     BlendStateDesc.RenderTargets[0].DstBlend = EBlendType::Zero;
 
-    FRHIBlendStateRef BlendState = RHI::CreateBlendState(BlendStateDesc);
-    if (!BlendState)
+    NewInstance.BlendState = RHI::CreateBlendState(BlendStateDesc);
+    if (!NewInstance.BlendState)
     {
         DEBUG_BREAK();
         return false;
     }
 
+    NewInstance.InputLayout = FrameResources.MeshInputLayout;
+
     FRHIGraphicsPipelineStateDesc PSODesc;
-    PSODesc.VertexShader                                   = VShader.Get();
-    PSODesc.PixelShader                                    = PShader.Get();
-    PSODesc.InputLayout                                    = FrameResources.MeshInputLayout.Get();
-    PSODesc.DepthStencilState                              = DepthStencilState.Get();
-    PSODesc.BlendState                                     = BlendState.Get();
-    PSODesc.RasterizerState                                = RasterizerState.Get();
+    PSODesc.VertexShader                                   = NewInstance.VertexShader.Get();
+    PSODesc.PixelShader                                    = NewInstance.PixelShader.Get();
+    PSODesc.InputLayout                                    = NewInstance.InputLayout.Get();
+    PSODesc.DepthStencilState                              = NewInstance.DepthStencilState.Get();
+    PSODesc.BlendState                                     = NewInstance.BlendState.Get();
+    PSODesc.RasterizerState                                = NewInstance.RasterizerState.Get();
     PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::SceneTargetFormat;
     PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
     PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
     PSODesc.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
 
-    PipelineState = RHI::CreateGraphicsPipelineState(PSODesc);
-    if (!PipelineState)
+    NewInstance.PipelineState = RHI::CreateGraphicsPipelineState(PSODesc);
+    if (!NewInstance.PipelineState)
     {
         DEBUG_BREAK();
+        return false;
+    }
+
+    const FString DebugName = FString::CreateFormatted("ForwardPass PipelineState%s", bBindless ? " [Bindless]" : "");
+    NewInstance.PipelineState->SetDebugName(DebugName);
+
+    PipelineStates.Add(MakeMaterialPSOKey(0, bBindless), Move(NewInstance));
+    return true;
+}
+
+bool FForwardPass::Initialize(FFrameResources& FrameResources)
+{
+    if (!CompilePipelineState(FrameResources, false))
+    {
+        return false;
+    }
+
+    if (!CompilePipelineState(FrameResources, true))
+    {
         return false;
     }
 
@@ -145,7 +177,21 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     RenderPassDesc.DepthStencilAttachment = FRHIDepthStencilAttachment(DepthStencilView, EAttachmentLoadAction::Load);
     CommandList.BeginRenderPass(RenderPassDesc);
 
-    CommandList.SetGraphicsPipelineState(PipelineState.Get());
+    const bool bBindless = GForwardPassBindless && FrameResources.MaterialIndicesBuffer.IsValid();
+
+    FGraphicsPipelineStateInstance* PipelineInstance = PipelineStates.Find(MakeMaterialPSOKey(0, bBindless));
+    if (!PipelineInstance)
+    {
+        CommandList.EndRenderPass();
+        CommandList.TransitionTextureState(FrameResources.ShadowCascades.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+        DEBUG_BREAK();
+        return;
+    }
+
+    FRHIVertexShaderRef VShader = PipelineInstance->VertexShader;
+    FRHIPixelShaderRef  PShader = PipelineInstance->PixelShader;
+
+    CommandList.SetGraphicsPipelineState(PipelineInstance->PipelineState.Get());
 
     CommandList.SetConstantBuffer(PShader.Get(), FrameResources.CameraBuffer.Get(), 0);
     // TODO: Fix point-light count in shader
@@ -184,14 +230,25 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
         
         FRHIBuffer* ConstantBuffer = Material->GetMaterialBuffer();
         CommandList.SetConstantBuffer(PShader.Get(), ConstantBuffer, 6);
-        
-        CommandList.SetShaderResourceView(PShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 5);
-        CommandList.SetShaderResourceView(PShader.Get(), Material->NormalMap->GetShaderResourceView(), 6);
-        CommandList.SetShaderResourceView(PShader.Get(), Material->MaterialMap->GetShaderResourceView(), 7);
-        CommandList.SetShaderResourceView(PShader.Get(), Material->HeightMap->GetShaderResourceView(), 8);
-        
-        FRHISamplerState* SamplerState = Material->GetMaterialSampler();
-        CommandList.SetSamplerState(PShader.Get(), SamplerState, 0);
+
+        if (bBindless)
+        {
+            FMaterialBindlessIndicesHLSL Indices;
+            FillMaterialBindlessIndices(*Material, Indices);
+
+            CommandList.UpdateBuffer(FrameResources.MaterialIndicesBuffer.Get(), FBufferRegion(0, sizeof(FMaterialBindlessIndicesHLSL)), &Indices);
+            CommandList.SetConstantBuffer(PShader.Get(), FrameResources.MaterialIndicesBuffer.Get(), 7);
+        }
+        else
+        {
+            CommandList.SetShaderResourceView(PShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 5);
+            CommandList.SetShaderResourceView(PShader.Get(), Material->NormalMap->GetShaderResourceView(), 6);
+            CommandList.SetShaderResourceView(PShader.Get(), Material->MaterialMap->GetShaderResourceView(), 7);
+            CommandList.SetShaderResourceView(PShader.Get(), Material->HeightMap->GetShaderResourceView(), 8);
+
+            FRHISamplerState* SamplerState = Material->GetMaterialSampler();
+            CommandList.SetSamplerState(PShader.Get(), SamplerState, 0);
+        }
 
         for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
         {

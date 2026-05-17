@@ -2,6 +2,7 @@
 #include "D3D12RHI/D3D12DeletionQueue.h"
 #include "D3D12RHI/D3D12Heap.h"
 #include "D3D12RHI/D3D12Allocators.h"
+#include "D3D12RHI/D3D12Descriptors.h"
 #include "D3D12RHI/D3D12ResidencyManager.h"
 
 void FD3D12DeferredObject::ProcessItems(const TArray<FD3D12DeferredObject>& Items)
@@ -78,6 +79,13 @@ void FD3D12DeferredObject::ProcessItems(const TArray<FD3D12DeferredObject>& Item
                 CHECK(Item.LinearAllocatorPage.Allocator != nullptr);
                 CHECK(Item.LinearAllocatorPage.Page != nullptr);
                 Item.LinearAllocatorPage.Allocator->ReturnPage(Item.LinearAllocatorPage.Page);
+                break;
+            }
+
+            case FD3D12DeferredObject::EType::BindlessSlot:
+            {
+                CHECK(Item.BindlessSlot.Heap != nullptr);
+                Item.BindlessSlot.Heap->RecycleSlot(Item.BindlessSlot.Handle);
                 break;
             }
         }

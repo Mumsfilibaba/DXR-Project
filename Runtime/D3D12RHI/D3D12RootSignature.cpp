@@ -268,9 +268,13 @@ FD3D12RootSignatureLayout::FD3D12RootSignatureLayout()
     : Type(ERootSignatureType::Unknown)
     , bAllowInputAssembler(false)
     , bAllowStreamOutput(false)
+    , bDirectlyIndexedResourceHeap(false)
+    , bDirectlyIndexedSamplerHeap(false)
     , NumPushConstants(0)
 {
 }
+
+FD3D12RootSignatureLayout::~FD3D12RootSignatureLayout() = default;
 
 void FD3D12RootSignatureLayout::AddStaticSampler(const FRHIStaticSamplerInfo& StaticSampler)
 {
@@ -407,6 +411,11 @@ bool FD3D12RootSignatureLayout::IsCompatible(const FD3D12RootSignatureLayout& Ot
         return false;
     }
 
+    if (bDirectlyIndexedResourceHeap != Other.bDirectlyIndexedResourceHeap || bDirectlyIndexedSamplerHeap != Other.bDirectlyIndexedSamplerHeap)
+    {
+        return false;
+    }
+
     if (NumPushConstants > Other.NumPushConstants)
     {
         return false;
@@ -450,6 +459,8 @@ FD3D12DescriptorTableMapping::FD3D12DescriptorTableMapping()
 {
     FMemory::Memzero(SlotToRegister, sizeof(SlotToRegister));
 }
+
+FD3D12DescriptorTableMapping::~FD3D12DescriptorTableMapping() = default;
 
 void FD3D12DescriptorTableMapping::Build(const FD3D12RegisterSet& Registers)
 {
@@ -508,6 +519,8 @@ FD3D12ShaderStage::FD3D12ShaderStage()
 
     FMemory::Memzero(RootDescriptors, sizeof(RootDescriptors));
 }
+
+FD3D12ShaderStage::~FD3D12ShaderStage() = default;
 
 void FD3D12ShaderStage::SetDescriptorTableIndex(EResourceType::Type Type, int8 RootParameterIndex, int8 DescriptorCount)
 {
@@ -758,12 +771,23 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
         Flags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT;
     }
 
+    if (Layout.GetDirectlyIndexedResourceHeap())
+    {
+        Flags |= D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
+    }
+
+    if (Layout.GetDirectlyIndexedSamplerHeap())
+    {
+        Flags |= D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED;
+    }
+
     NumStaticSamplers = 0;
 
     const auto& LayoutStaticSamplers = Layout.GetStaticSamplers();
     for (int32 i = 0; i < LayoutStaticSamplers.Size() && NumStaticSamplers < 16; ++i)
     {
         const FRHIStaticSamplerInfo& Entry = LayoutStaticSamplers[i];
+        
         D3D12_STATIC_SAMPLER_DESC& Desc = StaticSamplers[NumStaticSamplers];
         Desc.Filter           = ConvertSamplerFilter(Entry.Filter);
         Desc.AddressU         = ConvertSamplerMode(Entry.AddressU);
@@ -827,6 +851,8 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
     Desc.Flags             = Flags;
 #endif
 }
+
+FD3D12RootSignatureDescHelper::~FD3D12RootSignatureDescHelper() = default;
 
 #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
 uint32 FD3D12RootSignatureDescHelper::BuildDescriptorRangesForRegisterSet(const FD3D12RegisterSet& Registers, D3D12_DESCRIPTOR_RANGE_TYPE RangeType, uint32 Space, D3D12_DESCRIPTOR_RANGE_FLAGS RangeFlags)
@@ -1053,6 +1079,8 @@ FD3D12RootSignature::FD3D12RootSignature(FD3D12Device* InDevice)
     , Hash(0)
 {
 }
+
+FD3D12RootSignature::~FD3D12RootSignature() = default;
 
 bool FD3D12RootSignature::Initialize(const FD3D12RootSignatureLayout& Layout)
 {

@@ -8,6 +8,7 @@
 struct IDXGIAdapter3;
 class FD3D12Device;
 class FD3D12Fence;
+class FD3D12Resource;
 class FD3D12ResidencyManager;
 class FGenericThread;
 
@@ -23,6 +24,14 @@ public:
         Pageable    = InPageable;
         SizeBytes   = InSizeBytes;
         bIsResident = true;
+    }
+
+    void Deinitialize()
+    {
+        Pageable    = nullptr;
+        SizeBytes   = 0;
+        bIsResident = false;
+        bIsTracked  = false;
     }
 
     FORCEINLINE bool IsResident()    const { return bIsResident; }

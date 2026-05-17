@@ -5,6 +5,7 @@
 #include "VulkanRHI/VulkanTexture.h"
 #include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/VulkanBuffer.h"
+#include "VulkanRHI/VulkanDescriptorSet.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanFence.h"
 #include "VulkanRHI/VulkanRHI.h"
@@ -366,6 +367,14 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQu
         }
     }
 #endif
+
+    if (FVulkanBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager())
+    {
+        if (BindlessManager->IsEnabled())
+        {
+            BindlessManager->Flush();
+        }
+    }
 
     if (!CommandBuffer->End())
     {

@@ -14,6 +14,10 @@
     #define USE_UNJITTERED_CAMERA (0)
 #endif
 
+#ifndef BINDLESS_PRE_PASS
+    #define BINDLESS_PRE_PASS (0)
+#endif
+
 // Per Frame
 ConstantBuffer<FCamera> CameraBuffer : register(b0);
 
@@ -23,14 +27,19 @@ ConstantBuffer<FTransform> TransformBuffer : register(b1);
 // Per Object
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     ConstantBuffer<FMaterial> MaterialBuffer : register(b1);
+#if BINDLESS_PRE_PASS
+    #define MATERIAL_BINDLESS_REGISTER b2
+    #include "MaterialBindless.hlsli"
+#else
     SamplerState MaterialSampler : register(s0);
 #if ENABLE_ALPHA_MASK
     Texture2D<float4> AlbedoAlphaTex : register(t0);
-#endif
+#endif // ENABLE_ALPHA_MASK
 #if ENABLE_PARALLAX_MAPPING
     Texture2D<float> HeightTex : register(t1);
-#endif
-#endif
+#endif // ENABLE_PARALLAX_MAPPING
+#endif // BINDLESS_PRE_PASS
+#endif // ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
 
 // VertexShader
 
@@ -40,21 +49,21 @@ struct FVSInput
 #if ENABLE_PARALLAX_MAPPING
     float3 Normal  : NORMAL0;
     float3 Tangent : TANGENT0;
-#endif
+#endif // ENABLE_PARALLAX_MAPPING
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
-#endif
+#endif // ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
 };
 
 struct FVSOutput
 {
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
-#endif
+#endif // ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
 #if ENABLE_PARALLAX_MAPPING 
     float3 TangentViewPos  : TANGENTVIEWPOS0;
     float3 TangentPosition : TANGENTPOSITION0;
-#endif
+#endif // ENABLE_PARALLAX_MAPPING
     float4 Position : SV_Position;
 };
 
@@ -69,7 +78,7 @@ FVSOutput VSMain(FVSInput Input)
     Output.Position = mul(PositionWS, CameraBuffer.ViewProjectionUnjittered);
 #else
     Output.Position = mul(PositionWS, CameraBuffer.ViewProjection);
-#endif
+#endif // USE_UNJITTERED_CAMERA
 
     // Normal
 #if ENABLE_PARALLAX_MAPPING
@@ -81,11 +90,11 @@ FVSOutput VSMain(FVSInput Input)
     const float3x3 TangentSpace = float3x3(Tangent, Bitangent, Normal);
     Output.TangentViewPos  = mul(TangentSpace, CameraBuffer.PositionWS);
     Output.TangentPosition = mul(TangentSpace, PositionWS3);
-#endif
+#endif // ENABLE_PARALLAX_MAPPING
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     Output.TexCoord = Input.TexCoord;
-#endif
+#endif // ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
 
     return Output;
 }
@@ -115,20 +124,28 @@ void PSMain(FPSInput Input)
     float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
 
     uint bParallaxDiscard = 0;
+#if BINDLESS_PRE_PASS
+    TexCoords = ParallaxMapUV(GetHeightBindless(), GetMaterialSamplerBindless(), TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, MaterialBuffer.ParallaxHeightScale, MaterialBuffer.ParallaxMinLayers, MaterialBuffer.ParallaxMaxLayers, bParallaxDiscard);
+#else
     TexCoords = ParallaxMapUV(HeightTex, MaterialSampler, TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, MaterialBuffer.ParallaxHeightScale, MaterialBuffer.ParallaxMinLayers, MaterialBuffer.ParallaxMaxLayers, bParallaxDiscard);
+#endif // BINDLESS_PRE_PASS
     if (bParallaxDiscard != 0)
     {
         discard;
     }
-#endif
+#endif // ENABLE_PARALLAX_MAPPING
 
 #if ENABLE_ALPHA_MASK
+#if BINDLESS_PRE_PASS
+    const float AlphaMask = GetAlbedoBindless().Sample(GetMaterialSamplerBindless(), TexCoords).a;
+#else
     const float AlphaMask = AlbedoAlphaTex.Sample(MaterialSampler, TexCoords).a;
+#endif // BINDLESS_PRE_PASS
     [[branch]]
     if (AlphaMask < 0.5)
     {
         discard;
     }
-#endif
-#endif
+#endif // ENABLE_ALPHA_MASK
+#endif // ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
 }

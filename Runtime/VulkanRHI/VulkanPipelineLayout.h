@@ -5,6 +5,17 @@
 #include "VulkanRHI/VulkanDeviceChild.h"
 #include "VulkanRHI/VulkanShader.h"
 
+struct EResourceType
+{
+    enum Type
+    {
+        SRV = 0,
+        UAV,
+        UniformBuffer,
+        Sampler,
+    };
+};
+
 struct FVulkanDescriptorSetLayoutInfo
 {
     FVulkanDescriptorSetLayoutInfo()
@@ -124,6 +135,7 @@ struct FVulkanPipelineLayoutInfo
         : SetLayoutInfos()
         , ConstantsInfo()
         , Hash(0)
+        , bAnyStageUsesBindless(false)
     {
     }
 
@@ -151,6 +163,7 @@ struct FVulkanPipelineLayoutInfo
     {
         Hash = ConstantsInfo.NumConstants;
         HashCombine(Hash, ConstantsInfo.StageFlags);
+        HashCombine(Hash, bAnyStageUsesBindless ? 1ull : 0ull);
 
         for (int32 Index = 0; Index < SetLayoutInfos.Size(); Index++)
         {
@@ -170,7 +183,8 @@ struct FVulkanPipelineLayoutInfo
     {
         if (SetLayoutRemappings.Size() != Other.SetLayoutRemappings.Size() || 
             SetLayoutInfos.Size() != Other.SetLayoutInfos.Size() || 
-            ConstantsInfo != Other.ConstantsInfo)
+            ConstantsInfo != Other.ConstantsInfo ||
+            bAnyStageUsesBindless != Other.bAnyStageUsesBindless)
         {
             return false;
         }
@@ -208,17 +222,7 @@ struct FVulkanPipelineLayoutInfo
     TArray<FVulkanDescriptorSetLayoutInfo> SetLayoutInfos;      // The actual information for the DescriptorSetLayouts
     FPushConstantsInfo                     ConstantsInfo;       // Information about global push constants in the pipeline
     uint64                                 Hash;
-};
-
-struct EResourceType
-{
-    enum Type
-    {
-        SRV = 0,
-        UAV,
-        UniformBuffer,
-        Sampler,
-    };
+    bool                                   bAnyStageUsesBindless;
 };
 
 struct FStageDescriptorMap
@@ -250,9 +254,9 @@ public:
         return LayoutHandle;
     }
 
-    VkDescriptorSetLayout GetVkDescriptorSetLayout(int32 DescriptorSetIndex) const
+    VkDescriptorSetLayout GetVkDescriptorSetLayout(int32 RegularSetIndex) const
     {
-        return SetLayoutHandles[DescriptorSetIndex];
+        return RegularSetLayoutHandles[RegularSetIndex];
     }
 
     const FVulkanDescriptorRemappingInfo& GetDescriptorRemappingInfo(int32 DescriptorSetIndex) const
@@ -280,6 +284,16 @@ public:
         return TotalDynamicOffsets;
     }
 
+    uint32 GetRegularSetCount() const
+    {
+        return RegularSetCount;
+    }
+
+    bool HasBindlessSet() const
+    {
+        return bHasBindlessSet;
+    }
+
 #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
     const CHAR* GetBindingDebugName(int32 SetIndex, int32 BindingIndex) const
     {
@@ -296,12 +310,15 @@ private:
     void SetupResourceMapping(const FVulkanPipelineLayoutInfo& LayoutInfo);
 
     VkPipelineLayout                       LayoutHandle;
-    TArray<VkDescriptorSetLayout>          SetLayoutHandles;
+    TArray<VkDescriptorSetLayout>          RegularSetLayoutHandles;
+    VkDescriptorSetLayout                  BindlessSetLayoutHandle;
     TArray<FVulkanDescriptorRemappingInfo> SetLayoutRemappings;
     TArray<uint32>                         DynamicOffsetCounts;
     uint32                                 TotalDynamicOffsets;
     FPushConstantsInfo                     ConstantsInfo;
     FStageDescriptorMap                    DescriptorBindMap[EShaderVisibility::Count];
+    uint32                                 RegularSetCount;
+    bool                                   bHasBindlessSet;
 #if VULKAN_STORE_DEBUG_NAMES
     FString                                DebugName;
 #endif

@@ -21,6 +21,7 @@ class FD3D12RootSignature;
 class FD3D12ComputePipelineStateRHI;
 class FD3D12OnlineDescriptorHeap;
 class FD3D12OfflineDescriptorHeap;
+class FD3D12BindlessDescriptorHeap;
 class FD3D12QueryHeap;
 class FD3D12QueryHeapManager;
 class FD3D12ResidencyManager;
@@ -170,6 +171,8 @@ public:
     void BeginFrame(FD3D12CommandContext* InCommandContext);
     void UnregisterDebugMessageCallback();
     void CancelPendingDefragMoves(FD3D12ResourceBase* Owner);
+    
+    bool ReallocateGlobalDescriptorHeap(ED3D12GlobalDescriptorHeapType HeapType);
 
     bool CreateCommittedResource(const D3D12_RESOURCE_DESC& Desc, D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceRef& OutResource);
     bool CreatePlacedResource(FD3D12Heap* Heap, uint64 Offset, const D3D12_RESOURCE_DESC& Desc, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceRef& OutResource);
@@ -189,6 +192,8 @@ public:
     FD3D12PipelineStateManager&      GetPipelineStateManager()              const { return *PipelineStateManager; }
     FD3D12OnlineDescriptorHeap&      GetGlobalResourceHeap()                const { return *GlobalResourceHeap; }
     FD3D12OnlineDescriptorHeap&      GetGlobalSamplerHeap()                 const { return *GlobalSamplerHeap; }
+    FD3D12BindlessDescriptorHeap*    GetResourceBindlessHeap()              const { return ResourceBindlessHeap; }
+    FD3D12BindlessDescriptorHeap*    GetSamplerBindlessHeap()               const { return SamplerBindlessHeap; }
     FD3D12OfflineDescriptorHeap&     GetResourceOfflineDescriptorHeap()     const { return *ResourceOfflineDescriptorHeap; }
     FD3D12OfflineDescriptorHeap&     GetRenderTargetOfflineDescriptorHeap() const { return *RenderTargetOfflineDescriptorHeap; }
     FD3D12OfflineDescriptorHeap&     GetDepthStencilOfflineDescriptorHeap() const { return *DepthStencilOfflineDescriptorHeap; }
@@ -269,6 +274,8 @@ private:
 
     FD3D12OnlineDescriptorHeap*      GlobalResourceHeap;
     FD3D12OnlineDescriptorHeap*      GlobalSamplerHeap;
+    FD3D12BindlessDescriptorHeap*    ResourceBindlessHeap;
+    FD3D12BindlessDescriptorHeap*    SamplerBindlessHeap;
     FD3D12OfflineDescriptorHeap*     ResourceOfflineDescriptorHeap;
     FD3D12OfflineDescriptorHeap*     RenderTargetOfflineDescriptorHeap;
     FD3D12OfflineDescriptorHeap*     DepthStencilOfflineDescriptorHeap;

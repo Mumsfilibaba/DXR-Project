@@ -64,6 +64,26 @@ static TAutoConsoleVariable<int32> CVarSamplerOnlineDescriptorBlockSize(
     "Number of descriptors in each Sampler OnlineDescriptorHeap", 
     256);
 
+static TAutoConsoleVariable<bool> CVarEnableBindless(
+    "D3D12RHI.EnableBindless",
+    "When enabled, allocates a sub-region of the global descriptor heaps for bindless resources "
+    "and emits root signatures with HEAP_DIRECTLY_INDEXED flags for shaders that need it. "
+    "Has no effect when GD3D12SupportsBindless is false (requires SM 6.6 + Resource Binding Tier 3).",
+    true);
+
+static TAutoConsoleVariable<int32> CVarNumBindlessResourceDescriptors(
+    "D3D12RHI.NumBindlessResourceDescriptors",
+    "Number of CBV/SRV/UAV slots reserved at the start of the global resource descriptor heap "
+    "for bindless resources. Clamped so that at least one block remains available for legacy "
+    "descriptor tables.",
+    100000);
+
+static TAutoConsoleVariable<int32> CVarNumBindlessSamplerDescriptors(
+    "D3D12RHI.NumBindlessSamplerDescriptors",
+    "Number of sampler slots reserved at the start of the global sampler descriptor heap for "
+    "bindless samplers. Clamped so that at least one block remains available for legacy tables.",
+    256);
+
 static TAutoConsoleVariable<int32> CVarUploadHeapSmallAllocationThreshold(
     "D3D12RHI.UploadHeapSmallAllocationThreshold",
     "Allocation size threshold for the upload small allocator path (bytes)",
@@ -342,6 +362,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
         }
 
         D3D12_ERROR("%s", *Message);
+
         for (uint32 i = 0; i < CurrentNode->BreadcrumbCount; i++)
         {
             Message = "    " + FString(ToString(CurrentNode->pCommandHistory[i]));
@@ -656,6 +677,8 @@ bool FD3D12Adapter::Initialize()
 FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
     : GlobalResourceHeap(nullptr)
     , GlobalSamplerHeap(nullptr)
+    , ResourceBindlessHeap(nullptr)
+    , SamplerBindlessHeap(nullptr)
     , ResourceOfflineDescriptorHeap(nullptr)
     , RenderTargetOfflineDescriptorHeap(nullptr)
     , DepthStencilOfflineDescriptorHeap(nullptr)
@@ -769,7 +792,9 @@ FD3D12Device::~FD3D12Device()
     SAFE_DELETE(CopyCommandAllocatorManager);
     SAFE_DELETE(ComputeCommandAllocatorManager);
 
-    // Release Heaps
+    // Release Heaps. Bindless heaps must be released before the global heaps they alias.
+    SAFE_DELETE(ResourceBindlessHeap);
+    SAFE_DELETE(SamplerBindlessHeap);
     SAFE_DELETE(GlobalResourceHeap);
     SAFE_DELETE(GlobalSamplerHeap);
     SAFE_DELETE(ResourceOfflineDescriptorHeap);
@@ -1050,25 +1075,49 @@ bool FD3D12Device::Initialize()
     // Create RootSignatureManager
     RootSignatureManager = new FD3D12RootSignatureManager(this);
 
-    // Create DescriptorHeaps
-    const uint32 NumOnlineResourceDescriptors = Math::Min<uint32>(D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, GD3D12MaxResourceDescriptorHeapSize);
-    const uint32 ResourceDescriptorBlockSize  = Math::Min<uint32>(CVarResourceOnlineDescriptorBlockSize.GetValue(), NumOnlineResourceDescriptors);
+    const uint32 NumOnlineResourceDescriptors   = Math::Min<uint32>(D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, GD3D12MaxResourceDescriptorHeapSize);
+    const uint32 ResourceDescriptorBlockSize    = Math::Min<uint32>(CVarResourceOnlineDescriptorBlockSize.GetValue(), NumOnlineResourceDescriptors);
+    const bool   bBindlessEnabled               = GD3D12SupportsBindless && CVarEnableBindless.GetValue();
+    const uint32 RequestedBindlessResourceCount = bBindlessEnabled ? Math::Max<int32>(0, CVarNumBindlessResourceDescriptors.GetValue()) : 0u;
+    const uint32 RequestedBindlessSamplerCount  = bBindlessEnabled ? Math::Max<int32>(0, CVarNumBindlessSamplerDescriptors.GetValue())  : 0u;
+
+    const uint32 EffectiveBindlessResourceCount = (RequestedBindlessResourceCount > 0 && NumOnlineResourceDescriptors > ResourceDescriptorBlockSize)
+        ? Math::Min<uint32>(RequestedBindlessResourceCount, NumOnlineResourceDescriptors - ResourceDescriptorBlockSize)
+        : 0u;
 
     GlobalResourceHeap = new FD3D12OnlineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    if (!GlobalResourceHeap->Initialize(NumOnlineResourceDescriptors, ResourceDescriptorBlockSize))
+    if (!GlobalResourceHeap->Initialize(NumOnlineResourceDescriptors, ResourceDescriptorBlockSize, EffectiveBindlessResourceCount))
     {
         D3D12_ERROR("Failed to create global resource descriptor heap");
         return false;
     }
 
+    if (EffectiveBindlessResourceCount > 0)
+    {
+        ResourceBindlessHeap = new FD3D12BindlessDescriptorHeap(*GlobalResourceHeap, EffectiveBindlessResourceCount);
+        D3D12_INFO("[FD3D12Device]: Bindless resource heap. Capacity=%u (Requested=%u Heap=%u BlockSize=%u)",
+            EffectiveBindlessResourceCount, RequestedBindlessResourceCount, NumOnlineResourceDescriptors, ResourceDescriptorBlockSize);
+    }
+
     const uint32 NumOnlineSamplerDescriptors = Math::Min<uint32>(D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT, GD3D12MaxSamplerDescriptorHeapSize);
     const uint32 SamplerDescriptorBlockSize  = Math::Min<uint32>(CVarSamplerOnlineDescriptorBlockSize.GetValue(), NumOnlineSamplerDescriptors);
 
+    const uint32 EffectiveBindlessSamplerCount = (RequestedBindlessSamplerCount > 0 && NumOnlineSamplerDescriptors > SamplerDescriptorBlockSize)
+        ? Math::Min<uint32>(RequestedBindlessSamplerCount, NumOnlineSamplerDescriptors - SamplerDescriptorBlockSize)
+        : 0u;
+
     GlobalSamplerHeap = new FD3D12OnlineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
-    if (!GlobalSamplerHeap->Initialize(NumOnlineSamplerDescriptors, SamplerDescriptorBlockSize))
+    if (!GlobalSamplerHeap->Initialize(NumOnlineSamplerDescriptors, SamplerDescriptorBlockSize, EffectiveBindlessSamplerCount))
     {
         D3D12_ERROR("Failed to create global sampler descriptor heap");
         return false;
+    }
+
+    if (EffectiveBindlessSamplerCount > 0)
+    {
+        SamplerBindlessHeap = new FD3D12BindlessDescriptorHeap(*GlobalSamplerHeap, EffectiveBindlessSamplerCount);
+        D3D12_INFO("[FD3D12Device]: Bindless sampler heap. Capacity=%u (Requested=%u Heap=%u BlockSize=%u)",
+            EffectiveBindlessSamplerCount, RequestedBindlessSamplerCount, NumOnlineSamplerDescriptors, SamplerDescriptorBlockSize);
     }
 
     // Initialize Offline Descriptor heaps
@@ -1731,6 +1780,48 @@ void FD3D12Device::RecycleQueryHeap(FD3D12QueryHeap* Heap)
         default:
             break;
     }
+}
+
+bool FD3D12Device::ReallocateGlobalDescriptorHeap(ED3D12GlobalDescriptorHeapType HeapType)
+{
+    FD3D12OnlineDescriptorHeap*   GlobalHeap   = nullptr;
+    FD3D12BindlessDescriptorHeap* BindlessHeap = nullptr;
+    uint32                        Cap          = 0;
+
+    switch (HeapType)
+    {
+        case ED3D12GlobalDescriptorHeapType::Resource:
+            GlobalHeap   = GlobalResourceHeap;
+            BindlessHeap = ResourceBindlessHeap;
+            Cap          = Math::Min<uint32>(D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, GD3D12MaxResourceDescriptorHeapSize);
+            break;
+        case ED3D12GlobalDescriptorHeapType::Sampler:
+            GlobalHeap   = GlobalSamplerHeap;
+            BindlessHeap = SamplerBindlessHeap;
+            Cap          = Math::Min<uint32>(D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT, GD3D12MaxSamplerDescriptorHeapSize);
+            break;
+    }
+
+    CHECK(GlobalHeap != nullptr);
+
+    if (GlobalHeap->GetNumDescriptors() >= Cap)
+    {
+        D3D12_ERROR("[FD3D12Device]: Cannot reallocate global %s descriptor heap -- already at cap of %u", ToString(HeapType), Cap);
+        return false;
+    }
+
+    const uint32 BindlessReserved = GlobalHeap->GetBindlessReservedCount();
+    if (!GlobalHeap->Reallocate(Cap, BindlessReserved))
+    {
+        return false;
+    }
+
+    if (BindlessHeap)
+    {
+        BindlessHeap->Rebuild(*GlobalHeap);
+    }
+
+    return true;
 }
 
 void FD3D12Device::QueryDeviceFeatureSupport()

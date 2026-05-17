@@ -14,6 +14,7 @@
 #include "D3D12RHI/D3D12CommandContext.h"
 #include "D3D12RHI/D3D12Loader.h"
 #include "D3D12RHI/D3D12SwapChain.h"
+#include "D3D12RHI/D3D12Descriptors.h"
 #include <pix.h>
 
 static TAutoConsoleVariable<int32> CVarMaxCommandsPerCommandList(
@@ -271,6 +272,23 @@ void FD3D12CommandContext::AddPendingBarrier(FD3D12Resource* Resource, D3D12_RES
 void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolveQueries)
 {
     TRACE_FUNCTION_SCOPE();
+
+    // -------------------------------------------------------------------------------------------
+    // Drain bindless descriptor writes accumulated during recording. The bindless heap aliases
+    // the shader-visible global descriptor heap. Doing this before Close()/SubmitCommands() makes
+    // sure every descriptor referenced via a bindless index in this command list is up-to-date
+    // before the GPU starts executing it. Safe no-op when no writes were enqueued.
+    // -------------------------------------------------------------------------------------------
+
+    if (FD3D12BindlessDescriptorHeap* ResourceBindlessHeap = GetDevice()->GetResourceBindlessHeap())
+    {
+        ResourceBindlessHeap->Flush();
+    }
+
+    if (FD3D12BindlessDescriptorHeap* SamplerBindlessHeap = GetDevice()->GetSamplerBindlessHeap())
+    {
+        SamplerBindlessHeap->Flush();
+    }
 
     BarrierBatcher.FlushBarriers(GetCommandList());
     CommandList->InsertEndTimestamp(TimingQueryAllocator);

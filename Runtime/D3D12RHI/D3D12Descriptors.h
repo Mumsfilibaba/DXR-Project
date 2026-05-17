@@ -5,9 +5,11 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Platform/CriticalSection.h"
 #include "D3D12RHI/D3D12DeviceChild.h"
+#include "RHI/RHITypes.h"
 
 class FD3D12DescriptorHeap;
 class FD3D12OnlineDescriptorHeap;
+class FD3D12BindlessDescriptorHeap;
 
 typedef TSharedRef<FD3D12DescriptorHeap> FD3D12DescriptorHeapRef;
 
@@ -18,18 +20,32 @@ public:
     FD3D12DescriptorHeap(FD3D12DescriptorHeap* InHeap, uint32 InHandleOffset, uint32 InNumDescriptors);
     ~FD3D12DescriptorHeap() = default;
     
-    D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(int32 Index) const { return FD3D12_CPU_DESCRIPTOR_HANDLE(StartHandleCPU, Index, HandleIncrementSize); }
-    D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(int32 Index) const { return FD3D12_GPU_DESCRIPTOR_HANDLE(StartHandleGPU, Index, HandleIncrementSize); }
-    
-    uint32 GetNumDescriptors()      const { return NumDescriptors; }
-    uint32 GetHandleIncrementSize() const { return HandleIncrementSize; }
+    NODISCARD FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(int32 Index) const
+    {
+        return FD3D12_CPU_DESCRIPTOR_HANDLE(StartHandleCPU, Index, HandleIncrementSize);
+    }
 
-    ID3D12DescriptorHeap* GetD3D12Heap() const
+    NODISCARD FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(int32 Index) const
+    {
+        return FD3D12_GPU_DESCRIPTOR_HANDLE(StartHandleGPU, Index, HandleIncrementSize);
+    }
+
+    NODISCARD FORCEINLINE uint32 GetNumDescriptors() const
+    {
+        return NumDescriptors;
+    }
+
+    NODISCARD FORCEINLINE uint32 GetHandleIncrementSize() const
+    {
+        return HandleIncrementSize;
+    }
+
+    NODISCARD FORCEINLINE ID3D12DescriptorHeap* GetD3D12Heap() const
     {
         return Heap.Get();
     }
 
-    D3D12_DESCRIPTOR_HEAP_TYPE GetType() const
+    NODISCARD FORCEINLINE D3D12_DESCRIPTOR_HEAP_TYPE GetType() const
     {
         return Type;
     }
@@ -94,20 +110,20 @@ public:
 
     bool Initialize();
 
-    FD3D12OfflineDescriptor Allocate();
+    NODISCARD FD3D12OfflineDescriptor Allocate();
     void Free(FD3D12OfflineDescriptor& Descriptor);
 
-    uint32 GetNumTotalDescriptors() const
+    NODISCARD FORCEINLINE uint32 GetNumTotalDescriptors() const
     {
         return NumTotalDescriptors;
     }
 
-    uint32 GetDescriptorSize() const
+    NODISCARD FORCEINLINE uint32 GetDescriptorSize() const
     {
         return DescriptorSize;
     }
 
-    D3D12_DESCRIPTOR_HEAP_TYPE GetType() const
+    NODISCARD FORCEINLINE D3D12_DESCRIPTOR_HEAP_TYPE GetType() const
     {
         return Type;
     }
@@ -161,32 +177,95 @@ public:
     FD3D12OnlineDescriptorHeap(FD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType);
     ~FD3D12OnlineDescriptorHeap();
 
-    bool Initialize(uint32 InDescriptorCount, uint32 BlockSize);
-    FD3D12OnlineDescriptorBlock* AllocateBlock();
+    bool Initialize(uint32 InDescriptorCount, uint32 InBlockSize, uint32 InBindlessReservedCount = 0);
+    bool Reallocate(uint32 NewDescriptorCount, uint32 InBindlessReservedCount);
+
+    NODISCARD FD3D12OnlineDescriptorBlock* AllocateBlock();
     void RecycleBlock(FD3D12OnlineDescriptorBlock* InBlock);
     void RecycleBlockDeferred(FD3D12OnlineDescriptorBlock* InBlock);
 
-    FD3D12DescriptorHeap* GetHeap() const
+    NODISCARD FORCEINLINE FD3D12DescriptorHeap* GetHeap() const
     { 
         return Heap.Get();
     }
 
-    uint32 GetBlockSize() const
+    NODISCARD FORCEINLINE uint32 GetBlockSize() const
     {
         return BlockSize;
     }
 
-    uint32 GetNumDescriptors() const
+    NODISCARD FORCEINLINE uint32 GetNumDescriptors() const
     {
         return DescriptorCount;
+    }
+
+    NODISCARD FORCEINLINE uint32 GetBindlessReservedCount() const
+    {
+        return BindlessReservedCount;
+    }
+
+    NODISCARD FORCEINLINE uint32 GetGeneration() const
+    {
+        return Generation;
     }
 
 private:
     const D3D12_DESCRIPTOR_HEAP_TYPE     Type;
     uint32                               DescriptorCount;
     uint32                               BlockSize;
+    uint32                               BindlessReservedCount;
+    uint32                               Generation;
     FD3D12DescriptorHeapRef              Heap;
     TQueue<FD3D12OnlineDescriptorBlock*> AvailableBlockQueue;
     TArray<FD3D12OnlineDescriptorBlock*> BlockQueue;
     FCriticalSection                     BlockQueueCS;
+};
+
+struct FD3D12PendingBindlessWrite
+{
+    uint32                      DestSlot   = 0;
+    D3D12_CPU_DESCRIPTOR_HANDLE SrcHandle  = { 0 };
+};
+
+class FD3D12BindlessDescriptorHeap : public FD3D12DeviceChild
+{
+public:
+    FD3D12BindlessDescriptorHeap(FD3D12OnlineDescriptorHeap& InGlobalHeap, uint32 InCapacity);
+    ~FD3D12BindlessDescriptorHeap();
+
+    NODISCARD FRHIDescriptorHandle Allocate(EDescriptorType InType);
+
+    void Free(FRHIDescriptorHandle Handle);
+    void RecycleSlot(FRHIDescriptorHandle Handle);
+    void EnqueueWrite(FRHIDescriptorHandle Handle, D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle);
+
+    void Flush();
+
+    void Rebuild(FD3D12OnlineDescriptorHeap& NewGlobalHeap);
+
+    NODISCARD FORCEINLINE FD3D12DescriptorHeap* GetAliasedHeap() const
+    {
+        return AliasedHeap.Get();
+    }
+
+    NODISCARD FORCEINLINE D3D12_DESCRIPTOR_HEAP_TYPE GetHeapType() const
+    {
+        return HeapType;
+    }
+
+    NODISCARD FORCEINLINE uint32 GetCapacity() const
+    {
+        return Capacity;
+    }
+
+private:
+    FD3D12DescriptorHeapRef             AliasedHeap;
+    D3D12_DESCRIPTOR_HEAP_TYPE          HeapType;
+    uint32                              Capacity;
+    uint32                              NextFreshSlot;
+    TArray<uint32>                      FreeStack;
+    TArray<D3D12_CPU_DESCRIPTOR_HANDLE> SlotSources;
+    FCriticalSection                    AllocCS;
+    TArray<FD3D12PendingBindlessWrite>  PendingWrites;
+    FCriticalSection                    PendingWritesCS;
 };

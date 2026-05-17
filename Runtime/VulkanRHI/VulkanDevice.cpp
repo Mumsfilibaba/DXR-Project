@@ -33,6 +33,7 @@ VULKANRHI_API float  GVulkanMaxExtraPrimitiveOverestimationSize = 0.0f;
 VULKANRHI_API bool   GVulkanSupportsPipelineCacheControl        = false;
 VULKANRHI_API bool   GVulkanSupportsMultiviews                  = false;
 VULKANRHI_API bool   GVulkanSupportsBindless                    = false;
+VULKANRHI_API bool   GVulkanSupportsMutableDescriptorType       = false;
 VULKANRHI_API bool   GVulkanSupportsDepthBoundsTest             = false;
 VULKANRHI_API bool   GVulkanSupportsSparseBinding               = false;
 VULKANRHI_API bool   GVulkanSupportsSparseResidency2D           = false;
@@ -600,6 +601,7 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
 #else
     DescriptorPoolManager         = new FVulkanDescriptorPoolManager(this);
 #endif
+    BindlessDescriptorManager     = new FVulkanBindlessDescriptorManager(this);
     TimingQueryPoolManager        = new FVulkanQueryPoolManager(this, VK_QUERY_TYPE_TIMESTAMP, VULKAN_DEFAULT_QUERY_COUNT);
     OcclusionQueryPoolManager     = new FVulkanQueryPoolManager(this, VK_QUERY_TYPE_OCCLUSION, VULKAN_DEFAULT_QUERY_COUNT);
     PipelineStatsQueryPoolManager = new FVulkanQueryPoolManager(this, VK_QUERY_TYPE_PIPELINE_STATISTICS, VULKAN_DEFAULT_QUERY_COUNT);
@@ -636,19 +638,24 @@ FVulkanDevice::~FVulkanDevice()
         PipelineStateManager->SaveCacheData();
         delete PipelineStateManager;
     }
-    
+
+    SAFE_DELETE(BindlessDescriptorManager);
+
 #if VULKAN_USE_DESCRIPTOR_CACHE
     SAFE_DELETE(DescriptorSetCache);
 #else
     SAFE_DELETE(DescriptorPoolManager);
 #endif
+
     SAFE_DELETE(TimingQueryPoolManager);
     SAFE_DELETE(OcclusionQueryPoolManager);
     SAFE_DELETE(PipelineStatsQueryPoolManager);
     SAFE_DELETE(PipelineLayoutManager);
+
 #if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     SAFE_DELETE(RenderPassCache);
 #endif
+
     SAFE_DELETE(FrameFence);
     SAFE_DELETE(FenceManager);
     SAFE_DELETE(MemoryManager);
@@ -844,18 +851,21 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
         GVulkanSupportsPipelineCacheControl = true;
     }
 
-    if (AvailableFeatures.Features12.descriptorIndexing)
-    {
-        GVulkanSupportsBindless = true;
-    }
+    GVulkanSupportsBindless = (AvailableFeatures.Features12.descriptorIndexing         == VK_TRUE)
+        && (AvailableFeatures.Features12.runtimeDescriptorArray                        == VK_TRUE)
+        && (AvailableFeatures.Features12.descriptorBindingPartiallyBound               == VK_TRUE)
+        && (AvailableFeatures.Features12.descriptorBindingSampledImageUpdateAfterBind  == VK_TRUE)
+        && (AvailableFeatures.Features12.descriptorBindingStorageImageUpdateAfterBind  == VK_TRUE)
+        && (AvailableFeatures.Features12.descriptorBindingUniformBufferUpdateAfterBind == VK_TRUE)
+        && (AvailableFeatures.Features12.descriptorBindingStorageBufferUpdateAfterBind == VK_TRUE);
 
 #if VULKAN_ENABLE_CRASH_MARKERS
-#if VK_AMD_buffer_marker
-    bSupportsAMDBufferMarker = IsExtensionEnabled(VK_AMD_BUFFER_MARKER_EXTENSION_NAME);
-#endif
-#if VK_NV_device_diagnostic_checkpoints
-    bSupportsNVDiagnosticCheckpoints = IsExtensionEnabled(VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME);
-#endif
+    #if VK_AMD_buffer_marker
+        bSupportsAMDBufferMarker = IsExtensionEnabled(VK_AMD_BUFFER_MARKER_EXTENSION_NAME);
+    #endif
+    #if VK_NV_device_diagnostic_checkpoints
+        bSupportsNVDiagnosticCheckpoints = IsExtensionEnabled(VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME);
+    #endif
 #endif
 
     GVulkanMaxDrawIndirectCount           = CoreDeviceProperties10.limits.maxDrawIndirectCount;
@@ -871,6 +881,12 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
         {
             Extension->ProcessQueriedFeatures();
         }
+    }
+
+    if (GVulkanSupportsBindless && !GVulkanSupportsMutableDescriptorType)
+    {
+        VULKAN_INFO("Bindless disabled: VK_EXT_mutable_descriptor_type not supported by this device");
+        GVulkanSupportsBindless = false;
     }
 
     GVulkanSupportsDepthClamp = (CoreDeviceFeatures10.depthClamp == VK_TRUE);
@@ -1006,6 +1022,15 @@ bool FVulkanDevice::PostLoaderInitalize()
     }
 
     FrameFence->SetDebugName("FrameFence");
+
+    if (BindlessDescriptorManager && GVulkanSupportsBindless)
+    {
+        if (!BindlessDescriptorManager->Initialize())
+        {
+            VULKAN_WARNING("FVulkanDevice: Failed to initialize BindlessDescriptorManager; bindless will be disabled");
+            GVulkanSupportsBindless = false;
+        }
+    }
 
     return true;
 }

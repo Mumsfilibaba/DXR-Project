@@ -1,6 +1,7 @@
 #include "D3D12RHI/D3D12Device.h"
 #include "D3D12RHI/D3D12Descriptors.h"
 #include "D3D12RHI/D3D12ResourceViews.h"
+#include "D3D12RHI/D3D12ResidencyManager.h"
 #include "D3D12RHI/D3D12SwapChain.h"
 #include "D3D12RHI/D3D12Texture.h"
 
@@ -11,6 +12,7 @@ FD3D12View::FD3D12View(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOf
     , Descriptor()
     , OwnerResource(nullptr)
     , DescriptorVersion(0)
+    , BindlessHandle()
 {
 }
 
@@ -18,6 +20,16 @@ FD3D12View::~FD3D12View()
 {
     UnregisterFromResource();
     InvalidateAndFreeHandle();
+
+    if (BindlessHandle.IsValid())
+    {
+        if (FD3D12BindlessDescriptorHeap* Heap = GetDevice()->GetResourceBindlessHeap())
+        {
+            Heap->Free(BindlessHandle);
+        }
+        
+        BindlessHandle = FRHIDescriptorHandle();
+    }
 }
 
 void FD3D12View::RegisterWithResource(FD3D12ResourceBase* InOwner)
@@ -67,6 +79,53 @@ void FD3D12View::InvalidateAndFreeHandle()
 	{
 	    OfflineHeap.Free(Descriptor);
         Descriptor = {};
+    }
+}
+
+FRHIDescriptorHandle FD3D12View::EnsureBindlessHandle(EDescriptorType InType) const
+{
+    if (BindlessHandle.IsValid())
+    {
+        return BindlessHandle;
+    }
+
+    FD3D12BindlessDescriptorHeap* BindlessHeap = GetDevice()->GetResourceBindlessHeap();
+    if (!BindlessHeap)
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    if (!Descriptor)
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    BindlessHandle = BindlessHeap->Allocate(InType);
+    if (!BindlessHandle.IsValid())
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    BindlessHeap->EnqueueWrite(BindlessHandle, Descriptor.Handle);
+
+    if (FD3D12Resource* Resource = ViewResource.Get())
+    {
+        Resource->EndResidencyTracking();
+    }
+
+    return BindlessHandle;
+}
+
+void FD3D12View::IncrementDescriptorVersion()
+{
+    ++DescriptorVersion;
+
+    if (BindlessHandle.IsValid())
+    {
+        if (FD3D12BindlessDescriptorHeap* BindlessHeap = GetDevice()->GetResourceBindlessHeap())
+        {
+            BindlessHeap->EnqueueWrite(BindlessHandle, Descriptor.Handle);
+        }
     }
 }
 
@@ -132,7 +191,7 @@ void* FD3D12ShaderResourceViewRHI::GetRHINativeHandle() const
 
 FRHIDescriptorHandle FD3D12ShaderResourceViewRHI::GetBindlessHandle() const
 {
-    return FRHIDescriptorHandle();
+    return EnsureBindlessHandle(EDescriptorType::ShaderResource);
 }
 
 void FD3D12ShaderResourceViewRHI::OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
@@ -195,7 +254,7 @@ void* FD3D12UnorderedAccessViewRHI::GetRHINativeHandle() const
 
 FRHIDescriptorHandle FD3D12UnorderedAccessViewRHI::GetBindlessHandle() const
 {
-    return FRHIDescriptorHandle();
+    return EnsureBindlessHandle(EDescriptorType::UnorderedAccess);
 }
 
 FD3D12UnorderedAccessViewRHI* FD3D12UnorderedAccessViewRHI::GetUnorderedAccessViewInterface() const

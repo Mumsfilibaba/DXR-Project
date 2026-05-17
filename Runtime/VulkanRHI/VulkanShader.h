@@ -141,9 +141,15 @@ struct FVulkanShaderInfo
     #endif
     };
     
+    TArray<FBindingOffsets>  HeapBindingOffsets;
     TArray<FBindingOffsets>  BindingOffsets;
     TArray<FResourceBinding> ResourceBindings;
     uint32                   NumPushConstants;
+
+    bool UsesBindlessHeap() const
+    {
+        return HeapBindingOffsets.Size() > 0;
+    }
 };
 
 class FVulkanShaderModule : public FRefCountedBase
@@ -201,13 +207,12 @@ public:
 protected:
     bool InitializeShaderLayout();
     
-    FSpirvArray             SpirvCode;
-    FVulkanShaderInfo       ShaderInfo;
-    EShaderVisibility::Type ShaderVisibility;
-    FString                 EntryPointName;
-    
+    FSpirvArray                                   SpirvCode;
+    FVulkanShaderInfo                             ShaderInfo;
+    EShaderVisibility::Type                       ShaderVisibility;
+    FString                                       EntryPointName;
     TMap<uint32, TSharedRef<FVulkanShaderModule>> ShaderModules;
-    FCriticalSection ShaderModulesCS;
+    FCriticalSection                              ShaderModulesCS;
 };
 
 class FVulkanVertexShaderRHI : public FRHIVertexShader, public FVulkanShader

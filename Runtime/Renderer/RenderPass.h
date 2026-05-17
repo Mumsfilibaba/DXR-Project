@@ -6,6 +6,14 @@ class FMaterial;
 class FSceneRenderer;
 struct FFrameResources;
 
+constexpr uint64 PSO_KEY_BINDLESS_BIT = uint64(1) << 32;
+
+inline uint64 MakeMaterialPSOKey(int32 MaterialFlags, bool bBindless)
+{
+    const uint64 Flags = static_cast<uint64>(static_cast<uint32>(MaterialFlags));
+    return bBindless ? (Flags | PSO_KEY_BINDLESS_BIT) : Flags;
+}
+
 struct FComputePipelineStateInstance
 {
     FRHIComputeShaderRef        Shader;

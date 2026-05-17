@@ -25,4 +25,9 @@
 // See: https://gpuopen.com/learn/rdna-performance-guide/ (Descriptors section)
 #define VULKAN_RECOMMENDED_MAX_USER_DATA_DWORDS (13)
 
+#define VULKAN_BINDLESS_RESOURCE_BINDING (0)
+#define VULKAN_BINDLESS_SAMPLER_BINDING (1)
+#define VULKAN_BINDLESS_HEAP_MARKER_SET (31)
+#define VULKAN_BINDLESS_RUNTIME_SET_INDEX (0)
+
 #define VULKAN_VALIDATION_LAYER_NAME "VK_LAYER_KHRONOS_validation"

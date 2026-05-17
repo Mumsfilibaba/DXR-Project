@@ -4,6 +4,7 @@
 #include "Core/Misc/CRC.h"
 #include "Core/Platform/CriticalSection.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
+#include "RHI/RHITypes.h"
 
 class FVulkanBufferRHI;
 class FVulkanPipelineLayout;
@@ -564,6 +565,93 @@ private:
     FVulkanDescriptorPoolManager&              PoolManager;
     TMap<FVulkanDescriptorPoolInfo, FPoolSet>  PoolSets;
     uint64                                     DescriptorSetVersion;
+};
+
+struct FVulkanPendingBindlessWrite
+{
+    FVulkanPendingBindlessWrite()
+        : Binding(0)
+        , ArraySlot(0)
+        , DescriptorType(VK_DESCRIPTOR_TYPE_MAX_ENUM)
+        , Image{}
+    {
+    }
+    
+    uint32                     Binding                     = 0;
+    uint32                     ArraySlot                   = 0;
+    VkDescriptorType           DescriptorType              = VK_DESCRIPTOR_TYPE_MAX_ENUM;
+    VkAccelerationStructureKHR AccelerationStructureHandle = VK_NULL_HANDLE;
+
+    union
+    {
+        VkDescriptorImageInfo                        Image;
+        VkDescriptorBufferInfo                       Buffer;
+        VkBufferView                                 TexelBuffer;
+        VkWriteDescriptorSetAccelerationStructureKHR AccelerationStructure;
+    };
+};
+
+class VULKANRHI_API FVulkanBindlessDescriptorManager : public FVulkanDeviceChild
+{
+public:
+    FVulkanBindlessDescriptorManager(FVulkanDevice* InDevice);
+    ~FVulkanBindlessDescriptorManager();
+
+    bool Initialize();
+    void Release();
+
+    NODISCARD FRHIDescriptorHandle Allocate(EDescriptorType InType);
+    void Free(FRHIDescriptorHandle Handle);
+
+    void EnqueueImageWrite(FRHIDescriptorHandle Handle, VkImageView ImageView, VkImageLayout ImageLayout, VkDescriptorType DescriptorType);
+    void EnqueueBufferWrite(FRHIDescriptorHandle Handle, VkBuffer Buffer, VkDeviceSize Offset, VkDeviceSize Range, VkDescriptorType DescriptorType);
+    void EnqueueTexelBufferWrite(FRHIDescriptorHandle Handle, VkBufferView BufferView, VkDescriptorType DescriptorType);
+    void EnqueueAccelerationStructureWrite(FRHIDescriptorHandle Handle, VkAccelerationStructureKHR AccelerationStructure);
+    void EnqueueSamplerWrite(FRHIDescriptorHandle Handle, VkSampler Sampler);
+
+    void Flush();
+
+    NODISCARD FORCEINLINE bool IsEnabled() const
+    {
+        return bIsEnabled;
+    }
+
+    NODISCARD FORCEINLINE VkDescriptorSetLayout GetLayout() const
+    {
+        return SetLayout;
+    }
+
+    NODISCARD FORCEINLINE VkDescriptorSet GetDescriptorSet() const
+    {
+        return DescriptorSet;
+    }
+
+    NODISCARD FORCEINLINE uint32 GetResourceCapacity() const
+    {
+        return ResourceCapacity;
+    }
+
+    NODISCARD FORCEINLINE uint32 GetSamplerCapacity() const
+    {
+        return SamplerCapacity;
+    }
+
+private:
+    void RecycleSlot(FRHIDescriptorHandle Handle);
+
+    bool                                bIsEnabled;
+    VkDescriptorPool                    DescriptorPool;
+    VkDescriptorSetLayout               SetLayout;
+    VkDescriptorSet                     DescriptorSet;
+    uint32                              ResourceCapacity;
+    uint32                              SamplerCapacity;
+    uint32                              NextFreshResourceSlot;
+    uint32                              NextFreshSamplerSlot;
+    TArray<uint32>                      FreeResourceStack;
+    TArray<uint32>                      FreeSamplerStack;
+    FCriticalSection                    AllocCS;
+    TArray<FVulkanPendingBindlessWrite> PendingWrites;
+    FCriticalSection                    PendingWritesCS;
 };
 
 class FVulkanDescriptorSetCache : public FVulkanDeviceChild

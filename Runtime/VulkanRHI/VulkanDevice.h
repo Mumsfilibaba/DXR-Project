@@ -41,6 +41,7 @@ extern VULKANRHI_API float  GVulkanMaxExtraPrimitiveOverestimationSize;
 extern VULKANRHI_API bool   GVulkanSupportsPipelineCacheControl;
 extern VULKANRHI_API bool   GVulkanSupportsMultiviews;
 extern VULKANRHI_API bool   GVulkanSupportsBindless;
+extern VULKANRHI_API bool   GVulkanSupportsMutableDescriptorType;
 extern VULKANRHI_API bool   GVulkanSupportsDepthBoundsTest;
 extern VULKANRHI_API bool   GVulkanSupportsSparseBinding;
 extern VULKANRHI_API bool   GVulkanSupportsSparseResidency2D;
@@ -311,23 +312,35 @@ public:
     FVulkanQueryPoolManager* GetQueryPoolManager(VkQueryType QueryType);
     FVulkanQueryPool*        ObtainQueryPool(VkQueryType QueryType);
     void                     RecycleQueryPool(FVulkanQueryPool* Pool);
-    uint32 GetQueueIndexFromType(EVulkanCommandQueueType Type) const;
-    bool   InitializePresentQueueFamily(VkSurfaceKHR Surface);
+    uint32                   GetQueueIndexFromType(EVulkanCommandQueueType Type) const;
+    bool                     InitializePresentQueueFamily(VkSurfaceKHR Surface);
+
+    FVulkanMemoryManager&             GetMemoryManager()             { return *MemoryManager; }
+    FVulkanFenceManager&              GetFenceManager()              { return *FenceManager; }
+    FVulkanTimelineFence&             GetFrameFence()                { return *FrameFence; }
+    FVulkanPipelineLayoutManager&     GetPipelineLayoutManager()     { return *PipelineLayoutManager; }
+    FVulkanPipelineStateManager&      GetPipelineStateManager()      { return *PipelineStateManager; }
+    FVulkanBindlessDescriptorManager* GetBindlessDescriptorManager() { return BindlessDescriptorManager; }
+    FVulkanDefaultResources&          GetDefaultResources()          { return DefaultResources; }
 
 #if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
-    FVulkanRenderPassCache&       GetRenderPassCache()       { return *RenderPassCache; }
+    FVulkanRenderPassCache& GetRenderPassCache()
+    {
+        return *RenderPassCache;
+    }
 #endif
-    FVulkanMemoryManager&         GetMemoryManager()         { return *MemoryManager; }
-    FVulkanFenceManager&          GetFenceManager()          { return *FenceManager; }
-    FVulkanTimelineFence&         GetFrameFence()            { return *FrameFence; }
-    FVulkanPipelineLayoutManager& GetPipelineLayoutManager() { return *PipelineLayoutManager; }
-    FVulkanPipelineStateManager&  GetPipelineStateManager()  { return *PipelineStateManager; }
+    
 #if VULKAN_USE_DESCRIPTOR_CACHE
-    FVulkanDescriptorSetCache&    GetDescriptorSetCache()    { return *DescriptorSetCache; }
+    FVulkanDescriptorSetCache& GetDescriptorSetCache()
+    {
+        return *DescriptorSetCache;
+    }
 #else
-    FVulkanDescriptorPoolManager& GetDescriptorPoolManager() { return *DescriptorPoolManager; }
+    FVulkanDescriptorPoolManager& GetDescriptorPoolManager()
+    {
+        return *DescriptorPoolManager;
+    }
 #endif
-    FVulkanDefaultResources&      GetDefaultResources()      { return DefaultResources; }
 
     bool IsLayerEnabled(const FString& LayerName)         const { return (LayerNames.Find(LayerName) != nullptr); }
     bool IsExtensionEnabled(const FString& ExtensionName) const { return (ExtensionNames.Find(ExtensionName) != nullptr); }
@@ -377,6 +390,7 @@ private:
 #else
     FVulkanDescriptorPoolManager*        DescriptorPoolManager;
 #endif
+    FVulkanBindlessDescriptorManager*    BindlessDescriptorManager;
     FVulkanQueryPoolManager*             TimingQueryPoolManager;
     FVulkanQueryPoolManager*             OcclusionQueryPoolManager;
     FVulkanQueryPoolManager*             PipelineStatsQueryPoolManager;

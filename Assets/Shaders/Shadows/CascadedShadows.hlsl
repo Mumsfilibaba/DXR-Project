@@ -9,6 +9,10 @@
     #define ENABLE_PARALLAX_MAPPING 0
 #endif
 
+#ifndef BINDLESS_SHADOWS
+    #define BINDLESS_SHADOWS (0)
+#endif
+
 #ifndef MAX_CASCADES
     #define MAX_CASCADES 4
 #endif
@@ -53,17 +57,24 @@ StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     // MaterialBuffer
     ConstantBuffer<FMaterial> MaterialBuffer : register(b2);
-    // Sampler
-    SamplerState MaterialSampler : register(s0);
-    // Material Textures
-    #if ENABLE_ALPHA_MASK
-        Texture2D<float4> AlbedoAlphaTex : register(t0);
-    #endif
 
-    #if ENABLE_PARALLAX_MAPPING
-        Texture2D<float> HeightMap : register(t1);
-    #endif
-#endif
+    #if BINDLESS_SHADOWS
+        #define MATERIAL_BINDLESS_REGISTER b3
+        #include "../MaterialBindless.hlsli"
+    #else
+        // Sampler
+        SamplerState MaterialSampler : register(s0);
+
+        // Material Textures
+        #if ENABLE_ALPHA_MASK
+            Texture2D<float4> AlbedoAlphaTex : register(t0);
+        #endif // ENABLE_ALPHA_MASK
+
+        #if ENABLE_PARALLAX_MAPPING
+            Texture2D<float> HeightMap : register(t1);
+        #endif // ENABLE_PARALLAX_MAPPING
+    #endif // BINDLESS_SHADOWS
+#endif // ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
 
 struct FVSInput
 {
@@ -71,15 +82,15 @@ struct FVSInput
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
-#endif
+#endif // ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
 // For view-instancing
 #if ENABLE_CASCADE_VIEW_INSTANCING
     uint ViewID : SV_ViewID;
-#endif
+#endif // ENABLE_CASCADE_VIEW_INSTANCING
 // For vertex-shader instancing
 #if ENABLE_CASCADE_VS_INSTANCING
     uint InstanceID : SV_InstanceID;
-#endif
+#endif // ENABLE_CASCADE_VS_INSTANCING
 };
 
 struct FVSCascadeOutput
@@ -193,7 +204,11 @@ void Cascade_PSMain(FPSCascadeInput Input)
     // TODO: Perform Parallax mapping
 
 #if ENABLE_ALPHA_MASK
+#if BINDLESS_SHADOWS
+    const float AlphaMask = GetAlbedoBindless().Sample(GetMaterialSamplerBindless(), TexCoords).a;
+#else
     const float AlphaMask = AlbedoAlphaTex.Sample(MaterialSampler, TexCoords).a;
+#endif // BINDLESS_SHADOWS
 
     [[branch]]
     if (AlphaMask < 0.5f)

@@ -297,6 +297,25 @@ NODISCARD constexpr const CHAR* ToString(ED3D12CommandQueueType QueueType)
     return "CommandQueueType::Unknown";
 }
 
+enum class ED3D12GlobalDescriptorHeapType : uint8
+{
+    Resource = 0, // CBV/SRV/UAV global online heap (D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
+    Sampler  = 1, // Sampler global online heap (D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER)
+
+    Count
+};
+
+NODISCARD constexpr const CHAR* ToString(ED3D12GlobalDescriptorHeapType HeapType)
+{
+    switch (HeapType)
+    {
+        case ED3D12GlobalDescriptorHeapType::Resource: return "Resource";
+        case ED3D12GlobalDescriptorHeapType::Sampler:  return "Sampler";
+    }
+
+    return "Unknown";
+}
+
 NODISCARD constexpr D3D12_COMMAND_LIST_TYPE ToCommandListType(ED3D12CommandQueueType QueueType)
 {
     switch (QueueType)

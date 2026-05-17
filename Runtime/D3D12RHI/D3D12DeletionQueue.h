@@ -6,9 +6,11 @@
 #include "Core/Threading/Atomic.h"
 #include "D3D12RHI/D3D12DeviceChild.h"
 #include "D3D12RHI/D3D12Allocators.h"
+#include "RHI/RHITypes.h"
 
 class FD3D12Heap;
 class FD3D12OnlineDescriptorHeap;
+class FD3D12BindlessDescriptorHeap;
 struct FD3D12OnlineDescriptorBlock;
 
 struct FD3D12DeferredObject
@@ -28,6 +30,7 @@ struct FD3D12DeferredObject
         PoolAllocatorBlock    = 8,
         BucketAllocatorBlock  = 9,
         LinearAllocatorPage   = 10,
+        BindlessSlot          = 11,
     };
 
     FD3D12DeferredObject(FRHIResource* InResource)
@@ -113,6 +116,15 @@ struct FD3D12DeferredObject
         LinearAllocatorPage.Page      = InPage;
     }
 
+    FD3D12DeferredObject(FD3D12BindlessDescriptorHeap* InHeap, FRHIDescriptorHandle InHandle)
+        : Type(EType::BindlessSlot)
+    {
+        CHECK(InHeap != nullptr);
+        CHECK(InHandle.IsValid());
+        BindlessSlot.Heap   = InHeap;
+        BindlessSlot.Handle = InHandle;
+    }
+
     EType const Type;
 
     struct FOnlineDescriptorBlockData
@@ -145,6 +157,12 @@ struct FD3D12DeferredObject
         FD3D12LinearAllocatorPage* Page      = nullptr;
     };
 
+    struct FBindlessSlotData
+    {
+        FD3D12BindlessDescriptorHeap* Heap   = nullptr;
+        FRHIDescriptorHandle          Handle = {};
+    };
+
     union
     {
         FRHIResource*              RHIResource;
@@ -157,5 +175,6 @@ struct FD3D12DeferredObject
         FPoolAllocatorBlockData    PoolAllocatorBlock;
         FBucketAllocatorBlockData  BucketAllocatorBlock;
         FLinearAllocatorPageData   LinearAllocatorPage;
+        FBindlessSlotData          BindlessSlot;
     };
 };

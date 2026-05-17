@@ -2,6 +2,7 @@
 #include "RHI/RHIShader.h"
 #include "RHI/RHIResources.h"
 #include "RHI/ShaderCompilerInclude.h"
+#include "Core/Templates/Utility/EnumOperators.h"
 #include "D3D12RHI/D3D12DeviceChild.h"
 #include "D3D12RHI/D3D12Constants.h"
 #include <d3d12shader.h>
@@ -18,6 +19,15 @@ typedef TSharedRef<class FD3D12RayGenShaderRHI>        FD3D12RayGenShaderRHIRef;
 typedef TSharedRef<class FD3D12RayAnyHitShaderRHI>     FD3D12RayAnyHitShaderRHIRef;
 typedef TSharedRef<class FD3D12RayClosestHitShaderRHI> FD3D12RayClosestHitShaderRHIRef;
 typedef TSharedRef<class FD3D12RayMissShaderRHI>       FD3D12RayMissShaderRHIRef;
+
+enum class ED3D12ShaderFlags : uint32
+{
+    None                                   = 0,
+    RequiresResourceDescriptorHeapIndexing = FLAG(1), // D3D12_SHADER_REQUIRES_RESOURCE_DESCRIPTOR_HEAP_INDEXING (0x4000)
+    RequiresSamplerDescriptorHeapIndexing  = FLAG(2), // D3D12_SHADER_REQUIRES_SAMPLER_DESCRIPTOR_HEAP_INDEXING  (0x8000)
+};
+
+ENUM_CLASS_OPERATORS(ED3D12ShaderFlags);
 
 struct EShaderVisibility
 {
@@ -44,6 +54,15 @@ struct EResourceType
         Count   = Sampler + 1,
         Unknown = 5,
     };
+};
+
+enum class ED3D12BindingType : uint8
+{
+    ConstantBuffer = 0,
+    SRV,
+    UAV,
+    Sampler,
+    Count,
 };
 
 struct FD3D12ShaderHash
@@ -87,7 +106,7 @@ struct FD3D12ShaderBytecode
         return static_cast<uint64>(ByteCode.BytecodeLength);
     }
     
-    const D3D12_SHADER_BYTECODE& GetD3D12Bytecode() const
+    FORCEINLINE const D3D12_SHADER_BYTECODE& GetD3D12Bytecode() const
     {
         return ByteCode;
     }
@@ -97,15 +116,6 @@ struct FD3D12ShaderBytecode
 
 private:
     D3D12_SHADER_BYTECODE ByteCode;
-};
-
-enum class ED3D12BindingType : uint8
-{
-    ConstantBuffer = 0,
-    SRV,
-    UAV,
-    Sampler,
-    Count,
 };
 
 struct FD3D12ShaderBindingInfo
@@ -151,16 +161,29 @@ public:
         return ByteCodeHash;
     }
 
+    FORCEINLINE ED3D12ShaderFlags GetFlags() const
+    {
+        return Flags;
+    }
+
+    FORCEINLINE bool HasFlag(ED3D12ShaderFlags InFlag) const
+    {
+        return IsEnumFlagSet(Flags, InFlag);
+    }
+
 protected:
     bool IsRootSignatureInShaderBlob(const TComPtr<IDxcBlob>& ShaderBlob);
     bool GetReflectionInterface(const TComPtr<IDxcBlob>& ShaderBlob, REFIID iid, void** ppvObject);
-
     bool GetShaderResourceBindings(ID3D12ShaderReflection* Reflection, uint32 NumBoundResources);
+
+    static bool ReadShaderFeatureFlags(const TComPtr<IDxcBlob>& ShaderBlob, uint64& OutFlags);
+    static ED3D12ShaderFlags TranslateD3D12ShaderRequires(uint64 Mask);
 
     FD3D12ShaderBytecode     ByteCode;
     FD3D12ShaderHash         ByteCodeHash;
     EShaderVisibility::Type  ShaderVisibility;
     FD3D12ShaderBindingInfo  BindingInfo;
+    ED3D12ShaderFlags        Flags;
     bool                     bContainsRootSignature;
 };
 

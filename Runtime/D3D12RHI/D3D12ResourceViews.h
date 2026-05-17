@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/RefCountedBase.h"
 #include "RHI/RHIResources.h"
+#include "RHI/RHITypes.h"
 #include "D3D12RHI/D3D12DeviceChild.h"
 #include "D3D12RHI/D3D12Resource.h"
 
@@ -64,17 +65,21 @@ public:
         return DescriptorVersion;
     }
 
-protected:
-    void IncrementDescriptorVersion()
+    NODISCARD FORCEINLINE FRHIDescriptorHandle GetCachedBindlessHandle() const
     {
-        ++DescriptorVersion;
+        return BindlessHandle;
     }
+
+protected:
+    FRHIDescriptorHandle EnsureBindlessHandle(EDescriptorType InType) const;
+    void IncrementDescriptorVersion();
 
     FD3D12ResourceRef            ViewResource;
     FD3D12OfflineDescriptorHeap& OfflineHeap;
     FD3D12OfflineDescriptor      Descriptor;
     FD3D12ResourceBase*          OwnerResource;
     uint32                       DescriptorVersion;
+    mutable FRHIDescriptorHandle BindlessHandle;
 };
 
 class FD3D12ConstantBufferView : public FD3D12View, public FRefCountedBase
@@ -88,6 +93,11 @@ public:
 
     bool Initialize(FD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
     bool UpdateView(FD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
+
+    NODISCARD FRHIDescriptorHandle GetBindlessHandle() const
+    {
+        return EnsureBindlessHandle(EDescriptorType::ConstantBuffer);
+    }
 
     NODISCARD FORCEINLINE const D3D12_CONSTANT_BUFFER_VIEW_DESC& GetD3D12Desc() const
     {

@@ -498,6 +498,7 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
             RootSignatureLayout.SetAllowInputAssembler(D3D12InputLayout ? true : false);
 
             uint8 NumPushConstants = 0;
+            ED3D12ShaderFlags AggregatedShaderFlags = ED3D12ShaderFlags::None;
             for (FD3D12Shader* Shader : BaseShaders)
             {
                 const EShaderVisibility::Type  Stage       = Shader->GetShaderVisibility();
@@ -509,9 +510,12 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
                 }
                 
                 NumPushConstants = Math::Max<uint8>(NumPushConstants, static_cast<uint8>(BindingInfo.NumPushConstants));
+                AggregatedShaderFlags |= Shader->GetFlags();
             }
 
             RootSignatureLayout.SetNumPushConstants(NumPushConstants);
+            RootSignatureLayout.SetDirectlyIndexedResourceHeap((AggregatedShaderFlags & ED3D12ShaderFlags::RequiresResourceDescriptorHeapIndexing) != ED3D12ShaderFlags::None);
+            RootSignatureLayout.SetDirectlyIndexedSamplerHeap((AggregatedShaderFlags & ED3D12ShaderFlags::RequiresSamplerDescriptorHeapIndexing) != ED3D12ShaderFlags::None);
 
             if (Desc.StreamOutputDeclaration)
             {
@@ -831,6 +835,8 @@ bool FD3D12ComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
         }
 
         Layout.SetNumPushConstants(static_cast<uint8>(BindingInfo.NumPushConstants));
+        Layout.SetDirectlyIndexedResourceHeap(Shader->HasFlag(ED3D12ShaderFlags::RequiresResourceDescriptorHeapIndexing));
+        Layout.SetDirectlyIndexedSamplerHeap(Shader->HasFlag(ED3D12ShaderFlags::RequiresSamplerDescriptorHeapIndexing));
         Layout.ComputeRootCBVs();
 
         FD3D12RootSignatureManager& RootSignatureManager = GetDevice()->GetRootSignatureManager();
@@ -1286,6 +1292,7 @@ bool FD3D12RayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineSt
     GlobalLayout.SetAllowInputAssembler(false);
 
     uint8 MaxPushConstants = 0;
+    ED3D12ShaderFlags AggregatedRTShaderFlags = ED3D12ShaderFlags::None;
     for (FD3D12Shader* Shader : Shaders)
     {
         CHECK(Shader != nullptr);
@@ -1296,9 +1303,12 @@ bool FD3D12RayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineSt
         }
 
         MaxPushConstants = Math::Max<uint8>(MaxPushConstants, static_cast<uint8>(BindingInfo.NumPushConstants));
+        AggregatedRTShaderFlags |= Shader->GetFlags();
     }
 
     GlobalLayout.SetNumPushConstants(MaxPushConstants);
+    GlobalLayout.SetDirectlyIndexedResourceHeap((AggregatedRTShaderFlags & ED3D12ShaderFlags::RequiresResourceDescriptorHeapIndexing) != ED3D12ShaderFlags::None);
+    GlobalLayout.SetDirectlyIndexedSamplerHeap((AggregatedRTShaderFlags & ED3D12ShaderFlags::RequiresSamplerDescriptorHeapIndexing) != ED3D12ShaderFlags::None);
     GlobalLayout.ComputeRootCBVs();
 
     GlobalRootSignature = MakeSharedRef<FD3D12RootSignature>(RootSignatureManager.GetOrCreateRootSignature(GlobalLayout));

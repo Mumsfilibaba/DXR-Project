@@ -8,10 +8,17 @@
 #include "Engine/Resources/Material.h"
 #include "Engine/World/Lights/PointLight.h"
 #include "Engine/World/Lights/DirectionalLight.h"
+#include "Renderer/MaterialBindless.h"
 #include "Renderer/ShadowRendering.h"
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
+
+static bool GShadowsBindless = false;
+static FAutoConsoleVariableRef CVarShadowsBindless(
+    "Renderer.Shadows.Bindless",
+    "When true, point-light cube shadows and cascaded directional shadows sample the alpha-mask / parallax-height textures and material sampler through SM 6.6 ResourceDescriptorHeap[] / SamplerDescriptorHeap[] and a per-material indices buffer instead of conventional register bindings.",
+    GShadowsBindless);
 
 static TAutoConsoleVariable<bool> CVarPointLightsEnableSinglePassRendering(
     "Renderer.PointLights.EnableSinglePassRendering",
@@ -129,7 +136,8 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
     FPointLightShaderCombination ShaderCombination;
     ShaderCombination.MaterialFlags  = static_cast<uint32>(Material->GetMaterialFlags());
     ShaderCombination.RenderPassType = RenderPassType;
-    
+    ShaderCombination.bBindless      = GShadowsBindless;
+
     FGraphicsPipelineStateInstance* CachedPointLightPSO = MaterialPSOs.Find(ShaderCombination);
     if (!CachedPointLightPSO)
     {
@@ -170,7 +178,11 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
             ShaderDefines.Emplace("ENABLE_POINTLIGHT_GS_INSTANCING", "(0)");
         }
 
-        FShaderCompileInfo CompileInfo("Point_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, ShaderDefines);
+        ShaderDefines.Emplace("BINDLESS_SHADOWS", ShaderCombination.bBindless ? "(1)" : "(0)");
+
+        const EShaderModel TargetShaderModel = ShaderCombination.bBindless ? EShaderModel::SM_6_6 : EShaderModel::SM_6_2;
+
+        FShaderCompileInfo CompileInfo("Point_VSMain", TargetShaderModel, EShaderStage::Vertex, ShaderDefines);
         if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/PointLightShadows.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -188,7 +200,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
 
         if (ShaderCombination.RenderPassType == ECubeMapRenderPassType::GeometryShaderSinglePass)
         {
-            CompileInfo = FShaderCompileInfo("Point_GSMain", EShaderModel::SM_6_2, EShaderStage::Geometry, ShaderDefines);
+            CompileInfo = FShaderCompileInfo("Point_GSMain", TargetShaderModel, EShaderStage::Geometry, ShaderDefines);
             if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/PointLightShadows.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
@@ -203,7 +215,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
             }
         }
 
-        CompileInfo = FShaderCompileInfo("Point_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, ShaderDefines);
+        CompileInfo = FShaderCompileInfo("Point_PSMain", TargetShaderModel, EShaderStage::Pixel, ShaderDefines);
         if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/PointLightShadows.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -307,7 +319,9 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         }
         else
         {
-            const FString DebugName = FString::CreateFormatted("Point ShadowMap PipelineState %d", ShaderCombination.MaterialFlags);
+            const FString DebugName = FString::CreateFormatted("Point ShadowMap PipelineState%s %d",
+                ShaderCombination.bBindless ? " [Bindless]" : "",
+                ShaderCombination.MaterialFlags);
             NewPipelineStateInstance.PipelineState->SetDebugName(DebugName);
         }
 
@@ -465,7 +479,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 template<ECubeMapRenderPassType RenderPassType>
 void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene)
 {
-
+    const bool bBindless = GShadowsBindless && Resources.MaterialIndicesBuffer.IsValid();
 
     // Clamp the number of shadow-casting point-lights
     const int32 NumPointLights = Math::Min<int32>(Scene->PointLights.Size(), Resources.MaxPointLightShadows);
@@ -534,15 +548,27 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                 if (Instance->PixelShader)
                 {
                     CommandList.SetConstantBuffer(Instance->PixelShader.Get(), SinglePassShadowMapBuffer.Get(), 0);
-                    CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
-    
-                    if (Material->HasAlphaMask())
+
+                    if (bBindless)
                     {
-                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
+                        FMaterialBindlessIndicesHLSL Indices;
+                        FillMaterialBindlessIndices(*Material, Indices);
+
+                        CommandList.UpdateBuffer(Resources.MaterialIndicesBuffer.Get(), FBufferRegion(0, sizeof(FMaterialBindlessIndicesHLSL)), &Indices);
+                        CommandList.SetConstantBuffer(Instance->PixelShader.Get(), Resources.MaterialIndicesBuffer.Get(), 3);
                     }
-                    if (Material->HasHeightMap())
+                    else
                     {
-                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
+                        CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+
+                        if (Material->HasAlphaMask())
+                        {
+                            CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
+                        }
+                        if (Material->HasHeightMap())
+                        {
+                            CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
+                        }
                     }
                 }
 
@@ -646,15 +672,27 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                     if (Instance->PixelShader)
                     {
                         CommandList.SetConstantBuffer(Instance->PixelShader.Get(), PerShadowMapBuffer.Get(), 0);
-                        CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
 
-                        if (Material->HasAlphaMask())
+                        if (bBindless)
                         {
-                            CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
+                            FMaterialBindlessIndicesHLSL Indices;
+                            FillMaterialBindlessIndices(*Material, Indices);
+
+                            CommandList.UpdateBuffer(Resources.MaterialIndicesBuffer.Get(), FBufferRegion(0, sizeof(FMaterialBindlessIndicesHLSL)), &Indices);
+                            CommandList.SetConstantBuffer(Instance->PixelShader.Get(), Resources.MaterialIndicesBuffer.Get(), 3);
                         }
-                        if (Material->HasHeightMap())
+                        else
                         {
-                            CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
+                            CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+
+                            if (Material->HasAlphaMask())
+                            {
+                                CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
+                            }
+                            if (Material->HasHeightMap())
+                            {
+                                CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
+                            }
                         }
                     }
 
@@ -849,6 +887,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
     FCascadedShadowsShaderCombination ShaderCombination;
     ShaderCombination.RenderPassType       = RenderPassType;
     ShaderCombination.bEnableDepthClipping = CVarCSMEnableDepthClipping.GetValue();
+    ShaderCombination.bBindless            = GShadowsBindless;
     ShaderCombination.MaterialFlags        = static_cast<uint32>(Material->GetMaterialFlags());
 
     FGraphicsPipelineStateInstance* CachedDirectionalLightPSO = MaterialPSOs.Find(ShaderCombination);
@@ -900,7 +939,11 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
             ShaderDefines.Emplace("ENABLE_CASCADE_VIEW_INSTANCING", "(0)");
         }
 
-        FShaderCompileInfo CompileInfo("Cascade_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, ShaderDefines);
+        ShaderDefines.Emplace("BINDLESS_SHADOWS", ShaderCombination.bBindless ? "(1)" : "(0)");
+
+        const EShaderModel TargetShaderModel = ShaderCombination.bBindless ? EShaderModel::SM_6_6 : EShaderModel::SM_6_2;
+
+        FShaderCompileInfo CompileInfo("Cascade_VSMain", TargetShaderModel, EShaderStage::Vertex, ShaderDefines);
         if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/CascadedShadows.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -917,7 +960,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
 
         if (RenderPassType == ECascadeRenderPassType::GeometryShaderSinglePass)
         {
-            CompileInfo = FShaderCompileInfo("Cascade_GSMain", EShaderModel::SM_6_2, EShaderStage::Geometry, ShaderDefines);
+            CompileInfo = FShaderCompileInfo("Cascade_GSMain", TargetShaderModel, EShaderStage::Geometry, ShaderDefines);
             if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/CascadedShadows.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
@@ -935,7 +978,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         const bool bWantPixelShader = Material->HasHeightMap() || Material->HasAlphaMask();
         if (bWantPixelShader)
         {
-            CompileInfo = FShaderCompileInfo("Cascade_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, ShaderDefines);
+            CompileInfo = FShaderCompileInfo("Cascade_PSMain", TargetShaderModel, EShaderStage::Pixel, ShaderDefines);
             if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/CascadedShadows.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
@@ -1057,7 +1100,9 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         }
         else
         {
-            const FString DebugName = FString::CreateFormatted("CSM PipelineState %d", ShaderCombination.MaterialFlags);
+            const FString DebugName = FString::CreateFormatted("CSM PipelineState%s %d",
+                ShaderCombination.bBindless ? " [Bindless]" : "",
+                ShaderCombination.MaterialFlags);
             NewPipelineStateInstance.PipelineState->SetDebugName(DebugName);
         }
 
@@ -1217,7 +1262,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 template<ECascadeRenderPassType RenderPassType>
 void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene)
 {
-
+    const bool bBindless = GShadowsBindless && Resources.MaterialIndicesBuffer.IsValid();
 
     constexpr bool bIsSinglePass = 
         RenderPassType == ECascadeRenderPassType::SinglePass ||
@@ -1281,15 +1326,26 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
             // If this material require a pixel-shader, bind necessary pixel-shader resources
             if (Instance->PixelShader)
             {
-                CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+                if (bBindless)
+                {
+                    FMaterialBindlessIndicesHLSL Indices;
+                    FillMaterialBindlessIndices(*Material, Indices);
 
-                if (Material->HasAlphaMask())
-                {
-                    CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
+                    CommandList.UpdateBuffer(Resources.MaterialIndicesBuffer.Get(), FBufferRegion(0, sizeof(FMaterialBindlessIndicesHLSL)), &Indices);
+                    CommandList.SetConstantBuffer(Instance->PixelShader.Get(), Resources.MaterialIndicesBuffer.Get(), 3);
                 }
-                if (Material->HasHeightMap())
+                else
                 {
-                    CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
+                    CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+
+                    if (Material->HasAlphaMask())
+                    {
+                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
+                    }
+                    if (Material->HasHeightMap())
+                    {
+                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
+                    }
                 }
             }
 
@@ -1386,15 +1442,26 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                 // Bind pixel-shader resources if there are any
                 if (Instance->PixelShader)
                 {
-                    CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+                    if (bBindless)
+                    {
+                        FMaterialBindlessIndicesHLSL Indices;
+                        FillMaterialBindlessIndices(*Material, Indices);
 
-                    if (Material->HasAlphaMask())
-                    {
-                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
+                        CommandList.UpdateBuffer(Resources.MaterialIndicesBuffer.Get(), FBufferRegion(0, sizeof(FMaterialBindlessIndicesHLSL)), &Indices);
+                        CommandList.SetConstantBuffer(Instance->PixelShader.Get(), Resources.MaterialIndicesBuffer.Get(), 3);
                     }
-                    if (Material->HasHeightMap())
+                    else
                     {
-                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
+                        CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+
+                        if (Material->HasAlphaMask())
+                        {
+                            CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
+                        }
+                        if (Material->HasHeightMap())
+                        {
+                            CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
+                        }
                     }
                 }
 

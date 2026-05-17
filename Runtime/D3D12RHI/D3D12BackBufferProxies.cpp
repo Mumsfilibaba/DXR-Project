@@ -79,12 +79,14 @@ FRHIDepthStencilView* FD3D12BackBufferProxyTextureRHI::GetDepthStencilView() con
 
 FRHIDescriptorHandle FD3D12BackBufferProxyTextureRHI::GetBindlessUAVHandle() const
 {
-    return FRHIDescriptorHandle();
+    FD3D12TextureRHI* CurrentBackBuffer = GetTextureInterface();
+    return CurrentBackBuffer ? CurrentBackBuffer->GetBindlessUAVHandle() : FRHIDescriptorHandle();
 }
 
 FRHIDescriptorHandle FD3D12BackBufferProxyTextureRHI::GetBindlessSRVHandle() const
 {
-    return FRHIDescriptorHandle();
+    FD3D12TextureRHI* CurrentBackBuffer = GetTextureInterface();
+    return CurrentBackBuffer ? CurrentBackBuffer->GetBindlessSRVHandle() : FRHIDescriptorHandle();
 }
 
 void FD3D12BackBufferProxyTextureRHI::SetDebugName(const FString& InName)

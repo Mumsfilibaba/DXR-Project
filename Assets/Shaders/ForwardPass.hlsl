@@ -6,6 +6,10 @@
 #include "Shadows/ShadowHelpers.hlsli"
 #include "ParallaxMapping.hlsli"
 
+#ifndef BINDLESS_FORWARD_PASS
+    #define BINDLESS_FORWARD_PASS (0)
+#endif
+
 // Per Frame Buffers
 
 // TODO: Fix this
@@ -44,7 +48,6 @@ ConstantBuffer<FTransform> TransformBuffer : register(b1);
 ConstantBuffer<FMaterial>  MaterialBuffer  : register(b6);
 
 // Per Frame Samplers
-SamplerState MaterialSampler   : register(s0);
 SamplerState LUTSampler        : register(s1);
 SamplerState IrradianceSampler : register(s2);
 
@@ -58,11 +61,17 @@ Texture2D<float4>       IntegrationLUT        : register(t2);
 Texture2D<float>        DirLightShadowMaps    : register(t3);
 TextureCubeArray<float> PointLightShadowMaps  : register(t4);
 
-// Per Object Textures
-Texture2D<float4> AlbedoTex    : register(t5);
-Texture2D<float4> NormalTex    : register(t6);
-Texture2D<float3> MaterialMap  : register(t7);
-Texture2D<float>  HeightMap    : register(t8);
+// Per Object material textures + sampler
+#if BINDLESS_FORWARD_PASS
+    #define MATERIAL_BINDLESS_REGISTER b7
+    #include "MaterialBindless.hlsli"
+#else
+    SamplerState      MaterialSampler : register(s0);
+    Texture2D<float4> AlbedoTex       : register(t5);
+    Texture2D<float4> NormalTex       : register(t6);
+    Texture2D<float3> MaterialMap     : register(t7);
+    Texture2D<float>  HeightMap       : register(t8);
+#endif
 
 struct FVSInput
 {
@@ -138,7 +147,11 @@ float4 PSMain(FPSInput Input) : SV_Target0
         float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
 
         uint bParallaxDiscard = 0;
+    #if BINDLESS_FORWARD_PASS
+        TexCoords = ParallaxMapUV(GetHeightBindless(), GetMaterialSamplerBindless(), TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, MaterialBuffer.ParallaxHeightScale, MaterialBuffer.ParallaxMinLayers, MaterialBuffer.ParallaxMaxLayers, bParallaxDiscard);
+    #else
         TexCoords = ParallaxMapUV(HeightMap, MaterialSampler, TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, MaterialBuffer.ParallaxHeightScale, MaterialBuffer.ParallaxMinLayers, MaterialBuffer.ParallaxMaxLayers, bParallaxDiscard);
+    #endif
         if (bParallaxDiscard != 0)
         {
             discard;
@@ -146,7 +159,11 @@ float4 PSMain(FPSInput Input) : SV_Target0
     }
 #endif
 
+#if BINDLESS_FORWARD_PASS
+    const float4 AlbedoSample = GetAlbedoBindless().Sample(GetMaterialSamplerBindless(), TexCoords);
+#else
     const float4 AlbedoSample = AlbedoTex.Sample(MaterialSampler, TexCoords);
+#endif
     if (AlbedoSample.a < 0.5)
     {
         discard;
@@ -162,8 +179,12 @@ float4 PSMain(FPSInput Input) : SV_Target0
     {
         N = -N;
     }
-    
+
+#if BINDLESS_FORWARD_PASS
+    float3 SampledNormal = GetNormalBindless().Sample(GetMaterialSamplerBindless(), TexCoords).rgb;
+#else
     float3 SampledNormal = NormalTex.Sample(MaterialSampler, TexCoords).rgb;
+#endif
     SampledNormal        = UnpackNormal(SampledNormal);
     
     float3 Tangent   = normalize(Input.Tangent);
@@ -172,7 +193,11 @@ float4 PSMain(FPSInput Input) : SV_Target0
     N = ApplyNormalMapping(SampledNormal, Normal, Tangent, Bitangent);
 
     // Sample packed materialparam texture (R=AO, G=Roughness, B=Metallic)
+#if BINDLESS_FORWARD_PASS
+    const float3 MaterialParams   = GetMaterialBindless().Sample(GetMaterialSamplerBindless(), TexCoords);
+#else
     const float3 MaterialParams   = MaterialMap.Sample(MaterialSampler, TexCoords);
+#endif
     const float  SampledAO        = MaterialParams.r * MaterialBuffer.AO;
     const float  SampledRoughness = MaterialParams.g * MaterialBuffer.Roughness;
     const float  SampledMetallic  = MaterialParams.b * MaterialBuffer.Metallic;

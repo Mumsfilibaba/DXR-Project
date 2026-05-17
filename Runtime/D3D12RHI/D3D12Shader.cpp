@@ -50,7 +50,7 @@ static bool IsLegalRegisterSpace(const D3D12_SHADER_INPUT_BIND_DESC& ShaderBindD
 
 
 #ifndef MAKEFOURCC
-#define MAKEFOURCC(a, b, c, d) (unsigned int)((unsigned char)(a) | ((unsigned char)(b) << 8) | ((unsigned char)(c) << 16) | ((unsigned char)(d) << 24))
+    #define MAKEFOURCC(a, b, c, d) (unsigned int)((unsigned char)(a) | ((unsigned char)(b) << 8) | ((unsigned char)(c) << 16) | ((unsigned char)(d) << 24))
 #endif
 
 enum DxilFourCC
@@ -198,12 +198,30 @@ FD3D12Shader::FD3D12Shader(FD3D12Device* InDevice, EShaderVisibility::Type InSha
     , ByteCodeHash()
     , ShaderVisibility(InShaderVisibility)
     , BindingInfo()
+    , Flags(ED3D12ShaderFlags::None)
     , bContainsRootSignature(false)
 {
 }
 
 FD3D12Shader::~FD3D12Shader()
 {
+}
+
+ED3D12ShaderFlags FD3D12Shader::TranslateD3D12ShaderRequires(uint64 Mask)
+{
+    ED3D12ShaderFlags Result = ED3D12ShaderFlags::None;
+
+    if ((Mask & D3D_SHADER_REQUIRES_RESOURCE_DESCRIPTOR_HEAP_INDEXING) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresResourceDescriptorHeapIndexing;
+    }
+
+    if ((Mask & D3D_SHADER_REQUIRES_SAMPLER_DESCRIPTOR_HEAP_INDEXING) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresSamplerDescriptorHeapIndexing;
+    }
+
+    return Result;
 }
 
 FD3D12GraphicsShader::FD3D12GraphicsShader(FD3D12Device* InDevice, EShaderVisibility::Type InShaderVisibility)
@@ -267,6 +285,47 @@ bool FD3D12Shader::IsRootSignatureInShaderBlob(const TComPtr<IDxcBlob>& ShaderBl
     return true;
 }
 
+bool FD3D12Shader::ReadShaderFeatureFlags(const TComPtr<IDxcBlob>& ShaderBlob, uint64& OutFlags)
+{
+    OutFlags = 0;
+
+    TComPtr<IDxcContainerReflection> Reflection;
+    HRESULT Result = D3D12Functions::DxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&Reflection));
+    if (FAILED(Result))
+    {
+        D3D12_ERROR_CRITICAL("[FD3D12Shader]: FAILED to create IDxcContainerReflection");
+        return false;
+    }
+
+    Result = Reflection->Load(ShaderBlob.Get());
+    if (FAILED(Result))
+    {
+        D3D12_ERROR_CRITICAL("[FD3D12Shader]: Reflection were not able to load shader");
+        return false;
+    }
+
+    uint32 PartIndex = 0;
+    Result = Reflection->FindFirstPartKind(DFCC_FeatureInfo, &PartIndex);
+    if (FAILED(Result))
+    {
+        return true;
+    }
+
+    TComPtr<IDxcBlob> PartBlob;
+    Result = Reflection->GetPartContent(PartIndex, &PartBlob);
+    if (FAILED(Result) || !PartBlob)
+    {
+        return true;
+    }
+
+    if (PartBlob->GetBufferSize() >= sizeof(uint64) && PartBlob->GetBufferPointer())
+    {
+        FMemory::Memcpy(&OutFlags, PartBlob->GetBufferPointer(), sizeof(uint64));
+    }
+
+    return true;
+}
+
 bool FD3D12Shader::GetReflectionInterface(const TComPtr<IDxcBlob>& ShaderBlob, REFIID iid, void** ppvObject)
 {
     TComPtr<IDxcContainerReflection> ReflectionInterface;
@@ -301,7 +360,6 @@ bool FD3D12Shader::GetReflectionInterface(const TComPtr<IDxcBlob>& ShaderBlob, R
 
     return true;
 }
-
 
 bool FD3D12Shader::GetShaderResourceBindings(ID3D12ShaderReflection* Reflection, uint32 NumBoundResources)
 {
@@ -508,6 +566,8 @@ bool FD3D12GraphicsShader::Initialize(const TArray<uint8>& InCode)
 		return false;
 	}
 
+	Flags |= TranslateD3D12ShaderRequires(static_cast<uint64>(Reflection->GetRequiresFlags()));
+
 	if (IsRootSignatureInShaderBlob(ShaderBlob))
 	{
 		bContainsRootSignature = true;
@@ -543,6 +603,8 @@ bool FD3D12ComputeShaderRHI::Initialize(const TArray<uint8>& InCode)
         D3D12_ERROR_CRITICAL("[D3D12BaseComputeShader]: Error when analysing shader parameters");
         return false;
     }
+
+    Flags |= TranslateD3D12ShaderRequires(static_cast<uint64>(Reflection->GetRequiresFlags()));
 
     if (IsRootSignatureInShaderBlob(ShaderBlob))
     {
@@ -594,6 +656,12 @@ bool FD3D12RayTracingShader::Initialize(const TArray<uint8>& InCode)
 	{
 		D3D12_ERROR_CRITICAL("[FD3D12RayTracingShader]: Error when analysing shader parameters");
 		return false;
+	}
+
+	uint64 FeatureFlags = 0;
+	if (ReadShaderFeatureFlags(ShaderBlob, FeatureFlags))
+	{
+		Flags |= TranslateD3D12ShaderRequires(FeatureFlags);
 	}
 
 	// HACK: Since the NVIDIA driver can't handle these names, we have to change the names :(

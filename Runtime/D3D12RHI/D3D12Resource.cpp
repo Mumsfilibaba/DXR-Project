@@ -179,13 +179,23 @@ void FD3D12Resource::StartResidencyTracking()
 
 void FD3D12Resource::EndResidencyTracking()
 {
-    if (ResidencyHandle.IsInitialized())
+    if (IsPlacedResource())
     {
-        if (FD3D12ResidencyManager* ResidencyManager = GetDevice()->GetResidencyManager())
-        {
-            ResidencyManager->EndTrackingObject(&ResidencyHandle);
-        }
+        return;
     }
+
+    if (!ResidencyHandle.IsInitialized())
+    {
+        return;
+    }
+
+    if (FD3D12ResidencyManager* ResidencyManager = GetDevice()->GetResidencyManager())
+    {
+        ResidencyManager->EndTrackingObject(&ResidencyHandle);
+    }
+
+    // Idempotent: a later destructor-time call becomes a no-op once Pageable is cleared.
+    ResidencyHandle.Deinitialize();
 }
 
 void FD3D12Resource::DeferredRelease()

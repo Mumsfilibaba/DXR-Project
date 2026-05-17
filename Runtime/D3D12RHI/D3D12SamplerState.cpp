@@ -25,6 +25,7 @@ FD3D12SamplerStateRHI::FD3D12SamplerStateRHI(FD3D12Device* InDevice, FD3D12Offli
     , OfflineHeap(InOfflineHeap)
     , Descriptor()
     , Identifier(FD3D12SamplerStateIdentifier::EGenerate::New)
+    , BindlessHandle()
 {
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 }
@@ -36,6 +37,16 @@ FD3D12SamplerStateRHI::~FD3D12SamplerStateRHI()
 	    OfflineHeap.Free(Descriptor);
         Descriptor = {};
     }
+
+    if (BindlessHandle.IsValid())
+    {
+        if (FD3D12BindlessDescriptorHeap* SamplerBindlessHeap = GetDevice()->GetSamplerBindlessHeap())
+        {
+            SamplerBindlessHeap->Free(BindlessHandle);
+        }
+
+        BindlessHandle = FRHIDescriptorHandle();
+    }
 }
 
 void* FD3D12SamplerStateRHI::GetRHINativeSampler() const
@@ -45,7 +56,30 @@ void* FD3D12SamplerStateRHI::GetRHINativeSampler() const
 
 FRHIDescriptorHandle FD3D12SamplerStateRHI::GetBindlessHandle() const
 {
-    return FRHIDescriptorHandle();
+    if (BindlessHandle.IsValid())
+    {
+        return BindlessHandle;
+    }
+
+    if (!Descriptor)
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    FD3D12BindlessDescriptorHeap* SamplerBindlessHeap = GetDevice()->GetSamplerBindlessHeap();
+    if (!SamplerBindlessHeap)
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    BindlessHandle = SamplerBindlessHeap->Allocate(EDescriptorType::Sampler);
+    if (!BindlessHandle.IsValid())
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    SamplerBindlessHeap->EnqueueWrite(BindlessHandle, Descriptor.Handle);
+    return BindlessHandle;
 }
 
 bool FD3D12SamplerStateRHI::CreateSampler(const D3D12_SAMPLER_DESC& InDesc)

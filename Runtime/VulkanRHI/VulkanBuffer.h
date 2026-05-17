@@ -73,10 +73,11 @@ public:
     }
 
 protected:
-    VkBuffer           OwnedBuffer;
-    VkDeviceSize       RequiredAlignment;
-    FVulkanBufferState BufferState;
+    VkBuffer                      OwnedBuffer;
+    VkDeviceSize                  RequiredAlignment;
+    FVulkanBufferState            BufferState;
+    mutable FRHIDescriptorHandle  BindlessHandle;
 #if VULKAN_STORE_DEBUG_NAMES
-    FString            DebugName;
+    FString                       DebugName;
 #endif
 };

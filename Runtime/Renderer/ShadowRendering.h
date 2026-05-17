@@ -140,6 +140,12 @@ struct FPointLightShaderCombination
             // Type of RenderPass
             ECubeMapRenderPassType RenderPassType;
 
+            // True when this PSO routes Albedo / Material sampler via SM 6.6 bindless heaps
+            bool bBindless;
+
+            // Explicit padding to keep the struct equal in size to Hash for stable hashing
+            uint16 Padding0;
+
             // Material-flags
             uint32 MaterialFlags;
         };
@@ -147,6 +153,8 @@ struct FPointLightShaderCombination
         uint64 Hash;
     };
 };
+
+static_assert(sizeof(FPointLightShaderCombination) == sizeof(uint64), "FPointLightShaderCombination must have the same size as uint64");
 
 class FPointLightRenderPass : public FRenderPass
 {
@@ -221,6 +229,12 @@ struct FCascadedShadowsShaderCombination
             // True if depth-clipping should be enabled
             bool bEnableDepthClipping;
 
+            // True when this PSO routes Albedo / Material sampler via SM 6.6 bindless heaps
+            bool bBindless;
+
+            // Explicit padding to keep the struct equal in size to Hash for stable hashing
+            uint8 Padding0;
+
             // Material-flags
             uint32 MaterialFlags;
         };
@@ -228,6 +242,8 @@ struct FCascadedShadowsShaderCombination
         uint64 Hash;
     };
 };
+
+static_assert(sizeof(FCascadedShadowsShaderCombination) == sizeof(uint64), "FCascadedShadowsShaderCombination must have the same size as uint64");
 
 class FCascadedShadowsRenderPass : public FRenderPass
 {

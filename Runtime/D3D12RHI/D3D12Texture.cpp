@@ -66,12 +66,12 @@ FRHIDepthStencilView* FD3D12TextureRHI::GetDepthStencilView() const
 
 FRHIDescriptorHandle FD3D12TextureRHI::GetBindlessSRVHandle() const
 {
-    return FRHIDescriptorHandle();
+    return ShaderResourceView ? ShaderResourceView->GetBindlessHandle() : FRHIDescriptorHandle();
 }
 
 FRHIDescriptorHandle FD3D12TextureRHI::GetBindlessUAVHandle() const
 {
-    return FRHIDescriptorHandle();
+    return UnorderedAccessView ? UnorderedAccessView->GetBindlessHandle() : FRHIDescriptorHandle();
 }
 
 bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)

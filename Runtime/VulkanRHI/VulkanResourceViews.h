@@ -80,39 +80,42 @@ public:
 
     void RegisterToResource(FVulkanResource* InOwner);
     void UnregisterFromResource();
+    
+    NODISCARD FRHIDescriptorHandle EnsureBindlessHandle(EDescriptorType InType, bool bWritable) const;
+    void RefreshBindlessIfBound();
 
     void SetDebugName(const FString& InName);
     
-    const FStructuredBufferView& GetStructuredBufferInfo() const
+    NODISCARD FORCEINLINE const FStructuredBufferView& GetStructuredBufferInfo() const
     {
         CHECK(Type == EType::StructuredBufferView);
         return StructuredBufferInfo;
     }
     
-    const FTypedBufferView& GetTypedBufferInfo() const
+    NODISCARD FORCEINLINE const FTypedBufferView& GetTypedBufferInfo() const
     {
         CHECK(Type == EType::TypedBufferView);
         return TypedBufferInfo;
     }
 
-    const FImageView& GetImageViewInfo() const
+    NODISCARD FORCEINLINE const FImageView& GetImageViewInfo() const
     {
         CHECK(Type == EType::ImageView);
         return ImageViewInfo;
     }
 
-    const FAccelerationStructureView& GetAccelerationStructureInfo() const
+    NODISCARD FORCEINLINE const FAccelerationStructureView& GetAccelerationStructureInfo() const
     {
         CHECK(Type == EType::AccelerationStructureView);
         return AccelerationStructureInfo;
     }
 
-    EType GetType() const
+    NODISCARD FORCEINLINE EType GetType() const
     {
         return Type;
     }
 
-    void* GetRHINativeHandleForType() const
+    NODISCARD FORCEINLINE void* GetRHINativeHandleForType() const
     {
         switch (Type)
         {
@@ -127,12 +130,12 @@ public:
         }
     }
 
-    FVulkanResource* GetOwnerResource() const
+    NODISCARD FORCEINLINE FVulkanResource* GetOwnerResource() const
     {
         return OwnerResource;
     }
 
-    uint32 GetDescriptorVersion() const
+    NODISCARD FORCEINLINE uint32 GetDescriptorVersion() const
     {
         return DescriptorVersion;
     }
@@ -141,11 +144,16 @@ protected:
     void IncrementDescriptorVersion()
     {
         ++DescriptorVersion;
+        RefreshBindlessIfBound();
     }
 
-    EType            Type;
-    FVulkanResource* OwnerResource;
-    uint32           DescriptorVersion;
+    void FreeBindlessHandle();
+
+    EType                        Type;
+    FVulkanResource*             OwnerResource;
+    uint32                       DescriptorVersion;
+    mutable FRHIDescriptorHandle BindlessHandle;
+    mutable bool                 bBindlessIsWritable;
 
     union
     {

@@ -245,6 +245,15 @@ private:
 ```
 bool GMyGlobal;
 ```
+
+* Global / namespace-scope / file-scope constants — `constexpr` values defined outside any class or function body — use `UPPER_SNAKE_CASE`:
+```
+constexpr uint64 PSO_KEY_BINDLESS_BIT = uint64(1) << 32;
+constexpr int32  MAX_SHADOW_CASCADES  = 4;
+```
+* Prefer `constexpr` over `#define` for value constants so the type is preserved and the symbol is visible to the debugger. Use `#define` only for preprocessor switches, include guards, or token pasting where a value constant cannot do the job.
+
+* Class / struct member constants (`static constexpr` inside a type) and local `constexpr` variables follow the usual PascalCase / member naming rules — only file or namespace scope is UPPER_SNAKE_CASE.
 * Mathematical components such as x, y, z etc. should **NOT** be capitalized.
 ```
 struct FMyMathStruct

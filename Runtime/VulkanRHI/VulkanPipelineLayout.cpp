@@ -4,6 +4,7 @@
 #include "VulkanRHI/VulkanCore.h"
 #include "VulkanRHI/VulkanPipelineLayout.h"
 #include "VulkanRHI/VulkanConstants.h"
+#include "VulkanRHI/VulkanDescriptorSet.h"
 #include "VulkanRHI/VulkanShader.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
 
@@ -72,6 +73,11 @@ void FVulkanPipelineLayoutInfo::AddSetForStage(VkShaderStageFlagBits ShaderStage
 
     SetLayoutInfos.Add(Move(LayoutInfo));
     SetLayoutRemappings.Add(Move(LayoutRemappings));
+
+    if (ShaderInfo.UsesBindlessHeap())
+    {
+        bAnyStageUsesBindless = true;
+    }
 }
 
 void FVulkanPipelineLayoutInfo::PromoteUniformBuffersToDynamic()
@@ -172,7 +178,10 @@ void FVulkanPipelineLayoutInfo::ApplyImmutableSamplers(FVulkanDevice* Device, co
 FVulkanPipelineLayout::FVulkanPipelineLayout(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , LayoutHandle(VK_NULL_HANDLE)
+    , BindlessSetLayoutHandle(VK_NULL_HANDLE)
     , TotalDynamicOffsets(0)
+    , RegularSetCount(0)
+    , bHasBindlessSet(false)
 {
 }
 
@@ -187,20 +196,18 @@ FVulkanPipelineLayout::~FVulkanPipelineLayout()
 
 bool FVulkanPipelineLayout::Initialize(const FVulkanPipelineLayoutInfo& LayoutInfo)
 {
-    // Create Descriptor Bindings
-    TArray<VkDescriptorSetLayout> SetLayouts;
-    SetLayouts.Reserve(LayoutInfo.SetLayoutInfos.Size());
-    
+    TArray<VkDescriptorSetLayout> RegularLayouts;
+    RegularLayouts.Reserve(LayoutInfo.SetLayoutInfos.Size());
+
     FVulkanPipelineLayoutManager& PipelineLayoutManager = GetDevice()->GetPipelineLayoutManager();
     for (int32 SetIndex = 0; SetIndex < LayoutInfo.SetLayoutInfos.Size(); SetIndex++)
     {
         const FVulkanDescriptorSetLayoutInfo& SetLayoutInfo = LayoutInfo.SetLayoutInfos[SetIndex];
-        
-        // Retrieve a DescriptorSetLayout by creating or using a cached one
+
         VkDescriptorSetLayout NewSetLayout = PipelineLayoutManager.FindOrCreateSetLayouts(SetLayoutInfo);
         if (VULKAN_CHECK_HANDLE(NewSetLayout))
         {
-            SetLayouts.Add(NewSetLayout);
+            RegularLayouts.Add(NewSetLayout);
         }
         else
         {
@@ -208,7 +215,32 @@ bool FVulkanPipelineLayout::Initialize(const FVulkanPipelineLayoutInfo& LayoutIn
         }
     }
 
-    // Create PipelineLayout
+    RegularSetCount = static_cast<uint32>(RegularLayouts.Size());
+    bHasBindlessSet = false;
+    BindlessSetLayoutHandle = VK_NULL_HANDLE;
+
+    FVulkanBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager();
+
+    const bool bAttachBindless = LayoutInfo.bAnyStageUsesBindless && (BindlessManager != nullptr) && BindlessManager->IsEnabled();
+    if (bAttachBindless)
+    {
+        BindlessSetLayoutHandle = BindlessManager->GetLayout();
+        bHasBindlessSet = VULKAN_CHECK_HANDLE(BindlessSetLayoutHandle);
+    }
+
+    TArray<VkDescriptorSetLayout> SetLayouts;
+    SetLayouts.Reserve(RegularLayouts.Size() + (bHasBindlessSet ? 1 : 0));
+    
+    if (bHasBindlessSet)
+    {
+        SetLayouts.Add(BindlessSetLayoutHandle);
+    }
+
+    for (VkDescriptorSetLayout RegularLayout : RegularLayouts)
+    {
+        SetLayouts.Add(RegularLayout);
+    }
+
     VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo = {};
     PipelineLayoutCreateInfo.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     PipelineLayoutCreateInfo.setLayoutCount = SetLayouts.Size();
@@ -241,10 +273,9 @@ bool FVulkanPipelineLayout::Initialize(const FVulkanPipelineLayoutInfo& LayoutIn
     {
         // Ensure that the information about constants are stored
         ConstantsInfo = LayoutInfo.ConstantsInfo;
-        
-        // Ensure that we store the layout handles
-        SetLayoutHandles = Move(SetLayouts);
-        
+
+        RegularSetLayoutHandles = Move(RegularLayouts);
+
         // Ensure that the remapping info is copied for later use
         SetLayoutRemappings = LayoutInfo.SetLayoutRemappings;
 
@@ -275,20 +306,22 @@ bool FVulkanPipelineLayout::Initialize(const FVulkanPipelineLayoutInfo& LayoutIn
     //   Dynamic buffers  = 4 DWORDs each (with robust buffer access) or 2 DWORDs (without)
 
     const uint32 DynamicBufferCostDwords = GVulkanRobustBufferAccessEnabled ? 4 : 2;
+    const uint32 TotalSetCount = RegularSetLayoutHandles.Size() + (bHasBindlessSet ? 1u : 0u);
     uint32 UserDataCostDwords = 0;
-    UserDataCostDwords += SetLayoutHandles.Size();
+    UserDataCostDwords += TotalSetCount;
     UserDataCostDwords += LayoutInfo.ConstantsInfo.NumConstants;
     UserDataCostDwords += TotalDynamicOffsets * DynamicBufferCostDwords;
 
     if (UserDataCostDwords > VULKAN_RECOMMENDED_MAX_USER_DATA_DWORDS)
     {
-        LOG_WARNING("[FVulkanPipelineLayout] UserDataCost=%u DWORDs exceeds recommended %u (Sets=%d, PushConstants=%u, DynamicBuffers=%u)", 
-            UserDataCostDwords, VULKAN_RECOMMENDED_MAX_USER_DATA_DWORDS, SetLayoutHandles.Size(), LayoutInfo.ConstantsInfo.NumConstants, TotalDynamicOffsets);
+        LOG_WARNING("[FVulkanPipelineLayout] UserDataCost=%u DWORDs exceeds recommended %u (Sets=%u [Bindless=%s], PushConstants=%u, DynamicBuffers=%u)",
+            UserDataCostDwords, VULKAN_RECOMMENDED_MAX_USER_DATA_DWORDS, TotalSetCount, 
+            bHasBindlessSet ? "yes" : "no", LayoutInfo.ConstantsInfo.NumConstants, TotalDynamicOffsets);
     }
     else
     {
-        LOG_INFO("[FVulkanPipelineLayout] UserDataCost=%u DWORDs (Sets=%d, PushConstants=%u, DynamicBuffers=%u)", 
-            UserDataCostDwords, SetLayoutHandles.Size(), LayoutInfo.ConstantsInfo.NumConstants, TotalDynamicOffsets);
+        LOG_INFO("[FVulkanPipelineLayout] UserDataCost=%u DWORDs (Sets=%u [Bindless=%s], PushConstants=%u, DynamicBuffers=%u)",
+            UserDataCostDwords, TotalSetCount, bHasBindlessSet ? "yes" : "no", LayoutInfo.ConstantsInfo.NumConstants, TotalDynamicOffsets);
     }
 
     SetupResourceMapping(LayoutInfo);
@@ -347,7 +380,8 @@ bool FVulkanPipelineLayout::GetDescriptorSetIndex(EShaderVisibility::Type Shader
     FStageDescriptorMap& StageMapping = DescriptorBindMap[ShaderStage];
     if (StageMapping.DescriptorSetIndex != UINT8_MAX)
     {
-        OutDescriptorSetIndex = StageMapping.DescriptorSetIndex;
+        const uint32 BindlessOffset = bHasBindlessSet ? 1u : 0u;
+        OutDescriptorSetIndex = static_cast<uint32>(StageMapping.DescriptorSetIndex) + BindlessOffset;
         return true;
     }
     else
@@ -493,6 +527,7 @@ VkDescriptorSetLayout FVulkanPipelineLayoutManager::FindOrCreateSetLayouts(const
     // Build a local copy of bindings with pImmutableSamplers pointers resolved.
     // The stored Bindings always have pImmutableSamplers=nullptr (raw pointers don't survive copy/hash);
     // the actual VkSampler handles live in the ImmutableSamplers array.
+
     const bool bHasImmutableSamplers = SetLayoutInfo.ImmutableSamplers.Size() > 0;
     TArray<VkDescriptorSetLayoutBinding> ResolvedBindings;
 

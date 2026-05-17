@@ -499,6 +499,46 @@ public:
 };
 #endif
 
+#if VK_EXT_mutable_descriptor_type
+class FVulkanEXTMutableDescriptorTypeExtension : public FVulkanDeviceExtension
+{
+public:
+    FVulkanEXTMutableDescriptorTypeExtension()
+        : FVulkanDeviceExtension(VK_EXT_MUTABLE_DESCRIPTOR_TYPE_EXTENSION_NAME, false, true)
+    {
+    }
+
+    virtual void PrepareDeviceFeatures(VkPhysicalDeviceFeatures2& OutFeatures) override final
+    {
+        AvailableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT;
+        AddToStructChain(OutFeatures, AvailableFeatures);
+    }
+
+    virtual void ProcessQueriedFeatures() override final
+    {
+        if (AvailableFeatures.mutableDescriptorType == VK_TRUE)
+        {
+            GVulkanSupportsMutableDescriptorType = true;
+        }
+    }
+
+    virtual void PrepareDeviceCreateInfo(VkDeviceCreateInfo& OutDeviceCreateInfo) override final
+    {
+        if (!GVulkanSupportsMutableDescriptorType)
+        {
+            return;
+        }
+
+        EnableFeatures.sType                 = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT;
+        EnableFeatures.mutableDescriptorType = VK_TRUE;
+        AddToStructChain(OutDeviceCreateInfo, EnableFeatures);
+    }
+
+    VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT EnableFeatures    = {};
+    VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT AvailableFeatures = {};
+};
+#endif
+
 #if VK_EXT_device_fault
 class FVulkanEXTDeviceFaultExtension : public FVulkanDeviceExtension
 {
@@ -658,6 +698,9 @@ void FVulkanDeviceExtension::RegisterExtensions(TArray<TUniquePtr<FVulkanDeviceE
 #endif
 #if VK_EXT_transform_feedback
     OutExtensions.Add(MakeUniquePtr<FVulkanEXTTransformFeedbackExtension>());
+#endif
+#if VK_EXT_mutable_descriptor_type
+    OutExtensions.Add(MakeUniquePtr<FVulkanEXTMutableDescriptorTypeExtension>());
 #endif
 #if VK_EXT_device_fault
     OutExtensions.Add(MakeUniquePtr<FVulkanEXTDeviceFaultExtension>());

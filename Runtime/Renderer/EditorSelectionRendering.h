@@ -21,7 +21,7 @@ public:
     void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene);
 
 private:
-    TMap<int32, FGraphicsPipelineStateInstance> MaterialPSOs;
+    TMap<uint64, FGraphicsPipelineStateInstance> MaterialPSOs;
 };
 
 class FEditorSelectionIDPass : public FRenderPass

@@ -88,4 +88,5 @@ private:
     FD3D12OfflineDescriptorHeap& OfflineHeap;
     FD3D12OfflineDescriptor      Descriptor;
     FD3D12SamplerStateIdentifier Identifier;
+    mutable FRHIDescriptorHandle BindlessHandle;
 };

@@ -5,6 +5,7 @@
 #include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
 #include "Renderer/DeferredRendering.h"
+#include "Renderer/MaterialBindless.h"
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
@@ -21,6 +22,18 @@ static FAutoConsoleVariableRef CVarBasePassClearAllTargets(
     "Set to true to clear all the GBuffer RenderTargets inside of the BasePass, otherwise only a few targets are cleared to save bandwidth",
     GBasePassClearAllTargets);
 
+static bool GBasePassBindless = false;
+static FAutoConsoleVariableRef CVarBasePassBindless(
+    "Renderer.BasePass.Bindless",
+    "When true, the deferred BasePass samples material textures and samplers via SM 6.6 ResourceDescriptorHeap[] / SamplerDescriptorHeap[] and a per-material indices buffer instead of conventional register bindings. Falls back to the static-binding variant if bindless is not supported by the RHI.",
+    GBasePassBindless);
+
+bool GPrePassBindless = false;
+static FAutoConsoleVariableRef CVarPrePassBindless(
+    "Renderer.PrePass.Bindless",
+    "When true, the depth pre-pass samples Albedo (alpha mask) and Height (parallax) via SM 6.6 ResourceDescriptorHeap[] / SamplerDescriptorHeap[] and a per-material indices buffer instead of register bindings.",
+    GPrePassBindless);
+
 FDepthPrePass::FDepthPrePass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
     , MaterialPSOs()
@@ -34,9 +47,11 @@ FDepthPrePass::~FDepthPrePass()
 
 void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
 {
-    const int32 MaterialFlags = static_cast<int32>(Material->GetMaterialFlags());
+    const int32  MaterialFlags = static_cast<int32>(Material->GetMaterialFlags());
+    const bool   bBindless     = GPrePassBindless;
+    const uint64 PSOKey        = MakeMaterialPSOKey(MaterialFlags, bBindless);
 
-    FGraphicsPipelineStateInstance* CachedPrePassPSO = MaterialPSOs.Find(MaterialFlags);
+    FGraphicsPipelineStateInstance* CachedPrePassPSO = MaterialPSOs.Find(PSOKey);
     if (!CachedPrePassPSO)
     {
         TArray<uint8>         ShaderCode;
@@ -60,7 +75,11 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FFrameResour
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
         }
 
-        FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, ShaderDefines);
+        ShaderDefines.Emplace("BINDLESS_PRE_PASS", bBindless ? "(1)" : "(0)");
+
+        const EShaderModel TargetShaderModel = bBindless ? EShaderModel::SM_6_6 : EShaderModel::SM_6_2;
+
+        FShaderCompileInfo CompileInfo("VSMain", TargetShaderModel, EShaderStage::Vertex, ShaderDefines);
         if (!FShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -78,7 +97,7 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FFrameResour
         const bool bWantPixelShader = Material->HasHeightMap() || Material->HasAlphaMask();
         if (bWantPixelShader)
         {
-            CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, ShaderDefines);
+            CompileInfo = FShaderCompileInfo("PSMain", TargetShaderModel, EShaderStage::Pixel, ShaderDefines);
             if (!FShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
@@ -181,11 +200,13 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FFrameResour
         }
         else
         {
-            const FString DebugName = FString::CreateFormatted("PrePass PipelineState %d", MaterialFlags);
+            const FString DebugName = FString::CreateFormatted("PrePass PipelineState%s %d",
+                bBindless ? " [Bindless]" : "",
+                MaterialFlags);
             NewPipelineInstance.PipelineState->SetDebugName(DebugName);
         }
 
-        MaterialPSOs.Add(MaterialFlags, Move(NewPipelineInstance));
+        MaterialPSOs.Add(PSOKey, Move(NewPipelineInstance));
     }
 }
 
@@ -242,6 +263,8 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
+    const bool bBindless = GPrePassBindless && FrameResources.MaterialIndicesBuffer.IsValid();
+
     for (const FMeshBatch& Batch : Scene->CameraView.GetMeshBatches())
     {
         FMaterial* Material = Batch.Material;
@@ -252,7 +275,8 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
             continue;
         }
 
-        FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(static_cast<int32>(Material->GetMaterialFlags()));
+        const uint64 PSOKey = MakeMaterialPSOKey(static_cast<int32>(Material->GetMaterialFlags()), bBindless);
+        FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(PSOKey);
         if (!PipelineInstance)
         {
             DEBUG_BREAK();
@@ -267,17 +291,29 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
         if (Material->HasAlphaMask() || Material->HasHeightMap())
         {
             CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), Material->GetMaterialBuffer(), 1);
-            CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
-        }
 
-        if (Material->HasAlphaMask())
-        {
-            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
-        }
+            if (bBindless)
+            {
+                FMaterialBindlessIndicesHLSL Indices;
+                FillMaterialBindlessIndices(*Material, Indices);
 
-        if (Material->HasHeightMap())
-        {
-            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
+                CommandList.UpdateBuffer(FrameResources.MaterialIndicesBuffer.Get(), FBufferRegion(0, sizeof(FMaterialBindlessIndicesHLSL)), &Indices);
+                CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), FrameResources.MaterialIndicesBuffer.Get(), 2);
+            }
+            else
+            {
+                CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+
+                if (Material->HasAlphaMask())
+                {
+                    CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
+                }
+
+                if (Material->HasHeightMap())
+                {
+                    CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
+                }
+            }
         }
 
         for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
@@ -340,8 +376,10 @@ FDeferredBasePass::~FDeferredBasePass()
 void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
 {
     const int32 MaterialFlags = static_cast<int32>(Material->GetMaterialFlags());
+    const bool  bBindless     = GBasePassBindless;
+    const uint64 PSOKey       = MakeMaterialPSOKey(MaterialFlags, bBindless);
 
-    FGraphicsPipelineStateInstance* CachedBasePassPSO = MaterialPSOs.Find(MaterialFlags);
+    FGraphicsPipelineStateInstance* CachedBasePassPSO = MaterialPSOs.Find(PSOKey);
     if (!CachedBasePassPSO)
     {
         TArray<uint8>         ShaderCode;
@@ -383,7 +421,11 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FFrameRe
             ShaderDefines.Emplace("ENABLE_DOUBLE_SIDED", "(0)");
         }
 
-        FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, ShaderDefines);
+        ShaderDefines.Emplace("BINDLESS_BASE_PASS", bBindless ? "(1)" : "(0)");
+
+        const EShaderModel TargetShaderModel = bBindless ? EShaderModel::SM_6_6 : EShaderModel::SM_6_2;
+
+        FShaderCompileInfo CompileInfo("VSMain", TargetShaderModel, EShaderStage::Vertex, ShaderDefines);
         if (!FShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -398,7 +440,7 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FFrameRe
             return;
         }
 
-        CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, ShaderDefines);
+        CompileInfo = FShaderCompileInfo("PSMain", TargetShaderModel, EShaderStage::Pixel, ShaderDefines);
         if (!FShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -476,11 +518,13 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FFrameRe
         }
         else
         {
-            const FString DebugName = FString::CreateFormatted("BasePass PipelineState %d", MaterialFlags);
+            const FString DebugName = FString::CreateFormatted("BasePass PipelineState%s %d",
+                bBindless ? " [Bindless]" : "",
+                MaterialFlags);
             NewPipelineInstance.PipelineState->SetDebugName(DebugName);
         }
 
-        MaterialPSOs.Add(MaterialFlags, Move(NewPipelineInstance));
+        MaterialPSOs.Add(PSOKey, Move(NewPipelineInstance));
     }
 }
 
@@ -572,12 +616,12 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
     FRHIDepthStencilView* DepthStencilView         = FrameResources.GBuffer[EGBufferIndex::Depth]->GetDepthStencilView();
 
     FRHIBeginRenderPassDesc RenderPassDesc;
-    RenderPassDesc.NumRenderTargets                     = EGBufferIndex::NumRenderTargets;
+    RenderPassDesc.NumRenderTargets                       = EGBufferIndex::NumRenderTargets;
     RenderPassDesc.RenderTargets[EGBufferIndex::Albedo]   = FRHIRenderPassAttachment(AlbedoRenderTargetView, LoadAction);
     RenderPassDesc.RenderTargets[EGBufferIndex::Normal]   = FRHIRenderPassAttachment(NormalRenderTargetView, EAttachmentLoadAction::Clear);
     RenderPassDesc.RenderTargets[EGBufferIndex::Material] = FRHIRenderPassAttachment(MaterialRenderTargetView, LoadAction);
     RenderPassDesc.RenderTargets[EGBufferIndex::Velocity] = FRHIRenderPassAttachment(VelocityRenderTargetView, LoadAction);
-    RenderPassDesc.DepthStencilAttachment               = FRHIDepthStencilAttachment(DepthStencilView, EAttachmentLoadAction::Load);
+    RenderPassDesc.DepthStencilAttachment                 = FRHIDepthStencilAttachment(DepthStencilView, EAttachmentLoadAction::Load);
 
     CommandList.BeginRenderPass(RenderPassDesc);
 
@@ -587,6 +631,8 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
+    const bool bBindless = GBasePassBindless && FrameResources.MaterialIndicesBuffer.IsValid();
+
     for (const FMeshBatch& Batch : Scene->CameraView.GetMeshBatches())
     {
         FMaterial* Material = Batch.Material;
@@ -595,7 +641,8 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
             continue;
         }
 
-        FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(static_cast<int32>(Material->GetMaterialFlags()));
+        const uint64 PSOKey = MakeMaterialPSOKey(static_cast<int32>(Material->GetMaterialFlags()), bBindless);
+        FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(PSOKey);
         if (!PipelineInstance)
         {
             DEBUG_BREAK();
@@ -607,29 +654,48 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
 
         CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-        // Unified texture layout: t0=Albedo, t1=Normal, t2=MaterialMap, t3=Height
-        CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
-
-        if (Material->HasNormalMap())
+        if (bBindless)
         {
-            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->NormalMap->GetShaderResourceView(), 1);
+            FMaterialBindlessIndicesHLSL Indices;
+            FillMaterialBindlessIndices(*Material, Indices);
+
+            CommandList.UpdateBuffer(FrameResources.MaterialIndicesBuffer.Get(), FBufferRegion(0, sizeof(FMaterialBindlessIndicesHLSL)), &Indices);
+
+            FRHIBuffer* PSConstantBuffers[] =
+            {
+                FrameResources.CameraBuffer.Get(),
+                Material->GetMaterialBuffer(),
+                FrameResources.MaterialIndicesBuffer.Get(),
+            };
+
+            CommandList.SetConstantBuffers(PipelineInstance->PixelShader.Get(), MakeArrayView(PSConstantBuffers), 0);
         }
-
-        CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->MaterialMap->GetShaderResourceView(), 2);
-
-        if (Material->HasHeightMap())
+        else
         {
-            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 3);
+            // Unified texture layout: t0=Albedo, t1=Normal, t2=MaterialMap, t3=Height
+            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
+
+            if (Material->HasNormalMap())
+            {
+                CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->NormalMap->GetShaderResourceView(), 1);
+            }
+
+            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->MaterialMap->GetShaderResourceView(), 2);
+
+            if (Material->HasHeightMap())
+            {
+                CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 3);
+            }
+
+            FRHIBuffer* PSConstantBuffers[] =
+            {
+                FrameResources.CameraBuffer.Get(),
+                Material->GetMaterialBuffer(),
+            };
+
+            CommandList.SetConstantBuffers(PipelineInstance->PixelShader.Get(), MakeArrayView(PSConstantBuffers), 0);
+            CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
         }
-
-        FRHIBuffer* PSConstantBuffers[] =
-        {
-            FrameResources.CameraBuffer.Get(),
-            Material->GetMaterialBuffer(),
-        };
-
-        CommandList.SetConstantBuffers(PipelineInstance->PixelShader.Get(), MakeArrayView(PSConstantBuffers), 0);
-        CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
 
         for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
         {

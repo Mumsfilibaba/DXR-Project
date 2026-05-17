@@ -112,6 +112,15 @@ void FD3D12CommandContextState::BindGraphicsState()
         GraphicsState.bBindPrimitiveTopology = false;
     }
 
+    // -----------------------------------------------------------------------------------------------------------
+    // D3D12 Spec: when a root signature carries D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED
+    // (or its sampler counterpart) the shader-visible heaps must already be bound on the command list before 
+    // SetGraphicsRootSignature is called. SetDescriptorHeaps is idempotent (skips when unchanged), so the 
+    // redundant call at the top of BindResources stays safe.
+    // -----------------------------------------------------------------------------------------------------------
+
+    CommonState.DescriptorCache.SetDescriptorHeaps();
+
     if (GraphicsState.bBindRootSignature)
     {
         InternalSetRootSignature(RootSignature, EShaderVisibility::Pixel);
@@ -244,6 +253,13 @@ void FD3D12CommandContextState::BindComputeState()
         ComputeState.bBindPipelineState = false;
     }
 
+    // -----------------------------------------------------------------------------------------------------------
+    // See BindGraphicsState: shader-visible heaps must precede a directly-indexed root signature on the 
+    // command list. SetDescriptorHeaps is idempotent so the BindResources call below stays safe.
+    // -----------------------------------------------------------------------------------------------------------
+
+    CommonState.DescriptorCache.SetDescriptorHeaps();
+
     if (ComputeState.bBindRootSignature)
     {
         InternalSetRootSignature(RootSignature, EShaderVisibility::All);
@@ -299,8 +315,12 @@ bool FD3D12CommandContextState::PrepareSamplers(FD3D12RootSignature* RootSignatu
 
                 if (!CommonState.DescriptorCache.GetSamplerHeap().Realloc())
                 {
-                    D3D12_ERROR("Failed to allocate sampler descriptor block after CommandList split");
-                    return bCommandListSplit;
+                    if (!GetDevice()->ReallocateGlobalDescriptorHeap(ED3D12GlobalDescriptorHeapType::Sampler) || 
+                        !CommonState.DescriptorCache.GetSamplerHeap().Realloc())
+                    {
+                        D3D12_ERROR("Failed to allocate sampler descriptor block after CommandList split + heap reallocate");
+                        return bCommandListSplit;
+                    }
                 }
             }
 
@@ -393,8 +413,12 @@ bool FD3D12CommandContextState::PrepareResources(FD3D12RootSignature* RootSignat
 
                 if (!CommonState.DescriptorCache.GetResourceHeap().Realloc())
                 {
-                    D3D12_ERROR("Failed to allocate resource descriptor block after CommandList split");
-                    return bCommandListSplit;
+                    if (!GetDevice()->ReallocateGlobalDescriptorHeap(ED3D12GlobalDescriptorHeapType::Resource) ||
+                        !CommonState.DescriptorCache.GetResourceHeap().Realloc())
+                    {
+                        D3D12_ERROR("Failed to allocate resource descriptor block after CommandList split + heap reallocate");
+                        return bCommandListSplit;
+                    }
                 }
             }
 
