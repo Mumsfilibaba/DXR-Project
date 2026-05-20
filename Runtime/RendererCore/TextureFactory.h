@@ -75,28 +75,20 @@ private:
     bool CreateResources();
 
     FTextureCompressor          TextureCompressor;
-
     FRHISamplerStateRef         LinearSampler;
     FRHISamplerStateRef         CubeMapFilterSampler;
-
     FRHIComputePipelineStateRef PanoramaPSO;
     FRHIComputeShaderRef        PanoramCS;
-
     FRHIComputePipelineStateRef GenerateMipsTex2D_PSO;
     FRHIComputeShaderRef        GenerateMipsTex2D_CS;
-
     FRHIComputePipelineStateRef GenerateMipsTexCube_PSO;
     FRHIComputeShaderRef        GenerateMipsTexCube_CS;
-
     FRHIComputePipelineStateRef DiffuseCubeMapFilter_PSO;
     FRHIComputeShaderRef        DiffuseCubeMapFilter_CS;
-    
     FRHIComputePipelineStateRef SpecularCubeMapFilter_PSO;
     FRHIComputeShaderRef        SpecularCubeMapFilter_CS;
-
     FRHIComputePipelineStateRef PackMaterialParams_PSO;
     FRHIComputeShaderRef        PackMaterialParams_CS;
-
     FRHIComputePipelineStateRef BakeAlpha_PSO;
     FRHIComputeShaderRef        BakeAlpha_CS;
 
