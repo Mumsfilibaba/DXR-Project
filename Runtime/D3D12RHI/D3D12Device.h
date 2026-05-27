@@ -68,6 +68,7 @@ extern D3D12RHI_API D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER GD3D12ProgrammableS
 extern D3D12RHI_API D3D12_WORK_GRAPHS_TIER                   GD3D12WorkGraphsTier;
 extern D3D12RHI_API D3D12_EXECUTE_INDIRECT_TIER              GD3D12ExecuteIndirectTier;
 extern D3D12RHI_API D3D12_TILED_RESOURCES_TIER               GD3D12TiledResourcesTier;
+extern D3D12RHI_API D3D12_WAVE_MMA_TIER                      GD3D12WaveMMATier;
 extern D3D12RHI_API D3D_ROOT_SIGNATURE_VERSION               GD3D12RootSignatureVersion;
 extern D3D12RHI_API D3D_SHADER_MODEL                         GD3D12HighestShaderModel;
 
@@ -80,6 +81,23 @@ extern D3D12RHI_API bool GD3D12TypedUAVLoadAdditionalFormats;
 extern D3D12RHI_API bool GD3D12DepthBoundsTestSupported;
 extern D3D12RHI_API bool GD3D12IsArchitectureUMA;
 extern D3D12RHI_API bool GD3D12IsArchitectureCacheCoherentUMA;
+extern D3D12RHI_API bool GD3D12PSSpecifiedStencilRefSupported;
+extern D3D12RHI_API bool GD3D12WaveOpsSupported;
+extern D3D12RHI_API bool GD3D12Int64ShaderOpsSupported;
+extern D3D12RHI_API bool GD3D12BarycentricsSupported;
+extern D3D12RHI_API bool GD3D12Native16BitShaderOpsSupported;
+extern D3D12RHI_API bool GD3D12AtomicInt64OnTypedResourceSupported;
+extern D3D12RHI_API bool GD3D12AtomicInt64OnGroupSharedSupported;
+extern D3D12RHI_API bool GD3D12DerivativesInMeshAndAmpShadersSupported;
+extern D3D12RHI_API bool GD3D12AtomicInt64OnDescriptorHeapResourceSupported;
+
+// -------------------------------------------------------------------------------------------
+// Wave / Lane counts
+// -------------------------------------------------------------------------------------------
+
+extern D3D12RHI_API uint32 GD3D12WaveLaneCountMin;
+extern D3D12RHI_API uint32 GD3D12WaveLaneCountMax;
+extern D3D12RHI_API uint32 GD3D12TotalLaneCount;
 
 // -------------------------------------------------------------------------------------------
 // Descriptor / Heap Limits

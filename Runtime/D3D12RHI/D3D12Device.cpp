@@ -228,6 +228,7 @@ D3D12RHI_API D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER GD3D12ProgrammableSamplePo
 D3D12RHI_API D3D12_WORK_GRAPHS_TIER                   GD3D12WorkGraphsTier                  = D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED;
 D3D12RHI_API D3D12_EXECUTE_INDIRECT_TIER              GD3D12ExecuteIndirectTier             = D3D12_EXECUTE_INDIRECT_TIER_1_0;
 D3D12RHI_API D3D12_TILED_RESOURCES_TIER               GD3D12TiledResourcesTier              = D3D12_TILED_RESOURCES_TIER_NOT_SUPPORTED;
+D3D12RHI_API D3D12_WAVE_MMA_TIER                      GD3D12WaveMMATier                     = D3D12_WAVE_MMA_TIER_NOT_SUPPORTED;
 D3D12RHI_API D3D_ROOT_SIGNATURE_VERSION               GD3D12RootSignatureVersion            = D3D_ROOT_SIGNATURE_VERSION_1_0;
 D3D12RHI_API D3D_SHADER_MODEL                         GD3D12HighestShaderModel              = D3D_SHADER_MODEL_6_0;
 
@@ -235,11 +236,28 @@ D3D12RHI_API D3D_SHADER_MODEL                         GD3D12HighestShaderModel  
 // Boolean Capability Flags
 // -------------------------------------------------------------------------------------------
 
-D3D12RHI_API bool GD3D12RasterizerOrderViewsSupported  = false;
-D3D12RHI_API bool GD3D12TypedUAVLoadAdditionalFormats  = false;
-D3D12RHI_API bool GD3D12DepthBoundsTestSupported       = false;
-D3D12RHI_API bool GD3D12IsArchitectureUMA              = false;
-D3D12RHI_API bool GD3D12IsArchitectureCacheCoherentUMA = false;
+D3D12RHI_API bool GD3D12RasterizerOrderViewsSupported              = false;
+D3D12RHI_API bool GD3D12TypedUAVLoadAdditionalFormats              = false;
+D3D12RHI_API bool GD3D12DepthBoundsTestSupported                   = false;
+D3D12RHI_API bool GD3D12IsArchitectureUMA                          = false;
+D3D12RHI_API bool GD3D12IsArchitectureCacheCoherentUMA             = false;
+D3D12RHI_API bool GD3D12PSSpecifiedStencilRefSupported             = false;
+D3D12RHI_API bool GD3D12WaveOpsSupported                           = false;
+D3D12RHI_API bool GD3D12Int64ShaderOpsSupported                    = false;
+D3D12RHI_API bool GD3D12BarycentricsSupported                      = false;
+D3D12RHI_API bool GD3D12Native16BitShaderOpsSupported              = false;
+D3D12RHI_API bool GD3D12AtomicInt64OnTypedResourceSupported        = false;
+D3D12RHI_API bool GD3D12AtomicInt64OnGroupSharedSupported          = false;
+D3D12RHI_API bool GD3D12DerivativesInMeshAndAmpShadersSupported    = false;
+D3D12RHI_API bool GD3D12AtomicInt64OnDescriptorHeapResourceSupported = false;
+
+// -------------------------------------------------------------------------------------------
+// Wave / Lane counts
+// -------------------------------------------------------------------------------------------
+
+D3D12RHI_API uint32 GD3D12WaveLaneCountMin = 0;
+D3D12RHI_API uint32 GD3D12WaveLaneCountMax = 0;
+D3D12RHI_API uint32 GD3D12TotalLaneCount   = 0;
 
 // -------------------------------------------------------------------------------------------
 // Descriptor / Heap Limits
@@ -1873,12 +1891,13 @@ void FD3D12Device::QueryDeviceFeatureSupport()
         HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &Features, sizeof(Features));
         if (SUCCEEDED(hr))
         {
-            GD3D12ResourceBindingTier           = Features.ResourceBindingTier;
-            GD3D12ResourceHeapTier              = Features.ResourceHeapTier;
-            GD3D12ConservativeRasterizationTier = Features.ConservativeRasterizationTier;
-            GD3D12RasterizerOrderViewsSupported = !!Features.ROVsSupported;
-            GD3D12TypedUAVLoadAdditionalFormats = !!Features.TypedUAVLoadAdditionalFormats;
-            GD3D12TiledResourcesTier            = Features.TiledResourcesTier;
+            GD3D12ResourceBindingTier            = Features.ResourceBindingTier;
+            GD3D12ResourceHeapTier               = Features.ResourceHeapTier;
+            GD3D12ConservativeRasterizationTier  = Features.ConservativeRasterizationTier;
+            GD3D12RasterizerOrderViewsSupported  = !!Features.ROVsSupported;
+            GD3D12TypedUAVLoadAdditionalFormats  = !!Features.TypedUAVLoadAdditionalFormats;
+            GD3D12TiledResourcesTier             = Features.TiledResourcesTier;
+            GD3D12PSSpecifiedStencilRefSupported = !!Features.PSSpecifiedStencilRefSupported;
 
             const int32 BindingTierOverride = CVarResourceBindingTierOverride.GetValue();
             if (BindingTierOverride >= 1 && BindingTierOverride <= 3)
@@ -1893,10 +1912,37 @@ void FD3D12Device::QueryDeviceFeatureSupport()
             D3D12_INFO("[FD3D12Device] TypedUAVLoadAdditionalFormats: %s", GD3D12TypedUAVLoadAdditionalFormats ? "true" : "false");
             D3D12_INFO("[FD3D12Device] ROVsSupported: %s", GD3D12RasterizerOrderViewsSupported ? "true" : "false");
             D3D12_INFO("[FD3D12Device] TiledResources Tier: %d", GD3D12TiledResourcesTier);
+            D3D12_INFO("[FD3D12Device] PSSpecifiedStencilRefSupported: %s", GD3D12PSSpecifiedStencilRefSupported ? "true" : "false");
         }
         else
         {
             D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_D3D12_OPTIONS query failed (hr=0x%08X)", hr);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // Wave Ops, Int64 ops, Lane counts
+    // -------------------------------------------------------------------------------------------
+
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS1 Features1 = {};
+        HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS1, &Features1, sizeof(Features1));
+        if (SUCCEEDED(hr))
+        {
+            GD3D12WaveOpsSupported        = !!Features1.WaveOps;
+            GD3D12Int64ShaderOpsSupported = !!Features1.Int64ShaderOps;
+            GD3D12WaveLaneCountMin        = Features1.WaveLaneCountMin;
+            GD3D12WaveLaneCountMax        = Features1.WaveLaneCountMax;
+            GD3D12TotalLaneCount          = Features1.TotalLaneCount;
+
+            D3D12_INFO("[FD3D12Device] WaveOps Supported: %s", GD3D12WaveOpsSupported ? "true" : "false");
+            D3D12_INFO("[FD3D12Device] Int64ShaderOps Supported: %s", GD3D12Int64ShaderOpsSupported ? "true" : "false");
+            D3D12_INFO("[FD3D12Device] Wave Lane Count Min/Max: %u / %u", GD3D12WaveLaneCountMin, GD3D12WaveLaneCountMax);
+            D3D12_INFO("[FD3D12Device] Total Lane Count: %u", GD3D12TotalLaneCount);
+        }
+        else
+        {
+            D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_D3D12_OPTIONS1 query failed (hr=0x%08X)", hr);
         }
     }
 
@@ -1932,13 +1978,33 @@ void FD3D12Device::QueryDeviceFeatureSupport()
         {
             GD3D12ViewInstancingTier               = Features3.ViewInstancingTier;
             GD3D12WriteBufferImmediateSupportFlags = Features3.WriteBufferImmediateSupportFlags;
+            GD3D12BarycentricsSupported            = !!Features3.BarycentricsSupported;
 
+            D3D12_INFO("[FD3D12Device] BarycentricsSupported: %s", GD3D12BarycentricsSupported ? "true" : "false");
             D3D12_INFO("[FD3D12Device] ViewInstancing Tier: %d", GD3D12ViewInstancingTier);
             D3D12_INFO("[FD3D12Device] WriteBufferImmediate SupportFlags: 0x%X", static_cast<uint32>(GD3D12WriteBufferImmediateSupportFlags));
         }
         else
         {
             D3D12_WARNING("[FD3D12Device] D3D12_OPTIONS3 query failed (hr=0x%08X)", hr);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // Native 16-bit shader ops
+    // -------------------------------------------------------------------------------------------
+
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS4 Features4 = {};
+        HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS4, &Features4, sizeof(Features4));
+        if (SUCCEEDED(hr))
+        {
+            GD3D12Native16BitShaderOpsSupported = !!Features4.Native16BitShaderOpsSupported;
+            D3D12_INFO("[FD3D12Device] Native16BitShaderOps Supported: %s", GD3D12Native16BitShaderOpsSupported ? "true" : "false");
+        }
+        else
+        {
+            D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_D3D12_OPTIONS4 query failed (hr=0x%08X)", hr);
         }
     }
 
@@ -1996,6 +2062,49 @@ void FD3D12Device::QueryDeviceFeatureSupport()
         else
         {
             D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_D3D12_OPTIONS7 query failed (hr=0x%08X)", hr);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // Atomic int64 on typed/groupshared, Mesh/Amplification derivatives, Wave MMA
+    // -------------------------------------------------------------------------------------------
+
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS9 Features9 = {};
+        HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS9, &Features9, sizeof(Features9));
+        if (SUCCEEDED(hr))
+        {
+            GD3D12AtomicInt64OnTypedResourceSupported     = !!Features9.AtomicInt64OnTypedResourceSupported;
+            GD3D12AtomicInt64OnGroupSharedSupported       = !!Features9.AtomicInt64OnGroupSharedSupported;
+            GD3D12DerivativesInMeshAndAmpShadersSupported = !!Features9.DerivativesInMeshAndAmplificationShadersSupported;
+            GD3D12WaveMMATier                             = Features9.WaveMMATier;
+
+            D3D12_INFO("[FD3D12Device] AtomicInt64OnTypedResource Supported: %s", GD3D12AtomicInt64OnTypedResourceSupported ? "true" : "false");
+            D3D12_INFO("[FD3D12Device] AtomicInt64OnGroupShared Supported: %s", GD3D12AtomicInt64OnGroupSharedSupported ? "true" : "false");
+            D3D12_INFO("[FD3D12Device] DerivativesInMeshAndAmpShaders Supported: %s", GD3D12DerivativesInMeshAndAmpShadersSupported ? "true" : "false");
+            D3D12_INFO("[FD3D12Device] WaveMMA Tier: %d", GD3D12WaveMMATier);
+        }
+        else
+        {
+            D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_D3D12_OPTIONS9 query failed (hr=0x%08X)", hr);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // Atomic int64 on descriptor-heap resources
+    // -------------------------------------------------------------------------------------------
+
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS11 Features11 = {};
+        HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS11, &Features11, sizeof(Features11));
+        if (SUCCEEDED(hr))
+        {
+            GD3D12AtomicInt64OnDescriptorHeapResourceSupported = !!Features11.AtomicInt64OnDescriptorHeapResourceSupported;
+            D3D12_INFO("[FD3D12Device] AtomicInt64OnDescriptorHeapResource Supported: %s", GD3D12AtomicInt64OnDescriptorHeapResourceSupported ? "true" : "false");
+        }
+        else
+        {
+            D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_D3D12_OPTIONS11 query failed (hr=0x%08X)", hr);
         }
     }
 

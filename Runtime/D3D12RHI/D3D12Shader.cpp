@@ -1,6 +1,7 @@
 #include "Core/Misc/CRC.h"
 #include "Core/RefCountedBase.h"
 #include "D3D12RHI/D3D12Shader.h"
+#include "D3D12RHI/D3D12Device.h"
 #include "D3D12RHI/D3D12RootSignature.h"
 #include "D3D12RHI/D3D12Loader.h"
 #include "RHI/ShaderCompiler.h"
@@ -221,7 +222,229 @@ ED3D12ShaderFlags FD3D12Shader::TranslateD3D12ShaderRequires(uint64 Mask)
         Result |= ED3D12ShaderFlags::RequiresSamplerDescriptorHeapIndexing;
     }
 
+    if ((Mask & D3D_SHADER_REQUIRES_EARLY_DEPTH_STENCIL) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresEarlyDepthStencil;
+    }
+
+    if ((Mask & D3D_SHADER_REQUIRES_STENCIL_REF) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresStencilRef;
+    }
+
+    if ((Mask & D3D_SHADER_REQUIRES_INNER_COVERAGE) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresInnerCoverage;
+    }
+
+    if ((Mask & D3D_SHADER_REQUIRES_ROVS) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresROVs;
+    }
+
+    if ((Mask & D3D_SHADER_REQUIRES_WAVE_OPS) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresWaveOps;
+    }
+
+    if ((Mask & D3D_SHADER_REQUIRES_INT64_OPS) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresInt64Ops;
+    }
+
+    if ((Mask & D3D_SHADER_REQUIRES_NATIVE_16BIT_OPS) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresNative16BitOps;
+    }
+
+    if ((Mask & D3D_SHADER_REQUIRES_BARYCENTRICS) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresBarycentrics;
+    }
+
+    if ((Mask & D3D_SHADER_REQUIRES_VIEW_ID) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresViewID;
+    }
+
+    if ((Mask & D3D_SHADER_REQUIRES_SHADING_RATE) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresShadingRate;
+    }
+
+    if ((Mask & D3D_SHADER_REQUIRES_RAYTRACING_TIER_1_1) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresRaytracingTier1_1;
+    }
+
+    if ((Mask & D3D_SHADER_REQUIRES_SAMPLER_FEEDBACK) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresSamplerFeedback;
+    }
+
+    if ((Mask & D3D_SHADER_REQUIRES_TILED_RESOURCES) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresTiledResources;
+    }
+
+    if ((Mask & D3D_SHADER_REQUIRES_TYPED_UAV_LOAD_ADDITIONAL_FORMATS) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresTypedUAVLoadAdditionalFormats;
+    }
+
+    if ((Mask & D3D_SHADER_REQUIRES_VIEWPORT_AND_RT_ARRAY_INDEX_FROM_ANY_SHADER_FEEDING_RASTERIZER) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresVPAndRTArrayIndexFromAnyShader;
+    }
+
+    if ((Mask & D3D_SHADER_REQUIRES_ATOMIC_INT64_ON_TYPED_RESOURCE) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresAtomicInt64OnTypedResource;
+    }
+
+    if ((Mask & D3D_SHADER_REQUIRES_ATOMIC_INT64_ON_GROUP_SHARED) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresAtomicInt64OnGroupShared;
+    }
+
+    if ((Mask & D3D_SHADER_REQUIRES_ATOMIC_INT64_ON_DESCRIPTOR_HEAP_RESOURCE) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresAtomicInt64OnDescriptorHeapResource;
+    }
+
+    if ((Mask & D3D_SHADER_REQUIRES_WAVE_MMA) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresWaveMMA;
+    }
+
+    if ((Mask & D3D_SHADER_REQUIRES_DERIVATIVES_IN_MESH_AND_AMPLIFICATION_SHADERS) != 0)
+    {
+        Result |= ED3D12ShaderFlags::RequiresDerivativesInMeshAndAmpShaders;
+    }
+
     return Result;
+}
+
+bool FD3D12Shader::ValidateRequiresFlags(ED3D12ShaderFlags InFlags, const CHAR* InShaderName)
+{
+    // Logs each missing capability and returns false if any required feature is missing.
+    // Per-flag check is intentional so we surface every problem in a single shader-load.
+    bool bAllSatisfied = true;
+
+    const CHAR* SafeName = (InShaderName != nullptr) ? InShaderName : "<unnamed>";
+
+    auto ReportMissing = [&](const CHAR* InFeature)
+    {
+        D3D12_ERROR("[FD3D12Shader] Shader '%s' requires '%s' which the current device does not support", SafeName, InFeature);
+        bAllSatisfied = false;
+    };
+
+    if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresResourceDescriptorHeapIndexing) && !GD3D12SupportsBindless)
+    {
+        ReportMissing("ResourceDescriptorHeap indexing (SM6.6 dynamic resources)");
+    }
+
+    if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresSamplerDescriptorHeapIndexing) && !GD3D12SupportsBindless)
+    {
+        ReportMissing("SamplerDescriptorHeap indexing (SM6.6 dynamic resources)");
+    }
+
+    if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresStencilRef) && !GD3D12PSSpecifiedStencilRefSupported)
+    {
+        ReportMissing("PS-specified SV_StencilRef");
+    }
+
+    if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresInnerCoverage) && GD3D12ConservativeRasterizationTier < D3D12_CONSERVATIVE_RASTERIZATION_TIER_3)
+    {
+        ReportMissing("Inner Coverage (Conservative Raster Tier 3)");
+    }
+
+    if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresROVs) && !GD3D12RasterizerOrderViewsSupported)
+    {
+        ReportMissing("Rasterizer Ordered Views");
+    }
+
+    if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresWaveOps) && !GD3D12WaveOpsSupported)
+    {
+        ReportMissing("Wave Intrinsics");
+    }
+
+    if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresInt64Ops) && !GD3D12Int64ShaderOpsSupported)
+    {
+        ReportMissing("64-bit integer shader ops");
+    }
+
+    if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresNative16BitOps) && !GD3D12Native16BitShaderOpsSupported)
+    {
+        ReportMissing("Native 16-bit shader ops");
+    }
+
+    if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresBarycentrics) && !GD3D12BarycentricsSupported)
+    {
+        ReportMissing("SV_Barycentrics");
+    }
+
+    if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresViewID) && GD3D12ViewInstancingTier == D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED)
+    {
+        ReportMissing("View Instancing (SV_ViewID)");
+    }
+
+    if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresShadingRate) && GD3D12VariableRateShadingTier < D3D12_VARIABLE_SHADING_RATE_TIER_2)
+    {
+        ReportMissing("Variable Rate Shading Tier 2 (per-primitive SV_ShadingRate)");
+    }
+
+    if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresRaytracingTier1_1) && GD3D12RayTracingTier < D3D12_RAYTRACING_TIER_1_1)
+    {
+        ReportMissing("Ray Tracing Tier 1.1");
+    }
+
+    if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresSamplerFeedback) && GD3D12SamplerFeedbackTier == D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED)
+    {
+        ReportMissing("Sampler Feedback");
+    }
+
+    if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresTiledResources) && GD3D12TiledResourcesTier == D3D12_TILED_RESOURCES_TIER_NOT_SUPPORTED)
+    {
+        ReportMissing("Tiled Resources");
+    }
+
+    if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresTypedUAVLoadAdditionalFormats) && !GD3D12TypedUAVLoadAdditionalFormats)
+    {
+        ReportMissing("Typed UAV Load Additional Formats");
+    }
+
+    if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresVPAndRTArrayIndexFromAnyShader) && GD3D12ViewInstancingTier == D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED)
+    {
+        ReportMissing("Viewport and RT Array Index from any shader feeding rasterizer");
+    }
+
+    if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresAtomicInt64OnTypedResource) && !GD3D12AtomicInt64OnTypedResourceSupported)
+    {
+        ReportMissing("Atomic Int64 on typed resources");
+    }
+
+    if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresAtomicInt64OnGroupShared) && !GD3D12AtomicInt64OnGroupSharedSupported)
+    {
+        ReportMissing("Atomic Int64 on group-shared memory");
+    }
+
+    if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresAtomicInt64OnDescriptorHeapResource) && !GD3D12AtomicInt64OnDescriptorHeapResourceSupported)
+    {
+        ReportMissing("Atomic Int64 on descriptor-heap resources");
+    }
+
+    if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresWaveMMA) && GD3D12WaveMMATier == D3D12_WAVE_MMA_TIER_NOT_SUPPORTED)
+    {
+        ReportMissing("Wave MMA");
+    }
+
+    if (IsEnumFlagSet(InFlags, ED3D12ShaderFlags::RequiresDerivativesInMeshAndAmpShaders) && !GD3D12DerivativesInMeshAndAmpShadersSupported)
+    {
+        ReportMissing("Derivatives in Mesh / Amplification shaders");
+    }
+
+    return bAllSatisfied;
 }
 
 FD3D12GraphicsShader::FD3D12GraphicsShader(FD3D12Device* InDevice, EShaderVisibility::Type InShaderVisibility)
@@ -568,6 +791,11 @@ bool FD3D12GraphicsShader::Initialize(const TArray<uint8>& InCode)
 
 	Flags |= TranslateD3D12ShaderRequires(static_cast<uint64>(Reflection->GetRequiresFlags()));
 
+	if (!ValidateRequiresFlags(Flags, nullptr))
+	{
+		return false;
+	}
+
 	if (IsRootSignatureInShaderBlob(ShaderBlob))
 	{
 		bContainsRootSignature = true;
@@ -605,6 +833,11 @@ bool FD3D12ComputeShaderRHI::Initialize(const TArray<uint8>& InCode)
     }
 
     Flags |= TranslateD3D12ShaderRequires(static_cast<uint64>(Reflection->GetRequiresFlags()));
+
+    if (!ValidateRequiresFlags(Flags, nullptr))
+    {
+        return false;
+    }
 
     if (IsRootSignatureInShaderBlob(ShaderBlob))
     {
@@ -662,6 +895,11 @@ bool FD3D12RayTracingShader::Initialize(const TArray<uint8>& InCode)
 	if (ReadShaderFeatureFlags(ShaderBlob, FeatureFlags))
 	{
 		Flags |= TranslateD3D12ShaderRequires(FeatureFlags);
+	}
+
+	if (!ValidateRequiresFlags(Flags, FunctionDesc.Name))
+	{
+		return false;
 	}
 
 	// HACK: Since the NVIDIA driver can't handle these names, we have to change the names :(

@@ -202,7 +202,14 @@ void FD3D12CommandContextState::BindGraphicsState()
 
     if (GraphicsState.bBindStencilRef)
     {
-        Context.GetCommandList()->OMSetStencilRef(GraphicsState.StencilRef);
+        FD3D12GraphicsPipelineStateRHI* BoundPSO = GraphicsState.PipelineState.Get();
+        
+        const bool bShaderOverridesStencilRef = (BoundPSO != nullptr) && IsEnumFlagSet(BoundPSO->GetShaderFlags(), ED3D12ShaderFlags::RequiresStencilRef);
+        if (!bShaderOverridesStencilRef)
+        {
+            Context.GetCommandList()->OMSetStencilRef(GraphicsState.StencilRef);
+        }
+
         GraphicsState.bBindStencilRef = false;
     }
 
@@ -828,6 +835,16 @@ void FD3D12CommandContextState::SetGraphicsPipelineState(FD3D12GraphicsPipelineS
             GraphicsState.bBindPrimitiveTopology = true;
         }
 
+        const bool bCurrentOverridesStencilRef = (CurrentGraphicsPipelineState != nullptr) && 
+            IsEnumFlagSet(CurrentGraphicsPipelineState->GetShaderFlags(), ED3D12ShaderFlags::RequiresStencilRef);
+        const bool bNewOverridesStencilRef = (InGraphicsPipelineState != nullptr) && 
+            IsEnumFlagSet(InGraphicsPipelineState->GetShaderFlags(), ED3D12ShaderFlags::RequiresStencilRef);
+        
+        if (bCurrentOverridesStencilRef && !bNewOverridesStencilRef)
+        {
+            GraphicsState.bBindStencilRef = true;
+        }
+
         GraphicsState.PipelineState      = MakeSharedRef<FD3D12GraphicsPipelineStateRHI>(InGraphicsPipelineState);
         GraphicsState.bBindPipelineState = true;
 
@@ -949,6 +966,20 @@ void FD3D12CommandContextState::SetStencilRef(uint32 InStencilRef)
     {
         GraphicsState.StencilRef      = InStencilRef;
         GraphicsState.bBindStencilRef = true;
+
+        FD3D12GraphicsPipelineStateRHI* BoundPSO = GraphicsState.PipelineState.Get();
+        if (BoundPSO != nullptr && IsEnumFlagSet(BoundPSO->GetShaderFlags(), ED3D12ShaderFlags::RequiresStencilRef))
+        {
+            FString PSOName;
+            BoundPSO->GetDebugName(PSOName);
+
+            if (PSOName.IsEmpty())
+            {
+                PSOName = "<unnamed>";
+            }
+
+            D3D12_WARNING("[FD3D12CommandContextState] SetStencilRef(%u) called but bound PSO '%s' overrides the OM stencil ref per-pixel via SV_StencilRef; this value will be ignored.", InStencilRef, *PSOName);
+        }
     }
 }
 

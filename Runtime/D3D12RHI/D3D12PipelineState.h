@@ -326,6 +326,11 @@ public:
         return PrimitiveTopology;
     }
 
+    FORCEINLINE ED3D12ShaderFlags GetShaderFlags() const
+    {
+        return ShaderFlags;
+    }
+
     FORCEINLINE FD3D12VertexShaderRHI*   GetVertexShader()   const { return VertexShader.Get(); }
     FORCEINLINE FD3D12HullShaderRHI*     GetHullShader()     const { return HullShader.Get(); }
     FORCEINLINE FD3D12DomainShaderRHI*   GetDomainShader()   const { return DomainShader.Get(); }
@@ -334,6 +339,7 @@ public:
 
 private:
     D3D12_PRIMITIVE_TOPOLOGY            PrimitiveTopology;
+    ED3D12ShaderFlags                   ShaderFlags;
     TSharedRef<FD3D12VertexShaderRHI>   VertexShader;
     TSharedRef<FD3D12HullShaderRHI>     HullShader;
     TSharedRef<FD3D12DomainShaderRHI>   DomainShader;

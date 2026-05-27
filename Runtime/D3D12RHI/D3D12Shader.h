@@ -22,9 +22,29 @@ typedef TSharedRef<class FD3D12RayMissShaderRHI>       FD3D12RayMissShaderRHIRef
 
 enum class ED3D12ShaderFlags : uint32
 {
-    None                                   = 0,
-    RequiresResourceDescriptorHeapIndexing = FLAG(1), // D3D12_SHADER_REQUIRES_RESOURCE_DESCRIPTOR_HEAP_INDEXING (0x4000)
-    RequiresSamplerDescriptorHeapIndexing  = FLAG(2), // D3D12_SHADER_REQUIRES_SAMPLER_DESCRIPTOR_HEAP_INDEXING  (0x8000)
+    None                                        = 0,
+    RequiresResourceDescriptorHeapIndexing      = FLAG(1),  // D3D_SHADER_REQUIRES_RESOURCE_DESCRIPTOR_HEAP_INDEXING                              (0x02000000)
+    RequiresSamplerDescriptorHeapIndexing       = FLAG(2),  // D3D_SHADER_REQUIRES_SAMPLER_DESCRIPTOR_HEAP_INDEXING                               (0x04000000)
+    RequiresEarlyDepthStencil                   = FLAG(3),  // D3D_SHADER_REQUIRES_EARLY_DEPTH_STENCIL                                            (0x00000002)
+    RequiresStencilRef                          = FLAG(4),  // D3D_SHADER_REQUIRES_STENCIL_REF                                                    (0x00000200)
+    RequiresInnerCoverage                       = FLAG(5),  // D3D_SHADER_REQUIRES_INNER_COVERAGE                                                 (0x00000400)
+    RequiresROVs                                = FLAG(6),  // D3D_SHADER_REQUIRES_ROVS                                                           (0x00001000)
+    RequiresWaveOps                             = FLAG(7),  // D3D_SHADER_REQUIRES_WAVE_OPS                                                       (0x00004000)
+    RequiresInt64Ops                            = FLAG(8),  // D3D_SHADER_REQUIRES_INT64_OPS                                                      (0x00008000)
+    RequiresNative16BitOps                      = FLAG(9),  // D3D_SHADER_REQUIRES_NATIVE_16BIT_OPS                                               (0x00040000)
+    RequiresBarycentrics                        = FLAG(10), // D3D_SHADER_REQUIRES_BARYCENTRICS                                                   (0x00020000)
+    RequiresViewID                              = FLAG(11), // D3D_SHADER_REQUIRES_VIEW_ID                                                        (0x00010000)
+    RequiresShadingRate                         = FLAG(12), // D3D_SHADER_REQUIRES_SHADING_RATE                                                   (0x00080000)
+    RequiresRaytracingTier1_1                   = FLAG(13), // D3D_SHADER_REQUIRES_RAYTRACING_TIER_1_1                                            (0x00100000)
+    RequiresSamplerFeedback                     = FLAG(14), // D3D_SHADER_REQUIRES_SAMPLER_FEEDBACK                                               (0x00200000)
+    RequiresTiledResources                      = FLAG(15), // D3D_SHADER_REQUIRES_TILED_RESOURCES                                                (0x00000100)
+    RequiresTypedUAVLoadAdditionalFormats       = FLAG(16), // D3D_SHADER_REQUIRES_TYPED_UAV_LOAD_ADDITIONAL_FORMATS                              (0x00000800)
+    RequiresVPAndRTArrayIndexFromAnyShader      = FLAG(17), // D3D_SHADER_REQUIRES_VIEWPORT_AND_RT_ARRAY_INDEX_FROM_ANY_SHADER_FEEDING_RASTERIZER (0x00002000)
+    RequiresAtomicInt64OnTypedResource          = FLAG(18), // D3D_SHADER_REQUIRES_ATOMIC_INT64_ON_TYPED_RESOURCE                                 (0x00400000)
+    RequiresAtomicInt64OnGroupShared            = FLAG(19), // D3D_SHADER_REQUIRES_ATOMIC_INT64_ON_GROUP_SHARED                                   (0x00800000)
+    RequiresAtomicInt64OnDescriptorHeapResource = FLAG(20), // D3D_SHADER_REQUIRES_ATOMIC_INT64_ON_DESCRIPTOR_HEAP_RESOURCE                       (0x10000000)
+    RequiresWaveMMA                             = FLAG(21), // D3D_SHADER_REQUIRES_WAVE_MMA                                                       (0x08000000)
+    RequiresDerivativesInMeshAndAmpShaders      = FLAG(22), // D3D_SHADER_REQUIRES_DERIVATIVES_IN_MESH_AND_AMPLIFICATION_SHADERS                  (0x01000000)
 };
 
 ENUM_CLASS_OPERATORS(ED3D12ShaderFlags);
@@ -178,6 +198,7 @@ protected:
 
     static bool ReadShaderFeatureFlags(const TComPtr<IDxcBlob>& ShaderBlob, uint64& OutFlags);
     static ED3D12ShaderFlags TranslateD3D12ShaderRequires(uint64 Mask);
+    static bool ValidateRequiresFlags(ED3D12ShaderFlags InFlags, const CHAR* InShaderName);
 
     FD3D12ShaderBytecode     ByteCode;
     FD3D12ShaderHash         ByteCodeHash;

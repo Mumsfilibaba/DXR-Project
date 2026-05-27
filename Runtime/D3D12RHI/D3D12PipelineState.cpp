@@ -264,6 +264,7 @@ void FD3D12PipelineState::SetDebugName(const FString& InName)
 FD3D12GraphicsPipelineStateRHI::FD3D12GraphicsPipelineStateRHI(FD3D12Device* InDevice)
     : FRHIGraphicsPipelineState()
     , FD3D12PipelineState(InDevice)
+    , ShaderFlags(ED3D12ShaderFlags::None)
 {
 }
 
@@ -489,6 +490,13 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
         SampleDesc.Quality = Desc.MultiSampleState.SampleQuality;
     }
 
+    // Shader-flags
+    ShaderFlags = ED3D12ShaderFlags::None;
+    for (FD3D12Shader* Shader : BaseShaders)
+    {
+        ShaderFlags |= Shader->GetFlags();
+    }
+
     // RootSignature
     {
         if (ShadersWithRootSignature.IsEmpty())
@@ -498,7 +506,6 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
             RootSignatureLayout.SetAllowInputAssembler(D3D12InputLayout ? true : false);
 
             uint8 NumPushConstants = 0;
-            ED3D12ShaderFlags AggregatedShaderFlags = ED3D12ShaderFlags::None;
             for (FD3D12Shader* Shader : BaseShaders)
             {
                 const EShaderVisibility::Type  Stage       = Shader->GetShaderVisibility();
@@ -510,12 +517,11 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
                 }
                 
                 NumPushConstants = Math::Max<uint8>(NumPushConstants, static_cast<uint8>(BindingInfo.NumPushConstants));
-                AggregatedShaderFlags |= Shader->GetFlags();
             }
 
             RootSignatureLayout.SetNumPushConstants(NumPushConstants);
-            RootSignatureLayout.SetDirectlyIndexedResourceHeap((AggregatedShaderFlags & ED3D12ShaderFlags::RequiresResourceDescriptorHeapIndexing) != ED3D12ShaderFlags::None);
-            RootSignatureLayout.SetDirectlyIndexedSamplerHeap((AggregatedShaderFlags & ED3D12ShaderFlags::RequiresSamplerDescriptorHeapIndexing) != ED3D12ShaderFlags::None);
+            RootSignatureLayout.SetDirectlyIndexedResourceHeap(IsEnumFlagSet(ShaderFlags, ED3D12ShaderFlags::RequiresResourceDescriptorHeapIndexing));
+            RootSignatureLayout.SetDirectlyIndexedSamplerHeap(IsEnumFlagSet(ShaderFlags, ED3D12ShaderFlags::RequiresSamplerDescriptorHeapIndexing));
 
             if (Desc.StreamOutputDeclaration)
             {
@@ -591,7 +597,19 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
         ComputeEffectiveDescriptorCounts(BaseShaders.Data(), BaseShaders.Size());
     }
 
-    // View Instancing
+    // View Instancing: Validate that the PSO state is compatible with shader requirements
+    {
+        const bool bShaderRequiresViewID = IsEnumFlagSet(ShaderFlags, ED3D12ShaderFlags::RequiresViewID);
+        if (bShaderRequiresViewID && !Desc.ViewInstancingState.bEnableViewInstancing)
+        {
+            D3D12_ERROR_CRITICAL("Shader uses SV_ViewID but the graphics PSO was created without view instancing enabled. Set FRHIGraphicsPipelineStateDesc::ViewInstancingState.bEnableViewInstancing to true.");
+        }
+        else if (!bShaderRequiresViewID && Desc.ViewInstancingState.bEnableViewInstancing)
+        {
+            D3D12_WARNING("[FD3D12GraphicsPipelineStateRHI] View instancing is enabled on the PSO but no shader stage reads SV_ViewID; the view-instancing state will have no effect.");
+        }
+    }
+
     FD3D12HashableViewInstanceDesc ViewInstanceDesc;
     if (Desc.ViewInstancingState.bEnableViewInstancing)
     {
@@ -1307,8 +1325,8 @@ bool FD3D12RayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineSt
     }
 
     GlobalLayout.SetNumPushConstants(MaxPushConstants);
-    GlobalLayout.SetDirectlyIndexedResourceHeap((AggregatedRTShaderFlags & ED3D12ShaderFlags::RequiresResourceDescriptorHeapIndexing) != ED3D12ShaderFlags::None);
-    GlobalLayout.SetDirectlyIndexedSamplerHeap((AggregatedRTShaderFlags & ED3D12ShaderFlags::RequiresSamplerDescriptorHeapIndexing) != ED3D12ShaderFlags::None);
+    GlobalLayout.SetDirectlyIndexedResourceHeap(IsEnumFlagSet(AggregatedRTShaderFlags, ED3D12ShaderFlags::RequiresResourceDescriptorHeapIndexing));
+    GlobalLayout.SetDirectlyIndexedSamplerHeap(IsEnumFlagSet(AggregatedRTShaderFlags, ED3D12ShaderFlags::RequiresSamplerDescriptorHeapIndexing));
     GlobalLayout.ComputeRootCBVs();
 
     GlobalRootSignature = MakeSharedRef<FD3D12RootSignature>(RootSignatureManager.GetOrCreateRootSignature(GlobalLayout));
