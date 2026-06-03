@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Templates/TypeTraits.h"
-#include "Core/Platform/PlatformInterlocked.h"
 #include "Core/Platform/PlatformAtomic.h"
+#include "Core/Threading/Atomic/AtomicMemoryOrder.h"
 
 template<typename T>
 class TAtomicPointer
@@ -42,11 +42,30 @@ public:
     /**
      * @brief Atomically sets the pointer to a new value and returns the old value
      * @param InPtr New pointer value
+     * @param Order Memory-order constraint
      * @return Returns the old pointer value
      */
-    FORCEINLINE PointerType Exchange(PointerType InPtr) noexcept
+    FORCEINLINE PointerType Exchange(PointerType InPtr, EMemoryOrder Order = EMemoryOrder::SequentiallyConsistent) noexcept
     {
-        const SignedType OldVal = FPlatformInterlocked::InterlockedExchange(&Value, reinterpret_cast<SignedType>(InPtr));
+        const SignedType Desired = reinterpret_cast<SignedType>(InPtr);
+
+        SignedType OldVal;
+        switch (Order)
+        {
+        case EMemoryOrder::Relaxed:
+            OldVal = FPlatformAtomic::InterlockedExchange<EMemoryOrder::Relaxed>(&Value, Desired);
+            break;
+        case EMemoryOrder::Acquire:
+            OldVal = FPlatformAtomic::InterlockedExchange<EMemoryOrder::Acquire>(&Value, Desired);
+            break;
+        case EMemoryOrder::Release:
+            OldVal = FPlatformAtomic::InterlockedExchange<EMemoryOrder::Release>(&Value, Desired);
+            break;
+        default:
+            OldVal = FPlatformAtomic::InterlockedExchange(&Value, Desired);
+            break;
+        }
+
         return reinterpret_cast<PointerType>(OldVal);
     }
 
@@ -54,33 +73,80 @@ public:
      * @brief Compares and exchanges the pointer to a new value if it matches the comparand
      * @param InPtr New pointer value to set
      * @param Comparand Pointer value to compare against
+     * @param Order Memory-order constraint
      * @return Returns true if the exchange was successful
      */
-    FORCEINLINE bool CompareExchange(PointerType InPtr, PointerType Comparand) noexcept
+    FORCEINLINE bool CompareExchange(PointerType InPtr, PointerType Comparand, EMemoryOrder Order = EMemoryOrder::SequentiallyConsistent) noexcept
     {
         const SignedType Desired  = reinterpret_cast<SignedType>(InPtr);
         const SignedType Expected = reinterpret_cast<SignedType>(Comparand);
-        const SignedType Original = FPlatformInterlocked::InterlockedCompareExchange(&Value, Desired, Expected);
+
+        SignedType Original;
+        switch (Order)
+        {
+        case EMemoryOrder::Relaxed:
+            Original = FPlatformAtomic::InterlockedCompareExchange<EMemoryOrder::Relaxed>(&Value, Desired, Expected);
+            break;
+        case EMemoryOrder::Acquire:
+            Original = FPlatformAtomic::InterlockedCompareExchange<EMemoryOrder::Acquire>(&Value, Desired, Expected);
+            break;
+        case EMemoryOrder::Release:
+            Original = FPlatformAtomic::InterlockedCompareExchange<EMemoryOrder::Release>(&Value, Desired, Expected);
+            break;
+        default:
+            Original = FPlatformAtomic::InterlockedCompareExchange(&Value, Desired, Expected);
+            break;
+        }
+
         return Original == Expected;
     }
 
     /**
      * @brief Retrieves the pointer atomically
+     * @param Order Memory-order constraint (Relaxed / Acquire / SequentiallyConsistent)
      * @return Returns the stored pointer value
      */
-    FORCEINLINE PointerType Load() const noexcept
+    NODISCARD FORCEINLINE PointerType Load(EMemoryOrder Order = EMemoryOrder::SequentiallyConsistent) const noexcept
     {
-        const SignedType Current = FPlatformAtomic::Read(&Value);
+        SignedType Current;
+        switch (Order)
+        {
+        case EMemoryOrder::Relaxed:
+            Current = FPlatformAtomic::Read<EMemoryOrder::Relaxed>(&Value);
+            break;
+        case EMemoryOrder::Acquire:
+        case EMemoryOrder::AcquireRelease:
+            Current = FPlatformAtomic::Read<EMemoryOrder::Acquire>(&Value);
+            break;
+        default:
+            Current = FPlatformAtomic::Read(&Value);
+            break;
+        }
+        
         return reinterpret_cast<PointerType>(Current);
     }
 
     /**
      * @brief Stores a new pointer atomically
      * @param InPtr New pointer value to store
+     * @param Order Memory-order constraint (Relaxed / Release / SequentiallyConsistent)
      */
-    FORCEINLINE void Store(PointerType InPtr) noexcept
+    FORCEINLINE void Store(PointerType InPtr, EMemoryOrder Order = EMemoryOrder::SequentiallyConsistent) noexcept
     {
-        FPlatformAtomic::Store(&Value, reinterpret_cast<SignedType>(InPtr));
+        const SignedType Raw = reinterpret_cast<SignedType>(InPtr);
+        switch (Order)
+        {
+        case EMemoryOrder::Relaxed:
+            FPlatformAtomic::Store<EMemoryOrder::Relaxed>(&Value, Raw);
+            break;
+        case EMemoryOrder::Release:
+        case EMemoryOrder::AcquireRelease:
+            FPlatformAtomic::Store<EMemoryOrder::Release>(&Value, Raw);
+            break;
+        default:
+            FPlatformAtomic::Store(&Value, Raw);
+            break;
+        }
     }
 
 public:

@@ -3,7 +3,7 @@
 #include "Core/Templates/Utility.h"
 #include "Core/Threading/Atomic.h"
 #include "Core/Platform/PlatformMisc.h"
-#include "Core/Platform/PlatformInterlocked.h"
+#include "Core/Platform/PlatformAtomic.h"
 
 enum class EQueueType
 {
@@ -67,7 +67,7 @@ public:
         FNode* NextNode;
         if constexpr (QueueType == EQueueType::SPMC)
         {
-            NextNode = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
+            NextNode = reinterpret_cast<FNode*>(FPlatformAtomic::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
         }
         else
         {
@@ -92,7 +92,7 @@ public:
         FNode* PreviousTail;
         if constexpr (QueueType == EQueueType::SPMC)
         {
-            PreviousTail = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail), NextNode));
+            PreviousTail = reinterpret_cast<FNode*>(FPlatformAtomic::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail), NextNode));
         }
         else
         {
@@ -114,7 +114,7 @@ public:
         FNode* NextNode;
         if constexpr (QueueType == EQueueType::SPMC)
         {
-            NextNode = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
+            NextNode = reinterpret_cast<FNode*>(FPlatformAtomic::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
         }
         else
         {
@@ -136,7 +136,7 @@ public:
         FNode* PreviousTail;
         if constexpr (QueueType == EQueueType::SPMC)
         {
-            PreviousTail = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail), NextNode));
+            PreviousTail = reinterpret_cast<FNode*>(FPlatformAtomic::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail), NextNode));
         }
         else
         {
@@ -159,8 +159,8 @@ public:
         if constexpr (QueueType != EQueueType::SPSC)
         {
             // Detach producer head from consumer tail (keep dummy tail).
-            FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Head), Tail);
-            TailToDequeue = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
+            FPlatformAtomic::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Head), Tail);
+            TailToDequeue = reinterpret_cast<FNode*>(FPlatformAtomic::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
         }
         else
         {
@@ -235,8 +235,8 @@ public:
         FNode* PreviousHead;
         if constexpr (QueueType == EQueueType::MPSC)
         {
-            PreviousHead = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Head), NewNode));
-            FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&PreviousHead->NextNode), NewNode);
+            PreviousHead = reinterpret_cast<FNode*>(FPlatformAtomic::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Head), NewNode));
+            FPlatformAtomic::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&PreviousHead->NextNode), NewNode);
         }
         else
         {

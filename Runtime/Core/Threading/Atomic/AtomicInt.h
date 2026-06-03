@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Templates/TypeTraits.h"
-#include "Core/Platform/PlatformInterlocked.h"
 #include "Core/Platform/PlatformAtomic.h"
+#include "Core/Threading/Atomic/AtomicMemoryOrder.h"
 
 template<typename T>
 class TAtomicInt
@@ -42,98 +42,222 @@ public:
 
     /**
      * @brief Atomically increments the integer
+     * @param Order Memory-order constraint
      * @return Returns the new value
      */
-    FORCEINLINE IntegerType Increment() noexcept
+    FORCEINLINE IntegerType Increment(EMemoryOrder Order = EMemoryOrder::SequentiallyConsistent) noexcept
     {
-        return static_cast<IntegerType>(FPlatformInterlocked::InterlockedIncrement(&Value));
+        SignedType NewValue;
+        switch (Order)
+        {
+        case EMemoryOrder::Relaxed:
+            NewValue = FPlatformAtomic::InterlockedIncrement<EMemoryOrder::Relaxed>(&Value);
+            break;
+        case EMemoryOrder::Acquire:
+            NewValue = FPlatformAtomic::InterlockedIncrement<EMemoryOrder::Acquire>(&Value);
+            break;
+        case EMemoryOrder::Release:
+            NewValue = FPlatformAtomic::InterlockedIncrement<EMemoryOrder::Release>(&Value);
+            break;
+        default:
+            NewValue = FPlatformAtomic::InterlockedIncrement(&Value);
+            break;
+        }
+
+        return static_cast<IntegerType>(NewValue);
     }
 
     /**
      * @brief Atomically decrements the integer
+     * @param Order Memory-order constraint
      * @return Returns the new value
      */
-    FORCEINLINE IntegerType Decrement() noexcept
+    FORCEINLINE IntegerType Decrement(EMemoryOrder Order = EMemoryOrder::SequentiallyConsistent) noexcept
     {
-        return static_cast<IntegerType>(FPlatformInterlocked::InterlockedDecrement(&Value));
+        SignedType NewValue;
+        switch (Order)
+        {
+        case EMemoryOrder::Relaxed:
+            NewValue = FPlatformAtomic::InterlockedDecrement<EMemoryOrder::Relaxed>(&Value);
+            break;
+        case EMemoryOrder::Acquire:
+            NewValue = FPlatformAtomic::InterlockedDecrement<EMemoryOrder::Acquire>(&Value);
+            break;
+        case EMemoryOrder::Release:
+            NewValue = FPlatformAtomic::InterlockedDecrement<EMemoryOrder::Release>(&Value);
+            break;
+        default:
+            NewValue = FPlatformAtomic::InterlockedDecrement(&Value);
+            break;
+        }
+
+        return static_cast<IntegerType>(NewValue);
     }
 
     /**
      * @brief Atomically adds a value to the integer
+     * @param Order Memory-order constraint
      * @return Returns the new value
      */
-    FORCEINLINE IntegerType Add(IntegerType RHS) noexcept
+    FORCEINLINE IntegerType Add(IntegerType RHS, EMemoryOrder Order = EMemoryOrder::SequentiallyConsistent) noexcept
     {
-        FPlatformInterlocked::InterlockedAdd(&Value, static_cast<SignedType>(RHS));
-        return Load();
+        const SignedType Operand = static_cast<SignedType>(RHS);
+        switch (Order)
+        {
+        case EMemoryOrder::Relaxed:
+            FPlatformAtomic::InterlockedAdd<EMemoryOrder::Relaxed>(&Value, Operand);
+            break;
+        case EMemoryOrder::Acquire:
+            FPlatformAtomic::InterlockedAdd<EMemoryOrder::Acquire>(&Value, Operand);
+            break;
+        case EMemoryOrder::Release:
+            FPlatformAtomic::InterlockedAdd<EMemoryOrder::Release>(&Value, Operand);
+            break;
+        default:
+            FPlatformAtomic::InterlockedAdd(&Value, Operand);
+            break;
+        }
+
+        return Load(Order);
     }
 
     /**
      * @brief Atomically subtracts a value from the integer
+     * @param Order Memory-order constraint
      * @return Returns the new value
      */
-    FORCEINLINE IntegerType Subtract(IntegerType RHS) noexcept
+    FORCEINLINE IntegerType Subtract(IntegerType RHS, EMemoryOrder Order = EMemoryOrder::SequentiallyConsistent) noexcept
     {
-        FPlatformInterlocked::InterlockedAdd(&Value, static_cast<SignedType>(-RHS));
-        return Load();
+        return Add(static_cast<IntegerType>(-static_cast<SignedType>(RHS)), Order);
     }
 
     /**
      * @brief Performs a bitwise AND atomically with a value and the integer
+     * @param Order Memory-order constraint
      * @return Returns the new value
      */
-    FORCEINLINE IntegerType And(IntegerType RHS) noexcept
+    FORCEINLINE IntegerType And(IntegerType RHS, EMemoryOrder Order = EMemoryOrder::SequentiallyConsistent) noexcept
     {
-        FPlatformInterlocked::InterlockedAnd(&Value, static_cast<SignedType>(RHS));
-        return Load();
+        const SignedType Mask = static_cast<SignedType>(RHS);
+        switch (Order)
+        {
+        case EMemoryOrder::Relaxed:
+            FPlatformAtomic::InterlockedAnd<EMemoryOrder::Relaxed>(&Value, Mask);
+            break;
+        case EMemoryOrder::Acquire:
+            FPlatformAtomic::InterlockedAnd<EMemoryOrder::Acquire>(&Value, Mask);
+            break;
+        case EMemoryOrder::Release:
+            FPlatformAtomic::InterlockedAnd<EMemoryOrder::Release>(&Value, Mask);
+            break;
+        default:
+            FPlatformAtomic::InterlockedAnd(&Value, Mask);
+            break;
+        }
+
+        return Load(Order);
     }
 
     /**
      * @brief Performs a bitwise OR atomically with a value and the integer
+     * @param Order Memory-order constraint
      * @return Returns the new value
      */
-    FORCEINLINE IntegerType Or(IntegerType RHS) noexcept
+    FORCEINLINE IntegerType Or(IntegerType RHS, EMemoryOrder Order = EMemoryOrder::SequentiallyConsistent) noexcept
     {
-        FPlatformInterlocked::InterlockedOr(&Value, static_cast<SignedType>(RHS));
-        return Load();
+        const SignedType Mask = static_cast<SignedType>(RHS);
+        switch (Order)
+        {
+        case EMemoryOrder::Relaxed:
+            FPlatformAtomic::InterlockedOr<EMemoryOrder::Relaxed>(&Value, Mask);
+            break;
+        case EMemoryOrder::Acquire:
+            FPlatformAtomic::InterlockedOr<EMemoryOrder::Acquire>(&Value, Mask);
+            break;
+        case EMemoryOrder::Release:
+            FPlatformAtomic::InterlockedOr<EMemoryOrder::Release>(&Value, Mask);
+            break;
+        default:
+            FPlatformAtomic::InterlockedOr(&Value, Mask);
+            break;
+        }
+
+        return Load(Order);
     }
 
     /**
      * @brief Performs a bitwise XOR atomically with a value and the integer
+     * @param Order Memory-order constraint
      * @return Returns the new value
      */
-    FORCEINLINE IntegerType Xor(IntegerType RHS) noexcept
+    FORCEINLINE IntegerType Xor(IntegerType RHS, EMemoryOrder Order = EMemoryOrder::SequentiallyConsistent) noexcept
     {
-        FPlatformInterlocked::InterlockedXor(&Value, static_cast<SignedType>(RHS));
-        return Load();
+        const SignedType Mask = static_cast<SignedType>(RHS);
+        switch (Order)
+        {
+        case EMemoryOrder::Relaxed:
+            FPlatformAtomic::InterlockedXor<EMemoryOrder::Relaxed>(&Value, Mask);
+            break;
+        case EMemoryOrder::Acquire:
+            FPlatformAtomic::InterlockedXor<EMemoryOrder::Acquire>(&Value, Mask);
+            break;
+        case EMemoryOrder::Release:
+            FPlatformAtomic::InterlockedXor<EMemoryOrder::Release>(&Value, Mask);
+            break;
+        default:
+            FPlatformAtomic::InterlockedXor(&Value, Mask);
+            break;
+        }
+
+        return Load(Order);
     }
 
     /**
-     * @brief Retrieves the integer atomically and ensures that all prior accesses have completed 
+     * @brief Retrieves the integer atomically
+     * @param Order Memory-order constraint (Relaxed / Acquire / SequentiallyConsistent)
      * @return Returns the stored value
      */
-    FORCEINLINE IntegerType Load() const noexcept
+    NODISCARD FORCEINLINE IntegerType Load(EMemoryOrder Order = EMemoryOrder::SequentiallyConsistent) const noexcept
     {
-        return static_cast<IntegerType>(FPlatformAtomic::Read(&Value));
-    }
-
-    /**
-     * @brief Retrieves the integer atomically without ensuring that all prior accesses have completed
-     * @return Returns the stored value
-     */
-    FORCEINLINE IntegerType RelaxedLoad() const noexcept
-    {
-        return static_cast<IntegerType>(FPlatformAtomic::RelaxedRead(&Value));
+        switch (Order)
+        {
+        case EMemoryOrder::Relaxed:
+            return static_cast<IntegerType>(FPlatformAtomic::Read<EMemoryOrder::Relaxed>(&Value));
+        case EMemoryOrder::Acquire:
+        case EMemoryOrder::AcquireRelease:
+            return static_cast<IntegerType>(FPlatformAtomic::Read<EMemoryOrder::Acquire>(&Value));
+        default:
+            return static_cast<IntegerType>(FPlatformAtomic::Read(&Value));
+        }
     }
 
     /**
      * @brief Exchanges the integer to a new value and returns the original value
      * @param InValue Value to exchange
+     * @param Order Memory-order constraint
      * @return Returns the original value
      */
-    FORCEINLINE IntegerType Exchange(IntegerType InValue) noexcept
+    FORCEINLINE IntegerType Exchange(IntegerType InValue, EMemoryOrder Order = EMemoryOrder::SequentiallyConsistent) noexcept
     {
-        const SignedType OldVal = FPlatformInterlocked::InterlockedExchange(&Value, static_cast<SignedType>(InValue));
+        const SignedType Desired = static_cast<SignedType>(InValue);
+        
+        SignedType OldVal;
+        switch (Order)
+        {
+        case EMemoryOrder::Relaxed:
+            OldVal = FPlatformAtomic::InterlockedExchange<EMemoryOrder::Relaxed>(&Value, Desired);
+            break;
+        case EMemoryOrder::Acquire:
+            OldVal = FPlatformAtomic::InterlockedExchange<EMemoryOrder::Acquire>(&Value, Desired);
+            break;
+        case EMemoryOrder::Release:
+            OldVal = FPlatformAtomic::InterlockedExchange<EMemoryOrder::Release>(&Value, Desired);
+            break;
+        default:
+            OldVal = FPlatformAtomic::InterlockedExchange(&Value, Desired);
+            break;
+        }
+
         return static_cast<IntegerType>(OldVal);
     }
 
@@ -141,31 +265,55 @@ public:
      * @brief Compares and exchanges the integer to a new value if it matches the comparand
      * @param InValue Value to exchange
      * @param Comparand Value to compare against
+     * @param Order Memory-order constraint
      * @return Returns true if the exchange was successful
      */
-    FORCEINLINE bool CompareExchange(IntegerType InValue, IntegerType Comparand) noexcept
+    FORCEINLINE bool CompareExchange(IntegerType InValue, IntegerType Comparand, EMemoryOrder Order = EMemoryOrder::SequentiallyConsistent) noexcept
     {
         const SignedType Expected = static_cast<SignedType>(Comparand);
-        const SignedType Original = FPlatformInterlocked::InterlockedCompareExchange(&Value, static_cast<SignedType>(InValue), Expected);
+        const SignedType Desired  = static_cast<SignedType>(InValue);
+
+        SignedType Original;
+        switch (Order)
+        {
+        case EMemoryOrder::Relaxed:
+            Original = FPlatformAtomic::InterlockedCompareExchange<EMemoryOrder::Relaxed>(&Value, Desired, Expected);
+            break;
+        case EMemoryOrder::Acquire:
+            Original = FPlatformAtomic::InterlockedCompareExchange<EMemoryOrder::Acquire>(&Value, Desired, Expected);
+            break;
+        case EMemoryOrder::Release:
+            Original = FPlatformAtomic::InterlockedCompareExchange<EMemoryOrder::Release>(&Value, Desired, Expected);
+            break;
+        default:
+            Original = FPlatformAtomic::InterlockedCompareExchange(&Value, Desired, Expected);
+            break;
+        }
+
         return Original == Expected;
     }
 
     /**
-     * @brief Stores a new integer atomically and ensures that all prior accesses have completed
+     * @brief Stores a new integer atomically
      * @param InValue New value to store
+     * @param Order Memory-order constraint (Relaxed / Release / SequentiallyConsistent)
      */
-    FORCEINLINE void Store(IntegerType InValue) noexcept
+    FORCEINLINE void Store(IntegerType InValue, EMemoryOrder Order = EMemoryOrder::SequentiallyConsistent) noexcept
     {
-        FPlatformAtomic::Store(&Value, static_cast<SignedType>(InValue));
-    }
-
-    /**
-     * @brief Stores a new integer atomically without ensuring that all prior accesses have completed
-     * @param InValue New value to store
-     */
-    FORCEINLINE void RelaxedStore(IntegerType InValue) noexcept
-    {
-        FPlatformAtomic::RelaxedStore(&Value, static_cast<SignedType>(InValue));
+        const SignedType Raw = static_cast<SignedType>(InValue);
+        switch (Order)
+        {
+        case EMemoryOrder::Relaxed:
+            FPlatformAtomic::Store<EMemoryOrder::Relaxed>(&Value, Raw);
+            break;
+        case EMemoryOrder::Release:
+        case EMemoryOrder::AcquireRelease:
+            FPlatformAtomic::Store<EMemoryOrder::Release>(&Value, Raw);
+            break;
+        default:
+            FPlatformAtomic::Store(&Value, Raw);
+            break;
+        }
     }
 
 public:

@@ -47,15 +47,11 @@
     #include <shellscalingapi.h>
 #endif
 
-// NOTE: Undefine these as we have functions with these names 
+// NOTE: Undefine these as we have functions with these names
 #undef CreateWindow
-#undef CreateFile
-#undef CreateThread
-#undef CreateEvent
 #undef CreateSemaphore
 
 #undef InterlockedAdd
-#undef InterlockedSub
 #undef InterlockedAnd
 #undef InterlockedOr
 #undef InterlockedXor
@@ -70,11 +66,9 @@
 #undef MessageBox
 
 #undef OutputDebugString
-#undef OutputDebugFormat
 
 #undef GetClassName
 #undef GetModuleHandle
-#undef GetCurrentWorkingDirectory
 
 #undef IsMinimized
 #undef IsMaximized

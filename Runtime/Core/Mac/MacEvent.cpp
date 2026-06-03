@@ -1,5 +1,5 @@
 #include "Core/Mac/MacEvent.h"
-#include "Core/Platform/PlatformInterlocked.h"
+#include "Core/Platform/PlatformAtomic.h"
 #include "Core/Templates/NumericLimits.h"
 #include <sys/time.h>
 #include <Foundation/Foundation.h>
@@ -134,7 +134,7 @@ void FMacEvent::Wait(uint64 Milliseconds)
         }
         else if (Milliseconds != 0)
         {
-            FMacInterlocked::InterlockedIncrement(&NumWaitingThreads);
+            FPlatformAtomic::InterlockedIncrement(&NumWaitingThreads);
             
             if (Milliseconds == uint64(-1))
             {
@@ -163,7 +163,7 @@ void FMacEvent::Wait(uint64 Milliseconds)
                 StartTime    = Now;
             }
             
-            FMacInterlocked::InterlockedDecrement(&NumWaitingThreads);
+            FPlatformAtomic::InterlockedDecrement(&NumWaitingThreads);
             CHECK(NumWaitingThreads >= 0);
         }
 

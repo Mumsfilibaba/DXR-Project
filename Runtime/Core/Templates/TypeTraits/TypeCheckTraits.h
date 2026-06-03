@@ -160,3 +160,27 @@ struct TIsScopedEnum
 {
     static constexpr bool Value = TAnd<TIsEnum<T>, TNot<TIsConvertible<T, typename TUnderlyingType<T>::Type>>>::Value;
 };
+
+/** @brief Detects whether (a & b) is well-formed AND returns exactly T (not a promoted integer). */
+template<typename T, typename = void>
+struct THasBitwiseAnd : TFalseType { };
+
+template<typename T>
+struct THasBitwiseAnd<T, typename TVoid<decltype(DeclVal<T>() & DeclVal<T>())>::Type>
+    : TIsSame<decltype(DeclVal<T>() & DeclVal<T>()), T> { };
+
+/** @brief Detects whether (a | b) is well-formed AND returns exactly T (not a promoted integer). */
+template<typename T, typename = void>
+struct THasBitwiseOr : TFalseType { };
+
+template<typename T>
+struct THasBitwiseOr<T, typename TVoid<decltype(DeclVal<T>() | DeclVal<T>())>::Type>
+    : TIsSame<decltype(DeclVal<T>() | DeclVal<T>()), T> { };
+
+/** @brief Detects whether (a ^ b) is well-formed AND returns exactly T (not a promoted integer). */
+template<typename T, typename = void>
+struct THasBitwiseXor : TFalseType { };
+
+template<typename T>
+struct THasBitwiseXor<T, typename TVoid<decltype(DeclVal<T>() ^ DeclVal<T>())>::Type>
+    : TIsSame<decltype(DeclVal<T>() ^ DeclVal<T>()), T> { };

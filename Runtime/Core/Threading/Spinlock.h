@@ -34,7 +34,7 @@ public:
                 break;
             }
 
-            while (State.RelaxedLoad() == STATE_LOCKED)
+            while (State.Load(EMemoryOrder::Relaxed) == STATE_LOCKED)
             {
                 FPlatformThreadMisc::Pause();
             }
@@ -45,7 +45,7 @@ public:
     FORCEINLINE bool TryLock() noexcept
     {
         // The first relaxed load is in order to prevent unnecessary cache misses when trying to lock in a loop: See Lock
-        return (State.RelaxedLoad() == STATE_UNLOCKED) && (State.Exchange(STATE_LOCKED) == STATE_UNLOCKED);
+        return (State.Load(EMemoryOrder::Relaxed) == STATE_UNLOCKED) && (State.Exchange(STATE_LOCKED) == STATE_UNLOCKED);
     }
 
     /** @brief Unlock CriticalSection for other threads */

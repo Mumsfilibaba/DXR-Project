@@ -4,33 +4,33 @@
 FRHIResource::FRHIResource(ERHIResourceType InResourceType)
     : ResourceType(InResourceType)
     , StrongReferences(1)
-    , State(static_cast<int32>(EState::Alive))
+    , State(EState::Alive)
 {
 }
 
 FRHIResource::~FRHIResource()
 {
     CHECK(StrongReferences.Load() == 0);
-    CHECK(State.Load() == static_cast<int32>(EState::Deleted));
+    CHECK(State.Load() == EState::Deleted);
 }
 
 int32 FRHIResource::AddRef() const
 {
     CHECK(StrongReferences.Load() > 0);
-    CHECK(State.Load() == static_cast<int32>(EState::Alive));
+    CHECK(State.Load() == EState::Alive);
     ++StrongReferences;
     return StrongReferences.Load();
 }
 
 int32 FRHIResource::Release() const
 {
-    CHECK(State.Load() == static_cast<int32>(EState::Alive));
+    CHECK(State.Load() == EState::Alive);
     const int32 RefCount = --StrongReferences;
     CHECK(RefCount >= 0);
 
     if (RefCount < 1)
     {
-        State = static_cast<int32>(EState::Deleted);
+        State = EState::Deleted;
 
         // Delete immediately if we have not initialized the command-executor, this can happen if we fail to initialize the RHI
         if (FRHICommandListExecutor::IsInitialized())

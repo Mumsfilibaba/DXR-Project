@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Templates/TypeTraits.h"
-#include "Core/Platform/PlatformInterlocked.h"
 #include "Core/Platform/PlatformAtomic.h"
+#include "Core/Threading/Atomic/AtomicMemoryOrder.h"
 
 class FAtomicBool
 {
@@ -37,45 +37,106 @@ public:
 
     /**
      * @brief Atomically sets the boolean to a new value and returns the previous value
-     * @param InValue New value to set
+     * @param bInValue New value to set
+     * @param Order Memory-order constraint
      * @return Returns the previous value
      */
-    FORCEINLINE bool Exchange(bool bInValue) noexcept
+    FORCEINLINE bool Exchange(bool bInValue, EMemoryOrder Order = EMemoryOrder::SequentiallyConsistent) noexcept
     {
-        const IntegerType OldVal = FPlatformInterlocked::InterlockedExchange(&Value, static_cast<IntegerType>(bInValue));
+        const IntegerType Desired = static_cast<IntegerType>(bInValue);
+
+        IntegerType OldVal;
+        switch (Order)
+        {
+        case EMemoryOrder::Relaxed:
+            OldVal = FPlatformAtomic::InterlockedExchange<EMemoryOrder::Relaxed>(&Value, Desired);
+            break;
+        case EMemoryOrder::Acquire:
+            OldVal = FPlatformAtomic::InterlockedExchange<EMemoryOrder::Acquire>(&Value, Desired);
+            break;
+        case EMemoryOrder::Release:
+            OldVal = FPlatformAtomic::InterlockedExchange<EMemoryOrder::Release>(&Value, Desired);
+            break;
+        default:
+            OldVal = FPlatformAtomic::InterlockedExchange(&Value, Desired);
+            break;
+        }
+
         return static_cast<bool>(OldVal);
     }
 
     /**
      * @brief Compares and exchanges the boolean to a new value if it matches the comparand
-     * @param InValue Value to exchange
-     * @param Comparand Value to compare against
+     * @param bInValue Value to exchange
+     * @param bComparand Value to compare against
+     * @param Order Memory-order constraint
      * @return Returns true if the exchange was successful
      */
-    FORCEINLINE bool CompareExchange(bool bInValue, bool bComparand) noexcept
+    FORCEINLINE bool CompareExchange(bool bInValue, bool bComparand, EMemoryOrder Order = EMemoryOrder::SequentiallyConsistent) noexcept
     {
         const IntegerType Desired  = static_cast<IntegerType>(bInValue);
         const IntegerType Expected = static_cast<IntegerType>(bComparand);
-        const IntegerType Original = FPlatformInterlocked::InterlockedCompareExchange(&Value, Desired, Expected);
+
+        IntegerType Original;
+        switch (Order)
+        {
+        case EMemoryOrder::Relaxed:
+            Original = FPlatformAtomic::InterlockedCompareExchange<EMemoryOrder::Relaxed>(&Value, Desired, Expected);
+            break;
+        case EMemoryOrder::Acquire:
+            Original = FPlatformAtomic::InterlockedCompareExchange<EMemoryOrder::Acquire>(&Value, Desired, Expected);
+            break;
+        case EMemoryOrder::Release:
+            Original = FPlatformAtomic::InterlockedCompareExchange<EMemoryOrder::Release>(&Value, Desired, Expected);
+            break;
+        default:
+            Original = FPlatformAtomic::InterlockedCompareExchange(&Value, Desired, Expected);
+            break;
+        }
+        
         return Original == Expected;
     }
 
     /**
      * @brief Retrieves the boolean atomically
+     * @param Order Memory-order constraint (Relaxed / Acquire / SequentiallyConsistent)
      * @return Returns the stored boolean value
      */
-    FORCEINLINE bool Load() const noexcept
+    NODISCARD FORCEINLINE bool Load(EMemoryOrder Order = EMemoryOrder::SequentiallyConsistent) const noexcept
     {
-        return static_cast<bool>(FPlatformAtomic::Read(&Value));
+        switch (Order)
+        {
+        case EMemoryOrder::Relaxed:
+            return static_cast<bool>(FPlatformAtomic::Read<EMemoryOrder::Relaxed>(&Value));
+        case EMemoryOrder::Acquire:
+        case EMemoryOrder::AcquireRelease:
+            return static_cast<bool>(FPlatformAtomic::Read<EMemoryOrder::Acquire>(&Value));
+        default:
+            return static_cast<bool>(FPlatformAtomic::Read(&Value));
+        }
     }
 
     /**
      * @brief Stores a new boolean atomically
-     * @param InValue New value to store
+     * @param bInValue New value to store
+     * @param Order Memory-order constraint (Relaxed / Release / SequentiallyConsistent)
      */
-    FORCEINLINE void Store(bool bInValue) noexcept
+    FORCEINLINE void Store(bool bInValue, EMemoryOrder Order = EMemoryOrder::SequentiallyConsistent) noexcept
     {
-        FPlatformAtomic::Store(&Value, static_cast<IntegerType>(bInValue));
+        const IntegerType Raw = static_cast<IntegerType>(bInValue);
+        switch (Order)
+        {
+        case EMemoryOrder::Relaxed:
+            FPlatformAtomic::Store<EMemoryOrder::Relaxed>(&Value, Raw);
+            break;
+        case EMemoryOrder::Release:
+        case EMemoryOrder::AcquireRelease:
+            FPlatformAtomic::Store<EMemoryOrder::Release>(&Value, Raw);
+            break;
+        default:
+            FPlatformAtomic::Store(&Value, Raw);
+            break;
+        }
     }
 
 public:

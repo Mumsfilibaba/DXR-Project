@@ -62,7 +62,7 @@ namespace SharedPointerInternal
         {
             if constexpr (ThreadAccess == EThreadAccess::Safe)
             {
-                auto StrongReferenceCount = StrongReferences.RelaxedLoad();
+                auto StrongReferenceCount = StrongReferences.Load(EMemoryOrder::Relaxed);
                 while (true)
                 {
                     if (StrongReferenceCount == 0)
