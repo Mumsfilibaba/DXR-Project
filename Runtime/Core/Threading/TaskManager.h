@@ -23,11 +23,11 @@ public:
     void WakeUpAndStartTask(IAsyncTask* NewTask);
 
 private:
-    IAsyncTask* volatile CurrentTask;
-    FAtomicInt32         Triggered;
-    FGenericEvent*       Event;
-    FGenericThread*      Thread;
-    bool                 bIsRunning;
+    IAsyncTask* volatile    CurrentTask;
+    FAtomicInt32            Triggered;
+    FGenericPlatformEvent*  Event;
+    FGenericPlatformThread* Thread;
+    bool                    bIsRunning;
 };
 
 class CORE_API FTaskManager

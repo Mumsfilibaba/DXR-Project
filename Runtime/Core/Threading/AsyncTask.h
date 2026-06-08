@@ -91,7 +91,7 @@ private:
         FPlatformEvent::Recycle(TaskCompleteEvent);
     }
 
-    FGenericEvent* TaskCompleteEvent;
+    FGenericPlatformEvent* TaskCompleteEvent;
     FAtomicInt32   NumInvokations;
 };
 

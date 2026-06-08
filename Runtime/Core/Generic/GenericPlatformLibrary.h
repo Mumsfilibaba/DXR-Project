@@ -3,7 +3,7 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct FGenericLibrary
+struct FGenericPlatformLibrary
 {
     /**
      * @brief Load a dynamic library on the platform 

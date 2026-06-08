@@ -57,22 +57,22 @@ FThreadManager& FThreadManager::Get()
     return ThreadManager.GetValue();
 }
 
-void FThreadManager::RegisterThread(FGenericThread* InThread)
+void FThreadManager::RegisterThread(FGenericPlatformThread* InThread)
 {
     TScopedLock Lock(ThreadsCS);
     Threads.AddUnique(InThread);
 }
-void FThreadManager::UnregisterThread(FGenericThread* InThread)
+void FThreadManager::UnregisterThread(FGenericPlatformThread* InThread)
 {
     TScopedLock Lock(ThreadsCS);
     Threads.Remove(InThread);
 }
 
-FGenericThread* FThreadManager::GetThreadFromHandle(void* ThreadHandle)
+FGenericPlatformThread* FThreadManager::GetThreadFromHandle(void* ThreadHandle)
 {
     TScopedLock Lock(ThreadsCS);
 
-    for (FGenericThread* Thread : Threads)
+    for (FGenericPlatformThread* Thread : Threads)
     {
         if (Thread->GetPlatformHandle() == ThreadHandle)
         {

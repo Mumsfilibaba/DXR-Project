@@ -117,15 +117,14 @@ workspace "EngineTests"
             "../Runtime/Core/Memory/Memory.cpp",
             "../Runtime/Core/Memory/Malloc.cpp",
             "../Runtime/Core/Delegates/DelegateInstance.cpp",
-            "../Runtime/Core/Generic/GenericThread.cpp",
+            "../Runtime/Core/Generic/GenericPlatformThread.cpp",
             "../Runtime/Core/Generic/GenericPlatformStackTrace.cpp",
             "../Runtime/Core/Threading/ThreadManager.cpp",
 
             -- TODO: Add Mac specifics
             "../Runtime/Core/Windows/WindowsPlatformStackTrace.cpp",
-            "../Runtime/Core/Windows/WindowsThreadMisc.cpp",
-            "../Runtime/Core/Windows/WindowsThread.cpp",
-            "../Runtime/Core/Windows/WindowsEvent.cpp",
+            "../Runtime/Core/Windows/WindowsPlatformThread.cpp",
+            "../Runtime/Core/Windows/WindowsPlatformEvent.cpp",
         }
             
         -- In visual studio show natvis files

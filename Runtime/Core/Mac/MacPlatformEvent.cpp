@@ -1,12 +1,12 @@
-#include "Core/Mac/MacEvent.h"
+#include "Core/Mac/MacPlatformEvent.h"
 #include "Core/Platform/PlatformAtomic.h"
 #include "Core/Templates/NumericLimits.h"
 #include <sys/time.h>
 #include <Foundation/Foundation.h>
 
-FGenericEvent* FMacEvent::Create(bool bManualReset)
+FGenericPlatformEvent* FMacPlatformEvent::Create(bool bManualReset)
 {
-    FMacEvent* NewEvent = new FMacEvent();
+    FMacPlatformEvent* NewEvent = new FMacPlatformEvent();
     if (!NewEvent->Initialize(bManualReset))
     {
         delete NewEvent;
@@ -16,16 +16,16 @@ FGenericEvent* FMacEvent::Create(bool bManualReset)
     return NewEvent;
 }
 
-void FMacEvent::Recycle(FGenericEvent* InEvent)
+void FMacPlatformEvent::Recycle(FGenericPlatformEvent* InEvent)
 {
-    FMacEvent* MacEvent = static_cast<FMacEvent*>(InEvent);
+    FMacPlatformEvent* MacEvent = static_cast<FMacPlatformEvent*>(InEvent);
     if (MacEvent)
     {
         delete MacEvent;
     }
 }
 
-FMacEvent::FMacEvent()
+FMacPlatformEvent::FMacPlatformEvent()
     : bInitialized(false)
     , bManualReset(false)
     , Triggered(ETriggerType::None)
@@ -35,7 +35,7 @@ FMacEvent::FMacEvent()
 {
 }
 
-FMacEvent::~FMacEvent()
+FMacPlatformEvent::~FMacPlatformEvent()
 {
     if (bInitialized)
     {
@@ -62,7 +62,7 @@ FMacEvent::~FMacEvent()
     }
 }
 
-bool FMacEvent::Initialize(bool bInManualReset)
+bool FMacPlatformEvent::Initialize(bool bInManualReset)
 {
     CHECK(bInitialized == false);
     
@@ -86,7 +86,7 @@ bool FMacEvent::Initialize(bool bInManualReset)
     return bResult;
 }
 
-void FMacEvent::Trigger()
+void FMacPlatformEvent::Trigger()
 {
     CHECK(bInitialized == true);
 
@@ -108,7 +108,7 @@ void FMacEvent::Trigger()
     UnlockMutex();
 }
 
-void FMacEvent::Wait(uint64 Milliseconds)
+void FMacPlatformEvent::Wait(uint64 Milliseconds)
 {
     CHECK(bInitialized == true);
     
@@ -172,7 +172,7 @@ void FMacEvent::Wait(uint64 Milliseconds)
     UnlockMutex();
 }
 
-void FMacEvent::Reset()
+void FMacPlatformEvent::Reset()
 {
     CHECK(bInitialized == true);
     LockMutex();

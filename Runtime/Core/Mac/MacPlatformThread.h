@@ -1,16 +1,16 @@
 #pragma once
-#include "Core/Generic/GenericThread.h"
+#include "Core/Generic/GenericPlatformThread.h"
 #include <pthread.h>
 
-class FMacThread final : public FGenericThread
+class FMacPlatformThread final : public FGenericPlatformThread
 {
 public:
 
     // Create a new MacThread
-    static FGenericThread* Create(FRunnable* Runnable, const CHAR* ThreadName, bool bSuspended = true);
+    static FGenericPlatformThread* Create(FRunnable* Runnable, const CHAR* ThreadName, bool bSuspended = true);
 
 public:
-    virtual ~FMacThread() = default;
+    virtual ~FMacPlatformThread() = default;
 
     virtual bool Start() override final;
     virtual void Kill(bool bWaitUntilCompletion) override final;
@@ -27,7 +27,7 @@ public:
 private:
     static void* ThreadRoutine(void* ThreadParameter);
 
-    FMacThread(FRunnable* InRunnable, const CHAR* ThreadName);
+    FMacPlatformThread(FRunnable* InRunnable, const CHAR* ThreadName);
 
     pthread_t Thread;
 };

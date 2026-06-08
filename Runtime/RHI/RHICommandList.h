@@ -93,13 +93,13 @@ public:
         return *CommandContext;
     }
 
-    FORCEINLINE void SetEvent(FGenericEvent* InEvent) noexcept
+    FORCEINLINE void SetEvent(FGenericPlatformEvent* InEvent) noexcept
     {
         CHECK(InEvent != nullptr);
         FinishedEvent = InEvent;
     }
 
-    FORCEINLINE FGenericEvent* GetEvent() const noexcept
+    FORCEINLINE FGenericPlatformEvent* GetEvent() const noexcept
     {
         return FinishedEvent;
     }
@@ -458,7 +458,7 @@ private:
     FRHICommand**       CommandPointer;
     FRHICommand*        FirstCommand;
     IRHICommandContext* CommandContext;
-    FGenericEvent*      FinishedEvent;
+    FGenericPlatformEvent*      FinishedEvent;
     uint32              NumCommands;
 };
 
@@ -503,7 +503,7 @@ public:
     void WaitForOutstandingTasks();
 
 private:
-    FGenericThread*     Thread;
+    FGenericPlatformThread*     Thread;
     FRHIThreadTaskQueue Tasks;
     FAtomicInt64        NumSubmittedTasks;
     FAtomicInt64        NumCompletedTasks;

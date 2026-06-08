@@ -10,7 +10,7 @@ class FD3D12Device;
 class FD3D12Fence;
 class FD3D12Resource;
 class FD3D12ResidencyManager;
-class FGenericThread;
+class FGenericPlatformThread;
 
 class FD3D12ResidencyHandle
 {
@@ -143,7 +143,7 @@ private:
     TArray<FD3D12ResidencyHandle*> TrackedObjects;
     FCriticalSection               Mutex;
     FD3D12PagingWorker*            PagingWorker;
-    FGenericThread*                PagingThread;
+    FGenericPlatformThread*        PagingThread;
     TComPtr<ID3D12Fence>           PagingFence;
     uint64                         PagingFenceValue;
     HANDLE                         BudgetChangeEvent;

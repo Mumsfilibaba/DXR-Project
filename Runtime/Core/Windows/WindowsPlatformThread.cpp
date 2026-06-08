@@ -1,15 +1,15 @@
-#include "Core/Windows/WindowsThread.h"
+#include "Core/Windows/WindowsPlatformThread.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformTLS.h"
 
-FGenericThread* FWindowsThread::Create(FRunnable* Runnable, const CHAR* InThreadName, bool bSuspended)
+FGenericPlatformThread* FWindowsPlatformThread::Create(FRunnable* Runnable, const CHAR* InThreadName, bool bSuspended)
 {
-    FWindowsThread* NewThread = new FWindowsThread(Runnable, InThreadName, bSuspended);
+    FWindowsPlatformThread* NewThread = new FWindowsPlatformThread(Runnable, InThreadName, bSuspended);
     return NewThread;
 }
 
-FWindowsThread::FWindowsThread(FRunnable* InRunnable, const CHAR* InThreadName, bool bSuspended)
-    : FGenericThread(InRunnable, InThreadName)
+FWindowsPlatformThread::FWindowsPlatformThread(FRunnable* InRunnable, const CHAR* InThreadName, bool bSuspended)
+    : FGenericPlatformThread(InRunnable, InThreadName)
     , Thread(0)
     , hThreadID(0)
     , bIsSuspended(bSuspended)
@@ -20,15 +20,15 @@ FWindowsThread::FWindowsThread(FRunnable* InRunnable, const CHAR* InThreadName, 
         Flags = CREATE_SUSPENDED;
     }
 
-    Thread = ::CreateThread(nullptr, 0, FWindowsThread::ThreadRoutine, reinterpret_cast<void*>(this), Flags, &hThreadID);
+    Thread = ::CreateThread(nullptr, 0, FWindowsPlatformThread::ThreadRoutine, reinterpret_cast<void*>(this), Flags, &hThreadID);
     if (!Thread)
     {
-        LOG_ERROR("[FWindowsThread] Failed to create thread");
+        LOG_ERROR("[FWindowsPlatformThread] Failed to create thread");
         DEBUG_BREAK();
     }
 }
 
-FWindowsThread::~FWindowsThread()
+FWindowsPlatformThread::~FWindowsPlatformThread()
 {
     if (Thread)
     {
@@ -36,7 +36,7 @@ FWindowsThread::~FWindowsThread()
     }
 }
 
-bool FWindowsThread::Start()
+bool FWindowsPlatformThread::Start()
 {
     CHECK(bIsSuspended);
     CHECK(hThreadID != 0 && Thread != 0);
@@ -44,14 +44,14 @@ bool FWindowsThread::Start()
     DWORD Result = ::ResumeThread(Thread);
     if (Result == DWORD(-1))
     {
-        LOG_ERROR("[FWindowsThread] Failed to Start thread");
+        LOG_ERROR("[FWindowsPlatformThread] Failed to Start thread");
         return false;
     }
 
     return true;
 }
 
-void FWindowsThread::Kill(bool bWaitUntilCompletion)
+void FWindowsPlatformThread::Kill(bool bWaitUntilCompletion)
 {
     if (Runnable)
     {
@@ -67,36 +67,36 @@ void FWindowsThread::Kill(bool bWaitUntilCompletion)
     Thread = 0;
 }
 
-void FWindowsThread::Suspend()
+void FWindowsPlatformThread::Suspend()
 {
     ::SuspendThread(Thread);
 }
 
-void FWindowsThread::Resume()
+void FWindowsPlatformThread::Resume()
 {
     ::ResumeThread(Thread);
 }
 
-void FWindowsThread::WaitForCompletion()
+void FWindowsPlatformThread::WaitForCompletion()
 {
     ::WaitForSingleObject(Thread, INFINITE);
 }
 
-void* FWindowsThread::GetPlatformHandle()
+void* FWindowsPlatformThread::GetPlatformHandle()
 {
     SIZE_T Handle = static_cast<SIZE_T>(hThreadID);
     return reinterpret_cast<void*>(Handle);
 }
 
-DWORD WINAPI FWindowsThread::ThreadRoutine(LPVOID ThreadParameter)
+DWORD WINAPI FWindowsPlatformThread::ThreadRoutine(LPVOID ThreadParameter)
 {
     DWORD Result = DWORD(-1);
 
-    FWindowsThread* CurrentThread = reinterpret_cast<FWindowsThread*>(ThreadParameter);
+    FWindowsPlatformThread* CurrentThread = reinterpret_cast<FWindowsPlatformThread*>(ThreadParameter);
     if (CurrentThread)
     {
         // Ensure that this thread can be retrieved
-        FPlatformTLS::SetTLSValue(FGenericThread::TLSSlot, CurrentThread);
+        FPlatformTLS::SetTLSValue(FGenericPlatformThread::TLSSlot, CurrentThread);
 
         if (!CurrentThread->Name.IsEmpty())
         {
@@ -114,7 +114,7 @@ DWORD WINAPI FWindowsThread::ThreadRoutine(LPVOID ThreadParameter)
             Runnable->Destroy();
         }
         
-        FPlatformTLS::SetTLSValue(FGenericThread::TLSSlot, nullptr);
+        FPlatformTLS::SetTLSValue(FGenericPlatformThread::TLSSlot, nullptr);
     }
 
     return Result;

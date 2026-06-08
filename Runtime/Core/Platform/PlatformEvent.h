@@ -1,12 +1,12 @@
 #pragma once
 
 #if PLATFORM_WINDOWS
-    #include "Core/Windows/WindowsEvent.h"
-    typedef FWindowsEvent FPlatformEvent;
+    #include "Core/Windows/WindowsPlatformEvent.h"
+    typedef FWindowsPlatformEvent FPlatformEvent;
 #elif PLATFORM_MACOS
-    #include "Core/Mac/MacEvent.h"
-    typedef FMacEvent FPlatformEvent;
+    #include "Core/Mac/MacPlatformEvent.h"
+    typedef FMacPlatformEvent FPlatformEvent;
 #else
-    #include "Core/Generic/GenericEvent.h"
-    typedef FGenericEvent FPlatformEvent;
+    #include "Core/Generic/GenericPlatformEvent.h"
+    typedef FGenericPlatformEvent FPlatformEvent;
 #endif

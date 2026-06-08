@@ -1,14 +1,14 @@
 #pragma once
 #include "Core/Containers/Function.h"
-#include "Core/Generic/GenericThread.h"
+#include "Core/Generic/GenericPlatformThread.h"
 
-class CORE_API FWindowsThread final : public FGenericThread
+class CORE_API FWindowsPlatformThread final : public FGenericPlatformThread
 {
 public:
-    static FGenericThread* Create(FRunnable* Runnable, const CHAR* ThreadName, bool bSuspended = true);
+    static FGenericPlatformThread* Create(FRunnable* Runnable, const CHAR* ThreadName, bool bSuspended = true);
 
 public:
-    virtual ~FWindowsThread();
+    virtual ~FWindowsPlatformThread();
     
     virtual bool Start() override final;
     virtual void Kill(bool bWaitUntilCompletion) override final;
@@ -20,7 +20,7 @@ public:
 private:
     static DWORD WINAPI ThreadRoutine(LPVOID ThreadParameter);
 
-    FWindowsThread(FRunnable* InRunnable, const CHAR* InThreadName, bool bSuspended);
+    FWindowsPlatformThread(FRunnable* InRunnable, const CHAR* InThreadName, bool bSuspended);
 
     HANDLE Thread;
     DWORD  hThreadID;

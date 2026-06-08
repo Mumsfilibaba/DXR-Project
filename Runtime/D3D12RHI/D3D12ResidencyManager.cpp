@@ -1,4 +1,4 @@
-#include "Core/Generic/GenericThread.h"
+#include "Core/Generic/GenericPlatformThread.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformEvent.h"
 #include "D3D12RHI/D3D12ResidencyManager.h"
@@ -124,7 +124,7 @@ FD3D12ResidencyManager::FD3D12ResidencyManager(FD3D12Device* InDevice, bool bEna
 #endif
     {
         PagingWorker = new FD3D12PagingWorker(Device->GetD3D12Device());
-        PagingThread = FGenericThread::Create(PagingWorker, "D3D12 Paging Worker");
+        PagingThread = FGenericPlatformThread::Create(PagingWorker, "D3D12 Paging Worker");
         PagingThread->Start();
     }
 

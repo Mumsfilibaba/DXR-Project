@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Generic/GenericThread.h"
+#include "Core/Generic/GenericPlatformThread.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Optional.h"
@@ -17,14 +17,14 @@ public:
 
 public:
 
-    // Register a thread this is called from the constructor of the FGenericThread
-    void RegisterThread(FGenericThread* InThread);
+    // Register a thread this is called from the constructor of the FGenericPlatformThread
+    void RegisterThread(FGenericPlatformThread* InThread);
 
-    // Unregister a thread, this is called from the destructor of the FGenericThread
-    void UnregisterThread(FGenericThread* InThread);
+    // Unregister a thread, this is called from the destructor of the FGenericPlatformThread
+    void UnregisterThread(FGenericPlatformThread* InThread);
 
     // Retrieve a ThreadObject from a native ThreadHandle
-    FGenericThread* GetThreadFromHandle(void* ThreadHandle);
+    FGenericPlatformThread* GetThreadFromHandle(void* ThreadHandle);
 
     // Check if the thread-handle is for the main-thread
     bool IsMainThread(void* ThreadHandle) const 
@@ -45,6 +45,6 @@ private:
     ~FThreadManager();
 
     void*                   MainThreadHandle;
-    TArray<FGenericThread*> Threads;
+    TArray<FGenericPlatformThread*> Threads;
     FCriticalSection        ThreadsCS;
 };

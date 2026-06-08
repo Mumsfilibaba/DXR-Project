@@ -1,8 +1,8 @@
 #pragma once
 #include "Core/Mac/Mac.h"
-#include "Core/Generic/GenericEvent.h"
+#include "Core/Generic/GenericPlatformEvent.h"
 
-class FMacEvent final : public FGenericEvent
+class FMacPlatformEvent final : public FGenericPlatformEvent
 {
     enum class ETriggerType : uint8
     {
@@ -12,8 +12,8 @@ class FMacEvent final : public FGenericEvent
     };
 
 public:
-    static FGenericEvent* Create(bool bManualReset);
-    static void Recycle(FGenericEvent* InEvent);
+    static FGenericPlatformEvent* Create(bool bManualReset);
+    static void Recycle(FGenericPlatformEvent* InEvent);
 
     virtual void Trigger() override final;
     virtual void Wait(uint64 Milliseconds) override final;
@@ -25,8 +25,8 @@ public:
     }
 
 private:
-    FMacEvent();
-    ~FMacEvent();
+    FMacPlatformEvent();
+    ~FMacPlatformEvent();
 
     bool Initialize(bool bInManualReset);
 

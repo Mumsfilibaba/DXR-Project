@@ -7,20 +7,20 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class CORE_API FGenericThread
+class CORE_API FGenericPlatformThread
 {
 public:
 
     /** @brief Creates a new thread */
-    static FGenericThread* Create(FRunnable* Runnable, const CHAR* ThreadName, bool bSuspended = true);
+    static FGenericPlatformThread* Create(FRunnable* Runnable, const CHAR* ThreadName, bool bSuspended = true);
 
     /** @return Returns the thread-object for the current thread */
-    static FGenericThread* GetThread();
+    static FGenericPlatformThread* GetThread();
 
 public:
 
     /** @brief Destructor */
-    virtual ~FGenericThread();
+    virtual ~FGenericPlatformThread();
 
     /** @brief Start the thread and start executing the entrypoint */
     virtual bool Start() { return true; }
@@ -53,7 +53,7 @@ public:
     }
 
 protected:
-    FGenericThread(FRunnable* InRunnable, const CHAR* InThreadName);
+    FGenericPlatformThread(FRunnable* InRunnable, const CHAR* InThreadName);
 
     // Returns and allocates a TLS slot for the local thread pointer
     static uint32 AllocTLSSlot();

@@ -178,29 +178,29 @@ public:
 
     FRHITexture* GetSelectionMaskTexture() const
     {
-#if EDITOR_BUILD
+    #if EDITOR_BUILD
         return SelectionOutlinePass ? SelectionOutlinePass->GetSelectionMask() : nullptr;
-#else
+    #else
         return nullptr;
-#endif
+    #endif
     }
 
     FRHITexture* GetSelectionDilatedMaskTexture() const
     {
-#if EDITOR_BUILD
+    #if EDITOR_BUILD
         return SelectionOutlinePass ? SelectionOutlinePass->GetDilatedMask() : nullptr;
-#else
+    #else
         return nullptr;
-#endif
+    #endif
     }
 
     FRHITexture* GetSelectionRingTexture() const
     {
-#if EDITOR_BUILD
+    #if EDITOR_BUILD
         return SelectionOutlinePass ? SelectionOutlinePass->GetRingMask() : nullptr;
-#else
+    #else
         return nullptr;
-#endif
+    #endif
     }
 
 private: 
@@ -245,7 +245,7 @@ private:
     FRayTracer                  RayTracer;
 
     // RHI
-    FGenericEvent*              LastFrameFinishedEvent;
+    FGenericPlatformEvent*      LastFrameFinishedEvent;
     FRHIQueryRef                TimestampQueries;
     FRHICommandList             CommandList;
 

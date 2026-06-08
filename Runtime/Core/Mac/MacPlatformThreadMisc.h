@@ -1,12 +1,12 @@
 #pragma once
 #include "Core/Mac/MacThreadManager.h"
-#include "Core/Generic/GenericThreadMisc.h"
+#include "Core/Generic/GenericPlatformThreadMisc.h"
 #include <unistd.h>
 #include <pthread.h>
 #include <sched.h>
 #include <Foundation/Foundation.h>
 
-struct FMacThreadMisc final : public FGenericThreadMisc
+struct FMacPlatformThreadMisc final : public FGenericPlatformThreadMisc
 {
     static FORCEINLINE uint32 GetNumProcessors()
     {

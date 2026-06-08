@@ -1,12 +1,12 @@
 #pragma once
-#include "Core/Generic/GenericThread.h"
-#include "Core/Generic/GenericEvent.h"
+#include "Core/Generic/GenericPlatformThread.h"
+#include "Core/Generic/GenericPlatformEvent.h"
 #include "Core/Time/Timespan.h"
 #include "Core/Threading/Runnable.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct FGenericThreadMisc
+struct FGenericPlatformThreadMisc
 {
     static FORCEINLINE void Release() { }
     static FORCEINLINE uint32 GetNumProcessors() { return 1; }

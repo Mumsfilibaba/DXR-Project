@@ -1,4 +1,4 @@
-#include "Core/Mac/MacLibrary.h"
+#include "Core/Mac/MacPlatformLibrary.h"
 #include "Core/Mac/MacPlatformMisc.h"
 
 // Lazy mode resolves symbols when they are called for the first time, disable to load everything at loadtime
@@ -10,8 +10,8 @@
 static void* SafeLoadDynamicLib(const CHAR* LibraryName)
 {
     // Try and avoid dynamic memory allocation inside of this function
-    const CHAR* Prefix    = FMacLibrary::GetDynamicLibPrefix();
-    const CHAR* Extension = FMacLibrary::GetDynamicLibExtension();
+    const CHAR* Prefix    = FMacPlatformLibrary::GetDynamicLibPrefix();
+    const CHAR* Extension = FMacPlatformLibrary::GetDynamicLibExtension();
     
     // Concat the realname
     constexpr uint32 MaxNameLength = 256;
@@ -95,7 +95,7 @@ static void* SafeLoadDynamicLib(const CHAR* LibraryName)
     return nullptr;
 }
 
-void* FMacLibrary::LoadDynamicLib(const CHAR* LibraryName)
+void* FMacPlatformLibrary::LoadDynamicLib(const CHAR* LibraryName)
 {
     void* Handle = SafeLoadDynamicLib(LibraryName);
     if (Handle)
@@ -106,7 +106,7 @@ void* FMacLibrary::LoadDynamicLib(const CHAR* LibraryName)
     return nullptr;
 }
 
-void* FMacLibrary::GetLoadedHandle(const CHAR* LibraryName)
+void* FMacPlatformLibrary::GetLoadedHandle(const CHAR* LibraryName)
 { 
     void* Handle = SafeLoadDynamicLib(LibraryName);
     

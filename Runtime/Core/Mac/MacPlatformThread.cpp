@@ -1,10 +1,10 @@
-#include "Core/Mac/MacThread.h"
-#include "Core/Mac/MacThreadMisc.h"
+#include "Core/Mac/MacPlatformThread.h"
+#include "Core/Mac/MacPlatformThreadMisc.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 
-FGenericThread* FMacThread::Create(FRunnable* InRunnable, const CHAR* ThreadName, bool bSuspended)
+FGenericPlatformThread* FMacPlatformThread::Create(FRunnable* InRunnable, const CHAR* ThreadName, bool bSuspended)
 {
-    FMacThread* NewThread = new FMacThread(InRunnable, ThreadName);
+    FMacPlatformThread* NewThread = new FMacPlatformThread(InRunnable, ThreadName);
     if (!bSuspended)
     {
         NewThread->Start();
@@ -13,18 +13,18 @@ FGenericThread* FMacThread::Create(FRunnable* InRunnable, const CHAR* ThreadName
     return NewThread;
 }
 
-FMacThread::FMacThread(FRunnable* InRunnable, const CHAR* ThreadName)
-    : FGenericThread(InRunnable, ThreadName)
+FMacPlatformThread::FMacPlatformThread(FRunnable* InRunnable, const CHAR* ThreadName)
+    : FGenericPlatformThread(InRunnable, ThreadName)
     , Thread()
 { 
 }
 
-bool FMacThread::Start()
+bool FMacPlatformThread::Start()
 {
-    const int32 Result = ::pthread_create(&Thread, nullptr, FMacThread::ThreadRoutine, reinterpret_cast<void*>(this));
+    const int32 Result = ::pthread_create(&Thread, nullptr, FMacPlatformThread::ThreadRoutine, reinterpret_cast<void*>(this));
     if (Result)
     {
-        LOG_ERROR("[FMacThread] Failed to create thread");
+        LOG_ERROR("[FMacPlatformThread] Failed to create thread");
         return false;
     }
     else
@@ -33,7 +33,7 @@ bool FMacThread::Start()
     }
 }
 
-void FMacThread::Kill(bool bWaitUntilCompletion)
+void FMacPlatformThread::Kill(bool bWaitUntilCompletion)
 {
     if (Runnable)
     {
@@ -46,25 +46,25 @@ void FMacThread::Kill(bool bWaitUntilCompletion)
     }
 }
 
-void FMacThread::WaitForCompletion()
+void FMacPlatformThread::WaitForCompletion()
 {
     ::pthread_join(Thread, nullptr);
 }
 
-void* FMacThread::GetPlatformHandle()
+void* FMacPlatformThread::GetPlatformHandle()
 {
     return reinterpret_cast<void*>(Thread);
 }
 
-void* FMacThread::ThreadRoutine(void* ThreadParameter)
+void* FMacPlatformThread::ThreadRoutine(void* ThreadParameter)
 {
     int32 Result = int32(-1);
 
-    FMacThread* CurrentThread = reinterpret_cast<FMacThread*>(ThreadParameter);
+    FMacPlatformThread* CurrentThread = reinterpret_cast<FMacPlatformThread*>(ThreadParameter);
     if (CurrentThread)
     {
         // Ensure that this thread can be retrieved
-        FPlatformTLS::SetTLSValue(FGenericThread::TLSSlot, CurrentThread);
+        FPlatformTLS::SetTLSValue(FGenericPlatformThread::TLSSlot, CurrentThread);
 
         // Thread-name can only be set from the running thread
         if (!CurrentThread->Name.IsEmpty())
@@ -83,7 +83,7 @@ void* FMacThread::ThreadRoutine(void* ThreadParameter)
             Runnable->Destroy();
         }
 
-        FPlatformTLS::SetTLSValue(FGenericThread::TLSSlot, nullptr);
+        FPlatformTLS::SetTLSValue(FGenericPlatformThread::TLSSlot, nullptr);
     }
 
     ::pthread_exit(nullptr);

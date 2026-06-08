@@ -4,15 +4,15 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class CORE_API FGenericEvent
+class CORE_API FGenericPlatformEvent
 {
 public:
 
     // Creates a new event
-    static FGenericEvent* Create(bool bManualReset);
+    static FGenericPlatformEvent* Create(bool bManualReset);
 
     // Return the event to the system for reuse if possible
-    static void Recycle(FGenericEvent* InEvent);
+    static void Recycle(FGenericPlatformEvent* InEvent);
 
 public:
 
@@ -34,8 +34,8 @@ public:
 protected:
 
     // Protected, creation and destruction should be handled by the static functions
-    FGenericEvent() = default;
-    virtual ~FGenericEvent() = default;
+    FGenericPlatformEvent() = default;
+    virtual ~FGenericPlatformEvent() = default;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

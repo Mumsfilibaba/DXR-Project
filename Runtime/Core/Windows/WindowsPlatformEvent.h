@@ -1,12 +1,12 @@
 #pragma once
 #include "Core/Windows/Windows.h"
-#include "Core/Generic/GenericEvent.h"
+#include "Core/Generic/GenericPlatformEvent.h"
 
-class CORE_API FWindowsEvent final : public FGenericEvent
+class CORE_API FWindowsPlatformEvent final : public FGenericPlatformEvent
 {
 public:
-    static FGenericEvent* Create(bool bManualReset);
-    static void Recycle(FGenericEvent* InEvent);
+    static FGenericPlatformEvent* Create(bool bManualReset);
+    static void Recycle(FGenericPlatformEvent* InEvent);
 
     virtual void Trigger() override final;
     virtual void Wait(uint64 Milliseconds) override final;
@@ -18,8 +18,8 @@ public:
     }
 
 private:
-    FWindowsEvent();
-    ~FWindowsEvent();
+    FWindowsPlatformEvent();
+    ~FWindowsPlatformEvent();
 
     bool Initialize(bool bInManualReset)
     {

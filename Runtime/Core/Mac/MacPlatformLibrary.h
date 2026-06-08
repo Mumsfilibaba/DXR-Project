@@ -1,9 +1,9 @@
 #pragma once
 #include "Core/Containers/String.h"
-#include "Core/Generic/GenericLibrary.h"
+#include "Core/Generic/GenericPlatformLibrary.h"
 #include <dlfcn.h>
 
-struct CORE_API FMacLibrary final : public FGenericLibrary
+struct CORE_API FMacPlatformLibrary final : public FGenericPlatformLibrary
 {
     static void* LoadDynamicLib(const CHAR* LibraryName);
     static void* GetLoadedHandle(const CHAR* LibraryName);

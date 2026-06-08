@@ -108,17 +108,17 @@ namespace MPSCTest
         GQueue = new TQueue<FString, EQueueType::MPSC>;
         GItems = new TArray<FString>;
 
-        TArray<FGenericThread*> Producers;
+        TArray<FGenericPlatformThread*> Producers;
         for (int32 i = 0; i < NumProducers; ++i)
         {
             const int32 ProducerIndex = (i + 1) * ProducerOffset;
             Producers.Add(FPlatformThread::Create(new FProducerThread(ProducerIndex), "ProducerThread", false));
         }
 
-        FGenericThread* Consumer = FPlatformThread::Create(new FConsumerThread, "ConsumerThread", false);
+        FGenericPlatformThread* Consumer = FPlatformThread::Create(new FConsumerThread, "ConsumerThread", false);
 
         // Wait for all the thread to finish
-        for (FGenericThread* Producer : Producers)
+        for (FGenericPlatformThread* Producer : Producers)
         {
             Producer->WaitForCompletion();
         }
@@ -148,7 +148,7 @@ namespace MPSCTest
 
         delete Consumer;
 
-        for (FGenericThread* Producer : Producers)
+        for (FGenericPlatformThread* Producer : Producers)
         {
             delete Producer;
         }
@@ -214,10 +214,10 @@ namespace SPMCTest
         // Create the Queue on the heap to avoid wrong reporting of memory leaks
         GQueue = new TQueue<FString, EQueueType::SPMC>;
 
-        FGenericThread* Producer = FPlatformThread::Create(new FProducerThread, "ProducerThread", false);
+        FGenericPlatformThread* Producer = FPlatformThread::Create(new FProducerThread, "ProducerThread", false);
         
         TArray<TUniquePtr<FConsumerThread>> ConsumerInterfaces;
-        TArray<FGenericThread*> Consumers;
+        TArray<FGenericPlatformThread*> Consumers;
         for (int32 i = 0; i < NumConsumers; ++i)
         {
             TUniquePtr<FConsumerThread>& Interface = ConsumerInterfaces.Add(MakeUniquePtr<FConsumerThread>());
@@ -228,7 +228,7 @@ namespace SPMCTest
         Producer->WaitForCompletion();
 
         TArray<FString> TotalItems;
-        for (FGenericThread* Consumer : Consumers)
+        for (FGenericPlatformThread* Consumer : Consumers)
         {
             Consumer->WaitForCompletion();
             TotalItems.Append(static_cast<FConsumerThread*>(Consumer->GetRunnable())->Items);
@@ -249,7 +249,7 @@ namespace SPMCTest
         delete GQueue;
         GQueue = nullptr;
 
-        for (FGenericThread* Consumer : Consumers)
+        for (FGenericPlatformThread* Consumer : Consumers)
         {
             delete Consumer;
         }
