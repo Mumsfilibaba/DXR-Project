@@ -141,7 +141,7 @@ bool FTemporalAA::CreateResources(FFrameResources& /* FrameResources */, uint32 
 {
     // TAA History-Buffer
     const ETextureUsageFlags UsageFlags = ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::UnorderedAccessTexture;
-    FRHITextureDesc TAABufferDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::SceneTargetFormat, Width, Height, 1, 1, UsageFlags);
+    FRHITextureDesc TAABufferDesc = FRHITextureDesc::CreateTexture2D(RendererTextureFormats::SceneTargetFormat, Width, Height, 1, 1, UsageFlags);
 
     uint32 Index = 0;
     for (FRHITextureRef& TAABuffer : TAAHistoryBuffers)

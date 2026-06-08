@@ -8,6 +8,7 @@
   - [Templates](#templates)
   - [Classes](#classes)
   - [Structs](#structs)
+  - [Static-Only Classes](#static-only-classes)
   - [Interfaces](#interfaces)
   - [Enums](#enums)
   - [Union](#union)
@@ -144,6 +145,42 @@ struct FMyStruct
   int32 y;
 };
 ```
+
+### Static-Only Classes
+* A struct/class that contains only static members (no instance state, no virtuals) acts as a namespace. Drop the `F` prefix and give it a plural or semantic name that reads like a namespace at the call site.
+
+```
+// Correct - reads like a namespace
+struct Memory
+{
+  static void* Malloc(uint64 Size);
+};
+
+struct Bits
+{
+  template<typename T>
+  static constexpr T ReverseBits(T Value);
+};
+
+Memory::Malloc(Size);
+Bits::ReverseBits(Value);
+```
+
+* This applies to utility/helper "namespace" types only. Types with instance state or that are singletons (for example `FConsoleManager`, `FModuleManager`) keep the `F` prefix.
+
+* Class templates keep the `T` prefix even when they only hold helpers, because the `T` prefix communicates that the type is a template (for example `TInlineStorage`).
+
+* A struct that fakes a namespace of constants with `static const` members (rather than an `enum`) follows the same rule - drop the `E`/`F` prefix and treat it as a namespace (for example `Keys` exposing `Keys::W`). This is distinct from the enum-scoping idiom in [Enums](#enums), which keeps its `E` prefix.
+
+* The summary table:
+
+| Category | Prefix rule | Example |
+| --- | --- | --- |
+| Static-only "namespace" struct/class | Drop `F`, use a plural/semantic name | `FBitHelper` -> `Bits`, `FMemory` -> `Memory`, `FCommandLine` -> `CommandLine` |
+| Class template (helpers, but still a template) | `T` prefix | `FInlineStorage` -> `TInlineStorage` |
+| Polymorphic interface / abstract base | `I` prefix | `FModuleInterface` -> `IModule` |
+| `struct E { static const ... };` (constants masquerading as an enum) | Drop the prefix, treat as a namespace | `EKeys` -> `Keys` |
+| `struct E { enum Type { ... }; };` (enum-scoping idiom) | Keep `E` | `EKeyName`, `EShaderVisibility` (unchanged) |
 
 ### Interfaces
 * Interfaces do not contain any state (i.e no variables) and does not provide any function definition. All functions should be pure virtual.

@@ -108,7 +108,7 @@ struct FModelCreateInfo
     float                       Scale;
 };
 
-struct ENGINE_API FMeshFactory
+struct ENGINE_API MeshFactory
 {
     static FMeshCreateInfo CreateCube(float Width = 1.0f, float Height = 1.0f, float Depth = 1.0f) noexcept;
     static FMeshCreateInfo CreatePlane(uint32 Width = 1, uint32 Height = 1) noexcept;

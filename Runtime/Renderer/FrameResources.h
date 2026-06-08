@@ -156,7 +156,7 @@ struct FLightProbeInfoHLSL
 
 MARK_AS_REALLOCATABLE(FLightProbeInfoHLSL);
 
-struct FGlobalTextureFormats
+struct RendererTextureFormats
 {
     static constexpr EFormat DepthBufferFormat  = EFormat::D32_Float;
     static constexpr EFormat SSAOBufferFormat   = EFormat::R8_Unorm;

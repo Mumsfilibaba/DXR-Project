@@ -2,18 +2,18 @@
 #include "Core/Misc/Parse.h"
 #include "Core/Templates/CString.h"
 
-CHAR FCommandLine::CommandLine[FCommandLine::MaxCommandLineLength]         = { 0 };
-CHAR FCommandLine::OriginalCommandLine[FCommandLine::MaxCommandLineLength] = { 0 };
+CHAR CommandLine::CommandLineBuffer[CommandLine::MaxCommandLineLength]   = { 0 };
+CHAR CommandLine::OriginalCommandLine[CommandLine::MaxCommandLineLength] = { 0 };
 
-bool FCommandLine::Initialize(const CHAR** Args, int32 NumArgs)
+bool CommandLine::Initialize(const CHAR** Args, int32 NumArgs)
 {
     if (!Args)
     {
         return false;
     }
 
-    CHAR* CommandLineIt         = CommandLine;
-    CHAR* CommandLineEnd        = CommandLine + MaxCommandLineLength;
+    CHAR* CommandLineIt         = CommandLineBuffer;
+    CHAR* CommandLineEnd        = CommandLineBuffer + MaxCommandLineLength;
     CHAR* OriginalCommandLineIt = OriginalCommandLine;
 
     for (int32 Index = 0; Index < NumArgs; ++Index)
@@ -36,7 +36,7 @@ bool FCommandLine::Initialize(const CHAR** Args, int32 NumArgs)
             {
                 // Find the end of the value
                 const CHAR* Iterator = Option + 1;
-                FParse::ParseAlnum(&Iterator);
+                Parse::ParseAlnum(&Iterator);
 
                 {
                     const UPTR_INT Length = static_cast<UPTR_INT>(Iterator - Option);
@@ -44,14 +44,14 @@ bool FCommandLine::Initialize(const CHAR** Args, int32 NumArgs)
                     CommandLineIt += Length;
                 }
 
-                FParse::ParseWhiteSpace(&Iterator);
+                Parse::ParseWhiteSpace(&Iterator);
 
                 if (*Iterator == '=')
                 {
                     *(CommandLineIt++) = '=';
 
                     ++Iterator;
-                    FParse::ParseWhiteSpace(&Iterator);
+                    Parse::ParseWhiteSpace(&Iterator);
 
                     // Special case for string-values
                     const CHAR* ValueEnd = nullptr;
@@ -69,7 +69,7 @@ bool FCommandLine::Initialize(const CHAR** Args, int32 NumArgs)
                     if (!ValueEnd)
                     {
                         ValueEnd = Iterator;
-                        FParse::ParseAlnum(&ValueEnd);
+                        Parse::ParseAlnum(&ValueEnd);
                     }
 
                     {
@@ -93,19 +93,19 @@ bool FCommandLine::Initialize(const CHAR** Args, int32 NumArgs)
     return true;
 }
 
-bool FCommandLine::Parse(const CHAR* Value)
+bool CommandLine::FindOption(const CHAR* Value)
 {
     // TODO: Have a way to do this non-case sensitive
-    const CHAR* Result = FCString::Strstr(CommandLine, Value);
+    const CHAR* Result = FCString::Strstr(CommandLineBuffer, Value);
     return (Result != nullptr);
 }
 
-bool FCommandLine::Parse(const CHAR* Value, FStringView& OutValue)
+bool CommandLine::FindOption(const CHAR* Value, FStringView& OutValue)
 {
     // TODO: Have a way to do this non-case sensitive
-    if (const CHAR* Result = FCString::Strstr(CommandLine, Value))
+    if (const CHAR* Result = FCString::Strstr(CommandLineBuffer, Value))
     {
-        FParse::ParseAlnum(&Result);
+        Parse::ParseAlnum(&Result);
         if (*Result == '=')
         {
             ++Result;
@@ -118,7 +118,7 @@ bool FCommandLine::Parse(const CHAR* Value, FStringView& OutValue)
             }
             else
             {
-                FParse::ParseAlnum(&StringEnd);
+                Parse::ParseAlnum(&StringEnd);
             }
             
             const int32 Length = static_cast<int32>(StringEnd - Result);

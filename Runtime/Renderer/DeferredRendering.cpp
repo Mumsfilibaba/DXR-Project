@@ -190,7 +190,7 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FFrameResour
         PSODesc.RasterizerState                            = NewPipelineInstance.RasterizerState.Get();
         PSODesc.VertexShader                               = NewPipelineInstance.VertexShader.Get();
         PSODesc.PixelShader                                = NewPipelineInstance.PixelShader.Get();
-        PSODesc.RasterizerOutputFormats.DepthStencilFormat = FGlobalTextureFormats::DepthBufferFormat;
+        PSODesc.RasterizerOutputFormats.DepthStencilFormat = RendererTextureFormats::DepthBufferFormat;
 
         NewPipelineInstance.PipelineState = RHI::CreateGraphicsPipelineState(PSODesc);
         if (!NewPipelineInstance.PipelineState)
@@ -223,9 +223,9 @@ bool FDepthPrePass::CreateResources(FFrameResources& FrameResources, uint32 Widt
     }
 
     const ETextureUsageFlags Usage = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture;
-    const FClearValue DepthClearValue(FGlobalTextureFormats::DepthBufferFormat, 1.0f, 0);
+    const FClearValue DepthClearValue(RendererTextureFormats::DepthBufferFormat, 1.0f, 0);
 
-    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::DepthBufferFormat, Width, Height, 1, 1, Usage, DepthClearValue);
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(RendererTextureFormats::DepthBufferFormat, Width, Height, 1, 1, Usage, DepthClearValue);
     FrameResources.GBuffer[EGBufferIndex::Depth] = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (FrameResources.GBuffer[EGBufferIndex::Depth])
     {
@@ -503,12 +503,12 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FFrameRe
         PSODesc.RasterizerState                                = NewPipelineInstance.RasterizerState.Get();
         PSODesc.VertexShader                                   = NewPipelineInstance.VertexShader.Get();
         PSODesc.PixelShader                                    = NewPipelineInstance.PixelShader.Get();
-        PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::AlbedoFormat;
-        PSODesc.RasterizerOutputFormats.RenderTargetFormats[1] = FGlobalTextureFormats::NormalFormat;
-        PSODesc.RasterizerOutputFormats.RenderTargetFormats[2] = FGlobalTextureFormats::MaterialFormat;
-        PSODesc.RasterizerOutputFormats.RenderTargetFormats[3] = FGlobalTextureFormats::VelocityFormat;
+        PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = RendererTextureFormats::AlbedoFormat;
+        PSODesc.RasterizerOutputFormats.RenderTargetFormats[1] = RendererTextureFormats::NormalFormat;
+        PSODesc.RasterizerOutputFormats.RenderTargetFormats[2] = RendererTextureFormats::MaterialFormat;
+        PSODesc.RasterizerOutputFormats.RenderTargetFormats[3] = RendererTextureFormats::VelocityFormat;
         PSODesc.RasterizerOutputFormats.NumRenderTargets       = EGBufferIndex::NumRenderTargets;
-        PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
+        PSODesc.RasterizerOutputFormats.DepthStencilFormat     = RendererTextureFormats::DepthBufferFormat;
 
         NewPipelineInstance.PipelineState = RHI::CreateGraphicsPipelineState(PSODesc);
         if (!NewPipelineInstance.PipelineState)
@@ -541,7 +541,7 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     }
 
     const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
-    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::AlbedoFormat, Width, Height, 1, 1, Usage);
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(RendererTextureFormats::AlbedoFormat, Width, Height, 1, 1, Usage);
 
     // Albedo
     FrameResources.GBuffer[EGBufferIndex::Albedo] = RHI::CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
@@ -555,7 +555,7 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     }
 
     // Normal
-    TextureDesc.Format = FGlobalTextureFormats::NormalFormat;
+    TextureDesc.Format = RendererTextureFormats::NormalFormat;
 
     FrameResources.GBuffer[EGBufferIndex::Normal] = RHI::CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[EGBufferIndex::Normal])
@@ -568,7 +568,7 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     }
 
     // Material Properties
-    TextureDesc.Format = FGlobalTextureFormats::MaterialFormat;
+    TextureDesc.Format = RendererTextureFormats::MaterialFormat;
 
     FrameResources.GBuffer[EGBufferIndex::Material] = RHI::CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[EGBufferIndex::Material])
@@ -581,7 +581,7 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     }
 
     // Velocity
-    TextureDesc.Format = FGlobalTextureFormats::VelocityFormat;
+    TextureDesc.Format = RendererTextureFormats::VelocityFormat;
 
     FrameResources.GBuffer[EGBufferIndex::Velocity] = RHI::CreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[EGBufferIndex::Velocity])
@@ -967,7 +967,7 @@ bool FTiledLightPass::CreateResources(FFrameResources& FrameResources, uint32 Wi
     }
 
     const ETextureUsageFlags Usage = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
-    FRHITextureDesc SceneTargetDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::SceneTargetFormat, Width, Height, 1, 1, Usage);
+    FRHITextureDesc SceneTargetDesc = FRHITextureDesc::CreateTexture2D(RendererTextureFormats::SceneTargetFormat, Width, Height, 1, 1, Usage);
     FrameResources.SceneTarget = RHI::CreateTexture(SceneTargetDesc, EResourceAccess::PixelShaderResource);
     
     if (FrameResources.SceneTarget)

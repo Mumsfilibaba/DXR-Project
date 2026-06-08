@@ -229,7 +229,7 @@ static FMatrix4 LoadMatrix(const float* Matrix)
 static void StoreMatrix(float* OutMatrix, const FMatrix4& Matrix)
 {
     CHECK(OutMatrix != nullptr);
-    FMemory::Memcpy(OutMatrix, &Matrix.M[0][0], sizeof(Matrix.M));
+    Memory::Memcpy(OutMatrix, &Matrix.M[0][0], sizeof(Matrix.M));
 }
 
 static ImU32 GetColorU32(int32 IDX)
@@ -1790,7 +1790,7 @@ static bool HandleTranslation(float* Matrix, float* DeltaMatrix, EditorGuizmo::E
             const FMatrix4 DeltaMatrixTranslation = FMatrix4::Translation(Delta.X, Delta.Y, Delta.Z);
             if (DeltaMatrix)
             {
-                FMemory::Memcpy(DeltaMatrix, &DeltaMatrixTranslation.M[0][0], sizeof(float) * 16);
+                Memory::Memcpy(DeltaMatrix, &DeltaMatrixTranslation.M[0][0], sizeof(float) * 16);
             }
 
             const FMatrix4 Result = GuizmoContext.ModelSource * DeltaMatrixTranslation;
@@ -2020,7 +2020,7 @@ static bool HandleScale(float* Matrix, float* DeltaMatrix, EditorGuizmo::EOperat
                 DeltaScale = DeltaScale * OriginalScaleDivider;
 
                 DeltaMatrixScale = FMatrix4::Scale(DeltaScale.X, DeltaScale.Y, DeltaScale.Z);
-                FMemory::Memcpy(DeltaMatrix, &DeltaMatrixScale.M[0][0], sizeof(float) * 16);
+                Memory::Memcpy(DeltaMatrix, &DeltaMatrixScale.M[0][0], sizeof(float) * 16);
             }
 
             if (!State.MouseDown[0])
@@ -2171,7 +2171,7 @@ static bool HandleRotation(float* Matrix, float* DeltaMatrix, EditorGuizmo::EOpe
         if (DeltaMatrix)
         {
             FMatrix4 DeltaRotMatrix = GuizmoContext.ModelInverse * DeltaRotation * GuizmoContext.Model;
-            FMemory::Memcpy(DeltaMatrix, &DeltaRotMatrix.M[0][0], sizeof(float) * 16);
+            Memory::Memcpy(DeltaMatrix, &DeltaRotMatrix.M[0][0], sizeof(float) * 16);
         }
 
         if (!State.MouseDown[0])

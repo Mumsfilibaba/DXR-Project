@@ -328,7 +328,7 @@ bool FD3D12SceneAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext
     for (int32 Instance = 0; Instance < InstanceDescs.Size(); Instance++)
     {
         FD3D12GeometryAccelerationStructureRHI* D3D12Geometry = FD3D12DeviceRHI::ResourceCast(BuildDesc.Instances[Instance].Geometry);
-        FMemory::Memcpy(&InstanceDescs[Instance].Transform, &BuildDesc.Instances[Instance].Transform, sizeof(FMatrix3x4));
+        Memory::Memcpy(&InstanceDescs[Instance].Transform, &BuildDesc.Instances[Instance].Transform, sizeof(FMatrix3x4));
 
         InstanceDescs[Instance].AccelerationStructure               = D3D12Geometry->GetGPUVirtualAddress();
         InstanceDescs[Instance].InstanceID                          = BuildDesc.Instances[Instance].InstanceIndex;
@@ -568,7 +568,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
     CHECK(PipelineState != nullptr);
     CHECK(RootSignature != nullptr);
 
-    FMemory::Memcpy(OutShaderBindingEntry.ShaderIdentifier, PipelineState->GetShaderIdentifier(Resources.Identifier), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+    Memory::Memcpy(OutShaderBindingEntry.ShaderIdentifier, PipelineState->GetShaderIdentifier(Resources.Identifier), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
     const FD3D12ShaderStage& Stage = RootSignature->GetShaderStage(EShaderVisibility::All);
 

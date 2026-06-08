@@ -164,8 +164,8 @@ bool FTonemapPass::CreateResources(FFrameResources& FrameResources, uint32 Width
     }
 
     const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
-    const FClearValue ClearValue(FGlobalTextureFormats::SceneTargetFormat, 0.0f, 0.0f, 0.0f, 1.0f);
-    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::SceneTargetFormat, Width, Height, 1, 1, Usage, ClearValue);
+    const FClearValue ClearValue(RendererTextureFormats::SceneTargetFormat, 0.0f, 0.0f, 0.0f, 1.0f);
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(RendererTextureFormats::SceneTargetFormat, Width, Height, 1, 1, Usage, ClearValue);
 
     FrameResources.TonemappedTarget = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (!FrameResources.TonemappedTarget)

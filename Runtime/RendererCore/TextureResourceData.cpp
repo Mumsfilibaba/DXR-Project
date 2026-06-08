@@ -5,7 +5,7 @@ FTextureResourceData::FTextureResourceData()
     , TextureDataRowPitch()
     , TextureDataSlicePitch()
 {
-    FMemory::Memzero(TextureData, sizeof(TextureData));
+    Memory::Memzero(TextureData, sizeof(TextureData));
 }
 
 FTextureResourceData::~FTextureResourceData()
@@ -14,7 +14,7 @@ FTextureResourceData::~FTextureResourceData()
     {
         if (Data)
         {
-            FMemory::Free(Data);
+            Memory::Free(Data);
         }
         else
         {
@@ -27,8 +27,8 @@ void FTextureResourceData::InitMipData(const void* InTextureData, int64 InTextur
 {
     CHECK(MipLevel < MAX_TEXTURE_MIPS);
 
-    TextureData[MipLevel] = FMemory::Malloc(InTextureDataSlicePitch);
-    FMemory::Memcpy(TextureData[MipLevel], InTextureData, InTextureDataSlicePitch);
+    TextureData[MipLevel] = Memory::Malloc(InTextureDataSlicePitch);
+    Memory::Memcpy(TextureData[MipLevel], InTextureData, InTextureDataSlicePitch);
 
     TextureDataRowPitch[MipLevel]   = InTextureDataRowPitch;
     TextureDataSlicePitch[MipLevel] = InTextureDataSlicePitch;

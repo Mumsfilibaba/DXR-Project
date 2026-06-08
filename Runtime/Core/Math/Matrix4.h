@@ -83,7 +83,7 @@ public:
     FORCEINLINE explicit FMatrix4(const float* Array) noexcept
     {
         CHECK(Array != nullptr);
-        FMemory::Memcpy(M[0], Array, sizeof(M));
+        Memory::Memcpy(M[0], Array, sizeof(M));
     }
 
     /**

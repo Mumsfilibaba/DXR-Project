@@ -457,7 +457,7 @@ bool FD3D12RootSignatureLayout::IsCompatible(const FD3D12RootSignatureLayout& Ot
 FD3D12DescriptorTableMapping::FD3D12DescriptorTableMapping()
     : NumSlots(0)
 {
-    FMemory::Memzero(SlotToRegister, sizeof(SlotToRegister));
+    Memory::Memzero(SlotToRegister, sizeof(SlotToRegister));
 }
 
 FD3D12DescriptorTableMapping::~FD3D12DescriptorTableMapping() = default;
@@ -517,7 +517,7 @@ FD3D12ShaderStage::FD3D12ShaderStage()
         RootCBVRegister[i]       = 0;
     }
 
-    FMemory::Memzero(RootDescriptors, sizeof(RootDescriptors));
+    Memory::Memzero(RootDescriptors, sizeof(RootDescriptors));
 }
 
 FD3D12ShaderStage::~FD3D12ShaderStage() = default;

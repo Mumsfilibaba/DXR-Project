@@ -16,7 +16,7 @@ FXInputDevice::FXInputDevice()
     : FInputDevice()
     , bIsDeviceConnected(false)
 {
-    FMemory::Memzero(GamepadStates, sizeof(FXInputGamepadState) * XUSER_MAX_COUNT);
+    Memory::Memzero(GamepadStates, sizeof(FXInputGamepadState) * XUSER_MAX_COUNT);
 }
 
 void FXInputDevice::UpdateDeviceState()
@@ -33,7 +33,7 @@ void FXInputDevice::UpdateDeviceState()
         }
 
         XINPUT_STATE State;
-        FMemory::Memzero(&State, sizeof(XINPUT_STATE));
+        Memory::Memzero(&State, sizeof(XINPUT_STATE));
 
         DWORD Result = XInputGetState(GamepadIndex, &State);
         if (Result == ERROR_SUCCESS)
@@ -59,7 +59,7 @@ void FXInputDevice::UpdateConnectionState()
     for (DWORD UserIndex = 0; UserIndex < XUSER_MAX_COUNT; ++UserIndex)
     {
         XINPUT_STATE State;
-        FMemory::Memzero(&State, sizeof(XINPUT_STATE));
+        Memory::Memzero(&State, sizeof(XINPUT_STATE));
 
         DWORD Result = XInputGetState(UserIndex, &State);
         if (Result == ERROR_SUCCESS)
@@ -98,7 +98,7 @@ void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 GamepadI
 
     // Prepare a boolean array for all button states
     bool bCurrentStates[NUM_BUTTONS];
-    FMemory::Memzero(bCurrentStates, sizeof(bCurrentStates));
+    Memory::Memzero(bCurrentStates, sizeof(bCurrentStates));
 
     // D-Pad
     bCurrentStates[EGamepadButtonName::DPadUp]    = IsButtonDown(XINPUT_GAMEPAD_DPAD_UP);

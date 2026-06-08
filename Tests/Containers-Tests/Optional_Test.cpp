@@ -17,14 +17,14 @@ struct FTest
 
     FTest()
     {
-        Pointer = FMemory::Malloc(SizeInBytes);
+        Pointer = Memory::Malloc(SizeInBytes);
     }
 
     FTest(int32 InValue)
         : Value(InValue)
     {
-        Pointer = FMemory::Malloc(SizeInBytes);
-        FMemory::Memset(Pointer, static_cast<uint8>(Value), SizeInBytes);
+        Pointer = Memory::Malloc(SizeInBytes);
+        Memory::Memset(Pointer, static_cast<uint8>(Value), SizeInBytes);
 
         CHAR* Temp =reinterpret_cast<CHAR*>(Pointer);
         UNREFERENCED_VARIABLE(Temp);
@@ -32,8 +32,8 @@ struct FTest
      
     FTest(const FTest& Other)
     {
-        Pointer = FMemory::Malloc(SizeInBytes);
-        FMemory::Memcpy(Pointer, Other.Pointer, SizeInBytes);
+        Pointer = Memory::Malloc(SizeInBytes);
+        Memory::Memcpy(Pointer, Other.Pointer, SizeInBytes);
     }
 
     FTest(FTest&& Other)
@@ -46,7 +46,7 @@ struct FTest
 
     ~FTest()
     {
-        FMemory::Free(Pointer);
+        Memory::Free(Pointer);
         Pointer = nullptr;
         Value   = 0;
     }
@@ -55,11 +55,11 @@ struct FTest
     {
         if (Pointer)
         {
-            FMemory::Free(Pointer);
+            Memory::Free(Pointer);
         }
 
-        Pointer = FMemory::Malloc(SizeInBytes);
-        FMemory::Memcpy(Pointer, RHS.Pointer, SizeInBytes);
+        Pointer = Memory::Malloc(SizeInBytes);
+        Memory::Memcpy(Pointer, RHS.Pointer, SizeInBytes);
         return *this;
     }
 
@@ -67,7 +67,7 @@ struct FTest
     {
         if (Pointer)
         {
-            FMemory::Free(Pointer);
+            Memory::Free(Pointer);
         }
 
         Pointer = RHS.Pointer;
@@ -77,7 +77,7 @@ struct FTest
 
     bool operator==(const FTest& RHS) const
     {
-        return FMemory::Memcmp(Pointer, RHS.Pointer, SizeInBytes) == 0;
+        return Memory::Memcmp(Pointer, RHS.Pointer, SizeInBytes) == 0;
     }
 
     bool operator==(int32 RHS) const noexcept

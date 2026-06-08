@@ -11,7 +11,7 @@
 #include "CoreApplication/Generic/InputDevice.h"
 #include "RHI/RHICommandList.h"
 
-IMPLEMENT_ENGINE_MODULE(FModuleInterface, Application);
+IMPLEMENT_ENGINE_MODULE(IModule, Application);
 
 /* ---------------------------------------------------------------------------------------------------------- */
 // FEventDispatcher is a helper class that dispatches events with a specified dispatch policy.
@@ -515,7 +515,7 @@ bool FApplication::OnKeyDown(EKeyboardKeyName::Type KeyCode, bool bIsRepeat, FMo
 
 bool FApplication::OnKeyChar(uint32 Character)
 {
-    const FKeyEvent KeyEvent(EInputEventType::KeyChar, EKeys::Unknown, PlatformApplication->GetModifierKeyState(), Character, false, true);
+    const FKeyEvent KeyEvent(EInputEventType::KeyChar, Keys::Unknown, PlatformApplication->GetModifierKeyState(), Character, false, true);
 
     const FEventResponse PreProcessResponse = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), KeyEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FKeyEvent& KeyEvent)

@@ -119,7 +119,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
         }
         else if (Desc.ClearValue.IsColorValue())
         {
-            FMemory::Memcpy(ClearValue.Color, Desc.ClearValue.ColorValue.RGBA, sizeof(float[4]));
+            Memory::Memcpy(ClearValue.Color, Desc.ClearValue.ColorValue.RGBA, sizeof(float[4]));
         }
     }
 
@@ -492,7 +492,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
 
                 for (uint64 y = 0; y < NumRows; y++)
                 {
-                    FMemory::Memcpy(WritePtr, SourcePtr, SrcRowPitch);
+                    Memory::Memcpy(WritePtr, SourcePtr, SrcRowPitch);
 
                     WritePtr  += Footprint.Footprint.RowPitch;
                     SourcePtr += SrcRowPitch;

@@ -29,7 +29,7 @@ TArray<FStackTraceEntry> FGenericPlatformStackTrace::GetStack(int32 MaxDepth, in
     IgnoreCount += 2;
 
     uint64 StackTrace[MAX_STACK_DEPTH];
-    FMemory::Memzero(StackTrace);
+    Memory::Memzero(StackTrace);
 
     // Ensure that static buffer does not overflow
     MaxDepth = Math::Min(MAX_STACK_DEPTH, MaxDepth + IgnoreCount);

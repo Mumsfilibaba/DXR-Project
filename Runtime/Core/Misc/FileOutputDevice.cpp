@@ -75,7 +75,7 @@ void FFileOutputDevice::FlushAsync()
         uint32 Offset = 0;
         for (const FString& Line : LinesToFlush)
         {
-            FMemory::Memcpy(Buffer.Data() + Offset, *Line, Line.SizeInBytes());
+            Memory::Memcpy(Buffer.Data() + Offset, *Line, Line.SizeInBytes());
             Offset += Line.SizeInBytes();
         }
 

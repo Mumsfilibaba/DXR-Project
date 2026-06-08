@@ -70,7 +70,7 @@ FGCInputDevice::FGCInputDevice()
     , bIsDeviceConnected(false)
 {
     // Ensure that the gamepadstates are starting at zero
-    FMemory::Memzero(GamepadStates, sizeof(FGCGamepadState) * NUM_MAX_GAMEPADS);
+    Memory::Memzero(GamepadStates, sizeof(FGCGamepadState) * NUM_MAX_GAMEPADS);
     
     // Add an observer for new controller connections
     Observer = [[FGCConnectionObserver alloc] initWithInputDevice:this];
@@ -141,7 +141,7 @@ void FGCInputDevice::ProcessInputState(GCExtendedGamepad* InGamepad, uint32 Game
         
     // Store the current states
     bool bCurrentStates[EGamepadButtonName::Count];
-    FMemory::Memzero(bCurrentStates, sizeof(bCurrentStates));
+    Memory::Memzero(bCurrentStates, sizeof(bCurrentStates));
 
     bCurrentStates[EGamepadButtonName::DPadUp]    = InGamepad.dpad.up.isPressed;
     bCurrentStates[EGamepadButtonName::DPadDown]  = InGamepad.dpad.down.isPressed;

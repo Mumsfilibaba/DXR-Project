@@ -3,6 +3,7 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformFile.h"
+#include "Core/Filesystem/File.h"
 #include "Core/Templates/CString.h"
 
 FConfigSection::FConfigSection()
@@ -223,14 +224,14 @@ FConfigFile* FConfig::LoadFile(const FString& Filename)
     TArray<CHAR> FileContents;
 
     {
-        TFileRef<IPlatformFile> File = FPlatformFile::OpenForRead(Filename);
-        if (!File)
+        TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(Filename);
+        if (!FileHandle)
         {
             return nullptr;
         }
 
         // Read the full file
-        if (!FFileHelpers::ReadTextFile(File.Get(), FileContents))
+        if (!File::ReadTextFile(FileHandle.Get(), FileContents))
         {
             return nullptr;
         }
@@ -253,7 +254,7 @@ FConfigFile* FConfig::LoadFile(const FString& Filename)
         }
 
         CHAR* LineStart = Start;
-        FParse::ParseLine(&Start);
+        Parse::ParseLine(&Start);
 
         // End string at the end of line
         if (*Start == '\n')
@@ -262,7 +263,7 @@ FConfigFile* FConfig::LoadFile(const FString& Filename)
         }
 
         // Skip any spaces at the beginning of the line
-        FParse::ParseWhiteSpace(&LineStart);
+        Parse::ParseWhiteSpace(&LineStart);
 
         // This is a section
         if (*LineStart == '[')
@@ -292,7 +293,7 @@ FConfigFile* FConfig::LoadFile(const FString& Filename)
                 CHAR* Key = LineStart;
                 LineStart = EqualSign + 1;
 
-                FParse::ParseWhiteSpace(&LineStart);
+                Parse::ParseWhiteSpace(&LineStart);
 
                 // Find the end of the value
                 CHAR* Value    = LineStart;

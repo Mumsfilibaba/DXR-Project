@@ -35,14 +35,14 @@ void FModuleManager::Shutdown()
 }
 
 
-FModuleInterface* FModuleManager::LoadModule(const CHAR* ModuleName)
+IModule* FModuleManager::LoadModule(const CHAR* ModuleName)
 {
     CHECK(ModuleName != nullptr);
 
     {
         SCOPED_LOCK(ModulesCS);
         
-        if (FModuleInterface* ExistingModule = GetModuleInternal(ModuleName))
+        if (IModule* ExistingModule = GetModuleInternal(ModuleName))
         {
             LOG_WARNING("Module '%s' is already loaded", ModuleName);
             return ExistingModule;
@@ -114,11 +114,11 @@ FModuleInterface* FModuleManager::LoadModule(const CHAR* ModuleName)
     }
 }
 
-FModuleInterface* FModuleManager::GetModule(const CHAR* ModuleName)
+IModule* FModuleManager::GetModule(const CHAR* ModuleName)
 {
     SCOPED_LOCK(ModulesCS);
 
-    if (FModuleInterface* EngineModule = GetModuleInternal(ModuleName))
+    if (IModule* EngineModule = GetModuleInternal(ModuleName))
     {
         return EngineModule;
     }
@@ -135,12 +135,12 @@ FModuleInterface* FModuleManager::GetModule(const CHAR* ModuleName)
     }
 }
 
-FModuleInterface* FModuleManager::GetModuleInternal(const CHAR* ModuleName)
+IModule* FModuleManager::GetModuleInternal(const CHAR* ModuleName)
 {
     const int32 Index = GetModuleIndexUnlocked(ModuleName);
     if (Index >= 0)
     {
-        FModuleInterface* EngineModule = Modules[Index].Interface;
+        IModule* EngineModule = Modules[Index].Interface;
         if (!EngineModule)
         {
             LOG_WARNING("Module is loaded but does not contain an EngineModule interface");
@@ -201,7 +201,7 @@ void FModuleManager::UnloadModule(const CHAR* ModuleName)
     if (Index >= 0)
     {
         FModuleData& Module = Modules[Index];
-        if (FModuleInterface* EngineModule = Module.Interface)
+        if (IModule* EngineModule = Module.Interface)
         {
             EngineModule->Unload();
             SAFE_DELETE(EngineModule);
@@ -227,7 +227,7 @@ void FModuleManager::ReleaseAllModules()
     for (int32 Index = 0; Index < NumModules; Index++)
     {
         FModuleData& Module = Modules[Index];
-        if (FModuleInterface* EngineModule = Module.Interface)
+        if (IModule* EngineModule = Module.Interface)
         {
             EngineModule->Unload();
             SAFE_DELETE(EngineModule);

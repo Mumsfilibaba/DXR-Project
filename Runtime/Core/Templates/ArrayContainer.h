@@ -3,7 +3,7 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct FArrayContainerHelper
+struct ArrayContainer
 {
     template<typename ContainerType>
     static constexpr decltype(auto) Data(ContainerType&& Container) requires(TIsContiguousContainer<ContainerType>::Value)

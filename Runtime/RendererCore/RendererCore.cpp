@@ -1,3 +1,3 @@
 #include "Core/Modules/ModuleManager.h"
 
-IMPLEMENT_ENGINE_MODULE(FModuleInterface, RendererCore);
+IMPLEMENT_ENGINE_MODULE(IModule, RendererCore);

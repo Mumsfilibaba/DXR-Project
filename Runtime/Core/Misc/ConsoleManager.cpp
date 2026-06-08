@@ -1716,7 +1716,7 @@ IConsoleObject* FConsoleManager::RegisterObject(const CHAR* InName, IConsoleObje
     if (IConsoleVariable* Variable = Object->AsVariable())
     {
         FStringView CommandLineValue;
-        if (FCommandLine::Parse(InName, CommandLineValue))
+        if (CommandLine::FindOption(InName, CommandLineValue))
         {
             const FString Value = FString(CommandLineValue);
             Variable->SetString(Value, EConsoleVariableFlags::SetByCommandLine);

@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Core.h"
 
-struct CORE_API FMemory
+struct CORE_API Memory
 {
     template<typename T>
     static constexpr T BytesToMegaBytes(T Bytes)

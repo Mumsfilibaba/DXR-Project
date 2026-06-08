@@ -109,7 +109,7 @@ private:
         const int32 HeapSize  = Math::Max(MEMORY_STACK_PAGE_SIZE, MinSize);
         const int32 AllocSize = HeapSize + sizeof(FMemoryHeader);
         
-        FMemoryHeader* NewPage = reinterpret_cast<FMemoryHeader*>(FMemory::Malloc(AllocSize));
+        FMemoryHeader* NewPage = reinterpret_cast<FMemoryHeader*>(Memory::Malloc(AllocSize));
         NewPage->Size = HeapSize;
         
         if (TopPage)
@@ -139,7 +139,7 @@ private:
             STAT_SUBTRACT(STAT_Memory_StackBytes, PreviousChunk->Size + static_cast<int32>(sizeof(FMemoryHeader)));
             STAT_SUBTRACT(STAT_Memory_StackPageCount, 1);
             CurrentChunk = CurrentChunk->Next;
-            FMemory::Free(PreviousChunk);
+            Memory::Free(PreviousChunk);
         }
 
         TopPage    = LastPage;

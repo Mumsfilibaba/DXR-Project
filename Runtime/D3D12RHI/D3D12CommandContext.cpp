@@ -525,7 +525,7 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
             return;
         }
 
-        FMemory::Memcpy(BufferData + BufferRegion.Offset, SrcData, BufferRegion.Size);
+        Memory::Memcpy(BufferData + BufferRegion.Offset, SrcData, BufferRegion.Size);
 
         const D3D12_RANGE WrittenRange =
         {
@@ -546,7 +546,7 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
             return;
         }
 
-        FMemory::Memcpy(ResourceStorage.GetMappedBaseAddress(), SrcData, BufferRegion.Size);
+        Memory::Memcpy(ResourceStorage.GetMappedBaseAddress(), SrcData, BufferRegion.Size);
 
         GetCommandList()->CopyBufferRegion(
             Resource->GetD3D12Resource(), 
@@ -1028,7 +1028,7 @@ void FD3D12CommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& Bu
             return;
         }
 
-        FMemory::Memcpy(MappedPtr, SrcData, BufferRegion.Size);
+        Memory::Memcpy(MappedPtr, SrcData, BufferRegion.Size);
 
         D3D12Destination->ResourceRelocated(&Storage);
     }
@@ -1082,7 +1082,7 @@ void FD3D12CommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegio
     
     for (uint64 y = 0; y < NumRows; y++)
     {
-        FMemory::Memcpy(WritePtr, Source, SrcRowPitch);
+        Memory::Memcpy(WritePtr, Source, SrcRowPitch);
         
         WritePtr += PlacedSubresourceFootprint.Footprint.RowPitch;
         Source   += SrcRowPitch;
@@ -1155,7 +1155,7 @@ void FD3D12CommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegio
 
         for (uint32 y = 0; y < NumRows; y++)
         {
-            FMemory::Memcpy(SliceDest, SliceSource, SrcRowPitch);
+            Memory::Memcpy(SliceDest, SliceSource, SrcRowPitch);
 
             SliceDest   += PlacedSubresourceFootprint.Footprint.RowPitch;
             SliceSource += SrcRowPitch;

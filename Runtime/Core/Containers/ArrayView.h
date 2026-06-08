@@ -3,7 +3,7 @@
 #include "Core/Memory/Memory.h"
 #include "Core/Templates/Utility.h"
 #include "Core/Templates/TypeTraits.h"
-#include "Core/Templates/ArrayContainerHelper.h"
+#include "Core/Templates/ArrayContainer.h"
 
 template<typename ElementType>
 class TArrayView
@@ -32,8 +32,8 @@ public:
         typename ContainerType,
         typename PureContainerType = typename TRemoveCV<typename TRemoveReference<ContainerType>::Type>::Type>
     FORCEINLINE TArrayView(ContainerType&& Container) requires(TIsContiguousContainer<PureContainerType>::Value)
-        : View(FArrayContainerHelper::Data(Forward<ContainerType>(Container)))
-        , ViewSize(static_cast<SizeType>(FArrayContainerHelper::Size(Forward<ContainerType>(Container))))
+        : View(ArrayContainer::Data(Forward<ContainerType>(Container)))
+        , ViewSize(static_cast<SizeType>(ArrayContainer::Size(Forward<ContainerType>(Container))))
     {
     }
 
@@ -42,8 +42,8 @@ public:
      * @param InitList initializer_list to create view from
      */
     FORCEINLINE TArrayView(std::initializer_list<ElementType> InitList)
-        : View(FArrayContainerHelper::Data(InitList))
-        , ViewSize(static_cast<SizeType>(FArrayContainerHelper::Size(InitList)))
+        : View(ArrayContainer::Data(InitList))
+        , ViewSize(static_cast<SizeType>(ArrayContainer::Size(InitList)))
     {
     }
 
@@ -222,7 +222,7 @@ public:
     template<typename U = ElementType>
     FORCEINLINE void Memzero() requires(TIsTrivial<U>::Value)
     {
-        FMemory::Memzero(View, SizeInBytes());
+        Memory::Memzero(View, SizeInBytes());
     }
 
     /**
@@ -283,12 +283,12 @@ public:
     template<typename ArrayType>
     NODISCARD FORCEINLINE bool operator==(const ArrayType& RHS) const requires(TIsTArrayType<ArrayType>::Value)
     {
-        if (ViewSize != FArrayContainerHelper::Size(RHS))
+        if (ViewSize != ArrayContainer::Size(RHS))
         {
             return false;
         }
 
-        return ::CompareObjects<ElementType>(View, FArrayContainerHelper::Data(RHS), ViewSize);
+        return ::CompareObjects<ElementType>(View, ArrayContainer::Data(RHS), ViewSize);
     }
 
     /**
@@ -414,7 +414,7 @@ template<
     typename PureContainerType = typename TRemoveCV<typename TRemoveReference<ContainerType>::Type>::Type>
 auto MakeArrayView(ContainerType&& Container) requires(TIsContiguousContainer<PureContainerType>::Value)
 {
-    using ElementType = typename TRemovePointer<decltype(FArrayContainerHelper::Data(::DeclVal<PureContainerType>()))>::Type;
+    using ElementType = typename TRemovePointer<decltype(ArrayContainer::Data(::DeclVal<PureContainerType>()))>::Type;
     return TArrayView<ElementType>(Forward<ContainerType>(Container));
 }
 

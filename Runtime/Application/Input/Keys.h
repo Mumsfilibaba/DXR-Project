@@ -56,7 +56,7 @@ private:
     const CHAR*    KeyString;
 };
 
-struct EKeys
+struct Keys
 {
     // Keyboard keys
     

@@ -126,7 +126,7 @@ namespace FunctionInternal
             {
                 void* This = this;
                 this->~TFunctionContainer();
-                FMemory::Free(This);
+                Memory::Free(This);
             }
             else
             {
@@ -154,17 +154,17 @@ namespace FunctionInternal
             : HeapAllocation(nullptr)
         {
         #if TFUNCTION_ZERO_INLINE_STORAGE
-            FMemory::Memzero(InlineAllocation.Data, sizeof(InlineAllocation.Data));
+            Memory::Memzero(InlineAllocation.Data, sizeof(InlineAllocation.Data));
         #endif
         }
 
         FFunctionStorage(FFunctionStorage&& Other)
             : HeapAllocation(Other.HeapAllocation)
         {
-            FMemory::Memcpy(InlineAllocation.Data, Other.InlineAllocation.Data, sizeof(InlineAllocation.Data));
+            Memory::Memcpy(InlineAllocation.Data, Other.InlineAllocation.Data, sizeof(InlineAllocation.Data));
             Other.HeapAllocation = nullptr;
         #if TFUNCTION_ZERO_INLINE_STORAGE
-            FMemory::Memzero(Other.InlineAllocation.Data, sizeof(Other.InlineAllocation.Data));
+            Memory::Memzero(Other.InlineAllocation.Data, sizeof(Other.InlineAllocation.Data));
         #endif
         }
 
@@ -182,7 +182,7 @@ namespace FunctionInternal
             }
             else
             {
-                Memory = FMemory::Malloc(FunctorSize);
+                Memory = Memory::Malloc(FunctorSize);
                 HeapAllocation = Memory;
             }
 
@@ -196,7 +196,7 @@ namespace FunctionInternal
             HeapAllocation = nullptr;
 
         #if TFUNCTION_ZERO_INLINE_STORAGE
-            FMemory::Memzero(InlineAllocation.Data, sizeof(InlineAllocation.Data));
+            Memory::Memzero(InlineAllocation.Data, sizeof(InlineAllocation.Data));
         #endif
         }
 
@@ -224,7 +224,7 @@ namespace FunctionInternal
 
         FORCEINLINE void MoveFrom(FFunctionStorage&& Other)
         {
-            FMemory::Memcpy(InlineAllocation.Data, Other.InlineAllocation.Data, sizeof(InlineAllocation.Data));
+            Memory::Memcpy(InlineAllocation.Data, Other.InlineAllocation.Data, sizeof(InlineAllocation.Data));
             HeapAllocation = Other.HeapAllocation;
             Other.HeapAllocation = nullptr;
         }
@@ -243,7 +243,7 @@ namespace FunctionInternal
         }
         else
         {
-            Memory = FMemory::Malloc(sizeof(TFunctionContainer));
+            Memory = Memory::Malloc(sizeof(TFunctionContainer));
             Storage.HeapAllocation = Memory;
         }
 

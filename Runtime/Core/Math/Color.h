@@ -124,7 +124,7 @@ public:
     /** @brief Default constructor */
     FORCEINLINE FFloatColor()
     {
-        FMemory::Memzero(RGBA, sizeof(RGBA));
+        Memory::Memzero(RGBA, sizeof(RGBA));
     }
 
     /**
@@ -148,7 +148,7 @@ public:
      */
     FORCEINLINE explicit FFloatColor(const FVector3& InVector)
     {
-        FMemory::Memcpy(RGBA, &InVector, sizeof(FVector3));
+        Memory::Memcpy(RGBA, &InVector, sizeof(FVector3));
 
         RGBA[3] = 1.0f;
     }
@@ -159,7 +159,7 @@ public:
      */
     FORCEINLINE explicit FFloatColor(const FVector4& InVector)
     {
-        FMemory::Memcpy(RGBA, &InVector, sizeof(RGBA));
+        Memory::Memcpy(RGBA, &InVector, sizeof(RGBA));
     }
 
     /**

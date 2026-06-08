@@ -367,7 +367,7 @@ void FMeshCreateInfo::Subdivide(uint32 Subdivisions)
     Indices.Shrink();
 }
 
-FMeshCreateInfo FMeshFactory::CreateCube(float Width, float Height, float Depth) noexcept
+FMeshCreateInfo MeshFactory::CreateCube(float Width, float Height, float Depth) noexcept
 {
     const float HalfWidth  = Width  * 0.5f;
     const float HalfHeight = Height * 0.5f;
@@ -443,7 +443,7 @@ FMeshCreateInfo FMeshFactory::CreateCube(float Width, float Height, float Depth)
     return CubeInfo;
 }
 
-FMeshCreateInfo FMeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
+FMeshCreateInfo MeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
 {
     FMeshCreateInfo PlaneInfo;
     if (Width < 1)
@@ -495,7 +495,7 @@ FMeshCreateInfo FMeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
     return PlaneInfo;
 }
 
-FMeshCreateInfo FMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
+FMeshCreateInfo MeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
 {
     FMeshCreateInfo SphereInfo;
     SphereInfo.Vertices.Resize(12);
@@ -567,7 +567,7 @@ FMeshCreateInfo FMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) no
     return SphereInfo;
 }
 
-FMeshCreateInfo FMeshFactory::CreateCone(uint32 Sides, float Radius, float Height) noexcept
+FMeshCreateInfo MeshFactory::CreateCone(uint32 Sides, float Radius, float Height) noexcept
 {
     if (Sides < 3)
     {
@@ -647,7 +647,7 @@ FMeshCreateInfo FMeshFactory::CreateCone(uint32 Sides, float Radius, float Heigh
     return MeshCreateInfo;
 }
 
-FMeshCreateInfo FMeshFactory::CreateTorus(float RingRadius, float TubeRadius, uint32 RingSegments, uint32 TubeSegments) noexcept
+FMeshCreateInfo MeshFactory::CreateTorus(float RingRadius, float TubeRadius, uint32 RingSegments, uint32 TubeSegments) noexcept
 {
     if (RingSegments < 3 || TubeSegments < 3)
     {
@@ -727,7 +727,7 @@ FMeshCreateInfo FMeshFactory::CreateTorus(float RingRadius, float TubeRadius, ui
     return MeshCreateInfo;
 }
 
-FMeshCreateInfo FMeshFactory::CreateTeapot(uint32 Tessellation) noexcept
+FMeshCreateInfo MeshFactory::CreateTeapot(uint32 Tessellation) noexcept
 {
     static constexpr int32 NumPatches  = 32;
     static constexpr int32 NumVertices = 306;
@@ -969,7 +969,7 @@ FMeshCreateInfo FMeshFactory::CreateTeapot(uint32 Tessellation) noexcept
     return MeshInfo;
 }
 
-FMeshCreateInfo FMeshFactory::CreatePyramid(float Width, float Depth, float Height) noexcept
+FMeshCreateInfo MeshFactory::CreatePyramid(float Width, float Depth, float Height) noexcept
 {
     FMeshCreateInfo MeshInfo;
 
@@ -1109,7 +1109,7 @@ FMeshCreateInfo FMeshFactory::CreatePyramid(float Width, float Depth, float Heig
     return MeshInfo;
 }
 
-FMeshCreateInfo FMeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height) noexcept
+FMeshCreateInfo MeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height) noexcept
 {
     FMeshCreateInfo MeshInfo;
 

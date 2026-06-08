@@ -173,7 +173,7 @@ void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const F
     PSODesc.RasterizerState                            = NewPipelineInstance.RasterizerState.Get();
     PSODesc.VertexShader                               = NewPipelineInstance.VertexShader.Get();
     PSODesc.PixelShader                                = NewPipelineInstance.PixelShader.Get();
-    PSODesc.RasterizerOutputFormats.DepthStencilFormat = FGlobalTextureFormats::DepthBufferFormat;
+    PSODesc.RasterizerOutputFormats.DepthStencilFormat = RendererTextureFormats::DepthBufferFormat;
 
     NewPipelineInstance.PipelineState = RHI::CreateGraphicsPipelineState(PSODesc);
     if (!NewPipelineInstance.PipelineState)
@@ -205,9 +205,9 @@ bool FEditorNoJitterDepthPass::CreateResources(FFrameResources& FrameResources, 
     }
 
     const ETextureUsageFlags Usage = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture;
-    const FClearValue        DepthClearValue(FGlobalTextureFormats::DepthBufferFormat, 1.0f, 0);
+    const FClearValue        DepthClearValue(RendererTextureFormats::DepthBufferFormat, 1.0f, 0);
 
-    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::DepthBufferFormat, Width, Height, 1, 1, Usage, DepthClearValue);
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(RendererTextureFormats::DepthBufferFormat, Width, Height, 1, 1, Usage, DepthClearValue);
     FrameResources.EditorNoJitterDepth = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (!FrameResources.EditorNoJitterDepth)
     {
@@ -494,9 +494,9 @@ void FEditorSelectionIDPass::PreparePipelineState(FMaterial* Material, const FFr
     PSODesc.RasterizerState                                = NewPipelineInstance.RasterizerState.Get();
     PSODesc.VertexShader                                   = NewPipelineInstance.VertexShader.Get();
     PSODesc.PixelShader                                    = NewPipelineInstance.PixelShader.Get();
-    PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::ObjectIDFormat;
+    PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = RendererTextureFormats::ObjectIDFormat;
     PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
-    PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
+    PSODesc.RasterizerOutputFormats.DepthStencilFormat     = RendererTextureFormats::DepthBufferFormat;
 
     NewPipelineInstance.PipelineState = RHI::CreateGraphicsPipelineState(PSODesc);
     if (!NewPipelineInstance.PipelineState)
@@ -526,9 +526,9 @@ bool FEditorSelectionIDPass::CreateResources(FFrameResources& FrameResources, ui
     }
 
     const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
-    const FClearValue        ClearValue(FGlobalTextureFormats::ObjectIDFormat, 0.0f, 0.0f, 0.0f, 0.0f);
+    const FClearValue        ClearValue(RendererTextureFormats::ObjectIDFormat, 0.0f, 0.0f, 0.0f, 0.0f);
 
-    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::ObjectIDFormat, Width, Height, 1, 1, Usage, ClearValue);
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(RendererTextureFormats::ObjectIDFormat, Width, Height, 1, 1, Usage, ClearValue);
     FrameResources.EditorObjectID_NoJitter = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (!FrameResources.EditorObjectID_NoJitter)
     {

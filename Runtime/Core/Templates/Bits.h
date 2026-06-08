@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Templates/TypeTraits.h"
 
-struct FBitHelper
+struct Bits
 {
     template<typename IndexType, typename MaskType>
     static constexpr IndexType LeastSignificant(MaskType Mask) noexcept

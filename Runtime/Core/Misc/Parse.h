@@ -1,7 +1,7 @@
 #pragma once 
 #include "Core/Templates/CString.h"
 
-struct FParse
+struct Parse
 {
     static FORCEINLINE void ParseLine(CHAR** Start)
     {

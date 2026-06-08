@@ -284,7 +284,7 @@ bool FEngine::Init()
     }
 
     // Load Game-Module
-    const FString GameModuleName = FPaths::GetProjectModuleName();
+    const FString GameModuleName = Paths::GetProjectModuleName();
     GameModule = FModuleManager::Get().LoadModule<FGameModule>(*GameModuleName);
 
     if (!GameModule)
@@ -400,7 +400,7 @@ void FEngine::Release()
     {
         GameModule->Release();
 
-        const CHAR* GameModuleName = *FPaths::GetProjectModuleName();
+        const CHAR* GameModuleName = *Paths::GetProjectModuleName();
         FModuleManager::Get().UnloadModule(GameModuleName);
         GameModule = nullptr;
     }

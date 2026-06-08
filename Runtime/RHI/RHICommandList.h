@@ -50,7 +50,7 @@ public:
     FORCEINLINE TArrayView<T> AllocateArray(const TArrayView<T>& Array) noexcept
     {
         void* NewArray = Allocate(Array.Size() * sizeof(T), alignof(T));
-        FMemory::Memcpy(NewArray, Array.Data(), Array.SizeInBytes());
+        Memory::Memcpy(NewArray, Array.Data(), Array.SizeInBytes());
         return TArrayView<T>(reinterpret_cast<T*>(NewArray), Array.Size());
     }
 
@@ -235,7 +235,7 @@ public:
     {
         const int32 Size = NumShaderConstants * sizeof(uint32);
         void* SourceData = Allocate(Size, alignof(uint32));
-        FMemory::Memcpy(SourceData, ShaderConstants, Size);
+        Memory::Memcpy(SourceData, ShaderConstants, Size);
         EmplaceCommand<FRHICommandSetShaderConstants>(Shader, SourceData, NumShaderConstants);
     }
 
@@ -286,7 +286,7 @@ public:
     FORCEINLINE void UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* InSrcData) noexcept
     {
         void* SrcData = Allocate(BufferRegion.Size, alignof(uint8));
-        FMemory::Memcpy(SrcData, InSrcData, BufferRegion.Size);
+        Memory::Memcpy(SrcData, InSrcData, BufferRegion.Size);
         EmplaceCommand<FRHICommandUpdateBuffer>(Dst, BufferRegion, SrcData);
     }
 
@@ -294,7 +294,7 @@ public:
     {
         const uint32 SizeInBytes = SrcRowPitch * TextureRegion.Height;
         void* SrcData = Allocate(SizeInBytes, alignof(uint8));
-        FMemory::Memcpy(SrcData, InSrcData, SizeInBytes);
+        Memory::Memcpy(SrcData, InSrcData, SizeInBytes);
         EmplaceCommand<FRHICommandUpdateTexture2D>(Dst, TextureRegion, MipLevel, SrcData, SrcRowPitch);
     }
 
@@ -302,7 +302,7 @@ public:
     {
         const uint32 SizeInBytes = SrcDepthPitch * TextureRegion.Depth;
         void* SrcData = Allocate(SizeInBytes, alignof(uint8));
-        FMemory::Memcpy(SrcData, InSrcData, SizeInBytes);
+        Memory::Memcpy(SrcData, InSrcData, SizeInBytes);
         EmplaceCommand<FRHICommandUpdateTexture3D>(Dst, TextureRegion, MipLevel, SrcData, SrcRowPitch, SrcDepthPitch);
     }
 

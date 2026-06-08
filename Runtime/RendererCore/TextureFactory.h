@@ -16,14 +16,6 @@ enum class ETextureFactoryFlags : uint32
 
 ENUM_CLASS_OPERATORS(ETextureFactoryFlags);
 
-struct FTextureFactoryHelpers
-{
-    static FORCEINLINE uint32 TextureSizeToMiplevels(uint32 TextureSize)
-    {
-        return Math::Max<uint32>(static_cast<uint32>(Math::Log2(static_cast<float>(TextureSize))), 1u);
-    }
-};
-
 struct RENDERERCORE_API FTextureFactory
 {
 public:

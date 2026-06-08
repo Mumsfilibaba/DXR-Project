@@ -21,7 +21,7 @@ struct FVulkanRenderPassKey
 
     bool operator==(const FVulkanRenderPassKey& Other) const
     {
-        return FMemory::Memcmp(this, &Other, sizeof(FVulkanRenderPassKey)) == 0;
+        return Memory::Memcmp(this, &Other, sizeof(FVulkanRenderPassKey)) == 0;
     }
 
     bool operator!=(const FVulkanRenderPassKey& Other) const
@@ -71,7 +71,7 @@ struct FVulkanFramebufferKey
         , NumAttachmentViews(0)
         , RenderPass(VK_NULL_HANDLE)
     {
-        FMemory::Memzero(AttachmentViews, sizeof(AttachmentViews));
+        Memory::Memzero(AttachmentViews, sizeof(AttachmentViews));
     }
 
     bool ContainsImageView(VkImageView InView) const

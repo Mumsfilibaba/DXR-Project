@@ -2,6 +2,7 @@
 #include "Core/Containers/Map.h"
 #include "Core/Threading/AsyncTask.h"
 #include "Core/Generic/GenericPlatformFile.h"
+#include "Core/Filesystem/File.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/AssetImporters/OBJImporter.h"
@@ -19,8 +20,8 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
 
     // Extract just the name of the file
     const FString Filename            = FString(InFilename);
-    const FString MTLFiledir          = FFileHelpers::ExtractFilepath(Filename);
-    const FString FilenameWithoutPath = FFileHelpers::ExtractFilenameWithoutExtension(Filename);
+    const FString MTLFiledir          = File::ExtractFilepath(Filename);
+    const FString FilenameWithoutPath = File::ExtractFilenameWithoutExtension(Filename);
     
     // Load the OBJ file
     if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, *Filename, *MTLFiledir, true, false))

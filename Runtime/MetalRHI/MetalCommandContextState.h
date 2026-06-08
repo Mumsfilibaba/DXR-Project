@@ -245,7 +245,7 @@ struct FMetalShaderConstantsCache
     {
         for (uint32 Stage = 0; Stage < EShaderVisibility::Count; Stage++)
         {
-            FMemory::Memzero(Constants[Stage], sizeof(Constants[Stage]));
+            Memory::Memzero(Constants[Stage], sizeof(Constants[Stage]));
             NumConstants[Stage] = 0;
         }
     }
@@ -321,7 +321,7 @@ public:
         const uint32 CurrentNumRenderTargets = GraphicsState.RenderTargetCache.NumRenderTargets;
         if (RenderTargetViews)
         {
-            FMemory::Memcpy(RenderTargetViews, GraphicsState.RenderTargetCache.RenderTargetViews, sizeof(FMetalRenderTargetViewRHI*) * CurrentNumRenderTargets);
+            Memory::Memcpy(RenderTargetViews, GraphicsState.RenderTargetCache.RenderTargetViews, sizeof(FMetalRenderTargetViewRHI*) * CurrentNumRenderTargets);
         }
 
         OutNumRenderTargets = CurrentNumRenderTargets;
@@ -336,7 +336,7 @@ public:
     {
         if (Viewports)
         {
-            FMemory::Memcpy(Viewports, GraphicsState.Viewports, sizeof(MTLViewport) * GraphicsState.NumViewports);
+            Memory::Memcpy(Viewports, GraphicsState.Viewports, sizeof(MTLViewport) * GraphicsState.NumViewports);
         }
 
         OutNumViewports = GraphicsState.NumViewports;
@@ -346,7 +346,7 @@ public:
     {
         if (ScissorRects)
         {
-            FMemory::Memcpy(ScissorRects, GraphicsState.ScissorRects, sizeof(MTLScissorRect) * GraphicsState.NumScissorRects);
+            Memory::Memcpy(ScissorRects, GraphicsState.ScissorRects, sizeof(MTLScissorRect) * GraphicsState.NumScissorRects);
         }
 
         OutNumScissorRects = GraphicsState.NumScissorRects;
@@ -356,7 +356,7 @@ public:
     {
         if (BlendFactor)
         {
-            FMemory::Memcpy(BlendFactor, GraphicsState.BlendFactor, sizeof(GraphicsState.BlendFactor));
+            Memory::Memcpy(BlendFactor, GraphicsState.BlendFactor, sizeof(GraphicsState.BlendFactor));
         }
     }
 
@@ -383,10 +383,10 @@ private:
             , IndexBufferCache()
             , VertexBufferCache()
         {
-            FMemory::Memzero(BlendFactor, sizeof(BlendFactor));
-            FMemory::Memzero(DepthBias, sizeof(DepthBias));
-            FMemory::Memzero(Viewports, sizeof(Viewports));
-            FMemory::Memzero(ScissorRects, sizeof(ScissorRects));
+            Memory::Memzero(BlendFactor, sizeof(BlendFactor));
+            Memory::Memzero(DepthBias, sizeof(DepthBias));
+            Memory::Memzero(Viewports, sizeof(Viewports));
+            Memory::Memzero(ScissorRects, sizeof(ScissorRects));
 
             bBindPipelineState       = false;
             bBindPrimitiveTopology   = false;

@@ -143,7 +143,7 @@ void FD3D12OfflineDescriptorHeap::Free(FD3D12OfflineDescriptor& Descriptor)
 bool FD3D12OfflineDescriptorHeap::AllocateHeap()
 {
     D3D12_DESCRIPTOR_HEAP_DESC Desc;
-    FMemory::Memzero(&Desc);
+    Memory::Memzero(&Desc);
 
     Desc.Type           = Type;
     Desc.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
@@ -196,7 +196,7 @@ bool FD3D12OnlineDescriptorHeap::Initialize(uint32 InDescriptorCount, uint32 InB
     CHECK(InBindlessReservedCount <= InDescriptorCount);
 
     D3D12_DESCRIPTOR_HEAP_DESC Desc;
-    FMemory::Memzero(&Desc);
+    Memory::Memzero(&Desc);
 
     Desc.Type           = Type;
     Desc.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
@@ -246,7 +246,7 @@ bool FD3D12OnlineDescriptorHeap::Reallocate(uint32 NewDescriptorCount, uint32 In
         "Reallocate requires every online descriptor block to be recycled (drain GPU + flush deferred deletions first)");
 
     D3D12_DESCRIPTOR_HEAP_DESC Desc;
-    FMemory::Memzero(&Desc);
+    Memory::Memzero(&Desc);
 
     Desc.Type           = Type;
     Desc.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;

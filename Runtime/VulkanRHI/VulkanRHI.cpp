@@ -1006,11 +1006,11 @@ bool FVulkanDeviceRHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVid
     }
 
     VkPhysicalDeviceMemoryProperties2 MemoryProperties2;
-    FMemory::Memzero(&MemoryProperties2);
+    Memory::Memzero(&MemoryProperties2);
     MemoryProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
 
     VkPhysicalDeviceMemoryBudgetPropertiesEXT MemoryBudgetProperties;
-    FMemory::Memzero(&MemoryBudgetProperties);
+    Memory::Memzero(&MemoryBudgetProperties);
     MemoryBudgetProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
 
     MemoryProperties2.pNext = &MemoryBudgetProperties;

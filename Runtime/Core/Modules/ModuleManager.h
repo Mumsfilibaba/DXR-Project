@@ -26,7 +26,7 @@
 #define IMPLEMENT_ENGINE_MODULE(ModuleClassType, ModuleName) \
     extern "C" \
     { \
-        MODULE_EXPORT FModuleInterface* LoadEngineModule() \
+        MODULE_EXPORT IModule* LoadEngineModule() \
         { \
             return new ModuleClassType(); \
         } \
@@ -36,14 +36,14 @@
     IMPLEMENT_NEW_AND_DELETE_OPERATORS()
 #endif
 
-struct FModuleInterface;
+struct IModule;
 
-typedef FModuleInterface* (*PFNLoadEngineModule)();
+typedef IModule* (*PFNLoadEngineModule)();
 typedef void* PlatformModule;
 
-struct FModuleInterface
+struct IModule
 {
-    virtual ~FModuleInterface() = default;
+    virtual ~IModule() = default;
 
     /** @return Returns true if the load is successful */
     virtual bool Load() { return true; }
@@ -58,16 +58,16 @@ class CORE_API FModuleManager
     {
         FModuleData() = default;
 
-        FModuleData(const FString& InName, FModuleInterface* InInterface)
+        FModuleData(const FString& InName, IModule* InInterface)
             : Name(InName)
             , Interface(InInterface)
             , Handle(nullptr)
         {
         }
 
-        FString           Name;
-        FModuleInterface* Interface;
-        PlatformModule    Handle;
+        FString        Name;
+        IModule*       Interface;
+        PlatformModule Handle;
     };
 
     friend class TOptional<FModuleManager>;
@@ -94,12 +94,12 @@ public:
     /**
      * @brief Delegate for when a static module is loaded into the engine 
      */
-    DECLARE_RETURN_DELEGATE(FInitializeStaticModuleDelegate, FModuleInterface*);
+    DECLARE_RETURN_DELEGATE(FInitializeStaticModuleDelegate, IModule*);
 
     /** 
      * @brief Delegate for when a new module is loaded into the engine, name and IModule pointer is the arguments 
      */
-    DECLARE_EVENT(FModuleLoadedDelegate, FModuleManager, const CHAR*, FModuleInterface*);
+    DECLARE_EVENT(FModuleLoadedDelegate, FModuleManager, const CHAR*, IModule*);
     FModuleLoadedDelegate GetModuleLoadedDelegate() { return ModuleLoadedDelegate; }
 
     /**
@@ -107,14 +107,14 @@ public:
      * @param ModuleName Name of the module without platform extension or prefix
      * @return Returns a pointer to a IModule interface if the load is successful, otherwise nullptr
      */
-    FModuleInterface* LoadModule(const CHAR* ModuleName);
+    IModule* LoadModule(const CHAR* ModuleName);
 
     /**
      * @brief Retrieve a already loaded module interface
      * @param ModuleName Name of the module without platform extension or prefix
      * @return Returns a pointer to a IModule interface if the interface is present, otherwise nullptr
      */
-    FModuleInterface* GetModule(const CHAR* ModuleName);
+    IModule* GetModule(const CHAR* ModuleName);
 
     /**
      * @brief Retrieve a already loaded module's native handle
@@ -153,9 +153,9 @@ public:
      * @param ModuleName Name of the module to load without platform extension or prefix
      * @return A reference to the IModule interface, on fail an assert is triggered
      */
-    FORCEINLINE FModuleInterface& LoadModuleRef(const CHAR* ModuleName)
+    FORCEINLINE IModule& LoadModuleRef(const CHAR* ModuleName)
     {
-        FModuleInterface* Module = LoadModule(ModuleName);
+        IModule* Module = LoadModule(ModuleName);
         CHECK(Module != nullptr);
         return *Module;
     }
@@ -187,9 +187,9 @@ public:
      * @param ModuleName Name of the module without platform extension or prefix
      * @return Returns a reference to a typed interface if the interface is present, on fail an assert is triggered
      */
-    FORCEINLINE FModuleInterface& GetModuleRef(const CHAR_T* ModuleName)
+    FORCEINLINE IModule& GetModuleRef(const CHAR_T* ModuleName)
     {
-        FModuleInterface* Module = GetModule(ModuleName);
+        IModule* Module = GetModule(ModuleName);
         CHECK(Module != nullptr);
         return *Module;
     }
@@ -217,7 +217,7 @@ public:
     }
 
 protected:
-    void HandleModuleLoaded(const CHAR* ModuleName, FModuleInterface* Module) 
+    void HandleModuleLoaded(const CHAR* ModuleName, IModule* Module) 
     {
         ModuleLoadedDelegate.Broadcast(ModuleName, Module);
     }
@@ -227,7 +227,7 @@ protected:
     FInitializeStaticModuleDelegate* GetStaticModuleDelegate(const CHAR* ModuleName);
 
     // Used to retrieve a module, does not break on error
-    FModuleInterface* GetModuleInternal(const CHAR* ModuleName);
+    IModule* GetModuleInternal(const CHAR* ModuleName);
     
     int32 GetModuleIndexUnlocked(const CHAR* ModuleName);
 
@@ -265,7 +265,7 @@ public:
     /** 
      * @return The newly created module interface 
      */
-    FModuleInterface* CreateModuleInterface()
+    IModule* CreateModuleInterface()
     {
         return new ModuleClassType();
     }
@@ -273,7 +273,7 @@ public:
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct FGameModule : public FModuleInterface
+struct FGameModule : public IModule
 {
     virtual ~FGameModule() = default;
 

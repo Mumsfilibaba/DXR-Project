@@ -94,7 +94,7 @@ class TVariant
         }
     };
 
-    struct FDestructorTable
+    struct DestructorTable
     {
         static void Destruct(TypeIndexType Index, void* Memory)
         {
@@ -114,7 +114,7 @@ class TVariant
         }
     };
 
-    struct FCopyConstructorTable
+    struct CopyConstructorTable
     {
         static void Copy(TypeIndexType Index, void* Memory, const void* Value)
         {
@@ -134,7 +134,7 @@ class TVariant
         }
     };
 
-    struct FMoveConstructorTable
+    struct MoveConstructorTable
     {
         static void Move(TypeIndexType Index, void* Memory, void* Value)
         {
@@ -144,7 +144,7 @@ class TVariant
         }
     };
 
-struct FSwapFuncsTable
+struct SwapTable
     {
         template<typename T>
         struct TSwapFuncs
@@ -317,7 +317,7 @@ public:
             if (TypeIndex == Other.TypeIndex)
             {
                 // Both hold the same type -> swap the contained values
-                FSwapFuncsTable::Swap(TypeIndex, Value.Data, Other.Value.Data);
+                SwapTable::Swap(TypeIndex, Value.Data, Other.Value.Data);
             }
             else
             {
@@ -327,14 +327,14 @@ public:
 
                 TAlignedBytes<SizeInBytes, AlignmentInBytes> Temp;
 
-                FMoveConstructorTable::Move(AIndex, Temp.Data, Value.Data);
-                FDestructorTable::Destruct(AIndex, Value.Data);
+                MoveConstructorTable::Move(AIndex, Temp.Data, Value.Data);
+                DestructorTable::Destruct(AIndex, Value.Data);
 
-                FMoveConstructorTable::Move(BIndex, Value.Data, Other.Value.Data);
-                FDestructorTable::Destruct(BIndex, Other.Value.Data);
+                MoveConstructorTable::Move(BIndex, Value.Data, Other.Value.Data);
+                DestructorTable::Destruct(BIndex, Other.Value.Data);
 
-                FMoveConstructorTable::Move(AIndex, Other.Value.Data, Temp.Data);
-                FDestructorTable::Destruct(AIndex, Temp.Data);
+                MoveConstructorTable::Move(AIndex, Other.Value.Data, Temp.Data);
+                DestructorTable::Destruct(AIndex, Temp.Data);
 
                 TypeIndex = BIndex;
                 Other.TypeIndex = AIndex;
@@ -344,8 +344,8 @@ public:
         {
             // Move this into Other
             const TypeIndexType AIndex = TypeIndex;
-            FMoveConstructorTable::Move(AIndex, Other.Value.Data, Value.Data);
-            FDestructorTable::Destruct(AIndex, Value.Data);
+            MoveConstructorTable::Move(AIndex, Other.Value.Data, Value.Data);
+            DestructorTable::Destruct(AIndex, Value.Data);
 
             Other.TypeIndex = AIndex;
             TypeIndex = InvalidTypeIndex;
@@ -354,8 +354,8 @@ public:
         {
             // Move Other into this
             const TypeIndexType BIndex = Other.TypeIndex;
-            FMoveConstructorTable::Move(BIndex, Value.Data, Other.Value.Data);
-            FDestructorTable::Destruct(BIndex, Other.Value.Data);
+            MoveConstructorTable::Move(BIndex, Value.Data, Other.Value.Data);
+            DestructorTable::Destruct(BIndex, Other.Value.Data);
 
             TypeIndex = BIndex;
             Other.TypeIndex = InvalidTypeIndex;
@@ -653,18 +653,18 @@ private:
 
     FORCEINLINE void Destruct()
     {
-        FDestructorTable::Destruct(TypeIndex, reinterpret_cast<void*>(Value.Data));
+        DestructorTable::Destruct(TypeIndex, reinterpret_cast<void*>(Value.Data));
         TypeIndex = InvalidTypeIndex;
     }
 
     FORCEINLINE void MoveFrom(TVariant& Other)
     {
-        FMoveConstructorTable::Move(Other.TypeIndex, reinterpret_cast<void*>(Value.Data), reinterpret_cast<void*>(Other.Value.Data));
+        MoveConstructorTable::Move(Other.TypeIndex, reinterpret_cast<void*>(Value.Data), reinterpret_cast<void*>(Other.Value.Data));
     }
 
     FORCEINLINE void CopyFrom(const TVariant& Other)
     {
-        FCopyConstructorTable::Copy(Other.TypeIndex, reinterpret_cast<void*>(Value.Data), reinterpret_cast<const void*>(Other.Value.Data));
+        CopyConstructorTable::Copy(Other.TypeIndex, reinterpret_cast<void*>(Value.Data), reinterpret_cast<const void*>(Other.Value.Data));
     }
 
     NODISCARD FORCEINLINE bool IsEqual(const TVariant& RHS) const

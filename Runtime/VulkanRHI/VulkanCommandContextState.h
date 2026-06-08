@@ -21,8 +21,8 @@ struct FVulkanVertexBufferCache
 
     void Clear()
     {
-        FMemory::Memzero(VertexBuffers, sizeof(VertexBuffers));
-        FMemory::Memzero(VertexBufferOffsets, sizeof(VertexBufferOffsets));
+        Memory::Memzero(VertexBuffers, sizeof(VertexBuffers));
+        Memory::Memzero(VertexBufferOffsets, sizeof(VertexBufferOffsets));
         NumVertexBuffers = 0;
     }
 
@@ -59,7 +59,7 @@ struct FVulkanPushConstantsCache
 
     void Clear()
     {
-        FMemory::Memzero(Constants, sizeof(Constants));
+        Memory::Memzero(Constants, sizeof(Constants));
         NumConstants = VULKAN_MAX_NUM_PUSH_CONSTANTS;
     }
 
@@ -76,9 +76,9 @@ struct FVulkanStreamOutputCache
 
     void Clear()
     {
-        FMemory::Memzero(Buffers, sizeof(Buffers));
-        FMemory::Memzero(Offsets, sizeof(Offsets));
-        FMemory::Memzero(Sizes, sizeof(Sizes));
+        Memory::Memzero(Buffers, sizeof(Buffers));
+        Memory::Memzero(Offsets, sizeof(Offsets));
+        Memory::Memzero(Sizes, sizeof(Sizes));
         NumBuffers = 0;
     }
 
@@ -97,7 +97,7 @@ struct FVulkanRenderTargetState
 
     void Clear()
     {
-        FMemory::Memzero(RenderTargetViews, sizeof(RenderTargetViews));
+        Memory::Memzero(RenderTargetViews, sizeof(RenderTargetViews));
 
         for (uint32 Index = 0; Index < RHI_MAX_RENDER_TARGETS; Index++)
         {
@@ -207,7 +207,7 @@ public:
     {
         if (Viewports)
         {
-            FMemory::Memcpy(Viewports, GraphicsState.Viewports, sizeof(VkViewport) * GraphicsState.NumViewports);
+            Memory::Memcpy(Viewports, GraphicsState.Viewports, sizeof(VkViewport) * GraphicsState.NumViewports);
         }
 
         OutNumViewports = GraphicsState.NumViewports;
@@ -217,7 +217,7 @@ public:
     {
         if (ScissorRects)
         {
-            FMemory::Memcpy(ScissorRects, GraphicsState.ScissorRects, sizeof(VkRect2D) * GraphicsState.NumScissorRects);
+            Memory::Memcpy(ScissorRects, GraphicsState.ScissorRects, sizeof(VkRect2D) * GraphicsState.NumScissorRects);
         }
 
         OutNumScissorRects = GraphicsState.NumScissorRects;
@@ -227,7 +227,7 @@ public:
     {
         if (BlendFactor)
         {
-            FMemory::Memcpy(BlendFactor, GraphicsState.BlendFactor, sizeof(GraphicsState.BlendFactor));
+            Memory::Memcpy(BlendFactor, GraphicsState.BlendFactor, sizeof(GraphicsState.BlendFactor));
         }
     }
 
@@ -258,10 +258,10 @@ private:
             , VertexBufferCache()
             , StencilRef(0)
         {
-            FMemory::Memzero(BlendFactor, sizeof(BlendFactor));
-            FMemory::Memzero(DepthBias, sizeof(DepthBias));
-            FMemory::Memzero(Viewports, sizeof(Viewports));
-            FMemory::Memzero(ScissorRects, sizeof(ScissorRects));
+            Memory::Memzero(BlendFactor, sizeof(BlendFactor));
+            Memory::Memzero(DepthBias, sizeof(DepthBias));
+            Memory::Memzero(Viewports, sizeof(Viewports));
+            Memory::Memzero(ScissorRects, sizeof(ScissorRects));
         }
 
         FVulkanPipelineLayout*             CurrentLayout;

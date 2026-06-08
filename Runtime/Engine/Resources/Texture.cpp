@@ -1,5 +1,6 @@
 #include "RHI/RHI.h"
 #include "RendererCore/TextureFactory.h"
+#include "RendererCore/TextureHelpers.h"
 #include "Engine/Resources/Texture.h"
 
 FTexture2D::FTexture2D()
@@ -41,7 +42,7 @@ bool FTexture2D::CreateRHITexture(bool bGenerateMips)
     uint32 NumMipsRHI = NumMips;
     if (bGenerateMips)
     {
-        NumMipsRHI = FTextureFactoryHelpers::TextureSizeToMiplevels(Math::Max(Width, Height));
+        NumMipsRHI = TextureHelpers::TextureSizeToMiplevels(Math::Max(Width, Height));
     }
 
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(Format, Width, Height, NumMipsRHI, 1, ETextureUsageFlags::ShaderResourceTexture);

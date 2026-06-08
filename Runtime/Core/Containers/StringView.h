@@ -3,7 +3,7 @@
 #include "Core/Math/Math.h"
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/CString.h"
-#include "Core/Templates/ArrayContainerHelper.h"
+#include "Core/Templates/ArrayContainer.h"
 
 enum class EStringCaseType
 {
@@ -62,8 +62,8 @@ public:
      */
     template<typename StringType>
     FORCEINLINE explicit TStringView(const StringType& InString) requires(TIsTStringType<StringType>::Value)
-        : ViewStart(FArrayContainerHelper::Data(InString))
-        , ViewEnd(FArrayContainerHelper::Data(InString) + FArrayContainerHelper::Size(InString))
+        : ViewStart(ArrayContainer::Data(InString))
+        , ViewEnd(ArrayContainer::Data(InString) + ArrayContainer::Size(InString))
     {
     }
 

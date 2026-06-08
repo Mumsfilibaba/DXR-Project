@@ -8,14 +8,14 @@ FD3D12QueryRHI::FD3D12QueryRHI(FD3D12Device* InDevice, EQueryType InQueryType)
     , FRHIQuery(InQueryType)
     , CurrentQuery()
     , SyncPoint()
-    , QueryResult(static_cast<uint64*>(FMemory::Malloc(GetQueryResultElementCount(InQueryType) * sizeof(uint64))))
+    , QueryResult(static_cast<uint64*>(Memory::Malloc(GetQueryResultElementCount(InQueryType) * sizeof(uint64))))
 {
-    FMemory::Memzero(QueryResult, GetQueryResultElementCount(InQueryType) * sizeof(uint64));
+    Memory::Memzero(QueryResult, GetQueryResultElementCount(InQueryType) * sizeof(uint64));
 }
 
 FD3D12QueryRHI::~FD3D12QueryRHI()
 {
-    FMemory::Free(QueryResult);
+    Memory::Free(QueryResult);
     QueryResult = nullptr;
 }
 
@@ -33,7 +33,7 @@ void FD3D12Query::CopyResult(void* Dst) const
     }
 
     const uint64 Stride = QueryHeap->GetQuerySize();
-    FMemory::Memcpy(Dst, reinterpret_cast<const uint8*>(MappedData) + QueryIndex * Stride, static_cast<size_t>(Stride));
+    Memory::Memcpy(Dst, reinterpret_cast<const uint8*>(MappedData) + QueryIndex * Stride, static_cast<size_t>(Stride));
 }
 
 FD3D12QueryHeap::FD3D12QueryHeap(FD3D12Device* InDevice, D3D12_QUERY_HEAP_TYPE InHeapType, int32 InNumQueries)

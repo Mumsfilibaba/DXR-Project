@@ -204,12 +204,12 @@ struct FVulkanHashableSamplerCreateInfo
 {
 	bool operator==(const FVulkanHashableSamplerCreateInfo& Other) const
 	{
-		return FMemory::Memcmp(this, &Other, sizeof(FVulkanHashableSamplerCreateInfo)) == 0;
+		return Memory::Memcmp(this, &Other, sizeof(FVulkanHashableSamplerCreateInfo)) == 0;
 	}
 
 	bool operator!=(const FVulkanHashableSamplerCreateInfo& Other) const
 	{
-		return FMemory::Memcmp(this, &Other, sizeof(FVulkanHashableSamplerCreateInfo)) != 0;
+		return Memory::Memcmp(this, &Other, sizeof(FVulkanHashableSamplerCreateInfo)) != 0;
 	}
 
 	friend uint64 GetHashForType(const FVulkanHashableSamplerCreateInfo& Value)

@@ -245,7 +245,7 @@ bool FScreenSpaceOcclusionPass::CreateResources(FFrameResources& FrameResources,
 {
     const ETextureUsageFlags Flags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
 
-    FRHITextureDesc SSAOBufferDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::SSAOBufferFormat, Width, Height, 1, 1, Flags);
+    FRHITextureDesc SSAOBufferDesc = FRHITextureDesc::CreateTexture2D(RendererTextureFormats::SSAOBufferFormat, Width, Height, 1, 1, Flags);
     FrameResources.SSAOBuffer = RHI::CreateTexture(SSAOBufferDesc, EResourceAccess::NonPixelShaderResource);
     if (!FrameResources.SSAOBuffer)
     {

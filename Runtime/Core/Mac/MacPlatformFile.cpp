@@ -177,10 +177,10 @@ bool FMacAsyncFileHandle::WriteAsync(const uint8* Src, uint32 BytesToWrite)
     GarbageCollectCompleted();
 
     FPendingWrite* Pending = new FPendingWrite();
-    FMemory::Memzero(&Pending->ControlBlock, sizeof(struct aiocb));
+    Memory::Memzero(&Pending->ControlBlock, sizeof(struct aiocb));
 
-    Pending->Buffer = reinterpret_cast<uint8*>(FMemory::Malloc(BytesToWrite));
-    FMemory::Memcpy(Pending->Buffer, Src, BytesToWrite);
+    Pending->Buffer = reinterpret_cast<uint8*>(Memory::Malloc(BytesToWrite));
+    Memory::Memcpy(Pending->Buffer, Src, BytesToWrite);
 
     Pending->ControlBlock.aio_fildes = FileDescriptor;
     Pending->ControlBlock.aio_buf    = Pending->Buffer;
@@ -190,7 +190,7 @@ bool FMacAsyncFileHandle::WriteAsync(const uint8* Src, uint32 BytesToWrite)
     int32 Result = ::aio_write(&Pending->ControlBlock);
     if (Result != 0)
     {
-        FMemory::Free(Pending->Buffer);
+        Memory::Free(Pending->Buffer);
         delete Pending;
         return false;
     }
@@ -268,7 +268,7 @@ void FMacAsyncFileHandle::GarbageCollectCompleted()
 
 void FMacAsyncFileHandle::FreePendingWrite(FPendingWrite* PendingWrite)
 {
-    FMemory::Free(PendingWrite->Buffer);
+    Memory::Free(PendingWrite->Buffer);
     delete PendingWrite;
 }
 

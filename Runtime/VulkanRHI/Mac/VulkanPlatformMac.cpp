@@ -47,7 +47,7 @@ VkResult VulkanPlatformMac::CreateSurface(VkInstance Instance, void* WindowHandl
     // Create the vulkan surface
 #if VK_EXT_metal_surface
     VkMetalSurfaceCreateInfoEXT MetalSurfaceCreateInfo;
-    FMemory::Memzero(&MetalSurfaceCreateInfo);
+    Memory::Memzero(&MetalSurfaceCreateInfo);
 
     MetalSurfaceCreateInfo.sType  = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
     MetalSurfaceCreateInfo.pNext  = nullptr;
@@ -57,7 +57,7 @@ VkResult VulkanPlatformMac::CreateSurface(VkInstance Instance, void* WindowHandl
     return vkCreateMetalSurfaceEXT(Instance, &MetalSurfaceCreateInfo, nullptr, OutSurface);
 #elif VK_MVK_macos_surface
     VkMacOSSurfaceCreateInfoMVK MacOSSurfaceCreateInfo;
-    FMemory::Memzero(&MacOSSurfaceCreateInfo);
+    Memory::Memzero(&MacOSSurfaceCreateInfo);
 
     MacOSSurfaceCreateInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
     MacOSSurfaceCreateInfo.pNext = nullptr;

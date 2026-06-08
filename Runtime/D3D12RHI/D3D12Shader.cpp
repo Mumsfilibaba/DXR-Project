@@ -82,13 +82,13 @@ public:
 		: SizeInBytes(InSizeInBytes)
 		, Data(nullptr)
 	{
-		Data = FMemory::Malloc(SizeInBytes);
-		FMemory::Memcpy(Data, InData, SizeInBytes);
+		Data = Memory::Malloc(SizeInBytes);
+		Memory::Memcpy(Data, InData, SizeInBytes);
 	}
 
 	~FExistingBlob()
 	{
-		FMemory::Free(Data);
+		Memory::Free(Data);
 	}
 
     virtual ULONG AddRef()  override final { return static_cast<ULONG>(FRefCountedBase::AddRef()); }
@@ -130,8 +130,8 @@ FD3D12ShaderBytecode::FD3D12ShaderBytecode(const TArray<uint8>& InCode)
     : ByteCode()
 {
     ByteCode.BytecodeLength  = InCode.SizeInBytes();
-    ByteCode.pShaderBytecode = FMemory::Malloc(ByteCode.BytecodeLength);
-    FMemory::Memcpy((void*)ByteCode.pShaderBytecode, InCode.Data(), ByteCode.BytecodeLength);
+    ByteCode.pShaderBytecode = Memory::Malloc(ByteCode.BytecodeLength);
+    Memory::Memcpy((void*)ByteCode.pShaderBytecode, InCode.Data(), ByteCode.BytecodeLength);
 }
 
 FD3D12ShaderBytecode::FD3D12ShaderBytecode(const FD3D12ShaderBytecode& Other)
@@ -140,8 +140,8 @@ FD3D12ShaderBytecode::FD3D12ShaderBytecode(const FD3D12ShaderBytecode& Other)
     if (Other.ByteCode.pShaderBytecode)
     {
         ByteCode.BytecodeLength  = Other.ByteCode.BytecodeLength;
-        ByteCode.pShaderBytecode = FMemory::Malloc(ByteCode.BytecodeLength);
-        FMemory::Memcpy((void*)ByteCode.pShaderBytecode, Other.ByteCode.pShaderBytecode, ByteCode.BytecodeLength);
+        ByteCode.pShaderBytecode = Memory::Malloc(ByteCode.BytecodeLength);
+        Memory::Memcpy((void*)ByteCode.pShaderBytecode, Other.ByteCode.pShaderBytecode, ByteCode.BytecodeLength);
     }
 }
 
@@ -156,15 +156,15 @@ FD3D12ShaderBytecode& FD3D12ShaderBytecode::operator=(const FD3D12ShaderBytecode
 {
     if (this != &Other)
     {
-        FMemory::Free(ByteCode.pShaderBytecode);
+        Memory::Free(ByteCode.pShaderBytecode);
         ByteCode = {};
 
         if (Other.ByteCode.pShaderBytecode)
         {
             ByteCode.BytecodeLength  = Other.ByteCode.BytecodeLength;
-            ByteCode.pShaderBytecode = FMemory::Malloc(ByteCode.BytecodeLength);
+            ByteCode.pShaderBytecode = Memory::Malloc(ByteCode.BytecodeLength);
 
-            FMemory::Memcpy((void*)ByteCode.pShaderBytecode, Other.ByteCode.pShaderBytecode, ByteCode.BytecodeLength);
+            Memory::Memcpy((void*)ByteCode.pShaderBytecode, Other.ByteCode.pShaderBytecode, ByteCode.BytecodeLength);
         }
     }
 
@@ -175,7 +175,7 @@ FD3D12ShaderBytecode& FD3D12ShaderBytecode::operator=(FD3D12ShaderBytecode&& Oth
 {
     if (this != &Other)
     {
-        FMemory::Free(ByteCode.pShaderBytecode);
+        Memory::Free(ByteCode.pShaderBytecode);
 
         ByteCode = Other.ByteCode;
 
@@ -188,7 +188,7 @@ FD3D12ShaderBytecode& FD3D12ShaderBytecode::operator=(FD3D12ShaderBytecode&& Oth
 
 FD3D12ShaderBytecode::~FD3D12ShaderBytecode()
 {
-    FMemory::Free(ByteCode.pShaderBytecode);
+    Memory::Free(ByteCode.pShaderBytecode);
 
     ByteCode.pShaderBytecode = nullptr;
     ByteCode.BytecodeLength  = 0;
@@ -543,7 +543,7 @@ bool FD3D12Shader::ReadShaderFeatureFlags(const TComPtr<IDxcBlob>& ShaderBlob, u
 
     if (PartBlob->GetBufferSize() >= sizeof(uint64) && PartBlob->GetBufferPointer())
     {
-        FMemory::Memcpy(&OutFlags, PartBlob->GetBufferPointer(), sizeof(uint64));
+        Memory::Memcpy(&OutFlags, PartBlob->GetBufferPointer(), sizeof(uint64));
     }
 
     return true;

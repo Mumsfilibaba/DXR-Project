@@ -18,34 +18,34 @@ FSandboxPlayerController::FSandboxPlayerController(const FObjectInitializer& Ini
     // Bind input mappings
     if (FPlayerInput* Input = GetPlayerInput())
     {
-        FActionKeyMapping MoveForwardKeyMapping("MoveForward", EKeys::W);
+        FActionKeyMapping MoveForwardKeyMapping("MoveForward", Keys::W);
         Input->AddActionKeyMapping(MoveForwardKeyMapping);
 
-        FActionKeyMapping MoveBackwardsKeyMapping("MoveBackwards", EKeys::S);
+        FActionKeyMapping MoveBackwardsKeyMapping("MoveBackwards", Keys::S);
         Input->AddActionKeyMapping(MoveBackwardsKeyMapping);
 
-        FActionKeyMapping MoveLeftKeyMapping("MoveLeft", EKeys::A);
+        FActionKeyMapping MoveLeftKeyMapping("MoveLeft", Keys::A);
         Input->AddActionKeyMapping(MoveLeftKeyMapping);
 
-        FActionKeyMapping MoveRightKeyMapping("MoveRight", EKeys::D);
+        FActionKeyMapping MoveRightKeyMapping("MoveRight", Keys::D);
         Input->AddActionKeyMapping(MoveRightKeyMapping);
 
-        FActionKeyMapping RotateUpKeyMapping("RotateUp", EKeys::Up);
+        FActionKeyMapping RotateUpKeyMapping("RotateUp", Keys::Up);
         Input->AddActionKeyMapping(RotateUpKeyMapping);
 
-        FActionKeyMapping RotateDownKeyMapping("RotateDown", EKeys::Down);
+        FActionKeyMapping RotateDownKeyMapping("RotateDown", Keys::Down);
         Input->AddActionKeyMapping(RotateDownKeyMapping);
 
-        FActionKeyMapping RotateLeftKeyMapping("RotateLeft", EKeys::Left);
+        FActionKeyMapping RotateLeftKeyMapping("RotateLeft", Keys::Left);
         Input->AddActionKeyMapping(RotateLeftKeyMapping);
 
-        FActionKeyMapping RotateRightKeyMapping("RotateRight", EKeys::Right);
+        FActionKeyMapping RotateRightKeyMapping("RotateRight", Keys::Right);
         Input->AddActionKeyMapping(RotateRightKeyMapping);
 
-        FActionKeyMapping JumpKeyMapping("Jump", EKeys::Space);
+        FActionKeyMapping JumpKeyMapping("Jump", Keys::Space);
         Input->AddActionKeyMapping(JumpKeyMapping);
         
-        FAxisKeyMapping MoveForwardAxisKeyMapping("MoveForwardAxis", EKeys::W, 1.0f);
+        FAxisKeyMapping MoveForwardAxisKeyMapping("MoveForwardAxis", Keys::W, 1.0f);
         Input->AddAxisKeyMapping(MoveForwardAxisKeyMapping);
     }
 }
@@ -68,7 +68,7 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     const FAxisState RightThumbY = GetPlayerInput()->GetAnalogState(EAnalogSourceName::RightThumbY);
     
     // Reset Camera
-    if (GetPlayerInput()->IsKeyDown(EKeys::R))
+    if (GetPlayerInput()->IsKeyDown(Keys::R))
     {
         Camera->SetPosition(0.0f, 10.0f, -2.0f);
         Camera->SetRotation(0.0f,  0.0f,  0.0f);
@@ -79,11 +79,11 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     {
         Camera->Rotate(0.0f, Math::DegreesToRadians(RightThumbX.Value * RotationSpeed * DeltaTime), 0.0f);
     }
-    else if (GetPlayerInput()->IsKeyDown(EKeys::Right))
+    else if (GetPlayerInput()->IsKeyDown(Keys::Right))
     {
         Camera->Rotate(0.0f, Math::DegreesToRadians(RotationSpeed * DeltaTime), 0.0f);
     }
-    else if (GetPlayerInput()->IsKeyDown(EKeys::Left))
+    else if (GetPlayerInput()->IsKeyDown(Keys::Left))
     {
         Camera->Rotate(0.0f, Math::DegreesToRadians(-RotationSpeed * DeltaTime), 0.0f);
     }
@@ -92,18 +92,18 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     {
         Camera->Rotate(Math::DegreesToRadians(-RightThumbY.Value * RotationSpeed * DeltaTime), 0.0f, 0.0f);
     }
-    else if (GetPlayerInput()->IsKeyDown(EKeys::Up))
+    else if (GetPlayerInput()->IsKeyDown(Keys::Up))
     {
         Camera->Rotate(Math::DegreesToRadians(-RotationSpeed * DeltaTime), 0.0f, 0.0f);
     }
-    else if (GetPlayerInput()->IsKeyDown(EKeys::Down))
+    else if (GetPlayerInput()->IsKeyDown(Keys::Down))
     {
         Camera->Rotate(Math::DegreesToRadians(RotationSpeed * DeltaTime), 0.0f, 0.0f);
     }
 
     // Camera Movement
     float Acceleration = 15.0f;
-    if (GetPlayerInput()->IsKeyDown(EKeys::LeftShift) || GetPlayerInput()->IsKeyDown(EKeys::GamepadLeftThumb))
+    if (GetPlayerInput()->IsKeyDown(Keys::LeftShift) || GetPlayerInput()->IsKeyDown(Keys::GamepadLeftThumb))
     {
         Acceleration = Acceleration * 3;
     }
@@ -116,11 +116,11 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     {
         CameraAcceleration.Z = Acceleration * LeftThumbY.Value;
     }
-    else if (GetPlayerInput()->IsKeyDown(EKeys::W))
+    else if (GetPlayerInput()->IsKeyDown(Keys::W))
     {
         CameraAcceleration.Z = Acceleration;
     }
-    else if (GetPlayerInput()->IsKeyDown(EKeys::S))
+    else if (GetPlayerInput()->IsKeyDown(Keys::S))
     {
         CameraAcceleration.Z = -Acceleration;
     }
@@ -129,20 +129,20 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     {
         CameraAcceleration.X = Acceleration * -LeftThumbX.Value;
     }
-    else if (GetPlayerInput()->IsKeyDown(EKeys::A))
+    else if (GetPlayerInput()->IsKeyDown(Keys::A))
     {
         CameraAcceleration.X = Acceleration;
     }
-    else if (GetPlayerInput()->IsKeyDown(EKeys::D))
+    else if (GetPlayerInput()->IsKeyDown(Keys::D))
     {
         CameraAcceleration.X = -Acceleration;
     }
 
-    if (GetPlayerInput()->IsKeyDown(EKeys::Q))
+    if (GetPlayerInput()->IsKeyDown(Keys::Q))
     {
         CameraAcceleration.Y = Acceleration;
     }
-    else if (GetPlayerInput()->IsKeyDown(EKeys::E))
+    else if (GetPlayerInput()->IsKeyDown(Keys::E))
     {
         CameraAcceleration.Y = -Acceleration;
     }

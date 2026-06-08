@@ -143,7 +143,7 @@ public:
 
     static FORCEINLINE CharType* Strnmove(CharType* Dst, const CharType* Src, SIZE_T InLength) noexcept
     {
-        return reinterpret_cast<CharType*>(FMemory::Memmove(Dst, Src, InLength * sizeof(CharType)));
+        return reinterpret_cast<CharType*>(Memory::Memmove(Dst, Src, InLength * sizeof(CharType)));
     }
 
     static FORCEINLINE CharType* Strset(CharType* Dst, CharType Char) noexcept

@@ -35,7 +35,7 @@ struct FSceneRenderView
     EDebugView   SecondaryDebugView = EDebugView::None;
 };
 
-struct IRendererModule : public FModuleInterface
+struct IRendererModule : public IModule
 {
     static IRendererModule* Get()
     {

@@ -22,7 +22,7 @@ static void* SafeLoadDynamicLib(const CHAR* LibraryName)
     }
     
     CHAR RealName[MaxNameLength];
-    FMemory::Memzero(RealName, sizeof(RealName));
+    Memory::Memzero(RealName, sizeof(RealName));
     
     FCString::Strcat(RealName, Prefix);
     FCString::Strcat(RealName, LibraryName);
@@ -68,7 +68,7 @@ static void* SafeLoadDynamicLib(const CHAR* LibraryName)
             continue;
         }
         
-        FMemory::Memzero(FullPath, sizeof(FullPath));
+        Memory::Memzero(FullPath, sizeof(FullPath));
         FCString::Strcat(FullPath, Path);
         FCString::Strcat(FullPath, RealName);
         

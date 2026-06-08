@@ -128,7 +128,7 @@ void FVulkanPipelineLayoutInfo::ApplyImmutableSamplers(FVulkanDevice* Device, co
         if (SetLayout.ImmutableSamplers.Size() == 0 && SetLayout.Bindings.Size() > 0)
         {
             SetLayout.ImmutableSamplers.Resize(SetLayout.Bindings.Size());
-            FMemory::Memzero(SetLayout.ImmutableSamplers.Data(), SetLayout.ImmutableSamplers.SizeInBytes());
+            Memory::Memzero(SetLayout.ImmutableSamplers.Data(), SetLayout.ImmutableSamplers.SizeInBytes());
         }
     }
 
@@ -399,10 +399,10 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
     {
         StageMapping.DescriptorSetIndex = UINT8_MAX;
 
-        FMemory::Memset(StageMapping.SRVMappings, UINT8_MAX, sizeof(StageMapping.SRVMappings));
-        FMemory::Memset(StageMapping.UAVMappings, UINT8_MAX, sizeof(StageMapping.UAVMappings));
-        FMemory::Memset(StageMapping.UniformMappings, UINT8_MAX, sizeof(StageMapping.UniformMappings));
-        FMemory::Memset(StageMapping.SamplerMappings, UINT8_MAX, sizeof(StageMapping.SamplerMappings));
+        Memory::Memset(StageMapping.SRVMappings, UINT8_MAX, sizeof(StageMapping.SRVMappings));
+        Memory::Memset(StageMapping.UAVMappings, UINT8_MAX, sizeof(StageMapping.UAVMappings));
+        Memory::Memset(StageMapping.UniformMappings, UINT8_MAX, sizeof(StageMapping.UniformMappings));
+        Memory::Memset(StageMapping.SamplerMappings, UINT8_MAX, sizeof(StageMapping.SamplerMappings));
     }
 
     // Initialize the actual DescriptorBinding mapping

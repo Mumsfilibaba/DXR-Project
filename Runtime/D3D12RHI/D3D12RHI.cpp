@@ -542,7 +542,7 @@ FRHISamplerState* FD3D12DeviceRHI::CreateSamplerState(const FRHISamplerStateDesc
         Desc.MinLOD         = InSamplerDesc.MinLOD;
         Desc.MipLODBias     = InSamplerDesc.MipLODBias;
         
-        FMemory::Memcpy(Desc.BorderColor, InSamplerDesc.BorderColor.RGBA, sizeof(Desc.BorderColor));
+        Memory::Memcpy(Desc.BorderColor, InSamplerDesc.BorderColor.RGBA, sizeof(Desc.BorderColor));
 
         Result = new FD3D12SamplerStateRHI(GetDevice(), GetDevice()->GetSamplerOfflineDescriptorHeap(), InSamplerDesc);
         if (!Result->CreateSampler(Desc))

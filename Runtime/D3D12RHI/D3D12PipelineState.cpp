@@ -65,7 +65,7 @@ FD3D12InputLayoutRHI::FD3D12InputLayoutRHI(const TArray<FRHIInputElementDesc>& I
     for (const FRHIInputElementDesc& Element : InInputElements)
     {
         D3D12_INPUT_ELEMENT_DESC InputElementDesc;
-        FMemory::Memzero(&InputElementDesc, sizeof(D3D12_INPUT_ELEMENT_DESC));
+        Memory::Memzero(&InputElementDesc, sizeof(D3D12_INPUT_ELEMENT_DESC));
 
         const FString& Semantic = SemanticNames.Emplace(Element.Semantic);
         InputElementDesc.SemanticName = *Semantic;
@@ -121,7 +121,7 @@ FD3D12DepthStencilStateRHI::FD3D12DepthStencilStateRHI(const FRHIDepthStencilSta
     : FRHIDepthStencilState(InDesc)
     , Hash(0)
 {
-    FMemory::Memzero(&D3D12Desc);
+    Memory::Memzero(&D3D12Desc);
 
     D3D12Desc.DepthFunc        = ConvertComparisonFunc(InDesc.DepthFunc);
     D3D12Desc.DepthEnable      = InDesc.bDepthEnable;
@@ -148,7 +148,7 @@ FD3D12RasterizerStateRHI::FD3D12RasterizerStateRHI(const FRHIRasterizerStateDesc
     : FRHIRasterizerState(InDesc)
     , Hash(0)
 {
-    FMemory::Memzero(&D3D12Desc);
+    Memory::Memzero(&D3D12Desc);
 
     D3D12Desc.AntialiasedLineEnable = InDesc.bAntialiasedLineEnable;
     D3D12Desc.CullMode              = ConvertCullMode(InDesc.CullMode);
@@ -178,7 +178,7 @@ FD3D12BlendStateRHI::FD3D12BlendStateRHI(const FRHIBlendStateDesc& InDesc)
     : FRHIBlendState(InDesc)
     , Hash(0)
 {
-    FMemory::Memzero(&D3D12Desc);
+    Memory::Memzero(&D3D12Desc);
 
     D3D12Desc.AlphaToCoverageEnable   = InDesc.bAlphaToCoverageEnable;
     D3D12Desc.IndependentBlendEnable  = InDesc.bIndependentBlendEnable;
@@ -213,7 +213,7 @@ void* FD3D12BlendStateRHI::GetRHINativeState() const
 FD3D12PipelineState::FD3D12PipelineState(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
 {
-    FMemory::Memzero(EffectiveDescriptorCounts, sizeof(EffectiveDescriptorCounts));
+    Memory::Memzero(EffectiveDescriptorCounts, sizeof(EffectiveDescriptorCounts));
 }
 
 FD3D12PipelineState::~FD3D12PipelineState()
@@ -222,7 +222,7 @@ FD3D12PipelineState::~FD3D12PipelineState()
 
 void FD3D12PipelineState::ComputeEffectiveDescriptorCounts(FD3D12Shader* const* Shaders, uint32 NumShaders)
 {
-    FMemory::Memzero(EffectiveDescriptorCounts, sizeof(EffectiveDescriptorCounts));
+    Memory::Memzero(EffectiveDescriptorCounts, sizeof(EffectiveDescriptorCounts));
 
     for (uint32 i = 0; i < NumShaders; i++)
     {
@@ -662,7 +662,7 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
 
     // Build pipeline key for caching (shared by both paths)
     FD3D12GraphicsPipelineKey PipelineKey;
-    FMemory::Memzero(&PipelineKey, sizeof(FD3D12GraphicsPipelineKey));
+    Memory::Memzero(&PipelineKey, sizeof(FD3D12GraphicsPipelineKey));
 
     PipelineKey.RootSignatureHash        = RootSignature->GetHash();
     PipelineKey.PrimitiveTopologyType    = PrimitiveTopologyType;
@@ -718,7 +718,7 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
         }
 
         D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc;
-        FMemory::Memzero(&PipelineStreamDesc);
+        Memory::Memzero(&PipelineStreamDesc);
 
         PipelineStreamDesc.pPipelineStateSubobjectStream = &PipelineStream;
         PipelineStreamDesc.SizeInBytes                   = sizeof(FD3D12GraphicsPipelineStream);
@@ -757,7 +757,7 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
         }
 
         D3D12_GRAPHICS_PIPELINE_STATE_DESC LegacyDesc;
-        FMemory::Memzero(&LegacyDesc);
+        Memory::Memzero(&LegacyDesc);
 
         LegacyDesc.pRootSignature        = RootSignature->GetD3D12RootSignature();
         LegacyDesc.VS                    = VertexShaderCode;
@@ -896,7 +896,7 @@ bool FD3D12ComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
 
     // Build pipeline key for caching (shared by both paths)
     FD3D12ComputePipelineKey PipelineKey;
-    FMemory::Memzero(&PipelineKey, sizeof(FD3D12ComputePipelineKey));
+    Memory::Memzero(&PipelineKey, sizeof(FD3D12ComputePipelineKey));
 
     PipelineKey.CSHash            = Shader->GetHash();
     PipelineKey.RootSignatureHash = RootSignature->GetHash();
@@ -915,7 +915,7 @@ bool FD3D12ComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
         PipelineStream.ComputeShader = ComputeShaderCode;
 
         D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc;
-        FMemory::Memzero(&PipelineStreamDesc);
+        Memory::Memzero(&PipelineStreamDesc);
 
         PipelineStreamDesc.pPipelineStateSubobjectStream = &PipelineStream;
         PipelineStreamDesc.SizeInBytes                   = sizeof(FD3D12ComputePipelineStream);
@@ -947,7 +947,7 @@ bool FD3D12ComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
 #endif
     {
         D3D12_COMPUTE_PIPELINE_STATE_DESC LegacyDesc;
-        FMemory::Memzero(&LegacyDesc);
+        Memory::Memzero(&LegacyDesc);
 
         LegacyDesc.pRootSignature = RootSignature->GetD3D12RootSignature();
         LegacyDesc.CS             = ComputeShaderCode;
@@ -1002,7 +1002,7 @@ struct FD3D12HitGroup
         , AnyHit(InAnyHit)
         , Intersection(InIntersection)
     {
-        FMemory::Memzero(&Desc);
+        Memory::Memzero(&Desc);
 
         Desc.Type                   = D3D12_HIT_GROUP_TYPE_TRIANGLES;
         Desc.HitGroupExport         = *HitGroupName;
@@ -1339,7 +1339,7 @@ bool FD3D12RayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineSt
     PipelineStream.Generate();
 
     D3D12_STATE_OBJECT_DESC RayTracingPipeline;
-    FMemory::Memzero(&RayTracingPipeline);
+    Memory::Memzero(&RayTracingPipeline);
 
     RayTracingPipeline.Type          = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
     RayTracingPipeline.pSubobjects   = PipelineStream.SubObjects.Data();
@@ -1388,7 +1388,7 @@ void* FD3D12RayTracingPipelineStateRHI::GetShaderIdentifier(const FString& Expor
         }
 
         FD3D12RayTracingShaderIdentifier Identifier;
-        FMemory::Memcpy(Identifier.ShaderIdentifier, Result, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+        Memory::Memcpy(Identifier.ShaderIdentifier, Result, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
         FD3D12RayTracingShaderIdentifier& NewIdentifier = ShaderIdentifiers.Add(ExportName, Identifier);
         return NewIdentifier.ShaderIdentifier;
@@ -1599,7 +1599,7 @@ bool FD3D12PipelineStateManager::SaveCacheData()
     }
 
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const FString PipelineCacheFilepath = FPaths::GetAssetDir() + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
 
     TFileRef<IPlatformFile> CacheFile = FPlatformFile::OpenForWrite(PipelineCacheFilepath);
     if (!CacheFile)
@@ -1623,7 +1623,7 @@ bool FD3D12PipelineStateManager::SaveCacheData()
         }
 
         FD3D12PipelineDiskHeader Header;
-        FMemory::Memcpy(Header.Magic, "D3D12PSO", sizeof(Header.Magic));
+        Memory::Memcpy(Header.Magic, "D3D12PSO", sizeof(Header.Magic));
 
         Header.DataCRC  = CRC32::Generate(PipelineCacheData.Get(), PipelineCacheSize);
         Header.DataSize = PipelineCacheSize;
@@ -1669,7 +1669,7 @@ void FD3D12PipelineStateManager::SaveCacheDataAsync()
     }
 
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const FString PipelineCacheFilepath = FPaths::GetAssetDir() + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
 
     TUniquePtr<uint8[]> SerializedData;
     SIZE_T SerializedSize = 0;
@@ -1693,7 +1693,7 @@ void FD3D12PipelineStateManager::SaveCacheDataAsync()
     LastSaveTimestamp = CurrentTime;
 
     FD3D12PipelineDiskHeader Header;
-    FMemory::Memcpy(Header.Magic, "D3D12PSO", sizeof(Header.Magic));
+    Memory::Memcpy(Header.Magic, "D3D12PSO", sizeof(Header.Magic));
     Header.DataCRC  = CRC32::Generate(SerializedData.Get(), SerializedSize);
     Header.DataSize = SerializedSize;
 
@@ -1716,7 +1716,7 @@ void FD3D12PipelineStateManager::SaveCacheDataAsync()
 bool FD3D12PipelineStateManager::LoadCacheFromFile()
 {
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const FString PipelineCacheFilepath = FPaths::GetAssetDir() + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
     
     TFileRef<IPlatformFile> CacheFile = FPlatformFile::OpenForRead(PipelineCacheFilepath);
     if (!CacheFile)
@@ -1734,7 +1734,7 @@ bool FD3D12PipelineStateManager::LoadCacheFromFile()
         return false;
     }
 
-    if (FMemory::Memcmp(Header.Magic, "D3D12PSO", sizeof(Header.Magic)) != 0)
+    if (Memory::Memcmp(Header.Magic, "D3D12PSO", sizeof(Header.Magic)) != 0)
     {
         D3D12_WARNING("Invalid PipelineCacheHeader");
         return false;
@@ -1748,7 +1748,7 @@ bool FD3D12PipelineStateManager::LoadCacheFromFile()
         return false;
     }
 
-    PipelineData     = FMemory::Malloc(Header.DataSize);
+    PipelineData     = Memory::Malloc(Header.DataSize);
     PipelineDataSize = Header.DataSize;
 
     BytesRead = CacheFile->Read(reinterpret_cast<uint8*>(PipelineData), static_cast<uint32>(PipelineDataSize));
@@ -1801,7 +1801,7 @@ void FD3D12PipelineStateManager::FreePipelineData()
 {
     if (PipelineData)
     {
-        FMemory::Free(PipelineData);
+        Memory::Free(PipelineData);
         PipelineData = nullptr;
     }
 

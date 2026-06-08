@@ -58,7 +58,7 @@ int32 FWindowsPlatformStackTrace::CaptureStackTrace(uint64* StackTrace, int32 Ma
     ::RtlCaptureContext(&Context);
 
     STACKFRAME64 StackFrame64;
-    FMemory::Memzero(&StackFrame64);
+    Memory::Memzero(&StackFrame64);
 
     StackFrame64.AddrPC.Mode    = AddrModeFlat;
     StackFrame64.AddrStack.Mode = AddrModeFlat;
@@ -120,7 +120,7 @@ void FWindowsPlatformStackTrace::GetStackTraceEntryFromAddress(uint64 Address, F
 
     // Initialize symbol.
     CHAR SymbolBuffer[sizeof(SYMBOL_INFO) + FStackTraceEntry::MaxNameLength];
-    FMemory::Memzero(SymbolBuffer, sizeof(SymbolBuffer));
+    Memory::Memzero(SymbolBuffer, sizeof(SymbolBuffer));
 
     SYMBOL_INFO* Symbol = reinterpret_cast<SYMBOL_INFO*>(SymbolBuffer);
     Symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
@@ -147,7 +147,7 @@ void FWindowsPlatformStackTrace::GetStackTraceEntryFromAddress(uint64 Address, F
     }
 
     IMAGEHLP_LINE64	ImageHelpLine;
-    FMemory::Memzero(&ImageHelpLine);
+    Memory::Memzero(&ImageHelpLine);
 
     ImageHelpLine.SizeOfStruct = sizeof(ImageHelpLine);
 
@@ -163,7 +163,7 @@ void FWindowsPlatformStackTrace::GetStackTraceEntryFromAddress(uint64 Address, F
     }
 
     IMAGEHLP_MODULE64 ImageHelpModule;
-    FMemory::Memzero(&ImageHelpModule);
+    Memory::Memzero(&ImageHelpModule);
 
     ImageHelpModule.SizeOfStruct = sizeof(ImageHelpModule);
     if (::SymGetModuleInfo64(ProcessHandle, Address, &ImageHelpModule))

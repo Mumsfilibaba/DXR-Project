@@ -77,7 +77,7 @@ public:
         const SizeType NewSizeInBytes = static_cast<SizeType>(NewCount) * sizeof(ElementType);
         CHECK((NewSizeInBytes / sizeof(ElementType)) == static_cast<SizeType>(NewCount));
 
-        Allocation = reinterpret_cast<ElementType*>(FMemory::Realloc(Allocation, NewSizeInBytes));
+        Allocation = reinterpret_cast<ElementType*>(Memory::Realloc(Allocation, NewSizeInBytes));
         return Allocation;
     }
 
@@ -85,7 +85,7 @@ public:
     {
         if (Allocation)
         {
-            FMemory::Free(Allocation);
+            Memory::Free(Allocation);
             Allocation = nullptr;
         }
     }
@@ -127,7 +127,7 @@ template<typename ElementType, int32 NumInlineElements>
 class TInlineArrayAllocator
 {
     template<int32 NumElements>
-    class FInlineStorage
+    class TInlineStorage
     {
     public:
         typedef int32 SizeType;
@@ -151,7 +151,7 @@ public:
 
     TInlineArrayAllocator()
     {
-        FMemory::Memzero(InlineAllocation.GetElements(), InlineAllocation.Size());
+        Memory::Memzero(InlineAllocation.GetElements(), InlineAllocation.Size());
     }
 
     FORCEINLINE ~TInlineArrayAllocator()
@@ -204,7 +204,7 @@ public:
     {
         if (!DynamicAllocation.HasAllocation())
         {
-            FMemory::Memzero(reinterpret_cast<void*>(InlineAllocation.GetElements()), InlineAllocation.Size());
+            Memory::Memzero(reinterpret_cast<void*>(InlineAllocation.GetElements()), InlineAllocation.Size());
         }
         else
         {
@@ -233,7 +233,7 @@ public:
             }
 
             // Clear the source inline storage after relocation (raw storage, safe).
-            FMemory::Memzero(reinterpret_cast<void*>(Other.InlineAllocation.GetElements()), Other.InlineAllocation.Size());
+            Memory::Memzero(reinterpret_cast<void*>(Other.InlineAllocation.GetElements()), Other.InlineAllocation.Size());
         }
 
         // Steal heap allocation (if any). This also frees our current heap allocation if we had one.
@@ -255,8 +255,8 @@ public:
 
         if (!Other.DynamicAllocation.HasAllocation())
         {
-            FMemory::Memmove(reinterpret_cast<void*>(InlineAllocation.GetElements()), reinterpret_cast<const void*>(Other.InlineAllocation.GetElements()), InlineAllocation.Size());
-            FMemory::Memzero(reinterpret_cast<void*>(Other.InlineAllocation.GetElements()), Other.InlineAllocation.Size());
+            Memory::Memmove(reinterpret_cast<void*>(InlineAllocation.GetElements()), reinterpret_cast<const void*>(Other.InlineAllocation.GetElements()), InlineAllocation.Size());
+            Memory::Memzero(reinterpret_cast<void*>(Other.InlineAllocation.GetElements()), Other.InlineAllocation.Size());
         }
 
         DynamicAllocation.MoveFrom(::Move(Other.DynamicAllocation));
@@ -278,7 +278,7 @@ public:
     }
 
 private:
-    FInlineStorage<NumInlineElements>   InlineAllocation;
+    TInlineStorage<NumInlineElements>   InlineAllocation;
     TDefaultArrayAllocator<ElementType> DynamicAllocation;
 };
 

@@ -3,7 +3,7 @@
 #include "Core/Containers/StringView.h"
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/TypeHash.h"
-#include "Core/Templates/ArrayContainerHelper.h"
+#include "Core/Templates/ArrayContainer.h"
 #if defined(__OBJC__)
     #include <Foundation/Foundation.h>
 #endif
@@ -228,7 +228,7 @@ public:
     template<typename ArrayType>
     FORCEINLINE void Reset(const ArrayType& InputArray) requires(TIsTArrayType<ArrayType>::Value)
     {
-        Reset(FArrayContainerHelper::Data(InputArray), FArrayContainerHelper::Size(InputArray));
+        Reset(ArrayContainer::Data(InputArray), ArrayContainer::Size(InputArray));
     }
 
     /**
@@ -373,7 +373,7 @@ public:
         while ((WrittenChars > BufferSize) || (WrittenChars == -1))
         {
             BufferSize   += WrittenChars;
-            DynamicBuffer = reinterpret_cast<CharType*>(FMemory::Realloc(DynamicBuffer, BufferSize * sizeof(CharType)));
+            DynamicBuffer = reinterpret_cast<CharType*>(Memory::Realloc(DynamicBuffer, BufferSize * sizeof(CharType)));
             WrittenString = DynamicBuffer;
             WrittenChars  = FCStringType::Snprintf(WrittenString, BufferSize, InFormat, Forward<ArgTypes>(Args)...);
         }
@@ -385,7 +385,7 @@ public:
 
         if (DynamicBuffer)
         {
-            FMemory::Free(DynamicBuffer);
+            Memory::Free(DynamicBuffer);
         }
     }
 
@@ -410,7 +410,7 @@ public:
         while ((WrittenChars > BufferSize) || (WrittenChars == -1))
         {
             BufferSize   += WrittenChars;
-            DynamicBuffer = reinterpret_cast<CharType*>(FMemory::Realloc(DynamicBuffer, BufferSize * sizeof(CharType)));
+            DynamicBuffer = reinterpret_cast<CharType*>(Memory::Realloc(DynamicBuffer, BufferSize * sizeof(CharType)));
             WrittenString = DynamicBuffer;
             WrittenChars  = FCStringType::Snprintf(WrittenString, BufferSize, InFormat, Forward<ArgTypes>(Args)...);
         }
@@ -425,7 +425,7 @@ public:
 
         if (DynamicBuffer)
         {
-            FMemory::Free(DynamicBuffer);
+            Memory::Free(DynamicBuffer);
         }
     }
 

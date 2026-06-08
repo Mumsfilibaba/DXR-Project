@@ -271,7 +271,7 @@ struct FD3D12HashableViewInstanceDesc
         : ViewInstanceCount(0)
         , Flags(D3D12_VIEW_INSTANCING_FLAG_NONE)
     {
-        FMemory::Memzero(ViewInstanceLocations, sizeof(D3D12_VIEW_INSTANCE_LOCATION) * D3D12_MAX_VIEW_INSTANCE_COUNT);
+        Memory::Memzero(ViewInstanceLocations, sizeof(D3D12_VIEW_INSTANCE_LOCATION) * D3D12_MAX_VIEW_INSTANCE_COUNT);
     }
 
     uint64 GenerateHash() const

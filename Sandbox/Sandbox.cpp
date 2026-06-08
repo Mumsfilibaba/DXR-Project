@@ -13,6 +13,7 @@
 #include <Engine/World/Components/StaticMeshComponent.h>
 #include <Engine/World/Components/SkyboxComponent.h>
 #include <RendererCore/TextureFactory.h>
+#include <RendererCore/TextureHelpers.h>
 #include <Renderer/FrameResources.h>
 #include <Application/Application.h>
 
@@ -119,7 +120,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     Sponza->AddToWorld(InWorld);
 
     // Create Spheres
-    FMeshCreateInfo SphereMeshInfo = FMeshFactory::CreateSphere(3);
+    FMeshCreateInfo SphereMeshInfo = MeshFactory::CreateSphere(3);
 
     TSharedPtr<FMesh> SphereMesh = MakeSharedPtr<FMesh>();
     SphereMesh->Init(SphereMeshInfo);
@@ -278,7 +279,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             NewMaterial->Initialize();
             NewMaterial->SetName("GateMaterial");
 
-            FMeshCreateInfo CubeMeshData = FMeshFactory::CreateCube();
+            FMeshCreateInfo CubeMeshData = MeshFactory::CreateCube();
             TSharedPtr<FMesh> CubeMesh = MakeSharedPtr<FMesh>();
             CubeMesh->Init(CubeMeshData);
 
@@ -312,7 +313,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             NewMaterial->Initialize();
             NewMaterial->SetName("PlaneMaterial");
 
-            FMeshCreateInfo PlaneMeshData = FMeshFactory::CreatePlane(10, 10);
+            FMeshCreateInfo PlaneMeshData = MeshFactory::CreatePlane(10, 10);
             TSharedPtr<FMesh> PlaneMesh = MakeSharedPtr<FMesh>();
             PlaneMesh->Init(PlaneMeshData);
 
@@ -346,7 +347,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             NewMaterial->Initialize();
             NewMaterial->SetName("ConeMaterial");
 
-            FMeshCreateInfo ConeMeshData = FMeshFactory::CreateCone(32, 0.5f);
+            FMeshCreateInfo ConeMeshData = MeshFactory::CreateCone(32, 0.5f);
 
             TSharedPtr<FMesh> ConeMesh = MakeSharedPtr<FMesh>();
             ConeMesh->Init(ConeMeshData);
@@ -381,7 +382,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             NewMaterial->Initialize();
             NewMaterial->SetName("TorusMaterial");
 
-            FMeshCreateInfo TorusMeshData = FMeshFactory::CreateTorus(1.0f, 0.4f, 48, 32);
+            FMeshCreateInfo TorusMeshData = MeshFactory::CreateTorus(1.0f, 0.4f, 48, 32);
 
             TSharedPtr<FMesh> TorusMesh = MakeSharedPtr<FMesh>();
             TorusMesh->Init(TorusMeshData);
@@ -417,7 +418,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             NewMaterial->Initialize();
             NewMaterial->SetName("TeapotMaterial");
 
-            FMeshCreateInfo TeapotMeshData = FMeshFactory::CreateTeapot(12);
+            FMeshCreateInfo TeapotMeshData = MeshFactory::CreateTeapot(12);
 
             TSharedPtr<FMesh> TeapotMesh = MakeSharedPtr<FMesh>();
             TeapotMesh->Init(TeapotMeshData);
@@ -452,7 +453,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             NewMaterial->Initialize();
             NewMaterial->SetName("PyramidMaterial");
 
-            FMeshCreateInfo PyramidMeshData = FMeshFactory::CreatePyramid(2.0f, 2.0f, 2.0f);
+            FMeshCreateInfo PyramidMeshData = MeshFactory::CreatePyramid(2.0f, 2.0f, 2.0f);
 
             TSharedPtr<FMesh> PyramidMesh = MakeSharedPtr<FMesh>();
             PyramidMesh->Init(PyramidMeshData);
@@ -531,7 +532,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     CylinderMaterial->Initialize();
     CylinderMaterial->SetName("CylinderMaterial");
 
-    FMeshCreateInfo CylinderMeshData = FMeshFactory::CreateCylinder(32, 0.4f, 5.0f);
+    FMeshCreateInfo CylinderMeshData = MeshFactory::CreateCylinder(32, 0.4f, 5.0f);
 
     TSharedPtr<FMesh> CylinderMesh = MakeSharedPtr<FMesh>();
     CylinderMesh->Init(CylinderMeshData);
@@ -982,7 +983,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
         FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
         if (NewComponent)
         {
-            FMeshCreateInfo PlaneMeshData = FMeshFactory::CreatePlane(10, 10);
+            FMeshCreateInfo PlaneMeshData = MeshFactory::CreatePlane(10, 10);
 
             TSharedPtr<FMesh> PlaneMesh = MakeSharedPtr<FMesh>();
             PlaneMesh->Init(PlaneMeshData);
@@ -1004,7 +1005,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
         FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
         if (NewComponent)
         {
-            FMeshCreateInfo CylinderMeshData = FMeshFactory::CreateCylinder(16, 0.5f, 2.0f);
+            FMeshCreateInfo CylinderMeshData = MeshFactory::CreateCylinder(16, 0.5f, 2.0f);
 
             TSharedPtr<FMesh> CylinderMesh = MakeSharedPtr<FMesh>();
             CylinderMesh->Init(CylinderMeshData);
@@ -1016,7 +1017,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
     }
 
     // Create small hut
-    FMeshCreateInfo CubeMeshData = FMeshFactory::CreateCube();
+    FMeshCreateInfo CubeMeshData = MeshFactory::CreateCube();
 
     TSharedPtr<FMesh> CubeMesh = MakeSharedPtr<FMesh>();
     CubeMesh->Init(CubeMeshData);
@@ -1195,7 +1196,7 @@ FRHITextureRef FSandbox::LoadCubeMapFromPanorama(const FString& Filename)
     }
 
     const uint32 SkyboxSize   = 1024;
-    const uint32 NumMiplevels = FTextureFactoryHelpers::TextureSizeToMiplevels(SkyboxSize);
+    const uint32 NumMiplevels = TextureHelpers::TextureSizeToMiplevels(SkyboxSize);
 
     constexpr ETextureUsageFlags TextureFlags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTextureCube(EFormat::R16G16B16A16_Float, SkyboxSize, NumMiplevels, 1, TextureFlags);

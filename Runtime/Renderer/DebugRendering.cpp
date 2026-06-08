@@ -104,7 +104,7 @@ FDebugRenderer::~FDebugRenderer()
 
 bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
 {
-    FMeshCreateInfo SphereMesh = FMeshFactory::CreateSphere(2, 0.35f);
+    FMeshCreateInfo SphereMesh = MeshFactory::CreateSphere(2, 0.35f);
 
     // VertexBuffer
     FRHIBufferDesc VertexBufferDesc;
@@ -586,7 +586,7 @@ void FDebugRenderer::PreparePipelineState(EFormat OutputFormat)
         PSODesc.PrimitiveTopology                              = EPrimitiveTopology::LineList;
         PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
         PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = OutputFormat;
-        PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
+        PSODesc.RasterizerOutputFormats.DepthStencilFormat     = RendererTextureFormats::DepthBufferFormat;
 
         FRHIGraphicsPipelineStateRef NewPSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (NewPSO)
@@ -613,7 +613,7 @@ void FDebugRenderer::PreparePipelineState(EFormat OutputFormat)
         PSODesc.PrimitiveTopology                              = EPrimitiveTopology::LineList;
         PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
         PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = OutputFormat;
-        PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
+        PSODesc.RasterizerOutputFormats.DepthStencilFormat     = RendererTextureFormats::DepthBufferFormat;
 
         FRHIGraphicsPipelineStateRef NewPSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (NewPSO)
@@ -640,7 +640,7 @@ void FDebugRenderer::PreparePipelineState(EFormat OutputFormat)
         PSODesc.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
         PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
         PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = OutputFormat;
-        PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
+        PSODesc.RasterizerOutputFormats.DepthStencilFormat     = RendererTextureFormats::DepthBufferFormat;
 
         FRHIGraphicsPipelineStateRef NewPSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (NewPSO)
@@ -667,7 +667,7 @@ void FDebugRenderer::PreparePipelineState(EFormat OutputFormat)
         PSODesc.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
         PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
         PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = OutputFormat;
-        PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
+        PSODesc.RasterizerOutputFormats.DepthStencilFormat     = RendererTextureFormats::DepthBufferFormat;
 
         FRHIGraphicsPipelineStateRef NewPSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (NewPSO)
@@ -694,7 +694,7 @@ void FDebugRenderer::PreparePipelineState(EFormat OutputFormat)
         PSODesc.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
         PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
         PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = OutputFormat;
-        PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
+        PSODesc.RasterizerOutputFormats.DepthStencilFormat     = RendererTextureFormats::DepthBufferFormat;
 
         FRHIGraphicsPipelineStateRef NewPSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (NewPSO)

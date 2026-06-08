@@ -240,7 +240,7 @@ void FMallocStackTraceTracker::DumpAllocations(IOutputDevice* OutputDevice)
             for (uint64 Depth = 0; Depth < Current.StackDepth; ++Depth)
             {
                 FStackTraceEntry Entry;
-                FMemory::Memzero(&Entry);
+                Memory::Memzero(&Entry);
 
                 FPlatformStackTrace::GetStackTraceEntryFromAddress(Current.StackTrace[Depth], Entry);
                 Message.AppendFormat("        %d | %s | %s | %s\n", Entry.Line, Entry.FunctionName, Entry.Filename, Entry.ModuleName);

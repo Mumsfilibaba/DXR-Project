@@ -1,4 +1,5 @@
 #include "Core/Platform/PlatformFile.h"
+#include "Core/Filesystem/File.h"
 #include "Core/Templates/CString.h"
 #include "Core/Containers/Stream.h"
 #include "Core/Misc/Parse.h"
@@ -15,14 +16,14 @@ bool FModelImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFl
 
     {
         const FString Filename = FString(InFilename);
-        TFileRef<IPlatformFile> File = FPlatformFile::OpenForRead(Filename);
-        if (!File)
+        TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(Filename);
+        if (!FileHandle)
         {
             return false;
         }
 
         // Read the full file
-        if (!FFileHelpers::ReadFile(File.Get(), InputStream))
+        if (!File::ReadFile(FileHandle.Get(), InputStream))
         {
             return false;
         }
@@ -32,7 +33,7 @@ bool FModelImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFl
     ModelFormat::FFileHeader FileHeader;
     InputStream.Read(FileHeader);
 
-    if (FMemory::Memcmp(FileHeader.Magic, "DXRMESH", sizeof(FileHeader.Magic)) != 0)
+    if (Memory::Memcmp(FileHeader.Magic, "DXRMESH", sizeof(FileHeader.Magic)) != 0)
     {
         return false;
     }
@@ -174,7 +175,7 @@ bool FModelImporter::MatchExtenstion(const FStringView& FileName)
 bool FModelSerializer::Serialize(const FString& Filename, const FModelCreateInfo& ModelInfo)
 {
     ModelFormat::FModelHeader ModelHeader;
-    FMemory::Memzero(&ModelHeader, sizeof(ModelFormat::FModelHeader));
+    Memory::Memzero(&ModelHeader, sizeof(ModelFormat::FModelHeader));
 
     FByteOutputStream OutputStream;
     OutputStream.AddUninitialized<ModelFormat::FModelHeader>();
@@ -193,7 +194,7 @@ bool FModelSerializer::Serialize(const FString& Filename, const FModelCreateInfo
         const FMeshCreateInfo& MeshCreateInfo = ModelInfo.Meshes[MeshIdx];
 
         ModelFormat::FMeshInfo Header;
-        FMemory::Memzero(&Header, sizeof(ModelFormat::FMeshInfo));
+        Memory::Memzero(&Header, sizeof(ModelFormat::FMeshInfo));
 
         Header.FirstVertex  = NumVertices;
         Header.NumVertices  = MeshCreateInfo.Vertices.Size();
@@ -255,7 +256,7 @@ bool FModelSerializer::Serialize(const FString& Filename, const FModelCreateInfo
         if (Texture)
         {
             ModelFormat::FTextureInfo TextureHeader;
-            FMemory::Memzero(&TextureHeader, sizeof(ModelFormat::FTextureInfo));
+            Memory::Memzero(&TextureHeader, sizeof(ModelFormat::FTextureInfo));
 
             Texture->GetFilename().CopyToBuffer(TextureHeader.Filepath, MODEL_FORMAT_MAX_NAME_LENGTH);
             OutputStream.Add(TextureHeader);
@@ -275,7 +276,7 @@ bool FModelSerializer::Serialize(const FString& Filename, const FModelCreateInfo
         const FMaterialCreateInfo& MaterialCreateInfo = ModelInfo.Materials[MaterialIdx];
 
         ModelFormat::FMaterialInfo Material;
-        FMemory::Memzero(&Material, sizeof(ModelFormat::FMaterialInfo));
+        Memory::Memzero(&Material, sizeof(ModelFormat::FMaterialInfo));
 
         Material.DiffuseTextureIdx          = CreateTextureIndex(MaterialCreateInfo.Textures[EMaterialTexture::Diffuse]);
         Material.NormalTextureIdx           = CreateTextureIndex(MaterialCreateInfo.Textures[EMaterialTexture::Normal]);
@@ -304,9 +305,9 @@ bool FModelSerializer::Serialize(const FString& Filename, const FModelCreateInfo
         }
 
         ModelFormat::FFileHeader FileHeader;
-        FMemory::Memzero(&FileHeader, sizeof(ModelFormat::FFileHeader));
+        Memory::Memzero(&FileHeader, sizeof(ModelFormat::FFileHeader));
 
-        FMemory::Memcpy(FileHeader.Magic, "DXRMESH", sizeof(FileHeader.Magic));
+        Memory::Memcpy(FileHeader.Magic, "DXRMESH", sizeof(FileHeader.Magic));
         FileHeader.DataCRC      = CRC32::Generate(OutputStream.Data(), OutputStream.Size());
         FileHeader.DataSize     = OutputStream.Size();
         FileHeader.VersionMajor = MODEL_FORMAT_VERSION_MAJOR;

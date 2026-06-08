@@ -229,16 +229,16 @@ void FVulkanCommandContextState::ResetState()
     GraphicsState.VertexBufferCache.Clear();
     GraphicsState.IndexBufferCache.Clear();
 
-    FMemory::Memzero(GraphicsState.BlendFactor, sizeof(GraphicsState.BlendFactor));
-    FMemory::Memzero(GraphicsState.DepthBias, sizeof(GraphicsState.DepthBias));
+    Memory::Memzero(GraphicsState.BlendFactor, sizeof(GraphicsState.BlendFactor));
+    Memory::Memzero(GraphicsState.DepthBias, sizeof(GraphicsState.DepthBias));
 
     GraphicsState.StreamOutputCache.Clear();
     GraphicsState.StencilRef = 0;
     
-    FMemory::Memzero(GraphicsState.Viewports, sizeof(GraphicsState.Viewports));
+    Memory::Memzero(GraphicsState.Viewports, sizeof(GraphicsState.Viewports));
     GraphicsState.NumViewports = 0;
 
-    FMemory::Memzero(GraphicsState.ScissorRects, sizeof(GraphicsState.ScissorRects));
+    Memory::Memzero(GraphicsState.ScissorRects, sizeof(GraphicsState.ScissorRects));
     GraphicsState.NumScissorRects = 0;
     
     GraphicsState.PipelineState            = nullptr;
@@ -388,7 +388,7 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
         RenderPassKey.RenderTargetActions[Index].StoreAction = Attachment.StoreAction;
 #endif
 
-        FMemory::Memcpy(ColorClearValues[Index].color.float32, Attachment.ClearValue.RGBA, sizeof(ColorClearValues[Index].color.float32));
+        Memory::Memcpy(ColorClearValues[Index].color.float32, Attachment.ClearValue.RGBA, sizeof(ColorClearValues[Index].color.float32));
     }
 
     VkClearValue DepthStencilClearValue = {};
@@ -559,7 +559,7 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
         FramebufferKey.NumArrayLayers     = static_cast<uint16>(RenderTargetState.RenderingLayerCount);
         FramebufferKey.NumAttachmentViews = NumAttachmentViews;
 
-        FMemory::Memcpy(FramebufferKey.AttachmentViews, AttachmentViews, sizeof(FramebufferKey.AttachmentViews));
+        Memory::Memcpy(FramebufferKey.AttachmentViews, AttachmentViews, sizeof(FramebufferKey.AttachmentViews));
 
         RenderTargetState.Framebuffer = GetDevice()->GetRenderPassCache().GetFramebuffer(FramebufferKey);
         if (!VULKAN_CHECK_HANDLE(RenderTargetState.Framebuffer))
@@ -821,9 +821,9 @@ void FVulkanCommandContextState::SetViewports(VkViewport* Viewports, uint32 NumV
     CHECK(NumViewports < VULKAN_MAX_VIEWPORT_AND_SCISSORRECT_COUNT);
 
     const uint32 ViewportArraySize = sizeof(VkViewport) * NumViewports;
-    if (GraphicsState.NumViewports != NumViewports || FMemory::Memcmp(GraphicsState.Viewports, Viewports, ViewportArraySize) != 0 || GVulkanForceBinding)
+    if (GraphicsState.NumViewports != NumViewports || Memory::Memcmp(GraphicsState.Viewports, Viewports, ViewportArraySize) != 0 || GVulkanForceBinding)
     {
-        FMemory::Memcpy(GraphicsState.Viewports, Viewports, ViewportArraySize);
+        Memory::Memcpy(GraphicsState.Viewports, Viewports, ViewportArraySize);
 
         GraphicsState.NumViewports   = NumViewports;
         GraphicsState.bBindViewports = true;
@@ -835,9 +835,9 @@ void FVulkanCommandContextState::SetScissorRects(VkRect2D* ScissorRects, uint32 
     CHECK(NumScissorRects < VULKAN_MAX_VIEWPORT_AND_SCISSORRECT_COUNT);
 
     const uint32 ScissorRectArraySize = sizeof(VkRect2D) * NumScissorRects;
-    if (GraphicsState.NumScissorRects != NumScissorRects || FMemory::Memcmp(GraphicsState.ScissorRects, ScissorRects, ScissorRectArraySize) != 0 || GVulkanForceBinding)
+    if (GraphicsState.NumScissorRects != NumScissorRects || Memory::Memcmp(GraphicsState.ScissorRects, ScissorRects, ScissorRectArraySize) != 0 || GVulkanForceBinding)
     {
-        FMemory::Memcpy(GraphicsState.ScissorRects, ScissorRects, ScissorRectArraySize);
+        Memory::Memcpy(GraphicsState.ScissorRects, ScissorRects, ScissorRectArraySize);
 
         GraphicsState.NumScissorRects   = NumScissorRects;
         GraphicsState.bBindScissorRects = true;
@@ -846,9 +846,9 @@ void FVulkanCommandContextState::SetScissorRects(VkRect2D* ScissorRects, uint32 
 
 void FVulkanCommandContextState::SetBlendFactor(const float BlendFactor[4])
 {
-    if (FMemory::Memcmp(GraphicsState.BlendFactor, BlendFactor, sizeof(GraphicsState.BlendFactor)) != 0 || GVulkanForceBinding)
+    if (Memory::Memcmp(GraphicsState.BlendFactor, BlendFactor, sizeof(GraphicsState.BlendFactor)) != 0 || GVulkanForceBinding)
     {
-        FMemory::Memcpy(GraphicsState.BlendFactor, BlendFactor, sizeof(GraphicsState.BlendFactor));
+        Memory::Memcpy(GraphicsState.BlendFactor, BlendFactor, sizeof(GraphicsState.BlendFactor));
         GraphicsState.bBindBlendFactor = true;
     }
 }
@@ -871,9 +871,9 @@ void FVulkanCommandContextState::SetDepthBias(float InDepthBias, float InDepthBi
         InSlopeScaledDepthBias
     };
 
-    if (FMemory::Memcmp(GraphicsState.DepthBias, NewValues, sizeof(NewValues)) != 0 || GVulkanForceBinding)
+    if (Memory::Memcmp(GraphicsState.DepthBias, NewValues, sizeof(NewValues)) != 0 || GVulkanForceBinding)
     {
-        FMemory::Memcpy(GraphicsState.DepthBias, NewValues, sizeof(NewValues));
+        Memory::Memcpy(GraphicsState.DepthBias, NewValues, sizeof(NewValues));
         GraphicsState.bBindDepthBias = true;
     }
 }
@@ -963,9 +963,9 @@ void FVulkanCommandContextState::SetIndexBuffer(FVulkanBufferRHI* IndexBuffer, V
 void FVulkanCommandContextState::SetPushConstants(const uint32* ShaderConstants, uint32 NumShaderConstants)
 {
     FVulkanPushConstantsCache& ConstantCache = CommonState.PushConstantsCache;
-    if (NumShaderConstants != ConstantCache.NumConstants || FMemory::Memcmp(ShaderConstants, ConstantCache.Constants, sizeof(uint32) * NumShaderConstants) != 0 || GVulkanForceBinding)
+    if (NumShaderConstants != ConstantCache.NumConstants || Memory::Memcmp(ShaderConstants, ConstantCache.Constants, sizeof(uint32) * NumShaderConstants) != 0 || GVulkanForceBinding)
     {
-        FMemory::Memcpy(ConstantCache.Constants, ShaderConstants, sizeof(uint32) * NumShaderConstants);
+        Memory::Memcpy(ConstantCache.Constants, ShaderConstants, sizeof(uint32) * NumShaderConstants);
 
         ConstantCache.NumConstants       = NumShaderConstants;
         GraphicsState.bBindPushConstants = true;

@@ -651,7 +651,7 @@ void FSceneRenderer::PrepareResources(const FSceneRenderView& SceneRenderView, F
     const EFormat OutputFormat = SceneRenderView.RenderTarget->GetDesc().Format;
 
 #if EDITOR_BUILD
-    TonemapPass->PreparePipelineState(FGlobalTextureFormats::SceneTargetFormat);
+    TonemapPass->PreparePipelineState(RendererTextureFormats::SceneTargetFormat);
     FinalCompositePass->PreparePipelineState(OutputFormat);
 #else
     TonemapPass->PreparePipelineState(OutputFormat);

@@ -44,7 +44,7 @@ struct FVulkanDescriptorSetLayoutInfo
             return false;
         }
         
-        if (FMemory::Memcmp(Bindings.Data(), Other.Bindings.Data(), Bindings.SizeInBytes()) != 0)
+        if (Memory::Memcmp(Bindings.Data(), Other.Bindings.Data(), Bindings.SizeInBytes()) != 0)
         {
             return false;
         }
@@ -54,7 +54,7 @@ struct FVulkanDescriptorSetLayoutInfo
             return false;
         }
         
-        if (ImmutableSamplers.Size() > 0 && FMemory::Memcmp(ImmutableSamplers.Data(), Other.ImmutableSamplers.Data(), ImmutableSamplers.SizeInBytes()) != 0)
+        if (ImmutableSamplers.Size() > 0 && Memory::Memcmp(ImmutableSamplers.Data(), Other.ImmutableSamplers.Data(), ImmutableSamplers.SizeInBytes()) != 0)
         {
             return false;
         }
@@ -101,7 +101,7 @@ struct FVulkanDescriptorRemappingInfo
     bool operator==(const FVulkanDescriptorRemappingInfo& Other) const
     {
         return (RemappingInfo.Size() == Other.RemappingInfo.Size()) ? 
-            FMemory::Memcmp(RemappingInfo.Data(), Other.RemappingInfo.Data(), RemappingInfo.SizeInBytes()) == 0 : false;
+            Memory::Memcmp(RemappingInfo.Data(), Other.RemappingInfo.Data(), RemappingInfo.SizeInBytes()) == 0 : false;
     }
 
     bool operator!=(const FVulkanDescriptorRemappingInfo& Other) const

@@ -124,7 +124,7 @@ template<typename T>
 T* NewObject()
 {
     // TODO: We might want to allocate via a allocator
-    void* Memory = FMemory::Malloc(sizeof(T));
+    void* Memory = Memory::Malloc(sizeof(T));
     if (!Memory)
     {
         return nullptr;

@@ -2,6 +2,7 @@
 #include "RHI/RHICommandList.h"
 #include "RHI/ShaderCompiler.h"
 #include "RendererCore/TextureFactory.h"
+#include "RendererCore/TextureHelpers.h"
 #include "RendererCore/TextureResourceData.h"
 
 FTextureFactory* FTextureFactory::GTextureFactory = nullptr;
@@ -300,7 +301,7 @@ FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, 
 
     const bool bGenerateMips = IsEnumFlagSet(Flags, ETextureFactoryFlags::GenerateMips);
 
-    const uint32 NumMiplevels = bGenerateMips ? FTextureFactoryHelpers::TextureSizeToMiplevels(Math::Max<uint32>(Width, Height)) : 1u;
+    const uint32 NumMiplevels = bGenerateMips ? TextureHelpers::TextureSizeToMiplevels(Math::Max<uint32>(Width, Height)) : 1u;
     CHECK(NumMiplevels != 0);
 
     const uint32 Stride   = GetByteStrideFromFormat(Format);

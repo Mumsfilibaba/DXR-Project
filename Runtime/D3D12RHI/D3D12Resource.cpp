@@ -214,7 +214,7 @@ FD3D12ResourceStorage::FD3D12ResourceStorage(FD3D12Device* InDevice)
     , AllocatorType(ED3D12AllocatorType::None)
     , StorageType(EResourceStorageType::Unknown)
 {
-    FMemory::Memzero(&AllocationData, sizeof(AllocationData));
+    Memory::Memzero(&AllocationData, sizeof(AllocationData));
 }
 
 FD3D12ResourceStorage::~FD3D12ResourceStorage()
@@ -240,7 +240,7 @@ void FD3D12ResourceStorage::Swap(FD3D12ResourceStorage& Other)
     ::Swap(StorageType, Other.StorageType);
     ::Swap(AllocatorPointers.AsVoid, Other.AllocatorPointers.AsVoid);
     
-    FMemory::Memswap(&AllocationData, &Other.AllocationData, sizeof(AllocationData));
+    Memory::Memswap(&AllocationData, &Other.AllocationData, sizeof(AllocationData));
 
     UpdateOwnership();
     Other.UpdateOwnership();
@@ -256,7 +256,7 @@ void FD3D12ResourceStorage::UpdateOwnership()
 
 void FD3D12ResourceStorage::Reset()
 {
-    FMemory::Memzero(&AllocationData, sizeof(AllocationData));
+    Memory::Memzero(&AllocationData, sizeof(AllocationData));
     ResetAllocator();
 
     if (Resource)

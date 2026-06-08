@@ -47,7 +47,7 @@ public:
      */
     FORCEINLINE explicit FMatrix3x4(const FMatrix4& InMatrix) noexcept
     {
-        FMemory::Memcpy(M[0], InMatrix.M[0], sizeof(M));
+        Memory::Memcpy(M[0], InMatrix.M[0], sizeof(M));
     }
 
     /**

@@ -25,7 +25,7 @@ public:
         , StreamSize(Other.StreamSize)
     {
         InternalAllocate(Other.StreamSize);
-        FMemory::Memcpy(Stream, Other.Stream, Other.StreamSize);
+        Memory::Memcpy(Stream, Other.Stream, Other.StreamSize);
     }
 
     /**
@@ -157,7 +157,7 @@ public:
         CHECK((InWriteOffset + Size) <= StreamSize);
 
         uint8* Dest = Stream + InWriteOffset;
-        FMemory::Memcpy(Dest, Source, Size);
+        Memory::Memcpy(Dest, Source, Size);
         return Size;
     }
 
@@ -221,7 +221,7 @@ public:
 
             if (StreamSize > 0)
             {
-                FMemory::Memcpy(Stream, Other.Stream, StreamSize);
+                Memory::Memcpy(Stream, Other.Stream, StreamSize);
             }
         }
 
@@ -256,10 +256,10 @@ private:
     {
         if (NewCapacity > StreamCapacity)
         {
-            uint8* NewStream = reinterpret_cast<uint8*>(FMemory::Malloc(NewCapacity));
-            FMemory::Memcpy(NewStream, Stream, StreamSize);
+            uint8* NewStream = reinterpret_cast<uint8*>(Memory::Malloc(NewCapacity));
+            Memory::Memcpy(NewStream, Stream, StreamSize);
             
-            FMemory::Free(Stream);
+            Memory::Free(Stream);
             Stream = NewStream;
     
             StreamCapacity = NewCapacity;
@@ -281,12 +281,12 @@ private:
 
     void InternalAllocate(int32 NewCapacity)
     {
-        Stream = reinterpret_cast<uint8*>(FMemory::Malloc(NewCapacity));
+        Stream = reinterpret_cast<uint8*>(Memory::Malloc(NewCapacity));
     }
 
     void InternalFree()
     {
-        FMemory::Free(Stream);
+        Memory::Free(Stream);
         Stream = nullptr;
         
         StreamCapacity = 0;
@@ -334,7 +334,7 @@ public:
         , StreamOffset(Other.StreamOffset)
     {
         InternalAllocate(Other.StreamSize);
-        FMemory::Memcpy(Stream, Other.Stream, Other.StreamSize);
+        Memory::Memcpy(Stream, Other.Stream, Other.StreamSize);
     }
 
     /**
@@ -398,7 +398,7 @@ public:
         CHECK((StreamOffset + Size) <= StreamSize);
 
         uint8* Source = Stream + StreamOffset;
-        FMemory::Memcpy(Dest, Source, Size);
+        Memory::Memcpy(Dest, Source, Size);
         StreamOffset += Size;
         return Size;
     }
@@ -487,7 +487,7 @@ public:
 
             if (StreamSize > 0)
             {
-                FMemory::Memcpy(Stream, Other.Stream, StreamSize);
+                Memory::Memcpy(Stream, Other.Stream, StreamSize);
             }
         }
 
@@ -520,12 +520,12 @@ public:
 private:
     void InternalAllocate(int32 NewCapacity)
     {
-        Stream = reinterpret_cast<uint8*>(FMemory::Malloc(NewCapacity));
+        Stream = reinterpret_cast<uint8*>(Memory::Malloc(NewCapacity));
     }
 
     void InternalFree()
     {
-        FMemory::Free(Stream);
+        Memory::Free(Stream);
         Stream = nullptr;
         
         StreamOffset = 0;

@@ -3,7 +3,7 @@
 #include "Core/Templates/Utility.h"
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/ObjectHandling.h"
-#include "Core/Templates/ArrayContainerHelper.h"
+#include "Core/Templates/ArrayContainer.h"
 
 template<typename ElementType, int32 NUM_ELEMENTS>
 struct TStaticArray
@@ -92,7 +92,7 @@ public:
     template<typename U = ElementType>
     FORCEINLINE void Memzero() requires(TIsTrivial<U>::Value)
     {
-        FMemory::Memzero(Elements, SizeInBytes());
+        Memory::Memzero(Elements, SizeInBytes());
     }
 
     /**
@@ -267,7 +267,7 @@ public:
     template<typename ArrayType>
     NODISCARD FORCEINLINE bool operator==(const ArrayType& Other) const requires(TIsTArrayType<ArrayType>::Value)
     {
-        return (NUM_ELEMENTS == FArrayContainerHelper::Size(Other)) ? ::CompareObjects<ElementType>(Elements, FArrayContainerHelper::Data(Other), NUM_ELEMENTS) : false;
+        return (NUM_ELEMENTS == ArrayContainer::Size(Other)) ? ::CompareObjects<ElementType>(Elements, ArrayContainer::Data(Other), NUM_ELEMENTS) : false;
     }
 
     /**

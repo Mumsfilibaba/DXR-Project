@@ -433,10 +433,10 @@ bool VulkanCheckDeviceLost(VkResult Result)
                     if (FaultCounts.addressInfoCount > 0 || FaultCounts.vendorInfoCount > 0)
                     {
                         TArray<VkDeviceFaultAddressInfoEXT> AddressInfos(FaultCounts.addressInfoCount);
-                        FMemory::Memzero(AddressInfos.Data(), AddressInfos.Size() * sizeof(VkDeviceFaultAddressInfoEXT));
+                        Memory::Memzero(AddressInfos.Data(), AddressInfos.Size() * sizeof(VkDeviceFaultAddressInfoEXT));
                         
                         TArray<VkDeviceFaultVendorInfoEXT> VendorInfos(FaultCounts.vendorInfoCount);
-                        FMemory::Memzero(VendorInfos.Data(), VendorInfos.Size() * sizeof(VkDeviceFaultVendorInfoEXT));
+                        Memory::Memzero(VendorInfos.Data(), VendorInfos.Size() * sizeof(VkDeviceFaultVendorInfoEXT));
 
                         VkDeviceFaultInfoEXT FaultInfo = {};
                         FaultInfo.sType             = VK_STRUCTURE_TYPE_DEVICE_FAULT_INFO_EXT;

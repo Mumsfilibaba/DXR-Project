@@ -174,7 +174,7 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
 
         CorrelationMask = ViewMask;
 
-        FMemory::Memzero(&MultiviewCreateInfo);
+        Memory::Memzero(&MultiviewCreateInfo);
         MultiviewCreateInfo.sType                = VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO;
         MultiviewCreateInfo.subpassCount         = 1;
         MultiviewCreateInfo.pViewMasks           = &ViewMask;

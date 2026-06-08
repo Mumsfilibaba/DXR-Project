@@ -16,7 +16,7 @@ FVulkanResourceView::FVulkanResourceView(FVulkanDevice* InDevice)
     , BindlessHandle()
     , bBindlessIsWritable(false)
 {
-    FMemory::Memzero(&ImageViewInfo);
+    Memory::Memzero(&ImageViewInfo);
 }
 
 FVulkanResourceView::~FVulkanResourceView()

@@ -92,7 +92,7 @@ FWindowsApplication::~FWindowsApplication()
 bool FWindowsApplication::RegisterWindowClass()
 {
     WNDCLASSA WindowClass;
-    FMemory::Memzero(&WindowClass);
+    Memory::Memzero(&WindowClass);
 
     WindowClass.style         = CS_DBLCLKS | CS_HREDRAW | CS_OWNDC;
     WindowClass.hInstance     = InstanceHandle;
@@ -116,7 +116,7 @@ bool FWindowsApplication::RegisterRawInputDevices(HWND Window)
 {
     constexpr uint32 DeviceCount = 1;
     RAWINPUTDEVICE Devices[DeviceCount];
-    FMemory::Memzero(Devices, sizeof(Devices));
+    Memory::Memzero(Devices, sizeof(Devices));
 
     // Register Mouse as a raw input device
     Devices[0].dwFlags     = 0;
@@ -139,7 +139,7 @@ bool FWindowsApplication::UnregisterRawInputDevices()
 {
     constexpr uint32 DeviceCount = 1;
     RAWINPUTDEVICE Devices[DeviceCount];
-    FMemory::Memzero(Devices, sizeof(Devices));
+    Memory::Memzero(Devices, sizeof(Devices));
 
     // Unregister Mouse
     Devices[0].dwFlags     = RIDEV_REMOVE;
@@ -401,7 +401,7 @@ BOOL FWindowsApplication::EnumerateMonitors(HMONITOR Monitor, HDC /*DeviceContex
     CHECK(MonitorInfos != nullptr);
 
     MONITORINFOEXA MonitorInfo;
-    FMemory::Memzero(&MonitorInfo);
+    Memory::Memzero(&MonitorInfo);
     MonitorInfo.cbSize = sizeof(MONITORINFOEXA);
 
     if (!::GetMonitorInfoA(Monitor, &MonitorInfo))
@@ -754,7 +754,7 @@ void FWindowsApplication::ProcessWindowHoverMessage(const FWindowsDeferredMessag
         if (!bIsTrackingMouse)
         {
             TRACKMOUSEEVENT TrackEvent;
-            FMemory::Memzero(&TrackEvent);
+            Memory::Memzero(&TrackEvent);
 
             TrackEvent.cbSize    = sizeof(TRACKMOUSEEVENT);
             TrackEvent.dwFlags   = TME_LEAVE;

@@ -20,7 +20,7 @@
 #include "RendererCore/TextureFactory.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
-IMPLEMENT_ENGINE_MODULE(FModuleInterface, Launch);
+IMPLEMENT_ENGINE_MODULE(IModule, Launch);
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -65,7 +65,7 @@ static bool InitializeOutputDevices()
         FOutputDeviceLogger::Get()->RegisterOutputDevice(GDebuggerOutputDevice.Get());
     }
 
-    const FString OutputLogPath = FPaths::GetProjectDir() + "/OutputLog.txt";
+    const FString OutputLogPath = Paths::GetProjectDir() + "/OutputLog.txt";
     GFileOutputDevice = MakeUniquePtr<FFileOutputDevice>(OutputLogPath);
     
     if (GFileOutputDevice && GFileOutputDevice->IsValid())
@@ -79,8 +79,8 @@ static bool InitializeOutputDevices()
 static void LogStartupInformation()
 {
     LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");
-    LOG_INFO("ProjectName=%s", *FPaths::GetProjectName());
-    LOG_INFO("ProjectDir=%s", *FPaths::GetProjectDir());
+    LOG_INFO("ProjectName=%s", *Paths::GetProjectName());
+    LOG_INFO("ProjectDir=%s", *Paths::GetProjectDir());
 }
 
 FEngineLoop::FEngineLoop()
@@ -94,49 +94,49 @@ FEngineLoop::~FEngineLoop()
 
 bool FEngineLoop::LoadCoreModules()
 {
-    FModuleInterface* CoreModule = FModuleManager::Get().LoadModule("Core");
+    IModule* CoreModule = FModuleManager::Get().LoadModule("Core");
     if (!CoreModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* CoreApplicationModule = FModuleManager::Get().LoadModule("CoreApplication");
+    IModule* CoreApplicationModule = FModuleManager::Get().LoadModule("CoreApplication");
     if (!CoreApplicationModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* ApplicationModule = FModuleManager::Get().LoadModule("Application");
+    IModule* ApplicationModule = FModuleManager::Get().LoadModule("Application");
     if (!ApplicationModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* EngineModule = FModuleManager::Get().LoadModule("Engine");
+    IModule* EngineModule = FModuleManager::Get().LoadModule("Engine");
     if (!EngineModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* RHIModule = FModuleManager::Get().LoadModule("RHI");
+    IModule* RHIModule = FModuleManager::Get().LoadModule("RHI");
     if (!RHIModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* RendererCoreModule = FModuleManager::Get().LoadModule("RendererCore");
+    IModule* RendererCoreModule = FModuleManager::Get().LoadModule("RendererCore");
     if (!RendererCoreModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* RendererModule = FModuleManager::Get().LoadModule("Renderer");
+    IModule* RendererModule = FModuleManager::Get().LoadModule("Renderer");
     if (!RendererModule)
     {
         DEBUG_BREAK();
@@ -153,7 +153,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
         return -1;
     }
 
-    if (!FCommandLine::Initialize(Args, NumArgs))
+    if (!CommandLine::Initialize(Args, NumArgs))
     {
         LOG_WARNING("Invalid CommandLine");
     }
@@ -194,7 +194,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
         return -1;
     }
 
-    if (!FShaderCompiler::Create(FPaths::GetAssetDir()))
+    if (!FShaderCompiler::Create(Paths::GetAssetDir()))
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Initializer ShaderCompiler");
         return -1;

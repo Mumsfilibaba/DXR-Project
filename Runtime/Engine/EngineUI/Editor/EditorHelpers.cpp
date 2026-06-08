@@ -1376,7 +1376,7 @@ bool EditorWidgets::DrawColor3Property(const CHAR* Label, float* InOutColor, con
     if (ResetIconButton() && bCanRevert)
     {
         static constexpr uint64 SizeInBytes = sizeof(TStaticArray<float, 3>);
-        FMemory::Memcpy(InOutColor, InRevertColor, SizeInBytes);
+        Memory::Memcpy(InOutColor, InRevertColor, SizeInBytes);
         bResult = true;
     }
 
@@ -3102,7 +3102,7 @@ static bool LoadEditorIcon(const CHAR* InRelativePath, ImTextureID& OutIconID, E
     OutIcon.Reset();
     OutIconID = nullptr;
 
-    FString FullPath = FPaths::GetAssetDir();
+    FString FullPath = Paths::GetAssetDir();
     if (!FullPath.EndsWith("/"))
     {
         FullPath += "/";
@@ -3222,7 +3222,7 @@ ImFont* EditorFonts::Consola_16  = nullptr;
 
 static ImFont* LoadEditorFont(const CHAR* InRelativePath, float SizePixels, const ImFontConfig* FontCfgTemplate = nullptr, const ImWchar* GlyphRanges = nullptr)
 {
-    FString FullPath = FPaths::GetAssetDir();
+    FString FullPath = Paths::GetAssetDir();
     if (!FullPath.EndsWith("/"))
     {
         FullPath += "/";

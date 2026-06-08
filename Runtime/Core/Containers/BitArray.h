@@ -4,9 +4,9 @@
 #include "Core/Memory/Memory.h"
 #include "Core/Math/Math.h"
 #include "Core/Templates/TypeTraits.h"
-#include "Core/Templates/BitHelper.h"
+#include "Core/Templates/Bits.h"
 #include "Core/Templates/BitReference.h"
-#include "Core/Templates/ArrayContainerHelper.h"
+#include "Core/Templates/ArrayContainer.h"
 
 template<typename InIntegerType = uint32, typename InAllocatorType = TDefaultArrayAllocator<InIntegerType>>
 class TBitArray
@@ -84,7 +84,7 @@ public:
      */
     FORCEINLINE TBitArray(std::initializer_list<bool> InitList)
         : Allocator()
-        , NumBits(FArrayContainerHelper::Size(InitList))
+        , NumBits(ArrayContainer::Size(InitList))
         , NumElements(0)
     {
         InitializeZeroed(NumBits);
@@ -136,7 +136,7 @@ public:
      */
     FORCEINLINE void Reset()
     {
-        FMemory::Memset(Allocator.GetAllocation(), 0, CapacityInBytes());
+        Memory::Memset(Allocator.GetAllocation(), 0, CapacityInBytes());
     }
 
     /**
@@ -204,7 +204,7 @@ public:
         for (SizeType Index = 0; Index < NumElements; ++Index)
         {
             const InIntegerType Element = GetInteger(Index);
-            BitCount += FBitHelper::CountAssignedBits(Element);
+            BitCount += Bits::CountAssignedBits(Element);
         }
 
         return BitCount;
@@ -240,7 +240,7 @@ public:
             const InIntegerType Element = GetInteger(Index);
             if (Element)
             {
-                const SizeType BitIndex = FBitHelper::MostSignificant<SizeType>(Element);
+                const SizeType BitIndex = Bits::MostSignificant<SizeType>(Element);
                 Result = BitIndex + (Index * NumBitsPerInteger());
                 break;
             }
@@ -261,7 +261,7 @@ public:
             const InIntegerType Element = GetInteger(Index);
             if (Element)
             {
-                const SizeType BitIndex = FBitHelper::LeastSignificant<SizeType>(Element);
+                const SizeType BitIndex = Bits::LeastSignificant<SizeType>(Element);
                 Result = BitIndex + (Index * NumBitsPerInteger());
                 break;
             }
@@ -642,7 +642,7 @@ public:
     template<typename OtherIntegerType, typename OtherAllocatorType>
     NODISCARD FORCEINLINE bool operator==(const TBitArray<OtherIntegerType, OtherAllocatorType>& RHS) const
     {
-        return CapacityInBytes() == RHS.CapacityInBytes() ? FMemory::Memcmp(Allocator.GetAllocation(), RHS.Allocator.GetAllocation(), CapacityInBytes()) : false;
+        return CapacityInBytes() == RHS.CapacityInBytes() ? Memory::Memcmp(Allocator.GetAllocation(), RHS.Allocator.GetAllocation(), CapacityInBytes()) : false;
     }
 
     /**
@@ -782,12 +782,12 @@ private:
         const SizeType NewNumElements = GetNumIntegersRequiredForBits(InNumBits);
         Allocator.Realloc(NumElements, NewNumElements);
         NumElements = NewNumElements;
-        FMemory::Memzero(Allocator.GetAllocation(), CapacityInBytes());
+        Memory::Memzero(Allocator.GetAllocation(), CapacityInBytes());
     }
 
     FORCEINLINE void CopyFrom(const TBitArray& Other)
     {
-        FMemory::Memcpy(Allocator.GetAllocation(), Other.Allocator.GetAllocation(), Other.NumElements * sizeof(InIntegerType));
+        Memory::Memcpy(Allocator.GetAllocation(), Other.Allocator.GetAllocation(), Other.NumElements * sizeof(InIntegerType));
     }
 
     FORCEINLINE void MoveFrom(TBitArray&& Other)
@@ -827,8 +827,8 @@ private:
             const SizeType DiscardCount = Steps / NumBitsPerInteger();
             const SizeType RangeSize    = RemainingElements - DiscardCount;
 
-            FMemory::Memmove(Array, Array + DiscardCount, sizeof(InIntegerType) * RangeSize);
-            FMemory::Memzero(Array + RangeSize, sizeof(InIntegerType) * DiscardCount);
+            Memory::Memmove(Array, Array + DiscardCount, sizeof(InIntegerType) * RangeSize);
+            Memory::Memzero(Array + RangeSize, sizeof(InIntegerType) * DiscardCount);
 
             BitshiftRight_Simple(Steps, StartElementIndex, RangeSize);
 
@@ -837,7 +837,7 @@ private:
         }
         else
         {
-            FMemory::Memzero(Array, RemainingElements * sizeof(InIntegerType));
+            Memory::Memzero(Array, RemainingElements * sizeof(InIntegerType));
         }
     }
 
@@ -893,8 +893,8 @@ private:
             const SizeType DiscardCount = Steps / NumBitsPerInteger();
             const SizeType RangeSize    = RemainingElements - DiscardCount;
 
-            FMemory::Memmove(Array + DiscardCount, Array, sizeof(InIntegerType) * RangeSize);
-            FMemory::Memzero(Array, sizeof(InIntegerType) * DiscardCount);
+            Memory::Memmove(Array + DiscardCount, Array, sizeof(InIntegerType) * RangeSize);
+            Memory::Memzero(Array, sizeof(InIntegerType) * DiscardCount);
 
             BitshiftLeft_Simple(Steps, StartElementIndex + DiscardCount, RangeSize);
 
@@ -903,7 +903,7 @@ private:
         }
         else
         {
-            FMemory::Memzero(Array, RemainingElements * sizeof(InIntegerType));
+            Memory::Memzero(Array, RemainingElements * sizeof(InIntegerType));
         }
     }
 

@@ -110,7 +110,7 @@ void FWindowsConsoleOutputDevice::Flush()
     if (ConsoleHandle)
     {
         CONSOLE_SCREEN_BUFFER_INFO ConsoleScreenInfo;
-        FMemory::Memzero(&ConsoleScreenInfo, sizeof(CONSOLE_SCREEN_BUFFER_INFO));
+        Memory::Memzero(&ConsoleScreenInfo, sizeof(CONSOLE_SCREEN_BUFFER_INFO));
 
         if (::GetConsoleScreenBufferInfo(ConsoleHandle, &ConsoleScreenInfo))
         {

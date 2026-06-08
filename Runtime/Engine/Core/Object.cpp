@@ -22,7 +22,7 @@ FObject::FObject(const FObjectInitializer& ObjectInitializer)
 
 FObject* NewObject(FObjectClass* Class)
 {
-    void* Memory = FMemory::Malloc(Class->GetSize());
+    void* Memory = Memory::Malloc(Class->GetSize());
     if (!Memory)
     {
         return nullptr;

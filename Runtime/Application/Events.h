@@ -86,7 +86,7 @@ class FCursorEvent : public FInputEvent
 public:
     FCursorEvent()
         : FInputEvent()
-        , Key(EKeys::Unknown)
+        , Key(Keys::Unknown)
         , CursorPosition()
         , ScrollDelta(0.0f)
         , bIsScrollVertical(false)
@@ -96,7 +96,7 @@ public:
 
     FCursorEvent(EInputEventType InEventType, const FModifierKeyState& InModifierKeys)
         : FInputEvent(InEventType, InModifierKeys)
-        , Key(EKeys::Unknown)
+        , Key(Keys::Unknown)
         , CursorPosition()
         , ScrollDelta(0.0f)
         , bIsScrollVertical(false)
@@ -106,7 +106,7 @@ public:
 
     FCursorEvent(EInputEventType InEventType, const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys)
         : FInputEvent(InEventType, InModifierKeys)
-        , Key(EKeys::Unknown)
+        , Key(Keys::Unknown)
         , CursorPosition(InCursorPosition)
         , ScrollDelta(0.0f)
         , bIsScrollVertical(false)
@@ -138,7 +138,7 @@ public:
 
     FCursorEvent(EInputEventType InEventType, const FModifierKeyState& InModifierKeys, float InScrollDelta, bool bInIsScrollVertical)
         : FInputEvent(InEventType, InModifierKeys)
-        , Key(EKeys::Unknown)
+        , Key(Keys::Unknown)
         , CursorPosition()
         , ScrollDelta(InScrollDelta)
         , bIsScrollVertical(bInIsScrollVertical)
@@ -185,7 +185,7 @@ class FKeyEvent : public FInputEvent
 public:
     FKeyEvent()
         : FInputEvent()
-        , Key(EKeys::Unknown)
+        , Key(Keys::Unknown)
         , Character(0)
         , GamepadIndex(static_cast<uint32>(-1))
         , bIsRepeat(false)

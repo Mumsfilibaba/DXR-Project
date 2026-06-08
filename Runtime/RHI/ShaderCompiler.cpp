@@ -2,6 +2,7 @@
 #include "Core/RefCountedBase.h"
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Platform/PlatformFile.h"
+#include "Core/Filesystem/File.h"
 #include "Core/Memory/Malloc.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/ConsoleManager.h"
@@ -117,13 +118,13 @@ public:
         : Data(nullptr)
         , Size(InSize)
     {
-        Data = FMemory::Malloc(Size);
-        FMemory::Memcpy(Data, InData, Size);
+        Data = Memory::Malloc(Size);
+        Memory::Memcpy(Data, InData, Size);
     }
 
     ~FShaderBlob()
     {
-        FMemory::Free(Data);
+        Memory::Free(Data);
     }
 
     virtual SIZE_T GetBufferSize()    override final { return Size; }
@@ -251,15 +252,15 @@ bool FShaderCompiler::CompileFromFile(const FString& Filename, const FShaderComp
 
     {
         // Open the file
-        TFileRef<IPlatformFile> File = FPlatformFile::OpenForRead(FilePath);
-        if (!File)
+        TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(FilePath);
+        if (!FileHandle)
         {
             LOG_ERROR("[FShaderCompiler]: Failed to open file '%s'", *Filename);
             return false;
         }
 
         // Read the full file as a text-file
-        if (!FFileHelpers::ReadTextFile(File.Get(), Text))
+        if (!File::ReadTextFile(FileHandle.Get(), Text))
         {
             LOG_ERROR("[FShaderCompiler]: Failed to read file '%s'", *Filename);
             return false;
@@ -574,7 +575,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
 
     const uint32 BlobSize = static_cast<uint32>(CompiledBlob->GetBufferSize());
     OutByteCode.Resize(BlobSize);
-    FMemory::Memcpy(OutByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
+    Memory::Memcpy(OutByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
 
     if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
     {

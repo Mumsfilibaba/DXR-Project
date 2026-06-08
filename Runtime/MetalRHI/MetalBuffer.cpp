@@ -81,14 +81,14 @@ bool FMetalBufferRHI::Initialize(EResourceAccess InInitialAccess, const void* In
     {
         if (Desc.IsDynamic())
         {
-            FMemory::Memcpy(NewBuffer.contents, InInitialData, Desc.Size);
+            Memory::Memcpy(NewBuffer.contents, InInitialData, Desc.Size);
         }
         else
         {
             @autoreleasepool
             {
                 id<MTLBuffer> StagingBuffer = [Device newBufferWithLength:Desc.Size options:MTLResourceCPUCacheModeDefaultCache];
-                FMemory::Memcpy(StagingBuffer.contents, InInitialData, Desc.Size);
+                Memory::Memcpy(StagingBuffer.contents, InInitialData, Desc.Size);
                 
                 id<MTLCommandQueue>       CommandQueue  = GetDevice()->GetMTLCommandQueue();
                 id<MTLCommandBuffer>      CommandBuffer = [CommandQueue commandBuffer];

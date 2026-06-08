@@ -1300,7 +1300,7 @@ bool FD3D12Device::CreateDevice()
             };
 
             D3D12_INFO_QUEUE_FILTER Filter;
-            FMemory::Memzero(&Filter);
+            Memory::Memzero(&Filter);
 
             Filter.DenyList.NumIDs = ARRAY_COUNT(Hide);
             Filter.DenyList.pIDList = Hide;

@@ -32,7 +32,7 @@ struct VulkanPlatformWindows : public VulkanPlatformBase
     {
     #if VK_KHR_win32_surface
         VkWin32SurfaceCreateInfoKHR Win32SurfaceCreateInfo;
-        FMemory::Memzero(&Win32SurfaceCreateInfo);
+        Memory::Memzero(&Win32SurfaceCreateInfo);
 
         Win32SurfaceCreateInfo.sType     = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
         Win32SurfaceCreateInfo.pNext     = nullptr;

@@ -588,7 +588,7 @@ void FImGuiRenderer::SetupRenderState(FRHICommandList& CommandList, ImDrawData* 
     };
 
     FVertexConstantBuffer VertexConstantBuffer;
-    FMemory::Memcpy(&VertexConstantBuffer.ViewProjectionMatrix, Matrix, sizeof(Matrix));
+    Memory::Memcpy(&VertexConstantBuffer.ViewProjectionMatrix, Matrix, sizeof(Matrix));
 
     FViewportRegion ViewportRegion(static_cast<float>(FramebufferWidth), static_cast<float>(FramebufferHeight), 0.0f, 0.0f, 0.0f, 1.0f);
     CommandList.SetViewport(ViewportRegion);

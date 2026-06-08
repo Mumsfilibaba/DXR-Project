@@ -93,7 +93,7 @@ void FRHICommandList::Reset() noexcept
 
 void FRHICommandList::ExchangeState(FRHICommandList& Other) noexcept
 {
-    FMemory::Memswap(this, &Other, sizeof(FRHICommandList));
+    Memory::Memswap(this, &Other, sizeof(FRHICommandList));
 
     if (CommandPointer == &Other.FirstCommand)
     {

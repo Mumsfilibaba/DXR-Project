@@ -176,34 +176,4 @@ struct CORE_API FGenericPlatformFile
     }
 };
 
-class CORE_API FFileHelpers
-{
-public:
-    static bool ReadFile(IPlatformFile* File, FByteInputStream& OutData);
-    static bool ReadFile(IPlatformFile* File, TArray<uint8>& OutData);
-    static bool ReadTextFile(IPlatformFile* File, TArray<CHAR>& OutText);
-
-    static FORCEINLINE bool WriteTextFile(IPlatformFile* File, const TArray<CHAR>& Text)
-    {
-        return WriteTextFile(File, Text.Data(), Text.SizeInBytes());
-    }
-
-    static FORCEINLINE bool WriteTextFile(IPlatformFile* File, const FString& Text)
-    {
-        return WriteTextFile(File, Text.Data(), Text.SizeInBytes());
-    }
-
-    // Returns the Path to the file (Excluding the filename)
-    static FString ExtractFilepath(const FString& Filepath);
-    
-    // Returns the Filename with the extension (Excluding the rest of the path)
-    static FString ExtractFilename(const FString& Filepath);
-    
-    // Returns the Filename without the extension (Excluding the rest of the path)
-    static FString ExtractFilenameWithoutExtension(const FString& Filepath);
-
-private:
-    static bool WriteTextFile(IPlatformFile* File, const CHAR* Text, uint32 Size);
-};
-
 ENABLE_UNREFERENCED_VARIABLE_WARNING

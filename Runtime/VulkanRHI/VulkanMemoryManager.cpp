@@ -62,7 +62,7 @@ static constexpr uint64 UPLOAD_ALIGNMENT  = 256ull;
 
 FVulkanMemoryLocation::FVulkanMemoryLocation(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
-    , Memory(VK_NULL_HANDLE)
+    , DeviceMemory(VK_NULL_HANDLE)
     , MemoryOffset(0)
     , BackingBuffer(VK_NULL_HANDLE)
     , BufferOffset(0)
@@ -89,10 +89,10 @@ void FVulkanMemoryLocation::Swap(FVulkanMemoryLocation& Other)
         return;
     }
 
-    FMemory::Memswap(&AllocationData, &Other.AllocationData, sizeof(AllocationData));
+    Memory::Memswap(&AllocationData, &Other.AllocationData, sizeof(AllocationData));
 
     ::Swap(Device, Other.Device);
-    ::Swap(Memory, Other.Memory);
+    ::Swap(DeviceMemory, Other.DeviceMemory);
     ::Swap(MemoryOffset, Other.MemoryOffset);
     ::Swap(BackingBuffer, Other.BackingBuffer);
     ::Swap(BufferOffset, Other.BufferOffset);
@@ -130,7 +130,7 @@ void FVulkanMemoryLocation::ReleaseMemory()
         {
             if (LocationType == EVulkanMemoryLocationType::Dedicated)
             {
-                FVulkanDeviceRHI::DeferDeletion(Memory, BackingBuffer);
+                FVulkanDeviceRHI::DeferDeletion(DeviceMemory, BackingBuffer);
             }
 
             break;
@@ -142,7 +142,7 @@ void FVulkanMemoryLocation::ReleaseMemory()
 
 void FVulkanMemoryLocation::Reset()
 {
-    Memory                   = VK_NULL_HANDLE;
+    DeviceMemory             = VK_NULL_HANDLE;
     MemoryOffset             = 0;
     BackingBuffer            = VK_NULL_HANDLE;
     BufferOffset             = 0;

@@ -187,7 +187,7 @@ DECLARE_RHICOMMAND(FRHICommandClearUnorderedAccessViewUint)
         : UnorderedAccessView(InUnorderedAccessView)
     {
         CHECK(InUnorderedAccessView != nullptr);
-        FMemory::Memcpy(Values, InValues, sizeof(Values));
+        Memory::Memcpy(Values, InValues, sizeof(Values));
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)

@@ -730,11 +730,11 @@ void FD3D12CommandContextState::ResetState()
     GraphicsState.VertexBufferCache.Clear();
     GraphicsState.IndexBufferCache.Clear();
 
-    FMemory::Memzero(GraphicsState.BlendFactor, sizeof(GraphicsState.BlendFactor));
-    FMemory::Memzero(GraphicsState.Viewports, sizeof(GraphicsState.Viewports));
+    Memory::Memzero(GraphicsState.BlendFactor, sizeof(GraphicsState.BlendFactor));
+    Memory::Memzero(GraphicsState.Viewports, sizeof(GraphicsState.Viewports));
     GraphicsState.NumViewports = 0;
 
-    FMemory::Memzero(GraphicsState.ScissorRects, sizeof(GraphicsState.ScissorRects));
+    Memory::Memzero(GraphicsState.ScissorRects, sizeof(GraphicsState.ScissorRects));
     GraphicsState.NumScissorRects = 0;
     
     GraphicsState.PipelineState          = nullptr;
@@ -928,9 +928,9 @@ void FD3D12CommandContextState::SetViewports(D3D12_VIEWPORT* Viewports, uint32 N
     CHECK(NumViewports < D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT);
 
     const uint32 ViewportArraySize = sizeof(D3D12_VIEWPORT) * NumViewports;
-    if (GraphicsState.NumViewports != NumViewports || FMemory::Memcmp(GraphicsState.Viewports, Viewports, ViewportArraySize) != 0)
+    if (GraphicsState.NumViewports != NumViewports || Memory::Memcmp(GraphicsState.Viewports, Viewports, ViewportArraySize) != 0)
     {
-        FMemory::Memcpy(GraphicsState.Viewports, Viewports, ViewportArraySize);
+        Memory::Memcpy(GraphicsState.Viewports, Viewports, ViewportArraySize);
 
         GraphicsState.NumViewports   = NumViewports;
         GraphicsState.bBindViewports = true;
@@ -942,9 +942,9 @@ void FD3D12CommandContextState::SetScissorRects(D3D12_RECT* ScissorRects, uint32
     CHECK(NumScissorRects < D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT);
 
     const uint32 ScissorRectArraySize = sizeof(D3D12_RECT) * NumScissorRects;
-    if (GraphicsState.NumScissorRects != NumScissorRects || FMemory::Memcmp(GraphicsState.ScissorRects, ScissorRects, ScissorRectArraySize) != 0)
+    if (GraphicsState.NumScissorRects != NumScissorRects || Memory::Memcmp(GraphicsState.ScissorRects, ScissorRects, ScissorRectArraySize) != 0)
     {
-        FMemory::Memcpy(GraphicsState.ScissorRects, ScissorRects, ScissorRectArraySize);
+        Memory::Memcpy(GraphicsState.ScissorRects, ScissorRects, ScissorRectArraySize);
 
         GraphicsState.NumScissorRects   = NumScissorRects;
         GraphicsState.bBindScissorRects = true;
@@ -953,9 +953,9 @@ void FD3D12CommandContextState::SetScissorRects(D3D12_RECT* ScissorRects, uint32
 
 void FD3D12CommandContextState::SetBlendFactor(const float BlendFactor[4])
 {
-    if (FMemory::Memcmp(GraphicsState.BlendFactor, BlendFactor, sizeof(GraphicsState.BlendFactor)) != 0)
+    if (Memory::Memcmp(GraphicsState.BlendFactor, BlendFactor, sizeof(GraphicsState.BlendFactor)) != 0)
     {
-        FMemory::Memcpy(GraphicsState.BlendFactor, BlendFactor, sizeof(GraphicsState.BlendFactor));
+        Memory::Memcpy(GraphicsState.BlendFactor, BlendFactor, sizeof(GraphicsState.BlendFactor));
         GraphicsState.bBindBlendFactor = true;
     }
 }
@@ -992,9 +992,9 @@ void FD3D12CommandContextState::SetDepthBias(float InDepthBias, float InDepthBia
         InSlopeScaledDepthBias 
     };
     
-    if (FMemory::Memcmp(GraphicsState.DepthBias, NewValues, sizeof(NewValues)) != 0)
+    if (Memory::Memcmp(GraphicsState.DepthBias, NewValues, sizeof(NewValues)) != 0)
     {
-        FMemory::Memcpy(GraphicsState.DepthBias, NewValues, sizeof(NewValues));
+        Memory::Memcpy(GraphicsState.DepthBias, NewValues, sizeof(NewValues));
         GraphicsState.bBindDepthBias = true;
     }
 }
@@ -1016,7 +1016,7 @@ void FD3D12CommandContextState::SetStreamOutputTargets(const TArrayView<FRHIBuff
         }
         else
         {
-            FMemory::Memzero(&GraphicsState.SOBufferViews[Index], sizeof(D3D12_STREAM_OUTPUT_BUFFER_VIEW));
+            Memory::Memzero(&GraphicsState.SOBufferViews[Index], sizeof(D3D12_STREAM_OUTPUT_BUFFER_VIEW));
         }
     }
 
@@ -1036,12 +1036,12 @@ void FD3D12CommandContextState::SetVertexBuffer(FD3D12BufferRHI* VertexBuffer, u
     }
     else
     {
-        FMemory::Memzero(&CurrentVBV);
+        Memory::Memzero(&CurrentVBV);
     }
 
-    if (FMemory::Memcmp(&CurrentVBV, &GraphicsState.VertexBufferCache.VertexBuffers[VertexBufferSlot], sizeof(D3D12_VERTEX_BUFFER_VIEW)) != 0)
+    if (Memory::Memcmp(&CurrentVBV, &GraphicsState.VertexBufferCache.VertexBuffers[VertexBufferSlot], sizeof(D3D12_VERTEX_BUFFER_VIEW)) != 0)
     {
-        FMemory::Memcpy(&GraphicsState.VertexBufferCache.VertexBuffers[VertexBufferSlot], &CurrentVBV, sizeof(D3D12_VERTEX_BUFFER_VIEW));
+        Memory::Memcpy(&GraphicsState.VertexBufferCache.VertexBuffers[VertexBufferSlot], &CurrentVBV, sizeof(D3D12_VERTEX_BUFFER_VIEW));
         GraphicsState.VertexBufferCache.BufferResources[VertexBufferSlot] = VertexBuffer;
 
         const uint8 NumVertexBuffers = uint8(Math::Max<uint32>(GraphicsState.VertexBufferCache.NumVertexBuffers, VertexBufferSlot + 1));
@@ -1061,12 +1061,12 @@ void FD3D12CommandContextState::SetIndexBuffer(FD3D12BufferRHI* IndexBuffer, DXG
     }
     else
     {
-        FMemory::Memzero(&NewIndexBuffer);
+        Memory::Memzero(&NewIndexBuffer);
     }
 
-    if (FMemory::Memcmp(&NewIndexBuffer, &GraphicsState.IndexBufferCache.IndexBuffer, sizeof(D3D12_INDEX_BUFFER_VIEW)) != 0)
+    if (Memory::Memcmp(&NewIndexBuffer, &GraphicsState.IndexBufferCache.IndexBuffer, sizeof(D3D12_INDEX_BUFFER_VIEW)) != 0)
     {
-        FMemory::Memcpy(&GraphicsState.IndexBufferCache.IndexBuffer, &NewIndexBuffer, sizeof(D3D12_INDEX_BUFFER_VIEW));
+        Memory::Memcpy(&GraphicsState.IndexBufferCache.IndexBuffer, &NewIndexBuffer, sizeof(D3D12_INDEX_BUFFER_VIEW));
         GraphicsState.IndexBufferCache.BufferResource = IndexBuffer;
         GraphicsState.bBindIndexBuffer = true;
     }
@@ -1133,9 +1133,9 @@ void FD3D12CommandContextState::SetSampler(FD3D12SamplerStateRHI* SamplerState, 
 void FD3D12CommandContextState::SetShaderConstants(const uint32* ShaderConstants, uint32 NumShaderConstants)
 {
     FD3D12ShaderConstantsCache& ConstantCache = CommonState.ShaderConstantsCache;
-    if (NumShaderConstants != ConstantCache.NumConstants || FMemory::Memcmp(ShaderConstants, ConstantCache.Constants, sizeof(uint32) * NumShaderConstants) != 0)
+    if (NumShaderConstants != ConstantCache.NumConstants || Memory::Memcmp(ShaderConstants, ConstantCache.Constants, sizeof(uint32) * NumShaderConstants) != 0)
     {
-        FMemory::Memcpy(ConstantCache.Constants, ShaderConstants, sizeof(uint32) * NumShaderConstants);
+        Memory::Memcpy(ConstantCache.Constants, ShaderConstants, sizeof(uint32) * NumShaderConstants);
         ConstantCache.NumConstants = NumShaderConstants;
         
         GraphicsState.bBindShaderConstants = true;

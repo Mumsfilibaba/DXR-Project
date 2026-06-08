@@ -68,28 +68,28 @@ bool FWindowsPlatformSystemClipboard::SetText(const FString& InText)
     const SIZE_T CharCount = FCStringWide::Strlen(WidePtr) + 1;
     const SIZE_T ByteCount = CharCount * sizeof(WIDECHAR);
 
-    HGLOBAL Memory = ::GlobalAlloc(GMEM_MOVEABLE, ByteCount);
-    if (!Memory)
+    HGLOBAL GlobalHandle = ::GlobalAlloc(GMEM_MOVEABLE, ByteCount);
+    if (!GlobalHandle)
     {
         ::CloseClipboard();
         return false;
     }
 
-    void* Dest = ::GlobalLock(Memory);
+    void* Dest = ::GlobalLock(GlobalHandle);
     if (!Dest)
     {
-        ::GlobalFree(Memory);
+        ::GlobalFree(GlobalHandle);
         ::CloseClipboard();
         return false;
     }
 
-    FMemory::Memcpy(Dest, WidePtr, ByteCount);
+    Memory::Memcpy(Dest, WidePtr, ByteCount);
 
-    ::GlobalUnlock(Memory);
+    ::GlobalUnlock(GlobalHandle);
 
-    if (!::SetClipboardData(CF_UNICODETEXT, Memory))
+    if (!::SetClipboardData(CF_UNICODETEXT, GlobalHandle))
     {
-        ::GlobalFree(Memory);
+        ::GlobalFree(GlobalHandle);
         ::CloseClipboard();
         return false;
     }

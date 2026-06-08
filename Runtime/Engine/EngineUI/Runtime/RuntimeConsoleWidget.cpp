@@ -643,7 +643,7 @@ void FRuntimeConsoleWidget::HandleKeyPressedEvent(const FKeyEvent& Event)
 
     if (Event.IsDown())
     {
-        const bool bIsEnableKey = Event.GetKey() == EKeys::GraveAccent || Event.GetKey() == EKeys::World1;
+        const bool bIsEnableKey = Event.GetKey() == Keys::GraveAccent || Event.GetKey() == Keys::World1;
         if (!Event.IsRepeat() && bIsEnableKey)
         {
             bIsActive = !bIsActive;

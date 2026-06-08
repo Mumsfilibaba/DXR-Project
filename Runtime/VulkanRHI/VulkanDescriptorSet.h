@@ -44,7 +44,7 @@ struct FVulkanDescriptorSetKey
         }
         
         return Resources.Size() == Other.Resources.Size() ? 
-            FMemory::Memcmp(Resources.Data(), Other.Resources.Data(), Resources.SizeInBytes()) == 0 : false;
+            Memory::Memcmp(Resources.Data(), Other.Resources.Data(), Resources.SizeInBytes()) == 0 : false;
     }
 
     bool operator!=(const FVulkanDescriptorSetKey& Other) const
@@ -100,7 +100,7 @@ struct FVulkanDescriptorPoolInfo
         }
 
         return DescriptorSizes.Size() == Other.DescriptorSizes.Size() ? 
-            FMemory::Memcmp(DescriptorSizes.Data(), Other.DescriptorSizes.Data(), DescriptorSizes.SizeInBytes()) == 0 : false;
+            Memory::Memcmp(DescriptorSizes.Data(), Other.DescriptorSizes.Data(), DescriptorSizes.SizeInBytes()) == 0 : false;
     }
 
     bool operator!=(const FVulkanDescriptorPoolInfo& Other) const
@@ -137,7 +137,7 @@ public:
 
         // Allocate HashKey
         DescriptorSetKey.Resources.Resize(InNumDescriptorWrites);
-        FMemory::Memzero(DescriptorSetKey.Resources.Data(), DescriptorSetKey.Resources.SizeInBytes());
+        Memory::Memzero(DescriptorSetKey.Resources.Data(), DescriptorSetKey.Resources.SizeInBytes());
         DescriptorSetKey.SetLayout = SetLayout;
 
         // Initialize all the types

@@ -272,7 +272,7 @@ public:
     {
         static_assert(sizeof(float) == sizeof(uint32));
         uint32 Bits = 0;
-        FMemory::Memcpy(&Bits, &Value, sizeof(Bits));
+        Memory::Memcpy(&Bits, &Value, sizeof(Bits));
         return Bits;
     }
 
@@ -280,7 +280,7 @@ public:
     static FORCEINLINE float BitsToFloat(uint32 Bits) noexcept
     {
         float Value = 0.0f;
-        FMemory::Memcpy(&Value, &Bits, sizeof(Value));
+        Memory::Memcpy(&Value, &Bits, sizeof(Value));
         return Value;
     }
 
@@ -289,7 +289,7 @@ public:
     {
         static_assert(sizeof(int32) == sizeof(uint32));
         uint32 Bits = 0;
-        FMemory::Memcpy(&Bits, &Value, sizeof(Bits));
+        Memory::Memcpy(&Bits, &Value, sizeof(Bits));
         return Bits;
     }
 
@@ -297,7 +297,7 @@ public:
     static FORCEINLINE int32 BitsToInt(uint32 Bits) noexcept
     {
         int32 Value = 0;
-        FMemory::Memcpy(&Value, &Bits, sizeof(Value));
+        Memory::Memcpy(&Value, &Bits, sizeof(Value));
         return Value;
     }
 

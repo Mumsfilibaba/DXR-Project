@@ -40,7 +40,7 @@ static void CreateMalloc()
     CHECK(GMalloc != nullptr);
 }
 
-void* FMemory::Malloc(uint64 Size) noexcept
+void* Memory::Malloc(uint64 Size) noexcept
 {
     if (!GMalloc)
     {
@@ -57,7 +57,7 @@ void* FMemory::Malloc(uint64 Size) noexcept
     return Result;
 }
 
-void* FMemory::Realloc(void* Block, uint64 Size) noexcept
+void* Memory::Realloc(void* Block, uint64 Size) noexcept
 {
     if (!GMalloc)
     {
@@ -74,7 +74,7 @@ void* FMemory::Realloc(void* Block, uint64 Size) noexcept
     return Result;
 }
 
-void FMemory::Free(void* Block) noexcept
+void Memory::Free(void* Block) noexcept
 {
     if (!GMalloc)
     {
@@ -90,32 +90,32 @@ void FMemory::Free(void* Block) noexcept
     GMalloc->Free(Block);
 }
 
-void* FMemory::Memset(void* Dst, uint8 Value, uint64 Size) noexcept
+void* Memory::Memset(void* Dst, uint8 Value, uint64 Size) noexcept
 {
     return ::memset(Dst, static_cast<int>(Value), Size);
 }
 
-void* FMemory::Memzero(void* Dst, uint64 Size) noexcept
+void* Memory::Memzero(void* Dst, uint64 Size) noexcept
 {
     return ::memset(Dst, 0, Size);
 }
 
-void* FMemory::Memcpy(void* RESTRICT Dst, const void* RESTRICT Src, uint64 Size) noexcept
+void* Memory::Memcpy(void* RESTRICT Dst, const void* RESTRICT Src, uint64 Size) noexcept
 {
     return ::memcpy(Dst, Src, Size);
 }
 
-void* FMemory::Memmove(void* Dst, const void* Src, uint64 Size) noexcept
+void* Memory::Memmove(void* Dst, const void* Src, uint64 Size) noexcept
 {
     return ::memmove(Dst, Src, Size);
 }
 
-int32 FMemory::Memcmp(const void* LHS, const void* RHS, uint64 Size)  noexcept
+int32 Memory::Memcmp(const void* LHS, const void* RHS, uint64 Size)  noexcept
 {
     return ::memcmp(LHS, RHS, Size);
 }
 
-void FMemory::Memswap(void* RESTRICT LHS, void* RESTRICT RHS, uint64 Size) noexcept
+void Memory::Memswap(void* RESTRICT LHS, void* RESTRICT RHS, uint64 Size) noexcept
 {
     CHECK(LHS != nullptr && RHS != nullptr);
 

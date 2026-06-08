@@ -284,7 +284,7 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
     Constants.ViewY              = ViewY;
     Constants.TargetWidth        = TargetWidth;
     Constants.TargetHeight       = TargetHeight;
-    Constants.bIsOutputSceneTarget = (RenderTarget->GetDesc().Format == FGlobalTextureFormats::SceneTargetFormat) ? 1 : 0;
+    Constants.bIsOutputSceneTarget = (RenderTarget->GetDesc().Format == RendererTextureFormats::SceneTargetFormat) ? 1 : 0;
 
     constexpr uint32 NumConstants = sizeof(FDebugViewConstants) / sizeof(uint32);
     CommandList.SetShaderConstants(DebugPixelShader.Get(), &Constants, NumConstants);

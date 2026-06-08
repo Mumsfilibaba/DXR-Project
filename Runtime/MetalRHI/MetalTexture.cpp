@@ -139,7 +139,7 @@ bool FMetalTextureRHI::Initialize(EResourceAccess InInitialAccess, const IRHITex
                     const NSUInteger SlicePitch  = NSUInteger(InInitialData->GetMipSlicePitch(Index));
                     
                     // Set the data in the stagingbuffer
-                    FMemory::Memcpy(StagingBufferContents + SourceOffset, InInitialData->GetMipData(Index), SlicePitch);
+                    Memory::Memcpy(StagingBufferContents + SourceOffset, InInitialData->GetMipData(Index), SlicePitch);
                     
                     // Perform copy of the staginbuffer into the GPU memory
                     [CopyEncoder copyFromBuffer:StagingBuffer

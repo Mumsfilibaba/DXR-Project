@@ -2,20 +2,27 @@
 #include "Core/Core.h"
 #include "Core/Containers/StringView.h"
 
-class CORE_API FCommandLine
+class CORE_API CommandLine
 {
 public:
     static constexpr uint64 MaxCommandLineLength = 1024;
 
     static bool Initialize(const CHAR** Args, int32 NumArgs);
 
-    static bool Parse(const CHAR* Value);
-    static bool Parse(const CHAR* Value, FStringView& OutValue);
+    static bool FindOption(const CHAR* Value);
+    static bool FindOption(const CHAR* Value, FStringView& OutValue);
 
-    static FORCEINLINE const CHAR* Get()         { return CommandLine; } 
-    static FORCEINLINE const CHAR* GetOriginal() { return OriginalCommandLine; }
+    static FORCEINLINE const CHAR* Get()
+    {
+        return CommandLineBuffer;
+    }
+
+    static FORCEINLINE const CHAR* GetOriginal()
+    {
+        return OriginalCommandLine;
+    }
 
 private:
-    static CHAR CommandLine[MaxCommandLineLength];
+    static CHAR CommandLineBuffer[MaxCommandLineLength];
     static CHAR OriginalCommandLine[MaxCommandLineLength];
 };

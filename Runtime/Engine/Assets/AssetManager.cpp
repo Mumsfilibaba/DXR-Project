@@ -1,4 +1,5 @@
 #include "Core/Platform/PlatformFile.h"
+#include "Core/Filesystem/File.h"
 #include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Misc/OutputDeviceLogger.h"
@@ -35,8 +36,8 @@ FAssetRegistry::FAssetRegistry()
     : RegistryMap()
     , RegistryFilename()
 {
-    const FString AssetPath   = FPaths::GetAssetDir();
-    const FString ProjectName = FPaths::GetProjectName();
+    const FString AssetPath   = Paths::GetAssetDir();
+    const FString ProjectName = Paths::GetProjectName();
     RegistryFilename = AssetPath + "/" + ProjectName + ".assetregistry";
 }
 
@@ -65,14 +66,14 @@ void FAssetRegistry::LoadRegistryFile()
 {
     TArray<CHAR> FileContents;
     {
-        TFileRef<IPlatformFile> File = FPlatformFile::OpenForRead(RegistryFilename);
-        if (!File)
+        TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(RegistryFilename);
+        if (!FileHandle)
         {
             return;
         }
 
         // Read the full file
-        if (!FFileHelpers::ReadTextFile(File.Get(), FileContents))
+        if (!File::ReadTextFile(FileHandle.Get(), FileContents))
         {
             return;
         }
@@ -86,7 +87,7 @@ void FAssetRegistry::LoadRegistryFile()
             ++Start;
 
         CHAR* LineStart = Start;
-        FParse::ParseLine(&Start);
+        Parse::ParseLine(&Start);
 
         // End string at the end of line
         if (*Start == '\n')
@@ -95,7 +96,7 @@ void FAssetRegistry::LoadRegistryFile()
         }
 
         // Skip any spaces at the beginning of the line
-        FParse::ParseWhiteSpace(&LineStart);
+        Parse::ParseWhiteSpace(&LineStart);
         
         if (CHAR* EqualSign = FCString::Strchr(LineStart, '='))
         {
@@ -109,7 +110,7 @@ void FAssetRegistry::LoadRegistryFile()
             CHAR* Key = LineStart;
             LineStart = EqualSign + 1;
             
-            FParse::ParseWhiteSpace(&LineStart);
+            Parse::ParseWhiteSpace(&LineStart);
 
             // Find the end of the value
             CHAR* Value    = LineStart;
@@ -140,14 +141,14 @@ void FAssetRegistry::UpdateRegistryFile()
     }
 
     {
-        TFileRef<IPlatformFile> File = FPlatformFile::OpenForWrite(RegistryFilename);
-        if (!File)
+        TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForWrite(RegistryFilename);
+        if (!FileHandle)
         {
             return;
         }
 
         // Write the full file
-        if (!FFileHelpers::WriteTextFile(File.Get(), FileContents))
+        if (!File::WriteTextFile(FileHandle.Get(), FileContents))
         {
             return;
         }

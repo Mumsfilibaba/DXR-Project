@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Containers/String.h"
 
-struct CORE_API FPaths
+struct CORE_API Paths
 {
     static FString GetEngineDir();
 

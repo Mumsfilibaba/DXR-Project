@@ -72,7 +72,7 @@ FVulkanInputLayoutRHI::FVulkanInputLayoutRHI(const TArray<FRHIInputElementDesc>&
     }
 
     // VertexInputStateCreateInfo
-    FMemory::Memzero(&CreateInfo);
+    Memory::Memzero(&CreateInfo);
     CreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     
     if (!VertexInputBindingDescriptions.IsEmpty())
@@ -110,7 +110,7 @@ uint32 FVulkanInputLayoutRHI::GetNumInputElementDescs() const
 FVulkanDepthStencilStateRHI::FVulkanDepthStencilStateRHI(const FRHIDepthStencilStateDesc& InDesc)
     : FRHIDepthStencilState(InDesc)
 {
-    FMemory::Memzero(&CreateInfo);
+    Memory::Memzero(&CreateInfo);
     
     CreateInfo.sType                 = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     CreateInfo.depthTestEnable       = InDesc.bDepthEnable;
@@ -140,7 +140,7 @@ FVulkanRasterizerStateRHI::FVulkanRasterizerStateRHI(FVulkanDevice* InDevice, co
     : FRHIRasterizerState(InDesc)
     , FVulkanDeviceChild(InDevice)
 {
-    FMemory::Memzero(&CreateInfo);
+    Memory::Memzero(&CreateInfo);
     
     CreateInfo.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     CreateInfo.rasterizerDiscardEnable = VK_FALSE;
@@ -156,7 +156,7 @@ FVulkanRasterizerStateRHI::FVulkanRasterizerStateRHI(FVulkanDevice* InDevice, co
     CreateInfo.depthClampEnable = (!InDesc.bDepthClipEnable && GVulkanSupportsDepthClamp) ? VK_TRUE : VK_FALSE;
     
 #if VK_EXT_depth_clip_enable
-    FMemory::Memzero(&DepthClipStateCreateInfo);
+    Memory::Memzero(&DepthClipStateCreateInfo);
 
     DepthClipStateCreateInfo.sType           = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_DEPTH_CLIP_STATE_CREATE_INFO_EXT;
     DepthClipStateCreateInfo.depthClipEnable = InDesc.bDepthClipEnable ? VK_TRUE : VK_FALSE;
@@ -170,7 +170,7 @@ FVulkanRasterizerStateRHI::FVulkanRasterizerStateRHI(FVulkanDevice* InDevice, co
 #if VK_EXT_conservative_rasterization
     if (GVulkanSupportsConservativeRasterization)
     {
-        FMemory::Memzero(&ConservativeStateCreateInfo);
+        Memory::Memzero(&ConservativeStateCreateInfo);
         ConservativeStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_CONSERVATIVE_STATE_CREATE_INFO_EXT;
         
         if (InDesc.bEnableConservativeRaster)
@@ -214,7 +214,7 @@ void* FVulkanRasterizerStateRHI::GetRHINativeState() const
 FVulkanBlendStateRHI::FVulkanBlendStateRHI(const FRHIBlendStateDesc& InDesc)
     : FRHIBlendState(InDesc)
 {
-    FMemory::Memzero(&CreateInfo);
+    Memory::Memzero(&CreateInfo);
 
     // NOTE: Blend constants are configured as dynamic state
     CreateInfo.sType           = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -452,7 +452,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
     }
     else
     {
-        FMemory::Memzero(&VertexInputStateCreateInfo, sizeof(VkPipelineVertexInputStateCreateInfo));
+        Memory::Memzero(&VertexInputStateCreateInfo, sizeof(VkPipelineVertexInputStateCreateInfo));
         VertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     }
 
@@ -845,7 +845,7 @@ bool FVulkanPipelineStateManager::SaveCacheData()
     }
 
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const FString PipelineCacheFilepath = FPaths::GetAssetDir() + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
 
     TFileRef<IPlatformFile> CacheFile = FPlatformFile::OpenForWrite(PipelineCacheFilepath);
     if (!CacheFile)
@@ -876,9 +876,9 @@ bool FVulkanPipelineStateManager::SaveCacheData()
         }
 
         FVulkanPipelineDataHeader DataHeader;
-        FMemory::Memzero(&DataHeader, sizeof(FVulkanPipelineDataHeader));
+        Memory::Memzero(&DataHeader, sizeof(FVulkanPipelineDataHeader));
 
-        FMemory::Memcpy(DataHeader.Magic, "VKPSO", sizeof(DataHeader.Magic));
+        Memory::Memcpy(DataHeader.Magic, "VKPSO", sizeof(DataHeader.Magic));
         DataHeader.DataCRC  = CRC32::Generate(PipelineCacheData.Get(), PipelineCacheSize);
         DataHeader.DataSize = PipelineCacheSize;
 
@@ -923,13 +923,13 @@ void FVulkanPipelineStateManager::SaveCacheDataAsync()
     }
 
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const FString PipelineCacheFilepath = FPaths::GetAssetDir() + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
 
     TUniquePtr<uint8[]> SerializedData;
     size_t SerializedSize = 0;
 
     FVulkanPipelineDataHeader DataHeader;
-    FMemory::Memzero(&DataHeader, sizeof(FVulkanPipelineDataHeader));
+    Memory::Memzero(&DataHeader, sizeof(FVulkanPipelineDataHeader));
 
     {
         TScopedLock Lock(PipelineCacheCS);
@@ -954,7 +954,7 @@ void FVulkanPipelineStateManager::SaveCacheDataAsync()
 
     LastSaveTimestamp = CurrentTime;
 
-    FMemory::Memcpy(DataHeader.Magic, "VKPSO", sizeof(DataHeader.Magic));
+    Memory::Memcpy(DataHeader.Magic, "VKPSO", sizeof(DataHeader.Magic));
     DataHeader.DataCRC  = CRC32::Generate(SerializedData.Get(), SerializedSize);
     DataHeader.DataSize = SerializedSize;
 
@@ -977,7 +977,7 @@ void FVulkanPipelineStateManager::SaveCacheDataAsync()
 bool FVulkanPipelineStateManager::LoadCacheFromFile()
 {
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const FString PipelineCacheFilepath = FPaths::GetAssetDir() + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
     
     TFileRef<IPlatformFile> CacheFile = FPlatformFile::OpenForRead(PipelineCacheFilepath);
     if (!CacheFile)
@@ -995,7 +995,7 @@ bool FVulkanPipelineStateManager::LoadCacheFromFile()
     }
 
     // Validate that the file is valid
-    if (FMemory::Memcmp(DataHeader.Magic, "VKPSO", sizeof(DataHeader.Magic)) != 0)
+    if (Memory::Memcmp(DataHeader.Magic, "VKPSO", sizeof(DataHeader.Magic)) != 0)
     {
         VULKAN_WARNING("Invalid PipelineCacheHeader");
         return false;
@@ -1047,14 +1047,14 @@ bool FVulkanPipelineStateManager::LoadCacheFromFile()
     }
     
     constexpr uint64 UUIDSize = sizeof(DeviceProperties.pipelineCacheUUID);
-    if (FMemory::Memcpy(Header->UUID, DeviceProperties.pipelineCacheUUID, UUIDSize) == 0)
+    if (Memory::Memcpy(Header->UUID, DeviceProperties.pipelineCacheUUID, UUIDSize) == 0)
     {
         VULKAN_WARNING("PipelineCacheHeader contains invalid UUID");
         return false;
     }
     
     VkPipelineCacheCreateInfo CreateInfo;
-    FMemory::Memzero(&CreateInfo);
+    Memory::Memzero(&CreateInfo);
     
     CreateInfo.sType           = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
     CreateInfo.pInitialData    = PipelineCacheData.Get();

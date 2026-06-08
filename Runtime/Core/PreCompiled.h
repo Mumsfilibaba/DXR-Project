@@ -40,6 +40,8 @@
 #include "Core/Delegates/MulticastDelegate.h"
 #include "Core/Delegates/MulticastDelegateBase.h"
 
+#include "Core/Filesystem/File.h"
+
 #include "Core/Generic/GenericConditionVariable.h"
 #include "Core/Generic/GenericCriticalSection.h"
 #include "Core/Generic/GenericEvent.h"
@@ -138,8 +140,8 @@
 
 #include "Core/Modules/ModuleManager.h"
 
-#include "Core/Templates/ArrayContainerHelper.h"
-#include "Core/Templates/BitHelper.h"
+#include "Core/Templates/ArrayContainer.h"
+#include "Core/Templates/Bits.h"
 #include "Core/Templates/BitReference.h"
 #include "Core/Templates/CString.h"
 #include "Core/Templates/Functional.h"

@@ -97,7 +97,7 @@ public:
         : ArraySize(0)
         , ArrayMax(0)
     {
-        InitializeByCopy(FArrayContainerHelper::Data(Other), FArrayContainerHelper::Size(Other), 0);
+        InitializeByCopy(ArrayContainer::Data(Other), ArrayContainer::Size(Other), 0);
     }
 
     /** 
@@ -119,7 +119,7 @@ public:
         : ArraySize(0)
         , ArrayMax(0)
     {
-        InitializeByCopy(FArrayContainerHelper::Data(InitList), FArrayContainerHelper::Size(InitList), 0);
+        InitializeByCopy(ArrayContainer::Data(InitList), ArrayContainer::Size(InitList), 0);
     }
 
     /** 
@@ -212,7 +212,7 @@ public:
     template<typename ArrayType>
     FORCEINLINE void Reset(const ArrayType& InputArray) requires(TIsTArrayType<ArrayType>::Value)
     {
-        Reset(FArrayContainerHelper::Data(InputArray), FArrayContainerHelper::Size(InputArray));
+        Reset(ArrayContainer::Data(InputArray), ArrayContainer::Size(InputArray));
     }
 
     /**
@@ -230,7 +230,7 @@ public:
      */
     FORCEINLINE void Reset(std::initializer_list<ElementType> InitList)
     {
-        Reset(FArrayContainerHelper::Data(InitList), FArrayContainerHelper::Size(InitList));
+        Reset(ArrayContainer::Data(InitList), ArrayContainer::Size(InitList));
     }
 
     /** 
@@ -459,7 +459,7 @@ public:
      */
     FORCEINLINE void Insert(SizeType Position, std::initializer_list<ElementType> InitList)
     {
-        Insert(Position, FArrayContainerHelper::Data(InitList), FArrayContainerHelper::Size(InitList));
+        Insert(Position, ArrayContainer::Data(InitList), ArrayContainer::Size(InitList));
     }
 
     /**
@@ -470,7 +470,7 @@ public:
     template<typename ArrayType>
     FORCEINLINE void Insert(SizeType Position, const ArrayType& InArray) requires(TIsTArrayType<ArrayType>::Value)
     {
-        Insert(Position, FArrayContainerHelper::Data(InArray), FArrayContainerHelper::Size(InArray));
+        Insert(Position, ArrayContainer::Data(InArray), ArrayContainer::Size(InArray));
     }
 
     /**
@@ -515,7 +515,7 @@ public:
     template<typename ArrayType>
     FORCEINLINE void Append(const ArrayType& Other) requires(TIsTArrayType<ArrayType>::Value)
     {
-        Append(FArrayContainerHelper::Data(Other), FArrayContainerHelper::Size(Other));
+        Append(ArrayContainer::Data(Other), ArrayContainer::Size(Other));
     }
 
     /**
@@ -524,7 +524,7 @@ public:
      */
     FORCEINLINE void Append(std::initializer_list<ElementType> InitList)
     {
-        Append(FArrayContainerHelper::Data(InitList), FArrayContainerHelper::Size(InitList));
+        Append(ArrayContainer::Data(InitList), ArrayContainer::Size(InitList));
     }
 
     /**
@@ -1230,7 +1230,7 @@ public:
     template<typename ArrayType>
     NODISCARD bool operator==(const ArrayType& Other) const requires(TIsTArrayType<ArrayType>::Value)
     {
-        return ArraySize == FArrayContainerHelper::Size(Other) ? ::CompareObjects<ElementType>(Allocator.GetAllocation(), FArrayContainerHelper::Data(Other), ArraySize) : false;
+        return ArraySize == ArrayContainer::Size(Other) ? ::CompareObjects<ElementType>(Allocator.GetAllocation(), ArrayContainer::Data(Other), ArraySize) : false;
     }
 
     /**
@@ -1274,7 +1274,7 @@ public:
     template<typename ArrayType>
     FORCEINLINE TArray& operator+=(const ArrayType& Other) requires(TIsTArrayType<ArrayType>::Value)
     {
-        Append(FArrayContainerHelper::Data(Other), FArrayContainerHelper::Size(Other));
+        Append(ArrayContainer::Data(Other), ArrayContainer::Size(Other));
         return *this;
     }
 
@@ -1285,7 +1285,7 @@ public:
      */
     FORCEINLINE TArray& operator+=(std::initializer_list<ElementType> InitList)
     {
-        Append(FArrayContainerHelper::Data(InitList), FArrayContainerHelper::Size(InitList));
+        Append(ArrayContainer::Data(InitList), ArrayContainer::Size(InitList));
         return *this;
     }
 

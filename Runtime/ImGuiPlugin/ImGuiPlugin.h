@@ -29,7 +29,7 @@ public:
     FImGuiPlugin();
     virtual ~FImGuiPlugin();
 
-    // FModuleInterface Interface
+    // IModule Interface
     virtual bool Load() override final;
     virtual bool Unload() override final;
 

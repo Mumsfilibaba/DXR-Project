@@ -40,7 +40,7 @@ struct FImGuiTexture
     bool                      bEnableLinearSampler = false;
 };
 
-struct IImguiPlugin : public FModuleInterface
+struct IImguiPlugin : public IModule
 {
     // This ensures that the plugin is actually loaded
     static bool IsEnabled()

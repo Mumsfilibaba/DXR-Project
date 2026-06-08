@@ -16,7 +16,7 @@ FORCEINLINE void DefaultConstructObjects(void* StartAddress, SizeType Count) noe
     if constexpr (TIsTrivial<ObjectType>::Value)
     {
     #if MEMZERO_TRIVIAL_OBJECTS
-        FMemory::Memzero(StartAddress, sizeof(ObjectType) * Count);
+        Memory::Memzero(StartAddress, sizeof(ObjectType) * Count);
     #endif
     }
     else
@@ -37,7 +37,7 @@ FORCEINLINE void DefaultConstructObject(void* Address) noexcept
     if constexpr (TIsTrivial<ObjectType>::Value)
     {
     #if MEMZERO_TRIVIAL_OBJECTS
-        FMemory::Memzero(Address, sizeof(ObjectType));
+        Memory::Memzero(Address, sizeof(ObjectType));
     #endif
     }
     else
@@ -52,7 +52,7 @@ FORCEINLINE void ConstructObjectsFrom(void* RESTRICT StartAddress, SizeType Coun
     constexpr bool bObjectFitInByte = sizeof(ObjectType) == sizeof(uint8);
     if constexpr(TIsTrivial<ObjectType>::Value && bObjectFitInByte)
     {
-        FMemory::Memset(StartAddress, static_cast<uint8>(Object), sizeof(ObjectType) * Count);
+        Memory::Memset(StartAddress, static_cast<uint8>(Object), sizeof(ObjectType) * Count);
     }
     else
     {
@@ -72,7 +72,7 @@ FORCEINLINE void ConstructObjectsFrom(void* RESTRICT StartAddress, SizeType Coun
     constexpr bool bObjectFitInByte = sizeof(ObjectType) == sizeof(uint8);
     if constexpr(TIsTrivial<ObjectType>::Value && bObjectFitInByte)
     {
-        FMemory::Memset(StartAddress, static_cast<uint8>(::Forward<ObjectType>(Object)), sizeof(ObjectType) * Count);
+        Memory::Memset(StartAddress, static_cast<uint8>(::Forward<ObjectType>(Object)), sizeof(ObjectType) * Count);
     }
     else
     {
@@ -91,7 +91,7 @@ FORCEINLINE void CopyConstructObjects(void* RESTRICT StartAddress, const ObjectT
 {
     if constexpr (TIsTrivial<ObjectType>::Value)
     {
-        FMemory::Memcpy(StartAddress, Source, sizeof(ObjectType) * Count);
+        Memory::Memcpy(StartAddress, Source, sizeof(ObjectType) * Count);
     }
     else
     {
@@ -111,7 +111,7 @@ FORCEINLINE void CopyConstructObject(void* const RESTRICT Address, const ObjectT
 {
     if constexpr (TIsTrivial<ObjectType>::Value)
     {
-        FMemory::Memcpy(Address, Source, sizeof(ObjectType));
+        Memory::Memcpy(Address, Source, sizeof(ObjectType));
     }
     else
     {
@@ -124,7 +124,7 @@ FORCEINLINE void CopyAssignObjects(ObjectType* RESTRICT Destination, const Objec
 {
     if constexpr (TIsTrivial<ObjectType>::Value)
     {
-        FMemory::Memcpy(Destination, Source, sizeof(ObjectType) * Count);
+        Memory::Memcpy(Destination, Source, sizeof(ObjectType) * Count);
     }
     else
     {
@@ -143,7 +143,7 @@ FORCEINLINE void CopyAssignObject(ObjectType* RESTRICT Destination, const Object
 {
     if constexpr (TIsTrivial<ObjectType>::Value)
     {
-        FMemory::Memcpy(Destination, Source, sizeof(ObjectType));
+        Memory::Memcpy(Destination, Source, sizeof(ObjectType));
     }
     else
     {
@@ -156,7 +156,7 @@ FORCEINLINE void MoveConstructObjects(void* StartAddress, const ObjectType* Sour
 {
     if constexpr (TIsReallocatable<ObjectType>::Value)
     {
-        FMemory::Memexchange(StartAddress, Source, sizeof(ObjectType) * Count);
+        Memory::Memexchange(StartAddress, Source, sizeof(ObjectType) * Count);
     }
     else
     {
@@ -176,7 +176,7 @@ FORCEINLINE void MoveConstructObject(void* Address, const ObjectType* Source) no
 {
     if constexpr (TIsReallocatable<ObjectType>::Value)
     {
-        FMemory::Memexchange(Address, Source, sizeof(ObjectType));
+        Memory::Memexchange(Address, Source, sizeof(ObjectType));
     }
     else
     {
@@ -189,7 +189,7 @@ FORCEINLINE void MoveAssignObjects(ObjectType* Destination, const ObjectType* So
 {
     if constexpr(TIsReallocatable<ObjectType>::Value)
     {
-        FMemory::Memexchange(Destination, Source, sizeof(ObjectType) * Count);
+        Memory::Memexchange(Destination, Source, sizeof(ObjectType) * Count);
     }
     else
     {
@@ -208,7 +208,7 @@ FORCEINLINE void MoveAssignObject(ObjectType* Destination, const ObjectType* Sou
 {
     if constexpr(TIsReallocatable<ObjectType>::Value)
     {
-        FMemory::Memexchange(Destination, Source, sizeof(ObjectType));
+        Memory::Memexchange(Destination, Source, sizeof(ObjectType));
     }
     else
     {
@@ -248,7 +248,7 @@ FORCEINLINE void RelocateObjects(void* StartAddress, ObjectType* Source, SizeTyp
 
     if constexpr (TIsReallocatable<ObjectType>::Value)
     {
-        FMemory::Memmove(StartAddress, Source, sizeof(ObjectType) * Count);
+        Memory::Memmove(StartAddress, Source, sizeof(ObjectType) * Count);
     }
     else
     {
@@ -321,7 +321,7 @@ FORCEINLINE bool CompareObjects(const ObjectType* LHS, const ObjectType* RHS, Si
 {
     if constexpr (TIsTrivial<ObjectType>::Value)
     {
-        return FMemory::Memcmp(LHS, RHS, sizeof(ObjectType) * Count) == 0;
+        return Memory::Memcmp(LHS, RHS, sizeof(ObjectType) * Count) == 0;
     }
     else
     {
@@ -345,7 +345,7 @@ FORCEINLINE void AssignObjects(ObjectType* RESTRICT Dst, const ObjectType& Eleme
     constexpr bool bObjectFitInByte = sizeof(ObjectType) == sizeof(uint8);
     if constexpr (TIsTrivial<ObjectType>::Value && bObjectFitInByte)
     {
-        FMemory::Memset(Dst, static_cast<uint8>(Element), sizeof(ObjectType) * Count);
+        Memory::Memset(Dst, static_cast<uint8>(Element), sizeof(ObjectType) * Count);
     }
     else
     {
@@ -364,7 +364,7 @@ FORCEINLINE ObjectType* AssignObjectsAndReturn(ObjectType* RESTRICT Dst, const O
     constexpr bool bObjectFitInByte = sizeof(ObjectType) == sizeof(uint8);
     if constexpr(TIsTrivial<ObjectType>::Value && bObjectFitInByte)
     {
-        return reinterpret_cast<ObjectType*>(FMemory::Memset(Dst, static_cast<uint8>(Element), sizeof(ObjectType) * Count));
+        return reinterpret_cast<ObjectType*>(Memory::Memset(Dst, static_cast<uint8>(Element), sizeof(ObjectType) * Count));
     }
     else
     {

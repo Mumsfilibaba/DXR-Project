@@ -670,7 +670,7 @@ void FVulkanCommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTa
         BarrierBatcher.FlushBarriers(GetCommandBuffer());
 
         VkClearColorValue VulkanClearColor;
-        FMemory::Memcpy(VulkanClearColor.float32, ClearColor.XYZW, sizeof(VulkanClearColor.float32));
+        Memory::Memcpy(VulkanClearColor.float32, ClearColor.XYZW, sizeof(VulkanClearColor.float32));
 
         GetCommandBuffer()->ClearColorImage(
             ImageViewInfo.Image, 
@@ -754,7 +754,7 @@ void FVulkanCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessVie
     CHECK(VulkanUnorderedAccessView != nullptr);
     
     VkClearColorValue VulkanClearColor;
-    FMemory::Memcpy(VulkanClearColor.float32, ClearColor.XYZW, sizeof(VulkanClearColor.float32));
+    Memory::Memcpy(VulkanClearColor.float32, ClearColor.XYZW, sizeof(VulkanClearColor.float32));
 
     const FVulkanResourceView::EType Type = VulkanUnorderedAccessView->GetType();
     if (Type == FVulkanResourceView::EType::ImageView)
@@ -772,7 +772,7 @@ void FVulkanCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessVie
     else if (Type == FVulkanResourceView::EType::StructuredBufferView)
     {
         uint32 FillData;
-        FMemory::Memcpy(&FillData, &ClearColor.X, sizeof(uint32));
+        Memory::Memcpy(&FillData, &ClearColor.X, sizeof(uint32));
         
         BarrierBatcher.FlushBarriers(GetCommandBuffer());
 
@@ -786,7 +786,7 @@ void FVulkanCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessVie
     else if (Type == FVulkanResourceView::EType::TypedBufferView)
     {
         uint32 FillData;
-        FMemory::Memcpy(&FillData, &ClearColor.X, sizeof(uint32));
+        Memory::Memcpy(&FillData, &ClearColor.X, sizeof(uint32));
         
         BarrierBatcher.FlushBarriers(GetCommandBuffer());
         
@@ -812,7 +812,7 @@ void FVulkanCommandContext::ClearUnorderedAccessViewUint(FRHIUnorderedAccessView
     if (Type == FVulkanResourceView::EType::ImageView)
     {
         VkClearColorValue VulkanClearColor;
-        FMemory::Memcpy(VulkanClearColor.uint32, Values, sizeof(VulkanClearColor.uint32));
+        Memory::Memcpy(VulkanClearColor.uint32, Values, sizeof(VulkanClearColor.uint32));
 
         const FVulkanResourceView::FImageView& ImageViewInfo = VulkanUnorderedAccessView->GetImageViewInfo();
         GetCommandBuffer()->ClearColorImage(
@@ -1055,7 +1055,7 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
             NewLocation);
         CHECK(MappedMemory != nullptr);
 
-        FMemory::Memcpy(MappedMemory, SrcData, BufferRegion.Size);
+        Memory::Memcpy(MappedMemory, SrcData, BufferRegion.Size);
         VulkanBuffer->GetMemoryLocation().Swap(NewLocation);
         VulkanBuffer->ResourceRelocated(&VulkanBuffer->GetMemoryLocation());
     }
@@ -1068,7 +1068,7 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
             return;
         }
 
-        FMemory::Memcpy(BufferData, SrcData, BufferRegion.Size);
+        Memory::Memcpy(BufferData, SrcData, BufferRegion.Size);
         VulkanBuffer->Unmap(BufferRegion.Offset, BufferRegion.Size);
     }
     else
@@ -1081,7 +1081,7 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
             UploadLocation);
         CHECK(MappedMemory != nullptr);
 
-        FMemory::Memcpy(MappedMemory, SrcData, BufferRegion.Size);
+        Memory::Memcpy(MappedMemory, SrcData, BufferRegion.Size);
         
         VkBufferCopy BufferCopy = {};
         BufferCopy.srcOffset = UploadLocation.GetBufferOffset();
@@ -1123,7 +1123,7 @@ void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegi
 
     for (uint64 y = 0; y < NumRows; y++)
     {
-        FMemory::Memcpy(UploadMemory, Source, RowPitch);
+        Memory::Memcpy(UploadMemory, Source, RowPitch);
         Source       += SrcRowPitch;
         UploadMemory += RowPitch;
     }
@@ -1177,7 +1177,7 @@ void FVulkanCommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegi
         const uint8* SliceSource = Source + z * SrcDepthPitch;
         for (uint32 y = 0; y < NumRows; y++)
         {
-            FMemory::Memcpy(UploadMemory, SliceSource, RowPitch);
+            Memory::Memcpy(UploadMemory, SliceSource, RowPitch);
             SliceSource  += SrcRowPitch;
             UploadMemory += RowPitch;
         }
@@ -1283,7 +1283,7 @@ void FVulkanCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
     for (uint32 MipLevel = 0; MipLevel < TextureDesc.NumMipLevels; MipLevel++)
     {
         VkImageCopy& ImageCopy = ImageCopies[MipLevel];
-        FMemory::Memzero(&ImageCopy, sizeof(ImageCopy));
+        Memory::Memzero(&ImageCopy, sizeof(ImageCopy));
     
         ImageCopy.extent.width                  = Math::Max<uint32>(TextureDesc.Extent.X >> MipLevel, 1u);
         ImageCopy.extent.height                 = Math::Max<uint32>(TextureDesc.Extent.Y >> MipLevel, 1u);
@@ -1346,7 +1346,7 @@ void FVulkanCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src
         for (uint32 MipLevel = 0; MipLevel < CopyDesc.NumMipLevels; MipLevel++)
         {
             VkImageCopy& CopyInfo = ImageCopy[MipLevel];
-            FMemory::Memzero(&CopyInfo, sizeof(CopyInfo));
+            Memory::Memzero(&CopyInfo, sizeof(CopyInfo));
             
             // Describe the source subresource
             CopyInfo.srcSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());

@@ -77,7 +77,7 @@ public:
     bool IsValid()        const { return LocationType != EVulkanMemoryLocationType::Unknown; }
     bool IsSuballocated() const { return LocationType == EVulkanMemoryLocationType::Suballocated; }
 
-    FORCEINLINE VkDeviceMemory            GetMemory()            const { return Memory; }
+    FORCEINLINE VkDeviceMemory            GetMemory()            const { return DeviceMemory; }
     FORCEINLINE VkDeviceSize              GetMemoryOffset()      const { return MemoryOffset; }
     FORCEINLINE VkBuffer                  GetBackingBuffer()     const { return BackingBuffer; }
     FORCEINLINE VkDeviceSize              GetBufferOffset()      const { return BufferOffset; }
@@ -101,7 +101,7 @@ public:
     FORCEINLINE const FVulkanPoolAllocatorAllocationData&  GetPoolAllocationData()  const { return AllocationData.Pool; }
     FORCEINLINE const FVulkanBuddyAllocatorAllocationData& GetBuddyAllocationData() const { return AllocationData.Buddy; }
 
-    FORCEINLINE void SetMemory(VkDeviceMemory InMemory)                { Memory = InMemory; }
+    FORCEINLINE void SetMemory(VkDeviceMemory InMemory)                { DeviceMemory = InMemory; }
     FORCEINLINE void SetMemoryOffset(VkDeviceSize InOffset)            { MemoryOffset = InOffset; }
     FORCEINLINE void SetBackingBuffer(VkBuffer InBuffer)               { BackingBuffer = InBuffer; }
     FORCEINLINE void SetBufferOffset(VkDeviceSize InOffset)            { BufferOffset = InOffset; }
@@ -127,7 +127,7 @@ public:
     FORCEINLINE void SetBuddyAllocationData(const FVulkanBuddyAllocatorAllocationData& InData) { AllocationData.Buddy = InData; }
 
 private:
-    VkDeviceMemory           Memory;
+    VkDeviceMemory           DeviceMemory;
     VkDeviceSize             MemoryOffset;
     VkBuffer                 BackingBuffer;
     VkDeviceSize             BufferOffset;

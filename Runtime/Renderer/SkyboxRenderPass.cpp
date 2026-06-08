@@ -42,7 +42,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
 
     // Create a sphere used for the Skybox
     {
-        FMeshCreateInfo SkyboxMesh = FMeshFactory::CreateSphere(0);
+        FMeshCreateInfo SkyboxMesh = MeshFactory::CreateSphere(0);
         SkyboxIndexCount = SkyboxMesh.Indices.Size();
 
         // Indices
@@ -195,9 +195,9 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     PSODesc.RasterizerState                                = RasterizerState.Get();
     PSODesc.VertexShader                                   = SkyboxVertexShader.Get();
     PSODesc.PixelShader                                    = SkyboxPixelShader.Get();
-    PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::SceneTargetFormat;
+    PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = RendererTextureFormats::SceneTargetFormat;
     PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
-    PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
+    PSODesc.RasterizerOutputFormats.DepthStencilFormat     = RendererTextureFormats::DepthBufferFormat;
 
     PipelineState = RHI::CreateGraphicsPipelineState(PSODesc);
     if (!PipelineState)

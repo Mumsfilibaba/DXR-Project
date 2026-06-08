@@ -67,7 +67,7 @@ public:
         const uint32 CurrentNumRenderTargets = GraphicsState.RenderTargetCache.NumRenderTargets;
         if (RenderTargetViews)
         {
-            FMemory::Memcpy(RenderTargetViews, GraphicsState.RenderTargetCache.RenderTargetViews, sizeof(FD3D12RenderTargetViewRHI*) * CurrentNumRenderTargets);
+            Memory::Memcpy(RenderTargetViews, GraphicsState.RenderTargetCache.RenderTargetViews, sizeof(FD3D12RenderTargetViewRHI*) * CurrentNumRenderTargets);
         }
 
         OutNumRenderTargets = CurrentNumRenderTargets;
@@ -92,7 +92,7 @@ public:
     {
         if (Viewports)
         {
-            FMemory::Memcpy(Viewports, GraphicsState.Viewports, sizeof(D3D12_VIEWPORT) * GraphicsState.NumViewports);
+            Memory::Memcpy(Viewports, GraphicsState.Viewports, sizeof(D3D12_VIEWPORT) * GraphicsState.NumViewports);
         }
 
         OutNumViewports = GraphicsState.NumViewports;
@@ -102,7 +102,7 @@ public:
     {
         if (ScissorRects)
         {
-            FMemory::Memcpy(ScissorRects, GraphicsState.ScissorRects, sizeof(D3D12_RECT) * GraphicsState.NumScissorRects);
+            Memory::Memcpy(ScissorRects, GraphicsState.ScissorRects, sizeof(D3D12_RECT) * GraphicsState.NumScissorRects);
         }
 
         OutNumScissorRects = GraphicsState.NumScissorRects;
@@ -112,7 +112,7 @@ public:
     {
         if (BlendFactor)
         {
-            FMemory::Memcpy(BlendFactor, GraphicsState.BlendFactor, sizeof(GraphicsState.BlendFactor));
+            Memory::Memcpy(BlendFactor, GraphicsState.BlendFactor, sizeof(GraphicsState.BlendFactor));
         }
     }
 
@@ -139,16 +139,16 @@ private:
             , IndexBufferCache()
             , VertexBufferCache()
         {
-            FMemory::Memzero(BlendFactor, sizeof(BlendFactor));
+            Memory::Memzero(BlendFactor, sizeof(BlendFactor));
             StencilRef = 0;
             
-            FMemory::Memzero(DepthBias, sizeof(DepthBias));
-            FMemory::Memzero(SOBufferViews, sizeof(SOBufferViews));
-            FMemory::Memzero(SOBuffers, sizeof(SOBuffers));
+            Memory::Memzero(DepthBias, sizeof(DepthBias));
+            Memory::Memzero(SOBufferViews, sizeof(SOBufferViews));
+            Memory::Memzero(SOBuffers, sizeof(SOBuffers));
             NumSOBuffers = 0;
 
-            FMemory::Memzero(Viewports, sizeof(Viewports));
-            FMemory::Memzero(ScissorRects, sizeof(ScissorRects));
+            Memory::Memzero(Viewports, sizeof(Viewports));
+            Memory::Memzero(ScissorRects, sizeof(ScissorRects));
         }
 
         FD3D12GraphicsPipelineStateRHIRef PipelineState;

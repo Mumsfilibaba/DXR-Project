@@ -3,7 +3,7 @@
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Templates/BitReference.h"
-#include "Core/Templates/BitHelper.h"
+#include "Core/Templates/Bits.h"
 
 template<uint32 NUM_BITS, typename InIntegerType = uint32>
 class TStaticBitArray
@@ -144,7 +144,7 @@ public:
         for (SizeType Index = 0; Index < NumIntegers(); ++Index)
         {
             const InIntegerType Element = Integers[Index];
-            BitCount += FBitHelper::CountAssignedBits(Element);
+            BitCount += Bits::CountAssignedBits(Element);
         }
 
         return BitCount;
@@ -180,7 +180,7 @@ public:
             const InIntegerType Element = Integers[Index];
             if (Element)
             {
-                const SizeType BitIndex = FBitHelper::MostSignificant<SizeType>(Element);
+                const SizeType BitIndex = Bits::MostSignificant<SizeType>(Element);
                 Result = BitIndex + (Index * NumBitsPerInteger());
                 break;
             }
@@ -201,7 +201,7 @@ public:
             const InIntegerType Element = Integers[Index];
             if (Element)
             {
-                const InIntegerType BitIndex = FBitHelper::LeastSignificant<SizeType>(Element);
+                const InIntegerType BitIndex = Bits::LeastSignificant<SizeType>(Element);
                 Result = BitIndex + (Index * NumBitsPerInteger());
                 break;
             }
@@ -621,8 +621,8 @@ private:
             const SizeType DiscardCount = Steps / NumBitsPerInteger();
             const SizeType RangeSize    = RemainingElements - DiscardCount;
 
-            FMemory::Memmove(Pointer, Pointer + DiscardCount, sizeof(InIntegerType) * RangeSize);
-            FMemory::Memzero(Pointer + RangeSize, sizeof(InIntegerType) * DiscardCount);
+            Memory::Memmove(Pointer, Pointer + DiscardCount, sizeof(InIntegerType) * RangeSize);
+            Memory::Memzero(Pointer + RangeSize, sizeof(InIntegerType) * DiscardCount);
 
             BitshiftRight_Simple(Steps, StartElementIndex, RangeSize);
 
@@ -631,7 +631,7 @@ private:
         }
         else
         {
-            FMemory::Memzero(Pointer, RemainingElements * sizeof(InIntegerType));
+            Memory::Memzero(Pointer, RemainingElements * sizeof(InIntegerType));
         }
     }
 
@@ -670,8 +670,8 @@ private:
             const SizeType DiscardCount = Steps / NumBitsPerInteger();
             const SizeType RangeSize    = RemainingElements - DiscardCount;
 
-            FMemory::Memmove(Pointer + DiscardCount, Pointer, sizeof(InIntegerType) * RangeSize);
-            FMemory::Memzero(Pointer, sizeof(InIntegerType) * DiscardCount);
+            Memory::Memmove(Pointer + DiscardCount, Pointer, sizeof(InIntegerType) * RangeSize);
+            Memory::Memzero(Pointer, sizeof(InIntegerType) * DiscardCount);
 
             BitshiftLeft_Simple(Steps, StartElementIndex + DiscardCount, RangeSize);
 
@@ -680,7 +680,7 @@ private:
         }
         else
         {
-            FMemory::Memzero(Pointer, RemainingElements * sizeof(InIntegerType));
+            Memory::Memzero(Pointer, RemainingElements * sizeof(InIntegerType));
         }
     }
 

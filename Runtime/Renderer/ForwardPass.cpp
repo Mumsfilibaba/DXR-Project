@@ -114,9 +114,9 @@ bool FForwardPass::CompilePipelineState(FFrameResources& FrameResources, bool bB
     PSODesc.DepthStencilState                              = NewInstance.DepthStencilState.Get();
     PSODesc.BlendState                                     = NewInstance.BlendState.Get();
     PSODesc.RasterizerState                                = NewInstance.RasterizerState.Get();
-    PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::SceneTargetFormat;
+    PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = RendererTextureFormats::SceneTargetFormat;
     PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
-    PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
+    PSODesc.RasterizerOutputFormats.DepthStencilFormat     = RendererTextureFormats::DepthBufferFormat;
     PSODesc.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
 
     NewInstance.PipelineState = RHI::CreateGraphicsPipelineState(PSODesc);

@@ -107,7 +107,7 @@ static NSThread* GAppThread = nil;
 -(void) main
 {
     struct sched_param SchedParams;
-    FMemory::Memzero(&SchedParams, sizeof(SchedParams));
+    Memory::Memzero(&SchedParams, sizeof(SchedParams));
 
     int32 Policy = SCHED_RR;
     pthread_getschedparam(pthread_self(), &Policy, &SchedParams);

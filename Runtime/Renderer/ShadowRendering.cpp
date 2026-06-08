@@ -304,7 +304,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         PSODesc.VertexShader                               = NewPipelineStateInstance.VertexShader.Get();
         PSODesc.PixelShader                                = NewPipelineStateInstance.PixelShader.Get();
         PSODesc.RasterizerOutputFormats.NumRenderTargets   = 0;
-        PSODesc.RasterizerOutputFormats.DepthStencilFormat = FGlobalTextureFormats::ShadowMapFormat;
+        PSODesc.RasterizerOutputFormats.DepthStencilFormat = RendererTextureFormats::ShadowMapFormat;
 
         if (ShaderCombination.RenderPassType == ECubeMapRenderPassType::GeometryShaderSinglePass)
         {
@@ -375,10 +375,10 @@ bool FPointLightRenderPass::Initialize(FFrameResources& Resources)
 
 bool FPointLightRenderPass::CreateResources(FFrameResources& Resources)
 {
-    const FClearValue DepthClearValue(FGlobalTextureFormats::ShadowMapFormat, 1.0f, 0);
+    const FClearValue DepthClearValue(RendererTextureFormats::ShadowMapFormat, 1.0f, 0);
 
     const ETextureUsageFlags Flags = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::NoDefaultDSV;
-    FRHITextureDesc PointLightDesc = FRHITextureDesc::CreateTextureCubeArray(FGlobalTextureFormats::ShadowMapFormat, Resources.PointLightShadowSize, Resources.MaxPointLightShadows, 1, 1, Flags, DepthClearValue);
+    FRHITextureDesc PointLightDesc = FRHITextureDesc::CreateTextureCubeArray(RendererTextureFormats::ShadowMapFormat, Resources.PointLightShadowSize, Resources.MaxPointLightShadows, 1, 1, Flags, DepthClearValue);
     Resources.PointLightShadowMaps = RHI::CreateTexture(PointLightDesc, EResourceAccess::PixelShaderResource);
 
     if (Resources.PointLightShadowMaps)
@@ -1089,7 +1089,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
             PSODesc.GeometryShader = NewPipelineStateInstance.GeometryShader.Get();
         }
 
-        PSODesc.RasterizerOutputFormats.DepthStencilFormat = FGlobalTextureFormats::ShadowMapFormat;
+        PSODesc.RasterizerOutputFormats.DepthStencilFormat = RendererTextureFormats::ShadowMapFormat;
         PSODesc.RasterizerOutputFormats.NumRenderTargets   = 0;
 
         NewPipelineStateInstance.PipelineState = RHI::CreateGraphicsPipelineState(PSODesc);
@@ -1141,8 +1141,8 @@ bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
 {
     const ETextureUsageFlags Flags = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::NoDefaultDSV;
 
-    const FClearValue DepthClearValue(FGlobalTextureFormats::ShadowMapFormat, 1.0f, 0);
-    FRHITextureDesc CascadeDesc = FRHITextureDesc::CreateTexture2DArray(FGlobalTextureFormats::ShadowMapFormat, Resources.CascadeSize, Resources.CascadeSize, NUM_SHADOW_CASCADES, 1, 1, Flags, DepthClearValue);
+    const FClearValue DepthClearValue(RendererTextureFormats::ShadowMapFormat, 1.0f, 0);
+    FRHITextureDesc CascadeDesc = FRHITextureDesc::CreateTexture2DArray(RendererTextureFormats::ShadowMapFormat, Resources.CascadeSize, Resources.CascadeSize, NUM_SHADOW_CASCADES, 1, 1, Flags, DepthClearValue);
     Resources.ShadowCascades = RHI::CreateTexture(CascadeDesc, EResourceAccess::NonPixelShaderResource);
 
     if (Resources.ShadowCascades)
@@ -1565,7 +1565,7 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
 {
     const ETextureUsageFlags Flags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
 
-    FRHITextureDesc ShadowMaskDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::ShadowMaskFormat, Width, Height, 1, 1, Flags);
+    FRHITextureDesc ShadowMaskDesc = FRHITextureDesc::CreateTexture2D(RendererTextureFormats::ShadowMaskFormat, Width, Height, 1, 1, Flags);
     Resources.DirectionalShadowMask = RHI::CreateTexture(ShadowMaskDesc, EResourceAccess::NonPixelShaderResource);
 
     if (Resources.DirectionalShadowMask)
@@ -1606,7 +1606,7 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     GPU_TRACE_SCOPE(CommandList, "DirectionalLight Shadow Mask");
 
     FDirectionalShadowSettingsHLSL ShadowSettings;
-    FMemory::Memzero(&ShadowSettings);
+    Memory::Memzero(&ShadowSettings);
 
     ShadowSettings.FilterSize    = Math::Max<float>(static_cast<float>(CVarCSMFilterSize.GetValue()), 1.0f);
     ShadowSettings.MaxFilterSize = Math::Max<float>(static_cast<float>(CVarCSMMaxFilterSize.GetValue()), 1.0f);

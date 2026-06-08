@@ -95,10 +95,10 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
         // Allocate DescriptorWrites
         FVulkanDescriptorWrites& DSWrites = DescriptorSetWrites[DescriptorSetIndex];
         DSWrites.DescriptorWrites.Resize(SetRemappingInfo.RemappingInfo.Size());
-        FMemory::Memzero(DSWrites.DescriptorWrites.Data(), DSWrites.DescriptorWrites.SizeInBytes());
+        Memory::Memzero(DSWrites.DescriptorWrites.Data(), DSWrites.DescriptorWrites.SizeInBytes());
 
         BoundResourceViews[DescriptorSetIndex].Resize(SetRemappingInfo.RemappingInfo.Size());
-        FMemory::Memzero(BoundResourceViews[DescriptorSetIndex].Data(), BoundResourceViews[DescriptorSetIndex].SizeInBytes());
+        Memory::Memzero(BoundResourceViews[DescriptorSetIndex].Data(), BoundResourceViews[DescriptorSetIndex].SizeInBytes());
         
         // Init DescriptorWrites and count the other bindings
         uint32 NumImageInfos               = 0;
@@ -161,19 +161,19 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
 
         // Allocate Buffer, Image, TexelBufferView, and AccelerationStructure Infos
         DSWrites.DescriptorImageInfos.Resize(NumImageInfos);
-        FMemory::Memzero(DSWrites.DescriptorImageInfos.Data(), DSWrites.DescriptorImageInfos.SizeInBytes());
+        Memory::Memzero(DSWrites.DescriptorImageInfos.Data(), DSWrites.DescriptorImageInfos.SizeInBytes());
 
         DSWrites.DescriptorBufferInfos.Resize(NumBufferInfos);
-        FMemory::Memzero(DSWrites.DescriptorBufferInfos.Data(), DSWrites.DescriptorBufferInfos.SizeInBytes());
+        Memory::Memzero(DSWrites.DescriptorBufferInfos.Data(), DSWrites.DescriptorBufferInfos.SizeInBytes());
 
         DSWrites.DescriptorTexelBufferViews.Resize(NumTexelBufferViews);
-        FMemory::Memzero(DSWrites.DescriptorTexelBufferViews.Data(), DSWrites.DescriptorTexelBufferViews.SizeInBytes());
+        Memory::Memzero(DSWrites.DescriptorTexelBufferViews.Data(), DSWrites.DescriptorTexelBufferViews.SizeInBytes());
 
         DSWrites.DescriptorAccelerationStructureInfos.Resize(NumAccelerationStructInfos);
-        FMemory::Memzero(DSWrites.DescriptorAccelerationStructureInfos.Data(), DSWrites.DescriptorAccelerationStructureInfos.SizeInBytes());
+        Memory::Memzero(DSWrites.DescriptorAccelerationStructureInfos.Data(), DSWrites.DescriptorAccelerationStructureInfos.SizeInBytes());
 
         DSWrites.DescriptorAccelerationStructures.Resize(NumAccelerationStructInfos);
-        FMemory::Memzero(DSWrites.DescriptorAccelerationStructures.Data(), DSWrites.DescriptorAccelerationStructures.SizeInBytes());
+        Memory::Memzero(DSWrites.DescriptorAccelerationStructures.Data(), DSWrites.DescriptorAccelerationStructures.SizeInBytes());
 
         // Setup Buffer, Image, TexelBufferView, and AccelerationStructure Infos
         uint32 CurrentImageInfo                  = 0;
@@ -279,7 +279,7 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
     // Initialize dynamic offset tracking as a single flat array
     const uint32 TotalDynamic = Layout->GetTotalDynamicOffsetCount();
     DynamicOffsets.Resize(TotalDynamic);
-    FMemory::Memzero(DynamicOffsets.Data(), DynamicOffsets.SizeInBytes());
+    Memory::Memzero(DynamicOffsets.Data(), DynamicOffsets.SizeInBytes());
 
     DynamicOffsetBasePerSet.Resize(RemappingInfos.Size());
     BindingToDynamicIndex.Resize(RemappingInfos.Size());
@@ -582,7 +582,7 @@ void FVulkanDescriptorState::UpdateDescriptorSets(FVulkanTransientDescriptorAllo
             if (TransientAllocator->GetDescriptorSetVersion() != DescriptorSetVersion)
             {
                 DescriptorSetVersion = TransientAllocator->GetDescriptorSetVersion();
-                FMemory::Memzero(DescriptorSetHandles.Data(), DescriptorSetHandles.SizeInBytes());
+                Memory::Memzero(DescriptorSetHandles.Data(), DescriptorSetHandles.SizeInBytes());
             }
 
             if (!DSBuilder.IsKeyDirty() && DescriptorSetHandles[Index] != VK_NULL_HANDLE)
@@ -1547,7 +1547,7 @@ void FVulkanBindlessDescriptorManager::Flush()
     TArray<VkWriteDescriptorSet> Writes;
     Writes.Resize(NumWrites);
 
-    FMemory::Memzero(Writes.Data(), Writes.SizeInBytes());
+    Memory::Memzero(Writes.Data(), Writes.SizeInBytes());
 
     for (int32 Index = 0; Index < NumWrites; ++Index)
     {

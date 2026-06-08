@@ -5,7 +5,7 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct RHI_API FRHIModule : public FModuleInterface
+struct RHI_API FRHIModule : public IModule
 {
     virtual ~FRHIModule() = default;
 

@@ -5,9 +5,9 @@
 #include "Engine/Resources/Texture.h"
 
 #define STB_IMAGE_IMPLEMENTATION
-#define STBI_MALLOC FMemory::Malloc
-#define STBI_REALLOC FMemory::Realloc
-#define STBI_FREE FMemory::Free
+#define STBI_MALLOC Memory::Malloc
+#define STBI_REALLOC Memory::Realloc
+#define STBI_FREE Memory::Free
 #include <stb_image.h>
 
 static EFormat GetByteFormat(int32 Channels)

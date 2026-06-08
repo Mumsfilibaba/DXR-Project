@@ -170,12 +170,12 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, EResour
                     return false;
                 }
 
-                FMemory::Memcpy(MappedAddress, InInitialData, Desc.Size);
+                Memory::Memcpy(MappedAddress, InInitialData, Desc.Size);
                 D3D12Resource->UnmapRange(0, nullptr);
             }
             else
             {
-                FMemory::Memcpy(MappedAddress, InInitialData, Desc.Size);
+                Memory::Memcpy(MappedAddress, InInitialData, Desc.Size);
             }
         }
         else if (bHasDefaultState)
@@ -319,7 +319,7 @@ bool FD3D12BufferRHI::CreateConstantBufferView()
     CHECK(ResourceStorage.GetResource() != nullptr);
 
     D3D12_CONSTANT_BUFFER_VIEW_DESC ViewDesc;
-    FMemory::Memzero(&ViewDesc);
+    Memory::Memzero(&ViewDesc);
 
     ViewDesc.SizeInBytes    = Math::AlignUp<uint32>(static_cast<uint32>(Desc.Size), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
     ViewDesc.BufferLocation = ResourceStorage.GetGPUVirtualAddress();

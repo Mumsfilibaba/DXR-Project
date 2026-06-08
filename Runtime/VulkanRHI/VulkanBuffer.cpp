@@ -238,7 +238,7 @@ bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, EReso
                 return false;
             }
 
-            FMemory::Memcpy(BufferData, InInitialData, Desc.Size);
+            Memory::Memcpy(BufferData, InInitialData, Desc.Size);
         }
         else
         {

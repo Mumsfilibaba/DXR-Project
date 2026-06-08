@@ -20,8 +20,8 @@ struct FD3D12VertexBufferCache
 
     void Clear()
     {
-        FMemory::Memzero(VertexBuffers, sizeof(VertexBuffers));
-        FMemory::Memzero(BufferResources, sizeof(BufferResources));
+        Memory::Memzero(VertexBuffers, sizeof(VertexBuffers));
+        Memory::Memzero(BufferResources, sizeof(BufferResources));
         NumVertexBuffers = 0;
     }
 
@@ -39,7 +39,7 @@ struct FD3D12IndexBufferCache
 
     void Clear()
     {
-        FMemory::Memzero(&IndexBuffer, sizeof(IndexBuffer));
+        Memory::Memzero(&IndexBuffer, sizeof(IndexBuffer));
         BufferResource = nullptr;
     }
 
@@ -59,7 +59,7 @@ struct FD3D12RenderTargetCache
 
     void Clear()
     {
-        FMemory::Memzero(RenderTargetViews, sizeof(RenderTargetViews));
+        Memory::Memzero(RenderTargetViews, sizeof(RenderTargetViews));
         NumRenderTargets = 0;
         DepthStencilView = nullptr;
     }
@@ -150,8 +150,8 @@ struct FD3D12ConstantBufferCache : public FD3D12ResourceCache
         for (int32 Index = 0; Index < EShaderVisibility::Count; Index++)
         {
             auto& StageViews = ResourceViews[Index];
-            FMemory::Memzero(&StageViews, sizeof(StageViews));
-            FMemory::Memzero(&ViewVersions[Index], sizeof(ViewVersions[Index]));
+            Memory::Memzero(&StageViews, sizeof(StageViews));
+            Memory::Memzero(&ViewVersions[Index], sizeof(ViewVersions[Index]));
             NumBuffers[Index] = 0;
         }
     }
@@ -175,8 +175,8 @@ struct FD3D12ShaderResourceViewCache : public FD3D12ResourceCache
         for (int32 Index = 0; Index < EShaderVisibility::Count; Index++)
         {
             auto& StageViews = ResourceViews[Index];
-            FMemory::Memzero(&StageViews, sizeof(StageViews));
-            FMemory::Memzero(&ViewVersions[Index], sizeof(ViewVersions[Index]));
+            Memory::Memzero(&StageViews, sizeof(StageViews));
+            Memory::Memzero(&ViewVersions[Index], sizeof(ViewVersions[Index]));
             NumViews[Index] = 0;
         }
     }
@@ -200,8 +200,8 @@ struct FD3D12UnorderedAccessViewCache : public FD3D12ResourceCache
         for (int32 Index = 0; Index < EShaderVisibility::Count; Index++)
         {
             auto& StageViews = ResourceViews[Index];
-            FMemory::Memzero(&StageViews, sizeof(StageViews));
-            FMemory::Memzero(&ViewVersions[Index], sizeof(ViewVersions[Index]));
+            Memory::Memzero(&StageViews, sizeof(StageViews));
+            Memory::Memzero(&ViewVersions[Index], sizeof(ViewVersions[Index]));
             NumViews[Index] = 0;
         }
     }
@@ -220,7 +220,7 @@ struct FD3D12ShaderConstantsCache
 
     void Clear()
     {
-        FMemory::Memzero(Constants, sizeof(Constants));
+        Memory::Memzero(Constants, sizeof(Constants));
         NumConstants = 0;
     }
 
@@ -237,17 +237,17 @@ struct FD3D12UniqueSamplerTable
 
     void Reset()
     {
-        FMemory::Memzero(UniqueIDs, sizeof(UniqueIDs));
+        Memory::Memzero(UniqueIDs, sizeof(UniqueIDs));
     }
 
     bool operator==(const FD3D12UniqueSamplerTable& Other) const
     {
-        return FMemory::Memcmp(UniqueIDs, Other.UniqueIDs, sizeof(UniqueIDs)) == 0;
+        return Memory::Memcmp(UniqueIDs, Other.UniqueIDs, sizeof(UniqueIDs)) == 0;
     }
 
     bool operator!=(const FD3D12UniqueSamplerTable& Other) const
     {
-        return FMemory::Memcmp(UniqueIDs, Other.UniqueIDs, sizeof(UniqueIDs)) != 0;
+        return Memory::Memcmp(UniqueIDs, Other.UniqueIDs, sizeof(UniqueIDs)) != 0;
     }
 
     friend uint64 GetHashForType(const FD3D12UniqueSamplerTable& Table)
@@ -273,7 +273,7 @@ struct FD3D12SamplerStateCache : public FD3D12ResourceCache
         {
             auto& StageSamplers = SamplerStates[Index];
             NumSamplers[Index] = 0;
-            FMemory::Memzero(&StageSamplers, sizeof(StageSamplers));
+            Memory::Memzero(&StageSamplers, sizeof(StageSamplers));
         }
     }
 
@@ -322,7 +322,7 @@ public:
 
     void Clear()
     {
-        FMemory::Memzero(Table.Data(), Table.SizeInBytes());
+        Memory::Memzero(Table.Data(), Table.SizeInBytes());
     }
 
 private:
@@ -364,7 +364,7 @@ struct FD3D12DescriptorHandleCache
 
     void ClearAll()
     {
-        FMemory::Memzero(Handles, sizeof(Handles));
+        Memory::Memzero(Handles, sizeof(Handles));
     }
 
     D3D12_GPU_DESCRIPTOR_HANDLE Handles[EShaderVisibility::Count];

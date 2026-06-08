@@ -1,14 +1,16 @@
+#include "Core/Filesystem/File.h"
 #include "Core/Generic/GenericPlatformFile.h"
+#include "Core/Memory/Memory.h"
 
-bool FFileHelpers::ReadFile(IPlatformFile* File, FByteInputStream& OutData)
+bool File::ReadFile(IPlatformFile* InFile, FByteInputStream& OutData)
 {
-    CHECK(File != nullptr);
+    CHECK(InFile != nullptr);
 
-    const int64 FileSize = File->Size();
+    const int64 FileSize = InFile->Size();
     CHECK(FileSize < TNumericLimits<int32>::Max());
 
-    uint8* Stream = reinterpret_cast<uint8*>(FMemory::Malloc(static_cast<uint64>(FileSize)));
-    const int32 ReadBytes = File->Read(Stream, static_cast<uint32>(FileSize));
+    uint8* Stream = reinterpret_cast<uint8*>(Memory::Malloc(static_cast<uint64>(FileSize)));
+    const int32 ReadBytes = InFile->Read(Stream, static_cast<uint32>(FileSize));
     if (ReadBytes <= 0)
     {
         return false;
@@ -20,15 +22,15 @@ bool FFileHelpers::ReadFile(IPlatformFile* File, FByteInputStream& OutData)
     }
 }
 
-bool FFileHelpers::ReadFile(IPlatformFile* File, TArray<uint8>& OutData)
+bool File::ReadFile(IPlatformFile* InFile, TArray<uint8>& OutData)
 {
-    CHECK(File != nullptr);
+    CHECK(InFile != nullptr);
 
-    const int64 FileSize = File->Size();
+    const int64 FileSize = InFile->Size();
     CHECK(FileSize < TNumericLimits<int32>::Max());
     OutData.Resize(static_cast<int32>(FileSize));
 
-    const int32 ReadBytes = File->Read(reinterpret_cast<uint8*>(OutData.Data()), static_cast<uint32>(FileSize));
+    const int32 ReadBytes = InFile->Read(reinterpret_cast<uint8*>(OutData.Data()), static_cast<uint32>(FileSize));
     if (ReadBytes <= 0)
     {
         OutData.Clear(true);
@@ -40,17 +42,17 @@ bool FFileHelpers::ReadFile(IPlatformFile* File, TArray<uint8>& OutData)
     }
 }
 
-bool FFileHelpers::ReadTextFile(IPlatformFile* File, TArray<CHAR>& OutText)
+bool File::ReadTextFile(IPlatformFile* InFile, TArray<CHAR>& OutText)
 {
-    CHECK(File != nullptr);
+    CHECK(InFile != nullptr);
 
-    const int64 FileSize = File->Size();
+    const int64 FileSize = InFile->Size();
     CHECK(FileSize < TNumericLimits<int32>::Max());
 
     // Get the filesize and add an extra character for the null-terminator
     OutText.Resize(static_cast<int32>(FileSize) + 1);
 
-    const int32 ReadBytes = File->Read(reinterpret_cast<uint8*>(OutText.Data()), static_cast<uint32>(FileSize));
+    const int32 ReadBytes = InFile->Read(reinterpret_cast<uint8*>(OutText.Data()), static_cast<uint32>(FileSize));
     if (ReadBytes <= 0)
     {
         OutText.Clear(true);
@@ -63,11 +65,11 @@ bool FFileHelpers::ReadTextFile(IPlatformFile* File, TArray<CHAR>& OutText)
     }
 }
 
-bool FFileHelpers::WriteTextFile(IPlatformFile* File, const CHAR* Text, uint32 Size)
+bool File::WriteTextFile(IPlatformFile* InFile, const CHAR* Text, uint32 Size)
 {
-    CHECK(File != nullptr);
+    CHECK(InFile != nullptr);
 
-    const int32 WrittenBytes = File->Write(reinterpret_cast<const uint8*>(Text), Size);
+    const int32 WrittenBytes = InFile->Write(reinterpret_cast<const uint8*>(Text), Size);
     if (WrittenBytes <= 0)
     {
         return false;
@@ -78,7 +80,7 @@ bool FFileHelpers::WriteTextFile(IPlatformFile* File, const CHAR* Text, uint32 S
     }
 }
 
-FString FFileHelpers::ExtractFilepath(const FString& Filepath)
+FString File::ExtractFilepath(const FString& Filepath)
 {
     int32 LastSlash = Filepath.FindLastChar('/');
     if (LastSlash == FString::InvalidIndex)
@@ -89,7 +91,7 @@ FString FFileHelpers::ExtractFilepath(const FString& Filepath)
     return FString(*Filepath, LastSlash);
 }
 
-FString FFileHelpers::ExtractFilename(const FString& Filepath)
+FString File::ExtractFilename(const FString& Filepath)
 {
     int32 LastSlash = Filepath.FindLastChar('/');
     if (LastSlash == FString::InvalidIndex)
@@ -105,7 +107,7 @@ FString FFileHelpers::ExtractFilename(const FString& Filepath)
     return FString(*Filepath + LastSlash, NewLength);
 }
     
-FString FFileHelpers::ExtractFilenameWithoutExtension(const FString& Filepath)
+FString File::ExtractFilenameWithoutExtension(const FString& Filepath)
 {
     int32 LastSlash = Filepath.FindLastChar('/');
     if (LastSlash == FString::InvalidIndex)

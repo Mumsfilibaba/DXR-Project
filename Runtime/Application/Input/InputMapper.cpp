@@ -18,7 +18,7 @@ void FInputMapper::Initialize()
     // Init the MouseButton map
     static_assert(EMouseButtonName::Left == 1 && EMouseButtonName::Last == 5, "EMouseButtonName::Type has changed values, update mapping");
 
-    MouseMap[0] = EKeys::Unknown;
+    MouseMap[0] = Keys::Unknown;
     for (int32 Index = EMouseButtonName::Left; Index <= EMouseButtonName::Last; Index++)
     {
         const EKeyName::Type MouseButtonName = static_cast<EKeyName::Type>(EKeyName::MouseButtonLeft + Index - 1);
@@ -28,7 +28,7 @@ void FInputMapper::Initialize()
     // Init the MouseButton map
     static_assert(EGamepadButtonName::DPadUp == 1 && EGamepadButtonName::Last == 14, "EGamepadButtonName::Type has changed values, update mapping");
 
-    GamepadMap[0] = EKeys::Unknown;
+    GamepadMap[0] = Keys::Unknown;
     for (int32 Index = EGamepadButtonName::DPadUp; Index <= EGamepadButtonName::Last; Index++)
     {
         const EKeyName::Type GamepadButtonName = static_cast<EKeyName::Type>(EKeyName::GamepadDPadUp + Index - 1);

@@ -124,7 +124,7 @@ void FMetalCommandContextState::SetViewports(const MTLViewport* Viewports, uint3
 
     if (Viewports && NumViewports > 0)
     {
-        FMemory::Memcpy(GraphicsState.Viewports, Viewports, sizeof(MTLViewport) * NumViewports);
+        Memory::Memcpy(GraphicsState.Viewports, Viewports, sizeof(MTLViewport) * NumViewports);
     }
 
     GraphicsState.NumViewports   = NumViewports;
@@ -137,7 +137,7 @@ void FMetalCommandContextState::SetScissorRects(const MTLScissorRect* ScissorRec
 
     if (ScissorRects && NumScissorRects > 0)
     {
-        FMemory::Memcpy(GraphicsState.ScissorRects, ScissorRects, sizeof(MTLScissorRect) * NumScissorRects);
+        Memory::Memcpy(GraphicsState.ScissorRects, ScissorRects, sizeof(MTLScissorRect) * NumScissorRects);
     }
 
     GraphicsState.NumScissorRects   = NumScissorRects;
@@ -146,7 +146,7 @@ void FMetalCommandContextState::SetScissorRects(const MTLScissorRect* ScissorRec
 
 void FMetalCommandContextState::SetBlendFactor(const float BlendFactor[4])
 {
-    FMemory::Memcpy(GraphicsState.BlendFactor, BlendFactor, sizeof(GraphicsState.BlendFactor));
+    Memory::Memcpy(GraphicsState.BlendFactor, BlendFactor, sizeof(GraphicsState.BlendFactor));
     GraphicsState.bBindBlendFactor = true;
 }
 
@@ -250,7 +250,7 @@ void FMetalCommandContextState::SetShaderConstants(EShaderVisibility::Type Shade
     FMetalShaderConstantsCache& Cache = CommonState.ShaderConstantsCache;
     if (ShaderConstants && NumShaderConstants > 0)
     {
-        FMemory::Memcpy(Cache.Constants[ShaderStage], ShaderConstants, sizeof(uint32) * NumShaderConstants);
+        Memory::Memcpy(Cache.Constants[ShaderStage], ShaderConstants, sizeof(uint32) * NumShaderConstants);
     }
 
     Cache.NumConstants[ShaderStage] = NumShaderConstants;

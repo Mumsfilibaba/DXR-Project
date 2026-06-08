@@ -262,15 +262,15 @@ bool FWindowsAsyncFileHandle::WriteAsync(const uint8* Src, uint32 BytesToWrite)
     GarbageCollectCompleted();
 
     FPendingWrite* Pending = new FPendingWrite();
-    FMemory::Memzero(&Pending->Overlapped, sizeof(OVERLAPPED));
+    Memory::Memzero(&Pending->Overlapped, sizeof(OVERLAPPED));
 
-    Pending->Buffer = reinterpret_cast<uint8*>(FMemory::Malloc(BytesToWrite));
-    FMemory::Memcpy(Pending->Buffer, Src, BytesToWrite);
+    Pending->Buffer = reinterpret_cast<uint8*>(Memory::Malloc(BytesToWrite));
+    Memory::Memcpy(Pending->Buffer, Src, BytesToWrite);
 
     Pending->CompletionEvent = ::CreateEventA(nullptr, TRUE, FALSE, nullptr);
     if (Pending->CompletionEvent == nullptr)
     {
-        FMemory::Free(Pending->Buffer);
+        Memory::Free(Pending->Buffer);
         delete Pending;
         return false;
     }
@@ -286,7 +286,7 @@ bool FWindowsAsyncFileHandle::WriteAsync(const uint8* Src, uint32 BytesToWrite)
         if (Error != ERROR_IO_PENDING)
         {
             ::CloseHandle(Pending->CompletionEvent);
-            FMemory::Free(Pending->Buffer);
+            Memory::Free(Pending->Buffer);
             delete Pending;
             return false;
         }
@@ -347,7 +347,7 @@ void FWindowsAsyncFileHandle::GarbageCollectCompleted()
 void FWindowsAsyncFileHandle::FreePendingWrite(FPendingWrite* PendingWrite)
 {
     ::CloseHandle(PendingWrite->CompletionEvent);
-    FMemory::Free(PendingWrite->Buffer);
+    Memory::Free(PendingWrite->Buffer);
     delete PendingWrite;
 }
 

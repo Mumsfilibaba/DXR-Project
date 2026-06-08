@@ -408,21 +408,21 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCr
     vkGetPhysicalDeviceMemoryProperties(PhysicalDevice, &DeviceMemoryProperties);
 
     // Get Get Physical Device Properties
-    FMemory::Memzero(&DeviceProperties2);
+    Memory::Memzero(&DeviceProperties2);
     DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 
     vkGetPhysicalDeviceProperties2(PhysicalDevice, &DeviceProperties2);
 
     // Get Physical Device Feature (For Vulkan 1.1 and Vulkan 1.2 and extensions)
-    FMemory::Memzero(&DeviceFeatures2);
+    Memory::Memzero(&DeviceFeatures2);
     DeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 
     // Vulkan 1.1 features
-    FMemory::Memzero(&DeviceFeatures11);
+    Memory::Memzero(&DeviceFeatures11);
     DeviceFeatures11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
 
     // Vulkan 1.2 features
-    FMemory::Memzero(&DeviceFeatures12);
+    Memory::Memzero(&DeviceFeatures12);
     DeviceFeatures12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
     
     // Helper for checking for extensions
@@ -432,7 +432,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCr
     vkGetPhysicalDeviceFeatures2(PhysicalDevice, &DeviceFeatures2);
 
     // Get Physical Device Memory Properties
-    FMemory::Memzero(&DeviceMemoryProperties2);
+    Memory::Memzero(&DeviceMemoryProperties2);
     DeviceMemoryProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
 
     vkGetPhysicalDeviceMemoryProperties2(PhysicalDevice, &DeviceMemoryProperties2);

@@ -485,7 +485,7 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERes
                 {
                     for (uint32 y = 0; y < NumRows; y++)
                     {
-                        FMemory::Memcpy(UploadMemory, Source, RowPitch);
+                        Memory::Memcpy(UploadMemory, Source, RowPitch);
                         Source       += SrcRowPitch;
                         UploadMemory += RowPitch;
                     }
