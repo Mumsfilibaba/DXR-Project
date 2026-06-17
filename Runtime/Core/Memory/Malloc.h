@@ -153,7 +153,7 @@ private:
     TMap<void*, FAllocationStackTrace> Allocations;
     FCriticalSection                   AllocationsCS;
     FMalloc*                           BaseMalloc;
-    AtomicInt8                         bTrackingEnabled;
+    AtomicBool                         bTrackingEnabled;
 
     static FMallocStackTraceTracker* GStackTraceTracker;
 };

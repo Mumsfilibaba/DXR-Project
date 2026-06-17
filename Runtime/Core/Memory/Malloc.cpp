@@ -153,7 +153,7 @@ FMallocStackTraceTracker::FMallocStackTraceTracker(FMalloc* InBaseMalloc)
     : Allocations()
     , AllocationsCS()
     , BaseMalloc(InBaseMalloc)
-    , bTrackingEnabled(1)
+    , bTrackingEnabled(true)
 {
     if (!GStackTraceTracker)
     {
