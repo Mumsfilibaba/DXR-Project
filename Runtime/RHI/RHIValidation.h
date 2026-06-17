@@ -41,6 +41,7 @@ public:
     virtual FRHIInputLayout*                   CreateInputLayout(const TArray<FRHIInputElementDesc>& InInputElements) override final;
     virtual FRHIGraphicsPipelineState*         CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc) override final;
     virtual FRHIComputePipelineState*          CreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc) override final;
+    virtual FRHIMeshletPipelineState*          CreateMeshletPipelineState(const FRHIMeshletPipelineStateDesc& InDesc) override final;
     virtual FRHIRayTracingPipelineState*       CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc) override final;
     virtual FRHIQuery*                         CreateQuery(EQueryType InQueryType) override final;
     virtual FRHIFence*                         CreateFence() override final;
@@ -101,6 +102,7 @@ public:
     virtual void SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets) override final;
     virtual void SetGraphicsPipelineState(class FRHIGraphicsPipelineState* PipelineState) override final;
     virtual void SetComputePipelineState(class FRHIComputePipelineState* PipelineState) override final;
+    virtual void SetMeshletPipelineState(class FRHIMeshletPipelineState* PipelineState) override final;
     virtual void SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants) override final;
     virtual void SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 RegisterIndex) override final;
     virtual void SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 RegisterIndex) override final;
@@ -135,6 +137,7 @@ public:
     virtual void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) override final;
     virtual void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) override final;
     virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) override final;
+    virtual void DispatchMesh(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ) override final;
     virtual void DispatchRays(FRHISceneAccelerationStructure* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) override final;
     virtual void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) override final;
     virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace) override final;

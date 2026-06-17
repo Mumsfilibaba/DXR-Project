@@ -864,6 +864,12 @@ void FD3D12CommandContext::SetComputePipelineState(class FRHIComputePipelineStat
     ContextState.SetComputePipelineState(ComputePipelineState);
 }
 
+void FD3D12CommandContext::SetMeshletPipelineState(class FRHIMeshletPipelineState* PipelineState)
+{
+    FD3D12MeshletPipelineStateRHI* MeshletPipelineState = FD3D12DeviceRHI::ResourceCast(PipelineState);
+    ContextState.SetMeshletPipelineState(MeshletPipelineState);
+}
+
 void FD3D12CommandContext::SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
@@ -2366,6 +2372,32 @@ void FD3D12CommandContext::Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroup
     ContextState.BindComputeState();
 
     GetCommandList()->Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
+}
+
+void FD3D12CommandContext::DispatchMesh(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
+{
+    if (ThreadGroupCountX == 0 || ThreadGroupCountY == 0 || ThreadGroupCountZ == 0)
+    {
+        return;
+    }
+
+#if D3D12_USE_ID3D12COMMANDLIST_6
+    if (GD3D12MeshShaderTier == D3D12_MESH_SHADER_TIER_NOT_SUPPORTED)
+    {
+        D3D12_ERROR("DispatchMesh called but mesh shaders are not supported on this device");
+        return;
+    }
+
+    ConditionalSplitCommandList();
+
+    ContextState.PrepareMeshletState();
+    BarrierBatcher.FlushBarriers(GetCommandList());
+    ContextState.BindMeshletState();
+
+    GetCommandList().GetGraphicsCommandList6()->DispatchMesh(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
+#else
+    D3D12_ERROR("DispatchMesh requires ID3D12GraphicsCommandList6 support");
+#endif
 }
 
 void FD3D12CommandContext::DispatchRays(FRHISceneAccelerationStructure* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth)

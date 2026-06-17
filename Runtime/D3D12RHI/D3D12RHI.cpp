@@ -1396,16 +1396,28 @@ FRHIGeometryShader* FD3D12DeviceRHI::CreateGeometryShader(const TArray<uint8>& S
 
 FRHIMeshShader* FD3D12DeviceRHI::CreateMeshShader(const TArray<uint8>& ShaderCode)
 {
-    // TODO: Finish this
-    UNREFERENCED_VARIABLE(ShaderCode);
-    return nullptr;
+    FD3D12MeshShaderRHIRef NewShader = new FD3D12MeshShaderRHI(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIAmplificationShader* FD3D12DeviceRHI::CreateAmplificationShader(const TArray<uint8>& ShaderCode)
 {
-    // TODO: Finish this
-    UNREFERENCED_VARIABLE(ShaderCode);
-    return nullptr;
+    FD3D12AmplificationShaderRHIRef NewShader = new FD3D12AmplificationShaderRHI(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIPixelShader* FD3D12DeviceRHI::CreatePixelShader(const TArray<uint8>& ShaderCode)
@@ -1513,6 +1525,19 @@ FRHIGraphicsPipelineState* FD3D12DeviceRHI::CreateGraphicsPipelineState(const FR
 FRHIComputePipelineState* FD3D12DeviceRHI::CreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc)
 {
     FD3D12ComputePipelineStateRHIRef NewPipelineState = new FD3D12ComputePipelineStateRHI(GetDevice(), MakeSharedRef<FD3D12ComputeShaderRHI>(InDesc.Shader));
+    if (!NewPipelineState->Initialize(InDesc))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewPipelineState.ReleaseOwnership();
+    }
+}
+
+FRHIMeshletPipelineState* FD3D12DeviceRHI::CreateMeshletPipelineState(const FRHIMeshletPipelineStateDesc& InDesc)
+{
+    FD3D12MeshletPipelineStateRHIRef NewPipelineState = new FD3D12MeshletPipelineStateRHI(GetDevice());
     if (!NewPipelineState->Initialize(InDesc))
     {
         return nullptr;

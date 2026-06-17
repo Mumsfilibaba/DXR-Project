@@ -8,6 +8,7 @@ typedef TSharedRef<class FD3D12InputLayoutRHI>             FD3D12InputLayoutRHIR
 typedef TSharedRef<class FD3D12DepthStencilStateRHI>       FD3D12DepthStencilStateRHIRef;
 typedef TSharedRef<class FD3D12GraphicsPipelineStateRHI>   FD3D12GraphicsPipelineStateRHIRef;
 typedef TSharedRef<class FD3D12ComputePipelineStateRHI>    FD3D12ComputePipelineStateRHIRef;
+typedef TSharedRef<class FD3D12MeshletPipelineStateRHI>    FD3D12MeshletPipelineStateRHIRef;
 typedef TSharedRef<class FD3D12RayTracingPipelineStateRHI> FD3D12RayTracingPipelineStateRHIRef;
 
 enum class ED3D12PipelineType
@@ -15,7 +16,8 @@ enum class ED3D12PipelineType
     Unknown    = 0,
     Graphics   = 1,
     Compute    = 2,
-    RayTracing = 3,
+    Meshlet    = 3,
+    RayTracing = 4,
 };
 
 class FD3D12InputLayoutRHI : public FRHIInputLayout
@@ -393,6 +395,128 @@ private:
     TSharedRef<FD3D12ComputeShaderRHI> Shader;
 };
 
+#if D3D12_ENABLE_PIPELINE_STATE_STREAM
+struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) FD3D12MeshletPipelineStream
+{
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type0 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE;
+        ID3D12RootSignature* RootSignature = nullptr;
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type1 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_AS;
+        D3D12_SHADER_BYTECODE AmplificationShaderCode = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type2 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_MS;
+        D3D12_SHADER_BYTECODE MeshShaderCode = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type3 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PS;
+        D3D12_SHADER_BYTECODE PixelShaderCode = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type4 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RENDER_TARGET_FORMATS;
+        D3D12_RT_FORMAT_ARRAY RenderTargetInfo = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type5 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL_FORMAT;
+        DXGI_FORMAT DepthBufferFormat = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type6 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RASTERIZER;
+        D3D12_RASTERIZER_DESC RasterizerDesc = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type7 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL;
+        D3D12_DEPTH_STENCIL_DESC DepthStencilDesc = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type8 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_BLEND;
+        D3D12_BLEND_DESC BlendStateDesc = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type9 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_DESC;
+        DXGI_SAMPLE_DESC SampleDesc = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type10 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VIEW_INSTANCING;
+        D3D12_VIEW_INSTANCING_DESC ViewInstancingDesc = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type11 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_FLAGS;
+        D3D12_PIPELINE_STATE_FLAGS PipelineStateFlags = D3D12_PIPELINE_STATE_FLAG_NONE;
+    };
+};
+#endif
+
+struct FD3D12MeshletPipelineKey
+{
+    FD3D12ShaderHash      ASHash             = { };
+    FD3D12ShaderHash      MSHash             = { };
+    FD3D12ShaderHash      PSHash             = { };
+    uint64                RootSignatureHash  = 0;
+    uint64                BlendStateHash     = 0;
+    uint64                DepthStencilHash   = 0;
+    uint64                RasterizerHash     = 0;
+    uint64                ViewInstancingHash = 0;
+    DXGI_FORMAT           DepthBufferFormat  = { };
+    D3D12_RT_FORMAT_ARRAY RenderTargetInfo   = { };
+    DXGI_SAMPLE_DESC      SampleDesc         = { };
+};
+
+class FD3D12MeshletPipelineStateRHI : public FRHIMeshletPipelineState, public FD3D12PipelineState
+{
+public:
+    FD3D12MeshletPipelineStateRHI(FD3D12Device* InDevice);
+    virtual ~FD3D12MeshletPipelineStateRHI();
+
+    // FRHIPipelineState Interface
+    virtual void* GetRHINativeState() const override final;
+
+    virtual void SetDebugName(const String& InName)       override final;
+    virtual void GetDebugName(String& OutDebugName) const override final;
+
+    bool Initialize(const FRHIMeshletPipelineStateDesc& Desc);
+
+    FORCEINLINE ED3D12ShaderFlags GetShaderFlags() const
+    {
+        return ShaderFlags;
+    }
+
+    FORCEINLINE FD3D12AmplificationShaderRHI* GetAmplificationShader() const { return AmplificationShader.Get(); }
+    FORCEINLINE FD3D12MeshShaderRHI*          GetMeshShader()          const { return MeshShader.Get(); }
+    FORCEINLINE FD3D12PixelShaderRHI*         GetPixelShader()         const { return PixelShader.Get(); }
+
+private:
+    ED3D12ShaderFlags                        ShaderFlags;
+    TSharedRef<FD3D12AmplificationShaderRHI> AmplificationShader;
+    TSharedRef<FD3D12MeshShaderRHI>          MeshShader;
+    TSharedRef<FD3D12PixelShaderRHI>         PixelShader;
+};
+
 struct FD3D12RayTracingShaderIdentifier
 {
     CHAR ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
@@ -459,6 +583,7 @@ public:
     bool CreateGraphicsPipeline(const WIDECHAR* PipelineHash, const D3D12_GRAPHICS_PIPELINE_STATE_DESC& Desc, TComPtr<ID3D12PipelineState>& OutPipelineState);
     bool CreateComputePipeline(const WIDECHAR* PipelineHash, const D3D12_PIPELINE_STATE_STREAM_DESC& PipelineStream, TComPtr<ID3D12PipelineState>& OutPipelineState);
     bool CreateComputePipeline(const WIDECHAR* PipelineHash, const D3D12_COMPUTE_PIPELINE_STATE_DESC& Desc, TComPtr<ID3D12PipelineState>& OutPipelineState);
+    bool CreateMeshletPipeline(const WIDECHAR* PipelineHash, const D3D12_PIPELINE_STATE_STREAM_DESC& PipelineStream, TComPtr<ID3D12PipelineState>& OutPipelineState);
     
     bool SaveCacheData();
     void SaveCacheDataAsync();

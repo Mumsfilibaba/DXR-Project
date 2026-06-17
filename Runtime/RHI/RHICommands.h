@@ -395,6 +395,21 @@ DECLARE_RHICOMMAND(FRHICommandSetComputePipelineState)
     FRHIComputePipelineState* PipelineState;
 };
 
+DECLARE_RHICOMMAND(FRHICommandSetMeshletPipelineState)
+{
+    FORCEINLINE FRHICommandSetMeshletPipelineState(FRHIMeshletPipelineState* InPipelineState)
+        : PipelineState(InPipelineState)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.SetMeshletPipelineState(PipelineState);
+    }
+
+    FRHIMeshletPipelineState* PipelineState;
+};
+
 DECLARE_RHICOMMAND(FRHICommandSetShaderConstants)
 {
     FORCEINLINE FRHICommandSetShaderConstants(FRHIShader* InShader, const void* InShaderConstants, uint32 InNumShaderConstants)
@@ -1084,6 +1099,26 @@ DECLARE_RHICOMMAND(FRHICommandDispatch)
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
         CommandContext.Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
+    }
+
+    uint32 ThreadGroupCountX;
+    uint32 ThreadGroupCountY;
+    uint32 ThreadGroupCountZ;
+};
+
+DECLARE_RHICOMMAND(FRHICommandDispatchMesh)
+{
+    FORCEINLINE FRHICommandDispatchMesh(uint32 InThreadGroupCountX, uint32 InThreadGroupCountY, uint32 InThreadGroupCountZ)
+        : ThreadGroupCountX(InThreadGroupCountX)
+        , ThreadGroupCountY(InThreadGroupCountY)
+        , ThreadGroupCountZ(InThreadGroupCountZ)
+    {
+        CHECK(ThreadGroupCountX > 0 || ThreadGroupCountY > 0 || ThreadGroupCountZ > 0);
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.DispatchMesh(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
     }
 
     uint32 ThreadGroupCountX;

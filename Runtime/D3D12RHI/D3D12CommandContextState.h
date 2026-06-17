@@ -14,9 +14,11 @@ public:
 
     void PrepareGraphicsState();
     void PrepareComputeState();
+    void PrepareMeshletState();
 
     void BindGraphicsState();
     void BindComputeState();
+    void BindMeshletState();
 
     void BindShaderConstants(FD3D12RootSignature* InRootSignature, EShaderVisibility::Type ShaderStage);
     void ResetState();
@@ -25,6 +27,7 @@ public:
 
     void SetGraphicsPipelineState(FD3D12GraphicsPipelineStateRHI* InGraphicsPipelineState);
     void SetComputePipelineState(FD3D12ComputePipelineStateRHI* InComputePipelineState);
+    void SetMeshletPipelineState(FD3D12MeshletPipelineStateRHI* InMeshletPipelineState);
     void SetRenderTargets(FD3D12RenderTargetViewRHI* const* RenderTargets, uint32 NumRenderTargets, FD3D12DepthStencilViewRHI* DepthStencil);
     void SetShadingRate(EShadingRate ShadingRate);
     void SetShadingRateImage(FD3D12TextureRHI* ShadingRateImage);
@@ -62,57 +65,62 @@ public:
         return ComputeState.PipelineState.Get();
     }
 
+    FORCEINLINE FD3D12MeshletPipelineStateRHI* GetMeshletPipelineState() const
+    {
+        return MeshletState.PipelineState.Get();
+    }
+
     FORCEINLINE void GetRenderTargets(FD3D12RenderTargetViewRHI** RenderTargetViews, uint32& OutNumRenderTargets, FD3D12DepthStencilViewRHI** DepthStencilView) const
     {
-        const uint32 CurrentNumRenderTargets = GraphicsState.RenderTargetCache.NumRenderTargets;
+        const uint32 CurrentNumRenderTargets = CommonGraphicsState.RenderTargetCache.NumRenderTargets;
         if (RenderTargetViews)
         {
-            Memory::Memcpy(RenderTargetViews, GraphicsState.RenderTargetCache.RenderTargetViews, sizeof(FD3D12RenderTargetViewRHI*) * CurrentNumRenderTargets);
+            Memory::Memcpy(RenderTargetViews, CommonGraphicsState.RenderTargetCache.RenderTargetViews, sizeof(FD3D12RenderTargetViewRHI*) * CurrentNumRenderTargets);
         }
 
         OutNumRenderTargets = CurrentNumRenderTargets;
 
         if (DepthStencilView)
         {
-            *DepthStencilView = GraphicsState.RenderTargetCache.DepthStencilView;
+            *DepthStencilView = CommonGraphicsState.RenderTargetCache.DepthStencilView;
         }
     }
 
     FORCEINLINE D3D12_SHADING_RATE GetShadingRate() const
     {
-        return GraphicsState.ShadingRate;
+        return CommonGraphicsState.ShadingRate;
     }
 
     FORCEINLINE FD3D12TextureRHI* GetShadingRateImage() const
     {
-        return GraphicsState.ShadingRateImage;
+        return CommonGraphicsState.ShadingRateImage;
     }
 
     FORCEINLINE void GetViewports(D3D12_VIEWPORT* Viewports, uint32& OutNumViewports) const
     {
         if (Viewports)
         {
-            Memory::Memcpy(Viewports, GraphicsState.Viewports, sizeof(D3D12_VIEWPORT) * GraphicsState.NumViewports);
+            Memory::Memcpy(Viewports, CommonGraphicsState.Viewports, sizeof(D3D12_VIEWPORT) * CommonGraphicsState.NumViewports);
         }
 
-        OutNumViewports = GraphicsState.NumViewports;
+        OutNumViewports = CommonGraphicsState.NumViewports;
     }
 
     FORCEINLINE void GetScissorRects(D3D12_RECT* ScissorRects, uint32& OutNumScissorRects) const
     {
         if (ScissorRects)
         {
-            Memory::Memcpy(ScissorRects, GraphicsState.ScissorRects, sizeof(D3D12_RECT) * GraphicsState.NumScissorRects);
+            Memory::Memcpy(ScissorRects, CommonGraphicsState.ScissorRects, sizeof(D3D12_RECT) * CommonGraphicsState.NumScissorRects);
         }
 
-        OutNumScissorRects = GraphicsState.NumScissorRects;
+        OutNumScissorRects = CommonGraphicsState.NumScissorRects;
     }
 
     FORCEINLINE void GetBlendFactor(float* BlendFactor) const
     {
         if (BlendFactor)
         {
-            Memory::Memcpy(BlendFactor, GraphicsState.BlendFactor, sizeof(GraphicsState.BlendFactor));
+            Memory::Memcpy(BlendFactor, CommonGraphicsState.BlendFactor, sizeof(CommonGraphicsState.BlendFactor));
         }
     }
 
@@ -127,58 +135,66 @@ private:
 
     FD3D12CommandContext& Context;
 
-    struct FGraphicsState
+    struct FCommonGraphicsState
     {
-        FGraphicsState()
-            : PipelineState(nullptr)
-            , NumViewports(0)
+        FCommonGraphicsState()
+            : NumViewports(0)
             , NumScissorRects(0)
             , ShadingRateImage(nullptr)
             , ShadingRate(D3D12_SHADING_RATE_1X1)
             , RenderTargetCache()
-            , IndexBufferCache()
-            , VertexBufferCache()
         {
             Memory::Memzero(BlendFactor, sizeof(BlendFactor));
             StencilRef = 0;
-            
-            Memory::Memzero(DepthBias, sizeof(DepthBias));
-            Memory::Memzero(SOBufferViews, sizeof(SOBufferViews));
-            Memory::Memzero(SOBuffers, sizeof(SOBuffers));
-            NumSOBuffers = 0;
 
+            Memory::Memzero(DepthBias, sizeof(DepthBias));
             Memory::Memzero(Viewports, sizeof(Viewports));
             Memory::Memzero(ScissorRects, sizeof(ScissorRects));
         }
 
+        float                   BlendFactor[4];
+        uint32                  StencilRef;
+        D3D12_VIEWPORT          Viewports[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
+        uint32                  NumViewports;
+        D3D12_RECT              ScissorRects[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
+        uint32                  NumScissorRects;
+        FD3D12TextureRHI*       ShadingRateImage;
+        D3D12_SHADING_RATE      ShadingRate;
+        float                   DepthBias[3]; // DepthBias, DepthBiasClamp, SlopeScaledDepthBias
+        FD3D12RenderTargetCache RenderTargetCache;
+
+        bool bBindRenderTargets    : 1;
+        bool bBindBlendFactor      : 1;
+        bool bBindStencilRef       : 1;
+        bool bBindDepthBias        : 1;
+        bool bBindScissorRects     : 1;
+        bool bBindViewports        : 1;
+        bool bBindShadingRate      : 1;
+        bool bBindShadingRateImage : 1;
+    } CommonGraphicsState;
+
+    struct FGraphicsState
+    {
+        FGraphicsState()
+            : PipelineState(nullptr)
+            , IndexBufferCache()
+            , VertexBufferCache()
+        {
+            Memory::Memzero(SOBufferViews, sizeof(SOBufferViews));
+            Memory::Memzero(SOBuffers, sizeof(SOBuffers));
+            NumSOBuffers = 0;
+        }
+
         FD3D12GraphicsPipelineStateRHIRef PipelineState;
-        float                             BlendFactor[4];
-        uint32                            StencilRef;
-        D3D12_VIEWPORT                    Viewports[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
-        uint32                            NumViewports;
-        D3D12_RECT                        ScissorRects[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
-        uint32                            NumScissorRects;
-        FD3D12TextureRHI*                 ShadingRateImage;
-        D3D12_SHADING_RATE                ShadingRate;
-        float                             DepthBias[3]; // DepthBias, DepthBiasClamp, SlopeScaledDepthBias
         D3D12_STREAM_OUTPUT_BUFFER_VIEW   SOBufferViews[4];
         FD3D12BufferRHI*                  SOBuffers[4];
         uint32                            NumSOBuffers;
-        FD3D12RenderTargetCache           RenderTargetCache;
         FD3D12IndexBufferCache            IndexBufferCache;
         FD3D12VertexBufferCache           VertexBufferCache;
 
-        bool bBindRenderTargets       : 1;
-        bool bBindBlendFactor         : 1;
-        bool bBindStencilRef          : 1;
-        bool bBindDepthBias           : 1;
         bool bBindStreamOutputTargets : 1;
         bool bBindPipelineState       : 1;
-        bool bBindScissorRects        : 1;
-        bool bBindViewports           : 1;
         bool bBindRootSignature       : 1;
-        bool bBindShadingRate         : 1;
-        bool bBindShadingRateImage    : 1;
         bool bBindVertexBuffers       : 1;
         bool bBindIndexBuffer         : 1;
         bool bBindShaderConstants     : 1;
@@ -198,6 +214,20 @@ private:
         bool bBindRootSignature   : 1;
         bool bBindShaderConstants : 1;
     } ComputeState;
+
+    struct FMeshletState
+    {
+        FMeshletState()
+            : PipelineState(nullptr)
+        {
+        }
+
+        FD3D12MeshletPipelineStateRHIRef PipelineState;
+
+        bool bBindPipelineState   : 1;
+        bool bBindRootSignature   : 1;
+        bool bBindShaderConstants : 1;
+    } MeshletState;
 
     struct FCommonState
     {

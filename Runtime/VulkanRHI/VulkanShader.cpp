@@ -816,6 +816,22 @@ FVulkanPixelShaderRHI::FVulkanPixelShaderRHI(FVulkanDevice* InDevice)
 
 FVulkanPixelShaderRHI::~FVulkanPixelShaderRHI() = default;
 
+FVulkanMeshShaderRHI::FVulkanMeshShaderRHI(FVulkanDevice* InDevice)
+    : FRHIMeshShader()
+    , FVulkanShader(InDevice, EShaderVisibility::Mesh)
+{
+}
+
+FVulkanMeshShaderRHI::~FVulkanMeshShaderRHI() = default;
+
+FVulkanAmplificationShaderRHI::FVulkanAmplificationShaderRHI(FVulkanDevice* InDevice)
+    : FRHIAmplificationShader()
+    , FVulkanShader(InDevice, EShaderVisibility::Task)
+{
+}
+
+FVulkanAmplificationShaderRHI::~FVulkanAmplificationShaderRHI() = default;
+
 FVulkanRayGenShaderRHI::FVulkanRayGenShaderRHI(FVulkanDevice* InDevice)
     : FRHIRayGenShader()
     , FVulkanRayTracingShader(InDevice)
@@ -881,6 +897,16 @@ void* FVulkanPixelShaderRHI::GetRHINativeHandle()
     return reinterpret_cast<void*>(&SpirvCode);
 }
 
+void* FVulkanMeshShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(&SpirvCode);
+}
+
+void* FVulkanAmplificationShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(&SpirvCode);
+}
+
 void* FVulkanRayGenShaderRHI::GetRHINativeHandle()
 {
     return reinterpret_cast<void*>(&SpirvCode);
@@ -927,6 +953,16 @@ void* FVulkanGeometryShaderRHI::GetRHIBaseInterface()
 }
 
 void* FVulkanPixelShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FVulkanShader*>(this);
+}
+
+void* FVulkanMeshShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FVulkanShader*>(this);
+}
+
+void* FVulkanAmplificationShaderRHI::GetRHIBaseInterface()
 {
     return static_cast<FVulkanShader*>(this);
 }

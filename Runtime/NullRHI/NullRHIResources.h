@@ -708,6 +708,27 @@ private:
     String DebugName;
 };
 
+struct FNullMeshletPipelineStateRHI : public FRHIMeshletPipelineState
+{
+    virtual void* GetRHINativeState() const override final
+    {
+        return nullptr;
+    }
+
+    virtual void SetDebugName(const String& InDebugName) override final
+    {
+        DebugName = InDebugName;
+    }
+
+    virtual void GetDebugName(String& OutDebugName) const override final
+    {
+        OutDebugName = DebugName;
+    }
+
+private:
+    String DebugName;
+};
+
 struct FNullRayTracingPipelineStateRHI : public FRHIRayTracingPipelineState
 {
     virtual void* GetRHINativeState() const override final

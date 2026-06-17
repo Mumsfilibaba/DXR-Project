@@ -18,6 +18,10 @@ static inline EShaderVisibility::Type GetShaderVisibilityFromShaderFlag(VkShader
     case VK_SHADER_STAGE_GEOMETRY_BIT:                return EShaderVisibility::Geometry;
     case VK_SHADER_STAGE_FRAGMENT_BIT:                return EShaderVisibility::Pixel;
     case VK_SHADER_STAGE_COMPUTE_BIT:                 return EShaderVisibility::Compute;
+#if VK_EXT_mesh_shader
+    case VK_SHADER_STAGE_TASK_BIT_EXT:                return EShaderVisibility::Task;
+    case VK_SHADER_STAGE_MESH_BIT_EXT:                return EShaderVisibility::Mesh;
+#endif
     default:                                          return EShaderVisibility::Compute;
     }
 }
@@ -26,13 +30,17 @@ static VkShaderStageFlags GetVkStageFlagsFromShaderStage(EShaderStage Stage)
 {
     switch (Stage)
     {
-    case EShaderStage::Vertex:   return VK_SHADER_STAGE_VERTEX_BIT;
-    case EShaderStage::Hull:     return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-    case EShaderStage::Domain:   return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-    case EShaderStage::Geometry: return VK_SHADER_STAGE_GEOMETRY_BIT;
-    case EShaderStage::Pixel:    return VK_SHADER_STAGE_FRAGMENT_BIT;
-    case EShaderStage::Compute:  return VK_SHADER_STAGE_COMPUTE_BIT;
-    default:                     return 0; // All stages
+    case EShaderStage::Vertex:        return VK_SHADER_STAGE_VERTEX_BIT;
+    case EShaderStage::Hull:          return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+    case EShaderStage::Domain:        return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+    case EShaderStage::Geometry:      return VK_SHADER_STAGE_GEOMETRY_BIT;
+    case EShaderStage::Pixel:         return VK_SHADER_STAGE_FRAGMENT_BIT;
+    case EShaderStage::Compute:       return VK_SHADER_STAGE_COMPUTE_BIT;
+#if VK_EXT_mesh_shader
+    case EShaderStage::Mesh:          return VK_SHADER_STAGE_MESH_BIT_EXT;
+    case EShaderStage::Amplification: return VK_SHADER_STAGE_TASK_BIT_EXT;
+#endif
+    default:                          return 0;
     }
 }
 

@@ -605,6 +605,27 @@ protected:
     virtual ~FRHIComputePipelineState() = default;
 };
 
+struct FRHIMeshletPipelineStateDesc
+{
+    FRHIAmplificationShader*                AmplificationShader     = nullptr; // optional
+    FRHIMeshShader*                         MeshShader              = nullptr; // required
+    FRHIPixelShader*                        PixelShader             = nullptr; // optional (depth-only)
+    FRHIDepthStencilState*                  DepthStencilState       = nullptr;
+    FRHIRasterizerState*                    RasterizerState         = nullptr;
+    FRHIBlendState*                         BlendState              = nullptr;
+    TArrayView<const FRHIStaticSamplerInfo> StaticSamplers          = { };
+    FRHIMultiSampleState                    MultiSampleState        = { };
+    FRHIGraphicsPipelineFormats             RasterizerOutputFormats = { };
+    FRHIViewInstancingState                 ViewInstancingState     = { };
+};
+
+class FRHIMeshletPipelineState : public FRHIPipelineState
+{
+protected:
+    FRHIMeshletPipelineState() = default;
+    virtual ~FRHIMeshletPipelineState() = default;
+};
+
 enum class ERayTracingHitGroupType : uint8
 {
     Unknown    = 0,

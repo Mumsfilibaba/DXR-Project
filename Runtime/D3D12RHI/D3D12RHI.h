@@ -97,6 +97,7 @@ public:
     virtual FRHIInputLayout*                   CreateInputLayout(const TArray<FRHIInputElementDesc>& InInputElements) override final;
     virtual FRHIGraphicsPipelineState*         CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc) override final;
     virtual FRHIComputePipelineState*          CreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc) override final;
+    virtual FRHIMeshletPipelineState*          CreateMeshletPipelineState(const FRHIMeshletPipelineStateDesc& InDesc) override final;
     virtual FRHIRayTracingPipelineState*       CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc) override final;
 
     virtual IRHICommandContext* ObtainCommandContext() override final;

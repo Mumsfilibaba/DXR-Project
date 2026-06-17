@@ -624,6 +624,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
     FVulkanPipelineStateManager& PipelineCache = GetDevice()->GetPipelineStateManager();
     if (PipelineCache.CreateGraphicsPipeline(PipelineCreateInfo, Pipeline))
     {
+        STAT_ADD(STAT_Vulkan_NumGraphicsPipelineStates, 1);
         return true;
     }
     else
@@ -639,6 +640,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
     }
     else
     {
+        STAT_ADD(STAT_Vulkan_NumGraphicsPipelineStates, 1);
         return true;
     }
 }
@@ -727,6 +729,7 @@ bool FVulkanComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDe
     FVulkanPipelineStateManager& PipelineCache = GetDevice()->GetPipelineStateManager();
     if (PipelineCache.CreateComputePipeline(PipelineCreateInfo, Pipeline))
     {
+        STAT_ADD(STAT_Vulkan_NumComputePipelineStates, 1);
         return true;
     }
     else
@@ -742,8 +745,331 @@ bool FVulkanComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDe
     }
     else
     {
+        STAT_ADD(STAT_Vulkan_NumComputePipelineStates, 1);
         return true;
     }
+}
+
+FVulkanMeshletPipelineStateRHI::FVulkanMeshletPipelineStateRHI(FVulkanDevice* InDevice)
+    : FRHIMeshletPipelineState()
+    , FVulkanPipeline(InDevice)
+    , ViewInstancingState()
+{
+}
+
+FVulkanMeshletPipelineStateRHI::~FVulkanMeshletPipelineStateRHI()
+{
+}
+
+void* FVulkanMeshletPipelineStateRHI::GetRHINativeState() const
+{
+    return reinterpret_cast<void*>(GetVkPipeline());
+}
+
+void FVulkanMeshletPipelineStateRHI::SetDebugName(const String& InName)
+{
+    FVulkanPipeline::SetDebugName(InName);
+}
+
+void FVulkanMeshletPipelineStateRHI::GetDebugName(String& OutDebugName) const
+{
+#if VULKAN_STORE_DEBUG_NAMES
+    OutDebugName = DebugName;
+#else
+    OutDebugName.Clear();
+#endif
+}
+
+bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDesc& InDesc)
+{
+#if VK_EXT_mesh_shader
+    if (!GVulkanSupportsMeshShaders)
+    {
+        VULKAN_ERROR_CRITICAL("Mesh shaders are not supported on this device");
+        return false;
+    }
+
+    FVulkanMeshShaderRHI* VulkanMeshShader = FVulkanDeviceRHI::ResourceCast(InDesc.MeshShader);
+    if (!VulkanMeshShader)
+    {
+        VULKAN_ERROR_CRITICAL("MeshShader cannot be nullptr");
+        return false;
+    }
+
+    FVulkanAmplificationShaderRHI* VulkanAmplificationShader = FVulkanDeviceRHI::ResourceCast(InDesc.AmplificationShader);
+    FVulkanPixelShaderRHI*         VulkanPixelShader         = FVulkanDeviceRHI::ResourceCast(InDesc.PixelShader);
+
+    // PipelineLayout
+    FVulkanPipelineLayoutInfo LayoutInfo;
+    if (VulkanAmplificationShader)
+    {
+        LayoutInfo.AddSetForStage(VK_SHADER_STAGE_TASK_BIT_EXT, VulkanAmplificationShader->GetShaderInfo());
+        LayoutInfo.UpdateConstantsForStage(VK_SHADER_STAGE_TASK_BIT_EXT, VulkanAmplificationShader->GetShaderInfo());
+    }
+
+    LayoutInfo.AddSetForStage(VK_SHADER_STAGE_MESH_BIT_EXT, VulkanMeshShader->GetShaderInfo());
+    LayoutInfo.UpdateConstantsForStage(VK_SHADER_STAGE_MESH_BIT_EXT, VulkanMeshShader->GetShaderInfo());
+
+    if (VulkanPixelShader)
+    {
+        LayoutInfo.AddSetForStage(VK_SHADER_STAGE_FRAGMENT_BIT, VulkanPixelShader->GetShaderInfo());
+        LayoutInfo.UpdateConstantsForStage(VK_SHADER_STAGE_FRAGMENT_BIT, VulkanPixelShader->GetShaderInfo());
+    }
+
+#if VULKAN_ENABLE_DYNAMIC_UNIFORM_BUFFERS
+    LayoutInfo.PromoteUniformBuffersToDynamic();
+#endif
+
+    if (InDesc.StaticSamplers.Size() > 0)
+    {
+        LayoutInfo.ApplyImmutableSamplers(GetDevice(), InDesc.StaticSamplers);
+    }
+
+    LayoutInfo.GenerateHash();
+
+    FVulkanPipelineLayoutManager& PipelineLayoutManager = GetDevice()->GetPipelineLayoutManager();
+    PipelineLayout = PipelineLayoutManager.FindOrCreateLayout(LayoutInfo);
+    if (!PipelineLayout)
+    {
+        return false;
+    }
+
+    // Gather ShaderModules
+    VkPipelineShaderStageCreateInfo ShaderStageCreateInfo = {};
+    ShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+
+    TArray<VkPipelineShaderStageCreateInfo> ShaderStages;
+    if (VulkanAmplificationShader)
+    {
+        if (TSharedRef<FVulkanShaderModule> ShaderModule = VulkanAmplificationShader->GetOrCreateShaderModule(PipelineLayout))
+        {
+            ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_TASK_BIT_EXT;
+            ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
+            ShaderStageCreateInfo.pName  = *VulkanAmplificationShader->GetEntryPointName();
+            ShaderStages.Add(ShaderStageCreateInfo);
+        }
+        else
+        {
+            VULKAN_ERROR_CRITICAL("Failed to create ShaderModule");
+            return false;
+        }
+    }
+
+    if (TSharedRef<FVulkanShaderModule> ShaderModule = VulkanMeshShader->GetOrCreateShaderModule(PipelineLayout))
+    {
+        ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_MESH_BIT_EXT;
+        ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
+        ShaderStageCreateInfo.pName  = *VulkanMeshShader->GetEntryPointName();
+        ShaderStages.Add(ShaderStageCreateInfo);
+    }
+    else
+    {
+        VULKAN_ERROR_CRITICAL("Failed to create ShaderModule");
+        return false;
+    }
+
+    if (VulkanPixelShader)
+    {
+        if (TSharedRef<FVulkanShaderModule> ShaderModule = VulkanPixelShader->GetOrCreateShaderModule(PipelineLayout))
+        {
+            ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
+            ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
+            ShaderStageCreateInfo.pName  = *VulkanPixelShader->GetEntryPointName();
+            ShaderStages.Add(ShaderStageCreateInfo);
+        }
+        else
+        {
+            VULKAN_ERROR_CRITICAL("Failed to create ShaderModule");
+            return false;
+        }
+    }
+
+    // Viewport CreateInfo
+    VkPipelineViewportStateCreateInfo ViewportStateCreateInfo = {};
+    ViewportStateCreateInfo.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    ViewportStateCreateInfo.viewportCount = 1;
+    ViewportStateCreateInfo.scissorCount  = 1;
+
+    // RasterizerState CreateInfo
+    VkPipelineRasterizationStateCreateInfo RasterizerStateCreateInfo;
+    if (FVulkanRasterizerStateRHI* RasterizerState = FVulkanDeviceRHI::ResourceCast(InDesc.RasterizerState))
+    {
+        RasterizerStateCreateInfo = RasterizerState->GetVkCreateInfo();
+    }
+    else
+    {
+        VULKAN_ERROR_CRITICAL("RasterizerState cannot be nullptr");
+        return false;
+    }
+
+    // MultiSampling CreateInfo
+    VkPipelineMultisampleStateCreateInfo MultisamplingCreateInfo = {};
+    MultisamplingCreateInfo.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    MultisamplingCreateInfo.sampleShadingEnable   = VK_FALSE;
+    MultisamplingCreateInfo.rasterizationSamples  = VK_SAMPLE_COUNT_1_BIT;
+    MultisamplingCreateInfo.minSampleShading      = 1.0f;
+    MultisamplingCreateInfo.pSampleMask           = nullptr;
+    MultisamplingCreateInfo.alphaToCoverageEnable = VK_FALSE;
+    MultisamplingCreateInfo.alphaToOneEnable      = VK_FALSE;
+
+    // DepthStencilState CreateInfo
+    VkPipelineDepthStencilStateCreateInfo DepthStencilStateCreateInfo;
+    if (FVulkanDepthStencilStateRHI* DepthStencilState = FVulkanDeviceRHI::ResourceCast(InDesc.DepthStencilState))
+    {
+        DepthStencilStateCreateInfo = DepthStencilState->GetVkCreateInfo();
+    }
+    else
+    {
+        VULKAN_ERROR_CRITICAL("DepthStencilState cannot be nullptr");
+        return false;
+    }
+
+    // BlendState CreateInfo
+    VkPipelineColorBlendStateCreateInfo BlendStateCreateInfo;
+    if (FVulkanBlendStateRHI* BlendState = FVulkanDeviceRHI::ResourceCast(InDesc.BlendState))
+    {
+        BlendStateCreateInfo = BlendState->GetVkCreateInfo();
+    }
+    else
+    {
+        VULKAN_ERROR_CRITICAL("BlendState cannot be nullptr");
+        return false;
+    }
+
+    // Dynamic-State CreateInfo
+    VkDynamicState DynamicStates[] =
+    {
+        VK_DYNAMIC_STATE_VIEWPORT,
+        VK_DYNAMIC_STATE_SCISSOR,
+        VK_DYNAMIC_STATE_BLEND_CONSTANTS,
+        VK_DYNAMIC_STATE_STENCIL_REFERENCE,
+        VK_DYNAMIC_STATE_DEPTH_BIAS,
+    };
+
+    VkPipelineDynamicStateCreateInfo DynamicStateCreateInfo = {};
+    DynamicStateCreateInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    DynamicStateCreateInfo.dynamicStateCount = ARRAY_COUNT(DynamicStates);
+    DynamicStateCreateInfo.pDynamicStates    = DynamicStates;
+
+    if (InDesc.ViewInstancingState.bEnableViewInstancing)
+    {
+        ViewInstancingState = InDesc.ViewInstancingState;
+    }
+
+    // Create PipelineState (mesh shading pipelines omit vertex-input and input-assembly state)
+    VkGraphicsPipelineCreateInfo PipelineCreateInfo = {};
+    PipelineCreateInfo.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    PipelineCreateInfo.stageCount          = ShaderStages.Size();
+    PipelineCreateInfo.pStages             = ShaderStages.Data();
+    PipelineCreateInfo.pVertexInputState   = nullptr;
+    PipelineCreateInfo.pInputAssemblyState = nullptr;
+    PipelineCreateInfo.pViewportState      = &ViewportStateCreateInfo;
+    PipelineCreateInfo.pRasterizationState = &RasterizerStateCreateInfo;
+    PipelineCreateInfo.pMultisampleState   = &MultisamplingCreateInfo;
+    PipelineCreateInfo.pDepthStencilState  = &DepthStencilStateCreateInfo;
+    PipelineCreateInfo.pColorBlendState    = &BlendStateCreateInfo;
+    PipelineCreateInfo.pDynamicState       = &DynamicStateCreateInfo;
+    PipelineCreateInfo.layout              = PipelineLayout->GetVkPipelineLayout();
+    PipelineCreateInfo.basePipelineHandle  = VK_NULL_HANDLE;
+    PipelineCreateInfo.basePipelineIndex   = -1;
+
+    VkFormat ColorAttachmentFormats[RHI_MAX_RENDER_TARGETS] = {};
+
+    VkPipelineRenderingCreateInfo PipelineRenderingInfo = {};
+    if (GVulkanUseDynamicRendering)
+    {
+        for (uint8 Index = 0; Index < InDesc.RasterizerOutputFormats.NumRenderTargets; Index++)
+        {
+            ColorAttachmentFormats[Index] = ConvertFormat(InDesc.RasterizerOutputFormats.RenderTargetFormats[Index]);
+        }
+
+        const VkFormat DepthStencilVkFormat = ConvertFormat(InDesc.RasterizerOutputFormats.DepthStencilFormat);
+
+        PipelineRenderingInfo.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+        PipelineRenderingInfo.colorAttachmentCount    = InDesc.RasterizerOutputFormats.NumRenderTargets;
+        PipelineRenderingInfo.pColorAttachmentFormats = ColorAttachmentFormats;
+        PipelineRenderingInfo.depthAttachmentFormat   = DepthStencilVkFormat;
+        PipelineRenderingInfo.stencilAttachmentFormat = IsStencilFormat(DepthStencilVkFormat) ? DepthStencilVkFormat : VK_FORMAT_UNDEFINED;
+
+        if (GVulkanSupportsMultiviews && InDesc.ViewInstancingState.bEnableViewInstancing)
+        {
+            constexpr uint32 MaxArraySlices = 32;
+            const uint32 NumViews = Math::Min<uint32>(InDesc.ViewInstancingState.NumArraySlices, MaxArraySlices);
+
+            uint32 ViewMask = 0;
+            for (uint32 Index = 0; Index < NumViews; Index++)
+            {
+                const uint32 BitIndex = InDesc.ViewInstancingState.StartRenderTargetArrayIndex + Index;
+                CHECK(BitIndex < 32);
+                ViewMask |= (1u << BitIndex);
+            }
+
+            PipelineRenderingInfo.viewMask = ViewMask;
+        }
+
+        PipelineCreateInfo.pNext      = &PipelineRenderingInfo;
+        PipelineCreateInfo.renderPass = VK_NULL_HANDLE;
+    }
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
+    else
+    {
+        FVulkanRenderPassKey RenderPassKey;
+        RenderPassKey.NumSamples                      = InDesc.MultiSampleState.SampleCount;
+        RenderPassKey.DepthStencilFormat              = InDesc.RasterizerOutputFormats.DepthStencilFormat;
+        RenderPassKey.DepthStencilActions.LoadAction  = EAttachmentLoadAction::Load;
+        RenderPassKey.DepthStencilActions.StoreAction = EAttachmentStoreAction::Store;
+        RenderPassKey.NumRenderTargets                = InDesc.RasterizerOutputFormats.NumRenderTargets;
+
+        for (uint8 Index = 0; Index < InDesc.RasterizerOutputFormats.NumRenderTargets; Index++)
+        {
+            RenderPassKey.RenderTargetFormats[Index]             = InDesc.RasterizerOutputFormats.RenderTargetFormats[Index];
+            RenderPassKey.RenderTargetActions[Index].LoadAction  = EAttachmentLoadAction::Load;
+            RenderPassKey.RenderTargetActions[Index].StoreAction = EAttachmentStoreAction::Store;
+        }
+
+        if (InDesc.ViewInstancingState.bEnableViewInstancing)
+        {
+            RenderPassKey.ViewInstancingState = InDesc.ViewInstancingState;
+        }
+
+        VkRenderPass RenderPass = GetDevice()->GetRenderPassCache().GetRenderPass(RenderPassKey);
+        if (!VULKAN_CHECK_HANDLE(RenderPass))
+        {
+            return false;
+        }
+
+        PipelineCreateInfo.renderPass = RenderPass;
+        PipelineCreateInfo.subpass    = 0;
+    }
+#endif // VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
+
+    FVulkanPipelineStateManager& PipelineCache = GetDevice()->GetPipelineStateManager();
+    if (PipelineCache.CreateGraphicsPipeline(PipelineCreateInfo, Pipeline))
+    {
+        STAT_ADD(STAT_Vulkan_NumMeshletPipelineStates, 1);
+        return true;
+    }
+    else
+    {
+        VULKAN_WARNING("MeshletPipeline was not found in PipelineCache");
+    }
+
+    VkResult Result = vkCreateGraphicsPipelines(GetDevice()->GetVkDevice(), VK_NULL_HANDLE, 1, &PipelineCreateInfo, nullptr, &Pipeline);
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR_CRITICAL("Failed to create MeshletPipeline");
+        return false;
+    }
+    else
+    {
+        STAT_ADD(STAT_Vulkan_NumMeshletPipelineStates, 1);
+        return true;
+    }
+#else
+    UNREFERENCED_VARIABLE(InDesc);
+    VULKAN_ERROR_CRITICAL("Mesh shaders are not supported in this build");
+    return false;
+#endif // VK_EXT_mesh_shader
 }
 
 void* FVulkanRayTracingPipelineStateRHI::GetRHINativeState() const

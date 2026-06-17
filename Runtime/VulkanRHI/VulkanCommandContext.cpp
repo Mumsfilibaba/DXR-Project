@@ -942,6 +942,12 @@ void FVulkanCommandContext::SetComputePipelineState(class FRHIComputePipelineSta
     ContextState.SetComputePipelineState(VulkanPipelineState);
 }
 
+void FVulkanCommandContext::SetMeshletPipelineState(class FRHIMeshletPipelineState* PipelineState)
+{
+    FVulkanMeshletPipelineStateRHI* VulkanPipelineState = FVulkanDeviceRHI::ResourceCast(PipelineState);
+    ContextState.SetMeshletPipelineState(VulkanPipelineState);
+}
+
 void FVulkanCommandContext::SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants)
 {
     FVulkanShader* VulkanShader = GetVulkanShader(Shader);
@@ -2404,6 +2410,43 @@ void FVulkanCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uin
         FVulkanDeviceRHI::Get()->GetCrashMarkers()->WriteDrawMarker(GetCommandBuffer(), "Dispatch");
     }
 #endif
+}
+
+void FVulkanCommandContext::DispatchMesh(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
+{
+#if VK_EXT_mesh_shader
+    if (!GVulkanSupportsMeshShaders)
+    {
+        VULKAN_WARNING("DispatchMesh called but mesh shaders are not supported on this device");
+        return;
+    }
+
+    if (ThreadGroupCountX == 0 || ThreadGroupCountY == 0 || ThreadGroupCountZ == 0)
+    {
+        return;
+    }
+
+    ConditionalSplitCommandBuffer();
+    ContextState.PrepareMeshletState();
+
+    CHECK(IsInsideRenderPass());
+    CHECK(!BarrierBatcher.HasPendingBarriers());
+
+    ContextState.BindMeshletState();
+    GetCommandBuffer()->DrawMeshTasks(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
+
+#if VULKAN_ENABLE_CRASH_MARKERS
+    if (FVulkanDeviceRHI::Get()->IsCrashMarkersEnabled() && GetCrashMarkerLevel() >= 2)
+    {
+        FVulkanDeviceRHI::Get()->GetCrashMarkers()->WriteDrawMarker(GetCommandBuffer(), "DispatchMesh");
+    }
+#endif
+#else
+    UNREFERENCED_VARIABLE(ThreadGroupCountX);
+    UNREFERENCED_VARIABLE(ThreadGroupCountY);
+    UNREFERENCED_VARIABLE(ThreadGroupCountZ);
+    VULKAN_WARNING("DispatchMesh called but VK_EXT_mesh_shader is not available in this build");
+#endif // VK_EXT_mesh_shader
 }
 
 void FVulkanCommandContext::DispatchRays(FRHISceneAccelerationStructure* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)

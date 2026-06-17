@@ -7,6 +7,7 @@ typedef TSharedRef<class FVulkanInputLayoutRHI>             FVulkanVertexInputLa
 typedef TSharedRef<class FVulkanDepthStencilStateRHI>       FVulkanDepthStencilStateRHIRef;
 typedef TSharedRef<class FVulkanGraphicsPipelineStateRHI>   FVulkanGraphicsPipelineStateRHIRef;
 typedef TSharedRef<class FVulkanComputePipelineStateRHI>    FVulkanComputePipelineStateRHIRef;
+typedef TSharedRef<class FVulkanMeshletPipelineStateRHI>    FVulkanMeshletPipelineStateRHIRef;
 typedef TSharedRef<class FVulkanRayTracingPipelineStateRHI> FVulkanRayTracingPipelineStateRHIRef;
 
 class FVulkanInputLayoutRHI : public FRHIInputLayout
@@ -156,6 +157,29 @@ public:
     
     virtual void SetDebugName(const String& InName)       override final;
     virtual void GetDebugName(String& OutDebugName) const override final;
+};
+
+class FVulkanMeshletPipelineStateRHI : public FRHIMeshletPipelineState, public FVulkanPipeline
+{
+public:
+    FVulkanMeshletPipelineStateRHI(FVulkanDevice* InDevice);
+    virtual ~FVulkanMeshletPipelineStateRHI();
+
+    bool Initialize(const FRHIMeshletPipelineStateDesc& InDesc);
+
+    // FRHIPipelineState Interface
+    virtual void* GetRHINativeState() const override final;
+
+    virtual void SetDebugName(const String& InName)       override final;
+    virtual void GetDebugName(String& OutDebugName) const override final;
+
+    FORCEINLINE const FRHIViewInstancingState& GetViewInstancingState() const
+    {
+        return ViewInstancingState;
+    }
+
+private:
+    FRHIViewInstancingState ViewInstancingState;
 };
 
 class FVulkanRayTracingPipelineStateRHI : public FRHIRayTracingPipelineState

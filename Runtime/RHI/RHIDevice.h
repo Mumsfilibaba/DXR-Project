@@ -269,6 +269,13 @@ struct FRHIDevice
     virtual FRHIComputePipelineState* CreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc) = 0;
 
     /**
+     * @brief Creates a meshlet (mesh-shader) pipeline state.
+     * @param InDesc Information about the meshlet pipeline state.
+     * @return The newly created pipeline state.
+     */
+    virtual FRHIMeshletPipelineState* CreateMeshletPipelineState(const FRHIMeshletPipelineStateDesc& InDesc) = 0;
+
+    /**
      * @brief Creates a ray-tracing pipeline state.
      * @param InDesc Information about the ray-tracing pipeline state.
      * @return The newly created pipeline state.

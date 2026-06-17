@@ -46,6 +46,7 @@ typedef TSharedRef<class FRHIDepthStencilState>       FRHIDepthStencilStateRef;
 typedef TSharedRef<class FRHIInputLayout>             FRHIInputLayoutRef;
 typedef TSharedRef<class FRHIGraphicsPipelineState>   FRHIGraphicsPipelineStateRef;
 typedef TSharedRef<class FRHIComputePipelineState>    FRHIComputePipelineStateRef;
+typedef TSharedRef<class FRHIMeshletPipelineState>    FRHIMeshletPipelineStateRef;
 typedef TSharedRef<class FRHIRayTracingPipelineState> FRHIRayTracingPipelineStateRef;
 
 enum class EFormat : uint8

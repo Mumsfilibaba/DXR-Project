@@ -14,6 +14,8 @@ static D3D12_SHADER_VISIBILITY GD3D12ShaderVisibility[EShaderVisibility::Count] 
     D3D12_SHADER_VISIBILITY_DOMAIN,
     D3D12_SHADER_VISIBILITY_GEOMETRY,
     D3D12_SHADER_VISIBILITY_PIXEL,
+    D3D12_SHADER_VISIBILITY_AMPLIFICATION,
+    D3D12_SHADER_VISIBILITY_MESH,
 };
 
 static D3D12_SHADER_VISIBILITY GetD3D12ShaderVisibility(uint32 Visbility)
@@ -29,7 +31,9 @@ static EShaderVisibility::Type GShaderVisibility[EShaderVisibility::Count] =
     EShaderVisibility::Hull,
     EShaderVisibility::Domain,
     EShaderVisibility::Geometry,
-    EShaderVisibility::Pixel
+    EShaderVisibility::Pixel,
+    EShaderVisibility::Amplification,
+    EShaderVisibility::Mesh
 };
 
 static EShaderVisibility::Type GetShaderVisibility(uint32 Visbility)
@@ -42,12 +46,14 @@ static D3D12_SHADER_VISIBILITY GetD3D12ShaderVisibilityFromShaderStage(EShaderSt
 {
     switch (Stage)
     {
-    case EShaderStage::Vertex:   return D3D12_SHADER_VISIBILITY_VERTEX;
-    case EShaderStage::Hull:     return D3D12_SHADER_VISIBILITY_HULL;
-    case EShaderStage::Domain:   return D3D12_SHADER_VISIBILITY_DOMAIN;
-    case EShaderStage::Geometry: return D3D12_SHADER_VISIBILITY_GEOMETRY;
-    case EShaderStage::Pixel:    return D3D12_SHADER_VISIBILITY_PIXEL;
-    default:                     return D3D12_SHADER_VISIBILITY_ALL;
+    case EShaderStage::Vertex:        return D3D12_SHADER_VISIBILITY_VERTEX;
+    case EShaderStage::Hull:          return D3D12_SHADER_VISIBILITY_HULL;
+    case EShaderStage::Domain:        return D3D12_SHADER_VISIBILITY_DOMAIN;
+    case EShaderStage::Geometry:      return D3D12_SHADER_VISIBILITY_GEOMETRY;
+    case EShaderStage::Pixel:         return D3D12_SHADER_VISIBILITY_PIXEL;
+    case EShaderStage::Amplification: return D3D12_SHADER_VISIBILITY_AMPLIFICATION;
+    case EShaderStage::Mesh:          return D3D12_SHADER_VISIBILITY_MESH;
+    default:                          return D3D12_SHADER_VISIBILITY_ALL;
     }
 }
 
@@ -118,6 +124,8 @@ static const EShaderVisibility::Type GRootCBVStagePriority[] =
 {
     EShaderVisibility::Vertex,
     EShaderVisibility::Pixel,
+    EShaderVisibility::Mesh,
+    EShaderVisibility::Amplification,
     EShaderVisibility::Geometry,
     EShaderVisibility::Hull,
     EShaderVisibility::Domain,
@@ -611,6 +619,8 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
         D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS,
         D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS,
         D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS,
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS,
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS,
     };
 
     D3D12_ROOT_SIGNATURE_FLAGS Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
@@ -1062,6 +1072,8 @@ bool FD3D12RootSignature::HasDenyFlag(EShaderVisibility::Type Stage) const
         D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS,
         D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS,
         D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS,
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS,
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS,
     };
 
     CHECK(Stage < EShaderVisibility::Count);

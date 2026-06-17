@@ -11,6 +11,8 @@ typedef TSharedRef<class FVulkanHullShaderRHI>          FVulkanHullShaderRHIRef;
 typedef TSharedRef<class FVulkanDomainShaderRHI>        FVulkanDomainShaderRHIRef;
 typedef TSharedRef<class FVulkanGeometryShaderRHI>      FVulkanGeometryShaderRHIRef;
 typedef TSharedRef<class FVulkanPixelShaderRHI>         FVulkanPixelShaderRHIRef;
+typedef TSharedRef<class FVulkanMeshShaderRHI>          FVulkanMeshShaderRHIRef;
+typedef TSharedRef<class FVulkanAmplificationShaderRHI> FVulkanAmplificationShaderRHIRef;
 typedef TSharedRef<class FVulkanComputeShaderRHI>       FVulkanComputeShaderRHIRef;
 typedef TSharedRef<class FVulkanRayTracingShader>       FVulkanRayTracingShaderRef;
 typedef TSharedRef<class FVulkanRayGenShaderRHI>        FVulkanRayGenShaderRHIRef;
@@ -28,7 +30,9 @@ struct EShaderVisibility
         Geometry,
         Pixel,
         Compute,
-        Count = Compute + 1
+        Task,
+        Mesh,
+        Count = Mesh + 1
     };
 };
 
@@ -44,6 +48,8 @@ inline const CHAR* ToString(EShaderVisibility::Type ShaderVisibility)
         "Geometry",
         "Pixel",
         "Compute",
+        "Task",
+        "Mesh",
     };
     
     static_assert(ARRAY_COUNT(ShaderVisibilityStrings) == EShaderVisibility::Count, "ShaderVisibilityStrings is out of date");
@@ -264,6 +270,29 @@ class FVulkanPixelShaderRHI : public FRHIPixelShader, public FVulkanShader
 public:
     FVulkanPixelShaderRHI(FVulkanDevice* InDevice);
     virtual ~FVulkanPixelShaderRHI();
+
+    // FRHIShader Interface
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
+};
+
+
+class FVulkanMeshShaderRHI : public FRHIMeshShader, public FVulkanShader
+{
+public:
+    FVulkanMeshShaderRHI(FVulkanDevice* InDevice);
+    virtual ~FVulkanMeshShaderRHI();
+
+    // FRHIShader Interface
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
+};
+
+class FVulkanAmplificationShaderRHI : public FRHIAmplificationShader, public FVulkanShader
+{
+public:
+    FVulkanAmplificationShaderRHI(FVulkanDevice* InDevice);
+    virtual ~FVulkanAmplificationShaderRHI();
 
     // FRHIShader Interface
     virtual void* GetRHINativeHandle()  override final;

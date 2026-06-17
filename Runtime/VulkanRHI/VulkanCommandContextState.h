@@ -1,11 +1,11 @@
 #pragma once
+#include "RHI/IRHICommandContext.h"
 #include "VulkanRHI/VulkanQueue.h"
 #include "VulkanRHI/VulkanCommandBuffer.h"
 #include "VulkanRHI/VulkanPipelineState.h"
 #if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
-#include "VulkanRHI/VulkanRenderPass.h"
+    #include "VulkanRHI/VulkanRenderPass.h"
 #endif
-#include "RHI/IRHICommandContext.h"
 
 class FVulkanCommandContext;
 class FVulkanDescriptorState;
@@ -140,9 +140,11 @@ public:
     
     void PrepareGraphicsState();
     void PrepareComputeState();
+    void PrepareMeshletState();
 
     void BindGraphicsState();
     void BindComputeState();
+    void BindMeshletState();
     void BindPushConstants(FVulkanPipelineLayout* PipelineLayout);
 
     void ResetState();
@@ -157,6 +159,7 @@ public:
 
     void SetGraphicsPipelineState(FVulkanGraphicsPipelineStateRHI* InGraphicsPipelineState);
     void SetComputePipelineState(FVulkanComputePipelineStateRHI* InComputePipelineState);
+    void SetMeshletPipelineState(FVulkanMeshletPipelineStateRHI* InMeshletPipelineState);
     void SetViewports(VkViewport* Viewports, uint32 NumViewports);
     void SetScissorRects(VkRect2D* ScissorRects, uint32 NumScissorRects);
     void SetBlendFactor(const float BlendFactor[4]);
@@ -203,31 +206,36 @@ public:
         return ComputeState.PipelineState.Get();
     }
 
+    FORCEINLINE FVulkanMeshletPipelineStateRHI* GetMeshletPipelineState() const
+    {
+        return MeshletState.PipelineState.Get();
+    }
+
     FORCEINLINE void GetViewports(VkViewport* Viewports, uint32& OutNumViewports) const
     {
         if (Viewports)
         {
-            Memory::Memcpy(Viewports, GraphicsState.Viewports, sizeof(VkViewport) * GraphicsState.NumViewports);
+            Memory::Memcpy(Viewports, CommonGraphicsState.Viewports, sizeof(VkViewport) * CommonGraphicsState.NumViewports);
         }
 
-        OutNumViewports = GraphicsState.NumViewports;
+        OutNumViewports = CommonGraphicsState.NumViewports;
     }
 
     FORCEINLINE void GetScissorRects(VkRect2D* ScissorRects, uint32& OutNumScissorRects) const
     {
         if (ScissorRects)
         {
-            Memory::Memcpy(ScissorRects, GraphicsState.ScissorRects, sizeof(VkRect2D) * GraphicsState.NumScissorRects);
+            Memory::Memcpy(ScissorRects, CommonGraphicsState.ScissorRects, sizeof(VkRect2D) * CommonGraphicsState.NumScissorRects);
         }
 
-        OutNumScissorRects = GraphicsState.NumScissorRects;
+        OutNumScissorRects = CommonGraphicsState.NumScissorRects;
     }
 
     FORCEINLINE void GetBlendFactor(float* BlendFactor) const
     {
         if (BlendFactor)
         {
-            Memory::Memcpy(BlendFactor, GraphicsState.BlendFactor, sizeof(GraphicsState.BlendFactor));
+            Memory::Memcpy(BlendFactor, CommonGraphicsState.BlendFactor, sizeof(CommonGraphicsState.BlendFactor));
         }
     }
 
@@ -242,21 +250,14 @@ private:
         uint64                  LastUsedFrame;
     };
 
-    struct FGraphicsState
+    struct FCommonGraphicsState
     {
-        typedef TMap<FVulkanGraphicsPipelineStateRHI*, FCachedDescriptorState> FPipelineToDescriptorStateMap;
-        
-        FGraphicsState()
-            : CurrentLayout(nullptr)
-            , PipelineState(nullptr)
-            , ViewInstancingState()
-            , DescriptorStates()
-            , CurrentDescriptorState(nullptr)
+        FCommonGraphicsState()
+            : ViewInstancingState()
+            , StencilRef(0)
             , NumViewports(0)
             , NumScissorRects(0)
-            , IndexBufferCache()
-            , VertexBufferCache()
-            , StencilRef(0)
+            , RenderTargetState()
         {
             Memory::Memzero(BlendFactor, sizeof(BlendFactor));
             Memory::Memzero(DepthBias, sizeof(DepthBias));
@@ -264,29 +265,46 @@ private:
             Memory::Memzero(ScissorRects, sizeof(ScissorRects));
         }
 
+        FRHIViewInstancingState  ViewInstancingState;
+        float                    BlendFactor[4];
+        float                    DepthBias[3];
+        uint32                   StencilRef;
+        VkViewport               Viewports[VULKAN_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
+        uint32                   NumViewports;
+        VkRect2D                 ScissorRects[VULKAN_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
+        uint32                   NumScissorRects;
+        FVulkanRenderTargetState RenderTargetState;
+
+        bool bBindBlendFactor  : 1;
+        bool bBindStencilRef   : 1;
+        bool bBindDepthBias    : 1;
+        bool bBindScissorRects : 1;
+        bool bBindViewports    : 1;
+    } CommonGraphicsState;
+
+    struct FGraphicsState
+    {
+        typedef TMap<FVulkanGraphicsPipelineStateRHI*, FCachedDescriptorState> FPipelineToDescriptorStateMap;
+        
+        FGraphicsState()
+            : CurrentLayout(nullptr)
+            , PipelineState(nullptr)
+            , DescriptorStates()
+            , CurrentDescriptorState(nullptr)
+            , IndexBufferCache()
+            , VertexBufferCache()
+        {
+        }
+
         FVulkanPipelineLayout*             CurrentLayout;
         FVulkanGraphicsPipelineStateRHIRef PipelineState;
-        FRHIViewInstancingState            ViewInstancingState;
         FPipelineToDescriptorStateMap      DescriptorStates;
         FVulkanDescriptorState*            CurrentDescriptorState;
-        float                              BlendFactor[4];
-        float                              DepthBias[3];
-        uint32                             StencilRef;
-        VkViewport                         Viewports[VULKAN_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
-        uint32                             NumViewports;
-        VkRect2D                           ScissorRects[VULKAN_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
-        uint32                             NumScissorRects;
         FVulkanIndexBufferCache            IndexBufferCache;
         FVulkanVertexBufferCache           VertexBufferCache;
         FVulkanStreamOutputCache           StreamOutputCache;
-        FVulkanRenderTargetState           RenderTargetState;
 
-        bool bBindBlendFactor          : 1;
-        bool bBindStencilRef           : 1;
-        bool bBindDepthBias            : 1;
         bool bBindPipelineState        : 1;
-        bool bBindScissorRects         : 1;
-        bool bBindViewports            : 1;
         bool bBindVertexBuffers        : 1;
         bool bBindIndexBuffer          : 1;
         bool bBindPushConstants        : 1;
@@ -314,6 +332,27 @@ private:
         bool bBindPushConstants : 1;
     } ComputeState;
 
+    struct FMeshletState
+    {
+        typedef TMap<FVulkanMeshletPipelineStateRHI*, FCachedDescriptorState> FPipelineToDescriptorStateMap;
+
+        FMeshletState()
+            : CurrentLayout(nullptr)
+            , PipelineState(nullptr)
+            , DescriptorStates()
+            , CurrentDescriptorState(nullptr)
+        {
+        }
+
+        FVulkanPipelineLayout*             CurrentLayout;
+        FVulkanMeshletPipelineStateRHIRef  PipelineState;
+        FPipelineToDescriptorStateMap      DescriptorStates;
+        FVulkanDescriptorState*            CurrentDescriptorState;
+
+        bool bBindPipelineState : 1;
+        bool bBindPushConstants : 1;
+    } MeshletState;
+
     struct FCommonState
     {
         FVulkanPushConstantsCache PushConstantsCache;
@@ -322,4 +361,5 @@ private:
     FVulkanCommandContext& Context;
     uint64                 CurrentFrame;
     ECommandContextPhase   ContextPhase;
+    bool                   bMeshletPipelineActive;
 };

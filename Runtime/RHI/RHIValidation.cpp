@@ -1065,6 +1065,11 @@ FRHIComputePipelineState* FRHIValidation::CreateComputePipelineState(const FRHIC
     return RealRHI->CreateComputePipelineState(InDesc);
 }
 
+FRHIMeshletPipelineState* FRHIValidation::CreateMeshletPipelineState(const FRHIMeshletPipelineStateDesc& InDesc)
+{
+    return RealRHI->CreateMeshletPipelineState(InDesc);
+}
+
 FRHIRayTracingPipelineState* FRHIValidation::CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc)
 {
     return RealRHI->CreateRayTracingPipelineState(InDesc);
@@ -1412,6 +1417,11 @@ void FRHIValidationCommandContext::SetGraphicsPipelineState(FRHIGraphicsPipeline
 void FRHIValidationCommandContext::SetComputePipelineState(FRHIComputePipelineState* PipelineState)
 {
     RealContext->SetComputePipelineState(PipelineState);
+}
+
+void FRHIValidationCommandContext::SetMeshletPipelineState(FRHIMeshletPipelineState* PipelineState)
+{
+    RealContext->SetMeshletPipelineState(PipelineState);
 }
 
 void FRHIValidationCommandContext::SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants)
@@ -1876,6 +1886,11 @@ void FRHIValidationCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInst
 void FRHIValidationCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ)
 {
     RealContext->Dispatch(WorkGroupsX, WorkGroupsY, WorkGroupsZ);
+}
+
+void FRHIValidationCommandContext::DispatchMesh(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
+{
+    RealContext->DispatchMesh(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
 }
 
 void FRHIValidationCommandContext::DispatchRays(FRHISceneAccelerationStructure* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth)

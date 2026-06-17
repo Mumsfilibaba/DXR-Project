@@ -238,6 +238,13 @@ class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
         {
             vkCmdDispatch(CommandBuffer, GroupCountX, GroupCountY, GroupCountZ);
         }
+
+    #if VK_EXT_mesh_shader
+        FORCEINLINE void DrawMeshTasks(uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ)
+        {
+            vkCmdDrawMeshTasksEXT(CommandBuffer, GroupCountX, GroupCountY, GroupCountZ);
+        }
+    #endif
     
     #if VK_EXT_debug_utils
         FORCEINLINE void InsertDebugUtilsLabel(const VkDebugUtilsLabelEXT* LabelInfo)

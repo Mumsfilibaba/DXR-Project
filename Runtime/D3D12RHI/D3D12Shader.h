@@ -13,6 +13,8 @@ typedef TSharedRef<class FD3D12HullShaderRHI>          FD3D12HullShaderRHIRef;
 typedef TSharedRef<class FD3D12DomainShaderRHI>        FD3D12DomainShaderRHIRef;
 typedef TSharedRef<class FD3D12GeometryShaderRHI>      FD3D12GeometryShaderRHIRef;
 typedef TSharedRef<class FD3D12PixelShaderRHI>         FD3D12PixelShaderRHIRef;
+typedef TSharedRef<class FD3D12MeshShaderRHI>          FD3D12MeshShaderRHIRef;
+typedef TSharedRef<class FD3D12AmplificationShaderRHI> FD3D12AmplificationShaderRHIRef;
 typedef TSharedRef<class FD3D12ComputeShaderRHI>       FD3D12ComputeShaderRHIRef;
 typedef TSharedRef<class FD3D12RayTracingShader>       FD3D12RayTracingShaderRef;
 typedef TSharedRef<class FD3D12RayGenShaderRHI>        FD3D12RayGenShaderRHIRef;
@@ -59,7 +61,9 @@ struct EShaderVisibility
         Domain,
         Geometry,
         Pixel,
-        Count = Pixel + 1
+        Amplification,
+        Mesh,
+        Count = Mesh + 1
     };
 };
 
@@ -271,6 +275,28 @@ class FD3D12PixelShaderRHI : public FRHIPixelShader, public FD3D12GraphicsShader
 public:
     FD3D12PixelShaderRHI(FD3D12Device* InDevice);
     virtual ~FD3D12PixelShaderRHI();
+
+    // FRHIShader Interface
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
+};
+
+class FD3D12MeshShaderRHI : public FRHIMeshShader, public FD3D12GraphicsShader
+{
+public:
+    FD3D12MeshShaderRHI(FD3D12Device* InDevice);
+    virtual ~FD3D12MeshShaderRHI();
+
+    // FRHIShader Interface
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
+};
+
+class FD3D12AmplificationShaderRHI : public FRHIAmplificationShader, public FD3D12GraphicsShader
+{
+public:
+    FD3D12AmplificationShaderRHI(FD3D12Device* InDevice);
+    virtual ~FD3D12AmplificationShaderRHI();
 
     // FRHIShader Interface
     virtual void* GetRHINativeHandle()  override final;

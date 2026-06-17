@@ -37,6 +37,10 @@ STAT_DECLARE_EXTERN(VULKANRHI_API, STAT_Vulkan_BufferDefragBytesMoved);
 
 STAT_DECLARE_EXTERN(VULKANRHI_API, STAT_Vulkan_PSOCreateCount);
 STAT_DECLARE_EXTERN(VULKANRHI_API, STAT_Vulkan_PSOCacheSize);
+STAT_DECLARE_EXTERN(VULKANRHI_API, STAT_Vulkan_NumGraphicsPipelineStates);
+STAT_DECLARE_EXTERN(VULKANRHI_API, STAT_Vulkan_NumComputePipelineStates);
+STAT_DECLARE_EXTERN(VULKANRHI_API, STAT_Vulkan_NumRayTracingPipelineStates);
+STAT_DECLARE_EXTERN(VULKANRHI_API, STAT_Vulkan_NumMeshletPipelineStates);
 
 // -------------------------------------------------------------------------------------------
 // Vulkan Command Primitive Stats

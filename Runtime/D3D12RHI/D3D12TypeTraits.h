@@ -16,6 +16,7 @@ class FD3D12SceneAccelerationStructureRHI;
 class FD3D12GeometryAccelerationStructureRHI;
 class FD3D12GraphicsPipelineStateRHI;
 class FD3D12ComputePipelineStateRHI;
+class FD3D12MeshletPipelineStateRHI;
 class FD3D12RayTracingPipelineStateRHI;
 class FD3D12InputLayoutRHI;
 class FD3D12RasterizerStateRHI;
@@ -26,6 +27,8 @@ class FD3D12HullShaderRHI;
 class FD3D12DomainShaderRHI;
 class FD3D12GeometryShaderRHI;
 class FD3D12PixelShaderRHI;
+class FD3D12MeshShaderRHI;
+class FD3D12AmplificationShaderRHI;
 class FD3D12ComputeShaderRHI;
 class FD3D12RayGenShaderRHI;
 class FD3D12RayAnyHitShaderRHI;
@@ -102,6 +105,11 @@ template<> struct TD3D12RHIResourceType<FRHIComputePipelineState>
     typedef FD3D12ComputePipelineStateRHI Type;
 };
 
+template<> struct TD3D12RHIResourceType<FRHIMeshletPipelineState>
+{
+    typedef FD3D12MeshletPipelineStateRHI Type;
+};
+
 template<> struct TD3D12RHIResourceType<FRHIRayTracingPipelineState>
 {
     typedef FD3D12RayTracingPipelineStateRHI Type;
@@ -150,6 +158,16 @@ template<> struct TD3D12RHIResourceType<FRHIGeometryShader>
 template<> struct TD3D12RHIResourceType<FRHIPixelShader>
 {
     typedef FD3D12PixelShaderRHI Type;
+};
+
+template<> struct TD3D12RHIResourceType<FRHIMeshShader>
+{
+    typedef FD3D12MeshShaderRHI Type;
+};
+
+template<> struct TD3D12RHIResourceType<FRHIAmplificationShader>
+{
+    typedef FD3D12AmplificationShaderRHI Type;
 };
 
 template<> struct TD3D12RHIResourceType<FRHIComputeShader>

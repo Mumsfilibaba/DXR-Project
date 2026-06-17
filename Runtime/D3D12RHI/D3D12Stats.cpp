@@ -39,8 +39,12 @@ STAT_DEFINE_MEMORY(STAT_D3D12_ResidencyResidentBytes,       "Resident Bytes",   
 STAT_DEFINE_MEMORY(STAT_D3D12_ResidencyBudget,              "Budget",               "D3D12 Residency");
 
 // PSO Stats
-STAT_DEFINE_COUNTER(STAT_D3D12_PSOCreateCount, "PSOs Created",          "D3D12 PSO");
-STAT_DEFINE_MEMORY(STAT_D3D12_PSOCacheSize,    "Cache Serialized Size", "D3D12 PSO");
+STAT_DEFINE_COUNTER(STAT_D3D12_PSOCreateCount,                "PSOs Created",             "D3D12 PSO");
+STAT_DEFINE_COUNTER(STAT_D3D12_NumGraphicsPipelineStates,     "Graphics PSOs Created",    "D3D12 PSO");
+STAT_DEFINE_COUNTER(STAT_D3D12_NumComputePipelineStates,      "Compute PSOs Created",     "D3D12 PSO");
+STAT_DEFINE_COUNTER(STAT_D3D12_NumRayTracingPipelineStates,   "RayTracing PSOs Created",  "D3D12 PSO");
+STAT_DEFINE_COUNTER(STAT_D3D12_NumMeshletPipelineStates,      "Meshlet PSOs Created",     "D3D12 PSO");
+STAT_DEFINE_MEMORY(STAT_D3D12_PSOCacheSize,                   "Cache Serialized Size",    "D3D12 PSO");
 
 // Command Primitive Stats
 STAT_DEFINE_COUNTER(STAT_D3D12_CommandListCount,      "Command Lists",      "D3D12 Commands");

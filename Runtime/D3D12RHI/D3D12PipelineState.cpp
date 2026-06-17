@@ -640,6 +640,7 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
 
             StreamOutputEntries.Emplace(D3DEntry);
         }
+
         for (uint32 Stride : StreamOutputDecl.BufferStrides)
         {
             StreamOutputStrides.Emplace(Stride);
@@ -728,6 +729,7 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
             FD3D12PipelineStateManager& PipelineStateManager = GetDevice()->GetPipelineStateManager();
             if (PipelineStateManager.CreateGraphicsPipeline(PipelineHashBuffer, PipelineStreamDesc, PipelineState))
             {
+                STAT_ADD(STAT_D3D12_NumGraphicsPipelineStates, 1);
                 return true;
             }
         }
@@ -742,6 +744,7 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
         }
 
         PipelineState = NewPipelineState;
+        STAT_ADD(STAT_D3D12_NumGraphicsPipelineStates, 1);
         return true;
     #else
         D3D12_ERROR_CRITICAL("[D3D12GraphicsPipelineState]: ID3D12Device2 is required for pipeline stream creation");
@@ -790,6 +793,7 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
             FD3D12PipelineStateManager& PipelineStateManager = GetDevice()->GetPipelineStateManager();
             if (PipelineStateManager.CreateGraphicsPipeline(PipelineHashBuffer, LegacyDesc, PipelineState))
             {
+                STAT_ADD(STAT_D3D12_NumGraphicsPipelineStates, 1);
                 return true;
             }
         }
@@ -801,6 +805,7 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
             return false;
         }
 
+        STAT_ADD(STAT_D3D12_NumGraphicsPipelineStates, 1);
         return true;
     }
 }
@@ -925,6 +930,7 @@ bool FD3D12ComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
             FD3D12PipelineStateManager& PipelineStateManager = GetDevice()->GetPipelineStateManager();
             if (PipelineStateManager.CreateComputePipeline(PipelineHashBuffer, PipelineStreamDesc, PipelineState))
             {
+                STAT_ADD(STAT_D3D12_NumComputePipelineStates, 1);
                 return true;
             }
         }
@@ -937,6 +943,7 @@ bool FD3D12ComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
             return false;
         }
 
+        STAT_ADD(STAT_D3D12_NumComputePipelineStates, 1);
         return true;
     #else
         D3D12_ERROR_CRITICAL("[D3D12ComputePipelineState]: ID3D12Device2 is required for pipeline stream creation");
@@ -958,6 +965,7 @@ bool FD3D12ComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
             FD3D12PipelineStateManager& PipelineStateManager = GetDevice()->GetPipelineStateManager();
             if (PipelineStateManager.CreateComputePipeline(PipelineHashBuffer, LegacyDesc, PipelineState))
             {
+                STAT_ADD(STAT_D3D12_NumComputePipelineStates, 1);
                 return true;
             }
         }
@@ -969,8 +977,387 @@ bool FD3D12ComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDes
             return false;
         }
 
+        STAT_ADD(STAT_D3D12_NumComputePipelineStates, 1);
         return true;
     }
+}
+
+FD3D12MeshletPipelineStateRHI::FD3D12MeshletPipelineStateRHI(FD3D12Device* InDevice)
+    : FRHIMeshletPipelineState()
+    , FD3D12PipelineState(InDevice)
+    , ShaderFlags(ED3D12ShaderFlags::None)
+{
+}
+
+FD3D12MeshletPipelineStateRHI::~FD3D12MeshletPipelineStateRHI()
+{
+}
+
+void FD3D12MeshletPipelineStateRHI::SetDebugName(const String& InName)
+{
+    FD3D12PipelineState::SetDebugName(InName);
+}
+
+void FD3D12MeshletPipelineStateRHI::GetDebugName(String& OutDebugName) const
+{
+    OutDebugName = DebugName;
+}
+
+void* FD3D12MeshletPipelineStateRHI::GetRHINativeState() const
+{
+    return reinterpret_cast<void*>(GetD3D12PipelineState());
+}
+
+bool FD3D12MeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDesc& Desc)
+{
+#if D3D12_ENABLE_PIPELINE_STATE_STREAM
+    D3D12_SHADER_BYTECODE      AmplificationShaderCode = {};
+    D3D12_SHADER_BYTECODE      MeshShaderCode          = {};
+    D3D12_SHADER_BYTECODE      PixelShaderCode         = {};
+    D3D12_RT_FORMAT_ARRAY      RenderTargetInfo        = {};
+    DXGI_FORMAT                DepthBufferFormat       = {};
+    D3D12_RASTERIZER_DESC      RasterizerDesc          = {};
+    D3D12_DEPTH_STENCIL_DESC   DepthStencilDesc        = {};
+    D3D12_BLEND_DESC           BlendStateDesc          = {};
+    DXGI_SAMPLE_DESC           SampleDesc              = {};
+    D3D12_PIPELINE_STATE_FLAGS PipelineStateFlags      = D3D12_PIPELINE_STATE_FLAG_NONE;
+
+    // ShaderStages
+    TArray<FD3D12Shader*> ShadersWithRootSignature;
+    TArray<FD3D12Shader*> BaseShaders;
+
+    // AmplificationShader
+    {
+        if (FD3D12AmplificationShaderRHI* D3D12AmplificationShader = FD3D12DeviceRHI::ResourceCast(Desc.AmplificationShader))
+        {
+            if (D3D12AmplificationShader->HasRootSignature())
+            {
+                ShadersWithRootSignature.Emplace(D3D12AmplificationShader);
+            }
+
+            AmplificationShaderCode = D3D12AmplificationShader->GetByteCode().GetD3D12Bytecode();
+            BaseShaders.Emplace(D3D12AmplificationShader);
+
+            AmplificationShader = MakeSharedRef<FD3D12AmplificationShaderRHI>(D3D12AmplificationShader);
+        }
+        else
+        {
+            AmplificationShaderCode.pShaderBytecode = nullptr;
+            AmplificationShaderCode.BytecodeLength  = 0;
+        }
+    }
+
+    // MeshShader
+    {
+        if (FD3D12MeshShaderRHI* D3D12MeshShader = FD3D12DeviceRHI::ResourceCast(Desc.MeshShader))
+        {
+            if (D3D12MeshShader->HasRootSignature())
+            {
+                ShadersWithRootSignature.Emplace(D3D12MeshShader);
+            }
+
+            MeshShaderCode = D3D12MeshShader->GetByteCode().GetD3D12Bytecode();
+            BaseShaders.Emplace(D3D12MeshShader);
+
+            MeshShader = MakeSharedRef<FD3D12MeshShaderRHI>(D3D12MeshShader);
+        }
+        else
+        {
+            D3D12_ERROR_CRITICAL("MeshShader cannot be nullptr");
+            return false;
+        }
+    }
+
+    // PixelShader
+    {
+        if (FD3D12PixelShaderRHI* D3D12PixelShader = FD3D12DeviceRHI::ResourceCast(Desc.PixelShader))
+        {
+            if (D3D12PixelShader->HasRootSignature())
+            {
+                ShadersWithRootSignature.Emplace(D3D12PixelShader);
+            }
+
+            PixelShaderCode = D3D12PixelShader->GetByteCode().GetD3D12Bytecode();
+            BaseShaders.Emplace(D3D12PixelShader);
+
+            PixelShader = MakeSharedRef<FD3D12PixelShaderRHI>(D3D12PixelShader);
+        }
+        else
+        {
+            PixelShaderCode.pShaderBytecode = nullptr;
+            PixelShaderCode.BytecodeLength  = 0;
+        }
+    }
+
+    // RenderTarget
+    {
+        RenderTargetInfo.NumRenderTargets = Desc.RasterizerOutputFormats.NumRenderTargets;
+
+        for (uint32 Index = 0; Index < RenderTargetInfo.NumRenderTargets; Index++)
+        {
+            RenderTargetInfo.RTFormats[Index] = ConvertFormat(Desc.RasterizerOutputFormats.RenderTargetFormats[Index]);
+        }
+
+        DepthBufferFormat = ConvertFormat(Desc.RasterizerOutputFormats.DepthStencilFormat);
+    }
+
+    // RasterizerState
+    FD3D12RasterizerStateRHI* D3D12RasterizerState = FD3D12DeviceRHI::ResourceCast(Desc.RasterizerState);
+    if (D3D12RasterizerState)
+    {
+        RasterizerDesc = D3D12RasterizerState->GetD3D12Desc();
+    }
+    else
+    {
+        D3D12_ERROR_CRITICAL("RasterizerState cannot be nullptr");
+        return false;
+    }
+
+    // DepthStencilState
+    FD3D12DepthStencilStateRHI* D3D12DepthStencilState = FD3D12DeviceRHI::ResourceCast(Desc.DepthStencilState);
+    if (D3D12DepthStencilState)
+    {
+        DepthStencilDesc = D3D12DepthStencilState->GetD3D12Desc();
+    }
+    else
+    {
+        D3D12_ERROR_CRITICAL("DepthStencilState cannot be nullptr");
+        return false;
+    }
+
+    // BlendState
+    FD3D12BlendStateRHI* D3D12BlendState = FD3D12DeviceRHI::ResourceCast(Desc.BlendState);
+    if (D3D12BlendState)
+    {
+        BlendStateDesc = D3D12BlendState->GetD3D12Desc();
+    }
+    else
+    {
+        D3D12_ERROR_CRITICAL("BlendState cannot be nullptr");
+        return false;
+    }
+
+    // MSAA
+    {
+        SampleDesc.Count   = Desc.MultiSampleState.SampleCount;
+        SampleDesc.Quality = Desc.MultiSampleState.SampleQuality;
+    }
+
+    // Shader-flags
+    ShaderFlags = ED3D12ShaderFlags::None;
+    
+    for (FD3D12Shader* Shader : BaseShaders)
+    {
+        ShaderFlags |= Shader->GetFlags();
+    }
+
+    // RootSignature
+    {
+        if (ShadersWithRootSignature.IsEmpty())
+        {
+            FD3D12RootSignatureLayout RootSignatureLayout;
+            RootSignatureLayout.SetType(ERootSignatureType::Graphics);
+            RootSignatureLayout.SetAllowInputAssembler(false);
+
+            uint8 NumPushConstants = 0;
+            for (FD3D12Shader* Shader : BaseShaders)
+            {
+                const EShaderVisibility::Type  Stage       = Shader->GetShaderVisibility();
+                const FD3D12ShaderBindingInfo& BindingInfo = Shader->GetBindingInfo();
+
+                for (const FD3D12ShaderBindingInfo::FResourceBinding& Binding : BindingInfo.ResourceBindings)
+                {
+                    RootSignatureLayout.AddRegister(Stage, static_cast<EResourceType::Type>(Binding.BindingType), Binding.OriginalBindingIndex);
+                }
+
+                NumPushConstants = Math::Max<uint8>(NumPushConstants, static_cast<uint8>(BindingInfo.NumPushConstants));
+            }
+
+            RootSignatureLayout.SetNumPushConstants(NumPushConstants);
+            RootSignatureLayout.SetDirectlyIndexedResourceHeap(IsEnumFlagSet(ShaderFlags, ED3D12ShaderFlags::RequiresResourceDescriptorHeapIndexing));
+            RootSignatureLayout.SetDirectlyIndexedSamplerHeap(IsEnumFlagSet(ShaderFlags, ED3D12ShaderFlags::RequiresSamplerDescriptorHeapIndexing));
+
+            for (const FRHIStaticSamplerInfo& StaticSampler : Desc.StaticSamplers)
+            {
+                RootSignatureLayout.AddStaticSampler(StaticSampler);
+            }
+
+            RootSignatureLayout.ComputeRootCBVs();
+
+            FD3D12RootSignatureManager& RootSignatureManager = GetDevice()->GetRootSignatureManager();
+            RootSignature = MakeSharedRef<FD3D12RootSignature>(RootSignatureManager.GetOrCreateRootSignature(RootSignatureLayout));
+        }
+        else
+        {
+            const FD3D12ShaderBytecode& ByteCode = ShadersWithRootSignature.FirstElement()->GetByteCode();
+
+            RootSignature = new FD3D12RootSignature(GetDevice());
+            if (!RootSignature->Initialize(ByteCode.GetCode(), ByteCode.GetCodeSize()))
+            {
+                return false;
+            }
+            else
+            {
+                RootSignature->SetDebugName("Custom Meshlet RootSignature");
+            }
+
+            for (int32 i = 1; i < ShadersWithRootSignature.Size(); i++)
+            {
+                FD3D12RootSignature ValidationRS(GetDevice());
+                const FD3D12ShaderBytecode& OtherByteCode = ShadersWithRootSignature[i]->GetByteCode();
+                if (ValidationRS.Initialize(OtherByteCode.GetCode(), OtherByteCode.GetCodeSize()))
+                {
+                    if (ValidationRS.GetHash() != RootSignature->GetHash())
+                    {
+                        D3D12_ERROR_CRITICAL("Shader at index %d has an incompatible embedded root signature (hash mismatch: 0x%llx vs 0x%llx)",
+                            i, ValidationRS.GetHash(), RootSignature->GetHash());
+                    }
+                }
+            }
+        }
+
+        CHECK(RootSignature != nullptr);
+
+        for (FD3D12Shader* Shader : BaseShaders)
+        {
+            const EShaderVisibility::Type  Stage       = Shader->GetShaderVisibility();
+            const FD3D12ShaderBindingInfo& BindingInfo = Shader->GetBindingInfo();
+
+            const bool bShaderHasRootBindings = !BindingInfo.ResourceBindings.IsEmpty() || BindingInfo.NumPushConstants > 0;
+            if (bShaderHasRootBindings && RootSignature->HasDenyFlag(Stage))
+            {
+                D3D12_ERROR_CRITICAL("Root Signature denies access to stage %u, but shader has %d resource bindings and %u push constants.",
+                    Stage, BindingInfo.ResourceBindings.Size(), BindingInfo.NumPushConstants);
+            }
+
+            for (const FD3D12ShaderBindingInfo::FResourceBinding& Binding : BindingInfo.ResourceBindings)
+            {
+                const EResourceType::Type ResType = static_cast<EResourceType::Type>(Binding.BindingType);
+                if (RootSignature->GetSlotForRegister(Stage, ResType, Binding.OriginalBindingIndex) < 0 &&
+                    RootSignature->GetShaderStage(Stage).GetRootDescriptorParameterIndex(ResType, Binding.OriginalBindingIndex) < 0)
+                {
+                    D3D12_ERROR_CRITICAL("Custom root signature missing register %u (type %u) for shader stage %u",
+                        Binding.OriginalBindingIndex, Binding.BindingType, Stage);
+                }
+            }
+        }
+
+        ComputeEffectiveDescriptorCounts(BaseShaders.Data(), BaseShaders.Size());
+    }
+
+    // View Instancing: Validate that the PSO state is compatible with shader requirements
+    {
+        const bool bShaderRequiresViewID = IsEnumFlagSet(ShaderFlags, ED3D12ShaderFlags::RequiresViewID);
+        if (bShaderRequiresViewID && !Desc.ViewInstancingState.bEnableViewInstancing)
+        {
+            D3D12_ERROR_CRITICAL("Shader uses SV_ViewID but the meshlet PSO was created without view instancing enabled. Set FRHIMeshletPipelineStateDesc::ViewInstancingState.bEnableViewInstancing to true.");
+        }
+    }
+
+    FD3D12HashableViewInstanceDesc ViewInstanceDesc;
+    if (Desc.ViewInstancingState.bEnableViewInstancing)
+    {
+        ViewInstanceDesc.ViewInstanceCount = Math::Min<uint32>(Desc.ViewInstancingState.NumArraySlices, D3D12_MAX_VIEW_INSTANCE_COUNT);
+        for (uint32 Index = 0; Index < ViewInstanceDesc.ViewInstanceCount; Index++)
+        {
+            ViewInstanceDesc.ViewInstanceLocations[Index].RenderTargetArrayIndex = Desc.ViewInstancingState.StartRenderTargetArrayIndex;
+            ViewInstanceDesc.ViewInstanceLocations[Index].ViewportArrayIndex     = 0;
+        }
+    }
+
+    // Dynamic Depth Bias
+#if D3D12_ENABLE_DYNAMIC_DEPTH_BIAS
+    if (GD3D12SupportDynamicDepthBias && D3D12RasterizerState->GetDesc().bEnableDepthBias)
+    {
+        PipelineStateFlags = D3D12_PIPELINE_STATE_FLAG_DYNAMIC_DEPTH_BIAS;
+    }
+#endif
+
+    // Build pipeline key for caching
+    FD3D12MeshletPipelineKey PipelineKey;
+    Memory::Memzero(&PipelineKey, sizeof(FD3D12MeshletPipelineKey));
+
+    PipelineKey.RootSignatureHash  = RootSignature->GetHash();
+    PipelineKey.DepthBufferFormat  = DepthBufferFormat;
+    PipelineKey.RenderTargetInfo   = RenderTargetInfo;
+    PipelineKey.ViewInstancingHash = ViewInstanceDesc.GenerateHash();
+    PipelineKey.RasterizerHash     = D3D12RasterizerState->GetHash();
+    PipelineKey.DepthStencilHash   = D3D12DepthStencilState->GetHash();
+    PipelineKey.BlendStateHash     = D3D12BlendState->GetHash();
+    PipelineKey.SampleDesc         = SampleDesc;
+
+    PipelineKey.ASHash = AmplificationShader ? AmplificationShader->GetHash() : FD3D12ShaderHash();
+    PipelineKey.MSHash = MeshShader->GetHash();
+    PipelineKey.PSHash = PixelShader ? PixelShader->GetHash() : FD3D12ShaderHash();
+
+    const uint64 PipelineHash = CRC32::Generate(&PipelineKey, sizeof(FD3D12MeshletPipelineKey));
+    constexpr uint64 BufferLength = 128;
+    WIDECHAR PipelineHashBuffer[BufferLength] = { 0 };
+    FPlatformString::Snprintf(PipelineHashBuffer, BufferLength, L"MeshletPSO[%llu]", PipelineHash);
+
+    if (!GD3D12SupportPipelineStream)
+    {
+        D3D12_ERROR_CRITICAL("[D3D12MeshletPipelineState]: Pipeline stream support (ID3D12Device2) is required for mesh-shader pipelines");
+        return false;
+    }
+
+    FD3D12MeshletPipelineStream PipelineStream;
+    PipelineStream.RootSignature            = RootSignature->GetD3D12RootSignature();
+    PipelineStream.AmplificationShaderCode  = AmplificationShaderCode;
+    PipelineStream.MeshShaderCode           = MeshShaderCode;
+    PipelineStream.PixelShaderCode          = PixelShaderCode;
+    PipelineStream.RenderTargetInfo         = RenderTargetInfo;
+    PipelineStream.DepthBufferFormat        = DepthBufferFormat;
+    PipelineStream.RasterizerDesc           = RasterizerDesc;
+    PipelineStream.DepthStencilDesc         = DepthStencilDesc;
+    PipelineStream.BlendStateDesc           = BlendStateDesc;
+    PipelineStream.SampleDesc               = SampleDesc;
+    PipelineStream.PipelineStateFlags       = PipelineStateFlags;
+    PipelineStream.ViewInstancingDesc.Flags = ViewInstanceDesc.Flags;
+
+    if (Desc.ViewInstancingState.bEnableViewInstancing)
+    {
+        PipelineStream.ViewInstancingDesc.pViewInstanceLocations = ViewInstanceDesc.ViewInstanceLocations;
+        PipelineStream.ViewInstancingDesc.ViewInstanceCount      = ViewInstanceDesc.ViewInstanceCount;
+    }
+
+    D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc;
+    Memory::Memzero(&PipelineStreamDesc);
+
+    PipelineStreamDesc.pPipelineStateSubobjectStream = &PipelineStream;
+    PipelineStreamDesc.SizeInBytes                   = sizeof(FD3D12MeshletPipelineStream);
+
+    if (GD3D12SupportPipelineCache)
+    {
+        FD3D12PipelineStateManager& PipelineStateManager = GetDevice()->GetPipelineStateManager();
+        if (PipelineStateManager.CreateMeshletPipeline(PipelineHashBuffer, PipelineStreamDesc, PipelineState))
+        {
+            STAT_ADD(STAT_D3D12_NumMeshletPipelineStates, 1);
+            return true;
+        }
+    }
+
+#if D3D12_USE_ID3D12DEVICE_2
+    TComPtr<ID3D12PipelineState> NewPipelineState;
+    HRESULT Result = GetDevice()->GetD3D12Device2()->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&NewPipelineState));
+    if (FAILED(Result))
+    {
+        D3D12_ERROR_CRITICAL("[D3D12MeshletPipelineState]: FAILED to Create MeshletPipelineState");
+        return false;
+    }
+
+    PipelineState = NewPipelineState;
+    STAT_ADD(STAT_D3D12_NumMeshletPipelineStates, 1);
+    return true;
+#else
+    D3D12_ERROR_CRITICAL("[D3D12MeshletPipelineState]: ID3D12Device2 is required for pipeline stream creation");
+    return false;
+#endif
+#else
+    UNREFERENCED_VARIABLE(Desc);
+    D3D12_ERROR_CRITICAL("[D3D12MeshletPipelineState]: Pipeline stream support is required for mesh-shader pipelines");
+    return false;
+#endif
 }
 
 struct FD3D12RootSignatureAssociation
@@ -1363,6 +1750,7 @@ bool FD3D12RayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineSt
 
     StateObject           = TempStateObject;
     StateObjectProperties = TempStateObjectProperties;
+    STAT_ADD(STAT_D3D12_NumRayTracingPipelineStates, 1);
     return true;
 #else
     D3D12_ERROR_CRITICAL("[D3D12RayTracingPipelineState]: ID3D12Device5 is required for ray tracing pipeline creation");
@@ -1506,6 +1894,43 @@ bool FD3D12PipelineStateManager::CreateComputePipeline(const WIDECHAR* PipelineH
         if (FAILED(hResult))
         {
             D3D12_WARNING("Failed to store ComputePipelineState");
+        }
+
+        bPipelineLibraryDirty = true;
+    #else
+        D3D12_ERROR_CRITICAL("ID3D12Device2 is required for pipeline stream creation");
+        return false;
+    #endif
+    }
+
+    STAT_ADD(STAT_D3D12_PSOCreateCount, 1);
+    return true;
+}
+
+bool FD3D12PipelineStateManager::CreateMeshletPipeline(const WIDECHAR* PipelineHash, const D3D12_PIPELINE_STATE_STREAM_DESC& PipelineStream, TComPtr<ID3D12PipelineState>& OutPipelineState)
+{
+    if (!PipelineLibrary)
+    {
+        return false;
+    }
+
+    TScopedLock Lock(PipelineLibraryCS);
+
+    HRESULT hResult = PipelineLibrary->LoadPipeline(PipelineHash, &PipelineStream, IID_PPV_ARGS(&OutPipelineState));
+    if (hResult == E_INVALIDARG)
+    {
+    #if D3D12_USE_ID3D12DEVICE_2
+        hResult = GetDevice()->GetD3D12Device2()->CreatePipelineState(&PipelineStream, IID_PPV_ARGS(&OutPipelineState));
+        if (FAILED(hResult))
+        {
+            D3D12_ERROR_CRITICAL("Failed to create MeshletPipelineState");
+            return false;
+        }
+
+        hResult = PipelineLibrary->StorePipeline(PipelineHash, OutPipelineState.Get());
+        if (FAILED(hResult))
+        {
+            D3D12_WARNING("Failed to store MeshletPipelineState");
         }
 
         bPipelineLibraryDirty = true;
@@ -1693,6 +2118,7 @@ void FD3D12PipelineStateManager::SaveCacheDataAsync()
 
     FD3D12PipelineDiskHeader Header;
     Memory::Memcpy(Header.Magic, "D3D12PSO", sizeof(Header.Magic));
+
     Header.DataCRC  = CRC32::Generate(SerializedData.Get(), SerializedSize);
     Header.DataSize = SerializedSize;
 

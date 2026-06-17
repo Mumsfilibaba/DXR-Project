@@ -231,6 +231,11 @@ public:
         EmplaceCommand<FRHICommandSetComputePipelineState>(PipelineState);
     }
 
+    FORCEINLINE void SetMeshletPipelineState(FRHIMeshletPipelineState* PipelineState) noexcept
+    {
+        EmplaceCommand<FRHICommandSetMeshletPipelineState>(PipelineState);
+    }
+
     FORCEINLINE void SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants) noexcept
     {
         const int32 Size = NumShaderConstants * sizeof(uint32);
@@ -420,6 +425,12 @@ public:
     {
         EmplaceCommand<FRHICommandDispatch>(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
         STAT_ADD(STAT_RHI_DispatchCalls, 1);
+    }
+
+    FORCEINLINE void DispatchMesh(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ) noexcept
+    {
+        EmplaceCommand<FRHICommandDispatchMesh>(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
+        STAT_ADD(STAT_RHI_DrawCalls, 1);
     }
 
     FORCEINLINE void DispatchRays(FRHISceneAccelerationStructure* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) noexcept

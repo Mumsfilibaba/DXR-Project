@@ -8,6 +8,7 @@ FD3D12CommandContextState::FD3D12CommandContextState(FD3D12Device* InDevice, FD3
     , Context(InContext)
     , GraphicsState()
     , ComputeState()
+    , MeshletState()
     , CommonState(InDevice, InContext)
 {
 }
@@ -32,12 +33,11 @@ void FD3D12CommandContextState::PrepareGraphicsState()
     do
     {
         bCommandListSplit = false;
-
         bCommandListSplit |= PrepareResources(RootSignature, GraphicsState.PipelineState.Get(), EShaderVisibility::Vertex, EShaderVisibility::Pixel);
         bCommandListSplit |= PrepareSamplers(RootSignature, GraphicsState.PipelineState.Get(), EShaderVisibility::Vertex, EShaderVisibility::Pixel);
     } while (bCommandListSplit);
 
-    FD3D12RenderTargetCache& RenderTargetCache = GraphicsState.RenderTargetCache;
+    FD3D12RenderTargetCache& RenderTargetCache = CommonGraphicsState.RenderTargetCache;
     for (uint32 i = 0; i < RenderTargetCache.NumRenderTargets; i++)
     {
         if (FD3D12RenderTargetViewRHI* RenderTargetView = RenderTargetCache.RenderTargetViews[i])
@@ -86,7 +86,7 @@ void FD3D12CommandContextState::PrepareGraphicsState()
     }
 
 #if D3D12_USE_ID3D12COMMANDLIST_5
-    if (FD3D12TextureRHI* ShadingRateTexture = GraphicsState.ShadingRateImage)
+    if (FD3D12TextureRHI* ShadingRateTexture = CommonGraphicsState.ShadingRateImage)
     {
         if (ShadingRateTexture->GetResource()->RequiresResourceStateTracking())
         {
@@ -124,30 +124,31 @@ void FD3D12CommandContextState::BindGraphicsState()
     if (GraphicsState.bBindRootSignature)
     {
         InternalSetRootSignature(RootSignature, EShaderVisibility::Pixel);
+        MeshletState.bBindRootSignature = true;
     }
 
-    if (GraphicsState.bBindRenderTargets)
+    if (CommonGraphicsState.bBindRenderTargets)
     {
-        CommonState.DescriptorCache.SetRenderTargets(GraphicsState.RenderTargetCache);
-        GraphicsState.bBindRenderTargets = false;
+        CommonState.DescriptorCache.SetRenderTargets(CommonGraphicsState.RenderTargetCache);
+        CommonGraphicsState.bBindRenderTargets = false;
     }
 
 #if D3D12_USE_ID3D12COMMANDLIST_5
     if (Context.GetCommandList().GetGraphicsCommandList5().IsValid())
     {
-        if (GraphicsState.bBindShadingRateImage)
+        if (CommonGraphicsState.bBindShadingRateImage)
         {
-            ID3D12Resource* Resource = GraphicsState.ShadingRateImage ? GraphicsState.ShadingRateImage->GetResource()->GetD3D12Resource() : nullptr;
+            ID3D12Resource* Resource = CommonGraphicsState.ShadingRateImage ? CommonGraphicsState.ShadingRateImage->GetResource()->GetD3D12Resource() : nullptr;
             Context.GetCommandList().GetGraphicsCommandList5()->RSSetShadingRateImage(Resource);
-            GraphicsState.bBindShadingRateImage = false;
+            CommonGraphicsState.bBindShadingRateImage = false;
 
-            if (GraphicsState.ShadingRateImage)
+            if (CommonGraphicsState.ShadingRateImage)
             {
-                Context.GetCommandList().UpdateResidency(GraphicsState.ShadingRateImage->GetResource()->GetResidencyHandle());
+                Context.GetCommandList().UpdateResidency(CommonGraphicsState.ShadingRateImage->GetResource()->GetResidencyHandle());
             }
         }
 
-        if (GraphicsState.bBindShadingRate)
+        if (CommonGraphicsState.bBindShadingRate)
         {
             D3D12_SHADING_RATE_COMBINER Combiners[] =
             {
@@ -155,8 +156,8 @@ void FD3D12CommandContextState::BindGraphicsState()
                 D3D12_SHADING_RATE_COMBINER_OVERRIDE,
             };
 
-            Context.GetCommandList().GetGraphicsCommandList5()->RSSetShadingRate(GraphicsState.ShadingRate, Combiners);
-            GraphicsState.bBindShadingRate = false;
+            Context.GetCommandList().GetGraphicsCommandList5()->RSSetShadingRate(CommonGraphicsState.ShadingRate, Combiners);
+            CommonGraphicsState.bBindShadingRate = false;
         }
     }
 #endif
@@ -182,42 +183,46 @@ void FD3D12CommandContextState::BindGraphicsState()
         GraphicsState.bBindIndexBuffer = false;
     }
 
-    if (GraphicsState.bBindViewports)
+    if (CommonGraphicsState.bBindViewports)
     {
-        Context.GetCommandList()->RSSetViewports(GraphicsState.NumViewports, GraphicsState.Viewports);
-        GraphicsState.bBindViewports = false;
+        Context.GetCommandList()->RSSetViewports(CommonGraphicsState.NumViewports, CommonGraphicsState.Viewports);
+        CommonGraphicsState.bBindViewports = false;
     }
 
-    if (GraphicsState.bBindScissorRects)
+    if (CommonGraphicsState.bBindScissorRects)
     {
-        Context.GetCommandList()->RSSetScissorRects(GraphicsState.NumScissorRects, GraphicsState.ScissorRects);
-        GraphicsState.bBindScissorRects = false;
+        Context.GetCommandList()->RSSetScissorRects(CommonGraphicsState.NumScissorRects, CommonGraphicsState.ScissorRects);
+        CommonGraphicsState.bBindScissorRects = false;
     }
 
-    if (GraphicsState.bBindBlendFactor)
+    if (CommonGraphicsState.bBindBlendFactor)
     {
-        Context.GetCommandList()->OMSetBlendFactor(GraphicsState.BlendFactor);
-        GraphicsState.bBindBlendFactor = false;
+        Context.GetCommandList()->OMSetBlendFactor(CommonGraphicsState.BlendFactor);
+        CommonGraphicsState.bBindBlendFactor = false;
     }
 
-    if (GraphicsState.bBindStencilRef)
+    if (CommonGraphicsState.bBindStencilRef)
     {
         FD3D12GraphicsPipelineStateRHI* BoundPSO = GraphicsState.PipelineState.Get();
         
         const bool bShaderOverridesStencilRef = (BoundPSO != nullptr) && IsEnumFlagSet(BoundPSO->GetShaderFlags(), ED3D12ShaderFlags::RequiresStencilRef);
         if (!bShaderOverridesStencilRef)
         {
-            Context.GetCommandList()->OMSetStencilRef(GraphicsState.StencilRef);
+            Context.GetCommandList()->OMSetStencilRef(CommonGraphicsState.StencilRef);
         }
 
-        GraphicsState.bBindStencilRef = false;
+        CommonGraphicsState.bBindStencilRef = false;
     }
 
 #if D3D12_ENABLE_DYNAMIC_DEPTH_BIAS && D3D12_USE_ID3D12COMMANDLIST_9
-    if (GraphicsState.bBindDepthBias)
+    if (CommonGraphicsState.bBindDepthBias)
     {
-        Context.GetCommandList().GetGraphicsCommandList9()->RSSetDepthBias(GraphicsState.DepthBias[0], GraphicsState.DepthBias[1], GraphicsState.DepthBias[2]);
-        GraphicsState.bBindDepthBias = false;
+        Context.GetCommandList().GetGraphicsCommandList9()->RSSetDepthBias(
+            CommonGraphicsState.DepthBias[0], 
+            CommonGraphicsState.DepthBias[1], 
+            CommonGraphicsState.DepthBias[2]);
+
+        CommonGraphicsState.bBindDepthBias = false;
     }
 #endif
 
@@ -244,7 +249,6 @@ void FD3D12CommandContextState::PrepareComputeState()
     do
     {
         bCommandListSplit = false;
-
         bCommandListSplit |= PrepareResources(RootSignature, ComputeState.PipelineState.Get(), EShaderVisibility::All, EShaderVisibility::All);
         bCommandListSplit |= PrepareSamplers(RootSignature, ComputeState.PipelineState.Get(), EShaderVisibility::All, EShaderVisibility::All);
     } while (bCommandListSplit);
@@ -279,6 +283,149 @@ void FD3D12CommandContextState::BindComputeState()
     {
         BindShaderConstants(RootSignature, EShaderVisibility::All);
         ComputeState.bBindShaderConstants = false;
+    }
+}
+
+void FD3D12CommandContextState::PrepareMeshletState()
+{
+    FD3D12RootSignature* RootSignature = MeshletState.PipelineState->GetRootSignature();
+
+    bool bCommandListSplit;
+    do
+    {
+        bCommandListSplit = false;
+        bCommandListSplit |= PrepareResources(RootSignature, MeshletState.PipelineState.Get(), EShaderVisibility::Pixel, EShaderVisibility::Mesh);
+        bCommandListSplit |= PrepareSamplers(RootSignature, MeshletState.PipelineState.Get(), EShaderVisibility::Pixel, EShaderVisibility::Mesh);
+    } while (bCommandListSplit);
+
+    FD3D12RenderTargetCache& RenderTargetCache = CommonGraphicsState.RenderTargetCache;
+    for (uint32 i = 0; i < RenderTargetCache.NumRenderTargets; i++)
+    {
+        if (FD3D12RenderTargetViewRHI* RenderTargetView = RenderTargetCache.RenderTargetViews[i])
+        {
+            Context.TransitionResourceState(RenderTargetView);
+        }
+    }
+
+    if (FD3D12DepthStencilViewRHI* DepthStencilView = RenderTargetCache.DepthStencilView)
+    {
+        const D3D12_RESOURCE_STATES DesiredState = DepthStencilView->IsReadOnly()
+            ? D3D12_RESOURCE_STATE_DEPTH_READ
+            : D3D12_RESOURCE_STATE_DEPTH_WRITE;
+
+        Context.TransitionResourceState(DepthStencilView, DesiredState);
+    }
+
+#if D3D12_USE_ID3D12COMMANDLIST_5
+    if (FD3D12TextureRHI* ShadingRateTexture = CommonGraphicsState.ShadingRateImage)
+    {
+        if (ShadingRateTexture->GetResource()->RequiresResourceStateTracking())
+        {
+            Context.TransitionResourceState(ShadingRateTexture->GetResource(), D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE);
+        }
+    }
+#endif
+}
+
+void FD3D12CommandContextState::BindMeshletState()
+{
+    FD3D12RootSignature* RootSignature = MeshletState.PipelineState->GetRootSignature();
+
+    if (MeshletState.bBindPipelineState)
+    {
+        Context.GetCommandList()->SetPipelineState(MeshletState.PipelineState->GetD3D12PipelineState());
+        MeshletState.bBindPipelineState = false;
+    }
+
+    // See BindGraphicsState: shader-visible heaps must precede a directly-indexed root signature.
+    CommonState.DescriptorCache.SetDescriptorHeaps();
+
+    if (MeshletState.bBindRootSignature)
+    {
+        Context.GetCommandList()->SetGraphicsRootSignature(RootSignature->GetD3D12RootSignature());
+        
+        MeshletState.bBindRootSignature = false;
+        GraphicsState.bBindRootSignature = true;
+
+        CommonState.ConstantBufferCache.DirtyDescriptorTableAll();
+        CommonState.ShaderResourceViewCache.DirtyDescriptorTableAll();
+        CommonState.UnorderedAccessViewCache.DirtyDescriptorTableAll();
+        CommonState.SamplerStateCache.DirtyDescriptorTableAll();
+    }
+
+    if (CommonGraphicsState.bBindRenderTargets)
+    {
+        CommonState.DescriptorCache.SetRenderTargets(CommonGraphicsState.RenderTargetCache);
+        CommonGraphicsState.bBindRenderTargets = false;
+    }
+
+#if D3D12_USE_ID3D12COMMANDLIST_5
+    if (Context.GetCommandList().GetGraphicsCommandList5().IsValid())
+    {
+        if (CommonGraphicsState.bBindShadingRateImage)
+        {
+            ID3D12Resource* Resource = CommonGraphicsState.ShadingRateImage ? CommonGraphicsState.ShadingRateImage->GetResource()->GetD3D12Resource() : nullptr;
+            Context.GetCommandList().GetGraphicsCommandList5()->RSSetShadingRateImage(Resource);
+            CommonGraphicsState.bBindShadingRateImage = false;
+
+            if (CommonGraphicsState.ShadingRateImage)
+            {
+                Context.GetCommandList().UpdateResidency(CommonGraphicsState.ShadingRateImage->GetResource()->GetResidencyHandle());
+            }
+        }
+
+        if (CommonGraphicsState.bBindShadingRate)
+        {
+            D3D12_SHADING_RATE_COMBINER Combiners[] =
+            {
+                D3D12_SHADING_RATE_COMBINER_OVERRIDE,
+                D3D12_SHADING_RATE_COMBINER_OVERRIDE,
+            };
+
+            Context.GetCommandList().GetGraphicsCommandList5()->RSSetShadingRate(CommonGraphicsState.ShadingRate, Combiners);
+            CommonGraphicsState.bBindShadingRate = false;
+        }
+    }
+#endif
+
+    BindResources(RootSignature, EShaderVisibility::Pixel, EShaderVisibility::Mesh);
+    BindSamplers(RootSignature, EShaderVisibility::Pixel, EShaderVisibility::Mesh);
+
+    if (MeshletState.bBindShaderConstants)
+    {
+        BindShaderConstants(RootSignature, EShaderVisibility::Mesh);
+        MeshletState.bBindShaderConstants = false;
+    }
+
+    if (CommonGraphicsState.bBindViewports)
+    {
+        Context.GetCommandList()->RSSetViewports(CommonGraphicsState.NumViewports, CommonGraphicsState.Viewports);
+        CommonGraphicsState.bBindViewports = false;
+    }
+
+    if (CommonGraphicsState.bBindScissorRects)
+    {
+        Context.GetCommandList()->RSSetScissorRects(CommonGraphicsState.NumScissorRects, CommonGraphicsState.ScissorRects);
+        CommonGraphicsState.bBindScissorRects = false;
+    }
+
+    if (CommonGraphicsState.bBindBlendFactor)
+    {
+        Context.GetCommandList()->OMSetBlendFactor(CommonGraphicsState.BlendFactor);
+        CommonGraphicsState.bBindBlendFactor = false;
+    }
+
+    if (CommonGraphicsState.bBindStencilRef)
+    {
+        FD3D12MeshletPipelineStateRHI* BoundPSO = MeshletState.PipelineState.Get();
+
+        const bool bShaderOverridesStencilRef = (BoundPSO != nullptr) && IsEnumFlagSet(BoundPSO->GetShaderFlags(), ED3D12ShaderFlags::RequiresStencilRef);
+        if (!bShaderOverridesStencilRef)
+        {
+            Context.GetCommandList()->OMSetStencilRef(CommonGraphicsState.StencilRef);
+        }
+
+        CommonGraphicsState.bBindStencilRef = false;
     }
 }
 
@@ -726,37 +873,42 @@ void FD3D12CommandContextState::ResetState()
     CommonState.UnorderedAccessViewCache.Clear();
     CommonState.SamplerStateCache.Clear();
 
-    GraphicsState.RenderTargetCache.Clear();
+    CommonGraphicsState.RenderTargetCache.Clear();
     GraphicsState.VertexBufferCache.Clear();
     GraphicsState.IndexBufferCache.Clear();
 
-    Memory::Memzero(GraphicsState.BlendFactor, sizeof(GraphicsState.BlendFactor));
-    Memory::Memzero(GraphicsState.Viewports, sizeof(GraphicsState.Viewports));
-    GraphicsState.NumViewports = 0;
+    Memory::Memzero(CommonGraphicsState.BlendFactor, sizeof(CommonGraphicsState.BlendFactor));
+    Memory::Memzero(CommonGraphicsState.Viewports, sizeof(CommonGraphicsState.Viewports));
+    CommonGraphicsState.NumViewports = 0;
 
-    Memory::Memzero(GraphicsState.ScissorRects, sizeof(GraphicsState.ScissorRects));
-    GraphicsState.NumScissorRects = 0;
+    Memory::Memzero(CommonGraphicsState.ScissorRects, sizeof(CommonGraphicsState.ScissorRects));
+    CommonGraphicsState.NumScissorRects = 0;
     
-    GraphicsState.PipelineState          = nullptr;
-    GraphicsState.ShadingRate            = D3D12_SHADING_RATE_1X1;
-    GraphicsState.ShadingRateImage       = nullptr;
-    GraphicsState.bBindIndexBuffer       = true;
-    GraphicsState.bBindRenderTargets     = true;
-    GraphicsState.bBindBlendFactor       = true;
-    GraphicsState.bBindPipelineState     = true;
-    GraphicsState.bBindScissorRects      = true;
-    GraphicsState.bBindViewports         = true;
-    GraphicsState.bBindRootSignature     = true;
-    GraphicsState.bBindShadingRate       = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_1;
-    GraphicsState.bBindShadingRateImage  = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_2;
-    GraphicsState.bBindVertexBuffers     = true;
-    GraphicsState.bBindShaderConstants   = true;
-    GraphicsState.bBindPrimitiveTopology = true;
+    GraphicsState.PipelineState               = nullptr;
+    CommonGraphicsState.ShadingRate           = D3D12_SHADING_RATE_1X1;
+    CommonGraphicsState.ShadingRateImage      = nullptr;
+    GraphicsState.bBindIndexBuffer            = true;
+    CommonGraphicsState.bBindRenderTargets    = true;
+    CommonGraphicsState.bBindBlendFactor      = true;
+    GraphicsState.bBindPipelineState          = true;
+    CommonGraphicsState.bBindScissorRects     = true;
+    CommonGraphicsState.bBindViewports        = true;
+    GraphicsState.bBindRootSignature          = true;
+    CommonGraphicsState.bBindShadingRate      = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_1;
+    CommonGraphicsState.bBindShadingRateImage = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_2;
+    GraphicsState.bBindVertexBuffers          = true;
+    GraphicsState.bBindShaderConstants        = true;
+    GraphicsState.bBindPrimitiveTopology      = true;
 
-    ComputeState.PipelineState           = nullptr;
-    ComputeState.bBindPipelineState      = true;
-    ComputeState.bBindRootSignature      = true;
-    ComputeState.bBindShaderConstants    = true;
+    ComputeState.PipelineState                = nullptr;
+    ComputeState.bBindPipelineState           = true;
+    ComputeState.bBindRootSignature           = true;
+    ComputeState.bBindShaderConstants         = true;
+
+    MeshletState.PipelineState                = nullptr;
+    MeshletState.bBindPipelineState           = true;
+    MeshletState.bBindRootSignature           = true;
+    MeshletState.bBindShaderConstants         = true;
 }
 
 void FD3D12CommandContextState::ResetStateResources()
@@ -780,28 +932,32 @@ void FD3D12CommandContextState::ResetStateForNewCommandList()
     CommonState.UnorderedAccessViewCache.DirtyResourcesAll();
     CommonState.SamplerStateCache.DirtyResourcesAll();
 
-    GraphicsState.bBindIndexBuffer          = true;
-    GraphicsState.bBindRenderTargets        = true;
-    GraphicsState.bBindBlendFactor          = true;
-    GraphicsState.bBindStencilRef           = true;
-    GraphicsState.bBindPipelineState        = true;
-    GraphicsState.bBindScissorRects         = true;
-    GraphicsState.bBindViewports            = true;
-    GraphicsState.bBindRootSignature        = true;
-    GraphicsState.bBindShadingRate          = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_1;
-    GraphicsState.bBindShadingRateImage     = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_2;
-    GraphicsState.bBindVertexBuffers        = true;
-    GraphicsState.bBindShaderConstants      = true;
-    GraphicsState.bBindPrimitiveTopology    = true;
-    GraphicsState.bBindStreamOutputTargets  = (GraphicsState.NumSOBuffers > 0);
+    GraphicsState.bBindIndexBuffer            = true;
+    CommonGraphicsState.bBindRenderTargets    = true;
+    CommonGraphicsState.bBindBlendFactor      = true;
+    CommonGraphicsState.bBindStencilRef       = true;
+    GraphicsState.bBindPipelineState          = true;
+    CommonGraphicsState.bBindScissorRects     = true;
+    CommonGraphicsState.bBindViewports        = true;
+    GraphicsState.bBindRootSignature          = true;
+    CommonGraphicsState.bBindShadingRate      = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_1;
+    CommonGraphicsState.bBindShadingRateImage = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_2;
+    GraphicsState.bBindVertexBuffers          = true;
+    GraphicsState.bBindShaderConstants        = true;
+    GraphicsState.bBindPrimitiveTopology      = true;
+    GraphicsState.bBindStreamOutputTargets    = (GraphicsState.NumSOBuffers > 0);
 
 #if D3D12_ENABLE_DYNAMIC_DEPTH_BIAS && D3D12_USE_ID3D12COMMANDLIST_9
-    GraphicsState.bBindDepthBias            = true;
+    CommonGraphicsState.bBindDepthBias        = true;
 #endif
 
-    ComputeState.bBindPipelineState         = true;
-    ComputeState.bBindRootSignature         = true;
-    ComputeState.bBindShaderConstants       = true;
+    ComputeState.bBindPipelineState           = true;
+    ComputeState.bBindRootSignature           = true;
+    ComputeState.bBindShaderConstants         = true;
+
+    MeshletState.bBindPipelineState           = true;
+    MeshletState.bBindRootSignature           = true;
+    MeshletState.bBindShaderConstants         = true;
 }
 
 void FD3D12CommandContextState::SetGraphicsPipelineState(FD3D12GraphicsPipelineStateRHI* InGraphicsPipelineState)
@@ -842,7 +998,7 @@ void FD3D12CommandContextState::SetGraphicsPipelineState(FD3D12GraphicsPipelineS
         
         if (bCurrentOverridesStencilRef && !bNewOverridesStencilRef)
         {
-            GraphicsState.bBindStencilRef = true;
+            CommonGraphicsState.bBindStencilRef = true;
         }
 
         GraphicsState.PipelineState      = MakeSharedRef<FD3D12GraphicsPipelineStateRHI>(InGraphicsPipelineState);
@@ -851,10 +1007,10 @@ void FD3D12CommandContextState::SetGraphicsPipelineState(FD3D12GraphicsPipelineS
     #if D3D12_ENABLE_DYNAMIC_DEPTH_BIAS && D3D12_USE_ID3D12COMMANDLIST_9
         if (GD3D12SupportDynamicDepthBias)
         {
-            GraphicsState.DepthBias[0]   = 0.0f;
-            GraphicsState.DepthBias[1]   = 0.0f;
-            GraphicsState.DepthBias[2]   = 0.0f;
-            GraphicsState.bBindDepthBias = true;
+            CommonGraphicsState.DepthBias[0]   = 0.0f;
+            CommonGraphicsState.DepthBias[1]   = 0.0f;
+            CommonGraphicsState.DepthBias[2]   = 0.0f;
+            CommonGraphicsState.bBindDepthBias = true;
         }
     #endif
     }
@@ -883,23 +1039,46 @@ void FD3D12CommandContextState::SetComputePipelineState(FD3D12ComputePipelineSta
     }
 }
 
+void FD3D12CommandContextState::SetMeshletPipelineState(FD3D12MeshletPipelineStateRHI* InMeshletPipelineState)
+{
+    FD3D12MeshletPipelineStateRHI* CurrentMeshletPipelineState = MeshletState.PipelineState.Get();
+    if (CurrentMeshletPipelineState != InMeshletPipelineState)
+    {
+        FD3D12RootSignature* const RootSignature = InMeshletPipelineState ?
+            InMeshletPipelineState->GetRootSignature() :
+            nullptr;
+
+        FD3D12RootSignature* const CurrentRootSignature = CurrentMeshletPipelineState ?
+            CurrentMeshletPipelineState->GetRootSignature() :
+            nullptr;
+
+        if (CurrentRootSignature != RootSignature)
+        {
+            MeshletState.bBindRootSignature = true;
+        }
+
+        MeshletState.PipelineState      = MakeSharedRef<FD3D12MeshletPipelineStateRHI>(InMeshletPipelineState);
+        MeshletState.bBindPipelineState = true;
+    }
+}
+
 void FD3D12CommandContextState::SetRenderTargets(FD3D12RenderTargetViewRHI* const* RenderTargets, uint32 NumRenderTargets, FD3D12DepthStencilViewRHI* DepthStencil)
 {
-    if (GraphicsState.RenderTargetCache.DepthStencilView != DepthStencil)
+    if (CommonGraphicsState.RenderTargetCache.DepthStencilView != DepthStencil)
     {
-        GraphicsState.RenderTargetCache.DepthStencilView = DepthStencil;
-        GraphicsState.bBindRenderTargets = true;
+        CommonGraphicsState.RenderTargetCache.DepthStencilView = DepthStencil;
+        CommonGraphicsState.bBindRenderTargets = true;
     }
 
     CHECK(NumRenderTargets < D3D12_MAX_RENDER_TARGET_COUNT);
-    GraphicsState.RenderTargetCache.NumRenderTargets = NumRenderTargets;
+    CommonGraphicsState.RenderTargetCache.NumRenderTargets = NumRenderTargets;
 
     for (uint32 Index = 0; Index < NumRenderTargets; Index++)
     {
-        if (GraphicsState.RenderTargetCache.RenderTargetViews[Index] != RenderTargets[Index])
+        if (CommonGraphicsState.RenderTargetCache.RenderTargetViews[Index] != RenderTargets[Index])
         {
-            GraphicsState.RenderTargetCache.RenderTargetViews[Index] = RenderTargets[Index];
-            GraphicsState.bBindRenderTargets               = true;
+            CommonGraphicsState.RenderTargetCache.RenderTargetViews[Index] = RenderTargets[Index];
+            CommonGraphicsState.bBindRenderTargets               = true;
         }
     }
 }
@@ -907,19 +1086,19 @@ void FD3D12CommandContextState::SetRenderTargets(FD3D12RenderTargetViewRHI* cons
 void FD3D12CommandContextState::SetShadingRate(EShadingRate ShadingRate)
 {
     D3D12_SHADING_RATE D3DShadingRate = ConvertShadingRate(ShadingRate);
-    if (GraphicsState.ShadingRate != D3DShadingRate)
+    if (CommonGraphicsState.ShadingRate != D3DShadingRate)
     {
-        GraphicsState.ShadingRate      = D3DShadingRate;
-        GraphicsState.bBindShadingRate = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_1;
+        CommonGraphicsState.ShadingRate      = D3DShadingRate;
+        CommonGraphicsState.bBindShadingRate = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_1;
     }
 }
 
 void FD3D12CommandContextState::SetShadingRateImage(FD3D12TextureRHI* ShadingRateImage)
 {
-    if (GraphicsState.ShadingRateImage != ShadingRateImage)
+    if (CommonGraphicsState.ShadingRateImage != ShadingRateImage)
     {
-        GraphicsState.ShadingRateImage      = ShadingRateImage;
-        GraphicsState.bBindShadingRateImage = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_2;
+        CommonGraphicsState.ShadingRateImage      = ShadingRateImage;
+        CommonGraphicsState.bBindShadingRateImage = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_2;
     }
 }
 
@@ -928,12 +1107,12 @@ void FD3D12CommandContextState::SetViewports(D3D12_VIEWPORT* Viewports, uint32 N
     CHECK(NumViewports < D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT);
 
     const uint32 ViewportArraySize = sizeof(D3D12_VIEWPORT) * NumViewports;
-    if (GraphicsState.NumViewports != NumViewports || Memory::Memcmp(GraphicsState.Viewports, Viewports, ViewportArraySize) != 0)
+    if (CommonGraphicsState.NumViewports != NumViewports || Memory::Memcmp(CommonGraphicsState.Viewports, Viewports, ViewportArraySize) != 0)
     {
-        Memory::Memcpy(GraphicsState.Viewports, Viewports, ViewportArraySize);
+        Memory::Memcpy(CommonGraphicsState.Viewports, Viewports, ViewportArraySize);
 
-        GraphicsState.NumViewports   = NumViewports;
-        GraphicsState.bBindViewports = true;
+        CommonGraphicsState.NumViewports   = NumViewports;
+        CommonGraphicsState.bBindViewports = true;
     }
 }
 
@@ -942,30 +1121,30 @@ void FD3D12CommandContextState::SetScissorRects(D3D12_RECT* ScissorRects, uint32
     CHECK(NumScissorRects < D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT);
 
     const uint32 ScissorRectArraySize = sizeof(D3D12_RECT) * NumScissorRects;
-    if (GraphicsState.NumScissorRects != NumScissorRects || Memory::Memcmp(GraphicsState.ScissorRects, ScissorRects, ScissorRectArraySize) != 0)
+    if (CommonGraphicsState.NumScissorRects != NumScissorRects || Memory::Memcmp(CommonGraphicsState.ScissorRects, ScissorRects, ScissorRectArraySize) != 0)
     {
-        Memory::Memcpy(GraphicsState.ScissorRects, ScissorRects, ScissorRectArraySize);
+        Memory::Memcpy(CommonGraphicsState.ScissorRects, ScissorRects, ScissorRectArraySize);
 
-        GraphicsState.NumScissorRects   = NumScissorRects;
-        GraphicsState.bBindScissorRects = true;
+        CommonGraphicsState.NumScissorRects   = NumScissorRects;
+        CommonGraphicsState.bBindScissorRects = true;
     }
 }
 
 void FD3D12CommandContextState::SetBlendFactor(const float BlendFactor[4])
 {
-    if (Memory::Memcmp(GraphicsState.BlendFactor, BlendFactor, sizeof(GraphicsState.BlendFactor)) != 0)
+    if (Memory::Memcmp(CommonGraphicsState.BlendFactor, BlendFactor, sizeof(CommonGraphicsState.BlendFactor)) != 0)
     {
-        Memory::Memcpy(GraphicsState.BlendFactor, BlendFactor, sizeof(GraphicsState.BlendFactor));
-        GraphicsState.bBindBlendFactor = true;
+        Memory::Memcpy(CommonGraphicsState.BlendFactor, BlendFactor, sizeof(CommonGraphicsState.BlendFactor));
+        CommonGraphicsState.bBindBlendFactor = true;
     }
 }
 
 void FD3D12CommandContextState::SetStencilRef(uint32 InStencilRef)
 {
-    if (GraphicsState.StencilRef != InStencilRef)
+    if (CommonGraphicsState.StencilRef != InStencilRef)
     {
-        GraphicsState.StencilRef      = InStencilRef;
-        GraphicsState.bBindStencilRef = true;
+        CommonGraphicsState.StencilRef      = InStencilRef;
+        CommonGraphicsState.bBindStencilRef = true;
 
         FD3D12GraphicsPipelineStateRHI* BoundPSO = GraphicsState.PipelineState.Get();
         if (BoundPSO != nullptr && IsEnumFlagSet(BoundPSO->GetShaderFlags(), ED3D12ShaderFlags::RequiresStencilRef))
@@ -992,10 +1171,10 @@ void FD3D12CommandContextState::SetDepthBias(float InDepthBias, float InDepthBia
         InSlopeScaledDepthBias 
     };
     
-    if (Memory::Memcmp(GraphicsState.DepthBias, NewValues, sizeof(NewValues)) != 0)
+    if (Memory::Memcmp(CommonGraphicsState.DepthBias, NewValues, sizeof(NewValues)) != 0)
     {
-        Memory::Memcpy(GraphicsState.DepthBias, NewValues, sizeof(NewValues));
-        GraphicsState.bBindDepthBias = true;
+        Memory::Memcpy(CommonGraphicsState.DepthBias, NewValues, sizeof(NewValues));
+        CommonGraphicsState.bBindDepthBias = true;
     }
 }
 
@@ -1140,6 +1319,7 @@ void FD3D12CommandContextState::SetShaderConstants(const uint32* ShaderConstants
         
         GraphicsState.bBindShaderConstants = true;
         ComputeState.bBindShaderConstants  = true;
+        MeshletState.bBindShaderConstants  = true;
     }
 }
 

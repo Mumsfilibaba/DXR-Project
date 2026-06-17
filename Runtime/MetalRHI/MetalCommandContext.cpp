@@ -268,6 +268,12 @@ void FMetalCommandContext::SetComputePipelineState(FRHIComputePipelineState* Pip
     ContextState.SetComputePipelineState(MetalPipelineState);
 }
 
+void FMetalCommandContext::SetMeshletPipelineState(FRHIMeshletPipelineState* PipelineState)
+{
+    // Mesh shaders are not yet implemented on Metal.
+    UNREFERENCED_VARIABLE(PipelineState);
+}
+
 void FMetalCommandContext::SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants)
 {
     FMetalShader* MetalShader = GetMetalShader(Shader);
@@ -569,6 +575,14 @@ void FMetalCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, ui
 void FMetalCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ)
 {
     PrepareForDispatch();
+}
+
+void FMetalCommandContext::DispatchMesh(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
+{
+    // Mesh shaders are not yet implemented on Metal.
+    UNREFERENCED_VARIABLE(ThreadGroupCountX);
+    UNREFERENCED_VARIABLE(ThreadGroupCountY);
+    UNREFERENCED_VARIABLE(ThreadGroupCountZ);
 }
 
 void FMetalCommandContext::DispatchRays(FRHISceneAccelerationStructure* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)

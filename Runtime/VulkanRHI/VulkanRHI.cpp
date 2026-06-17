@@ -869,16 +869,38 @@ FRHIGeometryShader* FVulkanDeviceRHI::CreateGeometryShader(const TArray<uint8>& 
 
 FRHIMeshShader* FVulkanDeviceRHI::CreateMeshShader(const TArray<uint8>& ShaderCode)
 {
-    // TODO: Finish this
-    UNREFERENCED_VARIABLE(ShaderCode);
-    return nullptr;
+    if (!GVulkanSupportsMeshShaders)
+    {
+        return nullptr;
+    }
+
+    FVulkanMeshShaderRHIRef NewShader = new FVulkanMeshShaderRHI(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIAmplificationShader* FVulkanDeviceRHI::CreateAmplificationShader(const TArray<uint8>& ShaderCode)
 {
-    // TODO: Finish this
-    UNREFERENCED_VARIABLE(ShaderCode);
-    return nullptr;
+    if (!GVulkanSupportsMeshShaders)
+    {
+        return nullptr;
+    }
+
+    FVulkanAmplificationShaderRHIRef NewShader = new FVulkanAmplificationShaderRHI(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIPixelShader* FVulkanDeviceRHI::CreatePixelShader(const TArray<uint8>& ShaderCode)
@@ -992,8 +1014,27 @@ FRHIComputePipelineState* FVulkanDeviceRHI::CreateComputePipelineState(const FRH
     }
 }
 
+FRHIMeshletPipelineState* FVulkanDeviceRHI::CreateMeshletPipelineState(const FRHIMeshletPipelineStateDesc& InDesc)
+{
+    if (!GVulkanSupportsMeshShaders)
+    {
+        return nullptr;
+    }
+
+    FVulkanMeshletPipelineStateRHIRef NewPipeline = new FVulkanMeshletPipelineStateRHI(GetDevice());
+    if (!NewPipeline->Initialize(InDesc))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewPipeline.ReleaseOwnership();
+    }
+}
+
 FRHIRayTracingPipelineState* FVulkanDeviceRHI::CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& /*InDesc*/ )
 {
+    STAT_ADD(STAT_Vulkan_NumRayTracingPipelineStates, 1);
     return new FVulkanRayTracingPipelineStateRHI();
 }
 

@@ -328,6 +328,12 @@ FRHIComputePipelineState* FMetalDeviceRHI::CreateComputePipelineState(const FRHI
     return new FMetalComputePipelineStateRHI();
 }
 
+FRHIMeshletPipelineState* FMetalDeviceRHI::CreateMeshletPipelineState(const FRHIMeshletPipelineStateDesc& InDesc)
+{
+    // Mesh shaders (object/mesh) are not yet implemented on Metal.
+    return nullptr;
+}
+
 FRHIRayTracingPipelineState* FMetalDeviceRHI::CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& Desc)
 {
     return new FMetalRayTracingPipelineStateRHI();

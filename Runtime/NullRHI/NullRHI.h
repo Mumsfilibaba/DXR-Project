@@ -159,6 +159,11 @@ public:
     {
         return new FNullComputePipelineStateRHI();
     }
+
+    virtual class FRHIMeshletPipelineState* CreateMeshletPipelineState(const FRHIMeshletPipelineStateDesc& InDesc) override final
+    {
+        return new FNullMeshletPipelineStateRHI();
+    }
     
     virtual class FRHIRayTracingPipelineState* CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc) override final
     {

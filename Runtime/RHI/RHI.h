@@ -178,6 +178,11 @@ struct RHI
         return Device->CreateComputePipelineState(InDesc);
     }
 
+    static FORCEINLINE FRHIMeshletPipelineState* CreateMeshletPipelineState(const FRHIMeshletPipelineStateDesc& InDesc)
+    {
+        return Device->CreateMeshletPipelineState(InDesc);
+    }
+
     static FORCEINLINE FRHIRayTracingPipelineState* CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc)
     {
         return Device->CreateRayTracingPipelineState(InDesc);

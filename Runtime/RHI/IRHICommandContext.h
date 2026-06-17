@@ -166,6 +166,12 @@ struct IRHICommandContext
     virtual void SetComputePipelineState(class FRHIComputePipelineState* PipelineState) = 0;
 
     /**
+     * @brief Sets the current meshlet (mesh-shader) PipelineState
+     * @param PipelineState New PipelineState to use
+     */
+    virtual void SetMeshletPipelineState(class FRHIMeshletPipelineState* PipelineState) = 0;
+
+    /**
      * @brief Set shader constants
      * @param Shader Shader to bind the constants to
      * @param ShaderConstants Array of 32-bit constants
@@ -429,6 +435,14 @@ struct IRHICommandContext
      * @param WorkGroupsZ Number of work groups in the Z dimension.
      */
     virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) = 0;
+
+    /**
+     * @brief Dispatches a mesh-shader pipeline with the specified thread group dimensions.
+     * @param ThreadGroupCountX Number of thread groups in the X dimension.
+     * @param ThreadGroupCountY Number of thread groups in the Y dimension.
+     * @param ThreadGroupCountZ Number of thread groups in the Z dimension.
+     */
+    virtual void DispatchMesh(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ) = 0;
 
     /**
      * @brief Dispatches a ray tracing operation.

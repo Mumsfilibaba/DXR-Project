@@ -15,6 +15,7 @@ class FVulkanSwapChainRHI;
 class FVulkanGeometryAccelerationStructureRHI;
 class FVulkanGraphicsPipelineStateRHI;
 class FVulkanComputePipelineStateRHI;
+class FVulkanMeshletPipelineStateRHI;
 class FVulkanRayTracingPipelineStateRHI;
 class FVulkanInputLayoutRHI;
 class FVulkanRasterizerStateRHI;
@@ -25,6 +26,8 @@ class FVulkanHullShaderRHI;
 class FVulkanDomainShaderRHI;
 class FVulkanGeometryShaderRHI;
 class FVulkanPixelShaderRHI;
+class FVulkanMeshShaderRHI;
+class FVulkanAmplificationShaderRHI;
 class FVulkanComputeShaderRHI;
 class FVulkanRayGenShaderRHI;
 class FVulkanRayAnyHitShaderRHI;
@@ -96,6 +99,11 @@ template<> struct TVulkanRHIResourceType<FRHIComputePipelineState>
     typedef FVulkanComputePipelineStateRHI Type;
 };
 
+template<> struct TVulkanRHIResourceType<FRHIMeshletPipelineState>
+{
+    typedef FVulkanMeshletPipelineStateRHI Type;
+};
+
 template<> struct TVulkanRHIResourceType<FRHIRayTracingPipelineState>
 {
     typedef FVulkanRayTracingPipelineStateRHI Type;
@@ -144,6 +152,16 @@ template<> struct TVulkanRHIResourceType<FRHIGeometryShader>
 template<> struct TVulkanRHIResourceType<FRHIPixelShader>
 {
     typedef FVulkanPixelShaderRHI Type;
+};
+
+template<> struct TVulkanRHIResourceType<FRHIMeshShader>
+{
+    typedef FVulkanMeshShaderRHI Type;
+};
+
+template<> struct TVulkanRHIResourceType<FRHIAmplificationShader>
+{
+    typedef FVulkanAmplificationShaderRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIComputeShader>

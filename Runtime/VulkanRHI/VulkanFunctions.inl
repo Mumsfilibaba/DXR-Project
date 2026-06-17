@@ -232,6 +232,10 @@ VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdBeginDebugUtilsLabelEXT)
 VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdEndDebugUtilsLabelEXT)
 #endif
 
+#if VK_EXT_mesh_shader
+VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdDrawMeshTasksEXT)
+#endif
+
 #if VK_AMD_buffer_marker
 VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdWriteBufferMarkerAMD)
 #endif

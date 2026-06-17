@@ -54,6 +54,10 @@ STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_ResidencyBudget);
 // -------------------------------------------------------------------------------------------
 
 STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_PSOCreateCount);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_NumGraphicsPipelineStates);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_NumComputePipelineStates);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_NumRayTracingPipelineStates);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_NumMeshletPipelineStates);
 STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_PSOCacheSize);
 
 // -------------------------------------------------------------------------------------------

@@ -24,8 +24,12 @@ STAT_DEFINE_COUNTER(STAT_Vulkan_BufferDefragMovesCompleted,  "Buffer Defrag Move
 STAT_DEFINE_MEMORY(STAT_Vulkan_BufferDefragBytesMoved,       "Buffer Defrag Bytes Moved",      "Vulkan Allocators");
 
 // PSO Stats
-STAT_DEFINE_COUNTER(STAT_Vulkan_PSOCreateCount, "PSOs Created",          "Vulkan PSO");
-STAT_DEFINE_MEMORY(STAT_Vulkan_PSOCacheSize,    "Cache Serialized Size", "Vulkan PSO");
+STAT_DEFINE_COUNTER(STAT_Vulkan_PSOCreateCount,                "PSOs Created",            "Vulkan PSO");
+STAT_DEFINE_MEMORY(STAT_Vulkan_PSOCacheSize,                   "Cache Serialized Size",   "Vulkan PSO");
+STAT_DEFINE_COUNTER(STAT_Vulkan_NumGraphicsPipelineStates,     "Graphics PSOs Created",   "Vulkan PSO");
+STAT_DEFINE_COUNTER(STAT_Vulkan_NumComputePipelineStates,      "Compute PSOs Created",    "Vulkan PSO");
+STAT_DEFINE_COUNTER(STAT_Vulkan_NumRayTracingPipelineStates,   "RayTracing PSOs Created", "Vulkan PSO");
+STAT_DEFINE_COUNTER(STAT_Vulkan_NumMeshletPipelineStates,      "Meshlet PSOs Created",    "Vulkan PSO");
 
 // Command Primitive Stats
 STAT_DEFINE_COUNTER(STAT_Vulkan_CommandBufferCount, "Command Buffers", "Vulkan Commands");
