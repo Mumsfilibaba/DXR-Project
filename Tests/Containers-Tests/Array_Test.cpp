@@ -10,7 +10,7 @@
 #include "TestUtils.h"
 
 #include <Core/Containers/Array.h>
-#include <Core/Time/TimeUtilities.h>
+#include <Core/Time/Time.h>
 #include <Core/Math/Random.h>
 #include <Core/Platform/PlatformTime.h>
 
@@ -89,7 +89,7 @@ struct FScopedClock
         End = FPlatformTime::QueryPerformanceCounter();
 
         const uint64 Delta       = End - Start;
-        const uint64 Nanoseconds = TimeUtilities::FromSeconds(Delta) / Parent.TimeFrequency;
+        const uint64 Nanoseconds = Time::FromSeconds(Delta) / Parent.TimeFrequency;
         Parent.AddDuration(Nanoseconds);
     }
 

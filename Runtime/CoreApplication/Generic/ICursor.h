@@ -41,7 +41,7 @@ struct ICursor
       * 
       * @return Returns the cursor position
       */
-    virtual FIntVector2 GetPosition() const = 0;
+    virtual IntVector2 GetPosition() const = 0;
 
      /**
       * @brief Set the cursor visibility

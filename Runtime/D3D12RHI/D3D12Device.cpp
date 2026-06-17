@@ -159,7 +159,7 @@ static TAutoConsoleVariable<int32> CVarNumPipelineStatsQueriesPerHeap(
     "Number of pipeline statistics queries in each query heap",
     D3D12_DEFAULT_QUERY_COUNT);
 
-static TAutoConsoleVariable<FString> CVarDeviceRemovedDumpFilePath(
+static TAutoConsoleVariable<String> CVarDeviceRemovedDumpFilePath(
     "D3D12RHI.DeviceRemovedDumpFilePath",
     "File path for DRED device removed dump output",
     "D3D12DeviceRemovedDump.txt");
@@ -338,7 +338,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
 {
     CHECK(Device != nullptr);
 
-    FString Message = "[D3D12] Device Removed";
+    String Message = "[D3D12] Device Removed";
     D3D12_ERROR("%s", *Message);
 
     ID3D12Device* DxDevice = Device->GetD3D12Device();
@@ -383,7 +383,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
 
         for (uint32 i = 0; i < CurrentNode->BreadcrumbCount; i++)
         {
-            Message = "    " + FString(ToString(CurrentNode->pCommandHistory[i]));
+            Message = "    " + String(ToString(CurrentNode->pCommandHistory[i]));
             D3D12_ERROR("%s", *Message);
             if (File)
             {
@@ -1251,7 +1251,7 @@ bool FD3D12Device::CreateDevice()
     }
     else
     {
-        const FString Description = Adapter->GetDescription();
+        const String Description = Adapter->GetDescription();
         D3D12_INFO("[FD3D12Device]: Created Device for adapter '%s'", *Description);
     }
 

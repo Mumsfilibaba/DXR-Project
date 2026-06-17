@@ -3,12 +3,12 @@
 #include "Core/Memory/Memory.h"
 
 /** @brief 3D Matrix class with float components. */
-class FMatrix3
+class Matrix3
 {
 public:
 
     /** @brief Default constructor (Initializes all components to zero) */
-    FORCEINLINE FMatrix3() noexcept
+    FORCEINLINE Matrix3() noexcept
         : M{ { 0.0f, 0.0f, 0.0f },
              { 0.0f, 0.0f, 0.0f },
              { 0.0f, 0.0f, 0.0f } }
@@ -19,7 +19,7 @@ public:
      * @brief Constructor initializing all diagonal values with a single value. The other values are set to zero.
      * @param Diagonal Value to set on the diagonal
      */
-    FORCEINLINE explicit FMatrix3(float Diagonal) noexcept
+    FORCEINLINE explicit Matrix3(float Diagonal) noexcept
         : M{ { Diagonal, 0.0f, 0.0f },
              { 0.0f, Diagonal, 0.0f },
              { 0.0f, 0.0f, Diagonal } }
@@ -32,7 +32,7 @@ public:
      * @param Row1 Vector to set the second row to
      * @param Row2 Vector to set the third row to
      */
-    FORCEINLINE explicit FMatrix3(const FVector3& Row0, const FVector3& Row1, const FVector3& Row2) noexcept
+    FORCEINLINE explicit Matrix3(const Vector3& Row0, const Vector3& Row1, const Vector3& Row2) noexcept
         : M{ { Row0.X, Row0.Y, Row0.Z },
              { Row1.X, Row1.Y, Row1.Z },
              { Row2.X, Row2.Y, Row2.Z } }
@@ -51,7 +51,7 @@ public:
      * @param M21 Value to set on row 2 and column 1
      * @param M22 Value to set on row 2 and column 2
      */
-    FORCEINLINE explicit FMatrix3(
+    FORCEINLINE explicit Matrix3(
         float M00, float M01, float M02,
         float M10, float M11, float M12,
         float M20, float M21, float M22) noexcept
@@ -65,9 +65,9 @@ public:
      * @brief Returns the transposed version of this matrix
      * @return Transposed matrix
      */
-    FORCEINLINE FMatrix3 GetTranspose() const noexcept
+    FORCEINLINE Matrix3 GetTranspose() const noexcept
     {
-        FMatrix3 Transposed;
+        Matrix3 Transposed;
 
         for (int32 Row = 0; Row < 3; ++Row)
         {
@@ -84,9 +84,9 @@ public:
      * @brief Returns the inverted version of this matrix
      * @return Inverse matrix
      */
-    inline FMatrix3 GetInverse() const noexcept
+    inline Matrix3 GetInverse() const noexcept
     {
-        FMatrix3 Inverse;
+        Matrix3 Inverse;
 
         // Calculate the determinant
         const float Determinant = GetDeterminant();
@@ -114,9 +114,9 @@ public:
      * @brief Returns the adjugate of this matrix
      * @return Adjugate matrix
      */
-    inline FMatrix3 GetAdjugate() const noexcept
+    inline Matrix3 GetAdjugate() const noexcept
     {
-        FMatrix3 Adjugate;
+        Matrix3 Adjugate;
 
         Adjugate.M[0][0] =  (M[1][1] * M[2][2] - M[1][2] * M[2][1]);
         Adjugate.M[0][1] = -(M[0][1] * M[2][2] - M[0][2] * M[2][1]);
@@ -191,7 +191,7 @@ public:
      * @param Threshold Threshold for comparison
      * @return True if equal within Threshold, false otherwise
      */
-    FORCEINLINE bool IsEqual(const FMatrix3& Other, float Threshold = Math::Constants::CmpThreshold) const noexcept
+    FORCEINLINE bool IsEqual(const Matrix3& Other, float Threshold = Math::Constants::CmpThreshold) const noexcept
     {
         Threshold = Math::Abs(Threshold);
 
@@ -233,10 +233,10 @@ public:
      * @param Row The row to retrieve (0, 1, or 2)
      * @return A vector containing the specified row
      */
-    FORCEINLINE FVector3 GetRow(int32 Row) const noexcept
+    FORCEINLINE Vector3 GetRow(int32 Row) const noexcept
     {
         CHECK(Row < 3);
-        return FVector3(M[Row][0], M[Row][1], M[Row][2]);
+        return Vector3(M[Row][0], M[Row][1], M[Row][2]);
     }
 
     /**
@@ -244,10 +244,10 @@ public:
      * @param Column The column to retrieve (0, 1, or 2)
      * @return A vector containing the specified column
      */
-    FORCEINLINE FVector3 GetColumn(int32 Column) const noexcept
+    FORCEINLINE Vector3 GetColumn(int32 Column) const noexcept
     {
         CHECK(Column < 3);
-        return FVector3(M[0][Column], M[1][Column], M[2][Column]);
+        return Vector3(M[0][Column], M[1][Column], M[2][Column]);
     }
 
 public:
@@ -257,9 +257,9 @@ public:
      * @param Other The vector to transform
      * @return A vector containing the transformation
      */
-    FORCEINLINE FVector3 operator*(const FVector3& Other) const noexcept
+    FORCEINLINE Vector3 operator*(const Vector3& Other) const noexcept
     {
-        FVector3 Result;
+        Vector3 Result;
         Result.X = (Other.X * M[0][0]) + (Other.Y * M[1][0]) + (Other.Z * M[2][0]);
         Result.Y = (Other.X * M[0][1]) + (Other.Y * M[1][1]) + (Other.Z * M[2][1]);
         Result.Z = (Other.X * M[0][2]) + (Other.Y * M[1][2]) + (Other.Z * M[2][2]);
@@ -271,9 +271,9 @@ public:
      * @param Other The other matrix
      * @return A matrix containing the result of the multiplication
      */
-    FORCEINLINE FMatrix3 operator*(const FMatrix3& Other) const noexcept
+    FORCEINLINE Matrix3 operator*(const Matrix3& Other) const noexcept
     {
-        FMatrix3 Result;
+        Matrix3 Result;
 
         for (int32 Row = 0; Row < 3; ++Row)
         {
@@ -295,7 +295,7 @@ public:
      * @param Other The other matrix
      * @return A reference to this matrix after multiplication
      */
-    FORCEINLINE FMatrix3& operator*=(const FMatrix3& Other) noexcept
+    FORCEINLINE Matrix3& operator*=(const Matrix3& Other) noexcept
     {
         *this = *this * Other;
         return *this;
@@ -306,9 +306,9 @@ public:
      * @param Scalar The scalar
      * @return A matrix containing the result of the multiplication
      */
-    FORCEINLINE FMatrix3 operator*(float Scalar) const noexcept
+    FORCEINLINE Matrix3 operator*(float Scalar) const noexcept
     {
-        FMatrix3 Result;
+        Matrix3 Result;
 
         for (int32 Row = 0; Row < 3; ++Row)
         {
@@ -326,7 +326,7 @@ public:
      * @param Scalar The scalar
      * @return A reference to this matrix after multiplication
      */
-    FORCEINLINE FMatrix3& operator*=(float Scalar) noexcept
+    FORCEINLINE Matrix3& operator*=(float Scalar) noexcept
     {
         *this = *this * Scalar;
         return *this;
@@ -337,9 +337,9 @@ public:
      * @param Other The other matrix
      * @return A matrix containing the result of the addition
      */
-    FORCEINLINE FMatrix3 operator+(const FMatrix3& Other) const noexcept
+    FORCEINLINE Matrix3 operator+(const Matrix3& Other) const noexcept
     {
-        FMatrix3 Result;
+        Matrix3 Result;
 
         for (int32 Row = 0; Row < 3; ++Row)
         {
@@ -357,7 +357,7 @@ public:
      * @param Other The other matrix
      * @return A reference to this matrix after addition
      */
-    FORCEINLINE FMatrix3& operator+=(const FMatrix3& Other) noexcept
+    FORCEINLINE Matrix3& operator+=(const Matrix3& Other) noexcept
     {
         *this = *this + Other;
         return *this;
@@ -368,9 +368,9 @@ public:
      * @param Scalar The scalar
      * @return A matrix containing the result of the addition
      */
-    FORCEINLINE FMatrix3 operator+(float Scalar) const noexcept
+    FORCEINLINE Matrix3 operator+(float Scalar) const noexcept
     {
-        FMatrix3 Result;
+        Matrix3 Result;
 
         for (int32 Row = 0; Row < 3; ++Row)
         {
@@ -388,7 +388,7 @@ public:
      * @param Scalar The scalar
      * @return A reference to this matrix after addition
      */
-    FORCEINLINE FMatrix3& operator+=(float Scalar) noexcept
+    FORCEINLINE Matrix3& operator+=(float Scalar) noexcept
     {
         *this = *this + Scalar;
         return *this;
@@ -399,9 +399,9 @@ public:
      * @param Other The other matrix
      * @return A matrix containing the result of the subtraction
      */
-    FORCEINLINE FMatrix3 operator-(const FMatrix3& Other) const noexcept
+    FORCEINLINE Matrix3 operator-(const Matrix3& Other) const noexcept
     {
-        FMatrix3 Result;
+        Matrix3 Result;
 
         for (int32 Row = 0; Row < 3; ++Row)
         {
@@ -419,7 +419,7 @@ public:
      * @param Other The other matrix
      * @return A reference to this matrix after subtraction
      */
-    FORCEINLINE FMatrix3& operator-=(const FMatrix3& Other) noexcept
+    FORCEINLINE Matrix3& operator-=(const Matrix3& Other) noexcept
     {
         *this = *this - Other;
         return *this;
@@ -430,9 +430,9 @@ public:
      * @param Scalar The scalar
      * @return A matrix containing the result of the subtraction
      */
-    FORCEINLINE FMatrix3 operator-(float Scalar) const noexcept
+    FORCEINLINE Matrix3 operator-(float Scalar) const noexcept
     {
-        FMatrix3 Result;
+        Matrix3 Result;
 
         for (int32 Row = 0; Row < 3; ++Row)
         {
@@ -450,7 +450,7 @@ public:
      * @param Scalar The scalar
      * @return A reference to this matrix after subtraction
      */
-    FORCEINLINE FMatrix3& operator-=(float Scalar) noexcept
+    FORCEINLINE Matrix3& operator-=(float Scalar) noexcept
     {
         *this = *this - Scalar;
         return *this;
@@ -461,9 +461,9 @@ public:
      * @param Scalar The scalar
      * @return A matrix containing the result of the division
      */
-    FORCEINLINE FMatrix3 operator/(float Scalar) const noexcept
+    FORCEINLINE Matrix3 operator/(float Scalar) const noexcept
     {
-        FMatrix3 Result;
+        Matrix3 Result;
 
         const float RcpScalar = 1.0f / Scalar;
         for (int32 Row = 0; Row < 3; ++Row)
@@ -482,7 +482,7 @@ public:
      * @param Scalar The scalar
      * @return A reference to this matrix after division
      */
-    FORCEINLINE FMatrix3& operator/=(float Scalar) noexcept
+    FORCEINLINE Matrix3& operator/=(float Scalar) noexcept
     {
         *this = *this / Scalar;
         return *this;
@@ -493,7 +493,7 @@ public:
      * @param Other The matrix to compare with
      * @return True if matrices are equal, false otherwise
      */
-    FORCEINLINE bool operator==(const FMatrix3& Other) const noexcept
+    FORCEINLINE bool operator==(const Matrix3& Other) const noexcept
     {
         return IsEqual(Other);
     }
@@ -503,7 +503,7 @@ public:
      * @param Other The matrix to compare with
      * @return True if matrices are not equal, false otherwise
      */
-    FORCEINLINE bool operator!=(const FMatrix3& Other) const noexcept
+    FORCEINLINE bool operator!=(const Matrix3& Other) const noexcept
     {
         return !IsEqual(Other);
     }
@@ -514,9 +514,9 @@ public:
      * @brief Creates and returns an identity matrix
      * @return An identity matrix
      */
-    static FORCEINLINE FMatrix3 Identity() noexcept
+    static FORCEINLINE Matrix3 Identity() noexcept
     {
-        return FMatrix3(1.0f);
+        return Matrix3(1.0f);
     }
 
     /**
@@ -524,9 +524,9 @@ public:
      * @param Scale Uniform scale that represents this matrix
      * @return A scale matrix
      */
-    static FORCEINLINE FMatrix3 Scale(float Scale) noexcept
+    static FORCEINLINE Matrix3 Scale(float Scale) noexcept
     {
-        return FMatrix3(Scale);
+        return Matrix3(Scale);
     }
 
     /**
@@ -536,9 +536,9 @@ public:
      * @param InZ Scale for the z-axis
      * @return A scale matrix
      */
-    static FORCEINLINE FMatrix3 Scale(float InX, float InY, float InZ) noexcept
+    static FORCEINLINE Matrix3 Scale(float InX, float InY, float InZ) noexcept
     {
-        return FMatrix3(
+        return Matrix3(
             InX,  0.0f, 0.0f,
             0.0f, InY,  0.0f,
             0.0f, 0.0f, InZ);
@@ -549,9 +549,9 @@ public:
      * @param VectorWithScale A vector containing the scale for each axis in the x-, y-, z-components
      * @return A scale matrix
      */
-    static FORCEINLINE FMatrix3 Scale(const FVector3& VectorWithScale) noexcept
+    static FORCEINLINE Matrix3 Scale(const Vector3& VectorWithScale) noexcept
     {
-        return FMatrix3(
+        return Matrix3(
             VectorWithScale.X, 0.0f,              0.0f,
             0.0f,              VectorWithScale.Y, 0.0f,
             0.0f,              0.0f,              VectorWithScale.Z);
@@ -564,7 +564,7 @@ public:
      * @param Roll Rotation around the z-axis in radians
      * @return A rotation matrix
      */
-    static FORCEINLINE FMatrix3 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
+    static FORCEINLINE Matrix3 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
     {
         const float SinP = Math::Sin(Pitch);
         const float SinY = Math::Sin(Yaw);
@@ -576,7 +576,7 @@ public:
         const float SinRSinP = SinR * SinP;
         const float CosRSinP = CosR * SinP;
 
-        return FMatrix3(
+        return Matrix3(
             (CosR * CosY) + (SinRSinP * SinY),  SinR * CosP, (SinRSinP * CosY) - (CosR * SinY),
             (CosRSinP * SinY) - (SinR * CosY),  CosR * CosP, (SinR * SinY) + (CosRSinP * CosY),
             CosP * SinY,                       -SinP,         CosP * CosY);
@@ -587,12 +587,12 @@ public:
      * @param AxisX Rotation around the x-axis in radians
      * @return A rotation matrix
      */
-    static FORCEINLINE FMatrix3 RotationX(float AxisX) noexcept
+    static FORCEINLINE Matrix3 RotationX(float AxisX) noexcept
     {
         const float SinX = Math::Sin(AxisX);
         const float CosX = Math::Cos(AxisX);
 
-        return FMatrix3(
+        return Matrix3(
             1.0f,  0.0f, 0.0f,
             0.0f,  CosX, SinX,
             0.0f, -SinX, CosX);
@@ -603,12 +603,12 @@ public:
      * @param AxisY Rotation around the y-axis in radians
      * @return A rotation matrix
      */
-    static FORCEINLINE FMatrix3 RotationY(float AxisY) noexcept
+    static FORCEINLINE Matrix3 RotationY(float AxisY) noexcept
     {
         const float SinY = Math::Sin(AxisY);
         const float CosY = Math::Cos(AxisY);
 
-        return FMatrix3(
+        return Matrix3(
             CosY, 0.0f, -SinY,
             0.0f, 1.0f,  0.0f,
             SinY, 0.0f,  CosY);
@@ -619,12 +619,12 @@ public:
      * @param AxisZ Rotation around the z-axis in radians
      * @return A rotation matrix
      */
-    static FORCEINLINE FMatrix3 RotationZ(float AxisZ) noexcept
+    static FORCEINLINE Matrix3 RotationZ(float AxisZ) noexcept
     {
         const float SinZ = Math::Sin(AxisZ);
         const float CosZ = Math::Cos(AxisZ);
 
-        return FMatrix3(
+        return Matrix3(
              CosZ, SinZ, 0.0f,
             -SinZ, CosZ, 0.0f,
              0.0f, 0.0f, 1.0f);
@@ -636,4 +636,4 @@ public:
     float M[3][3];
 };
 
-MARK_AS_REALLOCATABLE(FMatrix3);
+MARK_AS_REALLOCATABLE(Matrix3);

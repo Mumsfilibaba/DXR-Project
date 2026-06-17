@@ -13,17 +13,17 @@ namespace SPSCTest
 {
     bool Test()
     {
-        TQueue<FString, EQueueType::SPSC> Queue;
+        TQueue<String, EQueueType::SPSC> Queue;
         for (int64 Index = 1; Index <= 50; ++Index)
         {
-            const FString Item = TTypeToString<int64>::ToString(Index);
+            const String Item = TTypeToString<int64>::ToString(Index);
             Queue.Enqueue(::Move(Item));
         }
 
-        TArray<FString> Items;
+        TArray<String> Items;
         while (Items.Size() < 50)
         {
-            FString NewItem;
+            String NewItem;
             if (Queue.Dequeue(NewItem))
             {
                 Items.Add(::Move(NewItem));
@@ -32,7 +32,7 @@ namespace SPSCTest
 
         for (int32 Index = 0; Index < 50; ++Index)
         {
-            const FString ExpectedItem = TTypeToString<int64>::ToString(Index + 1);
+            const String ExpectedItem = TTypeToString<int64>::ToString(Index + 1);
             TEST_CHECK(Items[Index] == ExpectedItem);
         }
 
@@ -43,7 +43,7 @@ namespace SPSCTest
 // Multiple Producers, Single Consumer
 namespace MPSCTest
 {
-    TQueue<FString, EQueueType::MPSC>* GQueue = nullptr;
+    TQueue<String, EQueueType::MPSC>* GQueue = nullptr;
     
     bool GIsRunning = true;
 
@@ -63,7 +63,7 @@ namespace MPSCTest
             // Do some work, otherwise to fast
             for (int64 Index = 0; Index < NumItemsPerProducer; ++Index)
             {
-                const FString NewItem = TTypeToString<int64>::ToString(ThreadIndex + Index);
+                const String NewItem = TTypeToString<int64>::ToString(ThreadIndex + Index);
                 GQueue->Emplace(::Move(NewItem));
             }
 
@@ -79,14 +79,14 @@ namespace MPSCTest
         int64 ThreadIndex;
     };
 
-    TArray<FString>* GItems = nullptr;
+    TArray<String>* GItems = nullptr;
     struct FConsumerThread : public FRunnable
     {
         int32 Run()
         {
             while (GIsRunning || !GQueue->IsEmpty())
             {
-                FString NewItem;
+                String NewItem;
                 if (GQueue->Dequeue(NewItem))
                 {
                     GItems->Add(::Move(NewItem));
@@ -105,8 +105,8 @@ namespace MPSCTest
     bool Test()
     {
         // Create the Queue and Array on the heap to avoid wrong reporting of memory leaks
-        GQueue = new TQueue<FString, EQueueType::MPSC>;
-        GItems = new TArray<FString>;
+        GQueue = new TQueue<String, EQueueType::MPSC>;
+        GItems = new TArray<String>;
 
         TArray<FGenericPlatformThread*> Producers;
         for (int32 i = 0; i < NumProducers; ++i)
@@ -132,7 +132,7 @@ namespace MPSCTest
         {
             for (int32 Index = 0; Index < NumItemsPerProducer; ++Index)
             {
-                const FString Expected = TTypeToString<int64>::ToString(((ProducerIndex + 1) * ProducerOffset) + Index);
+                const String Expected = TTypeToString<int64>::ToString(((ProducerIndex + 1) * ProducerOffset) + Index);
                 TEST_CHECK(GItems->Contains(Expected) == true);
             }
         }
@@ -165,7 +165,7 @@ namespace SPMCTest
     constexpr int64 NumItems     = 500;
     constexpr int64 NumConsumers = 6;
 
-    TQueue<FString, EQueueType::SPMC>* GQueue = nullptr;
+    TQueue<String, EQueueType::SPMC>* GQueue = nullptr;
 
     bool GIsRunning = true;
     
@@ -176,7 +176,7 @@ namespace SPMCTest
             // Do some work, otherwise to fast
             for (int64 Index = 0; Index < NumItems; ++Index)
             {
-                const FString NewItem = TTypeToString<int64>::ToString(Index);
+                const String NewItem = TTypeToString<int64>::ToString(Index);
                 GQueue->Enqueue(::Move(NewItem));
             }
 
@@ -196,7 +196,7 @@ namespace SPMCTest
         {
             while (GIsRunning || !GQueue->IsEmpty())
             {
-                FString NewItem;
+                String NewItem;
                 if (GQueue->Dequeue(NewItem))
                 {
                     Items.Add(::Move(NewItem));
@@ -206,13 +206,13 @@ namespace SPMCTest
             return 0;
         }
 
-        TArray<FString> Items;
+        TArray<String> Items;
     };
 
     bool Test()
     {
         // Create the Queue on the heap to avoid wrong reporting of memory leaks
-        GQueue = new TQueue<FString, EQueueType::SPMC>;
+        GQueue = new TQueue<String, EQueueType::SPMC>;
 
         FGenericPlatformThread* Producer = FPlatformThread::Create(new FProducerThread, "ProducerThread", false);
         
@@ -227,7 +227,7 @@ namespace SPMCTest
         // Wait for all the thread to finish
         Producer->WaitForCompletion();
 
-        TArray<FString> TotalItems;
+        TArray<String> TotalItems;
         for (FGenericPlatformThread* Consumer : Consumers)
         {
             Consumer->WaitForCompletion();
@@ -239,7 +239,7 @@ namespace SPMCTest
         // Check so the array contains the elements from Producer1
         for (int32 Index = 0; Index < NumItems; ++Index)
         {
-            const FString Expected = TTypeToString<int64>::ToString(Index);
+            const String Expected = TTypeToString<int64>::ToString(Index);
             TEST_CHECK(TotalItems.Contains(Expected) == true);
         }
 
@@ -264,10 +264,10 @@ namespace UnusedPopulatedQueue
 {
     void Test()
     {
-        TQueue<FString, EQueueType::SPSC> Queue;
+        TQueue<String, EQueueType::SPSC> Queue;
         for (int64 Index = 0; Index < 50; ++Index)
         {
-            const FString Item = "Some long string that is longer than the small string optimization" + TTypeToString<int64>::ToString(Index);
+            const String Item = "Some long string that is longer than the small string optimization" + TTypeToString<int64>::ToString(Index);
             Queue.Enqueue(::Move(Item));
         }
     }

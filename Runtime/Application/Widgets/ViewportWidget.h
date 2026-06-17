@@ -26,31 +26,18 @@ public:
     virtual void Tick(const FRectangle& AssignedBounds) override final;
 
     virtual FEventResponse OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent) override final;
-
     virtual FEventResponse OnKeyDown(const FKeyEvent& KeyEvent) override final;
-
     virtual FEventResponse OnKeyUp(const FKeyEvent& KeyEvent) override final;
-
     virtual FEventResponse OnKeyChar(const FKeyEvent& KeyEvent) override final;
-
     virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent) override final;
-
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override final;
-
     virtual FEventResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override final;
-
     virtual FEventResponse OnMouseScroll(const FCursorEvent& CursorEvent) override final;
-
     virtual FEventResponse OnMouseDoubleClick(const FCursorEvent& CursorEvent) override final;
-
     virtual FEventResponse OnMouseLeft(const FCursorEvent& CursorEvent) override final;
-
     virtual FEventResponse OnMouseEntered(const FCursorEvent& CursorEvent) override final;
-
     virtual FEventResponse OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent) override final;
-
     virtual FEventResponse OnFocusLost() override final;
-
     virtual FEventResponse OnFocusGained() override final;
 
     void SetViewportInterface(const TSharedPtr<IViewport>& InViewportInterface)
@@ -73,31 +60,31 @@ public:
      * 
      * @param InSize The new size.
      */
-    void SetSize(const FIntVector2& InSize) { Size = InSize; }
+    void SetSize(const IntVector2& InSize) { Size = InSize; }
     
     /**
      * @brief Sets the relative viewport position. This size will be clamped to the parent widget's size during Tick.
      * 
      * @param InPosition The new position.
      */
-    void SetPosition(const FIntVector2& InPosition, EViewportPositionSpace InSpace = EViewportPositionSpace::Parent);
+    void SetPosition(const IntVector2& InPosition, EViewportPositionSpace InSpace = EViewportPositionSpace::Parent);
 
     /**
      * @brief Gets the current viewport size.
      * 
      * @return The size of the viewport.
      */
-    FIntVector2 GetSize() const { return Size; }
+    IntVector2 GetSize() const { return Size; }
     
     /**
      * @brief Gets the current viewport position.
      * 
      * @return The position of the viewport.
      */
-    FIntVector2 GetPosition() const { return Position; }
+    IntVector2 GetPosition() const { return Position; }
 
 private:
     TSharedPtr<IViewport> ViewportInterface;
-    FIntVector2           Position;
-    FIntVector2           Size;
+    IntVector2            Position;
+    IntVector2            Size;
 };

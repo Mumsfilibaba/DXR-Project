@@ -11,8 +11,8 @@ using namespace DirectX;
 bool TestMatrix4()
 {
     // Identity
-    FMatrix4 Identity = FMatrix4::Identity();
-    if (Identity != FMatrix4(
+    Matrix4 Identity = Matrix4::Identity();
+    if (Identity != Matrix4(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
@@ -22,8 +22,8 @@ bool TestMatrix4()
     }
 
     // Constructors
-    FMatrix4 Test = FMatrix4(5.0f);
-    if (Test != FMatrix4(
+    Matrix4 Test = Matrix4(5.0f);
+    if (Test != Matrix4(
         5.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 5.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 5.0f, 0.0f,
@@ -32,11 +32,11 @@ bool TestMatrix4()
         TEST_FAILED();
     }
 
-    Test = FMatrix4(
-        FVector4(1.0f, 0.0f, 0.0f, 0.0f),
-        FVector4(0.0f, 1.0f, 0.0f, 0.0f),
-        FVector4(0.0f, 0.0f, 1.0f, 0.0f),
-        FVector4(0.0f, 0.0f, 0.0f, 1.0f));
+    Test = Matrix4(
+        Vector4(1.0f, 0.0f, 0.0f, 0.0f),
+        Vector4(0.0f, 1.0f, 0.0f, 0.0f),
+        Vector4(0.0f, 0.0f, 1.0f, 0.0f),
+        Vector4(0.0f, 0.0f, 0.0f, 1.0f));
     if (Identity != Test)
     {
         TEST_FAILED();
@@ -50,8 +50,8 @@ bool TestMatrix4()
         13.0f, 14.0f, 15.0f, 16.0f
     };
 
-    Test = FMatrix4(Arr);
-    if (Test != FMatrix4(
+    Test = Matrix4(Arr);
+    if (Test != Matrix4(
         1.0f, 2.0f, 3.0f, 4.0f,
         5.0f, 6.0f, 7.0f, 8.0f,
         9.0f, 10.0f, 11.0f, 12.0f,
@@ -61,8 +61,8 @@ bool TestMatrix4()
     }
 
     // Translation
-    FMatrix4 Translation = FMatrix4::Translation(5.0f, 1.0f, -2.0f);
-    if (Translation != FMatrix4(
+    Matrix4 Translation = Matrix4::Translation(5.0f, 1.0f, -2.0f);
+    if (Translation != Matrix4(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
@@ -72,22 +72,22 @@ bool TestMatrix4()
     }
 
     // Transformation
-    FVector3 Vec0 = FVector3(1.0f, 1.0f, 1.0f);
-    FVector3 Vec1 = Translation.TransformCoord(Vec0);
-    if (Vec1 != FVector3(6.0f, 2.0f, -1.0f))
+    Vector3 Vec0 = Vector3(1.0f, 1.0f, 1.0f);
+    Vector3 Vec1 = Translation.TransformCoord(Vec0);
+    if (Vec1 != Vector3(6.0f, 2.0f, -1.0f))
     {
         TEST_FAILED();
     }
 
     Vec1 = Translation.TransformNormal(Vec0);
-    if (Vec1 != FVector3(1.0f, 1.0f, 1.0f))
+    if (Vec1 != Vector3(1.0f, 1.0f, 1.0f))
     {
         TEST_FAILED();
     }
 
     // Transpose
     Test = Test.Transpose();
-    if (Test != FMatrix4(
+    if (Test != Matrix4(
         1.0f, 5.0f, 9.0f, 13.0f,
         2.0f, 6.0f, 10.0f, 14.0f,
         3.0f, 7.0f, 11.0f, 15.0f,
@@ -97,7 +97,7 @@ bool TestMatrix4()
     }
 
     // Determinant
-    FMatrix4 Scale = FMatrix4::Scale(6.0f);
+    Matrix4 Scale = Matrix4::Scale(6.0f);
     float fDeterminant0 = Scale.Determinant();
 
     XMMATRIX XmScale = XMMatrixScaling(6.0f, 6.0f, 6.0f);
@@ -109,7 +109,7 @@ bool TestMatrix4()
     }
 
     // LookAt / Look To
-    FMatrix4 LookAt = FMatrix4::LookAt(FVector3(0.0f, 0.0f, 1.0f), FVector3(0.0f), FVector3(0.0f, 1.0f, 0.0f));
+    Matrix4 LookAt = Matrix4::LookAt(Vector3(0.0f, 0.0f, 1.0f), Vector3(0.0f), Vector3(0.0f, 1.0f, 0.0f));
     XMMATRIX XmLookAt = XMMatrixLookAtLH(
         XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f),
         XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),
@@ -117,7 +117,7 @@ bool TestMatrix4()
 
     XMFLOAT4X4 Float4x4Matrix;
     XMStoreFloat4x4(&Float4x4Matrix, XmLookAt);
-    if (LookAt != FMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
+    if (LookAt != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
     {
         TEST_FAILED();
     }
@@ -129,30 +129,30 @@ bool TestMatrix4()
     float Near   = 0.01f;
     float Far    = 100.0f;
 
-    FMatrix4 Projection = FMatrix4::PerspectiveProjection(FOV, Width, Height, Near, Far);
+    Matrix4 Projection = Matrix4::PerspectiveProjection(FOV, Width, Height, Near, Far);
     XMMATRIX XmProjection = XMMatrixPerspectiveFovLH(FOV, Width / Height, Near, Far);
 
     Float4x4Matrix;
     XMStoreFloat4x4(&Float4x4Matrix, XmProjection);
-    if (Projection != FMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
+    if (Projection != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
     {
         TEST_FAILED();
     }
 
     // Multiplication
-    FMatrix4 Mult = LookAt * Projection;
+    Matrix4 Mult = LookAt * Projection;
     XMMATRIX XmMult = XMMatrixMultiply(XmLookAt, XmProjection);
 
     Float4x4Matrix;
     XMStoreFloat4x4(&Float4x4Matrix, XmMult);
 
-    if (Mult != FMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
+    if (Mult != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
     {
         TEST_FAILED();
     }
 
-    FMatrix4 _Mul0(2.0);
-    _Mul0 *= FMatrix4(2.0);
+    Matrix4 _Mul0(2.0);
+    _Mul0 *= Matrix4(2.0);
 
     XMFLOAT4X4 _Mul1(
         2.0f, 0.0f, 0.0f, 0.0f,
@@ -168,13 +168,13 @@ bool TestMatrix4()
     Float4x4Matrix;
     XMStoreFloat4x4(&Float4x4Matrix, XmMult0);
 
-    if (_Mul0 != FMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
+    if (_Mul0 != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
     {
         TEST_FAILED();
     }
 
     // Inverse
-    FMatrix4 Inverse = Mult.Invert();
+    Matrix4 Inverse = Mult.Invert();
     fDeterminant0 = Mult.Determinant();
 
     XMVECTOR XmDeterminant;
@@ -184,22 +184,22 @@ bool TestMatrix4()
     Float4x4Matrix;
     XMStoreFloat4x4(&Float4x4Matrix, XmInverse);
 
-    if (Inverse != FMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
+    if (Inverse != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
     {
         TEST_FAILED();
     }
 
     // Adjoint
-    FMatrix4 Adjoint = Mult.Adjoint();
-    FMatrix4 Inverse2 = Adjoint * (1.0f / fDeterminant0);
+    Matrix4 Adjoint = Mult.Adjoint();
+    Matrix4 Inverse2 = Adjoint * (1.0f / fDeterminant0);
 
     if (Inverse != Inverse2)
     {
         TEST_FAILED();
     }
 
-    FMatrix4 InvInverse = Inverse * fDeterminant0;
-    FMatrix4 XmInvInverse = FMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)) * fDeterminant1;
+    Matrix4 InvInverse = Inverse * fDeterminant0;
+    Matrix4 XmInvInverse = Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)) * fDeterminant1;
 
     if (InvInverse != XmInvInverse)
     {
@@ -212,7 +212,7 @@ bool TestMatrix4()
     }
 
     // NaN
-    FMatrix4 NaN(
+    Matrix4 NaN(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
@@ -223,7 +223,7 @@ bool TestMatrix4()
     }
 
     // Infinity
-    FMatrix4 Infinity(
+    Matrix4 Infinity(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
@@ -240,15 +240,15 @@ bool TestMatrix4()
     }
 
     // Get Row
-    FVector4 Row = Infinity.GetRow(0);
-    if (Row != FVector4(1.0f, 0.0f, 0.0f, 0.0f))
+    Vector4 Row = Infinity.GetRow(0);
+    if (Row != Vector4(1.0f, 0.0f, 0.0f, 0.0f))
     {
         TEST_FAILED();
     }
 
     // Column
-    FVector4 Column = Infinity.GetColumn(0);
-    if (Column != FVector4(1.0f, 0.0f, 0.0f, 0.0f))
+    Vector4 Column = Infinity.GetColumn(0);
+    if (Column != Vector4(1.0f, 0.0f, 0.0f, 0.0f))
     {
         TEST_FAILED();
     }
@@ -256,39 +256,39 @@ bool TestMatrix4()
     // SetIdentity
     Infinity.SetIdentity();
 
-    FMatrix4 TempIdentity = FMatrix4::Identity();
-    if (Infinity != FMatrix4::Identity())
+    Matrix4 TempIdentity = Matrix4::Identity();
+    if (Infinity != Matrix4::Identity())
     {
         TEST_FAILED();
     }
 
     // GetTranslation
-    FVector3 Position = Infinity.GetTranslation();
-    if (Position != FVector3(0.0f))
+    Vector3 Position = Infinity.GetTranslation();
+    if (Position != Vector3(0.0f))
     {
         TEST_FAILED();
     }
 
     // GetRotationAndScale
-    FMatrix3 RotationAndScale = Infinity.GetRotationAndScale();
-    if (RotationAndScale != FMatrix3::Identity())
+    Matrix3 RotationAndScale = Infinity.GetRotationAndScale();
+    if (RotationAndScale != Matrix3::Identity())
     {
         TEST_FAILED();
     }
 
     // Data
-    FMatrix4 Matrix0 = FMatrix4::Identity();
-    FMatrix4 Matrix1 = FMatrix4(Matrix0.Data());
+    Matrix4 Matrix0 = Matrix4::Identity();
+    Matrix4 Matrix1 = Matrix4(Matrix0.Data());
     if (Matrix0 != Matrix1)
     {
         TEST_FAILED();
     }
 
     // Multiply a vector
-    Translation = FMatrix4::Translation(5.0f, 5.0f, 5.0f);
-    FVector4 TranslatedVector = Translation * FVector4(0.0f, 0.0f, 0.0f, 1.0f);
+    Translation = Matrix4::Translation(5.0f, 5.0f, 5.0f);
+    Vector4 TranslatedVector = Translation * Vector4(0.0f, 0.0f, 0.0f, 1.0f);
 
-    if (TranslatedVector != FVector4(5.0f, 5.0f, 5.0f, 1.0f))
+    if (TranslatedVector != Vector4(5.0f, 5.0f, 5.0f, 1.0f))
     {
         TEST_FAILED();
     }
@@ -296,11 +296,11 @@ bool TestMatrix4()
     // Roll Pitch Yaw
     for (double Angle = -Math::TwoPI; Angle < Math::TwoPI; Angle += Math::OneDegree)
     {
-        FMatrix4 RollPitchYaw = FMatrix4::RotationRollPitchYaw((float)Angle, (float)Angle, (float)Angle);
+        Matrix4 RollPitchYaw = Matrix4::RotationRollPitchYaw((float)Angle, (float)Angle, (float)Angle);
         XMMATRIX XmRollPitchYaw = XMMatrixRotationRollPitchYaw((float)Angle, (float)Angle, (float)Angle);
         XMStoreFloat4x4(&Float4x4Matrix, XmRollPitchYaw);
 
-        if (RollPitchYaw != FMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
+        if (RollPitchYaw != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
         {
             TEST_FAILED();
         }
@@ -309,11 +309,11 @@ bool TestMatrix4()
     // RotationX
     for (double Angle = -Math::TwoPI; Angle < Math::TwoPI; Angle += Math::OneDegree)
     {
-        FMatrix4 Rotation = FMatrix4::RotationX((float)Angle);
+        Matrix4 Rotation = Matrix4::RotationX((float)Angle);
         XMMATRIX XmRotation = XMMatrixRotationX((float)Angle);
         XMStoreFloat4x4(&Float4x4Matrix, XmRotation);
 
-        if (Rotation != FMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
+        if (Rotation != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
         {
             TEST_FAILED();
         }
@@ -322,11 +322,11 @@ bool TestMatrix4()
     // RotationY
     for (double Angle = -Math::TwoPI; Angle < Math::TwoPI; Angle += Math::OneDegree)
     {
-        FMatrix4 Rotation = FMatrix4::RotationY((float)Angle);
+        Matrix4 Rotation = Matrix4::RotationY((float)Angle);
         XMMATRIX XmRotation = XMMatrixRotationY((float)Angle);
         XMStoreFloat4x4(&Float4x4Matrix, XmRotation);
 
-        if (Rotation != FMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
+        if (Rotation != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
         {
             TEST_FAILED();
         }
@@ -335,22 +335,22 @@ bool TestMatrix4()
     // RotationZ
     for (double Angle = -Math::TwoPI; Angle < Math::TwoPI; Angle += Math::OneDegree)
     {
-        FMatrix4 Rotation = FMatrix4::RotationZ((float)Angle);
+        Matrix4 Rotation = Matrix4::RotationZ((float)Angle);
         XMMATRIX XmRotation = XMMatrixRotationZ((float)Angle);
         XMStoreFloat4x4(&Float4x4Matrix, XmRotation);
 
-        if (Rotation != FMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
+        if (Rotation != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
         {
             TEST_FAILED();
         }
     }
 
     // Ortographic projection
-    FMatrix4 Ortographic = FMatrix4::OrtographicProjection(Width, Height, Near, Far);
+    Matrix4 Ortographic = Matrix4::OrtographicProjection(Width, Height, Near, Far);
     XMMATRIX XmOrtographic = XMMatrixOrthographicLH(Width, Height, Near, Far);
     XMStoreFloat4x4(&Float4x4Matrix, XmOrtographic);
 
-    if (Ortographic != FMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
+    if (Ortographic != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
     {
         TEST_FAILED();
     }
@@ -360,11 +360,11 @@ bool TestMatrix4()
     float Bottom = -10.0f;
     float Top = 10.0f;
 
-    Ortographic = FMatrix4::OrtographicProjection(Left, Right, Bottom, Top, Near, Far);
+    Ortographic = Matrix4::OrtographicProjection(Left, Right, Bottom, Top, Near, Far);
     XmOrtographic = XMMatrixOrthographicOffCenterLH(Left, Right, Bottom, Top, Near, Far);
     XMStoreFloat4x4(&Float4x4Matrix, XmOrtographic);
 
-    if (Ortographic != FMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
+    if (Ortographic != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
     {
         TEST_FAILED();
     }

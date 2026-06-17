@@ -28,20 +28,20 @@ enum class EShaderOutputLanguage : uint8
 
 struct FShaderDefine
 {
-    FShaderDefine(const FString& InDefine)
+    FShaderDefine(const String& InDefine)
         : Define(InDefine)
         , Value()
     {
     }
 
-    FShaderDefine(const FString& InDefine, const FString& InValue)
+    FShaderDefine(const String& InDefine, const String& InValue)
         : Define(InDefine)
         , Value(InValue)
     {
     }
 
-    FString Define;
-    FString Value;
+    String Define;
+    String Value;
 };
 
 struct FShaderCompileInfo;
@@ -51,7 +51,7 @@ class RHI_API FShaderCompiler
 public:
     static EShaderOutputLanguage GetOutputLanguageBasedOnRHI();
 
-    static bool Create(const FString& InAssetPath);
+    static bool Create(const String& InAssetPath);
     static void Destroy();
 
     static FORCEINLINE FShaderCompiler& Get()
@@ -61,22 +61,22 @@ public:
     }
 
 public:
-    bool CompileFromFile(const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
-    bool CompileFromSource(const FString& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+    bool CompileFromFile(const String& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+    bool CompileFromSource(const String& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
 
 private:
-    FShaderCompiler(const FString& InAssetPath);
+    FShaderCompiler(const String& InAssetPath);
     ~FShaderCompiler();
 
     bool Initialize();
-    bool Compile(const FString& ShaderSource, const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
-    bool ConvertSpirvToMetalShader(const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
-    bool DumpContentToFile(const TArray<uint8>& OutByteCode, const FString& Filename);
-    FString CreateArgString(const TArrayView<LPCWSTR> Args);
+    bool Compile(const String& ShaderSource, const String& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+    bool ConvertSpirvToMetalShader(const String& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+    bool DumpContentToFile(const TArray<uint8>& OutByteCode, const String& Filename);
+    String CreateArgString(const TArrayView<LPCWSTR> Args);
 
     void*                 DXCLib;
     DxcCreateInstanceProc DxcCreateInstanceFunc;
-    FString               AssetPath;
+    String                AssetPath;
 
     static FShaderCompiler* GShaderCompiler;
 };
@@ -93,7 +93,7 @@ struct FShaderCompileInfo
     {
     }
     
-    FShaderCompileInfo(const FString& InEntryPoint, EShaderModel InShaderModel, EShaderStage InShaderStage, 
+    FShaderCompileInfo(const String& InEntryPoint, EShaderModel InShaderModel, EShaderStage InShaderStage, 
         const TArrayView<FShaderDefine>& InDefines = TArrayView<FShaderDefine>(), EShaderOutputLanguage InOutputLanguage = FShaderCompiler::GetOutputLanguageBasedOnRHI())
         : ShaderModel(InShaderModel)
         , ShaderStage(InShaderStage)
@@ -109,5 +109,5 @@ struct FShaderCompileInfo
     EShaderOutputLanguage     OutputLanguage;
     bool                      bOptimize;
     TArrayView<FShaderDefine> Defines;
-    FString                   EntryPoint;
+    String                    EntryPoint;
 };

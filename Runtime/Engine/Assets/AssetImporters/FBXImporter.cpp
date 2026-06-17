@@ -10,10 +10,10 @@
 
 #define INVALID_MATERIAL_INDEX (-1)
 
-static FString ExtractPath(const FString& FullFilePath)
+static String ExtractPath(const String& FullFilePath)
 {
     auto Pos = FullFilePath.FindLastChar('/');
-    if (Pos != FString::InvalidIndex)
+    if (Pos != String::InvalidIndex)
     {
         return FullFilePath.SubString(0, Pos);
     }
@@ -23,9 +23,9 @@ static FString ExtractPath(const FString& FullFilePath)
     }
 }
 
-static FMatrix4 FBXConvertMatrix(const ofbx::DMatrix& Matrix)
+static Matrix4 FBXConvertMatrix(const ofbx::DMatrix& Matrix)
 {
-    FMatrix4 Result;
+    Matrix4 Result;
     for (uint32 y = 0; y < 4; y++)
     {
         for (uint32 x = 0; x < 4; x++)
@@ -39,20 +39,20 @@ static FMatrix4 FBXConvertMatrix(const ofbx::DMatrix& Matrix)
 }
 
 #if 0 // Currently unused
-static bool DoesFlipHandness(const FMatrix4& Matrix)
+static bool DoesFlipHandness(const Matrix4& Matrix)
 {
-    FVector3 X(1.0f, 0.0f, 0.0f);
+    Vector3 X(1.0f, 0.0f, 0.0f);
     X = Matrix.TransformNormal(X);
     
-    FVector3 Y(0.0f, 1.0f, 0.0f);
+    Vector3 Y(0.0f, 1.0f, 0.0f);
     Y = Matrix.TransformNormal(Y);
 
-    FVector3 Z = Matrix.GetInverse().TransformCoord(X.CrossProduct(Y));
+    Vector3 Z = Matrix.GetInverse().TransformCoord(X.CrossProduct(Y));
     return Z.Z < 0.0f;
 }
 #endif
 
-static auto LoadMaterialTexture(const FString& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type)
+static auto LoadMaterialTexture(const String& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type)
 {
     const ofbx::Texture* MaterialTexture = Material->getTexture(Type);
     if (MaterialTexture)
@@ -61,7 +61,7 @@ static auto LoadMaterialTexture(const FString& Path, const ofbx::Material* Mater
         MaterialTexture->getRelativeFileName().toString(StringBuffer);
 
         // Make sure that correct slashes are used
-        FString Filename = Path + '/' + StringBuffer;
+        String Filename = Path + '/' + StringBuffer;
         Filename.ReplaceAll('\\', '/');
 
         return StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Filename, false));
@@ -70,9 +70,9 @@ static auto LoadMaterialTexture(const FString& Path, const ofbx::Material* Mater
     return FTexture2DRef();
 }
 
-bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags InFlags, FModelCreateInfo& OutModelInfo)
+bool FFBXImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags InFlags, FModelCreateInfo& OutModelInfo)
 {
-    const FString Filename = FString(InFilename);
+    const String Filename = String(InFilename);
 
     TFileRef<IPlatformFile> File = FPlatformFile::OpenForRead(Filename);
     if (!File)
@@ -121,7 +121,7 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
     OutModelInfo.Materials.Reserve(MaterialCount);
 
     // Convert data
-    const FString Path = ExtractPath(Filename);
+    const String Path = ExtractPath(Filename);
 
     // Get the global settings
     const ofbx::GlobalSettings* GlobalSettings = FBXScene->getGlobalSettings();
@@ -148,7 +148,7 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
             MaterialCreateInfo.Textures[EMaterialTexture::Emissive]         = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::EMISSIVE);
             MaterialCreateInfo.Textures[EMaterialTexture::AmbientOcclusion] = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::AMBIENT);
 
-            MaterialCreateInfo.Diffuse       = FVector3(CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b);
+            MaterialCreateInfo.Diffuse       = Vector3(CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b);
             MaterialCreateInfo.AmbientFactor = 1.0f; // CurrentMaterial->getSpecularColor().r;
             MaterialCreateInfo.Roughness     = 1.0f; // CurrentMaterial->getSpecularColor().g;
             MaterialCreateInfo.Metallic      = 1.0f; // CurrentMaterial->getSpecularColor().b;
@@ -160,10 +160,10 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
 
         const bool bApplyScaleFactor = (InFlags & EMeshImportFlags::ApplyScaleFactor) != EMeshImportFlags::None;
 
-        const FMatrix4 ScaleMatrix     = FMatrix4::Scale(bApplyScaleFactor ? GlobalSettings->UnitScaleFactor : 1.0f);
-        const FMatrix4 GlobalTransform = FBXConvertMatrix(CurrentMesh->getGlobalTransform());
-        const FMatrix4 GeometricMatrix = FBXConvertMatrix(CurrentMesh->getGeometricMatrix());
-        const FMatrix4 Transform       = GlobalTransform * GeometricMatrix * ScaleMatrix;
+        const Matrix4 ScaleMatrix     = Matrix4::Scale(bApplyScaleFactor ? GlobalSettings->UnitScaleFactor : 1.0f);
+        const Matrix4 GlobalTransform = FBXConvertMatrix(CurrentMesh->getGlobalTransform());
+        const Matrix4 GeometricMatrix = FBXConvertMatrix(CurrentMesh->getGeometricMatrix());
+        const Matrix4 Transform       = GlobalTransform * GeometricMatrix * ScaleMatrix;
 
         const ofbx::GeometryData& GeometryData = CurrentMesh->getGeometryData();
         ofbx::Vec3Attributes Positions = GeometryData.getPositions();
@@ -208,14 +208,14 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
 
                     // Position
                     const ofbx::Vec3 OfbxPosition = Positions.get(VertexIdx);
-                    const FVector3 Position(OfbxPosition.x, OfbxPosition.y, OfbxPosition.z);
+                    const Vector3 Position(OfbxPosition.x, OfbxPosition.y, OfbxPosition.z);
                     Vertex.Position = Transform.Transform(Position);
 
                     // Normal
                     if (Normals.values)
                     {
                         const ofbx::Vec3 OfbxNormal = Normals.get(VertexIdx);
-                        const FVector3 Normal(OfbxNormal.x, OfbxNormal.y, OfbxNormal.z);
+                        const Vector3 Normal(OfbxNormal.x, OfbxNormal.y, OfbxNormal.z);
                         Vertex.Normal = Transform.TransformNormal(Normal);
                     }
 
@@ -223,7 +223,7 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
                     if (Tangents.values)
                     {
                         const ofbx::Vec3 OfbxTangent = Tangents.get(VertexIdx);
-                        const FVector3 Tangent(OfbxTangent.x, OfbxTangent.y, OfbxTangent.z);
+                        const Vector3 Tangent(OfbxTangent.x, OfbxTangent.y, OfbxTangent.z);
                         Vertex.Tangent = Transform.TransformNormal(Tangent);
                     }
 
@@ -232,7 +232,7 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
                     {
                         // We need to correct UVs (I assume since DirectX coordinate system)
                         const ofbx::Vec2 OfbxTexCoord = TexCoords.get(VertexIdx);
-                        Vertex.TexCoord = FVector2(OfbxTexCoord.x, 1.0f - OfbxTexCoord.y);
+                        Vertex.TexCoord = Vector2(OfbxTexCoord.x, 1.0f - OfbxTexCoord.y);
                     }
 
                     // Only push unique vertices
@@ -316,7 +316,7 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
     return true;
 }
 
-bool FFBXImporter::MatchExtenstion(const FStringView& FileName)
+bool FFBXImporter::MatchExtenstion(const StringView& FileName)
 {
     return FileName.EndsWith(".fbx", EStringCaseType::NoCase);
 }

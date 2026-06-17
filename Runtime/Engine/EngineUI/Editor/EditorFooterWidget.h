@@ -37,19 +37,19 @@ private:
     int32 InputTextCallback(struct ImGuiInputTextCallbackData* Data);
 
 private:
-    TArray<TPair<IConsoleObject*, FString>> Candidates;
-    FString                                 CandidateFilter;
-    TStaticArray<CHAR, 256>                 TextBuffer;
-    TSharedPtr<IOutputDevice>               OutputDevice;
-    TSharedPtr<FConsoleInputHandler>        InputHandler;
-    int32                                   SelectedCandidateIndex;
-    int32                                   HistoryIndex;
-    int32                                   LastCursorPosition;
-    int32                                   PendingCursorPosition;
-    bool                                    bCandidateSelectionChanged;
-    bool                                    bRequestCursorPosition;
-    bool                                    bRequestInputFocus;
-    bool                                    bUpdateCursorPosition;
-    bool                                    bScrollToBottom;
-    bool                                    bCandidatesOverlayOpen;
+    TArray<TPair<IConsoleObject*, String>> Candidates;
+    String                                 CandidateFilter;
+    TStaticArray<CHAR, 256>                TextBuffer;
+    TSharedPtr<IOutputDevice>              OutputDevice;
+    TSharedPtr<FConsoleInputHandler>       InputHandler;
+    int32                                  SelectedCandidateIndex;
+    int32                                  HistoryIndex;
+    int32                                  LastCursorPosition;
+    int32                                  PendingCursorPosition;
+    bool                                   bCandidateSelectionChanged : 1;
+    bool                                   bRequestCursorPosition : 1;
+    bool                                   bRequestInputFocus : 1;
+    bool                                   bUpdateCursorPosition : 1;
+    bool                                   bScrollToBottom : 1;
+    bool                                   bCandidatesOverlayOpen : 1;
 };

@@ -46,7 +46,7 @@ bool FMetalDevice::Initialize()
         return false;
     }
 
-    const FString DeviceName = SelectedDevice.name;
+    const String DeviceName = SelectedDevice.name;
     METAL_INFO("Selected Device=%s", *DeviceName);
 
     const bool bSupportRayTracing           = SelectedDevice.supportsRaytracing;

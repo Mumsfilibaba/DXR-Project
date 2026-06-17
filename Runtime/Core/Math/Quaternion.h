@@ -9,19 +9,19 @@
  * @brief Quaternion representing a 3D rotation. Stored as (X, Y, Z, W), where (X,Y,Z)
  * is the vector part and W is the scalar part. Identity quaternion = (0,0,0,1).
  */
-class VECTOR_ALIGN FQuaternion
+class VECTOR_ALIGN Quaternion
 {
 public:
 
     /** @brief Identity quaternion (no rotation). */
-    static CORE_API const FQuaternion Identity;
+    static CORE_API const Quaternion Identity;
 
 public:
 
     /**
      * @brief Default constructor (identity rotation).
      */
-    FORCEINLINE FQuaternion() noexcept
+    FORCEINLINE Quaternion() noexcept
         : X(0.0f)
         , Y(0.0f)
         , Z(0.0f)
@@ -36,7 +36,7 @@ public:
      * @param InZ Z component.
      * @param InW W component.
      */
-    FORCEINLINE explicit FQuaternion(float InX, float InY, float InZ, float InW) noexcept
+    FORCEINLINE explicit Quaternion(float InX, float InY, float InZ, float InW) noexcept
         : X(InX)
         , Y(InY)
         , Z(InZ)
@@ -49,7 +49,7 @@ public:
      * @param InXYZ Vector part (X,Y,Z).
      * @param InW Scalar part.
      */
-    FORCEINLINE explicit FQuaternion(const FVector3& InXYZ, float InW) noexcept
+    FORCEINLINE explicit Quaternion(const Vector3& InXYZ, float InW) noexcept
         : X(InXYZ.X)
         , Y(InXYZ.Y)
         , Z(InXYZ.Z)
@@ -87,7 +87,7 @@ public:
      * @brief Normalizes this quaternion in-place.
      * @return Reference to this quaternion.
      */
-    inline FQuaternion& Normalize() noexcept
+    inline Quaternion& Normalize() noexcept
     {
     #if !USE_VECTOR_MATH
         const float LengthSquared = GetLengthSquared();
@@ -122,9 +122,9 @@ public:
      * @brief Returns a normalized copy of this quaternion.
      * @return Normalized quaternion.
      */
-    FORCEINLINE FQuaternion GetNormalized() const noexcept
+    FORCEINLINE Quaternion GetNormalized() const noexcept
     {
-        FQuaternion Result(*this);
+        Quaternion Result(*this);
         Result.Normalize();
         return Result;
     }
@@ -146,7 +146,7 @@ public:
      * @param Other Other quaternion.
      * @return Dot product.
      */
-    FORCEINLINE float DotProduct(const FQuaternion& Other) const noexcept
+    FORCEINLINE float DotProduct(const Quaternion& Other) const noexcept
     {
     #if !USE_VECTOR_MATH
         return (X * Other.X) + (Y * Other.Y) + (Z * Other.Z) + (W * Other.W);
@@ -162,16 +162,16 @@ public:
      * @brief Returns the conjugate of this quaternion.
      * @return Conjugated quaternion.
      */
-    FORCEINLINE FQuaternion GetConjugated() const noexcept
+    FORCEINLINE Quaternion GetConjugated() const noexcept
     {
-        return FQuaternion(-X, -Y, -Z, W);
+        return Quaternion(-X, -Y, -Z, W);
     }
 
     /**
      * @brief Returns the inverse of this quaternion.
      * @return Inversed quaternion.
      */
-    FORCEINLINE FQuaternion GetInversed() const noexcept
+    FORCEINLINE Quaternion GetInversed() const noexcept
     {
         const float LengthSquared = GetLengthSquared();
         if (LengthSquared == 0.0f)
@@ -190,12 +190,12 @@ public:
      * @param Vector Vector to rotate.
      * @return Rotated vector.
      */
-    FORCEINLINE FVector3 RotateVector(const FVector3& Vector) const noexcept
+    FORCEINLINE Vector3 RotateVector(const Vector3& Vector) const noexcept
     {
         // v' = v + 2*w*(q.xyz x v) + 2*(q.xyz x (q.xyz x v))
-        const FVector3 QuaternionVectorPart(X, Y, Z);
+        const Vector3 QuaternionVectorPart(X, Y, Z);
 
-        const FVector3 T = 2.0f * QuaternionVectorPart.CrossProduct(Vector);
+        const Vector3 T = 2.0f * QuaternionVectorPart.CrossProduct(Vector);
         return Vector + (W * T) + QuaternionVectorPart.CrossProduct(T);
     }
 
@@ -205,7 +205,7 @@ public:
      * @brief Converts this quaternion to a 3x3 rotation matrix.
      * @return Rotation matrix.
      */
-    FORCEINLINE FMatrix3 ToMatrix3() const noexcept
+    FORCEINLINE Matrix3 ToMatrix3() const noexcept
     {
         const float XX = X * X;
         const float YY = Y * Y;
@@ -219,7 +219,7 @@ public:
         const float WY = W * Y;
         const float WZ = W * Z;
 
-        return FMatrix3(
+        return Matrix3(
             1.0f - 2.0f * (YY + ZZ), 2.0f * (XY + WZ),        2.0f * (XZ - WY),
             2.0f * (XY - WZ),        1.0f - 2.0f * (XX + ZZ), 2.0f * (YZ + WX),
             2.0f * (XZ + WY),        2.0f * (YZ - WX),        1.0f - 2.0f * (XX + YY));
@@ -229,11 +229,11 @@ public:
      * @brief Converts this quaternion to a 4x4 rotation matrix.
      * @return Rotation matrix (no translation).
      */
-    FORCEINLINE FMatrix4 ToMatrix4() const noexcept
+    FORCEINLINE Matrix4 ToMatrix4() const noexcept
     {
-        const FMatrix3 RotationMatrix3 = ToMatrix3();
+        const Matrix3 RotationMatrix3 = ToMatrix3();
 
-        return FMatrix4(
+        return Matrix4(
             RotationMatrix3.M[0][0], RotationMatrix3.M[0][1], RotationMatrix3.M[0][2], 0.0f,
             RotationMatrix3.M[1][0], RotationMatrix3.M[1][1], RotationMatrix3.M[1][2], 0.0f,
             RotationMatrix3.M[2][0], RotationMatrix3.M[2][1], RotationMatrix3.M[2][2], 0.0f,
@@ -244,13 +244,13 @@ public:
 
     /**
      * @brief Converts this quaternion into Euler angles (Pitch, Yaw, Roll) in radians.
-     * This extraction matches FMatrix3::RotationRollPitchYaw(Pitch, Yaw, Roll).
-     * @return FVector3(Pitch, Yaw, Roll) in radians.
+     * This extraction matches Matrix3::RotationRollPitchYaw(Pitch, Yaw, Roll).
+     * @return Vector3(Pitch, Yaw, Roll) in radians.
      */
-    FORCEINLINE FVector3 ToEuler() const noexcept
+    FORCEINLINE Vector3 ToEuler() const noexcept
     {
         // Use matrix extraction that matches:
-        // FMatrix3::RotationRollPitchYaw(Pitch, Yaw, Roll)
+        // Matrix3::RotationRollPitchYaw(Pitch, Yaw, Roll)
         //
         // Matrix layout from your RotationRollPitchYaw:
         // M[2][1] = -SinP
@@ -259,7 +259,7 @@ public:
         // M[0][1] = SinR * CosP
         // M[1][1] = CosR * CosP
 
-        const FMatrix3 RotationMatrix = ToMatrix3();
+        const Matrix3 RotationMatrix = ToMatrix3();
 
         const float SinPitch        = -RotationMatrix.M[2][1];
         const float ClampedSinPitch = Math::Clamp(SinPitch, -1.0f, 1.0f);
@@ -296,7 +296,7 @@ public:
             Yaw = Math::Atan2(-RotationMatrix.M[0][2], RotationMatrix.M[0][0]);
         }
 
-        return FVector3(Pitch, Yaw, Roll);
+        return Vector3(Pitch, Yaw, Roll);
     }
 
 public:
@@ -307,41 +307,41 @@ public:
      * @param AngleRadians Rotation angle in radians.
      * @return Quaternion.
      */
-    static FORCEINLINE FQuaternion FromAxisAngle(const FVector3& Axis, float AngleRadians) noexcept
+    static FORCEINLINE Quaternion FromAxisAngle(const Vector3& Axis, float AngleRadians) noexcept
     {
-        const FVector3 NormalizedAxis = Axis.GetNormalized();
+        const Vector3 NormalizedAxis = Axis.GetNormalized();
 
         const float HalfAngle    = AngleRadians * 0.5f;
         const float SinHalfAngle = Math::Sin(HalfAngle);
         const float CosHalfAngle = Math::Cos(HalfAngle);
 
-        return FQuaternion(NormalizedAxis.X * SinHalfAngle, NormalizedAxis.Y * SinHalfAngle, NormalizedAxis.Z * SinHalfAngle, CosHalfAngle);
+        return Quaternion(NormalizedAxis.X * SinHalfAngle, NormalizedAxis.Y * SinHalfAngle, NormalizedAxis.Z * SinHalfAngle, CosHalfAngle);
     }
 
     /**
      * @brief Creates a quaternion from Euler angles (Pitch, Yaw, Roll) in radians.
-     * This matches FMatrix3::RotationRollPitchYaw(Pitch, Yaw, Roll).
+     * This matches Matrix3::RotationRollPitchYaw(Pitch, Yaw, Roll).
      * 
-     * @param EulerRadians FVector3(Pitch, Yaw, Roll) in radians.
+     * @param EulerRadians Vector3(Pitch, Yaw, Roll) in radians.
      * @return Quaternion.
      */
-    static FORCEINLINE FQuaternion FromEuler(const FVector3& EulerRadians) noexcept
+    static FORCEINLINE Quaternion FromEuler(const Vector3& EulerRadians) noexcept
     {
         return FromEuler(EulerRadians.X, EulerRadians.Y, EulerRadians.Z);
     }
 
     /**
      * @brief Creates a quaternion from Euler angles (Pitch, Yaw, Roll) in radians.
-     * This matches FMatrix3::RotationRollPitchYaw(Pitch, Yaw, Roll).
+     * This matches Matrix3::RotationRollPitchYaw(Pitch, Yaw, Roll).
      *
      * @param Pitch Rotation around X (radians).
      * @param Yaw Rotation around Y (radians).
      * @param Roll Rotation around Z (radians).
      * @return Quaternion.
      */
-    static FORCEINLINE FQuaternion FromEuler(float Pitch, float Yaw, float Roll) noexcept
+    static FORCEINLINE Quaternion FromEuler(float Pitch, float Yaw, float Roll) noexcept
     {
-        const FMatrix3 RotationMatrix = FMatrix3::RotationRollPitchYaw(Pitch, Yaw, Roll);
+        const Matrix3 RotationMatrix = Matrix3::RotationRollPitchYaw(Pitch, Yaw, Roll);
         return FromRotationMatrix(RotationMatrix);
     }
 
@@ -350,7 +350,7 @@ public:
      * @param Rotation Rotation matrix.
      * @return Quaternion.
      */
-    static FORCEINLINE FQuaternion FromRotationMatrix(const FMatrix3& Rotation) noexcept
+    static FORCEINLINE Quaternion FromRotationMatrix(const Matrix3& Rotation) noexcept
     {
         const float Trace = Rotation.M[0][0] + Rotation.M[1][1] + Rotation.M[2][2];
 
@@ -363,7 +363,7 @@ public:
             const float OutY = (Rotation.M[2][0] - Rotation.M[0][2]) * InvS;
             const float OutZ = (Rotation.M[0][1] - Rotation.M[1][0]) * InvS;
 
-            return FQuaternion(OutX, OutY, OutZ, OutW);
+            return Quaternion(OutX, OutY, OutZ, OutW);
         }
 
         if (Rotation.M[0][0] > Rotation.M[1][1] && Rotation.M[0][0] > Rotation.M[2][2])
@@ -375,7 +375,7 @@ public:
             const float OutY = (Rotation.M[1][0] + Rotation.M[0][1]) * InvS;
             const float OutZ = (Rotation.M[2][0] + Rotation.M[0][2]) * InvS;
 
-            return FQuaternion(OutX, OutY, OutZ, OutW);
+            return Quaternion(OutX, OutY, OutZ, OutW);
         }
 
         if (Rotation.M[1][1] > Rotation.M[2][2])
@@ -387,7 +387,7 @@ public:
             const float OutY = 0.25f * S;
             const float OutZ = (Rotation.M[2][1] + Rotation.M[1][2]) * InvS;
 
-            return FQuaternion(OutX, OutY, OutZ, OutW);
+            return Quaternion(OutX, OutY, OutZ, OutW);
         }
 
         {
@@ -398,7 +398,7 @@ public:
             const float OutY = (Rotation.M[2][1] + Rotation.M[1][2]) * InvS;
             const float OutZ = 0.25f * S;
 
-            return FQuaternion(OutX, OutY, OutZ, OutW);
+            return Quaternion(OutX, OutY, OutZ, OutW);
         }
     }
 
@@ -409,10 +409,10 @@ public:
      * @param Factor [0,1].
      * @return Interpolated quaternion.
      */
-    static FORCEINLINE FQuaternion Nlerp(const FQuaternion& A, const FQuaternion& B, float Factor) noexcept
+    static FORCEINLINE Quaternion Nlerp(const Quaternion& A, const Quaternion& B, float Factor) noexcept
     {
         // Ensure shortest path: if dot < 0, negate B.
-        FQuaternion EndQuaternion = B;
+        Quaternion EndQuaternion = B;
 
     #if USE_VECTOR_MATH
         const FFloat128 StartQuaternionVector = FVectorMath::VectorLoad(A.XYZW);
@@ -432,7 +432,7 @@ public:
         }
     #endif
 
-        FQuaternion Result(
+        Quaternion Result(
             Math::Lerp(A.X, EndQuaternion.X, Factor),
             Math::Lerp(A.Y, EndQuaternion.Y, Factor),
             Math::Lerp(A.Z, EndQuaternion.Z, Factor),
@@ -449,10 +449,10 @@ public:
      * @param Factor [0,1].
      * @return Interpolated quaternion.
      */
-    static FORCEINLINE FQuaternion Slerp(const FQuaternion& A, const FQuaternion& B, float Factor) noexcept
+    static FORCEINLINE Quaternion Slerp(const Quaternion& A, const Quaternion& B, float Factor) noexcept
     {
         float DotProductValue = A.DotProduct(B);
-        FQuaternion EndQuaternion = B;
+        Quaternion EndQuaternion = B;
 
         if (DotProductValue < 0.0f)
         {
@@ -474,7 +474,7 @@ public:
         const float ScaleA    = Math::Cos(Theta) - DotProductValue * (SinTheta / SinTheta0);
         const float ScaleB    = SinTheta / SinTheta0;
 
-        return FQuaternion(
+        return Quaternion(
             (A.X * ScaleA) + (EndQuaternion.X * ScaleB),
             (A.Y * ScaleA) + (EndQuaternion.Y * ScaleB),
             (A.Z * ScaleA) + (EndQuaternion.Z * ScaleB),
@@ -487,17 +487,17 @@ public:
      * @brief Unary negation (flip sign of all components).
      * @return Negated quaternion.
      */
-    FORCEINLINE FQuaternion operator-() const noexcept
+    FORCEINLINE Quaternion operator-() const noexcept
     {
     #if !USE_VECTOR_MATH
-        return FQuaternion(-X, -Y, -Z, -W);
+        return Quaternion(-X, -Y, -Z, -W);
     #else
         // Flip sign bits using XOR with -0.0f.
         const FFloat128 SignFlipMaskVector      = FVectorMath::VectorSet(-0.0f, -0.0f, -0.0f, -0.0f);
         const FFloat128 QuaternionVector        = FVectorMath::VectorLoad(XYZW);
         const FFloat128 NegatedQuaternionVector = FVectorMath::VectorXor(QuaternionVector, SignFlipMaskVector);
 
-        FQuaternion Result;
+        Quaternion Result;
         FVectorMath::VectorStore(NegatedQuaternionVector, Result.XYZW);
         return Result;
     #endif
@@ -508,10 +508,10 @@ public:
      * @param RHS Right-hand quaternion.
      * @return Result quaternion.
      */
-    FORCEINLINE FQuaternion operator*(const FQuaternion& RHS) const noexcept
+    FORCEINLINE Quaternion operator*(const Quaternion& RHS) const noexcept
     {
     #if !USE_VECTOR_MATH
-        return FQuaternion(
+        return Quaternion(
             (W * RHS.X) + (RHS.W * X) + (Y * RHS.Z) - (Z * RHS.Y),
             (W * RHS.Y) + (RHS.W * Y) + (Z * RHS.X) - (X * RHS.Z),
             (W * RHS.Z) + (RHS.W * Z) + (X * RHS.Y) - (Y * RHS.X),
@@ -544,7 +544,7 @@ public:
         const FFloat128 ResultWOnlyVector      = FVectorMath::VectorMul(ResultWVector, MaskWVector);
         const FFloat128 FinalQuaternionVector  = FVectorMath::VectorAdd(ResultXYZOnlyVector, ResultWOnlyVector);
 
-        FQuaternion Result;
+        Quaternion Result;
         FVectorMath::VectorStore(FinalQuaternionVector, Result.XYZW);
         return Result;
     #endif
@@ -555,7 +555,7 @@ public:
      * @param RHS Right-hand quaternion.
      * @return Reference to this.
      */
-    FORCEINLINE FQuaternion& operator*=(const FQuaternion& RHS) noexcept
+    FORCEINLINE Quaternion& operator*=(const Quaternion& RHS) noexcept
     {
         *this = (*this) * RHS;
         return *this;
@@ -566,16 +566,16 @@ public:
      * @param RHS Scalar.
      * @return Scaled quaternion.
      */
-    FORCEINLINE FQuaternion operator*(float RHS) const noexcept
+    FORCEINLINE Quaternion operator*(float RHS) const noexcept
     {
     #if !USE_VECTOR_MATH
-        return FQuaternion(X * RHS, Y * RHS, Z * RHS, W * RHS);
+        return Quaternion(X * RHS, Y * RHS, Z * RHS, W * RHS);
     #else
         const FFloat128 QuaternionVector       = FVectorMath::VectorLoad(XYZW);
         const FFloat128 ScalarVector           = FVectorMath::VectorSet1(RHS);
         const FFloat128 ScaledQuaternionVector = FVectorMath::VectorMul(QuaternionVector, ScalarVector);
 
-        FQuaternion Result;
+        Quaternion Result;
         FVectorMath::VectorStore(ScaledQuaternionVector, Result.XYZW);
         return Result;
     #endif
@@ -586,7 +586,7 @@ public:
      * @param RHS Scalar.
      * @return Reference to this.
      */
-    FORCEINLINE FQuaternion& operator*=(float RHS) noexcept
+    FORCEINLINE Quaternion& operator*=(float RHS) noexcept
     {
     #if !USE_VECTOR_MATH
         X *= RHS;
@@ -651,4 +651,4 @@ public:
     };
 };
 
-MARK_AS_REALLOCATABLE(FQuaternion);
+MARK_AS_REALLOCATABLE(Quaternion);

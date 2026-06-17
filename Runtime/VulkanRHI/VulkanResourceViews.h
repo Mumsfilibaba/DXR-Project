@@ -84,7 +84,7 @@ public:
     NODISCARD FRHIDescriptorHandle EnsureBindlessHandle(EDescriptorType InType, bool bWritable) const;
     void RefreshBindlessIfBound();
 
-    void SetDebugName(const FString& InName);
+    void SetDebugName(const String& InName);
     
     NODISCARD FORCEINLINE const FStructuredBufferView& GetStructuredBufferInfo() const
     {

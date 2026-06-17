@@ -127,7 +127,7 @@ DECLARE_RHICOMMAND(FRHICommandQueryTimestamp)
 
 DECLARE_RHICOMMAND(FRHICommandClearRenderTargetView)
 {
-    FORCEINLINE FRHICommandClearRenderTargetView(FRHIRenderTargetView* InRenderTargetView, const FVector4& InClearColor)
+    FORCEINLINE FRHICommandClearRenderTargetView(FRHIRenderTargetView* InRenderTargetView, const Vector4& InClearColor)
         : RenderTargetView(InRenderTargetView)
         , ClearColor(InClearColor)
     {
@@ -140,7 +140,7 @@ DECLARE_RHICOMMAND(FRHICommandClearRenderTargetView)
     }
 
     FRHIRenderTargetView* RenderTargetView;
-    FVector4              ClearColor;
+    Vector4               ClearColor;
 };
 
 DECLARE_RHICOMMAND(FRHICommandClearDepthStencilView)
@@ -165,7 +165,7 @@ DECLARE_RHICOMMAND(FRHICommandClearDepthStencilView)
 
 DECLARE_RHICOMMAND(FRHICommandClearUnorderedAccessViewFloat)
 {
-    FORCEINLINE FRHICommandClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* InUnorderedAccessView, const FVector4& InClearColor)
+    FORCEINLINE FRHICommandClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* InUnorderedAccessView, const Vector4& InClearColor)
         : UnorderedAccessView(InUnorderedAccessView)
         , ClearColor(InClearColor)
     {
@@ -178,7 +178,7 @@ DECLARE_RHICOMMAND(FRHICommandClearUnorderedAccessViewFloat)
     }
 
     FRHIUnorderedAccessView* UnorderedAccessView;
-    FVector4                 ClearColor;
+    Vector4                  ClearColor;
 };
 
 DECLARE_RHICOMMAND(FRHICommandClearUnorderedAccessViewUint)
@@ -256,7 +256,7 @@ DECLARE_RHICOMMAND(FRHICommandSetScissorRect)
 
 DECLARE_RHICOMMAND(FRHICommandSetBlendFactor)
 {
-    FORCEINLINE FRHICommandSetBlendFactor(const FVector4& InColor)
+    FORCEINLINE FRHICommandSetBlendFactor(const Vector4& InColor)
         : Color(InColor)
     {
     }
@@ -266,7 +266,7 @@ DECLARE_RHICOMMAND(FRHICommandSetBlendFactor)
         CommandContext.SetBlendFactor(Color);
     }
 
-    FVector4 Color;
+    Vector4 Color;
 };
 
 DECLARE_RHICOMMAND(FRHICommandSetStencilRef)
@@ -843,7 +843,7 @@ DECLARE_RHICOMMAND(FRHICommandBuildGeometryAccelerationStructure)
         CommandContext.BuildGeometryAccelerationStructure(RayTracingGeometry, BuildDesc);
     }
 
-    FRHIGeometryAccelerationStructure*      RayTracingGeometry;
+    FRHIGeometryAccelerationStructure*         RayTracingGeometry;
     FRHIGeometryAccelerationStructureBuildDesc BuildDesc;
 };
 
@@ -1117,7 +1117,7 @@ DECLARE_RHICOMMAND(FRHICommandDispatchRays)
 
 DECLARE_RHICOMMAND(FRHICommandPushEvent)
 {
-    FORCEINLINE FRHICommandPushEvent(const FStringView& InName)
+    FORCEINLINE FRHICommandPushEvent(const StringView& InName)
         : Name(InName)
     {
     }
@@ -1126,13 +1126,13 @@ DECLARE_RHICOMMAND(FRHICommandPushEvent)
     {
         if (GRHIVerboseEventOutput && Debug::IsDebuggerPresent())
         {
-            Debug::OutputDebugString(FString(Name) + '\n');
+            Debug::OutputDebugString(String(Name) + '\n');
         }
 
         CommandContext.PushEvent(Name);
     }
 
-    FStringView Name;
+    StringView Name;
 };
 
 DECLARE_RHICOMMAND(FRHICommandPopEvent)

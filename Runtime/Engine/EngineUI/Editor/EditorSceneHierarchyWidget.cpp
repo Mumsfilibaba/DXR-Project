@@ -466,7 +466,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
             if (Search && Search[0] != '\0')
             {
                 const CHAR* CameraName = "Main Camera";
-                if (!FCString::Stristr(CameraName, Search) && !FCString::Stristr("Camera", Search))
+                if (!CString::Stristr(CameraName, Search) && !CString::Stristr("Camera", Search))
                 {
                     bCameraFound = false;
                 }
@@ -497,8 +497,8 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
                 const CHAR* Search = ActorSearchFilterBuffer.Data();
                 if (Search && Search[0] != '\0')
                 {
-                    const FString& Name = Actor->GetName();
-                    if (Name.IsEmpty() || !FCString::Stristr(*Name, Search))
+                    const String& Name = Actor->GetName();
+                    if (Name.IsEmpty() || !CString::Stristr(*Name, Search))
                     {
                         continue;
                     }
@@ -535,12 +535,12 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
                     }
 
                     TStaticArray<CHAR, 256> Label{};
-                    FCString::Snprintf(Label.Data(), static_cast<int32>(Label.Size()), "%s %d", TypeLabel, LightIndex++);
+                    CString::Snprintf(Label.Data(), static_cast<int32>(Label.Size()), "%s %d", TypeLabel, LightIndex++);
 
                     const CHAR* Search = ActorSearchFilterBuffer.Data();
                     if (Search && Search[0] != '\0')
                     {
-                        if (!FCString::Stristr(Label.Data(), Search))
+                        if (!CString::Stristr(Label.Data(), Search))
                         {
                             continue;
                         }
@@ -564,12 +564,12 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
                     }
 
                     TStaticArray<CHAR, 256> Label{};
-                    FCString::Snprintf(Label.Data(), static_cast<int32>(Label.Size()), "LightProbe %d", ProbeIndex++);
+                    CString::Snprintf(Label.Data(), static_cast<int32>(Label.Size()), "LightProbe %d", ProbeIndex++);
 
                     const CHAR* Search = ActorSearchFilterBuffer.Data();
                     if (Search && Search[0] != '\0')
                     {
-                        if (!FCString::Stristr(Label.Data(), Search))
+                        if (!CString::Stristr(Label.Data(), Search))
                         {
                             continue;
                         }
@@ -623,11 +623,11 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
                 ActorRenameBuffer.Fill(0);
                 ActorRenameBufferOriginal.Fill(0);
         
-                const FString& Name = SelectedActorForMenu->GetName();
+                const String& Name = SelectedActorForMenu->GetName();
                 if (!Name.IsEmpty())
                 {
-                    FCString::Strncpy(ActorRenameBuffer.Data(), *Name, ActorRenameBuffer.Size());
-                    FCString::Strncpy(ActorRenameBufferOriginal.Data(), *Name, ActorRenameBufferOriginal.Size());
+                    CString::Strncpy(ActorRenameBuffer.Data(), *Name, ActorRenameBuffer.Size());
+                    CString::Strncpy(ActorRenameBufferOriginal.Data(), *Name, ActorRenameBufferOriginal.Size());
                 }
             }
         }
@@ -705,11 +705,11 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const CHAR* Type, 
         ActorRenameBuffer.Fill(0);
         ActorRenameBufferOriginal.Fill(0);
 
-        const FString& Name = InActor->GetName();
+        const String& Name = InActor->GetName();
         if (!Name.IsEmpty())
         {
-            FCString::Strncpy(ActorRenameBuffer.Data(), *Name, ActorRenameBuffer.Size());
-            FCString::Strncpy(ActorRenameBufferOriginal.Data(), *Name, ActorRenameBufferOriginal.Size());
+            CString::Strncpy(ActorRenameBuffer.Data(), *Name, ActorRenameBuffer.Size());
+            CString::Strncpy(ActorRenameBufferOriginal.Data(), *Name, ActorRenameBufferOriginal.Size());
         }
     };
 
@@ -723,7 +723,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const CHAR* Type, 
     {
         if (RenamingActor)
         {
-            RenamingActor->SetName(FString(ActorRenameBuffer.Data()));
+            RenamingActor->SetName(String(ActorRenameBuffer.Data()));
             RenamingActor = nullptr;
         }
 
@@ -913,7 +913,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const CHAR* Type, 
 
         if (ImGui::IsItemActive() && ImGui::IsKeyPressed(ImGuiKey_Escape))
         {
-            FCString::Strncpy(ActorRenameBuffer.Data(), ActorRenameBufferOriginal.Data(), ActorRenameBuffer.Size());
+            CString::Strncpy(ActorRenameBuffer.Data(), ActorRenameBufferOriginal.Data(), ActorRenameBuffer.Size());
             CancelActorRename();
         }
         else if (bEnter || ImGui::IsItemDeactivatedAfterEdit() || ImGui::IsItemDeactivated())
@@ -930,7 +930,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const CHAR* Type, 
         const CHAR* FilterText  = EditorHelpers::GetTrimmedQuery(ActorSearchFilterBuffer.Data(), FilterBuf.Data(), static_cast<int32>(FilterBuf.Size()));
         const ImU32 BaseTextU32 = ImGui::GetColorU32(ImGuiCol_Text);
 
-        const FString& Name = Actor->GetName();
+        const String& Name = Actor->GetName();
         const CHAR* NameText = Name.IsEmpty() ? "Actor" : *Name;
         EditorWidgets::DrawTextWithSearchHighlight(ImGui::GetWindowDrawList(), ImVec2(LabelStartX, NameTextY), NameText, FilterText, BaseTextU32, 1.0f, 1.0f, &RowMin, &RowMax);
 

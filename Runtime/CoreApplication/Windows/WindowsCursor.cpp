@@ -54,11 +54,11 @@ void FWindowsCursor::SetPosition(int32 x, int32 y)
     ::SetCursorPos(x, y);
 }
 
-FIntVector2 FWindowsCursor::GetPosition() const
+IntVector2 FWindowsCursor::GetPosition() const
 {
     POINT CursorPos = { 0, 0 };
     ::GetCursorPos(&CursorPos);
-    return FIntVector2(CursorPos.x, CursorPos.y);
+    return IntVector2(CursorPos.x, CursorPos.y);
 }
 
 void FWindowsCursor::SetVisibility(bool bVisible)

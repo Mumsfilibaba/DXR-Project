@@ -94,11 +94,11 @@ void FMallocLeakTracker::DumpAllocations(IOutputDevice* OutputDevice)
         SCOPED_LOCK(AllocationsCS);
 
         const uint32 NumAllocations = static_cast<uint32>(Allocations.Size());
-        OutputDevice->Log(FString::CreateFormatted("Current Allocations (Num=%u):", NumAllocations));
+        OutputDevice->Log(String::CreateFormatted("Current Allocations (Num=%u):", NumAllocations));
 
         for (auto CurrentAllocation : Allocations)
         {
-            OutputDevice->Log(FString::CreateFormatted(
+            OutputDevice->Log(String::CreateFormatted(
                 "    Address=0x%p Size=%llu",
                 CurrentAllocation.First,
                 CurrentAllocation.Second.Size));
@@ -223,13 +223,13 @@ void FMallocStackTraceTracker::DumpAllocations(IOutputDevice* OutputDevice)
         SCOPED_LOCK(AllocationsCS);
 
         const int32 NumAllocations = Allocations.Size();
-        OutputDevice->Log(FString::CreateFormatted("Current Allocations (Num=%d):", NumAllocations));
+        OutputDevice->Log(String::CreateFormatted("Current Allocations (Num=%d):", NumAllocations));
 
         FPlatformStackTrace::InitializeSymbols();
 
         for (auto CurrentAllocation : Allocations)
         {
-            FString Message = FString::CreateFormatted(
+            String Message = String::CreateFormatted(
                 "    Address=0x%p Size=%llu\n"
                 "        Callstack:\n",
                 CurrentAllocation.First,

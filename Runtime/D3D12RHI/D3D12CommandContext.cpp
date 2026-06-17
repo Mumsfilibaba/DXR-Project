@@ -28,7 +28,7 @@ void FD3D12BarrierBatcher::AddTransitionBarrier(FD3D12Resource* InResource, D3D1
 
 #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
     {
-        FString DebugName;
+        String DebugName;
         InResource->GetDebugName(DebugName);
         D3D12_INFO("AddTransitionBarrier Resource=%s Subresource=%u Before=%s After=%s", *DebugName, SubresourceIndex, ToString(BeforeState), ToString(AfterState));
     }
@@ -43,7 +43,7 @@ void FD3D12BarrierBatcher::AddUnorderedAccessBarrier(FD3D12Resource* InResource)
 
 #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
     {
-        FString DebugName;
+        String DebugName;
         InResource->GetDebugName(DebugName);
         D3D12_INFO("AddUnorderedAccessBarrier Resource=%s", *DebugName);
     }
@@ -627,7 +627,7 @@ void FD3D12CommandContext::QueryTimestamp(FRHIQuery* Query)
     PendingQueries.Add(D3D12Query);
 }
 
-void FD3D12CommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor)
+void FD3D12CommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const Vector4& ClearColor)
 {
     BarrierBatcher.FlushBarriers(GetCommandList());
 
@@ -653,7 +653,7 @@ void FD3D12CommandContext::ClearDepthStencilView(FRHIDepthStencilView* DepthSten
     GetCommandList()->ClearDepthStencilView(D3D12DepthStencilView->GetOfflineHandle(), ClearFlags, Depth, Stencil, 0, nullptr);
 }
 
-void FD3D12CommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor)
+void FD3D12CommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const Vector4& ClearColor)
 {
     FD3D12UnorderedAccessViewRHI* D3D12UnorderedAccessView = FD3D12DeviceRHI::ResourceCast(UnorderedAccessView);
     CHECK(D3D12UnorderedAccessView != nullptr);
@@ -817,7 +817,7 @@ void FD3D12CommandContext::SetScissorRect(const FScissorRegion& ScissorRegion)
     ContextState.SetScissorRects(&ScissorRect, 1);
 }
 
-void FD3D12CommandContext::SetBlendFactor(const FVector4& Color)
+void FD3D12CommandContext::SetBlendFactor(const Vector4& Color)
 {
     ContextState.SetBlendFactor(Color.XYZW);
 }
@@ -1643,7 +1643,7 @@ void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FR
                 {
                     if (CurrentState != D3D12BeforeState)
                     {
-                        D3D12_LOG_TRANSITION_MISMATCH(D3D12Texture, *FString::CreateFormatted("array-slice loop, slice=%u, mip=%u", ArraySlice, TextureTransition.MipLevel),
+                        D3D12_LOG_TRANSITION_MISMATCH(D3D12Texture, *String::CreateFormatted("array-slice loop, slice=%u, mip=%u", ArraySlice, TextureTransition.MipLevel),
                             TextureTransition.BeforeState, D3D12BeforeState, D3D12AfterState, CurrentState);
                         CHECK(CurrentState == D3D12BeforeState);
                     }
@@ -1670,7 +1670,7 @@ void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FR
                 {
                     if (CurrentState != D3D12BeforeState)
                     {
-                        D3D12_LOG_TRANSITION_MISMATCH(D3D12Texture, *FString::CreateFormatted("mip loop, slice=%u, mip=%u", TextureTransition.ArraySlice, MipLevel),
+                        D3D12_LOG_TRANSITION_MISMATCH(D3D12Texture, *String::CreateFormatted("mip loop, slice=%u, mip=%u", TextureTransition.ArraySlice, MipLevel),
                             TextureTransition.BeforeState, D3D12BeforeState, D3D12AfterState, CurrentState);
                         CHECK(CurrentState == D3D12BeforeState);
                     }
@@ -1697,7 +1697,7 @@ void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FR
             {
                 if (CurrentState != D3D12BeforeState)
                 {
-                    D3D12_LOG_TRANSITION_MISMATCH(D3D12Texture, *FString::CreateFormatted("single subresource, slice=%u, mip=%u", TextureTransition.ArraySlice, TextureTransition.MipLevel),
+                    D3D12_LOG_TRANSITION_MISMATCH(D3D12Texture, *String::CreateFormatted("single subresource, slice=%u, mip=%u", TextureTransition.ArraySlice, TextureTransition.MipLevel),
                         TextureTransition.BeforeState, D3D12BeforeState, D3D12AfterState, CurrentState);
                     CHECK(CurrentState == D3D12BeforeState);
                 }
@@ -1741,7 +1741,7 @@ void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FR
                 {
                     if (CurrentState != D3D12BeforeState)
                     {
-                        D3D12_LOG_TRANSITION_MISMATCH(D3D12Texture, *FString::CreateFormatted("per-subresource (divergent), subresource=%u", i),
+                        D3D12_LOG_TRANSITION_MISMATCH(D3D12Texture, *String::CreateFormatted("per-subresource (divergent), subresource=%u", i),
                             TextureTransition.BeforeState, D3D12BeforeState, D3D12AfterState, CurrentState);
                         CHECK(CurrentState == D3D12BeforeState);
                     }
@@ -2478,7 +2478,7 @@ void* FD3D12CommandContext::GetRHINativeCommandList()
     return reinterpret_cast<void*>(CommandList->GetCommandList());
 }
 
-void FD3D12CommandContext::PushEvent(const FStringView& Name)
+void FD3D12CommandContext::PushEvent(const StringView& Name)
 {
     EventStack.Emplace(Name.Data());
 

@@ -164,7 +164,7 @@ void FVulkanQueryPool::ResetPool()
     vkResetQueryPool(GetDevice()->GetVkDevice(), QueryPool, 0, NumQueries);
 }
 
-void FVulkanQueryPool::SetDebugName(const FString& InName)
+void FVulkanQueryPool::SetDebugName(const String& InName)
 {
     if (VULKAN_CHECK_HANDLE(QueryPool))
     {
@@ -249,7 +249,7 @@ FVulkanQueryPool* FVulkanQueryPoolManager::ObtainPool()
         return nullptr;
     }
 
-    const FString DebugName = FString::CreateFormatted("QueryPool [%d]", AllPools.Size());
+    const String DebugName = String::CreateFormatted("QueryPool [%d]", AllPools.Size());
     Pool->SetDebugName(DebugName);
 
     AllPools.Add(Pool);

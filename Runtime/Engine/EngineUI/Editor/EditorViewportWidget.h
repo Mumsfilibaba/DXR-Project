@@ -15,7 +15,7 @@ public:
     void SetViewportWidget(const TSharedPtr<FViewportWidget>& ViewportWidget);
     void SetViewportImage(FRHITextureRef InViewportImage);
     
-    FIntVector2 GetViewportSize() const;
+    IntVector2 GetViewportSize() const;
 
     FSceneRenderView::EDebugView GetDebugView() const;
     FSceneRenderView::EDebugView GetSecondaryDebugView() const;
@@ -32,7 +32,7 @@ public:
 
 private:
     TSharedPtr<FViewportWidget>  ViewportWidget;
-    FIntVector2                  CachedViewportSize;
+    IntVector2                   CachedViewportSize;
     FImGuiTexture                ViewportImage;
     FDelegateHandle              ImGuiDelegateHandle;
     bool                         bVisible;

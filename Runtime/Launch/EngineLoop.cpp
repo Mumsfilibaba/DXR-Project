@@ -26,12 +26,12 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct FDebuggerOutputDevice : public IOutputDevice
 {
-    virtual void Log(const FString& Message)
+    virtual void Log(const String& Message)
     {
         FPlatformMisc::OutputDebugString(*Message);
     }
 
-    virtual void Log(ELogSeverity Severity, const FString& Message)
+    virtual void Log(ELogSeverity Severity, const String& Message)
     {
         FPlatformMisc::OutputDebugString(*Message);
     }
@@ -65,7 +65,7 @@ static bool InitializeOutputDevices()
         FOutputDeviceLogger::Get()->RegisterOutputDevice(GDebuggerOutputDevice.Get());
     }
 
-    const FString OutputLogPath = Paths::GetProjectDir() + "/OutputLog.txt";
+    const String OutputLogPath = Paths::GetProjectDir() + "/OutputLog.txt";
     GFileOutputDevice = MakeUniquePtr<FFileOutputDevice>(OutputLogPath);
     
     if (GFileOutputDevice && GFileOutputDevice->IsValid())

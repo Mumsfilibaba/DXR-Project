@@ -2,14 +2,14 @@
 #include "Core/Math/Vector3.h"
 #include "Core/Math/VectorMath/VectorMath.h"
 
-class VECTOR_ALIGN FVector4
+class VECTOR_ALIGN Vector4
 {
 public:
 
     /**
      * @brief Default constructor (initializes components to zero).
      */
-    FORCEINLINE FVector4() noexcept
+    FORCEINLINE Vector4() noexcept
         : X(0.0f)
         , Y(0.0f)
         , Z(0.0f)
@@ -24,7 +24,7 @@ public:
      * @param InZ The Z-coordinate.
      * @param InW The W-coordinate.
      */
-    FORCEINLINE explicit FVector4(float InX, float InY, float InZ, float InW) noexcept
+    FORCEINLINE explicit Vector4(float InX, float InY, float InZ, float InW) noexcept
         : X(InX)
         , Y(InY)
         , Z(InZ)
@@ -36,7 +36,7 @@ public:
      * @brief Constructor initializing all components with a single value.
      * @param Scalar Value to set all components to.
      */
-    FORCEINLINE explicit FVector4(float Scalar) noexcept
+    FORCEINLINE explicit Vector4(float Scalar) noexcept
         : X(Scalar)
         , Y(Scalar)
         , Z(Scalar)
@@ -48,7 +48,7 @@ public:
      * @brief Constructor copying a 3D vector into the first components, setting W-component to zero.
      * @param XYZ Value to set first components to.
      */
-    FORCEINLINE FVector4(const FVector3& XYZ) noexcept
+    FORCEINLINE Vector4(const Vector3& XYZ) noexcept
         : X(XYZ.X)
         , Y(XYZ.Y)
         , Z(XYZ.Z)
@@ -61,7 +61,7 @@ public:
      * @param XYZ Value to set first components to.
      * @param InW Value to set the W-component to.
      */
-    FORCEINLINE explicit FVector4(const FVector3& XYZ, float InW) noexcept
+    FORCEINLINE explicit Vector4(const Vector3& XYZ, float InW) noexcept
         : X(XYZ.X)
         , Y(XYZ.Y)
         , Z(XYZ.Z)
@@ -102,9 +102,9 @@ public:
      * @brief Returns a normalized version of this vector.
      * @return A normalized copy of this vector.
      */
-    FORCEINLINE FVector4 GetNormalized() const noexcept
+    FORCEINLINE Vector4 GetNormalized() const noexcept
     {
-        FVector4 Result(*this);
+        Vector4 Result(*this);
         Result.Normalize();
         return Result;
     }
@@ -157,9 +157,9 @@ public:
      * @brief Returns a normalized version of this vector using only XYZ (W is set to zero).
      * @return A normalized copy of this vector (XYZ normalized, W = 0).
      */
-    FORCEINLINE FVector4 GetNormalizedXYZ() const noexcept
+    FORCEINLINE Vector4 GetNormalizedXYZ() const noexcept
     {
-        FVector4 Result(*this);
+        Vector4 Result(*this);
         Result.NormalizeXYZ();
         return Result;
     }
@@ -169,7 +169,7 @@ public:
      * @param Other The other vector.
      * @return The distance between this vector and the other vector.
      */
-    FORCEINLINE float GetDistanceTo(const FVector4& Other) const noexcept
+    FORCEINLINE float GetDistanceTo(const Vector4& Other) const noexcept
     {
         return (*this - Other).GetLength();
     }
@@ -179,7 +179,7 @@ public:
      * @param Other The other vector.
      * @return The squared distance between this vector and the other vector.
      */
-    FORCEINLINE float GetDistanceSquaredTo(const FVector4& Other) const noexcept
+    FORCEINLINE float GetDistanceSquaredTo(const Vector4& Other) const noexcept
     {
         return (*this - Other).GetLengthSquared();
     }
@@ -189,7 +189,7 @@ public:
      * @param Other The other vector.
      * @return The angle in radians between the two vectors.
      */
-    FORCEINLINE float GetAngleBetween(const FVector4& Other) const noexcept
+    FORCEINLINE float GetAngleBetween(const Vector4& Other) const noexcept
     {
         float Dot     = DotProduct(Other);
         float Lengths = GetLength() * Other.GetLength();
@@ -209,7 +209,7 @@ public:
      * @param Normal The normal vector to reflect around (should be normalized).
      * @return The reflected vector.
      */
-    FORCEINLINE FVector4 GetReflected(const FVector4& Normal) const noexcept
+    FORCEINLINE Vector4 GetReflected(const Vector4& Normal) const noexcept
     {
         return *this - 2.0f * DotProduct(Normal) * Normal;
     }
@@ -220,7 +220,7 @@ public:
      * @param Threshold The threshold for comparison.
      * @return True if vectors are approximately equal, false otherwise.
      */
-    inline bool IsEqual(const FVector4& Other, float Threshold = Math::Constants::CmpThreshold) const noexcept
+    inline bool IsEqual(const Vector4& Other, float Threshold = Math::Constants::CmpThreshold) const noexcept
     {
     #if !USE_VECTOR_MATH
         Threshold = Math::Abs(Threshold);
@@ -314,7 +314,7 @@ public:
      * @param Other The vector to perform the dot product with.
      * @return The dot product.
      */
-    FORCEINLINE float DotProduct(const FVector4& Other) const noexcept
+    FORCEINLINE float DotProduct(const Vector4& Other) const noexcept
     {
     #if !USE_VECTOR_MATH
         return (X * Other.X) + (Y * Other.Y) + (Z * Other.Z) + (W * Other.W);
@@ -332,12 +332,12 @@ public:
      * @param Other The vector to perform the cross product with.
      * @return The cross product vector.
      */
-    FORCEINLINE FVector4 CrossProduct(const FVector4& Other) const noexcept
+    FORCEINLINE Vector4 CrossProduct(const Vector4& Other) const noexcept
     {
-        FVector4 Result;
+        Vector4 Result;
 
     #if !USE_VECTOR_MATH
-        Result = FVector4((Y * Other.Z) - (Z * Other.Y), (Z * Other.X) - (X * Other.Z), (X * Other.Y) - (Y * Other.X), 0.0f);
+        Result = Vector4((Y * Other.Z) - (Z * Other.Y), (Z * Other.X) - (X * Other.Z), (X * Other.Y) - (Y * Other.X), 0.0f);
     #else
         FFloat128 XYZW_128   = FVectorMath::VectorLoad(XYZW);
         FFloat128 Other_128  = FVectorMath::VectorLoad(Other.XYZW);
@@ -355,9 +355,9 @@ public:
      * @param Other The vector to project onto.
      * @return The projected vector.
      */
-    FORCEINLINE FVector4 ProjectOn(const FVector4& Other) const noexcept
+    FORCEINLINE Vector4 ProjectOn(const Vector4& Other) const noexcept
     {
-        FVector4 Projected;
+        Vector4 Projected;
 
     #if !USE_VECTOR_MATH
         float AdotB = DotProduct(Other);
@@ -365,7 +365,7 @@ public:
 
         if (BdotB == 0.0f)
         {
-            Projected = FVector4(0.0f, 0.0f, 0.0f, 0.0f);
+            Projected = Vector4(0.0f, 0.0f, 0.0f, 0.0f);
         }
         else
         {
@@ -394,12 +394,12 @@ public:
      * @param ValueB Second vector to compare.
      * @return A vector with the smallest components.
      */
-    static FORCEINLINE FVector4 Min(const FVector4& ValueA, const FVector4& ValueB) noexcept
+    static FORCEINLINE Vector4 Min(const Vector4& ValueA, const Vector4& ValueB) noexcept
     {
-        FVector4 Result;
+        Vector4 Result;
 
     #if !USE_VECTOR_MATH
-        Result = FVector4(Math::Min(ValueA.X, ValueB.X), Math::Min(ValueA.Y, ValueB.Y), Math::Min(ValueA.Z, ValueB.Z), Math::Min(ValueA.W, ValueB.W));
+        Result = Vector4(Math::Min(ValueA.X, ValueB.X), Math::Min(ValueA.Y, ValueB.Y), Math::Min(ValueA.Z, ValueB.Z), Math::Min(ValueA.W, ValueB.W));
     #else
         FFloat128 VectorA    = FVectorMath::VectorLoad(ValueA.XYZW);
         FFloat128 VectorB    = FVectorMath::VectorLoad(ValueB.XYZW);
@@ -416,12 +416,12 @@ public:
      * @param Second Second vector to compare.
      * @return A vector with the largest components.
      */
-    static FORCEINLINE FVector4 Max(const FVector4& First, const FVector4& Second) noexcept
+    static FORCEINLINE Vector4 Max(const Vector4& First, const Vector4& Second) noexcept
     {
-        FVector4 Result;
+        Vector4 Result;
 
     #if !USE_VECTOR_MATH
-        Result = FVector4(Math::Max(First.X, Second.X), Math::Max(First.Y, Second.Y), Math::Max(First.Z, Second.Z), Math::Max(First.W, Second.W));
+        Result = Vector4(Math::Max(First.X, Second.X), Math::Max(First.Y, Second.Y), Math::Max(First.Z, Second.Z), Math::Max(First.W, Second.W));
     #else
         FFloat128 VectorA    = FVectorMath::VectorLoad(First.XYZW);
         FFloat128 VectorB    = FVectorMath::VectorLoad(Second.XYZW);
@@ -439,12 +439,12 @@ public:
      * @param Factor Interpolation factor (0 returns ValueA, 1 returns ValueB).
      * @return The interpolated vector.
      */
-    static FORCEINLINE FVector4 Lerp(const FVector4& ValueA, const FVector4& ValueB, float Factor) noexcept
+    static FORCEINLINE Vector4 Lerp(const Vector4& ValueA, const Vector4& ValueB, float Factor) noexcept
     {
-        FVector4 Result;
+        Vector4 Result;
 
     #if !USE_VECTOR_MATH
-        Result = FVector4((1.0f - Factor) * ValueA.X + Factor * ValueB.X, (1.0f - Factor) * ValueA.Y + Factor * ValueB.Y, (1.0f - Factor) * ValueA.Z + Factor * ValueB.Z, (1.0f - Factor) * ValueA.W + Factor * ValueB.W);
+        Result = Vector4((1.0f - Factor) * ValueA.X + Factor * ValueB.X, (1.0f - Factor) * ValueA.Y + Factor * ValueB.Y, (1.0f - Factor) * ValueA.Z + Factor * ValueB.Z, (1.0f - Factor) * ValueA.W + Factor * ValueB.W);
     #else
         FFloat128 VectorA            = FVectorMath::VectorLoad(ValueA.XYZW);
         FFloat128 VectorB            = FVectorMath::VectorLoad(ValueB.XYZW);
@@ -466,12 +466,12 @@ public:
      * @param Max Vector containing the maximum values.
      * @return The clamped vector.
      */
-    static FORCEINLINE FVector4 Clamp(const FVector4& Value, const FVector4& Min, const FVector4& Max) noexcept
+    static FORCEINLINE Vector4 Clamp(const Vector4& Value, const Vector4& Min, const Vector4& Max) noexcept
     {
-        FVector4 Result;
+        Vector4 Result;
 
     #if !USE_VECTOR_MATH
-        Result = FVector4(Math::Clamp(Value.X, Min.X, Max.X), Math::Clamp(Value.Y, Min.Y, Max.Y), Math::Clamp(Value.Z, Min.Z, Max.Z), Math::Clamp(Value.W, Min.W, Max.W));
+        Result = Vector4(Math::Clamp(Value.X, Min.X, Max.X), Math::Clamp(Value.Y, Min.Y, Max.Y), Math::Clamp(Value.Z, Min.Z, Max.Z), Math::Clamp(Value.W, Min.W, Max.W));
     #else
         FFloat128 Value_128 = FVectorMath::VectorLoad(Value.XYZW);
         FFloat128 Min_128   = FVectorMath::VectorLoad(Min.XYZW);
@@ -489,12 +489,12 @@ public:
      * @param Value The vector to saturate.
      * @return The saturated vector.
      */
-    static FORCEINLINE FVector4 Saturate(const FVector4& Value) noexcept
+    static FORCEINLINE Vector4 Saturate(const Vector4& Value) noexcept
     {
-        FVector4 Result;
+        Vector4 Result;
 
     #if !USE_VECTOR_MATH
-        Result = FVector4(Math::Saturate(Value.X), Math::Saturate(Value.Y), Math::Saturate(Value.Z), Math::Saturate(Value.W));
+        Result = Vector4(Math::Saturate(Value.X), Math::Saturate(Value.Y), Math::Saturate(Value.Z), Math::Saturate(Value.W));
     #else
         FFloat128 Value_128 = FVectorMath::VectorLoad(Value.XYZW);
         FFloat128 Zeros_128 = FVectorMath::VectorZero();
@@ -512,9 +512,9 @@ public:
      * @param Radians Vector in radians.
      * @return Vector with components in degrees.
      */
-    static FORCEINLINE FVector4 RadiansToDegrees(const FVector4& Radians) noexcept
+    static FORCEINLINE Vector4 RadiansToDegrees(const Vector4& Radians) noexcept
     {
-        return FVector4(Math::RadiansToDegrees(Radians.X), Math::RadiansToDegrees(Radians.Y), Math::RadiansToDegrees(Radians.Z), Math::RadiansToDegrees(Radians.W));
+        return Vector4(Math::RadiansToDegrees(Radians.X), Math::RadiansToDegrees(Radians.Y), Math::RadiansToDegrees(Radians.Z), Math::RadiansToDegrees(Radians.W));
     }
 
     /**
@@ -522,9 +522,9 @@ public:
      * @param Degrees Vector in degrees.
      * @return Vector with components in radians.
      */
-    static FORCEINLINE FVector4 DegreesToRadians(const FVector4& Degrees) noexcept
+    static FORCEINLINE Vector4 DegreesToRadians(const Vector4& Degrees) noexcept
     {
-        return FVector4(Math::DegreesToRadians(Degrees.X), Math::DegreesToRadians(Degrees.Y), Math::DegreesToRadians(Degrees.Z), Math::DegreesToRadians(Degrees.W));
+        return Vector4(Math::DegreesToRadians(Degrees.X), Math::DegreesToRadians(Degrees.Y), Math::DegreesToRadians(Degrees.Z), Math::DegreesToRadians(Degrees.W));
     }
 
 public:
@@ -533,12 +533,12 @@ public:
      * @brief Returns a vector with negated components.
      * @return The negated vector.
      */
-    FORCEINLINE FVector4 operator-() const noexcept
+    FORCEINLINE Vector4 operator-() const noexcept
     {
-        FVector4 Result;
+        Vector4 Result;
 
     #if !USE_VECTOR_MATH
-        Result = FVector4(-X, -Y, -Z, -W);
+        Result = Vector4(-X, -Y, -Z, -W);
     #else
         FFloat128 Zero_128   = FVectorMath::VectorZero();
         FFloat128 XYZW_128   = FVectorMath::VectorLoad(XYZW);
@@ -554,12 +554,12 @@ public:
      * @param Other The vector to add.
      * @return The result of the addition.
      */
-    FORCEINLINE FVector4 operator+(const FVector4& Other) const noexcept
+    FORCEINLINE Vector4 operator+(const Vector4& Other) const noexcept
     {
-        FVector4 Result;
+        Vector4 Result;
 
     #if !USE_VECTOR_MATH
-        Result = FVector4(X + Other.X, Y + Other.Y, Z + Other.Z, W + Other.W);
+        Result = Vector4(X + Other.X, Y + Other.Y, Z + Other.Z, W + Other.W);
     #else
         FFloat128 XYZW_128   = FVectorMath::VectorLoad(XYZW);
         FFloat128 Other_128  = FVectorMath::VectorLoad(Other.XYZW);
@@ -575,7 +575,7 @@ public:
      * @param Other The vector to add.
      * @return Reference to this vector after addition.
      */
-    FORCEINLINE FVector4& operator+=(const FVector4& Other) noexcept
+    FORCEINLINE Vector4& operator+=(const Vector4& Other) noexcept
     {
     #if !USE_VECTOR_MATH
         X += Other.X;
@@ -597,12 +597,12 @@ public:
      * @param Scalar The scalar to add.
      * @return The result of the addition.
      */
-    FORCEINLINE FVector4 operator+(float Scalar) const noexcept
+    FORCEINLINE Vector4 operator+(float Scalar) const noexcept
     {
-        FVector4 Result;
+        Vector4 Result;
 
     #if !USE_VECTOR_MATH
-        Result = FVector4(X + Scalar, Y + Scalar, Z + Scalar, W + Scalar);
+        Result = Vector4(X + Scalar, Y + Scalar, Z + Scalar, W + Scalar);
     #else
         FFloat128 XYZW_128    = FVectorMath::VectorLoad(XYZW);
         FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
@@ -618,7 +618,7 @@ public:
      * @param Scalar The scalar to add.
      * @return Reference to this vector after addition.
      */
-    FORCEINLINE FVector4& operator+=(float Scalar) noexcept
+    FORCEINLINE Vector4& operator+=(float Scalar) noexcept
     {
     #if !USE_VECTOR_MATH
         X += Scalar;
@@ -640,12 +640,12 @@ public:
      * @param Other The vector to subtract.
      * @return The result of the subtraction.
      */
-    FORCEINLINE FVector4 operator-(const FVector4& Other) const noexcept
+    FORCEINLINE Vector4 operator-(const Vector4& Other) const noexcept
     {
-        FVector4 Result;
+        Vector4 Result;
 
     #if !USE_VECTOR_MATH
-        Result = FVector4(X - Other.X, Y - Other.Y, Z - Other.Z, W - Other.W);
+        Result = Vector4(X - Other.X, Y - Other.Y, Z - Other.Z, W - Other.W);
     #else
         FFloat128 XYZW_128   = FVectorMath::VectorLoad(XYZW);
         FFloat128 Other_128  = FVectorMath::VectorLoad(Other.XYZW);
@@ -661,7 +661,7 @@ public:
      * @param Other The vector to subtract.
      * @return Reference to this vector after subtraction.
      */
-    FORCEINLINE FVector4& operator-=(const FVector4& Other) noexcept
+    FORCEINLINE Vector4& operator-=(const Vector4& Other) noexcept
     {
     #if !USE_VECTOR_MATH
         X -= Other.X;
@@ -683,12 +683,12 @@ public:
      * @param Scalar The scalar to subtract.
      * @return The result of the subtraction.
      */
-    FORCEINLINE FVector4 operator-(float Scalar) const noexcept
+    FORCEINLINE Vector4 operator-(float Scalar) const noexcept
     {
-        FVector4 Result;
+        Vector4 Result;
 
     #if !USE_VECTOR_MATH
-        Result = FVector4(X - Scalar, Y - Scalar, Z - Scalar, W - Scalar);
+        Result = Vector4(X - Scalar, Y - Scalar, Z - Scalar, W - Scalar);
     #else
         FFloat128 XYZW_128    = FVectorMath::VectorLoad(XYZW);
         FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
@@ -704,7 +704,7 @@ public:
      * @param Scalar The scalar to subtract.
      * @return Reference to this vector after subtraction.
      */
-    FORCEINLINE FVector4& operator-=(float Scalar) noexcept
+    FORCEINLINE Vector4& operator-=(float Scalar) noexcept
     {
     #if !USE_VECTOR_MATH
         X -= Scalar;
@@ -726,12 +726,12 @@ public:
      * @param Other The vector to multiply with.
      * @return The result of the multiplication.
      */
-    FORCEINLINE FVector4 operator*(const FVector4& Other) const noexcept
+    FORCEINLINE Vector4 operator*(const Vector4& Other) const noexcept
     {
-        FVector4 Result;
+        Vector4 Result;
 
     #if !USE_VECTOR_MATH
-        Result = FVector4(X * Other.X, Y * Other.Y, Z * Other.Z, W * Other.W);
+        Result = Vector4(X * Other.X, Y * Other.Y, Z * Other.Z, W * Other.W);
     #else
         FFloat128 XYZW_128   = FVectorMath::VectorLoad(XYZW);
         FFloat128 Other_128  = FVectorMath::VectorLoad(Other.XYZW);
@@ -747,7 +747,7 @@ public:
      * @param Other The vector to multiply with.
      * @return Reference to this vector after multiplication.
      */
-    FORCEINLINE FVector4& operator*=(const FVector4& Other) noexcept
+    FORCEINLINE Vector4& operator*=(const Vector4& Other) noexcept
     {
     #if !USE_VECTOR_MATH
         X *= Other.X;
@@ -769,12 +769,12 @@ public:
      * @param Scalar The scalar to multiply with.
      * @return The result of the multiplication.
      */
-    FORCEINLINE FVector4 operator*(float Scalar) const noexcept
+    FORCEINLINE Vector4 operator*(float Scalar) const noexcept
     {
-        FVector4 Result;
+        Vector4 Result;
 
     #if !USE_VECTOR_MATH
-        Result = FVector4(X * Scalar, Y * Scalar, Z * Scalar, W * Scalar);
+        Result = Vector4(X * Scalar, Y * Scalar, Z * Scalar, W * Scalar);
     #else
         FFloat128 XYZW_128    = FVectorMath::VectorLoad(XYZW);
         FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
@@ -790,7 +790,7 @@ public:
      * @param Scalar The scalar to multiply with.
      * @return Reference to this vector after multiplication.
      */
-    FORCEINLINE FVector4& operator*=(float Scalar) noexcept
+    FORCEINLINE Vector4& operator*=(float Scalar) noexcept
     {
     #if !USE_VECTOR_MATH
         X *= Scalar;
@@ -813,7 +813,7 @@ public:
      * @param Other The vector to multiply with.
      * @return The result of the multiplication.
      */
-    friend FORCEINLINE FVector4 operator*(float Scalar, const FVector4& Other) noexcept
+    friend FORCEINLINE Vector4 operator*(float Scalar, const Vector4& Other) noexcept
     {
         return Other * Scalar;
     }
@@ -823,12 +823,12 @@ public:
      * @param Other The vector to divide by.
      * @return The result of the division.
      */
-    FORCEINLINE FVector4 operator/(const FVector4& Other) const noexcept
+    FORCEINLINE Vector4 operator/(const Vector4& Other) const noexcept
     {
-        FVector4 Result;
+        Vector4 Result;
 
     #if !USE_VECTOR_MATH
-        Result = FVector4(X / Other.X, Y / Other.Y, Z / Other.Z, W / Other.W);
+        Result = Vector4(X / Other.X, Y / Other.Y, Z / Other.Z, W / Other.W);
     #else
         FFloat128 XYZW_128   = FVectorMath::VectorLoad(XYZW);
         FFloat128 Other_128  = FVectorMath::VectorLoad(Other.XYZW);
@@ -844,7 +844,7 @@ public:
      * @param Other The vector to divide by.
      * @return Reference to this vector after division.
      */
-    FORCEINLINE FVector4& operator/=(const FVector4& Other) noexcept
+    FORCEINLINE Vector4& operator/=(const Vector4& Other) noexcept
     {
     #if !USE_VECTOR_MATH
         X /= Other.X;
@@ -866,12 +866,12 @@ public:
      * @param Scalar The scalar to divide by.
      * @return The result of the division.
      */
-    FORCEINLINE FVector4 operator/(float Scalar) const noexcept
+    FORCEINLINE Vector4 operator/(float Scalar) const noexcept
     {
-        FVector4 Result;
+        Vector4 Result;
 
     #if !USE_VECTOR_MATH
-        Result = FVector4(X / Scalar, Y / Scalar, Z / Scalar, W / Scalar);
+        Result = Vector4(X / Scalar, Y / Scalar, Z / Scalar, W / Scalar);
     #else
         FFloat128 XYZW_128    = FVectorMath::VectorLoad(XYZW);
         FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
@@ -887,7 +887,7 @@ public:
      * @param Scalar The scalar to divide by.
      * @return Reference to this vector after division.
      */
-    FORCEINLINE FVector4& operator/=(float Scalar) noexcept
+    FORCEINLINE Vector4& operator/=(float Scalar) noexcept
     {
     #if !USE_VECTOR_MATH
         X /= Scalar;
@@ -909,7 +909,7 @@ public:
      * @param Other The vector to compare with.
      * @return True if equal, false otherwise.
      */
-    FORCEINLINE bool operator==(const FVector4& Other) const noexcept
+    FORCEINLINE bool operator==(const Vector4& Other) const noexcept
     {
         return IsEqual(Other);
     }
@@ -919,7 +919,7 @@ public:
      * @param Other The vector to compare with.
      * @return True if not equal, false otherwise.
      */
-    FORCEINLINE bool operator!=(const FVector4& Other) const noexcept
+    FORCEINLINE bool operator!=(const Vector4& Other) const noexcept
     {
         return !IsEqual(Other);
     }
@@ -972,4 +972,4 @@ public:
     };
 };
 
-MARK_AS_REALLOCATABLE(FVector4);
+MARK_AS_REALLOCATABLE(Vector4);

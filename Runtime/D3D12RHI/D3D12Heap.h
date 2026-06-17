@@ -11,7 +11,7 @@ public:
     FD3D12Heap(FD3D12Device* InDevice, ID3D12Heap* InHeap);
     ~FD3D12Heap();
 
-    void SetDebugName(const FString& Name);
+    void SetDebugName(const String& Name);
 
     void DeferredRelease();
 

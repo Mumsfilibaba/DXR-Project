@@ -104,7 +104,7 @@ public:
     {
     }
 
-    FCursorEvent(EInputEventType InEventType, const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys)
+    FCursorEvent(EInputEventType InEventType, const IntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys)
         : FInputEvent(InEventType, InModifierKeys)
         , Key(Keys::Unknown)
         , CursorPosition(InCursorPosition)
@@ -151,7 +151,7 @@ public:
         return Key;
     }
 
-    const FIntVector2& GetCursorPos() const
+    const IntVector2& GetCursorPos() const
     {
         return CursorPosition;
     }
@@ -172,12 +172,11 @@ public:
     }
 
 private:
-    FKey        Key;
-    FIntVector2 CursorPosition;
-    float       ScrollDelta;
-    
-    bool bIsScrollVertical : 1;
-    bool bIsDown           : 1;
+    FKey       Key;
+    IntVector2 CursorPosition;
+    float      ScrollDelta;
+    bool       bIsScrollVertical : 1;
+    bool       bIsDown : 1;
 };
 
 class FKeyEvent : public FInputEvent
@@ -251,7 +250,6 @@ public:
 private:
     FKey   Key;
     uint32 Character;
-    
     uint32 GamepadIndex : 30;
     uint32 bIsRepeat    : 1;
     uint32 bIsDown      : 1;

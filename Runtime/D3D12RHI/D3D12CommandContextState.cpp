@@ -970,7 +970,7 @@ void FD3D12CommandContextState::SetStencilRef(uint32 InStencilRef)
         FD3D12GraphicsPipelineStateRHI* BoundPSO = GraphicsState.PipelineState.Get();
         if (BoundPSO != nullptr && IsEnumFlagSet(BoundPSO->GetShaderFlags(), ED3D12ShaderFlags::RequiresStencilRef))
         {
-            FString PSOName;
+            String PSOName;
             BoundPSO->GetDebugName(PSOName);
 
             if (PSOName.IsEmpty())

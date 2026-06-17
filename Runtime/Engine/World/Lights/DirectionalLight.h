@@ -13,7 +13,7 @@ public:
     ~FDirectionalLight();
 
     // Rotation in Radians
-    void SetRotation(const FVector3& InRotation);
+    void SetRotation(const Vector3& InRotation);
 
     // Lambda for determine the splits of the shadow-cascades
     void SetCascadeSplitLambda(float InCascadeSplitLambda);
@@ -24,12 +24,12 @@ public:
     // Area of the light-source
     void SetLightArea(float InLightArea);
 
-    FORCEINLINE const FVector3& GetDirectionVector() const
+    FORCEINLINE const Vector3& GetDirectionVector() const
     {
         return Direction;
     }
 
-    FORCEINLINE const FVector3& GetRotation() const
+    FORCEINLINE const Vector3& GetRotation() const
     {
         return Rotation;
     }
@@ -50,9 +50,9 @@ public:
     }
 
 private:
-    FVector3 Direction;
-    FVector3 Rotation;
-    float    ShadowPositionOffset;
-    float    CascadeSplitLambda;
-    float    LightArea;
+    Vector3 Direction;
+    Vector3 Rotation;
+    float   ShadowPositionOffset;
+    float   CascadeSplitLambda;
+    float   LightArea;
 };

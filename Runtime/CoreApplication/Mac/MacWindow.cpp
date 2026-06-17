@@ -166,7 +166,7 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         }
         
         // Store the cached position and initialization params
-        Position    = FIntVector2(static_cast<int32>(WindowRect.origin.x), static_cast<int32>(WindowRect.origin.y));
+        Position    = IntVector2(static_cast<int32>(WindowRect.origin.x), static_cast<int32>(WindowRect.origin.y));
         StyleParams = InInitializer.Style;
         bResult     = true;
         
@@ -384,7 +384,7 @@ void FMacWindow::SetWindowFocus()
     }, NSDefaultRunLoopMode, true);
 }
 
-void FMacWindow::SetTitle(const FString& InTitle)
+void FMacWindow::SetTitle(const String& InTitle)
 {
     SCOPED_AUTORELEASE_POOL();
 
@@ -401,7 +401,7 @@ void FMacWindow::SetTitle(const FString& InTitle)
     }, NSDefaultRunLoopMode, true);
 }
 
-void FMacWindow::GetTitle(FString& OutTitle) const
+void FMacWindow::GetTitle(String& OutTitle) const
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -414,7 +414,7 @@ void FMacWindow::GetTitle(FString& OutTitle) const
         }
     }, NSDefaultRunLoopMode, true);
 
-    OutTitle = FString(Title);
+    OutTitle = String(Title);
 }
 
 void FMacWindow::SetWindowPos(int32 x, int32 y)
@@ -433,7 +433,7 @@ void FMacWindow::SetWindowPos(int32 x, int32 y)
             [CocoaWindow setFrameOrigin:WindowFrame.origin];
             
             // Cache the position
-            Position = FIntVector2(static_cast<int32>(WindowFrame.origin.x), static_cast<int32>(WindowFrame.origin.y));
+            Position = IntVector2(static_cast<int32>(WindowFrame.origin.x), static_cast<int32>(WindowFrame.origin.y));
         }
         
         FPlatformApplicationMisc::PumpMessages(true);
@@ -480,7 +480,7 @@ void FMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
             [CocoaWindow setFrame: NewFrame display: YES];
             
             // Cache the position
-            Position = FIntVector2(static_cast<int32>(NewFrame.origin.x), static_cast<int32>(NewFrame.origin.y));
+            Position = IntVector2(static_cast<int32>(NewFrame.origin.x), static_cast<int32>(NewFrame.origin.y));
         }
         
         FPlatformApplicationMisc::PumpMessages(true);

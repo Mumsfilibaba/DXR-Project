@@ -65,9 +65,9 @@ public:
 
     FORCEINLINE CHAR_T* AllocateString(const CHAR_T* String) noexcept
     {
-        const int32 Length = FCString::Strlen(String);
+        const int32 Length = CString::Strlen(String);
         CHAR_T* NewString = reinterpret_cast<CHAR_T*>(Allocate(sizeof(CHAR_T) * Length, alignof(CHAR_T)));
-        return FCString::Strcpy(NewString, String);
+        return CString::Strcpy(NewString, String);
     }
 
     template<typename CommandType, typename... ArgTypes>
@@ -149,7 +149,7 @@ public:
         EmplaceCommand<FRHICommandQueryTimestamp>(Query);
     }
 
-    FORCEINLINE void ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor) noexcept
+    FORCEINLINE void ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const Vector4& ClearColor) noexcept
     {
         EmplaceCommand<FRHICommandClearRenderTargetView>(RenderTargetView, ClearColor);
     }
@@ -159,7 +159,7 @@ public:
         EmplaceCommand<FRHICommandClearDepthStencilView>(DepthStencilView, Depth, Stencil);
     }
 
-    FORCEINLINE void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) noexcept
+    FORCEINLINE void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const Vector4& ClearColor) noexcept
     {
         EmplaceCommand<FRHICommandClearUnorderedAccessViewFloat>(UnorderedAccessView, ClearColor);
     }
@@ -189,7 +189,7 @@ public:
         EmplaceCommand<FRHICommandSetScissorRect>(ScissorRegion);
     }
 
-    FORCEINLINE void SetBlendFactor(const FVector4& Color) noexcept
+    FORCEINLINE void SetBlendFactor(const Vector4& Color) noexcept
     {
         EmplaceCommand<FRHICommandSetBlendFactor>(Color);
     }
@@ -437,9 +437,9 @@ public:
         EmplaceCommand<FRHICommandResizeSwapChain>(SwapChain, Width, Height, Format, ColorSpace);
     }
 
-    FORCEINLINE void PushEvent(const FStringView& Name) noexcept
+    FORCEINLINE void PushEvent(const StringView& Name) noexcept
     {
-        FStringView AllocatedName = AllocateString(*Name);
+        StringView AllocatedName = AllocateString(*Name);
         EmplaceCommand<FRHICommandPushEvent>(AllocatedName);
     }
 
@@ -454,17 +454,17 @@ public:
     }
 
 private:
-    FMemoryStack        Memory;
-    FRHICommand**       CommandPointer;
-    FRHICommand*        FirstCommand;
-    IRHICommandContext* CommandContext;
-    FGenericPlatformEvent*      FinishedEvent;
-    uint32              NumCommands;
+    FMemoryStack           Memory;
+    FRHICommand**          CommandPointer;
+    FRHICommand*           FirstCommand;
+    IRHICommandContext*    CommandContext;
+    FGenericPlatformEvent* FinishedEvent;
+    uint32                 NumCommands;
 };
 
 struct FRHIScopedEvent
 {
-    FORCEINLINE FRHIScopedEvent(FRHICommandList& InCommandList, const FStringView& Name)
+    FORCEINLINE FRHIScopedEvent(FRHICommandList& InCommandList, const StringView& Name)
         : CommandList(InCommandList)
     {
         CommandList.PushEvent(Name);
@@ -503,11 +503,11 @@ public:
     void WaitForOutstandingTasks();
 
 private:
-    FGenericPlatformThread*     Thread;
-    FRHIThreadTaskQueue Tasks;
-    FAtomicInt64        NumSubmittedTasks;
-    FAtomicInt64        NumCompletedTasks;
-    bool                bIsRunning;
+    FGenericPlatformThread* Thread;
+    FRHIThreadTaskQueue     Tasks;
+    AtomicInt64             NumSubmittedTasks;
+    AtomicInt64             NumCompletedTasks;
+    bool                    bIsRunning;
 };
 
 class RHI_API FRHICommandListExecutor : FNonCopyable

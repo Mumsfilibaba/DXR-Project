@@ -188,14 +188,14 @@ public:
      * 
      * @param Position The new absolute screen coordinates for the cursor.
      */
-    void SetCursorPosition(const FIntVector2& Position);
+    void SetCursorPosition(const IntVector2& Position);
 
     /**
      * @brief Retrieves the global cursor position in screen coordinates.
      * 
      * @return The current (X, Y) position of the system cursor.
      */
-    FIntVector2 GetCursorPosition() const;
+    IntVector2 GetCursorPosition() const;
 
     /**
      * @brief Sets the cursor appearance (pointer, hand, crosshair, etc.).
@@ -327,7 +327,7 @@ public:
      * @param Point A 2D screen coordinate (X, Y).
      * @param OutCursorPath A widget path object to populate.
      */
-    void FindWidgetsUnderCursor(const FIntVector2& Point, FWidgetPath& OutCursorPath);
+    void FindWidgetsUnderCursor(const IntVector2& Point, FWidgetPath& OutCursorPath);
 
     /**
      * @brief Retrieves cached monitor/display information (e.g., resolution, DPI).

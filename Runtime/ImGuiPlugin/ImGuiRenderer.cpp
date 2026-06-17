@@ -597,7 +597,7 @@ void FImGuiRenderer::SetupRenderState(FRHICommandList& CommandList, ImDrawData* 
     CommandList.SetIndexBuffer(Buffers.IndexBuffer.Get(), IndexFormat);
     CommandList.SetVertexBuffers(MakeArrayView(&Buffers.VertexBuffer, 1), 0);
     
-    CommandList.SetBlendFactor(FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
+    CommandList.SetBlendFactor(Vector4{ 0.0f, 0.0f, 0.0f, 0.0f });
 
     CommandList.SetShaderConstants(PShader.Get(), &VertexConstantBuffer, 16);
 }

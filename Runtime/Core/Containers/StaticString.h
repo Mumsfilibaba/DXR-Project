@@ -7,8 +7,8 @@
 template<typename InCharType, int32 NUM_CHARS = STANDARD_STATIC_STRING_LENGTH>
 class TStaticString
 {
-    typedef TCharTraits<InCharType> FCharTraitsType;
-    typedef TCString<InCharType>    FCStringType;
+    typedef TCharTraits<InCharType> CharTraitsType;
+    typedef TCString<InCharType>    CStringType;
 
 public:
     typedef int32      SizeType;
@@ -56,7 +56,7 @@ public:
      */
     FORCEINLINE TStaticString(const CharType* InString)
     {
-        InitializeByCopy(InString, FCStringType::Strlen(InString));
+        InitializeByCopy(InString, CStringType::Strlen(InString));
     }
 
     /**
@@ -125,7 +125,7 @@ public:
      */
     FORCEINLINE void Append(const CharType* InString)
     {
-        Append(InString, FCStringType::Strlen(InString));
+        Append(InString, CStringType::Strlen(InString));
     }
 
     /**
@@ -148,7 +148,7 @@ public:
         if (InString && InLength > 0)
         {
             const SizeType MinLength = Math::Min<SizeType>((NUM_CHARS - 1) - StringLength, InLength);
-            FCStringType::Strncpy(CharData + StringLength, InString, MinLength);
+            CStringType::Strncpy(CharData + StringLength, InString, MinLength);
             StringLength = StringLength + MinLength;
             CharData[StringLength] = 0;
         }
@@ -179,7 +179,7 @@ public:
             // Copy as much as we can, always keeping the output buffer null-terminated.
             const SizeType Remaining = StringLength - Position;
             const SizeType CopySize  = Math::Min(BufferSize - 1, Remaining);
-            FCStringType::Strncpy(Buffer, CharData + Position, CopySize);
+            CStringType::Strncpy(Buffer, CharData + Position, CopySize);
             Buffer[CopySize] = 0;
         }
     }
@@ -192,7 +192,7 @@ public:
     template<typename... ArgTypes>
     FORCEINLINE void Format(const CharType* InFormat, ArgTypes&&... Args)
     {
-        const SizeType NumWritten = FCStringType::Snprintf(CharData, NUM_CHARS - 1, InFormat, Forward<ArgTypes>(Args)...);
+        const SizeType NumWritten = CStringType::Snprintf(CharData, NUM_CHARS - 1, InFormat, Forward<ArgTypes>(Args)...);
         if (NumWritten < NUM_CHARS)
         {
             StringLength = NumWritten;
@@ -220,7 +220,7 @@ public:
             return;
         }
 
-        const SizeType NumWritten = FCStringType::Snprintf(CharData + StringLength, RemainingCapacity, InFormat, Forward<ArgTypes>(Args)...);
+        const SizeType NumWritten = CStringType::Snprintf(CharData + StringLength, RemainingCapacity, InFormat, Forward<ArgTypes>(Args)...);
         const SizeType NewLength  = StringLength + NumWritten;
         if (NewLength < NUM_CHARS)
         {
@@ -304,7 +304,7 @@ public:
     FORCEINLINE void TrimStartInline()
     {
         SizeType Index = 0;
-        while (FCharTraitsType::IsWhitespace(CharData[Index]))
+        while (CharTraitsType::IsWhitespace(CharData[Index]))
         {
             Index++;
         }
@@ -312,7 +312,7 @@ public:
         if (Index)
         {
             StringLength = Math::Clamp<SizeType>(StringLength - Index, 0, NUM_CHARS - 1);
-            FCStringType::Strnmove(CharData, CharData + Index, StringLength);
+            CStringType::Strnmove(CharData, CharData + Index, StringLength);
         }
     }
 
@@ -332,7 +332,7 @@ public:
      */
     FORCEINLINE void TrimEndInline()
     {
-        while (StringLength > 0 && FCharTraitsType::IsWhitespace(CharData[StringLength - 1]))
+        while (StringLength > 0 && CharTraitsType::IsWhitespace(CharData[StringLength - 1]))
         {
             StringLength--;
         }
@@ -399,11 +399,11 @@ public:
     {
         if (CaseType == EStringCaseType::NoCase)
         {
-            return static_cast<SizeType>(FCStringType::Stricmp(CharData, InString));
+            return static_cast<SizeType>(CStringType::Stricmp(CharData, InString));
         }
         else
         {
-            return static_cast<SizeType>(FCStringType::Strcmp(CharData, InString));
+            return static_cast<SizeType>(CStringType::Strcmp(CharData, InString));
         }
     }
 
@@ -419,11 +419,11 @@ public:
         const SizeType MinLength = Math::Min(Length(), InLength);
         if (CaseType == EStringCaseType::NoCase)
         {
-            return static_cast<SizeType>(FCStringType::Strnicmp(CharData, InString, MinLength));
+            return static_cast<SizeType>(CStringType::Strnicmp(CharData, InString, MinLength));
         }
         else
         {
-            return static_cast<SizeType>(FCStringType::Strncmp(CharData, InString, MinLength));
+            return static_cast<SizeType>(CStringType::Strncmp(CharData, InString, MinLength));
         }
     }
 
@@ -447,7 +447,7 @@ public:
      */
     NODISCARD FORCEINLINE bool Equals(const CharType* InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const
     {
-        return Equals(InString, FCStringType::Strlen(InString), CaseType);
+        return Equals(InString, CStringType::Strlen(InString), CaseType);
     }
 
     /**
@@ -466,11 +466,11 @@ public:
 
         if (CaseType == EStringCaseType::CaseSensitive)
         {
-            return FCStringType::Strncmp(CharData, InString, StringLength) == 0;
+            return CStringType::Strncmp(CharData, InString, StringLength) == 0;
         }
         else if (CaseType == EStringCaseType::NoCase)
         {
-            return FCStringType::Strnicmp(CharData, InString, StringLength) == 0;
+            return CStringType::Strnicmp(CharData, InString, StringLength) == 0;
         }
         else
         {
@@ -505,12 +505,12 @@ public:
 
         if (CaseType == EStringCaseType::CaseSensitive)
         {
-            const CharType* RESTRICT Result = FCStringType::Strstr(CharData + Index, InString);
+            const CharType* RESTRICT Result = CStringType::Strstr(CharData + Index, InString);
             return Result ? static_cast<SizeType>(static_cast<PTR_INT>(Result - CharData)) : InvalidIndex;
         }
         else if (CaseType == EStringCaseType::NoCase)
         {
-            const CharType* RESTRICT Result = FCStringType::Stristr(CharData + Index, InString);
+            const CharType* RESTRICT Result = CStringType::Stristr(CharData + Index, InString);
             return Result ? static_cast<SizeType>(static_cast<PTR_INT>(Result - CharData)) : InvalidIndex;
         }
 
@@ -650,7 +650,7 @@ public:
             Position = StringLength;
         }
 
-        const SizeType SearchLength = FCStringType::Strlen(InString);
+        const SizeType SearchLength = CStringType::Strlen(InString);
         if (SearchLength == 0)
         {
             return Position;
@@ -666,11 +666,11 @@ public:
             bool bMatch = false;
             if (CaseType == EStringCaseType::CaseSensitive)
             {
-                bMatch = FCStringType::Strncmp(CharData + Index, InString, SearchLength) == 0;
+                bMatch = CStringType::Strncmp(CharData + Index, InString, SearchLength) == 0;
             }
             else if (CaseType == EStringCaseType::NoCase)
             {
-                bMatch = FCStringType::Strnicmp(CharData + Index, InString, SearchLength) == 0;
+                bMatch = CStringType::Strnicmp(CharData + Index, InString, SearchLength) == 0;
             }
 
             if (bMatch)
@@ -875,11 +875,11 @@ public:
         {
             if (SearchType == EStringCaseType::CaseSensitive)
             {
-                return FCStringType::Strncmp(CharData, InString, InLength) == 0;
+                return CStringType::Strncmp(CharData, InString, InLength) == 0;
             }
             else if (SearchType == EStringCaseType::NoCase)
             {
-                return FCStringType::Strnicmp(CharData, InString, InLength) == 0;
+                return CStringType::Strnicmp(CharData, InString, InLength) == 0;
             }
         }
 
@@ -899,7 +899,7 @@ public:
             return false;
         }
 
-        return StartsWith(InString, FCStringType::Strlen(InString), SearchType);
+        return StartsWith(InString, CStringType::Strlen(InString), SearchType);
     }
 
     /**
@@ -933,11 +933,11 @@ public:
             const CharType* StringData = CharData + (StringLength - InLength);
             if (SearchType == EStringCaseType::CaseSensitive)
             {
-                return FCStringType::Strncmp(StringData, InString, InLength) == 0;
+                return CStringType::Strncmp(StringData, InString, InLength) == 0;
             }
             else if (SearchType == EStringCaseType::NoCase)
             {
-                return FCStringType::Strnicmp(StringData, InString, InLength) == 0;
+                return CStringType::Strnicmp(StringData, InString, InLength) == 0;
             }
         }
 
@@ -957,7 +957,7 @@ public:
             return false;
         }
 
-        return EndsWith(InString, FCStringType::Strlen(InString), SearchType);
+        return EndsWith(InString, CStringType::Strlen(InString), SearchType);
     }
 
     /**
@@ -985,7 +985,7 @@ public:
         CharType* Src = Dst + Count;
 
         const SizeType Num = StringLength - (Position + Count);
-        FCStringType::Strmove(Dst, Src, Num);
+        CStringType::Strmove(Dst, Src, Num);
     }
 
     /**
@@ -995,7 +995,7 @@ public:
      */
     FORCEINLINE void Insert(const CharType* InString, SizeType Position)
     {
-        Insert(InString, FCStringType::Strlen(InString), Position);
+        Insert(InString, CStringType::Strlen(InString), Position);
     }
 
     /**
@@ -1023,8 +1023,8 @@ public:
         CharType* Dst = Src + InLength;
 
         const SizeType MoveSize = StringLength - Position;
-        FCStringType::Strnmove(Dst, Src, MoveSize);
-        FCStringType::Strncpy(Src, InString, InLength);
+        CStringType::Strnmove(Dst, Src, MoveSize);
+        CStringType::Strncpy(Src, InString, InLength);
 
         StringLength += InLength;
         CharData[StringLength] = 0;
@@ -1044,7 +1044,7 @@ public:
         CharType* Dst = Src + 1;
 
         const SizeType MoveSize = StringLength - Position;
-        FCStringType::Strmove(Dst, Src, MoveSize);
+        CStringType::Strmove(Dst, Src, MoveSize);
 
         // Insert character
         *Src = Char;
@@ -1058,7 +1058,7 @@ public:
      */
     FORCEINLINE void Replace(const CharType* InString, SizeType Position)
     {
-        Replace(InString, FCStringType::Strlen(InString), Position);
+        Replace(InString, CStringType::Strlen(InString), Position);
     }
 
     /**
@@ -1083,7 +1083,7 @@ public:
         CHECK(Position < StringLength && (Position + InLength) < StringLength);      
         if (InString)
         {
-            FCStringType::Strncpy(CharData + Position, InString, InLength);
+            CStringType::Strncpy(CharData + Position, InString, InLength);
         }
     }
 
@@ -1567,7 +1567,7 @@ private:
     {
         if (InString && InLength)
         {
-            FCStringType::Strncpy(CharData, InString, InLength);
+            CStringType::Strncpy(CharData, InString, InLength);
             StringLength = InLength;
             CharData[StringLength] = 0;
         }
@@ -1575,7 +1575,7 @@ private:
 
     FORCEINLINE void MoveFrom(TStaticString&& Other)
     {
-        FCStringType::Strncpy(CharData, Other.CharData, Other.StringLength);
+        CStringType::Strncpy(CharData, Other.CharData, Other.StringLength);
         Other.CharData[0] = 0;
 
         StringLength = Other.StringLength;
@@ -1588,10 +1588,10 @@ private:
 };
 
 template<int32 NUM_CHARS = STANDARD_STATIC_STRING_LENGTH>
-using FStaticString = TStaticString<CHAR, NUM_CHARS>;
+using StaticString = TStaticString<CHAR, NUM_CHARS>;
 
 template<int32 NUM_CHARS = STANDARD_STATIC_STRING_LENGTH>
-using FStaticStringWide = TStaticString<WIDECHAR, NUM_CHARS>;
+using StaticStringWide = TStaticString<WIDECHAR, NUM_CHARS>;
 
 template<typename CharType, int32 NUM_CHARS>
 struct TIsTStringType<TStaticString<CharType, NUM_CHARS>>
@@ -1600,18 +1600,18 @@ struct TIsTStringType<TStaticString<CharType, NUM_CHARS>>
 };
 
 template<int32 NUM_CHARS>
-NODISCARD inline FStaticStringWide<NUM_CHARS> CharToWide(const FStaticString<NUM_CHARS>& CharString)
+NODISCARD inline StaticStringWide<NUM_CHARS> CharToWide(const StaticString<NUM_CHARS>& CharString)
 {
-    FStaticStringWide<NUM_CHARS> NewString;
+    StaticStringWide<NUM_CHARS> NewString;
     NewString.Resize(CharString.Length());
     FPlatformString::Mbstowcs(NewString.Data(), CharString.Data(), CharString.Length());
     return NewString;
 }
 
 template<int32 NUM_CHARS>
-NODISCARD inline FStaticString<NUM_CHARS> WideToChar(const FStaticStringWide<NUM_CHARS>& WideString)
+NODISCARD inline StaticString<NUM_CHARS> WideToChar(const StaticStringWide<NUM_CHARS>& WideString)
 {
-    FStaticString<NUM_CHARS> NewString;
+    StaticString<NUM_CHARS> NewString;
     NewString.Resize(WideString.Length());
     FPlatformString::Wcstombs(NewString.Data(), WideString.Data(), WideString.Length());
     return NewString;

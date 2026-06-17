@@ -79,21 +79,20 @@ namespace ModelFormat
     struct FMaterialInfo
     {
         // Texture-index reference a TextureHeader in the file
-        int32    DiffuseTextureIdx;
-        int32    NormalTextureIdx;
-        int32    SpecularTextureIdx;
-        int32    EmissiveTextureIdx;
-        int32    AmbientOcclusionTextureIdx;
-        int32    RoughnessTextureIdx;
-        int32    MetallicTextureIdx;
-        int32    AlphaMaskTextureIdx;
-
+        int32   DiffuseTextureIdx;
+        int32   NormalTextureIdx;
+        int32   SpecularTextureIdx;
+        int32   EmissiveTextureIdx;
+        int32   AmbientOcclusionTextureIdx;
+        int32   RoughnessTextureIdx;
+        int32   MetallicTextureIdx;
+        int32   AlphaMaskTextureIdx;
         // Pure MaterialData
-        FVector3 Diffuse;
-        float    AO;
-        float    Roughness;
-        float    Metallic;
-        int32    MaterialFlags;
+        Vector3 Diffuse;
+        float   AO;
+        float   Roughness;
+        float   Metallic;
+        int32   MaterialFlags;
     };
 }
 
@@ -101,13 +100,13 @@ struct ENGINE_API FModelImporter : public IModelImporter
 {
     virtual ~FModelImporter() = default;
 
-    virtual bool ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags, FModelCreateInfo& OutCreateInfo) override final;
-    virtual bool MatchExtenstion(const FStringView& FileName) override final;
+    virtual bool ImportFromFile(const StringView& Filename, EMeshImportFlags Flags, FModelCreateInfo& OutCreateInfo) override final;
+    virtual bool MatchExtenstion(const StringView& FileName) override final;
 };
 
 struct ENGINE_API FModelSerializer
 {
     virtual ~FModelSerializer() = default;
 
-    bool Serialize(const FString& Filename, const FModelCreateInfo& ModelInfo);
+    bool Serialize(const String& Filename, const FModelCreateInfo& ModelInfo);
 };

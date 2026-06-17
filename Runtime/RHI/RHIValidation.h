@@ -61,7 +61,7 @@ public:
     virtual void* GetRHINativeComputeCommandQueue() override final;
     virtual void* GetRHINativeCopyCommandQueue()    override final;
 
-    virtual FString GetAdapterName() const override final;
+    virtual String GetAdapterName() const override final;
 
     virtual ERHIType GetRHIType() const override final;
 
@@ -85,15 +85,15 @@ public:
     virtual void BeginQuery(FRHIQuery* Query) override final;
     virtual void EndQuery(FRHIQuery* Query) override final;
     virtual void QueryTimestamp(FRHIQuery* Query) override final;
-    virtual void ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor) override final;
+    virtual void ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const Vector4& ClearColor) override final;
     virtual void ClearDepthStencilView(FRHIDepthStencilView* DepthStencilView, const float Depth, const uint8 Stencil) override final;
-    virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) override final;
+    virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const Vector4& ClearColor) override final;
     virtual void ClearUnorderedAccessViewUint(FRHIUnorderedAccessView* UnorderedAccessView, const uint32 Values[4]) override final;
     virtual void BeginRenderPass(const FRHIBeginRenderPassDesc& BeginRenderPassDesc) override final;
     virtual void EndRenderPass() override final;
     virtual void SetViewport(const FViewportRegion& ViewportRegion) override final;
     virtual void SetScissorRect(const FScissorRegion& ScissorRegion) override final;
-    virtual void SetBlendFactor(const FVector4& Color) override final;
+    virtual void SetBlendFactor(const Vector4& Color) override final;
     virtual void SetStencilRef(uint32 StencilRef) override final;
     virtual void SetDepthBias(float DepthBias, float DepthBiasClamp, float SlopeScaledDepthBias) override final;
     virtual void SetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot) override final;
@@ -142,7 +142,7 @@ public:
     virtual void ClearState() override final;
     virtual void Flush()      override final;
 
-    virtual void PushEvent(const FStringView& Name) override final;
+    virtual void PushEvent(const StringView& Name) override final;
     virtual void PopEvent()                         override final;
 
     virtual void* GetRHINativeCommandList() override final;

@@ -57,7 +57,7 @@ bool FWindowWidget::IsWindow() const
     return true;
 }
 
-void FWindowWidget::FindChildrenContainingPoint(const FIntVector2& Point, FWidgetPath& OutParentWidgets)
+void FWindowWidget::FindChildrenContainingPoint(const IntVector2& Point, FWidgetPath& OutParentWidgets)
 {
     FRectangle WindowBounds = GetContentRectangle();
     if (WindowBounds.EncapsulatesPoint(Point))
@@ -115,7 +115,7 @@ void FWindowWidget::OnWindowFocusChanged(bool)
     OnWindowFocusChangedDelegate.ExecuteIfBound();
 }
 
-void FWindowWidget::OnWindowMoved(const FIntVector2& InPosition)
+void FWindowWidget::OnWindowMoved(const IntVector2& InPosition)
 {
     if (CachedPosition != InPosition)
     {
@@ -125,7 +125,7 @@ void FWindowWidget::OnWindowMoved(const FIntVector2& InPosition)
     }
 }
 
-void FWindowWidget::OnWindowResize(const FIntVector2& InSize)
+void FWindowWidget::OnWindowResize(const IntVector2& InSize)
 {
     if (CachedSize != InSize)
     {
@@ -135,7 +135,7 @@ void FWindowWidget::OnWindowResize(const FIntVector2& InSize)
     }
 }
 
-void FWindowWidget::MoveTo(const FIntVector2& InPosition)
+void FWindowWidget::MoveTo(const IntVector2& InPosition)
 {
     if (CachedPosition != InPosition)
     {
@@ -150,7 +150,7 @@ void FWindowWidget::MoveTo(const FIntVector2& InPosition)
     }
 }
 
-void FWindowWidget::Resize(const FIntVector2& InSize)
+void FWindowWidget::Resize(const IntVector2& InSize)
 {
     if (CachedSize != InSize)
     {
@@ -166,22 +166,22 @@ void FWindowWidget::Resize(const FIntVector2& InSize)
     }
 }
 
-void FWindowWidget::SetSize(const FIntVector2& InSize)
+void FWindowWidget::SetSize(const IntVector2& InSize)
 {
     CachedSize = InSize;
 }
 
-void FWindowWidget::SetPosition(const FIntVector2& InPosition)
+void FWindowWidget::SetPosition(const IntVector2& InPosition)
 {
     CachedPosition = InPosition;
 }
 
-FIntVector2 FWindowWidget::GetSize() const
+IntVector2 FWindowWidget::GetSize() const
 {
     return CachedSize;
 }
 
-FIntVector2 FWindowWidget::GetPosition() const
+IntVector2 FWindowWidget::GetPosition() const
 {
     return CachedPosition;
 }
@@ -283,7 +283,7 @@ float FWindowWidget::GetWindowDPIScale() const
     return 1.0f;
 }
 
-void FWindowWidget::SetTitle(const FString& InTitle)
+void FWindowWidget::SetTitle(const String& InTitle)
 {
     Title = InTitle;
 
@@ -314,7 +314,7 @@ void FWindowWidget::SetPlatformWindow(const TSharedRef<FGenericWindow>& InPlatfo
         FWindowShape WindowShape;
         PlatformWindow->GetWindowShape(WindowShape);
 
-        CachedSize     = FIntVector2(WindowShape.Width, WindowShape.Height);
+        CachedSize     = IntVector2(WindowShape.Width, WindowShape.Height);
         CachedPosition = WindowShape.Position;
         
         PlatformWindow->GetTitle(Title);

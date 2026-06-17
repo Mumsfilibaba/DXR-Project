@@ -130,8 +130,8 @@ public:
     // FRHIPipelineState Interface
     virtual void* GetRHINativeState() const override final;
     
-    virtual void SetDebugName(const FString& InName)       override final;
-    virtual void GetDebugName(FString& OutDebugName) const override final;
+    virtual void SetDebugName(const String& InName)       override final;
+    virtual void GetDebugName(String& OutDebugName) const override final;
 
     bool Initialize();
 
@@ -176,8 +176,8 @@ public:
     // FRHIPipelineState Interface
     virtual void* GetRHINativeState() const override final;
 
-    virtual void SetDebugName(const FString& InName)       override final;
-    virtual void GetDebugName(FString& OutDebugName) const override final;
+    virtual void SetDebugName(const String& InName)       override final;
+    virtual void GetDebugName(String& OutDebugName) const override final;
 };
 
 class FMetalRayTracingPipelineStateRHI : public FRHIRayTracingPipelineState
@@ -189,8 +189,8 @@ public:
     // FRHIPipelineState Interface
     virtual void* GetRHINativeState() const override final;
 
-    virtual void SetDebugName(const FString& InName)       override final;
-    virtual void GetDebugName(FString& OutDebugName) const override final;
+    virtual void SetDebugName(const String& InName)       override final;
+    virtual void GetDebugName(String& OutDebugName) const override final;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

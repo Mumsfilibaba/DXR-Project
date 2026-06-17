@@ -639,7 +639,7 @@ void FVulkanCommandContext::QueryTimestamp(FRHIQuery* Query)
     PendingQueries.Add(VulkanQuery);
 }
 
-void FVulkanCommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor)
+void FVulkanCommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const Vector4& ClearColor)
 {
     FVulkanRenderTargetViewRHI* VulkanRenderTargetView = FVulkanDeviceRHI::ResourceCast(RenderTargetView);
     CHECK(VulkanRenderTargetView != nullptr);
@@ -748,7 +748,7 @@ void FVulkanCommandContext::ClearDepthStencilView(FRHIDepthStencilView* DepthSte
     }
 }
 
-void FVulkanCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor)
+void FVulkanCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const Vector4& ClearColor)
 {
     FVulkanUnorderedAccessViewRHI* VulkanUnorderedAccessView = FVulkanDeviceRHI::ResourceCast(UnorderedAccessView);
     CHECK(VulkanUnorderedAccessView != nullptr);
@@ -895,7 +895,7 @@ void FVulkanCommandContext::SetScissorRect(const FScissorRegion& ScissorRegion)
     ContextState.SetScissorRects(&ScissorRect, 1);
 }
 
-void FVulkanCommandContext::SetBlendFactor(const FVector4& Color)
+void FVulkanCommandContext::SetBlendFactor(const Vector4& Color)
 {
     ContextState.SetBlendFactor(Color.XYZW);
 }
@@ -2482,7 +2482,7 @@ void FVulkanCommandContext::Flush()
     Queue.WaitForCompletion();
 }
 
-void FVulkanCommandContext::PushEvent(const FStringView& Name)
+void FVulkanCommandContext::PushEvent(const StringView& Name)
 {
     EventStack.Emplace(Name.Data());
 

@@ -143,7 +143,7 @@ void FEditorEngine::Tick(float DeltaTime)
         }
     }
 
-    const FIntVector2 Size = ViewportWidget->GetViewportSize();
+    const IntVector2 Size = ViewportWidget->GetViewportSize();
     if (ViewportImageSize != Size)
     {
         CreateViewportRenderTarget();
@@ -210,7 +210,7 @@ void FEditorEngine::ClearSelection()
 
 bool FEditorEngine::CreateViewportRenderTarget()
 {
-    const FIntVector2 Size = ViewportWidget->GetViewportSize();
+    const IntVector2 Size = ViewportWidget->GetViewportSize();
     if (Size.X == 0 || Size.Y == 0)
     {
         return ViewportImage != nullptr;

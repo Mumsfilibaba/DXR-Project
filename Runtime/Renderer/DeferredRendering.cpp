@@ -200,7 +200,7 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FFrameResour
         }
         else
         {
-            const FString DebugName = FString::CreateFormatted("PrePass PipelineState%s %d",
+            const String DebugName = String::CreateFormatted("PrePass PipelineState%s %d",
                 bBindless ? " [Bindless]" : "",
                 MaterialFlags);
             NewPipelineInstance.PipelineState->SetDebugName(DebugName);
@@ -518,7 +518,7 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FFrameRe
         }
         else
         {
-            const FString DebugName = FString::CreateFormatted("BasePass PipelineState%s %d",
+            const String DebugName = String::CreateFormatted("BasePass PipelineState%s %d",
                 bBindless ? " [Bindless]" : "",
                 MaterialFlags);
             NewPipelineInstance.PipelineState->SetDebugName(DebugName);
@@ -1264,9 +1264,9 @@ void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& Fr
 
     struct FReductionConstants
     {
-        FMatrix4 CamProjection;
-        float    NearPlane;
-        float    FarPlane;
+        Matrix4 CamProjection;
+        float   NearPlane;
+        float   FarPlane;
     } ReductionConstants;
 
     FCamera* Camera = Scene->Camera;

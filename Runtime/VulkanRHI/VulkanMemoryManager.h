@@ -127,16 +127,16 @@ public:
     FORCEINLINE void SetBuddyAllocationData(const FVulkanBuddyAllocatorAllocationData& InData) { AllocationData.Buddy = InData; }
 
 private:
-    VkDeviceMemory           DeviceMemory;
-    VkDeviceSize             MemoryOffset;
-    VkBuffer                 BackingBuffer;
-    VkDeviceSize             BufferOffset;
-    VkDeviceAddress          DeviceAddress;
-    void*                    MappedBaseAddress;
-    VkDeviceSize             Size;
-    EVulkanAllocatorType     AllocatorType;
+    VkDeviceMemory            DeviceMemory;
+    VkDeviceSize              MemoryOffset;
+    VkBuffer                  BackingBuffer;
+    VkDeviceSize              BufferOffset;
+    VkDeviceAddress           DeviceAddress;
+    void*                     MappedBaseAddress;
+    VkDeviceSize              Size;
+    EVulkanAllocatorType      AllocatorType;
     EVulkanMemoryLocationType LocationType;
-    FVulkanResource*         Owner;
+    FVulkanResource*          Owner;
 
     union FAllocationData
     {
@@ -214,8 +214,8 @@ private:
     VkDeviceAddress          BaseDeviceAddress;
     uint8*                   MappedBaseAddress;
     TArray<TArray<uint64>>   FreeOffsets;
-    FAtomicInt64             TrackedUsedBytes;
-    FAtomicInt64             TrackedWastedBytes;
+    AtomicInt64              TrackedUsedBytes;
+    AtomicInt64              TrackedWastedBytes;
     mutable FCriticalSection AllocatorCS;
 };
 
@@ -362,8 +362,8 @@ private:
     VkMemoryAllocateFlags             AllocateFlags;
     VkBufferUsageFlags                BufferUsageFlags;
     uint64                            FragmentedBytes;
-    FAtomicInt64                      TrackedAllocatedBytes;
-    FAtomicInt64                      TrackedUsedBytes;
+    AtomicInt64                       TrackedAllocatedBytes;
+    AtomicInt64                       TrackedUsedBytes;
     TArray<FVulkanPoolAllocatorPage*> Pages;
     mutable FCriticalSection          PagesCS;
 };
@@ -714,5 +714,5 @@ private:
     FVulkanLinearAllocator     StagingBufferAllocator;
     uint32                     UploadMemoryTypeIndex;
     uint32                     MaxAllocationCount;
-    FAtomicInt64               ActiveAllocationCount;
+    AtomicInt64                ActiveAllocationCount;
 };

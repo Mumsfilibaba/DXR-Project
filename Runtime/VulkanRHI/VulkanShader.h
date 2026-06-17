@@ -137,7 +137,7 @@ struct FVulkanShaderInfo
         uint8                    BindingIndex;
         uint16                   OriginalBindingIndex;
     #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
-        FString                  DebugName;
+        String                   DebugName;
     #endif
     };
     
@@ -187,7 +187,7 @@ public:
     TSharedRef<FVulkanShaderModule> GetOrCreateShaderModule(class FVulkanPipelineLayout* Layout);
     bool PatchShaderBindings(FSpirvArray& OutSpirv, uint32 DescriptorSetIndex);
     bool StripGoogleSpirvRequirements(const FSpirvArray& InWords, FSpirvArray& OutWords);
-    bool ValidateNoGoogleSpirvRequirements(const FSpirvArray& Words, FString* OutErrorMessage = nullptr);
+    bool ValidateNoGoogleSpirvRequirements(const FSpirvArray& Words, String* OutErrorMessage = nullptr);
 
     EShaderVisibility::Type GetShaderVisibility() const
     {
@@ -199,7 +199,7 @@ public:
         return ShaderInfo;
     }
 
-    const FString& GetEntryPointName() const
+    const String& GetEntryPointName() const
     {
         return EntryPointName;
     }
@@ -210,7 +210,7 @@ protected:
     FSpirvArray                                   SpirvCode;
     FVulkanShaderInfo                             ShaderInfo;
     EShaderVisibility::Type                       ShaderVisibility;
-    FString                                       EntryPointName;
+    String                                        EntryPointName;
     TMap<uint32, TSharedRef<FVulkanShaderModule>> ShaderModules;
     FCriticalSection                              ShaderModulesCS;
 };
@@ -280,13 +280,13 @@ public:
     FVulkanRayTracingShader(FVulkanDevice* InDevice);
     virtual ~FVulkanRayTracingShader();
 
-    const FString& GetIdentifier() const
+    const String& GetIdentifier() const
     {
         return Identifier;
     }
 
 protected:
-    FString Identifier;
+    String Identifier;
 };
 
 class FVulkanRayGenShaderRHI : public FRHIRayGenShader, public FVulkanRayTracingShader

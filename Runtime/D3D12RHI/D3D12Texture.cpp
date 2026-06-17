@@ -765,7 +765,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
     return true;
 }
 
-void FD3D12TextureRHI::SetDebugName(const FString& InName)
+void FD3D12TextureRHI::SetDebugName(const String& InName)
 {
     if (ResourceStorage.GetResource())
     {
@@ -773,7 +773,7 @@ void FD3D12TextureRHI::SetDebugName(const FString& InName)
     }
 }
 
-void FD3D12TextureRHI::GetDebugName(FString& OutDebugName) const
+void FD3D12TextureRHI::GetDebugName(String& OutDebugName) const
 {
     if (ResourceStorage.GetResource())
     {

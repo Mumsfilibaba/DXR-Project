@@ -6,26 +6,26 @@
 #define LOG_ERROR_CRITICAL(...) \
     do \
     { \
-        FOutputDeviceLogger::Get()->Log(ELogSeverity::Error, FString::CreateFormatted(__VA_ARGS__)); \
+        FOutputDeviceLogger::Get()->Log(ELogSeverity::Error, String::CreateFormatted(__VA_ARGS__)); \
         DEBUG_BREAK(); \
     } while (false)
 
 #define LOG_ERROR(...) \
     do \
     { \
-        FOutputDeviceLogger::Get()->Log(ELogSeverity::Error, FString::CreateFormatted(__VA_ARGS__)); \
+        FOutputDeviceLogger::Get()->Log(ELogSeverity::Error, String::CreateFormatted(__VA_ARGS__)); \
     } while (false)
 
 #define LOG_WARNING(...) \
     do \
     { \
-        FOutputDeviceLogger::Get()->Log(ELogSeverity::Warning, FString::CreateFormatted(__VA_ARGS__)); \
+        FOutputDeviceLogger::Get()->Log(ELogSeverity::Warning, String::CreateFormatted(__VA_ARGS__)); \
     } while (false)
 
 #define LOG_INFO(...) \
     do \
     { \
-        FOutputDeviceLogger::Get()->Log(ELogSeverity::Info, FString::CreateFormatted(__VA_ARGS__)); \
+        FOutputDeviceLogger::Get()->Log(ELogSeverity::Info, String::CreateFormatted(__VA_ARGS__)); \
     } while (false)
 
 class CORE_API FOutputDeviceLogger : public IOutputDevice
@@ -37,10 +37,10 @@ public:
 
 public:
     /** @brief Log a simple message to all output devices */
-    virtual void Log(const FString& Message) override final;
+    virtual void Log(const String& Message) override final;
 
     /** @brief Log a message with severity to all output devices */
-    virtual void Log(ELogSeverity Severity, const FString& Message) override final;
+    virtual void Log(ELogSeverity Severity, const String& Message) override final;
 
     /** @brief Flush all output devices */
     virtual void Flush() override final;

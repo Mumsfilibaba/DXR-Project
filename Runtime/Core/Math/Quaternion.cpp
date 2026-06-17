@@ -1,3 +1,3 @@
 #include "Core/Math/Quaternion.h"
 
-const FQuaternion FQuaternion::Identity = FQuaternion(0.0f, 0.0f, 0.0f, 1.0f);
+const Quaternion Quaternion::Identity = Quaternion(0.0f, 0.0f, 0.0f, 1.0f);

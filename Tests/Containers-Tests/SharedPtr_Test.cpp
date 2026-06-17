@@ -75,7 +75,7 @@ public:
     }
 
 private:
-    mutable FAtomicInt32 StrongReferences = 1;
+    mutable AtomicInt32 StrongReferences = 1;
 };
 
 

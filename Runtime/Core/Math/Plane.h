@@ -3,7 +3,7 @@
 #include "Core/Math/Vector3.h"
 #include "Core/Math/Vector4.h"
 
-class VECTOR_ALIGN FPlane
+class VECTOR_ALIGN Plane
 {
 public:
 
@@ -11,7 +11,7 @@ public:
      * @brief Default constructor
      * Initializes a plane with default values.
      */
-    FORCEINLINE FPlane() noexcept
+    FORCEINLINE Plane() noexcept
         : X(0.0f)
         , Y(1.0f)
         , Z(0.0f)
@@ -20,10 +20,10 @@ public:
     }
 
     /**
-     * @brief Constructor that creates a plane from a FVector4.
-     * @param Plane A FVector4 representing the plane.
+     * @brief Constructor that creates a plane from a Vector4.
+     * @param Plane A Vector4 representing the plane.
      */
-    FORCEINLINE explicit FPlane(const FVector4& Plane) noexcept
+    FORCEINLINE explicit Plane(const Vector4& Plane) noexcept
         : X(Plane.X)
         , Y(Plane.Y)
         , Z(Plane.Z)
@@ -36,7 +36,7 @@ public:
      * @param Normal The normal vector of the plane.
      * @param InW The offset from the origin along the normal.
      */
-    FORCEINLINE explicit FPlane(const FVector3& Normal, float InW) noexcept
+    FORCEINLINE explicit Plane(const Vector3& Normal, float InW) noexcept
         : X(Normal.X)
         , Y(Normal.Y)
         , Z(Normal.Z)
@@ -51,7 +51,7 @@ public:
      * @param InZ The z-component of the plane.
      * @param InW The w-component of the plane.
      */
-    FORCEINLINE explicit FPlane(float InX, float InY, float InZ, float InW) noexcept
+    FORCEINLINE explicit Plane(float InX, float InY, float InZ, float InW) noexcept
         : X(InX)
         , Y(InY)
         , Z(InZ)
@@ -65,7 +65,7 @@ public:
      * @param Threshold The threshold for comparison. Defaults to Math::Constants::CmpThreshold.
      * @return True if planes are approximately equal, false otherwise.
      */
-    FORCEINLINE bool IsEqual(const FPlane& Other, float Threshold = Math::Constants::CmpThreshold) const noexcept
+    FORCEINLINE bool IsEqual(const Plane& Other, float Threshold = Math::Constants::CmpThreshold) const noexcept
     {
     #if !USE_VECTOR_MATH
         Threshold = Math::Abs(Threshold);
@@ -128,9 +128,9 @@ public:
     /**
      * @brief Flips the plane by negating its normal vector and offset.
      */
-    FORCEINLINE FPlane Flip() noexcept
+    FORCEINLINE Plane Flip() noexcept
     {
-        return FPlane(-X, -Y, -Z, -W);
+        return Plane(-X, -Y, -Z, -W);
     }
 
     /**
@@ -139,7 +139,7 @@ public:
     FORCEINLINE void Normalize() noexcept
     {
     #if !USE_VECTOR_MATH
-        FVector3 Normal = GetNormal();
+        Vector3 Normal = GetNormal();
 
         const float RcpLength = 1.0f / Normal.GetLength();
         X *= RcpLength;
@@ -160,10 +160,10 @@ public:
      * @param Point The point to compute the dot product with.
      * @return The resulting dot product value.
      */
-    FORCEINLINE float DotProductCoord(const FVector3& Point) const noexcept
+    FORCEINLINE float DotProductCoord(const Vector3& Point) const noexcept
     {
     #if !USE_VECTOR_MATH
-        FVector3 Normal = GetNormal();
+        Vector3 Normal = GetNormal();
         return Normal.DotProduct(Point) + W;
     #else
         FFloat128 Normal_128     = FVectorMath::VectorSet(X, Y, Z, 0.0f);
@@ -179,10 +179,10 @@ public:
      * @param Normal The normal vector of the plane (does not need to be normalized).
      * @return A plane with normalized normal and W = -Normal.DotProduct(Point).
      */
-    static FORCEINLINE FPlane FromPointAndNormal(const FVector3& Point, const FVector3& Normal) noexcept
+    static FORCEINLINE Plane FromPointAndNormal(const Vector3& Point, const Vector3& Normal) noexcept
     {
-        const FVector3 NormalizedNormal = Normal.GetNormalized();
-        return FPlane(NormalizedNormal, -NormalizedNormal.DotProduct(Point));
+        const Vector3 NormalizedNormal = Normal.GetNormalized();
+        return Plane(NormalizedNormal, -NormalizedNormal.DotProduct(Point));
     }
 
     /**
@@ -192,7 +192,7 @@ public:
      * @param Direction The ray direction (does not need to be normalized).
      * @return The parameter t, or -1.0f if the ray is parallel to the plane (no intersection).
      */
-    FORCEINLINE float IntersectRay(const FVector3& Origin, const FVector3& Direction) const noexcept
+    FORCEINLINE float IntersectRay(const Vector3& Origin, const Vector3& Direction) const noexcept
     {
         const float Denominator = GetNormal().DotProduct(Direction);
         if (Math::Abs(Denominator) < Math::Constants::Epsilon)
@@ -205,20 +205,20 @@ public:
 
     /**
      * @brief Retrieves the normal vector of the plane.
-     * @return A FVector3 representing the plane's normal vector.
+     * @return A Vector3 representing the plane's normal vector.
      */
-    FORCEINLINE FVector3 GetNormal() const noexcept
+    FORCEINLINE Vector3 GetNormal() const noexcept
     {
-        return FVector3(X, Y, Z);
+        return Vector3(X, Y, Z);
     }
 
     /**
      * @brief Retrieves the origin point of the plane.
-     * @return A FVector3 representing the plane's origin.
+     * @return A Vector3 representing the plane's origin.
      */
-    FORCEINLINE FVector3 GetOrigin() const noexcept
+    FORCEINLINE Vector3 GetOrigin() const noexcept
     {
-        return FVector3(X * W, Y * W, Z * W);
+        return Vector3(X * W, Y * W, Z * W);
     }
 
 public:
@@ -228,7 +228,7 @@ public:
      * @param Other The plane to compare with.
      * @return True if planes are equal, false otherwise.
      */
-    FORCEINLINE bool operator==(const FPlane& Other) const noexcept
+    FORCEINLINE bool operator==(const Plane& Other) const noexcept
     {
         return IsEqual(Other);
     }
@@ -238,7 +238,7 @@ public:
      * @param Other The plane to compare with.
      * @return True if planes are not equal, false otherwise.
      */
-    FORCEINLINE bool operator!=(const FPlane& Other) const noexcept
+    FORCEINLINE bool operator!=(const Plane& Other) const noexcept
     {
         return !IsEqual(Other);
     }
@@ -266,4 +266,4 @@ public:
     };
 };
 
-MARK_AS_REALLOCATABLE(FPlane);
+MARK_AS_REALLOCATABLE(Plane);

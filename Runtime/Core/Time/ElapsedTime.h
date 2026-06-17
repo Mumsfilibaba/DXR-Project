@@ -30,6 +30,6 @@ public:
 private:
     FTimespan TotalTime;
     FTimespan DeltaTime;
-    uint64    LastTime  = 0;
-    uint64    Frequency = 0;
+    uint64    LastTime;
+    uint64    Frequency;
 };

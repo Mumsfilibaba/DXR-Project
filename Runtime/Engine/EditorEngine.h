@@ -60,11 +60,10 @@ private:
 
     bool CreateViewportRenderTarget();
 
-    FActor*      SelectedActor;
-    FLight*      SelectedLight;
-    FCamera*     SelectedCamera;
-    FLightProbe* SelectedLightProbe;
-
+    FActor*                                   SelectedActor;
+    FLight*                                   SelectedLight;
+    FCamera*                                  SelectedCamera;
+    FLightProbe*                              SelectedLightProbe;
     // Editor Interface
     TSharedPtr<FEditorDockspaceWidget>        DockspaceWidget;
     TSharedPtr<FEditorFooterWidget>           FooterWidget;
@@ -80,5 +79,5 @@ private:
     TSharedPtr<FEditorRHIInfoWidget>          RHIInfoWidget;
     TSharedPtr<FEditorStatsWidget>            StatsWidget;
     FRHITextureRef                            ViewportImage;
-    FIntVector2                               ViewportImageSize;
+    IntVector2                                ViewportImageSize;
 };

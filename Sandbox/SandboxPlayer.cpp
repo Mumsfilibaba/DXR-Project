@@ -111,7 +111,7 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     const FAxisState LeftThumbX = GetPlayerInput()->GetAnalogState(EAnalogSourceName::LeftThumbX);
     const FAxisState LeftThumbY = GetPlayerInput()->GetAnalogState(EAnalogSourceName::LeftThumbY);
 
-    FVector3 CameraAcceleration;
+    Vector3 CameraAcceleration;
     if (Math::Abs(LeftThumbY.Value) > Deadzone)
     {
         CameraAcceleration.Z = Acceleration * LeftThumbY.Value;
@@ -152,7 +152,7 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     CameraSpeed = CameraSpeed * DampingFactor;
     CameraSpeed = CameraSpeed + (CameraAcceleration * DeltaTime);
 
-    const FVector3 Speed = CameraSpeed * DeltaTime;
+    const Vector3 Speed = CameraSpeed * DeltaTime;
     Camera->Move(Speed.X, Speed.Y, Speed.Z);
 
     // When the camera has rotated and moved we can update the view matrix

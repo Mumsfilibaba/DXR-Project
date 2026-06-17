@@ -70,7 +70,7 @@ bool FD3D12Queue::Initialize()
         }
     }
 
-    const FStringWide WideName = CharToWide(FString::CreateFormatted("CommandQueue %s", ToString(QueueType)));
+    const StringWide WideName = CharToWide(String::CreateFormatted("CommandQueue %s", ToString(QueueType)));
     NewCommandQueue->SetName(*WideName);
 
     D3D12_INFO("[FD3D12Device]: Created CommandQueue '%s'", ToString(QueueType));
@@ -82,7 +82,7 @@ bool FD3D12Queue::Initialize()
         return false;
     }
 
-    SubmissionFence->SetDebugName(FString::CreateFormatted("SubmissionFence_%s", ToString(QueueType)));
+    SubmissionFence->SetDebugName(String::CreateFormatted("SubmissionFence_%s", ToString(QueueType)));
     return true;
 }
 

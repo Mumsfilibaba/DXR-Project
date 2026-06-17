@@ -23,14 +23,14 @@ inline uint64 GetHashForType(FFloat64 Value)
     return GetHashForType(Value.Encoded);
 }
 
-inline uint64 GetHashForType(const FInt16Vector2& Value)
+inline uint64 GetHashForType(const Int16Vector2& Value)
 {
     uint64 Hash = GetHashForType(Value.X);
     HashCombine<int16>(Hash, Value.Y);
     return Hash;
 }
 
-inline uint64 GetHashForType(const FInt16Vector3& Value)
+inline uint64 GetHashForType(const Int16Vector3& Value)
 {
     uint64 Hash = GetHashForType(Value.X);
     HashCombine<int16>(Hash, Value.Y);
@@ -38,7 +38,7 @@ inline uint64 GetHashForType(const FInt16Vector3& Value)
     return Hash;
 }
 
-inline uint64 GetHashForType(const FInt16Vector4& Value)
+inline uint64 GetHashForType(const Int16Vector4& Value)
 {
     uint64 Hash = GetHashForType(Value.X);
     HashCombine<int16>(Hash, Value.Y);
@@ -47,14 +47,14 @@ inline uint64 GetHashForType(const FInt16Vector4& Value)
     return Hash;
 }
 
-inline uint64 GetHashForType(const FIntVector2& Value)
+inline uint64 GetHashForType(const IntVector2& Value)
 {
     uint64 Hash = GetHashForType(Value.X);
     HashCombine<int32>(Hash, Value.Y);
     return Hash;
 }
 
-inline uint64 GetHashForType(const FIntVector3& Value)
+inline uint64 GetHashForType(const IntVector3& Value)
 {
     uint64 Hash = GetHashForType(Value.X);
     HashCombine<int32>(Hash, Value.Y);
@@ -62,7 +62,7 @@ inline uint64 GetHashForType(const FIntVector3& Value)
     return Hash;
 }
 
-inline uint64 GetHashForType(const FIntVector4& Value)
+inline uint64 GetHashForType(const IntVector4& Value)
 {
     uint64 Hash = GetHashForType(Value.X);
     HashCombine<int32>(Hash, Value.Y);
@@ -71,14 +71,14 @@ inline uint64 GetHashForType(const FIntVector4& Value)
     return Hash;
 }
 
-inline uint64 GetHashForType(const FVector2& Value)
+inline uint64 GetHashForType(const Vector2& Value)
 {
     uint64 Hash = GetHashForType(Value.X);
     HashCombine<float>(Hash, Value.Y);
     return Hash;
 }
 
-inline uint64 GetHashForType(const FVector3& Value)
+inline uint64 GetHashForType(const Vector3& Value)
 {
     uint64 Hash = GetHashForType(Value.X);
     HashCombine<float>(Hash, Value.Y);
@@ -86,7 +86,7 @@ inline uint64 GetHashForType(const FVector3& Value)
     return Hash;
 }
 
-inline uint64 GetHashForType(const FVector4& Value)
+inline uint64 GetHashForType(const Vector4& Value)
 {
     uint64 Hash = GetHashForType(Value.X);
     HashCombine<float>(Hash, Value.Y);

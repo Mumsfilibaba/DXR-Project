@@ -645,7 +645,7 @@ bool FD3D12SwapChainRHI::RetrieveBackBuffers()
         BackBufferResource->DisableDeferredRelease();
 
         BackBuffers[Index].Texture->SetResource(BackBufferResource.Get());
-        BackBuffers[Index].Texture->GetResource()->SetDebugName(FString::CreateFormatted("BackBuffer[%u]", Index));
+        BackBuffers[Index].Texture->GetResource()->SetDebugName(String::CreateFormatted("BackBuffer[%u]", Index));
     }
 
     BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();

@@ -42,5 +42,5 @@ public:
     }
 
 protected:
-    mutable FAtomicInt32 StrongReferences;
+    mutable AtomicInt32 StrongReferences;
 };

@@ -48,10 +48,10 @@ private:
     bool CompressSinglePass128(FRHICommandList& CommandList, const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture,
         FRHIComputeShader* Shader, FRHIComputePipelineState* PSO, EFormat OutputFormat);
 
-    bool CompileAndCreateShaderPSO(const FString& ShaderPath, const FRHIStaticSamplerInfo& StaticSampler,
+    bool CompileAndCreateShaderPSO(const String& ShaderPath, const FRHIStaticSamplerInfo& StaticSampler,
         FRHIComputeShaderRef& OutShader, FRHIComputePipelineStateRef& OutPSO);
 
-    bool CompileAndCreateShaderPSOEx(const FString& ShaderPath, const FString& EntryPoint,
+    bool CompileAndCreateShaderPSOEx(const String& ShaderPath, const String& EntryPoint,
         const TArrayView<FShaderDefine>& Defines, FRHIComputeShaderRef& OutShader, FRHIComputePipelineStateRef& OutPSO);
 
     // BC1-BC5 (single-pass)

@@ -8,6 +8,7 @@
   - [Templates](#templates)
   - [Classes](#classes)
   - [Structs](#structs)
+  - [Core Value Types](#core-value-types)
   - [Static-Only Classes](#static-only-classes)
   - [Interfaces](#interfaces)
   - [Enums](#enums)
@@ -107,7 +108,7 @@ private:
   // Protected functions and variable here ...
 };
 ```
-* Classes use 'F' as prefix
+* Classes use 'F' as prefix, with the exception of core value types (see [Core Value Types](#core-value-types))
 
 * Note the order of the access modifers
 
@@ -136,7 +137,7 @@ class CORE_API MyClass
 ### Structs
 * Structs should be used when all members are public
 
-* Structs use 'F' as prefix, for example
+* Structs use 'F' as prefix (except core value types, see [Core Value Types](#core-value-types)), for example
 
 ```
 struct FMyStruct
@@ -145,6 +146,25 @@ struct FMyStruct
   int32 y;
 };
 ```
+
+### Core Value Types
+* Core string, math, and atomic *value* types are used **without** the `F` prefix and keep their bare name. These are the small, ubiquitous value types in `Runtime/Core/` (strings, vectors, matrices, quaternion, plane, atomic aliases), used so pervasively that the prefix only adds noise.
+
+```
+// Correct - core value types are prefix-free
+String   Name;
+Vector3  Position;
+Matrix4  ViewProjection;
+AtomicInt32 RefCount;
+```
+
+* Examples: `String`, `StringView`, `CString`, `Vector2/3/4`, `IntVector2/3/4`, `Matrix2/3/4`, `Matrix3x4`, `Quaternion`, `Plane`, `AtomicBool`, `AtomicInt32`.
+
+* Non-core gameplay/engine structs and classes still use the `F` prefix (for example `FCameraConstants`, `FViewportRegion`, `FRectangle`). The color types `FColor`/`FFloatColor`/`FFloatColor16` also keep the `F` prefix. Only the core value types listed above drop it.
+
+* The platform-abstraction / SIMD layer keeps the `F` prefix (for example `FPlatformString`, `FPlatformMath`, `FGenericPlatformVectorMath`, `FInt128`, `FFloat128`).
+
+* Underlying templates keep their `T` prefix (`TString`, `TStringView`, `TStaticString`, `TCString`, `TAtomicInt`, `TAtomicEnum`); only the `F` aliases over them lose the prefix. Interfaces keep `I` and enums keep `E` as usual.
 
 ### Static-Only Classes
 * A struct/class that contains only static members (no instance state, no virtuals) acts as a namespace. Drop the `F` prefix and give it a plural or semantic name that reads like a namespace at the call site.

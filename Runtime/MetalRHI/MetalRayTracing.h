@@ -17,11 +17,11 @@ public:
     virtual void* GetRHIBaseInterface()        override final;
     virtual void* GetRHINativeResource() const override final;
 
-    virtual void SetDebugName(const FString& InName)       override final;
-    virtual void GetDebugName(FString& OutDebugName) const override final;
+    virtual void SetDebugName(const String& InName)       override final;
+    virtual void GetDebugName(String& OutDebugName) const override final;
 
 private:
-    FString DebugName;
+    String DebugName;
 };
 
 class FMetalSceneAccelerationStructureRHI : public FRHISceneAccelerationStructure
@@ -37,12 +37,12 @@ public:
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final;
     virtual FRHIDescriptorHandle    GetBindlessHandle()     const override final;
 
-    virtual void SetDebugName(const FString& InName)       override final;
-    virtual void GetDebugName(FString& OutDebugName) const override final;
+    virtual void SetDebugName(const String& InName)       override final;
+    virtual void GetDebugName(String& OutDebugName) const override final;
 
 private:
     TSharedRef<FMetalShaderResourceViewRHI> View;
-    FString                                 DebugName;
+    String                                  DebugName;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

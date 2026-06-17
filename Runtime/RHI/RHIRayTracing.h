@@ -21,8 +21,8 @@ typedef TSharedRef<FRHIGeometryAccelerationStructure> FRHIGeometryAccelerationSt
 
 struct FRayPayload
 {
-    FVector3 Color;
-    uint32   CurrentDepth;
+    Vector3 Color;
+    uint32  CurrentDepth;
 };
 
 struct FRayIntersectionAttributes
@@ -57,7 +57,7 @@ struct FRHIGeometryAccelerationStructureInstance
     FRHIGeometryAccelerationStructureInstance() noexcept = default;
 
     FRHIGeometryAccelerationStructureInstance(FRHIGeometryAccelerationStructure* InGeometry, uint32 InInstanceIndex, uint32 InHitGroupIndex,
-        ERayTracingInstanceFlags InFlags, uint32 InMask, const FMatrix3x4& InTransform) noexcept
+        ERayTracingInstanceFlags InFlags, uint32 InMask, const Matrix3x4& InTransform) noexcept
         : Geometry(InGeometry)
         , InstanceIndex(InInstanceIndex)
         , HitGroupIndex(InHitGroupIndex)
@@ -69,12 +69,12 @@ struct FRHIGeometryAccelerationStructureInstance
 
     bool operator==(const FRHIGeometryAccelerationStructureInstance& Other) const noexcept = default;
 
-    FRHIGeometryAccelerationStructure*  Geometry      = nullptr;
-    uint32                              InstanceIndex = 0;
-    uint32                              HitGroupIndex = 0;
-    ERayTracingInstanceFlags            Flags         = ERayTracingInstanceFlags::None;
-    uint32                              Mask          = RHI_DEFAULT_GEOMETRY_INSTANCE_MASK;
-    FMatrix3x4                          Transform     = { };
+    FRHIGeometryAccelerationStructure* Geometry      = nullptr;
+    uint32                             InstanceIndex = 0;
+    uint32                             HitGroupIndex = 0;
+    ERayTracingInstanceFlags           Flags         = ERayTracingInstanceFlags::None;
+    uint32                             Mask          = RHI_DEFAULT_GEOMETRY_INSTANCE_MASK;
+    Matrix3x4                          Transform     = { };
 };
 
 struct FRHIGeometryAccelerationStructureDesc
@@ -142,8 +142,8 @@ public:
     /** @return D3D12: ID3D12Resource* (result heap). Vulkan: VkAccelerationStructureKHR. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeResource() const = 0;
 
-    virtual void SetDebugName(const FString& InName) = 0;
-    virtual void GetDebugName(FString& OutDebugName) const = 0;
+    virtual void SetDebugName(const String& InName) = 0;
+    virtual void GetDebugName(String& OutDebugName) const = 0;
 
     EAccelerationStructureBuildFlags GetFlags() const 
     {
@@ -173,8 +173,8 @@ public:
     virtual FRHIShaderResourceView* GetShaderResourceView() const = 0;
     virtual FRHIDescriptorHandle    GetBindlessHandle()     const = 0;
 
-    virtual void SetDebugName(const FString& InName) = 0;
-    virtual void GetDebugName(FString& OutDebugName) const = 0;
+    virtual void SetDebugName(const String& InName) = 0;
+    virtual void GetDebugName(String& OutDebugName) const = 0;
 
     EAccelerationStructureBuildFlags GetFlags() const 
     {
@@ -225,8 +225,7 @@ struct FRayTracingShaderResources
         SamplerStates.Clear();
     }
 
-    FString Identifier;
-
+    String                           Identifier;
     TArray<FRHIBuffer*>              ConstantBuffers;
     TArray<FRHIShaderResourceView*>  ShaderResourceViews;
     TArray<FRHIUnorderedAccessView*> UnorderedAccessViews;

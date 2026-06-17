@@ -207,9 +207,9 @@ void FVulkanCoreFeatures::BuildEnableChain(VkPhysicalDeviceFeatures2& Root)
 // Helpers
 // -------------------------------------------------------------------------------------------
 
-static FString GetQueuePropertiesAsString(const VkQueueFamilyProperties& Properties)
+static String GetQueuePropertiesAsString(const VkQueueFamilyProperties& Properties)
 {
-    FString PropertyString = "QueueCount=" + TTypeToString<int32>::ToString(Properties.queueCount) + ", QueueBits=(";
+    String PropertyString = "QueueCount=" + TTypeToString<int32>::ToString(Properties.queueCount) + ", QueueBits=(";
     if (Properties.queueFlags & VK_QUEUE_GRAPHICS_BIT)
     {
         PropertyString += "GRAPHICS | ";
@@ -354,7 +354,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCr
             bool bFound = false;
             for (const VkExtensionProperties& Property : AvailableDeviceExtensions)
             {
-                if (FCString::Strcmp(Extension->GetExtensionName(), Property.extensionName) == 0)
+                if (CString::Strcmp(Extension->GetExtensionName(), Property.extensionName) == 0)
                 {
                     bFound = true;
                     break;
@@ -507,7 +507,7 @@ TOptional<FVulkanQueueFamilyIndices> FVulkanPhysicalDevice::GetQueueFamilyIndice
         uint32 Index = 0;
         for (const VkQueueFamilyProperties& Properties : QueueFamilies)
         {
-            const FString PropertyString = GetQueuePropertiesAsString(Properties);
+            const String PropertyString = GetQueuePropertiesAsString(Properties);
             VULKAN_INFO("Queue[%d]: %s", Index, *PropertyString);
             Index++;
         }
@@ -709,7 +709,7 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
 
         for (const VkExtensionProperties& Property : AvailableDeviceExtensions)
         {
-            if (FCString::Strcmp(Extension->GetExtensionName(), Property.extensionName) == 0)
+            if (CString::Strcmp(Extension->GetExtensionName(), Property.extensionName) == 0)
             {
                 Extension->SetEnabled(true);
                 EnabledExtensionNames.Add(Property.extensionName);
@@ -914,7 +914,7 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
             bool bFound = false;
             for (const VkLayerProperties& LayerProp : AvailableDeviceLayers)
             {
-                if (FCString::Strcmp(RequiredLayer, LayerProp.layerName) == 0)
+                if (CString::Strcmp(RequiredLayer, LayerProp.layerName) == 0)
                 {
                     EnabledDeviceLayerNames.Add(LayerProp.layerName);
                     LayerNames.Emplace(LayerProp.layerName);
@@ -934,7 +934,7 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
         {
             for (const VkLayerProperties& LayerProp : AvailableDeviceLayers)
             {
-                if (FCString::Strcmp(OptionalLayer, LayerProp.layerName) == 0)
+                if (CString::Strcmp(OptionalLayer, LayerProp.layerName) == 0)
                 {
                     EnabledDeviceLayerNames.Add(LayerProp.layerName);
                     LayerNames.Emplace(LayerProp.layerName);
@@ -1363,7 +1363,7 @@ bool FVulkanDevice::FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreate
     }
     else
     {
-        const FString DebugName = FString::CreateFormatted("Sampler %d", SamplerMap.Size());
+        const String DebugName = String::CreateFormatted("Sampler %d", SamplerMap.Size());
         VulkanSetObjectName(GetVkDevice(), DebugName.Data(), OutSampler, VK_OBJECT_TYPE_SAMPLER);
     }
 

@@ -63,8 +63,8 @@ struct TCharTraits
     }
 };
 
-typedef TCharTraits<CHAR>     FCharTraits;
-typedef TCharTraits<WIDECHAR> FCharTraitsWide;
+typedef TCharTraits<CHAR>     CharTraits;
+typedef TCharTraits<WIDECHAR> CharTraitsWide;
 
 template<typename InCharType>
 struct TCString
@@ -243,8 +243,8 @@ FORCEINLINE const WIDECHAR* TCString<WIDECHAR>::Empty() noexcept
     return L"";
 }
 
-typedef TCString<CHAR>     FCString;
-typedef TCString<WIDECHAR> FCStringWide;
+typedef TCString<CHAR>     CString;
+typedef TCString<WIDECHAR> CStringWide;
 
 #define DECLARE_FORMAT_STRING_SPECIFIER(Type, Specifier) \
 template<> \

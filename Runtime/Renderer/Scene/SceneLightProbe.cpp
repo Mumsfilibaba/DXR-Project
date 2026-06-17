@@ -33,11 +33,11 @@ void FSceneLightProbe::Tick()
         bBoxProjection = LightProbe->GetBoxProjection();
 
         // Update box
-        FVector3 BoxOffset = LightProbe->GetBoxOffset();
-        FVector3 BoxExtent = LightProbe->GetBoxExtents();
+        Vector3 BoxOffset = LightProbe->GetBoxOffset();
+        Vector3 BoxExtent = LightProbe->GetBoxExtents();
 
-        FVector3 BoxMidPoint   = Origin + BoxOffset;
-        FVector3 BoxExtentHalf = BoxExtent * 0.5f;
+        Vector3 BoxMidPoint   = Origin + BoxOffset;
+        Vector3 BoxExtentHalf = BoxExtent * 0.5f;
 
         BoxMin = BoxMidPoint - BoxExtentHalf;
         BoxMax = BoxMidPoint + BoxExtentHalf;

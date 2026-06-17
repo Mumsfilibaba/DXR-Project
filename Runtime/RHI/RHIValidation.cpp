@@ -1168,7 +1168,7 @@ bool FRHIValidation::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideo
     return RealRHI->QueryVideoMemoryInfo(MemoryType, OutMemoryInfo);
 }
 
-FString FRHIValidation::GetAdapterName() const
+String FRHIValidation::GetAdapterName() const
 {
     return RealRHI->GetAdapterName();
 }
@@ -1274,7 +1274,7 @@ void FRHIValidationCommandContext::QueryTimestamp(FRHIQuery* Query)
     RealContext->QueryTimestamp(Query);
 }
 
-void FRHIValidationCommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor)
+void FRHIValidationCommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const Vector4& ClearColor)
 {
     if (!RenderTargetView)
     {
@@ -1296,7 +1296,7 @@ void FRHIValidationCommandContext::ClearDepthStencilView(FRHIDepthStencilView* D
     RealContext->ClearDepthStencilView(DepthStencilView, Depth, Stencil);
 }
 
-void FRHIValidationCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor)
+void FRHIValidationCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const Vector4& ClearColor)
 {
     if (!UnorderedAccessView)
     {
@@ -1361,7 +1361,7 @@ void FRHIValidationCommandContext::SetScissorRect(const FScissorRegion& ScissorR
     RealContext->SetScissorRect(ScissorRegion);
 }
 
-void FRHIValidationCommandContext::SetBlendFactor(const FVector4& Color)
+void FRHIValidationCommandContext::SetBlendFactor(const Vector4& Color)
 {
     RealContext->SetBlendFactor(Color);
 }
@@ -1915,7 +1915,7 @@ void FRHIValidationCommandContext::Flush()
     RealContext->Flush();
 }
 
-void FRHIValidationCommandContext::PushEvent(const FStringView& Name)
+void FRHIValidationCommandContext::PushEvent(const StringView& Name)
 {
     RealContext->PushEvent(Name);
 }

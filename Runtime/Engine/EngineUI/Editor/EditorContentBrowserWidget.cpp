@@ -95,7 +95,7 @@ static void SplitNameAndExtension(const CHAR* InName, TStaticArray<CHAR, 256>& O
         return;
     }
 
-    const int32 Len = static_cast<int32>(FCString::Strlen(InName));
+    const int32 Len = static_cast<int32>(CString::Strlen(InName));
     if (Len <= 0)
     {
         return;
@@ -113,20 +113,20 @@ static void SplitNameAndExtension(const CHAR* InName, TStaticArray<CHAR, 256>& O
 
     if (DotIndex <= 0)
     {
-        FCString::Strncpy(OutBase.Data(), InName, static_cast<int32>(OutBase.Size()));
+        CString::Strncpy(OutBase.Data(), InName, static_cast<int32>(OutBase.Size()));
         return;
     }
 
     const int32 BaseLen     = DotIndex;
     const int32 BaseCopyLen = Math::Min(BaseLen, static_cast<int32>(OutBase.Size()) - 1);
 
-    FCString::Strncpy(OutBase.Data(), InName, BaseCopyLen);
+    CString::Strncpy(OutBase.Data(), InName, BaseCopyLen);
     OutBase[BaseCopyLen] = 0;
 
     const int32 ExtLen     = Len - DotIndex;
     const int32 ExtCopyLen = Math::Min(ExtLen, static_cast<int32>(OutExtension.Size()) - 1);
     
-    FCString::Strncpy(OutExtension.Data(), InName + DotIndex, ExtCopyLen);
+    CString::Strncpy(OutExtension.Data(), InName + DotIndex, ExtCopyLen);
     OutExtension[ExtCopyLen] = 0;
 }
 
@@ -252,14 +252,14 @@ FEditorContentBrowserWidget::~FEditorContentBrowserWidget()
     }
 }
 
-static FString AppendNameToPath(const FString& BasePath, const FString& Name)
+static String AppendNameToPath(const String& BasePath, const String& Name)
 {
     if (Name.IsEmpty())
     {
         return BasePath;
     }
 
-    FString Result = BasePath;
+    String Result = BasePath;
     if (!Result.IsEmpty())
     {
         Result += "/";
@@ -694,7 +694,7 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
                 const FileInfo* Folder = GetFolderFromPath(SelectedFolderPath);
                 if (Folder)
                 {
-                    const FString FolderName = Folder->Name.IsEmpty() ? "this folder" : Folder->Name;
+                    const String FolderName = Folder->Name.IsEmpty() ? "this folder" : Folder->Name;
                     DeleteConfirmContext.Message.Format("Are you sure you want to delete \"%s\" and its contents?", *FolderName);
                 }
                 else
@@ -868,7 +868,7 @@ void FEditorContentBrowserWidget::DrawContentPanel()
                 if (Folder->FolderContents.IsValidIndex(Index))
                 {
                     const FileInfo& Item = Folder->FolderContents[Index];
-                    const FString ItemName = Item.Name.IsEmpty() ? "this item" : Item.Name;
+                    const String ItemName = Item.Name.IsEmpty() ? "this item" : Item.Name;
                     DeleteConfirmContext.Message.Format("Are you sure you want to delete \"%s\"?", *ItemName);
                 }
                 else
@@ -957,11 +957,11 @@ void FEditorContentBrowserWidget::DrawItemTooltip(const FileInfo& InItem)
     TStaticArray<CHAR, 768> FullPathBuf{};
     if (FolderPathBuf[0] != 0)
     {
-        FCString::Snprintf(FullPathBuf.Data(), static_cast<int32>(FullPathBuf.Size()), "%s/%s", FolderPathBuf.Data(), ItemName);
+        CString::Snprintf(FullPathBuf.Data(), static_cast<int32>(FullPathBuf.Size()), "%s/%s", FolderPathBuf.Data(), ItemName);
     }
     else
     {
-        FCString::Snprintf(FullPathBuf.Data(), static_cast<int32>(FullPathBuf.Size()), "%s", ItemName);
+        CString::Snprintf(FullPathBuf.Data(), static_cast<int32>(FullPathBuf.Size()), "%s", ItemName);
     }
 
     const ImVec4 MutedTextColor = ImVec4(122.0f / 255.0f, 122.0f / 255.0f, 122.0f / 255.0f, 1.0f);
@@ -1022,11 +1022,11 @@ void FEditorContentBrowserWidget::DrawContentGrid()
 
         if (FolderPathBuf[0] != 0)
         {
-            FCString::Snprintf(OutBuf, OutBufSize, "%s/%s", FolderPathBuf.Data(), ItemName);
+            CString::Snprintf(OutBuf, OutBufSize, "%s/%s", FolderPathBuf.Data(), ItemName);
         }
         else
         {
-            FCString::Snprintf(OutBuf, OutBufSize, "%s", ItemName);
+            CString::Snprintf(OutBuf, OutBufSize, "%s", ItemName);
         }
     };
 
@@ -1329,7 +1329,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
 
                 if (ImGui::IsItemActive() && ImGui::IsKeyPressed(ImGuiKey_Escape))
                 {
-                    FCString::Strncpy(ItemRenameBuffer.Data(), ItemRenameBufferOriginal.Data(), ItemRenameBuffer.Size());
+                    CString::Strncpy(ItemRenameBuffer.Data(), ItemRenameBufferOriginal.Data(), ItemRenameBuffer.Size());
                     CancelItemRename();
                 }
                 else if (bEnter || ImGui::IsItemDeactivatedAfterEdit() || ImGui::IsItemDeactivated())
@@ -1388,7 +1388,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                 DragPreviewSelectionCount = Math::Max(1, SelectedItemIndices.Size());
 
                 const CHAR* PrimaryName = PrimaryItem.Name.IsEmpty() ? "" : *PrimaryItem.Name;
-                FCString::Strncpy(DragPreviewSourceName.Data(), PrimaryName, static_cast<int32>(DragPreviewSourceName.Size()));
+                CString::Strncpy(DragPreviewSourceName.Data(), PrimaryName, static_cast<int32>(DragPreviewSourceName.Size()));
 
                 ImGui::EndDragDropSource();
             }
@@ -1636,7 +1636,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                     bDragPreviewIsFolder      = true;
                     DragPreviewSelectionCount = Math::Max(1, DragPaths.Size());
 
-                    FCString::Strncpy(DragPreviewSourceName.Data(), PrimaryName, static_cast<int32>(DragPreviewSourceName.Size()));
+                    CString::Strncpy(DragPreviewSourceName.Data(), PrimaryName, static_cast<int32>(DragPreviewSourceName.Size()));
                 }
             }
         }
@@ -1708,7 +1708,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                 const ImVec2 IconMax = ImGui::GetItemRectMax();
 
                 TStaticArray<CHAR, 16> CountBuf{};
-                FCString::Snprintf(CountBuf.Data(), static_cast<int32>(CountBuf.Size()), "+%d", DragPreviewSelectionCount);
+                CString::Snprintf(CountBuf.Data(), static_cast<int32>(CountBuf.Size()), "+%d", DragPreviewSelectionCount);
 
                 const ImVec2 TextSize = ImGui::CalcTextSize(CountBuf.Data());
 
@@ -1759,22 +1759,22 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                             const CHAR* ItemLabel = (OtherSelectionCount == 1) ? "item" : "items";
                             if (bStatusForbidden)
                             {
-                                FCString::Snprintf(Line1.Data(), static_cast<int32>(Line1.Size()), "Cannot move %s and %d %s to %s", DragPreviewSourceName.Data(), OtherSelectionCount, ItemLabel, DragPreviewTargetName.Data());
+                                CString::Snprintf(Line1.Data(), static_cast<int32>(Line1.Size()), "Cannot move %s and %d %s to %s", DragPreviewSourceName.Data(), OtherSelectionCount, ItemLabel, DragPreviewTargetName.Data());
                             }
                             else
                             {
-                                FCString::Snprintf(Line1.Data(), static_cast<int32>(Line1.Size()), "Move %s and %d %s to %s", DragPreviewSourceName.Data(), OtherSelectionCount, ItemLabel, DragPreviewTargetName.Data());
+                                CString::Snprintf(Line1.Data(), static_cast<int32>(Line1.Size()), "Move %s and %d %s to %s", DragPreviewSourceName.Data(), OtherSelectionCount, ItemLabel, DragPreviewTargetName.Data());
                             }
                         }
                         else
                         {
                             if (bStatusForbidden)
                             {
-                                FCString::Snprintf(Line1.Data(), static_cast<int32>(Line1.Size()), "Cannot move %s to %s", DragPreviewSourceName.Data(), DragPreviewTargetName.Data());
+                                CString::Snprintf(Line1.Data(), static_cast<int32>(Line1.Size()), "Cannot move %s to %s", DragPreviewSourceName.Data(), DragPreviewTargetName.Data());
                             }
                             else
                             {
-                                FCString::Snprintf(Line1.Data(), static_cast<int32>(Line1.Size()), "Move %s to %s", DragPreviewSourceName.Data(), DragPreviewTargetName.Data());
+                                CString::Snprintf(Line1.Data(), static_cast<int32>(Line1.Size()), "Move %s to %s", DragPreviewSourceName.Data(), DragPreviewTargetName.Data());
                             }
                         }
 
@@ -1784,7 +1784,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                         {
                             const CHAR* ItemLabel = (IllegalMoveCount == 1) ? "item" : "items";
                             const CHAR* Pronoun = (IllegalMoveCount == 1) ? "it" : "they";
-                            FCString::Snprintf(Line2.Data(), static_cast<int32>(Line2.Size()), "%d %s will be ignored since %s cannot be moved", IllegalMoveCount, ItemLabel, Pronoun);
+                            CString::Snprintf(Line2.Data(), static_cast<int32>(Line2.Size()), "%d %s will be ignored since %s cannot be moved", IllegalMoveCount, ItemLabel, Pronoun);
                             LineCount = 2;
                         }
                     }
@@ -2565,7 +2565,7 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
 
         if (ImGui::IsItemActive() && ImGui::IsKeyPressed(ImGuiKey_Escape))
         {
-            FCString::Strncpy(FolderRenameBuffer.Data(), FolderRenameBufferOriginal.Data(), FolderRenameBuffer.Size());
+            CString::Strncpy(FolderRenameBuffer.Data(), FolderRenameBufferOriginal.Data(), FolderRenameBuffer.Size());
             CancelFolderRename();
         }
         else if (bEnter || ImGui::IsItemDeactivatedAfterEdit() || ImGui::IsItemDeactivated())
@@ -2632,7 +2632,7 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
         bDragPreviewIsFolder      = true;
         DragPreviewSelectionCount = Math::Max(1, DragPaths.Size());
 
-        FCString::Strncpy(DragPreviewSourceName.Data(), PrimaryName, static_cast<int32>(DragPreviewSourceName.Size()));
+        CString::Strncpy(DragPreviewSourceName.Data(), PrimaryName, static_cast<int32>(DragPreviewSourceName.Size()));
 
         ImGui::EndDragDropSource();
     }
@@ -2733,8 +2733,8 @@ void FEditorContentBrowserWidget::BeginFolderRename(const TArray<int32>& InPath,
     const CHAR* NameText = InFolder.Name.IsEmpty() ? "" : *InFolder.Name;
     if (NameText[0] != 0)
     {
-        FCString::Strncpy(FolderRenameBuffer.Data(), NameText, FolderRenameBuffer.Size());
-        FCString::Strncpy(FolderRenameBufferOriginal.Data(), NameText, FolderRenameBufferOriginal.Size());
+        CString::Strncpy(FolderRenameBuffer.Data(), NameText, FolderRenameBuffer.Size());
+        CString::Strncpy(FolderRenameBufferOriginal.Data(), NameText, FolderRenameBufferOriginal.Size());
     }
 }
 
@@ -2749,7 +2749,7 @@ void FEditorContentBrowserWidget::CommitFolderRename()
     FileInfo* Folder = GetFolderFromPath(RenamingFolderPath);
     if (Folder)
     {
-        Folder->Name = FString(FolderRenameBuffer.Data());
+        Folder->Name = String(FolderRenameBuffer.Data());
     }
 
     RenamingFolderPath.Clear();
@@ -2779,14 +2779,14 @@ void FEditorContentBrowserWidget::BeginItemRename(const TArray<int32>& InParentP
     {
         if (NameText[0] != 0)
         {
-            FCString::Strncpy(ItemRenameBuffer.Data(), NameText, ItemRenameBuffer.Size());
-            FCString::Strncpy(ItemRenameBufferOriginal.Data(), NameText, ItemRenameBufferOriginal.Size());
+            CString::Strncpy(ItemRenameBuffer.Data(), NameText, ItemRenameBuffer.Size());
+            CString::Strncpy(ItemRenameBufferOriginal.Data(), NameText, ItemRenameBufferOriginal.Size());
         }
     }
     else
     {
         SplitNameAndExtension(NameText, ItemRenameBuffer, ItemRenameExtension);
-        FCString::Strncpy(ItemRenameBufferOriginal.Data(), ItemRenameBuffer.Data(), ItemRenameBufferOriginal.Size());
+        CString::Strncpy(ItemRenameBufferOriginal.Data(), ItemRenameBuffer.Data(), ItemRenameBufferOriginal.Size());
     }
 }
 
@@ -2807,13 +2807,13 @@ void FEditorContentBrowserWidget::CommitItemRename()
         FileInfo& Item = ParentFolder->FolderContents[RenamingItemIndex];
         if (Item.bIsFolder || ItemRenameExtension[0] == 0)
         {
-            Item.Name = FString(ItemRenameBuffer.Data());
+            Item.Name = String(ItemRenameBuffer.Data());
         }
         else
         {
             TStaticArray<CHAR, 320> NewName{};
-            FCString::Snprintf(NewName.Data(), static_cast<int32>(NewName.Size()), "%s%s", ItemRenameBuffer.Data(), ItemRenameExtension.Data());
-            Item.Name = FString(NewName.Data());
+            CString::Snprintf(NewName.Data(), static_cast<int32>(NewName.Size()), "%s%s", ItemRenameBuffer.Data(), ItemRenameExtension.Data());
+            Item.Name = String(NewName.Data());
         }
     }
 
@@ -2970,7 +2970,7 @@ bool FEditorContentBrowserWidget::MoveItemsToFolder(const TArray<int32>& InSourc
     CHAR SourceParentPathBuf[PathBufSize];
     SourceParentPathBuf[0] = 0;
     BuildFolderPathString(InSourceParentPath, SourceParentPathBuf, PathBufSize);
-    const FString SourceParentPathStr = SourceParentPathBuf;
+    const String SourceParentPathStr = SourceParentPathBuf;
 
     TArray<int32> TargetParentPath = InTargetFolderPath;
 
@@ -3118,7 +3118,7 @@ bool FEditorContentBrowserWidget::MoveItemsToFolder(const TArray<int32>& InSourc
         }
 
         FileInfo& Item = SourceParent->FolderContents[SourceIndex];
-        const FString ItemPath = AppendNameToPath(SourceParentPathStr, Item.Name);
+        const String ItemPath = AppendNameToPath(SourceParentPathStr, Item.Name);
         if (Item.bIsFolder)
         {
             const int32 ExistingFolderIndex = FindChildFolderIndexByName(*TargetFolder, Item.Name);
@@ -3205,9 +3205,9 @@ bool FEditorContentBrowserWidget::MoveItemsToFolder(const TArray<int32>& InSourc
     return true;
 }
 
-void FEditorContentBrowserWidget::ReportFailedMove(const FString& InFullPath)
+void FEditorContentBrowserWidget::ReportFailedMove(const String& InFullPath)
 {
-    FString Entry = InFullPath;
+    String Entry = InFullPath;
     if (Entry.IsEmpty())
     {
         Entry = "Unnamed asset";
@@ -3237,7 +3237,7 @@ bool FEditorContentBrowserWidget::MatchesSearch(const CHAR* InName, const CHAR* 
         return true;
     }
 
-    return FCString::Stristr(InName, InQuery) != nullptr;
+    return CString::Stristr(InName, InQuery) != nullptr;
 }
 
 bool FEditorContentBrowserWidget::FolderTreeMatches(const FileInfo& InFolder, const CHAR* InQuery) const
@@ -3373,7 +3373,7 @@ void FEditorContentBrowserWidget::BuildFolderPathString(const TArray<int32>& InP
     const FileInfo* Current = &RootFolders[RootIndex];
 
     const CHAR* RootName = Current->Name.IsEmpty() ? "" : *Current->Name;
-    Offset += FCString::Snprintf(OutBuf + Offset, OutBufSize - Offset, "%s", RootName);
+    Offset += CString::Snprintf(OutBuf + Offset, OutBufSize - Offset, "%s", RootName);
 
     for (int32 Depth = 1; Depth < InPath.Size(); ++Depth)
     {
@@ -3386,7 +3386,7 @@ void FEditorContentBrowserWidget::BuildFolderPathString(const TArray<int32>& InP
         Current = &Current->FolderContents[ChildIndex];
 
         const CHAR* ChildName = Current->Name.IsEmpty() ? "" : *Current->Name;
-        Offset += FCString::Snprintf(OutBuf + Offset, OutBufSize - Offset, "/%s", ChildName);
+        Offset += CString::Snprintf(OutBuf + Offset, OutBufSize - Offset, "/%s", ChildName);
     }
 }
 
@@ -3746,7 +3746,7 @@ void FEditorContentBrowserWidget::AppendFolderPayloadPath(const ImGuiPayload* Pa
     }
 }
 
-int32 FEditorContentBrowserWidget::FindChildFolderIndexByName(const FileInfo& ParentFolder, const FString& FolderName) const
+int32 FEditorContentBrowserWidget::FindChildFolderIndexByName(const FileInfo& ParentFolder, const String& FolderName) const
 {
     for (int32 Index = 0; Index < ParentFolder.FolderContents.Size(); ++Index)
     {
@@ -3765,7 +3765,7 @@ int32 FEditorContentBrowserWidget::FindChildFolderIndexByName(const FileInfo& Pa
     return -1;
 }
 
-int32 FEditorContentBrowserWidget::FindChildFileIndexByName(const FileInfo& ParentFolder, const FString& FileName) const
+int32 FEditorContentBrowserWidget::FindChildFileIndexByName(const FileInfo& ParentFolder, const String& FileName) const
 {
     for (int32 Index = 0; Index < ParentFolder.FolderContents.Size(); ++Index)
     {
@@ -3890,11 +3890,11 @@ void FEditorContentBrowserWidget::SetDragPreviewTarget(const CHAR* TargetName, c
     const FileInfo* SourceParentFolder, const TArray<int32>* SourceIndices, const TArray<int32>* SourceParentPath)
 {
     const CHAR* NameText = (TargetName && TargetName[0]) ? TargetName : "";
-    FCString::Strncpy(DragPreviewTargetName.Data(), NameText, static_cast<int32>(DragPreviewTargetName.Size()));
+    CString::Strncpy(DragPreviewTargetName.Data(), NameText, static_cast<int32>(DragPreviewTargetName.Size()));
     UpdateDragPreviewNameConflicts(SourceFolderPaths, SourceParentFolder, SourceIndices, SourceParentPath, TargetPath);
 }
 
-bool FEditorContentBrowserWidget::MergeFolderContents(FileInfo& TargetFolder, FileInfo& SourceFolder, const FString& SourceFolderPath)
+bool FEditorContentBrowserWidget::MergeFolderContents(FileInfo& TargetFolder, FileInfo& SourceFolder, const String& SourceFolderPath)
 {
     if (!TargetFolder.bIsFolder || !SourceFolder.bIsFolder)
     {
@@ -3917,7 +3917,7 @@ bool FEditorContentBrowserWidget::MergeFolderContents(FileInfo& TargetFolder, Fi
     for (int32 Index = 0; Index < SourceFolder.FolderContents.Size();)
     {
         FileInfo& Item = SourceFolder.FolderContents[Index];
-        const FString ItemPath = AppendNameToPath(SourceFolderPath, Item.Name);
+        const String ItemPath = AppendNameToPath(SourceFolderPath, Item.Name);
         if (Item.bIsFolder)
         {
             const int32 ExistingFolderIndex = FindChildFolderIndexByName(TargetFolder, Item.Name);
@@ -3984,7 +3984,7 @@ void FEditorContentBrowserWidget::AddNewFolderInCurrentPath()
         return;
     }
 
-    const FString NewFolderName("New folder");
+    const String NewFolderName("New folder");
 
     FileInfo NewFolder;
     NewFolder.Name      = NewFolderName;
@@ -4126,7 +4126,7 @@ void FEditorContentBrowserWidget::PasteInCurrentFolder()
             }
 
             const FileInfo& SourceItem = SourceParent->FolderContents[SourceIndex];
-            FString BaseName = SourceItem.Name;
+            String BaseName = SourceItem.Name;
             int32 Suffix = 0;
 
             TStaticArray<CHAR, 256> Buf{};
@@ -4135,14 +4135,14 @@ void FEditorContentBrowserWidget::PasteInCurrentFolder()
                 ++Suffix;
                 if (SourceItem.bIsFolder)
                 {
-                    FCString::Snprintf(Buf.Data(), static_cast<int32>(Buf.Size()), "%s (%d)", *SourceItem.Name, Suffix);
+                    CString::Snprintf(Buf.Data(), static_cast<int32>(Buf.Size()), "%s (%d)", *SourceItem.Name, Suffix);
                     BaseName = Buf.Data();
                 }
                 else
                 {
                     int32 Dot = -1;
                     const CHAR* NameStr = *SourceItem.Name;
-                    const int32 Len = static_cast<int32>(FCString::Strlen(NameStr));
+                    const int32 Len = static_cast<int32>(CString::Strlen(NameStr));
                     for (int32 i = Len - 1; i > 0; --i)
                     {
                         if (NameStr[i] == '.')
@@ -4153,12 +4153,12 @@ void FEditorContentBrowserWidget::PasteInCurrentFolder()
                     }
                     if (Dot >= 0)
                     {
-                        FCString::Snprintf(Buf.Data(), static_cast<int32>(Buf.Size()), "%.*s (%d)%s", Dot, NameStr, Suffix, NameStr + Dot);
+                        CString::Snprintf(Buf.Data(), static_cast<int32>(Buf.Size()), "%.*s (%d)%s", Dot, NameStr, Suffix, NameStr + Dot);
                         BaseName = Buf.Data();
                     }
                     else
                     {
-                        FCString::Snprintf(Buf.Data(), static_cast<int32>(Buf.Size()), "%s (%d)", NameStr, Suffix);
+                        CString::Snprintf(Buf.Data(), static_cast<int32>(Buf.Size()), "%s (%d)", NameStr, Suffix);
                         BaseName = Buf.Data();
                     }
                 }
@@ -4190,14 +4190,14 @@ void FEditorContentBrowserWidget::PasteInCurrentFolder()
                 continue;
             }
 
-            FString BaseName = SourceFolder->Name;
+            String BaseName = SourceFolder->Name;
             int32 Suffix = 0;
 
             while (FindChildFolderIndexByName(*TargetFolder, BaseName) >= 0)
             {
                 ++Suffix;
                 TStaticArray<CHAR, 256> Buf{};
-                FCString::Snprintf(Buf.Data(), static_cast<int32>(Buf.Size()), "%s (%d)", *SourceFolder->Name, Suffix);
+                CString::Snprintf(Buf.Data(), static_cast<int32>(Buf.Size()), "%s (%d)", *SourceFolder->Name, Suffix);
                 BaseName = Buf.Data();
             }
 

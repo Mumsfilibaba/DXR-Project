@@ -233,13 +233,13 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
     {
         FPointLight* PointLight = Scene->PointLights[Index]->PointLight;
 
-        // Pre-multiply light intensity TODO: Just specify the light color directly FVector4(100.0f, 1.0f, 58.0f, 6.0f)
-        FVector3 Color = PointLight->GetColor();
+        // Pre-multiply light intensity TODO: Just specify the light color directly Vector4(100.0f, 1.0f, 58.0f, 6.0f)
+        Vector3 Color = PointLight->GetColor();
         Color = Color * PointLight->GetIntensity();
 
         const float Radius = PointLight->GetShadowFarPlane();
-        FVector3 Position = PointLight->GetPosition();
-        FVector4 PositionAndRadius = FVector4(Position, Radius);
+        Vector3 Position = PointLight->GetPosition();
+        Vector4 PositionAndRadius = Vector4(Position, Radius);
 
         if (PointLight->IsShadowCaster())
         {

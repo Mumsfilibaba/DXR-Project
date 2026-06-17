@@ -169,7 +169,7 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
 #endif
 }
 
-void FD3D12GeometryAccelerationStructureRHI::SetDebugName(const FString& InName)
+void FD3D12GeometryAccelerationStructureRHI::SetDebugName(const String& InName)
 {
     FD3D12Resource* D3D12Resource = GetResource();
     if (D3D12Resource)
@@ -178,7 +178,7 @@ void FD3D12GeometryAccelerationStructureRHI::SetDebugName(const FString& InName)
     }
 }
 
-void FD3D12GeometryAccelerationStructureRHI::GetDebugName(FString& OutDebugName) const
+void FD3D12GeometryAccelerationStructureRHI::GetDebugName(String& OutDebugName) const
 {
     if (FD3D12Resource* D3D12Resource = GetResource())
     {
@@ -328,7 +328,7 @@ bool FD3D12SceneAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext
     for (int32 Instance = 0; Instance < InstanceDescs.Size(); Instance++)
     {
         FD3D12GeometryAccelerationStructureRHI* D3D12Geometry = FD3D12DeviceRHI::ResourceCast(BuildDesc.Instances[Instance].Geometry);
-        Memory::Memcpy(&InstanceDescs[Instance].Transform, &BuildDesc.Instances[Instance].Transform, sizeof(FMatrix3x4));
+        Memory::Memcpy(&InstanceDescs[Instance].Transform, &BuildDesc.Instances[Instance].Transform, sizeof(Matrix3x4));
 
         InstanceDescs[Instance].AccelerationStructure               = D3D12Geometry->GetGPUVirtualAddress();
         InstanceDescs[Instance].InstanceID                          = BuildDesc.Instances[Instance].InstanceIndex;
@@ -532,7 +532,7 @@ D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE FD3D12SceneAccelerationStructureRHI::
     return { BindingTableAdress + AddressOffset, BindingTableStride, BindingTableStride };
 }
 
-void FD3D12SceneAccelerationStructureRHI::SetDebugName(const FString& InName)
+void FD3D12SceneAccelerationStructureRHI::SetDebugName(const String& InName)
 {
     FD3D12Resource* D3D12Resource = GetResource();
     if (D3D12Resource)
@@ -541,7 +541,7 @@ void FD3D12SceneAccelerationStructureRHI::SetDebugName(const FString& InName)
     }
 }
 
-void FD3D12SceneAccelerationStructureRHI::GetDebugName(FString& OutDebugName) const
+void FD3D12SceneAccelerationStructureRHI::GetDebugName(String& OutDebugName) const
 {
     if (FD3D12Resource* D3D12Resource = GetResource())
     {

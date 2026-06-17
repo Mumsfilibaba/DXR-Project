@@ -1,26 +1,26 @@
 #include "Core/Misc/Paths.h"
 
-FString Paths::GetEngineDir()
+String Paths::GetEngineDir()
 {
-    return FString(ENGINE_LOCATION);
+    return String(ENGINE_LOCATION);
 }
 
-FString Paths::GetAssetDir()
+String Paths::GetAssetDir()
 {
-    return Paths::GetEngineDir() + FString("/Assets");
+    return Paths::GetEngineDir() + String("/Assets");
 }
 
-FString Paths::GetProjectDir()
+String Paths::GetProjectDir()
 {
-    return FString(PROJECT_LOCATION);
+    return String(PROJECT_LOCATION);
 }
 
-FString Paths::GetProjectName()
+String Paths::GetProjectName()
 {
-    return FString(PROJECT_NAME);
+    return String(PROJECT_NAME);
 }
 
-FString Paths::GetProjectModuleName()
+String Paths::GetProjectModuleName()
 {
-    return FString(PROJECT_NAME);
+    return String(PROJECT_NAME);
 }

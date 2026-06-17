@@ -126,7 +126,7 @@ bool FForwardPass::CompilePipelineState(FFrameResources& FrameResources, bool bB
         return false;
     }
 
-    const FString DebugName = FString::CreateFormatted("ForwardPass PipelineState%s", bBindless ? " [Bindless]" : "");
+    const String DebugName = String::CreateFormatted("ForwardPass PipelineState%s", bBindless ? " [Bindless]" : "");
     NewInstance.PipelineState->SetDebugName(DebugName);
 
     PipelineStates.Add(MakeMaterialPSOKey(0, bBindless), Move(NewInstance));

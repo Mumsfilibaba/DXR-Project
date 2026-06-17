@@ -20,6 +20,6 @@ public:
     virtual bool IsSignaled() const = 0; 
     virtual bool Wait(uint64 TimeoutNs = UINT64_MAX) const = 0; 
 
-    virtual void SetDebugName(const FString& InName) = 0; 
-    virtual void GetDebugName(FString& OutDebugName) const = 0; 
+    virtual void SetDebugName(const String& InName) = 0; 
+    virtual void GetDebugName(String& OutDebugName) const = 0; 
 }; 

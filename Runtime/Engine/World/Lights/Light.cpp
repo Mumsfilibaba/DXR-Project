@@ -26,7 +26,7 @@ FLight::~FLight()
 {
 }
 
-void FLight::SetColor(const FVector3& InColor)
+void FLight::SetColor(const Vector3& InColor)
 {
     Color = InColor;
 }

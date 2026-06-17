@@ -133,26 +133,26 @@ private:
 
 struct CORE_API FGenericPlatformFile
 {
-    static void ObtainRelativePath(const FString& Path);
+    static void ObtainRelativePath(const String& Path);
 
-    static FORCEINLINE IPlatformFile* OpenForRead(const FString& Filename) 
+    static FORCEINLINE IPlatformFile* OpenForRead(const String& Filename) 
     {
         return nullptr;
     }
 
-    static FORCEINLINE IPlatformFile* OpenForWrite(const FString& Filename, bool bTruncate = true)
+    static FORCEINLINE IPlatformFile* OpenForWrite(const String& Filename, bool bTruncate = true)
     {
         return nullptr;
     }
 
-    static FORCEINLINE IPlatformAsyncFile* OpenForAsyncWrite(const FString& Filename, bool bTruncate = true)
+    static FORCEINLINE IPlatformAsyncFile* OpenForAsyncWrite(const String& Filename, bool bTruncate = true)
     {
         return nullptr;
     }
 
-    static FORCEINLINE FString GetCurrentWorkingDirectory()
+    static FORCEINLINE String GetCurrentWorkingDirectory()
     {
-        return FString();
+        return String();
     }
 
     static FORCEINLINE const CHAR* GetExecutablePath()

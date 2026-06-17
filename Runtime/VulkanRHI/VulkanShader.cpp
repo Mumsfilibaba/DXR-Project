@@ -47,8 +47,8 @@ static bool SpvReadLiteralString(const uint32* Inst, uint16 InstWords, uint16 St
 
 static bool IsOneOfGoogleExtensions(const CHAR* Name)
 {
-    return (FCString::Strcmp(Name, "SPV_GOOGLE_decorate_string") == 0) || (FCString::Strcmp(Name, "SPV_GOOGLE_hlsl_functionality1") == 0) || 
-        (FCString::Strcmp(Name, "SPV_GOOGLE_user_type") == 0);
+    return (CString::Strcmp(Name, "SPV_GOOGLE_decorate_string") == 0) || (CString::Strcmp(Name, "SPV_GOOGLE_hlsl_functionality1") == 0) || 
+        (CString::Strcmp(Name, "SPV_GOOGLE_user_type") == 0);
 }
 
 static bool IsGoogleDecorateStringDecoration(uint32 DecorationId)
@@ -166,7 +166,7 @@ TSharedRef<FVulkanShaderModule> FVulkanShader::GetOrCreateShaderModule(FVulkanPi
         return nullptr;
     }
 
-    FString GoogleValidationError;
+    String GoogleValidationError;
     if (!ValidateNoGoogleSpirvRequirements(StrippedCode, &GoogleValidationError))
     {
         VULKAN_ERROR_CRITICAL("Google SPIR-V requirements remain after stripping: %s", *GoogleValidationError);
@@ -558,7 +558,7 @@ bool FVulkanShader::InitializeShaderLayout()
             Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
             Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationBinding));
 
-            const FString BaseTypeName = spvc_compiler_get_name(Compiler, StorageBuffers[Index].base_type_id);
+            const String BaseTypeName = spvc_compiler_get_name(Compiler, StorageBuffers[Index].base_type_id);
 
             const bool bIsUAV = BaseTypeName.Contains("RWStructuredBuffer");
             if (bIsUAV)
@@ -730,7 +730,7 @@ bool FVulkanShader::StripGoogleSpirvRequirements(const FSpirvArray& InWords, FSp
     return true;
 }
 
-bool FVulkanShader::ValidateNoGoogleSpirvRequirements(const FSpirvArray& Words, FString* OutErrorMessage)
+bool FVulkanShader::ValidateNoGoogleSpirvRequirements(const FSpirvArray& Words, String* OutErrorMessage)
 {
     if (Words.Size() < 5)
     {
@@ -762,7 +762,7 @@ bool FVulkanShader::ValidateNoGoogleSpirvRequirements(const FSpirvArray& Words, 
                 {
                     if (OutErrorMessage)
                     {
-                        *OutErrorMessage = FString::CreateFormatted("Found Google extension: %s", ExtName);
+                        *OutErrorMessage = String::CreateFormatted("Found Google extension: %s", ExtName);
                     }
 
                     return false;

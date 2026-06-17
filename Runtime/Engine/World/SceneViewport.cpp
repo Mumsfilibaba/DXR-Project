@@ -42,7 +42,7 @@ bool FSceneViewport::InitializeRHI()
         return false;
     }
 
-    const FIntVector2 WindowSize = WindowWidget->GetSize();
+    const IntVector2 WindowSize = WindowWidget->GetSize();
     FRHISwapChainDesc SwapChainDesc;
     SwapChainDesc.Width        = static_cast<uint16>(WindowSize.X);
     SwapChainDesc.Height       = static_cast<uint16>(WindowSize.Y);

@@ -10,7 +10,7 @@ public:
     static bool Initialize(const CHAR** Args, int32 NumArgs);
 
     static bool FindOption(const CHAR* Value);
-    static bool FindOption(const CHAR* Value, FStringView& OutValue);
+    static bool FindOption(const CHAR* Value, StringView& OutValue);
 
     static FORCEINLINE const CHAR* Get()
     {

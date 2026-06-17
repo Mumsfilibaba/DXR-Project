@@ -89,13 +89,13 @@ public:
     FMetalRayTracingShader(FMetalDevice* InDevice);
     virtual ~FMetalRayTracingShader();
 
-    const FString& GetIdentifier() const
+    const String& GetIdentifier() const
     {
         return Identifier;
     }
 
 protected:
-    FString Identifier;
+    String Identifier;
 };
 
 class FMetalRayGenShaderRHI : public FRHIRayGenShader, public FMetalRayTracingShader

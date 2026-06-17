@@ -44,8 +44,8 @@ public:
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final;
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final;
     
-    virtual void SetDebugName(const FString& InName)       override final;
-    virtual void GetDebugName(FString& OutDebugName) const override final;
+    virtual void SetDebugName(const String& InName)       override final;
+    virtual void GetDebugName(String& OutDebugName) const override final;
     
     bool Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
 
@@ -70,9 +70,6 @@ public:
     }
     
 protected:
-#if VULKAN_STORE_DEBUG_NAMES
-    FString                          DebugName;
-#endif
     VkImage                          Image;
     VkImageCreateInfo                CreateInfo;
     FVulkanImageLayoutState          ImageLayoutState;
@@ -80,4 +77,7 @@ protected:
     FVulkanUnorderedAccessViewRHIRef UnorderedAccessView;
     FVulkanRenderTargetViewRHIRef    RenderTargetView;
     FVulkanDepthStencilViewRHIRef    DepthStencilView;
+#if VULKAN_STORE_DEBUG_NAMES
+    String                           DebugName;
+#endif
 };

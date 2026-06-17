@@ -89,7 +89,7 @@ FRHIDescriptorHandle FVulkanBackBufferProxyTextureRHI::GetBindlessSRVHandle() co
     return FRHIDescriptorHandle();
 }
 
-void FVulkanBackBufferProxyTextureRHI::SetDebugName(const FString& InName)
+void FVulkanBackBufferProxyTextureRHI::SetDebugName(const String& InName)
 {
     if (!SwapChain)
     {
@@ -106,7 +106,7 @@ void FVulkanBackBufferProxyTextureRHI::SetDebugName(const FString& InName)
     }
 }
 
-void FVulkanBackBufferProxyTextureRHI::GetDebugName(FString& OutDebugName) const
+void FVulkanBackBufferProxyTextureRHI::GetDebugName(String& OutDebugName) const
 {
     if (FVulkanTextureRHI* CurrentBackBuffer = GetTextureInterface())
     {

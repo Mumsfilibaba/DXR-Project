@@ -95,7 +95,7 @@ public:
         return IndexFormat;
     }
     
-    const FString& GetName() const
+    const String& GetName() const
     {
         return MeshName;
     }
@@ -103,7 +103,7 @@ public:
 private:
     void CreateBoundingBox(const FMeshCreateInfo& CreateInfo);
 
-    FString                              MeshName;
+    String                               MeshName;
     FRHIBufferRef                        VertexBuffer;
     FRHIShaderResourceViewRef            VertexBufferSRV;
     FRHIBufferRef                        VertexPositionBuffer;

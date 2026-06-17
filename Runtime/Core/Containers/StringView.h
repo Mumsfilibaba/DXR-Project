@@ -14,8 +14,8 @@ enum class EStringCaseType
 template<typename InCharType>
 class TStringView
 {
-    typedef TCharTraits<InCharType> FCharTraitsType;
-    typedef TCString<InCharType>    FCStringType;
+    typedef TCharTraits<InCharType> CharTraitsType;
+    typedef TCString<InCharType>    CStringType;
 
 public:
     typedef int32      SizeType;
@@ -40,7 +40,7 @@ public:
      */
     FORCEINLINE TStringView(const CharType* InString)
         : ViewStart(InString)
-        , ViewEnd(InString + FCStringType::Strlen(InString))
+        , ViewEnd(InString + CStringType::Strlen(InString))
     {
     }
 
@@ -110,7 +110,7 @@ public:
         if (Buffer && BufferSize > 0)
         {
             const SizeType CopySize = Math::Min(BufferSize, Length() - Position);
-            FCStringType::Strncpy(Buffer, ViewStart + Position, CopySize);
+            CStringType::Strncpy(Buffer, ViewStart + Position, CopySize);
         }
     }
 
@@ -271,11 +271,11 @@ public:
     {
         if (CaseType == EStringCaseType::NoCase)
         {
-            return static_cast<SizeType>(FCStringType::Stricmp(ViewStart, InString));
+            return static_cast<SizeType>(CStringType::Stricmp(ViewStart, InString));
         }
         else
         {
-            return static_cast<SizeType>(FCStringType::Strcmp(ViewStart, InString));
+            return static_cast<SizeType>(CStringType::Strcmp(ViewStart, InString));
         }
     }
 
@@ -291,11 +291,11 @@ public:
         const SizeType MinLength = Math::Min(Length(), InLength);
         if (CaseType == EStringCaseType::NoCase)
         {
-            return static_cast<SizeType>(FCStringType::Strnicmp(ViewStart, InString, MinLength));
+            return static_cast<SizeType>(CStringType::Strnicmp(ViewStart, InString, MinLength));
         }
         else
         {
-            return static_cast<SizeType>(FCStringType::Strncmp(ViewStart, InString, MinLength));
+            return static_cast<SizeType>(CStringType::Strncmp(ViewStart, InString, MinLength));
         }
     }
 
@@ -319,7 +319,7 @@ public:
      */
     NODISCARD FORCEINLINE bool Equals(const CharType* InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const
     {
-        return Equals(InString, FCStringType::Strlen(InString), CaseType);
+        return Equals(InString, CStringType::Strlen(InString), CaseType);
     }
 
     /**
@@ -339,11 +339,11 @@ public:
 
         if (CaseType == EStringCaseType::CaseSensitive)
         {
-            return FCStringType::Strncmp(ViewStart, InString, CurrentLength) == 0;
+            return CStringType::Strncmp(ViewStart, InString, CurrentLength) == 0;
         }
         else if (CaseType == EStringCaseType::NoCase)
         {
-            return FCStringType::Strnicmp(ViewStart, InString, CurrentLength) == 0;
+            return CStringType::Strnicmp(ViewStart, InString, CurrentLength) == 0;
         }
         else
         {
@@ -377,7 +377,7 @@ public:
             Index += Math::Clamp(Position, 0, CurrentLength - 1);
         }
 
-        const SizeType SearchLength = FCStringType::Strlen(InString);
+        const SizeType SearchLength = CStringType::Strlen(InString);
         if (SearchLength == 0)
         {
             return Index;
@@ -392,14 +392,14 @@ public:
         {
             if (CaseType == EStringCaseType::CaseSensitive)
             {
-                if (FCStringType::Strncmp(ViewStart + Index, InString, SearchLength) == 0)
+                if (CStringType::Strncmp(ViewStart + Index, InString, SearchLength) == 0)
                 {
                     return Index;
                 }
             }
             else if (CaseType == EStringCaseType::NoCase)
             {
-                if (FCStringType::Strnicmp(ViewStart + Index, InString, SearchLength) == 0)
+                if (CStringType::Strnicmp(ViewStart + Index, InString, SearchLength) == 0)
                 {
                     return Index;
                 }
@@ -549,7 +549,7 @@ public:
             Position = CurrentLength;
         }
 
-        const SizeType SearchLength = FCStringType::Strlen(InString);
+        const SizeType SearchLength = CStringType::Strlen(InString);
         if (SearchLength == 0)
         {
             return Position;
@@ -565,11 +565,11 @@ public:
             bool bMatch = false;
             if (CaseType == EStringCaseType::CaseSensitive)
             {
-                bMatch = FCStringType::Strncmp(ViewStart + Index, InString, SearchLength) == 0;
+                bMatch = CStringType::Strncmp(ViewStart + Index, InString, SearchLength) == 0;
             }
             else if (CaseType == EStringCaseType::NoCase)
             {
-                bMatch = FCStringType::Strnicmp(ViewStart + Index, InString, SearchLength) == 0;
+                bMatch = CStringType::Strnicmp(ViewStart + Index, InString, SearchLength) == 0;
             }
 
             if (bMatch)
@@ -777,11 +777,11 @@ public:
         {
             if (SearchType == EStringCaseType::CaseSensitive)
             {
-                return FCStringType::Strncmp(ViewStart, InString, InLength) == 0;
+                return CStringType::Strncmp(ViewStart, InString, InLength) == 0;
             }
             else if (SearchType == EStringCaseType::NoCase)
             {
-                return FCStringType::Strnicmp(ViewStart, InString, InLength) == 0;
+                return CStringType::Strnicmp(ViewStart, InString, InLength) == 0;
             }
         }
 
@@ -801,7 +801,7 @@ public:
             return false;
         }
 
-        return StartsWith(InString, FCStringType::Strlen(InString), SearchType);
+        return StartsWith(InString, CStringType::Strlen(InString), SearchType);
     }
 
     /**
@@ -836,11 +836,11 @@ public:
             const CharType* StringData = ViewStart + (CurrentLength - InLength);
             if (SearchType == EStringCaseType::CaseSensitive)
             {
-                return FCStringType::Strncmp(StringData, InString, InLength) == 0;
+                return CStringType::Strncmp(StringData, InString, InLength) == 0;
             }
             else if (SearchType == EStringCaseType::NoCase)
             {
-                return FCStringType::Strnicmp(StringData, InString, InLength) == 0;
+                return CStringType::Strnicmp(StringData, InString, InLength) == 0;
             }
         }
 
@@ -860,7 +860,7 @@ public:
             return false;
         }
 
-        return EndsWith(InString, FCStringType::Strlen(InString), SearchType);
+        return EndsWith(InString, CStringType::Strlen(InString), SearchType);
     }
 
     /**
@@ -991,7 +991,7 @@ public:
      */
     NODISCARD FORCEINLINE const CharType* operator*() const
     {
-        return (ViewStart == nullptr) ? FCStringType::Empty() : ViewStart;
+        return (ViewStart == nullptr) ? CStringType::Empty() : ViewStart;
     }
 
     /**
@@ -1040,8 +1040,8 @@ private:
     const CharType* ViewEnd{ nullptr };
 };
 
-using FStringView     = TStringView<CHAR>;
-using FStringViewWide = TStringView<WIDECHAR>;
+using StringView     = TStringView<CHAR>;
+using StringViewWide = TStringView<WIDECHAR>;
 
 template<typename CharType>
 NODISCARD inline bool operator==(const TStringView<CharType>& LHS, const CharType* RHS)

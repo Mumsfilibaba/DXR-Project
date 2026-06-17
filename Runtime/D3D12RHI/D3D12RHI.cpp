@@ -952,7 +952,7 @@ FRHIUnorderedAccessView* FD3D12DeviceRHI::CreateUnorderedAccessView(FRHIResource
     const D3D12_RESOURCE_DESC& ResourceDesc = D3D12Resource->GetDesc();
     if ((ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) == D3D12_RESOURCE_FLAG_NONE)
     {
-        FString DebugName;
+        String DebugName;
         D3D12Resource->GetDebugName(DebugName);
         D3D12_ERROR("Resource '%s' does not allow UnorderedAccessViews", *DebugName);
         return nullptr;
@@ -996,7 +996,7 @@ FRHIRenderTargetView* FD3D12DeviceRHI::CreateRenderTargetView(FRHIResource* InRe
     const D3D12_RESOURCE_DESC& ResourceDesc = D3D12Resource->GetDesc();
     if ((ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) == D3D12_RESOURCE_FLAG_NONE)
     {
-        FString DebugName;
+        String DebugName;
         D3D12Resource->GetDebugName(DebugName);
         D3D12_ERROR("Texture '%s' does not allow RenderTargetViews", *DebugName);
         return nullptr;
@@ -1177,7 +1177,7 @@ FRHIDepthStencilView* FD3D12DeviceRHI::CreateDepthStencilView(FRHIResource* InRe
     const D3D12_RESOURCE_DESC& ResourceDesc = D3D12Resource->GetDesc();
     if ((ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) == D3D12_RESOURCE_FLAG_NONE)
     {
-        FString DebugName;
+        String DebugName;
         D3D12Resource->GetDebugName(DebugName);
         D3D12_ERROR("Texture '%s' does not allow DepthStencilViews", *DebugName);
         return nullptr;
@@ -1673,7 +1673,7 @@ void FD3D12DeviceRHI::EnqueueResourceDeletion(FRHIResource* Resource)
     }
 }
 
-FString FD3D12DeviceRHI::GetAdapterName() const 
+String FD3D12DeviceRHI::GetAdapterName() const 
 { 
     CHECK(Adapter != nullptr);
     return Adapter->GetDescription(); 

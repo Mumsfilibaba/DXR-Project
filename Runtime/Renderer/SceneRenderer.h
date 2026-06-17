@@ -23,7 +23,7 @@
 #include "Renderer/TemporalAA.h"
 #include "Renderer/PostProcessing.h"
 #if EDITOR_BUILD
-#include "Renderer/SelectionOutlinePass.h"
+    #include "Renderer/SelectionOutlinePass.h"
 #endif
 #include "Renderer/Scene/Scene.h"
 
@@ -38,49 +38,49 @@ class FEditorSelectionIDPass;
 struct FCameraHLSL
 {
     // 0-64
-    FMatrix4 PrevViewProjection;
+    Matrix4 PrevViewProjection;
 
     // 64-192
-    FMatrix4 ViewProjection;
-    FMatrix4 ViewProjectionInv;
+    Matrix4 ViewProjection;
+    Matrix4 ViewProjectionInv;
 
     // 192-320
-    FMatrix4 ViewProjectionUnjittered;
-    FMatrix4 ViewProjectionInvUnjittered;
+    Matrix4 ViewProjectionUnjittered;
+    Matrix4 ViewProjectionInvUnjittered;
 
     // 320-448
-    FMatrix4 View;
-    FMatrix4 ViewInv;
+    Matrix4 View;
+    Matrix4 ViewInv;
 
     // 448-576
-    FMatrix4 Projection;
-    FMatrix4 ProjectionInv;
+    Matrix4 Projection;
+    Matrix4 ProjectionInv;
 
     // 448-576
-    FMatrix4 ProjectionUnjittered;
-    FMatrix4 ProjectionInvUnjittered;
+    Matrix4 ProjectionUnjittered;
+    Matrix4 ProjectionInvUnjittered;
 
     // 576-592
-    FVector3 Position;
-    float    NearPlane = 0.0f;
+    Vector3 Position;
+    float   NearPlane = 0.0f;
 
     // 592-608
-    FVector3 Forward;
-    float    FarPlane = 0.0f;
+    Vector3 Forward;
+    float   FarPlane = 0.0f;
 
     // 608-624
-    FVector3 Right;
-    float    AspectRatio = 0.0f;
+    Vector3 Right;
+    float   AspectRatio = 0.0f;
 
     // 624-640
-    FVector2 Jitter;
-    FVector2 PrevJitter;
+    Vector2 Jitter;
+    Vector2 PrevJitter;
 
     // 640-656
-    float    ViewportWidth  = 0.0f;
-    float    ViewportHeight = 0.0f;
-    float    Padding0       = 0.0f;
-    float    Padding1       = 0.0f;
+    float   ViewportWidth  = 0.0f;
+    float   ViewportHeight = 0.0f;
+    float   Padding0       = 0.0f;
+    float   Padding1       = 0.0f;
 };
 
 class FFrameCounterState
@@ -211,47 +211,45 @@ private:
 #endif
  
     // RenderPasses and Resources 
-    FFrameResources             Resources; 
-    FFrameCounterState          FrameCounter;
-
-    FCameraHLSL                 CameraBuffer;
-    FHaltonState                HaltonState;
-
-    FDepthPrePass*              DepthPrePass;
-    FDeferredBasePass*          BasePass;
-    FDepthReducePass*           DepthReducePass;
-    FTiledLightPass*            TiledLightPass;
-    FPointLightRenderPass*      PointLightRenderPass;
-    FCascadeGenerationPass*     CascadeGenerationPass;
-    FCascadedShadowsRenderPass* CascadedShadowsRenderPass;
-    FShadowMaskRenderPass*      ShadowMaskRenderPass;
-    FScreenSpaceOcclusionPass*  ScreenSpaceOcclusionPass;
-    FSkyboxRenderPass*          SkyboxRenderPass;
-    FTemporalAA*                TemporalAA;
+    FFrameResources              Resources; 
+    FFrameCounterState           FrameCounter;
+    FCameraHLSL                  CameraBuffer;
+    FHaltonState                 HaltonState;
+    FDepthPrePass*               DepthPrePass;
+    FDeferredBasePass*           BasePass;
+    FDepthReducePass*            DepthReducePass;
+    FTiledLightPass*             TiledLightPass;
+    FPointLightRenderPass*       PointLightRenderPass;
+    FCascadeGenerationPass*      CascadeGenerationPass;
+    FCascadedShadowsRenderPass*  CascadedShadowsRenderPass;
+    FShadowMaskRenderPass*       ShadowMaskRenderPass;
+    FScreenSpaceOcclusionPass*   ScreenSpaceOcclusionPass;
+    FSkyboxRenderPass*           SkyboxRenderPass;
+    FTemporalAA*                 TemporalAA;
 #if EDITOR_BUILD
-    FSelectionOutlinePass*      SelectionOutlinePass;
-    FEditorNoJitterDepthPass*   EditorNoJitterDepthPass;
-    FEditorSelectionIDPass*     EditorSelectionIDPass;
+    FSelectionOutlinePass*       SelectionOutlinePass;
+    FEditorNoJitterDepthPass*    EditorNoJitterDepthPass;
+    FEditorSelectionIDPass*      EditorSelectionIDPass;
 #endif
-    FForwardPass*               ForwardPass;
-    FFXAAPass*                  FXAAPass;
-    FTonemapPass*               TonemapPass;
+    FForwardPass*                ForwardPass;
+    FFXAAPass*                   FXAAPass;
+    FTonemapPass*                TonemapPass;
 #if EDITOR_BUILD
-    FFinalCompositePass*        FinalCompositePass;
+    FFinalCompositePass*         FinalCompositePass;
 #endif
-    FLightProbeRenderer*        LightProbeRenderer;
-    FDebugRenderer*             DebugRenderer;
-    FDebugViewPass*             DebugViewPass;
-    FRayTracer                  RayTracer;
+    FLightProbeRenderer*         LightProbeRenderer;
+    FDebugRenderer*              DebugRenderer;
+    FDebugViewPass*              DebugViewPass;
+    FRayTracer                   RayTracer;
 
     // RHI
-    FGenericPlatformEvent*      LastFrameFinishedEvent;
-    FRHIQueryRef                TimestampQueries;
-    FRHICommandList             CommandList;
+    FGenericPlatformEvent*       LastFrameFinishedEvent;
+    FRHIQueryRef                 TimestampQueries;
+    FRHICommandList              CommandList;
 
-    FRHITextureRef              ShadingImage;
-    FRHIComputePipelineStateRef ShadingRatePipeline;
-    FRHIComputeShaderRef        ShadingRateShader;
+    FRHITextureRef               ShadingImage;
+    FRHIComputePipelineStateRef  ShadingRatePipeline;
+    FRHIComputeShaderRef         ShadingRateShader;
 
     // SwapChains that should be presented at the end of the frame
     TArray<FRHISwapChainRef>     SwapChainsToPrepare;

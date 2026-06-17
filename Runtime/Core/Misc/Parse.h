@@ -42,7 +42,7 @@ struct Parse
     static FORCEINLINE void ParseAlnum(CHAR** Start)
     {
         CHAR* TempStart = *Start;
-        while (FCharTraits::IsAlnum(*TempStart))
+        while (CharTraits::IsAlnum(*TempStart))
             ++TempStart;
 
         *Start = TempStart;
@@ -51,7 +51,7 @@ struct Parse
     static FORCEINLINE void ParseAlnum(const CHAR** Start)
     {
         const CHAR* TempStart = *Start;
-        while (FCharTraits::IsAlnum(*TempStart))
+        while (CharTraits::IsAlnum(*TempStart))
             ++TempStart;
 
         *Start = TempStart;

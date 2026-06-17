@@ -160,7 +160,7 @@ private:
 
 FShaderCompiler* FShaderCompiler::GShaderCompiler = nullptr;
 
-FShaderCompiler::FShaderCompiler(const FString& InAssetPath)
+FShaderCompiler::FShaderCompiler(const String& InAssetPath)
     : DXCLib(nullptr)
     , DxcCreateInstanceFunc(nullptr)
     , AssetPath(InAssetPath)
@@ -179,7 +179,7 @@ FShaderCompiler::~FShaderCompiler()
     DxcCreateInstanceFunc = nullptr;
 }
 
-bool FShaderCompiler::Create(const FString& InAssetPath)
+bool FShaderCompiler::Create(const String& InAssetPath)
 {
     CHECK(GShaderCompiler == nullptr);
 
@@ -242,10 +242,10 @@ bool FShaderCompiler::Initialize()
     return true;
 }
 
-bool FShaderCompiler::CompileFromFile(const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
+bool FShaderCompiler::CompileFromFile(const String& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
     // Add asset-path to the filename
-    const FString FilePath = AssetPath + '/' + Filename;
+    const String FilePath = AssetPath + '/' + Filename;
     
     // Store the ShaderFile in this array
     TArray<CHAR> Text;
@@ -268,16 +268,16 @@ bool FShaderCompiler::CompileFromFile(const FString& Filename, const FShaderComp
     }
 
     // Compile the source
-    const FString Source(Text.Data(), Text.Size());
+    const String Source(Text.Data(), Text.Size());
     return Compile(Source, FilePath, CompileInfo, OutByteCode);
 }
 
-bool FShaderCompiler::CompileFromSource(const FString& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
+bool FShaderCompiler::CompileFromSource(const String& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
     return Compile(ShaderSource, "", CompileInfo, OutByteCode);
 }
 
-bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
+bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
     STAT_ADD(STAT_Shader_CompileCount, 1);
     OutByteCode.Clear();
@@ -353,15 +353,15 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     }
 
     // Convert defines
-    TArray<FStringWide> DefineStrings;
+    TArray<StringWide> DefineStrings;
     if (!CompileInfo.Defines.IsEmpty())
     {
         DefineStrings.Reserve(CompileInfo.Defines.Size() * 2);
 
         for (const FShaderDefine& Define : CompileInfo.Defines)
         {
-            const FStringWide& WideDefine = DefineStrings.Emplace(CharToWide(Define.Define));
-            const FStringWide& WideValue  = DefineStrings.Emplace(CharToWide(Define.Value));
+            const StringWide& WideDefine = DefineStrings.Emplace(CharToWide(Define.Define));
+            const StringWide& WideValue  = DefineStrings.Emplace(CharToWide(Define.Value));
             DxcDefines.Add({ *WideDefine, *WideValue });
         }
     }
@@ -386,7 +386,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     }
 
     // Helper for building arguments for compilation and preprocessing
-    const auto BuildArguments = [&](const FString& FilePath, const FString& EntryPoint, const FShaderCompileInfo& CompileInfo)
+    const auto BuildArguments = [&](const String& FilePath, const String& EntryPoint, const FShaderCompileInfo& CompileInfo)
     {
         // Retrieve the shader target
         const LPCWSTR ShaderStageText = GetShaderStageString(CompileInfo.ShaderStage);
@@ -394,11 +394,11 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
 
         constexpr uint32 BufferLength = sizeof("xxx_x_x");
         WCHAR TargetProfile[BufferLength];
-        FCStringWide::Snprintf(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
+        CStringWide::Snprintf(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
 
         // Use the asset-folder as base for the shader-files
-        const FStringWide WideFilePath   = CharToWide(FilePath);
-        const FStringWide WideEntrypoint = CharToWide(EntryPoint);
+        const StringWide WideFilePath   = CharToWide(FilePath);
+        const StringWide WideEntrypoint = CharToWide(EntryPoint);
 
         // Build the arguments for the preprocessing step
         TComPtr<IDxcCompilerArgs> CompileArguments;
@@ -482,7 +482,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     }
 
     // Handle language selection
-    FString Source(reinterpret_cast<const char*>(PreprocessedBlob->GetBufferPointer()), static_cast<int32>(PreprocessedBlob->GetBufferSize()));
+    String Source(reinterpret_cast<const char*>(PreprocessedBlob->GetBufferPointer()), static_cast<int32>(PreprocessedBlob->GetBufferSize()));
     if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
     {
         CompileArgs.Emplace(L"-spirv");
@@ -555,7 +555,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
 
         if (PrintBlob && PrintBlob->GetBufferSize() > 0)
         {
-            const FString Output(reinterpret_cast<LPCSTR>(PrintBlob->GetBufferPointer()), uint32(PrintBlob->GetBufferSize()));
+            const String Output(reinterpret_cast<LPCSTR>(PrintBlob->GetBufferPointer()), uint32(PrintBlob->GetBufferSize()));
             LOG_INFO("[FShaderCompiler]: Successfully compiled shader with the following output: %s", *Output);
         }
         else
@@ -624,7 +624,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     return true;
 }
 
-bool FShaderCompiler::ConvertSpirvToMetalShader(const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
+bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
     if (OutByteCode.IsEmpty() || CompileInfo.EntryPoint.IsEmpty())
     {
@@ -678,7 +678,7 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const FString& FilePath, const F
     }
 
     // Create a new array
-    const uint32 SourceLength = FCString::Strlen(MSLSource);
+    const uint32 SourceLength = CString::Strlen(MSLSource);
     TArray<uint8> NewShader(reinterpret_cast<const uint8*>(MSLSource), (SourceLength + 1) * sizeof(uint8));
     NewShader[SourceLength] = 0;
 
@@ -700,7 +700,7 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const FString& FilePath, const F
     return true;
 }
 
-bool FShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const FString& Filename)
+bool FShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const String& Filename)
 {
     TFileRef<IPlatformFile> Output = FPlatformFile::OpenForWrite(Filename);
     if (!Output)
@@ -713,9 +713,9 @@ bool FShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const FSt
     return true;
 }
 
-FString FShaderCompiler::CreateArgString(const TArrayView<LPCWSTR> Args)
+String FShaderCompiler::CreateArgString(const TArrayView<LPCWSTR> Args)
 {
-    FStringWide NewString;
+    StringWide NewString;
     for (LPCWSTR CurrentArg : Args)
     {
         NewString += CurrentArg;

@@ -47,12 +47,12 @@ FEditorOutputLogWidget::~FEditorOutputLogWidget()
     }
 }
 
-void FEditorOutputLogWidget::Log(const FString& Message)
+void FEditorOutputLogWidget::Log(const String& Message)
 {
     Log(ELogSeverity::Info, Message);
 }
 
-void FEditorOutputLogWidget::Log(ELogSeverity Severity, const FString& Message)
+void FEditorOutputLogWidget::Log(ELogSeverity Severity, const String& Message)
 {
     SCOPED_LOCK(MessagesCS);
 
@@ -394,7 +394,7 @@ void FEditorOutputLogWidget::DrawLogListRichText()
                 continue;
             }
 
-            if (bHasSearch && !FCString::Stristr(Line, Search))
+            if (bHasSearch && !CString::Stristr(Line, Search))
             {
                 continue;
             }
@@ -413,14 +413,14 @@ void FEditorOutputLogWidget::DrawLogListRichText()
 
             if (bHasSearch)
             {
-                const int32 MatchStart = FStringView(Line).Find(Search, EStringCaseType::NoCase);
-                const int32 MatchLen   = static_cast<int32>(FCString::Strlen(Search));
+                const int32 MatchStart = StringView(Line).Find(Search, EStringCaseType::NoCase);
+                const int32 MatchLen   = static_cast<int32>(CString::Strlen(Search));
 
                 if (MatchStart >= 0 && MatchLen > 0)
                 {
                     if (MatchStart > 0)
                     {
-                        FString Prefix;
+                        String Prefix;
                         Prefix.Reserve(MatchStart + 1);
 
                         for (int32 c = 0; c < MatchStart; ++c)
@@ -431,7 +431,7 @@ void FEditorOutputLogWidget::DrawLogListRichText()
                         EditorWidgets::RichTextAddText(RichTextCtx, *Prefix, LineColor);
                     }
 
-                    FString Match;
+                    String Match;
                     Match.Reserve(MatchLen + 1);
 
                     for (int32 c = 0; c < MatchLen; ++c)
@@ -441,12 +441,12 @@ void FEditorOutputLogWidget::DrawLogListRichText()
 
                     EditorWidgets::RichTextAddTextBg(RichTextCtx, *Match, HighlightTextU32, HighlightBgU32);
 
-                    const int32 LineLen     = static_cast<int32>(FCString::Strlen(Line));
+                    const int32 LineLen     = static_cast<int32>(CString::Strlen(Line));
                     const int32 SuffixStart = MatchStart + MatchLen;
 
                     if (SuffixStart < LineLen)
                     {
-                        FString Suffix;
+                        String Suffix;
                         Suffix.Reserve(LineLen - SuffixStart + 1);
                         for (int32 c = SuffixStart; c < LineLen; ++c)
                         {
@@ -478,7 +478,7 @@ void FEditorOutputLogWidget::DrawLogListRichText()
 
             if (EditorWidgets::MenuItem("Copy", nullptr, false, RichTextCtx.bHasSelection))
             {
-                const FString Selected = EditorWidgets::GetSelectedRichText(RichTextCtx);
+                const String Selected = EditorWidgets::GetSelectedRichText(RichTextCtx);
                 if (!Selected.IsEmpty())
                 {
                     ImGui::SetClipboardText(*Selected);

@@ -15,7 +15,7 @@
 struct FCompressionBufferHLSL
 {
     uint32   TextureSizeInBlocks[2];
-    FVector2 TextureSizeRcp;
+    Vector2 TextureSizeRcp;
 };
 
 struct FBC7CompressionBufferHLSL
@@ -59,7 +59,7 @@ FTextureCompressor::~FTextureCompressor()
 {
 }
 
-bool FTextureCompressor::CompileAndCreateShaderPSO(const FString& ShaderPath, const FRHIStaticSamplerInfo& StaticSampler, FRHIComputeShaderRef& OutShader, FRHIComputePipelineStateRef& OutPSO)
+bool FTextureCompressor::CompileAndCreateShaderPSO(const String& ShaderPath, const FRHIStaticSamplerInfo& StaticSampler, FRHIComputeShaderRef& OutShader, FRHIComputePipelineStateRef& OutPSO)
 {
     TArray<uint8> ShaderCode;
     FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
@@ -90,7 +90,7 @@ bool FTextureCompressor::CompileAndCreateShaderPSO(const FString& ShaderPath, co
     return true;
 }
 
-bool FTextureCompressor::CompileAndCreateShaderPSOEx(const FString& ShaderPath, const FString& EntryPoint, const TArrayView<FShaderDefine>& Defines, FRHIComputeShaderRef& OutShader, FRHIComputePipelineStateRef& OutPSO)
+bool FTextureCompressor::CompileAndCreateShaderPSOEx(const String& ShaderPath, const String& EntryPoint, const TArrayView<FShaderDefine>& Defines, FRHIComputeShaderRef& OutShader, FRHIComputePipelineStateRef& OutPSO)
 {
     TArray<uint8> ShaderCode;
     FShaderCompileInfo CompileInfo(EntryPoint, EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
@@ -343,7 +343,7 @@ bool FTextureCompressor::CompressSinglePass64(FRHICommandList& CommandList, cons
         FCompressionBufferHLSL Buffer;
         Buffer.TextureSizeInBlocks[0] = Math::AlignUp(MipBlocksX, BC_BLOCK_SIZE);
         Buffer.TextureSizeInBlocks[1] = Math::AlignUp(MipBlocksY, BC_BLOCK_SIZE);
-        Buffer.TextureSizeRcp         = FVector2(1.0f / static_cast<float>(MipWidth), 1.0f / static_cast<float>(MipHeight));
+        Buffer.TextureSizeRcp         = Vector2(1.0f / static_cast<float>(MipWidth), 1.0f / static_cast<float>(MipHeight));
 
         constexpr uint32 NumConstants = sizeof(FCompressionBufferHLSL) / sizeof(uint32);
         CommandList.SetShaderConstants(Shader, &Buffer, NumConstants);
@@ -360,10 +360,10 @@ bool FTextureCompressor::CompressSinglePass64(FRHICommandList& CommandList, cons
     FRHITextureCopyDesc CopyDesc;
     CopyDesc.DstArraySlice  = 0;
     CopyDesc.DstMipSlice    = 0;
-    CopyDesc.DstPosition    = FIntVector3();
+    CopyDesc.DstPosition    = IntVector3();
     CopyDesc.SrcArraySlice  = 0;
     CopyDesc.SrcMipSlice    = 0;
-    CopyDesc.SrcPosition    = FIntVector3();
+    CopyDesc.SrcPosition    = IntVector3();
     CopyDesc.Size.X         = BlocksX;
     CopyDesc.Size.Y         = BlocksY;
     CopyDesc.Size.Z         = 1;
@@ -455,7 +455,7 @@ bool FTextureCompressor::CompressSinglePass128(FRHICommandList& CommandList, con
         FCompressionBufferHLSL Buffer;
         Buffer.TextureSizeInBlocks[0] = Math::AlignUp(MipBlocksX, BC_BLOCK_SIZE);
         Buffer.TextureSizeInBlocks[1] = Math::AlignUp(MipBlocksY, BC_BLOCK_SIZE);
-        Buffer.TextureSizeRcp         = FVector2(1.0f / static_cast<float>(MipWidth), 1.0f / static_cast<float>(MipHeight));
+        Buffer.TextureSizeRcp         = Vector2(1.0f / static_cast<float>(MipWidth), 1.0f / static_cast<float>(MipHeight));
 
         constexpr uint32 NumConstants = sizeof(FCompressionBufferHLSL) / sizeof(uint32);
         CommandList.SetShaderConstants(Shader, &Buffer, NumConstants);
@@ -472,10 +472,10 @@ bool FTextureCompressor::CompressSinglePass128(FRHICommandList& CommandList, con
     FRHITextureCopyDesc CopyDesc;
     CopyDesc.DstArraySlice  = 0;
     CopyDesc.DstMipSlice    = 0;
-    CopyDesc.DstPosition    = FIntVector3();
+    CopyDesc.DstPosition    = IntVector3();
     CopyDesc.SrcArraySlice  = 0;
     CopyDesc.SrcMipSlice    = 0;
-    CopyDesc.SrcPosition    = FIntVector3();
+    CopyDesc.SrcPosition    = IntVector3();
     CopyDesc.Size.X         = BlocksX;
     CopyDesc.Size.Y         = BlocksY;
     CopyDesc.Size.Z         = 1;
@@ -668,7 +668,7 @@ bool FTextureCompressor::CompressBC6(FRHICommandList& CommandList, const FRHITex
         FCompressionBufferHLSL Buffer;
         Buffer.TextureSizeInBlocks[0] = Math::AlignUp(MipBlocksX, BC_BLOCK_SIZE);
         Buffer.TextureSizeInBlocks[1] = Math::AlignUp(MipBlocksY, BC_BLOCK_SIZE);
-        Buffer.TextureSizeRcp         = FVector2(1.0f / static_cast<float>(MipWidth), 1.0f / static_cast<float>(MipHeight));
+        Buffer.TextureSizeRcp         = Vector2(1.0f / static_cast<float>(MipWidth), 1.0f / static_cast<float>(MipHeight));
 
         constexpr uint32 NumConstants = sizeof(FCompressionBufferHLSL) / sizeof(uint32);
         CommandList.SetShaderConstants(BC6HCompressionShader.Get(), &Buffer, NumConstants);
@@ -685,10 +685,10 @@ bool FTextureCompressor::CompressBC6(FRHICommandList& CommandList, const FRHITex
     FRHITextureCopyDesc CopyDesc;
     CopyDesc.DstArraySlice  = 0;
     CopyDesc.DstMipSlice    = 0;
-    CopyDesc.DstPosition    = FIntVector3();
+    CopyDesc.DstPosition    = IntVector3();
     CopyDesc.SrcArraySlice  = 0;
     CopyDesc.SrcMipSlice    = 0;
-    CopyDesc.SrcPosition    = FIntVector3();
+    CopyDesc.SrcPosition    = IntVector3();
     CopyDesc.Size.X         = BlocksX;
     CopyDesc.Size.Y         = BlocksY;
     CopyDesc.Size.Z         = 1;
@@ -703,7 +703,7 @@ bool FTextureCompressor::CompressBC6(FRHICommandList& CommandList, const FRHITex
 
 bool FTextureCompressor::InitializeBC7()
 {
-    const FString BC7ShaderPath = "Shaders/BlockCompression/BlockCompressionBC7.hlsl";
+    const String BC7ShaderPath = "Shaders/BlockCompression/BlockCompressionBC7.hlsl";
 
     TArray<FShaderDefine> NoDefines;
     if (!CompileAndCreateShaderPSOEx(BC7ShaderPath, "TryMode456CS", NoDefines, BC7TryMode456Shader, BC7TryMode456PSO))
@@ -949,10 +949,10 @@ bool FTextureCompressor::CompressBC7(FRHICommandList& CommandList, const FRHITex
     FRHITextureCopyDesc CopyDesc;
     CopyDesc.DstArraySlice  = 0;
     CopyDesc.DstMipSlice    = 0;
-    CopyDesc.DstPosition    = FIntVector3();
+    CopyDesc.DstPosition    = IntVector3();
     CopyDesc.SrcArraySlice  = 0;
     CopyDesc.SrcMipSlice    = 0;
-    CopyDesc.SrcPosition    = FIntVector3();
+    CopyDesc.SrcPosition    = IntVector3();
     CopyDesc.Size.X         = BlocksX;
     CopyDesc.Size.Y         = BlocksY;
     CopyDesc.Size.Z         = 1;
@@ -1085,7 +1085,7 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
         Buffer.TextureSizeInBlocks[1] = Math::AlignUp(CurrentFaceSizeInBlocks, BC_BLOCK_SIZE);
 
         const float CurrentFaceSizeRcp = 1.0f / static_cast<float>(CurrentFaceSize);
-        Buffer.TextureSizeRcp = FVector2(CurrentFaceSizeRcp);
+        Buffer.TextureSizeRcp = Vector2(CurrentFaceSizeRcp);
 
         constexpr uint32 NumConstants = sizeof(FCompressionBufferHLSL) / sizeof(uint32);
         CommandList.SetShaderConstants(BC6HCompressionCubeShader.Get(), &Buffer, NumConstants);
@@ -1102,10 +1102,10 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
     }
 
     FRHITextureCopyDesc CopyDesc;
-    CopyDesc.DstPosition    = FIntVector3();
+    CopyDesc.DstPosition    = IntVector3();
     CopyDesc.DstArraySlice  = 0;
     CopyDesc.DstMipSlice    = 0;
-    CopyDesc.SrcPosition    = FIntVector3();
+    CopyDesc.SrcPosition    = IntVector3();
     CopyDesc.SrcArraySlice  = 0;
     CopyDesc.SrcMipSlice    = 0;
     CopyDesc.Size.X         = CompressedTexDesc.Extent.X;

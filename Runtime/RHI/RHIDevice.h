@@ -349,7 +349,7 @@ struct FRHIDevice
      * @brief Gets the adapter name.
      * @return A string with the adapter name.
      */
-    virtual FString GetAdapterName() const = 0;
+    virtual String GetAdapterName() const = 0;
 
     /**
      * @brief Gets the current RHI's API type.

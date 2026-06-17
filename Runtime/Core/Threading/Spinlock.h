@@ -4,10 +4,10 @@
 
 class FSpinLock
 {
-    enum
+    enum class EState : int32
     {
-        STATE_UNLOCKED = 0,
-        STATE_LOCKED   = 1,
+        Unlocked = 0,
+        Locked   = 1,
     };
 
 public:
@@ -18,7 +18,7 @@ public:
 
     /** @brief Default constructor */
     FORCEINLINE FSpinLock() noexcept
-        : State(STATE_UNLOCKED)
+        : State(EState::Unlocked)
     {
     }
 
@@ -29,12 +29,12 @@ public:
         for (;;)
         {
             // When the previous value is unlocked => success
-            if (State.Exchange(STATE_LOCKED) == STATE_UNLOCKED)
+            if (State.Exchange(EState::Locked) == EState::Unlocked)
             {
                 break;
             }
 
-            while (State.Load(EMemoryOrder::Relaxed) == STATE_LOCKED)
+            while (State.Load(EMemoryOrder::Relaxed) == EState::Locked)
             {
                 FPlatformThreadMisc::Pause();
             }
@@ -45,15 +45,15 @@ public:
     FORCEINLINE bool TryLock() noexcept
     {
         // The first relaxed load is in order to prevent unnecessary cache misses when trying to lock in a loop: See Lock
-        return (State.Load(EMemoryOrder::Relaxed) == STATE_UNLOCKED) && (State.Exchange(STATE_LOCKED) == STATE_UNLOCKED);
+        return (State.Load(EMemoryOrder::Relaxed) == EState::Unlocked) && (State.Exchange(EState::Locked) == EState::Unlocked);
     }
 
     /** @brief Unlock CriticalSection for other threads */
     FORCEINLINE void Unlock() noexcept
     {
-        State.Store(STATE_UNLOCKED);
+        State.Store(EState::Unlocked);
     }
 
 private:
-    FAtomicInt32 State;
+    TAtomicEnum<EState> State;
 };

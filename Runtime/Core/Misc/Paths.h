@@ -3,13 +3,13 @@
 
 struct CORE_API Paths
 {
-    static FString GetEngineDir();
+    static String GetEngineDir();
 
-    static FString GetAssetDir();
+    static String GetAssetDir();
 
-    static FString GetProjectDir();
+    static String GetProjectDir();
 
-    static FString GetProjectName();
+    static String GetProjectName();
 
-    static FString GetProjectModuleName();
+    static String GetProjectModuleName();
 };

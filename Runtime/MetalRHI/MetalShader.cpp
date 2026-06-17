@@ -24,7 +24,7 @@ bool FMetalShader::Initialize(const TArray<uint8>& InCode)
         const CHAR* CodeString = reinterpret_cast<const CHAR*>(InCode.Data());
         const int32 CodeLength = InCode.Size();
         
-        const FString SourceString(CodeString, CodeLength);
+        const String SourceString(CodeString, CodeLength);
         
         NSString* Source = SourceString.GetNSString();
         CHECK(Source != nil);
@@ -37,13 +37,13 @@ bool FMetalShader::Initialize(const TArray<uint8>& InCode)
         Library = [Device newLibraryWithSource:Source options:nil error:&Error];
         if (!Library)
         {
-            const FString ErrorString([Error localizedDescription]);
+            const String ErrorString([Error localizedDescription]);
             LOG_ERROR("Failed to compile shader. Error: %s", *ErrorString);
             return false;
         }
         
         // Retrieve the entrypoint (All SPIR-V shaders have a static entrypoint)
-        NSString* EntryPoint = FString("Spirv_Main").GetNSString();
+        NSString* EntryPoint = String("Spirv_Main").GetNSString();
         FunctionName = [EntryPoint retain];
         
         // Retrieve the function

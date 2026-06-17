@@ -36,9 +36,9 @@ FSkyboxRenderPass::~FSkyboxRenderPass()
 bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
 {
     // Sphere-data
-    TArray<FVector3> SkyboxVertices;
-    TArray<uint16>   SkyboxIndicies16;
-    TArray<uint32>   SkyboxIndicies32;
+    TArray<Vector3> SkyboxVertices;
+    TArray<uint16>  SkyboxIndicies16;
+    TArray<uint32>  SkyboxIndicies32;
 
     // Create a sphere used for the Skybox
     {
@@ -146,7 +146,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     // Initialize standard input layout
     TArray<FRHIInputElementDesc> InputElements =
     {
-        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 }
+        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(Vector3), 0, 0, 0, EVertexInputClass::Vertex, 0 }
     };
 
     FRHIInputLayoutRef InputLayout = RHI::CreateInputLayout(InputElements);
@@ -263,7 +263,7 @@ void FSkyboxRenderPass::Execute(FRHICommandList& CommandList, const FFrameResour
 
     struct FSimpleCameraBufferHLSL
     {
-        FMatrix4 Matrix;
+        Matrix4 Matrix;
     } SimpleCamera;
 
     SimpleCamera.Matrix = Scene->Camera->GetViewProjectionWitoutTranslateMatrix();

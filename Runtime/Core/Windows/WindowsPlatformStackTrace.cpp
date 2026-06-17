@@ -19,7 +19,7 @@ bool FWindowsPlatformStackTrace::InitializeSymbols()
         ::SymSetOptions(SymOptions | SymOptionFlags);
 
         // TODO: Assumed to be the same as the executable path
-        const FString SymbolPath = GetSymbolPath();
+        const String SymbolPath = GetSymbolPath();
 
         // Get handle for the current process handle
         HANDLE CurrentProcess = ::GetCurrentProcess();
@@ -137,8 +137,8 @@ void FWindowsPlatformStackTrace::GetStackTraceEntryFromAddress(uint64 Address, F
             Offset++;
         }
 
-        FCString::Strncpy(OutStackTraceEntry.FunctionName, Symbol->Name + Offset, FStackTraceEntry::MaxNameLength);
-        FCString::Strncat(OutStackTraceEntry.FunctionName + Offset, "()", FStackTraceEntry::MaxNameLength - Offset);
+        CString::Strncpy(OutStackTraceEntry.FunctionName, Symbol->Name + Offset, FStackTraceEntry::MaxNameLength);
+        CString::Strncat(OutStackTraceEntry.FunctionName + Offset, "()", FStackTraceEntry::MaxNameLength - Offset);
     }
     else
     {
@@ -154,7 +154,7 @@ void FWindowsPlatformStackTrace::GetStackTraceEntryFromAddress(uint64 Address, F
     DWORD SymbolDisplacement;
     if (::SymGetLineFromAddr64(ProcessHandle, Address, &SymbolDisplacement, &ImageHelpLine))
     {
-        FCString::Strncpy(OutStackTraceEntry.Filename, ImageHelpLine.FileName, FStackTraceEntry::MaxNameLength);
+        CString::Strncpy(OutStackTraceEntry.Filename, ImageHelpLine.FileName, FStackTraceEntry::MaxNameLength);
         OutStackTraceEntry.Line = ImageHelpLine.LineNumber;
     }
     else
@@ -168,7 +168,7 @@ void FWindowsPlatformStackTrace::GetStackTraceEntryFromAddress(uint64 Address, F
     ImageHelpModule.SizeOfStruct = sizeof(ImageHelpModule);
     if (::SymGetModuleInfo64(ProcessHandle, Address, &ImageHelpModule))
     {
-        FCString::Strncpy(OutStackTraceEntry.ModuleName, ImageHelpModule.ImageName, FStackTraceEntry::MaxNameLength);
+        CString::Strncpy(OutStackTraceEntry.ModuleName, ImageHelpModule.ImageName, FStackTraceEntry::MaxNameLength);
     }
     else
     {

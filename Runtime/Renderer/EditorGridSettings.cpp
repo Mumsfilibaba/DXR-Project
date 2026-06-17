@@ -2,8 +2,6 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Math/Math.h"
 
-// File-scope settings instance. The bound CVars below write directly into these fields,
-// so the console / config files / command-line and the renderer all read/write the same memory.
 static FEditorGridSettings GEditorGridSettings =
 {
     /* bEnabled         */ true,
@@ -16,9 +14,9 @@ static FEditorGridSettings GEditorGridSettings =
     /* FadeDistance     */ 5000.0f,
     /* HorizonFade      */ 4.0f,
     /* DepthBias        */ 0.01f,
-    /* MinorColor       */ FVector3(0.1f, 0.1f, 0.1f),
+    /* MinorColor       */ Vector3(0.1f, 0.1f, 0.1f),
     /* MinorAlpha       */ 0.6f,
-    /* MajorColor       */ FVector3(0.14f, 0.14f, 0.14f),
+    /* MajorColor       */ Vector3(0.14f, 0.14f, 0.14f),
     /* MajorAlpha       */ 0.7f,
 };
 
@@ -136,28 +134,26 @@ FEditorGridSettings GetEditorGridSettings()
 
     Settings.MinorSize = Math::Clamp<float>(Settings.MinorSize, 0.001f, 1000000.0f);
     Settings.MajorSize = Math::Clamp<float>(Settings.MajorSize, 0.001f, 1000000.0f);
+
     if (Settings.MajorSize < Settings.MinorSize)
     {
         Settings.MajorSize = Settings.MinorSize;
     }
 
-    Settings.MinorWidth = Math::Clamp<float>(Settings.MinorWidth, 0.25f, 16.0f);
-    Settings.MajorWidth = Math::Clamp<float>(Settings.MajorWidth, 0.25f, 16.0f);
-
+    Settings.MinorWidth       = Math::Clamp<float>(Settings.MinorWidth, 0.25f, 16.0f);
+    Settings.MajorWidth       = Math::Clamp<float>(Settings.MajorWidth, 0.25f, 16.0f);
     Settings.MaxTraceDistance = Math::Clamp<float>(Settings.MaxTraceDistance, 0.0f, 10000000.0f);
     Settings.FadeDistance     = Math::Clamp<float>(Settings.FadeDistance, 0.0f, 10000000.0f);
     Settings.HorizonFade      = Math::Clamp<float>(Settings.HorizonFade, 0.0f, 128.0f);
     Settings.DepthBias        = Math::Clamp<float>(Settings.DepthBias, 0.0f, 1000.0f);
-
-    Settings.MinorColor.X = Math::Clamp<float>(Settings.MinorColor.X, 0.0f, 1.0f);
-    Settings.MinorColor.Y = Math::Clamp<float>(Settings.MinorColor.Y, 0.0f, 1.0f);
-    Settings.MinorColor.Z = Math::Clamp<float>(Settings.MinorColor.Z, 0.0f, 1.0f);
-    Settings.MinorAlpha   = Math::Clamp<float>(Settings.MinorAlpha, 0.0f, 1.0f);
-
-    Settings.MajorColor.X = Math::Clamp<float>(Settings.MajorColor.X, 0.0f, 1.0f);
-    Settings.MajorColor.Y = Math::Clamp<float>(Settings.MajorColor.Y, 0.0f, 1.0f);
-    Settings.MajorColor.Z = Math::Clamp<float>(Settings.MajorColor.Z, 0.0f, 1.0f);
-    Settings.MajorAlpha   = Math::Clamp<float>(Settings.MajorAlpha, 0.0f, 1.0f);
+    Settings.MinorColor.X     = Math::Clamp<float>(Settings.MinorColor.X, 0.0f, 1.0f);
+    Settings.MinorColor.Y     = Math::Clamp<float>(Settings.MinorColor.Y, 0.0f, 1.0f);
+    Settings.MinorColor.Z     = Math::Clamp<float>(Settings.MinorColor.Z, 0.0f, 1.0f);
+    Settings.MinorAlpha       = Math::Clamp<float>(Settings.MinorAlpha, 0.0f, 1.0f);
+    Settings.MajorColor.X     = Math::Clamp<float>(Settings.MajorColor.X, 0.0f, 1.0f);
+    Settings.MajorColor.Y     = Math::Clamp<float>(Settings.MajorColor.Y, 0.0f, 1.0f);
+    Settings.MajorColor.Z     = Math::Clamp<float>(Settings.MajorColor.Z, 0.0f, 1.0f);
+    Settings.MajorAlpha       = Math::Clamp<float>(Settings.MajorAlpha, 0.0f, 1.0f);
 
     return Settings;
 }

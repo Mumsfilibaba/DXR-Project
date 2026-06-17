@@ -17,9 +17,9 @@ public:
     ~FActorTransform() = default;
 
     void SetTranslation(float x, float y, float z);
-    void SetTranslation(const FVector3& InPosition);
+    void SetTranslation(const Vector3& InPosition);
     void SetScale(float x, float y, float z);
-    void SetScale(const FVector3& InScale);
+    void SetScale(const Vector3& InScale);
 
     void SetUniformScale(float InScale)
     {
@@ -27,46 +27,46 @@ public:
     }
 
     void SetRotation(float x, float y, float z);
-    void SetRotation(const FVector3& InRotation);
+    void SetRotation(const Vector3& InRotation);
 
-    const FVector3& GetTranslation() const
+    const Vector3& GetTranslation() const
     {
         return Translation;
     }
 
-    const FVector3& GetScale() const
+    const Vector3& GetScale() const
     {
         return Scale;
     }
 
-    const FVector3& GetRotation() const
+    const Vector3& GetRotation() const
     {
         return Rotation;
     }
 
-    const FMatrix4& GetTransformMatrix() const
+    const Matrix4& GetTransformMatrix() const
     {
         return TransformMatrix;
     }
 
-    FMatrix4 GetTransformMatrixInverse() const
+    Matrix4 GetTransformMatrixInverse() const
     {
-        FMatrix4 MatrixInverse = TransformMatrix.GetInverse();
+        Matrix4 MatrixInverse = TransformMatrix.GetInverse();
         return MatrixInverse;
     }
 
-    FMatrix3x4 GetTinyMatrix() const
+    Matrix3x4 GetTinyMatrix() const
     {
-        return FMatrix3x4(TransformMatrix);
+        return Matrix3x4(TransformMatrix);
     }
 
 private:
     void CalculateMatrix();
 
-    FVector3 Translation;
-    FVector3 Scale;
-    FVector3 Rotation;
-    FMatrix4 TransformMatrix;
+    Vector3 Translation;
+    Vector3 Scale;
+    Vector3 Rotation;
+    Matrix4 TransformMatrix;
 };
 
 class ENGINE_API FActor : public FObject
@@ -110,7 +110,7 @@ public:
      *
      * @param InName Name of the actor
      */
-    void SetName(const FString& InName);
+    void SetName(const String& InName);
 
     /**
      * @brief Check if the actor has a component of the component-class
@@ -165,7 +165,7 @@ public:
      *
      * @return Returns the name of the actor
      */
-    const FString& GetName() const
+    const String& GetName() const
     {
         return Name;
     }
@@ -251,11 +251,10 @@ public:
     }
 
 private:
-    FString             Name;
-    FWorld*             World;
-    FActorTransform     Transform;
+    String                   Name;
+    FWorld*                  World;
+    FActorTransform          Transform;
     TArray<FActorComponent*> Components;
-
-    bool bIsStartable : 1;
-    bool bIsTickable  : 1;
+    bool                     bIsStartable : 1;
+    bool                     bIsTickable  : 1;
 };

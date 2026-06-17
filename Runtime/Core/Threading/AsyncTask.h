@@ -92,7 +92,7 @@ private:
     }
 
     FGenericPlatformEvent* TaskCompleteEvent;
-    FAtomicInt32   NumInvokations;
+    AtomicInt32            NumInvokations;
 };
 
 struct FAbanbonableTask

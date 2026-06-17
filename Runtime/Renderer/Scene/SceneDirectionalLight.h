@@ -20,10 +20,10 @@ public:
     FSceneView&       GetShadowView()       { return ShadowView; }
     const FSceneView& GetShadowView() const { return ShadowView; }
 
-    const FVector3& GetColor()           const { return Color; }
-    const FVector3& GetDirectionVector() const { return Direction; }
-    const FVector3& GetUpVector()        const { return UpVector; }
-    const FMatrix4& GetShadowMatrix()    const { return ShadowMatrix; }
+    const Vector3& GetColor()           const { return Color; }
+    const Vector3& GetDirectionVector() const { return Direction; }
+    const Vector3& GetUpVector()        const { return UpVector; }
+    const Matrix4& GetShadowMatrix()    const { return ShadowMatrix; }
 
     float GetShadowNearPlane()      const { return ShadowNearPlane; }
     float GetShadowFarPlane()       const { return ShadowFarPlane; }
@@ -33,22 +33,16 @@ public:
     float GetLightArea()            const { return LightArea; }
 
 private:
-
-    // Pointer to the light in the world
-    FDirectionalLight* DirectionalLight;
-
-    // View for shadow rendering
-    FSceneView ShadowView;
-
-    // Light properties
-    FVector3 Color;
-    FVector3 Direction;
-    FVector3 UpVector;
-    FMatrix4 ShadowMatrix;
-    float    ShadowNearPlane;
-    float    ShadowFarPlane;
-    float    ShadowBias;
-    float    ShadowPositionOffset;
-    float    CascadeSplitLambda;
-    float    LightArea;
+    FDirectionalLight* DirectionalLight; // Pointer to the light in the world
+    FSceneView         ShadowView;       // View for shadow rendering
+    Vector3            Color;
+    Vector3            Direction;
+    Vector3            UpVector;
+    Matrix4            ShadowMatrix;
+    float              ShadowNearPlane;
+    float              ShadowFarPlane;
+    float              ShadowBias;
+    float              ShadowPositionOffset;
+    float              CascadeSplitLambda;
+    float              LightArea;
 };

@@ -36,20 +36,20 @@ public:
 
     virtual bool IsVisible() const override final { return (ConsoleHandle != nullptr); }
 
-    virtual void Log(const FString& Message) override final;
+    virtual void Log(const String& Message) override final;
 
-    virtual void Log(ELogSeverity Severity, const FString& Message) override final;
+    virtual void Log(ELogSeverity Severity, const String& Message) override final;
 
     virtual void Flush() override final;
 
-    virtual void SetTitle(const FString& Title) override final;
+    virtual void SetTitle(const String& Title) override final;
 
     virtual void SetTextColor(EConsoleColor Color) override final;
 
 private:
     FWindowsConsoleOutputDevice();
 
-    FString          Title;
+    String          Title;
     HANDLE           ConsoleHandle;
     FCriticalSection ConsoleHandleCS;
 };

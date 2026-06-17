@@ -25,9 +25,9 @@ struct CORE_API FGenericPlatformStackTrace
     static FORCEINLINE void GetStackTraceEntryFromAddress(uint64 Address, FStackTraceEntry& OutStackTraceEntry) { }
     static TArray<FStackTraceEntry> GetStack(int32 MaxDepth = 128, int32 IgnoreCount = 0);
 
-    static FORCEINLINE FString GetExecutableFilename()
+    static FORCEINLINE String GetExecutableFilename()
     {
-        return FString();
+        return String();
     }
 };
 

@@ -11,9 +11,9 @@ FCamera::FCamera()
     , AspectRatio()
     , Position(0.0f, 0.0f, -2.0f)
     , Rotation(0.0f, 0.0f, 0.0f)
-    , ForwardVector(FVector3::Forward)
+    , ForwardVector(Vector3::Forward)
     , RightVector(-1.0f, 0.0f, 0.0f)
-    , UpVector(FVector3::Up)
+    , UpVector(Vector3::Up)
 {
 }
 
@@ -23,9 +23,9 @@ FCamera::~FCamera()
 
 void FCamera::Move(float x, float y, float z)
 {
-    FVector3 LocalRight   = RightVector * x;
-    FVector3 LocalUp      = UpVector * y;
-    FVector3 LocalForward = ForwardVector * z;
+    Vector3 LocalRight   = RightVector * x;
+    Vector3 LocalUp      = UpVector * y;
+    Vector3 LocalForward = ForwardVector * z;
 
     Position = Position + LocalRight + LocalUp + LocalForward;
 }
@@ -60,7 +60,7 @@ void FCamera::SetFarPlane(float InFarPlane)
 
 void FCamera::SetPosition(float x, float y, float z)
 {
-    Position = FVector3(x, y, z);
+    Position = Vector3(x, y, z);
 }
 
 void FCamera::SetRotation(float Pitch, float Yaw, float Roll)
@@ -74,12 +74,12 @@ void FCamera::SetRotation(float Pitch, float Yaw, float Roll)
 
 void FCamera::UpdateDirectionVectors()
 {
-    FMatrix4 RotationMatrix = FMatrix4::RotationRollPitchYaw(Rotation);
+    Matrix4 RotationMatrix = Matrix4::RotationRollPitchYaw(Rotation);
 
-    ForwardVector = RotationMatrix.TransformNormal(FVector3::Forward);
+    ForwardVector = RotationMatrix.TransformNormal(Vector3::Forward);
     ForwardVector.Normalize();
 
-    RightVector = ForwardVector.CrossProduct(FVector3::Up);
+    RightVector = ForwardVector.CrossProduct(Vector3::Up);
     RightVector.Normalize();
 
     UpVector = RightVector.CrossProduct(ForwardVector);
@@ -92,7 +92,7 @@ void FCamera::UpdateProjectionMatrix(float InViewportWidth, float InViewportHeig
     const float FieldOfViewRadians = Math::DegreesToRadians(FieldOfView);
 
     // Create the matrix
-    Projection        = FMatrix4::PerspectiveProjection(FieldOfViewRadians, InViewportWidth, InViewportHeight, NearPlane, FarPlane);
+    Projection        = Matrix4::PerspectiveProjection(FieldOfViewRadians, InViewportWidth, InViewportHeight, NearPlane, FarPlane);
     ProjectionInverse = Projection.GetInverse();
 
     // Cache the size of the viewport
@@ -102,7 +102,7 @@ void FCamera::UpdateProjectionMatrix(float InViewportWidth, float InViewportHeig
 
 void FCamera::UpdateViewMatrix()
 {
-    View        = FMatrix4::LookTo(Position, ForwardVector, UpVector);
+    View        = Matrix4::LookTo(Position, ForwardVector, UpVector);
     ViewInverse = View.GetInverse();
 }
 
@@ -112,7 +112,7 @@ void FCamera::UpdateWorldToClipSpaceMatrices()
     ViewProjection        = View * Projection;
     ViewProjectionInverse = ViewProjection.GetInverse();
 
-    FMatrix3 View3x3 = View.GetRotationAndScale();
+    Matrix3 View3x3 = View.GetRotationAndScale();
     ViewProjectionNoTranslation.SetIdentity();
     ViewProjectionNoTranslation.SetRotationAndScale(View3x3);
     ViewProjectionNoTranslation = ViewProjectionNoTranslation * Projection;

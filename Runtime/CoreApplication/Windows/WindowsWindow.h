@@ -132,9 +132,9 @@ public:
 
     virtual void SetWindowFocus() override final;
 
-    virtual void SetTitle(const FString& Title) override final;
+    virtual void SetTitle(const String& Title) override final;
 
-    virtual void GetTitle(FString& OutTitle) const override final;
+    virtual void GetTitle(String& OutTitle) const override final;
 
     virtual void SetWindowPos(int32 x, int32 y) override final;
 

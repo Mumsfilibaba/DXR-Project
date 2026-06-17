@@ -147,7 +147,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             if (NewActor)
             {
                 NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 0.6f, 40.0f + StartPositionY + (y * SphereOffset));
-                NewActor->SetName(FString::CreateFormatted("Sphere[%d]", SphereIndex));
+                NewActor->SetName(String::CreateFormatted("Sphere[%d]", SphereIndex));
                 SphereIndex++;
 
                 FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
@@ -158,7 +158,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
                     NewMaterial->MaterialMap  = FEngine::Get()->BaseTexture;
 
                     NewMaterial->Initialize();
-                    NewMaterial->SetName(FString::CreateFormatted("Sphere Material %d", SphereIndex));
+                    NewMaterial->SetName(String::CreateFormatted("Sphere Material %d", SphereIndex));
 
                     NewComponent->SetMesh(SphereMesh);
                     NewComponent->SetMaterial(NewMaterial);
@@ -503,7 +503,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
                 if (FActor* NewActor = InWorld->CreateActor())
                 {
                     const TSharedPtr<FMesh>& Mesh = StreetLightModel->GetMesh(MeshIndex);
-                    NewActor->SetName(FString::CreateFormatted("Street Light (%s) %d", *Mesh->GetName(), i));
+                    NewActor->SetName(String::CreateFormatted("Street Light (%s) %d", *Mesh->GetName(), i));
                     NewActor->GetTransform().SetUniformScale(0.25f);
                     NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - float(i) * 3.0f);
 
@@ -542,7 +542,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     {
         if (FActor* NewActor = InWorld->CreateActor())
         {
-            NewActor->SetName(FString::CreateFormatted("Cylinder %d", i));
+            NewActor->SetName(String::CreateFormatted("Cylinder %d", i));
             NewActor->GetTransform().SetUniformScale(1.0f);
             NewActor->GetTransform().SetTranslation(-15.0f + float(i) * 1.75f, 2.5f, 60.0f);
 
@@ -585,8 +585,8 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     const float ShadowFarPlane = 35.0f;
     if (FPointLight* PointLight0 = NewObject<FPointLight>())
     {
-        PointLight0->SetPosition(FVector3(15.0f, 2.5f, 0.0f));
-        PointLight0->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        PointLight0->SetPosition(Vector3(15.0f, 2.5f, 0.0f));
+        PointLight0->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         PointLight0->SetShadowBias(0.02f);
         PointLight0->SetShadowFarPlane(ShadowFarPlane);
         PointLight0->SetIntensity(Intensity);
@@ -597,8 +597,8 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
     if (FPointLight* PointLight1 = NewObject<FPointLight>())
     {
-        PointLight1->SetPosition(FVector3(-15.0f, 2.5f, 0.0f));
-        PointLight1->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        PointLight1->SetPosition(Vector3(-15.0f, 2.5f, 0.0f));
+        PointLight1->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         PointLight1->SetShadowBias(0.02f);
         PointLight1->SetShadowFarPlane(ShadowFarPlane);
         PointLight1->SetIntensity(Intensity);
@@ -609,8 +609,8 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
     if (FPointLight* PointLight2 = NewObject<FPointLight>())
     {
-        PointLight2->SetPosition(FVector3(17.0f, 10.0f, 6.0f));
-        PointLight2->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        PointLight2->SetPosition(Vector3(17.0f, 10.0f, 6.0f));
+        PointLight2->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         PointLight2->SetShadowBias(0.02f);
         PointLight2->SetShadowFarPlane(ShadowFarPlane);
         PointLight2->SetIntensity(Intensity);
@@ -621,8 +621,8 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
     if (FPointLight* PointLight3 = NewObject<FPointLight>())
     {
-        PointLight3->SetPosition(FVector3(-18.0f, 10.0f, 6.0f));
-        PointLight3->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        PointLight3->SetPosition(Vector3(-18.0f, 10.0f, 6.0f));
+        PointLight3->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         PointLight3->SetShadowBias(0.02f);
         PointLight3->SetShadowFarPlane(ShadowFarPlane);
         PointLight3->SetIntensity(Intensity);
@@ -633,8 +633,8 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
     if (FPointLight* PointLight4 = NewObject<FPointLight>())
     {
-        PointLight4->SetPosition(FVector3(17.0f, 10.0f, -7.0f));
-        PointLight4->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        PointLight4->SetPosition(Vector3(17.0f, 10.0f, -7.0f));
+        PointLight4->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         PointLight4->SetShadowBias(0.02f);
         PointLight4->SetShadowFarPlane(ShadowFarPlane);
         PointLight4->SetIntensity(Intensity);
@@ -645,8 +645,8 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
     if (FPointLight* PointLight5 = NewObject<FPointLight>())
     {
-        PointLight5->SetPosition(FVector3(-18.0f, 10.0f, -7.0f));
-        PointLight5->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        PointLight5->SetPosition(Vector3(-18.0f, 10.0f, -7.0f));
+        PointLight5->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         PointLight5->SetShadowBias(0.02f);
         PointLight5->SetShadowFarPlane(ShadowFarPlane);
         PointLight5->SetIntensity(Intensity);
@@ -691,9 +691,9 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     if (FDirectionalLight* DirectionalLight = NewObject<FDirectionalLight>())
     {
         DirectionalLight->SetShadowBias(0.0005f);
-        DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        DirectionalLight->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
-        DirectionalLight->SetRotation(FVector3(Math::DegreesToRadians(35.0f), Math::DegreesToRadians(135.0f), 0.0f));
+        DirectionalLight->SetRotation(Vector3(Math::DegreesToRadians(35.0f), Math::DegreesToRadians(135.0f), 0.0f));
 
         InWorld->AddLight(DirectionalLight);
     }
@@ -774,9 +774,9 @@ bool FSandbox::CreateBistro(FWorld* InWorld)
     if (FDirectionalLight* DirectionalLight = NewObject<FDirectionalLight>())
     {
         DirectionalLight->SetShadowBias(0.0005f);
-        DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        DirectionalLight->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
-        DirectionalLight->SetRotation(FVector3(Math::DegreesToRadians(35.0f), Math::DegreesToRadians(135.0f), 0.0f));
+        DirectionalLight->SetRotation(Vector3(Math::DegreesToRadians(35.0f), Math::DegreesToRadians(135.0f), 0.0f));
 
         InWorld->AddLight(DirectionalLight);
     }
@@ -847,9 +847,9 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
             return false;
         }
 
-        LightProbe->SetPosition(FVector3(0.0f, 13.0f, 0.5f));
-        LightProbe->SetBoxExtent(FVector3(19.0f, 21.5f, 22.0f));
-        LightProbe->SetBoxOffset(FVector3(0.0f, 0.0f, 0.0f));
+        LightProbe->SetPosition(Vector3(0.0f, 13.0f, 0.5f));
+        LightProbe->SetBoxExtent(Vector3(19.0f, 21.5f, 22.0f));
+        LightProbe->SetBoxOffset(Vector3(0.0f, 0.0f, 0.0f));
         LightProbe->SetCubeMap(ReflectionProbe);
         LightProbe->SetBoxProjection(true);
 
@@ -867,9 +867,9 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
             return false;
         }
 
-        LightProbe->SetPosition(FVector3(0.0f, 6.0f, 30.0f));
-        LightProbe->SetBoxExtent(FVector3(19.0f, 21.5f, 22.0f));
-        LightProbe->SetBoxOffset(FVector3(0.0f, 0.0f, 0.0f));
+        LightProbe->SetPosition(Vector3(0.0f, 6.0f, 30.0f));
+        LightProbe->SetBoxExtent(Vector3(19.0f, 21.5f, 22.0f));
+        LightProbe->SetBoxOffset(Vector3(0.0f, 0.0f, 0.0f));
         LightProbe->SetCubeMap(ReflectionProbe);
         LightProbe->SetBoxProjection(true);
 
@@ -880,9 +880,9 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
     if (FDirectionalLight* DirectionalLight = NewObject<FDirectionalLight>())
     {
         DirectionalLight->SetShadowBias(0.0005f);
-        DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        DirectionalLight->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
-        DirectionalLight->SetRotation(FVector3(Math::DegreesToRadians(-55.0f), Math::DegreesToRadians(325.0f), 0.0f));
+        DirectionalLight->SetRotation(Vector3(Math::DegreesToRadians(-55.0f), Math::DegreesToRadians(325.0f), 0.0f));
 
         InWorld->AddLight(DirectionalLight);
     }
@@ -946,9 +946,9 @@ bool FSandbox::CreateEmeraldSquare(FWorld* InWorld)
     if (FDirectionalLight* DirectionalLight = NewObject<FDirectionalLight>())
     {
         DirectionalLight->SetShadowBias(0.0005f);
-        DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        DirectionalLight->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
-        DirectionalLight->SetRotation(FVector3(Math::DegreesToRadians(35.0f), Math::DegreesToRadians(135.0f), 0.0f));
+        DirectionalLight->SetRotation(Vector3(Math::DegreesToRadians(35.0f), Math::DegreesToRadians(135.0f), 0.0f));
 
         InWorld->AddLight(DirectionalLight);
     }
@@ -1116,8 +1116,8 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
     const float Intensity = 10.0f;
     if (FPointLight* PointLight = NewObject<FPointLight>())
     {
-        PointLight->SetPosition(FVector3(8.0f, 1.0f, -8.0f));
-        PointLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        PointLight->SetPosition(Vector3(8.0f, 1.0f, -8.0f));
+        PointLight->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         PointLight->SetShadowBias(0.006f);
         PointLight->SetShadowNearPlane(0.01f);
         PointLight->SetShadowFarPlane(30.0f);
@@ -1164,9 +1164,9 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
     if (FDirectionalLight* DirectionalLight = NewObject<FDirectionalLight>())
     {
         DirectionalLight->SetShadowBias(0.0005f);
-        DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        DirectionalLight->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
-        DirectionalLight->SetRotation(FVector3(Math::DegreesToRadians(45.0f), 0.0f, 0.0f));
+        DirectionalLight->SetRotation(Vector3(Math::DegreesToRadians(45.0f), 0.0f, 0.0f));
 
         InWorld->AddLight(DirectionalLight);
     }
@@ -1174,7 +1174,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
     return true;
 }
 
-FRHITextureRef FSandbox::LoadCubeMapFromPanorama(const FString& Filename)
+FRHITextureRef FSandbox::LoadCubeMapFromPanorama(const String& Filename)
 {
     FTexture2DRef Panorama = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Filename, false));
     if (!Panorama)

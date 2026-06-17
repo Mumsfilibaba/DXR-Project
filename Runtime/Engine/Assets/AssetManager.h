@@ -16,17 +16,17 @@ public:
     FAssetRegistry();
     ~FAssetRegistry();
 
-    FString* FindFile(const FString& SrcFilename);
-    void AddEntry(const FString& SrcFilename, const FString& Filename);
-    void RemoveEntry(const FString& SrcFilename);
+    String* FindFile(const String& SrcFilename);
+    void AddEntry(const String& SrcFilename, const String& Filename);
+    void RemoveEntry(const String& SrcFilename);
     void LoadRegistryFile();
     void UpdateRegistryFile();
 
 private:
 
     // Maps the original path to the engine file
-    TMap<FString, FString> RegistryMap;
-    FString                RegistryFilename;
+    TMap<String, String> RegistryMap;
+    String               RegistryFilename;
 };
 
 class ENGINE_API FAssetManager
@@ -43,10 +43,10 @@ public:
     static FAssetManager& Get();
 
 public:
-    TSharedRef<FTexture> LoadTexture(const FString& Filename, bool bGenerateMips = true);
+    TSharedRef<FTexture> LoadTexture(const String& Filename, bool bGenerateMips = true);
     void UnloadTexture(const TSharedRef<FTexture>& Texture);
 
-    TSharedRef<FModel> LoadModel(const FString& Filename, EMeshImportFlags Flags = EMeshImportFlags::Default);
+    TSharedRef<FModel> LoadModel(const String& Filename, EMeshImportFlags Flags = EMeshImportFlags::Default);
     void UnloadModel(const TSharedRef<FModel>& InModel);
 
     void RegisterTextureImporter(const TSharedPtr<ITextureImporter>& InImporter);
@@ -60,21 +60,19 @@ private:
     ~FAssetManager();
 
     // Registry of where to find any engine file
-    TUniquePtr<FAssetRegistry>   AssetRegistry;
-    TUniquePtr<FModelSerializer> ModelSerializer;
-    TUniquePtr<FModelImporter>   ModelImporter;
-
+    TUniquePtr<FAssetRegistry>           AssetRegistry;
+    TUniquePtr<FModelSerializer>         ModelSerializer;
+    TUniquePtr<FModelImporter>           ModelImporter;
     // Meshes
-    TArray<TSharedPtr<IModelImporter>> ModelImporters;
-    FCriticalSection                   ModelImportersCS;
-    TMap<FString, int32>               ModelsMap;
-    TArray<TSharedRef<FModel>>         Models;
-    FCriticalSection                   ModelsCS;
-
+    TArray<TSharedPtr<IModelImporter>>   ModelImporters;
+    FCriticalSection                     ModelImportersCS;
+    TMap<String, int32>                  ModelsMap;
+    TArray<TSharedRef<FModel>>           Models;
+    FCriticalSection                     ModelsCS;
     // Textures
     TArray<TSharedPtr<ITextureImporter>> TextureImporters;
     FCriticalSection                     TextureImportersCS;
-    TMap<FString, int32>                 TextureMap;
+    TMap<String, int32>                  TextureMap;
     TArray<TSharedRef<FTexture>>         Textures;
     FCriticalSection                     TexturesCS;
 

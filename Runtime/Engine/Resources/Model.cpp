@@ -284,13 +284,13 @@ void FMesh::CreateBoundingBox(const FMeshCreateInfo& CreateInfo)
 {
     static constexpr const float Inf = TNumericLimits<float>::Infinity();
 
-    FVector3 MinBounds = FVector3( Inf,  Inf,  Inf);
-    FVector3 MaxBounds = FVector3(-Inf, -Inf, -Inf);
+    Vector3 MinBounds = Vector3( Inf,  Inf,  Inf);
+    Vector3 MaxBounds = Vector3(-Inf, -Inf, -Inf);
 
     for (const FVertex& Vertex : CreateInfo.Vertices)
     {
-        MinBounds = FVector3::Min(MinBounds, Vertex.Position);
-        MaxBounds = FVector3::Max(MaxBounds, Vertex.Position);
+        MinBounds = Vector3::Min(MinBounds, Vertex.Position);
+        MaxBounds = Vector3::Max(MaxBounds, Vertex.Position);
     }
 
     BoundingBox.Max = MaxBounds;

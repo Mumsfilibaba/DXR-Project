@@ -15,7 +15,7 @@ static void* SafeLoadDynamicLib(const CHAR* LibraryName)
     
     // Concat the realname
     constexpr uint32 MaxNameLength = 256;
-    const uint32 FullLength = FCString::Strlen(LibraryName) + FCString::Strlen(Prefix) + FCString::Strlen(Extension);
+    const uint32 FullLength = CString::Strlen(LibraryName) + CString::Strlen(Prefix) + CString::Strlen(Extension);
     if (FullLength >= MaxNameLength)
     {
         return nullptr;
@@ -24,9 +24,9 @@ static void* SafeLoadDynamicLib(const CHAR* LibraryName)
     CHAR RealName[MaxNameLength];
     Memory::Memzero(RealName, sizeof(RealName));
     
-    FCString::Strcat(RealName, Prefix);
-    FCString::Strcat(RealName, LibraryName);
-    FCString::Strcat(RealName, Extension);
+    CString::Strcat(RealName, Prefix);
+    CString::Strcat(RealName, LibraryName);
+    CString::Strcat(RealName, Extension);
     
 #if ENABLE_LIBRARY_LAZY_MODE
     const int32 Mode = RTLD_LAZY;
@@ -62,15 +62,15 @@ static void* SafeLoadDynamicLib(const CHAR* LibraryName)
     CHAR FullPath[MaxFullPathLength];
     for (const CHAR* Path : Paths)
     {
-        const uint32 FullPathLength = FullLength + FCString::Strlen(Path);
+        const uint32 FullPathLength = FullLength + CString::Strlen(Path);
         if (FullPathLength >= MaxFullPathLength)
         {
             continue;
         }
         
         Memory::Memzero(FullPath, sizeof(FullPath));
-        FCString::Strcat(FullPath, Path);
-        FCString::Strcat(FullPath, RealName);
+        CString::Strcat(FullPath, Path);
+        CString::Strcat(FullPath, RealName);
         
         // Try and load the handle again
         Handle = ::dlopen(FullPath, Mode);

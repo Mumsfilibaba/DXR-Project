@@ -57,10 +57,10 @@ private:
 
 struct CORE_API FWindowsPlatformFile : public FGenericPlatformFile
 {
-    static IPlatformFile* OpenForRead(const FString& Filename);
-    static IPlatformFile* OpenForWrite(const FString& Filename, bool bTruncate = true);
-    static IPlatformAsyncFile* OpenForAsyncWrite(const FString& Filename, bool bTruncate = true);
-    static FString GetCurrentWorkingDirectory();
+    static IPlatformFile* OpenForRead(const String& Filename);
+    static IPlatformFile* OpenForWrite(const String& Filename, bool bTruncate = true);
+    static IPlatformAsyncFile* OpenForAsyncWrite(const String& Filename, bool bTruncate = true);
+    static String GetCurrentWorkingDirectory();
     static const CHAR* GetExecutablePath();
 
     static FORCEINLINE bool IsDirectory(const CHAR* Path)

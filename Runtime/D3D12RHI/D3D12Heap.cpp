@@ -12,7 +12,7 @@ FD3D12Heap::FD3D12Heap(FD3D12Device* InDevice, ID3D12Heap* InHeap)
 {
 }
 
-void FD3D12Heap::SetDebugName(const FString& Name)
+void FD3D12Heap::SetDebugName(const String& Name)
 {
     if (Heap)
     {
@@ -22,7 +22,7 @@ void FD3D12Heap::SetDebugName(const FString& Name)
             D3D12_ERROR("Failed to set heap name");
         }
 
-        FStringWide WideName = CharToWide(Name);
+        StringWide WideName = CharToWide(Name);
         Result = Heap->SetName(*WideName);
         if (FAILED(Result))
         {

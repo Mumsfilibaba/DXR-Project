@@ -21,7 +21,7 @@ public:
 
     uint64 GetCompletedValue() const;
 
-    void SetDebugName(const FString& Name);
+    void SetDebugName(const String& Name);
 
     uint64 GetCurrentValue()      const { return CurrentValue; }
     uint64 GetLastSignaledValue() const { return LastSignaledValue; }
@@ -98,14 +98,14 @@ public:
     virtual bool IsSignaled()                        const override final;
     virtual bool Wait(uint64 TimeoutNs = UINT64_MAX) const override final;
 
-    virtual void SetDebugName(const FString& InName)       override final;
-    virtual void GetDebugName(FString& OutDebugName) const override final;
+    virtual void SetDebugName(const String& InName)       override final;
+    virtual void GetDebugName(String& OutDebugName) const override final;
 
     bool Initialize();
     void Signal(ID3D12CommandQueue* Queue);
 
 private:
     FD3D12FenceRef Fence;
-    FAtomicBool    bHasPendingSignal;
-    FString        DebugName;
+    AtomicBool     bHasPendingSignal;
+    String         DebugName;
 };

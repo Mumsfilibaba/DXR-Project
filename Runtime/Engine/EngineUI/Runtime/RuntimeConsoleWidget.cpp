@@ -140,13 +140,13 @@ void FRuntimeConsoleWidget::DrawConsole()
                 float VariableValueWidth = 20.0f * Scale;
 
                 // First find the maximum length of each column for the selectable
-                Candidates.Foreach([&](const TPair<IConsoleObject*, FString>& Candidate)
+                Candidates.Foreach([&](const TPair<IConsoleObject*, String>& Candidate)
                 {
                     VariableNameWidth = Math::Max(VariableNameWidth, ImGui::CalcTextSize(*Candidate.Second).x);
 
                     if (IConsoleVariable* Variable = Candidate.First->AsVariable())
                     {
-                        const FString Value = Variable->GetString();
+                        const String Value = Variable->GetString();
                         VariableValueWidth = Math::Max(VariableValueWidth, ImGui::CalcTextSize(*Value).x);
                     }
                 });
@@ -174,7 +174,7 @@ void FRuntimeConsoleWidget::DrawConsole()
                 bool bIsActiveIndex = false;
                 for (int32 CandidateIndex = 0; CandidateIndex < Candidates.Size(); CandidateIndex++)
                 {
-                    const TPair<IConsoleObject*, FString>& Candidate = Candidates[CandidateIndex];
+                    const TPair<IConsoleObject*, String>& Candidate = Candidates[CandidateIndex];
                     bIsActiveIndex = SelectedCandidateIndex == CandidateIndex;
 
                     // VariableName
@@ -198,7 +198,7 @@ void FRuntimeConsoleWidget::DrawConsole()
                     IConsoleVariable* ConsoleVariable = Candidate.First->AsVariable();
                     if (ConsoleVariable)
                     {
-                        const FString Value = ConsoleVariable->GetString();
+                        const String Value = ConsoleVariable->GetString();
                         ImGui::Text("%s", *Value);
 
                         if (ConsoleVariable->IsVariableBool())
@@ -358,13 +358,13 @@ void FRuntimeConsoleWidget::DrawConsole()
                     {
                         CHECK(Candidates.IsEmpty() == false);
 
-                        const FString& NewTextData = Candidates[SelectedCandidateIndex].Second;
-                        FCString::Strcpy(TextBuffer.Data(), *NewTextData);
+                        const String& NewTextData = Candidates[SelectedCandidateIndex].Second;
+                        CString::Strcpy(TextBuffer.Data(), *NewTextData);
                         bUpdateCursorPosition = true;
                     }
                     else
                     {
-                        const FString Text = FString(TextBuffer.Data());
+                        const String Text = String(TextBuffer.Data());
                         FConsoleManager::Get().ExecuteCommand(*this, Text);
 
                         TextBuffer[0] = 0;
@@ -400,12 +400,12 @@ void FRuntimeConsoleWidget::DrawConsole()
     ImGui::PopStyleColor();
 }
 
-void FRuntimeConsoleWidget::Log(const FString& Message)
+void FRuntimeConsoleWidget::Log(const String& Message)
 {
     Log(ELogSeverity::Info, Message);
 }
 
-void FRuntimeConsoleWidget::Log(ELogSeverity Severity, const FString& Message)
+void FRuntimeConsoleWidget::Log(ELogSeverity Severity, const String& Message)
 {
     SCOPED_LOCK(MessagesCS);
 
@@ -461,7 +461,7 @@ int32 FRuntimeConsoleWidget::InputTextCallback(ImGuiInputTextCallbackData* Callb
             const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
             if (WordLength > 0)
             {
-                const FStringView CandidateName(WordStart, WordLength);
+                const StringView CandidateName(WordStart, WordLength);
                 FConsoleManager::Get().FindCandidates(CandidateName, Candidates);
 
                 // If we found any candidates, then want to reset the history index, otherwise the index will be the 
@@ -509,7 +509,7 @@ int32 FRuntimeConsoleWidget::InputTextCallback(ImGuiInputTextCallbackData* Callb
                     const int32 Pos   = static_cast<int32>(WordStart - CallbackData->Buf);
                     const int32 Count = WordLength;
 
-                    const FString& NewTextData = Candidates[SelectedCandidateIndex].Second;
+                    const String& NewTextData = Candidates[SelectedCandidateIndex].Second;
                     CallbackData->DeleteChars(Pos, Count);
                     CallbackData->InsertChars(CallbackData->CursorPos, *NewTextData);
 
@@ -539,7 +539,7 @@ int32 FRuntimeConsoleWidget::InputTextCallback(ImGuiInputTextCallbackData* Callb
 
                 const int32 PrevHistoryIndex = HistoryIndex;
 
-                const TArray<FString>& History = FConsoleManager::Get().GetHistory();
+                const TArray<String>& History = FConsoleManager::Get().GetHistory();
                 if (!History.IsEmpty())
                 {
                     // If we have any console-history then we can go through the history by pressing the down-arrow key

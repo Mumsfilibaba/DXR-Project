@@ -122,7 +122,7 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
     TArray<const CHAR*> EnabledLayerNames;
     for (const VkLayerProperties& LayerProperty : LayerProperties)
     {
-        const auto MatchLayer = [=](const CHAR* Other) -> bool { return FCString::Strcmp(LayerProperty.layerName, Other) == 0; };
+        const auto MatchLayer = [=](const CHAR* Other) -> bool { return CString::Strcmp(LayerProperty.layerName, Other) == 0; };
 
         if (CreateInfo.RequiredLayerNames.ContainsWithPredicate(MatchLayer) || CreateInfo.OptionalLayerNames.ContainsWithPredicate(MatchLayer))
         {
@@ -133,7 +133,7 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
 
     for (const CHAR* LayerName : CreateInfo.RequiredLayerNames)
     {
-        const auto MatchLayer = [=](const CHAR* Other) -> bool { return FCString::Strcmp(LayerName, Other) == 0; };
+        const auto MatchLayer = [=](const CHAR* Other) -> bool { return CString::Strcmp(LayerName, Other) == 0; };
 
         if (!EnabledLayerNames.ContainsWithPredicate(MatchLayer))
         {
@@ -155,7 +155,7 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
 
         for (const VkExtensionProperties& Property : ExtensionProperties)
         {
-            if (FCString::Strcmp(Extension->GetExtensionName(), Property.extensionName) == 0)
+            if (CString::Strcmp(Extension->GetExtensionName(), Property.extensionName) == 0)
             {
                 Extension->SetEnabled(true);
                 EnabledExtensionNames.Add(Property.extensionName);

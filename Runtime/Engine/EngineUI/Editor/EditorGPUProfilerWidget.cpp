@@ -1,4 +1,4 @@
-#include "Core/Time/TimeUtilities.h"
+#include "Core/Time/Time.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
@@ -124,13 +124,13 @@ void FEditorGPUProfilerWidget::DrawGPUData()
             ImGui::Text("%s", *Sample.First);
 
             ImGui::TableSetColumnIndex(1);
-            ImGui::Text("%.4f ms", TimeUtilities::ToMilliseconds<float>(Avg));
+            ImGui::Text("%.4f ms", Time::ToMilliseconds<float>(Avg));
 
             ImGui::TableSetColumnIndex(2);
-            ImGui::Text("%.4f ms", TimeUtilities::ToMilliseconds<float>(Min));
+            ImGui::Text("%.4f ms", Time::ToMilliseconds<float>(Min));
 
             ImGui::TableSetColumnIndex(3);
-            ImGui::Text("%.4f ms", TimeUtilities::ToMilliseconds<float>(Max));
+            ImGui::Text("%.4f ms", Time::ToMilliseconds<float>(Max));
         }
 
         Samples.Clear();

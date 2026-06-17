@@ -69,7 +69,7 @@ struct FRectangle
      * @param Point The point to check.
      * @return True if the point is within the rectangle; false otherwise.
      */
-    bool EncapsulatesPoint(const FIntVector2& Point) const
+    bool EncapsulatesPoint(const IntVector2& Point) const
     {
         return Point.X >= Position.X && Point.Y >= Position.Y && Point.X <= (Position.X + Width) && Point.Y <= (Position.Y + Height);
     }
@@ -103,7 +103,7 @@ struct FRectangle
     int32 Height;
 
     /** @brief Position of the rectangle (x, y). */
-    FIntVector2 Position;
+    IntVector2 Position;
 };
 
 class APPLICATION_API FWidget : public TSharedFromThis<FWidget>
@@ -255,7 +255,7 @@ public:
      * @param ScreenCursorPosition The screen position to check.
      * @param OutChildWidgets The widget path to populate with child widgets.
      */
-    virtual void FindChildrenContainingPoint(const FIntVector2& ScreenCursorPosition, FWidgetPath& OutChildWidgets);
+    virtual void FindChildrenContainingPoint(const IntVector2& ScreenCursorPosition, FWidgetPath& OutChildWidgets);
 
     /**
      * @brief Checks if the widget is visible.

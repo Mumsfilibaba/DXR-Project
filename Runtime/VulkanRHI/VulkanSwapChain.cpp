@@ -1046,7 +1046,7 @@ bool FVulkanSwapChainRHI::Present(bool bVerticalSync)
     return true;
 }
 
-void FVulkanSwapChainRHI::SetDebugName(const FString& InName)
+void FVulkanSwapChainRHI::SetDebugName(const String& InName)
 {
     // Name the swapchain object
     if (SwapChainResource)
@@ -1056,7 +1056,7 @@ void FVulkanSwapChainRHI::SetDebugName(const FString& InName)
         // Name all the images
         for (int32 i = 0; i < BackBuffers.Size(); ++i)
         {
-            const FString ImageName = InName + FString::CreateFormatted(" BackBuffer Image[%d]", i);
+            const String ImageName = InName + String::CreateFormatted(" BackBuffer Image[%d]", i);
             BackBuffers[i].Texture->SetDebugName(ImageName);
         }
     }

@@ -37,13 +37,13 @@ public:
 
     virtual bool IsVisible() const override final { return (WindowHandle != nullptr); }
 
-    virtual void Log(const FString& Message) override final;
+    virtual void Log(const String& Message) override final;
 
-    virtual void Log(ELogSeverity Severity, const FString& Message) override final;
+    virtual void Log(ELogSeverity Severity, const String& Message) override final;
 
     virtual void Flush() override final;
 
-    virtual void SetTitle(const FString& Title) override final;
+    virtual void SetTitle(const String& Title) override final;
 
     virtual void SetTextColor(EConsoleColor Color) override final;
 
@@ -62,7 +62,7 @@ private:
     void DestroyConsole();
     void DestroyResources();
 
-    NSAttributedString* CreatePrintableString(const FString& String);
+    NSAttributedString* CreatePrintableString(const String& String);
     void InternalSetConsoleColor(EConsoleColor Color);
 
     void MainThreadAppendStringAndScroll(NSAttributedString* AttributedString);

@@ -93,48 +93,48 @@ struct FRHITextureDesc
     NODISCARD static FRHITextureDesc CreateTexture1D(EFormat InFormat, uint32 InWidth, uint32 InNumMipLevels,
         ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureDesc(ETextureDimension::Texture1D, InFormat, FIntVector3(InWidth, 1, 0), 1, InNumMipLevels, 1, InUsageFlags, InClearValue);
+        return FRHITextureDesc(ETextureDimension::Texture1D, InFormat, IntVector3(InWidth, 1, 0), 1, InNumMipLevels, 1, InUsageFlags, InClearValue);
     }
 
     NODISCARD static FRHITextureDesc CreateTexture1DArray(EFormat InFormat, uint32 InWidth, uint32 InArraySlices, uint32 InNumMipLevels,
         ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureDesc(ETextureDimension::Texture1DArray, InFormat, FIntVector3(InWidth, 1, 0), InArraySlices, InNumMipLevels, 1, InUsageFlags, InClearValue);
+        return FRHITextureDesc(ETextureDimension::Texture1DArray, InFormat, IntVector3(InWidth, 1, 0), InArraySlices, InNumMipLevels, 1, InUsageFlags, InClearValue);
     }
 
     NODISCARD static FRHITextureDesc CreateTexture2D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMipLevels, uint32 InNumSamples,
         ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureDesc(ETextureDimension::Texture2D, InFormat, FIntVector3(InWidth, InHeight, 0), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
+        return FRHITextureDesc(ETextureDimension::Texture2D, InFormat, IntVector3(InWidth, InHeight, 0), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
     }
 
     NODISCARD static FRHITextureDesc CreateTexture2DArray(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InArraySlices, uint32 InNumMipLevels,
         uint32 InNumSamples, ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureDesc(ETextureDimension::Texture2DArray, InFormat, FIntVector3(InWidth, InHeight, 0), InArraySlices, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
+        return FRHITextureDesc(ETextureDimension::Texture2DArray, InFormat, IntVector3(InWidth, InHeight, 0), InArraySlices, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
     }
 
     NODISCARD static FRHITextureDesc CreateTextureCube(EFormat InFormat, uint32 InExtent, uint32 InNumMipLevels, uint32 InNumSamples, 
         ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureDesc(ETextureDimension::TextureCube, InFormat, FIntVector3(InExtent, InExtent, 0), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
+        return FRHITextureDesc(ETextureDimension::TextureCube, InFormat, IntVector3(InExtent, InExtent, 0), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
     }
 
     NODISCARD static FRHITextureDesc CreateTextureCubeArray(EFormat InFormat, uint32 InExtent, uint32 InArraySlices, uint32 InNumMipLevels,
         uint32 InNumSamples, ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureDesc(ETextureDimension::TextureCubeArray, InFormat, FIntVector3(InExtent, InExtent, 0), InArraySlices, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
+        return FRHITextureDesc(ETextureDimension::TextureCubeArray, InFormat, IntVector3(InExtent, InExtent, 0), InArraySlices, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
     }
 
     NODISCARD static FRHITextureDesc CreateTexture3D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InDepth, uint32 InNumMipLevels,
         uint32 InNumSamples, ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureDesc(ETextureDimension::Texture3D, InFormat, FIntVector3(InWidth, InHeight, InDepth), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
+        return FRHITextureDesc(ETextureDimension::Texture3D, InFormat, IntVector3(InWidth, InHeight, InDepth), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
     }
 
     FRHITextureDesc() noexcept = default;
 
-    FRHITextureDesc(ETextureDimension InDimension, EFormat InFormat, FIntVector3 InExtent, uint32 InNumArraySlices, uint32 InNumMipLevels,
+    FRHITextureDesc(ETextureDimension InDimension, EFormat InFormat, IntVector3 InExtent, uint32 InNumArraySlices, uint32 InNumMipLevels,
         uint32 InNumSamples, ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue()) noexcept
         : Dimension(InDimension)
         , Format(InFormat)
@@ -175,7 +175,7 @@ struct FRHITextureDesc
     uint32             NumArraySlices = 0;
     uint32             NumMipLevels   = 0;
     uint32             NumSamples     = 0;
-    FIntVector3        Extent         = { };
+    IntVector3         Extent         = { };
     FClearValue        ClearValue     = { };
 };
 
@@ -201,8 +201,8 @@ public:
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const { return FRHIDescriptorHandle(); }
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const { return FRHIDescriptorHandle(); }
 
-    virtual void SetDebugName(const FString&) { }
-    virtual void GetDebugName(FString& OutDebugName) const { OutDebugName.Clear(); }
+    virtual void SetDebugName(const String&) { }
+    virtual void GetDebugName(String& OutDebugName) const { OutDebugName.Clear(); }
 
     NODISCARD const FRHITextureDesc& GetDesc() const
     {

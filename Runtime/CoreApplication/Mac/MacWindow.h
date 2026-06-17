@@ -66,9 +66,9 @@ public:
 
     virtual void SetWindowFocus() override final;
 
-    virtual void SetTitle(const FString& Title) override final;
+    virtual void SetTitle(const String& Title) override final;
 
-    virtual void GetTitle(FString& OutTitle) const override final;
+    virtual void GetTitle(String& OutTitle) const override final;
 
     virtual void SetWindowPos(int32 x, int32 y) override final;
 
@@ -120,9 +120,9 @@ public:
     /**
      * @brief Caches the window's position locally to avoid redundant reposition events.
      * 
-     * @param InPosition The new position as an FIntVector2.
+     * @param InPosition The new position as an IntVector2.
      */
-    FORCEINLINE void SetCachedPosition(const FIntVector2& InPosition)
+    FORCEINLINE void SetCachedPosition(const IntVector2& InPosition)
     {
         Position = InPosition;
     }
@@ -130,9 +130,9 @@ public:
     /**
      * @brief Retrieves the cached window position.
      * 
-     * @return A const reference to the cached window position as an FIntVector2.
+     * @return A const reference to the cached window position as an IntVector2.
      */
-    FORCEINLINE const FIntVector2& GetCachedPosition() const
+    FORCEINLINE const IntVector2& GetCachedPosition() const
     {
         return Position;
     }
@@ -143,5 +143,5 @@ private:
     FMacApplication*  Application;
     FCocoaWindow*     CocoaWindow;
     FCocoaWindowView* CocoaWindowView;
-    FIntVector2       Position;
+    IntVector2       Position;
 };

@@ -108,10 +108,9 @@ public:
 
 private:
     TMap<void*, FAllocationInfo> Allocations;
-    FCriticalSection AllocationsCS;
-
-    FMalloc* BaseMalloc;
-    bool     bTrackingEnabled;
+    FCriticalSection             AllocationsCS;
+    FMalloc*                     BaseMalloc;
+    bool                         bTrackingEnabled;
 };
 
 class CORE_API FMallocStackTraceTracker : public FMalloc
@@ -152,10 +151,9 @@ public:
 
 private:
     TMap<void*, FAllocationStackTrace> Allocations;
-    FCriticalSection AllocationsCS;
-
-    FMalloc*    BaseMalloc;
-    FAtomicInt8 bTrackingEnabled;
+    FCriticalSection                   AllocationsCS;
+    FMalloc*                           BaseMalloc;
+    AtomicInt8                         bTrackingEnabled;
 
     static FMallocStackTraceTracker* GStackTraceTracker;
 };

@@ -89,7 +89,7 @@ private:
     TSharedPtr<FWindowWidget>      MainWindow;
     TSharedPtr<FViewportWidget>    MainViewport;
     TArray<FMonitorInfo>           MonitorInfos;
-    FString                        ClipboardText;
+    String                         ClipboardText;
     FImGuiDrawMulticastDelegate    BeginFrameDelegates;
     FImGuiDrawMulticastDelegate    DrawDelegates;
     FImGuiDrawMulticastDelegate    EndFrameDelegates;

@@ -162,17 +162,17 @@ void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameReso
     struct FSSAOSettingsHLSL
     {
         // 0-16
-        FVector2 ScreenSize;
-        FVector2 NoiseSize;
+        Vector2    ScreenSize;
+        Vector2    NoiseSize;
 
         // 16-32
-        FIntVector2 GBufferSize;
-        float       Radius;
-        float       Bias;
+        IntVector2 GBufferSize;
+        float      Radius;
+        float      Bias;
 
         // 32-40
-        uint32 KernelSize;
-        uint32 FrameIndex;
+        uint32     KernelSize;
+        uint32     FrameIndex;
     } SSAOSettings;
 
     const uint32 Width         = FrameResources.SSAOBuffer->GetDesc().Extent.X;
@@ -180,9 +180,9 @@ void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameReso
     const uint32 GBufferWidth  = FrameResources.GBuffer[EGBufferIndex::Depth]->GetDesc().Extent.X;
     const uint32 GBufferHeight = FrameResources.GBuffer[EGBufferIndex::Depth]->GetDesc().Extent.Y;
 
-    SSAOSettings.ScreenSize  = FVector2(float(Width), float(Height));
-    SSAOSettings.NoiseSize   = FVector2(4.0f, 4.0f);
-    SSAOSettings.GBufferSize = FIntVector2(GBufferWidth, GBufferHeight);
+    SSAOSettings.ScreenSize  = Vector2(float(Width), float(Height));
+    SSAOSettings.NoiseSize   = Vector2(4.0f, 4.0f);
+    SSAOSettings.GBufferSize = IntVector2(GBufferWidth, GBufferHeight);
     SSAOSettings.Radius      = GSSAORadius;
     SSAOSettings.KernelSize  = GSSAOKernelSize;
     SSAOSettings.Bias        = GSSAOBias;

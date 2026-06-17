@@ -19,12 +19,12 @@ bool FMetalFenceRHI::Wait(uint64 TimeoutNs) const
     return true;
 }
 
-void FMetalFenceRHI::SetDebugName(const FString& InName)
+void FMetalFenceRHI::SetDebugName(const String& InName)
 {
     DebugName = InName;
 }
 
-void FMetalFenceRHI::GetDebugName(FString& OutDebugName) const
+void FMetalFenceRHI::GetDebugName(String& OutDebugName) const
 {
     OutDebugName = DebugName;
 }

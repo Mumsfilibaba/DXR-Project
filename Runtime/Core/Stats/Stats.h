@@ -12,10 +12,10 @@ enum class EStatType : uint8
 
 struct FStatData
 {
-    const CHAR*  StatName;
-    const CHAR*  GroupName;
-    EStatType    Type;
-    FAtomicInt64 Value;
+    const CHAR* StatName;
+    const CHAR* GroupName;
+    EStatType   Type;
+    AtomicInt64 Value;
 };
 
 class CORE_API FStatRegistry

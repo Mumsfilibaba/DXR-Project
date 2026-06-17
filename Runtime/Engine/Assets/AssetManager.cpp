@@ -19,15 +19,15 @@ static TAutoConsoleVariable<bool> CVarEnableAssetConversion(
     true,
     EConsoleVariableFlags::Default);
 
-static FString ReplaceExtension(const FString& Filename, const FString& NewExtension)
+static String ReplaceExtension(const String& Filename, const String& NewExtension)
 {
     const int32 Position = Filename.FindLastChar('.');
-    if (Position == FString::InvalidIndex)
+    if (Position == String::InvalidIndex)
     {
         return Filename;
     }
     
-    FString NewFilename = Filename.SubString(0, Position);
+    String NewFilename = Filename.SubString(0, Position);
     NewFilename += NewExtension;
     return NewFilename;
 }
@@ -36,8 +36,8 @@ FAssetRegistry::FAssetRegistry()
     : RegistryMap()
     , RegistryFilename()
 {
-    const FString AssetPath   = Paths::GetAssetDir();
-    const FString ProjectName = Paths::GetProjectName();
+    const String AssetPath   = Paths::GetAssetDir();
+    const String ProjectName = Paths::GetProjectName();
     RegistryFilename = AssetPath + "/" + ProjectName + ".assetregistry";
 }
 
@@ -45,18 +45,18 @@ FAssetRegistry::~FAssetRegistry()
 {
 }
 
-FString* FAssetRegistry::FindFile(const FString& SrcFilename)
+String* FAssetRegistry::FindFile(const String& SrcFilename)
 {
     return RegistryMap.Find(SrcFilename);
 }
 
-void FAssetRegistry::AddEntry(const FString& SrcFilename, const FString& Filename)
+void FAssetRegistry::AddEntry(const String& SrcFilename, const String& Filename)
 {
     RegistryMap.Add(SrcFilename, Filename);
     UpdateRegistryFile();
 }
 
-void FAssetRegistry::RemoveEntry(const FString& SrcFilename)
+void FAssetRegistry::RemoveEntry(const String& SrcFilename)
 {
     RegistryMap.Remove(SrcFilename);
     UpdateRegistryFile();
@@ -98,7 +98,7 @@ void FAssetRegistry::LoadRegistryFile()
         // Skip any spaces at the beginning of the line
         Parse::ParseWhiteSpace(&LineStart);
         
-        if (CHAR* EqualSign = FCString::Strchr(LineStart, '='))
+        if (CHAR* EqualSign = CString::Strchr(LineStart, '='))
         {
             *EqualSign = '\0';
 
@@ -114,7 +114,7 @@ void FAssetRegistry::LoadRegistryFile()
 
             // Find the end of the value
             CHAR* Value    = LineStart;
-            CHAR* ValueEnd = FCString::Strchr(LineStart, ' ');
+            CHAR* ValueEnd = CString::Strchr(LineStart, ' ');
 
             // Use line-end as backup
             if (!ValueEnd)
@@ -125,8 +125,8 @@ void FAssetRegistry::LoadRegistryFile()
             while (*ValueEnd == ' ')
                 *(ValueEnd--) = '\0';
 
-            FString NewValue      = Value;
-            FString OriginalValue = Key;
+            String NewValue      = Value;
+            String OriginalValue = Key;
             RegistryMap.Emplace(Move(OriginalValue), Move(NewValue));
         }
     }
@@ -134,8 +134,8 @@ void FAssetRegistry::LoadRegistryFile()
 
 void FAssetRegistry::UpdateRegistryFile()
 {
-    FString FileContents;
-    for (TMap<FString, FString>::IteratorType Iterator = RegistryMap.CreateIterator(); !Iterator.IsEnd(); Iterator++)
+    String FileContents;
+    for (TMap<String, String>::IteratorType Iterator = RegistryMap.CreateIterator(); !Iterator.IsEnd(); Iterator++)
     {
         FileContents.AppendFormat("%s = %s\n", *Iterator.GetKey(), *Iterator.GetValue());
     }
@@ -227,12 +227,12 @@ FAssetManager& FAssetManager::Get()
     return *GAssetManager;
 }
 
-TSharedRef<FTexture> FAssetManager::LoadTexture(const FString& Filename, bool bGenerateMips)
+TSharedRef<FTexture> FAssetManager::LoadTexture(const String& Filename, bool bGenerateMips)
 {
     SCOPED_LOCK(TexturesCS);
 
     // Convert backslashes
-    FString FinalPath = Filename;
+    String FinalPath = Filename;
     FinalPath.ReplaceAll('\\', '/');
     
     if (int32* TextureID = TextureMap.Find(FinalPath))
@@ -248,7 +248,7 @@ TSharedRef<FTexture> FAssetManager::LoadTexture(const FString& Filename, bool bG
         
         for (TSharedPtr<ITextureImporter> Importer : TextureImporters)
         {
-            const FStringView FileNameView(FinalPath);
+            const StringView FileNameView(FinalPath);
             if (Importer->MatchExtenstion(FileNameView))
             {
                 NewTexture = Importer->ImportFromFile(FileNameView);
@@ -290,12 +290,12 @@ TSharedRef<FTexture> FAssetManager::LoadTexture(const FString& Filename, bool bG
     return NewTexture;
 }
 
-TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImportFlags Flags)
+TSharedRef<FModel> FAssetManager::LoadModel(const String& Filename, EMeshImportFlags Flags)
 {
     SCOPED_LOCK(ModelsCS);
 
     // Convert backslashes
-    FString FinalPath = Filename;
+    String FinalPath = Filename;
     FinalPath.ReplaceAll('\\', '/');
 
     if (int32* MeshID = ModelsMap.Find(FinalPath))
@@ -305,7 +305,7 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
     }
 
     // Insert the a new model into the AssetManager
-    const auto InsertModel = [this](const FString& Filename, const FModelCreateInfo& InCreateInfo)
+    const auto InsertModel = [this](const String& Filename, const FModelCreateInfo& InCreateInfo)
     {
         TSharedRef<FModel> NewModel = new FModel();
         if (!NewModel->Init(InCreateInfo))
@@ -326,9 +326,9 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
     const bool bEnableAssetConversion = CVarEnableAssetConversion.GetValue();
     if (bEnableAssetConversion)
     {
-        if (FString* ExistingPath = AssetRegistry->FindFile(FinalPath))
+        if (String* ExistingPath = AssetRegistry->FindFile(FinalPath))
         {
-            const FStringView FileNameView(*ExistingPath);
+            const StringView FileNameView(*ExistingPath);
 
             if (ModelImporter->ImportFromFile(FileNameView, Flags, NewCreateInfo))
             {
@@ -355,7 +355,7 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
 
         for (TSharedPtr<IModelImporter> Importer : ModelImporters)
         {
-            const FStringView FileNameView(FinalPath);
+            const StringView FileNameView(FinalPath);
             if (Importer->MatchExtenstion(FileNameView))
             {
                 bResult = Importer->ImportFromFile(FileNameView, Flags, NewCreateInfo);
@@ -377,7 +377,7 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
 
     if (bEnableAssetConversion)
     {
-        const FString NewFilename = ReplaceExtension(FinalPath, ".dxrmesh");
+        const String NewFilename = ReplaceExtension(FinalPath, ".dxrmesh");
         if (ModelSerializer->Serialize(NewFilename, NewCreateInfo))
         {
             AssetRegistry->AddEntry(FinalPath, NewFilename);
@@ -400,7 +400,7 @@ void FAssetManager::UnloadTexture(const FTextureRef& Texture)
 {
     SCOPED_LOCK(TexturesCS);
     
-    const FString& Filename = Texture->GetFilename();
+    const String& Filename = Texture->GetFilename();
     TextureMap.Remove(Filename);
     Textures.Remove(Texture);
 }

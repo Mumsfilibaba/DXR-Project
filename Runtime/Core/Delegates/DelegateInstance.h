@@ -94,7 +94,7 @@ private:
 
     DelegateHandle Handle;
 
-    static CORE_API FAtomicInt64 NextID;
+    static CORE_API AtomicInt64 NextID;
 };
 
 struct IDelegateInstance

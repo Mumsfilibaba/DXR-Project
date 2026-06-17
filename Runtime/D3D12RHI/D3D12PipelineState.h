@@ -43,7 +43,7 @@ public:
 private:
     TArray<FRHIInputElementDesc>     InputElements;
     D3D12_INPUT_LAYOUT_DESC          D3D12Desc;
-    TArray<FString>                  SemanticNames;
+    TArray<String>                   SemanticNames;
     TArray<D3D12_INPUT_ELEMENT_DESC> ElementDesc;
     uint64                           Hash;
 };
@@ -68,8 +68,8 @@ public:
     }
 
 private:
-    D3D12_DEPTH_STENCIL_DESC  D3D12Desc;
-    uint64                    Hash;
+    D3D12_DEPTH_STENCIL_DESC D3D12Desc;
+    uint64                   Hash;
 };
 
 class FD3D12RasterizerStateRHI : public FRHIRasterizerState
@@ -92,8 +92,8 @@ public:
     }
 
 private:
-    D3D12_RASTERIZER_DESC   D3D12Desc;
-    uint64                  Hash;
+    D3D12_RASTERIZER_DESC D3D12Desc;
+    uint64                Hash;
 };
 
 class FD3D12BlendStateRHI : public FRHIBlendState
@@ -116,8 +116,8 @@ public:
     }
 
 private:
-    D3D12_BLEND_DESC   D3D12Desc;
-    uint64             Hash;
+    D3D12_BLEND_DESC D3D12Desc;
+    uint64           Hash;
 };
 
 class FD3D12PipelineState : public FD3D12DeviceChild
@@ -126,7 +126,7 @@ public:
     FD3D12PipelineState(FD3D12Device* InDevice);
     virtual ~FD3D12PipelineState();
 
-    void SetDebugName(const FString& InName);
+    void SetDebugName(const String& InName);
 
     ID3D12PipelineState* GetD3D12PipelineState() const
     {
@@ -149,7 +149,7 @@ protected:
     uint8                        EffectiveDescriptorCounts[EShaderVisibility::Count][EResourceType::Count];
     TComPtr<ID3D12PipelineState> PipelineState;
     FD3D12RootSignatureRef       RootSignature;
-    FString                      DebugName;
+    String                       DebugName;
 };
 
 #if D3D12_ENABLE_PIPELINE_STATE_STREAM
@@ -316,8 +316,8 @@ public:
     // FRHIPipelineState Interface
     virtual void* GetRHINativeState() const override final;
     
-    virtual void SetDebugName(const FString& InName)       override final;
-    virtual void GetDebugName(FString& OutDebugName) const override final;
+    virtual void SetDebugName(const String& InName)       override final;
+    virtual void GetDebugName(String& OutDebugName) const override final;
 
     bool Initialize(const FRHIGraphicsPipelineStateDesc& Desc);
 
@@ -379,8 +379,8 @@ public:
     // FRHIPipelineState Interface
     virtual void* GetRHINativeState() const override final;
     
-    virtual void SetDebugName(const FString& InName)       override final;
-    virtual void GetDebugName(FString& OutDebugName) const override final;
+    virtual void SetDebugName(const String& InName)       override final;
+    virtual void GetDebugName(String& OutDebugName) const override final;
     
     bool Initialize(const FRHIComputePipelineStateDesc& Desc);
 
@@ -407,12 +407,12 @@ public:
     // FRHIPipelineState Interface
     virtual void* GetRHINativeState() const override final;
     
-    virtual void SetDebugName(const FString& InName)       override final;
-    virtual void GetDebugName(FString& OutDebugName) const override final;
+    virtual void SetDebugName(const String& InName)       override final;
+    virtual void GetDebugName(String& OutDebugName) const override final;
     
     bool Initialize(const FRHIRayTracingPipelineStateDesc& Desc);
 
-    void* GetShaderIdentifier(const FString& ExportName);
+    void* GetShaderIdentifier(const String& ExportName);
 
     FORCEINLINE ID3D12StateObject* GetD3D12StateObject() const 
     {
@@ -430,14 +430,14 @@ public:
     FORCEINLINE FD3D12RootSignature* GetHitLocalRootSignature()    const { return HitLocalRootSignature.Get(); }
 
 private:
-    TComPtr<ID3D12StateObject>                      StateObject;
-    TComPtr<ID3D12StateObjectProperties>            StateObjectProperties;
-    FD3D12RootSignatureRef                          GlobalRootSignature;
-    FD3D12RootSignatureRef                          RayGenLocalRootSignature;
-    FD3D12RootSignatureRef                          MissLocalRootSignature;
-    FD3D12RootSignatureRef                          HitLocalRootSignature;
-    TMap<FString, FD3D12RayTracingShaderIdentifier> ShaderIdentifiers;
-    FString                                         DebugName;
+    TComPtr<ID3D12StateObject>                     StateObject;
+    TComPtr<ID3D12StateObjectProperties>           StateObjectProperties;
+    FD3D12RootSignatureRef                         GlobalRootSignature;
+    FD3D12RootSignatureRef                         RayGenLocalRootSignature;
+    FD3D12RootSignatureRef                         MissLocalRootSignature;
+    FD3D12RootSignatureRef                         HitLocalRootSignature;
+    TMap<String, FD3D12RayTracingShaderIdentifier> ShaderIdentifiers;
+    String                                         DebugName;
 };
 
 struct FD3D12PipelineDiskHeader

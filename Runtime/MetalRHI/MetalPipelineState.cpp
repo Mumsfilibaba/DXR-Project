@@ -213,7 +213,7 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
 
     if (PipelineState == nil)
     {
-        const FString ErrorString([Error localizedDescription]);
+        const String ErrorString([Error localizedDescription]);
         METAL_ERROR("Failed to create pipeline state, error %s", *ErrorString);
         return false;
     }
@@ -286,11 +286,11 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
     return true;
 }
 
-void FMetalGraphicsPipelineStateRHI::SetDebugName(const FString& InName)
+void FMetalGraphicsPipelineStateRHI::SetDebugName(const String& InName)
 {
 }
 
-void FMetalGraphicsPipelineStateRHI::GetDebugName(FString& OutDebugName) const
+void FMetalGraphicsPipelineStateRHI::GetDebugName(String& OutDebugName) const
 {
     OutDebugName.Clear();
 }
@@ -300,11 +300,11 @@ void* FMetalGraphicsPipelineStateRHI::GetRHINativeState() const
     return (__bridge void*)PipelineState;
 }
 
-void FMetalComputePipelineStateRHI::SetDebugName(const FString& InName)
+void FMetalComputePipelineStateRHI::SetDebugName(const String& InName)
 {
 }
 
-void FMetalComputePipelineStateRHI::GetDebugName(FString& OutDebugName) const
+void FMetalComputePipelineStateRHI::GetDebugName(String& OutDebugName) const
 {
     OutDebugName.Clear();
 }
@@ -314,11 +314,11 @@ void* FMetalComputePipelineStateRHI::GetRHINativeState() const
     return nullptr;
 }
 
-void FMetalRayTracingPipelineStateRHI::SetDebugName(const FString& InName)
+void FMetalRayTracingPipelineStateRHI::SetDebugName(const String& InName)
 {
 }
 
-void FMetalRayTracingPipelineStateRHI::GetDebugName(FString& OutDebugName) const
+void FMetalRayTracingPipelineStateRHI::GetDebugName(String& OutDebugName) const
 {
     OutDebugName.Clear();
 }

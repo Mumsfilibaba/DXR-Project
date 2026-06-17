@@ -12,17 +12,17 @@ struct CORE_API FWindowsPlatformStackTrace final : public FGenericPlatformStackT
     static int32 CaptureStackTrace(uint64* StackTrace, int32 MaxDepth);
     static void GetStackTraceEntryFromAddress(uint64 Address, FStackTraceEntry& OutStackTraceEntry);
 
-    static FORCEINLINE FString GetSymbolPath()
+    static FORCEINLINE String GetSymbolPath()
     {
         // TODO: Assumed to be the same as the executable path
-        const FString Path = GetExecutableFilename();
+        const String Path = GetExecutableFilename();
         return Path;
     }
 
-    static FORCEINLINE FString GetExecutableFilename()
+    static FORCEINLINE String GetExecutableFilename()
     {
         CHAR ModulePathName[FStackTraceEntry::MaxNameLength + 1];
         ::GetModuleFileNameA(::GetModuleHandleA(nullptr), ModulePathName, FStackTraceEntry::MaxNameLength);
-        return FString(ModulePathName);
+        return String(ModulePathName);
     }
 };

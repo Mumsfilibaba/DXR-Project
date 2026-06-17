@@ -25,9 +25,9 @@ public:
         return Allocator.Get();
     }
 
-    void SetDebugName(const FString& Name)
+    void SetDebugName(const String& Name)
     {
-        FStringWide WideName = CharToWide(Name);
+        StringWide WideName = CharToWide(Name);
         Allocator->SetName(*WideName);
     }
 
@@ -114,9 +114,9 @@ public:
         return NumCommands;
     }
 
-    FORCEINLINE void SetDebugName(const FString& Name)
+    FORCEINLINE void SetDebugName(const String& Name)
     {
-        FStringWide WideName = CharToWide(Name);
+        StringWide WideName = CharToWide(Name);
         CmdList->SetName(*WideName);
     }
 

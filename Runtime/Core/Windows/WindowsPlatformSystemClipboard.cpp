@@ -12,7 +12,7 @@ bool FWindowsPlatformSystemClipboard::HasText()
     return ::IsClipboardFormatAvailable(CF_UNICODETEXT) != 0;
 }
 
-bool FWindowsPlatformSystemClipboard::GetText(FString& OutText)
+bool FWindowsPlatformSystemClipboard::GetText(String& OutText)
 {
     OutText.Clear();
 
@@ -40,14 +40,14 @@ bool FWindowsPlatformSystemClipboard::GetText(FString& OutText)
         return false;
     }
 
-    OutText = WideToChar(FStringViewWide(WideText));
+    OutText = WideToChar(StringViewWide(WideText));
 
     ::GlobalUnlock(DataHandle);
     ::CloseClipboard();
     return true;
 }
 
-bool FWindowsPlatformSystemClipboard::SetText(const FString& InText)
+bool FWindowsPlatformSystemClipboard::SetText(const String& InText)
 {
     if (!OpenClipboardScoped(nullptr))
     {
@@ -56,7 +56,7 @@ bool FWindowsPlatformSystemClipboard::SetText(const FString& InText)
 
     ::EmptyClipboard();
 
-    const FStringWide WideText = CharToWide(FStringView(InText));
+    const StringWide WideText = CharToWide(StringView(InText));
 
     const WIDECHAR* WidePtr = *WideText;
     if (!WidePtr)
@@ -65,7 +65,7 @@ bool FWindowsPlatformSystemClipboard::SetText(const FString& InText)
         return false;
     }
 
-    const SIZE_T CharCount = FCStringWide::Strlen(WidePtr) + 1;
+    const SIZE_T CharCount = CStringWide::Strlen(WidePtr) + 1;
     const SIZE_T ByteCount = CharCount * sizeof(WIDECHAR);
 
     HGLOBAL GlobalHandle = ::GlobalAlloc(GMEM_MOVEABLE, ByteCount);

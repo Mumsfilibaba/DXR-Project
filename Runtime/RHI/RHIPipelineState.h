@@ -434,7 +434,7 @@ NODISCARD constexpr const CHAR* ToString(EVertexInputClass BlendOp)
 struct FRHIInputElementDesc
 {
     /** @brief Semantic in the shader to match */
-    FString Semantic;
+    String Semantic;
 
     /** @brief Index of the semantic in the shader */
     uint32 SemanticIndex = 0;
@@ -495,8 +495,8 @@ public:
     /** @return D3D12: ID3D12PipelineState* (graphics/compute) or ID3D12StateObject* (ray tracing). Vulkan: VkPipeline (graphics/compute) or nullptr (ray tracing). Metal: id<MTLRenderPipelineState> (graphics) or nullptr. Null: nullptr. */
     virtual void* GetRHINativeState() const = 0;
 
-    virtual void SetDebugName(const FString& InName) { }
-    virtual void GetDebugName(FString& OutDebugName) const { OutDebugName.Clear(); }
+    virtual void SetDebugName(const String& InName) { }
+    virtual void GetDebugName(String& OutDebugName) const { OutDebugName.Clear(); }
 };
 
 struct FRHIGraphicsPipelineFormats
@@ -596,7 +596,7 @@ struct FRHIRayTracingHitGroupInfo
 {
     FRHIRayTracingHitGroupInfo() noexcept = default;
 
-    FRHIRayTracingHitGroupInfo(const FString& InName, ERayTracingHitGroupType InType, TArrayView<FRHIRayTracingShader*> InRayTracingShaders) noexcept
+    FRHIRayTracingHitGroupInfo(const String& InName, ERayTracingHitGroupType InType, TArrayView<FRHIRayTracingShader*> InRayTracingShaders) noexcept
         : Name(InName)
         , Type(InType)
         , Shaders(InRayTracingShaders)
@@ -605,7 +605,7 @@ struct FRHIRayTracingHitGroupInfo
 
     bool operator==(const FRHIRayTracingHitGroupInfo& Other) const noexcept = default;
 
-    FString                       Name;
+    String                        Name;
     TArray<FRHIRayTracingShader*> Shaders;
     ERayTracingHitGroupType       Type = ERayTracingHitGroupType::Unknown;
 };

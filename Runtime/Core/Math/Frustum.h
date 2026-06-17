@@ -17,14 +17,14 @@ public:
      * @param View View matrix of the camera.
      * @param Projection Projection matrix of the camera.
      */
-    FFrustum(const FMatrix4& View, const FMatrix4& Projection);
+    FFrustum(const Matrix4& View, const Matrix4& Projection);
 
     /**
      * @brief Initializes or updates the frustum based on view and projection matrices.
      * @param View View matrix of the camera.
      * @param Projection Projection matrix of the camera.
      */
-    void Initialize(const FMatrix4& View, const FMatrix4& Projection);
+    void Initialize(const Matrix4& View, const Matrix4& Projection);
 
     /**
      * @brief Checks if a bounding box intersects with the frustum.
@@ -34,11 +34,11 @@ public:
     bool IntersectsAABB(const FAABB& BoundingBox) const;
 
 private:
-    void ExtractPlanes(const FMatrix4& CombinedMatrix);
-    void GenerateFrustumCorners(const FMatrix4& CombinedMatrix);
+    void ExtractPlanes(const Matrix4& CombinedMatrix);
+    void GenerateFrustumCorners(const Matrix4& CombinedMatrix);
 
-    FPlane   Planes[6];
-    FVector3 Points[8];
+    Plane   Planes[6];
+    Vector3 Points[8];
 };
 
 MARK_AS_REALLOCATABLE(FFrustum);

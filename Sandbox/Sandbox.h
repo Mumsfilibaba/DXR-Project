@@ -23,5 +23,5 @@ private:
     bool CreateEmeraldSquare(FWorld* InWorld);
     bool CreateLightSandbox(FWorld* InWorld);
 
-    FRHITextureRef LoadCubeMapFromPanorama(const FString& Filename);
+    FRHITextureRef LoadCubeMapFromPanorama(const String& Filename);
 };

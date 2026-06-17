@@ -26,8 +26,8 @@
 template<typename InCharType>
 class TString
 {
-    typedef TCharTraits<InCharType> FCharTraitsType;
-    typedef TCString<InCharType>    FCStringType;
+    typedef TCharTraits<InCharType> CharTraitsType;
+    typedef TCString<InCharType>    CStringType;
 
 public:
     typedef int32      SizeType;
@@ -76,7 +76,7 @@ public:
      */
     FORCEINLINE TString(const CharType* InString)
     {
-        InitializeByCopy(InString, FCStringType::Strlen(InString));
+        InitializeByCopy(InString, CStringType::Strlen(InString));
     }
 
     /**
@@ -86,7 +86,7 @@ public:
      */
     FORCEINLINE TString(SizeType InSlack, const CharType* InString)
     {
-        InitializeWithSlack(InString, FCStringType::Strlen(InString), InSlack);
+        InitializeWithSlack(InString, CStringType::Strlen(InString), InSlack);
     }
 
     /**
@@ -212,7 +212,7 @@ public:
 
         if (InLength > 0)
         {
-            FCStringType::Strncpy(CharData.Data(), InString, InLength);
+            CStringType::Strncpy(CharData.Data(), InString, InLength);
             CharData[InLength] = 0;
         }
         else
@@ -251,7 +251,7 @@ public:
      */
     FORCEINLINE void Append(const CharType* InString)
     {
-        Append(InString, FCStringType::Strlen(InString));
+        Append(InString, CStringType::Strlen(InString));
     }
 
     /**
@@ -277,7 +277,7 @@ public:
             const SizeType NumUninitialized = CharData.IsEmpty() ? InLength + 1 : InLength;
             const SizeType OldLength = Length();
             CharData.AppendUninitialized(NumUninitialized);
-            FCStringType::Strncpy(CharData.Data() + OldLength, InString, InLength);
+            CStringType::Strncpy(CharData.Data() + OldLength, InString, InLength);
             CharData[Length()] = 0;
         }
     }
@@ -346,7 +346,7 @@ public:
 
         if (CopySize > 0)
         {
-            FCStringType::Strncpy(Buffer, CharData.Data() + Position, CopySize);
+            CStringType::Strncpy(Buffer, CharData.Data() + Position, CopySize);
         }
 
         Buffer[CopySize] = 0;
@@ -367,7 +367,7 @@ public:
         CharType* WrittenString = Buffer;
         
         // Start by printing to the static buffer
-        SizeType WrittenChars = FCStringType::Snprintf(WrittenString, BufferSize, InFormat, Forward<ArgTypes>(Args)...);
+        SizeType WrittenChars = CStringType::Snprintf(WrittenString, BufferSize, InFormat, Forward<ArgTypes>(Args)...);
        
         // In case the buffer size is too small, increase the buffer size with a dynamic allocation until we have enough space
         while ((WrittenChars > BufferSize) || (WrittenChars == -1))
@@ -375,12 +375,12 @@ public:
             BufferSize   += WrittenChars;
             DynamicBuffer = reinterpret_cast<CharType*>(Memory::Realloc(DynamicBuffer, BufferSize * sizeof(CharType)));
             WrittenString = DynamicBuffer;
-            WrittenChars  = FCStringType::Snprintf(WrittenString, BufferSize, InFormat, Forward<ArgTypes>(Args)...);
+            WrittenChars  = CStringType::Snprintf(WrittenString, BufferSize, InFormat, Forward<ArgTypes>(Args)...);
         }
 
-        const SizeType WrittenLength = FCStringType::Strlen(WrittenString);
+        const SizeType WrittenLength = CStringType::Strlen(WrittenString);
         CharData.Reset(WrittenLength + 1);
-        FCStringType::Strncpy(CharData.Data(), WrittenString, WrittenLength);
+        CStringType::Strncpy(CharData.Data(), WrittenString, WrittenLength);
         CharData[WrittenLength] = 0;
 
         if (DynamicBuffer)
@@ -404,7 +404,7 @@ public:
         CharType* WrittenString = Buffer;
 
         // Start by printing to the static buffer
-        SizeType WrittenChars = FCStringType::Snprintf(WrittenString, BufferSize, InFormat, Forward<ArgTypes>(Args)...);
+        SizeType WrittenChars = CStringType::Snprintf(WrittenString, BufferSize, InFormat, Forward<ArgTypes>(Args)...);
         
         // In case the buffer size is too small, increase the buffer size with a dynamic allocation until we have enough space
         while ((WrittenChars > BufferSize) || (WrittenChars == -1))
@@ -412,15 +412,15 @@ public:
             BufferSize   += WrittenChars;
             DynamicBuffer = reinterpret_cast<CharType*>(Memory::Realloc(DynamicBuffer, BufferSize * sizeof(CharType)));
             WrittenString = DynamicBuffer;
-            WrittenChars  = FCStringType::Snprintf(WrittenString, BufferSize, InFormat, Forward<ArgTypes>(Args)...);
+            WrittenChars  = CStringType::Snprintf(WrittenString, BufferSize, InFormat, Forward<ArgTypes>(Args)...);
         }
 
-        const SizeType WrittenLength = FCStringType::Strlen(WrittenString);
+        const SizeType WrittenLength = CStringType::Strlen(WrittenString);
         const SizeType OldSize       = Length();
         const SizeType NewSize       = (OldSize > 0) ? WrittenLength : WrittenLength + 1;
         CharData.AppendUninitialized(NewSize);
 
-        FCStringType::Strncpy(CharData.Data() + OldSize, WrittenString, WrittenLength);
+        CStringType::Strncpy(CharData.Data() + OldSize, WrittenString, WrittenLength);
         CharData[OldSize + WrittenLength] = 0;
 
         if (DynamicBuffer)
@@ -436,7 +436,7 @@ public:
     {
         for (CharType* RESTRICT Start = CharData.Data(), *RESTRICT End = Start + Length(); Start != End; ++Start)
         {
-            *Start = FCharTraitsType::ToLower(*Start);
+            *Start = CharTraitsType::ToLower(*Start);
         }
     }
 
@@ -458,7 +458,7 @@ public:
     {
         for (CharType* RESTRICT Start = CharData.Data(), *RESTRICT End = Start + Length(); Start != End; ++Start)
         {
-            *Start = FCharTraitsType::ToUpper(*Start);
+            *Start = CharTraitsType::ToUpper(*Start);
         }
     }
 
@@ -510,7 +510,7 @@ public:
     FORCEINLINE void TrimStartInline()
     {
         SizeType Index = 0;
-        while (FCharTraitsType::IsWhitespace(CharData[Index]))
+        while (CharTraitsType::IsWhitespace(CharData[Index]))
         {
             Index++;
         }
@@ -536,7 +536,7 @@ public:
     {
         const SizeType OldLength = Length();
         SizeType NewLength = OldLength;
-        while (NewLength > 0 && FCharTraitsType::IsWhitespace(CharData[NewLength - 1]))
+        while (NewLength > 0 && CharTraitsType::IsWhitespace(CharData[NewLength - 1]))
         {
             NewLength--;
         }
@@ -595,11 +595,11 @@ public:
     {
         if (CaseType == EStringCaseType::NoCase)
         {
-            return static_cast<SizeType>(FCStringType::Stricmp(CharData.Data(), InString));
+            return static_cast<SizeType>(CStringType::Stricmp(CharData.Data(), InString));
         }
         else
         {
-            return static_cast<SizeType>(FCStringType::Strcmp(CharData.Data(), InString));
+            return static_cast<SizeType>(CStringType::Strcmp(CharData.Data(), InString));
         }
     }
 
@@ -615,11 +615,11 @@ public:
         const SizeType MinLength = Math::Min(Length(), InLength);
         if (CaseType == EStringCaseType::NoCase)
         {
-            return static_cast<SizeType>(FCStringType::Strnicmp(CharData.Data(), InString, MinLength));
+            return static_cast<SizeType>(CStringType::Strnicmp(CharData.Data(), InString, MinLength));
         }
         else
         {
-            return static_cast<SizeType>(FCStringType::Strncmp(CharData.Data(), InString, MinLength));
+            return static_cast<SizeType>(CStringType::Strncmp(CharData.Data(), InString, MinLength));
         }
     }
 
@@ -643,7 +643,7 @@ public:
      */
     NODISCARD FORCEINLINE bool Equals(const CharType* InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const
     {
-        return Equals(InString, FCStringType::Strlen(InString), CaseType);
+        return Equals(InString, CStringType::Strlen(InString), CaseType);
     }
 
     /**
@@ -663,11 +663,11 @@ public:
 
         if (CaseType == EStringCaseType::CaseSensitive)
         {
-            return FCStringType::Strncmp(CharData.Data(), InString, CurrentLength) == 0;
+            return CStringType::Strncmp(CharData.Data(), InString, CurrentLength) == 0;
         }
         else if (CaseType == EStringCaseType::NoCase)
         {
-            return FCStringType::Strnicmp(CharData.Data(), InString, CurrentLength) == 0;
+            return CStringType::Strnicmp(CharData.Data(), InString, CurrentLength) == 0;
         }
         else
         {
@@ -703,12 +703,12 @@ public:
 
         if (CaseType == EStringCaseType::CaseSensitive)
         {
-            const CharType* RESTRICT Result = FCStringType::Strstr(CharData.Data() + Index, InString);
+            const CharType* RESTRICT Result = CStringType::Strstr(CharData.Data() + Index, InString);
             return Result ? static_cast<SizeType>(static_cast<PTR_INT>(Result - CharData.Data())) : InvalidIndex;
         }
         else if (CaseType == EStringCaseType::NoCase)
         {
-            const CharType* RESTRICT Result = FCStringType::Stristr(CharData.Data() + Index, InString);
+            const CharType* RESTRICT Result = CStringType::Stristr(CharData.Data() + Index, InString);
             return Result ? static_cast<SizeType>(static_cast<PTR_INT>(Result - CharData.Data())) : InvalidIndex;
         }
 
@@ -851,7 +851,7 @@ public:
             Position = CurrentLength;
         }
 
-        const SizeType SearchLength = FCStringType::Strlen(InString);
+        const SizeType SearchLength = CStringType::Strlen(InString);
         if (SearchLength == 0)
         {
             return Position;
@@ -868,11 +868,11 @@ public:
             bool bMatch = false;
             if (CaseType == EStringCaseType::CaseSensitive)
             {
-                bMatch = FCStringType::Strncmp(Data + Index, InString, SearchLength) == 0;
+                bMatch = CStringType::Strncmp(Data + Index, InString, SearchLength) == 0;
             }
             else if (CaseType == EStringCaseType::NoCase)
             {
-                bMatch = FCStringType::Strnicmp(Data + Index, InString, SearchLength) == 0;
+                bMatch = CStringType::Strnicmp(Data + Index, InString, SearchLength) == 0;
             }
 
             if (bMatch)
@@ -1080,11 +1080,11 @@ public:
         {
             if (SearchType == EStringCaseType::CaseSensitive)
             {
-                return FCStringType::Strncmp(CharData.Data(), InString, InLength) == 0;
+                return CStringType::Strncmp(CharData.Data(), InString, InLength) == 0;
             }
             else if (SearchType == EStringCaseType::NoCase)
             {
-                return FCStringType::Strnicmp(CharData.Data(), InString, InLength) == 0;
+                return CStringType::Strnicmp(CharData.Data(), InString, InLength) == 0;
             }
         }
 
@@ -1104,7 +1104,7 @@ public:
             return false;
         }
 
-        return StartsWith(InString, FCStringType::Strlen(InString), SearchType);
+        return StartsWith(InString, CStringType::Strlen(InString), SearchType);
     }
 
     /**
@@ -1139,11 +1139,11 @@ public:
             const CharType* StringData = CharData.Data() + (CurrentLength - InLength);
             if (SearchType == EStringCaseType::CaseSensitive)
             {
-                return FCStringType::Strncmp(StringData, InString, InLength) == 0;
+                return CStringType::Strncmp(StringData, InString, InLength) == 0;
             }
             else if (SearchType == EStringCaseType::NoCase)
             {
-                return FCStringType::Strnicmp(StringData, InString, InLength) == 0;
+                return CStringType::Strnicmp(StringData, InString, InLength) == 0;
             }
         }
 
@@ -1163,7 +1163,7 @@ public:
             return false;
         }
 
-        return EndsWith(InString, FCStringType::Strlen(InString), SearchType);
+        return EndsWith(InString, CStringType::Strlen(InString), SearchType);
     }
 
     /**
@@ -1196,7 +1196,7 @@ public:
      */
     FORCEINLINE void Insert(const CharType* InString, SizeType Position)
     {
-        Insert(InString, FCStringType::Strlen(InString), Position);
+        Insert(InString, CStringType::Strlen(InString), Position);
     }
 
     /**
@@ -1240,7 +1240,7 @@ public:
      */
     FORCEINLINE void Replace(const CharType* InString, SizeType Position)
     {
-        Replace(InString, FCStringType::Strlen(InString), Position);
+        Replace(InString, CStringType::Strlen(InString), Position);
     }
 
     /**
@@ -1263,7 +1263,7 @@ public:
     FORCEINLINE void Replace(const CharType* InString, SizeType InLength, SizeType Position)
     {
         CHECK(Position < Length() && (Position + InLength) < Length());
-        FCStringType::Strncpy(CharData.Data() + Position, InString, InLength);
+        CStringType::Strncpy(CharData.Data() + Position, InString, InLength);
     }
 
     /**
@@ -1583,7 +1583,7 @@ public:
      */
     NODISCARD FORCEINLINE const CharType* operator*() const
     {
-        return !CharData.IsEmpty() ? CharData.Data() : FCStringType::Empty();
+        return !CharData.IsEmpty() ? CharData.Data() : CStringType::Empty();
     }
 
     /**
@@ -1648,7 +1648,7 @@ public:
 
     NODISCARD friend FORCEINLINE TString operator+(const TString& LHS, const CharType* RHS)
     {
-        const SizeType AppendLength = FCStringType::Strlen(RHS);
+        const SizeType AppendLength = CStringType::Strlen(RHS);
         TString NewString(LHS, AppendLength);
         NewString.Append(RHS, AppendLength);
         return NewString;
@@ -1664,7 +1664,7 @@ public:
 
         CharType* StringData = NewString.Data();
         StringData[0] = LHS;
-        FCStringType::Strncpy(StringData + 1, RHS.Data(), RHS.Length());
+        CStringType::Strncpy(StringData + 1, RHS.Data(), RHS.Length());
         StringData[NewLength] = 0;
         return NewString;
     }
@@ -1813,7 +1813,7 @@ private:
 
         // Exactly InLength characters + null terminator
         CharData.Resize(InLength + 1);
-        FCStringType::Strncpy(CharData.Data(), InString, InLength);
+        CStringType::Strncpy(CharData.Data(), InString, InLength);
         CharData[InLength] = 0;
     }
 
@@ -1839,15 +1839,15 @@ private:
 
         // Exactly InLength characters + null terminator
         CharData.Resize(InLength + 1);
-        FCStringType::Strncpy(CharData.Data(), InString, InLength);
+        CStringType::Strncpy(CharData.Data(), InString, InLength);
         CharData[InLength] = 0;
     }
 
     StorageType CharData;
 };
 
-using FString     = TString<CHAR>;
-using FStringWide = TString<WIDECHAR>;
+using String     = TString<CHAR>;
+using StringWide = TString<WIDECHAR>;
 
 // TODO: Investigate this one
 //template<typename CharType>
@@ -1868,47 +1868,47 @@ struct TIsContiguousContainer<TString<CharType>>
     inline static constexpr bool Value = true;
 };
 
-NODISCARD inline FStringWide CharToWide(const FStringView& CharString)
+NODISCARD inline StringWide CharToWide(const StringView& CharString)
 {
-    FStringWide NewString;
+    StringWide NewString;
     NewString.Resize(CharString.Length());
     FPlatformString::Mbstowcs(NewString.Data(), CharString.Data(), CharString.Length());
     return NewString;
 }
 
-NODISCARD inline FStringWide CharToWide(const FString& CharString)
+NODISCARD inline StringWide CharToWide(const String& CharString)
 {
-    FStringWide NewString;
+    StringWide NewString;
     NewString.Resize(CharString.Length());
     FPlatformString::Mbstowcs(NewString.Data(), CharString.Data(), CharString.Length());
     return NewString;
 }
 
-NODISCARD inline FString WideToChar(const FStringViewWide& WideString)
+NODISCARD inline String WideToChar(const StringViewWide& WideString)
 {
-    FString NewString;
+    String NewString;
     NewString.Resize(WideString.Length());
     FPlatformString::Wcstombs(NewString.Data(), WideString.Data(), WideString.Length());
     return NewString;
 }
 
-NODISCARD inline FString WideToChar(const FStringWide& WideString)
+NODISCARD inline String WideToChar(const StringWide& WideString)
 {
-    FString NewString;
+    String NewString;
     NewString.Resize(WideString.Length());
     FPlatformString::Wcstombs(NewString.Data(), WideString.Data(), WideString.Length());
     return NewString;
 }
 
 // Jenkins's one_at_a_time hash: https://en.wikipedia.org/wiki/Jenkins_hash_function
-inline uint64 GetHashForType(const FString& String)
+inline uint64 GetHashForType(const String& InString)
 {
-    const CHAR* Key = *String;
+    const CHAR* Key = *InString;
 
     int32  Index = 0;
     uint64 Hash  = 0;
 
-    const int32 Length = String.Length();
+    const int32 Length = InString.Length();
     while (Index != Length)
     {
         Hash += Key[Index++];
@@ -1923,15 +1923,15 @@ inline uint64 GetHashForType(const FString& String)
 }
 
 // Jenkins's one_at_a_time hash: https://en.wikipedia.org/wiki/Jenkins_hash_function
-inline uint64 GetHashForType(const FStringWide& String)
+inline uint64 GetHashForType(const StringWide& InString)
 {
     // TODO: Investigate how good is this for wide chars
-    const WIDECHAR* Key = *String;
+    const WIDECHAR* Key = *InString;
 
     int32  Index = 0;
     uint64 Hash  = 0;
 
-    const int32 Length = String.Length();
+    const int32 Length = InString.Length();
     while (Index != Length)
     {
         Hash += Key[Index++];
@@ -1948,52 +1948,52 @@ inline uint64 GetHashForType(const FStringWide& String)
 template<typename T>
 struct TTypeToString
 {
-    NODISCARD static FORCEINLINE typename TEnableIf<TIsArithmetic<T>::Value, FString>::Type ToString(T Element)
+    NODISCARD static FORCEINLINE typename TEnableIf<TIsArithmetic<T>::Value, String>::Type ToString(T Element)
     {
-        return FString::CreateFormatted(TFormatSpecifier<typename TRemoveCV<T>::Type>::GetStringSpecifier(), Element);
+        return String::CreateFormatted(TFormatSpecifier<typename TRemoveCV<T>::Type>::GetStringSpecifier(), Element);
     }
 };
 
 template<>
-NODISCARD FORCEINLINE FString TTypeToString<bool>::ToString(bool bElement)
+NODISCARD FORCEINLINE String TTypeToString<bool>::ToString(bool bElement)
 {
-    return FString(bElement ? "true" : "false");
+    return String(bElement ? "true" : "false");
 }
 
 template<typename T>
 struct TTypeToStringWide
 {
-    NODISCARD static FORCEINLINE typename TEnableIf<TIsArithmetic<T>::Value, FStringWide>::Type ToString(T Element)
+    NODISCARD static FORCEINLINE typename TEnableIf<TIsArithmetic<T>::Value, StringWide>::Type ToString(T Element)
     {
-        return FStringWide::CreateFormatted(TFormatSpecifierWide<typename TRemoveCV<T>::Type>::GetStringSpecifier(), Element);
+        return StringWide::CreateFormatted(TFormatSpecifierWide<typename TRemoveCV<T>::Type>::GetStringSpecifier(), Element);
     }
 };
 
 template<>
-NODISCARD FORCEINLINE FStringWide TTypeToStringWide<bool>::ToString(bool bElement)
+NODISCARD FORCEINLINE StringWide TTypeToStringWide<bool>::ToString(bool bElement)
 {
-    return FStringWide(bElement ? L"true" : L"false");
+    return StringWide(bElement ? L"true" : L"false");
 }
 
 template<typename T>
 struct TTypeFromString
 {
-    static FORCEINLINE bool FromString(const FString& String, T& OutElement);
+    static FORCEINLINE bool FromString(const String& InString, T& OutElement);
 };
 
 template<>
-FORCEINLINE bool TTypeFromString<FString>::FromString(const FString& String, FString& OutElement)
+FORCEINLINE bool TTypeFromString<String>::FromString(const String& InString, String& OutElement)
 {
-    OutElement = String;
+    OutElement = InString;
     return true;
 }
 
 template<>
-FORCEINLINE bool TTypeFromString<int32>::FromString(const FString& String, int32& OutElement)
+FORCEINLINE bool TTypeFromString<int32>::FromString(const String& InString, int32& OutElement)
 {
     CHAR* End;
-    const CHAR* Start = *String;
-    OutElement = FCString::Strtoi(Start, &End, 10);
+    const CHAR* Start = *InString;
+    OutElement = CString::Strtoi(Start, &End, 10);
     if (End != Start)
     {
         return true;
@@ -2003,11 +2003,11 @@ FORCEINLINE bool TTypeFromString<int32>::FromString(const FString& String, int32
 }
 
 template<>
-FORCEINLINE bool TTypeFromString<int64>::FromString(const FString& String, int64& OutElement)
+FORCEINLINE bool TTypeFromString<int64>::FromString(const String& InString, int64& OutElement)
 {
     CHAR* End;
-    const CHAR* Start = *String;
-    OutElement = FCString::Strtoi64(Start, &End, 10);
+    const CHAR* Start = *InString;
+    OutElement = CString::Strtoi64(Start, &End, 10);
     if (End != Start)
     {
         return true;
@@ -2017,11 +2017,11 @@ FORCEINLINE bool TTypeFromString<int64>::FromString(const FString& String, int64
 }
 
 template<>
-FORCEINLINE bool TTypeFromString<uint32>::FromString(const FString& String, uint32& OutElement)
+FORCEINLINE bool TTypeFromString<uint32>::FromString(const String& InString, uint32& OutElement)
 {
     CHAR* End;
-    const CHAR* Start = *String;
-    OutElement = FCString::Strtoui(Start, &End, 10);
+    const CHAR* Start = *InString;
+    OutElement = CString::Strtoui(Start, &End, 10);
     if (End != Start)
     {
         return true;
@@ -2031,11 +2031,11 @@ FORCEINLINE bool TTypeFromString<uint32>::FromString(const FString& String, uint
 }
 
 template<>
-FORCEINLINE bool TTypeFromString<uint64>::FromString(const FString& String, uint64& OutElement)
+FORCEINLINE bool TTypeFromString<uint64>::FromString(const String& InString, uint64& OutElement)
 {
     CHAR* End;
-    const CHAR* Start = *String;
-    OutElement = FCString::Strtoui64(Start, &End, 10);
+    const CHAR* Start = *InString;
+    OutElement = CString::Strtoui64(Start, &End, 10);
     if (End != Start)
     {
         return true;
@@ -2045,11 +2045,11 @@ FORCEINLINE bool TTypeFromString<uint64>::FromString(const FString& String, uint
 }
 
 template<>
-FORCEINLINE bool TTypeFromString<float>::FromString(const FString& String, float& OutElement)
+FORCEINLINE bool TTypeFromString<float>::FromString(const String& InString, float& OutElement)
 {
     CHAR* End;
-    const CHAR* Start = *String;
-    OutElement = FCString::Strtof(Start, &End);
+    const CHAR* Start = *InString;
+    OutElement = CString::Strtof(Start, &End);
     if (End != Start)
     {
         return true;
@@ -2059,11 +2059,11 @@ FORCEINLINE bool TTypeFromString<float>::FromString(const FString& String, float
 }
 
 template<>
-FORCEINLINE bool TTypeFromString<double>::FromString(const FString& String, double& OutElement)
+FORCEINLINE bool TTypeFromString<double>::FromString(const String& InString, double& OutElement)
 {
     CHAR* End;
-    const CHAR* Start = *String;
-    OutElement = FCString::Strtod(Start, &End);
+    const CHAR* Start = *InString;
+    OutElement = CString::Strtod(Start, &End);
     if (End != Start)
     {
         return true;
@@ -2073,22 +2073,22 @@ FORCEINLINE bool TTypeFromString<double>::FromString(const FString& String, doub
 }
 
 template<>
-FORCEINLINE bool TTypeFromString<bool>::FromString(const FString& String, bool& OutElement)
+FORCEINLINE bool TTypeFromString<bool>::FromString(const String& InString, bool& OutElement)
 {
-    const CHAR* Start = *String;
-    if (FCString::Stricmp(Start, "true") == 0)
+    const CHAR* Start = *InString;
+    if (CString::Stricmp(Start, "true") == 0)
     {
         OutElement = true;
         return true;
     }
-    else if (FCString::Stricmp(Start, "false") == 0)
+    else if (CString::Stricmp(Start, "false") == 0)
     {
         OutElement = false;
         return true;
     }
 
     CHAR* End;
-    OutElement = static_cast<bool>(FCString::Strtoi(Start, &End, 10));
+    OutElement = static_cast<bool>(CString::Strtoi(Start, &End, 10));
     if (End != Start)
     {
         return true;
@@ -2100,22 +2100,22 @@ FORCEINLINE bool TTypeFromString<bool>::FromString(const FString& String, bool& 
 template<typename T>
 struct TTypeFromStringWide
 {
-    static FORCEINLINE bool FromString(const FStringWide& String, T& OutElement);
+    static FORCEINLINE bool FromString(const StringWide& InString, T& OutElement);
 };
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<FStringWide>::FromString(const FStringWide& String, FStringWide& OutElement)
+FORCEINLINE bool TTypeFromStringWide<StringWide>::FromString(const StringWide& InString, StringWide& OutElement)
 {
-    OutElement = String;
+    OutElement = InString;
     return true;
 }
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<int32>::FromString(const FStringWide& String, int32& OutElement)
+FORCEINLINE bool TTypeFromStringWide<int32>::FromString(const StringWide& InString, int32& OutElement)
 {
     WIDECHAR* End;
-    const WIDECHAR* Start = *String;
-    OutElement = FCStringWide::Strtoi(Start, &End, 10);
+    const WIDECHAR* Start = *InString;
+    OutElement = CStringWide::Strtoi(Start, &End, 10);
     if (End != Start)
     {
         return true;
@@ -2125,11 +2125,11 @@ FORCEINLINE bool TTypeFromStringWide<int32>::FromString(const FStringWide& Strin
 }
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<int64>::FromString(const FStringWide& String, int64& OutElement)
+FORCEINLINE bool TTypeFromStringWide<int64>::FromString(const StringWide& InString, int64& OutElement)
 {
     WIDECHAR* End;
-    const WIDECHAR* Start = *String;
-    OutElement = FCStringWide::Strtoi64(Start, &End, 10);
+    const WIDECHAR* Start = *InString;
+    OutElement = CStringWide::Strtoi64(Start, &End, 10);
     if (End != Start)
     {
         return true;
@@ -2139,11 +2139,11 @@ FORCEINLINE bool TTypeFromStringWide<int64>::FromString(const FStringWide& Strin
 }
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<uint32>::FromString(const FStringWide& String, uint32& OutElement)
+FORCEINLINE bool TTypeFromStringWide<uint32>::FromString(const StringWide& InString, uint32& OutElement)
 {
     WIDECHAR* End;
-    const WIDECHAR* Start = *String;
-    OutElement = FCStringWide::Strtoui(Start, &End, 10);
+    const WIDECHAR* Start = *InString;
+    OutElement = CStringWide::Strtoui(Start, &End, 10);
     if (End != Start)
     {
         return true;
@@ -2153,11 +2153,11 @@ FORCEINLINE bool TTypeFromStringWide<uint32>::FromString(const FStringWide& Stri
 }
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<uint64>::FromString(const FStringWide& String, uint64& OutElement)
+FORCEINLINE bool TTypeFromStringWide<uint64>::FromString(const StringWide& InString, uint64& OutElement)
 {
     WIDECHAR* End;
-    const WIDECHAR* Start = *String;
-    OutElement = FCStringWide::Strtoui64(Start, &End, 10);
+    const WIDECHAR* Start = *InString;
+    OutElement = CStringWide::Strtoui64(Start, &End, 10);
     if (End != Start)
     {
         return true;
@@ -2167,11 +2167,11 @@ FORCEINLINE bool TTypeFromStringWide<uint64>::FromString(const FStringWide& Stri
 }
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<float>::FromString(const FStringWide& String, float& OutElement)
+FORCEINLINE bool TTypeFromStringWide<float>::FromString(const StringWide& InString, float& OutElement)
 {
     WIDECHAR* End;
-    const WIDECHAR* Start = *String;
-    OutElement = FCStringWide::Strtof(Start, &End);
+    const WIDECHAR* Start = *InString;
+    OutElement = CStringWide::Strtof(Start, &End);
     if (End != Start)
     {
         return true;
@@ -2181,11 +2181,11 @@ FORCEINLINE bool TTypeFromStringWide<float>::FromString(const FStringWide& Strin
 }
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<double>::FromString(const FStringWide& String, double& OutElement)
+FORCEINLINE bool TTypeFromStringWide<double>::FromString(const StringWide& InString, double& OutElement)
 {
     WIDECHAR* End;
-    const WIDECHAR* Start = *String;
-    OutElement = FCStringWide::Strtod(Start, &End);
+    const WIDECHAR* Start = *InString;
+    OutElement = CStringWide::Strtod(Start, &End);
     if (End != Start)
     {
         return true;
@@ -2195,22 +2195,22 @@ FORCEINLINE bool TTypeFromStringWide<double>::FromString(const FStringWide& Stri
 }
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<bool>::FromString(const FStringWide& String, bool& OutElement)
+FORCEINLINE bool TTypeFromStringWide<bool>::FromString(const StringWide& InString, bool& OutElement)
 {
-    const WIDECHAR* Start = *String;
-    if (FCStringWide::Stricmp(Start, L"true") == 0)
+    const WIDECHAR* Start = *InString;
+    if (CStringWide::Stricmp(Start, L"true") == 0)
     {
         OutElement = true;
         return true;
     }
-    else if (FCStringWide::Stricmp(Start, L"false") == 0)
+    else if (CStringWide::Stricmp(Start, L"false") == 0)
     {
         OutElement = false;
         return true;
     }
 
     WIDECHAR* End;
-    OutElement = static_cast<bool>(FCStringWide::Strtoi(Start, &End, 10));
+    OutElement = static_cast<bool>(CStringWide::Strtoi(Start, &End, 10));
     if (End != Start)
     {
         return true;
@@ -2222,77 +2222,77 @@ FORCEINLINE bool TTypeFromStringWide<bool>::FromString(const FStringWide& String
 template<typename T>
 struct TTryParseType
 {
-    static FORCEINLINE bool TryParse(const FString& InString);
+    static FORCEINLINE bool TryParse(const String& InString);
 };
 
 template<>
-FORCEINLINE bool TTryParseType<int32>::TryParse(const FString& InString)
+FORCEINLINE bool TTryParseType<int32>::TryParse(const String& InString)
 {
     CHAR* End;
     const CHAR* Start = *InString;
-    FCString::Strtoi(Start, &End, 10);
+    CString::Strtoi(Start, &End, 10);
     return (End != Start);
 }
 
 template<>
-FORCEINLINE bool TTryParseType<uint32>::TryParse(const FString& InString)
+FORCEINLINE bool TTryParseType<uint32>::TryParse(const String& InString)
 {
     CHAR* End;
     const CHAR* Start = *InString;
-    FCString::Strtoui(Start, &End, 10);
+    CString::Strtoui(Start, &End, 10);
     return (End != Start);
 }
 
 template<>
-FORCEINLINE bool TTryParseType<int64>::TryParse(const FString& InString)
+FORCEINLINE bool TTryParseType<int64>::TryParse(const String& InString)
 {
     CHAR* End;
     const CHAR* Start = *InString;
-    FCString::Strtoi64(Start, &End, 10);
+    CString::Strtoi64(Start, &End, 10);
     return (End != Start);
 }
 
 template<>
-FORCEINLINE bool TTryParseType<uint64>::TryParse(const FString& InString)
+FORCEINLINE bool TTryParseType<uint64>::TryParse(const String& InString)
 {
     CHAR* End;
     const CHAR* Start = *InString;
-    FCString::Strtoui64(Start, &End, 10);
+    CString::Strtoui64(Start, &End, 10);
     return (End != Start);
 }
 
 template<>
-FORCEINLINE bool TTryParseType<float>::TryParse(const FString& InString)
+FORCEINLINE bool TTryParseType<float>::TryParse(const String& InString)
 {
     CHAR* End;
     const CHAR* Start = *InString;
-    FCString::Strtof(Start, &End);
+    CString::Strtof(Start, &End);
     return (End != Start);
 }
 
 template<>
-FORCEINLINE bool TTryParseType<double>::TryParse(const FString& InString)
+FORCEINLINE bool TTryParseType<double>::TryParse(const String& InString)
 {
     CHAR* End;
     const CHAR* Start = *InString;
-    FCString::Strtof(Start, &End);
+    CString::Strtof(Start, &End);
     return (End != Start);
 }
 
 template<>
-FORCEINLINE bool TTryParseType<bool>::TryParse(const FString& InString)
+FORCEINLINE bool TTryParseType<bool>::TryParse(const String& InString)
 {
     const CHAR* Start = *InString;
-    if (FCString::Stricmp(Start, "true") == 0)
+    if (CString::Stricmp(Start, "true") == 0)
     {
         return true;
     }
-    else if (FCString::Stricmp(Start, "false") == 0)
+    else if (CString::Stricmp(Start, "false") == 0)
     {
         return true;
     }
 
     CHAR* End;
-    FCString::Strtoi64(Start, &End, 10);
+    CString::Strtoi64(Start, &End, 10);
     return (End != Start);
 }

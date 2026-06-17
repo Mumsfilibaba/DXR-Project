@@ -277,18 +277,18 @@ static FORCEINLINE bool SelectionIntersectsLine(const RichTextSelectionPoint& Se
     return LineCharCount > 0;
 }
 
-static FString BuildSelectedText(const RichTextViewContext& Ctx)
+static String BuildSelectedText(const RichTextViewContext& Ctx)
 {
     if (!Ctx.bHasSelection || Ctx.Lines.IsEmpty())
     {
-        return FString();
+        return String();
     }
 
     RichTextSelectionPoint A = Ctx.SelStart;
     RichTextSelectionPoint B = Ctx.SelEnd;
     NormalizeSelection(A, B);
 
-    FString Result;
+    String Result;
 
     const int32 LineMin = ClampInt32(A.Line, 0, Ctx.Lines.Size() - 1);
     const int32 LineMax = ClampInt32(B.Line, 0, Ctx.Lines.Size() - 1);
@@ -297,14 +297,14 @@ static FString BuildSelectedText(const RichTextViewContext& Ctx)
     {
         const RichTextLine& Line = Ctx.Lines[L];
 
-        FString FullLine;
+        String FullLine;
         for (int32 s = 0; s < Line.Spans.Size(); ++s)
         {
             FullLine += Line.Spans[s].Text;
         }
 
         const CHAR* Full = *FullLine;
-        const int32 FullLen = static_cast<int32>(FCString::Strlen(Full));
+        const int32 FullLen = static_cast<int32>(CString::Strlen(Full));
 
         int32 SelColStart = 0;
         int32 SelColEnd   = 0;
@@ -324,7 +324,7 @@ static FString BuildSelectedText(const RichTextViewContext& Ctx)
         {
             const int32 SubLen = SelColEnd - SelColStart;
 
-            FString Sub;
+            String Sub;
             Sub.Reserve(SubLen + 1);
 
             for (int32 i = 0; i < SubLen; ++i)
@@ -368,7 +368,7 @@ static RichTextSelectionPoint GetMouseSelectionPoint(const RichTextViewContext& 
     return P;
 }
 
-bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, float Speed, const FVector3* InRevertValue, EVector3ControlType InType)
+bool EditorWidgets::DrawFloat3Control(const CHAR* Label, Vector3& OutValue, float Speed, const Vector3* InRevertValue, EVector3ControlType InType)
 {
     ImGuiTable* CurrentTable = ImGui::GetCurrentTable();
     if (!CurrentTable)
@@ -427,7 +427,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
             DecimalsToShow = 4;
         }
 
-        FCString::Snprintf(OutFormat.Data(), static_cast<int32>(OutFormat.Size()), "%%.%df", DecimalsToShow);
+        CString::Snprintf(OutFormat.Data(), static_cast<int32>(OutFormat.Size()), "%%.%df", DecimalsToShow);
         return OutFormat.Data();
     };
 
@@ -564,7 +564,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
             const CHAR* FormatStringAfter = GetDynamicFormatString(InOutAxisValue, FormatBufferAfter);
 
             TStaticArray<CHAR, 64> ValueTextBuffer;
-            FCString::Snprintf(ValueTextBuffer.Data(), static_cast<int32>(ValueTextBuffer.Size()), FormatStringAfter, InOutAxisValue);
+            CString::Snprintf(ValueTextBuffer.Data(), static_cast<int32>(ValueTextBuffer.Size()), FormatStringAfter, InOutAxisValue);
 
             ImGuiWindow* Window = ImGui::GetCurrentWindow();
             if (Window && !Window->SkipItems)
@@ -1229,7 +1229,7 @@ void EditorWidgets::DrawTextProperty(const CHAR* Label, const CHAR* ValueText)
     ApplyHoveredRowBg(bRowHovered);
 }
 
-void EditorWidgets::DrawReadOnlyFloat3Property(const CHAR* Label, const FVector3& Value)
+void EditorWidgets::DrawReadOnlyFloat3Property(const CHAR* Label, const Vector3& Value)
 {
     ImGuiTable* Table = ImGui::GetCurrentTable();
     if (!Table)
@@ -1406,7 +1406,7 @@ const CHAR* EditorHelpers::GetTrimmedQuery(const CHAR* InText, CHAR* OutBuf, int
     }
 
     const CHAR* Start = InText;
-    while (*Start && FCharTraits::IsWhitespace(*Start))
+    while (*Start && CharTraits::IsWhitespace(*Start))
     {
         ++Start;
     }
@@ -1417,7 +1417,7 @@ const CHAR* EditorHelpers::GetTrimmedQuery(const CHAR* InText, CHAR* OutBuf, int
         ++End;
     }
 
-    while (End > Start && FCharTraits::IsWhitespace(End[-1]))
+    while (End > Start && CharTraits::IsWhitespace(End[-1]))
     {
         --End;
     }
@@ -1434,7 +1434,7 @@ const CHAR* EditorHelpers::GetTrimmedQuery(const CHAR* InText, CHAR* OutBuf, int
     }
 
     const int32 CopyLen = Math::Min(Len, OutBufSize - 1);
-    FCString::Strncpy(OutBuf, Start, CopyLen + 1);
+    CString::Strncpy(OutBuf, Start, CopyLen + 1);
     OutBuf[CopyLen] = 0;
     return OutBuf[0] ? OutBuf : nullptr;
 }
@@ -1855,10 +1855,10 @@ void EditorWidgets::DrawTextWithSearchHighlight(ImDrawList* DrawList, const ImVe
 
     if (Query)
     {
-        if (const CHAR* MatchPtr = FCString::Stristr(Text, Query))
+        if (const CHAR* MatchPtr = CString::Stristr(Text, Query))
         {
             MatchStart = static_cast<int32>(MatchPtr - Text);
-            MatchLen   = static_cast<int32>(FCString::Strlen(Query));
+            MatchLen   = static_cast<int32>(CString::Strlen(Query));
         }
     }
 
@@ -1982,7 +1982,7 @@ void EditorWidgets::MenuLabeledSeparator(const CHAR* Label, float Thickness, flo
         for (; Label[i] != '\0' && i < UpperLabelMax; ++i)
         {
             const CHAR Ch = static_cast<CHAR>(Label[i]);
-            UpperLabel[i] = static_cast<CHAR>(FCharTraits::ToUpper(Ch));
+            UpperLabel[i] = static_cast<CHAR>(CharTraits::ToUpper(Ch));
         }
 
         UpperLabel[i] = '\0';
@@ -2100,7 +2100,7 @@ bool EditorWidgets::MenuItem(const CHAR* Label, const CHAR* Shortcut, bool bSele
         for (; Shortcut[i] != '\0' && i < UpperShortcutMax; ++i)
         {
             const CHAR Ch    = static_cast<CHAR>(Shortcut[i]);
-            UpperShortcut[i] = static_cast<CHAR>(FCharTraits::ToUpper(Ch));
+            UpperShortcut[i] = static_cast<CHAR>(CharTraits::ToUpper(Ch));
         }
         UpperShortcut[i] = '\0';
         ShortcutToDraw   = UpperShortcut.Data();
@@ -2612,14 +2612,14 @@ bool EditorWidgets::BeginRichTextView(const CHAR* InId, const ImVec2& InSize, Ri
     if (bWithContextMenu && EditorWidgets::BeginPopupContextWindow("##RichTextViewContext", ImGuiPopupFlags_MouseButtonRight))
     {
         EditorWidgets::MenuLabeledSeparator("Log");
-        const FString Selected = BuildSelectedText(InOutContext);
+        const String Selected = BuildSelectedText(InOutContext);
         if (EditorWidgets::MenuItem("Copy Selection", nullptr, false, InOutContext.bHasSelection && !Selected.IsEmpty()))
         {
             ImGui::SetClipboardText(*Selected);
         }
         if (EditorWidgets::MenuItem("Copy All"))
         {
-            FString All;
+            String All;
             for (int32 L = 0; L < InOutContext.Lines.Size(); ++L)
             {
                 const RichTextLine& Line = InOutContext.Lines[L];
@@ -2660,7 +2660,7 @@ void EditorWidgets::RichTextSelectAll(RichTextViewContext& InOutContext)
     InOutContext.SelEnd.Column   = LastCol;
 }
 
-FString EditorWidgets::GetSelectedRichText(const RichTextViewContext& InContext)
+String EditorWidgets::GetSelectedRichText(const RichTextViewContext& InContext)
 {
     return BuildSelectedText(InContext);
 }
@@ -2691,7 +2691,7 @@ void EditorWidgets::RichTextAddText(RichTextViewContext& InOutContext, const CHA
     Span.TextColor      = InTextColor;
     Span.bHasBackground = false;
 
-    Line.TotalChars += static_cast<int32>(FCString::Strlen(InText));
+    Line.TotalChars += static_cast<int32>(CString::Strlen(InText));
     Line.Spans.Add(Span);
 }
 
@@ -2710,7 +2710,7 @@ void EditorWidgets::RichTextAddTextBg(RichTextViewContext& InOutContext, const C
     Span.bHasBackground  = true;
     Span.BackgroundColor = InBackgroundColor;
 
-    Line.TotalChars += static_cast<int32>(FCString::Strlen(InText));
+    Line.TotalChars += static_cast<int32>(CString::Strlen(InText));
     Line.Spans.Add(Span);
 }
 
@@ -2905,7 +2905,7 @@ void EditorWidgets::EndRichTextView(RichTextViewContext& InOutContext)
 
         if (InOutContext.bHasSelection)
         {
-            const FString Selected = BuildSelectedText(InOutContext);
+            const String Selected = BuildSelectedText(InOutContext);
             if (!Selected.IsEmpty())
             {
                 ImGui::SetClipboardText(*Selected);
@@ -2916,7 +2916,7 @@ void EditorWidgets::EndRichTextView(RichTextViewContext& InOutContext)
             const RichTextSelectionPoint P = GetMouseSelectionPoint(InOutContext, State.MousePos);
             if (InOutContext.Lines.IsValidIndex(P.Line))
             {
-                FString LineText;
+                String LineText;
                 for (int32 s = 0; s < InOutContext.Lines[P.Line].Spans.Size(); ++s)
                 {
                     LineText += InOutContext.Lines[P.Line].Spans[s].Text;
@@ -3102,7 +3102,7 @@ static bool LoadEditorIcon(const CHAR* InRelativePath, ImTextureID& OutIconID, E
     OutIcon.Reset();
     OutIconID = nullptr;
 
-    FString FullPath = Paths::GetAssetDir();
+    String FullPath = Paths::GetAssetDir();
     if (!FullPath.EndsWith("/"))
     {
         FullPath += "/";
@@ -3222,7 +3222,7 @@ ImFont* EditorFonts::Consola_16  = nullptr;
 
 static ImFont* LoadEditorFont(const CHAR* InRelativePath, float SizePixels, const ImFontConfig* FontCfgTemplate = nullptr, const ImWchar* GlyphRanges = nullptr)
 {
-    FString FullPath = Paths::GetAssetDir();
+    String FullPath = Paths::GetAssetDir();
     if (!FullPath.EndsWith("/"))
     {
         FullPath += "/";

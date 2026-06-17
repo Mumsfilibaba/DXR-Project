@@ -4,12 +4,12 @@
 #include "Core/Math/Math.h"
 
 /** @brief 3x4 Matrix class with float components. Represents a 3D affine transformation matrix. */
-class VECTOR_ALIGN FMatrix3x4
+class VECTOR_ALIGN Matrix3x4
 {
 public:
 
     /** @brief Default constructor (Initializes all components to zero) */
-    FORCEINLINE FMatrix3x4() noexcept
+    FORCEINLINE Matrix3x4() noexcept
         : M{ {0.0f, 0.0f, 0.0f, 0.0f},
              {0.0f, 0.0f, 0.0f, 0.0f},
              {0.0f, 0.0f, 0.0f, 0.0f} }
@@ -31,7 +31,7 @@ public:
      * @param M22 Value to set on row 2 and column 2
      * @param M23 Value to set on row 2 and column 3
      */
-    FORCEINLINE explicit FMatrix3x4(
+    FORCEINLINE explicit Matrix3x4(
         float M00, float M01, float M02, float M03,
         float M10, float M11, float M12, float M13,
         float M20, float M21, float M22, float M23) noexcept
@@ -45,7 +45,7 @@ public:
      * @brief Constructor initializing all components from a 4x4 matrix
      * @param InMatrix A 4x4 matrix to initialize this matrix from
      */
-    FORCEINLINE explicit FMatrix3x4(const FMatrix4& InMatrix) noexcept
+    FORCEINLINE explicit Matrix3x4(const Matrix4& InMatrix) noexcept
     {
         Memory::Memcpy(M[0], InMatrix.M[0], sizeof(M));
     }
@@ -96,7 +96,7 @@ public:
      * @param Threshold Threshold for comparison
      * @return True if equal within Threshold, false otherwise
      */
-    FORCEINLINE bool IsEqual(const FMatrix3x4& Other, float Threshold = Math::Constants::CmpThreshold) const noexcept
+    FORCEINLINE bool IsEqual(const Matrix3x4& Other, float Threshold = Math::Constants::CmpThreshold) const noexcept
     {
         Threshold = Math::Abs(Threshold);
 
@@ -122,7 +122,7 @@ public:
      * @param Other The matrix to compare with
      * @return True if matrices are equal within a default epsilon, false otherwise
      */
-    FORCEINLINE bool operator==(const FMatrix3x4& Other) const noexcept
+    FORCEINLINE bool operator==(const Matrix3x4& Other) const noexcept
     {
         return IsEqual(Other);
     }
@@ -132,7 +132,7 @@ public:
      * @param Other The matrix to compare with
      * @return True if matrices are not equal within a default epsilon, false otherwise
      */
-    FORCEINLINE bool operator!=(const FMatrix3x4& Other) const noexcept
+    FORCEINLINE bool operator!=(const Matrix3x4& Other) const noexcept
     {
         return !IsEqual(Other);
     }
@@ -143,4 +143,4 @@ public:
     float M[3][4];
 };
 
-MARK_AS_REALLOCATABLE(FMatrix3x4);
+MARK_AS_REALLOCATABLE(Matrix3x4);

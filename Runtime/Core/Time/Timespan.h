@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Core.h"
-#include "Core/Time/TimeUtilities.h"
+#include "Core/Time/Time.h"
 
 class FTimespan
 {
@@ -12,17 +12,17 @@ public:
 
     FORCEINLINE double AsSeconds() const
     {
-        return TimeUtilities::ToSeconds(static_cast<double>(TimespanNS));
+        return Time::ToSeconds(static_cast<double>(TimespanNS));
     }
 
     FORCEINLINE double AsMilliseconds() const
     {
-        return TimeUtilities::ToMilliseconds(static_cast<double>(TimespanNS));
+        return Time::ToMilliseconds(static_cast<double>(TimespanNS));
     }
 
     FORCEINLINE double AsMicroseconds() const
     {
-        return TimeUtilities::ToMicroseconds(static_cast<double>(TimespanNS));
+        return Time::ToMicroseconds(static_cast<double>(TimespanNS));
     }
 
     FORCEINLINE uint64 AsNanoseconds() const
@@ -68,17 +68,17 @@ public:
 public:
     static FORCEINLINE FTimespan Seconds(double InSeconds)
     {
-        return FTimespan(static_cast<uint64>(TimeUtilities::FromSeconds(InSeconds)));
+        return FTimespan(static_cast<uint64>(Time::FromSeconds(InSeconds)));
     }
 
     static FORCEINLINE FTimespan Milliseconds(double InMilliseconds)
     {
-        return FTimespan(static_cast<uint64>(TimeUtilities::FromMilliseconds(InMilliseconds)));
+        return FTimespan(static_cast<uint64>(Time::FromMilliseconds(InMilliseconds)));
     }
 
     static FORCEINLINE FTimespan Microseconds(double InMicroseconds)
     {
-        return FTimespan(static_cast<uint64>(TimeUtilities::FromMicroseconds(InMicroseconds)));
+        return FTimespan(static_cast<uint64>(Time::FromMicroseconds(InMicroseconds)));
     }
 
     static FORCEINLINE FTimespan Nanoseconds(uint64 InNanoseconds)

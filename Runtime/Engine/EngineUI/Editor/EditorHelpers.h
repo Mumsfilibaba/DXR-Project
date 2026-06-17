@@ -18,13 +18,12 @@ struct PopupAnchor
 {
     ImVec2 Min = ImVec2(0.0f, 0.0f);
     ImVec2 Max = ImVec2(0.0f, 0.0f);
-    
-    bool bRequestPosition = false;
+    bool   bRequestPosition = false;
 };
 
 struct RichTextSpan
 {
-    FString Text;
+    String Text;
 
     ImU32 TextColor       = IM_COL32(255, 255, 255, 255);
     ImU32 BackgroundColor = 0;
@@ -69,17 +68,16 @@ struct RichTextViewContext
 
 struct ErrorWindowContext
 {
-    TArray<FString> Entries;
-    FString         Title;
-    FString         HeaderText;
-
-    bool bVisible = false;
+    TArray<String> Entries;
+    String         Title;
+    String         HeaderText;
+    bool           bVisible = false;
 };
 
 struct ConfirmDialogContext
 {
-    FString Title;
-    FString Message;
+    String Title;
+    String Message;
 
     bool bVisible = false;
 };
@@ -140,13 +138,13 @@ struct ENGINE_API EditorWidgets
     // Inputs
     // -----------------------------------------------------------------------------------------
 
-    static bool DrawFloat3Control(const CHAR* Label, FVector3& OutValue, float Speed, const FVector3* InRevertValue, EVector3ControlType InType);
+    static bool DrawFloat3Control(const CHAR* Label, Vector3& OutValue, float Speed, const Vector3* InRevertValue, EVector3ControlType InType);
     static bool DrawFloatProperty(const CHAR* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const CHAR* Format, bool bUseSlider, const float* InRevertValue, bool bEnabled = true);
     static bool DrawIntProperty(const CHAR* Label, int32& InOutValue, float Speed, int32 MinValue, int32 MaxValue, const CHAR* Format, bool bUseSlider, const int32* InRevertValue, bool bEnabled = true);
     static bool DrawCheckboxProperty(const CHAR* Label, bool& InOutValue, const bool* InRevertValue, bool bEnabled = true);
     static bool DrawComboProperty(const CHAR* Label, int32& InOutValue, const CHAR* const* Items, int32 ItemCount, const int32* InRevertValue, bool bEnabled = true);
     static void DrawTextProperty(const CHAR* Label, const CHAR* ValueText);
-    static void DrawReadOnlyFloat3Property(const CHAR* Label, const FVector3& Value);
+    static void DrawReadOnlyFloat3Property(const CHAR* Label, const Vector3& Value);
 
     static bool DrawColor3Property(const CHAR* Label, float* InOutColor, const float* InRevertColor, bool bEnabled, ImGuiColorEditFlags Flags);
  
@@ -155,12 +153,12 @@ struct ENGINE_API EditorWidgets
         return DrawColor3Property(Label, InOutColor.RGBA, InRevertColor.RGBA, bEnabled, Flags);
     }
 
-    static FORCEINLINE bool DrawColor3Property(const CHAR* Label, FVector3& InOutColor, const FVector3& InRevertColor, bool bEnabled = true, ImGuiColorEditFlags Flags = ImGuiColorEditFlags_None)
+    static FORCEINLINE bool DrawColor3Property(const CHAR* Label, Vector3& InOutColor, const Vector3& InRevertColor, bool bEnabled = true, ImGuiColorEditFlags Flags = ImGuiColorEditFlags_None)
     {
         return DrawColor3Property(Label, InOutColor.XYZ, InRevertColor.XYZ, bEnabled, Flags);
     }
 
-    static FORCEINLINE bool DrawColorEdit3(const CHAR* Label, FVector3& OutColor, ImGuiColorEditFlags Flags = 0)
+    static FORCEINLINE bool DrawColorEdit3(const CHAR* Label, Vector3& OutColor, ImGuiColorEditFlags Flags = 0)
     {
         return ImGui::ColorEdit3(Label, OutColor.XYZ, Flags);
     }
@@ -213,7 +211,7 @@ struct ENGINE_API EditorWidgets
     static void RichTextAddTextBg(RichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor, ImU32 InBackgroundColor);
     static void EndRichTextView(RichTextViewContext& InOutContext);
 
-    static FString GetSelectedRichText(const RichTextViewContext& InContext);
+    static String GetSelectedRichText(const RichTextViewContext& InContext);
 
     // -----------------------------------------------------------------------------------------
     // Buttons

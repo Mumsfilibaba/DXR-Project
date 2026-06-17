@@ -33,5 +33,5 @@ public:
 
 private:
     FCamera* Camera;
-    FVector3 CameraSpeed;
+    Vector3  CameraSpeed;
 };

@@ -291,7 +291,7 @@ bool FImGuiEventHandler::OnKeyChar(const FKeyEvent& KeyTypedEvent)
 
 bool FImGuiEventHandler::OnMouseMove(const FCursorEvent& CursorEvent)
 {
-    FIntVector2 CursorPos = CursorEvent.GetCursorPos();
+    IntVector2 CursorPos = CursorEvent.GetCursorPos();
     
 #ifndef EDITOR_BUILD
     if (TSharedRef<FGenericWindow> Window = FApplication::Get().GetPlatformApplication()->GetWindowUnderCursor())

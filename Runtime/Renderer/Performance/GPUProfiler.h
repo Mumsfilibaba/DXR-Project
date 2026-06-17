@@ -80,18 +80,18 @@ private:
 
     void CollectResults();
 
-    FGPUProfileSample                      FrameTime;
-    GPUProfileSamplesMap                   Samples;
-    FSpinLock                              SamplesLock;
-    FRHIQueryRef                           FrameBeginQuery[GPU_PROFILER_BUFFER_COUNT];
-    FRHIQueryRef                           FrameEndQuery[GPU_PROFILER_BUFFER_COUNT];
-    TMap<FString, FGPUProfileScopeQueries> ScopeQueries;
-    FRHIPipelineStatistics                 LastPipelineStats;
-    FPipelineStatisticsMinMax              PipelineStatsMinMax;
-    bool                                   bEnabled;
-    bool                                   bPipelineStatsEnabled;
-    int32                                  WriteIndex;
-    int32                                  PipelineStatsNestingDepth;
+    FGPUProfileSample                     FrameTime;
+    GPUProfileSamplesMap                  Samples;
+    FSpinLock                             SamplesLock;
+    FRHIQueryRef                          FrameBeginQuery[GPU_PROFILER_BUFFER_COUNT];
+    FRHIQueryRef                          FrameEndQuery[GPU_PROFILER_BUFFER_COUNT];
+    TMap<String, FGPUProfileScopeQueries> ScopeQueries;
+    FRHIPipelineStatistics                LastPipelineStats;
+    FPipelineStatisticsMinMax             PipelineStatsMinMax;
+    bool                                  bEnabled;
+    bool                                  bPipelineStatsEnabled;
+    int32                                 WriteIndex;
+    int32                                 PipelineStatsNestingDepth;
 
     static FGPUProfiler GGpuProfiler;
 };

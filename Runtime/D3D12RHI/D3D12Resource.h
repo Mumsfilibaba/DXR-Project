@@ -173,8 +173,8 @@ public:
     void EndResidencyTracking();
     bool RequiresResourceStateTracking() const;
 
-    void SetDebugName(const FString& InDebugName);
-    void GetDebugName(FString& OutDebugName) const;
+    void SetDebugName(const String& InDebugName);
+    void GetDebugName(String& OutDebugName) const;
     
     bool IsPlacedResource() const { return Heap != nullptr; }
 

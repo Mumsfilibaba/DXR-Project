@@ -539,7 +539,7 @@ bool FApplication::OnKeyChar(uint32 Character)
 
 bool FApplication::OnMouseMove(int32 MouseX, int32 MouseY)
 {
-    const FCursorEvent CursorEvent(EInputEventType::MouseMoved, FIntVector2(MouseX, MouseY), PlatformApplication->GetModifierKeyState());
+    const FCursorEvent CursorEvent(EInputEventType::MouseMoved, IntVector2(MouseX, MouseY), PlatformApplication->GetModifierKeyState());
 
     const FEventResponse PreProcessResponse = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
@@ -788,7 +788,7 @@ bool FApplication::OnMouseLeft()
 
 bool FApplication::OnHighPrecisionMouseInput(int32 MouseX, int32 MouseY)
 {
-    const FCursorEvent CursorEvent(EInputEventType::HighPrecisionMouse, FIntVector2(MouseX, MouseY), PlatformApplication->GetModifierKeyState());
+    const FCursorEvent CursorEvent(EInputEventType::HighPrecisionMouse, IntVector2(MouseX, MouseY), PlatformApplication->GetModifierKeyState());
 
     const FEventResponse PreProcessResponse = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
@@ -819,7 +819,7 @@ bool FApplication::OnWindowResized(const TSharedRef<FGenericWindow>& PlatformWin
 
     if (TSharedPtr<FWindowWidget> Window = FindWindowFromGenericWindow(PlatformWindow))
     {
-        FIntVector2 NewScreenSize(Width, Height);
+        IntVector2 NewScreenSize(Width, Height);
         Window->OnWindowResize(NewScreenSize);
         bResult = true;
     }
@@ -840,7 +840,7 @@ bool FApplication::OnWindowMoved(const TSharedRef<FGenericWindow>& PlatformWindo
 
     if (TSharedPtr<FWindowWidget> Window = FindWindowFromGenericWindow(PlatformWindow))
     {
-        FIntVector2 NewScreenPosition(x, y);
+        IntVector2 NewScreenPosition(x, y);
         Window->OnWindowMoved(NewScreenPosition);
         bResult = true;
     }
@@ -936,7 +936,7 @@ bool FApplication::SupportsHighPrecisionMouse() const
     return PlatformApplication->SupportsHighPrecisionMouse();
 }
 
-void FApplication::SetCursorPosition(const FIntVector2& Position)
+void FApplication::SetCursorPosition(const IntVector2& Position)
 {
     if (TSharedPtr<ICursor> Cursor = GetCursor())
     {
@@ -944,14 +944,14 @@ void FApplication::SetCursorPosition(const FIntVector2& Position)
     }
 }
 
-FIntVector2 FApplication::GetCursorPosition() const
+IntVector2 FApplication::GetCursorPosition() const
 {
     if (TSharedPtr<ICursor> Cursor = GetCursor())
     {
         return Cursor->GetPosition();
     }
 
-    return FIntVector2();
+    return IntVector2();
 }
 
 void FApplication::SetCursor(ECursor InCursor)
@@ -1099,7 +1099,7 @@ void FApplication::FindWidgetsUnderCursor(FWidgetPath& OutCursorPath)
     }
 }
 
-void FApplication::FindWidgetsUnderCursor(const FIntVector2& Point, FWidgetPath& OutCursorPath)
+void FApplication::FindWidgetsUnderCursor(const IntVector2& Point, FWidgetPath& OutCursorPath)
 {
     if (TSharedRef<FGenericWindow> PlatformWindow = PlatformApplication->GetWindowUnderCursor())
     {

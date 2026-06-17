@@ -94,8 +94,8 @@ private:
     FD3D12ResourceRef        BackingResource;
     TArray<TArray<uint64>>   FreeOffsets;
     uint8*                   MappedBaseAddress;
-    FAtomicInt64             TrackedUsedBytes;
-    FAtomicInt64             TrackedWastedBytes;
+    AtomicInt64              TrackedUsedBytes;
+    AtomicInt64              TrackedWastedBytes;
     mutable FCriticalSection AllocatorCS;
 };
 
@@ -255,9 +255,9 @@ private:
     EAllocationStrategy              AllocationStrategy;
     D3D12_RESOURCE_FLAGS             ResourceFlags;
     uint64                           FragmentedBytes;
-    FAtomicInt64                     TrackedAllocatedBytes;
-    FAtomicInt64                     TrackedUsedBytes;
-    FAtomicInt64                     StandaloneAllocatedBytes;
+    AtomicInt64                      TrackedAllocatedBytes;
+    AtomicInt64                      TrackedUsedBytes;
+    AtomicInt64                      StandaloneAllocatedBytes;
     TArray<FD3D12PoolAllocatorPage*> Pages;
     mutable FCriticalSection         PagesCS;
 };
@@ -467,13 +467,13 @@ public:
 private:
     void Destroy();
 
-    D3D12_HEAP_TYPE            HeapType;
-    D3D12_RESOURCE_STATES      InitialState;
-    EAllocationStrategy        AllocationStrategy;
-    uint64                     PageSizeBytes;
-    uint64                     MinBlockBytes;
-    uint64                     MaxSuballocationSize;
-    FD3D12MultiBuddyAllocator  MultiBuddyAllocator;
+    D3D12_HEAP_TYPE           HeapType;
+    D3D12_RESOURCE_STATES     InitialState;
+    EAllocationStrategy       AllocationStrategy;
+    uint64                    PageSizeBytes;
+    uint64                    MinBlockBytes;
+    uint64                    MaxSuballocationSize;
+    FD3D12MultiBuddyAllocator MultiBuddyAllocator;
 };
 
 #endif // D3D12_BUFFER_ALLOCATOR_USE_POOL_ALLOCATOR

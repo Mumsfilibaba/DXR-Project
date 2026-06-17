@@ -853,15 +853,15 @@ struct FRHIBufferCopyDesc
 
 struct FRHITextureCopyDesc
 {
-    FIntVector3 DstPosition    = {};
-    uint32      DstArraySlice  = 0;
-    uint32      DstMipSlice    = 0;
-    FIntVector3 SrcPosition    = {};
-    uint32      SrcArraySlice  = 0;
-    uint32      SrcMipSlice    = 0;
-    FIntVector3 Size           = {};
-    uint32      NumArraySlices = 0;
-    uint32      NumMipLevels   = 0;
+    IntVector3 DstPosition    = {};
+    uint32     DstArraySlice  = 0;
+    uint32     DstMipSlice    = 0;
+    IntVector3 SrcPosition    = {};
+    uint32     SrcArraySlice  = 0;
+    uint32     SrcMipSlice    = 0;
+    IntVector3 Size           = {};
+    uint32     NumArraySlices = 0;
+    uint32     NumMipLevels   = 0;
 };
 
 struct FViewportRegion

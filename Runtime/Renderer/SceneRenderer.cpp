@@ -175,7 +175,7 @@ static FAutoConsoleVariableRef CVarCSMTightFrustum(
 static FAutoConsoleCommand CVarFreezeRendering(
     "Renderer.FreezeRendering",
     "Freezes the updating of Frustum culling",
-    FConsoleCommandDelegate::CreateLambda([](FStringView)
+    FConsoleCommandDelegate::CreateLambda([](StringView)
     {
         GFreezeRendering = !GFreezeRendering;
     }));
@@ -694,11 +694,11 @@ void FSceneRenderer::PrepareCameraData(const FSceneRenderView& /*SceneRenderView
 
     if (GEnableTemporalAA)
     {
-        const FVector2 CameraJitter    = HaltonState.NextSample();
-        const FVector2 ClipSpaceJitter = CameraJitter / FVector2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
+        const Vector2 CameraJitter    = HaltonState.NextSample();
+        const Vector2 ClipSpaceJitter = CameraJitter / Vector2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
 
         // Add Jitter to projection matrix
-        FMatrix4 JitterOffset          = FMatrix4::Translation(FVector3(ClipSpaceJitter.X, ClipSpaceJitter.Y, 0.0f));
+        Matrix4 JitterOffset          = Matrix4::Translation(Vector3(ClipSpaceJitter.X, ClipSpaceJitter.Y, 0.0f));
         CameraBuffer.Projection        = CameraBuffer.Projection * JitterOffset;
         CameraBuffer.ProjectionInv     = CameraBuffer.Projection.GetInverse();
         // Calculate new ViewProjection
@@ -709,8 +709,8 @@ void FSceneRenderer::PrepareCameraData(const FSceneRenderView& /*SceneRenderView
     }
     else
     {
-        CameraBuffer.PrevJitter = FVector2(0.0f);
-        CameraBuffer.Jitter     = FVector2(0.0f);
+        CameraBuffer.PrevJitter = Vector2(0.0f);
+        CameraBuffer.Jitter     = Vector2(0.0f);
     }
 
     // Prepare matrices for the GPU
@@ -812,7 +812,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     }
     else
     {
-        CommandList.ClearUnorderedAccessViewFloat(Resources.SSAOBuffer->GetUnorderedAccessView(), FVector4(1.0f, 1.0f, 1.0f, 1.0f));
+        CommandList.ClearUnorderedAccessViewFloat(Resources.SSAOBuffer->GetUnorderedAccessView(), Vector4(1.0f, 1.0f, 1.0f, 1.0f));
     }
 
     CommandList.TransitionTextureState(Resources.SSAOBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
@@ -899,10 +899,10 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
         CommandList.TransitionTextureState(Resources.DirectionalShadowMask.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
         CommandList.TransitionTextureState(Resources.CascadeIndexBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
 
-        const FVector4 MaskClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        const Vector4 MaskClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         CommandList.ClearUnorderedAccessViewFloat(Resources.DirectionalShadowMask->GetUnorderedAccessView(), MaskClearColor);
 
-        const FVector4 DebugClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        const Vector4 DebugClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         CommandList.ClearUnorderedAccessViewFloat(Resources.CascadeIndexBuffer->GetUnorderedAccessView(), DebugClearColor);
 
         CommandList.TransitionTextureState(Resources.CascadeIndexBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));

@@ -147,14 +147,14 @@ void FEditorGuizmoWidget::Draw()
 
     if (SelectedActor) 
     { 
-        FMatrix4 Model = SelectedActor->GetTransform().GetTransformMatrix(); 
+        Matrix4 Model = SelectedActor->GetTransform().GetTransformMatrix(); 
  
         const bool bChanged = EditorGuizmo::Manipulate(Camera->GetViewMatrix(), Camera->GetProjectionMatrix(), Operation, Mode, Model);
         if (bChanged || EditorGuizmo::IsUsing())
         {
-            FVector3 Translation;
-            FVector3 RotationDegrees;
-            FVector3 Scale;
+            Vector3 Translation;
+            Vector3 RotationDegrees;
+            Vector3 Scale;
             EditorGuizmo::DecomposeMatrixToComponents(Model, Translation, RotationDegrees, Scale);
 
             // Only commit the components that the current gizmo operation is expected to modify.
@@ -165,7 +165,7 @@ void FEditorGuizmoWidget::Draw()
             }
             else if (Operation == EditorGuizmo::EOperation::Rotate) 
             { 
-                SelectedActor->GetTransform().SetRotation(FVector3::DegreesToRadians(RotationDegrees)); 
+                SelectedActor->GetTransform().SetRotation(Vector3::DegreesToRadians(RotationDegrees)); 
             }
             else if (Operation == EditorGuizmo::EOperation::Scale) 
             { 
@@ -174,7 +174,7 @@ void FEditorGuizmoWidget::Draw()
             else
             { 
                 SelectedActor->GetTransform().SetTranslation(Translation); 
-                SelectedActor->GetTransform().SetRotation(FVector3::DegreesToRadians(RotationDegrees)); 
+                SelectedActor->GetTransform().SetRotation(Vector3::DegreesToRadians(RotationDegrees)); 
                 SelectedActor->GetTransform().SetScale(Scale); 
             }
         }
@@ -188,17 +188,17 @@ void FEditorGuizmoWidget::Draw()
 
     if (SelectedCamera) 
     { 
-        const FVector3 CamPos = SelectedCamera->GetPosition(); 
-        const FVector3 CamRot = SelectedCamera->GetRotation(); 
+        const Vector3 CamPos = SelectedCamera->GetPosition(); 
+        const Vector3 CamRot = SelectedCamera->GetRotation(); 
  
-        FMatrix4 Model = (FMatrix4::Scale(FVector3(1.0f, 1.0f, 1.0f)) * FMatrix4::RotationRollPitchYaw(CamRot)) * FMatrix4::Translation(CamPos); 
+        Matrix4 Model = (Matrix4::Scale(Vector3(1.0f, 1.0f, 1.0f)) * Matrix4::RotationRollPitchYaw(CamRot)) * Matrix4::Translation(CamPos); 
  
         const bool bChanged = EditorGuizmo::Manipulate(Camera->GetViewMatrix(), Camera->GetProjectionMatrix(), Operation, Mode, Model); 
         if (bChanged || EditorGuizmo::IsUsing()) 
         { 
-            FVector3 Translation; 
-            FVector3 RotationDegrees; 
-            FVector3 Scale; 
+            Vector3 Translation; 
+            Vector3 RotationDegrees; 
+            Vector3 Scale; 
             EditorGuizmo::DecomposeMatrixToComponents(Model, Translation, RotationDegrees, Scale); 
  
             if (Operation == EditorGuizmo::EOperation::Translate) 
@@ -207,14 +207,14 @@ void FEditorGuizmoWidget::Draw()
             } 
             else if (Operation == EditorGuizmo::EOperation::Rotate) 
             { 
-                const FVector3 RotationRadians = FVector3::DegreesToRadians(RotationDegrees); 
+                const Vector3 RotationRadians = Vector3::DegreesToRadians(RotationDegrees); 
                 SelectedCamera->SetRotation(RotationRadians.X, RotationRadians.Y, RotationRadians.Z); 
             } 
             else 
             { 
                 SelectedCamera->SetPosition(Translation.X, Translation.Y, Translation.Z); 
  
-                const FVector3 RotationRadians = FVector3::DegreesToRadians(RotationDegrees); 
+                const Vector3 RotationRadians = Vector3::DegreesToRadians(RotationDegrees); 
                 SelectedCamera->SetRotation(RotationRadians.X, RotationRadians.Y, RotationRadians.Z); 
             }
         }
@@ -228,15 +228,15 @@ void FEditorGuizmoWidget::Draw()
 
     if (SelectedLightProbe)
     {
-        const FVector3 Pos = SelectedLightProbe->GetPosition();
-        FMatrix4 Model = FMatrix4::Translation(Pos);
+        const Vector3 Pos = SelectedLightProbe->GetPosition();
+        Matrix4 Model = Matrix4::Translation(Pos);
 
         const bool bChanged = EditorGuizmo::Manipulate(Camera->GetViewMatrix(), Camera->GetProjectionMatrix(), EditorGuizmo::EOperation::Translate, EditorGuizmo::EMode::World, Model);
         if (bChanged || EditorGuizmo::IsUsing())
         {
-            FVector3 Translation;
-            FVector3 RotationDegrees;
-            FVector3 Scale;
+            Vector3 Translation;
+            Vector3 RotationDegrees;
+            Vector3 Scale;
             EditorGuizmo::DecomposeMatrixToComponents(Model, Translation, RotationDegrees, Scale);
 
             SelectedLightProbe->SetPosition(Translation);
@@ -253,15 +253,15 @@ void FEditorGuizmoWidget::Draw()
     {
         if (FPointLight* PointLight = Cast<FPointLight>(SelectedLight))
         {
-            const FVector3 Pos = PointLight->GetPosition();
-            FMatrix4 Model = FMatrix4::Translation(Pos);
+            const Vector3 Pos = PointLight->GetPosition();
+            Matrix4 Model = Matrix4::Translation(Pos);
 
             const bool bChanged = EditorGuizmo::Manipulate(Camera->GetViewMatrix(), Camera->GetProjectionMatrix(), EditorGuizmo::EOperation::Translate, EditorGuizmo::EMode::World, Model);
             if (bChanged || EditorGuizmo::IsUsing())
             {
-                FVector3 Translation;
-                FVector3 RotationDegrees;
-                FVector3 Scale;
+                Vector3 Translation;
+                Vector3 RotationDegrees;
+                Vector3 Scale;
                 EditorGuizmo::DecomposeMatrixToComponents(Model, Translation, RotationDegrees, Scale);
 
                 PointLight->SetPosition(Translation);

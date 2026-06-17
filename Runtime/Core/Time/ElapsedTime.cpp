@@ -2,11 +2,11 @@
 #include "Core/Platform/PlatformTime.h"
 
 FElapsedTime::FElapsedTime()
-    : Frequency(FPlatformTime::QueryPerformanceFrequency())
+    : TotalTime(0)
+    , DeltaTime(0)
+    , LastTime(FPlatformTime::QueryPerformanceCounter())
+    , Frequency(FPlatformTime::QueryPerformanceFrequency())
 {
-    LastTime  = FPlatformTime::QueryPerformanceCounter();
-    DeltaTime = FTimespan(0);
-    TotalTime = FTimespan(0);
 }
 
 void FElapsedTime::Tick()

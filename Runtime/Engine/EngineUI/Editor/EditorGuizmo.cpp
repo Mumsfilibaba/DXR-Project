@@ -56,38 +56,38 @@ struct Context
     }
 
     // 16-byte alignment (largest first to minimize padding)
-    EditorGuizmo::Style            Style;
-    FMatrix4                       ViewMat;
-    FMatrix4                       ProjectionMat;
-    FMatrix4                       Model;
-    FMatrix4                       ModelLocal; // Orthonormalized model
-    FMatrix4                       ModelInverse;
-    FMatrix4                       ModelSource;
-    FMatrix4                       ModelSourceInverse;
-    FMatrix4                       MVP;
-    FMatrix4                       MVPLocal; // MVP with full model; MVP's model may be Translation-only for World space
-    FMatrix4                       ViewProjection;
-    FMatrix4                       BoundsMatrix;
-    FPlane                         TranslationPlan;
-    FPlane                         BoundsPlan;
-    FVector4                       ModelScaleOrigin;
-    FVector4                       CameraEye;
-    FVector4                       CameraRight;
-    FVector4                       CameraDir;
-    FVector4                       CameraUp;
-    FVector4                       RayOrigin;
-    FVector4                       RayVector;
-    FVector4                       RelativeOrigin;
-    FVector4                       TranslationPlanOrigin;
-    FVector4                       MatrixOrigin;
-    FVector4                       TranslationLastDelta;
-    FVector4                       RotationVectorSource;
-    FVector4                       Scale;
-    FVector4                       ScaleValueOrigin;
-    FVector4                       ScaleLast;
-    FVector4                       BoundsPivot;
-    FVector4                       BoundsAnchor;
-    FVector4                       BoundsLocalPivot;
+    EditorGuizmo::Style           Style;
+    Matrix4                       ViewMat;
+    Matrix4                       ProjectionMat;
+    Matrix4                       Model;
+    Matrix4                       ModelLocal; // Orthonormalized model
+    Matrix4                       ModelInverse;
+    Matrix4                       ModelSource;
+    Matrix4                       ModelSourceInverse;
+    Matrix4                       MVP;
+    Matrix4                       MVPLocal; // MVP with full model; MVP's model may be Translation-only for World space
+    Matrix4                       ViewProjection;
+    Matrix4                       BoundsMatrix;
+    Plane                         TranslationPlan;
+    Plane                         BoundsPlan;
+    Vector4                       ModelScaleOrigin;
+    Vector4                       CameraEye;
+    Vector4                       CameraRight;
+    Vector4                       CameraDir;
+    Vector4                       CameraUp;
+    Vector4                       RayOrigin;
+    Vector4                       RayVector;
+    Vector4                       RelativeOrigin;
+    Vector4                       TranslationPlanOrigin;
+    Vector4                       MatrixOrigin;
+    Vector4                       TranslationLastDelta;
+    Vector4                       RotationVectorSource;
+    Vector4                       Scale;
+    Vector4                       ScaleValueOrigin;
+    Vector4                       ScaleLast;
+    Vector4                       BoundsPivot;
+    Vector4                       BoundsAnchor;
+    Vector4                       BoundsLocalPivot;
 
     // 8-byte alignment
     ImVector<ImGuiID>              IDStack;
@@ -151,11 +151,11 @@ static const EditorGuizmo::EOperation::Type TRANSLATE_PLANS[3] =
 
 static Context GuizmoContext;
 
-static const FVector4 DirectionUnary[3] =
+static const Vector4 DirectionUnary[3] =
 {
-    FVector4(1.0f, 0.0f, 0.0f, 0.0f),
-    FVector4(0.0f, 1.0f, 0.0f, 0.0f),
-    FVector4(0.0f, 0.0f, 1.0f, 0.0f)
+    Vector4(1.0f, 0.0f, 0.0f, 0.0f),
+    Vector4(0.0f, 1.0f, 0.0f, 0.0f),
+    Vector4(0.0f, 0.0f, 1.0f, 0.0f)
 };
 
 static const char* TranslationInfoMask[] =
@@ -165,12 +165,17 @@ static const char* TranslationInfoMask[] =
     "X : %5.3f Y : %5.3f Z : %5.3f"
 };
 
-static const char* ScaleInfoMask[]        = { "X : %5.2f", "Y : %5.2f", "Z : %5.2f", "XYZ : %5.2f" };
+static const char* ScaleInfoMask[] = 
+{ 
+    "X : %5.2f", "Y : %5.2f", "Z : %5.2f", "XYZ : %5.2f"
+};
+
 static const char* RotationInfoMask[] =
 {
     "X : %5.2f deg %5.2f rad", "Y : %5.2f deg %5.2f rad", "Z : %5.2f deg %5.2f rad",
     "Screen : %5.2f deg %5.2f rad"
 };
+
 static const int32 TranslationInfoIndex[] = { 0,0,0, 1,0,0, 2,0,0, 1,2,0, 0,2,0, 0,1,0, 0,1,2 };
 
 static const float QuadMin   = 0.5f;
@@ -191,7 +196,7 @@ static const int32 HalfCircleSegmentCount = 64;
 static const float SnapTension            = 0.5f;
 
 // Static functions
-static int32 GetMoveType(EditorGuizmo::EOperation::Type Op, FVector4* GizmoHitProportion);
+static int32 GetMoveType(EditorGuizmo::EOperation::Type Op, Vector4* GizmoHitProportion);
 static int32 GetRotateType(EditorGuizmo::EOperation::Type Op);
 static int32 GetScaleType(EditorGuizmo::EOperation::Type Op);
 
@@ -221,12 +226,12 @@ static bool IsScaleType(int32 Type)
     return Type >= EMoveType::ScaleX && Type <= EMoveType::ScaleXYZ;
 }
 
-static FMatrix4 LoadMatrix(const float* Matrix)
+static Matrix4 LoadMatrix(const float* Matrix)
 {
-    return FMatrix4(Matrix);
+    return Matrix4(Matrix);
 }
 
-static void StoreMatrix(float* OutMatrix, const FMatrix4& Matrix)
+static void StoreMatrix(float* OutMatrix, const Matrix4& Matrix)
 {
     CHECK(OutMatrix != nullptr);
     Memory::Memcpy(OutMatrix, &Matrix.M[0][0], sizeof(Matrix.M));
@@ -238,64 +243,66 @@ static ImU32 GetColorU32(int32 IDX)
     return ImGui::ColorConvertFloat4ToU32(GuizmoContext.Style.Colors[IDX]);
 }
 
-static ImVec2 WorldToPos(const FVector4& WorldPos, const FMatrix4& Matrix,
+static ImVec2 WorldToPos(const Vector4& WorldPos, const Matrix4& Matrix,
     ImVec2 Position = ImVec2(GuizmoContext.X, GuizmoContext.Y),
     ImVec2 Size = ImVec2(GuizmoContext.Width, GuizmoContext.Height))
 {
-    FVector4 Trans = Matrix.Transform(FVector4(WorldPos.X, WorldPos.Y, WorldPos.Z, 1.0f));
+    Vector4 Trans = Matrix.Transform(Vector4(WorldPos.X, WorldPos.Y, WorldPos.Z, 1.0f));
 
     const float SafeW = (Math::Abs(Trans.W) > Math::Constants::Epsilon)
         ? Trans.W
         : ((Trans.W < 0.0f) ? -Math::Constants::Epsilon : Math::Constants::Epsilon);
+
     Trans *= 0.5f / SafeW;
-    Trans += FVector4(0.5f, 0.5f, 0.0f, 0.0f);
+    Trans += Vector4(0.5f, 0.5f, 0.0f, 0.0f);
 
     Trans.Y = 1.0f - Trans.Y;
     Trans.X *= Size.x;
     Trans.Y *= Size.y;
     Trans.X += Position.x;
     Trans.Y += Position.y;
+
     return ImVec2(Trans.X, Trans.Y);
 }
 
-static void ComputeCameraRay(FVector4& RayOrigin, FVector4& RayDir,
+static void ComputeCameraRay(Vector4& RayOrigin, Vector4& RayDir,
     ImVec2 Position = ImVec2(GuizmoContext.X, GuizmoContext.Y),
     ImVec2 Size = ImVec2(GuizmoContext.Width, GuizmoContext.Height))
 {
     ImGuiIO& State = ImGui::GetIO();
 
-    FMatrix4 MViewProjInverse = (GuizmoContext.ViewMat * GuizmoContext.ProjectionMat).GetInverse();
+    Matrix4 MViewProjInverse = (GuizmoContext.ViewMat * GuizmoContext.ProjectionMat).GetInverse();
 
     const float MouseX = ((State.MousePos.x - Position.x) / Size.x) * 2.0f - 1.0f;
     const float MouseY = (1.0f - ((State.MousePos.y - Position.y) / Size.y)) * 2.0f - 1.0f;
     const float ZNear  = GuizmoContext.bReversed ? (1.0f - Math::Constants::Epsilon) : 0.0f;
     const float ZFar   = GuizmoContext.bReversed ? 0.0f : (1.0f - Math::Constants::Epsilon);
 
-    RayOrigin  = MViewProjInverse.Transform(FVector4(MouseX, MouseY, ZNear, 1.0f));
+    RayOrigin  = MViewProjInverse.Transform(Vector4(MouseX, MouseY, ZNear, 1.0f));
     RayOrigin *= 1.0f / RayOrigin.W;
 
-    FVector4 RayEnd = MViewProjInverse.Transform(FVector4(MouseX, MouseY, ZFar, 1.0f));
+    Vector4 RayEnd = MViewProjInverse.Transform(Vector4(MouseX, MouseY, ZFar, 1.0f));
     RayEnd *= 1.0f / RayEnd.W;
     RayDir  = (RayEnd - RayOrigin).GetNormalized();
 }
 
-static float GetSegmentLengthClipSpace(const FVector4& Start, const FVector4& End, const bool bLocalCoordinates = false)
+static float GetSegmentLengthClipSpace(const Vector4& Start, const Vector4& End, const bool bLocalCoordinates = false)
 {
-    const FMatrix4& MVP = bLocalCoordinates ? GuizmoContext.MVPLocal : GuizmoContext.MVP;
+    const Matrix4& MVP = bLocalCoordinates ? GuizmoContext.MVPLocal : GuizmoContext.MVP;
 
-    FVector4 StartOfSegment = MVP.Transform(FVector4(Start.X, Start.Y, Start.Z, 1.0f));
+    Vector4 StartOfSegment = MVP.Transform(Vector4(Start.X, Start.Y, Start.Z, 1.0f));
     if (Math::Abs(StartOfSegment.W) > Math::Constants::Epsilon) // Check for axis aligned with camera direction
     {
         StartOfSegment *= 1.0f / StartOfSegment.W;
     }
 
-    FVector4 EndOfSegment = MVP.Transform(FVector4(End.X, End.Y, End.Z, 1.0f));
+    Vector4 EndOfSegment = MVP.Transform(Vector4(End.X, End.Y, End.Z, 1.0f));
     if (Math::Abs(EndOfSegment.W) > Math::Constants::Epsilon) // Check for axis aligned with camera direction
     {
         EndOfSegment *= 1.0f / EndOfSegment.W;
     }
 
-    FVector4 ClipSpaceAxis = EndOfSegment - StartOfSegment;
+    Vector4 ClipSpaceAxis = EndOfSegment - StartOfSegment;
     if (GuizmoContext.DisplayRatio < 1.0)
     {
         ClipSpaceAxis.X *= GuizmoContext.DisplayRatio;
@@ -309,9 +316,9 @@ static float GetSegmentLengthClipSpace(const FVector4& Start, const FVector4& En
     return SegmentLengthInClipSpace;
 }
 
-static float GetParallelogram(const FVector4& PointOrigin, const FVector4& PointA, const FVector4& PointB)
+static float GetParallelogram(const Vector4& PointOrigin, const Vector4& PointA, const Vector4& PointB)
 {
-    FVector4 Points[] = 
+    Vector4 Points[] = 
     {
         PointOrigin,
         PointA,
@@ -320,19 +327,19 @@ static float GetParallelogram(const FVector4& PointOrigin, const FVector4& Point
 
     for (uint32 PointIndex = 0; PointIndex < 3; PointIndex++)
     {
-        Points[PointIndex] = GuizmoContext.MVP.Transform(FVector4(Points[PointIndex].X, Points[PointIndex].Y, Points[PointIndex].Z, 1.0f));
+        Points[PointIndex] = GuizmoContext.MVP.Transform(Vector4(Points[PointIndex].X, Points[PointIndex].Y, Points[PointIndex].Z, 1.0f));
         if (Math::Abs(Points[PointIndex].W) > Math::Constants::Epsilon) // Check for axis aligned with camera direction
         {
             Points[PointIndex] *= 1.0f / Points[PointIndex].W;
         }
     }
 
-    FVector4 SegmentA = Points[1] - Points[0];
-    FVector4 SegmentB = Points[2] - Points[0];
+    Vector4 SegmentA = Points[1] - Points[0];
+    Vector4 SegmentB = Points[2] - Points[0];
     SegmentA.Y /= GuizmoContext.DisplayRatio;
     SegmentB.Y /= GuizmoContext.DisplayRatio;
 
-    FVector4 SegmentAOrtho = FVector4(-SegmentA.Y, SegmentA.X, 0.0f, 0.0f);
+    Vector4 SegmentAOrtho = Vector4(-SegmentA.Y, SegmentA.X, 0.0f, 0.0f);
     SegmentAOrtho.Normalize();
 
     float DotProductResult = SegmentAOrtho.DotProduct(SegmentB);
@@ -340,10 +347,10 @@ static float GetParallelogram(const FVector4& PointOrigin, const FVector4& Point
     return Surface;
 }
 
-inline FVector4 PointOnSegment(const FVector4& Point, const FVector4& VertPos1, const FVector4& VertPos2)
+inline Vector4 PointOnSegment(const Vector4& Point, const Vector4& VertPos1, const Vector4& VertPos2)
 {
-    FVector4 PointToVert1     = Point - VertPos1;
-    FVector4 SegmentDirection = (VertPos2 - VertPos1).GetNormalized();
+    Vector4 PointToVert1     = Point - VertPos1;
+    Vector4 SegmentDirection = (VertPos2 - VertPos1).GetNormalized();
 
     float SegmentLength   = (VertPos2 - VertPos1).GetLength();
     float ProjectionParam = SegmentDirection.DotProduct(PointToVert1);
@@ -422,40 +429,40 @@ static void ComputeContext(const float* View, const float* Projection, float* Ma
     }
     else
     {
-        const FVector3 Translation = GuizmoContext.ModelSource.GetTranslation();
-        GuizmoContext.Model = FMatrix4::Translation(Translation.X, Translation.Y, Translation.Z);
+        const Vector3 Translation = GuizmoContext.ModelSource.GetTranslation();
+        GuizmoContext.Model = Matrix4::Translation(Translation.X, Translation.Y, Translation.Z);
     }
 
-    FVector3 RightVec        = FVector3(GuizmoContext.ModelSource.M[0][0], GuizmoContext.ModelSource.M[0][1], GuizmoContext.ModelSource.M[0][2]);
-    FVector3 UpVec           = FVector3(GuizmoContext.ModelSource.M[1][0], GuizmoContext.ModelSource.M[1][1], GuizmoContext.ModelSource.M[1][2]);
-    FVector3 DirectionVector = FVector3(GuizmoContext.ModelSource.M[2][0], GuizmoContext.ModelSource.M[2][1], GuizmoContext.ModelSource.M[2][2]);
+    Vector3 RightVec        = Vector3(GuizmoContext.ModelSource.M[0][0], GuizmoContext.ModelSource.M[0][1], GuizmoContext.ModelSource.M[0][2]);
+    Vector3 UpVec           = Vector3(GuizmoContext.ModelSource.M[1][0], GuizmoContext.ModelSource.M[1][1], GuizmoContext.ModelSource.M[1][2]);
+    Vector3 DirectionVector = Vector3(GuizmoContext.ModelSource.M[2][0], GuizmoContext.ModelSource.M[2][1], GuizmoContext.ModelSource.M[2][2]);
 
-    GuizmoContext.ModelScaleOrigin   = FVector4(RightVec.GetLength(), UpVec.GetLength(), DirectionVector.GetLength(), 0.0f);
+    GuizmoContext.ModelScaleOrigin   = Vector4(RightVec.GetLength(), UpVec.GetLength(), DirectionVector.GetLength(), 0.0f);
     GuizmoContext.ModelInverse       = GuizmoContext.Model.GetInverse();
     GuizmoContext.ModelSourceInverse = GuizmoContext.ModelSource.GetInverse();
     GuizmoContext.ViewProjection     = GuizmoContext.ViewMat * GuizmoContext.ProjectionMat;
     GuizmoContext.MVP                = GuizmoContext.Model * GuizmoContext.ViewProjection;
     GuizmoContext.MVPLocal           = GuizmoContext.ModelLocal * GuizmoContext.ViewProjection;
 
-    FMatrix4 ViewInverse      = GuizmoContext.ViewMat.GetInverse();
-    GuizmoContext.CameraDir   = FVector4(ViewInverse.M[2][0], ViewInverse.M[2][1], ViewInverse.M[2][2], 0.0f);
-    GuizmoContext.CameraEye   = FVector4(ViewInverse.M[3][0], ViewInverse.M[3][1], ViewInverse.M[3][2], 0.0f);
-    GuizmoContext.CameraRight = FVector4(ViewInverse.M[0][0], ViewInverse.M[0][1], ViewInverse.M[0][2], 0.0f);
-    GuizmoContext.CameraUp    = FVector4(ViewInverse.M[1][0], ViewInverse.M[1][1], ViewInverse.M[1][2], 0.0f);
+    Matrix4 ViewInverse       = GuizmoContext.ViewMat.GetInverse();
+    GuizmoContext.CameraDir   = Vector4(ViewInverse.M[2][0], ViewInverse.M[2][1], ViewInverse.M[2][2], 0.0f);
+    GuizmoContext.CameraEye   = Vector4(ViewInverse.M[3][0], ViewInverse.M[3][1], ViewInverse.M[3][2], 0.0f);
+    GuizmoContext.CameraRight = Vector4(ViewInverse.M[0][0], ViewInverse.M[0][1], ViewInverse.M[0][2], 0.0f);
+    GuizmoContext.CameraUp    = Vector4(ViewInverse.M[1][0], ViewInverse.M[1][1], ViewInverse.M[1][2], 0.0f);
 
     // Projection reverse
-    FVector4 NearPos = GuizmoContext.ProjectionMat.Transform(FVector4(0.0f, 0.0f, 1.0f, 1.0f));
-    FVector4 FarPos  = GuizmoContext.ProjectionMat.Transform(FVector4(0.0f, 0.0f, 2.0f, 1.0f));
+    Vector4 NearPos = GuizmoContext.ProjectionMat.Transform(Vector4(0.0f, 0.0f, 1.0f, 1.0f));
+    Vector4 FarPos  = GuizmoContext.ProjectionMat.Transform(Vector4(0.0f, 0.0f, 2.0f, 1.0f));
 
     GuizmoContext.bReversed = (NearPos.Z/NearPos.W) > (FarPos.Z / FarPos.W);
 
-    FVector4 RightViewInverse = FVector4(ViewInverse.M[0][0], ViewInverse.M[0][1], ViewInverse.M[0][2], 0.0f);
-    RightViewInverse = GuizmoContext.ModelInverse.Transform(FVector4(RightViewInverse.X, RightViewInverse.Y, RightViewInverse.Z, 0.0f));
+    Vector4 RightViewInverse = Vector4(ViewInverse.M[0][0], ViewInverse.M[0][1], ViewInverse.M[0][2], 0.0f);
+    RightViewInverse = GuizmoContext.ModelInverse.Transform(Vector4(RightViewInverse.X, RightViewInverse.Y, RightViewInverse.Z, 0.0f));
 
-    const float RightLength    = GetSegmentLengthClipSpace(FVector4(0.0f, 0.0f, 0.0f, 0.0f), RightViewInverse);
+    const float RightLength    = GetSegmentLengthClipSpace(Vector4(0.0f, 0.0f, 0.0f, 0.0f), RightViewInverse);
     GuizmoContext.ScreenFactor = (Math::Abs(RightLength) > Math::Constants::Epsilon) ? (GuizmoContext.GizmoSizeClipSpace / RightLength) : 0.0f;
 
-    ImVec2 CenterSSpace              = WorldToPos(FVector4(0.0f, 0.0f, 0.0f, 0.0f), GuizmoContext.MVP);
+    ImVec2 CenterSSpace              = WorldToPos(Vector4(0.0f, 0.0f, 0.0f, 0.0f), GuizmoContext.MVP);
     GuizmoContext.ScreenSquareCenter = CenterSSpace;
     GuizmoContext.ScreenSquareMin    = ImVec2(CenterSSpace.x - 10.0f, CenterSSpace.y - 10.0f);
     GuizmoContext.ScreenSquareMax    = ImVec2(CenterSSpace.x + 10.0f, CenterSSpace.y + 10.0f);
@@ -527,7 +534,7 @@ static void ComputeColors(ImU32* Colors, int32 Type, EditorGuizmo::EOperation::T
     }
 }
 
-static void ComputeTripodAxisAndVisibility(const int32 AxisIndex, FVector4& DirAxis, FVector4& DirPlaneX, FVector4& DirPlaneY, bool& bBelowAxisLimit, bool& bBelowPlaneLimit, 
+static void ComputeTripodAxisAndVisibility(const int32 AxisIndex, Vector4& DirAxis, Vector4& DirPlaneX, Vector4& DirPlaneY, bool& bBelowAxisLimit, bool& bBelowPlaneLimit, 
     const bool bLocalCoordinates = false)
 {
     DirAxis   = DirectionUnary[AxisIndex];
@@ -549,7 +556,7 @@ static void ComputeTripodAxisAndVisibility(const int32 AxisIndex, FVector4& DirA
     else
     {
         // New method
-        const FVector4 Origin = FVector4(0.0f, 0.0f, 0.0f, 0.0f);
+        const Vector4 Origin = Vector4(0.0f, 0.0f, 0.0f, 0.0f);
 
         float LengthDir            = GetSegmentLengthClipSpace(Origin, DirAxis, bLocalCoordinates);
         float LengthDirMinus       = GetSegmentLengthClipSpace(Origin, -DirAxis, bLocalCoordinates);
@@ -606,7 +613,7 @@ static void ComputeSnap(float* Value, float Snap)
     }
 }
 
-static void ComputeSnap(FVector4& Value, const float* Snap)
+static void ComputeSnap(Vector4& Value, const float* Snap)
 {
     for (int32 AxisIndex = 0; AxisIndex < 3; AxisIndex++)
     {
@@ -617,19 +624,19 @@ static void ComputeSnap(FVector4& Value, const float* Snap)
 static float ComputeAngleOnPlan() 
 { 
     const float Length = GuizmoContext.TranslationPlan.IntersectRay( 
-        FVector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z), 
-        FVector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z)); 
+        Vector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z), 
+        Vector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z)); 
  
     if (Length < 0.0f) 
     { 
         return GuizmoContext.RotationAngleOrigin; 
     } 
  
-    const FVector3 PlaneNormal3 = GuizmoContext.TranslationPlan.GetNormal(); 
-    const FVector4 PlaneNormal  = FVector4(PlaneNormal3.X, PlaneNormal3.Y, PlaneNormal3.Z, 0.0f); 
+    const Vector3 PlaneNormal3 = GuizmoContext.TranslationPlan.GetNormal(); 
+    const Vector4 PlaneNormal  = Vector4(PlaneNormal3.X, PlaneNormal3.Y, PlaneNormal3.Z, 0.0f); 
  
-    const FVector4 ModelPosition = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f); 
-    const FVector4 LocalPosition = (GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length - ModelPosition).GetNormalized(); 
+    const Vector4 ModelPosition = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f); 
+    const Vector4 LocalPosition = (GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length - ModelPosition).GetNormalized(); 
  
     const float CosAngle = Math::Clamp(LocalPosition.DotProduct(GuizmoContext.RotationVectorSource), -1.0f, 1.0f); 
     const float SinAngle = PlaneNormal.DotProduct(GuizmoContext.RotationVectorSource.CrossProduct(LocalPosition)); 
@@ -651,11 +658,11 @@ static void DrawRotationGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
     ImU32 Colors[7];
     ComputeColors(Colors, Type, EditorGuizmo::EOperation::Rotate);
 
-    FVector4 ViewDirNormalized;
+    Vector4 ViewDirNormalized;
     if (GuizmoContext.bIsOrthographic)
     {
-        FMatrix4 ViewInverse = GuizmoContext.ViewMat.GetInverse();
-        ViewDirNormalized    = FVector4(-ViewInverse.M[2][0], -ViewInverse.M[2][1], -ViewInverse.M[2][2], 0.0f);
+        Matrix4 ViewInverse = GuizmoContext.ViewMat.GetInverse();
+        ViewDirNormalized    = Vector4(-ViewInverse.M[2][0], -ViewInverse.M[2][1], -ViewInverse.M[2][2], 0.0f);
     }
     else
     {
@@ -664,7 +671,7 @@ static void DrawRotationGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
         ViewDirNormalized = (-GuizmoContext.CameraDir).GetNormalized();
     }
 
-    ViewDirNormalized = GuizmoContext.ModelInverse.Transform(FVector4(ViewDirNormalized.X, ViewDirNormalized.Y, ViewDirNormalized.Z, 0.0f));
+    ViewDirNormalized = GuizmoContext.ModelInverse.Transform(Vector4(ViewDirNormalized.X, ViewDirNormalized.Y, ViewDirNormalized.Z, 0.0f));
     GuizmoContext.RadiusSquareCenter = ScreenRotateSize * GuizmoContext.Height;
 
     bool bHasRSC = Intersects(Op, EditorGuizmo::EOperation::RotateScreen);
@@ -694,8 +701,8 @@ static void DrawRotationGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
         {
             float Angle = AngleStart + static_cast<float>(CircleMul) * Math::Constants::PI * (static_cast<float>(CircleSegmentIndex) / static_cast<float>(CircleMul * HalfCircleSegmentCount));
            
-            FVector4 AxisPos  = FVector4(Math::Cos(Angle), Math::Sin(Angle), 0.0f, 0.0f);
-            FVector4 Position = FVector4(AxisPos[Axis], AxisPos[(Axis + 1) % 3], AxisPos[(Axis + 2) % 3], 0.0f);
+            Vector4 AxisPos  = Vector4(Math::Cos(Angle), Math::Sin(Angle), 0.0f, 0.0f);
+            Vector4 Position = Vector4(AxisPos[Axis], AxisPos[(Axis + 1) % 3], AxisPos[(Axis + 2) % 3], 0.0f);
             Position = Position * GuizmoContext.ScreenFactor * RotationDisplayFactor;
 
             CirclePos[CircleSegmentIndex] = WorldToPos(Position, GuizmoContext.MVP);
@@ -707,7 +714,7 @@ static void DrawRotationGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
                 GuizmoContext.Style.RotationLineThickness);
         }
 
-        FVector4 ModelPosition = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
+        Vector4 ModelPosition = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
 
         float RadiusAxis = Math::Sqrt((ImLengthSqr(WorldToPos(ModelPosition, GuizmoContext.ViewProjection) - CirclePos[0])));
         if (RadiusAxis > GuizmoContext.RadiusSquareCenter)
@@ -718,7 +725,7 @@ static void DrawRotationGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
 
     if (bHasRSC && (!GuizmoContext.bUsing || Type == EMoveType::RotateScreen) && bIsNoAxesMasked)
     {
-        FVector4 ModelPosition = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
+        Vector4 ModelPosition = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
         DrawList->AddCircle(WorldToPos(ModelPosition, GuizmoContext.ViewProjection), 
             GuizmoContext.RadiusSquareCenter, Colors[0], 64, GuizmoContext.Style.RotationOuterLineThickness);
     }
@@ -727,16 +734,16 @@ static void DrawRotationGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
     {
         ImVec2 CirclePos[HalfCircleSegmentCount + 1];
 
-        FVector4 ModelPosition = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
+        Vector4 ModelPosition = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
         CirclePos[0] = WorldToPos(ModelPosition, GuizmoContext.ViewProjection);
 
         for (uint32 CircleSegmentIndex = 1; CircleSegmentIndex < HalfCircleSegmentCount + 1; CircleSegmentIndex++)
         {
             float Angle = GuizmoContext.RotationAngle * (static_cast<float>(CircleSegmentIndex - 1) / static_cast<float>(HalfCircleSegmentCount - 1));
 
-            FMatrix4 RotateVectorMatrix = FQuaternion::FromAxisAngle(GuizmoContext.TranslationPlan.GetNormal(), Angle).ToMatrix4();
+            Matrix4 RotateVectorMatrix = Quaternion::FromAxisAngle(GuizmoContext.TranslationPlan.GetNormal(), Angle).ToMatrix4();
 
-            FVector4 Position = RotateVectorMatrix.Transform(FVector4(
+            Vector4 Position = RotateVectorMatrix.Transform(Vector4(
                 GuizmoContext.RotationVectorSource.X,
                 GuizmoContext.RotationVectorSource.Y,
                 GuizmoContext.RotationVectorSource.Z,
@@ -744,7 +751,7 @@ static void DrawRotationGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
 
             Position *= GuizmoContext.ScreenFactor * RotationDisplayFactor;
 
-            FVector4 ModelPosition2 = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
+            Vector4 ModelPosition2 = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
             CirclePos[CircleSegmentIndex] = WorldToPos(Position + ModelPosition2, GuizmoContext.ViewProjection);
         }
 
@@ -764,7 +771,7 @@ static void DrawRotationGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
     }
 }
 
-static void DrawHatchedAxis(const FVector4& Axis) 
+static void DrawHatchedAxis(const Vector4& Axis) 
 { 
     if (GuizmoContext.Style.HatchedAxisLineThickness <= 0.0f) 
     { 
@@ -815,7 +822,7 @@ static void DrawScaleGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
     ComputeColors(Colors, Type, EditorGuizmo::EOperation::Scale);
 
     // Draw
-    FVector4 ScaleDisplay = FVector4(1.0f, 1.0f, 1.0f, 1.0f);
+    Vector4 ScaleDisplay = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
     if (GuizmoContext.bUsing && (GuizmoContext.GetCurrentID() == GuizmoContext.EditingID))
     {
         ScaleDisplay = GuizmoContext.Scale;
@@ -831,9 +838,9 @@ static void DrawScaleGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
         const bool bUsingAxis = (GuizmoContext.bUsing && Type == EMoveType::ScaleX + AxisIndex);
         if (!GuizmoContext.bUsing || bUsingAxis)
         {
-            FVector4 DirPlaneX;
-            FVector4 DirPlaneY;
-            FVector4 DirAxis;
+            Vector4 DirPlaneX;
+            Vector4 DirPlaneY;
+            Vector4 DirAxis;
 
             bool bBelowAxisLimit;
             bool bBelowPlaneLimit;
@@ -876,7 +883,7 @@ static void DrawScaleGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
 
     if (GuizmoContext.bUsing && (GuizmoContext.GetCurrentID() == GuizmoContext.EditingID) && IsScaleType(Type))
     {
-        FVector4 ModelPosition = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
+        Vector4 ModelPosition = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
 
         char TempString[512];
         int32 ComponentInfoIndex = (Type - EMoveType::ScaleX) * 3;
@@ -903,7 +910,7 @@ static void DrawScaleUniveralGizmo(EditorGuizmo::EOperation::Type Op, int32 Type
     ComputeColors(Colors, Type, EditorGuizmo::EOperation::ScaleU);
 
     // Draw
-    FVector4 ScaleDisplay = FVector4(1.0f, 1.0f, 1.0f, 1.0f);
+    Vector4 ScaleDisplay = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
     if (GuizmoContext.bUsing && (GuizmoContext.GetCurrentID() == GuizmoContext.EditingID))
     {
         ScaleDisplay = GuizmoContext.Scale;
@@ -919,9 +926,9 @@ static void DrawScaleUniveralGizmo(EditorGuizmo::EOperation::Type Op, int32 Type
         const bool bUsingAxis = (GuizmoContext.bUsing && Type == EMoveType::ScaleX + AxisIndex);
         if (!GuizmoContext.bUsing || bUsingAxis)
         {
-            FVector4 DirPlaneX;
-            FVector4 DirPlaneY;
-            FVector4 DirAxis;
+            Vector4 DirPlaneX;
+            Vector4 DirPlaneY;
+            Vector4 DirAxis;
 
             bool bBelowAxisLimit;
             bool bBelowPlaneLimit;
@@ -944,7 +951,7 @@ static void DrawScaleUniveralGizmo(EditorGuizmo::EOperation::Type Op, int32 Type
 
     if (GuizmoContext.bUsing && (GuizmoContext.GetCurrentID() == GuizmoContext.EditingID) && IsScaleType(Type))
     {
-        FVector4 ModelPosition = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
+        Vector4 ModelPosition = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
 
         char TempString[512];
         int32 ComponentInfoIndex = (Type - EMoveType::ScaleX) * 3;
@@ -974,7 +981,7 @@ static void DrawTranslationGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
     ImU32 Colors[7];
     ComputeColors(Colors, Type, EditorGuizmo::EOperation::Translate);
 
-    FVector4 ModelPosition = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
+    Vector4 ModelPosition = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
     const ImVec2 Origin = WorldToPos(ModelPosition, GuizmoContext.ViewProjection);
 
     // Draw
@@ -983,7 +990,7 @@ static void DrawTranslationGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
 
     for (int32 AxisIndex = 0; AxisIndex < 3; ++AxisIndex)
     {
-        FVector4 DirPlaneX, DirPlaneY, DirAxis;
+        Vector4 DirPlaneX, DirPlaneY, DirAxis;
         ComputeTripodAxisAndVisibility(AxisIndex, DirAxis, DirPlaneX, DirPlaneY, bBelowAxisLimit, bBelowPlaneLimit);
 
         if (!GuizmoContext.bUsing || (GuizmoContext.bUsing && Type == EMoveType::MoveX + AxisIndex))
@@ -1027,7 +1034,7 @@ static void DrawTranslationGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
                 ImVec2 ScreenQuadPts[4];
                 for (int32 QuadCornerIndex = 0; QuadCornerIndex < 4; ++QuadCornerIndex)
                 {
-                    FVector4 CornerWorldPos = (DirPlaneX * QuadUV[QuadCornerIndex * 2] + DirPlaneY * QuadUV[QuadCornerIndex * 2 + 1]) * GuizmoContext.ScreenFactor;
+                    Vector4 CornerWorldPos = (DirPlaneX * QuadUV[QuadCornerIndex * 2] + DirPlaneY * QuadUV[QuadCornerIndex * 2 + 1]) * GuizmoContext.ScreenFactor;
                     ScreenQuadPts[QuadCornerIndex] = WorldToPos(CornerWorldPos, GuizmoContext.MVP);
                 }
 
@@ -1041,12 +1048,12 @@ static void DrawTranslationGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
 
     if (GuizmoContext.bUsing && (GuizmoContext.GetCurrentID() == GuizmoContext.EditingID) && IsTranslateType(Type))
     {
-        ImU32    TranslationLineColor   = GetColorU32(EditorGuizmo::EColor::TranslationLine);
-        ImVec2   SourcePosOnScreen      = WorldToPos(GuizmoContext.MatrixOrigin, GuizmoContext.ViewProjection);
-        FVector4 ModelPositionTranslate = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
-        ImVec2   DestinationPosOnScreen = WorldToPos(ModelPositionTranslate, GuizmoContext.ViewProjection);
+        ImU32   TranslationLineColor   = GetColorU32(EditorGuizmo::EColor::TranslationLine);
+        ImVec2  SourcePosOnScreen      = WorldToPos(GuizmoContext.MatrixOrigin, GuizmoContext.ViewProjection);
+        Vector4 ModelPositionTranslate = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
+        ImVec2  DestinationPosOnScreen = WorldToPos(ModelPositionTranslate, GuizmoContext.ViewProjection);
 
-        FVector4 Difference = FVector4(DestinationPosOnScreen.x - SourcePosOnScreen.x, DestinationPosOnScreen.y - SourcePosOnScreen.y, 0.0f, 0.0f);
+        Vector4 Difference = Vector4(DestinationPosOnScreen.x - SourcePosOnScreen.x, DestinationPosOnScreen.y - SourcePosOnScreen.y, 0.0f, 0.0f);
         Difference.Normalize();
         Difference *= 5.0f;
 
@@ -1059,8 +1066,8 @@ static void DrawTranslationGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
             2.0f);
 
         char TempString[512];
-        FVector4 ModelPosition2 = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
-        FVector4 DeltaInfo      = ModelPosition2 - GuizmoContext.MatrixOrigin;
+        Vector4 ModelPosition2 = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
+        Vector4 DeltaInfo      = ModelPosition2 - GuizmoContext.MatrixOrigin;
 
         int32 ComponentInfoIndex = (Type - EMoveType::MoveX) * 3;
         ImFormatString(TempString, sizeof(TempString), 
@@ -1091,9 +1098,9 @@ static bool HandleAndDrawLocalBounds(const float* Bounds, float* Matrix, const f
     bool bManipulated = false;
 
     // Compute best Projection axis
-    FVector4 AxesWorldDirections[3];
-    FVector4 BestAxisWorldDirection = FVector4(0.0f, 0.0f, 0.0f, 0.0f);
-    int32    Axes[3];
+    Vector4 AxesWorldDirections[3];
+    Vector4 BestAxisWorldDirection = Vector4(0.0f, 0.0f, 0.0f, 0.0f);
+    int32   Axes[3];
 
     uint32 NumAxes = 1;
     Axes[0] = GuizmoContext.BoundsBestAxis;
@@ -1106,12 +1113,12 @@ static bool HandleAndDrawLocalBounds(const float* Bounds, float* Matrix, const f
         float BestDot = 0.0f;
         for (int32 AxisIndex = 0; AxisIndex < 3; AxisIndex++)
         {
-            FVector4 DirPlaneNormalWorld;
+            Vector4 DirPlaneNormalWorld;
             DirPlaneNormalWorld = GuizmoContext.ModelSource.Transform(
-                FVector4(DirectionUnary[AxisIndex].X, DirectionUnary[AxisIndex].Y, DirectionUnary[AxisIndex].Z, 0.0f));
+                Vector4(DirectionUnary[AxisIndex].X, DirectionUnary[AxisIndex].Y, DirectionUnary[AxisIndex].Z, 0.0f));
             DirPlaneNormalWorld.Normalize();
 
-            FVector4 ModelSourcePos = FVector4(GuizmoContext.ModelSource.GetTranslation(), 1.0f);
+            Vector4 ModelSourcePos = Vector4(GuizmoContext.ModelSource.GetTranslation(), 1.0f);
 
             float DotProductResult = Math::Abs((GuizmoContext.CameraEye - ModelSourcePos).GetNormalized().DotProduct(DirPlaneNormalWorld));
             if (DotProductResult >= BestDot)
@@ -1153,7 +1160,7 @@ static bool HandleAndDrawLocalBounds(const float* Bounds, float* Matrix, const f
         Axes[0]         = Axes[BestIndex];
         Axes[BestIndex] = TempAxis;
 
-        FVector4 TempDirection         = AxesWorldDirections[0];
+        Vector4 TempDirection         = AxesWorldDirections[0];
         AxesWorldDirections[0]         = AxesWorldDirections[BestIndex];
         AxesWorldDirections[BestIndex] = TempDirection;
     }
@@ -1164,7 +1171,7 @@ static bool HandleAndDrawLocalBounds(const float* Bounds, float* Matrix, const f
         BestAxisWorldDirection = AxesWorldDirections[AxisIndex];
 
         // Corners
-        FVector4 AABB[4];
+        Vector4 AABB[4];
 
         int32 SecondAxis = (BestAxis + 1) % 3;
         int32 ThirdAxis  = (BestAxis + 2) % 3;
@@ -1179,7 +1186,7 @@ static bool HandleAndDrawLocalBounds(const float* Bounds, float* Matrix, const f
         // Draw bounds
         uint32 AnchorAlpha = GuizmoContext.bEnable ? IM_COL32_BLACK : IM_COL32(0, 0, 0, 0x80);
 
-        FMatrix4 BoundsMVP = GuizmoContext.ModelSource * GuizmoContext.ViewProjection;
+        Matrix4 BoundsMVP = GuizmoContext.ModelSource * GuizmoContext.ViewProjection;
         for (int32 EdgeIndex = 0; EdgeIndex < 4; EdgeIndex++)
         {
             ImVec2 WorldBound1 = WorldToPos(AABB[EdgeIndex], BoundsMVP);
@@ -1205,7 +1212,7 @@ static bool HandleAndDrawLocalBounds(const float* Bounds, float* Matrix, const f
                 DrawList->AddLine(WorldBoundSS1, WorldBoundSS2, IM_COL32(0xAA, 0xAA, 0xAA, 0) + AnchorAlpha, 2.0f);
             }
 
-            FVector4 MidPoint = (AABB[EdgeIndex] + AABB[(EdgeIndex + 1) % 4]) * 0.5f;
+            Vector4 MidPoint = (AABB[EdgeIndex] + AABB[(EdgeIndex + 1) % 4]) * 0.5f;
             ImVec2   MidBound = WorldToPos(MidPoint, BoundsMVP);
 
             static const float AnchorBigRadius   = 8.0f;
@@ -1251,17 +1258,17 @@ static bool HandleAndDrawLocalBounds(const float* Bounds, float* Matrix, const f
             if (!GuizmoContext.bUsingBounds && GuizmoContext.bEnable && bOverBigAnchor && CanActivate())
             {
                 GuizmoContext.BoundsPivot = GuizmoContext.ModelSource.Transform(
-                    FVector4(AABB[(EdgeIndex + 2) % 4].X, AABB[(EdgeIndex + 2) % 4].Y, AABB[(EdgeIndex + 2) % 4].Z, 1.0f));
+                    Vector4(AABB[(EdgeIndex + 2) % 4].X, AABB[(EdgeIndex + 2) % 4].Y, AABB[(EdgeIndex + 2) % 4].Z, 1.0f));
                 GuizmoContext.BoundsAnchor = GuizmoContext.ModelSource.Transform(
-                    FVector4(AABB[EdgeIndex].X, AABB[EdgeIndex].Y, AABB[EdgeIndex].Z, 1.0f));
-                GuizmoContext.BoundsPlan = FPlane::FromPointAndNormal(
-                    FVector3(GuizmoContext.BoundsAnchor.X, GuizmoContext.BoundsAnchor.Y, GuizmoContext.BoundsAnchor.Z),
-                    FVector3(BestAxisWorldDirection.X, BestAxisWorldDirection.Y, BestAxisWorldDirection.Z));
+                    Vector4(AABB[EdgeIndex].X, AABB[EdgeIndex].Y, AABB[EdgeIndex].Z, 1.0f));
+                GuizmoContext.BoundsPlan = Plane::FromPointAndNormal(
+                    Vector3(GuizmoContext.BoundsAnchor.X, GuizmoContext.BoundsAnchor.Y, GuizmoContext.BoundsAnchor.Z),
+                    Vector3(BestAxisWorldDirection.X, BestAxisWorldDirection.Y, BestAxisWorldDirection.Z));
 
                 GuizmoContext.BoundsBestAxis               = BestAxis;
                 GuizmoContext.BoundsAxis[0]                = SecondAxis;
                 GuizmoContext.BoundsAxis[1]                = ThirdAxis;
-                GuizmoContext.BoundsLocalPivot             = FVector4(0.0f, 0.0f, 0.0f, 0.0f);
+                GuizmoContext.BoundsLocalPivot             = Vector4(0.0f, 0.0f, 0.0f, 0.0f);
                 GuizmoContext.BoundsLocalPivot[SecondAxis] = AABB[OppositeIndex][SecondAxis];
                 GuizmoContext.BoundsLocalPivot[ThirdAxis]  = AABB[OppositeIndex][ThirdAxis];
                 GuizmoContext.bUsingBounds                 = true;
@@ -1272,14 +1279,14 @@ static bool HandleAndDrawLocalBounds(const float* Bounds, float* Matrix, const f
             // Small anchor on middle of segment
             if (!GuizmoContext.bUsingBounds && GuizmoContext.bEnable && bOverSmallAnchor && CanActivate())
             {
-                FVector4 MidPointOpposite = (AABB[(EdgeIndex + 2) % 4] + AABB[(EdgeIndex + 3) % 4]) * 0.5f;
+                Vector4 MidPointOpposite = (AABB[(EdgeIndex + 2) % 4] + AABB[(EdgeIndex + 3) % 4]) * 0.5f;
                 GuizmoContext.BoundsPivot = GuizmoContext.ModelSource.Transform(
-                    FVector4(MidPointOpposite.X, MidPointOpposite.Y, MidPointOpposite.Z, 1.0f));
+                    Vector4(MidPointOpposite.X, MidPointOpposite.Y, MidPointOpposite.Z, 1.0f));
                 GuizmoContext.BoundsAnchor = GuizmoContext.ModelSource.Transform(
-                    FVector4(MidPoint.X, MidPoint.Y, MidPoint.Z, 1.0f));
-                GuizmoContext.BoundsPlan = FPlane::FromPointAndNormal(
-                    FVector3(GuizmoContext.BoundsAnchor.X, GuizmoContext.BoundsAnchor.Y, GuizmoContext.BoundsAnchor.Z), 
-                    FVector3(BestAxisWorldDirection.X, BestAxisWorldDirection.Y, BestAxisWorldDirection.Z));
+                    Vector4(MidPoint.X, MidPoint.Y, MidPoint.Z, 1.0f));
+                GuizmoContext.BoundsPlan = Plane::FromPointAndNormal(
+                    Vector3(GuizmoContext.BoundsAnchor.X, GuizmoContext.BoundsAnchor.Y, GuizmoContext.BoundsAnchor.Z), 
+                    Vector3(BestAxisWorldDirection.X, BestAxisWorldDirection.Y, BestAxisWorldDirection.Z));
 
                 GuizmoContext.BoundsBestAxis = BestAxis;
 
@@ -1291,7 +1298,7 @@ static bool HandleAndDrawLocalBounds(const float* Bounds, float* Matrix, const f
 
                 GuizmoContext.BoundsAxis[0]                                 = Indices[EdgeIndex % 2];
                 GuizmoContext.BoundsAxis[1]                                 = -1;
-                GuizmoContext.BoundsLocalPivot                              = FVector4(0.0f, 0.0f, 0.0f, 0.0f);
+                GuizmoContext.BoundsLocalPivot                              = Vector4(0.0f, 0.0f, 0.0f, 0.0f);
                 GuizmoContext.BoundsLocalPivot[GuizmoContext.BoundsAxis[0]] = AABB[OppositeIndex][Indices[EdgeIndex % 2]];
                 GuizmoContext.bUsingBounds                                  = true;
                 GuizmoContext.EditingID                                     = GuizmoContext.GetCurrentID();
@@ -1301,21 +1308,21 @@ static bool HandleAndDrawLocalBounds(const float* Bounds, float* Matrix, const f
 
         if (GuizmoContext.bUsingBounds && (GuizmoContext.GetCurrentID() == GuizmoContext.EditingID))
         {
-            FMatrix4 ScaleMat;
+            Matrix4 ScaleMat;
             ScaleMat.SetIdentity();
 
             // Compute projected mouse position on plan
             const float Length = GuizmoContext.BoundsPlan.IntersectRay(
-                FVector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z), 
-                FVector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
+                Vector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z), 
+                Vector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
 
             if (Length >= 0.0f)
             {
-                FVector4 NewPos          = GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length;
-                FVector4 DeltaDiff       = NewPos - GuizmoContext.BoundsPivot; // Reference and delta vectors based on mouse move
-                FVector4 RefDiff         = GuizmoContext.BoundsAnchor - GuizmoContext.BoundsPivot;
-                FVector4 DeltaVector     = FVector4(Math::Abs(DeltaDiff.X), Math::Abs(DeltaDiff.Y), Math::Abs(DeltaDiff.Z), 0.0f);
-                FVector4 ReferenceVector = FVector4(Math::Abs(RefDiff.X), Math::Abs(RefDiff.Y), Math::Abs(RefDiff.Z), 0.0f);
+                Vector4 NewPos          = GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length;
+                Vector4 DeltaDiff       = NewPos - GuizmoContext.BoundsPivot; // Reference and delta vectors based on mouse move
+                Vector4 RefDiff         = GuizmoContext.BoundsAnchor - GuizmoContext.BoundsPivot;
+                Vector4 DeltaVector     = Vector4(Math::Abs(DeltaDiff.X), Math::Abs(DeltaDiff.Y), Math::Abs(DeltaDiff.Z), 0.0f);
+                Vector4 ReferenceVector = Vector4(Math::Abs(RefDiff.X), Math::Abs(RefDiff.Y), Math::Abs(RefDiff.Z), 0.0f);
 
                 // For 1 or 2 axes, compute a ratio that's used for Scale and snap it based on resulting length
                 for (int32 BoundsAxisIndex = 0; BoundsAxisIndex < 2; BoundsAxisIndex++)
@@ -1326,13 +1333,13 @@ static bool HandleAndDrawLocalBounds(const float* Bounds, float* Matrix, const f
                         continue;
                     }
 
-                    FVector4 AxisDir = FVector4(
+                    Vector4 AxisDir = Vector4(
                         GuizmoContext.BoundsMatrix.M[0][AxisIndex1],
                         GuizmoContext.BoundsMatrix.M[1][AxisIndex1],
                         GuizmoContext.BoundsMatrix.M[2][AxisIndex1],
                         0.0f);
 
-                    AxisDir = FVector4(Math::Abs(AxisDir.X), Math::Abs(AxisDir.Y), Math::Abs(AxisDir.Z), AxisDir.W);
+                    AxisDir = Vector4(Math::Abs(AxisDir.X), Math::Abs(AxisDir.Y), Math::Abs(AxisDir.Z), AxisDir.W);
 
                     float DtAxis    = AxisDir.DotProduct(ReferenceVector);
                     float BoundSize = Bounds[AxisIndex1 + 3] - Bounds[AxisIndex1];    
@@ -1363,22 +1370,21 @@ static bool HandleAndDrawLocalBounds(const float* Bounds, float* Matrix, const f
                 }
 
                 // Transform Matrix
-                FMatrix4 PreScale  = FMatrix4::Translation(-GuizmoContext.BoundsLocalPivot.X, -GuizmoContext.BoundsLocalPivot.Y, -GuizmoContext.BoundsLocalPivot.Z);
-                FMatrix4 PostScale = FMatrix4::Translation(GuizmoContext.BoundsLocalPivot.X, GuizmoContext.BoundsLocalPivot.Y, GuizmoContext.BoundsLocalPivot.Z);
-                FMatrix4 Result    = PreScale * ScaleMat * PostScale * GuizmoContext.BoundsMatrix;
+                Matrix4 PreScale  = Matrix4::Translation(-GuizmoContext.BoundsLocalPivot.X, -GuizmoContext.BoundsLocalPivot.Y, -GuizmoContext.BoundsLocalPivot.Z);
+                Matrix4 PostScale = Matrix4::Translation(GuizmoContext.BoundsLocalPivot.X, GuizmoContext.BoundsLocalPivot.Y, GuizmoContext.BoundsLocalPivot.Z);
+                Matrix4 Result    = PreScale * ScaleMat * PostScale * GuizmoContext.BoundsMatrix;
                 StoreMatrix(Matrix, Result);
 
                 // Info text
                 char TempString[512];
-                FVector4 ModelPosition = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
-                ImVec2 DestinationPosOnScreen = WorldToPos(ModelPosition, GuizmoContext.ViewProjection);
-
-                FVector3 BoundsMatrixRight = FVector3(GuizmoContext.BoundsMatrix.M[0][0], GuizmoContext.BoundsMatrix.M[0][1], GuizmoContext.BoundsMatrix.M[0][2]);
-                FVector3 BoundsMatrixUp    = FVector3(GuizmoContext.BoundsMatrix.M[1][0], GuizmoContext.BoundsMatrix.M[1][1], GuizmoContext.BoundsMatrix.M[1][2]);
-                FVector3 BoundsMatrixDir   = FVector3(GuizmoContext.BoundsMatrix.M[2][0], GuizmoContext.BoundsMatrix.M[2][1], GuizmoContext.BoundsMatrix.M[2][2]);
-                FVector3 ScaleMatRight     = FVector3(ScaleMat.M[0][0], ScaleMat.M[0][1], ScaleMat.M[0][2]);
-                FVector3 ScaleMatUp        = FVector3(ScaleMat.M[1][0], ScaleMat.M[1][1], ScaleMat.M[1][2]);
-                FVector3 ScaleMatDir       = FVector3(ScaleMat.M[2][0], ScaleMat.M[2][1], ScaleMat.M[2][2]);
+                Vector4 ModelPosition          = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
+                ImVec2  DestinationPosOnScreen = WorldToPos(ModelPosition, GuizmoContext.ViewProjection);
+                Vector3 BoundsMatrixRight      = Vector3(GuizmoContext.BoundsMatrix.M[0][0], GuizmoContext.BoundsMatrix.M[0][1], GuizmoContext.BoundsMatrix.M[0][2]);
+                Vector3 BoundsMatrixUp         = Vector3(GuizmoContext.BoundsMatrix.M[1][0], GuizmoContext.BoundsMatrix.M[1][1], GuizmoContext.BoundsMatrix.M[1][2]);
+                Vector3 BoundsMatrixDir        = Vector3(GuizmoContext.BoundsMatrix.M[2][0], GuizmoContext.BoundsMatrix.M[2][1], GuizmoContext.BoundsMatrix.M[2][2]);
+                Vector3 ScaleMatRight          = Vector3(ScaleMat.M[0][0], ScaleMat.M[0][1], ScaleMat.M[0][2]);
+                Vector3 ScaleMatUp             = Vector3(ScaleMat.M[1][0], ScaleMat.M[1][1], ScaleMat.M[1][2]);
+                Vector3 ScaleMatDir            = Vector3(ScaleMat.M[2][0], ScaleMat.M[2][1], ScaleMat.M[2][2]);
 
                 ImFormatString(TempString, sizeof(TempString), "X: %.2f Y: %.2f Z: %.2f",
                     (Bounds[3] - Bounds[0]) * BoundsMatrixRight.GetLength() * ScaleMatRight.GetLength(),
@@ -1433,25 +1439,25 @@ static int32 GetScaleType(EditorGuizmo::EOperation::Type Op)
 
         bool bIsAxisMasked = ((1 << AxisIndex) & GuizmoContext.AxisMask) != 0;
 
-        FVector4 DirPlaneX;
-        FVector4 DirPlaneY;
-        FVector4 DirAxis;
+        Vector4 DirPlaneX;
+        Vector4 DirPlaneY;
+        Vector4 DirAxis;
 
         bool bBelowAxisLimit;
         bool bBelowPlaneLimit;
         ComputeTripodAxisAndVisibility(AxisIndex, DirAxis, DirPlaneX, DirPlaneY, bBelowAxisLimit, bBelowPlaneLimit, true);
 
-        DirAxis   = GuizmoContext.ModelLocal.Transform(FVector4(DirAxis.X, DirAxis.Y, DirAxis.Z, 0.0f));
-        DirPlaneX = GuizmoContext.ModelLocal.Transform(FVector4(DirPlaneX.X, DirPlaneX.Y, DirPlaneX.Z, 0.0f));
-        DirPlaneY = GuizmoContext.ModelLocal.Transform(FVector4(DirPlaneY.X, DirPlaneY.Y, DirPlaneY.Z, 0.0f));
+        DirAxis   = GuizmoContext.ModelLocal.Transform(Vector4(DirAxis.X, DirAxis.Y, DirAxis.Z, 0.0f));
+        DirPlaneX = GuizmoContext.ModelLocal.Transform(Vector4(DirPlaneX.X, DirPlaneX.Y, DirPlaneX.Z, 0.0f));
+        DirPlaneY = GuizmoContext.ModelLocal.Transform(Vector4(DirPlaneY.X, DirPlaneY.Y, DirPlaneY.Z, 0.0f));
 
-        FVector4 ModelLocalPosition = FVector4(GuizmoContext.ModelLocal.GetTranslation(), 1.0f);
+        Vector4 ModelLocalPosition = Vector4(GuizmoContext.ModelLocal.GetTranslation(), 1.0f);
 
-        const float Length = FPlane::FromPointAndNormal(
-            FVector3(ModelLocalPosition.X, ModelLocalPosition.Y, ModelLocalPosition.Z), 
-            FVector3(DirAxis.X, DirAxis.Y, DirAxis.Z)).IntersectRay(
-                FVector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z), 
-                FVector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
+        const float Length = Plane::FromPointAndNormal(
+            Vector3(ModelLocalPosition.X, ModelLocalPosition.Y, ModelLocalPosition.Z), 
+            Vector3(DirAxis.X, DirAxis.Y, DirAxis.Z)).IntersectRay(
+                Vector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z), 
+                Vector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
 
         if (Length < 0.0f)
         {
@@ -1461,17 +1467,17 @@ static int32 GetScaleType(EditorGuizmo::EOperation::Type Op)
         const float StartOffset = Contains(Op, static_cast<EditorGuizmo::EOperation::Type>(EditorGuizmo::EOperation::TranslateX << AxisIndex)) ? 1.0f : 0.1f;
         const float EndOffset   = Contains(Op, static_cast<EditorGuizmo::EOperation::Type>(EditorGuizmo::EOperation::TranslateX << AxisIndex)) ? 1.4f : 1.0f;
 
-        FVector4     PositionOnPlane         = GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length;
-        const ImVec2 PositionOnPlaneScreen   = WorldToPos(PositionOnPlane, GuizmoContext.ViewProjection);
-        const ImVec2 AxisStartOnScreen = WorldToPos(ModelLocalPosition + DirAxis * GuizmoContext.ScreenFactor * StartOffset, GuizmoContext.ViewProjection);
-        const ImVec2 AxisEndOnScreen   = WorldToPos(ModelLocalPosition + DirAxis * GuizmoContext.ScreenFactor * EndOffset, GuizmoContext.ViewProjection);
+        Vector4      PositionOnPlane       = GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length;
+        const ImVec2 PositionOnPlaneScreen = WorldToPos(PositionOnPlane, GuizmoContext.ViewProjection);
+        const ImVec2 AxisStartOnScreen     = WorldToPos(ModelLocalPosition + DirAxis * GuizmoContext.ScreenFactor * StartOffset, GuizmoContext.ViewProjection);
+        const ImVec2 AxisEndOnScreen       = WorldToPos(ModelLocalPosition + DirAxis * GuizmoContext.ScreenFactor * EndOffset, GuizmoContext.ViewProjection);
 
-        FVector4 ClosestPointOnAxis = PointOnSegment(
-            FVector4(PositionOnPlaneScreen.x, PositionOnPlaneScreen.y, 0.0f, 0.0f), 
-            FVector4(AxisStartOnScreen.x, AxisStartOnScreen.y, 0.0f, 0.0f), 
-            FVector4(AxisEndOnScreen.x, AxisEndOnScreen.y, 0.0f, 0.0f));
+        Vector4 ClosestPointOnAxis = PointOnSegment(
+            Vector4(PositionOnPlaneScreen.x, PositionOnPlaneScreen.y, 0.0f, 0.0f), 
+            Vector4(AxisStartOnScreen.x, AxisStartOnScreen.y, 0.0f, 0.0f), 
+            Vector4(AxisEndOnScreen.x, AxisEndOnScreen.y, 0.0f, 0.0f));
 
-        if ((ClosestPointOnAxis - FVector4(PositionOnPlaneScreen.x, PositionOnPlaneScreen.y, 0.0f, 0.0f)).GetLength() < 12.0f) // Pixel size
+        if ((ClosestPointOnAxis - Vector4(PositionOnPlaneScreen.x, PositionOnPlaneScreen.y, 0.0f, 0.0f)).GetLength() < 12.0f) // Pixel size
         {
             if (!bIsAxisMasked)
             {
@@ -1482,7 +1488,7 @@ static int32 GetScaleType(EditorGuizmo::EOperation::Type Op)
 
     // Universal
 
-    FVector4 DeltaScreen = FVector4(State.MousePos.x - GuizmoContext.ScreenSquareCenter.x, State.MousePos.y - GuizmoContext.ScreenSquareCenter.y, 0.0f, 0.0f);
+    Vector4 DeltaScreen = Vector4(State.MousePos.x - GuizmoContext.ScreenSquareCenter.x, State.MousePos.y - GuizmoContext.ScreenSquareCenter.y, 0.0f, 0.0f);
 
     float Distance = DeltaScreen.GetLength();
     if (Contains(Op, EditorGuizmo::EOperation::ScaleU) && Distance >= 17.0f && Distance < 23.0f)
@@ -1497,9 +1503,9 @@ static int32 GetScaleType(EditorGuizmo::EOperation::Type Op)
             continue;
         }
 
-        FVector4 DirPlaneX;
-        FVector4 DirPlaneY;
-        FVector4 DirAxis;
+        Vector4 DirPlaneX;
+        Vector4 DirPlaneY;
+        Vector4 DirAxis;
 
         bool bBelowAxisLimit;
         bool bBelowPlaneLimit;
@@ -1535,7 +1541,7 @@ static int32 GetRotateType(EditorGuizmo::EOperation::Type Op)
     ImGuiIO& State = ImGui::GetIO();
     int32 Type = EMoveType::None;
 
-    FVector4 DeltaScreen = FVector4(State.MousePos.x - GuizmoContext.ScreenSquareCenter.x, State.MousePos.y - GuizmoContext.ScreenSquareCenter.y, 0.0f, 0.0f);
+    Vector4 DeltaScreen = Vector4(State.MousePos.x - GuizmoContext.ScreenSquareCenter.x, State.MousePos.y - GuizmoContext.ScreenSquareCenter.y, 0.0f, 0.0f);
 
     float Distance = DeltaScreen.GetLength();
     if (Intersects(Op, EditorGuizmo::EOperation::RotateScreen) && bIsNoAxesMasked && Distance >= (GuizmoContext.RadiusSquareCenter - 4.0f) && 
@@ -1544,19 +1550,19 @@ static int32 GetRotateType(EditorGuizmo::EOperation::Type Op)
         Type = EMoveType::RotateScreen;
     }
 
-    FVector4 ModelRight = FVector4(GuizmoContext.Model.M[0][0], GuizmoContext.Model.M[0][1], GuizmoContext.Model.M[0][2], 0.0f);
-    FVector4 ModelUp    = FVector4(GuizmoContext.Model.M[1][0], GuizmoContext.Model.M[1][1], GuizmoContext.Model.M[1][2], 0.0f);
-    FVector4 ModelDir   = FVector4(GuizmoContext.Model.M[2][0], GuizmoContext.Model.M[2][1], GuizmoContext.Model.M[2][2], 0.0f);
+    Vector4 ModelRight = Vector4(GuizmoContext.Model.M[0][0], GuizmoContext.Model.M[0][1], GuizmoContext.Model.M[0][2], 0.0f);
+    Vector4 ModelUp    = Vector4(GuizmoContext.Model.M[1][0], GuizmoContext.Model.M[1][1], GuizmoContext.Model.M[1][2], 0.0f);
+    Vector4 ModelDir   = Vector4(GuizmoContext.Model.M[2][0], GuizmoContext.Model.M[2][1], GuizmoContext.Model.M[2][2], 0.0f);
 
-    const FVector4 PlanNormals[] =
+    const Vector4 PlanNormals[] =
     {
         ModelRight,
         ModelUp,
         ModelDir
     };
 
-    FVector4 ModelPosition = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
-    FVector4 ModelViewPos  = GuizmoContext.ViewMat.Transform(FVector4(ModelPosition.X, ModelPosition.Y, ModelPosition.Z, 1.0f));
+    Vector4 ModelPosition = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
+    Vector4 ModelViewPos  = GuizmoContext.ViewMat.Transform(Vector4(ModelPosition.X, ModelPosition.Y, ModelPosition.Z, 1.0f));
 
     for (int32 AxisIndex = 0; AxisIndex < 3 && Type == EMoveType::None; AxisIndex++)
     {
@@ -1572,37 +1578,37 @@ static int32 GetRotateType(EditorGuizmo::EOperation::Type Op)
         }
 
         // Pickup plan
-        FVector4 ModelPositionRotate = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
+        Vector4 ModelPositionRotate = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
 
-        const FPlane PickupPlan = FPlane::FromPointAndNormal(
-            FVector3(ModelPositionRotate.X, ModelPositionRotate.Y, ModelPositionRotate.Z), 
-            FVector3(PlanNormals[AxisIndex].X, PlanNormals[AxisIndex].Y, PlanNormals[AxisIndex].Z));
+        const Plane PickupPlan = Plane::FromPointAndNormal(
+            Vector3(ModelPositionRotate.X, ModelPositionRotate.Y, ModelPositionRotate.Z), 
+            Vector3(PlanNormals[AxisIndex].X, PlanNormals[AxisIndex].Y, PlanNormals[AxisIndex].Z));
 
         const float Length = PickupPlan.IntersectRay(
-            FVector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z), 
-            FVector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
+            Vector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z), 
+            Vector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
 
         if (Length < 0.0f)
         {
             continue;
         }
 
-        const FVector4 IntersectWorldPos = GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length;
-        FVector4 IntersectViewPos = GuizmoContext.ViewMat.Transform(FVector4(IntersectWorldPos.X, IntersectWorldPos.Y, IntersectWorldPos.Z, 1.0f));
+        const Vector4 IntersectWorldPos = GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length;
+        Vector4 IntersectViewPos = GuizmoContext.ViewMat.Transform(Vector4(IntersectWorldPos.X, IntersectWorldPos.Y, IntersectWorldPos.Z, 1.0f));
 
         if (Math::Abs(ModelViewPos.Z) - Math::Abs(IntersectViewPos.Z) < -Math::Constants::Epsilon)
         {
             continue;
         }
 
-        const FVector4 LocalPosition = IntersectWorldPos - ModelPositionRotate;
-        FVector4 IdealPosOnCircle = LocalPosition.GetNormalized();
-        IdealPosOnCircle = GuizmoContext.ModelInverse.Transform(FVector4(IdealPosOnCircle.X, IdealPosOnCircle.Y, IdealPosOnCircle.Z, 0.0f));
+        const Vector4 LocalPosition = IntersectWorldPos - ModelPositionRotate;
+        Vector4 IdealPosOnCircle = LocalPosition.GetNormalized();
+        IdealPosOnCircle = GuizmoContext.ModelInverse.Transform(Vector4(IdealPosOnCircle.X, IdealPosOnCircle.Y, IdealPosOnCircle.Z, 0.0f));
 
         const ImVec2 IdealPosOnCircleScreen = WorldToPos(IdealPosOnCircle * RotationDisplayFactor * GuizmoContext.ScreenFactor, GuizmoContext.MVP);
         const ImVec2 DistanceOnScreen       = IdealPosOnCircleScreen - State.MousePos;
 
-        const float DistanceToIdealPos = FVector4(DistanceOnScreen.x, DistanceOnScreen.y, 0.0f, 0.0f).GetLength();
+        const float DistanceToIdealPos = Vector4(DistanceOnScreen.x, DistanceOnScreen.y, 0.0f, 0.0f).GetLength();
         if (DistanceToIdealPos < 8.0f) // Pixel size
         {
             Type = EMoveType::RotateX + AxisIndex;
@@ -1612,7 +1618,7 @@ static int32 GetRotateType(EditorGuizmo::EOperation::Type Op)
     return Type;
 }
 
-static int32 GetMoveType(EditorGuizmo::EOperation::Type Op, FVector4* GizmoHitProportion)
+static int32 GetMoveType(EditorGuizmo::EOperation::Type Op, Vector4* GizmoHitProportion)
 {
     if (!Intersects(Op, EditorGuizmo::EOperation::Translate) || GuizmoContext.bUsing || !GuizmoContext.bMouseOver)
     {
@@ -1634,37 +1640,37 @@ static int32 GetMoveType(EditorGuizmo::EOperation::Type Op, FVector4* GizmoHitPr
     }
 
     // Compute
-    const FVector4 ScreenCoord = FVector4(State.MousePos.x - GuizmoContext.X, State.MousePos.y - GuizmoContext.Y, 0.0f, 0.0f);
+    const Vector4 ScreenCoord = Vector4(State.MousePos.x - GuizmoContext.X, State.MousePos.y - GuizmoContext.Y, 0.0f, 0.0f);
     for (int32 AxisIndex = 0; AxisIndex < 3 && Type == EMoveType::None; AxisIndex++)
     {
         bool bIsAxisMasked = ((1 << AxisIndex) & GuizmoContext.AxisMask) != 0;
 
-        FVector4 DirPlaneX;
-        FVector4 DirPlaneY;
-        FVector4 DirAxis;
+        Vector4 DirPlaneX;
+        Vector4 DirPlaneY;
+        Vector4 DirAxis;
 
         bool bBelowAxisLimit;
         bool bBelowPlaneLimit;
         ComputeTripodAxisAndVisibility(AxisIndex, DirAxis, DirPlaneX, DirPlaneY, bBelowAxisLimit, bBelowPlaneLimit);
 
-        DirAxis   = GuizmoContext.Model.Transform(FVector4(DirAxis.X, DirAxis.Y, DirAxis.Z, 0.0f));
-        DirPlaneX = GuizmoContext.Model.Transform(FVector4(DirPlaneX.X, DirPlaneX.Y, DirPlaneX.Z, 0.0f));
-        DirPlaneY = GuizmoContext.Model.Transform(FVector4(DirPlaneY.X, DirPlaneY.Y, DirPlaneY.Z, 0.0f));
+        DirAxis   = GuizmoContext.Model.Transform(Vector4(DirAxis.X, DirAxis.Y, DirAxis.Z, 0.0f));
+        DirPlaneX = GuizmoContext.Model.Transform(Vector4(DirPlaneX.X, DirPlaneX.Y, DirPlaneX.Z, 0.0f));
+        DirPlaneY = GuizmoContext.Model.Transform(Vector4(DirPlaneY.X, DirPlaneY.Y, DirPlaneY.Z, 0.0f));
 
-        FVector4 ModelPosition = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
+        Vector4 ModelPosition = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
 
-        const float Length = FPlane::FromPointAndNormal(
-            FVector3(ModelPosition.X, ModelPosition.Y, ModelPosition.Z),
-            FVector3(DirAxis.X, DirAxis.Y, DirAxis.Z)).IntersectRay(
-                FVector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z),
-                FVector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
+        const float Length = Plane::FromPointAndNormal(
+            Vector3(ModelPosition.X, ModelPosition.Y, ModelPosition.Z),
+            Vector3(DirAxis.X, DirAxis.Y, DirAxis.Z)).IntersectRay(
+                Vector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z),
+                Vector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
 
         if (Length < 0.0f)
         {
             continue;
         }
 
-        FVector4 PositionOnPlane = GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length;
+        Vector4 PositionOnPlane = GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length;
 
         const ImVec2 AxisStartOnScreen = WorldToPos(
             ModelPosition + DirAxis * GuizmoContext.ScreenFactor * 0.1f,
@@ -1673,9 +1679,9 @@ static int32 GetMoveType(EditorGuizmo::EOperation::Type Op, FVector4* GizmoHitPr
             ModelPosition + DirAxis * GuizmoContext.ScreenFactor,
             GuizmoContext.ViewProjection) - ImVec2(GuizmoContext.X, GuizmoContext.Y);
 
-        FVector4 ClosestPointOnAxis = PointOnSegment(ScreenCoord,
-            FVector4(AxisStartOnScreen.x, AxisStartOnScreen.y, 0.0f, 0.0f),
-            FVector4(AxisEndOnScreen.x, AxisEndOnScreen.y, 0.0f, 0.0f));
+        Vector4 ClosestPointOnAxis = PointOnSegment(ScreenCoord,
+            Vector4(AxisStartOnScreen.x, AxisStartOnScreen.y, 0.0f, 0.0f),
+            Vector4(AxisEndOnScreen.x, AxisEndOnScreen.y, 0.0f, 0.0f));
 
         if ((ClosestPointOnAxis - ScreenCoord).GetLength() < 12.0f && 
             Intersects(Op, static_cast<EditorGuizmo::EOperation::Type>(EditorGuizmo::EOperation::TranslateX << AxisIndex))) // Pixel size
@@ -1688,7 +1694,7 @@ static int32 GetMoveType(EditorGuizmo::EOperation::Type Op, FVector4* GizmoHitPr
             Type = EMoveType::MoveX + AxisIndex;
         }
 
-        FVector4 ModelPosition2 = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
+        Vector4 ModelPosition2 = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
 
         const float PlaneCoordX = DirPlaneX.DotProduct((PositionOnPlane - ModelPosition2) * (1.0f / GuizmoContext.ScreenFactor));
         const float PlaneCoordY = DirPlaneY.DotProduct((PositionOnPlane - ModelPosition2) * (1.0f / GuizmoContext.ScreenFactor));
@@ -1706,7 +1712,7 @@ static int32 GetMoveType(EditorGuizmo::EOperation::Type Op, FVector4* GizmoHitPr
 
         if (GizmoHitProportion)
         {
-            *GizmoHitProportion = FVector4(PlaneCoordX, PlaneCoordY, 0.0f, 0.0f);
+            *GizmoHitProportion = Vector4(PlaneCoordX, PlaneCoordY, 0.0f, 0.0f);
         }
     }
 
@@ -1731,23 +1737,23 @@ static bool HandleTranslation(float* Matrix, float* DeltaMatrix, EditorGuizmo::E
         ImGui::SetNextFrameWantCaptureMouse(true);
 
         const float SignedLength = GuizmoContext.TranslationPlan.IntersectRay(
-            FVector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z), 
-            FVector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
+            Vector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z), 
+            Vector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
 
         if (SignedLength >= 0.0f)
         {
             const float Length = SignedLength;
-            const FVector4 NewPos = GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length;
-            const FVector4 NewOrigin = NewPos - GuizmoContext.RelativeOrigin * GuizmoContext.ScreenFactor; // Compute delta
+            const Vector4 NewPos = GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length;
+            const Vector4 NewOrigin = NewPos - GuizmoContext.RelativeOrigin * GuizmoContext.ScreenFactor; // Compute delta
 
-            const FVector4 ModelPosition = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
-            FVector4 Delta = NewOrigin - ModelPosition;
+            const Vector4 ModelPosition = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
+            Vector4 Delta = NewOrigin - ModelPosition;
 
             // 1 axis constraint 
             if (GuizmoContext.CurrentOperation >= EMoveType::MoveX && GuizmoContext.CurrentOperation <= EMoveType::MoveZ) 
             { 
                 const int32 AxisIndex = GuizmoContext.CurrentOperation - EMoveType::MoveX; 
-                const FVector4 AxisValue = FVector4(GuizmoContext.Model.M[AxisIndex][0], GuizmoContext.Model.M[AxisIndex][1], GuizmoContext.Model.M[AxisIndex][2], 0.0f); 
+                const Vector4 AxisValue = Vector4(GuizmoContext.Model.M[AxisIndex][0], GuizmoContext.Model.M[AxisIndex][1], GuizmoContext.Model.M[AxisIndex][2], 0.0f); 
  
                 const float LengthOnAxis = AxisValue.DotProduct(Delta); 
                 Delta = AxisValue * LengthOnAxis; 
@@ -1756,26 +1762,26 @@ static bool HandleTranslation(float* Matrix, float* DeltaMatrix, EditorGuizmo::E
             // Snap
             if (Snap)
             {
-                const FVector4 ModelPositionSnap = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
-                FVector4 CumulativeDelta = ModelPositionSnap + Delta - GuizmoContext.MatrixOrigin;
+                const Vector4 ModelPositionSnap = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
+                Vector4 CumulativeDelta = ModelPositionSnap + Delta - GuizmoContext.MatrixOrigin;
 
                 if (bApplyRotationLocally)
                 {
-                    FMatrix4 ModelSourceNormalized = GuizmoContext.ModelSource;
+                    Matrix4 ModelSourceNormalized = GuizmoContext.ModelSource;
                     ModelSourceNormalized.OrthoNormalize();
 
-                    const FMatrix4 ModelSourceNormalizedInverse = ModelSourceNormalized.GetInverse();
-                    CumulativeDelta = ModelSourceNormalizedInverse.Transform(FVector4(CumulativeDelta.X, CumulativeDelta.Y, CumulativeDelta.Z, 0.0f));
+                    const Matrix4 ModelSourceNormalizedInverse = ModelSourceNormalized.GetInverse();
+                    CumulativeDelta = ModelSourceNormalizedInverse.Transform(Vector4(CumulativeDelta.X, CumulativeDelta.Y, CumulativeDelta.Z, 0.0f));
 
                     ComputeSnap(CumulativeDelta, Snap);
-                    CumulativeDelta = ModelSourceNormalized.Transform(FVector4(CumulativeDelta.X, CumulativeDelta.Y, CumulativeDelta.Z, 0.0f));
+                    CumulativeDelta = ModelSourceNormalized.Transform(Vector4(CumulativeDelta.X, CumulativeDelta.Y, CumulativeDelta.Z, 0.0f));
                 }
                 else
                 {
                     ComputeSnap(CumulativeDelta, Snap);
                 }
 
-                const FVector4 UpdatedModelPosition = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
+                const Vector4 UpdatedModelPosition = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
                 Delta = GuizmoContext.MatrixOrigin + CumulativeDelta - UpdatedModelPosition;
             }
 
@@ -1787,13 +1793,13 @@ static bool HandleTranslation(float* Matrix, float* DeltaMatrix, EditorGuizmo::E
             GuizmoContext.TranslationLastDelta = Delta;
 
             // Compute Matrix & delta
-            const FMatrix4 DeltaMatrixTranslation = FMatrix4::Translation(Delta.X, Delta.Y, Delta.Z);
+            const Matrix4 DeltaMatrixTranslation = Matrix4::Translation(Delta.X, Delta.Y, Delta.Z);
             if (DeltaMatrix)
             {
                 Memory::Memcpy(DeltaMatrix, &DeltaMatrixTranslation.M[0][0], sizeof(float) * 16);
             }
 
-            const FMatrix4 Result = GuizmoContext.ModelSource * DeltaMatrixTranslation;
+            const Matrix4 Result = GuizmoContext.ModelSource * DeltaMatrixTranslation;
             StoreMatrix(Matrix, Result);
 
             if (!State.MouseDown[0])
@@ -1817,11 +1823,11 @@ static bool HandleTranslation(float* Matrix, float* DeltaMatrix, EditorGuizmo::E
 
         if (CanActivate() && Type != EMoveType::None)
         {
-            FVector4 ModelRight = FVector4(GuizmoContext.Model.M[0][0], GuizmoContext.Model.M[0][1], GuizmoContext.Model.M[0][2], 0.0f);
-            FVector4 ModelUp    = FVector4(GuizmoContext.Model.M[1][0], GuizmoContext.Model.M[1][1], GuizmoContext.Model.M[1][2], 0.0f);
-            FVector4 ModelDir   = FVector4(GuizmoContext.Model.M[2][0], GuizmoContext.Model.M[2][1], GuizmoContext.Model.M[2][2], 0.0f);
+            Vector4 ModelRight = Vector4(GuizmoContext.Model.M[0][0], GuizmoContext.Model.M[0][1], GuizmoContext.Model.M[0][2], 0.0f);
+            Vector4 ModelUp    = Vector4(GuizmoContext.Model.M[1][0], GuizmoContext.Model.M[1][1], GuizmoContext.Model.M[1][2], 0.0f);
+            Vector4 ModelDir   = Vector4(GuizmoContext.Model.M[2][0], GuizmoContext.Model.M[2][1], GuizmoContext.Model.M[2][2], 0.0f);
 
-            FVector4 MovePlanNormal[] =
+            Vector4 MovePlanNormal[] =
             {
                 ModelRight,
                 ModelUp,
@@ -1832,23 +1838,23 @@ static bool HandleTranslation(float* Matrix, float* DeltaMatrix, EditorGuizmo::E
                 -GuizmoContext.CameraDir
             };
 
-            FVector4 ModelPosition           = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
-            FVector4 CameraToModelNormalized = (ModelPosition - GuizmoContext.CameraEye).GetNormalized();
+            Vector4 ModelPosition           = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
+            Vector4 CameraToModelNormalized = (ModelPosition - GuizmoContext.CameraEye).GetNormalized();
 
             for (uint32 AxisIndex = 0; AxisIndex < 3; AxisIndex++)
             {
-                FVector4 OrthoVector      = MovePlanNormal[AxisIndex].CrossProduct(CameraToModelNormalized);
+                Vector4 OrthoVector      = MovePlanNormal[AxisIndex].CrossProduct(CameraToModelNormalized);
                 MovePlanNormal[AxisIndex] = MovePlanNormal[AxisIndex].CrossProduct(OrthoVector);
                 MovePlanNormal[AxisIndex].Normalize();
             }
 
-            GuizmoContext.TranslationPlan = FPlane::FromPointAndNormal(
-                FVector3(ModelPosition.X, ModelPosition.Y, ModelPosition.Z),
-                FVector3(MovePlanNormal[Type - EMoveType::MoveX].X, MovePlanNormal[Type - EMoveType::MoveX].Y, MovePlanNormal[Type - EMoveType::MoveX].Z));
+            GuizmoContext.TranslationPlan = Plane::FromPointAndNormal(
+                Vector3(ModelPosition.X, ModelPosition.Y, ModelPosition.Z),
+                Vector3(MovePlanNormal[Type - EMoveType::MoveX].X, MovePlanNormal[Type - EMoveType::MoveX].Y, MovePlanNormal[Type - EMoveType::MoveX].Z));
 
             const float Length = GuizmoContext.TranslationPlan.IntersectRay(
-                FVector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z),
-                FVector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
+                Vector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z),
+                Vector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
 
             if (Length >= 0.0f)
             {
@@ -1888,11 +1894,11 @@ static bool HandleScale(float* Matrix, float* DeltaMatrix, EditorGuizmo::EOperat
 
         if (CanActivate() && Type != EMoveType::None)
         {
-            FVector4 ModelLocalUp    = FVector4(GuizmoContext.ModelLocal.M[1][0], GuizmoContext.ModelLocal.M[1][1], GuizmoContext.ModelLocal.M[1][2], 0.0f);
-            FVector4 ModelLocalDir   = FVector4(GuizmoContext.ModelLocal.M[2][0], GuizmoContext.ModelLocal.M[2][1], GuizmoContext.ModelLocal.M[2][2], 0.0f);
-            FVector4 ModelLocalRight = FVector4(GuizmoContext.ModelLocal.M[0][0], GuizmoContext.ModelLocal.M[0][1], GuizmoContext.ModelLocal.M[0][2], 0.0f);
+            Vector4 ModelLocalUp    = Vector4(GuizmoContext.ModelLocal.M[1][0], GuizmoContext.ModelLocal.M[1][1], GuizmoContext.ModelLocal.M[1][2], 0.0f);
+            Vector4 ModelLocalDir   = Vector4(GuizmoContext.ModelLocal.M[2][0], GuizmoContext.ModelLocal.M[2][1], GuizmoContext.ModelLocal.M[2][2], 0.0f);
+            Vector4 ModelLocalRight = Vector4(GuizmoContext.ModelLocal.M[0][0], GuizmoContext.ModelLocal.M[0][1], GuizmoContext.ModelLocal.M[0][2], 0.0f);
                 
-            const FVector4 MovePlanNormal[] =
+            const Vector4 MovePlanNormal[] =
             {
                 ModelLocalUp, 
                 ModelLocalDir, 
@@ -1903,14 +1909,14 @@ static bool HandleScale(float* Matrix, float* DeltaMatrix, EditorGuizmo::EOperat
                 -GuizmoContext.CameraDir
             };
             
-            FVector4 ModelLocalPosition = FVector4(GuizmoContext.ModelLocal.GetTranslation(), 1.0f);
-            GuizmoContext.TranslationPlan = FPlane::FromPointAndNormal(
-                FVector3(ModelLocalPosition.X, ModelLocalPosition.Y, ModelLocalPosition.Z), 
-                FVector3(MovePlanNormal[Type - EMoveType::ScaleX].X, MovePlanNormal[Type - EMoveType::ScaleX].Y, MovePlanNormal[Type - EMoveType::ScaleX].Z));
+            Vector4 ModelLocalPosition = Vector4(GuizmoContext.ModelLocal.GetTranslation(), 1.0f);
+            GuizmoContext.TranslationPlan = Plane::FromPointAndNormal(
+                Vector3(ModelLocalPosition.X, ModelLocalPosition.Y, ModelLocalPosition.Z), 
+                Vector3(MovePlanNormal[Type - EMoveType::ScaleX].X, MovePlanNormal[Type - EMoveType::ScaleX].Y, MovePlanNormal[Type - EMoveType::ScaleX].Z));
 
             const float Length = GuizmoContext.TranslationPlan.IntersectRay(
-                FVector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z), 
-                FVector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
+                Vector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z), 
+                Vector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
 
             if (Length >= 0.0f)
             {
@@ -1919,14 +1925,14 @@ static bool HandleScale(float* Matrix, float* DeltaMatrix, EditorGuizmo::EOperat
                 GuizmoContext.CurrentOperation      = Type;
                 GuizmoContext.TranslationPlanOrigin = GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length;
                 GuizmoContext.MatrixOrigin          = ModelLocalPosition;
-                GuizmoContext.Scale                 = FVector4(1.0f, 1.0f, 1.0f, 0.0f);
+                GuizmoContext.Scale                 = Vector4(1.0f, 1.0f, 1.0f, 0.0f);
                 GuizmoContext.RelativeOrigin        = (GuizmoContext.TranslationPlanOrigin - ModelLocalPosition) * (1.0f / GuizmoContext.ScreenFactor);
 
-                FVector3 ModelSourceRight = FVector3(GuizmoContext.ModelSource.M[0][0], GuizmoContext.ModelSource.M[0][1], GuizmoContext.ModelSource.M[0][2]);
-                FVector3 ModelSourceUp    = FVector3(GuizmoContext.ModelSource.M[1][0], GuizmoContext.ModelSource.M[1][1], GuizmoContext.ModelSource.M[1][2]);
-                FVector3 ModelSourceDir   = FVector3(GuizmoContext.ModelSource.M[2][0], GuizmoContext.ModelSource.M[2][1], GuizmoContext.ModelSource.M[2][2]);
+                Vector3 ModelSourceRight = Vector3(GuizmoContext.ModelSource.M[0][0], GuizmoContext.ModelSource.M[0][1], GuizmoContext.ModelSource.M[0][2]);
+                Vector3 ModelSourceUp    = Vector3(GuizmoContext.ModelSource.M[1][0], GuizmoContext.ModelSource.M[1][1], GuizmoContext.ModelSource.M[1][2]);
+                Vector3 ModelSourceDir   = Vector3(GuizmoContext.ModelSource.M[2][0], GuizmoContext.ModelSource.M[2][1], GuizmoContext.ModelSource.M[2][2]);
 
-                GuizmoContext.ScaleValueOrigin = FVector4(ModelSourceRight.GetLength(), ModelSourceUp.GetLength(), ModelSourceDir.GetLength(), 0.0f);
+                GuizmoContext.ScaleValueOrigin = Vector4(ModelSourceRight.GetLength(), ModelSourceUp.GetLength(), ModelSourceDir.GetLength(), 0.0f);
                 GuizmoContext.SaveMousePosX    = State.MousePos.x;
             }
         }
@@ -1938,22 +1944,22 @@ static bool HandleScale(float* Matrix, float* DeltaMatrix, EditorGuizmo::EOperat
         ImGui::SetNextFrameWantCaptureMouse(true);
 
         const float Length = GuizmoContext.TranslationPlan.IntersectRay(
-            FVector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z),
-            FVector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
+            Vector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z),
+            Vector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
 
         if (Length >= 0.0f)
         {
-            const FVector4 NewPos = GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length;
-            const FVector4 NewOrigin = NewPos - GuizmoContext.RelativeOrigin * GuizmoContext.ScreenFactor;
-            const FVector4 ModelLocalPosition = FVector4(GuizmoContext.ModelLocal.GetTranslation(), 1.0f);
-            FVector4 Delta = NewOrigin - ModelLocalPosition;
+            const Vector4 NewPos = GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length;
+            const Vector4 NewOrigin = NewPos - GuizmoContext.RelativeOrigin * GuizmoContext.ScreenFactor;
+            const Vector4 ModelLocalPosition = Vector4(GuizmoContext.ModelLocal.GetTranslation(), 1.0f);
+            Vector4 Delta = NewOrigin - ModelLocalPosition;
 
             // 1 axis constraint
             if (GuizmoContext.CurrentOperation >= EMoveType::ScaleX && GuizmoContext.CurrentOperation <= EMoveType::ScaleZ) 
             { 
                 const int32 AxisIndex = GuizmoContext.CurrentOperation - EMoveType::ScaleX; 
  
-                const FVector4 AxisValue = FVector4( 
+                const Vector4 AxisValue = Vector4( 
                     GuizmoContext.ModelLocal.M[AxisIndex][0], 
                     GuizmoContext.ModelLocal.M[AxisIndex][1], 
                     GuizmoContext.ModelLocal.M[AxisIndex][2], 
@@ -1962,8 +1968,8 @@ static bool HandleScale(float* Matrix, float* DeltaMatrix, EditorGuizmo::EOperat
                 const float LengthOnAxis = AxisValue.DotProduct(Delta); 
                 Delta = AxisValue * LengthOnAxis; 
 
-                const FVector4 ModelLocalPositionScale = FVector4(GuizmoContext.ModelLocal.GetTranslation(), 1.0f);
-                const FVector4 BaseVector = GuizmoContext.TranslationPlanOrigin - ModelLocalPositionScale;
+                const Vector4 ModelLocalPositionScale = Vector4(GuizmoContext.ModelLocal.GetTranslation(), 1.0f);
+                const Vector4 BaseVector = GuizmoContext.TranslationPlanOrigin - ModelLocalPositionScale;
 
                 const float Ratio = AxisValue.DotProduct(BaseVector + Delta) / AxisValue.DotProduct(BaseVector);
                 GuizmoContext.Scale[AxisIndex] = Math::Max(Ratio, 0.001f);
@@ -1972,7 +1978,7 @@ static bool HandleScale(float* Matrix, float* DeltaMatrix, EditorGuizmo::EOperat
             {
                 const float ScaleDelta = (State.MousePos.x - GuizmoContext.SaveMousePosX) * 0.01f;
                 const float ScaleValue = Math::Max(1.0f + ScaleDelta, 0.001f);
-                GuizmoContext.Scale = FVector4(ScaleValue, ScaleValue, ScaleValue, 0.0f);
+                GuizmoContext.Scale = Vector4(ScaleValue, ScaleValue, ScaleValue, 0.0f);
             }
 
             // Snap
@@ -2002,31 +2008,31 @@ static bool HandleScale(float* Matrix, float* DeltaMatrix, EditorGuizmo::EOperat
             GuizmoContext.ScaleLast = GuizmoContext.Scale;
 
             // Compute Matrix & delta
-            const FVector4 ScaleVec   = GuizmoContext.Scale * GuizmoContext.ScaleValueOrigin;
-            FMatrix4 DeltaMatrixScale = FMatrix4::Scale(ScaleVec.X, ScaleVec.Y, ScaleVec.Z);
+            const Vector4 ScaleVec   = GuizmoContext.Scale * GuizmoContext.ScaleValueOrigin;
+            Matrix4 DeltaMatrixScale = Matrix4::Scale(ScaleVec.X, ScaleVec.Y, ScaleVec.Z);
 
-            const FMatrix4 Result = DeltaMatrixScale * GuizmoContext.ModelLocal;
+            const Matrix4 Result = DeltaMatrixScale * GuizmoContext.ModelLocal;
             StoreMatrix(Matrix, Result);
 
             if (DeltaMatrix)
             {
-                FVector4 DeltaScale = GuizmoContext.Scale * GuizmoContext.ScaleValueOrigin;
+                Vector4 DeltaScale = GuizmoContext.Scale * GuizmoContext.ScaleValueOrigin;
 
-                FVector4 OriginalScaleDivider;
+                Vector4 OriginalScaleDivider;
                 OriginalScaleDivider.X = 1.0f / GuizmoContext.ModelScaleOrigin.X;
                 OriginalScaleDivider.Y = 1.0f / GuizmoContext.ModelScaleOrigin.Y;
                 OriginalScaleDivider.Z = 1.0f / GuizmoContext.ModelScaleOrigin.Z;
 
                 DeltaScale = DeltaScale * OriginalScaleDivider;
 
-                DeltaMatrixScale = FMatrix4::Scale(DeltaScale.X, DeltaScale.Y, DeltaScale.Z);
+                DeltaMatrixScale = Matrix4::Scale(DeltaScale.X, DeltaScale.Y, DeltaScale.Z);
                 Memory::Memcpy(DeltaMatrix, &DeltaMatrixScale.M[0][0], sizeof(float) * 16);
             }
 
             if (!State.MouseDown[0])
             {
                 GuizmoContext.bUsing = false;
-                GuizmoContext.Scale = FVector4(1.0f, 1.0f, 1.0f, 0.0f);
+                GuizmoContext.Scale = Vector4(1.0f, 1.0f, 1.0f, 0.0f);
             }
 
             Type = GuizmoContext.CurrentOperation;
@@ -2065,11 +2071,11 @@ static bool HandleRotation(float* Matrix, float* DeltaMatrix, EditorGuizmo::EOpe
 
         if (CanActivate() && Type != EMoveType::None)
         {
-            FVector4 ModelRight = FVector4(GuizmoContext.Model.M[0][0], GuizmoContext.Model.M[0][1], GuizmoContext.Model.M[0][2], 0.0f);
-            FVector4 ModelUp    = FVector4(GuizmoContext.Model.M[1][0], GuizmoContext.Model.M[1][1], GuizmoContext.Model.M[1][2], 0.0f);
-            FVector4 ModelDir   = FVector4(GuizmoContext.Model.M[2][0], GuizmoContext.Model.M[2][1], GuizmoContext.Model.M[2][2], 0.0f);
+            Vector4 ModelRight = Vector4(GuizmoContext.Model.M[0][0], GuizmoContext.Model.M[0][1], GuizmoContext.Model.M[0][2], 0.0f);
+            Vector4 ModelUp    = Vector4(GuizmoContext.Model.M[1][0], GuizmoContext.Model.M[1][1], GuizmoContext.Model.M[1][2], 0.0f);
+            Vector4 ModelDir   = Vector4(GuizmoContext.Model.M[2][0], GuizmoContext.Model.M[2][1], GuizmoContext.Model.M[2][2], 0.0f);
 
-            const FVector4 RotatePlanNormal[] =
+            const Vector4 RotatePlanNormal[] =
             {
                 ModelRight,
                 ModelUp,
@@ -2079,22 +2085,22 @@ static bool HandleRotation(float* Matrix, float* DeltaMatrix, EditorGuizmo::EOpe
 
             if (bApplyRotationLocally)
             {
-                FVector4 ModelPositionRot     = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
-                GuizmoContext.TranslationPlan = FPlane::FromPointAndNormal(
-                    FVector3(ModelPositionRot.X, ModelPositionRot.Y, ModelPositionRot.Z), 
-                    FVector3(RotatePlanNormal[Type - EMoveType::RotateX].X, RotatePlanNormal[Type - EMoveType::RotateX].Y, RotatePlanNormal[Type - EMoveType::RotateX].Z));
+                Vector4 ModelPositionRot     = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
+                GuizmoContext.TranslationPlan = Plane::FromPointAndNormal(
+                    Vector3(ModelPositionRot.X, ModelPositionRot.Y, ModelPositionRot.Z), 
+                    Vector3(RotatePlanNormal[Type - EMoveType::RotateX].X, RotatePlanNormal[Type - EMoveType::RotateX].Y, RotatePlanNormal[Type - EMoveType::RotateX].Z));
             }
             else
             {
-                FVector4 ModelSourcePos       = FVector4(GuizmoContext.ModelSource.GetTranslation(), 1.0f);
-                GuizmoContext.TranslationPlan = FPlane::FromPointAndNormal(
-                    FVector3(ModelSourcePos.X, ModelSourcePos.Y, ModelSourcePos.Z), 
-                    FVector3(DirectionUnary[Type - EMoveType::RotateX].X, DirectionUnary[Type - EMoveType::RotateX].Y, DirectionUnary[Type - EMoveType::RotateX].Z));
+                Vector4 ModelSourcePos       = Vector4(GuizmoContext.ModelSource.GetTranslation(), 1.0f);
+                GuizmoContext.TranslationPlan = Plane::FromPointAndNormal(
+                    Vector3(ModelSourcePos.X, ModelSourcePos.Y, ModelSourcePos.Z), 
+                    Vector3(DirectionUnary[Type - EMoveType::RotateX].X, DirectionUnary[Type - EMoveType::RotateX].Y, DirectionUnary[Type - EMoveType::RotateX].Z));
             }
 
             const float Length = GuizmoContext.TranslationPlan.IntersectRay(
-                FVector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z),
-                FVector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
+                Vector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z),
+                Vector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
 
             if (Length >= 0.0f)
             {
@@ -2102,8 +2108,8 @@ static bool HandleRotation(float* Matrix, float* DeltaMatrix, EditorGuizmo::EOpe
                 GuizmoContext.EditingID        = GuizmoContext.GetCurrentID();
                 GuizmoContext.CurrentOperation = Type;
 
-                FVector4 ModelPositionRot2 = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
-                FVector4 LocalPosition     = GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length - ModelPositionRot2;
+                Vector4 ModelPositionRot2 = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
+                Vector4 LocalPosition     = GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length - ModelPositionRot2;
 
                 GuizmoContext.RotationVectorSource = LocalPosition.GetNormalized();
                 GuizmoContext.RotationAngleOrigin = ComputeAngleOnPlan();
@@ -2133,13 +2139,13 @@ static bool HandleRotation(float* Matrix, float* DeltaMatrix, EditorGuizmo::EOpe
             RotationAngleDelta += Math::Constants::TwoPI; 
         } 
  
-        FVector4 RotationAxisLocalSpace = GuizmoContext.ModelInverse.Transform( 
-            FVector4(GuizmoContext.TranslationPlan.X, GuizmoContext.TranslationPlan.Y, GuizmoContext.TranslationPlan.Z, 0.0f)); 
+        Vector4 RotationAxisLocalSpace = GuizmoContext.ModelInverse.Transform( 
+            Vector4(GuizmoContext.TranslationPlan.X, GuizmoContext.TranslationPlan.Y, GuizmoContext.TranslationPlan.Z, 0.0f)); 
         RotationAxisLocalSpace.Normalize(); 
  
-        FMatrix4 DeltaRotation; 
-        DeltaRotation = FQuaternion::FromAxisAngle( 
-            FVector3(RotationAxisLocalSpace.X, RotationAxisLocalSpace.Y, RotationAxisLocalSpace.Z),  
+        Matrix4 DeltaRotation; 
+        DeltaRotation = Quaternion::FromAxisAngle( 
+            Vector3(RotationAxisLocalSpace.X, RotationAxisLocalSpace.Y, RotationAxisLocalSpace.Z),  
             RotationAngleDelta).ToMatrix4(); 
          
         if (Math::Abs(RotationAngleDelta) > Math::Constants::Epsilon) 
@@ -2149,28 +2155,28 @@ static bool HandleRotation(float* Matrix, float* DeltaMatrix, EditorGuizmo::EOpe
  
         GuizmoContext.RotationAngleOrigin = GuizmoContext.RotationAngle; 
 
-        FMatrix4 ScaleOrigin = FMatrix4::Scale(GuizmoContext.ModelScaleOrigin.X, GuizmoContext.ModelScaleOrigin.Y, GuizmoContext.ModelScaleOrigin.Z);
+        Matrix4 ScaleOrigin = Matrix4::Scale(GuizmoContext.ModelScaleOrigin.X, GuizmoContext.ModelScaleOrigin.Y, GuizmoContext.ModelScaleOrigin.Z);
         if (bApplyRotationLocally)
         {
             StoreMatrix(Matrix, ScaleOrigin * DeltaRotation * GuizmoContext.ModelLocal);
         }
         else
         {
-            FMatrix4 Result = GuizmoContext.ModelSource;
+            Matrix4 Result = GuizmoContext.ModelSource;
             Result.M[3][0] = 0.0f;
             Result.M[3][1] = 0.0f;
             Result.M[3][2] = 0.0f;
             Result.M[3][3] = 1.0f;
 
-            FMatrix4 ResultMatrix   = Result * DeltaRotation;
-            FVector4 ModelSourcePos = FVector4(GuizmoContext.ModelSource.GetTranslation(), 1.0f);
-            ResultMatrix.SetTranslation(FVector3(ModelSourcePos.X, ModelSourcePos.Y, ModelSourcePos.Z));
+            Matrix4 ResultMatrix   = Result * DeltaRotation;
+            Vector4 ModelSourcePos = Vector4(GuizmoContext.ModelSource.GetTranslation(), 1.0f);
+            ResultMatrix.SetTranslation(Vector3(ModelSourcePos.X, ModelSourcePos.Y, ModelSourcePos.Z));
             StoreMatrix(Matrix, ResultMatrix);
         }
 
         if (DeltaMatrix)
         {
-            FMatrix4 DeltaRotMatrix = GuizmoContext.ModelInverse * DeltaRotation * GuizmoContext.Model;
+            Matrix4 DeltaRotMatrix = GuizmoContext.ModelInverse * DeltaRotation * GuizmoContext.Model;
             Memory::Memcpy(DeltaMatrix, &DeltaRotMatrix.M[0][0], sizeof(float) * 16);
         }
 
@@ -2186,14 +2192,14 @@ static bool HandleRotation(float* Matrix, float* DeltaMatrix, EditorGuizmo::EOpe
     return bModified;
 }
 
-static void ComputeFrustumPlanes(FPlane* Frustum, const float* Clip)
+static void ComputeFrustumPlanes(Plane* Frustum, const float* Clip)
 {
-    Frustum[0] = FPlane(Clip[3] - Clip[0], Clip[7] - Clip[4], Clip[11] - Clip[8], Clip[15] - Clip[12]);
-    Frustum[1] = FPlane(Clip[3] + Clip[0], Clip[7] + Clip[4], Clip[11] + Clip[8], Clip[15] + Clip[12]);
-    Frustum[2] = FPlane(Clip[3] + Clip[1], Clip[7] + Clip[5], Clip[11] + Clip[9], Clip[15] + Clip[13]);
-    Frustum[3] = FPlane(Clip[3] - Clip[1], Clip[7] - Clip[5], Clip[11] - Clip[9], Clip[15] - Clip[13]);
-    Frustum[4] = FPlane(Clip[3] - Clip[2], Clip[7] - Clip[6], Clip[11] - Clip[10], Clip[15] - Clip[14]);
-    Frustum[5] = FPlane(Clip[3] + Clip[2], Clip[7] + Clip[6], Clip[11] + Clip[10], Clip[15] + Clip[14]);
+    Frustum[0] = Plane(Clip[3] - Clip[0], Clip[7] - Clip[4], Clip[11] - Clip[8], Clip[15] - Clip[12]);
+    Frustum[1] = Plane(Clip[3] + Clip[0], Clip[7] + Clip[4], Clip[11] + Clip[8], Clip[15] + Clip[12]);
+    Frustum[2] = Plane(Clip[3] + Clip[1], Clip[7] + Clip[5], Clip[11] + Clip[9], Clip[15] + Clip[13]);
+    Frustum[3] = Plane(Clip[3] - Clip[1], Clip[7] - Clip[5], Clip[11] - Clip[9], Clip[15] - Clip[13]);
+    Frustum[4] = Plane(Clip[3] - Clip[2], Clip[7] - Clip[6], Clip[11] - Clip[10], Clip[15] - Clip[14]);
+    Frustum[5] = Plane(Clip[3] + Clip[2], Clip[7] + Clip[6], Clip[11] + Clip[10], Clip[15] + Clip[14]);
 
     for (int32 PlaneIndex = 0; PlaneIndex < 6; PlaneIndex++)
     {
@@ -2322,28 +2328,28 @@ void EditorGuizmo::Enable(bool bEnable)
 
 void EditorGuizmo::DecomposeMatrixToComponents(const float* Matrix, float* Translation, float* Rotation, float* Scale) 
 { 
-    const FMatrix4 MatrixData = LoadMatrix(Matrix); 
+    const Matrix4 MatrixData = LoadMatrix(Matrix); 
  
-    FVector3 RightVec = FVector3(MatrixData.M[0][0], MatrixData.M[0][1], MatrixData.M[0][2]); 
-    FVector3 UpVec    = FVector3(MatrixData.M[1][0], MatrixData.M[1][1], MatrixData.M[1][2]); 
-    FVector3 DirVec   = FVector3(MatrixData.M[2][0], MatrixData.M[2][1], MatrixData.M[2][2]); 
+    Vector3 RightVec = Vector3(MatrixData.M[0][0], MatrixData.M[0][1], MatrixData.M[0][2]); 
+    Vector3 UpVec    = Vector3(MatrixData.M[1][0], MatrixData.M[1][1], MatrixData.M[1][2]); 
+    Vector3 DirVec   = Vector3(MatrixData.M[2][0], MatrixData.M[2][1], MatrixData.M[2][2]); 
  
     Scale[0] = RightVec.GetLength(); 
     Scale[1] = UpVec.GetLength(); 
     Scale[2] = DirVec.GetLength(); 
  
-    FMatrix4 MatrixOrthonormal = MatrixData; 
+    Matrix4 MatrixOrthonormal = MatrixData; 
     MatrixOrthonormal.OrthoNormalize(); 
   
-    const FMatrix3 RotationMatrix3  = MatrixOrthonormal.GetRotationAndScale(); 
-    const FQuaternion RotationQuat  = FQuaternion::FromRotationMatrix(RotationMatrix3); 
-    const FVector3 EulerRadians     = RotationQuat.ToEuler(); 
-    const FVector3 EulerDegrees     = EulerRadians * Math::Constants::RadToDeg; 
+    const Matrix3 RotationMatrix3  = MatrixOrthonormal.GetRotationAndScale(); 
+    const Quaternion RotationQuat  = Quaternion::FromRotationMatrix(RotationMatrix3); 
+    const Vector3 EulerRadians     = RotationQuat.ToEuler(); 
+    const Vector3 EulerDegrees     = EulerRadians * Math::Constants::RadToDeg; 
     Rotation[0] = EulerDegrees.X; 
     Rotation[1] = EulerDegrees.Y; 
     Rotation[2] = EulerDegrees.Z; 
  
-    const FVector3 MatrixTranslation = MatrixData.GetTranslation(); 
+    const Vector3 MatrixTranslation = MatrixData.GetTranslation(); 
     Translation[0] = MatrixTranslation.X; 
     Translation[1] = MatrixTranslation.Y; 
     Translation[2] = MatrixTranslation.Z; 
@@ -2354,7 +2360,7 @@ void EditorGuizmo::RecomposeMatrixFromComponents(const float* Translation, const
     const float RadX = Rotation[0] * Math::Constants::Deg2Rad; 
     const float RadY = Rotation[1] * Math::Constants::Deg2Rad; 
     const float RadZ = Rotation[2] * Math::Constants::Deg2Rad; 
-    FMatrix4 MatrixData = FMatrix4::RotationRollPitchYaw(RadX, RadY, RadZ); 
+    Matrix4 MatrixData = Matrix4::RotationRollPitchYaw(RadX, RadY, RadZ); 
  
     float ValidScale[3]; 
     for (int32 AxisIndex = 0; AxisIndex < 3; AxisIndex++) 
@@ -2379,11 +2385,11 @@ void EditorGuizmo::RecomposeMatrixFromComponents(const float* Translation, const
     MatrixData.M[2][1] *= ValidScale[2];
     MatrixData.M[2][2] *= ValidScale[2];
 
-    MatrixData.SetTranslation(FVector3(Translation[0], Translation[1], Translation[2]));
+    MatrixData.SetTranslation(Vector3(Translation[0], Translation[1], Translation[2]));
     StoreMatrix(Matrix, MatrixData);
 }
 
-void EditorGuizmo::DecomposeMatrixToComponents(const FMatrix4& InMatrix, FVector3& OutTranslation, FVector3& OutRotation, FVector3& OutScale)
+void EditorGuizmo::DecomposeMatrixToComponents(const Matrix4& InMatrix, Vector3& OutTranslation, Vector3& OutRotation, Vector3& OutScale)
 {
     float Translation[3] = { 0.0f, 0.0f, 0.0f };
     float Rotation[3]    = { 0.0f, 0.0f, 0.0f };
@@ -2391,12 +2397,12 @@ void EditorGuizmo::DecomposeMatrixToComponents(const FMatrix4& InMatrix, FVector
 
     EditorGuizmo::DecomposeMatrixToComponents(&InMatrix.M[0][0], Translation, Rotation, Scale);
 
-    OutTranslation = FVector3(Translation[0], Translation[1], Translation[2]);
-    OutRotation    = FVector3(Rotation[0], Rotation[1], Rotation[2]);
-    OutScale       = FVector3(Scale[0], Scale[1], Scale[2]);
+    OutTranslation = Vector3(Translation[0], Translation[1], Translation[2]);
+    OutRotation    = Vector3(Rotation[0], Rotation[1], Rotation[2]);
+    OutScale       = Vector3(Scale[0], Scale[1], Scale[2]);
 }
 
-void EditorGuizmo::RecomposeMatrixFromComponents(const FVector3& InTranslation, const FVector3& InRotation, const FVector3& InScale, FMatrix4& OutMatrix)
+void EditorGuizmo::RecomposeMatrixFromComponents(const Vector3& InTranslation, const Vector3& InRotation, const Vector3& InScale, Matrix4& OutMatrix)
 {
     const float Translation[3] = { InTranslation.X, InTranslation.Y, InTranslation.Z };
     const float Rotation[3]    = { InRotation.X,    InRotation.Y,    InRotation.Z    };
@@ -2423,8 +2429,8 @@ void EditorGuizmo::SetOrthographic(bool bIsOrthographic)
 
 void EditorGuizmo::DrawCubes(const float* View, const float* Projection, const float* Matrices, int32 MatrixCount)
 {
-    const FMatrix4 ViewMat       = LoadMatrix(View);
-    const FMatrix4 ProjectionMat = LoadMatrix(Projection);
+    const Matrix4 ViewMat       = LoadMatrix(View);
+    const Matrix4 ProjectionMat = LoadMatrix(Projection);
 
     struct CubeFace
     {
@@ -2442,8 +2448,8 @@ void EditorGuizmo::DrawCubes(const float* View, const float* Projection, const f
        return;
     }
 
-    FPlane Frustum[6];
-    const FMatrix4 ViewProjection = ViewMat * ProjectionMat;
+    Plane Frustum[6];
+    const Matrix4 ViewProjection = ViewMat * ProjectionMat;
     ComputeFrustumPlanes(Frustum, &ViewProjection.M[0][0]);
 
     int32 CubeFaceCount = 0;
@@ -2451,8 +2457,8 @@ void EditorGuizmo::DrawCubes(const float* View, const float* Projection, const f
     {
        const float* Matrix = &Matrices[Cube * 16];
 
-       const FMatrix4 ModelMat = LoadMatrix(Matrix);
-       const FMatrix4 Result   = ModelMat * ViewProjection;
+       const Matrix4 ModelMat = LoadMatrix(Matrix);
+       const Matrix4 Result   = ModelMat * ViewProjection;
        for (int32 IFace = 0; IFace < 6; IFace++)
        {
             const int32 NormalIndex = (IFace % 3);
@@ -2460,7 +2466,7 @@ void EditorGuizmo::DrawCubes(const float* View, const float* Projection, const f
             const int32 PerpYIndex  = (NormalIndex + 2) % 3;
             const float Invert      = (IFace > 2) ? -1.0f : 1.0f;
 
-            const FVector4 FaceCoords[4] = 
+            const Vector4 FaceCoords[4] = 
             {
                 DirectionUnary[NormalIndex] + DirectionUnary[PerpXIndex] + DirectionUnary[PerpYIndex],
                 DirectionUnary[NormalIndex] + DirectionUnary[PerpXIndex] - DirectionUnary[PerpYIndex],
@@ -2468,14 +2474,14 @@ void EditorGuizmo::DrawCubes(const float* View, const float* Projection, const f
                 DirectionUnary[NormalIndex] - DirectionUnary[PerpXIndex] + DirectionUnary[PerpYIndex],
             };
 
-            FVector4 DirectionVector  = DirectionUnary[NormalIndex] * 0.5f * Invert;
-            FVector4 CenterPosition   = ModelMat.Transform(FVector4(DirectionVector.X, DirectionVector.Y, DirectionVector.Z, 1.0f));
-            FVector4 CenterPositionVP = Result.Transform(FVector4(DirectionVector.X, DirectionVector.Y, DirectionVector.Z, 1.0f));
+            Vector4 DirectionVector  = DirectionUnary[NormalIndex] * 0.5f * Invert;
+            Vector4 CenterPosition   = ModelMat.Transform(Vector4(DirectionVector.X, DirectionVector.Y, DirectionVector.Z, 1.0f));
+            Vector4 CenterPositionVP = Result.Transform(Vector4(DirectionVector.X, DirectionVector.Y, DirectionVector.Z, 1.0f));
 
             bool bInFrustum = true;
             for (int32 IFrustum = 0; IFrustum < 6; IFrustum++)
             {
-                float Distance = Frustum[IFrustum].DotProductCoord(FVector3(CenterPosition.X, CenterPosition.Y, CenterPosition.Z));
+                float Distance = Frustum[IFrustum].DotProductCoord(Vector3(CenterPosition.X, CenterPosition.Y, CenterPosition.Z));
                 if (Distance < 0.0f)
                 {
                     bInFrustum = false;
@@ -2519,27 +2525,27 @@ void EditorGuizmo::DrawCubes(const float* View, const float* Projection, const f
 
 void EditorGuizmo::DrawGrid(const float* View, const float* Projection, const float* Matrix, float GridSize)
 {
-    const FMatrix4 ViewMat       = LoadMatrix(View);
-    const FMatrix4 ProjectionMat = LoadMatrix(Projection);
-    const FMatrix4 ViewProjection = ViewMat * ProjectionMat;
+    const Matrix4 ViewMat       = LoadMatrix(View);
+    const Matrix4 ProjectionMat = LoadMatrix(Projection);
+    const Matrix4 ViewProjection = ViewMat * ProjectionMat;
     
-    FPlane Frustum[6];
+    Plane Frustum[6];
     ComputeFrustumPlanes(Frustum, &ViewProjection.M[0][0]);
 
-    const FMatrix4 ModelMat = LoadMatrix(Matrix);
-    const FMatrix4 Result   = ModelMat * ViewProjection;
+    const Matrix4 ModelMat = LoadMatrix(Matrix);
+    const Matrix4 Result   = ModelMat * ViewProjection;
     for (float GridLineOffset = -GridSize; GridLineOffset <= GridSize; GridLineOffset += 1.0f)
     {
         for (int32 AxisDirIndex = 0; AxisDirIndex < 2; AxisDirIndex++)
         {
-            FVector4 PointA = FVector4(AxisDirIndex ? -GridSize : GridLineOffset, 0.0f, AxisDirIndex ? GridLineOffset : -GridSize, 0.0f);
-            FVector4 PointB = FVector4(AxisDirIndex ? GridSize : GridLineOffset, 0.0f, AxisDirIndex ? GridLineOffset : GridSize, 0.0f);
+            Vector4 PointA = Vector4(AxisDirIndex ? -GridSize : GridLineOffset, 0.0f, AxisDirIndex ? GridLineOffset : -GridSize, 0.0f);
+            Vector4 PointB = Vector4(AxisDirIndex ? GridSize : GridLineOffset, 0.0f, AxisDirIndex ? GridLineOffset : GridSize, 0.0f);
 
             bool bVisible = true;
             for (int32 PlaneIndex = 0; PlaneIndex < 6; PlaneIndex++)
             {
-                float DistToPlaneA = Frustum[PlaneIndex].DotProductCoord(FVector3(PointA.X, PointA.Y, PointA.Z));
-                float DistToPlaneB = Frustum[PlaneIndex].DotProductCoord(FVector3(PointB.X, PointB.Y, PointB.Z));
+                float DistToPlaneA = Frustum[PlaneIndex].DotProductCoord(Vector3(PointA.X, PointA.Y, PointA.Z));
+                float DistToPlaneB = Frustum[PlaneIndex].DotProductCoord(Vector3(PointB.X, PointB.Y, PointB.Z));
 
                 if (DistToPlaneA < 0.0f && DistToPlaneB < 0.0f)
                 {
@@ -2556,14 +2562,14 @@ void EditorGuizmo::DrawGrid(const float* View, const float* Projection, const fl
                 {
                     float Length = Math::Abs(DistToPlaneA - DistToPlaneB);
                     float LerpParam = Math::Abs(DistToPlaneA) / Length;
-                    PointA = FVector4::Lerp(PointA, PointB, LerpParam);
+                    PointA = Vector4::Lerp(PointA, PointB, LerpParam);
                 }
 
                 if (DistToPlaneB < 0.0f)
                 {
                     float Length = Math::Abs(DistToPlaneB - DistToPlaneA);
                     float LerpParam = Math::Abs(DistToPlaneB) / Length;
-                    PointB = FVector4::Lerp(PointB, PointA, LerpParam);
+                    PointB = Vector4::Lerp(PointB, PointA, LerpParam);
                 }
             }
 
@@ -2583,7 +2589,7 @@ void EditorGuizmo::DrawGrid(const float* View, const float* Projection, const fl
     }
 }
 
-void EditorGuizmo::DrawCubes(const FMatrix4& View, const FMatrix4& Projection, const FMatrix4* Matrices, int32 MatrixCount)
+void EditorGuizmo::DrawCubes(const Matrix4& View, const Matrix4& Projection, const Matrix4* Matrices, int32 MatrixCount)
 {
     const float* ViewPtr       = &View.M[0][0];
     const float* ProjectionPtr = &Projection.M[0][0];
@@ -2592,7 +2598,7 @@ void EditorGuizmo::DrawCubes(const FMatrix4& View, const FMatrix4& Projection, c
     EditorGuizmo::DrawCubes(ViewPtr, ProjectionPtr, MatricesPtr, MatrixCount);
 }
 
-void EditorGuizmo::DrawGrid(const FMatrix4& View, const FMatrix4& Projection, const FMatrix4& Matrix, float GridSize)
+void EditorGuizmo::DrawGrid(const Matrix4& View, const Matrix4& Projection, const Matrix4& Matrix, float GridSize)
 {
     const float* ViewPtr       = &View.M[0][0];
     const float* ProjectionPtr = &Projection.M[0][0];
@@ -2615,13 +2621,13 @@ bool EditorGuizmo::Manipulate(const float* View, const float* Projection, Editor
     // Set delta to identity
     if (OutDeltaMatrix)
     {
-       FMatrix4 DeltaMat;
+       Matrix4 DeltaMat;
        DeltaMat.SetIdentity();
        StoreMatrix(OutDeltaMatrix, DeltaMat);
     }
 
     // Behind camera
-    FVector4 CamSpacePosition = GuizmoContext.MVP.Transform(FVector4(0.0f, 0.0f, 0.0f, 1.0f));
+    Vector4 CamSpacePosition = GuizmoContext.MVP.Transform(Vector4(0.0f, 0.0f, 0.0f, 1.0f));
     if (!GuizmoContext.bIsOrthographic && CamSpacePosition.Z < 0.001f && !GuizmoContext.bUsing)
     {
        GuizmoContext.DrawList->PopClipRect();
@@ -2661,8 +2667,8 @@ bool EditorGuizmo::Manipulate(const float* View, const float* Projection, Editor
     return bManipulated;
 }
 
-bool EditorGuizmo::Manipulate(const FMatrix4& View, const FMatrix4& Projection, EditorGuizmo::EOperation::Type Operation, EditorGuizmo::EMode Mode, FMatrix4& InOutMatrix,
-    FMatrix4* OutDeltaMatrix, const float* Snap, const float* LocalBounds, const float* BoundsSnap)
+bool EditorGuizmo::Manipulate(const Matrix4& View, const Matrix4& Projection, EditorGuizmo::EOperation::Type Operation, EditorGuizmo::EMode Mode, Matrix4& InOutMatrix,
+    Matrix4* OutDeltaMatrix, const float* Snap, const float* LocalBounds, const float* BoundsSnap)
 {
     const float* ViewPtr       = &View.M[0][0];
     const float* ProjectionPtr = &Projection.M[0][0];
@@ -2677,49 +2683,49 @@ void EditorGuizmo::ViewManipulate(float* InOutView, float Length, ImVec2 Positio
     // Implementation moved from static function - see static ViewManipulate below
     static bool     bIsDragging = false;
     static bool     bIsClicking = false;
-    static FVector4 InterpolationUp;
-    static FVector4 InterpolationDir;
+    static Vector4 InterpolationUp;
+    static Vector4 InterpolationDir;
     static int32    InterpolationFrames = 0;
 
-    const FVector4 ReferenceUp = FVector4(0.0f, 1.0f, 0.0f, 0.0f);
+    const Vector4 ReferenceUp = Vector4(0.0f, 1.0f, 0.0f, 0.0f);
 
-    FMatrix4 SvgView       = GuizmoContext.ViewMat;
-    FMatrix4 SvgProjection = GuizmoContext.ProjectionMat;
+    Matrix4 SvgView       = GuizmoContext.ViewMat;
+    Matrix4 SvgProjection = GuizmoContext.ProjectionMat;
 
     ImGuiIO& State = ImGui::GetIO();
     GuizmoContext.DrawList->AddRectFilled(Position, Position + Size, BackgroundColor);
 
-    const FMatrix4 ViewMatrix = LoadMatrix(InOutView);
-    FMatrix4 ViewInverse = ViewMatrix.GetInverse();
+    const Matrix4 ViewMatrix = LoadMatrix(InOutView);
+    Matrix4 ViewInverse = ViewMatrix.GetInverse();
 
-    FVector4 ViewInverseDir = FVector4(ViewInverse.M[2][0], ViewInverse.M[2][1], ViewInverse.M[2][2], 0.0f);
-    FVector4 ViewInversePos  = FVector4(ViewInverse.GetTranslation(), 1.0f);
-    const FVector4 CamTarget = ViewInversePos - ViewInverseDir * Length;
+    Vector4 ViewInverseDir = Vector4(ViewInverse.M[2][0], ViewInverse.M[2][1], ViewInverse.M[2][2], 0.0f);
+    Vector4 ViewInversePos  = Vector4(ViewInverse.GetTranslation(), 1.0f);
+    const Vector4 CamTarget = ViewInversePos - ViewInverseDir * Length;
 
     // View/Projection matrices
     const float Distance = 3.0f;
     
-    FMatrix4 CubeProjection;
-    FMatrix4 CubeView;
+    Matrix4 CubeProjection;
+    Matrix4 CubeView;
     
     float FOV = Math::Acos(Distance / (Math::Sqrt(Distance * Distance + 3.0f))) * Math::Constants::RadToDeg;
 
     const float FOVRadians = (FOV / Math::Sqrt(2.0f)) * Math::Constants::Deg2Rad;
-    CubeProjection = FMatrix4::PerspectiveProjection(FOVRadians, Size.x / Size.y, 0.01f, 1000.0f);
+    CubeProjection = Matrix4::PerspectiveProjection(FOVRadians, Size.x / Size.y, 0.01f, 1000.0f);
 
-    FVector3 Direction = FVector3(ViewInverse.M[2][0], ViewInverse.M[2][1], ViewInverse.M[2][2]);
-    FVector3 Up = FVector3(ViewInverse.M[1][0], ViewInverse.M[1][1], ViewInverse.M[1][2]);
-    FVector3 Eye = Direction * Distance;
-    FVector3 At = FVector3(0.0f, 0.0f, 0.0f);
+    Vector3 Direction = Vector3(ViewInverse.M[2][0], ViewInverse.M[2][1], ViewInverse.M[2][2]);
+    Vector3 Up = Vector3(ViewInverse.M[1][0], ViewInverse.M[1][1], ViewInverse.M[1][2]);
+    Vector3 Eye = Direction * Distance;
+    Vector3 At = Vector3(0.0f, 0.0f, 0.0f);
 
-    CubeView = FMatrix4::LookAt(Eye, At, Up);
+    CubeView = Matrix4::LookAt(Eye, At, Up);
 
     // Set context
     GuizmoContext.ViewMat       = CubeView;
     GuizmoContext.ProjectionMat = CubeProjection;
     ComputeCameraRay(GuizmoContext.RayOrigin, GuizmoContext.RayVector, Position, Size);
 
-    const FMatrix4 Result = CubeView * CubeProjection;
+    const Matrix4 Result = CubeView * CubeProjection;
 
     // Panels
     static const ImVec2 PanelPosition[9] =
@@ -2749,20 +2755,20 @@ void EditorGuizmo::ViewManipulate(float* InOutView, float Length, ImVec2 Positio
             const int32 PerpYIndex  = (NormalIndex + 2) % 3;
             const float Invert      = (IFace > 2) ? -1.0f : 1.0f;
 
-            const FVector4 IndexVectorX = DirectionUnary[PerpXIndex] * Invert;
-            const FVector4 IndexVectorY = DirectionUnary[PerpYIndex] * Invert;
-            const FVector4 BoxOrigin    = DirectionUnary[NormalIndex] * -Invert - IndexVectorX - IndexVectorY;
+            const Vector4 IndexVectorX = DirectionUnary[PerpXIndex] * Invert;
+            const Vector4 IndexVectorY = DirectionUnary[PerpYIndex] * Invert;
+            const Vector4 BoxOrigin    = DirectionUnary[NormalIndex] * -Invert - IndexVectorX - IndexVectorY;
 
             // Plan local space
-            const FVector4 FaceNormal = DirectionUnary[NormalIndex] * Invert;
+            const Vector4 FaceNormal = DirectionUnary[NormalIndex] * Invert;
 
-            FVector4 ViewSpaceNormal = CubeView.Transform(FVector4(FaceNormal.X, FaceNormal.Y, FaceNormal.Z, 0.0f));
+            Vector4 ViewSpaceNormal = CubeView.Transform(Vector4(FaceNormal.X, FaceNormal.Y, FaceNormal.Z, 0.0f));
             ViewSpaceNormal.Normalize();
 
-            FVector4 ViewSpacePoint = CubeView.Transform(FVector4(FaceNormal.X * 0.5f, FaceNormal.Y * 0.5f, FaceNormal.Z * 0.5f, 1.0f));
-            const FPlane ViewSpaceFacePlan = FPlane::FromPointAndNormal(
-                FVector3(ViewSpacePoint.X, ViewSpacePoint.Y, ViewSpacePoint.Z), 
-                FVector3(ViewSpaceNormal.X, ViewSpaceNormal.Y, ViewSpaceNormal.Z));
+            Vector4 ViewSpacePoint = CubeView.Transform(Vector4(FaceNormal.X * 0.5f, FaceNormal.Y * 0.5f, FaceNormal.Z * 0.5f, 1.0f));
+            const Plane ViewSpaceFacePlan = Plane::FromPointAndNormal(
+                Vector3(ViewSpacePoint.X, ViewSpacePoint.Y, ViewSpacePoint.Z), 
+                Vector3(ViewSpaceNormal.X, ViewSpaceNormal.Y, ViewSpaceNormal.Z));
 
             // Back face culling
             if (ViewSpaceFacePlan.W > 0.0f)
@@ -2770,37 +2776,37 @@ void EditorGuizmo::ViewManipulate(float* InOutView, float Length, ImVec2 Positio
                 continue;
             }
 
-            const FPlane FacePlan = FPlane::FromPointAndNormal(
-                FVector3(FaceNormal.X * 0.5f, FaceNormal.Y * 0.5f, FaceNormal.Z * 0.5f),
-                FVector3(FaceNormal.X, FaceNormal.Y, FaceNormal.Z));
+            const Plane FacePlan = Plane::FromPointAndNormal(
+                Vector3(FaceNormal.X * 0.5f, FaceNormal.Y * 0.5f, FaceNormal.Z * 0.5f),
+                Vector3(FaceNormal.X, FaceNormal.Y, FaceNormal.Z));
 
             const float RayIntersectionLength = FacePlan.IntersectRay(
-                FVector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z), 
-                FVector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
+                Vector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z), 
+                Vector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
 
             if (RayIntersectionLength < 0.0f)
             {
                 continue;
             }
 
-            FVector4 PositionOnPlane = GuizmoContext.RayOrigin + GuizmoContext.RayVector * RayIntersectionLength - (FaceNormal * 0.5f);
+            Vector4 PositionOnPlane = GuizmoContext.RayOrigin + GuizmoContext.RayVector * RayIntersectionLength - (FaceNormal * 0.5f);
 
             float LocalX = DirectionUnary[PerpXIndex].DotProduct(PositionOnPlane) * Invert + 0.5f;
             float LocalY = DirectionUnary[PerpYIndex].DotProduct(PositionOnPlane) * Invert + 0.5f;
 
             // Panels
-            const FVector4 DirectionX = DirectionUnary[PerpXIndex];
-            const FVector4 DirectionY = DirectionUnary[PerpYIndex];
-            const FVector4 Origin     = DirectionUnary[NormalIndex] - DirectionX - DirectionY;
+            const Vector4 DirectionX = DirectionUnary[PerpXIndex];
+            const Vector4 DirectionY = DirectionUnary[PerpYIndex];
+            const Vector4 Origin     = DirectionUnary[NormalIndex] - DirectionX - DirectionY;
 
             for (int32 IPanel = 0; IPanel < 9; IPanel++)
             {
-                FVector4 BoxCoord = BoxOrigin + IndexVectorX * static_cast<float>(IPanel % 3) + IndexVectorY * static_cast<float>(IPanel / 3) + FVector4(1.0f, 1.0f, 1.0f, 0.0f);
+                Vector4 BoxCoord = BoxOrigin + IndexVectorX * static_cast<float>(IPanel % 3) + IndexVectorY * static_cast<float>(IPanel / 3) + Vector4(1.0f, 1.0f, 1.0f, 0.0f);
 
                 const ImVec2 PanelPositionScaled  = PanelPosition[IPanel] * 2.0f;
                 const ImVec2 PanelSizeScaled    = PanelSize[IPanel] * 2.0f;
                 
-                FVector4 PanelPositions[4] = 
+                Vector4 PanelPositions[4] = 
                 {
                     DirectionX * PanelPositionScaled.x + DirectionY * PanelPositionScaled.y,
                     DirectionX * PanelPositionScaled.x + DirectionY * (PanelPositionScaled.y + PanelSizeScaled.y),
@@ -2848,20 +2854,20 @@ void EditorGuizmo::ViewManipulate(float* InOutView, float Length, ImVec2 Positio
     {
         InterpolationFrames--;
 
-        FVector4 NewDir = FVector4(ViewInverse.M[2][0], ViewInverse.M[2][1], ViewInverse.M[2][2], 0.0f);
-        NewDir = FVector4::Lerp(NewDir, InterpolationDir, 0.2f);
+        Vector4 NewDir = Vector4(ViewInverse.M[2][0], ViewInverse.M[2][1], ViewInverse.M[2][2], 0.0f);
+        NewDir = Vector4::Lerp(NewDir, InterpolationDir, 0.2f);
         NewDir.Normalize();
 
-        FVector4 NewUp = FVector4(ViewInverse.M[1][0], ViewInverse.M[1][1], ViewInverse.M[1][2], 0.0f);
-        NewUp = FVector4::Lerp(NewUp, InterpolationUp, 0.3f);
+        Vector4 NewUp = Vector4(ViewInverse.M[1][0], ViewInverse.M[1][1], ViewInverse.M[1][2], 0.0f);
+        NewUp = Vector4::Lerp(NewUp, InterpolationUp, 0.3f);
         NewUp.Normalize();
         NewUp = InterpolationUp;
 
-        FVector4 NewEye = CamTarget + NewDir * Length;
-        StoreMatrix(InOutView, FMatrix4::LookAt(
-            FVector3(NewEye.X, NewEye.Y, NewEye.Z),
-            FVector3(CamTarget.X, CamTarget.Y, CamTarget.Z),
-            FVector3(NewUp.X, NewUp.Y, NewUp.Z)));
+        Vector4 NewEye = CamTarget + NewDir * Length;
+        StoreMatrix(InOutView, Matrix4::LookAt(
+            Vector3(NewEye.X, NewEye.Y, NewEye.Z),
+            Vector3(CamTarget.X, CamTarget.Y, CamTarget.Z),
+            Vector3(NewUp.X, NewUp.Y, NewUp.Z)));
     }
 
     GuizmoContext.bIsViewManipulatorHovered = GuizmoContext.bMouseOver && ImRect(Position, Position + Size).Contains(State.MousePos);
@@ -2880,12 +2886,12 @@ void EditorGuizmo::ViewManipulate(float* InOutView, float Length, ImVec2 Positio
             int32 Cy = (OverBox - Cx * 9) / 3;
             int32 Cz = OverBox % 3;
 
-            InterpolationDir = FVector4(1.0f - static_cast<float>(Cx), 1.0f - static_cast<float>(Cy), 1.0f - static_cast<float>(Cz), 0.0f);
+            InterpolationDir = Vector4(1.0f - static_cast<float>(Cx), 1.0f - static_cast<float>(Cy), 1.0f - static_cast<float>(Cz), 0.0f);
             InterpolationDir.Normalize();
 
             if (Math::Abs(InterpolationDir.DotProduct(ReferenceUp)) > 1.0f - 0.01f)
             {
-                FVector4 Right = FVector4(ViewInverse.M[0][0], ViewInverse.M[0][1], ViewInverse.M[0][2], 0.0f);
+                Vector4 Right = Vector4(ViewInverse.M[0][0], ViewInverse.M[0][1], ViewInverse.M[0][2], 0.0f);
                 if (Math::Abs(Right.X) > Math::Abs(Right.Z))
                 {
                     Right.Z = 0.0f;
@@ -2913,21 +2919,21 @@ void EditorGuizmo::ViewManipulate(float* InOutView, float Length, ImVec2 Positio
 
     if (bIsDragging)
     {
-        FMatrix4 Rx;
-        FMatrix4 Ry;
-        FMatrix4 Roll;
-        Rx = FQuaternion::FromAxisAngle(FVector3(ReferenceUp.X, ReferenceUp.Y, ReferenceUp.Z), -State.MouseDelta.x * 0.01f).ToMatrix4();
+        Matrix4 Rx;
+        Matrix4 Ry;
+        Matrix4 Roll;
+        Rx = Quaternion::FromAxisAngle(Vector3(ReferenceUp.X, ReferenceUp.Y, ReferenceUp.Z), -State.MouseDelta.x * 0.01f).ToMatrix4();
 
-        FVector4 ViewInverseRight = FVector4(ViewInverse.M[0][0], ViewInverse.M[0][1], ViewInverse.M[0][2], 0.0f);
-        Ry = FQuaternion::FromAxisAngle(FVector3(ViewInverseRight.X, ViewInverseRight.Y, ViewInverseRight.Z), -State.MouseDelta.y * 0.01f).ToMatrix4();
+        Vector4 ViewInverseRight = Vector4(ViewInverse.M[0][0], ViewInverse.M[0][1], ViewInverse.M[0][2], 0.0f);
+        Ry = Quaternion::FromAxisAngle(Vector3(ViewInverseRight.X, ViewInverseRight.Y, ViewInverseRight.Z), -State.MouseDelta.y * 0.01f).ToMatrix4();
 
         Roll = Rx * Ry;
 
-        FVector4 NewDir = Roll.Transform(FVector4(ViewInverse.M[2][0], ViewInverse.M[2][1], ViewInverse.M[2][2], 0.0f));
+        Vector4 NewDir = Roll.Transform(Vector4(ViewInverse.M[2][0], ViewInverse.M[2][1], ViewInverse.M[2][2], 0.0f));
         NewDir.Normalize();
 
         // Clamp
-        FVector4 PlanDir = ViewInverseRight.CrossProduct(ReferenceUp);
+        Vector4 PlanDir = ViewInverseRight.CrossProduct(ReferenceUp);
         PlanDir.Y = 0.0f;
         PlanDir.Normalize();
 
@@ -2938,11 +2944,11 @@ void EditorGuizmo::ViewManipulate(float* InOutView, float Length, ImVec2 Positio
             NewDir.Normalize();
         }
 
-        FVector4 NewEye = CamTarget + NewDir * Length;
-        StoreMatrix(InOutView, FMatrix4::LookAt(
-            FVector3(NewEye.X, NewEye.Y, NewEye.Z),
-            FVector3(CamTarget.X, CamTarget.Y, CamTarget.Z),
-            FVector3(ReferenceUp.X, ReferenceUp.Y, ReferenceUp.Z)));
+        Vector4 NewEye = CamTarget + NewDir * Length;
+        StoreMatrix(InOutView, Matrix4::LookAt(
+            Vector3(NewEye.X, NewEye.Y, NewEye.Z),
+            Vector3(CamTarget.X, CamTarget.Y, CamTarget.Z),
+            Vector3(ReferenceUp.X, ReferenceUp.Y, ReferenceUp.Z)));
     }
 
     GuizmoContext.bUsingViewManipulate = (InterpolationFrames != 0) || bIsDragging;
@@ -2955,7 +2961,7 @@ void EditorGuizmo::ViewManipulate(float* InOutView, float Length, ImVec2 Positio
     ComputeContext(&SvgView.M[0][0], &SvgProjection.M[0][0], &GuizmoContext.ModelSource.M[0][0], GuizmoContext.Mode);
 }
 
-void EditorGuizmo::ViewManipulate(FMatrix4& InOutView, float Length, ImVec2 Position, ImVec2 Size, ImU32 BackgroundColor)
+void EditorGuizmo::ViewManipulate(Matrix4& InOutView, float Length, ImVec2 Position, ImVec2 Size, ImU32 BackgroundColor)
 {
     EditorGuizmo::ViewManipulate(&InOutView.M[0][0], Length, Position, Size, BackgroundColor);
 }
@@ -2968,7 +2974,7 @@ void EditorGuizmo::ViewManipulate(float* InOutView, const float* Projection, Edi
     EditorGuizmo::ViewManipulate(InOutView, Length, Position, Size, BackgroundColor);
 }
 
-void EditorGuizmo::ViewManipulate(FMatrix4& InOutView, const FMatrix4& Projection, EditorGuizmo::EOperation::Type Operation, EditorGuizmo::EMode Mode, FMatrix4& InOutMatrix, 
+void EditorGuizmo::ViewManipulate(Matrix4& InOutView, const Matrix4& Projection, EditorGuizmo::EOperation::Type Operation, EditorGuizmo::EMode Mode, Matrix4& InOutMatrix, 
     float Length, ImVec2 Position, ImVec2 Size, ImU32 BackgroundColor)
 {
     EditorGuizmo::ViewManipulate(&InOutView.M[0][0], &Projection.M[0][0], Operation, Mode, &InOutMatrix.M[0][0], Length, Position, Size, BackgroundColor);
@@ -3070,14 +3076,14 @@ bool EditorGuizmo::IsOver(EditorGuizmo::EOperation::Type Op)
 bool EditorGuizmo::IsOver(float* Position, float PixelRadius)
 {
     const ImGuiIO& State = ImGui::GetIO();
-    float Radius = Math::Sqrt((ImLengthSqr(WorldToPos(FVector4(Position[0], Position[1], Position[2], 0.0f), GuizmoContext.ViewProjection) - State.MousePos)));
+    float Radius = Math::Sqrt((ImLengthSqr(WorldToPos(Vector4(Position[0], Position[1], Position[2], 0.0f), GuizmoContext.ViewProjection) - State.MousePos)));
     return Radius < PixelRadius;
 }
 
-bool EditorGuizmo::IsOver(FVector3& Position, float PixelRadius)
+bool EditorGuizmo::IsOver(Vector3& Position, float PixelRadius)
 {
     const ImGuiIO& State = ImGui::GetIO();
-    float Radius = Math::Sqrt((ImLengthSqr(WorldToPos(FVector4(Position.X, Position.Y, Position.Z, 0.0f), GuizmoContext.ViewProjection) - State.MousePos)));
+    float Radius = Math::Sqrt((ImLengthSqr(WorldToPos(Vector4(Position.X, Position.Y, Position.Z, 0.0f), GuizmoContext.ViewProjection) - State.MousePos)));
     return Radius < PixelRadius;
 }
 

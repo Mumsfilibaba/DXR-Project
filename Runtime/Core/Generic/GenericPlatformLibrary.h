@@ -55,7 +55,7 @@ struct FGenericPlatformLibrary
      * @brief Retrieve the full name for the library including prefixes and extension 
      * @param LibraryName Name of the library without extension or prefixes
      */
-    static FORCEINLINE FString GetRealName(const CHAR* LibraryName) { return ""; }
+    static FORCEINLINE String GetRealName(const CHAR* LibraryName) { return ""; }
 
     /**
      * @brief Check if the dynamic library is already loaded into the application 

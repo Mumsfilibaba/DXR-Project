@@ -34,7 +34,7 @@ bool FVulkanSemaphore::Initialize()
     return true;
 }
 
-bool FVulkanSemaphore::SetDebugName(const FString& Name)
+bool FVulkanSemaphore::SetDebugName(const String& Name)
 {
     VkResult Result = VulkanSetObjectName(GetDevice()->GetVkDevice(), *Name, Semaphore, VK_OBJECT_TYPE_SEMAPHORE);
     if (VULKAN_FAILED(Result))
@@ -49,7 +49,7 @@ bool FVulkanSemaphore::SetDebugName(const FString& Name)
     return true;
 }
 
-void FVulkanSemaphore::GetDebugName(FString& OutDebugName) const
+void FVulkanSemaphore::GetDebugName(String& OutDebugName) const
 {
 #if VULKAN_STORE_DEBUG_NAMES
     OutDebugName = DebugName;

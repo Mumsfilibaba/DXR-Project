@@ -165,8 +165,8 @@ void FMacPlatformStackTrace::GetStackTraceEntryFromAddress(uint64 Address, FStac
         CSSourceInfoRef Symbol = CSSymbolicatorGetSourceInfoWithAddressAtTime(Symbolicator, (vm_address_t)Address, kCSNow);
         if(!CSIsNull(Symbol))
         {
-            FCString::Strncpy(OutStackTraceEntry.Filename, CSSourceInfoGetPath(Symbol), ARRAY_COUNT(OutStackTraceEntry.Filename));
-            FCString::Strncpy(OutStackTraceEntry.FunctionName, CSSymbolGetName(CSSourceInfoGetSymbol(Symbol)), ARRAY_COUNT(OutStackTraceEntry.FunctionName));
+            CString::Strncpy(OutStackTraceEntry.Filename, CSSourceInfoGetPath(Symbol), ARRAY_COUNT(OutStackTraceEntry.Filename));
+            CString::Strncpy(OutStackTraceEntry.FunctionName, CSSymbolGetName(CSSourceInfoGetSymbol(Symbol)), ARRAY_COUNT(OutStackTraceEntry.FunctionName));
             
             OutStackTraceEntry.Line = CSSourceInfoGetLineNumber(Symbol);
 
@@ -174,7 +174,7 @@ void FMacPlatformStackTrace::GetStackTraceEntryFromAddress(uint64 Address, FStac
             if(!CSIsNull(Owner))
             {
                 const CHAR* DylibName = CSSymbolOwnerGetName(Owner);
-                FCString::Strncpy(OutStackTraceEntry.ModuleName, DylibName, ARRAY_COUNT(OutStackTraceEntry.ModuleName));
+                CString::Strncpy(OutStackTraceEntry.ModuleName, DylibName, ARRAY_COUNT(OutStackTraceEntry.ModuleName));
             }
         }
         

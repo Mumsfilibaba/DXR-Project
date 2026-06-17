@@ -83,7 +83,7 @@ void* FMetalCommandContext::GetRHINativeCommandList()
     return nullptr;
 }
 
-void FMetalCommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor)
+void FMetalCommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const Vector4& ClearColor)
 {
     SCOPED_AUTORELEASE_POOL();
 
@@ -118,7 +118,7 @@ void FMetalCommandContext::ClearDepthStencilView(FRHIDepthStencilView* DepthSten
 {
 }
 
-void FMetalCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor)
+void FMetalCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const Vector4& ClearColor)
 {
 }
 
@@ -221,7 +221,7 @@ void FMetalCommandContext::SetScissorRect(const FScissorRegion& ScissorRegion)
     UNREFERENCED_VARIABLE(ScissorRegion);
 }
 
-void FMetalCommandContext::SetBlendFactor(const FVector4& Color)
+void FMetalCommandContext::SetBlendFactor(const Vector4& Color)
 {
     const float BlendFactor[4] = { Color.X, Color.Y, Color.Z, Color.W };
     ContextState.SetBlendFactor(BlendFactor);
@@ -604,7 +604,7 @@ void FMetalCommandContext::Flush()
     }
 }
 
-void FMetalCommandContext::PushEvent(const FStringView& Name)
+void FMetalCommandContext::PushEvent(const StringView& Name)
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -619,7 +619,7 @@ void FMetalCommandContext::PushEvent(const FStringView& Name)
         Encoder = CopyContext.GetMTLCopyEncoder();
     }
 
-    [Encoder pushDebugGroup:FString(Name).GetNSString()];
+    [Encoder pushDebugGroup:String(Name).GetNSString()];
 }
 
 void FMetalCommandContext::PopEvent()

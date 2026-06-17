@@ -388,10 +388,10 @@ void FMacApplication::QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) con
         // information we can retrieve from the Win32 API in order to be consisitent across platforms.
         FMonitorInfo& MonitorInfo = OutMonitorInfo[Index++];
         MonitorInfo.DeviceName     = FindMonitorName(Screen);
-        MonitorInfo.MainPosition   = FIntVector2(ScreenFrame.origin.x, ScreenFrame.origin.y);
-        MonitorInfo.MainSize       = FIntVector2(ScreenFrame.size.width, ScreenFrame.size.height);
-        MonitorInfo.WorkPosition   = FIntVector2(ScreenVisibleFrame.origin.x, ScreenVisibleFrame.origin.y);
-        MonitorInfo.WorkSize       = FIntVector2(ScreenVisibleFrame.size.width, ScreenVisibleFrame.size.height);
+        MonitorInfo.MainPosition   = IntVector2(ScreenFrame.origin.x, ScreenFrame.origin.y);
+        MonitorInfo.MainSize       = IntVector2(ScreenFrame.size.width, ScreenFrame.size.height);
+        MonitorInfo.WorkPosition   = IntVector2(ScreenVisibleFrame.origin.x, ScreenVisibleFrame.origin.y);
+        MonitorInfo.WorkSize       = IntVector2(ScreenVisibleFrame.size.width, ScreenVisibleFrame.size.height);
         MonitorInfo.bIsPrimary     = MainScreen == Screen;
         MonitorInfo.DisplayDPI     = MonitorDPIFromScreen(Screen);
         MonitorInfo.DisplayScaling = Screen.backingScaleFactor;
@@ -539,7 +539,7 @@ void FMacApplication::DeferEvent(NSObject* EventObject)
                 case NSEventTypeScrollWheel:
                 {
                     NewDeferredEvent.ScrollPhase                = [CurrentEvent phase];
-                    NewDeferredEvent.ScrollDelta                = FVector2([CurrentEvent scrollingDeltaX], [CurrentEvent scrollingDeltaY]);
+                    NewDeferredEvent.ScrollDelta                = Vector2([CurrentEvent scrollingDeltaX], [CurrentEvent scrollingDeltaY]);
                     NewDeferredEvent.bHasPreciseScrollingDeltas = [CurrentEvent hasPreciseScrollingDeltas];
                     break;
                 }
@@ -687,7 +687,7 @@ void FMacApplication::ProcessMouseMoveEvent(const FDeferredMacEvent&)
 {
     const NSPoint MouseLocation  = [NSEvent mouseLocation];
     const NSPoint CursorPosition = ConvertCocoaPointToEngine(MouseLocation.x, MouseLocation.y);
-    MacCursor->UpdateCursorPosition(FIntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y)));
+    MacCursor->UpdateCursorPosition(IntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y)));
 
     MessageHandler->OnMouseMove(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
 }
@@ -897,11 +897,11 @@ void FMacApplication::ProcessWindowResized(const FDeferredMacEvent& DeferredEven
     const int32 PositionX = static_cast<int32>(ContentFrame.origin.x);
     const int32 PositionY = static_cast<int32>(ContentFrame.origin.y);
     
-    const FIntVector2 CachedPosition = DeferredEvent.Window->GetCachedPosition();
+    const IntVector2 CachedPosition = DeferredEvent.Window->GetCachedPosition();
     if (CachedPosition.X != PositionX || CachedPosition.Y != PositionY)
     {
         MessageHandler->OnWindowMoved(DeferredEvent.Window, PositionX, PositionY);
-        DeferredEvent.Window->SetCachedPosition(FIntVector2(PositionX, PositionY));
+        DeferredEvent.Window->SetCachedPosition(IntVector2(PositionX, PositionY));
     }
     
     MessageHandler->OnWindowResized(DeferredEvent.Window, uint32(ContentFrame.size.width), uint32(ContentFrame.size.height));
@@ -916,11 +916,11 @@ void FMacApplication::ProcessWindowMoved(const FDeferredMacEvent& DeferredEvent)
     const int32 PositionX = static_cast<int32>(ContentFrame.origin.x);
     const int32 PositionY = static_cast<int32>(ContentFrame.origin.y);
     
-    const FIntVector2 CachedPosition = DeferredEvent.Window->GetCachedPosition();
+    const IntVector2 CachedPosition = DeferredEvent.Window->GetCachedPosition();
     if (CachedPosition.X != PositionX || CachedPosition.Y != PositionY)
     {
         MessageHandler->OnWindowMoved(DeferredEvent.Window, PositionX, PositionY);
-        DeferredEvent.Window->SetCachedPosition(FIntVector2(PositionX, PositionY));
+        DeferredEvent.Window->SetCachedPosition(IntVector2(PositionX, PositionY));
     }
 }
 
@@ -948,7 +948,7 @@ void FMacApplication::OnWindowWillResize(const TSharedRef<FMacWindow>& Window)
     MessageHandler->OnWindowResizing(Window);
 }
 
-FString FMacApplication::FindMonitorName(NSScreen* Screen)
+String FMacApplication::FindMonitorName(NSScreen* Screen)
 {
     if (!Screen)
     {
@@ -1019,7 +1019,7 @@ FString FMacApplication::FindMonitorName(NSScreen* Screen)
     NSString* MonitorName = (__bridge NSString*)NameRef;
     
     // Store the string name, since we need to release the original string (via the DisplayInfo) before we return
-    FString Result(MonitorName);
+    String Result(MonitorName);
     
     // Release DisplayInfo
     CFRelease(DisplayInfo);

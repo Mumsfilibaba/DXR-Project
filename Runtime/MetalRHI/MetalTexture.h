@@ -25,8 +25,8 @@ public:
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final;
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final;
 
-    virtual void SetDebugName(const FString& InName)       override final;
-    virtual void GetDebugName(FString& OutDebugName) const override final;
+    virtual void SetDebugName(const String& InName)       override final;
+    virtual void GetDebugName(String& OutDebugName) const override final;
     
     bool Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
     

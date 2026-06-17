@@ -49,8 +49,8 @@ public:
 
     bool WaitForValue(uint64 Value, uint64 TimeoutNs = UINT64_MAX);
 
-    void SetDebugName(const FString& Name);
-    void GetDebugName(FString& OutDebugName) const;
+    void SetDebugName(const String& Name);
+    void GetDebugName(String& OutDebugName) const;
 
     uint64 GetLastSignaledValue() const
     {
@@ -73,7 +73,7 @@ private:
     uint64         CurrentValue;
     uint64         LastSignaledValue;
 #if VULKAN_STORE_DEBUG_NAMES
-    FString        DebugName;
+    String         DebugName;
 #endif
 };
 
@@ -89,8 +89,8 @@ public:
     virtual bool IsSignaled()                        const override final;
     virtual bool Wait(uint64 TimeoutNs = UINT64_MAX) const override final;
     
-    virtual void SetDebugName(const FString& InName)       override final;
-    virtual void GetDebugName(FString& OutDebugName) const override final;
+    virtual void SetDebugName(const String& InName)       override final;
+    virtual void GetDebugName(String& OutDebugName) const override final;
 
     bool Initialize();
  
@@ -120,9 +120,9 @@ private:
     FVulkanFence* SubmissionFence;
     uint64        NextValue;
     uint64        TargetValue;
-    FAtomicBool   bHasPendingSignal;
+    AtomicBool    bHasPendingSignal;
     bool          bUsesTimeline;
 #if VULKAN_STORE_DEBUG_NAMES
-    FString       DebugName;
+    String        DebugName;
 #endif
 };

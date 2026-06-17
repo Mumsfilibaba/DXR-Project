@@ -14,7 +14,7 @@ struct FVertex
     {
     }
 
-    FVertex(const FVector3& InPosition, const FVector3& InNormal, const FVector3& InTangent, const FVector2& InTexCoord)
+    FVertex(const Vector3& InPosition, const Vector3& InNormal, const Vector3& InTangent, const Vector2& InTexCoord)
         : Position(InPosition)
         , Normal(InNormal)
         , Tangent(InTangent)
@@ -35,16 +35,16 @@ struct FVertex
     friend uint64 GetHashForType(const FVertex& Vertex)
     {
         uint64 Hash = GetHashForType(Vertex.Position);
-        HashCombine<FVector3>(Hash, Vertex.Normal);
-        HashCombine<FVector3>(Hash, Vertex.Tangent);
-        HashCombine<FVector2>(Hash, Vertex.TexCoord);
+        HashCombine<Vector3>(Hash, Vertex.Normal);
+        HashCombine<Vector3>(Hash, Vertex.Tangent);
+        HashCombine<Vector2>(Hash, Vertex.TexCoord);
         return Hash;
     }
 
-    FVector3 Position;
-    FVector3 Normal;
-    FVector3 Tangent;
-    FVector2 TexCoord;
+    Vector3 Position;
+    Vector3 Normal;
+    Vector3 Tangent;
+    Vector2 TexCoord;
 };
 
 struct FVertexPacked
@@ -57,7 +57,7 @@ struct FVertexPacked
     {
     }
 
-    FVertexPacked(const FVector3& InPosition, const FR10G10B10A2& InNormal, const FR10G10B10A2& InTangent, const FVector2& InTexCoord)
+    FVertexPacked(const Vector3& InPosition, const FR10G10B10A2& InNormal, const FR10G10B10A2& InTangent, const Vector2& InTexCoord)
         : Position(InPosition)
         , Normal(InNormal)
         , Tangent(InTangent)
@@ -75,10 +75,10 @@ struct FVertexPacked
         return !(*this == Other);
     }
 
-    FVector3     Position;
+    Vector3      Position;
     FR10G10B10A2 Normal;
     FR10G10B10A2 Tangent;
-    FVector2     TexCoord;
+    Vector2      TexCoord;
 };
 
 struct FVertexPosition
@@ -88,7 +88,7 @@ struct FVertexPosition
     {
     }
 
-    FVertexPosition(const FVector3& InPosition)
+    FVertexPosition(const Vector3& InPosition)
         : Position(InPosition)
     {
     }
@@ -109,7 +109,7 @@ struct FVertexPosition
         return Hash;
     }
 
-    FVector3 Position;
+    Vector3 Position;
 };
 
 struct FVertexNormal
@@ -120,7 +120,7 @@ struct FVertexNormal
     {
     }
 
-    FVertexNormal(const FVector3& InNormal, const FVector3& InTangent)
+    FVertexNormal(const Vector3& InNormal, const Vector3& InTangent)
         : Normal(InNormal)
         , Tangent(InTangent)
     {
@@ -139,12 +139,12 @@ struct FVertexNormal
     friend uint64 GetHashForType(const FVertexNormal& Vertex)
     {
         uint64 Hash = GetHashForType(Vertex.Normal);
-        HashCombine<FVector3>(Hash, Vertex.Tangent);
+        HashCombine<Vector3>(Hash, Vertex.Tangent);
         return Hash;
     }
 
-    FVector3 Normal;
-    FVector3 Tangent;
+    Vector3 Normal;
+    Vector3 Tangent;
 };
 
 struct FVertexTexCoord
@@ -154,7 +154,7 @@ struct FVertexTexCoord
     {
     }
 
-    FVertexTexCoord(const FVector2& InTexCoord)
+    FVertexTexCoord(const Vector2& InTexCoord)
         : TexCoord(InTexCoord)
     {
     }
@@ -175,5 +175,5 @@ struct FVertexTexCoord
         return Hash;
     }
 
-    FVector2 TexCoord;
+    Vector2 TexCoord;
 };

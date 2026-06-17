@@ -1100,16 +1100,16 @@ bool FVulkanDeviceRHI::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelin
     return true;
 }
 
-FString FVulkanDeviceRHI::GetAdapterName() const
+String FVulkanDeviceRHI::GetAdapterName() const
 {
     if (!PhysicalDevice)
     {
         VULKAN_ERROR_CRITICAL("PhysicalDevice is not initialized properly");
-        return FString();
+        return String();
     }
 
     VkPhysicalDeviceProperties DeviceProperties = PhysicalDevice->GetProperties();
-    return FString(DeviceProperties.deviceName);
+    return String(DeviceProperties.deviceName);
 }
 
 IRHICommandContext* FVulkanDeviceRHI::ObtainCommandContext()

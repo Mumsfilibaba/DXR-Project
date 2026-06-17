@@ -28,7 +28,7 @@ namespace SharedPointerInternal
     {
     public:
         typedef int32 ReferenceCountType;
-        typedef typename TConditional<ThreadAccess == EThreadAccess::Safe, FAtomicInt32, int32>::Type ReferenceType;
+        typedef typename TConditional<ThreadAccess == EThreadAccess::Safe, AtomicInt32, int32>::Type ReferenceType;
 
         FReferenceHandler(const FReferenceHandler&) = delete;
         FReferenceHandler(FReferenceHandler&&) = delete;

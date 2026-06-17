@@ -67,8 +67,8 @@ public:
     // FRHIGeometryAccelerationStructure Interface
     virtual void* GetRHINativeResource() const override final;
 
-    virtual void SetDebugName(const FString& InName)       override final;
-    virtual void GetDebugName(FString& OutDebugName) const override final;
+    virtual void SetDebugName(const String& InName)       override final;
+    virtual void GetDebugName(String& OutDebugName) const override final;
     
     bool Build(FD3D12CommandContext& CmdContext, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc);
     
@@ -99,8 +99,8 @@ public:
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final;
     virtual FRHIDescriptorHandle    GetBindlessHandle()     const override final;
 
-    virtual void SetDebugName(const FString& InName)       override final;
-    virtual void GetDebugName(FString& OutDebugName) const override final;
+    virtual void SetDebugName(const String& InName)       override final;
+    virtual void GetDebugName(String& OutDebugName) const override final;
 
     bool Build(FD3D12CommandContext& CmdContext, const FRHISceneAccelerationStructureBuildDesc& BuildDesc);
     bool BuildBindingTable(

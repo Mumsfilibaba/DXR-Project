@@ -3,12 +3,12 @@
 #include "Core/Math/VectorMath/VectorMath.h"
 
 /** @brief 2D Matrix class with float components. */
-class VECTOR_ALIGN FMatrix2
+class VECTOR_ALIGN Matrix2
 {
 public:
 
     /** @brief Default constructor (Initialize components to zero) */
-    FORCEINLINE FMatrix2() noexcept 
+    FORCEINLINE Matrix2() noexcept 
         : M{ { 0.0f, 0.0f }, { 0.0f, 0.0f } }
     {
     }
@@ -17,7 +17,7 @@ public:
      * @brief Constructor initializing all values on the diagonal with a single value. The other values are set to zero.
      * @param Diagonal Value to set on the diagonal
      */
-    FORCEINLINE explicit FMatrix2(float Diagonal) noexcept
+    FORCEINLINE explicit Matrix2(float Diagonal) noexcept
         : M{ { Diagonal, 0.0f }, { 0.0f, Diagonal } }
     {
     }
@@ -27,7 +27,7 @@ public:
      * @param Row0 Vector to set the first row to
      * @param Row1 Vector to set the second row to
      */
-    FORCEINLINE explicit FMatrix2(const FVector2& Row0, const FVector2& Row1) noexcept
+    FORCEINLINE explicit Matrix2(const Vector2& Row0, const Vector2& Row1) noexcept
         : M{ { Row0.X, Row0.Y }, { Row1.X, Row1.Y } }
     {
     }
@@ -39,7 +39,7 @@ public:
      * @param M10 Value to set on row 1 and column 0
      * @param M11 Value to set on row 1 and column 1
      */
-    FORCEINLINE explicit FMatrix2(float M00, float M01, float M10, float M11) noexcept
+    FORCEINLINE explicit Matrix2(float M00, float M01, float M10, float M11) noexcept
         : M{ { M00, M01 }, { M10, M11 } }
     {
     }
@@ -48,9 +48,9 @@ public:
      * @brief Returns the transposed version of this matrix
      * @return Transposed matrix
      */
-    FORCEINLINE FMatrix2 GetTranspose() const noexcept
+    FORCEINLINE Matrix2 GetTranspose() const noexcept
     {
-        FMatrix2 Transpose;
+        Matrix2 Transpose;
 
     #if !USE_VECTOR_MATH
         Transpose.M[0][0] = M[0][0];
@@ -70,9 +70,9 @@ public:
      * @brief Returns the inverted version of this matrix
      * @return Inverse matrix
      */
-    FORCEINLINE FMatrix2 GetInverse() const noexcept
+    FORCEINLINE Matrix2 GetInverse() const noexcept
     {
-        FMatrix2 Inverse;
+        Matrix2 Inverse;
 
         const float Determinant = GetDeterminant();
         CHECK(Determinant != 0.0f);
@@ -101,9 +101,9 @@ public:
      * @brief Returns the adjugate of this matrix
      * @return Adjugate matrix
      */
-    FORCEINLINE FMatrix2 GetAdjoint() const noexcept
+    FORCEINLINE Matrix2 GetAdjoint() const noexcept
     {
-        FMatrix2 Adjugate;
+        Matrix2 Adjugate;
 
     #if !USE_VECTOR_MATH
         Adjugate.M[0][0] =  M[1][1];
@@ -176,7 +176,7 @@ public:
      * @param Threshold Threshold for comparison
      * @return True if equal within Threshold, false otherwise
      */
-    FORCEINLINE bool IsEqual(const FMatrix2& Other, float Threshold = Math::Constants::CmpThreshold) const noexcept
+    FORCEINLINE bool IsEqual(const Matrix2& Other, float Threshold = Math::Constants::CmpThreshold) const noexcept
     {
     #if !USE_VECTOR_MATH
         Threshold = Math::Abs(Threshold);
@@ -223,10 +223,10 @@ public:
      * @param Row The row to retrieve (0 or 1)
      * @return A vector containing the specified row
      */
-    FORCEINLINE FVector2 GetRow(int32 Row) const noexcept
+    FORCEINLINE Vector2 GetRow(int32 Row) const noexcept
     {
         CHECK(Row < 2);
-        return FVector2(M[Row][0], M[Row][1]);
+        return Vector2(M[Row][0], M[Row][1]);
     }
 
     /**
@@ -234,10 +234,10 @@ public:
      * @param Column The column to retrieve (0 or 1)
      * @return A vector containing the specified column
      */
-    FORCEINLINE FVector2 GetColumn(int32 Column) const noexcept
+    FORCEINLINE Vector2 GetColumn(int32 Column) const noexcept
     {
         CHECK(Column < 2);
-        return FVector2(M[0][Column], M[1][Column]);
+        return Vector2(M[0][Column], M[1][Column]);
     }
 
 public:
@@ -247,9 +247,9 @@ public:
      * @param Vector The vector to transform
      * @return A vector containing the transformation
      */
-    FORCEINLINE FVector2 operator*(const FVector2& Vector) const noexcept
+    FORCEINLINE Vector2 operator*(const Vector2& Vector) const noexcept
     {
-        FVector2 Result;
+        Vector2 Result;
 
     #if !USE_VECTOR_MATH
         Result.X = (Vector.X * M[0][0]) + (Vector.Y * M[1][0]);
@@ -274,9 +274,9 @@ public:
      * @param Other The other matrix
      * @return A matrix containing the result of the multiplication
      */
-    FORCEINLINE FMatrix2 operator*(const FMatrix2& Other) const noexcept
+    FORCEINLINE Matrix2 operator*(const Matrix2& Other) const noexcept
     {
-        FMatrix2 Result;
+        Matrix2 Result;
 
     #if !USE_VECTOR_MATH
         Result.M[0][0] = (M[0][0] * Other.M[0][0]) + (M[0][1] * Other.M[1][0]);
@@ -298,7 +298,7 @@ public:
      * @param Other The other matrix
      * @return A reference to this matrix after multiplication
      */
-    FORCEINLINE FMatrix2& operator*=(const FMatrix2& Other) noexcept
+    FORCEINLINE Matrix2& operator*=(const Matrix2& Other) noexcept
     {
         *this = (*this) * Other;
         return *this;
@@ -309,9 +309,9 @@ public:
      * @param Scalar The scalar
      * @return A matrix containing the result of the multiplication
      */
-    FORCEINLINE FMatrix2 operator*(float Scalar) const noexcept
+    FORCEINLINE Matrix2 operator*(float Scalar) const noexcept
     {
-        FMatrix2 Result;
+        Matrix2 Result;
 
     #if !USE_VECTOR_MATH
         Result.M[0][0] = M[0][0] * Scalar;
@@ -332,7 +332,7 @@ public:
      * @param Scalar The scalar
      * @return A reference to this matrix after multiplication
      */
-    FORCEINLINE FMatrix2& operator*=(float Scalar) noexcept
+    FORCEINLINE Matrix2& operator*=(float Scalar) noexcept
     {
     #if !USE_VECTOR_MATH
         M[0][0] = M[0][0] * Scalar;
@@ -353,9 +353,9 @@ public:
      * @param Other The other matrix
      * @return A matrix containing the result of the addition
      */
-    FORCEINLINE FMatrix2 operator+(const FMatrix2& Other) const noexcept
+    FORCEINLINE Matrix2 operator+(const Matrix2& Other) const noexcept
     {
-        FMatrix2 Result;
+        Matrix2 Result;
 
     #if !USE_VECTOR_MATH
         Result.M[0][0] = M[0][0] + Other.M[0][0];
@@ -375,7 +375,7 @@ public:
      * @param Other The other matrix
      * @return A reference to this matrix after addition
      */
-    FORCEINLINE FMatrix2& operator+=(const FMatrix2& Other) noexcept
+    FORCEINLINE Matrix2& operator+=(const Matrix2& Other) noexcept
     {
     #if !USE_VECTOR_MATH
         M[0][0] = M[0][0] + Other.M[0][0];
@@ -395,9 +395,9 @@ public:
      * @param Scalar The scalar
      * @return A matrix containing the result of the addition
      */
-    FORCEINLINE FMatrix2 operator+(float Scalar) const noexcept
+    FORCEINLINE Matrix2 operator+(float Scalar) const noexcept
     {
-        FMatrix2 Result;
+        Matrix2 Result;
 
     #if !USE_VECTOR_MATH
         Result.M[0][0] = M[0][0] + Scalar;
@@ -418,7 +418,7 @@ public:
      * @param Scalar The scalar
      * @return A reference to this matrix after addition
      */
-    FORCEINLINE FMatrix2& operator+=(float Scalar) noexcept
+    FORCEINLINE Matrix2& operator+=(float Scalar) noexcept
     {
     #if !USE_VECTOR_MATH
         M[0][0] = M[0][0] + Scalar;
@@ -439,9 +439,9 @@ public:
      * @param Other The other matrix
      * @return A matrix containing the result of the subtraction
      */
-    FORCEINLINE FMatrix2 operator-(const FMatrix2& Other) const noexcept
+    FORCEINLINE Matrix2 operator-(const Matrix2& Other) const noexcept
     {
-        FMatrix2 Result;
+        Matrix2 Result;
 
     #if !USE_VECTOR_MATH
         Result.M[0][0] = M[0][0] - Other.M[0][0];
@@ -461,7 +461,7 @@ public:
      * @param Other The other matrix
      * @return A reference to this matrix after subtraction
      */
-    FORCEINLINE FMatrix2& operator-=(const FMatrix2& Other) noexcept
+    FORCEINLINE Matrix2& operator-=(const Matrix2& Other) noexcept
     {
     #if !USE_VECTOR_MATH
         M[0][0] = M[0][0] - Other.M[0][0];
@@ -481,9 +481,9 @@ public:
      * @param Scalar The scalar
      * @return A matrix containing the result of the subtraction
      */
-    FORCEINLINE FMatrix2 operator-(float Scalar) const noexcept
+    FORCEINLINE Matrix2 operator-(float Scalar) const noexcept
     {
-        FMatrix2 Result;
+        Matrix2 Result;
 
     #if !USE_VECTOR_MATH
         Result.M[0][0] = M[0][0] - Scalar;
@@ -504,7 +504,7 @@ public:
      * @param Scalar The scalar
      * @return A reference to this matrix after subtraction
      */
-    FORCEINLINE FMatrix2& operator-=(float Scalar) noexcept
+    FORCEINLINE Matrix2& operator-=(float Scalar) noexcept
     {
     #if !USE_VECTOR_MATH
         M[0][0] = M[0][0] - Scalar;
@@ -526,9 +526,9 @@ public:
      * @brief Creates and returns an identity matrix
      * @return An identity matrix
      */
-    static FORCEINLINE FMatrix2 Identity() noexcept
+    static FORCEINLINE Matrix2 Identity() noexcept
     {
-        return FMatrix2(1.0f);
+        return Matrix2(1.0f);
     }
 
     /**
@@ -536,9 +536,9 @@ public:
      * @param Scale Uniform scale that represents this matrix
      * @return A scale matrix
      */
-    static FORCEINLINE FMatrix2 Scale(float Scale) noexcept
+    static FORCEINLINE Matrix2 Scale(float Scale) noexcept
     {
-        return FMatrix2(Scale);
+        return Matrix2(Scale);
     }
 
     /**
@@ -547,9 +547,9 @@ public:
      * @param y Scale for the y-axis
      * @return A scale matrix
      */
-    static FORCEINLINE FMatrix2 Scale(float x, float y) noexcept
+    static FORCEINLINE Matrix2 Scale(float x, float y) noexcept
     {
-        return FMatrix2(x, 0.0f, 0.0f, y);
+        return Matrix2(x, 0.0f, 0.0f, y);
     }
 
     /**
@@ -557,7 +557,7 @@ public:
      * @param VectorWithScale A vector containing the scale for each axis in the x- and y-components
      * @return A scale matrix
      */
-    static FORCEINLINE FMatrix2 Scale(const FVector2& VectorWithScale) noexcept
+    static FORCEINLINE Matrix2 Scale(const Vector2& VectorWithScale) noexcept
     {
         return Scale(VectorWithScale.X, VectorWithScale.Y);
     }
@@ -567,12 +567,12 @@ public:
      * @param Rotation Rotation in radians
      * @return A rotation matrix
      */
-    static FORCEINLINE FMatrix2 Rotation(float Rotation) noexcept
+    static FORCEINLINE Matrix2 Rotation(float Rotation) noexcept
     {
         const float SinZ = Math::Sin(Rotation);
         const float CosZ = Math::Cos(Rotation);
 
-        return FMatrix2(CosZ, SinZ, -SinZ, CosZ);
+        return Matrix2(CosZ, SinZ, -SinZ, CosZ);
     }
 
 public:
@@ -581,4 +581,4 @@ public:
     float M[2][2];
 };
 
-MARK_AS_REALLOCATABLE(FMatrix2);
+MARK_AS_REALLOCATABLE(Matrix2);

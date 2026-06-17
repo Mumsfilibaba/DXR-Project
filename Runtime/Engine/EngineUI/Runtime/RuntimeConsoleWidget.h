@@ -18,8 +18,8 @@ public:
     ~FRuntimeConsoleWidget();
     
     // IOutputDevice Interface
-    virtual void Log(const FString& Message) override final;
-    virtual void Log(ELogSeverity Severity, const FString& Message) override final;
+    virtual void Log(const String& Message) override final;
+    virtual void Log(ELogSeverity Severity, const String& Message) override final;
     
     // Draw the interface
     void Draw();
@@ -29,13 +29,13 @@ private:
     {
         FConsoleMessage() = default;
     
-        FConsoleMessage(const FString& InMessage, ELogSeverity InSeverity)
+        FConsoleMessage(const String& InMessage, ELogSeverity InSeverity)
             : Message(InMessage)
             , Severity(InSeverity)
         {
         }
     
-        FString      Message;
+        String       Message;
         ELogSeverity Severity;
     };
 
@@ -51,23 +51,16 @@ private:
     void InvalidateCandidates();
     void HandleKeyPressedEvent(const FKeyEvent& Event);
 
-    TSharedPtr<FConsoleInputHandler> InputHandler;
-    FDelegateHandle                  ImGuiDelegateHandle;
-
-    // The current candidates of registered console-objects
-    TArray<TPair<IConsoleObject*, FString>> Candidates;
-
-    // Index in the history
-    TArray<FConsoleMessage> Messages;
-    FCriticalSection        MessagesCS;
-
-    int32 SelectedCandidateIndex = InvalidIndex;
-    int32 HistoryIndex           = InvalidIndex;
-
-    TStaticArray<CHAR, 256> TextBuffer;
-
-    bool bUpdateCursorPosition;
-    bool bIsActive;
-    bool bCandidateSelectionChanged;
-    bool bShouldScrollText;
+    TSharedPtr<FConsoleInputHandler>       InputHandler;
+    FDelegateHandle                        ImGuiDelegateHandle;
+    TArray<TPair<IConsoleObject*, String>> Candidates;
+    TArray<FConsoleMessage>                Messages;
+    FCriticalSection                       MessagesCS;
+    int32                                  SelectedCandidateIndex = InvalidIndex;
+    int32                                  HistoryIndex           = InvalidIndex;
+    TStaticArray<CHAR, 256>                TextBuffer;
+    bool                                   bUpdateCursorPosition : 1;
+    bool                                   bIsActive : 1;
+    bool                                   bCandidateSelectionChanged : 1;
+    bool                                   bShouldScrollText : 1;
 };

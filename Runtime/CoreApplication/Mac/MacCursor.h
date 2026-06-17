@@ -15,7 +15,7 @@ public:
 
     virtual void SetPosition(int32 x, int32 y) override final;
 
-    virtual FIntVector2 GetPosition() const override final;
+    virtual IntVector2 GetPosition() const override final;
 
     virtual void SetVisibility(bool bVisible) override final;
 
@@ -31,12 +31,12 @@ public:
      * then, the last known cursor position is used whenever the application requests the current
      * cursor position.
      * 
-     * @param Position The new position to update the cursor with, represented as an FIntVector2.
+     * @param Position The new position to update the cursor with, represented as an IntVector2.
      */
-    void UpdateCursorPosition(const FIntVector2& Position);
+    void UpdateCursorPosition(const IntVector2& Position);
 
 private:
-    FIntVector2 CurrentPosition;
+    IntVector2 CurrentPosition;
     bool        bIsPositionInitialized;
 };
 

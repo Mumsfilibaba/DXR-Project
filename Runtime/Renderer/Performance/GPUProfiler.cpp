@@ -199,7 +199,7 @@ void FGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
 {
     if (bEnabled)
     {
-        const FString ScopeName = Name;
+        const String ScopeName = Name;
 
         FGPUProfileScopeQueries* Queries = ScopeQueries.Find(ScopeName);
         if (!Queries)
@@ -241,7 +241,7 @@ void FGPUProfiler::EndGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
 {
     if (bEnabled)
     {
-        const FString ScopeName = Name;
+        const String ScopeName = Name;
 
         FGPUProfileScopeQueries* Queries = ScopeQueries.Find(ScopeName);
         if (Queries)

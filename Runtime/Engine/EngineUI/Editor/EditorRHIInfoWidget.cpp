@@ -57,7 +57,7 @@ void FEditorRHIInfoWidget::DrawAdapterInfo()
 
     if (FRHIDevice* Device = RHI::Device)
     {
-        const FString AdapterName = Device->GetAdapterName();
+        const String AdapterName = Device->GetAdapterName();
         ImGui::Text("Adapter: %s", *AdapterName);
     }
 }
@@ -169,15 +169,15 @@ void FEditorRHIInfoWidget::DrawAllocatorDetails()
     for (const CHAR* GroupName : Groups)
     {
         const bool bIsRHIDetailGroup =
-            (FCString::Strcmp(GroupName, "D3D12 Allocators") == 0) ||
-            (FCString::Strcmp(GroupName, "Vulkan Allocators") == 0) ||
-            (FCString::Strcmp(GroupName, "D3D12 PSO") == 0) ||
-            (FCString::Strcmp(GroupName, "Vulkan PSO") == 0) ||
-            (FCString::Strcmp(GroupName, "D3D12 Commands") == 0) ||
-            (FCString::Strcmp(GroupName, "Vulkan Commands") == 0) ||
-            (FCString::Strcmp(GroupName, "D3D12 Queries") == 0) ||
-            (FCString::Strcmp(GroupName, "Vulkan Queries") == 0) ||
-            (FCString::Strcmp(GroupName, "D3D12 Residency") == 0);
+            (CString::Strcmp(GroupName, "D3D12 Allocators") == 0) ||
+            (CString::Strcmp(GroupName, "Vulkan Allocators") == 0) ||
+            (CString::Strcmp(GroupName, "D3D12 PSO") == 0) ||
+            (CString::Strcmp(GroupName, "Vulkan PSO") == 0) ||
+            (CString::Strcmp(GroupName, "D3D12 Commands") == 0) ||
+            (CString::Strcmp(GroupName, "Vulkan Commands") == 0) ||
+            (CString::Strcmp(GroupName, "D3D12 Queries") == 0) ||
+            (CString::Strcmp(GroupName, "Vulkan Queries") == 0) ||
+            (CString::Strcmp(GroupName, "D3D12 Residency") == 0);
 
         if (!bIsRHIDetailGroup)
         {

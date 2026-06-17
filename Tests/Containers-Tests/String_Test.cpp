@@ -63,36 +63,36 @@ void TString_Test(const CHAR* Args)
 bool TString_Test_Internal(const CHAR* Args)
 {
     {
-        std::cout << std::endl << "----Testing FString----" << std::endl << std::endl;
+        std::cout << std::endl << "----Testing String----" << std::endl << std::endl;
 
-        FStringView StringView("Hello FStringView");
+        StringView StringView("Hello StringView");
 
-        FString String0;
+        String String0;
         TEST_CHECK_STRING(String0, "");
         TEST_CHECK(String0.Length()   == 0);
         TEST_CHECK(String0.Capacity() == 0);
 
-        FString String1 = "Hello String";
+        String String1 = "Hello String";
         TEST_CHECK_STRING(String1, "Hello String");
         TEST_CHECK(String1.Length()   == 12);
         TEST_CHECK(String1.Capacity() == 13);
 
-        FString String2 = FString(Args, 7);
+        String String2 = String(Args, 7);
         TEST_CHECK_STRING_N(String2, Args, 7);
 		TEST_CHECK(String2.Length()   == 7);
 		TEST_CHECK(String2.Capacity() == 8);
 
-        FString String3 = FString(StringView);
-        TEST_CHECK_STRING(String3, "Hello FStringView");
+        String String3 = String(StringView);
+        TEST_CHECK_STRING(String3, "Hello StringView");
 		TEST_CHECK(String3.Length() == 17);
 		TEST_CHECK(String3.Capacity() == 18);
 
-        FString String4 = String1;
+        String String4 = String1;
         TEST_CHECK_STRING(String4, "Hello String");
 		TEST_CHECK(String4.Length()   == 12);
 		TEST_CHECK(String4.Capacity() == 13);
         
-        FString String5 = ::Move(String2);
+        String String5 = ::Move(String2);
         TEST_CHECK_STRING(String2, "");
         TEST_CHECK_STRING_N(String5, Args, 7);
 		TEST_CHECK(String5.Length()   == 7);
@@ -106,7 +106,7 @@ bool TString_Test_Internal(const CHAR* Args)
         const std::string ArgString = std::string(Args, 7) + "Appended String_";
         TEST_CHECK_STRING(String5, ArgString.c_str());
 
-        FString String6;
+        String String6;
         String6.Format("Formatted String=%.4f", 0.004f);
         TEST_CHECK_STRING(String6, "Formatted String=0.0040");
 
@@ -116,10 +116,10 @@ bool TString_Test_Internal(const CHAR* Args)
         String6.AppendFormat("Formatted String=%.4f", 0.0077f);
         TEST_CHECK_STRING(String6, "Formatted String=0.0040_Formatted String=0.0077");
 
-        FString LowerString6 = String6.ToLower();
+        String LowerString6 = String6.ToLower();
         TEST_CHECK_STRING(LowerString6, "formatted string=0.0040_formatted string=0.0077");
 
-        FString UpperString6 = String6.ToUpper();
+        String UpperString6 = String6.ToUpper();
         TEST_CHECK_STRING(UpperString6, "FORMATTED STRING=0.0040_FORMATTED STRING=0.0077");
 
         String6.Clear();
@@ -128,7 +128,7 @@ bool TString_Test_Internal(const CHAR* Args)
         String6.Append("    Trimmable String    ");
         TEST_CHECK_STRING(String6, "    Trimmable String    ");
 
-        FString TrimmedString6 = String6.Trim();
+        String TrimmedString6 = String6.Trim();
         TrimmedString6.Append('*');
         TEST_CHECK_STRING(TrimmedString6, "Trimmable String*");
 
@@ -138,10 +138,10 @@ bool TString_Test_Internal(const CHAR* Args)
         String6.Append("123456789");
         TEST_CHECK_STRING(String6, "123456789");
 
-        FString ReversedString6 = String6.Reverse();
+        String ReversedString6 = String6.Reverse();
         TEST_CHECK_STRING(ReversedString6, "987654321");
 
-        FString String7 = "NewString";
+        String String7 = "NewString";
         TEST_CHECK_STRING(String7, "NewString");
 
         String7.Reset(12);
@@ -149,7 +149,7 @@ bool TString_Test_Internal(const CHAR* Args)
         TEST_CHECK(String7.Capacity() == 13);
         TEST_CHECK(TCString<CHAR>::Strcmp(String7.GetCString(), "") == 0);
 
-        FString SearchString = "0123MeSearch89Me89";
+        String SearchString = "0123MeSearch89Me89";
         TEST_CHECK_STRING(SearchString, "0123MeSearch89Me89");
         TEST_CHECK(SearchString.Find("Me")                                    == 4);
         TEST_CHECK(SearchString.FindChar('M')                                 == 4);
@@ -206,27 +206,27 @@ bool TString_Test_Internal(const CHAR* Args)
             return true;
         }) == 15);
 
-        FString CompareString0 = "COMPARE";
+        String CompareString0 = "COMPARE";
         TEST_CHECK_STRING(CompareString0, "COMPARE");
 
-        FString CompareString1 = "compare";
+        String CompareString1 = "compare";
         TEST_CHECK_STRING(CompareString1, "compare");
         TEST_CHECK(CompareString0.Compare(CompareString1)                          != 0);
         TEST_CHECK(CompareString0.Compare(CompareString1, EStringCaseType::NoCase) == 0);
 
         CompareString1.Resize(7);
-        TEST_CHECK(FCString::Strcmp(CompareString1.GetCString(), "compare") == 0);
+        TEST_CHECK(CString::Strcmp(CompareString1.GetCString(), "compare") == 0);
 
         CompareString1.Resize(20);
-        TEST_CHECK(FCString::Strcmp(CompareString1.GetCString(), "compare") == 0);
+        TEST_CHECK(CString::Strcmp(CompareString1.GetCString(), "compare") == 0);
 
         CompareString1.Resize(7);
-        TEST_CHECK(FCString::Strcmp(CompareString1.GetCString(), "compare") == 0);
+        TEST_CHECK(CString::Strcmp(CompareString1.GetCString(), "compare") == 0);
 
         CHAR Buffer[6];
         Buffer[5] = 0;
         CompareString1.CopyToBuffer(Buffer, 5, 2);
-        TEST_CHECK(FCString::Strcmp(Buffer, "mpare") == 0);
+        TEST_CHECK(CString::Strcmp(Buffer, "mpare") == 0);
 
         CompareString0.Insert("lower", 4);
         TEST_CHECK_STRING(CompareString0, "COMPlowerARE");
@@ -237,7 +237,7 @@ bool TString_Test_Internal(const CHAR* Args)
         CompareString0.Replace('X', 0);
         TEST_CHECK_STRING(CompareString0, "XOMPupperARE");
 
-        FString CombinedString;
+        String CombinedString;
         CombinedString = CompareString0 + '5';
         TEST_CHECK_STRING(CombinedString, "XOMPupperARE5");
 
@@ -253,7 +253,7 @@ bool TString_Test_Internal(const CHAR* Args)
         CombinedString = CombinedString + CombinedString;
         TEST_CHECK_STRING(CombinedString, "Inserted5XOMPupperARE5AppendedInserted5XOMPupperARE5Appended");
 
-        FString TestString = "Test";
+        String TestString = "Test";
         TEST_CHECK_STRING(TestString, "Test");
 
         TEST_CHECK(("Test" == TestString) == true);
@@ -290,35 +290,35 @@ bool TString_Test_Internal(const CHAR* Args)
             std::cout << Index << '=' << TestString[Index] << std::endl;
         }
 
-        FStringWide WideCompareString = CharToWide(CombinedString);
+        StringWide WideCompareString = CharToWide(CombinedString);
         TEST_CHECK_STRING(WideCompareString, L"Inserted5XOMPupperARE5AppendedInserted5XOMPupperARE5Appended");
     }
 
     {
-        std::cout << std::endl << "----Testing FStringWide----" << std::endl << std::endl;
+        std::cout << std::endl << "----Testing StringWide----" << std::endl << std::endl;
 
-        FStringViewWide StringView(L"Hello FStringView");
+        StringViewWide StringView(L"Hello StringView");
 
         const WIDECHAR* SomeWideStringInsteadOfArgs = L"/Users/SomeFolder/Blabla/BlaBla";
 
-        FStringWide String0;
+        StringWide String0;
         TEST_CHECK_STRING(String0, L"");
         TEST_CHECK(String0.Length()   == 0);
         TEST_CHECK(String0.Capacity() == 0);
 
-        FStringWide String1 = L"Hello String";
+        StringWide String1 = L"Hello String";
         TEST_CHECK_STRING(String1, L"Hello String");
         TEST_CHECK(String1.Length()   == 12);
         TEST_CHECK(String1.Capacity() == 13);
 
-        FStringWide String2 = FStringWide(SomeWideStringInsteadOfArgs, 7);
+        StringWide String2 = StringWide(SomeWideStringInsteadOfArgs, 7);
         TEST_CHECK_STRING_N(String2, SomeWideStringInsteadOfArgs, 7);
 
-        FStringWide String3 = FStringWide(StringView);
-        TEST_CHECK_STRING(String3, L"Hello FStringView");
-        FStringWide String4 = String1;
+        StringWide String3 = StringWide(StringView);
+        TEST_CHECK_STRING(String3, L"Hello StringView");
+        StringWide String4 = String1;
         TEST_CHECK_STRING(String4, L"Hello String");
-        FStringWide String5 = Move(String2);
+        StringWide String5 = Move(String2);
         TEST_CHECK_STRING(String2, L"");
         TEST_CHECK_STRING_N(String5, SomeWideStringInsteadOfArgs, 7);
 
@@ -330,7 +330,7 @@ bool TString_Test_Internal(const CHAR* Args)
         const std::wstring ArgString = std::wstring(SomeWideStringInsteadOfArgs, 7) + L"Appended String_";
         TEST_CHECK_STRING(String5, ArgString.c_str());
 
-        FStringWide String6;
+        StringWide String6;
         String6.Format(L"Formatted String=%.4f", 0.004f);
         TEST_CHECK_STRING(String6, L"Formatted String=0.0040");
 
@@ -340,10 +340,10 @@ bool TString_Test_Internal(const CHAR* Args)
         String6.AppendFormat(L"Formatted String=%.4f", 0.0077f);
         TEST_CHECK_STRING(String6, L"Formatted String=0.0040_Formatted String=0.0077");
 
-        FStringWide LowerString6 = String6.ToLower();
+        StringWide LowerString6 = String6.ToLower();
         TEST_CHECK_STRING(LowerString6, L"formatted string=0.0040_formatted string=0.0077");
 
-        FStringWide UpperString6 = String6.ToUpper();
+        StringWide UpperString6 = String6.ToUpper();
         TEST_CHECK_STRING(UpperString6, L"FORMATTED STRING=0.0040_FORMATTED STRING=0.0077");
 
         String6.Clear();
@@ -352,7 +352,7 @@ bool TString_Test_Internal(const CHAR* Args)
         String6.Append(L"    Trimmable String    ");
         TEST_CHECK_STRING(String6, L"    Trimmable String    ");
 
-        FStringWide TrimmedString6 = String6.Trim();
+        StringWide TrimmedString6 = String6.Trim();
         TrimmedString6.Append(L'*');
         TEST_CHECK_STRING(TrimmedString6, L"Trimmable String*");
 
@@ -362,10 +362,10 @@ bool TString_Test_Internal(const CHAR* Args)
         String6.Append(L"123456789");
         TEST_CHECK_STRING(String6, L"123456789");
 
-        FStringWide ReversedString6 = String6.Reverse();
+        StringWide ReversedString6 = String6.Reverse();
         TEST_CHECK_STRING(ReversedString6, L"987654321");
 
-        FStringWide String7 = L"NewString";
+        StringWide String7 = L"NewString";
         TEST_CHECK_STRING(String7, L"NewString");
 
         String7.Reset(12);
@@ -373,7 +373,7 @@ bool TString_Test_Internal(const CHAR* Args)
         TEST_CHECK(String7.Capacity() == 13);
         TEST_CHECK(TCString<WIDECHAR>::Strncmp(String7.GetCString(), L"", 0) == 0);
 
-        FStringWide SearchString = L"0123MeSearch89Me89";
+        StringWide SearchString = L"0123MeSearch89Me89";
         TEST_CHECK_STRING(SearchString, L"0123MeSearch89Me89");
         TEST_CHECK(SearchString.Find(L"Me")                                    == 4);
         TEST_CHECK(SearchString.FindChar(L'M')                                 == 4);
@@ -430,27 +430,27 @@ bool TString_Test_Internal(const CHAR* Args)
             return true;
         }) == 15);
 
-        FStringWide CompareString0 = L"COMPARE";
+        StringWide CompareString0 = L"COMPARE";
         TEST_CHECK_STRING(CompareString0, L"COMPARE");
 
-        FStringWide CompareString1 = L"compare";
+        StringWide CompareString1 = L"compare";
         TEST_CHECK_STRING(CompareString1, L"compare");
         TEST_CHECK(CompareString0.Compare(CompareString1)                          != 0);
         TEST_CHECK(CompareString0.Compare(CompareString1, EStringCaseType::NoCase) == 0);
 
         CompareString1.Resize(7);
-        TEST_CHECK(FCStringWide::Strcmp(CompareString1.GetCString(), L"compare") == 0);
+        TEST_CHECK(CStringWide::Strcmp(CompareString1.GetCString(), L"compare") == 0);
 
         CompareString1.Resize(20);
-        TEST_CHECK(FCStringWide::Strcmp(CompareString1.GetCString(), L"compare") == 0);
+        TEST_CHECK(CStringWide::Strcmp(CompareString1.GetCString(), L"compare") == 0);
 
         CompareString1.Resize(7);
-        TEST_CHECK(FCStringWide::Strcmp(CompareString1.GetCString(), L"compare") == 0);
+        TEST_CHECK(CStringWide::Strcmp(CompareString1.GetCString(), L"compare") == 0);
 
         WIDECHAR Buffer[6];
         Buffer[5] = 0;
         CompareString1.CopyToBuffer(Buffer, 5, 2);
-        TEST_CHECK(FCStringWide::Strcmp(Buffer, L"mpare") == 0);
+        TEST_CHECK(CStringWide::Strcmp(Buffer, L"mpare") == 0);
 
         CompareString0.Insert(L"lower", 4);
         TEST_CHECK_STRING(CompareString0, L"COMPlowerARE");
@@ -461,7 +461,7 @@ bool TString_Test_Internal(const CHAR* Args)
         CompareString0.Replace(L'X', 0);
         TEST_CHECK_STRING(CompareString0, L"XOMPupperARE");
 
-        FStringWide CombinedString = CompareString0 + L'5';
+        StringWide CombinedString = CompareString0 + L'5';
         TEST_CHECK_STRING(CombinedString, L"XOMPupperARE5");
 
         CombinedString = L'5' + CombinedString;
@@ -476,7 +476,7 @@ bool TString_Test_Internal(const CHAR* Args)
         CombinedString = CombinedString + CombinedString;
         TEST_CHECK_STRING(CombinedString, L"Inserted5XOMPupperARE5AppendedInserted5XOMPupperARE5Appended");
 
-        FStringWide TestString = L"Test";
+        StringWide TestString = L"Test";
         TEST_CHECK_STRING(TestString, L"Test");
 
         TEST_CHECK((L"Test" == TestString) == true);
@@ -513,7 +513,7 @@ bool TString_Test_Internal(const CHAR* Args)
             std::wcout << Index << L'=' << TestString[Index] << std::endl;
         }
 
-        FString WideCompareString = WideToChar(CombinedString);
+        String WideCompareString = WideToChar(CombinedString);
         TEST_CHECK_STRING(WideCompareString, "Inserted5XOMPupperARE5AppendedInserted5XOMPupperARE5Appended");
     }
 
@@ -525,21 +525,21 @@ bool TString_Test_Internal(const CHAR* Args)
 bool TStaticString_Test_Internal(const CHAR* Args)
 {
     {
-        std::cout << std::endl << "----Testing FStaticString----" << std::endl << std::endl;
+        std::cout << std::endl << "----Testing StaticString----" << std::endl << std::endl;
 
-        FStringView StringView("Hello FStringView");
+        StringView StringView("Hello StringView");
 
-        FStaticString<64> StaticString0;
+        StaticString<64> StaticString0;
         TEST_CHECK_STRING(StaticString0, "");
-        FStaticString<64> StaticString1 = "Hello String";
+        StaticString<64> StaticString1 = "Hello String";
         TEST_CHECK_STRING(StaticString1, "Hello String");
-        FStaticString<64> StaticString2 = FStaticString<64>(Args, 7);
+        StaticString<64> StaticString2 = StaticString<64>(Args, 7);
         TEST_CHECK_STRING_N(StaticString2, Args, 7);
-        FStaticString<64> StaticString3 = FStaticString<64>(StringView);
-        TEST_CHECK_STRING(StaticString3, "Hello FStringView");
-        FStaticString<64> StaticString4 = StaticString1;
+        StaticString<64> StaticString3 = StaticString<64>(StringView);
+        TEST_CHECK_STRING(StaticString3, "Hello StringView");
+        StaticString<64> StaticString4 = StaticString1;
         TEST_CHECK_STRING(StaticString4, "Hello String");
-        FStaticString<64> StaticString5 = Move(StaticString2);
+        StaticString<64> StaticString5 = Move(StaticString2);
         TEST_CHECK_STRING(StaticString2, "");
         TEST_CHECK_STRING_N(StaticString5, Args, 7);
 
@@ -551,7 +551,7 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         const std::string ArgString = std::string(Args, 7) + "Appended String_";
         TEST_CHECK_STRING(StaticString5, ArgString.c_str());
 
-        FStaticString<64> StaticString6;
+        StaticString<64> StaticString6;
         StaticString6.Format("Formatted String=%.4f", 0.004f);
         TEST_CHECK_STRING(StaticString6, "Formatted String=0.0040");
 
@@ -561,10 +561,10 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         StaticString6.AppendFormat("Formatted String=%.4f", 0.0077f);
         TEST_CHECK_STRING(StaticString6, "Formatted String=0.0040_Formatted String=0.0077");
 
-        FStaticString<64> LowerStaticString6 = StaticString6.ToLower();
+        StaticString<64> LowerStaticString6 = StaticString6.ToLower();
         TEST_CHECK_STRING(LowerStaticString6, "formatted string=0.0040_formatted string=0.0077");
 
-        FStaticString<64> UpperStaticString6 = StaticString6.ToUpper();
+        StaticString<64> UpperStaticString6 = StaticString6.ToUpper();
         TEST_CHECK_STRING(UpperStaticString6, "FORMATTED STRING=0.0040_FORMATTED STRING=0.0077");
 
         StaticString6.Reset();
@@ -573,7 +573,7 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         StaticString6.Append("    Trimmable String    ");
         TEST_CHECK_STRING(StaticString6, "    Trimmable String    ");
 
-        FStaticString<64> TrimmedStaticString6 = StaticString6.Trim();
+        StaticString<64> TrimmedStaticString6 = StaticString6.Trim();
         TEST_CHECK_STRING(TrimmedStaticString6, "Trimmable String");
         TrimmedStaticString6.Append('*');
         TEST_CHECK_STRING(TrimmedStaticString6, "Trimmable String*");
@@ -584,10 +584,10 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         StaticString6.Append("123456789");
         TEST_CHECK_STRING(StaticString6, "123456789");
 
-        FStaticString<64> ReversedStaticString6 = StaticString6.Reverse();
+        StaticString<64> ReversedStaticString6 = StaticString6.Reverse();
         TEST_CHECK_STRING(ReversedStaticString6, "987654321");
 
-        FStaticString<64> SearchString = "0123MeSearch89Me89";
+        StaticString<64> SearchString = "0123MeSearch89Me89";
         TEST_CHECK_STRING(SearchString, "0123MeSearch89Me89");
 
         TEST_CHECK(SearchString.Find("Me")                                    == 4);
@@ -645,28 +645,28 @@ bool TStaticString_Test_Internal(const CHAR* Args)
             return true;
         }) == 15);
 
-        FStaticString<64> CompareString0 = "COMPARE";
+        StaticString<64> CompareString0 = "COMPARE";
         TEST_CHECK_STRING(CompareString0, "COMPARE");
 
-        FStaticString<64> CompareString1 = "compare";
+        StaticString<64> CompareString1 = "compare";
         TEST_CHECK_STRING(CompareString1, "compare");
 
         TEST_CHECK(CompareString0.Compare(CompareString1)                          != 0);
         TEST_CHECK(CompareString0.Compare(CompareString1, EStringCaseType::NoCase) == 0);
 
         CompareString1.Resize(7);
-        TEST_CHECK(FCString::Strcmp(CompareString1.GetCString(), "compare") == 0);
+        TEST_CHECK(CString::Strcmp(CompareString1.GetCString(), "compare") == 0);
 
         CompareString1.Resize(20);
-        TEST_CHECK(FCString::Strcmp(CompareString1.GetCString(), "compare") == 0);
+        TEST_CHECK(CString::Strcmp(CompareString1.GetCString(), "compare") == 0);
 
         CompareString1.Resize(7);
-        TEST_CHECK(FCString::Strcmp(CompareString1.GetCString(), "compare") == 0);
+        TEST_CHECK(CString::Strcmp(CompareString1.GetCString(), "compare") == 0);
 
         CHAR Buffer[6];
         Buffer[5] = 0;
         CompareString1.CopyToBuffer(Buffer, 5, 2);
-        TEST_CHECK(FCString::Strcmp(Buffer, "mpare") == 0);
+        TEST_CHECK(CString::Strcmp(Buffer, "mpare") == 0);
 
         CompareString0.Insert("lower", 4);
         TEST_CHECK_STRING(CompareString0, "COMPlowerARE");
@@ -677,7 +677,7 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         CompareString0.Replace('X', 0);
         TEST_CHECK_STRING(CompareString0, "XOMPupperARE");
 
-        FStaticString<64> CombinedString = (CompareString0 + '5');
+        StaticString<64> CombinedString = (CompareString0 + '5');
         TEST_CHECK_STRING(CombinedString, "XOMPupperARE5");
 
         CombinedString = '5' + CombinedString;
@@ -692,7 +692,7 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         CombinedString = CombinedString + CombinedString;
         TEST_CHECK_STRING(CombinedString, "Inserted5XOMPupperARE5AppendedInserted5XOMPupperARE5Appended");
 
-        FStaticString<64> TestString = "Test";
+        StaticString<64> TestString = "Test";
         TEST_CHECK_STRING(TestString, "Test");
 
         TEST_CHECK(("Test" == TestString) == true);
@@ -729,28 +729,28 @@ bool TStaticString_Test_Internal(const CHAR* Args)
             std::cout << Index << '=' << TestString[Index] << std::endl;
         }
 
-        FStaticStringWide<64> WideCompareString = CharToWide(CombinedString);
+        StaticStringWide<64> WideCompareString = CharToWide(CombinedString);
         TEST_CHECK_STRING(WideCompareString, L"Inserted5XOMPupperARE5AppendedInserted5XOMPupperARE5Appended");
     }
 
     {
-        std::cout << std::endl << "----Testing FStaticStringWide----" << std::endl << std::endl;
+        std::cout << std::endl << "----Testing StaticStringWide----" << std::endl << std::endl;
 
-        FStringViewWide StringView(L"Hello FStringView");
+        StringViewWide StringView(L"Hello StringView");
 
         const WIDECHAR* SomeWideStringInsteadOfArgs = L"/Users/SomeFolder/Blabla/BlaBla";
 
-        FStaticStringWide<64> StaticString0;
+        StaticStringWide<64> StaticString0;
         TEST_CHECK_STRING(StaticString0, L"");
-        FStaticStringWide<64> StaticString1 = L"Hello String";
+        StaticStringWide<64> StaticString1 = L"Hello String";
         TEST_CHECK_STRING(StaticString1, L"Hello String");
-        FStaticStringWide<64> StaticString2 = FStaticStringWide<64>(SomeWideStringInsteadOfArgs, 7);
+        StaticStringWide<64> StaticString2 = StaticStringWide<64>(SomeWideStringInsteadOfArgs, 7);
         TEST_CHECK_STRING_N(StaticString2, SomeWideStringInsteadOfArgs, 7);
-        FStaticStringWide<64> StaticString3 = FStaticStringWide<64>(StringView);
-        TEST_CHECK_STRING(StaticString3, L"Hello FStringView");
-        FStaticStringWide<64> StaticString4 = StaticString1;
+        StaticStringWide<64> StaticString3 = StaticStringWide<64>(StringView);
+        TEST_CHECK_STRING(StaticString3, L"Hello StringView");
+        StaticStringWide<64> StaticString4 = StaticString1;
         TEST_CHECK_STRING(StaticString4, L"Hello String");
-        FStaticStringWide<64> StaticString5 = Move(StaticString2);
+        StaticStringWide<64> StaticString5 = Move(StaticString2);
         TEST_CHECK_STRING(StaticString2, L"");
         TEST_CHECK_STRING_N(StaticString5, SomeWideStringInsteadOfArgs, 7);
 
@@ -762,7 +762,7 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         const std::wstring ArgString = std::wstring(SomeWideStringInsteadOfArgs, 7) + L"Appended String_";
         TEST_CHECK_STRING(StaticString5, ArgString.c_str());
 
-        FStaticStringWide<64> StaticString6;
+        StaticStringWide<64> StaticString6;
         StaticString6.Format(L"Formatted String=%.4f", 0.004f);
         TEST_CHECK_STRING(StaticString6, L"Formatted String=0.0040");
 
@@ -772,10 +772,10 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         StaticString6.AppendFormat(L"Formatted String=%.4f", 0.0077f);
         TEST_CHECK_STRING(StaticString6, L"Formatted String=0.0040_Formatted String=0.0077");
 
-        FStaticStringWide<64> LowerStaticString6 = StaticString6.ToLower();
+        StaticStringWide<64> LowerStaticString6 = StaticString6.ToLower();
         TEST_CHECK_STRING(LowerStaticString6, L"formatted string=0.0040_formatted string=0.0077");
 
-        FStaticStringWide<64> UpperStaticString6 = StaticString6.ToUpper();
+        StaticStringWide<64> UpperStaticString6 = StaticString6.ToUpper();
         TEST_CHECK_STRING(UpperStaticString6, L"FORMATTED STRING=0.0040_FORMATTED STRING=0.0077");
 
         StaticString6.Reset();
@@ -784,7 +784,7 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         StaticString6.Append(L"    Trimmable String    ");
         TEST_CHECK_STRING(StaticString6, L"    Trimmable String    ");
 
-        FStaticStringWide<64> TrimmedStaticString6 = StaticString6.Trim();
+        StaticStringWide<64> TrimmedStaticString6 = StaticString6.Trim();
         TrimmedStaticString6.Append(L'*');
         TEST_CHECK_STRING(TrimmedStaticString6, L"Trimmable String*");
 
@@ -794,10 +794,10 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         StaticString6.Append(L"123456789");
         TEST_CHECK_STRING(StaticString6, L"123456789");
 
-        FStaticStringWide<64> ReversedStaticString6 = StaticString6.Reverse();
+        StaticStringWide<64> ReversedStaticString6 = StaticString6.Reverse();
         TEST_CHECK_STRING(ReversedStaticString6, L"987654321");
 
-        FStaticStringWide<64> SearchString = L"0123MeSearch89Me89";
+        StaticStringWide<64> SearchString = L"0123MeSearch89Me89";
         TEST_CHECK_STRING(SearchString, L"0123MeSearch89Me89");
 
         TEST_CHECK(SearchString.Find(L"Me")                                    == 4);
@@ -855,28 +855,28 @@ bool TStaticString_Test_Internal(const CHAR* Args)
             return true;
         }) == 15);
 
-        FStaticStringWide<64> CompareString0 = L"COMPARE";
+        StaticStringWide<64> CompareString0 = L"COMPARE";
         TEST_CHECK_STRING(CompareString0, L"COMPARE");
 
-        FStaticStringWide<64> CompareString1 = L"compare";
+        StaticStringWide<64> CompareString1 = L"compare";
         TEST_CHECK_STRING(CompareString1, L"compare");
 
         TEST_CHECK(CompareString0.Compare(CompareString1)                          != 0);
         TEST_CHECK(CompareString0.Compare(CompareString1, EStringCaseType::NoCase) == 0);
 
         CompareString1.Resize(7);
-        TEST_CHECK(FCStringWide::Strcmp(CompareString1.GetCString(), L"compare") == 0);
+        TEST_CHECK(CStringWide::Strcmp(CompareString1.GetCString(), L"compare") == 0);
 
         CompareString1.Resize(20);
-        TEST_CHECK(FCStringWide::Strcmp(CompareString1.GetCString(), L"compare") == 0);
+        TEST_CHECK(CStringWide::Strcmp(CompareString1.GetCString(), L"compare") == 0);
 
         CompareString1.Resize(7);
-        TEST_CHECK(FCStringWide::Strcmp(CompareString1.GetCString(), L"compare") == 0);
+        TEST_CHECK(CStringWide::Strcmp(CompareString1.GetCString(), L"compare") == 0);
 
         WIDECHAR Buffer[6];
         Buffer[5] = 0;
         CompareString1.CopyToBuffer(Buffer, 5, 2);
-        TEST_CHECK(FCStringWide::Strcmp(Buffer, L"mpare") == 0);
+        TEST_CHECK(CStringWide::Strcmp(Buffer, L"mpare") == 0);
 
         CompareString0.Insert(L"lower", 4);
         TEST_CHECK_STRING(CompareString0, L"COMPlowerARE");
@@ -887,7 +887,7 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         CompareString0.Replace(L'X', 0);
         TEST_CHECK_STRING(CompareString0, L"XOMPupperARE");
 
-        FStaticStringWide<64> CombinedString = (CompareString0 + L'5');
+        StaticStringWide<64> CombinedString = (CompareString0 + L'5');
         TEST_CHECK_STRING(CombinedString, L"XOMPupperARE5");
 
         CombinedString = L'5' + CombinedString;
@@ -902,7 +902,7 @@ bool TStaticString_Test_Internal(const CHAR* Args)
         CombinedString = CombinedString + CombinedString;
         TEST_CHECK_STRING(CombinedString, L"Inserted5XOMPupperARE5AppendedInserted5XOMPupperARE5Appended");
 
-        FStaticStringWide<64> TestString = L"Test";
+        StaticStringWide<64> TestString = L"Test";
         TEST_CHECK_STRING(TestString, L"Test");
 
         TEST_CHECK((L"Test" == TestString) == true);
@@ -939,7 +939,7 @@ bool TStaticString_Test_Internal(const CHAR* Args)
             std::wcout << Index << L'=' << TestString[Index] << std::endl;
         }
 
-        FStaticString<64> WideCompareString = WideToChar(CombinedString);
+        StaticString<64> WideCompareString = WideToChar(CombinedString);
         TEST_CHECK_STRING(WideCompareString, "Inserted5XOMPupperARE5AppendedInserted5XOMPupperARE5Appended");
     }
     
@@ -953,32 +953,32 @@ bool TStringView_Test_Internal(const CHAR* Args)
     UNREFERENCED_VARIABLE(Args);
 
     {
-        std::cout << std::endl << "----Testing FStringView----" << std::endl << std::endl;
+        std::cout << std::endl << "----Testing StringView----" << std::endl << std::endl;
 
         const CHAR* LongString = "This is a long string";
 
-        FStringView StringView0;
+        StringView StringView0;
         TEST_CHECK_STRING(StringView0, "");
-        FStringView StringView1 = LongString;
+        StringView StringView1 = LongString;
         TEST_CHECK_STRING(StringView1, "This is a long string");
-        FStringView StringView2 = FStringView(LongString, 4, 5);
+        StringView StringView2 = StringView(LongString, 4, 5);
         TEST_CHECK_STRING(StringView2, "is a");
 
         CHAR Buffer[6] = { };
         Buffer[5] = 0;
         StringView1.CopyToBuffer(Buffer, 5, 3);
-        TEST_CHECK(FCString::Strcmp(Buffer, "s is ") == 0);
+        TEST_CHECK(CString::Strcmp(Buffer, "s is ") == 0);
 
-        FStringView StringView3 = "    Trimmable String    ";
+        StringView StringView3 = "    Trimmable String    ";
         TEST_CHECK_STRING(StringView3, "    Trimmable String    ");
 
-        FStringView StringView4 = StringView3.Trim();
+        StringView StringView4 = StringView3.Trim();
         TEST_CHECK_STRING(StringView4, "Trimmable String");
 
-        FStringView StringView5 = FStringView("COMPAREPostfix", 7);
+        StringView StringView5 = StringView("COMPAREPostfix", 7);
         TEST_CHECK_STRING(StringView5, "COMPARE");
 
-        FStringView StringView6 = FStringView("comparePostfix", 7);
+        StringView StringView6 = StringView("comparePostfix", 7);
         TEST_CHECK_STRING(StringView6, "compare");
 
         TEST_CHECK(StringView5.Compare(StringView6)                          != 0);
@@ -987,7 +987,7 @@ bool TStringView_Test_Internal(const CHAR* Args)
         StringView6.Clear();
         PrintStringView(StringView6);
 
-        FStringView SearchString = "0123MeSearch89Me89";
+        StringView SearchString = "0123MeSearch89Me89";
         TEST_CHECK_STRING(SearchString, "0123MeSearch89Me89");
 
         TEST_CHECK(SearchString.Find("Me")                                    == 4);
@@ -1045,7 +1045,7 @@ bool TStringView_Test_Internal(const CHAR* Args)
             return true;
         }) == 15);
 
-        FStringView TestString = "Test";
+        StringView TestString = "Test";
         TEST_CHECK_STRING(TestString, "Test");
 
         TEST_CHECK(("Test" == TestString) == true);
@@ -1078,32 +1078,32 @@ bool TStringView_Test_Internal(const CHAR* Args)
     }
 
     {
-        std::cout << std::endl << "----Testing FStringViewWide----" << std::endl << std::endl;
+        std::cout << std::endl << "----Testing StringViewWide----" << std::endl << std::endl;
 
         const WIDECHAR* LongString = L"This is a long string";
 
-        FStringViewWide StringView0;
+        StringViewWide StringView0;
         TEST_CHECK_STRING(StringView0, L"");
-        FStringViewWide StringView1 = LongString;
+        StringViewWide StringView1 = LongString;
         TEST_CHECK_STRING(StringView1, L"This is a long string");
-        FStringViewWide StringView2 = FStringViewWide(LongString, 4, 5);
+        StringViewWide StringView2 = StringViewWide(LongString, 4, 5);
         TEST_CHECK_STRING(StringView2, L"is a");
 
         WIDECHAR Buffer[6] = { };
         Buffer[5] = 0;
         StringView1.CopyToBuffer(Buffer, 5, 3);
-        TEST_CHECK(FCStringWide::Strcmp(Buffer, L"s is ") == 0);
+        TEST_CHECK(CStringWide::Strcmp(Buffer, L"s is ") == 0);
 
-        FStringViewWide StringView3 = L"    Trimmable String    ";
+        StringViewWide StringView3 = L"    Trimmable String    ";
         TEST_CHECK_STRING(StringView3, L"    Trimmable String    ");
 
-        FStringViewWide StringView4 = StringView3.Trim();
+        StringViewWide StringView4 = StringView3.Trim();
         TEST_CHECK_STRING(StringView4, L"Trimmable String");
 
-        FStringViewWide StringView5 = FStringViewWide(L"COMPAREPostfix", 7);
+        StringViewWide StringView5 = StringViewWide(L"COMPAREPostfix", 7);
         TEST_CHECK_STRING(StringView5, L"COMPARE");
 
-        FStringViewWide StringView6 = FStringViewWide(L"comparePostfix", 7);
+        StringViewWide StringView6 = StringViewWide(L"comparePostfix", 7);
         TEST_CHECK_STRING(StringView6, L"compare");
 
         TEST_CHECK(StringView5.Compare(StringView6)                          != 0);
@@ -1112,7 +1112,7 @@ bool TStringView_Test_Internal(const CHAR* Args)
         StringView6.Clear();
         PrintWideStringView(StringView6);
 
-        FStringViewWide SearchString = L"0123MeSearch89Me89";
+        StringViewWide SearchString = L"0123MeSearch89Me89";
         TEST_CHECK_STRING(SearchString, L"0123MeSearch89Me89");
 
         TEST_CHECK(SearchString.Find(L"Me")                                    == 4);
@@ -1170,7 +1170,7 @@ bool TStringView_Test_Internal(const CHAR* Args)
             return true;
         }) == 15);
 
-        FStringViewWide TestString = L"Test";
+        StringViewWide TestString = L"Test";
         TEST_CHECK_STRING(TestString, L"Test");
 
         TEST_CHECK((L"Test" == TestString) == true);

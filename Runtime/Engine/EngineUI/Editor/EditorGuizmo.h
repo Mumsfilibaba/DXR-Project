@@ -4,8 +4,8 @@
 struct ImGuiContext;
 struct ImGuiWindow;
 
-class FMatrix4;
-class FVector3;
+class Matrix4;
+class Vector3;
 
 struct ENGINE_API EditorGuizmo
 {
@@ -103,7 +103,7 @@ public:
     static bool IsOver();
     static bool IsOver(EOperation::Type Op);
     static bool IsOver(float* Position, float PixelRadius);
-    static bool IsOver(FVector3& Position, float PixelRadius);
+    static bool IsOver(Vector3& Position, float PixelRadius);
     static bool IsUsing();
     static bool IsUsingViewManipulate();
     static bool IsViewManipulateHovered();
@@ -112,26 +112,26 @@ public:
 
     static void DecomposeMatrixToComponents(const float* Matrix, float* Translation, float* Rotation, float* Scale);
     static void RecomposeMatrixFromComponents(const float* Translation, const float* Rotation, const float* Scale, float* Matrix);
-    static void DecomposeMatrixToComponents(const FMatrix4& InMatrix, FVector3& OutTranslation, FVector3& OutRotation, FVector3& OutScale);
-    static void RecomposeMatrixFromComponents(const FVector3& InTranslation, const FVector3& InRotation, const FVector3& InScale, FMatrix4& OutMatrix);
+    static void DecomposeMatrixToComponents(const Matrix4& InMatrix, Vector3& OutTranslation, Vector3& OutRotation, Vector3& OutScale);
+    static void RecomposeMatrixFromComponents(const Vector3& InTranslation, const Vector3& InRotation, const Vector3& InScale, Matrix4& OutMatrix);
 
     static void DrawCubes(const float* View, const float* Projection, const float* Matrices, int32 MatrixCount);
     static void DrawGrid(const float* View, const float* Projection, const float* Matrix, float GridSize);
-    static void DrawCubes(const FMatrix4& View, const FMatrix4& Projection, const FMatrix4* Matrices, int32 MatrixCount);
-    static void DrawGrid(const FMatrix4& View, const FMatrix4& Projection, const FMatrix4& Matrix, float GridSize);
+    static void DrawCubes(const Matrix4& View, const Matrix4& Projection, const Matrix4* Matrices, int32 MatrixCount);
+    static void DrawGrid(const Matrix4& View, const Matrix4& Projection, const Matrix4& Matrix, float GridSize);
 
     // Manipulation
     static bool Manipulate(const float* View, const float* Projection, EOperation::Type Operation, EMode Mode, float* InOutMatrix, float* OutDeltaMatrix = nullptr,
         const float* Snap = nullptr, const float* LocalBounds = nullptr, const float* BoundsSnap = nullptr);
-    static bool Manipulate(const FMatrix4& View, const FMatrix4& Projection, EOperation::Type Operation, EMode Mode, FMatrix4& InOutMatrix, FMatrix4* OutDeltaMatrix = nullptr,
+    static bool Manipulate(const Matrix4& View, const Matrix4& Projection, EOperation::Type Operation, EMode Mode, Matrix4& InOutMatrix, Matrix4* OutDeltaMatrix = nullptr,
         const float* Snap = nullptr, const float* LocalBounds = nullptr, const float* BoundsSnap = nullptr);
 
     // View manipulator
     static void ViewManipulate(float* InOutView, float Length, ImVec2 Position, ImVec2 Size, ImU32 BackgroundColor);
     static void ViewManipulate(float* InOutView, const float* Projection, EOperation::Type Operation, EMode Mode, float* InOutMatrix, float Length, ImVec2 Position,
         ImVec2 Size, ImU32 BackgroundColor);
-    static void ViewManipulate(FMatrix4& InOutView, float Length, ImVec2 Position, ImVec2 Size, ImU32 BackgroundColor);
-    static void ViewManipulate(FMatrix4& InOutView, const FMatrix4& Projection, EOperation::Type Operation, EMode Mode, FMatrix4& InOutMatrix, float Length, ImVec2 Position,
+    static void ViewManipulate(Matrix4& InOutView, float Length, ImVec2 Position, ImVec2 Size, ImU32 BackgroundColor);
+    static void ViewManipulate(Matrix4& InOutView, const Matrix4& Projection, EOperation::Type Operation, EMode Mode, Matrix4& InOutMatrix, float Length, ImVec2 Position,
         ImVec2 Size, ImU32 BackgroundColor);
 
     static void PushID(const char* StrID);

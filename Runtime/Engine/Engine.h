@@ -86,8 +86,8 @@ private:
     bool CreateSceneViewport();
 
     void OnEngineWindowClosed();
-    void OnEngineWindowMoved(const FIntVector2& NewScreenPosition);
-    void OnEngineWindowResized(const FIntVector2& NewScreenSize);
+    void OnEngineWindowMoved(const IntVector2& NewScreenPosition);
+    void OnEngineWindowResized(const IntVector2& NewScreenSize);
 
     TSharedPtr<FWindowWidget>   EngineWindow;
     TSharedPtr<FViewportWidget> EngineViewportWidget;

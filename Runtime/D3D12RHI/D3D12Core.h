@@ -88,7 +88,7 @@
     #define D3D12_LOG_TRANSITION_MISMATCH(InTexture, InContext, InEngineBeforeState, InD3D12BeforeState, InD3D12AfterState, InCurrentState) \
         do \
         { \
-            FString TransitionDebugName; \
+            String TransitionDebugName; \
             (InTexture)->GetDebugName(TransitionDebugName); \
             D3D12_ERROR( \
                 "TransitionTextureState mismatch on '%s' [%s]: " \

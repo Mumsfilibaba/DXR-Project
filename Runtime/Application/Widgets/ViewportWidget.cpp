@@ -19,7 +19,7 @@ void FViewportWidget::Initialize(const FInitializer& Initializer)
     ViewportInterface = Initializer.ViewportInterface;
 }
 
-void FViewportWidget::SetPosition(const FIntVector2& InPosition, EViewportPositionSpace InSpace)
+void FViewportWidget::SetPosition(const IntVector2& InPosition, EViewportPositionSpace InSpace)
 {
     Position = InPosition;
 
@@ -34,7 +34,7 @@ void FViewportWidget::SetPosition(const FIntVector2& InPosition, EViewportPositi
             {
                 TSharedPtr<FWindowWidget> WindowWidget = StaticCastSharedPtr<FWindowWidget>(LocalParentWidget.ToSharedPtr());
 
-                const FIntVector2 WindowPos = WindowWidget->GetPosition();
+                const IntVector2 WindowPos = WindowWidget->GetPosition();
                 Position.X -= WindowPos.X;
                 Position.Y -= WindowPos.Y;
                 break;

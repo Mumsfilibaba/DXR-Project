@@ -22,62 +22,62 @@ public:
     void UpdateViewMatrix();
     void UpdateWorldToClipSpaceMatrices();
 
-    FORCEINLINE const FMatrix4& GetViewMatrix() const
+    FORCEINLINE const Matrix4& GetViewMatrix() const
     {
         return View;
     }
 
-    FORCEINLINE const FMatrix4& GetViewInverseMatrix() const
+    FORCEINLINE const Matrix4& GetViewInverseMatrix() const
     {
         return ViewInverse;
     }
 
-    FORCEINLINE const FMatrix4& GetProjectionMatrix() const
+    FORCEINLINE const Matrix4& GetProjectionMatrix() const
     {
         return Projection;
     }
 
-    FORCEINLINE const FMatrix4& GetProjectionInverseMatrix() const
+    FORCEINLINE const Matrix4& GetProjectionInverseMatrix() const
     {
         return ProjectionInverse;
     }
 
-    FORCEINLINE const FMatrix4& GetViewProjectionMatrix() const
+    FORCEINLINE const Matrix4& GetViewProjectionMatrix() const
     {
         return ViewProjection;
     }
 
-    FORCEINLINE const FMatrix4& GetViewProjectionInverseMatrix() const
+    FORCEINLINE const Matrix4& GetViewProjectionInverseMatrix() const
     {
         return ViewProjectionInverse;
     }
 
-    FORCEINLINE const FMatrix4& GetViewProjectionWitoutTranslateMatrix() const
+    FORCEINLINE const Matrix4& GetViewProjectionWitoutTranslateMatrix() const
     {
         return ViewProjectionNoTranslation;
     }
 
-    FORCEINLINE const FVector3& GetPosition() const
+    FORCEINLINE const Vector3& GetPosition() const
     {
         return Position;
     }
 
-    FORCEINLINE const FVector3& GetRotation() const
+    FORCEINLINE const Vector3& GetRotation() const
     {
         return Rotation;
     }
 
-    FORCEINLINE const FVector3& GetForwardVector() const
+    FORCEINLINE const Vector3& GetForwardVector() const
     {
         return ForwardVector;
     }
 
-    FORCEINLINE const FVector3& GetUpVector() const
+    FORCEINLINE const Vector3& GetUpVector() const
     {
         return UpVector;
     }
 
-    FORCEINLINE const FVector3& GetRightVector() const
+    FORCEINLINE const Vector3& GetRightVector() const
     {
         return RightVector;
     }
@@ -115,24 +115,22 @@ public:
 private:
     void UpdateDirectionVectors();
 
-    FMatrix4 View;
-    FMatrix4 ViewInverse;
-    FMatrix4 Projection;
-    FMatrix4 ProjectionInverse;
-    FMatrix4 ViewProjection;
-    FMatrix4 ViewProjectionInverse;
-    FMatrix4 ViewProjectionNoTranslation;
-
-    float NearPlane;
-    float FarPlane;
-    float AspectRatio;
-    float ViewportWidth;
-    float ViewportHeight;
-    float FieldOfView;
-
-    FVector3 Position;
-    FVector3 Rotation;
-    FVector3 ForwardVector;
-    FVector3 RightVector;
-    FVector3 UpVector;
+    Matrix4 View;
+    Matrix4 ViewInverse;
+    Matrix4 Projection;
+    Matrix4 ProjectionInverse;
+    Matrix4 ViewProjection;
+    Matrix4 ViewProjectionInverse;
+    Matrix4 ViewProjectionNoTranslation;
+    float   NearPlane;
+    float   FarPlane;
+    float   AspectRatio;
+    float   ViewportWidth;
+    float   ViewportHeight;
+    float   FieldOfView;
+    Vector3 Position;
+    Vector3 Rotation;
+    Vector3 ForwardVector;
+    Vector3 RightVector;
+    Vector3 UpVector;
 };

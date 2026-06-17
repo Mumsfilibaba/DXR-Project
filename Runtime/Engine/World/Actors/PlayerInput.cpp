@@ -150,7 +150,7 @@ int32 FPlayerInput::AddAxisKeyMapping(const FAxisKeyMapping& AxisKeyMapping)
     return MappingIndex;
 }
 
-void FPlayerInput::SetCursorPosition(const FIntVector2& Position)
+void FPlayerInput::SetCursorPosition(const IntVector2& Position)
 {
     if (TSharedPtr<ICursor> Cursor = GetCursorInterface())
     {
@@ -207,14 +207,14 @@ void FPlayerInput::OnKeyEvent(FKey Key, bool bIsDown, bool bIsRepeat)
     }
 }
 
-FIntVector2 FPlayerInput::GetCursorPosition() const
+IntVector2 FPlayerInput::GetCursorPosition() const
 {
     if (TSharedPtr<ICursor> Cursor = GetCursorInterface())
     {
         Cursor->GetPosition();
     }
 
-    return FIntVector2(0, 0);
+    return IntVector2(0, 0);
 }
 
 FKeyState FPlayerInput::GetKeyState(FKey Key) const

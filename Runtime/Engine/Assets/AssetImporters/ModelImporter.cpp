@@ -10,12 +10,12 @@
 #include "Engine/Assets/AssetImporters/FBXImporter.h"
 #include "Engine/Assets/AssetImporters/OBJImporter.h"
 
-bool FModelImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags, FModelCreateInfo& OutCreateInfo)
+bool FModelImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags, FModelCreateInfo& OutCreateInfo)
 {
     FByteInputStream InputStream;
 
     {
-        const FString Filename = FString(InFilename);
+        const String Filename = String(InFilename);
         TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(Filename);
         if (!FileHandle)
         {
@@ -74,7 +74,7 @@ bool FModelImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFl
         FMeshCreateInfo& MeshCreateInfo = OutCreateInfo.Meshes[MeshIdx];
 
         const ModelFormat::FMeshInfo& MeshHeader = MeshHeaders[MeshIdx];
-        MAYBE_UNUSED const int32 Length = FCString::Strlen(MeshHeader.Name);
+        MAYBE_UNUSED const int32 Length = CString::Strlen(MeshHeader.Name);
         CHECK(Length < MODEL_FORMAT_MAX_NAME_LENGTH);
 
         MeshCreateInfo.Name = MeshHeader.Name;
@@ -108,14 +108,14 @@ bool FModelImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFl
     const ModelFormat::FTextureInfo* Textures = InputStream.PeekData<ModelFormat::FTextureInfo>(ModelHeader->TextureDataOffset);
     for (int32 TextureIdx = 0; TextureIdx < ModelHeader->NumTextures; ++TextureIdx)
     {
-        const FStringView FilenameView = Textures[TextureIdx].Filepath;
+        const StringView FilenameView = Textures[TextureIdx].Filepath;
         if (!FPlatformFile::IsFile(*FilenameView))
         {
             LOG_ERROR("[FModelImporter] Stored file contains a invalid file reference, file will be reloaded from source");
             return false;
         }
 
-        const FString Filename = FString(FilenameView);
+        const String Filename = String(FilenameView);
         LoadedTextures[TextureIdx] = FAssetManager::Get().LoadTexture(Filename);
         if (!LoadedTextures[TextureIdx])
         {
@@ -167,12 +167,12 @@ bool FModelImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFl
     return true;
 }
 
-bool FModelImporter::MatchExtenstion(const FStringView& FileName)
+bool FModelImporter::MatchExtenstion(const StringView& FileName)
 {
     return FileName.EndsWith(".dxrmesh", EStringCaseType::NoCase);
 }
 
-bool FModelSerializer::Serialize(const FString& Filename, const FModelCreateInfo& ModelInfo)
+bool FModelSerializer::Serialize(const String& Filename, const FModelCreateInfo& ModelInfo)
 {
     ModelFormat::FModelHeader ModelHeader;
     Memory::Memzero(&ModelHeader, sizeof(ModelFormat::FModelHeader));
@@ -203,7 +203,7 @@ bool FModelSerializer::Serialize(const FString& Filename, const FModelCreateInfo
         Header.FirstSubMesh = NumSubMeshes;
         Header.NumSubMeshes = MeshCreateInfo.SubMeshes.Size();
 
-        FCString::Strncpy(Header.Name, *MeshCreateInfo.Name, MODEL_FORMAT_MAX_NAME_LENGTH);
+        CString::Strncpy(Header.Name, *MeshCreateInfo.Name, MODEL_FORMAT_MAX_NAME_LENGTH);
         MeshDataOffset += OutputStream.Write(Header, MeshDataOffset);
 
         NumVertices  += Header.NumVertices;
@@ -222,6 +222,7 @@ bool FModelSerializer::Serialize(const FString& Filename, const FModelCreateInfo
     int32 VertexDataOffset  = ModelHeader.VertexDataOffset;
     int32 IndexDataOffset   = ModelHeader.IndexDataOffset;
     int32 SubMeshDataOffset = ModelHeader.SubMeshDataOffset;
+
     for (int32 MeshIdx = 0; MeshIdx < ModelHeader.NumMeshes; ++MeshIdx)
     {
         const FMeshCreateInfo& MeshCreateInfo = ModelInfo.Meshes[MeshIdx];

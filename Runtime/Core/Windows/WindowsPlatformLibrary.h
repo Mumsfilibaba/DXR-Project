@@ -7,13 +7,13 @@ struct FWindowsPlatformLibrary final : public FGenericPlatformLibrary
 {
     static FORCEINLINE void* LoadDynamicLib(const CHAR* LibraryName)
     {
-        const FString RealName = GetRealName(LibraryName);
+        const String RealName = GetRealName(LibraryName);
         return reinterpret_cast<void*>(::LoadLibraryA(*RealName));
     }
 
     static FORCEINLINE void* GetLoadedHandle(const CHAR* LibraryName)
     {
-        const FString RealName = GetRealName(LibraryName);
+        const String RealName = GetRealName(LibraryName);
         return reinterpret_cast<void*>(::GetModuleHandleA(*RealName));
     }
 
@@ -38,9 +38,9 @@ struct FWindowsPlatformLibrary final : public FGenericPlatformLibrary
         return ".dll";
     }
 
-    static FORCEINLINE FString GetRealName(const CHAR* LibraryName)
+    static FORCEINLINE String GetRealName(const CHAR* LibraryName)
     {
-        return FString(LibraryName) + GetDynamicLibExtension();
+        return String(LibraryName) + GetDynamicLibExtension();
     }
 
     static FORCEINLINE bool IsLibraryLoaded(const CHAR* LibraryName)

@@ -14,7 +14,7 @@ bool FMacPlatformSystemClipboard::HasText()
     return (Str != nil && [Str length] > 0);
 }
 
-bool FMacPlatformSystemClipboard::GetText(FString& OutText)
+bool FMacPlatformSystemClipboard::GetText(String& OutText)
 {
     OutText.Clear();
 
@@ -36,11 +36,11 @@ bool FMacPlatformSystemClipboard::GetText(FString& OutText)
         return false;
     }
 
-    OutText = FString(Utf8);
+    OutText = String(Utf8);
     return true;
 }
 
-bool FMacPlatformSystemClipboard::SetText(const FString& InText)
+bool FMacPlatformSystemClipboard::SetText(const String& InText)
 {
     NSPasteboard* Pasteboard = [NSPasteboard generalPasteboard];
     if (!Pasteboard)

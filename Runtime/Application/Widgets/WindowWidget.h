@@ -5,10 +5,10 @@
 #include "Application/Widgets/Widget.h"
 
 /** @brief Delegate called when the window is moved. */
-DECLARE_DELEGATE(FOnWindowMoved, const FIntVector2&);
+DECLARE_DELEGATE(FOnWindowMoved, const IntVector2&);
 
 /** @brief Delegate called when the window is resized. */
-DECLARE_DELEGATE(FOnWindowResized, const FIntVector2&);
+DECLARE_DELEGATE(FOnWindowResized, const IntVector2&);
 
 /** @brief Delegate called when the window is closed. */
 DECLARE_DELEGATE(FOnWindowClosed);
@@ -41,16 +41,16 @@ public:
         }
 
         /** @brief The title of the window. */
-        FString Title;     
+        String Title;     
         
         /** @brief Optional parent/owner window (used for owned popup/tool windows). */
         TSharedPtr<FWindowWidget> ParentWindow;
 
         /** @brief The size of the window (width, height). */
-        FIntVector2 Size;      
+        IntVector2 Size;      
         
         /** @brief The position of the window (x, y). */
-        FIntVector2 Position;  
+        IntVector2 Position;  
         
         /** @brief Style flags for the window. */
         EWindowStyleFlags StyleFlags;
@@ -66,10 +66,8 @@ public:
 
     // FWidget Interface
     virtual void Tick(const FRectangle& AssignedBounds) override final;
-
     virtual bool IsWindow() const override final;
-
-    virtual void FindChildrenContainingPoint(const FIntVector2& Point, FWidgetPath& OutParentWidgets) override final;
+    virtual void FindChildrenContainingPoint(const IntVector2& Point, FWidgetPath& OutParentWidgets) override final;
 
     /**
      * @brief Initializes the window with the specified parameters.
@@ -128,14 +126,14 @@ public:
      * 
      * @param InSize The new size of the window.
      */
-    void OnWindowResize(const FIntVector2& InSize);
+    void OnWindowResize(const IntVector2& InSize);
 
     /**
      * @brief Called when the platform window is moved.
      * 
      * @param InPosition The new position of the window.
      */
-    void OnWindowMoved(const FIntVector2& InPosition);
+    void OnWindowMoved(const IntVector2& InPosition);
 
     /**
      * @brief Resizes the window to a new size.
@@ -143,7 +141,7 @@ public:
      * This function also sets the platform window's size and updates the cached size.
      * @param InSize The new size for the window.
      */
-    void Resize(const FIntVector2& InSize);
+    void Resize(const IntVector2& InSize);
 
     /**
      * @brief Moves the window to a new position.
@@ -151,35 +149,35 @@ public:
      * This function also sets the platform window's position and updates the cached position.
      * @param InPosition The new position for the window.
      */
-    void MoveTo(const FIntVector2& InPosition);
+    void MoveTo(const IntVector2& InPosition);
         
     /**
      * @brief Sets the cached window size without modifying the platform window size.
      * 
      * @param InSize The new cached size.
      */
-    void SetSize(const FIntVector2& InSize);
+    void SetSize(const IntVector2& InSize);
     
     /**
      * @brief Sets the cached window position without modifying the platform window position.
      * 
      * @param InPosition The new cached position.
      */
-    void SetPosition(const FIntVector2& InPosition);
+    void SetPosition(const IntVector2& InPosition);
 
     /**
      * @brief Gets the current cached window size.
      * 
      * @return The size of the window.
      */
-    FIntVector2 GetSize() const;
+    IntVector2 GetSize() const;
     
     /**
      * @brief Gets the current cached window position.
      * 
      * @return The position of the window.
      */
-    FIntVector2 GetPosition() const;
+    IntVector2 GetPosition() const;
 
     /**
      * @brief Gets the current cached window width.
@@ -287,7 +285,7 @@ public:
      * Updates the cached title and sets the platform window's text if there is a valid platform window.
      * @param InTitle The new title for the window.
      */
-    void SetTitle(const FString& InTitle);
+    void SetTitle(const String& InTitle);
     
     /**
      * @brief Sets the window style flags.
@@ -336,7 +334,7 @@ public:
      * 
      * @return The title of the window.
      */
-    const FString& GetTitle() const
+    const String& GetTitle() const
     {
         return Title;
     }
@@ -372,13 +370,13 @@ public:
     }
 
 private:
-    FString                    Title;
+    String                     Title;
     FOnWindowClosed            OnWindowClosedDelegate;
     FOnWindowMoved             OnWindowMovedDelegate;
     FOnWindowResized           OnWindowResizedDelegate;
     FOnWindowFocusChanged      OnWindowFocusChangedDelegate;
-    FIntVector2                CachedPosition;
-    FIntVector2                CachedSize;
+    IntVector2                 CachedPosition;
+    IntVector2                 CachedSize;
     EWindowStyleFlags          StyleFlags;
     bool                       bActivateOnShow;
     TSharedPtr<FWidget>        Overlay;

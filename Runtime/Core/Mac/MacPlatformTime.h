@@ -15,6 +15,6 @@ struct FMacPlatformTime : public FGenericPlatformTime
         mach_timebase_info_data_t TimeBaseInfo = {};
         mach_timebase_info(&TimeBaseInfo);
 
-        return TimeUtilities::FromSeconds<uint64>(uint64(TimeBaseInfo.numer)) / uint64(TimeBaseInfo.denom);
+        return Time::FromSeconds<uint64>(uint64(TimeBaseInfo.numer)) / uint64(TimeBaseInfo.denom);
     }
 };

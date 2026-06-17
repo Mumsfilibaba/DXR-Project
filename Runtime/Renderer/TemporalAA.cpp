@@ -149,7 +149,7 @@ bool FTemporalAA::CreateResources(FFrameResources& /* FrameResources */, uint32 
         TAABuffer = RHI::CreateTexture(TAABufferDesc, EResourceAccess::NonPixelShaderResource);
         if (TAABuffer)
         {
-            TAABuffer->SetDebugName(FString::CreateFormatted("TAA History-Buffer[%u]", Index++));
+            TAABuffer->SetDebugName(String::CreateFormatted("TAA History-Buffer[%u]", Index++));
         }
         else
         {

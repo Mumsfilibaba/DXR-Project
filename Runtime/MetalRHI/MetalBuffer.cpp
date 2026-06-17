@@ -114,7 +114,7 @@ bool FMetalBufferRHI::Initialize(EResourceAccess InInitialAccess, const void* In
     return true;
 }
 
-void FMetalBufferRHI::SetDebugName(const FString& InName)
+void FMetalBufferRHI::SetDebugName(const String& InName)
 {
     @autoreleasepool
     {
@@ -126,7 +126,7 @@ void FMetalBufferRHI::SetDebugName(const FString& InName)
     }
 }
 
-void FMetalBufferRHI::GetDebugName(FString& OutDebugName) const
+void FMetalBufferRHI::GetDebugName(String& OutDebugName) const
 {
     OutDebugName.Clear();
 
@@ -135,7 +135,7 @@ void FMetalBufferRHI::GetDebugName(FString& OutDebugName) const
         id<MTLBuffer> BufferHandle = GetMTLBuffer();
         if (BufferHandle)
         {
-            OutDebugName = FString(BufferHandle.label);
+            OutDebugName = String(BufferHandle.label);
         }
     }
 }

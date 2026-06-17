@@ -96,7 +96,7 @@ struct FFrameProfilerFunctionInfo
     int32 TotalCalls    = 0;
 };
 
-using FFrameProfileFunctionInfoMap = TMap<FString, FFrameProfilerFunctionInfo>;
+using FFrameProfileFunctionInfoMap = TMap<String, FFrameProfilerFunctionInfo>;
 
 struct FFrameProfilerThreadInfo
 {

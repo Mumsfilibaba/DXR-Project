@@ -51,7 +51,7 @@ public:
 private:
     static uint16 GenerateIdentifier();
 
-    static D3D12RHI_API FAtomicInt32 NextIdentifier;
+    static D3D12RHI_API AtomicInt32 NextIdentifier;
 };
 
 

@@ -204,7 +204,7 @@ void FMacConsoleOutputDevice::Show(bool bShow)
     }
 }
 
-void FMacConsoleOutputDevice::Log(const FString& Message)
+void FMacConsoleOutputDevice::Log(const String& Message)
 {
     SCOPED_LOCK(WindowCS);
     
@@ -230,7 +230,7 @@ void FMacConsoleOutputDevice::Log(const FString& Message)
     }
 }
 
-void FMacConsoleOutputDevice::Log(ELogSeverity Severity, const FString& Message)
+void FMacConsoleOutputDevice::Log(ELogSeverity Severity, const String& Message)
 {
     SCOPED_LOCK(WindowCS);
     
@@ -299,7 +299,7 @@ void FMacConsoleOutputDevice::Flush()
     }
 }
 
-void FMacConsoleOutputDevice::SetTitle(const FString& InTitle)
+void FMacConsoleOutputDevice::SetTitle(const String& InTitle)
 {
     SCOPED_LOCK(WindowCS);
     
@@ -361,7 +361,7 @@ void FMacConsoleOutputDevice::InternalSetConsoleColor(EConsoleColor Color)
     [TextColor retain];
 }
 
-NSAttributedString* FMacConsoleOutputDevice::CreatePrintableString(const FString& String)
+NSAttributedString* FMacConsoleOutputDevice::CreatePrintableString(const String& String)
 {
     SCOPED_AUTORELEASE_POOL();
 

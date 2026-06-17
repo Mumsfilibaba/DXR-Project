@@ -80,21 +80,21 @@ bool File::WriteTextFile(IPlatformFile* InFile, const CHAR* Text, uint32 Size)
     }
 }
 
-FString File::ExtractFilepath(const FString& Filepath)
+String File::ExtractFilepath(const String& Filepath)
 {
     int32 LastSlash = Filepath.FindLastChar('/');
-    if (LastSlash == FString::InvalidIndex)
+    if (LastSlash == String::InvalidIndex)
     {
         LastSlash = Filepath.Length();
     }
     
-    return FString(*Filepath, LastSlash);
+    return String(*Filepath, LastSlash);
 }
 
-FString File::ExtractFilename(const FString& Filepath)
+String File::ExtractFilename(const String& Filepath)
 {
     int32 LastSlash = Filepath.FindLastChar('/');
-    if (LastSlash == FString::InvalidIndex)
+    if (LastSlash == String::InvalidIndex)
     {
         LastSlash = 0;
     }
@@ -104,13 +104,13 @@ FString File::ExtractFilename(const FString& Filepath)
     }
     
     int32 NewLength = Filepath.Length() - LastSlash;
-    return FString(*Filepath + LastSlash, NewLength);
+    return String(*Filepath + LastSlash, NewLength);
 }
     
-FString File::ExtractFilenameWithoutExtension(const FString& Filepath)
+String File::ExtractFilenameWithoutExtension(const String& Filepath)
 {
     int32 LastSlash = Filepath.FindLastChar('/');
-    if (LastSlash == FString::InvalidIndex)
+    if (LastSlash == String::InvalidIndex)
     {
         LastSlash = 0;
     }
@@ -120,11 +120,11 @@ FString File::ExtractFilenameWithoutExtension(const FString& Filepath)
     }
     
     int32 ExtensionPos = Filepath.FindLastChar('.');
-    if (ExtensionPos == FString::InvalidIndex)
+    if (ExtensionPos == String::InvalidIndex)
     {
-        ExtensionPos = FCString::Strlen(*Filepath + LastSlash);
+        ExtensionPos = CString::Strlen(*Filepath + LastSlash);
     }
     
     int32 NewLength = ExtensionPos - LastSlash;
-    return FString(*Filepath + LastSlash, NewLength);
+    return String(*Filepath + LastSlash, NewLength);
 }

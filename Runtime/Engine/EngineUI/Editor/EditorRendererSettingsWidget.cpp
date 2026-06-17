@@ -13,9 +13,9 @@ static constexpr float RendererSettingsLabelColumnWidth  = 310.0f;
 static constexpr float RendererSettingsRevertColumnWidth = 28.0f;
 
 template<typename ValueType>
-static const ValueType* TryGetDefaultPtr(const TMap<FString, ValueType>& Defaults, const CHAR* CVarName, ValueType& OutValue)
+static const ValueType* TryGetDefaultPtr(const TMap<String, ValueType>& Defaults, const CHAR* CVarName, ValueType& OutValue)
 {
-    if (const ValueType* Found = Defaults.Find(FString(CVarName)))
+    if (const ValueType* Found = Defaults.Find(String(CVarName)))
     {
         OutValue = *Found;
         return &OutValue;
@@ -77,7 +77,7 @@ void FEditorRendererSettingsWidget::CaptureDefaultsIfNeeded()
     {
         if (IConsoleVariable* CVar = Console.FindConsoleVariable(Name))
         {
-            BoolDefaults.Add(FString(Name), CVar->GetBool());
+            BoolDefaults.Add(String(Name), CVar->GetBool());
         }
     };
 
@@ -85,7 +85,7 @@ void FEditorRendererSettingsWidget::CaptureDefaultsIfNeeded()
     {
         if (IConsoleVariable* CVar = Console.FindConsoleVariable(Name))
         {
-            IntDefaults.Add(FString(Name), CVar->GetInt());
+            IntDefaults.Add(String(Name), CVar->GetInt());
         }
     };
 
@@ -93,7 +93,7 @@ void FEditorRendererSettingsWidget::CaptureDefaultsIfNeeded()
     {
         if (IConsoleVariable* CVar = Console.FindConsoleVariable(Name))
         {
-            FloatDefaults.Add(FString(Name), CVar->GetFloat());
+            FloatDefaults.Add(String(Name), CVar->GetFloat());
         }
     };
 
@@ -167,7 +167,7 @@ void FEditorRendererSettingsWidget::DrawWindow()
     {
         static constexpr int32 LabelLength = 256;
         TStaticArray<CHAR, LabelLength> Label{};
-        FCString::Snprintf(Label.Data(), static_cast<int32>(Label.Size()), "%s", InLabel);
+        CString::Snprintf(Label.Data(), static_cast<int32>(Label.Size()), "%s", InLabel);
 
         ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextBorderSize, 4.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextAlign, ImVec2(0.1f, 0.5f));

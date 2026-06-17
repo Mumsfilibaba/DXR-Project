@@ -115,7 +115,7 @@ constexpr EFormat ConvertFormat(tinyddsloader::DDSFile::DXGIFormat Format)
     }
 }
 
-TSharedRef<FTexture> FTextureImporterDDS::ImportFromFile(const FStringView& FileName)
+TSharedRef<FTexture> FTextureImporterDDS::ImportFromFile(const StringView& FileName)
 {
     tinyddsloader::DDSFile File;
 
@@ -149,7 +149,7 @@ TSharedRef<FTexture> FTextureImporterDDS::ImportFromFile(const FStringView& File
     return NewTexture;
 }
 
-bool FTextureImporterDDS::MatchExtenstion(const FStringView& FileName)
+bool FTextureImporterDDS::MatchExtenstion(const StringView& FileName)
 {
     return FileName.EndsWith(".dds", EStringCaseType::NoCase);
 }

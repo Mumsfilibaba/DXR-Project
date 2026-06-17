@@ -12,13 +12,13 @@ public:
     ~FLightProbe();
 
     // Set the position of the probe (Where the environment is captured)
-    void SetPosition(const FVector3& InPosition);
+    void SetPosition(const Vector3& InPosition);
 
     // Sets the extents of the box
-    void SetBoxExtent(const FVector3& InBoxExtent);
+    void SetBoxExtent(const Vector3& InBoxExtent);
 
     // Sets the offset of the box relative to the probe position
-    void SetBoxOffset(const FVector3& InBoxExtent);
+    void SetBoxOffset(const Vector3& InBoxExtent);
 
     // Set if box-projection should be enabled or not
     void SetBoxProjection(bool bInBoxProjection);
@@ -26,17 +26,17 @@ public:
     // Set the source cube-map
     void SetCubeMap(const FRHITextureRef& InCubeMap);
 
-    FORCEINLINE const FVector3& GetPosition()
+    FORCEINLINE const Vector3& GetPosition()
     {
         return Position;
     }
 
-    FORCEINLINE const FVector3& GetBoxOffset()
+    FORCEINLINE const Vector3& GetBoxOffset()
     {
         return BoxOffset;
     }
 
-    FORCEINLINE const FVector3& GetBoxExtents()
+    FORCEINLINE const Vector3& GetBoxExtents()
     {
         return BoxExtent;
     }
@@ -52,9 +52,9 @@ public:
     }
 
 protected:
-    FVector3       Position;
-    FVector3       BoxOffset;
-    FVector3       BoxExtent;
-    bool           bBoxProjection;
     FRHITextureRef CubeMap;
+    Vector3        Position;
+    Vector3        BoxOffset;
+    Vector3        BoxExtent;
+    bool           bBoxProjection;
 };

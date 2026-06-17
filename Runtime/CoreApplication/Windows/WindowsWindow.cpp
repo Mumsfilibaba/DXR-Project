@@ -308,7 +308,7 @@ bool FWindowsWindow::IsActiveWindow() const
     return (ForegroundWindow == Window);
 }
 
-void FWindowsWindow::SetTitle(const FString& Title)
+void FWindowsWindow::SetTitle(const String& Title)
 {
     if (IsValid())
     {
@@ -316,7 +316,7 @@ void FWindowsWindow::SetTitle(const FString& Title)
     }
 }
 
-void FWindowsWindow::GetTitle(FString& OutTitle) const
+void FWindowsWindow::GetTitle(String& OutTitle) const
 {
     if (!IsValid())
     {

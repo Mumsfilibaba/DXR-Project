@@ -13,8 +13,8 @@
 
 struct FAABBShaderInfoHLSL
 {
-    FMatrix4 WorldMatrix;
-    FVector4 Color;
+    Matrix4 WorldMatrix;
+    Vector4 Color;
 };
 
 FDebugRenderer::FDebugRenderer(FSceneRenderer* InRenderer)
@@ -144,19 +144,19 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
         SphereIndexBuffer->SetDebugName("Debug-Sphere IndexBuffer");
     }
 
-    TStaticArray<FVector3, 8> AABBVertices =
+    TStaticArray<Vector3, 8> AABBVertices =
     {
-        FVector3(-0.5f, -0.5f,  0.5f),
-        FVector3( 0.5f, -0.5f,  0.5f),
-        FVector3(-0.5f,  0.5f,  0.5f),
-        FVector3( 0.5f,  0.5f,  0.5f),
-        FVector3( 0.5f, -0.5f, -0.5f),
-        FVector3(-0.5f, -0.5f, -0.5f),
-        FVector3( 0.5f,  0.5f, -0.5f),
-        FVector3(-0.5f,  0.5f, -0.5f)
+        Vector3(-0.5f, -0.5f,  0.5f),
+        Vector3( 0.5f, -0.5f,  0.5f),
+        Vector3(-0.5f,  0.5f,  0.5f),
+        Vector3( 0.5f,  0.5f,  0.5f),
+        Vector3( 0.5f, -0.5f, -0.5f),
+        Vector3(-0.5f, -0.5f, -0.5f),
+        Vector3( 0.5f,  0.5f, -0.5f),
+        Vector3(-0.5f,  0.5f, -0.5f)
     };
 
-    VertexBufferDesc.Stride = sizeof(FVector3);
+    VertexBufferDesc.Stride = sizeof(Vector3);
     VertexBufferDesc.Size   = AABBVertices.SizeInBytes();
     VertexBufferDesc.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::Default;
 
@@ -280,7 +280,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
 
         TArray<FRHIInputElementDesc> InputElements =
         {
-            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 },
+            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(Vector3), 0, 0, 0, EVertexInputClass::Vertex, 0 },
         };
 
         AABBInputLayout = RHI::CreateInputLayout(InputElements);
@@ -450,7 +450,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
 
         TArray<FRHIInputElementDesc> InputElements =
         {
-            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 },
+            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(Vector3), 0, 0, 0, EVertexInputClass::Vertex, 0 },
         };
 
         AABBSolidInputLayout = RHI::CreateInputLayout(InputElements);
@@ -738,16 +738,16 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
     {
         const FAABB& WorldBounds = StaticMesh->GetWorldBounds();
 
-        FVector3 Scale    = FVector3(WorldBounds.GetWidth(), WorldBounds.GetHeight(), WorldBounds.GetDepth());
-        FVector3 Position = WorldBounds.GetCenter();
+        Vector3 Scale    = Vector3(WorldBounds.GetWidth(), WorldBounds.GetHeight(), WorldBounds.GetDepth());
+        Vector3 Position = WorldBounds.GetCenter();
 
-        FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.X, Position.Y, Position.Z);
-        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z);
-        FMatrix4 TransformMatrix   = ScaleMatrix * TranslationMatrix;
+        Matrix4 TranslationMatrix = Matrix4::Translation(Position.X, Position.Y, Position.Z);
+        Matrix4 ScaleMatrix       = Matrix4::Scale(Scale.X, Scale.Y, Scale.Z);
+        Matrix4 TransformMatrix   = ScaleMatrix * TranslationMatrix;
 
         FAABBShaderInfoHLSL ShaderData;
         ShaderData.WorldMatrix = TransformMatrix.GetTranspose();
-        ShaderData.Color       = FVector4(1.0f, 0.0f, 0.0f, 1.0f);
+        ShaderData.Color       = Vector4(1.0f, 0.0f, 0.0f, 1.0f);
 
         constexpr uint32 NumConstants = sizeof(FAABBShaderInfoHLSL) / sizeof(uint32);
         CommandList.SetShaderConstants(AABB_VS.Get(), &ShaderData, NumConstants);
@@ -784,14 +784,14 @@ void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResou
 
     struct FPointlightDebugData
     {
-        FVector4 Color;
-        FVector3 WorldPosition;
-        float    Padding;
+        Vector4 Color;
+        Vector3 WorldPosition;
+        float   Padding;
     } PointLightData;
 
     for (FScenePointLight* PointLight : Scene->PointLights)
     {
-        PointLightData.Color         = FVector4(PointLight->Color.X, PointLight->Color.Y, PointLight->Color.Z, 1.0f);
+        PointLightData.Color         = Vector4(PointLight->Color.X, PointLight->Color.Y, PointLight->Color.Z, 1.0f);
         PointLightData.WorldPosition = PointLight->Position;
 
         constexpr uint32 NumConstants = sizeof(FPointlightDebugData) / sizeof(uint32);
@@ -835,19 +835,19 @@ void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResou
 
             FAABB BoundingBox(LightProbe->BoxMin, LightProbe->BoxMax);
 
-            FVector3 Scale = FVector3(BoundingBox.GetWidth(), BoundingBox.GetHeight(), BoundingBox.GetDepth());
+            Vector3 Scale = Vector3(BoundingBox.GetWidth(), BoundingBox.GetHeight(), BoundingBox.GetDepth());
             Scale.X = Math::Max<float>(Scale.X, 0.005f);
             Scale.Y = Math::Max<float>(Scale.Y, 0.005f);
             Scale.Z = Math::Max<float>(Scale.Z, 0.005f);
 
-            FVector3 Position          = BoundingBox.GetCenter();
-            FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.X, Position.Y, Position.Z);
-            FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z);
-            FMatrix4 TransformMatrix   = ScaleMatrix * TranslationMatrix;
+            Vector3 Position          = BoundingBox.GetCenter();
+            Matrix4 TranslationMatrix = Matrix4::Translation(Position.X, Position.Y, Position.Z);
+            Matrix4 ScaleMatrix       = Matrix4::Scale(Scale.X, Scale.Y, Scale.Z);
+            Matrix4 TransformMatrix   = ScaleMatrix * TranslationMatrix;
 
             FAABBShaderInfoHLSL ShaderData;
             ShaderData.WorldMatrix = TransformMatrix.GetTranspose();
-            ShaderData.Color       = FVector4(0.8f, 0.8f, 0.8f, 0.4f);
+            ShaderData.Color       = Vector4(0.8f, 0.8f, 0.8f, 0.4f);
 
             CommandList.SetConstantBuffer(AABBSolid_VS.Get(), Resources.CameraBuffer.Get(), 0);
 
@@ -862,7 +862,7 @@ void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResou
             CommandList.SetVertexBuffers(MakeArrayView(&AABBVertexBuffer, 1), 0);
             CommandList.SetIndexBuffer(AABBIndexBuffer_Wireframe.Get(), EIndexFormat::uint16);
 
-            ShaderData.Color = FVector4(0.7f, 0.7f, 0.7f, 1.0f);
+            ShaderData.Color = Vector4(0.7f, 0.7f, 0.7f, 1.0f);
 
             CommandList.SetShaderConstants(AABB_VS.Get(), &ShaderData, NumConstants);
 
@@ -881,8 +881,8 @@ void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResou
 
     struct FLightProbeDebugData
     {
-        FVector3 WorldPosition;
-        float    Padding;
+        Vector3 WorldPosition;
+        float   Padding;
     } LightProbeData;
 
     for (FSceneLightProbe* LightProbe : Scene->LightProbes)

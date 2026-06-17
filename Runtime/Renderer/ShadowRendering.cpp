@@ -319,7 +319,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         }
         else
         {
-            const FString DebugName = FString::CreateFormatted("Point ShadowMap PipelineState%s %d",
+            const String DebugName = String::CreateFormatted("Point ShadowMap PipelineState%s %d",
                 ShaderCombination.bBindless ? " [Bindless]" : "",
                 ShaderCombination.MaterialFlags);
             NewPipelineStateInstance.PipelineState->SetDebugName(DebugName);
@@ -1100,7 +1100,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         }
         else
         {
-            const FString DebugName = FString::CreateFormatted("CSM PipelineState%s %d",
+            const String DebugName = String::CreateFormatted("CSM PipelineState%s %d",
                 ShaderCombination.bBindless ? " [Bindless]" : "",
                 ShaderCombination.MaterialFlags);
             NewPipelineStateInstance.PipelineState->SetDebugName(DebugName);
@@ -1147,7 +1147,7 @@ bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
 
     if (Resources.ShadowCascades)
     {
-        const FString DebugName = FString::CreateFormatted("Shadow Map Cascades");
+        const String DebugName = String::CreateFormatted("Shadow Map Cascades");
         Resources.ShadowCascades->SetDebugName(DebugName);
     }
     else
@@ -1683,7 +1683,7 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
     TArray<uint8> ShaderCode;
     TArray<FShaderDefine> Defines;
 
-    FString DebugName = "ShadowMask PSO (";
+    String DebugName = "ShadowMask PSO (";
 
     // Filter function
     if (Combination.FilterFunction == ECSMFilterFunction::Grid)

@@ -15,10 +15,10 @@ FActorTransform::FActorTransform()
 
 void FActorTransform::SetTranslation(float x, float y, float z)
 {
-    SetTranslation(FVector3(x, y, z));
+    SetTranslation(Vector3(x, y, z));
 }
 
-void FActorTransform::SetTranslation(const FVector3& InPosition)
+void FActorTransform::SetTranslation(const Vector3& InPosition)
 {
     Translation = InPosition;
     CalculateMatrix();
@@ -26,10 +26,10 @@ void FActorTransform::SetTranslation(const FVector3& InPosition)
 
 void FActorTransform::SetScale(float x, float y, float z)
 {
-    SetScale(FVector3(x, y, z));
+    SetScale(Vector3(x, y, z));
 }
 
-void FActorTransform::SetScale(const FVector3& InScale)
+void FActorTransform::SetScale(const Vector3& InScale)
 {
     Scale = InScale;
     CalculateMatrix();
@@ -37,10 +37,10 @@ void FActorTransform::SetScale(const FVector3& InScale)
 
 void FActorTransform::SetRotation(float x, float y, float z)
 {
-    SetRotation(FVector3(x, y, z));
+    SetRotation(Vector3(x, y, z));
 }
 
-void FActorTransform::SetRotation(const FVector3& InRotation)
+void FActorTransform::SetRotation(const Vector3& InRotation)
 {
     Rotation = InRotation;
     CalculateMatrix();
@@ -48,9 +48,9 @@ void FActorTransform::SetRotation(const FVector3& InRotation)
 
 void FActorTransform::CalculateMatrix()
 {
-    FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale);
-    FMatrix4 RotationMatrix    = FMatrix4::RotationRollPitchYaw(Rotation);
-    FMatrix4 TranslationMatrix = FMatrix4::Translation(Translation);
+    Matrix4 ScaleMatrix       = Matrix4::Scale(Scale);
+    Matrix4 RotationMatrix    = Matrix4::RotationRollPitchYaw(Rotation);
+    Matrix4 TranslationMatrix = Matrix4::Translation(Translation);
 
     TransformMatrix = (ScaleMatrix * RotationMatrix) * TranslationMatrix;
 }
@@ -114,7 +114,7 @@ void FActor::AddComponent(FActorComponent* InComponent)
     }
 }
 
-void FActor::SetName(const FString& InName)
+void FActor::SetName(const String& InName)
 {
     Name = InName;
 }

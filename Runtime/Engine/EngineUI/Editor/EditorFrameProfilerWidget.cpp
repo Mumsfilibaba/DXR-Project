@@ -119,7 +119,7 @@ void FEditorFrameProfilerWidget::DrawCPUData(float Width)
     {
         bool bIsMainThread = false;
 
-        FString ThreadName;
+        String ThreadName;
         if (FThreadManager::Get().IsMainThread(ThreadInfo.ThreadHandle))
         {
             ThreadName = "MainThread";
@@ -136,7 +136,7 @@ void FEditorFrameProfilerWidget::DrawCPUData(float Width)
             ThreadName = Thread->GetName();
             if (ThreadName.IsEmpty())
             {
-                ThreadName = FString::CreateFormatted("Thread %d", ThreadIndex);
+                ThreadName = String::CreateFormatted("Thread %d", ThreadIndex);
             }
         }
 

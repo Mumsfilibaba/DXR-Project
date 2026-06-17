@@ -10,7 +10,7 @@ static FSelectionOutlineSettings GSelectionOutlineSettings =
     /* ThicknessPx */ 2,
     /* Alpha       */ 0.8f,
     /* Smoothness  */ 1.0f,
-    /* Color       */ FVector3(1.0f, 0.6f, 0.0f),
+    /* Color       */ Vector3(1.0f, 0.6f, 0.0f),
 };
 
 static FAutoConsoleVariableRef CVarSelectionOutlineEnabled(

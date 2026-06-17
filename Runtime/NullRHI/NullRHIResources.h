@@ -178,18 +178,18 @@ public:
     {
     }
 
-    virtual void SetDebugName(const FString& InDebugName) override final
+    virtual void SetDebugName(const String& InDebugName) override final
     {
         DebugName = InDebugName;
     }
 
-    virtual void GetDebugName(FString& OutDebugName) const override final
+    virtual void GetDebugName(String& OutDebugName) const override final
     {
         OutDebugName = DebugName;
     }
 
 private:
-    FString DebugName;
+    String DebugName;
 };
 
 struct FNullShaderResourceViewRHI : public FRHIShaderResourceView
@@ -325,12 +325,12 @@ public:
         return FRHIDescriptorHandle();
     }
 
-    virtual void SetDebugName(const FString& InDebugName) override final
+    virtual void SetDebugName(const String& InDebugName) override final
     {
         DebugName = InDebugName;
     }
 
-    virtual void GetDebugName(FString& OutDebugName) const override final
+    virtual void GetDebugName(String& OutDebugName) const override final
     {
         OutDebugName = DebugName;
     }
@@ -340,7 +340,7 @@ private:
     TSharedRef<FNullUnorderedAccessViewRHI> UnorderedAccessView;
     TSharedRef<FNullRenderTargetViewRHI>    RenderTargetView;
     TSharedRef<FNullDepthStencilViewRHI>    DepthStencilView;
-    FString                                 DebugName;
+    String                                  DebugName;
 };
 
 class FNullRayTracingGeometryRHI : public FRHIGeometryAccelerationStructure
@@ -356,18 +356,18 @@ public:
         return nullptr;
     }
 
-    virtual void SetDebugName(const FString& InName) override final
+    virtual void SetDebugName(const String& InName) override final
     {
         DebugName = InName;
     }
 
-    virtual void GetDebugName(FString& OutDebugName) const override final
+    virtual void GetDebugName(String& OutDebugName) const override final
     {
         OutDebugName = DebugName;
     }
 
 private:
-    FString DebugName;
+    String DebugName;
 };
 
 class FNullRayTracingSceneRHI : public FRHISceneAccelerationStructure
@@ -394,19 +394,19 @@ public:
         return FRHIDescriptorHandle();
     }
 
-    virtual void SetDebugName(const FString& InName) override final
+    virtual void SetDebugName(const String& InName) override final
     {
         DebugName = InName;
     }
 
-    virtual void GetDebugName(FString& OutDebugName) const override final
+    virtual void GetDebugName(String& OutDebugName) const override final
     {
         OutDebugName = DebugName;
     }
 
 private:
     TSharedRef<FNullShaderResourceViewRHI> View;
-    FString                                DebugName;
+    String                                 DebugName;
 };
 
 struct FNullSamplerStateRHI : public FRHISamplerState
@@ -582,18 +582,18 @@ public:
         return true;
     }
 
-    virtual void SetDebugName(const FString& InName) override final
+    virtual void SetDebugName(const String& InName) override final
     {
         DebugName = InName;
     }
 
-    virtual void GetDebugName(FString& OutDebugName) const override final
+    virtual void GetDebugName(String& OutDebugName) const override final
     {
         OutDebugName = DebugName;
     }
 
 private:
-    FString DebugName;
+    String DebugName;
 };
 
 class FNullInputLayoutRHI : public FRHIInputLayout
@@ -673,18 +673,18 @@ struct FNullGraphicsPipelineStateRHI : public FRHIGraphicsPipelineState
         return nullptr;
     }
 
-    virtual void SetDebugName(const FString& InDebugName) override final
+    virtual void SetDebugName(const String& InDebugName) override final
     {
         DebugName = InDebugName;
     }
 
-    virtual void GetDebugName(FString& OutDebugName) const override final
+    virtual void GetDebugName(String& OutDebugName) const override final
     {
         OutDebugName = DebugName;
     }
 
 private:
-    FString DebugName;
+    String DebugName;
 };
 
 struct FNullComputePipelineStateRHI : public FRHIComputePipelineState
@@ -694,18 +694,18 @@ struct FNullComputePipelineStateRHI : public FRHIComputePipelineState
         return nullptr;
     }
 
-    virtual void SetDebugName(const FString& InDebugName) override final
+    virtual void SetDebugName(const String& InDebugName) override final
     {
         DebugName = InDebugName;
     }
 
-    virtual void GetDebugName(FString& OutDebugName) const override final
+    virtual void GetDebugName(String& OutDebugName) const override final
     {
         OutDebugName = DebugName;
     }
 
 private:
-    FString DebugName;
+    String DebugName;
 };
 
 struct FNullRayTracingPipelineStateRHI : public FRHIRayTracingPipelineState
@@ -715,18 +715,18 @@ struct FNullRayTracingPipelineStateRHI : public FRHIRayTracingPipelineState
         return nullptr;
     }
 
-    virtual void SetDebugName(const FString& InDebugName) override final
+    virtual void SetDebugName(const String& InDebugName) override final
     {
         DebugName = InDebugName;
     }
 
-    virtual void GetDebugName(FString& OutDebugName) const override final
+    virtual void GetDebugName(String& OutDebugName) const override final
     {
         OutDebugName = DebugName;
     }
 
 private:
-    FString DebugName;
+    String DebugName;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

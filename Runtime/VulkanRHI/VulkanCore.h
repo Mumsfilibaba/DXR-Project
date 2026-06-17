@@ -345,9 +345,9 @@ struct FVulkanHashableImageView
 
 static_assert(sizeof(FVulkanHashableImageView) == sizeof(uint64), "FVulkanHashableImageView should be the same size as uint64");
 
-inline FString GetVersionAsString(uint32 VersionNumber)
+inline String GetVersionAsString(uint32 VersionNumber)
 {
-    return FString::CreateFormatted("%d.%d.%d.%d", VK_API_VERSION_MAJOR(VersionNumber), VK_API_VERSION_MINOR(VersionNumber),
+    return String::CreateFormatted("%d.%d.%d.%d", VK_API_VERSION_MAJOR(VersionNumber), VK_API_VERSION_MINOR(VersionNumber),
         VK_API_VERSION_PATCH(VersionNumber), VK_API_VERSION_VARIANT(VersionNumber));
 }
 

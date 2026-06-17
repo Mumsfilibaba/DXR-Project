@@ -24,7 +24,7 @@ public:
 
 private:
     IAsyncTask* volatile    CurrentTask;
-    FAtomicInt32            Triggered;
+    AtomicInt32             Triggered;
     FGenericPlatformEvent*  Event;
     FGenericPlatformThread* Thread;
     bool                    bIsRunning;

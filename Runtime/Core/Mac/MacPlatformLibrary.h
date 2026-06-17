@@ -34,9 +34,9 @@ struct CORE_API FMacPlatformLibrary final : public FGenericPlatformLibrary
         return ".dylib";
     }
 
-    static FORCEINLINE FString GetRealName(const CHAR* LibraryName) 
+    static FORCEINLINE String GetRealName(const CHAR* LibraryName) 
     {
-        return FString("lib") + LibraryName + GetDynamicLibExtension();
+        return String("lib") + LibraryName + GetDynamicLibExtension();
     }
 
     static FORCEINLINE bool IsLibraryLoaded(const CHAR* LibraryName)

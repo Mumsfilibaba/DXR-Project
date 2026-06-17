@@ -230,7 +230,7 @@ bool FMetalTextureRHI::Initialize(EResourceAccess InInitialAccess, const IRHITex
     return true;
 }
 
-void FMetalTextureRHI::SetDebugName(const FString& InName)
+void FMetalTextureRHI::SetDebugName(const String& InName)
 {
     @autoreleasepool
     {
@@ -242,7 +242,7 @@ void FMetalTextureRHI::SetDebugName(const FString& InName)
     }
 }
 
-void FMetalTextureRHI::GetDebugName(FString& OutDebugName) const
+void FMetalTextureRHI::GetDebugName(String& OutDebugName) const
 {
     OutDebugName.Clear();
 
@@ -251,7 +251,7 @@ void FMetalTextureRHI::GetDebugName(FString& OutDebugName) const
         id<MTLTexture> TextureHandle = GetMTLTexture();
         if (TextureHandle)
         {
-            OutDebugName = FString(TextureHandle.label);
+            OutDebugName = String(TextureHandle.label);
         }
     }
 }

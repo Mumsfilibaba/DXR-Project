@@ -9,7 +9,7 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 // Forward declaration of the EngineMain function, which serves as the entry point for the engine
 extern int32 EngineMain(const CHAR* Args[], int32 NumArgs);
 
-static FString GMacCommandLine;     // Stores the command-line arguments as a single string
+static String GMacCommandLine;     // Stores the command-line arguments as a single string
 static int32 GEngineMainResult = 0; // Stores the result returned by EngineMain
 
 /**
@@ -117,24 +117,24 @@ int main(int NumArgs, const CHAR** Args)
     for (int32 Index = 1; Index < NumArgs; Index++)
     {
         GMacCommandLine += " ";
-        FString CurrentArg(Args[Index]);
+        String CurrentArg(Args[Index]);
         
         // If the current argument contains spaces, handle it appropriately
         if (CurrentArg.Contains(' '))
         {
             if (CurrentArg.Contains('='))
             {
-                FString Argument;
-                FString ArgumentValue;
+                String Argument;
+                String ArgumentValue;
                 CurrentArg.Split('=', Argument, ArgumentValue);
                 
                 // Format as key="value" to handle spaces within the value
-                CurrentArg = FString::CreateFormatted("%s=\"%s\"", *Argument, *ArgumentValue);
+                CurrentArg = String::CreateFormatted("%s=\"%s\"", *Argument, *ArgumentValue);
             }
             else
             {
                 // Wrap the entire argument in quotes to handle spaces
-                CurrentArg = FString::CreateFormatted("\"%s\"", *CurrentArg);
+                CurrentArg = String::CreateFormatted("\"%s\"", *CurrentArg);
             }
         }
         

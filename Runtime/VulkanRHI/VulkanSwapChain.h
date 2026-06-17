@@ -113,7 +113,7 @@ public:
     FVulkanRenderTargetViewRHI*    GetCurrentBackBufferRenderTargetView() const;
     FVulkanUnorderedAccessViewRHI* GetCurrentBackBufferUnorderedAccessView() const;
 
-    void SetDebugName(const FString& InName);
+    void SetDebugName(const String& InName);
 
     FVulkanTextureRHI* GetBackBufferAtIndex(uint32 Index) const
     {

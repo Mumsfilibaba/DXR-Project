@@ -41,7 +41,7 @@ public:
     virtual void* GetPlatformHandle() { return nullptr; }
 
     /** @return Returns the name of the thread */
-    const FString& GetName() const
+    const String& GetName() const
     {
         return Name;
     }
@@ -58,7 +58,7 @@ protected:
     // Returns and allocates a TLS slot for the local thread pointer
     static uint32 AllocTLSSlot();
 
-    FString    Name;
+    String     Name;
     FRunnable* Runnable;
 
     // Slot-Index for storing the current threads pointer

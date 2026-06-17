@@ -17,8 +17,8 @@ public:
     // FRHIGeometryAccelerationStructure Interface
     virtual void* GetRHINativeResource() const override final;
 
-    virtual void SetDebugName(const FString& InName)       override final;
-    virtual void GetDebugName(FString& OutDebugName) const override final;
+    virtual void SetDebugName(const String& InName)       override final;
+    virtual void GetDebugName(String& OutDebugName) const override final;
 
     VkAccelerationStructureKHR GetVkAccelerationStructure() const
     {
@@ -33,6 +33,6 @@ private:
     FVulkanBufferRHIRef        VertexBuffer;
     FVulkanBufferRHIRef        IndexBuffer;
 #if VULKAN_STORE_DEBUG_NAMES
-    FString                    DebugName;
+    String                     DebugName;
 #endif
 };

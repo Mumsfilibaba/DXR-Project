@@ -25,14 +25,14 @@ bool CommandLine::Initialize(const CHAR** Args, int32 NumArgs)
         }
 
         {
-            const int32 Length = FCString::Strlen(CurrentArg);
-            FCString::Strncpy(OriginalCommandLineIt, CurrentArg, Length);
+            const int32 Length = CString::Strlen(CurrentArg);
+            CString::Strncpy(OriginalCommandLineIt, CurrentArg, Length);
             OriginalCommandLineIt += Length;
         }
 
         while (CurrentArg && *CurrentArg && (CommandLineIt < CommandLineEnd))
         {
-            if (const CHAR* Option = FCString::Strchr(CurrentArg, '-'))
+            if (const CHAR* Option = CString::Strchr(CurrentArg, '-'))
             {
                 // Find the end of the value
                 const CHAR* Iterator = Option + 1;
@@ -40,7 +40,7 @@ bool CommandLine::Initialize(const CHAR** Args, int32 NumArgs)
 
                 {
                     const UPTR_INT Length = static_cast<UPTR_INT>(Iterator - Option);
-                    FCString::Strncpy(CommandLineIt, Option, Length);
+                    CString::Strncpy(CommandLineIt, Option, Length);
                     CommandLineIt += Length;
                 }
 
@@ -57,13 +57,13 @@ bool CommandLine::Initialize(const CHAR** Args, int32 NumArgs)
                     const CHAR* ValueEnd = nullptr;
                     if (*Iterator == '\"')
                     {
-                        ValueEnd = FCString::Strchr(Iterator + 1, '\"');
+                        ValueEnd = CString::Strchr(Iterator + 1, '\"');
                         if (ValueEnd)
                             ++ValueEnd;
                     }
                     else
                     {
-                        ValueEnd = FCString::Strchr(Iterator, ' ');
+                        ValueEnd = CString::Strchr(Iterator, ' ');
                     }
 
                     if (!ValueEnd)
@@ -74,7 +74,7 @@ bool CommandLine::Initialize(const CHAR** Args, int32 NumArgs)
 
                     {
                         const UPTR_INT Length = static_cast<UPTR_INT>(ValueEnd - Iterator);
-                        FCString::Strncpy(CommandLineIt, Iterator, Length);
+                        CString::Strncpy(CommandLineIt, Iterator, Length);
                         CommandLineIt += Length;
                     }
                 }
@@ -96,14 +96,14 @@ bool CommandLine::Initialize(const CHAR** Args, int32 NumArgs)
 bool CommandLine::FindOption(const CHAR* Value)
 {
     // TODO: Have a way to do this non-case sensitive
-    const CHAR* Result = FCString::Strstr(CommandLineBuffer, Value);
+    const CHAR* Result = CString::Strstr(CommandLineBuffer, Value);
     return (Result != nullptr);
 }
 
-bool CommandLine::FindOption(const CHAR* Value, FStringView& OutValue)
+bool CommandLine::FindOption(const CHAR* Value, StringView& OutValue)
 {
     // TODO: Have a way to do this non-case sensitive
-    if (const CHAR* Result = FCString::Strstr(CommandLineBuffer, Value))
+    if (const CHAR* Result = CString::Strstr(CommandLineBuffer, Value))
     {
         Parse::ParseAlnum(&Result);
         if (*Result == '=')
@@ -113,7 +113,7 @@ bool CommandLine::FindOption(const CHAR* Value, FStringView& OutValue)
             const CHAR* StringEnd = Result++;
             if (*StringEnd == '\"')
             {
-                StringEnd = FCString::Strchr(Result, '\"');
+                StringEnd = CString::Strchr(Result, '\"');
                 CHECK(StringEnd != nullptr);
             }
             else
@@ -122,7 +122,7 @@ bool CommandLine::FindOption(const CHAR* Value, FStringView& OutValue)
             }
             
             const int32 Length = static_cast<int32>(StringEnd - Result);
-            OutValue = FStringView(Result, Length);
+            OutValue = StringView(Result, Length);
         }
 
         return true;

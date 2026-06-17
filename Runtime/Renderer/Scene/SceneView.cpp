@@ -27,7 +27,7 @@ void FSceneView::PrepareView(uint32 MaxMeshes)
     MeshBatcher.Clear();
 }
 
-void FSceneView::SetupFrustum(const FMatrix4& View, const FMatrix4& Projection)
+void FSceneView::SetupFrustum(const Matrix4& View, const Matrix4& Projection)
 {
     if (!Frustum)
     {

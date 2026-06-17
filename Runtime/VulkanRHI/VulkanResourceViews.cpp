@@ -360,7 +360,7 @@ void FVulkanResourceView::FreeBindlessHandle()
     bBindlessIsWritable = false;
 }
 
-void FVulkanResourceView::SetDebugName(const FString& InName)
+void FVulkanResourceView::SetDebugName(const String& InName)
 {
     if (!InName.IsEmpty())
     {
@@ -615,7 +615,7 @@ bool FVulkanShaderResourceViewRHI::Initialize(FRHIResource* InResource, const FR
 
         if (InitializeImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, FirstMipLevel, NumMips))
         {
-            FString TextureDebugName;
+            String TextureDebugName;
             VulkanTexture->GetDebugName(TextureDebugName);
 
             if (!TextureDebugName.IsEmpty())
@@ -888,7 +888,7 @@ bool FVulkanUnorderedAccessViewRHI::Initialize(FRHIResource* InResource, const F
 
         if (InitializeImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, MipLevel, 1u))
         {
-            FString TextureDebugName;
+            String TextureDebugName;
             VulkanTexture->GetDebugName(TextureDebugName);
             if (!TextureDebugName.IsEmpty())
             {
@@ -1068,7 +1068,7 @@ bool FVulkanRenderTargetViewRHI::Initialize(FRHITexture* InTexture, const FRHIRe
         return false;
     }
 
-    FString TextureDebugName;
+    String TextureDebugName;
     VulkanTexture->GetDebugName(TextureDebugName);
 
     if (!TextureDebugName.IsEmpty())
@@ -1228,7 +1228,7 @@ bool FVulkanDepthStencilViewRHI::Initialize(FRHITexture* InTexture, const FRHIDe
         return false;
     }
 
-    FString TextureDebugName;
+    String TextureDebugName;
     VulkanTexture->GetDebugName(TextureDebugName);
     if (!TextureDebugName.IsEmpty())
     {

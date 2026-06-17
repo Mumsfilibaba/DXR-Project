@@ -272,7 +272,7 @@ void FMacAsyncFileHandle::FreePendingWrite(FPendingWrite* PendingWrite)
     delete PendingWrite;
 }
 
-IPlatformAsyncFile* FMacPlatformFile::OpenForAsyncWrite(const FString& Filename, bool bTruncate)
+IPlatformAsyncFile* FMacPlatformFile::OpenForAsyncWrite(const String& Filename, bool bTruncate)
 {
     int32 Flags =
         O_WRONLY |
@@ -305,7 +305,7 @@ IPlatformAsyncFile* FMacPlatformFile::OpenForAsyncWrite(const FString& Filename,
     return new FMacAsyncFileHandle(FileHandle);
 }
 
-IPlatformFile* FMacPlatformFile::OpenForRead(const FString& Filename)
+IPlatformFile* FMacPlatformFile::OpenForRead(const String& Filename)
 {
     int32 FileHandle = ::open(*Filename, O_RDONLY);
     if (FileHandle < 0)
@@ -329,7 +329,7 @@ IPlatformFile* FMacPlatformFile::OpenForRead(const FString& Filename)
     }
 }
 
-IPlatformFile* FMacPlatformFile::OpenForWrite(const FString& Filename, bool bTruncate)
+IPlatformFile* FMacPlatformFile::OpenForWrite(const String& Filename, bool bTruncate)
 {
     int32 Flags =
         O_WRONLY | // Writing only 
@@ -370,13 +370,13 @@ IPlatformFile* FMacPlatformFile::OpenForWrite(const FString& Filename, bool bTru
     }
 }
 
-FString FMacPlatformFile::GetCurrentWorkingDirectory()
+String FMacPlatformFile::GetCurrentWorkingDirectory()
 {
     CHAR Buffer[MAXPATHLEN] = { 0 };
     CHAR* CurrentDirectory = ::getcwd(Buffer, sizeof(Buffer));
     if (!CurrentDirectory)
     {
-        return FString();
+        return String();
     }
     else
     {

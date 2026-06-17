@@ -10,14 +10,14 @@ FInputComponent::FInputComponent(const FObjectInitializer& ObjectInitializer)
     bIsStartable = false;
 }
 
-int32 FInputComponent::BindAxis(const FStringView& InName, const FInputAxisDelegate& Delegate)
+int32 FInputComponent::BindAxis(const StringView& InName, const FInputAxisDelegate& Delegate)
 {
     const int32 Identifier = AxisBindings.Size();
     AxisBindings.Emplace(InName, Delegate);
     return Identifier;
 }
 
-int32 FInputComponent::BindAction(const FStringView& InName, EActionState ActionState, const FInputActionDelegate& Delegate)
+int32 FInputComponent::BindAction(const StringView& InName, EActionState ActionState, const FInputActionDelegate& Delegate)
 {
     const int32 Identifier = ActionBindings.Size();
     ActionBindings.Emplace(InName, ActionState, Delegate);

@@ -125,7 +125,7 @@ public:
     bool IsDebugLayerEnabled() const { return bEnableDebugLayer; }
     bool IsTearingSupported() const { return bAllowTearing; }
 
-    FString GetDescription() const { return WideToChar(FStringViewWide(AdapterDesc.Description)); }
+    String GetDescription() const { return WideToChar(StringViewWide(AdapterDesc.Description)); }
 
     FORCEINLINE uint32 GetAdapterIndex() const
     { 

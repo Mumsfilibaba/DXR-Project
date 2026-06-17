@@ -237,9 +237,9 @@ public:
         return nullptr;
     }
 
-    virtual FString GetAdapterName() const override final
+    virtual String GetAdapterName() const override final
     {
-        return FString("NullRHI Adapter");
+        return String("NullRHI Adapter");
     }
 
     virtual ERHIType GetRHIType() const override final;

@@ -12,7 +12,7 @@ public:
     virtual ~FLight();
 
     // Set color of a light
-    void SetColor(const FVector3& InColor);
+    void SetColor(const Vector3& InColor);
 
     // Set intensity of the light
     void SetIntensity(float InIntensity);
@@ -26,7 +26,7 @@ public:
     // Set shadow-bias
     void SetShadowBias(float InShadowBias);
 
-    FORCEINLINE const FVector3& GetColor() const
+    FORCEINLINE const Vector3& GetColor() const
     {
         return Color;
     }
@@ -52,9 +52,9 @@ public:
     }
 
 protected:
-    FVector3 Color;
-    float    Intensity;
-    float    ShadowNearPlane;
-    float    ShadowFarPlane;
-    float    ShadowBias;
+    Vector3 Color;
+    float   Intensity;
+    float   ShadowNearPlane;
+    float   ShadowFarPlane;
+    float   ShadowBias;
 };

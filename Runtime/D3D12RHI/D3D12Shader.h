@@ -143,12 +143,12 @@ struct FD3D12ShaderBindingInfo
     struct FResourceBinding
     {
         ED3D12BindingType BindingType;
-        uint8                   BindingIndex;
-        uint16                  OriginalBindingIndex;
-        FString                 DebugName;
+        uint8             BindingIndex;
+        uint16            OriginalBindingIndex;
+        String            DebugName;
     };
     
-    void AddBinding(ED3D12BindingType InType, uint16 InOriginalBindingIndex, const FString& InDebugName)
+    void AddBinding(ED3D12BindingType InType, uint16 InOriginalBindingIndex, const String& InDebugName)
     {
         FResourceBinding& Binding    = ResourceBindings.Emplace();
         Binding.BindingType          = InType;
@@ -282,7 +282,7 @@ public:
     // FD3D12Shader Interface
     virtual bool Initialize(const TArray<uint8>& InCode) override final;
     
-    FORCEINLINE const FString& GetIdentifier() const
+    FORCEINLINE const String& GetIdentifier() const
     {
         return Identifier;
     }
@@ -295,7 +295,7 @@ public:
 protected:
     bool GetShaderResourceBindings(ID3D12FunctionReflection* Reflection, uint32 NumBoundResources);
 
-    FString Identifier;
+    String Identifier;
 
 private:
     FD3D12ShaderBindingInfo LocalBindingInfo;
@@ -359,7 +359,7 @@ public:
     virtual void* GetRHIBaseInterface() override final;
 
 protected:
-    FIntVector3 ThreadGroupXYZ;
+    IntVector3 ThreadGroupXYZ;
 };
 
 NODISCARD inline FD3D12Shader* GetD3D12Shader(FRHIShader* Shader)

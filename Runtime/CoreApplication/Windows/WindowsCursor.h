@@ -21,5 +21,5 @@ public:
 
     virtual void SetPosition(int32 x, int32 y) override final;
     
-    virtual FIntVector2 GetPosition() const override final;
+    virtual IntVector2 GetPosition() const override final;
 };

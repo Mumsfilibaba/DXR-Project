@@ -12,23 +12,12 @@ struct FSceneLightProbe : public FSceneObject
     // Filters the source into the necessary cube-maps
     void FilterStaticCubeMaps();
 
-    // Pointer to the light in the world
-    FLightProbe* LightProbe;
-
-    // Source cube-map
-    FRHITextureRef SourceCubeMap;
-
-    // Cube-maps
-    FRHITextureRef SpecularCubeMap;
-    FRHITextureRef DiffuseCubeMap;
-
-    // Position
-    FVector3 Origin;
-
-    // Bounds 
-    FVector3 BoxMin;
-    FVector3 BoxMax;
-
-    // Use box-projection
-    bool bBoxProjection;
+    FLightProbe*   LightProbe;      // Pointer to the light in the world    
+    FRHITextureRef SourceCubeMap;   // Source cube-map
+    FRHITextureRef SpecularCubeMap; // Cube-maps for specular reflections
+    FRHITextureRef DiffuseCubeMap;  // Cube-maps for diffuse reflections
+    Vector3        Origin;          // Position of the probe in world space
+    Vector3        BoxMin;          // Minimum bounds of the probe's box
+    Vector3        BoxMax;          // Maximum bounds of the probe's box
+    bool           bBoxProjection;  // Use box-projection
 };

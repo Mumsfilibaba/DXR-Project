@@ -16,17 +16,17 @@ FLightProbe::~FLightProbe()
 {
 }
 
-void FLightProbe::SetPosition(const FVector3& InPosition)
+void FLightProbe::SetPosition(const Vector3& InPosition)
 {
     Position = InPosition;
 }
 
-void FLightProbe::SetBoxExtent(const FVector3& InBoxExtent)
+void FLightProbe::SetBoxExtent(const Vector3& InBoxExtent)
 {
     BoxExtent = InBoxExtent;
 }
 
-void FLightProbe::SetBoxOffset(const FVector3& InBoxOffset)
+void FLightProbe::SetBoxOffset(const Vector3& InBoxOffset)
 {
     BoxOffset = InBoxOffset;
 }

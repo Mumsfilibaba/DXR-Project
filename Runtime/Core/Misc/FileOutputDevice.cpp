@@ -12,7 +12,7 @@ static const CHAR* SeverityToString(ELogSeverity Severity)
     }
 }
 
-FFileOutputDevice::FFileOutputDevice(const FString& FilePath)
+FFileOutputDevice::FFileOutputDevice(const String& FilePath)
     : FileHandle(FPlatformFile::OpenForAsyncWrite(FilePath, true))
 {
 }
@@ -22,14 +22,14 @@ FFileOutputDevice::~FFileOutputDevice()
     FlushBlocking();
 }
 
-void FFileOutputDevice::Log(const FString& Message)
+void FFileOutputDevice::Log(const String& Message)
 {
     QueueWrite(Message + "\n");
 }
 
-void FFileOutputDevice::Log(ELogSeverity Severity, const FString& Message)
+void FFileOutputDevice::Log(ELogSeverity Severity, const String& Message)
 {
-    QueueWrite(FString(SeverityToString(Severity)) + Message + "\n");
+    QueueWrite(String(SeverityToString(Severity)) + Message + "\n");
 }
 
 void FFileOutputDevice::Flush()
@@ -37,7 +37,7 @@ void FFileOutputDevice::Flush()
     FlushBlocking();
 }
 
-void FFileOutputDevice::QueueWrite(const FString& Line)
+void FFileOutputDevice::QueueWrite(const String& Line)
 {
     {
         TScopedLock Lock(PendingLinesCS);
@@ -49,7 +49,7 @@ void FFileOutputDevice::QueueWrite(const FString& Line)
 
 void FFileOutputDevice::FlushAsync()
 {
-    TArray<FString> LinesToFlush;
+    TArray<String> LinesToFlush;
     {
         TScopedLock Lock(PendingLinesCS);
         if (PendingLines.IsEmpty())
@@ -64,7 +64,7 @@ void FFileOutputDevice::FlushAsync()
     if (FileHandle.IsValid())
     {
         uint32 TotalSize = 0;
-        for (const FString& Line : LinesToFlush)
+        for (const String& Line : LinesToFlush)
         {
             TotalSize += Line.SizeInBytes();
         }
@@ -73,7 +73,7 @@ void FFileOutputDevice::FlushAsync()
         Buffer.Resize(TotalSize);
 
         uint32 Offset = 0;
-        for (const FString& Line : LinesToFlush)
+        for (const String& Line : LinesToFlush)
         {
             Memory::Memcpy(Buffer.Data() + Offset, *Line, Line.SizeInBytes());
             Offset += Line.SizeInBytes();

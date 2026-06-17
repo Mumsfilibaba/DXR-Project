@@ -56,27 +56,27 @@ struct FActionKeyMapping
 {
     FActionKeyMapping() = default;
 
-    FActionKeyMapping(const FStringView& InName, FKey InKey)
+    FActionKeyMapping(const StringView& InName, FKey InKey)
         : Name(InName)
         , Key(InKey)
     {
     }
 
-    FString Name;
-    FKey    Key;
+    String Name;
+    FKey   Key;
 };
 
 struct FAxisMapping
 {
     FAxisMapping() = default;
 
-    FAxisMapping(const FStringView& InName, EAnalogSourceName::Type InAxis)
+    FAxisMapping(const StringView& InName, EAnalogSourceName::Type InAxis)
         : Name(InName)
         , Axis(InAxis)
     {
     }
 
-    FString                 Name;
+    String                  Name;
     EAnalogSourceName::Type Axis;
 };
 
@@ -84,16 +84,16 @@ struct FAxisKeyMapping
 {
     FAxisKeyMapping() = default;
 
-    FAxisKeyMapping(const FStringView& InName, FKey InKey, float InScale)
+    FAxisKeyMapping(const StringView& InName, FKey InKey, float InScale)
         : Name(InName)
         , Key(InKey)
         , Scale(InScale)
     {
     }
 
-    FString Name;
-    FKey    Key;
-    float   Scale;
+    String Name;
+    FKey   Key;
+    float  Scale;
 };
 
 class FInputComponent;
@@ -113,7 +113,7 @@ public:
     int32 AddAxisMapping(const FAxisMapping& AxisMapping);
     int32 AddAxisKeyMapping(const FAxisKeyMapping& AxisKeyMapping);
 
-    void SetCursorPosition(const FIntVector2& Postion);
+    void SetCursorPosition(const IntVector2& Postion);
     
     void OnAxisEvent(EAnalogSourceName::Type AxisSource, float AxisValue);
     void OnKeyEvent(FKey Key, bool bIsDown, bool bIsRepeat);
@@ -137,7 +137,7 @@ public:
     }
 
     FKeyState   GetKeyState(FKey Key) const;
-    FIntVector2 GetCursorPosition() const;
+    IntVector2 GetCursorPosition() const;
     FAxisState  GetAnalogState(EAnalogSourceName::Type AnalogSource) const;
 
     TSharedPtr<ICursor> GetCursorInterface() const 

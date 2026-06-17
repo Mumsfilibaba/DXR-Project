@@ -34,16 +34,16 @@ enum class ECascadeRenderPassType : uint8
 struct FCascadeMatricesHLSL
 {
     // 0-64
-    FMatrix4 View;
+    Matrix4 View;
 
     // 64-128
-    FMatrix4 ViewProjection;
+    Matrix4 ViewProjection;
 
     // 128-196
-    FMatrix4 InvView;
+    Matrix4 InvView;
 
     // 196-256
-    FMatrix4 InvViewProjection;
+    Matrix4 InvViewProjection;
 };
 
 MARK_AS_REALLOCATABLE(FCascadeMatricesHLSL);
@@ -51,27 +51,27 @@ MARK_AS_REALLOCATABLE(FCascadeMatricesHLSL);
 struct FCascadeSplitHLSL
 {
     // 0-64
-    FVector4 FrustumPlanes[NUM_FRUSTUM_PLANES];
+    Vector4 FrustumPlanes[NUM_FRUSTUM_PLANES];
 
     // 64-96
-    FVector4 Offsets;
-    FVector4 Scale;
+    Vector4 Offsets;
+    Vector4 Scale;
 
     // 96-128
-    FVector3 MinExtent;
-    float    Split;
-    FVector3 MaxExtent;
-    float    NearPlane;
+    Vector3 MinExtent;
+    float   Split;
+    Vector3 MaxExtent;
+    float   NearPlane;
 
     // 128-144
-    float FarPlane;
-    float MinDepth;
-    float MaxDepth;
-    float PreviousSplit;
+    float   FarPlane;
+    float   MinDepth;
+    float   MaxDepth;
+    float   PreviousSplit;
 
     // 144-160
-    FVector3 CascadeCameraPosition;
-    float    Padding0;
+    Vector3 CascadeCameraPosition;
+    float   Padding0;
 };
 
 MARK_AS_REALLOCATABLE(FCascadeSplitHLSL);
@@ -79,11 +79,11 @@ MARK_AS_REALLOCATABLE(FCascadeSplitHLSL);
 struct FPerShadowMapHLSL
 {
     // 0-64
-    FMatrix4 Matrix;
+    Matrix4 Matrix;
 
     // 64-80
-    FVector3 Position;
-    float    FarPlane;
+    Vector3 Position;
+    float   FarPlane;
 };
 
 MARK_AS_REALLOCATABLE(FPerShadowMapHLSL);
@@ -91,11 +91,11 @@ MARK_AS_REALLOCATABLE(FPerShadowMapHLSL);
 struct FSinglePassPointLightBufferHLSL
 {
     // 0-384
-    FMatrix4 LightProjections[RHI_NUM_CUBE_FACES];
+    Matrix4 LightProjections[RHI_NUM_CUBE_FACES];
 
     // 384-400
-    FVector3 LightPosition;
-    float    LightFarPlane;
+    Vector3 LightPosition;
+    float   LightFarPlane;
 };
 
 MARK_AS_REALLOCATABLE(FSinglePassPointLightBufferHLSL);
@@ -175,12 +175,9 @@ private:
     template<ECubeMapRenderPassType RenderPassType>
     void Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene);
 
-    // Cache PipelineState types
     TMap<FPointLightShaderCombination, FGraphicsPipelineStateInstance> MaterialPSOs;
-
-    // Buffers
-    FRHIBufferRef PerShadowMapBuffer;
-    FRHIBufferRef SinglePassShadowMapBuffer;
+    FRHIBufferRef                                                      PerShadowMapBuffer;
+    FRHIBufferRef                                                      SinglePassShadowMapBuffer;
 };
 
 class FCascadeGenerationPass : public FRenderPass
@@ -265,7 +262,7 @@ private:
     void Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene);
 
     TMap<FCascadedShadowsShaderCombination, FGraphicsPipelineStateInstance> MaterialPSOs;
-    FRHIBufferRef PerCascadeBuffer;
+    FRHIBufferRef                                                           PerCascadeBuffer;
 };
 
 struct FDirectionalShadowSettingsHLSL
@@ -366,5 +363,5 @@ public:
 
 private:
     TMap<FShadowMaskShaderCombination, FComputePipelineStateInstance> PipelineStates;
-    FRHIBufferRef ShadowSettingsBuffer;
+    FRHIBufferRef                                                     ShadowSettingsBuffer;
 };

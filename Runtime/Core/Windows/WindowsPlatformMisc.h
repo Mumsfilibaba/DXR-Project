@@ -24,7 +24,7 @@ struct FWindowsPlatformMisc final : public FGenericPlatformMisc
     #endif
     }
 
-    static FORCEINLINE int32 GetLastErrorString(FString& OutErrorString)
+    static FORCEINLINE int32 GetLastErrorString(String& OutErrorString)
     {
         const int32 LastError = ::GetLastError();
         const int32 Flags     = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;

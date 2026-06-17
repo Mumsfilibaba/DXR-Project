@@ -41,10 +41,10 @@ private:
     void DrawDebugSettings();
     void DrawTonemappingSettings();
 
-    FDelegateHandle      ImGuiDelegateHandle;
-    TMap<FString, bool>  BoolDefaults;
-    TMap<FString, int32> IntDefaults;
-    TMap<FString, float> FloatDefaults;
-    bool                 bVisible          = true;
-    bool                 bDefaultsCaptured = false;
+    FDelegateHandle     ImGuiDelegateHandle;
+    TMap<String, bool>  BoolDefaults;
+    TMap<String, int32> IntDefaults;
+    TMap<String, float> FloatDefaults;
+    bool                bVisible          = true;
+    bool                bDefaultsCaptured = false;
 };

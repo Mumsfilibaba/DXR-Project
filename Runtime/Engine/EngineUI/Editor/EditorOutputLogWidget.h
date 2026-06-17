@@ -12,7 +12,7 @@ class FEditorOutputLogWidget final : public IOutputDevice
 {
     struct FLogMessage
     {
-        FString      Message;
+        String       Message;
         ELogSeverity Severity = ELogSeverity::Info;
     };
 
@@ -21,8 +21,8 @@ public:
     virtual ~FEditorOutputLogWidget() override;
 
     // IOutputDevice
-    virtual void Log(const FString& Message) override final;
-    virtual void Log(ELogSeverity Severity, const FString& Message) override final;
+    virtual void Log(const String& Message) override final;
+    virtual void Log(ELogSeverity Severity, const String& Message) override final;
 
     void Draw();
 

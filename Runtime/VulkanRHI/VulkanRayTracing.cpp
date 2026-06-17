@@ -28,7 +28,7 @@ void* FVulkanGeometryAccelerationStructureRHI::GetRHINativeResource() const
     return reinterpret_cast<void*>(Geometry);
 }
 
-void FVulkanGeometryAccelerationStructureRHI::SetDebugName(const FString& InName)
+void FVulkanGeometryAccelerationStructureRHI::SetDebugName(const String& InName)
 {
     if (VULKAN_CHECK_HANDLE(Geometry))
     {
@@ -40,7 +40,7 @@ void FVulkanGeometryAccelerationStructureRHI::SetDebugName(const FString& InName
 #endif
 }
 
-void FVulkanGeometryAccelerationStructureRHI::GetDebugName(FString& OutDebugName) const
+void FVulkanGeometryAccelerationStructureRHI::GetDebugName(String& OutDebugName) const
 {
 #if VULKAN_STORE_DEBUG_NAMES
     OutDebugName = DebugName;

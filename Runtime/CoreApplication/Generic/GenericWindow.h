@@ -124,7 +124,7 @@ struct FWindowShape
     uint32 Height;
 
     /** @brief The (x, y) position of the window. */
-    FIntVector2 Position;
+    IntVector2 Position;
 };
 
 /**
@@ -154,7 +154,7 @@ struct FGenericWindowInitializer
     }
 
     /** @brief The textual title of the window. */
-    FString Title;
+    String Title;
 
     /** @brief The desired width of the window. */
     uint32 Width;
@@ -163,7 +163,7 @@ struct FGenericWindowInitializer
     uint32 Height;
 
     /** @brief The initial on-screen position of the window (x, y). */
-    FIntVector2 Position;
+    IntVector2 Position;
 
     /** @brief Style flags controlling the appearance and behavior of the window. */
     EWindowStyleFlags Style;
@@ -284,14 +284,14 @@ public:
      * 
      * @param Title The new title text.
      */
-    virtual void SetTitle(const FString& Title) { }
+    virtual void SetTitle(const String& Title) { }
 
     /**
      * @brief Retrieves the current title of the window.
      * 
-     * @param OutTitle An FString that will receive the window's title.
+     * @param OutTitle An String that will receive the window's title.
      */
-    virtual void GetTitle(FString& OutTitle) const { }
+    virtual void GetTitle(String& OutTitle) const { }
 
     /**
      * @brief Sets the overall window opacity.

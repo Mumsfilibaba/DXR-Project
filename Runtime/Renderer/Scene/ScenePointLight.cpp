@@ -21,7 +21,7 @@ void FScenePointLight::Tick()
     for (int32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)
     {
         // Update ShadowData
-        FMatrix4 ViewProjMatrix = PointLight->GetViewProjectionMatrix(FaceIndex);
+        Matrix4 ViewProjMatrix = PointLight->GetViewProjectionMatrix(FaceIndex);
         ViewProjMatrix = ViewProjMatrix.GetTranspose();
 
         ShadowData[FaceIndex].ViewProjMatrix = ViewProjMatrix;

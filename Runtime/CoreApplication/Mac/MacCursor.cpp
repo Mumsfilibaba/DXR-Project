@@ -88,10 +88,10 @@ void FMacCursor::SetPosition(int32 x, int32 y)
     
     CGAssociateMouseAndMouseCursorPosition(true);
 
-    UpdateCursorPosition(FIntVector2(NewPosition.x, NewPosition.y));
+    UpdateCursorPosition(IntVector2(NewPosition.x, NewPosition.y));
 }
 
-FIntVector2 FMacCursor::GetPosition() const
+IntVector2 FMacCursor::GetPosition() const
 {
     if (bIsPositionInitialized)
     {
@@ -100,7 +100,7 @@ FIntVector2 FMacCursor::GetPosition() const
     
     const NSPoint MouseLocation  = [NSEvent mouseLocation];
     const NSPoint CursorPosition = FMacApplication::ConvertCocoaPointToEngine(MouseLocation.x, MouseLocation.y);
-    return FIntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
+    return IntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
 }
 
 void FMacCursor::SetVisibility(bool bVisible)
@@ -123,7 +123,7 @@ void FMacCursor::SetVisibility(bool bVisible)
     }
 }
 
-void FMacCursor::UpdateCursorPosition(const FIntVector2& InPosition)
+void FMacCursor::UpdateCursorPosition(const IntVector2& InPosition)
 {
     CurrentPosition = InPosition;
     bIsPositionInitialized = true;

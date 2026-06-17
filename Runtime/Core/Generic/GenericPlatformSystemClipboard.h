@@ -19,7 +19,7 @@ struct FGenericPlatformSystemClipboard
      * @param OutText Output string.
      * @return True if successful and clipboard contained text.
      */
-    static bool GetText(FString& OutText)
+    static bool GetText(String& OutText)
     {
         OutText.Clear();
         return false;
@@ -30,7 +30,7 @@ struct FGenericPlatformSystemClipboard
      * @param InText Text to write.
      * @return True if successful.
      */
-    static bool SetText(const FString& InText)
+    static bool SetText(const String& InText)
     {
         (void)InText;
         return false;
@@ -46,9 +46,9 @@ struct FGenericPlatformSystemClipboard
     /**
      * @brief Convenience helper: returns clipboard text or empty string.
      */
-    static FString GetTextOrEmpty()
+    static String GetTextOrEmpty()
     {
-        FString Result;
+        String Result;
         GetText(Result);
         return Result;
     }

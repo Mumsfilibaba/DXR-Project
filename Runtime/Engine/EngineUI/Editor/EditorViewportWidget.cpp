@@ -330,7 +330,7 @@ void FEditorViewportWidget::Draw()
 
                     if (ImGui::CalcTextSize(InLabel).x <= MaxWidth)
                     {
-                        FCString::Snprintf(OutBuffer.Data(), static_cast<int32>(OutBuffer.Size()), "%s", InLabel);
+                        CString::Snprintf(OutBuffer.Data(), static_cast<int32>(OutBuffer.Size()), "%s", InLabel);
                         return OutBuffer.Data();
                     }
 
@@ -369,7 +369,7 @@ void FEditorViewportWidget::Draw()
                     }
 
                     OutBuffer[MaxCopy] = '\0';
-                    FCString::Strcat(OutBuffer.Data(), Ellipsis);
+                    CString::Strcat(OutBuffer.Data(), Ellipsis);
 
                     return OutBuffer.Data();
                 };
@@ -648,11 +648,11 @@ void FEditorViewportWidget::Draw()
 
         // Update the relative viewport position
         const ImVec2 ContentPos = ImGui::GetCursorScreenPos();
-        ViewportWidget->SetPosition(FIntVector2(static_cast<int32>(ContentPos.x), static_cast<int32>(ContentPos.y)), EViewportPositionSpace::Screen);
+        ViewportWidget->SetPosition(IntVector2(static_cast<int32>(ContentPos.x), static_cast<int32>(ContentPos.y)), EViewportPositionSpace::Screen);
 
         // Update the viewport image that we will render to
         const ImVec2 ContentSize = ImGui::GetContentRegionAvail();
-        CachedViewportSize = FIntVector2(static_cast<int32>(ContentSize.x), static_cast<int32>(ContentSize.y));
+        CachedViewportSize = IntVector2(static_cast<int32>(ContentSize.x), static_cast<int32>(ContentSize.y));
         ViewportWidget->SetSize(CachedViewportSize);
 
         // Draw the viewport texture
@@ -758,7 +758,7 @@ void FEditorViewportWidget::Draw()
         if (CVarDrawFps.GetValue())
         {
             char FpsText[16];
-            FCString::Snprintf(FpsText, sizeof(FpsText), "%d", FFrameProfiler::Get().GetFramesPerSecond());
+            CString::Snprintf(FpsText, sizeof(FpsText), "%d", FFrameProfiler::Get().GetFramesPerSecond());
 
             ImDrawList* DrawList = ImGui::GetWindowDrawList();
             
@@ -797,7 +797,7 @@ void FEditorViewportWidget::SetViewportImage(FRHITextureRef InViewportImage)
     }
 }
 
-FIntVector2 FEditorViewportWidget::GetViewportSize() const
+IntVector2 FEditorViewportWidget::GetViewportSize() const
 {
     if (CachedViewportSize.X > 0 && CachedViewportSize.Y > 0)
     {
@@ -807,10 +807,10 @@ FIntVector2 FEditorViewportWidget::GetViewportSize() const
     if (ImGuiWindow* ViewportWindow = ImGui::FindWindowByName("Viewport"))
     {
         const ImVec2 Size = ViewportWindow->ContentRegionRect.GetSize();
-        return FIntVector2(static_cast<int32>(Size.x), static_cast<int32>(Size.y));
+        return IntVector2(static_cast<int32>(Size.x), static_cast<int32>(Size.y));
     }
 
-    return FIntVector2(1920, 1080);
+    return IntVector2(1920, 1080);
 }
 
 FSceneRenderView::EDebugView FEditorViewportWidget::GetDebugView() const

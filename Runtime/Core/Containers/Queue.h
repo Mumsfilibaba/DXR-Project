@@ -33,6 +33,8 @@ public:
      * @brief Constructor
      */
     TQueue()
+        : Head(nullptr)
+        , Tail(nullptr)
     {
         // Create a dummy node to simplify edge cases.
         Head = CreateDummyNode();
@@ -191,9 +193,7 @@ public:
      */
     void Clear()
     {
-        while (Dequeue())
-        {
-        }
+        while (Dequeue());
 
         NumElements = 0;
     }
@@ -350,7 +350,7 @@ private:
     }
 
 private:
-    FNode* volatile Head{nullptr};
-    FNode* volatile Tail{nullptr};
-    FAtomicInt32    NumElements;
+    FNode* volatile Head;
+    FNode* volatile Tail;
+    AtomicInt32     NumElements;
 };

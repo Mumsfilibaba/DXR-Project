@@ -13,13 +13,13 @@ struct FConfigValue
     FConfigValue& operator=(FConfigValue&& Other) = default;
     FConfigValue& operator=(const FConfigValue& Other) = default;
 
-    explicit FConfigValue(FString&& InString)
+    explicit FConfigValue(String&& InString)
         : SavedValue(InString)
         , CurrentValue(::Move(InString))
     {
     }
 
-    explicit FConfigValue(const FString& InString)
+    explicit FConfigValue(const String& InString)
         : SavedValue(InString)
         , CurrentValue(InString)
     {
@@ -48,10 +48,10 @@ struct FConfigValue
     }
 
      /** @brief Current value in the config file */
-    FString SavedValue;
+    String SavedValue;
 
      /** @brief Current value in the runtime, this will be saved when the file is flushed to disk */
-    FString CurrentValue;
+    String CurrentValue;
 };
 
 struct CORE_API FConfigSection
@@ -63,7 +63,7 @@ struct CORE_API FConfigSection
     void Restore();
 
     /** @brief Dump the values to a string */
-    void DumpToString(FString& OutString);
+    void DumpToString(String& OutString);
 
     bool operator==(const FConfigSection& Other) const
     {
@@ -75,8 +75,8 @@ struct CORE_API FConfigSection
         return !(*this == Other);
     }
 
-    FString                     Name;
-    TMap<FString, FConfigValue> Values;
+    String                     Name;
+    TMap<String, FConfigValue> Values;
 };
 
 struct CORE_API FConfigFile
@@ -94,7 +94,7 @@ struct CORE_API FConfigFile
     FConfigValue* FindValue(const CHAR* SectionName, const CHAR* Name);
 
      /** @brief Set a string from the Engine config */
-    bool SetString(const CHAR* SectionName, const CHAR* Name, const FString& NewValue);
+    bool SetString(const CHAR* SectionName, const CHAR* Name, const String& NewValue);
 
      /** @brief Set a int from the Engine config */
     bool SetInt(const CHAR* SectionName, const CHAR* Name, int32 NewValue);
@@ -106,7 +106,7 @@ struct CORE_API FConfigFile
     bool SetBool(const CHAR* SectionName, const CHAR* Name, bool bNewValue);
 
      /** @brief Retrieve a string from the Engine config */
-    bool GetString(const CHAR* SectionName, const CHAR* Name, FString& OutValue);
+    bool GetString(const CHAR* SectionName, const CHAR* Name, String& OutValue);
 
      /** @brief Retrieve a int from the Engine config */
     bool GetInt(const CHAR* SectionName, const CHAR* Name, int32& OutValue);
@@ -121,7 +121,7 @@ struct CORE_API FConfigFile
 	bool WriteToFile();
 
 	/** @brief Prints the content into a string */
-	void DumpToString(FString& OutString);
+	void DumpToString(String& OutString);
 
     bool operator==(const FConfigFile& Other) const
     {
@@ -133,8 +133,8 @@ struct CORE_API FConfigFile
         return !(*this == Other);
     }
 
-    FString                       Filename;
-    TMap<FString, FConfigSection> Sections;
+    String                       Filename;
+    TMap<String, FConfigSection> Sections;
 };
 
 extern CORE_API FConfigFile* GConfig;
@@ -145,13 +145,13 @@ public:
     static bool Initialize();
     static void Release();
 
-    FConfigFile* LoadFile(const FString& Filename);
+    FConfigFile* LoadFile(const String& Filename);
 
     void LoadConsoleVariables();
 
 private:
     FConfig();
 
-    TMap<FString, FConfigFile> ConfigFiles;
+    TMap<String, FConfigFile> ConfigFiles;
     static FConfig* GlobalConfig;
 };

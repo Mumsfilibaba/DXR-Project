@@ -55,7 +55,7 @@ struct FWindowsDeferredMessage
     LPARAM lParam;
 
     /** @brief Horizontal delta for raw mouse movements. */
-    FIntVector2 MouseDelta;
+    IntVector2 MouseDelta;
 };
 
 /**

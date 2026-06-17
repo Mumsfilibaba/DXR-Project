@@ -14,7 +14,7 @@ void FMovingBallComponent::Tick(float DeltaTime)
     FActor* Actor = GetActorOwner();
     
     FActorTransform& ActorTransform = Actor->GetTransform();
-    ActorTransform.SetTranslation(ActorTransform.GetTranslation() + FVector3(0.0f, CurrentSpeed * DeltaTime, 0.0f));
+    ActorTransform.SetTranslation(ActorTransform.GetTranslation() + Vector3(0.0f, CurrentSpeed * DeltaTime, 0.0f));
 
     if (ActorTransform.GetTranslation().Y >= 60.0f)
     {

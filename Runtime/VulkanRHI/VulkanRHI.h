@@ -119,7 +119,7 @@ public:
     virtual void* GetRHINativeComputeCommandQueue() override final;
     virtual void* GetRHINativeCopyCommandQueue()    override final;
 
-    virtual FString GetAdapterName() const override final;
+    virtual String GetAdapterName() const override final;
 
     virtual ERHIType GetRHIType() const override final;
 

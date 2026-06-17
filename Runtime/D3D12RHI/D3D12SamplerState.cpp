@@ -1,6 +1,6 @@
 #include "D3D12RHI/D3D12SamplerState.h"
 
-FAtomicInt32 FD3D12SamplerStateIdentifier::NextIdentifier = 0;
+AtomicInt32 FD3D12SamplerStateIdentifier::NextIdentifier = 0;
 
 uint16 FD3D12SamplerStateIdentifier::GenerateIdentifier()
 {

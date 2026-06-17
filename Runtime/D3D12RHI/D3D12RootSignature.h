@@ -314,9 +314,9 @@ public:
         return ShaderStages[Stage].IsRootCBV(Register);
     }
 
-    FORCEINLINE void SetDebugName(const FString& Name)
+    FORCEINLINE void SetDebugName(const String& Name)
     {
-        FStringWide WideName = CharToWide(Name);
+        StringWide WideName = CharToWide(Name);
         RootSignature->SetName(*WideName);
     }
 

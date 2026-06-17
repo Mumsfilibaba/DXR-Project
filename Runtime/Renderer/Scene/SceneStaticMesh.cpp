@@ -44,21 +44,21 @@ void FSceneStaticMesh::Tick()
 {
     // Retrieve the transforms for each object so that they are ready for the GPU
     const FActorTransform& Transform = Actor->GetTransform();
-    const FMatrix4 TransformM = Transform.GetTransformMatrix();
-    const FMatrix4 TransformT = TransformM.GetTranspose();
+    const Matrix4 TransformM = Transform.GetTransformMatrix();
+    const Matrix4 TransformT = TransformM.GetTranspose();
 
     // Store a row-major float3x4 (3 first rows) for shaders + DXR instance transforms.
-    TransformBuffer.Transform = FMatrix3x4(TransformT);
+    TransformBuffer.Transform = Matrix3x4(TransformT);
 
     // For normals/tangents we need inverse-transpose(Transform). Since Transform = transpose(TransformM),
     // we have inverse-transpose(Transform) = inverse(TransformM).
-    const FMatrix4 TransformInv = Transform.GetTransformMatrixInverse();
-    TransformBuffer.TransformInvT = FMatrix3x4(TransformInv);
+    const Matrix4 TransformInv = Transform.GetTransformMatrixInverse();
+    TransformBuffer.TransformInvT = Matrix3x4(TransformInv);
 
     // Create a world bounding-box
     const FAABB& LocalBounds = Mesh->GetAABB();
 
-    const FVector3 Max = Transform.GetTransformMatrix().Transform(LocalBounds.Max);
-    const FVector3 Min = Transform.GetTransformMatrix().Transform(LocalBounds.Min);
+    const Vector3 Max = Transform.GetTransformMatrix().Transform(LocalBounds.Max);
+    const Vector3 Min = Transform.GetTransformMatrix().Transform(LocalBounds.Min);
     WorldBounds = FAABB(Max, Min); 
 }

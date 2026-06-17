@@ -448,10 +448,10 @@ void* FMetalDeviceRHI::GetRHINativeCopyCommandQueue()
     return nullptr;
 }
 
-FString FMetalDeviceRHI::GetAdapterName() const
+String FMetalDeviceRHI::GetAdapterName() const
 {
     // TODO: Finish
-    return FString();
+    return String();
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -80,9 +80,9 @@ void FFrameProfiler::Tick()
             ThreadHandleToIndexMap.Add(Sample.ThreadHandle, TableIndex);
         }
 
-        const FString ScopeName   = Sample.Name;
-        const uint64  Delta       = Sample.EndTimeStamp - Sample.StartTimeStamp;
-        const uint64  Nanoseconds = TimeUtilities::FromSeconds(Delta) / Frequency;
+        const String ScopeName   = Sample.Name;
+        const uint64 Delta       = Sample.EndTimeStamp - Sample.StartTimeStamp;
+        const uint64 Nanoseconds = Time::FromSeconds(Delta) / Frequency;
 
         FFrameProfilerThreadInfo& ThreadInfo = FunctionInfoTable[TableIndex];
         if (FFrameProfilerFunctionInfo* Entry = ThreadInfo.FunctionInfoMap.Find(ScopeName))

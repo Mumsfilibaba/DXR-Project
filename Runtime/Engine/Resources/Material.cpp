@@ -39,7 +39,7 @@ void FMaterial::Initialize()
 
 void FMaterial::BuildBuffer(FRHICommandList& CommandList)
 {
-    MaterialData.Albedo           = FVector3(MaterialInfo.Albedo.R, MaterialInfo.Albedo.G, MaterialInfo.Albedo.B);
+    MaterialData.Albedo           = Vector3(MaterialInfo.Albedo.R, MaterialInfo.Albedo.G, MaterialInfo.Albedo.B);
     MaterialData.Metallic         = MaterialInfo.Metallic;
     MaterialData.Roughness        = MaterialInfo.Roughness;
     MaterialData.AmbientOcclusion = MaterialInfo.AmbientOcclusion;
@@ -137,7 +137,7 @@ void FMaterial::SetParallaxLayers(float InParallaxMinLayers, float InParallaxMax
     bMaterialBufferIsDirty         = true;
 }
 
-void FMaterial::SetName(const FString& InName)
+void FMaterial::SetName(const String& InName)
 {
     Name = InName;
 }

@@ -37,7 +37,7 @@ void FStatRegistry::GetStatsByGroup(const CHAR* GroupName, TArray<FStatData*>& O
 {
     for (FStatData* Stat : Stats)
     {
-        if (FCString::Strcmp(Stat->GroupName, GroupName) == 0)
+        if (CString::Strcmp(Stat->GroupName, GroupName) == 0)
         {
             OutStats.Add(Stat);
         }
@@ -51,7 +51,7 @@ void FStatRegistry::GetGroups(TArray<const CHAR*>& OutGroups) const
         bool bFound = false;
         for (const CHAR* Existing : OutGroups)
         {
-            if (FCString::Strcmp(Existing, Stat->GroupName) == 0)
+            if (CString::Strcmp(Existing, Stat->GroupName) == 0)
             {
                 bFound = true;
                 break;

@@ -903,14 +903,14 @@ bool FD3D12RayTracingShader::Initialize(const TArray<uint8>& InCode)
 	}
 
 	// HACK: Since the NVIDIA driver can't handle these names, we have to change the names :(
-	const FString FuncIdentifier = FunctionDesc.Name;
+	const String FuncIdentifier = FunctionDesc.Name;
 
 	int32 NameStart = FuncIdentifier.FindLastCharWithPredicate([](CHAR Char) -> bool
 	{
 		return (Char == '\x1') || (Char == '?');
 	});
 
-	if (NameStart != FString::InvalidIndex)
+	if (NameStart != String::InvalidIndex)
 	{
 		NameStart++;
 	}

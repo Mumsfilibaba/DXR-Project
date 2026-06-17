@@ -7,12 +7,12 @@
 
 static bool IsRHIGroup(const CHAR* GroupName)
 {
-    return FCString::Strcmp(GroupName, "RHI") == 0
-        || FCString::Strcmp(GroupName, "RHI Budget") == 0
-        || FCString::Strcmp(GroupName, "D3D12 Allocators") == 0
-        || FCString::Strcmp(GroupName, "Vulkan Allocators") == 0
-        || FCString::Strcmp(GroupName, "D3D12 PSO") == 0
-        || FCString::Strcmp(GroupName, "Vulkan PSO") == 0;
+    return CString::Strcmp(GroupName, "RHI") == 0
+        || CString::Strcmp(GroupName, "RHI Budget") == 0
+        || CString::Strcmp(GroupName, "D3D12 Allocators") == 0
+        || CString::Strcmp(GroupName, "Vulkan Allocators") == 0
+        || CString::Strcmp(GroupName, "D3D12 PSO") == 0
+        || CString::Strcmp(GroupName, "Vulkan PSO") == 0;
 }
 
 FEditorStatsWidget::FEditorStatsWidget()

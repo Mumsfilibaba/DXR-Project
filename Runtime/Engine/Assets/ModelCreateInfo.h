@@ -66,7 +66,7 @@ struct ENGINE_API FMeshCreateInfo
 
     TArray<uint16> GetSmallIndices() const;
 
-    FString              Name;
+    String               Name;
     TArray<FSubMeshInfo> SubMeshes;
     TArray<uint32>       Indices;
     TArray<FVertex>      Vertices;
@@ -85,9 +85,9 @@ struct FMaterialCreateInfo
     {
     }
 
-    FString        Name;
+    String         Name;
     FTexture2DRef  Textures[EMaterialTexture::Count];
-    FVector3       Diffuse;
+    Vector3        Diffuse;
     float          AmbientFactor;
     float          Roughness;
     float          Metallic;

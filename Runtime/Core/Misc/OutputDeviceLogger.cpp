@@ -18,7 +18,7 @@ FOutputDeviceLogger* FOutputDeviceLogger::Get()
     return &StaticOutputDeviceLogger;
 }
 
-void FOutputDeviceLogger::Log(const FString& Message)
+void FOutputDeviceLogger::Log(const String& Message)
 {
     TArray<IOutputDevice*> CurrentOutputDevices;
     {
@@ -35,7 +35,7 @@ void FOutputDeviceLogger::Log(const FString& Message)
     }
 }
 
-void FOutputDeviceLogger::Log(ELogSeverity Severity, const FString& Message)
+void FOutputDeviceLogger::Log(ELogSeverity Severity, const String& Message)
 {
     TArray<IOutputDevice*> CurrentOutputDevices;
     {

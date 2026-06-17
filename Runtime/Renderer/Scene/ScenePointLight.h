@@ -12,10 +12,10 @@ struct FScenePointLight : public FSceneObject
 {
     struct FShadowData
     {
-        FMatrix4 ViewProjMatrix;
-        FVector3 Position;
-        float    NearPlane;
-        float    FarPlane;
+        Matrix4 ViewProjMatrix;
+        Vector3 Position;
+        float   NearPlane;
+        float   FarPlane;
     };
 
     FScenePointLight(FScene* InScene, FPointLight* InPointLight);
@@ -23,19 +23,11 @@ struct FScenePointLight : public FSceneObject
 
     virtual void Tick() override final;
 
-    // Pointer to the light in the world
-    FPointLight* PointLight;
-
-    // Shadow generation information
-    FShadowData ShadowData[RHI_NUM_CUBE_FACES];
-
-    // Store data for each face
-    FSceneView ShadowView[RHI_NUM_CUBE_FACES];
-
-    // Store data for a single pass cube-map
-    FSceneView SinglePassShadowView;
-
-    FVector3 Position;
-    FVector3 Color;
-    float    ShadowBias;
+    FPointLight* PointLight;                     // Pointer to the light in the world
+    FShadowData  ShadowData[RHI_NUM_CUBE_FACES]; // Shadow generation information
+    FSceneView   ShadowView[RHI_NUM_CUBE_FACES]; // Store data for each face
+    FSceneView   SinglePassShadowView;           // Store data for a single pass cube-map
+    Vector3      Position;
+    Vector3      Color;
+    float        ShadowBias;
 };

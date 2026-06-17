@@ -125,7 +125,7 @@ bool FD3D12QueryHeap::Initialize()
     return true;
 }
 
-void FD3D12QueryHeap::SetDebugName(const FString& InName)
+void FD3D12QueryHeap::SetDebugName(const String& InName)
 {
     if (QueryHeap)
     {
@@ -135,7 +135,7 @@ void FD3D12QueryHeap::SetDebugName(const FString& InName)
             D3D12_ERROR("Failed to set queryheap name");
         }
 
-        FStringWide WideName = CharToWide(InName);
+        StringWide WideName = CharToWide(InName);
         Result = QueryHeap->SetName(*WideName);
         if (FAILED(Result))
         {
@@ -145,7 +145,7 @@ void FD3D12QueryHeap::SetDebugName(const FString& InName)
 
     if (ReadbackResource.IsValid())
     {
-        const FString ResourceName = InName + "ReadBack Resource";
+        const String ResourceName = InName + "ReadBack Resource";
         ReadbackResource->SetDebugName(ResourceName);
     }
 }
@@ -224,7 +224,7 @@ FD3D12QueryHeap* FD3D12QueryHeapManager::ObtainHeap()
         return nullptr;
     }
 
-    const FString DebugName = FString::CreateFormatted("QueryHeap [%d]", AllHeaps.Size());
+    const String DebugName = String::CreateFormatted("QueryHeap [%d]", AllHeaps.Size());
     Heap->SetDebugName(DebugName);
 
     AllHeaps.Add(Heap);

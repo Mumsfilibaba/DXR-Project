@@ -123,7 +123,7 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
         Resources.RTMaterialTextureCache.Add(SafeGetDefaultSRV(Material->MaterialMap));
         Sampler = Material->GetMaterialSampler();
 
-        const FMatrix3x4 TinyTransform;// = StaticMesh->Actor->GetTransform().GetTinyMatrix();
+        const Matrix3x4 TinyTransform;// = StaticMesh->Actor->GetTransform().GetTinyMatrix();
 
         uint32 HitGroupIndex = 0;
         if (uint32* ExistingIndex = Resources.RTMeshToHitGroupIndex.Find(StaticMesh->GetMesh().Get()))

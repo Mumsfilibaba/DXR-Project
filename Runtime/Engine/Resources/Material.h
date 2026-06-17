@@ -47,18 +47,18 @@ struct FMaterialInfo
 struct FMaterialHLSL
 {
     // 0-16 
-    FVector3 Albedo           = FVector3(1.0f);
-    float    Roughness        = 1.0f;
+    Vector3 Albedo           = Vector3(1.0f);
+    float   Roughness        = 1.0f;
     // 16-32
-    float    Metallic         = 0.0f;
-    float    AmbientOcclusion = 1.0f;
-    int32    Padding0         = 0;
-    int32    Padding1         = 0;
+    float   Metallic         = 0.0f;
+    float   AmbientOcclusion = 1.0f;
+    int32   Padding0         = 0;
+    int32   Padding1         = 0;
     // 32-48
-    float    ParallaxHeightScale = 0.03f;
-    float    ParallaxMinLayers   = 32.0f;
-    float    ParallaxMaxLayers   = 64.0f;
-    float    Padding2            = 0.0f;
+    float   ParallaxHeightScale = 0.03f;
+    float   ParallaxMinLayers   = 32.0f;
+    float   ParallaxMaxLayers   = 64.0f;
+    float   Padding2            = 0.0f;
 };
 
 class ENGINE_API FMaterial
@@ -87,7 +87,7 @@ public:
     void SetParallaxHeightScale(float InParallaxHeightScale);
     void SetParallaxLayers(float InParallaxMinLayers, float InParallaxMaxLayers);
     
-    void SetName(const FString& InName);
+    void SetName(const String& InName);
 
     bool HasAlphaMask() const { return (MaterialInfo.MaterialFlags & EMaterialFlags::EnableAlpha) != EMaterialFlags::None; }
     bool HasHeightMap() const { return (MaterialInfo.MaterialFlags & EMaterialFlags::EnableHeight) != EMaterialFlags::None; }
@@ -119,7 +119,7 @@ public:
         return MaterialInfo;
     }
     
-    const FString& GetName() const
+    const String& GetName() const
     {
         return Name;
     }
@@ -146,7 +146,7 @@ public:
     FRHITextureRef HeightMap;    // Parallax height (BC4)
 
 private:
-    FString             Name;
+    String              Name;
     FMaterialHLSL       MaterialData;
     FMaterialInfo       MaterialInfo;
     bool                bMaterialBufferIsDirty;

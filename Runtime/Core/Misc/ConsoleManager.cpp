@@ -9,7 +9,7 @@
 static FAutoConsoleCommand CmdClearHistory(
     "ClearHistory",
     "Clears the history of the Console",
-    FConsoleCommandDelegate::CreateLambda([](FStringView)
+    FConsoleCommandDelegate::CreateLambda([](StringView)
     {
         FConsoleManager::Get().ClearHistory();
     }));
@@ -17,20 +17,20 @@ static FAutoConsoleCommand CmdClearHistory(
 static FAutoConsoleCommand CmdDumpCVars(
     "Console.DumpCVars",
     "Dumps all console variables (optionally filtered by key) to DumpConsoleVariableValues.txt in the current working directory",
-    FConsoleCommandDelegate::CreateLambda([](FStringView Args)
+    FConsoleCommandDelegate::CreateLambda([](StringView Args)
     {
         FConsoleManager& ConsoleManager = FConsoleManager::Get();
 
-        const FString FilePath = FPlatformFile::GetCurrentWorkingDirectory() + "/DumpConsoleVariableValues.txt";
+        const String FilePath = FPlatformFile::GetCurrentWorkingDirectory() + "/DumpConsoleVariableValues.txt";
         FFileOutputDevice OutputDevice(FilePath);
 
-        FStringView KeyView = Args;
+        StringView KeyView = Args;
         KeyView.TrimInline();
         const CHAR* Key = KeyView.IsEmpty() ? nullptr : *KeyView;
         ConsoleManager.DumpConsoleVariableValues(OutputDevice, Key);
     }));
 
-static TAutoConsoleVariable<FString> CVarEcho(
+static TAutoConsoleVariable<String> CVarEcho(
     "Echo", 
     "Prints the entered text to the console",
     "",
@@ -56,14 +56,14 @@ template<typename T>
 class TBoundedConsoleVariableRef;
 
 typedef TConsoleVariable<bool>         FConsoleVariableBool;
-typedef TConsoleVariable<FString>      FConsoleVariableString;
+typedef TConsoleVariable<String>       FConsoleVariableString;
 typedef TBoundedConsoleVariable<int32> FConsoleVariableInt32;
 typedef TBoundedConsoleVariable<float> FConsoleVariableFloat;
 
-typedef TConsoleVariableRef<bool>           FConsoleVariableBoolRef;
-typedef TConsoleVariableRef<FString>        FConsoleVariableStringRef;
-typedef TBoundedConsoleVariableRef<int32>   FConsoleVariableInt32Ref;
-typedef TBoundedConsoleVariableRef<float>   FConsoleVariableFloatRef;
+typedef TConsoleVariableRef<bool>         FConsoleVariableBoolRef;
+typedef TConsoleVariableRef<String>       FConsoleVariableStringRef;
+typedef TBoundedConsoleVariableRef<int32> FConsoleVariableInt32Ref;
+typedef TBoundedConsoleVariableRef<float> FConsoleVariableFloatRef;
 
 
 class FConsoleCommand  : public IConsoleCommand
@@ -77,11 +77,17 @@ public:
 
     virtual ~FConsoleCommand() = default;
 
-    virtual IConsoleCommand* AsCommand() override final { return this; }
+    virtual IConsoleCommand* AsCommand() override final
+    {
+        return this;
+    }
  
-    virtual const CHAR* GetHelpString() const override final { return HelpString; }
+    virtual const CHAR* GetHelpString() const override final
+    {
+        return HelpString;
+    }
 
-    virtual void Execute(FStringView Args) override final
+    virtual void Execute(StringView Args) override final
     {
         ExecuteDelegate.ExecuteIfBound(Args);
     }
@@ -105,9 +111,15 @@ public:
 
     virtual ~FConsoleVariableBase() = default;
 
-    virtual IConsoleVariable* AsVariable() override final { return this; }
+    virtual IConsoleVariable* AsVariable() override final
+    {
+        return this;
+    }
     
-    virtual const CHAR* GetHelpString() const override final { return HelpString; }
+    virtual const CHAR* GetHelpString() const override final
+    {
+        return HelpString;
+    }
 
     virtual void SetOnChangedDelegate(const FConsoleVariableDelegate& NewChangedDelegate) override final
     {
@@ -185,10 +197,10 @@ public:
     {
     }
 
-    virtual TConsoleVariableData<int32>*   GetIntData()    override final { return nullptr; }
-    virtual TConsoleVariableData<float>*   GetFloatData()  override final { return nullptr; }
-    virtual TConsoleVariableData<bool>*    GetBoolData()   override final { return nullptr; }
-    virtual TConsoleVariableData<FString>* GetStringData() override final { return nullptr; }
+    virtual TConsoleVariableData<int32>*  GetIntData()    override final { return nullptr; }
+    virtual TConsoleVariableData<float>*  GetFloatData()  override final { return nullptr; }
+    virtual TConsoleVariableData<bool>*   GetBoolData()   override final { return nullptr; }
+    virtual TConsoleVariableData<String>* GetStringData() override final { return nullptr; }
 
     virtual bool IsVariableInt()    const override final { return false; }
     virtual bool IsVariableFloat()  const override final { return false; }
@@ -199,7 +211,7 @@ public:
     virtual void SetAsFloat(float InValue, EConsoleVariableFlags InFlags) override;
     virtual void SetAsBool(bool bValue, EConsoleVariableFlags InFlags)    override;
 
-    virtual void SetString(const FString& InValue, EConsoleVariableFlags InFlags) override
+    virtual void SetString(const String& InValue, EConsoleVariableFlags InFlags) override
     {
         if (CanBeSet(InFlags))
         {
@@ -216,7 +228,7 @@ public:
     virtual float GetFloat() const override final;
     virtual bool  GetBool()  const override final;
 
-    virtual FString GetString() const override final
+    virtual String GetString() const override final
     {
         return TTypeToString<T>::ToString(*Data);
     }
@@ -418,23 +430,23 @@ bool TConsoleVariable<bool>::GetBool() const
 }
 
 // -------------------------------------------------------------------------------------------
-// FString
+// String
 // -------------------------------------------------------------------------------------------
 
 template<>
-TConsoleVariableData<FString>* TConsoleVariable<FString>::GetStringData()
+TConsoleVariableData<String>* TConsoleVariable<String>::GetStringData()
 {
     return &Data;
 }
 
 template<>
-bool TConsoleVariable<FString>::IsVariableString() const
+bool TConsoleVariable<String>::IsVariableString() const
 {
     return true;
 }
 
 template<>
-inline void TConsoleVariable<FString>::SetAsInt(int32 InValue, EConsoleVariableFlags InFlags)
+inline void TConsoleVariable<String>::SetAsInt(int32 InValue, EConsoleVariableFlags InFlags)
 {
     if (CanBeSet(InFlags))
     {
@@ -444,7 +456,7 @@ inline void TConsoleVariable<FString>::SetAsInt(int32 InValue, EConsoleVariableF
 }
 
 template<>
-inline void TConsoleVariable<FString>::SetAsFloat(float InValue, EConsoleVariableFlags InFlags)
+inline void TConsoleVariable<String>::SetAsFloat(float InValue, EConsoleVariableFlags InFlags)
 {
     if (CanBeSet(InFlags))
     {
@@ -454,7 +466,7 @@ inline void TConsoleVariable<FString>::SetAsFloat(float InValue, EConsoleVariabl
 }
 
 template<>
-inline void TConsoleVariable<FString>::SetAsBool(bool InValue, EConsoleVariableFlags InFlags)
+inline void TConsoleVariable<String>::SetAsBool(bool InValue, EConsoleVariableFlags InFlags)
 {
     if (CanBeSet(InFlags))
     {
@@ -464,7 +476,7 @@ inline void TConsoleVariable<FString>::SetAsBool(bool InValue, EConsoleVariableF
 }
 
 template<>
-inline void TConsoleVariable<FString>::SetString(const FString& InValue, EConsoleVariableFlags InFlags)
+inline void TConsoleVariable<String>::SetString(const String& InValue, EConsoleVariableFlags InFlags)
 {
     if (CanBeSet(InFlags))
     {
@@ -474,7 +486,7 @@ inline void TConsoleVariable<FString>::SetString(const FString& InValue, EConsol
 }
 
 template<>
-int32 TConsoleVariable<FString>::GetInt() const
+int32 TConsoleVariable<String>::GetInt() const
 {
     int32 Value = false;
     TTypeFromString<int32>::FromString(Data.GetValue(), Value);
@@ -482,7 +494,7 @@ int32 TConsoleVariable<FString>::GetInt() const
 }
 
 template<>
-float TConsoleVariable<FString>::GetFloat() const
+float TConsoleVariable<String>::GetFloat() const
 {
     float Value = false;
     TTypeFromString<float>::FromString(Data.GetValue(), Value);
@@ -490,7 +502,7 @@ float TConsoleVariable<FString>::GetFloat() const
 }
 
 template<>
-bool TConsoleVariable<FString>::GetBool() const
+bool TConsoleVariable<String>::GetBool() const
 {
     bool bValue = false;
     TTypeFromString<bool>::FromString(Data.GetValue(), bValue);
@@ -498,7 +510,7 @@ bool TConsoleVariable<FString>::GetBool() const
 }
 
 template<>
-FString TConsoleVariable<FString>::GetString() const
+String TConsoleVariable<String>::GetString() const
 {
     return Data.GetValue();
 }
@@ -544,7 +556,7 @@ public:
         }
     }
 
-    virtual void SetString(const FString& InValue, EConsoleVariableFlags InFlags) override final
+    virtual void SetString(const String& InValue, EConsoleVariableFlags InFlags) override final
     {
         if (this->CanBeSet(InFlags))
         {
@@ -780,7 +792,7 @@ public:
     virtual TConsoleVariableData<int32>*   GetIntData()    override final { return nullptr; }
     virtual TConsoleVariableData<float>*   GetFloatData()  override final { return nullptr; }
     virtual TConsoleVariableData<bool>*    GetBoolData()   override final { return nullptr; }
-    virtual TConsoleVariableData<FString>* GetStringData() override final { return nullptr; }
+    virtual TConsoleVariableData<String>* GetStringData() override final { return nullptr; }
 
     virtual bool IsVariableInt()    const override final { return false; }
     virtual bool IsVariableFloat()  const override final { return false; }
@@ -791,7 +803,7 @@ public:
     virtual void SetAsFloat(float InValue, EConsoleVariableFlags InFlags) override;
     virtual void SetAsBool(bool bValue, EConsoleVariableFlags InFlags)    override;
 
-    virtual void SetString(const FString& InValue, EConsoleVariableFlags InFlags) override
+    virtual void SetString(const String& InValue, EConsoleVariableFlags InFlags) override
     {
         if (CanBeSet(InFlags))
         {
@@ -808,7 +820,7 @@ public:
     virtual float GetFloat() const override final;
     virtual bool  GetBool()  const override final;
 
-    virtual FString GetString() const override final
+    virtual String GetString() const override final
     {
         return TTypeToString<T>::ToString(*DataPtr);
     }
@@ -992,17 +1004,17 @@ bool TConsoleVariableRef<bool>::GetBool() const
 }
 
 // -------------------------------------------------------------------------------------------
-// FString ref
+// String ref
 // -------------------------------------------------------------------------------------------
 
 template<>
-bool TConsoleVariableRef<FString>::IsVariableString() const
+bool TConsoleVariableRef<String>::IsVariableString() const
 {
     return true;
 }
 
 template<>
-inline void TConsoleVariableRef<FString>::SetAsInt(int32 InValue, EConsoleVariableFlags InFlags)
+inline void TConsoleVariableRef<String>::SetAsInt(int32 InValue, EConsoleVariableFlags InFlags)
 {
     if (CanBeSet(InFlags))
     {
@@ -1012,7 +1024,7 @@ inline void TConsoleVariableRef<FString>::SetAsInt(int32 InValue, EConsoleVariab
 }
 
 template<>
-inline void TConsoleVariableRef<FString>::SetAsFloat(float InValue, EConsoleVariableFlags InFlags)
+inline void TConsoleVariableRef<String>::SetAsFloat(float InValue, EConsoleVariableFlags InFlags)
 {
     if (CanBeSet(InFlags))
     {
@@ -1022,7 +1034,7 @@ inline void TConsoleVariableRef<FString>::SetAsFloat(float InValue, EConsoleVari
 }
 
 template<>
-inline void TConsoleVariableRef<FString>::SetAsBool(bool InValue, EConsoleVariableFlags InFlags)
+inline void TConsoleVariableRef<String>::SetAsBool(bool InValue, EConsoleVariableFlags InFlags)
 {
     if (CanBeSet(InFlags))
     {
@@ -1032,7 +1044,7 @@ inline void TConsoleVariableRef<FString>::SetAsBool(bool InValue, EConsoleVariab
 }
 
 template<>
-inline void TConsoleVariableRef<FString>::SetString(const FString& InValue, EConsoleVariableFlags InFlags)
+inline void TConsoleVariableRef<String>::SetString(const String& InValue, EConsoleVariableFlags InFlags)
 {
     if (CanBeSet(InFlags))
     {
@@ -1042,7 +1054,7 @@ inline void TConsoleVariableRef<FString>::SetString(const FString& InValue, ECon
 }
 
 template<>
-int32 TConsoleVariableRef<FString>::GetInt() const
+int32 TConsoleVariableRef<String>::GetInt() const
 {
     int32 Value = 0;
     TTypeFromString<int32>::FromString(*DataPtr, Value);
@@ -1050,7 +1062,7 @@ int32 TConsoleVariableRef<FString>::GetInt() const
 }
 
 template<>
-float TConsoleVariableRef<FString>::GetFloat() const
+float TConsoleVariableRef<String>::GetFloat() const
 {
     float Value = 0.0f;
     TTypeFromString<float>::FromString(*DataPtr, Value);
@@ -1058,7 +1070,7 @@ float TConsoleVariableRef<FString>::GetFloat() const
 }
 
 template<>
-bool TConsoleVariableRef<FString>::GetBool() const
+bool TConsoleVariableRef<String>::GetBool() const
 {
     bool bValue = false;
     TTypeFromString<bool>::FromString(*DataPtr, bValue);
@@ -1066,7 +1078,7 @@ bool TConsoleVariableRef<FString>::GetBool() const
 }
 
 template<>
-FString TConsoleVariableRef<FString>::GetString() const
+String TConsoleVariableRef<String>::GetString() const
 {
     return *DataPtr;
 }
@@ -1112,7 +1124,7 @@ public:
         }
     }
 
-    virtual void SetString(const FString& InValue, EConsoleVariableFlags InFlags) override final
+    virtual void SetString(const String& InValue, EConsoleVariableFlags InFlags) override final
     {
         if (this->CanBeSet(InFlags))
         {
@@ -1491,7 +1503,7 @@ IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR* InName, const
     return nullptr;
 }
 
-IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR* InName, const CHAR* HelpString, FString& RefValue, EConsoleVariableFlags Flags)
+IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR* InName, const CHAR* HelpString, String& RefValue, EConsoleVariableFlags Flags)
 {
     if (IConsoleObject* NewObject = RegisterObject(InName, new FConsoleVariableStringRef(RefValue, Flags, HelpString)))
     {
@@ -1503,7 +1515,7 @@ IConsoleVariable* FConsoleManager::RegisterVariableRef(const CHAR* InName, const
 
 void FConsoleManager::UnregisterObject(IConsoleObject* ConsoleObject)
 {
-    const FString Name = FindConsoleObjectName(ConsoleObject);
+    const String Name = FindConsoleObjectName(ConsoleObject);
     if (IConsoleObject** Object = ConsoleObjects.Find(Name))
     {
         // Delete and erase reference to object
@@ -1517,7 +1529,7 @@ bool FConsoleManager::IsConsoleObject(const CHAR* InName) const
     return FindConsoleObject(InName) != nullptr;
 }
 
-FString FConsoleManager::FindConsoleObjectName(IConsoleObject* ConsoleObject)
+String FConsoleManager::FindConsoleObjectName(IConsoleObject* ConsoleObject)
 {
     for (auto CurrentObject : ConsoleObjects)
     {
@@ -1527,7 +1539,7 @@ FString FConsoleManager::FindConsoleObjectName(IConsoleObject* ConsoleObject)
         }
     }
 
-    return FString();
+    return String();
 }
 
 IConsoleCommand* FConsoleManager::FindConsoleCommand(const CHAR* Name) const
@@ -1552,7 +1564,7 @@ IConsoleVariable* FConsoleManager::FindConsoleVariable(const CHAR* Name) const
 
 IConsoleObject* FConsoleManager::FindConsoleObject(const CHAR* InName) const
 {
-    const FString Name(InName);
+    const String Name(InName);
     if (IConsoleObject* const* Object = ConsoleObjects.Find(Name))
     {
         return *Object;
@@ -1568,7 +1580,7 @@ void FConsoleManager::ClearHistory()
     History.Clear();
 }
 
-void FConsoleManager::FindCandidates(const FStringView& CandidateName, TArray<TPair<IConsoleObject*, FString>>& OutCandidates)
+void FConsoleManager::FindCandidates(const StringView& CandidateName, TArray<TPair<IConsoleObject*, String>>& OutCandidates)
 {
     for (const auto& Object : ConsoleObjects)
     {
@@ -1594,7 +1606,7 @@ void FConsoleManager::FindCandidates(const FStringView& CandidateName, TArray<TP
     }
 }
 
-void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString& Command)
+void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const String& Command)
 {
     OutputDevice.Log(ELogSeverity::Info, Command);
 
@@ -1605,7 +1617,7 @@ void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString&
     }
 
     int32 Pos = Command.FindChar(' ');
-    if (Pos == FString::InvalidIndex)
+    if (Pos == String::InvalidIndex)
     {
         IConsoleCommand* CommandObject = FindConsoleCommand(*Command);
         if (!CommandObject)
@@ -1614,16 +1626,16 @@ void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString&
         }
         else
         {
-            CommandObject->Execute(FStringView());
+            CommandObject->Execute(StringView());
         }
         
         return;
     }
 
-    const FString CommandName(*Command, Pos);
+    const String CommandName(*Command, Pos);
     const int32 ArgsOffset = Pos + 1;
-    FStringView Args(*Command + ArgsOffset, Command.Length() - ArgsOffset);
-    FStringView TrimmedArgs = Args;
+    StringView Args(*Command + ArgsOffset, Command.Length() - ArgsOffset);
+    StringView TrimmedArgs = Args;
     TrimmedArgs.TrimInline();
 
     if (IConsoleCommand* CommandObject = FindConsoleCommand(*CommandName))
@@ -1639,7 +1651,7 @@ void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString&
         return;
     }
 
-    const FString Value(TrimmedArgs);
+    const String Value(TrimmedArgs);
     const EConsoleVariableFlags SetByConsole = EConsoleVariableFlags::SetByConsole;
 
     bool bHandled = false;
@@ -1703,7 +1715,7 @@ void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString&
 
 IConsoleObject* FConsoleManager::RegisterObject(const CHAR* InName, IConsoleObject* Object)
 {
-    const FString Name(InName);
+    const String Name(InName);
     if (IConsoleObject** ExistingObject = ConsoleObjects.Find(Name))
     {
         LOG_WARNING("Trying to register an already existing ConsoleObject '%s'", InName);
@@ -1715,15 +1727,15 @@ IConsoleObject* FConsoleManager::RegisterObject(const CHAR* InName, IConsoleObje
     // TODO: Refactor this, right now it only works with a single ConfigFile
     if (IConsoleVariable* Variable = Object->AsVariable())
     {
-        FStringView CommandLineValue;
+        StringView CommandLineValue;
         if (CommandLine::FindOption(InName, CommandLineValue))
         {
-            const FString Value = FString(CommandLineValue);
+            const String Value = String(CommandLineValue);
             Variable->SetString(Value, EConsoleVariableFlags::SetByCommandLine);
         }
         else if (GConfig)
         {
-            FString Value;
+            String Value;
             if (GConfig->GetString("", InName, Value))
             {
                 Variable->SetString(Value, EConsoleVariableFlags::SetByConfigFile);
@@ -1735,14 +1747,14 @@ IConsoleObject* FConsoleManager::RegisterObject(const CHAR* InName, IConsoleObje
     return Result;
 }
 
-void FConsoleManager::GetConsoleObjects(TArray<TPair<FString, IConsoleObject*>>& OutObjects) const
+void FConsoleManager::GetConsoleObjects(TArray<TPair<String, IConsoleObject*>>& OutObjects) const
 {
     OutObjects.Clear();
     OutObjects.Reserve(ConsoleObjects.Size());
 
     for (const auto& Pair : ConsoleObjects)
     {
-        OutObjects.Add(TPair<FString, IConsoleObject*>(Pair.First, Pair.Second));
+        OutObjects.Add(TPair<String, IConsoleObject*>(Pair.First, Pair.Second));
     }
 }
 
@@ -1750,18 +1762,18 @@ void FConsoleManager::DumpConsoleVariableValues(IOutputDevice& OutputDevice, con
 {
     const bool bHasKey = Key && (*Key != '\0');
 
-    TArray<TPair<FString, IConsoleObject*>> ConsoleObjectPairs;
+    TArray<TPair<String, IConsoleObject*>> ConsoleObjectPairs;
     GetConsoleObjects(ConsoleObjectPairs);
 
-    TArray<TPair<FString, IConsoleVariable*>> ConsoleVariables;
+    TArray<TPair<String, IConsoleVariable*>> ConsoleVariables;
     ConsoleVariables.Reserve(ConsoleObjectPairs.Size());
 
-    for (const TPair<FString, IConsoleObject*>& Pair : ConsoleObjectPairs)
+    for (const TPair<String, IConsoleObject*>& Pair : ConsoleObjectPairs)
     {
         if (bHasKey)
         {
-            const FStringView NameView(Pair.First);
-            if (NameView.Find(Key, EStringCaseType::NoCase) == FStringView::InvalidIndex)
+            const StringView NameView(Pair.First);
+            if (NameView.Find(Key, EStringCaseType::NoCase) == StringView::InvalidIndex)
             {
                 continue;
             }
@@ -1769,33 +1781,33 @@ void FConsoleManager::DumpConsoleVariableValues(IOutputDevice& OutputDevice, con
 
         if (IConsoleVariable* Variable = Pair.Second ? Pair.Second->AsVariable() : nullptr)
         {
-            ConsoleVariables.Add(TPair<FString, IConsoleVariable*>(Pair.First, Variable));
+            ConsoleVariables.Add(TPair<String, IConsoleVariable*>(Pair.First, Variable));
         }
     }
 
-    ConsoleVariables.SortWithPredicate([](const TPair<FString, IConsoleVariable*>& A, const TPair<FString, IConsoleVariable*>& B)
+    ConsoleVariables.SortWithPredicate([](const TPair<String, IConsoleVariable*>& A, const TPair<String, IConsoleVariable*>& B)
     {
         return A.First < B.First;
     });
 
     OutputDevice.Log("CVar Dump");
-    OutputDevice.Log(FString::CreateFormatted("Count: %d", ConsoleVariables.Size()));
+    OutputDevice.Log(String::CreateFormatted("Count: %d", ConsoleVariables.Size()));
     OutputDevice.Log("----------------------------------------");
 
-    for (const TPair<FString, IConsoleVariable*>& Pair : ConsoleVariables)
+    for (const TPair<String, IConsoleVariable*>& Pair : ConsoleVariables)
     {
         IConsoleVariable* Variable = Pair.Second;
-        FString ValueString;
+        String ValueString;
         const CHAR* TypeString = "unknown";
 
         if (Variable->IsVariableInt())
         {
-            ValueString = FString::CreateFormatted("%d", Variable->GetInt());
+            ValueString = String::CreateFormatted("%d", Variable->GetInt());
             TypeString = "int";
         }
         else if (Variable->IsVariableFloat())
         {
-            ValueString = FString::CreateFormatted("%.6f", Variable->GetFloat());
+            ValueString = String::CreateFormatted("%.6f", Variable->GetFloat());
             TypeString = "float";
         }
         else if (Variable->IsVariableBool())
@@ -1812,6 +1824,6 @@ void FConsoleManager::DumpConsoleVariableValues(IOutputDevice& OutputDevice, con
         const EConsoleVariableFlags SetByFlags = Variable->GetFlags() & EConsoleVariableFlags::SetByMask;
         const CHAR* SetByString = SetByFlagToString(SetByFlags);
 
-        OutputDevice.Log(FString::CreateFormatted("%s = %s [type:%s setby:%s]", *Pair.First, *ValueString, TypeString, SetByString));
+        OutputDevice.Log(String::CreateFormatted("%s = %s [type:%s setby:%s]", *Pair.First, *ValueString, TypeString, SetByString));
     }
 }

@@ -9,7 +9,7 @@
 
 #include <tiny_obj_loader.h>
 
-bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags /* Flags */, FModelCreateInfo& OutModelInfo)
+bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags /* Flags */, FModelCreateInfo& OutModelInfo)
 {
     // Load Scene File
     std::string                      Warning;
@@ -19,9 +19,9 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
     tinyobj::attrib_t                Attributes;
 
     // Extract just the name of the file
-    const FString Filename            = FString(InFilename);
-    const FString MTLFiledir          = File::ExtractFilepath(Filename);
-    const FString FilenameWithoutPath = File::ExtractFilenameWithoutExtension(Filename);
+    const String Filename            = String(InFilename);
+    const String MTLFiledir          = File::ExtractFilepath(Filename);
+    const String FilenameWithoutPath = File::ExtractFilenameWithoutExtension(Filename);
     
     // Load the OBJ file
     if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, *Filename, *MTLFiledir, true, false))
@@ -47,7 +47,7 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
         MaterialCreateInfo.Textures[EMaterialTexture::Normal]    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.bump_texname.c_str()));
         MaterialCreateInfo.Textures[EMaterialTexture::AlphaMask] = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.alpha_texname.c_str()));
         
-        MaterialCreateInfo.Diffuse       = FVector3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
+        MaterialCreateInfo.Diffuse       = Vector3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
         MaterialCreateInfo.Metallic      = Mat.ambient[0];
         MaterialCreateInfo.AmbientFactor = 1.0f;
         MaterialCreateInfo.Roughness     = 1.0f;
@@ -55,11 +55,11 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
 
         if (Mat.name.empty())
         {
-            MaterialCreateInfo.Name = FString::CreateFormatted("%s_material_%d", *FilenameWithoutPath, SceneMaterialIndex);
+            MaterialCreateInfo.Name = String::CreateFormatted("%s_material_%d", *FilenameWithoutPath, SceneMaterialIndex);
         }
         else
         {
-            MaterialCreateInfo.Name = FString(Mat.name.c_str());
+            MaterialCreateInfo.Name = String(Mat.name.c_str());
         }
         
         OutModelInfo.Materials.Add(Move(MaterialCreateInfo));
@@ -119,19 +119,19 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
                 FVertex Vertex;
 
                 const uint32 PositionIndex = NumPositionsPerTriangle * Index.vertex_index;
-                Vertex.Position = FVector3(Attributes.vertices[PositionIndex + 0], Attributes.vertices[PositionIndex + 1], Attributes.vertices[PositionIndex + 2]);
+                Vertex.Position = Vector3(Attributes.vertices[PositionIndex + 0], Attributes.vertices[PositionIndex + 1], Attributes.vertices[PositionIndex + 2]);
 
                 if (Index.normal_index >= 0)
                 {
                     const uint32 NormalIndex = NumNormalsPerTriangle * Index.normal_index;
-                    Vertex.Normal = FVector3(Attributes.normals[NormalIndex + 0], Attributes.normals[NormalIndex + 1], Attributes.normals[NormalIndex + 2]);
+                    Vertex.Normal = Vector3(Attributes.normals[NormalIndex + 0], Attributes.normals[NormalIndex + 1], Attributes.normals[NormalIndex + 2]);
                     Vertex.Normal.Normalize();
                 }
 
                 if (Index.texcoord_index >= 0)
                 {
                     const uint32 TexCoordIndex = NumTexCoordsPerTriangle * Index.texcoord_index;
-                    Vertex.TexCoord = FVector2(Attributes.texcoords[TexCoordIndex + 0], 1.0f - Attributes.texcoords[TexCoordIndex + 1]);
+                    Vertex.TexCoord = Vector2(Attributes.texcoords[TexCoordIndex + 0], 1.0f - Attributes.texcoords[TexCoordIndex + 1]);
                 }
 
                 uint32 VertexIndex;
@@ -159,7 +159,7 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
 
             if (Shape.name.empty())
             {
-                MeshCreateInfo.Name = FString::CreateFormatted("%s_%d", *FilenameWithoutPath, ShapeIndex);
+                MeshCreateInfo.Name = String::CreateFormatted("%s_%d", *FilenameWithoutPath, ShapeIndex);
             }
             else
             {
@@ -175,7 +175,7 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
     return true;
 }
 
-bool FOBJImporter::MatchExtenstion(const FStringView& FileName)
+bool FOBJImporter::MatchExtenstion(const StringView& FileName)
 {
     return FileName.EndsWith(".obj", EStringCaseType::NoCase);
 }

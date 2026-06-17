@@ -67,9 +67,9 @@ void FMeshCreateInfo::CalculateHardNormals()
         FVertex& Vertex1 = Vertices[Indices[i + 1]];
         FVertex& Vertex2 = Vertices[Indices[i + 2]];
 
-        FVector3 Edge0  = Vertex2.Position - Vertex0.Position;
-        FVector3 Edge1  = Vertex1.Position - Vertex0.Position;
-        FVector3 Normal = Edge0.CrossProduct(Edge1);
+        Vector3 Edge0  = Vertex2.Position - Vertex0.Position;
+        Vector3 Edge1  = Vertex1.Position - Vertex0.Position;
+        Vector3 Normal = Edge0.CrossProduct(Edge1);
         Normal.Normalize();
 
         Vertex0.Normal = Normal;
@@ -91,9 +91,9 @@ void FMeshCreateInfo::CalculateSoftNormals()
         FVertex& Vertex1 = Vertices[Indices[i + 1]];
         FVertex& Vertex2 = Vertices[Indices[i + 2]];
 
-        FVector3 Edge0  = Vertex2.Position - Vertex0.Position;
-        FVector3 Edge1  = Vertex1.Position - Vertex0.Position;
-        FVector3 Normal = Edge0.CrossProduct(Edge1);
+        Vector3 Edge0  = Vertex2.Position - Vertex0.Position;
+        Vector3 Edge1  = Vertex1.Position - Vertex0.Position;
+        Vector3 Normal = Edge0.CrossProduct(Edge1);
         Normal.Normalize();
 
         // Average current and new normal
@@ -106,7 +106,7 @@ void FMeshCreateInfo::CalculateSoftNormals()
     }
 }
 
-static FVector3 GetOrthoNormal(const FVector3& Tangent, const FVector3& Normal)
+static Vector3 GetOrthoNormal(const Vector3& Tangent, const Vector3& Normal)
 {
     return (Tangent - (Tangent.DotProduct(Normal)) * Normal).GetNormalized();
 };
@@ -115,7 +115,7 @@ void FMeshCreateInfo::CalculateTangents()
 {
     CHECK(Indices.Size() % 3 == 0);
 
-    TArray<FVector3> TangentAccumulation;
+    TArray<Vector3> TangentAccumulation;
     TangentAccumulation.Resize(Vertices.Size());
 
     for (int32 i = 0; i < Indices.Size(); i += 3)
@@ -124,15 +124,15 @@ void FMeshCreateInfo::CalculateTangents()
         const uint32 Index1 = Indices[i + 1];
         const uint32 Index2 = Indices[i + 2];
 
-        FVector3 Edge1    = Vertices[Index1].Position - Vertices[Index0].Position;
-        FVector3 Edge2    = Vertices[Index2].Position - Vertices[Index0].Position;
-        FVector2 DeltaUV1 = Vertices[Index1].TexCoord - Vertices[Index0].TexCoord;
-        FVector2 DeltaUV2 = Vertices[Index2].TexCoord - Vertices[Index0].TexCoord;
+        Vector3 Edge1    = Vertices[Index1].Position - Vertices[Index0].Position;
+        Vector3 Edge2    = Vertices[Index2].Position - Vertices[Index0].Position;
+        Vector2 DeltaUV1 = Vertices[Index1].TexCoord - Vertices[Index0].TexCoord;
+        Vector2 DeltaUV2 = Vertices[Index2].TexCoord - Vertices[Index0].TexCoord;
 
         const float Denom    = DeltaUV1.X * DeltaUV2.Y - DeltaUV2.X * DeltaUV1.Y;
         const float RcpDenom = Math::Abs<float>(Denom) > 0.0f ? 1.0f / Denom : 0.0f;
 
-        FVector3 Tangent;
+        Vector3 Tangent;
         Tangent.X = RcpDenom * (DeltaUV2.Y * Edge1.X - DeltaUV1.Y * Edge2.X);
         Tangent.Y = RcpDenom * (DeltaUV2.Y * Edge1.Y - DeltaUV1.Y * Edge2.Y);
         Tangent.Z = RcpDenom * (DeltaUV2.Y * Edge1.Z - DeltaUV1.Y * Edge2.Z);
@@ -144,19 +144,19 @@ void FMeshCreateInfo::CalculateTangents()
 
     for (int32 i = 0; i < Vertices.Size(); i++)
     {
-        FVector3 Tangent = TangentAccumulation[i].Normalize();
+        Vector3 Tangent = TangentAccumulation[i].Normalize();
         Vertices[i].Tangent = GetOrthoNormal(Tangent, Vertices[i].Normal);
     }
 }
 
 void FMeshCreateInfo::ValidateTangents()
 {
-    const auto IsValid = [](const FVector3& Vector)
+    const auto IsValid = [](const Vector3& Vector)
     {
         return !Vector.ContainsInfinity() && !Vector.ContainsNaN();
     };
 
-    TArray<FVector3> TangentAccumulation;
+    TArray<Vector3> TangentAccumulation;
     TangentAccumulation.Resize(Vertices.Size());
 
     // Loop over each triangle (assumes indices are in groups of 3).
@@ -170,7 +170,7 @@ void FMeshCreateInfo::ValidateTangents()
         FVertex& Vertex2 = Vertices[Index1];
         FVertex& Vertex3 = Vertices[Index2];
 
-        // Use FVector3's member functions to check for infinity or NaN in normals and tangents.
+        // Use Vector3's member functions to check for infinity or NaN in normals and tangents.
         const bool bValid1 = IsValid(Vertex1.Tangent);
         const bool bValid2 = IsValid(Vertex2.Tangent);
         const bool bValid3 = IsValid(Vertex3.Tangent);
@@ -179,17 +179,17 @@ void FMeshCreateInfo::ValidateTangents()
         if (!bValid1 || !bValid2 || !bValid3)
         {
             // Compute two edge vectors from the triangle.
-            FVector3 Edge1 = Vertex2.Position - Vertex1.Position;
-            FVector3 Edge2 = Vertex3.Position - Vertex1.Position;
+            Vector3 Edge1 = Vertex2.Position - Vertex1.Position;
+            Vector3 Edge2 = Vertex3.Position - Vertex1.Position;
 
             // Calculate the triangle's normal using the cross product, then normalize.
-            FVector3 TriangleNormal = Edge1.CrossProduct(Edge2).GetNormalized();
+            Vector3 TriangleNormal = Edge1.CrossProduct(Edge2).GetNormalized();
 
             // Select an arbitrary vector not parallel to the normal.
-            FVector3 Arbitrary = (Math::Abs<float>(TriangleNormal.X) < 0.9f) ? FVector3(1.0f, 0.0f, 0.0f) : FVector3(0.0f, 1.0f, 0.0f);
+            Vector3 Arbitrary = (Math::Abs<float>(TriangleNormal.X) < 0.9f) ? Vector3(1.0f, 0.0f, 0.0f) : Vector3(0.0f, 1.0f, 0.0f);
 
             // Compute a tangent vector perpendicular to the normal.
-            FVector3 TriangleTangent = TriangleNormal.CrossProduct(Arbitrary).GetNormalized();
+            Vector3 TriangleTangent = TriangleNormal.CrossProduct(Arbitrary).GetNormalized();
 
             // Update vertices with invalid tangent.
             if (!bValid1)
@@ -275,11 +275,11 @@ void FMeshCreateInfo::Subdivide(uint32 Subdivisions)
         for (uint32 j = 0; j < IndexCount; j += 3)
         {
             // Calculate Position
-            FVector3 Position0 = Vertices[Indices[j]].Position;
-            FVector3 Position1 = Vertices[Indices[j + 1]].Position;
-            FVector3 Position2 = Vertices[Indices[j + 2]].Position;
+            Vector3 Position0 = Vertices[Indices[j]].Position;
+            Vector3 Position1 = Vertices[Indices[j + 1]].Position;
+            Vector3 Position2 = Vertices[Indices[j + 2]].Position;
 
-            FVector3 Position = Position0 + Position1;
+            Vector3 Position = Position0 + Position1;
             TempVertices[0].Position = Position * 0.5f;
 
             Position = Position0 + Position2;
@@ -289,11 +289,11 @@ void FMeshCreateInfo::Subdivide(uint32 Subdivisions)
             TempVertices[2].Position = Position * 0.5f;
 
             // Calculate TexCoord
-            FVector2 TexCoord0 = Vertices[Indices[j]].TexCoord;
-            FVector2 TexCoord1 = Vertices[Indices[j + 1]].TexCoord;
-            FVector2 TexCoord2 = Vertices[Indices[j + 2]].TexCoord;
+            Vector2 TexCoord0 = Vertices[Indices[j]].TexCoord;
+            Vector2 TexCoord1 = Vertices[Indices[j + 1]].TexCoord;
+            Vector2 TexCoord2 = Vertices[Indices[j + 2]].TexCoord;
 
-            FVector2 TexCoord = TexCoord0 + TexCoord1;
+            Vector2 TexCoord = TexCoord0 + TexCoord1;
             TempVertices[0].TexCoord = TexCoord * 0.5f;
 
             TexCoord = TexCoord0 + TexCoord2;
@@ -303,11 +303,11 @@ void FMeshCreateInfo::Subdivide(uint32 Subdivisions)
             TempVertices[2].TexCoord = TexCoord * 0.5f;
 
             // Calculate Normal
-            FVector3 Normal0 = Vertices[Indices[j]].Normal;
-            FVector3 Normal1 = Vertices[Indices[j + 1]].Normal;
-            FVector3 Normal2 = Vertices[Indices[j + 2]].Normal;
+            Vector3 Normal0 = Vertices[Indices[j]].Normal;
+            Vector3 Normal1 = Vertices[Indices[j + 1]].Normal;
+            Vector3 Normal2 = Vertices[Indices[j + 2]].Normal;
 
-            FVector3 Normal = Normal0 + Normal1;
+            Vector3 Normal = Normal0 + Normal1;
             Normal = Normal * 0.5f;
             TempVertices[0].Normal = Normal.GetNormalized();
 
@@ -320,11 +320,11 @@ void FMeshCreateInfo::Subdivide(uint32 Subdivisions)
             TempVertices[2].Normal = Normal.GetNormalized();
 
             // Calculate Tangent
-            FVector3 Tangent0 = Vertices[Indices[j]].Tangent;
-            FVector3 Tangent1 = Vertices[Indices[j + 1]].Tangent;
-            FVector3 Tangent2 = Vertices[Indices[j + 2]].Tangent;
+            Vector3 Tangent0 = Vertices[Indices[j]].Tangent;
+            Vector3 Tangent1 = Vertices[Indices[j + 1]].Tangent;
+            Vector3 Tangent2 = Vertices[Indices[j + 2]].Tangent;
 
-            FVector3 Tangent = Tangent0 + Tangent1;
+            Vector3 Tangent = Tangent0 + Tangent1;
             Tangent = Tangent * 0.5f;
             TempVertices[0].Tangent = Tangent.GetNormalized();
 
@@ -377,40 +377,40 @@ FMeshCreateInfo MeshFactory::CreateCube(float Width, float Height, float Depth) 
     CubeInfo.Vertices =
     {
         // FRONT FACE
-        { FVector3(-HalfWidth,  HalfHeight, -HalfDepth), FVector3(0.0f,  0.0f, -1.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(0.0f, 0.0f) },
-        { FVector3( HalfWidth,  HalfHeight, -HalfDepth), FVector3(0.0f,  0.0f, -1.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(1.0f, 0.0f) },
-        { FVector3(-HalfWidth, -HalfHeight, -HalfDepth), FVector3(0.0f,  0.0f, -1.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(0.0f, 1.0f) },
-        { FVector3( HalfWidth, -HalfHeight, -HalfDepth), FVector3(0.0f,  0.0f, -1.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(1.0f, 1.0f) },
+        { Vector3(-HalfWidth,  HalfHeight, -HalfDepth), Vector3(0.0f,  0.0f, -1.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(0.0f, 0.0f) },
+        { Vector3( HalfWidth,  HalfHeight, -HalfDepth), Vector3(0.0f,  0.0f, -1.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(1.0f, 0.0f) },
+        { Vector3(-HalfWidth, -HalfHeight, -HalfDepth), Vector3(0.0f,  0.0f, -1.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(0.0f, 1.0f) },
+        { Vector3( HalfWidth, -HalfHeight, -HalfDepth), Vector3(0.0f,  0.0f, -1.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(1.0f, 1.0f) },
 
         // BACK FACE
-        { FVector3( HalfWidth,  HalfHeight,  HalfDepth), FVector3(0.0f,  0.0f,  1.0f), FVector3(-1.0f,  0.0f, 0.0f), FVector2(0.0f, 0.0f) },
-        { FVector3(-HalfWidth,  HalfHeight,  HalfDepth), FVector3(0.0f,  0.0f,  1.0f), FVector3(-1.0f,  0.0f, 0.0f), FVector2(1.0f, 0.0f) },
-        { FVector3( HalfWidth, -HalfHeight,  HalfDepth), FVector3(0.0f,  0.0f,  1.0f), FVector3(-1.0f,  0.0f, 0.0f), FVector2(0.0f, 1.0f) },
-        { FVector3(-HalfWidth, -HalfHeight,  HalfDepth), FVector3(0.0f,  0.0f,  1.0f), FVector3(-1.0f,  0.0f, 0.0f), FVector2(1.0f, 1.0f) },
+        { Vector3( HalfWidth,  HalfHeight,  HalfDepth), Vector3(0.0f,  0.0f,  1.0f), Vector3(-1.0f,  0.0f, 0.0f), Vector2(0.0f, 0.0f) },
+        { Vector3(-HalfWidth,  HalfHeight,  HalfDepth), Vector3(0.0f,  0.0f,  1.0f), Vector3(-1.0f,  0.0f, 0.0f), Vector2(1.0f, 0.0f) },
+        { Vector3( HalfWidth, -HalfHeight,  HalfDepth), Vector3(0.0f,  0.0f,  1.0f), Vector3(-1.0f,  0.0f, 0.0f), Vector2(0.0f, 1.0f) },
+        { Vector3(-HalfWidth, -HalfHeight,  HalfDepth), Vector3(0.0f,  0.0f,  1.0f), Vector3(-1.0f,  0.0f, 0.0f), Vector2(1.0f, 1.0f) },
 
         // RIGHT FACE
-        { FVector3(HalfWidth,  HalfHeight, -HalfDepth), FVector3(1.0f,  0.0f,  0.0f), FVector3(0.0f,  0.0f, 1.0f), FVector2(0.0f, 0.0f) },
-        { FVector3(HalfWidth,  HalfHeight,  HalfDepth), FVector3(1.0f,  0.0f,  0.0f), FVector3(0.0f,  0.0f, 1.0f), FVector2(1.0f, 0.0f) },
-        { FVector3(HalfWidth, -HalfHeight, -HalfDepth), FVector3(1.0f,  0.0f,  0.0f), FVector3(0.0f,  0.0f, 1.0f), FVector2(0.0f, 1.0f) },
-        { FVector3(HalfWidth, -HalfHeight,  HalfDepth), FVector3(1.0f,  0.0f,  0.0f), FVector3(0.0f,  0.0f, 1.0f), FVector2(1.0f, 1.0f) },
+        { Vector3(HalfWidth,  HalfHeight, -HalfDepth), Vector3(1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(0.0f, 0.0f) },
+        { Vector3(HalfWidth,  HalfHeight,  HalfDepth), Vector3(1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(1.0f, 0.0f) },
+        { Vector3(HalfWidth, -HalfHeight, -HalfDepth), Vector3(1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(0.0f, 1.0f) },
+        { Vector3(HalfWidth, -HalfHeight,  HalfDepth), Vector3(1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(1.0f, 1.0f) },
 
         // LEFT FACE
-        { FVector3(-HalfWidth,  HalfHeight, -HalfDepth), FVector3(-1.0f,  0.0f,  0.0f), FVector3(0.0f,  0.0f, 1.0f), FVector2(0.0f, 1.0f) },
-        { FVector3(-HalfWidth,  HalfHeight,  HalfDepth), FVector3(-1.0f,  0.0f,  0.0f), FVector3(0.0f,  0.0f, 1.0f), FVector2(1.0f, 1.0f) },
-        { FVector3(-HalfWidth, -HalfHeight, -HalfDepth), FVector3(-1.0f,  0.0f,  0.0f), FVector3(0.0f,  0.0f, 1.0f), FVector2(0.0f, 0.0f) },
-        { FVector3(-HalfWidth, -HalfHeight,  HalfDepth), FVector3(-1.0f,  0.0f,  0.0f), FVector3(0.0f,  0.0f, 1.0f), FVector2(1.0f, 0.0f) },
+        { Vector3(-HalfWidth,  HalfHeight, -HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(0.0f, 1.0f) },
+        { Vector3(-HalfWidth,  HalfHeight,  HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(1.0f, 1.0f) },
+        { Vector3(-HalfWidth, -HalfHeight, -HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(0.0f, 0.0f) },
+        { Vector3(-HalfWidth, -HalfHeight,  HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(1.0f, 0.0f) },
 
         // TOP FACE
-        { FVector3(-HalfWidth,  HalfHeight,  HalfDepth), FVector3(0.0f,  1.0f,  0.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(0.0f, 0.0f) },
-        { FVector3( HalfWidth,  HalfHeight,  HalfDepth), FVector3(0.0f,  1.0f,  0.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(1.0f, 0.0f) },
-        { FVector3(-HalfWidth,  HalfHeight, -HalfDepth), FVector3(0.0f,  1.0f,  0.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(0.0f, 1.0f) },
-        { FVector3( HalfWidth,  HalfHeight, -HalfDepth), FVector3(0.0f,  1.0f,  0.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(1.0f, 1.0f) },
+        { Vector3(-HalfWidth,  HalfHeight,  HalfDepth), Vector3(0.0f,  1.0f,  0.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(0.0f, 0.0f) },
+        { Vector3( HalfWidth,  HalfHeight,  HalfDepth), Vector3(0.0f,  1.0f,  0.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(1.0f, 0.0f) },
+        { Vector3(-HalfWidth,  HalfHeight, -HalfDepth), Vector3(0.0f,  1.0f,  0.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(0.0f, 1.0f) },
+        { Vector3( HalfWidth,  HalfHeight, -HalfDepth), Vector3(0.0f,  1.0f,  0.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(1.0f, 1.0f) },
 
         // BOTTOM FACE
-        { FVector3(-HalfWidth, -HalfHeight, -HalfDepth), FVector3(0.0f, -1.0f,  0.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(0.0f, 0.0f) },
-        { FVector3( HalfWidth, -HalfHeight, -HalfDepth), FVector3(0.0f, -1.0f,  0.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(1.0f, 0.0f) },
-        { FVector3(-HalfWidth, -HalfHeight,  HalfDepth), FVector3(0.0f, -1.0f,  0.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(0.0f, 1.0f) },
-        { FVector3( HalfWidth, -HalfHeight,  HalfDepth), FVector3(0.0f, -1.0f,  0.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(1.0f, 1.0f) },
+        { Vector3(-HalfWidth, -HalfHeight, -HalfDepth), Vector3(0.0f, -1.0f,  0.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(0.0f, 0.0f) },
+        { Vector3( HalfWidth, -HalfHeight, -HalfDepth), Vector3(0.0f, -1.0f,  0.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(1.0f, 0.0f) },
+        { Vector3(-HalfWidth, -HalfHeight,  HalfDepth), Vector3(0.0f, -1.0f,  0.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(0.0f, 1.0f) },
+        { Vector3( HalfWidth, -HalfHeight,  HalfDepth), Vector3(0.0f, -1.0f,  0.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(1.0f, 1.0f) },
     };
 
     CubeInfo.Indices =
@@ -459,19 +459,19 @@ FMeshCreateInfo MeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
     PlaneInfo.Indices.Resize((Width * Height) * 6);
 
     // Size of each quad, size of the plane will always be between -0.5 and 0.5
-    FVector2 QuadSize   = FVector2(1.0f / float(Width), 1.0f / float(Height));
-    FVector2 UvQuadSize = FVector2(1.0f / float(Width), 1.0f / float(Height));
+    Vector2 QuadSize   = Vector2(1.0f / float(Width), 1.0f / float(Height));
+    Vector2 UvQuadSize = Vector2(1.0f / float(Width), 1.0f / float(Height));
 
     for (uint32 x = 0; x <= Width; x++)
     {
         for (uint32 y = 0; y <= Height; y++)
         {
             int32 v = ((1 + Height) * x) + y;
-            PlaneInfo.Vertices[v].Position = FVector3(0.5f - (QuadSize.X * x), 0.5f - (QuadSize.Y * y), 0.0f);
+            PlaneInfo.Vertices[v].Position = Vector3(0.5f - (QuadSize.X * x), 0.5f - (QuadSize.Y * y), 0.0f);
             // TODO: Fix vertices so normal is positive
-            PlaneInfo.Vertices[v].Normal   = FVector3(0.0f, 0.0f, -1.0f);
-            PlaneInfo.Vertices[v].Tangent  = FVector3(1.0f, 0.0f, 0.0f);
-            PlaneInfo.Vertices[v].TexCoord = FVector2(0.0f + (UvQuadSize.X * x), 0.0f + (UvQuadSize.Y * y));
+            PlaneInfo.Vertices[v].Normal   = Vector3(0.0f, 0.0f, -1.0f);
+            PlaneInfo.Vertices[v].Tangent  = Vector3(1.0f, 0.0f, 0.0f);
+            PlaneInfo.Vertices[v].TexCoord = Vector2(0.0f + (UvQuadSize.X * x), 0.0f + (UvQuadSize.Y * y));
         }
     }
 
@@ -501,18 +501,18 @@ FMeshCreateInfo MeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noe
     SphereInfo.Vertices.Resize(12);
 
     const float t = (1.0f + Math::Sqrt(5.0f)) / 2.0f;
-    SphereInfo.Vertices[0].Position  = FVector3(-1.0f,  t   ,  0.0f);
-    SphereInfo.Vertices[1].Position  = FVector3( 1.0f,  t   ,  0.0f);
-    SphereInfo.Vertices[2].Position  = FVector3(-1.0f, -t   ,  0.0f);
-    SphereInfo.Vertices[3].Position  = FVector3( 1.0f, -t   ,  0.0f);
-    SphereInfo.Vertices[4].Position  = FVector3( 0.0f, -1.0f,  t);
-    SphereInfo.Vertices[5].Position  = FVector3( 0.0f,  1.0f,  t);
-    SphereInfo.Vertices[6].Position  = FVector3( 0.0f, -1.0f, -t);
-    SphereInfo.Vertices[7].Position  = FVector3( 0.0f,  1.0f, -t);
-    SphereInfo.Vertices[8].Position  = FVector3( t   ,  0.0f, -1.0f);
-    SphereInfo.Vertices[9].Position  = FVector3( t   ,  0.0f,  1.0f);
-    SphereInfo.Vertices[10].Position = FVector3(-t   ,  0.0f, -1.0f);
-    SphereInfo.Vertices[11].Position = FVector3(-t   ,  0.0f,  1.0f);
+    SphereInfo.Vertices[0].Position  = Vector3(-1.0f,  t   ,  0.0f);
+    SphereInfo.Vertices[1].Position  = Vector3( 1.0f,  t   ,  0.0f);
+    SphereInfo.Vertices[2].Position  = Vector3(-1.0f, -t   ,  0.0f);
+    SphereInfo.Vertices[3].Position  = Vector3( 1.0f, -t   ,  0.0f);
+    SphereInfo.Vertices[4].Position  = Vector3( 0.0f, -1.0f,  t);
+    SphereInfo.Vertices[5].Position  = Vector3( 0.0f,  1.0f,  t);
+    SphereInfo.Vertices[6].Position  = Vector3( 0.0f, -1.0f, -t);
+    SphereInfo.Vertices[7].Position  = Vector3( 0.0f,  1.0f, -t);
+    SphereInfo.Vertices[8].Position  = Vector3( t   ,  0.0f, -1.0f);
+    SphereInfo.Vertices[9].Position  = Vector3( t   ,  0.0f,  1.0f);
+    SphereInfo.Vertices[10].Position = Vector3(-t   ,  0.0f, -1.0f);
+    SphereInfo.Vertices[11].Position = Vector3(-t   ,  0.0f,  1.0f);
 
     SphereInfo.Indices =
     {
@@ -549,7 +549,7 @@ FMeshCreateInfo MeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noe
     for (uint32 i = 0; i < static_cast<uint32>(SphereInfo.Vertices.Size()); i++)
     {
         // Calculate the new position, normal and tangent
-        FVector3 Position = SphereInfo.Vertices[i].Position;
+        Vector3 Position = SphereInfo.Vertices[i].Position;
         Position.Normalize();
 
         SphereInfo.Vertices[i].Normal   = Position;
@@ -589,9 +589,9 @@ FMeshCreateInfo MeshFactory::CreateCone(uint32 Sides, float Radius, float Height
     const float Angle = (2.0f * Math::Constants::PI) / static_cast<float>(Sides);
     
     // Create the center vertex for the base cap
-    MeshCreateInfo.Vertices[0].Position = FVector3(0.0f, 0.0f, 0.0f);
-    MeshCreateInfo.Vertices[0].Normal   = FVector3(0.0f, -1.0f, 0.0f);
-    MeshCreateInfo.Vertices[0].TexCoord = FVector2(0.5f, 0.5f); // Center UV coordinates
+    MeshCreateInfo.Vertices[0].Position = Vector3(0.0f, 0.0f, 0.0f);
+    MeshCreateInfo.Vertices[0].Normal   = Vector3(0.0f, -1.0f, 0.0f);
+    MeshCreateInfo.Vertices[0].TexCoord = Vector2(0.5f, 0.5f); // Center UV coordinates
 
     // Create vertices for the base cap and sides
     const uint32 Offset = Sides + 1;
@@ -600,30 +600,30 @@ FMeshCreateInfo MeshFactory::CreateCone(uint32 Sides, float Radius, float Height
         // Calculate the position of the current vertex on the base circle
         const float x = Radius * Math::Cos(Angle * i);
         const float z = Radius * Math::Sin(Angle * i);
-        const FVector3 BasePosition(x, 0.0f, z);
+        const Vector3 BasePosition(x, 0.0f, z);
 
         // Base vertex
         MeshCreateInfo.Vertices[i + 1].Position = BasePosition;
-        MeshCreateInfo.Vertices[i + 1].Normal   = FVector3(0.0f, -1.0f, 0.0f); // Pointing downwards
-        MeshCreateInfo.Vertices[i + 1].TexCoord = FVector2((x / Radius + 1.0f) * 0.5f, (z / Radius + 1.0f) * 0.5f);
+        MeshCreateInfo.Vertices[i + 1].Normal   = Vector3(0.0f, -1.0f, 0.0f); // Pointing downwards
+        MeshCreateInfo.Vertices[i + 1].TexCoord = Vector2((x / Radius + 1.0f) * 0.5f, (z / Radius + 1.0f) * 0.5f);
 
         // Side vertex
         MeshCreateInfo.Vertices[Offset + i].Position = BasePosition;
         
-        FVector3 Normal(x, Radius / Height, z);
+        Vector3 Normal(x, Radius / Height, z);
         if (Normal.GetLengthSquared() > 0.0f) // Ensure normalization is safe
         {
             Normal.Normalize();
         }
         
         MeshCreateInfo.Vertices[Offset + i].Normal   = Normal;
-        MeshCreateInfo.Vertices[Offset + i].TexCoord = FVector2(static_cast<float>(i) / static_cast<float>(Sides), 1.0f);
+        MeshCreateInfo.Vertices[Offset + i].TexCoord = Vector2(static_cast<float>(i) / static_cast<float>(Sides), 1.0f);
     }
 
     // Apex vertex
-    MeshCreateInfo.Vertices[NumVertices - 1].Position = FVector3(0.0f, Height, 0.0f);
-    MeshCreateInfo.Vertices[NumVertices - 1].Normal   = FVector3(0.0f, 1.0f, 0.0f); // Pointing upwards
-    MeshCreateInfo.Vertices[NumVertices - 1].TexCoord = FVector2(0.5f, 0.0f);
+    MeshCreateInfo.Vertices[NumVertices - 1].Position = Vector3(0.0f, Height, 0.0f);
+    MeshCreateInfo.Vertices[NumVertices - 1].Normal   = Vector3(0.0f, 1.0f, 0.0f); // Pointing upwards
+    MeshCreateInfo.Vertices[NumVertices - 1].TexCoord = Vector2(0.5f, 0.0f);
 
     // Create indices for the base cap
     uint32 Index = 0;
@@ -672,7 +672,7 @@ FMeshCreateInfo MeshFactory::CreateTorus(float RingRadius, float TubeRadius, uin
     for (uint32 i = 0; i < RingSegments; ++i)
     {
         const float RingAngle = i * RingStep;
-        const FVector3 RingCenter = FVector3(RingRadius * Math::Cos(RingAngle), 0.0f, RingRadius * Math::Sin(RingAngle));
+        const Vector3 RingCenter = Vector3(RingRadius * Math::Cos(RingAngle), 0.0f, RingRadius * Math::Sin(RingAngle));
         for (uint32 j = 0; j < TubeSegments; ++j)
         {
             const float TubeAngle = j * TubeStep;
@@ -680,11 +680,11 @@ FMeshCreateInfo MeshFactory::CreateTorus(float RingRadius, float TubeRadius, uin
             const float SinTube   = Math::Sin(TubeAngle);
 
             // Position of the vertex
-            FVector3 Position = RingCenter + FVector3(TubeRadius * CosTube * Math::Cos(RingAngle), TubeRadius * SinTube, TubeRadius * CosTube * Math::Sin(RingAngle));
+            Vector3 Position = RingCenter + Vector3(TubeRadius * CosTube * Math::Cos(RingAngle), TubeRadius * SinTube, TubeRadius * CosTube * Math::Sin(RingAngle));
             MeshCreateInfo.Vertices[VertexIndex].Position = Position;
 
             // Normal vector
-            FVector3 Normal = FVector3(CosTube * Math::Cos(RingAngle), SinTube, CosTube * Math::Sin(RingAngle));
+            Vector3 Normal = Vector3(CosTube * Math::Cos(RingAngle), SinTube, CosTube * Math::Sin(RingAngle));
             Normal.Normalize();
             
             MeshCreateInfo.Vertices[VertexIndex].Normal = Normal;
@@ -692,7 +692,7 @@ FMeshCreateInfo MeshFactory::CreateTorus(float RingRadius, float TubeRadius, uin
             // Texture coordinates
             const float u = static_cast<float>(i) / static_cast<float>(RingSegments);
             const float v = static_cast<float>(j) / static_cast<float>(TubeSegments);
-            MeshCreateInfo.Vertices[VertexIndex].TexCoord = FVector2(u, v);
+            MeshCreateInfo.Vertices[VertexIndex].TexCoord = Vector2(u, v);
 
             ++VertexIndex;
         }
@@ -900,7 +900,7 @@ FMeshCreateInfo MeshFactory::CreateTeapot(uint32 Tessellation) noexcept
         Vertex.Position[1] = Position[1];
         Vertex.Position[2] = Position[2];
 
-        FVector3 Normal(
+        Vector3 Normal(
             TangentU[1] * TangentV[2] - TangentU[2] * TangentV[1],
             TangentU[2] * TangentV[0] - TangentU[0] * TangentV[2],
             TangentU[0] * TangentV[1] - TangentU[1] * TangentV[0]);
@@ -978,26 +978,26 @@ FMeshCreateInfo MeshFactory::CreatePyramid(float Width, float Depth, float Heigh
 
     // Bottom vertices
     FVertex v0;
-    v0.Position = FVector3(-HalfWidth, 0.0f, -HalfDepth); // Front-left
+    v0.Position = Vector3(-HalfWidth, 0.0f, -HalfDepth); // Front-left
     FVertex v1;
-    v1.Position = FVector3( HalfWidth, 0.0f, -HalfDepth); // Front-right
+    v1.Position = Vector3( HalfWidth, 0.0f, -HalfDepth); // Front-right
     FVertex v2;
-    v2.Position = FVector3( HalfWidth, 0.0f,  HalfDepth); // Back-right
+    v2.Position = Vector3( HalfWidth, 0.0f,  HalfDepth); // Back-right
     FVertex v3;
-    v3.Position = FVector3(-HalfWidth, 0.0f,  HalfDepth); // Back-left
+    v3.Position = Vector3(-HalfWidth, 0.0f,  HalfDepth); // Back-left
 
     // Apex vertex
     FVertex v4;
-    v4.Position = FVector3(0.0f, Height, 0.0f); // Top center
+    v4.Position = Vector3(0.0f, Height, 0.0f); // Top center
 
     // Base normal
-    FVector3 BaseNormal = FVector3(0.0f, -1.0f, 0.0f);
+    Vector3 BaseNormal = Vector3(0.0f, -1.0f, 0.0f);
 
     // Side normals (calculated for each face)
-    FVector3 Normal0 = (v4.Position - v0.Position).CrossProduct(v1.Position - v0.Position).Normalize();
-    FVector3 Normal1 = (v4.Position - v1.Position).CrossProduct(v2.Position - v1.Position).Normalize();
-    FVector3 Normal2 = (v4.Position - v2.Position).CrossProduct(v3.Position - v2.Position).Normalize();
-    FVector3 Normal3 = (v4.Position - v3.Position).CrossProduct(v0.Position - v3.Position).Normalize();
+    Vector3 Normal0 = (v4.Position - v0.Position).CrossProduct(v1.Position - v0.Position).Normalize();
+    Vector3 Normal1 = (v4.Position - v1.Position).CrossProduct(v2.Position - v1.Position).Normalize();
+    Vector3 Normal2 = (v4.Position - v2.Position).CrossProduct(v3.Position - v2.Position).Normalize();
+    Vector3 Normal3 = (v4.Position - v3.Position).CrossProduct(v0.Position - v3.Position).Normalize();
 
     // Assign normals to the base vertices
     v0.Normal = BaseNormal;
@@ -1006,10 +1006,10 @@ FMeshCreateInfo MeshFactory::CreatePyramid(float Width, float Depth, float Heigh
     v3.Normal = BaseNormal;
 
     // Assign texture coordinates for the base
-    v0.TexCoord = FVector2(0.0f, 0.0f);
-    v1.TexCoord = FVector2(1.0f, 0.0f);
-    v2.TexCoord = FVector2(1.0f, 1.0f);
-    v3.TexCoord = FVector2(0.0f, 1.0f);
+    v0.TexCoord = Vector2(0.0f, 0.0f);
+    v1.TexCoord = Vector2(1.0f, 0.0f);
+    v2.TexCoord = Vector2(1.0f, 1.0f);
+    v3.TexCoord = Vector2(0.0f, 1.0f);
 
     // Add base vertices to the mesh
     uint32 BaseIndex = static_cast<uint32>(MeshInfo.Vertices.Size());
@@ -1034,9 +1034,9 @@ FMeshCreateInfo MeshFactory::CreatePyramid(float Width, float Depth, float Heigh
     s0v0.Normal   = Normal0;
     s0v1.Normal   = Normal0;
     s0v4.Normal   = Normal0;
-    s0v0.TexCoord = FVector2(0.0f, 0.0f);
-    s0v1.TexCoord = FVector2(1.0f, 0.0f);
-    s0v4.TexCoord = FVector2(0.5f, 1.0f);
+    s0v0.TexCoord = Vector2(0.0f, 0.0f);
+    s0v1.TexCoord = Vector2(1.0f, 0.0f);
+    s0v4.TexCoord = Vector2(0.5f, 1.0f);
 
     const uint32 Side0Index = static_cast<uint32>(MeshInfo.Vertices.Size());
     MeshInfo.Vertices.Add(s0v0);
@@ -1054,9 +1054,9 @@ FMeshCreateInfo MeshFactory::CreatePyramid(float Width, float Depth, float Heigh
     s1v0.Normal   = Normal1;
     s1v1.Normal   = Normal1;
     s1v4.Normal   = Normal1;
-    s1v0.TexCoord = FVector2(0.0f, 0.0f);
-    s1v1.TexCoord = FVector2(1.0f, 0.0f);
-    s1v4.TexCoord = FVector2(0.5f, 1.0f);
+    s1v0.TexCoord = Vector2(0.0f, 0.0f);
+    s1v1.TexCoord = Vector2(1.0f, 0.0f);
+    s1v4.TexCoord = Vector2(0.5f, 1.0f);
 
     const uint32 Side1Index = static_cast<uint32>(MeshInfo.Vertices.Size());
     MeshInfo.Vertices.Add(s1v0);
@@ -1074,9 +1074,9 @@ FMeshCreateInfo MeshFactory::CreatePyramid(float Width, float Depth, float Heigh
     s2v0.Normal   = Normal2;
     s2v1.Normal   = Normal2;
     s2v4.Normal   = Normal2;
-    s2v0.TexCoord = FVector2(0.0f, 0.0f);
-    s2v1.TexCoord = FVector2(1.0f, 0.0f);
-    s2v4.TexCoord = FVector2(0.5f, 1.0f);
+    s2v0.TexCoord = Vector2(0.0f, 0.0f);
+    s2v1.TexCoord = Vector2(1.0f, 0.0f);
+    s2v4.TexCoord = Vector2(0.5f, 1.0f);
 
     const uint32 Side2Index = static_cast<uint32>(MeshInfo.Vertices.Size());
     MeshInfo.Vertices.Add(s2v0);
@@ -1094,9 +1094,9 @@ FMeshCreateInfo MeshFactory::CreatePyramid(float Width, float Depth, float Heigh
     s3v0.Normal   = Normal3;
     s3v1.Normal   = Normal3;
     s3v4.Normal   = Normal3;
-    s3v0.TexCoord = FVector2(0.0f, 0.0f);
-    s3v1.TexCoord = FVector2(1.0f, 0.0f);
-    s3v4.TexCoord = FVector2(0.5f, 1.0f);
+    s3v0.TexCoord = Vector2(0.0f, 0.0f);
+    s3v1.TexCoord = Vector2(1.0f, 0.0f);
+    s3v4.TexCoord = Vector2(0.5f, 1.0f);
 
     const uint32 Side3Index = static_cast<uint32>(MeshInfo.Vertices.Size());
     MeshInfo.Vertices.Add(s3v0);
@@ -1128,9 +1128,9 @@ FMeshCreateInfo MeshFactory::CreateCylinder(uint32 Sides, float Radius, float He
 
     // Generate top cap vertices
     FVertex TopCenterVertex;
-    TopCenterVertex.Position = FVector3(0.0f, HalfHeight, 0.0f);
-    TopCenterVertex.Normal   = FVector3(0.0f, 1.0f, 0.0f);
-    TopCenterVertex.TexCoord = FVector2(0.5f, 0.5f); // Center of the texture
+    TopCenterVertex.Position = Vector3(0.0f, HalfHeight, 0.0f);
+    TopCenterVertex.Normal   = Vector3(0.0f, 1.0f, 0.0f);
+    TopCenterVertex.TexCoord = Vector2(0.5f, 0.5f); // Center of the texture
     MeshInfo.Vertices.Add(TopCenterVertex);
 
     for (uint32 i = 0; i < Sides; ++i)
@@ -1140,9 +1140,9 @@ FMeshCreateInfo MeshFactory::CreateCylinder(uint32 Sides, float Radius, float He
         const float Z     = Radius * sinf(Angle);
         
         FVertex Vertex;
-        Vertex.Position = FVector3(X, HalfHeight, Z);
-        Vertex.Normal   = FVector3(0.0f, 1.0f, 0.0f);
-        Vertex.TexCoord = FVector2((cosf(Angle) + 1.0f) * 0.5f, (sinf(Angle) + 1.0f) * 0.5f); // Map to [0,1]
+        Vertex.Position = Vector3(X, HalfHeight, Z);
+        Vertex.Normal   = Vector3(0.0f, 1.0f, 0.0f);
+        Vertex.TexCoord = Vector2((cosf(Angle) + 1.0f) * 0.5f, (sinf(Angle) + 1.0f) * 0.5f); // Map to [0,1]
         MeshInfo.Vertices.Add(Vertex);
     }
 
@@ -1150,9 +1150,9 @@ FMeshCreateInfo MeshFactory::CreateCylinder(uint32 Sides, float Radius, float He
     const uint32 BottomCenterIndex = static_cast<uint32>(MeshInfo.Vertices.Size());
     
     FVertex BottomCenterVertex;
-    BottomCenterVertex.Position = FVector3(0.0f, -HalfHeight, 0.0f);
-    BottomCenterVertex.Normal   = FVector3(0.0f, -1.0f, 0.0f);
-    BottomCenterVertex.TexCoord = FVector2(0.5f, 0.5f);
+    BottomCenterVertex.Position = Vector3(0.0f, -HalfHeight, 0.0f);
+    BottomCenterVertex.Normal   = Vector3(0.0f, -1.0f, 0.0f);
+    BottomCenterVertex.TexCoord = Vector2(0.5f, 0.5f);
     MeshInfo.Vertices.Add(BottomCenterVertex);
 
     for (uint32 i = 0; i < Sides; ++i)
@@ -1162,9 +1162,9 @@ FMeshCreateInfo MeshFactory::CreateCylinder(uint32 Sides, float Radius, float He
         const float Z     = Radius * sinf(Angle);
 
         FVertex Vertex;
-        Vertex.Position = FVector3(X, -HalfHeight, Z);
-        Vertex.Normal   = FVector3(0.0f, -1.0f, 0.0f);
-        Vertex.TexCoord = FVector2((cosf(Angle) + 1.0f) * 0.5f, (sinf(Angle) + 1.0f) * 0.5f);
+        Vertex.Position = Vector3(X, -HalfHeight, Z);
+        Vertex.Normal   = Vector3(0.0f, -1.0f, 0.0f);
+        Vertex.TexCoord = Vector2((cosf(Angle) + 1.0f) * 0.5f, (sinf(Angle) + 1.0f) * 0.5f);
         MeshInfo.Vertices.Add(Vertex);
     }
 
@@ -1177,20 +1177,20 @@ FMeshCreateInfo MeshFactory::CreateCylinder(uint32 Sides, float Radius, float He
         const float Z     = Radius * sinf(Angle);
         const float U     = static_cast<float>(i) / static_cast<float>(Sides); // Texture coordinate U
 
-        const FVector3 Normal = FVector3(X, 0.0f, Z).Normalize();
+        const Vector3 Normal = Vector3(X, 0.0f, Z).Normalize();
 
         // Top vertex
         FVertex TopVertex;
-        TopVertex.Position = FVector3(X, HalfHeight, Z);
+        TopVertex.Position = Vector3(X, HalfHeight, Z);
         TopVertex.Normal   = Normal;
-        TopVertex.TexCoord = FVector2(U, 0.0f); // V = 0 at the top
+        TopVertex.TexCoord = Vector2(U, 0.0f); // V = 0 at the top
         MeshInfo.Vertices.Add(TopVertex);
 
         // Bottom vertex
         FVertex BottomVertex;
-        BottomVertex.Position = FVector3(X, -HalfHeight, Z);
+        BottomVertex.Position = Vector3(X, -HalfHeight, Z);
         BottomVertex.Normal   = Normal;
-        BottomVertex.TexCoord = FVector2(U, 1.0f); // V = 1 at the bottom
+        BottomVertex.TexCoord = Vector2(U, 1.0f); // V = 1 at the bottom
         MeshInfo.Vertices.Add(BottomVertex);
     }
 

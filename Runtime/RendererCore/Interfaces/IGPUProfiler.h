@@ -59,7 +59,7 @@ struct FGPUProfileSample
     int32 TotalCalls    = 0;
 };
 
-using GPUProfileSamplesMap = TMap<FString, FGPUProfileSample>;
+using GPUProfileSamplesMap = TMap<String, FGPUProfileSample>;
 
 struct FPipelineStatisticsMinMax
 {

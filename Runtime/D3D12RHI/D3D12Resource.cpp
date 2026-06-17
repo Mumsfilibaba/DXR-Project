@@ -89,7 +89,7 @@ void FD3D12Resource::UnmapRange(uint32 SubresourceIndex, const D3D12_RANGE* Rang
     Resource->Unmap(SubresourceIndex, Range);
 }
 
-void FD3D12Resource::SetDebugName(const FString& InDebugName)
+void FD3D12Resource::SetDebugName(const String& InDebugName)
 {
     if (Resource)
     {
@@ -100,7 +100,7 @@ void FD3D12Resource::SetDebugName(const FString& InDebugName)
         }
 
         // Calling SetName as well since NVIDIA Nsight does not recognize the name otherwise
-        FStringWide WideName = CharToWide(InDebugName);
+        StringWide WideName = CharToWide(InDebugName);
         
         Result = Resource->SetName(*WideName);
         if (FAILED(Result))
@@ -110,7 +110,7 @@ void FD3D12Resource::SetDebugName(const FString& InDebugName)
     }
 }
 
-void FD3D12Resource::GetDebugName(FString& OutDebugName) const
+void FD3D12Resource::GetDebugName(String& OutDebugName) const
 {
     OutDebugName.Clear();
 

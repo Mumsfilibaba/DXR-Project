@@ -117,7 +117,7 @@ struct FVulkanDescriptorRemappingInfo
     TArray<FRemappingInfo> RemappingInfo;
     uint64                 Hash;
 #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
-    TArray<FString>        DebugNames;
+    TArray<String>         DebugNames;
 #endif
 };
 
@@ -320,7 +320,7 @@ private:
     uint32                                 RegularSetCount;
     bool                                   bHasBindlessSet;
 #if VULKAN_STORE_DEBUG_NAMES
-    FString                                DebugName;
+    String                                 DebugName;
 #endif
 };
 

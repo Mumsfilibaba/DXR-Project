@@ -15,7 +15,7 @@ public:
     void PrepareView(uint32 MaxMeshes = 0);
 
     // Creates the FFrustum for this view
-    void SetupFrustum(const FMatrix4& View, const FMatrix4& Projection);
+    void SetupFrustum(const Matrix4& View, const Matrix4& Projection);
 
     // Add a static mesh to this view if the mesh is in view
     bool AddStaticMesh(FSceneStaticMesh* StaticMesh);

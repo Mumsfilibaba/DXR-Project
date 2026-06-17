@@ -58,7 +58,7 @@ void FWindowsConsoleOutputDevice::Show(bool bShow)
     }
 }
 
-void FWindowsConsoleOutputDevice::Log(const FString& Message)
+void FWindowsConsoleOutputDevice::Log(const String& Message)
 {
     TScopedLock Lock(ConsoleHandleCS);
 
@@ -70,7 +70,7 @@ void FWindowsConsoleOutputDevice::Log(const FString& Message)
     }
 }
 
-void FWindowsConsoleOutputDevice::Log(ELogSeverity Severity, const FString& Message)
+void FWindowsConsoleOutputDevice::Log(ELogSeverity Severity, const String& Message)
 {
     TScopedLock Lock(ConsoleHandleCS);
 
@@ -130,7 +130,7 @@ void FWindowsConsoleOutputDevice::Flush()
     }
 }
 
-void FWindowsConsoleOutputDevice::SetTitle(const FString& InTitle)
+void FWindowsConsoleOutputDevice::SetTitle(const String& InTitle)
 {
     TScopedLock Lock(ConsoleHandleCS);
 

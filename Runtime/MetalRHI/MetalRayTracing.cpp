@@ -17,12 +17,12 @@ void* FMetalGeometryAccelerationStructureRHI::GetRHIBaseInterface()
     return reinterpret_cast<void*>(this);
 }
 
-void FMetalGeometryAccelerationStructureRHI::SetDebugName(const FString& InName)
+void FMetalGeometryAccelerationStructureRHI::SetDebugName(const String& InName)
 {
     DebugName = InName;
 }
 
-void FMetalGeometryAccelerationStructureRHI::GetDebugName(FString& OutDebugName) const
+void FMetalGeometryAccelerationStructureRHI::GetDebugName(String& OutDebugName) const
 {
     OutDebugName = DebugName;
 }
@@ -55,12 +55,12 @@ FRHIDescriptorHandle FMetalSceneAccelerationStructureRHI::GetBindlessHandle() co
     return FRHIDescriptorHandle();
 }
 
-void FMetalSceneAccelerationStructureRHI::SetDebugName(const FString& InName)
+void FMetalSceneAccelerationStructureRHI::SetDebugName(const String& InName)
 {
     DebugName = InName;
 }
 
-void FMetalSceneAccelerationStructureRHI::GetDebugName(FString& OutDebugName) const
+void FMetalSceneAccelerationStructureRHI::GetDebugName(String& OutDebugName) const
 {
     OutDebugName = DebugName;
 }

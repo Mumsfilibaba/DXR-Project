@@ -11,7 +11,7 @@ class FEditorContentBrowserWidget
     // NOTE: Remove this when we actually search the file tree
     struct FileInfo
     {
-        FString          Name;
+        String           Name;
         bool             bIsFolder;
         TArray<FileInfo> FolderContents;
     };
@@ -85,7 +85,7 @@ private:
     void SelectItemRange(int32 InStartIndex, int32 InEndIndex, bool bAddToExisting);
     bool IsItemSelected(int32 InIndex) const;
     bool MoveItemsToFolder(const TArray<int32>& InSourceParentPath, const TArray<int32>& InSourceIndices, const TArray<int32>& InTargetFolderPath);
-    void ReportFailedMove(const FString& InFullPath);
+    void ReportFailedMove(const String& InFullPath);
 
     bool MatchesSearch(const CHAR* InName, const CHAR* InQuery) const;
     bool FolderTreeMatches(const FileInfo& InFolder, const CHAR* InQuery) const;
@@ -111,11 +111,11 @@ private:
     void QueueFolderMoveRequests(const TArray<TArray<int32>>& DragPaths, const TArray<int32>& TargetPath);
     void BuildDragSourceSelection(const FCBDndPayload& Data, TArray<int32>& OutSourceParentPath, const FileInfo*& OutSourceParentFolder, TArray<int32>& OutSourceIndices, TArray<TArray<int32>>& OutSourceFolderPaths) const;
     void AppendFolderPayloadPath(const ImGuiPayload* Payload, TArray<TArray<int32>>& InOutPaths) const;
-    int32 FindChildFolderIndexByName(const FileInfo& ParentFolder, const FString& FolderName) const;
-    int32 FindChildFileIndexByName(const FileInfo& ParentFolder, const FString& FileName) const;
+    int32 FindChildFolderIndexByName(const FileInfo& ParentFolder, const String& FolderName) const;
+    int32 FindChildFileIndexByName(const FileInfo& ParentFolder, const String& FileName) const;
     void UpdateDragPreviewNameConflicts(const TArray<TArray<int32>>& SourceFolderPaths, const FileInfo* SourceParentFolder, const TArray<int32>* SourceIndices, const TArray<int32>* SourceParentPath, const TArray<int32>& TargetPath);
     void SetDragPreviewTarget(const CHAR* TargetName, const TArray<int32>& TargetPath, const TArray<TArray<int32>>& SourceFolderPaths, const FileInfo* SourceParentFolder, const TArray<int32>* SourceIndices, const TArray<int32>* SourceParentPath);
-    bool MergeFolderContents(FileInfo& TargetFolder, FileInfo& SourceFolder, const FString& SourceFolderPath);
+    bool MergeFolderContents(FileInfo& TargetFolder, FileInfo& SourceFolder, const String& SourceFolderPath);
 
     void AddNewFolderInCurrentPath();
     void DeleteSelectedContentItems();

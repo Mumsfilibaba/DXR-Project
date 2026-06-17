@@ -26,7 +26,7 @@ void FConfigSection::Restore()
     }
 }
 
-void FConfigSection::DumpToString(FString& OutString)
+void FConfigSection::DumpToString(String& OutString)
 {
     for (auto ValuePair : Values)
     {
@@ -35,7 +35,7 @@ void FConfigSection::DumpToString(FString& OutString)
 }
 
 
-bool FConfigFile::SetString(const CHAR* SectionName, const CHAR* Name, const FString& NewValue)
+bool FConfigFile::SetString(const CHAR* SectionName, const CHAR* Name, const String& NewValue)
 {
     if (FConfigValue* Value = FindValue(SectionName, Name))
     {
@@ -64,7 +64,7 @@ bool FConfigFile::SetBool(const CHAR* SectionName, const CHAR* Name, bool bNewVa
     return SetString(SectionName, Name, TTypeToString<bool>::ToString(bNewValue));
 }
 
-bool FConfigFile::GetString(const CHAR* SectionName, const CHAR* Name, FString& OutValue)
+bool FConfigFile::GetString(const CHAR* SectionName, const CHAR* Name, String& OutValue)
 {
     if (FConfigValue* Value = FindValue(SectionName, Name))
     {
@@ -133,7 +133,7 @@ ENABLE_UNREACHABLE_CODE_WARNING
 
 FConfigValue* FConfigFile::FindValue(const CHAR* SectionName, const CHAR* Name)
 {
-    const bool bIsGlobal = !SectionName || FCString::Strcmp(SectionName, "") == 0;
+    const bool bIsGlobal = !SectionName || CString::Strcmp(SectionName, "") == 0;
     if (bIsGlobal)
     {
         return FindValue(Name);
@@ -148,7 +148,7 @@ FConfigValue* FConfigFile::FindValue(const CHAR* SectionName, const CHAR* Name)
 
 bool FConfigFile::WriteToFile()
 {
-    FString ConfigString;
+    String ConfigString;
     DumpToString(ConfigString);
 
     {
@@ -164,7 +164,7 @@ bool FConfigFile::WriteToFile()
     return false;
 }
 
-void FConfigFile::DumpToString(FString& OutString)
+void FConfigFile::DumpToString(String& OutString)
 {
     for (auto CurrentSection : Sections)
     {
@@ -219,7 +219,7 @@ void FConfig::Release()
     }
 }
 
-FConfigFile* FConfig::LoadFile(const FString& Filename)
+FConfigFile* FConfig::LoadFile(const String& Filename)
 {
     TArray<CHAR> FileContents;
 
@@ -268,7 +268,7 @@ FConfigFile* FConfig::LoadFile(const FString& Filename)
         // This is a section
         if (*LineStart == '[')
         {
-            if (CHAR* SectionEnd = FCString::Strchr(++LineStart, ']'))
+            if (CHAR* SectionEnd = CString::Strchr(++LineStart, ']'))
             {
                 CHAR* SectionStart = LineStart;
                 *SectionEnd = '\0';
@@ -279,7 +279,7 @@ FConfigFile* FConfig::LoadFile(const FString& Filename)
         }
         else if (*LineStart != ';') // Check if this is a comment line
         {
-            if (CHAR* EqualSign = FCString::Strchr(LineStart, '='))
+            if (CHAR* EqualSign = CString::Strchr(LineStart, '='))
             {
                 *EqualSign = '\0';
 
@@ -303,12 +303,12 @@ FConfigFile* FConfig::LoadFile(const FString& Filename)
                 if (*Value == '\"')
                 {
                     Value++;
-                    ValueEnd = FCString::Strchr(Value, '\"');
+                    ValueEnd = CString::Strchr(Value, '\"');
                     *ValueEnd = '\0';
                 }
                 else
                 {
-                    ValueEnd = FCString::Strchr(LineStart, ' ');
+                    ValueEnd = CString::Strchr(LineStart, ' ');
                 }
 
                 // Use line-end as backup

@@ -55,7 +55,7 @@ struct FR10G10B10A2
     FORCEINLINE FR10G10B10A2(float InR, float InG, float InB, float InA = 0.0f)
         : ARGB(0)
     {
-        FVector3 Vector(InR, InG, InB);
+        Vector3 Vector(InR, InG, InB);
         Vector.Normalize();
 
         Vector.X = Math::Clamp(Vector.X, 0.0f, 1.0f);

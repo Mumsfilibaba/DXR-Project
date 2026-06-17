@@ -118,7 +118,7 @@ struct FDeferredMacEvent
     NSEventPhase ScrollPhase;
 
     /** @brief Scroll deltas (X, Y) for wheel/trackpad scrolling. */
-    FVector2 ScrollDelta;
+    Vector2 ScrollDelta;
 
     /** @brief Character code for keyboard events, if applicable (e.g., key down). */
     uint32 Character;
@@ -262,9 +262,9 @@ public:
      * @brief Retrieves a human-readable name for a monitor (NSScreen).
      * 
      * @param Screen The NSScreen representing the monitor.
-     * @return An FString containing the monitor's name.
+     * @return An String containing the monitor's name.
      */
-    static FString FindMonitorName(NSScreen* Screen);
+    static String FindMonitorName(NSScreen* Screen);
 
     /**
      * @brief Calculates the DPI for a specific NSScreen.

@@ -69,7 +69,7 @@ int32 FWindowsFileHandle::Read(uint8* Dst, uint32 BytesToRead)
             // ERROR_IO_PENDING is not an error, however if the error is not that we report an error
             if (Error != ERROR_IO_PENDING)
             {
-                FString ErrorString;
+                String ErrorString;
 
                 FWindowsPlatformMisc::GetLastErrorString(ErrorString);
                 LOG_ERROR("Failed to read file, Error '%d' Message '%s'", Error, *ErrorString);
@@ -165,18 +165,18 @@ void FWindowsFileHandle::UpdateFileSize()
 }
 
 
-IPlatformFile* FWindowsPlatformFile::OpenForRead(const FString& Filename)
+IPlatformFile* FWindowsPlatformFile::OpenForRead(const String& Filename)
 {
     ::SetLastError(S_OK);
 
     HANDLE NewHandle = CreateFileA(*Filename, GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
     if (NewHandle == INVALID_HANDLE_VALUE)
     {
-        FString ErrorString;
+        String ErrorString;
         FWindowsPlatformMisc::GetLastErrorString(ErrorString);
         
         int32 Position = ErrorString.FindLast("\r\n");
-        if (Position != FString::InvalidIndex)
+        if (Position != String::InvalidIndex)
         {
             ErrorString.Remove(Position, 2);
         }
@@ -191,7 +191,7 @@ IPlatformFile* FWindowsPlatformFile::OpenForRead(const FString& Filename)
     }
 }
 
-IPlatformFile* FWindowsPlatformFile::OpenForWrite(const FString& Filename, bool bTruncate)
+IPlatformFile* FWindowsPlatformFile::OpenForWrite(const String& Filename, bool bTruncate)
 {
     ::SetLastError(S_OK);
 
@@ -200,11 +200,11 @@ IPlatformFile* FWindowsPlatformFile::OpenForWrite(const FString& Filename, bool 
     HANDLE NewHandle = ::CreateFileA(*Filename, GENERIC_WRITE, 0, 0, CreationDisposition, FILE_ATTRIBUTE_NORMAL, 0);
     if (NewHandle == INVALID_HANDLE_VALUE)
     {
-        FString ErrorString;
+        String ErrorString;
         FWindowsPlatformMisc::GetLastErrorString(ErrorString);
 
         int32 Position = ErrorString.FindLast("\r\n");
-        if (Position != FString::InvalidIndex)
+        if (Position != String::InvalidIndex)
         {
             ErrorString.Remove(Position, 2);
         }
@@ -219,7 +219,7 @@ IPlatformFile* FWindowsPlatformFile::OpenForWrite(const FString& Filename, bool 
     }
 }
 
-IPlatformAsyncFile* FWindowsPlatformFile::OpenForAsyncWrite(const FString& Filename, bool bTruncate)
+IPlatformAsyncFile* FWindowsPlatformFile::OpenForAsyncWrite(const String& Filename, bool bTruncate)
 {
     ::SetLastError(S_OK);
 
@@ -228,11 +228,11 @@ IPlatformAsyncFile* FWindowsPlatformFile::OpenForAsyncWrite(const FString& Filen
     HANDLE NewHandle = ::CreateFileA(*Filename, GENERIC_WRITE, 0, 0, CreationDisposition, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, 0);
     if (NewHandle == INVALID_HANDLE_VALUE)
     {
-        FString ErrorString;
+        String ErrorString;
         FWindowsPlatformMisc::GetLastErrorString(ErrorString);
 
         int32 Position = ErrorString.FindLast("\r\n");
-        if (Position != FString::InvalidIndex)
+        if (Position != String::InvalidIndex)
         {
             ErrorString.Remove(Position, 2);
         }
@@ -366,28 +366,28 @@ const CHAR* FWindowsPlatformFile::GetExecutablePath()
     return StaticExecutablePath;
 }
 
-FString FWindowsPlatformFile::GetCurrentWorkingDirectory()
+String FWindowsPlatformFile::GetCurrentWorkingDirectory()
 {
     int32 Length = ::GetCurrentDirectoryA(0, nullptr);
     if (!Length)
     {
-        FString Error;
+        String Error;
         const int32 ErrorCode = FWindowsPlatformMisc::GetLastErrorString(Error);
         LOG_ERROR("GetCurrentWorkingDirectory failed with error %d '%s' ", ErrorCode, *Error);
-        return FString();
+        return String();
     }
 
-    FString Result;
+    String Result;
     Result.Resize(Length);
 
     Length = ::GetCurrentDirectoryA(Result.Size(), Result.Data());
     if (!Length)
     {
-        FString Error;
+        String Error;
 
         const int32 ErrorCode = FWindowsPlatformMisc::GetLastErrorString(Error);
         LOG_ERROR("GetCurrentWorkingDirectory failed with error %d '%s' ", ErrorCode, *Error);
-        return FString();
+        return String();
     }
     else
     {

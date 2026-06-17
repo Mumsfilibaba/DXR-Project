@@ -41,14 +41,14 @@ namespace HaltonPrivate
         return Math::Min<float>(float(ReversedDigits) * InvBaseN, OneMinusEpsilon);
     }
 
-    inline FVector2 Hammersley2(uint32 Sample, uint32 N)
+    inline Vector2 Hammersley2(uint32 Sample, uint32 N)
     {
-        return FVector2(float(Sample) / float(N), RadicalInverse2(Sample));
+        return Vector2(float(Sample) / float(N), RadicalInverse2(Sample));
     }
 
-    inline FVector2 Halton23(uint32 Sample)
+    inline Vector2 Halton23(uint32 Sample)
     {
-        return FVector2(RadicalInverse2(Sample), RadicalInverse3(Sample));
+        return Vector2(RadicalInverse2(Sample), RadicalInverse3(Sample));
     }
 }
 
@@ -60,10 +60,10 @@ struct FHaltonState
     {
     }
 
-    FVector2 NextSample()
+    Vector2 NextSample()
     {
         SampleIndex = (SampleIndex + 1) % MaxNumSamples;
-        FVector2 Sample = HaltonPrivate::Halton23(SampleIndex);
+        Vector2 Sample = HaltonPrivate::Halton23(SampleIndex);
         return (Sample * 2.0f) - 1.0f;
     }
 

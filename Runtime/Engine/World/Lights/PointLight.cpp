@@ -17,7 +17,7 @@ FPointLight::~FPointLight()
 {
 }
 
-void FPointLight::SetPosition(const FVector3& InPosition)
+void FPointLight::SetPosition(const Vector3& InPosition)
 {
     Position = InPosition;
     CalculateMatrices();
@@ -54,30 +54,30 @@ void FPointLight::CalculateMatrices()
         return;
     }
 
-    const FVector3 Directions[6] =
+    const Vector3 Directions[6] =
     {
-        { FVector3( 1.0f,  0.0f,  0.0f) },
-        { FVector3(-1.0f,  0.0f,  0.0f) },
-        { FVector3( 0.0f,  1.0f,  0.0f) },
-        { FVector3( 0.0f, -1.0f,  0.0f) },
-        { FVector3( 0.0f,  0.0f,  1.0f) },
-        { FVector3( 0.0f,  0.0f, -1.0f) },
+        { Vector3( 1.0f,  0.0f,  0.0f) },
+        { Vector3(-1.0f,  0.0f,  0.0f) },
+        { Vector3( 0.0f,  1.0f,  0.0f) },
+        { Vector3( 0.0f, -1.0f,  0.0f) },
+        { Vector3( 0.0f,  0.0f,  1.0f) },
+        { Vector3( 0.0f,  0.0f, -1.0f) },
     };
 
-    const FVector3 UpVectors[6] =
+    const Vector3 UpVectors[6] =
     {
-        { FVector3(0.0f, 1.0f,  0.0f) },
-        { FVector3(0.0f, 1.0f,  0.0f) },
-        { FVector3(0.0f, 0.0f, -1.0f) },
-        { FVector3(0.0f, 0.0f,  1.0f) },
-        { FVector3(0.0f, 1.0f,  0.0f) },
-        { FVector3(0.0f, 1.0f,  0.0f) },
+        { Vector3(0.0f, 1.0f,  0.0f) },
+        { Vector3(0.0f, 1.0f,  0.0f) },
+        { Vector3(0.0f, 0.0f, -1.0f) },
+        { Vector3(0.0f, 0.0f,  1.0f) },
+        { Vector3(0.0f, 1.0f,  0.0f) },
+        { Vector3(0.0f, 1.0f,  0.0f) },
     };
 
     for (uint32 Face = 0; Face < 6; ++Face)
     {
-        const FMatrix4 LightProjection = FMatrix4::PerspectiveProjection(Math::Constants::HalfPI, 1.0f, ShadowNearPlane, ShadowFarPlane);
-        const FMatrix4 LightView       = FMatrix4::LookTo(Position, Directions[Face], UpVectors[Face]);
+        const Matrix4 LightProjection = Matrix4::PerspectiveProjection(Math::Constants::HalfPI, 1.0f, ShadowNearPlane, ShadowFarPlane);
+        const Matrix4 LightView       = Matrix4::LookTo(Position, Directions[Face], UpVectors[Face]);
 
         ViewMatrices[Face]     = LightView;
         ProjMatrices[Face]     = LightProjection;

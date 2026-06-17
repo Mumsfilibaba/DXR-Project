@@ -10,7 +10,7 @@ public:
     FPointLight(const FObjectInitializer& ObjectInitializer);
     ~FPointLight();
 
-    void SetPosition(const FVector3& InPosition);
+    void SetPosition(const Vector3& InPosition);
     void SetShadowNearPlane(float InShadowNearPlane);
     void SetShadowFarPlane(float InShadowFarPlane);
 
@@ -25,24 +25,24 @@ public:
         return bShadowCaster;
     }
 
-    FORCEINLINE const FVector3& GetPosition() const
+    FORCEINLINE const Vector3& GetPosition() const
     {
         return Position;
     }
 
-    FORCEINLINE const FMatrix4& GetViewProjectionMatrix(uint32 Index) const
+    FORCEINLINE const Matrix4& GetViewProjectionMatrix(uint32 Index) const
     {
         CHECK(Index < 6);
         return ViewProjMatrices[Index];
     }
 
-    FORCEINLINE const FMatrix4& GetViewMatrix(uint32 Index) const
+    FORCEINLINE const Matrix4& GetViewMatrix(uint32 Index) const
     {
         CHECK(Index < 6);
         return ViewMatrices[Index];
     }
 
-    FORCEINLINE const FMatrix4& GetProjectionMatrix(uint32 Index) const
+    FORCEINLINE const Matrix4& GetProjectionMatrix(uint32 Index) const
     {
         CHECK(Index < 6);
         return ProjMatrices[Index];
@@ -51,9 +51,9 @@ public:
 private:
     void CalculateMatrices();
 
-    FMatrix4 ViewProjMatrices[6];
-    FMatrix4 ViewMatrices[6];
-    FMatrix4 ProjMatrices[6];
-    FVector3 Position;
-    bool     bShadowCaster;
+    Matrix4 ViewProjMatrices[6];
+    Matrix4 ViewMatrices[6];
+    Matrix4 ProjMatrices[6];
+    Vector3 Position;
+    bool    bShadowCaster;
 };

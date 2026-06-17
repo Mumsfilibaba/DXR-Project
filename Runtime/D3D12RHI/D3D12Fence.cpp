@@ -103,7 +103,7 @@ uint64 FD3D12Fence::GetCompletedValue() const
     return LastCompletedValue;
 }
 
-void FD3D12Fence::SetDebugName(const FString& Name)
+void FD3D12Fence::SetDebugName(const String& Name)
 {
     CHECK(Fence != nullptr);
     Fence->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), *Name);
@@ -179,7 +179,7 @@ void* FD3D12FenceRHI::GetRHINativeFence() const
     return Fence ? reinterpret_cast<void*>(Fence->GetD3D12Fence()) : nullptr;
 }
 
-void FD3D12FenceRHI::SetDebugName(const FString& InName)
+void FD3D12FenceRHI::SetDebugName(const String& InName)
 {
     DebugName = InName;
     if (Fence)
@@ -188,7 +188,7 @@ void FD3D12FenceRHI::SetDebugName(const FString& InName)
     }
 }
 
-void FD3D12FenceRHI::GetDebugName(FString& OutDebugName) const
+void FD3D12FenceRHI::GetDebugName(String& OutDebugName) const
 {
     OutDebugName = DebugName;
 }

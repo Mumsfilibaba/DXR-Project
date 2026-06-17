@@ -266,7 +266,7 @@ bool FTaskManager::CreateWorkers(int32 NumWorkers)
         // Startup workers
         for (int32 Index = 0; Index < NumWorkers && bResult; ++Index)
         {
-            const FString Name = FString::CreateFormatted("Task Worker[%d]", Index);
+            const String Name = String::CreateFormatted("Task Worker[%d]", Index);
 
             FTaskWorkerThread* NewWorker = new FTaskWorkerThread();
             if (NewWorker->Create(*Name))

@@ -89,7 +89,7 @@ FRHIDescriptorHandle FD3D12BackBufferProxyTextureRHI::GetBindlessSRVHandle() con
     return CurrentBackBuffer ? CurrentBackBuffer->GetBindlessSRVHandle() : FRHIDescriptorHandle();
 }
 
-void FD3D12BackBufferProxyTextureRHI::SetDebugName(const FString& InName)
+void FD3D12BackBufferProxyTextureRHI::SetDebugName(const String& InName)
 {
     if (!SwapChain)
     {
@@ -106,7 +106,7 @@ void FD3D12BackBufferProxyTextureRHI::SetDebugName(const FString& InName)
     }
 }
 
-void FD3D12BackBufferProxyTextureRHI::GetDebugName(FString& OutDebugName) const
+void FD3D12BackBufferProxyTextureRHI::GetDebugName(String& OutDebugName) const
 {
     if (FD3D12TextureRHI* CurrentBackBuffer = GetTextureInterface())
     {

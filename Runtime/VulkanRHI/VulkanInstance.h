@@ -20,12 +20,12 @@ public:
     bool Initialize(FVulkanInstanceCreateInfo& CreateInfo);
     void Release();
 
-    bool IsLayerEnabled(const FString& LayerName)
+    bool IsLayerEnabled(const String& LayerName)
     {
         return LayerNames.Find(LayerName) != nullptr;
     }
 
-    bool IsExtensionEnabled(const FString& ExtensionName)
+    bool IsExtensionEnabled(const String& ExtensionName)
     {
         return ExtensionNames.Find(ExtensionName) != nullptr;
     }
@@ -36,8 +36,8 @@ public:
     }
 
 private:
-    void*         DriverHandle;  
-    VkInstance    Instance;
-    TSet<FString> ExtensionNames;
-    TSet<FString> LayerNames;
+    void*        DriverHandle;  
+    VkInstance   Instance;
+    TSet<String> ExtensionNames;
+    TSet<String> LayerNames;
 };

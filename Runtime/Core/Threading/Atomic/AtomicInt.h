@@ -436,13 +436,13 @@ private:
 };
 
 // Typedefs for signed integer types
-using FAtomicInt8  = TAtomicInt<int8>;
-using FAtomicInt16 = TAtomicInt<int16>;
-using FAtomicInt32 = TAtomicInt<int32>;
-using FAtomicInt64 = TAtomicInt<int64>;
+using AtomicInt8  = TAtomicInt<int8>;
+using AtomicInt16 = TAtomicInt<int16>;
+using AtomicInt32 = TAtomicInt<int32>;
+using AtomicInt64 = TAtomicInt<int64>;
 
 // Typedefs for unsigned integer types
-using FAtomicUInt8  = TAtomicInt<uint8>;
-using FAtomicUInt16 = TAtomicInt<uint16>;
-using FAtomicUInt32 = TAtomicInt<uint32>;
-using FAtomicUInt64 = TAtomicInt<uint64>;
+using AtomicUInt8  = TAtomicInt<uint8>;
+using AtomicUInt16 = TAtomicInt<uint16>;
+using AtomicUInt32 = TAtomicInt<uint32>;
+using AtomicUInt64 = TAtomicInt<uint64>;

@@ -105,13 +105,13 @@ void Tests(int32 Argc, const CHAR* Argv[])
  */
 struct FDebuggerOutputDevice : public IOutputDevice
 {
-    virtual void Log(const FString& Message)
+    virtual void Log(const String& Message)
     {
         FPlatformMisc::OutputDebugString(Message.GetCString());
         FPlatformMisc::OutputDebugString("\n");
     }
 
-    virtual void Log(ELogSeverity Severity, const FString& Message)
+    virtual void Log(ELogSeverity Severity, const String& Message)
     {
         Log(Message);
     }

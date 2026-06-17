@@ -640,7 +640,7 @@ void FVulkanTextureRHI::SetVkImage(VkImage InImage)
     ImageLayoutState.SetImageLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 }
 
-void FVulkanTextureRHI::SetDebugName(const FString& InName)
+void FVulkanTextureRHI::SetDebugName(const String& InName)
 {
     if (VULKAN_CHECK_HANDLE(Image))
     {
@@ -651,7 +651,7 @@ void FVulkanTextureRHI::SetDebugName(const FString& InName)
     }
 }
 
-void FVulkanTextureRHI::GetDebugName(FString& OutDebugName) const
+void FVulkanTextureRHI::GetDebugName(String& OutDebugName) const
 {
 #if VULKAN_STORE_DEBUG_NAMES
     OutDebugName = DebugName;

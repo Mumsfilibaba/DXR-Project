@@ -177,19 +177,19 @@ struct FMonitorInfo
     }
 
     /** @brief Name of the monitor as provided by the platform. */
-    FString DeviceName;
+    String DeviceName;
     
     /** @brief The workspace position of the monitor without considering UI elements like menu-bars or docks. */
-    FIntVector2 MainPosition;
+    IntVector2 MainPosition;
 
     /** @brief The workspace size of the monitor without considering UI elements like menu-bars or docks. */
-    FIntVector2 MainSize;
+    IntVector2 MainSize;
 
     /** @brief The usable workspace position of the monitor, taking UI elements into account. */
-    FIntVector2 WorkPosition;
+    IntVector2 WorkPosition;
 
     /** @brief The usable workspace size of the monitor, taking UI elements into account. */
-    FIntVector2 WorkSize;
+    IntVector2 WorkSize;
 
     /** @brief The DPI (dots per inch) of the monitor. */
     int32 DisplayDPI;

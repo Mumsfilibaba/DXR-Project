@@ -415,11 +415,11 @@ BOOL FWindowsApplication::EnumerateMonitors(HMONITOR Monitor, HDC /*DeviceContex
     CHECK(DpiX == DpiY);
 
     FMonitorInfo NewMonitorInfo;
-    NewMonitorInfo.DeviceName     = FString(MonitorInfo.szDevice);
-    NewMonitorInfo.MainPosition   = FIntVector2(MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.top);
-    NewMonitorInfo.MainSize       = FIntVector2(MonitorInfo.rcMonitor.right  - MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.bottom - MonitorInfo.rcMonitor.top);
-    NewMonitorInfo.WorkPosition   = FIntVector2(MonitorInfo.rcWork.left, MonitorInfo.rcWork.top);
-    NewMonitorInfo.WorkSize       = FIntVector2(MonitorInfo.rcWork.right - MonitorInfo.rcWork.left, MonitorInfo.rcWork.bottom - MonitorInfo.rcWork.top);
+    NewMonitorInfo.DeviceName     = String(MonitorInfo.szDevice);
+    NewMonitorInfo.MainPosition   = IntVector2(MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.top);
+    NewMonitorInfo.MainSize       = IntVector2(MonitorInfo.rcMonitor.right  - MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.bottom - MonitorInfo.rcMonitor.top);
+    NewMonitorInfo.WorkPosition   = IntVector2(MonitorInfo.rcWork.left, MonitorInfo.rcWork.top);
+    NewMonitorInfo.WorkSize       = IntVector2(MonitorInfo.rcWork.right - MonitorInfo.rcWork.left, MonitorInfo.rcWork.bottom - MonitorInfo.rcWork.top);
     NewMonitorInfo.bIsPrimary     = (MonitorInfo.dwFlags & MONITORINFOF_PRIMARY) != 0;
     NewMonitorInfo.DisplayDPI     = DpiX;
     NewMonitorInfo.DisplayScaling = static_cast<float>(DpiX) / 96.0f;
@@ -582,7 +582,7 @@ LRESULT FWindowsApplication::ProcessRawInput(HWND WindowHandle, UINT Message, WP
                 DeferredMsg.MessageType  = Message;
                 DeferredMsg.wParam       = wParam;
                 DeferredMsg.lParam       = lParam;
-                DeferredMsg.MouseDelta   = FIntVector2(DeltaX, DeltaY);
+                DeferredMsg.MouseDelta   = IntVector2(DeltaX, DeltaY);
 
                 DeferMessage(DeferredMsg);
             }
