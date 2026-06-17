@@ -199,14 +199,6 @@ public:
     {
         constexpr bool operator==(const FBufferSRV& Other) const noexcept = default;
 
-        NODISCARD friend uint64 GetHashForType(const FBufferSRV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Type);
-            HashCombine(Hash, Value.FirstElement);
-            HashCombine(Hash, Value.NumElements);
-            return Hash;
-        }
-
         EBufferViewType Type;
         uint32          FirstElement;
         uint32          NumElements;
@@ -215,15 +207,6 @@ public:
     struct FTexture1DSRV
     {
         constexpr bool operator==(const FTexture1DSRV& Other) const noexcept = default;
-
-        NODISCARD friend uint64 GetHashForType(const FTexture1DSRV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MinLODClamp);
-            HashCombine(Hash, Value.FirstMipLevel);
-            HashCombine(Hash, Value.NumMips);
-            return Hash;
-        }
 
         EFormat Format;
         float   MinLODClamp;
@@ -234,17 +217,6 @@ public:
     struct FTexture1DArraySRV
     {
         constexpr bool operator==(const FTexture1DArraySRV& Other) const noexcept = default;
-
-        NODISCARD friend uint64 GetHashForType(const FTexture1DArraySRV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MinLODClamp);
-            HashCombine(Hash, Value.FirstMipLevel);
-            HashCombine(Hash, Value.NumMips);
-            HashCombine(Hash, Value.FirstArraySlice);
-            HashCombine(Hash, Value.NumSlices);
-            return Hash;
-        }
 
         EFormat Format;
         float   MinLODClamp;
@@ -258,16 +230,6 @@ public:
     {
         constexpr bool operator==(const FTexture2DSRV& Other) const noexcept = default;
 
-        NODISCARD friend uint64 GetHashForType(const FTexture2DSRV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MinLODClamp);
-            HashCombine(Hash, Value.FirstMipLevel);
-            HashCombine(Hash, Value.NumMips);
-            HashCombine(Hash, Value.PlaneSlice);
-            return Hash;
-        }
-
         EFormat Format;
         float   MinLODClamp;
         uint8   FirstMipLevel;
@@ -278,18 +240,6 @@ public:
     struct FTexture2DArraySRV
     {
         constexpr bool operator==(const FTexture2DArraySRV& Other) const noexcept = default;
-
-        NODISCARD friend uint64 GetHashForType(const FTexture2DArraySRV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MinLODClamp);
-            HashCombine(Hash, Value.FirstMipLevel);
-            HashCombine(Hash, Value.NumMips);
-            HashCombine(Hash, Value.PlaneSlice);
-            HashCombine(Hash, Value.FirstArraySlice);
-            HashCombine(Hash, Value.NumSlices);
-            return Hash;
-        }
 
         EFormat Format;
         float   MinLODClamp;
@@ -304,15 +254,6 @@ public:
     {
         constexpr bool operator==(const FTextureCubeSRV& Other) const noexcept = default;
 
-        NODISCARD friend uint64 GetHashForType(const FTextureCubeSRV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MinLODClamp);
-            HashCombine(Hash, Value.FirstMipLevel);
-            HashCombine(Hash, Value.NumMips);
-            return Hash;
-        }
-
         EFormat Format;
         float   MinLODClamp;
         uint8   FirstMipLevel;
@@ -322,17 +263,6 @@ public:
     struct FTextureCubeArraySRV
     {
         constexpr bool operator==(const FTextureCubeArraySRV& Other) const noexcept = default;
-
-        NODISCARD friend uint64 GetHashForType(const FTextureCubeArraySRV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MinLODClamp);
-            HashCombine(Hash, Value.FirstMipLevel);
-            HashCombine(Hash, Value.NumMips);
-            HashCombine(Hash, Value.FirstCube);
-            HashCombine(Hash, Value.NumCubes);
-            return Hash;
-        }
 
         EFormat Format;
         float   MinLODClamp;
@@ -346,15 +276,6 @@ public:
     {
         constexpr bool operator==(const FTexture3DSRV& Other) const noexcept = default;
 
-        NODISCARD friend uint64 GetHashForType(const FTexture3DSRV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MinLODClamp);
-            HashCombine(Hash, Value.FirstMipLevel);
-            HashCombine(Hash, Value.NumMips);
-            return Hash;
-        }
-
         EFormat Format;
         float   MinLODClamp;
         uint8   FirstMipLevel;
@@ -364,11 +285,6 @@ public:
     struct FAccelerationStructureSRV
     {
         constexpr bool operator==(const FAccelerationStructureSRV& Other) const noexcept = default;
-
-        NODISCARD friend uint64 GetHashForType(const FAccelerationStructureSRV& /*Value*/)
-        {
-            return 0;
-        }
     };
 
 public:
@@ -541,45 +457,6 @@ public:
         }
     }
 
-    NODISCARD friend uint64 GetHashForType(const FRHIShaderResourceViewDesc& Value)
-    {
-        uint64 Hash = UnderlyingTypeValue(Value.ViewDimension);
-        switch (Value.ViewDimension)
-        {
-            case EViewDimension::Buffer:
-                HashCombine(Hash, GetHashForType(Value.Buffer));
-                break;
-            case EViewDimension::Texture1D:
-                HashCombine(Hash, GetHashForType(Value.Texture1D));
-                break;
-            case EViewDimension::Texture1DArray:
-                HashCombine(Hash, GetHashForType(Value.Texture1DArray));
-                break;
-            case EViewDimension::Texture2D:
-                HashCombine(Hash, GetHashForType(Value.Texture2D));
-                break;
-            case EViewDimension::Texture2DArray:
-                HashCombine(Hash, GetHashForType(Value.Texture2DArray));
-                break;
-            case EViewDimension::TextureCube:
-                HashCombine(Hash, GetHashForType(Value.TextureCube));
-                break;
-            case EViewDimension::TextureCubeArray:
-                HashCombine(Hash, GetHashForType(Value.TextureCubeArray));
-                break;
-            case EViewDimension::Texture3D:
-                HashCombine(Hash, GetHashForType(Value.Texture3D));
-                break;
-            case EViewDimension::AccelerationStructure:
-                HashCombine(Hash, GetHashForType(Value.AccelerationStructure));
-                break;
-            default:
-                break;
-        }
-
-        return Hash;
-    }
-
     EViewDimension ViewDimension;
 
     union
@@ -596,20 +473,175 @@ public:
     };
 };
 
+template<>
+struct THash<FRHIShaderResourceViewDesc::FBufferSRV>
+{
+    NODISCARD static uint64 GetHash(const FRHIShaderResourceViewDesc::FBufferSRV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Type);
+        HashCombine(Result, Value.FirstElement);
+        HashCombine(Result, Value.NumElements);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIShaderResourceViewDesc::FTexture1DSRV>
+{
+    NODISCARD static uint64 GetHash(const FRHIShaderResourceViewDesc::FTexture1DSRV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MinLODClamp);
+        HashCombine(Result, Value.FirstMipLevel);
+        HashCombine(Result, Value.NumMips);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIShaderResourceViewDesc::FTexture1DArraySRV>
+{
+    NODISCARD static uint64 GetHash(const FRHIShaderResourceViewDesc::FTexture1DArraySRV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MinLODClamp);
+        HashCombine(Result, Value.FirstMipLevel);
+        HashCombine(Result, Value.NumMips);
+        HashCombine(Result, Value.FirstArraySlice);
+        HashCombine(Result, Value.NumSlices);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIShaderResourceViewDesc::FTexture2DSRV>
+{
+    NODISCARD static uint64 GetHash(const FRHIShaderResourceViewDesc::FTexture2DSRV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MinLODClamp);
+        HashCombine(Result, Value.FirstMipLevel);
+        HashCombine(Result, Value.NumMips);
+        HashCombine(Result, Value.PlaneSlice);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIShaderResourceViewDesc::FTexture2DArraySRV>
+{
+    NODISCARD static uint64 GetHash(const FRHIShaderResourceViewDesc::FTexture2DArraySRV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MinLODClamp);
+        HashCombine(Result, Value.FirstMipLevel);
+        HashCombine(Result, Value.NumMips);
+        HashCombine(Result, Value.PlaneSlice);
+        HashCombine(Result, Value.FirstArraySlice);
+        HashCombine(Result, Value.NumSlices);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIShaderResourceViewDesc::FTextureCubeSRV>
+{
+    NODISCARD static uint64 GetHash(const FRHIShaderResourceViewDesc::FTextureCubeSRV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MinLODClamp);
+        HashCombine(Result, Value.FirstMipLevel);
+        HashCombine(Result, Value.NumMips);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIShaderResourceViewDesc::FTextureCubeArraySRV>
+{
+    NODISCARD static uint64 GetHash(const FRHIShaderResourceViewDesc::FTextureCubeArraySRV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MinLODClamp);
+        HashCombine(Result, Value.FirstMipLevel);
+        HashCombine(Result, Value.NumMips);
+        HashCombine(Result, Value.FirstCube);
+        HashCombine(Result, Value.NumCubes);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIShaderResourceViewDesc::FTexture3DSRV>
+{
+    NODISCARD static uint64 GetHash(const FRHIShaderResourceViewDesc::FTexture3DSRV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MinLODClamp);
+        HashCombine(Result, Value.FirstMipLevel);
+        HashCombine(Result, Value.NumMips);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIShaderResourceViewDesc::FAccelerationStructureSRV>
+{
+    NODISCARD static uint64 GetHash(const FRHIShaderResourceViewDesc::FAccelerationStructureSRV& /*Value*/)
+    {
+        return 0;
+    }
+};
+
+template<>
+struct THash<FRHIShaderResourceViewDesc>
+{
+    NODISCARD static uint64 GetHash(const FRHIShaderResourceViewDesc& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.ViewDimension);
+        switch (Value.ViewDimension)
+        {
+            case EViewDimension::Buffer:
+                HashCombine(Result, THash<FRHIShaderResourceViewDesc::FBufferSRV>::GetHash(Value.Buffer));
+                break;
+            case EViewDimension::Texture1D:
+                HashCombine(Result, THash<FRHIShaderResourceViewDesc::FTexture1DSRV>::GetHash(Value.Texture1D));
+                break;
+            case EViewDimension::Texture1DArray:
+                HashCombine(Result, THash<FRHIShaderResourceViewDesc::FTexture1DArraySRV>::GetHash(Value.Texture1DArray));
+                break;
+            case EViewDimension::Texture2D:
+                HashCombine(Result, THash<FRHIShaderResourceViewDesc::FTexture2DSRV>::GetHash(Value.Texture2D));
+                break;
+            case EViewDimension::Texture2DArray:
+                HashCombine(Result, THash<FRHIShaderResourceViewDesc::FTexture2DArraySRV>::GetHash(Value.Texture2DArray));
+                break;
+            case EViewDimension::TextureCube:
+                HashCombine(Result, THash<FRHIShaderResourceViewDesc::FTextureCubeSRV>::GetHash(Value.TextureCube));
+                break;
+            case EViewDimension::TextureCubeArray:
+                HashCombine(Result, THash<FRHIShaderResourceViewDesc::FTextureCubeArraySRV>::GetHash(Value.TextureCubeArray));
+                break;
+            case EViewDimension::Texture3D:
+                HashCombine(Result, THash<FRHIShaderResourceViewDesc::FTexture3DSRV>::GetHash(Value.Texture3D));
+                break;
+            case EViewDimension::AccelerationStructure:
+                HashCombine(Result, THash<FRHIShaderResourceViewDesc::FAccelerationStructureSRV>::GetHash(Value.AccelerationStructure));
+                break;
+            default:
+                break;
+        }
+
+        return Result;
+    }
+};
+
 struct FRHIUnorderedAccessViewDesc
 {
 public:
     struct FBufferUAV
     {
         constexpr bool operator==(const FBufferUAV& Other) const noexcept = default;
-
-        NODISCARD friend uint64 GetHashForType(const FBufferUAV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Type);
-            HashCombine(Hash, Value.FirstElement);
-            HashCombine(Hash, Value.NumElements);
-            return Hash;
-        }
 
         EBufferViewType Type;
         uint32          FirstElement;
@@ -620,13 +652,6 @@ public:
     {
         constexpr bool operator==(const FTexture1DUAV& Other) const noexcept = default;
 
-        NODISCARD friend uint64 GetHashForType(const FTexture1DUAV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MipLevel);
-            return Hash;
-        }
-
         EFormat Format;
         uint8   MipLevel;
     };
@@ -634,15 +659,6 @@ public:
     struct FTexture1DArrayUAV
     {
         constexpr bool operator==(const FTexture1DArrayUAV& Other) const noexcept = default;
-
-        NODISCARD friend uint64 GetHashForType(const FTexture1DArrayUAV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MipLevel);
-            HashCombine(Hash, Value.FirstArraySlice);
-            HashCombine(Hash, Value.NumSlices);
-            return Hash;
-        }
 
         EFormat Format;
         uint8   MipLevel;
@@ -654,14 +670,6 @@ public:
     {
         constexpr bool operator==(const FTexture2DUAV& Other) const noexcept = default;
 
-        NODISCARD friend uint64 GetHashForType(const FTexture2DUAV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MipLevel);
-            HashCombine(Hash, Value.PlaneSlice);
-            return Hash;
-        }
-
         EFormat Format;
         uint8   MipLevel;
         uint8   PlaneSlice;
@@ -670,16 +678,6 @@ public:
     struct FTexture2DArrayUAV
     {
         constexpr bool operator==(const FTexture2DArrayUAV& Other) const noexcept = default;
-
-        NODISCARD friend uint64 GetHashForType(const FTexture2DArrayUAV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MipLevel);
-            HashCombine(Hash, Value.PlaneSlice);
-            HashCombine(Hash, Value.FirstArraySlice);
-            HashCombine(Hash, Value.NumSlices);
-            return Hash;
-        }
 
         EFormat Format;
         uint8   MipLevel;
@@ -692,13 +690,6 @@ public:
     {
         constexpr bool operator==(const FTextureCubeUAV& Other) const noexcept = default;
 
-        NODISCARD friend uint64 GetHashForType(const FTextureCubeUAV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MipLevel);
-            return Hash;
-        }
-
         EFormat Format;
         uint8   MipLevel;
     };
@@ -706,15 +697,6 @@ public:
     struct FTextureCubeArrayUAV
     {
         constexpr bool operator==(const FTextureCubeArrayUAV& Other) const noexcept = default;
-
-        NODISCARD friend uint64 GetHashForType(const FTextureCubeArrayUAV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MipLevel);
-            HashCombine(Hash, Value.FirstCube);
-            HashCombine(Hash, Value.NumCubes);
-            return Hash;
-        }
 
         EFormat Format;
         uint8   MipLevel;
@@ -725,15 +707,6 @@ public:
     struct FTexture3DUAV
     {
         constexpr bool operator==(const FTexture3DUAV& Other) const noexcept = default;
-
-        NODISCARD friend uint64 GetHashForType(const FTexture3DUAV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MipLevel);
-            HashCombine(Hash, Value.FirstWSlice);
-            HashCombine(Hash, Value.WSize);
-            return Hash;
-        }
 
         EFormat Format;
         uint8   MipLevel;
@@ -888,42 +861,6 @@ public:
         }
     }
 
-    NODISCARD friend uint64 GetHashForType(const FRHIUnorderedAccessViewDesc& Value)
-    {
-        uint64 Hash = UnderlyingTypeValue(Value.ViewDimension);
-        switch (Value.ViewDimension)
-        {
-            case EViewDimension::Buffer:
-                HashCombine(Hash, GetHashForType(Value.Buffer));
-                break;
-            case EViewDimension::Texture1D:
-                HashCombine(Hash, GetHashForType(Value.Texture1D));
-                break;
-            case EViewDimension::Texture1DArray:
-                HashCombine(Hash, GetHashForType(Value.Texture1DArray));
-                break;
-            case EViewDimension::Texture2D:
-                HashCombine(Hash, GetHashForType(Value.Texture2D));
-                break;
-            case EViewDimension::Texture2DArray:
-                HashCombine(Hash, GetHashForType(Value.Texture2DArray));
-                break;
-            case EViewDimension::TextureCube:
-                HashCombine(Hash, GetHashForType(Value.TextureCube));
-                break;
-            case EViewDimension::TextureCubeArray:
-                HashCombine(Hash, GetHashForType(Value.TextureCubeArray));
-                break;
-            case EViewDimension::Texture3D:
-                HashCombine(Hash, GetHashForType(Value.Texture3D));
-                break;
-            default:
-                break;
-        }
-
-        return Hash;
-    }
-
     EViewDimension ViewDimension;
 
     union
@@ -939,19 +876,151 @@ public:
     };
 };
 
+template<>
+struct THash<FRHIUnorderedAccessViewDesc::FBufferUAV>
+{
+    NODISCARD static uint64 GetHash(const FRHIUnorderedAccessViewDesc::FBufferUAV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Type);
+        HashCombine(Result, Value.FirstElement);
+        HashCombine(Result, Value.NumElements);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIUnorderedAccessViewDesc::FTexture1DUAV>
+{
+    NODISCARD static uint64 GetHash(const FRHIUnorderedAccessViewDesc::FTexture1DUAV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MipLevel);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIUnorderedAccessViewDesc::FTexture1DArrayUAV>
+{
+    NODISCARD static uint64 GetHash(const FRHIUnorderedAccessViewDesc::FTexture1DArrayUAV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MipLevel);
+        HashCombine(Result, Value.FirstArraySlice);
+        HashCombine(Result, Value.NumSlices);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIUnorderedAccessViewDesc::FTexture2DUAV>
+{
+    NODISCARD static uint64 GetHash(const FRHIUnorderedAccessViewDesc::FTexture2DUAV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MipLevel);
+        HashCombine(Result, Value.PlaneSlice);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIUnorderedAccessViewDesc::FTexture2DArrayUAV>
+{
+    NODISCARD static uint64 GetHash(const FRHIUnorderedAccessViewDesc::FTexture2DArrayUAV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MipLevel);
+        HashCombine(Result, Value.PlaneSlice);
+        HashCombine(Result, Value.FirstArraySlice);
+        HashCombine(Result, Value.NumSlices);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIUnorderedAccessViewDesc::FTextureCubeUAV>
+{
+    NODISCARD static uint64 GetHash(const FRHIUnorderedAccessViewDesc::FTextureCubeUAV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MipLevel);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIUnorderedAccessViewDesc::FTextureCubeArrayUAV>
+{
+    NODISCARD static uint64 GetHash(const FRHIUnorderedAccessViewDesc::FTextureCubeArrayUAV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MipLevel);
+        HashCombine(Result, Value.FirstCube);
+        HashCombine(Result, Value.NumCubes);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIUnorderedAccessViewDesc::FTexture3DUAV>
+{
+    NODISCARD static uint64 GetHash(const FRHIUnorderedAccessViewDesc::FTexture3DUAV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MipLevel);
+        HashCombine(Result, Value.FirstWSlice);
+        HashCombine(Result, Value.WSize);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIUnorderedAccessViewDesc>
+{
+    NODISCARD static uint64 GetHash(const FRHIUnorderedAccessViewDesc& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.ViewDimension);
+        switch (Value.ViewDimension)
+        {
+            case EViewDimension::Buffer:
+                HashCombine(Result, THash<FRHIUnorderedAccessViewDesc::FBufferUAV>::GetHash(Value.Buffer));
+                break;
+            case EViewDimension::Texture1D:
+                HashCombine(Result, THash<FRHIUnorderedAccessViewDesc::FTexture1DUAV>::GetHash(Value.Texture1D));
+                break;
+            case EViewDimension::Texture1DArray:
+                HashCombine(Result, THash<FRHIUnorderedAccessViewDesc::FTexture1DArrayUAV>::GetHash(Value.Texture1DArray));
+                break;
+            case EViewDimension::Texture2D:
+                HashCombine(Result, THash<FRHIUnorderedAccessViewDesc::FTexture2DUAV>::GetHash(Value.Texture2D));
+                break;
+            case EViewDimension::Texture2DArray:
+                HashCombine(Result, THash<FRHIUnorderedAccessViewDesc::FTexture2DArrayUAV>::GetHash(Value.Texture2DArray));
+                break;
+            case EViewDimension::TextureCube:
+                HashCombine(Result, THash<FRHIUnorderedAccessViewDesc::FTextureCubeUAV>::GetHash(Value.TextureCube));
+                break;
+            case EViewDimension::TextureCubeArray:
+                HashCombine(Result, THash<FRHIUnorderedAccessViewDesc::FTextureCubeArrayUAV>::GetHash(Value.TextureCubeArray));
+                break;
+            case EViewDimension::Texture3D:
+                HashCombine(Result, THash<FRHIUnorderedAccessViewDesc::FTexture3DUAV>::GetHash(Value.Texture3D));
+                break;
+            default:
+                break;
+        }
+
+        return Result;
+    }
+};
+
 struct FRHIRenderTargetViewDesc
 {
 public:
     struct FTexture1DRTV
     {
         constexpr bool operator==(const FTexture1DRTV& Other) const noexcept = default;
-
-        NODISCARD friend uint64 GetHashForType(const FTexture1DRTV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MipLevel);
-            return Hash;
-        }
 
         EFormat Format;
         uint8   MipLevel;
@@ -960,15 +1029,6 @@ public:
     struct FTexture1DArrayRTV
     {
         constexpr bool operator==(const FTexture1DArrayRTV& Other) const noexcept = default;
-
-        NODISCARD friend uint64 GetHashForType(const FTexture1DArrayRTV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MipLevel);
-            HashCombine(Hash, Value.FirstArraySlice);
-            HashCombine(Hash, Value.NumSlices);
-            return Hash;
-        }
 
         EFormat Format;
         uint8   MipLevel;
@@ -980,14 +1040,6 @@ public:
     {
         constexpr bool operator==(const FTexture2DRTV& Other) const noexcept = default;
 
-        NODISCARD friend uint64 GetHashForType(const FTexture2DRTV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MipLevel);
-            HashCombine(Hash, Value.PlaneSlice);
-            return Hash;
-        }
-
         EFormat Format;
         uint8   MipLevel;
         uint8   PlaneSlice;
@@ -996,16 +1048,6 @@ public:
     struct FTexture2DArrayRTV
     {
         constexpr bool operator==(const FTexture2DArrayRTV& Other) const noexcept = default;
-
-        NODISCARD friend uint64 GetHashForType(const FTexture2DArrayRTV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MipLevel);
-            HashCombine(Hash, Value.PlaneSlice);
-            HashCombine(Hash, Value.FirstArraySlice);
-            HashCombine(Hash, Value.NumSlices);
-            return Hash;
-        }
 
         EFormat Format;
         uint8   MipLevel;
@@ -1018,13 +1060,6 @@ public:
     {
         constexpr bool operator==(const FTextureCubeRTV& Other) const noexcept = default;
 
-        NODISCARD friend uint64 GetHashForType(const FTextureCubeRTV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MipLevel);
-            return Hash;
-        }
-
         EFormat Format;
         uint8   MipLevel;
     };
@@ -1032,15 +1067,6 @@ public:
     struct FTextureCubeArrayRTV
     {
         constexpr bool operator==(const FTextureCubeArrayRTV& Other) const noexcept = default;
-
-        NODISCARD friend uint64 GetHashForType(const FTextureCubeArrayRTV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MipLevel);
-            HashCombine(Hash, Value.FirstCube);
-            HashCombine(Hash, Value.NumCubes);
-            return Hash;
-        }
 
         EFormat Format;
         uint8   MipLevel;
@@ -1051,15 +1077,6 @@ public:
     struct FTexture3DRTV
     {
         constexpr bool operator==(const FTexture3DRTV& Other) const noexcept = default;
-
-        NODISCARD friend uint64 GetHashForType(const FTexture3DRTV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MipLevel);
-            HashCombine(Hash, Value.FirstWSlice);
-            HashCombine(Hash, Value.WSize);
-            return Hash;
-        }
 
         EFormat Format;
         uint8   MipLevel;
@@ -1199,39 +1216,6 @@ public:
         }
     }
 
-    NODISCARD friend uint64 GetHashForType(const FRHIRenderTargetViewDesc& Value)
-    {
-        uint64 Hash = UnderlyingTypeValue(Value.ViewDimension);
-        switch (Value.ViewDimension)
-        {
-            case EViewDimension::Texture1D:
-                HashCombine(Hash, GetHashForType(Value.Texture1D));
-                break;
-            case EViewDimension::Texture1DArray:
-                HashCombine(Hash, GetHashForType(Value.Texture1DArray));
-                break;
-            case EViewDimension::Texture2D:
-                HashCombine(Hash, GetHashForType(Value.Texture2D));
-                break;
-            case EViewDimension::Texture2DArray:
-                HashCombine(Hash, GetHashForType(Value.Texture2DArray));
-                break;
-            case EViewDimension::TextureCube:
-                HashCombine(Hash, GetHashForType(Value.TextureCube));
-                break;
-            case EViewDimension::TextureCubeArray:
-                HashCombine(Hash, GetHashForType(Value.TextureCubeArray));
-                break;
-            case EViewDimension::Texture3D:
-                HashCombine(Hash, GetHashForType(Value.Texture3D));
-                break;
-            default:
-                break;
-        }
-
-        return Hash;
-    }
-
     EViewDimension ViewDimension;
 
     union
@@ -1246,19 +1230,136 @@ public:
     };
 };
 
+template<>
+struct THash<FRHIRenderTargetViewDesc::FTexture1DRTV>
+{
+    NODISCARD static uint64 GetHash(const FRHIRenderTargetViewDesc::FTexture1DRTV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MipLevel);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIRenderTargetViewDesc::FTexture1DArrayRTV>
+{
+    NODISCARD static uint64 GetHash(const FRHIRenderTargetViewDesc::FTexture1DArrayRTV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MipLevel);
+        HashCombine(Result, Value.FirstArraySlice);
+        HashCombine(Result, Value.NumSlices);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIRenderTargetViewDesc::FTexture2DRTV>
+{
+    NODISCARD static uint64 GetHash(const FRHIRenderTargetViewDesc::FTexture2DRTV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MipLevel);
+        HashCombine(Result, Value.PlaneSlice);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIRenderTargetViewDesc::FTexture2DArrayRTV>
+{
+    NODISCARD static uint64 GetHash(const FRHIRenderTargetViewDesc::FTexture2DArrayRTV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MipLevel);
+        HashCombine(Result, Value.PlaneSlice);
+        HashCombine(Result, Value.FirstArraySlice);
+        HashCombine(Result, Value.NumSlices);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIRenderTargetViewDesc::FTextureCubeRTV>
+{
+    NODISCARD static uint64 GetHash(const FRHIRenderTargetViewDesc::FTextureCubeRTV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MipLevel);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIRenderTargetViewDesc::FTextureCubeArrayRTV>
+{
+    NODISCARD static uint64 GetHash(const FRHIRenderTargetViewDesc::FTextureCubeArrayRTV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MipLevel);
+        HashCombine(Result, Value.FirstCube);
+        HashCombine(Result, Value.NumCubes);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIRenderTargetViewDesc::FTexture3DRTV>
+{
+    NODISCARD static uint64 GetHash(const FRHIRenderTargetViewDesc::FTexture3DRTV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MipLevel);
+        HashCombine(Result, Value.FirstWSlice);
+        HashCombine(Result, Value.WSize);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIRenderTargetViewDesc>
+{
+    NODISCARD static uint64 GetHash(const FRHIRenderTargetViewDesc& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.ViewDimension);
+        switch (Value.ViewDimension)
+        {
+            case EViewDimension::Texture1D:
+                HashCombine(Result, THash<FRHIRenderTargetViewDesc::FTexture1DRTV>::GetHash(Value.Texture1D));
+                break;
+            case EViewDimension::Texture1DArray:
+                HashCombine(Result, THash<FRHIRenderTargetViewDesc::FTexture1DArrayRTV>::GetHash(Value.Texture1DArray));
+                break;
+            case EViewDimension::Texture2D:
+                HashCombine(Result, THash<FRHIRenderTargetViewDesc::FTexture2DRTV>::GetHash(Value.Texture2D));
+                break;
+            case EViewDimension::Texture2DArray:
+                HashCombine(Result, THash<FRHIRenderTargetViewDesc::FTexture2DArrayRTV>::GetHash(Value.Texture2DArray));
+                break;
+            case EViewDimension::TextureCube:
+                HashCombine(Result, THash<FRHIRenderTargetViewDesc::FTextureCubeRTV>::GetHash(Value.TextureCube));
+                break;
+            case EViewDimension::TextureCubeArray:
+                HashCombine(Result, THash<FRHIRenderTargetViewDesc::FTextureCubeArrayRTV>::GetHash(Value.TextureCubeArray));
+                break;
+            case EViewDimension::Texture3D:
+                HashCombine(Result, THash<FRHIRenderTargetViewDesc::FTexture3DRTV>::GetHash(Value.Texture3D));
+                break;
+            default:
+                break;
+        }
+
+        return Result;
+    }
+};
+
 struct FRHIDepthStencilViewDesc
 {
 public:
     struct FTexture1DDSV
     {
         constexpr bool operator==(const FTexture1DDSV& Other) const noexcept = default;
-
-        NODISCARD friend uint64 GetHashForType(const FTexture1DDSV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MipLevel);
-            return Hash;
-        }
 
         EFormat Format;
         uint8   MipLevel;
@@ -1267,15 +1368,6 @@ public:
     struct FTexture1DArrayDSV
     {
         constexpr bool operator==(const FTexture1DArrayDSV& Other) const noexcept = default;
-
-        NODISCARD friend uint64 GetHashForType(const FTexture1DArrayDSV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MipLevel);
-            HashCombine(Hash, Value.FirstArraySlice);
-            HashCombine(Hash, Value.NumSlices);
-            return Hash;
-        }
 
         EFormat Format;
         uint8   MipLevel;
@@ -1287,13 +1379,6 @@ public:
     {
         constexpr bool operator==(const FTexture2DDSV& Other) const noexcept = default;
 
-        NODISCARD friend uint64 GetHashForType(const FTexture2DDSV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MipLevel);
-            return Hash;
-        }
-
         EFormat Format;
         uint8   MipLevel;
     };
@@ -1301,15 +1386,6 @@ public:
     struct FTexture2DArrayDSV
     {
         constexpr bool operator==(const FTexture2DArrayDSV& Other) const noexcept = default;
-
-        NODISCARD friend uint64 GetHashForType(const FTexture2DArrayDSV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MipLevel);
-            HashCombine(Hash, Value.FirstArraySlice);
-            HashCombine(Hash, Value.NumSlices);
-            return Hash;
-        }
 
         EFormat Format;
         uint8   MipLevel;
@@ -1321,13 +1397,6 @@ public:
     {
         constexpr bool operator==(const FTextureCubeDSV& Other) const noexcept = default;
 
-        NODISCARD friend uint64 GetHashForType(const FTextureCubeDSV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MipLevel);
-            return Hash;
-        }
-
         EFormat Format;
         uint8   MipLevel;
     };
@@ -1335,15 +1404,6 @@ public:
     struct FTextureCubeArrayDSV
     {
         constexpr bool operator==(const FTextureCubeArrayDSV& Other) const noexcept = default;
-
-        NODISCARD friend uint64 GetHashForType(const FTextureCubeArrayDSV& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.Format);
-            HashCombine(Hash, Value.MipLevel);
-            HashCombine(Hash, Value.FirstCube);
-            HashCombine(Hash, Value.NumCubes);
-            return Hash;
-        }
 
         EFormat Format;
         uint8   MipLevel;
@@ -1479,38 +1539,6 @@ public:
         }
     }
 
-    NODISCARD friend uint64 GetHashForType(const FRHIDepthStencilViewDesc& Value)
-    {
-        uint64 Hash = UnderlyingTypeValue(Value.ViewDimension);
-        HashCombine(Hash, UnderlyingTypeValue(Value.Flags));
-
-        switch (Value.ViewDimension)
-        {
-            case EViewDimension::Texture1D:
-                HashCombine(Hash, GetHashForType(Value.Texture1D));
-                break;
-            case EViewDimension::Texture1DArray:
-                HashCombine(Hash, GetHashForType(Value.Texture1DArray));
-                break;
-            case EViewDimension::Texture2D:
-                HashCombine(Hash, GetHashForType(Value.Texture2D));
-                break;
-            case EViewDimension::Texture2DArray:
-                HashCombine(Hash, GetHashForType(Value.Texture2DArray));
-                break;
-            case EViewDimension::TextureCube:
-                HashCombine(Hash, GetHashForType(Value.TextureCube));
-                break;
-            case EViewDimension::TextureCubeArray:
-                HashCombine(Hash, GetHashForType(Value.TextureCubeArray));
-                break;
-            default:
-                break;
-        }
-
-        return Hash;
-    }
-
     NODISCARD FORCEINLINE bool HasStencilFormat() const noexcept
     {
         return IsStencilFormat(GetFormat());
@@ -1543,6 +1571,114 @@ public:
         FTextureCubeDSV      TextureCube;
         FTextureCubeArrayDSV TextureCubeArray;
     };
+};
+
+template<>
+struct THash<FRHIDepthStencilViewDesc::FTexture1DDSV>
+{
+    NODISCARD static uint64 GetHash(const FRHIDepthStencilViewDesc::FTexture1DDSV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MipLevel);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIDepthStencilViewDesc::FTexture1DArrayDSV>
+{
+    NODISCARD static uint64 GetHash(const FRHIDepthStencilViewDesc::FTexture1DArrayDSV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MipLevel);
+        HashCombine(Result, Value.FirstArraySlice);
+        HashCombine(Result, Value.NumSlices);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIDepthStencilViewDesc::FTexture2DDSV>
+{
+    NODISCARD static uint64 GetHash(const FRHIDepthStencilViewDesc::FTexture2DDSV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MipLevel);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIDepthStencilViewDesc::FTexture2DArrayDSV>
+{
+    NODISCARD static uint64 GetHash(const FRHIDepthStencilViewDesc::FTexture2DArrayDSV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MipLevel);
+        HashCombine(Result, Value.FirstArraySlice);
+        HashCombine(Result, Value.NumSlices);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIDepthStencilViewDesc::FTextureCubeDSV>
+{
+    NODISCARD static uint64 GetHash(const FRHIDepthStencilViewDesc::FTextureCubeDSV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MipLevel);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIDepthStencilViewDesc::FTextureCubeArrayDSV>
+{
+    NODISCARD static uint64 GetHash(const FRHIDepthStencilViewDesc::FTextureCubeArrayDSV& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.Format);
+        HashCombine(Result, Value.MipLevel);
+        HashCombine(Result, Value.FirstCube);
+        HashCombine(Result, Value.NumCubes);
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIDepthStencilViewDesc>
+{
+    NODISCARD static uint64 GetHash(const FRHIDepthStencilViewDesc& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.ViewDimension);
+        HashCombine(Result, UnderlyingTypeValue(Value.Flags));
+
+        switch (Value.ViewDimension)
+        {
+            case EViewDimension::Texture1D:
+                HashCombine(Result, THash<FRHIDepthStencilViewDesc::FTexture1DDSV>::GetHash(Value.Texture1D));
+                break;
+            case EViewDimension::Texture1DArray:
+                HashCombine(Result, THash<FRHIDepthStencilViewDesc::FTexture1DArrayDSV>::GetHash(Value.Texture1DArray));
+                break;
+            case EViewDimension::Texture2D:
+                HashCombine(Result, THash<FRHIDepthStencilViewDesc::FTexture2DDSV>::GetHash(Value.Texture2D));
+                break;
+            case EViewDimension::Texture2DArray:
+                HashCombine(Result, THash<FRHIDepthStencilViewDesc::FTexture2DArrayDSV>::GetHash(Value.Texture2DArray));
+                break;
+            case EViewDimension::TextureCube:
+                HashCombine(Result, THash<FRHIDepthStencilViewDesc::FTextureCubeDSV>::GetHash(Value.TextureCube));
+                break;
+            case EViewDimension::TextureCubeArray:
+                HashCombine(Result, THash<FRHIDepthStencilViewDesc::FTextureCubeArrayDSV>::GetHash(Value.TextureCubeArray));
+                break;
+            default:
+                break;
+        }
+
+        return Result;
+    }
 };
 
 class FRHIResourceView : public FRHIResource

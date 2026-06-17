@@ -99,22 +99,6 @@ struct FR10G10B10A2
         return !(*this == Other);
     }
 
-    /**
-     * @brief Hash function for FR10G10B10A2.
-     * @param Value The FR10G10B10A2 value to hash.
-     * @return Hash value.
-     */
-    friend uint64 GetHashForType(const FR10G10B10A2& Value)
-    {
-        // Using a prime multiplier for hashing
-        uint64 hash = 17;
-        hash = hash * 31 + static_cast<uint64>(Value.A);
-        hash = hash * 31 + static_cast<uint64>(Value.R);
-        hash = hash * 31 + static_cast<uint64>(Value.G);
-        hash = hash * 31 + static_cast<uint64>(Value.B);
-        return hash;
-    }
-
 public:
 
     union
@@ -140,6 +124,21 @@ public:
 
 static_assert(sizeof(FR10G10B10A2) == sizeof(uint32), "FR10G10B10A2 is assumed to have the same size as a uint32");
 MARK_AS_REALLOCATABLE(FR10G10B10A2);
+
+template<>
+struct THash<FR10G10B10A2>
+{
+    static uint64 GetHash(const FR10G10B10A2& Value)
+    {
+        // Using a prime multiplier for hashing
+        uint64 Result = 17;
+        Result = Result * 31 + static_cast<uint64>(Value.A);
+        Result = Result * 31 + static_cast<uint64>(Value.R);
+        Result = Result * 31 + static_cast<uint64>(Value.G);
+        Result = Result * 31 + static_cast<uint64>(Value.B);
+        return Result;
+    }
+};
 
 /**
  * @brief 16-bit Red and 16-bit Green floating-point representation.
@@ -207,16 +206,6 @@ struct FRG16F
         return !(*this == Other);
     }
 
-    /**
-     * @brief Hash function for FRG16F.
-     * @param Value The FRG16F value to hash.
-     * @return Hash value.
-     */
-    friend uint64 GetHashForType(const FRG16F& Value) 
-    {
-        return GetHashForType(Value.RG);
-    }
-
     union
     {
         struct
@@ -234,6 +223,15 @@ struct FRG16F
 
 static_assert(sizeof(FRG16F) == sizeof(uint32), "FRG16F is assumed to have the same size as a uint32");
 MARK_AS_REALLOCATABLE(FRG16F);
+
+template<>
+struct THash<FRG16F>
+{
+    static uint64 GetHash(const FRG16F& Value)
+    {
+        return THash<decltype(Value.RG)>::GetHash(Value.RG);
+    }
+};
 
 /**
  * @brief 16-bit Alpha, Red, Green, and Blue floating-point representation.
@@ -308,16 +306,6 @@ struct FRGBA16F
         return !(*this == Other);
     }
 
-    /**
-     * @brief Hash function for FRGBA16F.
-     * @param Value The FRGBA16F value to hash.
-     * @return Hash value.
-     */
-    friend uint64 GetHashForType(const FRGBA16F& Value) 
-    {
-        return GetHashForType(Value.ARGB);
-    }
-
 public:
 
     union
@@ -343,5 +331,14 @@ public:
 
 static_assert(sizeof(FRGBA16F) == sizeof(uint64), "FRGBA16F is assumed to have the same size as a uint64");
 MARK_AS_REALLOCATABLE(FRGBA16F);
+
+template<>
+struct THash<FRGBA16F>
+{
+    static uint64 GetHash(const FRGBA16F& Value)
+    {
+        return THash<decltype(Value.ARGB)>::GetHash(Value.ARGB);
+    }
+};
 
 #pragma pack(pop) // End struct packing

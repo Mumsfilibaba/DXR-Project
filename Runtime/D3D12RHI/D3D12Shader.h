@@ -99,12 +99,16 @@ struct FD3D12ShaderHash
     {
         return Hash[0] != Other.Hash[0] || Hash[1] != Other.Hash[1];
     }
+};
 
-    friend uint64 GetHashForType(const FD3D12ShaderHash& Value)
+template<>
+struct THash<FD3D12ShaderHash>
+{
+    static uint64 GetHash(const FD3D12ShaderHash& Value)
     {
-        uint64 Hash = Value.Hash[0];
-        HashCombine(Hash, Value.Hash[1]);
-        return Hash;
+        uint64 Result = Value.Hash[0];
+        HashCombine(Result, Value.Hash[1]);
+        return Result;
     }
 };
 

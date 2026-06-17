@@ -649,15 +649,19 @@ struct FDepthStencilValue
 
     constexpr bool operator==(const FDepthStencilValue& Other) const noexcept = default;
 
-    NODISCARD friend constexpr uint64 GetHashForType(const FDepthStencilValue& Value)
-    {
-        uint64 Hash = Value.Stencil;
-        HashCombine(Hash, Value.Depth);
-        return Hash;
-    }
-
     float  Depth   = 1.0f;
     uint32 Stencil = 0;
+};
+
+template<>
+struct THash<FDepthStencilValue>
+{
+    NODISCARD static constexpr uint64 GetHash(const FDepthStencilValue& Value)
+    {
+        uint64 Result = Value.Stencil;
+        HashCombine(Result, Value.Depth);
+        return Result;
+    }
 };
 
 struct FClearValue

@@ -128,11 +128,6 @@ struct FPointLightShaderCombination
         return Hash == Other.Hash;
     }
 
-    friend uint64 GetHashForType(const FPointLightShaderCombination& Value)
-    {
-        return Value.Hash;
-    }
-
     union
     {
         struct
@@ -155,6 +150,15 @@ struct FPointLightShaderCombination
 };
 
 static_assert(sizeof(FPointLightShaderCombination) == sizeof(uint64), "FPointLightShaderCombination must have the same size as uint64");
+
+template<>
+struct THash<FPointLightShaderCombination>
+{
+    static uint64 GetHash(const FPointLightShaderCombination& Value)
+    {
+        return Value.Hash;
+    }
+};
 
 class FPointLightRenderPass : public FRenderPass
 {
@@ -211,11 +215,6 @@ struct FCascadedShadowsShaderCombination
         return Hash == Other.Hash;
     }
 
-    friend uint64 GetHashForType(const FCascadedShadowsShaderCombination& Value)
-    {
-        return Value.Hash;
-    }
-
     union
     {
         struct
@@ -241,6 +240,15 @@ struct FCascadedShadowsShaderCombination
 };
 
 static_assert(sizeof(FCascadedShadowsShaderCombination) == sizeof(uint64), "FCascadedShadowsShaderCombination must have the same size as uint64");
+
+template<>
+struct THash<FCascadedShadowsShaderCombination>
+{
+    static uint64 GetHash(const FCascadedShadowsShaderCombination& Value)
+    {
+        return Value.Hash;
+    }
+};
 
 class FCascadedShadowsRenderPass : public FRenderPass
 {
@@ -312,11 +320,6 @@ struct FShadowMaskShaderCombination
         return Hash == Other.Hash;
     }
 
-    friend uint64 GetHashForType(const FShadowMaskShaderCombination& Value)
-    {
-        return Value.Hash;
-    }
-
     union
     {
         struct
@@ -348,6 +351,15 @@ struct FShadowMaskShaderCombination
 };
 
 static_assert(sizeof(FShadowMaskShaderCombination) == sizeof(uint64), "FShadowMaskShaderCombination must have the same size as uint64");
+
+template<>
+struct THash<FShadowMaskShaderCombination>
+{
+    static uint64 GetHash(const FShadowMaskShaderCombination& Value)
+    {
+        return Value.Hash;
+    }
+};
 
 class FShadowMaskRenderPass : public FRenderPass
 {

@@ -250,12 +250,16 @@ struct FD3D12UniqueSamplerTable
         return Memory::Memcmp(UniqueIDs, Other.UniqueIDs, sizeof(UniqueIDs)) != 0;
     }
 
-    friend uint64 GetHashForType(const FD3D12UniqueSamplerTable& Table)
+    uint16 UniqueIDs[D3D12_DEFAULT_SAMPLER_STATE_COUNT];
+};
+
+template<>
+struct THash<FD3D12UniqueSamplerTable>
+{
+    static uint64 GetHash(const FD3D12UniqueSamplerTable& Table)
     {
         return CRC32::Generate(Table.UniqueIDs, sizeof(Table.UniqueIDs));
     }
-
-    uint16 UniqueIDs[D3D12_DEFAULT_SAMPLER_STATE_COUNT];
 };
 
 struct FD3D12SamplerStateCache : public FD3D12ResourceCache
@@ -328,8 +332,8 @@ public:
 private:
     int32 GetHashedIndex(const KeyType& Entry) const
     {
-        const uint64 Hash  = GetHashForType(Entry);
-        const uint64 Index = Hash % Table.Size();
+        const uint64 HashValue = THash<KeyType>::GetHash(Entry);
+        const uint64 Index     = HashValue % Table.Size();
         return static_cast<int32>(Index);
     }
 

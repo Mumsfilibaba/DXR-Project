@@ -102,21 +102,6 @@ struct FRHISamplerStateDesc
 
     bool operator==(const FRHISamplerStateDesc& Other) const noexcept = default;
 
-    NODISCARD friend uint64 GetHashForType(const FRHISamplerStateDesc& Value)
-    {
-        uint64 Hash = UnderlyingTypeValue(Value.AddressU);
-        HashCombine(Hash, UnderlyingTypeValue(Value.AddressV));
-        HashCombine(Hash, UnderlyingTypeValue(Value.AddressW));
-        HashCombine(Hash, UnderlyingTypeValue(Value.Filter));
-        HashCombine(Hash, UnderlyingTypeValue(Value.ComparisonFunc));
-        HashCombine(Hash, Value.MaxAnisotropy);
-        HashCombine(Hash, Value.MinLOD);
-        HashCombine(Hash, Value.MinLOD);
-        HashCombine(Hash, Value.MaxLOD);
-        HashCombine(Hash, GetHashForType(Value.BorderColor));
-        return Hash;
-    }
-
     ESamplerMode    AddressU       = ESamplerMode::Clamp;
     ESamplerMode    AddressV       = ESamplerMode::Clamp;
     ESamplerMode    AddressW       = ESamplerMode::Clamp;
@@ -127,6 +112,25 @@ struct FRHISamplerStateDesc
     float           MinLOD         = TNumericLimits<float>::Lowest();
     float           MaxLOD         = TNumericLimits<float>::Max();
     FFloatColor     BorderColor    = { };
+};
+
+template<>
+struct THash<FRHISamplerStateDesc>
+{
+    NODISCARD static uint64 GetHash(const FRHISamplerStateDesc& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.AddressU);
+        HashCombine(Result, UnderlyingTypeValue(Value.AddressV));
+        HashCombine(Result, UnderlyingTypeValue(Value.AddressW));
+        HashCombine(Result, UnderlyingTypeValue(Value.Filter));
+        HashCombine(Result, UnderlyingTypeValue(Value.ComparisonFunc));
+        HashCombine(Result, Value.MaxAnisotropy);
+        HashCombine(Result, Value.MinLOD);
+        HashCombine(Result, Value.MinLOD);
+        HashCombine(Result, Value.MaxLOD);
+        HashCombine(Result, THash<FFloatColor>::GetHash(Value.BorderColor));
+        return Result;
+    }
 };
 
 struct FRHIStaticSamplerInfo
@@ -154,23 +158,6 @@ struct FRHIStaticSamplerInfo
 
     bool operator==(const FRHIStaticSamplerInfo& Other) const noexcept = default;
 
-    NODISCARD friend uint64 GetHashForType(const FRHIStaticSamplerInfo& Value)
-    {
-        uint64 Hash = UnderlyingTypeValue(Value.AddressU);
-        HashCombine(Hash, UnderlyingTypeValue(Value.AddressV));
-        HashCombine(Hash, UnderlyingTypeValue(Value.AddressW));
-        HashCombine(Hash, UnderlyingTypeValue(Value.Filter));
-        HashCombine(Hash, UnderlyingTypeValue(Value.ComparisonFunc));
-        HashCombine(Hash, Value.MaxAnisotropy);
-        HashCombine(Hash, Value.MipLODBias);
-        HashCombine(Hash, Value.MinLOD);
-        HashCombine(Hash, Value.MaxLOD);
-        HashCombine(Hash, GetHashForType(Value.BorderColor));
-        HashCombine(Hash, UnderlyingTypeValue(Value.ShaderVisibility));
-        HashCombine(Hash, Value.ShaderRegister);
-        return Hash;
-    }
-
     ESamplerMode    AddressU         = ESamplerMode::Clamp;
     ESamplerMode    AddressV         = ESamplerMode::Clamp;
     ESamplerMode    AddressW         = ESamplerMode::Clamp;
@@ -183,6 +170,27 @@ struct FRHIStaticSamplerInfo
     FFloatColor     BorderColor      = { };
     EShaderStage    ShaderVisibility = EShaderStage{};
     uint16          ShaderRegister   = 0;
+};
+
+template<>
+struct THash<FRHIStaticSamplerInfo>
+{
+    NODISCARD static uint64 GetHash(const FRHIStaticSamplerInfo& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.AddressU);
+        HashCombine(Result, UnderlyingTypeValue(Value.AddressV));
+        HashCombine(Result, UnderlyingTypeValue(Value.AddressW));
+        HashCombine(Result, UnderlyingTypeValue(Value.Filter));
+        HashCombine(Result, UnderlyingTypeValue(Value.ComparisonFunc));
+        HashCombine(Result, Value.MaxAnisotropy);
+        HashCombine(Result, Value.MipLODBias);
+        HashCombine(Result, Value.MinLOD);
+        HashCombine(Result, Value.MaxLOD);
+        HashCombine(Result, THash<FFloatColor>::GetHash(Value.BorderColor));
+        HashCombine(Result, UnderlyingTypeValue(Value.ShaderVisibility));
+        HashCombine(Result, Value.ShaderRegister);
+        return Result;
+    }
 };
 
 class FRHISamplerState : public FRHIResource

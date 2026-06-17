@@ -8,89 +8,137 @@
 #include "Core/Math/Vector4.h"
 #include "Core/Templates/TypeHash.h"
 
-inline uint64 GetHashForType(FFloat16 Value)
+template<>
+struct THash<FFloat16>
 {
-    return GetHashForType(Value.Encoded);
-}
+    static uint64 GetHash(FFloat16 Value)
+    {
+        return THash<decltype(Value.Encoded)>::GetHash(Value.Encoded);
+    }
+};
 
-inline uint64 GetHashForType(FFloat32 Value)
+template<>
+struct THash<FFloat32>
 {
-    return GetHashForType(Value.Encoded);
-}
+    static uint64 GetHash(FFloat32 Value)
+    {
+        return THash<decltype(Value.Encoded)>::GetHash(Value.Encoded);
+    }
+};
 
-inline uint64 GetHashForType(FFloat64 Value)
+template<>
+struct THash<FFloat64>
 {
-    return GetHashForType(Value.Encoded);
-}
+    static uint64 GetHash(FFloat64 Value)
+    {
+        return THash<decltype(Value.Encoded)>::GetHash(Value.Encoded);
+    }
+};
 
-inline uint64 GetHashForType(const Int16Vector2& Value)
+template<>
+struct THash<Int16Vector2>
 {
-    uint64 Hash = GetHashForType(Value.X);
-    HashCombine<int16>(Hash, Value.Y);
-    return Hash;
-}
+    static uint64 GetHash(const Int16Vector2& Value)
+    {
+        uint64 Result = THash<int16>::GetHash(Value.X);
+        HashCombine<int16>(Result, Value.Y);
+        return Result;
+    }
+};
 
-inline uint64 GetHashForType(const Int16Vector3& Value)
+template<>
+struct THash<Int16Vector3>
 {
-    uint64 Hash = GetHashForType(Value.X);
-    HashCombine<int16>(Hash, Value.Y);
-    HashCombine<int16>(Hash, Value.Z);
-    return Hash;
-}
+    static uint64 GetHash(const Int16Vector3& Value)
+    {
+        uint64 Result = THash<int16>::GetHash(Value.X);
+        HashCombine<int16>(Result, Value.Y);
+        HashCombine<int16>(Result, Value.Z);
+        return Result;
+    }
+};
 
-inline uint64 GetHashForType(const Int16Vector4& Value)
+template<>
+struct THash<Int16Vector4>
 {
-    uint64 Hash = GetHashForType(Value.X);
-    HashCombine<int16>(Hash, Value.Y);
-    HashCombine<int16>(Hash, Value.Z);
-    HashCombine<int16>(Hash, Value.W);
-    return Hash;
-}
+    static uint64 GetHash(const Int16Vector4& Value)
+    {
+        uint64 Result = THash<int16>::GetHash(Value.X);
+        HashCombine<int16>(Result, Value.Y);
+        HashCombine<int16>(Result, Value.Z);
+        HashCombine<int16>(Result, Value.W);
+        return Result;
+    }
+};
 
-inline uint64 GetHashForType(const IntVector2& Value)
+template<>
+struct THash<IntVector2>
 {
-    uint64 Hash = GetHashForType(Value.X);
-    HashCombine<int32>(Hash, Value.Y);
-    return Hash;
-}
+    static uint64 GetHash(const IntVector2& Value)
+    {
+        uint64 Result = THash<int32>::GetHash(Value.X);
+        HashCombine<int32>(Result, Value.Y);
+        return Result;
+    }
+};
 
-inline uint64 GetHashForType(const IntVector3& Value)
+template<>
+struct THash<IntVector3>
 {
-    uint64 Hash = GetHashForType(Value.X);
-    HashCombine<int32>(Hash, Value.Y);
-    HashCombine<int32>(Hash, Value.Z);
-    return Hash;
-}
+    static uint64 GetHash(const IntVector3& Value)
+    {
+        uint64 Result = THash<int32>::GetHash(Value.X);
+        HashCombine<int32>(Result, Value.Y);
+        HashCombine<int32>(Result, Value.Z);
+        return Result;
+    }
+};
 
-inline uint64 GetHashForType(const IntVector4& Value)
+template<>
+struct THash<IntVector4>
 {
-    uint64 Hash = GetHashForType(Value.X);
-    HashCombine<int32>(Hash, Value.Y);
-    HashCombine<int32>(Hash, Value.Z);
-    HashCombine<int32>(Hash, Value.W);
-    return Hash;
-}
+    static uint64 GetHash(const IntVector4& Value)
+    {
+        uint64 Result = THash<int32>::GetHash(Value.X);
+        HashCombine<int32>(Result, Value.Y);
+        HashCombine<int32>(Result, Value.Z);
+        HashCombine<int32>(Result, Value.W);
+        return Result;
+    }
+};
 
-inline uint64 GetHashForType(const Vector2& Value)
+template<>
+struct THash<Vector2>
 {
-    uint64 Hash = GetHashForType(Value.X);
-    HashCombine<float>(Hash, Value.Y);
-    return Hash;
-}
+    static uint64 GetHash(const Vector2& Value)
+    {
+        uint64 Result = THash<float>::GetHash(Value.X);
+        HashCombine<float>(Result, Value.Y);
+        return Result;
+    }
+};
 
-inline uint64 GetHashForType(const Vector3& Value)
+template<>
+struct THash<Vector3>
 {
-    uint64 Hash = GetHashForType(Value.X);
-    HashCombine<float>(Hash, Value.Y);
-    HashCombine<float>(Hash, Value.Z);
-    return Hash;
-}
+    static uint64 GetHash(const Vector3& Value)
+    {
+        uint64 Result = THash<float>::GetHash(Value.X);
+        HashCombine<float>(Result, Value.Y);
+        HashCombine<float>(Result, Value.Z);
+        return Result;
+    }
+};
 
-inline uint64 GetHashForType(const Vector4& Value)
+template<>
+struct THash<Vector4>
 {
-    uint64 Hash = GetHashForType(Value.X);
-    HashCombine<float>(Hash, Value.Y);
-    HashCombine<float>(Hash, Value.Z);
-    HashCombine<float>(Hash, Value.W);
-    return Hash;
-}
+    static uint64 GetHash(const Vector4& Value)
+    {
+        uint64 Result = THash<float>::GetHash(Value.X);
+        HashCombine<float>(Result, Value.Y);
+        HashCombine<float>(Result, Value.Z);
+        HashCombine<float>(Result, Value.W);
+        return Result;
+    }
+};

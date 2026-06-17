@@ -1412,11 +1412,6 @@ struct FD3D12HashableTextureView
         return Hash != Other.Hash;
     }
 
-    NODISCARD friend uint64 GetHashForType(const FD3D12HashableTextureView& Value)
-    {
-        return Value.Hash;
-    }
-
     union
     {
         struct
@@ -1432,6 +1427,15 @@ struct FD3D12HashableTextureView
 };
 
 static_assert(sizeof(FD3D12HashableTextureView) == sizeof(uint64), "FD3D12HashableTextureView should be the same size as uint64");
+
+template<>
+struct THash<FD3D12HashableTextureView>
+{
+    NODISCARD static uint64 GetHash(const FD3D12HashableTextureView& Value)
+    {
+        return Value.Hash;
+    }
+};
 
 struct FD3D12_CPU_DESCRIPTOR_HANDLE : public D3D12_CPU_DESCRIPTOR_HANDLE
 {

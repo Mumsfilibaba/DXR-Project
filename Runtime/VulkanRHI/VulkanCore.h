@@ -324,11 +324,6 @@ struct FVulkanHashableImageView
         return Hash != Other.Hash;
     }
 
-    friend uint64 GetHashForType(const FVulkanHashableImageView& Value)
-    {
-        return Value.Hash;
-    }
-
     union
     {
         struct
@@ -344,6 +339,15 @@ struct FVulkanHashableImageView
 };
 
 static_assert(sizeof(FVulkanHashableImageView) == sizeof(uint64), "FVulkanHashableImageView should be the same size as uint64");
+
+template<>
+struct THash<FVulkanHashableImageView>
+{
+    static uint64 GetHash(const FVulkanHashableImageView& Value)
+    {
+        return Value.Hash;
+    }
+};
 
 inline String GetVersionAsString(uint32 VersionNumber)
 {

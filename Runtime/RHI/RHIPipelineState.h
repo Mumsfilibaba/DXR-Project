@@ -43,15 +43,6 @@ struct FRHIDepthStencilStateDesc
     {
         constexpr bool operator==(const FStencilState& Other) const noexcept = default;
 
-        NODISCARD friend uint64 GetHashForType(const FStencilState& Value)
-        {
-            uint64 Hash = UnderlyingTypeValue(Value.StencilFailOp);
-            HashCombine(Hash, UnderlyingTypeValue(Value.StencilDepthFailOp));
-            HashCombine(Hash, UnderlyingTypeValue(Value.StencilDepthPassOp));
-            HashCombine(Hash, UnderlyingTypeValue(Value.StencilFunc));
-            return Hash;
-        }
-
         EStencilOp      StencilFailOp      = EStencilOp::Keep;
         EStencilOp      StencilDepthFailOp = EStencilOp::Keep;
         EStencilOp      StencilDepthPassOp = EStencilOp::Keep;
@@ -59,19 +50,6 @@ struct FRHIDepthStencilStateDesc
     };
 
     constexpr bool operator==(const FRHIDepthStencilStateDesc& Other) const noexcept = default;
-
-    NODISCARD friend uint64 GetHashForType(const FRHIDepthStencilStateDesc& Value)
-    {
-        uint64 Hash = static_cast<uint64>(Value.bDepthWriteEnable);
-        HashCombine(Hash, UnderlyingTypeValue(Value.DepthFunc));
-        HashCombine(Hash, Value.bDepthEnable);
-        HashCombine(Hash, Value.StencilReadMask);
-        HashCombine(Hash, Value.StencilWriteMask);
-        HashCombine(Hash, Value.bStencilEnable);
-        HashCombine(Hash, GetHashForType(Value.FrontFace));
-        HashCombine(Hash, GetHashForType(Value.BackFace));
-        return Hash;
-    }
 
     EComparisonFunc DepthFunc         = EComparisonFunc::Less;
     bool            bDepthWriteEnable = true;
@@ -81,6 +59,36 @@ struct FRHIDepthStencilStateDesc
     bool            bStencilEnable    = false;
     FStencilState   FrontFace         = { };
     FStencilState   BackFace          = { };
+};
+
+template<>
+struct THash<FRHIDepthStencilStateDesc::FStencilState>
+{
+    NODISCARD static uint64 GetHash(const FRHIDepthStencilStateDesc::FStencilState& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.StencilFailOp);
+        HashCombine(Result, UnderlyingTypeValue(Value.StencilDepthFailOp));
+        HashCombine(Result, UnderlyingTypeValue(Value.StencilDepthPassOp));
+        HashCombine(Result, UnderlyingTypeValue(Value.StencilFunc));
+        return Result;
+    }
+};
+
+template<>
+struct THash<FRHIDepthStencilStateDesc>
+{
+    NODISCARD static uint64 GetHash(const FRHIDepthStencilStateDesc& Value)
+    {
+        uint64 Result = static_cast<uint64>(Value.bDepthWriteEnable);
+        HashCombine(Result, UnderlyingTypeValue(Value.DepthFunc));
+        HashCombine(Result, Value.bDepthEnable);
+        HashCombine(Result, Value.StencilReadMask);
+        HashCombine(Result, Value.StencilWriteMask);
+        HashCombine(Result, Value.bStencilEnable);
+        HashCombine(Result, THash<FRHIDepthStencilStateDesc::FStencilState>::GetHash(Value.FrontFace));
+        HashCombine(Result, THash<FRHIDepthStencilStateDesc::FStencilState>::GetHash(Value.BackFace));
+        return Result;
+    }
 };
 
 class FRHIDepthStencilState : public FRHIResource
@@ -149,22 +157,6 @@ struct FRHIRasterizerStateDesc
 {
     constexpr bool operator==(const FRHIRasterizerStateDesc& Other) const noexcept = default;
 
-    NODISCARD friend uint64 GetHashForType(const FRHIRasterizerStateDesc& Value)
-    {
-        uint64 Hash = UnderlyingTypeValue(Value.FillMode);
-        HashCombine(Hash, UnderlyingTypeValue(Value.CullMode));
-        HashCombine(Hash, Value.bFrontCounterClockwise);
-        HashCombine(Hash, Value.bDepthClipEnable);
-        HashCombine(Hash, Value.bMultisampleEnable);
-        HashCombine(Hash, Value.bAntialiasedLineEnable);
-        HashCombine(Hash, Value.bEnableConservativeRaster);
-        HashCombine(Hash, Value.ForcedSampleCount);
-        HashCombine(Hash, Value.DepthBias);
-        HashCombine(Hash, Value.DepthBiasClamp);
-        HashCombine(Hash, Value.SlopeScaledDepthBias);
-        return Hash;
-    }
-
     EFillMode FillMode                  = EFillMode::Solid;
     ECullMode CullMode                  = ECullMode::Back;
     bool      bFrontCounterClockwise    = false;
@@ -177,6 +169,26 @@ struct FRHIRasterizerStateDesc
     float     DepthBias                 = 0.0f;
     float     DepthBiasClamp            = 0.0f;
     float     SlopeScaledDepthBias      = 0.0f;
+};
+
+template<>
+struct THash<FRHIRasterizerStateDesc>
+{
+    NODISCARD static uint64 GetHash(const FRHIRasterizerStateDesc& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.FillMode);
+        HashCombine(Result, UnderlyingTypeValue(Value.CullMode));
+        HashCombine(Result, Value.bFrontCounterClockwise);
+        HashCombine(Result, Value.bDepthClipEnable);
+        HashCombine(Result, Value.bMultisampleEnable);
+        HashCombine(Result, Value.bAntialiasedLineEnable);
+        HashCombine(Result, Value.bEnableConservativeRaster);
+        HashCombine(Result, Value.ForcedSampleCount);
+        HashCombine(Result, Value.DepthBias);
+        HashCombine(Result, Value.DepthBiasClamp);
+        HashCombine(Result, Value.SlopeScaledDepthBias);
+        return Result;
+    }
 };
 
 class FRHIRasterizerState : public FRHIResource
@@ -336,19 +348,6 @@ struct FRenderTargetBlendInfo
 {
     constexpr bool operator==(const FRenderTargetBlendInfo& Other) const noexcept = default;
 
-    NODISCARD friend uint64 GetHashForType(const FRenderTargetBlendInfo& Value)
-    {
-        uint64 Hash = UnderlyingTypeValue(Value.SrcBlend);
-        HashCombine(Hash, UnderlyingTypeValue(Value.DstBlend));
-        HashCombine(Hash, UnderlyingTypeValue(Value.BlendOp));
-        HashCombine(Hash, UnderlyingTypeValue(Value.SrcBlendAlpha));
-        HashCombine(Hash, UnderlyingTypeValue(Value.DstBlendAlpha));
-        HashCombine(Hash, UnderlyingTypeValue(Value.BlendOpAlpha));
-        HashCombine(Hash, Value.bBlendEnable);
-        HashCombine(Hash, UnderlyingTypeValue(Value.ColorWriteMask));
-        return Hash;
-    }
-
     EBlendType       SrcBlend       = EBlendType::One;
     EBlendType       DstBlend       = EBlendType::Zero;
     EBlendOp         BlendOp        = EBlendOp::Add;
@@ -361,24 +360,26 @@ struct FRenderTargetBlendInfo
 
 static_assert(TAlignmentOf<FRenderTargetBlendInfo>::Value == sizeof(uint8), "FRenderTargetBlendInfo is assumed to aligned to a uint8");
 
+template<>
+struct THash<FRenderTargetBlendInfo>
+{
+    NODISCARD static uint64 GetHash(const FRenderTargetBlendInfo& Value)
+    {
+        uint64 Result = UnderlyingTypeValue(Value.SrcBlend);
+        HashCombine(Result, UnderlyingTypeValue(Value.DstBlend));
+        HashCombine(Result, UnderlyingTypeValue(Value.BlendOp));
+        HashCombine(Result, UnderlyingTypeValue(Value.SrcBlendAlpha));
+        HashCombine(Result, UnderlyingTypeValue(Value.DstBlendAlpha));
+        HashCombine(Result, UnderlyingTypeValue(Value.BlendOpAlpha));
+        HashCombine(Result, Value.bBlendEnable);
+        HashCombine(Result, UnderlyingTypeValue(Value.ColorWriteMask));
+        return Result;
+    }
+};
+
 struct FRHIBlendStateDesc
 {
     constexpr bool operator==(const FRHIBlendStateDesc& Other) const noexcept = default;
-
-    NODISCARD friend uint64 GetHashForType(const FRHIBlendStateDesc& Value)
-    {
-        uint64 Hash = 0;
-        for (uint32 Index = 0; Index < Value.NumRenderTargets; ++Index)
-        {
-            HashCombine(Hash, GetHashForType(Value.RenderTargets[Index]));
-        }
-
-        HashCombine(Hash, UnderlyingTypeValue(Value.LogicOp));
-        HashCombine(Hash, Value.bLogicOpEnable);
-        HashCombine(Hash, Value.bAlphaToCoverageEnable);
-        HashCombine(Hash, Value.bIndependentBlendEnable);
-        return Hash;
-    }
 
     FRenderTargetBlendInfo RenderTargets[RHI_MAX_RENDER_TARGETS] = { };
     uint8                  NumRenderTargets                      = 0;
@@ -386,6 +387,25 @@ struct FRHIBlendStateDesc
     bool                   bLogicOpEnable                        = false;
     bool                   bAlphaToCoverageEnable                = false;
     bool                   bIndependentBlendEnable               = false;
+};
+
+template<>
+struct THash<FRHIBlendStateDesc>
+{
+    NODISCARD static uint64 GetHash(const FRHIBlendStateDesc& Value)
+    {
+        uint64 Result = 0;
+        for (uint32 Index = 0; Index < Value.NumRenderTargets; ++Index)
+        {
+            HashCombine(Result, THash<FRenderTargetBlendInfo>::GetHash(Value.RenderTargets[Index]));
+        }
+
+        HashCombine(Result, UnderlyingTypeValue(Value.LogicOp));
+        HashCombine(Result, Value.bLogicOpEnable);
+        HashCombine(Result, Value.bAlphaToCoverageEnable);
+        HashCombine(Result, Value.bIndependentBlendEnable);
+        return Result;
+    }
 };
 
 class FRHIBlendState : public FRHIResource

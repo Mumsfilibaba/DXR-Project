@@ -69,7 +69,7 @@ FD3D12InputLayoutRHI::FD3D12InputLayoutRHI(const TArray<FRHIInputElementDesc>& I
 
         const String& Semantic = SemanticNames.Emplace(Element.Semantic);
         InputElementDesc.SemanticName = *Semantic;
-        HashCombine(CalculatedHash, GetHashForType(Semantic));
+        HashCombine(CalculatedHash, THash<String>::GetHash(Semantic));
 
         InputElementDesc.SemanticIndex = Element.SemanticIndex;
         HashCombine(CalculatedHash, InputElementDesc.SemanticIndex);

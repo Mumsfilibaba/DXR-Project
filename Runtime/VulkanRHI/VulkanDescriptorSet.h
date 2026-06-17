@@ -52,14 +52,18 @@ struct FVulkanDescriptorSetKey
         return !(*this == Other);
     }
 
-    friend uint64 GetHashForType(const FVulkanDescriptorSetKey& Value)
-    {
-        return Value.Hash;
-    }
-    
     TArray<FBinding>      Resources;
     VkDescriptorSetLayout SetLayout;
     uint64                Hash;
+};
+
+template<>
+struct THash<FVulkanDescriptorSetKey>
+{
+    static uint64 GetHash(const FVulkanDescriptorSetKey& Value)
+    {
+        return Value.Hash;
+    }
 };
 
 struct FVulkanDescriptorPoolInfo
@@ -108,14 +112,18 @@ struct FVulkanDescriptorPoolInfo
         return !(*this == Other);
     }
 
-    friend uint64 GetHashForType(const FVulkanDescriptorPoolInfo& Value)
-    {
-        return Value.Hash;
-    }
-
     VkDescriptorSetLayout   DescriptorSetLayout;
     TArray<FDescriptorSize> DescriptorSizes;
     uint64                  Hash;
+};
+
+template<>
+struct THash<FVulkanDescriptorPoolInfo>
+{
+    static uint64 GetHash(const FVulkanDescriptorPoolInfo& Value)
+    {
+        return Value.Hash;
+    }
 };
 
 class FVulkanDescriptorSetBuilder

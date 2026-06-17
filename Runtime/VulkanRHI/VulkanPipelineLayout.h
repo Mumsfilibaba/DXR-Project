@@ -67,14 +67,18 @@ struct FVulkanDescriptorSetLayoutInfo
         return !(*this == Other);
     }
     
-    friend uint64 GetHashForType(const FVulkanDescriptorSetLayoutInfo& Value)
-    {
-        return Value.Hash;
-    }
-    
     TArray<VkDescriptorSetLayoutBinding> Bindings;
     TArray<VkSampler>                    ImmutableSamplers; // Parallel to Bindings; VK_NULL_HANDLE for non-immutable
     uint64                               Hash;
+};
+
+template<>
+struct THash<FVulkanDescriptorSetLayoutInfo>
+{
+    static uint64 GetHash(const FVulkanDescriptorSetLayoutInfo& Value)
+    {
+        return Value.Hash;
+    }
 };
 
 struct FVulkanDescriptorRemappingInfo
@@ -109,16 +113,20 @@ struct FVulkanDescriptorRemappingInfo
         return !(*this == Other);
     }
 
-    friend uint64 GetHashForType(const FVulkanDescriptorRemappingInfo& Value)
-    {
-        return Value.Hash;
-    }
-
     TArray<FRemappingInfo> RemappingInfo;
     uint64                 Hash;
 #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
     TArray<String>         DebugNames;
 #endif
+};
+
+template<>
+struct THash<FVulkanDescriptorRemappingInfo>
+{
+    static uint64 GetHash(const FVulkanDescriptorRemappingInfo& Value)
+    {
+        return Value.Hash;
+    }
 };
 
 struct FPushConstantsInfo
@@ -169,11 +177,11 @@ struct FVulkanPipelineLayoutInfo
         {
             FVulkanDescriptorSetLayoutInfo& SetLayoutInfo = SetLayoutInfos[Index];
             SetLayoutInfo.GenerateHash();
-            HashCombine(Hash, GetHashForType(SetLayoutInfo));
+            HashCombine(Hash, ::THash<FVulkanDescriptorSetLayoutInfo>::GetHash(SetLayoutInfo));
 
             FVulkanDescriptorRemappingInfo& SetLayoutRemap = SetLayoutRemappings[Index];
             SetLayoutRemap.GenerateHash();
-            HashCombine(Hash, GetHashForType(SetLayoutRemap));
+            HashCombine(Hash, ::THash<FVulkanDescriptorRemappingInfo>::GetHash(SetLayoutRemap));
         }
 
         return Hash;
@@ -213,16 +221,20 @@ struct FVulkanPipelineLayoutInfo
         return !(*this == Other);
     }
     
-    friend uint64 GetHashForType(const FVulkanPipelineLayoutInfo& Value)
-    {
-        return Value.Hash;
-    }
-    
     TArray<FVulkanDescriptorRemappingInfo> SetLayoutRemappings; // Information that is needed when building the resource-map
     TArray<FVulkanDescriptorSetLayoutInfo> SetLayoutInfos;      // The actual information for the DescriptorSetLayouts
     FPushConstantsInfo                     ConstantsInfo;       // Information about global push constants in the pipeline
     uint64                                 Hash;
     bool                                   bAnyStageUsesBindless;
+};
+
+template<>
+struct THash<FVulkanPipelineLayoutInfo>
+{
+    static uint64 GetHash(const FVulkanPipelineLayoutInfo& Value)
+    {
+        return Value.Hash;
+    }
 };
 
 struct FStageDescriptorMap

@@ -212,11 +212,6 @@ struct FVulkanHashableSamplerCreateInfo
 		return Memory::Memcmp(this, &Other, sizeof(FVulkanHashableSamplerCreateInfo)) != 0;
 	}
 
-	friend uint64 GetHashForType(const FVulkanHashableSamplerCreateInfo& Value)
-	{
-		return CRC32::Generate(&Value, sizeof(Value));
-	}
-
 	VkSamplerCreateFlags Flags;
 	VkFilter             MagFilter;
 	VkFilter             MinFilter;
@@ -233,6 +228,15 @@ struct FVulkanHashableSamplerCreateInfo
 	float                MaxLod;
 	VkBorderColor        BorderColor;
 	VkBool32             UnnormalizedCoordinates;
+};
+
+template<>
+struct THash<FVulkanHashableSamplerCreateInfo>
+{
+	static uint64 GetHash(const FVulkanHashableSamplerCreateInfo& Value)
+	{
+		return CRC32::Generate(&Value, sizeof(Value));
+	}
 };
 
 class FVulkanPhysicalDevice

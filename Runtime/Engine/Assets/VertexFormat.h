@@ -32,19 +32,23 @@ struct FVertex
         return !(*this == Other);
     }
 
-    friend uint64 GetHashForType(const FVertex& Vertex)
-    {
-        uint64 Hash = GetHashForType(Vertex.Position);
-        HashCombine<Vector3>(Hash, Vertex.Normal);
-        HashCombine<Vector3>(Hash, Vertex.Tangent);
-        HashCombine<Vector2>(Hash, Vertex.TexCoord);
-        return Hash;
-    }
-
     Vector3 Position;
     Vector3 Normal;
     Vector3 Tangent;
     Vector2 TexCoord;
+};
+
+template<>
+struct THash<FVertex>
+{
+    static uint64 GetHash(const FVertex& Vertex)
+    {
+        uint64 Result = THash<Vector3>::GetHash(Vertex.Position);
+        HashCombine<Vector3>(Result, Vertex.Normal);
+        HashCombine<Vector3>(Result, Vertex.Tangent);
+        HashCombine<Vector2>(Result, Vertex.TexCoord);
+        return Result;
+    }
 };
 
 struct FVertexPacked
@@ -103,13 +107,16 @@ struct FVertexPosition
         return !(*this == Other);
     }
 
-    friend uint64 GetHashForType(const FVertexPosition& Vertex)
-    {
-        uint64 Hash = GetHashForType(Vertex.Position);
-        return Hash;
-    }
-
     Vector3 Position;
+};
+
+template<>
+struct THash<FVertexPosition>
+{
+    static uint64 GetHash(const FVertexPosition& Vertex)
+    {
+        return THash<Vector3>::GetHash(Vertex.Position);
+    }
 };
 
 struct FVertexNormal
@@ -136,15 +143,19 @@ struct FVertexNormal
         return !(*this == Other);
     }
 
-    friend uint64 GetHashForType(const FVertexNormal& Vertex)
-    {
-        uint64 Hash = GetHashForType(Vertex.Normal);
-        HashCombine<Vector3>(Hash, Vertex.Tangent);
-        return Hash;
-    }
-
     Vector3 Normal;
     Vector3 Tangent;
+};
+
+template<>
+struct THash<FVertexNormal>
+{
+    static uint64 GetHash(const FVertexNormal& Vertex)
+    {
+        uint64 Result = THash<Vector3>::GetHash(Vertex.Normal);
+        HashCombine<Vector3>(Result, Vertex.Tangent);
+        return Result;
+    }
 };
 
 struct FVertexTexCoord
@@ -169,11 +180,14 @@ struct FVertexTexCoord
         return !(*this == Other);
     }
 
-    friend uint64 GetHashForType(const FVertexTexCoord& Vertex)
-    {
-        uint64 Hash = GetHashForType(Vertex.TexCoord);
-        return Hash;
-    }
-
     Vector2 TexCoord;
+};
+
+template<>
+struct THash<FVertexTexCoord>
+{
+    static uint64 GetHash(const FVertexTexCoord& Vertex)
+    {
+        return THash<Vector2>::GetHash(Vertex.TexCoord);
+    }
 };

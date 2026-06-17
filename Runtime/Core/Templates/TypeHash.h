@@ -1,77 +1,130 @@
 #pragma once
 #include "Core/Templates/Utility.h"
 
-constexpr uint64 GetHashForType(bool bValue)
-{
-    return static_cast<uint64>(bValue);
-}
+template<typename T, typename = void>
+struct THash;
 
-constexpr uint64 GetHashForType(int8 Value)
+template<>
+struct THash<bool>
 {
-    return static_cast<uint64>(Value);
-}
+    static constexpr uint64 GetHash(bool bValue)
+    {
+        return static_cast<uint64>(bValue);
+    }
+};
 
-constexpr uint64 GetHashForType(uint8 Value)
+template<>
+struct THash<int8>
 {
-    return static_cast<uint64>(Value);
-}
+    static constexpr uint64 GetHash(int8 Value)
+    {
+        return static_cast<uint64>(Value);
+    }
+};
 
-constexpr uint64 GetHashForType(int16 Value)
+template<>
+struct THash<uint8>
 {
-    return static_cast<uint64>(Value);
-}
+    static constexpr uint64 GetHash(uint8 Value)
+    {
+        return static_cast<uint64>(Value);
+    }
+};
 
-constexpr uint64 GetHashForType(uint16 Value)
+template<>
+struct THash<int16>
 {
-    return static_cast<uint64>(Value);
-}
+    static constexpr uint64 GetHash(int16 Value)
+    {
+        return static_cast<uint64>(Value);
+    }
+};
 
-constexpr uint64 GetHashForType(int32 Value)
+template<>
+struct THash<uint16>
 {
-    return static_cast<uint64>(Value);
-}
+    static constexpr uint64 GetHash(uint16 Value)
+    {
+        return static_cast<uint64>(Value);
+    }
+};
 
-constexpr uint64 GetHashForType(uint32 Value)
+template<>
+struct THash<int32>
 {
-    return static_cast<uint64>(Value);
-}
+    static constexpr uint64 GetHash(int32 Value)
+    {
+        return static_cast<uint64>(Value);
+    }
+};
 
-constexpr uint64 GetHashForType(int64 Value)
+template<>
+struct THash<uint32>
 {
-    return static_cast<uint64>(Value);
-}
+    static constexpr uint64 GetHash(uint32 Value)
+    {
+        return static_cast<uint64>(Value);
+    }
+};
 
-constexpr uint64 GetHashForType(uint64 Value)
+template<>
+struct THash<int64>
 {
-    return static_cast<uint64>(Value);
-}
+    static constexpr uint64 GetHash(int64 Value)
+    {
+        return static_cast<uint64>(Value);
+    }
+};
 
-constexpr uint64 GetHashForType(float Value)
+template<>
+struct THash<uint64>
 {
-    return static_cast<uint64>(BitCast<uint32>(Value));
-}
+    static constexpr uint64 GetHash(uint64 Value)
+    {
+        return static_cast<uint64>(Value);
+    }
+};
 
-constexpr uint64 GetHashForType(double Value)
+template<>
+struct THash<float>
 {
-    return BitCast<uint64>(Value);
-}
+    static constexpr uint64 GetHash(float Value)
+    {
+        return static_cast<uint64>(BitCast<uint32>(Value));
+    }
+};
+
+template<>
+struct THash<double>
+{
+    static constexpr uint64 GetHash(double Value)
+    {
+        return BitCast<uint64>(Value);
+    }
+};
 
 template<typename PointerType>
-constexpr TEnableIf<TIsPointer<PointerType>::Value, uint64>::Type GetHashForType(PointerType* Value) 
+struct THash<PointerType*>
 {
-    return reinterpret_cast<uint64>(Value);
-}
+    static uint64 GetHash(PointerType* Value)
+    {
+        return reinterpret_cast<uint64>(Value);
+    }
+};
 
 template<typename EnumType>
-constexpr TEnableIf<TIsEnum<EnumType>::Value, uint64>::Type GetHashForType(EnumType Value) 
+struct THash<EnumType, typename TEnableIf<TIsEnum<EnumType>::Value>::Type>
 {
-    return static_cast<uint64>(UnderlyingTypeValue<EnumType>(Value));
-}
+    static constexpr uint64 GetHash(EnumType Value)
+    {
+        return static_cast<uint64>(UnderlyingTypeValue<EnumType>(Value));
+    }
+};
 
 template<typename T>
 constexpr void HashCombine(uint64& OutHash, const T& Value)
 {
-    OutHash ^= GetHashForType(Value) + 0x9e3779b9 + (OutHash << 6) + (OutHash >> 2);
+    OutHash ^= THash<T>::GetHash(Value) + 0x9e3779b9 + (OutHash << 6) + (OutHash >> 2);
 }
 
 template<typename T, const uint64 NumEntries>

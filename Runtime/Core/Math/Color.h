@@ -60,21 +60,6 @@ public:
         return !(*this == Other);
     }
 
-    /**
-     * @brief Generates a hash value for this color.
-     * @param Value The color to hash.
-     * @return A 64-bit hash value.
-     */
-    friend uint64 GetHashForType(const FColor& Value)
-    {
-        uint64 Hash = 0;
-        HashCombine(Hash, Value.R);
-        HashCombine(Hash, Value.G);
-        HashCombine(Hash, Value.B);
-        HashCombine(Hash, Value.A);
-        return Hash;
-    }
-
 public:
     union
     {
@@ -99,6 +84,20 @@ public:
 
 static_assert(TIsStandardLayout<FColor>::Value, "FColor must be a standard layout type");
 MARK_AS_REALLOCATABLE(FColor);
+
+template<>
+struct THash<FColor>
+{
+    static uint64 GetHash(const FColor& Value)
+    {
+        uint64 Result = 0;
+        HashCombine(Result, Value.R);
+        HashCombine(Result, Value.G);
+        HashCombine(Result, Value.B);
+        HashCombine(Result, Value.A);
+        return Result;
+    }
+};
 
 class FFloatColor
 {
@@ -564,21 +563,6 @@ public:
         return !(*this == RHS);
     }
 
-    /**
-     * @brief Generates a hash value for this color.
-     * @param Value The color to hash.
-     * @return A 64-bit hash value.
-     */
-    friend uint64 GetHashForType(const FFloatColor& Value)
-    {
-        uint64 Hash = 0;
-        HashCombine(Hash, BitCast<uint32>(Value.R));
-        HashCombine(Hash, BitCast<uint32>(Value.G));
-        HashCombine(Hash, BitCast<uint32>(Value.B));
-        HashCombine(Hash, BitCast<uint32>(Value.A));
-        return Hash;
-    }
-
 public:
     union
     {
@@ -608,6 +592,20 @@ FFloatColor FColor::ToFloatColor() const
 
 static_assert(TIsStandardLayout<FFloatColor>::Value, "FFloatColor must be a standard layout type");
 MARK_AS_REALLOCATABLE(FFloatColor);
+
+template<>
+struct THash<FFloatColor>
+{
+    static uint64 GetHash(const FFloatColor& Value)
+    {
+        uint64 Result = 0;
+        HashCombine(Result, BitCast<uint32>(Value.R));
+        HashCombine(Result, BitCast<uint32>(Value.G));
+        HashCombine(Result, BitCast<uint32>(Value.B));
+        HashCombine(Result, BitCast<uint32>(Value.A));
+        return Result;
+    }
+};
 
 class FFloatColor16
 {
@@ -649,21 +647,6 @@ public:
         return !(*this == RHS);
     }
 
-    /**
-     * @brief Generates a hash value for this color.
-     * @param Value The color to hash.
-     * @return A 64-bit hash value.
-     */
-    friend uint64 GetHashForType(const FFloatColor16& Value)
-    {
-        uint64 Hash = 0;
-        HashCombine(Hash, Value.R);
-        HashCombine(Hash, Value.G);
-        HashCombine(Hash, Value.B);
-        HashCombine(Hash, Value.A);
-        return Hash;
-    }
-
 public:
 
     /** @brief Red channel */
@@ -681,3 +664,17 @@ public:
 
 static_assert(TIsStandardLayout<FFloatColor16>::Value, "FFloatColor16 must be a standard layout type");
 MARK_AS_REALLOCATABLE(FFloatColor16);
+
+template<>
+struct THash<FFloatColor16>
+{
+    static uint64 GetHash(const FFloatColor16& Value)
+    {
+        uint64 Result = 0;
+        HashCombine(Result, Value.R);
+        HashCombine(Result, Value.G);
+        HashCombine(Result, Value.B);
+        HashCombine(Result, Value.A);
+        return Result;
+    }
+};

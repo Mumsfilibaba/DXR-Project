@@ -29,14 +29,6 @@ struct FVulkanRenderPassKey
         return !(*this == Other);
     }
 
-    friend uint64 GetHashForType(const FVulkanRenderPassKey& Key)
-    {
-        uint64 Hash = Key.Key0;
-        HashCombine(Hash, Key.Key1);
-        HashCombine(Hash, Key.Key2);
-        return Hash;
-    }
-
     union
     {
         struct
@@ -61,6 +53,18 @@ struct FVulkanRenderPassKey
 };
 
 static_assert(sizeof(FVulkanRenderPassKey) == sizeof(uint64[3]), "Size of FVulkanRenderPassKey is invalid");
+
+template<>
+struct THash<FVulkanRenderPassKey>
+{
+    static uint64 GetHash(const FVulkanRenderPassKey& Key)
+    {
+        uint64 Result = Key.Key0;
+        HashCombine(Result, Key.Key1);
+        HashCombine(Result, Key.Key2);
+        return Result;
+    }
+};
 
 struct FVulkanFramebufferKey
 {
@@ -116,28 +120,32 @@ struct FVulkanFramebufferKey
         return !(*this == Other);
     }
 
-    friend uint64 GetHashForType(const FVulkanFramebufferKey& Key)
-    {
-        uint64 Hash = reinterpret_cast<uint64>(Key.RenderPass);
-        HashCombine(Hash, Key.Width);
-        HashCombine(Hash, Key.Height);
-        HashCombine(Hash, Key.NumArrayLayers);
-        HashCombine(Hash, Key.NumAttachmentViews);
-
-        for (uint32 Index = 0; Index < Key.NumAttachmentViews; Index++)
-        {
-            HashCombine(Hash, Key.AttachmentViews[Index]);
-        }
-
-        return Hash;
-    }
-
     uint16       Width;
     uint16       Height;
     uint16       NumArrayLayers;
     uint16       NumAttachmentViews;
     VkRenderPass RenderPass;
     VkImageView  AttachmentViews[RHI_MAX_RENDER_TARGETS + 1];
+};
+
+template<>
+struct THash<FVulkanFramebufferKey>
+{
+    static uint64 GetHash(const FVulkanFramebufferKey& Key)
+    {
+        uint64 Result = reinterpret_cast<uint64>(Key.RenderPass);
+        HashCombine(Result, Key.Width);
+        HashCombine(Result, Key.Height);
+        HashCombine(Result, Key.NumArrayLayers);
+        HashCombine(Result, Key.NumAttachmentViews);
+
+        for (uint32 Index = 0; Index < Key.NumAttachmentViews; Index++)
+        {
+            HashCombine(Result, Key.AttachmentViews[Index]);
+        }
+
+        return Result;
+    }
 };
 
 class FVulkanRenderPassCache : public FVulkanDeviceChild

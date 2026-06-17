@@ -1901,49 +1901,57 @@ NODISCARD inline String WideToChar(const WString& WideString)
 }
 
 // Jenkins's one_at_a_time hash: https://en.wikipedia.org/wiki/Jenkins_hash_function
-inline uint64 GetHashForType(const String& InString)
+template<>
+struct THash<String>
 {
-    const CHAR* Key = *InString;
-
-    int32  Index = 0;
-    uint64 Hash  = 0;
-
-    const int32 Length = InString.Length();
-    while (Index != Length)
+    static uint64 GetHash(const String& InString)
     {
-        Hash += Key[Index++];
-        Hash += Hash << 10;
-        Hash ^= Hash >> 6;
-    }
+        const CHAR* Key = *InString;
 
-    Hash += Hash << 3;
-    Hash ^= Hash >> 11;
-    Hash += Hash << 15;
-    return Hash;
-}
+        int32  Index  = 0;
+        uint64 Result = 0;
+
+        const int32 Length = InString.Length();
+        while (Index != Length)
+        {
+            Result += Key[Index++];
+            Result += Result << 10;
+            Result ^= Result >> 6;
+        }
+
+        Result += Result << 3;
+        Result ^= Result >> 11;
+        Result += Result << 15;
+        return Result;
+    }
+};
 
 // Jenkins's one_at_a_time hash: https://en.wikipedia.org/wiki/Jenkins_hash_function
-inline uint64 GetHashForType(const WString& InString)
+template<>
+struct THash<WString>
 {
-    // TODO: Investigate how good is this for wide chars
-    const WIDECHAR* Key = *InString;
-
-    int32  Index = 0;
-    uint64 Hash  = 0;
-
-    const int32 Length = InString.Length();
-    while (Index != Length)
+    static uint64 GetHash(const WString& InString)
     {
-        Hash += Key[Index++];
-        Hash += Hash << 10;
-        Hash ^= Hash >> 6;
-    }
+        // TODO: Investigate how good is this for wide chars
+        const WIDECHAR* Key = *InString;
 
-    Hash += Hash << 3;
-    Hash ^= Hash >> 11;
-    Hash += Hash << 15;
-    return Hash;
-}
+        int32  Index  = 0;
+        uint64 Result = 0;
+
+        const int32 Length = InString.Length();
+        while (Index != Length)
+        {
+            Result += Key[Index++];
+            Result += Result << 10;
+            Result ^= Result >> 6;
+        }
+
+        Result += Result << 3;
+        Result ^= Result >> 11;
+        Result += Result << 15;
+        return Result;
+    }
+};
 
 template<typename T>
 struct TTypeToString
