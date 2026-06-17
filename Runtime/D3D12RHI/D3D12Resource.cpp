@@ -100,7 +100,7 @@ void FD3D12Resource::SetDebugName(const String& InDebugName)
         }
 
         // Calling SetName as well since NVIDIA Nsight does not recognize the name otherwise
-        StringWide WideName = CharToWide(InDebugName);
+        WString WideName = CharToWide(InDebugName);
         
         Result = Resource->SetName(*WideName);
         if (FAILED(Result))

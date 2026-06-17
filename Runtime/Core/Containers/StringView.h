@@ -1040,8 +1040,8 @@ private:
     const CharType* ViewEnd{ nullptr };
 };
 
-using StringView     = TStringView<CHAR>;
-using StringViewWide = TStringView<WIDECHAR>;
+using StringView  = TStringView<CHAR>;
+using WStringView = TStringView<WIDECHAR>;
 
 template<typename CharType>
 NODISCARD inline bool operator==(const TStringView<CharType>& LHS, const CharType* RHS)

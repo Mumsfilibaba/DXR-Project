@@ -27,7 +27,7 @@ public:
 
     void SetDebugName(const String& Name)
     {
-        StringWide WideName = CharToWide(Name);
+        WString WideName = CharToWide(Name);
         Allocator->SetName(*WideName);
     }
 
@@ -116,7 +116,7 @@ public:
 
     FORCEINLINE void SetDebugName(const String& Name)
     {
-        StringWide WideName = CharToWide(Name);
+        WString WideName = CharToWide(Name);
         CmdList->SetName(*WideName);
     }
 

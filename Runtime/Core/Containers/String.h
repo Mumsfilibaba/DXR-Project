@@ -1846,8 +1846,8 @@ private:
     StorageType CharData;
 };
 
-using String     = TString<CHAR>;
-using StringWide = TString<WIDECHAR>;
+using String  = TString<CHAR>;
+using WString = TString<WIDECHAR>;
 
 // TODO: Investigate this one
 //template<typename CharType>
@@ -1868,23 +1868,23 @@ struct TIsContiguousContainer<TString<CharType>>
     inline static constexpr bool Value = true;
 };
 
-NODISCARD inline StringWide CharToWide(const StringView& CharString)
+NODISCARD inline WString CharToWide(const StringView& CharString)
 {
-    StringWide NewString;
+    WString NewString;
     NewString.Resize(CharString.Length());
     FPlatformString::Mbstowcs(NewString.Data(), CharString.Data(), CharString.Length());
     return NewString;
 }
 
-NODISCARD inline StringWide CharToWide(const String& CharString)
+NODISCARD inline WString CharToWide(const String& CharString)
 {
-    StringWide NewString;
+    WString NewString;
     NewString.Resize(CharString.Length());
     FPlatformString::Mbstowcs(NewString.Data(), CharString.Data(), CharString.Length());
     return NewString;
 }
 
-NODISCARD inline String WideToChar(const StringViewWide& WideString)
+NODISCARD inline String WideToChar(const WStringView& WideString)
 {
     String NewString;
     NewString.Resize(WideString.Length());
@@ -1892,7 +1892,7 @@ NODISCARD inline String WideToChar(const StringViewWide& WideString)
     return NewString;
 }
 
-NODISCARD inline String WideToChar(const StringWide& WideString)
+NODISCARD inline String WideToChar(const WString& WideString)
 {
     String NewString;
     NewString.Resize(WideString.Length());
@@ -1923,7 +1923,7 @@ inline uint64 GetHashForType(const String& InString)
 }
 
 // Jenkins's one_at_a_time hash: https://en.wikipedia.org/wiki/Jenkins_hash_function
-inline uint64 GetHashForType(const StringWide& InString)
+inline uint64 GetHashForType(const WString& InString)
 {
     // TODO: Investigate how good is this for wide chars
     const WIDECHAR* Key = *InString;
@@ -1963,16 +1963,16 @@ NODISCARD FORCEINLINE String TTypeToString<bool>::ToString(bool bElement)
 template<typename T>
 struct TTypeToStringWide
 {
-    NODISCARD static FORCEINLINE typename TEnableIf<TIsArithmetic<T>::Value, StringWide>::Type ToString(T Element)
+    NODISCARD static FORCEINLINE typename TEnableIf<TIsArithmetic<T>::Value, WString>::Type ToString(T Element)
     {
-        return StringWide::CreateFormatted(TFormatSpecifierWide<typename TRemoveCV<T>::Type>::GetStringSpecifier(), Element);
+        return WString::CreateFormatted(TFormatSpecifierWide<typename TRemoveCV<T>::Type>::GetStringSpecifier(), Element);
     }
 };
 
 template<>
-NODISCARD FORCEINLINE StringWide TTypeToStringWide<bool>::ToString(bool bElement)
+NODISCARD FORCEINLINE WString TTypeToStringWide<bool>::ToString(bool bElement)
 {
-    return StringWide(bElement ? L"true" : L"false");
+    return WString(bElement ? L"true" : L"false");
 }
 
 template<typename T>
@@ -2100,18 +2100,18 @@ FORCEINLINE bool TTypeFromString<bool>::FromString(const String& InString, bool&
 template<typename T>
 struct TTypeFromStringWide
 {
-    static FORCEINLINE bool FromString(const StringWide& InString, T& OutElement);
+    static FORCEINLINE bool FromString(const WString& InString, T& OutElement);
 };
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<StringWide>::FromString(const StringWide& InString, StringWide& OutElement)
+FORCEINLINE bool TTypeFromStringWide<WString>::FromString(const WString& InString, WString& OutElement)
 {
     OutElement = InString;
     return true;
 }
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<int32>::FromString(const StringWide& InString, int32& OutElement)
+FORCEINLINE bool TTypeFromStringWide<int32>::FromString(const WString& InString, int32& OutElement)
 {
     WIDECHAR* End;
     const WIDECHAR* Start = *InString;
@@ -2125,7 +2125,7 @@ FORCEINLINE bool TTypeFromStringWide<int32>::FromString(const StringWide& InStri
 }
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<int64>::FromString(const StringWide& InString, int64& OutElement)
+FORCEINLINE bool TTypeFromStringWide<int64>::FromString(const WString& InString, int64& OutElement)
 {
     WIDECHAR* End;
     const WIDECHAR* Start = *InString;
@@ -2139,7 +2139,7 @@ FORCEINLINE bool TTypeFromStringWide<int64>::FromString(const StringWide& InStri
 }
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<uint32>::FromString(const StringWide& InString, uint32& OutElement)
+FORCEINLINE bool TTypeFromStringWide<uint32>::FromString(const WString& InString, uint32& OutElement)
 {
     WIDECHAR* End;
     const WIDECHAR* Start = *InString;
@@ -2153,7 +2153,7 @@ FORCEINLINE bool TTypeFromStringWide<uint32>::FromString(const StringWide& InStr
 }
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<uint64>::FromString(const StringWide& InString, uint64& OutElement)
+FORCEINLINE bool TTypeFromStringWide<uint64>::FromString(const WString& InString, uint64& OutElement)
 {
     WIDECHAR* End;
     const WIDECHAR* Start = *InString;
@@ -2167,7 +2167,7 @@ FORCEINLINE bool TTypeFromStringWide<uint64>::FromString(const StringWide& InStr
 }
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<float>::FromString(const StringWide& InString, float& OutElement)
+FORCEINLINE bool TTypeFromStringWide<float>::FromString(const WString& InString, float& OutElement)
 {
     WIDECHAR* End;
     const WIDECHAR* Start = *InString;
@@ -2181,7 +2181,7 @@ FORCEINLINE bool TTypeFromStringWide<float>::FromString(const StringWide& InStri
 }
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<double>::FromString(const StringWide& InString, double& OutElement)
+FORCEINLINE bool TTypeFromStringWide<double>::FromString(const WString& InString, double& OutElement)
 {
     WIDECHAR* End;
     const WIDECHAR* Start = *InString;
@@ -2195,7 +2195,7 @@ FORCEINLINE bool TTypeFromStringWide<double>::FromString(const StringWide& InStr
 }
 
 template<>
-FORCEINLINE bool TTypeFromStringWide<bool>::FromString(const StringWide& InString, bool& OutElement)
+FORCEINLINE bool TTypeFromStringWide<bool>::FromString(const WString& InString, bool& OutElement)
 {
     const WIDECHAR* Start = *InString;
     if (CStringWide::Stricmp(Start, L"true") == 0)

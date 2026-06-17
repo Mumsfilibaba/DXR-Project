@@ -40,7 +40,7 @@ bool FWindowsPlatformSystemClipboard::GetText(String& OutText)
         return false;
     }
 
-    OutText = WideToChar(StringViewWide(WideText));
+    OutText = WideToChar(WStringView(WideText));
 
     ::GlobalUnlock(DataHandle);
     ::CloseClipboard();
@@ -56,7 +56,7 @@ bool FWindowsPlatformSystemClipboard::SetText(const String& InText)
 
     ::EmptyClipboard();
 
-    const StringWide WideText = CharToWide(StringView(InText));
+    const WString WideText = CharToWide(StringView(InText));
 
     const WIDECHAR* WidePtr = *WideText;
     if (!WidePtr)

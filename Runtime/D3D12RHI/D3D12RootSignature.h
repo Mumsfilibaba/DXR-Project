@@ -316,7 +316,7 @@ public:
 
     FORCEINLINE void SetDebugName(const String& Name)
     {
-        StringWide WideName = CharToWide(Name);
+        WString WideName = CharToWide(Name);
         RootSignature->SetName(*WideName);
     }
 

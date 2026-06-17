@@ -135,7 +135,7 @@ void FD3D12QueryHeap::SetDebugName(const String& InName)
             D3D12_ERROR("Failed to set queryheap name");
         }
 
-        StringWide WideName = CharToWide(InName);
+        WString WideName = CharToWide(InName);
         Result = QueryHeap->SetName(*WideName);
         if (FAILED(Result))
         {

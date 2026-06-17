@@ -1591,7 +1591,7 @@ template<int32 NUM_CHARS = STANDARD_STATIC_STRING_LENGTH>
 using StaticString = TStaticString<CHAR, NUM_CHARS>;
 
 template<int32 NUM_CHARS = STANDARD_STATIC_STRING_LENGTH>
-using StaticStringWide = TStaticString<WIDECHAR, NUM_CHARS>;
+using WStaticString = TStaticString<WIDECHAR, NUM_CHARS>;
 
 template<typename CharType, int32 NUM_CHARS>
 struct TIsTStringType<TStaticString<CharType, NUM_CHARS>>
@@ -1600,16 +1600,16 @@ struct TIsTStringType<TStaticString<CharType, NUM_CHARS>>
 };
 
 template<int32 NUM_CHARS>
-NODISCARD inline StaticStringWide<NUM_CHARS> CharToWide(const StaticString<NUM_CHARS>& CharString)
+NODISCARD inline WStaticString<NUM_CHARS> CharToWide(const StaticString<NUM_CHARS>& CharString)
 {
-    StaticStringWide<NUM_CHARS> NewString;
+    WStaticString<NUM_CHARS> NewString;
     NewString.Resize(CharString.Length());
     FPlatformString::Mbstowcs(NewString.Data(), CharString.Data(), CharString.Length());
     return NewString;
 }
 
 template<int32 NUM_CHARS>
-NODISCARD inline StaticString<NUM_CHARS> WideToChar(const StaticStringWide<NUM_CHARS>& WideString)
+NODISCARD inline StaticString<NUM_CHARS> WideToChar(const WStaticString<NUM_CHARS>& WideString)
 {
     StaticString<NUM_CHARS> NewString;
     NewString.Resize(WideString.Length());

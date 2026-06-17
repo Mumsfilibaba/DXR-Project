@@ -353,15 +353,15 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
     }
 
     // Convert defines
-    TArray<StringWide> DefineStrings;
+    TArray<WString> DefineStrings;
     if (!CompileInfo.Defines.IsEmpty())
     {
         DefineStrings.Reserve(CompileInfo.Defines.Size() * 2);
 
         for (const FShaderDefine& Define : CompileInfo.Defines)
         {
-            const StringWide& WideDefine = DefineStrings.Emplace(CharToWide(Define.Define));
-            const StringWide& WideValue  = DefineStrings.Emplace(CharToWide(Define.Value));
+            const WString& WideDefine = DefineStrings.Emplace(CharToWide(Define.Define));
+            const WString& WideValue  = DefineStrings.Emplace(CharToWide(Define.Value));
             DxcDefines.Add({ *WideDefine, *WideValue });
         }
     }
@@ -397,8 +397,8 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
         CStringWide::Snprintf(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
 
         // Use the asset-folder as base for the shader-files
-        const StringWide WideFilePath   = CharToWide(FilePath);
-        const StringWide WideEntrypoint = CharToWide(EntryPoint);
+        const WString WideFilePath   = CharToWide(FilePath);
+        const WString WideEntrypoint = CharToWide(EntryPoint);
 
         // Build the arguments for the preprocessing step
         TComPtr<IDxcCompilerArgs> CompileArguments;
@@ -715,7 +715,7 @@ bool FShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const Str
 
 String FShaderCompiler::CreateArgString(const TArrayView<LPCWSTR> Args)
 {
-    StringWide NewString;
+    WString NewString;
     for (LPCWSTR CurrentArg : Args)
     {
         NewString += CurrentArg;

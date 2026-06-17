@@ -22,7 +22,7 @@ void FD3D12Heap::SetDebugName(const String& Name)
             D3D12_ERROR("Failed to set heap name");
         }
 
-        StringWide WideName = CharToWide(Name);
+        WString WideName = CharToWide(Name);
         Result = Heap->SetName(*WideName);
         if (FAILED(Result))
         {
