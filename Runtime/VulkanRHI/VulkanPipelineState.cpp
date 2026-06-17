@@ -799,6 +799,12 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
     FVulkanAmplificationShaderRHI* VulkanAmplificationShader = FVulkanDeviceRHI::ResourceCast(InDesc.AmplificationShader);
     FVulkanPixelShaderRHI*         VulkanPixelShader         = FVulkanDeviceRHI::ResourceCast(InDesc.PixelShader);
 
+    if (VulkanAmplificationShader && !GVulkanSupportsTaskShaders)
+    {
+        VULKAN_ERROR_CRITICAL("Meshlet pipeline specifies an amplification shader but task (amplification) shaders are not supported on this device");
+        return false;
+    }
+
     // PipelineLayout
     FVulkanPipelineLayoutInfo LayoutInfo;
     if (VulkanAmplificationShader)
@@ -991,7 +997,7 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
         PipelineRenderingInfo.depthAttachmentFormat   = DepthStencilVkFormat;
         PipelineRenderingInfo.stencilAttachmentFormat = IsStencilFormat(DepthStencilVkFormat) ? DepthStencilVkFormat : VK_FORMAT_UNDEFINED;
 
-        if (GVulkanSupportsMultiviews && InDesc.ViewInstancingState.bEnableViewInstancing)
+        if (GVulkanSupportsMultiviews && GVulkanSupportsMeshShaderMultiview && InDesc.ViewInstancingState.bEnableViewInstancing)
         {
             constexpr uint32 MaxArraySlices = 32;
             const uint32 NumViews = Math::Min<uint32>(InDesc.ViewInstancingState.NumArraySlices, MaxArraySlices);
@@ -1005,6 +1011,10 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
             }
 
             PipelineRenderingInfo.viewMask = ViewMask;
+        }
+        else if (GVulkanSupportsMultiviews && InDesc.ViewInstancingState.bEnableViewInstancing)
+        {
+            VULKAN_WARNING("Meshlet pipeline requested view instancing but multiviewMeshShader is not supported on this device; view instancing will be disabled for this pipeline");
         }
 
         PipelineCreateInfo.pNext      = &PipelineRenderingInfo;

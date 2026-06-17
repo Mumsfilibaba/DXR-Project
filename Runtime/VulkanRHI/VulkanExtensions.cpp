@@ -236,12 +236,16 @@ public:
 
     virtual void ProcessQueriedFeatures() override final
     {
-        if (AvailableFeatures.meshShader || AvailableFeatures.taskShader)
+        if (AvailableFeatures.meshShader)
         {
-            GVulkanMaxMeshOutputVertices       = AvailableProperties.maxMeshOutputVertices;
-            GVulkanMaxMeshWorkGroupInvocations = AvailableProperties.maxMeshWorkGroupInvocations;
-            GVulkanMaxTaskWorkGroupInvocations = AvailableProperties.maxTaskWorkGroupInvocations;
-            GVulkanSupportsMeshShaders         = true;
+            GVulkanMaxMeshOutputVertices                          = AvailableProperties.maxMeshOutputVertices;
+            GVulkanMaxMeshWorkGroupInvocations                    = AvailableProperties.maxMeshWorkGroupInvocations;
+            GVulkanMaxTaskWorkGroupInvocations                    = AvailableProperties.maxTaskWorkGroupInvocations;
+            GVulkanSupportsMeshShaders                            = true;
+            GVulkanSupportsTaskShaders                            = AvailableFeatures.taskShader;
+            GVulkanSupportsMeshShaderMultiview                    = AvailableFeatures.multiviewMeshShader;
+            GVulkanSupportsMeshShaderQueries                      = AvailableFeatures.meshShaderQueries;
+            GVulkanSupportsMeshShaderPrimitiveFragmentShadingRate = AvailableFeatures.primitiveFragmentShadingRateMeshShader;
         }
     }
 
@@ -252,9 +256,12 @@ public:
             return;
         }
 
-        EnableFeatures.sType      = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT;
-        EnableFeatures.meshShader = AvailableFeatures.meshShader;
-        EnableFeatures.taskShader = AvailableFeatures.taskShader;
+        EnableFeatures.sType                                  = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT;
+        EnableFeatures.meshShader                             = AvailableFeatures.meshShader;
+        EnableFeatures.taskShader                             = AvailableFeatures.taskShader;
+        EnableFeatures.multiviewMeshShader                    = AvailableFeatures.multiviewMeshShader;
+        EnableFeatures.meshShaderQueries                      = AvailableFeatures.meshShaderQueries;
+        EnableFeatures.primitiveFragmentShadingRateMeshShader = AvailableFeatures.primitiveFragmentShadingRateMeshShader;
         AddToStructChain(OutDeviceCreateInfo, EnableFeatures);
     }
 

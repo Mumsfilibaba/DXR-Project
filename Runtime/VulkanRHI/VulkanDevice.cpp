@@ -76,10 +76,14 @@ VULKANRHI_API uint32 GVulkanShadingRateTileSize         = 0;
 // Mesh Shaders (VK_EXT_mesh_shader)
 // -------------------------------------------------------------------------------------------
 
-VULKANRHI_API bool   GVulkanSupportsMeshShaders         = false;
-VULKANRHI_API uint32 GVulkanMaxMeshOutputVertices       = 0;
-VULKANRHI_API uint32 GVulkanMaxMeshWorkGroupInvocations = 0;
-VULKANRHI_API uint32 GVulkanMaxTaskWorkGroupInvocations = 0;
+VULKANRHI_API bool   GVulkanSupportsMeshShaders                            = false;
+VULKANRHI_API bool   GVulkanSupportsTaskShaders                            = false;
+VULKANRHI_API bool   GVulkanSupportsMeshShaderMultiview                    = false;
+VULKANRHI_API bool   GVulkanSupportsMeshShaderQueries                      = false;
+VULKANRHI_API bool   GVulkanSupportsMeshShaderPrimitiveFragmentShadingRate = false;
+VULKANRHI_API uint32 GVulkanMaxMeshOutputVertices                          = 0;
+VULKANRHI_API uint32 GVulkanMaxMeshWorkGroupInvocations                    = 0;
+VULKANRHI_API uint32 GVulkanMaxTaskWorkGroupInvocations                    = 0;
 
 // -------------------------------------------------------------------------------------------
 // Transform Feedback / Stream Output (VK_EXT_transform_feedback)

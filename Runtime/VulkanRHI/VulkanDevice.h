@@ -85,6 +85,10 @@ extern VULKANRHI_API uint32 GVulkanShadingRateTileSize;
 // -------------------------------------------------------------------------------------------
 
 extern VULKANRHI_API bool   GVulkanSupportsMeshShaders;
+extern VULKANRHI_API bool   GVulkanSupportsTaskShaders;
+extern VULKANRHI_API bool   GVulkanSupportsMeshShaderMultiview;
+extern VULKANRHI_API bool   GVulkanSupportsMeshShaderQueries;
+extern VULKANRHI_API bool   GVulkanSupportsMeshShaderPrimitiveFragmentShadingRate;
 extern VULKANRHI_API uint32 GVulkanMaxMeshOutputVertices;
 extern VULKANRHI_API uint32 GVulkanMaxMeshWorkGroupInvocations;
 extern VULKANRHI_API uint32 GVulkanMaxTaskWorkGroupInvocations;

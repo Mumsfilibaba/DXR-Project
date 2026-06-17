@@ -887,8 +887,9 @@ FRHIMeshShader* FVulkanDeviceRHI::CreateMeshShader(const TArray<uint8>& ShaderCo
 
 FRHIAmplificationShader* FVulkanDeviceRHI::CreateAmplificationShader(const TArray<uint8>& ShaderCode)
 {
-    if (!GVulkanSupportsMeshShaders)
+    if (!GVulkanSupportsTaskShaders)
     {
+        VULKAN_WARNING("CreateAmplificationShader called but task (amplification) shaders are not supported on this device");
         return nullptr;
     }
 
