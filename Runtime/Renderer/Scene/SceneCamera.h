@@ -1,16 +1,13 @@
 #pragma once
+#include "Core/Math/Vector3.h"
+#include "Core/Math/Matrix4.h"
 #include "Renderer/Scene/SceneObject.h"
+#include "Renderer/Scene/SceneProxyData.h"
 
-class FCamera;
-
-class FSceneCamera : public FSceneObject
+struct FSceneCamera : public FSceneObject
 {
-public:
-    FSceneCamera(FScene* InScene, FCamera* InCamera);
+    FSceneCamera(FScene* InScene);
     virtual ~FSceneCamera();
 
-    virtual void Tick() { }
-
-private:
-    FCamera* Camera;
+    FCameraSnapshot Snapshot;
 };

@@ -3,6 +3,7 @@
 #include "Application/Events.h"
 #include "Application/Application.h"
 #include "RHI/RHIResources.h"
+#include "RendererCore/Interfaces/IRendererModule.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/World/World.h"
 #include "Engine/World/SceneViewport.h"
@@ -16,31 +17,35 @@ struct FInputDebugInputHandler;
 class ENGINE_API FEngine
 {
 public:
-    static bool Create();
+    static bool Initialize();
     static void Destroy();
 
     static FORCEINLINE bool IsInitialized()
     {
-        return GEngine != nullptr;
+        return Engine != nullptr;
     }
 
     static FORCEINLINE FEngine* Get()
     {
-        return GEngine;
+        return Engine;
     }
 
 public:
     FEngine();
     virtual ~FEngine();
 
+    virtual bool Start();
     virtual bool Init();
     virtual bool InitPostRenderer() { return true; }
-
+    virtual void Tick(float DeltaTime);
     virtual void Release();
 
-    virtual bool Start();
-    virtual void Tick(float DeltaTime);
-    virtual void RenderFrame();
+    /**
+     * @brief Build the by-value description of this frame's scene render (main thread).
+     * The base fills the target swap-chain; subclasses fill the view (output target, debug views)
+     * and any marshalled editor state (selection ObjectIDs).
+     */
+    virtual FSceneRenderPacket BuildRenderPacket();
 
     virtual void Exit() { }
 
@@ -89,16 +94,14 @@ private:
     void OnEngineWindowMoved(const IntVector2& NewScreenPosition);
     void OnEngineWindowResized(const IntVector2& NewScreenSize);
 
-    TSharedPtr<FWindowWidget>   EngineWindow;
-    TSharedPtr<FViewportWidget> EngineViewportWidget;
-    TSharedPtr<FSceneViewport>  SceneViewport;
-    
-    FWorld*      World;
-    FGameModule* GameModule;
-    
+    FWorld*                             World;
+    FGameModule*                        GameModule;
+    TSharedPtr<FWindowWidget>           EngineWindow;
+    TSharedPtr<FViewportWidget>         EngineViewportWidget;
+    TSharedPtr<FSceneViewport>          SceneViewport;
 #if ENGINE_DEBUG_INPUT
     TSharedPtr<FInputDebugInputHandler> InputDebugInputHandler;
 #endif
 
-    static FEngine* GEngine;
+    static FEngine* Engine;
 };

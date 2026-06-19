@@ -2,7 +2,8 @@
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Platform/PlatformTime.h"
 #include "Core/Containers/UniquePtr.h"
-#include "Core/Threading/AsyncTask.h"
+#include "Core/Containers/SharedPtr.h"
+#include "Core/Tasks/Tasks.h"
 #include "Core/Misc/Paths.h"
 #include "D3D12RHI/D3D12PipelineState.h"
 #include "D3D12RHI/D3D12Stats.h"
@@ -2095,14 +2096,14 @@ void FD3D12PipelineStateManager::SaveCacheDataAsync()
     const String PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
     const String PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
 
-    TUniquePtr<uint8[]> SerializedData;
+    TSharedPtr<uint8[]> SerializedData;
     SIZE_T SerializedSize = 0;
 
     {
         TScopedLock Lock(PipelineLibraryCS);
 
         SerializedSize = PipelineLibrary->GetSerializedSize();
-        SerializedData = MakeUniquePtr<uint8[]>(SerializedSize);
+        SerializedData = MakeSharedPtr<uint8[]>(static_cast<uint32>(SerializedSize));
 
         HRESULT hResult = PipelineLibrary->Serialize(SerializedData.Get(), SerializedSize);
         if (FAILED(hResult))
@@ -2122,7 +2123,7 @@ void FD3D12PipelineStateManager::SaveCacheDataAsync()
     Header.DataCRC  = CRC32::Generate(SerializedData.Get(), SerializedSize);
     Header.DataSize = SerializedSize;
 
-    Async([FilePath = PipelineCacheFilepath, Header, Data = Move(SerializedData), DataSize = SerializedSize]()
+    Tasks::Async([FilePath = PipelineCacheFilepath, Header, Data = Move(SerializedData), DataSize = SerializedSize]()
     {
         TFileRef<IPlatformFile> CacheFile = FPlatformFile::OpenForWrite(FilePath);
         if (!CacheFile)

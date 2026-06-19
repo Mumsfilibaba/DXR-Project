@@ -482,7 +482,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     const bool bBindless = GShadowsBindless && Resources.MaterialIndicesBuffer.IsValid();
 
     // Clamp the number of shadow-casting point-lights
-    const int32 NumPointLights = Math::Min<int32>(Scene->PointLights.Size(), Resources.MaxPointLightShadows);
+    const int32 NumPointLights = Math::Min<int32>(Scene->GetPointLights().Size(), Resources.MaxPointLightShadows);
 
     constexpr bool bIsSinglePass = RenderPassType == ECubeMapRenderPassType::SinglePass || RenderPassType == ECubeMapRenderPassType::GeometryShaderSinglePass;
     if constexpr (bIsSinglePass)
@@ -492,7 +492,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
         for (int32 LightIndex = 0; LightIndex < NumPointLights; ++LightIndex)
         {
-            FScenePointLight* ScenePointLight = Scene->PointLights[LightIndex];
+            FScenePointLight* ScenePointLight = Scene->GetPointLights()[LightIndex];
             for (int32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)
             {
                 const FScenePointLight::FShadowData& Data = ScenePointLight->ShadowData[FaceIndex];
@@ -579,8 +579,8 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                     {
                         FRHIBuffer* VertexBuffers[] =
                         {
-                            StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
-                            StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
+                            StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                            StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
                         };
                         
                         CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
@@ -589,15 +589,15 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                     {
                         FRHIBuffer* VertexBuffers[] =
                         {
-                            StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
+                            StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
                         };
                         
                         CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
                     }
 
-                    CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
+                    CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
 
-                    CommandList.UpdateBuffer(Resources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->GetTransformShaderData());
+                    CommandList.UpdateBuffer(Resources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->TransformBuffer);
                     CommandList.SetConstantBuffer(Instance->VertexShader.Get(), Resources.TransformBuffer.Get(), 1);
 
                     if constexpr (RenderPassType == ECubeMapRenderPassType::SinglePass)
@@ -625,7 +625,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
         for (int32 LightIndex = 0; LightIndex < NumPointLights; ++LightIndex)
         {
-            FScenePointLight* ScenePointLight = Scene->PointLights[LightIndex];
+            FScenePointLight* ScenePointLight = Scene->GetPointLights()[LightIndex];
             for (uint32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; ++FaceIndex)
             {
                 FScenePointLight::FShadowData& Data = ScenePointLight->ShadowData[FaceIndex];
@@ -703,8 +703,8 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                         {
                             FRHIBuffer* VertexBuffers[] =
                             {
-                                StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
-                                StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
+                                StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                                StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
                             };
 
                             CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
@@ -713,15 +713,15 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                         {
                             FRHIBuffer* VertexBuffers[] =
                             {
-                                StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
+                                StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
                             };
 
                             CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
                         }
 
-                        CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
+                        CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
 
-                        CommandList.UpdateBuffer(Resources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->GetTransformShaderData());
+                        CommandList.UpdateBuffer(Resources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->TransformBuffer);
                         CommandList.SetConstantBuffer(Instance->VertexShader.Get(), Resources.TransformBuffer.Get(), 1);
 
                         CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
@@ -1234,7 +1234,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
     GPU_TRACE_SCOPE(CommandList, "DirectionalLight ShadowMaps");
 
     const ECascadeRenderPassType RenderPassType = GetRenderMapRenderPassType();
-    if (Scene->DirectionalLight)
+    if (Scene->GetDirectionalLight())
     {
         CommandList.TransitionTextureState(Resources.ShadowCascades.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite));
 
@@ -1269,7 +1269,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
         RenderPassType == ECascadeRenderPassType::GeometryShaderSinglePass ||
         RenderPassType == ECascadeRenderPassType::ViewInstancingSinglePass;
 
-    FSceneDirectionalLight* SceneDirectionalLight = Scene->DirectionalLight;
+    FSceneDirectionalLight* SceneDirectionalLight = Scene->GetDirectionalLight();
     if constexpr (bIsSinglePass)
     {
         FRHIDepthStencilView* DepthStencilView = Resources.ShadowCascadesCombinedDSV.Get();
@@ -1299,7 +1299,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
         FScissorRegion ScissorRegion(CascadeSize, CascadeSize, 0, 0);
         CommandList.SetScissorRect(ScissorRegion);
 
-        for (const FMeshBatch& Batch : SceneDirectionalLight->GetShadowView().GetMeshBatches())
+        for (const FMeshBatch& Batch : SceneDirectionalLight->ShadowView.GetMeshBatches())
         {
             FMaterial* Material = Batch.Material;
             FGraphicsPipelineStateInstance* Instance = CompilePipelineStateInstance(RenderPassType, Material, Resources);
@@ -1357,8 +1357,8 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                 {
                     FRHIBuffer* VertexBuffers[] =
                     {
-                        StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
-                        StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
+                        StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                        StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
                     };
 
                     CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
@@ -1367,15 +1367,15 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                 {
                     FRHIBuffer* VertexBuffers[] =
                     {
-                        StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
+                        StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
                     };
 
                     CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
                 }
 
-                CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
+                CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
 
-                CommandList.UpdateBuffer(Resources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->GetTransformShaderData());
+                CommandList.UpdateBuffer(Resources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->TransformBuffer);
                 CommandList.SetConstantBuffer(Instance->VertexShader.Get(), Resources.TransformBuffer.Get(), 1);
 
                 // If we use vertex-shader instancing, we need to create our own instances and use instanced rendering
@@ -1426,7 +1426,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
             FScissorRegion ScissorRegion(CascadeSize, CascadeSize, 0, 0);
             CommandList.SetScissorRect(ScissorRegion);
 
-            for (const FMeshBatch& Batch : SceneDirectionalLight->GetShadowView().GetMeshBatches())
+            for (const FMeshBatch& Batch : SceneDirectionalLight->ShadowView.GetMeshBatches())
             {
                 FMaterial* Material = Batch.Material;
                 FGraphicsPipelineStateInstance* Instance = CompilePipelineStateInstance(RenderPassType, Material, Resources);
@@ -1475,8 +1475,8 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                     {
                         FRHIBuffer* VertexBuffers[] =
                         {
-                            StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
-                            StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
+                            StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                            StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
                         };
 
                         CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
@@ -1485,15 +1485,15 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                     {
                         FRHIBuffer* VertexBuffers[] =
                         {
-                            StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
+                            StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
                         };
 
                         CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
                     }
 
-                    CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
+                    CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
 
-                    CommandList.UpdateBuffer(Resources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->GetTransformShaderData());
+                    CommandList.UpdateBuffer(Resources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->TransformBuffer);
                     CommandList.SetConstantBuffer(Instance->VertexShader.Get(), Resources.TransformBuffer.Get(), 1);
 
                     CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);

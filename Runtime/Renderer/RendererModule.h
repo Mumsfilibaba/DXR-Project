@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/Array.h"
+#include "Core/Tasks/TaskHandle.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
 
 class FSceneRenderer;
@@ -15,20 +16,19 @@ public:
     virtual bool Load()       override final;
     virtual bool Initialize() override final;
     virtual void Release()    override final;
-
-    virtual void BeginFrame() override final;
     virtual void Tick()       override final;
-    virtual void EndFrame()   override final;
 
-    virtual void RenderSceneView(const FSceneRenderView& SceneRenderView) override final; 
-    virtual void RenderUI() override final; 
+    virtual void FinishPreviousFrame() override final;
+    virtual void DiscardPendingFrame() override final;
+
+    virtual void RecordUI() override final;
+    
+    virtual void KickSceneRender(FSceneRenderPacket&& Packet) override final;
  
     virtual void RequestEditorObjectPick(IScene* Scene, uint32 PixelX, uint32 PixelY) override final; 
     virtual bool PollEditorObjectPickResult(IScene* Scene, uint32& OutObjectID)       override final; 
  
     virtual void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 Width, uint32 Height, EFormat Format = EFormat::Unknown, EColorSpace ColorSpace = EColorSpace::Unknown) override final; 
-    virtual void PrepareSwapChain(FRHISwapChainRef SwapChain) override final; 
-    virtual void PresentSwapChain(FRHISwapChainRef SwapChain) override final; 
 
     // Creates and adds a scene to the list of scenes
     virtual IScene* CreateScene(FWorld* World) override final;
@@ -44,9 +44,10 @@ public:
     }
 
 private:
-    FSceneRenderer* Renderer;
-    TArray<FScene*> Scenes;
-
-    // Delegate that is called to properly initialize ImGui for this module
-    FDelegateHandle PreEngineInitHandle;
+    FSceneRenderer*    Renderer;
+    TArray<FScene*>    Scenes;
+    FTaskHandle        PendingSceneTask;
+    FSceneRenderPacket PendingPacket;
+    FDelegateHandle    PreEngineInitHandle; // Delegate that is called to properly initialize ImGui for this module
+    bool               bHasPendingFrame;
 };

@@ -1,7 +1,9 @@
 #include "Launch/EngineLoop.h"
+#include "Core/CoreGlobals.h"
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Threading/ThreadManager.h"
-#include "Core/Threading/TaskManager.h"
+#include "Core/Tasks/TaskGraph.h"
+#include "Core/Tasks/Tasks.h"
 #include "Core/Misc/CoreDelegates.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/EngineConfig.h"
@@ -180,7 +182,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
         return -1;
     }
 
-    if (!FApplication::Create())
+    if (!FApplication::Initialize())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create Application");
         return -1;
@@ -188,13 +190,14 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
 
     CoreDelegates::PostApplicationCreateDelegate.Broadcast();
 
-    // Initialize async-worker threads
-    if (!FTaskManager::Initialize())
+    // Initialize the task graph (named-thread lanes + anonymous worker pool)
+    if (!FTaskGraph::Initialize())
     {
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize TaskGraph");
         return -1;
     }
 
-    if (!FShaderCompiler::Create(Paths::GetAssetDir()))
+    if (!FShaderCompiler::Initialize(Paths::GetAssetDir()))
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Initializer ShaderCompiler");
         return -1;
@@ -228,7 +231,7 @@ int32 FEngineLoop::Init()
 
     CoreDelegates::PreEngineInitDelegate.Broadcast();
 
-    if (!FEngine::Create())
+    if (!FEngine::Initialize())
     {
         LOG_ERROR("Failed to initialize engine");
         return -1;
@@ -277,22 +280,31 @@ void FEngineLoop::Tick()
 {
     TRACE_FUNCTION_SCOPE();
 
+    // Run any work that was queued onto the main thread since the last tick.
+    Tasks::ProcessMainThreadTasks();
+
     // Tick the timer
     FrameTimer.Tick();
 
     const float DeltaTime = static_cast<float>(FrameTimer.GetDeltaTime().AsSeconds());
     FApplication::Get().Tick(DeltaTime);
 
+    // The window-close message is pumped above; once exit is requested the surface may already be gone.
+    if (IsEngineExitRequested())
+    {
+        return;
+    }
+
+    IRendererModule* RendererModule = IRendererModule::Get();
+    RendererModule->FinishPreviousFrame();
+
     FEngine::Get()->Tick(DeltaTime);
 
-    // Rendering
-    IRendererModule* RendererModule = IRendererModule::Get();
-    RendererModule->BeginFrame();
+    RendererModule->RecordUI();
     RendererModule->Tick();
 
-    FEngine::Get()->RenderFrame();
-
-    RendererModule->EndFrame();
+    FSceneRenderPacket Packet = FEngine::Get()->BuildRenderPacket();
+    RendererModule->KickSceneRender(::Move(Packet));
 
     FFrameProfiler::Get().Tick();
 }
@@ -300,6 +312,12 @@ void FEngineLoop::Tick()
 void FEngineLoop::Release()
 {
     TRACE_FUNCTION_SCOPE();
+
+    // Drain the one-frame-ahead pipeline without presenting.
+    if (IRendererModule* RendererModule = IRendererModule::Get())
+    {
+        RendererModule->DiscardPendingFrame();
+    }
 
     // Wait for the last RHI commands to finish
     if (FRHICommandListExecutor::IsInitialized())
@@ -330,9 +348,10 @@ void FEngineLoop::Release()
 
     FShaderCompiler::Destroy();
 
-    FTaskManager::Release();
+    // Shut down the task graph workers.
+    FTaskGraph::Release();
 
-    FApplication::Destroy();
+    FApplication::Release();
 
     FThreadManager::Release();
 

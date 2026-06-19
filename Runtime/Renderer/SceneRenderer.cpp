@@ -3,6 +3,8 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Time/Timespan.h"
 #include "Core/Platform/PlatformThreadMisc.h"
+#include "Core/Threading/ScopedLock.h"
+#include "Core/Tasks/Tasks.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
@@ -561,50 +563,71 @@ bool FSceneRenderer::InitializeRenderPasses()
     return true;
 }
 
-void FSceneRenderer::BeginFrame()
+void FSceneRenderer::RenderThread_BeginSceneCommandList(const FSceneRenderPacket& Packet)
 {
+    CHECK_RENDER_THREAD();
+
     FRHICommandListExecutor::Get().Tick();
 
     // Update FrameCounter
     FrameCounter.NextFrame();
 
     CommandList.BeginFrame();
-
     CommandList.PushEvent("Frame");
-    
-    // Resize / re-format SwapChains before doing anything else.
+
     {
         TRACE_SCOPE("Resize SwapChains");
 
-        for (const FSwapChainResizeInfo& ResizeInfo : SwapChainsToResize)
+        TArray<FSwapChainResizeInfo> ResizeRequests;
+        {
+            TScopedLock Lock(SwapChainsToResizeCS);
+            ResizeRequests = ::Move(SwapChainsToResize);
+            SwapChainsToResize.Clear();
+        }
+
+        for (const FSwapChainResizeInfo& ResizeInfo : ResizeRequests)
         {
             if (ResizeInfo.HasPendingChange())
             {
                 CommandList.ResizeSwapChain(ResizeInfo.SwapChain.Get(), ResizeInfo.Width, ResizeInfo.Height, ResizeInfo.Format, ResizeInfo.ColorSpace);
             }
         }
-
-        SwapChainsToResize.Clear();
     }
 
     // Begin capture GPU FrameTime
     FGPUProfiler::Get().BeginGPUFrame(CommandList);
 
-    // Prepare SwapChains by transition the back-buffers to the correct resource state
+    if (Packet.SwapChain)
     {
-        TRACE_SCOPE("Prepare SwapChains");
+        TRACE_SCOPE("Prepare SwapChain");
 
-        for (FRHISwapChainRef SwapChain : SwapChainsToPrepare)
-        {
-            FRHITexture* BackBuffer = SwapChain->GetBackBuffer();
-            CommandList.TransitionTextureState(BackBuffer, FRHITextureTransition::Make(EResourceAccess::Present, EResourceAccess::RenderTarget));
-        }
-
-        SwapChainsToPrepare.Clear();
+        FRHITexture* BackBuffer = Packet.SwapChain->GetBackBuffer();
+        CommandList.TransitionTextureState(BackBuffer, FRHITextureTransition::Make(EResourceAccess::Present, EResourceAccess::RenderTarget));
     }
 }
 
-void FSceneRenderer::PrepareResources(const FSceneRenderView& SceneRenderView, FScene* Scene)
+void FSceneRenderer::RenderThread_RenderSceneFrame(const FSceneRenderPacket& Packet)
+{
+    CHECK_RENDER_THREAD();
+
+    FScene* CurrentScene = static_cast<FScene*>(Packet.View.Scene);
+
+    RenderThread_BeginSceneCommandList(Packet);
+
+    if (CurrentScene)
+    {
+        CurrentScene->RenderThread_ApplyAndCull();
+    }
+
+    RenderThread_RenderSceneView(Packet.View, Packet.SelectedObjectIDs);
+
+    FGPUProfiler::Get().EndGPUFrame(CommandList);
+    CommandList.PopEvent();
+
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+}
+
+void FSceneRenderer::RenderThread_PrepareResources(const FSceneRenderView& SceneRenderView, FScene* Scene)
 {
     TRACE_SCOPE("PrepareResources");
 
@@ -621,25 +644,22 @@ void FSceneRenderer::PrepareResources(const FSceneRenderView& SceneRenderView, F
 
     Resources.BuildLightBuffers(CommandList, Scene);
 
-    PrepareCameraData(SceneRenderView, Scene);
+    RenderThread_PrepareCameraData(SceneRenderView, Scene);
 
     if (Scene)
     {
-        for (FMaterial* Material : Scene->Materials)
+        for (FMaterial* Material : Scene->GetMaterials())
         {
-            // TODO: Only do this once?
-            DepthPrePass->PreparePipelineState(Material, Resources);
-
+        // TODO: Only do this once?
         #if EDITOR_BUILD
             EditorNoJitterDepthPass->PreparePipelineState(Material, Resources);
             EditorSelectionIDPass->PreparePipelineState(Material, Resources);
         #endif
 
+            DepthPrePass->PreparePipelineState(Material, Resources);
             BasePass->PreparePipelineState(Material, Resources);
-
-            PointLightRenderPass->PreparePipelineState(Material, Resources);
-
             CascadedShadowsRenderPass->PreparePipelineState(Material, Resources);
+            PointLightRenderPass->PreparePipelineState(Material, Resources);
 
             if (Material->IsBufferDirty())
             {
@@ -662,33 +682,33 @@ void FSceneRenderer::PrepareResources(const FSceneRenderView& SceneRenderView, F
     DebugViewPass->PreparePipelineState(OutputFormat);
 }
 
-void FSceneRenderer::PrepareCameraData(const FSceneRenderView& /*SceneRenderView*/, FScene* Scene)
+void FSceneRenderer::RenderThread_PrepareCameraData(const FSceneRenderView& /*SceneRenderView*/, FScene* Scene)
 {
     TRACE_SCOPE("PrepareCameraData");
 
-    FCamera* Camera = Scene ? Scene->Camera : nullptr;
+    FSceneCamera* Camera = Scene ? Scene->GetCamera() : nullptr;
     if (!Camera)
     {
         return;
     }
 
     CameraBuffer.PrevViewProjection          = CameraBuffer.ViewProjection;
-    CameraBuffer.ViewProjection              = Camera->GetViewProjectionMatrix();
-    CameraBuffer.ViewProjectionInv           = Camera->GetViewProjectionInverseMatrix();
+    CameraBuffer.ViewProjection              = Camera->Snapshot.ViewProjection;
+    CameraBuffer.ViewProjectionInv           = Camera->Snapshot.ViewProjectionInverse;
     CameraBuffer.ViewProjectionUnjittered    = CameraBuffer.ViewProjection;
     CameraBuffer.ViewProjectionInvUnjittered = CameraBuffer.ViewProjectionInv;
-    CameraBuffer.View                        = Camera->GetViewMatrix();
-    CameraBuffer.ViewInv                     = Camera->GetViewInverseMatrix();
-    CameraBuffer.Projection                  = Camera->GetProjectionMatrix();
-    CameraBuffer.ProjectionInv               = Camera->GetProjectionInverseMatrix();
+    CameraBuffer.View                        = Camera->Snapshot.View;
+    CameraBuffer.ViewInv                     = Camera->Snapshot.ViewInverse;
+    CameraBuffer.Projection                  = Camera->Snapshot.Projection;
+    CameraBuffer.ProjectionInv               = Camera->Snapshot.ProjectionInverse;
     CameraBuffer.ProjectionUnjittered        = CameraBuffer.Projection;
     CameraBuffer.ProjectionInvUnjittered     = CameraBuffer.ProjectionInv;
-    CameraBuffer.Position                    = Camera->GetPosition();
-    CameraBuffer.Forward                     = Camera->GetForwardVector();
-    CameraBuffer.Right                       = Camera->GetRightVector();
-    CameraBuffer.NearPlane                   = Camera->GetNearPlane();
-    CameraBuffer.FarPlane                    = Camera->GetFarPlane();
-    CameraBuffer.AspectRatio                 = Camera->GetAspectRatio();
+    CameraBuffer.Position                    = Camera->Snapshot.Position;
+    CameraBuffer.Forward                     = Camera->Snapshot.Forward;
+    CameraBuffer.Right                       = Camera->Snapshot.Right;
+    CameraBuffer.NearPlane                   = Camera->Snapshot.NearPlane;
+    CameraBuffer.FarPlane                    = Camera->Snapshot.FarPlane;
+    CameraBuffer.AspectRatio                 = Camera->Snapshot.AspectRatio;
     CameraBuffer.ViewportWidth               = float(Resources.CurrentRenderWidth);
     CameraBuffer.ViewportHeight              = float(Resources.CurrentRenderHeight);
 
@@ -731,11 +751,17 @@ void FSceneRenderer::PrepareCameraData(const FSceneRenderView& /*SceneRenderView
     CommandList.TransitionBufferState(Resources.CameraBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 }
 
-void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
+void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneRenderView, const TArray<uint32>& SelectedObjectIDs)
 {
+    CHECK_RENDER_THREAD();
+
+#if !EDITOR_BUILD
+    UNREFERENCED_VARIABLE(SelectedObjectIDs); // Only consumed by the editor selection-outline pass.
+#endif
+
     // Cast and cache the current scene being rendered
     FScene* CurrentScene = static_cast<FScene*>(SceneRenderView.Scene);
-    PrepareResources(SceneRenderView, CurrentScene);
+    RenderThread_PrepareResources(SceneRenderView, CurrentScene);
 
     CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Albedo].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget));
     CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Normal].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget));
@@ -875,7 +901,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
 
     if (CurrentScene)
     {
-        if (FSceneSkyLight* SkyLight = CurrentScene->SkyLight)
+        if (FSceneSkyLight* SkyLight = CurrentScene->GetSkyLight())
         {
             CommandList.TransitionTextureState(SkyLight->DiffuseCubeMap.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
             CommandList.TransitionTextureState(SkyLight->SpecularCubeMap.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
@@ -927,7 +953,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
 
     if (CurrentScene)
     {
-        if (FSceneSkyLight* SkyLight = CurrentScene->SkyLight)
+        if (FSceneSkyLight* SkyLight = CurrentScene->GetSkyLight())
         {
             CommandList.TransitionTextureState(SkyLight->DiffuseCubeMap.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
             CommandList.TransitionTextureState(SkyLight->SpecularCubeMap.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
@@ -960,23 +986,12 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
         CommandList.TransitionTextureState(Resources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
     }
 
-    // Editor selection outline (ObjectID -> mask -> dilate/erode -> ring -> composite after tonemap)
 #if EDITOR_BUILD
     {
-        TArray<uint32> SelectedObjectIDs;
-
-        if (FEditorEngine* EditorEngine = static_cast<FEditorEngine*>(FEngine::Get()))
-        {
-            if (FActor* SelectedActor = EditorEngine->GetSelectedActor())
-            {
-                SelectedObjectIDs.Add(CurrentScene->GetOrCreateObjectID(SelectedActor));
-            }
-        }
-
         EditorNoJitterDepthPass->Execute(CommandList, Resources, CurrentScene); 
         EditorSelectionIDPass->Execute(CommandList, Resources, CurrentScene); 
  
-        ProcessEditorObjectPickRequests(CommandList, Resources, CurrentScene); 
+        RenderThread_ProcessEditorObjectPickRequests(CommandList, Resources, CurrentScene); 
  
         SelectionOutlinePass->Execute(CommandList, Resources, SelectedObjectIDs); 
     } 
@@ -1056,12 +1071,15 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
 } 
  
 #if EDITOR_BUILD
-void FSceneRenderer::ProcessEditorObjectPickRequests(FRHICommandList& InCommandList, FFrameResources& InResources, FScene* CurrentScene)
+void FSceneRenderer::RenderThread_ProcessEditorObjectPickRequests(FRHICommandList& InCommandList, FFrameResources& InResources, FScene* CurrentScene)
 {
     // Optional editor picking: copy a small region from the ObjectID render target to a readback buffer and signal a fence.
-    if (InFlightObjectPicks.Size() >= MaxInFlightObjectPicks)
     {
-        return;
+        TScopedLock Lock(ObjectPickStateCS);
+        if (InFlightObjectPicks.Size() >= MaxInFlightObjectPicks)
+        {
+            return;
+        }
     }
 
     FEditorObjectPickRequest Request;
@@ -1211,8 +1229,11 @@ void FSceneRenderer::ProcessEditorObjectPickRequests(FRHICommandList& InCommandL
     InFlight.FlippedHeight         = FlippedRegionHeight;
     InFlight.FlippedCenterX        = FlippedCenterLocalX;
     InFlight.FlippedCenterY        = FlippedCenterLocalY;
-    
-    InFlightObjectPicks.Add(Move(InFlight));
+
+    {
+        TScopedLock Lock(ObjectPickStateCS);
+        InFlightObjectPicks.Add(Move(InFlight));
+    }
 }
 #endif
 
@@ -1237,6 +1258,9 @@ bool FSceneRenderer::PollEditorObjectPickResult(FScene* Scene, uint32& OutObject
     { 
         return false; 
     } 
+
+    // InFlightObjectPicks is mutated on the render thread (ProcessEditorObjectPickRequests).
+    TScopedLock Lock(ObjectPickStateCS);
 
     for (int32 Index = 0; Index < InFlightObjectPicks.Size(); ++Index)
     {
@@ -1401,56 +1425,50 @@ bool FSceneRenderer::PollEditorObjectPickResult(FScene* Scene, uint32& OutObject
 #endif
 } 
 
-void FSceneRenderer::RenderUI()
+void FSceneRenderer::RecordUI()
 {
-    RHI_EVENT_SCOPE(CommandList, "UI Render");
+    CHECK_MAIN_THREAD();
+
+    RHI_EVENT_SCOPE(UICommandList, "UI Render");
 
     {
-        TRACE_SCOPE("Render UI");
+        TRACE_SCOPE("Record UI");
 
     #if SUPPORT_VARIABLE_RATE_SHADING
         if (RHISupportsVariableRateShading())
         {
-            CommandList.SetShadingRate(EShadingRate::VRS_1x1);
-            CommandList.SetShadingRateImage(nullptr);
+            UICommandList.SetShadingRate(EShadingRate::VRS_1x1);
+            UICommandList.SetShadingRateImage(nullptr);
         }
     #endif
 
         if (IImguiPlugin::IsEnabled())
         {
-            IImguiPlugin::Get().Draw(CommandList);
+            IImguiPlugin::Get().Draw(UICommandList);
         }
     }
 }
 
-void FSceneRenderer::EndFrame()
+void FSceneRenderer::SubmitUIAndPresent(const FSceneRenderPacket& Packet)
 {
-    FGPUProfiler::Get().EndGPUFrame(CommandList);
+    CHECK_MAIN_THREAD();
 
-    CommandList.PopEvent();
-
+    if (Packet.SwapChain)
     {
-        TRACE_SCOPE("Present SwapChains");
+        TRACE_SCOPE("Present SwapChain");
 
-        const bool bEnableVSync = GVSyncEnabled;
-        for (FRHISwapChainRef SwapChain : SwapChainsToPresent)
-        {
-            FRHITexture* BackBuffer = SwapChain->GetBackBuffer();
-            CommandList.TransitionTextureState(BackBuffer, FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::Present));
-            CommandList.PresentSwapChain(SwapChain.Get(), bEnableVSync);
-        }
-
-        SwapChainsToPresent.Clear();
+        FRHITexture* BackBuffer = Packet.SwapChain->GetBackBuffer();
+        UICommandList.TransitionTextureState(BackBuffer, FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::Present));
+        UICommandList.PresentSwapChain(Packet.SwapChain.Get(), GVSyncEnabled);
     }
-    
-    CommandList.EndFrame();
 
-    CommandList.FlushDeletedResources();
+    UICommandList.EndFrame();
+
+    UICommandList.FlushDeletedResources();
 
     {
         TRACE_SCOPE("ExecuteCommandList");
 
-        // Wait for the last frame to finish on the RHI thread
         if (LastFrameFinishedEvent)
         {
             LastFrameFinishedEvent->Wait(FTimespan::Infinity());
@@ -1461,10 +1479,10 @@ void FSceneRenderer::EndFrame()
         LastFrameFinishedEvent = FPlatformEvent::Create(false);
         if (LastFrameFinishedEvent)
         {
-            CommandList.SetEvent(LastFrameFinishedEvent);
+            UICommandList.SetEvent(LastFrameFinishedEvent);
         }
 
-        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+        FRHICommandListExecutor::Get().ExecuteCommandList(UICommandList);
     }
 }
 
@@ -1474,6 +1492,9 @@ void FSceneRenderer::ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth,
     {
         return;
     }
+
+    // Queued from the main thread (window/ImGui resize callbacks); consumed on the render thread.
+    TScopedLock Lock(SwapChainsToResizeCS);
 
     for (FSwapChainResizeInfo& Existing : SwapChainsToResize)
     {
@@ -1605,22 +1626,6 @@ void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
         Resources.CurrentRenderWidth  = InWidth;
         Resources.CurrentRenderHeight = InHeight;
         RenderSettings::OnDidChangeRenderResolution(InWidth, InHeight);
-    }
-}
-
-void FSceneRenderer::PrepareSwapChain(FRHISwapChainRef SwapChain)
-{
-    if (SwapChain)
-    {
-        SwapChainsToPrepare.Add(SwapChain);
-    }
-}
-
-void FSceneRenderer::PresentSwapChain(FRHISwapChainRef SwapChain)
-{
-    if (SwapChain)
-    {
-        SwapChainsToPresent.Add(SwapChain);
     }
 }
 

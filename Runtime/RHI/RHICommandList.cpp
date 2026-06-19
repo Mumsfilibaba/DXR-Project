@@ -2,13 +2,10 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "Core/Platform/PlatformThread.h"
+#include "Core/Tasks/Tasks.h"
+#include "Core/Tasks/TaskGraph.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "RHI/RHICommandList.h"
-
-static TAutoConsoleVariable<bool> CVarEnableRHIThread(
-    "RHI.EnableRHIThread",
-    "Enables the use of a separate Thread for executing RHI Commands",
-    true);
 
 bool GRHIVerboseEventOutput = false;
 
@@ -114,131 +111,18 @@ void FRHICommandList::FlushDeletedResources() noexcept
     });
 }
 
-FRHIThread::FRHIThread()
-    : Thread(nullptr)
-    , bIsRunning(false)
-{
-}
-
-FRHIThread::~FRHIThread()
-{
-    CHECK(Thread != nullptr);
-    Thread->WaitForCompletion();
-    delete Thread;
-}
-
-bool FRHIThread::Startup()
-{
-    Thread = FPlatformThread::Create(this, "RHIThread");
-    if (!Thread)
-    {
-        return false;
-    }
-
-    if (!Thread->Start())
-    {
-        return false;
-    }
-
-    return true;
-}
-
-bool FRHIThread::Start()
-{
-    bIsRunning = true;
-    return true;
-}
-
-int32 FRHIThread::Run()
-{
-    while (bIsRunning)
-    {
-        for(;;)
-        {
-            FRHICommandList* CommandList = nullptr;
-            if (!Tasks.Dequeue(CommandList))
-            {
-                break;
-            }
-
-            if (CommandList)
-            {
-                TRACE_FUNCTION_SCOPE();
-
-                CommandList->Execute();
-                delete CommandList;
-
-                NumCompletedTasks++;
-            }
-        }
-
-        FPlatformThreadMisc::Pause();
-    }
-
-    return 0;
-}
-
-void FRHIThread::Stop()
-{
-    if (bIsRunning)
-    {
-        WaitForOutstandingTasks();
-        bIsRunning = false;
-    }
-}
-
-void FRHIThread::Execute(FRHICommandList* InCommandList)
-{
-    if (bIsRunning)
-    {
-        Tasks.Enqueue(InCommandList);
-        NumSubmittedTasks++;
-    }
-}
-
-void FRHIThread::WaitForOutstandingTasks()
-{
-    while (NumCompletedTasks.Load() < NumSubmittedTasks.Load())
-    {
-        FPlatformThreadMisc::Pause();
-    }
-}
-
 FRHICommandListExecutor* FRHICommandListExecutor::GCommandListExecutor = nullptr;
 
 FRHICommandListExecutor::FRHICommandListExecutor(IRHICommandContext* InDefaultCommandContext)
     : DeletedResources()
     , DeletedResourcesCS()
     , DefaultCommandContext(InDefaultCommandContext)
-    , RHIThread(nullptr)
 {
 }
 
 FRHICommandListExecutor::~FRHICommandListExecutor()
 {
     DefaultCommandContext = nullptr;
-}
-
-bool FRHICommandListExecutor::InitializeRHIThread()
-{
-    RHIThread = new FRHIThread();
-    if (!RHIThread->Startup())
-    {
-        LOG_ERROR("Failed to startup RHIThread");
-        return false;
-    }
-
-    return true;
-}
-
-void FRHICommandListExecutor::ReleaseRHIThread()
-{
-	if (RHIThread)
-	{
-		RHIThread->Stop();
-		delete RHIThread;
-		RHIThread = nullptr;
-	}
 }
 
 bool FRHICommandListExecutor::Initialize()
@@ -249,29 +133,16 @@ bool FRHICommandListExecutor::Initialize()
         return false;
     }
 
-    // Create the executor
-    FRHICommandListExecutor* LocalExecutor = new FRHICommandListExecutor(Context);
-    GCommandListExecutor = LocalExecutor;
-
-    // Initialize the RHI-Thread
-    if (CVarEnableRHIThread.GetValue())
-    {
-        return LocalExecutor->InitializeRHIThread();
-    }
-    else
-    {
-        return true;
-    }
+    GCommandListExecutor = new FRHICommandListExecutor(Context);
+    return true;
 }
 
 void FRHICommandListExecutor::Release()
 {
     if (GCommandListExecutor)
     {
-        // Release the RHI-Thread
-        GCommandListExecutor->ReleaseRHIThread();
+        GCommandListExecutor->WaitForCommands();
 
-        // Delete the instance
         delete GCommandListExecutor;
         GCommandListExecutor = nullptr;
     }
@@ -311,40 +182,46 @@ void FRHICommandListExecutor::FlushDeletedResources()
 
 void FRHICommandListExecutor::ExecuteCommandList(FRHICommandList& CommandList)
 {
-    if (CommandList.HasCommands())
+    if (!CommandList.HasCommands())
     {
-        if (RHIThread)
-        {
-            FRHICommandList* NewCommandList = new FRHICommandList();
-            NewCommandList->ExchangeState(CommandList);
+        return;
+    }
 
-            // Execute with the default command-context for now
-            NewCommandList->SetCommandContext(DefaultCommandContext);
-            
-            RHIThread->Execute(NewCommandList);
-        }
-        else
-        {
-            CommandList.SetCommandContext(DefaultCommandContext);
-            CommandList.Execute();
-        }
+    if (FTaskGraph::Get().IsRHIThreadEnabled())
+    {
+        FRHICommandList* NewCommandList = new FRHICommandList();
+        NewCommandList->ExchangeState(CommandList);
+
+        // Execute with the default command-context for now
+        NewCommandList->SetCommandContext(DefaultCommandContext);
+
+        Tasks::LaunchOnRHIThread("RHIExecuteCommandList",
+            [NewCommandList]()
+            {
+                TRACE_FUNCTION_SCOPE();
+
+                NewCommandList->Execute();
+                delete NewCommandList;
+            });
+    }
+    else
+    {
+        CommandList.SetCommandContext(DefaultCommandContext);
+        CommandList.Execute();
     }
 }
 
 void FRHICommandListExecutor::WaitForCommands()
 {
-    if (RHIThread)
+    if (FTaskGraph::Get().IsRHIThreadEnabled())
     {
-        RHIThread->WaitForOutstandingTasks();
+        Tasks::LaunchOnRHIThread("RHIFlush", []() { }).Wait();
     }
 }
 
 void FRHICommandListExecutor::WaitForGPU()
 {
-    if (RHIThread)
-    {
-        WaitForCommands();
-    }
+    WaitForCommands();
 
     if (DefaultCommandContext)
     {

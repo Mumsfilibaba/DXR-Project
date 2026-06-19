@@ -3,10 +3,14 @@
 #include "Core/Containers/Map.h"
 #include "Core/Math/Frustum.h"
 #include "Core/Math/Vector3.h"
+#include "Core/Platform/CriticalSection.h"
+#include "Core/Tasks/TaskHandle.h"
 #include "RendererCore/Interfaces/IScene.h"
 #include "RHI/RHICore.h"
 #include "Renderer/Scene/SceneObject.h"
+#include "Renderer/Scene/SceneProxyData.h"
 #include "Renderer/Scene/MeshBatch.h"
+#include "Renderer/Scene/SceneCamera.h"
 #include "Renderer/Scene/SceneDirectionalLight.h"
 #include "Renderer/Scene/ScenePointLight.h"
 #include "Renderer/Scene/SceneSkyLight.h"
@@ -23,77 +27,131 @@ class FSkyLight;
 
 extern bool GFreezeRendering;
 
+class FObjectIDRegistry
+{
+public:
+    FObjectIDRegistry();
+    ~FObjectIDRegistry();
+
+    FActor* Resolve(uint32 ObjectID) const;
+    
+    uint32 GetOrCreate(FActor* Actor);
+    uint32 Get(FActor* Actor) const;
+
+private:
+    TMap<FActor*, uint32> ActorToObjectID;
+    TMap<uint32, FActor*> ObjectIDToActor;
+    uint32                NextObjectID;
+};
+
 class FScene : public IScene
 {
 public:
     FScene(FWorld* InWorld);
     virtual ~FScene();
 
-    // Update the scene this frame
+    // IScene interface
     virtual void Tick() override final;
-
-    // Adds a camera to the scene
+    
     virtual void AddCamera(FCamera* InCamera) override final;
-
-    // Adds a light to the scene
     virtual void AddLight(FLight* InLight) override final;
-
-    // Adds a light-probe to the scene
     virtual void AddLightProbe(FLightProbe* InLightProbe) override final;
-
-    // Adds a Skybox to the light
     virtual void AddSkybox(FSkyboxComponent* InSkyboxComponent) override final;
-
-    // Adds a static mesh to the scene
     virtual void AddStaticMesh(FStaticMeshComponent* InMeshComponent) override final;
+    
+    virtual void RemoveLight(FLight* InLight) override final;
+    virtual void RemoveLightProbe(FLightProbe* InLightProbe) override final;
+    virtual void RemoveStaticMesh(FStaticMeshComponent* InMeshComponent) override final;
 
-    // ObjectID allocation for editor highlighting/picking. Current implementation assigns IDs per logical Actor (not per mesh instance).
-    uint32 GetOrCreateObjectID(FActor* Actor);
-    uint32 GetObjectID(FActor* Actor) const;
     virtual FActor* GetActorByObjectID(uint32 ObjectID) const override final;
 
-    // Update all scene objects with the world version of the object
-    void SyncSceneAndWorld();
+    // ObjectID allocation for editor highlighting/picking (main thread).
+    virtual uint32 GetOrCreateObjectID(FActor* Actor) override final;
 
-    // Performs frustum culling
-    void PrepareViewsForRendering();
+    uint32 GetObjectID(FActor* Actor) const;
+
+    // Applies a marshalled per-frame batch to the proxies.
+    void RenderThread_ApplyRenderUpdates(const FRenderUpdateBatch& Batch);
+
+    // Performs frustum culling and builds visible primitive batches.
+    void RenderThread_PrepareViewsForRendering();
+
+    // Applies the batch collected by Tick(), runs culling, and reclaims retired proxies.
+    void RenderThread_ApplyAndCull();
 
     // Defers deletion of objects
     void DeferDeletion(FSceneObject* InObject);
 
-    // Deletes enqueues objects
+    // Deletes enqueued objects
     void DeleteDeferredObjects();
 
-    // World that is mirrored by this RendererScene
-    FWorld* World;
+    FSceneCamera* GetCamera() const
+    {
+        return Camera;
+    }
 
-    // TODO: Differ the Renderer's camera from the World's
-    FCamera*   Camera;
-    FSceneView CameraView;
+    const FSceneView& GetCameraView() const
+    {
+        return CameraView;
+    }
 
-    // All static meshes in this scene
-    TArray<FSceneStaticMesh*> StaticMeshes;
+    const TArray<FSceneStaticMesh*>& GetStaticMeshes() const
+    {
+        return StaticMeshes;
+    }
 
-    // All Lights in the Scene
-    TArray<FScenePointLight*> PointLights;
-    FSceneSkyLight*           SkyLight;
-    FSceneDirectionalLight*   DirectionalLight;
+    const TArray<FScenePointLight*>& GetPointLights() const
+    {
+        return PointLights;
+    }
 
-    // Pointer to Skybox
-    FSceneSkybox* Skybox;
+    FSceneSkyLight* GetSkyLight() const
+    {
+        return SkyLight;
+    }
 
-    // All materials
-    TArray<FMaterial*> Materials;
+    FSceneDirectionalLight* GetDirectionalLight() const
+    {
+        return DirectionalLight;
+    }
 
-    // All LightProbes
-    TArray<FSceneLightProbe*> LightProbes;
+    FSceneSkybox* GetSkybox() const
+    {
+        return Skybox;
+    }
 
-    // Objects to be deleted next frame
-    TArray<FSceneObject*> DeferredObjects;
-    FCriticalSection      DeferredObjectsCS;
+    const TArray<FMaterial*>& GetMaterials() const
+    {
+        return Materials;
+    }
 
-    // Stable object IDs (0 reserved for background).
-    TMap<FActor*, uint32> ActorToObjectID;
-    TMap<uint32, FActor*> ObjectIDToActor;
-    uint32                NextObjectID = 1;
+    const TArray<FSceneLightProbe*>& GetLightProbes() const
+    {
+        return LightProbes;
+    }
+
+private:
+
+    // Reads the live sources and produces a render batch.
+    FRenderUpdateBatch CollectRenderUpdates();
+
+    FWorld*                       World;
+    FSceneCamera*                 Camera;
+    FSceneView                    CameraView;
+    TArray<FSceneStaticMesh*>     StaticMeshes;
+    TArray<FScenePointLight*>     PointLights;
+    FSceneSkyLight*               SkyLight;
+    FSceneDirectionalLight*       DirectionalLight;
+    FSceneSkybox*                 Skybox;
+    TArray<FMaterial*>            Materials;
+    TArray<FSceneLightProbe*>     LightProbes;
+    TArray<FSceneObject*>         DeferredObjects;
+    FCriticalSection              DeferredObjectsCS;
+    FCamera*                      CameraSource;
+    TArray<FStaticMeshComponent*> StaticMeshSources;
+    TArray<FPointLight*>          PointLightSources;
+    TArray<FLightProbe*>          LightProbeSources;
+    FDirectionalLight*            DirectionalLightSource;
+    FObjectIDRegistry             ObjectIDs;
+    FRenderUpdateBatch            LatestBatch;
 };

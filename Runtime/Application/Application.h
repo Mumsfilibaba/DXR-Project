@@ -20,13 +20,13 @@ public:
      * 
      * @return True if both the FApplication and PlatformApplication instances were successfully created, otherwise false.
      */
-    static bool Create();
+    static bool Initialize();
 
     /**
-     * @brief Destroys the singleton FApplication and PlatformApplication instances.
-     * Cleans up resources, windows, and any other data allocated in Create().
+     * @brief Releases the singleton FApplication and PlatformApplication instances.
+     * Cleans up resources, windows, and any other data allocated in Initialize().
      */
-    static void Destroy();
+    static void Release();
 
     /**
      * @brief Checks if the FApplication instance has been created.

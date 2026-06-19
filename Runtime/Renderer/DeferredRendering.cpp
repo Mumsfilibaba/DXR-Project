@@ -265,7 +265,7 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
 
     const bool bBindless = GPrePassBindless && FrameResources.MaterialIndicesBuffer.IsValid();
 
-    for (const FMeshBatch& Batch : Scene->CameraView.GetMeshBatches())
+    for (const FMeshBatch& Batch : Scene->GetCameraView().GetMeshBatches())
     {
         FMaterial* Material = Batch.Material;
         CHECK(Material != nullptr);
@@ -323,9 +323,9 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
             {
                 FRHIBuffer* VertexBuffers[] =
                 {
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Normals),
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Normals),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
                 };
                 
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
@@ -334,8 +334,8 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
             {
                 FRHIBuffer* VertexBuffers[] =
                 {
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
                 };
                 
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
@@ -344,15 +344,15 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
             {
                 FRHIBuffer* VertexBuffers[] =
                 {
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
                 };
                 
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
             }
 
-            CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
+            CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
 
-            CommandList.UpdateBuffer(FrameResources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->GetTransformShaderData());
+            CommandList.UpdateBuffer(FrameResources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->TransformBuffer);
             CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.TransformBuffer.Get(), 1);
 
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
@@ -633,7 +633,7 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
 
     const bool bBindless = GBasePassBindless && FrameResources.MaterialIndicesBuffer.IsValid();
 
-    for (const FMeshBatch& Batch : Scene->CameraView.GetMeshBatches())
+    for (const FMeshBatch& Batch : Scene->GetCameraView().GetMeshBatches())
     {
         FMaterial* Material = Batch.Material;
         if (Material->ShouldRenderInForwardPass())
@@ -703,15 +703,15 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
 
             FRHIBuffer* VertexBuffers[] =
             {
-                StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
-                StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Normals),
-                StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
+                StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Normals),
+                StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
             };
             
             CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
-            CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
+            CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
 
-            CommandList.UpdateBuffer(FrameResources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->GetTransformShaderData());
+            CommandList.UpdateBuffer(FrameResources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->TransformBuffer);
             CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.TransformBuffer.Get(), 1);
 
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
@@ -1031,17 +1031,17 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
     if (Scene)
     {
         // Global SkyLight as a fallback
-        if (FSceneSkyLight* SkyLight = Scene->SkyLight)
+        if (FSceneSkyLight* SkyLight = Scene->GetSkyLight())
         {
             CommandList.SetShaderResourceView(LightPassShader, SkyLight->DiffuseCubeMap->GetShaderResourceView(), 6);
             CommandList.SetShaderResourceView(LightPassShader, SkyLight->SpecularCubeMap->GetShaderResourceView(), 7);
         }
 
         // Local Light-Probe
-        if (!Scene->LightProbes.IsEmpty())
+        if (!Scene->GetLightProbes().IsEmpty())
         {
             // TODO: Support more than the first probe
-            if (FSceneLightProbe* LightProbe = Scene->LightProbes.FirstElement())
+            if (FSceneLightProbe* LightProbe = Scene->GetLightProbes().FirstElement())
             {
                 CommandList.SetShaderResourceView(LightPassShader, LightProbe->DiffuseCubeMap->GetShaderResourceView(), 8);
                 CommandList.SetShaderResourceView(LightPassShader, LightProbe->SpecularCubeMap->GetShaderResourceView(), 9);
@@ -1102,7 +1102,7 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
 
     if (Scene)
     {
-        if (FSceneSkyLight* SkyLight = Scene->SkyLight)
+        if (FSceneSkyLight* SkyLight = Scene->GetSkyLight())
         {
             LightPassSettings.NumSkyLightMips = SkyLight->SpecularCubeMap->GetDesc().NumMipLevels;
         }
@@ -1269,10 +1269,10 @@ void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& Fr
         float   FarPlane;
     } ReductionConstants;
 
-    FCamera* Camera = Scene->Camera;
-    ReductionConstants.CamProjection = Camera->GetProjectionMatrix();
-    ReductionConstants.NearPlane     = Camera->GetNearPlane();
-    ReductionConstants.FarPlane      = Camera->GetFarPlane();
+    FSceneCamera* Camera = Scene->GetCamera();
+    ReductionConstants.CamProjection = Camera->Snapshot.Projection;
+    ReductionConstants.NearPlane     = Camera->Snapshot.NearPlane;
+    ReductionConstants.FarPlane      = Camera->Snapshot.FarPlane;
 
     // Perform the first reduction
     CommandList.TransitionTextureState(FrameResources.GBuffer[EGBufferIndex::Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource));

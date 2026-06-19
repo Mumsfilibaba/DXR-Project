@@ -1,23 +1,26 @@
 #pragma once
-#include "Engine/World/Reflections/LightProbe.h"
+#include "RHI/RHITexture.h"
+#include "Core/Math/Vector3.h"
 #include "Renderer/Scene/SceneObject.h"
+
+struct FLightProbeProxyUpdate;
 
 struct FSceneLightProbe : public FSceneObject
 {
-    FSceneLightProbe(FScene* InScene, FLightProbe* InLightProbe);
+    FSceneLightProbe(FScene* InScene, const FRHITextureRef& InSourceCubeMap);
     ~FSceneLightProbe();
 
-    virtual void Tick() override final;
+    // Applies a per-frame probe snapshot (position + box-projection bounds).
+    void RenderThread_ApplyUpdate(const FLightProbeProxyUpdate& Update);
 
     // Filters the source into the necessary cube-maps
-    void FilterStaticCubeMaps();
+    void RenderThread_FilterStaticCubeMaps();
 
-    FLightProbe*   LightProbe;      // Pointer to the light in the world    
-    FRHITextureRef SourceCubeMap;   // Source cube-map
-    FRHITextureRef SpecularCubeMap; // Cube-maps for specular reflections
-    FRHITextureRef DiffuseCubeMap;  // Cube-maps for diffuse reflections
-    Vector3        Origin;          // Position of the probe in world space
-    Vector3        BoxMin;          // Minimum bounds of the probe's box
-    Vector3        BoxMax;          // Maximum bounds of the probe's box
-    bool           bBoxProjection;  // Use box-projection
+    FRHITextureRef SourceCubeMap;   
+    FRHITextureRef SpecularCubeMap; 
+    FRHITextureRef DiffuseCubeMap;  
+    Vector3        Origin;
+    Vector3        BoxMin;          
+    Vector3        BoxMax;          
+    bool           bBoxProjection;  
 };

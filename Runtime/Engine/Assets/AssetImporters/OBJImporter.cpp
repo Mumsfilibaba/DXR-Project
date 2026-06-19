@@ -1,6 +1,5 @@
 #include "Core/Math/Math.h"
 #include "Core/Containers/Map.h"
-#include "Core/Threading/AsyncTask.h"
 #include "Core/Generic/GenericPlatformFile.h"
 #include "Core/Filesystem/File.h"
 #include "Core/Misc/OutputDeviceLogger.h"

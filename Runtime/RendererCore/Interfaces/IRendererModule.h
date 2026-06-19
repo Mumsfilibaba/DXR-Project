@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Modules/ModuleManager.h"
+#include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
 #include "RHI/RHITypes.h"
 #include "RendererCore/Interfaces/IScene.h"
@@ -25,7 +26,6 @@ struct FSceneRenderView
         ShadowCascadeIndex,
         ShadowCascadeOverlay,
         Lit,
-
         Count,
     };
 
@@ -35,33 +35,63 @@ struct FSceneRenderView
     EDebugView   SecondaryDebugView = EDebugView::None;
 };
 
+struct FSceneRenderPacket
+{
+    FSceneRenderView View;
+    FRHISwapChainRef SwapChain = nullptr;
+    TArray<uint32>   SelectedObjectIDs;
+    uint64           FrameIndex = 0;
+};
+
 struct IRendererModule : public IModule
 {
+public:
     static IRendererModule* Get()
     {
-        IRendererModule* RendererModule = FModuleManager::Get().GetModule<IRendererModule>("Renderer");
         return RendererModule;
     }
 
+public:
     virtual ~IRendererModule() = default;
 
     /** @brief Initialize the Renderer from the EngineLoop */
     virtual bool Initialize() = 0;
 
-    /** @brief Begin the frame */
-    virtual void BeginFrame() = 0;
-
-    /** @brief Run a frame on the Renderer side */
+    /**
+     * @brief Main-thread marshalling for all scenes (FScene::Tick): snapshot the live world into a
+     * by-value batch consumed later by the render thread. Does not touch the GPU.
+     */
     virtual void Tick() = 0;
 
-    /** @brief End the frame */
-    virtual void EndFrame() = 0;
+    /**
+     * @brief Main thread: finish the previously kicked frame.
+     * Waits for the in-flight scene-render task (its scene command list is already on the RHI FIFO),
+     * then dispatches the UI/present command list recorded for that frame. Keeps one GPU frame in
+     * flight. A no-op if no frame is pending (first frame / after a flush).
+     */
+    virtual void FinishPreviousFrame() = 0;
 
-    /** @brief Render the scene */
-    virtual void RenderSceneView(const FSceneRenderView& SceneRenderView) = 0;
+    /**
+     * @brief Main thread: drain the previously kicked frame without presenting it.
+     * Waits for the in-flight scene-render task (so the render thread no longer touches any
+     * resources) and clears the pending-frame state, but does NOT dispatch the UI/present command
+     * list. Used at shutdown when the window/surface is being torn down and the owed frame is unseen.
+     * A no-op if no frame is pending.
+     */
+    virtual void DiscardPendingFrame() = 0;
 
-    /** @brief Render UI */ 
-    virtual void RenderUI() = 0; 
+    /**
+     * @brief Main thread: record ImGui draw data for the current frame into the UI command list.
+     * Kept on the main thread so editor multi-viewport OS-window callbacks stay on the main thread.
+     */
+    virtual void RecordUI() = 0;
+
+    /**
+     * @brief Main thread: kick the scene render for the current frame onto the render thread.
+     * The render task records BeginFrame + scene apply/cull + RenderSceneView into the scene command
+     * list and dispatches it to the RHI FIFO. Returns immediately so the main thread can advance.
+     */
+    virtual void KickSceneRender(FSceneRenderPacket&& Packet) = 0;
  
     /** @brief Request an async editor ObjectID pick at the given pixel (in render target space). */ 
     virtual void RequestEditorObjectPick(IScene* Scene, uint32 PixelX, uint32 PixelY) = 0; 
@@ -76,12 +106,6 @@ struct IRendererModule : public IModule
      */
     virtual void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth, uint32 InHeight, EFormat InFormat = EFormat::Unknown, EColorSpace InColorSpace = EColorSpace::Unknown) = 0; 
 
-    /** @brief Prepare a swapchain for being used in rendering */
-    virtual void PrepareSwapChain(FRHISwapChainRef SwapChain) = 0;
-
-    /** @brief Submit a swapchain for presentation */
-    virtual void PresentSwapChain(FRHISwapChainRef SwapChain) = 0;
-
     /** @brief Release the Renderer from the EngineLoop */
     virtual void Release() = 0;
 
@@ -93,4 +117,7 @@ struct IRendererModule : public IModule
 
     /** @brief Returns the GPU profiler interface */
     virtual IGPUProfiler& GetGPUProfiler() = 0;
+
+protected:
+    static RENDERERCORE_API IRendererModule* RendererModule;
 };

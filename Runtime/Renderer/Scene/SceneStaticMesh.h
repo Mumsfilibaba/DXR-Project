@@ -11,6 +11,14 @@ class FMesh;
 class FStaticMeshComponent;
 class FRHIBuffer;
 class FRHIGeometryAccelerationStructure;
+struct FStaticMeshProxyUpdate;
+
+struct FStaticMeshInitData
+{
+    TSharedPtr<FMesh>             Mesh;
+    TArray<TSharedPtr<FMaterial>> Materials;
+    uint32                        ObjectID = 0;
+};
 
 struct FTransformBufferHLSL
 {
@@ -24,32 +32,30 @@ struct FTransformBufferHLSL
 
 MARK_AS_REALLOCATABLE(FTransformBufferHLSL);
 
-class FSceneStaticMesh : public FSceneObject
+struct FSceneStaticMesh : public FSceneObject
 {
-public:
-    FSceneStaticMesh(FScene* InScene, FStaticMeshComponent* MeshComponent);
+    FSceneStaticMesh(FScene* InScene, const FStaticMeshInitData& InitData);
     virtual ~FSceneStaticMesh();
 
-    // FSceneObject Interface
-    virtual void Tick() override final;
+    // Applies a per-frame transform snapshot (recomputes the GPU transform buffer + world bounds).
+    void RenderThread_ApplyUpdate(const FStaticMeshProxyUpdate& Update);
 
-    TSharedPtr<FMesh>                  GetMesh()                    const { return Mesh; }
-    TSharedPtr<FMaterial>              GetMaterial(int32 Index = 0) const { return Materials.IsValidIndex(Index) ? Materials[Index] : nullptr; }
-    uint32                             GetNumMaterials()            const { return Materials.Size(); }
-    const FAABB&                       GetWorldBounds()             const { return WorldBounds; };
-    const FTransformBufferHLSL&        GetTransformShaderData()     const { return TransformBuffer; }
-    FRHIBuffer*                        GetIndexBuffer()             const { return IndexBuffer; }
-    EIndexFormat                       GetIndexFormat()             const { return IndexFormat; }
-    FRHIGeometryAccelerationStructure* GetRayTracingGeometry()      const { return Geometry; }
+    // Small helpers carrying bounds-check / count logic over the Materials array.
+    TSharedPtr<FMaterial> GetMaterial(int32 Index = 0) const
+    {
+        return Materials.IsValidIndex(Index) ? Materials[Index] : nullptr;
+    }
+    
+    uint32 GetNumMaterials() const
+    {
+        return Materials.Size();
+    }
 
-private:
-    class FActor*                      Actor;           // Reference to the Actor
-    FStaticMeshComponent*              MeshComponent;
-    FTransformBufferHLSL               TransformBuffer; // TransformData for this object
-    FAABB                              WorldBounds;     // AABB in world-space
-    TSharedPtr<FMesh>                  Mesh;            // Reference to the Mesh
-    TArray<TSharedPtr<FMaterial>>      Materials;       // Reference to the material array
-    FRHIGeometryAccelerationStructure* Geometry;        // Geometry Objects
+    FTransformBufferHLSL               TransformBuffer;
+    FAABB                              WorldBounds; // AABB in world-space
+    TSharedPtr<FMesh>                  Mesh;
+    TArray<TSharedPtr<FMaterial>>      Materials;
+    FRHIGeometryAccelerationStructure* Geometry;
     FRHIBuffer*                        VertexBuffer;
     FRHIBuffer*                        IndexBuffer;
     uint32                             NumVertices;

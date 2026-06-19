@@ -57,9 +57,9 @@ static TAutoConsoleVariable<int32> CVarViewportHeight(
     EConsoleVariableFlags::Default);
 
 
-FEngine* FEngine::GEngine = nullptr;
+FEngine* FEngine::Engine = nullptr;
 
-bool FEngine::Create()
+bool FEngine::Initialize()
 {
     TUniquePtr<FEngine> LocalEngine;
     
@@ -70,28 +70,28 @@ bool FEngine::Create()
 #endif
 
     // Set the global engine pointer since it is used inside functions called by FEngine::Init
-    GEngine = LocalEngine.Get();
+    Engine = LocalEngine.Get();
 
     if (!LocalEngine->Init())
     {
-        GEngine = nullptr;
+        Engine = nullptr;
         return false;
     }
     else
     {
-        GEngine = LocalEngine.Release();
+        Engine = LocalEngine.Release();
         return true;
     }
 }
 
 void FEngine::Destroy()
 {
-    if (GEngine)
+    if (Engine)
     {
-        GEngine->Release();
+        Engine->Release();
 
-        delete GEngine;
-        GEngine = nullptr;
+        delete Engine;
+        Engine = nullptr;
     }
 }
 
@@ -351,19 +351,17 @@ void FEngine::Tick(float DeltaTime)
     {
         IImguiPlugin::Get().Tick(DeltaTime);
     }
-
-    // Prepare the swapchain
-    IRendererModule* RendererModule = IRendererModule::Get();
-    RendererModule->PrepareSwapChain(SceneViewport->GetRHISwapChain());
 }
 
-void FEngine::RenderFrame()
+FSceneRenderPacket FEngine::BuildRenderPacket()
 {
-    TRACE_FUNCTION_SCOPE();
+    FSceneRenderPacket Packet;
+    if (SceneViewport)
+    {
+        Packet.SwapChain = SceneViewport->GetRHISwapChain();
+    }
 
-    IRendererModule* RendererModule = IRendererModule::Get();
-    RendererModule->RenderUI();
-    RendererModule->PresentSwapChain(SceneViewport->GetRHISwapChain());
+    return Packet;
 }
 
 void FEngine::Release()

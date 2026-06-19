@@ -21,19 +21,62 @@ static TAutoConsoleVariable<bool> CVarLogResidencyEvents(
 FD3D12PagingWorker::FD3D12PagingWorker(ID3D12Device* InDevice)
     : Device(InDevice)
     , LastResult(S_OK)
-    , WakeEvent(static_cast<FPlatformEvent*>(FPlatformEvent::Create(false)))
-    , CompletionEvent(static_cast<FPlatformEvent*>(FPlatformEvent::Create(false)))
+    , WakeEvent(nullptr)
+    , CompletionEvent(nullptr)
+    , Thread(nullptr)
     , bRunning(true)
 {
 }
 
 FD3D12PagingWorker::~FD3D12PagingWorker()
 {
-    FPlatformEvent::Recycle(WakeEvent);
-    FPlatformEvent::Recycle(CompletionEvent);
+    if (Thread)
+    {
+        // Signal the run loop to exit, wake it, then join before tearing anything down.
+        Stop();
+        Thread->WaitForCompletion();
+        delete Thread;
+        Thread = nullptr;
+    }
 
-    WakeEvent       = nullptr;
-    CompletionEvent = nullptr;
+    if (WakeEvent)
+    {
+        FPlatformEvent::Recycle(WakeEvent);
+        WakeEvent = nullptr;
+    }
+
+    if (CompletionEvent)
+    {
+        FPlatformEvent::Recycle(CompletionEvent);
+        CompletionEvent = nullptr;
+    }
+}
+
+bool FD3D12PagingWorker::Initialize(const CHAR* InThreadName)
+{
+    WakeEvent = static_cast<FPlatformEvent*>(FPlatformEvent::Create(false));
+    if (!WakeEvent)
+    {
+        LOG_ERROR("[FD3D12PagingWorker] Failed to create wake event");
+        return false;
+    }
+
+    CompletionEvent = static_cast<FPlatformEvent*>(FPlatformEvent::Create(false));
+    if (!CompletionEvent)
+    {
+        LOG_ERROR("[FD3D12PagingWorker] Failed to create completion event");
+        return false;
+    }
+
+    Thread = FGenericPlatformThread::Create(this, InThreadName);
+    if (!Thread)
+    {
+        LOG_ERROR("[FD3D12PagingWorker] Failed to create thread");
+        return false;
+    }
+
+    Thread->Start();
+    return true;
 }
 
 void FD3D12PagingWorker::RequestMakeResident(TArray<ID3D12Pageable*>&& Pageables)
@@ -104,7 +147,6 @@ FD3D12ResidencyManager::FD3D12ResidencyManager(FD3D12Device* InDevice, bool bEna
     , CurrentFrame(0)
     , bEnable(bEnableResidency)
     , PagingWorker(nullptr)
-    , PagingThread(nullptr)
     , PagingFenceValue(0)
     , BudgetChangeEvent(nullptr)
     , BudgetChangeCookie(0)
@@ -124,8 +166,12 @@ FD3D12ResidencyManager::FD3D12ResidencyManager(FD3D12Device* InDevice, bool bEna
 #endif
     {
         PagingWorker = new FD3D12PagingWorker(Device->GetD3D12Device());
-        PagingThread = FGenericPlatformThread::Create(PagingWorker, "D3D12 Paging Worker");
-        PagingThread->Start();
+        if (!PagingWorker->Initialize("D3D12 Paging Worker"))
+        {
+            LOG_ERROR("[FD3D12ResidencyManager] Failed to initialize paging worker");
+            delete PagingWorker;
+            PagingWorker = nullptr;
+        }
     }
 
     if (Adapter)
@@ -164,13 +210,6 @@ FD3D12ResidencyManager::~FD3D12ResidencyManager()
     {
         CloseHandle(BudgetChangeEvent);
         BudgetChangeEvent = nullptr;
-    }
-
-    if (PagingThread)
-    {
-        PagingThread->Kill(true);
-        delete PagingThread;
-        PagingThread = nullptr;
     }
 
     delete PagingWorker;

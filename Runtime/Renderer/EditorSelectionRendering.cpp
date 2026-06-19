@@ -249,7 +249,7 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
 
     const bool bBindless = GPrePassBindless && FrameResources.MaterialIndicesBuffer.IsValid();
 
-    for (const FMeshBatch& Batch : Scene->CameraView.GetMeshBatches())
+    for (const FMeshBatch& Batch : Scene->GetCameraView().GetMeshBatches())
     {
         FMaterial* Material = Batch.Material;
         CHECK(Material != nullptr);
@@ -308,9 +308,9 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
             {
                 FRHIBuffer* VertexBuffers[] =
                 {
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Normals),
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Normals),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
                 };
 
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
@@ -319,8 +319,8 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
             {
                 FRHIBuffer* VertexBuffers[] =
                 {
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
                 };
 
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
@@ -329,15 +329,15 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
             {
                 FRHIBuffer* VertexBuffers[] =
                 {
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
                 };
 
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
             }
 
-            CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat()); 
+            CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat); 
   
-            CommandList.UpdateBuffer(FrameResources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->GetTransformShaderData());
+            CommandList.UpdateBuffer(FrameResources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->TransformBuffer);
             CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.TransformBuffer.Get(), 1);
   
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0); 
@@ -572,7 +572,7 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
-    for (const FMeshBatch& Batch : Scene->CameraView.GetMeshBatches())
+    for (const FMeshBatch& Batch : Scene->GetCameraView().GetMeshBatches())
     {
         FMaterial* Material = Batch.Material;
         CHECK(Material != nullptr);
@@ -615,9 +615,9 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
             {
                 FRHIBuffer* VertexBuffers[] =
                 {
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Normals),
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Normals),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
                 };
 
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
@@ -626,8 +626,8 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
             {
                 FRHIBuffer* VertexBuffers[] =
                 {
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
                 };
 
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
@@ -636,15 +636,15 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
             {
                 FRHIBuffer* VertexBuffers[] =
                 {
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
                 };
 
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
             }
 
-            CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
+            CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
 
-            CommandList.UpdateBuffer(FrameResources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->GetTransformShaderData());
+            CommandList.UpdateBuffer(FrameResources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->TransformBuffer);
             CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.TransformBuffer.Get(), 1);
 
             if (FRHIPixelShader* PixelShader = PipelineInstance->PixelShader.Get())

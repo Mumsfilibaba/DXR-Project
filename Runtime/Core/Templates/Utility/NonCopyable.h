@@ -2,30 +2,39 @@
 
 struct FNonCopyable
 {
-    FNonCopyable() = default;
+    FNonCopyable()  = default;
     ~FNonCopyable() = default;
 
-    FNonCopyable(const FNonCopyable&) = delete;
+    FNonCopyable(const FNonCopyable&)            = delete;
     FNonCopyable& operator=(const FNonCopyable&) = delete;
 };
 
 struct FNonMovable
 {
-    FNonMovable() = default;
+    FNonMovable()  = default;
     ~FNonMovable() = default;
 
-    FNonMovable(const FNonMovable&) = delete;
+    FNonMovable(const FNonMovable&)            = delete;
     FNonMovable& operator=(const FNonMovable&) = delete;
 };
 
 struct FNonCopyAndNonMovable
 {
-    FNonCopyAndNonMovable() = default;
+    FNonCopyAndNonMovable()  = default;
     ~FNonCopyAndNonMovable() = default;
 
-    FNonCopyAndNonMovable(const FNonCopyAndNonMovable&) = delete;
+    FNonCopyAndNonMovable(const FNonCopyAndNonMovable&)            = delete;
     FNonCopyAndNonMovable& operator=(const FNonCopyAndNonMovable&) = delete;
+    FNonCopyAndNonMovable(FNonCopyAndNonMovable&&)                 = delete;
+    FNonCopyAndNonMovable& operator=(FNonCopyAndNonMovable&&)      = delete;
+};
 
-    FNonCopyAndNonMovable(FNonCopyAndNonMovable&&) = delete;
-    FNonCopyAndNonMovable& operator=(FNonCopyAndNonMovable&&) = delete;
+struct FNonConstructible
+{
+    FNonConstructible()                                    = delete;
+    ~FNonConstructible()                                   = delete;
+    FNonConstructible(const FNonConstructible&)            = delete;
+    FNonConstructible& operator=(const FNonConstructible&) = delete;
+    FNonConstructible(FNonConstructible&&)                 = delete;
+    FNonConstructible& operator=(FNonConstructible&&)      = delete;
 };

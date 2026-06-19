@@ -85,6 +85,27 @@ public:
     void AddSceneComponent(FSceneComponent* SceneComponent);
 
     /**
+     * @brief Removes a light from the world
+     * 
+     * @param InLight Light to remove from the world
+     */
+    void RemoveLight(FLight* InLight);
+
+    /**
+     * @brief Removes a light-probe from the world
+     * 
+     * @param InLightProbe LightProbe to remove from the world
+     */
+    void RemoveLightProbe(FLightProbe* InLightProbe);
+
+    /**
+     * @brief Function called when removing a SceneComponent
+     * 
+     * @param SceneComponent SceneComponent being removed from the world
+     */
+    void RemoveSceneComponent(FSceneComponent* SceneComponent);
+
+    /**
       * @brief Sets the scene representation in the renderer
       * 
       * @param InScene Interface to the renderer scene representation

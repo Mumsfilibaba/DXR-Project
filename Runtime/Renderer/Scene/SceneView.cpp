@@ -10,9 +10,7 @@ FSceneView::FSceneView()
 {
 }
 
-FSceneView::~FSceneView()
-{
-}
+FSceneView::~FSceneView() = default;
 
 void FSceneView::PrepareView(uint32 MaxMeshes)
 {
@@ -51,7 +49,7 @@ bool FSceneView::AddStaticMesh(FSceneStaticMesh* StaticMesh)
         return true;
     }
 
-    if (Frustum->IntersectsAABB(StaticMesh->GetWorldBounds()))
+    if (Frustum->IntersectsAABB(StaticMesh->WorldBounds))
     {
         StaticMeshes.Add(StaticMesh);
         MeshBatcher.AddStaticMesh(StaticMesh);

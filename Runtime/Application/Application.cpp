@@ -191,7 +191,7 @@ struct FEventPreProcessor
 
 TSharedPtr<FApplication> FApplication::GApplicationInstance = nullptr;
 
-bool FApplication::Create()
+bool FApplication::Initialize()
 {
     FInputMapper::Get().Initialize();
 
@@ -207,7 +207,7 @@ bool FApplication::Create()
     return true;
 }
 
-void FApplication::Destroy()
+void FApplication::Release()
 {
     if (GApplicationInstance)
     {

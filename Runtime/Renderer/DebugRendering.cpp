@@ -734,9 +734,9 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
     CommandList.SetVertexBuffers(MakeArrayView(&AABBVertexBuffer, 1), 0);
     CommandList.SetIndexBuffer(AABBIndexBuffer_Wireframe.Get(), EIndexFormat::uint16);
 
-    for (const FSceneStaticMesh* StaticMesh : Scene->CameraView.GetStaticMeshes())
+    for (const FSceneStaticMesh* StaticMesh : Scene->GetCameraView().GetStaticMeshes())
     {
-        const FAABB& WorldBounds = StaticMesh->GetWorldBounds();
+        const FAABB& WorldBounds = StaticMesh->WorldBounds;
 
         Vector3 Scale    = Vector3(WorldBounds.GetWidth(), WorldBounds.GetHeight(), WorldBounds.GetDepth());
         Vector3 Position = WorldBounds.GetCenter();
@@ -789,7 +789,7 @@ void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResou
         float   Padding;
     } PointLightData;
 
-    for (FScenePointLight* PointLight : Scene->PointLights)
+    for (FScenePointLight* PointLight : Scene->GetPointLights())
     {
         PointLightData.Color         = Vector4(PointLight->Color.X, PointLight->Color.Y, PointLight->Color.Z, 1.0f);
         PointLightData.WorldPosition = PointLight->Position;
@@ -823,7 +823,7 @@ void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResou
     CommandList.BeginRenderPass(RenderPassDesc);
 
     // Draw box for the light-probe
-    for (FSceneLightProbe* LightProbe : Scene->LightProbes)
+    for (FSceneLightProbe* LightProbe : Scene->GetLightProbes())
     {
         // Only draw the box if we have enabled box-projection for this probe
         if (LightProbe->bBoxProjection)
@@ -885,7 +885,7 @@ void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResou
         float   Padding;
     } LightProbeData;
 
-    for (FSceneLightProbe* LightProbe : Scene->LightProbes)
+    for (FSceneLightProbe* LightProbe : Scene->GetLightProbes())
     {
         LightProbeData.WorldPosition = LightProbe->Origin;
 

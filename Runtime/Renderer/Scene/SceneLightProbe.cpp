@@ -1,11 +1,12 @@
 #include "RHI/RHITexture.h"
 #include "RendererCore/TextureFactory.h"
 #include "Renderer/Scene/SceneLightProbe.h"
+#include "Renderer/Scene/SceneProxyData.h"
 #include "Renderer/FrameResources.h"
 
-FSceneLightProbe::FSceneLightProbe(FScene* InScene, FLightProbe* InLightProbe)
+FSceneLightProbe::FSceneLightProbe(FScene* InScene, const FRHITextureRef& InSourceCubeMap)
     : FSceneObject(InScene)
-    , LightProbe(InLightProbe)
+    , SourceCubeMap(InSourceCubeMap)
     , SpecularCubeMap(nullptr)
     , DiffuseCubeMap(nullptr)
     , Origin()
@@ -13,38 +14,23 @@ FSceneLightProbe::FSceneLightProbe(FScene* InScene, FLightProbe* InLightProbe)
     , BoxMax()
     , bBoxProjection(false)
 {
-    if (LightProbe)
-    {
-        SourceCubeMap = InLightProbe->GetCubeMap();
-    }
 }
 
-FSceneLightProbe::~FSceneLightProbe()
+FSceneLightProbe::~FSceneLightProbe() = default;
+
+void FSceneLightProbe::RenderThread_ApplyUpdate(const FLightProbeProxyUpdate& Update)
 {
-    LightProbe = nullptr;
+    Origin         = Update.Position;
+    bBoxProjection = Update.bBoxProjection;
+
+    Vector3 BoxMidPoint   = Origin + Update.BoxOffset;
+    Vector3 BoxExtentHalf = Update.BoxExtent * 0.5f;
+
+    BoxMin = BoxMidPoint - BoxExtentHalf;
+    BoxMax = BoxMidPoint + BoxExtentHalf;
 }
 
-void FSceneLightProbe::Tick()
-{
-    if (LightProbe)
-    {
-        // Update state
-        Origin         = LightProbe->GetPosition();
-        bBoxProjection = LightProbe->GetBoxProjection();
-
-        // Update box
-        Vector3 BoxOffset = LightProbe->GetBoxOffset();
-        Vector3 BoxExtent = LightProbe->GetBoxExtents();
-
-        Vector3 BoxMidPoint   = Origin + BoxOffset;
-        Vector3 BoxExtentHalf = BoxExtent * 0.5f;
-
-        BoxMin = BoxMidPoint - BoxExtentHalf;
-        BoxMax = BoxMidPoint + BoxExtentHalf;
-    }
-}
-
-void FSceneLightProbe::FilterStaticCubeMaps()
+void FSceneLightProbe::RenderThread_FilterStaticCubeMaps()
 {
     if (!SourceCubeMap)
     {

@@ -9,16 +9,11 @@ class FSkyLight;
 
 struct FSceneSkyLight : public FSceneObject
 {
-    FSceneSkyLight(FScene* InScene, FSkyLight* InSkyLight);
+    FSceneSkyLight(FScene* InScene, const FRHITextureRef& InSourceCubeMap);
     ~FSceneSkyLight();
 
-    virtual void Tick() override final { }
-
     // Filters the source into the necessary cube-maps
-    void FilterStaticCubeMaps();
-
-    // Pointer to the light in the world
-    FSkyLight* SkyLight;
+    void RenderThread_FilterStaticCubeMaps();
 
     // Source cube-map
     FRHITextureRef SourceCubeMap;

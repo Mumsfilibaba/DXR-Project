@@ -1,16 +1,9 @@
 #include "Renderer/Scene/SceneSkybox.h"
 
-FSceneSkybox::FSceneSkybox(FScene* InScene, FSkyboxComponent* InSkybox)
+FSceneSkybox::FSceneSkybox(FScene* InScene, const FRHITextureRef& InCubeMap)
     : FSceneObject(InScene)
-    , Skybox(InSkybox)
+    , CubeMap(InCubeMap)
 {
-    if (InSkybox)
-    {
-        CubeMap = InSkybox->GetCubeMap();
-    }
 }
 
-FSceneSkybox::~FSceneSkybox()
-{
-    Skybox = nullptr;
-}
+FSceneSkybox::~FSceneSkybox() = default;

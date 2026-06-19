@@ -5,7 +5,7 @@
 #include "Core/Containers/Map.h"
 
 class FMaterial;
-class FSceneStaticMesh;
+struct FSceneStaticMesh;
 
 struct FMeshBatch
 {

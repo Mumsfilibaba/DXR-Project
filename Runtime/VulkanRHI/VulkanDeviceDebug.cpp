@@ -362,8 +362,7 @@ void FVulkanCrashMarkers::DumpCrashMarkers()
             }
         }
 
-        LOG_ERROR("[VulkanRHI]   %u checkpoint(s) returned by driver (highest index: %u):",
-            CheckpointCount, HighestReached);
+        LOG_ERROR("[VulkanRHI]   %u checkpoint(s) returned by driver (highest index: %u):", CheckpointCount, HighestReached);
         LOG_ERROR("----------------------------------------------------------");
 
         // Sort checkpoints by index for display (driver order is unspecified)

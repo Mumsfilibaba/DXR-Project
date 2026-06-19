@@ -1,4 +1,5 @@
 #include "Core/Misc/CoreDelegates.h"
+#include "Core/Tasks/Tasks.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 #include "Renderer/SceneRenderer.h"
@@ -12,7 +13,11 @@ FRendererModule::FRendererModule()
     : IRendererModule()
     , Renderer(nullptr)
     , Scenes()
+    , bHasPendingFrame(false)
 {
+    // Self-register the cached module instance returned by IRendererModule::Get().
+    CHECK(RendererModule == nullptr);
+    RendererModule = this;
 }
 
 FRendererModule::~FRendererModule()
@@ -23,6 +28,8 @@ FRendererModule::~FRendererModule()
     {
         delete Scene;
     }
+
+    RendererModule = nullptr;
 }
 
 bool FRendererModule::Load()
@@ -59,6 +66,9 @@ bool FRendererModule::Initialize()
 
 void FRendererModule::Release()
 {
+    // Drain the pipeline without presenting.
+    DiscardPendingFrame();
+
     // Release GPU profiler
     FGPUProfiler::Get().Release();
 
@@ -69,45 +79,83 @@ void FRendererModule::Release()
     }
 }
 
-void FRendererModule::BeginFrame()
-{
-    if (Renderer)
-    {
-        Renderer->BeginFrame();
-    }
-}
-
 void FRendererModule::Tick()
 {
+    CHECK_MAIN_THREAD();
+
     for (FScene* Scene : Scenes)
     {
-        // Performs frustum culling for all the cameras and updates visible primitives
         Scene->Tick();
     }
 }
 
-void FRendererModule::EndFrame()
+void FRendererModule::FinishPreviousFrame()
 {
+    CHECK_MAIN_THREAD();
+
+    if (!bHasPendingFrame)
+    {
+        return;
+    }
+
     if (Renderer)
     {
-        Renderer->EndFrame();
+        PendingSceneTask.Wait();
+
+        // Dispatch the UI/present command list recorded last frame.
+        Renderer->SubmitUIAndPresent(PendingPacket);
+    }
+
+    PendingSceneTask = FTaskHandle();
+    PendingPacket    = FSceneRenderPacket();
+    bHasPendingFrame = false;
+}
+
+void FRendererModule::DiscardPendingFrame()
+{
+    CHECK_MAIN_THREAD();
+
+    if (!bHasPendingFrame)
+    {
+        return;
+    }
+
+    PendingSceneTask.Wait();
+
+    PendingSceneTask = FTaskHandle();
+    PendingPacket    = FSceneRenderPacket();
+    bHasPendingFrame = false;
+}
+
+void FRendererModule::RecordUI()
+{
+    CHECK_MAIN_THREAD();
+
+    if (Renderer)
+    {
+        Renderer->RecordUI();
     }
 }
 
-void FRendererModule::RenderSceneView(const FSceneRenderView& SceneRenderView)
+void FRendererModule::KickSceneRender(FSceneRenderPacket&& Packet)
 {
-    if (Renderer)
-    {
-        Renderer->RenderSceneView(SceneRenderView);
-    }
-}
+    CHECK_MAIN_THREAD();
 
-void FRendererModule::RenderUI()
-{
-    if (Renderer)
+    if (!Renderer)
     {
-        Renderer->RenderUI();
+        return;
     }
+
+    // Keep the packet so FinishPreviousFrame can present the same swap-chain next frame.
+    PendingPacket    = Packet;
+    bHasPendingFrame = true;
+
+    PendingSceneTask = Tasks::LaunchOnRenderThread("SceneRender",
+        [this, Packet = ::Move(Packet)]()
+        {
+            CHECK_RENDER_THREAD();
+            Renderer->RenderThread_RenderSceneFrame(Packet);
+        });
 }
 
 void FRendererModule::RequestEditorObjectPick(IScene* Scene, uint32 PixelX, uint32 PixelY) 
@@ -140,22 +188,6 @@ bool FRendererModule::PollEditorObjectPickResult(IScene* Scene, uint32& OutObjec
 #endif 
 } 
  
-void FRendererModule::PrepareSwapChain(FRHISwapChainRef SwapChain) 
-{ 
-    if (Renderer)
-    {
-        Renderer->PrepareSwapChain(SwapChain);
-    }
-}
-
-void FRendererModule::PresentSwapChain(FRHISwapChainRef SwapChain)
-{
-    if (Renderer)
-    {
-        Renderer->PresentSwapChain(SwapChain);
-    }
-}
-
 void FRendererModule::ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace)
 {
     if (Renderer)

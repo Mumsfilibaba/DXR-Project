@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Time/ElapsedTime.h"
-#include "Core/Threading/AsyncTask.h"
+#include "Core/Platform/PlatformEvent.h"
+#include "Core/Platform/CriticalSection.h"
 #include "Core/Containers/Queue.h"
 #include "Application/Events.h"
 #include "Application/InputHandler.h"
@@ -140,25 +141,21 @@ public:
 
     bool Initialize();
     bool InitializeRenderPasses();
-    
-    void BeginFrame();
-    
-    void Tick(FScene* Scene);
 
-    void PrepareResources(const FSceneRenderView& SceneRenderView, FScene* Scene);
+    // Records BeginFrame + scene apply/cull + RenderSceneView into the scene commandlist and dispatches it.
+    void RenderThread_RenderSceneFrame(const FSceneRenderPacket& Packet);
+    void RenderThread_PrepareResources(const FSceneRenderView& SceneRenderView, FScene* Scene);
 
-    void RenderSceneView(const FSceneRenderView& SceneRenderView);
-    void RenderUI();
+    // Records ImGui draw data into the UI command list.
+    void RecordUI();
 
-    void EndFrame(); 
- 
+    // Main thread: dispatches the UI command list plus present for the frame described by Packet.
+    void SubmitUIAndPresent(const FSceneRenderPacket& Packet);
+
     void RequestEditorObjectPick(FScene* Scene, uint32 PixelX, uint32 PixelY); 
     bool PollEditorObjectPickResult(FScene* Scene, uint32& OutObjectID); 
  
     void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth, uint32 InHeight, EFormat InFormat = EFormat::Unknown, EColorSpace InColorSpace = EColorSpace::Unknown); 
-    void PrepareSwapChain(FRHISwapChainRef SwapChain); 
-    void PresentSwapChain(FRHISwapChainRef SwapChain); 
-
     void ResizeResources(uint32 InWidth, uint32 InHeight);
 
     uint32 GetRenderWidth() const
@@ -205,9 +202,16 @@ public:
 
 private: 
     bool InitShadingImage(); 
-    void PrepareCameraData(const FSceneRenderView& SceneRenderView, FScene* Scene);
+    void RenderThread_PrepareCameraData(const FSceneRenderView& SceneRenderView, FScene* Scene);
+
+    // Render thread: opens the scene command list for the frame before scene passes are recorded.
+    void RenderThread_BeginSceneCommandList(const FSceneRenderPacket& Packet);
+
+    // Render thread: records all scene passes for the view into the scene command list.
+    void RenderThread_RenderSceneView(const FSceneRenderView& SceneRenderView, const TArray<uint32>& SelectedObjectIDs);
+
 #if EDITOR_BUILD
-    void ProcessEditorObjectPickRequests(FRHICommandList& InCommandList, FFrameResources& InResources, FScene* CurrentScene);
+    void RenderThread_ProcessEditorObjectPickRequests(FRHICommandList& InCommandList, FFrameResources& InResources, FScene* CurrentScene);
 #endif
  
     // RenderPasses and Resources 
@@ -241,20 +245,15 @@ private:
     FDebugRenderer*              DebugRenderer;
     FDebugViewPass*              DebugViewPass;
     FRayTracer                   RayTracer;
-
-    // RHI
     FGenericPlatformEvent*       LastFrameFinishedEvent;
     FRHIQueryRef                 TimestampQueries;
     FRHICommandList              CommandList;
-
+    FRHICommandList              UICommandList;
     FRHITextureRef               ShadingImage;
     FRHIComputePipelineStateRef  ShadingRatePipeline;
     FRHIComputeShaderRef         ShadingRateShader;
-
-    // SwapChains that should be presented at the end of the frame
-    TArray<FRHISwapChainRef>     SwapChainsToPrepare;
-    TArray<FRHISwapChainRef>     SwapChainsToPresent;
     TArray<FSwapChainResizeInfo> SwapChainsToResize;
+    FCriticalSection             SwapChainsToResizeCS;
 
 #if EDITOR_BUILD
     struct FEditorObjectPickRequest
@@ -266,38 +265,39 @@ private:
 
     struct FEditorObjectPickInFlight
     {
-        FScene*         Scene = nullptr;
+        FScene*       Scene = nullptr;
 
-        FRHIFenceRef    Fence;
-        FRHIBufferRef   ReadbackBuffer;
+        FRHIFenceRef  Fence;
+        FRHIBufferRef ReadbackBuffer;
 
-        uint32          SampleRadius = 0;
-        uint32          PixelX       = 0;
-        uint32          PixelY       = 0;
-        uint32          TexWidth     = 0;
-        uint32          TexHeight    = 0;
+        uint32        SampleRadius = 0;
+        uint32        PixelX       = 0;
+        uint32        PixelY       = 0;
+        uint32        TexWidth     = 0;
+        uint32        TexHeight    = 0;
 
         // Normal window (around PixelX/PixelY).
-        uint32          NormalBaseOffset     = 0;
-        uint32          NormalRowStrideBytes = 0;
-        uint32          NormalWidth          = 0;
-        uint32          NormalHeight         = 0;
-        uint32          NormalCenterX        = 0;
-        uint32          NormalCenterY        = 0;
+        uint32        NormalBaseOffset     = 0;
+        uint32        NormalRowStrideBytes = 0;
+        uint32        NormalWidth          = 0;
+        uint32        NormalHeight         = 0;
+        uint32        NormalCenterX        = 0;
+        uint32        NormalCenterY        = 0;
 
         // Optional flipped-Y window.
-        uint32          bHasFlippedWindow : 1 = 0;
-        uint32          FlippedBaseOffset     = 0;
-        uint32          FlippedRowStrideBytes = 0;
-        uint32          FlippedWidth          = 0;
-        uint32          FlippedHeight         = 0;
-        uint32          FlippedCenterX        = 0;
-        uint32          FlippedCenterY        = 0;
+        uint32        bHasFlippedWindow : 1 = 0;
+        uint32        FlippedBaseOffset     = 0;
+        uint32        FlippedRowStrideBytes = 0;
+        uint32        FlippedWidth          = 0;
+        uint32        FlippedHeight         = 0;
+        uint32        FlippedCenterX        = 0;
+        uint32        FlippedCenterY        = 0;
     };
 
     static constexpr uint32 MaxInFlightObjectPicks = 4;
 
     TQueue<FEditorObjectPickRequest, EQueueType::MPSC> PendingObjectPicks;
     TArray<FEditorObjectPickInFlight>                  InFlightObjectPicks;
+    FCriticalSection                                   ObjectPickStateCS;
 #endif
 };

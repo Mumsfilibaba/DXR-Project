@@ -3,16 +3,14 @@
 #include "RHI/RHIQuery.h"
 #include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
-#include "Engine/World/Actors/Actor.h"
-#include "Engine/World/Components/StaticMeshComponent.h"
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
+#include "Renderer/Scene/SceneProxyData.h"
 
-FSceneStaticMesh::FSceneStaticMesh(FScene* InScene, FStaticMeshComponent* MeshComponent)
+FSceneStaticMesh::FSceneStaticMesh(FScene* InScene, const FStaticMeshInitData& InitData)
     : FSceneObject(InScene)
-    , Materials()
-    , Mesh(nullptr)
-    , Actor(nullptr)
+    , Materials(InitData.Materials)
+    , Mesh(InitData.Mesh)
     , Geometry(nullptr)
     , VertexBuffer(nullptr)
     , IndexBuffer(nullptr)
@@ -20,7 +18,6 @@ FSceneStaticMesh::FSceneStaticMesh(FScene* InScene, FStaticMeshComponent* MeshCo
     , NumIndices(0)
     , IndexFormat(EIndexFormat::Unknown)
 {
-    Mesh = MeshComponent->GetMesh();
     CHECK(Mesh != nullptr);
 
     Geometry     = Mesh->GetRayTracingGeometry();
@@ -30,35 +27,25 @@ FSceneStaticMesh::FSceneStaticMesh(FScene* InScene, FStaticMeshComponent* MeshCo
     NumIndices   = Mesh->GetIndexCount();
     IndexFormat  = Mesh->GetIndexFormat();
 
-    Actor     = MeshComponent->GetActorOwner();
-    Materials = MeshComponent->GetMaterials();
-
-    TransformBuffer.ObjectID = InScene ? InScene->GetOrCreateObjectID(Actor) : 0;
+    TransformBuffer.ObjectID = InitData.ObjectID;
 }
 
-FSceneStaticMesh::~FSceneStaticMesh()
-{
-}
+FSceneStaticMesh::~FSceneStaticMesh() = default;
 
-void FSceneStaticMesh::Tick()
+void FSceneStaticMesh::RenderThread_ApplyUpdate(const FStaticMeshProxyUpdate& Update)
 {
-    // Retrieve the transforms for each object so that they are ready for the GPU
-    const FActorTransform& Transform = Actor->GetTransform();
-    const Matrix4 TransformM = Transform.GetTransformMatrix();
-    const Matrix4 TransformT = TransformM.GetTranspose();
-
-    // Store a row-major float3x4 (3 first rows) for shaders + DXR instance transforms.
+    // Store a row-major float3x4 (3 first rows) for shaders + DXR instance transforms. The shader
+    // treats positions as column vectors, so we upload the transpose of the affine transform.
+    const Matrix4 TransformT = Update.TransformMatrix.GetTranspose();
     TransformBuffer.Transform = Matrix3x4(TransformT);
 
-    // For normals/tangents we need inverse-transpose(Transform). Since Transform = transpose(TransformM),
-    // we have inverse-transpose(Transform) = inverse(TransformM).
-    const Matrix4 TransformInv = Transform.GetTransformMatrixInverse();
-    TransformBuffer.TransformInvT = Matrix3x4(TransformInv);
+    // For normals/tangents we need inverse-transpose(Transform). Since the uploaded Transform is the
+    // transpose of the world matrix, inverse-transpose(Transform) == inverse(world matrix).
+    TransformBuffer.TransformInvT = Matrix3x4(Update.TransformMatrixInverse);
 
-    // Create a world bounding-box
+    // Create a world bounding-box from the mesh's local AABB.
     const FAABB& LocalBounds = Mesh->GetAABB();
-
-    const Vector3 Max = Transform.GetTransformMatrix().Transform(LocalBounds.Max);
-    const Vector3 Min = Transform.GetTransformMatrix().Transform(LocalBounds.Min);
-    WorldBounds = FAABB(Max, Min); 
+    const Vector3 Max = Update.TransformMatrix.Transform(LocalBounds.Max);
+    const Vector3 Min = Update.TransformMatrix.Transform(LocalBounds.Min);
+    WorldBounds = FAABB(Max, Min);
 }

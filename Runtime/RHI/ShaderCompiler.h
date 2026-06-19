@@ -51,7 +51,7 @@ class RHI_API FShaderCompiler
 public:
     static EShaderOutputLanguage GetOutputLanguageBasedOnRHI();
 
-    static bool Create(const String& InAssetPath);
+    static bool Initialize(const String& InAssetPath);
     static void Destroy();
 
     static FORCEINLINE FShaderCompiler& Get()
@@ -68,7 +68,7 @@ private:
     FShaderCompiler(const String& InAssetPath);
     ~FShaderCompiler();
 
-    bool Initialize();
+    bool InitializeDXC();
     bool Compile(const String& ShaderSource, const String& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
     bool ConvertSpirvToMetalShader(const String& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
     bool DumpContentToFile(const TArray<uint8>& OutByteCode, const String& Filename);

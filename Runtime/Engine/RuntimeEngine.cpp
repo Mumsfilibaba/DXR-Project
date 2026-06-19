@@ -48,18 +48,14 @@ void FRuntimeEngine::Release()
     FEngine::Release();
 }
 
-void FRuntimeEngine::RenderFrame()
+FSceneRenderPacket FRuntimeEngine::BuildRenderPacket()
 {
     TRACE_FUNCTION_SCOPE();
 
-    // Render directly to the BackBuffer
-    FSceneRenderView RenderView;
-    RenderView.Scene        = GetWorld()->GetSceneInterface();
-    RenderView.RenderTarget = GetSceneViewport()->GetRHISwapChain()->GetBackBuffer();
+    // Render directly to the BackBuffer.
+    FSceneRenderPacket Packet = FEngine::BuildRenderPacket();
+    Packet.View.Scene        = GetWorld()->GetSceneInterface();
+    Packet.View.RenderTarget = GetSceneViewport()->GetRHISwapChain()->GetBackBuffer();
 
-    IRendererModule* RendererModule = IRendererModule::Get();
-    RendererModule->RenderSceneView(RenderView);
-
-    // Render the rest
-    FEngine::RenderFrame();
+    return Packet;
 }

@@ -22,12 +22,12 @@ public:
     virtual ~FEditorEngine();
 
     // FEngine Interface
-    virtual bool Init()             override final;
-    virtual bool InitPostRenderer() override final;
-    virtual void Release()          override final;
-
+    virtual bool Init()                override final;
+    virtual bool InitPostRenderer()    override final;
     virtual void Tick(float DeltaTime) override final;
-    virtual void RenderFrame()         override final;
+    virtual void Release()             override final;
+
+    virtual FSceneRenderPacket BuildRenderPacket() override final;
 
     // Editor Widgets
     const TSharedPtr<FEditorDockspaceWidget>&        GetDockspaceWidget()        const { return DockspaceWidget; }
@@ -64,7 +64,6 @@ private:
     FLight*                                   SelectedLight;
     FCamera*                                  SelectedCamera;
     FLightProbe*                              SelectedLightProbe;
-    // Editor Interface
     TSharedPtr<FEditorDockspaceWidget>        DockspaceWidget;
     TSharedPtr<FEditorFooterWidget>           FooterWidget;
     TSharedPtr<FEditorOutputLogWidget>        OutputLogWidget;

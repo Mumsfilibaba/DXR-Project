@@ -203,7 +203,7 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
 
     if (Scene)
     {
-        if (FSceneSkyLight* SkyLight = Scene->SkyLight)
+        if (FSceneSkyLight* SkyLight = Scene->GetSkyLight())
         {
             CommandList.SetShaderResourceView(PShader.Get(), SkyLight->DiffuseCubeMap->GetShaderResourceView(), 0);
             CommandList.SetShaderResourceView(PShader.Get(), SkyLight->SpecularCubeMap->GetShaderResourceView(), 1);
@@ -220,7 +220,7 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     CommandList.SetSamplerState(PShader.Get(), FrameResources.PointLightShadowSampler.Get(), 3);
     //CmdList.SetSamplerState(PShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 4);
 
-    for (const FMeshBatch& Batch : Scene->CameraView.GetMeshBatches())
+    for (const FMeshBatch& Batch : Scene->GetCameraView().GetMeshBatches())
     {
         FMaterial* Material = Batch.Material;
         if (!Material->ShouldRenderInForwardPass())
@@ -256,15 +256,15 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
 
             FRHIBuffer* VertexBuffers[] =
             {
-                StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
-                StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Normals),
-                StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
+                StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Normals),
+                StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
             };
 
             CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
-            CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
+            CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
 
-            CommandList.UpdateBuffer(FrameResources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->GetTransformShaderData());
+            CommandList.UpdateBuffer(FrameResources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->TransformBuffer);
             CommandList.SetConstantBuffer(VShader.Get(), FrameResources.TransformBuffer.Get(), 1);
 
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);

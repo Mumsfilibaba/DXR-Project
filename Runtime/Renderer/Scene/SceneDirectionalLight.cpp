@@ -1,11 +1,9 @@
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneDirectionalLight.h"
-#include "Engine/World/Camera.h"
-#include "Engine/World/Lights/DirectionalLight.h"
+#include "Renderer/Scene/SceneProxyData.h"
 
-FSceneDirectionalLight::FSceneDirectionalLight(FScene* InScene, FDirectionalLight* InDirectionalLight)
+FSceneDirectionalLight::FSceneDirectionalLight(FScene* InScene)
     : FSceneObject(InScene)
-    , DirectionalLight(InDirectionalLight)
     , ShadowView()
     , Color(1.0f, 1.0f, 1.0f)
     , Direction(-Vector3::Up)
@@ -19,27 +17,18 @@ FSceneDirectionalLight::FSceneDirectionalLight(FScene* InScene, FDirectionalLigh
     ShadowMatrix.SetIdentity();
 }
 
-FSceneDirectionalLight::~FSceneDirectionalLight()
+FSceneDirectionalLight::~FSceneDirectionalLight() = default;
+
+void FSceneDirectionalLight::RenderThread_ApplyUpdate(const FDirectionalLightProxyUpdate& Update)
 {
-    DirectionalLight = nullptr;
-}
-
-void FSceneDirectionalLight::Tick()
-{
-    // Retrieve color 
-    Vector3 LocalColor = DirectionalLight->GetColor();
-
-    // TODO: Just specify the light color directly Vector4(100.0f, 1.0f, 58.0f, 6.0f)
-    Color = LocalColor * DirectionalLight->GetIntensity();
-
-    // Update any values that might have been updated
-    Direction            = DirectionalLight->GetDirectionVector();
-    ShadowNearPlane      = DirectionalLight->GetShadowNearPlane();
-    ShadowFarPlane       = DirectionalLight->GetShadowFarPlane();
-    ShadowBias           = DirectionalLight->GetShadowBias();
-    ShadowPositionOffset = DirectionalLight->GetShadowPositionOffset();
-    CascadeSplitLambda   = DirectionalLight->GetCascadeSplitLambda();
-    LightArea            = DirectionalLight->GetLightArea();
+    Color                = Update.Color;
+    Direction            = Update.Direction;
+    ShadowNearPlane      = Update.ShadowNearPlane;
+    ShadowFarPlane       = Update.ShadowFarPlane;
+    ShadowBias           = Update.ShadowBias;
+    ShadowPositionOffset = Update.ShadowPositionOffset;
+    CascadeSplitLambda   = Update.CascadeSplitLambda;
+    LightArea            = Update.LightArea;
 
     // Update ShadowMatrix
     Vector3 FrustumCorners[8] =
@@ -55,7 +44,7 @@ void FSceneDirectionalLight::Tick()
     };
 
     // NOTE: Need to transpose since this matrix is assumed to be used on the GPU
-    Matrix4 InvViewProjection = GetScene()->Camera->GetViewProjectionInverseMatrix();
+    Matrix4 InvViewProjection = Update.CameraViewProjectionInverse;
     InvViewProjection = InvViewProjection.GetTranspose();
 
     // Calculate the center of frustum
@@ -70,7 +59,6 @@ void FSceneDirectionalLight::Tick()
 
     // Calculate a Shadow-matrix
     {
-        // Update up-vector
         UpVector = Vector3::Up;
 
         Vector3 ShadowLookAt           = FrustumCenter - Direction;

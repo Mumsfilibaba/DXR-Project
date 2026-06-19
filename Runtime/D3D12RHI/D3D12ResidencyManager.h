@@ -92,6 +92,9 @@ public:
     FD3D12PagingWorker(ID3D12Device* InDevice);
     ~FD3D12PagingWorker();
 
+    // Creates the wake/completion events and the OS thread for this worker.
+    bool Initialize(const CHAR* InThreadName);
+
     void RequestMakeResident(TArray<ID3D12Pageable*>&& Pageables);
     bool WaitForCompletion();
 
@@ -105,6 +108,7 @@ private:
     HRESULT                 LastResult;
     FPlatformEvent*         WakeEvent;
     FPlatformEvent*         CompletionEvent;
+    FGenericPlatformThread* Thread;
     FCriticalSection        RequestMutex;
     bool                    bRunning;
 };
@@ -143,7 +147,6 @@ private:
     TArray<FD3D12ResidencyHandle*> TrackedObjects;
     FCriticalSection               Mutex;
     FD3D12PagingWorker*            PagingWorker;
-    FGenericPlatformThread*        PagingThread;
     TComPtr<ID3D12Fence>           PagingFence;
     uint64                         PagingFenceValue;
     HANDLE                         BudgetChangeEvent;

@@ -94,6 +94,7 @@
 #pragma warning(disable : 4201) // nonstandard extension used: nameless struct/union
 #pragma warning(disable : 4324) // structure was padded due to alignment specifier
 #pragma warning(disable : 5054) // operator '==': deprecated between enumerations of different types
+#pragma warning(disable : 4624) // destructor was implicitly deleted (intentional for FNonConstructible "namespace" structs)
 
 // TODO: Investigate if this can be removed (4275, 4251)
 #pragma warning(disable : 4275) // Non DLL-interface class used '...' as base for DLL-interface class '...'

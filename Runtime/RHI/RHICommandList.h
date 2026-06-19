@@ -497,30 +497,6 @@ void FRHICommandExecuteCommandList::Execute(IRHICommandContext& CommandContext)
     CommandList->~FRHICommandList();
 }
 
-class RHI_API FRHIThread : public FRunnable, FNonCopyable
-{
-    typedef TQueue<FRHICommandList*, EQueueType::MPSC> FRHIThreadTaskQueue;
-    
-public:
-    FRHIThread();
-    ~FRHIThread();
-
-    virtual bool Start() override final;
-    virtual int32 Run() override final;
-    virtual void Stop() override final;
-
-    bool Startup();
-    void Execute(FRHICommandList* InCommandList);
-    void WaitForOutstandingTasks();
-
-private:
-    FGenericPlatformThread* Thread;
-    FRHIThreadTaskQueue     Tasks;
-    AtomicInt64             NumSubmittedTasks;
-    AtomicInt64             NumCompletedTasks;
-    bool                    bIsRunning;
-};
-
 class RHI_API FRHICommandListExecutor : FNonCopyable
 {
 public:
@@ -564,13 +540,9 @@ private:
     FRHICommandListExecutor(IRHICommandContext* InDefaultCommandContext);
     ~FRHICommandListExecutor();
 
-    bool InitializeRHIThread();
-    void ReleaseRHIThread();
-
     TArray<FRHIResource*> DeletedResources;
     FCriticalSection      DeletedResourcesCS;
     IRHICommandContext*   DefaultCommandContext;
-    FRHIThread*           RHIThread;
 
     static FRHICommandListExecutor* GCommandListExecutor;
 };

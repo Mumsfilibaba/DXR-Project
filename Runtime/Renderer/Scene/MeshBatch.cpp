@@ -18,7 +18,7 @@ void FMeshBatch::AddStaticMesh(FSceneStaticMesh* StaticMesh, int32 MaterialIndex
     MeshReference.StaticMesh   = StaticMesh;
     MeshReference.SubMeshIndex = MaterialIndex;
     
-    const FSubMesh& SubMesh = StaticMesh->GetMesh()->GetSubMesh(MaterialIndex);
+    const FSubMesh& SubMesh = StaticMesh->Mesh->GetSubMesh(MaterialIndex);
     MeshReference.BaseVertex  = SubMesh.BaseVertex;
     MeshReference.StartIndex  = SubMesh.StartIndex;
     MeshReference.VertexCount = SubMesh.VertexCount;
@@ -31,9 +31,7 @@ FMeshBatcher::FMeshBatcher()
 {
 }
 
-FMeshBatcher::~FMeshBatcher()
-{
-}
+FMeshBatcher::~FMeshBatcher() = default;
 
 void FMeshBatcher::AddStaticMesh(FSceneStaticMesh* StaticMesh)
 {

@@ -152,13 +152,15 @@
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/Utility.h"
 
-#include "Core/Threading/AsyncTask.h"
-#include "Core/Threading/TaskManager.h"
 #include "Core/Threading/Atomic.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/Spinlock.h"
 #include "Core/Threading/Runnable.h"
 #include "Core/Threading/ThreadManager.h"
+
+#include "Core/Tasks/Tasks.h"
+#include "Core/Tasks/TaskGraph.h"
+#include "Core/Tasks/ParallelFor.h"
 
 #include "Core/Time/ElapsedTime.h"
 #include "Core/Time/Time.h"

@@ -179,6 +179,49 @@ void FWorld::AddSceneComponent(FSceneComponent* SceneComponent)
     }
 }
 
+void FWorld::RemoveLight(FLight* InLight)
+{
+    if (!InLight)
+    {
+        return;
+    }
+
+    Lights.Remove(InLight);
+
+    if (Scene)
+    {
+        Scene->RemoveLight(InLight);
+    }
+}
+
+void FWorld::RemoveLightProbe(FLightProbe* InLightProbe)
+{
+    if (!InLightProbe)
+    {
+        return;
+    }
+
+    LightProbes.Remove(InLightProbe);
+
+    if (Scene)
+    {
+        Scene->RemoveLightProbe(InLightProbe);
+    }
+}
+
+void FWorld::RemoveSceneComponent(FSceneComponent* SceneComponent)
+{
+    if (!Scene || !SceneComponent)
+    {
+        return;
+    }
+
+    if (FStaticMeshComponent* MeshComponent = Cast<FStaticMeshComponent>(SceneComponent))
+    {
+        Scene->RemoveStaticMesh(MeshComponent);
+    }
+}
+
 void FWorld::SetSceneInterface(IScene* InScene)
 {
     if (InScene)

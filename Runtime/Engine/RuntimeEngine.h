@@ -10,9 +10,10 @@ public:
     // FEngine Interface
     virtual bool Init() override final;
     virtual void Release() override final;
-    virtual void RenderFrame() override final;
+
+    virtual FSceneRenderPacket BuildRenderPacket() override final;
 
 private:
-    TSharedPtr<class FRuntimeConsoleWidget> ConsoleWidget;
+    TSharedPtr<class FRuntimeConsoleWidget>      ConsoleWidget;
     TSharedPtr<class FEditorFrameProfilerWidget> ProfilerWidget;
 };

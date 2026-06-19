@@ -184,23 +184,23 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
     LightProbeInfos.Clear();
 
     // Update DirectionalLight
-    if (FSceneDirectionalLight* DirectionalLight = Scene->DirectionalLight)
+    if (FSceneDirectionalLight* DirectionalLight = Scene->GetDirectionalLight())
     {
         // Update data necessary for other stages
-        DirectionalLightData.Color         = DirectionalLight->GetColor();
-        DirectionalLightData.ShadowBias    = DirectionalLight->GetShadowBias();
-        DirectionalLightData.Direction     = DirectionalLight->GetDirectionVector();
-        DirectionalLightData.UpVector      = DirectionalLight->GetUpVector();
-        DirectionalLightData.LightSize     = DirectionalLight->GetLightArea();
-        DirectionalLightData.ShadowMatrix  = DirectionalLight->GetShadowMatrix();
+        DirectionalLightData.Color         = DirectionalLight->Color;
+        DirectionalLightData.ShadowBias    = DirectionalLight->ShadowBias;
+        DirectionalLightData.Direction     = DirectionalLight->Direction;
+        DirectionalLightData.UpVector      = DirectionalLight->UpVector;
+        DirectionalLightData.LightSize     = DirectionalLight->LightArea;
+        DirectionalLightData.ShadowMatrix  = DirectionalLight->ShadowMatrix;
         DirectionalLightData.ShadowMatrix  = DirectionalLightData.ShadowMatrix.GetTranspose();
         DirectionalLightDataDirty = true;
 
         // Update HLSL data
-        CascadeGenerationData.CascadeSplitLambda  = DirectionalLight->GetCascadeSplitLambda();
-        CascadeGenerationData.LightPositionOffset = DirectionalLight->GetShadowPositionOffset();
-        CascadeGenerationData.LightNearPlane      = DirectionalLight->GetShadowNearPlane();
-        CascadeGenerationData.LightFarPlane       = DirectionalLight->GetShadowFarPlane();
+        CascadeGenerationData.CascadeSplitLambda  = DirectionalLight->CascadeSplitLambda;
+        CascadeGenerationData.LightPositionOffset = DirectionalLight->ShadowPositionOffset;
+        CascadeGenerationData.LightNearPlane      = DirectionalLight->ShadowNearPlane;
+        CascadeGenerationData.LightFarPlane       = DirectionalLight->ShadowFarPlane;
         CascadeGenerationData.LightUp             = DirectionalLightData.UpVector;
         CascadeGenerationData.LightDirection      = DirectionalLightData.Direction;
         CascadeGenerationData.ShadowMatrix        = DirectionalLightData.ShadowMatrix;
@@ -228,46 +228,30 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         CascadeGenerationDataDirty = true;
     }
 
-    // Update PointLights
-    for (int32 Index = 0; Index < Scene->PointLights.Size(); Index++)
+    // Update PointLights. Only shadow-casting point lights become scene proxies.
+    for (int32 Index = 0; Index < Scene->GetPointLights().Size(); Index++)
     {
-        FPointLight* PointLight = Scene->PointLights[Index]->PointLight;
+        FScenePointLight* PointLight = Scene->GetPointLights()[Index];
 
-        // Pre-multiply light intensity TODO: Just specify the light color directly Vector4(100.0f, 1.0f, 58.0f, 6.0f)
-        Vector3 Color = PointLight->GetColor();
-        Color = Color * PointLight->GetIntensity();
+        const float Radius = PointLight->ShadowFarPlane;
+        Vector4 PositionAndRadius = Vector4(PointLight->Position, Radius);
 
-        const float Radius = PointLight->GetShadowFarPlane();
-        Vector3 Position = PointLight->GetPosition();
-        Vector4 PositionAndRadius = Vector4(Position, Radius);
+        FShadowCastingPointLightDataHLSL Data;
+        Data.Color      = PointLight->Color;
+        Data.FarPlane   = PointLight->ShadowFarPlane;
+        Data.ShadowBias = PointLight->ShadowBias;
+        Data.Padding0   = 0.0f;
+        Data.Padding1   = 0.0f;
+        Data.Padding2   = 0.0f;
 
-        if (PointLight->IsShadowCaster())
-        {
-            FShadowCastingPointLightDataHLSL Data;
-            Data.Color      = Color;
-            Data.FarPlane   = PointLight->GetShadowFarPlane();
-            Data.ShadowBias = PointLight->GetShadowBias();
-            Data.Padding0   = 0.0f;
-            Data.Padding1   = 0.0f;
-            Data.Padding2   = 0.0f;
-
-            ShadowCastingPointLightsData.Emplace(Data);
-            ShadowCastingPointLightsPosRad.Emplace(PositionAndRadius);
-        }
-        else
-        {
-            FPointLightDataHLSL Data;
-            Data.Color = Color;
-
-            PointLightsData.Emplace(Data);
-            PointLightsPosRad.Emplace(PositionAndRadius);
-        }
+        ShadowCastingPointLightsData.Emplace(Data);
+        ShadowCastingPointLightsPosRad.Emplace(PositionAndRadius);
     }
 
     // Update LightProbes
-    for (int32 Index = 0; Index < Scene->LightProbes.Size(); Index++)
+    for (int32 Index = 0; Index < Scene->GetLightProbes().Size(); Index++)
     {
-        FSceneLightProbe* LightProbe = Scene->LightProbes[Index];
+        FSceneLightProbe* LightProbe = Scene->GetLightProbes()[Index];
 
         FLightProbeInfoHLSL Info;
         Info.BoxOriginWS   = LightProbe->Origin;

@@ -179,12 +179,12 @@ FShaderCompiler::~FShaderCompiler()
     DxcCreateInstanceFunc = nullptr;
 }
 
-bool FShaderCompiler::Create(const String& InAssetPath)
+bool FShaderCompiler::Initialize(const String& InAssetPath)
 {
     CHECK(GShaderCompiler == nullptr);
 
     GShaderCompiler = new FShaderCompiler(InAssetPath);
-    if (!GShaderCompiler->Initialize())
+    if (!GShaderCompiler->InitializeDXC())
     {
         delete GShaderCompiler;
         GShaderCompiler = nullptr;
@@ -222,7 +222,7 @@ EShaderOutputLanguage FShaderCompiler::GetOutputLanguageBasedOnRHI()
     return EShaderOutputLanguage::HLSL;
 }
 
-bool FShaderCompiler::Initialize()
+bool FShaderCompiler::InitializeDXC()
 {
     // Init DXC
     DXCLib = FPlatformLibrary::LoadDynamicLib("dxcompiler");

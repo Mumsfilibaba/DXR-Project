@@ -150,22 +150,26 @@ void FEditorEngine::Tick(float DeltaTime)
     }
 }
 
-void FEditorEngine::RenderFrame()
+FSceneRenderPacket FEditorEngine::BuildRenderPacket()
 {
     TRACE_FUNCTION_SCOPE();
 
-    // Render to a separate render-target
-    FSceneRenderView RenderView;
-    RenderView.Scene        = GetWorld()->GetSceneInterface();
-    RenderView.RenderTarget = ViewportImage.Get();
-    RenderView.DebugView          = ViewportWidget->GetDebugView();
-    RenderView.SecondaryDebugView = ViewportWidget->GetSecondaryDebugView();
+    FSceneRenderPacket Packet = FEngine::BuildRenderPacket();
+    Packet.View.Scene              = GetWorld()->GetSceneInterface();
+    Packet.View.RenderTarget       = ViewportImage.Get();
+    Packet.View.DebugView          = ViewportWidget->GetDebugView();
+    Packet.View.SecondaryDebugView = ViewportWidget->GetSecondaryDebugView();
 
-    IRendererModule* RendererModule = IRendererModule::Get();
-    RendererModule->RenderSceneView(RenderView);
+    // Resolve the editor selection to a stable ObjectID on the main thread so the render thread never reads live editor state.
+    if (FActor* Selected = GetSelectedActor())
+    {
+        if (IScene* Scene = Packet.View.Scene)
+        {
+            Packet.SelectedObjectIDs.Add(Scene->GetOrCreateObjectID(Selected));
+        }
+    }
 
-    // Render the rest
-    FEngine::RenderFrame();
+    return Packet;
 }
 
 void FEditorEngine::SetSelectedActor(FActor* InActor)

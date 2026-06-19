@@ -32,19 +32,13 @@ public:
         return MainThreadHandle == ThreadHandle;
     }
 
-    // Retrieve the main-thread handle
-    void* GetMainThreadHandle() const
-    {
-        return MainThreadHandle;
-    }
-
 private:
     friend class TOptional<FThreadManager>;
     
     FThreadManager();
     ~FThreadManager();
 
-    void*                   MainThreadHandle;
+    void*                           MainThreadHandle;
     TArray<FGenericPlatformThread*> Threads;
-    FCriticalSection        ThreadsCS;
+    FCriticalSection                ThreadsCS;
 };

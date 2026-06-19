@@ -4,24 +4,17 @@
 #include "Renderer/Scene/SceneSkyLight.h"
 #include "Renderer/FrameResources.h"
 
-FSceneSkyLight::FSceneSkyLight(FScene* InScene, FSkyLight* InSkyLight)
+FSceneSkyLight::FSceneSkyLight(FScene* InScene, const FRHITextureRef& InSourceCubeMap)
     : FSceneObject(InScene)
-    , SkyLight(InSkyLight)
+    , SourceCubeMap(InSourceCubeMap)
     , SpecularCubeMap(nullptr)
     , DiffuseCubeMap(nullptr)
 {
-    if (SkyLight)
-    {
-        SourceCubeMap = SkyLight->GetCubeMap();
-    }
 }
 
-FSceneSkyLight::~FSceneSkyLight()
-{
-    SkyLight = nullptr;
-}
+FSceneSkyLight::~FSceneSkyLight() = default;
 
-void FSceneSkyLight::FilterStaticCubeMaps()
+void FSceneSkyLight::RenderThread_FilterStaticCubeMaps()
 {
     if (!SourceCubeMap)
     {
