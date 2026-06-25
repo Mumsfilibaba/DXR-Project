@@ -157,3 +157,6 @@ public:
         Super::Unlock();
     }
 };
+
+// Convenience alias for a parameter-less multicast delegate (void signature).
+using FMulticastDelegate = TMulticastDelegate<>;

@@ -2,16 +2,18 @@
 
 #if RUN_TQUEUE_TEST
 #include "TestUtils.h"
+
 #include <Core/Containers/Queue.h>
 #include <Core/Containers/Array.h>
 #include <Core/Containers/String.h>
+#include <Core/Containers/UniquePtr.h>
 #include <Core/Threading/Runnable.h>
 #include <Core/Platform/PlatformThread.h>
 
 // Single Producer, Single Consumer
 namespace SPSCTest
 {
-    bool Test()
+    static bool Test()
     {
         TQueue<String, EQueueType::SPSC> Queue;
         for (int64 Index = 1; Index <= 50; ++Index)
@@ -33,19 +35,21 @@ namespace SPSCTest
         for (int32 Index = 0; Index < 50; ++Index)
         {
             const String ExpectedItem = TTypeToString<int64>::ToString(Index + 1);
-            TEST_CHECK(Items[Index] == ExpectedItem);
+            if (Items[Index] != ExpectedItem)
+            {
+                return false;
+            }
         }
 
-        SUCCESS();
+        return true;
     }
 }
 
 // Multiple Producers, Single Consumer
 namespace MPSCTest
 {
-    TQueue<String, EQueueType::MPSC>* GQueue = nullptr;
-    
-    bool GIsRunning = true;
+    static TQueue<String, EQueueType::MPSC>* GQueue = nullptr;
+    static bool GIsRunning = true;
 
     constexpr int64 NumItemsPerProducer = 500;
     constexpr int64 ProducerOffset      = 1000;
@@ -60,7 +64,6 @@ namespace MPSCTest
 
         int32 Run()
         {
-            // Do some work, otherwise to fast
             for (int64 Index = 0; Index < NumItemsPerProducer; ++Index)
             {
                 const String NewItem = TTypeToString<int64>::ToString(ThreadIndex + Index);
@@ -79,7 +82,8 @@ namespace MPSCTest
         int64 ThreadIndex;
     };
 
-    TArray<String>* GItems = nullptr;
+    static TArray<String>* GItems = nullptr;
+
     struct FConsumerThread : public FRunnable
     {
         int32 Run()
@@ -102,9 +106,11 @@ namespace MPSCTest
         }
     };
 
-    bool Test()
+    static bool Test()
     {
-        // Create the Queue and Array on the heap to avoid wrong reporting of memory leaks
+        bool bResult = true;
+
+        GIsRunning = true;
         GQueue = new TQueue<String, EQueueType::MPSC>;
         GItems = new TArray<String>;
 
@@ -117,7 +123,6 @@ namespace MPSCTest
 
         FGenericPlatformThread* Consumer = FPlatformThread::Create(new FConsumerThread, "ConsumerThread", false);
 
-        // Wait for all the thread to finish
         for (FGenericPlatformThread* Producer : Producers)
         {
             Producer->WaitForCompletion();
@@ -125,21 +130,19 @@ namespace MPSCTest
 
         Consumer->WaitForCompletion();
 
-        TEST_CHECK(GItems->Size() == NumProducers * NumItemsPerProducer);
+        bResult = (GItems->Size() == NumProducers * NumItemsPerProducer) && bResult;
 
-        // Check so the array contains the elements from all producers
-        for (int32 ProducerIndex = 0; ProducerIndex < NumProducers; ++ProducerIndex) 
+        for (int32 ProducerIndex = 0; ProducerIndex < NumProducers; ++ProducerIndex)
         {
             for (int32 Index = 0; Index < NumItemsPerProducer; ++Index)
             {
                 const String Expected = TTypeToString<int64>::ToString(((ProducerIndex + 1) * ProducerOffset) + Index);
-                TEST_CHECK(GItems->Contains(Expected) == true);
+                bResult = GItems->Contains(Expected) && bResult;
             }
         }
 
         GQueue->Clear();
 
-        // Delete the Queue and Array
         delete GQueue;
         GQueue = nullptr;
 
@@ -154,8 +157,7 @@ namespace MPSCTest
         }
 
         Producers.Clear();
-
-        SUCCESS();
+        return bResult;
     }
 }
 
@@ -165,15 +167,13 @@ namespace SPMCTest
     constexpr int64 NumItems     = 500;
     constexpr int64 NumConsumers = 6;
 
-    TQueue<String, EQueueType::SPMC>* GQueue = nullptr;
+    static TQueue<String, EQueueType::SPMC>* GQueue = nullptr;
+    static bool GIsRunning = true;
 
-    bool GIsRunning = true;
-    
     struct FProducerThread : public FRunnable
     {
         int32 Run()
         {
-            // Do some work, otherwise to fast
             for (int64 Index = 0; Index < NumItems; ++Index)
             {
                 const String NewItem = TTypeToString<int64>::ToString(Index);
@@ -209,13 +209,15 @@ namespace SPMCTest
         TArray<String> Items;
     };
 
-    bool Test()
+    static bool Test()
     {
-        // Create the Queue on the heap to avoid wrong reporting of memory leaks
+        bool bResult = true;
+
+        GIsRunning = true;
         GQueue = new TQueue<String, EQueueType::SPMC>;
 
         FGenericPlatformThread* Producer = FPlatformThread::Create(new FProducerThread, "ProducerThread", false);
-        
+
         TArray<TUniquePtr<FConsumerThread>> ConsumerInterfaces;
         TArray<FGenericPlatformThread*> Consumers;
         for (int32 i = 0; i < NumConsumers; ++i)
@@ -224,7 +226,6 @@ namespace SPMCTest
             Consumers.Add(FPlatformThread::Create(Interface.Get(), "ConsumerThread", false));
         }
 
-        // Wait for all the thread to finish
         Producer->WaitForCompletion();
 
         TArray<String> TotalItems;
@@ -234,18 +235,16 @@ namespace SPMCTest
             TotalItems.Append(static_cast<FConsumerThread*>(Consumer->GetRunnable())->Items);
         }
 
-        TEST_CHECK(TotalItems.IsEmpty() == false);
+        bResult = (TotalItems.IsEmpty() == false) && bResult;
 
-        // Check so the array contains the elements from Producer1
         for (int32 Index = 0; Index < NumItems; ++Index)
         {
             const String Expected = TTypeToString<int64>::ToString(Index);
-            TEST_CHECK(TotalItems.Contains(Expected) == true);
+            bResult = TotalItems.Contains(Expected) && bResult;
         }
 
         GQueue->Clear();
 
-        // Delete the queue
         delete GQueue;
         GQueue = nullptr;
 
@@ -255,29 +254,145 @@ namespace SPMCTest
         }
 
         delete Producer;
-
-        SUCCESS();
+        return bResult;
     }
 }
 
-namespace UnusedPopulatedQueue
+bool TQueue_Test()
 {
-    void Test()
+    TEST_BEGIN();
+
+    TEST_SECTION("Empty queue / IsEmpty / Size / Peek");
     {
-        TQueue<String, EQueueType::SPSC> Queue;
-        for (int64 Index = 0; Index < 50; ++Index)
-        {
-            const String Item = "Some long string that is longer than the small string optimization" + TTypeToString<int64>::ToString(Index);
-            Queue.Enqueue(::Move(Item));
-        }
-    }
-}
+        TQueue<int32> Queue;
+        TEST_EXPECT(Queue.IsEmpty());
+        TEST_EXPECT_EQ(Queue.Size(), 0);
+        TEST_EXPECT(Queue.Peek() == nullptr);
 
-void TQueue_Test()
-{
-    SPSCTest::Test();
-    MPSCTest::Test();
-    SPMCTest::Test();
-    UnusedPopulatedQueue::Test();
+        int32 Out = -1;
+        TEST_EXPECT(!Queue.Peek(Out));
+        TEST_EXPECT(!Queue.Dequeue(Out));
+    }
+
+    TEST_SECTION("Enqueue / Size / Peek (FIFO order)");
+    {
+        TQueue<int32> Queue;
+        TEST_EXPECT(Queue.Enqueue(1));
+        TEST_EXPECT(Queue.Enqueue(2));
+        TEST_EXPECT(Queue.Enqueue(3));
+        TEST_EXPECT(!Queue.IsEmpty());
+        TEST_EXPECT_EQ(Queue.Size(), 3);
+
+        int32 Front = -1;
+        TEST_EXPECT(Queue.Peek(Front));
+        TEST_EXPECT_EQ(Front, 1);
+        TEST_EXPECT(Queue.Peek() != nullptr);
+        TEST_EXPECT_EQ(*Queue.Peek(), 1);
+        TEST_EXPECT_EQ(Queue.Size(), 3);
+    }
+
+    TEST_SECTION("Dequeue preserves FIFO order");
+    {
+        TQueue<int32> Queue;
+        Queue.Enqueue(10);
+        Queue.Enqueue(20);
+        Queue.Enqueue(30);
+
+        int32 Value = 0;
+        TEST_EXPECT(Queue.Dequeue(Value));
+        TEST_EXPECT_EQ(Value, 10);
+        TEST_EXPECT(Queue.Dequeue(Value));
+        TEST_EXPECT_EQ(Value, 20);
+        TEST_EXPECT_EQ(Queue.Size(), 1);
+
+        TEST_EXPECT(Queue.Dequeue());
+        TEST_EXPECT(Queue.IsEmpty());
+        TEST_EXPECT(!Queue.Dequeue(Value));
+    }
+
+    TEST_SECTION("Enqueue move overload");
+    {
+        TQueue<String> Queue;
+        String Item = "Hello";
+        TEST_EXPECT(Queue.Enqueue(::Move(Item)));
+        TEST_EXPECT_EQ(Queue.Size(), 1);
+
+        String Out;
+        TEST_EXPECT(Queue.Dequeue(Out));
+        TEST_EXPECT(Out.Equals("Hello"));
+    }
+
+    TEST_SECTION("Clear");
+    {
+        TQueue<int32> Queue;
+        Queue.Enqueue(1);
+        Queue.Enqueue(2);
+        Queue.Enqueue(3);
+        Queue.Clear();
+
+        TEST_EXPECT(Queue.IsEmpty());
+        TEST_EXPECT_EQ(Queue.Size(), 0);
+    }
+
+    TEST_SECTION("DequeueAll");
+    {
+        TQueue<int32> Queue;
+        Queue.Enqueue(5);
+        Queue.Enqueue(6);
+        Queue.Enqueue(7);
+
+        TArray<int32> Out;
+        Queue.DequeueAll(Out);
+        
+        TEST_EXPECT_EQ(Out.Size(), 3);
+        TEST_EXPECT(Queue.IsEmpty());
+        TEST_EXPECT(Out.Contains(5));
+        TEST_EXPECT(Out.Contains(6));
+        TEST_EXPECT(Out.Contains(7));
+    }
+
+    TEST_SECTION("Concurrency: SPSC / MPSC / SPMC");
+    {
+        TEST_EXPECT(SPSCTest::Test());
+        TEST_EXPECT(MPSCTest::Test());
+        TEST_EXPECT(SPMCTest::Test());
+    }
+
+    TEST_SECTION("TQueue enqueue/dequeue stress (FInstanced, FIFO + no leaks)");
+    {
+        FInstanced::Reset();
+        STRESS_SWEEP(TargetSize, Seed, Stress::DefaultSeedCount)
+        {
+            TQueue<FInstanced> Queue;
+            for (int32 Step = 0; Step < TargetSize; ++Step)
+            {
+                Queue.Enqueue(FInstanced(Step));
+            }
+
+            TEST_EXPECT_EQ(Queue.Size(), TargetSize);
+            TEST_EXPECT(FInstanced::LiveCount() == TargetSize);
+
+            bool bOrdered = true;
+            for (int32 Step = 0; Step < TargetSize; ++Step)
+            {
+                FInstanced Out;
+                const bool bPopped = Queue.Dequeue(Out);
+                bOrdered = bOrdered && bPopped && (Out.GetId() == Step) && Out.IsPayloadValid();
+            }
+
+            if (!bOrdered)
+            {
+                LOG_ERROR("[STRESS FAIL] TQueue seed=%u size=%d", Seed, TargetSize);
+            }
+
+            TEST_EXPECT(bOrdered);
+            TEST_EXPECT(Queue.IsEmpty());
+            TEST_EXPECT(FInstanced::LiveCount() == 0);
+        }
+
+        TEST_EXPECT(FInstanced::LiveCount() == 0);
+    }
+
+    TEST_END();
 }
 #endif

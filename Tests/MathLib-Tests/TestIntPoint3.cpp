@@ -2,99 +2,82 @@
 
 #include <Core/Math/IntVector3.h>
 
-#include <cstdio>
-
 bool TestIntPoint3()
 {
-    // Constructors
-    IntVector3 Point0;
+    TEST_BEGIN();
 
-    IntVector3 Point1(1, 2, -4);
+    TEST_SECTION("IntVector3::IntVector3 (constructors)");
+    TEST_EXPECT(IntVector3() == IntVector3(0, 0, 0));
+    TEST_EXPECT(IntVector3(-3) == IntVector3(-3, -3, -3));
 
-    int Arr[3] = { 5, -7, 2 };
-    IntVector3 Point2(Arr);
+    TEST_SECTION("IntVector3::Min / Max / Clamp");
+    TEST_EXPECT(IntVector3::Min(IntVector3(5, -7, 2), IntVector3(-3)) == IntVector3(-3, -7, -3));
+    TEST_EXPECT(IntVector3::Max(IntVector3(5, -7, 2), IntVector3(-3)) == IntVector3(5, -3, 2));
+    TEST_EXPECT(IntVector3::Clamp(IntVector3(-5, 8, 1), IntVector3(-2), IntVector3(5)) == IntVector3(-2, 5, 1));
 
-    IntVector3 Point3(-3);
+    TEST_SECTION("IntVector3::operator- (unary)");
+    TEST_EXPECT(-IntVector3(1, 2, -4) == IntVector3(-1, -2, 4));
 
-    // Min
-    IntVector3 MinPoint = Min(Point2, Point3);
-    if (MinPoint != IntVector3(-3, -7, -3))
+    TEST_SECTION("IntVector3::operator+ / operator+=");
+    TEST_EXPECT(IntVector3(1, 2, 3) + IntVector3(3, 1, 2) == IntVector3(4, 3, 5));
+    TEST_EXPECT(IntVector3(1, 2, 3) + 5 == IntVector3(6, 7, 8));
+    TEST_EXPECT(5 + IntVector3(1, 2, 3) == IntVector3(6, 7, 8));
     {
-        TEST_FAILED();
+        IntVector3 Vec(1, 2, 3);
+        Vec += IntVector3(1, 1, 1);
+        Vec += 1;
+
+        TEST_EXPECT(Vec == IntVector3(3, 4, 5));
     }
 
-    // Max
-    IntVector3 MaxPoint = Max(Point2, Point3);
-    if (MaxPoint != IntVector3(5, -3, 2))
+    TEST_SECTION("IntVector3::operator- / operator-=");
+    TEST_EXPECT(IntVector3(4, 3, 9) - IntVector3(3, 1, 6) == IntVector3(1, 2, 3));
+    TEST_EXPECT(IntVector3(4, 3, 9) - 5 == IntVector3(-1, -2, 4));
+    TEST_EXPECT(5 - IntVector3(1, 2, 3) == IntVector3(4, 3, 2));
     {
-        TEST_FAILED();
+        IntVector3 Vec(4, 3, 9);
+        Vec -= IntVector3(1, 1, 1);
+        Vec -= 1;
+
+        TEST_EXPECT(Vec == IntVector3(2, 1, 7));
     }
 
-    // Unary minus
-    IntVector3 Minus = -Point1;
-    if (Minus != IntVector3(-1, -2, 4))
+    TEST_SECTION("IntVector3::operator* / operator*=");
+    TEST_EXPECT(IntVector3(1, 2, 3) * IntVector3(3, 1, 2) == IntVector3(3, 2, 6));
+    TEST_EXPECT(IntVector3(1, 2, 3) * 5 == IntVector3(5, 10, 15));
+    TEST_EXPECT(5 * IntVector3(1, 2, 3) == IntVector3(5, 10, 15));
     {
-        TEST_FAILED();
+        IntVector3 Vec(1, 2, 3);
+        Vec *= IntVector3(2, 2, 2);
+        Vec *= 2;
+
+        TEST_EXPECT(Vec == IntVector3(4, 8, 12));
     }
 
-    // Add
-    IntVector3 Add0 = Minus + IntVector3(3, 1, 2);
-    if (Add0 != IntVector3(2, -1, 6))
+    TEST_SECTION("IntVector3::operator/ / operator/=");
+    TEST_EXPECT(IntVector3(6, 8, 9) / IntVector3(3, 4, 3) == IntVector3(2, 2, 3));
+    TEST_EXPECT(IntVector3(10, 20, 15) / 5 == IntVector3(2, 4, 3));
+    TEST_EXPECT(12 / IntVector3(3, 4, 6) == IntVector3(4, 3, 2));
     {
-        TEST_FAILED();
+        IntVector3 Vec(8, 4, 2);
+        Vec /= IntVector3(2, 2, 2);
+        Vec /= 2;
+
+        TEST_EXPECT(Vec == IntVector3(2, 1, 0));
     }
 
-    IntVector3 Add1 = Minus + 5;
-    if (Add1 != IntVector3(4, 3, 9))
+    TEST_SECTION("IntVector3::operator== / operator!=");
+    TEST_EXPECT(IntVector3(1, 2, 3) == IntVector3(1, 2, 3));
+    TEST_EXPECT(IntVector3(1, 2, 3) != IntVector3(1, 2, 4));
+
+    TEST_SECTION("IntVector3::operator[]");
     {
-        TEST_FAILED();
+        IntVector3 Vec(1, 2, 3);
+        Vec[2] = 9;
+
+        TEST_EXPECT(Vec[0] == 1);
+        TEST_EXPECT(Vec[2] == 9);
     }
 
-    // Subtraction
-    IntVector3 Sub0 = Add1 - IntVector3(3, 1, 6);
-    if (Sub0 != IntVector3(1, 2, 3))
-    {
-        TEST_FAILED();
-    }
-
-    IntVector3 Sub1 = Add1 - 5;
-    if (Sub1 != IntVector3(-1, -2, 4))
-    {
-        TEST_FAILED();
-    }
-
-    // Multiplication
-    IntVector3 Mul0 = Sub0 * IntVector3(3, 1, 2);
-    if (Mul0 != IntVector3(3, 2, 6))
-    {
-        TEST_FAILED();
-    }
-
-    IntVector3 Mul1 = Sub0 * 5;
-    if (Mul1 != IntVector3(5, 10, 15))
-    {
-        TEST_FAILED();
-    }
-
-    // Division
-    IntVector3 Div0 = Mul0 / IntVector3(3, 1, 3);
-    if (Div0 != IntVector3(1, 2, 2))
-    {
-        TEST_FAILED();
-    }
-
-    const IntVector3 Div1 = Mul1 / 5;
-    if (Div1 != IntVector3(1, 2, 3))
-    {
-        TEST_FAILED();
-    }
-
-    // Get Component
-    int Component = Div1[2];
-    if (Component != 3)
-    {
-        TEST_FAILED();
-    }
-
-    return true;
+    TEST_END();
 }

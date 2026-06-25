@@ -320,6 +320,11 @@ struct FPlatformVectorMathSSE
         return VectorSet(-0.0f, -0.0f, -0.0f, -0.0f);
     }
 
+    static FORCEINLINE FFloat128 VECTORCALL VectorMaskXYZ() noexcept
+    {
+        return VectorCompareEqual(VectorSet(0.0f, 0.0f, 0.0f, 1.0f), VectorZero());
+    }
+
     static FORCEINLINE FFloat128 VECTORCALL VectorNegate(FFloat128 Vector) noexcept
     {
         return VectorXor(Vector, VectorSignMask());

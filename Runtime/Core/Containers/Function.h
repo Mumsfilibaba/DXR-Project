@@ -80,6 +80,27 @@ namespace FunctionInternal
         }
     };
 
+    template<typename FunctorType, typename FunctionType>
+    struct TFunctionPointerCaller;
+
+    template<typename FunctorType, typename ReturnType, typename... ParamTypes>
+    struct TFunctionPointerCaller<FunctorType, ReturnType(ParamTypes...)>
+    {
+        static ReturnType CallFunctor(void* InFunctor, ParamTypes&... InParams)
+        {
+            return ::Invoke(reinterpret_cast<FunctorType>(InFunctor), Forward<ParamTypes>(InParams)...);
+        }
+    };
+
+    template<typename FunctorType, typename... ParamTypes>
+    struct TFunctionPointerCaller<FunctorType, void(ParamTypes...)>
+    {
+        static void CallFunctor(void* InFunctor, ParamTypes&... InParams)
+        {
+            ::Invoke(reinterpret_cast<FunctorType>(InFunctor), Forward<ParamTypes>(InParams)...);
+        }
+    };
+
     struct IFunctionContainer
     {
         virtual ~IFunctionContainer() = default;
@@ -620,8 +641,17 @@ private:
             }
         }
 
-        FunctorCaller = &FunctionCallerType::CallFunctor;
-        Functor = reinterpret_cast<void*>(&InFunctor);
+        if constexpr (TIsPointer<FunctorType>::Value)
+        {
+            typedef FunctionInternal::TFunctionPointerCaller<FunctorType, ReturnType(ParamTypes...)> PointerCallerType;
+            FunctorCaller = &PointerCallerType::CallFunctor;
+            Functor = reinterpret_cast<void*>(static_cast<FunctorType>(InFunctor));
+        }
+        else
+        {
+            FunctorCaller = &FunctionCallerType::CallFunctor;
+            Functor = reinterpret_cast<void*>(&InFunctor);
+        }
     }
 
     FORCEINLINE void MoveFrom(TFunctionRef&& Other)

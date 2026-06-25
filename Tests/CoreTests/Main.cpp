@@ -6,6 +6,9 @@
 #include <Core/Threading/ThreadManager.h>
 #include <Core/Tasks/TaskGraph.h>
 
+#include "TestCommon/TestHarness.h"
+#include "TestCommon/TestMacros.h"
+
 #include "TaskGraphTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
@@ -20,17 +23,25 @@ int main(int Argc, const CHAR* Argv[])
     UNREFERENCED_VARIABLE(Argc);
     UNREFERENCED_VARIABLE(Argv);
 
+    TestHarness::Initialize();
+    LOG_INFO("=== Core Tests ===");
+
     FThreadManager::Initialize();
 
     if (!FTaskGraph::Initialize())
     {
+        LOG_ERROR("Failed to initialize the task graph");
+        FThreadManager::Release();
+        TestHarness::Shutdown();
         return -1;
     }
 
-    bool bResult = TaskGraph_Test();
+    RUN_TEST("TaskGraph", TaskGraph_Test());
 
     FTaskGraph::Release();
     FThreadManager::Release();
 
-    return bResult ? 0 : -1;
+    const int32 ExitCode = TestHarness::Report();
+    TestHarness::Shutdown();
+    return ExitCode;
 }

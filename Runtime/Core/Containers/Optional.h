@@ -3,6 +3,21 @@
 #include "Core/Templates/Utility.h"
 
 template<typename ElementType>
+class TOptional;
+
+template<typename T>
+struct TIsTOptional
+{
+    inline static constexpr bool Value = false;
+};
+
+template<typename T>
+struct TIsTOptional<TOptional<T>>
+{
+    inline static constexpr bool Value = true;
+};
+
+template<typename ElementType>
 class TOptional
 {
 public:
@@ -341,7 +356,8 @@ public:
      */
     template<typename OtherType = ElementType>
     FORCEINLINE TOptional& operator=(OtherType&& Other) 
-        requires(TIsConstructible<ElementType, typename TAddRValueReference<typename TRemoveReference<OtherType>::Type>::Type>::Value)
+        requires(TIsConstructible<ElementType, typename TAddRValueReference<typename TRemoveReference<OtherType>::Type>::Type>::Value &&
+                 !TIsTOptional<typename TDecay<OtherType>::Type>::Value)
     {
         if (HasValue())
         {
@@ -555,12 +571,12 @@ private:
 
     NODISCARD FORCEINLINE bool IsEqual(const TOptional& RHS) const
     {
-        return *reinterpret_cast<ElementType*>(Value.Data) == *reinterpret_cast<ElementType*>(RHS.Value.Data);
+        return *reinterpret_cast<const ElementType*>(Value.Data) == *reinterpret_cast<const ElementType*>(RHS.Value.Data);
     }
 
     NODISCARD FORCEINLINE bool IsLessThan(const TOptional& RHS) const
     {
-        return *reinterpret_cast<ElementType*>(Value.Data) < *reinterpret_cast<ElementType*>(RHS.Value.Data);
+        return *reinterpret_cast<const ElementType*>(Value.Data) < *reinterpret_cast<const ElementType*>(RHS.Value.Data);
     }
 
     TTypeAlignedBytes<ElementType> Value;

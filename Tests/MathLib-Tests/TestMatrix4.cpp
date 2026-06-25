@@ -1,373 +1,172 @@
 #include "MathTest.h"
 
 #include <Core/Math/Matrix4.h>
-
-#include <cstdio>
-
-#define _XM_NO_INTRINSICS_
-#include <DirectXMath.h>
-using namespace DirectX;
+#include <Core/Math/Matrix3.h>
 
 bool TestMatrix4()
 {
-    // Identity
-    Matrix4 Identity = Matrix4::Identity();
-    if (Identity != Matrix4(
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f))
-    {
-        TEST_FAILED();
-    }
+    TEST_BEGIN();
 
-    // Constructors
-    Matrix4 Test = Matrix4(5.0f);
-    if (Test != Matrix4(
-        5.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 5.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 5.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 5.0f))
-    {
-        TEST_FAILED();
-    }
+    const float HalfPI = Math::Constants::HalfPI;
+    const float PI     = Math::Constants::PI;
 
-    Test = Matrix4(
-        Vector4(1.0f, 0.0f, 0.0f, 0.0f),
-        Vector4(0.0f, 1.0f, 0.0f, 0.0f),
-        Vector4(0.0f, 0.0f, 1.0f, 0.0f),
-        Vector4(0.0f, 0.0f, 0.0f, 1.0f));
-    if (Identity != Test)
+    const float Values[16] =
     {
-        TEST_FAILED();
-    }
-
-    float Arr[16] =
-    {
-        1.0f,  2.0f,  3.0f,  4.0f,
-        5.0f,  6.0f,  7.0f,  8.0f,
-        9.0f,  10.0f, 11.0f, 12.0f,
-        13.0f, 14.0f, 15.0f, 16.0f
+         1.0f,  2.0f,  3.0f,  4.0f,
+         5.0f,  6.0f,  7.0f,  8.0f,
+         9.0f, 10.0f, 11.0f, 12.0f,
+        13.0f, 14.0f, 15.0f, 16.0f,
     };
+    
+    const Matrix4 Sample(Values);
 
-    Test = Matrix4(Arr);
-    if (Test != Matrix4(
-        1.0f, 2.0f, 3.0f, 4.0f,
-        5.0f, 6.0f, 7.0f, 8.0f,
-        9.0f, 10.0f, 11.0f, 12.0f,
-        13.0f, 14.0f, 15.0f, 16.0f))
+    TEST_SECTION("Matrix4::Identity / constructors");
+    TEST_EXPECT(Matrix4::Identity() == Matrix4(1.0f));
+    TEST_EXPECT(Sample.GetRow(0) == Vector4(1.0f, 2.0f, 3.0f, 4.0f));
+    TEST_EXPECT(Sample.GetColumn(0) == Vector4(1.0f, 5.0f, 9.0f, 13.0f));
+
+    TEST_SECTION("Matrix4::GetTranspose");
+    TEST_EXPECT(Sample.GetTranspose().GetTranspose() == Sample);
+    TEST_EXPECT(Sample.GetTranspose().GetColumn(0) == Vector4(1.0f, 2.0f, 3.0f, 4.0f));
+
+    TEST_SECTION("Matrix4::GetDeterminant");
+    TEST_EXPECT(Matrix4::Identity().GetDeterminant() == 1.0f);
+    TEST_EXPECT(Matrix4::Scale(2.0f, 3.0f, 4.0f).GetDeterminant() == 24.0f);
+
+    TEST_SECTION("Matrix4::GetInverse");
     {
-        TEST_FAILED();
+        const Matrix4 Scale = Matrix4::Scale(2.0f, 3.0f, 4.0f);
+        TEST_EXPECT((Scale * Scale.GetInverse()).IsEqual(Matrix4::Identity()));
     }
 
-    // Translation
-    Matrix4 Translation = Matrix4::Translation(5.0f, 1.0f, -2.0f);
-    if (Translation != Matrix4(
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        5.0f, 1.0f, -2.0f, 1.0f))
+    TEST_SECTION("Matrix4::GetAdjugate");
     {
-        TEST_FAILED();
+        const Matrix4 Scale = Matrix4::Scale(2.0f, 3.0f, 4.0f);
+        TEST_EXPECT((Scale * Scale.GetAdjugate()).IsEqual(Matrix4(24.0f)));
     }
 
-    // Transformation
-    Vector3 Vec0 = Vector3(1.0f, 1.0f, 1.0f);
-    Vector3 Vec1 = Translation.TransformCoord(Vec0);
-    if (Vec1 != Vector3(6.0f, 2.0f, -1.0f))
+    TEST_SECTION("Matrix4::Scale");
+    TEST_EXPECT(Matrix4::Scale(2.0f).IsEqual(Matrix4::Scale(2.0f, 2.0f, 2.0f)));
+    TEST_EXPECT(Matrix4::Scale(Vector3(2.0f, 3.0f, 4.0f)).IsEqual(Matrix4::Scale(2.0f, 3.0f, 4.0f)));
+
+    TEST_SECTION("Matrix4::Translation / GetTranslation");
+    TEST_EXPECT(Matrix4::Translation(1.0f, 2.0f, 3.0f).GetTranslation() == Vector3(1.0f, 2.0f, 3.0f));
+    TEST_EXPECT(Matrix4::Translation(Vector3(1.0f, 2.0f, 3.0f)).GetTranslation() == Vector3(1.0f, 2.0f, 3.0f));
+
+    TEST_SECTION("Matrix4::RotationX/Y/Z");
+    TEST_EXPECT((Matrix4::RotationX(HalfPI) * Matrix4::RotationX(HalfPI)).IsEqual(Matrix4::RotationX(PI)));
+    TEST_EXPECT((Matrix4::RotationY(HalfPI) * Matrix4::RotationY(HalfPI)).IsEqual(Matrix4::RotationY(PI)));
+    TEST_EXPECT((Matrix4::RotationZ(HalfPI) * Matrix4::RotationZ(HalfPI)).IsEqual(Matrix4::RotationZ(PI)));
+
+    TEST_SECTION("Matrix4::RotationRollPitchYaw");
+    TEST_EXPECT(Matrix4::RotationRollPitchYaw(0.0f, 0.0f, 0.0f).IsEqual(Matrix4::Identity()));
+    TEST_EXPECT(Matrix4::RotationRollPitchYaw(Vector3(0.0f, 0.0f, 0.0f)).IsEqual(Matrix4::Identity()));
+
+    TEST_SECTION("Matrix4::Transform (Vector4)");
+    TEST_EXPECT(Matrix4::Identity().Transform(Vector4(1.0f, 2.0f, 3.0f, 4.0f)).IsEqual(Vector4(1.0f, 2.0f, 3.0f, 4.0f)));
+    TEST_EXPECT(Matrix4::Scale(2.0f, 3.0f, 4.0f).Transform(Vector4(1.0f, 1.0f, 1.0f, 1.0f)).IsEqual(Vector4(2.0f, 3.0f, 4.0f, 1.0f)));
+
+    TEST_SECTION("Matrix4::Transform / TransformCoord / TransformNormal (Vector3)");
+    TEST_EXPECT(Matrix4::Translation(1.0f, 2.0f, 3.0f).Transform(Vector3(0.0f, 0.0f, 0.0f)).IsEqual(Vector3(1.0f, 2.0f, 3.0f)));
+    TEST_EXPECT(Matrix4::Translation(1.0f, 2.0f, 3.0f).TransformCoord(Vector3(0.0f, 0.0f, 0.0f)).IsEqual(Vector3(1.0f, 2.0f, 3.0f)));
+    TEST_EXPECT(Matrix4::Translation(1.0f, 2.0f, 3.0f).TransformNormal(Vector3(1.0f, 0.0f, 0.0f)).IsEqual(Vector3(1.0f, 0.0f, 0.0f)));
+
+    TEST_SECTION("Matrix4::operator* (matrix/scalar)");
     {
-        TEST_FAILED();
+        Matrix4 Accum = Matrix4::RotationZ(HalfPI);
+        Accum *= Matrix4::RotationZ(HalfPI);
+
+        TEST_EXPECT(Accum.IsEqual(Matrix4::RotationZ(PI)));
     }
 
-    Vec1 = Translation.TransformNormal(Vec0);
-    if (Vec1 != Vector3(1.0f, 1.0f, 1.0f))
+    TEST_EXPECT((Matrix4(1.0f) * 2.0f).IsEqual(Matrix4(2.0f)));
     {
-        TEST_FAILED();
+        Matrix4 Mat(1.0f);
+        Mat *= 2.0f;
+
+        TEST_EXPECT(Mat.IsEqual(Matrix4(2.0f)));
     }
 
-    // Transpose
-    Test = Test.Transpose();
-    if (Test != Matrix4(
-        1.0f, 5.0f, 9.0f, 13.0f,
-        2.0f, 6.0f, 10.0f, 14.0f,
-        3.0f, 7.0f, 11.0f, 15.0f,
-        4.0f, 8.0f, 12.0f, 16.0f))
+    TEST_SECTION("Matrix4::operator+ / operator- / operator/");
+    TEST_EXPECT((Matrix4(1.0f) + Matrix4(1.0f)).IsEqual(Matrix4(2.0f)));
+    TEST_EXPECT((Matrix4(2.0f) - Matrix4(1.0f)).IsEqual(Matrix4(1.0f)));
+    TEST_EXPECT((Matrix4(4.0f) / 2.0f).IsEqual(Matrix4(2.0f)));
     {
-        TEST_FAILED();
+        Matrix4 Mat(1.0f);
+        Mat += Matrix4(1.0f);
+        Mat += 1.0f;
+        Mat -= 1.0f;
+        Mat -= Matrix4(1.0f);
+        Mat /= 1.0f;
+
+        TEST_EXPECT(Mat.IsEqual(Matrix4(1.0f)));
     }
 
-    // Determinant
-    Matrix4 Scale = Matrix4::Scale(6.0f);
-    float fDeterminant0 = Scale.Determinant();
+    TEST_SECTION("Matrix4::operator== / operator!= / IsEqual");
+    TEST_EXPECT(Sample == Sample);
+    TEST_EXPECT(Sample != Matrix4::Identity());
+    TEST_EXPECT(Sample.IsEqual(Sample));
 
-    XMMATRIX XmScale = XMMatrixScaling(6.0f, 6.0f, 6.0f);
-    float fDeterminant1 = XMVectorGetX(XMMatrixDeterminant(XmScale));
-
-    if (fDeterminant0 != fDeterminant1)
+    TEST_SECTION("Matrix4::SetIdentity / SetTranslation");
     {
-        TEST_FAILED();
+        Matrix4 Mat = Sample;
+        Mat.SetIdentity();
+
+        TEST_EXPECT(Mat == Matrix4::Identity());
+
+        Mat.SetTranslation(Vector3(1.0f, 2.0f, 3.0f));
+
+        TEST_EXPECT(Mat.GetTranslation() == Vector3(1.0f, 2.0f, 3.0f));
     }
 
-    // LookAt / Look To
-    Matrix4 LookAt = Matrix4::LookAt(Vector3(0.0f, 0.0f, 1.0f), Vector3(0.0f), Vector3(0.0f, 1.0f, 0.0f));
-    XMMATRIX XmLookAt = XMMatrixLookAtLH(
-        XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f),
-        XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),
-        XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
-
-    XMFLOAT4X4 Float4x4Matrix;
-    XMStoreFloat4x4(&Float4x4Matrix, XmLookAt);
-    if (LookAt != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
+    TEST_SECTION("Matrix4::SetRotationAndScale / GetRotationAndScale");
     {
-        TEST_FAILED();
+        Matrix4 Mat = Matrix4::Identity();
+        Mat.SetRotationAndScale(Matrix3::Scale(2.0f, 3.0f, 4.0f));
+
+        TEST_EXPECT(Mat.GetRotationAndScale().IsEqual(Matrix3::Scale(2.0f, 3.0f, 4.0f)));
     }
 
-    // Perspective Projection
-    float Width  = 1920.0f;
-    float Height = 1080.0f;
-    float FOV    = Math::Constants::PI / 2.0f;
-    float Near   = 0.01f;
-    float Far    = 100.0f;
-
-    Matrix4 Projection = Matrix4::PerspectiveProjection(FOV, Width, Height, Near, Far);
-    XMMATRIX XmProjection = XMMatrixPerspectiveFovLH(FOV, Width / Height, Near, Far);
-
-    Float4x4Matrix;
-    XMStoreFloat4x4(&Float4x4Matrix, XmProjection);
-    if (Projection != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
+    TEST_SECTION("Matrix4::OrthoNormalize");
     {
-        TEST_FAILED();
+        Matrix4 Mat = Matrix4::RotationZ(HalfPI);
+        Mat.OrthoNormalize();
+
+        TEST_EXPECT(Mat.IsEqual(Matrix4::RotationZ(HalfPI)));
     }
 
-    // Multiplication
-    Matrix4 Mult = LookAt * Projection;
-    XMMATRIX XmMult = XMMatrixMultiply(XmLookAt, XmProjection);
-
-    Float4x4Matrix;
-    XMStoreFloat4x4(&Float4x4Matrix, XmMult);
-
-    if (Mult != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
+    TEST_SECTION("Matrix4::LookAt / LookTo (eye maps to origin)");
     {
-        TEST_FAILED();
+        const Vector3 Eye(0.0f, 0.0f, -5.0f);
+        const Vector3 At(0.0f, 0.0f, 0.0f);
+        const Vector3 Up(0.0f, 1.0f, 0.0f);
+        const Matrix4 View = Matrix4::LookAt(Eye, At, Up);
+        TEST_EXPECT(View.TransformCoord(Eye).IsEqual(Vector3(0.0f, 0.0f, 0.0f)));
+
+        const Matrix4 ViewTo = Matrix4::LookTo(Eye, (At - Eye).GetNormalized(), Up);
+        TEST_EXPECT(ViewTo.TransformCoord(Eye).IsEqual(Vector3(0.0f, 0.0f, 0.0f)));
     }
 
-    Matrix4 _Mul0(2.0);
-    _Mul0 *= Matrix4(2.0);
-
-    XMFLOAT4X4 _Mul1(
-        2.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 2.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 2.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 2.0f);
-    XMFLOAT4X4 _Mul2 = _Mul1;
-
-    XMMATRIX XmMult0 = XMLoadFloat4x4(&_Mul1);
-    XMMATRIX XmMult1 = XMLoadFloat4x4(&_Mul2);
-    XmMult0 = XMMatrixMultiply(XmMult0, XmMult1);
-
-    Float4x4Matrix;
-    XMStoreFloat4x4(&Float4x4Matrix, XmMult0);
-
-    if (_Mul0 != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
+    TEST_SECTION("Matrix4::Projections (well-formed)");
     {
-        TEST_FAILED();
+        TEST_EXPECT(!Matrix4::OrthographicProjection(2.0f, 2.0f, 0.1f, 100.0f).ContainsNaN());
+        TEST_EXPECT(!Matrix4::OrthographicProjection(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 100.0f).ContainsNaN());
+        TEST_EXPECT(!Matrix4::PerspectiveProjection(HalfPI, 1.777f, 0.1f, 100.0f).ContainsNaN());
+        TEST_EXPECT(!Matrix4::PerspectiveProjection(HalfPI, 1280.0f, 720.0f, 0.1f, 100.0f).ContainsNaN());
     }
 
-    // Inverse
-    Matrix4 Inverse = Mult.Invert();
-    fDeterminant0 = Mult.Determinant();
-
-    XMVECTOR XmDeterminant;
-    XMMATRIX XmInverse = XMMatrixInverse(&XmDeterminant, XmMult);
-    fDeterminant1 = XMVectorGetX(XmDeterminant);
-
-    Float4x4Matrix;
-    XMStoreFloat4x4(&Float4x4Matrix, XmInverse);
-
-    if (Inverse != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
+    TEST_SECTION("Matrix4::ContainsNaN / ContainsInfinity");
     {
-        TEST_FAILED();
+        Matrix4 NaN = Matrix4::Identity();
+        NaN.SetTranslation(Vector3(0.0f, 0.0f, Math::Constants::NaN));
+        Matrix4 Inf = Matrix4::Identity();
+        Inf.SetTranslation(Vector3(0.0f, 0.0f, Math::Constants::Infinity));
+
+        TEST_EXPECT(NaN.ContainsNaN());
+        TEST_EXPECT(Inf.ContainsInfinity());
+        TEST_EXPECT(!Matrix4::Identity().ContainsNaN());
+        TEST_EXPECT(!Matrix4::Identity().ContainsInfinity());
     }
 
-    // Adjoint
-    Matrix4 Adjoint = Mult.Adjoint();
-    Matrix4 Inverse2 = Adjoint * (1.0f / fDeterminant0);
-
-    if (Inverse != Inverse2)
-    {
-        TEST_FAILED();
-    }
-
-    Matrix4 InvInverse = Inverse * fDeterminant0;
-    Matrix4 XmInvInverse = Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)) * fDeterminant1;
-
-    if (InvInverse != XmInvInverse)
-    {
-        TEST_FAILED();
-    }
-
-    if (Adjoint != XmInvInverse)
-    {
-        TEST_FAILED();
-    }
-
-    // NaN
-    Matrix4 NaN(
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, NAN);
-    if (NaN.HasNaN() != true)
-    {
-        TEST_FAILED();
-    }
-
-    // Infinity
-    Matrix4 Infinity(
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, INFINITY);
-    if (Infinity.HasInfinity() != true)
-    {
-        TEST_FAILED();
-    }
-
-    // Valid
-    if (NaN.IsValid() || Infinity.IsValid())
-    {
-        TEST_FAILED();
-    }
-
-    // Get Row
-    Vector4 Row = Infinity.GetRow(0);
-    if (Row != Vector4(1.0f, 0.0f, 0.0f, 0.0f))
-    {
-        TEST_FAILED();
-    }
-
-    // Column
-    Vector4 Column = Infinity.GetColumn(0);
-    if (Column != Vector4(1.0f, 0.0f, 0.0f, 0.0f))
-    {
-        TEST_FAILED();
-    }
-
-    // SetIdentity
-    Infinity.SetIdentity();
-
-    Matrix4 TempIdentity = Matrix4::Identity();
-    if (Infinity != Matrix4::Identity())
-    {
-        TEST_FAILED();
-    }
-
-    // GetTranslation
-    Vector3 Position = Infinity.GetTranslation();
-    if (Position != Vector3(0.0f))
-    {
-        TEST_FAILED();
-    }
-
-    // GetRotationAndScale
-    Matrix3 RotationAndScale = Infinity.GetRotationAndScale();
-    if (RotationAndScale != Matrix3::Identity())
-    {
-        TEST_FAILED();
-    }
-
-    // Data
-    Matrix4 Matrix0 = Matrix4::Identity();
-    Matrix4 Matrix1 = Matrix4(Matrix0.Data());
-    if (Matrix0 != Matrix1)
-    {
-        TEST_FAILED();
-    }
-
-    // Multiply a vector
-    Translation = Matrix4::Translation(5.0f, 5.0f, 5.0f);
-    Vector4 TranslatedVector = Translation * Vector4(0.0f, 0.0f, 0.0f, 1.0f);
-
-    if (TranslatedVector != Vector4(5.0f, 5.0f, 5.0f, 1.0f))
-    {
-        TEST_FAILED();
-    }
-
-    // Roll Pitch Yaw
-    for (double Angle = -Math::TwoPI; Angle < Math::TwoPI; Angle += Math::OneDegree)
-    {
-        Matrix4 RollPitchYaw = Matrix4::RotationRollPitchYaw((float)Angle, (float)Angle, (float)Angle);
-        XMMATRIX XmRollPitchYaw = XMMatrixRotationRollPitchYaw((float)Angle, (float)Angle, (float)Angle);
-        XMStoreFloat4x4(&Float4x4Matrix, XmRollPitchYaw);
-
-        if (RollPitchYaw != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
-        {
-            TEST_FAILED();
-        }
-    }
-
-    // RotationX
-    for (double Angle = -Math::TwoPI; Angle < Math::TwoPI; Angle += Math::OneDegree)
-    {
-        Matrix4 Rotation = Matrix4::RotationX((float)Angle);
-        XMMATRIX XmRotation = XMMatrixRotationX((float)Angle);
-        XMStoreFloat4x4(&Float4x4Matrix, XmRotation);
-
-        if (Rotation != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
-        {
-            TEST_FAILED();
-        }
-    }
-
-    // RotationY
-    for (double Angle = -Math::TwoPI; Angle < Math::TwoPI; Angle += Math::OneDegree)
-    {
-        Matrix4 Rotation = Matrix4::RotationY((float)Angle);
-        XMMATRIX XmRotation = XMMatrixRotationY((float)Angle);
-        XMStoreFloat4x4(&Float4x4Matrix, XmRotation);
-
-        if (Rotation != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
-        {
-            TEST_FAILED();
-        }
-    }
-
-    // RotationZ
-    for (double Angle = -Math::TwoPI; Angle < Math::TwoPI; Angle += Math::OneDegree)
-    {
-        Matrix4 Rotation = Matrix4::RotationZ((float)Angle);
-        XMMATRIX XmRotation = XMMatrixRotationZ((float)Angle);
-        XMStoreFloat4x4(&Float4x4Matrix, XmRotation);
-
-        if (Rotation != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
-        {
-            TEST_FAILED();
-        }
-    }
-
-    // Ortographic projection
-    Matrix4 Ortographic = Matrix4::OrtographicProjection(Width, Height, Near, Far);
-    XMMATRIX XmOrtographic = XMMatrixOrthographicLH(Width, Height, Near, Far);
-    XMStoreFloat4x4(&Float4x4Matrix, XmOrtographic);
-
-    if (Ortographic != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
-    {
-        TEST_FAILED();
-    }
-
-    float Left = -10.0f;
-    float Right = 10.0f;
-    float Bottom = -10.0f;
-    float Top = 10.0f;
-
-    Ortographic = Matrix4::OrtographicProjection(Left, Right, Bottom, Top, Near, Far);
-    XmOrtographic = XMMatrixOrthographicOffCenterLH(Left, Right, Bottom, Top, Near, Far);
-    XMStoreFloat4x4(&Float4x4Matrix, XmOrtographic);
-
-    if (Ortographic != Matrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
-    {
-        TEST_FAILED();
-    }
-
-    return true;
+    TEST_END();
 }

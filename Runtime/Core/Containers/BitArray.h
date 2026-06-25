@@ -381,7 +381,7 @@ public:
         for (SizeType Index = 0; Index < Count; Index++)
         {
             InIntegerType& Element = GetInteger(Index);
-            Element |= Other.GetInteger(Index);
+            Element ^= Other.GetInteger(Index);
         }
     }
 
@@ -642,7 +642,7 @@ public:
     template<typename OtherIntegerType, typename OtherAllocatorType>
     NODISCARD FORCEINLINE bool operator==(const TBitArray<OtherIntegerType, OtherAllocatorType>& RHS) const
     {
-        return CapacityInBytes() == RHS.CapacityInBytes() ? Memory::Memcmp(Allocator.GetAllocation(), RHS.Allocator.GetAllocation(), CapacityInBytes()) : false;
+        return CapacityInBytes() == RHS.CapacityInBytes() ? (Memory::Memcmp(Allocator.GetAllocation(), RHS.Allocator.GetAllocation(), CapacityInBytes()) == 0) : false;
     }
 
     /**
@@ -802,11 +802,17 @@ private:
         const SizeType ElementIndex   = GetArrayIndexOfBit(BitPosition);
         const SizeType IndexInElement = GetIndexOfBitInArray(BitPosition);
 
-        const InIntegerType Mask  = CreateMaskForBit(IndexInElement);
-        const InIntegerType Value = bValue ? Mask : InIntegerType(0);
+        const InIntegerType Mask = CreateMaskForBit(IndexInElement);
 
         InIntegerType& Element = GetInteger(ElementIndex);
-        Element |= Value;
+        if (bValue)
+        {
+            Element |= Mask;
+        }
+        else
+        {
+            Element &= ~Mask;
+        }
     }
 
     FORCEINLINE void BitshiftRightUnchecked(SizeType Steps, SizeType StartBit = 0)

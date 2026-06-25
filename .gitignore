@@ -39,3 +39,4 @@ packages/
 *.d3d12psocache
 *.vkpsocache
 /Tests/Build
+*.log

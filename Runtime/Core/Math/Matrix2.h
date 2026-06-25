@@ -86,7 +86,7 @@ public:
         Inverse.M[1][1] =  M[0][0] * RcpDeterminant;
     #else
         FFloat128 M_128   = FVectorMath::VectorLoad(&M[0][0]);
-        FFloat128 VectorA = FVectorMath::VectorShuffle<3, 2, 1, 0>(M_128);
+        FFloat128 VectorA = FVectorMath::VectorShuffle<3, 1, 2, 0>(M_128);
         const FFloat128 Sign_128 = FVectorMath::VectorSet(1.0f, -1.0f, -1.0f, 1.0f);
         FFloat128 VectorB = FVectorMath::VectorMul(VectorA, Sign_128);
         FFloat128 RcpDeterminant = FVectorMath::VectorRecip(FVectorMath::VectorSet1(Determinant));
@@ -112,7 +112,7 @@ public:
         Adjugate.M[1][1] =  M[0][0];
     #else
         FFloat128 M_128   = FVectorMath::VectorLoad(&M[0][0]);
-        FFloat128 VectorA = FVectorMath::VectorShuffle<3, 2, 1, 0>(M_128);
+        FFloat128 VectorA = FVectorMath::VectorShuffle<3, 1, 2, 0>(M_128);
         const FFloat128 Sign_128 = FVectorMath::VectorSet(1.0f, -1.0f, -1.0f, 1.0f);
         FFloat128 Result_128 = FVectorMath::VectorMul(VectorA, Sign_128);
         FVectorMath::VectorStore(Result_128, &Adjugate.M[0][0]);

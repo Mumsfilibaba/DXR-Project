@@ -133,8 +133,7 @@ public:
         FFloat128 XYZW_128 = FVectorMath::VectorLoad(XYZW);
 
         // Mask out W so it does not contribute to length, and becomes 0 in the result.
-        FInt128   Mask_128 = FVectorMath::VectorSetInt(~0, ~0, ~0, 0);
-        FFloat128 XYZ0_128 = FVectorMath::VectorAnd(XYZW_128, FVectorMath::VectorIntToFloat(Mask_128));
+        FFloat128 XYZ0_128 = FVectorMath::VectorAnd(XYZW_128, FVectorMath::VectorMaskXYZ());
 
         FFloat128 LenSq_128 = FVectorMath::VectorDot(XYZ0_128, XYZ0_128);
 
@@ -342,8 +341,7 @@ public:
         FFloat128 XYZW_128   = FVectorMath::VectorLoad(XYZW);
         FFloat128 Other_128  = FVectorMath::VectorLoad(Other.XYZW);
         FFloat128 Cross_128  = FVectorMath::VectorCross(XYZW_128, Other_128);
-        FInt128   Mask_128   = FVectorMath::VectorSetInt(~0, ~0, ~0, 0);
-        FFloat128 Result_128 = FVectorMath::VectorAnd(Cross_128, FVectorMath::VectorIntToFloat(Mask_128));
+        FFloat128 Result_128 = FVectorMath::VectorAnd(Cross_128, FVectorMath::VectorMaskXYZ());
         FVectorMath::VectorStore(Result_128, Result.XYZW);
     #endif
 

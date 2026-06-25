@@ -7,411 +7,430 @@
 #include <Core/Containers/SharedRef.h>
 #include <Core/Containers/UniquePtr.h>
 #include <Core/Containers/Array.h>
+#include <Core/Threading/Atomic/AtomicInt.h>
 
-#include <iostream>
-
-/* Helper classes */
-
-struct FBase
+namespace
 {
-    virtual ~FBase() = default;
-
-    uint32 X = 0;
-};
-
-struct FDerived : public FBase
-{
-    uint32 Y = 0;
-};
-
-class FVirtualBase
-{
-public:
-    virtual ~FVirtualBase() = default;
-    virtual void Func() = 0;
-
-private:
-    int64 Value64;
-};
-
-class FVirtualDerived : public FVirtualBase
-{
-public:
-    virtual void Func() override { }
-};
-
-#define TEST_REF_COUNT(Pointer, StrongReferenceCount, WeakReferenceCount)        \
-    TEST_CHECK(((Pointer).GetStrongReferenceCount() == (StrongReferenceCount))); \
-    TEST_CHECK(((Pointer).GetWeakReferenceCount()   == (WeakReferenceCount)))    \
-
-/* Test */
-
-struct FRefCountedTest : public IRefCounted
-{
-public:
-    virtual int32 AddRef() const override
+    struct FBase
     {
-        CHECK(StrongReferences.Load() > 0);
-        ++StrongReferences;
-        return StrongReferences.Load();
-    }
+        virtual ~FBase() = default;
+        int32 X = 1;
+    };
 
-    virtual int32 Release() const override
+    struct FDerived : public FBase
     {
-        const int32 RefCount = --StrongReferences;
-        CHECK(RefCount >= 0);
+        int32 Y = 2;
+    };
 
-        if (RefCount < 1)
+    struct FShared : public TSharedFromThis<FShared>
+    {
+        int32 Value = 42;
+    };
+
+    struct FTestRefCounted : public IRefCounted
+    {
+        virtual int32 AddRef() const override
         {
-            delete this;
+            ++Refs;
+            return Refs.Load();
         }
 
-        return RefCount;
-    }
+        virtual int32 Release() const override
+        {
+            const int32 Count = --Refs;
+            if (Count < 1)
+            {
+                delete this;
+            }
 
-    virtual int32 GetRefCount() const override
+            return Count;
+        }
+
+        virtual int32 GetRefCount() const override
+        {
+            return Refs.Load();
+        }
+
+        int32 Tag = 7;
+        mutable AtomicInt32 Refs = 1;
+    };
+
+    struct FTestRefCountedDerived : public FTestRefCounted
     {
-        return StrongReferences.Load();
-    }
-
-private:
-    mutable AtomicInt32 StrongReferences = 1;
-};
-
+        int32 Extra = 21;
+    };
+}
 
 bool TSharedPtr_Test()
 {
+    TEST_BEGIN();
+
+    TEST_SECTION("TSharedPtr::IsValid / operator bool / Get");
     {
-        TSharedRef<FRefCountedTest> Test;
-        TEST_CHECK(Test.Get() == nullptr);
+        TSharedPtr<int32> Empty;
+        TEST_EXPECT(!Empty.IsValid());
+        TEST_EXPECT(!static_cast<bool>(Empty));
+        TEST_EXPECT(Empty.Get() == nullptr);
+
+        TSharedPtr<int32> Ptr = MakeSharedPtr<int32>(5);
+        TEST_EXPECT(Ptr.IsValid());
+        TEST_EXPECT(static_cast<bool>(Ptr));
+        TEST_EXPECT(*Ptr == 5);
+        TEST_EXPECT(*Ptr.Get() == 5);
+    }
+
+    TEST_SECTION("TSharedPtr::IsUnique");
+    {
+        TSharedPtr<int32> Ptr = MakeSharedPtr<int32>(1);
+        TEST_EXPECT(Ptr.IsUnique());
+
+        TSharedPtr<int32> Shared = Ptr;
+        TEST_EXPECT(!Ptr.IsUnique());
+    }
+
+    TEST_SECTION("TSharedPtr::Reset");
+    {
+        TSharedPtr<int32> Ptr = MakeSharedPtr<int32>(9);
+        TEST_EXPECT(Ptr.IsValid());
+
+        Ptr.Reset();
+        TEST_EXPECT(!Ptr.IsValid());
+    }
+
+    TEST_SECTION("TSharedPtr::Swap");
+    {
+        TSharedPtr<int32> First = MakeSharedPtr<int32>(1);
+        TSharedPtr<int32> Second = MakeSharedPtr<int32>(2);
+        First.Swap(Second);
         
-        TSharedRef<FRefCountedTest> Test0 = new FRefCountedTest();
-        TEST_CHECK(Test0 != nullptr);
-        TEST_CHECK(Test0->GetRefCount() == 1);
-
-        TSharedRef<FRefCountedTest> Test1 = Test0;
-        TEST_CHECK(Test1 != nullptr);
-        TEST_CHECK(Test1->GetRefCount() == 2);
-
-        TSharedRef<FRefCountedTest> Test2 = Test0;
-        TEST_CHECK(Test2 != nullptr);
-        TEST_CHECK(Test2->GetRefCount() == 3);
-
-        TSharedRef<FRefCountedTest> Test3 = ::Move(Test2);
-        TEST_CHECK(Test2 == nullptr);
-        TEST_CHECK(Test3 != nullptr);
-        TEST_CHECK(Test3->GetRefCount() == 3);
+        TEST_EXPECT(*First == 2);
+        TEST_EXPECT(*Second == 1);
     }
 
-    // TSharedPtr
-    std::cout << std::endl << "----------TSharedPtr----------" << std::endl << std::endl;
-    uint32* Ptr0 = new uint32(9);
-    uint32* Ptr1 = new uint32(10);
-
-    // Test nullptr
-    std::cout << std::endl << "----Testing Constructors----" << std::endl << std::endl;
-    TSharedPtr<uint32> Null;
-    TEST_CHECK(Null == nullptr);
-
-    TWeakPtr<uint32> NullWeak;
-    TEST_CHECK(NullWeak == nullptr);
-
-    Null = Ptr0; // Takes ownership of Ptr0
-    TEST_CHECK(Null == Ptr0);
-
+    TEST_SECTION("TSharedPtr assignment operators");
     {
-        TSharedPtr<uint32> SharedNullPtr = nullptr;
-        TEST_CHECK(SharedNullPtr == nullptr);
+        TSharedPtr<int32> Ptr = MakeSharedPtr<int32>(3);
 
-        TSharedPtr<uint32> UintPtr0 = MakeShared<uint32>(5);
-        TEST_REF_COUNT(UintPtr0, 1, 1);
+        TSharedPtr<int32> Copy;
+        Copy = Ptr;
+        
+        TEST_EXPECT(Copy.Get() == Ptr.Get());
+        TEST_EXPECT(Ptr.GetStrongReferenceCount() == 2);
 
-        TSharedPtr<uint32> UintPtr1 = Null;
-        TEST_REF_COUNT(UintPtr1, 2, 1);
+        TSharedPtr<int32> Moved;
+        Moved = ::Move(Copy);
+        
+        TEST_EXPECT(Moved.Get() == Ptr.Get());
+        TEST_EXPECT(!Copy.IsValid());
 
-        TSharedPtr<uint32> UintPtr2 = TSharedPtr<uint32>(Ptr1); // Takes ownership of Ptr1
-        TEST_REF_COUNT(UintPtr2, 1, 1);
+        Moved = nullptr;
+        TEST_EXPECT(!Moved.IsValid());
     }
 
-    std::cout << std::endl << "----Testing StaticCast (Scalar)----" << std::endl << std::endl;
+    TEST_SECTION("TSharedPtr converting ctor (derived -> base)");
     {
-        TSharedPtr<FDerived> DerivedPtr0 = MakeShared<FDerived>();
-        TEST_REF_COUNT(DerivedPtr0, 1, 1);
-        TSharedPtr<FBase> BasePtr0 = DerivedPtr0;
-        TEST_REF_COUNT(BasePtr0, 2, 1);
-        TSharedPtr<FBase> BasePtr = TSharedPtr<FBase>(new FDerived());
-        TEST_REF_COUNT(BasePtr, 1, 1);
-        TSharedPtr<FDerived> DerivedPtr1 = StaticCastSharedPtr<FDerived>(BasePtr0);
-        TEST_REF_COUNT(DerivedPtr1, 3, 1);
-        TSharedPtr<FDerived> DerivedPtr3 = StaticCastSharedPtr<FDerived>(::Move(BasePtr0));
-        TEST_REF_COUNT(DerivedPtr3, 3, 1);
+        TSharedPtr<FDerived> Derived = MakeSharedPtr<FDerived>();
+        TSharedPtr<FBase> Base = Derived;
+        TEST_EXPECT(Base.IsValid());
+        TEST_EXPECT(Base.Get() == static_cast<FBase*>(Derived.Get()));
+        TEST_EXPECT(Base.GetStrongReferenceCount() == 2);
     }
 
-    std::cout << std::endl << "----Testing StaticCast (Array)----" << std::endl << std::endl;
+    TEST_SECTION("TWeakPtr Reset/Swap/IsExpired/IsValid/ToSharedPtr");
     {
-        TSharedPtr<uint32[]> Integers = MakeShared<uint32[32]>();
-        TEST_REF_COUNT(Integers, 1, 1);
-        TSharedPtr<FDerived[]> DerivedPtr0 = MakeShared<FDerived[]>(5);
-        TEST_REF_COUNT(DerivedPtr0, 1, 1);
-        TSharedPtr<FBase[]> BasePtr1 = DerivedPtr0;
-        TEST_REF_COUNT(BasePtr1, 2, 1);
-        TSharedPtr<FBase[]> BasePtrArray = TSharedPtr<FBase[]>(new FDerived[5]);
-        TEST_REF_COUNT(BasePtrArray, 1, 1);
-        TSharedPtr<FDerived[]> DerivedPtr1 = StaticCastSharedPtr<FDerived[]>(BasePtr1);
-        TEST_REF_COUNT(DerivedPtr1, 3, 1);
-        TSharedPtr<FDerived[]> DerivedPtr2 = StaticCastSharedPtr<FDerived[]>(::Move(BasePtr1));
-        TEST_REF_COUNT(DerivedPtr2, 3, 1);
+        TSharedPtr<int32> Shared = MakeSharedPtr<int32>(11);
+        TWeakPtr<int32> Weak = Shared;
+        TEST_EXPECT(Weak.IsValid());
+        TEST_EXPECT(!Weak.IsExpired());
+        TEST_EXPECT(*Weak == 11);
+
+        TSharedPtr<int32> Promoted = Weak.ToSharedPtr();
+        TEST_EXPECT(Promoted.Get() == Shared.Get());
+
+        TWeakPtr<int32> Other;
+        Weak.Swap(Other);
+
+        TEST_EXPECT(Other.IsValid());
+        TEST_EXPECT(!Weak.IsValid());
+
+        Other.Reset();
+        TEST_EXPECT(!Other.IsValid());
     }
 
+    TEST_SECTION("TWeakPtr expiration");
     {
-        std::cout << std::endl << "----Testing ConstCast----" << std::endl << std::endl;
-        TSharedPtr<const uint32> ConstPtr0 = MakeShared<const uint32>(5);
-        TEST_CHECK(*ConstPtr0 == 5);
-        TEST_REF_COUNT(ConstPtr0, 1, 1);
+        TWeakPtr<int32> Weak;
+        {
+            TSharedPtr<int32> Shared = MakeSharedPtr<int32>(99);
+            Weak = Shared;
+            TEST_EXPECT(!Weak.IsExpired());
+        }
 
-        TSharedPtr<uint32> ConstPtr1 = ConstCastSharedPtr<uint32>(ConstPtr0);
-        TEST_CHECK(*ConstPtr1 == 5);
-        TEST_REF_COUNT(ConstPtr1, 2, 1);
-
-        std::cout << std::endl << "----Testing ReinterpretCast----" << std::endl << std::endl;
-        TSharedPtr<int32> ReintPtr0 = MakeShared<int32>(1065353216);
-        TEST_CHECK(*ReintPtr0 == 1065353216);
-        TEST_REF_COUNT(ReintPtr0, 1, 1);
-
-        TSharedPtr<float> ReintPtr1 = ReinterpretCastSharedPtr<float>(ReintPtr0);
-        TEST_CHECK(*ReintPtr1 == 1.0f);
-        TEST_REF_COUNT(ReintPtr1, 2, 1);
+        TEST_EXPECT(Weak.IsExpired());
+        TEST_EXPECT(!Weak.IsValid());
     }
 
-    std::cout << std::endl << "----Testing Deleter----" << std::endl << std::endl;
+    TEST_SECTION("TSharedFromThis AsSharedPtr/AsWeakPtr");
+    {
+        TSharedPtr<FShared> Shared = MakeSharedPtr<FShared>();
+        TSharedPtr<FShared> FromThis = Shared->AsSharedPtr();
+        TEST_EXPECT(FromThis.Get() == Shared.Get());
+        TEST_EXPECT(Shared.GetStrongReferenceCount() == 2);
+
+        TWeakPtr<FShared> WeakThis = Shared->AsWeakPtr();
+        TEST_EXPECT(WeakThis.IsValid());
+        TEST_EXPECT(WeakThis.Get() == Shared.Get());
+    }
+
+    TEST_SECTION("TSharedRef MakeSharedRef / Get / IsValid / operator bool");
+    {
+        TSharedRef<FTestRefCounted> Empty;
+        TEST_EXPECT(!Empty.IsValid());
+        TEST_EXPECT(!static_cast<bool>(Empty));
+
+        FTestRefCounted* Object = new FTestRefCounted();
+        TSharedRef<FTestRefCounted> Ref = MakeSharedRef<FTestRefCounted>(Object);
+        TEST_EXPECT(Ref.IsValid());
+        TEST_EXPECT(Ref.Get() == Object);
+        TEST_EXPECT(Ref->GetRefCount() == 2);
+
+        Object->Release();
+        TEST_EXPECT(Ref->GetRefCount() == 1);
+    }
+
+    TEST_SECTION("TSharedRef AddRef / Reset / Swap");
+    {
+        TSharedRef<FTestRefCounted> Ref = new FTestRefCounted();
+        TEST_EXPECT(Ref->GetRefCount() == 1);
+
+        Ref.AddRef();
+        TEST_EXPECT(Ref->GetRefCount() == 2);
+        Ref->Release();
+
+        TSharedRef<FTestRefCounted> Other = new FTestRefCounted();
+        Other->Tag = 13;
+        Ref.Swap(Other);
+        TEST_EXPECT(Ref->Tag == 13);
+
+        Ref.Reset();
+        TEST_EXPECT(!Ref.IsValid());
+    }
+
+    TEST_SECTION("TSharedRef ReleaseOwnership / GetAs / assignment");
+    {
+        TSharedRef<FTestRefCounted> Ref = new FTestRefCounted();
+        TSharedRef<FTestRefCounted> Copy;
+        Copy = Ref;
+        TEST_EXPECT(Ref->GetRefCount() == 2);
+
+        FTestRefCounted* Owned = Copy.ReleaseOwnership();
+        TEST_EXPECT(!Copy.IsValid());
+        TEST_EXPECT(Owned != nullptr);
+        Owned->Release();
+
+        TSharedRef<FTestRefCounted> BaseRef = new FTestRefCountedDerived();
+        FTestRefCountedDerived* AsDerived = BaseRef.GetAs<FTestRefCountedDerived>();
+        TEST_EXPECT(AsDerived == static_cast<FTestRefCountedDerived*>(BaseRef.Get()));
+    }
+
+    TEST_SECTION("TSharedRef StaticCastSharedRef");
+    {
+        TSharedRef<FTestRefCounted> Ref = new FTestRefCounted();
+        TSharedRef<IRefCounted> AsBase = StaticCastSharedRef<IRefCounted>(Ref);
+        TEST_EXPECT(AsBase.Get() == static_cast<IRefCounted*>(Ref.Get()));
+        TEST_EXPECT(Ref->GetRefCount() == 2);
+    }
+
+    TEST_SECTION("Cast helpers: Static / Const / Reinterpret / Dynamic (scalar)");
+    {
+        TSharedPtr<FDerived> Derived = MakeSharedPtr<FDerived>();
+        TSharedPtr<FBase> Base = Derived;
+        TEST_EXPECT(Base.GetStrongReferenceCount() == 2);
+
+        TSharedPtr<FDerived> BackToDerived = StaticCastSharedPtr<FDerived>(Base);
+        TEST_EXPECT(BackToDerived.Get() == Derived.Get());
+        TEST_EXPECT(Base.GetStrongReferenceCount() == 3);
+
+        TSharedPtr<FDerived> MovedDerived = StaticCastSharedPtr<FDerived>(::Move(BackToDerived));
+        TEST_EXPECT(MovedDerived.Get() == Derived.Get());
+
+        TSharedPtr<const uint32> ConstPtr = MakeSharedPtr<const uint32>(5);
+        TSharedPtr<uint32> NonConst = ConstCastSharedPtr<uint32>(ConstPtr);
+        TEST_EXPECT(*NonConst == 5);
+        TEST_EXPECT(ConstPtr.GetStrongReferenceCount() == 2);
+
+        TSharedPtr<int32> AsInt   = MakeSharedPtr<int32>(1065353216);
+        TSharedPtr<float> AsFloat = ReinterpretCastSharedPtr<float>(AsInt);
+        TEST_EXPECT(*AsFloat == 1.0f);
+
+        TSharedPtr<FBase>    PolyBase    = MakeSharedPtr<FDerived>();
+        TSharedPtr<FDerived> PolyDerived = DynamicCastSharedPtr<FDerived>(PolyBase);
+
+        TEST_EXPECT(PolyDerived.IsValid());
+        TEST_EXPECT(PolyBase.GetStrongReferenceCount() == 2);
+    }
+
+    TEST_SECTION("Array TSharedPtr: MakeSharedPtr / operator[] / cast / weak array");
+    {
+        TSharedPtr<uint32[]> Array = MakeSharedPtr<uint32[]>(5);
+        TEST_EXPECT(Array.GetStrongReferenceCount() == 1);
+        
+        for (uint32 Index = 0; Index < 5; ++Index)
+        {
+            Array[Index] = Index;
+        }
+
+        TEST_EXPECT(Array[0] == 0u);
+        TEST_EXPECT(Array[4] == 4u);
+
+        TSharedPtr<const uint32[]> ConstArray = ConstCastSharedPtr<const uint32[]>(Array);
+        TEST_EXPECT(ConstArray.GetStrongReferenceCount() == 2);
+        TEST_EXPECT(ConstArray[3] == 3u);
+
+        TSharedPtr<FDerived[]> DerivedArr = MakeSharedPtr<FDerived[]>(4);
+        TSharedPtr<FBase[]> BaseArr = DerivedArr;
+        TEST_EXPECT(BaseArr.GetStrongReferenceCount() == 2);
+
+        TSharedPtr<FDerived[]> BackArr = StaticCastSharedPtr<FDerived[]>(BaseArr);
+        TEST_EXPECT(BaseArr.GetStrongReferenceCount() == 3);
+
+        TWeakPtr<uint32[]> WeakArr = Array;
+        WeakArr[1] = 6;
+        TEST_EXPECT(WeakArr[1] == 6u);
+        
+        TSharedPtr<uint32[]> Promoted = WeakArr.ToSharedPtr();
+        TEST_EXPECT(Promoted.Get() == Array.Get());
+    }
+
+    TEST_SECTION("Custom deleter / TUniquePtr -> TSharedPtr");
     {
         struct FMyDeleter
         {
-            FMyDeleter()                  = default;
-            FMyDeleter(const FMyDeleter&) = default;
-            FMyDeleter(FMyDeleter&&)      = default;
-            ~FMyDeleter()                 = default;
-
-            FMyDeleter& operator=(const FMyDeleter&) = default;
-            FMyDeleter& operator=(FMyDeleter&&)      = default;
-
             FORCEINLINE void Call(uint32* Pointer) noexcept
             {
                 delete Pointer;
             }
         };
 
-        TSharedPtr<uint32> UintPtr = TSharedPtr<uint32>(new uint32(5), FMyDeleter());
+        TSharedPtr<uint32> WithDeleter = TSharedPtr<uint32>(new uint32(5), FMyDeleter());
+        TEST_EXPECT(*WithDeleter == 5);
 
-        TUniquePtr<uint32, FMyDeleter> UniquePtr = TUniquePtr(new uint32(5), FMyDeleter());
-        UintPtr = TSharedPtr<uint32>(::Move(UniquePtr));
+        TUniquePtr<uint32, FMyDeleter> Unique = TUniquePtr<uint32, FMyDeleter>(new uint32(7), FMyDeleter());
+        TSharedPtr<uint32> FromUnique = TSharedPtr<uint32>(::Move(Unique));
+        TEST_EXPECT(*FromUnique == 7);
     }
 
-    std::cout << std::endl << "----Testing DynamicCast----" << std::endl << std::endl;
+    TEST_SECTION("TUniquePtr scalar / array / Reset / Release / IsValid");
     {
-        TSharedPtr<FVirtualBase> VirtualPtr0 = MakeShared<FVirtualDerived>();
-        TEST_REF_COUNT(VirtualPtr0, 1, 1);
-
-        TSharedPtr<FVirtualDerived> VirtualPtr1 = DynamicCastSharedPtr<FVirtualDerived>(VirtualPtr0);
-        TEST_REF_COUNT(VirtualPtr0, 2, 1);
-    }
-
-    constexpr uint32 Num = 5;
-    std::cout << std::endl << "----Testing Operator[]----" << std::endl << std::endl;
-    {
-        TSharedPtr<uint32[]> ConstPtr3 = MakeShared<uint32[]>(5);
-        TEST_REF_COUNT(ConstPtr3, 1, 1);
-
-        std::cout << "ConstPtr3=" << std::endl;
-        auto TempPtr = ConstPtr3.Get();
-        for (uint32 i = 0; i < Num; i++)
-        {
-            ConstPtr3[i] = i;
-            TEST_CHECK(TempPtr[i] == ConstPtr3[i]);
-        }
-
-        TSharedPtr<const uint32[]> ConstPtr4 = ConstCastSharedPtr<const uint32[]>(ConstPtr3);
-        TEST_REF_COUNT(ConstPtr4, 2, 1);
-
-        std::cout << "ConstPtr4=" << std::endl;
-        for (uint32 i = 0; i < Num; i++)
-        {
-            TEST_CHECK(TempPtr[i] == ConstPtr4[i]);
-        }
-    }
-
-    std::cout << std::endl << "----Testing WeakPtr----" << std::endl << std::endl;
-    {
-        TSharedPtr<FDerived> DerivedPtr = MakeShared<FDerived>();
-        TEST_REF_COUNT(DerivedPtr, 1, 1);
-        TSharedPtr<FBase> BasePtr = DerivedPtr;
-        TEST_REF_COUNT(BasePtr, 2, 1);
-
-        TSharedPtr<uint32> UintPtr0 = MakeShared<uint32>(5);
-        TEST_REF_COUNT(UintPtr0, 1, 1);
-        TSharedPtr<uint32> UintPtr1 = Null;
-        TEST_REF_COUNT(UintPtr1, 2, 1);
-
-        TWeakPtr<uint32> WeakUintPtr0 = UintPtr0;
-        TEST_REF_COUNT(WeakUintPtr0, 1, 2);
-        TWeakPtr<uint32> WeakUintPtr1 = UintPtr1;
-        TEST_REF_COUNT(WeakUintPtr1, 2, 2);
-
-        TWeakPtr<FBase> WeakBase = BasePtr;
-        TEST_REF_COUNT(WeakBase, 2, 2);
-
-        TWeakPtr<FDerived> WeakDerived = DerivedPtr;
-        TEST_REF_COUNT(WeakDerived, 2, 3);
-
-        std::cout << std::endl << "----Testing Equality----" << std::endl << std::endl;
-        TEST_CHECK((WeakBase       == WeakDerived)       == true);
-        TEST_CHECK((WeakBase       == WeakDerived.Get()) == true);
-        TEST_CHECK((WeakBase.Get() == WeakDerived)       == true);
-
-        TEST_CHECK((BasePtr       == BasePtr)       == true);
-        TEST_CHECK((BasePtr       == BasePtr.Get()) == true);
-        TEST_CHECK((BasePtr.Get() == BasePtr)       == true);
-
-        TEST_CHECK((WeakBase == BasePtr)  == true);
-        TEST_CHECK((BasePtr  == WeakBase) == true);
-
-        std::cout << std::endl << "----Testing Array types----" << std::endl << std::endl;
-        TSharedPtr<uint32[]> UintArr0 = MakeShared<uint32[]>(5);
-        TEST_REF_COUNT(UintArr0, 1, 1);
-
-        TWeakPtr<uint32[]> WeakArr = UintArr0;
-        TEST_REF_COUNT(UintArr0, 1, 2);
-
-        TSharedPtr<uint32[]> UintArr1 = WeakArr.ToSharedPtr();
-        TEST_REF_COUNT(UintArr0, 2, 2);
-
-        TUniquePtr<uint32[]> UniqueUintArr = MakeUniquePtr<uint32[]>(5);
-
-        std::cout << "----Testing Index operator----" << std::endl;
-        WeakArr[0] = 5;
-        TEST_CHECK(WeakArr[0] == 5);
-
-        WeakArr[1] = 6;
-        TEST_CHECK(WeakArr[1] == 6);
-    }
-
-    std::cout << std::endl << "----Testing ::Move----" << std::endl << std::endl;
-    {
-        TSharedPtr<uint32> MovePtr0 = MakeShared<uint32>(32);
-        TEST_REF_COUNT(MovePtr0, 1, 1);
-
-        auto TempPtr = MovePtr0.Get();
-        TSharedPtr<uint32> MovePtr1 = ::Move(MovePtr0);
-        TEST_REF_COUNT(MovePtr1, 1, 1);
-        TEST_CHECK(MovePtr1.Get() == TempPtr);
-
-        TSharedPtr<uint32[]> MovePtr3 = MakeShared<uint32[]>(Num);
-        TEST_REF_COUNT(MovePtr3, 1, 1);
-
-        for (uint32 i = 0; i < Num; i++)
-        {
-            MovePtr3[i] = i;
-        }
-
-        TempPtr = MovePtr3.Get();
-        TSharedPtr<uint32[]> MovePtr4 = ::Move(MovePtr3);
-        TEST_REF_COUNT(MovePtr4, 1, 1);
-
-        for (uint32 i = 0; i < Num; i++)
-        {
-            TEST_CHECK(MovePtr4[i] == TempPtr[i]);
-        }
-    }
-
-    std::cout << "----Testing Unique to Shared----" << std::endl;
-    {
-        TUniquePtr<uint32> UniqueInt = MakeUniquePtr<uint32>(5);
-        TEST_CHECK(UniqueInt != nullptr);
-
-        TSharedPtr<uint32> UintPtr3 = TSharedPtr<uint32>(::Move(UniqueInt));
-        TEST_REF_COUNT(UintPtr3, 1, 1);
-        TEST_CHECK(UniqueInt == nullptr);
-    }
-
-    std::cout << "----Testing UniquePtr (Scalar)----" << std::endl;
-    {
-        TUniquePtr<uint32> Unique0 = MakeUniquePtr<uint32>(5);
-        TEST_CHECK(*Unique0 == 5);
+        TUniquePtr<uint32> Scalar = MakeUniquePtr<uint32>(5);
+        TEST_EXPECT(Scalar.IsValid());
+        TEST_EXPECT(*Scalar == 5);
         
-        TUniquePtr<uint32> Unique1 = nullptr;
-        TEST_CHECK(Unique1.IsValid() == false);
+        Scalar.Reset(new uint32(15));
+        TEST_EXPECT(*Scalar == 15);
 
-        TUniquePtr<uint32> Unique2 = TUniquePtr(new uint32(5));
-        TEST_CHECK(*Unique2 == 5);
-        Unique2.Reset(new uint32(15));
-        TEST_CHECK(*Unique2 == 15);
+        uint32* Released = Scalar.Release();
+        TEST_EXPECT(!Scalar.IsValid());
+        delete Released;
 
-        TEST_CHECK(Unique0.IsValid() == true);
+        TUniquePtr<uint32> Null = nullptr;
+        TEST_EXPECT(!Null.IsValid());
 
-        uint32* Raw = Unique0.Release();
-        delete Raw;
+        TUniquePtr<uint32[]> ArrayUnique = MakeUniquePtr<uint32[]>(5);
+        TEST_EXPECT(ArrayUnique.IsValid());
+        
+        ArrayUnique[0] = 1;
+        TEST_EXPECT(ArrayUnique[0] == 1u);
+
+        uint32* ReleasedArray = ArrayUnique.Release();
+        delete[] ReleasedArray;
+
+        TUniquePtr<uint32> UniqueInt        = MakeUniquePtr<uint32>(5);
+        TSharedPtr<uint32> SharedFromUnique = TSharedPtr<uint32>(::Move(UniqueInt));
+
+        TEST_EXPECT(SharedFromUnique.IsValid());
+        TEST_EXPECT(!UniqueInt.IsValid());
     }
 
-    std::cout << "----Testing UniquePtr (Array)----" << std::endl;
-    {
-        TUniquePtr<uint32[]> Unique0 = MakeUniquePtr<uint32[]>(5);
-        TUniquePtr<uint32[]> Unique1 = nullptr;
-        TUniquePtr<uint32[]> Unique2 = TUniquePtr<uint32[]>(new uint32[5]);
-        Unique2.Reset(new uint32[15]);
-
-        TEST_CHECK(Unique0.IsValid() == true);
-
-        std::cout << "Unique0=" << std::endl;
-        for (uint32 i = 0; i < 5; i++)
-        {
-            std::cout << Unique0[i] << std::endl;
-        }
-
-        uint32* Raw = Unique0.Release();
-        delete[] Raw;
-    }
-
-    std::cout << "----Testing UniquePtr with TArray----" << std::endl;
+    TEST_SECTION("TUniquePtr inside TArray (move)");
     {
         TArray<TUniquePtr<int32>> UniqueArray;
-        for (uint32 i = 0; i < 200; i++)
+        for (int32 Index = 0; Index < 64; ++Index)
         {
-            UniqueArray.Emplace(MakeUniquePtr<int32>(i));
+            UniqueArray.Emplace(MakeUniquePtr<int32>(Index));
         }
 
-        TArray<TUniquePtr<int32>> UniqueArray2 = ::Move(UniqueArray);
+        TArray<TUniquePtr<int32>> Moved = ::Move(UniqueArray);
+        TEST_EXPECT(Moved.Size() == 64);
+        TEST_EXPECT(*Moved[10] == 10);
     }
 
-    std::cout << "----Testing TSharedFromThis----" << std::endl;
+    TEST_SECTION("Weak/Shared equality operators");
     {
-        class FSharedClass : public TSharedFromThis<FSharedClass>
+        TSharedPtr<FDerived> Derived = MakeSharedPtr<FDerived>();
+        TSharedPtr<FBase>    Base    = Derived;
+
+        TWeakPtr<FBase>    WeakBase    = Base;
+        TWeakPtr<FDerived> WeakDerived = Derived;
+
+        TEST_EXPECT((WeakBase == WeakDerived));
+        TEST_EXPECT((WeakBase == WeakDerived.Get()));
+        TEST_EXPECT((WeakBase.Get() == WeakDerived));
+        TEST_EXPECT((Base == Base.Get()));
+        TEST_EXPECT((WeakBase == Base));
+        TEST_EXPECT((Base == WeakBase));
+    }
+
+    TEST_SECTION("TSharedPtr / TUniquePtr lifetime stress (FInstanced, seeded sweep)");
+    {
+        FInstanced::Reset();
+        STRESS_SWEEP(TargetSize, Seed, Stress::DefaultSeedCount)
         {
-        public:
-            FSharedClass(int32 InValue)
-                : Value(InValue)
+            FRandom Random(Seed);
+
+            TArray<TSharedPtr<FInstanced>> Shared;
+            for (int32 Step = 0; Step < TargetSize; ++Step)
             {
+                Shared.Add(MakeSharedPtr<FInstanced>(Step));
             }
 
-        private:
-            int32 Value;
-        };
+            TEST_EXPECT(FInstanced::LiveCount() == TargetSize);
 
-        static_assert(TIsBaseOf<TSharedFromThis<FSharedClass>, FSharedClass>::Value == true, "TSharedFromThis is not working correctly");
+            // Random aliasing must share ownership rather than create new instances.
+            for (int32 Step = 0; Step < TargetSize; ++Step)
+            {
+                if (Random.RandBool() && !Shared.IsEmpty())
+                {
+                    const int32 At = static_cast<int32>(Random.RandInt(0, Shared.Size() - 1));
+                    TSharedPtr<FInstanced> Alias = Shared[At];
+                    TEST_EXPECT(Alias.GetStrongReferenceCount() >= 2);
+                }
+            }
 
-        TSharedPtr<FSharedClass> SharedInstance1;
-        {
-            TSharedPtr<FSharedClass> SharedInstance0 = MakeShared<FSharedClass>(500);
-            TEST_REF_COUNT(SharedInstance0, 1, 2);
+            TEST_EXPECT(FInstanced::LiveCount() == TargetSize);
 
-            SharedInstance1 = SharedInstance0->AsSharedPtr();
-            TEST_REF_COUNT(SharedInstance1, 2, 2);
+            // Release everything; every managed object must be destroyed exactly once.
+            while (!Shared.IsEmpty())
+            {
+                Shared.RemoveAt(Shared.Size() - 1);
+            }
+
+            TEST_EXPECT(FInstanced::LiveCount() == 0);
+
+            // High-volume unique-pointer create/reset cycles.
+            for (int32 Step = 0; Step < TargetSize; ++Step)
+            {
+                TUniquePtr<FInstanced> Unique = MakeUniquePtr<FInstanced>(Step);
+                TEST_EXPECT(Unique.IsValid());
+                TEST_EXPECT(Unique->GetId() == Step);
+            }
+
+            TEST_EXPECT(FInstanced::LiveCount() == 0);
         }
 
-        TSharedPtr<FSharedClass> SharedInstance2 = SharedInstance1;
-        TEST_REF_COUNT(SharedInstance1, 2, 2);
+        TEST_EXPECT(FInstanced::LiveCount() == 0);
     }
 
-    SUCCESS();
+    TEST_END();
 }
-
 #endif

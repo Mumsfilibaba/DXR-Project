@@ -6,250 +6,207 @@
 #include <Core/Containers/Optional.h>
 #include <Core/Memory/Memory.h>
 
-#include <iostream>
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FTest
-
-struct FTest
+namespace
 {
-    enum { SizeInBytes = 1024*1024 };
-
-    FTest()
+    // Non-trivial, heap-owning type to exercise Optional with real construction/copy/move/destruction.
+    struct FHeavy
     {
-        Pointer = Memory::Malloc(SizeInBytes);
-    }
+        enum { SizeInBytes = 256 };
 
-    FTest(int32 InValue)
-        : Value(InValue)
-    {
-        Pointer = Memory::Malloc(SizeInBytes);
-        Memory::Memset(Pointer, static_cast<uint8>(Value), SizeInBytes);
-
-        CHAR* Temp =reinterpret_cast<CHAR*>(Pointer);
-        UNREFERENCED_VARIABLE(Temp);
-    }
-     
-    FTest(const FTest& Other)
-    {
-        Pointer = Memory::Malloc(SizeInBytes);
-        Memory::Memcpy(Pointer, Other.Pointer, SizeInBytes);
-    }
-
-    FTest(FTest&& Other)
-        : Pointer(Other.Pointer)
-        , Value(Other.Value)
-    {
-        Other.Pointer = nullptr;
-        Other.Value   = 0;
-    }
-
-    ~FTest()
-    {
-        Memory::Free(Pointer);
-        Pointer = nullptr;
-        Value   = 0;
-    }
-
-    FTest& operator=(const FTest& RHS)
-    {
-        if (Pointer)
+        FHeavy()
         {
-            Memory::Free(Pointer);
+            Pointer = Memory::Malloc(SizeInBytes);
         }
 
-        Pointer = Memory::Malloc(SizeInBytes);
-        Memory::Memcpy(Pointer, RHS.Pointer, SizeInBytes);
-        return *this;
-    }
-
-    FTest& operator=(FTest&& RHS)
-    {
-        if (Pointer)
+        FHeavy(int32 InValue)
+            : Value(InValue)
         {
-            Memory::Free(Pointer);
+            Pointer = Memory::Malloc(SizeInBytes);
+            Memory::Memset(Pointer, static_cast<uint8>(Value), SizeInBytes);
         }
 
-        Pointer = RHS.Pointer;
-        RHS.Pointer = nullptr;
-        return *this;
-    }
+        FHeavy(const FHeavy& Other)
+            : Value(Other.Value)
+        {
+            Pointer = Memory::Malloc(SizeInBytes);
+            Memory::Memcpy(Pointer, Other.Pointer, SizeInBytes);
+        }
 
-    bool operator==(const FTest& RHS) const
+        FHeavy(FHeavy&& Other)
+            : Pointer(Other.Pointer)
+            , Value(Other.Value)
+        {
+            Other.Pointer = nullptr;
+            Other.Value   = 0;
+        }
+
+        ~FHeavy()
+        {
+            Memory::Free(Pointer);
+            Pointer = nullptr;
+            Value   = 0;
+        }
+
+        FHeavy& operator=(const FHeavy& RHS)
+        {
+            Memory::Free(Pointer);
+            Pointer = Memory::Malloc(SizeInBytes);
+            Memory::Memcpy(Pointer, RHS.Pointer, SizeInBytes);
+            Value = RHS.Value;
+            return *this;
+        }
+
+        FHeavy& operator=(FHeavy&& RHS)
+        {
+            Memory::Free(Pointer);
+            Pointer     = RHS.Pointer;
+            Value       = RHS.Value;
+            RHS.Pointer = nullptr;
+            RHS.Value   = 0;
+            return *this;
+        }
+
+        bool operator==(int32 RHS) const noexcept
+        {
+            return Value == RHS;
+        }
+
+        void* Pointer = nullptr;
+        int32 Value   = 0;
+    };
+
+    // Move-only type to ensure Optional supports non-copyable payloads.
+    struct FMoveOnly
     {
-        return Memory::Memcmp(Pointer, RHS.Pointer, SizeInBytes) == 0;
-    }
-
-    bool operator==(int32 RHS) const noexcept
-    {
-        return Value == RHS;
-    }
-
-    bool operator!=(int32 RHS) const noexcept
-    {
-        return !(*this == RHS);
-    }
-
-    void* Pointer = nullptr;
-    int32 Value   = 0;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FMoveable
-
-struct FMoveable
-{
-    FMoveable() = default;
-    ~FMoveable() = default;
-
-    FMoveable(FMoveable&&) = default;
-    FMoveable& operator=(FMoveable&&) = default;
-
-    FMoveable(const FMoveable&) = delete;
-    FMoveable& operator=(const FMoveable&) = delete;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FCopyable
-
-struct FCopyable
-{
-    FCopyable() = default;
-    ~FCopyable() = default;
-
-    FCopyable(FCopyable&&) = delete;
-    FCopyable& operator=(FCopyable&&) = delete;
-
-    FCopyable(const FCopyable&) = default;
-    FCopyable& operator=(const FCopyable&) = default;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Tests
+        FMoveOnly() = default;
+        ~FMoveOnly() = default;
+        FMoveOnly(FMoveOnly&&) = default;
+        FMoveOnly& operator=(FMoveOnly&&) = default;
+        FMoveOnly(const FMoveOnly&) = delete;
+        FMoveOnly& operator=(const FMoveOnly&) = delete;
+    };
+}
 
 bool TOptional_Test()
 {
-    std::cout << '\n' << "----------TOptional----------" << '\n' << '\n';
+    TEST_BEGIN();
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Constructors copy/move etc
-
+    TEST_SECTION("Empty optional / HasValue / operator bool / TryGetValue");
     {
-        TOptional<FTest> Optional0;
-        TOptional<FTest> Optional1(InPlace, 65);
-
-        TEST_CHECK(!Optional0);
-        TEST_CHECK( Optional1);
-
-        Optional1.Reset();
-
-        TEST_CHECK(!Optional1);
+        TOptional<int32> Empty;
+        TEST_EXPECT(!Empty.HasValue());
+        TEST_EXPECT(!static_cast<bool>(Empty));
+        TEST_EXPECT(Empty.TryGetValue() == nullptr);
+        TEST_EXPECT_EQ(Empty.GetValueOrDefault(7), 7);
     }
 
+    TEST_SECTION("InPlace construction / GetValue / operator* / operator->");
     {
-        TOptional<FMoveable> Optional0;
-        Optional0.Emplace();
-
-        TOptional<FMoveable> Optional1(Move(Optional0));
+        TOptional<int32> Value(EInPlace::InPlace, 42);
+        TEST_EXPECT(Value.HasValue());
+        TEST_EXPECT(static_cast<bool>(Value));
+        TEST_EXPECT_EQ(Value.GetValue(), 42);
+        TEST_EXPECT_EQ(*Value, 42);
+        TEST_EXPECT(Value.TryGetValue() != nullptr);
+        TEST_EXPECT_EQ(*Value.TryGetValue(), 42);
+        TEST_EXPECT_EQ(Value.GetValueOrDefault(7), 42);
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Emplace
-
+    TEST_SECTION("Emplace / Reset");
     {
-        TOptional<FTest> Optional0(InPlace, 70);
-        TEST_CHECK(*Optional0 == 70);
-        TEST_CHECK(Optional0.Emplace(245) == 245);
-        TEST_CHECK(Optional0.Emplace(235) == 235);
-        TEST_CHECK(Optional0.Emplace(225) == 225);
-        TEST_CHECK(Optional0.Emplace(215) == 215);
-        TEST_CHECK(Optional0.Emplace(205) == 205);
+        TOptional<int32> Value;
+        TEST_EXPECT_EQ(Value.Emplace(100), 100);
+        TEST_EXPECT(Value.HasValue());
+        TEST_EXPECT_EQ(*Value, 100);
 
-        TOptional<int32> Optional1;
-        TEST_CHECK(Optional1.Emplace(10) == 10);
-        TEST_CHECK(Optional1.Emplace(20) == 20);
-        TEST_CHECK(Optional1.Emplace(30) == 30);
-        TEST_CHECK(Optional1.Emplace(40) == 40);
-        TEST_CHECK(Optional1.Emplace(50) == 50);
-        TEST_CHECK(Optional1.Emplace(60) == 60);
+        Value.Emplace(200);
+        TEST_EXPECT_EQ(*Value, 200);
+
+        Value.Reset();
+        TEST_EXPECT(!Value.HasValue());
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Swap basic
-
+    TEST_SECTION("Copy / move / nullptr assignment");
     {
-        TOptional<int64> Optional0;
-        TOptional<int64> Optional1(InPlace, 100);
-        TEST_CHECK(*Optional1 == 100);
+        TOptional<int32> Value(EInPlace::InPlace, 5);
+        TOptional<int32> Copy;
+        Copy = Value;
 
-        TEST_CHECK(!Optional0.HasValue());
+        TEST_EXPECT(Copy.HasValue());
+        TEST_EXPECT_EQ(*Copy, 5);
 
-        TEST_CHECK(Optional0.Emplace(255) == 255);
-
-        TEST_CHECK(Optional0.HasValue());
-        TEST_CHECK(Optional1.HasValue());
-
-        Optional0.Swap(Optional1);
-
-        TEST_CHECK(*Optional0 == 100);
-        TEST_CHECK(*Optional1 == 255);
-
-        Optional0.Reset();
-
-        TEST_CHECK(Optional0.GetValueOrDefault(50) == 50);
-    }
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Swap complex
-
-    {
-        TOptional<FTest> Optional0;
-        TOptional<FTest> Optional1(InPlace, 100);
+        TOptional<int32> Moved;
+        Moved = ::Move(Copy);
         
-        TEST_CHECK(!Optional0.HasValue());
-        TEST_CHECK( Optional1.HasValue());
+        TEST_EXPECT(Moved.HasValue());
+        TEST_EXPECT_EQ(*Moved, 5);
 
-        TEST_CHECK(*Optional1 == 100);
-
-        TEST_CHECK(Optional0.Emplace(255) == 255);
-        TEST_CHECK(Optional0.HasValue());
-
-        Optional0.Swap(Optional1);
-
-        TEST_CHECK(*Optional0 == 100);
-        TEST_CHECK(*Optional1 == 255);
-        TEST_CHECK(Optional0.HasValue());
-        TEST_CHECK(Optional1.HasValue());
-
-        Optional0.Swap(Optional1);
-
-        TEST_CHECK(*Optional0 == 255);
-        TEST_CHECK(*Optional1 == 100);
-        TEST_CHECK(Optional0.HasValue());
-        TEST_CHECK(Optional1.HasValue());
-
-        Optional0.Swap(Optional1);
-
-        TEST_CHECK(*Optional0 == 100);
-        TEST_CHECK(*Optional1 == 255);
-        TEST_CHECK(Optional0.HasValue());
-        TEST_CHECK(Optional1.HasValue());
+        Moved = nullptr;
+        TEST_EXPECT(!Moved.HasValue());
     }
-    
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // TryGetValue
 
+    TEST_SECTION("Swap (both set, one set, neither set)");
     {
-        TOptional<int32> Optional0;
-        TOptional<int32> Optional1(InPlace);
-        TEST_CHECK(!Optional0.HasValue());
-        TEST_CHECK(Optional1.HasValue());
+        TOptional<int32> First(EInPlace::InPlace, 1);
+        TOptional<int32> Second(EInPlace::InPlace, 2);
+        First.Swap(Second);
+        
+        TEST_EXPECT_EQ(*First, 2);
+        TEST_EXPECT_EQ(*Second, 1);
 
-        TEST_CHECK(Optional0.TryGetValue() == nullptr);
-        TEST_CHECK(Optional1.TryGetValue() != nullptr);
+        TOptional<int32> Set(EInPlace::InPlace, 9);
+        TOptional<int32> Unset;
+        Set.Swap(Unset);
+
+        TEST_EXPECT(!Set.HasValue());
+        TEST_EXPECT(Unset.HasValue());
+        TEST_EXPECT_EQ(*Unset, 9);
     }
 
-    SUCCESS();
-}
+    TEST_SECTION("operator== / operator!=");
+    {
+        TOptional<int32> First(EInPlace::InPlace, 5);
+        TOptional<int32> Second(EInPlace::InPlace, 5);
+        TOptional<int32> Third(EInPlace::InPlace, 6);
+        TOptional<int32> Empty1;
+        TOptional<int32> Empty2;
 
+        TEST_EXPECT(First == Second);
+        TEST_EXPECT(First != Third);
+        TEST_EXPECT(Empty1 == Empty2);
+        TEST_EXPECT(First != Empty1);
+    }
+
+    TEST_SECTION("Non-trivial heap type: InPlace / Emplace / Swap / GetValueOrDefault");
+    {
+        TOptional<FHeavy> First;
+        TOptional<FHeavy> Second(EInPlace::InPlace, 100);
+        TEST_EXPECT(!First.HasValue());
+        TEST_EXPECT(Second.HasValue());
+        TEST_EXPECT(*Second == 100);
+
+        TEST_EXPECT(First.Emplace(255) == 255);
+        TEST_EXPECT(First.HasValue());
+
+        First.Swap(Second);
+        TEST_EXPECT(*First == 100);
+        TEST_EXPECT(*Second == 255);
+
+        First.Reset();
+        TEST_EXPECT(First.GetValueOrDefault(FHeavy(50)) == 50);
+    }
+
+    TEST_SECTION("Move-only payload: Emplace / move construction");
+    {
+        TOptional<FMoveOnly> First;
+        First.Emplace();
+        
+        TEST_EXPECT(First.HasValue());
+
+        TOptional<FMoveOnly> Second(::Move(First));
+        TEST_EXPECT(Second.HasValue());
+    }
+
+    TEST_END();
+}
 #endif

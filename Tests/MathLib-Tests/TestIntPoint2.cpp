@@ -2,100 +2,82 @@
 
 #include <Core/Math/IntVector2.h>
 
-#include <cstdio>
-
 bool TestIntPoint2()
 {
-    // Constructors
-    IntVector2 Point0;
+    TEST_BEGIN();
 
-    IntVector2 Point1(1, 2);
+    TEST_SECTION("IntVector2::IntVector2 (constructors)");
+    TEST_EXPECT(IntVector2() == IntVector2(0, 0));
+    TEST_EXPECT(IntVector2(-3) == IntVector2(-3, -3));
 
-    int Arr[2] = { 5, -7 };
-    IntVector2 Point2(Arr);
+    TEST_SECTION("IntVector2::Min / Max / Clamp");
+    TEST_EXPECT(IntVector2::Min(IntVector2(5, -7), IntVector2(-3)) == IntVector2(-3, -7));
+    TEST_EXPECT(IntVector2::Max(IntVector2(5, -7), IntVector2(-3)) == IntVector2(5, -3));
+    TEST_EXPECT(IntVector2::Clamp(IntVector2(-5, 8), IntVector2(-2), IntVector2(5)) == IntVector2(-2, 5));
 
-    IntVector2 Point3(-3);
+    TEST_SECTION("IntVector2::operator- (unary)");
+    TEST_EXPECT(-IntVector2(1, 2) == IntVector2(-1, -2));
 
-    // Min
-    IntVector2 MinPoint = Min(Point2, Point3);
-    if (MinPoint != IntVector2(-3, -7))
+    TEST_SECTION("IntVector2::operator+ / operator+=");
+    TEST_EXPECT(IntVector2(1, 2) + IntVector2(3, 1) == IntVector2(4, 3));
+    TEST_EXPECT(IntVector2(1, 2) + 5 == IntVector2(6, 7));
+    TEST_EXPECT(5 + IntVector2(1, 2) == IntVector2(6, 7));
     {
-        TEST_FAILED();
+        IntVector2 Vec(1, 2);
+        Vec += IntVector2(1, 1);
+        Vec += 1;
+
+        TEST_EXPECT(Vec == IntVector2(3, 4));
     }
 
-    // Max
-    IntVector2 MaxPoint = Max(Point2, Point3);
-    if (MaxPoint != IntVector2(5, -3))
+    TEST_SECTION("IntVector2::operator- / operator-=");
+    TEST_EXPECT(IntVector2(4, 3) - IntVector2(3, 1) == IntVector2(1, 2));
+    TEST_EXPECT(IntVector2(4, 3) - 5 == IntVector2(-1, -2));
+    TEST_EXPECT(5 - IntVector2(1, 2) == IntVector2(4, 3));
     {
-        TEST_FAILED();
+        IntVector2 Vec(4, 3);
+        Vec -= IntVector2(1, 1);
+        Vec -= 1;
+
+        TEST_EXPECT(Vec == IntVector2(2, 1));
     }
 
-    // Unary minus
-    IntVector2 Minus = -Point1;
-    if (Minus != IntVector2(-1, -2))
+    TEST_SECTION("IntVector2::operator* / operator*=");
+    TEST_EXPECT(IntVector2(1, 2) * IntVector2(3, 1) == IntVector2(3, 2));
+    TEST_EXPECT(IntVector2(1, 2) * 5 == IntVector2(5, 10));
+    TEST_EXPECT(5 * IntVector2(1, 2) == IntVector2(5, 10));
     {
-        TEST_FAILED();
+        IntVector2 Vec(1, 2);
+        Vec *= IntVector2(2, 2);
+        Vec *= 2;
+
+        TEST_EXPECT(Vec == IntVector2(4, 8));
     }
 
-    // Add
-    IntVector2 Add0 = Minus + IntVector2(3, 1);
-    if (Add0 != IntVector2(2, -1))
+    TEST_SECTION("IntVector2::operator/ / operator/=");
+    TEST_EXPECT(IntVector2(6, 8) / IntVector2(3, 4) == IntVector2(2, 2));
+    TEST_EXPECT(IntVector2(10, 20) / 5 == IntVector2(2, 4));
+    TEST_EXPECT(12 / IntVector2(3, 4) == IntVector2(4, 3));
     {
-        TEST_FAILED();
+        IntVector2 Vec(8, 4);
+        Vec /= IntVector2(2, 2);
+        Vec /= 2;
+
+        TEST_EXPECT(Vec == IntVector2(2, 1));
     }
 
-    IntVector2 Add1 = Minus + 5;
-    if (Add1 != IntVector2(4, 3))
+    TEST_SECTION("IntVector2::operator== / operator!=");
+    TEST_EXPECT(IntVector2(1, 2) == IntVector2(1, 2));
+    TEST_EXPECT(IntVector2(1, 2) != IntVector2(1, 3));
+
+    TEST_SECTION("IntVector2::operator[]");
     {
-        TEST_FAILED();
+        IntVector2 Vec(1, 2);
+        Vec[0] = 5;
+
+        TEST_EXPECT(Vec[0] == 5);
+        TEST_EXPECT(Vec[1] == 2);
     }
 
-    // Subtraction
-    IntVector2 Sub0 = Add1 - IntVector2(3, 1);
-    if (Sub0 != IntVector2(1, 2))
-    {
-        TEST_FAILED();
-    }
-
-    IntVector2 Sub1 = Add1 - 5;
-    if (Sub1 != IntVector2(-1, -2))
-    {
-        TEST_FAILED();
-
-    }
-
-    // Multiplication
-    IntVector2 Mul0 = Sub0 * IntVector2(3, 1);
-    if (Mul0 != IntVector2(3, 2))
-    {
-        TEST_FAILED();
-    }
-
-    IntVector2 Mul1 = Sub0 * 5;
-    if (Mul1 != IntVector2(5, 10))
-    {
-        TEST_FAILED();
-    }
-
-    // Division
-    IntVector2 Div0 = Mul0 / IntVector2(3, 1);
-    if (Div0 != IntVector2(1, 2))
-    {
-        TEST_FAILED();
-    }
-
-    const IntVector2 Div1 = Mul1 / 5;
-    if (Div1 != IntVector2(1, 2))
-    {
-        TEST_FAILED();
-    }
-
-    // Get Component
-    int Component = Div1[1];
-    if (Component != 2)
-    {
-        TEST_FAILED();
-    }
-
-    return true;
+    TEST_END();
 }

@@ -2,5 +2,5 @@
 #include "Config.h"
 
 #if RUN_TQUEUE_TEST
-void TQueue_Test();
+bool TQueue_Test();
 #endif

@@ -1,478 +1,435 @@
 #include "BitArray_Test.h"
 
 #if RUN_TBITARRAY_TEST || RUN_TSTATICBITARRAY_TEST
+#include <Core/Containers/String.h>
+
 #include "TestUtils.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Helpers
-
+// Renders a bit array as a string with the most-significant (highest index) bit first.
 template<typename BitArrayType>
-std::string MakeStringFromBitArray(const BitArrayType& BitArray)
+static String MakeStringFromBitArray(const BitArrayType& BitArray)
 {
-    std::string NewString;
-    NewString.reserve(BitArray.Size());
+    String NewString;
+    NewString.Reserve(BitArray.Size());
 
-    for (int32 Index = 0; Index < BitArray.Size(); ++Index)
+    for (int32 Index = BitArray.Size() - 1; Index >= 0; --Index)
     {
-        const bool bValue = (BitArray[Index] == true);
-        NewString.push_back(bValue ? '1' : '0');
+        NewString.Append((BitArray[Index] == true) ? '1' : '0');
     }
 
-    std::reverse(NewString.begin(), NewString.end());
     return NewString;
 }
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// BitArray test
+#endif
 
 #if RUN_TBITARRAY_TEST
 #include <Core/Containers/BitArray.h>
 
+#include <vector>
+
 bool TBitArray_Test()
 {
-    std::cout << '\n' << "----------TBitArray----------" << '\n' << '\n';
+    TEST_BEGIN();
 
+    TEST_SECTION("Empty / IsEmpty / Size");
     {
-        TBitArray<uint8> BitArray;
-        TEST_CHECK(BitArray.Size()            == 0);
-        TEST_CHECK(BitArray.Capacity()        == 0);
-        TEST_CHECK(BitArray.IntegerSize()     == 0);
-        TEST_CHECK(BitArray.CapacityInBytes() == 0);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "");
+        TBitArray<uint8> Bits;
+        TEST_EXPECT(Bits.IsEmpty());
+        TEST_EXPECT_EQ(Bits.Size(), 0);
+        TEST_EXPECT(Bits.HasNoBitSet());
+        TEST_EXPECT(!Bits.HasAnyBitSet());
     }
 
+    TEST_SECTION("Add / AssignBit / operator[] read");
     {
-        TBitArray<uint32> BitArray;
-        TEST_CHECK(BitArray.Size()         == 0);
-        TEST_CHECK(BitArray.Capacity()     == 0);
-        TEST_CHECK(BitArray.IntegerSize()     == 0);
-        TEST_CHECK(BitArray.CapacityInBytes() == 0);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "");
-    }
-
-    {
-        TBitArray BitArray(8, true);
-        TEST_CHECK(BitArray.Size()         == 8);
-        TEST_CHECK(BitArray.Capacity()     == 32);
-        TEST_CHECK(BitArray.IntegerSize()     == 1);
-        TEST_CHECK(BitArray.CapacityInBytes() == 4);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "11111111");
-    }
-
-    {
-        TBitArray<uint8> BitArray(uint8(0b01010101));
-        TEST_CHECK(BitArray.Size()         == 8);
-        TEST_CHECK(BitArray.Capacity()     == 8);
-        TEST_CHECK(BitArray.IntegerSize()     == 1);
-        TEST_CHECK(BitArray.CapacityInBytes() == 1);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "01010101");
-    }
-
-    {
-        const uint8 Bits[] =
-        {
-            0b01010101,
-            0b01010101,
-        };
-
-        TBitArray<uint8> BitArray(Bits, ARRAY_COUNT(Bits));
-        TEST_CHECK(BitArray.Size() == 16);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "0101010101010101");
-    }
-
-    {
-        TBitArray BitArray = { false, true, false, true };
-        TEST_CHECK(BitArray.Size() == 4);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "1010");
-    }
-
-    {
-        TBitArray<uint8> BitArray0(9, true);
-        TEST_CHECK(BitArray0.Size() == 9);
-        TEST_CHECK(MakeStringFromBitArray(BitArray0) == "111111111");
-
-        TBitArray<uint8> BitArray1(BitArray0);
-        TEST_CHECK(BitArray1.Size() == 9);
-        TEST_CHECK(MakeStringFromBitArray(BitArray1) == "111111111");
-
-        TEST_CHECK((BitArray0 == BitArray1) == true);
-    }
-
-    {
-        TBitArray<uint8> BitArray0(9, true);
-        TEST_CHECK(BitArray0.Size() == 9);
-        TEST_CHECK(MakeStringFromBitArray(BitArray0) == "111111111");
-
-        TBitArray<uint8> BitArray1(Move(BitArray0));
-        TEST_CHECK(BitArray0.Size() == 0);
-        TEST_CHECK(BitArray1.Size() == 9);
+        TBitArray<uint8> Bits;
+        Bits.Add(true);
+        Bits.Add(false);
+        Bits.Add(true);
         
-        TEST_CHECK(MakeStringFromBitArray(BitArray0) == "");
-        TEST_CHECK(MakeStringFromBitArray(BitArray1) == "111111111");
+        TEST_EXPECT_EQ(Bits.Size(), 3);
+        TEST_EXPECT(Bits[0] == true);
+        TEST_EXPECT(Bits[1] == false);
+        TEST_EXPECT(Bits[2] == true);
 
-        TEST_CHECK((BitArray0 != BitArray1) == true);
+        Bits.AssignBit(1, true);
+        TEST_EXPECT(Bits[1] == true);
     }
 
+    TEST_SECTION("FlipBit");
     {
-        TBitArray<uint8> BitArray(9, true);
-        TEST_CHECK(BitArray.Size() == 9);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "111111111");
-
-        BitArray.Reset();
-
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "000000000");
+        TBitArray<uint8> Bits(4, false);
+        Bits.FlipBit(2);
+        TEST_EXPECT(Bits[2] == true);
+        Bits.FlipBit(2);
+        TEST_EXPECT(Bits[2] == false);
     }
 
+    TEST_SECTION("CountAssignedBits / HasAnyBitSet / HasNoBitSet");
     {
-        TBitArray<uint8> BitArray;
-        TEST_CHECK(BitArray.Size() == 0);
-        TEST_CHECK(BitArray.IsEmpty() == true);
+        TBitArray<uint8> Bits(8, false);
+        TEST_EXPECT_EQ(Bits.CountAssignedBits(), 0);
+        TEST_EXPECT(Bits.HasNoBitSet());
 
-        BitArray.Add(false);
-        BitArray.Add(true);
-        BitArray.Add(false);
-        BitArray.Add(true);
-        BitArray.Add(true);
-        BitArray.Add(false);
-        BitArray.Add(true);
-        BitArray.Add(true);
-        BitArray.Add(false);
-        BitArray.Add(true);
-        BitArray.Add(false);
+        Bits.AssignBit(0, true);
+        Bits.AssignBit(3, true);
+        Bits.AssignBit(7, true);
 
-        TEST_CHECK(BitArray.Size() == 11);
-        TEST_CHECK(BitArray.IsEmpty() == false);
-
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "01011011010");
+        TEST_EXPECT_EQ(Bits.CountAssignedBits(), 3);
+        TEST_EXPECT(Bits.HasAnyBitSet());
     }
 
+    TEST_SECTION("MostSignificant / LeastSignificant");
     {
-        TBitArray<uint8> BitArray(0b00000000);
-        TEST_CHECK(BitArray.Size() == 8);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "00000000");
-
-        BitArray.AssignBit(3, true);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "00001000");
-
-        BitArray.FlipBit(4);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "00011000");
-
-        TEST_CHECK(BitArray.CountAssignedBits() == 2);
-        TEST_CHECK(BitArray.HasAnyBitSet()      == true);
-        TEST_CHECK(BitArray.HasNoBitSet()       == false);
-
-        const uint32 MostSignificantBit = BitArray.MostSignificant();
-        TEST_CHECK(MostSignificantBit == 4);
-
-        const uint32 LeastSignificantBit = BitArray.LeastSignificant();
-        TEST_CHECK(LeastSignificantBit == 3);
+        TBitArray<uint8> Bits(8, false);
+        Bits.AssignBit(2, true);
+        Bits.AssignBit(5, true);
+        TEST_EXPECT_EQ(Bits.LeastSignificant(), 2);
+        TEST_EXPECT_EQ(Bits.MostSignificant(), 5);
     }
 
+    TEST_SECTION("Reset clears all bits");
     {
-        TBitArray BitArray = { false, true, false, true };
-        TEST_CHECK(BitArray.Size() == 4);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "1010");
-
-        BitArray = ~BitArray;
-
-        TEST_CHECK(BitArray.Size() == 4);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "0101");
+        TBitArray<uint8> Bits(8, true);
+        TEST_EXPECT(Bits.HasAnyBitSet());
+        Bits.Reset();
+        TEST_EXPECT(Bits.HasNoBitSet());
     }
 
-    constexpr int32 BitCount = 18;
+    TEST_SECTION("Copy construction / operator== / operator!=");
     {
-        TBitArray<uint8> BitArray(BitCount, false);
-        for (int32 Bit = 0; Bit < BitCount; ++Bit)
+        TBitArray<uint8> First(9, true);
+        TBitArray<uint8> Second(First);
+        TEST_EXPECT(First == Second);
+
+        Second.AssignBit(0, false);
+        TEST_EXPECT(First != Second);
+    }
+
+    TEST_SECTION("Bitwise And / Or / Xor / Not");
+    {
+        TBitArray<uint8> First  = { true, true, false, false };
+        TBitArray<uint8> Second = { true, false, true, false };
+
+        TBitArray<uint8> AndResult(First);
+        AndResult.BitwiseAnd(Second);
+        TEST_EXPECT(AndResult[0] == true);
+        TEST_EXPECT(AndResult[1] == false);
+        TEST_EXPECT(AndResult[2] == false);
+
+        TBitArray<uint8> OrResult(First);
+        OrResult.BitwiseOr(Second);
+        TEST_EXPECT(OrResult[0] == true);
+        TEST_EXPECT(OrResult[1] == true);
+        TEST_EXPECT(OrResult[2] == true);
+        TEST_EXPECT(OrResult[3] == false);
+
+        TBitArray<uint8> XorResult(First);
+        XorResult.BitwiseXor(Second);
+        TEST_EXPECT(XorResult[0] == false);
+        TEST_EXPECT(XorResult[1] == true);
+        TEST_EXPECT(XorResult[2] == true);
+        TEST_EXPECT(XorResult[3] == false);
+    }
+
+    TEST_SECTION("Default int type metadata (Capacity/IntegerSize/CapacityInBytes)");
+    {
+        TBitArray<uint8> Empty8;
+        TEST_EXPECT_EQ(Empty8.Capacity(), 0);
+        TEST_EXPECT_EQ(Empty8.IntegerSize(), 0);
+        TEST_EXPECT_EQ(Empty8.CapacityInBytes(), 0);
+
+        TBitArray Bits(8, true);
+        TEST_EXPECT_EQ(Bits.Size(), 8);
+        TEST_EXPECT_EQ(Bits.Capacity(), 32);
+        TEST_EXPECT_EQ(Bits.IntegerSize(), 1);
+        TEST_EXPECT_EQ(Bits.CapacityInBytes(), 4);
+        TEST_EXPECT(MakeStringFromBitArray(Bits) == "11111111");
+    }
+
+    TEST_SECTION("Construction (single integer / ptr+count / initializer-list)");
+    {
+        TBitArray<uint8> FromInt(uint8(0b01010101));
+        TEST_EXPECT_EQ(FromInt.Size(), 8);
+        TEST_EXPECT(MakeStringFromBitArray(FromInt) == "01010101");
+
+        const uint8 Bytes[] = { 0b01010101, 0b01010101 };
+        TBitArray<uint8> FromPtr(Bytes, ARRAY_COUNT(Bytes));
+        TEST_EXPECT_EQ(FromPtr.Size(), 16);
+        TEST_EXPECT(MakeStringFromBitArray(FromPtr) == "0101010101010101");
+
+        TBitArray FromList = { false, true, false, true };
+        TEST_EXPECT_EQ(FromList.Size(), 4);
+        TEST_EXPECT(MakeStringFromBitArray(FromList) == "1010");
+    }
+
+    TEST_SECTION("Move construction empties the source");
+    {
+        TBitArray<uint8> Source(9, true);
+        TBitArray<uint8> Moved(::Move(Source));
+        TEST_EXPECT_EQ(Source.Size(), 0);
+        TEST_EXPECT_EQ(Moved.Size(), 9);
+        TEST_EXPECT(MakeStringFromBitArray(Moved) == "111111111");
+        TEST_EXPECT(Source != Moved);
+    }
+
+    TEST_SECTION("operator~ (bitwise not)");
+    {
+        TBitArray<uint8> Bits = { false, true, false, true };
+        TEST_EXPECT(MakeStringFromBitArray(Bits) == "1010");
+
+        Bits = ~Bits;
+        TEST_EXPECT(MakeStringFromBitArray(Bits) == "0101");
+    }
+
+    TEST_SECTION("Insert shifts bits up");
+    {
+        constexpr int32 BitCount = 18;
+        TBitArray<uint8> Bits(BitCount, false);
+        for (int32 Index = 0; Index < BitCount; ++Index)
         {
-            BitArray.Insert(3, true);
-
-            std::cout << MakeStringFromBitArray(BitArray) << '\n';
+            Bits.Insert(3, true);
         }
 
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "000000000000000111111111111111111000");
+        TEST_EXPECT(MakeStringFromBitArray(Bits) == "000000000000000111111111111111111000");
     }
 
+    TEST_SECTION("Remove shifts bits down");
     {
-        TBitArray<uint8> BitArray(BitCount, false);
+        constexpr int32 BitCount = 18;
+        TBitArray<uint8> Bits(BitCount, false);
         for (int32 Index = 0; Index < BitCount; ++Index)
         {
             if (Index % 2 == 0)
             {
-                BitArray.FlipBit(Index);
+                Bits.FlipBit(Index);
             }
-
-            std::cout << MakeStringFromBitArray(BitArray) << '\n';
         }
 
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "010101010101010101");
+        TEST_EXPECT(MakeStringFromBitArray(Bits) == "010101010101010101");
 
-        for (int32 Bit = 0; Bit < BitCount; ++Bit)
+        while (Bits.Size() > 3)
         {
-            if (BitArray.Size() > 3)
-            {
-                BitArray.Remove(3);
-            }
-            else
-            {
-                break;
-            }
-
-            std::cout << MakeStringFromBitArray(BitArray) << '\n';
+            Bits.Remove(3);
         }
 
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "101");
+        TEST_EXPECT(MakeStringFromBitArray(Bits) == "101");
     }
 
-    std::cout << "Testing BitShift Left\n";
+    TEST_SECTION("BitshiftLeft / BitshiftRight (zero shift is a no-op, size preserved)");
     {
-        for (int32 Bit = 0; Bit <= BitCount; ++Bit)
+        TBitArray<uint8> Bits = { true, false, true, true };
+        TBitArray<uint8> Copy(Bits);
+
+        Bits.BitshiftLeft(0);
+        TEST_EXPECT(Bits == Copy);
+        
+        Bits.BitshiftRight(0);
+        TEST_EXPECT(Bits == Copy);
+
+        Bits.BitshiftLeft(2);
+        TEST_EXPECT_EQ(Bits.Size(), 4);
+
+        Bits.BitshiftRight(2);
+        TEST_EXPECT_EQ(Bits.Size(), 4);
+    }
+
+    TEST_SECTION("TBitArray reallocation stress (seeded size sweep vs std::vector<bool>)");
+    {
+        STRESS_SWEEP(TargetSize, Seed, Stress::DefaultSeedCount)
         {
-            TBitArray<uint8> BitArray;
-            for (int32 Index = 0; Index < (BitCount / 2); ++Index)
+            FRandom           Random(Seed);
+            TBitArray<uint8>  Bits;
+            std::vector<bool> Oracle;
+
+            // Grow bit-by-bit so storage reallocates repeatedly across the boundary sizes.
+            for (int32 Step = 0; Step < TargetSize; ++Step)
             {
-                if (Index % 2)
+                const bool bValue = Random.RandBool();
+                Bits.Add(bValue);
+                Oracle.push_back(bValue);
+            }
+
+            // Random flips to stress the bit addressing inside the (possibly reallocated) storage.
+            for (int32 Step = 0; (Step < TargetSize) && !Oracle.empty(); ++Step)
+            {
+                if (Random.RandBool())
                 {
-                    BitArray.Add(false);
-                    BitArray.Add(false);
-                }
-                else
-                {
-                    BitArray.Add(true);
-                    BitArray.Add(true);
+                    const int32 At = static_cast<int32>(Random.RandInt(0, static_cast<int64>(Oracle.size()) - 1));
+                    Bits.FlipBit(At);
+                    Oracle[At] = !Oracle[At];
                 }
             }
 
-            BitArray.BitshiftLeft(Bit);
-            std::cout << MakeStringFromBitArray(BitArray) << '\n';
-        }
-    }
-
-    std::cout << "Testing BitShift Right\n";
-    {
-        for (int32 Bit = 0; Bit <= BitCount; ++Bit)
-        {
-            TBitArray<uint8> BitArray;
-            for (int32 Index = 0; Index < (BitCount / 2); ++Index)
+            bool  bMatches = (Bits.Size() == static_cast<int32>(Oracle.size()));
+            int32 SetCount = 0;
+            for (int32 Index = 0; bMatches && (Index < Bits.Size()); ++Index)
             {
-                if (Index % 2)
+                const bool bLhs = (Bits[Index] == true);
+                const bool bRhs = Oracle[Index];
+                bMatches = (bLhs == bRhs);
+                if (bRhs)
                 {
-                    BitArray.Add(false);
-                    BitArray.Add(false);
-                }
-                else
-                {
-                    BitArray.Add(true);
-                    BitArray.Add(true);
+                    ++SetCount;
                 }
             }
 
-            BitArray.BitshiftRight(Bit);
-            std::cout << MakeStringFromBitArray(BitArray) << '\n';
+            bMatches = bMatches && (Bits.CountAssignedBits() == SetCount);
+            if (!bMatches)
+            {
+                LOG_ERROR("[STRESS FAIL] TBitArray seed=%u size=%d", Seed, TargetSize);
+            }
+
+            TEST_EXPECT(bMatches);
         }
     }
 
-    std::cout << "Testing Flip\n";
-    {
-        TBitArray<uint8> BitArray(BitCount, false);
-        for (int32 Bit = 0; Bit < BitCount; ++Bit)
-        {
-            BitArray.FlipBit(Bit);
-
-            std::cout << MakeStringFromBitArray(BitArray) << '\n';
-        }
-    }
-
-    SUCCESS();
+    TEST_END();
 }
 #endif
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// StaticBitArray Test
 
 #if RUN_TSTATICBITARRAY_TEST
 #include <Core/Containers/StaticBitArray.h>
 
 bool TStaticBitArray_Test()
 {
-    std::cout << '\n' << "----------TStaticBitArray----------" << '\n' << '\n';
+    TEST_BEGIN();
 
+    TEST_SECTION("Default / Size / all clear");
     {
-        constexpr TStaticBitArray<11, uint8> BitArray;
-        static_assert(BitArray.Size()         == 11);
-        static_assert(BitArray.Capacity()     == 16);
-        static_assert(BitArray.IntegerSize()     == 2);
-        static_assert(BitArray.CapacityInBytes() == 2);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "00000000000");
+        TStaticBitArray<16, uint8> Bits;
+        TEST_EXPECT_EQ(Bits.Size(), 16);
+        TEST_EXPECT(Bits.HasNoBitSet());
+        TEST_EXPECT_EQ(Bits.CountAssignedBits(), 0);
     }
 
+    TEST_SECTION("constexpr metadata (Size/Capacity/IntegerSize/CapacityInBytes)");
     {
-        constexpr TStaticBitArray<18, uint32> BitArray;
-        static_assert(BitArray.Size()         == 18);
-        static_assert(BitArray.Capacity()     == 32);
-        static_assert(BitArray.IntegerSize()     == 1);
-        static_assert(BitArray.CapacityInBytes() == 4);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "000000000000000000");
+        constexpr TStaticBitArray<11, uint8> Bits8;
+        static_assert(Bits8.Size() == 11);
+        static_assert(Bits8.Capacity() == 16);
+        static_assert(Bits8.IntegerSize() == 2);
+        static_assert(Bits8.CapacityInBytes() == 2);
+
+        constexpr TStaticBitArray<18, uint32> Bits32;
+        static_assert(Bits32.Size() == 18);
+        static_assert(Bits32.Capacity() == 32);
+        static_assert(Bits32.IntegerSize() == 1);
+        static_assert(Bits32.CapacityInBytes() == 4);
+        TEST_EXPECT(MakeStringFromBitArray(Bits8) == "00000000000");
     }
 
+    TEST_SECTION("Construction (count+value / single integer / ptr+count / initializer-list)");
     {
-        constexpr TStaticBitArray<9, uint8> BitArray(8, true);
-        static_assert(BitArray.Size()         == 9);
-        static_assert(BitArray.Capacity()     == 16);
-        static_assert(BitArray.IntegerSize()     == 2);
-        static_assert(BitArray.CapacityInBytes() == 2);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "011111111");
+        constexpr TStaticBitArray<9, uint8> CountValue(8, true);
+        static_assert(CountValue.Size() == 9);
+        TEST_EXPECT(MakeStringFromBitArray(CountValue) == "011111111");
+
+        constexpr TStaticBitArray<8, uint8> FromInt(uint8(0b01010101));
+        TEST_EXPECT(MakeStringFromBitArray(FromInt) == "01010101");
+
+        constexpr const uint8 Bytes[] = { 0b01010101, 0b01010101 };
+        constexpr TStaticBitArray<14, uint8> FromPtr(Bytes, ARRAY_COUNT(Bytes));
+        static_assert(FromPtr.Size() == 14);
+        TEST_EXPECT(MakeStringFromBitArray(FromPtr) == "01010101010101");
+
+        constexpr TStaticBitArray<8> FromList = { false, true, false, true };
+        static_assert(FromList.Size() == 8);
+        TEST_EXPECT(MakeStringFromBitArray(FromList) == "00001010");
     }
 
+    TEST_SECTION("Copy / move construction (move keeps source intact)");
     {
-        constexpr TStaticBitArray<8, uint8> BitArray(uint8(0b01010101));
-        static_assert(BitArray.Size()         == 8);
-        static_assert(BitArray.Capacity()     == 8);
-        static_assert(BitArray.IntegerSize()     == 1);
-        static_assert(BitArray.CapacityInBytes() == 1);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "01010101");
+        constexpr TStaticBitArray<9, uint8> Source(9, true);
+        constexpr TStaticBitArray<9, uint8> Copy(Source);
+        static_assert((Source == Copy) == true);
+
+        constexpr TStaticBitArray<9, uint8> Moved(::Move(Source));
+        static_assert(Moved.Size() == 9);
+
+        TEST_EXPECT(MakeStringFromBitArray(Source) == "111111111");
+        TEST_EXPECT(MakeStringFromBitArray(Moved) == "111111111");
     }
 
+    TEST_SECTION("BitshiftLeft / BitshiftRight (zero shift no-op, size preserved)");
     {
-        constexpr const uint8 Bits[] =
-        {
-            0b01010101,
-            0b01010101,
-        };
+        TStaticBitArray<8, uint8> Bits = { true, false, true, true, false, false, false, false };
+        TStaticBitArray<8, uint8> Copy(Bits);
 
-        constexpr TStaticBitArray<14, uint8> BitArray(Bits, ARRAY_COUNT(Bits));
-        static_assert(BitArray.Size() == 14);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "01010101010101");
-    }
-
-    {
-        constexpr TStaticBitArray<8> BitArray = { false, true, false, true };
-        static_assert(BitArray.Size() == 8);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "00001010");
-    }
-
-    {
-        constexpr TStaticBitArray<9, uint8> BitArray0(9, true);
-        static_assert(BitArray0.Size() == 9);
-        TEST_CHECK(MakeStringFromBitArray(BitArray0) == "111111111");
-
-        constexpr TStaticBitArray<9, uint8> BitArray1(BitArray0);
-        static_assert(BitArray1.Size() == 9);
-        TEST_CHECK(MakeStringFromBitArray(BitArray1) == "111111111");
+        Bits.BitshiftLeft(0);
+        TEST_EXPECT(Bits == Copy);
         
-        static_assert((BitArray0 == BitArray1) == true);
-    }
+        Bits.BitshiftRight(0);
+        TEST_EXPECT(Bits == Copy);
 
-    {
-        constexpr TStaticBitArray<9, uint8> BitArray0(9, true);
-        static_assert(BitArray0.Size() == 9);
-        TEST_CHECK(MakeStringFromBitArray(BitArray0) == "111111111");
-
-        constexpr TStaticBitArray<9, uint8> BitArray1(Move(BitArray0));
-        static_assert(BitArray1.Size() == 9);
+        Bits.BitshiftLeft(2);
+        TEST_EXPECT_EQ(Bits.Size(), 8);
         
-        TEST_CHECK(MakeStringFromBitArray(BitArray0) == "111111111");
-        TEST_CHECK(MakeStringFromBitArray(BitArray1) == "111111111");
-        
-        static_assert((BitArray0 == BitArray1) == true);
+        Bits.BitshiftRight(2);
+        TEST_EXPECT_EQ(Bits.Size(), 8);
     }
 
+    TEST_SECTION("AssignBit / operator[] / FlipBit");
     {
-        TStaticBitArray<9, uint8> BitArray(9, true);
-        static_assert(BitArray.Size() == 9);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "111111111");
+        TStaticBitArray<16, uint8> Bits;
+        Bits.AssignBit(0, true);
+        Bits.AssignBit(15, true);
 
-        BitArray.Reset();
+        TEST_EXPECT(Bits[0] == true);
+        TEST_EXPECT(Bits[15] == true);
+        TEST_EXPECT(Bits[1] == false);
+        TEST_EXPECT_EQ(Bits.CountAssignedBits(), 2);
 
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "000000000");
+        Bits.FlipBit(0);
+        TEST_EXPECT(Bits[0] == false);
     }
 
+    TEST_SECTION("MostSignificant / LeastSignificant / HasAnyBitSet");
     {
-        TStaticBitArray<8, uint8> BitArray(0b00000000);
-        TEST_CHECK(BitArray.Size() == 8);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "00000000");
+        TStaticBitArray<16, uint8> Bits;
+        Bits.AssignBit(3, true);
+        Bits.AssignBit(10, true);
 
-        BitArray.AssignBit(3, true);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "00001000");
-
-        BitArray.FlipBit(4);
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "00011000");
-
-        TEST_CHECK(BitArray.CountAssignedBits() == 2);
-        TEST_CHECK(BitArray.HasAnyBitSet()      == true);
-        TEST_CHECK(BitArray.HasNoBitSet()       == false);
-
-        const uint32 MostSignificantBit = BitArray.MostSignificant();
-        TEST_CHECK(MostSignificantBit == 4);
-
-        const uint32 LeastSignificantBit = BitArray.LeastSignificant();
-        TEST_CHECK(LeastSignificantBit == 3);
+        TEST_EXPECT(Bits.HasAnyBitSet());
+        TEST_EXPECT_EQ(Bits.LeastSignificant(), 3);
+        TEST_EXPECT_EQ(Bits.MostSignificant(), 10);
     }
 
-    constexpr int32 BitCount = 18;
+    TEST_SECTION("Initializer-list construction / operator== / operator!=");
     {
-        TStaticBitArray<BitCount, uint8> BitArray(BitCount, false);
-        for (int32 Index = 0; Index < BitCount; ++Index)
-        {
-            if (Index % 2 == 0)
-            {
-                BitArray.FlipBit(Index);
-            }
-        }
+        TStaticBitArray<4, uint8> First  = { true, false, true, false };
+        TStaticBitArray<4, uint8> Second = { true, false, true, false };
+        TStaticBitArray<4, uint8> Third  = { true, true, true, false };
 
-        std::cout << MakeStringFromBitArray(BitArray) << '\n';
-        TEST_CHECK(MakeStringFromBitArray(BitArray) == "010101010101010101");
+        TEST_EXPECT(First == Second);
+        TEST_EXPECT(First != Third);
     }
 
-    std::cout << "Testing BitShift Left\n";
+    TEST_SECTION("Bitwise operators");
     {
-        for (int32 Bit = 0; Bit <= BitCount; ++Bit)
-        {
-            TStaticBitArray<BitCount, uint8> BitArray;
+        TStaticBitArray<4, uint8> First     = { true, true, false, false };
+        TStaticBitArray<4, uint8> Second    = { true, false, true, false };
+        TStaticBitArray<4, uint8> AndResult = First & Second;
 
-            bool Value = true;
-            for (int32 Index = 0; Index < BitCount; Index += 2)
-            {
-                BitArray.AssignBit(Index, Value);
-                BitArray.AssignBit(Index + 1, Value);
-                Value = !Value;
-            }
+        TEST_EXPECT(AndResult[0] == true);
+        TEST_EXPECT(AndResult[1] == false);
 
-            BitArray.BitshiftLeft(Bit);
-            std::cout << MakeStringFromBitArray(BitArray) << '\n';
-        }
+        TStaticBitArray<4, uint8> OrResult = First | Second;
+        TEST_EXPECT(OrResult[2] == true);
+
+        TStaticBitArray<4, uint8> XorResult = First ^ Second;
+        TEST_EXPECT(XorResult[1] == true);
+        TEST_EXPECT(XorResult[0] == false);
     }
 
-    std::cout << "Testing BitShift Right\n";
+    TEST_SECTION("Reset");
     {
-        for (int32 Bit = 0; Bit <= BitCount; ++Bit)
-        {
-            TStaticBitArray<BitCount, uint8> BitArray;
+        TStaticBitArray<8, uint8> Bits = { true, true, true, true, true, true, true, true };
+        TEST_EXPECT(Bits.HasAnyBitSet());
 
-            bool Value = true;
-            for (int32 Index = 0; Index < BitCount; Index += 2)
-            {
-                BitArray.AssignBit(Index    , Value);
-                BitArray.AssignBit(Index + 1, Value);
-                Value = !Value;
-            }
-
-            BitArray.BitshiftRight(Bit);
-            std::cout << MakeStringFromBitArray(BitArray) << '\n';
-        }
+        Bits.Reset();
+        TEST_EXPECT(Bits.HasNoBitSet());
     }
 
-    std::cout << "Testing Flip\n";
-    {
-        TStaticBitArray<BitCount, uint8> BitArray(BitCount, false);
-        for (int32 Bit = 0; Bit < BitCount; ++Bit)
-        {
-            BitArray.FlipBit(Bit);
-            std::cout << MakeStringFromBitArray(BitArray) << '\n';
-        }
-    }
-
-    SUCCESS();
+    TEST_END();
 }
-#endif
-
 #endif

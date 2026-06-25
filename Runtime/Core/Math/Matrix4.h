@@ -1114,10 +1114,10 @@ public:
     #else
         FFloat128 Scalars128 = FVectorMath::VectorSet1(Scalar);
 
-        FFloat128 MatrixRow0 = FVectorMath::VectorAdd(M[0], Scalars128);
-        FFloat128 MatrixRow1 = FVectorMath::VectorAdd(M[1], Scalars128);
-        FFloat128 MatrixRow2 = FVectorMath::VectorAdd(M[2], Scalars128);
-        FFloat128 MatrixRow3 = FVectorMath::VectorAdd(M[3], Scalars128);
+        FFloat128 MatrixRow0 = FVectorMath::VectorSub(M[0], Scalars128);
+        FFloat128 MatrixRow1 = FVectorMath::VectorSub(M[1], Scalars128);
+        FFloat128 MatrixRow2 = FVectorMath::VectorSub(M[2], Scalars128);
+        FFloat128 MatrixRow3 = FVectorMath::VectorSub(M[3], Scalars128);
 
         FVectorMath::VectorStore(MatrixRow0, M[0]);
         FVectorMath::VectorStore(MatrixRow1, M[1]);

@@ -3,130 +3,179 @@
 #if RUN_TARRAYVIEW_TEST
 #include "TestUtils.h"
 
-#include <Core/CoreTypes.h>
+#include <Core/Containers/ArrayView.h>
 #include <Core/Containers/Array.h>
 #include <Core/Containers/StaticArray.h>
-#include <Core/Containers/ArrayView.h>
-
-#include <iostream>
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// PrintArrayView
-
-template<typename T>
-static void PrintArrayView(const TArrayView<T>& View)
-{
-    std::cout << "------------------------------" << std::endl;
-    for (typename TArrayView<T>::SizeType i = 0; i < View.Size(); i++)
-    {
-        std::cout << View[i] << std::endl;
-    }
-    std::cout << "------------------------------" << std::endl;
-}
-
-template<typename T>
-static void PrintArrayViewRangeBased(const TArrayView<T>& View)
-{
-    std::cout << "------------------------------" << std::endl;
-    for (const T& Element : View)
-    {
-        std::cout << Element << std::endl;
-    }
-    std::cout << "------------------------------" << std::endl;
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TArrayView_Test
 
 bool TArrayView_Test()
 {
-    std::cout << std::endl << "----------TArrayView----------" << std::endl << std::endl;
-    std::cout << "Testing Constructors" << std::endl;
+    TEST_BEGIN();
 
-    TArrayView<uint32> EmptyView;
-
-    TArray<uint32> Arr0 = { 1, 2, 3, 4 };
-    TArrayView<uint32> ArrView0 = TArrayView<uint32>(Arr0);
-
+    TEST_SECTION("Construct from raw pointer + size / Size / IsEmpty / indexing");
     {
-        TArrayView<uint32> _ArrView = MakeArrayView(Arr0);
+        int32 Values[5] = { 10, 20, 30, 40, 50 };
+        TArrayView<int32> ArrayView(Values, 5);
+        TEST_EXPECT_EQ(ArrayView.Size(), 5);
+        TEST_EXPECT(!ArrayView.IsEmpty());
+        TEST_EXPECT_EQ(ArrayView[0], 10);
+        TEST_EXPECT_EQ(ArrayView[4], 50);
+        TEST_EXPECT_EQ(ArrayView.LastElementIndex(), 4);
+        TEST_EXPECT(ArrayView.IsValidIndex(4));
+        TEST_EXPECT(!ArrayView.IsValidIndex(5));
+
+        TArrayView<int32> Empty(Values, 0);
+        TEST_EXPECT(Empty.IsEmpty());
     }
 
-    TStaticArray<uint32, 4> Arr1 = { 11, 12, 13, 14 };
-    TArrayView<uint32> ArrView1 = TArrayView<uint32>(Arr1);
-
+    TEST_SECTION("Construct from TArray / FirstElement / LastElement / Data");
     {
-        TArrayView<uint32> _ArrView = MakeArrayView(Arr1);
+        TArray<int32> Source = { 1, 2, 3, 4 };
+        TArrayView<int32> ArrayView(Source);
+        TEST_EXPECT_EQ(ArrayView.Size(), 4);
+        TEST_EXPECT_EQ(ArrayView.FirstElement(), 1);
+        TEST_EXPECT_EQ(ArrayView.LastElement(), 4);
+        TEST_EXPECT_EQ(ArrayView.Data(), Source.Data());
     }
 
-    uint32 Arr2[] = { 21, 22, 23, 24 };
-    TArrayView<uint32> ArrView2 = TArrayView<uint32>(Arr2);
-
+    TEST_SECTION("Find / FindLast / Contains / predicates");
     {
-        TArrayView<uint32> _ArrView = MakeArrayView(Arr2);
+        int32 Values[5] = { 5, 10, 15, 10, 25 };
+        TArrayView<int32> ArrayView(Values, 5);
+        TEST_EXPECT_EQ(ArrayView.Find(15), 2);
+        TEST_EXPECT_EQ(ArrayView.Find(10), 1);
+        TEST_EXPECT_EQ(ArrayView.FindLast(10), 3);
+        TEST_EXPECT_EQ(ArrayView.Find(99), TArrayView<int32>::InvalidIndex);
+        TEST_EXPECT(ArrayView.Contains(25));
+        TEST_EXPECT(!ArrayView.Contains(99));
+        
+        TEST_EXPECT_EQ(ArrayView.FindWithPredicate([](int32 Value)
+        {
+            return Value > 20;
+        }), 4);
+
+        TEST_EXPECT(ArrayView.ContainsWithPredicate([](int32 Value)
+        {
+            return Value == 15;
+        }));
     }
 
-    uint32* DynamicPtr = new uint32[]{ 31, 32, 33, 34, 35 };
-    TArrayView<uint32> ArrView3 = TArrayView<uint32>(DynamicPtr, 5);
-    
+    TEST_SECTION("SubView");
     {
-        TArrayView<uint32> _ArrView = MakeArrayView(DynamicPtr, 5);
+        int32 Values[6] = { 0, 1, 2, 3, 4, 5 };
+        TArrayView<int32> ArrayView(Values, 6);
+        TArrayView<int32> Sub = ArrayView.SubView(2, 3);
+
+        TEST_EXPECT_EQ(Sub.Size(), 3);
+        TEST_EXPECT_EQ(Sub[0], 2);
+        TEST_EXPECT_EQ(Sub[2], 4);
     }
 
-    const TArray<uint32> ConstArr0 = { 1, 2, 3, 4 };
-    TArrayView<const uint32> ConstArrView0 = TArrayView<const uint32>(ConstArr0);
+    TEST_SECTION("Fill / mutation writes through to underlying memory");
+    {
+        int32 Values[4] = { 1, 2, 3, 4 };
+        
+        TArrayView<int32> ArrayView(Values, 4);
+        ArrayView.Fill(9);
 
-    std::cout << "Testing At and operator[]" << std::endl;
-    PrintArrayView(EmptyView);
-    PrintArrayView(ArrView0);
-    PrintArrayView(ArrView1);
-    PrintArrayView(ArrView2);
-    PrintArrayView(ArrView3);
+        for (int32 Index = 0; Index < 4; ++Index)
+        {
+            TEST_EXPECT_EQ(Values[Index], 9);
+        }
 
-    std::cout << "Testing range-based for-loops" << std::endl;
-    PrintArrayViewRangeBased(EmptyView);
-    PrintArrayViewRangeBased(ArrView0);
-    PrintArrayViewRangeBased(ArrView1);
-    PrintArrayViewRangeBased(ArrView2);
-    PrintArrayViewRangeBased(ArrView3);
+        ArrayView[1] = 100;
+        TEST_EXPECT_EQ(Values[1], 100);
+    }
 
-    std::cout << "Testing copy/move constructor" << std::endl;
-    TArrayView<uint32> ArrView4 = ArrView1;
-    TArrayView<uint32> ArrView5 = Move(ArrView0);
+    TEST_SECTION("Swap");
+    {
+        int32 ValuesA[3] = { 1, 2, 3 };
+        int32 ValuesB[2] = { 9, 8 };
 
-    PrintArrayViewRangeBased(ArrView4);
-    PrintArrayViewRangeBased(ArrView5);
+        TArrayView<int32> First(ValuesA, 3);
+        TArrayView<int32> Second(ValuesB, 2);
+        First.Swap(Second);
 
-    std::cout << "Testing IsEmpty" << std::endl;
-    std::cout << "EmptyView=" << std::boolalpha << EmptyView.IsEmpty() << std::endl;
-    std::cout << "ArrView0=" << std::boolalpha << ArrView5.IsEmpty() << std::endl;
+        TEST_EXPECT_EQ(First.Size(), 2);
+        TEST_EXPECT_EQ(Second.Size(), 3);
+        TEST_EXPECT_EQ(First[0], 9);
+        TEST_EXPECT_EQ(Second[0], 1);
+    }
 
-    std::cout << "Testing Size/SizeInBytes" << std::endl;
-    std::cout << "Size: " << ArrView4.Size() << std::endl;
-    std::cout << "SizeInBytes: " << ArrView4.SizeInBytes() << std::endl;
+    TEST_SECTION("Range-based iteration / Foreach");
+    {
+        int32 Values[5] = { 2, 4, 6, 8, 10 };
+        TArrayView<int32> ArrayView(Values, 5);
 
-    std::cout << "Testing Swap" << std::endl;
-    std::cout << "-----------Before----------" << std::endl;
-    PrintArrayViewRangeBased(ArrView4);
-    PrintArrayViewRangeBased(ArrView5);
+        int32 Sum = 0;
+        for (int32 Value : ArrayView)
+        {
+            Sum += Value;
+        }
 
-    ArrView4.Swap(ArrView5);
+        TEST_EXPECT_EQ(Sum, 30);
 
-    std::cout << "-----------After-----------" << std::endl;
-    PrintArrayViewRangeBased(ArrView4);
-    PrintArrayViewRangeBased(ArrView5);
+        int32 ForeachSum = 0;
+        ArrayView.Foreach([&ForeachSum](int32 Value)
+        {
+            ForeachSum += Value;
+        });
 
-    std::cout << "Testing Fill" << std::endl;
-    std::cout << "-----------Before----------" << std::endl;
-    PrintArrayViewRangeBased(ArrView4);
+        TEST_EXPECT_EQ(ForeachSum, 30);
+    }
 
-    ArrView4.Fill(99);
+    TEST_SECTION("operator== / operator!= against TArray");
+    {
+        int32 Values[4] = { 1, 2, 3, 4 };
+        TArrayView<int32> ArrayView(Values, 4);
+        
+        TArray<int32> Same      = { 1, 2, 3, 4 };
+        TArray<int32> Different = { 1, 2, 3, 5 };
+        
+        TEST_EXPECT(ArrayView == Same);
+        TEST_EXPECT(ArrayView != Different);
+    }
 
-    std::cout << "-----------After-----------" << std::endl;
-    PrintArrayViewRangeBased(ArrView4);
+    TEST_SECTION("Construct from TStaticArray / C-array / MakeArrayView helpers");
+    {
+        TStaticArray<int32, 4> Static = { 11, 12, 13, 14 };
+        TArrayView<int32> FromStatic(Static);
+        TEST_EXPECT_EQ(FromStatic.Size(), 4);
+        TEST_EXPECT_EQ(FromStatic[0], 11);
 
-    delete[] DynamicPtr;
-    SUCCESS();
+        int32 CArray[4] = { 21, 22, 23, 24 };
+        TArrayView<int32> FromCArray(CArray);
+        TEST_EXPECT_EQ(FromCArray.Size(), 4);
+        TEST_EXPECT_EQ(FromCArray[3], 24);
+
+        TArray<int32> Source = { 1, 2, 3, 4 };
+        TArrayView<int32> FromArrayHelper = MakeArrayView(Source);
+        TEST_EXPECT_EQ(FromArrayHelper.Size(), 4);
+
+        TArrayView<int32> FromStaticHelper = MakeArrayView(Static);
+        TEST_EXPECT_EQ(FromStaticHelper.Size(), 4);
+
+        TArrayView<int32> FromPtrHelper = MakeArrayView(CArray, 4);
+        TEST_EXPECT_EQ(FromPtrHelper.Size(), 4);
+    }
+
+    TEST_SECTION("Const-element view / copy / move construction");
+    {
+        const TArray<int32> Source = { 1, 2, 3, 4 };
+        TArrayView<const int32> ConstView(Source);
+        TEST_EXPECT_EQ(ConstView.Size(), 4);
+        TEST_EXPECT_EQ(ConstView[2], 3);
+
+        int32 Values[3] = { 7, 8, 9 };
+        TArrayView<int32> Original(Values, 3);
+        TArrayView<int32> Copy = Original;
+        TEST_EXPECT_EQ(Copy.Size(), 3);
+        TEST_EXPECT_EQ(Copy[0], 7);
+
+        TArrayView<int32> Moved = ::Move(Original);
+        TEST_EXPECT_EQ(Moved.Size(), 3);
+        TEST_EXPECT_EQ(Moved[2], 9);
+    }
+
+    TEST_END();
 }
-
 #endif

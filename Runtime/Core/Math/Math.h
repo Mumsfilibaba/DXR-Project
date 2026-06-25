@@ -66,6 +66,7 @@ struct Math : public FPlatformMath
 
         static constexpr float Epsilon      = TNumericLimits<float>::Epsilon();  // FLT_EPSILON
         static constexpr float Infinity     = TNumericLimits<float>::Infinity(); // Positive infinity sentinel
+        static constexpr float NaN          = TNumericLimits<float>::NaN();      // Quiet NaN sentinel
         static constexpr float CmpThreshold = 5.0e-4f;                           // Threshold for float comparisons
     };
 

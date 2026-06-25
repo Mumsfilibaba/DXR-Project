@@ -1478,7 +1478,8 @@ public:
      */
     NODISCARD FORCEINLINE SizeType LastElementIndex() const
     {
-        return Size();
+        const SizeType CurrentSize = Size();
+        return (CurrentSize > 0) ? (CurrentSize - 1) : 0;
     }
 
     /**

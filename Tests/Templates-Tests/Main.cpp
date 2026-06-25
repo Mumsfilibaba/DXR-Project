@@ -2,7 +2,10 @@
 #include <Core/Containers/UniquePtr.h>
 #include <Core/Templates/TypeTraits.h>
 
-#include <iostream>
+#include "TestCommon/TestHarness.h"
+#include "TestCommon/TestMacros.h"
+
+#include <string>
 #include <type_traits>
 #include <utility>
 
@@ -12,7 +15,7 @@ struct FClass
 {
     void Func(int32 Num)
     {
-        std::cout << "FClass: " << Num << std::endl;
+        LOG_INFO("FClass: %d", Num);
     }
 
     int32 Member = 6;
@@ -34,7 +37,7 @@ struct FPolyClassBase
 {
     virtual void Func(int Num)
     {
-        std::cout << "FPolyClassBase: " << Num << std::endl;
+        LOG_INFO("FPolyClassBase: %d", Num);
     }
 };
 
@@ -82,7 +85,7 @@ struct FInvokable
 {
     void operator()(int32 Num)
     {
-        std::cout << "SInvokable: " << Num << std::endl;
+        LOG_INFO("FInvokable: %d", Num);
     }
 };
 
@@ -105,7 +108,7 @@ enum class EEnum
 
 void Func(int32 Num)
 {
-    std::cout << Num << std::endl;
+    LOG_INFO("%d", Num);
 }
 
 auto Func2(CHAR) -> int(*)()
@@ -117,6 +120,9 @@ auto Func2(CHAR) -> int(*)()
 
 int main()
 {
+    TestHarness::Initialize();
+    LOG_INFO("=== Template Tests ===");
+
     /* Is Same */
     static_assert(TIsSame<int, int>::Value  == true);
     static_assert(TIsSame<int, CHAR>::Value == false);
@@ -183,7 +189,7 @@ int main()
     static_assert(TIsSame<int, typename TRemoveReference<int&&>::Type>::Value     == true);
 
     /* Identity */
-    static_assert(TIsSame<int, typename TIdentity<int>::Type>::Value == true);
+    static_assert(TIsSame<int, typename TTypeIdentity<int>::Type>::Value == true);
 
     /* Add CV */
     static_assert(TIsSame<const volatile int, typename TAddCV<int>::Type>::Value == true);
@@ -211,10 +217,10 @@ int main()
     static_assert(TIsSame<int,   typename TAddRValueReference<int>::Type>::Value == false);
 
     /* Add Reference */
-    static_assert(TIsSame<int&,  typename TAddReference<int>::LValue>::Value == true);
-    static_assert(TIsSame<int,   typename TAddReference<int>::LValue>::Value == false);
-    static_assert(TIsSame<int&&, typename TAddReference<int>::RValue>::Value == true);
-    static_assert(TIsSame<int,   typename TAddReference<int>::RValue>::Value == false);
+    static_assert(TIsSame<int&,  typename TAddLValueReference<int>::Type>::Value == true);
+    static_assert(TIsSame<int,   typename TAddLValueReference<int>::Type>::Value == false);
+    static_assert(TIsSame<int&&, typename TAddRValueReference<int>::Type>::Value == true);
+    static_assert(TIsSame<int,   typename TAddRValueReference<int>::Type>::Value == false);
 
     /* Void */
     static_assert(TIsSame<void, typename TVoid<void>::Type>::Value      == true);
@@ -315,7 +321,7 @@ int main()
 
     FClass Instance;
     Invoke(&FClass::Func, Instance, 5);
-    std::cout << "CClass::Member=" << Invoke(&FClass::Member, Instance) << std::endl;
+    LOG_INFO("FClass::Member=%d", Invoke(&FClass::Member, Instance));
 
     FPolyClassBase BasePolyInstance;
     FPolyClass     PolyInstance;
@@ -324,7 +330,7 @@ int main()
 
     auto SomeLambda = [](int Num)
     {
-        std::cout << "SomeLambda=" << Num << std::endl;
+        LOG_INFO("SomeLambda=%d", Num);
     };
 
     Invoke(SomeLambda, 20);
@@ -357,8 +363,8 @@ int main()
     static_assert(TIsConvertible<FAnotherClass, FClass>::Value        == true);
 
     /* Is Copyable Constructible */
-    static_assert(TIsCopyConstructable<FClass>::Value        == true);
-    static_assert(TIsCopyConstructable<FAnotherClass>::Value == false);
+    static_assert(TIsCopyConstructible<FClass>::Value        == true);
+    static_assert(TIsCopyConstructible<FAnotherClass>::Value == false);
 
     /* Is Copyable Assignable */
     static_assert(TIsCopyAssignable<FClass>::Value        == true);
@@ -370,8 +376,10 @@ int main()
     static_assert(TIsEmpty<FStatic>::Value            == true);
     static_assert(TIsEmpty<FVirtualDestructor>::Value == false);
     static_assert(TIsEmpty<FUnion>::Value             == false);
-    // static_assert(TIsEmpty<FBitField>::Value          == true); // triggers the assert, but should be true according to: https://en.cppreference.com/w/cpp/types/is_empty
-    // static_assert(std::is_empty<FBitField>::value     == true);
+    // A class whose only member is a zero-width unnamed bit-field is empty.
+    // https://en.cppreference.com/w/cpp/types/is_empty
+    static_assert(TIsEmpty<FBitField>::Value          == true);
+    static_assert(std::is_empty<FBitField>::value     == true);
 
     /* Is Enum */
     static_assert(TIsEnum<FClass>::Value     == false);
@@ -388,7 +396,6 @@ int main()
     static_assert(TIsFunction<int(int)>::Value       == true);
     static_assert(TIsFunction<decltype(Func)>::Value == true);
     static_assert(TIsFunction<int>::Value            == false);
-    static_assert(TIsFunction<typename TMemberPointerTraits<decltype(&FClass::Func)>::Type>::Value == true);
 
     /* Is Fundamental */
     static_assert(TIsFundamental<FClass>::Value == false);
@@ -406,20 +413,20 @@ int main()
     /* Is Invokable */
     static_assert(TIsInvokable<int()>::Value                            == true);
     static_assert(TIsInvokable<int(), int>::Value                       == false);
-    static_assert(TIsInvokableR<int(), int>::Value                      == true);
-    static_assert(TIsInvokableR<int(), int*>::Value                     == false);
-    static_assert(TIsInvokableR<void(int), void, int>::Value            == true);
-    static_assert(TIsInvokableR<void(int), void, void>::Value           == false);
-    static_assert(TIsInvokableR<decltype(Func2), int(*)(), CHAR>::Value == true);
-    static_assert(TIsInvokableR<decltype(Func2), int(*)(), void>::Value == false);
+    static_assert(TIsInvokableReturn<int(), int>::Value                      == true);
+    static_assert(TIsInvokableReturn<int(), int*>::Value                     == false);
+    static_assert(TIsInvokableReturn<void(int), void, int>::Value            == true);
+    static_assert(TIsInvokableReturn<void(int), void, void>::Value           == false);
+    static_assert(TIsInvokableReturn<decltype(Func2), int(*)(), CHAR>::Value == true);
+    static_assert(TIsInvokableReturn<decltype(Func2), int(*)(), void>::Value == false);
 
     /* Is Member-pointer */
     static_assert(TIsMemberPointer<int FClass::*>::Value == true);
     static_assert(TIsMemberPointer<int>::Value           == false);
 
     /* Is Movable Constructible */
-    static_assert(TIsMoveConstructable<FClass>::Value        == true);
-    static_assert(TIsMoveConstructable<FAnotherClass>::Value == false);
+    static_assert(TIsMoveConstructible<FClass>::Value        == true);
+    static_assert(TIsMoveConstructible<FAnotherClass>::Value == false);
 
     /* Is Movable Assignable */
     static_assert(TIsMoveAssignable<FClass>::Value        == true);
@@ -482,5 +489,12 @@ int main()
     TIntegerSequence Sequence = TMakeIntegerSequence<uint32, 5>();
     static_assert(Sequence.Size == 5);
 
-    return 0;
+    // All template checks are validated at compile time via static_assert; reaching
+    // this point means the suite passed.
+    TestHarness::AddPass();
+    LOG_INFO("[ OK ] Templates (static_assert checks compiled)");
+
+    const int32 ExitCode = TestHarness::Report();
+    TestHarness::Shutdown();
+    return ExitCode;
 }

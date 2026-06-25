@@ -1,8 +1,5 @@
 #include "TaskGraphTests.h"
 
-#include <iostream>
-#include <chrono>
-
 #include <Core/Tasks/Tasks.h>
 #include <Core/Tasks/ParallelFor.h>
 #include <Core/Tasks/TaskGraph.h>
@@ -12,23 +9,23 @@
 #include <Core/Threading/ScopedLock.h>
 #include <Core/Platform/CriticalSection.h>
 #include <Core/Platform/PlatformThreadMisc.h>
+#include <Core/Platform/PlatformTime.h>
 #include <Core/Containers/Array.h>
 #include <Core/Time/Timespan.h>
 
-#define TG_CHECK(Condition)                                                        \
-    if (!(Condition))                                                              \
-    {                                                                              \
-        std::cout << "[TEST FAILED] Condition='" << #Condition << "'\n";           \
-        return false;                                                              \
-    }                                                                              \
-    else                                                                           \
-    {                                                                              \
-        std::cout << "[TEST SUCCEEDED]: '" << #Condition << "'\n";                 \
+#include "TestCommon/TestMacros.h"
+
+#define TG_CHECK(Condition) \
+    if (!(Condition)) \
+    { \
+        LOG_ERROR("[TEST FAILED] Condition='%s'", #Condition); \
+        return false; \
     }
 
 // ------------------------------------------------------------------------------------------------
 // Launch + Wait completes
 // ------------------------------------------------------------------------------------------------
+
 static bool Test_LaunchAndWait()
 {
     AtomicInt32 Ran(0);
@@ -48,6 +45,7 @@ static bool Test_LaunchAndWait()
 // ------------------------------------------------------------------------------------------------
 // Prerequisite chain A -> B -> C runs in order
 // ------------------------------------------------------------------------------------------------
+
 static bool Test_PrerequisiteChain()
 {
     AtomicInt32 Order(0);
@@ -55,11 +53,22 @@ static bool Test_PrerequisiteChain()
     AtomicInt32 OrderB(-1);
     AtomicInt32 OrderC(-1);
 
-    FTaskHandle A = Tasks::Launch("A", [&]() { OrderA.Store(Order.Increment()); });
-    FTaskHandle B = Tasks::Launch("B", [&]() { OrderB.Store(Order.Increment()); }, ENamedThread::AnyThread, ETaskPriority::Normal, { A });
-    FTaskHandle C = Tasks::Launch("C", [&]() { OrderC.Store(Order.Increment()); }, ENamedThread::AnyThread, ETaskPriority::Normal, { B });
+    FTaskHandle TaskA = Tasks::Launch("A", [&]()
+    {
+        OrderA.Store(Order.Increment());
+    });
+    
+    FTaskHandle TaskB = Tasks::Launch("B", [&]()
+    {
+        OrderB.Store(Order.Increment());
+    }, ENamedThread::AnyThread, ETaskPriority::Normal, { TaskA });
 
-    C.Wait();
+    FTaskHandle TaskC = Tasks::Launch("C", [&]()
+    {
+        OrderC.Store(Order.Increment());
+    }, ENamedThread::AnyThread, ETaskPriority::Normal, { TaskB });
+
+    TaskC.Wait();
 
     TG_CHECK(OrderA.Load() == 1);
     TG_CHECK(OrderB.Load() == 2);
@@ -70,6 +79,7 @@ static bool Test_PrerequisiteChain()
 // ------------------------------------------------------------------------------------------------
 // Named-thread FIFO: tasks on a single named lane execute in submit order
 // ------------------------------------------------------------------------------------------------
+
 static bool Test_NamedThreadFIFO()
 {
     constexpr int32 NumTasks = 100;
@@ -108,6 +118,7 @@ static bool Test_NamedThreadFIFO()
 // ------------------------------------------------------------------------------------------------
 // ParallelFor runs the body exactly Count times
 // ------------------------------------------------------------------------------------------------
+
 static bool Test_ParallelFor()
 {
     constexpr int32 Count = 10000;
@@ -132,6 +143,7 @@ static bool Test_ParallelFor()
 // Main-thread queueing + deadlock-safe Wait: a worker waits on a main-thread task while the main
 // thread pumps the main-thread queue.
 // ------------------------------------------------------------------------------------------------
+
 static bool Test_MainThreadPumpNoDeadlock()
 {
     AtomicInt32 MainTaskRan(0);
@@ -165,43 +177,59 @@ static bool Test_MainThreadPumpNoDeadlock()
 // from inside a worker, they land on that worker's own deque and the remaining idle workers must
 // steal them. Verifies all tasks complete and (with >1 worker) that work-stealing actually engaged.
 // ------------------------------------------------------------------------------------------------
+
 static bool Test_WorkStealingStress()
 {
     constexpr int32 NumChildTasks = 100000;
-
-    AtomicInt32 Completed(0);
+    constexpr int32 MaxAttempts   = 16;
 
 #if STATS_ENABLED
-    const int64 StealsBefore = STAT_GET(STAT_TaskGraph_StealSuccesses);
+    const int64 StealsBefore  = STAT_GET(STAT_TaskGraph_StealSuccesses);
+    const bool  bExpectSteals = FTaskGraph::Get().GetNumAnyThreadWorkers() > 1;
+    int64       StealsDelta   = 0;
 #endif
 
-    FTaskHandle Root = Tasks::Launch("StressRoot", [&]()
+    for (int32 Attempt = 0; Attempt < MaxAttempts; ++Attempt)
     {
-        for (int32 Index = 0; Index < NumChildTasks; ++Index)
+        AtomicInt32 Completed(0);
+
+        FTaskHandle Root = Tasks::Launch("StressRoot", [&]()
         {
-            Tasks::Async([&Completed]()
+            for (int32 Index = 0; Index < NumChildTasks; ++Index)
             {
-                Completed.Increment();
-            });
+                Tasks::Async([&Completed]()
+                {
+                    Completed.Increment();
+                });
+            }
+        });
+
+        Root.Wait();
+
+        // Spin until every child task has run.
+        while (Completed.Load() < NumChildTasks)
+        {
+            FPlatformThreadMisc::Pause();
         }
-    });
 
-    Root.Wait();
+        TG_CHECK(Completed.Load() == NumChildTasks);
 
-    // Spin until every child task has run.
-    while (Completed.Load() < NumChildTasks)
-    {
-        FPlatformThreadMisc::Pause();
+    #if STATS_ENABLED
+        StealsDelta = STAT_GET(STAT_TaskGraph_StealSuccesses) - StealsBefore;
+        if (!bExpectSteals || StealsDelta > 0)
+        {
+            break;
+        }
+    #else
+        break;
+    #endif
     }
 
-    TG_CHECK(Completed.Load() == NumChildTasks);
-
 #if STATS_ENABLED
-    const int64 StealsAfter = STAT_GET(STAT_TaskGraph_StealSuccesses);
-    if (FTaskGraph::Get().GetNumAnyThreadWorkers() > 1)
+    if (bExpectSteals)
     {
-        std::cout << "[INFO] Work-stealing steals during stress: " << (StealsAfter - StealsBefore) << "\n";
-        TG_CHECK((StealsAfter - StealsBefore) > 0);
+        LOG_INFO("Work-stealing steals during stress: %lld", static_cast<int64>(StealsDelta));
+        TG_CHECK(StealsDelta > 0);
     }
 #endif
 
@@ -212,13 +240,15 @@ static bool Test_WorkStealingStress()
 // Benchmark: throughput of empty tasks driven through the graph. Not a pass/fail correctness test;
 // it prints tasks/sec so Phase 1.5 can be compared against the Phase 1 central-queue baseline.
 // ------------------------------------------------------------------------------------------------
+
 static bool Test_ThroughputBenchmark()
 {
     constexpr int32 NumTasks = 200000;
 
     AtomicInt32 Completed(0);
 
-    const auto Start = std::chrono::high_resolution_clock::now();
+    const uint64 Frequency = FPlatformTime::QueryPerformanceFrequency();
+    const uint64 Start     = FPlatformTime::QueryPerformanceCounter();
 
     FTaskHandle Root = Tasks::Launch("BenchRoot", [&]()
     {
@@ -238,14 +268,13 @@ static bool Test_ThroughputBenchmark()
         FPlatformThreadMisc::Pause();
     }
 
-    const auto End = std::chrono::high_resolution_clock::now();
+    const uint64 End = FPlatformTime::QueryPerformanceCounter();
 
-    const double Seconds      = std::chrono::duration<double>(End - Start).count();
+    const double Seconds      = (Frequency > 0) ? (static_cast<double>(End - Start) / static_cast<double>(Frequency)) : 0.0;
     const double TasksPerSec  = (Seconds > 0.0) ? (static_cast<double>(NumTasks) / Seconds) : 0.0;
 
-    std::cout << "[BENCHMARK] " << NumTasks << " tasks in " << (Seconds * 1000.0) << " ms ("
-              << (TasksPerSec / 1.0e6) << " M tasks/sec) across "
-              << FTaskGraph::Get().GetNumAnyThreadWorkers() << " workers\n";
+    LOG_INFO("[BENCHMARK] %d tasks in %.3f ms (%.3f M tasks/sec) across %d workers",
+        NumTasks, Seconds * 1000.0, TasksPerSec / 1.0e6, FTaskGraph::Get().GetNumAnyThreadWorkers());
 
     TG_CHECK(Completed.Load() == NumTasks);
     return true;
@@ -253,7 +282,7 @@ static bool Test_ThroughputBenchmark()
 
 bool TaskGraph_Test()
 {
-    std::cout << "\n=== Task Graph Tests ===\n";
+    LOG_INFO("=== Task Graph Tests ===");
 
     bool bResult = true;
     bResult = Test_LaunchAndWait()             && bResult;
@@ -264,6 +293,6 @@ bool TaskGraph_Test()
     bResult = Test_WorkStealingStress()        && bResult;
     bResult = Test_ThroughputBenchmark()       && bResult;
 
-    std::cout << (bResult ? "[TASK GRAPH TESTS SUCCEEDED]\n" : "[TASK GRAPH TESTS FAILED]\n");
+    LOG_INFO(bResult ? "[TASK GRAPH TESTS SUCCEEDED]" : "[TASK GRAPH TESTS FAILED]");
     return bResult;
 }

@@ -12,6 +12,29 @@ struct FWindowsPlatformMisc final : public FGenericPlatformMisc
         ::OutputDebugStringA("\n");
     }
 
+    static FORCEINLINE void WriteToStdOutput(const CHAR* Text, uint32 Length)
+    {
+        if (Length == 0)
+        {
+            return;
+        }
+
+        HANDLE Handle = ::GetStdHandle(STD_OUTPUT_HANDLE);
+        if (Handle && (Handle != INVALID_HANDLE_VALUE))
+        {
+            DWORD Written = 0;
+            // Console handles need WriteConsoleA, but redirected handles (files/pipes) require WriteFile
+            if (::GetFileType(Handle) == FILE_TYPE_CHAR)
+            {
+                ::WriteConsoleA(Handle, Text, Length, &Written, nullptr);
+            }
+            else
+            {
+                ::WriteFile(Handle, Text, Length, &Written, nullptr);
+            }
+        }
+    }
+
     static FORCEINLINE bool IsDebuggerPresent()
     {
         return ::IsDebuggerPresent();

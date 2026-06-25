@@ -1,7 +1,11 @@
-#include <cstdio>
+#include "TestCommon/TestHarness.h"
+#include "TestCommon/TestMacros.h"
 
 bool TestIntPoint2();
 bool TestIntPoint3();
+
+bool TestInt16Vector2();
+bool TestInt16Vector3();
 
 bool TestVector2();
 bool TestVector3();
@@ -11,82 +15,30 @@ bool TestMatrix2();
 bool TestMatrix3();
 bool TestMatrix4();
 
+bool TestQuaternion();
+
 int main()
 {
-    // IntPoint
-    if ( TestIntPoint2() )
-    {
-        printf( "IntPoint2 SUCCEEDED\n" );
-    }
-    else
-    {
-        printf( "IntPoint2 FAILED\n" );
-    }
+    TestHarness::Initialize();
+    LOG_INFO("=== Math Library Tests ===");
 
-    if ( TestIntPoint3() )
-    {
-        printf( "IntPoint3 SUCCEEDED\n" );
-    }
-    else
-    {
-        printf( "IntPoint3 FAILED\n" );
-    }
+    RUN_TEST("IntPoint2", TestIntPoint2());
+    RUN_TEST("IntPoint3", TestIntPoint3());
 
-    // Vertices
-    if ( TestVector2() )
-    {
-        printf( "Vector2 SUCCEEDED\n" );
-    }
-    else
-    {
-        printf( "Vector2 FAILED\n" );
-    }
+    RUN_TEST("Int16Vector2", TestInt16Vector2());
+    RUN_TEST("Int16Vector3", TestInt16Vector3());
 
-    if ( TestVector3() )
-    {
-        printf( "Vector3 SUCCEEDED\n" );
-    }
-    else
-    {
-        printf( "Vector3 FAILED\n" );
-    }
+    RUN_TEST("Vector2", TestVector2());
+    RUN_TEST("Vector3", TestVector3());
+    RUN_TEST("Vector4", TestVector4());
 
-    if ( TestVector4() )
-    {
-        printf( "Vector4 SUCCEEDED\n" );
-    }
-    else
-    {
-        printf( "Vector4 FAILED\n" );
-    }
+    RUN_TEST("Matrix2", TestMatrix2());
+    RUN_TEST("Matrix3", TestMatrix3());
+    RUN_TEST("Matrix4", TestMatrix4());
 
-    // Matrices
-    if ( TestMatrix2() )
-    {
-        printf( "Matrix2 SUCCEEDED\n" );
-    }
-    else
-    {
-        printf( "Matrix2 FAILED\n" );
-    }
+    RUN_TEST("Quaternion", TestQuaternion());
 
-    if ( TestMatrix3() )
-    {
-        printf( "Matrix3 SUCCEEDED\n" );
-    }
-    else
-    {
-        printf( "Matrix3 FAILED\n" );
-    }
-
-    if ( TestMatrix4() )
-    {
-        printf( "Matrix4 SUCCEEDED\n" );
-    }
-    else
-    {
-        printf( "Matrix4 FAILED\n" );
-    }
-
-    return 0;
+    const int32 ExitCode = TestHarness::Report();
+    TestHarness::Shutdown();
+    return ExitCode;
 }

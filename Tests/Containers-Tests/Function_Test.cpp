@@ -5,366 +5,290 @@
 
 #include <Core/Containers/Function.h>
 
-#include <iostream>
-
-#define TEST_TFUNCTION    (1)
-#define TEST_TFUNCTIONREF (1)
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// A
-
-struct A
+namespace
 {
-    bool Func(int32 In)
+    static int32 FreeAdd(int32 First, int32 Second)
     {
-        std::cout << "MemberCall " << In << std::endl;
-        return true;
+        return First + Second;
     }
 
-    bool ConstFunc(int32 In) const
+    static int32 FreeNegate(int32 First, int32 Second)
     {
-        std::cout << "Const MemberCall " << In << std::endl;
-        return true;
+        return -(First + Second);
     }
 
-    bool Func2(int32 In)
+    static int32 Free4(int32 First, int32 Second, int32 Third, int32 Fourth)
     {
-        std::cout << "MemberCall2 " << In << std::endl;
-        return true;
+        return First + Second + Third + Fourth;
     }
-};
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FFirst
-
-struct FFirst
-{
-    virtual void Func(int32 In) = 0;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FSecond
-
-struct FSecond : public FFirst
-{
-    virtual void Func(int32 In)
+    struct FFunctor
     {
-        std::cout << "Virtual MemberCall " << In << std::endl;
-    }
-};
+        int32 operator()(int32 First, int32 Second) const
+        {
+            return (First * Second) + Bias;
+        }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FThird
+        int32 Bias = 0;
+    };
 
-struct FThird
-{
-    virtual void SecondFunc(int32 In) = 0;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FFourth
-
-struct FFourth : public FThird, public FSecond
-{
-    virtual void SecondFunc(int32 In)
+    struct FObject
     {
-        std::cout << "Second Virtual MemberCall " << In << std::endl;
-    }
-};
+        int32 Add(int32 First, int32 Second)
+        {
+            return First + Second;
+        }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Func
+        int32 ConstAdd(int32 First, int32 Second) const
+        {
+            return First + Second;
+        }
+    };
 
-static bool Func(int32 In)
-{
-    std::cout << "FunctionCall " << In << std::endl;
-    return true;
+    struct FVirtualBase
+    {
+        virtual ~FVirtualBase() = default;
+        virtual int32 Scale(int32 In) const
+        {
+            return In;
+        }
+    };
+
+    struct FVirtualDerived : public FVirtualBase
+    {
+        virtual int32 Scale(int32 In) const override
+        {
+            return In * 2;
+        }
+    };
 }
-
-static bool Func2(int32 In)
-{
-    std::cout << "FunctionCall2 " << In << std::endl;
-    return true;
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TupleFunc
-
-static int32 TupleFunc(int32 Num0, int32 Num1, int32 Num2, int32 Num3)
-{
-    std::cout << "Tuple func Num0=" << Num0 << ", Num1=" << Num1 << ", Num2=" << Num2 << ", Num3=" << Num3 << std::endl;
-    return Num0 + 1;
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TFunction_Test
 
 bool TFunction_Test()
 {
-    struct FFunctor
+    TEST_BEGIN();
+
+    TEST_SECTION("TFunction default / IsValid / operator bool / Reset");
     {
-        bool operator()(int32 In) const
-        {
-            std::cout << "Functor " << In << std::endl;
-            return true;
-        }
-    } Fun;
+        TFunction<int32(int32, int32)> Empty;
+        TEST_EXPECT(!Empty.IsValid());
+        TEST_EXPECT(!static_cast<bool>(Empty));
 
-    std::cout << std::endl << "-------Bind-------" << std::endl << std::endl;
-    std::cout << "Testing constructor and Invoke" << std::endl;
+        TFunction<int32(int32, int32)> Add = &FreeAdd;
+        TEST_EXPECT(Add.IsValid());
+        TEST_EXPECT(static_cast<bool>(Add));
+        TEST_EXPECT(Add(2, 3) == 5);
 
-    A a;
-    auto A_Func = Bind(&A::Func, &a);
-    A_Func(32);
+        Add.Reset();
+        TEST_EXPECT(!Add.IsValid());
+    }
 
-    auto A_ConstFunc = Bind(&A::ConstFunc, &a);
-    A_ConstFunc(32);
-
-    std::cout << "Testing virtual functions" << std::endl;
-    FSecond Second;
-
-    auto SecondFunc = Bind(&FSecond::Func, &Second);
-    SecondFunc(42);
-
-    FFourth Fourth;
-
-    auto FourthFunc = Bind(&FFourth::Func, &Fourth);
-    FourthFunc(42);
-
-    // TFunction
-#if TEST_TFUNCTION
+    TEST_SECTION("TFunction Bind / functor with state");
     {
-        TFunction<void(int32)> FourthFuncWrapper = Bind(&FFourth::Func, &Fourth);
-        FourthFuncWrapper(555);
+        TFunction<int32(int32, int32)> Func;
+        FFunctor Functor{ 10 };
+        Func.Bind(Functor);
+        TEST_EXPECT(Func(2, 3) == 16);
 
-        std::cout << std::endl << "----------TFunction----------" << std::endl << std::endl;
-        std::cout << "Testing constructors" << std::endl;
+        Func.Bind(&FreeAdd);
+        TEST_EXPECT(Func(4, 5) == 9);
+    }
 
-        TFunction<bool(int32)> NormalFunc = Func;
-        NormalFunc(5);
+    TEST_SECTION("TFunction copy / move / nullptr assignment");
+    {
+        TFunction<int32(int32, int32)> Original = &FreeAdd;
+        TFunction<int32(int32, int32)> Copy = Original;
+        TEST_EXPECT(Copy.IsValid());
+        TEST_EXPECT(Copy(1, 1) == 2);
 
-        TFunction<bool(int32)> MemberFunc = Bind(&A::Func, &a);
-        MemberFunc(10);
+        TFunction<int32(int32, int32)> Moved = ::Move(Original);
+        TEST_EXPECT(Moved.IsValid());
+        TEST_EXPECT(!Original.IsValid());
+        TEST_EXPECT(Moved(3, 4) == 7);
 
-        TFunction<bool(int32)> MemberFunc1 = Bind(&A::ConstFunc, &a);
-        MemberFunc1(666);
+        Moved = nullptr;
+        TEST_EXPECT(!Moved.IsValid());
+    }
 
-        TFunction<bool(int32)> FunctorFunc = Fun;
-        FunctorFunc(15);
+    TEST_SECTION("TFunction Swap");
+    {
+        TFunction<int32(int32, int32)> First = &FreeAdd;
+        TFunction<int32(int32, int32)> Second = &FreeNegate;
+        First.Swap(Second);
+        TEST_EXPECT(First(2, 3) == -5);
+        TEST_EXPECT(Second(2, 3) == 5);
+    }
 
-        A a1;
+    TEST_SECTION("TFunctionRef free function (regression for non-owning pointer storage)");
+    {
+        TFunctionRef<int32(int32, int32)> Ref = FreeAdd;
+        TEST_EXPECT(Ref.IsValid());
+        TEST_EXPECT(Ref(6, 7) == 13);
+
+        int32 (*FuncPtr)(int32, int32) = &FreeNegate;
+        TFunctionRef<int32(int32, int32)> RefPtr = FuncPtr;
+        TEST_EXPECT(RefPtr(6, 7) == -13);
+    }
+
+    TEST_SECTION("TFunctionRef functor / Bind / Swap");
+    {
+        FFunctor Functor{ 1 };
+        TFunctionRef<int32(int32, int32)> Ref = Functor;
+        TEST_EXPECT(Ref(2, 3) == 7);
+
+        Ref.Bind(FreeAdd);
+        TEST_EXPECT(Ref(2, 3) == 5);
+
+        FFunctor OtherFunctor{ 100 };
+        TFunctionRef<int32(int32, int32)> Other = OtherFunctor;
+        Ref.Swap(Other);
+        TEST_EXPECT(Ref(2, 3) == 106);
+    }
+
+    TEST_SECTION("TUniqueFunction move-only semantics");
+    {
+        TUniqueFunction<int32(int32, int32)> Empty;
+        TEST_EXPECT(!Empty.IsValid());
+
+        TUniqueFunction<int32(int32, int32)> Func = &FreeAdd;
+        TEST_EXPECT(Func.IsValid());
+        TEST_EXPECT(static_cast<bool>(Func));
+        TEST_EXPECT(Func(8, 9) == 17);
+
+        TUniqueFunction<int32(int32, int32)> Moved = ::Move(Func);
+        TEST_EXPECT(Moved.IsValid());
+        TEST_EXPECT(!Func.IsValid());
+        TEST_EXPECT(Moved(1, 2) == 3);
+
+        Moved = nullptr;
+        TEST_EXPECT(!Moved.IsValid());
+    }
+
+    TEST_SECTION("TUniqueFunction Swap / Reset / stateful capture");
+    {
+        int32 Base = 40;
+        TUniqueFunction<int32(int32)> Func = [Base](int32 Add) -> int32
         {
-            TFunction<bool(int32)> LambdaMemberFunc = [&](int32 Input) -> bool
+            return Base + Add;
+        };
+        
+        TEST_EXPECT(Func.IsValid());
+        TEST_EXPECT(Func(2) == 42);
+
+        TUniqueFunction<int32(int32)> Other;
+        Other.Swap(Func);
+        TEST_EXPECT(Other.IsValid());
+        TEST_EXPECT(!Func.IsValid());
+        TEST_EXPECT(Other(3) == 43);
+
+        Other.Reset();
+        TEST_EXPECT(!Other.IsValid());
+    }
+
+    TEST_SECTION("Bind: member / const member / payload / partial application / Invoke");
+    {
+        FObject Obj;
+        auto MemberBind = Bind(&FObject::Add, &Obj);
+        TEST_EXPECT(MemberBind(2, 3) == 5);
+
+        auto ConstBind = Bind(&FObject::ConstAdd, &Obj);
+        TEST_EXPECT(ConstBind(4, 5) == 9);
+
+        // Partial application: bind leading args, supply the rest at call time.
+        auto Partial = Bind(Free4, 1, 2);
+        TEST_EXPECT(Partial(3, 4) == 10);
+
+        // Full payload: all args bound, call with no args.
+        auto Full = Bind(FreeAdd, 7, 8);
+        TEST_EXPECT(Full() == 15);
+
+        // Member with object + args all bound as payload.
+        auto MemberPayload = Bind(&FObject::Add, &Obj, 10, 20);
+        TEST_EXPECT(MemberPayload() == 30);
+
+        // Bind member without object; object passed at call time.
+        auto Unbound = Bind(&FObject::Add);
+        TEST_EXPECT(Unbound(&Obj, 5, 6) == 11);
+
+        // Invoke free + member directly.
+        TEST_EXPECT(Invoke(FreeAdd, 3, 4) == 7);
+        TEST_EXPECT(Invoke(&FObject::Add, &Obj, 5, 6) == 11);
+    }
+
+    TEST_SECTION("Bind / Invoke virtual member (dynamic dispatch)");
+    {
+        FVirtualDerived Derived;
+        FVirtualBase* Base = &Derived;
+
+        auto VirtualBind = Bind(&FVirtualBase::Scale, Base);
+        TEST_EXPECT(VirtualBind(21) == 42);
+        TEST_EXPECT(Invoke(&FVirtualBase::Scale, Base, 5) == 10);
+    }
+
+    TEST_SECTION("TFunction holding member bind / value+ref capturing lambdas");
+    {
+        FObject Obj;
+        TFunction<int32(int32, int32)> MemberFunc = Bind(&FObject::Add, &Obj);
+        TEST_EXPECT(MemberFunc(10, 20) == 30);
+
+        int32 Captured = 100;
+        TFunction<int32(int32)> ByValue = [Captured](int32 In)
+        {
+            return Captured + In;
+        };
+        TEST_EXPECT(ByValue(1) == 101);
+
+        int32 Counter = 0;
+        TFunction<void(int32)> ByRef = [&Counter](int32 In)
+        {
+            Counter += In;
+        };
+        ByRef(5);
+        TEST_EXPECT(Counter == 5);
+    }
+
+    TEST_SECTION("TFunctionRef holding member bind (non-owning)");
+    {
+        FObject Obj;
+        auto MemberBind = Bind(&FObject::Add, &Obj);
+        TFunctionRef<int32(int32, int32)> Ref = MemberBind;
+        TEST_EXPECT(Ref(2, 3) == 5);
+    }
+
+    TEST_SECTION("TFunction heap-storage stress (heavy capture, copy/move, no leaks)");
+    {
+        FInstanced::Reset();
+        STRESS_SWEEP(TargetSize, Seed, Stress::DefaultSeedCount)
+        {
+            FRandom     Random(Seed);
+            const int32 Bias = static_cast<int32>(Random.RandInt(0, 1000));
+
+            FInstanced Payload(Bias);
+            int64      Pad[16] = {};
+            
+            TFunction<int32(int32)> Func = [Payload, Pad, Bias](int32 In) -> int32
             {
-                std::cout << "--Lambda Begin--" << std::endl;
-                a1.Func(Input);
-                a1.Func2(Input);
-                std::cout << "--Lambda End--";
-                return true;
+                (void)Pad;
+                return In + Payload.GetId() + Bias;
             };
-            LambdaMemberFunc(20);
-        }
 
-        std::cout << std::endl << "-------Test copy constructor-------" << std::endl << std::endl;
+            TEST_EXPECT(Func.IsValid());
+            TEST_EXPECT(Func(1) == (1 + Bias + Bias));
 
-        {
-            TFunction<bool(int32)> CopyFunc(MemberFunc);
-            CopyFunc(30);
-        }
-
-        MemberFunc(40);
-
-        std::cout << std::endl << "-------Test Move constructor-------" << std::endl << std::endl;
-        {
-
-            int64 x = 50;
-            int64 y = 150;
-            int64 z = 250;
-            int64 w = 350;
-            const auto TestLambda = [=](int32 Input) -> bool
+            const int32 Repeats = (TargetSize % 64) + 1;
+            for (int32 Step = 0; Step < Repeats; ++Step)
             {
-                std::cout << "Lambda (x=" << x << ", y=" << y << ", z=" << z << "w=" << w << ") = " << Input << std::endl;
-                return true;
-            };
+                TFunction<int32(int32)> Copy = Func;
+                TEST_EXPECT(Copy(2) == (2 + Bias + Bias));
 
-            TFunction<bool(int32)> LambdaFunc = TestLambda;
-            LambdaFunc(20);
-
-            TFunction<bool(int32)> MoveFunc(::Move(LambdaFunc));
-            MoveFunc(50);
-
-            if (LambdaFunc)
-            {
-                LambdaFunc(60);
+                TFunction<int32(int32)> Moved = ::Move(Copy);
+                TEST_EXPECT(Moved(3) == (3 + Bias + Bias));
+                TEST_EXPECT(!Copy.IsValid());
             }
         }
 
-
-        std::cout << std::endl << "-------Test Bind-------" << std::endl << std::endl;
-        NormalFunc.Bind(Func2);
-        MemberFunc.Bind(Bind(&A::Func2, &a));
-
-        NormalFunc(70);
-        MemberFunc(80);
-
-        std::cout << std::endl << "-------Test Swap-------" << std::endl << std::endl;
-        NormalFunc.Swap(MemberFunc);
-
-        NormalFunc(90);
-        MemberFunc(100);
-
-        std::cout << std::endl << "-------Test IsValid-------" << std::endl << std::endl;
-        std::cout << "NormalFunc=" << std::boolalpha << NormalFunc.IsValid() << std::endl;
-
-        {
-            TFunction<void(int)> EmptyFunc;
-            std::cout << "EmptyFunc=" << std::boolalpha << EmptyFunc.IsValid() << std::endl;
-        }
-
-        std::cout << std::endl << "-------Test Bind-------" << std::endl << std::endl;
-        int32 Num0 = 50;
-        int32 Num1 = 100;
-
-        {
-            TFunction<int(int, int)> Payload = Bind(TupleFunc, Num0, Num1);
-            Payload(150, 200);
-        }
-
-        auto Payload2 = Bind(Func, 42);
-        Payload2();
-
-        // Lambda
-        int64 x2 = 50;
-        int64 y2 = 150;
-        int64 z2 = 250;
-        auto Lambda = [=](int32 Num) -> int32
-        {
-            std::cout << "Lambda (x=" << x2 << ", y=" << y2 << ", z=" << z2 << ") =" << Num << std::endl;
-            return Num + 1;
-        };
-
-        auto Payload3 = Bind(Lambda, 42);
-        Payload3();
-
-        auto Payload4 = Bind(&FSecond::Func, &Second, 42);
-        Payload4();
-
-        Invoke(&FSecond::Func, &Second, 42);
-
-        auto Payload5 = Bind(Func);
-        Payload5(42);
-
-        auto Payload6 = Bind(&FSecond::Func);
-        Payload6(&Second, 42);
+        TEST_EXPECT(FInstanced::LiveCount() == 0);
     }
-#endif
 
-    // TFunctionRef
-#if TEST_TFUNCTIONREF
-    {
-        std::cout << std::endl << "----------TFunctionRef---------" << std::endl << std::endl;
-        std::cout << "Testing constructors" << std::endl;
-
-        TFunctionRef<bool(int32)> NormalFunc = Func;
-        NormalFunc(5);
-
-        TFunctionRef<bool(int32)> MemberFunc = Bind(&A::Func, &a);
-        MemberFunc(10);
-
-        TFunctionRef<bool(int32)> MemberFunc1 = Bind(&A::ConstFunc, &a);
-        MemberFunc1(666);
-
-        TFunctionRef<bool(int32)> FunctorFunc = Fun;
-        FunctorFunc(15);
-
-        int64 x = 50;
-        int64 y = 150;
-        int64 z = 250;
-        TFunctionRef<bool(int32)> LambdaFunc = [=](int32 Input) -> bool
-        {
-            std::cout << "Lambda (x=" << x << ", y=" << y << ", z=" << z << ") =" << Input << std::endl;
-            return true;
-        };
-        LambdaFunc(20);
-
-        A a1;
-        TFunctionRef<bool(int32)> LambdaMemberFunc = [&](int32 Input) -> bool
-        {
-            std::cout << "--Lambda Begin--" << std::endl;
-            a1.Func(Input);
-            a1.Func2(Input);
-            std::cout << "--Lambda End--";
-            return true;
-        };
-        LambdaMemberFunc(20);
-
-        std::cout << std::endl << "-------Test copy constructor-------" << std::endl << std::endl;
-
-        TFunctionRef<bool(int32)> CopyFunc(MemberFunc);
-        CopyFunc(30);
-        MemberFunc(40);
-
-        std::cout << std::endl << "-------Test Move constructor-------" << std::endl << std::endl;
-        TFunctionRef<bool(int32)> MoveFunc(Move(LambdaFunc));
-        MoveFunc(50);
-        if (LambdaFunc)
-        {
-            LambdaFunc(60);
-        }
-
-        std::cout << std::endl << "-------Test Bind-------" << std::endl << std::endl;
-        NormalFunc.Bind(Func2);
-        MemberFunc.Bind(Bind(&A::Func2, &a));
-
-        NormalFunc(70);
-        MemberFunc(80);
-
-        std::cout << std::endl << "-------Test Swap-------" << std::endl << std::endl;
-        NormalFunc.Swap(MemberFunc);
-
-        NormalFunc(90);
-        MemberFunc(100);
-
-        std::cout << std::endl << "-------Test IsValid-------" << std::endl << std::endl;
-        std::cout << "NormalFunc=" << std::boolalpha << NormalFunc.IsValid() << std::endl;
-
-        TFunctionRef<void(int)> EmptyFunc;
-        std::cout << "EmptyFunc=" << std::boolalpha << EmptyFunc.IsValid() << std::endl;
-
-        std::cout << std::endl << "-------Test Bind-------" << std::endl << std::endl;
-        int32 Num0 = 50;
-        int32 Num1 = 100;
-
-        TFunctionRef<int(int, int)> Payload = Bind(TupleFunc, Num0, Num1);
-        Payload(150, 200);
-
-        auto Payload2 = Bind(Func, 42);
-        Payload2();
-
-        // Lambda
-        auto Lambda = [=](int32 Num) -> int32
-        {
-            std::cout << "Lambda (x=" << x << ", y=" << y << ", z=" << z << ") =" << Num << std::endl;
-            return Num + 1;
-        };
-
-        auto Payload3 = Bind(Lambda, 42);
-        Payload3();
-
-        auto Payload4 = Bind(&FSecond::Func, &Second, 42);
-        Payload4();
-
-        Invoke(&FSecond::Func, &Second, 42);
-
-        auto Payload5 = Bind(Func);
-        Payload5(42);
-
-        auto Payload6 = Bind(&FSecond::Func);
-        Payload6(&Second, 42);
-    }
-#endif
-
-    SUCCESS();
+    TEST_END();
 }
-
 #endif

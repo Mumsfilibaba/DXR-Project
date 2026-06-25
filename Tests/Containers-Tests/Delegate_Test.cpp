@@ -8,396 +8,355 @@
 #include <Core/Delegates/Delegate.h>
 #include <Core/Delegates/MulticastDelegate.h>
 #include <Core/Delegates/Event.h>
+#include <Core/Containers/String.h>
 
-#include <iostream>
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Functions
-
-static int32 StaticFunc(int32 Num) 
+namespace
 {
-    std::cout << "StaticFunc=" << Num << std::endl;
-    return Num + 1;
+    static int32 AddOne(int32 Num)
+    {
+        return Num + 1;
+    }
+
+    static int32 AddPayload(int32 Num, int32 Payload)
+    {
+        return Num + Payload;
+    }
+
+    static int32 GVoidCounter = 0;
+    static void VoidStatic(int32)
+    {
+        ++GVoidCounter;
+    }
+
+    static int32 GTupleSum = 0;
+    static void TupleFunc(int32 N0, int32 N1, int32 N2, int32 N3)
+    {
+        GTupleSum = N0 + N1 + N2 + N3;
+    }
+
+    struct FReceiver
+    {
+        int32 MemberAdd(int32 Num)
+        {
+            LastValue = Num;
+            ++CallCount;
+            return Num + 2;
+        }
+
+        int32 ConstAdd(int32 Num) const
+        {
+            ++CallCount;
+            return Num + 3;
+        }
+
+        void MemberVoid(int32 Num)
+        {
+            LastValue = Num;
+            ++CallCount;
+        }
+
+        void ConstVoid(int32) const
+        {
+            ++CallCount;
+        }
+
+        int32 LastValue = 0;
+        mutable int32 CallCount = 0;
+    };
+
+    struct FVBase
+    {
+        virtual ~FVBase() = default;
+        int32 Func(int32 Num)
+        {
+            return Num + 3;
+        }
+
+        int32 ConstFunc(int32 Num) const
+        {
+            return Num + 4;
+        }
+
+        virtual int32 VirtualFunc(int32 Num) = 0;
+    };
+
+    struct FVDerived : public FVBase
+    {
+        virtual int32 VirtualFunc(int32 Num) override final
+        {
+            return Num + 5;
+        }
+    };
 }
 
-static void StaticFunc2(int32 Num) 
-{
-    std::cout << "StaticFunc2=" << Num << std::endl;
-}
+DECLARE_EVENT(FSomeEvent, FEventDispatcher, int32);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FBase
-
-struct FBase
-{
-    virtual ~FBase() = default;
-
-    int32 Func(int32 Num) 
-    {
-        std::cout << "MemberFunc=" << Num << std::endl;
-        return Num + 3;
-    }
-
-    int32 ConstFunc(int32 Num) const
-    {
-        std::cout << "ConstMemberFunc=" << Num << std::endl;
-        return Num + 4;
-    }
-
-    virtual int32 VirtualFunc(int32 Num) = 0;
-
-    virtual int32 VirtualConstFunc(int32 Num) const = 0;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FDerived
-
-struct FDerived : public FBase
-{
-    virtual int32 VirtualFunc(int32 Num) override final
-    {
-        std::cout << "Virtual MemberFunc=" << Num << std::endl;
-        return Num + 5;
-    }
-
-    virtual int32 VirtualConstFunc(int32 Num) const override final
-    {
-        std::cout << "Virtual ConstMemberFunc=" << Num << std::endl;
-        return Num + 6;
-    }
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FBase2
-
-struct FBase2
-{
-    virtual ~FBase2() = default;
-
-    void Func(int32 Num)
-    {
-        std::cout << "MemberFunc2=" << Num << std::endl;
-    }
-
-    void ConstFunc(int32 Num) const
-    {
-        std::cout << "ConstMemberFunc2=" << Num << std::endl;
-    }
-
-    virtual void VirtualFunc(int32 Num) = 0;
-
-    virtual void VirtualConstFunc(int32 Num) const = 0;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FDerived2
-
-struct FDerived2 : public FBase2
-{
-    virtual void VirtualFunc(int32 Num) override final
-    {
-        std::cout << "Virtual MemberFunc2=" << Num << std::endl;
-    }
-
-    virtual void VirtualConstFunc(int32 Num) const override final
-    {
-        std::cout << "Virtual ConstMemberFunc2=" << Num << std::endl;
-    }
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TupleFunc
-
-static void TupleFunc(int32 Num0, int32 Num1, int32 Num2, int32 Num3) 
-{
-    std::cout << "Tuple func Num0=" << Num0 << ", Num1=" << Num1 << ", Num2=" << Num2 << ", Num3=" << Num3 << std::endl;
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FEventDispacher
-
-DECLARE_EVENT(FSomeEvent, FEventDispacher, int32);
-
-class FEventDispacher
+class FEventDispatcher
 {
 public:
-    void Func()
+    void Dispatch()
     {
         SomeEvent.Broadcast(42);
     }
-    
+
     FSomeEvent SomeEvent;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TDelegate_Test
-
 bool TDelegate_Test()
 {
-    std::cout << std::endl << "----Testing Tuple----" << std::endl << std::endl;
-    TTuple<int32, float, double, std::string> Tuple(5, 0.9f, 5.0, "A string");
+    TEST_BEGIN();
 
-    TEST_CHECK(Tuple.Size() == 4);
+    TEST_SECTION("TDelegate CreateStatic / IsBound / Execute");
+    {
+        TDelegate<int32(int32)> Delegate = TDelegate<int32(int32)>::CreateStatic(&AddOne);
+        TEST_EXPECT(Delegate.IsBound());
+        TEST_EXPECT_EQ(Delegate.Execute(10), 11);
+    }
 
-    auto Check = TTuple<int, float, double>::NumElements;
-    TEST_CHECK(Check == 3);
+    TEST_SECTION("TDelegate CreateStatic with payload");
+    {
+        TDelegate<int32(int32)> Delegate = TDelegate<int32(int32)>::CreateStatic(&AddPayload, 100);
+        TEST_EXPECT(Delegate.IsBound());
+        TEST_EXPECT_EQ(Delegate.Execute(5), 105);
+    }
 
-    TEST_CHECK(Tuple.GetByIndex<0>() == 5);
-    TEST_CHECK(Tuple.GetByIndex<1>() == 0.9f);
-    TEST_CHECK(Tuple.GetByIndex<2>() == 5.0);
-    TEST_CHECK(Tuple.GetByIndex<3>() == "A string");
+    TEST_SECTION("TDelegate CreateLambda");
+    {
+        TDelegate<int32(int32)> Delegate = TDelegate<int32(int32)>::CreateLambda([](int32 Num)
+        {
+            return Num * 2;
+        });
 
-    TEST_CHECK(Tuple.Get<int32>()       == 5);
-    TEST_CHECK(Tuple.Get<float>()       == 0.9f);
-    TEST_CHECK(Tuple.Get<double>()      == 5.0);
-    TEST_CHECK(Tuple.Get<std::string>() == "A string");
+        TEST_EXPECT_EQ(Delegate.Execute(21), 42);
+    }
 
-    TEST_CHECK(TupleGetByIndex<0>(Tuple) == 5);
-    TEST_CHECK(TupleGetByIndex<1>(Tuple) == 0.9f);
-    TEST_CHECK(TupleGetByIndex<2>(Tuple) == 5.0);
-    TEST_CHECK(TupleGetByIndex<3>(Tuple) == "A string");
+    TEST_SECTION("TDelegate CreateRaw member / const member");
+    {
+        FReceiver Receiver;
+        TDelegate<int32(int32)> Delegate = TDelegate<int32(int32)>::CreateRaw(&Receiver, &FReceiver::MemberAdd);
+        TEST_EXPECT_EQ(Delegate.Execute(8), 10);
+        TEST_EXPECT_EQ(Receiver.LastValue, 8);
 
-    TEST_CHECK(TupleGet<int>(Tuple)         == 5);
-    TEST_CHECK(TupleGet<float>(Tuple)       == 0.9f);
-    TEST_CHECK(TupleGet<double>(Tuple)      == 5.0);
-    TEST_CHECK(TupleGet<std::string>(Tuple) == "A string");
+        TDelegate<int32(int32)> ConstDelegate = TDelegate<int32(int32)>::CreateRaw(&Receiver, &FReceiver::ConstAdd);
+        TEST_EXPECT_EQ(ConstDelegate.Execute(8), 11);
+    }
 
-    TTuple<int32, float, double, std::string> Tuple2;
-    Tuple2 = Tuple;
-
-    TTuple<int32, float, double, std::string> Tuple3 = ::Move(Tuple2);
-    TEST_CHECK((Tuple == Tuple3) == true);
-    TEST_CHECK((Tuple != Tuple3) == false);
-    TEST_CHECK((Tuple <= Tuple3) == true);
-    TEST_CHECK((Tuple <  Tuple3) == false);
-    TEST_CHECK((Tuple>  Tuple3) == false);
-    TEST_CHECK((Tuple>= Tuple3) == true);
-    
-    TTuple<int32, float, double> Tuple4(5, 32.0f, 500.0);
-    TTuple<int32, float, double> Tuple5(2, 22.0f, 100.0);
-    Tuple4.Swap(Tuple5);
-    
-    TEST_CHECK((Tuple4 == Tuple5) == false);
-    TEST_CHECK((Tuple4 != Tuple5) == true);
-    TEST_CHECK((Tuple4 <= Tuple5) == true);
-    TEST_CHECK((Tuple4 <  Tuple5) == true);
-    TEST_CHECK((Tuple4>  Tuple5) == false);
-    TEST_CHECK((Tuple4>= Tuple5) == false);
-
-    TTuple<float, float> PairTuple0(80.0f, 900.0f);
-    TTuple<float, float> PairTuple1(50.0f, 100.0f);
-    PairTuple1.First  = 30.0f;
-    PairTuple1.Second = 200.0f;
-
-    TEST_CHECK(PairTuple0.First           == 80.0f);
-    TEST_CHECK(PairTuple0.Second          == 900.0f);
-    TEST_CHECK(PairTuple0.Get<float>()    == 80.0f);
-    TEST_CHECK(PairTuple0.Get<float>()    == 80.0f);
-    TEST_CHECK(PairTuple0.GetByIndex<0>() == 80.0f);
-    TEST_CHECK(PairTuple0.GetByIndex<1>() == 900.0f);
-
-    PairTuple0.Swap(PairTuple1);
-
-    TEST_CHECK(PairTuple0.First           == 30.0f);
-    TEST_CHECK(PairTuple0.Second          == 200.0f);
-    TEST_CHECK(PairTuple0.Get<float>()    == 30.0f);
-    TEST_CHECK(PairTuple0.Get<float>()    == 30.0f);
-    TEST_CHECK(PairTuple0.GetByIndex<0>() == 30.0f);
-    TEST_CHECK(PairTuple0.GetByIndex<1>() == 200.0f);
-
-    TTuple<int32, int32> PairTuple2(80, 900);
-    PairTuple2.ApplyAfter(TupleFunc, 30, 99);
-    PairTuple2.ApplyBefore(TupleFunc, 30, 99);
-
-    TTuple<int32, int32, int32> Args(10, 20, 30);
-    Args.ApplyAfter(TupleFunc, 99);
-    Args.ApplyBefore(TupleFunc, 99);
-
-    TPair<std::string, int32> Pair0("Pair0", 32);
-    TPair<std::string, int32> Pair1("Pair1", 42);
-    TEST_CHECK((Pair0 == Pair1) == false);
-    TEST_CHECK((Pair0 != Pair1) == true);
-
-    Pair0.Swap(Pair1);
-
-    std::cout << std::endl << "----Testing Delegate----" << std::endl << std::endl;
-
+    TEST_SECTION("TDelegate Bind* / Unbind / ExecuteIfBound");
     {
         TDelegate<int32(int32)> Delegate;
-        TEST_CHECK(Delegate.IsBound()          == false);
-        TEST_CHECK(Delegate.ExecuteIfBound(32) == false);
+        TEST_EXPECT(!Delegate.IsBound());
+        TEST_EXPECT(!Delegate.ExecuteIfBound(1));
 
-        // Static
-        Delegate.BindStatic(StaticFunc);
-        TEST_CHECK(Delegate.GetBoundObject() == nullptr);
-        TEST_CHECK(Delegate.IsBound()        == true);
-        TEST_CHECK(Delegate.Execute(32)      == 33);
-
-        // Lambda
-        int64 x = 50;
-        int64 y = 150;
-        int64 z = 250;
-        auto Lambda = [=](int32 Num)  -> int32
-        {
-            std::cout << "Lambda (x=" << x << ", y=" << y << ", z=" << z << ") =" << Num << std::endl;
-            return Num + 2;
-        };
-
-        Delegate.BindLambda(Lambda);
-        TEST_CHECK(Delegate.Execute(500) == 502);
-
-        // Members
-        FBase* Base = new FDerived();
-        Delegate.BindRaw(Base, &FBase::Func);
-        TEST_CHECK(Delegate.Execute(100) == 103);
-    
-        Delegate.BindRaw(Base, &FBase::ConstFunc);
-        TEST_CHECK(Delegate.Execute(200) == 204);
-
-        Delegate.BindRaw(Base, &FDerived::Func);
-        TEST_CHECK(Delegate.Execute(300) == 303);
-
-        Delegate.BindRaw(Base, &FDerived::ConstFunc);
-        TEST_CHECK(Delegate.Execute(400) == 404);
-
-        TEST_CHECK(Delegate.IsObjectBound(Base) == true);
-        TEST_CHECK(Delegate.UnbindIfBound(Base) == true);
+        Delegate.BindStatic(&AddOne);
+        TEST_EXPECT(Delegate.IsBound());
+        TEST_EXPECT(Delegate.ExecuteIfBound(1));
 
         Delegate.Unbind();
+        TEST_EXPECT(!Delegate.IsBound());
 
-        TEST_CHECK(Delegate.IsObjectBound(Base) == false);
-        TEST_CHECK(Delegate.UnbindIfBound(Base) == false);
+        Delegate.BindLambda([](int32 Num)
+        {
+            return Num;
+        });
 
-        // Copy
-        Delegate.BindLambda(Lambda);
-        Delegate.Execute(0);
-
-        TDelegate<int32(int32)> Delegate2 = Delegate;
-        Delegate2.Execute(100);
-
-        Delegate = Delegate2;
-        Delegate.Execute(200);
-
-        // Move
-        TDelegate<int32(int32)> Delegate3 = Move(Delegate2);
-        Delegate3.Execute(300);
-        Delegate2.ExecuteIfBound(400);
-
-        Delegate = Move(Delegate3);
-        Delegate.Execute(500);
-
-        // Swap
-        TDelegate<int32(int32)> Static;
-        Static.BindLambda(StaticFunc);
-        Static.Execute(1000);
-
-        TDelegate<int32(int32)> NotStatic;
-        NotStatic.BindLambda(Lambda);
-        NotStatic.Execute(2000);
-
-        NotStatic.Swap(Static);
-        NotStatic.Execute(3000);
-        Static.Execute(4000);
-
-        // Static Create functions with and without payload
-        std::cout << std::endl << "Static Create functions with and without payload" << std::endl << std::endl;
-        TDelegate<int32(int32)> Lambda2 = TDelegate<int32(int32)>::CreateLambda(Lambda);
-        Lambda2.Execute(100);
-        TDelegate<int32()> Lambda3 = TDelegate<int32()>::CreateLambda(Lambda, 200);
-        Lambda3.Execute();
-
-        TDelegate<int32(int32)> Static2 = TDelegate<int32(int32)>::CreateStatic(StaticFunc);
-        Static2.Execute(100);
-        TDelegate<int32()> Static3 = TDelegate<int32()>::CreateStatic(StaticFunc, 200);
-        Static3.Execute();
-
-        TDelegate<int32(int32)> Member0 = TDelegate<int32(int32)>::CreateRaw(Base, &FBase::Func);
-        Member0.Execute(100);
-        TDelegate<int32()> Member01 = TDelegate<int32()>::CreateRaw(Base, &FBase::Func, 200);
-        Member01.Execute();
-
-        TDelegate<int32(int32)> Member1 = TDelegate<int32(int32)>::CreateRaw(Base, &FBase::ConstFunc);
-        Member1.Execute(100);
-        TDelegate<int32()> Member11 = TDelegate<int32()>::CreateRaw(Base, &FBase::ConstFunc, 200);
-        Member11.Execute();
-
-        TDelegate<int32(int32)> Member2 = TDelegate<int32(int32)>::CreateRaw(Base, &FDerived::Func);
-        Member2.Execute(100);
-        TDelegate<int32()> Member21 = TDelegate<int32()>::CreateRaw(Base, &FDerived::Func, 200);
-        Member21.Execute();
-
-        TDelegate<int32(int32)> Member3 = TDelegate<int32(int32)>::CreateRaw(Base, &FDerived::ConstFunc);
-        Member3.Execute(100);
-
-        TDelegate<int32()> Member31 = TDelegate<int32()>::CreateRaw(Base, &FDerived::ConstFunc, 200);
-        Member31.Execute();
-
-        delete Base;
+        TEST_EXPECT(Delegate.IsBound());
     }
 
-    std::cout << std::endl << "----Testing MultiCastDelegate----" << std::endl << std::endl;
-
+    TEST_SECTION("TDelegate UnbindIfBound by object");
     {
-        TMulticastDelegate<> VoidMultiDelegates;
-        VoidMultiDelegates.AddLambda([]()
+        FReceiver Receiver;
+        TDelegate<int32(int32)> Delegate = TDelegate<int32(int32)>::CreateRaw(&Receiver, &FReceiver::MemberAdd);
+        TEST_EXPECT(Delegate.IsBound());
+        TEST_EXPECT(Delegate.UnbindIfBound(&Receiver));
+        TEST_EXPECT(!Delegate.IsBound());
+        TEST_EXPECT(!Delegate.UnbindIfBound(&Receiver));
+    }
+
+    TEST_SECTION("TMulticastDelegate Add* / Broadcast / GetCount / IsBound");
+    {
+        TMulticastDelegate<int32> Event;
+        TEST_EXPECT(!Event.IsBound());
+        TEST_EXPECT_EQ(Event.GetCount(), 0u);
+
+        int32 LambdaSum = 0;
+        Event.AddLambda([&LambdaSum](int32 Num)
         {
-            std::cout << "Lambda Void" << std::endl;
+            LambdaSum += Num;
+        });
+
+        FReceiver Receiver;
+        Event.AddRaw(&Receiver, &FReceiver::MemberVoid);
+
+        TEST_EXPECT(Event.IsBound());
+        TEST_EXPECT_EQ(Event.GetCount(), 2u);
+
+        Event.Broadcast(7);
+        TEST_EXPECT_EQ(LambdaSum, 7);
+        TEST_EXPECT_EQ(Receiver.LastValue, 7);
+        TEST_EXPECT_EQ(Receiver.CallCount, 1);
+    }
+
+    TEST_SECTION("TMulticastDelegate Unbind by handle");
+    {
+        TMulticastDelegate<int32> Event;
+        
+        int32 CounterA = 0;
+        int32 CounterB = 0;
+
+        FDelegateHandle HandleA = Event.AddLambda([&CounterA](int32)
+        {
+            ++CounterA;
         });
         
-        VoidMultiDelegates.Broadcast();
-        
-        TMulticastDelegate<int32> MultiDelegates;
-        TEST_CHECK(MultiDelegates.IsBound() == false);
-
-        // Static
-        MultiDelegates.AddStatic(StaticFunc2);
-        TEST_CHECK(MultiDelegates.IsBound() == true);
-
-        // Lambda
-        int64 x = 50;
-        int64 y = 150;
-        int64 z = 250;
-        auto Lambda = [=](int32 Num) 
+        Event.AddLambda([&CounterB](int32)
         {
-            std::cout << "Lambda2 (x=" << x << ", y=" << y << ", z=" << z << ") =" << Num << std::endl;
-        };
+            ++CounterB;
+        });
 
-        MultiDelegates.AddLambda(Lambda);
+        TEST_EXPECT_EQ(Event.GetCount(), 2u);
+        TEST_EXPECT(Event.Unbind(HandleA));
+        TEST_EXPECT_EQ(Event.GetCount(), 1u);
 
-        // Members
-        FBase2* Base = new FDerived2();
-        MultiDelegates.AddRaw(Base, &FBase2::Func);
-        MultiDelegates.AddRaw(Base, &FBase2::ConstFunc);
-        MultiDelegates.AddRaw(Base, &FDerived2::Func);
-        MultiDelegates.AddRaw(Base, &FDerived2::ConstFunc);
-
-        MultiDelegates.Broadcast(5000);
-
-        TEST_CHECK(MultiDelegates.GetCount()          == 6);
-        TEST_CHECK(MultiDelegates.UnbindIfBound(Base) == true);
-        TEST_CHECK(MultiDelegates.GetCount()          == 2);
-        TEST_CHECK(MultiDelegates.UnbindIfBound(Base) == false);
-
-        delete Base;
+        Event.Broadcast(0);
+        TEST_EXPECT_EQ(CounterA, 0);
+        TEST_EXPECT_EQ(CounterB, 1);
     }
 
-    std::cout << std::endl << "----Testing Delegate Macros----" << std::endl << std::endl;
+    TEST_SECTION("TMulticastDelegate UnbindIfBound / UnbindAll");
+    {
+        TMulticastDelegate<int32> Event;
+        FReceiver Receiver;
+        Event.AddRaw(&Receiver, &FReceiver::MemberVoid);
+        Event.AddRaw(&Receiver, &FReceiver::ConstVoid);
+        Event.AddStatic(&VoidStatic);
+
+        TEST_EXPECT_EQ(Event.GetCount(), 3u);
+
+        TEST_EXPECT(Event.UnbindIfBound(&Receiver));
+        TEST_EXPECT_EQ(Event.GetCount(), 1u);
+
+        Event.UnbindAll();
+        TEST_EXPECT_EQ(Event.GetCount(), 0u);
+        TEST_EXPECT(!Event.IsBound());
+    }
+
+    TEST_SECTION("TTuple: size / GetByIndex / comparison / Swap / Apply");
+    {
+        TTuple<int32, float, double, String> Tuple(5, 0.9f, 5.0, "A string");
+        TEST_EXPECT_EQ(Tuple.Size(), 4);
+        TEST_EXPECT_EQ((TTuple<int, float, double>::StaticSize()), 3);
+        TEST_EXPECT_EQ(Tuple.GetByIndex<0>(), 5);
+        TEST_EXPECT(Tuple.GetByIndex<3>() == "A string");
+
+        TTuple<int32, float, double, String> Copy;
+        Copy = Tuple;
+
+        TTuple<int32, float, double, String> Moved = ::Move(Copy);
+        TEST_EXPECT(Tuple == Moved);
+        TEST_EXPECT(!(Tuple != Moved));
+        TEST_EXPECT(Tuple <= Moved);
+        TEST_EXPECT(Tuple >= Moved);
+
+        TTuple<int32, float, double> FirstTuple(5, 32.0f, 500.0);
+        TTuple<int32, float, double> SecondTuple(2, 22.0f, 100.0);
+        FirstTuple.Swap(SecondTuple);
+        
+        TEST_EXPECT(FirstTuple.GetByIndex<0>() == 2);
+        TEST_EXPECT(SecondTuple.GetByIndex<0>() == 5);
+
+        GTupleSum = 0;
+        TTuple<int32, int32> Args(80, 900);
+        Args.ApplyAfter(TupleFunc, 30, 99);
+        TEST_EXPECT(GTupleSum == (80 + 900 + 30 + 99));
+
+        GTupleSum = 0;
+        Args.ApplyBefore(TupleFunc, 30, 99);
+        TEST_EXPECT(GTupleSum == (80 + 900 + 30 + 99));
+    }
+
+    TEST_SECTION("TPair: construct / comparison / Swap");
+    {
+        TPair<String, int32> P0("Pair0", 32);
+        TPair<String, int32> P1("Pair1", 42);
+        TEST_EXPECT(!(P0 == P1));
+        TEST_EXPECT(P0 != P1);
+
+        TPair<String, int32> P0Copy = P0;
+        P0.Swap(P1);
+        
+        TEST_EXPECT(P1 == P0Copy);
+    }
+
+    TEST_SECTION("TDelegate BindRaw / virtual member / copy / move / Swap / payload");
+    {
+        FVDerived Derived;
+        FVBase* Base = &Derived;
+
+        TDelegate<int32(int32)> Delegate;
+        Delegate.BindRaw(Base, &FVBase::Func);
+        TEST_EXPECT_EQ(Delegate.Execute(100), 103);
+        
+        Delegate.BindRaw(Base, &FVBase::ConstFunc);
+        TEST_EXPECT_EQ(Delegate.Execute(200), 204);
+
+        Delegate.BindRaw(Base, &FVBase::VirtualFunc);
+        TEST_EXPECT_EQ(Delegate.Execute(300), 305);
+        TEST_EXPECT(Delegate.IsObjectBound(Base));
+
+        TDelegate<int32(int32)> Copy = Delegate;
+        TEST_EXPECT_EQ(Copy.Execute(300), 305);
+
+        TDelegate<int32(int32)> Moved = ::Move(Copy);
+        TEST_EXPECT_EQ(Moved.Execute(300), 305);
+        TEST_EXPECT(!Copy.IsBound());
+
+        TDelegate<int32(int32)> Other = TDelegate<int32(int32)>::CreateStatic(&AddOne);
+        Moved.Swap(Other);
+
+        TEST_EXPECT_EQ(Moved.Execute(10), 11);
+        TEST_EXPECT_EQ(Other.Execute(300), 305);
+
+        TDelegate<int32()> WithPayload = TDelegate<int32()>::CreateRaw(Base, &FVBase::Func, 200);
+        TEST_EXPECT_EQ(WithPayload.Execute(), 203);
+    }
+
+    TEST_SECTION("TMulticastDelegate void signature");
+    {
+        FMulticastDelegate VoidEvent;
+
+        int32 Counter = 0;
+        VoidEvent.AddLambda([&Counter]()
+        {
+            ++Counter;
+        });
+
+        VoidEvent.Broadcast();
+        TEST_EXPECT_EQ(Counter, 1);
+    }
+
+    TEST_SECTION("Delegate declaration macros / Event dispatch");
     {
         DECLARE_DELEGATE(FSomeDelegate, int32);
         FSomeDelegate SomeDelegate;
+        TEST_EXPECT(!SomeDelegate.IsBound());
 
         DECLARE_RETURN_DELEGATE(FSomeReturnDelegate, bool, int32);
         FSomeReturnDelegate SomeReturnDelegate;
+        TEST_EXPECT(!SomeReturnDelegate.IsBound());
 
-        DECLARE_MULTICAST_DELEGATE(FSomeMulticastDelegate, int32);
-        FSomeMulticastDelegate SomeMulticastDelegate;
+        DECLARE_MULTICAST_DELEGATE(FSomeMulticast, int32);
+        FSomeMulticast SomeMulticast;
+        TEST_EXPECT(!SomeMulticast.IsBound());
 
-        FEventDispacher EventDispacher;
-        EventDispacher.SomeEvent.AddStatic(StaticFunc2);
-        EventDispacher.Func();
+        GVoidCounter = 0;
+
+        FEventDispatcher Dispatcher;
+        Dispatcher.SomeEvent.AddStatic(&VoidStatic);
+        Dispatcher.Dispatch();
+
+        TEST_EXPECT_EQ(GVoidCounter, 1);
     }
 
-    SUCCESS();
+    TEST_END();
 }
-
 #endif

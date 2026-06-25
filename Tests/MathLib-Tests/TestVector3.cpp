@@ -2,218 +2,148 @@
 
 #include <Core/Math/Vector3.h>
 
-#include <cstdio>
-
-#define _XM_NO_INTRINSICS_
-#include <DirectXMath.h>
-using namespace DirectX;
-
 bool TestVector3()
 {
-    // Constructors
-    Vector3 Point0;
-    Vector3 Point1(1.0f, 2.0f, -2.0f);
+    TEST_BEGIN();
 
-    float Arr[3] = { 5.0f, -7.0f, 2.0f };
-    Vector3 Point2(Arr);
+    const float HalfPI = Math::Constants::HalfPI;
 
-    Vector3 Point3(-3.0f);
+    TEST_SECTION("Vector3::Vector3 (constructors)");
+    TEST_EXPECT(Vector3() == Vector3(0.0f, 0.0f, 0.0f));
+    TEST_EXPECT(Vector3(-3.0f) == Vector3(-3.0f, -3.0f, -3.0f));
 
-    // Dot
-    float Dot = Point1.DotProduct(Point3);
-    if (Dot != -3.0f)
+    TEST_SECTION("Vector3 axis constants");
+    TEST_EXPECT(Vector3::Up.IsUnitVector());
+    TEST_EXPECT(Vector3::Forward.IsUnitVector());
+    TEST_EXPECT(Vector3::Right.IsUnitVector());
+
+    TEST_SECTION("Vector3::DotProduct");
+    TEST_EXPECT(Vector3(1.0f, 2.0f, -2.0f).DotProduct(Vector3(-3.0f)) == -3.0f);
+
+    TEST_SECTION("Vector3::CrossProduct");
+    TEST_EXPECT(Vector3(1.0f, 2.0f, -2.0f).CrossProduct(Vector3(5.0f, -7.0f, 2.0f)) == Vector3(-10.0f, -12.0f, -17.0f));
+
+    TEST_SECTION("Vector3::ProjectOn");
+    TEST_EXPECT(Vector3(4.0f, 5.0f, 3.0f).ProjectOn(Vector3(1.0f, 0.0f, 0.0f)).IsEqual(Vector3(4.0f, 0.0f, 0.0f)));
+
+    TEST_SECTION("Vector3::GetReflected");
+    TEST_EXPECT(Vector3(1.0f, 2.0f, -2.0f).GetReflected(Vector3(0.0f, 1.0f, 0.0f)).IsEqual(Vector3(1.0f, -2.0f, -2.0f)));
+
+    TEST_SECTION("Vector3::GetRotated");
+    TEST_EXPECT(Vector3(1.0f, 0.0f, 0.0f).GetRotated(Vector3(0.0f, 0.0f, 1.0f), HalfPI).IsEqual(Vector3(0.0f, 1.0f, 0.0f)));
+
+    TEST_SECTION("Vector3::GetDistanceTo / GetDistanceSquaredTo");
+    TEST_EXPECT(Math::Abs(Vector3(0.0f).GetDistanceTo(Vector3(2.0f, 3.0f, 6.0f)) - 7.0f) <= 1.0e-4f);
+    TEST_EXPECT(Vector3(0.0f).GetDistanceSquaredTo(Vector3(2.0f, 3.0f, 6.0f)) == 49.0f);
+
+    TEST_SECTION("Vector3::GetAngleBetween");
+    TEST_EXPECT(Math::Abs(Vector3(1.0f, 0.0f, 0.0f).GetAngleBetween(Vector3(0.0f, 1.0f, 0.0f)) - HalfPI) <= 1.0e-4f);
+
+    TEST_SECTION("Vector3::IsEqual");
+    TEST_EXPECT(Vector3(1.0f, 2.0f, 3.0f).IsEqual(Vector3(1.0f, 2.0f, 3.0f)));
+    TEST_EXPECT(!Vector3(1.0f, 2.0f, 3.0f).IsEqual(Vector3(1.0f, 2.0f, 4.0f)));
+
+    TEST_SECTION("Vector3::Min / Max");
+    TEST_EXPECT(Vector3::Min(Vector3(5.0f, -7.0f, 2.0f), Vector3(-3.0f)) == Vector3(-3.0f, -7.0f, -3.0f));
+    TEST_EXPECT(Vector3::Max(Vector3(5.0f, -7.0f, 2.0f), Vector3(-3.0f)) == Vector3(5.0f, -3.0f, 2.0f));
+
+    TEST_SECTION("Vector3::Lerp");
+    TEST_EXPECT(Vector3::Lerp(Vector3(0.0f), Vector3(1.0f), 0.5f) == Vector3(0.5f));
+
+    TEST_SECTION("Vector3::Clamp");
+    TEST_EXPECT(Vector3::Clamp(Vector3(-3.5f, 7.5f, 1.0f), Vector3(-2.0f), Vector3(5.0f)) == Vector3(-2.0f, 5.0f, 1.0f));
+
+    TEST_SECTION("Vector3::Saturate");
+    TEST_EXPECT(Vector3::Saturate(Vector3(-5.0f, 1.5f, 0.25f)) == Vector3(0.0f, 1.0f, 0.25f));
+
+    TEST_SECTION("Vector3::RadiansToDegrees / DegreesToRadians");
+    TEST_EXPECT(Vector3::RadiansToDegrees(Vector3(Math::Constants::PI, HalfPI, 0.0f)).IsEqual(Vector3(180.0f, 90.0f, 0.0f), 1.0e-2f));
+    TEST_EXPECT(Vector3::DegreesToRadians(Vector3(180.0f, 90.0f, 0.0f)).IsEqual(Vector3(Math::Constants::PI, HalfPI, 0.0f)));
+
+    TEST_SECTION("Vector3::Normalize / GetNormalized / IsUnitVector");
     {
-        TEST_FAILED();
+        Vector3 Norm(1.0f);
+        Norm.Normalize();
+
+        TEST_EXPECT(Norm.IsEqual(Vector3(0.57735026f)));
+        TEST_EXPECT(Norm.IsUnitVector());
+        TEST_EXPECT(Vector3(1.0f).GetNormalized().IsUnitVector());
     }
 
-    // Cross
-    Vector3 Cross = Point1.CrossProduct(Point2);
-
-    XMVECTOR Xm0 = XMVectorSet(1.0f, 2.0f, -2.0f, 0.0f);
-    XMVECTOR Xm1 = XMVectorSet(5.0f, -7.0f, 2.0f, 0.0f);
-    XMVECTOR XmCross = XMVector3Cross(Xm0, Xm1);
-
-    XMFLOAT3 XmFloat3;
-    XMStoreFloat3(&XmFloat3, XmCross);
-
-    if (Cross != Vector3(reinterpret_cast<float*>(&XmFloat3)))
+    TEST_SECTION("Vector3::ContainsNaN / ContainsInfinity");
     {
-        TEST_FAILED();
+        const Vector3 NaNVector(1.0f, 0.0f, Math::Constants::NaN);
+        const Vector3 InfVector(1.0f, 0.0f, Math::Constants::Infinity);
+        TEST_EXPECT(NaNVector.ContainsNaN());
+        TEST_EXPECT(InfVector.ContainsInfinity());
+        TEST_EXPECT(!Vector3(1.0f, 2.0f, 3.0f).ContainsNaN());
+        TEST_EXPECT(!Vector3(1.0f, 2.0f, 3.0f).ContainsInfinity());
     }
 
-    // Project On
-    Vector3 v0 = Vector3(4.0f, 5.0f, 3.0f);
-    Vector3 v1 = Vector3(1.0f, 0.0f, 0.0f);
-    Vector3 Projected = v0.ProjectOn(v1);
+    TEST_SECTION("Vector3::GetLength / GetLengthSquared");
+    TEST_EXPECT(Math::Abs(Vector3(2.0f).GetLength() - 3.46410161f) <= 1.0e-4f);
+    TEST_EXPECT(Vector3(2.0f).GetLengthSquared() == 12.0f);
 
-    if (Projected != Vector3(4.0f, 0.0f, 0.0f))
+    TEST_SECTION("Vector3::operator- (unary)");
+    TEST_EXPECT(-Vector3(1.0f, 2.0f, -2.0f) == Vector3(-1.0f, -2.0f, 2.0f));
+
+    TEST_SECTION("Vector3::operator+ / operator+=");
+    TEST_EXPECT(Vector3(1.0f, 2.0f, 3.0f) + Vector3(3.0f, 1.0f, -1.0f) == Vector3(4.0f, 3.0f, 2.0f));
+    TEST_EXPECT(Vector3(1.0f, 2.0f, 3.0f) + 5.0f == Vector3(6.0f, 7.0f, 8.0f));
     {
-        TEST_FAILED();
+        Vector3 Vec(1.0f, 2.0f, 3.0f);
+        Vec += Vector3(1.0f, 1.0f, 1.0f);
+        Vec += 1.0f;
+
+        TEST_EXPECT(Vec == Vector3(3.0f, 4.0f, 5.0f));
     }
 
-    // Reflection
-    Vector3 Reflect = Point1.Reflect(Vector3(0.0f, 1.0f, 0.0f));
-
-    XMVECTOR Xm2 = XMVectorSet(1.0f, 2.0f, -2.0f, 0.0f);
-    XMVECTOR Xm3 = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-    XMVECTOR XmReflect = XMVector3Reflect(Xm2, Xm3);
-
-    XMStoreFloat3(&XmFloat3, XmReflect);
-    if (Reflect != Vector3(reinterpret_cast<float*>(&XmFloat3)))
+    TEST_SECTION("Vector3::operator- / operator-=");
+    TEST_EXPECT(Vector3(4.0f, 3.0f, 7.0f) - Vector3(3.0f, 1.0f, 8.0f) == Vector3(1.0f, 2.0f, -1.0f));
+    TEST_EXPECT(Vector3(4.0f, 3.0f, 7.0f) - 5.0f == Vector3(-1.0f, -2.0f, 2.0f));
     {
-        TEST_FAILED();
+        Vector3 Vec(4.0f, 3.0f, 7.0f);
+        Vec -= Vector3(1.0f, 1.0f, 1.0f);
+        Vec -= 1.0f;
+
+        TEST_EXPECT(Vec == Vector3(2.0f, 1.0f, 5.0f));
     }
 
-    // Min
-    Vector3 MinPoint = Min(Point2, Point3);
-    if (MinPoint != Vector3(-3.0f, -7.0f, -3.0f))
+    TEST_SECTION("Vector3::operator* / operator*=");
+    TEST_EXPECT(Vector3(1.0f, 2.0f, -1.0f) * Vector3(3.0f, 1.0f, 2.0f) == Vector3(3.0f, 2.0f, -2.0f));
+    TEST_EXPECT(Vector3(1.0f, 2.0f, -1.0f) * 5.0f == Vector3(5.0f, 10.0f, -5.0f));
+    TEST_EXPECT(5.0f * Vector3(1.0f, 2.0f, -1.0f) == Vector3(5.0f, 10.0f, -5.0f));
     {
-        TEST_FAILED();
+        Vector3 Vec(1.0f, 2.0f, 3.0f);
+        Vec *= Vector3(2.0f, 2.0f, 2.0f);
+        Vec *= 2.0f;
+
+        TEST_EXPECT(Vec == Vector3(4.0f, 8.0f, 12.0f));
     }
 
-    // Max
-    Vector3 MaxPoint = Max(Point2, Point3);
-    if (MaxPoint != Vector3(5.0f, -3.0f, 2.0f))
+    TEST_SECTION("Vector3::operator/ / operator/=");
+    TEST_EXPECT(Vector3(3.0f, 2.0f, -2.0f) / Vector3(3.0f, 1.0f, 2.0f) == Vector3(1.0f, 2.0f, -1.0f));
+    TEST_EXPECT(Vector3(5.0f, 10.0f, -5.0f) / 5.0f == Vector3(1.0f, 2.0f, -1.0f));
     {
-        TEST_FAILED();
+        Vector3 Vec(8.0f, 4.0f, 2.0f);
+        Vec /= Vector3(2.0f, 2.0f, 2.0f);
+        Vec /= 2.0f;
+
+        TEST_EXPECT(Vec == Vector3(2.0f, 1.0f, 0.5f));
     }
 
-    // Lerp
-    Vector3 Lerped = Lerp(Vector3(0.0f), Vector3(1.0f), 0.5f);
-    if (Lerped != Vector3(0.5f))
+    TEST_SECTION("Vector3::operator== / operator!=");
+    TEST_EXPECT(Vector3(1.0f, 2.0f, 3.0f) == Vector3(1.0f, 2.0f, 3.0f));
+    TEST_EXPECT(Vector3(1.0f, 2.0f, 3.0f) != Vector3(1.0f, 2.0f, 4.0f));
+
+    TEST_SECTION("Vector3::operator[]");
     {
-        TEST_FAILED();
+        Vector3 Vec(1.0f, 2.0f, 3.0f);
+        Vec[2] = -1.0f;
+
+        TEST_EXPECT(Vec[0] == 1.0f);
+        TEST_EXPECT(Vec[2] == -1.0f);
     }
 
-    // Clamp
-    Vector3 Clamped = Clamp(Vector3(-2.0f), Vector3(5.0f), Vector3(-3.5f, 7.5f, 1.0f));
-    if (Clamped != Vector3(-2.0f, 5.0f, 1.0f))
-    {
-        TEST_FAILED();
-    }
-
-    // Saturate
-    Vector3 Saturated = Saturate(Vector3(-5.0f, 1.5f, 0.25f));
-    if (Saturated != Vector3(0.0f, 1.0f, 0.25f))
-    {
-        TEST_FAILED();
-    }
-
-    // Normalize
-    Vector3 Norm(1.0f);
-    Norm.Normalize();
-
-    if (Norm != Vector3(0.57735026919f))
-    {
-        TEST_FAILED();
-    }
-
-    if (!Norm.IsUnitVector())
-    {
-        TEST_FAILED();
-    }
-
-    // NaN
-    Vector3 NaN(1.0f, 0.0f, NAN);
-    if (!NaN.HasNaN())
-    {
-        TEST_FAILED();
-    }
-
-    // Infinity
-    Vector3 Infinity(1.0f, 0.0f, INFINITY);
-    if (!Infinity.HasInfinity())
-    {
-        TEST_FAILED();
-    }
-
-    // Valid
-    if (Infinity.IsValid() || NaN.IsValid())
-    {
-        TEST_FAILED();
-    }
-
-    // Length
-    Vector3 LengthVector(2.0f, 2.0f, 2.0f);
-    float Length = LengthVector.Length();
-
-    if (Length != 3.46410161514f)
-    {
-        TEST_FAILED();
-    }
-
-    // Length Squared
-    float LengthSqrd = LengthVector.LengthSquared();
-    if (LengthSqrd != 12.0f)
-    {
-        TEST_FAILED();
-    }
-
-    // Unary minus
-    Vector3 Minus = -Point1;
-    if (Minus != Vector3(-1.0f, -2.0f, 2.0f))
-    {
-        TEST_FAILED();
-    }
-
-    // Add
-    Vector3 Add0 = Minus + Vector3(3.0f, 1.0f, -1.0f);
-    if (Add0 != Vector3(2.0f, -1.0f, 1.0f))
-    {
-        TEST_FAILED();
-    }
-
-    Vector3 Add1 = Minus + 5.0f;
-    if (Add1 != Vector3(4.0f, 3.0f, 7.0f))
-    {
-        TEST_FAILED();
-    }
-
-    // Subtraction
-    Vector3 Sub0 = Add1 - Vector3(3.0f, 1.0f, 8.0f);
-    if (Sub0 != Vector3(1.0f, 2.0f, -1.0f))
-    {
-        TEST_FAILED();
-    }
-
-    Vector3 Sub1 = Add1 - 5.0f;
-    if (Sub1 != Vector3(-1.0f, -2.0f, 2.0f))
-    {
-        TEST_FAILED();
-    }
-
-    // Multiplication
-    Vector3 Mul0 = Sub0 * Vector3(3.0f, 1.0f, 2.0f);
-    if (Mul0 != Vector3(3.0f, 2.0f, -2.0f))
-    {
-        TEST_FAILED();
-    }
-
-    Vector3 Mul1 = Sub0 * 5.0f;
-    if (Mul1 != Vector3(5.0f, 10.0f, -5.0f))
-    {
-        TEST_FAILED();
-    }
-
-    // Division
-    Vector3 Div0 = Mul0 / Vector3(3.0f, 1.0f, 2.0f);
-    if (Div0 != Vector3(1.0f, 2.0f, -1.0f))
-    {
-        TEST_FAILED();
-    }
-
-    const Vector3 Div1 = Mul1 / 5.0f;
-    if (Div1 != Vector3(1.0f, 2.0f, -1.0f))
-    {
-        TEST_FAILED();
-    }
-
-    // Get Component
-    float Component = Div1[2];
-    if (Component != -1.0f)
-    {
-        TEST_FAILED();
-    }
-
-    return true;
+    TEST_END();
 }

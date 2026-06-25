@@ -18,7 +18,7 @@ private:
 
     // Step 2: Prepare TrueType for when U is an array type. Remove one extent level from U (array to element type)
     // Then add a pointer to the element type.
-    typedef typename TAddPointer<TRemoveExtent<U>>::Type TrueType;
+    typedef typename TAddPointer<typename TRemoveExtent<U>::Type>::Type TrueType;
 
     // Step 3: Prepare FalseType for when U is not an array. If U is a function type, remove CV-qualifiers and add 
     // a pointer to it. Otherwise, remove CV-qualifiers from U.

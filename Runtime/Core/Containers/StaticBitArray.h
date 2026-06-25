@@ -216,7 +216,7 @@ public:
      */
     constexpr void BitwiseAnd(const TStaticBitArray& Other)
     {
-        for (SizeType Index = 0; Index < Capacity(); Index++)
+        for (SizeType Index = 0; Index < IntegerSize(); Index++)
         {
             Integers[Index] &= Other.Integers[Index];
         }
@@ -228,7 +228,7 @@ public:
      */
     constexpr void BitwiseOr(const TStaticBitArray& Other)
     {
-        for (SizeType Index = 0; Index < Capacity(); Index++)
+        for (SizeType Index = 0; Index < IntegerSize(); Index++)
         {
             Integers[Index] |= Other.Integers[Index];
         }
@@ -240,7 +240,7 @@ public:
      */
     constexpr void BitwiseXor(const TStaticBitArray& Other)
     {
-        for (SizeType Index = 0; Index < Capacity(); Index++)
+        for (SizeType Index = 0; Index < IntegerSize(); Index++)
         {
             Integers[Index] ^= Other.Integers[Index];
         }
@@ -251,7 +251,7 @@ public:
      */
     constexpr void BitwiseNot()
     {
-        for (SizeType Index = 0; Index < Capacity(); Index++)
+        for (SizeType Index = 0; Index < IntegerSize(); Index++)
         {
             Integers[Index] = ~Integers[Index];
         }
@@ -598,9 +598,15 @@ private:
         const SizeType ElementIndex   = GetIntegersIndexOfBit(BitPosition);
         const SizeType IndexInElement = GetIndexOfBitInIntegers(BitPosition);
 
-        const InIntegerType Mask  = CreateMaskForBit(IndexInElement);
-        const InIntegerType Value = bValue ? Mask : InIntegerType(0);
-        Integers[ElementIndex] |= Value;
+        const InIntegerType Mask = CreateMaskForBit(IndexInElement);
+        if (bValue)
+        {
+            Integers[ElementIndex] |= Mask;
+        }
+        else
+        {
+            Integers[ElementIndex] &= ~Mask;
+        }
     }
 
     constexpr void BitshiftRightUnchecked(SizeType Steps, SizeType StartBit = 0)

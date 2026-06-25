@@ -305,7 +305,7 @@ public:
     NODISCARD TArray<ElementType> GetValues() const
     {
         TArray<ElementType> Values;
-        Values.Reserve(BaseSet.size());
+        Values.Reserve(static_cast<int32>(BaseSet.size()));
 
         for (const ElementType& Element : BaseSet)
         {

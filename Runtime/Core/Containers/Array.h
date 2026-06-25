@@ -1426,9 +1426,8 @@ private:
         {
             if (ArrayMax)
             {
-                // For non-trivial objects, reallocate with proper handling
                 AllocatorType NewAllocator;
-                NewAllocator.Realloc(ArrayMax, NewCapacity);
+                NewAllocator.Realloc(0, NewCapacity);
 
                 if (ArraySize)
                 {
@@ -1639,6 +1638,9 @@ private:
     SizeType      ArraySize;
     SizeType      ArrayMax;
 };
+
+template<typename ElementType, int32 NumInlineElements>
+using TInlineArray = TArray<ElementType, TInlineArrayAllocator<ElementType, NumInlineElements>>;
 
 template<typename T, typename AllocatorType>
 struct TIsTArrayType<TArray<T, AllocatorType>>

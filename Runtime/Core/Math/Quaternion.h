@@ -139,6 +139,26 @@ public:
         return Difference < Math::Constants::CmpThreshold;
     }
 
+    /**
+     * @brief Checks if this quaternion is component-wise equal to another within a threshold.
+     * @param Other The quaternion to compare with.
+     * @param Threshold Per-component tolerance.
+     * @return True if all components are within the threshold.
+     */
+    FORCEINLINE bool IsEqual(const Quaternion& Other, float Threshold = Math::Constants::CmpThreshold) const noexcept
+    {
+        Threshold = Math::Abs(Threshold);
+        for (int32 Index = 0; Index < 4; ++Index)
+        {
+            if (Math::Abs(XYZW[Index] - Other.XYZW[Index]) > Threshold)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
 public:
 
     /**

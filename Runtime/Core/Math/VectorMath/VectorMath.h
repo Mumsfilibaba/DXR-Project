@@ -221,10 +221,12 @@ struct FVectorMath : public FPlatformVectorMath
         return VectorMax(MinValue, VectorMin(MaxValue, Value));
     }
 
+#if USE_INT_VECTOR_MATH
     static FORCEINLINE FInt128 VECTORCALL VectorClampInt(FInt128 Value, FInt128 MinValue, FInt128 MaxValue) noexcept
     {
         return VectorMaxInt(MinValue, VectorMinInt(MaxValue, Value));
     }
+#endif
 
     // ---------------------------------------------------------------------------------------------
     // 2x2 matrix helpers
