@@ -1,6 +1,5 @@
 # This file uses centimeters as units for non-parametric coordinates.
 
-mtllib street lighr.mtl
 g default
 v 0.928488 -0.045763 -1.608187
 v -0.928487 -0.045763 -1.608187
