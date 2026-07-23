@@ -18,6 +18,9 @@ imgui.ini
 /ThirdParty/bin/
 /ThirdParty/bin-int/
 
+# Vendored D3D12 Agility SDK (kept local, not committed)
+/ThirdParty/D3D12AgilitySDK/
+
 #VS Packages
 packages/
 
