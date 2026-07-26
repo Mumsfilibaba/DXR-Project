@@ -594,6 +594,11 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                     CommandList.UpdateBuffer(Resources.PerObjectBuffer.Get(), FBufferRegion(0, sizeof(FPerObjectHLSL)), &StaticMesh->PerObjectBuffer);
                     CommandList.SetConstantBuffer(Instance->VertexShader.Get(), Resources.PerObjectBuffer.Get(), 1);
 
+                    if (FRHIPixelShader* PixelShader = Instance->PixelShader.Get())
+                    {
+                        CommandList.SetConstantBuffer(PixelShader, Resources.PerObjectBuffer.Get(), 1);
+                    }
+
                     if constexpr (RenderPassType == ECubeMapRenderPassType::SinglePass)
                     {
                         // One instance per face
@@ -713,6 +718,11 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
                         CommandList.UpdateBuffer(Resources.PerObjectBuffer.Get(), FBufferRegion(0, sizeof(FPerObjectHLSL)), &StaticMesh->PerObjectBuffer);
                         CommandList.SetConstantBuffer(Instance->VertexShader.Get(), Resources.PerObjectBuffer.Get(), 1);
+
+                        if (FRHIPixelShader* PixelShader = Instance->PixelShader.Get())
+                        {
+                            CommandList.SetConstantBuffer(PixelShader, Resources.PerObjectBuffer.Get(), 1);
+                        }
 
                         CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
                     }
@@ -1364,6 +1374,11 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                 CommandList.UpdateBuffer(Resources.PerObjectBuffer.Get(), FBufferRegion(0, sizeof(FPerObjectHLSL)), &StaticMesh->PerObjectBuffer);
                 CommandList.SetConstantBuffer(Instance->VertexShader.Get(), Resources.PerObjectBuffer.Get(), 1);
 
+                if (FRHIPixelShader* PixelShader = Instance->PixelShader.Get())
+                {
+                    CommandList.SetConstantBuffer(PixelShader, Resources.PerObjectBuffer.Get(), 1);
+                }
+
                 // If we use vertex-shader instancing, we need to create our own instances and use instanced rendering
                 if constexpr (RenderPassType == ECascadeRenderPassType::SinglePass)
                 {
@@ -1477,6 +1492,11 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
                     CommandList.UpdateBuffer(Resources.PerObjectBuffer.Get(), FBufferRegion(0, sizeof(FPerObjectHLSL)), &StaticMesh->PerObjectBuffer);
                     CommandList.SetConstantBuffer(Instance->VertexShader.Get(), Resources.PerObjectBuffer.Get(), 1);
+
+                    if (FRHIPixelShader* PixelShader = Instance->PixelShader.Get())
+                    {
+                        CommandList.SetConstantBuffer(PixelShader, Resources.PerObjectBuffer.Get(), 1);
+                    }
 
                     CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
                 }
