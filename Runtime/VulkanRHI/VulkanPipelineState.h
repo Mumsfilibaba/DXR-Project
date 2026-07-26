@@ -8,7 +8,6 @@ typedef TSharedRef<class FVulkanDepthStencilStateRHI>       FVulkanDepthStencilS
 typedef TSharedRef<class FVulkanGraphicsPipelineStateRHI>   FVulkanGraphicsPipelineStateRHIRef;
 typedef TSharedRef<class FVulkanComputePipelineStateRHI>    FVulkanComputePipelineStateRHIRef;
 typedef TSharedRef<class FVulkanMeshletPipelineStateRHI>    FVulkanMeshletPipelineStateRHIRef;
-typedef TSharedRef<class FVulkanRayTracingPipelineStateRHI> FVulkanRayTracingPipelineStateRHIRef;
 
 class FVulkanInputLayoutRHI : public FRHIInputLayout
 {
@@ -180,16 +179,6 @@ public:
 
 private:
     FRHIViewInstancingState ViewInstancingState;
-};
-
-class FVulkanRayTracingPipelineStateRHI : public FRHIRayTracingPipelineState
-{
-public:
-    FVulkanRayTracingPipelineStateRHI() = default;
-    virtual ~FVulkanRayTracingPipelineStateRHI() = default;
-
-    // FRHIPipelineState Interface
-    virtual void* GetRHINativeState() const override final;
 };
 
 struct FVulkanPipelineDataHeader

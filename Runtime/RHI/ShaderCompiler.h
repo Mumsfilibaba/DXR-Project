@@ -16,6 +16,7 @@ enum class EShaderModel : uint8
     SM_6_7  = 10,
     SM_6_8  = 11,
     SM_6_9  = 12,
+    SM_6_10 = 13,
 };
 
 enum class EShaderOutputLanguage : uint8

@@ -8,7 +8,9 @@
 #include "RHI/RHIRayTracing.h"
 #include "Engine/World/World.h"
 #include "Engine/World/Lights/DirectionalLight.h"
+#include "Engine/Resources/Material.h"
 #include "Renderer/RendererModule.h"
+#include "Renderer/RayTracingBindless.h"
 
 #define MAX_LIGHTS_PER_TILE (1024)
 #define NUM_SHADOW_CASTING_POINT_LIGHTS (8)
@@ -158,19 +160,19 @@ MARK_AS_REALLOCATABLE(FLightProbeInfoHLSL);
 
 struct RendererTextureFormats
 {
-    static constexpr EFormat DepthBufferFormat  = EFormat::D32_Float;
-    static constexpr EFormat SSAOBufferFormat   = EFormat::R8_Unorm;
-    static constexpr EFormat SceneTargetFormat  = EFormat::R16G16B16A16_Float;
-    static constexpr EFormat RTOutputFormat     = EFormat::R16G16B16A16_Float;
-    static constexpr EFormat RenderTargetFormat = EFormat::R8G8B8A8_Unorm;
-    static constexpr EFormat AlbedoFormat       = EFormat::R8G8B8A8_Unorm;
-    static constexpr EFormat MaterialFormat     = EFormat::R8G8B8A8_Unorm;
-    static constexpr EFormat NormalFormat       = EFormat::R10G10B10A2_Unorm;
-    static constexpr EFormat VelocityFormat     = EFormat::R16G16_Float;
-    static constexpr EFormat ObjectIDFormat     = EFormat::R32_Uint;
-    static constexpr EFormat ShadowMaskFormat   = EFormat::R32_Float;
-    static constexpr EFormat ShadowMapFormat    = EFormat::D32_Float;
-    static constexpr EFormat LightProbeFormat   = EFormat::R11G11B10_Float;
+    static constexpr EFormat DepthBufferFormat      = EFormat::D32_Float;
+    static constexpr EFormat SSAOBufferFormat       = EFormat::R8_Unorm;
+    static constexpr EFormat SceneTargetFormat      = EFormat::R16G16B16A16_Float;
+    static constexpr EFormat RayTracingOutputFormat = EFormat::R16G16B16A16_Float;
+    static constexpr EFormat RenderTargetFormat     = EFormat::R8G8B8A8_Unorm;
+    static constexpr EFormat AlbedoFormat           = EFormat::R8G8B8A8_Unorm;
+    static constexpr EFormat MaterialFormat         = EFormat::R8G8B8A8_Unorm;
+    static constexpr EFormat NormalFormat           = EFormat::R10G10B10A2_Unorm;
+    static constexpr EFormat VelocityFormat         = EFormat::R16G16_Float;
+    static constexpr EFormat ObjectIDFormat         = EFormat::R32_Uint;
+    static constexpr EFormat ShadowMaskFormat       = EFormat::R32_Float;
+    static constexpr EFormat ShadowMapFormat        = EFormat::D32_Float;
+    static constexpr EFormat LightProbeFormat       = EFormat::R11G11B10_Float;
 };
 
 struct FFrameResources
@@ -197,9 +199,11 @@ struct FFrameResources
     FRHIInputLayoutRef  MeshInputLayout;
 
     // Global Buffers
-    FRHIBufferRef       CameraBuffer;
-    FRHIBufferRef       TransformBuffer;
-    FRHIBufferRef       MaterialIndicesBuffer;
+    FRHIBufferRef             CameraBuffer;
+    FRHIBufferRef             PerObjectBuffer;
+    FRHIBufferRef             MaterialDataBuffer;
+    FRHIShaderResourceViewRef MaterialDataBufferSRV;
+    TArray<FMaterialHLSL>     MaterialData;
 
     // Global Samplers
     FRHISamplerStateRef PointLightShadowSampler;
@@ -276,15 +280,23 @@ struct FFrameResources
     TArray<FLightProbeInfoHLSL> LightProbeInfos;
 
     // RayTracing
-    FRHITextureRef                                    RTOutput;
-    FRHISceneAccelerationStructureRef                 RTScene;
-    FRayTracingShaderResources                        GlobalResources;
-    FRayTracingShaderResources                        RayGenLocalResources;
-    FRayTracingShaderResources                        MissLocalResources;
-    TArray<FRHIGeometryAccelerationStructureInstance> RTGeometryInstances;
-    TArray<FRayTracingShaderResources>                RTHitGroupResources;
-    TMap<class FMesh*, uint32>                        RTMeshToHitGroupIndex;
-    TResourceCache<FRHIShaderResourceView>            RTMaterialTextureCache;
+    FRHITextureRef                                    RayTracingOutput;
+    FRHISceneAccelerationStructureRef                 RayTracingScene;
+    FRHIShaderBindingTableRef                         RayTracingShaderBindingTable;
+    FRHIShaderBindingTableRef                         RayTracingBindlessShaderBindingTable;
+    FRHIShaderBindingTableRef                         RayTracingSERShaderBindingTable;     
+    TArray<TArray<FRHIHitGroupLocalShaderBinding>>    RayTracingHitGroupBindings;
+    TArray<FRHIGeometryAccelerationStructureInstance> RayTracingGeometryInstances;
+    TMap<class FMesh*, uint32>                        RayTracingMeshToHitGroupIndex;
+    FRHIBufferRef                                     RayTracingSceneConstantsBuffer;
+    FRHIBufferRef                                     RayTracingGeometryTableBuffer; 
+    FRHIShaderResourceViewRef                         RayTracingGeometryTableSRV;
+    TArray<FRayTracingGeometryIndicesHLSL>            RayTracingGeometryTableData;
+    FRHITextureRef                                    ReflectionTrace;      
+    FRHITextureRef                                    ReflectionHistory[2]; 
+    FRHITextureRef                                    ReflectionMoments[2]; 
+    FRHITextureRef                                    ReflectionDenoised[2];
+    uint32                                            ReflectionHistoryIndex = 0; // Index of the ReflectionHistory slot written this frame (for debug views)
 
     // Output Target
 	uint32 CurrentRenderWidth;

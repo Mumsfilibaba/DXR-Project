@@ -1,8 +1,9 @@
 #include "Structs.hlsli"
+#include "TransformHelpers.hlsli"
 #include "Constants.hlsli"
 
 ConstantBuffer<FCamera>    CameraBuffer    : register(b0);
-ConstantBuffer<FTransform> TransformBuffer : register(b1);
+ConstantBuffer<FPerObject> PerObjectBuffer : register(b1);
 
 struct FVSInput
 {
@@ -16,8 +17,9 @@ struct FVSOutput
 
 FVSOutput VSMain(FVSInput Input)
 {
+    const float3 PositionWS3 = TransformPositionWS(PerObjectBuffer, Input.Position);
+    
     FVSOutput Output = (FVSOutput)0;
-    const float3 PositionWS3 = TransformPositionWS(TransformBuffer, Input.Position);
     Output.Position = mul(float4(PositionWS3, 1.0), CameraBuffer.ViewProjection);
     return Output;
 }

@@ -2,18 +2,23 @@
 #include "Structs.hlsli"
 #include "Constants.hlsli"
 
-#define NUM_THREADS 16
+#ifndef NUM_THREADS
+    #define NUM_THREADS 16
+#endif
+
 #define NUM_THREADS_TOTAL (NUM_THREADS * NUM_THREADS)
 #define REVERSED_DEPTH 0
 
-// Handles first reduction
-Texture2D<float> DepthBuffer : register(t0);
+Texture2D<float>  DepthBuffer : register(t0);
 Texture2D<float2> InputMinMax : register(t0);
 
 TEXTURE_FORMAT_UNKNOWN RWTexture2D<float2> OutputMinMax : register(u0);
 
 SHADER_CONSTANT_BLOCK_BEGIN
+    // 0-64
     float4x4 CamProjection;
+
+    // 64-72
     float    NearPlane;
     float    FarPlane;
 SHADER_CONSTANT_BLOCK_END
@@ -45,8 +50,8 @@ void ReductionMainInital(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_Gr
     {
         DepthSample = Projection._43 / (DepthSample - Projection._33);
         DepthSample = saturate((DepthSample - Constants.NearPlane) / (Constants.FarPlane - Constants.NearPlane));
-        MinDepth = min(MinDepth, DepthSample);
-        MaxDepth = max(MaxDepth, DepthSample);
+        MinDepth    = min(MinDepth, DepthSample);
+        MaxDepth    = max(MaxDepth, DepthSample);
     }
     
     GroupMinZ[GroupThreadIndex] = MinDepth;

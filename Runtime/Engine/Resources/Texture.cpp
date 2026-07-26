@@ -38,14 +38,19 @@ bool FTexture2D::CreateRHITexture(bool bGenerateMips)
         return false;
     }
 
-    // Calculate how many miplevels we need in the RHI texture
     uint32 NumMipsRHI = NumMips;
     if (bGenerateMips)
     {
         NumMipsRHI = TextureHelpers::TextureSizeToMiplevels(Math::Max(Width, Height));
     }
 
-    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(Format, Width, Height, NumMipsRHI, 1, ETextureUsageFlags::ShaderResourceTexture);
+    ETextureUsageFlags TextureUsage = ETextureUsageFlags::ShaderResourceTexture;
+    if (bGenerateMips)
+    {
+        TextureUsage |= ETextureUsageFlags::CopyDest;
+    }
+
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(Format, Width, Height, NumMipsRHI, 1, TextureUsage);
     TextureRHI = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource, TextureData);
     if (!TextureRHI)
     {
@@ -56,7 +61,7 @@ bool FTexture2D::CreateRHITexture(bool bGenerateMips)
     if (bGenerateMips)
     {
         CHECK(!IsBlockCompressed(Format));
-        FTextureFactory::Get().GenerateMiplevels(TextureRHI.Get());
+        FTextureFactory::Get().GenerateMiplevels(TextureRHI.Get(), TextureData);
     }
 
     return true;

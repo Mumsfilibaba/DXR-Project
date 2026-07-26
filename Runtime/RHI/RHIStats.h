@@ -35,6 +35,14 @@ STAT_DECLARE_EXTERN(RHI_API, STAT_RHI_UploadMemory);
 STAT_DECLARE_EXTERN(RHI_API, STAT_RHI_ReadbackMemory);
 
 // -------------------------------------------------------------------------------------------
+// Ray Tracing Acceleration Structure Stats
+// -------------------------------------------------------------------------------------------
+
+STAT_DECLARE_EXTERN(RHI_API, STAT_RHI_BLASCount);
+STAT_DECLARE_EXTERN(RHI_API, STAT_RHI_TLASCount);
+STAT_DECLARE_EXTERN(RHI_API, STAT_RHI_AccelerationStructureBuilds);
+
+// -------------------------------------------------------------------------------------------
 // Budget Stats (polled once per frame)
 // -------------------------------------------------------------------------------------------
 

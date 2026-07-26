@@ -3,6 +3,7 @@
 #include "D3D12RHI/D3D12RHI.h"
 #include "D3D12RHI/D3D12SwapChain.h"
 #include "D3D12RHI/D3D12BackBufferProxies.h"
+#include "D3D12RHI/D3D12DeviceDebug.h"
 
 static TAutoConsoleVariable<int32> CVarSwapChainBackBufferCount(
     "D3D12RHI.SwapChain.BackBufferCount",
@@ -513,12 +514,7 @@ bool FD3D12SwapChainRHI::Present(bool bVerticalSync)
     }
 
     HRESULT Result = SwapChain->Present(SyncInterval, PresentFlags);
-#if D3D12_ENABLE_DEVICE_LOST_CHECK
-    if (Result == DXGI_ERROR_DEVICE_REMOVED)
-    {
-        D3D12DeviceRemovedHandlerRHI(GetDevice());
-    }
-#endif
+    D3D12RHICheckDeviceRemoved(GetDevice(), Result, "Present");
 
     if (SUCCEEDED(Result))
     {

@@ -15,50 +15,67 @@ void FVulkanDeferredObject::ProcessItems(FVulkanDevice* Device, TArray<FVulkanDe
                 delete Item.RHIResource;
                 break;
             }
+
             case FVulkanDeferredObject::EType::VulkanResource:
             {
                 CHECK(Item.VulkanResource != nullptr);
                 Item.VulkanResource->Release();
                 break;
             }
+
             case FVulkanDeferredObject::EType::BuddyAllocatorBlock:
             {
                 CHECK(Item.BuddyAllocatorBlock.Allocator != nullptr);
                 Item.BuddyAllocatorBlock.Allocator->RecycleAllocation(Item.BuddyAllocatorBlock.AllocationData);
                 break;
             }
+
             case FVulkanDeferredObject::EType::PoolAllocatorBlock:
             {
                 CHECK(Item.PoolAllocatorBlock.Allocator != nullptr);
                 Item.PoolAllocatorBlock.Allocator->RecycleAllocation(Item.PoolAllocatorBlock.AllocationData);
                 break;
             }
-            case FVulkanDeferredObject::EType::DedicatedAllocation:
+
+            case FVulkanDeferredObject::EType::DedicatedBufferAllocation:
             {
-                if (Item.DedicatedAllocation.Buffer != VK_NULL_HANDLE)
-                {
-                    vkDestroyBuffer(Device->GetVkDevice(), Item.DedicatedAllocation.Buffer, nullptr);
-                }
+                CHECK(Item.DedicatedBufferAllocation.Buffer != VK_NULL_HANDLE);
+                CHECK(Item.DedicatedBufferAllocation.Memory != VK_NULL_HANDLE);
 
-                if (Item.DedicatedAllocation.Memory != VK_NULL_HANDLE)
-                {
-                    Device->GetMemoryManager().FreeMemory(Item.DedicatedAllocation.Memory);
-                }
-
+                vkDestroyBuffer(Device->GetVkDevice(), Item.DedicatedBufferAllocation.Buffer, nullptr);
+                Device->GetMemoryManager().FreeMemory(Item.DedicatedBufferAllocation.Memory);
                 break;
             }
+
+            case FVulkanDeferredObject::EType::DedicatedAllocation:
+            {
+                CHECK(Item.DedicatedAllocation.Memory != VK_NULL_HANDLE);
+                Device->GetMemoryManager().FreeMemory(Item.DedicatedAllocation.Memory);
+                break;
+            }
+
             case FVulkanDeferredObject::EType::LinearAllocatorPage:
             {
                 CHECK(Item.LinearAllocatorPage.Allocator != nullptr);
                 CHECK(Item.LinearAllocatorPage.Page != nullptr);
+                
                 Item.LinearAllocatorPage.Allocator->ReturnPage(Item.LinearAllocatorPage.Page);
                 break;
             }
+
             case FVulkanDeferredObject::EType::DescriptorPool:
             {
                 CHECK(Item.DescriptorPoolData.PoolManager != nullptr);
                 CHECK(Item.DescriptorPoolData.Pool != nullptr);
+
                 Item.DescriptorPoolData.PoolManager->ReleasePool(Item.DescriptorPoolData.Pool);
+                break;
+            }
+
+            case FVulkanDeferredObject::EType::QueryPool:
+            {
+                CHECK(Item.QueryPool != VK_NULL_HANDLE);
+                vkDestroyQueryPool(Device->GetVkDevice(), Item.QueryPool, nullptr);
                 break;
             }
         }

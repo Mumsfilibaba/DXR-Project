@@ -453,28 +453,43 @@ bool FVulkanShaderResourceViewRHI::Initialize(FRHIResource* InResource, const FR
         }
 
         const auto& BufferDesc = InDesc.Buffer;
-        if (BufferDesc.Type == EBufferViewType::ByteAddress)
+        switch (BufferDesc.Type)
         {
-            const VkFormat     VulkanFormat = VK_FORMAT_R32_UINT;
-            const VkDeviceSize ElementSize  = sizeof(uint32);
-            const VkDeviceSize ViewOffset   = ElementSize * BufferDesc.FirstElement;
-            const VkDeviceSize Range        = ElementSize * BufferDesc.NumElements;
-            const VkDeviceSize Offset       = VulkanBuffer->GetBindOffset() + ViewOffset;
-
-            if (!InitializeTypedBufferView(VulkanBuffer->GetBindVkBuffer(), VulkanFormat, Offset, Range))
+            case EBufferViewType::Typed:
             {
-                return false;
+                const VkFormat     VulkanFormat = ConvertFormat(BufferDesc.Format);
+                const VkDeviceSize ElementSize  = GetByteStrideFromFormat(BufferDesc.Format);
+                const VkDeviceSize ViewOffset   = ElementSize * BufferDesc.FirstElement;
+                const VkDeviceSize Range        = ElementSize * BufferDesc.NumElements;
+                const VkDeviceSize Offset       = VulkanBuffer->GetBindOffset() + ViewOffset;
+
+                if (!InitializeTypedBufferView(VulkanBuffer->GetBindVkBuffer(), VulkanFormat, Offset, Range))
+                {
+                    return false;
+                }
+
+                break;
             }
-        }
-        else
-        {
-            const VkDeviceSize Stride     = VulkanBuffer->GetDesc().Stride;
-            const VkDeviceSize ViewOffset = Stride * BufferDesc.FirstElement;
-            const VkDeviceSize Range      = Stride * BufferDesc.NumElements;
-            const VkDeviceSize Offset     = VulkanBuffer->GetBindOffset() + ViewOffset;
 
-            if (!InitializeStructuredBufferView(VulkanBuffer->GetBindVkBuffer(), Offset, Range, ViewOffset))
+            case EBufferViewType::ByteAddress:
+            case EBufferViewType::Structured:
             {
+                const VkDeviceSize ElementSize = (BufferDesc.Type == EBufferViewType::ByteAddress) ? sizeof(uint32) : VulkanBuffer->GetDesc().Stride;
+                const VkDeviceSize ViewOffset  = ElementSize * BufferDesc.FirstElement;
+                const VkDeviceSize Range       = ElementSize * BufferDesc.NumElements;
+                const VkDeviceSize Offset      = VulkanBuffer->GetBindOffset() + ViewOffset;
+
+                if (!InitializeStructuredBufferView(VulkanBuffer->GetBindVkBuffer(), Offset, Range, ViewOffset))
+                {
+                    return false;
+                }
+
+                break;
+            }
+
+            default:
+            {
+                VULKAN_ERROR_CRITICAL("Unsupported EBufferViewType for buffer SRV");
                 return false;
             }
         }
@@ -640,7 +655,7 @@ bool FVulkanShaderResourceViewRHI::Initialize(FRHIResource* InResource, const FR
             return false;
         }
 
-        VkAccelerationStructureKHR Handle = reinterpret_cast<VkAccelerationStructureKHR>(SceneAS->GetRHINativeResource());
+        VkAccelerationStructureKHR Handle = FVulkanDeviceRHI::ResourceCast(SceneAS)->GetVkAccelerationStructure();
         return InitializeAccelerationStructureView(Handle);
     }
     else
@@ -732,28 +747,43 @@ bool FVulkanUnorderedAccessViewRHI::Initialize(FRHIResource* InResource, const F
         }
 
         const auto& BufferDesc = InDesc.Buffer;
-        if (BufferDesc.Type == EBufferViewType::ByteAddress)
+        switch (BufferDesc.Type)
         {
-            const VkFormat     VulkanFormat = VK_FORMAT_R32_UINT;
-            const VkDeviceSize ElementSize  = sizeof(uint32);
-            const VkDeviceSize ViewOffset   = ElementSize * BufferDesc.FirstElement;
-            const VkDeviceSize Range        = ElementSize * BufferDesc.NumElements;
-            const VkDeviceSize Offset       = VulkanBuffer->GetBindOffset() + ViewOffset;
-
-            if (!InitializeTypedBufferView(VulkanBuffer->GetBindVkBuffer(), VulkanFormat, Offset, Range))
+            case EBufferViewType::Typed:
             {
-                return false;
+                const VkFormat     VulkanFormat = ConvertFormat(BufferDesc.Format);
+                const VkDeviceSize ElementSize  = GetByteStrideFromFormat(BufferDesc.Format);
+                const VkDeviceSize ViewOffset   = ElementSize * BufferDesc.FirstElement;
+                const VkDeviceSize Range        = ElementSize * BufferDesc.NumElements;
+                const VkDeviceSize Offset       = VulkanBuffer->GetBindOffset() + ViewOffset;
+
+                if (!InitializeTypedBufferView(VulkanBuffer->GetBindVkBuffer(), VulkanFormat, Offset, Range))
+                {
+                    return false;
+                }
+
+                break;
             }
-        }
-        else
-        {
-            const VkDeviceSize Stride     = VulkanBuffer->GetDesc().Stride;
-            const VkDeviceSize ViewOffset = Stride * BufferDesc.FirstElement;
-            const VkDeviceSize Range      = Stride * BufferDesc.NumElements;
-            const VkDeviceSize Offset     = VulkanBuffer->GetBindOffset() + ViewOffset;
 
-            if (!InitializeStructuredBufferView(VulkanBuffer->GetBindVkBuffer(), Offset, Range, ViewOffset))
+            case EBufferViewType::ByteAddress:
+            case EBufferViewType::Structured:
             {
+                const VkDeviceSize ElementSize = (BufferDesc.Type == EBufferViewType::ByteAddress) ? sizeof(uint32) : VulkanBuffer->GetDesc().Stride;
+                const VkDeviceSize ViewOffset  = ElementSize * BufferDesc.FirstElement;
+                const VkDeviceSize Range       = ElementSize * BufferDesc.NumElements;
+                const VkDeviceSize Offset      = VulkanBuffer->GetBindOffset() + ViewOffset;
+
+                if (!InitializeStructuredBufferView(VulkanBuffer->GetBindVkBuffer(), Offset, Range, ViewOffset))
+                {
+                    return false;
+                }
+                
+                break;
+            }
+
+            default:
+            {
+                VULKAN_ERROR_CRITICAL("Unsupported EBufferViewType for buffer UAV");
                 return false;
             }
         }
@@ -1230,6 +1260,7 @@ bool FVulkanDepthStencilViewRHI::Initialize(FRHITexture* InTexture, const FRHIDe
 
     String TextureDebugName;
     VulkanTexture->GetDebugName(TextureDebugName);
+    
     if (!TextureDebugName.IsEmpty())
     {
         SetDebugName(TextureDebugName + " ImageView DSV");

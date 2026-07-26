@@ -1,5 +1,23 @@
 #include "RHI/RHI.h"
 #include "RHI/RHITexture.h"
+#include "RHI/RayTracing/RHIRayTracingTypes.h"
+#include "Core/Misc/ConsoleManager.h"
+
+static FAutoConsoleCommand CCmdDumpRayTracingCapsCommand(
+    "RHI.DumpRayTracingCaps",
+    "Logs the ray-tracing (DXR 2.0) capability table for the active RHI backend",
+    FConsoleCommandDelegate::CreateLambda([](StringView)
+    {
+        RHI::DumpRayTracingCapabilities();
+    }));
+
+static FAutoConsoleCommand CCmdDumpCapsCommand(
+    "RHI.DumpCaps",
+    "Logs the full device capability table (general + ray tracing) for the active RHI backend",
+    FConsoleCommandDelegate::CreateLambda([](StringView)
+    {
+        RHI::DumpCapabilities();
+    }));
 
 // -------------------------------------------------------------------------------------------
 // Feature Support
@@ -26,6 +44,20 @@ RHI_API uint32 RHI::MaxViewInstanceCount    = 1;
 RHI_API bool            RHI::bSupportsRayTracing         = false;
 RHI_API ERayTracingTier RHI::RayTracingTier              = ERayTracingTier::NotSupported;
 RHI_API uint32          RHI::RayTracingMaxRecursionDepth = 0;
+
+RHI_API bool   RHI::bSupportsInlineRayTracing                                  = false;
+RHI_API bool   RHI::bSupportsOpacityMicromap                                   = false;
+RHI_API bool   RHI::bSupportsShaderExecutionReordering                         = false;
+RHI_API bool   RHI::bShaderExecutionReorderingActuallyReorders                 = false;
+RHI_API bool   RHI::bSupportsRayTracingPipelineAdditions                       = false;
+RHI_API bool   RHI::bSupportsClustersAndPartitionedSceneAccelerationStructure  = false;
+RHI_API bool   RHI::bSupportsIndirectAccelerationStructureOperations           = false;
+RHI_API bool   RHI::bSupportsIndirectRayDispatch                               = false;
+RHI_API uint32 RHI::RayTracingMaxTrianglesPerCluster                           = 0;
+RHI_API uint32 RHI::RayTracingMaxVerticesPerCluster                            = 0;
+RHI_API uint32 RHI::RayTracingMaxPartitionedInstanceCount                      = 0;
+RHI_API bool   RHI::bSupportsShaderBindingTableDescriptors                     = false;
+RHI_API bool   RHI::bSupportsToolsVisualization                                = false;
 
 // -------------------------------------------------------------------------------------------
 // Variable Rate Shading
@@ -69,7 +101,8 @@ RHI_API uint32 RHI::MaxConstantBufferSize      = 64 * 1024; // 64 KB
 RHI_API uint64 RHI::MaxStorageBufferSize       = uint64(~0);
 RHI_API uint32 RHI::StructuredBufferMinStride  = 4;
 RHI_API uint32 RHI::StructuredBufferMaxStride  = 2048;
-RHI_API uint32 RHI::RawBufferRequiredAlignment = 4;
+RHI_API uint32 RHI::RawBufferRequiredAlignment           = 4;
+RHI_API uint32 RHI::AccelerationStructureBufferAlignment = 256; // D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT
 
 RHI_API bool RHI::bSupportsDynamicDepthBias = false;
 RHI_API bool RHI::bSupportsStreamOutput     = false;
@@ -87,3 +120,35 @@ RHI_API bool RHI::bSupportsGPUTimestampBubblesRemoval = false;
 // -------------------------------------------------------------------------------------------
 
 RHI_API EFormat RHI::DefaultSwapChainFormat = EFormat::Unknown;
+
+// -------------------------------------------------------------------------------------------
+// Ray-tracing capability reporting
+// -------------------------------------------------------------------------------------------
+
+RHI_API void RHI::DumpRayTracingCapabilities()
+{
+    const auto YesNo = [](bool bValue) -> const CHAR*
+    {
+        return bValue ? "Yes" : "No";
+    };
+
+    LOG_INFO("[RHI] -------------------------------- Ray Tracing Capabilities ---------------------------------");
+    LOG_INFO("[RHI]   Hardware Ray Tracing                  : %s", YesNo(RHI::bSupportsRayTracing));
+    LOG_INFO("[RHI]   Tier                                  : %s", ToString(RHI::RayTracingTier));
+    LOG_INFO("[RHI]   Max Recursion Depth                   : %u", RHI::RayTracingMaxRecursionDepth);
+    LOG_INFO("[RHI]   Inline Ray Tracing (RayQuery)         : %s", YesNo(RHI::bSupportsInlineRayTracing));
+    LOG_INFO("[RHI]   Opacity Micromap                      : %s", YesNo(RHI::bSupportsOpacityMicromap));
+    LOG_INFO("[RHI]   Shader Execution Reordering           : %s", YesNo(RHI::bSupportsShaderExecutionReordering));
+    LOG_INFO("[RHI]   Shader Execution Reordering (Reorders): %s", YesNo(RHI::bShaderExecutionReorderingActuallyReorders));
+    LOG_INFO("[RHI]   Pipeline Additions (AddToStateObject) : %s", YesNo(RHI::bSupportsRayTracingPipelineAdditions));
+    LOG_INFO("[RHI]   Clusters + Partitioned Scene          : %s", YesNo(RHI::bSupportsClustersAndPartitionedSceneAccelerationStructure));
+    LOG_INFO("[RHI]   Indirect AS Operations                : %s", YesNo(RHI::bSupportsIndirectAccelerationStructureOperations));
+    LOG_INFO("[RHI]   Indirect Ray Dispatch                 : %s", YesNo(RHI::bSupportsIndirectRayDispatch));
+    LOG_INFO("[RHI]   Max Triangles / Cluster               : %u", RHI::RayTracingMaxTrianglesPerCluster);
+    LOG_INFO("[RHI]   Max Vertices / Cluster                : %u", RHI::RayTracingMaxVerticesPerCluster);
+    LOG_INFO("[RHI]   Max Partitioned Instances             : %u", RHI::RayTracingMaxPartitionedInstanceCount);
+    LOG_INFO("[RHI]   SBT Local Descriptors                 : %s", YesNo(RHI::bSupportsShaderBindingTableDescriptors));
+    LOG_INFO("[RHI]   Tools Visualization                   : %s", YesNo(RHI::bSupportsToolsVisualization));
+    LOG_INFO("[RHI] -------------------------------------------------------------------------------------------");
+}
+

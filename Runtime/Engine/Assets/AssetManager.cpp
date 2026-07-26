@@ -64,6 +64,11 @@ void FAssetRegistry::RemoveEntry(const String& SrcFilename)
 
 void FAssetRegistry::LoadRegistryFile()
 {
+    if (!FPlatformFile::IsFile(*RegistryFilename))
+    {
+        return;
+    }
+
     TArray<CHAR> FileContents;
     {
         TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(RegistryFilename);

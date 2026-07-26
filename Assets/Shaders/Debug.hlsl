@@ -3,12 +3,18 @@
 
 ConstantBuffer<FCamera> CameraBuffer : register(b0);
 
+// ------------------------------------------------------------------------------------------------
 // AABB Debug
+// ------------------------------------------------------------------------------------------------
+
 #if AABB_DEBUG // NOTE: We need this define since the shader constant-block otherwise causes issues when compiling SPIR-V code
 
 SHADER_CONSTANT_BLOCK_BEGIN
+    // 0-64
     float4x4 WorldMatrix;
-    float4   Color;
+
+    // 64-80
+    float4 Color;
 SHADER_CONSTANT_BLOCK_END
 
 struct FVSInput
@@ -29,11 +35,17 @@ float4 AABB_PSMain() : SV_Target
 
 #endif // AABB_DEBUG
 
+// ------------------------------------------------------------------------------------------------
 // PointLight Debug
+// ------------------------------------------------------------------------------------------------
+
 #if POINTLIGHT_DEBUG // NOTE: We need this define since the shader constant-block otherwise causes issues when compiling SPIR-V code
 
 SHADER_CONSTANT_BLOCK_BEGIN
+    // 0-16
     float4 Color;
+
+    // 16-32
     float3 WorldPosition;
     float  Padding;
 SHADER_CONSTANT_BLOCK_END
@@ -56,11 +68,16 @@ float4 Light_PSMain() : SV_Target
 
 #endif // POINTLIGHT_DEBUG
 
+// ------------------------------------------------------------------------------------------------
 // AABB Solid Debug
+// ------------------------------------------------------------------------------------------------
+
 #if AABB_SOLID_DEBUG // NOTE: We need this define since the shader constant-block otherwise causes issues when compiling SPIR-V code
 
 SHADER_CONSTANT_BLOCK_BEGIN
+    // 0-64
     float4x4 WorldMatrix;
+    // 64-80
     float4   Color;
 SHADER_CONSTANT_BLOCK_END
 
@@ -81,13 +98,17 @@ float4 AABBSolidDebug_PSMain() : SV_Target
 
 #endif // AABB_SOLID_DEBUG
 
+// ------------------------------------------------------------------------------------------------
 // LightProbe Debug
+// ------------------------------------------------------------------------------------------------
+
 #if LIGHTPROBE_DEBUG // NOTE: We need this define since the shader constant-block otherwise causes issues when compiling SPIR-V code
 
-TextureCube<float4> CubeMap : register(t0);
-SamplerState CubeMapSampler : register(s0);
+TextureCube<float4> CubeMap        : register(t0);
+SamplerState        CubeMapSampler : register(s0);
 
 SHADER_CONSTANT_BLOCK_BEGIN
+    // 0-16
     float3 WorldPosition;
     float  Padding;
 SHADER_CONSTANT_BLOCK_END
@@ -121,11 +142,11 @@ struct FPSInput
 
 float4 Probe_PSMain(FPSInput Input) : SV_Target
 {
-    const float3 ViewWS     = normalize(CameraBuffer.PositionWS - Input.PositionWS);
-    const float3 NormalWS   = normalize(Input.Normal);
-    const float3 Reflection = reflect(-ViewWS, NormalWS);
-    
+    const float3 ViewWS        = normalize(CameraBuffer.PositionWS - Input.PositionWS);
+    const float3 NormalWS      = normalize(Input.Normal);
+    const float3 Reflection    = reflect(-ViewWS, NormalWS);
     const float3 CubeMapSample = CubeMap.SampleLevel(CubeMapSampler, Reflection, 0.0).rgb;
+    
     return float4(CubeMapSample, 1.0);
 }
 

@@ -1218,17 +1218,28 @@ bool FVulkanBindlessDescriptorManager::Initialize()
         VULKAN_WARNING("Bindless capacities clamped to zero; bindless descriptor manager disabled");
         return false;
     }
+    
+    constexpr uint32 NumBaseMutableDescriptorTypes            = 6;
+    constexpr uint32 MaxMutableDescriptorTypesWithAccelStruct = NumBaseMutableDescriptorTypes + 1;
 
-    VkDescriptorType MutableTypes[] =
+    VkDescriptorType MutableTypes[MaxMutableDescriptorTypesWithAccelStruct] =
     {
         VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
         VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
         VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+        VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER,
+        VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
     };
 
+    uint32 NumMutableTypes = NumBaseMutableDescriptorTypes;
+    if (GVulkanSupportsAccelerationStructures)
+    {
+        MutableTypes[NumMutableTypes++] = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+    }
+
     VkMutableDescriptorTypeListEXT MutableLists[2] = {};
-    MutableLists[0].descriptorTypeCount = ARRAY_COUNT(MutableTypes);
+    MutableLists[0].descriptorTypeCount = NumMutableTypes;
     MutableLists[0].pDescriptorTypes    = MutableTypes;
     MutableLists[1].descriptorTypeCount = 0;
     MutableLists[1].pDescriptorTypes    = nullptr;

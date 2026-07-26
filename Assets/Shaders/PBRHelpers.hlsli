@@ -1,5 +1,6 @@
 #ifndef PBR_HELPERS_HLSLI
 #define PBR_HELPERS_HLSLI
+
 #include "Constants.hlsli"
 #include "Helpers.hlsli"
 #include "Halton.hlsli"
@@ -21,6 +22,7 @@ float3 ImportanceSampleGGX(float2 Xi, float Roughness, float3 N)
     float3 TangentX = normalize(cross(Up, N));
     float3 TangentY = cross(N, TangentX);
     float3 Sample   = TangentX * H.x + TangentY * H.y + N * H.z;
+
     return normalize(Sample);
 }
 
@@ -31,6 +33,7 @@ float DistributionGGX(float3 N, float3 H, float Roughness)
     float Alpha2 = Alpha * Alpha;
     float NDotH  = max(dot(N, H), 0.0);
     float Denominator = NDotH * NDotH * (Alpha2 - 1.0) + 1.0;
+
     return Alpha2 / max(PI * Denominator * Denominator, 0.0000001);
 }
 
@@ -50,6 +53,7 @@ float3 FresnelSchlick(float3 F0, float3 V, float3 H)
 {
     float VDotH = max(dot(V, H), 0.0);
     float Exp   = (-5.55473 * VDotH - 6.98316) * VDotH;
+
     return F0 + (1.0 - F0) * exp2(Exp);
 }
 
@@ -58,6 +62,7 @@ float3 FresnelSchlick_Roughness(float3 F0, float3 V, float3 H, float Roughness)
     float R     = 1.0 - Roughness;
     float VDotH = max(dot(V, H), 0.0);
     float Exp   = (-5.55473 * VDotH - 6.98316) * VDotH;
+
     return F0 + (max(R, F0) - F0) * exp2(Exp);
 }
 
@@ -65,8 +70,9 @@ float3 FresnelSchlick_Roughness(float3 F0, float3 V, float3 H, float Roughness)
 float GeometrySmithGGX1(float3 N, float3 V, float Roughness)
 {
     float Roughness1 = Roughness + 1;
-    float K     = (Roughness1 * Roughness1) / 8.0;
-    float NDotV = max(dot(N, V), 0.0);
+    float K          = (Roughness1 * Roughness1) / 8.0;
+    float NDotV      = max(dot(N, V), 0.0);
+
     return NDotV / max(NDotV * (1.0 - K) + K, 0.0000001);
 }
 
@@ -79,6 +85,7 @@ float GeometrySmithGGX1_IBL(float3 N, float3 V, float Roughness)
 {
     float K     = (Roughness * Roughness) / 2.0;
     float NDotV = max(dot(N, V), 0.0);
+    
     return NDotV / max(NDotV * (1.0 - K) + K, 0.0000001);
 }
 

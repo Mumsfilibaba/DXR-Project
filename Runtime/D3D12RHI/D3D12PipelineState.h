@@ -9,7 +9,6 @@ typedef TSharedRef<class FD3D12DepthStencilStateRHI>       FD3D12DepthStencilSta
 typedef TSharedRef<class FD3D12GraphicsPipelineStateRHI>   FD3D12GraphicsPipelineStateRHIRef;
 typedef TSharedRef<class FD3D12ComputePipelineStateRHI>    FD3D12ComputePipelineStateRHIRef;
 typedef TSharedRef<class FD3D12MeshletPipelineStateRHI>    FD3D12MeshletPipelineStateRHIRef;
-typedef TSharedRef<class FD3D12RayTracingPipelineStateRHI> FD3D12RayTracingPipelineStateRHIRef;
 
 enum class ED3D12PipelineType
 {
@@ -122,7 +121,21 @@ private:
     uint64           Hash;
 };
 
-class FD3D12PipelineState : public FD3D12DeviceChild
+class FD3D12EffectiveDescriptorCounts
+{
+public:
+    uint8 GetEffectiveDescriptorCount(EShaderVisibility::Type Stage, EResourceType::Type Type) const
+    {
+        return EffectiveDescriptorCounts[Stage][Type];
+    }
+
+protected:
+    void ComputeEffectiveDescriptorCounts(const FD3D12RootSignature* RootSignature, FD3D12Shader* const* Shaders, uint32 NumShaders);
+
+    uint8 EffectiveDescriptorCounts[EShaderVisibility::Count][EResourceType::Count] = {};
+};
+
+class FD3D12PipelineState : public FD3D12DeviceChild, public FD3D12EffectiveDescriptorCounts
 {
 public:
     FD3D12PipelineState(FD3D12Device* InDevice);
@@ -140,15 +153,7 @@ public:
         return RootSignature.Get();
     }
 
-    uint8 GetEffectiveDescriptorCount(EShaderVisibility::Type Stage, EResourceType::Type Type) const
-    {
-        return EffectiveDescriptorCounts[Stage][Type];
-    }
-
 protected:
-    void ComputeEffectiveDescriptorCounts(FD3D12Shader* const* Shaders, uint32 NumShaders);
-
-    uint8                        EffectiveDescriptorCounts[EShaderVisibility::Count][EResourceType::Count];
     TComPtr<ID3D12PipelineState> PipelineState;
     FD3D12RootSignatureRef       RootSignature;
     String                       DebugName;
@@ -515,53 +520,6 @@ private:
     TSharedRef<FD3D12AmplificationShaderRHI> AmplificationShader;
     TSharedRef<FD3D12MeshShaderRHI>          MeshShader;
     TSharedRef<FD3D12PixelShaderRHI>         PixelShader;
-};
-
-struct FD3D12RayTracingShaderIdentifier
-{
-    CHAR ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
-};
-
-class FD3D12RayTracingPipelineStateRHI : public FRHIRayTracingPipelineState, public FD3D12DeviceChild
-{
-public:
-    FD3D12RayTracingPipelineStateRHI(FD3D12Device* InDevice);
-    virtual ~FD3D12RayTracingPipelineStateRHI();
-
-    // FRHIPipelineState Interface
-    virtual void* GetRHINativeState() const override final;
-    
-    virtual void SetDebugName(const String& InName)       override final;
-    virtual void GetDebugName(String& OutDebugName) const override final;
-    
-    bool Initialize(const FRHIRayTracingPipelineStateDesc& Desc);
-
-    void* GetShaderIdentifier(const String& ExportName);
-
-    FORCEINLINE ID3D12StateObject* GetD3D12StateObject() const 
-    {
-        return StateObject.Get();
-    }
-
-    FORCEINLINE ID3D12StateObjectProperties* GetD3D12StateObjectProperties() const
-    {
-        return StateObjectProperties.Get();
-    }
-
-    FORCEINLINE FD3D12RootSignature* GetGlobalRootSignature()      const { return GlobalRootSignature.Get(); }
-    FORCEINLINE FD3D12RootSignature* GetRayGenLocalRootSignature() const { return RayGenLocalRootSignature.Get(); }
-    FORCEINLINE FD3D12RootSignature* GetMissLocalRootSignature()   const { return MissLocalRootSignature.Get(); }
-    FORCEINLINE FD3D12RootSignature* GetHitLocalRootSignature()    const { return HitLocalRootSignature.Get(); }
-
-private:
-    TComPtr<ID3D12StateObject>                     StateObject;
-    TComPtr<ID3D12StateObjectProperties>           StateObjectProperties;
-    FD3D12RootSignatureRef                         GlobalRootSignature;
-    FD3D12RootSignatureRef                         RayGenLocalRootSignature;
-    FD3D12RootSignatureRef                         MissLocalRootSignature;
-    FD3D12RootSignatureRef                         HitLocalRootSignature;
-    TMap<String, FD3D12RayTracingShaderIdentifier> ShaderIdentifiers;
-    String                                         DebugName;
 };
 
 struct FD3D12PipelineDiskHeader

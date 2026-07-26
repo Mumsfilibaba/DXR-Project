@@ -862,40 +862,6 @@ DECLARE_RHICOMMAND(FRHICommandBuildGeometryAccelerationStructure)
     FRHIGeometryAccelerationStructureBuildDesc BuildDesc;
 };
 
-DECLARE_RHICOMMAND(FRHICommandSetRayTracingBindings)
-{
-    FORCEINLINE FRHICommandSetRayTracingBindings(
-        FRHISceneAccelerationStructure*   InRayTracingScene,
-        FRHIRayTracingPipelineState*      InPipelineState,
-        const FRayTracingShaderResources* InGlobalResource,
-        const FRayTracingShaderResources* InRayGenLocalResources,
-        const FRayTracingShaderResources* InMissLocalResources,
-        const FRayTracingShaderResources* InHitGroupResources,
-        uint32                            InNumHitGroupResources)
-        : RayTracingScene(InRayTracingScene)
-        , PipelineState(InPipelineState)
-        , GlobalResource(InGlobalResource)
-        , RayGenLocalResources(InRayGenLocalResources)
-        , MissLocalResources(InMissLocalResources)
-        , HitGroupResources(InHitGroupResources)
-        , NumHitGroupResources(InNumHitGroupResources)
-    {
-    }
-
-    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
-    {
-        CommandContext.SetRayTracingBindings(RayTracingScene, PipelineState, GlobalResource, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources);
-    }
-
-    FRHISceneAccelerationStructure*   RayTracingScene;
-    FRHIRayTracingPipelineState*      PipelineState;
-    const FRayTracingShaderResources* GlobalResource;
-    const FRayTracingShaderResources* RayGenLocalResources;
-    const FRayTracingShaderResources* MissLocalResources;
-    const FRayTracingShaderResources* HitGroupResources;
-    uint32                            NumHitGroupResources;
-};
-
 DECLARE_RHICOMMAND(FRHICommandTransitionTextureState)
 {
     FORCEINLINE FRHICommandTransitionTextureState(FRHITexture* InTexture, const FRHITextureTransition& InTextureTransition)
@@ -1126,11 +1092,82 @@ DECLARE_RHICOMMAND(FRHICommandDispatchMesh)
     uint32 ThreadGroupCountZ;
 };
 
-DECLARE_RHICOMMAND(FRHICommandDispatchRays)
+DECLARE_RHICOMMAND(FRHICommandSetHitRecordLocalShaderBindings)
 {
-    FORCEINLINE FRHICommandDispatchRays(FRHISceneAccelerationStructure* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
-        : Scene(InScene)
-        , PipelineState(InPipelineState)
+    FORCEINLINE FRHICommandSetHitRecordLocalShaderBindings(FRHIShaderBindingTable* InShaderBindingTable, ERayTracingShaderRecordKind InRecordKind, uint32 InRecordIndex, const FRHIHitGroupLocalShaderBinding* InBindings, uint32 InNumBindings)
+        : ShaderBindingTable(InShaderBindingTable)
+        , RecordKind(InRecordKind)
+        , RecordIndex(InRecordIndex)
+        , Bindings()
+    {
+        Bindings.Reserve(int32(InNumBindings));
+
+        for (uint32 i = 0; i < InNumBindings; ++i)
+        {
+            Bindings.Emplace(InBindings[i]);
+        }
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.SetHitRecordLocalShaderBindings(ShaderBindingTable, RecordKind, RecordIndex, Bindings.Data(), uint32(Bindings.Size()));
+    }
+
+    FRHIShaderBindingTable*                ShaderBindingTable;
+    ERayTracingShaderRecordKind            RecordKind;
+    uint32                                 RecordIndex;
+    TArray<FRHIHitGroupLocalShaderBinding> Bindings;
+};
+
+DECLARE_RHICOMMAND(FRHICommandBuildShaderBindingTable)
+{
+    FORCEINLINE FRHICommandBuildShaderBindingTable(FRHIShaderBindingTable* InShaderBindingTable)
+        : ShaderBindingTable(InShaderBindingTable)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.BuildShaderBindingTable(ShaderBindingTable);
+    }
+
+    FRHIShaderBindingTable* ShaderBindingTable;
+};
+
+DECLARE_RHICOMMAND(FRHICommandResetShaderBindingTable)
+{
+    FORCEINLINE FRHICommandResetShaderBindingTable(FRHIShaderBindingTable* InShaderBindingTable)
+        : ShaderBindingTable(InShaderBindingTable)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.ResetShaderBindingTable(ShaderBindingTable);
+    }
+
+    FRHIShaderBindingTable* ShaderBindingTable;
+};
+
+DECLARE_RHICOMMAND(FRHICommandSetRayTracingPipelineState)
+{
+    FORCEINLINE FRHICommandSetRayTracingPipelineState(FRHIRayTracingPipelineState* InPipelineState)
+        : PipelineState(InPipelineState)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.SetRayTracingPipelineState(PipelineState);
+    }
+
+    FRHIRayTracingPipelineState* PipelineState;
+};
+
+DECLARE_RHICOMMAND(FRHICommandDispatchRaysShaderBindingTable)
+{
+    FORCEINLINE FRHICommandDispatchRaysShaderBindingTable(FRHIShaderBindingTable* InShaderBindingTable, uint32 InWidth, uint32 InHeight, uint32 InDepth)
+        : ShaderBindingTable(InShaderBindingTable)
         , Width(InWidth)
         , Height(InHeight)
         , Depth(InDepth)
@@ -1140,14 +1177,169 @@ DECLARE_RHICOMMAND(FRHICommandDispatchRays)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.DispatchRays(Scene, PipelineState, Width, Height, Depth);
+        CommandContext.DispatchRays(ShaderBindingTable, Width, Height, Depth);
     }
 
-    FRHISceneAccelerationStructure* Scene;
-    FRHIRayTracingPipelineState*    PipelineState;
-    uint32                          Width;
-    uint32                          Height;
-    uint32                          Depth;
+    FRHIShaderBindingTable*      ShaderBindingTable;
+    uint32                       Width;
+    uint32                       Height;
+    uint32                       Depth;
+};
+
+DECLARE_RHICOMMAND(FRHICommandDispatchRaysIndirect)
+{
+    FORCEINLINE FRHICommandDispatchRaysIndirect(FRHIShaderBindingTable* InShaderBindingTable, FRHIBuffer* InArgumentBuffer, uint64 InArgumentBufferOffset)
+        : ShaderBindingTable(InShaderBindingTable)
+        , ArgumentBuffer(InArgumentBuffer)
+        , ArgumentBufferOffset(InArgumentBufferOffset)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.DispatchRaysIndirect(ShaderBindingTable, ArgumentBuffer, ArgumentBufferOffset);
+    }
+
+    FRHIShaderBindingTable*      ShaderBindingTable;
+    FRHIBuffer*                  ArgumentBuffer;
+    uint64                       ArgumentBufferOffset;
+};
+
+DECLARE_RHICOMMAND(FRHICommandBuildOpacityMicromap)
+{
+    FORCEINLINE FRHICommandBuildOpacityMicromap(FRHIOpacityMicromap* InOpacityMicromap, const FRHIOpacityMicromapBuildDesc& InBuildDesc)
+        : OpacityMicromap(InOpacityMicromap)
+        , BuildDesc(InBuildDesc)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.BuildOpacityMicromap(OpacityMicromap, BuildDesc);
+    }
+
+    FRHIOpacityMicromap*         OpacityMicromap;
+    FRHIOpacityMicromapBuildDesc BuildDesc;
+};
+
+DECLARE_RHICOMMAND(FRHICommandExecuteIndirectRayTracingAccelerationStructureOperations)
+{
+    FORCEINLINE FRHICommandExecuteIndirectRayTracingAccelerationStructureOperations(const FRHIRayTracingAccelerationStructureOperationDesc* InOperations, uint32 InNumOperations)
+        : Operations()
+    {
+        Operations.Reserve(int32(InNumOperations));
+        for (uint32 Index = 0; Index < InNumOperations; ++Index)
+        {
+            Operations.Emplace(InOperations[Index]);
+        }
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.ExecuteIndirectRayTracingAccelerationStructureOperations(Operations.Data(), uint32(Operations.Size()));
+    }
+
+    TArray<FRHIRayTracingAccelerationStructureOperationDesc> Operations;
+};
+
+DECLARE_RHICOMMAND(FRHICommandWriteAccelerationStructurePostBuildInfo)
+{
+    FORCEINLINE FRHICommandWriteAccelerationStructurePostBuildInfo(FRHIBuffer* InDestinationBuffer, uint64 InDestinationOffset, EAccelerationStructurePostBuildInfoType InInfoType, FRHIRayTracingAccelerationStructure* const* InSources, uint32 InNumSources)
+        : DestinationBuffer(InDestinationBuffer)
+        , DestinationOffset(InDestinationOffset)
+        , InfoType(InInfoType)
+        , Sources()
+    {
+        Sources.Reserve(int32(InNumSources));
+        for (uint32 Index = 0; Index < InNumSources; ++Index)
+        {
+            Sources.Emplace(InSources[Index]);
+        }
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.WriteAccelerationStructurePostBuildInfo(DestinationBuffer, DestinationOffset, InfoType, Sources.Data(), uint32(Sources.Size()));
+    }
+
+    FRHIBuffer*                                  DestinationBuffer;
+    uint64                                       DestinationOffset;
+    EAccelerationStructurePostBuildInfoType      InfoType;
+    TArray<FRHIRayTracingAccelerationStructure*> Sources;
+};
+
+DECLARE_RHICOMMAND(FRHICommandCopyAccelerationStructure)
+{
+    FORCEINLINE FRHICommandCopyAccelerationStructure(FRHIRayTracingAccelerationStructure* InDestination, FRHIRayTracingAccelerationStructure* InSource, EAccelerationStructureCopyMode InCopyMode)
+        : Destination(InDestination)
+        , Source(InSource)
+        , CopyMode(InCopyMode)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.CopyAccelerationStructure(Destination, Source, CopyMode);
+    }
+
+    FRHIRayTracingAccelerationStructure* Destination;
+    FRHIRayTracingAccelerationStructure* Source;
+    EAccelerationStructureCopyMode       CopyMode;
+};
+
+DECLARE_RHICOMMAND(FRHICommandCompactAccelerationStructure)
+{
+    FORCEINLINE FRHICommandCompactAccelerationStructure(FRHIRayTracingAccelerationStructure* InAccelerationStructure, uint64 InCompactedSizeInBytes)
+        : AccelerationStructure(InAccelerationStructure)
+        , CompactedSizeInBytes(InCompactedSizeInBytes)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.CompactAccelerationStructure(AccelerationStructure, CompactedSizeInBytes);
+    }
+
+    FRHIRayTracingAccelerationStructure* AccelerationStructure;
+    uint64                               CompactedSizeInBytes;
+};
+
+DECLARE_RHICOMMAND(FRHICommandSerializeAccelerationStructure)
+{
+    FORCEINLINE FRHICommandSerializeAccelerationStructure(FRHIBuffer* InDestinationBuffer, uint64 InDestinationOffset, FRHIRayTracingAccelerationStructure* InSource)
+        : DestinationBuffer(InDestinationBuffer)
+        , DestinationOffset(InDestinationOffset)
+        , Source(InSource)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.SerializeAccelerationStructure(Source, DestinationBuffer, DestinationOffset);
+    }
+
+    FRHIBuffer*                          DestinationBuffer;
+    uint64                               DestinationOffset;
+    FRHIRayTracingAccelerationStructure* Source;
+};
+
+DECLARE_RHICOMMAND(FRHICommandDeserializeAccelerationStructure)
+{
+    FORCEINLINE FRHICommandDeserializeAccelerationStructure(FRHIRayTracingAccelerationStructure* InDestination, FRHIBuffer* InSourceBuffer, uint64 InSourceOffset)
+        : Destination(InDestination)
+        , SourceBuffer(InSourceBuffer)
+        , SourceOffset(InSourceOffset)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.DeserializeAccelerationStructure(Destination, SourceBuffer, SourceOffset);
+    }
+
+    FRHIRayTracingAccelerationStructure* Destination;
+    FRHIBuffer*                          SourceBuffer;
+    uint64                               SourceOffset;
 };
 
 DECLARE_RHICOMMAND(FRHICommandPushEvent)

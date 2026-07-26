@@ -38,13 +38,23 @@ bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
     int32 SceneMaterialIndex = 0;
     for (tinyobj::material_t& Mat : Materials)
     {
+        const auto LoadMaterialTexture = [&](const std::string& TexName) -> FTexture2DRef
+        {
+            if (TexName.empty())
+            {
+                return nullptr;
+            }
+
+            return StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + TexName.c_str()));
+        };
+
         // Create new material with default properties
         FMaterialCreateInfo MaterialCreateInfo;
-        MaterialCreateInfo.Textures[EMaterialTexture::Metallic]  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.ambient_texname.c_str()));
-        MaterialCreateInfo.Textures[EMaterialTexture::Diffuse]   = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.diffuse_texname.c_str()));
-        MaterialCreateInfo.Textures[EMaterialTexture::Roughness] = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.specular_highlight_texname.c_str()));
-        MaterialCreateInfo.Textures[EMaterialTexture::Normal]    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.bump_texname.c_str()));
-        MaterialCreateInfo.Textures[EMaterialTexture::AlphaMask] = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.alpha_texname.c_str()));
+        MaterialCreateInfo.Textures[EMaterialTexture::Metallic]  = LoadMaterialTexture(Mat.ambient_texname);
+        MaterialCreateInfo.Textures[EMaterialTexture::Diffuse]   = LoadMaterialTexture(Mat.diffuse_texname);
+        MaterialCreateInfo.Textures[EMaterialTexture::Roughness] = LoadMaterialTexture(Mat.specular_highlight_texname);
+        MaterialCreateInfo.Textures[EMaterialTexture::Normal]    = LoadMaterialTexture(Mat.bump_texname);
+        MaterialCreateInfo.Textures[EMaterialTexture::AlphaMask] = LoadMaterialTexture(Mat.alpha_texname);
         
         MaterialCreateInfo.Diffuse       = Vector3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
         MaterialCreateInfo.Metallic      = Mat.ambient[0];

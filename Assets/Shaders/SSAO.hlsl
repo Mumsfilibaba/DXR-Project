@@ -2,12 +2,20 @@
 #include "Structs.hlsli"
 #include "Random.hlsli"
 
-#define THREAD_COUNT 16
-#define MAX_SAMPLES 128
-#define ENABLE_FRAME_INDEX 0
+#ifndef THREAD_COUNT
+    #define THREAD_COUNT 16
+#endif
+
+#ifndef MAX_SAMPLES
+    #define MAX_SAMPLES 128
+#endif
+
+#ifndef ENABLE_FRAME_INDEX
+    #define ENABLE_FRAME_INDEX 0
+#endif
 
 Texture2D<float3> GBufferNormals : register(t0);
-Texture2D<float> GBufferDepth : register(t1);
+Texture2D<float>  GBufferDepth   : register(t1);
 
 SamplerState GBufferSampler : register(s0);
 
@@ -39,7 +47,7 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID, uint GroupIndex : SV_Gro
     const uint KernelSize = min(max(Constants.KernelSize, 1), MAX_SAMPLES);
     if (GroupIndex < KernelSize)
     {
-        const float2 HammerslySample    = Hammersley2(GroupIndex, KernelSize);
+        const float2 HammerslySample = Hammersley2(GroupIndex, KernelSize);
         HaltonSamples[GroupIndex] = HemispherePointUniform(HammerslySample.x, HammerslySample.y);
     }
 

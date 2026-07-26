@@ -361,12 +361,6 @@ public:
         EmplaceCommand<FRHICommandBuildGeometryAccelerationStructure>(RayTracingGeometry, BuildDesc);
     }
 
-    // TODO: Refactor
-    FORCEINLINE void SetRayTracingBindings(FRHISceneAccelerationStructure* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources) noexcept
-    {
-        EmplaceCommand<FRHICommandSetRayTracingBindings>(RayTracingScene, PipelineState, GlobalResource, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources);
-    }
-
     FORCEINLINE void TransitionTextureState(FRHITexture* Texture, const FRHITextureTransition& TextureTransition) noexcept
     {
         EmplaceCommand<FRHICommandTransitionTextureState>(Texture, TextureTransition);
@@ -433,9 +427,69 @@ public:
         STAT_ADD(STAT_RHI_DrawCalls, 1);
     }
 
-    FORCEINLINE void DispatchRays(FRHISceneAccelerationStructure* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) noexcept
+    FORCEINLINE void SetHitRecordLocalShaderBindings(FRHIShaderBindingTable* ShaderBindingTable, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings) noexcept
     {
-        EmplaceCommand<FRHICommandDispatchRays>(Scene, PipelineState, Width, Height, Depth);
+        EmplaceCommand<FRHICommandSetHitRecordLocalShaderBindings>(ShaderBindingTable, RecordKind, RecordIndex, Bindings, NumBindings);
+    }
+
+    FORCEINLINE void BuildShaderBindingTable(FRHIShaderBindingTable* ShaderBindingTable) noexcept
+    {
+        EmplaceCommand<FRHICommandBuildShaderBindingTable>(ShaderBindingTable);
+    }
+
+    FORCEINLINE void ResetShaderBindingTable(FRHIShaderBindingTable* ShaderBindingTable) noexcept
+    {
+        EmplaceCommand<FRHICommandResetShaderBindingTable>(ShaderBindingTable);
+    }
+
+    FORCEINLINE void DispatchRaysIndirect(FRHIShaderBindingTable* ShaderBindingTable, FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset) noexcept
+    {
+        EmplaceCommand<FRHICommandDispatchRaysIndirect>(ShaderBindingTable, ArgumentBuffer, ArgumentBufferOffset);
+    }
+
+    FORCEINLINE void BuildOpacityMicromap(FRHIOpacityMicromap* OpacityMicromap, const FRHIOpacityMicromapBuildDesc& BuildDesc) noexcept
+    {
+        EmplaceCommand<FRHICommandBuildOpacityMicromap>(OpacityMicromap, BuildDesc);
+    }
+
+    FORCEINLINE void ExecuteIndirectRayTracingAccelerationStructureOperations(const FRHIRayTracingAccelerationStructureOperationDesc* Operations, uint32 NumOperations) noexcept
+    {
+        EmplaceCommand<FRHICommandExecuteIndirectRayTracingAccelerationStructureOperations>(Operations, NumOperations);
+    }
+
+    FORCEINLINE void WriteAccelerationStructurePostBuildInfo(FRHIBuffer* DstBuffer, uint64 DstOffset, EAccelerationStructurePostBuildInfoType InfoType, FRHIRayTracingAccelerationStructure* const* Sources, uint32 NumSources) noexcept
+    {
+        EmplaceCommand<FRHICommandWriteAccelerationStructurePostBuildInfo>(DstBuffer, DstOffset, InfoType, Sources, NumSources);
+    }
+
+    FORCEINLINE void CopyAccelerationStructure(FRHIRayTracingAccelerationStructure* Destination, FRHIRayTracingAccelerationStructure* Source, EAccelerationStructureCopyMode CopyMode) noexcept
+    {
+        EmplaceCommand<FRHICommandCopyAccelerationStructure>(Destination, Source, CopyMode);
+    }
+
+    FORCEINLINE void CompactAccelerationStructure(FRHIRayTracingAccelerationStructure* AccelerationStructure, uint64 CompactedSizeInBytes) noexcept
+    {
+        EmplaceCommand<FRHICommandCompactAccelerationStructure>(AccelerationStructure, CompactedSizeInBytes);
+    }
+
+    FORCEINLINE void SerializeAccelerationStructure(FRHIRayTracingAccelerationStructure* Source, FRHIBuffer* DstBuffer, uint64 DstOffset) noexcept
+    {
+        EmplaceCommand<FRHICommandSerializeAccelerationStructure>(DstBuffer, DstOffset, Source);
+    }
+
+    FORCEINLINE void DeserializeAccelerationStructure(FRHIRayTracingAccelerationStructure* Destination, FRHIBuffer* SourceBuffer, uint64 SourceOffset) noexcept
+    {
+        EmplaceCommand<FRHICommandDeserializeAccelerationStructure>(Destination, SourceBuffer, SourceOffset);
+    }
+
+    FORCEINLINE void SetRayTracingPipelineState(FRHIRayTracingPipelineState* PipelineState) noexcept
+    {
+        EmplaceCommand<FRHICommandSetRayTracingPipelineState>(PipelineState);
+    }
+
+    FORCEINLINE void DispatchRays(FRHIShaderBindingTable* ShaderBindingTable, uint32 Width, uint32 Height, uint32 Depth) noexcept
+    {
+        EmplaceCommand<FRHICommandDispatchRaysShaderBindingTable>(ShaderBindingTable, Width, Height, Depth);
     }
 
     FORCEINLINE void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) noexcept

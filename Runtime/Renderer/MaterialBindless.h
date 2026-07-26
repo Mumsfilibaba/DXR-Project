@@ -1,44 +1,87 @@
 #pragma once
 #include "RHI/RHIResources.h"
+#include "Engine/Engine.h"
 #include "Engine/Resources/Material.h"
+#include "Core/CoreDefines.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 
-struct FMaterialBindlessIndicesHLSL
-{
-    FRHIDescriptorHandle AlbedoHandle;
-    FRHIDescriptorHandle NormalHandle;
-    FRHIDescriptorHandle MaterialHandle;
-    FRHIDescriptorHandle HeightHandle;
-    FRHIDescriptorHandle SamplerHandle;
-    uint32               Padding[3] = { 0, 0, 0 };
-};
-
-static_assert(sizeof(FMaterialBindlessIndicesHLSL) == 32, "Must stay 16-byte aligned for the constant buffer");
 static_assert(sizeof(FRHIDescriptorHandle) == sizeof(uint32), "FRHIDescriptorHandle must be 4 bytes for the HLSL bitfield layout");
 
-inline void FillMaterialBindlessIndices(const FMaterial& InMaterial, FMaterialBindlessIndicesHLSL& OutIndices)
+inline FRHIDescriptorHandle ResolveBindlessSRV(const FMaterial& InMaterial, FRHITexture* InTexture, const char* InSlotName)
 {
-    if (InMaterial.AlbedoMap)
+    if (!InTexture)
     {
-        OutIndices.AlbedoHandle = InMaterial.AlbedoMap->GetShaderResourceView()->GetBindlessHandle();
+        return FRHIDescriptorHandle();
     }
 
-    if (InMaterial.HasNormalMap() && InMaterial.NormalMap)
+    FRHIShaderResourceView* ShaderResourceView = InTexture->GetShaderResourceView();
+    if (!ShaderResourceView)
     {
-        OutIndices.NormalHandle = InMaterial.NormalMap->GetShaderResourceView()->GetBindlessHandle();
+        LOG_ERROR("[Bindless] Material '%s' %s map has no ShaderResourceView", *InMaterial.GetName(), InSlotName);
+        CHECK(false);
+        return FRHIDescriptorHandle();
     }
 
-    if (InMaterial.MaterialMap)
+    const FRHIDescriptorHandle Handle = ShaderResourceView->GetBindlessHandle();
+    if (!Handle.IsValid())
     {
-        OutIndices.MaterialHandle = InMaterial.MaterialMap->GetShaderResourceView()->GetBindlessHandle();
+        LOG_ERROR("[Bindless] Material '%s' %s map SRV has no valid bindless descriptor", *InMaterial.GetName(), InSlotName);
+        CHECK(false);
+    }
+
+    return Handle;
+}
+
+inline void FillMaterialHandles(const FMaterial& InMaterial, FMaterialHLSL& OutData)
+{
+    FRHIShaderResourceView* AlbedoSRV   = SafeGetDefaultSRV(InMaterial.AlbedoMap);
+    FRHIShaderResourceView* NormalSRV   = SafeGetDefaultSRV(InMaterial.NormalMap);
+    FRHIShaderResourceView* MaterialSRV = SafeGetDefaultSRV(InMaterial.MaterialMap);
+
+    const bool bHasRealNormalMap = (NormalSRV != nullptr);
+
+    if (FEngine* Engine = FEngine::Get())
+    {
+        if (!AlbedoSRV && Engine->BaseTexture)
+        {
+            AlbedoSRV = Engine->BaseTexture->GetShaderResourceView();
+        }
+
+        if (!NormalSRV && Engine->BaseNormal)
+        {
+            NormalSRV = Engine->BaseNormal->GetShaderResourceView();
+        }
+
+        if (!MaterialSRV && Engine->BaseTexture)
+        {
+            MaterialSRV = Engine->BaseTexture->GetShaderResourceView();
+        }
+    }
+
+    if (AlbedoSRV)
+    {
+        OutData.AlbedoHandle = AlbedoSRV->GetBindlessHandle();
+    }
+
+    if (NormalSRV)
+    {
+        OutData.NormalHandle = NormalSRV->GetBindlessHandle();
+    }
+
+    if (MaterialSRV)
+    {
+        OutData.MaterialHandle = MaterialSRV->GetBindlessHandle();
     }
 
     if (InMaterial.HasHeightMap() && InMaterial.HeightMap)
     {
-        OutIndices.HeightHandle = InMaterial.HeightMap->GetShaderResourceView()->GetBindlessHandle();
+        OutData.HeightHandle = ResolveBindlessSRV(InMaterial, InMaterial.HeightMap.Get(), "Height");
     }
 
     if (FRHISamplerState* MaterialSampler = InMaterial.GetMaterialSampler())
     {
-        OutIndices.SamplerHandle = MaterialSampler->GetBindlessHandle();
+        OutData.SamplerHandle = MaterialSampler->GetBindlessHandle();
     }
+
+    OutData.NormalMapFlags = bHasRealNormalMap ? 1u : 0u;
 }

@@ -1,5 +1,6 @@
 #include "Core/Filesystem/File.h"
 #include "Core/Generic/GenericPlatformFile.h"
+#include "Core/Platform/PlatformFile.h"
 #include "Core/Memory/Memory.h"
 
 bool File::ReadFile(IPlatformFile* InFile, FByteInputStream& OutData)
@@ -127,4 +128,34 @@ String File::ExtractFilenameWithoutExtension(const String& Filepath)
     
     int32 NewLength = ExtensionPos - LastSlash;
     return String(*Filepath + LastSlash, NewLength);
+}
+
+bool File::CreateDirectoryTree(const String& Path)
+{
+    // Walk the path and create each intermediate directory in turn (like 'mkdir -p').
+    String Prefix;
+    for (const CHAR* It = *Path; ; ++It)
+    {
+        if (*It == '/' || *It == '\\' || *It == '\0')
+        {
+            // Skip empty segments and the Windows drive root ("C:")
+            const bool bDriveRoot = (Prefix.Length() == 2 && Prefix[1] == ':');
+            if (!Prefix.IsEmpty() && !bDriveRoot && !FPlatformFile::IsDirectory(*Prefix))
+            {
+                if (!FPlatformFile::CreateDirectory(*Prefix))
+                {
+                    return false;
+                }
+            }
+
+            if (*It == '\0')
+            {
+                break;
+            }
+        }
+
+        Prefix.Append(*It);
+    }
+
+    return true;
 }

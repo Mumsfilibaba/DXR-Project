@@ -104,8 +104,6 @@
     #define D3D12_LOG_TRANSITION_MISMATCH(InTexture, InContext, InEngineBeforeState, InD3D12BeforeState, InD3D12AfterState, InCurrentState) ((void)0)
 #endif
 
-void D3D12DeviceRemovedHandlerRHI(class FD3D12Device* Device);
-
 NODISCARD inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
 {
     D3D12_HEAP_PROPERTIES HeapProperties = { };
@@ -297,6 +295,18 @@ NODISCARD constexpr const CHAR* ToString(ED3D12CommandQueueType QueueType)
     return "CommandQueueType::Unknown";
 }
 
+NODISCARD constexpr D3D12_COMMAND_LIST_TYPE ToCommandListType(ED3D12CommandQueueType QueueType)
+{
+    switch (QueueType)
+    {
+        case ED3D12CommandQueueType::Direct:  return D3D12_COMMAND_LIST_TYPE_DIRECT;
+        case ED3D12CommandQueueType::Compute: return D3D12_COMMAND_LIST_TYPE_COMPUTE;
+        case ED3D12CommandQueueType::Copy:    return D3D12_COMMAND_LIST_TYPE_COPY;
+    }
+
+    return D3D12_COMMAND_LIST_TYPE(-1);
+}
+
 enum class ED3D12GlobalDescriptorHeapType : uint8
 {
     Resource = 0, // CBV/SRV/UAV global online heap (D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
@@ -316,28 +326,20 @@ NODISCARD constexpr const CHAR* ToString(ED3D12GlobalDescriptorHeapType HeapType
     return "Unknown";
 }
 
-NODISCARD constexpr D3D12_COMMAND_LIST_TYPE ToCommandListType(ED3D12CommandQueueType QueueType)
+enum class ED3D12ResourceStateMode : uint8
 {
-    switch (QueueType)
-    {
-        case ED3D12CommandQueueType::Direct:  return D3D12_COMMAND_LIST_TYPE_DIRECT;
-        case ED3D12CommandQueueType::Compute: return D3D12_COMMAND_LIST_TYPE_COMPUTE;
-        case ED3D12CommandQueueType::Copy:    return D3D12_COMMAND_LIST_TYPE_COPY;
-    }
-
-    return D3D12_COMMAND_LIST_TYPE(-1);
-}
+    SingleState,
+    MultipleStates
+};
 
 NODISCARD constexpr uint32 GetBufferAlignment(EBufferFlags BufferFlags)
 {
-    // Constant buffers require special alignment
     if (IsEnumFlagSet(BufferFlags, EBufferFlags::ConstantBuffer))
     {
         return D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
     }
     else
     {
-        // Otherwise, return a default of 16
         return 16;
     }
 }
@@ -942,41 +944,109 @@ NODISCARD constexpr D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitive
 
 NODISCARD constexpr D3D12_RESOURCE_STATES ConvertResourceState(EResourceAccess ResourceState)
 {
-    switch (ResourceState)
+    if (ResourceState == EResourceAccess::Common)
     {
-        case EResourceAccess::Common:                 return D3D12_RESOURCE_STATE_COMMON;
-        case EResourceAccess::CopyDest:               return D3D12_RESOURCE_STATE_COPY_DEST;
-        case EResourceAccess::CopySource:             return D3D12_RESOURCE_STATE_COPY_SOURCE;
-        case EResourceAccess::DepthRead:              return D3D12_RESOURCE_STATE_DEPTH_READ;
-        case EResourceAccess::DepthWrite:             return D3D12_RESOURCE_STATE_DEPTH_WRITE;
-        case EResourceAccess::IndexBuffer:            return D3D12_RESOURCE_STATE_INDEX_BUFFER;
-        case EResourceAccess::VertexBuffer:           return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
-        case EResourceAccess::NonPixelShaderResource: return D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-        case EResourceAccess::PixelShaderResource:    return D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-        case EResourceAccess::Present:                return D3D12_RESOURCE_STATE_PRESENT;
-        case EResourceAccess::RenderTarget:           return D3D12_RESOURCE_STATE_RENDER_TARGET;
-        case EResourceAccess::ResolveDest:            return D3D12_RESOURCE_STATE_RESOLVE_DEST;
-        case EResourceAccess::ResolveSource:          return D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
-        case EResourceAccess::ShadingRateSource:      return D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE;
-        case EResourceAccess::UnorderedAccess:        return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-        case EResourceAccess::ConstantBuffer:         return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
-        case EResourceAccess::GenericRead:            return D3D12_RESOURCE_STATE_GENERIC_READ;
-        case EResourceAccess::StreamOutput:           return D3D12_RESOURCE_STATE_STREAM_OUT;
+        return D3D12_RESOURCE_STATE_COMMON;
     }
 
-    return D3D12_RESOURCE_STATES();
-}
+    D3D12_RESOURCE_STATES State = D3D12_RESOURCE_STATE_COMMON;
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::ConstantBuffer))
+    {
+        State |= D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+    }
 
-enum class ED3D12ResourceStateMode : uint8
-{
-    SingleState,
-    MultipleStates
-};
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::IndexBuffer))
+    {
+        State |= D3D12_RESOURCE_STATE_INDEX_BUFFER;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::VertexBuffer))
+    {
+        State |= D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::RenderTarget))
+    {
+        State |= D3D12_RESOURCE_STATE_RENDER_TARGET;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::UnorderedAccess))
+    {
+        State |= D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::DepthWrite))
+    {
+        State |= D3D12_RESOURCE_STATE_DEPTH_WRITE;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::DepthRead))
+    {
+        State |= D3D12_RESOURCE_STATE_DEPTH_READ;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::NonPixelShaderResource))
+    {
+        State |= D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::PixelShaderResource))
+    {
+        State |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::CopyDest))
+    {
+        State |= D3D12_RESOURCE_STATE_COPY_DEST;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::CopySource))
+    {
+        State |= D3D12_RESOURCE_STATE_COPY_SOURCE;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::ResolveDest))
+    {
+        State |= D3D12_RESOURCE_STATE_RESOLVE_DEST;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::ResolveSource))
+    {
+        State |= D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::ShadingRateSource))
+    {
+        State |= D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::Present))
+    {
+        State |= D3D12_RESOURCE_STATE_PRESENT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::GenericRead))
+    {
+        State |= D3D12_RESOURCE_STATE_GENERIC_READ;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::StreamOutput))
+    {
+        State |= D3D12_RESOURCE_STATE_STREAM_OUT;
+    }
+
+    return State;
+}
 
 NODISCARD inline D3D12_RESOURCE_STATES DetermineDefaultBufferState(EBufferFlags Flags)
 {
-    constexpr EBufferFlags WriteMask = EBufferFlags::UnorderedAccessBuffer;
-    if (IsEnumFlagSet(Flags, WriteMask))
+    constexpr EBufferFlags TrackedMask =
+        EBufferFlags::UnorderedAccessBuffer |
+        EBufferFlags::StreamOutputBuffer |
+        EBufferFlags::CopyDest |
+        EBufferFlags::AccelerationStructure;
+
+    if ((Flags & TrackedMask) != EBufferFlags::None)
     {
         return D3D12_RESOURCE_STATES(0);
     }
@@ -986,13 +1056,20 @@ NODISCARD inline D3D12_RESOURCE_STATES DetermineDefaultBufferState(EBufferFlags 
     {
         State |= D3D12_RESOURCE_STATE_INDEX_BUFFER;
     }
+
     if (IsEnumFlagSet(Flags, EBufferFlags::VertexBuffer) || IsEnumFlagSet(Flags, EBufferFlags::ConstantBuffer))
     {
         State |= D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
     }
+
     if (IsEnumFlagSet(Flags, EBufferFlags::ShaderResourceBuffer))
     {
         State |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+    }
+
+    if (IsEnumFlagSet(Flags, EBufferFlags::CopySource))
+    {
+        State |= D3D12_RESOURCE_STATE_COPY_SOURCE;
     }
 
     return State;
@@ -1000,7 +1077,12 @@ NODISCARD inline D3D12_RESOURCE_STATES DetermineDefaultBufferState(EBufferFlags 
 
 NODISCARD inline D3D12_RESOURCE_STATES DetermineDefaultTextureState(ETextureUsageFlags Flags)
 {
-    constexpr ETextureUsageFlags WriteMask = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::DepthStencil | ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::Presentable;
+    constexpr ETextureUsageFlags WriteMask = 
+        ETextureUsageFlags::RenderTarget | 
+        ETextureUsageFlags::DepthStencil | 
+        ETextureUsageFlags::UnorderedAccessTexture | 
+        ETextureUsageFlags::Presentable;
+
     if ((Flags & WriteMask) != ETextureUsageFlags::None)
     {
         return D3D12_RESOURCE_STATES(0);
@@ -1011,9 +1093,21 @@ NODISCARD inline D3D12_RESOURCE_STATES DetermineDefaultTextureState(ETextureUsag
     {
         State |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
     }
+
     if (IsEnumFlagSet(Flags, ETextureUsageFlags::ShadingRateTexture))
     {
         State |= D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE;
+    }
+
+    if (State == D3D12_RESOURCE_STATES(0))
+    {
+        const bool bCopySource = IsEnumFlagSet(Flags, ETextureUsageFlags::CopySource);
+        const bool bCopyDest   = IsEnumFlagSet(Flags, ETextureUsageFlags::CopyDest);
+
+        if (bCopySource != bCopyDest)
+        {
+            return bCopySource ? D3D12_RESOURCE_STATE_COPY_SOURCE : D3D12_RESOURCE_STATE_COPY_DEST;
+        }
     }
 
     return State;
@@ -1083,13 +1177,25 @@ NODISCARD constexpr D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertA
     {
         Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
     }
+
     if ((InFlags & EAccelerationStructureBuildFlags::PreferFastTrace) != EAccelerationStructureBuildFlags::None)
     {
         Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
     }
+
     if ((InFlags & EAccelerationStructureBuildFlags::PreferFastBuild) != EAccelerationStructureBuildFlags::None)
     {
         Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD;
+    }
+
+    if ((InFlags & EAccelerationStructureBuildFlags::AllowCompaction) != EAccelerationStructureBuildFlags::None)
+    {
+        Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_COMPACTION;
+    }
+
+    if ((InFlags & EAccelerationStructureBuildFlags::MinimizeMemory) != EAccelerationStructureBuildFlags::None)
+    {
+        Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_MINIMIZE_MEMORY;
     }
 
     return Flags;
@@ -1102,14 +1208,17 @@ NODISCARD constexpr D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFla
     {
         Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE;
     }
+
     if ((InFlags & ERayTracingInstanceFlags::FrontCounterClockwise) != ERayTracingInstanceFlags::None)
     {
         Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE;
     }
+
     if ((InFlags & ERayTracingInstanceFlags::ForceOpaque) != ERayTracingInstanceFlags::None)
     {
         Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE;
     }
+
     if ((InFlags & ERayTracingInstanceFlags::ForceNonOpaque) != ERayTracingInstanceFlags::None)
     {
         Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE;
@@ -1118,6 +1227,30 @@ NODISCARD constexpr D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFla
     return Flags;
 }
 
+NODISCARD constexpr D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE ConvertAccelerationStructureCopyMode(EAccelerationStructureCopyMode CopyMode)
+{
+    switch (CopyMode)
+    {
+        case EAccelerationStructureCopyMode::Clone:                    return D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_CLONE;
+        case EAccelerationStructureCopyMode::Compact:                  return D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_COMPACT;
+        case EAccelerationStructureCopyMode::Serialize:                return D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_SERIALIZE;
+        case EAccelerationStructureCopyMode::Deserialize:              return D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_DESERIALIZE;
+        case EAccelerationStructureCopyMode::ToolsVisualizationDecode: return D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_VISUALIZATION_DECODE_FOR_TOOLS;
+        default:                                                       return D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_CLONE;
+    }
+}
+
+NODISCARD constexpr D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TYPE ConvertAccelerationStructurePostBuildInfoType(EAccelerationStructurePostBuildInfoType InfoType)
+{
+    switch (InfoType)
+    {
+        case EAccelerationStructurePostBuildInfoType::CompactedSize:      return D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_COMPACTED_SIZE;
+        case EAccelerationStructurePostBuildInfoType::CurrentSize:        return D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_CURRENT_SIZE;
+        case EAccelerationStructurePostBuildInfoType::Serialization:      return D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION;
+        case EAccelerationStructurePostBuildInfoType::ToolsVisualization: return D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TOOLS_VISUALIZATION;
+        default:                                                          return D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_CURRENT_SIZE;
+    }
+}
 
 NODISCARD constexpr uint32 GetFormatStride(DXGI_FORMAT Format)
 {
@@ -1245,6 +1378,7 @@ NODISCARD constexpr bool IsFormatCompressed(DXGI_FORMAT Format)
     case DXGI_FORMAT_BC7_UNORM:
     case DXGI_FORMAT_BC7_UNORM_SRGB:
         return true;
+
     default:
         return false;
     }
@@ -1263,6 +1397,7 @@ NODISCARD constexpr uint32 GetBitsPerPixel(DXGI_FORMAT Format)
         case DXGI_FORMAT_BC4_UNORM:
         case DXGI_FORMAT_BC4_SNORM:
             return 4;
+
         default:
             return 8;
         }
@@ -1663,4 +1798,3 @@ NODISCARD constexpr uint32 D3D12CalculateSubresourceCount(uint32 MipLevels, uint
 {
     return MipLevels * ArraySize * PlaneCount;
 }
-

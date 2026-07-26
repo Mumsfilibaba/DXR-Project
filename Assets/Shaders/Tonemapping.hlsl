@@ -2,10 +2,11 @@
 #include "Tonemapping.hlsli"
 #include "ColorSpaceTransforms.hlsli"
 
-Texture2D FinalImage : register(t0);
+Texture2D    FinalImage   : register(t0);
 SamplerState PointSampler : register(s0);
 
 SHADER_CONSTANT_BLOCK_BEGIN
+    // 0-16
     int   TonemappingType;
     int   OutputSRGB;
     float ReinhardIntensity;

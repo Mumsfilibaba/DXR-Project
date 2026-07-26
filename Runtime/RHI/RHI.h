@@ -68,6 +68,46 @@ struct RHI
         return Device->CreateGeometryAccelerationStructure(InGeometryDesc);
     }
 
+    static FORCEINLINE FRHIClusterAccelerationStructure* CreateClusterAccelerationStructure(const FRHIClusterAccelerationStructureDesc& InDesc)
+    {
+        return Device->CreateClusterAccelerationStructure(InDesc);
+    }
+
+    static FORCEINLINE FRHIClusterTemplate* CreateClusterTemplate(const FRHIClusterTemplateDesc& InDesc)
+    {
+        return Device->CreateClusterTemplate(InDesc);
+    }
+
+    static FORCEINLINE FRHIPartitionedSceneAccelerationStructure* CreatePartitionedSceneAccelerationStructure(const FRHIRayTracingAccelerationStructurePartitionedSceneInputs& InInputs)
+    {
+        return Device->CreatePartitionedSceneAccelerationStructure(InInputs);
+    }
+
+    static FORCEINLINE FRHIOpacityMicromap* CreateOpacityMicromap(const FRHIOpacityMicromapDesc& InDesc)
+    {
+        return Device->CreateOpacityMicromap(InDesc);
+    }
+
+    static FORCEINLINE FRHIShaderBindingTable* CreateShaderBindingTable(const FRHIShaderBindingTableDesc& InDesc)
+    {
+        return Device->CreateShaderBindingTable(InDesc);
+    }
+
+    static FORCEINLINE void GetRayTracingAccelerationStructureOperationPrebuildInfo(const FRHIRayTracingAccelerationStructureOperationInputs& InInputs, FRHIRayTracingAccelerationStructurePrebuildInfo& OutInfo)
+    {
+        Device->GetRayTracingAccelerationStructureOperationPrebuildInfo(InInputs, OutInfo);
+    }
+
+    static FORCEINLINE FRHIRayTracingShaderIdentifier GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState* InPipeline, const String& InExportName)
+    {
+        return Device->GetRayTracingShaderIdentifier(InPipeline, InExportName);
+    }
+
+    static FORCEINLINE bool IsAccelerationStructureSerializationHeaderValid(const FRHIAccelerationStructureSerializationHeader& InHeader)
+    {
+        return Device->IsAccelerationStructureSerializationHeaderValid(InHeader);
+    }
+
     static FORCEINLINE FRHIShaderResourceView* CreateShaderResourceView(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc)
     {
         return Device->CreateShaderResourceView(InResource, InDesc);
@@ -188,6 +228,11 @@ struct RHI
         return Device->CreateRayTracingPipelineState(InDesc);
     }
 
+    static FORCEINLINE FRHIRayTracingPipelineState* AddToRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& AdditionsDesc)
+    {
+        return Device->CreateRayTracingPipelineState(AdditionsDesc);
+    }
+
     static FORCEINLINE FRHIQuery* CreateQuery(EQueryType InQueryType)
     {
         return Device->CreateQuery(InQueryType);
@@ -238,6 +283,51 @@ struct RHI
     /** Maximum recursion depth supported for ray tracing pipelines */
     static RHI_API uint32 RayTracingMaxRecursionDepth;
 
+    /** Whether inline ray tracing (ray queries / TraceRayInline) is supported */
+    static RHI_API bool bSupportsInlineRayTracing;
+
+    /** Whether opacity micromaps are supported */
+    static RHI_API bool bSupportsOpacityMicromap;
+
+    /** Whether shader execution reordering (SER) is supported */
+    static RHI_API bool bSupportsShaderExecutionReordering;
+
+    /** Whether the supported SER implementation actually reorders (false when the driver accepts SER intrinsics but performs no reordering). */
+    static RHI_API bool bShaderExecutionReorderingActuallyReorders;
+
+    /** Whether incremental ray tracing pipeline additions (D3D12 AddToStateObject) are supported */
+    static RHI_API bool bSupportsRayTracingPipelineAdditions;
+
+    /** Whether cluster + partitioned-scene acceleration structures are supported */
+    static RHI_API bool bSupportsClustersAndPartitionedSceneAccelerationStructure;
+
+    /** Whether indirect acceleration-structure operations are supported */
+    static RHI_API bool bSupportsIndirectAccelerationStructureOperations;
+
+    /** Whether indirect ray dispatch (DispatchRaysIndirect) is supported. */
+    static RHI_API bool bSupportsIndirectRayDispatch;
+
+    /** Maximum triangles per cluster (0 when clusters are unsupported) */
+    static RHI_API uint32 RayTracingMaxTrianglesPerCluster;
+
+    /** Maximum vertices per cluster (0 when clusters are unsupported) */
+    static RHI_API uint32 RayTracingMaxVerticesPerCluster;
+
+    /** Maximum instance count in a partitioned scene (0 when unsupported) */
+    static RHI_API uint32 RayTracingMaxPartitionedInstanceCount;
+
+    /** Whether the shader-binding-table can carry descriptors in per-record local bindings. */
+    static RHI_API bool bSupportsShaderBindingTableDescriptors;
+
+    /** Whether D3D12-only acceleration-structure tools visualization (postbuild ToolsVisualization / copy ToolsVisualizationDecode) is available. */
+    static RHI_API bool bSupportsToolsVisualization;
+
+    /** Logs the ray-tracing capability table. */
+    static RHI_API void DumpRayTracingCapabilities();
+
+    /** Logs the full device capability table (general + ray tracing). */
+    static RHI_API void DumpCapabilities();
+
     // -------------------------------------------------------------------------------------------
     // Variable Rate Shading (VRS)
     // -------------------------------------------------------------------------------------------
@@ -276,7 +366,6 @@ struct RHI
     /** Maximum number of array layers for 1D textures */
     static RHI_API uint32 MaxTexture1DArrayLayers;
 
-
     // --- 2D Textures ---
 
     /** Maximum width or height of a 2D texture */
@@ -284,7 +373,6 @@ struct RHI
 
     /** Maximum number of array layers for 2D textures */
     static RHI_API uint32 MaxTexture2DArrayLayers;
-
 
     // --- 3D Textures ---
 
@@ -296,7 +384,6 @@ struct RHI
 
     /** Maximum 3D texture depth */
     static RHI_API uint32 MaxTexture3DDepth;
-
 
     // --- Cube Textures ---
 
@@ -332,6 +419,9 @@ struct RHI
     /** Required alignment for raw/byte-address buffers (SRV/UAV) */
     static RHI_API uint32 RawBufferRequiredAlignment;
 
+    /** Required allocation alignment (address + size) for acceleration-structure copy/serialize buffers (256, matches D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT) */
+    static RHI_API uint32 AccelerationStructureBufferAlignment;
+
     // -------------------------------------------------------------------------------------------
     // Dynamic State
     // -------------------------------------------------------------------------------------------
@@ -361,10 +451,9 @@ struct RHI
 
     /**
      * The format the active RHI backend picks when an FRHISwapChainDesc is created with
-     * EFormat::Unknown. Populated during backend initialisation from the per-backend CVar
-     * (D3D12RHI.DefaultBackBufferFormat / VulkanRHI.DefaultBackBufferFormat). Read-only
-     * outside of init - use it when a caller needs to know up front what a swap chain
-     * created with Unknown will end up with.
+     * EFormat::Unknown. Populated during backend initialization. Read-only outside of init
+     * use it when a caller needs to know up front what a swap chain created with Unknown 
+     * will end up with.
      */
     static RHI_API EFormat DefaultSwapChainFormat;
 };

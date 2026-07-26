@@ -7,17 +7,11 @@
 #include "RendererCore/TextureCompressor.h"
 
 FMesh::FMesh()
-    : VertexBuffer(nullptr)
-    , VertexBufferSRV(nullptr)
-    , VertexPositionBuffer(nullptr)
-    , VertexPositionBufferSRV(nullptr)
-    , VertexNormalBuffer(nullptr)
-    , VertexNormalBufferSRV(nullptr)
-    , VertexTexCoordBuffer(nullptr)
-    , VertexTexCoordBufferSRV(nullptr)
+    : VertexBuffers()
+    , VertexBufferSRVs()
     , IndexBuffer(nullptr)
     , IndexBufferSRV(nullptr)
-    , RTGeometry(nullptr)
+    , RayTracingGeometry(nullptr)
     , IndexFormat(EIndexFormat::Unknown)
     , IndexCount()
     , VertexCount(0)
@@ -30,9 +24,9 @@ FMesh::~FMesh()
 {
 }
 
-bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
+bool FMesh::Init(const FMeshCreateInfo& CreateInfo, bool bCreateVertexAndIndexSRVs)
 {
-    const bool bEnableRayTracing = false; //RHI::bSupportsRayTracing;
+    const bool bEnableRayTracing = RHI::bSupportsRayTracing;
 
     VertexCount = CreateInfo.Vertices.Size();
     IndexCount  = CreateInfo.Indices.Size();
@@ -45,14 +39,14 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
     VertexBufferDesc.Size   = VertexCount * VertexBufferDesc.Stride;
     VertexBufferDesc.Flags  = BufferFlags | EBufferFlags::VertexBuffer;
 
-    VertexBuffer = RHI::CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, CreateInfo.Vertices.Data());
-    if (!VertexBuffer)
+    VertexBuffers[EVertexStream::Packed] = RHI::CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, CreateInfo.Vertices.Data());
+    if (!VertexBuffers[EVertexStream::Packed])
     {
         return false;
     }
     else
     {
-        VertexBuffer->SetDebugName("VertexBuffer");
+        VertexBuffers[EVertexStream::Packed]->SetDebugName("VertexBuffer");
     }
 
     // Create VertexPositionBuffer
@@ -66,14 +60,14 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
 	VertexBufferDesc.Stride = sizeof(FVertexPosition);
 	VertexBufferDesc.Size   = VertexCount * VertexBufferDesc.Stride;
 
-    VertexPositionBuffer = RHI::CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, VertexPositions.Data());
-    if (!VertexPositionBuffer)
+    VertexBuffers[EVertexStream::Positions] = RHI::CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, VertexPositions.Data());
+    if (!VertexBuffers[EVertexStream::Positions])
     {
         return false;
     }
     else
     {
-        VertexPositionBuffer->SetDebugName("VertexPositionBuffer");
+        VertexBuffers[EVertexStream::Positions]->SetDebugName("VertexPositionBuffer");
     }
 
     // Create VertexNormalBuffer
@@ -87,14 +81,14 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
 	VertexBufferDesc.Stride = sizeof(FVertexNormal);
 	VertexBufferDesc.Size   = VertexCount * VertexBufferDesc.Stride;
 
-    VertexNormalBuffer = RHI::CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, VertexNormals.Data());
-    if (!VertexNormalBuffer)
+    VertexBuffers[EVertexStream::Normals] = RHI::CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, VertexNormals.Data());
+    if (!VertexBuffers[EVertexStream::Normals])
     {
         return false;
     }
     else
     {
-        VertexNormalBuffer->SetDebugName("VertexNormalBuffer");
+        VertexBuffers[EVertexStream::Normals]->SetDebugName("VertexNormalBuffer");
     }
     
     // Create VertexTexCoordBuffer
@@ -108,14 +102,14 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
     VertexBufferDesc.Stride = sizeof(FVertexTexCoord);
     VertexBufferDesc.Size   = VertexCount * VertexBufferDesc.Stride;
 
-    VertexTexCoordBuffer = RHI::CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, VertexTexCoords.Data());
-    if (!VertexTexCoordBuffer)
+    VertexBuffers[EVertexStream::TexCoords] = RHI::CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, VertexTexCoords.Data());
+    if (!VertexBuffers[EVertexStream::TexCoords])
     {
         return false;
     }
     else
     {
-        VertexTexCoordBuffer->SetDebugName("VertexTexCoordBuffer");
+        VertexBuffers[EVertexStream::TexCoords]->SetDebugName("VertexTexCoordBuffer");
     }
 
     // If we can get away with 16-bit indices, store them in this array
@@ -156,51 +150,9 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
         IndexBuffer->SetDebugName("IndexBuffer");
     }
 
-    if (bEnableRayTracing)
+    if (bCreateVertexAndIndexSRVs)
     {
-        FRHIGeometryAccelerationStructureDesc GeometryDesc(VertexBuffer.Get(), VertexCount, IndexBuffer.Get(), IndexCount, IndexFormat, EAccelerationStructureBuildFlags::None);
-        RTGeometry = RHI::CreateGeometryAccelerationStructure(GeometryDesc);
-
-        if (!RTGeometry)
-        {
-            return false;
-        }
-        else
-        {
-            RTGeometry->SetDebugName("RayTracing Geometry");
-        }
-
-        FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, VertexCount);
-        VertexBufferSRV = RHI::CreateShaderResourceView(VertexBuffer.Get(), SRVDesc);
-        if (!VertexBufferSRV)
-        {
-            return false;
-        }
-
-        SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, VertexCount);
-        VertexPositionBufferSRV = RHI::CreateShaderResourceView(VertexPositionBuffer.Get(), SRVDesc);
-        if (!VertexPositionBufferSRV)
-        {
-            return false;
-        }
-
-        SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, VertexCount);
-        VertexNormalBufferSRV = RHI::CreateShaderResourceView(VertexNormalBuffer.Get(), SRVDesc);
-        if (!VertexNormalBufferSRV)
-        {
-            return false;
-        }
-
-        SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, VertexCount);
-        VertexTexCoordBufferSRV = RHI::CreateShaderResourceView(VertexTexCoordBuffer.Get(), SRVDesc);
-        if (!VertexTexCoordBufferSRV)
-        {
-            return false;
-        }
-
-        SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, IndexCount, EBufferViewType::ByteAddress);
-        IndexBufferSRV = RHI::CreateShaderResourceView(IndexBuffer.Get(), SRVDesc);
-        if (!IndexBufferSRV)
+        if (!CreateVertexAndIndexSRVs())
         {
             return false;
         }
@@ -240,44 +192,106 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
     return true;
 }
 
+bool FMesh::CreateVertexAndIndexSRVs()
+{
+    if (VertexBufferSRVs[EVertexStream::Packed])
+    {
+        return true;
+    }
+
+    if (!VertexBuffers[EVertexStream::Packed] || !VertexBuffers[EVertexStream::Positions] || !VertexBuffers[EVertexStream::Normals] || !VertexBuffers[EVertexStream::TexCoords] || !IndexBuffer)
+    {
+        return false;
+    }
+
+    for (int32 StreamIndex = 0; StreamIndex < EVertexStream::Count; StreamIndex++)
+    {
+        VertexBufferSRVs[StreamIndex] = RHI::CreateShaderResourceView(VertexBuffers[StreamIndex].Get(), FRHIShaderResourceViewDesc::CreateBuffer(0, VertexCount));
+        if (!VertexBufferSRVs[StreamIndex])
+        {
+            return false;
+        }
+    }
+
+    IndexBufferSRV = RHI::CreateShaderResourceView(IndexBuffer.Get(), FRHIShaderResourceViewDesc::CreateBuffer(0, IndexCount, EBufferViewType::ByteAddress));
+    if (!IndexBufferSRV)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool FMesh::CreateRayTracingGeometry()
+{
+    if (RayTracingGeometry)
+    {
+        return true;
+    }
+
+    if (!RHI::bSupportsRayTracing || !VertexBuffers[EVertexStream::Packed] || !IndexBuffer)
+    {
+        return false;
+    }
+
+    if (!CreateVertexAndIndexSRVs())
+    {
+        return false;
+    }
+
+    FRHIGeometryAccelerationStructureDesc GeometryDesc(VertexBuffers[EVertexStream::Packed].Get(), VertexCount, IndexBuffer.Get(), IndexCount, IndexFormat, EAccelerationStructureBuildFlags::AllowCompaction);
+    RayTracingGeometry = RHI::CreateGeometryAccelerationStructure(GeometryDesc);
+    if (!RayTracingGeometry)
+    {
+        return false;
+    }
+
+    RayTracingGeometry->SetDebugName("RayTracing Geometry");
+    return true;
+}
+
+void FMesh::ReleaseRayTracingGeometry()
+{
+    RayTracingGeometry.Reset();
+}
+
 bool FMesh::BuildAccelerationStructure(FRHICommandList& CommandList)
 {
+    if (!RayTracingGeometry)
+    {
+        return false;
+    }
+
     FRHIGeometryAccelerationStructureBuildDesc BuildDesc;
-    BuildDesc.VertexBuffer = VertexBuffer.Get();
+    BuildDesc.VertexBuffer = VertexBuffers[EVertexStream::Packed].Get();
     BuildDesc.NumVertices  = VertexCount;
     BuildDesc.IndexBuffer  = IndexBuffer.Get();
     BuildDesc.NumIndices   = IndexCount;
     BuildDesc.IndexFormat  = IndexFormat;
     BuildDesc.bUpdate      = true;
 
-    CommandList.BuildGeometryAccelerationStructure(RTGeometry.Get(), BuildDesc);
+    CommandList.BuildGeometryAccelerationStructure(RayTracingGeometry.Get(), BuildDesc);
     return true;
 }
 
-FRHIBuffer* FMesh::GetVertexBuffer(EVertexStream VertexStream) const
+FRHIBuffer* FMesh::GetVertexBuffer(EVertexStream::Type VertexStream) const
 {
-    switch (VertexStream)
+    if (VertexStream < 0 || VertexStream >= EVertexStream::Count)
     {
-        case EVertexStream::Packed:    return VertexBuffer.Get();
-        case EVertexStream::Positions: return VertexPositionBuffer.Get();
-        case EVertexStream::Normals:   return VertexNormalBuffer.Get();
-        case EVertexStream::TexCoords: return VertexTexCoordBuffer.Get();
-        
-        default: return nullptr;
+        return nullptr;
     }
+
+    return VertexBuffers[VertexStream].Get();
 }
 
-FRHIShaderResourceView* FMesh::GetVertexBufferSRV(EVertexStream VertexStream) const
+FRHIShaderResourceView* FMesh::GetVertexBufferSRV(EVertexStream::Type VertexStream) const
 {
-    switch (VertexStream)
+    if (VertexStream < 0 || VertexStream >= EVertexStream::Count)
     {
-        case EVertexStream::Packed:    return VertexBufferSRV.Get();
-        case EVertexStream::Positions: return VertexPositionBufferSRV.Get();
-        case EVertexStream::Normals:   return VertexNormalBufferSRV.Get();
-        case EVertexStream::TexCoords: return VertexTexCoordBufferSRV.Get();
-        
-        default: return nullptr;
+        return nullptr;
     }
+
+    return VertexBufferSRVs[VertexStream].Get();
 }
 
 void FMesh::CreateBoundingBox(const FMeshCreateInfo& CreateInfo)
@@ -377,9 +391,6 @@ bool FModel::Init(const FModelCreateInfo& CreateInfo)
             Material->NormalMap = CreateInfo.Materials[Index].Textures[EMaterialTexture::Normal]->GetRHITexture();
         }
 
-        // Determine the MaterialMap (R=AO, G=Roughness, B=Metallic)
-        // If a packed Specular texture exists (from FBX scenes like Sun Temple, Bistro), use it directly.
-        // Otherwise, if separate single-channel textures exist, pack them into a material param texture.
         const FTexture2DRef& SpecularTex  = CreateInfo.Materials[Index].Textures[EMaterialTexture::Specular];
         const FTexture2DRef& RoughnessTex = CreateInfo.Materials[Index].Textures[EMaterialTexture::Roughness];
         const FTexture2DRef& MetallicTex  = CreateInfo.Materials[Index].Textures[EMaterialTexture::Metallic];

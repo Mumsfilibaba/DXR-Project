@@ -47,19 +47,30 @@ struct FMaterialInfo
 struct FMaterialHLSL
 {
     // 0-16 
-    Vector3 Albedo           = Vector3(1.0f);
-    float   Roughness        = 1.0f;
+    Vector3 Albedo    = Vector3(1.0f);
+    float   Roughness = 1.0f;
+    
     // 16-32
-    float   Metallic         = 0.0f;
-    float   AmbientOcclusion = 1.0f;
-    int32   Padding0         = 0;
-    int32   Padding1         = 0;
+    float                Metallic         = 0.0f;
+    float                AmbientOcclusion = 1.0f;
+    FRHIDescriptorHandle AlbedoHandle     = {};
+    FRHIDescriptorHandle NormalHandle     = {};
+    
     // 32-48
-    float   ParallaxHeightScale = 0.03f;
-    float   ParallaxMinLayers   = 32.0f;
-    float   ParallaxMaxLayers   = 64.0f;
-    float   Padding2            = 0.0f;
+    float                ParallaxHeightScale = 0.03f;
+    float                ParallaxMinLayers   = 32.0f;
+    float                ParallaxMaxLayers   = 64.0f;
+    FRHIDescriptorHandle MaterialHandle      = {};
+
+    // 48-64
+    FRHIDescriptorHandle HeightHandle   = {};
+    FRHIDescriptorHandle SamplerHandle  = {};
+    uint32               NormalMapFlags = 0;
+    uint32               Padding0       = 0;
 };
+
+static_assert(sizeof(FRHIDescriptorHandle) == sizeof(uint32), "FRHIDescriptorHandle must be 4 bytes for the HLSL Material layout");
+static_assert(sizeof(FMaterialHLSL) == 64, "FMaterialHLSL must match the HLSL Material layout");
 
 class ENGINE_API FMaterial
 {
@@ -68,9 +79,7 @@ public:
     ~FMaterial();
 
     void Initialize();
-    void BuildBuffer(class FRHICommandList& CommandList);
-
-    bool IsBufferDirty() const { return bMaterialBufferIsDirty; }
+    void FillMaterialData(FMaterialHLSL& OutData) const;
 
     void SetAlbedo(const FFloatColor& Albedo);
     void SetMetallic(float Metallic);
@@ -104,9 +113,15 @@ public:
         return Sampler.Get();
     }
 
-    FRHIBuffer* GetMaterialBuffer() const
+    // Index into the global shared material StructuredBuffer (assigned each frame by the renderer).
+    int32 GetBufferIndex() const
     {
-        return MaterialBuffer.Get();
+        return BufferIndex;
+    }
+
+    void SetBufferIndex(int32 InBufferIndex)
+    {
+        BufferIndex = InBufferIndex;
     }
 
     EMaterialFlags GetMaterialFlags() const 
@@ -147,9 +162,7 @@ public:
 
 private:
     String              Name;
-    FMaterialHLSL       MaterialData;
     FMaterialInfo       MaterialInfo;
-    bool                bMaterialBufferIsDirty;
-    FRHIBufferRef       MaterialBuffer;
+    int32               BufferIndex = 0;
     FRHISamplerStateRef Sampler;
 };

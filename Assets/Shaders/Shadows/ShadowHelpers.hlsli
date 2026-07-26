@@ -1,9 +1,10 @@
 #ifndef SHADOW_HELPERS_HLSLI
 #define SHADOW_HELPERS_HLSLI
-#include "../Structs.hlsli"
-#include "../Helpers.hlsli"
-#include "../Random.hlsli"
-#include "../PoissonDisk.hlsli"
+
+#include "Structs.hlsli"
+#include "Helpers.hlsli"
+#include "Random.hlsli"
+#include "PoissonDisk.hlsli"
 
 #define POINT_LIGHT_SAMPLES 8
 #define NUM_OFFSET_SAMPLES 20
@@ -60,9 +61,9 @@ float PointLightShadowFactor(in TextureCubeArray<float> ShadowMap, float Index, 
     [unroll]
     for (int i = 0; i < POINT_LIGHT_SAMPLES; i++)
     {
-        const int OffsetIndex = int(float(NUM_OFFSET_SAMPLES) * Random(floor(WorldPosition.xyz * 1000.0), i)) % NUM_OFFSET_SAMPLES;
+        const int    OffsetIndex = int(float(NUM_OFFSET_SAMPLES) * Random(floor(WorldPosition.xyz * 1000.0), i)) % NUM_OFFSET_SAMPLES;
+        const float3 SampleVec   = DirToLight + SampleOffsetDirections[OffsetIndex] * DiskRadius;
         
-        const float3 SampleVec = DirToLight + SampleOffsetDirections[OffsetIndex] * DiskRadius;
         Shadow += ShadowMap.SampleCmpLevelZero(Sampler, float4(SampleVec, Index), Depth);
     }
     

@@ -12,7 +12,7 @@
 #include "VulkanRHI/VulkanSamplerState.h"
 #include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/VulkanDeviceLimits.h"
-#include "VulkanRHI/VulkanRayTracing.h"
+#include "VulkanRHI/RayTracing/VulkanRayTracing.h"
 #include "VulkanRHI/VulkanStats.h"
 #include "RHI/RHIStats.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
@@ -99,6 +99,58 @@ FVulkanUnorderedAccessViewRHI* FVulkanDeviceRHI::ResourceCast(FRHIUnorderedAcces
     return nullptr;
 }
 
+FVulkanAccelerationStructure* FVulkanDeviceRHI::ResourceCast(FRHIRayTracingAccelerationStructure* AccelerationStructure)
+{
+    if (!AccelerationStructure)
+    {
+        return nullptr;
+    }
+
+    switch (AccelerationStructure->GetAccelerationStructureType())
+    {
+        case ERayTracingAccelerationStructureType::Geometry:
+            return static_cast<FVulkanGeometryAccelerationStructureRHI*>(AccelerationStructure);
+
+        case ERayTracingAccelerationStructureType::Scene:
+            return static_cast<FVulkanSceneAccelerationStructureRHI*>(AccelerationStructure);
+
+        case ERayTracingAccelerationStructureType::Cluster:
+            return static_cast<FVulkanClusterAccelerationStructureRHI*>(AccelerationStructure);
+        
+        case ERayTracingAccelerationStructureType::PartitionedScene:
+            return static_cast<FVulkanPartitionedSceneAccelerationStructureRHI*>(AccelerationStructure);
+
+        default:
+            return nullptr;
+    }
+}
+
+const FVulkanAccelerationStructure* FVulkanDeviceRHI::ResourceCast(const FRHIRayTracingAccelerationStructure* AccelerationStructure)
+{
+    if (!AccelerationStructure)
+    {
+        return nullptr;
+    }
+
+    switch (AccelerationStructure->GetAccelerationStructureType())
+    {
+        case ERayTracingAccelerationStructureType::Geometry:
+            return static_cast<const FVulkanGeometryAccelerationStructureRHI*>(AccelerationStructure);
+
+        case ERayTracingAccelerationStructureType::Scene:
+            return static_cast<const FVulkanSceneAccelerationStructureRHI*>(AccelerationStructure);
+
+        case ERayTracingAccelerationStructureType::Cluster:
+            return static_cast<const FVulkanClusterAccelerationStructureRHI*>(AccelerationStructure);
+
+        case ERayTracingAccelerationStructureType::PartitionedScene:
+            return static_cast<const FVulkanPartitionedSceneAccelerationStructureRHI*>(AccelerationStructure);
+
+        default:
+            return nullptr;
+    }
+}
+
 const FVulkanTextureRHI* FVulkanDeviceRHI::ResourceCast(const FRHITexture* Texture)
 {
     if (Texture)
@@ -137,8 +189,6 @@ FVulkanDeviceRHI::FVulkanDeviceRHI()
 #endif
     , PhysicalDevice(nullptr)
     , Device(nullptr)
-    , GraphicsQueue(nullptr)
-    , PresentQueue(nullptr)
     , GraphicsCommandContext(nullptr)
 #if VULKAN_ENABLE_CRASH_MARKERS
     , CrashMarkers(nullptr)
@@ -185,9 +235,10 @@ FVulkanDeviceRHI::~FVulkanDeviceRHI()
         GraphicsCommandContext->Flush();
     }
 
-    if (GraphicsQueue)
+    // Idle all queues and reclaim completed submissions.
+    if (Device)
     {
-        GraphicsQueue->ProcessCommandQueue();
+        Device->WaitForGPU();
     }
 
     // Flush before submitting since some objects needs the CommandContext
@@ -209,16 +260,6 @@ FVulkanDeviceRHI::~FVulkanDeviceRHI()
     SAFE_DELETE(CrashMarkers);
 #endif
 
-    if (PresentQueue != GraphicsQueue)
-    {
-        SAFE_DELETE(PresentQueue);
-    }
-    else
-    {
-        PresentQueue = nullptr;
-    }
-
-    SAFE_DELETE(GraphicsQueue);
     SAFE_DELETE(Device);
     SAFE_DELETE(PhysicalDevice);
 
@@ -346,6 +387,13 @@ bool FVulkanDeviceRHI::Initialize()
     DeviceCreateInfo.OptionalFeatures.Features12.descriptorBindingUniformTexelBufferUpdateAfterBind = VK_TRUE;
     DeviceCreateInfo.OptionalFeatures.Features12.descriptorBindingStorageTexelBufferUpdateAfterBind = VK_TRUE;
     DeviceCreateInfo.OptionalFeatures.Features12.descriptorBindingUpdateUnusedWhilePending          = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features12.scalarBlockLayout                                  = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features12.shaderSampledImageArrayNonUniformIndexing          = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features12.shaderStorageImageArrayNonUniformIndexing          = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features12.shaderStorageBufferArrayNonUniformIndexing         = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features12.shaderUniformBufferArrayNonUniformIndexing         = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features12.shaderUniformTexelBufferArrayNonUniformIndexing    = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features12.shaderStorageTexelBufferArrayNonUniformIndexing    = VK_TRUE;
 
     // Vulkan 1.3 Required
     DeviceCreateInfo.RequiredFeatures.Features13.dynamicRendering = VK_TRUE;
@@ -382,23 +430,18 @@ bool FVulkanDeviceRHI::Initialize()
         return false;
     }
 
-    // Initialize Queues
-    GraphicsQueue = new FVulkanQueue(Device, EVulkanCommandQueueType::Graphics);
-    if (!GraphicsQueue->Initialize())
+    // Initialize Queues (owned by FVulkanDevice)
+    if (!Device->CreateGraphicsQueue())
     {
         VULKAN_ERROR_CRITICAL("Failed to initialize VulkanQueue [Graphics]");
         return false;
-    }
-    else
-    {
-        GraphicsQueue->SetDebugName("Graphics Queue");
     }
 
 #if VULKAN_ENABLE_CRASH_MARKERS
     if (Device->IsCrashMarkerExtensionsEnabled() && CVarVulkanEnableCrashMarkers.GetValue())
     {
         CrashMarkers = new FVulkanCrashMarkers(Device);
-        if (!CrashMarkers->Initialize(*GraphicsQueue))
+        if (!CrashMarkers->Initialize(*Device->GetGraphicsQueue()))
         {
             delete CrashMarkers;
             CrashMarkers = nullptr;
@@ -407,7 +450,7 @@ bool FVulkanDeviceRHI::Initialize()
 #endif
 
     // Initialize Default CommandContext
-    GraphicsCommandContext = new FVulkanCommandContext(Device, *GraphicsQueue);
+    GraphicsCommandContext = new FVulkanCommandContext(Device, *Device->GetGraphicsQueue());
     if (!GraphicsCommandContext->Initialize())
     {
         VULKAN_ERROR_CRITICAL("Failed to initialize VulkanCommandContext");
@@ -432,7 +475,7 @@ void FVulkanDeviceRHI::BeginFrame()
         VulkanDeviceLimits::TimestampPeriod = Properties.limits.timestampPeriod;
     }
 
-    GraphicsQueue->ProcessCommandQueue();
+    Device->GetGraphicsQueue()->ProcessCommandQueue();
 
 #if VULKAN_USE_DESCRIPTOR_CACHE
     Device->GetDescriptorSetCache().EvictStaleDescriptorSets(0);
@@ -459,7 +502,7 @@ void FVulkanDeviceRHI::BeginFrame()
         Device->GetMemoryManager().DefragmentAllocations(GraphicsCommandContext, MaxDefragMoves);
     }
 
-    Device->GetFrameFence().Signal(*GraphicsQueue);
+    Device->GetFrameFence().Signal(*Device->GetGraphicsQueue());
 }
 
 void FVulkanDeviceRHI::EndFrame()
@@ -600,40 +643,8 @@ FRHISwapChain* FVulkanDeviceRHI::CreateSwapChain(const FRHISwapChainDesc& InSwap
         return nullptr;
     }
 
-    EnsurePresentQueue();
+    Device->EnsurePresentQueue();
     return NewSwapChain.ReleaseOwnership();
-}
-
-bool FVulkanDeviceRHI::EnsurePresentQueue()
-{
-    if (PresentQueue)
-    {
-        return true;
-    }
-
-    TOptional<FVulkanQueueFamilyIndices> QueueIndices = Device->GetQueueIndicies();
-    if (!QueueIndices || QueueIndices->PresentQueueIndex == uint32(~0))
-    {
-        return false;
-    }
-
-    if (!QueueIndices->HasSeparatePresentQueue())
-    {
-        PresentQueue = GraphicsQueue;
-        return true;
-    }
-
-    PresentQueue = new FVulkanQueue(Device, EVulkanCommandQueueType::Present);
-    if (!PresentQueue->Initialize())
-    {
-        VULKAN_ERROR_CRITICAL("Failed to initialize present queue");
-        SAFE_DELETE(PresentQueue);
-        return false;
-    }
-
-    PresentQueue->SetDebugName("Present Queue");
-    VULKAN_INFO("Created separate present queue (family=%u)", QueueIndices->PresentQueueIndex);
-    return true;
 }
 
 FRHIQuery* FVulkanDeviceRHI::CreateQuery(EQueryType InQueryType)
@@ -655,9 +666,24 @@ FRHIFence* FVulkanDeviceRHI::CreateFence()
 
 FRHISceneAccelerationStructure* FVulkanDeviceRHI::CreateSceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& InSceneDesc)
 {
-    // TODO: Finish this
-    UNREFERENCED_VARIABLE(InSceneDesc);
-    return nullptr;
+    FRHISceneAccelerationStructureBuildDesc BuildDesc;
+    BuildDesc.Instances    = InSceneDesc.Instances.Data();
+    BuildDesc.NumInstances = InSceneDesc.Instances.Size();
+    BuildDesc.bUpdate      = false;
+
+    GraphicsCommandContext->StartContext();
+
+    FVulkanSceneAccelerationStructureRHIRef NewScene = new FVulkanSceneAccelerationStructureRHI(GetDevice(), InSceneDesc);
+    if (!NewScene->Build(*GraphicsCommandContext, BuildDesc))
+    {
+        DEBUG_BREAK();
+        NewScene.Reset();
+    }
+
+    GraphicsCommandContext->FinishContext();
+
+    TickCoreProgression();
+    return NewScene.ReleaseOwnership();
 }
 
 FRHIGeometryAccelerationStructure* FVulkanDeviceRHI::CreateGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
@@ -683,6 +709,158 @@ FRHIGeometryAccelerationStructure* FVulkanDeviceRHI::CreateGeometryAccelerationS
 
     TickCoreProgression();
     return NewGeometry.ReleaseOwnership();
+}
+
+FRHIOpacityMicromap* FVulkanDeviceRHI::CreateOpacityMicromap(const FRHIOpacityMicromapDesc& InDesc)
+{
+#if VK_EXT_opacity_micromap
+    if (GVulkanSupportsOpacityMicromap)
+    {
+        return new FVulkanOpacityMicromap(GetDevice(), InDesc);
+    }
+#endif
+
+    UNREFERENCED_VARIABLE(InDesc);
+    return nullptr;
+}
+
+FRHIClusterAccelerationStructure* FVulkanDeviceRHI::CreateClusterAccelerationStructure(const FRHIClusterAccelerationStructureDesc& InDesc)
+{
+#if VK_NV_cluster_acceleration_structure
+    if (GVulkanSupportsClustersAndPTLAS)
+    {
+        TSharedRef<FVulkanClusterAccelerationStructureRHI> NewCluster = new FVulkanClusterAccelerationStructureRHI(GetDevice(), InDesc);
+        if (NewCluster->Initialize())
+        {
+            return NewCluster.ReleaseOwnership();
+        }
+    }
+#endif
+
+    UNREFERENCED_VARIABLE(InDesc);
+    return nullptr;
+}
+
+FRHIClusterTemplate* FVulkanDeviceRHI::CreateClusterTemplate(const FRHIClusterTemplateDesc& InDesc)
+{
+#if VK_NV_cluster_acceleration_structure
+    if (GVulkanSupportsClustersAndPTLAS)
+    {
+        TSharedRef<FVulkanClusterTemplateRHI> NewTemplate = new FVulkanClusterTemplateRHI(GetDevice(), InDesc);
+        if (NewTemplate->Initialize())
+        {
+            return NewTemplate.ReleaseOwnership();
+        }
+    }
+#endif
+
+    UNREFERENCED_VARIABLE(InDesc);
+    return nullptr;
+}
+
+FRHIPartitionedSceneAccelerationStructure* FVulkanDeviceRHI::CreatePartitionedSceneAccelerationStructure(const FRHIRayTracingAccelerationStructurePartitionedSceneInputs& InInputs)
+{
+#if VK_NV_partitioned_acceleration_structure
+    if (GVulkanSupportsClustersAndPTLAS)
+    {
+        TSharedRef<FVulkanPartitionedSceneAccelerationStructureRHI> NewScene = new FVulkanPartitionedSceneAccelerationStructureRHI(GetDevice(), InInputs);
+        if (NewScene->Initialize())
+        {
+            return NewScene.ReleaseOwnership();
+        }
+    }
+#endif
+
+    UNREFERENCED_VARIABLE(InInputs);
+    return nullptr;
+}
+
+void FVulkanDeviceRHI::GetRayTracingAccelerationStructureOperationPrebuildInfo(const FRHIRayTracingAccelerationStructureOperationInputs& InInputs, FRHIRayTracingAccelerationStructurePrebuildInfo& OutInfo)
+{
+    OutInfo = FRHIRayTracingAccelerationStructurePrebuildInfo();
+
+#if VK_NV_cluster_acceleration_structure && VK_NV_partitioned_acceleration_structure
+    if (!GVulkanSupportsClustersAndPTLAS)
+    {
+        return;
+    }
+
+    VkAccelerationStructureBuildSizesInfoKHR SizesInfo = {};
+    SizesInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
+
+    if (InInputs.OperationType == ERayTracingAccelerationStructureOperationType::PartitionedSceneAccelerationStructure)
+    {
+        if (vkGetPartitionedAccelerationStructuresBuildSizesNV)
+        {
+            VkPartitionedAccelerationStructureInstancesInputNV InstancesInput = {};
+            InstancesInput.sType                             = VK_STRUCTURE_TYPE_PARTITIONED_ACCELERATION_STRUCTURE_INSTANCES_INPUT_NV;
+            InstancesInput.instanceCount                     = InInputs.MaxArgumentCount;
+            InstancesInput.maxInstancePerPartitionCount      = InInputs.MaxArgumentCount;
+            InstancesInput.partitionCount                    = 1;
+            InstancesInput.maxInstanceInGlobalPartitionCount = InInputs.MaxArgumentCount;
+            vkGetPartitionedAccelerationStructuresBuildSizesNV(GetDevice()->GetVkDevice(), &InstancesInput, &SizesInfo);
+        }
+    }
+    else if (vkGetClusterAccelerationStructureBuildSizesNV)
+    {
+        FVulkanClusterInputScratch Scratch = {};
+        Scratch.TriangleClusters.sType                         = VK_STRUCTURE_TYPE_CLUSTER_ACCELERATION_STRUCTURE_TRIANGLE_CLUSTER_INPUT_NV;
+        Scratch.TriangleClusters.vertexFormat                  = VK_FORMAT_R32G32B32_SFLOAT;
+        Scratch.TriangleClusters.maxGeometryIndexValue         = InInputs.ClusterLimits.MaxGeometryIndex;
+        Scratch.TriangleClusters.maxClusterUniqueGeometryCount = 1;
+        Scratch.TriangleClusters.maxClusterTriangleCount       = InInputs.ClusterLimits.MaxTrianglesPerCluster;
+        Scratch.TriangleClusters.maxClusterVertexCount         = InInputs.ClusterLimits.MaxVerticesPerCluster;
+        Scratch.TriangleClusters.maxTotalTriangleCount         = InInputs.ClusterLimits.MaxTrianglesPerCluster * InInputs.ClusterLimits.MaxClusterCount;
+        Scratch.TriangleClusters.maxTotalVertexCount           = InInputs.ClusterLimits.MaxVerticesPerCluster * InInputs.ClusterLimits.MaxClusterCount;
+        Scratch.TriangleClusters.minPositionTruncateBitCount   = 0;
+
+        Scratch.ClustersBottomLevel.sType                                   = VK_STRUCTURE_TYPE_CLUSTER_ACCELERATION_STRUCTURE_CLUSTERS_BOTTOM_LEVEL_INPUT_NV;
+        Scratch.ClustersBottomLevel.maxTotalClusterCount                    = InInputs.ClusterLimits.MaxClusterCount;
+        Scratch.ClustersBottomLevel.maxClusterCountPerAccelerationStructure = InInputs.ClusterLimits.MaxClusterCount;
+
+        Scratch.MoveObjects.sType         = VK_STRUCTURE_TYPE_CLUSTER_ACCELERATION_STRUCTURE_MOVE_OBJECTS_INPUT_NV;
+        Scratch.MoveObjects.type          = VK_CLUSTER_ACCELERATION_STRUCTURE_TYPE_TRIANGLE_CLUSTER_NV;
+        Scratch.MoveObjects.noMoveOverlap = VK_FALSE;
+        Scratch.MoveObjects.maxMovedBytes = 0;
+
+        VkClusterAccelerationStructureInputInfoNV InputInfo = {};
+        InputInfo.sType                         = VK_STRUCTURE_TYPE_CLUSTER_ACCELERATION_STRUCTURE_INPUT_INFO_NV;
+        InputInfo.maxAccelerationStructureCount = InInputs.MaxArgumentCount;
+        InputInfo.flags                         = ConvertAccelerationStructureBuildFlags(EAccelerationStructureBuildFlags::None);
+
+        switch (InInputs.OperationType)
+        {
+            case ERayTracingAccelerationStructureOperationType::BuildClusterTemplatesFromTriangles:
+                InputInfo.opType                    = VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_BUILD_TRIANGLE_CLUSTER_TEMPLATE_NV;
+                InputInfo.opInput.pTriangleClusters = &Scratch.TriangleClusters;
+                break;
+            case ERayTracingAccelerationStructureOperationType::InstantiateClusterTemplates:
+                InputInfo.opType                    = VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_INSTANTIATE_TRIANGLE_CLUSTER_NV;
+                InputInfo.opInput.pTriangleClusters = &Scratch.TriangleClusters;
+                break;
+            case ERayTracingAccelerationStructureOperationType::BuildGeometryAccelerationStructureFromClusters:
+                InputInfo.opType                       = VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_BUILD_CLUSTERS_BOTTOM_LEVEL_NV;
+                InputInfo.opInput.pClustersBottomLevel = &Scratch.ClustersBottomLevel;
+                break;
+            case ERayTracingAccelerationStructureOperationType::MoveClusterObjects:
+                InputInfo.opType               = VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_MOVE_OBJECTS_NV;
+                InputInfo.opInput.pMoveObjects = &Scratch.MoveObjects;
+                break;
+            default:
+                InputInfo.opType                    = VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_BUILD_TRIANGLE_CLUSTER_NV;
+                InputInfo.opInput.pTriangleClusters = &Scratch.TriangleClusters;
+                break;
+        }
+
+        vkGetClusterAccelerationStructureBuildSizesNV(GetDevice()->GetVkDevice(), &InputInfo, &SizesInfo);
+    }
+
+    OutInfo.ResultSizeInBytes        = SizesInfo.accelerationStructureSize;
+    OutInfo.ScratchSizeInBytes       = SizesInfo.buildScratchSize;
+    OutInfo.UpdateScratchSizeInBytes = SizesInfo.updateScratchSize;
+#else
+    UNREFERENCED_VARIABLE(InInputs);
+#endif
 }
 
 FRHIShaderResourceView* FVulkanDeviceRHI::CreateShaderResourceView(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc)
@@ -1033,10 +1211,67 @@ FRHIMeshletPipelineState* FVulkanDeviceRHI::CreateMeshletPipelineState(const FRH
     }
 }
 
-FRHIRayTracingPipelineState* FVulkanDeviceRHI::CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& /*InDesc*/ )
+FRHIRayTracingPipelineState* FVulkanDeviceRHI::CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc)
 {
-    STAT_ADD(STAT_Vulkan_NumRayTracingPipelineStates, 1);
-    return new FVulkanRayTracingPipelineStateRHI();
+    FVulkanRayTracingPipelineStateRHIRef NewPipeline = new FVulkanRayTracingPipelineStateRHI(GetDevice());
+    if (!NewPipeline->Initialize(InDesc))
+    {
+        DEBUG_BREAK();
+        return nullptr;
+    }
+
+    return NewPipeline.ReleaseOwnership();
+}
+
+FRHIShaderBindingTable* FVulkanDeviceRHI::CreateShaderBindingTable(const FRHIShaderBindingTableDesc& InDesc)
+{
+    FVulkanShaderBindingTableRef NewTable = new FVulkanShaderBindingTable(GetDevice(), InDesc);
+    return NewTable.ReleaseOwnership();
+}
+
+FRHIRayTracingShaderIdentifier FVulkanDeviceRHI::GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState* InPipeline, const String& InExportName)
+{
+    FRHIRayTracingShaderIdentifier Identifier;
+    if (FVulkanRayTracingPipelineStateRHI* VulkanPipeline = FVulkanDeviceRHI::ResourceCast(InPipeline))
+    {
+        if (const uint8* GroupHandle = VulkanPipeline->GetShaderGroupHandle(InExportName))
+        {
+            const uint32 HandleSize = Math::Min<uint32>(VulkanPipeline->GetShaderGroupHandleSize(), FRHIRayTracingShaderIdentifier::MAX_SIZE_IN_BYTES);
+            Memory::Memcpy(Identifier.Data, GroupHandle, HandleSize);
+            Identifier.SizeInBytes = HandleSize;
+        }
+    }
+
+    return Identifier;
+}
+
+bool FVulkanDeviceRHI::IsAccelerationStructureSerializationHeaderValid(const FRHIAccelerationStructureSerializationHeader& InHeader)
+{
+    if (InHeader.RHIType != ERHIType::Vulkan)
+    {
+        return false;
+    }
+
+#if VK_KHR_acceleration_structure
+    if (!vkGetDeviceAccelerationStructureCompatibilityKHR)
+    {
+        return false;
+    }
+
+    static_assert(FRHIAccelerationStructureSerializationHeader::DRIVER_MATCHING_IDENTIFIER_SIZE >= (2 * VK_UUID_SIZE),
+        "Serialization header driver-matching identifier is too small for Vulkan");
+
+    VkAccelerationStructureVersionInfoKHR VersionInfo = {};
+    VersionInfo.sType        = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_VERSION_INFO_KHR;
+    VersionInfo.pVersionData = InHeader.DriverMatchingIdentifier;
+
+    VkAccelerationStructureCompatibilityKHR Compatibility = VK_ACCELERATION_STRUCTURE_COMPATIBILITY_INCOMPATIBLE_KHR;
+    vkGetDeviceAccelerationStructureCompatibilityKHR(GetDevice()->GetVkDevice(), &VersionInfo, &Compatibility);
+
+    return Compatibility == VK_ACCELERATION_STRUCTURE_COMPATIBILITY_COMPATIBLE_KHR;
+#else
+    return false;
+#endif
 }
 
 bool FVulkanDeviceRHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryInfo) const 
@@ -1174,8 +1409,8 @@ void* FVulkanDeviceRHI::GetRHINativeDevice()
 
 void* FVulkanDeviceRHI::GetRHINativeDirectCommandQueue()
 {
-    CHECK(GraphicsQueue != nullptr);
-    return reinterpret_cast<void*>(GraphicsQueue->GetVkQueue());
+    CHECK(Device != nullptr && Device->GetGraphicsQueue() != nullptr);
+    return reinterpret_cast<void*>(Device->GetGraphicsQueue()->GetVkQueue());
 }
 
 void* FVulkanDeviceRHI::GetRHINativeComputeCommandQueue()
@@ -1202,13 +1437,13 @@ void FVulkanDeviceRHI::EnqueueResourceDeletion(FRHIResource* Resource)
 
 void FVulkanDeviceRHI::TickCoreProgression()
 {
-    GraphicsQueue->ProcessCommandQueue();
+    Device->GetGraphicsQueue()->ProcessCommandQueue();
     Device->GetMemoryManager().CleanUpAllocators();
 }
 
 void FVulkanDeviceRHI::FlushCompletedSubmissions()
 {
-    GraphicsQueue->ProcessCommandQueue();
+    Device->GetGraphicsQueue()->ProcessCommandQueue();
 }
 
 void FVulkanDeviceRHI::FlushDeletionQueue(FVulkanCommands* Commands)
@@ -1246,56 +1481,189 @@ VkPipelineStageFlags2 FVulkanDeviceRHI::ResourceStateToPipelineStageFlags(EResou
         AllNonPixelShaderBits |= VK_PIPELINE_STAGE_2_TESSELLATION_CONTROL_SHADER_BIT | VK_PIPELINE_STAGE_2_TESSELLATION_EVALUATION_SHADER_BIT;
     }
 
-    switch (ResourceState)
+    if (ResourceState == EResourceAccess::Common || IsEnumFlagSet(ResourceState, EResourceAccess::GenericRead))
     {
-        case EResourceAccess::Common:                 return VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
-        case EResourceAccess::CopyDest:               return VK_PIPELINE_STAGE_2_TRANSFER_BIT;
-        case EResourceAccess::CopySource:             return VK_PIPELINE_STAGE_2_TRANSFER_BIT;
-        case EResourceAccess::DepthRead:              return VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
-        case EResourceAccess::DepthWrite:             return VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
-        case EResourceAccess::IndexBuffer:            return VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT;
-        case EResourceAccess::VertexBuffer:           return VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT;
-        case EResourceAccess::NonPixelShaderResource: return AllNonPixelShaderBits;
-        case EResourceAccess::PixelShaderResource:    return VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
-        case EResourceAccess::Present:                return VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
-        case EResourceAccess::RenderTarget:           return VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-        case EResourceAccess::ResolveDest:            return VK_PIPELINE_STAGE_2_TRANSFER_BIT;
-        case EResourceAccess::ResolveSource:          return VK_PIPELINE_STAGE_2_TRANSFER_BIT;
-        case EResourceAccess::ShadingRateSource:      return GVulkanSupportsFragmentShadingRate ? VK_PIPELINE_STAGE_2_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR : VK_PIPELINE_STAGE_2_NONE;
-        case EResourceAccess::UnorderedAccess:        return AllShaderBits;
-        case EResourceAccess::ConstantBuffer:         return AllShaderBits;
-        case EResourceAccess::GenericRead:            return VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
-        default:                                      return VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+        return VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
     }
+
+    VkPipelineStageFlags2 Stages = VK_PIPELINE_STAGE_2_NONE;
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::CopyDest))
+    {
+        Stages |= VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::CopySource))
+    {
+        Stages |= VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::DepthRead))
+    {
+        Stages |= VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::DepthWrite))
+    {
+        Stages |= VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::IndexBuffer))
+    {
+        Stages |= VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::VertexBuffer))
+    {
+        Stages |= VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::NonPixelShaderResource))
+    {
+        Stages |= AllNonPixelShaderBits;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::PixelShaderResource))
+    {
+        Stages |= VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::Present))
+    {
+        Stages |= VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::RenderTarget))
+    {
+        Stages |= VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::ResolveDest))
+    {
+        Stages |= VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::ResolveSource))
+    {
+        Stages |= VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::ShadingRateSource))
+    {
+        Stages |= GVulkanSupportsFragmentShadingRate ? VK_PIPELINE_STAGE_2_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR : VK_PIPELINE_STAGE_2_NONE;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::UnorderedAccess))
+    {
+        Stages |= AllShaderBits;
+    }
+    
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::ConstantBuffer))
+    {
+        Stages |= AllShaderBits;
+    }
+
+    return Stages != VK_PIPELINE_STAGE_2_NONE ? Stages : VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
 }
 
 VkAccessFlags2 FVulkanDeviceRHI::ResourceStateToAccessFlags(EResourceAccess ResourceState)
 {
-    switch (ResourceState)
+    if (ResourceState == EResourceAccess::Common)
     {
-        case EResourceAccess::Common:                 return VK_ACCESS_2_NONE;
-        case EResourceAccess::CopyDest:               return VK_ACCESS_2_TRANSFER_WRITE_BIT;
-        case EResourceAccess::CopySource:             return VK_ACCESS_2_TRANSFER_READ_BIT;
-        case EResourceAccess::DepthRead:              return VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-        case EResourceAccess::DepthWrite:             return VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-        case EResourceAccess::IndexBuffer:            return VK_ACCESS_2_INDEX_READ_BIT;
-        case EResourceAccess::VertexBuffer:           return VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT;
-        case EResourceAccess::NonPixelShaderResource: return VK_ACCESS_2_SHADER_READ_BIT;
-        case EResourceAccess::PixelShaderResource:    return VK_ACCESS_2_SHADER_READ_BIT;
-        case EResourceAccess::Present:                return VK_ACCESS_2_MEMORY_READ_BIT;
-        case EResourceAccess::RenderTarget:           return VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
-        case EResourceAccess::ResolveDest:            return VK_ACCESS_2_TRANSFER_WRITE_BIT;
-        case EResourceAccess::ResolveSource:          return VK_ACCESS_2_TRANSFER_READ_BIT;
-        case EResourceAccess::ShadingRateSource:      return GVulkanSupportsFragmentShadingRate ? VK_ACCESS_2_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR : VK_ACCESS_2_NONE;
-        case EResourceAccess::UnorderedAccess:        return VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT;
-        case EResourceAccess::ConstantBuffer:         return VK_ACCESS_2_UNIFORM_READ_BIT;
-        case EResourceAccess::GenericRead:            return VK_ACCESS_2_MEMORY_READ_BIT;
-        default:                                      return VK_ACCESS_2_NONE;
+        return VK_ACCESS_2_NONE;
     }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::GenericRead))
+    {
+        return VK_ACCESS_2_MEMORY_READ_BIT;
+    }
+
+    VkAccessFlags2 Access = VK_ACCESS_2_NONE;
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::CopyDest))
+    {
+        Access |= VK_ACCESS_2_TRANSFER_WRITE_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::CopySource))
+    {
+        Access |= VK_ACCESS_2_TRANSFER_READ_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::DepthRead))
+    {
+        Access |= VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::DepthWrite))
+    {
+        Access |= VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::IndexBuffer))
+    {
+        Access |= VK_ACCESS_2_INDEX_READ_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::VertexBuffer))
+    {
+        Access |= VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::NonPixelShaderResource))
+    {
+        Access |= VK_ACCESS_2_SHADER_READ_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::PixelShaderResource))
+    {
+        Access |= VK_ACCESS_2_SHADER_READ_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::Present))
+    {
+        Access |= VK_ACCESS_2_MEMORY_READ_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::RenderTarget))
+    {
+        Access |= VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::ResolveDest))
+    {
+        Access |= VK_ACCESS_2_TRANSFER_WRITE_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::ResolveSource))
+    {
+        Access |= VK_ACCESS_2_TRANSFER_READ_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::ShadingRateSource))
+    {
+        Access |= GVulkanSupportsFragmentShadingRate ? VK_ACCESS_2_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR : VK_ACCESS_2_NONE;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::UnorderedAccess))
+    {
+        Access |= VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT;
+    }
+    
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::ConstantBuffer))
+    {
+        Access |= VK_ACCESS_2_UNIFORM_READ_BIT;
+    }
+
+    return Access;
 }
 
 VkImageLayout FVulkanDeviceRHI::ResourceStateToImageLayout(EResourceAccess ResourceState)
 {
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::PixelShaderResource) ||
+        IsEnumFlagSet(ResourceState, EResourceAccess::NonPixelShaderResource))
+    {
+        return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    }
+
     switch (ResourceState)
     {
         case EResourceAccess::Common:                 return VK_IMAGE_LAYOUT_GENERAL;

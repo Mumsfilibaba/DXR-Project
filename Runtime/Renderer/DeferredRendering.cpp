@@ -34,6 +34,24 @@ static FAutoConsoleVariableRef CVarPrePassBindless(
     "When true, the depth pre-pass samples Albedo (alpha mask) and Height (parallax) via SM 6.6 ResourceDescriptorHeap[] / SamplerDescriptorHeap[] and a per-material indices buffer instead of register bindings.",
     GPrePassBindless);
 
+static float GIndirectSpecularStrength = 1.0f;
+static FAutoConsoleVariableRef CVarIndirectSpecularStrength(
+    "Renderer.Reflections.IndirectSpecularStrength",
+    "Scalar multiplier applied to the indirect specular (IBL / ray-traced reflection) contribution in the deferred light pass.",
+    GIndirectSpecularStrength);
+
+static float GBasePassSpecularAAStrength = 1.0f;
+static FAutoConsoleVariableRef CVarBasePassSpecularAAStrength(
+    "Renderer.BasePass.SpecularAA.Strength",
+    "Strength of the geometric specular anti-aliasing roughness gain applied in the deferred BasePass.",
+    GBasePassSpecularAAStrength);
+
+static float GBasePassSpecularAAMaxRoughnessGain = 0.02f;
+static FAutoConsoleVariableRef CVarBasePassSpecularAAMaxRoughnessGain(
+    "Renderer.BasePass.SpecularAA.MaxRoughnessGain",
+    "Maximum squared-roughness gain that geometric specular anti-aliasing can add in the deferred BasePass.",
+    GBasePassSpecularAAMaxRoughnessGain);
+
 FDepthPrePass::FDepthPrePass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
     , MaterialPSOs()
@@ -263,7 +281,7 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
-    const bool bBindless = GPrePassBindless && FrameResources.MaterialIndicesBuffer.IsValid();
+    const bool bBindless = GPrePassBindless && FrameResources.MaterialDataBufferSRV.IsValid();
 
     for (const FMeshBatch& Batch : Scene->GetCameraView().GetMeshBatches())
     {
@@ -290,18 +308,17 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
 
         if (Material->HasAlphaMask() || Material->HasHeightMap())
         {
-            CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), Material->GetMaterialBuffer(), 1);
-
             if (bBindless)
             {
-                FMaterialBindlessIndicesHLSL Indices;
-                FillMaterialBindlessIndices(*Material, Indices);
-
-                CommandList.UpdateBuffer(FrameResources.MaterialIndicesBuffer.Get(), FBufferRegion(0, sizeof(FMaterialBindlessIndicesHLSL)), &Indices);
-                CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), FrameResources.MaterialIndicesBuffer.Get(), 2);
+                CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), FrameResources.MaterialDataBufferSRV.Get(), 2);
             }
             else
             {
+                if (Material->HasHeightMap())
+                {
+                    CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), FrameResources.MaterialDataBufferSRV.Get(), 2);
+                }
+
                 CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
 
                 if (Material->HasAlphaMask())
@@ -352,8 +369,16 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
 
             CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
 
-            CommandList.UpdateBuffer(FrameResources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->TransformBuffer);
-            CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.TransformBuffer.Get(), 1);
+            const int32 MaxMaterialIndex = Math::Max<int32>(int32(FrameResources.MaterialData.Size()) - 1, 0);
+            StaticMesh->PerObjectBuffer.MaterialIndex = uint32(Math::Clamp<int32>(Material->GetBufferIndex(), 0, MaxMaterialIndex));
+
+            CommandList.UpdateBuffer(FrameResources.PerObjectBuffer.Get(), FBufferRegion(0, sizeof(FPerObjectHLSL)), &StaticMesh->PerObjectBuffer);
+            CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.PerObjectBuffer.Get(), 1);
+
+            if (FRHIPixelShader* PixelShader = PipelineInstance->PixelShader.Get())
+            {
+                CommandList.SetConstantBuffer(PixelShader, FrameResources.PerObjectBuffer.Get(), 1);
+            }
 
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
         }
@@ -426,7 +451,7 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FFrameRe
         const EShaderModel TargetShaderModel = bBindless ? EShaderModel::SM_6_6 : EShaderModel::SM_6_2;
 
         FShaderCompileInfo CompileInfo("VSMain", TargetShaderModel, EShaderStage::Vertex, ShaderDefines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/BasePass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return;
@@ -441,7 +466,7 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FFrameRe
         }
 
         CompileInfo = FShaderCompileInfo("PSMain", TargetShaderModel, EShaderStage::Pixel, ShaderDefines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/BasePass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return;
@@ -631,7 +656,7 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
-    const bool bBindless = GBasePassBindless && FrameResources.MaterialIndicesBuffer.IsValid();
+    const bool bBindless = GBasePassBindless && FrameResources.MaterialDataBufferSRV.IsValid();
 
     for (const FMeshBatch& Batch : Scene->GetCameraView().GetMeshBatches())
     {
@@ -654,25 +679,32 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
 
         CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
+        if (FRHIPixelShader* PixelShader = PipelineInstance->PixelShader.Get())
+        {
+            struct FBasePassConstants
+            {
+                float SpecularAAStrength;
+                float SpecularAAMaxRoughnessGain;
+                float Padding0;
+                float Padding1;
+            } BasePassConstants;
+
+            BasePassConstants.SpecularAAStrength         = GBasePassSpecularAAStrength;
+            BasePassConstants.SpecularAAMaxRoughnessGain = GBasePassSpecularAAMaxRoughnessGain;
+            BasePassConstants.Padding0                   = 0.0f;
+            BasePassConstants.Padding1                   = 0.0f;
+
+            constexpr uint32 NumConstants = sizeof(FBasePassConstants) / sizeof(uint32);
+            CommandList.SetShaderConstants(PixelShader, &BasePassConstants, NumConstants);
+        }
+
         if (bBindless)
         {
-            FMaterialBindlessIndicesHLSL Indices;
-            FillMaterialBindlessIndices(*Material, Indices);
-
-            CommandList.UpdateBuffer(FrameResources.MaterialIndicesBuffer.Get(), FBufferRegion(0, sizeof(FMaterialBindlessIndicesHLSL)), &Indices);
-
-            FRHIBuffer* PSConstantBuffers[] =
-            {
-                FrameResources.CameraBuffer.Get(),
-                Material->GetMaterialBuffer(),
-                FrameResources.MaterialIndicesBuffer.Get(),
-            };
-
-            CommandList.SetConstantBuffers(PipelineInstance->PixelShader.Get(), MakeArrayView(PSConstantBuffers), 0);
+            CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), FrameResources.MaterialDataBufferSRV.Get(), 4);
         }
         else
         {
-            // Unified texture layout: t0=Albedo, t1=Normal, t2=MaterialMap, t3=Height
             CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
 
             if (Material->HasNormalMap())
@@ -687,13 +719,10 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
                 CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 3);
             }
 
-            FRHIBuffer* PSConstantBuffers[] =
-            {
-                FrameResources.CameraBuffer.Get(),
-                Material->GetMaterialBuffer(),
-            };
+            CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-            CommandList.SetConstantBuffers(PipelineInstance->PixelShader.Get(), MakeArrayView(PSConstantBuffers), 0);
+            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), FrameResources.MaterialDataBufferSRV.Get(), 4);
+
             CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
         }
 
@@ -711,8 +740,12 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
             CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
             CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
 
-            CommandList.UpdateBuffer(FrameResources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->TransformBuffer);
-            CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.TransformBuffer.Get(), 1);
+            const int32 MaxMaterialIndex = Math::Max<int32>(int32(FrameResources.MaterialData.Size()) - 1, 0);
+            StaticMesh->PerObjectBuffer.MaterialIndex = uint32(Math::Clamp<int32>(Material->GetBufferIndex(), 0, MaxMaterialIndex));
+            CommandList.UpdateBuffer(FrameResources.PerObjectBuffer.Get(), FBufferRegion(0, sizeof(FPerObjectHLSL)), &StaticMesh->PerObjectBuffer);
+
+            CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.PerObjectBuffer.Get(), 1);
+            CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), FrameResources.PerObjectBuffer.Get(), 1);
 
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
         }
@@ -763,16 +796,16 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
 
     TArray<uint8> ShaderCode;
 
-    // BRDF LUT Generation
     constexpr uint32  LUTSize   = 512;
     constexpr EFormat LUTFormat = EFormat::R16G16_Float;
+
     if (!RHI::Device->QueryUAVFormatSupport(LUTFormat))
     {
         LOG_ERROR("[FSceneRenderer]: R16G16_Float is not supported for UAVs");
         return false;
     }
 
-    FRHITextureDesc LUTDesc = FRHITextureDesc::CreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, ETextureUsageFlags::UnorderedAccessTexture);
+    FRHITextureDesc LUTDesc = FRHITextureDesc::CreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::CopySource);
     FRHITextureRef StagingTexture = RHI::CreateTexture(LUTDesc, EResourceAccess::Common);
 
     if (!StagingTexture)
@@ -785,7 +818,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         StagingTexture->SetDebugName("Staging IntegrationLUT");
     }
 
-    LUTDesc.UsageFlags = ETextureUsageFlags::ShaderResourceTexture;
+    LUTDesc.UsageFlags = ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::CopyDest;
 
     FrameResources.IntegrationLUT = RHI::CreateTexture(LUTDesc, EResourceAccess::Common);
     if (!FrameResources.IntegrationLUT)
@@ -846,9 +879,10 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
     FRHIUnorderedAccessView* StagingUAV = StagingTexture->GetUnorderedAccessView();
     CommandList.SetUnorderedAccessView(BRDFShader.Get(), StagingUAV, 0);
 
-    constexpr uint32 ThreadCount = 16;
+    constexpr uint32 ThreadCount    = 16;
     constexpr uint32 DispatchWidth  = Math::DivideByMultiple(LUTSize, ThreadCount);
     constexpr uint32 DispatchHeight = Math::DivideByMultiple(LUTSize, ThreadCount);
+
     CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
     CommandList.UnorderedAccessTextureBarrier(StagingTexture.Get());
@@ -966,7 +1000,7 @@ bool FTiledLightPass::CreateResources(FFrameResources& FrameResources, uint32 Wi
         return true;
     }
 
-    const ETextureUsageFlags Usage = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
+    const ETextureUsageFlags Usage = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::CopySource;
     FRHITextureDesc SceneTargetDesc = FRHITextureDesc::CreateTexture2D(RendererTextureFormats::SceneTargetFormat, Width, Height, 1, 1, Usage);
     FrameResources.SceneTarget = RHI::CreateTexture(SceneTargetDesc, EResourceAccess::PixelShaderResource);
     
@@ -1022,9 +1056,19 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[EGBufferIndex::Normal]->GetShaderResourceView(), 1);
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[EGBufferIndex::Material]->GetShaderResourceView(), 2);
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[EGBufferIndex::Depth]->GetShaderResourceView(), 3);
-#if 0 // DXR-Reflection (currently unused)
-    CommandList.SetShaderResourceView(LightPassShader, nullptr, 4);
-#endif
+
+    bool bRayTracingEnabled = false;
+    if (IConsoleVariable* CVarRayTracing = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.RayTracing"))
+    {
+        bRayTracingEnabled = CVarRayTracing->GetBool();
+    }
+
+    const bool bUseRayTracingReflections = RHI::bSupportsRayTracing && bRayTracingEnabled && FrameResources.RayTracingOutput;
+    if (bUseRayTracingReflections)
+    {
+        CommandList.RequireTextureState(FrameResources.RayTracingOutput.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+        CommandList.SetShaderResourceView(LightPassShader, FrameResources.RayTracingOutput->GetShaderResourceView(), 4);
+    }
 
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.IntegrationLUT->GetShaderResourceView(), 5);
 
@@ -1086,19 +1130,23 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
         int32 ScreenWidth;
         int32 ScreenHeight;
         int32 bEnablePointLightShadows;
-        int32 Padding0;
+        int32 bEnableRayTracingReflections;
+
+        // 32-48
+        float IndirectSpecularStrength;
     } LightPassSettings;
 
     const int32 RenderWidth  = FrameResources.CurrentRenderWidth;
     const int32 RenderHeight = FrameResources.CurrentRenderHeight;
 
-    LightPassSettings.NumSkyLightMips             = 0;
-    LightPassSettings.NumShadowCastingPointLights = FrameResources.ShadowCastingPointLightsData.Size();
-    LightPassSettings.NumPointLights              = FrameResources.PointLightsData.Size();
-    LightPassSettings.NumLightProbes              = FrameResources.LightProbeInfos.Size();
-    LightPassSettings.ScreenWidth                 = static_cast<int32>(RenderWidth);
-    LightPassSettings.ScreenHeight                = static_cast<int32>(RenderHeight);
-    LightPassSettings.Padding0                    = 0;
+    LightPassSettings.NumSkyLightMips              = 0;
+    LightPassSettings.NumShadowCastingPointLights  = FrameResources.ShadowCastingPointLightsData.Size();
+    LightPassSettings.NumPointLights               = FrameResources.PointLightsData.Size();
+    LightPassSettings.NumLightProbes               = FrameResources.LightProbeInfos.Size();
+    LightPassSettings.ScreenWidth                  = static_cast<int32>(RenderWidth);
+    LightPassSettings.ScreenHeight                 = static_cast<int32>(RenderHeight);
+    LightPassSettings.bEnableRayTracingReflections = bUseRayTracingReflections ? 1 : 0;
+    LightPassSettings.IndirectSpecularStrength     = GIndirectSpecularStrength;
 
     if (Scene)
     {

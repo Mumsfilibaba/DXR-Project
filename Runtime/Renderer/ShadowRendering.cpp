@@ -341,7 +341,7 @@ bool FPointLightRenderPass::Initialize(FFrameResources& Resources)
     FRHIBufferDesc PerShadowMapBufferDesc;
     PerShadowMapBufferDesc.Stride = sizeof(FPerShadowMapHLSL);
     PerShadowMapBufferDesc.Size   = sizeof(FPerShadowMapHLSL);
-    PerShadowMapBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
+    PerShadowMapBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
     PerShadowMapBuffer = RHI::CreateBuffer(PerShadowMapBufferDesc, EResourceAccess::ConstantBuffer, nullptr);
     if (!PerShadowMapBuffer)
@@ -357,7 +357,7 @@ bool FPointLightRenderPass::Initialize(FFrameResources& Resources)
 	FRHIBufferDesc SinglePassShadowMapBufferDesc;
     SinglePassShadowMapBufferDesc.Stride = sizeof(FSinglePassPointLightBufferHLSL);
     SinglePassShadowMapBufferDesc.Size   = sizeof(FSinglePassPointLightBufferHLSL);
-    SinglePassShadowMapBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
+    SinglePassShadowMapBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
     SinglePassShadowMapBuffer = RHI::CreateBuffer(SinglePassShadowMapBufferDesc, EResourceAccess::ConstantBuffer, nullptr);
     if (!SinglePassShadowMapBuffer)
@@ -479,7 +479,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 template<ECubeMapRenderPassType RenderPassType>
 void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene)
 {
-    const bool bBindless = GShadowsBindless && Resources.MaterialIndicesBuffer.IsValid();
+    const bool bBindless = GShadowsBindless && Resources.MaterialDataBufferSRV.IsValid();
 
     // Clamp the number of shadow-casting point-lights
     const int32 NumPointLights = Math::Min<int32>(Scene->GetPointLights().Size(), Resources.MaxPointLightShadows);
@@ -532,9 +532,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                 CHECK(PipelineState != nullptr);
 
                 CommandList.SetGraphicsPipelineState(PipelineState);
-                
-                // If we are using geometry-shaders for a single-pass, then bind the matrices to the geometry-shader,
-                // otherwise we bind the matrices to the vertex-shader.
+
                 if constexpr (RenderPassType == ECubeMapRenderPassType::SinglePass)
                 {
                     CommandList.SetConstantBuffer(Instance->VertexShader.Get(), SinglePassShadowMapBuffer.Get(), 0);
@@ -543,19 +541,14 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                 {
                     CommandList.SetConstantBuffer(Instance->GeometryShader.Get(), SinglePassShadowMapBuffer.Get(), 0);
                 }
-                
-                // If we have a pixel-shader, bind all resources that shader needs
+
                 if (Instance->PixelShader)
                 {
                     CommandList.SetConstantBuffer(Instance->PixelShader.Get(), SinglePassShadowMapBuffer.Get(), 0);
 
                     if (bBindless)
                     {
-                        FMaterialBindlessIndicesHLSL Indices;
-                        FillMaterialBindlessIndices(*Material, Indices);
-
-                        CommandList.UpdateBuffer(Resources.MaterialIndicesBuffer.Get(), FBufferRegion(0, sizeof(FMaterialBindlessIndicesHLSL)), &Indices);
-                        CommandList.SetConstantBuffer(Instance->PixelShader.Get(), Resources.MaterialIndicesBuffer.Get(), 3);
+                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Resources.MaterialDataBufferSRV.Get(), 0);
                     }
                     else
                     {
@@ -565,6 +558,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                         {
                             CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
                         }
+
                         if (Material->HasHeightMap())
                         {
                             CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
@@ -597,8 +591,8 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
                     CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
 
-                    CommandList.UpdateBuffer(Resources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->TransformBuffer);
-                    CommandList.SetConstantBuffer(Instance->VertexShader.Get(), Resources.TransformBuffer.Get(), 1);
+                    CommandList.UpdateBuffer(Resources.PerObjectBuffer.Get(), FBufferRegion(0, sizeof(FPerObjectHLSL)), &StaticMesh->PerObjectBuffer);
+                    CommandList.SetConstantBuffer(Instance->VertexShader.Get(), Resources.PerObjectBuffer.Get(), 1);
 
                     if constexpr (RenderPassType == ECubeMapRenderPassType::SinglePass)
                     {
@@ -675,11 +669,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
                         if (bBindless)
                         {
-                            FMaterialBindlessIndicesHLSL Indices;
-                            FillMaterialBindlessIndices(*Material, Indices);
-
-                            CommandList.UpdateBuffer(Resources.MaterialIndicesBuffer.Get(), FBufferRegion(0, sizeof(FMaterialBindlessIndicesHLSL)), &Indices);
-                            CommandList.SetConstantBuffer(Instance->PixelShader.Get(), Resources.MaterialIndicesBuffer.Get(), 3);
+                            CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Resources.MaterialDataBufferSRV.Get(), 0);
                         }
                         else
                         {
@@ -721,8 +711,8 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
                         CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
 
-                        CommandList.UpdateBuffer(Resources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->TransformBuffer);
-                        CommandList.SetConstantBuffer(Instance->VertexShader.Get(), Resources.TransformBuffer.Get(), 1);
+                        CommandList.UpdateBuffer(Resources.PerObjectBuffer.Get(), FBufferRegion(0, sizeof(FPerObjectHLSL)), &StaticMesh->PerObjectBuffer);
+                        CommandList.SetConstantBuffer(Instance->VertexShader.Get(), Resources.PerObjectBuffer.Get(), 1);
 
                         CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
                     }
@@ -1121,7 +1111,7 @@ bool FCascadedShadowsRenderPass::Initialize(FFrameResources& Resources)
 	FRHIBufferDesc PerCascadeBufferDesc;
     PerCascadeBufferDesc.Stride = sizeof(FPerCascadeHLSL);
     PerCascadeBufferDesc.Size   = sizeof(FPerCascadeHLSL);
-    PerCascadeBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
+    PerCascadeBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
     PerCascadeBuffer = RHI::CreateBuffer(PerCascadeBufferDesc, EResourceAccess::ConstantBuffer, nullptr);
     if (!PerCascadeBuffer)
@@ -1262,7 +1252,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 template<ECascadeRenderPassType RenderPassType>
 void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene)
 {
-    const bool bBindless = GShadowsBindless && Resources.MaterialIndicesBuffer.IsValid();
+    const bool bBindless = GShadowsBindless && Resources.MaterialDataBufferSRV.IsValid();
 
     constexpr bool bIsSinglePass = 
         RenderPassType == ECascadeRenderPassType::SinglePass ||
@@ -1328,11 +1318,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
             {
                 if (bBindless)
                 {
-                    FMaterialBindlessIndicesHLSL Indices;
-                    FillMaterialBindlessIndices(*Material, Indices);
-
-                    CommandList.UpdateBuffer(Resources.MaterialIndicesBuffer.Get(), FBufferRegion(0, sizeof(FMaterialBindlessIndicesHLSL)), &Indices);
-                    CommandList.SetConstantBuffer(Instance->PixelShader.Get(), Resources.MaterialIndicesBuffer.Get(), 3);
+                    CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Resources.MaterialDataBufferSRV.Get(), 1);
                 }
                 else
                 {
@@ -1375,8 +1361,8 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
                 CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
 
-                CommandList.UpdateBuffer(Resources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->TransformBuffer);
-                CommandList.SetConstantBuffer(Instance->VertexShader.Get(), Resources.TransformBuffer.Get(), 1);
+                CommandList.UpdateBuffer(Resources.PerObjectBuffer.Get(), FBufferRegion(0, sizeof(FPerObjectHLSL)), &StaticMesh->PerObjectBuffer);
+                CommandList.SetConstantBuffer(Instance->VertexShader.Get(), Resources.PerObjectBuffer.Get(), 1);
 
                 // If we use vertex-shader instancing, we need to create our own instances and use instanced rendering
                 if constexpr (RenderPassType == ECascadeRenderPassType::SinglePass)
@@ -1444,11 +1430,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                 {
                     if (bBindless)
                     {
-                        FMaterialBindlessIndicesHLSL Indices;
-                        FillMaterialBindlessIndices(*Material, Indices);
-
-                        CommandList.UpdateBuffer(Resources.MaterialIndicesBuffer.Get(), FBufferRegion(0, sizeof(FMaterialBindlessIndicesHLSL)), &Indices);
-                        CommandList.SetConstantBuffer(Instance->PixelShader.Get(), Resources.MaterialIndicesBuffer.Get(), 3);
+                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Resources.MaterialDataBufferSRV.Get(), 1);
                     }
                     else
                     {
@@ -1493,8 +1475,8 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
                     CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
 
-                    CommandList.UpdateBuffer(Resources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->TransformBuffer);
-                    CommandList.SetConstantBuffer(Instance->VertexShader.Get(), Resources.TransformBuffer.Get(), 1);
+                    CommandList.UpdateBuffer(Resources.PerObjectBuffer.Get(), FBufferRegion(0, sizeof(FPerObjectHLSL)), &StaticMesh->PerObjectBuffer);
+                    CommandList.SetConstantBuffer(Instance->VertexShader.Get(), Resources.PerObjectBuffer.Get(), 1);
 
                     CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
                 }
@@ -1545,7 +1527,7 @@ bool FShadowMaskRenderPass::Initialize(FFrameResources& Resources)
 	FRHIBufferDesc SettingsBufferDesc;
     SettingsBufferDesc.Stride = sizeof(FDirectionalShadowSettingsHLSL);
     SettingsBufferDesc.Size   = sizeof(FDirectionalShadowSettingsHLSL);
-    SettingsBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
+    SettingsBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
     ShadowSettingsBuffer = RHI::CreateBuffer(SettingsBufferDesc, EResourceAccess::ConstantBuffer);
     if (!ShadowSettingsBuffer)
@@ -1852,8 +1834,6 @@ void FShadowMaskRenderPass::RetrieveCurrentCombinationBasedOnCVar(FShadowMaskSha
     OutCombination.bSelectCascadeFromProjection = CVarCSMSelectCascadeFromProjection.GetValue();
     OutCombination.bRotateSamples               = CVarCSMRotateSamples.GetValue();
 
-    // Vogel disk uses runtime sample count from the cbuffer, so set 0 to avoid PSO permutations.
-    // Poisson disk needs compile-time NUM_SAMPLES for its fixed arrays.
     if (OutCombination.FilterFunction == ECSMFilterFunction::VogelDisk)
     {
         OutCombination.NumSamples = 0;

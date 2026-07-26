@@ -663,6 +663,9 @@ void FVulkanDeviceExtension::RegisterExtensions(TArray<TUniquePtr<FVulkanDeviceE
 #if VK_EXT_swapchain_maintenance1
     OutExtensions.Add(MakeUniquePtr<FVulkanDeviceExtension>(VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME, false, true));
 #endif
+#if VK_EXT_ray_tracing_invocation_reorder
+    OutExtensions.Add(MakeUniquePtr<FVulkanDeviceExtension>(VK_EXT_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME, false, true));
+#endif
 #if VK_NV_ray_tracing_invocation_reorder
     OutExtensions.Add(MakeUniquePtr<FVulkanDeviceExtension>(VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME, false, true));
 #endif

@@ -163,7 +163,7 @@ static FAutoConsoleVariableRef CVarFrustumCullEnabled(
 static bool GRayTracingEnabled = false;
 static FAutoConsoleVariableRef CVarRayTracingEnabled(
     "Renderer.Feature.RayTracing",
-    "Enables Ray Tracing (Currently broken)",
+    "Enables ray-traced reflections. Only takes effect when the hardware reports ray tracing support; otherwise the renderer falls back to image-based lighting.",
     GRayTracingEnabled,
     EConsoleVariableFlags::Default);
 
@@ -174,13 +174,19 @@ static FAutoConsoleVariableRef CVarCSMTightFrustum(
     GCSMTightFrustum,
     EConsoleVariableFlags::Default);
 
-static FAutoConsoleCommand CVarFreezeRendering(
+static FAutoConsoleCommand CCmdFreezeRendering(
     "Renderer.FreezeRendering",
     "Freezes the updating of Frustum culling",
     FConsoleCommandDelegate::CreateLambda([](StringView)
     {
         GFreezeRendering = !GFreezeRendering;
     }));
+
+// Hardware capability AND the user toggle must both be set.
+static FORCEINLINE bool IsRayTracingActive()
+{
+    return RHI::bSupportsRayTracing && GRayTracingEnabled;
+}
 
 FSceneRenderer::FSceneRenderer()
     : CommandList()
@@ -278,7 +284,7 @@ bool FSceneRenderer::Initialize()
     FRHIBufferDesc ConstantBufferDesc;
     ConstantBufferDesc.Size   = sizeof(FCameraHLSL);
     ConstantBufferDesc.Stride = sizeof(FCameraHLSL);
-    ConstantBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
+    ConstantBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
     Resources.CameraBuffer = RHI::CreateBuffer(ConstantBufferDesc, EResourceAccess::Common, nullptr);
     if (!Resources.CameraBuffer)
@@ -291,36 +297,20 @@ bool FSceneRenderer::Initialize()
         Resources.CameraBuffer->SetDebugName("CameraBuffer");
     }
 
-    FRHIBufferDesc TransformConstantBufferDesc;
-    TransformConstantBufferDesc.Size   = sizeof(FTransformBufferHLSL);
-    TransformConstantBufferDesc.Stride = sizeof(FTransformBufferHLSL);
-    TransformConstantBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Transient;
+    FRHIBufferDesc PerObjectConstantBufferDesc;
+    PerObjectConstantBufferDesc.Size   = sizeof(FPerObjectHLSL);
+    PerObjectConstantBufferDesc.Stride = sizeof(FPerObjectHLSL);
+    PerObjectConstantBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Transient;
 
-    Resources.TransformBuffer = RHI::CreateBuffer(TransformConstantBufferDesc, EResourceAccess::Common, nullptr);
-    if (!Resources.TransformBuffer)
+    Resources.PerObjectBuffer = RHI::CreateBuffer(PerObjectConstantBufferDesc, EResourceAccess::Common, nullptr);
+    if (!Resources.PerObjectBuffer)
     {
-        LOG_ERROR("[Renderer]: Failed to create TransformBuffer");
+        LOG_ERROR("[Renderer]: Failed to create PerObjectBuffer");
         return false;
     }
     else
     {
-        Resources.TransformBuffer->SetDebugName("TransformBuffer");
-    }
-
-    FRHIBufferDesc MaterialIndicesBufferDesc;
-    MaterialIndicesBufferDesc.Size   = sizeof(FMaterialBindlessIndicesHLSL);
-    MaterialIndicesBufferDesc.Stride = sizeof(FMaterialBindlessIndicesHLSL);
-    MaterialIndicesBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Transient;
-
-    Resources.MaterialIndicesBuffer = RHI::CreateBuffer(MaterialIndicesBufferDesc, EResourceAccess::Common, nullptr);
-    if (!Resources.MaterialIndicesBuffer)
-    {
-        LOG_ERROR("[Renderer]: Failed to create MaterialIndicesBuffer");
-        return false;
-    }
-    else
-    {
-        Resources.MaterialIndicesBuffer->SetDebugName("MaterialBindless Indices");
+        Resources.PerObjectBuffer->SetDebugName("PerObjectBuffer");
     }
 
     // Initialize standard input layout
@@ -417,7 +407,7 @@ bool FSceneRenderer::Initialize()
         return false;
     }
 
-    if (false/*RHI::bSupportsRayTracing*/)
+    if (RHI::bSupportsRayTracing)
     {
         if (!RayTracer.Initialize(Resources))
         {
@@ -642,12 +632,21 @@ void FSceneRenderer::RenderThread_PrepareResources(const FSceneRenderView& Scene
         ResizeResources(RenderSettings::GetRenderWidth(), RenderSettings::GetRenderHeight());
     }
 
+    if (RHI::bSupportsRayTracing && RayTracer.NeedsReflectionReconfigure())
+    {
+        FRHICommandListExecutor::Get().WaitForGPU();
+        RayTracer.CreateResources(Resources, Resources.CurrentRenderWidth, Resources.CurrentRenderHeight);
+    }
+
     Resources.BuildLightBuffers(CommandList, Scene);
 
     RenderThread_PrepareCameraData(SceneRenderView, Scene);
 
     if (Scene)
     {
+        Resources.MaterialData.Clear();
+
+        int32 MaterialIndex = 0;
         for (FMaterial* Material : Scene->GetMaterials())
         {
         // TODO: Only do this once?
@@ -661,9 +660,43 @@ void FSceneRenderer::RenderThread_PrepareResources(const FSceneRenderView& Scene
             CascadedShadowsRenderPass->PreparePipelineState(Material, Resources);
             PointLightRenderPass->PreparePipelineState(Material, Resources);
 
-            if (Material->IsBufferDirty())
+            Material->SetBufferIndex(MaterialIndex++);
+
+            FMaterialHLSL MaterialEntry;
+            Material->FillMaterialData(MaterialEntry);
+            FillMaterialHandles(*Material, MaterialEntry);
+            Resources.MaterialData.Emplace(MaterialEntry);
+        }
+
+        if (!Resources.MaterialData.IsEmpty())
+        {
+            const uint32 RequiredCount = uint32(Resources.MaterialData.Size());
+            const uint32 CurrentCount  = Resources.MaterialDataBuffer ? uint32(Resources.MaterialDataBuffer->GetDesc().Size / sizeof(FMaterialHLSL)) : 0;
+
+            if (!Resources.MaterialDataBuffer || RequiredCount > CurrentCount)
             {
-                Material->BuildBuffer(CommandList);
+                FRHIBufferDesc MaterialBufferDesc;
+                MaterialBufferDesc.Stride = sizeof(FMaterialHLSL);
+                MaterialBufferDesc.Size   = uint64(MaterialBufferDesc.Stride) * RequiredCount;
+                MaterialBufferDesc.Flags  = EBufferFlags::ShaderResourceBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
+
+                Resources.MaterialDataBuffer    = RHI::CreateBuffer(MaterialBufferDesc, EResourceAccess::GenericRead, nullptr);
+                Resources.MaterialDataBufferSRV = nullptr;
+
+                if (Resources.MaterialDataBuffer)
+                {
+                    Resources.MaterialDataBuffer->SetDebugName("Material Data Buffer");
+
+                    const FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, RequiredCount);
+                    Resources.MaterialDataBufferSRV = RHI::CreateShaderResourceView(Resources.MaterialDataBuffer.Get(), SRVDesc);
+                }
+            }
+
+            if (Resources.MaterialDataBuffer)
+            {
+                CommandList.TransitionBufferState(Resources.MaterialDataBuffer.Get(), EResourceAccess::GenericRead, EResourceAccess::CopyDest);
+                CommandList.UpdateBuffer(Resources.MaterialDataBuffer.Get(), FBufferRegion(0, sizeof(FMaterialHLSL) * RequiredCount), Resources.MaterialData.Data());
+                CommandList.TransitionBufferState(Resources.MaterialDataBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::GenericRead);
             }
         }
     }
@@ -703,6 +736,7 @@ void FSceneRenderer::RenderThread_PrepareCameraData(const FSceneRenderView& /*Sc
     CameraBuffer.ProjectionInv               = Camera->Snapshot.ProjectionInverse;
     CameraBuffer.ProjectionUnjittered        = CameraBuffer.Projection;
     CameraBuffer.ProjectionInvUnjittered     = CameraBuffer.ProjectionInv;
+    CameraBuffer.PrevPosition                = CameraBuffer.Position;
     CameraBuffer.Position                    = Camera->Snapshot.Position;
     CameraBuffer.Forward                     = Camera->Snapshot.Forward;
     CameraBuffer.Right                       = Camera->Snapshot.Right;
@@ -759,9 +793,15 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
     UNREFERENCED_VARIABLE(SelectedObjectIDs); // Only consumed by the editor selection-outline pass.
 #endif
 
-    // Cast and cache the current scene being rendered
     FScene* CurrentScene = static_cast<FScene*>(SceneRenderView.Scene);
     RenderThread_PrepareResources(SceneRenderView, CurrentScene);
+
+    if (SceneRenderView.DebugView == FSceneRenderView::EDebugView::RayTracingPrimaryID && RHI::bSupportsRayTracing)
+    {
+        RayTracer.RenderPrimaryRayDebug(CommandList, Resources, CurrentScene);
+        DebugViewPass->Execute(CommandList, SceneRenderView, Resources, FSceneRenderView::EDebugView::RayTracingPrimaryID);
+        return;
+    }
 
     CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Albedo].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget));
     CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Normal].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget));
@@ -817,19 +857,40 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
         DepthReducePass->Execute(CommandList, Resources, CurrentScene);
     }
 
-    // RayTracing PrePass
-    if (false /*RHI::bSupportsRayTracing*/)
-    {
-        GPU_TRACE_SCOPE(CommandList, "Ray Tracing");
-        RayTracer.PreRender(CommandList, Resources, CurrentScene);
-    }
-
     CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Albedo].Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource));
     CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Normal].Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource));
     CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Velocity].Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource));
     CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Material].Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource));
     CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource));
     CommandList.TransitionTextureState(Resources.SSAOBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
+
+    const bool bIsRayTracingActive = IsRayTracingActive();
+    if (bIsRayTracingActive)
+    {
+        if (!bRayTracingWasActive)
+        {
+            RayTracer.InvalidateReflectionHistory();
+        }
+
+        GPU_TRACE_SCOPE(CommandList, "Ray Tracing");
+        RayTracer.PreRender(CommandList, Resources, CurrentScene);
+    }
+    else
+    {
+        if (bRayTracingWasActive)
+        {
+            RayTracer.ReleaseRayTracingGeometry(CurrentScene);
+        }
+        
+        STAT_SET(STAT_RT_Active,                  0);
+        STAT_SET(STAT_RT_InstanceCount,           0);
+        STAT_SET(STAT_RT_HitGroupCount,           0);
+        STAT_SET(STAT_RT_GeometryTableRows,       0);
+        STAT_SET(STAT_RT_LazyBLASBuildsThisFrame, 0);
+        STAT_SET(STAT_RT_SkippedNullGeometry,     0);
+    }
+
+    bRayTracingWasActive = bIsRayTracingActive;
 
     // SSAO
     if (GEnableSSAO)
@@ -1588,6 +1649,12 @@ void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
 #endif
 
         if (!TonemapPass->CreateResources(Resources, InWidth, InHeight))
+        {
+            DEBUG_BREAK();
+            return;
+        }
+
+        if (RHI::bSupportsRayTracing && !RayTracer.CreateResources(Resources, InWidth, InHeight))
         {
             DEBUG_BREAK();
             return;

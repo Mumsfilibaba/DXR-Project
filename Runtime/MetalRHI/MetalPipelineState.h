@@ -191,6 +191,10 @@ public:
 
     virtual void SetDebugName(const String& InName)       override final;
     virtual void GetDebugName(String& OutDebugName) const override final;
+
+    // FRHIRayTracingPipelineState Interface
+    virtual void GetExportName(ERayTracingShaderRecordKind, uint32, String& OutExportName) const override final { OutExportName = String(); }
+    virtual uint32 GetNumExportNames(ERayTracingShaderRecordKind) const override final { return 0; }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

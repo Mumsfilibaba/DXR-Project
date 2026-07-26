@@ -10,10 +10,7 @@ FMaterial::FMaterial(const FMaterialInfo& InMaterialInfo)
     , MaterialMap()
     , HeightMap()
     , Name()
-    , MaterialData()
     , MaterialInfo(InMaterialInfo)
-    , bMaterialBufferIsDirty(true)
-    , MaterialBuffer()
 {
 }
 
@@ -23,58 +20,38 @@ FMaterial::~FMaterial()
 
 void FMaterial::Initialize()
 {
-    FRHIBufferDesc BufferDesc;
-    BufferDesc.Stride = sizeof(FMaterialHLSL);
-    BufferDesc.Size   = sizeof(FMaterialHLSL);
-    BufferDesc.Flags  = EBufferFlags::Default | EBufferFlags::ConstantBuffer;
-
-    MaterialBuffer = RHI::CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
-    if (MaterialBuffer)
-    {
-        MaterialBuffer->SetDebugName("MaterialBuffer");
-    }
-
     Sampler = FEngine::Get()->BaseMaterialSampler;
 }
 
-void FMaterial::BuildBuffer(FRHICommandList& CommandList)
+void FMaterial::FillMaterialData(FMaterialHLSL& OutData) const
 {
-    MaterialData.Albedo           = Vector3(MaterialInfo.Albedo.R, MaterialInfo.Albedo.G, MaterialInfo.Albedo.B);
-    MaterialData.Metallic         = MaterialInfo.Metallic;
-    MaterialData.Roughness        = MaterialInfo.Roughness;
-    MaterialData.AmbientOcclusion = MaterialInfo.AmbientOcclusion;
-    MaterialData.ParallaxHeightScale = MaterialInfo.ParallaxHeightScale;
-    MaterialData.ParallaxMinLayers   = MaterialInfo.ParallaxMinLayers;
-    MaterialData.ParallaxMaxLayers   = MaterialInfo.ParallaxMaxLayers;
-
-    CommandList.TransitionBufferState(MaterialBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
-    CommandList.UpdateBuffer(MaterialBuffer.Get(), FBufferRegion(0, sizeof(FMaterialHLSL)), &MaterialData);
-    CommandList.TransitionBufferState(MaterialBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
-    bMaterialBufferIsDirty = false;
+    OutData.Albedo              = Vector3(MaterialInfo.Albedo.R, MaterialInfo.Albedo.G, MaterialInfo.Albedo.B);
+    OutData.Metallic            = MaterialInfo.Metallic;
+    OutData.Roughness           = MaterialInfo.Roughness;
+    OutData.AmbientOcclusion    = MaterialInfo.AmbientOcclusion;
+    OutData.ParallaxHeightScale = MaterialInfo.ParallaxHeightScale;
+    OutData.ParallaxMinLayers   = MaterialInfo.ParallaxMinLayers;
+    OutData.ParallaxMaxLayers   = MaterialInfo.ParallaxMaxLayers;
 }
 
 void FMaterial::SetAlbedo(const FFloatColor& Albedo)
 {
-    MaterialInfo.Albedo    = Albedo;
-    bMaterialBufferIsDirty = true;
+    MaterialInfo.Albedo = Albedo;
 }
 
 void FMaterial::SetMetallic(float Metallic)
 {
-    MaterialInfo.Metallic  = Metallic;
-    bMaterialBufferIsDirty = true;
+    MaterialInfo.Metallic = Metallic;
 }
 
 void FMaterial::SetRoughness(float Roughness)
 {
     MaterialInfo.Roughness = Roughness;
-    bMaterialBufferIsDirty = true;
 }
 
 void FMaterial::SetAmbientOcclusion(float AmbientOcclusion)
 {
     MaterialInfo.AmbientOcclusion = AmbientOcclusion;
-    bMaterialBufferIsDirty        = true;
 }
 
 void FMaterial::SetMaterialFlags(EMaterialFlags InFlags, bool bUpdateOnly)
@@ -124,7 +101,6 @@ void FMaterial::EnableDoubleSided(bool bIsDoubleSided)
 void FMaterial::SetParallaxHeightScale(float InParallaxHeightScale)
 {
     MaterialInfo.ParallaxHeightScale = InParallaxHeightScale;
-    bMaterialBufferIsDirty           = true;
 }
 
 void FMaterial::SetParallaxLayers(float InParallaxMinLayers, float InParallaxMaxLayers)
@@ -134,7 +110,6 @@ void FMaterial::SetParallaxLayers(float InParallaxMinLayers, float InParallaxMax
 
     MaterialInfo.ParallaxMinLayers = InParallaxMinLayers;
     MaterialInfo.ParallaxMaxLayers = InParallaxMaxLayers;
-    bMaterialBufferIsDirty         = true;
 }
 
 void FMaterial::SetName(const String& InName)

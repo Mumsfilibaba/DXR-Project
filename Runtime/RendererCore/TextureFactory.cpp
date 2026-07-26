@@ -311,7 +311,13 @@ FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, 
     FTextureResourceData InitalData;
     InitalData.InitMipData(Pixels, RowPitch, RowPitch * Height);
 
-    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(Format, Width, Height, NumMiplevels, 1, ETextureUsageFlags::ShaderResourceTexture);
+    ETextureUsageFlags TextureUsage = ETextureUsageFlags::ShaderResourceTexture;
+    if (bGenerateMips && NumMiplevels > 1)
+    {
+        TextureUsage |= ETextureUsageFlags::CopyDest;
+    }
+
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(Format, Width, Height, NumMiplevels, 1, TextureUsage);
     FRHITextureRef Texture = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource, &InitalData);
     if (!Texture)
     {
@@ -321,7 +327,7 @@ FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, 
 
     if (bGenerateMips && NumMiplevels > 1)
     {
-        GenerateMiplevels(Texture.Get());
+        GenerateMiplevels(Texture.Get(), &InitalData);
     }
 
     return Texture.ReleaseOwnership();
@@ -341,7 +347,7 @@ bool FTextureFactory::TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* D
     if (!bDestSupportUAV)
     {
         FRHITextureDesc TextureDesc = Dest->GetDesc();
-        TextureDesc.UsageFlags |= ETextureUsageFlags::UnorderedAccessTexture;
+        TextureDesc.UsageFlags |= ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::CopySource;
 
         StagingTexture = RHI::CreateTexture(TextureDesc, EResourceAccess::Common, nullptr);
         if (!StagingTexture)
@@ -395,7 +401,7 @@ bool FTextureFactory::TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* D
         const uint32 ThreadsY = Math::DivideByMultiple(ShaderConstantData.CubeMapSize, LocalWorkGroupCount);
         CommandList.Dispatch(ThreadsX, ThreadsY, 6);
 
-        CommandList.TransitionTextureState(Source, FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
+        CommandList.TransitionTextureState(Source, FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::ShaderResource));
 
         if (!bDestSupportUAV)
         {
@@ -404,11 +410,11 @@ bool FTextureFactory::TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* D
 
             CommandList.CopyTexture(Dest, StagingTexture.Get());
 
-            CommandList.TransitionTextureState(Dest, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::PixelShaderResource));
+            CommandList.TransitionTextureState(Dest, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::ShaderResource));
         }
         else
         {
-            CommandList.TransitionTextureState(Dest, FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource));
+            CommandList.TransitionTextureState(Dest, FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::ShaderResource));
         }
 
         if (bGenerateMips)
@@ -422,12 +428,12 @@ bool FTextureFactory::TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* D
     return true;
 }
 
-bool FTextureFactory::GenerateMiplevels(FRHITexture* Texture)
+bool FTextureFactory::GenerateMiplevels(FRHITexture* Texture, const IRHITextureData* Mip0Data)
 {
     // Schedule miplevel generation without an existing CommandList
     FRHICommandList CommandList;
 
-    const bool bResult = GenerateMiplevels(CommandList, Texture);
+    const bool bResult = GenerateMiplevels(CommandList, Texture, Mip0Data);
     if (!bResult)
     {
         return false;
@@ -438,7 +444,7 @@ bool FTextureFactory::GenerateMiplevels(FRHITexture* Texture)
     return true;
 }
 
-bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITexture* Texture)
+bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITexture* Texture, const IRHITextureData* Mip0Data)
 {
     CHECK(IsEnumFlagSet(Texture->GetDesc().UsageFlags, ETextureUsageFlags::ShaderResourceTexture));
 
@@ -457,9 +463,9 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
     if (!bDestSupportUAV)
     {
         FRHITextureDesc TextureDesc = Texture->GetDesc();
-        TextureDesc.UsageFlags |= ETextureUsageFlags::UnorderedAccessTexture;
+        TextureDesc.UsageFlags |= ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::CopySource;
 
-        StagingTexture = RHI::CreateTexture(TextureDesc, EResourceAccess::Common, nullptr);
+        StagingTexture = RHI::CreateTexture(TextureDesc, EResourceAccess::Common, Mip0Data);
         if (!StagingTexture)
         {
             return false;
@@ -506,15 +512,9 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
         UnorderedAccessViews.Emplace(UnorderedAccessView);
     }
 
-    // Copy the texture over to the staging-resource
     if (!bDestSupportUAV)
     {
-        CommandList.TransitionTextureState(Texture, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::CopySource));
-        CommandList.TransitionTextureState(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::CopyDest));
-
-        CommandList.CopyTexture(StagingTexture.Get(), Texture);
-
-        CommandList.TransitionTextureState(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::NonPixelShaderResource));
+        CommandList.TransitionTextureState(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::NonPixelShaderResource));
     }
     else
     {
@@ -604,15 +604,15 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
     if (!bDestSupportUAV)
     {
         CommandList.TransitionTextureState(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::CopySource));
-        CommandList.TransitionTextureState(Texture, FRHITextureTransition::Make(EResourceAccess::CopySource, EResourceAccess::CopyDest));
+        CommandList.TransitionTextureState(Texture, FRHITextureTransition::Make(EResourceAccess::ShaderResource, EResourceAccess::CopyDest));
 
         CommandList.CopyTexture(Texture, StagingTexture.Get());
 
-        CommandList.TransitionTextureState(Texture, FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource));
+        CommandList.TransitionTextureState(Texture, FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::ShaderResource));
     }
     else
     {
-        CommandList.TransitionTextureState(Texture, FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
+        CommandList.TransitionTextureState(Texture, FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::ShaderResource));
     }
 
     return true;
@@ -795,7 +795,7 @@ bool FTextureFactory::PackMaterialParamsTexture(const FRHITextureRef& AOTexture,
     const uint32 Width  = SizeRef->GetDesc().Extent.X;
     const uint32 Height = SizeRef->GetDesc().Extent.Y;
 
-    FRHITextureDesc TempDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccessTexture);
+    FRHITextureDesc TempDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::CopySource);
     FRHITextureRef  TempTex  = RHI::CreateTexture(TempDesc, EResourceAccess::UnorderedAccess, nullptr);
     if (!TempTex)
     {
@@ -803,7 +803,7 @@ bool FTextureFactory::PackMaterialParamsTexture(const FRHITextureRef& AOTexture,
         return false;
     }
 
-    FRHITextureDesc OutputDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, Width, Height, 1, 1, ETextureUsageFlags::ShaderResourceTexture);
+    FRHITextureDesc OutputDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, Width, Height, 1, 1, ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::CopyDest);
     OutTexture = RHI::CreateTexture(OutputDesc, EResourceAccess::CopyDest, nullptr);
     if (!OutTexture)
     {
@@ -901,7 +901,7 @@ bool FTextureFactory::BakeAlphaIntoAlbedo(const FRHITextureRef& AlbedoTexture, c
     const uint32 Width  = AlbedoTexture->GetDesc().Extent.X;
     const uint32 Height = AlbedoTexture->GetDesc().Extent.Y;
 
-    FRHITextureDesc TempDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccessTexture);
+    FRHITextureDesc TempDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::CopySource);
     FRHITextureRef  TempTex  = RHI::CreateTexture(TempDesc, EResourceAccess::UnorderedAccess, nullptr);
     if (!TempTex)
     {
@@ -909,7 +909,7 @@ bool FTextureFactory::BakeAlphaIntoAlbedo(const FRHITextureRef& AlbedoTexture, c
         return false;
     }
 
-    FRHITextureDesc OutputDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, Width, Height, 1, 1, ETextureUsageFlags::ShaderResourceTexture);
+    FRHITextureDesc OutputDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, Width, Height, 1, 1, ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::CopyDest);
     OutTexture = RHI::CreateTexture(OutputDesc, EResourceAccess::CopyDest, nullptr);
     if (!OutTexture)
     {

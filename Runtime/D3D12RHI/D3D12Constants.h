@@ -34,11 +34,15 @@
 #define D3D12_DEFAULT_SAMPLER_STATE_COUNT (64)
 
 #define D3D12_MAX_LOCAL_ROOT_DESCRIPTORS (16)
+#define D3D12_MAX_LOCAL_RECORD_ENTRIES (4)
+#define D3D12_MAX_LOCAL_TABLE_DESCRIPTORS (8)
 
+// ------------------------------------------------------------------------------------------------
 // Space: | Usage:
 // 0      | Standard
 // 1      | Constants
-// 2      | RT Local
+// 2      | Ray Tracing Local
+// ------------------------------------------------------------------------------------------------
 
 #define D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS (1)
-#define D3D12_SHADER_REGISTER_SPACE_RT_LOCAL (2)
+#define D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL (2)

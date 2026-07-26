@@ -1,18 +1,17 @@
-#include "../Helpers.hlsli"
-#include "../Structs.hlsli"
-#include "../Constants.hlsli"
-#include "../Matrix.hlsli"
+#include "Helpers.hlsli"
+#include "Structs.hlsli"
+#include "Constants.hlsli"
+#include "Matrix.hlsli"
 #include "CascadeStructs.hlsli"
 
 #define NUM_THREADS (NUM_SHADOW_CASCADES)
 
-ConstantBuffer<FCamera> CameraBuffer : register(b0);
+ConstantBuffer<FCamera>                CameraBuffer   : register(b0);
 ConstantBuffer<FCascadeGenerationInfo> GenerationInfo : register(b1);
 
-RWStructuredBuffer<FCascadeMatrices> MatrixBuffer : register(u0);
-RWStructuredBuffer<FCascadeSplit> SplitBuffer : register(u1);
-
-Texture2D<float2> MinMaxDepthTex : register(t0);
+RWStructuredBuffer<FCascadeMatrices> MatrixBuffer   : register(u0);
+RWStructuredBuffer<FCascadeSplit>    SplitBuffer    : register(u1);
+Texture2D<float2>                    MinMaxDepthTex : register(t0);
 
 [numthreads(NUM_THREADS, 1, 1)]
 void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
@@ -157,11 +156,11 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     LightRotation[0] = normalize(cross(LightUp, LightRotation[2]));
     LightRotation[1] = cross(LightRotation[2], LightRotation[0]);
 
-    float4x4 View    = FMatrix::InvRotationTranslation(LightRotation, ShadowEyePos);
+    float4x4 View    = Matrix::InvRotationTranslation(LightRotation, ShadowEyePos);
     float4x4 InvView = float4x4(float4(LightRotation[0], 0.0), float4(LightRotation[1], 0.0), float4(LightRotation[2], 0.0), float4(ShadowEyePos, 1.0));
 
     // Create the projection
-    float4x4 Projection = FMatrix::OrthographicProjection(MinExtents.x, MaxExtents.x, MinExtents.y, MaxExtents.y, LightNearPlane, LightFarPlane);
+    float4x4 Projection = Matrix::OrthographicProjection(MinExtents.x, MaxExtents.x, MinExtents.y, MaxExtents.y, LightNearPlane, LightFarPlane);
     
     // Stabilize cascades
     [branch]
@@ -186,7 +185,7 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     float4x4 ViewProjection = mul(View, Projection);
 
     // Create inverse matrices
-    float4x4 InvProjection     = FMatrix::InvScaleTranslation(Projection);
+    float4x4 InvProjection     = Matrix::InvScaleTranslation(Projection);
     float4x4 InvViewProjection = mul(InvView, InvProjection);
 
     // Store final matrices
@@ -236,7 +235,7 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         float4(0.0,  0.0, 1.0, 0.0),
         float4(0.5,  0.5, 0.0, 1.0));
         
-    const float4x4 InvTextureScaleBias = FMatrix::InvScaleTranslation(TextureScaleBias);
+    const float4x4 InvTextureScaleBias = Matrix::InvScaleTranslation(TextureScaleBias);
     const float4x4 InvCascadeMatrix    = mul(mul(InvTextureScaleBias, InvProjection), InvView);
     
     // Calculate the position of the lower corner of the cascade partition, in the UV space of the first cascade partition...

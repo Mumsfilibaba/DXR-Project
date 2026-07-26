@@ -82,6 +82,10 @@ struct FCameraHLSL
     float   ViewportHeight = 0.0f;
     float   Padding0       = 0.0f;
     float   Padding1       = 0.0f;
+
+    // 656-672
+    Vector3 PrevPosition;
+    float   Padding2       = 0.0f;
 };
 
 class FFrameCounterState
@@ -149,7 +153,7 @@ public:
     // Records ImGui draw data into the UI command list.
     void RecordUI();
 
-    // Main thread: dispatches the UI command list plus present for the frame described by Packet.
+    // Dispatches the UI command list plus present for the frame described by Packet.
     void SubmitUIAndPresent(const FSceneRenderPacket& Packet);
 
     void RequestEditorObjectPick(FScene* Scene, uint32 PixelX, uint32 PixelY); 
@@ -204,10 +208,10 @@ private:
     bool InitShadingImage(); 
     void RenderThread_PrepareCameraData(const FSceneRenderView& SceneRenderView, FScene* Scene);
 
-    // Render thread: opens the scene command list for the frame before scene passes are recorded.
+    // Opens the scene command list for the frame before scene passes are recorded.
     void RenderThread_BeginSceneCommandList(const FSceneRenderPacket& Packet);
 
-    // Render thread: records all scene passes for the view into the scene command list.
+    // Records all scene passes for the view into the scene command list.
     void RenderThread_RenderSceneView(const FSceneRenderView& SceneRenderView, const TArray<uint32>& SelectedObjectIDs);
 
 #if EDITOR_BUILD
@@ -245,6 +249,7 @@ private:
     FDebugRenderer*              DebugRenderer;
     FDebugViewPass*              DebugViewPass;
     FRayTracer                   RayTracer;
+    bool                         bRayTracingWasActive = false; // tracks the RT active->inactive edge for BLAS teardown
     FGenericPlatformEvent*       LastFrameFinishedEvent;
     FRHIQueryRef                 TimestampQueries;
     FRHICommandList              CommandList;

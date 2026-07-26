@@ -9,18 +9,74 @@
 #include "D3D12RHI/D3D12Buffer.h"
 #include "D3D12RHI/D3D12Texture.h"
 #include "D3D12RHI/D3D12PipelineState.h"
-#include "D3D12RHI/D3D12RayTracing.h"
 #include "D3D12RHI/D3D12Query.h"
 #include "D3D12RHI/D3D12CommandContext.h"
 #include "D3D12RHI/D3D12Loader.h"
 #include "D3D12RHI/D3D12SwapChain.h"
 #include "D3D12RHI/D3D12Descriptors.h"
+#include "D3D12RHI/RayTracing/D3D12RayTracing.h"
+
 #include <pix.h>
 
 static TAutoConsoleVariable<int32> CVarMaxCommandsPerCommandList(
     "D3D12RHI.MaxCommandsPerCommandList",
     "Number of commands allowed before submitting the current CommandList to the GPU",
     10000);
+
+static D3D12_RESOURCE_STATES D3D12ResolveRestingState(const FD3D12Resource* Resource, D3D12_RESOURCE_STATES DesiredState)
+{
+    if (Resource->HasDefaultState())
+    {
+        const D3D12_RESOURCE_STATES Default = Resource->GetDefaultState();
+        if ((DesiredState & Default) == DesiredState && DesiredState != Default)
+        {
+            return Default;
+        }
+    }
+
+    return DesiredState;
+}
+
+static D3D12_GPU_VIRTUAL_ADDRESS GetD3D12AccelerationStructureGPUAddress(FRHIRayTracingAccelerationStructure* AccelerationStructure)
+{
+    if (!AccelerationStructure)
+    {
+        return 0;
+    }
+
+    switch (AccelerationStructure->GetAccelerationStructureType())
+    {
+        case ERayTracingAccelerationStructureType::Geometry:
+        {
+            return static_cast<FD3D12GeometryAccelerationStructureRHI*>(AccelerationStructure)->GetGPUVirtualAddress();
+        }
+
+        case ERayTracingAccelerationStructureType::Scene:
+        {
+            return static_cast<FD3D12SceneAccelerationStructureRHI*>(AccelerationStructure)->GetGPUVirtualAddress();
+        }
+
+        default:
+        {
+            return 0;
+        }
+    }
+}
+
+static uint64 GetRayTracingPostBuildInfoStride(EAccelerationStructurePostBuildInfoType InfoType)
+{
+    switch (InfoType)
+    {
+        case EAccelerationStructurePostBuildInfoType::Serialization:
+            return 16;
+
+        case EAccelerationStructurePostBuildInfoType::CompactedSize:
+        case EAccelerationStructurePostBuildInfoType::CurrentSize:
+        case EAccelerationStructurePostBuildInfoType::ToolsVisualization:
+        default:
+            return 8;
+    }
+}
 
 void FD3D12BarrierBatcher::AddTransitionBarrier(FD3D12Resource* InResource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, uint32 SubresourceIndex)
 {
@@ -58,11 +114,9 @@ void FD3D12BarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_
 
     if (BeforeState == AfterState)
     {
-        // No-op transition
         return;
     }
 
-    // Try to coalesce with an existing transition for the same (sub)resource.
     for (TArray<D3D12_RESOURCE_BARRIER>::IteratorType It = Barriers.Iterator(); !It.IsEnd(); ++It)
     {
         if (It->Type != D3D12_RESOURCE_BARRIER_TYPE_TRANSITION)
@@ -76,12 +130,10 @@ void FD3D12BarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_
             continue;
         }
 
-        // We only coalesce when subresources match exactly (or both are ALL_SUBRESOURCES).
-        const bool bSameSubresource     = (Existing.Transition.Subresource == SubresourceIndex);
-        const bool bBothAllSubresources = (Existing.Transition.Subresource == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) &&
-            (SubresourceIndex == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+        const bool bIsSameSubresource     = (Existing.Transition.Subresource == SubresourceIndex);
+        const bool bIsBothAllSubresources = (Existing.Transition.Subresource == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) && (SubresourceIndex == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
         
-        if (!(bSameSubresource || bBothAllSubresources))
+        if (!(bIsSameSubresource || bIsBothAllSubresources))
         {
             continue;
         }
@@ -101,16 +153,14 @@ void FD3D12BarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_
         {
             ExistingTransitionBarrier.StateAfter = AfterState;
         #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
-            LOG_INFO("  Extended barrier to %s->%s (SubresourceIndex=%u)", 
-                ToString(ExistingTransitionBarrier.StateBefore), ToString(ExistingTransitionBarrier.StateAfter), SubresourceIndex);
+            LOG_INFO("  Extended barrier to %s->%s (SubresourceIndex=%u)", ToString(ExistingTransitionBarrier.StateBefore), ToString(ExistingTransitionBarrier.StateAfter), SubresourceIndex);
         #endif
 
             // If we changed state to the same before- and after-state, remove it
             if (ExistingTransitionBarrier.StateBefore == ExistingTransitionBarrier.StateAfter)
             {
             #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
-                LOG_INFO("  Cancelled barrier (SubresourceIndex=%u, %s<->%s)", 
-                    SubresourceIndex, ToString(ExistingTransitionBarrier.StateBefore), ToString(ExistingTransitionBarrier.StateAfter));
+                LOG_INFO("  Cancelled barrier (SubresourceIndex=%u, %s<->%s)", SubresourceIndex, ToString(ExistingTransitionBarrier.StateBefore), ToString(ExistingTransitionBarrier.StateAfter));
             #endif
                 Barriers.RemoveAt(It.GetIndex());
             }
@@ -118,18 +168,24 @@ void FD3D12BarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_
             return;
         }
 
-        // Case 3: Cancel barrier (FirstRange->SecondRange then SecondRange->FirstRange) => remove
-        if (ExistingTransitionBarrier.StateBefore == AfterState)
-        {
-        #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
-            LOG_INFO("  Cancelled barrier (SubresourceIndex=%u, %s<->%s)", SubresourceIndex, ToString(BeforeState), ToString(AfterState));
-        #endif
-            Barriers.RemoveAt(It.GetIndex());
-            return;
-        }
+    #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
+        D3D12_ERROR(
+            "Non-chained transition barrier. Resource=%p Subresource=%u Existing=%s(0x%X)->%s(0x%X) New=%s(0x%X)->%s(0x%X)",
+            Resource,
+            SubresourceIndex,
+            ToString(ExistingTransitionBarrier.StateBefore),
+            uint32(ExistingTransitionBarrier.StateBefore),
+            ToString(ExistingTransitionBarrier.StateAfter),
+            uint32(ExistingTransitionBarrier.StateAfter),
+            ToString(BeforeState),
+            uint32(BeforeState),
+            ToString(AfterState),
+            uint32(AfterState));
+        CHECK(false);
+    #endif
     }
 
-    // Otherwise: Different, non-chainable states -> cannot coalesce. Add a new barrier.
+    // Otherwise: Add a new barrier.
     D3D12_RESOURCE_BARRIER Barrier = {};
     Barrier.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
     Barrier.Flags                  = D3D12_RESOURCE_BARRIER_FLAG_NONE;
@@ -137,6 +193,7 @@ void FD3D12BarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_
     Barrier.Transition.StateBefore = BeforeState;
     Barrier.Transition.StateAfter  = AfterState;
     Barrier.Transition.Subresource = SubresourceIndex;
+    
     Barriers.Emplace(Barrier);
 }
 
@@ -157,6 +214,34 @@ void FD3D12BarrierBatcher::AddUnorderedAccessBarrier(ID3D12Resource* Resource)
     Barrier.Type          = D3D12_RESOURCE_BARRIER_TYPE_UAV;
     Barrier.Flags         = D3D12_RESOURCE_BARRIER_FLAG_NONE;
     Barrier.UAV.pResource = Resource;
+
+    Barriers.Emplace(Barrier);
+}
+
+void FD3D12BarrierBatcher::AddAliasingBarrier(FD3D12Resource* InResourceAfter)
+{
+    CHECK(InResourceAfter != nullptr);
+
+#if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
+    {
+        String DebugName;
+        InResourceAfter->GetDebugName(DebugName);
+        D3D12_INFO("AddAliasingBarrier Resource=%s", *DebugName);
+    }
+#endif
+
+    AddAliasingBarrier(InResourceAfter->GetD3D12Resource());
+}
+
+void FD3D12BarrierBatcher::AddAliasingBarrier(ID3D12Resource* ResourceAfter)
+{
+    CHECK(ResourceAfter != nullptr);
+
+    D3D12_RESOURCE_BARRIER Barrier = {};
+    Barrier.Type                     = D3D12_RESOURCE_BARRIER_TYPE_ALIASING;
+    Barrier.Flags                    = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    Barrier.Aliasing.pResourceBefore = nullptr;
+    Barrier.Aliasing.pResourceAfter  = ResourceAfter;
 
     Barriers.Emplace(Barrier);
 }
@@ -253,7 +338,7 @@ FD3D12ResourceState& FD3D12CommandContext::RetrievePendingResourceState(FD3D12Re
     if (!LocalState.IsInitialized())
     {
         LocalState.Initialize(Resource->GetNumSubresources());
-        LocalState.SetResourceState(D3D12_RESOURCE_STATE_TO_BE_DETERMINED);
+        LocalState.SetState(D3D12_RESOURCE_STATE_TO_BE_DETERMINED);
     }
 
     return LocalState;
@@ -305,7 +390,6 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
             Commands->Flags |= ED3D12CommandsFlags::ResolveQueries;
 
             TArray<FD3D12QueryRange>& AllRanges = Commands->QueryRanges;
-
             AllRanges.SortWithPredicate([](const FD3D12QueryRange& FirstRange, const FD3D12QueryRange& SecondRange)
             {
                 if (FirstRange.Heap != SecondRange.Heap)
@@ -425,6 +509,11 @@ void FD3D12CommandContext::SplitCommandListAndResetState(bool bFlushAllocator, b
 
 void FD3D12CommandContext::SplitCommandListForDescriptorHeapRollover()
 {
+#if D3D12_ENABLE_DESCRIPTOR_HEAP_ROLLOVER_LOGGING
+    D3D12_WARNING("[DescriptorRollover] Splitting command list for descriptor-heap rollover (RecordedCommands=%u)",
+        CommandList ? CommandList->GetNumCommands() : 0u);
+#endif
+
     SplitCommandList(true, true);
     FD3D12DeviceRHI::Get()->FlushCompletedSubmissions();
 }
@@ -436,7 +525,7 @@ void FD3D12CommandContext::BeginFrame()
 
 void FD3D12CommandContext::EndFrame()
 {
-    FD3D12DeviceRHI::Get()->EndFrame();
+    FD3D12DeviceRHI::Get()->EndFrame(this);
 }
 
 void FD3D12CommandContext::StartContext()
@@ -525,14 +614,13 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
             return;
         }
 
-        Memory::Memcpy(BufferData + BufferRegion.Offset, SrcData, BufferRegion.Size);
-
         const D3D12_RANGE WrittenRange =
         {
             BufferRegion.Offset,
             BufferRegion.Offset + BufferRegion.Size
         };
 
+        Memory::Memcpy(BufferData + BufferRegion.Offset, SrcData, BufferRegion.Size);
         Resource->UnmapRange(0, &WrittenRange);
     }
     else
@@ -682,6 +770,7 @@ void FD3D12CommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView
 
     const D3D12_GPU_DESCRIPTOR_HANDLE OnlineHandleGPU = ResourceHeap.GetGPUHandle(HandeOffset);
     GetCommandList().UpdateResidency(D3D12UnorderedAccessView->GetResourceResidencyHandle());
+
     GetCommandList()->ClearUnorderedAccessViewFloat(
         OnlineHandleGPU,
         D3D12UnorderedAccessView->GetOfflineHandle(),
@@ -718,6 +807,7 @@ void FD3D12CommandContext::ClearUnorderedAccessViewUint(FRHIUnorderedAccessView*
 
     const D3D12_GPU_DESCRIPTOR_HANDLE OnlineHandleGPU = ResourceHeap.GetGPUHandle(HandeOffset);
     GetCommandList().UpdateResidency(D3D12UnorderedAccessView->GetResourceResidencyHandle());
+
     GetCommandList()->ClearUnorderedAccessViewUint(
         OnlineHandleGPU,
         D3D12UnorderedAccessView->GetOfflineHandle(),
@@ -1035,7 +1125,6 @@ void FD3D12CommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& Bu
         }
 
         Memory::Memcpy(MappedPtr, SrcData, BufferRegion.Size);
-
         D3D12Destination->ResourceRelocated(&Storage);
     }
     else
@@ -1355,10 +1444,13 @@ void FD3D12CommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 Dst
     SourceLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
     SourceLocation.SubresourceIndex = SrcSubresource;
 
+    const FD3D12ResourceStorage& DstStorage = D3D12Destination->GetResourceStorage();
+    const uint64 EffectiveOffset = DstOffset + DstStorage.GetResourceOffset();
+
     D3D12_TEXTURE_COPY_LOCATION DestLocation = {};
     DestLocation.pResource                        = DstResource->GetD3D12Resource();
     DestLocation.Type                             = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-    DestLocation.PlacedFootprint.Offset           = DstOffset;
+    DestLocation.PlacedFootprint.Offset           = EffectiveOffset;
     DestLocation.PlacedFootprint.Footprint.Format = ConvertFormat(Src->GetDesc().Format);
 
     const uint32 SrcLeft      = SrcRegion.PositionX >> SrcMipLevel;
@@ -1370,7 +1462,7 @@ void FD3D12CommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 Dst
     const uint32 RowPitch     = Math::AlignUp<uint32>(BytesPerPixel * CopyWidth, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
     const uint64 RequiredSize = uint64(RowPitch) * uint64(CopyHeight);
 
-    CHECK(DstOffset + RequiredSize <= DstResource->GetSize());
+    CHECK(EffectiveOffset + RequiredSize <= DstResource->GetSize());
 
     DestLocation.PlacedFootprint.Footprint.Width    = CopyWidth;
     DestLocation.PlacedFootprint.Footprint.Height   = CopyHeight;
@@ -1441,10 +1533,12 @@ void FD3D12CommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint6
     const uint32 CopyDepth  = Math::Max(SrcRegion.Depth, 1u);
     const uint32 RowPitch   = Math::AlignUp<uint32>(BytesPerPixel * CopyWidth, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 
+    const FD3D12ResourceStorage& DstStorage = D3D12Destination->GetResourceStorage();
+
     D3D12_TEXTURE_COPY_LOCATION DestLocation = {};
     DestLocation.pResource                          = DstResource->GetD3D12Resource();
     DestLocation.Type                               = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-    DestLocation.PlacedFootprint.Offset             = DstOffset;
+    DestLocation.PlacedFootprint.Offset             = DstOffset + DstStorage.GetResourceOffset();
     DestLocation.PlacedFootprint.Footprint.Format   = ConvertFormat(Src->GetDesc().Format);
     DestLocation.PlacedFootprint.Footprint.Width    = CopyWidth;
     DestLocation.PlacedFootprint.Footprint.Height   = CopyHeight;
@@ -1500,113 +1594,6 @@ void FD3D12CommandContext::BuildGeometryAccelerationStructure(FRHIGeometryAccele
     D3D12RayTracingGeometry->Build(*this, BuildDesc);
 }
 
-void FD3D12CommandContext::SetRayTracingBindings(FRHISceneAccelerationStructure* /* RayTracingScene */, FRHIRayTracingPipelineState* /* PipelineState */, const FRayTracingShaderResources* /* GlobalResource */, const FRayTracingShaderResources* /* RayGenLocalResources */, const FRayTracingShaderResources* /* MissLocalResources */, const FRayTracingShaderResources* /* HitGroupResources */, uint32 /* NumHitGroupResources */)
-{
-#if 0
-    FD3D12SceneAccelerationStructureRHI* D3D12Scene = FD3D12DeviceRHI::ResourceCast(RayTracingScene);
-    D3D12_ERROR_COND(D3D12Scene != nullptr, "RayTracingScene cannot be nullptr");
-
-    FD3D12RayTracingPipelineStateRHI* D3D12PipelineState = FD3D12DeviceRHI::ResourceCast(PipelineState);
-    D3D12_ERROR_COND(D3D12PipelineState != nullptr, "PipelineState cannot be nullptr");
-
-    uint32 NumDescriptorsNeeded = 0;
-    uint32 NumSamplersNeeded    = 0;
-    if (GlobalResource)
-    {
-        NumDescriptorsNeeded += GlobalResource->NumResources();
-        NumSamplersNeeded    += GlobalResource->NumSamplers();
-    }
-    if (RayGenLocalResources)
-    {
-        NumDescriptorsNeeded += RayGenLocalResources->NumResources();
-        NumSamplersNeeded    += RayGenLocalResources->NumSamplers();
-    }
-    if (MissLocalResources)
-    {
-        NumDescriptorsNeeded += MissLocalResources->NumResources();
-        NumSamplersNeeded    += MissLocalResources->NumSamplers();
-    }
-
-    for (uint32 i = 0; i < NumHitGroupResources; i++)
-    {
-        NumDescriptorsNeeded += HitGroupResources[i].NumResources();
-        NumSamplersNeeded    += HitGroupResources[i].NumSamplers();
-    }
-
-    D3D12_ERROR_COND(NumDescriptorsNeeded < D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, "NumDescriptorsNeeded=%u, but the maximum is '%u'", NumDescriptorsNeeded, D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT);
-
-    FD3D12OnlineDescriptorManager* ResourceHeap = CmdBatch->GetResourceDescriptorManager();
-    if (!ResourceHeap->HasSpace(NumDescriptorsNeeded))
-    {
-        CHECK(false);
-        // TODO: Fix this
-        // ResourceHeap->AllocateFreshHeap();
-    }
-
-    D3D12_ERROR_COND(NumSamplersNeeded < D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT, "NumDescriptorsNeeded=%u, but the maximum is '%u'", NumSamplersNeeded, D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT);
-
-    FD3D12OnlineDescriptorManager* SamplerHeap = CmdBatch->GetSamplerDescriptorManager();
-    if (!SamplerHeap->HasSpace(NumSamplersNeeded))
-    {
-        CHECK(false);
-        // TODO: Fix this
-        // SamplerHeap->AllocateFreshHeap();
-    }
-
-    // TODO: Fix this
-    // if (!D3D12Scene->BuildBindingTable(*this, D3D12PipelineState, ResourceHeap, SamplerHeap, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources))
-    {
-        D3D12_ERROR_CRITICAL("[FD3D12CommandContext]: FAILED to Build Shader Binding Table");
-    }
-
-    if (GlobalResource)
-    {
-        if (!GlobalResource->ConstantBuffers.IsEmpty())
-        {
-            for (int32 i = 0; i < GlobalResource->ConstantBuffers.Size(); i++)
-            {
-                FD3D12BufferRHI* D3D12Buffer = FD3D12DeviceRHI::ResourceCast(GlobalResource->ConstantBuffers[i]);
-                ContextState.SetCBV(D3D12Buffer, EShaderVisibility::All, i);
-            }
-        }
-        
-        if (!GlobalResource->ShaderResourceViews.IsEmpty())
-        {
-            for (int32 i = 0; i < GlobalResource->ShaderResourceViews.Size(); i++)
-            {
-                FD3D12ShaderResourceViewRHI* D3D12ShaderResourceView = FD3D12DeviceRHI::ResourceCast(GlobalResource->ShaderResourceViews[i]);
-                ContextState.DescriptorCache.SetShaderResourceView(EShaderVisibility::All, D3D12ShaderResourceView, i);
-            }
-        }
-        
-        if (!GlobalResource->UnorderedAccessViews.IsEmpty())
-        {
-            for (int32 i = 0; i < GlobalResource->UnorderedAccessViews.Size(); i++)
-            {
-                FD3D12UnorderedAccessViewRHI* D3D12UnorderedAccessView = FD3D12DeviceRHI::ResourceCast(GlobalResource->UnorderedAccessViews[i]);
-                ContextState.DescriptorCache.SetUnorderedAccessView(EShaderVisibility::All, D3D12UnorderedAccessView, i);
-            }
-        }
-
-        if (!GlobalResource->SamplerStates.IsEmpty())
-        {
-            for (int32 i = 0; i < GlobalResource->SamplerStates.Size(); i++)
-            {
-                FD3D12SamplerStateRHI* DxSampler = FD3D12DeviceRHI::ResourceCast(GlobalResource->SamplerStates[i]);
-                ContextState.DescriptorCache.SetSamplerState(EShaderVisibility::All, DxSampler, i);
-            }
-        }
-    }
-
-    ID3D12GraphicsCommandList4* DXRCommandList = CommandList->GetGraphicsCommandList4();
-
-    FD3D12RootSignature* GlobalRootSignature = D3D12PipelineState->GetGlobalRootSignature();
-    DXRCommandList->SetComputeRootSignature(GlobalRootSignature->GetD3D12RootSignature());
-
-    ContextState.DescriptorCache.PrepareComputeDescriptors(CmdBatch, GlobalRootSignature);
-#endif
-}
-
 void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FRHITextureTransition& TextureTransition)
 {
     FD3D12TextureRHI* D3D12Texture = FD3D12DeviceRHI::ResourceCast(Texture);
@@ -1621,7 +1608,7 @@ void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FR
     FD3D12Resource* Resource = D3D12Texture->GetResource();
 
     const D3D12_RESOURCE_STATES D3D12BeforeState = ConvertResourceState(TextureTransition.BeforeState);
-    const D3D12_RESOURCE_STATES D3D12AfterState  = ConvertResourceState(TextureTransition.AfterState);
+    const D3D12_RESOURCE_STATES D3D12AfterState  = D3D12ResolveRestingState(Resource, ConvertResourceState(TextureTransition.AfterState));
 
     FD3D12ResourceState& LocalState = RetrievePendingResourceState(Resource);
     if (TextureTransition.MipLevel != RHI_ALL_MIP_LEVELS || TextureTransition.ArraySlice != RHI_ALL_ARRAY_SLICES)
@@ -1644,19 +1631,21 @@ void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FR
                 if (CurrentState == D3D12_RESOURCE_STATE_TO_BE_DETERMINED)
                 {
                     AddPendingBarrier(Resource, D3D12BeforeState, SubresourceIndex);
+                    BarrierBatcher.AddTransitionBarrier(Resource, D3D12BeforeState, D3D12AfterState, SubresourceIndex);
+                    LocalState.SetSubresourceState(SubresourceIndex, D3D12AfterState);
                 }
-                else
+                else if (!D3D12IsReadStateSatisfied(CurrentState, D3D12AfterState))
                 {
-                    if (CurrentState != D3D12BeforeState)
+                    if (!D3D12IsBeforeStateValid(CurrentState, D3D12BeforeState))
                     {
                         D3D12_LOG_TRANSITION_MISMATCH(D3D12Texture, *String::CreateFormatted("array-slice loop, slice=%u, mip=%u", ArraySlice, TextureTransition.MipLevel),
                             TextureTransition.BeforeState, D3D12BeforeState, D3D12AfterState, CurrentState);
-                        CHECK(CurrentState == D3D12BeforeState);
+                        CHECK(D3D12IsBeforeStateValid(CurrentState, D3D12BeforeState));
                     }
-                }
 
-                BarrierBatcher.AddTransitionBarrier(Resource, D3D12BeforeState, D3D12AfterState, SubresourceIndex);
-                LocalState.SetSubresourceState(SubresourceIndex, D3D12AfterState);
+                    BarrierBatcher.AddTransitionBarrier(Resource, CurrentState, D3D12AfterState, SubresourceIndex);
+                    LocalState.SetSubresourceState(SubresourceIndex, D3D12AfterState);
+                }
             }
         }
         else if (TextureTransition.MipLevel == RHI_ALL_MIP_LEVELS)
@@ -1671,19 +1660,21 @@ void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FR
                 if (CurrentState == D3D12_RESOURCE_STATE_TO_BE_DETERMINED)
                 {
                     AddPendingBarrier(Resource, D3D12BeforeState, SubresourceIndex);
+                    BarrierBatcher.AddTransitionBarrier(Resource, D3D12BeforeState, D3D12AfterState, SubresourceIndex);
+                    LocalState.SetSubresourceState(SubresourceIndex, D3D12AfterState);
                 }
-                else
+                else if (!D3D12IsReadStateSatisfied(CurrentState, D3D12AfterState))
                 {
-                    if (CurrentState != D3D12BeforeState)
+                    if (!D3D12IsBeforeStateValid(CurrentState, D3D12BeforeState))
                     {
                         D3D12_LOG_TRANSITION_MISMATCH(D3D12Texture, *String::CreateFormatted("mip loop, slice=%u, mip=%u", TextureTransition.ArraySlice, MipLevel),
                             TextureTransition.BeforeState, D3D12BeforeState, D3D12AfterState, CurrentState);
-                        CHECK(CurrentState == D3D12BeforeState);
+                        CHECK(D3D12IsBeforeStateValid(CurrentState, D3D12BeforeState));
                     }
-                }
 
-                BarrierBatcher.AddTransitionBarrier(Resource, D3D12BeforeState, D3D12AfterState, SubresourceIndex);
-                LocalState.SetSubresourceState(SubresourceIndex, D3D12AfterState);
+                    BarrierBatcher.AddTransitionBarrier(Resource, CurrentState, D3D12AfterState, SubresourceIndex);
+                    LocalState.SetSubresourceState(SubresourceIndex, D3D12AfterState);
+                }
             }
         }
         else
@@ -1698,41 +1689,46 @@ void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FR
             if (CurrentState == D3D12_RESOURCE_STATE_TO_BE_DETERMINED)
             {
                 AddPendingBarrier(Resource, D3D12BeforeState, SubresourceIndex);
+                BarrierBatcher.AddTransitionBarrier(Resource, D3D12BeforeState, D3D12AfterState, SubresourceIndex);
+                LocalState.SetSubresourceState(SubresourceIndex, D3D12AfterState);
             }
-            else
+            else if (!D3D12IsReadStateSatisfied(CurrentState, D3D12AfterState))
             {
-                if (CurrentState != D3D12BeforeState)
+                if (!D3D12IsBeforeStateValid(CurrentState, D3D12BeforeState))
                 {
                     D3D12_LOG_TRANSITION_MISMATCH(D3D12Texture, *String::CreateFormatted("single subresource, slice=%u, mip=%u", TextureTransition.ArraySlice, TextureTransition.MipLevel),
                         TextureTransition.BeforeState, D3D12BeforeState, D3D12AfterState, CurrentState);
-                    CHECK(CurrentState == D3D12BeforeState);
+                    CHECK(D3D12IsBeforeStateValid(CurrentState, D3D12BeforeState));
                 }
-            }
 
-            BarrierBatcher.AddTransitionBarrier(Resource, D3D12BeforeState, D3D12AfterState, SubresourceIndex);
-            LocalState.SetSubresourceState(SubresourceIndex, D3D12AfterState);
+                BarrierBatcher.AddTransitionBarrier(Resource, CurrentState, D3D12AfterState, SubresourceIndex);
+                LocalState.SetSubresourceState(SubresourceIndex, D3D12AfterState);
+            }
         }
     }
     else
     {
-        if (LocalState.AreAllSubresourcesSameState())
+        if (LocalState.IsSingleState())
         {
-            const D3D12_RESOURCE_STATES CurrentState = LocalState.GetResourceState();
+            const D3D12_RESOURCE_STATES CurrentState = LocalState.GetState();
             if (CurrentState == D3D12_RESOURCE_STATE_TO_BE_DETERMINED)
             {
                 AddPendingBarrier(Resource, D3D12BeforeState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+                BarrierBatcher.AddTransitionBarrier(Resource, D3D12BeforeState, D3D12AfterState);
+                LocalState.SetState(D3D12AfterState);
             }
-            else
+            else if (!D3D12IsReadStateSatisfied(CurrentState, D3D12AfterState))
             {
-                if (CurrentState != D3D12BeforeState)
+                if (!D3D12IsBeforeStateValid(CurrentState, D3D12BeforeState))
                 {
                     D3D12_LOG_TRANSITION_MISMATCH(D3D12Texture, "all-subresources (uniform state)",
                         TextureTransition.BeforeState, D3D12BeforeState, D3D12AfterState, CurrentState);
-                    CHECK(CurrentState == D3D12BeforeState);
+                    CHECK(D3D12IsBeforeStateValid(CurrentState, D3D12BeforeState));
                 }
-            }
 
-            BarrierBatcher.AddTransitionBarrier(Resource, D3D12BeforeState, D3D12AfterState);
+                BarrierBatcher.AddTransitionBarrier(Resource, CurrentState, D3D12AfterState);
+                LocalState.SetState(D3D12AfterState);
+            }
         }
         else
         {
@@ -1742,22 +1738,23 @@ void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FR
                 if (CurrentState == D3D12_RESOURCE_STATE_TO_BE_DETERMINED)
                 {
                     AddPendingBarrier(Resource, D3D12BeforeState, i);
+                    BarrierBatcher.AddTransitionBarrier(Resource, D3D12BeforeState, D3D12AfterState, i);
                 }
                 else
                 {
-                    if (CurrentState != D3D12BeforeState)
+                    if (!D3D12IsBeforeStateValid(CurrentState, D3D12BeforeState))
                     {
                         D3D12_LOG_TRANSITION_MISMATCH(D3D12Texture, *String::CreateFormatted("per-subresource (divergent), subresource=%u", i),
                             TextureTransition.BeforeState, D3D12BeforeState, D3D12AfterState, CurrentState);
-                        CHECK(CurrentState == D3D12BeforeState);
+                        CHECK(D3D12IsBeforeStateValid(CurrentState, D3D12BeforeState));
                     }
+
+                    BarrierBatcher.AddTransitionBarrier(Resource, CurrentState, D3D12AfterState, i);
                 }
-
-                BarrierBatcher.AddTransitionBarrier(Resource, D3D12BeforeState, D3D12AfterState, i);
             }
-        }
 
-        LocalState.SetResourceState(D3D12AfterState);
+            LocalState.SetState(D3D12AfterState);
+        }
     }
 }
 
@@ -1768,12 +1765,12 @@ void FD3D12CommandContext::TransitionBufferState(FRHIBuffer* Buffer, EResourceAc
 
     FD3D12Resource* Resource = D3D12Buffer->GetResource();
 
-    const D3D12_RESOURCE_STATES D3D12AfterState  = ConvertResourceState(AfterState);
+    const D3D12_RESOURCE_STATES D3D12AfterState  = D3D12ResolveRestingState(Resource, ConvertResourceState(AfterState));
     const D3D12_RESOURCE_STATES D3D12BeforeState = ConvertResourceState(BeforeState);
 
     FD3D12ResourceState& LocalState = RetrievePendingResourceState(Resource);
 
-    const D3D12_RESOURCE_STATES CurrentState = LocalState.GetResourceState();
+    const D3D12_RESOURCE_STATES CurrentState = LocalState.GetState();
     if (CurrentState == D3D12AfterState)
     {
         return;
@@ -1785,22 +1782,29 @@ void FD3D12CommandContext::TransitionBufferState(FRHIBuffer* Buffer, EResourceAc
     }
     else
     {
-        CHECK(Resource->HasDefaultState() || CurrentState == D3D12BeforeState);
+        if (D3D12IsReadStateSatisfied(CurrentState, D3D12AfterState))
+        {
+            return;
+        }
+
+        CHECK(D3D12IsBeforeStateValid(CurrentState, D3D12BeforeState));
     }
 
     const D3D12_RESOURCE_STATES EffectiveBeforeState = (CurrentState != D3D12_RESOURCE_STATE_TO_BE_DETERMINED) ? CurrentState : D3D12BeforeState;
     BarrierBatcher.AddTransitionBarrier(Resource, EffectiveBeforeState, D3D12AfterState);
-    LocalState.SetResourceState(D3D12AfterState);
+    LocalState.SetState(D3D12AfterState);
 }
 
 void FD3D12CommandContext::TransitionResourceState(FD3D12Resource* Resource, D3D12_RESOURCE_STATES AfterState)
 {
     CHECK(Resource != nullptr);
 
+    AfterState = D3D12ResolveRestingState(Resource, AfterState);
+
     FD3D12ResourceState& LocalState = RetrievePendingResourceState(Resource);
-    if (LocalState.AreAllSubresourcesSameState())
+    if (LocalState.IsSingleState())
     {
-        const D3D12_RESOURCE_STATES CurrentState = LocalState.GetResourceState();
+        const D3D12_RESOURCE_STATES CurrentState = LocalState.GetState();
         if (CurrentState == D3D12_RESOURCE_STATE_TO_BE_DETERMINED)
         {
             AddPendingBarrier(Resource, AfterState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
@@ -1810,7 +1814,7 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12Resource* Resource, D3D
             BarrierBatcher.AddTransitionBarrier(Resource, CurrentState, AfterState);
         }
 
-        LocalState.SetResourceState(AfterState);
+        LocalState.SetState(AfterState);
     }
     else
     {
@@ -1836,17 +1840,19 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12Resource* Resource, D3D
     CHECK(Resource != nullptr);
     CHECK(BeforeState != D3D12_RESOURCE_STATE_TO_BE_DETERMINED);
 
+    AfterState = D3D12ResolveRestingState(Resource, AfterState);
+
     FD3D12ResourceState& LocalState = RetrievePendingResourceState(Resource);
-    if (LocalState.AreAllSubresourcesSameState())
+    if (LocalState.IsSingleState())
     {
-        const D3D12_RESOURCE_STATES CurrentState = LocalState.GetResourceState();
+        const D3D12_RESOURCE_STATES CurrentState = LocalState.GetState();
         if (CurrentState == D3D12_RESOURCE_STATE_TO_BE_DETERMINED)
         {
             AddPendingBarrier(Resource, BeforeState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
         }
 
         BarrierBatcher.AddTransitionBarrier(Resource, BeforeState, AfterState);
-        LocalState.SetResourceState(AfterState);
+        LocalState.SetState(AfterState);
     }
     else
     {
@@ -1867,6 +1873,8 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12Resource* Resource, D3D
 void FD3D12CommandContext::TransitionResourceState(FD3D12Resource* Resource, D3D12_RESOURCE_STATES AfterState, uint32 FirstMip, uint32 NumMips, uint32 FirstArraySlice, uint32 NumArraySlices)
 {
     CHECK(Resource != nullptr);
+
+    AfterState = D3D12ResolveRestingState(Resource, AfterState);
 
     FD3D12ResourceState& LocalState = RetrievePendingResourceState(Resource);
     
@@ -1896,11 +1904,42 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12Resource* Resource, D3D
     }
 }
 
+void FD3D12CommandContext::EnsureDefaultState(const FD3D12Resource* Resource) const
+{
+#if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
+    if (Resource && Resource->HasDefaultState())
+    {
+        const FD3D12ResourceState* Pending     = PendingResourceStates.Find(const_cast<FD3D12Resource*>(Resource));
+        const bool                 bUsePending = Pending && Pending->IsInitialized() && Pending->IsSingleState();
+        const FD3D12ResourceState& GlobalState = Resource->GetResourceState();
+
+        const D3D12_RESOURCE_STATES CurrentState = bUsePending
+            ? Pending->GetState()
+            : (GlobalState.IsSingleState() ? GlobalState.GetState() : GlobalState.GetSubresourceState(0));
+
+        const D3D12_RESOURCE_STATES DefaultState = Resource->GetDefaultState();
+        if (CurrentState != D3D12_RESOURCE_STATE_TO_BE_DETERMINED && CurrentState != DefaultState)
+        {
+            String DebugName;
+            Resource->GetDebugName(DebugName);
+
+            D3D12_ERROR("EnsureDefaultState mismatch on '%s': CurrentState=%s (0x%08X, Source=%s), DefaultState=%s (0x%08X)",
+                *DebugName, ToString(CurrentState), uint32(CurrentState), bUsePending ? "Pending" : "Global", ToString(DefaultState), uint32(DefaultState));
+        }
+
+        CHECK(CurrentState == D3D12_RESOURCE_STATE_TO_BE_DETERMINED || CurrentState == DefaultState);
+    }
+#else
+    UNREFERENCED_VARIABLE(Resource);
+#endif
+}
+
 void FD3D12CommandContext::TransitionResourceState(FD3D12UnorderedAccessViewRHI* View)
 {
     FD3D12Resource* Resource = View->GetViewResource();
     if (!Resource || !Resource->RequiresResourceStateTracking())
     {
+        EnsureDefaultState(Resource);
         return;
     }
 
@@ -1941,6 +1980,7 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12ShaderResourceViewRHI* 
     FD3D12Resource* Resource = View->GetViewResource();
     if (!Resource || !Resource->RequiresResourceStateTracking())
     {
+        EnsureDefaultState(Resource);
         return;
     }
 
@@ -2027,6 +2067,11 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12ShaderResourceViewRHI* 
             }
 
             TransitionResourceState(Resource, State, 0, 1, ViewDesc.Texture2DMSArray.FirstArraySlice, NumSlices);
+            break;
+        }
+
+        case D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE:
+        {
             break;
         }
 
@@ -2155,8 +2200,14 @@ void FD3D12CommandContext::RequireTextureState(FRHITexture* Texture, const FRHIR
     FD3D12Resource* Resource = D3D12Texture->GetResource();
     CHECK(Resource != nullptr);
 
+    if (!Resource->RequiresResourceStateTracking())
+    {
+        EnsureDefaultState(Resource);
+        return;
+    }
+
     const D3D12_RESOURCE_DESC&  ResourceDesc = Resource->GetDesc();
-    const D3D12_RESOURCE_STATES DesiredState = ConvertResourceState(RequiredState.State);
+    const D3D12_RESOURCE_STATES DesiredState = D3D12ResolveRestingState(Resource, ConvertResourceState(RequiredState.State));
     
     const uint32 NumMipLevels   = ResourceDesc.MipLevels;
     const uint32 NumArraySlices = ResourceDesc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D ? ResourceDesc.DepthOrArraySize : 1u;
@@ -2164,16 +2215,22 @@ void FD3D12CommandContext::RequireTextureState(FRHITexture* Texture, const FRHIR
     FD3D12ResourceState& LocalState = RetrievePendingResourceState(Resource);
     if (RequiredState.MipLevel == RHI_ALL_MIP_LEVELS && RequiredState.ArraySlice == RHI_ALL_ARRAY_SLICES)
     {
-        if (LocalState.AreAllSubresourcesSameState())
+        if (LocalState.IsSingleState())
         {
-            const D3D12_RESOURCE_STATES CurrentState = LocalState.GetResourceState();
+            const D3D12_RESOURCE_STATES CurrentState = LocalState.GetState();
             if (CurrentState == D3D12_RESOURCE_STATE_TO_BE_DETERMINED)
             {
                 AddPendingBarrier(Resource, DesiredState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+                LocalState.SetState(DesiredState);
             }
-            else if (CurrentState != DesiredState)
+            else if (!D3D12IsReadStateSatisfied(CurrentState, DesiredState))
             {
-                BarrierBatcher.AddTransitionBarrier(Resource, CurrentState, DesiredState);
+                if (CurrentState != DesiredState)
+                {
+                    BarrierBatcher.AddTransitionBarrier(Resource, CurrentState, DesiredState);
+                }
+
+                LocalState.SetState(DesiredState);
             }
         }
         else
@@ -2190,9 +2247,9 @@ void FD3D12CommandContext::RequireTextureState(FRHITexture* Texture, const FRHIR
                     BarrierBatcher.AddTransitionBarrier(Resource, CurrentState, DesiredState, i);
                 }
             }
-        }
 
-        LocalState.SetResourceState(DesiredState);
+            LocalState.SetState(DesiredState);
+        }
     }
     else if (RequiredState.ArraySlice == RHI_ALL_ARRAY_SLICES)
     {
@@ -2206,13 +2263,17 @@ void FD3D12CommandContext::RequireTextureState(FRHITexture* Texture, const FRHIR
             if (CurrentState == D3D12_RESOURCE_STATE_TO_BE_DETERMINED)
             {
                 AddPendingBarrier(Resource, DesiredState, SubresourceIndex);
+                LocalState.SetSubresourceState(SubresourceIndex, DesiredState);
             }
-            else if (CurrentState != DesiredState)
+            else if (!D3D12IsReadStateSatisfied(CurrentState, DesiredState))
             {
-                BarrierBatcher.AddTransitionBarrier(Resource, CurrentState, DesiredState, SubresourceIndex);
-            }
+                if (CurrentState != DesiredState)
+                {
+                    BarrierBatcher.AddTransitionBarrier(Resource, CurrentState, DesiredState, SubresourceIndex);
+                }
 
-            LocalState.SetSubresourceState(SubresourceIndex, DesiredState);
+                LocalState.SetSubresourceState(SubresourceIndex, DesiredState);
+            }
         }
     }
     else if (RequiredState.MipLevel == RHI_ALL_MIP_LEVELS)
@@ -2227,13 +2288,17 @@ void FD3D12CommandContext::RequireTextureState(FRHITexture* Texture, const FRHIR
             if (CurrentState == D3D12_RESOURCE_STATE_TO_BE_DETERMINED)
             {
                 AddPendingBarrier(Resource, DesiredState, SubresourceIndex);
+                LocalState.SetSubresourceState(SubresourceIndex, DesiredState);
             }
-            else if (CurrentState != DesiredState)
+            else if (!D3D12IsReadStateSatisfied(CurrentState, DesiredState))
             {
-                BarrierBatcher.AddTransitionBarrier(Resource, CurrentState, DesiredState, SubresourceIndex);
+                if (CurrentState != DesiredState)
+                {
+                    BarrierBatcher.AddTransitionBarrier(Resource, CurrentState, DesiredState, SubresourceIndex);
+                }
+
+                LocalState.SetSubresourceState(SubresourceIndex, DesiredState);
             }
-            
-            LocalState.SetSubresourceState(SubresourceIndex, DesiredState);
         }
     }
     else
@@ -2247,13 +2312,17 @@ void FD3D12CommandContext::RequireTextureState(FRHITexture* Texture, const FRHIR
         if (CurrentState == D3D12_RESOURCE_STATE_TO_BE_DETERMINED)
         {
             AddPendingBarrier(Resource, DesiredState, SubresourceIndex);
+            LocalState.SetSubresourceState(SubresourceIndex, DesiredState);
         }
-        else if (CurrentState != DesiredState)
+        else if (!D3D12IsReadStateSatisfied(CurrentState, DesiredState))
         {
-            BarrierBatcher.AddTransitionBarrier(Resource, CurrentState, DesiredState, SubresourceIndex);
+            if (CurrentState != DesiredState)
+            {
+                BarrierBatcher.AddTransitionBarrier(Resource, CurrentState, DesiredState, SubresourceIndex);
+            }
+            
+            LocalState.SetSubresourceState(SubresourceIndex, DesiredState);
         }
-
-        LocalState.SetSubresourceState(SubresourceIndex, DesiredState);
     }
 }
 
@@ -2265,20 +2334,26 @@ void FD3D12CommandContext::RequireBufferState(FRHIBuffer* Buffer, EResourceAcces
     FD3D12Resource* Resource = D3D12Buffer->GetResource();
     CHECK(Resource != nullptr);
 
+    if (!Resource->RequiresResourceStateTracking())
+    {
+        EnsureDefaultState(Resource);
+        return;
+    }
+
     FD3D12ResourceState& LocalState = RetrievePendingResourceState(Resource);
 
-    const D3D12_RESOURCE_STATES DesiredState = ConvertResourceState(RequiredState);
-    const D3D12_RESOURCE_STATES CurrentState = LocalState.GetResourceState();
+    const D3D12_RESOURCE_STATES DesiredState = D3D12ResolveRestingState(Resource, ConvertResourceState(RequiredState));
+    const D3D12_RESOURCE_STATES CurrentState = LocalState.GetState();
 
     if (CurrentState == D3D12_RESOURCE_STATE_TO_BE_DETERMINED)
     {
         AddPendingBarrier(Resource, DesiredState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
-        LocalState.SetResourceState(DesiredState);
+        LocalState.SetState(DesiredState);
     }
-    else if (CurrentState != DesiredState)
+    else if (CurrentState != DesiredState && !D3D12IsReadStateSatisfied(CurrentState, DesiredState))
     {
         BarrierBatcher.AddTransitionBarrier(Resource, CurrentState, DesiredState);
-        LocalState.SetResourceState(DesiredState);
+        LocalState.SetState(DesiredState);
     }
 }
 
@@ -2296,6 +2371,12 @@ void FD3D12CommandContext::UnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
     CHECK(D3D12Buffer != nullptr);
 
     BarrierBatcher.AddUnorderedAccessBarrier(D3D12Buffer->GetResource());
+}
+
+void FD3D12CommandContext::AliasingBarrier(FD3D12Resource* ResourceAfter)
+{
+    CHECK(ResourceAfter != nullptr);
+    BarrierBatcher.AddAliasingBarrier(ResourceAfter);
 }
 
 void FD3D12CommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
@@ -2400,43 +2481,396 @@ void FD3D12CommandContext::DispatchMesh(uint32 ThreadGroupCountX, uint32 ThreadG
 #endif
 }
 
-void FD3D12CommandContext::DispatchRays(FRHISceneAccelerationStructure* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth)
+void FD3D12CommandContext::SetHitRecordLocalShaderBindings(FRHIShaderBindingTable* ShaderBindingTable, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings)
 {
-    FD3D12SceneAccelerationStructureRHI* D3D12Scene = FD3D12DeviceRHI::ResourceCast(RayTracingScene);
-    CHECK(D3D12Scene != nullptr);
+    if (!ShaderBindingTable)
+    {
+        return;
+    }
 
+    FD3D12ShaderBindingTable* D3D12ShaderBindingTable = FD3D12DeviceRHI::ResourceCast(ShaderBindingTable);
+    D3D12ShaderBindingTable->SetBindings(RecordKind, RecordIndex, Bindings, NumBindings);
+}
+
+void FD3D12CommandContext::BuildShaderBindingTable(FRHIShaderBindingTable* ShaderBindingTable)
+{
+    if (!ShaderBindingTable)
+    {
+        return;
+    }
+
+    FD3D12ShaderBindingTable* D3D12ShaderBindingTable = FD3D12DeviceRHI::ResourceCast(ShaderBindingTable);
+    D3D12ShaderBindingTable->Build(*this);
+}
+
+void FD3D12CommandContext::ResetShaderBindingTable(FRHIShaderBindingTable* ShaderBindingTable)
+{
+    if (!ShaderBindingTable)
+    {
+        return;
+    }
+
+    FD3D12ShaderBindingTable* D3D12ShaderBindingTable = FD3D12DeviceRHI::ResourceCast(ShaderBindingTable);
+    D3D12ShaderBindingTable->ClearTableRecords();
+}
+
+void FD3D12CommandContext::SetRayTracingPipelineState(FRHIRayTracingPipelineState* PipelineState)
+{
     FD3D12RayTracingPipelineStateRHI* D3D12PipelineState = FD3D12DeviceRHI::ResourceCast(PipelineState);
+    ContextState.SetRayTracingPipelineState(D3D12PipelineState);
+}
+
+void FD3D12CommandContext::DispatchRays(FRHIShaderBindingTable* ShaderBindingTable, uint32 Width, uint32 Height, uint32 Depth)
+{
+#if D3D12_USE_ID3D12COMMANDLIST_4
+    FD3D12RayTracingPipelineStateRHI* D3D12PipelineState = ContextState.GetRayTracingPipelineState();
     CHECK(D3D12PipelineState != nullptr);
+
+    FD3D12ShaderBindingTable* D3D12ShaderBindingTable = FD3D12DeviceRHI::ResourceCast(ShaderBindingTable);
+    CHECK(D3D12ShaderBindingTable != nullptr);
+    CHECK(D3D12ShaderBindingTable->GetPipeline() == D3D12PipelineState);
+
+    if (Width == 0 || Height == 0 || Depth == 0)
+    {
+        return;
+    }
 
     ConditionalSplitCommandList();
     BarrierBatcher.FlushBarriers(GetCommandList());
 
-    GetCommandList().UpdateResidency(D3D12Scene->GetResource()->GetResidencyHandle());
-
-    if (D3D12Scene->GetBindingTable())
+    if (FD3D12Resource* TableResource = D3D12ShaderBindingTable->GetResource())
     {
-        GetCommandList().UpdateResidency(D3D12Scene->GetBindingTable()->GetResidencyHandle());
+        GetCommandList().UpdateResidency(TableResource->GetResidencyHandle());
     }
 
-    if (D3D12Scene->GetInstanceBuffer())
+    const uint32 NumLocalTableDescriptors   = D3D12ShaderBindingTable->GetNumPendingLocalTableDescriptors();
+    const uint32 NumLocalSamplerDescriptors = D3D12ShaderBindingTable->GetNumPendingLocalSamplerDescriptors();
+    
+    if (NumLocalTableDescriptors > 0)
     {
-        GetCommandList().UpdateResidency(D3D12Scene->GetInstanceBuffer()->GetResidencyHandle());
+        FD3D12LocalDescriptorHeap& ResourceHeap = ContextState.GetDescriptorCache().GetResourceHeap();
+        if (!ResourceHeap.HasSpace(NumLocalTableDescriptors))
+        {
+            ResourceHeap.Realloc();
+        }
+    }
+
+    if (NumLocalSamplerDescriptors > 0)
+    {
+        FD3D12LocalDescriptorHeap& SamplerHeap = ContextState.GetDescriptorCache().GetSamplerHeap();
+        if (!SamplerHeap.HasSpace(NumLocalSamplerDescriptors))
+        {
+            SamplerHeap.Realloc();
+        }
+    }
+
+    ContextState.BindRayTracingState();
+    CommandList->GetGraphicsCommandList4()->SetPipelineState1(D3D12PipelineState->GetD3D12StateObject());
+
+    if (NumLocalTableDescriptors > 0 || NumLocalSamplerDescriptors > 0)
+    {
+        FD3D12LocalDescriptorHeap& ResourceHeap = ContextState.GetDescriptorCache().GetResourceHeap();
+        FD3D12LocalDescriptorHeap& SamplerHeap  = ContextState.GetDescriptorCache().GetSamplerHeap();
+        D3D12ShaderBindingTable->ResolveLocalDescriptorTables(*this, ResourceHeap, SamplerHeap);
+        BarrierBatcher.FlushBarriers(GetCommandList());
     }
 
     D3D12_DISPATCH_RAYS_DESC RayDispatchDesc = {};
-    RayDispatchDesc.RayGenerationShaderRecord = D3D12Scene->GetRayGenShaderRecord();
-    RayDispatchDesc.HitGroupTable             = D3D12Scene->GetHitGroupTable();
-    RayDispatchDesc.MissShaderTable           = D3D12Scene->GetMissShaderTable();
+    RayDispatchDesc.RayGenerationShaderRecord = D3D12ShaderBindingTable->GetRayGenRecord();
+    RayDispatchDesc.MissShaderTable           = D3D12ShaderBindingTable->GetMissTable();
+    RayDispatchDesc.HitGroupTable             = D3D12ShaderBindingTable->GetHitGroupTable();
+    RayDispatchDesc.CallableShaderTable       = D3D12ShaderBindingTable->GetCallableTable();
+    RayDispatchDesc.Width                     = Width;
+    RayDispatchDesc.Height                    = Height;
+    RayDispatchDesc.Depth                     = Depth;
 
-    RayDispatchDesc.Width  = Width;
-    RayDispatchDesc.Height = Height;
-    RayDispatchDesc.Depth  = Depth;
-
-#if D3D12_USE_ID3D12COMMANDLIST_4
-    CommandList->GetGraphicsCommandList4()->SetPipelineState1(D3D12PipelineState->GetD3D12StateObject());
     CommandList->GetGraphicsCommandList4()->DispatchRays(&RayDispatchDesc);
 #else
+    UNREFERENCED_VARIABLE(ShaderBindingTable);
+    UNREFERENCED_VARIABLE(Width);
+    UNREFERENCED_VARIABLE(Height);
+    UNREFERENCED_VARIABLE(Depth);
     D3D12_ERROR_CRITICAL("[FD3D12CommandContext]: DispatchRays requires ID3D12GraphicsCommandList4");
+#endif
+}
+
+void FD3D12CommandContext::BuildOpacityMicromap(FRHIOpacityMicromap* OpacityMicromap, const FRHIOpacityMicromapBuildDesc& BuildDesc)
+{
+#if D3D12_ENABLE_OPACITY_MICROMAPS
+    if (FD3D12OpacityMicromapRHI* D3D12OpacityMicromap = FD3D12DeviceRHI::ResourceCast(OpacityMicromap))
+    {
+        D3D12OpacityMicromap->Build(*this, BuildDesc);
+    }
+#else
+    UNREFERENCED_VARIABLE(OpacityMicromap);
+    UNREFERENCED_VARIABLE(BuildDesc);
+    D3D12_ERROR_CRITICAL("[FD3D12CommandContext]: BuildOpacityMicromap is not supported - opacity micromaps require a newer Agility SDK.");
+#endif
+}
+
+void FD3D12CommandContext::ExecuteIndirectRayTracingAccelerationStructureOperations(const FRHIRayTracingAccelerationStructureOperationDesc* Operations, uint32 NumOperations)
+{
+#if D3D12_ENABLE_INDIRECT_RTAS_OPERATIONS
+    #error "D3D12_ENABLE_INDIRECT_RTAS_OPERATIONS is on but the ExecuteIndirectRTASOperations path is not implemented for the integrated SDK yet."
+#else
+    UNREFERENCED_VARIABLE(Operations);
+    UNREFERENCED_VARIABLE(NumOperations);
+    D3D12_ERROR_CRITICAL("[FD3D12CommandContext]: ExecuteIndirectRayTracingAccelerationStructureOperations is not supported - Clusters/PTLAS require a DXR 2.0 SDK.");
+#endif
+}
+
+void FD3D12CommandContext::DispatchRaysIndirect(FRHIShaderBindingTable* ShaderBindingTable, FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset)
+{
+#if D3D12_USE_ID3D12COMMANDLIST_4
+    FD3D12RayTracingPipelineStateRHI* D3D12PipelineState = ContextState.GetRayTracingPipelineState();
+    CHECK(D3D12PipelineState != nullptr);
+
+    FD3D12ShaderBindingTable* D3D12ShaderBindingTable = FD3D12DeviceRHI::ResourceCast(ShaderBindingTable);
+    CHECK(D3D12ShaderBindingTable != nullptr);
+
+    FD3D12BufferRHI* D3D12ArgumentBuffer = FD3D12DeviceRHI::ResourceCast(ArgumentBuffer);
+    CHECK(D3D12ArgumentBuffer != nullptr);
+
+    ID3D12CommandSignature* CommandSignature = GetDevice()->GetCommandSignature(ED3D12CommandSignatureType::DispatchRays);
+    if (!CommandSignature)
+    {
+        return;
+    }
+
+    ConditionalSplitCommandList();
+    BarrierBatcher.FlushBarriers(GetCommandList());
+
+    if (FD3D12Resource* TableResource = D3D12ShaderBindingTable->GetResource())
+    {
+        GetCommandList().UpdateResidency(TableResource->GetResidencyHandle());
+    }
+
+    if (FD3D12Resource* ArgumentResource = D3D12ArgumentBuffer->GetResource())
+    {
+        GetCommandList().UpdateResidency(ArgumentResource->GetResidencyHandle());
+    }
+
+    ContextState.BindRayTracingState();
+    CommandList->GetGraphicsCommandList4()->SetPipelineState1(D3D12PipelineState->GetD3D12StateObject());
+
+    CommandList->GetGraphicsCommandList4()->ExecuteIndirect(
+        CommandSignature,
+        1,
+        D3D12ArgumentBuffer->GetResource()->GetD3D12Resource(),
+        ArgumentBufferOffset,
+        nullptr,
+        0);
+#else
+    UNREFERENCED_VARIABLE(ShaderBindingTable);
+    UNREFERENCED_VARIABLE(ArgumentBuffer);
+    UNREFERENCED_VARIABLE(ArgumentBufferOffset);
+    D3D12_ERROR_CRITICAL("[FD3D12CommandContext]: DispatchRaysIndirect requires ID3D12GraphicsCommandList4");
+#endif
+}
+
+void FD3D12CommandContext::WriteAccelerationStructurePostBuildInfo(FRHIBuffer* DstBuffer, uint64 DstOffset, EAccelerationStructurePostBuildInfoType InfoType, FRHIRayTracingAccelerationStructure* const* Sources, uint32 NumSources)
+{
+#if D3D12_USE_ID3D12COMMANDLIST_4
+    CHECK(DstBuffer != nullptr);
+    CHECK(Sources != nullptr && NumSources > 0);
+
+    FD3D12BufferRHI* D3D12DestinationBuffer = FD3D12DeviceRHI::ResourceCast(DstBuffer);
+    CHECK(D3D12DestinationBuffer != nullptr);
+
+    const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TYPE D3D12InfoType = ConvertAccelerationStructurePostBuildInfoType(InfoType);
+
+    TArray<D3D12_GPU_VIRTUAL_ADDRESS> SourceAddresses;
+    SourceAddresses.Reserve(NumSources);
+
+    for (uint32 Index = 0; Index < NumSources; ++Index)
+    {
+        SourceAddresses.Emplace(GetD3D12AccelerationStructureGPUAddress(Sources[Index]));
+    }
+
+    const uint64 Stride           = GetRayTracingPostBuildInfoStride(InfoType);
+    const uint64 TotalSize        = static_cast<uint64>(NumSources) * Stride;
+    const uint64 IntermediateSize = Math::Max<uint64>(Math::AlignUp<uint64>(TotalSize, 16ull), 16ull);
+
+    FD3D12BufferAllocator* Allocator = GetDevice()->GetBufferAllocator();
+    if (!Allocator)
+    {
+        D3D12_ERROR("[FD3D12CommandContext]: WriteAccelerationStructurePostBuildInfo has no buffer allocator");
+        return;
+    }
+
+    D3D12_RESOURCE_DESC IntermediateDesc = {};
+    IntermediateDesc.Dimension        = D3D12_RESOURCE_DIMENSION_BUFFER;
+    IntermediateDesc.Flags            = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+    IntermediateDesc.Format           = DXGI_FORMAT_UNKNOWN;
+    IntermediateDesc.Layout           = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    IntermediateDesc.Width            = IntermediateSize;
+    IntermediateDesc.Height           = 1;
+    IntermediateDesc.DepthOrArraySize = 1;
+    IntermediateDesc.MipLevels        = 1;
+    IntermediateDesc.SampleDesc.Count = 1;
+
+    FD3D12ResourceStorage IntermediateStorage(GetDevice());
+    const bool bAllocated = Allocator->TryAllocate(
+        D3D12_HEAP_TYPE_DEFAULT,
+        IntermediateDesc,
+        D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+        ED3D12ResourceStateMode::MultipleStates,
+        D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT,
+        IntermediateStorage);
+
+    if (!bAllocated || IntermediateStorage.GetResource() == nullptr)
+    {
+        D3D12_ERROR("[FD3D12CommandContext]: WriteAccelerationStructurePostBuildInfo failed to allocate intermediate UAV buffer");
+        return;
+    }
+
+    ConditionalSplitCommandList();
+    BarrierBatcher.FlushBarriers(GetCommandList());
+
+    FD3D12CommandList& CmdList = GetCommandList();
+    CmdList.UpdateResidency(IntermediateStorage.GetResource()->GetResidencyHandle());
+    CmdList.UpdateResidency(D3D12DestinationBuffer->GetResource()->GetResidencyHandle());
+
+    if (IntermediateStorage.GetResource()->IsPlacedResource())
+    {
+        BarrierBatcher.AddAliasingBarrier(IntermediateStorage.GetResource());
+        BarrierBatcher.FlushBarriers(CmdList);
+    }
+
+    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC PostBuildInfoDesc = {};
+    PostBuildInfoDesc.DestBuffer = IntermediateStorage.GetGPUVirtualAddress();
+    PostBuildInfoDesc.InfoType   = D3D12InfoType;
+
+    CmdList.GetGraphicsCommandList4()->EmitRaytracingAccelerationStructurePostbuildInfo(&PostBuildInfoDesc, NumSources, SourceAddresses.Data());
+
+    BarrierBatcher.AddUnorderedAccessBarrier(IntermediateStorage.GetResource());
+    BarrierBatcher.AddTransitionBarrier(IntermediateStorage.GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    BarrierBatcher.FlushBarriers(CmdList);
+
+    const FD3D12ResourceStorage& DstStorage = D3D12DestinationBuffer->GetResourceStorage();
+    const uint64 EffectiveDstOffset = DstOffset + DstStorage.GetResourceOffset();
+    const uint64 SrcOffset = IntermediateStorage.GetResourceOffset();
+
+    CmdList->CopyBufferRegion(
+        D3D12DestinationBuffer->GetResource()->GetD3D12Resource(),
+        EffectiveDstOffset,
+        IntermediateStorage.GetResource()->GetD3D12Resource(),
+        SrcOffset,
+        TotalSize);
+#else
+    UNREFERENCED_VARIABLE(DstBuffer);
+    UNREFERENCED_VARIABLE(DstOffset);
+    UNREFERENCED_VARIABLE(InfoType);
+    UNREFERENCED_VARIABLE(Sources);
+    UNREFERENCED_VARIABLE(NumSources);
+    D3D12_ERROR_CRITICAL("[FD3D12CommandContext]: WriteAccelerationStructurePostBuildInfo requires ID3D12GraphicsCommandList4");
+#endif
+}
+
+void FD3D12CommandContext::CopyAccelerationStructure(FRHIRayTracingAccelerationStructure* Destination, FRHIRayTracingAccelerationStructure* Source, EAccelerationStructureCopyMode CopyMode)
+{
+#if D3D12_USE_ID3D12COMMANDLIST_4
+    CHECK(Destination != nullptr && Source != nullptr);
+    
+    const D3D12_GPU_VIRTUAL_ADDRESS SourceAddress                         = GetD3D12AccelerationStructureGPUAddress(Source);
+    const D3D12_GPU_VIRTUAL_ADDRESS DestinationAddress                    = GetD3D12AccelerationStructureGPUAddress(Destination);
+    const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE D3D12CopyMode = ConvertAccelerationStructureCopyMode(CopyMode);
+
+    ConditionalSplitCommandList();
+    BarrierBatcher.FlushBarriers(GetCommandList());
+
+    CommandList->GetGraphicsCommandList4()->CopyRaytracingAccelerationStructure(DestinationAddress, SourceAddress, D3D12CopyMode);
+#else
+    UNREFERENCED_VARIABLE(Destination);
+    UNREFERENCED_VARIABLE(Source);
+    UNREFERENCED_VARIABLE(CopyMode);
+    D3D12_ERROR_CRITICAL("[FD3D12CommandContext]: CopyAccelerationStructure requires ID3D12GraphicsCommandList4");
+#endif
+}
+
+void FD3D12CommandContext::CompactAccelerationStructure(FRHIRayTracingAccelerationStructure* AccelerationStructure, uint64 CompactedSizeInBytes)
+{
+#if D3D12_USE_ID3D12COMMANDLIST_4
+    if (!AccelerationStructure || CompactedSizeInBytes == 0)
+    {
+        return;
+    }
+
+    FD3D12AccelerationStructure* D3D12AccelerationStructure = nullptr;
+    switch (AccelerationStructure->GetAccelerationStructureType())
+    {
+        case ERayTracingAccelerationStructureType::Geometry:
+        {
+            D3D12AccelerationStructure = static_cast<FD3D12GeometryAccelerationStructureRHI*>(AccelerationStructure);
+            break;
+        }
+
+        case ERayTracingAccelerationStructureType::Scene:
+        {
+            D3D12AccelerationStructure = static_cast<FD3D12SceneAccelerationStructureRHI*>(AccelerationStructure);
+            break;
+        }
+
+        default:
+        {
+            break;
+        }
+    }
+
+    if (D3D12AccelerationStructure)
+    {
+        D3D12AccelerationStructure->CompactInPlace(*this, CompactedSizeInBytes);
+    }
+#else
+    UNREFERENCED_VARIABLE(AccelerationStructure);
+    UNREFERENCED_VARIABLE(CompactedSizeInBytes);
+    D3D12_ERROR_CRITICAL("[FD3D12CommandContext]: CompactAccelerationStructure requires ID3D12GraphicsCommandList4");
+#endif
+}
+
+void FD3D12CommandContext::SerializeAccelerationStructure(FRHIRayTracingAccelerationStructure* Source, FRHIBuffer* DstBuffer, uint64 DstOffset)
+{
+#if D3D12_USE_ID3D12COMMANDLIST_4
+    CHECK(DstBuffer != nullptr && Source != nullptr);
+
+    FD3D12BufferRHI* D3D12DestinationBuffer = FD3D12DeviceRHI::ResourceCast(DstBuffer);
+    CHECK(D3D12DestinationBuffer != nullptr);
+
+    const D3D12_GPU_VIRTUAL_ADDRESS DestinationAddress = D3D12DestinationBuffer->GetGPUVirtualAddress() + DstOffset;
+    const D3D12_GPU_VIRTUAL_ADDRESS SourceAddress      = GetD3D12AccelerationStructureGPUAddress(Source);
+
+    ConditionalSplitCommandList();
+    BarrierBatcher.FlushBarriers(GetCommandList());
+
+    CommandList->GetGraphicsCommandList4()->CopyRaytracingAccelerationStructure(DestinationAddress, SourceAddress, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_SERIALIZE);
+#else
+    UNREFERENCED_VARIABLE(Source);
+    UNREFERENCED_VARIABLE(DstBuffer);
+    UNREFERENCED_VARIABLE(DstOffset);
+    D3D12_ERROR_CRITICAL("[FD3D12CommandContext]: SerializeAccelerationStructure requires ID3D12GraphicsCommandList4");
+#endif
+}
+
+void FD3D12CommandContext::DeserializeAccelerationStructure(FRHIRayTracingAccelerationStructure* Destination, FRHIBuffer* SourceBuffer, uint64 SourceOffset)
+{
+#if D3D12_USE_ID3D12COMMANDLIST_4
+    CHECK(Destination != nullptr && SourceBuffer != nullptr);
+
+    FD3D12BufferRHI* D3D12SourceBuffer = FD3D12DeviceRHI::ResourceCast(SourceBuffer);
+    CHECK(D3D12SourceBuffer != nullptr);
+
+    const D3D12_GPU_VIRTUAL_ADDRESS DestinationAddress = GetD3D12AccelerationStructureGPUAddress(Destination);
+    const D3D12_GPU_VIRTUAL_ADDRESS SourceAddress      = D3D12SourceBuffer->GetGPUVirtualAddress() + SourceOffset;
+
+    ConditionalSplitCommandList();
+    BarrierBatcher.FlushBarriers(GetCommandList());
+
+    CommandList->GetGraphicsCommandList4()->CopyRaytracingAccelerationStructure(DestinationAddress, SourceAddress, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_DESERIALIZE);
+#else
+    UNREFERENCED_VARIABLE(Destination);
+    UNREFERENCED_VARIABLE(SourceBuffer);
+    UNREFERENCED_VARIABLE(SourceOffset);
+    D3D12_ERROR_CRITICAL("[FD3D12CommandContext]: DeserializeAccelerationStructure requires ID3D12GraphicsCommandList4");
 #endif
 }
 

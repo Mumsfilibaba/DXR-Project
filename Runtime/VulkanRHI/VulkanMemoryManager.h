@@ -58,6 +58,7 @@ struct FVulkanPendingDefragMove
     FVulkanMemoryLocation*             SourceLocation       = nullptr;
     VkImage                            NewImage             = VK_NULL_HANDLE;
     VkBuffer                           NewBuffer            = VK_NULL_HANDLE;
+    VkDeviceAddress                    NewDeviceAddress     = 0;
     FVulkanPoolAllocator*              Allocator            = nullptr;
     FVulkanPoolAllocatorAllocationData OldAllocationData    = {};
     FVulkanPoolAllocatorAllocationData NewAllocationData    = {};
@@ -309,6 +310,7 @@ private:
     VkBufferUsageFlags                         BufferUsageFlags;
     VkDeviceMemory                             DeviceMemory;
     VkBuffer                                   SharedBuffer;
+    VkDeviceAddress                            BaseDeviceAddress;
     uint8*                                     MappedBaseAddress;
     TArray<FFreeRange>                         FreeRanges;
     TArray<FVulkanPoolAllocatorAllocationData> LiveAllocations;

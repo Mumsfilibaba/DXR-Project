@@ -42,7 +42,7 @@ void FD3D12ResourceState::SetSubresourceState(uint32 Subresource, D3D12_RESOURCE
     }
 }
 
-void FD3D12ResourceState::SetResourceState(D3D12_RESOURCE_STATES State)
+void FD3D12ResourceState::SetState(D3D12_RESOURCE_STATES State)
 {
     ResourceState = State;
     
@@ -57,8 +57,43 @@ void FD3D12ResourceState::SetResourceState(D3D12_RESOURCE_STATES State)
     bAllSameState = true;
 }
 
-D3D12_RESOURCE_STATES FD3D12ResourceState::GetResourceState() const
+D3D12_RESOURCE_STATES FD3D12ResourceState::GetState() const
 {
     CHECK(bAllSameState);
     return ResourceState;
+}
+
+void FD3D12ResourceState::ApplyResolvedStates(const FD3D12ResourceState& Other)
+{
+    if (NumSubresources == 0)
+    {
+        return;
+    }
+
+    CHECK(NumSubresources == Other.NumSubresources);
+
+    for (uint32 i = 0; i < NumSubresources; i++)
+    {
+        const D3D12_RESOURCE_STATES OtherState = Other.GetSubresourceState(i);
+        if (OtherState != D3D12_RESOURCE_STATE_TO_BE_DETERMINED)
+        {
+            SubresourceStates[i] = OtherState;
+        }
+    }
+
+    bool bAllSame = true;
+    for (uint32 i = 1; i < NumSubresources; i++)
+    {
+        if (SubresourceStates[i] != SubresourceStates[0])
+        {
+            bAllSame = false;
+            break;
+        }
+    }
+
+    bAllSameState = bAllSame;
+    if (bAllSameState)
+    {
+        ResourceState = SubresourceStates[0];
+    }
 }

@@ -20,3 +20,14 @@ STAT_DECLARE_EXTERN(RENDERER_API, STAT_Render_ObjectsCulled);
 
 STAT_DECLARE_EXTERN(RENDERER_API, STAT_Render_MeshBatchCount);
 STAT_DECLARE_EXTERN(RENDERER_API, STAT_Render_MeshReferenceCount);
+
+// -------------------------------------------------------------------------------------------
+// Ray Tracing Stats (per-frame, set in FRayTracer::PreRender; zeroed when RT is inactive)
+// -------------------------------------------------------------------------------------------
+
+STAT_DECLARE_EXTERN(RENDERER_API, STAT_RT_Active);
+STAT_DECLARE_EXTERN(RENDERER_API, STAT_RT_InstanceCount);
+STAT_DECLARE_EXTERN(RENDERER_API, STAT_RT_HitGroupCount);
+STAT_DECLARE_EXTERN(RENDERER_API, STAT_RT_GeometryTableRows);
+STAT_DECLARE_EXTERN(RENDERER_API, STAT_RT_LazyBLASBuildsThisFrame);
+STAT_DECLARE_EXTERN(RENDERER_API, STAT_RT_SkippedNullGeometry);

@@ -1,5 +1,6 @@
 #ifndef TONEMAPPING_HLSLI
 #define TONEMAPPING_HLSLI
+
 #include "CoreDefines.hlsli"
 #include "Helpers.hlsli"
 #include "Constants.hlsli"

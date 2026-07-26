@@ -1,5 +1,6 @@
 #ifndef CONSTANTS_HLSLI
 #define CONSTANTS_HLSLI
+
 #include "CoreDefines.hlsli"
 
 #define PI (3.14159265359)   // π  (pi)
@@ -34,12 +35,14 @@
 #define SHADING_RATE_4x2 (0x9)
 #define SHADING_RATE_4x4 (0xa)
 
+// ------------------------------------------------------------------------------------------------
 // Space: | Usage:
 // 0      | Standard
 // 1      | Constants
-// 2      | RT Local
+// 2      | Ray Tracing Local
+// ------------------------------------------------------------------------------------------------
 
 #define D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS space1
-#define D3D12_SHADER_REGISTER_SPACE_RT_LOCAL space2
+#define D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL space2
 
 #endif

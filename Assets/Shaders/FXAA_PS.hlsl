@@ -3,15 +3,15 @@
 
 // Debugging
 #ifdef ENABLE_DEBUG
-    #define DEBUG_LUMINANCE    0
-    #define DEBUG_EDGES        1
-    #define PASSTHROUGH        0
-    #define DEBUG              0
-    #define DEBUG_HORIZONTAL   0
-    #define DEBUG_NEGPOS       0
-    #define DEBUG_STEP         0
+    #define DEBUG_LUMINANCE 0
+    #define DEBUG_EDGES 1
+    #define PASSTHROUGH 0
+    #define DEBUG 0
+    #define DEBUG_HORIZONTAL 0
+    #define DEBUG_NEGPOS 0
+    #define DEBUG_STEP 0
     #define DEBUG_BLEND_FACTOR 0
-    #define DEBUG_RANGE        0
+    #define DEBUG_RANGE 0
 #endif
 
 // FXAA Settings
@@ -24,11 +24,12 @@
 #define FXAA_SEARCH_STEPS 24
 
 SHADER_CONSTANT_BLOCK_BEGIN
+    // 0-8
     float2 TextureSize;
 SHADER_CONSTANT_BLOCK_END
 
-Texture2D FinalImage : register(t0);
-SamplerState Sampler : register(s0);
+Texture2D    FinalImage : register(t0);
+SamplerState Sampler    : register(s0);
 
 float4 FXAASample(in Texture2D Texture, in SamplerState InSampler, float2 TexCoord)
 {
@@ -54,7 +55,8 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET0
     const float2 InvTextureSize = 1.0 / float2(Width, Height); //TextureSize;
     
     float4 M = FXAASampleOffset(FinalImage, Sampler, TexCoord, int2(0, 0));
-    float LumaM = M.a;
+    float  LumaM = M.a;
+
 #if PASSTHROUGH
     return M;
 #endif
@@ -67,21 +69,22 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET0
     float4 S = FXAASampleOffset(FinalImage, Sampler, TexCoord, int2( 0,  1));
     float4 W = FXAASampleOffset(FinalImage, Sampler, TexCoord, int2(-1,  0));
     float4 E = FXAASampleOffset(FinalImage, Sampler, TexCoord, int2( 1,  0));
-    float LumaN = N.a;
-    float LumaS = S.a;
-    float LumaW = W.a;
-    float LumaE = E.a;
+    float  LumaN = N.a;
+    float  LumaS = S.a;
+    float  LumaW = W.a;
+    float  LumaE = E.a;
     
     float RangeMin = min(LumaM, min(min(LumaN, LumaS), min(LumaW, LumaE)));
     float RangeMax = max(LumaM, max(max(LumaN, LumaS), max(LumaW, LumaE)));
     float Range    = RangeMax - RangeMin;
+
     if (Range < max(FXAA_EDGE_THRESHOLD_MIN, RangeMax * FXAA_EDGE_THRESHOLD))
     {
-#if DEBUG
+    #if DEBUG
         return float4(ToFloat3(M.a), 1.0);
-#else
+    #else
         return float4(M.rgb, 1.0);
-#endif
+    #endif
     }
     
 #if DEBUG_EDGES
@@ -138,6 +141,7 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET0
     {
         LumaN = LumaW;
     }
+
     if (!bIsHorizontal)
     {
         LumaS = LumaE;
@@ -148,7 +152,7 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET0
     float LumaAvg0  = (LumaN + LumaM) * 0.5;
     float LumaAvg1  = (LumaS + LumaM) * 0.5;
     
-    bool  bPair0         = (Gradient0 >= Gradient1);
+    bool  bPair0        = (Gradient0 >= Gradient1);
     float LocalLumaAvg  = (!bPair0) ? LumaAvg1 : LumaAvg0;
     float LocalGradient = (!bPair0) ? Gradient1 : Gradient0;
     LocalGradient = LocalGradient * FXAA_SEARCH_THRESHOLD;
@@ -184,6 +188,7 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET0
             float4 Sample = FXAASample(FinalImage, Sampler, TexCoord0);
             LumaEnd0 = Sample.a;
         }
+
         if(!bDone1)
         {
             float4 Sample = FXAASample(FinalImage, Sampler, TexCoord1);
@@ -192,6 +197,7 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET0
         
         bDone0 = (abs(LumaEnd0 - LocalLumaAvg) >= LocalGradient);
         bDone1 = (abs(LumaEnd1 - LocalLumaAvg) >= LocalGradient);
+        
         if (bDone0 && bDone1)
         {
             break;
@@ -201,6 +207,7 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET0
         {
             TexCoord0 -= Offset;
         }
+
         if (!bDone1)
         {
             TexCoord1 += Offset;

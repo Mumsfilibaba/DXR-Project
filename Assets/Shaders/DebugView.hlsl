@@ -15,17 +15,24 @@
 #define DEBUG_VIEW_SHADOW_CASCADE_INDEX 9
 #define DEBUG_VIEW_SHADOW_CASCADE_OVERLAY 10
 #define DEBUG_VIEW_LIT 11
+#define DEBUG_VIEW_RAY_TRACING_REFLECTIONS_RAW 12
+#define DEBUG_VIEW_RAY_TRACING_REFLECTIONS_TEMPORAL 13
+#define DEBUG_VIEW_RAY_TRACING_REFLECTIONS_SPATIAL 14
+#define DEBUG_VIEW_RAY_TRACING_PRIMARY_ID 15
 
-Texture2D<float4>     GBufferAlbedo      : register(t0);
-Texture2D<float4>     GBufferNormal      : register(t1);
-Texture2D<float4>     GBufferMaterial    : register(t2);
-Texture2D<float4>     GBufferVelocity    : register(t3);
-Texture2D<float>      GBufferDepth       : register(t4);
-Texture2D<float>      ShadowMask         : register(t5);
-Texture2D<float>      SSAOBuffer         : register(t6);
-Texture2DArray<float> ShadowCascades     : register(t7);
-Texture2D<uint>       CascadeIndexBuffer : register(t8);
-Texture2D<float4>     LitSceneBuffer     : register(t9);
+Texture2D<float4>     GBufferAlbedo        : register(t0);  // rgb = base color
+Texture2D<float4>     GBufferNormal        : register(t1);  // rgb = world-space normal (packed)
+Texture2D<float4>     GBufferMaterial      : register(t2);  // r   = AO, g = Roughness, b = Metallic
+Texture2D<float4>     GBufferVelocity      : register(t3);  // rg  = NDC motion vector
+Texture2D<float>      GBufferDepth         : register(t4);  // r   = device depth
+Texture2D<float>      ShadowMask           : register(t5);  // r   = directional shadow factor
+Texture2D<float>      SSAOBuffer           : register(t6);  // r   = ambient occlusion
+Texture2DArray<float> ShadowCascades       : register(t7);  // r   = cascade shadow depth (per slice)
+Texture2D<uint>       CascadeIndexBuffer   : register(t8);  // r   = selected cascade index
+Texture2D<float4>     LitSceneBuffer       : register(t9);  // rgb = composited lit scene color
+Texture2D<float4>     RayTracedReflections : register(t10); // rgb = final a-trous resolved reflection radiance
+Texture2D<float4>     ReflectionTrace      : register(t11); // rgb = raw 1-spp traced reflection radiance, a = hit distance
+Texture2D<float4>     ReflectionTemporal   : register(t12); // rgb = temporally-accumulated radiance (current ReflectionHistory)
 
 SamplerState LinearSampler : register(s0);
 SamplerState PointSampler  : register(s1);
@@ -33,14 +40,19 @@ SamplerState PointSampler  : register(s1);
 ConstantBuffer<FCamera> CameraBuffer : register(b0);
 
 SHADER_CONSTANT_BLOCK_BEGIN
+    // 0-16
     int DebugMode;
     int ShadowMapSize;
     int OutputWidth;
     int OutputHeight;
+
+    // 16-32
     int ViewX;
     int ViewY;
     int TargetWidth;
     int TargetHeight;
+
+    // 32-36
     int bIsOutputSceneTarget;
 SHADER_CONSTANT_BLOCK_END
 
@@ -48,6 +60,7 @@ float3 VisualizeDepth(float Depth)
 {
     float LinearDepth = DepthToLinear(CameraBuffer.NearPlane, CameraBuffer.FarPlane, Depth);
     float Depth01     = saturate((LinearDepth - CameraBuffer.NearPlane) / max(CameraBuffer.FarPlane - CameraBuffer.NearPlane, 0.0001));
+    
     return (1.0 - Depth01).xxx;
 }
 
@@ -185,6 +198,22 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_Target
     else if (Constants.DebugMode == DEBUG_VIEW_LIT)
     {
         Color = LitSceneBuffer.SampleLevel(LinearSampler, FullTexCoord, 0).rgb;
+    }
+    else if (Constants.DebugMode == DEBUG_VIEW_RAY_TRACING_REFLECTIONS_RAW)
+    {
+        Color = ReflectionTrace.SampleLevel(LinearSampler, FullTexCoord, 0).rgb;
+    }
+    else if (Constants.DebugMode == DEBUG_VIEW_RAY_TRACING_REFLECTIONS_TEMPORAL)
+    {
+        Color = ReflectionTemporal.SampleLevel(LinearSampler, FullTexCoord, 0).rgb;
+    }
+    else if (Constants.DebugMode == DEBUG_VIEW_RAY_TRACING_REFLECTIONS_SPATIAL)
+    {
+        Color = RayTracedReflections.SampleLevel(LinearSampler, FullTexCoord, 0).rgb;
+    }
+    else if (Constants.DebugMode == DEBUG_VIEW_RAY_TRACING_PRIMARY_ID)
+    {
+        Color = RayTracedReflections.SampleLevel(PointSampler, FullTexCoord, 0).rgb;
     }
     else
     {

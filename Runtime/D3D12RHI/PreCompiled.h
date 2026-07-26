@@ -18,7 +18,6 @@
 #include "D3D12RHI/D3D12Heap.h"
 #include "D3D12RHI/D3D12Loader.h"
 #include "D3D12RHI/D3D12PipelineState.h"
-#include "D3D12RHI/D3D12RayTracing.h"
 #include "D3D12RHI/D3D12ResidencyManager.h"
 #include "D3D12RHI/D3D12Resource.h"
 #include "D3D12RHI/D3D12ResourceViews.h"
@@ -28,3 +27,4 @@
 #include "D3D12RHI/D3D12Texture.h"
 #include "D3D12RHI/D3D12Query.h"
 #include "D3D12RHI/D3D12SwapChain.h"
+#include "D3D12RHI/RayTracing/D3D12RayTracing.h"

@@ -1,6 +1,8 @@
 #include "PBRHelpers.hlsli"
 
-#define NUM_THREADS 16
+#ifndef NUM_THREADS
+    #define NUM_THREADS 16
+#endif
 
 TEXTURE_FORMAT_UNKNOWN RWTexture2D<float2> IntegrationMap : register(u0);
 
@@ -48,10 +50,9 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     float OutputHeight;
     IntegrationMap.GetDimensions(OutputWidth, OutputHeight);
     
-    float2 TexCoord = (float2(DispatchThreadID.xy) + 0.5) / float2(OutputWidth, OutputHeight);
-    
-    float NdotV     = max(TexCoord.x, MIN_VALUE);
-    float Roughness = min(max(1.0 - TexCoord.y, MIN_ROUGHNESS), MAX_ROUGHNESS);
+    float2 TexCoord  = (float2(DispatchThreadID.xy) + 0.5) / float2(OutputWidth, OutputHeight);
+    float  NdotV     = max(TexCoord.x, MIN_VALUE);
+    float  Roughness = min(max(1.0 - TexCoord.y, MIN_ROUGHNESS), MAX_ROUGHNESS);
     
     const float2 IntegratedBDRF = IntegrateBRDF(NdotV, Roughness);
     IntegrationMap[DispatchThreadID.xy] = IntegratedBDRF;

@@ -39,7 +39,8 @@ workspace "EngineTests"
     {
         "MONOLITHIC_BUILD=(1)",
         -- TODO: Tests should probably be compiled with the normal build pipeline
-        "CORE_API="
+        "CORE_API=",
+        "RHI_API="
     }
 
     filter "configurations:Debug"

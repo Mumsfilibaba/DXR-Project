@@ -1,54 +1,57 @@
 #ifndef MATERIAL_BINDLESS_HLSLI
 #define MATERIAL_BINDLESS_HLSLI
 
-#include "DescriptorTypes.hlsli"
+#include "BindlessHelpers.hlsli"
+#include "Structs.hlsli"
 
-struct FMaterialBindlessIndices
+bool IsAlbedoBindlessValid(FMaterial MaterialData)
 {
-    uint AlbedoHandle;
-    uint NormalHandle;
-    uint MaterialHandle;
-    uint HeightHandle;
-    uint SamplerHandle;
-    uint Padding0;
-    uint Padding1;
-    uint Padding2;
-};
-
-#ifndef MATERIAL_BINDLESS_REGISTER
-    #define MATERIAL_BINDLESS_REGISTER b2
-#endif
-
-ConstantBuffer<FMaterialBindlessIndices> MaterialIndicesBuffer : register(MATERIAL_BINDLESS_REGISTER);
-
-SamplerState GetMaterialSamplerBindless()
-{
-    const FDescriptorHandle Sampler = FDescriptorHandle::FromPacked(MaterialIndicesBuffer.SamplerHandle);
-    return SamplerDescriptorHeap[Sampler.GetIndex()];
+    return FDescriptorHandle::FromPacked(MaterialData.AlbedoHandle).IsValid();
 }
 
-Texture2D<float4> GetAlbedoBindless()
+bool IsNormalBindlessValid(FMaterial MaterialData)
 {
-    const FDescriptorHandle Albedo = FDescriptorHandle::FromPacked(MaterialIndicesBuffer.AlbedoHandle);
-    return ResourceDescriptorHeap[Albedo.GetIndex()];
+    return FDescriptorHandle::FromPacked(MaterialData.NormalHandle).IsValid();
 }
 
-Texture2D<float3> GetNormalBindless()
+bool IsMaterialBindlessValid(FMaterial MaterialData)
 {
-    const FDescriptorHandle Normal = FDescriptorHandle::FromPacked(MaterialIndicesBuffer.NormalHandle);
-    return ResourceDescriptorHeap[Normal.GetIndex()];
+    return FDescriptorHandle::FromPacked(MaterialData.MaterialHandle).IsValid();
 }
 
-Texture2D<float3> GetMaterialBindless()
+bool IsHeightBindlessValid(FMaterial MaterialData)
 {
-    const FDescriptorHandle Material = FDescriptorHandle::FromPacked(MaterialIndicesBuffer.MaterialHandle);
-    return ResourceDescriptorHeap[Material.GetIndex()];
+    return FDescriptorHandle::FromPacked(MaterialData.HeightHandle).IsValid();
 }
 
-Texture2D<float> GetHeightBindless()
+bool IsMaterialSamplerBindlessValid(FMaterial MaterialData)
 {
-    const FDescriptorHandle Height = FDescriptorHandle::FromPacked(MaterialIndicesBuffer.HeightHandle);
-    return ResourceDescriptorHeap[Height.GetIndex()];
+    return FDescriptorHandle::FromPacked(MaterialData.SamplerHandle).IsValid();
+}
+
+SamplerState GetMaterialSamplerBindless(FMaterial MaterialData)
+{
+    return GetSamplerFromPackedDescriptorIndex(MaterialData.SamplerHandle);
+}
+
+Texture2D<float4> GetAlbedoBindless(FMaterial MaterialData)
+{
+    return GetResourceFromPackedDescriptorIndex(MaterialData.AlbedoHandle);
+}
+
+Texture2D<float3> GetNormalBindless(FMaterial MaterialData)
+{
+    return GetResourceFromPackedDescriptorIndex(MaterialData.NormalHandle);
+}
+
+Texture2D<float3> GetMaterialBindless(FMaterial MaterialData)
+{
+    return GetResourceFromPackedDescriptorIndex(MaterialData.MaterialHandle);
+}
+
+Texture2D<float> GetHeightBindless(FMaterial MaterialData)
+{
+    return GetResourceFromPackedDescriptorIndex(MaterialData.HeightHandle);
 }
 
 #endif

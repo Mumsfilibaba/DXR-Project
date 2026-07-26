@@ -1,3 +1,4 @@
+#include "D3D12RHI/D3D12Configuration.h"
 #include "D3D12RHI/D3D12Device.h"
 #include "D3D12RHI/D3D12Descriptors.h"
 #include "D3D12RHI/D3D12ResourceViews.h"
@@ -97,16 +98,22 @@ FRHIDescriptorHandle FD3D12View::EnsureBindlessHandle(EDescriptorType InType) co
 
     if (!Descriptor)
     {
+        D3D12_WARNING("[Bindless] EnsureBindlessHandle: view has no offline descriptor; returning invalid handle (type=%d)", static_cast<int32>(InType));
         return FRHIDescriptorHandle();
     }
 
     BindlessHandle = BindlessHeap->Allocate(InType);
     if (!BindlessHandle.IsValid())
     {
+        D3D12_WARNING("[Bindless] EnsureBindlessHandle: bindless heap Allocate failed (heap full?); returning invalid handle (type=%d)", static_cast<int32>(InType));
         return FRHIDescriptorHandle();
     }
 
+#if D3D12_ENABLE_SYNCHRONOUS_BINDLESS_WRITES
+    BindlessHeap->WriteSlotImmediate(BindlessHandle, Descriptor.Handle);
+#else
     BindlessHeap->EnqueueWrite(BindlessHandle, Descriptor.Handle);
+#endif
 
     if (FD3D12Resource* Resource = ViewResource.Get())
     {
@@ -124,7 +131,11 @@ void FD3D12View::IncrementDescriptorVersion()
     {
         if (FD3D12BindlessDescriptorHeap* BindlessHeap = GetDevice()->GetResourceBindlessHeap())
         {
+        #if D3D12_ENABLE_SYNCHRONOUS_BINDLESS_WRITES
+            BindlessHeap->WriteSlotImmediate(BindlessHandle, Descriptor.Handle);
+        #else
             BindlessHeap->EnqueueWrite(BindlessHandle, Descriptor.Handle);
+        #endif
         }
     }
 }

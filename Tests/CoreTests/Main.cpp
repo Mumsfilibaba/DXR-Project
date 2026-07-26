@@ -10,6 +10,7 @@
 #include "TestCommon/TestMacros.h"
 
 #include "TaskGraphTests.h"
+#include "RHIValidationHelperTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -37,6 +38,7 @@ int main(int Argc, const CHAR* Argv[])
     }
 
     RUN_TEST("TaskGraph", TaskGraph_Test());
+    RUN_TEST("RHIValidationHelpers", RHIValidationHelpers_Test());
 
     FTaskGraph::Release();
     FThreadManager::Release();

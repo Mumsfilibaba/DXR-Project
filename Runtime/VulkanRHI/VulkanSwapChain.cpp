@@ -800,25 +800,8 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
     int32 Index = 0;
     for (VkImage Image : SwapChainImages)
     {
-        VkImageMemoryBarrier2 ImageBarrier = {};
-        ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
-        ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-        ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
-        ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-        ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-        ImageBarrier.image                           = Image;
-        ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE;
-        ImageBarrier.dstAccessMask                   = VK_ACCESS_2_NONE;
-        ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
-        ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
-        ImageBarrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-        ImageBarrier.subresourceRange.baseArrayLayer = 0;
-        ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
-        ImageBarrier.subresourceRange.baseMipLevel   = 0;
-        ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
-
-        CommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
         BackBuffers[Index].Texture->SetVkImage(Image);
+        BackBuffers[Index].Texture->GetImageLayoutState().SetImageLayout(VK_IMAGE_LAYOUT_UNDEFINED);
 
         FVulkanTextureRHI* BackBufferTexture = BackBuffers[Index].Texture.Get();
 
@@ -855,7 +838,7 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
 
     CommandContext->SplitCommandBuffer(false, false);
 
-	// Reset indices; AcquireNextImage callers will populate BackBufferIndex.
+	// Reset indices. AcquireNextImage callers will populate BackBufferIndex.
 	SemaphoreIndex  = 0;
 	BackBufferIndex = 0;
     return true;

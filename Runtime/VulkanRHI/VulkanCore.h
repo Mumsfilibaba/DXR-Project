@@ -7,6 +7,7 @@
 #include "Core/Templates/TypeTraits/EqualTraits.h"
 #include "RHI/RHITypes.h"
 #include "RHI/RHIResources.h"
+#include "RHI/RayTracing/RHIRayTracingTypes.h"
 #include "VulkanRHI/VulkanConstants.h"
 
 #if PLATFORM_MACOS
@@ -758,6 +759,59 @@ constexpr VkIndexType ConvertIndexFormat(EIndexFormat IndexFormat)
         case EIndexFormat::uint32: return VK_INDEX_TYPE_UINT32;
         default:                   return VkIndexType(-1);
     }
+}
+
+constexpr VkBuildAccelerationStructureFlagsKHR ConvertAccelerationStructureBuildFlags(EAccelerationStructureBuildFlags Flags)
+{
+    VkBuildAccelerationStructureFlagsKHR Result = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+    if (IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::AllowUpdate))
+    {
+        Result |= VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+    }
+
+    if (IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::AllowCompaction))
+    {
+        Result |= VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR;
+    }
+
+    if (IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::PreferFastBuild))
+    {
+        Result &= ~VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+        Result |= VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
+    }
+
+    if (IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::MinimizeMemory))
+    {
+        Result |= VK_BUILD_ACCELERATION_STRUCTURE_LOW_MEMORY_BIT_KHR;
+    }
+
+    return Result;
+}
+
+constexpr VkGeometryInstanceFlagsKHR ConvertRayTracingInstanceFlags(ERayTracingInstanceFlags Flags)
+{
+    VkGeometryInstanceFlagsKHR Result = 0;
+    if (IsEnumFlagSet(Flags, ERayTracingInstanceFlags::CullDisable))
+    {
+        Result |= VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
+    }
+
+    if (IsEnumFlagSet(Flags, ERayTracingInstanceFlags::FrontCounterClockwise))
+    {
+        Result |= VK_GEOMETRY_INSTANCE_TRIANGLE_FLIP_FACING_BIT_KHR;
+    }
+
+    if (IsEnumFlagSet(Flags, ERayTracingInstanceFlags::ForceOpaque))
+    {
+        Result |= VK_GEOMETRY_INSTANCE_FORCE_OPAQUE_BIT_KHR;
+    }
+
+    if (IsEnumFlagSet(Flags, ERayTracingInstanceFlags::ForceNonOpaque))
+    {
+        Result |= VK_GEOMETRY_INSTANCE_FORCE_NO_OPAQUE_BIT_KHR;
+    }
+
+    return Result;
 }
 
 NODISCARD constexpr VkImageUsageFlags ConvertSwapChainUsage(ESwapChainUsageFlags Usage)

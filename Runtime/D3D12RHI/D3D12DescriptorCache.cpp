@@ -11,6 +11,33 @@ static TAutoConsoleVariable<int32> CVarSamplerDescriptorCacheSize(
     "Number of entries in the sampler descriptor LRU cache",
     256);
 
+#if D3D12_ENABLE_DESCRIPTOR_TABLE_VALIDATION
+static TAutoConsoleVariable<int32> CVarValidateDescriptorTables(
+    "D3D12RHI.ValidateDescriptorTables",
+    "When non-zero, logs the (stage, root-parameter, slot, register, SRV view dimension) staged into each online SRV descriptor table. Diagnostic aid for tracking stale/mismatched descriptor-table binds (e.g. a Texture2D landing in a StructuredBuffer slot).",
+    0);
+
+static const CHAR* GetSRVDimensionString(D3D12_SRV_DIMENSION Dimension)
+{
+    switch (Dimension)
+    {
+    case D3D12_SRV_DIMENSION_UNKNOWN:                           return "UNKNOWN";
+    case D3D12_SRV_DIMENSION_BUFFER:                            return "BUFFER";
+    case D3D12_SRV_DIMENSION_TEXTURE1D:                         return "TEXTURE1D";
+    case D3D12_SRV_DIMENSION_TEXTURE1DARRAY:                    return "TEXTURE1DARRAY";
+    case D3D12_SRV_DIMENSION_TEXTURE2D:                         return "TEXTURE2D";
+    case D3D12_SRV_DIMENSION_TEXTURE2DARRAY:                    return "TEXTURE2DARRAY";
+    case D3D12_SRV_DIMENSION_TEXTURE2DMS:                       return "TEXTURE2DMS";
+    case D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY:                  return "TEXTURE2DMSARRAY";
+    case D3D12_SRV_DIMENSION_TEXTURE3D:                         return "TEXTURE3D";
+    case D3D12_SRV_DIMENSION_TEXTURECUBE:                       return "TEXTURECUBE";
+    case D3D12_SRV_DIMENSION_TEXTURECUBEARRAY:                  return "TEXTURECUBEARRAY";
+    case D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE: return "RAYTRACING_AS";
+    default:                                                    return "?";
+    }
+}
+#endif
+
 FD3D12LocalDescriptorHeap::FD3D12LocalDescriptorHeap(FD3D12Device* InDevice, FD3D12CommandContext& InContext, bool bInSamplers)
     : FD3D12DeviceChild(InDevice)
     , Context(InContext)
@@ -44,7 +71,6 @@ uint32 FD3D12LocalDescriptorHeap::AllocateHandles(uint32 NumHandles)
 
 bool FD3D12LocalDescriptorHeap::Realloc()
 {
-    // Delete the old block if it exists
     FD3D12OnlineDescriptorHeap& GlobalHeap = bIsSamplerHeap ? GetDevice()->GetGlobalSamplerHeap() : GetDevice()->GetGlobalResourceHeap();
     if (Block)
     {
@@ -61,10 +87,18 @@ bool FD3D12LocalDescriptorHeap::Realloc()
     if (Block)
     {
         Heap = new FD3D12DescriptorHeap(GlobalHeap.GetHeap(), Block->HandleOffset, Block->NumDescriptors);
+    #if D3D12_ENABLE_DESCRIPTOR_HEAP_ROLLOVER_LOGGING
+        D3D12_INFO("[DescriptorCache] Realloc new block: heap=%s HandleOffset=%u NumDescriptors=%u generation=%u",
+            bIsSamplerHeap ? "Sampler" : "Resource", Block->HandleOffset, Block->NumDescriptors, GlobalHeap.GetGeneration());
+    #endif
         return true;
     }
-
-    return false;
+    else
+    {
+        D3D12_WARNING("[DescriptorCache] Realloc FAILED (no free block; forces command-list split): heap=%s generation=%u",
+            bIsSamplerHeap ? "Sampler" : "Resource", GlobalHeap.GetGeneration());
+        return false;
+    }
 }
 
 bool FD3D12LocalDescriptorHeap::HasSpace(uint32 NumHandles) const
@@ -220,6 +254,8 @@ void FD3D12DescriptorCache::PrepareCBVs(FD3D12ConstantBufferCache& Cache, FD3D12
     D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandles[D3D12_DEFAULT_CONSTANT_BUFFER_COUNT];
 
     const FD3D12DescriptorTableMapping& Mapping = RootSignature->GetDescriptorTableMapping(ShaderStage, EResourceType::CBV);
+    CHECK(NumCBVs <= Mapping.GetNumSlots());
+
     auto& CBVCache = Cache.ResourceViews[ShaderStage];
     for (uint32 Slot = 0; Slot < NumCBVs; Slot++)
     {
@@ -257,6 +293,9 @@ void FD3D12DescriptorCache::PrepareCBVs(FD3D12ConstantBufferCache& Cache, FD3D12
         OfflineHandles,
         nullptr,
         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    ConstantBufferCache.StagedRootSig[ShaderStage] = RootSignature;
+    ConstantBufferCache.StagedCount[ShaderStage]   = NumCBVs;
 
     Cache.ClearResourcesDirty(ShaderStage);
     Cache.DirtyDescriptorTable(ShaderStage);
@@ -306,6 +345,12 @@ void FD3D12DescriptorCache::PrepareSRVs(FD3D12ShaderResourceViewCache& Cache, FD
     D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandles[D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
 
     const FD3D12DescriptorTableMapping& Mapping = RootSignature->GetDescriptorTableMapping(ShaderStage, EResourceType::SRV);
+    CHECK(NumSRVs <= Mapping.GetNumSlots());
+
+#if D3D12_ENABLE_DESCRIPTOR_TABLE_VALIDATION
+    const bool bValidate = CVarValidateDescriptorTables.GetValue() != 0;
+#endif
+
     auto& SRVCache = Cache.ResourceViews[ShaderStage];
     for (uint32 Slot = 0; Slot < NumSRVs; Slot++)
     {
@@ -316,10 +361,27 @@ void FD3D12DescriptorCache::PrepareSRVs(FD3D12ShaderResourceViewCache& Cache, FD
         {
             OfflineHandles[Slot] = ShaderResourceView->GetOfflineHandle();
             Context.GetCommandList().UpdateResidency(ShaderResourceView->GetResourceResidencyHandle());
+
+        #if D3D12_ENABLE_DESCRIPTOR_TABLE_VALIDATION
+            if (bValidate)
+            {
+                D3D12_INFO("[ValidateDescriptorTables] stage=%u rootparam=%d slot=%u register=t%u dimension=%s",
+                    static_cast<uint32>(ShaderStage), ParameterIndex, Slot, static_cast<uint32>(Register),
+                    GetSRVDimensionString(ShaderResourceView->GetD3D12Desc().ViewDimension));
+            }
+        #endif
         }
         else
         {
             OfflineHandles[Slot] = DefaultDescriptors.DefaultSRV->GetOfflineHandle();
+
+        #if D3D12_ENABLE_DESCRIPTOR_TABLE_VALIDATION
+            if (bValidate)
+            {
+                D3D12_INFO("[ValidateDescriptorTables] stage=%u rootparam=%d slot=%u register=t%u dimension=<default SRV, no view bound>",
+                    static_cast<uint32>(ShaderStage), ParameterIndex, Slot, static_cast<uint32>(Register));
+            }
+        #endif
         }
     }
 
@@ -336,6 +398,10 @@ void FD3D12DescriptorCache::PrepareSRVs(FD3D12ShaderResourceViewCache& Cache, FD
         OfflineHandles,
         nullptr,
         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    // Remember the layout this table was staged for so it is only rebound for an identical layout.
+    ShaderResourceViewCache.StagedRootSig[ShaderStage] = RootSignature;
+    ShaderResourceViewCache.StagedCount[ShaderStage]   = NumSRVs;
 
     Cache.ClearResourcesDirty(ShaderStage);
     Cache.DirtyDescriptorTable(ShaderStage);
@@ -385,6 +451,8 @@ void FD3D12DescriptorCache::PrepareUAVs(FD3D12UnorderedAccessViewCache& Cache, F
     D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandles[D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
 
     const FD3D12DescriptorTableMapping& Mapping = RootSignature->GetDescriptorTableMapping(ShaderStage, EResourceType::UAV);
+    CHECK(NumUAVs <= Mapping.GetNumSlots());
+
     auto& UAVCache = Cache.ResourceViews[ShaderStage];
     for (uint32 Slot = 0; Slot < NumUAVs; Slot++)
     {
@@ -415,6 +483,10 @@ void FD3D12DescriptorCache::PrepareUAVs(FD3D12UnorderedAccessViewCache& Cache, F
         OfflineHandles,
         nullptr,
         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    // Remember the layout this table was staged for so it is only rebound for an identical layout.
+    UnorderedAccessViewCache.StagedRootSig[ShaderStage] = RootSignature;
+    UnorderedAccessViewCache.StagedCount[ShaderStage]   = NumUAVs;
 
     Cache.ClearResourcesDirty(ShaderStage);
     Cache.DirtyDescriptorTable(ShaderStage);
@@ -564,4 +636,28 @@ void FD3D12DescriptorCache::SetDescriptorHeaps()
         CurrentDescriptorHeaps[0] = DescriptorHeaps[0];
         CurrentDescriptorHeaps[1] = DescriptorHeaps[1];
     }
+}
+
+bool FD3D12DescriptorCache::IsTableLayoutStale(EResourceType::Type Type, EShaderVisibility::Type ShaderStage, const FD3D12RootSignature* RootSignature, uint32 Count) const
+{
+    const FD3D12DescriptorHandleCache* HandleCache = nullptr;
+    switch (Type)
+    {
+    case EResourceType::CBV: 
+        HandleCache = &ConstantBufferCache;
+        break;
+
+    case EResourceType::SRV:
+        HandleCache = &ShaderResourceViewCache;
+        break;
+
+    case EResourceType::UAV:
+        HandleCache = &UnorderedAccessViewCache;
+        break;
+
+    default:
+        return false;
+    }
+
+    return HandleCache->StagedRootSig[ShaderStage] != RootSignature || HandleCache->StagedCount[ShaderStage] != Count;
 }

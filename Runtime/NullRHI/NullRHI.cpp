@@ -29,33 +29,34 @@ FNullDeviceRHI::FNullDeviceRHI()
     // View Instancing
     // -------------------------------------------------------------------------------------------
 
-    RHI::bSupportsViewInstancing = false;
     RHI::MaxViewInstanceCount    = 1;
+    RHI::bSupportsViewInstancing = false;
 
     // -------------------------------------------------------------------------------------------
     // Hardware Ray Tracing - advertise Tier 1.1 so the engine exercises RT paths.
     // NullRHI returns valid stub RT shaders / PSO / scene / geometry.
     // -------------------------------------------------------------------------------------------
 
-    RHI::bSupportsRayTracing         = true;
-    RHI::RayTracingTier              = ERayTracingTier::Tier1_1;
-    RHI::RayTracingMaxRecursionDepth = 31;
+    RHI::RayTracingTier                       = ERayTracingTier::Tier1_1;
+    RHI::RayTracingMaxRecursionDepth          = 31;
+    RHI::bSupportsRayTracingPipelineAdditions = false;
+    RHI::bSupportsRayTracing                  = true;
 
     // -------------------------------------------------------------------------------------------
     // Variable Rate Shading (VRS)
     // -------------------------------------------------------------------------------------------
 
-    RHI::bSupportsVRS             = false;
     RHI::ShadingRateTier          = EShadingRateTier::NotSupported;
     RHI::ShadingRateImageTileSize = 0;
+    RHI::bSupportsVRS             = false;
 
     // -------------------------------------------------------------------------------------------
     // Draw Indirect
     // -------------------------------------------------------------------------------------------
 
+    RHI::MaxDrawIndirectCount      = uint32(~0u);
     RHI::bSupportDrawIndirect      = true;
     RHI::bSupportMultiDrawIndirect = true;
-    RHI::MaxDrawIndirectCount      = uint32(~0u);
 
     // -------------------------------------------------------------------------------------------
     // Texture / Image Limits

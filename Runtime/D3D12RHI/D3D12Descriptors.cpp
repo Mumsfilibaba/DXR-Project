@@ -432,6 +432,30 @@ void FD3D12BindlessDescriptorHeap::EnqueueWrite(FRHIDescriptorHandle Handle, D3D
     Write.SrcHandle = OfflineHandle;
 }
 
+void FD3D12BindlessDescriptorHeap::WriteSlotImmediate(FRHIDescriptorHandle Handle, D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle)
+{
+    if (!Handle.IsValid() || OfflineHandle.ptr == 0)
+    {
+        return;
+    }
+
+    const uint32 SlotIndex = Handle.Index;
+    CHECK(SlotIndex < Capacity);
+
+    TScopedLock Lock(PendingWritesCS);
+
+    SlotSources[SlotIndex] = OfflineHandle;
+
+    FD3D12DescriptorHeap* DestHeap = AliasedHeap.Get();
+    CHECK(DestHeap != nullptr);
+
+    GetDevice()->GetD3D12Device()->CopyDescriptorsSimple(
+        1,
+        DestHeap->GetCPUHandle(static_cast<int32>(SlotIndex)),
+        OfflineHandle,
+        HeapType);
+}
+
 void FD3D12BindlessDescriptorHeap::Flush()
 {
     TArray<FD3D12PendingBindlessWrite> LocalWrites;
@@ -497,6 +521,7 @@ void FD3D12BindlessDescriptorHeap::Rebuild(FD3D12OnlineDescriptorHeap& NewGlobal
         const uint32 LiveCount = static_cast<uint32>(LiveSources.Size());
         PendingWrites.Reserve(PendingWrites.Size() + LiveCount);
 
+        uint32 PopulatedSlots = 0;
         for (uint32 Index = 0; Index < LiveCount; ++Index)
         {
             if (LiveSources[Index].ptr != 0)
@@ -504,8 +529,11 @@ void FD3D12BindlessDescriptorHeap::Rebuild(FD3D12OnlineDescriptorHeap& NewGlobal
                 FD3D12PendingBindlessWrite& Write = PendingWrites.Emplace();
                 Write.DestSlot  = Index;
                 Write.SrcHandle = LiveSources[Index];
+                ++PopulatedSlots;
             }
         }
+
+        D3D12_WARNING("[Bindless] Rebuild onto new global heap: Capacity=%u LiveDescriptors=%u", Capacity, PopulatedSlots);
     }
 
     Flush();

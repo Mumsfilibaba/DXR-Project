@@ -1,9 +1,12 @@
 #ifndef HELPERS_HLSLI
 #define HELPERS_HLSLI
+
 #include "Constants.hlsli"
 #include "DepthHelpers.hlsli"
 
+// ------------------------------------------------------------------------------------------------
 // Mapping Helpers
+// ------------------------------------------------------------------------------------------------
 
 float MinusOneToOne(float v)
 {
@@ -35,7 +38,9 @@ float3 OneToMinusOne(float3 v)
     return v * 2.0 - 1.0;
 }
 
+// ------------------------------------------------------------------------------------------------
 // Luma
+// ------------------------------------------------------------------------------------------------
 
 float Luma(float3 Color)
 {
@@ -47,60 +52,66 @@ float Luminance(float3 Color)
     return dot(Color, float3(0.2126f, 0.7152f, 0.0722f));
 }
 
+// ------------------------------------------------------------------------------------------------
 // Plane helpers
+// ------------------------------------------------------------------------------------------------
 
-float4 CreatePlane(float3 Q, float3 R)
+float4 CreatePlane(float3 EdgeA, float3 EdgeB)
 {
-    float3 N = normalize(cross(Q, R));
-    return float4(N, 0);
+    float3 PlaneNormal = normalize(cross(EdgeA, EdgeB));
+    return float4(PlaneNormal, 0);
 }
 
-float GetSignedDistanceFromPlane(float3 P, float4 Plane)
+float GetSignedDistanceFromPlane(float3 Point, float4 Plane)
 {
-    return dot(Plane.xyz, P);
+    return dot(Plane.xyz, Point);
 }
 
 float4 PlaneFromPoints(in float3 Point1, in float3 Point2, in float3 Point3)
 {
-    float3 v21 = Point1 - Point2;
-    float3 v31 = Point1 - Point3;
+    float3 Edge1 = Point1 - Point2;
+    float3 Edge2 = Point1 - Point3;
 
-    float3 Normal = normalize(cross(v21, v31));
+    float3 Normal = normalize(cross(Edge1, Edge2));
     float  Offset = -dot(Normal, Point1);
 
     return float4(Normal, Offset);
 }
 
+// ------------------------------------------------------------------------------------------------
 // Math Helpers
+// ------------------------------------------------------------------------------------------------
 
 uint DivideByMultiple(uint Value, uint Alignment)
 {
     return ((Value + Alignment - 1) / Alignment);
 }
 
-float Random(float3 Seed, int i)
+float Random(float3 Seed, int Index)
 {
-    float4 Seed4 = float4(Seed, i);
-    float  Dot   = dot(Seed4, float4(12.9898f, 78.233f, 45.164f, 94.673f));
-    return frac(sin(Dot) * 43758.5453f);
+    float4 Seed4 = float4(Seed, Index);
+    float  DotProduct = dot(Seed4, float4(12.9898f, 78.233f, 45.164f, 94.673f));
+    return frac(sin(DotProduct) * 43758.5453f);
 }
 
-float Linstep(float Low, float High, float P)
+float Linstep(float Low, float High, float Value)
 {
-    return saturate((P - Low) / (High - Low));
+    return saturate((Value - Low) / (High - Low));
 }
 
-float Lerp(float A, float B, float P)
+float Lerp(float Start, float End, float Factor)
 {
-    return (-P * B) + ((A * P) + B);
+    return (-Factor * End) + ((Start * Factor) + End);
 }
 
-float3 Lerp(float3 A, float3 B, float P)
+float3 Lerp(float3 Start, float3 End, float Factor)
 {
-    return (-P * B) + ((A * P) + B);
+    return (-Factor * End) + ((Start * Factor) + End);
 }
 
+// ------------------------------------------------------------------------------------------------
 // Normal-Mapping Helpers
+// ------------------------------------------------------------------------------------------------
 
 float3 ApplyNormalMapping(float3 TangantNormal, float3 Normal, float3 Tangent, float3 Bitangent)
 {
@@ -108,21 +119,25 @@ float3 ApplyNormalMapping(float3 TangantNormal, float3 Normal, float3 Tangent, f
     return normalize(mul(TangantNormal, TangentSpace));
 }
 
+#if MIN16FLOAT_AVAILABLE
 min16float3 ApplyNormalMapping(min16float3 TangantNormal, min16float3 Normal, min16float3 Tangent, min16float3 Bitangent)
 {
     min16float3x3 TangentSpace = min16float3x3(Tangent, Bitangent, Normal);
     return normalize(mul(TangantNormal, TangentSpace));
 }
+#endif
 
 float3 UnpackNormal(float3 TextureSample)
 {
     return normalize((TextureSample * 2.0) - 1.0);
 }
 
+#if MIN16FLOAT_AVAILABLE
 min16float3 UnpackNormal(min16float3 TextureSample)
 {
     return normalize((TextureSample * 2.0) - 1.0);
 }
+#endif
 
 float3 UnpackNormalBC5(float3 TextureSample)
 {
@@ -132,6 +147,7 @@ float3 UnpackNormalBC5(float3 TextureSample)
 	return float3(NormalXY.xy, NormalZ);
 }
 
+#if MIN16FLOAT_AVAILABLE
 min16float3 UnpackNormalBC5(min16float3 TextureSample)
 {
 	min16float2 NormalXY = TextureSample.rg;	
@@ -139,39 +155,43 @@ min16float3 UnpackNormalBC5(min16float3 TextureSample)
 	min16float NormalZ = sqrt(saturate(1.0 - dot(NormalXY, NormalXY)));
 	return min16float3(NormalXY.xy, NormalZ);
 }
+#endif
 
 float3 PackNormal(float3 Normal)
 {
     return (normalize(Normal) + 1.0) * 0.5;
 }
 
+#if MIN16FLOAT_AVAILABLE
 min16float3 PackNormal(min16float3 Normal)
 {
     return (normalize(Normal) + 1.0) * 0.5;
 }
+#endif
 
+// ------------------------------------------------------------------------------------------------
 // ClipAABB
+// ------------------------------------------------------------------------------------------------
 
 // Modified version from: https://github.com/playdeadgames/temporal/blob/master/Assets/Shaders/TemporalReprojection.shader
-float3 ClipAABB(float3 MinAABB, float3 MaxAABB, float3 Q)
+float3 ClipAABB(float3 MinAABB, float3 MaxAABB, float3 Point)
 {
     // NOTE: Only clips towards AABB center (but fast!)
-    float3 ClipO = 0.5 * (MaxAABB + MinAABB);
-    float3 ClipE = 0.5 * (MaxAABB - MinAABB) + FLT32_EPSILON;
+    float3 Center  = 0.5 * (MaxAABB + MinAABB);
+    float3 Extent  = 0.5 * (MaxAABB - MinAABB) + FLT32_EPSILON;
+    float3 Offset  = Point - Center;
+    float3 Unit    = Offset / Extent;
+    float3 AbsUnit = abs(Unit);
+    float  MaxUnit = max(AbsUnit.x, max(AbsUnit.y, AbsUnit.z));
 
-    float3 ClipV  = Q - ClipO;
-    float3 UnitV  = ClipV / ClipE;
-    float3 UnitA  = abs(UnitV);
-    float  UnitMa = max(UnitA.x, max(UnitA.y, UnitA.z));
-
-    if (UnitMa > 1.0)
+    if (MaxUnit > 1.0)
     {
-        return ClipO + (ClipV / UnitMa);
+        return Center + (Offset / MaxUnit);
     }
     else
     {    
         // Point inside AABB
-        return Q;
+        return Point;
     }
 }
 

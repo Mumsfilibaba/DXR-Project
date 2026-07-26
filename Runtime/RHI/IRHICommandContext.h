@@ -1,15 +1,23 @@
 #pragma once
 #include "RHI/RHITypes.h"
 #include "RHI/RHIResources.h"
+#include "RHI/RayTracing/RHIRayTracingTypes.h"
+#include "RHI/RayTracing/RHIShaderBindingTable.h"
 
 class FRHISwapChain;
 class FRHIGeometryAccelerationStructure;
 class FRHISceneAccelerationStructure;
+class FRHIRayTracingAccelerationStructure;
+class FRHIOpacityMicromap;
+class FRHIShaderBindingTable;
 class FRHIQuery;
 class FRHIShader;
 class FRHIRayTracingPipelineState;
 class FRHIFence;
-struct FRayTracingShaderResources;
+class FRHIBuffer;
+struct FRHIHitGroupLocalShaderBinding;
+struct FRHIOpacityMicromapBuildDesc;
+struct FRHIRayTracingAccelerationStructureOperationDesc;
 struct FRHIGeometryAccelerationStructureInstance;
 struct FRHITextureTransition;
 
@@ -349,11 +357,6 @@ struct IRHICommandContext
     virtual void BuildGeometryAccelerationStructure(FRHIGeometryAccelerationStructure* RayTracingGeometry, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc) = 0;
 
     /**
-     * @brief Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored
-     */
-    virtual void SetRayTracingBindings(FRHISceneAccelerationStructure* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources) = 0;
-
-    /**
      * @brief Transition the ResourceState of a Texture resource.
      * @param Texture Texture to transition ResourceState for
      * @param TextureTransition Part of the texture to transition
@@ -445,14 +448,106 @@ struct IRHICommandContext
     virtual void DispatchMesh(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ) = 0;
 
     /**
-     * @brief Dispatches a ray tracing operation.
-     * @param Scene Ray tracing scene to use.
-     * @param PipelineState Pipeline state for ray tracing.
-     * @param Width Dispatch width.
-     * @param Height Dispatch height.
-     * @param Depth Dispatch depth.
+     * @brief Records the local resources for a single shader-binding-table record.
+     * @param ShaderBindingTable The table to update.
+     * @param RecordKind Which sub-table the record belongs to.
+     * @param RecordIndex Record slot within the sub-table to update.
+     * @param Bindings Array of this record's local bindings.
+     * @param NumBindings Number of entries in Bindings.
      */
-    virtual void DispatchRays(FRHISceneAccelerationStructure* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) = 0;
+    virtual void SetHitRecordLocalShaderBindings(FRHIShaderBindingTable* ShaderBindingTable, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings) = 0;
+
+    /**
+     * @brief Flushes pending record updates from the CPU shadow into the GPU shader-binding-table buffer.
+     * @param ShaderBindingTable The table to update.
+     */
+    virtual void BuildShaderBindingTable(FRHIShaderBindingTable* ShaderBindingTable) = 0;
+
+    /** 
+     * @brief Clears all records in a shader-binding-table.
+     * @param ShaderBindingTable The table to clear.
+     */
+    virtual void ResetShaderBindingTable(FRHIShaderBindingTable* ShaderBindingTable) = 0;
+
+    /**
+     * @brief Sets the ray tracing pipeline state used by subsequent global resource binds and DispatchRays.
+     * @param PipelineState Ray tracing pipeline state.
+     */
+    virtual void SetRayTracingPipelineState(FRHIRayTracingPipelineState* PipelineState) = 0;
+
+    /**
+     * @brief Dispatches rays using a standalone shader-binding-table.
+     * @param ShaderBindingTable The shader-binding-table providing the records.
+     * @param Width Dispatch dimensions.
+     * @param Height Dispatch dimensions.
+     * @param Depth Dispatch dimensions.
+     */
+    virtual void DispatchRays(FRHIShaderBindingTable* ShaderBindingTable, uint32 Width, uint32 Height, uint32 Depth) = 0;
+
+    /** 
+     * @brief Dispatches rays with GPU-provided dimensions. Requires RHI::bSupportsIndirectAccelerationStructureOperations.
+     * @param ShaderBindingTable The shader-binding-table providing the records.
+     * @param ArgumentBuffer Buffer containing the dispatch arguments.
+     * @param ArgumentBufferOffset Byte offset into ArgumentBuffer.
+     */
+    virtual void DispatchRaysIndirect(FRHIShaderBindingTable* ShaderBindingTable, FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset) = 0;
+
+    /** 
+     * @brief Builds (or updates) an opacity micromap. Requires RHI::bSupportsOpacityMicromap.
+     * @param OpacityMicromap The micromap to build or update.
+     * @param BuildDesc Description of the build operation.
+     */
+    virtual void BuildOpacityMicromap(FRHIOpacityMicromap* OpacityMicromap, const FRHIOpacityMicromapBuildDesc& BuildDesc) = 0;
+
+    /**
+     * @brief Executes a batch of indirect acceleration-structure operations.
+     * @param Operations Array of operation descriptions.
+     * @param NumOperations Number of operations in the array.
+     */
+    virtual void ExecuteIndirectRayTracingAccelerationStructureOperations(const FRHIRayTracingAccelerationStructureOperationDesc* Operations, uint32 NumOperations) = 0;
+
+    /**
+     * @brief Emits post-build info for acceleration structures.
+     * @param DstBuffer Buffer receiving the post-build info.
+     * @param DstOffset Byte offset into DstBuffer.
+     * @param InfoType Which post-build info to emit.
+     * @param Sources Acceleration structures to query.
+     * @param NumSources Number of source acceleration structures.
+     */
+    virtual void WriteAccelerationStructurePostBuildInfo(FRHIBuffer* DstBuffer, uint64 DstOffset, EAccelerationStructurePostBuildInfoType InfoType, FRHIRayTracingAccelerationStructure* const* Sources, uint32 NumSources) = 0;
+
+    /** 
+     * @brief Copies an acceleration structure with a given mode.
+     * @param Destination The destination acceleration structure.
+     * @param Source The source acceleration structure.
+     * @param CopyMode The mode for the copy operation.
+     */
+    virtual void CopyAccelerationStructure(FRHIRayTracingAccelerationStructure* Destination, FRHIRayTracingAccelerationStructure* Source, EAccelerationStructureCopyMode CopyMode) = 0;
+
+    /**
+     * @brief Compacts an acceleration structure in place. Allocates a result buffer of the compacted 
+     * size, performs a Compact copy into it, then swaps it into the structure so the structure keeps
+     * its identity but any TLAS that references it need to be rebuilt.
+     * @param AccelerationStructure The acceleration structure to compact.
+     * @param CompactedSizeInBytes The size of the compacted acceleration structure in bytes
+     */
+    virtual void CompactAccelerationStructure(FRHIRayTracingAccelerationStructure* AccelerationStructure, uint64 CompactedSizeInBytes) = 0;
+
+    /**
+     * @brief Serializes an acceleration structure into a (GPU-visible) buffer.
+     * @param Source The acceleration structure to serialize.
+     * @param DstBuffer The destination buffer to write the serialized data into.
+     * @param DstOffset The byte offset into the destination buffer to start writing.
+     */
+    virtual void SerializeAccelerationStructure(FRHIRayTracingAccelerationStructure* Source, FRHIBuffer* DstBuffer, uint64 DstOffset) = 0;
+
+    /**
+     * @brief Deserializes a previously serialized acceleration structure from a buffer into an acceleration structure object.
+     * @param Destination The destination acceleration structure.
+     * @param SourceBuffer The source buffer containing the serialized data.
+     * @param SourceOffset The byte offset into the source buffer to start reading.
+     */
+    virtual void DeserializeAccelerationStructure(FRHIRayTracingAccelerationStructure* Destination, FRHIBuffer* SourceBuffer, uint64 SourceOffset) = 0;
 
     /**
      * @brief Presents the swap-chain, swapping the back buffer to the screen.

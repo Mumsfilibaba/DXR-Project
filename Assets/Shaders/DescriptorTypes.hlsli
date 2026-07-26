@@ -1,7 +1,6 @@
 #ifndef DESCRIPTOR_TYPES_HLSLI
 #define DESCRIPTOR_TYPES_HLSLI
 
-// Compile-time mirror of C++ EDescriptorType in Runtime/RHI/RHITypes.h. Keep in sync.
 enum class EDescriptorType : uint
 {
     Unknown         = 0,

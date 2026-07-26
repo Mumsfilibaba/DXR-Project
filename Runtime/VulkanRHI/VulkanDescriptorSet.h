@@ -437,6 +437,13 @@ public:
         BindDescriptorSets(CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE);
     }
 
+#if VK_KHR_ray_tracing_pipeline
+    inline void BindRayTracingDescriptorSets(class FVulkanCommandBuffer& CommandBuffer)
+    {
+        BindDescriptorSets(CommandBuffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR);
+    }
+#endif
+
     FVulkanPipelineLayout* GetLayout() const
     {
         return Layout;

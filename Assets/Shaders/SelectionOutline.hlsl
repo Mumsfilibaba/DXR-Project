@@ -1,21 +1,30 @@
 #include "CoreDefines.hlsli"
 
-Texture2D<uint> ObjectID : register(t0);
-StructuredBuffer<uint> SelectedIDs : register(t1);
-Texture2D<float> InputMask : register(t2);
-Texture2D<float> DilatedMaskInput : register(t3);
+Texture2D<uint>        ObjectID         : register(t0);
+StructuredBuffer<uint> SelectedIDs      : register(t1);
+Texture2D<float>       InputMask        : register(t2);
+Texture2D<float>       DilatedMaskInput : register(t3);
+
 SamplerState LinearSampler : register(s0);
 
 SHADER_CONSTANT_BLOCK_BEGIN
+    // 0-16
     int2 ScreenSize;
     int2 Direction;
-    int  Radius;
-    uint SelectedCount;
 
+    // 16-32
+    int    Radius;
+    uint   SelectedCount;
     float2 InvViewport;
-    float  Smoothness;
-    float  Padding0;
+
+    // 32-40
+    float Smoothness;
+    float Padding0;
 SHADER_CONSTANT_BLOCK_END
+
+// ------------------------------------------------------------------------------------------------
+// Selection Mask
+// ------------------------------------------------------------------------------------------------
 
 float SelectionMaskPS(float2 /* TexCoord */ : TEXCOORD0, float4 Position : SV_Position) : SV_Target0
 {
@@ -43,6 +52,10 @@ float SelectionMaskPS(float2 /* TexCoord */ : TEXCOORD0, float4 Position : SV_Po
     return Selected;
 }
 
+// ------------------------------------------------------------------------------------------------
+// Dilate (Max)
+// ------------------------------------------------------------------------------------------------
+
 float DilateMaxPS(float2 /* TexCoord */ : TEXCOORD0, float4 Position : SV_Position) : SV_Target0
 {
     const int2 Pixel = int2(Position.xy);
@@ -63,6 +76,10 @@ float DilateMaxPS(float2 /* TexCoord */ : TEXCOORD0, float4 Position : SV_Positi
     return Result;
 }
 
+// ------------------------------------------------------------------------------------------------
+// Erode (Min)
+// ------------------------------------------------------------------------------------------------
+
 float ErodeMinPS(float2 /* TexCoord */ : TEXCOORD0, float4 Position : SV_Position) : SV_Target0
 {
     const int2 Pixel = int2(Position.xy);
@@ -82,6 +99,10 @@ float ErodeMinPS(float2 /* TexCoord */ : TEXCOORD0, float4 Position : SV_Positio
 
     return Result;
 }
+
+// ------------------------------------------------------------------------------------------------
+// Selection Ring
+// ------------------------------------------------------------------------------------------------
 
 float SelectionRingPS(float2 /* TexCoord */ : TEXCOORD0, float4 Position : SV_Position) : SV_Target0
 {

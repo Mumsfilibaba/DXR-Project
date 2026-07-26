@@ -55,7 +55,7 @@ bool FFrameResources::Initialize()
     FRHIBufferDesc BufferDesc;
     BufferDesc.Stride = sizeof(FDirectionalLightDataHLSL);
     BufferDesc.Size   = sizeof(FDirectionalLightDataHLSL);
-    BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
+    BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
     DirectionalLightDataBuffer = RHI::CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
 
@@ -270,7 +270,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         FRHIBufferDesc BufferDesc;
 		BufferDesc.Stride = PointLightsData.Stride();
 		BufferDesc.Size   = PointLightsData.CapacityInBytes();
-		BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
+		BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
         PointLightsBuffer = RHI::CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
         if (!PointLightsBuffer)
@@ -284,7 +284,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
 		FRHIBufferDesc BufferDesc;
 		BufferDesc.Stride = PointLightsPosRad.Stride();
 		BufferDesc.Size   = PointLightsPosRad.CapacityInBytes();
-		BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
+		BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
         PointLightsPosRadBuffer = RHI::CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
         if (!PointLightsPosRadBuffer)
@@ -298,7 +298,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
 		FRHIBufferDesc BufferDesc;
 		BufferDesc.Stride = ShadowCastingPointLightsData.Stride();
 		BufferDesc.Size   = ShadowCastingPointLightsData.CapacityInBytes();
-		BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
+		BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
         ShadowCastingPointLightsBuffer = RHI::CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
         if (!ShadowCastingPointLightsBuffer)
@@ -312,7 +312,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
 		FRHIBufferDesc BufferDesc;
 		BufferDesc.Stride = ShadowCastingPointLightsPosRad.Stride();
 		BufferDesc.Size   = ShadowCastingPointLightsPosRad.CapacityInBytes();
-		BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
+		BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
         ShadowCastingPointLightsPosRadBuffer = RHI::CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
         if (!ShadowCastingPointLightsPosRadBuffer)
@@ -326,7 +326,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         FRHIBufferDesc BufferDesc;
         BufferDesc.Stride = LightProbeInfos.Stride();
         BufferDesc.Size   = LightProbeInfos.CapacityInBytes();
-        BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
+        BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
         LightProbeBuffer = RHI::CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
         if (!LightProbeBuffer)
@@ -397,7 +397,11 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
 void FFrameResources::Release()
 {
     CameraBuffer.Reset();
-    TransformBuffer.Reset();
+    PerObjectBuffer.Reset();
+
+    MaterialDataBuffer.Reset();
+    MaterialDataBufferSRV.Reset();
+    MaterialData.Clear();
 
     PointLightShadowSampler.Reset();
     ShadowSamplerPoint.Reset();
@@ -428,11 +432,12 @@ void FFrameResources::Release()
 
     MeshInputLayout.Reset();
 
-    RTScene.Reset();
-    RTOutput.Reset();
-    RTGeometryInstances.Clear();
-    RTHitGroupResources.Clear();
-    RTMeshToHitGroupIndex.Clear();
+    RayTracingScene.Reset();
+    RayTracingOutput.Reset();
+    RayTracingShaderBindingTable.Reset();
+    RayTracingHitGroupBindings.Clear();
+    RayTracingGeometryInstances.Clear();
+    RayTracingMeshToHitGroupIndex.Clear();
 
     DirectionalShadowMask.Reset();
     CascadeIndexBuffer.Reset();

@@ -9,6 +9,9 @@ typedef TSharedRef<class FD3D12BufferRHI> FD3D12BufferRHIRef;
 class FD3D12BufferRHI : public FRHIBuffer, public FD3D12ResourceBase
 {
 public:
+    static uint64 GetBufferAlignment(const FRHIBufferDesc& Desc);
+    
+public:
     FD3D12BufferRHI(FD3D12Device* InDevice, const FRHIBufferDesc& InBufferDesc);
     ~FD3D12BufferRHI();
 

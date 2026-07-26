@@ -247,7 +247,7 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
-    const bool bBindless = GPrePassBindless && FrameResources.MaterialIndicesBuffer.IsValid();
+    const bool bBindless = GPrePassBindless && FrameResources.MaterialDataBufferSRV.IsValid();
 
     for (const FMeshBatch& Batch : Scene->GetCameraView().GetMeshBatches())
     {
@@ -274,29 +274,21 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
 
         if (Material->HasAlphaMask() || Material->HasHeightMap())
         {
-            CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), Material->GetMaterialBuffer(), 1);
-
-            if (bBindless)
+            if (Material->HasHeightMap())
             {
-                FMaterialBindlessIndicesHLSL Indices;
-                FillMaterialBindlessIndices(*Material, Indices);
-
-                CommandList.UpdateBuffer(FrameResources.MaterialIndicesBuffer.Get(), FBufferRegion(0, sizeof(FMaterialBindlessIndicesHLSL)), &Indices);
-                CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), FrameResources.MaterialIndicesBuffer.Get(), 2);
+                CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), FrameResources.MaterialDataBufferSRV.Get(), 2);
             }
-            else
+
+            CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+
+            if (Material->HasAlphaMask())
             {
-                CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+                CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
+            }
 
-                if (Material->HasAlphaMask())
-                {
-                    CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
-                }
-
-                if (Material->HasHeightMap())
-                {
-                    CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
-                }
+            if (Material->HasHeightMap())
+            {
+                CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
             }
         }
 
@@ -337,8 +329,14 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
 
             CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat); 
   
-            CommandList.UpdateBuffer(FrameResources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->TransformBuffer);
-            CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.TransformBuffer.Get(), 1);
+            StaticMesh->PerObjectBuffer.MaterialIndex = Material->GetBufferIndex();
+            CommandList.UpdateBuffer(FrameResources.PerObjectBuffer.Get(), FBufferRegion(0, sizeof(FPerObjectHLSL)), &StaticMesh->PerObjectBuffer);
+            CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.PerObjectBuffer.Get(), 1);
+
+            if (FRHIPixelShader* PixelShader = PipelineInstance->PixelShader.Get())
+            {
+                CommandList.SetConstantBuffer(PixelShader, FrameResources.PerObjectBuffer.Get(), 1);
+            }
   
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0); 
         } 
@@ -525,7 +523,7 @@ bool FEditorSelectionIDPass::CreateResources(FFrameResources& FrameResources, ui
         return true;
     }
 
-    const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
+    const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::CopySource;
     const FClearValue        ClearValue(RendererTextureFormats::ObjectIDFormat, 0.0f, 0.0f, 0.0f, 0.0f);
 
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(RendererTextureFormats::ObjectIDFormat, Width, Height, 1, 1, Usage, ClearValue);
@@ -594,7 +592,6 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
 
         CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-        CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), Material->GetMaterialBuffer(), 2);
         CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
 
         if (Material->HasAlphaMask())
@@ -605,6 +602,7 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
         if (Material->HasHeightMap())
         {
             CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
+            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), FrameResources.MaterialDataBufferSRV.Get(), 2);
         }
 
         for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
@@ -644,12 +642,14 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
 
             CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
 
-            CommandList.UpdateBuffer(FrameResources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->TransformBuffer);
-            CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.TransformBuffer.Get(), 1);
+            StaticMesh->PerObjectBuffer.MaterialIndex = Material->GetBufferIndex();
+            
+            CommandList.UpdateBuffer(FrameResources.PerObjectBuffer.Get(), FBufferRegion(0, sizeof(FPerObjectHLSL)), &StaticMesh->PerObjectBuffer);
+            CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.PerObjectBuffer.Get(), 1);
 
             if (FRHIPixelShader* PixelShader = PipelineInstance->PixelShader.Get())
             {
-                CommandList.SetConstantBuffer(PixelShader, FrameResources.TransformBuffer.Get(), 1);
+                CommandList.SetConstantBuffer(PixelShader, FrameResources.PerObjectBuffer.Get(), 1);
             }
 
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);

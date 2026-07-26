@@ -1,5 +1,6 @@
 #include "D3D12RHI/D3D12Fence.h"
 #include "D3D12RHI/D3D12Device.h"
+#include "D3D12RHI/D3D12DeviceDebug.h"
 
 FD3D12Fence::FD3D12Fence(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
@@ -51,6 +52,7 @@ uint64 FD3D12Fence::Signal(ID3D12CommandQueue* Queue)
     HRESULT hResult = Queue->Signal(Fence.Get(), CurrentValue);
     if (FAILED(hResult))
     {
+        D3D12RHICheckDeviceRemoved(GetDevice(), hResult, "Fence::Signal");
         D3D12_ERROR_CRITICAL("[FD3D12Fence]: Failed to signal Fence on the GPU");
     }
 
@@ -93,6 +95,8 @@ bool FD3D12Fence::WaitForValue(uint64 Value, uint32 TimeoutMs)
         return true;
     }
 
+    // Triggers the device-removed handler if the fence reports UINT64_MAX.
+    GetCompletedValue(); 
     return false;
 }
 
@@ -100,6 +104,14 @@ uint64 FD3D12Fence::GetCompletedValue() const
 {
     CHECK(Fence != nullptr);
     LastCompletedValue = Fence->GetCompletedValue();
+
+#if D3D12_ENABLE_DEVICE_LOST_CHECK
+    if (LastCompletedValue == UINT64_MAX)
+    {
+        D3D12RHIDeviceRemovedHandler(GetDevice(), "Fence");
+    }
+#endif
+
     return LastCompletedValue;
 }
 

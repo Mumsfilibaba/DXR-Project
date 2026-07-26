@@ -153,6 +153,7 @@ void FRHICommandListExecutor::Tick()
     STAT_SET(STAT_RHI_Commands,      0);
     STAT_SET(STAT_RHI_DispatchCalls, 0);
     STAT_SET(STAT_RHI_DrawCalls,     0);
+    STAT_SET(STAT_RHI_AccelerationStructureBuilds, 0);
 }
 
 void FRHICommandListExecutor::EnqueueResourceDeletion(FRHIResource* InResource)

@@ -20,6 +20,7 @@
 class FVulkanInstance;
 class FVulkanPhysicalDevice;
 class FVulkanTimelineFence;
+class FVulkanQueue;
 
 // -------------------------------------------------------------------------------------------
 // Vulkan Device Feature Support
@@ -72,6 +73,12 @@ extern VULKANRHI_API bool GVulkanSupportsFragmentShaderInterlock;
 extern VULKANRHI_API bool GVulkanSupportsRayTracingPipeline; 
 extern VULKANRHI_API bool GVulkanSupportsRayQuery;
 extern VULKANRHI_API bool GVulkanSupportsAccelerationStructures;
+extern VULKANRHI_API bool GVulkanSupportsOpacityMicromap;
+extern VULKANRHI_API bool GVulkanSupportsShaderExecutionReordering;
+extern VULKANRHI_API bool GVulkanShaderExecutionReorderingActuallyReorders;
+extern VULKANRHI_API bool GVulkanSupportsClustersAndPTLAS;
+extern VULKANRHI_API bool GVulkanSupportsIndirectAccelerationStructureOperations;
+extern VULKANRHI_API bool GVulkanSupportsIndirectRayDispatch;
 
 // -------------------------------------------------------------------------------------------
 // Variable Rate Shading (VK_KHR_fragment_shading_rate)
@@ -118,6 +125,13 @@ extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetSampledImages;
 extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetStorageImages;
 extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetUniformBuffers;
 extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetStorageBuffers;
+
+// -------------------------------------------------------------------------------------------
+// Vulkan Capabilitiy Logging
+// -------------------------------------------------------------------------------------------
+
+extern VULKANRHI_API void DumpVulkanCapabilities();
+extern VULKANRHI_API void DumpVulkanRayTracingCapabilities();
 
 enum class EVulkanCommandQueueType
 {
@@ -271,6 +285,10 @@ public:
     const VkPhysicalDeviceMemoryProperties2& GetMemoryProperties2() const { return DeviceMemoryProperties2; }
     const VkPhysicalDeviceVulkan12Features&  GetFeaturesVulkan12()  const { return DeviceFeatures12; }
 
+#if VK_KHR_ray_tracing_pipeline
+    const VkPhysicalDeviceRayTracingPipelinePropertiesKHR& GetRayTracingPipelineProperties() const { return RayTracingPipelineProperties; }
+#endif
+
     FVulkanInstance* GetInstance() const
     {
         return Instance;
@@ -292,12 +310,15 @@ private:
 
     // Vulkan 1.1 features
     VkPhysicalDeviceVulkan11Features  DeviceFeatures11;
-    
+
     // Vulkan 1.2 features
     VkPhysicalDeviceProperties2       DeviceProperties2;
     VkPhysicalDeviceFeatures2         DeviceFeatures2;
     VkPhysicalDeviceMemoryProperties2 DeviceMemoryProperties2;
     VkPhysicalDeviceVulkan12Features  DeviceFeatures12;
+#if VK_KHR_ray_tracing_pipeline
+    VkPhysicalDeviceRayTracingPipelinePropertiesKHR RayTracingPipelineProperties;
+#endif
 };
 
 class FVulkanDevice
@@ -322,6 +343,14 @@ public:
     void                     RecycleQueryPool(FVulkanQueryPool* Pool);
     uint32                   GetQueueIndexFromType(EVulkanCommandQueueType Type) const;
     bool                     InitializePresentQueueFamily(VkSurfaceKHR Surface);
+
+    bool CreateGraphicsQueue();
+    bool EnsurePresentQueue();
+    void WaitForGPU();
+
+    FVulkanQueue* GetQueue(EVulkanCommandQueueType Type) const;
+    FVulkanQueue* GetGraphicsQueue() const { return GraphicsQueue; }
+    FVulkanQueue* GetPresentQueue()  const { return PresentQueue; }
 
     FVulkanMemoryManager&             GetMemoryManager()             { return *MemoryManager; }
     FVulkanFenceManager&              GetFenceManager()              { return *FenceManager; }
@@ -406,6 +435,8 @@ private:
     TSet<String>                         ExtensionNames;
     TSet<String>                         LayerNames;
     TOptional<FVulkanQueueFamilyIndices> QueueIndicies;
+    FVulkanQueue*                        GraphicsQueue;
+    FVulkanQueue*                        PresentQueue;
     FSamplerMap                          SamplerMap;
     FCriticalSection                     SamplerMapCS;
 

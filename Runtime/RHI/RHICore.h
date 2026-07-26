@@ -44,6 +44,8 @@ enum class ERayTracingTier : uint8
 
     Tier1   = 1,
     Tier1_1 = 2,
+    Tier1_2 = 3,
+    Tier2_0 = 4,
 };
 
 NODISCARD constexpr const CHAR* ToString(ERayTracingTier RayTracingTier)
@@ -53,6 +55,8 @@ NODISCARD constexpr const CHAR* ToString(ERayTracingTier RayTracingTier)
         case ERayTracingTier::NotSupported: return "NotSupported";
         case ERayTracingTier::Tier1:        return "Tier1";
         case ERayTracingTier::Tier1_1:      return "Tier1_1";
+        case ERayTracingTier::Tier1_2:      return "Tier1_2";
+        case ERayTracingTier::Tier2_0:      return "Tier2_0";
         
         default: return "Unknown";
     }

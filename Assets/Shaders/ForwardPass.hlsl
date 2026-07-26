@@ -1,6 +1,7 @@
 #include "PBRHelpers.hlsli"
 #include "Helpers.hlsli"
 #include "Structs.hlsli"
+#include "TransformHelpers.hlsli"
 #include "ColorSpaceTransforms.hlsli"
 #include "Shadows/CascadeStructs.hlsli"
 #include "Shadows/ShadowHelpers.hlsli"
@@ -8,6 +9,10 @@
 
 #ifndef BINDLESS_FORWARD_PASS
     #define BINDLESS_FORWARD_PASS (0)
+#endif
+
+#if BINDLESS_FORWARD_PASS
+    #include "MaterialBindless.hlsli"
 #endif
 
 // Per Frame Buffers
@@ -41,37 +46,35 @@ cbuffer ShadowCastingPointLightsPosRadBuffer : register(b4)
     FPositionRadius ShadowCastingPointLightsPosRad[8];
 }
 
-ConstantBuffer<FDirectionalLight> DirLightBuffer : register(b5);
+ConstantBuffer<FDirectionalLight> DirLightBuffer  : register(b5);
+ConstantBuffer<FPerObject>        PerObjectBuffer : register(b6);
 
-// Per Object Buffers
-ConstantBuffer<FTransform> TransformBuffer : register(b1);
-ConstantBuffer<FMaterial>  MaterialBuffer  : register(b6);
+#define MATERIAL_ARRAY_REGISTER t9
+#include "MaterialArray.hlsli"
 
-// Per Frame Samplers
-SamplerState LUTSampler        : register(s1);
-SamplerState IrradianceSampler : register(s2);
-
+SamplerState           LUTSampler        : register(s1);
+SamplerState           IrradianceSampler : register(s2);
 SamplerComparisonState ShadowMapSampler0 : register(s3);
 SamplerComparisonState ShadowMapSampler1 : register(s4);
 
-// Per Frame Textures
 TextureCube<float4>     IrradianceMap         : register(t0);
 TextureCube<float4>     SpecularIrradianceMap : register(t1);
 Texture2D<float4>       IntegrationLUT        : register(t2);
 Texture2D<float>        DirLightShadowMaps    : register(t3);
 TextureCubeArray<float> PointLightShadowMaps  : register(t4);
 
-// Per Object material textures + sampler
-#if BINDLESS_FORWARD_PASS
-    #define MATERIAL_BINDLESS_REGISTER b7
-    #include "MaterialBindless.hlsli"
-#else
+#if !BINDLESS_FORWARD_PASS
+    // Per-material textures: Albedo (t5), Normal (t6), Material (R=AO, G=Roughness, B=Metallic, t7), Height (t8).
     SamplerState      MaterialSampler : register(s0);
     Texture2D<float4> AlbedoTex       : register(t5);
     Texture2D<float4> NormalTex       : register(t6);
     Texture2D<float3> MaterialMap     : register(t7);
     Texture2D<float>  HeightMap       : register(t8);
 #endif
+
+// ------------------------------------------------------------------------------------------------
+// VertexShader
+// ------------------------------------------------------------------------------------------------
 
 struct FVSInput
 {
@@ -96,20 +99,24 @@ struct FVSOutput
 FVSOutput VSMain(FVSInput Input)
 {
     FVSOutput Output;
-    
-    float3 Normal = normalize(TransformDirectionWS(TransformBuffer, Input.Normal));
-    Output.Normal = Normal;
-    
-    float3 Tangent = normalize(TransformDirectionWS(TransformBuffer, Input.Tangent));
-    Tangent        = normalize(Tangent - dot(Tangent, Normal) * Normal);
-    Output.Tangent = Tangent;
-    
-    float3 Bitangent = normalize(cross(Output.Tangent, Output.Normal));
+
+    // Normal
+    float3 Normal = normalize(TransformDirectionInvT(PerObjectBuffer, Input.Normal));
+
+    // Tangent
+    float3 Tangent = normalize(TransformDirectionInvT(PerObjectBuffer, Input.Tangent));
+    Tangent = normalize(Tangent - dot(Tangent, Normal) * Normal);
+
+    // Bitangent
+    float3 Bitangent = normalize(cross(Tangent, Normal));
+
+    Output.Normal    = Normal;
+    Output.Tangent   = Tangent;
     Output.Bitangent = Bitangent;
 
     Output.TexCoord = Input.TexCoord;
 
-    const float3 WorldPosition3 = TransformPositionWS(TransformBuffer, Input.Position);
+    const float3 WorldPosition3 = TransformPositionWS(PerObjectBuffer, Input.Position);
     Output.Position      = mul(float4(WorldPosition3, 1.0), CameraBuffer.ViewProjection);
     Output.WorldPosition = WorldPosition3;
 
@@ -121,6 +128,10 @@ FVSOutput VSMain(FVSInput Input)
 
     return Output;
 }
+
+// ------------------------------------------------------------------------------------------------
+// PixelShader
+// ------------------------------------------------------------------------------------------------
 
 struct FPSInput
 {
@@ -136,23 +147,25 @@ struct FPSInput
 
 float4 PSMain(FPSInput Input) : SV_Target0
 {
+    const FMaterial MaterialData = Materials[PerObjectBuffer.MaterialIndex];
+
     float2 TexCoords = Input.TexCoord;
 
 #if 0 
-    if (MaterialBuffer.EnableHeight != 0)
+    if (MaterialData.EnableHeight != 0)
     {
         const float2 TexCoordsDx = ddx(TexCoords);
         const float2 TexCoordsDy = ddy(TexCoords);
 
         float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
 
-        uint bParallaxDiscard = 0;
+        bool bParallaxDiscard = false;
     #if BINDLESS_FORWARD_PASS
-        TexCoords = ParallaxMapUV(GetHeightBindless(), GetMaterialSamplerBindless(), TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, MaterialBuffer.ParallaxHeightScale, MaterialBuffer.ParallaxMinLayers, MaterialBuffer.ParallaxMaxLayers, bParallaxDiscard);
+        TexCoords = ParallaxMapUV(GetHeightBindless(MaterialData), GetMaterialSamplerBindless(MaterialData), TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, MaterialData.ParallaxHeightScale, MaterialData.ParallaxMinLayers, MaterialData.ParallaxMaxLayers, bParallaxDiscard);
     #else
-        TexCoords = ParallaxMapUV(HeightMap, MaterialSampler, TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, MaterialBuffer.ParallaxHeightScale, MaterialBuffer.ParallaxMinLayers, MaterialBuffer.ParallaxMaxLayers, bParallaxDiscard);
+        TexCoords = ParallaxMapUV(HeightMap, MaterialSampler, TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, MaterialData.ParallaxHeightScale, MaterialData.ParallaxMinLayers, MaterialData.ParallaxMaxLayers, bParallaxDiscard);
     #endif
-        if (bParallaxDiscard != 0)
+        if (bParallaxDiscard)
         {
             discard;
         }
@@ -160,7 +173,7 @@ float4 PSMain(FPSInput Input) : SV_Target0
 #endif
 
 #if BINDLESS_FORWARD_PASS
-    const float4 AlbedoSample = GetAlbedoBindless().Sample(GetMaterialSamplerBindless(), TexCoords);
+    const float4 AlbedoSample = GetAlbedoBindless(MaterialData).Sample(GetMaterialSamplerBindless(MaterialData), TexCoords);
 #else
     const float4 AlbedoSample = AlbedoTex.Sample(MaterialSampler, TexCoords);
 #endif
@@ -169,7 +182,7 @@ float4 PSMain(FPSInput Input) : SV_Target0
         discard;
     }
 
-    float3 SampledAlbedo = SRGBToLinear(AlbedoSample.rgb) * MaterialBuffer.Albedo;
+    float3 SampledAlbedo = SRGBToLinear(AlbedoSample.rgb) * MaterialData.Albedo;
     
     const float3 WorldPosition = Input.WorldPosition;
     const float3 V             = normalize(CameraBuffer.PositionWS - WorldPosition);
@@ -181,7 +194,7 @@ float4 PSMain(FPSInput Input) : SV_Target0
     }
 
 #if BINDLESS_FORWARD_PASS
-    float3 SampledNormal = GetNormalBindless().Sample(GetMaterialSamplerBindless(), TexCoords).rgb;
+    float3 SampledNormal = GetNormalBindless(MaterialData).Sample(GetMaterialSamplerBindless(MaterialData), TexCoords).rgb;
 #else
     float3 SampledNormal = NormalTex.Sample(MaterialSampler, TexCoords).rgb;
 #endif
@@ -194,14 +207,14 @@ float4 PSMain(FPSInput Input) : SV_Target0
 
     // Sample packed materialparam texture (R=AO, G=Roughness, B=Metallic)
 #if BINDLESS_FORWARD_PASS
-    const float3 MaterialParams   = GetMaterialBindless().Sample(GetMaterialSamplerBindless(), TexCoords);
+    const float3 MaterialParams   = GetMaterialBindless(MaterialData).Sample(GetMaterialSamplerBindless(MaterialData), TexCoords);
 #else
     const float3 MaterialParams   = MaterialMap.Sample(MaterialSampler, TexCoords);
 #endif
-    const float  SampledAO        = MaterialParams.r * MaterialBuffer.AO;
-    const float  SampledRoughness = MaterialParams.g * MaterialBuffer.Roughness;
-    const float  SampledMetallic  = MaterialParams.b * MaterialBuffer.Metallic;
-    const float  Roughness        = SampledRoughness;
+    const float SampledAO        = MaterialParams.r * MaterialData.AO;
+    const float SampledRoughness = MaterialParams.g * MaterialData.Roughness;
+    const float SampledMetallic  = MaterialParams.b * MaterialData.Metallic;
+    const float Roughness        = SampledRoughness;
     
     float3 F0 = 0.04;
     F0 = lerp(F0, SampledAlbedo, SampledMetallic);
@@ -234,9 +247,9 @@ float4 PSMain(FPSInput Input) : SV_Target0
         float ShadowFactor = PointLightShadowFactor(PointLightShadowMaps, float(i), ShadowMapSampler0, WorldPosition, N, Light, LightPosRad);
         if (ShadowFactor > 0.001)
         {
-            float3 L = LightPosRad.Position - WorldPosition;
-            float DistanceSqrd = dot(L, L);
-            float Attenuation  = 1.0 / max(DistanceSqrd, 0.01 * 0.01);
+            float3 L            = LightPosRad.Position - WorldPosition;
+            float  DistanceSqrd = dot(L, L);
+            float  Attenuation  = 1.0 / max(DistanceSqrd, 0.01 * 0.01);
             L = normalize(L);
             
             float3 IncidentRadiance = Light.Color * Attenuation;
@@ -275,15 +288,14 @@ float4 PSMain(FPSInput Input) : SV_Target0
         float3 Ks = F;
         float3 Kd = 1.0 - Ks;
 
-        float3 Irradiance = IrradianceMap.SampleLevel(IrradianceSampler, N, 0.0).rgb;
-        float3 Diffuse    = Irradiance * SampledAlbedo * Kd;
-
+        float3 Irradiance      = IrradianceMap.SampleLevel(IrradianceSampler, N, 0.0).rgb;
+        float3 Diffuse         = Irradiance * SampledAlbedo * Kd;
         float3 R               = reflect(-V, N);
         float3 PrefilteredMap  = SpecularIrradianceMap.SampleLevel(IrradianceSampler, R, Roughness * (7.0 - 1.0)).rgb;
         float2 BRDFIntegration = IntegrationLUT.SampleLevel(LUTSampler, float2(NDotV, Roughness), 0.0).rg;
         float3 Specular        = PrefilteredMap * (F * BRDFIntegration.x + BRDFIntegration.y);
+        float3 Ambient         = (Diffuse + Specular) * SampledAO;
 
-        float3 Ambient = (Diffuse + Specular) * SampledAO;
         FinalColor = Ambient + L0;
     }
     

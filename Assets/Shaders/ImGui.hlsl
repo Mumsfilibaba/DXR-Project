@@ -1,14 +1,13 @@
-struct FShaderConstants
-{
-    float4x4 ProjectionMatrix;
-};
+#include "CoreDefines.hlsli"
 
-#if SHADER_LANG == SHADER_LANG_SPIRV
-    [[vk::push_constant]]
-    FShaderConstants Constants;
-#else
-    ConstantBuffer<FShaderConstants> Constants : register(b0, space1);
-#endif
+SHADER_CONSTANT_BLOCK_BEGIN
+    // 0-64
+    float4x4 ProjectionMatrix;
+SHADER_CONSTANT_BLOCK_END
+
+// ------------------------------------------------------------------------------------------------
+// VertexShader
+// ------------------------------------------------------------------------------------------------
 
 struct FVSInput
 {
@@ -32,6 +31,10 @@ FVSOutput VSMain(FVSInput Input)
     Output.TexCoord = Input.TexCoord;
     return Output;
 }
+
+// ------------------------------------------------------------------------------------------------
+// PixelShader
+// ------------------------------------------------------------------------------------------------
 
 struct FPSInput
 {

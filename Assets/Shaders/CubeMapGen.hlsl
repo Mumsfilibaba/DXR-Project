@@ -1,15 +1,17 @@
 #include "Constants.hlsli"
 
-#define NUM_THREADS 16
+#ifndef NUM_THREADS
+    #define NUM_THREADS 16
+#endif
 
-// Shader Constants
 SHADER_CONSTANT_BLOCK_BEGIN
+    // 0-4
     uint CubeMapSize; // Size of one side of the TextureCube
 SHADER_CONSTANT_BLOCK_END
 
-SamplerState LinearSampler : register(s0);
+SamplerState      LinearSampler : register(s0);
+Texture2D<float4> Source        : register(t0);
 
-Texture2D<float4> Source : register(t0);
 TEXTURE_FORMAT_UNKNOWN RWTexture2DArray<min16float4> OutCube : register(u0);
 
 static const float2 INV_ATAN = float2(0.1591f, 0.3183f);

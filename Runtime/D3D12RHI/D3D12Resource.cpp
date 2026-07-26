@@ -21,7 +21,7 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResourc
     , bHasClearValue(false)
     , bHasDefaultState(false)
 {
-    ResourceState.SetResourceState(InInitialState);
+    ResourceState.SetState(InInitialState);
 
     if (InClearValue)
     {
@@ -60,7 +60,7 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResourc
 void FD3D12Resource::InitializeStateTracking(D3D12_RESOURCE_STATES InitialState)
 {
     ResourceState.Initialize(Math::Max(NumSubresources, 1u));
-    ResourceState.SetResourceState(InitialState);
+    ResourceState.SetState(InitialState);
 }
 
 bool FD3D12Resource::RequiresResourceStateTracking() const

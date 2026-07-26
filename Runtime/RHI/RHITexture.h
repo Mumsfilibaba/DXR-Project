@@ -16,6 +16,8 @@ enum class ETextureUsageFlags
     NoDefaultUAV           = FLAG(8),  // Do not create a default UnorderedAccessView at texture creation time
     NoDefaultRTV           = FLAG(9),  // Do not create a default RenderTargetView at texture creation time
     NoDefaultDSV           = FLAG(10), // Do not create a default DepthStencilView at texture creation time
+    CopySource             = FLAG(11), // Texture rests as a copy source (staging/upload)
+    CopyDest               = FLAG(12), // Texture rests as a copy destination (readback/staging)
 };
 
 ENUM_CLASS_OPERATORS(ETextureUsageFlags);
@@ -165,6 +167,8 @@ struct FRHITextureDesc
     NODISCARD constexpr bool IsNoDefaultUAV()           const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::NoDefaultUAV); }
     NODISCARD constexpr bool IsNoDefaultRTV()           const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::NoDefaultRTV); }
     NODISCARD constexpr bool IsNoDefaultDSV()           const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::NoDefaultDSV); }
+    NODISCARD constexpr bool IsCopySource()             const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::CopySource); }
+    NODISCARD constexpr bool IsCopyDest()               const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::CopyDest); }
     NODISCARD constexpr bool IsMultisampled()           const { return (NumSamples > 1); }
 
     bool operator==(const FRHITextureDesc& Other) const noexcept = default;

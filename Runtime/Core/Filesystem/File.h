@@ -31,6 +31,9 @@ public:
     // Returns the Filename without the extension (Excluding the rest of the path)
     static String ExtractFilenameWithoutExtension(const String& Filepath);
 
+    // Recursively creates every directory in Path that does not already exist. Returns true if the full directory tree exists afterwards.
+    static bool CreateDirectoryTree(const String& Path);
+
 private:
     static bool WriteTextFile(IPlatformFile* InFile, const CHAR* Text, uint32 Size);
 };

@@ -1,7 +1,7 @@
 #ifndef BLOCK_COMPRESSION_SHARED_HLSLI
 #define BLOCK_COMPRESSION_SHARED_HLSLI
 
-#include "../CoreDefines.hlsli"
+#include "CoreDefines.hlsli"
 
 #ifndef NUM_THREADS
 	#define NUM_THREADS (8)
@@ -12,6 +12,7 @@
 SamplerState BlockSampler : register(s0);
 
 SHADER_CONSTANT_BLOCK_BEGIN
+	// 0-16
 	uint2  TextureSizeInBlocks;
 	float2 TextureSizeRcp;
 SHADER_CONSTANT_BLOCK_END
@@ -122,12 +123,7 @@ void GatherRGB(Texture2D<float4> Tex, FGatherUVs UVs, out float3 Texels[16])
 }
 
 // ------------------------------------------------------------------------------------------------
-// BC4: Single-channel block encoding (64 bits)
-//
-// Layout: [endpoint0:8][endpoint1:8][16 x 3-bit indices : 48 bits]
-// When endpoint0 > endpoint1: 8-value palette (6 interpolated + 2 endpoints)
-// When endpoint0 <= endpoint1: 6-value palette (4 interpolated + 0.0 + 1.0)
-// We always use the 8-value mode for best quality on continuous data.
+// BC4: Single-channel block encoding
 // ------------------------------------------------------------------------------------------------
 
 uint2 EncodeBC4Block(float Texels[16])
@@ -157,13 +153,9 @@ uint2 EncodeBC4Block(float Texels[16])
 		Endpoint1 = Temp;
 	}
 
-	// Reconstruct quantized endpoints for projection
 	float MaxVal = Endpoint0 / 255.0;
 	float MinVal = Endpoint1 / 255.0;
-
-	// Project texels onto the endpoint line to determine indices.
-	// Natural index: 0 = MaxVal (endpoint0), 7 = MinVal (endpoint1)
-	float Step = 7.0 / (MaxVal - MinVal);
+	float Step   = 7.0 / (MaxVal - MinVal);
 
 	uint Indices[16];
 
@@ -173,8 +165,6 @@ uint2 EncodeBC4Block(float Texels[16])
 		float Projected = clamp(Step * (MaxVal - Texels[i]), 0.0, 7.0);
 		uint  Index     = uint(round(Projected));
 
-		// BC4 palette order: 0=ep0, 1=ep1, 2..7=6/7 to 1/7 interpolated
-		// Remap natural 0,1,2,3,4,5,6,7 -> BC4 indices 0,2,3,4,5,6,7,1
 		Indices[i] = Index + (Index > 0) - 7 * (Index == 7);
 	}
 
@@ -203,12 +193,7 @@ uint2 EncodeBC4Block(float Texels[16])
 }
 
 // ------------------------------------------------------------------------------------------------
-// BC1: RGB block encoding (64 bits)
-//
-// Layout: [color0:16 R5G6B5][color1:16 R5G6B5][16 x 2-bit indices : 32 bits]
-// When color0 > color1: 4-color mode (2 endpoints + 2 interpolated)
-// When color0 <= color1: 3-color + transparent mode
-// We use 4-color mode (color0 > color1) for opaque compression.
+// BC1: RGB block encoding
 // ------------------------------------------------------------------------------------------------
 
 uint PackR5G6B5(float3 Color)
@@ -239,7 +224,6 @@ uint2 EncodeBC1Block(float3 Texels[16])
 		BlockMax = max(BlockMax, Texels[i]);
 	}
 
-	// Inset bounding box by 1/16 to reduce RMS error (van Waveren & Castano)
 	float3 Inset = (BlockMax - BlockMin) / 16.0;
 	BlockMin = saturate(BlockMin + Inset);
 	BlockMax = saturate(BlockMax - Inset);
@@ -259,11 +243,8 @@ uint2 EncodeBC1Block(float3 Texels[16])
 		return uint2(Color0 | (Color1 << 16), 0);
 	}
 
-	float3 Ep0 = UnpackR5G6B5(Color0);
-	float3 Ep1 = UnpackR5G6B5(Color1);
-
-	// Project texels onto the endpoint line to determine indices.
-	// Natural index: 0 = Ep0 (color0), 3 = Ep1 (color1)
+	float3 Ep0       = UnpackR5G6B5(Color0);
+	float3 Ep1       = UnpackR5G6B5(Color1);
 	float3 Direction = Ep1 - Ep0;
 	float  Scale     = 3.0 / dot(Direction, Direction);
 	float  Bias      = Scale * (dot(Ep0, Ep0) - dot(Ep0, Ep1));
@@ -276,11 +257,10 @@ uint2 EncodeBC1Block(float3 Texels[16])
 	{
 		float Projected = clamp(dot(Texels[j], Direction) + Bias, 0.0, 3.0);
 		uint  Index     = uint(round(Projected));
-
-		// BC1 palette order is: 0=color0, 1=color1, 2=2/3+1/3, 3=1/3+2/3
-		// Remap natural 0,1,2,3 -> BC1 indices 0,2,3,1
+		
 		uint Bit0 = Index & 1;
 		uint Bit1 = Index >> 1;
+		
 		IndexBlock |= ((Bit0 ^ Bit1) << 1) | Bit1;
 
 		if (j > 0)
@@ -293,9 +273,7 @@ uint2 EncodeBC1Block(float3 Texels[16])
 }
 
 // ------------------------------------------------------------------------------------------------
-// BC2: Explicit 4-bit alpha encoding (64 bits for alpha portion)
-//
-// Layout: 16 alpha values x 4 bits = 64 bits = uint2
+// BC2: Explicit 4-bit alpha encoding
 // ------------------------------------------------------------------------------------------------
 
 uint2 EncodeBC2AlphaBlock(float Alphas[16])

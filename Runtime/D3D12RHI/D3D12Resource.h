@@ -40,10 +40,10 @@ enum class EResourceStorageType : uint8
 
 struct FD3D12PoolAllocatorAllocationData
 {
-    uint32                 PageIndex       = UINT32_MAX;
-    uint64                 Offset          = 0;
-    uint64                 Size            = 0;
-    FD3D12ResourceStorage* Owner           = nullptr;
+    uint32                 PageIndex = UINT32_MAX;
+    uint64                 Offset    = 0;
+    uint64                 Size      = 0;
+    FD3D12ResourceStorage* Owner     = nullptr;
 };
 
 struct FD3D12BuddyAllocatorAllocationData
@@ -234,6 +234,11 @@ public:
     void SetResourceStateMode(ED3D12ResourceStateMode InStateMode)
     {
         StateMode = InStateMode;
+    }
+
+    ED3D12ResourceStateMode GetResourceStateMode() const
+    {
+        return StateMode;
     }
 
     uint32 GetNumSubresources() const 

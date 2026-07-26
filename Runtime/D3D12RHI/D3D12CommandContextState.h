@@ -4,11 +4,14 @@
 #include "D3D12RHI/D3D12DescriptorCache.h"
 #include "D3D12RHI/D3D12PipelineState.h"
 
+class FD3D12RayTracingPipelineStateRHI;
+typedef TSharedRef<class FD3D12RayTracingPipelineStateRHI> FD3D12RayTracingPipelineStateRHIRef;
+
 class FD3D12CommandContextState : public FD3D12DeviceChild
 {
 public:
     FD3D12CommandContextState(FD3D12Device* InDevice, FD3D12CommandContext& InContext);
-    ~FD3D12CommandContextState() = default;
+    ~FD3D12CommandContextState();
 
     bool Initialize();
 
@@ -19,6 +22,7 @@ public:
     void BindGraphicsState();
     void BindComputeState();
     void BindMeshletState();
+    void BindRayTracingState();
 
     void BindShaderConstants(FD3D12RootSignature* InRootSignature, EShaderVisibility::Type ShaderStage);
     void ResetState();
@@ -28,6 +32,7 @@ public:
     void SetGraphicsPipelineState(FD3D12GraphicsPipelineStateRHI* InGraphicsPipelineState);
     void SetComputePipelineState(FD3D12ComputePipelineStateRHI* InComputePipelineState);
     void SetMeshletPipelineState(FD3D12MeshletPipelineStateRHI* InMeshletPipelineState);
+    void SetRayTracingPipelineState(FD3D12RayTracingPipelineStateRHI* InRayTracingPipelineState);
     void SetRenderTargets(FD3D12RenderTargetViewRHI* const* RenderTargets, uint32 NumRenderTargets, FD3D12DepthStencilViewRHI* DepthStencil);
     void SetShadingRate(EShadingRate ShadingRate);
     void SetShadingRateImage(FD3D12TextureRHI* ShadingRateImage);
@@ -68,6 +73,11 @@ public:
     FORCEINLINE FD3D12MeshletPipelineStateRHI* GetMeshletPipelineState() const
     {
         return MeshletState.PipelineState.Get();
+    }
+
+    FORCEINLINE FD3D12RayTracingPipelineStateRHI* GetRayTracingPipelineState() const
+    {
+        return RayTracingState.PipelineState.Get();
     }
 
     FORCEINLINE void GetRenderTargets(FD3D12RenderTargetViewRHI** RenderTargetViews, uint32& OutNumRenderTargets, FD3D12DepthStencilViewRHI** DepthStencilView) const
@@ -125,15 +135,26 @@ public:
     }
 
 private:
-    bool PrepareResources(FD3D12RootSignature* InRootSignature, FD3D12PipelineState* InPipelineState, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
-    bool PrepareSamplers(FD3D12RootSignature* InRootSignature, FD3D12PipelineState* InPipelineState, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
+    bool PrepareResources(FD3D12RootSignature* InRootSignature, const FD3D12EffectiveDescriptorCounts* InPipelineState, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
+    bool PrepareSamplers(FD3D12RootSignature* InRootSignature, const FD3D12EffectiveDescriptorCounts* InPipelineState, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
 
     void BindResources(FD3D12RootSignature* InRootSignature, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
     void BindSamplers(FD3D12RootSignature* InRootSignature, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
 
-    void InternalSetRootSignature(FD3D12RootSignature* InRootSignature, EShaderVisibility::Type ShaderStage);
+    void InternalSetRootSignature(FD3D12RootSignature* InRootSignature, bool bIsCompute);
+
+    void DirtyAllResources();
+
+    enum class EActivePipeline : uint8
+    {
+        Graphics,
+        Compute,
+        Meshlet,
+        RayTracing,
+    };
 
     FD3D12CommandContext& Context;
+    EActivePipeline       ActivePipeline = EActivePipeline::Graphics;
 
     struct FCommonGraphicsState
     {
@@ -143,6 +164,7 @@ private:
             , ShadingRateImage(nullptr)
             , ShadingRate(D3D12_SHADING_RATE_1X1)
             , RenderTargetCache()
+            , BoundRootSignature(nullptr)
         {
             Memory::Memzero(BlendFactor, sizeof(BlendFactor));
             StencilRef = 0;
@@ -162,6 +184,7 @@ private:
         D3D12_SHADING_RATE      ShadingRate;
         float                   DepthBias[3]; // DepthBias, DepthBiasClamp, SlopeScaledDepthBias
         FD3D12RenderTargetCache RenderTargetCache;
+        FD3D12RootSignature*    BoundRootSignature;
 
         bool bBindRenderTargets    : 1;
         bool bBindBlendFactor      : 1;
@@ -194,7 +217,6 @@ private:
 
         bool bBindStreamOutputTargets : 1;
         bool bBindPipelineState       : 1;
-        bool bBindRootSignature       : 1;
         bool bBindVertexBuffers       : 1;
         bool bBindIndexBuffer         : 1;
         bool bBindShaderConstants     : 1;
@@ -211,7 +233,6 @@ private:
         FD3D12ComputePipelineStateRHIRef PipelineState;
 
         bool bBindPipelineState   : 1;
-        bool bBindRootSignature   : 1;
         bool bBindShaderConstants : 1;
     } ComputeState;
 
@@ -225,9 +246,18 @@ private:
         FD3D12MeshletPipelineStateRHIRef PipelineState;
 
         bool bBindPipelineState   : 1;
-        bool bBindRootSignature   : 1;
         bool bBindShaderConstants : 1;
     } MeshletState;
+
+    struct FRayTracingState
+    {
+        FD3D12RayTracingPipelineStateRHIRef PipelineState;
+    } RayTracingState;
+
+    struct FCommonComputeState
+    {
+        FD3D12RootSignature* BoundRootSignature = nullptr;
+    } ComputeCommonState;
 
     struct FCommonState
     {

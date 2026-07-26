@@ -2,11 +2,14 @@
 #include "Structs.hlsli"
 #include "RayTracingHelpers.hlsli"
 
-TextureCube<float4> Skybox : register(t1);
-SamplerState TextureSampler : register(s0);
+ConstantBuffer<FCamera> CameraBuffer : register(b0);
+
+TextureCube<float4> Skybox        : register(t1);
+SamplerState        SkyboxSampler : register(s2);
 
 [shader("miss")]
-void Miss(inout RayPayload PayLoad)
+void Miss(inout FRayPayload PayLoad)
 {
-    PayLoad.Color = Skybox.SampleLevel(TextureSampler, WorldRayDirection(), 0).rgb;
+    PayLoad.Color = Skybox.SampleLevel(SkyboxSampler, WorldRayDirection(), 0).rgb;
+    PayLoad.HitT  = -1.0f;
 }

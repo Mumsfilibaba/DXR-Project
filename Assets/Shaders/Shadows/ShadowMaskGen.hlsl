@@ -1,9 +1,9 @@
-#include "../Structs.hlsli"
-#include "../Random.hlsli"
-#include "../Helpers.hlsli"
-#include "../PoissonDisk.hlsli"
-#include "../VogelDisk.hlsli"
-#include "../Halton.hlsli"
+#include "Structs.hlsli"
+#include "Random.hlsli"
+#include "Helpers.hlsli"
+#include "PoissonDisk.hlsli"
+#include "VogelDisk.hlsli"
+#include "Halton.hlsli"
 #include "CascadeStructs.hlsli"
 
 #if !defined(NUM_THREADS)
@@ -67,78 +67,81 @@
 #endif
 
 // Debugging defines
-#define ENABLE_FIRST_CASCADE_ONLY 0
+#if !defined(ENABLE_FIRST_CASCADE_ONLY)
+    #define ENABLE_FIRST_CASCADE_ONLY 0
+#endif
 
-#define MAX_PCSS_FILTER_SIZE 0.999
-#define MIN_PCSS_FILTER_SIZE 0.03
-#define PENUMBRA_SCALE 30.0
+#if !defined(MAX_PCSS_FILTER_SIZE)
+    #define MAX_PCSS_FILTER_SIZE 0.999
+#endif
+#if !defined(MIN_PCSS_FILTER_SIZE)
+    #define MIN_PCSS_FILTER_SIZE 0.03
+#endif
+#if !defined(PENUMBRA_SCALE)
+    #define PENUMBRA_SCALE 30.0
+#endif
 
-#define USE_ORTHO 1
-
-// Camera and Light
-#if SHADER_LANG == SHADER_LANG_MSL
-ConstantBuffer<FCamera> CameraBuffer : register(b2);
-ConstantBuffer<FDirectionalLight> LightBuffer : register(b3);
-#else
-ConstantBuffer<FCamera> CameraBuffer : register(b0);
-ConstantBuffer<FDirectionalLight> LightBuffer : register(b1);
+#if !defined(USE_ORTHO)
+    #define USE_ORTHO 1
 #endif
 
 struct FDirectionalShadowSettings
 {
+    // 0-16
     float FilterSize;
     float MaxFilterSize;
     uint  ShadowMapSize;
     uint  FrameIndex;
 
+    // 16-32
     uint  NumSamples;
     uint  Padding0;
     uint  Padding1;
     uint  Padding2;
 };
 
+#if SHADER_BACKEND == SHADER_BACKEND_METAL
+    ConstantBuffer<FCamera>           CameraBuffer : register(b2);
+    ConstantBuffer<FDirectionalLight> LightBuffer  : register(b3);
+#else
+    ConstantBuffer<FCamera>           CameraBuffer : register(b0);
+    ConstantBuffer<FDirectionalLight> LightBuffer  : register(b1);
+#endif
+
 ConstantBuffer<FDirectionalShadowSettings> SettingsBuffer : register(b2);
 
-// Shadow information
 StructuredBuffer<FCascadeMatrices> ShadowMatricesBuffer : register(t0);
-StructuredBuffer<FCascadeSplit> ShadowSplitsBuffer : register(t1);
-
-// G-Buffer
-Texture2D<float> DepthBuffer : register(t2);
-Texture2D<float3> NormalBuffer : register(t3);
-
-// Shadow Cascades
-Texture2DArray<float> ShadowCascades : register(t4);
+StructuredBuffer<FCascadeSplit>    ShadowSplitsBuffer   : register(t1);
+Texture2D<float>                   DepthBuffer          : register(t2);
+Texture2D<float3>                  NormalBuffer         : register(t3);
+Texture2DArray<float>              ShadowCascades       : register(t4);
 
 // Output
 TEXTURE_FORMAT_UNKNOWN RWTexture2D<float> Output : register(u0);
 #if ENABLE_DEBUG
-TEXTURE_FORMAT_UNKNOWN RWTexture2D<uint> CascadeIndexTex : register(u1);
+    TEXTURE_FORMAT_UNKNOWN RWTexture2D<uint> CascadeIndexTex : register(u1);
 #endif
 
 // Samplers
-SamplerComparisonState ShadowSamplerPointCmp : register(s0);
+SamplerComparisonState ShadowSamplerPointCmp  : register(s0);
 SamplerComparisonState ShadowSamplerLinearCmp : register(s1);
-
-SamplerState ShadowSamplerPoint : register(s2);
+SamplerState           ShadowSamplerPoint     : register(s2);
 
 float2 GenerateSampleOffset(uint SampleIndex)
 {
 #if FILTER_FUNCTION_POISSON_DISK
-
-    // Sample from predefined poisson-disks
-#if (NUM_SAMPLES == 16)
-    return PoissonDisk16[SampleIndex];
-#elif (NUM_SAMPLES == 32)
-    return PoissonDisk32[SampleIndex];
-#elif (NUM_SAMPLES == 64)
-    return PoissonDisk64[SampleIndex];
-#elif (NUM_SAMPLES == 128)
-    return PoissonDisk128[SampleIndex];
-#else
-    return 0.0;
-#endif
-
+        // Sample from predefined poisson-disks
+    #if (NUM_SAMPLES == 16)
+        return PoissonDisk16[SampleIndex];
+    #elif (NUM_SAMPLES == 32)
+        return PoissonDisk32[SampleIndex];
+    #elif (NUM_SAMPLES == 64)
+        return PoissonDisk64[SampleIndex];
+    #elif (NUM_SAMPLES == 128)
+        return PoissonDisk128[SampleIndex];
+    #else
+        return 0.0;
+    #endif
 #else
     // Generate a vogel sample using runtime sample count
     return VogelDiskSample(SampleIndex, SettingsBuffer.NumSamples, 1);
@@ -148,20 +151,18 @@ float2 GenerateSampleOffset(uint SampleIndex)
 float2 GenerateBlockerSampleOffset(uint SampleIndex)
 {
 #if FILTER_FUNCTION_POISSON_DISK
-
-    // Sample from predefined poisson-disks
-#if (NUM_BLOCKER_SAMPLES == 16)
-    return PoissonDisk16[SampleIndex];
-#elif (NUM_BLOCKER_SAMPLES == 32)
-    return PoissonDisk32[SampleIndex];
-#elif (NUM_BLOCKER_SAMPLES == 64)
-    return PoissonDisk64[SampleIndex];
-#elif (NUM_BLOCKER_SAMPLES == 128)
-    return PoissonDisk128[SampleIndex];
-#else
-    return 0.0;
-#endif
-
+        // Sample from predefined poisson-disks
+    #if (NUM_BLOCKER_SAMPLES == 16)
+        return PoissonDisk16[SampleIndex];
+    #elif (NUM_BLOCKER_SAMPLES == 32)
+        return PoissonDisk32[SampleIndex];
+    #elif (NUM_BLOCKER_SAMPLES == 64)
+        return PoissonDisk64[SampleIndex];
+    #elif (NUM_BLOCKER_SAMPLES == 128)
+        return PoissonDisk128[SampleIndex];
+    #else
+        return 0.0;
+    #endif
 #else
     // Generate a vogel sample
     return VogelDiskSample(SampleIndex, NUM_BLOCKER_SAMPLES, 1);
@@ -199,7 +200,6 @@ float2 ComputeBlockerDepth(uint CascadeIndex, FFilterSetup FilterSetup, float Se
     {
         float2 SampleOffset = GenerateBlockerSampleOffset(Sample);
     #if ROTATE_SAMPLES
-
         SampleOffset = mul(SampleOffset, FilterSetup.SampleRotationMatrix);
     #endif
         SampleOffset = SampleOffset * FilterRadius;
@@ -306,9 +306,8 @@ float ShadowAmountGridPCF(uint CascadeIndex, FFilterSetup FilterSetup)
     [branch]
     if (FilterSize.x > 1.0 || FilterSize.y > 1.0)
     {
-        const float ShadowMapSize = GetShadowMapSize();
-        const float TexelSize     = 1.0 / ShadowMapSize;
-
+        const float  ShadowMapSize = GetShadowMapSize();
+        const float  TexelSize     = 1.0 / ShadowMapSize;
         const float2 ShadowTexel   = FilterSetup.ShadowPosition * ShadowMapSize;
         const float2 TexelFraction = frac(ShadowTexel);
         const float2 FilterRadius  = FilterSize / 2.0;
@@ -347,6 +346,7 @@ float ShadowAmountGridPCF(uint CascadeIndex, FFilterSetup FilterSetup)
 
                 const float Weight = WeightX * WeightY;
                 const float Sample = ShadowCascades.SampleCmpLevelZero(ShadowSamplerPointCmp, float3(CurrentTexCoords, CascadeIndex), FilterSetup.BiasedDepth);
+                
                 Result += Sample * Weight;
             }
         }
@@ -424,9 +424,8 @@ float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS,
 #endif
 
 #if FILTER_MODE_PCSS
-    
     // PCSS Step 1: With PCSS we need to calculate the number of blockers and the average depth
-    // FCascadeMatrices CascadeMatrices = ShadowMatricesBuffer[CascadeIndex];
+    // CascadeMatrices CascadeMatrices = ShadowMatricesBuffer[CascadeIndex];
 
     // float4 PositionVS = mul(float4(PositionWS, 1.0), CascadeMatrices.View);
     // PositionVS.xyz /= PositionVS.w;
@@ -454,22 +453,17 @@ float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS,
 
     // PCSS Step 3: Filter the shadows
     return ShadowAmountPCSS(CascadeIndex, FilterSetup, PenumbraRadius);
-
 #elif FILTER_MODE_PCF
-
-#if FILTER_FUNCTION_GRID
-    // PCF using a grid
-    return ShadowAmountGridPCF(CascadeIndex, FilterSetup);
-#else
-    // PCF using a random disk (Poisson or Vogel)
-    return ShadowAmountDiscPCF(CascadeIndex, FilterSetup);
-#endif
-
-#else
-    
+    #if FILTER_FUNCTION_GRID
+        // PCF using a grid
+        return ShadowAmountGridPCF(CascadeIndex, FilterSetup);
+    #else
+        // PCF using a random disk (Poisson or Vogel)
+        return ShadowAmountDiscPCF(CascadeIndex, FilterSetup);
+    #endif
+#else 
     // Fallback to a single sample 
     return ShadowAmountSimple(CascadeIndex, FilterSetup);
-
 #endif
 }
 
@@ -525,17 +519,17 @@ float ComputeShadow(float3 PositionWS, float3 Normal, float DepthVS, inout uint 
     float SplitSize  = NextSplit - CascadeSplit.PreviousSplit;
     float FadeFactor = (NextSplit - ViewPosZ) / SplitSize;
     
-#if SELECT_CASCADE_FROM_PROJECTION
-    const float4 Offsets = CascadeSplit.Offsets;
-    const float4 Scale   = CascadeSplit.Scale;
+    #if SELECT_CASCADE_FROM_PROJECTION
+        const float4 Offsets = CascadeSplit.Offsets;
+        const float4 Scale   = CascadeSplit.Scale;
 
-    float3 CascadePosition  = ProjectionPosition + Offsets.xyz;
-    CascadePosition *= Scale.xyz;
-    CascadePosition  = abs(CascadePosition * 2.0 - 1.0);
+        float3 CascadePosition  = ProjectionPosition + Offsets.xyz;
+        CascadePosition *= Scale.xyz;
+        CascadePosition  = abs(CascadePosition * 2.0 - 1.0);
 
-    float DistToEdge = 1.0 - max(max(CascadePosition.x, CascadePosition.y), CascadePosition.z);
-    FadeFactor = max(DistToEdge, FadeFactor);
-#endif
+        float DistToEdge = 1.0 - max(max(CascadePosition.x, CascadePosition.y), CascadePosition.z);
+        FadeFactor = max(DistToEdge, FadeFactor);
+    #endif
 
     [branch]
     if(FadeFactor <= CASCADE_FADE_FACTOR && CascadeIndex != (NUM_SHADOW_CASCADES - 1))

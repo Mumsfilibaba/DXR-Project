@@ -205,6 +205,7 @@ VULKAN_DEVICE_FUNCTION(CmdWriteTimestamp)
 VULKAN_DEVICE_FUNCTION(CmdBeginQuery)
 VULKAN_DEVICE_FUNCTION(CmdEndQuery)
 VULKAN_DEVICE_FUNCTION(CmdCopyQueryPoolResults)
+VULKAN_DEVICE_FUNCTION(CmdResetQueryPool)
 
 // -------------------------------------------------------------------------------------------
 // Device Extension Functions
@@ -224,6 +225,35 @@ VULKAN_DEVICE_FUNCTION_OPTIONAL(DestroyAccelerationStructureKHR)
 VULKAN_DEVICE_FUNCTION_OPTIONAL(GetAccelerationStructureBuildSizesKHR)
 VULKAN_DEVICE_FUNCTION_OPTIONAL(GetAccelerationStructureDeviceAddressKHR)
 VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdBuildAccelerationStructuresKHR)
+VULKAN_DEVICE_FUNCTION_OPTIONAL(GetDeviceAccelerationStructureCompatibilityKHR)
+VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdCopyAccelerationStructureKHR)
+VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdCopyAccelerationStructureToMemoryKHR)
+VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdCopyMemoryToAccelerationStructureKHR)
+VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdWriteAccelerationStructuresPropertiesKHR)
+#endif
+
+#if VK_EXT_opacity_micromap
+VULKAN_DEVICE_FUNCTION_OPTIONAL(CreateMicromapEXT)
+VULKAN_DEVICE_FUNCTION_OPTIONAL(DestroyMicromapEXT)
+VULKAN_DEVICE_FUNCTION_OPTIONAL(GetMicromapBuildSizesEXT)
+VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdBuildMicromapsEXT)
+#endif
+
+#if VK_NV_cluster_acceleration_structure
+VULKAN_DEVICE_FUNCTION_OPTIONAL(GetClusterAccelerationStructureBuildSizesNV)
+VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdBuildClusterAccelerationStructureIndirectNV)
+#endif
+
+#if VK_NV_partitioned_acceleration_structure
+VULKAN_DEVICE_FUNCTION_OPTIONAL(GetPartitionedAccelerationStructuresBuildSizesNV)
+VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdBuildPartitionedAccelerationStructuresNV)
+#endif
+
+#if VK_KHR_ray_tracing_pipeline
+VULKAN_DEVICE_FUNCTION_OPTIONAL(CreateRayTracingPipelinesKHR)
+VULKAN_DEVICE_FUNCTION_OPTIONAL(GetRayTracingShaderGroupHandlesKHR)
+VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdTraceRaysKHR)
+VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdTraceRaysIndirectKHR)
 #endif
 
 #if VK_EXT_debug_utils

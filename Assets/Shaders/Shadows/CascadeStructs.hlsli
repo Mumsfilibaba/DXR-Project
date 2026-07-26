@@ -1,6 +1,7 @@
 #ifndef CASCADE_STRUCTS_HLSLI
 #define CASCADE_STRUCTS_HLSLI
-#include "../CoreDefines.hlsli"
+
+#include "CoreDefines.hlsli"
 
 struct FCascadeMatrices
 {
@@ -10,10 +11,10 @@ struct FCascadeMatrices
     // 64-128
     float4x4 ViewProj;
     
-    // 128-196
+    // 128-192
     float4x4 InvView;
 
-    // 196-256
+    // 192-256
     float4x4 InvViewProj;
 };
 
@@ -87,7 +88,6 @@ struct FDirectionalLight
 
     // 48-112
     float4x4 ShadowMatrix;
-    
 };
 
 #endif

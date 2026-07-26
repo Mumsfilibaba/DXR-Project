@@ -2,6 +2,7 @@
 #include "D3D12RHI/D3D12CommandList.h"
 #include "D3D12RHI/D3D12Query.h"
 #include "D3D12RHI/D3D12Core.h"
+#include "D3D12RHI/D3D12DeviceDebug.h"
 
 FD3D12CommandAllocator::FD3D12CommandAllocator(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType)
     : FD3D12DeviceChild(InDevice)
@@ -45,12 +46,7 @@ bool FD3D12CommandAllocator::Initialize()
 bool FD3D12CommandAllocator::Reset()
 {
     HRESULT Result = Allocator->Reset();
-#if D3D12_ENABLE_DEVICE_LOST_CHECK
-    if (Result == DXGI_ERROR_DEVICE_REMOVED)
-    {
-        D3D12DeviceRemovedHandlerRHI(GetDevice());
-    }
-#endif
+    D3D12RHICheckDeviceRemoved(GetDevice(), Result, "CommandAllocator::Reset");
 
     return SUCCEEDED(Result);
 }
@@ -238,12 +234,7 @@ bool FD3D12CommandList::Reset(FD3D12CommandAllocator* Allocator)
     EndTimestamp   = FD3D12Query();
 
     HRESULT Result = CmdList->Reset(Allocator->GetD3D12Allocator(), nullptr);
-#if D3D12_ENABLE_DEVICE_LOST_CHECK
-    if (Result == DXGI_ERROR_DEVICE_REMOVED)
-    {
-        D3D12DeviceRemovedHandlerRHI(GetDevice());
-    }
-#endif
+    D3D12RHICheckDeviceRemoved(GetDevice(), Result, "CommandList::Reset");
 
     return SUCCEEDED(Result);
 }
@@ -253,12 +244,7 @@ bool FD3D12CommandList::Close()
     bIsReady = false;
 
     HRESULT Result = CmdList->Close();
-#if D3D12_ENABLE_DEVICE_LOST_CHECK
-    if (Result == DXGI_ERROR_DEVICE_REMOVED)
-    {
-        D3D12DeviceRemovedHandlerRHI(GetDevice());
-    }
-#endif
+    D3D12RHICheckDeviceRemoved(GetDevice(), Result, "CommandList::Close");
 
     NumCommands = 0;
     return SUCCEEDED(Result);

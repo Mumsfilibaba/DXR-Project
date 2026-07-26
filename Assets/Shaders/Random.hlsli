@@ -1,5 +1,6 @@
 #ifndef RANDOM_HLSLI
 #define RANDOM_HLSLI
+
 #include "CoreDefines.hlsli"
 
 // Based on: https://github.com/NVIDIAGameWorks/GettingStartedWithRTXRayTracing/blob/master/11-OneShadowRayPerPixel/Data/Tutorial11/diffusePlus1ShadowUtils.hlsli
@@ -36,30 +37,14 @@ float NextRandom(inout uint Seed)
     return float(Seed) * (1.0 / 4294967296.0);
 }
 
-min16float NextRandomMin16(inout uint Seed)
-{
-    Seed = XORShift(Seed);
-    return min16float(Seed) * (1.0 / 4294967296.0);
-}
-
 float2 NextRandom2(inout uint Seed)
 {
     return float2(NextRandom(Seed), NextRandom(Seed));
 }
 
-min16float2 NextRandom2Min16(inout uint Seed)
-{
-    return min16float2(NextRandomMin16(Seed), NextRandomMin16(Seed));
-}
-
 float3 NextRandom3(inout uint Seed)
 {
     return float3(NextRandom(Seed), NextRandom(Seed), NextRandom(Seed));
-}
-
-min16float3 NextRandom3Min16(inout uint Seed)
-{
-    return min16float3(NextRandomMin16(Seed), NextRandomMin16(Seed), NextRandomMin16(Seed));
 }
 
 int NextRandomInt(inout uint Seed)

@@ -389,7 +389,8 @@ struct FD3D12PendingDefragMove
     FD3D12PoolAllocatorAllocationData OldAllocationData    = {};
     FD3D12PoolAllocatorAllocationData NewAllocationData    = {};
     D3D12_RESOURCE_STATES             ResourceState        = D3D12_RESOURCE_STATE_COMMON;
-    uint64                            FenceValueAtCreation = 0;
+    uint64                            CompletionFenceValue = 0;
+    bool                              bCanceled            = false;
 };
 
 #if D3D12_BUFFER_ALLOCATOR_USE_POOL_ALLOCATOR
@@ -492,8 +493,11 @@ public:
     bool TryAllocate(D3D12_HEAP_TYPE HeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InitialState, ED3D12ResourceStateMode StateMode, uint64 Alignment, FD3D12ResourceStorage& OutStorage);
     bool Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, const D3D12_RESOURCE_DESC& ResourceDesc) const;
 
-    void DefragmentAllocations(FD3D12CommandContext* InCommandContext, int32 MaxMovesPerFrame);
-    void CancelPendingDefragMoves(FD3D12ResourceBase* Owner);
+    int32  RecordDefragMoves(FD3D12CommandContext* InCommandContext, int32 MaxMovesPerFrame);
+    void   SetDefragCompletionFence(uint64 CompletionFenceValue);
+    uint64 GetDefragCompletionFence() const;
+    void   FinalizeDefragMoves();
+    void   CancelPendingDefragMoves(FD3D12ResourceBase* Owner);
 
     bool Initialize();
     void Destroy();
@@ -570,7 +574,10 @@ public:
     bool TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceStorage& OutStorage);
     bool Supports(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc) const;
 
-    void DefragmentAllocations(FD3D12CommandContext* InCommandContext, int32 MaxMovesPerFrame);
+    int32 RecordDefragMoves(FD3D12CommandContext* InCommandContext, int32 MaxMovesPerFrame);
+    void  SetDefragCompletionFence(uint64 CompletionFenceValue);
+    uint64 GetDefragCompletionFence() const;
+    void  FinalizeDefragMoves();
     void CancelPendingDefragMoves(FD3D12ResourceBase* Owner);
 
     bool Initialize();

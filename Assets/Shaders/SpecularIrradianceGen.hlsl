@@ -1,16 +1,19 @@
 #include "PBRHelpers.hlsli"
 #include "Constants.hlsli"
 
-#define NUM_THREADS (16)
+#ifndef NUM_THREADS
+    #define NUM_THREADS (16)
+#endif
 
 SHADER_CONSTANT_BLOCK_BEGIN
+    // 0-12
     float CurrentRoughness;
     uint  SourceFaceResolution;
     uint  CurrentFaceResolution;
 SHADER_CONSTANT_BLOCK_END
 
-TextureCube<float4> EnvironmentMap : register(t0);
-SamplerState EnvironmentSampler : register(s0);
+TextureCube<float4> EnvironmentMap     : register(t0);
+SamplerState        EnvironmentSampler : register(s0);
 
 TEXTURE_FORMAT_UNKNOWN RWTexture2DArray<float4> SpecularIrradianceMap : register(u0);
 

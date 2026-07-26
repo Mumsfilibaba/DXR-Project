@@ -126,6 +126,14 @@ void FEditorViewportWidget::Draw()
                     { "CSM Cascade Overlay",  FSceneRenderView::EDebugView::ShadowCascadeOverlay },
                 };
 
+                static const FDebugItem RayTracingDebugItems[] =
+                {
+                    { "Reflections Radiance",        FSceneRenderView::EDebugView::RayTracingReflectionsRaw },
+                    { "Reflections Temporal Filter", FSceneRenderView::EDebugView::RayTracingReflectionsTemporal },
+                    { "Reflections Spatial Filter",  FSceneRenderView::EDebugView::RayTracingReflectionsSpatial },
+                    { "Geometry Debug",              FSceneRenderView::EDebugView::RayTracingPrimaryID },
+                };
+
                 const auto FindDebugLabel = [&](FSceneRenderView::EDebugView InView) -> const CHAR*
                 {
                     for (const FDebugItem& Item : BaseViewItems)
@@ -137,6 +145,14 @@ void FEditorViewportWidget::Draw()
                     }
 
                     for (const FDebugItem& Item : ShadowDebugItems)
+                    {
+                        if (Item.View == InView)
+                        {
+                            return Item.Label;
+                        }
+                    }
+
+                    for (const FDebugItem& Item : RayTracingDebugItems)
                     {
                         if (Item.View == InView)
                         {
@@ -314,6 +330,10 @@ void FEditorViewportWidget::Draw()
                 {
                     MaxLabelWidth = Math::Max(MaxLabelWidth, ImGui::CalcTextSize(Item.Label).x);
                 }
+                for (const FDebugItem& Item : RayTracingDebugItems)
+                {
+                    MaxLabelWidth = Math::Max(MaxLabelWidth, ImGui::CalcTextSize(Item.Label).x);
+                }
 
                 const float PaddingX           = ImGui::GetStyle().FramePadding.x;
                 const float DesiredButtonWidth = MaxLabelWidth + TextArrowGap + ArrowIconSize + PaddingX * 2.0f;
@@ -387,17 +407,19 @@ void FEditorViewportWidget::Draw()
 
                 ImGui::SetCursorScreenPos(ImVec2(ChildPos.x + CursorX, ChildPos.y + CursorY));
 
-                const CHAR* ViewMenuPopupId      = "##ViewportViewModeMenu";
-                const CHAR* ShadowMenuPopupId    = "##ViewportShadowMenu";
-                const CHAR* SecondaryMenuPopupId = "##ViewportSecondaryMenu";
-                const float SubmenuOverlap       = 0.0f;
+                const CHAR* ViewMenuPopupId       = "##ViewportViewModeMenu";
+                const CHAR* ShadowMenuPopupId     = "##ViewportShadowMenu";
+                const CHAR* RayTracingMenuPopupId = "##ViewportRayTracingMenu";
+                const CHAR* SecondaryMenuPopupId  = "##ViewportSecondaryMenu";
+                const float SubmenuOverlap        = 0.0f;
 
                 const ImGuiPopupFlags PopupQueryFlags = ImGuiPopupFlags_AnyPopupLevel;
 
-                const bool bViewPopupOpen      = ImGui::IsPopupOpen(ViewMenuPopupId, PopupQueryFlags);
-                const bool bShadowPopupOpen    = ImGui::IsPopupOpen(ShadowMenuPopupId, PopupQueryFlags);
-                const bool bSecondaryPopupOpen = ImGui::IsPopupOpen(SecondaryMenuPopupId, PopupQueryFlags);
-                const bool bAnyPopupOpen       = bViewPopupOpen || bShadowPopupOpen || bSecondaryPopupOpen;
+                const bool bViewPopupOpen       = ImGui::IsPopupOpen(ViewMenuPopupId, PopupQueryFlags);
+                const bool bShadowPopupOpen     = ImGui::IsPopupOpen(ShadowMenuPopupId, PopupQueryFlags);
+                const bool bRayTracingPopupOpen = ImGui::IsPopupOpen(RayTracingMenuPopupId, PopupQueryFlags);
+                const bool bSecondaryPopupOpen  = ImGui::IsPopupOpen(SecondaryMenuPopupId, PopupQueryFlags);
+                const bool bAnyPopupOpen        = bViewPopupOpen || bShadowPopupOpen || bRayTracingPopupOpen || bSecondaryPopupOpen;
 
                 PopupAnchor ViewMenuAnchor;
                 const auto DrawViewModeButton = [&](const CHAR* Label, PopupAnchor& OutAnchor, bool& bOutHovered) -> bool
@@ -561,6 +583,55 @@ void FEditorViewportWidget::Draw()
                     }
 
                     {
+                        PopupAnchor RayTracingAnchor;
+                        bool bRayTracingHovered = false;
+
+                        const bool bRayTracingPressed = DrawSubmenuRow("Ray Tracing", RayTracingAnchor, bRayTracingHovered, bRayTracingPopupOpen);
+                        bAnyMainRowHovered |= bRayTracingHovered;
+
+                        if (bRayTracingPressed || (bAnyPopupOpen && bRayTracingHovered))
+                        {
+                            ImGui::OpenPopup(RayTracingMenuPopupId);
+                            RayTracingAnchor.bRequestPosition = true;
+                        }
+
+                        PopupAnchor RayTracingPopupAnchor = RayTracingAnchor;
+                        RayTracingPopupAnchor.Min              = ImVec2(RayTracingAnchor.Max.x - SubmenuOverlap, RayTracingAnchor.Min.y);
+                        RayTracingPopupAnchor.Max              = ImVec2(RayTracingAnchor.Max.x - SubmenuOverlap, RayTracingAnchor.Min.y);
+                        RayTracingPopupAnchor.bRequestPosition = RayTracingAnchor.bRequestPosition;
+
+                        if (EditorWidgets::BeginMenuPopup(RayTracingMenuPopupId, RayTracingPopupAnchor, 240.0f))
+                        {
+                            const bool bRayTracingPopupHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+                            for (const FDebugItem& Item : RayTracingDebugItems)
+                            {
+                                if (DrawRadioMenuItem(Item.Label, DebugView == Item.View, true, true, nullptr))
+                                {
+                                    DebugView          = Item.View;
+                                    bRequestClosePopup = true;
+                                }
+                            }
+
+                            const float BridgeMaxX = Math::Max(RayTracingPopupAnchor.Min.x + 4.0f, RayTracingAnchor.Max.x);
+
+                            const bool bRayTracingBridgeHovered = ImGui::IsMouseHoveringRect(RayTracingAnchor.Min, ImVec2(BridgeMaxX, RayTracingAnchor.Max.y), false);
+                            const bool bRayTracingKeepOpen      = bRayTracingPopupHovered || bRayTracingHovered || bRayTracingBridgeHovered;
+
+                            if (!bRayTracingKeepOpen)
+                            {
+                                ImGui::CloseCurrentPopup();
+                            }
+
+                            EditorWidgets::EndMenuPopup();
+                        }
+
+                        if (ImGui::IsPopupOpen(RayTracingMenuPopupId, PopupQueryFlags))
+                        {
+                            DrawSubmenuOverlay("Ray Tracing", RayTracingAnchor);
+                        }
+                    }
+
+                    {
                         PopupAnchor SecondaryAnchor;
 
                         bool bSecondaryHovered = false;
@@ -602,6 +673,15 @@ void FEditorViewportWidget::Draw()
                             }
 
                             for (const FDebugItem& Item : ShadowDebugItems)
+                            {
+                                if (DrawRadioMenuItem(Item.Label, SecondaryDebugView == Item.View, true, true, nullptr))
+                                {
+                                    SecondaryDebugView = Item.View;
+                                    bRequestClosePopup = true;
+                                }
+                            }
+
+                            for (const FDebugItem& Item : RayTracingDebugItems)
                             {
                                 if (DrawRadioMenuItem(Item.Label, SecondaryDebugView == Item.View, true, true, nullptr))
                                 {

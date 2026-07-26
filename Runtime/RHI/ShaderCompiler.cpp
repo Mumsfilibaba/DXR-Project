@@ -23,6 +23,12 @@ static TAutoConsoleVariable<bool> CVarVerboseLogging(
     "Enable verbose logging in the ShaderCompiler",
     false);
 
+static TAutoConsoleVariable<bool> CVarMapMin16FloatToFloat(
+    "RHI.ShaderCompiler.MapMin16FloatToFloat",
+    "Map the min16float type family to full-precision float on non-HLSL backends (works around DXC's SPIR-V "
+    "RelaxedPrecision codegen bug). Disable to keep native min-precision types (also sets MIN16FLOAT_AVAILABLE).",
+    true);
+
 enum class EDXCPart
 {
     Container               = DXC_FOURCC('D', 'X', 'B', 'C'),
@@ -106,6 +112,8 @@ static LPCWSTR GetShaderModelString(EShaderModel Model)
 			return L"6_8";
 		case EShaderModel::SM_6_9:
 			return L"6_9";
+		case EShaderModel::SM_6_10:
+			return L"6_10";
         default:
             return L"0_0";
     }
@@ -306,6 +314,8 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
         return false;
     }
 
+    const WString WideShaderIncludeDir = CharToWide(AssetPath + "/Shaders");
+
     // Add compile arguments
     TArray<LPCWSTR> CompileArgs =
     {
@@ -314,6 +324,9 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
         L"-WX",          // Warnings as errors
         L"-Qembed_debug" // We are forced to embed debug information in order to get all the information we need
     };
+
+    CompileArgs.Emplace(L"-I");
+    CompileArgs.Emplace(*WideShaderIncludeDir);
 
     if (CVarShaderDebug.GetValue())
     {
@@ -327,29 +340,47 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
         CompileArgs.Emplace(L"-all-resources-bound");
     }
 
-    // Add defines that is based on language
+    // Add defines that identify the target shader backend
     TArray<DxcDefine> DxcDefines =
     {
-        { L"SHADER_LANG_HLSL" , L"(1)" },
-        { L"SHADER_LANG_SPIRV", L"(2)" },
-        { L"SHADER_LANG_MSL"  , L"(3)" },
+        { L"SHADER_BACKEND_D3D12" , L"(1)" },
+        { L"SHADER_BACKEND_VULKAN", L"(2)" },
+        { L"SHADER_BACKEND_METAL" , L"(3)" },
     };
 
     if (CompileInfo.OutputLanguage == EShaderOutputLanguage::HLSL)
     {
-        DxcDefines.Add({ L"SHADER_LANG", L"SHADER_LANG_HLSL" });
+        DxcDefines.Add({ L"SHADER_BACKEND", L"SHADER_BACKEND_D3D12" });
     }
     else if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
     {
-        DxcDefines.Add({ L"SHADER_LANG", L"SHADER_LANG_MSL" });
+        DxcDefines.Add({ L"SHADER_BACKEND", L"SHADER_BACKEND_METAL" });
     }
     else if (CompileInfo.OutputLanguage == EShaderOutputLanguage::SPIRV)
     {
-        DxcDefines.Add({ L"SHADER_LANG", L"SHADER_LANG_SPIRV" });
+        DxcDefines.Add({ L"SHADER_BACKEND", L"SHADER_BACKEND_VULKAN" });
     }
     else
     {
-        DxcDefines.Add({ L"SHADER_LANG", L"(0)" });
+        DxcDefines.Add({ L"SHADER_BACKEND", L"(0)" });
+    }
+
+    // DXC's SPIR-V backend adds a RelaxedPrecision decoration, and its codegen can emit 
+    // that decoration twice on the same id, producing invalid SPIR-V that fails validation 
+    // with the error "decorated with RelaxedPrecision multiple times".
+
+    const bool bMapMin16FloatToFloat = (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL) && CVarMapMin16FloatToFloat.GetValue();
+    if (bMapMin16FloatToFloat)
+    {
+        DxcDefines.Add({ L"min16float",  L"float"  });
+        DxcDefines.Add({ L"min16float2", L"float2" });
+        DxcDefines.Add({ L"min16float3", L"float3" });
+        DxcDefines.Add({ L"min16float4", L"float4" });
+        DxcDefines.Add({ L"MIN16FLOAT_AVAILABLE", L"(0)" });
+    }
+    else
+    {
+        DxcDefines.Add({ L"MIN16FLOAT_AVAILABLE", L"(1)" });
     }
 
     // Convert defines
@@ -362,6 +393,7 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
         {
             const WString& WideDefine = DefineStrings.Emplace(CharToWide(Define.Define));
             const WString& WideValue  = DefineStrings.Emplace(CharToWide(Define.Value));
+
             DxcDefines.Add({ *WideDefine, *WideValue });
         }
     }
@@ -488,6 +520,7 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
         CompileArgs.Emplace(L"-spirv");
         CompileArgs.Emplace(L"-fspv-target-env=vulkan1.2");
         CompileArgs.Emplace(L"-fspv-reduce-load-size");
+        CompileArgs.Emplace(L"-fvk-use-dx-layout");
 
         // Set must match VULKAN_BINDLESS_HEAP_MARKER_SET in VulkanConstants.h.
         CompileArgs.Emplace(L"-fvk-bind-resource-heap");
@@ -575,6 +608,7 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
 
     const uint32 BlobSize = static_cast<uint32>(CompiledBlob->GetBufferSize());
     OutByteCode.Resize(BlobSize);
+
     Memory::Memcpy(OutByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
 
     if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)

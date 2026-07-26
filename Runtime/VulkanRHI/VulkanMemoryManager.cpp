@@ -120,17 +120,26 @@ void FVulkanMemoryLocation::ReleaseMemory()
             AllocatorPointers.BuddyAllocator->Deallocate(*this);
             break;
         }
+        
         case EVulkanAllocatorType::PoolAllocator:
         {
             CHECK(AllocatorPointers.PoolAllocator != nullptr);
             AllocatorPointers.PoolAllocator->Deallocate(*this);
             break;
         }
+
         case EVulkanAllocatorType::None:
         {
             if (LocationType == EVulkanMemoryLocationType::Dedicated)
             {
-                FVulkanDeviceRHI::DeferDeletion(DeviceMemory, BackingBuffer);
+                if (BackingBuffer != VK_NULL_HANDLE)
+                {
+                    FVulkanDeviceRHI::DeferDeletion(DeviceMemory, BackingBuffer);
+                }
+                else
+                {
+                    FVulkanDeviceRHI::DeferDeletion(DeviceMemory); 
+                }
             }
 
             break;
@@ -759,6 +768,7 @@ FVulkanPoolAllocatorPage::FVulkanPoolAllocatorPage(FVulkanDevice* InDevice, uint
     , BufferUsageFlags(InBufferUsageFlags)
     , DeviceMemory(VK_NULL_HANDLE)
     , SharedBuffer(VK_NULL_HANDLE)
+    , BaseDeviceAddress(0)
     , MappedBaseAddress(nullptr)
     , FreeRanges()
 {
@@ -828,6 +838,15 @@ bool FVulkanPoolAllocatorPage::Initialize()
         {
             VULKAN_ERROR_CRITICAL("FVulkanPoolAllocatorPage: vkBindBufferMemory failed for shared buffer");
             return false;
+        }
+
+        if (AllocateFlags & VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT)
+        {
+            VkBufferDeviceAddressInfo AddressInfo = {};
+            AddressInfo.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+            AddressInfo.buffer = SharedBuffer;
+
+            BaseDeviceAddress = vkGetBufferDeviceAddress(VulkanDevice, &AddressInfo);
         }
     }
 
@@ -908,6 +927,7 @@ bool FVulkanPoolAllocatorPage::TryAllocate(uint64 SizeInBytes, uint64 InAlignmen
         {
             OutLocation.SetBackingBuffer(SharedBuffer);
             OutLocation.SetBufferOffset(AlignedOffset);
+            OutLocation.SetDeviceAddress(BaseDeviceAddress ? (BaseDeviceAddress + AlignedOffset) : 0);
         }
 
         FVulkanPoolAllocatorAllocationData AllocationData = {};
@@ -2095,6 +2115,7 @@ void FVulkanBufferAllocator::DefragmentAllocations(FVulkanCommandContext* InComm
             Move.SourceLocation->SetMemoryOffset(Move.NewAllocationData.Offset);
             Move.SourceLocation->SetBackingBuffer(Move.NewBuffer);
             Move.SourceLocation->SetBufferOffset(0);
+            Move.SourceLocation->SetDeviceAddress(Move.NewDeviceAddress);
             Move.SourceLocation->SetPoolAllocationData(Move.NewAllocationData);
 
             Move.Allocator->TransferOwnership(Move.NewAllocationData, Move.SourceLocation);
@@ -2167,6 +2188,16 @@ void FVulkanBufferAllocator::DefragmentAllocations(FVulkanCommandContext* InComm
             break;
         }
 
+        VkDeviceAddress NewDeviceAddress = 0;
+        if (SourcePool->GetAllocateFlags() & VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT)
+        {
+            VkBufferDeviceAddressInfo AddressInfo = {};
+            AddressInfo.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+            AddressInfo.buffer = NewBuffer;
+
+            NewDeviceAddress = vkGetBufferDeviceAddress(GetDevice()->GetVkDevice(), &AddressInfo);
+        }
+
         VkBufferCopy Region = {};
         Region.srcOffset = Candidate.Owner->GetBufferOffset();
         Region.dstOffset = 0;
@@ -2177,6 +2208,7 @@ void FVulkanBufferAllocator::DefragmentAllocations(FVulkanCommandContext* InComm
         FVulkanPendingDefragMove PendingMove = {};
         PendingMove.SourceLocation        = Candidate.Owner;
         PendingMove.NewBuffer            = NewBuffer;
+        PendingMove.NewDeviceAddress     = NewDeviceAddress;
         PendingMove.Allocator            = &SourcePool->GetPoolAllocator();
         PendingMove.OldAllocationData    = Candidate;
         PendingMove.NewAllocationData    = NewAllocationData;
@@ -2562,8 +2594,12 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
         
         const VkImageLayout      CurrentLayout = Texture->GetImageLayoutState().GetImageLayout();
         const VkImageCreateInfo& OldCreateInfo = Texture->GetVkImageCreateInfo();
-        
-        VkResult Result = vkCreateImage(GetDevice()->GetVkDevice(), &OldCreateInfo, nullptr, &NewImage);
+
+        VkImageCreateInfo RecreateInfo = OldCreateInfo;
+        RecreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+        RecreateInfo.pNext = nullptr;
+
+        VkResult Result = vkCreateImage(GetDevice()->GetVkDevice(), &RecreateInfo, nullptr, &NewImage);
         if (VULKAN_FAILED(Result))
         {
             break;

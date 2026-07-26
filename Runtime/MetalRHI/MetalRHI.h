@@ -85,6 +85,15 @@ public:
     virtual FRHIMeshletPipelineState*          CreateMeshletPipelineState(const FRHIMeshletPipelineStateDesc& InDesc) override final;
     virtual FRHIRayTracingPipelineState*       CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc) override final;
 
+    virtual FRHIShaderBindingTable*                    CreateShaderBindingTable(const FRHIShaderBindingTableDesc&) override final { return nullptr; }
+    virtual FRHIRayTracingShaderIdentifier             GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState*, const String&) override final { return FRHIRayTracingShaderIdentifier(); }
+    virtual FRHIOpacityMicromap*                       CreateOpacityMicromap(const FRHIOpacityMicromapDesc&) override final { return nullptr; }
+    virtual FRHIClusterAccelerationStructure*          CreateClusterAccelerationStructure(const FRHIClusterAccelerationStructureDesc&) override final { return nullptr; }
+    virtual FRHIClusterTemplate*                       CreateClusterTemplate(const FRHIClusterTemplateDesc&) override final { return nullptr; }
+    virtual FRHIPartitionedSceneAccelerationStructure* CreatePartitionedSceneAccelerationStructure(const FRHIRayTracingAccelerationStructurePartitionedSceneInputs&) override final { return nullptr; }
+    virtual void                                       GetRayTracingAccelerationStructureOperationPrebuildInfo(const FRHIRayTracingAccelerationStructureOperationInputs&, FRHIRayTracingAccelerationStructurePrebuildInfo& OutInfo) override final { OutInfo = FRHIRayTracingAccelerationStructurePrebuildInfo(); }
+    virtual bool                                       IsAccelerationStructureSerializationHeaderValid(const FRHIAccelerationStructureSerializationHeader&) override final { return false; }
+
     virtual IRHICommandContext* ObtainCommandContext() override final;
 
     virtual bool QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryInfo) const override final;

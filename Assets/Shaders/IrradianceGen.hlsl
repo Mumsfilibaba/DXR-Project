@@ -1,9 +1,11 @@
 #include "PBRHelpers.hlsli"
 
-#define NUM_THREADS (16)
+#ifndef NUM_THREADS
+    #define NUM_THREADS (16)
+#endif
 
-TextureCube<float4> EnvironmentMap : register(t0);
-SamplerState EnvironmentSampler : register(s0);
+TextureCube<float4> EnvironmentMap     : register(t0);
+SamplerState        EnvironmentSampler : register(s0);
 
 TEXTURE_FORMAT_UNKNOWN RWTexture2DArray<float4> IrradianceMap : register(u0);
 

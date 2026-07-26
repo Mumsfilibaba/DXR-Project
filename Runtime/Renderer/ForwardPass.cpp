@@ -177,7 +177,7 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     RenderPassDesc.DepthStencilAttachment = FRHIDepthStencilAttachment(DepthStencilView, EAttachmentLoadAction::Load);
     CommandList.BeginRenderPass(RenderPassDesc);
 
-    const bool bBindless = GForwardPassBindless && FrameResources.MaterialIndicesBuffer.IsValid();
+    const bool bBindless = GForwardPassBindless && FrameResources.MaterialDataBufferSRV.IsValid();
 
     FGraphicsPipelineStateInstance* PipelineInstance = PipelineStates.Find(MakeMaterialPSOKey(0, bBindless));
     if (!PipelineInstance)
@@ -228,16 +228,11 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
             continue;
         }
         
-        FRHIBuffer* ConstantBuffer = Material->GetMaterialBuffer();
-        CommandList.SetConstantBuffer(PShader.Get(), ConstantBuffer, 6);
+        CommandList.SetShaderResourceView(PShader.Get(), FrameResources.MaterialDataBufferSRV.Get(), 9);
 
         if (bBindless)
         {
-            FMaterialBindlessIndicesHLSL Indices;
-            FillMaterialBindlessIndices(*Material, Indices);
-
-            CommandList.UpdateBuffer(FrameResources.MaterialIndicesBuffer.Get(), FBufferRegion(0, sizeof(FMaterialBindlessIndicesHLSL)), &Indices);
-            CommandList.SetConstantBuffer(PShader.Get(), FrameResources.MaterialIndicesBuffer.Get(), 7);
+            // TODO: 
         }
         else
         {
@@ -264,8 +259,11 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
             CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
             CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
 
-            CommandList.UpdateBuffer(FrameResources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->TransformBuffer);
-            CommandList.SetConstantBuffer(VShader.Get(), FrameResources.TransformBuffer.Get(), 1);
+            StaticMesh->PerObjectBuffer.MaterialIndex = Material->GetBufferIndex();
+            CommandList.UpdateBuffer(FrameResources.PerObjectBuffer.Get(), FBufferRegion(0, sizeof(FPerObjectHLSL)), &StaticMesh->PerObjectBuffer);
+
+            CommandList.SetConstantBuffer(VShader.Get(), FrameResources.PerObjectBuffer.Get(), 6);
+            CommandList.SetConstantBuffer(PShader.Get(), FrameResources.PerObjectBuffer.Get(), 6);
 
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
         }

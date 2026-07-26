@@ -3,6 +3,35 @@
 #include "D3D12RHI/D3D12Buffer.h"
 #include "RHI/RHIStats.h"
 
+uint64 FD3D12BufferRHI::GetBufferAlignment(const FRHIBufferDesc& Desc)
+{
+    uint64 Alignment;
+    if (Desc.IsConstantBuffer())
+    {
+        Alignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
+    }
+    else if (Desc.Stride > 0)
+    {
+        Alignment = Math::LeastCommonMultiple<uint64>(Desc.Stride, 16);
+    }
+    else
+    {
+        Alignment = 16;
+    }
+
+    if (Desc.IsReadBack())
+    {
+        Alignment = Math::Max<uint64>(Alignment, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
+    }
+
+    if (Desc.IsAccelerationStructure())
+    {
+        Alignment = Math::Max<uint64>(Alignment, RHI::AccelerationStructureBufferAlignment); // 256
+    }
+
+    return Alignment;
+}
+
 FD3D12BufferRHI::FD3D12BufferRHI(FD3D12Device* InDevice, const FRHIBufferDesc& InBufferDesc)
     : FRHIBuffer(InBufferDesc)
     , FD3D12ResourceBase(InDevice)
@@ -73,8 +102,8 @@ FD3D12BufferRHI::~FD3D12BufferRHI()
 
 bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData)
 {
-    const uint64 Alignment   = GetBufferAlignment(Desc.Flags);
-    const uint64 AlignedSize = Math::AlignUp(Desc.Size, Alignment);
+    const uint64 Alignment   = GetBufferAlignment(Desc);
+    const uint64 AlignedSize = Math::AlignUpToMultiple<uint64>(Desc.Size, Alignment);
 
     D3D12_RESOURCE_DESC ResourceDesc = {};
     ResourceDesc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
@@ -156,53 +185,57 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, EResour
         D3D12Resource->SetDefaultState(D3D12DefaultState);
     }
 
-    if (InInitialData)
+    const bool bPlaced       = D3D12Resource->IsPlacedResource();
+    const bool bMappedUpload = InInitialData && (Desc.IsDynamic() || Desc.IsTransient());
+
+    if (bMappedUpload)
     {
-        if (Desc.IsDynamic() || Desc.IsTransient())
+        void* MappedAddress = ResourceStorage.GetMappedBaseAddress();
+        if (!MappedAddress)
         {
-            void* MappedAddress = ResourceStorage.GetMappedBaseAddress();
+            MappedAddress = D3D12Resource->MapRange(0, nullptr);
             if (!MappedAddress)
             {
-                MappedAddress = D3D12Resource->MapRange(0, nullptr);
-                if (!MappedAddress)
-                {
-                    D3D12_ERROR("Failed to map buffer data");
-                    return false;
-                }
-
-                Memory::Memcpy(MappedAddress, InInitialData, Desc.Size);
-                D3D12Resource->UnmapRange(0, nullptr);
+                D3D12_ERROR("Failed to map buffer data");
+                return false;
             }
-            else
-            {
-                Memory::Memcpy(MappedAddress, InInitialData, Desc.Size);
-            }
-        }
-        else if (bHasDefaultState)
-        {
-            InCommandContext->StartContext();
 
-            InCommandContext->TransitionResourceState(D3D12Resource, D3D12DefaultState, D3D12_RESOURCE_STATE_COPY_DEST);
-            InCommandContext->UpdateBuffer(this, FBufferRegion(0, Desc.Size), InInitialData);
-            InCommandContext->TransitionResourceState(D3D12Resource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12DefaultState);
-
-            InCommandContext->FinishContext();
+            Memory::Memcpy(MappedAddress, InInitialData, Desc.Size);
+            D3D12Resource->UnmapRange(0, nullptr);
         }
         else
         {
-            InCommandContext->StartContext();
-
-            InCommandContext->TransitionBufferState(this, EResourceAccess::Common, EResourceAccess::CopyDest);
-            InCommandContext->UpdateBuffer(this, FBufferRegion(0, Desc.Size), InInitialData);
-            InCommandContext->TransitionBufferState(this, EResourceAccess::CopyDest, InInitialAccess);
-
-            InCommandContext->FinishContext();
+            Memory::Memcpy(MappedAddress, InInitialData, Desc.Size);
         }
     }
-    else if (!bHasDefaultState && InInitialAccess != EResourceAccess::Common && D3D12HeapType == D3D12_HEAP_TYPE_DEFAULT)
+
+    const bool bGpuUpload       = InInitialData && !bMappedUpload;
+    const bool bNeedsTransition = !InInitialData && !bHasDefaultState && (InInitialAccess != EResourceAccess::Common) && (D3D12HeapType == D3D12_HEAP_TYPE_DEFAULT);
+
+    if (bPlaced || bGpuUpload || bNeedsTransition)
     {
         InCommandContext->StartContext();
-        InCommandContext->TransitionBufferState(this, EResourceAccess::Common, InInitialAccess);
+
+        if (bPlaced)
+        {
+            InCommandContext->AliasingBarrier(D3D12Resource);
+            InCommandContext->GetBarrierBatcher().FlushBarriers(InCommandContext->GetCommandList());
+        }
+
+        if (bGpuUpload)
+        {
+            const D3D12_RESOURCE_STATES BeforeState = bHasDefaultState ? D3D12DefaultState : D3D12_RESOURCE_STATE_COMMON;
+            const D3D12_RESOURCE_STATES AfterState  = bHasDefaultState ? D3D12DefaultState : ConvertResourceState(InInitialAccess);
+
+            InCommandContext->TransitionResourceState(D3D12Resource, BeforeState, D3D12_RESOURCE_STATE_COPY_DEST);
+            InCommandContext->UpdateBuffer(this, FBufferRegion(0, Desc.Size), InInitialData);
+            InCommandContext->TransitionResourceState(D3D12Resource, D3D12_RESOURCE_STATE_COPY_DEST, AfterState);
+        }
+        else if (bNeedsTransition)
+        {
+            InCommandContext->TransitionResourceState(D3D12Resource, D3D12_RESOURCE_STATE_COMMON, ConvertResourceState(InInitialAccess));
+        }
+
         InCommandContext->FinishContext();
     }
 

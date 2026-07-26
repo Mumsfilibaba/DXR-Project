@@ -172,6 +172,8 @@ IPlatformFile* FWindowsPlatformFile::OpenForRead(const String& Filename)
     HANDLE NewHandle = CreateFileA(*Filename, GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
     if (NewHandle == INVALID_HANDLE_VALUE)
     {
+        const DWORD LastError = ::GetLastError();
+
         String ErrorString;
         FWindowsPlatformMisc::GetLastErrorString(ErrorString);
         
@@ -181,7 +183,15 @@ IPlatformFile* FWindowsPlatformFile::OpenForRead(const String& Filename)
             ErrorString.Remove(Position, 2);
         }
 
-        LOG_ERROR("[FWindowsPlatformFile] Failed to open file. Error '%s'", *ErrorString);
+        if (LastError == ERROR_FILE_NOT_FOUND || LastError == ERROR_PATH_NOT_FOUND)
+        {
+            // A missing file is the caller's decision to handle, not inherently an error
+            LOG_WARNING("[FWindowsPlatformFile] File not found '%s'", *Filename);
+        }
+        else
+        {
+            LOG_ERROR("[FWindowsPlatformFile] Failed to open file. Error '%s'", *ErrorString);
+        }
         return nullptr;
     }
     else
@@ -200,6 +210,8 @@ IPlatformFile* FWindowsPlatformFile::OpenForWrite(const String& Filename, bool b
     HANDLE NewHandle = ::CreateFileA(*Filename, GENERIC_WRITE, 0, 0, CreationDisposition, FILE_ATTRIBUTE_NORMAL, 0);
     if (NewHandle == INVALID_HANDLE_VALUE)
     {
+        const DWORD LastError = ::GetLastError();
+
         String ErrorString;
         FWindowsPlatformMisc::GetLastErrorString(ErrorString);
 
@@ -209,7 +221,15 @@ IPlatformFile* FWindowsPlatformFile::OpenForWrite(const String& Filename, bool b
             ErrorString.Remove(Position, 2);
         }
 
-        LOG_ERROR("[FWindowsPlatformFile] Failed to open file. Error '%s'", *ErrorString);
+        if (LastError == ERROR_FILE_NOT_FOUND || LastError == ERROR_PATH_NOT_FOUND)
+        {
+            // A missing path is the caller's decision to handle, not inherently an error
+            LOG_WARNING("[FWindowsPlatformFile] File not found '%s'", *Filename);
+        }
+        else
+        {
+            LOG_ERROR("[FWindowsPlatformFile] Failed to open file. Error '%s'", *ErrorString);
+        }
         return nullptr;
     }
     else

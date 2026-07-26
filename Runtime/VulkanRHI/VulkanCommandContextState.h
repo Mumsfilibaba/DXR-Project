@@ -10,6 +10,8 @@
 class FVulkanCommandContext;
 class FVulkanDescriptorState;
 class FVulkanResourceView;
+class FVulkanRayTracingPipelineStateRHI;
+typedef TSharedRef<class FVulkanRayTracingPipelineStateRHI> FVulkanRayTracingPipelineStateRHIRef;
 struct FRHIBeginRenderPassDesc;
 
 struct FVulkanVertexBufferCache
@@ -141,11 +143,13 @@ public:
     void PrepareGraphicsState();
     void PrepareComputeState();
     void PrepareMeshletState();
+    void PrepareRayTracingState();
 
     void BindGraphicsState();
     void BindComputeState();
     void BindMeshletState();
     void BindPushConstants(FVulkanPipelineLayout* PipelineLayout);
+    void BindRayTracingState();
 
     void ResetState();
     void ResetStateForNewCommandBuffer();
@@ -160,6 +164,7 @@ public:
     void SetGraphicsPipelineState(FVulkanGraphicsPipelineStateRHI* InGraphicsPipelineState);
     void SetComputePipelineState(FVulkanComputePipelineStateRHI* InComputePipelineState);
     void SetMeshletPipelineState(FVulkanMeshletPipelineStateRHI* InMeshletPipelineState);
+    void SetRayTracingPipelineState(FVulkanRayTracingPipelineStateRHI* InRayTracingPipelineState);
     void SetViewports(VkViewport* Viewports, uint32 NumViewports);
     void SetScissorRects(VkRect2D* ScissorRects, uint32 NumScissorRects);
     void SetBlendFactor(const float BlendFactor[4]);
@@ -209,6 +214,11 @@ public:
     FORCEINLINE FVulkanMeshletPipelineStateRHI* GetMeshletPipelineState() const
     {
         return MeshletState.PipelineState.Get();
+    }
+
+    FORCEINLINE FVulkanRayTracingPipelineStateRHI* GetRayTracingPipelineState() const
+    {
+        return RayTracingState.PipelineState.Get();
     }
 
     FORCEINLINE void GetViewports(VkViewport* Viewports, uint32& OutNumViewports) const
@@ -344,14 +354,35 @@ private:
         {
         }
 
-        FVulkanPipelineLayout*             CurrentLayout;
-        FVulkanMeshletPipelineStateRHIRef  PipelineState;
-        FPipelineToDescriptorStateMap      DescriptorStates;
-        FVulkanDescriptorState*            CurrentDescriptorState;
+        FVulkanPipelineLayout*            CurrentLayout;
+        FVulkanMeshletPipelineStateRHIRef PipelineState;
+        FPipelineToDescriptorStateMap     DescriptorStates;
+        FVulkanDescriptorState*           CurrentDescriptorState;
 
         bool bBindPipelineState : 1;
         bool bBindPushConstants : 1;
     } MeshletState;
+
+    struct FRayTracingState
+    {
+        typedef TMap<FVulkanRayTracingPipelineStateRHI*, FCachedDescriptorState> FPipelineToDescriptorStateMap;
+
+        FRayTracingState()
+            : CurrentLayout(nullptr)
+            , PipelineState(nullptr)
+            , DescriptorStates()
+            , CurrentDescriptorState(nullptr)
+        {
+        }
+
+        FVulkanPipelineLayout*               CurrentLayout;
+        FVulkanRayTracingPipelineStateRHIRef PipelineState;
+        FPipelineToDescriptorStateMap        DescriptorStates;
+        FVulkanDescriptorState*              CurrentDescriptorState;
+
+        bool bBindPipelineState : 1;
+        bool bBindPushConstants : 1;
+    } RayTracingState;
 
     struct FCommonState
     {

@@ -12,3 +12,11 @@ STAT_DEFINE_COUNTER(STAT_Render_ObjectsVisible,     "Objects Visible", "Renderin
 STAT_DEFINE_COUNTER(STAT_Render_ObjectsCulled,      "Objects Culled",  "Rendering");
 STAT_DEFINE_COUNTER(STAT_Render_MeshBatchCount,     "Mesh Batches",    "Rendering");
 STAT_DEFINE_COUNTER(STAT_Render_MeshReferenceCount, "Mesh References", "Rendering");
+
+// Ray Tracing Stats
+STAT_DEFINE_COUNTER(STAT_RT_Active,                  "Active",              "Ray Tracing");
+STAT_DEFINE_COUNTER(STAT_RT_InstanceCount,           "Instances",           "Ray Tracing");
+STAT_DEFINE_COUNTER(STAT_RT_HitGroupCount,           "Hit Groups",          "Ray Tracing");
+STAT_DEFINE_COUNTER(STAT_RT_GeometryTableRows,       "Geometry Table Rows", "Ray Tracing");
+STAT_DEFINE_COUNTER(STAT_RT_LazyBLASBuildsThisFrame, "Lazy BLAS Builds",    "Ray Tracing");
+STAT_DEFINE_COUNTER(STAT_RT_SkippedNullGeometry,     "Skipped Null Geom",   "Ray Tracing");

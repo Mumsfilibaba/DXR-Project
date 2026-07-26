@@ -1,5 +1,6 @@
 #ifndef VOGEL_DISK_HLSLI
 #define VOGEL_DISK_HLSLI
+
 #include "Constants.hlsli"
 
 float GetNoiseInterleavedGradient(float2 ScreenPos, uint FrameIndex)

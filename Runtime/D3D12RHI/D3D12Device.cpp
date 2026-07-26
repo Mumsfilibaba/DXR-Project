@@ -16,16 +16,7 @@
 #include "D3D12RHI/D3D12CommandContext.h"
 #include "D3D12RHI/D3D12Query.h"
 #include "D3D12RHI/D3D12RHI.h"
-
-#include <dxgidebug.h>
-#pragma comment(lib, "dxguid.lib")
-
-#if D3D12_ENABLE_GPU_VALIDATION
-static TAutoConsoleVariable<bool> CVarEnableGPUValidation(
-    "D3D12RHI.EnableGPUValidation",
-    "Enables GPU Based Validation if true",
-    false);
-#endif
+#include "D3D12RHI/D3D12DeviceDebug.h"
 
 static TAutoConsoleVariable<bool> CVarBreakOnError(
     "D3D12RHI.BreakOnError",
@@ -36,13 +27,6 @@ static TAutoConsoleVariable<bool> CVarBreakOnWarning(
     "D3D12RHI.BreakOnWarning",
     "When enabled, there will be a DebugBreak when the validation layer encounters an warnings",
     false);
-
-#if D3D12_ENABLE_CRASH_MARKERS
-static TAutoConsoleVariable<bool> CVarEnableDRED(
-    "D3D12RHI.EnableDRED",
-    "Enables Device Removed Extended Data (DRED) if the Device gets removed",
-    false);
-#endif
 
 static TAutoConsoleVariable<bool> CVarPreferDedicatedGPU(
     "D3D12RHI.PreferDedicatedGPU",
@@ -159,11 +143,6 @@ static TAutoConsoleVariable<int32> CVarNumPipelineStatsQueriesPerHeap(
     "Number of pipeline statistics queries in each query heap",
     D3D12_DEFAULT_QUERY_COUNT);
 
-static TAutoConsoleVariable<String> CVarDeviceRemovedDumpFilePath(
-    "D3D12RHI.DeviceRemovedDumpFilePath",
-    "File path for DRED device removed dump output",
-    "D3D12DeviceRemovedDump.txt");
-
 static TAutoConsoleVariable<int32> CVarMaxDefragMovesPerFrame(
     "D3D12RHI.MaxDefragMovesPerFrame",
     "Maximum number of resource defragmentation moves per frame (0 to disable)",
@@ -173,27 +152,6 @@ static TAutoConsoleVariable<bool> CVarEnableTightAlignment(
     "D3D12RHI.EnableTightAlignment",
     "Enable tight alignment if supported by the device",
     true);
-
-#if D3D12_USE_DEBUG_MESSAGE_CALLBACK
-static void __stdcall D3D12DebugMessageCallback(D3D12_MESSAGE_CATEGORY, D3D12_MESSAGE_SEVERITY Severity, D3D12_MESSAGE_ID, LPCSTR pDescription, void*)
-{
-    switch (Severity)
-    {
-        case D3D12_MESSAGE_SEVERITY_CORRUPTION:
-        case D3D12_MESSAGE_SEVERITY_ERROR:
-            D3D12_ERROR("[D3D12 Debug Layer] %s", pDescription);
-            break;
-        case D3D12_MESSAGE_SEVERITY_WARNING:
-            D3D12_WARNING("[D3D12 Debug Layer] %s", pDescription);
-            break;
-        case D3D12_MESSAGE_SEVERITY_INFO:
-        case D3D12_MESSAGE_SEVERITY_MESSAGE:
-        default:
-            D3D12_INFO("[D3D12 Debug Layer] %s", pDescription);
-            break;
-    }
-}
-#endif
 
 // -------------------------------------------------------------------------------------------
 // D3D12 Feature Support
@@ -211,6 +169,19 @@ D3D12RHI_API bool GD3D12SupportGPUUploadHeaps   = false;
 D3D12RHI_API bool GD3D12SupportDynamicDepthBias = false;
 D3D12RHI_API bool GD3D12SupportsBindless        = false;
 D3D12RHI_API bool GD3D12SupportEnhancedBarriers = false;
+
+// -------------------------------------------------------------------------------------------
+// Ray Tracing feature support (backend-native mirrors of the agnostic RHI::bSupports* flags)
+// -------------------------------------------------------------------------------------------
+
+D3D12RHI_API bool GD3D12SupportsInlineRayTracing                        = false;
+D3D12RHI_API bool GD3D12SupportsOpacityMicromap                         = false;
+D3D12RHI_API bool GD3D12SupportsShaderExecutionReordering               = false;
+D3D12RHI_API bool GD3D12ShaderExecutionReorderingActuallyReorders       = false;
+D3D12RHI_API bool GD3D12SupportsRayTracingPipelineAdditions             = false;
+D3D12RHI_API bool GD3D12SupportsClustersAndPTLAS                        = false;
+D3D12RHI_API bool GD3D12SupportsIndirectAccelerationStructureOperations = false;
+D3D12RHI_API bool GD3D12SupportsIndirectRayDispatch                     = false;
 
 // -------------------------------------------------------------------------------------------
 // Core Feature Tiers
@@ -236,19 +207,19 @@ D3D12RHI_API D3D_SHADER_MODEL                         GD3D12HighestShaderModel  
 // Boolean Capability Flags
 // -------------------------------------------------------------------------------------------
 
-D3D12RHI_API bool GD3D12RasterizerOrderViewsSupported              = false;
-D3D12RHI_API bool GD3D12TypedUAVLoadAdditionalFormats              = false;
-D3D12RHI_API bool GD3D12DepthBoundsTestSupported                   = false;
-D3D12RHI_API bool GD3D12IsArchitectureUMA                          = false;
-D3D12RHI_API bool GD3D12IsArchitectureCacheCoherentUMA             = false;
-D3D12RHI_API bool GD3D12PSSpecifiedStencilRefSupported             = false;
-D3D12RHI_API bool GD3D12WaveOpsSupported                           = false;
-D3D12RHI_API bool GD3D12Int64ShaderOpsSupported                    = false;
-D3D12RHI_API bool GD3D12BarycentricsSupported                      = false;
-D3D12RHI_API bool GD3D12Native16BitShaderOpsSupported              = false;
-D3D12RHI_API bool GD3D12AtomicInt64OnTypedResourceSupported        = false;
-D3D12RHI_API bool GD3D12AtomicInt64OnGroupSharedSupported          = false;
-D3D12RHI_API bool GD3D12DerivativesInMeshAndAmpShadersSupported    = false;
+D3D12RHI_API bool GD3D12RasterizerOrderViewsSupported                = false;
+D3D12RHI_API bool GD3D12TypedUAVLoadAdditionalFormats                = false;
+D3D12RHI_API bool GD3D12DepthBoundsTestSupported                     = false;
+D3D12RHI_API bool GD3D12IsArchitectureUMA                            = false;
+D3D12RHI_API bool GD3D12IsArchitectureCacheCoherentUMA               = false;
+D3D12RHI_API bool GD3D12PSSpecifiedStencilRefSupported               = false;
+D3D12RHI_API bool GD3D12WaveOpsSupported                             = false;
+D3D12RHI_API bool GD3D12Int64ShaderOpsSupported                      = false;
+D3D12RHI_API bool GD3D12BarycentricsSupported                        = false;
+D3D12RHI_API bool GD3D12Native16BitShaderOpsSupported                = false;
+D3D12RHI_API bool GD3D12AtomicInt64OnTypedResourceSupported          = false;
+D3D12RHI_API bool GD3D12AtomicInt64OnGroupSharedSupported            = false;
+D3D12RHI_API bool GD3D12DerivativesInMeshAndAmpShadersSupported      = false;
 D3D12RHI_API bool GD3D12AtomicInt64OnDescriptorHeapResourceSupported = false;
 
 // -------------------------------------------------------------------------------------------
@@ -274,134 +245,6 @@ D3D12RHI_API uint32                           GD3D12VirtualAddressBitsPerResourc
 D3D12RHI_API uint32                           GD3D12VirtualAddressBitsPerProcess     = 0;
 D3D12RHI_API D3D12_COMMAND_LIST_SUPPORT_FLAGS GD3D12WriteBufferImmediateSupportFlags = D3D12_COMMAND_LIST_SUPPORT_FLAG_NONE;
 
-// -------------------------------------------------------------------------------------------
-// Device Removed Handling 
-// -------------------------------------------------------------------------------------------
-
-static const CHAR* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
-{
-    switch (BreadCrumbOp)
-    {
-    case D3D12_AUTO_BREADCRUMB_OP_SETMARKER:                                        return "D3D12_AUTO_BREADCRUMB_OP_SETMARKER";
-    case D3D12_AUTO_BREADCRUMB_OP_BEGINEVENT:                                       return "D3D12_AUTO_BREADCRUMB_OP_BEGINEVENT";
-    case D3D12_AUTO_BREADCRUMB_OP_ENDEVENT:                                         return "D3D12_AUTO_BREADCRUMB_OP_ENDEVENT";
-    case D3D12_AUTO_BREADCRUMB_OP_DRAWINSTANCED:                                    return "D3D12_AUTO_BREADCRUMB_OP_DRAWINSTANCED";
-    case D3D12_AUTO_BREADCRUMB_OP_DRAWINDEXEDINSTANCED:                             return "D3D12_AUTO_BREADCRUMB_OP_DRAWINDEXEDINSTANCED";
-    case D3D12_AUTO_BREADCRUMB_OP_EXECUTEINDIRECT:                                  return "D3D12_AUTO_BREADCRUMB_OP_EXECUTEINDIRECT";
-    case D3D12_AUTO_BREADCRUMB_OP_DISPATCH:                                         return "D3D12_AUTO_BREADCRUMB_OP_DISPATCH";
-    case D3D12_AUTO_BREADCRUMB_OP_COPYBUFFERREGION:                                 return "D3D12_AUTO_BREADCRUMB_OP_COPYBUFFERREGION";
-    case D3D12_AUTO_BREADCRUMB_OP_COPYTEXTUREREGION:                                return "D3D12_AUTO_BREADCRUMB_OP_COPYTEXTUREREGION";
-    case D3D12_AUTO_BREADCRUMB_OP_COPYRESOURCE:                                     return "D3D12_AUTO_BREADCRUMB_OP_COPYRESOURCE";
-    case D3D12_AUTO_BREADCRUMB_OP_COPYTILES:                                        return "D3D12_AUTO_BREADCRUMB_OP_COPYTILES";
-    case D3D12_AUTO_BREADCRUMB_OP_RESOLVESUBRESOURCE:                               return "D3D12_AUTO_BREADCRUMB_OP_RESOLVESUBRESOURCE";
-    case D3D12_AUTO_BREADCRUMB_OP_CLEARRENDERTARGETVIEW:                            return "D3D12_AUTO_BREADCRUMB_OP_CLEARRENDERTARGETVIEW";
-    case D3D12_AUTO_BREADCRUMB_OP_CLEARUNORDEREDACCESSVIEW:                         return "D3D12_AUTO_BREADCRUMB_OP_CLEARUNORDEREDACCESSVIEW";
-    case D3D12_AUTO_BREADCRUMB_OP_CLEARDEPTHSTENCILVIEW:                            return "D3D12_AUTO_BREADCRUMB_OP_CLEARDEPTHSTENCILVIEW";
-    case D3D12_AUTO_BREADCRUMB_OP_RESOURCEBARRIER:                                  return "D3D12_AUTO_BREADCRUMB_OP_RESOURCEBARRIER";
-    case D3D12_AUTO_BREADCRUMB_OP_EXECUTEBUNDLE:                                    return "D3D12_AUTO_BREADCRUMB_OP_EXECUTEBUNDLE";
-    case D3D12_AUTO_BREADCRUMB_OP_PRESENT:                                          return "D3D12_AUTO_BREADCRUMB_OP_PRESENT";
-    case D3D12_AUTO_BREADCRUMB_OP_RESOLVEQUERYDATA:                                 return "D3D12_AUTO_BREADCRUMB_OP_RESOLVEQUERYDATA";
-    case D3D12_AUTO_BREADCRUMB_OP_BEGINSUBMISSION:                                  return "D3D12_AUTO_BREADCRUMB_OP_BEGINSUBMISSION";
-    case D3D12_AUTO_BREADCRUMB_OP_ENDSUBMISSION:                                    return "D3D12_AUTO_BREADCRUMB_OP_ENDSUBMISSION";
-    case D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME:                                      return "D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME";
-    case D3D12_AUTO_BREADCRUMB_OP_PROCESSFRAMES:                                    return "D3D12_AUTO_BREADCRUMB_OP_PROCESSFRAMES";
-    case D3D12_AUTO_BREADCRUMB_OP_ATOMICCOPYBUFFERUINT:                             return "D3D12_AUTO_BREADCRUMB_OP_ATOMICCOPYBUFFERUINT";
-    case D3D12_AUTO_BREADCRUMB_OP_ATOMICCOPYBUFFERUINT64:                           return "D3D12_AUTO_BREADCRUMB_OP_ATOMICCOPYBUFFERUINT64";
-    case D3D12_AUTO_BREADCRUMB_OP_RESOLVESUBRESOURCEREGION:                         return "D3D12_AUTO_BREADCRUMB_OP_RESOLVESUBRESOURCEREGION";
-    case D3D12_AUTO_BREADCRUMB_OP_WRITEBUFFERIMMEDIATE:                             return "D3D12_AUTO_BREADCRUMB_OP_WRITEBUFFERIMMEDIATE";
-    case D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME1:                                     return "D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME1";
-    case D3D12_AUTO_BREADCRUMB_OP_SETPROTECTEDRESOURCESESSION:                      return "D3D12_AUTO_BREADCRUMB_OP_SETPROTECTEDRESOURCESESSION";
-    case D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME2:                                     return "D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME2";
-    case D3D12_AUTO_BREADCRUMB_OP_PROCESSFRAMES1:                                   return "D3D12_AUTO_BREADCRUMB_OP_PROCESSFRAMES1";
-    case D3D12_AUTO_BREADCRUMB_OP_BUILDRAYTRACINGACCELERATIONSTRUCTURE:             return "D3D12_AUTO_BREADCRUMB_OP_BUILDRAYTRACINGACCELERATIONSTRUCTURE";
-    case D3D12_AUTO_BREADCRUMB_OP_EMITRAYTRACINGACCELERATIONSTRUCTUREPOSTBUILDINFO: return "D3D12_AUTO_BREADCRUMB_OP_EMITRAYTRACINGACCELERATIONSTRUCTUREPOSTBUILDINFO";
-    case D3D12_AUTO_BREADCRUMB_OP_COPYRAYTRACINGACCELERATIONSTRUCTURE:              return "D3D12_AUTO_BREADCRUMB_OP_COPYRAYTRACINGACCELERATIONSTRUCTURE";
-    case D3D12_AUTO_BREADCRUMB_OP_DISPATCHRAYS:                                     return "D3D12_AUTO_BREADCRUMB_OP_DISPATCHRAYS";
-    case D3D12_AUTO_BREADCRUMB_OP_INITIALIZEMETACOMMAND:                            return "D3D12_AUTO_BREADCRUMB_OP_INITIALIZEMETACOMMAND";
-    case D3D12_AUTO_BREADCRUMB_OP_EXECUTEMETACOMMAND:                               return "D3D12_AUTO_BREADCRUMB_OP_EXECUTEMETACOMMAND";
-    case D3D12_AUTO_BREADCRUMB_OP_ESTIMATEMOTION:                                   return "D3D12_AUTO_BREADCRUMB_OP_ESTIMATEMOTION";
-    case D3D12_AUTO_BREADCRUMB_OP_RESOLVEMOTIONVECTORHEAP:                          return "D3D12_AUTO_BREADCRUMB_OP_RESOLVEMOTIONVECTORHEAP";
-    case D3D12_AUTO_BREADCRUMB_OP_SETPIPELINESTATE1:                                return "D3D12_AUTO_BREADCRUMB_OP_SETPIPELINESTATE1";
-    case D3D12_AUTO_BREADCRUMB_OP_INITIALIZEEXTENSIONCOMMAND:                       return "D3D12_AUTO_BREADCRUMB_OP_INITIALIZEEXTENSIONCOMMAND";
-    case D3D12_AUTO_BREADCRUMB_OP_EXECUTEEXTENSIONCOMMAND:                          return "D3D12_AUTO_BREADCRUMB_OP_EXECUTEEXTENSIONCOMMAND";
-    case D3D12_AUTO_BREADCRUMB_OP_DISPATCHMESH:                                     return "D3D12_AUTO_BREADCRUMB_OP_DISPATCHMESH";
-    default:                                                                        return "UNKNOWN";
-    }
-}
-
-static const CHAR* GetDeviceRemovedDumpFilePath()
-{
-    return *CVarDeviceRemovedDumpFilePath.GetValue();
-}
-
-void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
-{
-    CHECK(Device != nullptr);
-
-    String Message = "[D3D12] Device Removed";
-    D3D12_ERROR("%s", *Message);
-
-    ID3D12Device* DxDevice = Device->GetD3D12Device();
-
-    TComPtr<ID3D12DeviceRemovedExtendedData> Dred;
-    if (FAILED(DxDevice->QueryInterface(IID_PPV_ARGS(&Dred))))
-    {
-        return;
-    }
-
-    D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT DredAutoBreadcrumbsOutput;
-    D3D12_DRED_PAGE_FAULT_OUTPUT       DredPageFaultOutput;
-    if (FAILED(Dred->GetAutoBreadcrumbsOutput(&DredAutoBreadcrumbsOutput)))
-    {
-        return;
-    }
-
-    if (FAILED(Dred->GetPageFaultAllocationOutput(&DredPageFaultOutput)))
-    {
-        return;
-    }
-
-    TFileRef<IPlatformFile> File = FPlatformFile::OpenForWrite(GetDeviceRemovedDumpFilePath());
-    if (File)
-    {
-        Message += '\n';
-        File->Write((const uint8*)*Message, Message.Size());
-    }
-
-    const D3D12_AUTO_BREADCRUMB_NODE* CurrentNode  = DredAutoBreadcrumbsOutput.pHeadAutoBreadcrumbNode;
-    const D3D12_AUTO_BREADCRUMB_NODE* PreviousNode = nullptr;
-    while (CurrentNode)
-    {
-        Message = "BreadCrumbs:";
-        if (File)
-        {
-            Message += '\n';
-            File->Write((const uint8*)*Message, Message.Size());
-        }
-
-        D3D12_ERROR("%s", *Message);
-
-        for (uint32 i = 0; i < CurrentNode->BreadcrumbCount; i++)
-        {
-            Message = "    " + String(ToString(CurrentNode->pCommandHistory[i]));
-            D3D12_ERROR("%s", *Message);
-            if (File)
-            {
-                Message += '\n';
-                File->Write((const uint8*)*Message, Message.Size());
-            }
-        }
-
-        PreviousNode = CurrentNode;
-        CurrentNode  = CurrentNode->pNext;
-    }
-
-    // Signal other systems that the device is removed 
-    CoreDelegates::DeviceRemovedDelegate.Broadcast();
-
-    FPlatformApplicationMisc::MessageBox("Error", " [D3D12] Device Removed");
-}
-
 FD3D12Adapter::FD3D12Adapter()
     : AdapterIndex(0)
     , bAllowTearing(false)
@@ -425,82 +268,14 @@ bool FD3D12Adapter::Initialize()
         bEnableDebugLayer = CVarEnableDebugLayer->GetBool();
     }
     
+    // DRED does not require the debug layer. Must happen before device creation.
+    D3D12RHIEnableDRED();
+
+    // Debug layer, GPU-based validation, object auto-naming and DXGI InfoQueue break settings.
+    D3D12RHISetupDebugInterfaces(bEnableDebugLayer);
+
     if (bEnableDebugLayer)
     {
-        TComPtr<ID3D12Debug> DebugInterface;
-        if (FAILED(D3D12Functions::D3D12GetDebugInterface(IID_PPV_ARGS(&DebugInterface))))
-        {
-            D3D12_ERROR("[FD3D12Adapter]: FAILED to enable DebugLayer");
-            return false;
-        }
-        else
-        {
-            DebugInterface->EnableDebugLayer();
-        }
-
-    #if D3D12_ENABLE_CRASH_MARKERS
-        const bool bEnableDRED = CVarEnableDRED.GetValue();
-        if (bEnableDRED)
-        {
-            TComPtr<ID3D12DeviceRemovedExtendedDataSettings> DredSettings;
-            if (SUCCEEDED(D3D12Functions::D3D12GetDebugInterface(IID_PPV_ARGS(&DredSettings))))
-            {
-                DredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
-                DredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
-            }
-            else
-            {
-                D3D12_ERROR("[FD3D12Adapter]: FAILED to enable DRED");
-            }
-        }
-    #endif
-
-    #if D3D12_ENABLE_GPU_VALIDATION
-        const bool bEnableGPUValidation = CVarEnableGPUValidation.GetValue();
-        if (bEnableGPUValidation)
-        {
-            TComPtr<ID3D12Debug1> DebugInterface1;
-            if (FAILED(DebugInterface.GetAs(&DebugInterface1)))
-            {
-                D3D12_ERROR("[FD3D12Adapter]: FAILED to enable GPU-Validation");
-                return false;
-            }
-            else
-            {
-                DebugInterface1->SetEnableGPUBasedValidation(true);
-            }
-        }
-    #endif
-
-    #if WIN10_BUILD_20348
-        {
-            TComPtr<ID3D12Debug5> DebugInterface5;
-            if (FAILED(DebugInterface.GetAs(&DebugInterface5)))
-            {
-                D3D12_WARNING("[FD3D12Adapter]: FAILED to enable auto-naming of objects");
-            }
-            else
-            {
-                DebugInterface5->SetEnableAutoName(true);
-            }
-        }
-    #endif
-
-        TComPtr<IDXGIInfoQueue> InfoQueue;
-        if (SUCCEEDED(D3D12Functions::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&InfoQueue))))
-        {
-            const bool bBreakOnError = CVarBreakOnError.GetValue();
-            InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, bBreakOnError);
-            InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, bBreakOnError);
-
-            const bool bBreakOnWarning = CVarBreakOnWarning.GetValue();
-            InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_WARNING, bBreakOnWarning);
-        }
-        else
-        {
-            D3D12_ERROR("[FD3D12Adapter]: FAILED to retrieve InfoQueue");
-        }
-
         if (IConsoleVariable* CVarEnablePIX = FConsoleManager::Get().FindConsoleVariable("D3D12RHI.EnablePIX"))
         {
             if (CVarEnablePIX->GetBool())
@@ -770,6 +545,8 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
 #if D3D12_USE_DEBUG_MESSAGE_CALLBACK
     , DebugMessageCallbackCookie(0)
 #endif
+    , DeviceRemovedEvent(nullptr)
+    , DeviceRemovedWait(nullptr)
 {
     // Create CommandAllocatorManagers
     DirectCommandAllocatorManager  = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Direct);
@@ -779,6 +556,20 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
 
 FD3D12Device::~FD3D12Device()
 {
+    // Tear down the device-removed notification first so the thread-pool callback cannot fire while the device is being destroyed.
+    if (DeviceRemovedWait)
+    {
+        ::UnregisterWaitEx(DeviceRemovedWait, INVALID_HANDLE_VALUE); // block until callback drained
+        DeviceRemovedWait = nullptr;
+    }
+
+    DeviceRemovedFence.Reset();
+    if (DeviceRemovedEvent)
+    {
+        ::CloseHandle(DeviceRemovedEvent);
+        DeviceRemovedEvent = nullptr;
+    }
+
     // Flush PipelineCache
     if (PipelineStateManager)
     {
@@ -809,6 +600,11 @@ FD3D12Device::~FD3D12Device()
     SAFE_DELETE(DirectCommandAllocatorManager);
     SAFE_DELETE(CopyCommandAllocatorManager);
     SAFE_DELETE(ComputeCommandAllocatorManager);
+
+    // Drain #1: release everything deferred so far (e.g. the DefaultDescriptors views reset
+    // above, plus any allocator-backed resources) while the descriptor heaps AND allocators
+    // are still alive.
+    FD3D12DeviceRHI::FlushDeferredDeletions();
 
     // Release Heaps. Bindless heaps must be released before the global heaps they alias.
     SAFE_DELETE(ResourceBindlessHeap);
@@ -851,6 +647,8 @@ FD3D12Device::~FD3D12Device()
         UploadHeapAllocator = nullptr;
     }
 
+    FD3D12DeviceRHI::FlushDeferredDeletions();
+
     if (ResidencyManager)
     {
         delete ResidencyManager;
@@ -859,6 +657,14 @@ FD3D12Device::~FD3D12Device()
 
     // Release the rest of the managers
     SAFE_DELETE(RootSignatureManager);
+
+    // Release device-owned GPU objects before the live-object report / device reset.
+    for (TComPtr<ID3D12CommandSignature>& CommandSignature : CommandSignatures)
+    {
+        CommandSignature.Reset();
+    }
+
+    FrameFence.Reset();
 
     // Report any live objects still hanging around
     if (Adapter->IsDebugLayerEnabled())
@@ -925,34 +731,12 @@ FD3D12Device::~FD3D12Device()
 #endif
 }
 
-void FD3D12Device::UnregisterDebugMessageCallback()
-{
-#if D3D12_USE_DEBUG_MESSAGE_CALLBACK
-
-    if (DebugInfoQueue)
-    {
-        if (DebugMessageCallbackCookie != 0)
-        {
-            HRESULT Result = DebugInfoQueue->UnregisterMessageCallback(DebugMessageCallbackCookie);
-            if (FAILED(Result))
-            {
-                D3D12_WARNING("[FD3D12Device] Failed to unregister D3D12 debug message callback (hr=0x%08X)", Result);
-            }
-            else
-            {
-                D3D12_INFO("[FD3D12Device] Unregistered D3D12 debug message callback");
-            }
-
-            DebugMessageCallbackCookie = 0;
-        }
-
-        DebugInfoQueue.Reset();
-    }
-#endif
-}
-
 void FD3D12Device::BeginFrame(FD3D12CommandContext* InCommandContext)
 {
+    UNREFERENCED_VARIABLE(InCommandContext);
+
+    FinalizePendingDefragMoves();
+
     if (StagingBufferAllocator)
     {
         StagingBufferAllocator->CleanUp();
@@ -977,24 +761,93 @@ void FD3D12Device::BeginFrame(FD3D12CommandContext* InCommandContext)
     {
         TextureAllocator->CleanUp();
     }
+}
+
+void FD3D12Device::EndFrame(FD3D12CommandContext* InCommandContext)
+{
+    CHECK(InCommandContext != nullptr);
+    CHECK(InCommandContext->IsRecording());
+
+    const int32 MaxMovesPerFrame = CVarMaxDefragMovesPerFrame.GetValue();
+    int32 NumRecordedMoves = 0;
 
 #if D3D12_TEXTURE_ALLOCATOR_USE_POOL_ALLOCATOR
     if (TextureAllocator)
     {
-        const int32 MaxMovesPerFrame = CVarMaxDefragMovesPerFrame.GetValue();
-        TextureAllocator->DefragmentAllocations(InCommandContext, MaxMovesPerFrame);
+        NumRecordedMoves += TextureAllocator->RecordDefragMoves(InCommandContext, MaxMovesPerFrame);
     }
 #endif
 
 #if D3D12_BUFFER_ALLOCATOR_USE_POOL_ALLOCATOR
     if (BufferAllocator)
     {
-        const int32 MaxMovesPerFrame = CVarMaxDefragMovesPerFrame.GetValue();
-        BufferAllocator->DefragmentAllocations(InCommandContext, MaxMovesPerFrame);
+        NumRecordedMoves += BufferAllocator->RecordDefragMoves(InCommandContext, MaxMovesPerFrame);
     }
 #endif
 
-    FrameFence->Signal(DirectQueue->GetD3D12CommandQueue());
+    if (NumRecordedMoves <= 0)
+    {
+        return;
+    }
+
+    InCommandContext->SplitCommandList(true, false);
+
+    const uint64 CompletionFenceValue = FrameFence->Signal(DirectQueue->GetD3D12CommandQueue());
+
+#if D3D12_TEXTURE_ALLOCATOR_USE_POOL_ALLOCATOR
+    if (TextureAllocator)
+    {
+        TextureAllocator->SetDefragCompletionFence(CompletionFenceValue);
+    }
+#endif
+
+#if D3D12_BUFFER_ALLOCATOR_USE_POOL_ALLOCATOR
+    if (BufferAllocator)
+    {
+        BufferAllocator->SetDefragCompletionFence(CompletionFenceValue);
+    }
+#endif
+}
+
+void FD3D12Device::FinalizePendingDefragMoves()
+{
+    uint64 CompletionFenceValue = 0;
+
+#if D3D12_TEXTURE_ALLOCATOR_USE_POOL_ALLOCATOR
+    if (TextureAllocator)
+    {
+        CompletionFenceValue = Math::Max(CompletionFenceValue, TextureAllocator->GetDefragCompletionFence());
+    }
+#endif
+
+#if D3D12_BUFFER_ALLOCATOR_USE_POOL_ALLOCATOR
+    if (BufferAllocator)
+    {
+        CompletionFenceValue = Math::Max(CompletionFenceValue, BufferAllocator->GetDefragCompletionFence());
+    }
+#endif
+
+    if (CompletionFenceValue == 0)
+    {
+        return;
+    }
+
+    FrameFence->WaitForValue(CompletionFenceValue);
+    DirectQueue->ProcessCommandQueue();
+
+#if D3D12_TEXTURE_ALLOCATOR_USE_POOL_ALLOCATOR
+    if (TextureAllocator)
+    {
+        TextureAllocator->FinalizeDefragMoves();
+    }
+#endif
+
+#if D3D12_BUFFER_ALLOCATOR_USE_POOL_ALLOCATOR
+    if (BufferAllocator)
+    {
+        BufferAllocator->FinalizeDefragMoves();
+    }
+#endif
 }
 
 void FD3D12Device::CancelPendingDefragMoves(FD3D12ResourceBase* Owner)
@@ -1093,9 +946,11 @@ bool FD3D12Device::Initialize()
     // Create RootSignatureManager
     RootSignatureManager = new FD3D12RootSignatureManager(this);
 
+    // Create DescriptorHeaps
+    const bool bBindlessEnabled = GD3D12SupportsBindless && CVarEnableBindless.GetValue();
+
     const uint32 NumOnlineResourceDescriptors   = Math::Min<uint32>(D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, GD3D12MaxResourceDescriptorHeapSize);
     const uint32 ResourceDescriptorBlockSize    = Math::Min<uint32>(CVarResourceOnlineDescriptorBlockSize.GetValue(), NumOnlineResourceDescriptors);
-    const bool   bBindlessEnabled               = GD3D12SupportsBindless && CVarEnableBindless.GetValue();
     const uint32 RequestedBindlessResourceCount = bBindlessEnabled ? Math::Max<int32>(0, CVarNumBindlessResourceDescriptors.GetValue()) : 0u;
     const uint32 RequestedBindlessSamplerCount  = bBindlessEnabled ? Math::Max<int32>(0, CVarNumBindlessSamplerDescriptors.GetValue())  : 0u;
 
@@ -1225,6 +1080,12 @@ bool FD3D12Device::Initialize()
         return false;
     }
 
+    // Create indirect command signatures
+    if (!CreateCommandSignatures())
+    {
+        return false;
+    }
+
     // Create PipelineCache
     PipelineStateManager = new FD3D12PipelineStateManager(this);
     if (!PipelineStateManager->Initialize())
@@ -1307,26 +1168,7 @@ bool FD3D12Device::CreateDevice()
             InfoQueue->AddStorageFilterEntries(&Filter);
         }
 
-    #if D3D12_USE_DEBUG_MESSAGE_CALLBACK
-        if (SUCCEEDED(D3D12Device.GetAs(&DebugInfoQueue)))
-        {
-            HRESULT CallbackResult = DebugInfoQueue->RegisterMessageCallback(
-                D3D12DebugMessageCallback,
-                D3D12_MESSAGE_CALLBACK_FLAG_NONE,
-                nullptr,
-                &DebugMessageCallbackCookie);
-
-            if (SUCCEEDED(CallbackResult))
-            {
-                D3D12_INFO("[FD3D12Device] Registered D3D12 debug message callback");
-            }
-            else
-            {
-                D3D12_WARNING("[FD3D12Device] Failed to register D3D12 debug message callback (hr=0x%08X)", CallbackResult);
-                DebugInfoQueue.Reset();
-            }
-        }
-    #endif
+        RegisterDebugMessageCallback();
     }
 
 #if D3D12_USE_ID3D12DEVICE_1
@@ -1427,6 +1269,9 @@ bool FD3D12Device::CreateDevice()
     }
 #endif
 
+    // Automated device-removed notification.
+    RegisterDeviceRemovedEvent();
+
     return true;
 }
 
@@ -1524,6 +1369,36 @@ bool FD3D12Device::CreateDefaultResources()
     {
         return false;
     }
+
+    return true;
+}
+
+bool FD3D12Device::CreateCommandSignatures()
+{
+#if D3D12_USE_ID3D12COMMANDLIST_4
+    if (GD3D12RayTracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
+    {
+        D3D12_INDIRECT_ARGUMENT_DESC ArgumentDesc = {};
+        ArgumentDesc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_RAYS;
+
+        D3D12_COMMAND_SIGNATURE_DESC CommandSignatureDesc = {};
+        CommandSignatureDesc.ByteStride       = sizeof(D3D12_DISPATCH_RAYS_DESC);
+        CommandSignatureDesc.NumArgumentDescs = 1;
+        CommandSignatureDesc.pArgumentDescs   = &ArgumentDesc;
+
+        TComPtr<ID3D12CommandSignature> CommandSignature;
+        HRESULT Result = GetD3D12Device()->CreateCommandSignature(&CommandSignatureDesc, nullptr, IID_PPV_ARGS(&CommandSignature));
+        if (FAILED(Result))
+        {
+            D3D12_ERROR("[FD3D12Device]: Failed to create DISPATCH_RAYS command signature");
+            return false;
+        }
+        else
+        {
+            CommandSignatures[ED3D12CommandSignatureType::DispatchRays] = CommandSignature;
+        }
+    }
+#endif
 
     return true;
 }
@@ -1692,6 +1567,25 @@ FD3D12Queue* FD3D12Device::GetQueue(ED3D12CommandQueueType QueueType)
     }
 }
 
+void FD3D12Device::WaitForGPU()
+{
+    const ED3D12CommandQueueType Types[] =
+    {
+        ED3D12CommandQueueType::Direct,
+        ED3D12CommandQueueType::Compute,
+        ED3D12CommandQueueType::Copy,
+    };
+
+    for (ED3D12CommandQueueType Type : Types)
+    {
+        if (FD3D12Queue* Queue = GetQueue(Type))
+        {
+            Queue->WaitForCompletion();
+            Queue->ProcessCommandQueue();
+        }
+    }
+}
+
 FD3D12CommandAllocatorManager* FD3D12Device::GetCommandAllocatorManager(ED3D12CommandQueueType QueueType)
 {
     if (QueueType == ED3D12CommandQueueType::Direct)
@@ -1853,6 +1747,15 @@ void FD3D12Device::QueryDeviceFeatureSupport()
     GD3D12SupportDynamicDepthBias          = false;
     GD3D12SupportsBindless                 = false;
     GD3D12SupportEnhancedBarriers          = false;
+
+    GD3D12SupportsInlineRayTracing                        = false;
+    GD3D12SupportsOpacityMicromap                         = false;
+    GD3D12SupportsShaderExecutionReordering               = false;
+    GD3D12ShaderExecutionReorderingActuallyReorders       = false;
+    GD3D12SupportsRayTracingPipelineAdditions             = false;
+    GD3D12SupportsClustersAndPTLAS                        = false;
+    GD3D12SupportsIndirectAccelerationStructureOperations = false;
+    GD3D12SupportsIndirectRayDispatch                     = false;
 
     GD3D12ResourceBindingTier              = D3D12_RESOURCE_BINDING_TIER_1;
     GD3D12ResourceHeapTier                 = D3D12_RESOURCE_HEAP_TIER_1;

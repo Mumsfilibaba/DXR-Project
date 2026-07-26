@@ -1,8 +1,9 @@
 #ifndef CORE_DEFINES_HLSLI
 #define CORE_DEFINES_HLSLI
+
 #include "Constants.hlsli"
 
-#if SHADER_LANG == SHADER_LANG_SPIRV
+#if SHADER_BACKEND == SHADER_BACKEND_VULKAN
     #define SHADER_CONSTANT_BLOCK_BEGIN \
         [[vk::push_constant]]        \
         struct FShaderBlockConstants \
@@ -20,7 +21,7 @@
         ConstantBuffer<FShaderBlockConstants> Constants : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
 #endif
 
-#if SHADER_LANG == SHADER_LANG_SPIRV
+#if SHADER_BACKEND == SHADER_BACKEND_VULKAN
     #define TEXTURE_FORMAT_UNKNOWN [[vk::image_format("unknown")]] 
 #else
     #define TEXTURE_FORMAT_UNKNOWN

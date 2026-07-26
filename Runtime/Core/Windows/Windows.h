@@ -50,6 +50,7 @@
 // NOTE: Undefine these as we have functions with these names
 #undef CreateWindow
 #undef CreateSemaphore
+#undef CreateDirectory
 
 #undef InterlockedAdd
 #undef InterlockedAnd

@@ -32,7 +32,6 @@ A hobby rendering and game engine created for testing and experimenting with var
 
 #### **Planned:**
 - Screen Space Reflections (SSR)
-- Ray-Traced Reflections
 - Spotlights
 - Local Environment Probes
 

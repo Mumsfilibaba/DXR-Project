@@ -48,6 +48,9 @@ public:
     void AddRegister(EShaderVisibility::Type Stage, EResourceType::Type ResType, uint16 Register);
     void AddContiguousRegisters(EShaderVisibility::Type Stage, EResourceType::Type ResType, uint8 Count);
     void AddStaticSampler(const FRHIStaticSamplerInfo& StaticSampler);
+    void AddLocalTableSRVRegister(EShaderVisibility::Type Stage, uint16 Register);
+    void AddLocalTableUAVRegister(EShaderVisibility::Type Stage, uint16 Register);
+    void AddLocalTableSamplerRegister(EShaderVisibility::Type Stage, uint16 Register);
 
     void   ComputeRootCBVs();
     uint32 ComputeCost() const;
@@ -62,6 +65,21 @@ public:
     FORCEINLINE const FD3D12RegisterSet& GetRegisters(EShaderVisibility::Type Stage, EResourceType::Type ResType) const
     {
         return RegisterSets[Stage][ResType];
+    }
+
+    FORCEINLINE const FD3D12RegisterSet& GetLocalTableSRVRegisters(EShaderVisibility::Type Stage) const
+    {
+        return LocalTableSRVSets[Stage];
+    }
+
+    FORCEINLINE const FD3D12RegisterSet& GetLocalTableUAVRegisters(EShaderVisibility::Type Stage) const
+    {
+        return LocalTableUAVSets[Stage];
+    }
+
+    FORCEINLINE const FD3D12RegisterSet& GetLocalTableSamplerRegisters(EShaderVisibility::Type Stage) const
+    {
+        return LocalTableSamplerSets[Stage];
     }
 
     FORCEINLINE void SetType(ERootSignatureType InType) 
@@ -132,6 +150,9 @@ public:
 private:
     FD3D12RegisterSet             RegisterSets[EShaderVisibility::Count][EResourceType::Count];
     FD3D12RegisterSet             RootCBVSets[EShaderVisibility::Count];
+    FD3D12RegisterSet             LocalTableSRVSets[EShaderVisibility::Count];
+    FD3D12RegisterSet             LocalTableUAVSets[EShaderVisibility::Count];
+    FD3D12RegisterSet             LocalTableSamplerSets[EShaderVisibility::Count];
     TArray<FRHIStaticSamplerInfo> StaticSamplers;
     uint8                         NumPushConstants;
     bool                          bAllowInputAssembler;

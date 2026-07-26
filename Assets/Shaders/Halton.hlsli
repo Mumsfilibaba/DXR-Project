@@ -1,7 +1,9 @@
 #ifndef HALTON_HLSLI
 #define HALTON_HLSLI
 
+// ------------------------------------------------------------------------------------------------
 // Halton Sampler functions
+// ------------------------------------------------------------------------------------------------
 
 // Modifed from this Source: https://pbr-book.org/3ed-2018/Sampling_and_Reconstruction/The_Halton_Sampler
 float RadicalInverse2(uint Bits)
@@ -19,11 +21,11 @@ float RadicalInverse3(uint a)
 {
     const float OneMinusEpsilon = 0x1.fffffep-1;
     
-    const uint Base = 3;
+    const uint  Base    = 3;
     const float InvBase = 1.0 / float(Base);
     
-    uint ReversedDigits = 0;
-    float InvBaseN = 1.0;
+    uint  ReversedDigits = 0;
+    float InvBaseN       = 1.0;
     
     while (a)
     {
@@ -42,11 +44,6 @@ float2 Hammersley2(uint i, uint n)
     return float2(float(i) / float(n), RadicalInverse2(i));
 }
 
-min16float2 Hammersley2Min16(uint i, uint n)
-{
-    return min16float2(min16float(i) / min16float(n), min16float(RadicalInverse2(i)));
-}
-
 float2 Halton23(uint i)
 {
     return float2(RadicalInverse2(i), RadicalInverse3(i));
@@ -62,6 +59,7 @@ float3 HemispherePointUniform(float U, float V)
 	return float3(cos(Phi) * SinTheta, sin(Phi) * SinTheta, CosTheta);
 }
 
+#if MIN16FLOAT_AVAILABLE
 min16float3 HemispherePointUniform(min16float U, min16float V) 
 {
 	min16float Phi      = V * 2.0 * PI;
@@ -71,6 +69,7 @@ min16float3 HemispherePointUniform(min16float U, min16float V)
 	min16float SinTheta = sqrt(1.0 - (CosTheta * CosTheta));
 	return min16float3(cos(Phi) * SinTheta, sin(Phi) * SinTheta, CosTheta);
 }
+#endif
 
 float2 OneToMinusOne_Halton23(uint i)
 {

@@ -1,5 +1,6 @@
 #ifndef FILTER_FUNCTION_HLSLI
 #define FILTER_FUNCTION_HLSLI
+
 #include "Constants.hlsli"
 
 #define GAUSSIAN_SIGMA 0.5

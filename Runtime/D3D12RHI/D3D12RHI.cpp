@@ -2,13 +2,13 @@
 #include "Core/Containers/UniquePtr.h"
 #include "Core/Threading/ScopedLock.h"
 #include "CoreApplication/Windows/WindowsWindow.h"
+#include "RHI/RHIStats.h"
 #include "D3D12RHI/D3D12CommandList.h"
 #include "D3D12RHI/D3D12Fence.h"
 #include "D3D12RHI/D3D12RootSignature.h"
 #include "D3D12RHI/D3D12Core.h"
 #include "D3D12RHI/D3D12RHI.h"
 #include "D3D12RHI/D3D12ResourceViews.h"
-#include "D3D12RHI/D3D12RayTracing.h"
 #include "D3D12RHI/D3D12PipelineState.h"
 #include "D3D12RHI/D3D12Texture.h"
 #include "D3D12RHI/D3D12Buffer.h"
@@ -18,7 +18,7 @@
 #include "D3D12RHI/D3D12Loader.h"
 #include "D3D12RHI/D3D12ResidencyManager.h"
 #include "D3D12RHI/D3D12Stats.h"
-#include "RHI/RHIStats.h"
+#include "D3D12RHI/RayTracing/D3D12RayTracing.h"
 
 #include <dxgidebug.h>
 
@@ -28,6 +28,101 @@ static TAutoConsoleVariable<bool> CVarEnablePix(
     "D3D12RHI.EnablePIX",
     "Enables loading of PIX when creating device to capture frame's programmatically",
     false);
+
+static FAutoConsoleCommand CCmdD3D12DumpRayTracingCapsCommand(
+    "D3D12RHI.DumpRayTracingCaps",
+    "Logs the backend-native D3D12 ray-tracing capability table (GD3D12Supports* RT globals)",
+    FConsoleCommandDelegate::CreateLambda([](StringView)
+    {
+        DumpD3D12RayTracingCapabilities();
+    }));
+
+static FAutoConsoleCommand CCmdD3D12DumpCapsCommand(
+    "D3D12RHI.DumpCaps",
+    "Logs the backend-native D3D12 capability table (all GD3D12* globals, including ray tracing)",
+    FConsoleCommandDelegate::CreateLambda([](StringView)
+    {
+        DumpD3D12Capabilities();
+    }));
+
+
+D3D12RHI_API void DumpD3D12RayTracingCapabilities()
+{
+    const auto YesNo = [](bool bValue) -> const CHAR*
+    {
+        return bValue ? "Yes" : "No";
+    };
+
+    LOG_INFO("[D3D12RHI] ------------------------- D3D12 Ray Tracing Capabilities (native) -------------------------");
+    LOG_INFO("[D3D12RHI]   D3D12_RAYTRACING_TIER                 : %d", static_cast<int32>(GD3D12RayTracingTier));
+    LOG_INFO("[D3D12RHI]   Inline Ray Tracing (RayQuery)         : %s", YesNo(GD3D12SupportsInlineRayTracing));
+    LOG_INFO("[D3D12RHI]   Opacity Micromap                      : %s", YesNo(GD3D12SupportsOpacityMicromap));
+    LOG_INFO("[D3D12RHI]   Shader Execution Reordering           : %s", YesNo(GD3D12SupportsShaderExecutionReordering));
+    LOG_INFO("[D3D12RHI]   Shader Execution Reordering (Reorders): %s", YesNo(GD3D12ShaderExecutionReorderingActuallyReorders));
+    LOG_INFO("[D3D12RHI]   Pipeline Additions (AddToStateObject) : %s", YesNo(GD3D12SupportsRayTracingPipelineAdditions));
+    LOG_INFO("[D3D12RHI]   Clusters + Partitioned Scene (PTLAS)  : %s", YesNo(GD3D12SupportsClustersAndPTLAS));
+    LOG_INFO("[D3D12RHI]   Indirect AS Operations                : %s", YesNo(GD3D12SupportsIndirectAccelerationStructureOperations));
+    LOG_INFO("[D3D12RHI]   Indirect Ray Dispatch                 : %s", YesNo(GD3D12SupportsIndirectRayDispatch));
+    LOG_INFO("[D3D12RHI] -----------------------------------------------------------------------------------------");
+}
+
+D3D12RHI_API void DumpD3D12Capabilities()
+{
+    const auto YesNo = [](bool bValue) -> const CHAR*
+    {
+        return bValue ? "Yes" : "No";
+    };
+
+    LOG_INFO("[D3D12RHI] ------------------------- D3D12 Capabilities (native) -------------------------");
+    LOG_INFO("[D3D12RHI]   Force Binding                         : %s", YesNo(GD3D12ForceBinding));
+    LOG_INFO("[D3D12RHI]   Bindless                              : %s", YesNo(GD3D12SupportsBindless));
+    LOG_INFO("[D3D12RHI]   Enhanced Barriers                     : %s", YesNo(GD3D12SupportEnhancedBarriers));
+    LOG_INFO("[D3D12RHI]   GPU Upload Heaps                      : %s", YesNo(GD3D12SupportGPUUploadHeaps));
+    LOG_INFO("[D3D12RHI]   Tight Alignment                       : %s", YesNo(GD3D12SupportTightAlignment));
+    LOG_INFO("[D3D12RHI]   Dynamic Depth Bias                    : %s", YesNo(GD3D12SupportDynamicDepthBias));
+    LOG_INFO("[D3D12RHI]   Pipeline Cache                        : %s", YesNo(GD3D12SupportPipelineCache));
+    LOG_INFO("[D3D12RHI]   Pipeline Stream                       : %s", YesNo(GD3D12SupportPipelineStream));
+
+    LOG_INFO("[D3D12RHI]   Resource Binding Tier                 : %d", static_cast<int32>(GD3D12ResourceBindingTier));
+    LOG_INFO("[D3D12RHI]   Resource Heap Tier                    : %d", static_cast<int32>(GD3D12ResourceHeapTier));
+    LOG_INFO("[D3D12RHI]   Variable Rate Shading Tier            : %d", static_cast<int32>(GD3D12VariableRateShadingTier));
+    LOG_INFO("[D3D12RHI]   Mesh Shader Tier                      : %d", static_cast<int32>(GD3D12MeshShaderTier));
+    LOG_INFO("[D3D12RHI]   Sampler Feedback Tier                 : %d", static_cast<int32>(GD3D12SamplerFeedbackTier));
+    LOG_INFO("[D3D12RHI]   View Instancing Tier                  : %d", static_cast<int32>(GD3D12ViewInstancingTier));
+    LOG_INFO("[D3D12RHI]   Conservative Rasterization Tier       : %d", static_cast<int32>(GD3D12ConservativeRasterizationTier));
+    LOG_INFO("[D3D12RHI]   Programmable Sample Positions Tier    : %d", static_cast<int32>(GD3D12ProgrammableSamplePositionsTier));
+    LOG_INFO("[D3D12RHI]   Work Graphs Tier                      : %d", static_cast<int32>(GD3D12WorkGraphsTier));
+    LOG_INFO("[D3D12RHI]   Execute Indirect Tier                 : %d", static_cast<int32>(GD3D12ExecuteIndirectTier));
+    LOG_INFO("[D3D12RHI]   Tiled Resources Tier                  : %d", static_cast<int32>(GD3D12TiledResourcesTier));
+    LOG_INFO("[D3D12RHI]   Wave MMA Tier                         : %d", static_cast<int32>(GD3D12WaveMMATier));
+    LOG_INFO("[D3D12RHI]   Root Signature Version                : %d", static_cast<int32>(GD3D12RootSignatureVersion));
+    LOG_INFO("[D3D12RHI]   Highest Shader Model                  : 0x%X", static_cast<int32>(GD3D12HighestShaderModel));
+
+    LOG_INFO("[D3D12RHI]   Rasterizer Ordered Views              : %s", YesNo(GD3D12RasterizerOrderViewsSupported));
+    LOG_INFO("[D3D12RHI]   Typed UAV Load Additional Formats     : %s", YesNo(GD3D12TypedUAVLoadAdditionalFormats));
+    LOG_INFO("[D3D12RHI]   Depth Bounds Test                     : %s", YesNo(GD3D12DepthBoundsTestSupported));
+    LOG_INFO("[D3D12RHI]   Architecture UMA                      : %s", YesNo(GD3D12IsArchitectureUMA));
+    LOG_INFO("[D3D12RHI]   Architecture Cache-Coherent UMA       : %s", YesNo(GD3D12IsArchitectureCacheCoherentUMA));
+    LOG_INFO("[D3D12RHI]   PS-Specified Stencil Ref              : %s", YesNo(GD3D12PSSpecifiedStencilRefSupported));
+    LOG_INFO("[D3D12RHI]   Wave Ops                              : %s", YesNo(GD3D12WaveOpsSupported));
+    LOG_INFO("[D3D12RHI]   Int64 Shader Ops                      : %s", YesNo(GD3D12Int64ShaderOpsSupported));
+    LOG_INFO("[D3D12RHI]   Barycentrics                          : %s", YesNo(GD3D12BarycentricsSupported));
+    LOG_INFO("[D3D12RHI]   Native 16-bit Shader Ops              : %s", YesNo(GD3D12Native16BitShaderOpsSupported));
+    LOG_INFO("[D3D12RHI]   Atomic Int64 (Typed Resource)         : %s", YesNo(GD3D12AtomicInt64OnTypedResourceSupported));
+    LOG_INFO("[D3D12RHI]   Atomic Int64 (Group Shared)           : %s", YesNo(GD3D12AtomicInt64OnGroupSharedSupported));
+    LOG_INFO("[D3D12RHI]   Derivatives in Mesh/Amp Shaders       : %s", YesNo(GD3D12DerivativesInMeshAndAmpShadersSupported));
+    LOG_INFO("[D3D12RHI]   Atomic Int64 (Descriptor Heap Rsrc)   : %s", YesNo(GD3D12AtomicInt64OnDescriptorHeapResourceSupported));
+
+    LOG_INFO("[D3D12RHI]   Wave Lanes (min / max / total)        : %u / %u / %u", GD3D12WaveLaneCountMin, GD3D12WaveLaneCountMax, GD3D12TotalLaneCount);
+    LOG_INFO("[D3D12RHI]   Max Resource Descriptor Heap Size     : %u", GD3D12MaxResourceDescriptorHeapSize);
+    LOG_INFO("[D3D12RHI]   Max Sampler Descriptor Heap Size      : %u", GD3D12MaxSamplerDescriptorHeapSize);
+    LOG_INFO("[D3D12RHI]   VA Bits (per resource / per process)  : %u / %u", GD3D12VirtualAddressBitsPerResource, GD3D12VirtualAddressBitsPerProcess);
+    LOG_INFO("[D3D12RHI]   Write Buffer Immediate Support Flags  : 0x%X", static_cast<int32>(GD3D12WriteBufferImmediateSupportFlags));
+    LOG_INFO("[D3D12RHI] -----------------------------------------------------------------------------");
+
+    DumpD3D12RayTracingCapabilities();
+}
+
 
 FD3D12DeviceRHI* FD3D12DeviceRHI::GD3D12DeviceRHI = nullptr;
 
@@ -120,50 +215,55 @@ FD3D12DeviceRHI::FD3D12DeviceRHI()
     }
 }
 
-FD3D12DeviceRHI::~FD3D12DeviceRHI()
+void FD3D12DeviceRHI::FlushDeferredDeletions()
 {
-    const auto FlushDeletionQueues = [this]()
+    FD3D12DeviceRHI* DeviceRHI = Get();
+    if (!DeviceRHI)
     {
+        return;
+    }
+
+    // NOTE: Objects could contain other objects, that now need to be flushed
+    if (FRHICommandListExecutor::IsInitialized())
+    {
+        FRHICommandListExecutor::Get().FlushDeletedResources();
+    }
+
+    while (!DeviceRHI->DeferredObjects.IsEmpty())
+    {
+        TArray<FD3D12DeferredObject> Items;
+        {
+            TScopedLock Lock(DeviceRHI->DeferredObjectsCS);
+            Items = Move(DeviceRHI->DeferredObjects);
+        }
+
+        FD3D12DeferredObject::ProcessItems(Items);
+
         // NOTE: Objects could contain other objects, that now need to be flushed
         if (FRHICommandListExecutor::IsInitialized())
         {
             FRHICommandListExecutor::Get().FlushDeletedResources();
         }
+    }
+}
 
-        while (!DeferredObjects.IsEmpty())
-        {
-            TArray<FD3D12DeferredObject> Items;
-            {
-                TScopedLock Lock(DeferredObjectsCS);
-                Items = Move(DeferredObjects);
-            }
-
-            FD3D12DeferredObject::ProcessItems(Items);
-
-            // NOTE: Objects could contain other objects, that now need to be flushed
-            if (FRHICommandListExecutor::IsInitialized())
-            {
-                FRHICommandListExecutor::Get().FlushDeletedResources();
-            }
-        }
-    };
-
-    // Flush the default context before flushing the submission queue
+FD3D12DeviceRHI::~FD3D12DeviceRHI()
+{
     if (DirectCommandContext)
     {
-        DirectCommandContext->Flush();
+        DirectCommandContext->ClearState();
     }
 
     if (Device)
     {
-        FD3D12Queue* DirectQueue = Device->GetQueue(ED3D12CommandQueueType::Direct);
-        DirectQueue->ProcessCommandQueue();
+        Device->WaitForGPU();
+        Device->FinalizePendingDefragMoves();
     }
 
-    // Flush any objects that might need the context...
-    FlushDeletionQueues();
+    // Flush any objects that might need the context
+    FlushDeferredDeletions();
 
-    // ...then delete the context
+    // Then delete the context
     SAFE_DELETE(DirectCommandContext);
 
     // Delete all samplers
@@ -172,8 +272,8 @@ FD3D12DeviceRHI::~FD3D12DeviceRHI()
         SamplerStateMap.Clear();
     }
 
-    // ... Finally, delete all remaining resources
-    FlushDeletionQueues();
+    // Finally, delete all remaining resources
+    FlushDeferredDeletions();
 
     // Destroy the device and adapter
     SAFE_DELETE(Device);
@@ -249,9 +349,19 @@ void FD3D12DeviceRHI::BeginFrame(FD3D12CommandContext* InCommandContext)
 
 void FD3D12DeviceRHI::EndFrame()
 {
+    EndFrame(nullptr);
+}
+
+void FD3D12DeviceRHI::EndFrame(FD3D12CommandContext* InCommandContext)
+{
     if (!Device)
     {
         return;
+    }
+
+    if (InCommandContext)
+    {
+        Device->EndFrame(InCommandContext);
     }
 
     if (FD3D12ResidencyManager* ResidencyManager = Device->GetResidencyManager())
@@ -361,19 +471,77 @@ bool FD3D12DeviceRHI::InitializeDeviceFeatureSupport()
     // Ray Tracing (DXR)
     // -------------------------------------------------------------------------------------------
 
+    GD3D12SupportsInlineRayTracing                        = false;
+    GD3D12SupportsOpacityMicromap                         = false;
+    GD3D12SupportsShaderExecutionReordering               = false;
+    GD3D12ShaderExecutionReorderingActuallyReorders       = false;
+    GD3D12SupportsRayTracingPipelineAdditions             = false;
+    GD3D12SupportsClustersAndPTLAS                        = false;
+    GD3D12SupportsIndirectAccelerationStructureOperations = false;
+    GD3D12SupportsIndirectRayDispatch                     = false;
+
+    RHI::RayTracingMaxTrianglesPerCluster      = 0;
+    RHI::RayTracingMaxVerticesPerCluster       = 0;
+    RHI::RayTracingMaxPartitionedInstanceCount = 0;
+
     if (GD3D12RayTracingTier >= D3D12_RAYTRACING_TIER_1_0)
     {
-        RHI::bSupportsRayTracing         = true;
-        RHI::RayTracingMaxRecursionDepth = D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH;
+        RHI::bSupportsRayTracing                    = true;
+        RHI::RayTracingMaxRecursionDepth            = D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH;
+        RHI::bSupportsShaderBindingTableDescriptors = true;
+        RHI::bSupportsToolsVisualization            = true;
 
-        if (GD3D12RayTracingTier == D3D12_RAYTRACING_TIER_1_1)
+        GD3D12SupportsRayTracingPipelineAdditions = GetDevice()->GetD3D12Device7() != nullptr;
+
+        if (GD3D12RayTracingTier >= D3D12_RAYTRACING_TIER_1_1)
         {
-            RHI::RayTracingTier = ERayTracingTier::Tier1_1;
+            RHI::RayTracingTier            = ERayTracingTier::Tier1_1;
+            GD3D12SupportsInlineRayTracing = true;
         }
         else
         {
             RHI::RayTracingTier = ERayTracingTier::Tier1;
         }
+
+    #if D3D12_ENABLE_INDIRECT_RAY_DISPATCH
+        GD3D12SupportsIndirectRayDispatch = true;
+    #endif
+
+    #if D3D12_ENABLE_OPACITY_MICROMAPS || D3D12_ENABLE_SHADER_EXECUTION_REORDERING
+        if (GD3D12RayTracingTier >= D3D12_RAYTRACING_TIER_1_2)
+        {
+            RHI::RayTracingTier = ERayTracingTier::Tier1_2;
+        
+        #if D3D12_ENABLE_OPACITY_MICROMAPS
+            GD3D12SupportsOpacityMicromap = true;
+        #endif
+
+        #if D3D12_ENABLE_SHADER_EXECUTION_REORDERING
+            GD3D12SupportsShaderExecutionReordering = true;
+
+            D3D12_FEATURE_DATA_D3D12_OPTIONS22 Features22 = {};
+            if (SUCCEEDED(GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS22, &Features22, sizeof(Features22))))
+            {
+                GD3D12ShaderExecutionReorderingActuallyReorders = Features22.ShaderExecutionReorderingActuallyReorders;
+            }
+        #endif
+        }
+    #endif
+
+    #if D3D12_ENABLE_CLUSTERS_AND_PTLAS
+        if (GD3D12RayTracingTier >= D3D12_RAYTRACING_TIER_2_0)
+        {
+            RHI::RayTracingTier                   = ERayTracingTier::Tier2_0;
+            RHI::RayTracingMaxTrianglesPerCluster = D3D12_RTAS_MAX_TRIANGLES_PER_CLUSTER;
+            RHI::RayTracingMaxVerticesPerCluster  = D3D12_RTAS_MAX_VERTICES_PER_CLUSTER;
+            
+            GD3D12SupportsClustersAndPTLAS = true;
+
+        #if D3D12_ENABLE_INDIRECT_RTAS_OPERATIONS
+            GD3D12SupportsIndirectAccelerationStructureOperations = true;
+        #endif
+        }
+    #endif
     }
     else
     {
@@ -381,6 +549,19 @@ bool FD3D12DeviceRHI::InitializeDeviceFeatureSupport()
         RHI::RayTracingMaxRecursionDepth = 0;
         RHI::RayTracingTier              = ERayTracingTier::NotSupported;
     }
+
+    // Mirror the backend-native globals into the agnostic RHI capability flags.
+    RHI::bSupportsInlineRayTracing                                 = GD3D12SupportsInlineRayTracing;
+    RHI::bSupportsOpacityMicromap                                  = GD3D12SupportsOpacityMicromap;
+    RHI::bSupportsShaderExecutionReordering                        = GD3D12SupportsShaderExecutionReordering;
+    RHI::bShaderExecutionReorderingActuallyReorders                = GD3D12ShaderExecutionReorderingActuallyReorders;
+    RHI::bSupportsRayTracingPipelineAdditions                      = GD3D12SupportsRayTracingPipelineAdditions;
+    RHI::bSupportsClustersAndPartitionedSceneAccelerationStructure = GD3D12SupportsClustersAndPTLAS;
+    RHI::bSupportsIndirectAccelerationStructureOperations          = GD3D12SupportsIndirectAccelerationStructureOperations;
+    RHI::bSupportsIndirectRayDispatch                              = GD3D12SupportsIndirectRayDispatch;
+
+    // Log the backend-native capability view (general + ray-tracing) alongside the agnostic RHI table.
+    DumpD3D12Capabilities();
 
     // -------------------------------------------------------------------------------------------
     // View Instancing
@@ -605,6 +786,18 @@ FRHIGeometryAccelerationStructure* FD3D12DeviceRHI::CreateGeometryAccelerationSt
     return D3D12Geometry.ReleaseOwnership();
 }
 
+FRHIOpacityMicromap* FD3D12DeviceRHI::CreateOpacityMicromap(const FRHIOpacityMicromapDesc& InDesc)
+{
+#if D3D12_ENABLE_OPACITY_MICROMAPS
+    FD3D12OpacityMicromapRHIRef OpacityMicromap = new FD3D12OpacityMicromapRHI(GetDevice(), InDesc);
+    return OpacityMicromap.ReleaseOwnership();
+#else
+    UNREFERENCED_VARIABLE(InDesc);
+    D3D12_ERROR("[FD3D12DeviceRHI]: CreateOpacityMicromap called but opacity micromaps are disabled in this build (D3D12_ENABLE_OPACITY_MICROMAPS=0)");
+    return nullptr;
+#endif
+}
+
 FRHIShaderResourceView* FD3D12DeviceRHI::CreateShaderResourceView(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc)
 {
     if (!InResource)
@@ -630,23 +823,52 @@ FRHIShaderResourceView* FD3D12DeviceRHI::CreateShaderResourceView(FRHIResource* 
         Resource      = D3D12Buffer;
         D3D12Resource = D3D12Buffer->GetResource();
 
-        const auto& BufferDesc   = InDesc.Buffer;
-        Desc.ViewDimension       = D3D12_SRV_DIMENSION_BUFFER;
-        Desc.Buffer.FirstElement = BufferDesc.FirstElement;
-        Desc.Buffer.NumElements  = BufferDesc.NumElements;
+        const auto&  BufferDesc = InDesc.Buffer;
+        const uint64 ByteOffset = D3D12Buffer->GetGPUVirtualAddress() - D3D12Buffer->GetResource()->GetGPUVirtualAddress();
 
-        if (BufferDesc.Type != EBufferViewType::ByteAddress)
+        uint64 ElementSize = static_cast<uint64>(D3D12Buffer->GetDesc().Stride);
+        switch (BufferDesc.Type)
         {
-            Desc.Format                     = DXGI_FORMAT_UNKNOWN;
-            Desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
-            Desc.Buffer.StructureByteStride = D3D12Buffer->GetDesc().Stride;
+            case EBufferViewType::Typed:
+            {
+                // Buffer<T>: A real format-typed buffer view (no RAW flag, no structure stride).
+                ElementSize                     = GetByteStrideFromFormat(BufferDesc.Format);
+                Desc.Format                     = D3D12CastShaderResourceFormat(ConvertFormat(BufferDesc.Format));
+                Desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
+                Desc.Buffer.StructureByteStride = 0;
+                break;
+            }
+
+            case EBufferViewType::ByteAddress:
+            {
+                // ByteAddressBuffer: A raw R32-typeless view, addressed in 4-byte units.
+                ElementSize                     = 4ull;
+                Desc.Format                     = DXGI_FORMAT_R32_TYPELESS;
+                Desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_RAW;
+                Desc.Buffer.StructureByteStride = 0;
+                break;
+            }
+
+            case EBufferViewType::Structured:
+            {
+                // StructuredBuffer<T>: UNKNOWN format + structure stride.
+                Desc.Format                     = DXGI_FORMAT_UNKNOWN;
+                Desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
+                Desc.Buffer.StructureByteStride = D3D12Buffer->GetDesc().Stride;
+                break;
+            }
+
+            default:
+            {
+                D3D12_ERROR("Unsupported EBufferViewType for buffer SRV");
+                return nullptr;
+            }
         }
-        else
-        {
-            Desc.Format                     = DXGI_FORMAT_R32_TYPELESS;
-            Desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_RAW;
-            Desc.Buffer.StructureByteStride = 0;
-        }
+
+        const uint64 ElementOffset = (ElementSize > 0) ? (ByteOffset / ElementSize) : 0ull;
+        Desc.ViewDimension       = D3D12_SRV_DIMENSION_BUFFER;
+        Desc.Buffer.FirstElement = BufferDesc.FirstElement + ElementOffset;
+        Desc.Buffer.NumElements  = BufferDesc.NumElements;
     }
     else if (InDesc.IsTextureSRV())
     {
@@ -828,23 +1050,53 @@ FRHIUnorderedAccessView* FD3D12DeviceRHI::CreateUnorderedAccessView(FRHIResource
         Resource      = D3D12Buffer;
         D3D12Resource = D3D12Buffer->GetResource();
 
-        const auto& BufferDesc   = InDesc.Buffer;
-        Desc.ViewDimension       = D3D12_UAV_DIMENSION_BUFFER;
-        Desc.Buffer.FirstElement = BufferDesc.FirstElement;
-        Desc.Buffer.NumElements  = BufferDesc.NumElements;
+        const auto&  BufferDesc = InDesc.Buffer;
+        const uint64 ByteOffset = D3D12Buffer->GetGPUVirtualAddress() - D3D12Buffer->GetResource()->GetGPUVirtualAddress();
 
-        if (BufferDesc.Type != EBufferViewType::ByteAddress)
+        uint64 ElementSize = static_cast<uint64>(D3D12Buffer->GetDesc().Stride);
+        switch (BufferDesc.Type)
         {
-            Desc.Format                     = DXGI_FORMAT_UNKNOWN;
-            Desc.Buffer.Flags               = D3D12_BUFFER_UAV_FLAG_NONE;
-            Desc.Buffer.StructureByteStride = D3D12Buffer->GetDesc().Stride;
+            case EBufferViewType::Typed:
+            {
+                // RWBuffer<T>: A real format-typed buffer view (no RAW flag, no structure stride).
+                ElementSize                     = GetByteStrideFromFormat(BufferDesc.Format);
+                Desc.Format                     = D3D12CastUnorderedAccessFormat(ConvertFormat(BufferDesc.Format));
+                Desc.Buffer.Flags               = D3D12_BUFFER_UAV_FLAG_NONE;
+                Desc.Buffer.StructureByteStride = 0;
+                break;
+            }
+
+            case EBufferViewType::ByteAddress:
+            {
+                // RWByteAddressBuffer: A raw R32-typeless view, addressed in 4-byte units.
+                ElementSize                     = 4ull;
+                Desc.Format                     = DXGI_FORMAT_R32_TYPELESS;
+                Desc.Buffer.Flags               = D3D12_BUFFER_UAV_FLAG_RAW;
+                Desc.Buffer.StructureByteStride = 0;
+                break;
+            }
+
+            case EBufferViewType::Structured:
+            {
+                // RWStructuredBuffer<T>: UNKNOWN format + structure stride.
+                Desc.Format                     = DXGI_FORMAT_UNKNOWN;
+                Desc.Buffer.Flags               = D3D12_BUFFER_UAV_FLAG_NONE;
+                Desc.Buffer.StructureByteStride = D3D12Buffer->GetDesc().Stride;
+                break;
+            }
+
+            default:
+            {
+                D3D12_ERROR("Unsupported EBufferViewType for buffer UAV");
+                return nullptr;
+            }
         }
-        else
-        {
-            Desc.Format                     = DXGI_FORMAT_R32_TYPELESS;
-            Desc.Buffer.Flags               = D3D12_BUFFER_UAV_FLAG_RAW;
-            Desc.Buffer.StructureByteStride = 0;
-        }
+
+        const uint64 ElementOffset = (ElementSize > 0) ? (ByteOffset / ElementSize) : 0ull;
+
+        Desc.ViewDimension       = D3D12_UAV_DIMENSION_BUFFER;
+        Desc.Buffer.FirstElement = BufferDesc.FirstElement + ElementOffset;
+        Desc.Buffer.NumElements  = BufferDesc.NumElements;
     }
     else if (InDesc.IsTextureUAV())
     {
@@ -1559,6 +1811,63 @@ FRHIRayTracingPipelineState* FD3D12DeviceRHI::CreateRayTracingPipelineState(cons
     {
         return NewPipelineState.ReleaseOwnership();
     }
+}
+
+FRHIShaderBindingTable* FD3D12DeviceRHI::CreateShaderBindingTable(const FRHIShaderBindingTableDesc& InDesc)
+{
+    if (!InDesc.Pipeline)
+    {
+        return nullptr;
+    }
+
+    return new FD3D12ShaderBindingTable(GetDevice(), InDesc);
+}
+
+FRHIRayTracingShaderIdentifier FD3D12DeviceRHI::GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState* InPipeline, const String& InExportName)
+{
+    FRHIRayTracingShaderIdentifier Identifier;
+    if (FD3D12RayTracingPipelineStateRHI* D3D12Pipeline = FD3D12DeviceRHI::ResourceCast(InPipeline))
+    {
+        if (void* ShaderIdentifier = D3D12Pipeline->GetShaderIdentifier(InExportName))
+        {
+            static_assert(D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES <= FRHIRayTracingShaderIdentifier::MAX_SIZE_IN_BYTES, "Shader identifier does not fit");
+            
+            Memory::Memcpy(Identifier.Data, ShaderIdentifier, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+            Identifier.SizeInBytes = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+        }
+    }
+
+    return Identifier;
+}
+
+bool FD3D12DeviceRHI::IsAccelerationStructureSerializationHeaderValid(const FRHIAccelerationStructureSerializationHeader& InHeader)
+{
+    if (InHeader.RHIType != ERHIType::D3D12)
+    {
+        return false;
+    }
+
+#if D3D12_USE_ID3D12DEVICE_5
+    ID3D12Device5* D3D12Device5 = GetDevice() ? GetDevice()->GetD3D12Device5() : nullptr;
+    if (!D3D12Device5)
+    {
+        return false;
+    }
+
+    static_assert(FRHIAccelerationStructureSerializationHeader::DRIVER_MATCHING_IDENTIFIER_SIZE >= sizeof(D3D12_SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER),
+        "Serialization header driver-matching identifier is too small for D3D12");
+
+    D3D12_SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER DriverIdentifier = {};
+    Memory::Memcpy(&DriverIdentifier, InHeader.DriverMatchingIdentifier, sizeof(D3D12_SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER));
+
+    const D3D12_DRIVER_MATCHING_IDENTIFIER_STATUS Status = D3D12Device5->CheckDriverMatchingIdentifier(
+        D3D12_SERIALIZED_DATA_RAYTRACING_ACCELERATION_STRUCTURE,
+        &DriverIdentifier);
+
+    return Status == D3D12_DRIVER_MATCHING_IDENTIFIER_COMPATIBLE_WITH_DEVICE;
+#else
+    return false;
+#endif
 }
 
 FRHIQuery* FD3D12DeviceRHI::CreateQuery(EQueryType InQueryType)

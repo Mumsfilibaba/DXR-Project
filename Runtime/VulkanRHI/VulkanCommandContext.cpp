@@ -1,14 +1,17 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
+#include "RHI/RHIShader.h"
 #include "VulkanRHI/VulkanCommandContext.h"
 #include "VulkanRHI/VulkanResourceViews.h"
 #include "VulkanRHI/VulkanTexture.h"
 #include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/VulkanBuffer.h"
 #include "VulkanRHI/VulkanDescriptorSet.h"
+#include "VulkanRHI/VulkanPipelineLayout.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanFence.h"
 #include "VulkanRHI/VulkanRHI.h"
+#include "VulkanRHI/RayTracing/VulkanRayTracing.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
 
 static TAutoConsoleVariable<int32> CVarMaxCommandsPerCommandBuffer(
@@ -1055,10 +1058,7 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
     if (VulkanBuffer->GetDesc().IsTransient())
     {
         FVulkanMemoryLocation NewLocation(GetDevice());
-        void* MappedMemory = GetDevice()->GetMemoryManager().AllocateConstants(
-            BufferRegion.Size, 
-            0, 
-            NewLocation);
+        void* MappedMemory = GetDevice()->GetMemoryManager().AllocateConstants(BufferRegion.Size, 0, NewLocation);
         CHECK(MappedMemory != nullptr);
 
         Memory::Memcpy(MappedMemory, SrcData, BufferRegion.Size);
@@ -1543,25 +1543,450 @@ void FVulkanCommandContext::DiscardContents(FRHITexture* Resource)
 
 void FVulkanCommandContext::BuildSceneAccelerationStructure(FRHISceneAccelerationStructure* InRayTracingScene, const FRHISceneAccelerationStructureBuildDesc& InBuildDesc)
 {
-    UNREFERENCED_VARIABLE(InRayTracingScene);
-    UNREFERENCED_VARIABLE(InBuildDesc);
+    FVulkanSceneAccelerationStructureRHI* VulkanScene = FVulkanDeviceRHI::ResourceCast(InRayTracingScene);
+    if (!VulkanScene)
+    {
+        return;
+    }
+
+    if (!VulkanScene->Build(*this, InBuildDesc))
+    {
+        VULKAN_ERROR("Failed to build scene acceleration-structure");
+    }
 }
 
 void FVulkanCommandContext::BuildGeometryAccelerationStructure(FRHIGeometryAccelerationStructure* InRayTracingGeometry, const FRHIGeometryAccelerationStructureBuildDesc& InBuildDesc)
 {
-    UNREFERENCED_VARIABLE(InRayTracingGeometry);
-    UNREFERENCED_VARIABLE(InBuildDesc);
+    FVulkanGeometryAccelerationStructureRHI* VulkanGeometry = FVulkanDeviceRHI::ResourceCast(InRayTracingGeometry);
+    if (!VulkanGeometry)
+    {
+        return;
+    }
+
+    if (!VulkanGeometry->Build(*this, InBuildDesc))
+    {
+        VULKAN_ERROR("Failed to build geometry acceleration-structure");
+    }
 }
 
-void FVulkanCommandContext::SetRayTracingBindings(FRHISceneAccelerationStructure* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources)
+void FVulkanCommandContext::CopyAccelerationStructure(FRHIRayTracingAccelerationStructure* Destination, FRHIRayTracingAccelerationStructure* Source, EAccelerationStructureCopyMode CopyMode)
 {
-    UNREFERENCED_VARIABLE(RayTracingScene);
-    UNREFERENCED_VARIABLE(PipelineState);
-    UNREFERENCED_VARIABLE(GlobalResource);
-    UNREFERENCED_VARIABLE(RayGenLocalResources);
-    UNREFERENCED_VARIABLE(MissLocalResources);
-    UNREFERENCED_VARIABLE(HitGroupResources);
-    UNREFERENCED_VARIABLE(NumHitGroupResources);
+#if VK_KHR_ray_tracing_pipeline
+    if (!Destination || !Source || !vkCmdCopyAccelerationStructureKHR)
+    {
+        return;
+    }
+
+    VkCopyAccelerationStructureModeKHR VulkanCopyMode;
+    switch (CopyMode)
+    {
+        case EAccelerationStructureCopyMode::Clone:
+        {
+            VulkanCopyMode = VK_COPY_ACCELERATION_STRUCTURE_MODE_CLONE_KHR;
+            break;
+        }
+
+        case EAccelerationStructureCopyMode::Compact:
+        {
+            VulkanCopyMode = VK_COPY_ACCELERATION_STRUCTURE_MODE_COMPACT_KHR;
+            break;
+        }
+
+        default:
+        {
+            VULKAN_WARNING("CopyAccelerationStructure: only Clone/Compact are supported through the AS->AS path on Vulkan");
+            return;
+        }
+    }
+
+    VkCopyAccelerationStructureInfoKHR CopyInfo = {};
+    CopyInfo.sType = VK_STRUCTURE_TYPE_COPY_ACCELERATION_STRUCTURE_INFO_KHR;
+    CopyInfo.src   = FVulkanDeviceRHI::ResourceCast(Source)->GetVkAccelerationStructure();
+    CopyInfo.dst   = FVulkanDeviceRHI::ResourceCast(Destination)->GetVkAccelerationStructure();
+    CopyInfo.mode  = VulkanCopyMode;
+
+    GetCommandBuffer()->CopyAccelerationStructure(&CopyInfo);
+#else
+    UNREFERENCED_VARIABLE(Destination);
+    UNREFERENCED_VARIABLE(Source);
+    UNREFERENCED_VARIABLE(CopyMode);
+#endif
+}
+
+void FVulkanCommandContext::CompactAccelerationStructure(FRHIRayTracingAccelerationStructure* AccelerationStructure, uint64 CompactedSizeInBytes)
+{
+#if VK_KHR_acceleration_structure
+    if (!AccelerationStructure || CompactedSizeInBytes == 0)
+    {
+        return;
+    }
+
+    if (AccelerationStructure->GetAccelerationStructureType() == ERayTracingAccelerationStructureType::Geometry)
+    {
+        FVulkanGeometryAccelerationStructureRHI* Geometry = FVulkanDeviceRHI::ResourceCast(static_cast<FRHIGeometryAccelerationStructure*>(AccelerationStructure));
+        Geometry->CompactInPlace(*this, CompactedSizeInBytes);
+    }
+    else
+    {
+        VULKAN_WARNING("CompactAccelerationStructure: only geometry (BLAS) compaction is supported on Vulkan");
+    }
+#else
+    UNREFERENCED_VARIABLE(AccelerationStructure);
+    UNREFERENCED_VARIABLE(CompactedSizeInBytes);
+#endif
+}
+
+void FVulkanCommandContext::SerializeAccelerationStructure(FRHIRayTracingAccelerationStructure* Source, FRHIBuffer* DstBuffer, uint64 DstOffset)
+{
+#if VK_KHR_acceleration_structure
+    FVulkanBufferRHI* VulkanDestination = FVulkanDeviceRHI::ResourceCast(DstBuffer);
+    if (!VulkanDestination || !Source || !vkCmdCopyAccelerationStructureToMemoryKHR)
+    {
+        VULKAN_WARNING("SerializeAccelerationStructure: missing destination/source or vkCmdCopyAccelerationStructureToMemoryKHR not loaded");
+        return;
+    }
+
+    VkCopyAccelerationStructureToMemoryInfoKHR CopyInfo = {};
+    CopyInfo.sType              = VK_STRUCTURE_TYPE_COPY_ACCELERATION_STRUCTURE_TO_MEMORY_INFO_KHR;
+    CopyInfo.src                = FVulkanDeviceRHI::ResourceCast(Source)->GetVkAccelerationStructure();
+    CopyInfo.dst.deviceAddress  = VulkanDestination->GetDeviceAddress() + DstOffset;
+    CopyInfo.mode               = VK_COPY_ACCELERATION_STRUCTURE_MODE_SERIALIZE_KHR;
+
+    GetCommandBuffer()->CopyAccelerationStructureToMemory(&CopyInfo);
+#else
+    UNREFERENCED_VARIABLE(DstBuffer);
+    UNREFERENCED_VARIABLE(DstOffset);
+    UNREFERENCED_VARIABLE(Source);
+#endif
+}
+
+void FVulkanCommandContext::DeserializeAccelerationStructure(FRHIRayTracingAccelerationStructure* Destination, FRHIBuffer* SourceBuffer, uint64 SourceOffset)
+{
+#if VK_KHR_acceleration_structure
+    FVulkanBufferRHI* VulkanSource = FVulkanDeviceRHI::ResourceCast(SourceBuffer);
+    if (!Destination || !VulkanSource || !vkCmdCopyMemoryToAccelerationStructureKHR)
+    {
+        VULKAN_WARNING("DeserializeAccelerationStructure: missing destination/source or vkCmdCopyMemoryToAccelerationStructureKHR not loaded");
+        return;
+    }
+
+    VkCopyMemoryToAccelerationStructureInfoKHR CopyInfo = {};
+    CopyInfo.sType             = VK_STRUCTURE_TYPE_COPY_MEMORY_TO_ACCELERATION_STRUCTURE_INFO_KHR;
+    CopyInfo.src.deviceAddress = VulkanSource->GetDeviceAddress() + SourceOffset;
+    CopyInfo.dst               = FVulkanDeviceRHI::ResourceCast(Destination)->GetVkAccelerationStructure();
+    CopyInfo.mode              = VK_COPY_ACCELERATION_STRUCTURE_MODE_DESERIALIZE_KHR;
+
+    GetCommandBuffer()->CopyMemoryToAccelerationStructure(&CopyInfo);
+#else
+    UNREFERENCED_VARIABLE(Destination);
+    UNREFERENCED_VARIABLE(SourceBuffer);
+    UNREFERENCED_VARIABLE(SourceOffset);
+#endif
+}
+
+void FVulkanCommandContext::WriteAccelerationStructurePostBuildInfo(FRHIBuffer* DstBuffer, uint64 DstOffset, EAccelerationStructurePostBuildInfoType InfoType, FRHIRayTracingAccelerationStructure* const* Sources, uint32 NumSources)
+{
+#if VK_KHR_acceleration_structure
+    FVulkanBufferRHI* VulkanDestination = FVulkanDeviceRHI::ResourceCast(DstBuffer);
+    if (!VulkanDestination || !Sources || NumSources == 0 || !vkCmdWriteAccelerationStructuresPropertiesKHR)
+    {
+        return;
+    }
+
+    VkQueryType QueryType;
+    switch (InfoType)
+    {
+        case EAccelerationStructurePostBuildInfoType::CompactedSize:
+        {
+            QueryType = VK_QUERY_TYPE_ACCELERATION_STRUCTURE_COMPACTED_SIZE_KHR;
+            break;
+        }
+
+        case EAccelerationStructurePostBuildInfoType::Serialization:
+        {
+            QueryType = VK_QUERY_TYPE_ACCELERATION_STRUCTURE_SERIALIZATION_SIZE_KHR;
+            break;
+        }
+
+        default:
+        {
+            VULKAN_WARNING("WriteAccelerationStructurePostBuildInfo: unsupported post-build info type on Vulkan");
+            return;
+        }
+    }
+
+    TArray<VkAccelerationStructureKHR> SourceHandles;
+    SourceHandles.Reserve(NumSources);
+
+    for (uint32 Index = 0; Index < NumSources; ++Index)
+    {
+        if (Sources[Index])
+        {
+            SourceHandles.Add(FVulkanDeviceRHI::ResourceCast(Sources[Index])->GetVkAccelerationStructure());
+        }
+    }
+
+    if (SourceHandles.IsEmpty())
+    {
+        return;
+    }
+
+    VkQueryPoolCreateInfo QueryPoolCreateInfo = {};
+    QueryPoolCreateInfo.sType      = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
+    QueryPoolCreateInfo.queryType  = QueryType;
+    QueryPoolCreateInfo.queryCount = static_cast<uint32>(SourceHandles.Size());
+
+    VkQueryPool QueryPool = VK_NULL_HANDLE;
+    if (VULKAN_FAILED(vkCreateQueryPool(GetDevice()->GetVkDevice(), &QueryPoolCreateInfo, nullptr, &QueryPool)))
+    {
+        VULKAN_ERROR("WriteAccelerationStructurePostBuildInfo: failed to create query pool");
+        return;
+    }
+
+    VkMemoryBarrier2 AccelerationStructureReadBarrier = {};
+    AccelerationStructureReadBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2;
+    AccelerationStructureReadBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
+    AccelerationStructureReadBarrier.srcAccessMask = VK_ACCESS_2_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
+    AccelerationStructureReadBarrier.dstStageMask  = VK_PIPELINE_STAGE_2_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
+    AccelerationStructureReadBarrier.dstAccessMask = VK_ACCESS_2_ACCELERATION_STRUCTURE_READ_BIT_KHR;
+    
+    BarrierBatcher.AddMemoryBarrier(0, AccelerationStructureReadBarrier);
+    BarrierBatcher.FlushBarriers(GetCommandBuffer());
+
+    GetCommandBuffer()->ResetQueryPool(QueryPool, 0, static_cast<uint32>(SourceHandles.Size()));
+    GetCommandBuffer()->WriteAccelerationStructuresProperties(static_cast<uint32>(SourceHandles.Size()), SourceHandles.Data(), QueryType, QueryPool, 0);
+    GetCommandBuffer()->CopyQueryPoolResults(
+        QueryPool,
+        0,
+        static_cast<uint32>(SourceHandles.Size()),
+        VulkanDestination->GetVkBuffer(),
+        VulkanDestination->GetBindOffset() + DstOffset,
+        sizeof(uint64),
+        VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
+
+    FVulkanDeviceRHI::DeferDeletion(QueryPool);
+#else
+    UNREFERENCED_VARIABLE(DstBuffer);
+    UNREFERENCED_VARIABLE(DstOffset);
+    UNREFERENCED_VARIABLE(InfoType);
+    UNREFERENCED_VARIABLE(Sources);
+    UNREFERENCED_VARIABLE(NumSources);
+#endif
+}
+
+void FVulkanCommandContext::SetHitRecordLocalShaderBindings(FRHIShaderBindingTable* ShaderBindingTable, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings)
+{
+    if (FVulkanShaderBindingTable* VulkanShaderBindingTable = FVulkanDeviceRHI::ResourceCast(ShaderBindingTable))
+    {
+        VulkanShaderBindingTable->SetBindings(RecordKind, RecordIndex, Bindings, NumBindings);
+    }
+}
+
+void FVulkanCommandContext::BuildShaderBindingTable(FRHIShaderBindingTable* ShaderBindingTable)
+{
+    if (FVulkanShaderBindingTable* VulkanShaderBindingTable = FVulkanDeviceRHI::ResourceCast(ShaderBindingTable))
+    {
+        VulkanShaderBindingTable->Build();
+    }
+}
+
+void FVulkanCommandContext::ResetShaderBindingTable(FRHIShaderBindingTable* ShaderBindingTable)
+{
+    if (FVulkanShaderBindingTable* VulkanShaderBindingTable = FVulkanDeviceRHI::ResourceCast(ShaderBindingTable))
+    {
+        VulkanShaderBindingTable->ClearTableRecords();
+    }
+}
+
+void FVulkanCommandContext::BuildOpacityMicromap(FRHIOpacityMicromap* OpacityMicromap, const FRHIOpacityMicromapBuildDesc& BuildDesc)
+{
+    if (FVulkanOpacityMicromap* VulkanMicromap = FVulkanDeviceRHI::ResourceCast(OpacityMicromap))
+    {
+        VulkanMicromap->Build(*this, BuildDesc);
+    }
+}
+
+void FVulkanCommandContext::SetRayTracingPipelineState(FRHIRayTracingPipelineState* PipelineState)
+{
+    ContextState.SetRayTracingPipelineState(FVulkanDeviceRHI::ResourceCast(PipelineState));
+}
+
+void FVulkanCommandContext::DispatchRays(FRHIShaderBindingTable* ShaderBindingTable, uint32 Width, uint32 Height, uint32 Depth)
+{
+#if VK_KHR_ray_tracing_pipeline
+    FVulkanShaderBindingTable* VulkanShaderBindingTable = FVulkanDeviceRHI::ResourceCast(ShaderBindingTable);
+    if (!ContextState.GetRayTracingPipelineState() || !VulkanShaderBindingTable || !vkCmdTraceRaysKHR)
+    {
+        return;
+    }
+
+    CHECK(VulkanShaderBindingTable->GetPipeline() == ContextState.GetRayTracingPipelineState());
+
+    ContextState.PrepareRayTracingState();
+    ContextState.BindRayTracingState();
+
+    const VkStridedDeviceAddressRegionKHR RayGenRegion   = VulkanShaderBindingTable->GetRayGenRegion();
+    const VkStridedDeviceAddressRegionKHR MissRegion     = VulkanShaderBindingTable->GetMissRegion();
+    const VkStridedDeviceAddressRegionKHR HitGroupRegion = VulkanShaderBindingTable->GetHitGroupRegion();
+    const VkStridedDeviceAddressRegionKHR CallableRegion = VulkanShaderBindingTable->GetCallableRegion();
+
+    GetCommandBuffer()->TraceRays(&RayGenRegion, &MissRegion, &HitGroupRegion, &CallableRegion, Width, Height, Depth);
+#else
+    UNREFERENCED_VARIABLE(ShaderBindingTable);
+    UNREFERENCED_VARIABLE(Width);
+    UNREFERENCED_VARIABLE(Height);
+    UNREFERENCED_VARIABLE(Depth);
+#endif
+}
+
+void FVulkanCommandContext::DispatchRaysIndirect(FRHIShaderBindingTable* ShaderBindingTable, FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset)
+{
+#if VK_KHR_ray_tracing_pipeline
+    FVulkanBufferRHI*          VulkanArgumentBuffer     = FVulkanDeviceRHI::ResourceCast(ArgumentBuffer);
+    FVulkanShaderBindingTable* VulkanShaderBindingTable = FVulkanDeviceRHI::ResourceCast(ShaderBindingTable);
+
+    if (!ContextState.GetRayTracingPipelineState() || !VulkanShaderBindingTable || !VulkanArgumentBuffer || !vkCmdTraceRaysIndirectKHR)
+    {
+        VULKAN_WARNING("DispatchRaysIndirect: missing pipeline/SBT/args or vkCmdTraceRaysIndirectKHR not loaded");
+        return;
+    }
+
+    CHECK(VulkanShaderBindingTable->GetPipeline() == ContextState.GetRayTracingPipelineState());
+
+    ContextState.PrepareRayTracingState();
+    ContextState.BindRayTracingState();
+
+    const VkStridedDeviceAddressRegionKHR RayGenRegion   = VulkanShaderBindingTable->GetRayGenRegion();
+    const VkStridedDeviceAddressRegionKHR MissRegion     = VulkanShaderBindingTable->GetMissRegion();
+    const VkStridedDeviceAddressRegionKHR HitGroupRegion = VulkanShaderBindingTable->GetHitGroupRegion();
+    const VkStridedDeviceAddressRegionKHR CallableRegion = VulkanShaderBindingTable->GetCallableRegion();
+
+    const VkDeviceAddress IndirectDeviceAddress = VulkanArgumentBuffer->GetDeviceAddress() + ArgumentBufferOffset;
+    GetCommandBuffer()->TraceRaysIndirect(&RayGenRegion, &MissRegion, &HitGroupRegion, &CallableRegion, IndirectDeviceAddress);
+#else
+    UNREFERENCED_VARIABLE(ShaderBindingTable);
+    UNREFERENCED_VARIABLE(ArgumentBuffer);
+    UNREFERENCED_VARIABLE(ArgumentBufferOffset);
+#endif
+}
+
+void FVulkanCommandContext::ExecuteIndirectRayTracingAccelerationStructureOperations(const FRHIRayTracingAccelerationStructureOperationDesc* Operations, uint32 NumOperations)
+{
+#if VK_NV_cluster_acceleration_structure && VK_NV_partitioned_acceleration_structure
+    if (!Operations || NumOperations == 0)
+    {
+        return;
+    }
+
+    BarrierBatcher.FlushBarriers(GetCommandBuffer());
+
+    for (uint32 Index = 0; Index < NumOperations; ++Index)
+    {
+        const FRHIRayTracingAccelerationStructureOperationDesc& Operation = Operations[Index];
+
+        FVulkanBufferRHI* ArgumentBuffer    = FVulkanDeviceRHI::ResourceCast(Operation.ArgumentBuffer);
+        FVulkanBufferRHI* DestinationBuffer = FVulkanDeviceRHI::ResourceCast(Operation.DestinationBuffer);
+        FVulkanBufferRHI* ScratchBuffer     = FVulkanDeviceRHI::ResourceCast(Operation.ScratchBuffer);
+
+        const VkDeviceAddress ArgumentAddress    = ArgumentBuffer    ? (ArgumentBuffer->GetDeviceAddress()    + Operation.ArgumentBufferOffset) : 0;
+        const VkDeviceAddress DestinationAddress = DestinationBuffer ? (DestinationBuffer->GetDeviceAddress() + Operation.DestinationOffset)    : 0;
+        const VkDeviceAddress ScratchAddress     = ScratchBuffer     ? (ScratchBuffer->GetDeviceAddress()     + Operation.ScratchOffset)        : 0;
+
+        if (Operation.OperationType == ERayTracingAccelerationStructureOperationType::PartitionedSceneAccelerationStructure)
+        {
+            if (!vkCmdBuildPartitionedAccelerationStructuresNV)
+            {
+                continue;
+            }
+
+            VkPartitionedAccelerationStructureInstancesInputNV InstancesInput = {};
+            InstancesInput.sType                             = VK_STRUCTURE_TYPE_PARTITIONED_ACCELERATION_STRUCTURE_INSTANCES_INPUT_NV;
+            InstancesInput.instanceCount                     = Operation.ArgumentCount;
+            InstancesInput.maxInstancePerPartitionCount      = Operation.ArgumentCount;
+            InstancesInput.partitionCount                    = 1;
+            InstancesInput.maxInstanceInGlobalPartitionCount = Operation.ArgumentCount;
+
+            VkBuildPartitionedAccelerationStructureInfoNV BuildInfo = {};
+            BuildInfo.sType                        = VK_STRUCTURE_TYPE_BUILD_PARTITIONED_ACCELERATION_STRUCTURE_INFO_NV;
+            BuildInfo.input                        = InstancesInput;
+            BuildInfo.dstAccelerationStructureData = DestinationAddress;
+            BuildInfo.scratchData                  = ScratchAddress;
+            BuildInfo.srcInfos                     = ArgumentAddress;
+
+            GetCommandBuffer()->BuildPartitionedAccelerationStructures(&BuildInfo);
+        }
+        else
+        {
+            if (!vkCmdBuildClusterAccelerationStructureIndirectNV)
+            {
+                continue;
+            }
+
+            FVulkanClusterInputScratch Scratch = {};
+            Scratch.TriangleClusters.sType                         = VK_STRUCTURE_TYPE_CLUSTER_ACCELERATION_STRUCTURE_TRIANGLE_CLUSTER_INPUT_NV;
+            Scratch.TriangleClusters.vertexFormat                  = VK_FORMAT_R32G32B32_SFLOAT;
+            Scratch.TriangleClusters.maxGeometryIndexValue         = Operation.ClusterLimits.MaxGeometryIndex;
+            Scratch.TriangleClusters.maxClusterUniqueGeometryCount = 1;
+            Scratch.TriangleClusters.maxClusterTriangleCount       = Operation.ClusterLimits.MaxTrianglesPerCluster;
+            Scratch.TriangleClusters.maxClusterVertexCount         = Operation.ClusterLimits.MaxVerticesPerCluster;
+            Scratch.TriangleClusters.maxTotalTriangleCount         = Operation.ClusterLimits.MaxTrianglesPerCluster * Operation.ClusterLimits.MaxClusterCount;
+            Scratch.TriangleClusters.maxTotalVertexCount           = Operation.ClusterLimits.MaxVerticesPerCluster * Operation.ClusterLimits.MaxClusterCount;
+            Scratch.TriangleClusters.minPositionTruncateBitCount   = 0;
+
+            Scratch.ClustersBottomLevel.sType                                   = VK_STRUCTURE_TYPE_CLUSTER_ACCELERATION_STRUCTURE_CLUSTERS_BOTTOM_LEVEL_INPUT_NV;
+            Scratch.ClustersBottomLevel.maxTotalClusterCount                    = Operation.ClusterLimits.MaxClusterCount;
+            Scratch.ClustersBottomLevel.maxClusterCountPerAccelerationStructure = Operation.ClusterLimits.MaxClusterCount;
+
+            Scratch.MoveObjects.sType         = VK_STRUCTURE_TYPE_CLUSTER_ACCELERATION_STRUCTURE_MOVE_OBJECTS_INPUT_NV;
+            Scratch.MoveObjects.type          = VK_CLUSTER_ACCELERATION_STRUCTURE_TYPE_TRIANGLE_CLUSTER_NV;
+            Scratch.MoveObjects.noMoveOverlap = VK_FALSE;
+            Scratch.MoveObjects.maxMovedBytes = 0;
+
+            VkClusterAccelerationStructureInputInfoNV InputInfo = {};
+            InputInfo.sType                         = VK_STRUCTURE_TYPE_CLUSTER_ACCELERATION_STRUCTURE_INPUT_INFO_NV;
+            InputInfo.maxAccelerationStructureCount = Operation.ArgumentCount;
+            InputInfo.flags                         = ConvertAccelerationStructureBuildFlags(EAccelerationStructureBuildFlags::None);
+
+            switch (Operation.OperationType)
+            {
+                case ERayTracingAccelerationStructureOperationType::BuildClusterTemplatesFromTriangles:
+                    InputInfo.opType                    = VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_BUILD_TRIANGLE_CLUSTER_TEMPLATE_NV;
+                    InputInfo.opInput.pTriangleClusters = &Scratch.TriangleClusters;
+                    break;
+                case ERayTracingAccelerationStructureOperationType::InstantiateClusterTemplates:
+                    InputInfo.opType                    = VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_INSTANTIATE_TRIANGLE_CLUSTER_NV;
+                    InputInfo.opInput.pTriangleClusters = &Scratch.TriangleClusters;
+                    break;
+                case ERayTracingAccelerationStructureOperationType::BuildGeometryAccelerationStructureFromClusters:
+                    InputInfo.opType                       = VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_BUILD_CLUSTERS_BOTTOM_LEVEL_NV;
+                    InputInfo.opInput.pClustersBottomLevel = &Scratch.ClustersBottomLevel;
+                    break;
+                case ERayTracingAccelerationStructureOperationType::MoveClusterObjects:
+                    InputInfo.opType               = VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_MOVE_OBJECTS_NV;
+                    InputInfo.opInput.pMoveObjects = &Scratch.MoveObjects;
+                    break;
+                default:
+                    InputInfo.opType                    = VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_BUILD_TRIANGLE_CLUSTER_NV;
+                    InputInfo.opInput.pTriangleClusters = &Scratch.TriangleClusters;
+                    break;
+            }
+
+            VkClusterAccelerationStructureCommandsInfoNV CommandsInfo = {};
+            CommandsInfo.sType                       = VK_STRUCTURE_TYPE_CLUSTER_ACCELERATION_STRUCTURE_COMMANDS_INFO_NV;
+            CommandsInfo.input                       = InputInfo;
+            CommandsInfo.dstImplicitData             = DestinationAddress;
+            CommandsInfo.scratchData                 = ScratchAddress;
+            CommandsInfo.srcInfosArray.deviceAddress = ArgumentAddress;
+            CommandsInfo.srcInfosArray.stride        = Operation.ArgumentStride;
+            CommandsInfo.srcInfosArray.size          = uint64(Operation.ArgumentCount) * Operation.ArgumentStride;
+
+            GetCommandBuffer()->BuildClusterAccelerationStructureIndirect(&CommandsInfo);
+        }
+    }
+#else
+    UNREFERENCED_VARIABLE(Operations);
+    UNREFERENCED_VARIABLE(NumOperations);
+#endif
 }
 
 void FVulkanCommandContext::TransitionTextureState(FRHITexture* Texture, const FRHITextureTransition& TextureTransition)
@@ -2447,16 +2872,6 @@ void FVulkanCommandContext::DispatchMesh(uint32 ThreadGroupCountX, uint32 Thread
     UNREFERENCED_VARIABLE(ThreadGroupCountZ);
     VULKAN_WARNING("DispatchMesh called but VK_EXT_mesh_shader is not available in this build");
 #endif // VK_EXT_mesh_shader
-}
-
-void FVulkanCommandContext::DispatchRays(FRHISceneAccelerationStructure* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
-{
-    // TODO: Implement Vulkan RT
-    UNREFERENCED_VARIABLE(InScene);
-    UNREFERENCED_VARIABLE(InPipelineState);
-    UNREFERENCED_VARIABLE(InWidth);
-    UNREFERENCED_VARIABLE(InHeight);
-    UNREFERENCED_VARIABLE(InDepth);
 }
 
 void FVulkanCommandContext::PresentSwapChain(FRHISwapChain* InSwapChain, bool bVerticalSync)

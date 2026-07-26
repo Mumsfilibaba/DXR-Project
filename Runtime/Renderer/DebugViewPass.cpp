@@ -199,6 +199,9 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
     RequirePixelIfNotRT(FrameResources.CascadeIndexBuffer.Get());
     RequirePixelIfNotRT(FrameResources.TonemappedTarget.Get());
     RequirePixelIfNotRT(FrameResources.SceneTarget.Get());
+    RequirePixelIfNotRT(FrameResources.RayTracingOutput.Get());
+    RequirePixelIfNotRT(FrameResources.ReflectionTrace.Get());
+    RequirePixelIfNotRT(FrameResources.ReflectionDenoised[0].Get());
 
     FRHIRenderTargetView* RenderTargetView = RenderTarget->GetRenderTargetView();
 
@@ -255,6 +258,21 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
         CommandList.SetShaderResourceView(DebugPixelShader.Get(), LitSourceTexture->GetShaderResourceView(), 9);
     }
 
+    if (FrameResources.RayTracingOutput)
+    {
+        CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.RayTracingOutput->GetShaderResourceView(), 10);
+    }
+
+    if (FrameResources.ReflectionTrace)
+    {
+        CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.ReflectionTrace->GetShaderResourceView(), 11);
+    }
+
+    if (FRHITexture* TemporalHistory = FrameResources.ReflectionHistory[FrameResources.ReflectionHistoryIndex].Get())
+    {
+        CommandList.SetShaderResourceView(DebugPixelShader.Get(), TemporalHistory->GetShaderResourceView(), 12);
+    }
+
     CommandList.SetConstantBuffer(DebugPixelShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
     FRHISamplerState* PointSampler  = FrameResources.GBufferSampler.Get();
@@ -276,14 +294,14 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
         int32 bIsOutputSceneTarget = 0;
     } Constants;
 
-    Constants.DebugMode          = static_cast<int32>(DebugView);
-    Constants.ShadowMapSize      = FrameResources.ShadowCascades ? static_cast<int32>(FrameResources.ShadowCascades->GetDesc().Extent.X) : 0;
-    Constants.OutputWidth        = ViewWidth;
-    Constants.OutputHeight       = ViewHeight;
-    Constants.ViewX              = ViewX;
-    Constants.ViewY              = ViewY;
-    Constants.TargetWidth        = TargetWidth;
-    Constants.TargetHeight       = TargetHeight;
+    Constants.DebugMode            = static_cast<int32>(DebugView);
+    Constants.ShadowMapSize        = FrameResources.ShadowCascades ? static_cast<int32>(FrameResources.ShadowCascades->GetDesc().Extent.X) : 0;
+    Constants.OutputWidth          = ViewWidth;
+    Constants.OutputHeight         = ViewHeight;
+    Constants.ViewX                = ViewX;
+    Constants.ViewY                = ViewY;
+    Constants.TargetWidth          = TargetWidth;
+    Constants.TargetHeight         = TargetHeight;
     Constants.bIsOutputSceneTarget = (RenderTarget->GetDesc().Format == RendererTextureFormats::SceneTargetFormat) ? 1 : 0;
 
     constexpr uint32 NumConstants = sizeof(FDebugViewConstants) / sizeof(uint32);

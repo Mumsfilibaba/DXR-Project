@@ -34,9 +34,15 @@ FVulkanCommandContextState::~FVulkanCommandContextState()
         delete Entry.Second.State;
     }
 
+    for (auto Entry : RayTracingState.DescriptorStates)
+    {
+        delete Entry.Second.State;
+    }
+
     ComputeState.DescriptorStates.Clear();
     GraphicsState.DescriptorStates.Clear();
     MeshletState.DescriptorStates.Clear();
+    RayTracingState.DescriptorStates.Clear();
 }
 
 bool FVulkanCommandContextState::Initialize()
@@ -111,7 +117,11 @@ void FVulkanCommandContextState::BindGraphicsState()
     if (GraphicsState.bBindVertexBuffers || GVulkanForceBinding)
     {
         FVulkanVertexBufferCache& VertexBufferCache = GraphicsState.VertexBufferCache;
-        Context.GetCommandBuffer()->BindVertexBuffers(0, VertexBufferCache.NumVertexBuffers, VertexBufferCache.VertexBuffers, VertexBufferCache.VertexBufferOffsets);
+        if (VertexBufferCache.NumVertexBuffers > 0)
+        {
+            Context.GetCommandBuffer()->BindVertexBuffers(0, VertexBufferCache.NumVertexBuffers, VertexBufferCache.VertexBuffers, VertexBufferCache.VertexBufferOffsets);
+        }
+
         GraphicsState.bBindVertexBuffers = false;
     }
 
@@ -366,6 +376,11 @@ void FVulkanCommandContextState::ResetState()
     MeshletState.CurrentLayout             = nullptr;
     MeshletState.bBindPipelineState        = true;
     MeshletState.bBindPushConstants        = true;
+    RayTracingState.PipelineState          = nullptr;
+    RayTracingState.CurrentDescriptorState = nullptr;
+    RayTracingState.CurrentLayout          = nullptr;
+    RayTracingState.bBindPipelineState     = true;
+    RayTracingState.bBindPushConstants     = true;
     bMeshletPipelineActive                 = false;
 }
 
@@ -385,6 +400,8 @@ void FVulkanCommandContextState::ResetStateForNewCommandBuffer()
     ComputeState.bBindPushConstants        = true;
     MeshletState.bBindPipelineState        = true;
     MeshletState.bBindPushConstants        = true;
+    RayTracingState.bBindPipelineState     = true;
+    RayTracingState.bBindPushConstants     = true;
 
     if (GraphicsState.CurrentDescriptorState)
     {
@@ -399,6 +416,11 @@ void FVulkanCommandContextState::ResetStateForNewCommandBuffer()
     if (MeshletState.CurrentDescriptorState)
     {
         MeshletState.CurrentDescriptorState->DirtyDescriptorSet();
+    }
+
+    if (RayTracingState.CurrentDescriptorState)
+    {
+        RayTracingState.CurrentDescriptorState->DirtyDescriptorSet();
     }
 }
 
@@ -1144,7 +1166,7 @@ void FVulkanCommandContextState::SetPushConstants(const uint32* ShaderConstants,
 void FVulkanCommandContextState::SetSRV(FVulkanShaderResourceViewRHI* ShaderResourceView, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex)
 {
     CHECK(ResourceIndex < VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
-    
+
     FVulkanPipelineLayout*  Layout          = nullptr;
     FVulkanDescriptorState* DescriptorState = nullptr;
 
@@ -1152,6 +1174,11 @@ void FVulkanCommandContextState::SetSRV(FVulkanShaderResourceViewRHI* ShaderReso
     {
         Layout          = ComputeState.CurrentLayout;
         DescriptorState = ComputeState.CurrentDescriptorState;
+    }
+    else if (ShaderStage == EShaderVisibility::RayTracing)
+    {
+        Layout          = RayTracingState.CurrentLayout;
+        DescriptorState = RayTracingState.CurrentDescriptorState;
     }
     else if (bMeshletPipelineActive)
     {
@@ -1197,6 +1224,11 @@ void FVulkanCommandContextState::SetUAV(FVulkanUnorderedAccessViewRHI* Unordered
         Layout          = ComputeState.CurrentLayout;
         DescriptorState = ComputeState.CurrentDescriptorState;
     }
+    else if (ShaderStage == EShaderVisibility::RayTracing)
+    {
+        Layout          = RayTracingState.CurrentLayout;
+        DescriptorState = RayTracingState.CurrentDescriptorState;
+    }
     else if (bMeshletPipelineActive)
     {
         Layout          = MeshletState.CurrentLayout;
@@ -1232,7 +1264,7 @@ void FVulkanCommandContextState::SetUAV(FVulkanUnorderedAccessViewRHI* Unordered
 void FVulkanCommandContextState::SetUniformBuffer(FVulkanBufferRHI* UniformBuffer, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex)
 {
     CHECK(ResourceIndex < VULKAN_DEFAULT_UNIFORM_BUFFER_COUNT);
-    
+
     FVulkanPipelineLayout*  Layout          = nullptr;
     FVulkanDescriptorState* DescriptorState = nullptr;
 
@@ -1240,6 +1272,11 @@ void FVulkanCommandContextState::SetUniformBuffer(FVulkanBufferRHI* UniformBuffe
     {
         Layout          = ComputeState.CurrentLayout;
         DescriptorState = ComputeState.CurrentDescriptorState;
+    }
+    else if (ShaderStage == EShaderVisibility::RayTracing)
+    {
+        Layout          = RayTracingState.CurrentLayout;
+        DescriptorState = RayTracingState.CurrentDescriptorState;
     }
     else if (bMeshletPipelineActive)
     {
@@ -1285,6 +1322,11 @@ void FVulkanCommandContextState::SetSampler(FVulkanSamplerStateRHI* SamplerState
         Layout          = ComputeState.CurrentLayout;
         DescriptorState = ComputeState.CurrentDescriptorState;
     }
+    else if (ShaderStage == EShaderVisibility::RayTracing)
+    {
+        Layout          = RayTracingState.CurrentLayout;
+        DescriptorState = RayTracingState.CurrentDescriptorState;
+    }
     else if (bMeshletPipelineActive)
     {
         Layout          = MeshletState.CurrentLayout;
@@ -1315,6 +1357,95 @@ void FVulkanCommandContextState::SetSampler(FVulkanSamplerStateRHI* SamplerState
     }
     
     DescriptorState->SetSampler(SamplerState, DescriptorSetIndex, BindingIndex);
+}
+
+void FVulkanCommandContextState::SetRayTracingPipelineState(FVulkanRayTracingPipelineStateRHI* InRayTracingPipelineState)
+{
+    if (RayTracingState.PipelineState.Get() != InRayTracingPipelineState || GVulkanForceBinding)
+    {
+        RayTracingState.PipelineState      = MakeSharedRef<FVulkanRayTracingPipelineStateRHI>(InRayTracingPipelineState);
+        RayTracingState.bBindPipelineState = true;
+
+        if (InRayTracingPipelineState)
+        {
+            RayTracingState.CurrentLayout = InRayTracingPipelineState->GetPipelineLayout();
+
+            if (FCachedDescriptorState* Cached = RayTracingState.DescriptorStates.Find(InRayTracingPipelineState))
+            {
+                Cached->LastUsedFrame                  = CurrentFrame;
+                RayTracingState.CurrentDescriptorState = Cached->State;
+
+                if (GVulkanForceBinding)
+                {
+                    RayTracingState.CurrentDescriptorState->Reset();
+                }
+            }
+            else
+            {
+                FVulkanDescriptorState* NewState = new FVulkanDescriptorState(GetDevice(), RayTracingState.CurrentLayout, GetDevice()->GetDefaultResources());
+
+                FCachedDescriptorState NewEntry;
+                NewEntry.State         = NewState;
+                NewEntry.LastUsedFrame = CurrentFrame;
+
+                RayTracingState.DescriptorStates.Add(InRayTracingPipelineState, NewEntry);
+                RayTracingState.CurrentDescriptorState = NewState;
+            }
+        }
+        else
+        {
+            RayTracingState.CurrentLayout          = nullptr;
+            RayTracingState.CurrentDescriptorState = nullptr;
+        }
+
+        RayTracingState.bBindPushConstants = true;
+    }
+}
+
+void FVulkanCommandContextState::PrepareRayTracingState()
+{
+    if (!RayTracingState.PipelineState)
+    {
+        return;
+    }
+
+    if (RayTracingState.CurrentDescriptorState->IsResourcesDirty())
+    {
+        RayTracingState.CurrentDescriptorState->UpdateDescriptorSets(Context.GetTransientDescriptorAllocator());
+        RayTracingState.CurrentDescriptorState->ClearResourcesDirty();
+    }
+
+    RayTracingState.CurrentDescriptorState->TransitionBoundResources(Context);
+    Context.GetBarrierBatcher().FlushBarriers(Context.GetCommandBuffer());
+}
+
+void FVulkanCommandContextState::BindRayTracingState()
+{
+#if VK_KHR_ray_tracing_pipeline
+    if (!RayTracingState.PipelineState)
+    {
+        return;
+    }
+
+    if (RayTracingState.bBindPipelineState || GVulkanForceBinding)
+    {
+        Context.GetCommandBuffer()->BindPipeline(VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, RayTracingState.PipelineState->GetVkPipeline());
+        RayTracingState.bBindPipelineState = false;
+    }
+
+    if (RayTracingState.CurrentDescriptorState->IsDescriptorSetDirty() || GVulkanForceBinding)
+    {
+        RayTracingState.CurrentDescriptorState->BindRayTracingDescriptorSets(Context.GetCommandBuffer());
+        RayTracingState.CurrentDescriptorState->ClearDescriptorSetDirty();
+    }
+
+    FVulkanPipelineLayout* PipelineLayout = RayTracingState.PipelineState->GetPipelineLayout();
+    if (RayTracingState.bBindPushConstants || GVulkanForceBinding)
+    {
+        BindPushConstants(PipelineLayout);
+        RayTracingState.bBindPushConstants = false;
+    }
+#endif
 }
 
 void FVulkanCommandContextState::EvictStaleDescriptorStates()
@@ -1404,6 +1535,33 @@ void FVulkanCommandContextState::EvictStaleDescriptorStates()
                 if (MeshletState.CurrentDescriptorState == Cached.State)
                 {
                     MeshletState.CurrentDescriptorState = nullptr;
+                }
+
+                delete Cached.State;
+                EvictedCount++;
+            }
+        }
+    }
+
+    // Evict stale ray tracing descriptor states
+    {
+        TArray<FVulkanRayTracingPipelineStateRHI*> StaleKeys;
+        RayTracingState.DescriptorStates.Foreach([&StaleKeys, EvictionCutoff](FVulkanRayTracingPipelineStateRHI* const& Key, const FCachedDescriptorState& Cached)
+        {
+            if (Cached.LastUsedFrame < EvictionCutoff)
+            {
+                StaleKeys.Add(Key);
+            }
+        });
+
+        for (FVulkanRayTracingPipelineStateRHI* Key : StaleKeys)
+        {
+            FCachedDescriptorState Cached;
+            if (RayTracingState.DescriptorStates.RemoveKey(Key, &Cached))
+            {
+                if (RayTracingState.CurrentDescriptorState == Cached.State)
+                {
+                    RayTracingState.CurrentDescriptorState = nullptr;
                 }
 
                 delete Cached.State;

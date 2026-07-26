@@ -154,15 +154,17 @@ struct FD3D12ShaderBindingInfo
         uint8             BindingIndex;
         uint16            OriginalBindingIndex;
         String            DebugName;
+        bool              bIsTexture = false;
     };
     
-    void AddBinding(ED3D12BindingType InType, uint16 InOriginalBindingIndex, const String& InDebugName)
+    void AddBinding(ED3D12BindingType InType, uint16 InOriginalBindingIndex, const String& InDebugName, bool bInIsTexture = false)
     {
         FResourceBinding& Binding    = ResourceBindings.Emplace();
         Binding.BindingType          = InType;
         Binding.BindingIndex         = 0;
         Binding.OriginalBindingIndex = InOriginalBindingIndex;
         Binding.DebugName            = InDebugName;
+        Binding.bIsTexture           = bInIsTexture;
     }
 
     TArray<FResourceBinding> ResourceBindings;

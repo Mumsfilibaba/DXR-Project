@@ -2,6 +2,7 @@
 #include "Core/Mac/Mac.h"
 #include "Core/Generic/GenericPlatformFile.h"
 #include <sys/stat.h>
+#include <cerrno>
 
 class CORE_API FMacFileHandle : public IPlatformFile
 {
@@ -75,6 +76,12 @@ struct CORE_API FMacPlatformFile final : public FGenericPlatformFile
     {
         struct stat FileStat;
         return ::stat(Path, &FileStat) == 0;
+    }
+
+    static FORCEINLINE bool CreateDirectory(const CHAR* Path)
+    {
+        // Success if the directory was created now or already existed
+        return (::mkdir(Path, 0755) == 0) || (errno == EEXIST);
     }
 
     static FORCEINLINE bool IsPathRelative(const CHAR* Filepath)

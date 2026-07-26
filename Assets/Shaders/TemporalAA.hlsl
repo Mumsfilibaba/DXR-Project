@@ -3,9 +3,17 @@
 #include "Helpers.hlsli"
 #include "FilterFunction.hlsli"
 
-#define NUM_THREADS (16)
-#define FLT_EPS (0.00000001)
-#define HDR_CORRECTION (1)
+#ifndef NUM_THREADS
+    #define NUM_THREADS (16)
+#endif
+
+#ifndef FLT_EPS
+    #define FLT_EPS (0.00000001)
+#endif
+
+#ifndef HDR_CORRECTION
+    #define HDR_CORRECTION (1)
+#endif
 
 TEXTURE_FORMAT_UNKNOWN RWTexture2D<float4> SceneTarget : register(u0);
 TEXTURE_FORMAT_UNKNOWN RWTexture2D<float4> Output      : register(u1);
@@ -135,9 +143,8 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
 
     const float3 CompressedSource  = CurrentSample * rcp(max(max(CurrentSample.r, CurrentSample.g), CurrentSample.b) + 1.0);
     const float3 CompressedHistory = HistorySample * rcp(max(max(HistorySample.r, HistorySample.g), HistorySample.b) + 1.0);
-    
-    const float LuminanceSource  = Luminance(CompressedSource);
-    const float LuminanceHistory = Luminance(CompressedHistory); 
+    const float  LuminanceSource   = Luminance(CompressedSource);
+    const float  LuminanceHistory  = Luminance(CompressedHistory); 
     
     // Calculate weights
 #if HDR_CORRECTION

@@ -29,11 +29,11 @@
     TEXTURE_FORMAT_UNKNOWN RWTexture2D<float4> OutputMip4 : register(u3);
 #endif
 
-// Linear sampler
 SamplerState LinearSampler : register(s0);
 
 // Properties
 SHADER_CONSTANT_BLOCK_BEGIN
+    // 0-16
     uint   SrcMipLevel;   // Texture level of source mip
     uint   NumMipLevels;  // Number of OutMips to write: [1, 4]
     float2 TexelSize;     // 1.0 / OutputMip1.Dimensions
@@ -119,6 +119,7 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID, uint GroupIndex : SV_Gro
     // power-of-two sized textures.  Trying to handle the undersampling case
     // will force this shader to be slower and more complicated as it will
     // have to take more source texture samples.
+
 #if CONFIG_CUBE_MAP
     float3 TexCoord = float3((DispatchThreadID.xy * Constants.TexelSize) - 0.5f, 0.5f);
     TexCoord = normalize(mul(RotateUV[DispatchThreadID.z], TexCoord));

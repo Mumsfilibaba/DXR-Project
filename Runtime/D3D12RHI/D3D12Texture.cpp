@@ -5,6 +5,11 @@
 #include "D3D12RHI/D3D12RHI.h"
 #include "RHI/RHIStats.h"
 
+static bool ShouldUseDefaultState(D3D12_RESOURCE_STATES CandidateDefaultState, D3D12_RESOURCE_STATES RequestedInitialState)
+{
+    return (CandidateDefaultState != D3D12_RESOURCE_STATES(0)) && ((RequestedInitialState & ~CandidateDefaultState) == D3D12_RESOURCE_STATES(0));
+}
+
 FD3D12TextureRHI::FD3D12TextureRHI(FD3D12Device* InDevice, const FRHITextureDesc& InTextureDesc)
     : FD3D12TextureBase(InTextureDesc)
     , FD3D12ResourceBase(InDevice)
@@ -123,10 +128,29 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
         }
     }
 
-    const D3D12_RESOURCE_STATES D3D12DefaultState = DetermineDefaultTextureState(Desc.UsageFlags);
+    const D3D12_RESOURCE_STATES CandidateDefaultState = DetermineDefaultTextureState(Desc.UsageFlags);
+    const D3D12_RESOURCE_STATES RequestedInitialState = ConvertResourceState(InInitialAccess);
+
+    const bool bHasDefaultState = ShouldUseDefaultState(CandidateDefaultState, RequestedInitialState);
+    const D3D12_RESOURCE_STATES D3D12DefaultState = bHasDefaultState ? CandidateDefaultState : D3D12_RESOURCE_STATES(0);
+
+    D3D12_RESOURCE_STATES D3D12CreateState;
+    if (InInitialData != nullptr)
+    {
+        D3D12CreateState = D3D12_RESOURCE_STATE_COPY_DEST;
+    }
+    else if (bHasDefaultState)
+    {
+        D3D12CreateState = D3D12DefaultState;
+    }
+    else
+    {
+        D3D12CreateState = RequestedInitialState;
+    }
+
     const bool bAllocated = GetDevice()->GetTextureAllocator()->TryAllocate(
         ResourceDesc, 
-        D3D12_RESOURCE_STATE_COMMON, 
+        D3D12CreateState, 
         bSupportClearValue ? &ClearValue : nullptr, 
         ResourceStorage);
 
@@ -416,15 +440,32 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
         DepthStencilView = DefaultDSV;
     }
 
-    const bool bHasDefaultState = D3D12DefaultState != D3D12_RESOURCE_STATES(0);
     const ED3D12ResourceStateMode TextureStateMode = bHasDefaultState
         ? ED3D12ResourceStateMode::SingleState
         : ED3D12ResourceStateMode::MultipleStates;
 
-    if (const IRHITextureData* InitialData = InInitialData)
+    if (ResourceStorage.GetResource()->IsPlacedResource())
     {
         InCommandContext->StartContext();
-        InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::CopyDest));
+
+        InCommandContext->AliasingBarrier(GetResource());
+        InCommandContext->GetBarrierBatcher().FlushBarriers(InCommandContext->GetCommandList());
+
+        const bool bWillBeInitialized = (InInitialData != nullptr) || bSupportClearValue;
+        const bool bDiscardable       = (D3D12CreateState & (D3D12_RESOURCE_STATE_UNORDERED_ACCESS | D3D12_RESOURCE_STATE_RENDER_TARGET | D3D12_RESOURCE_STATE_DEPTH_WRITE)) != 0;
+
+        if (!bWillBeInitialized && bDiscardable)
+        {
+            InCommandContext->GetCommandList()->DiscardResource(GetResource()->GetD3D12Resource(), nullptr);
+        }
+
+        InCommandContext->FinishContext();
+    }
+
+    if (const IRHITextureData* InitialData = InInitialData)
+    {
+        // Resource was created in COPY_DEST; no COMMON->COPY_DEST fixup needed.
+        InCommandContext->StartContext();
 
         CHECK(IsTextureCube(Desc.Dimension) || !Desc.IsTexture3D() || Desc.NumArraySlices == 1);
 
@@ -534,8 +575,15 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
             Depth  = Math::Max(1u, Depth >> 1);
         }
 
-        // NOTE: Transition into InitialAccess
-        InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::CopyDest, InInitialAccess));
+        const EResourceAccess RestingAccess = (bHasDefaultState && Desc.IsShaderResourceTexture())
+            ? EResourceAccess::ShaderResource
+            : InInitialAccess;
+
+        if (RestingAccess != EResourceAccess::CopyDest)
+        {
+            InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::CopyDest, RestingAccess));
+        }
+
         InCommandContext->FinishContext();
     }
     else if (ResourceStorage.IsPlacedResource() && bSupportClearValue)
@@ -544,7 +592,11 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
 
         if (Desc.IsRenderTarget())
         {
-            InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::RenderTarget));
+            if (InInitialAccess != EResourceAccess::RenderTarget)
+            {
+                InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(InInitialAccess, EResourceAccess::RenderTarget));
+            }
+
             InCommandContext->GetBarrierBatcher().FlushBarriers(InCommandContext->GetCommandList());
 
             FD3D12RenderTargetViewRHI* D3D12RenderTargetView = nullptr;
@@ -648,7 +700,11 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
         }
         else if (Desc.IsDepthStencil())
         {
-            InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::DepthWrite));
+            if (InInitialAccess != EResourceAccess::DepthWrite)
+            {
+                InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(InInitialAccess, EResourceAccess::DepthWrite));
+            }
+
             InCommandContext->GetBarrierBatcher().FlushBarriers(InCommandContext->GetCommandList());
 
             FD3D12DepthStencilViewRHI* D3D12DepthStencilView = nullptr;
@@ -748,12 +804,6 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
 
         InCommandContext->FinishContext();
     }
-    else if (InInitialAccess != EResourceAccess::Common)
-    {
-        InCommandContext->StartContext();
-        InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::Common, InInitialAccess));
-        InCommandContext->FinishContext();
-    }
 
     GetResource()->SetResourceStateMode(TextureStateMode);
 
@@ -784,5 +834,3 @@ void FD3D12TextureRHI::GetDebugName(String& OutDebugName) const
         OutDebugName.Clear();
     }
 }
-
-// FD3D12BackBufferProxyTextureRHI implementation moved to D3D12BackBufferProxies.cpp

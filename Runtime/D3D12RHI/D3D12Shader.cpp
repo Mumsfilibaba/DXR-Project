@@ -28,7 +28,7 @@ static bool IsBufferUAV(D3D_SHADER_INPUT_TYPE Type)
 
 static bool IsRayTracingLocalSpace(uint32 RegisterSpace)
 {
-    return RegisterSpace == D3D12_SHADER_REGISTER_SPACE_RT_LOCAL;
+    return RegisterSpace == D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL;
 }
 
 static bool IsLegalRegisterSpace(const D3D12_SHADER_INPUT_BIND_DESC& ShaderBindDesc)
@@ -714,23 +714,19 @@ bool FD3D12RayTracingShader::GetShaderResourceBindings(ID3D12FunctionReflection*
         {
             if (bIsLocalSpace)
             {
-                D3D12_ERROR_CRITICAL("Shader Parameter '%s': Samplers are not supported in RT local root signatures (space %u). Only buffer resources are allowed.", ShaderBindDesc.Name, ShaderBindDesc.Space);
-                return false;
+                NewLocalBindingInfo.AddBinding(ED3D12BindingType::Sampler, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
             }
-
-            NewBindingInfo.AddBinding(ED3D12BindingType::Sampler, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
+            else
+            {
+                NewBindingInfo.AddBinding(ED3D12BindingType::Sampler, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
+            }
         }
         else if (IsShaderResourceView(ShaderBindDesc.Type))
         {
             if (bIsLocalSpace)
             {
-                if (!IsBufferSRV(ShaderBindDesc.Type))
-                {
-                    D3D12_ERROR_CRITICAL("Shader Parameter '%s': Texture SRVs are not supported in RT local root signatures (space %u). Only buffer SRVs are allowed.", ShaderBindDesc.Name, ShaderBindDesc.Space);
-                    return false;
-                }
-
-                NewLocalBindingInfo.AddBinding(ED3D12BindingType::SRV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name);
+                const bool bIsTexture = !IsBufferSRV(ShaderBindDesc.Type);
+                NewLocalBindingInfo.AddBinding(ED3D12BindingType::SRV, static_cast<uint16>(ShaderBindDesc.BindPoint), ShaderBindDesc.Name, bIsTexture);
             }
             else
             {
@@ -869,7 +865,7 @@ bool FD3D12RayTracingShader::Initialize(const TArray<uint8>& InCode)
 		return false;
 	}
 
-	if (LibraryDesc.FunctionCount > 0)
+	if (LibraryDesc.FunctionCount == 0)
 	{
         D3D12_ERROR("[FD3D12RayTracingShader]: No functions in shader-library");
 		return false;
@@ -879,7 +875,7 @@ bool FD3D12RayTracingShader::Initialize(const TArray<uint8>& InCode)
 	ID3D12FunctionReflection* Function = Reflection->GetFunctionByIndex(0);
 
 	D3D12_FUNCTION_DESC FunctionDesc = {};
-	Function->GetDesc(&FunctionDesc);
+	Result = Function->GetDesc(&FunctionDesc);
 	if (FAILED(Result))
 	{
 		return false;

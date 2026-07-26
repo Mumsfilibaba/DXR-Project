@@ -6,11 +6,10 @@
 
 enum class EBufferViewType : uint8
 {
-    Unknown     = 0, // Sentinel / default-constructed; backend treats as invalid
-    Structured,      // Stride-driven view (uses FRHIBufferDesc::Stride)
-    ByteAddress,     // ByteAddress / Raw view
-                     // - D3D12: DXGI_FORMAT_R32_TYPELESS + D3D12_BUFFER_SRV/UAV_FLAG_RAW
-                     // - Vulkan: VK_FORMAT_R32_UINT typed buffer view
+    Unknown = 0,  // Unknown
+    Structured,   // StructuredBuffer<T>, RWStructuredBuffer<T>
+    ByteAddress,  // ByteAddressBuffer, RWByteAddressBuffer
+    Typed,        // Buffer<T>, RWBuffer<T>
 };
 
 NODISCARD constexpr const CHAR* ToString(EBufferViewType ViewType)
@@ -19,6 +18,7 @@ NODISCARD constexpr const CHAR* ToString(EBufferViewType ViewType)
     {
         case EBufferViewType::Structured:  return "Structured";
         case EBufferViewType::ByteAddress: return "ByteAddress";
+        case EBufferViewType::Typed:       return "Typed";
         default:                           return "Unknown";
     }
 }
@@ -202,6 +202,7 @@ public:
         EBufferViewType Type;
         uint32          FirstElement;
         uint32          NumElements;
+        EFormat         Format;
     };
 
     struct FTexture1DSRV
@@ -295,6 +296,18 @@ public:
         Desc.Buffer.Type         = InType;
         Desc.Buffer.FirstElement = InFirstElement;
         Desc.Buffer.NumElements  = InNumElements;
+        Desc.Buffer.Format       = EFormat::Unknown;
+        return Desc;
+    }
+
+    NODISCARD static FRHIShaderResourceViewDesc CreateTypedBuffer(uint32 InFirstElement, uint32 InNumElements, EFormat InFormat)
+    {
+        FRHIShaderResourceViewDesc Desc;
+        Desc.ViewDimension       = EViewDimension::Buffer;
+        Desc.Buffer.Type         = EBufferViewType::Typed;
+        Desc.Buffer.FirstElement = InFirstElement;
+        Desc.Buffer.NumElements  = InNumElements;
+        Desc.Buffer.Format       = InFormat;
         return Desc;
     }
 
@@ -646,6 +659,7 @@ public:
         EBufferViewType Type;
         uint32          FirstElement;
         uint32          NumElements;
+        EFormat         Format; // Only used when Type == EBufferViewType::Typed
     };
 
     struct FTexture1DUAV
@@ -722,6 +736,18 @@ public:
         Desc.Buffer.Type         = InType;
         Desc.Buffer.FirstElement = InFirstElement;
         Desc.Buffer.NumElements  = InNumElements;
+        Desc.Buffer.Format       = EFormat::Unknown;
+        return Desc;
+    }
+
+    NODISCARD static FRHIUnorderedAccessViewDesc CreateTypedBuffer(uint32 InFirstElement, uint32 InNumElements, EFormat InFormat)
+    {
+        FRHIUnorderedAccessViewDesc Desc;
+        Desc.ViewDimension       = EViewDimension::Buffer;
+        Desc.Buffer.Type         = EBufferViewType::Typed;
+        Desc.Buffer.FirstElement = InFirstElement;
+        Desc.Buffer.NumElements  = InNumElements;
+        Desc.Buffer.Format       = InFormat;
         return Desc;
     }
 

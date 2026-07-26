@@ -10,6 +10,16 @@
 
 static inline EShaderVisibility::Type GetShaderVisibilityFromShaderFlag(VkShaderStageFlags ShaderStage)
 {
+    constexpr VkShaderStageFlags RayTracingStageMask =
+        VK_SHADER_STAGE_RAYGEN_BIT_KHR       | VK_SHADER_STAGE_MISS_BIT_KHR     |
+        VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR  | VK_SHADER_STAGE_ANY_HIT_BIT_KHR  |
+        VK_SHADER_STAGE_INTERSECTION_BIT_KHR | VK_SHADER_STAGE_CALLABLE_BIT_KHR;
+
+    if ((ShaderStage & RayTracingStageMask) != 0)
+    {
+        return EShaderVisibility::RayTracing;
+    }
+
     switch(ShaderStage)
     {
     case VK_SHADER_STAGE_VERTEX_BIT:                  return EShaderVisibility::Vertex;
@@ -23,6 +33,20 @@ static inline EShaderVisibility::Type GetShaderVisibilityFromShaderFlag(VkShader
     case VK_SHADER_STAGE_MESH_BIT_EXT:                return EShaderVisibility::Mesh;
 #endif
     default:                                          return EShaderVisibility::Compute;
+    }
+}
+
+static EResourceType::Type GetResourceBucket(EVulkanBindingType::Type BindingType)
+{
+    switch (BindingType)
+    {
+    case EVulkanBindingType::UniformBuffer:
+    case EVulkanBindingType::UniformBufferDynamic:   return EResourceType::UniformBuffer;
+    case EVulkanBindingType::Sampler:
+    case EVulkanBindingType::ImmutableSampler:       return EResourceType::Sampler;
+    case EVulkanBindingType::StorageImage:
+    case EVulkanBindingType::StorageBufferReadWrite: return EResourceType::UAV;
+    default:                                         return EResourceType::SRV; // SampledImage, StorageBufferRead, AccelerationStructure
     }
 }
 
@@ -81,6 +105,79 @@ void FVulkanPipelineLayoutInfo::AddSetForStage(VkShaderStageFlagBits ShaderStage
 
     SetLayoutInfos.Add(Move(LayoutInfo));
     SetLayoutRemappings.Add(Move(LayoutRemappings));
+
+    if (ShaderInfo.UsesBindlessHeap())
+    {
+        bAnyStageUsesBindless = true;
+    }
+}
+
+void FVulkanPipelineLayoutInfo::MergeSetForStage(VkShaderStageFlagBits ShaderStage, const FVulkanShaderInfo& ShaderInfo)
+{
+    if (SetLayoutInfos.IsEmpty())
+    {
+        AddSetForStage(ShaderStage, ShaderInfo);
+        return;
+    }
+
+    FVulkanDescriptorSetLayoutInfo& LayoutInfo  = SetLayoutInfos[0];
+    FVulkanDescriptorRemappingInfo& LayoutRemap = SetLayoutRemappings[0];
+
+    for (const FVulkanShaderInfo::FResourceBinding& Binding : ShaderInfo.ResourceBindings)
+    {
+        const VkDescriptorType DescriptorType = GetDescriptorTypeFromBindingType(Binding.BindingType);
+
+        const EResourceType::Type Bucket = GetResourceBucket(Binding.BindingType);
+        int32 ExistingIndex = -1;
+        for (int32 Index = 0; Index < LayoutInfo.Bindings.Size(); ++Index)
+        {
+            if (LayoutRemap.RemappingInfo[Index].OriginalBindingIndex == Binding.OriginalBindingIndex &&
+                GetResourceBucket(LayoutRemap.RemappingInfo[Index].BindingType) == Bucket)
+            {
+                ExistingIndex = Index;
+                break;
+            }
+        }
+
+        if (ExistingIndex != -1)
+        {
+
+            const bool bTypeConflict = (LayoutInfo.Bindings[ExistingIndex].descriptorType != DescriptorType);
+            bool bNameConflict = false;
+        #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
+            bNameConflict = (LayoutRemap.DebugNames[ExistingIndex] != Binding.DebugName);
+        #endif
+            if (bTypeConflict || bNameConflict)
+            {
+                VULKAN_ERROR("Ray tracing register collision at register %u (class %d): stages disagree on the resource bound here; RT globals share one register namespace - give them distinct registers",
+                    Binding.OriginalBindingIndex, static_cast<int32>(Bucket));
+            }
+
+            LayoutInfo.Bindings[ExistingIndex].stageFlags |= ShaderStage;
+            continue;
+        }
+
+        const uint32 MergedBinding = static_cast<uint32>(LayoutInfo.Bindings.Size());
+
+        VkDescriptorSetLayoutBinding LayoutBinding = {};
+        LayoutBinding.descriptorCount    = 1;
+        LayoutBinding.binding            = MergedBinding;
+        LayoutBinding.pImmutableSamplers = nullptr;
+        LayoutBinding.stageFlags         = ShaderStage;
+        LayoutBinding.descriptorType     = DescriptorType;
+
+        LayoutInfo.Bindings.Add(LayoutBinding);
+
+        FVulkanDescriptorRemappingInfo::FRemappingInfo RemappingInfo;
+        RemappingInfo.BindingType          = Binding.BindingType;
+        RemappingInfo.BindingIndex         = static_cast<uint8>(MergedBinding);
+        RemappingInfo.OriginalBindingIndex = Binding.OriginalBindingIndex;
+
+        LayoutRemap.RemappingInfo.Add(RemappingInfo);
+    #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
+        LayoutRemap.DebugNames.Add(Binding.DebugName);
+    #endif
+    }
 
     if (ShaderInfo.UsesBindlessHeap())
     {
@@ -398,6 +495,30 @@ bool FVulkanPipelineLayout::GetDescriptorSetIndex(EShaderVisibility::Type Shader
     }
 }
 
+bool FVulkanPipelineLayout::GetRemappedBinding(EShaderVisibility::Type ShaderStage, EVulkanBindingType::Type BindingType,
+                                               uint16 OriginalBindingIndex, uint32& OutBinding) const
+{
+    const FStageDescriptorMap& StageMapping = DescriptorBindMap[ShaderStage];
+    if (StageMapping.DescriptorSetIndex == UINT8_MAX)
+    {
+        return false;
+    }
+
+    const EResourceType::Type             Bucket = GetResourceBucket(BindingType);
+    const FVulkanDescriptorRemappingInfo& Remap  = SetLayoutRemappings[StageMapping.DescriptorSetIndex];
+
+    for (const FVulkanDescriptorRemappingInfo::FRemappingInfo& Info : Remap.RemappingInfo)
+    {
+        if (Info.OriginalBindingIndex == OriginalBindingIndex && GetResourceBucket(Info.BindingType) == Bucket)
+        {
+            OutBinding = Info.BindingIndex;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo& LayoutInfo)
 {
     CHECK(LayoutInfo.SetLayoutInfos.Size() == LayoutInfo.SetLayoutRemappings.Size());
@@ -428,25 +549,39 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
             StageMapping.DescriptorSetIndex = static_cast<uint8>(SetIndex);
 
             const FVulkanDescriptorRemappingInfo::FRemappingInfo& RemappingInfo = StageMappingInfo.RemappingInfo[BindingIndex];
+
+            const auto CheckSlotCollision = [&](uint8 Slot, const CHAR* BucketName)
+            {
+                if (Slot != UINT8_MAX && Slot != static_cast<uint8>(BindingIndex))
+                {
+                    VULKAN_ERROR("Register namespace collision: %s register %u already maps to binding %u, now %u (RT stages must agree on the resource per register)",
+                        BucketName, RemappingInfo.OriginalBindingIndex, Slot, BindingIndex);
+                }
+            };
+
             switch(RemappingInfo.BindingType)
             {
             case EVulkanBindingType::UniformBuffer:
             case EVulkanBindingType::UniformBufferDynamic:
+                CheckSlotCollision(StageMapping.UniformMappings[RemappingInfo.OriginalBindingIndex], "CBV");
                 StageMapping.UniformMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
 
             case EVulkanBindingType::Sampler:
+                CheckSlotCollision(StageMapping.SamplerMappings[RemappingInfo.OriginalBindingIndex], "Sampler");
                 StageMapping.SamplerMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
 
             case EVulkanBindingType::SampledImage:
             case EVulkanBindingType::StorageBufferRead:
             case EVulkanBindingType::AccelerationStructure:
+                CheckSlotCollision(StageMapping.SRVMappings[RemappingInfo.OriginalBindingIndex], "SRV");
                 StageMapping.SRVMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
 
             case EVulkanBindingType::StorageImage:
             case EVulkanBindingType::StorageBufferReadWrite:
+                CheckSlotCollision(StageMapping.UAVMappings[RemappingInfo.OriginalBindingIndex], "UAV");
                 StageMapping.UAVMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
 

@@ -25,12 +25,16 @@ struct FSubMesh
     int32  MaterialIndex;
 };
 
-enum class EVertexStream
+struct EVertexStream
 {
-    Packed    = 0,
-    Positions = 1,
-    Normals   = 2,
-    TexCoords = 3,
+    enum Type
+    {
+        Packed    = 0,
+        Positions = 1,
+        Normals   = 2,
+        TexCoords = 3,
+        Count,
+    };
 };
 
 class ENGINE_API FMesh
@@ -39,11 +43,15 @@ public:
     FMesh();
     ~FMesh();
 
-    bool Init(const FMeshCreateInfo& CreateInfo);
+    bool Init(const FMeshCreateInfo& CreateInfo, bool bCreateVertexAndIndexSRVs = false);
     bool BuildAccelerationStructure(FRHICommandList& CommandList);
-    
-    FRHIBuffer* GetVertexBuffer(EVertexStream VertexStream) const;
-    FRHIShaderResourceView* GetVertexBufferSRV(EVertexStream VertexStream) const;
+
+    bool CreateVertexAndIndexSRVs();
+    bool CreateRayTracingGeometry();
+    void ReleaseRayTracingGeometry();
+
+    FRHIBuffer*             GetVertexBuffer(EVertexStream::Type VertexStream)    const;
+    FRHIShaderResourceView* GetVertexBufferSRV(EVertexStream::Type VertexStream) const;
     
     FRHIBuffer* GetIndexBuffer() const
     {
@@ -57,7 +65,7 @@ public:
     
     FRHIGeometryAccelerationStructure* GetRayTracingGeometry() const
     {
-        return RTGeometry.Get();
+        return RayTracingGeometry.Get();
     }
     
     void AddSubMesh(const FSubMesh& InSubMesh)
@@ -104,17 +112,11 @@ private:
     void CreateBoundingBox(const FMeshCreateInfo& CreateInfo);
 
     String                               MeshName;
-    FRHIBufferRef                        VertexBuffer;
-    FRHIShaderResourceViewRef            VertexBufferSRV;
-    FRHIBufferRef                        VertexPositionBuffer;
-    FRHIShaderResourceViewRef            VertexPositionBufferSRV;
-    FRHIBufferRef                        VertexNormalBuffer;
-    FRHIShaderResourceViewRef            VertexNormalBufferSRV;
-    FRHIBufferRef                        VertexTexCoordBuffer;
-    FRHIShaderResourceViewRef            VertexTexCoordBufferSRV;
+    FRHIBufferRef                        VertexBuffers[EVertexStream::Count];
+    FRHIShaderResourceViewRef            VertexBufferSRVs[EVertexStream::Count];
     FRHIBufferRef                        IndexBuffer;
     FRHIShaderResourceViewRef            IndexBufferSRV;
-    FRHIGeometryAccelerationStructureRef RTGeometry;
+    FRHIGeometryAccelerationStructureRef RayTracingGeometry;
     EIndexFormat                         IndexFormat;
     int32                                IndexCount;
     int32                                VertexCount;
@@ -142,8 +144,15 @@ public:
         return Materials[Index];
     }
 
-    int32 GetNumMeshes() const { return Meshes.Size(); }
-    int32 GetNumMaterials() const { return Materials.Size(); }
+    int32 GetNumMeshes() const
+    {
+        return Meshes.Size();
+    }
+    
+    int32 GetNumMaterials() const
+    {
+        return Materials.Size();
+    }
 
     const FAABB& GetAABB() const
     {

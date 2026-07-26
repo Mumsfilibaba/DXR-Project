@@ -46,13 +46,7 @@ FRHIDescriptorHandle FVulkanBufferRHI::GetBindlessHandle() const
         return FRHIDescriptorHandle();
     }
 
-    BindlessManager->EnqueueBufferWrite(
-        BindlessHandle,
-        GetBindVkBuffer(),
-        GetBindOffset(),
-        GetBindRange(),
-        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-
+    BindlessManager->EnqueueBufferWrite(BindlessHandle, GetBindVkBuffer(), GetBindOffset(), GetBindRange(), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
     return BindlessHandle;
 }
 
@@ -97,6 +91,7 @@ FVulkanBufferRHI::~FVulkanBufferRHI()
         {
             STAT_SUBTRACT(STAT_RHI_ReadbackMemory, AllocatedSize);
         }
+
         if (Desc.IsDynamic() || Desc.IsTransient())
         {
             STAT_SUBTRACT(STAT_RHI_UploadMemory, AllocatedSize);
@@ -131,6 +126,7 @@ bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, EReso
     if (Desc.IsVertexBuffer())
     {
         UsageFlags |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+
     #if VK_KHR_acceleration_structure
         if (bIsRayTracingSupported)
         {
@@ -140,9 +136,11 @@ bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, EReso
 
         RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, 1LLU);
     }
+
     if (Desc.IsIndexBuffer())
     {
         UsageFlags |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+
     #if VK_KHR_acceleration_structure
         if (bIsRayTracingSupported)
         {
@@ -152,25 +150,39 @@ bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, EReso
 
         RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, 1LLU);
     }
+
     if (Desc.IsConstantBuffer())
     {
         UsageFlags |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
         RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minUniformBufferOffsetAlignment);
     }
+
     if (Desc.IsUnorderedAccessBuffer() || Desc.IsShaderResourceBuffer())
     {
         UsageFlags |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
         RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minStorageBufferOffsetAlignment);
     }
+
     if (Desc.IsShaderResourceBuffer())
     {
         UsageFlags |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
         RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minTexelBufferOffsetAlignment);
     }
+
     if (Desc.IsUnorderedAccessBuffer())
     {
         UsageFlags |= VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
         RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minTexelBufferOffsetAlignment);
+    }
+
+    if (Desc.IsReadBack())
+    {
+        RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.nonCoherentAtomSize);
+    }
+
+    if (Desc.IsAccelerationStructure())
+    {
+        RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, RHI::AccelerationStructureBufferAlignment); // 256
     }
 
     const VkDeviceSize AlignedSize = Math::AlignUp(static_cast<VkDeviceSize>(Desc.Size), RequiredAlignment);
@@ -243,9 +255,8 @@ bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, EReso
         else
         {
             InCommandContext->StartContext();
-
-            InCommandContext->TransitionBufferState(this, EResourceAccess::Common, EResourceAccess::CopyDest);
             
+            InCommandContext->TransitionBufferState(this, EResourceAccess::Common, EResourceAccess::CopyDest);
             InCommandContext->UpdateBuffer(this, FBufferRegion(0, Desc.Size), InInitialData);
 
             if (InInitialAccess != EResourceAccess::CopyDest)
@@ -284,6 +295,9 @@ void FVulkanBufferRHI::GetDebugName(String& OutDebugName) const
 
 void* FVulkanBufferRHI::Map(uint64 Offset, uint64 Size)
 {
+    UNREFERENCED_VARIABLE(Size);
+    CHECK(Offset <= Desc.Size);
+
     if (!MemoryLocation.IsValid())
     {
         return nullptr;
@@ -303,21 +317,17 @@ void* FVulkanBufferRHI::Map(uint64 Offset, uint64 Size)
         return nullptr;
     }
 
-    CHECK(Offset <= Desc.Size);
-    uint64 MapSize = Size;
-    if (MapSize == UINT64_MAX)
-    {
-        MapSize = Desc.Size - Offset;
-    }
-
     if (Desc.IsReadBack())
     {
+        const VkDeviceSize AtomSize = GetDevice()->GetPhysicalDevice()->GetProperties().limits.nonCoherentAtomSize;
+
         VkMappedMemoryRange Range = {};
         Range.sType  = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
         Range.pNext  = nullptr;
         Range.memory = MemoryLocation.GetMemory();
-        Range.offset = MemoryLocation.GetMemoryOffset() + Offset;
-        Range.size   = MapSize;
+        Range.offset = MemoryLocation.GetMemoryOffset();
+        Range.size   = Math::AlignUp<VkDeviceSize>(Desc.Size, AtomSize);
+
         vkInvalidateMappedMemoryRanges(GetDevice()->GetVkDevice(), 1, &Range);
     }
 

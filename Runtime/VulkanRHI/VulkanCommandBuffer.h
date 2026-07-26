@@ -283,11 +283,71 @@ class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
             vkCmdCopyQueryPoolResults(CommandBuffer, QueryPool, FirstQuery, QueryCount, DstBuffer, DstOffset, Stride, Flags);
         }
 
+        FORCEINLINE void ResetQueryPool(VkQueryPool QueryPool, uint32 FirstQuery, uint32 QueryCount)
+        {
+            vkCmdResetQueryPool(CommandBuffer, QueryPool, FirstQuery, QueryCount);
+        }
+
     #if VK_KHR_acceleration_structure
         FORCEINLINE void BuildAccelerationStructures(uint32 InfoCount, const VkAccelerationStructureBuildGeometryInfoKHR* Infos, 
             const VkAccelerationStructureBuildRangeInfoKHR* const* BuildRangeInfos)
         {
             vkCmdBuildAccelerationStructuresKHR(CommandBuffer, InfoCount, Infos, BuildRangeInfos);
+        }
+
+        FORCEINLINE void CopyAccelerationStructure(const VkCopyAccelerationStructureInfoKHR* Info)
+        {
+            vkCmdCopyAccelerationStructureKHR(CommandBuffer, Info);
+        }
+
+        FORCEINLINE void CopyAccelerationStructureToMemory(const VkCopyAccelerationStructureToMemoryInfoKHR* Info)
+        {
+            vkCmdCopyAccelerationStructureToMemoryKHR(CommandBuffer, Info);
+        }
+
+        FORCEINLINE void CopyMemoryToAccelerationStructure(const VkCopyMemoryToAccelerationStructureInfoKHR* Info)
+        {
+            vkCmdCopyMemoryToAccelerationStructureKHR(CommandBuffer, Info);
+        }
+
+        FORCEINLINE void WriteAccelerationStructuresProperties(uint32 Count, const VkAccelerationStructureKHR* Structures, VkQueryType QueryType, VkQueryPool QueryPool, uint32 FirstQuery)
+        {
+            vkCmdWriteAccelerationStructuresPropertiesKHR(CommandBuffer, Count, Structures, QueryType, QueryPool, FirstQuery);
+        }
+    #endif
+
+    #if VK_EXT_opacity_micromap
+        FORCEINLINE void BuildMicromaps(uint32 InfoCount, const VkMicromapBuildInfoEXT* Infos)
+        {
+            vkCmdBuildMicromapsEXT(CommandBuffer, InfoCount, Infos);
+        }
+    #endif
+
+    #if VK_KHR_ray_tracing_pipeline
+        FORCEINLINE void TraceRays(const VkStridedDeviceAddressRegionKHR* RayGenRegion, const VkStridedDeviceAddressRegionKHR* MissRegion,
+            const VkStridedDeviceAddressRegionKHR* HitGroupRegion, const VkStridedDeviceAddressRegionKHR* CallableRegion, uint32 Width, uint32 Height, uint32 Depth)
+        {
+            vkCmdTraceRaysKHR(CommandBuffer, RayGenRegion, MissRegion, HitGroupRegion, CallableRegion, Width, Height, Depth);
+        }
+
+        FORCEINLINE void TraceRaysIndirect(const VkStridedDeviceAddressRegionKHR* RayGenRegion, const VkStridedDeviceAddressRegionKHR* MissRegion,
+            const VkStridedDeviceAddressRegionKHR* HitGroupRegion, const VkStridedDeviceAddressRegionKHR* CallableRegion, VkDeviceAddress IndirectDeviceAddress)
+        {
+            vkCmdTraceRaysIndirectKHR(CommandBuffer, RayGenRegion, MissRegion, HitGroupRegion, CallableRegion, IndirectDeviceAddress);
+        }
+    #endif
+
+    #if VK_NV_cluster_acceleration_structure
+        FORCEINLINE void BuildClusterAccelerationStructureIndirect(const VkClusterAccelerationStructureCommandsInfoNV* CommandInfos)
+        {
+            vkCmdBuildClusterAccelerationStructureIndirectNV(CommandBuffer, CommandInfos);
+        }
+    #endif
+
+    #if VK_NV_partitioned_acceleration_structure
+        FORCEINLINE void BuildPartitionedAccelerationStructures(const VkBuildPartitionedAccelerationStructureInfoNV* BuildInfo)
+        {
+            vkCmdBuildPartitionedAccelerationStructuresNV(CommandBuffer, BuildInfo);
         }
     #endif
 

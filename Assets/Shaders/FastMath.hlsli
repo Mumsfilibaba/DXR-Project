@@ -1,5 +1,6 @@
 #ifndef FAST_MATH_HLSLI
 #define FAST_MATH_HLSLI
+
 #include "Constants.hlsli"
 
 // Fast approximate square root function using bit-level manipulation.

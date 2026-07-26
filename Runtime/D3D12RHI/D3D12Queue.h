@@ -76,6 +76,8 @@ public:
     void SubmitCommands(FD3D12Commands* Commands);
     void ProcessCommandQueue();
 
+    void WaitForCompletion();
+
     FD3D12Fence& GetSubmissionFence()
     {
         return *SubmissionFence;

@@ -377,7 +377,7 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
         FRHIBufferDesc VertexBufferDesc;
         VertexBufferDesc.Stride = sizeof(ImDrawVert);
         VertexBufferDesc.Size   = VertexBufferDesc.Stride * NewVertexCount;
-        VertexBufferDesc.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::Default;
+        VertexBufferDesc.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
         TSharedRef<FRHIBuffer> NewVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, EResourceAccess::GenericRead, nullptr);
         if (NewVertexBuffer)
@@ -399,7 +399,7 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
         FRHIBufferDesc IndexBufferDesc;
         IndexBufferDesc.Stride = sizeof(ImDrawIdx);
         IndexBufferDesc.Size   = IndexBufferDesc.Stride * NewIndexCount;
-        IndexBufferDesc.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::Default;
+        IndexBufferDesc.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
         TSharedRef<FRHIBuffer> NewIndexBuffer = RHI::CreateBuffer(IndexBufferDesc, EResourceAccess::GenericRead, nullptr);
         if (NewIndexBuffer)

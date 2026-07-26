@@ -25,7 +25,7 @@
 #include "Engine/Debug/InputDebugInputHandler.h"
 #endif
 
-static FAutoConsoleCommand CVarExit(
+static FAutoConsoleCommand CCmdExit(
     "Engine.Exit",
     "Exits the engine",
     FConsoleCommandDelegate::CreateLambda([](StringView)
@@ -36,7 +36,7 @@ static FAutoConsoleCommand CVarExit(
         }
     }));
 
-static FAutoConsoleCommand CVarToggleFullscreen(
+static FAutoConsoleCommand CCmdToggleFullscreen(
     "Engine.ToggleFullscreen",
     "Toggles fullscreen on the main Viewport",
     FConsoleCommandDelegate::CreateLambda([](StringView)

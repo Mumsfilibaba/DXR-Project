@@ -91,8 +91,6 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
 
     if (!bHistoryValid)
     {
-        // After resize or first frame: seed both history buffers with the current
-        // SceneTarget so subsequent frames have valid history to blend with.
         CommandList.TransitionTextureState(FrameResources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
 
         for (FRHITextureRef& HistoryBuffer : TAAHistoryBuffers)
@@ -140,7 +138,7 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
 bool FTemporalAA::CreateResources(FFrameResources& /* FrameResources */, uint32 Width, uint32 Height)
 {
     // TAA History-Buffer
-    const ETextureUsageFlags UsageFlags = ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::UnorderedAccessTexture;
+    const ETextureUsageFlags UsageFlags = ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::CopyDest;
     FRHITextureDesc TAABufferDesc = FRHITextureDesc::CreateTexture2D(RendererTextureFormats::SceneTargetFormat, Width, Height, 1, 1, UsageFlags);
 
     uint32 Index = 0;

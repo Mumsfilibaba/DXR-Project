@@ -7,6 +7,7 @@
 #include "RendererCore/TextureCompressor.h"
 
 class FRHITexture;
+struct IRHITextureData;
 
 enum class ETextureFactoryFlags : uint32
 {
@@ -37,8 +38,8 @@ public:
     bool TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* Dest, ETextureFactoryFlags Flags);
 
     // Generates a chain of miplevels. This function assumes that the 'Texture' is in 'EResourceState::PixelShaderResource'
-    bool GenerateMiplevels(FRHITexture* Texture);
-    bool GenerateMiplevels(FRHICommandList& CommandList, FRHITexture* Texture);
+    bool GenerateMiplevels(FRHITexture* Texture, const IRHITextureData* Mip0Data = nullptr);
+    bool GenerateMiplevels(FRHICommandList& CommandList, FRHITexture* Texture, const IRHITextureData* Mip0Data = nullptr);
 
     // Filters a cube-map for use in specular light-calculations
     bool FilterSpecularCubeMap(FRHITexture* SrcCubeMap, FRHITexture* DstCubeMap, uint32 NumMipLevels = uint32(~0));

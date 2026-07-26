@@ -30,4 +30,8 @@
 #define VULKAN_BINDLESS_HEAP_MARKER_SET (31)
 #define VULKAN_BINDLESS_RUNTIME_SET_INDEX (0)
 
+#define VULKAN_SHADER_CONSTANTS_SET (1)             // HLSL space1 (32-bit constants -> push constants)
+#define VULKAN_RAY_TRACING_LOCAL_SET (2)            // HLSL space2 -> Vulkan set 2 (DXC maps spaceN -> setN)
+#define VULKAN_RAY_TRACING_LOCAL_REGISTER_BASE (32) // local registers occupy [32..63], global stay [0..31]
+
 #define VULKAN_VALIDATION_LAYER_NAME "VK_LAYER_KHRONOS_validation"

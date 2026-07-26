@@ -238,9 +238,8 @@ public:
     void Free(FRHIDescriptorHandle Handle);
     void RecycleSlot(FRHIDescriptorHandle Handle);
     void EnqueueWrite(FRHIDescriptorHandle Handle, D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle);
-
+    void WriteSlotImmediate(FRHIDescriptorHandle Handle, D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle);
     void Flush();
-
     void Rebuild(FD3D12OnlineDescriptorHeap& NewGlobalHeap);
 
     NODISCARD FORCEINLINE FD3D12DescriptorHeap* GetAliasedHeap() const

@@ -106,7 +106,7 @@ public:
     template<typename T>
     static FORCEINLINE constexpr T DivideByMultiple(T Value, uint32 Alignment) requires(TIsInteger<T>::Value)
     {
-        return static_cast<T>((Value + Alignment - 1) / Alignment);
+        return static_cast<T>((Value + Alignment - T(1)) / Alignment);
     }
 
     /** @brief Rounds an integer up to the nearest aligned value. */
@@ -123,6 +123,39 @@ public:
     {
         const T Mask = Alignment - 1;
         return (Value & (~Mask));
+    }
+
+    /** @brief Rounds an integer up to the nearest multiple of the alignment. Supports non-power-of-two alignments. */
+    template<typename T>
+    static FORCEINLINE constexpr T AlignUpToMultiple(T Value, T Alignment) requires(TIsInteger<T>::Value)
+    {
+        return ((Value + Alignment - T(1)) / Alignment) * Alignment;
+    }
+
+    /** @brief Returns the greatest common divisor of two integers using Euclid's algorithm. */
+    template<typename T>
+    static FORCEINLINE constexpr T GreatestCommonDivisor(T ValueA, T ValueB) requires(TIsInteger<T>::Value)
+    {
+        while (ValueB != T(0))
+        {
+            const T Temp = ValueB;
+            ValueB = ValueA % ValueB;
+            ValueA = Temp;
+        }
+
+        return ValueA;
+    }
+
+    /** @brief Returns the least common multiple of two integers. */
+    template<typename T>
+    static FORCEINLINE constexpr T LeastCommonMultiple(T ValueA, T ValueB) requires(TIsInteger<T>::Value)
+    {
+        if (ValueA == T(0) || ValueB == T(0))
+        {
+            return T(0);
+        }
+
+        return (ValueA / GreatestCommonDivisor(ValueA, ValueB)) * ValueB;
     }
 
     /** @brief Returns true if the given integer is a power of two. */

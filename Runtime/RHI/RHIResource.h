@@ -22,6 +22,10 @@ enum class ERHIResourceType : uint8
     BlendState,
     GeometryAccelerationStructure,
     SceneAccelerationStructure,
+    ClusterAccelerationStructure,
+    ClusterTemplate,
+    OpacityMicromap,
+    ShaderBindingTable,
     ShaderResourceView,
     UnorderedAccessView,
     RenderTargetView,
@@ -46,6 +50,10 @@ NODISCARD constexpr const CHAR* ToString(ERHIResourceType Type)
         case ERHIResourceType::BlendState:                    return "BlendState";
         case ERHIResourceType::GeometryAccelerationStructure: return "GeometryAccelerationStructure";
         case ERHIResourceType::SceneAccelerationStructure:    return "SceneAccelerationStructure";
+        case ERHIResourceType::ClusterAccelerationStructure:  return "ClusterAccelerationStructure";
+        case ERHIResourceType::ClusterTemplate:               return "ClusterTemplate";
+        case ERHIResourceType::OpacityMicromap:               return "OpacityMicromap";
+        case ERHIResourceType::ShaderBindingTable:            return "ShaderBindingTable";
         case ERHIResourceType::ShaderResourceView:            return "ShaderResourceView";
         case ERHIResourceType::UnorderedAccessView:           return "UnorderedAccessView";
         case ERHIResourceType::RenderTargetView:              return "RenderTargetView";

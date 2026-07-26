@@ -2,6 +2,9 @@
 #include "Core/Templates/TypeTraits.h"
 #include "RHI/RHIResources.h"
 
+class FRHIShaderBindingTable;
+class FRHIOpacityMicromap;
+
 class FD3D12BufferRHI;
 class FD3D12TextureRHI;
 struct FD3D12QueryRHI;
@@ -14,6 +17,8 @@ class FD3D12FenceRHI;
 class FD3D12SwapChainRHI;
 class FD3D12SceneAccelerationStructureRHI;
 class FD3D12GeometryAccelerationStructureRHI;
+class FD3D12ShaderBindingTable;
+class FD3D12OpacityMicromapRHI;
 class FD3D12GraphicsPipelineStateRHI;
 class FD3D12ComputePipelineStateRHI;
 class FD3D12MeshletPipelineStateRHI;
@@ -93,6 +98,16 @@ template<> struct TD3D12RHIResourceType<FRHISceneAccelerationStructure>
 template<> struct TD3D12RHIResourceType<FRHIGeometryAccelerationStructure>
 {
     typedef FD3D12GeometryAccelerationStructureRHI Type;
+};
+
+template<> struct TD3D12RHIResourceType<FRHIShaderBindingTable>
+{
+    typedef FD3D12ShaderBindingTable Type;
+};
+
+template<> struct TD3D12RHIResourceType<FRHIOpacityMicromap>
+{
+    typedef FD3D12OpacityMicromapRHI Type;
 };
 
 template<> struct TD3D12RHIResourceType<FRHIGraphicsPipelineState>

@@ -736,6 +736,9 @@ struct FNullRayTracingPipelineStateRHI : public FRHIRayTracingPipelineState
         return nullptr;
     }
 
+    virtual void GetExportName(ERayTracingShaderRecordKind, uint32, String& OutExportName) const override final { OutExportName = String(); }
+    virtual uint32 GetNumExportNames(ERayTracingShaderRecordKind) const override final { return 0; }
+
     virtual void SetDebugName(const String& InDebugName) override final
     {
         DebugName = InDebugName;

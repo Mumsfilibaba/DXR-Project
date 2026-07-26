@@ -150,6 +150,10 @@ struct FVulkanPipelineLayoutInfo
     // Add info for a new DescriptorSet based on the ShaderInfo from a certain shader
     void AddSetForStage(VkShaderStageFlagBits ShaderStage, const FVulkanShaderInfo& ShaderInfo);
 
+    // Merge a stage's bindings into a single shared descriptor set (set 0). Used by ray tracing, where all
+    // stages share one set and each binding's stageFlags must include every stage that uses it.
+    void MergeSetForStage(VkShaderStageFlagBits ShaderStage, const FVulkanShaderInfo& ShaderInfo);
+
     // Promotes VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER bindings to VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC. Must be called before GenerateHash().
     void PromoteUniformBuffersToDynamic();
 
@@ -260,6 +264,7 @@ public:
 
     bool GetDescriptorBinding(EShaderVisibility::Type ShaderStage, EResourceType::Type ResourceType, int32 ResourceIndex, uint32& OutDescriptorSetIndex, uint32& OutBinding);
     bool GetDescriptorSetIndex(EShaderVisibility::Type ShaderStage, uint32& OutDescriptorSetIndex);
+    bool GetRemappedBinding(EShaderVisibility::Type ShaderStage, EVulkanBindingType::Type BindingType, uint16 OriginalBindingIndex, uint32& OutBinding) const;
 
     VkPipelineLayout GetVkPipelineLayout() const
     {

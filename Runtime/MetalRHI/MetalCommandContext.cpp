@@ -455,10 +455,6 @@ void FMetalCommandContext::BuildGeometryAccelerationStructure(FRHIGeometryAccele
 {
 }
 
-void FMetalCommandContext::SetRayTracingBindings(FRHISceneAccelerationStructure* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources)
-{
-}
-
 void FMetalCommandContext::TransitionTextureState(FRHITexture* Texture, const FRHITextureTransition& TextureTransition)
 {
 }
@@ -583,10 +579,6 @@ void FMetalCommandContext::DispatchMesh(uint32 ThreadGroupCountX, uint32 ThreadG
     UNREFERENCED_VARIABLE(ThreadGroupCountX);
     UNREFERENCED_VARIABLE(ThreadGroupCountY);
     UNREFERENCED_VARIABLE(ThreadGroupCountZ);
-}
-
-void FMetalCommandContext::DispatchRays(FRHISceneAccelerationStructure* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
-{
 }
 
 void FMetalCommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync)

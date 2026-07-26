@@ -43,3 +43,4 @@ packages/
 *.vkpsocache
 /Tests/Build
 *.log
+/Assets/RTASCache

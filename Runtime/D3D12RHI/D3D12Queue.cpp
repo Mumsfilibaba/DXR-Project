@@ -7,6 +7,7 @@
 #include "D3D12RHI/D3D12CommandContext.h"
 #include "D3D12RHI/D3D12Query.h"
 #include "D3D12RHI/D3D12Core.h"
+#include "D3D12RHI/D3D12DeviceDebug.h"
 
 static TAutoConsoleVariable<int32> CVarMaxPendingSubmissions(
     "D3D12RHI.MaxPendingSubmissions",
@@ -175,6 +176,13 @@ FD3D12FenceSyncPoint FD3D12Queue::ExecuteCommandLists(FD3D12CommandList* const* 
 
     CommandQueue->ExecuteCommandLists(D3DCommandLists.Size(), D3DCommandLists.Data());
 
+#if D3D12_ENABLE_DEVICE_LOST_CHECK
+    if (GetDevice()->GetD3D12Device()->GetDeviceRemovedReason() != S_OK)
+    {
+        D3D12RHIDeviceRemovedHandler(GetDevice(), "ExecuteCommandLists");
+    }
+#endif
+
     const uint64 FenceValue = SubmissionFence->Signal(CommandQueue.Get());
     if (bWaitForCompletion)
     {
@@ -289,6 +297,12 @@ void FD3D12Queue::ProcessCommandQueue()
     }
 }
 
+void FD3D12Queue::WaitForCompletion()
+{
+    SubmissionFence->Signal(CommandQueue.Get());
+    SubmissionFence->WaitForValue(SubmissionFence->GetLastSignaledValue());
+}
+
 FD3D12Commands::FD3D12Commands(FD3D12Device* InDevice, FD3D12Queue* InQueue)
     : Queue(InQueue)
     , Device(InDevice)
@@ -321,36 +335,63 @@ void FD3D12Commands::PreExecute()
 
     FD3D12BarrierBatcher BarrierBatcher;
 
+    const auto ResolveBeforeState = [](FD3D12Resource* Resource, D3D12_RESOURCE_STATES TrackedState) -> D3D12_RESOURCE_STATES
+    {
+        if (TrackedState != D3D12_RESOURCE_STATE_TO_BE_DETERMINED)
+        {
+            return TrackedState;
+        }
+
+        return Resource->HasDefaultState() ? Resource->GetDefaultState() : D3D12_RESOURCE_STATE_COMMON;
+    };
+
+    const auto AddPendingFixup = [&BarrierBatcher](const FD3D12PendingBarrier& Pending, D3D12_RESOURCE_STATES BeforeState, uint32 Subresource)
+    {
+        if (BeforeState == Pending.DesiredState)
+        {
+            return;
+        }
+
+    #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
+        String DebugName;
+        Pending.Resource->GetDebugName(DebugName);
+        D3D12_INFO(
+            "[PendingFixup] Resource=%s Subresource=%u Global=%s(0x%X) Desired=%s(0x%X)",
+            DebugName.IsEmpty() ? "<unnamed>" : *DebugName,
+            Subresource,
+            ToString(BeforeState),
+            uint32(BeforeState),
+            ToString(Pending.DesiredState),
+            uint32(Pending.DesiredState));
+    #endif
+
+        BarrierBatcher.AddTransitionBarrier(Pending.Resource, BeforeState, Pending.DesiredState, Subresource);
+    };
+
     for (const FD3D12PendingBarrier& Pending : PendingBarriers)
     {
         FD3D12ResourceState& GlobalState = Pending.Resource->GetResourceState();
         if (Pending.Subresource == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
         {
-            if (GlobalState.AreAllSubresourcesSameState())
+            if (GlobalState.IsSingleState())
             {
-                if (GlobalState.GetResourceState() != Pending.DesiredState)
-                {
-                    BarrierBatcher.AddTransitionBarrier(Pending.Resource, GlobalState.GetResourceState(), Pending.DesiredState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
-                }
+                const D3D12_RESOURCE_STATES BeforeState = ResolveBeforeState(Pending.Resource, GlobalState.GetState());
+                AddPendingFixup(Pending, BeforeState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
             }
             else
             {
                 const uint32 NumSubresources = GlobalState.GetNumSubresources();
                 for (uint32 i = 0; i < NumSubresources; i++)
                 {
-                    if (GlobalState.GetSubresourceState(i) != Pending.DesiredState)
-                    {
-                        BarrierBatcher.AddTransitionBarrier(Pending.Resource, GlobalState.GetSubresourceState(i), Pending.DesiredState, i);
-                    }
+                    const D3D12_RESOURCE_STATES BeforeState = ResolveBeforeState(Pending.Resource, GlobalState.GetSubresourceState(i));
+                    AddPendingFixup(Pending, BeforeState, i);
                 }
             }
         }
         else
         {
-            if (GlobalState.GetSubresourceState(Pending.Subresource) != Pending.DesiredState)
-            {
-                BarrierBatcher.AddTransitionBarrier(Pending.Resource, GlobalState.GetSubresourceState(Pending.Subresource), Pending.DesiredState, Pending.Subresource);
-            }
+            const D3D12_RESOURCE_STATES BeforeState = ResolveBeforeState(Pending.Resource, GlobalState.GetSubresourceState(Pending.Subresource));
+            AddPendingFixup(Pending, BeforeState, Pending.Subresource);
         }
     }
 
@@ -376,7 +417,15 @@ void FD3D12Commands::PreExecute()
     {
         FD3D12Resource*      Resource   = It.GetKey();
         FD3D12ResourceState& LocalState = It.GetValue();
-        Resource->GetResourceState() = LocalState;
+
+        if (!Resource->RequiresResourceStateTracking() && Resource->HasDefaultState())
+        {
+            Resource->GetResourceState().SetState(Resource->GetDefaultState());
+        }
+        else
+        {
+            Resource->GetResourceState().ApplyResolvedStates(LocalState);
+        }
     }
 
     PendingBarriers.Clear();
@@ -511,7 +560,7 @@ void FD3D12Commands::PostExecute()
             Stats->MSInvocations = 0;
             Stats->MSPrimitives  = 0;
         }
-#if D3D12_SUPPORT_PIPELINE_STATISTICS1
+    #if D3D12_SUPPORT_PIPELINE_STATISTICS1
         else if (HeapType == D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1)
         {
             D3D12_QUERY_DATA_PIPELINE_STATISTICS1 Src = {};
@@ -532,7 +581,7 @@ void FD3D12Commands::PostExecute()
             Stats->MSInvocations = Src.MSInvocations;
             Stats->MSPrimitives  = Src.MSPrimitives;
         }
-#endif
+    #endif
     }
 
     PipelineStatsQueries.Clear();

@@ -1,5 +1,6 @@
-#include "../Structs.hlsli"
-#include "../Constants.hlsli"
+#include "Structs.hlsli"
+#include "TransformHelpers.hlsli"
+#include "Constants.hlsli"
 
 #ifndef ENABLE_ALPHA_MASK
     #define ENABLE_ALPHA_MASK 0
@@ -17,22 +18,23 @@
 #ifndef ENABLE_POINTLIGHT_VS_INSTANCING
     #define ENABLE_POINTLIGHT_VS_INSTANCING 0
 #endif
+
 #ifndef ENABLE_POINTLIGHT_GS_INSTANCING
     #define ENABLE_POINTLIGHT_GS_INSTANCING 0
 #endif
+
 #if !ENABLE_POINTLIGHT_VS_INSTANCING && !ENABLE_POINTLIGHT_GS_INSTANCING
     #define ENABLE_POINTLIGHT_MULTI_PASS 1
 #endif
 
 // Per-object
-ConstantBuffer<FTransform> TransformBuffer : register(b1);
+ConstantBuffer<FPerObject> PerObjectBuffer : register(b1);
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
-    ConstantBuffer<FMaterial> MaterialBuffer : register(b2);
-
     #if BINDLESS_SHADOWS
-        #define MATERIAL_BINDLESS_REGISTER b3
-        #include "../MaterialBindless.hlsli"
+        #define MATERIAL_ARRAY_REGISTER t0
+        #include "MaterialArray.hlsli"
+        #include "MaterialBindless.hlsli"
     #else
         SamplerState MaterialSampler : register(s0);
 
@@ -53,13 +55,14 @@ struct FVSInput
     float2 TexCoord : TEXCOORD0;
 #endif
 
-// For Vertex-Shader instancing
 #if ENABLE_POINTLIGHT_VS_INSTANCING
     uint InstanceID : SV_InstanceID;
 #endif
 };
 
+// ------------------------------------------------------------------------------------------------
 // VertexShader
+// ------------------------------------------------------------------------------------------------
 
 #if ENABLE_POINTLIGHT_VS_INSTANCING || ENABLE_POINTLIGHT_GS_INSTANCING
 struct FSinglePassPointLightBuffer
@@ -84,7 +87,7 @@ ConstantBuffer<FPointLightBuffer> PointLightBuffer : register(b0);
 struct FVSPointOutput
 {
     float3 WorldPosition : POSITION0;
-
+    
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
 #endif
@@ -102,7 +105,7 @@ FVSPointOutput Point_VSMain(FVSInput Input)
 {
     FVSPointOutput Output = (FVSPointOutput)0;
 
-    const float3 WorldPositionWS = TransformPositionWS(TransformBuffer, Input.Position);
+    const float3 WorldPositionWS = TransformPositionWS(PerObjectBuffer, Input.Position);
     const float4 WorldPosition   = float4(WorldPositionWS, 1.0f);
     Output.WorldPosition = WorldPosition.xyz;
 
@@ -125,19 +128,22 @@ FVSPointOutput Point_VSMain(FVSInput Input)
     return Output;
 }
 
+// ------------------------------------------------------------------------------------------------
 // Geometry-Shader
+// ------------------------------------------------------------------------------------------------
 
 // NOTE: For some reason it seems like this part of the shader is always compiled, so disable it to avoid compilation errors
 #if ENABLE_POINTLIGHT_GS_INSTANCING
 struct FGSPointOutput
 {
     float3 WorldPosition : POSITION0;
+
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
 #endif
+
     float4 Position : SV_Position;
-    // Index into what ArraySlice we want to write into
-    uint RenderTargetViewIndex : SV_RenderTargetArrayIndex;
+    uint   RenderTargetViewIndex : SV_RenderTargetArrayIndex;
 };
 
 [maxvertexcount(NUM_CUBE_FACES * 3)]
@@ -159,7 +165,7 @@ void Point_GSMain(triangle FVSPointOutput Input[3], inout TriangleStream<FGSPoin
         #endif
 
             Output.WorldPosition = Input[Vertex].WorldPosition;
-            Output.Position = mul(float4(Input[Vertex].WorldPosition, 1.0f), LightViewProjection);
+            Output.Position      = mul(float4(Input[Vertex].WorldPosition, 1.0f), LightViewProjection);
 
             OutStream.Append(Output);
         }
@@ -169,7 +175,9 @@ void Point_GSMain(triangle FVSPointOutput Input[3], inout TriangleStream<FGSPoin
 }
 #endif // ENABLE_POINTLIGHT_GS_INSTANCING
 
+// ------------------------------------------------------------------------------------------------
 // PixelShader
+// ------------------------------------------------------------------------------------------------
 
 struct FPSPointInput
 {
@@ -187,20 +195,21 @@ float Point_PSMain(FPSPointInput Input) : SV_DepthLessEqual
 
     // TODO: Do parallax-mapping
 
-#if ENABLE_ALPHA_MASK 
-#if BINDLESS_SHADOWS
-    const float AlphaMask = GetAlbedoBindless().Sample(GetMaterialSamplerBindless(), TexCoords).a;
-#else
-    const float AlphaMask = AlbedoAlphaTex.Sample(MaterialSampler, TexCoords).a;
-#endif
+    #if ENABLE_ALPHA_MASK 
+        #if BINDLESS_SHADOWS
+            const FMaterial MaterialData = Materials[PerObjectBuffer.MaterialIndex];
+            const float AlphaMask = GetAlbedoBindless(MaterialData).Sample(GetMaterialSamplerBindless(MaterialData), TexCoords).a;
+        #else
+            const float AlphaMask = AlbedoAlphaTex.Sample(MaterialSampler, TexCoords).a;
+        #endif
 
-    [[branch]]
-    if (AlphaMask < 0.5)
-    {
-        discard;
-    }
-#endif // ENABLE_ALPHA_MASK
-#endif // ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
+        [[branch]]
+        if (AlphaMask < 0.5)
+        {
+            discard;
+        }
+    #endif
+#endif
 
     const float LightDistance = length(Input.WorldPosition.xyz - PointLightBuffer.LightPosition) / PointLightBuffer.LightFarPlane;
     return LightDistance;

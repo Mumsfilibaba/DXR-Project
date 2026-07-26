@@ -3,81 +3,59 @@
 #include "Structs.hlsli"
 #include "Constants.hlsli"
 #include "PoissonDisk.hlsli"
+#include "ImageBasedLighting.hlsli"
 #include "Shadows/CascadeStructs.hlsli"
 #include "Shadows/ShadowHelpers.hlsli"
 
-#define NUM_THREADS 16
+#ifndef NUM_THREADS
+    #define NUM_THREADS 16
+#endif
 #define TOTAL_THREAD_COUNT (NUM_THREADS * NUM_THREADS)
 
 #define BASE_OCCLUSION 0.1
 
-// Can be defined from the application
 #ifndef MAX_LIGHTS_PER_TILE
     #define MAX_LIGHTS_PER_TILE 1024
 #endif
 
-// Tile Occupancy Debug
 #ifdef DRAW_TILE_DEBUG 
     #define DRAW_TILE_OCCUPANCY 1
 #else
     #define DRAW_TILE_OCCUPANCY 0
 #endif
 
-// Cascade Debug
 #ifdef DRAW_CASCADE_DEBUG
     #define DRAW_SHADOW_CASCADE 1
 #else
     #define DRAW_SHADOW_CASCADE 0
 #endif
 
-// Enable Box-Projection for Light-Probes
 #ifndef ENABLE_LIGHT_PROBE_BOX_PROJECTION
     #define ENABLE_LIGHT_PROBE_BOX_PROJECTION 1
 #endif
 
-// G-Buffer
-Texture2D<float4> AlbedoTex : register(t0);
-Texture2D<float4> NormalBuffer : register(t1);
-Texture2D<float4> MaterialTex : register(t2);
-Texture2D<float> DepthStencilTex : register(t3);
+Texture2D<float4>       AlbedoTex               : register(t0);
+Texture2D<float4>       NormalBuffer            : register(t1);
+Texture2D<float4>       MaterialTex             : register(t2);
+Texture2D<float>        DepthStencilTex         : register(t3);
+Texture2D<float4>       RayTracingReflection    : register(t4);
+Texture2D<float2>       IntegrationLUT          : register(t5);
+TextureCube<float4>     SkyLightDiffuseCubeMap  : register(t6);
+TextureCube<float4>     SkyLightSpecularCubeMap : register(t7);
+TextureCube<float4>     ProbeDiffuseCubeMap     : register(t8);
+TextureCube<float4>     ProbeSpecularCubeMap    : register(t9);
+Texture2D<float>        DirectionalShadowMask   : register(t10);
+TextureCubeArray<float> PointLightShadowMaps    : register(t11);
+Texture2D<float>        SSAOBuffer              : register(t12);
 
-// Reflections
-#if 0
-Texture2D<float4> DXRReflection : register(t4);
-#endif
-
-// Pre-integrated LUT
-Texture2D<float2> IntegrationLUT : register(t5);
-
-// SkyLight
-TextureCube<float4> SkyLightDiffuseCubeMap : register(t6);
-TextureCube<float4> SkyLightSpecularCubeMap : register(t7);
-
-// Light-Probe
-TextureCube<float4> ProbeDiffuseCubeMap : register(t8);
-TextureCube<float4> ProbeSpecularCubeMap : register(t9);
-
-// Shadow Cascade
-Texture2D<float> DirectionalShadowMask : register(t10);
-
-// Point Shadows
-TextureCubeArray<float> PointLightShadowMaps : register(t11);
-
-// SSAOBuffer
-Texture2D<float> SSAOBuffer : register(t12);
-
-// Shadow Cascade Data - (Debug data)
 #if DRAW_SHADOW_CASCADE
-Texture2D<uint> CascadeIndexBuffer : register(t13);
+    Texture2D<uint> CascadeIndexBuffer : register(t13);
 #endif
 
-// Samplers
-SamplerState LUTSampler : register(s0);
-SamplerState EnvironmentSampler : register(s1);
-SamplerState GBufferSampler : register(s2);
-
-// Point-Lights
-SamplerComparisonState ShadowMapSampler0 : register(s3);
+SamplerState           LUTSampler         : register(s0);
+SamplerState           EnvironmentSampler : register(s1);
+SamplerState           GBufferSampler     : register(s2);
+SamplerComparisonState ShadowMapSampler0  : register(s3);
 
 SHADER_CONSTANT_BLOCK_BEGIN
     // 0-16
@@ -90,7 +68,10 @@ SHADER_CONSTANT_BLOCK_BEGIN
     int ScreenWidth;
     int ScreenHeight;
     int bEnablePointLightShadows;
-    int Padding0;
+    int bEnableRayTracingReflections;
+
+    // 32-36
+    float IndirectSpecularStrength;
 SHADER_CONSTANT_BLOCK_END
 
 ConstantBuffer<FCamera> CameraBuffer : register(b0);
@@ -116,95 +97,9 @@ cbuffer ShadowCastingPointLightsPosRadBuffer : register(b4)
 }
 
 ConstantBuffer<FDirectionalLight> DirectionalLightBuffer : register(b5);
-ConstantBuffer<FLightProbeInfo> LightProbeInfoBuffer     : register(b6);
+ConstantBuffer<FLightProbeInfo>   LightProbeInfoBuffer   : register(b6);
 
-// Scene Output
 TEXTURE_FORMAT_UNKNOWN RWTexture2D<float4> Output : register(u0);
-
-// SpecularEnvironment
-
-struct FSpecularEnvironmentInfo
-{
-    float3 ReflectionUVW;
-    float  Roughness;
-};
-
-float3 SpecularEnvironment(TextureCube<float4> SpecularCubeMap, FSpecularEnvironmentInfo EnvironmentInfo)
-{
-    // Use a modified version of roughness when selecting miplevels
-    float ModifiedRoughness = EnvironmentInfo.Roughness;
-    ModifiedRoughness *= 1.7 - (0.7 * ModifiedRoughness);
-
-    // Calculate the miplevel that we want to sample
-    const float SpecularMipLevel = ModifiedRoughness * ((float)(Constants.NumSkyLightMips) - 1.0);
-    
-    // Sample and return specular cube-map
-    return SpecularCubeMap.SampleLevel(EnvironmentSampler, EnvironmentInfo.ReflectionUVW, SpecularMipLevel).rgb;
-}
-
-float2 GetIntegrationConstants(float NDotV, float Roughness)
-{
-    return IntegrationLUT.SampleLevel(LUTSampler, float2(NDotV, Roughness), 0.0).rg;
-}
-
-// Diffuse Environment
-
-struct FDiffuseEnvironmentInfo
-{
-    float3 NormalUVW;
-};
-
-float3 DiffuseEnvironment(TextureCube<float4> DiffuseCubeMap, FDiffuseEnvironmentInfo EnvironmentInfo)
-{
-    // Sample and return the diffuse cube-map
-    return DiffuseCubeMap.SampleLevel(EnvironmentSampler, EnvironmentInfo.NormalUVW, 0.0).rgb;
-}
-
-// Box-Projection
-struct FBoxProjectionInfo
-{
-    float3 ReflectionUVW;
-    float3 PositionWS;
-    float3 CubeMapPositionWS;
-    float3 BoxMinWS;
-    float3 BoxMaxWS;
-    float  BoxProjection;
-};
-
-float3 BoxProjection(FBoxProjectionInfo BoxProjectionInfo)
-{
-#if ENABLE_LIGHT_PROBE_BOX_PROJECTION
-    [[branch]]
-    if (BoxProjectionInfo.BoxProjection > 0.0)
-    {
-        const float3 ReflectionUVW   = BoxProjectionInfo.ReflectionUVW;
-        const float3 Position        = BoxProjectionInfo.PositionWS;        // viewer's position
-        const float3 CubeMapPosition = BoxProjectionInfo.CubeMapPositionWS; // probe's world position
-
-        // Compute the relative positions from the viewer.
-        float3 RelativeMin = BoxProjectionInfo.BoxMinWS - Position;
-        float3 RelativeMax = BoxProjectionInfo.BoxMaxWS - Position;
-
-        float x = (ReflectionUVW.x > 0 ? RelativeMax.x : RelativeMin.x) / ReflectionUVW.x;
-        float y = (ReflectionUVW.y > 0 ? RelativeMax.y : RelativeMin.y) / ReflectionUVW.y;
-        float z = (ReflectionUVW.z > 0 ? RelativeMax.z : RelativeMin.z) / ReflectionUVW.z;
-
-        float Scalar = min(min(x, y), z);
-        
-        // Return the new sampling direction.
-        return ReflectionUVW * Scalar + (Position - CubeMapPosition);
-    }
-    else
-#endif
-    {
-        return BoxProjectionInfo.ReflectionUVW;
-    }
-}
-
-bool IsInsideAABB(float3 Position, float3 BoxMin, float3 BoxMax)
-{
-    return (Position.x >= BoxMin.x && Position.x <= BoxMax.x) && (Position.y >= BoxMin.y && Position.y <= BoxMax.y) && (Position.z >= BoxMin.z && Position.z <= BoxMax.z);
-}
 
 // Tiled Light Culling
 groupshared uint GGroupMinZ;
@@ -457,7 +352,7 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
         
         float3 F  = FresnelSchlick_Roughness(F0, ViewWS, NormalWS, GBufferRoughness);
         float3 Ks = F;
-        float3 Kd = 1.0 - Ks;
+        float3 Kd = (1.0 - Ks) * (1.0 - GBufferMetallic);
 
         // Sample cube-maps
         FDiffuseEnvironmentInfo DiffuseEnvironmentInfo;
@@ -485,16 +380,16 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
                 
                 SpecularEnvironmentInfo.ReflectionUVW = BoxProjection(BoxProjectionInfo);
 
-                SpecularSample = SpecularEnvironment(ProbeSpecularCubeMap, SpecularEnvironmentInfo);
-                DiffuseSample  = DiffuseEnvironment(ProbeDiffuseCubeMap, DiffuseEnvironmentInfo);
+                SpecularSample = SpecularEnvironment(ProbeSpecularCubeMap, EnvironmentSampler, SpecularEnvironmentInfo, Constants.NumSkyLightMips);
+                DiffuseSample  = DiffuseEnvironment(ProbeDiffuseCubeMap, EnvironmentSampler, DiffuseEnvironmentInfo);
             }
             else
             {
                 SpecularEnvironmentInfo.ReflectionUVW = Reflection;
 
                 // Apply shadow-mask so that environment is not too visible in the shadowed areas
-                SpecularSample = SpecularEnvironment(SkyLightSpecularCubeMap, SpecularEnvironmentInfo) * ShadowMask;
-                DiffuseSample  = DiffuseEnvironment(SkyLightDiffuseCubeMap, DiffuseEnvironmentInfo) * ShadowMask;
+                SpecularSample = SpecularEnvironment(SkyLightSpecularCubeMap, EnvironmentSampler, SpecularEnvironmentInfo, Constants.NumSkyLightMips) * ShadowMask;
+                DiffuseSample  = DiffuseEnvironment(SkyLightDiffuseCubeMap, EnvironmentSampler, DiffuseEnvironmentInfo) * ShadowMask;
             }
         }
         else
@@ -502,16 +397,23 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
             SpecularEnvironmentInfo.ReflectionUVW = Reflection;
 
             // Apply shadow-mask so that environment is not too visible in the shadowed areas
-            SpecularSample = SpecularEnvironment(SkyLightSpecularCubeMap, SpecularEnvironmentInfo)* ShadowMask;
-            DiffuseSample  = DiffuseEnvironment(SkyLightDiffuseCubeMap, DiffuseEnvironmentInfo) * ShadowMask;
+            SpecularSample = SpecularEnvironment(SkyLightSpecularCubeMap, EnvironmentSampler, SpecularEnvironmentInfo, Constants.NumSkyLightMips) * ShadowMask;
+            DiffuseSample  = DiffuseEnvironment(SkyLightDiffuseCubeMap, EnvironmentSampler, DiffuseEnvironmentInfo) * ShadowMask;
         }
 
-        // Perform calculations
-        float2 BRDFIntegration = GetIntegrationConstants(NDotV, GBufferRoughness);
+        // Ray Traced reflections
+        [[branch]]
+        if (Constants.bEnableRayTracingReflections != 0)
+        {
+            SpecularSample = RayTracingReflection.Load(int3(Pixel, 0)).rgb;
+        }
+
+        float2 BRDFIntegration = GetIntegrationConstants(IntegrationLUT, LUTSampler, NDotV, GBufferRoughness);
+        float3 DiffuseColor    = lerp(GBufferAlbedo * (1.0 - F0), float3(0.0, 0.0, 0.0), GBufferMetallic);
+        float3 Specular        = SpecularSample * (F * BRDFIntegration.x + BRDFIntegration.y) * Constants.IndirectSpecularStrength;
+        float3 Diffuse         = DiffuseSample * DiffuseColor;
+        float3 Ambient         = (Kd * Diffuse + Specular) * GBufferAO;
         
-        float3 Specular = SpecularSample * (Ks * BRDFIntegration.x + BRDFIntegration.y);
-        float3 Diffuse  = DiffuseSample * GBufferAlbedo * Kd;
-        float3 Ambient  = (Diffuse + Specular) * GBufferAO;
         FinalColor = Ambient + L0;
     }
 

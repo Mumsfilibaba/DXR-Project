@@ -16,13 +16,15 @@ struct FVulkanDeferredObject
 
     enum class EType
     {
-        RHIResource         = 1,
-        VulkanResource      = 2,
-        BuddyAllocatorBlock = 3,
-        PoolAllocatorBlock  = 4,
-        DedicatedAllocation = 5,
-        LinearAllocatorPage = 6,
-        DescriptorPool      = 7,
+        RHIResource               = 1,
+        VulkanResource            = 2,
+        BuddyAllocatorBlock       = 3,
+        PoolAllocatorBlock        = 4,
+        DedicatedBufferAllocation = 5, // dedicated buffer (owns VkBuffer + VkDeviceMemory)
+        DedicatedAllocation       = 6, // dedicated memory only (image memory; VkImage destroyed by the texture)
+        LinearAllocatorPage       = 7,
+        DescriptorPool            = 8,
+        QueryPool                 = 9,
     };
 
     FVulkanDeferredObject(FRHIResource* InResource)
@@ -56,11 +58,20 @@ struct FVulkanDeferredObject
         PoolAllocatorBlock.AllocationData = InAllocationData;
     }
 
+    // Dedicated buffer: owns a VkBuffer + its dedicated VkDeviceMemory.
     FVulkanDeferredObject(VkDeviceMemory InMemory, VkBuffer InBuffer)
+        : Type(EType::DedicatedBufferAllocation)
+    {
+        DedicatedBufferAllocation.Memory = InMemory;
+        DedicatedBufferAllocation.Buffer = InBuffer;
+    }
+
+    // Dedicated memory with no owned buffer (image memory; the VkImage is destroyed by the texture).
+    FVulkanDeferredObject(VkDeviceMemory InMemory)
         : Type(EType::DedicatedAllocation)
     {
+        CHECK(InMemory != VK_NULL_HANDLE);
         DedicatedAllocation.Memory = InMemory;
-        DedicatedAllocation.Buffer = InBuffer;
     }
 
     FVulkanDeferredObject(FVulkanLinearAllocator* InAllocator, FVulkanLinearAllocatorPage* InPage)
@@ -81,6 +92,13 @@ struct FVulkanDeferredObject
         DescriptorPoolData.Pool        = InPool;
     }
 
+    FVulkanDeferredObject(VkQueryPool InQueryPool)
+        : Type(EType::QueryPool)
+    {
+        CHECK(InQueryPool != VK_NULL_HANDLE);
+        QueryPool = InQueryPool;
+    }
+
     EType const Type;
 
     struct FBuddyAllocatorBlockData
@@ -95,9 +113,14 @@ struct FVulkanDeferredObject
         FVulkanPoolAllocatorAllocationData AllocationData = {};
     };
 
-    struct FDedicatedAllocationData
+    struct FDedicatedBufferAllocationData
     {
         VkBuffer       Buffer = VK_NULL_HANDLE;
+        VkDeviceMemory Memory = VK_NULL_HANDLE;
+    };
+
+    struct FDedicatedAllocationData
+    {
         VkDeviceMemory Memory = VK_NULL_HANDLE;
     };
 
@@ -115,12 +138,14 @@ struct FVulkanDeferredObject
 
     union
     {
-        FRHIResource*            RHIResource;
-        FRefCountedBase*         VulkanResource;
-        FBuddyAllocatorBlockData BuddyAllocatorBlock;
-        FPoolAllocatorBlockData  PoolAllocatorBlock;
-        FDedicatedAllocationData DedicatedAllocation;
-        FLinearAllocatorPageData LinearAllocatorPage;
-        FDescriptorPoolData      DescriptorPoolData;
+        FRHIResource*                  RHIResource;
+        FRefCountedBase*               VulkanResource;
+        FBuddyAllocatorBlockData       BuddyAllocatorBlock;
+        FPoolAllocatorBlockData        PoolAllocatorBlock;
+        FDedicatedBufferAllocationData DedicatedBufferAllocation;
+        FDedicatedAllocationData       DedicatedAllocation;
+        FLinearAllocatorPageData       LinearAllocatorPage;
+        FDescriptorPoolData            DescriptorPoolData;
+        VkQueryPool                    QueryPool;
     };
 };

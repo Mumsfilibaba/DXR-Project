@@ -1,6 +1,7 @@
 #pragma once
 #include "RHI/RHITypes.h"
 #include "RHI/RHIResources.h"
+#include "RHI/RHIRayTracing.h"
 #include "RHI/IRHICommandContext.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
@@ -109,6 +110,63 @@ struct FRHIDevice
      * @return The newly created ray tracing geometry.
      */
     virtual FRHIGeometryAccelerationStructure* CreateGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc) = 0;
+
+    /** 
+     * @brief Creates a cluster acceleration structure (CLAS).
+     * @param InDesc Structure containing information about the cluster acceleration structure.
+     * @return The newly created cluster acceleration structure (may return nullptr if clusters are unsupported).
+     */
+    virtual FRHIClusterAccelerationStructure* CreateClusterAccelerationStructure(const FRHIClusterAccelerationStructureDesc& InDesc) = 0;
+
+    /**
+     * @brief Creates a cluster template used to instantiate CLAS objects. 
+     * @param InDesc Structure containing information about the cluster template.
+     * @return The newly created cluster template (may return nullptr if clusters are unsupported).
+     */
+    virtual FRHIClusterTemplate* CreateClusterTemplate(const FRHIClusterTemplateDesc& InDesc) = 0;
+
+    /**
+     * @brief Creates a partitioned-scene acceleration structure (PTLAS). Requires cluster/partitioned support.
+     * @param InInputs Structure containing information about the partitioned scene acceleration structure.
+     * @return The newly created partitioned scene acceleration structure (may return nullptr if partitioned scenes are unsupported).
+     */
+    virtual FRHIPartitionedSceneAccelerationStructure* CreatePartitionedSceneAccelerationStructure(const FRHIRayTracingAccelerationStructurePartitionedSceneInputs& InInputs) = 0;
+
+    /** 
+     * @brief Creates an opacity micromap (OMM).
+     * @param InDesc Structure containing information about the opacity micromap.
+     * @return The newly created opacity micromap (may return nullptr if opacity micromaps are unsupported).
+     */
+    virtual FRHIOpacityMicromap* CreateOpacityMicromap(const FRHIOpacityMicromapDesc& InDesc) = 0;
+
+    /**
+     * @brief Creates a standalone shader-binding-table.
+     * @param InDesc Structure containing information about the shader-binding-table.
+     * @return The newly created shader-binding-table (may return nullptr if shader-binding-tables are unsupported).
+     */
+    virtual FRHIShaderBindingTable* CreateShaderBindingTable(const FRHIShaderBindingTableDesc& InDesc) = 0;
+
+    /**
+     * @brief Returns sizes for an indirect acceleration-structure operation. Requires DXR 2.0 indirect AS ops.
+     * @param InInputs Structure containing information about the acceleration structure operation.
+     * @param OutInfo Structure to output the prebuild information.
+     */
+    virtual void GetRayTracingAccelerationStructureOperationPrebuildInfo(const FRHIRayTracingAccelerationStructureOperationInputs& InInputs, FRHIRayTracingAccelerationStructurePrebuildInfo& OutInfo) = 0;
+
+    /**
+     * @brief Returns the opaque shader identifier for a pipeline export (used to author shader-binding-table records).
+     * @param InPipeline The ray tracing pipeline state.
+     * @param InExportName The name of the export.
+     * @return The ray tracing shader identifier.
+     */
+    virtual FRHIRayTracingShaderIdentifier GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState* InPipeline, const String& InExportName) = 0;
+
+    /**
+     * @brief Validates whether previously-serialized acceleration-structure bytes can be deserialized on this device.
+     * @param InHeader Structure containing the serialization header to validate.
+     * @return True if the header is valid, false otherwise.
+     */
+    virtual bool IsAccelerationStructureSerializationHeaderValid(const FRHIAccelerationStructureSerializationHeader& InHeader) = 0;
 
     /**
      * @brief Creates a new shader resource view for a buffer or texture.

@@ -8,16 +8,19 @@ enum class EBufferFlags : uint16
 { 
     None = 0,
 
-    Default               = FLAG(1), // Default Device Memory
-    Dynamic               = FLAG(2), // Dynamic Memory (D3D12 UploadHeap)
-    ReadBack              = FLAG(3), // Read-Back from GPU
-    Transient             = FLAG(4), // Per-frame ephemeral memory, contents not preserved across frames
-    ConstantBuffer        = FLAG(5), // Can be used as ConstantBuffer
-    UnorderedAccessBuffer = FLAG(6), // Can be used in UnorderedAccessViews
-    ShaderResourceBuffer  = FLAG(7), // Can be used in ShaderResourceViews
-    VertexBuffer          = FLAG(8), // Can be used as VertexBuffer
-    IndexBuffer           = FLAG(9), // Can be used as IndexBuffer
+    Default               = FLAG(1),  // Default device memory (memory class, not a resource-state policy)
+    Dynamic               = FLAG(2),  // Dynamic memory (D3D12 upload heap)
+    ReadBack              = FLAG(3),  // Read-back memory; CopyDest usage is implicit
+    Transient             = FLAG(4),  // Per-frame ephemeral upload memory, contents not preserved across frames
+    ConstantBuffer        = FLAG(5),  // Can be used as ConstantBuffer
+    UnorderedAccessBuffer = FLAG(6),  // Can be used in UnorderedAccessViews
+    ShaderResourceBuffer  = FLAG(7),  // Can be used in ShaderResourceViews
+    VertexBuffer          = FLAG(8),  // Can be used as VertexBuffer
+    IndexBuffer           = FLAG(9),  // Can be used as IndexBuffer
     StreamOutputBuffer    = FLAG(10), // Can be used as a StreamOutput target
+    CopySource            = FLAG(11), // May be used explicitly as a runtime copy source
+    CopyDest              = FLAG(12), // May be used explicitly as a runtime copy destination
+    AccelerationStructure = FLAG(13), // Participates in AS copy/serialize/build ops; requires AS (256B) allocation alignment
 
     RWBuffer = UnorderedAccessBuffer | ShaderResourceBuffer
 };
@@ -36,6 +39,9 @@ struct FRHIBufferDesc
     NODISCARD constexpr bool IsIndexBuffer()           const { return IsEnumFlagSet(Flags, EBufferFlags::IndexBuffer); }
     NODISCARD constexpr bool IsUnorderedAccessBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::UnorderedAccessBuffer); }
     NODISCARD constexpr bool IsStreamOutputBuffer()    const { return IsEnumFlagSet(Flags, EBufferFlags::StreamOutputBuffer); }
+    NODISCARD constexpr bool IsCopySource()            const { return IsEnumFlagSet(Flags, EBufferFlags::CopySource); }
+    NODISCARD constexpr bool IsCopyDest()              const { return IsEnumFlagSet(Flags, EBufferFlags::CopyDest); }
+    NODISCARD constexpr bool IsAccelerationStructure() const { return IsEnumFlagSet(Flags, EBufferFlags::AccelerationStructure); }
 
     EBufferFlags Flags  = EBufferFlags::None;
     uint32       Stride = 0;

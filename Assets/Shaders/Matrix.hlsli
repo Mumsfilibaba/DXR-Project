@@ -1,7 +1,7 @@
 #ifndef MATRICES_HLSLI
 #define MATRICES_HLSLI
 
-struct FMatrix
+struct Matrix
 {
     // Left handed
     static float4x4 OrthographicProjection(float Left, float Right, float Bottom, float Top, float Near, float Far)
@@ -17,22 +17,22 @@ struct FMatrix
             float4(-(Left + Right) * Width, -(Top + Bottom) * Height, -Range * Near, 1.0));
     }
 
-    static float4x4 Translation(float x, float y, float z)
+    static float4x4 Translation(float X, float Y, float Z)
     {
         return float4x4(
             float4(1.0, 0.0, 0.0, 0.0),
             float4(0.0, 1.0, 0.0, 0.0),
             float4(0.0, 0.0, 1.0, 0.0),
-            float4(x,   y,   z,   1.0));
+            float4(X,   Y,   Z,   1.0));
     }
 
-    static float4x4 Scale(float x, float y, float z, float w = 1.0)
+    static float4x4 Scale(float X, float Y, float Z, float W = 1.0)
     {
         return float4x4(
-            float4(x,   0.0, 0.0, 0.0),
-            float4(0.0, y,   0.0, 0.0),
-            float4(0.0, 0.0, z,   0.0),
-            float4(0.0, 0.0, 0.0, w));
+            float4(X,   0.0, 0.0, 0.0),
+            float4(0.0, Y,   0.0, 0.0),
+            float4(0.0, 0.0, Z,   0.0),
+            float4(0.0, 0.0, 0.0, W));
     }
 
     static float4x4 PitchYawRoll(float Pitch, float Yaw, float Roll)
@@ -55,20 +55,20 @@ struct FMatrix
     // Left Handed
     static float4x4 LookTo(float3 Eye, float3 Direction, float3 Up)
     {
-        float3 e2 = normalize(Direction);
-        float3 e0 = normalize(cross(Up, e2));
-        float3 e1 = normalize(cross(e2, e0));
+        float3 AxisZ = normalize(Direction);
+        float3 AxisX = normalize(cross(Up, AxisZ));
+        float3 AxisY = normalize(cross(AxisZ, AxisX));
         
         float3 NegEye = -Eye;
         
-        float m30 = dot(NegEye, e0);
-        float m31 = dot(NegEye, e1);
-        float m32 = dot(NegEye, e2);
+        float M30 = dot(NegEye, AxisX);
+        float M31 = dot(NegEye, AxisY);
+        float M32 = dot(NegEye, AxisZ);
         
         return transpose(float4x4(
-            float4(e0, m30),
-            float4(e1, m31),
-            float4(e2, m32),
+            float4(AxisX, M30),
+            float4(AxisY, M31),
+            float4(AxisZ, M32),
             float4(0.0, 0.0, 0.0, 1.0)));
     }
 
@@ -79,8 +79,8 @@ struct FMatrix
         return LookTo(Eye, Direction, Up);
     }
 
-    // Inverse of scale and translation (Hint: Projection for example)
-    static float4x4 InvScaleTranslation(in float4x4 Matrix)
+    // Inverse of scale and translation
+    static float4x4 InvScaleTranslation(in float4x4 ScaleTranslation)
     {
         float4x4 Inverse = float4x4(
             float4(1.0, 0.0, 0.0, 0.0),
@@ -88,12 +88,12 @@ struct FMatrix
             float4(0.0, 0.0, 1.0, 0.0),
             float4(0.0, 0.0, 0.0, 1.0));
 
-        Inverse[0][0] =  1.0 / Matrix[0][0];
-        Inverse[1][1] =  1.0 / Matrix[1][1];
-        Inverse[2][2] =  1.0 / Matrix[2][2];
-        Inverse[3][0] = -Matrix[3][0] * Inverse[0][0];
-        Inverse[3][1] = -Matrix[3][1] * Inverse[1][1];
-        Inverse[3][2] = -Matrix[3][2] * Inverse[2][2];
+        Inverse[0][0] =  1.0 / ScaleTranslation[0][0];
+        Inverse[1][1] =  1.0 / ScaleTranslation[1][1];
+        Inverse[2][2] =  1.0 / ScaleTranslation[2][2];
+        Inverse[3][0] = -ScaleTranslation[3][0] * Inverse[0][0];
+        Inverse[3][1] = -ScaleTranslation[3][1] * Inverse[1][1];
+        Inverse[3][2] = -ScaleTranslation[3][2] * Inverse[2][2];
         return Inverse;
     }
 

@@ -362,16 +362,22 @@ struct FD3D12DescriptorHandleCache
 
         for (uint32 Index = StartStage; Index < EndStage; Index++)
         {
-            Handles[Index] = { 0 };
+            Handles[Index]        = { 0 };
+            StagedRootSig[Index]  = nullptr;
+            StagedCount[Index]    = 0;
         }
     }
 
     void ClearAll()
     {
         Memory::Memzero(Handles, sizeof(Handles));
+        Memory::Memzero(StagedRootSig, sizeof(StagedRootSig));
+        Memory::Memzero(StagedCount, sizeof(StagedCount));
     }
 
     D3D12_GPU_DESCRIPTOR_HANDLE Handles[EShaderVisibility::Count];
+    const FD3D12RootSignature*  StagedRootSig[EShaderVisibility::Count];
+    uint32                      StagedCount[EShaderVisibility::Count];
 };
 
 class FD3D12LocalDescriptorHeap : public FD3D12DeviceChild
@@ -441,6 +447,8 @@ public:
     void BindSamplers(FD3D12RootSignature* RootSignature, EShaderVisibility::Type ShaderStage);
 
     void SetDescriptorHeaps();
+
+    bool IsTableLayoutStale(EResourceType::Type Type, EShaderVisibility::Type ShaderStage, const FD3D12RootSignature* RootSignature, uint32 Count) const;
 
     FORCEINLINE void DirtyDescriptorHeaps()
     {

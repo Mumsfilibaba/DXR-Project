@@ -6,7 +6,7 @@
 #include "Core/Platform/PlatformMisc.h"
 #include "Core/Templates/TypeTraits/EqualTraits.h"
 
-static FAutoConsoleCommand CmdClearHistory(
+static FAutoConsoleCommand CCmdClearHistory(
     "ClearHistory",
     "Clears the history of the Console",
     FConsoleCommandDelegate::CreateLambda([](StringView)
@@ -14,7 +14,7 @@ static FAutoConsoleCommand CmdClearHistory(
         FConsoleManager::Get().ClearHistory();
     }));
 
-static FAutoConsoleCommand CmdDumpCVars(
+static FAutoConsoleCommand CCmdDumpCVars(
     "Console.DumpCVars",
     "Dumps all console variables (optionally filtered by key) to DumpConsoleVariableValues.txt in the current working directory",
     FConsoleCommandDelegate::CreateLambda([](StringView Args)
@@ -26,6 +26,7 @@ static FAutoConsoleCommand CmdDumpCVars(
 
         StringView KeyView = Args;
         KeyView.TrimInline();
+        
         const CHAR* Key = KeyView.IsEmpty() ? nullptr : *KeyView;
         ConsoleManager.DumpConsoleVariableValues(OutputDevice, Key);
     }));

@@ -1,6 +1,6 @@
 #include "BlockCompressionShared.hlsli"
 
-Texture2D<float4> SourceTexture : register(t0);
+Texture2D<float4>                         SourceTexture : register(t0);
 TEXTURE_FORMAT_UNKNOWN RWTexture2D<uint4> OutputTexture : register(u0);
 
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]

@@ -4,11 +4,17 @@
 TEXTURE_FORMAT_UNKNOWN RWTexture2D<min16float> Texture : register(u0);
 
 SHADER_CONSTANT_BLOCK_BEGIN
+    // 0-8
     int2 ScreenSize;
 SHADER_CONSTANT_BLOCK_END
 
-#define NUM_THREADS 16
-#define KERNEL_SIZE 5
+#ifndef NUM_THREADS
+    #define NUM_THREADS 16
+#endif
+
+#ifndef KERNEL_SIZE
+    #define KERNEL_SIZE 5
+#endif
 
 groupshared min16float GTextureCache[NUM_THREADS][NUM_THREADS];
 
@@ -52,11 +58,11 @@ void Main(uint3 GroupThreadID : SV_GroupThreadID, uint3 DispatchThreadID : SV_Di
         // Going outside of the cache? 
         if (any(CurrentTexCoord >= MAX_SIZE) || any(CurrentTexCoord < int2(0, 0)))
         {
-    #ifdef HORIZONTAL_PASS
-        const int2 CurrentPixel = int2(min(max(Pixel.x + Offset, 0), Constants.ScreenSize.x - 1), Pixel.y);
-    #else
-        const int2 CurrentPixel = int2(Pixel.x, min(max(Pixel.y + Offset, 0), Constants.ScreenSize.y - 1));
-    #endif
+        #ifdef HORIZONTAL_PASS
+            const int2 CurrentPixel = int2(min(max(Pixel.x + Offset, 0), Constants.ScreenSize.x - 1), Pixel.y);
+        #else
+            const int2 CurrentPixel = int2(Pixel.x, min(max(Pixel.y + Offset, 0), Constants.ScreenSize.y - 1));
+        #endif
             Result += Texture[CurrentPixel] * Weight;
         }
         else

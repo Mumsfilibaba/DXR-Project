@@ -61,6 +61,25 @@ static bool IsGoogleDecorateIdDecoration(uint32 DecorationId)
     return DecorationId == SpirvOps::DecorationHlslCounterBufferGOOGLE;
 }
 
+static uint16 ComputeEffectiveRegister(uint32 OriginalSet, uint32 RawBinding)
+{
+    if (OriginalSet == VULKAN_RAY_TRACING_LOCAL_SET)
+    {
+        const uint32 EffectiveRegister = VULKAN_RAY_TRACING_LOCAL_REGISTER_BASE + RawBinding;
+        VULKAN_ERROR("RT-local resource (register %u, space%u) force-mapped into the global set at register %u",
+            RawBinding, VULKAN_RAY_TRACING_LOCAL_SET, EffectiveRegister);
+        CHECK(EffectiveRegister < VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS);
+        return static_cast<uint16>(EffectiveRegister);
+    }
+    else if (OriginalSet == VULKAN_SHADER_CONSTANTS_SET)
+    {
+        VULKAN_ERROR("Descriptor resource declared in space%u (reserved for 32-bit constants), register %u; "
+            "this is unexpected - treating it as a global-space resource", VULKAN_SHADER_CONSTANTS_SET, RawBinding);
+    }
+
+    return static_cast<uint16>(RawBinding);
+}
+
 FVulkanDevice* FVulkanShaderModule::StaticDevice = nullptr;
 
 FVulkanShaderModule::FVulkanShaderModule(FVulkanDevice* InDevice, VkShaderModule InShaderModule)
@@ -94,7 +113,7 @@ FVulkanShader::~FVulkanShader()
 }
 
 FVulkanRayTracingShader::FVulkanRayTracingShader(FVulkanDevice* InDevice)
-    : FVulkanShader(InDevice, EShaderVisibility::Compute)
+    : FVulkanShader(InDevice, EShaderVisibility::RayTracing)
 {
 }
 
@@ -134,20 +153,32 @@ TSharedRef<FVulkanShaderModule> FVulkanShader::GetOrCreateShaderModule(FVulkanPi
             return nullptr;
         }
     }
+
+    // Cache per (set index + resolved final bindings). This is stable for non-RT shaders (each owns its
+    // set, so the bindings never change), but distinguishes an RT shader reused across pipelines that
+    // assign it different merged bindings - those must not alias to the same VkShaderModule.
+
+    uint64 ModuleKey = DescriptorSetIndex;
+    for (const FVulkanShaderInfo::FResourceBinding& Binding : ShaderInfo.ResourceBindings)
+    {
+        uint32 RemappedBinding = 0;
+        const bool bFound = Layout->GetRemappedBinding(ShaderVisibility, Binding.BindingType, Binding.OriginalBindingIndex, RemappedBinding);
+        HashCombine(ModuleKey, bFound ? RemappedBinding : static_cast<uint32>(Binding.BindingIndex));
+    }
     
     {
         TScopedLock Lock(ShaderModulesCS);
 
-        // Find the ShaderModule with the correct DescriptorSetIndex
-        if (TSharedRef<FVulkanShaderModule>* ShaderModule = ShaderModules.Find(DescriptorSetIndex))
+        // Find the ShaderModule with the matching resolved bindings
+        if (TSharedRef<FVulkanShaderModule>* ShaderModule = ShaderModules.Find(ModuleKey))
         {
             return *ShaderModule;
         }
     }
     
-    // Patch the SPIR-V code with the correct DescriptorSetIndex
+    // Patch the SPIR-V code with the correct DescriptorSetIndex + merged binding numbers
     FSpirvArray PatchedCode;
-    if (!PatchShaderBindings(PatchedCode, DescriptorSetIndex))
+    if (!PatchShaderBindings(PatchedCode, Layout, DescriptorSetIndex))
     {
         VULKAN_ERROR_CRITICAL("Failed to get resource bindings");
         return nullptr;
@@ -190,7 +221,7 @@ TSharedRef<FVulkanShaderModule> FVulkanShader::GetOrCreateShaderModule(FVulkanPi
     {
         TScopedLock Lock(ShaderModulesCS);
 
-		if (TSharedRef<FVulkanShaderModule>* Existing = ShaderModules.Find(DescriptorSetIndex))
+		if (TSharedRef<FVulkanShaderModule>* Existing = ShaderModules.Find(ModuleKey))
 		{
 		    // Another thread won the race; destroy the newly created VkShaderModule and reuse the existing shared ref.
 			vkDestroyShaderModule(GetDevice()->GetVkDevice(), ShaderModule, nullptr);
@@ -198,12 +229,12 @@ TSharedRef<FVulkanShaderModule> FVulkanShader::GetOrCreateShaderModule(FVulkanPi
 		}
 
         TSharedRef<FVulkanShaderModule> NewShaderModule = new FVulkanShaderModule(GetDevice(), ShaderModule);
-        ShaderModules.Add(DescriptorSetIndex, NewShaderModule);
+        ShaderModules.Add(ModuleKey, NewShaderModule);
         return NewShaderModule;
     }
 }
 
-bool FVulkanShader::PatchShaderBindings(FSpirvArray& OutSpirv, uint32 DescriptorSetIndex)
+bool FVulkanShader::PatchShaderBindings(FSpirvArray& OutSpirv, FVulkanPipelineLayout* Layout, uint32 DescriptorSetIndex)
 {
     if (SpirvCode.IsEmpty())
     {
@@ -211,15 +242,34 @@ bool FVulkanShader::PatchShaderBindings(FSpirvArray& OutSpirv, uint32 Descriptor
         return false;
     }
 
+    CHECK(Layout != nullptr);
+    CHECK(ShaderInfo.BindingOffsets.Size() == ShaderInfo.ResourceBindings.Size());
+
     FSpirvArray PatchedCode = SpirvCode;
 
-    for (FVulkanShaderInfo::FBindingOffsets& Offsets : ShaderInfo.BindingOffsets)
+    // BindingOffsets is index-aligned with ResourceBindings. Resolve the final binding number from the
+    // (merged) layout and write both decorations. For non-RT shaders this resolves to the same dense
+    // BindingIndex as before. For ray tracing it resolves to the shared merged binding.
+
+    for (int32 Index = 0; Index < ShaderInfo.BindingOffsets.Size(); Index++)
     {
+        const FVulkanShaderInfo::FBindingOffsets& Offsets  = ShaderInfo.BindingOffsets[Index];
+        const FVulkanShaderInfo::FResourceBinding& Binding = ShaderInfo.ResourceBindings[Index];
+
+        CHECK(Offsets.BindingOffset       != UINT32_MAX);
         CHECK(Offsets.DescriptorSetOffset != UINT32_MAX);
+
+        uint32 RemappedBinding = 0;
+        const bool bFound = Layout->GetRemappedBinding(ShaderVisibility, Binding.BindingType, Binding.OriginalBindingIndex, RemappedBinding);
+        CHECK(ShaderVisibility == EShaderVisibility::RayTracing || (bFound && RemappedBinding == Binding.BindingIndex));
+
+        const uint32 FinalBinding = bFound ? RemappedBinding : Binding.BindingIndex;
+
+        PatchedCode[Offsets.BindingOffset]       = FinalBinding;
         PatchedCode[Offsets.DescriptorSetOffset] = DescriptorSetIndex;
     }
 
-    for (FVulkanShaderInfo::FBindingOffsets& Offsets : ShaderInfo.HeapBindingOffsets)
+    for (const FVulkanShaderInfo::FBindingOffsets& Offsets : ShaderInfo.HeapBindingOffsets)
     {
         CHECK(Offsets.DescriptorSetOffset != UINT32_MAX);
         PatchedCode[Offsets.DescriptorSetOffset] = VULKAN_BINDLESS_RUNTIME_SET_INDEX;
@@ -319,8 +369,7 @@ bool FVulkanShader::InitializeShaderLayout()
                 const uint32 OriginalBinding = spvc_compiler_get_decoration(Compiler, SampledImages[Index].id, SpvDecorationBinding);
                 if (OriginalBinding != VULKAN_BINDLESS_RESOURCE_BINDING)
                 {
-                    VULKAN_ERROR_CRITICAL(
-                        "Resource at marker set %u must sit at binding %u (got %u). HLSL must not declare regular resources at space%u.",
+                    VULKAN_ERROR_CRITICAL("Resource at marker set %u must sit at binding %u (got %u). HLSL must not declare regular resources at space%u.",
                         VULKAN_BINDLESS_HEAP_MARKER_SET, VULKAN_BINDLESS_RESOURCE_BINDING, OriginalBinding, VULKAN_BINDLESS_HEAP_MARKER_SET);
                     spvc_context_destroy(Context);
                     return false;
@@ -333,7 +382,7 @@ bool FVulkanShader::InitializeShaderLayout()
             FVulkanShaderInfo::FResourceBinding Binding;
             Binding.BindingType          = EVulkanBindingType::SampledImage;
             Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
-            Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, SampledImages[Index].id, SpvDecorationBinding));
+            Binding.OriginalBindingIndex = ComputeEffectiveRegister(OriginalSet, spvc_compiler_get_decoration(Compiler, SampledImages[Index].id, SpvDecorationBinding));
 
         #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
             Binding.DebugName = spvc_compiler_get_name(Compiler, SampledImages[Index].base_type_id);
@@ -375,8 +424,7 @@ bool FVulkanShader::InitializeShaderLayout()
                 const uint32 OriginalBinding = spvc_compiler_get_decoration(Compiler, Samplers[Index].id, SpvDecorationBinding);
                 if (OriginalBinding != VULKAN_BINDLESS_SAMPLER_BINDING)
                 {
-                    VULKAN_ERROR_CRITICAL(
-                        "Sampler at marker set %u must sit at binding %u (got %u). HLSL must not declare regular resources at space%u.",
+                    VULKAN_ERROR_CRITICAL("Sampler at marker set %u must sit at binding %u (got %u). HLSL must not declare regular resources at space%u.",
                         VULKAN_BINDLESS_HEAP_MARKER_SET, VULKAN_BINDLESS_SAMPLER_BINDING, OriginalBinding, VULKAN_BINDLESS_HEAP_MARKER_SET);
                     spvc_context_destroy(Context);
                     return false;
@@ -389,7 +437,7 @@ bool FVulkanShader::InitializeShaderLayout()
             FVulkanShaderInfo::FResourceBinding Binding;
             Binding.BindingType          = EVulkanBindingType::Sampler;
             Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
-            Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, Samplers[Index].id, SpvDecorationBinding));
+            Binding.OriginalBindingIndex = ComputeEffectiveRegister(OriginalSet, spvc_compiler_get_decoration(Compiler, Samplers[Index].id, SpvDecorationBinding));
 
         #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
             Binding.DebugName = spvc_compiler_get_name(Compiler, Samplers[Index].base_type_id);
@@ -431,8 +479,7 @@ bool FVulkanShader::InitializeShaderLayout()
                 const uint32 OriginalBinding = spvc_compiler_get_decoration(Compiler, StorageImages[Index].id, SpvDecorationBinding);
                 if (OriginalBinding != VULKAN_BINDLESS_RESOURCE_BINDING)
                 {
-                    VULKAN_ERROR_CRITICAL(
-                        "Resource at marker set %u must sit at binding %u (got %u). HLSL must not declare regular resources at space%u.",
+                    VULKAN_ERROR_CRITICAL("Resource at marker set %u must sit at binding %u (got %u). HLSL must not declare regular resources at space%u.",
                         VULKAN_BINDLESS_HEAP_MARKER_SET, VULKAN_BINDLESS_RESOURCE_BINDING, OriginalBinding, VULKAN_BINDLESS_HEAP_MARKER_SET);
                     spvc_context_destroy(Context);
                     return false;
@@ -445,7 +492,7 @@ bool FVulkanShader::InitializeShaderLayout()
             FVulkanShaderInfo::FResourceBinding Binding;
             Binding.BindingType          = EVulkanBindingType::StorageImage;
             Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
-            Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, StorageImages[Index].id, SpvDecorationBinding));
+            Binding.OriginalBindingIndex = ComputeEffectiveRegister(OriginalSet, spvc_compiler_get_decoration(Compiler, StorageImages[Index].id, SpvDecorationBinding));
 
         #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
             Binding.DebugName = spvc_compiler_get_name(Compiler, StorageImages[Index].base_type_id);
@@ -487,8 +534,7 @@ bool FVulkanShader::InitializeShaderLayout()
                 const uint32 OriginalBinding = spvc_compiler_get_decoration(Compiler, UniformBuffers[Index].id, SpvDecorationBinding);
                 if (OriginalBinding != VULKAN_BINDLESS_RESOURCE_BINDING)
                 {
-                    VULKAN_ERROR_CRITICAL(
-                        "Resource at marker set %u must sit at binding %u (got %u). HLSL must not declare regular resources at space%u.",
+                    VULKAN_ERROR_CRITICAL("Resource at marker set %u must sit at binding %u (got %u). HLSL must not declare regular resources at space%u.",
                         VULKAN_BINDLESS_HEAP_MARKER_SET, VULKAN_BINDLESS_RESOURCE_BINDING, OriginalBinding, VULKAN_BINDLESS_HEAP_MARKER_SET);
                     spvc_context_destroy(Context);
                     return false;
@@ -501,7 +547,7 @@ bool FVulkanShader::InitializeShaderLayout()
             FVulkanShaderInfo::FResourceBinding Binding;
             Binding.BindingType          = EVulkanBindingType::UniformBuffer;
             Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
-            Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, UniformBuffers[Index].id, SpvDecorationBinding));
+            Binding.OriginalBindingIndex = ComputeEffectiveRegister(OriginalSet, spvc_compiler_get_decoration(Compiler, UniformBuffers[Index].id, SpvDecorationBinding));
 
         #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
             Binding.DebugName = spvc_compiler_get_name(Compiler, UniformBuffers[Index].base_type_id);
@@ -543,8 +589,7 @@ bool FVulkanShader::InitializeShaderLayout()
                 const uint32 OriginalBinding = spvc_compiler_get_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationBinding);
                 if (OriginalBinding != VULKAN_BINDLESS_RESOURCE_BINDING)
                 {
-                    VULKAN_ERROR_CRITICAL(
-                        "Resource at marker set %u must sit at binding %u (got %u). HLSL must not declare regular resources at space%u.",
+                    VULKAN_ERROR_CRITICAL("Resource at marker set %u must sit at binding %u (got %u). HLSL must not declare regular resources at space%u.",
                         VULKAN_BINDLESS_HEAP_MARKER_SET, VULKAN_BINDLESS_RESOURCE_BINDING, OriginalBinding, VULKAN_BINDLESS_HEAP_MARKER_SET);
                     spvc_context_destroy(Context);
                     return false;
@@ -556,7 +601,7 @@ bool FVulkanShader::InitializeShaderLayout()
 
             FVulkanShaderInfo::FResourceBinding Binding;
             Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
-            Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationBinding));
+            Binding.OriginalBindingIndex = ComputeEffectiveRegister(OriginalSet, spvc_compiler_get_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationBinding));
 
             const String BaseTypeName = spvc_compiler_get_name(Compiler, StorageBuffers[Index].base_type_id);
 
@@ -572,6 +617,61 @@ bool FVulkanShader::InitializeShaderLayout()
 
         #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
             Binding.DebugName = Move(BaseTypeName);
+        #endif
+
+            ShaderInfo.BindingOffsets.Add({ DescriptorSetOffset, BindingOffset });
+            ShaderInfo.ResourceBindings.Add(Move(Binding));
+        }
+    }
+    else
+    {
+        spvc_context_destroy(Context);
+        return false;
+    }
+
+    // Acceleration Structures
+    size_t NumAccelerationStructures = 0;
+    const spvc_reflected_resource* AccelerationStructures = nullptr;
+    if (spvc_resources_get_resource_list_for_type(ShaderResources, SPVC_RESOURCE_TYPE_ACCELERATION_STRUCTURE, &AccelerationStructures, &NumAccelerationStructures) == SPVC_SUCCESS)
+    {
+        for (uint32 Index = 0; Index < NumAccelerationStructures; Index++)
+        {
+            const uint32 OriginalSet = spvc_compiler_get_decoration(Compiler, AccelerationStructures[Index].id, SpvDecorationDescriptorSet);
+
+            uint32 BindingOffset = UINT32_MAX;
+            if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, AccelerationStructures[Index].id, SpvDecorationBinding, &BindingOffset))
+            {
+                BindingOffset = UINT32_MAX;
+            }
+
+            uint32 DescriptorSetOffset = UINT32_MAX;
+            if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, AccelerationStructures[Index].id, SpvDecorationDescriptorSet, &DescriptorSetOffset))
+            {
+                DescriptorSetOffset = UINT32_MAX;
+            }
+
+            if (OriginalSet == VULKAN_BINDLESS_HEAP_MARKER_SET)
+            {
+                const uint32 OriginalBinding = spvc_compiler_get_decoration(Compiler, AccelerationStructures[Index].id, SpvDecorationBinding);
+                if (OriginalBinding != VULKAN_BINDLESS_RESOURCE_BINDING)
+                {
+                    VULKAN_ERROR_CRITICAL("Resource at marker set %u must sit at binding %u (got %u). HLSL must not declare regular resources at space%u.",
+                        VULKAN_BINDLESS_HEAP_MARKER_SET, VULKAN_BINDLESS_RESOURCE_BINDING, OriginalBinding, VULKAN_BINDLESS_HEAP_MARKER_SET);
+                    spvc_context_destroy(Context);
+                    return false;
+                }
+
+                ShaderInfo.HeapBindingOffsets.Add({ DescriptorSetOffset, BindingOffset });
+                continue;
+            }
+
+            FVulkanShaderInfo::FResourceBinding Binding;
+            Binding.BindingType          = EVulkanBindingType::AccelerationStructure;
+            Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
+            Binding.OriginalBindingIndex = ComputeEffectiveRegister(OriginalSet, spvc_compiler_get_decoration(Compiler, AccelerationStructures[Index].id, SpvDecorationBinding));
+
+        #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
+            Binding.DebugName = spvc_compiler_get_name(Compiler, AccelerationStructures[Index].id);
         #endif
 
             ShaderInfo.BindingOffsets.Add({ DescriptorSetOffset, BindingOffset });
@@ -625,17 +725,11 @@ bool FVulkanShader::InitializeShaderLayout()
         return false;
     }
     
-    // Remap the necessary bindings
+    // Do NOT bake binding/set numbers here. At reflection time the shader is seen in isolation, so the final numbers are unknown.
     for (int32 Index = 0; Index < ShaderInfo.BindingOffsets.Size(); Index++)
     {
-        FVulkanShaderInfo::FBindingOffsets& Offsets = ShaderInfo.BindingOffsets[Index];
-        CHECK(Offsets.BindingOffset != UINT32_MAX);
-        CHECK(Offsets.DescriptorSetOffset != UINT32_MAX);
-        
-        // Since all the bindings will be the same no matter what DescriptorSetIndex, only change the BindingIndex
-        FVulkanShaderInfo::FResourceBinding& Binding = ShaderInfo.ResourceBindings[Index];
-        SpirvCode[Offsets.BindingOffset]       = Binding.BindingIndex;
-        SpirvCode[Offsets.DescriptorSetOffset] = 0;
+        CHECK(ShaderInfo.BindingOffsets[Index].BindingOffset       != UINT32_MAX);
+        CHECK(ShaderInfo.BindingOffsets[Index].DescriptorSetOffset != UINT32_MAX);
     }
     
     spvc_context_destroy(Context);

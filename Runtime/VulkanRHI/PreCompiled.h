@@ -23,7 +23,6 @@
 #include "VulkanRHI/VulkanPipelineState.h"
 #include "VulkanRHI/VulkanQuery.h"
 #include "VulkanRHI/VulkanQueue.h"
-#include "VulkanRHI/VulkanRayTracing.h"
 #include "VulkanRHI/VulkanRenderPass.h"
 #include "VulkanRHI/VulkanResourceViews.h"
 #include "VulkanRHI/VulkanSamplerState.h"
@@ -32,3 +31,4 @@
 #include "VulkanRHI/VulkanSurface.h"
 #include "VulkanRHI/VulkanTexture.h"
 #include "VulkanRHI/VulkanSwapChain.h"
+#include "VulkanRHI/RayTracing/VulkanRayTracing.h"

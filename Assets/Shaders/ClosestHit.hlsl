@@ -1,140 +1,91 @@
 #include "PBRHelpers.hlsli"
 #include "Structs.hlsli"
-#include "RayTracingHelpers.hlsli"
 #include "Constants.hlsli"
 #include "ColorSpaceTransforms.hlsli"
+#include "RayTracingHelpers.hlsli"
+#include "RayTracingShading.hlsli"
 
-// Global RootSignature
-RaytracingAccelerationStructure Scene : register(t0);
+#if RAY_TRACING_BINDLESS
+    #include "BindlessHelpers.hlsli"
+    #include "MaterialBindless.hlsli"
+#endif
 
-ConstantBuffer<FCamera> CameraBuffer : register(b0);
+ConstantBuffer<FCamera>                   CameraBuffer   : register(b0);
+ConstantBuffer<FRayTracingSceneConstants> SceneConstants : register(b1);
 
-TextureCube<float4> Skybox : register(t1);
-Texture2D<float4> MaterialTextures[128] : register(t4);
+StructuredBuffer<FRayTracingGeometryIndices> GeometryTable  : register(t9);
+StructuredBuffer<FMaterial>                  Materials      : register(t8);
+TextureCube<float4>                          IBLDiffuse     : register(t5);
+TextureCube<float4>                          IBLSpecular    : register(t6);
+Texture2D<float2>                            IntegrationLUT : register(t7);
 
-SamplerState TextureSampler : register(s1);
+SamplerState EnvironmentSampler : register(s2);
+SamplerState LUTSampler         : register(s3);
 
-// Local RootSignature
-StructuredBuffer<FVertex> Vertices : register(t0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-ByteAddressBuffer InIndices : register(t1, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-
+#if !RAY_TRACING_BINDLESS
+    StructuredBuffer<FVertex> InVertices      : register(t0, D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL);
+    ByteAddressBuffer         InIndices       : register(t1, D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL);
+    Texture2D<float4>         AlbedoTex       : register(t2, D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL);
+    Texture2D<float4>         NormalTex       : register(t3, D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL);
+    Texture2D<float4>         MaterialTex     : register(t4, D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL);
+    SamplerState              MaterialSampler : register(s0, D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL);
+#endif
 
 [shader("closesthit")]
-void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttributes IntersectionAttributes)
+void ClosestHit(inout FRayPayload PayLoad, in BuiltInTriangleIntersectionAttributes IntersectionAttributes)
 {
-    PayLoad.Color        = float3(1.0f, 0.0f, 0.0f);
-    PayLoad.CurrentDepth = PayLoad.CurrentDepth + 1;
+    const FRayTracingGeometryIndices GeometryIndices = GeometryTable[InstanceID()];
+    const FMaterial                  MaterialData    = Materials[GeometryIndices.MaterialIndex];
+
+#if RAY_TRACING_BINDLESS
+    StructuredBuffer<FVertex> InVertices      = GetResourceFromPackedDescriptorIndex(GeometryIndices.VerticesHandle);
+    ByteAddressBuffer         InIndices       = GetResourceFromPackedDescriptorIndex(GeometryIndices.IndicesHandle);
+    Texture2D<float4>         AlbedoTex       = GetResourceFromPackedDescriptorIndex(MaterialData.AlbedoHandle);
+    Texture2D<float4>         NormalTex       = GetResourceFromPackedDescriptorIndex(MaterialData.NormalHandle);
+    Texture2D<float4>         MaterialTex     = GetResourceFromPackedDescriptorIndex(MaterialData.MaterialHandle);
+    SamplerState              MaterialSampler = GetMaterialSamplerBindless(MaterialData);
+#endif
+
+    FHitSurface Surface = InterpolateTriangleHit(InVertices, InIndices, PrimitiveIndex(), IntersectionAttributes.barycentrics);
+    TransformHitSurfaceToWorld(Surface, ObjectToWorld3x4(), WorldToObject3x4());
+
+    const float3 FacingViewDir = normalize(-WorldRayDirection());
+    const bool   bHasNormalMap = (MaterialData.NormalMapFlags != 0);
     
-    // Get the base index of the triangle's first 16 bit index.
-    const uint IndexSizeInBytes    = 4;
-    const uint IndicesPerTriangle  = 3;
-    const uint TriangleIndexStride = IndicesPerTriangle * IndexSizeInBytes;
-    const uint BaseIndex           = PrimitiveIndex() * TriangleIndexStride;
-
-    // Load up three indices for the triangle.
-    uint3 Indices = InIndices.Load3(BaseIndex);
-
-    // Retrieve corresponding vertex normals for the triangle vertices.
-    float3 TriangleNormals[3] =
+    float3 Normal;
+    if (bHasNormalMap && length(Surface.Tangent) > 1e-4f)
     {
-        Vertices[Indices[0]].Normal,
-        Vertices[Indices[1]].Normal,
-        Vertices[Indices[2]].Normal
-    };
+        const float3 MappedNormal = UnpackNormalBC5(NormalTex.SampleLevel(MaterialSampler, Surface.TexCoord, 0).rgb);
+        const float3 Bitangent    = normalize(cross(Surface.Normal, Surface.Tangent));
 
-    float3 BarycentricCoords = float3(
-        1.0f - IntersectionAttributes.barycentrics.x - IntersectionAttributes.barycentrics.y,
-        IntersectionAttributes.barycentrics.x,
-        IntersectionAttributes.barycentrics.y);
-    
-    float3 Normal = (TriangleNormals[0] * BarycentricCoords.x) + (TriangleNormals[1] * BarycentricCoords.y) + (TriangleNormals[2] * BarycentricCoords.z);
-    Normal = normalize(Normal);
-    
-    float3 TriangleTangent[3] =
+        Normal = ApplyNormalMapping(MappedNormal, Surface.Normal, Surface.Tangent, Bitangent);
+    }
+    else
     {
-        Vertices[Indices[0]].Tangent,
-        Vertices[Indices[1]].Tangent,
-        Vertices[Indices[2]].Tangent
-    };
+        Normal = Surface.Normal;
+    }
 
-    float2 TriangleTexCoords[3] =
+    if (dot(Normal, FacingViewDir) < 0.0f)
     {
-        Vertices[Indices[0]].TexCoord,
-        Vertices[Indices[1]].TexCoord,
-        Vertices[Indices[2]].TexCoord
-    };
+        Normal = -Normal;
+    }
 
-    float2 TexCoords =
-        (TriangleTexCoords[0] * BarycentricCoords.x) +
-        (TriangleTexCoords[1] * BarycentricCoords.y) +
-        (TriangleTexCoords[2] * BarycentricCoords.z);
-    TexCoords.y = 1.0f - TexCoords.y;
-    
-    float3 Tangent =
-        (TriangleTangent[0] * BarycentricCoords.x) +
-        (TriangleTangent[1] * BarycentricCoords.y) +
-        (TriangleTangent[2] * BarycentricCoords.z);
-    Tangent = normalize(Tangent);
+    // TODO: We should have a more proper texture LOD selection here.  
+    const float LOD = (min(RayTCurrent(), 1000.0f) / 1000.0f) * 15.0f;
 
-    uint TextureIndex  = InstanceID();
-    uint AlbedoIndex   = TextureIndex;
-    uint NormalIndex   = TextureIndex + 1;
-    uint MaterialIndex = TextureIndex + 2;
-    
-    float3 MappedNormal = MaterialTextures[NormalIndex].SampleLevel(TextureSampler, TexCoords, 0).rgb;
-    MappedNormal = UnpackNormal(MappedNormal);
-    
-    float3 Bitangent = normalize(cross(Normal, Tangent));
-    Normal = ApplyNormalMapping(MappedNormal, Normal, Tangent, Bitangent);
-    
-    float LOD = (min(RayTCurrent(), 1000.0f) / 1000.0f) * 15.0f;
-    float3 AlbedoColor = SRGBToLinear(MaterialTextures[AlbedoIndex].SampleLevel(TextureSampler, TexCoords, LOD).rgb);
-    
-    // Send a new ray for reflection
+    float3 AlbedoColor    = SRGBToLinear(AlbedoTex.SampleLevel(MaterialSampler, Surface.TexCoord, LOD).rgb);
+    float3 MaterialParams = MaterialTex.SampleLevel(MaterialSampler, Surface.TexCoord, 0).rgb; // r=AO, g=Roughness, b=Metallic
+
     const float3 HitPosition = WorldHitPosition();
-    const float3 LightDir    = normalize(float3(0.0f, 1.0f, 0.0f));
-    const float3 ViewDir     = normalize(CameraBuffer.PositionWS - HitPosition);
-    
-    // Sample packed material texture (R=AO, G=Roughness, B=Metallic)
-    const float3 MaterialParams  = MaterialTextures[MaterialIndex].SampleLevel(TextureSampler, TexCoords, 0).rgb;
-    const float SampledAO        = MaterialParams.r;
-    const float SampledRoughness = MaterialParams.g;
-    const float SampledMetallic  = MaterialParams.b;
-    const float FinalRoughness   = min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
-    
-    //float3 ReflectedColor = 0.0;
-    //if (PayLoad.CurrentDepth < 4)
-    //{
-    //    RayDesc Ray;
-    //    Ray.Origin    = HitPosition + (Normal * RAY_OFFSET);
-    //    Ray.Direction = reflect(WorldRayDirection(), Normal);
-    //    Ray.TMin      = 0;
-    //    Ray.TMax      = 100000;
 
-    //    RayPayload ReflectancePayLoad;
-    //    ReflectancePayLoad.CurrentDepth = PayLoad.CurrentDepth + 1;
+    AlbedoColor    *= MaterialData.Albedo;
+    MaterialParams *= float3(MaterialData.AO, MaterialData.Roughness, MaterialData.Metallic);
 
-    //    TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, Ray, ReflectancePayLoad);
-
-    //    ReflectedColor = ReflectancePayLoad.Color;
-    //}
-    //else
-    //{
-    //    ReflectedColor = Skybox.SampleLevel(TextureSampler, WorldRayDirection(), 0).rgb;
-    //}
+    const float3 ViewDir = normalize(-WorldRayDirection());
     
-    //float3 FresnelReflect = FresnelSchlick(-WorldRayDirection(), Normal, AlbedoColor);
-    //ReflectedColor = FresnelReflect * ReflectedColor;
+    PayLoad.Color = ShadeReflectionHit(
+        SceneConstants, IBLDiffuse, IBLSpecular, IntegrationLUT, EnvironmentSampler,
+        LUTSampler, AlbedoColor, Normal, MaterialParams, HitPosition, ViewDir);
 
-    float3 F0 = 0.04;
-    F0 = lerp(F0, AlbedoColor, SampledMetallic);
-
-    float3 IncidentRadiance = float3(10.0f, 10.0f, 10.0f);
-    float3 L0 = DirectRadiance(F0, Normal, ViewDir, LightDir, IncidentRadiance, AlbedoColor, SampledRoughness, SampledMetallic);
-    
-    float3 Ambient = 0.03 * AlbedoColor * SampledAO;
-    float3 Color   = Ambient + L0;
-    
-    // Add rays together
-    PayLoad.Color = Color;
+    PayLoad.HitT  = RayTCurrent();
 }

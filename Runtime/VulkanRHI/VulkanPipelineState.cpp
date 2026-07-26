@@ -1082,11 +1082,6 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
 #endif // VK_EXT_mesh_shader
 }
 
-void* FVulkanRayTracingPipelineStateRHI::GetRHINativeState() const
-{
-    return nullptr;
-}
-
 FVulkanPipelineStateManager::FVulkanPipelineStateManager(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , PipelineCache(VK_NULL_HANDLE)

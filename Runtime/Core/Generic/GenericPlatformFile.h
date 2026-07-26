@@ -170,6 +170,11 @@ struct CORE_API FGenericPlatformFile
         return false;
     }
 
+    static FORCEINLINE bool CreateDirectory(const CHAR* Path)
+    {
+        return false;
+    }
+
     static FORCEINLINE bool IsPathRelative(const CHAR* Path)
     {
         return false;

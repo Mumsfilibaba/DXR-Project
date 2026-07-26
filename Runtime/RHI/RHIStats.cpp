@@ -34,6 +34,14 @@ STAT_DEFINE_MEMORY(STAT_RHI_UploadMemory,                "Upload Memory",       
 STAT_DEFINE_MEMORY(STAT_RHI_ReadbackMemory,              "Readback Memory",               "RHI");
 
 // -------------------------------------------------------------------------------------------
+// Ray Tracing Acceleration Structure Stats
+// -------------------------------------------------------------------------------------------
+
+STAT_DEFINE_COUNTER(STAT_RHI_BLASCount,                  "BLAS Count", "RHI");
+STAT_DEFINE_COUNTER(STAT_RHI_TLASCount,                  "TLAS Count", "RHI");
+STAT_DEFINE_COUNTER(STAT_RHI_AccelerationStructureBuilds, "AS Builds", "RHI");
+
+// -------------------------------------------------------------------------------------------
 // Budget Stats
 // -------------------------------------------------------------------------------------------
 

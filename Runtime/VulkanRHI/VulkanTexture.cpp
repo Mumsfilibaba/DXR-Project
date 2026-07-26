@@ -172,8 +172,12 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERes
         ImageCreateInfo.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
     }
 
-    // TODO: Look into abstracting these flags
-    ImageCreateInfo.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    if (Desc.IsCopySource())
+    {
+        ImageCreateInfo.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    }
+
+    ImageCreateInfo.usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
     if (Desc.IsRenderTarget())
     {
@@ -225,7 +229,8 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERes
     }
     else
     {
-        CreateInfo = ImageCreateInfo;
+        CreateInfo       = ImageCreateInfo;
+        CreateInfo.pNext = nullptr;
     }
 
     const VkMemoryAllocateFlags AllocateFlags    = 0;

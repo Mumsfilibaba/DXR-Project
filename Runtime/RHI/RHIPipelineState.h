@@ -1,5 +1,6 @@
 #pragma once
 #include "RHI/RHIResource.h"
+#include "RHI/RayTracing/RHIRayTracingTypes.h"
 
 #define RHI_DEFAULT_STENCIl_MASK (0xffffffff)
 #define RHI_DEFAULT_SAMPLE_MASK (0xffffffff)
@@ -512,7 +513,11 @@ protected:
 
 public:
 
-    /** @return D3D12: ID3D12PipelineState* (graphics/compute) or ID3D12StateObject* (ray tracing). Vulkan: VkPipeline (graphics/compute) or nullptr (ray tracing). Metal: id<MTLRenderPipelineState> (graphics) or nullptr. Null: nullptr. */
+    /** 
+     * @return D3D12: ID3D12PipelineState* (graphics/compute) or ID3D12StateObject* (ray tracing). 
+     * Vulkan: VkPipeline (graphics/compute/ray tracing). 
+     * Metal: id<MTLRenderPipelineState> (graphics) or nullptr.
+     * */
     virtual void* GetRHINativeState() const = 0;
 
     virtual void SetDebugName(const String& InName) { }
@@ -624,66 +629,6 @@ class FRHIMeshletPipelineState : public FRHIPipelineState
 protected:
     FRHIMeshletPipelineState() = default;
     virtual ~FRHIMeshletPipelineState() = default;
-};
-
-enum class ERayTracingHitGroupType : uint8
-{
-    Unknown    = 0,
-    Triangles  = 1,
-    Procedural = 2
-};
-
-struct FRHIRayTracingHitGroupInfo
-{
-    FRHIRayTracingHitGroupInfo() noexcept = default;
-
-    FRHIRayTracingHitGroupInfo(const String& InName, ERayTracingHitGroupType InType, TArrayView<FRHIRayTracingShader*> InRayTracingShaders) noexcept
-        : Name(InName)
-        , Type(InType)
-        , Shaders(InRayTracingShaders)
-    {
-    }
-
-    bool operator==(const FRHIRayTracingHitGroupInfo& Other) const noexcept = default;
-
-    String                        Name;
-    TArray<FRHIRayTracingShader*> Shaders;
-    ERayTracingHitGroupType       Type = ERayTracingHitGroupType::Unknown;
-};
-
-struct FRHIRayTracingPipelineStateDesc
-{
-    FRHIRayTracingPipelineStateDesc() noexcept  = default;
-
-    FRHIRayTracingPipelineStateDesc(const TArrayView<FRHIRayGenShader*>& InRayGenShaders, const TArrayView<FRHIRayCallableShader*>& InCallableShaders,
-        const TArrayView<FRHIRayTracingHitGroupInfo>& InHitGroups, const TArrayView<FRHIRayMissShader*>& InMissShaders, uint32 InMaxAttributeSizeInBytes,
-        uint32 InMaxPayloadSizeInBytes, uint32 InMaxRecursionDepth) noexcept
-        : RayGenShaders(InRayGenShaders)
-        , CallableShaders(InCallableShaders)
-        , MissShaders(InMissShaders)
-        , HitGroups(InHitGroups)
-        , MaxAttributeSizeInBytes(InMaxAttributeSizeInBytes)
-        , MaxPayloadSizeInBytes(InMaxPayloadSizeInBytes)
-        , MaxRecursionDepth(InMaxRecursionDepth)
-    {
-    }
-
-    bool operator==(const FRHIRayTracingPipelineStateDesc& Other) const noexcept = default;
-
-    TArray<FRHIRayGenShader*>          RayGenShaders;
-    TArray<FRHIRayCallableShader*>     CallableShaders;
-    TArray<FRHIRayMissShader*>         MissShaders;
-    TArray<FRHIRayTracingHitGroupInfo> HitGroups;
-    uint32                             MaxAttributeSizeInBytes = 0;
-    uint32                             MaxPayloadSizeInBytes   = 0;
-    uint32                             MaxRecursionDepth       = 1;
-};
-
-class FRHIRayTracingPipelineState : public FRHIPipelineState
-{
-protected:
-    FRHIRayTracingPipelineState() = default;
-    virtual ~FRHIRayTracingPipelineState() = default;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

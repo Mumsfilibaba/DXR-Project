@@ -32,7 +32,8 @@ struct EShaderVisibility
         Compute,
         Task,
         Mesh,
-        Count = Mesh + 1
+        RayTracing,
+        Count = RayTracing + 1
     };
 };
 
@@ -50,6 +51,7 @@ inline const CHAR* ToString(EShaderVisibility::Type ShaderVisibility)
         "Compute",
         "Task",
         "Mesh",
+        "RayTracing",
     };
     
     static_assert(ARRAY_COUNT(ShaderVisibilityStrings) == EShaderVisibility::Count, "ShaderVisibilityStrings is out of date");
@@ -191,7 +193,7 @@ public:
     bool Initialize(const TArray<uint8>& InCode);
 
     TSharedRef<FVulkanShaderModule> GetOrCreateShaderModule(class FVulkanPipelineLayout* Layout);
-    bool PatchShaderBindings(FSpirvArray& OutSpirv, uint32 DescriptorSetIndex);
+    bool PatchShaderBindings(FSpirvArray& OutSpirv, class FVulkanPipelineLayout* Layout, uint32 DescriptorSetIndex);
     bool StripGoogleSpirvRequirements(const FSpirvArray& InWords, FSpirvArray& OutWords);
     bool ValidateNoGoogleSpirvRequirements(const FSpirvArray& Words, String* OutErrorMessage = nullptr);
 
@@ -217,7 +219,7 @@ protected:
     FVulkanShaderInfo                             ShaderInfo;
     EShaderVisibility::Type                       ShaderVisibility;
     String                                        EntryPointName;
-    TMap<uint32, TSharedRef<FVulkanShaderModule>> ShaderModules;
+    TMap<uint64, TSharedRef<FVulkanShaderModule>> ShaderModules;
     FCriticalSection                              ShaderModulesCS;
 };
 
@@ -311,11 +313,8 @@ public:
 
     const String& GetIdentifier() const
     {
-        return Identifier;
+        return GetEntryPointName();
     }
-
-protected:
-    String Identifier;
 };
 
 class FVulkanRayGenShaderRHI : public FRHIRayGenShader, public FVulkanRayTracingShader

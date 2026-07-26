@@ -1,4 +1,4 @@
-#include "../CoreDefines.hlsli"
+#include "CoreDefines.hlsli"
 
 // Modified version of: https://github.com/knarkowicz/GPURealTimeBC6H/blob/master/bin/compress.hlsl
 
@@ -29,11 +29,11 @@ static const float HALF_MAX    = 65504.0;
 static const uint  PATTERN_NUM = 32;
 
 #ifdef ENABLE_CUBE_MAP
-TextureCube<float4> SourceTexture : register(t0);
-TEXTURE_FORMAT_UNKNOWN RWTexture2DArray<uint4> OutputTexture : register(u0);
+	TextureCube<float4>                            SourceTexture : register(t0);
+	TEXTURE_FORMAT_UNKNOWN RWTexture2DArray<uint4> OutputTexture : register(u0);
 #else
-Texture2D<float4> SourceTexture : register(t0);
-TEXTURE_FORMAT_UNKNOWN RWTexture2D<uint4> OutputTexture : register(u0);
+	Texture2D<float4>                         SourceTexture : register(t0);
+	TEXTURE_FORMAT_UNKNOWN RWTexture2D<uint4> OutputTexture : register(u0);
 #endif
 
 // ------------------------------------------------------------------------------------------------
@@ -77,6 +77,7 @@ float3 TexCoordToCubeMapDir(in float2 TexCoord, in uint FaceIndex)
 SamplerState PointSampler : register(s0);
 
 SHADER_CONSTANT_BLOCK_BEGIN
+	// 0-16
 	uint2  TextureSizeInBlocks;
 	float2 TextureSizeRcp;
 SHADER_CONSTANT_BLOCK_END

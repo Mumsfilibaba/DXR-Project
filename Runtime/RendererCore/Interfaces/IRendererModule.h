@@ -26,6 +26,10 @@ struct FSceneRenderView
         ShadowCascadeIndex,
         ShadowCascadeOverlay,
         Lit,
+        RayTracingReflectionsRaw,     
+        RayTracingReflectionsTemporal,
+        RayTracingReflectionsSpatial, 
+        RayTracingPrimaryID,          
         Count,
     };
 

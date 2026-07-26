@@ -145,7 +145,7 @@ static ERHIType GetRHIType()
 }
 
 
-static void LogRHI()
+RHI_API void RHI::DumpCapabilities()
 {
     const auto YesNo = [](bool bBoolean) -> const char*
     {
@@ -172,6 +172,8 @@ static void LogRHI()
     LOG_INFO("[RHI] Ray Tracing                               : %s", YesNo(RHI::bSupportsRayTracing));
     LOG_INFO("[RHI]   Tier                                    : %s", ToString(RHI::RayTracingTier));
     LOG_INFO("[RHI]   Max Recursion Depth                     : %u", RHI::RayTracingMaxRecursionDepth);
+    
+    RHI::DumpRayTracingCapabilities();
     
     // -------------------------------------------------------------------------------------------
     // Variable Rate Shading (VRS)
@@ -286,7 +288,7 @@ bool RHI::Initialize()
     }
 
     // Log features of the loaded device and RHI
-    LogRHI();
+    DumpCapabilities();
     return true;
 }
 

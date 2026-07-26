@@ -75,6 +75,12 @@ struct CORE_API FWindowsPlatformFile : public FGenericPlatformFile
         return Result == TRUE;
     }
 
+    static FORCEINLINE bool CreateDirectory(const CHAR* Path)
+    {
+        // Success if the directory was created now or already existed
+        return ::CreateDirectoryA(Path, nullptr) || (::GetLastError() == ERROR_ALREADY_EXISTS);
+    }
+
     static FORCEINLINE bool IsPathRelative(const CHAR* Filepath)
     {
         const BOOL Result = ::PathIsRelativeA(Filepath);

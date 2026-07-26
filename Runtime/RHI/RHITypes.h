@@ -486,6 +486,7 @@ enum class EResourceAccess : uint32
     Present                         = FLAG(15),
     GenericRead                     = FLAG(16),
     StreamOutput                    = FLAG(17),
+    ShaderResource                  = NonPixelShaderResource | PixelShaderResource,
 };
 
 ENUM_CLASS_OPERATORS(EResourceAccess);
@@ -513,6 +514,7 @@ NODISCARD constexpr const CHAR* ToString(EResourceAccess ResourceState)
     case EResourceAccess::Present:                         return "Present";
     case EResourceAccess::GenericRead:                     return "GenericRead";
     case EResourceAccess::StreamOutput:                    return "StreamOutput";
+    case EResourceAccess::ShaderResource:                  return "ShaderResource";
     
     default: return "Unknown";
     }
@@ -844,7 +846,7 @@ struct FRHIBufferCopyDesc
 {
     constexpr FRHIBufferCopyDesc() noexcept = default;
 
-    constexpr FRHIBufferCopyDesc(uint64 InSrcOffset, uint32 InDstOffset, uint32 InSize) noexcept
+    constexpr FRHIBufferCopyDesc(uint64 InSrcOffset, uint64 InDstOffset, uint64 InSize) noexcept
         : SrcOffset(InSrcOffset)
         , DstOffset(InDstOffset)
         , Size(InSize)

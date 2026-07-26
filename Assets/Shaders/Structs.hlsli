@@ -1,46 +1,68 @@
 #ifndef STRUCTS_HLSLI
 #define STRUCTS_HLSLI
+
 #include "CoreDefines.hlsli"
 
 struct FCamera
 {
+    // 0-64
     float4x4 PrevViewProjection;
 
+    // 64-128
     float4x4 ViewProjection;
+    // 128-192
     float4x4 ViewProjectionInv;
 
+    // 192-256
     float4x4 ViewProjectionUnjittered;
+    // 256-320
     float4x4 ViewProjectionInvUnjittered;
 
+    // 320-384
     float4x4 View;
+    // 384-448
     float4x4 ViewInv;
 
+    // 448-512
     float4x4 Projection;
+    // 512-576
     float4x4 ProjectionInv;
-    
+
+    // 576-640
     float4x4 ProjectionUnjittered;
+    // 640-704
     float4x4 ProjectionInvUnjittered;
 
+    // 704-720
     float3   PositionWS;
     float    NearPlane;
-    
+
+    // 720-736
     float3   Forward;
     float    FarPlane;
 
+    // 736-752
     float3   Right;
     float    AspectRatio;
 
+    // 752-768
     float2   Jitter;
     float2   PrevJitter;
 
+    // 768-784
     float    ViewportWidth;
     float    ViewportHeight;
     float    Padding0;
     float    Padding1;
+
+    // 784-800
+    float3   PrevPositionWS;
+    float    Padding2;
 };
 
 struct FPositionRadius
 {
+    // 0-16
     float3 Position;
     float  Radius;
 };
@@ -67,43 +89,29 @@ struct FShadowPointLight
 
 struct FVertex
 {
+    // 0-12
     float3 Position;
+    // 12-24
     float3 Normal;
+    // 24-36
     float3 Tangent;
+    // 36-44
     float2 TexCoord;
 };
 
-struct FTransform
+struct FPerObject
 {
-    // Row-major float3x4 affine transform (3 rows x 4 columns).
-    row_major float3x4 Transform;
-
-    // Inverse-transpose transform (used for normals, tangents etc).
+    // 0-48
+    row_major float3x4 LocalToWorld;
+    // 48-96
     row_major float3x4 TransformInvT;
 
+    // 96-112
     uint ObjectID;
-    uint Padding0;
+    uint MaterialIndex;
     uint Padding1;
     uint Padding2;
 };
-
-float3 TransformPositionWS(FTransform T, float3 Position)
-{
-    const float4 V = float4(Position, 1.0);
-    return float3(dot(V, T.Transform[0]), dot(V, T.Transform[1]), dot(V, T.Transform[2]));
-}
-
-float3 TransformDirectionWS(FTransform T, float3 Direction)
-{
-    const float4 V = float4(Direction, 0.0);
-    return float3(dot(V, T.Transform[0]), dot(V, T.Transform[1]), dot(V, T.Transform[2]));
-}
-
-float3 TransformDirectionInvT(FTransform T, float3 Direction)
-{
-    const float4 V = float4(Direction, 0.0);
-    return float3(dot(V, T.TransformInvT[0]), dot(V, T.TransformInvT[1]), dot(V, T.TransformInvT[2]));
-}
 
 struct FMaterial
 {
@@ -114,14 +122,20 @@ struct FMaterial
     // 16-32
     float Metallic;
     float AO;
-    int   Padding0;
-    int   Padding1;
+    uint  AlbedoHandle;
+    uint  NormalHandle;
 
     // 32-48
     float ParallaxHeightScale;
     float ParallaxMinLayers;
     float ParallaxMaxLayers;
-    float Padding2;
+    uint  MaterialHandle;
+
+    // 48-64
+    uint  HeightHandle;
+    uint  SamplerHandle;
+    uint  NormalMapFlags;
+    uint  Padding0;
 };
 
 struct FLightProbeInfo

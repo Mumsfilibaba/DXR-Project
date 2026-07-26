@@ -1,6 +1,7 @@
 #include "Structs.hlsli"
 
 SHADER_CONSTANT_BLOCK_BEGIN
+	// 0-8
 	uint2 TextureSize;
 SHADER_CONSTANT_BLOCK_END
 
@@ -18,11 +19,10 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
 		return;
 	}
 
-	const int3 TexelCoord = int3(DispatchThreadID.xy, 0);
-
-	const float AO        = AOTexture.Load(TexelCoord);
-	const float Roughness = RoughnessTexture.Load(TexelCoord);
-	const float Metallic  = MetallicTexture.Load(TexelCoord);
+	const int3  TexelCoord = int3(DispatchThreadID.xy, 0);
+	const float AO         = AOTexture.Load(TexelCoord);
+	const float Roughness  = RoughnessTexture.Load(TexelCoord);
+	const float Metallic   = MetallicTexture.Load(TexelCoord);
 
 	Output[DispatchThreadID.xy] = float4(AO, Roughness, Metallic, 1.0);
 }

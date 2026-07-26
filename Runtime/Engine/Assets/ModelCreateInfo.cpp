@@ -966,6 +966,8 @@ FMeshCreateInfo MeshFactory::CreateTeapot(uint32 Tessellation) noexcept
         }
     }
 
+    // Calculate tangents for proper lighting and normal mapping
+    MeshInfo.CalculateTangents();
     return MeshInfo;
 }
 

@@ -53,6 +53,19 @@ extern D3D12RHI_API bool GD3D12SupportsBindless;
 extern D3D12RHI_API bool GD3D12SupportEnhancedBarriers;
 
 // -------------------------------------------------------------------------------------------
+// Ray Tracing feature support (backend-native mirrors of the agnostic RHI::bSupports* flags)
+// -------------------------------------------------------------------------------------------
+
+extern D3D12RHI_API bool GD3D12SupportsInlineRayTracing;
+extern D3D12RHI_API bool GD3D12SupportsOpacityMicromap;
+extern D3D12RHI_API bool GD3D12SupportsShaderExecutionReordering;
+extern D3D12RHI_API bool GD3D12ShaderExecutionReorderingActuallyReorders;
+extern D3D12RHI_API bool GD3D12SupportsRayTracingPipelineAdditions;
+extern D3D12RHI_API bool GD3D12SupportsClustersAndPTLAS;
+extern D3D12RHI_API bool GD3D12SupportsIndirectAccelerationStructureOperations;
+extern D3D12RHI_API bool GD3D12SupportsIndirectRayDispatch;
+
+// -------------------------------------------------------------------------------------------
 // Core Feature Tiers
 // -------------------------------------------------------------------------------------------
 
@@ -114,6 +127,13 @@ extern D3D12RHI_API uint32                           GD3D12VirtualAddressBitsPer
 extern D3D12RHI_API uint32                           GD3D12VirtualAddressBitsPerProcess;
 extern D3D12RHI_API D3D12_COMMAND_LIST_SUPPORT_FLAGS GD3D12WriteBufferImmediateSupportFlags;
 
+// -------------------------------------------------------------------------------------------
+// D3D12 Capabilitiy Logging
+// -------------------------------------------------------------------------------------------
+
+extern D3D12RHI_API void DumpD3D12Capabilities();
+extern D3D12RHI_API void DumpD3D12RayTracingCapabilities();
+
 class FD3D12Adapter
 {
 public:
@@ -123,7 +143,7 @@ public:
     bool Initialize();
 
     bool IsDebugLayerEnabled() const { return bEnableDebugLayer; }
-    bool IsTearingSupported() const { return bAllowTearing; }
+    bool IsTearingSupported()  const { return bAllowTearing; }
 
     String GetDescription() const { return WideToChar(WStringView(AdapterDesc.Description)); }
 
@@ -142,7 +162,10 @@ public:
         return Adapter.Get();
     }
 
-    FORCEINLINE IDXGIAdapter3* GetDXGIAdapter3() const { return Adapter3.Get(); }
+    FORCEINLINE IDXGIAdapter3* GetDXGIAdapter3() const
+    {
+        return Adapter3.Get();
+    }
 
     FORCEINLINE IDXGIFactory2* GetDXGIFactory() const
     {
@@ -179,6 +202,15 @@ struct FD3D12DefaultDescriptors
     FD3D12SamplerStateRHIRef        DefaultSampler;
 };
 
+struct ED3D12CommandSignatureType
+{
+    enum Type : uint8
+    {
+        DispatchRays = 0,
+        Count
+    };
+};
+
 class FD3D12Device
 {
 public:
@@ -187,16 +219,23 @@ public:
 
     bool Initialize();
     void BeginFrame(FD3D12CommandContext* InCommandContext);
-    void UnregisterDebugMessageCallback();
+    void EndFrame(FD3D12CommandContext* InCommandContext);
+    void FinalizePendingDefragMoves();
     void CancelPendingDefragMoves(FD3D12ResourceBase* Owner);
-    
-    bool ReallocateGlobalDescriptorHeap(ED3D12GlobalDescriptorHeapType HeapType);
 
+    void WaitForGPU();
+        
+    bool ReallocateGlobalDescriptorHeap(ED3D12GlobalDescriptorHeapType HeapType);
+    
     bool CreateCommittedResource(const D3D12_RESOURCE_DESC& Desc, D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceRef& OutResource);
     bool CreatePlacedResource(FD3D12Heap* Heap, uint64 Offset, const D3D12_RESOURCE_DESC& Desc, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceRef& OutResource);
     bool CreateHeap(const D3D12_HEAP_DESC& Desc, FD3D12HeapRef& OutHeap);
     
     bool SupportsSwapChainFormat(DXGI_FORMAT DXGIFormat, ESwapChainUsageFlags Usage) const;
+
+    void RegisterDeviceRemovedEvent();
+    void RegisterDebugMessageCallback();
+    void UnregisterDebugMessageCallback();
 
     ID3D12CommandQueue*              GetD3D12CommandQueue(ED3D12CommandQueueType QueueType);
     FD3D12Queue*                     GetQueue(ED3D12CommandQueueType QueueType);
@@ -224,6 +263,11 @@ public:
     FD3D12TextureAllocator*          GetTextureAllocator()                  const { return TextureAllocator; }
     FD3D12UploadHeapAllocator*       GetUploadHeapAllocator()               const { return UploadHeapAllocator; }
     FD3D12Fence&                     GetFrameFence()                        const { return *FrameFence; }
+
+    ID3D12CommandSignature* GetCommandSignature(ED3D12CommandSignatureType::Type Type) const
+    {
+        return CommandSignatures[Type].Get();
+    }
 
     uint32            GetNodeCount()    const { return NodeCount; }
     uint32            GetNodeMask()     const { return NodeMask; }
@@ -286,6 +330,7 @@ private:
     bool CreateDevice();
     bool CreateCommandQueues();
     bool CreateDefaultResources();
+    bool CreateCommandSignatures();
     void QueryDeviceFeatureSupport();
 
     FD3D12Adapter* const             Adapter;
@@ -321,6 +366,8 @@ private:
     FD3D12QueryHeapManager*          PipelineStatsQueryHeapManager;
 
     FD3D12DefaultDescriptors         DefaultDescriptors;
+
+    TComPtr<ID3D12CommandSignature>  CommandSignatures[ED3D12CommandSignatureType::Count];
 
     D3D_FEATURE_LEVEL                MinFeatureLevel;
     D3D_FEATURE_LEVEL                ActiveFeatureLevel;
@@ -374,4 +421,8 @@ private:
     TComPtr<ID3D12InfoQueue1> DebugInfoQueue;
     DWORD                     DebugMessageCallbackCookie;
 #endif
+
+    HANDLE               DeviceRemovedEvent;
+    HANDLE               DeviceRemovedWait;
+    TComPtr<ID3D12Fence> DeviceRemovedFence;
 };

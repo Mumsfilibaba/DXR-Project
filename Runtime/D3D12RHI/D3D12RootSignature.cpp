@@ -310,6 +310,24 @@ void FD3D12RootSignatureLayout::AddContiguousRegisters(EShaderVisibility::Type S
     }
 }
 
+void FD3D12RootSignatureLayout::AddLocalTableSRVRegister(EShaderVisibility::Type Stage, uint16 Register)
+{
+    CHECK(Stage < EShaderVisibility::Count);
+    LocalTableSRVSets[Stage].Insert(Register);
+}
+
+void FD3D12RootSignatureLayout::AddLocalTableUAVRegister(EShaderVisibility::Type Stage, uint16 Register)
+{
+    CHECK(Stage < EShaderVisibility::Count);
+    LocalTableUAVSets[Stage].Insert(Register);
+}
+
+void FD3D12RootSignatureLayout::AddLocalTableSamplerRegister(EShaderVisibility::Type Stage, uint16 Register)
+{
+    CHECK(Stage < EShaderVisibility::Count);
+    LocalTableSamplerSets[Stage].Insert(Register);
+}
+
 void FD3D12RootSignatureLayout::ComputeRootCBVs()
 {
 #if D3D12_ENABLE_ROOT_CONSTANT_BUFFERS
@@ -454,6 +472,21 @@ bool FD3D12RootSignatureLayout::IsCompatible(const FD3D12RootSignatureLayout& Ot
         }
 
         if (!RootCBVSets[Stage].IsSubsetOf(Other.RootCBVSets[Stage]))
+        {
+            return false;
+        }
+
+        if (!LocalTableSRVSets[Stage].IsSubsetOf(Other.LocalTableSRVSets[Stage]))
+        {
+            return false;
+        }
+
+        if (!LocalTableUAVSets[Stage].IsSubsetOf(Other.LocalTableUAVSets[Stage]))
+        {
+            return false;
+        }
+
+        if (!LocalTableSamplerSets[Stage].IsSubsetOf(Other.LocalTableSamplerSets[Stage]))
         {
             return false;
         }
@@ -625,8 +658,7 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
 
     D3D12_ROOT_SIGNATURE_FLAGS Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
 
-    const uint32 Space = (Layout.GetType() == ERootSignatureType::RayTracingLocal) ? D3D12_SHADER_REGISTER_SPACE_RT_LOCAL : 0;
-
+    const uint32 Space = (Layout.GetType() == ERootSignatureType::RayTracingLocal) ? D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL : 0;
     if (Layout.GetNumPushConstants() > 0)
     {
         CHECK(Layout.GetNumPushConstants() <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT);
@@ -679,7 +711,44 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
                 bIsStageUsed = true;
             }
 
-            CHECK(Layout.GetRegisters(static_cast<EShaderVisibility::Type>(ShaderStage), EResourceType::Sampler).IsEmpty());
+            const FD3D12RegisterSet& LocalTableSRVs = Layout.GetLocalTableSRVRegisters(static_cast<EShaderVisibility::Type>(ShaderStage));
+            if (!LocalTableSRVs.IsEmpty())
+            {
+                const uint32 RangeStart = NumDescriptorRanges;
+            #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+                const uint32 NumRanges = BuildDescriptorRangesForRegisterSet(LocalTableSRVs, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, Space, GetDescriptorRangeFlags(EResourceType::SRV));
+            #else
+                const uint32 NumRanges = BuildDescriptorRangesForRegisterSet(LocalTableSRVs, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, Space);
+            #endif
+                InsertDescriptorTable(D3D12Visibility, &DescriptorRanges[RangeStart], NumRanges);
+                bIsStageUsed = true;
+            }
+
+            const FD3D12RegisterSet& LocalTableUAVs = Layout.GetLocalTableUAVRegisters(static_cast<EShaderVisibility::Type>(ShaderStage));
+            if (!LocalTableUAVs.IsEmpty())
+            {
+                const uint32 RangeStart = NumDescriptorRanges;
+            #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+                const uint32 NumRanges = BuildDescriptorRangesForRegisterSet(LocalTableUAVs, D3D12_DESCRIPTOR_RANGE_TYPE_UAV, Space, GetDescriptorRangeFlags(EResourceType::UAV));
+            #else
+                const uint32 NumRanges = BuildDescriptorRangesForRegisterSet(LocalTableUAVs, D3D12_DESCRIPTOR_RANGE_TYPE_UAV, Space);
+            #endif
+                InsertDescriptorTable(D3D12Visibility, &DescriptorRanges[RangeStart], NumRanges);
+                bIsStageUsed = true;
+            }
+
+            const FD3D12RegisterSet& LocalTableSamplers = Layout.GetLocalTableSamplerRegisters(static_cast<EShaderVisibility::Type>(ShaderStage));
+            if (!LocalTableSamplers.IsEmpty())
+            {
+                const uint32 RangeStart = NumDescriptorRanges;
+            #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+                const uint32 NumRanges = BuildDescriptorRangesForRegisterSet(LocalTableSamplers, D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, Space, GetDescriptorRangeFlags(EResourceType::Sampler));
+            #else
+                const uint32 NumRanges = BuildDescriptorRangesForRegisterSet(LocalTableSamplers, D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, Space);
+            #endif
+                InsertDescriptorTable(D3D12Visibility, &DescriptorRanges[RangeStart], NumRanges);
+                bIsStageUsed = true;
+            }
         }
         else
         {
@@ -690,11 +759,11 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
                 if (!Registers.IsEmpty())
                 {
                     const uint32 RangeStart = NumDescriptorRanges;
-            #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+                #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
                     const uint32 NumRanges = BuildDescriptorRangesForRegisterSet(Registers, GetD3D12DescriptorRangeType(ResType), Space, GetDescriptorRangeFlags(ResType));
-            #else
+                #else
                     const uint32 NumRanges = BuildDescriptorRangesForRegisterSet(Registers, GetD3D12DescriptorRangeType(ResType), Space);
-            #endif
+                #endif
                     InsertDescriptorTable(D3D12Visibility, &DescriptorRanges[RangeStart], NumRanges);
                     bIsStageUsed = true;
                 }
@@ -725,11 +794,11 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
             if (!TableCBVRegisters.IsEmpty())
             {
                 const uint32 RangeStart = NumDescriptorRanges;
-        #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+            #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
                 const uint32 NumRanges = BuildDescriptorRangesForRegisterSet(TableCBVRegisters, D3D12_DESCRIPTOR_RANGE_TYPE_CBV, Space, GetDescriptorRangeFlags(EResourceType::CBV));
-        #else
+            #else
                 const uint32 NumRanges = BuildDescriptorRangesForRegisterSet(TableCBVRegisters, D3D12_DESCRIPTOR_RANGE_TYPE_CBV, Space);
-        #endif
+            #endif
                 InsertDescriptorTable(D3D12Visibility, &DescriptorRanges[RangeStart], NumRanges);
                 bIsStageUsed = true;
             }
@@ -756,7 +825,8 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
             {
                 if (!Layout.GetRegisters(static_cast<EShaderVisibility::Type>(s), static_cast<EResourceType::Type>(t)).IsEmpty())
                 {
-                    if (t != EResourceType::CBV || !Layout.GetRegisters(static_cast<EShaderVisibility::Type>(s), static_cast<EResourceType::Type>(t)).IsSubsetOf(Layout.GetRootCBVRegisters(static_cast<EShaderVisibility::Type>(s))))
+                    if (t != EResourceType::CBV || !Layout.GetRegisters(static_cast<EShaderVisibility::Type>(s), 
+                        static_cast<EResourceType::Type>(t)).IsSubsetOf(Layout.GetRootCBVRegisters(static_cast<EShaderVisibility::Type>(s))))
                     {
                         NumTables++;
                     }
@@ -764,7 +834,8 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
             }
         }
 
-        D3D12_INFO("[FD3D12RootSignatureDescHelper] RootSignature: %u DWORDs (%u tables, %u root CBVs, %u push constants)", DWordCost, NumTables, NumRootCBVTotal, Layout.GetNumPushConstants());
+        D3D12_INFO("[FD3D12RootSignatureDescHelper] RootSignature: %u DWORDs (%u tables, %u root CBVs, %u push constants)", 
+            DWordCost, NumTables, NumRootCBVTotal, Layout.GetNumPushConstants());
     }
 
     if (Layout.GetAllowInputAssembler())
@@ -1108,6 +1179,13 @@ bool FD3D12RootSignature::Initialize(const FD3D12RootSignatureLayout& Layout)
 
     if (Layout.GetType() == ERootSignatureType::RayTracingLocal)
     {
+        for (uint32 Stage = 0; Stage < EShaderVisibility::Count; Stage++)
+        {
+            TableMappings[Stage][EResourceType::SRV].Build(Layout.GetLocalTableSRVRegisters(static_cast<EShaderVisibility::Type>(Stage)));
+            TableMappings[Stage][EResourceType::UAV].Build(Layout.GetLocalTableUAVRegisters(static_cast<EShaderVisibility::Type>(Stage)));
+            TableMappings[Stage][EResourceType::Sampler].Build(Layout.GetLocalTableSamplerRegisters(static_cast<EShaderVisibility::Type>(Stage)));
+        }
+
         return true;
     }
 

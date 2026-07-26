@@ -1,6 +1,7 @@
 #include "Structs.hlsli"
 
 SHADER_CONSTANT_BLOCK_BEGIN
+	// 0-8
 	uint2 TextureSize;
 SHADER_CONSTANT_BLOCK_END
 
