@@ -21,6 +21,7 @@ enum class EBufferFlags : uint16
     CopySource            = FLAG(11), // May be used explicitly as a runtime copy source
     CopyDest              = FLAG(12), // May be used explicitly as a runtime copy destination
     AccelerationStructure = FLAG(13), // Participates in AS copy/serialize/build ops; requires AS (256B) allocation alignment
+    IndirectArguments     = FLAG(14), // May be consumed by indirect draw/dispatch commands
 
     RWBuffer = UnorderedAccessBuffer | ShaderResourceBuffer
 };
@@ -42,6 +43,7 @@ struct FRHIBufferDesc
     NODISCARD constexpr bool IsCopySource()            const { return IsEnumFlagSet(Flags, EBufferFlags::CopySource); }
     NODISCARD constexpr bool IsCopyDest()              const { return IsEnumFlagSet(Flags, EBufferFlags::CopyDest); }
     NODISCARD constexpr bool IsAccelerationStructure() const { return IsEnumFlagSet(Flags, EBufferFlags::AccelerationStructure); }
+    NODISCARD constexpr bool IsIndirectArguments()     const { return IsEnumFlagSet(Flags, EBufferFlags::IndirectArguments); }
 
     EBufferFlags Flags  = EBufferFlags::None;
     uint32       Stride = 0;

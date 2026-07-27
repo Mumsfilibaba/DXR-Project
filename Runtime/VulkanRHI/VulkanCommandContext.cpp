@@ -1841,13 +1841,13 @@ void FVulkanCommandContext::DispatchRays(FRHIShaderBindingTable* ShaderBindingTa
 
 void FVulkanCommandContext::DispatchRaysIndirect(FRHIShaderBindingTable* ShaderBindingTable, FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset)
 {
-#if VK_KHR_ray_tracing_pipeline
+#if VK_KHR_ray_tracing_pipeline && VK_KHR_ray_tracing_maintenance1
     FVulkanBufferRHI*          VulkanArgumentBuffer     = FVulkanDeviceRHI::ResourceCast(ArgumentBuffer);
     FVulkanShaderBindingTable* VulkanShaderBindingTable = FVulkanDeviceRHI::ResourceCast(ShaderBindingTable);
 
-    if (!ContextState.GetRayTracingPipelineState() || !VulkanShaderBindingTable || !VulkanArgumentBuffer || !vkCmdTraceRaysIndirectKHR)
+    if (!ContextState.GetRayTracingPipelineState() || !VulkanShaderBindingTable || !VulkanArgumentBuffer || !vkCmdTraceRaysIndirect2KHR)
     {
-        VULKAN_WARNING("DispatchRaysIndirect: missing pipeline/SBT/args or vkCmdTraceRaysIndirectKHR not loaded");
+        VULKAN_WARNING("DispatchRaysIndirect: missing pipeline/SBT/args or vkCmdTraceRaysIndirect2KHR not loaded");
         return;
     }
 
@@ -1856,13 +1856,14 @@ void FVulkanCommandContext::DispatchRaysIndirect(FRHIShaderBindingTable* ShaderB
     ContextState.PrepareRayTracingState();
     ContextState.BindRayTracingState();
 
-    const VkStridedDeviceAddressRegionKHR RayGenRegion   = VulkanShaderBindingTable->GetRayGenRegion();
-    const VkStridedDeviceAddressRegionKHR MissRegion     = VulkanShaderBindingTable->GetMissRegion();
-    const VkStridedDeviceAddressRegionKHR HitGroupRegion = VulkanShaderBindingTable->GetHitGroupRegion();
-    const VkStridedDeviceAddressRegionKHR CallableRegion = VulkanShaderBindingTable->GetCallableRegion();
-
     const VkDeviceAddress IndirectDeviceAddress = VulkanArgumentBuffer->GetDeviceAddress() + ArgumentBufferOffset;
-    GetCommandBuffer()->TraceRaysIndirect(&RayGenRegion, &MissRegion, &HitGroupRegion, &CallableRegion, IndirectDeviceAddress);
+    if (IndirectDeviceAddress == 0 || (IndirectDeviceAddress & 3u) != 0)
+    {
+        VULKAN_WARNING("DispatchRaysIndirect: indirect device address must be non-zero and 4-byte aligned");
+        return;
+    }
+
+    GetCommandBuffer()->TraceRaysIndirect2(IndirectDeviceAddress);
 #else
     UNREFERENCED_VARIABLE(ShaderBindingTable);
     UNREFERENCED_VARIABLE(ArgumentBuffer);
@@ -1953,18 +1954,22 @@ void FVulkanCommandContext::ExecuteIndirectRayTracingAccelerationStructureOperat
                     InputInfo.opType                    = VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_BUILD_TRIANGLE_CLUSTER_TEMPLATE_NV;
                     InputInfo.opInput.pTriangleClusters = &Scratch.TriangleClusters;
                     break;
+
                 case ERayTracingAccelerationStructureOperationType::InstantiateClusterTemplates:
                     InputInfo.opType                    = VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_INSTANTIATE_TRIANGLE_CLUSTER_NV;
                     InputInfo.opInput.pTriangleClusters = &Scratch.TriangleClusters;
                     break;
+
                 case ERayTracingAccelerationStructureOperationType::BuildGeometryAccelerationStructureFromClusters:
                     InputInfo.opType                       = VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_BUILD_CLUSTERS_BOTTOM_LEVEL_NV;
                     InputInfo.opInput.pClustersBottomLevel = &Scratch.ClustersBottomLevel;
                     break;
+
                 case ERayTracingAccelerationStructureOperationType::MoveClusterObjects:
                     InputInfo.opType               = VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_MOVE_OBJECTS_NV;
                     InputInfo.opInput.pMoveObjects = &Scratch.MoveObjects;
                     break;
+
                 default:
                     InputInfo.opType                    = VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_BUILD_TRIANGLE_CLUSTER_NV;
                     InputInfo.opInput.pTriangleClusters = &Scratch.TriangleClusters;
@@ -2320,6 +2325,13 @@ void FVulkanCommandContext::RequireTextureState(FRHITexture* Texture, const FRHI
 void FVulkanCommandContext::RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState)
 {
     FVulkanBufferRHI* VulkanBuffer = FVulkanDeviceRHI::ResourceCast(Buffer);
+    CHECK(VulkanBuffer != nullptr);
+
+    RequireBufferState(VulkanBuffer, RequiredState);
+}
+
+void FVulkanCommandContext::RequireBufferState(FVulkanBufferRHI* VulkanBuffer, EResourceAccess RequiredState)
+{
     CHECK(VulkanBuffer != nullptr);
 
     FVulkanBufferState& LocalState = RetrievePendingBufferState(VulkanBuffer);
@@ -2872,6 +2884,180 @@ void FVulkanCommandContext::DispatchMesh(uint32 ThreadGroupCountX, uint32 Thread
     UNREFERENCED_VARIABLE(ThreadGroupCountZ);
     VULKAN_WARNING("DispatchMesh called but VK_EXT_mesh_shader is not available in this build");
 #endif // VK_EXT_mesh_shader
+}
+
+void FVulkanCommandContext::DrawIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount)
+{
+    FVulkanBufferRHI* Arguments = FVulkanDeviceRHI::ResourceCast(ArgumentBuffer);
+    CHECK(Arguments != nullptr);
+
+    ConditionalSplitCommandBuffer();
+    ContextState.PrepareGraphicsState();
+
+    CHECK(IsInsideRenderPass());
+    CHECK(!BarrierBatcher.HasPendingBarriers());
+
+    ContextState.BindGraphicsState();
+
+    GetCommandBuffer()->DrawIndirect(
+        Arguments->GetBindVkBuffer(),
+        Arguments->GetBindOffset() + ArgumentBufferOffset,
+        CommandCount,
+        sizeof(FRHIDrawIndirectParameters));
+}
+
+void FVulkanCommandContext::DrawIndirectCount(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, FRHIBuffer* CountBuffer, uint64 CountBufferOffset, uint32 MaxCommandCount)
+{
+    FVulkanBufferRHI* Arguments = FVulkanDeviceRHI::ResourceCast(ArgumentBuffer);
+    CHECK(Arguments != nullptr);
+
+    FVulkanBufferRHI* Count = FVulkanDeviceRHI::ResourceCast(CountBuffer);
+    CHECK(Count != nullptr);
+
+    ConditionalSplitCommandBuffer();
+    ContextState.PrepareGraphicsState();
+
+    CHECK(IsInsideRenderPass());
+    CHECK(!BarrierBatcher.HasPendingBarriers());
+
+    ContextState.BindGraphicsState();
+
+    GetCommandBuffer()->DrawIndirectCount(
+        Arguments->GetBindVkBuffer(),
+        Arguments->GetBindOffset() + ArgumentBufferOffset,
+        Count->GetBindVkBuffer(),
+        Count->GetBindOffset() + CountBufferOffset,
+        MaxCommandCount,
+        sizeof(FRHIDrawIndirectParameters));
+}
+
+void FVulkanCommandContext::DrawIndexedIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount)
+{
+    FVulkanBufferRHI* Arguments = FVulkanDeviceRHI::ResourceCast(ArgumentBuffer);
+    CHECK(Arguments != nullptr);
+
+    ConditionalSplitCommandBuffer();
+    ContextState.PrepareGraphicsState();
+
+    CHECK(IsInsideRenderPass());
+    CHECK(!BarrierBatcher.HasPendingBarriers());
+
+    ContextState.BindGraphicsState();
+
+    GetCommandBuffer()->DrawIndexedIndirect(
+        Arguments->GetBindVkBuffer(),
+        Arguments->GetBindOffset() + ArgumentBufferOffset,
+        CommandCount,
+        sizeof(FRHIDrawIndexedIndirectParameters));
+}
+
+void FVulkanCommandContext::DrawIndexedIndirectCount(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, FRHIBuffer* CountBuffer, uint64 CountBufferOffset, uint32 MaxCommandCount)
+{
+    FVulkanBufferRHI* Arguments = FVulkanDeviceRHI::ResourceCast(ArgumentBuffer);
+    CHECK(Arguments != nullptr);
+
+    FVulkanBufferRHI* Count = FVulkanDeviceRHI::ResourceCast(CountBuffer);
+    CHECK(Count != nullptr);
+
+    ConditionalSplitCommandBuffer();
+    ContextState.PrepareGraphicsState();
+
+    CHECK(IsInsideRenderPass());
+    CHECK(!BarrierBatcher.HasPendingBarriers());
+
+    ContextState.BindGraphicsState();
+
+    GetCommandBuffer()->DrawIndexedIndirectCount(
+        Arguments->GetBindVkBuffer(),
+        Arguments->GetBindOffset() + ArgumentBufferOffset,
+        Count->GetBindVkBuffer(),
+        Count->GetBindOffset() + CountBufferOffset,
+        MaxCommandCount,
+        sizeof(FRHIDrawIndexedIndirectParameters));
+}
+
+void FVulkanCommandContext::DispatchIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset)
+{
+    FVulkanBufferRHI* Arguments = FVulkanDeviceRHI::ResourceCast(ArgumentBuffer);
+    CHECK(Arguments != nullptr);
+
+    ConditionalSplitCommandBuffer();
+
+    ContextState.PrepareComputeState();
+    ContextState.BindComputeState();
+
+    GetCommandBuffer()->DispatchIndirect(Arguments->GetBindVkBuffer(), Arguments->GetBindOffset() + ArgumentBufferOffset);
+}
+
+void FVulkanCommandContext::DispatchMeshIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount)
+{
+#if VK_EXT_mesh_shader
+    if (!GVulkanSupportsMeshShaders || !vkCmdDrawMeshTasksIndirectEXT)
+    {
+        VULKAN_WARNING("DispatchMeshIndirect called but indirect mesh shaders are not supported on this device");
+        return;
+    }
+
+    FVulkanBufferRHI* Arguments = FVulkanDeviceRHI::ResourceCast(ArgumentBuffer);
+    CHECK(Arguments != nullptr);
+
+    ConditionalSplitCommandBuffer();
+    ContextState.PrepareMeshletState();
+
+    CHECK(IsInsideRenderPass());
+    CHECK(!BarrierBatcher.HasPendingBarriers());
+
+    ContextState.BindMeshletState();
+
+    GetCommandBuffer()->DrawMeshTasksIndirect(
+        Arguments->GetBindVkBuffer(),
+        Arguments->GetBindOffset() + ArgumentBufferOffset,
+        CommandCount,
+        sizeof(FRHIDispatchMeshIndirectParameters));
+#else
+    UNREFERENCED_VARIABLE(ArgumentBuffer);
+    UNREFERENCED_VARIABLE(ArgumentBufferOffset);
+    UNREFERENCED_VARIABLE(CommandCount);
+#endif
+}
+
+void FVulkanCommandContext::DispatchMeshIndirectCount(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, FRHIBuffer* CountBuffer, uint64 CountBufferOffset, uint32 MaxCommandCount)
+{
+#if VK_EXT_mesh_shader
+    if (!GVulkanSupportsMeshShaders || !vkCmdDrawMeshTasksIndirectCountEXT)
+    {
+        VULKAN_WARNING("DispatchMeshIndirectCount called but count-buffer mesh shaders are not supported on this device");
+        return;
+    }
+
+    FVulkanBufferRHI* Arguments = FVulkanDeviceRHI::ResourceCast(ArgumentBuffer);
+    CHECK(Arguments != nullptr);
+
+    FVulkanBufferRHI* Count = FVulkanDeviceRHI::ResourceCast(CountBuffer);
+    CHECK(Count != nullptr);
+
+    ConditionalSplitCommandBuffer();
+    ContextState.PrepareMeshletState();
+
+    CHECK(IsInsideRenderPass());
+    CHECK(!BarrierBatcher.HasPendingBarriers());
+
+    ContextState.BindMeshletState();
+
+    GetCommandBuffer()->DrawMeshTasksIndirectCount(
+        Arguments->GetBindVkBuffer(),
+        Arguments->GetBindOffset() + ArgumentBufferOffset,
+        Count->GetBindVkBuffer(),
+        Count->GetBindOffset() + CountBufferOffset,
+        MaxCommandCount,
+        sizeof(FRHIDispatchMeshIndirectParameters));
+#else
+    UNREFERENCED_VARIABLE(ArgumentBuffer);
+    UNREFERENCED_VARIABLE(ArgumentBufferOffset);
+    UNREFERENCED_VARIABLE(CountBuffer);
+    UNREFERENCED_VARIABLE(CountBufferOffset);
+    UNREFERENCED_VARIABLE(MaxCommandCount);
+#endif
 }
 
 void FVulkanCommandContext::PresentSwapChain(FRHISwapChain* InSwapChain, bool bVerticalSync)

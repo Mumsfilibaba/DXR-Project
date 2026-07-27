@@ -486,6 +486,7 @@ enum class EResourceAccess : uint32
     Present                         = FLAG(15),
     GenericRead                     = FLAG(16),
     StreamOutput                    = FLAG(17),
+    IndirectArgument                = FLAG(18),
     ShaderResource                  = NonPixelShaderResource | PixelShaderResource,
 };
 
@@ -514,6 +515,7 @@ NODISCARD constexpr const CHAR* ToString(EResourceAccess ResourceState)
     case EResourceAccess::Present:                         return "Present";
     case EResourceAccess::GenericRead:                     return "GenericRead";
     case EResourceAccess::StreamOutput:                    return "StreamOutput";
+    case EResourceAccess::IndirectArgument:                return "IndirectArgument";
     case EResourceAccess::ShaderResource:                  return "ShaderResource";
     
     default: return "Unknown";

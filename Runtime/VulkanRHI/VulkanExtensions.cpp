@@ -122,6 +122,44 @@ public:
 };
 #endif
 
+#if VK_KHR_ray_tracing_maintenance1
+class FVulkanKHRRayTracingMaintenance1Extension : public FVulkanDeviceExtension
+{
+public:
+    FVulkanKHRRayTracingMaintenance1Extension()
+        : FVulkanDeviceExtension(VK_KHR_RAY_TRACING_MAINTENANCE_1_EXTENSION_NAME, false, true)
+    {
+    }
+
+    virtual void PrepareDeviceFeatures(VkPhysicalDeviceFeatures2& OutFeatures) override final
+    {
+        AvailableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_MAINTENANCE_1_FEATURES_KHR;
+        AddToStructChain(OutFeatures, AvailableFeatures);
+    }
+
+    virtual void ProcessQueriedFeatures() override final
+    {
+        GVulkanSupportsIndirectRayDispatch = AvailableFeatures.rayTracingPipelineTraceRaysIndirect2 == VK_TRUE;
+    }
+
+    virtual void PrepareDeviceCreateInfo(VkDeviceCreateInfo& OutDeviceCreateInfo) override final
+    {
+        if (!GVulkanSupportsIndirectRayDispatch)
+        {
+            return;
+        }
+
+        EnableFeatures.sType                                = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_MAINTENANCE_1_FEATURES_KHR;
+        EnableFeatures.rayTracingMaintenance1               = AvailableFeatures.rayTracingMaintenance1;
+        EnableFeatures.rayTracingPipelineTraceRaysIndirect2 = AvailableFeatures.rayTracingPipelineTraceRaysIndirect2;
+        AddToStructChain(OutDeviceCreateInfo, EnableFeatures);
+    }
+
+    VkPhysicalDeviceRayTracingMaintenance1FeaturesKHR EnableFeatures    = {};
+    VkPhysicalDeviceRayTracingMaintenance1FeaturesKHR AvailableFeatures = {};
+};
+#endif
+
 #if VK_KHR_ray_query
 class FVulkanKHRRayQueryExtension : public FVulkanDeviceExtension
 {
@@ -651,9 +689,6 @@ void FVulkanDeviceExtension::RegisterExtensions(TArray<TUniquePtr<FVulkanDeviceE
 #if VK_KHR_push_descriptor
     OutExtensions.Add(MakeUniquePtr<FVulkanDeviceExtension>(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME, false, true));
 #endif
-#if VK_KHR_ray_tracing_maintenance1
-    OutExtensions.Add(MakeUniquePtr<FVulkanDeviceExtension>(VK_KHR_RAY_TRACING_MAINTENANCE_1_EXTENSION_NAME, false, true));
-#endif
 #if VK_EXT_memory_budget
     OutExtensions.Add(MakeUniquePtr<FVulkanDeviceExtension>(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME, false, true));
 #endif
@@ -681,6 +716,9 @@ void FVulkanDeviceExtension::RegisterExtensions(TArray<TUniquePtr<FVulkanDeviceE
 #endif
 #if VK_KHR_ray_tracing_pipeline
     OutExtensions.Add(MakeUniquePtr<FVulkanKHRRayTracingPipelineExtension>());
+#endif
+#if VK_KHR_ray_tracing_maintenance1
+    OutExtensions.Add(MakeUniquePtr<FVulkanKHRRayTracingMaintenance1Extension>());
 #endif
 #if VK_KHR_ray_query
     OutExtensions.Add(MakeUniquePtr<FVulkanKHRRayQueryExtension>());

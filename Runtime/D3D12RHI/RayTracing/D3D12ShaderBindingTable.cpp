@@ -36,6 +36,67 @@ void* FD3D12ShaderBindingTable::GetRHINativeResource() const
     return Resource ? reinterpret_cast<void*>(Resource->GetD3D12Resource()) : nullptr;
 }
 
+bool FD3D12ShaderBindingTable::Initialize()
+{
+    const uint64 RequiredSize = uint64(CpuShadow.SizeInBytes());
+    if (RequiredSize == 0)
+    {
+        return false;
+    }
+
+    FD3D12BufferAllocator* Allocator = GetDevice()->GetBufferAllocator();
+    if (!Allocator)
+    {
+        return false;
+    }
+
+    D3D12_RESOURCE_DESC Desc = {};
+    Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+    Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
+    Desc.Format             = DXGI_FORMAT_UNKNOWN;
+    Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    Desc.Width              = RequiredSize;
+    Desc.Height             = 1;
+    Desc.DepthOrArraySize   = 1;
+    Desc.MipLevels          = 1;
+    Desc.SampleDesc.Count   = 1;
+
+    if (!Allocator->TryAllocate(
+            D3D12_HEAP_TYPE_DEFAULT,
+            Desc,
+            D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+            ED3D12ResourceStateMode::MultipleStates,
+            D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT,
+            TableResourceStorage))
+    {
+        return false;
+    }
+
+    return TableResourceStorage.GetResource() != nullptr;
+}
+
+FRHIShaderBindingTableAddressInfo FD3D12ShaderBindingTable::GetAddressInfo() const
+{
+    FRHIShaderBindingTableAddressInfo AddressInfo = {};
+    if (!TableResourceStorage.GetResource())
+    {
+        return AddressInfo;
+    }
+
+    const D3D12_GPU_VIRTUAL_ADDRESS_RANGE RayGen = GetRayGenRecord();
+    AddressInfo.RayGeneration = { RayGen.StartAddress, RayGen.SizeInBytes, RayGen.SizeInBytes };
+
+    const D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE Miss = GetMissTable();
+    AddressInfo.Miss = { Miss.StartAddress, Miss.SizeInBytes, Miss.StrideInBytes };
+
+    const D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE HitGroup = GetHitGroupTable();
+    AddressInfo.HitGroup = { HitGroup.StartAddress, HitGroup.SizeInBytes, HitGroup.StrideInBytes };
+
+    const D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE Callable = GetCallableTable();
+    AddressInfo.Callable = { Callable.StartAddress, Callable.SizeInBytes, Callable.StrideInBytes };
+    return AddressInfo;
+}
+
 uint32 FD3D12ShaderBindingTable::GetSubTableBaseRecord(ERayTracingShaderRecordKind RecordKind) const
 {
     switch (RecordKind)
@@ -359,45 +420,8 @@ void FD3D12ShaderBindingTable::UploadCpuShadow(FD3D12CommandContext& CmdContext)
         return;
     }
 
-    const uint64 CurrentSize = TableResourceStorage.GetSize();
-    if (CurrentSize < RequiredSize)
-    {
-        FD3D12BufferAllocator* Allocator = GetDevice()->GetBufferAllocator();
-        if (!Allocator)
-        {
-            DEBUG_BREAK();
-            return;
-        }
-
-        D3D12_RESOURCE_DESC Desc = {};
-        Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
-        Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
-        Desc.Format             = DXGI_FORMAT_UNKNOWN;
-        Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        Desc.Width              = RequiredSize;
-        Desc.Height             = 1;
-        Desc.DepthOrArraySize   = 1;
-        Desc.MipLevels          = 1;
-        Desc.Alignment          = 0;
-        Desc.SampleDesc.Count   = 1;
-        Desc.SampleDesc.Quality = 0;
-
-        const bool bAllocated = Allocator->TryAllocate(
-            D3D12_HEAP_TYPE_DEFAULT,
-            Desc,
-            D3D12_RESOURCE_STATE_COMMON,
-            ED3D12ResourceStateMode::MultipleStates,
-            D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT,
-            TableResourceStorage);
-
-        if (!bAllocated || TableResourceStorage.GetResource() == nullptr)
-        {
-            DEBUG_BREAK();
-            return;
-        }
-
-        CmdContext.GetBarrierBatcher().AddTransitionBarrier(TableResourceStorage.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-    }
+    CHECK(TableResourceStorage.GetResource() != nullptr);
+    CHECK(TableResourceStorage.GetSize() >= RequiredSize);
 
     CmdContext.GetBarrierBatcher().AddTransitionBarrier(TableResourceStorage.GetResource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
     
@@ -531,6 +555,11 @@ D3D12_GPU_VIRTUAL_ADDRESS_RANGE FD3D12ShaderBindingTable::GetRayGenRecord() cons
 D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE FD3D12ShaderBindingTable::GetMissTable() const
 {
     CHECK(TableResourceStorage.GetResource() != nullptr);
+    if (NumMiss == 0)
+    {
+        return { 0, 0, 0 };
+    }
+
     const uint64 BaseAddress = TableResourceStorage.GetGPUVirtualAddress() + uint64(GetSubTableBaseRecord(ERayTracingShaderRecordKind::Miss)) * RecordStride;
     return { BaseAddress, uint64(NumMiss) * RecordStride, RecordStride };
 }
@@ -538,6 +567,11 @@ D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE FD3D12ShaderBindingTable::GetMissTabl
 D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE FD3D12ShaderBindingTable::GetHitGroupTable() const
 {
     CHECK(TableResourceStorage.GetResource() != nullptr);
+    if (NumHitGroup == 0)
+    {
+        return { 0, 0, 0 };
+    }
+
     const uint64 BaseAddress = TableResourceStorage.GetGPUVirtualAddress() + uint64(GetSubTableBaseRecord(ERayTracingShaderRecordKind::HitGroup)) * RecordStride;
     return { BaseAddress, uint64(NumHitGroup) * RecordStride, RecordStride };
 }

@@ -41,6 +41,7 @@ FNullDeviceRHI::FNullDeviceRHI()
     RHI::RayTracingMaxRecursionDepth          = 31;
     RHI::bSupportsRayTracingPipelineAdditions = false;
     RHI::bSupportsRayTracing                  = true;
+    RHI::bSupportsDispatchRaysIndirect        = true;
 
     // -------------------------------------------------------------------------------------------
     // Variable Rate Shading (VRS)
@@ -54,9 +55,13 @@ FNullDeviceRHI::FNullDeviceRHI()
     // Draw Indirect
     // -------------------------------------------------------------------------------------------
 
-    RHI::MaxDrawIndirectCount      = uint32(~0u);
-    RHI::bSupportDrawIndirect      = true;
-    RHI::bSupportMultiDrawIndirect = true;
+    RHI::bSupportsDrawIndirect               = true;
+    RHI::bSupportsDrawIndirectCount          = true;
+    RHI::bSupportsDispatchIndirect           = true;
+    RHI::bSupportsDispatchMeshIndirect       = true;
+    RHI::bSupportsDispatchMeshIndirectCount  = true;
+    RHI::MaxDrawIndirectCommandCount         = uint32(~0u);
+    RHI::MaxDispatchMeshIndirectCommandCount = uint32(~0u);
 
     // -------------------------------------------------------------------------------------------
     // Texture / Image Limits

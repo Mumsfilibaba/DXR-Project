@@ -33,6 +33,15 @@ FMetalDeviceRHI::FMetalDeviceRHI()
     {
         GMetalDeviceRHI = this;
     }
+
+    RHI::bSupportsDrawIndirect               = false;
+    RHI::bSupportsDrawIndirectCount          = false;
+    RHI::bSupportsDispatchIndirect           = false;
+    RHI::bSupportsDispatchMeshIndirect       = false;
+    RHI::bSupportsDispatchMeshIndirectCount  = false;
+    RHI::bSupportsDispatchRaysIndirect       = false;
+    RHI::MaxDrawIndirectCommandCount         = 0;
+    RHI::MaxDispatchMeshIndirectCommandCount = 0;
 }
 
 FMetalDeviceRHI::~FMetalDeviceRHI()

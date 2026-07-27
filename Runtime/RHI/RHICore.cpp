@@ -52,7 +52,7 @@ RHI_API bool   RHI::bShaderExecutionReorderingActuallyReorders                 =
 RHI_API bool   RHI::bSupportsRayTracingPipelineAdditions                       = false;
 RHI_API bool   RHI::bSupportsClustersAndPartitionedSceneAccelerationStructure  = false;
 RHI_API bool   RHI::bSupportsIndirectAccelerationStructureOperations           = false;
-RHI_API bool   RHI::bSupportsIndirectRayDispatch                               = false;
+RHI_API bool   RHI::bSupportsDispatchRaysIndirect                              = false;
 RHI_API uint32 RHI::RayTracingMaxTrianglesPerCluster                           = 0;
 RHI_API uint32 RHI::RayTracingMaxVerticesPerCluster                            = 0;
 RHI_API uint32 RHI::RayTracingMaxPartitionedInstanceCount                      = 0;
@@ -71,9 +71,13 @@ RHI_API uint32           RHI::ShadingRateImageTileSize = 0;
 // Draw Indirect
 // -------------------------------------------------------------------------------------------
 
-RHI_API bool   RHI::bSupportDrawIndirect      = true;
-RHI_API bool   RHI::bSupportMultiDrawIndirect = false;
-RHI_API uint32 RHI::MaxDrawIndirectCount      = 1;
+RHI_API bool   RHI::bSupportsDrawIndirect               = false;
+RHI_API bool   RHI::bSupportsDrawIndirectCount          = false;
+RHI_API bool   RHI::bSupportsDispatchIndirect           = false;
+RHI_API bool   RHI::bSupportsDispatchMeshIndirect       = false;
+RHI_API bool   RHI::bSupportsDispatchMeshIndirectCount  = false;
+RHI_API uint32 RHI::MaxDrawIndirectCommandCount         = 1;
+RHI_API uint32 RHI::MaxDispatchMeshIndirectCommandCount = 1;
 
 // -------------------------------------------------------------------------------------------
 // Texture / Image Limits
@@ -96,13 +100,13 @@ RHI_API uint32 RHI::MaxCubeArrayCount       = RHIArrayLayersToCubes(ETextureDime
 // Buffer / Memory Limits
 // -------------------------------------------------------------------------------------------
 
-RHI_API uint64 RHI::MaxBufferSize              = uint64(~0);
-RHI_API uint32 RHI::MaxConstantBufferSize      = 64 * 1024; // 64 KB
-RHI_API uint64 RHI::MaxStorageBufferSize       = uint64(~0);
-RHI_API uint32 RHI::StructuredBufferMinStride  = 4;
-RHI_API uint32 RHI::StructuredBufferMaxStride  = 2048;
+RHI_API uint64 RHI::MaxBufferSize                        = uint64(~0);
+RHI_API uint32 RHI::MaxConstantBufferSize                = 64 * 1024; // 64 KB
+RHI_API uint64 RHI::MaxStorageBufferSize                 = uint64(~0);
+RHI_API uint32 RHI::StructuredBufferMinStride            = 4;
+RHI_API uint32 RHI::StructuredBufferMaxStride            = 2048;
 RHI_API uint32 RHI::RawBufferRequiredAlignment           = 4;
-RHI_API uint32 RHI::AccelerationStructureBufferAlignment = 256; // D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT
+RHI_API uint32 RHI::AccelerationStructureBufferAlignment = 256;
 
 RHI_API bool RHI::bSupportsDynamicDepthBias = false;
 RHI_API bool RHI::bSupportsStreamOutput     = false;
@@ -143,7 +147,7 @@ RHI_API void RHI::DumpRayTracingCapabilities()
     LOG_INFO("[RHI]   Pipeline Additions (AddToStateObject) : %s", YesNo(RHI::bSupportsRayTracingPipelineAdditions));
     LOG_INFO("[RHI]   Clusters + Partitioned Scene          : %s", YesNo(RHI::bSupportsClustersAndPartitionedSceneAccelerationStructure));
     LOG_INFO("[RHI]   Indirect AS Operations                : %s", YesNo(RHI::bSupportsIndirectAccelerationStructureOperations));
-    LOG_INFO("[RHI]   Indirect Ray Dispatch                 : %s", YesNo(RHI::bSupportsIndirectRayDispatch));
+    LOG_INFO("[RHI]   Indirect Ray Dispatch                 : %s", YesNo(RHI::bSupportsDispatchRaysIndirect));
     LOG_INFO("[RHI]   Max Triangles / Cluster               : %u", RHI::RayTracingMaxTrianglesPerCluster);
     LOG_INFO("[RHI]   Max Vertices / Cluster                : %u", RHI::RayTracingMaxVerticesPerCluster);
     LOG_INFO("[RHI]   Max Partitioned Instances             : %u", RHI::RayTracingMaxPartitionedInstanceCount);

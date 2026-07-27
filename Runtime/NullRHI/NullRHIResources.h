@@ -753,4 +753,54 @@ private:
     String DebugName;
 };
 
+class FNullShaderBindingTableRHI : public FRHIShaderBindingTable
+{
+public:
+    explicit FNullShaderBindingTableRHI(const FRHIShaderBindingTableDesc& InDesc)
+        : FRHIShaderBindingTable(InDesc)
+        , BaseAddress(0)
+    {
+        const uint64 RawAddress = reinterpret_cast<uint64>(this);
+        BaseAddress = (RawAddress + RecordStride - 1) & ~(uint64(RecordStride) - 1);
+    }
+
+    virtual void* GetRHINativeResource() const override final
+    {
+        return nullptr;
+    }
+
+    virtual FRHIShaderBindingTableAddressInfo GetAddressInfo() const override final
+    {
+        FRHIShaderBindingTableAddressInfo AddressInfo = {};
+        uint64 CurrentAddress = BaseAddress;
+
+        const uint32 NumRayGen = Math::Max<uint32>(GetDesc().NumRayGenerationShaders, 1u);
+        AddressInfo.RayGeneration = { CurrentAddress, RecordStride, RecordStride };
+        CurrentAddress += uint64(NumRayGen) * RecordStride;
+
+        if (GetDesc().NumMissShaders > 0)
+        {
+            AddressInfo.Miss = { CurrentAddress, uint64(GetDesc().NumMissShaders) * RecordStride, RecordStride };
+            CurrentAddress += AddressInfo.Miss.SizeInBytes;
+        }
+
+        if (GetDesc().NumHitGroupRecords > 0)
+        {
+            AddressInfo.HitGroup = { CurrentAddress, uint64(GetDesc().NumHitGroupRecords) * RecordStride, RecordStride };
+            CurrentAddress += AddressInfo.HitGroup.SizeInBytes;
+        }
+
+        if (GetDesc().NumCallableShaders > 0)
+        {
+            AddressInfo.Callable = { CurrentAddress, uint64(GetDesc().NumCallableShaders) * RecordStride, RecordStride };
+        }
+
+        return AddressInfo;
+    }
+
+private:
+    static constexpr uint32 RecordStride = 64;
+    uint64 BaseAddress;
+};
+
 ENABLE_UNREFERENCED_VARIABLE_WARNING

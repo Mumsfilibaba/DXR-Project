@@ -1375,27 +1375,49 @@ bool FD3D12Device::CreateDefaultResources()
 
 bool FD3D12Device::CreateCommandSignatures()
 {
+    const auto CreateCommandSignature = [this](ED3D12CommandSignatureType::Type SignatureType, D3D12_INDIRECT_ARGUMENT_TYPE ArgumentType, uint32 ByteStride) -> bool
+    {
+        D3D12_INDIRECT_ARGUMENT_DESC IndirectArgumentDesc = {};
+        IndirectArgumentDesc.Type = ArgumentType;
+
+        D3D12_COMMAND_SIGNATURE_DESC CommandSignatureDesc = {};
+        CommandSignatureDesc.ByteStride       = ByteStride;
+        CommandSignatureDesc.NumArgumentDescs = 1;
+        CommandSignatureDesc.pArgumentDescs   = &IndirectArgumentDesc;
+
+        TComPtr<ID3D12CommandSignature> CommandSignature;
+        const HRESULT Result = GetD3D12Device()->CreateCommandSignature(&CommandSignatureDesc, nullptr, IID_PPV_ARGS(&CommandSignature));
+        if (FAILED(Result))
+        {
+            D3D12_ERROR("[FD3D12Device]: Failed to create indirect command signature (Type=%u)", uint32(ArgumentType));
+            return false;
+        }
+
+        CommandSignatures[SignatureType] = CommandSignature;
+        return true;
+    };
+
+    if (!CreateCommandSignature(ED3D12CommandSignatureType::Draw, D3D12_INDIRECT_ARGUMENT_TYPE_DRAW, sizeof(FRHIDrawIndirectParameters)) ||
+        !CreateCommandSignature(ED3D12CommandSignatureType::DrawIndexed, D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED, sizeof(FRHIDrawIndexedIndirectParameters)) ||
+        !CreateCommandSignature(ED3D12CommandSignatureType::Dispatch, D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH, sizeof(FRHIDispatchIndirectParameters)))
+    {
+        return false;
+    }
+
+#if D3D12_USE_ID3D12COMMANDLIST_6
+    if (GD3D12MeshShaderTier != D3D12_MESH_SHADER_TIER_NOT_SUPPORTED &&
+        !CreateCommandSignature(ED3D12CommandSignatureType::DispatchMesh, D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_MESH, sizeof(FRHIDispatchMeshIndirectParameters)))
+    {
+        return false;
+    }
+#endif
+
 #if D3D12_USE_ID3D12COMMANDLIST_4
     if (GD3D12RayTracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
     {
-        D3D12_INDIRECT_ARGUMENT_DESC ArgumentDesc = {};
-        ArgumentDesc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_RAYS;
-
-        D3D12_COMMAND_SIGNATURE_DESC CommandSignatureDesc = {};
-        CommandSignatureDesc.ByteStride       = sizeof(D3D12_DISPATCH_RAYS_DESC);
-        CommandSignatureDesc.NumArgumentDescs = 1;
-        CommandSignatureDesc.pArgumentDescs   = &ArgumentDesc;
-
-        TComPtr<ID3D12CommandSignature> CommandSignature;
-        HRESULT Result = GetD3D12Device()->CreateCommandSignature(&CommandSignatureDesc, nullptr, IID_PPV_ARGS(&CommandSignature));
-        if (FAILED(Result))
+        if (!CreateCommandSignature(ED3D12CommandSignatureType::DispatchRays, D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_RAYS, sizeof(FRHIDispatchRaysIndirectParameters)))
         {
-            D3D12_ERROR("[FD3D12Device]: Failed to create DISPATCH_RAYS command signature");
             return false;
-        }
-        else
-        {
-            CommandSignatures[ED3D12CommandSignatureType::DispatchRays] = CommandSignature;
         }
     }
 #endif

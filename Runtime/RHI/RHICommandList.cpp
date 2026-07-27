@@ -168,16 +168,24 @@ void FRHICommandListExecutor::EnqueueResourceDeletion(FRHIResource* InResource)
 
 void FRHICommandListExecutor::FlushDeletedResources()
 {
-    TScopedLock Lock(DeletedResourcesCS);
-
-    if (!DeletedResources.IsEmpty())
+    while (true)
     {
-        for (FRHIResource* Resource : DeletedResources)
+        TArray<FRHIResource*> ResourcesToDelete;
+
+        {
+            TScopedLock Lock(DeletedResourcesCS);
+            if (DeletedResources.IsEmpty())
+            {
+                break;
+            }
+
+            ResourcesToDelete = Move(DeletedResources);
+        }
+
+        for (FRHIResource* Resource : ResourcesToDelete)
         {
             RHI::Device->EnqueueResourceDeletion(Resource);
         }
-
-        DeletedResources.Clear();
     }
 }
 

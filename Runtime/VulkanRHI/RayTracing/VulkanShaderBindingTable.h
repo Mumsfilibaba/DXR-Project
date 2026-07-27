@@ -16,7 +16,9 @@ public:
 
     // FRHIShaderBindingTable Interface
     virtual void* GetRHINativeResource() const override final;
+    virtual FRHIShaderBindingTableAddressInfo GetAddressInfo() const override final;
 
+    bool Initialize();
     void SetBindings(ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings);
     void Build();
     void ClearTableRecords();

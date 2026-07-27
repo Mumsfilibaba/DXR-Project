@@ -101,6 +101,21 @@ struct FRHIShaderBindingTableDesc
     uint32                       NumHitGroupRecords      = 0;
 };
 
+struct FRHIShaderBindingTableRegion
+{
+    uint64 StartAddress  = 0;
+    uint64 SizeInBytes   = 0;
+    uint64 StrideInBytes = 0;
+};
+
+struct FRHIShaderBindingTableAddressInfo
+{
+    FRHIShaderBindingTableRegion RayGeneration;
+    FRHIShaderBindingTableRegion Miss;
+    FRHIShaderBindingTableRegion HitGroup;
+    FRHIShaderBindingTableRegion Callable;
+};
+
 typedef TSharedRef<class FRHIShaderBindingTable> FRHIShaderBindingTableRef;
 
 class FRHIShaderBindingTable : public FRHIResource
@@ -116,6 +131,7 @@ protected:
 
 public:
     virtual void* GetRHINativeResource() const = 0;
+    virtual FRHIShaderBindingTableAddressInfo GetAddressInfo() const = 0;
 
     NODISCARD const FRHIShaderBindingTableDesc& GetDesc() const
     {

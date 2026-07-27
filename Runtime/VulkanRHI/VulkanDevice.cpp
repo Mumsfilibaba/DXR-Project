@@ -1181,9 +1181,14 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     RHI::ShadingRateTier             = EShadingRateTier::NotSupported;
     RHI::ShadingRateImageTileSize    = 0;
 
-    RHI::bSupportDrawIndirect        = true;
-    RHI::bSupportMultiDrawIndirect   = false;
-    RHI::MaxDrawIndirectCount        = 1;
+    RHI::bSupportsDrawIndirect               = true;
+    RHI::bSupportsDrawIndirectCount          = false;
+    RHI::bSupportsDispatchIndirect           = true;
+    RHI::bSupportsDispatchMeshIndirect       = false;
+    RHI::bSupportsDispatchMeshIndirectCount  = false;
+    RHI::bSupportsDispatchRaysIndirect       = false;
+    RHI::MaxDrawIndirectCommandCount         = 1;
+    RHI::MaxDispatchMeshIndirectCommandCount = 1;
 
     RHI::MaxTexture1DSize            = 0;
     RHI::MaxTexture1DArrayLayers     = 0;
@@ -1219,17 +1224,14 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     const VkPhysicalDeviceProperties& PhysicalDeviceProperties = PhysicalDevice->GetProperties();
 
     {
-        // DrawIndirect + MultiDrawIndirect
-        if (PhysicalDeviceFeatures.multiDrawIndirect)
-        {
-            RHI::bSupportMultiDrawIndirect = true;
-            RHI::MaxDrawIndirectCount      = PhysicalDeviceProperties.limits.maxDrawIndirectCount;
-        }
-        else
-        {
-            RHI::bSupportMultiDrawIndirect = false;
-            RHI::MaxDrawIndirectCount      = 1;
-        }
+        const VkPhysicalDeviceVulkan12Features& PhysicalDeviceFeatures12 = PhysicalDevice->GetFeaturesVulkan12();
+        RHI::bSupportsDrawIndirectCount  = PhysicalDeviceFeatures12.drawIndirectCount == VK_TRUE && vkCmdDrawIndirectCount && vkCmdDrawIndexedIndirectCount;
+        RHI::MaxDrawIndirectCommandCount = PhysicalDeviceFeatures.multiDrawIndirect ? PhysicalDeviceProperties.limits.maxDrawIndirectCount : 1;
+    #if VK_EXT_mesh_shader
+        RHI::bSupportsDispatchMeshIndirect       = GVulkanSupportsMeshShaders && vkCmdDrawMeshTasksIndirectEXT;
+        RHI::bSupportsDispatchMeshIndirectCount  = RHI::bSupportsDispatchMeshIndirect && RHI::bSupportsDrawIndirectCount && vkCmdDrawMeshTasksIndirectCountEXT;
+        RHI::MaxDispatchMeshIndirectCommandCount = RHI::bSupportsDispatchMeshIndirect ? RHI::MaxDrawIndirectCommandCount : 1;
+    #endif
 
         // Texture / Image limits
         RHI::MaxTexture1DSize        = PhysicalDeviceProperties.limits.maxImageDimension1D;
@@ -1309,6 +1311,7 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
 
             VkPhysicalDeviceProperties2 DeviceProperties2 = {};
             DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+
             AddToStructChain(DeviceProperties2, ReorderProperties);
             vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
 
@@ -1324,6 +1327,7 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
 
             VkPhysicalDeviceProperties2 DeviceProperties2 = {};
             DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+
             AddToStructChain(DeviceProperties2, ReorderProperties);
             vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
 
@@ -1337,7 +1341,6 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
         GVulkanShaderExecutionReorderingActuallyReorders                 = false;
         GVulkanSupportsClustersAndPTLAS                        = false;
         GVulkanSupportsIndirectAccelerationStructureOperations = false;
-        GVulkanSupportsIndirectRayDispatch                     = false;
 
         RHI::bSupportsRayTracing         = true;
         RHI::RayTracingTier              = bHasRayQuery ? ERayTracingTier::Tier1_1 : ERayTracingTier::Tier1;
@@ -1355,9 +1358,11 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
         // Vulkan SBT records can only carry raw data / buffer device addresses, not image descriptors.
         RHI::bSupportsShaderBindingTableDescriptors = false;
 
-        // Indirect ray dispatch (vkCmdTraceRaysIndirectKHR) is part of VK_KHR_ray_tracing_pipeline and
-        // is reported when the device exposes the rayTracingPipelineTraceRaysIndirect feature.
-        GVulkanSupportsIndirectRayDispatch = bHasRayTracingPipeline;
+    #if VK_KHR_ray_tracing_maintenance1 && VK_KHR_ray_tracing_pipeline
+        GVulkanSupportsIndirectRayDispatch = GVulkanSupportsIndirectRayDispatch && IsExtensionEnabled(VK_KHR_RAY_TRACING_MAINTENANCE_1_EXTENSION_NAME) && vkCmdTraceRaysIndirect2KHR;
+    #else
+        GVulkanSupportsIndirectRayDispatch = false;
+    #endif
 
     #if VK_EXT_opacity_micromap
         GVulkanSupportsOpacityMicromap = IsExtensionEnabled(VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME);
@@ -1399,17 +1404,18 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
         RHI::bShaderExecutionReorderingActuallyReorders                = GVulkanShaderExecutionReorderingActuallyReorders;
         RHI::bSupportsClustersAndPartitionedSceneAccelerationStructure = GVulkanSupportsClustersAndPTLAS;
         RHI::bSupportsIndirectAccelerationStructureOperations          = GVulkanSupportsIndirectAccelerationStructureOperations;
-        RHI::bSupportsIndirectRayDispatch                              = GVulkanSupportsIndirectRayDispatch;
+        RHI::bSupportsDispatchRaysIndirect                             = GVulkanSupportsIndirectRayDispatch;
 
         DumpVulkanCapabilities();
     }
     else
     {
-        RHI::bSupportsRayTracing          = false;
-        RHI::RayTracingTier               = ERayTracingTier::NotSupported;
-        RHI::RayTracingMaxRecursionDepth  = 0;
-        RHI::bSupportsInlineRayTracing    = false;
-        RHI::bSupportsIndirectRayDispatch = false;
+        GVulkanSupportsIndirectRayDispatch = false;
+        RHI::bSupportsRayTracing           = false;
+        RHI::RayTracingTier                = ERayTracingTier::NotSupported;
+        RHI::RayTracingMaxRecursionDepth   = 0;
+        RHI::bSupportsInlineRayTracing     = false;
+        RHI::bSupportsDispatchRaysIndirect = false;
     }
 
     // -------------------------------------------------------------------------------------------

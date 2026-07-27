@@ -1092,6 +1092,149 @@ DECLARE_RHICOMMAND(FRHICommandDispatchMesh)
     uint32 ThreadGroupCountZ;
 };
 
+DECLARE_RHICOMMAND(FRHICommandDrawIndirect)
+{
+    FORCEINLINE FRHICommandDrawIndirect(FRHIBuffer* InArgumentBuffer, uint64 InArgumentBufferOffset, uint32 InCommandCount)
+        : ArgumentBuffer(InArgumentBuffer)
+        , ArgumentBufferOffset(InArgumentBufferOffset)
+        , CommandCount(InCommandCount)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.DrawIndirect(ArgumentBuffer, ArgumentBufferOffset, CommandCount);
+    }
+
+    FRHIBuffer* ArgumentBuffer;
+    uint64      ArgumentBufferOffset;
+    uint32      CommandCount;
+};
+
+DECLARE_RHICOMMAND(FRHICommandDrawIndirectCount)
+{
+    FORCEINLINE FRHICommandDrawIndirectCount(FRHIBuffer* InArgumentBuffer, uint64 InArgumentBufferOffset, FRHIBuffer* InCountBuffer, uint64 InCountBufferOffset, uint32 InMaxCommandCount)
+        : ArgumentBuffer(InArgumentBuffer)
+        , ArgumentBufferOffset(InArgumentBufferOffset)
+        , CountBuffer(InCountBuffer)
+        , CountBufferOffset(InCountBufferOffset)
+        , MaxCommandCount(InMaxCommandCount)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.DrawIndirectCount(ArgumentBuffer, ArgumentBufferOffset, CountBuffer, CountBufferOffset, MaxCommandCount);
+    }
+
+    FRHIBuffer* ArgumentBuffer;
+    uint64      ArgumentBufferOffset;
+    FRHIBuffer* CountBuffer;
+    uint64      CountBufferOffset;
+    uint32      MaxCommandCount;
+};
+
+DECLARE_RHICOMMAND(FRHICommandDrawIndexedIndirect)
+{
+    FORCEINLINE FRHICommandDrawIndexedIndirect(FRHIBuffer* InArgumentBuffer, uint64 InArgumentBufferOffset, uint32 InCommandCount)
+        : ArgumentBuffer(InArgumentBuffer)
+        , ArgumentBufferOffset(InArgumentBufferOffset)
+        , CommandCount(InCommandCount)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.DrawIndexedIndirect(ArgumentBuffer, ArgumentBufferOffset, CommandCount);
+    }
+
+    FRHIBuffer* ArgumentBuffer;
+    uint64      ArgumentBufferOffset;
+    uint32      CommandCount;
+};
+
+DECLARE_RHICOMMAND(FRHICommandDrawIndexedIndirectCount)
+{
+    FORCEINLINE FRHICommandDrawIndexedIndirectCount(FRHIBuffer* InArgumentBuffer, uint64 InArgumentBufferOffset, FRHIBuffer* InCountBuffer, uint64 InCountBufferOffset, uint32 InMaxCommandCount)
+        : ArgumentBuffer(InArgumentBuffer)
+        , ArgumentBufferOffset(InArgumentBufferOffset)
+        , CountBuffer(InCountBuffer)
+        , CountBufferOffset(InCountBufferOffset)
+        , MaxCommandCount(InMaxCommandCount)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.DrawIndexedIndirectCount(ArgumentBuffer, ArgumentBufferOffset, CountBuffer, CountBufferOffset, MaxCommandCount);
+    }
+
+    FRHIBuffer* ArgumentBuffer;
+    uint64      ArgumentBufferOffset;
+    FRHIBuffer* CountBuffer;
+    uint64      CountBufferOffset;
+    uint32      MaxCommandCount;
+};
+
+DECLARE_RHICOMMAND(FRHICommandDispatchIndirect)
+{
+    FORCEINLINE FRHICommandDispatchIndirect(FRHIBuffer* InArgumentBuffer, uint64 InArgumentBufferOffset)
+        : ArgumentBuffer(InArgumentBuffer)
+        , ArgumentBufferOffset(InArgumentBufferOffset)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.DispatchIndirect(ArgumentBuffer, ArgumentBufferOffset);
+    }
+
+    FRHIBuffer* ArgumentBuffer;
+    uint64      ArgumentBufferOffset;
+};
+
+DECLARE_RHICOMMAND(FRHICommandDispatchMeshIndirect)
+{
+    FORCEINLINE FRHICommandDispatchMeshIndirect(FRHIBuffer* InArgumentBuffer, uint64 InArgumentBufferOffset, uint32 InCommandCount)
+        : ArgumentBuffer(InArgumentBuffer)
+        , ArgumentBufferOffset(InArgumentBufferOffset)
+        , CommandCount(InCommandCount)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.DispatchMeshIndirect(ArgumentBuffer, ArgumentBufferOffset, CommandCount);
+    }
+
+    FRHIBuffer* ArgumentBuffer;
+    uint64      ArgumentBufferOffset;
+    uint32      CommandCount;
+};
+
+DECLARE_RHICOMMAND(FRHICommandDispatchMeshIndirectCount)
+{
+    FORCEINLINE FRHICommandDispatchMeshIndirectCount(FRHIBuffer* InArgumentBuffer, uint64 InArgumentBufferOffset, FRHIBuffer* InCountBuffer, uint64 InCountBufferOffset, uint32 InMaxCommandCount)
+        : ArgumentBuffer(InArgumentBuffer)
+        , ArgumentBufferOffset(InArgumentBufferOffset)
+        , CountBuffer(InCountBuffer)
+        , CountBufferOffset(InCountBufferOffset)
+        , MaxCommandCount(InMaxCommandCount)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.DispatchMeshIndirectCount(ArgumentBuffer, ArgumentBufferOffset, CountBuffer, CountBufferOffset, MaxCommandCount);
+    }
+
+    FRHIBuffer* ArgumentBuffer;
+    uint64      ArgumentBufferOffset;
+    FRHIBuffer* CountBuffer;
+    uint64      CountBufferOffset;
+    uint32      MaxCommandCount;
+};
+
 DECLARE_RHICOMMAND(FRHICommandSetHitRecordLocalShaderBindings)
 {
     FORCEINLINE FRHICommandSetHitRecordLocalShaderBindings(FRHIShaderBindingTable* InShaderBindingTable, ERayTracingShaderRecordKind InRecordKind, uint32 InRecordIndex, const FRHIHitGroupLocalShaderBinding* InBindings, uint32 InNumBindings)

@@ -376,6 +376,7 @@ bool FVulkanDeviceRHI::Initialize()
     
     // Vulkan 1.2 Optional 
     DeviceCreateInfo.OptionalFeatures.Features12.descriptorIndexing = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features12.drawIndirectCount  = VK_TRUE;
 
     DeviceCreateInfo.OptionalFeatures.Features12.runtimeDescriptorArray                             = VK_TRUE;
     DeviceCreateInfo.OptionalFeatures.Features12.descriptorBindingPartiallyBound                    = VK_TRUE;
@@ -1226,6 +1227,11 @@ FRHIRayTracingPipelineState* FVulkanDeviceRHI::CreateRayTracingPipelineState(con
 FRHIShaderBindingTable* FVulkanDeviceRHI::CreateShaderBindingTable(const FRHIShaderBindingTableDesc& InDesc)
 {
     FVulkanShaderBindingTableRef NewTable = new FVulkanShaderBindingTable(GetDevice(), InDesc);
+    if (!NewTable->Initialize())
+    {
+        return nullptr;
+    }
+
     return NewTable.ReleaseOwnership();
 }
 
@@ -1562,6 +1568,11 @@ VkPipelineStageFlags2 FVulkanDeviceRHI::ResourceStateToPipelineStageFlags(EResou
         Stages |= AllShaderBits;
     }
 
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::IndirectArgument))
+    {
+        Stages |= VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT;
+    }
+
     return Stages != VK_PIPELINE_STAGE_2_NONE ? Stages : VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
 }
 
@@ -1651,6 +1662,11 @@ VkAccessFlags2 FVulkanDeviceRHI::ResourceStateToAccessFlags(EResourceAccess Reso
     if (IsEnumFlagSet(ResourceState, EResourceAccess::ConstantBuffer))
     {
         Access |= VK_ACCESS_2_UNIFORM_READ_BIT;
+    }
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::IndirectArgument))
+    {
+        Access |= VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT;
     }
 
     return Access;

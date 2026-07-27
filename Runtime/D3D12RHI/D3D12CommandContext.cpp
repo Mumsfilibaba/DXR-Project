@@ -2481,6 +2481,240 @@ void FD3D12CommandContext::DispatchMesh(uint32 ThreadGroupCountX, uint32 ThreadG
 #endif
 }
 
+void FD3D12CommandContext::DrawIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount)
+{
+    FD3D12BufferRHI* Arguments = FD3D12DeviceRHI::ResourceCast(ArgumentBuffer);
+    CHECK(Arguments != nullptr);
+
+    ID3D12CommandSignature* Signature = GetDevice()->GetCommandSignature(ED3D12CommandSignatureType::Draw);
+    CHECK(Signature != nullptr);
+
+    ConditionalSplitCommandList();
+    ContextState.PrepareGraphicsState();
+
+    FD3D12Resource* ArgumentResource = Arguments->GetResource();
+    CHECK(ArgumentResource != nullptr);
+
+    BarrierBatcher.FlushBarriers(GetCommandList());
+    ContextState.BindGraphicsState();
+
+    GetCommandList().UpdateResidency(ArgumentResource->GetResidencyHandle());
+
+    const uint64 NativeOffset = Arguments->GetResourceStorage().GetResourceOffset() + ArgumentBufferOffset;
+    GetCommandList()->ExecuteIndirect(Signature, CommandCount, ArgumentResource->GetD3D12Resource(), NativeOffset, nullptr, 0);
+}
+
+void FD3D12CommandContext::DrawIndirectCount(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, FRHIBuffer* CountBuffer, uint64 CountBufferOffset, uint32 MaxCommandCount)
+{
+    FD3D12BufferRHI* Arguments = FD3D12DeviceRHI::ResourceCast(ArgumentBuffer);
+    CHECK(Arguments != nullptr);
+
+    FD3D12BufferRHI* Count = FD3D12DeviceRHI::ResourceCast(CountBuffer);
+    CHECK(Count != nullptr);
+
+    ID3D12CommandSignature* Signature = GetDevice()->GetCommandSignature(ED3D12CommandSignatureType::Draw);
+    CHECK(Signature != nullptr);
+
+    ConditionalSplitCommandList();
+    ContextState.PrepareGraphicsState();
+
+    FD3D12Resource* ArgumentResource = Arguments->GetResource();
+    CHECK(ArgumentResource != nullptr);
+
+    FD3D12Resource* CountResource = Count->GetResource();
+    CHECK(CountResource != nullptr);
+
+    BarrierBatcher.FlushBarriers(GetCommandList());
+    ContextState.BindGraphicsState();
+
+    GetCommandList().UpdateResidency(ArgumentResource->GetResidencyHandle());
+    GetCommandList().UpdateResidency(CountResource->GetResidencyHandle());
+
+    const uint64 NativeArgumentOffset = Arguments->GetResourceStorage().GetResourceOffset() + ArgumentBufferOffset;
+    const uint64 NativeCountOffset    = Count->GetResourceStorage().GetResourceOffset() + CountBufferOffset;
+
+    GetCommandList()->ExecuteIndirect(
+        Signature,
+        MaxCommandCount,
+        ArgumentResource->GetD3D12Resource(),
+        NativeArgumentOffset,
+        CountResource->GetD3D12Resource(),
+        NativeCountOffset);
+}
+
+void FD3D12CommandContext::DrawIndexedIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount)
+{
+    FD3D12BufferRHI* Arguments = FD3D12DeviceRHI::ResourceCast(ArgumentBuffer);
+    CHECK(Arguments != nullptr);
+
+    ID3D12CommandSignature* Signature = GetDevice()->GetCommandSignature(ED3D12CommandSignatureType::DrawIndexed);
+    CHECK(Signature != nullptr);
+
+    ConditionalSplitCommandList();
+    ContextState.PrepareGraphicsState();
+
+    FD3D12Resource* ArgumentResource = Arguments->GetResource();
+    CHECK(ArgumentResource != nullptr);
+
+    BarrierBatcher.FlushBarriers(GetCommandList());
+    ContextState.BindGraphicsState();
+
+    GetCommandList().UpdateResidency(ArgumentResource->GetResidencyHandle());
+
+    const uint64 NativeOffset = Arguments->GetResourceStorage().GetResourceOffset() + ArgumentBufferOffset;
+    GetCommandList()->ExecuteIndirect(Signature, CommandCount, ArgumentResource->GetD3D12Resource(), NativeOffset, nullptr, 0);
+}
+
+void FD3D12CommandContext::DrawIndexedIndirectCount(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, FRHIBuffer* CountBuffer, uint64 CountBufferOffset, uint32 MaxCommandCount)
+{
+    FD3D12BufferRHI* Arguments = FD3D12DeviceRHI::ResourceCast(ArgumentBuffer);
+    CHECK(Arguments != nullptr);
+
+    FD3D12BufferRHI* Count = FD3D12DeviceRHI::ResourceCast(CountBuffer);
+    CHECK(Count != nullptr);
+
+    ID3D12CommandSignature* Signature = GetDevice()->GetCommandSignature(ED3D12CommandSignatureType::DrawIndexed);
+    CHECK(Signature != nullptr);
+
+    ConditionalSplitCommandList();
+    ContextState.PrepareGraphicsState();
+
+    FD3D12Resource* ArgumentResource = Arguments->GetResource();
+    CHECK(ArgumentResource != nullptr);
+
+    FD3D12Resource* CountResource = Count->GetResource();
+    CHECK(CountResource != nullptr);
+
+    BarrierBatcher.FlushBarriers(GetCommandList());
+    ContextState.BindGraphicsState();
+
+    GetCommandList().UpdateResidency(ArgumentResource->GetResidencyHandle());
+    GetCommandList().UpdateResidency(CountResource->GetResidencyHandle());
+
+    const uint64 NativeArgumentOffset = Arguments->GetResourceStorage().GetResourceOffset() + ArgumentBufferOffset;
+    const uint64 NativeCountOffset    = Count->GetResourceStorage().GetResourceOffset() + CountBufferOffset;
+
+    GetCommandList()->ExecuteIndirect(
+        Signature,
+        MaxCommandCount,
+        ArgumentResource->GetD3D12Resource(),
+        NativeArgumentOffset,
+        CountResource->GetD3D12Resource(),
+        NativeCountOffset);
+}
+
+void FD3D12CommandContext::DispatchIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset)
+{
+    FD3D12BufferRHI* Arguments = FD3D12DeviceRHI::ResourceCast(ArgumentBuffer);
+    CHECK(Arguments != nullptr);
+
+    ID3D12CommandSignature* Signature = GetDevice()->GetCommandSignature(ED3D12CommandSignatureType::Dispatch);
+    CHECK(Signature != nullptr);
+
+    ConditionalSplitCommandList();
+    ContextState.PrepareComputeState();
+
+    FD3D12Resource* ArgumentResource = Arguments->GetResource();
+    CHECK(ArgumentResource != nullptr);
+
+    BarrierBatcher.FlushBarriers(GetCommandList());
+    ContextState.BindComputeState();
+
+    GetCommandList().UpdateResidency(ArgumentResource->GetResidencyHandle());
+
+    const uint64 NativeOffset = Arguments->GetResourceStorage().GetResourceOffset() + ArgumentBufferOffset;
+    GetCommandList()->ExecuteIndirect(Signature, 1, ArgumentResource->GetD3D12Resource(), NativeOffset, nullptr, 0);
+}
+
+void FD3D12CommandContext::DispatchMeshIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount)
+{
+#if D3D12_USE_ID3D12COMMANDLIST_6
+    if (GD3D12MeshShaderTier == D3D12_MESH_SHADER_TIER_NOT_SUPPORTED)
+    {
+        D3D12_ERROR("DispatchMeshIndirect called but mesh shaders are not supported on this device");
+        return;
+    }
+
+    FD3D12BufferRHI* Arguments = FD3D12DeviceRHI::ResourceCast(ArgumentBuffer);
+    CHECK(Arguments != nullptr);
+
+    ID3D12CommandSignature* Signature = GetDevice()->GetCommandSignature(ED3D12CommandSignatureType::DispatchMesh);
+    CHECK(Signature != nullptr);
+
+    ConditionalSplitCommandList();
+    ContextState.PrepareMeshletState();
+
+    FD3D12Resource* ArgumentResource = Arguments->GetResource();
+    CHECK(ArgumentResource != nullptr);
+
+    BarrierBatcher.FlushBarriers(GetCommandList());
+    ContextState.BindMeshletState();
+
+    GetCommandList().UpdateResidency(ArgumentResource->GetResidencyHandle());
+
+    const uint64 NativeOffset = Arguments->GetResourceStorage().GetResourceOffset() + ArgumentBufferOffset;
+    GetCommandList().GetGraphicsCommandList6()->ExecuteIndirect(Signature, CommandCount, ArgumentResource->GetD3D12Resource(), NativeOffset, nullptr, 0);
+#else
+    UNREFERENCED_VARIABLE(ArgumentBuffer);
+    UNREFERENCED_VARIABLE(ArgumentBufferOffset);
+    UNREFERENCED_VARIABLE(CommandCount);
+    D3D12_ERROR("DispatchMeshIndirect requires ID3D12GraphicsCommandList6 support");
+#endif
+}
+
+void FD3D12CommandContext::DispatchMeshIndirectCount(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, FRHIBuffer* CountBuffer, uint64 CountBufferOffset, uint32 MaxCommandCount)
+{
+#if D3D12_USE_ID3D12COMMANDLIST_6
+    if (GD3D12MeshShaderTier == D3D12_MESH_SHADER_TIER_NOT_SUPPORTED)
+    {
+        D3D12_ERROR("DispatchMeshIndirectCount called but mesh shaders are not supported on this device");
+        return;
+    }
+
+    FD3D12BufferRHI* Arguments = FD3D12DeviceRHI::ResourceCast(ArgumentBuffer);
+    CHECK(Arguments != nullptr);
+
+    FD3D12BufferRHI* Count = FD3D12DeviceRHI::ResourceCast(CountBuffer);
+    CHECK(Count != nullptr);
+
+    ID3D12CommandSignature* Signature = GetDevice()->GetCommandSignature(ED3D12CommandSignatureType::DispatchMesh);
+    CHECK(Signature != nullptr);
+
+    ConditionalSplitCommandList();
+    ContextState.PrepareMeshletState();
+
+    FD3D12Resource* ArgumentResource = Arguments->GetResource();
+    CHECK(ArgumentResource != nullptr);
+
+    FD3D12Resource* CountResource = Count->GetResource();
+    CHECK(CountResource != nullptr);
+
+    BarrierBatcher.FlushBarriers(GetCommandList());
+    ContextState.BindMeshletState();
+
+    GetCommandList().UpdateResidency(ArgumentResource->GetResidencyHandle());
+    GetCommandList().UpdateResidency(CountResource->GetResidencyHandle());
+
+    const uint64 NativeArgumentOffset = Arguments->GetResourceStorage().GetResourceOffset() + ArgumentBufferOffset;
+    const uint64 NativeCountOffset    = Count->GetResourceStorage().GetResourceOffset() + CountBufferOffset;
+
+    GetCommandList().GetGraphicsCommandList6()->ExecuteIndirect(
+        Signature,
+        MaxCommandCount,
+        ArgumentResource->GetD3D12Resource(),
+        NativeArgumentOffset,
+        CountResource->GetD3D12Resource(),
+        NativeCountOffset);
+#else
+    UNREFERENCED_VARIABLE(ArgumentBuffer);
+    UNREFERENCED_VARIABLE(ArgumentBufferOffset);
+    UNREFERENCED_VARIABLE(CountBuffer);
+    UNREFERENCED_VARIABLE(CountBufferOffset);
+    UNREFERENCED_VARIABLE(MaxCommandCount);
+    D3D12_ERROR("DispatchMeshIndirectCount requires ID3D12GraphicsCommandList6 support");
+#endif
+}
+
 void FD3D12CommandContext::SetHitRecordLocalShaderBindings(FRHIShaderBindingTable* ShaderBindingTable, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings)
 {
     if (!ShaderBindingTable)
@@ -2520,32 +2754,20 @@ void FD3D12CommandContext::SetRayTracingPipelineState(FRHIRayTracingPipelineStat
     ContextState.SetRayTracingPipelineState(D3D12PipelineState);
 }
 
-void FD3D12CommandContext::DispatchRays(FRHIShaderBindingTable* ShaderBindingTable, uint32 Width, uint32 Height, uint32 Depth)
+void FD3D12CommandContext::PrepareShaderBindingTableForDispatch(FD3D12ShaderBindingTable* ShaderBindingTable)
 {
-#if D3D12_USE_ID3D12COMMANDLIST_4
-    FD3D12RayTracingPipelineStateRHI* D3D12PipelineState = ContextState.GetRayTracingPipelineState();
-    CHECK(D3D12PipelineState != nullptr);
+    CHECK(ShaderBindingTable != nullptr);
 
-    FD3D12ShaderBindingTable* D3D12ShaderBindingTable = FD3D12DeviceRHI::ResourceCast(ShaderBindingTable);
-    CHECK(D3D12ShaderBindingTable != nullptr);
-    CHECK(D3D12ShaderBindingTable->GetPipeline() == D3D12PipelineState);
-
-    if (Width == 0 || Height == 0 || Depth == 0)
-    {
-        return;
-    }
-
-    ConditionalSplitCommandList();
     BarrierBatcher.FlushBarriers(GetCommandList());
 
-    if (FD3D12Resource* TableResource = D3D12ShaderBindingTable->GetResource())
+    if (FD3D12Resource* TableResource = ShaderBindingTable->GetResource())
     {
         GetCommandList().UpdateResidency(TableResource->GetResidencyHandle());
     }
 
-    const uint32 NumLocalTableDescriptors   = D3D12ShaderBindingTable->GetNumPendingLocalTableDescriptors();
-    const uint32 NumLocalSamplerDescriptors = D3D12ShaderBindingTable->GetNumPendingLocalSamplerDescriptors();
-    
+    const uint32 NumLocalTableDescriptors   = ShaderBindingTable->GetNumPendingLocalTableDescriptors();
+    const uint32 NumLocalSamplerDescriptors = ShaderBindingTable->GetNumPendingLocalSamplerDescriptors();
+
     if (NumLocalTableDescriptors > 0)
     {
         FD3D12LocalDescriptorHeap& ResourceHeap = ContextState.GetDescriptorCache().GetResourceHeap();
@@ -2565,15 +2787,35 @@ void FD3D12CommandContext::DispatchRays(FRHIShaderBindingTable* ShaderBindingTab
     }
 
     ContextState.BindRayTracingState();
-    CommandList->GetGraphicsCommandList4()->SetPipelineState1(D3D12PipelineState->GetD3D12StateObject());
 
     if (NumLocalTableDescriptors > 0 || NumLocalSamplerDescriptors > 0)
     {
         FD3D12LocalDescriptorHeap& ResourceHeap = ContextState.GetDescriptorCache().GetResourceHeap();
         FD3D12LocalDescriptorHeap& SamplerHeap  = ContextState.GetDescriptorCache().GetSamplerHeap();
-        D3D12ShaderBindingTable->ResolveLocalDescriptorTables(*this, ResourceHeap, SamplerHeap);
+
+        ShaderBindingTable->ResolveLocalDescriptorTables(*this, ResourceHeap, SamplerHeap);
         BarrierBatcher.FlushBarriers(GetCommandList());
     }
+}
+
+void FD3D12CommandContext::DispatchRays(FRHIShaderBindingTable* ShaderBindingTable, uint32 Width, uint32 Height, uint32 Depth)
+{
+#if D3D12_USE_ID3D12COMMANDLIST_4
+    FD3D12RayTracingPipelineStateRHI* D3D12PipelineState = ContextState.GetRayTracingPipelineState();
+    CHECK(D3D12PipelineState != nullptr);
+
+    FD3D12ShaderBindingTable* D3D12ShaderBindingTable = FD3D12DeviceRHI::ResourceCast(ShaderBindingTable);
+    CHECK(D3D12ShaderBindingTable != nullptr);
+    CHECK(D3D12ShaderBindingTable->GetPipeline() == D3D12PipelineState);
+
+    if (Width == 0 || Height == 0 || Depth == 0)
+    {
+        return;
+    }
+
+    ConditionalSplitCommandList();
+    PrepareShaderBindingTableForDispatch(D3D12ShaderBindingTable);
+    CommandList->GetGraphicsCommandList4()->SetPipelineState1(D3D12PipelineState->GetD3D12StateObject());
 
     D3D12_DISPATCH_RAYS_DESC RayDispatchDesc = {};
     RayDispatchDesc.RayGenerationShaderRecord = D3D12ShaderBindingTable->GetRayGenRecord();
@@ -2627,6 +2869,7 @@ void FD3D12CommandContext::DispatchRaysIndirect(FRHIShaderBindingTable* ShaderBi
 
     FD3D12ShaderBindingTable* D3D12ShaderBindingTable = FD3D12DeviceRHI::ResourceCast(ShaderBindingTable);
     CHECK(D3D12ShaderBindingTable != nullptr);
+    CHECK(D3D12ShaderBindingTable->GetPipeline() == D3D12PipelineState);
 
     FD3D12BufferRHI* D3D12ArgumentBuffer = FD3D12DeviceRHI::ResourceCast(ArgumentBuffer);
     CHECK(D3D12ArgumentBuffer != nullptr);
@@ -2638,26 +2881,22 @@ void FD3D12CommandContext::DispatchRaysIndirect(FRHIShaderBindingTable* ShaderBi
     }
 
     ConditionalSplitCommandList();
+    PrepareShaderBindingTableForDispatch(D3D12ShaderBindingTable);
+
+    FD3D12Resource* ArgumentResource = D3D12ArgumentBuffer->GetResource();
+    CHECK(ArgumentResource != nullptr);
+
     BarrierBatcher.FlushBarriers(GetCommandList());
+    GetCommandList().UpdateResidency(ArgumentResource->GetResidencyHandle());
 
-    if (FD3D12Resource* TableResource = D3D12ShaderBindingTable->GetResource())
-    {
-        GetCommandList().UpdateResidency(TableResource->GetResidencyHandle());
-    }
-
-    if (FD3D12Resource* ArgumentResource = D3D12ArgumentBuffer->GetResource())
-    {
-        GetCommandList().UpdateResidency(ArgumentResource->GetResidencyHandle());
-    }
-
-    ContextState.BindRayTracingState();
     CommandList->GetGraphicsCommandList4()->SetPipelineState1(D3D12PipelineState->GetD3D12StateObject());
 
+    const uint64 NativeArgumentOffset = D3D12ArgumentBuffer->GetResourceStorage().GetResourceOffset() + ArgumentBufferOffset;
     CommandList->GetGraphicsCommandList4()->ExecuteIndirect(
         CommandSignature,
         1,
-        D3D12ArgumentBuffer->GetResource()->GetD3D12Resource(),
-        ArgumentBufferOffset,
+        ArgumentResource->GetD3D12Resource(),
+        NativeArgumentOffset,
         nullptr,
         0);
 #else

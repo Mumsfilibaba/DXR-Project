@@ -206,7 +206,11 @@ struct ED3D12CommandSignatureType
 {
     enum Type : uint8
     {
-        DispatchRays = 0,
+        Draw = 0,
+        DrawIndexed,
+        Dispatch,
+        DispatchMesh,
+        DispatchRays,
         Count
     };
 };

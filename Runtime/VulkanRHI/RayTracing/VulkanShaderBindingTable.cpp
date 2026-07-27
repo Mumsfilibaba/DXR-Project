@@ -63,6 +63,44 @@ void* FVulkanShaderBindingTable::GetRHINativeResource() const
     return reinterpret_cast<void*>(TableLocation.GetBackingBuffer());
 }
 
+bool FVulkanShaderBindingTable::Initialize()
+{
+    const uint64 RequiredSize = uint64(CpuShadow.SizeInBytes());
+    if (RequiredSize == 0)
+    {
+        return false;
+    }
+
+    const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    const VkBufferUsageFlags    Usage            = VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+    const VkMemoryAllocateFlags AllocateFlags    = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+
+    const uint32 BaseAlignment = Pipeline ? Pipeline->GetShaderGroupBaseAlignment() : 256;
+    return GetDevice()->GetMemoryManager().AllocateBufferMemory(MemoryProperties, Usage, AllocateFlags, RequiredSize, BaseAlignment, TableLocation);
+}
+
+FRHIShaderBindingTableAddressInfo FVulkanShaderBindingTable::GetAddressInfo() const
+{
+    FRHIShaderBindingTableAddressInfo AddressInfo = {};
+    if (!TableLocation.IsValid())
+    {
+        return AddressInfo;
+    }
+
+    const VkStridedDeviceAddressRegionKHR RayGen = GetRayGenRegion();
+    AddressInfo.RayGeneration = { RayGen.deviceAddress, RayGen.size, RayGen.stride };
+
+    const VkStridedDeviceAddressRegionKHR Miss = GetMissRegion();
+    AddressInfo.Miss = { Miss.deviceAddress, Miss.size, Miss.stride };
+
+    const VkStridedDeviceAddressRegionKHR HitGroup = GetHitGroupRegion();
+    AddressInfo.HitGroup = { HitGroup.deviceAddress, HitGroup.size, HitGroup.stride };
+
+    const VkStridedDeviceAddressRegionKHR Callable = GetCallableRegion();
+    AddressInfo.Callable = { Callable.deviceAddress, Callable.size, Callable.stride };
+    return AddressInfo;
+}
+
 uint64 FVulkanShaderBindingTable::GetRegionBaseOffset(ERayTracingShaderRecordKind RecordKind) const
 {
     switch (RecordKind)
@@ -146,25 +184,15 @@ void FVulkanShaderBindingTable::Build()
         return;
     }
 
-    if (!TableLocation.IsValid() || TableLocation.GetSize() < RequiredSize)
-    {
-        TableLocation.ReleaseMemory();
-
-        const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-        const VkBufferUsageFlags    Usage            = VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
-        const VkMemoryAllocateFlags AllocateFlags    = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
-
-        const uint32 BaseAlignment = Pipeline ? Pipeline->GetShaderGroupBaseAlignment() : 256;
-        if (!GetDevice()->GetMemoryManager().AllocateBufferMemory(MemoryProperties, Usage, AllocateFlags, RequiredSize, BaseAlignment, TableLocation))
-        {
-            VULKAN_ERROR_CRITICAL("Failed to allocate shader-binding-table memory");
-            return;
-        }
-    }
+    CHECK(TableLocation.IsValid() && TableLocation.GetSize() >= RequiredSize);
 
     if (void* Mapped = TableLocation.GetMappedBaseAddress())
     {
         Memory::Memcpy(Mapped, CpuShadow.Data(), CpuShadow.SizeInBytes());
+    }
+    else
+    {
+        VULKAN_ERROR("Failed to map shader-binding-table memory");
     }
 }
 

@@ -1,6 +1,7 @@
 #pragma once
 #include "RHI/RHITypes.h"
 #include "RHI/RHIResources.h"
+#include "RHI/RHIIndirect.h"
 #include "RHI/RayTracing/RHIRayTracingTypes.h"
 #include "RHI/RayTracing/RHIShaderBindingTable.h"
 
@@ -32,22 +33,22 @@ enum class ECommandContextPhase
 struct IRHICommandContext
 {
     /**
-     * @brief Begin Frame on the RHIThread
+     * @brief Begins a frame on the RHI thread.
      */
     virtual void BeginFrame() = 0;
 
     /**
-     * @brief End Frame on the RHIThread
+     * @brief Ends the current frame on the RHI thread.
      */
     virtual void EndFrame() = 0;
 
     /**
-     * @brief Prepares the context to records commands
+     * @brief Prepares the context to record commands.
      */
     virtual void StartContext() = 0;
 
     /**
-     * @brief Ends recording of commands for the context and submits the commandlists
+     * @brief Ends command recording and submits the recorded command lists.
      */
     virtual void FinishContext() = 0;
 
@@ -77,9 +78,10 @@ struct IRHICommandContext
     virtual void ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const Vector4& ClearColor) = 0;
 
     /**
-     * @brief Clears a DepthStencilView with a specific value
-     * @param DepthStencilView DepthStencilView to clear
-     * @param ClearValue Value to set each pixel within the DepthStencilView to
+     * @brief Clears a depth-stencil view with depth and stencil values.
+     * @param DepthStencilView Depth-stencil view to clear.
+     * @param Depth Depth value written to the view.
+     * @param Stencil Stencil value written to the view.
      */
     virtual void ClearDepthStencilView(FRHIDepthStencilView* DepthStencilView, const float Depth, const uint8 Stencil) = 0;
 
@@ -141,9 +143,9 @@ struct IRHICommandContext
     virtual void SetDepthBias(float DepthBias, float DepthBiasClamp, float SlopeScaledDepthBias) = 0;
 
     /**
-     * @brief Set the VertexBuffers to be used
-     * @param VertexBuffers ArrayView of VertexBuffers to use
-     * @param BufferSlot Slot to start bind the array to
+     * @brief Sets the vertex buffers used by subsequent draw commands.
+     * @param InVertexBuffers Vertex buffers to bind.
+     * @param BufferSlot First vertex-buffer slot receiving the array.
      */
     virtual void SetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot) = 0;
 
@@ -183,7 +185,7 @@ struct IRHICommandContext
      * @brief Set shader constants
      * @param Shader Shader to bind the constants to
      * @param ShaderConstants Array of 32-bit constants
-     * @param NumShaderConstants Number o 32-bit constants (Each is 4 bytes)
+     * @param NumShaderConstants Number of 32-bit constants in ShaderConstants.
      */
     virtual void SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants) = 0;
 
@@ -198,7 +200,7 @@ struct IRHICommandContext
     /**
      * @brief Sets multiple ShaderResourceViews starting at the specified register index (for arrays in the shader). RegisterIndex corresponds to the HLSL register (e.g., register(t0)).
      * @param Shader Shader to bind resource to
-     * @param ShaderResourceViews ArrayView of ShaderResourceViews to bind
+     * @param InShaderResourceViews ShaderResourceViews to bind
      * @param RegisterIndex Starting register index to bind from
      */
     virtual void SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 RegisterIndex) = 0;
@@ -230,7 +232,7 @@ struct IRHICommandContext
     /**
      * @brief Sets multiple ConstantBuffers starting at the specified register index (for arrays in the shader). RegisterIndex corresponds to the HLSL register (e.g., register(b0)).
      * @param Shader Shader to bind resource to
-     * @param ConstantBuffers ArrayView of ConstantBuffers to bind
+     * @param InConstantBuffers ConstantBuffers to bind
      * @param RegisterIndex Starting register index to bind from
      */
     virtual void SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 RegisterIndex) = 0;
@@ -246,7 +248,7 @@ struct IRHICommandContext
     /**
      * @brief Sets multiple SamplerStates starting at the specified register index (for arrays in the shader). RegisterIndex corresponds to the HLSL register (e.g., register(s0)).
      * @param Shader Shader to bind resource to
-     * @param SamplerStates ArrayView of SamplerStates to bind
+     * @param InSamplerStates SamplerStates to bind
      * @param RegisterIndex Starting register index to bind from
      */
     virtual void SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 RegisterIndex) = 0;
@@ -333,6 +335,7 @@ struct IRHICommandContext
 
     /**
      * @brief Splits the command stream and signals the provided fence after all prior GPU work is complete.
+     * @param Fence Fence to signal after previously recorded work completes.
      */
     virtual void WriteFence(FRHIFence* Fence) = 0;
 
@@ -448,6 +451,67 @@ struct IRHICommandContext
     virtual void DispatchMesh(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ) = 0;
 
     /**
+     * @brief Executes non-indexed draw commands read from a GPU buffer. Requires RHI::bSupportsDrawIndirect to be true.
+     * @param ArgumentBuffer Buffer containing consecutive FRHIDrawIndirectParameters records.
+     * @param ArgumentBufferOffset 4-byte-aligned byte offset of the first record in ArgumentBuffer.
+     * @param CommandCount Number of records to execute. Must be greater than zero and no greater than RHI::MaxDrawIndirectCommandCount.
+     */
+    virtual void DrawIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount) = 0;
+
+    /**
+     * @brief Executes non-indexed draw commands using a GPU-provided command count. Requires RHI::bSupportsDrawIndirect and RHI::bSupportsDrawIndirectCount to be true.
+     * @param ArgumentBuffer Buffer containing consecutive FRHIDrawIndirectParameters records.
+     * @param ArgumentBufferOffset 4-byte-aligned byte offset of the first record in ArgumentBuffer.
+     * @param CountBuffer Buffer containing the GPU uint32 command count.
+     * @param CountBufferOffset 4-byte-aligned byte offset of the uint32 count in CountBuffer.
+     * @param MaxCommandCount Maximum number of records to execute. Must be greater than zero and no greater than RHI::MaxDrawIndirectCommandCount.
+     */
+    virtual void DrawIndirectCount(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, FRHIBuffer* CountBuffer, uint64 CountBufferOffset, uint32 MaxCommandCount) = 0;
+
+    /**
+     * @brief Executes indexed draw commands read from a GPU buffer. Requires RHI::bSupportsDrawIndirect to be true.
+     * @param ArgumentBuffer Buffer containing consecutive FRHIDrawIndexedIndirectParameters records.
+     * @param ArgumentBufferOffset 4-byte-aligned byte offset of the first record in ArgumentBuffer.
+     * @param CommandCount Number of records to execute. Must be greater than zero and no greater than RHI::MaxDrawIndirectCommandCount.
+     */
+    virtual void DrawIndexedIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount) = 0;
+
+    /**
+     * @brief Executes indexed draw commands using a GPU-provided command count. Requires RHI::bSupportsDrawIndirect and RHI::bSupportsDrawIndirectCount to be true.
+     * @param ArgumentBuffer Buffer containing consecutive FRHIDrawIndexedIndirectParameters records.
+     * @param ArgumentBufferOffset 4-byte-aligned byte offset of the first record in ArgumentBuffer.
+     * @param CountBuffer Buffer containing the GPU uint32 command count.
+     * @param CountBufferOffset 4-byte-aligned byte offset of the uint32 count in CountBuffer.
+     * @param MaxCommandCount Maximum number of records to execute. Must be greater than zero and no greater than RHI::MaxDrawIndirectCommandCount.
+     */
+    virtual void DrawIndexedIndirectCount(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, FRHIBuffer* CountBuffer, uint64 CountBufferOffset, uint32 MaxCommandCount) = 0;
+
+    /**
+     * @brief Dispatches one compute command read from a GPU buffer. Requires RHI::bSupportsDispatchIndirect to be true.
+     * @param ArgumentBuffer Buffer containing one FRHIDispatchIndirectParameters record.
+     * @param ArgumentBufferOffset 4-byte-aligned byte offset of the record in ArgumentBuffer.
+     */
+    virtual void DispatchIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset) = 0;
+
+    /**
+     * @brief Executes mesh-shader dispatch commands read from a GPU buffer. Requires RHI::bSupportsDispatchMeshIndirect to be true.
+     * @param ArgumentBuffer Buffer containing consecutive FRHIDispatchMeshIndirectParameters records.
+     * @param ArgumentBufferOffset 4-byte-aligned byte offset of the first record in ArgumentBuffer.
+     * @param CommandCount Number of records to execute. Must be greater than zero and no greater than RHI::MaxDispatchMeshIndirectCommandCount.
+     */
+    virtual void DispatchMeshIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount) = 0;
+
+    /**
+     * @brief Executes mesh-shader dispatch commands using a GPU-provided command count. Requires RHI::bSupportsDispatchMeshIndirect and RHI::bSupportsDispatchMeshIndirectCount to be true.
+     * @param ArgumentBuffer Buffer containing consecutive FRHIDispatchMeshIndirectParameters records.
+     * @param ArgumentBufferOffset 4-byte-aligned byte offset of the first record in ArgumentBuffer.
+     * @param CountBuffer Buffer containing the GPU uint32 command count.
+     * @param CountBufferOffset 4-byte-aligned byte offset of the uint32 count in CountBuffer.
+     * @param MaxCommandCount Maximum number of records to execute. Must be greater than zero and no greater than RHI::MaxDispatchMeshIndirectCommandCount.
+     */
+    virtual void DispatchMeshIndirectCount(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, FRHIBuffer* CountBuffer, uint64 CountBufferOffset, uint32 MaxCommandCount) = 0;
+
+    /**
      * @brief Records the local resources for a single shader-binding-table record.
      * @param ShaderBindingTable The table to update.
      * @param RecordKind Which sub-table the record belongs to.
@@ -478,17 +542,17 @@ struct IRHICommandContext
     /**
      * @brief Dispatches rays using a standalone shader-binding-table.
      * @param ShaderBindingTable The shader-binding-table providing the records.
-     * @param Width Dispatch dimensions.
-     * @param Height Dispatch dimensions.
-     * @param Depth Dispatch dimensions.
+     * @param Width Number of ray invocations in the X dimension.
+     * @param Height Number of ray invocations in the Y dimension.
+     * @param Depth Number of ray invocations in the Z dimension.
      */
     virtual void DispatchRays(FRHIShaderBindingTable* ShaderBindingTable, uint32 Width, uint32 Height, uint32 Depth) = 0;
 
-    /** 
-     * @brief Dispatches rays with GPU-provided dimensions. Requires RHI::bSupportsIndirectAccelerationStructureOperations.
+    /**
+     * @brief Dispatches rays with GPU-provided SBT ranges and dimensions. Requires RHI::bSupportsDispatchRaysIndirect to be true.
      * @param ShaderBindingTable The shader-binding-table providing the records.
-     * @param ArgumentBuffer Buffer containing the dispatch arguments.
-     * @param ArgumentBufferOffset Byte offset into ArgumentBuffer.
+     * @param ArgumentBuffer Buffer containing one FRHIDispatchRaysIndirectParameters record.
+     * @param ArgumentBufferOffset 4-byte-aligned byte offset of the record in ArgumentBuffer.
      */
     virtual void DispatchRaysIndirect(FRHIShaderBindingTable* ShaderBindingTable, FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset) = 0;
 
@@ -578,6 +642,7 @@ struct IRHICommandContext
 
     /**
      * @brief Begins a named GPU event region for profiling tools (PIX, RenderDoc, etc.)
+     * @param Name Name displayed for the event region in GPU profiling tools.
      */
     virtual void PushEvent(const StringView& Name) = 0;
 
@@ -586,6 +651,10 @@ struct IRHICommandContext
      */
     virtual void PopEvent() = 0;
 
-    /** @return D3D12: ID3D12GraphicsCommandList*. Vulkan: VkCommandBuffer*. Metal: nullptr. Null: nullptr. */
+    /**
+     * @brief Returns the backend-native command-list or command-buffer handle.
+     * @return D3D12: ID3D12GraphicsCommandList*. Vulkan: VkCommandBuffer*. Metal: nullptr.
+     * Null: nullptr.
+     */
     virtual void* GetRHINativeCommandList() = 0;
 };

@@ -5,6 +5,7 @@
 #include "Core/Containers/String.h"
 #include "Core/Templates/TypeTraits/BasicTraits.h"
 #include "Core/Templates/TypeTraits/EqualTraits.h"
+#include "RHI/RHIIndirect.h"
 #include "RHI/RHITypes.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RayTracing/RHIRayTracingTypes.h"
@@ -22,6 +23,32 @@
 
 #if !defined(VK_VERSION_1_3)
     #error Vulkan version must be 1.3 or above
+#endif
+
+static_assert(sizeof(FRHIDrawIndirectParameters) == sizeof(VkDrawIndirectCommand));
+static_assert(sizeof(FRHIDrawIndexedIndirectParameters) == sizeof(VkDrawIndexedIndirectCommand));
+static_assert(sizeof(FRHIDispatchIndirectParameters) == sizeof(VkDispatchIndirectCommand));
+
+#if VK_EXT_mesh_shader
+static_assert(sizeof(FRHIDispatchMeshIndirectParameters) == sizeof(VkDrawMeshTasksIndirectCommandEXT));
+#endif
+
+#if VK_KHR_ray_tracing_maintenance1
+static_assert(sizeof(FRHIDispatchRaysIndirectParameters) == sizeof(VkTraceRaysIndirectCommand2KHR));
+static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, RayGenerationShaderRecord) == OFFSETOF(VkTraceRaysIndirectCommand2KHR, raygenShaderRecordAddress));
+static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, RayGenerationShaderRecord) + OFFSETOF(FRHIShaderRecordAddressRange, SizeInBytes) == OFFSETOF(VkTraceRaysIndirectCommand2KHR, raygenShaderRecordSize));
+static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, MissShaderTable) == OFFSETOF(VkTraceRaysIndirectCommand2KHR, missShaderBindingTableAddress));
+static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, MissShaderTable) + OFFSETOF(FRHIShaderTableAddressRange, SizeInBytes) == OFFSETOF(VkTraceRaysIndirectCommand2KHR, missShaderBindingTableSize));
+static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, MissShaderTable) + OFFSETOF(FRHIShaderTableAddressRange, StrideInBytes) == OFFSETOF(VkTraceRaysIndirectCommand2KHR, missShaderBindingTableStride));
+static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, HitGroupTable) == OFFSETOF(VkTraceRaysIndirectCommand2KHR, hitShaderBindingTableAddress));
+static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, HitGroupTable) + OFFSETOF(FRHIShaderTableAddressRange, SizeInBytes) == OFFSETOF(VkTraceRaysIndirectCommand2KHR, hitShaderBindingTableSize));
+static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, HitGroupTable) + OFFSETOF(FRHIShaderTableAddressRange, StrideInBytes) == OFFSETOF(VkTraceRaysIndirectCommand2KHR, hitShaderBindingTableStride));
+static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, CallableShaderTable) == OFFSETOF(VkTraceRaysIndirectCommand2KHR, callableShaderBindingTableAddress));
+static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, CallableShaderTable) + OFFSETOF(FRHIShaderTableAddressRange, SizeInBytes) == OFFSETOF(VkTraceRaysIndirectCommand2KHR, callableShaderBindingTableSize));
+static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, CallableShaderTable) + OFFSETOF(FRHIShaderTableAddressRange, StrideInBytes) == OFFSETOF(VkTraceRaysIndirectCommand2KHR, callableShaderBindingTableStride));
+static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, Width) == OFFSETOF(VkTraceRaysIndirectCommand2KHR, width));
+static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, Height) == OFFSETOF(VkTraceRaysIndirectCommand2KHR, height));
+static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, Depth) == OFFSETOF(VkTraceRaysIndirectCommand2KHR, depth));
 #endif
 
 #include "VulkanRHI/VulkanLoader.h"

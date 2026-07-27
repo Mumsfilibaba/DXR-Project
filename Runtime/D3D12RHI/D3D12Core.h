@@ -2,6 +2,7 @@
 #include "Core/Misc/Debug.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Containers/ComPtr.h"
+#include "RHI/RHIIndirect.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHIRayTracing.h"
 #include "D3D12RHI/D3D12Constants.h"
@@ -20,6 +21,32 @@
 // D3D_FEATURE_LEVEL_12_2, ID3D12Debug5 - requires Windows 10 21H1 (FE) SDK
 #if (NTDDI_WIN10_FE && (WDK_NTDDI_VERSION >= NTDDI_WIN10_FE))
     #define WIN10_BUILD_20348 (1)
+#endif
+
+static_assert(sizeof(FRHIDrawIndirectParameters) == sizeof(D3D12_DRAW_ARGUMENTS));
+static_assert(sizeof(FRHIDrawIndexedIndirectParameters) == sizeof(D3D12_DRAW_INDEXED_ARGUMENTS));
+static_assert(sizeof(FRHIDispatchIndirectParameters) == sizeof(D3D12_DISPATCH_ARGUMENTS));
+
+#if D3D12_USE_ID3D12COMMANDLIST_4
+static_assert(sizeof(FRHIShaderRecordAddressRange) == sizeof(D3D12_GPU_VIRTUAL_ADDRESS_RANGE));
+static_assert(OFFSETOF(FRHIShaderRecordAddressRange, StartAddress) == OFFSETOF(D3D12_GPU_VIRTUAL_ADDRESS_RANGE, StartAddress));
+static_assert(OFFSETOF(FRHIShaderRecordAddressRange, SizeInBytes) == OFFSETOF(D3D12_GPU_VIRTUAL_ADDRESS_RANGE, SizeInBytes));
+static_assert(sizeof(FRHIShaderTableAddressRange) == sizeof(D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE));
+static_assert(OFFSETOF(FRHIShaderTableAddressRange, StartAddress) == OFFSETOF(D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE, StartAddress));
+static_assert(OFFSETOF(FRHIShaderTableAddressRange, SizeInBytes) == OFFSETOF(D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE, SizeInBytes));
+static_assert(OFFSETOF(FRHIShaderTableAddressRange, StrideInBytes) == OFFSETOF(D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE, StrideInBytes));
+static_assert(sizeof(FRHIDispatchRaysIndirectParameters) == sizeof(D3D12_DISPATCH_RAYS_DESC));
+static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, RayGenerationShaderRecord) == OFFSETOF(D3D12_DISPATCH_RAYS_DESC, RayGenerationShaderRecord));
+static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, MissShaderTable) == OFFSETOF(D3D12_DISPATCH_RAYS_DESC, MissShaderTable));
+static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, HitGroupTable) == OFFSETOF(D3D12_DISPATCH_RAYS_DESC, HitGroupTable));
+static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, CallableShaderTable) == OFFSETOF(D3D12_DISPATCH_RAYS_DESC, CallableShaderTable));
+static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, Width) == OFFSETOF(D3D12_DISPATCH_RAYS_DESC, Width));
+static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, Height) == OFFSETOF(D3D12_DISPATCH_RAYS_DESC, Height));
+static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, Depth) == OFFSETOF(D3D12_DISPATCH_RAYS_DESC, Depth));
+#endif
+
+#if D3D12_USE_ID3D12COMMANDLIST_6
+static_assert(sizeof(FRHIDispatchMeshIndirectParameters) == sizeof(D3D12_DISPATCH_MESH_ARGUMENTS));
 #endif
 
 #if D3D12_ENABLE_LOGGING
@@ -1035,6 +1062,11 @@ NODISCARD constexpr D3D12_RESOURCE_STATES ConvertResourceState(EResourceAccess R
         State |= D3D12_RESOURCE_STATE_STREAM_OUT;
     }
 
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::IndirectArgument))
+    {
+        State |= D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT;
+    }
+
     return State;
 }
 
@@ -1070,6 +1102,11 @@ NODISCARD inline D3D12_RESOURCE_STATES DetermineDefaultBufferState(EBufferFlags 
     if (IsEnumFlagSet(Flags, EBufferFlags::CopySource))
     {
         State |= D3D12_RESOURCE_STATE_COPY_SOURCE;
+    }
+
+    if (IsEnumFlagSet(Flags, EBufferFlags::IndirectArguments))
+    {
+        State |= D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT;
     }
 
     return State;

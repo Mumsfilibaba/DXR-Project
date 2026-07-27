@@ -1,6 +1,6 @@
 #include "RHIValidationHelperTests.h"
 
-#include <RHI/RHIValidationHelpers.h>
+#include <RHI/ValidationLayer/RHIValidationHelpers.h>
 #include <RHI/RHIBuffer.h>
 #include <RHI/RHITypes.h>
 
@@ -35,6 +35,16 @@ bool RHIValidationHelpers_Test()
     TEST_EXPECT(!RHIValidationHelpers::DoRangesOverlap(0, 8, 16, 8));
     TEST_EXPECT(RHIValidationHelpers::DoRangesOverlap(UINT64_MAX - 8, 8, UINT64_MAX - 4, 4));
 
+    TEST_SECTION("Indirect command ranges");
+    TEST_EXPECT(!RHIValidationHelpers::IsIndirectCommandRangeValid(64, 0, 16, 0));
+    TEST_EXPECT(RHIValidationHelpers::IsIndirectCommandRangeValid(64, 0, 16, 4));
+    TEST_EXPECT(RHIValidationHelpers::IsIndirectCommandRangeValid(64, 48, 16, 1));
+    TEST_EXPECT(!RHIValidationHelpers::IsIndirectCommandRangeValid(63, 48, 16, 1));
+    TEST_EXPECT(!RHIValidationHelpers::IsIndirectCommandRangeValid(64, 2, 16, 1));
+    TEST_EXPECT(RHIValidationHelpers::IsIndirectCommandRangeValid(uint64(UINT32_MAX) * 4, 0, 4, UINT32_MAX));
+    TEST_EXPECT(!RHIValidationHelpers::IsIndirectCommandRangeValid(UINT64_MAX, UINT64_MAX - 3, 4, 1));
+    TEST_EXPECT(!RHIValidationHelpers::IsIndirectCommandRangeValid(UINT64_MAX, UINT64_MAX - 7, UINT64_MAX, 2));
+
     TEST_SECTION("64-bit buffer copy descriptor");
     constexpr uint64 LargeValue = uint64(UINT32_MAX) + 4096;
     constexpr FRHIBufferCopyDesc CopyDesc(LargeValue, LargeValue + 1, LargeValue + 2);
@@ -49,6 +59,12 @@ bool RHIValidationHelpers_Test()
     TEST_EXPECT(BufferDesc.IsShaderResourceBuffer());
     TEST_EXPECT(BufferDesc.IsCopyDest());
     TEST_EXPECT(!BufferDesc.IsCopySource());
+
+    TEST_SECTION("Indirect argument contract");
+    BufferDesc.Flags = EBufferFlags::Default | EBufferFlags::UnorderedAccessBuffer | EBufferFlags::IndirectArguments;
+    TEST_EXPECT(BufferDesc.IsIndirectArguments());
+    TEST_EXPECT(BufferDesc.IsUnorderedAccessBuffer());
+    TEST_EXPECT(StringView(ToString(EResourceAccess::IndirectArgument)) == StringView("IndirectArgument"));
 
     TEST_END();
 }

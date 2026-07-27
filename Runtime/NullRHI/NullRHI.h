@@ -170,7 +170,7 @@ public:
         return new FNullRayTracingPipelineStateRHI();
     }
 
-    virtual FRHIShaderBindingTable* CreateShaderBindingTable(const FRHIShaderBindingTableDesc&) override final { return nullptr; }
+    virtual FRHIShaderBindingTable* CreateShaderBindingTable(const FRHIShaderBindingTableDesc& InDesc) override final { return new FNullShaderBindingTableRHI(InDesc); }
     virtual FRHIRayTracingShaderIdentifier GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState*, const String&) override final { return FRHIRayTracingShaderIdentifier(); }
     virtual FRHIOpacityMicromap* CreateOpacityMicromap(const FRHIOpacityMicromapDesc&) override final { return nullptr; }
     virtual FRHIClusterAccelerationStructure* CreateClusterAccelerationStructure(const FRHIClusterAccelerationStructureDesc&) override final { return nullptr; }

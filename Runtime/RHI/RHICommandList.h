@@ -427,6 +427,48 @@ public:
         STAT_ADD(STAT_RHI_DrawCalls, 1);
     }
 
+    FORCEINLINE void DrawIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount) noexcept
+    {
+        EmplaceCommand<FRHICommandDrawIndirect>(ArgumentBuffer, ArgumentBufferOffset, CommandCount);
+        STAT_ADD(STAT_RHI_DrawCalls, 1);
+    }
+
+    FORCEINLINE void DrawIndirectCount(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, FRHIBuffer* CountBuffer, uint64 CountBufferOffset, uint32 MaxCommandCount) noexcept
+    {
+        EmplaceCommand<FRHICommandDrawIndirectCount>(ArgumentBuffer, ArgumentBufferOffset, CountBuffer, CountBufferOffset, MaxCommandCount);
+        STAT_ADD(STAT_RHI_DrawCalls, 1);
+    }
+
+    FORCEINLINE void DrawIndexedIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount) noexcept
+    {
+        EmplaceCommand<FRHICommandDrawIndexedIndirect>(ArgumentBuffer, ArgumentBufferOffset, CommandCount);
+        STAT_ADD(STAT_RHI_DrawCalls, 1);
+    }
+
+    FORCEINLINE void DrawIndexedIndirectCount(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, FRHIBuffer* CountBuffer, uint64 CountBufferOffset, uint32 MaxCommandCount) noexcept
+    {
+        EmplaceCommand<FRHICommandDrawIndexedIndirectCount>(ArgumentBuffer, ArgumentBufferOffset, CountBuffer, CountBufferOffset, MaxCommandCount);
+        STAT_ADD(STAT_RHI_DrawCalls, 1);
+    }
+
+    FORCEINLINE void DispatchIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset) noexcept
+    {
+        EmplaceCommand<FRHICommandDispatchIndirect>(ArgumentBuffer, ArgumentBufferOffset);
+        STAT_ADD(STAT_RHI_DispatchCalls, 1);
+    }
+
+    FORCEINLINE void DispatchMeshIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount) noexcept
+    {
+        EmplaceCommand<FRHICommandDispatchMeshIndirect>(ArgumentBuffer, ArgumentBufferOffset, CommandCount);
+        STAT_ADD(STAT_RHI_DrawCalls, 1);
+    }
+
+    FORCEINLINE void DispatchMeshIndirectCount(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, FRHIBuffer* CountBuffer, uint64 CountBufferOffset, uint32 MaxCommandCount) noexcept
+    {
+        EmplaceCommand<FRHICommandDispatchMeshIndirectCount>(ArgumentBuffer, ArgumentBufferOffset, CountBuffer, CountBufferOffset, MaxCommandCount);
+        STAT_ADD(STAT_RHI_DrawCalls, 1);
+    }
+
     FORCEINLINE void SetHitRecordLocalShaderBindings(FRHIShaderBindingTable* ShaderBindingTable, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings) noexcept
     {
         EmplaceCommand<FRHICommandSetHitRecordLocalShaderBindings>(ShaderBindingTable, RecordKind, RecordIndex, Bindings, NumBindings);
@@ -445,6 +487,7 @@ public:
     FORCEINLINE void DispatchRaysIndirect(FRHIShaderBindingTable* ShaderBindingTable, FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset) noexcept
     {
         EmplaceCommand<FRHICommandDispatchRaysIndirect>(ShaderBindingTable, ArgumentBuffer, ArgumentBufferOffset);
+        STAT_ADD(STAT_RHI_DispatchCalls, 1);
     }
 
     FORCEINLINE void BuildOpacityMicromap(FRHIOpacityMicromap* OpacityMicromap, const FRHIOpacityMicromapBuildDesc& BuildDesc) noexcept
@@ -490,6 +533,7 @@ public:
     FORCEINLINE void DispatchRays(FRHIShaderBindingTable* ShaderBindingTable, uint32 Width, uint32 Height, uint32 Depth) noexcept
     {
         EmplaceCommand<FRHICommandDispatchRaysShaderBindingTable>(ShaderBindingTable, Width, Height, Depth);
+        STAT_ADD(STAT_RHI_DispatchCalls, 1);
     }
 
     FORCEINLINE void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) noexcept

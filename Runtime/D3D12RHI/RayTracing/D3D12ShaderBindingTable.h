@@ -13,6 +13,7 @@
 
 class FD3D12CommandContext;
 class FD3D12LocalDescriptorHeap;
+typedef TSharedRef<class FD3D12ShaderBindingTable> FD3D12ShaderBindingTableRef;
 
 enum class ED3D12PendingLocalTableHeap : uint8
 {
@@ -48,7 +49,9 @@ public:
 
     // FRHIShaderBindingTable Interface
     virtual void* GetRHINativeResource() const override final;
+    virtual FRHIShaderBindingTableAddressInfo GetAddressInfo() const override final;
 
+    bool Initialize();
     void SetBindings(ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings);
     void Build(FD3D12CommandContext& CmdContext);
     void ResolveLocalDescriptorTables(FD3D12CommandContext& CmdContext, FD3D12LocalDescriptorHeap& ResourceHeap, FD3D12LocalDescriptorHeap& SamplerHeap);

@@ -305,7 +305,7 @@ struct RHI
     static RHI_API bool bSupportsIndirectAccelerationStructureOperations;
 
     /** Whether indirect ray dispatch (DispatchRaysIndirect) is supported. */
-    static RHI_API bool bSupportsIndirectRayDispatch;
+    static RHI_API bool bSupportsDispatchRaysIndirect;
 
     /** Maximum triangles per cluster (0 when clusters are unsupported) */
     static RHI_API uint32 RayTracingMaxTrianglesPerCluster;
@@ -345,14 +345,26 @@ struct RHI
     // Draw Indirect
     // -------------------------------------------------------------------------------------------
 
-    /** Whether indirect draw calls are supported */
-    static RHI_API bool bSupportDrawIndirect;
+    /** Whether indirect draw calls are supported. */
+    static RHI_API bool bSupportsDrawIndirect;
 
-    /** Whether multi-draw indirect is supported */
-    static RHI_API bool bSupportMultiDrawIndirect;
+    /** Whether GPU-count-buffer indirect draw calls are supported. */
+    static RHI_API bool bSupportsDrawIndirectCount;
 
-    /** Maximum number of draws per indirect call */
-    static RHI_API uint32 MaxDrawIndirectCount;
+    /** Whether indirect compute dispatch is supported. */
+    static RHI_API bool bSupportsDispatchIndirect;
+
+    /** Whether indirect mesh dispatch is supported. */
+    static RHI_API bool bSupportsDispatchMeshIndirect;
+
+    /** Whether GPU-count-buffer indirect mesh dispatch is supported. */
+    static RHI_API bool bSupportsDispatchMeshIndirectCount;
+
+    /** Maximum number of draw commands per indirect call. */
+    static RHI_API uint32 MaxDrawIndirectCommandCount;
+
+    /** Maximum number of mesh commands per indirect call. */
+    static RHI_API uint32 MaxDispatchMeshIndirectCommandCount;
 
     // -------------------------------------------------------------------------------------------
     // Texture / Image Limits

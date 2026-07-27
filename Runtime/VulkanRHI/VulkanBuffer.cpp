@@ -116,10 +116,16 @@ bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, EReso
     VkBufferUsageFlags UsageFlags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
     VkMemoryAllocateFlags AllocateFlags = 0;
-    if (Desc.IsDefault())
+    if (Desc.IsDefault() || Desc.IsIndirectArguments())
     {
         AllocateFlags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
         UsageFlags |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+    }
+
+    if (Desc.IsIndirectArguments())
+    {
+        UsageFlags |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
+        RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, 4);
     }
 
     const bool bIsRayTracingSupported = GVulkanSupportsAccelerationStructures;

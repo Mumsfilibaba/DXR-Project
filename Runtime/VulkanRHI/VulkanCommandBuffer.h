@@ -239,10 +239,45 @@ class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
             vkCmdDispatch(CommandBuffer, GroupCountX, GroupCountY, GroupCountZ);
         }
 
+        FORCEINLINE void DrawIndirect(VkBuffer Buffer, VkDeviceSize Offset, uint32 DrawCount, uint32 Stride)
+        {
+            vkCmdDrawIndirect(CommandBuffer, Buffer, Offset, DrawCount, Stride);
+        }
+
+        FORCEINLINE void DrawIndirectCount(VkBuffer Buffer, VkDeviceSize Offset, VkBuffer CountBuffer, VkDeviceSize CountBufferOffset, uint32 MaxDrawCount, uint32 Stride)
+        {
+            vkCmdDrawIndirectCount(CommandBuffer, Buffer, Offset, CountBuffer, CountBufferOffset, MaxDrawCount, Stride);
+        }
+
+        FORCEINLINE void DrawIndexedIndirect(VkBuffer Buffer, VkDeviceSize Offset, uint32 DrawCount, uint32 Stride)
+        {
+            vkCmdDrawIndexedIndirect(CommandBuffer, Buffer, Offset, DrawCount, Stride);
+        }
+
+        FORCEINLINE void DrawIndexedIndirectCount(VkBuffer Buffer, VkDeviceSize Offset, VkBuffer CountBuffer, VkDeviceSize CountBufferOffset, uint32 MaxDrawCount, uint32 Stride)
+        {
+            vkCmdDrawIndexedIndirectCount(CommandBuffer, Buffer, Offset, CountBuffer, CountBufferOffset, MaxDrawCount, Stride);
+        }
+
+        FORCEINLINE void DispatchIndirect(VkBuffer Buffer, VkDeviceSize Offset)
+        {
+            vkCmdDispatchIndirect(CommandBuffer, Buffer, Offset);
+        }
+
     #if VK_EXT_mesh_shader
         FORCEINLINE void DrawMeshTasks(uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ)
         {
             vkCmdDrawMeshTasksEXT(CommandBuffer, GroupCountX, GroupCountY, GroupCountZ);
+        }
+
+        FORCEINLINE void DrawMeshTasksIndirect(VkBuffer Buffer, VkDeviceSize Offset, uint32 DrawCount, uint32 Stride)
+        {
+            vkCmdDrawMeshTasksIndirectEXT(CommandBuffer, Buffer, Offset, DrawCount, Stride);
+        }
+
+        FORCEINLINE void DrawMeshTasksIndirectCount(VkBuffer Buffer, VkDeviceSize Offset, VkBuffer CountBuffer, VkDeviceSize CountBufferOffset, uint32 MaxDrawCount, uint32 Stride)
+        {
+            vkCmdDrawMeshTasksIndirectCountEXT(CommandBuffer, Buffer, Offset, CountBuffer, CountBufferOffset, MaxDrawCount, Stride);
         }
     #endif
     
@@ -330,11 +365,12 @@ class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
             vkCmdTraceRaysKHR(CommandBuffer, RayGenRegion, MissRegion, HitGroupRegion, CallableRegion, Width, Height, Depth);
         }
 
-        FORCEINLINE void TraceRaysIndirect(const VkStridedDeviceAddressRegionKHR* RayGenRegion, const VkStridedDeviceAddressRegionKHR* MissRegion,
-            const VkStridedDeviceAddressRegionKHR* HitGroupRegion, const VkStridedDeviceAddressRegionKHR* CallableRegion, VkDeviceAddress IndirectDeviceAddress)
+#if VK_KHR_ray_tracing_maintenance1
+        FORCEINLINE void TraceRaysIndirect2(VkDeviceAddress IndirectDeviceAddress)
         {
-            vkCmdTraceRaysIndirectKHR(CommandBuffer, RayGenRegion, MissRegion, HitGroupRegion, CallableRegion, IndirectDeviceAddress);
+            vkCmdTraceRaysIndirect2KHR(CommandBuffer, IndirectDeviceAddress);
         }
+#endif
     #endif
 
     #if VK_NV_cluster_acceleration_structure

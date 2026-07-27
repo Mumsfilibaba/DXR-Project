@@ -185,9 +185,13 @@ RHI_API void RHI::DumpCapabilities()
     // -------------------------------------------------------------------------------------------
     // Draw Indirect
     // -------------------------------------------------------------------------------------------
-    LOG_INFO("[RHI] DrawIndirect                              : %s", YesNo(RHI::bSupportDrawIndirect));
-    LOG_INFO("[RHI]   MultiDrawIndirect                       : %s", YesNo(RHI::bSupportMultiDrawIndirect)); 
-    LOG_INFO("[RHI]   Max Draws Per Indirect Call             : %u", RHI::MaxDrawIndirectCount);
+    LOG_INFO("[RHI] DrawIndirect                              : %s", YesNo(RHI::bSupportsDrawIndirect));
+    LOG_INFO("[RHI]   DrawIndirectCount                       : %s", YesNo(RHI::bSupportsDrawIndirectCount));
+    LOG_INFO("[RHI]   DispatchIndirect                        : %s", YesNo(RHI::bSupportsDispatchIndirect));
+    LOG_INFO("[RHI]   DispatchMeshIndirect                    : %s", YesNo(RHI::bSupportsDispatchMeshIndirect));
+    LOG_INFO("[RHI]   DispatchMeshIndirectCount               : %s", YesNo(RHI::bSupportsDispatchMeshIndirectCount));
+    LOG_INFO("[RHI]   Max Draw Commands Per Indirect Call     : %u", RHI::MaxDrawIndirectCommandCount);
+    LOG_INFO("[RHI]   Max Mesh Commands Per Indirect Call     : %u", RHI::MaxDispatchMeshIndirectCommandCount);
 
     // -------------------------------------------------------------------------------------------
     // Texture / Image Limits
@@ -275,8 +279,8 @@ bool RHI::Initialize()
     // Create the validation interface if chosen
     if (CVarEnableValidation.GetValue())
     {
-        FRHIValidation* ValidationRHI = new FRHIValidation(LocalRHI);
-        LocalRHI = ValidationRHI;
+        FRHIValidationDevice* ValidationDevice = new FRHIValidationDevice(LocalRHI);
+        LocalRHI = ValidationDevice;
     }
 
     Device = LocalRHI;

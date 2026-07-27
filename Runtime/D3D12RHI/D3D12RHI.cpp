@@ -425,9 +425,13 @@ bool FD3D12DeviceRHI::InitializeDeviceFeatureSupport()
     RHI::ShadingRateTier             = EShadingRateTier::NotSupported;
     RHI::ShadingRateImageTileSize    = 0;
 
-    RHI::bSupportDrawIndirect        = true;
-    RHI::bSupportMultiDrawIndirect   = true;
-    RHI::MaxDrawIndirectCount        = uint32(~0u);
+    RHI::bSupportsDrawIndirect               = true;
+    RHI::bSupportsDrawIndirectCount          = true;
+    RHI::bSupportsDispatchIndirect           = true;
+    RHI::bSupportsDispatchMeshIndirect       = GD3D12MeshShaderTier != D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
+    RHI::bSupportsDispatchMeshIndirectCount  = RHI::bSupportsDispatchMeshIndirect;
+    RHI::MaxDrawIndirectCommandCount         = uint32(~0u);
+    RHI::MaxDispatchMeshIndirectCommandCount = uint32(~0u);
 
     // -------------------------------------------------------------------------------------------
     // Texture / image limits (canonical D3D12 defines)
@@ -558,7 +562,7 @@ bool FD3D12DeviceRHI::InitializeDeviceFeatureSupport()
     RHI::bSupportsRayTracingPipelineAdditions                      = GD3D12SupportsRayTracingPipelineAdditions;
     RHI::bSupportsClustersAndPartitionedSceneAccelerationStructure = GD3D12SupportsClustersAndPTLAS;
     RHI::bSupportsIndirectAccelerationStructureOperations          = GD3D12SupportsIndirectAccelerationStructureOperations;
-    RHI::bSupportsIndirectRayDispatch                              = GD3D12SupportsIndirectRayDispatch;
+    RHI::bSupportsDispatchRaysIndirect                             = GD3D12SupportsIndirectRayDispatch;
 
     // Log the backend-native capability view (general + ray-tracing) alongside the agnostic RHI table.
     DumpD3D12Capabilities();
@@ -1820,7 +1824,13 @@ FRHIShaderBindingTable* FD3D12DeviceRHI::CreateShaderBindingTable(const FRHIShad
         return nullptr;
     }
 
-    return new FD3D12ShaderBindingTable(GetDevice(), InDesc);
+    FD3D12ShaderBindingTableRef ShaderBindingTable = new FD3D12ShaderBindingTable(GetDevice(), InDesc);
+    if (!ShaderBindingTable->Initialize())
+    {
+        return nullptr;
+    }
+
+    return ShaderBindingTable.ReleaseOwnership();
 }
 
 FRHIRayTracingShaderIdentifier FD3D12DeviceRHI::GetRayTracingShaderIdentifier(FRHIRayTracingPipelineState* InPipeline, const String& InExportName)
