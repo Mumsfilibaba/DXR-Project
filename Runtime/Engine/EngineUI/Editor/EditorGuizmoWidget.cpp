@@ -5,6 +5,7 @@
 #include "Engine/World/Components/DirectionalLightComponent.h"
 #include "Engine/World/Components/LightProbeComponent.h"
 #include "Engine/World/Components/PointLightComponent.h"
+#include "Engine/World/Components/StaticMeshComponent.h"
 #include "Engine/EngineUI/Editor/EditorGuizmoWidget.h"
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h"
 #include "ImGuiPlugin/ImGuiCore.h"
@@ -13,8 +14,6 @@ FEditorGuizmoWidget::FEditorGuizmoWidget(FEditorEngine* InEditorEngine)
     : EditorEngine(InEditorEngine)
     , ImGuiEndFrameDelegateHandle()
     , bVisible(true)
-    , Operation(EditorGuizmo::EOperation::Translate)
-    , Mode(EditorGuizmo::EMode::World)
 {
     if (IImguiPlugin::IsEnabled())
     {
@@ -48,21 +47,28 @@ void FEditorGuizmoWidget::UpdateShortcuts(bool bViewportHovered)
         return;
     }
 
+    const TSharedPtr<FEditorViewportWidget>& Viewport = EditorEngine->GetEditorViewportWidget();
+    if (!Viewport)
+    {
+        return;
+    }
+
     if (ImGui::IsKeyPressed(ImGuiKey_1))
     {
-        Operation = EditorGuizmo::EOperation::Translate;
+        Viewport->SetGizmoOperation(EditorGuizmo::EOperation::Translate);
     }
     else if (ImGui::IsKeyPressed(ImGuiKey_2))
     {
-        Operation = EditorGuizmo::EOperation::Rotate;
+        Viewport->SetGizmoOperation(EditorGuizmo::EOperation::Rotate);
     }
     else if (ImGui::IsKeyPressed(ImGuiKey_3))
     {
-        Operation = EditorGuizmo::EOperation::Scale;
+        Viewport->SetGizmoOperation(EditorGuizmo::EOperation::Scale);
     }
     else if (ImGui::IsKeyPressed(ImGuiKey_4))
     {
-        Mode = (Mode == EditorGuizmo::EMode::Local) ? EditorGuizmo::EMode::World : EditorGuizmo::EMode::Local;
+        const EditorGuizmo::EMode CurrentOrientation = Viewport->GetGizmoOrientation();
+        Viewport->SetGizmoOrientation(CurrentOrientation == EditorGuizmo::EMode::Local ? EditorGuizmo::EMode::World : EditorGuizmo::EMode::Local);
     }
 }
 
@@ -78,7 +84,8 @@ void FEditorGuizmoWidget::Draw()
         return;
     }
 
-    if (const TSharedPtr<FEditorViewportWidget>& Viewport = EditorEngine->GetEditorViewportWidget())
+    const TSharedPtr<FEditorViewportWidget>& Viewport = EditorEngine->GetEditorViewportWidget();
+    if (Viewport)
     {
         if (Viewport->GetDebugView() != FSceneRenderView::EDebugView::None)
         {
@@ -136,10 +143,9 @@ void FEditorGuizmoWidget::Draw()
     }
 
     EditorGuizmo::SetRect(ViewportMin.x, ViewportMin.y, ViewportWidth, ViewportHeight);
-
     EditorGuizmo::SetOrthographic(false);
 
-    EditorGuizmo::EOperation::Type EffectiveOperation = Operation;
+    EditorGuizmo::EOperation::Type EffectiveOperation = Viewport ? Viewport->GetGizmoOperation() : EditorGuizmo::EOperation::Translate;
 
     if (SelectedActor->HasComponentOfType<FPointLightComponent>() || SelectedActor->HasComponentOfType<FLightProbeComponent>())
     {
@@ -154,9 +160,29 @@ void FEditorGuizmoWidget::Draw()
         EffectiveOperation = EditorGuizmo::EOperation::Translate;
     }
 
-    Matrix4 Model = SelectedActor->GetTransform().GetTransformMatrix();
+    const Matrix4 ActorModel = SelectedActor->GetTransform().GetTransformMatrix();
+    Matrix4 Model = ActorModel;
 
-    const bool bChanged = EditorGuizmo::Manipulate(Camera->GetViewMatrix(), Camera->GetProjectionMatrix(), EffectiveOperation, Mode, Model);
+    bool bUsingBoundsCenter = false;
+    Vector3 InitialGizmoPosition = ActorModel.GetTranslation();
+
+    if (Viewport && Viewport->GetGizmoPlacement() == FEditorViewportWidget::EGizmoPlacement::Center)
+    {
+        if (FStaticMeshComponent* MeshComponent = SelectedActor->GetComponentOfType<FStaticMeshComponent>())
+        {
+            const TSharedPtr<FMesh> Mesh = MeshComponent->GetMesh();
+            if (Mesh && Mesh->GetVertexCount() > 0)
+            {
+                InitialGizmoPosition = ActorModel.Transform(Mesh->GetAABB().GetCenter());
+                Model.SetTranslation(InitialGizmoPosition);
+                bUsingBoundsCenter = true;
+            }
+        }
+    }
+
+    const EditorGuizmo::EMode Orientation = Viewport ? Viewport->GetGizmoOrientation() : EditorGuizmo::EMode::World;
+
+    const bool bChanged = EditorGuizmo::Manipulate(Camera->GetViewMatrix(), Camera->GetProjectionMatrix(), EffectiveOperation, Orientation, Model);
     if (bChanged || EditorGuizmo::IsUsing())
     {
         Vector3 Translation;
@@ -167,7 +193,15 @@ void FEditorGuizmoWidget::Draw()
 
         if (EffectiveOperation == EditorGuizmo::EOperation::Translate)
         {
-            SelectedActor->GetTransform().SetTranslation(Translation);
+            if (bUsingBoundsCenter)
+            {
+                const Vector3 TranslationDelta = Translation - InitialGizmoPosition;
+                SelectedActor->GetTransform().SetTranslation(SelectedActor->GetTransform().GetTranslation() + TranslationDelta);
+            }
+            else
+            {
+                SelectedActor->GetTransform().SetTranslation(Translation);
+            }
         }
         else if (EffectiveOperation == EditorGuizmo::EOperation::Rotate)
         {

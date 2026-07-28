@@ -27,6 +27,9 @@ FEditorViewportWidget::FEditorViewportWidget()
     , bViewportInputActive(false)
     , DebugView(FSceneRenderView::EDebugView::None)
     , SecondaryDebugView(FSceneRenderView::EDebugView::None)
+    , GizmoPlacement(EGizmoPlacement::Center)
+    , GizmoOrientation(EditorGuizmo::EMode::World)
+    , GizmoOperation(EditorGuizmo::EOperation::Translate)
 {
     if (IImguiPlugin::IsEnabled())
     {
@@ -396,16 +399,23 @@ void FEditorViewportWidget::Draw()
 
                 const CHAR* MenuLabelText = BuildClampedLabel(CurrentLabel, MaxTextWidth, MenuLabel);
 
-                const ImVec2 LabelSize     = ImGui::CalcTextSize(MenuLabelText);
-                const ImVec2 ChildPos      = ImGui::GetWindowPos();
-                const ImVec2 ChildSize     = ImGui::GetWindowSize();
-                const ImVec2 ContentMin    = ImGui::GetWindowContentRegionMin();
-                const ImVec2 ContentMax    = ImGui::GetWindowContentRegionMax();
-                const float  ContentWidth  = ContentMax.x - ContentMin.x;
-                const float  CursorX       = ContentMin.x + Math::Max(0.0f, ContentWidth - ButtonWidth - RightPadding);
-                const float  CursorY       = ContentMin.y + 6.0f;
+                const ImVec2 LabelSize              = ImGui::CalcTextSize(MenuLabelText);
+                const ImVec2 ChildPos               = ImGui::GetWindowPos();
+                const ImVec2 ChildSize              = ImGui::GetWindowSize();
+                const ImVec2 ContentMin             = ImGui::GetWindowContentRegionMin();
+                const ImVec2 ContentMax             = ImGui::GetWindowContentRegionMax();
+                const float  ContentWidth           = ContentMax.x - ContentMin.x;
+                const float  TranslationButtonWidth = 76.0f;
+                const float  RotateButtonWidth      = 56.0f;
+                const float  ScaleButtonWidth       = 52.0f;
+                const float  PlacementButtonWidth   = 56.0f;
+                const float  OrientationButtonWidth = 52.0f;
+                const float  ToolbarControlGap      = 8.0f;
+                const float  LeftPadding            = 12.0f;
+                const float  ViewModeCursorX        = ContentMin.x + Math::Max(0.0f, ContentWidth - ButtonWidth - RightPadding);
+                const float  CursorY                = ContentMin.y + 6.0f;
 
-                ImGui::SetCursorScreenPos(ImVec2(ChildPos.x + CursorX, ChildPos.y + CursorY));
+                ImGui::SetCursorScreenPos(ImVec2(ChildPos.x + ContentMin.x + LeftPadding, ChildPos.y + CursorY));
 
                 const CHAR* ViewMenuPopupId       = "##ViewportViewModeMenu";
                 const CHAR* ShadowMenuPopupId     = "##ViewportShadowMenu";
@@ -469,6 +479,80 @@ void FEditorViewportWidget::Draw()
 
                     return bPressed;
                 };
+
+                const auto DrawGizmoToggle = [&](const CHAR* Id, const CHAR* Label, bool bSelected, float Width, ImDrawFlags Corners) -> bool
+                {
+                    const bool bPressed = ImGui::InvisibleButton(Id, ImVec2(Width, ButtonHeight));
+                    const bool bHovered = ImGui::IsItemHovered();
+                    const bool bHeld    = ImGui::IsItemActive();
+
+                    const ImVec2 Min = ImGui::GetItemRectMin();
+                    const ImVec2 Max = ImGui::GetItemRectMax();
+
+                    const ImU32 BgIdle          = IM_COL32(56, 56, 56, 255);
+                    const ImU32 BgHover         = IM_COL32(87, 87, 87, 255);
+                    const ImU32 BgSelected      = IM_COL32(9, 92, 176, 255);
+                    const ImU32 BgSelectedHover = IM_COL32(15, 110, 205, 255);
+
+                    ImU32 Bg = bSelected ? BgSelected : BgIdle;
+                    if (bHovered || bHeld)
+                    {
+                        Bg = bSelected ? BgSelectedHover : BgHover;
+                    }
+
+                    ImDrawList* DrawList = ImGui::GetWindowDrawList();
+                    DrawList->AddRectFilled(Min, Max, Bg, 6.0f, Corners);
+
+                    const ImVec2 TextSize = ImGui::CalcTextSize(Label);
+                    const ImVec2 TextPos  = ImVec2(Min.x + (Width - TextSize.x) * 0.5f, Min.y + (ButtonHeight - TextSize.y) * 0.5f);
+
+                    DrawList->AddText(TextPos, ImGui::GetColorU32(ImGuiCol_Text), Label);
+
+                    return bPressed;
+                };
+
+                if (DrawGizmoToggle("##GizmoOperationTranslation", "Translation", GizmoOperation == EditorGuizmo::EOperation::Translate, TranslationButtonWidth, ImDrawFlags_RoundCornersLeft))
+                {
+                    GizmoOperation = EditorGuizmo::EOperation::Translate;
+                }
+
+                ImGui::SameLine(0.0f, 0.0f);
+                if (DrawGizmoToggle("##GizmoOperationRotate", "Rotate", GizmoOperation == EditorGuizmo::EOperation::Rotate, RotateButtonWidth, ImDrawFlags_RoundCornersNone))
+                {
+                    GizmoOperation = EditorGuizmo::EOperation::Rotate;
+                }
+
+                ImGui::SameLine(0.0f, 0.0f);
+                if (DrawGizmoToggle("##GizmoOperationScale", "Scale", GizmoOperation == EditorGuizmo::EOperation::Scale, ScaleButtonWidth, ImDrawFlags_RoundCornersRight))
+                {
+                    GizmoOperation = EditorGuizmo::EOperation::Scale;
+                }
+
+                ImGui::SameLine(0.0f, ToolbarControlGap);
+                if (DrawGizmoToggle("##GizmoPlacementCenter", "Center", GizmoPlacement == EGizmoPlacement::Center, PlacementButtonWidth, ImDrawFlags_RoundCornersLeft))
+                {
+                    GizmoPlacement = EGizmoPlacement::Center;
+                }
+
+                ImGui::SameLine(0.0f, 0.0f);
+                if (DrawGizmoToggle("##GizmoPlacementPivot", "Pivot", GizmoPlacement == EGizmoPlacement::Pivot, PlacementButtonWidth, ImDrawFlags_RoundCornersRight))
+                {
+                    GizmoPlacement = EGizmoPlacement::Pivot;
+                }
+
+                ImGui::SameLine(0.0f, ToolbarControlGap);
+                if (DrawGizmoToggle("##GizmoOrientationLocal", "Local", GizmoOrientation == EditorGuizmo::EMode::Local, OrientationButtonWidth, ImDrawFlags_RoundCornersLeft))
+                {
+                    GizmoOrientation = EditorGuizmo::EMode::Local;
+                }
+
+                ImGui::SameLine(0.0f, 0.0f);
+                if (DrawGizmoToggle("##GizmoOrientationWorld", "World", GizmoOrientation == EditorGuizmo::EMode::World, OrientationButtonWidth, ImDrawFlags_RoundCornersRight))
+                {
+                    GizmoOrientation = EditorGuizmo::EMode::World;
+                }
+
+                ImGui::SetCursorScreenPos(ImVec2(ChildPos.x + ViewModeCursorX, ChildPos.y + CursorY));
 
                 bool bViewHovered = false;
 
