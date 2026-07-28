@@ -1,12 +1,9 @@
 #pragma once
 #include "Core/CoreTypes.h"
 
-class FCamera;
-class FLight;
-class FStaticMeshComponent;
-class FSkyboxComponent;
-class FLightProbe;
 class FActor;
+class FCameraComponent;
+class FSceneComponent;
 
 struct IScene
 {
@@ -16,52 +13,22 @@ struct IScene
     virtual void Tick() = 0;
 
     /**
-     * @brief Add a renderer-side proxy for a camera.
-     * @param InCamera The camera to add to the scene.
+     * @brief Registers a scene component as a renderer source on the main thread.
+     * @param InComponent Scene component to register.
      */
-    virtual void AddCamera(FCamera* InCamera) = 0;
+    virtual void AddSceneComponent(FSceneComponent* InComponent) = 0;
 
     /**
-     * @brief Add a light to the scene.
-     * @param InLight The light to add to the scene.
+     * @brief Unregisters a scene component as a renderer source on the main thread.
+     * @param InComponent Scene component to unregister.
      */
-    virtual void AddLight(FLight* InLight) = 0;
+    virtual void RemoveSceneComponent(FSceneComponent* InComponent) = 0;
 
     /**
-     * @brief Add a light-probe to the scene.
-     * @param InLightProbe The light-probe to add to the scene.
+     * @brief Sets the main-thread camera source used to create per-frame renderer snapshots.
+     * @param InCamera Active camera component, or nullptr to clear it.
      */
-    virtual void AddLightProbe(FLightProbe* InLightProbe) = 0;
-
-    /**
-     * @brief Add a skybox to the scene.
-     * @param InSkyboxComponent The skybox component to add to the scene.
-     */
-    virtual void AddSkybox(FSkyboxComponent* InSkyboxComponent) = 0;
-
-    /**
-     * @brief Add a static mesh to the scene.
-     * @param InMeshComponent The static-mesh component to add to the scene.
-     */
-    virtual void AddStaticMesh(FStaticMeshComponent* InMeshComponent) = 0;
-
-    /**
-     * @brief Remove a previously-added light from the scene.
-     * @param InLight The light to remove from the scene.
-     */
-    virtual void RemoveLight(FLight* InLight) = 0;
-
-    /**
-     * @brief Remove a previously-added light-probe from the scene.
-     * @param InLightProbe The light-probe to remove from the scene.
-     */
-    virtual void RemoveLightProbe(FLightProbe* InLightProbe) = 0;
-
-    /**
-     * @brief Remove a previously-added static mesh from the scene.
-     * @param InMeshComponent The static-mesh component to remove from the scene.
-     */
-    virtual void RemoveStaticMesh(FStaticMeshComponent* InMeshComponent) = 0;
+    virtual void SetActiveCamera(FCameraComponent* InCamera) = 0;
 
     /**
      * @brief Resolve an ObjectID (from the selection/picking buffer) back to an Actor.
@@ -77,4 +44,10 @@ struct IScene
      * @return The stable ObjectID for the Actor.
      */
     virtual uint32 GetOrCreateObjectID(FActor* Actor) = 0;
+
+    /**
+     * @brief Remove the stable ObjectID for an Actor.
+     * @param Actor The Actor whose ObjectID should be removed.
+     */
+    virtual void RemoveActorObjectID(FActor* Actor) = 0;
 };

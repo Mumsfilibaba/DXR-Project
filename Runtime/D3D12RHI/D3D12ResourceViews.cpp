@@ -1,10 +1,56 @@
 #include "D3D12RHI/D3D12Configuration.h"
+#include "D3D12RHI/D3D12Buffer.h"
 #include "D3D12RHI/D3D12Device.h"
 #include "D3D12RHI/D3D12Descriptors.h"
 #include "D3D12RHI/D3D12ResourceViews.h"
 #include "D3D12RHI/D3D12ResidencyManager.h"
 #include "D3D12RHI/D3D12SwapChain.h"
 #include "D3D12RHI/D3D12Texture.h"
+
+template<typename TBufferViewDesc>
+static uint64 GetBufferViewElementSize(const FRHIBufferDesc& BufferDesc, const TBufferViewDesc& ViewDesc)
+{
+    switch (ViewDesc.Type)
+    {
+        case EBufferViewType::Structured:
+            return BufferDesc.Stride;
+        
+        case EBufferViewType::ByteAddress:
+            return sizeof(uint32);
+        
+        case EBufferViewType::Typed:
+            return GetByteStrideFromFormat(ViewDesc.Format);
+        
+        default:
+            return 0;
+    }
+}
+
+static constexpr uint64 CalculateBufferFirstElement(uint32 FirstElement, uint64 ByteOffset, uint64 ElementSize)
+{
+    return uint64(FirstElement) + (ByteOffset / ElementSize);
+}
+
+static_assert(CalculateBufferFirstElement(3, 256, 4) == 67);
+
+template<typename TBufferViewDesc>
+static uint64 GetRelocatedBufferFirstElement(FD3D12ResourceBase* RelocatedResource, const FD3D12ResourceStorage& NewResourceStorage, const TBufferViewDesc& ViewDesc)
+{
+    FD3D12BufferRHI* Buffer = static_cast<FD3D12BufferRHI*>(RelocatedResource);
+    CHECK(Buffer != nullptr);
+    CHECK(NewResourceStorage.GetResource() != nullptr);
+
+    const uint64 ElementSize = GetBufferViewElementSize(Buffer->GetDesc(), ViewDesc);
+    CHECK(ElementSize != 0);
+
+    const D3D12_GPU_VIRTUAL_ADDRESS ResourceAddress = NewResourceStorage.GetResource()->GetGPUVirtualAddress();
+    const D3D12_GPU_VIRTUAL_ADDRESS BufferAddress   = NewResourceStorage.GetGPUVirtualAddress();
+    CHECK(BufferAddress >= ResourceAddress);
+
+    const uint64 ByteOffset = BufferAddress - ResourceAddress;
+    CHECK((ByteOffset % ElementSize) == 0);
+    return CalculateBufferFirstElement(ViewDesc.FirstElement, ByteOffset, ElementSize);
+}
 
 FD3D12View::FD3D12View(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap)
     : FD3D12DeviceChild(InDevice)
@@ -211,7 +257,22 @@ void FD3D12ShaderResourceViewRHI::OnResourceRelocated(FD3D12ResourceBase* Reloca
 
     if (NewResourceStorage)
     {
-        UpdateView(NewResourceStorage->GetResource(), D3D12Desc);
+        const uint32 PreviousDescriptorVersion = GetDescriptorVersion();
+
+        D3D12_SHADER_RESOURCE_VIEW_DESC NewDesc = D3D12Desc;
+        if (GetDesc().IsBufferSRV())
+        {
+            NewDesc.Buffer.FirstElement = GetRelocatedBufferFirstElement(RelocatedResource, *NewResourceStorage, GetDesc().Buffer);
+        }
+
+        if (!UpdateView(NewResourceStorage->GetResource(), NewDesc))
+        {
+            D3D12_ERROR_CRITICAL("[FD3D12ShaderResourceViewRHI] Failed to refresh a relocated resource view");
+            return;
+        }
+
+        CHECK(GetViewResource() == NewResourceStorage->GetResource());
+        CHECK(GetDescriptorVersion() == PreviousDescriptorVersion + 1);
     }
 }
 
@@ -279,7 +340,22 @@ void FD3D12UnorderedAccessViewRHI::OnResourceRelocated(FD3D12ResourceBase* Reloc
 
     if (NewResourceStorage)
     {
-        UpdateView(CounterResource.Get(), NewResourceStorage->GetResource(), D3D12Desc);
+        const uint32 PreviousDescriptorVersion = GetDescriptorVersion();
+
+        D3D12_UNORDERED_ACCESS_VIEW_DESC NewDesc = D3D12Desc;
+        if (GetDesc().IsBufferUAV())
+        {
+            NewDesc.Buffer.FirstElement = GetRelocatedBufferFirstElement(RelocatedResource, *NewResourceStorage, GetDesc().Buffer);
+        }
+
+        if (!UpdateView(CounterResource.Get(), NewResourceStorage->GetResource(), NewDesc))
+        {
+            D3D12_ERROR_CRITICAL("[FD3D12UnorderedAccessViewRHI] Failed to refresh a relocated resource view");
+            return;
+        }
+
+        CHECK(GetViewResource() == NewResourceStorage->GetResource());
+        CHECK(GetDescriptorVersion() == PreviousDescriptorVersion + 1);
     }
 }
 

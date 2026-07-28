@@ -4,14 +4,16 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Tasks/Tasks.h"
 #include "Engine/World/World.h"
-#include "Engine/World/Camera.h"
 #include "Engine/World/Actors/Actor.h"
+#include "Engine/World/Components/CameraComponent.h"
+#include "Engine/World/Components/DirectionalLightComponent.h"
+#include "Engine/World/Components/LightComponent.h"
+#include "Engine/World/Components/LightProbeComponent.h"
+#include "Engine/World/Components/PointLightComponent.h"
+#include "Engine/World/Components/SceneComponent.h"
+#include "Engine/World/Components/SkyLightComponent.h"
 #include "Engine/World/Components/StaticMeshComponent.h"
 #include "Engine/World/Components/SkyboxComponent.h"
-#include "Engine/World/Lights/DirectionalLight.h"
-#include "Engine/World/Lights/PointLight.h"
-#include "Engine/World/Lights/SkyLight.h"
-#include "Engine/World/Reflections/LightProbe.h"
 #include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
 #include "Renderer/RendererStats.h"
@@ -20,16 +22,16 @@
 
 bool GFreezeRendering = false;
 
-FObjectIDRegistry::FObjectIDRegistry()
+FObjectIdentificationRegistry::FObjectIdentificationRegistry()
     : ActorToObjectID()
     , ObjectIDToActor()
     , NextObjectID(1)
 {
 }
 
-FObjectIDRegistry::~FObjectIDRegistry() = default;
+FObjectIdentificationRegistry::~FObjectIdentificationRegistry() = default;
 
-uint32 FObjectIDRegistry::GetOrCreate(FActor* Actor)
+uint32 FObjectIdentificationRegistry::GetOrCreate(FActor* Actor)
 {
     if (!Actor)
     {
@@ -52,10 +54,11 @@ uint32 FObjectIDRegistry::GetOrCreate(FActor* Actor)
 
     ActorToObjectID.Add(Actor, NewID);
     ObjectIDToActor.Add(NewID, Actor);
+
     return NewID;
 }
 
-uint32 FObjectIDRegistry::Get(FActor* Actor) const
+uint32 FObjectIdentificationRegistry::Get(FActor* Actor) const
 {
     if (!Actor)
     {
@@ -70,7 +73,21 @@ uint32 FObjectIDRegistry::Get(FActor* Actor) const
     return 0;
 }
 
-FActor* FObjectIDRegistry::Resolve(uint32 ObjectID) const
+void FObjectIdentificationRegistry::Remove(FActor* Actor)
+{
+    if (!Actor)
+    {
+        return;
+    }
+
+    if (uint32* ExistingID = ActorToObjectID.Find(Actor))
+    {
+        ObjectIDToActor.Remove(*ExistingID);
+        ActorToObjectID.Remove(Actor);
+    }
+}
+
+FActor* FObjectIdentificationRegistry::Resolve(uint32 ObjectID) const
 {
     if (ObjectID == 0)
     {
@@ -104,6 +121,8 @@ FScene::FScene(FWorld* InWorld)
     , PointLightSources()
     , LightProbeSources()
     , DirectionalLightSource(nullptr)
+    , SkyLightSource(nullptr)
+    , SkyboxSource(nullptr)
     , ObjectIDs()
     , LatestBatch()
 {
@@ -143,8 +162,11 @@ FScene::~FScene()
     SAFE_DELETE(Skybox);
     SAFE_DELETE(Camera);
 
-    World        = nullptr;
-    CameraSource = nullptr;
+    World                  = nullptr;
+    CameraSource           = nullptr;
+    DirectionalLightSource = nullptr;
+    SkyLightSource         = nullptr;
+    SkyboxSource           = nullptr;
 
     STAT_SET(STAT_Scene_StaticMeshCount, 0);
     STAT_SET(STAT_Scene_PointLightCount, 0);
@@ -213,6 +235,7 @@ FRenderUpdateBatch FScene::CollectRenderUpdates()
 
     Matrix4 CameraInvViewProj;
     CameraInvViewProj.SetIdentity();
+
     if (CameraSource)
     {
         CameraInvViewProj = CameraSource->GetViewProjectionInverseMatrix();
@@ -252,11 +275,12 @@ FRenderUpdateBatch FScene::CollectRenderUpdates()
 
     // Point lights
     Batch.PointLightUpdates.Reserve(PointLightSources.Size());
-    for (FPointLight* PointLight : PointLightSources)
+    for (FPointLightComponent* PointLight : PointLightSources)
     {
         FPointLightProxyUpdate Update;
         if (PointLight)
         {
+            PointLight->UpdateShadowMatrices();
             Update.Position        = PointLight->GetPosition();
             Update.Color           = PointLight->GetColor() * PointLight->GetIntensity();
             Update.ShadowBias      = PointLight->GetShadowBias();
@@ -276,7 +300,7 @@ FRenderUpdateBatch FScene::CollectRenderUpdates()
 
     // Light probes
     Batch.LightProbeUpdates.Reserve(LightProbeSources.Size());
-    for (FLightProbe* LightProbe : LightProbeSources)
+    for (FLightProbeComponent* LightProbe : LightProbeSources)
     {
         FLightProbeProxyUpdate Update;
         if (LightProbe)
@@ -326,58 +350,115 @@ void FScene::RenderThread_ApplyRenderUpdates(const FRenderUpdateBatch& Batch)
     }
 }
 
-void FScene::AddCamera(FCamera* InCamera)
+void FScene::SetActiveCamera(FCameraComponent* InCamera)
 {
-    // The camera proxy already exists; just remember the source so it can be marshalled each frame.
-    if (InCamera)
-    {
-        CameraSource = InCamera;
-    }
+    CameraSource = InCamera;
 }
 
-void FScene::AddLight(FLight* InLight)
+void FScene::AddSceneComponent(FSceneComponent* InComponent)
 {
-    if (!InLight)
+    if (!InComponent)
     {
         return;
     }
 
-    if (FDirectionalLight* InDirectionalLight = Cast<FDirectionalLight>(InLight))
+    if (FStaticMeshComponent* StaticMesh = Cast<FStaticMeshComponent>(InComponent))
     {
-        DirectionalLightSource = InDirectionalLight;
-        Tasks::LaunchOnRenderThread("AddDirectionalLight", [this]()
-        {
-            DeferDeletion(DirectionalLight);
-            DirectionalLight = new FSceneDirectionalLight(this);
-        });
+        AddStaticMesh(StaticMesh);
     }
-    else if (FSkyLight* InSkyLight = Cast<FSkyLight>(InLight))
+    else if (FSkyboxComponent* SkyboxComponent = Cast<FSkyboxComponent>(InComponent))
     {
-        FRHITextureRef CubeMap = InSkyLight->GetCubeMap();
-        Tasks::LaunchOnRenderThread("AddSkyLight", [this, CubeMap]()
-        {
-            DeferDeletion(SkyLight);
-            SkyLight = new FSceneSkyLight(this, CubeMap);
-            SkyLight->RenderThread_FilterStaticCubeMaps();
-        });
+        AddSkybox(SkyboxComponent);
     }
-    else if (FPointLight* InPointLight = Cast<FPointLight>(InLight))
+    else if (FLightProbeComponent* LightProbe = Cast<FLightProbeComponent>(InComponent))
     {
-        if (InPointLight->IsShadowCaster())
-        {
-            PointLightSources.Add(InPointLight);
-            Tasks::LaunchOnRenderThread("AddPointLight", [this]()
-            {
-                PointLights.Add(new FScenePointLight(this));
-                STAT_ADD(STAT_Scene_PointLightCount, 1);
-            });
-        }
+        AddLightProbe(LightProbe);
+    }
+    else if (FDirectionalLightComponent* DirectionalLightComponent = Cast<FDirectionalLightComponent>(InComponent))
+    {
+        AddDirectionalLight(DirectionalLightComponent);
+    }
+    else if (FSkyLightComponent* SkyLightComponent = Cast<FSkyLightComponent>(InComponent))
+    {
+        AddSkyLight(SkyLightComponent);
+    }
+    else if (FPointLightComponent* PointLightComponent = Cast<FPointLightComponent>(InComponent))
+    {
+        AddPointLight(PointLightComponent);
     }
 }
 
-void FScene::AddLightProbe(FLightProbe* InLightProbe)
+void FScene::AddDirectionalLight(FDirectionalLightComponent* InDirectionalLight)
 {
-    if (!InLightProbe)
+    if (!InDirectionalLight)
+    {
+        return;
+    }
+
+    if (DirectionalLightSource == InDirectionalLight)
+    {
+        return;
+    }
+
+    DirectionalLightSource = InDirectionalLight;
+    Tasks::LaunchOnRenderThread("AddDirectionalLight", [this]()
+    {
+        DeferDeletion(DirectionalLight);
+        DirectionalLight = new FSceneDirectionalLight(this);
+    });
+}
+
+void FScene::AddSkyLight(FSkyLightComponent* InSkyLight)
+{
+    if (!InSkyLight || !InSkyLight->GetCubeMap())
+    {
+        return;
+    }
+
+    if (SkyLightSource == InSkyLight)
+    {
+        return;
+    }
+
+    SkyLightSource = InSkyLight;
+
+    const FRHITextureRef CubeMap = InSkyLight->GetCubeMap();
+    Tasks::LaunchOnRenderThread("AddSkyLight", [this, CubeMap]()
+    {
+        DeferDeletion(SkyLight);
+        SkyLight = new FSceneSkyLight(this, CubeMap);
+        SkyLight->RenderThread_FilterStaticCubeMaps();
+    });
+}
+
+void FScene::AddPointLight(FPointLightComponent* InPointLight)
+{
+    if (!InPointLight || !InPointLight->IsShadowCaster())
+    {
+        return;
+    }
+
+    if (PointLightSources.IsValidIndex(PointLightSources.Find(InPointLight)))
+    {
+        return;
+    }
+
+    PointLightSources.Add(InPointLight);
+    Tasks::LaunchOnRenderThread("AddPointLight", [this]()
+    {
+        PointLights.Add(new FScenePointLight(this));
+        STAT_ADD(STAT_Scene_PointLightCount, 1);
+    });
+}
+
+void FScene::AddLightProbe(FLightProbeComponent* InLightProbe)
+{
+    if (!InLightProbe || !InLightProbe->GetCubeMap())
+    {
+        return;
+    }
+
+    if (LightProbeSources.IsValidIndex(LightProbeSources.Find(InLightProbe)))
     {
         return;
     }
@@ -396,7 +477,14 @@ void FScene::AddLightProbe(FLightProbe* InLightProbe)
 
 void FScene::AddSkybox(FSkyboxComponent* InSkyboxComponent)
 {
-    FRHITextureRef CubeMap = InSkyboxComponent ? InSkyboxComponent->GetCubeMap() : FRHITextureRef(nullptr);
+    if (SkyboxSource == InSkyboxComponent)
+    {
+        return;
+    }
+
+    SkyboxSource = InSkyboxComponent;
+
+    const FRHITextureRef CubeMap = InSkyboxComponent ? InSkyboxComponent->GetCubeMap() : FRHITextureRef(nullptr);
     Tasks::LaunchOnRenderThread("AddSkybox", [this, CubeMap]()
     {
         DeferDeletion(Skybox);
@@ -407,6 +495,11 @@ void FScene::AddSkybox(FSkyboxComponent* InSkyboxComponent)
 void FScene::AddStaticMesh(FStaticMeshComponent* InMeshComponent)
 {
     if (!InMeshComponent)
+    {
+        return;
+    }
+
+    if (StaticMeshSources.IsValidIndex(StaticMeshSources.Find(InMeshComponent)))
     {
         return;
     }
@@ -434,53 +527,90 @@ void FScene::AddStaticMesh(FStaticMeshComponent* InMeshComponent)
     });
 }
 
-void FScene::RemoveLight(FLight* InLight)
+void FScene::RemoveSceneComponent(FSceneComponent* InComponent)
 {
-    if (!InLight)
+    if (!InComponent)
     {
         return;
     }
 
-    if (FDirectionalLight* InDirectionalLight = Cast<FDirectionalLight>(InLight))
+    if (FStaticMeshComponent* StaticMesh = Cast<FStaticMeshComponent>(InComponent))
     {
-        if (DirectionalLightSource == InDirectionalLight)
-        {
-            DirectionalLightSource = nullptr;
-            Tasks::LaunchOnRenderThread("RemoveDirectionalLight", [this]()
-            {
-                DeferDeletion(DirectionalLight);
-                DirectionalLight = nullptr;
-            });
-        }
+        RemoveStaticMesh(StaticMesh);
     }
-    else if (Cast<FSkyLight>(InLight))
+    else if (FSkyboxComponent* SkyboxComponent = Cast<FSkyboxComponent>(InComponent))
     {
-        Tasks::LaunchOnRenderThread("RemoveSkyLight", [this]()
-        {
-            DeferDeletion(SkyLight);
-            SkyLight = nullptr;
-        });
+        RemoveSkybox(SkyboxComponent);
     }
-    else if (FPointLight* InPointLight = Cast<FPointLight>(InLight))
+    else if (FLightProbeComponent* LightProbe = Cast<FLightProbeComponent>(InComponent))
     {
-        const int32 Index = PointLightSources.Find(InPointLight);
-        if (PointLightSources.IsValidIndex(Index))
-        {
-            PointLightSources.RemoveAt(Index);
-            Tasks::LaunchOnRenderThread("RemovePointLight", [this, Index]()
-            {
-                if (PointLights.IsValidIndex(Index))
-                {
-                    DeferDeletion(PointLights[Index]);
-                    PointLights.RemoveAt(Index);
-                    STAT_ADD(STAT_Scene_PointLightCount, -1);
-                }
-            });
-        }
+        RemoveLightProbe(LightProbe);
+    }
+    else if (FDirectionalLightComponent* DirectionalLightComponent = Cast<FDirectionalLightComponent>(InComponent))
+    {
+        RemoveDirectionalLight(DirectionalLightComponent);
+    }
+    else if (FSkyLightComponent* SkyLightComponent = Cast<FSkyLightComponent>(InComponent))
+    {
+        RemoveSkyLight(SkyLightComponent);
+    }
+    else if (FPointLightComponent* PointLightComponent = Cast<FPointLightComponent>(InComponent))
+    {
+        RemovePointLight(PointLightComponent);
     }
 }
 
-void FScene::RemoveLightProbe(FLightProbe* InLightProbe)
+void FScene::RemoveDirectionalLight(FDirectionalLightComponent* InDirectionalLight)
+{
+    if (DirectionalLightSource != InDirectionalLight)
+    {
+        return;
+    }
+
+    DirectionalLightSource = nullptr;
+    Tasks::LaunchOnRenderThread("RemoveDirectionalLight", [this]()
+    {
+        DeferDeletion(DirectionalLight);
+        DirectionalLight = nullptr;
+    });
+}
+
+void FScene::RemoveSkyLight(FSkyLightComponent* InSkyLight)
+{
+    if (SkyLightSource != InSkyLight)
+    {
+        return;
+    }
+
+    SkyLightSource = nullptr;
+    Tasks::LaunchOnRenderThread("RemoveSkyLight", [this]()
+    {
+        DeferDeletion(SkyLight);
+        SkyLight = nullptr;
+    });
+}
+
+void FScene::RemovePointLight(FPointLightComponent* InPointLight)
+{
+    const int32 Index = PointLightSources.Find(InPointLight);
+    if (!PointLightSources.IsValidIndex(Index))
+    {
+        return;
+    }
+
+    PointLightSources.RemoveAt(Index);
+    Tasks::LaunchOnRenderThread("RemovePointLight", [this, Index]()
+    {
+        if (PointLights.IsValidIndex(Index))
+        {
+            DeferDeletion(PointLights[Index]);
+            PointLights.RemoveAt(Index);
+            STAT_ADD(STAT_Scene_PointLightCount, -1);
+        }
+    });
+}
+
+void FScene::RemoveLightProbe(FLightProbeComponent* InLightProbe)
 {
     const int32 Index = LightProbeSources.Find(InLightProbe);
     if (!LightProbeSources.IsValidIndex(Index))
@@ -497,6 +627,21 @@ void FScene::RemoveLightProbe(FLightProbe* InLightProbe)
             LightProbes.RemoveAt(Index);
             STAT_ADD(STAT_Scene_LightProbeCount, -1);
         }
+    });
+}
+
+void FScene::RemoveSkybox(FSkyboxComponent* InSkyboxComponent)
+{
+    if (SkyboxSource != InSkyboxComponent)
+    {
+        return;
+    }
+
+    SkyboxSource = nullptr;
+    Tasks::LaunchOnRenderThread("RemoveSkybox", [this]()
+    {
+        DeferDeletion(Skybox);
+        Skybox = nullptr;
     });
 }
 
@@ -523,6 +668,11 @@ void FScene::RemoveStaticMesh(FStaticMeshComponent* InMeshComponent)
 uint32 FScene::GetOrCreateObjectID(FActor* Actor)
 {
     return ObjectIDs.GetOrCreate(Actor);
+}
+
+void FScene::RemoveActorObjectID(FActor* Actor)
+{
+    ObjectIDs.Remove(Actor);
 }
 
 uint32 FScene::GetObjectID(FActor* Actor) const

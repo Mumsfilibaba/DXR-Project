@@ -1,6 +1,4 @@
 #include "RHI/RHI.h"
-#include "Engine/World/Lights/PointLight.h"
-#include "Engine/World/Lights/DirectionalLight.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Renderer/FrameResources.h"

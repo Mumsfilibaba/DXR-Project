@@ -6,7 +6,6 @@
 #include "Renderer/Scene/SceneObject.h"
 #include "Renderer/Scene/SceneView.h"
 
-class FPointLight;
 struct FPointLightProxyUpdate;
 
 struct FScenePointLight : public FSceneObject

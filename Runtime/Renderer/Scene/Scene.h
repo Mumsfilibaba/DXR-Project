@@ -21,22 +21,29 @@
 class FWorld;
 class FMaterial;
 class FActor;
-class FDirectionalLight;
-class FPointLight;
-class FSkyLight;
+class FCameraComponent;
+class FDirectionalLightComponent;
+class FLightProbeComponent;
+class FPointLightComponent;
+class FSceneComponent;
+class FSkyLightComponent;
+class FSkyboxComponent;
+class FStaticMeshComponent;
 
 extern bool GFreezeRendering;
 
-class FObjectIDRegistry
+class FObjectIdentificationRegistry
 {
 public:
-    FObjectIDRegistry();
-    ~FObjectIDRegistry();
+    FObjectIdentificationRegistry();
+    ~FObjectIdentificationRegistry();
 
     FActor* Resolve(uint32 ObjectID) const;
     
     uint32 GetOrCreate(FActor* Actor);
     uint32 Get(FActor* Actor) const;
+    
+    void Remove(FActor* Actor);
 
 private:
     TMap<FActor*, uint32> ActorToObjectID;
@@ -52,21 +59,16 @@ public:
 
     // IScene interface
     virtual void Tick() override final;
-    
-    virtual void AddCamera(FCamera* InCamera) override final;
-    virtual void AddLight(FLight* InLight) override final;
-    virtual void AddLightProbe(FLightProbe* InLightProbe) override final;
-    virtual void AddSkybox(FSkyboxComponent* InSkyboxComponent) override final;
-    virtual void AddStaticMesh(FStaticMeshComponent* InMeshComponent) override final;
-    
-    virtual void RemoveLight(FLight* InLight) override final;
-    virtual void RemoveLightProbe(FLightProbe* InLightProbe) override final;
-    virtual void RemoveStaticMesh(FStaticMeshComponent* InMeshComponent) override final;
+
+    virtual void AddSceneComponent(FSceneComponent* InComponent) override final;
+    virtual void RemoveSceneComponent(FSceneComponent* InComponent) override final;
+    virtual void SetActiveCamera(FCameraComponent* InCamera) override final;
 
     virtual FActor* GetActorByObjectID(uint32 ObjectID) const override final;
 
     // ObjectID allocation for editor highlighting/picking (main thread).
     virtual uint32 GetOrCreateObjectID(FActor* Actor) override final;
+    virtual void RemoveActorObjectID(FActor* Actor) override final;
 
     uint32 GetObjectID(FActor* Actor) const;
 
@@ -135,6 +137,20 @@ private:
     // Reads the live sources and produces a render batch.
     FRenderUpdateBatch CollectRenderUpdates();
 
+    void AddLightProbe(FLightProbeComponent* InLightProbe);
+    void AddSkybox(FSkyboxComponent* InSkyboxComponent);
+    void AddStaticMesh(FStaticMeshComponent* InMeshComponent);
+    void AddDirectionalLight(FDirectionalLightComponent* InDirectionalLight);
+    void AddPointLight(FPointLightComponent* InPointLight);
+    void AddSkyLight(FSkyLightComponent* InSkyLight);
+
+    void RemoveLightProbe(FLightProbeComponent* InLightProbe);
+    void RemoveSkybox(FSkyboxComponent* InSkyboxComponent);
+    void RemoveStaticMesh(FStaticMeshComponent* InMeshComponent);
+    void RemoveDirectionalLight(FDirectionalLightComponent* InDirectionalLight);
+    void RemovePointLight(FPointLightComponent* InPointLight);
+    void RemoveSkyLight(FSkyLightComponent* InSkyLight);
+
     FWorld*                       World;
     FSceneCamera*                 Camera;
     FSceneView                    CameraView;
@@ -147,11 +163,13 @@ private:
     TArray<FSceneLightProbe*>     LightProbes;
     TArray<FSceneObject*>         DeferredObjects;
     FCriticalSection              DeferredObjectsCS;
-    FCamera*                      CameraSource;
+    FCameraComponent*             CameraSource;
     TArray<FStaticMeshComponent*> StaticMeshSources;
-    TArray<FPointLight*>          PointLightSources;
-    TArray<FLightProbe*>          LightProbeSources;
-    FDirectionalLight*            DirectionalLightSource;
-    FObjectIDRegistry             ObjectIDs;
+    TArray<FPointLightComponent*> PointLightSources;
+    TArray<FLightProbeComponent*> LightProbeSources;
+    FDirectionalLightComponent*   DirectionalLightSource;
+    FSkyLightComponent*           SkyLightSource;
+    FSkyboxComponent*             SkyboxSource;
+    FObjectIdentificationRegistry ObjectIDs;
     FRenderUpdateBatch            LatestBatch;
 };

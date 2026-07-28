@@ -76,6 +76,10 @@ FActor::~FActor()
     Components.Clear();
 }
 
+void FActor::Initialize()
+{
+}
+
 void FActor::Start()
 {
     for (FActorComponent* Component : Components)
@@ -109,9 +113,29 @@ void FActor::AddComponent(FActorComponent* InComponent)
 
     if (FSceneComponent* SceneComponent = Cast<FSceneComponent>(InComponent))
     {
-        CHECK(World != nullptr);
-        World->AddSceneComponent(SceneComponent);
+        if (World)
+        {
+            World->AddSceneComponent(SceneComponent);
+        }
     }
+}
+
+void FActor::RemoveComponent(FActorComponent* InComponent)
+{
+    CHECK(InComponent != nullptr);
+    CHECK(InComponent->GetActorOwner() == this);
+
+    if (FSceneComponent* SceneComponent = Cast<FSceneComponent>(InComponent))
+    {
+        if (World)
+        {
+            World->RemoveSceneComponent(SceneComponent);
+        }
+    }
+
+    Components.Remove(InComponent);
+    InComponent->SetActorOwner(nullptr);
+    SAFE_DELETE(InComponent);
 }
 
 void FActor::SetName(const String& InName)

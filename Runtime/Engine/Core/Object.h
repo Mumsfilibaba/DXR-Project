@@ -27,7 +27,7 @@ class FObjectInitializer;
         typedef FObjectType     This; \
         typedef FSuperClassType Super; \
         /* Retrieve a static version of the FObjectClass object for this type */ \
-        static FObjectClass* StaticClass() \
+        static FObjectClass* GetStaticClass() \
         { \
             return GetStaticClassPrivate(); \
         } \
@@ -49,8 +49,8 @@ class FObjectInitializer;
                 #FObjectType, \
                 sizeof(FObjectType), \
                 alignof(FObjectType), \
-                &Super::StaticClass, \
-                &FObjectType::StaticClass, \
+                &Super::GetStaticClass, \
+                &FObjectType::GetStaticClass, \
                 &FObjectType::StaticDefaultConstructor); \
         } \
      \
@@ -109,7 +109,7 @@ inline bool IsSubClassOf(FObject* Object, FObjectClass* Class)
 template<typename T>
 inline bool IsSubClassOf(FObject* Object)
 {
-    return IsSubClassOf(Object, T::StaticClass());
+    return IsSubClassOf(Object, T::GetStaticClass());
 }
 
 template<typename T>
@@ -130,7 +130,7 @@ T* NewObject()
         return nullptr;
     }
 
-    FObjectClass* Class = T::StaticClass();
+    FObjectClass* Class = T::GetStaticClass();
     FObjectInitializer ObjectInitalizer(Memory, Class);
     FObjectClass::StaticDefaultConstructorType DefaultConstructorFunc = Class->GetDefaultConstructorFunc();
     DefaultConstructorFunc(ObjectInitalizer);

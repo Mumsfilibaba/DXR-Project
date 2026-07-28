@@ -1,7 +1,6 @@
 #pragma once
 #include <Core/Core.h>
 #include <Core/Modules/ModuleManager.h>
-#include <Engine/World/Camera.h>
 #include <RHI/RHITexture.h>
 
 class FWorld;

@@ -1,42 +1,48 @@
-#include "Engine/Resources/Material.h"
-#include "Engine/Resources/Model.h"
-#include "RHI/RHIResources.h"
 #include "Engine/World/World.h"
-#include "Engine/World/Components/StaticMeshComponent.h"
-#include "Engine/World/Components/SkyboxComponent.h"
+#include "Engine/World/Components/CameraComponent.h"
+#include "Engine/World/Components/SceneComponent.h"
 
 FWorld::FWorld()
-    : Actors()
-    , CurrentCamera(nullptr)
-    , Scene(nullptr)
+    : Scene(nullptr)
+    , ActiveCamera(nullptr)
+    , Actors()
+    , PlayerControllers()
+    , OnActorRemovedEvent()
 {
 }
 
 FWorld::~FWorld()
 {
-    for (FActor* CurrentActor : Actors)
+    if (Scene)
     {
-        SAFE_DELETE(CurrentActor);
-    }
-    
-    for (FLight* CurrentLight : Lights)
-    {
-        SAFE_DELETE(CurrentLight);
+        for (FActor* CurrentActor : Actors)
+        {
+            for (FActorComponent* Component : CurrentActor->GetComponents())
+            {
+                if (FSceneComponent* SceneComponent = Cast<FSceneComponent>(Component))
+                {
+                    RemoveSceneComponent(SceneComponent);
+                }
+            }
+
+            Scene->RemoveActorObjectID(CurrentActor);
+        }
     }
 
-    SAFE_DELETE(CurrentCamera);
+    for (FActor* CurrentActor : Actors)
+    {
+        CurrentActor->SetWorld(nullptr);
+        SAFE_DELETE(CurrentActor);
+    }
+
+    Actors.Clear();
+    PlayerControllers.Clear();
+    ActiveCamera = nullptr;
 }
 
 FActor* FWorld::CreateActor()
 {
-    FActor* NewActor = NewObject<FActor>();
-    if (NewActor)
-    {
-        AddActor(NewActor);
-        return NewActor;
-    }
-    
-    return nullptr;
+    return SpawnActor<FActor>();
 }
 
 void FWorld::Start()
@@ -69,26 +75,10 @@ void FWorld::Tick(float DeltaTime)
     }
 
     // Update the view-proj matrices, at this point we should have a valid view and projection matrix
-    if (CurrentCamera)
+    if (ActiveCamera)
     {
-        // Keep matrices in sync every frame for both rendering and editor gizmos.
-        CurrentCamera->UpdateViewMatrix();
-        CurrentCamera->UpdateWorldToClipSpaceMatrices();
-    }
-}
-
-void FWorld::AddCamera(FCamera* InCamera)
-{
-    if (CurrentCamera)
-    {
-        SAFE_DELETE(CurrentCamera);
-    }
-
-    CurrentCamera = InCamera;
-
-    if (Scene)
-    {
-        Scene->AddCamera(CurrentCamera);
+        ActiveCamera->UpdateViewMatrix();
+        ActiveCamera->UpdateWorldToClipSpaceMatrices();
     }
 }
 
@@ -106,10 +96,74 @@ void FWorld::AddActor(FActor* InActor)
             AddPlayerController(PlayerController);
         }
 
-        if (FSceneComponent* SceneComponent = InActor->GetComponentOfType<FSceneComponent>())
+        for (FActorComponent* Component : InActor->GetComponents())
         {
-            AddSceneComponent(SceneComponent);
+            if (FSceneComponent* SceneComponent = Cast<FSceneComponent>(Component))
+            {
+                AddSceneComponent(SceneComponent);
+            }
         }
+    }
+}
+
+void FWorld::RemoveActor(FActor* InActor)
+{
+    if (!InActor || InActor->GetWorld() != this)
+    {
+        return;
+    }
+
+    const bool bRemovedActiveCamera = ActiveCamera && ActiveCamera->GetActorOwner() == InActor;
+    for (FActorComponent* Component : InActor->GetComponents())
+    {
+        if (FSceneComponent* SceneComponent = Cast<FSceneComponent>(Component))
+        {
+            RemoveSceneComponent(SceneComponent);
+        }
+    }
+
+    if (Scene)
+    {
+        Scene->RemoveActorObjectID(InActor);
+    }
+
+    if (FPlayerController* PlayerController = Cast<FPlayerController>(InActor))
+    {
+        PlayerControllers.Remove(PlayerController);
+    }
+
+    Actors.Remove(InActor);
+    
+    InActor->SetWorld(nullptr);
+    
+    OnActorRemovedEvent.Broadcast(InActor);
+    SAFE_DELETE(InActor);
+
+    if (bRemovedActiveCamera)
+    {
+        for (FActor* Actor : Actors)
+        {
+            if (FCameraComponent* CameraComponent = Actor->GetComponentOfType<FCameraComponent>())
+            {
+                SetActiveCamera(CameraComponent);
+                break;
+            }
+        }
+    }
+}
+
+void FWorld::SetActiveCamera(FCameraComponent* InCamera)
+{
+    if (InCamera)
+    {
+        CHECK(InCamera->GetActorOwner() != nullptr);
+        CHECK(InCamera->GetActorOwner()->GetWorld() == this);
+    }
+
+    ActiveCamera = InCamera;
+    if (Scene)
+    {
+        Scene->SetActiveCamera(ActiveCamera);
     }
 }
 
@@ -125,111 +179,69 @@ void FWorld::AddPlayerController(FPlayerController* InPlayerController)
     }
 }
 
-void FWorld::AddLight(FLight* InLight)
-{
-    if (InLight)
-    {
-        Lights.Emplace(InLight);
-    }
-    else
-    {
-        DEBUG_BREAK();
-    }
-
-    if (Scene)
-    {
-        Scene->AddLight(InLight);
-    }
-}
-
-void FWorld::AddLightProbe(FLightProbe* InLightProbe)
-{
-    if (InLightProbe)
-    {
-        LightProbes.Emplace(InLightProbe);
-    }
-    else
-    {
-        DEBUG_BREAK();
-    }
-
-    if (Scene)
-    {
-        Scene->AddLightProbe(InLightProbe);
-    }
-}
-
 void FWorld::AddSceneComponent(FSceneComponent* SceneComponent)
 {
-    if (!Scene)
+    if (!SceneComponent)
     {
         return;
     }
 
-    if (SceneComponent)
+    if (FCameraComponent* CameraComponent = Cast<FCameraComponent>(SceneComponent))
     {
-        if (FStaticMeshComponent* MeshComponent = Cast<FStaticMeshComponent>(SceneComponent))
+        if (!ActiveCamera)
         {
-            Scene->AddStaticMesh(MeshComponent);
-        }
-        else if (FSkyboxComponent* SkyboxComponent = Cast<FSkyboxComponent>(SceneComponent))
-        {
-            Scene->AddSkybox(SkyboxComponent);
+            SetActiveCamera(CameraComponent);
         }
     }
-}
-
-void FWorld::RemoveLight(FLight* InLight)
-{
-    if (!InLight)
-    {
-        return;
-    }
-
-    Lights.Remove(InLight);
 
     if (Scene)
     {
-        Scene->RemoveLight(InLight);
-    }
-}
-
-void FWorld::RemoveLightProbe(FLightProbe* InLightProbe)
-{
-    if (!InLightProbe)
-    {
-        return;
-    }
-
-    LightProbes.Remove(InLightProbe);
-
-    if (Scene)
-    {
-        Scene->RemoveLightProbe(InLightProbe);
+        Scene->AddSceneComponent(SceneComponent);
     }
 }
 
 void FWorld::RemoveSceneComponent(FSceneComponent* SceneComponent)
 {
-    if (!Scene || !SceneComponent)
+    if (!SceneComponent)
     {
         return;
     }
 
-    if (FStaticMeshComponent* MeshComponent = Cast<FStaticMeshComponent>(SceneComponent))
+    if (SceneComponent == ActiveCamera)
     {
-        Scene->RemoveStaticMesh(MeshComponent);
+        SetActiveCamera(nullptr);
+    }
+
+    if (Scene)
+    {
+        Scene->RemoveSceneComponent(SceneComponent);
     }
 }
 
 void FWorld::SetSceneInterface(IScene* InScene)
 {
-    if (InScene)
-    {
-        Scene = InScene;
-    }
-    else
+    if (!InScene)
     {
         LOG_WARNING("Trying to add a null SceneInterface");
+        return;
     }
+
+    Scene = InScene;
+    for (FActor* Actor : Actors)
+    {
+        for (FActorComponent* Component : Actor->GetComponents())
+        {
+            if (FSceneComponent* SceneComponent = Cast<FSceneComponent>(Component))
+            {
+                Scene->AddSceneComponent(SceneComponent);
+            }
+        }
+    }
+
+    Scene->SetActiveCamera(ActiveCamera);
+}
+
+void FWorld::ClearSceneInterface()
+{
+    Scene = nullptr;
 }

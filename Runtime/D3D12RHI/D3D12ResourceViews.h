@@ -65,6 +65,11 @@ public:
         return DescriptorVersion;
     }
 
+    NODISCARD FORCEINLINE bool IsRegisteredWithResource(const FD3D12ResourceBase* Resource) const
+    {
+        return OwnerResource == Resource;
+    }
+
     NODISCARD FORCEINLINE FRHIDescriptorHandle GetCachedBindlessHandle() const
     {
         return BindlessHandle;

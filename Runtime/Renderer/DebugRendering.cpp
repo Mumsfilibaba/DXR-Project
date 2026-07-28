@@ -5,7 +5,6 @@
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Resources/Model.h"
 #include "Engine/World/Actors/Actor.h"
-#include "Engine/World/Lights/PointLight.h"
 #include "Renderer/DebugRendering.h"
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneLightProbe.h"

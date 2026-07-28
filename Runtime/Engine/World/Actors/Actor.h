@@ -87,6 +87,11 @@ public:
     ~FActor();
 
     /**
+     * @brief Initializes the actor immediately after construction and before world or renderer registration
+     */
+    virtual void Initialize();
+
+    /**
      * @brief Start actor, called in the beginning of the run, perform initialization here
      */
     virtual void Start();
@@ -104,6 +109,13 @@ public:
      * @param InComponent Component to add to the Actor
      */
     void AddComponent(FActorComponent* InComponent);
+
+    /**
+     * @brief Remove and delete a component owned by the actor
+     *
+     * @param InComponent Component to remove from the Actor
+     */
+    void RemoveComponent(FActorComponent* InComponent);
 
     /**
      * @brief Set name of the actor
@@ -147,7 +159,15 @@ public:
     template <typename ComponentType>
     inline ComponentType* GetComponentOfType() const
     {
-        return static_cast<ComponentType*>(GetComponentOfClass(ComponentType::StaticClass()));
+        return static_cast<ComponentType*>(GetComponentOfClass(ComponentType::GetStaticClass()));
+    }
+
+    /**
+     * @return Returns all components owned by the actor
+     */
+    const TArray<FActorComponent*>& GetComponents() const
+    {
+        return Components;
     }
 
     /**

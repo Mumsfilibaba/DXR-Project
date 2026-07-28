@@ -13,8 +13,6 @@
     #include "Engine/EditorEngine.h"
 #endif
 #include "Engine/Resources/Model.h"
-#include "Engine/World/Lights/PointLight.h"
-#include "Engine/World/Lights/DirectionalLight.h"
 #include "Renderer/MaterialBindless.h"
 #include "Renderer/SceneRenderer.h"
 #include "Renderer/EditorSelectionRendering.h"

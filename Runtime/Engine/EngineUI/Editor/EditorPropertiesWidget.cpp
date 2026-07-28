@@ -1,4 +1,9 @@
 #include "Engine/EditorEngine.h"
+#include "Engine/World/Components/CameraComponent.h"
+#include "Engine/World/Components/DirectionalLightComponent.h"
+#include "Engine/World/Components/LightComponent.h"
+#include "Engine/World/Components/LightProbeComponent.h"
+#include "Engine/World/Components/PointLightComponent.h"
 #include "Engine/World/Components/StaticMeshComponent.h"
 #include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
@@ -54,12 +59,8 @@ void FEditorPropertiesWidget::Draw()
 
 void FEditorPropertiesWidget::DrawWindowContents()
 {
-    FActor*      SelectedActor      = EditorEngine->GetSelectedActor();
-    FLight*      SelectedLight      = EditorEngine->GetSelectedLight();
-    FCamera*     SelectedCamera     = EditorEngine->GetSelectedCamera();
-    FLightProbe* SelectedLightProbe = EditorEngine->GetSelectedLightProbe();
-
-    if (!SelectedActor && !SelectedLight && !SelectedCamera && !SelectedLightProbe)
+    FActor* SelectedActor = EditorEngine->GetSelectedActor();
+    if (!SelectedActor)
     {
         ImGui::TextDisabled("No selection");
         return;
@@ -157,6 +158,11 @@ void FEditorPropertiesWidget::DrawWindowContents()
     // Actor
     // ------------------------------------------------------------
 
+    FStaticMeshComponent* MeshComponent      = SelectedActor->GetComponentOfType<FStaticMeshComponent>();
+    FLightComponent*      SelectedLight      = SelectedActor->GetComponentOfType<FLightComponent>();
+    FCameraComponent*     SelectedCamera     = SelectedActor->GetComponentOfType<FCameraComponent>();
+    FLightProbeComponent* SelectedLightProbe = SelectedActor->GetComponentOfType<FLightProbeComponent>();
+
     if (SelectedActor)
     {
         ImGui::PushID(SelectedActor);
@@ -164,10 +170,10 @@ void FEditorPropertiesWidget::DrawWindowContents()
         const String& ActorName = SelectedActor->GetName();
         DrawLabelWithSeperator(ActorName.IsEmpty() ? "Actor" : *ActorName);
 
-        FStaticMeshComponent* MeshComponent = SelectedActor->GetComponentOfType<FStaticMeshComponent>();
+        const bool bHasMeshComponent       = MeshComponent != nullptr;
+        const bool bHasComponentProperties = bHasMeshComponent || SelectedLight || SelectedCamera || SelectedLightProbe;
         
-        const bool bHasMeshComponent = MeshComponent != nullptr;
-        if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen, bHasMeshComponent))
+        if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen, bHasComponentProperties))
         {
             if (EditorWidgets::BeginPropertyTable("##ActorTransformTable", LabelColumnWidth, RevertColumnWidth))
             {
@@ -192,7 +198,14 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     if (EditorWidgets::DrawFloat3Control("Rotation", Rotation, 0.0f, &RotationRevert, EVector3ControlType::RotationDegrees))
                     {
                         const Vector3 Radians = Vector3::DegreesToRadians(Rotation);
-                        SelectedActor->GetTransform().SetRotation(Radians);
+                        if (SelectedCamera)
+                        {
+                            SelectedCamera->SetRotation(Radians);
+                        }
+                        else
+                        {
+                            SelectedActor->GetTransform().SetRotation(Radians);
+                        }
                     }
                 }
 
@@ -279,6 +292,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 
                         float ParallaxMinLayers = MaterialInfo.ParallaxMinLayers;
                         const float ParallaxMinLayers0 = 32.0f;
+
                         if (EditorWidgets::DrawFloatProperty("Parallax Min Layers", ParallaxMinLayers, 1.0f, 1.0f, 128.0f, "%.0f", true, &ParallaxMinLayers0))
                         {
                             MeshComponent->GetMaterial()->SetParallaxLayers(ParallaxMinLayers, MeshComponent->GetMaterial()->GetParallaxMaxLayers());
@@ -286,6 +300,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 
                         float ParallaxMaxLayers = MaterialInfo.ParallaxMaxLayers;
                         const float ParallaxMaxLayers0 = 64.0f;
+
                         if (EditorWidgets::DrawFloatProperty("Parallax Max Layers", ParallaxMaxLayers, 1.0f, 1.0f, 256.0f, "%.0f", true, &ParallaxMaxLayers0))
                         {
                             MeshComponent->GetMaterial()->SetParallaxLayers(MeshComponent->GetMaterial()->GetParallaxMinLayers(), ParallaxMaxLayers);
@@ -298,7 +313,6 @@ void FEditorPropertiesWidget::DrawWindowContents()
         }
 
         ImGui::PopID();
-        return;
     }
 
     // ------------------------------------------------------------
@@ -310,7 +324,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
         ImGui::PushID(SelectedLight);
 
         // Point light
-        if (FPointLight* Point = Cast<FPointLight>(SelectedLight))
+        if (FPointLightComponent* PointLight = Cast<FPointLightComponent>(SelectedLight))
         {
             DrawLabelWithSeperator("PointLight");
 
@@ -318,20 +332,20 @@ void FEditorPropertiesWidget::DrawWindowContents()
             {
                 if (EditorWidgets::BeginPropertyTable("##PointLightSettingsTable", LabelColumnWidth, RevertColumnWidth))
                 {
-                    Vector3 Color = Point->GetColor();
+                    Vector3 Color = PointLight->GetColor();
                     const Vector3 Color0 = Vector3(1.0f, 1.0f, 1.0f);
                     
                     if (EditorWidgets::DrawColor3Property("Color", Color, Color0))
                     {
-                        Point->SetColor(Color);
+                        PointLight->SetColor(Color);
                     }
 
-                    float Intensity = Point->GetIntensity();
+                    float Intensity = PointLight->GetIntensity();
                     const float Intensity0 = 1.0f;
                     
                     if (EditorWidgets::DrawFloatProperty("Intensity (Lumen)", Intensity, 0.1f, 0.0f, 200000.0f, "%.1f", true, &Intensity0))
                     {
-                        Point->SetIntensity(Intensity);
+                        PointLight->SetIntensity(Intensity);
                     }
 
                     EditorWidgets::EndPropertyTable();
@@ -342,12 +356,12 @@ void FEditorPropertiesWidget::DrawWindowContents()
             {
                 if (EditorWidgets::BeginPropertyTable("##PointLightTransformTable", LabelColumnWidth, RevertColumnWidth))
                 {
-                    Vector3 Translation = Point->GetPosition();
+                    Vector3 Translation = PointLight->GetPosition();
                     const Vector3 Translation0 = Vector3(0.0f, 0.0f, 0.0f);
                     
                     if (EditorWidgets::DrawFloat3Control("Translation", Translation, 0.0f, &Translation0, EVector3ControlType::Position))
                     {
-                        Point->SetPosition(Translation);
+                        SelectedActor->GetTransform().SetTranslation(Translation);
                     }
 
                     EditorWidgets::EndPropertyTable();
@@ -358,35 +372,35 @@ void FEditorPropertiesWidget::DrawWindowContents()
             {
                 if (EditorWidgets::BeginPropertyTable("##PointLightShadowsTable", LabelColumnWidth, RevertColumnWidth))
                 {
-                    float ShadowBias = Point->GetShadowBias();
+                    float ShadowBias = PointLight->GetShadowBias();
                     const float ShadowBias0 = 0.005f;
                     
                     if (EditorWidgets::DrawFloatProperty("Shadow-bias", ShadowBias, 0.0001f, 0.0001f, 0.1f, "%.4f", true, &ShadowBias0))
                     {
-                        Point->SetShadowBias(ShadowBias);
+                        PointLight->SetShadowBias(ShadowBias);
                     }
 
-                    float ShadowNearPlane = Point->GetShadowNearPlane();
+                    float ShadowNearPlane = PointLight->GetShadowNearPlane();
                     const float ShadowNearPlane0 = 1.0f;
                     
                     if (EditorWidgets::DrawFloatProperty("Shadow near-plane", ShadowNearPlane, 0.01f, 0.01f, 1.0f, "%.2f", true, &ShadowNearPlane0))
                     {
-                        Point->SetShadowNearPlane(ShadowNearPlane);
+                        PointLight->SetShadowNearPlane(ShadowNearPlane);
                     }
 
-                    float ShadowFarPlane = Point->GetShadowFarPlane();
+                    float ShadowFarPlane = PointLight->GetShadowFarPlane();
                     const float ShadowFarPlane0 = 30.0f;
 
                     if (EditorWidgets::DrawFloatProperty("Shadow far-plane", ShadowFarPlane, 1.0f, 1.0f, 100.0f, "%.1f", true, &ShadowFarPlane0))
                     {
-                        Point->SetShadowFarPlane(ShadowFarPlane);
+                        PointLight->SetShadowFarPlane(ShadowFarPlane);
                     }
 
                     EditorWidgets::EndPropertyTable();
                 }
             }
         }
-        else if (FDirectionalLight* Dir = Cast<FDirectionalLight>(SelectedLight))
+        else if (FDirectionalLightComponent* DirectionalLight = Cast<FDirectionalLightComponent>(SelectedLight))
         {
             DrawLabelWithSeperator("DirectionalLight");
 
@@ -394,20 +408,20 @@ void FEditorPropertiesWidget::DrawWindowContents()
             {
                 if (EditorWidgets::BeginPropertyTable("##DirLightSettingsTable", LabelColumnWidth, RevertColumnWidth))
                 {
-                    Vector3 Color = Dir->GetColor();
+                    Vector3 Color = DirectionalLight->GetColor();
                     const Vector3 Color0 = Vector3(1.0f, 1.0f, 1.0f);
 
                     if (EditorWidgets::DrawColor3Property("Color", Color, Color0))
                     {
-                        Dir->SetColor(Color);
+                        DirectionalLight->SetColor(Color);
                     }
 
-                    float Intensity = Dir->GetIntensity();
+                    float Intensity = DirectionalLight->GetIntensity();
                     const float Intensity0 = 1.0f;
 
                     if (EditorWidgets::DrawFloatProperty("Intensity (Lux)", Intensity, 0.1f, 0.0f, 200000.0f, "%.1f", true, &Intensity0))
                     {
-                        Dir->SetIntensity(Intensity);
+                        DirectionalLight->SetIntensity(Intensity);
                     }
 
                     EditorWidgets::EndPropertyTable();
@@ -418,7 +432,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
             {
                 if (EditorWidgets::BeginPropertyTable("##DirLightDirectionTable", LabelColumnWidth, RevertColumnWidth))
                 {
-                    Vector3 Rotation = Dir->GetRotation();
+                    Vector3 Rotation = SelectedActor->GetTransform().GetRotation();
                     
                     float RotationTheta = Math::RadiansToDegrees(Rotation.X);
                     float RotationPhi   = Math::RadiansToDegrees(Rotation.Y);
@@ -434,10 +448,11 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     {
                         Rotation.X = Math::DegreesToRadians(RotationTheta);
                         Rotation.Y = Math::DegreesToRadians(RotationPhi);
-                        Dir->SetRotation(Rotation);
+
+                        SelectedActor->GetTransform().SetRotation(Rotation);
                     }
 
-                    const Vector3 Direction = Dir->GetDirectionVector();
+                    const Vector3 Direction = DirectionalLight->GetDirectionVector();
                     EditorWidgets::DrawReadOnlyFloat3Property("Direction", Direction);
 
                     EditorWidgets::EndPropertyTable();
@@ -448,52 +463,52 @@ void FEditorPropertiesWidget::DrawWindowContents()
             {
                 if (EditorWidgets::BeginPropertyTable("##DirLightShadowsTable", LabelColumnWidth, RevertColumnWidth))
                 {
-                    float ShadowBias = Dir->GetShadowBias();
+                    float ShadowBias = DirectionalLight->GetShadowBias();
                     const float ShadowBias0 = 0.005f;
                     
                     if (EditorWidgets::DrawFloatProperty("Shadow-bias", ShadowBias, 0.0001f, 0.0001f, 0.1f, "%.4f", true, &ShadowBias0))
                     {
-                        Dir->SetShadowBias(ShadowBias);
+                        DirectionalLight->SetShadowBias(ShadowBias);
                     }
 
-                    float Lambda = Dir->GetCascadeSplitLambda();
+                    float Lambda = DirectionalLight->GetCascadeSplitLambda();
                     const float Lambda0 = 0.95f;
                     
                     if (EditorWidgets::DrawFloatProperty("Cascade Split Lambda", Lambda, 0.01f, 0.0f, 1.0f, "%.2f", true, &Lambda0))
                     {
-                        Dir->SetCascadeSplitLambda(Lambda);
+                        DirectionalLight->SetCascadeSplitLambda(Lambda);
                     }
 
-                    float Offset = Dir->GetShadowPositionOffset();
+                    float Offset = DirectionalLight->GetShadowPositionOffset();
                     const float Offset0 = 200.0f;
                     
                     if (EditorWidgets::DrawFloatProperty("Cascade Position Offset", Offset, 1.0f, 0.0f, 1000.0f, "%.1f", true, &Offset0))
                     {
-                        Dir->SetShadowPositionOffset(Offset);
+                        DirectionalLight->SetShadowPositionOffset(Offset);
                     }
 
-                    float ShadowNearPlane = Dir->GetShadowNearPlane();
+                    float ShadowNearPlane = DirectionalLight->GetShadowNearPlane();
                     const float ShadowNearPlane0 = 120.0f;
                     
                     if (EditorWidgets::DrawFloatProperty("Shadow near-plane", ShadowNearPlane, 1.0f, 0.0f, 1000.0f, "%.1f", true, &ShadowNearPlane0))
                     {
-                        Dir->SetShadowNearPlane(ShadowNearPlane);
+                        DirectionalLight->SetShadowNearPlane(ShadowNearPlane);
                     }
 
-                    float ShadowFarPlane = Dir->GetShadowFarPlane();
+                    float ShadowFarPlane = DirectionalLight->GetShadowFarPlane();
                     const float ShadowFarPlane0 = 250.0f;
                     
                     if (EditorWidgets::DrawFloatProperty("Shadow far-plane", ShadowFarPlane, 1.0f, 0.0f, 1000.0f, "%.1f", true, &ShadowFarPlane0))
                     {
-                        Dir->SetShadowFarPlane(ShadowFarPlane);
+                        DirectionalLight->SetShadowFarPlane(ShadowFarPlane);
                     }
 
-                    float LightArea = Dir->GetLightArea();
+                    float LightArea = DirectionalLight->GetLightArea();
                     const float LightArea0 = 0.05f;
 
                     if (EditorWidgets::DrawFloatProperty("Light area", LightArea, 0.01f, 0.0f, 1.0f, "%.2f", true, &LightArea0))
                     {
-                        Dir->SetLightArea(LightArea);
+                        DirectionalLight->SetLightArea(LightArea);
                     }
 
                     EditorWidgets::EndPropertyTable();
@@ -506,7 +521,6 @@ void FEditorPropertiesWidget::DrawWindowContents()
         }
 
         ImGui::PopID();
-        return;
     }
 
     // ------------------------------------------------------------
@@ -590,7 +604,6 @@ void FEditorPropertiesWidget::DrawWindowContents()
         }
 
         ImGui::PopID();
-        return;
     }
 
     // ------------------------------------------------------------
@@ -612,7 +625,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 
                 if (EditorWidgets::DrawFloat3Control("Position", Position, 0.0f, &Position0, EVector3ControlType::Position))
                 {
-                    SelectedLightProbe->SetPosition(Position);
+                    SelectedActor->GetTransform().SetTranslation(Position);
                 }
 
                 EditorWidgets::EndPropertyTable();
@@ -652,6 +665,5 @@ void FEditorPropertiesWidget::DrawWindowContents()
         }
 
         ImGui::PopID();
-        return;
     }
 }

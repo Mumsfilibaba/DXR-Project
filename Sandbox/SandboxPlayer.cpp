@@ -1,20 +1,19 @@
 #include "SandboxPlayer.h"
 #include <Core/Misc/OutputDeviceLogger.h>
 #include <Engine/Engine.h>
-#include <Engine/World/Camera.h>
 #include <Engine/World/World.h>
+#include <Engine/World/Actors/CameraActor.h>
 #include <Engine/World/Actors/PlayerInput.h>
+#include <Engine/World/Components/CameraComponent.h>
 #include <Engine/World/Components/InputComponent.h>
 
 FOBJECT_IMPLEMENT_CLASS(FSandboxPlayerController);
 
 FSandboxPlayerController::FSandboxPlayerController(const FObjectInitializer& Initializer)
     : FPlayerController(Initializer)
-    , Camera(nullptr)
+    , CameraActor(nullptr)
+    , CameraSpeed()
 {
-    Camera = new FCamera();
-    Camera->Move(0.0f, 10.0f, -2.0f);
-
     // Bind input mappings
     if (FPlayerInput* Input = GetPlayerInput())
     {
@@ -61,6 +60,12 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     // NOTE: The input is handled here via the input component
     Super::Tick(DeltaTime);
 
+    if (!CameraActor)
+    {
+        return;
+    }
+
+    FCameraComponent* Camera = CameraActor->GetCameraComponent();
     const float RotationSpeed = 45.0f;
     const float Deadzone      = 0.01f;
 
@@ -77,28 +82,28 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     // Camera Rotation
     if (Math::Abs(RightThumbX.Value) > Deadzone)
     {
-        Camera->Rotate(0.0f, Math::DegreesToRadians(RightThumbX.Value * RotationSpeed * DeltaTime), 0.0f);
+        Camera->AddRotation(0.0f, Math::DegreesToRadians(RightThumbX.Value * RotationSpeed * DeltaTime), 0.0f);
     }
     else if (GetPlayerInput()->IsKeyDown(Keys::Right))
     {
-        Camera->Rotate(0.0f, Math::DegreesToRadians(RotationSpeed * DeltaTime), 0.0f);
+        Camera->AddRotation(0.0f, Math::DegreesToRadians(RotationSpeed * DeltaTime), 0.0f);
     }
     else if (GetPlayerInput()->IsKeyDown(Keys::Left))
     {
-        Camera->Rotate(0.0f, Math::DegreesToRadians(-RotationSpeed * DeltaTime), 0.0f);
+        Camera->AddRotation(0.0f, Math::DegreesToRadians(-RotationSpeed * DeltaTime), 0.0f);
     }
 
     if (Math::Abs(RightThumbY.Value) > Deadzone)
     {
-        Camera->Rotate(Math::DegreesToRadians(-RightThumbY.Value * RotationSpeed * DeltaTime), 0.0f, 0.0f);
+        Camera->AddRotation(Math::DegreesToRadians(-RightThumbY.Value * RotationSpeed * DeltaTime), 0.0f, 0.0f);
     }
     else if (GetPlayerInput()->IsKeyDown(Keys::Up))
     {
-        Camera->Rotate(Math::DegreesToRadians(-RotationSpeed * DeltaTime), 0.0f, 0.0f);
+        Camera->AddRotation(Math::DegreesToRadians(-RotationSpeed * DeltaTime), 0.0f, 0.0f);
     }
     else if (GetPlayerInput()->IsKeyDown(Keys::Down))
     {
-        Camera->Rotate(Math::DegreesToRadians(RotationSpeed * DeltaTime), 0.0f, 0.0f);
+        Camera->AddRotation(Math::DegreesToRadians(RotationSpeed * DeltaTime), 0.0f, 0.0f);
     }
 
     // Camera Movement
@@ -153,10 +158,7 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     CameraSpeed = CameraSpeed + (CameraAcceleration * DeltaTime);
 
     const Vector3 Speed = CameraSpeed * DeltaTime;
-    Camera->Move(Speed.X, Speed.Y, Speed.Z);
-
-    // When the camera has rotated and moved we can update the view matrix
-    Camera->UpdateViewMatrix();
+    Camera->AddLocalMovement(Speed.X, Speed.Y, Speed.Z);
 }
 
 void FSandboxPlayerController::SetupInputComponent()

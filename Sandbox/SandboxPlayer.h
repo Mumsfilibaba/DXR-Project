@@ -1,6 +1,7 @@
 #pragma once
-#include <Engine/World/Camera.h>
 #include <Engine/World/Actors/PlayerController.h>
+
+class FCameraActor;
 
 class SANDBOX_API FSandboxPlayerController : public FPlayerController
 {
@@ -26,12 +27,17 @@ public:
 
     void Jump();
 
-    FCamera* GetCamera() const
+    void SetCameraActor(FCameraActor* InCameraActor)
     {
-        return Camera;
+        CameraActor = InCameraActor;
+    }
+
+    FCameraActor* GetCameraActor() const
+    {
+        return CameraActor;
     }
 
 private:
-    FCamera* Camera;
-    Vector3  CameraSpeed;
+    FCameraActor* CameraActor;
+    Vector3       CameraSpeed;
 };

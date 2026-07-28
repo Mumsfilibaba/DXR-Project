@@ -6,12 +6,8 @@
 #include <Engine/Engine.h>
 #include <Engine/Assets/AssetManager.h>
 #include <Engine/World/World.h>
-#include <Engine/World/Lights/PointLight.h>
-#include <Engine/World/Lights/DirectionalLight.h>
-#include <Engine/World/Lights/SkyLight.h>
-#include <Engine/World/Actors/PlayerController.h>
-#include <Engine/World/Components/StaticMeshComponent.h>
-#include <Engine/World/Components/SkyboxComponent.h>
+#include <Engine/World/Actors/Actors.h>
+#include <Engine/World/Components/Components.h>
 #include <RendererCore/TextureFactory.h>
 #include <RendererCore/TextureHelpers.h>
 #include <Renderer/FrameResources.h>
@@ -31,7 +27,8 @@
 
 static void TryCompressBC1(FTextureCompressor& Compressor, FRHITextureRef& Texture)
 {
-    if (Texture && !IsBlockCompressed(Texture->GetDesc().Format) && IsBlockCompressedAligned(Texture->GetDesc().Extent.X) && IsBlockCompressedAligned(Texture->GetDesc().Extent.Y))
+    if (Texture && !IsBlockCompressed(Texture->GetDesc().Format) && IsBlockCompressedAligned(Texture->GetDesc().Extent.X) && 
+        IsBlockCompressedAligned(Texture->GetDesc().Extent.Y))
     {
         FRHITextureRef Compressed;
         if (Compressor.CompressBC1(Texture, Compressed))
@@ -43,7 +40,8 @@ static void TryCompressBC1(FTextureCompressor& Compressor, FRHITextureRef& Textu
 
 static void TryCompressBC5(FTextureCompressor& Compressor, FRHITextureRef& Texture)
 {
-    if (Texture && !IsBlockCompressed(Texture->GetDesc().Format) && IsBlockCompressedAligned(Texture->GetDesc().Extent.X) && IsBlockCompressedAligned(Texture->GetDesc().Extent.Y))
+    if (Texture && !IsBlockCompressed(Texture->GetDesc().Format) && IsBlockCompressedAligned(Texture->GetDesc().Extent.X) && 
+        IsBlockCompressedAligned(Texture->GetDesc().Extent.Y))
     {
         FRHITextureRef Compressed;
         if (Compressor.CompressBC5(Texture, Compressed))
@@ -51,6 +49,30 @@ static void TryCompressBC5(FTextureCompressor& Compressor, FRHITextureRef& Textu
             Texture = Compressed;
         }
     }
+}
+
+static bool AddSandboxPlayer(FWorld* World, const FRHITextureRef& Skybox)
+{
+    FCameraActor* CameraActor = World->SpawnActor<FCameraActor>(Vector3(0.0f, 10.0f, -2.0f), Vector3(0.0f, 0.0f, 0.0f));
+    FSandboxPlayerController* Player = World->SpawnActor<FSandboxPlayerController>();
+
+    if (!CameraActor || !Player)
+    {
+        return false;
+    }
+
+    CameraActor->SetName("Main Camera");
+    Player->SetName("PlayerController");
+    Player->SetCameraActor(CameraActor);
+    World->SetActiveCamera(CameraActor->GetCameraComponent());
+
+    if (FSkyboxComponent* SkyboxComponent = NewObject<FSkyboxComponent>())
+    {
+        SkyboxComponent->SetCubeMap(Skybox);
+        Player->AddComponent(SkyboxComponent);
+    }
+
+    return true;
 }
 
 IMPLEMENT_ENGINE_MODULE(FSandbox, Sandbox);
@@ -564,95 +586,67 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         return false;
     }
 
-    // Add Camera
-    if (FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>())
+    if (!AddSandboxPlayer(InWorld, Skybox))
     {
-        // Add camera to the world
-        InWorld->AddCamera(Player->GetCamera());
-        InWorld->AddActor(Player);
-
-        // Add Skybox
-        if (FSkyboxComponent* SkyboxComponent = NewObject<FSkyboxComponent>())
-        {
-            // Set skybox cube-map
-            SkyboxComponent->SetCubeMap(Skybox);
-            Player->AddComponent(SkyboxComponent);
-        }
+        return false;
     }
 
     // Add PointLights
     const float Intensity      = 80.0f;
     const float ShadowFarPlane = 35.0f;
-    if (FPointLight* PointLight0 = NewObject<FPointLight>())
+
+    if (FPointLightActor* PointLightActor0 = InWorld->SpawnActor<FPointLightActor>(Vector3(15.0f, 2.5f, 0.0f), true))
     {
-        PointLight0->SetPosition(Vector3(15.0f, 2.5f, 0.0f));
+        FPointLightComponent* PointLight0 = PointLightActor0->GetLightComponent();
         PointLight0->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         PointLight0->SetShadowBias(0.02f);
         PointLight0->SetShadowFarPlane(ShadowFarPlane);
         PointLight0->SetIntensity(Intensity);
-        PointLight0->SetShadowCaster(true);
-
-        InWorld->AddLight(PointLight0);
     }
 
-    if (FPointLight* PointLight1 = NewObject<FPointLight>())
+    if (FPointLightActor* PointLightActor1 = InWorld->SpawnActor<FPointLightActor>(Vector3(-15.0f, 2.5f, 0.0f), true))
     {
-        PointLight1->SetPosition(Vector3(-15.0f, 2.5f, 0.0f));
+        FPointLightComponent* PointLight1 = PointLightActor1->GetLightComponent();
         PointLight1->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         PointLight1->SetShadowBias(0.02f);
         PointLight1->SetShadowFarPlane(ShadowFarPlane);
         PointLight1->SetIntensity(Intensity);
-        PointLight1->SetShadowCaster(true);
-
-        InWorld->AddLight(PointLight1);
     }
 
-    if (FPointLight* PointLight2 = NewObject<FPointLight>())
+    if (FPointLightActor* PointLightActor2 = InWorld->SpawnActor<FPointLightActor>(Vector3(17.0f, 10.0f, 6.0f), true))
     {
-        PointLight2->SetPosition(Vector3(17.0f, 10.0f, 6.0f));
+        FPointLightComponent* PointLight2 = PointLightActor2->GetLightComponent();
         PointLight2->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         PointLight2->SetShadowBias(0.02f);
         PointLight2->SetShadowFarPlane(ShadowFarPlane);
         PointLight2->SetIntensity(Intensity);
-        PointLight2->SetShadowCaster(true);
-
-        InWorld->AddLight(PointLight2);
     }
 
-    if (FPointLight* PointLight3 = NewObject<FPointLight>())
+    if (FPointLightActor* PointLightActor3 = InWorld->SpawnActor<FPointLightActor>(Vector3(-18.0f, 10.0f, 6.0f), true))
     {
-        PointLight3->SetPosition(Vector3(-18.0f, 10.0f, 6.0f));
+        FPointLightComponent* PointLight3 = PointLightActor3->GetLightComponent();
         PointLight3->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         PointLight3->SetShadowBias(0.02f);
         PointLight3->SetShadowFarPlane(ShadowFarPlane);
         PointLight3->SetIntensity(Intensity);
-        PointLight3->SetShadowCaster(true);
-
-        InWorld->AddLight(PointLight3);
     }
 
-    if (FPointLight* PointLight4 = NewObject<FPointLight>())
+    if (FPointLightActor* PointLightActor4 = InWorld->SpawnActor<FPointLightActor>(Vector3(17.0f, 10.0f, -7.0f), true))
     {
-        PointLight4->SetPosition(Vector3(17.0f, 10.0f, -7.0f));
+        FPointLightComponent* PointLight4 = PointLightActor4->GetLightComponent();
         PointLight4->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         PointLight4->SetShadowBias(0.02f);
         PointLight4->SetShadowFarPlane(ShadowFarPlane);
         PointLight4->SetIntensity(Intensity);
-        PointLight4->SetShadowCaster(true);
-
-        InWorld->AddLight(PointLight4);
     }
 
-    if (FPointLight* PointLight5 = NewObject<FPointLight>())
+    if (FPointLightActor* PointLightActor5 = InWorld->SpawnActor<FPointLightActor>(Vector3(-18.0f, 10.0f, -7.0f), true))
     {
-        PointLight5->SetPosition(Vector3(-18.0f, 10.0f, -7.0f));
+        FPointLightComponent* PointLight5 = PointLightActor5->GetLightComponent();
         PointLight5->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         PointLight5->SetShadowBias(0.02f);
         PointLight5->SetShadowFarPlane(ShadowFarPlane);
         PointLight5->SetIntensity(Intensity);
-        PointLight5->SetShadowCaster(true);
-
-        InWorld->AddLight(PointLight5);
     }
 
 #if ENABLE_LIGHT_TEST
@@ -663,39 +657,32 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
         for (uint32 i = 0; i < 256; i++)
         {
-            float x = RandomFloats(Generator) * 35.0f - 17.5f;
-            float y = RandomFloats(Generator) * 22.0f;
-            float z = RandomFloats(Generator) * 16.0f - 8.0f;
+            float x          = RandomFloats(Generator) * 35.0f - 17.5f;
+            float y          = RandomFloats(Generator) * 22.0f;
+            float z          = RandomFloats(Generator) * 16.0f - 8.0f;
             float Intentsity = RandomFloats(Generator) * 5.0f + 1.0f;
 
-            FPointLight* Light = NewObject<FPointLight>();
-            if (Light)
+            if (FPointLightActor* LightActor = InWorld->SpawnActor<FPointLightActor>(Vector3(x, y, z), false))
             {
-                Light->SetPosition(x, y, z);
+                FPointLightComponent* Light = LightActor->GetLightComponent();
                 Light->SetColor(RandomFloats(Generator), RandomFloats(Generator), RandomFloats(Generator));
                 Light->SetIntensity(Intentsity);
-                FWorld->AddLight(Light);
             }
         }
     }
 #endif
 
     // Add SkyLight
-    if (FSkyLight* SkyLight = NewObject<FSkyLight>())
-    {
-        SkyLight->SetCubeMap(Skybox);
-        InWorld->AddLight(SkyLight);
-    }
+    InWorld->SpawnActor<FSkyLightActor>(Skybox);
 
     // Add DirectionalLight
-    if (FDirectionalLight* DirectionalLight = NewObject<FDirectionalLight>())
+    if (FDirectionalLightActor* DirectionalLightActor = InWorld->SpawnActor<FDirectionalLightActor>(
+        Vector3(Math::DegreesToRadians(35.0f), Math::DegreesToRadians(135.0f), 0.0f)))
     {
+        FDirectionalLightComponent* DirectionalLight = DirectionalLightActor->GetLightComponent();
         DirectionalLight->SetShadowBias(0.0005f);
         DirectionalLight->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
-        DirectionalLight->SetRotation(Vector3(Math::DegreesToRadians(35.0f), Math::DegreesToRadians(135.0f), 0.0f));
-
-        InWorld->AddLight(DirectionalLight);
     }
 
     return true;
@@ -747,38 +734,22 @@ bool FSandbox::CreateBistro(FWorld* InWorld)
         return false;
     }
 
-    // Add Camera
-    if (FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>())
+    if (!AddSandboxPlayer(InWorld, Skybox))
     {
-        // Add camera to the world
-        InWorld->AddCamera(Player->GetCamera());
-        InWorld->AddActor(Player);
-
-        // Add Skybox
-        if (FSkyboxComponent* SkyboxComponent = NewObject<FSkyboxComponent>())
-        {
-            // Set skybox cube-map
-            SkyboxComponent->SetCubeMap(Skybox);
-            Player->AddComponent(SkyboxComponent);
-        }
+        return false;
     }
 
     // Add SkyLight
-    if (FSkyLight* SkyLight = NewObject<FSkyLight>())
-    {
-        SkyLight->SetCubeMap(Skybox);
-        InWorld->AddLight(SkyLight);
-    }
+    InWorld->SpawnActor<FSkyLightActor>(Skybox);
 
     // Add DirectionalLight
-    if (FDirectionalLight* DirectionalLight = NewObject<FDirectionalLight>())
+    if (FDirectionalLightActor* DirectionalLightActor = InWorld->SpawnActor<FDirectionalLightActor>(
+        Vector3(Math::DegreesToRadians(35.0f), Math::DegreesToRadians(135.0f), 0.0f)))
     {
+        FDirectionalLightComponent* DirectionalLight = DirectionalLightActor->GetLightComponent();
         DirectionalLight->SetShadowBias(0.0005f);
         DirectionalLight->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
-        DirectionalLight->SetRotation(Vector3(Math::DegreesToRadians(35.0f), Math::DegreesToRadians(135.0f), 0.0f));
-
-        InWorld->AddLight(DirectionalLight);
     }
 
     return true;
@@ -813,78 +784,56 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
         return false;
     }
 
-    // Add Camera
-    if (FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>())
+    if (!AddSandboxPlayer(InWorld, Skybox))
     {
-        // Add camera to the world
-        InWorld->AddCamera(Player->GetCamera());
-        InWorld->AddActor(Player);
-
-        // Add Skybox
-        if (FSkyboxComponent* SkyboxComponent = NewObject<FSkyboxComponent>())
-        {
-            // Set skybox cube-map
-            SkyboxComponent->SetCubeMap(Skybox);
-            Player->AddComponent(SkyboxComponent);
-        }
+        return false;
     }
 
     // Add SkyLight
-    if (FSkyLight* SkyLight = NewObject<FSkyLight>())
+    InWorld->SpawnActor<FSkyLightActor>(Skybox);
+
+    // Load Reflection Probe
+    FRHITextureRef ReflectionProbeExterior = LoadCubeMapFromPanorama(ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple_Reflection.hdr");
+    if (!ReflectionProbeExterior)
     {
-        SkyLight->SetCubeMap(Skybox);
-        InWorld->AddLight(SkyLight);
+        DEBUG_BREAK();
+        return false;
     }
 
     // Add Light-Probes
-    if (FLightProbe* LightProbe = NewObject<FLightProbe>())
+    if (FLightProbeActor* LightProbeActor = InWorld->SpawnActor<FLightProbeActor>(Vector3(0.0f, 13.0f, 0.5f), ReflectionProbeExterior))
     {
-        // Load Reflection Probe
-        FRHITextureRef ReflectionProbe = LoadCubeMapFromPanorama(ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple_Reflection.hdr");
-        if (!ReflectionProbe)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        LightProbe->SetPosition(Vector3(0.0f, 13.0f, 0.5f));
+        FLightProbeComponent* LightProbe = LightProbeActor->GetLightProbeComponent();
         LightProbe->SetBoxExtent(Vector3(19.0f, 21.5f, 22.0f));
         LightProbe->SetBoxOffset(Vector3(0.0f, 0.0f, 0.0f));
-        LightProbe->SetCubeMap(ReflectionProbe);
         LightProbe->SetBoxProjection(true);
+    }
 
-        InWorld->AddLightProbe(LightProbe);
+    // Load Reflection Probe
+    FRHITextureRef ReflectionProbeInterior = LoadCubeMapFromPanorama(ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple_Reflection_Interior.hdr");
+    if (!ReflectionProbeInterior)
+    {
+        DEBUG_BREAK();
+        return false;
     }
 
     // Add Light-Probes
-    if (FLightProbe* LightProbe = NewObject<FLightProbe>())
+    if (FLightProbeActor* LightProbeActor = InWorld->SpawnActor<FLightProbeActor>(Vector3(0.0f, 6.0f, 30.0f), ReflectionProbeInterior))
     {
-        // Load Reflection Probe
-        FRHITextureRef ReflectionProbe = LoadCubeMapFromPanorama(ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple_Reflection_Interior.hdr");
-        if (!ReflectionProbe)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        LightProbe->SetPosition(Vector3(0.0f, 6.0f, 30.0f));
+        FLightProbeComponent* LightProbe = LightProbeActor->GetLightProbeComponent();
         LightProbe->SetBoxExtent(Vector3(19.0f, 21.5f, 22.0f));
         LightProbe->SetBoxOffset(Vector3(0.0f, 0.0f, 0.0f));
-        LightProbe->SetCubeMap(ReflectionProbe);
         LightProbe->SetBoxProjection(true);
-
-        InWorld->AddLightProbe(LightProbe);
     }
 
     // Add DirectionalLight
-    if (FDirectionalLight* DirectionalLight = NewObject<FDirectionalLight>())
+    if (FDirectionalLightActor* DirectionalLightActor = InWorld->SpawnActor<FDirectionalLightActor>(
+        Vector3(Math::DegreesToRadians(-55.0f), Math::DegreesToRadians(325.0f), 0.0f)))
     {
+        FDirectionalLightComponent* DirectionalLight = DirectionalLightActor->GetLightComponent();
         DirectionalLight->SetShadowBias(0.0005f);
         DirectionalLight->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
-        DirectionalLight->SetRotation(Vector3(Math::DegreesToRadians(-55.0f), Math::DegreesToRadians(325.0f), 0.0f));
-
-        InWorld->AddLight(DirectionalLight);
     }
 
     return true;
@@ -919,38 +868,22 @@ bool FSandbox::CreateEmeraldSquare(FWorld* InWorld)
         return false;
     }
 
-    // Add Camera
-    if (FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>())
+    if (!AddSandboxPlayer(InWorld, Skybox))
     {
-        // Add camera to the world
-        InWorld->AddCamera(Player->GetCamera());
-        InWorld->AddActor(Player);
-
-        // Add Skybox
-        if (FSkyboxComponent* SkyboxComponent = NewObject<FSkyboxComponent>())
-        {
-            // Set skybox cube-map
-            SkyboxComponent->SetCubeMap(Skybox);
-            Player->AddComponent(SkyboxComponent);
-        }
+        return false;
     }
 
     // Add SkyLight
-    if (FSkyLight* SkyLight = NewObject<FSkyLight>())
-    {
-        SkyLight->SetCubeMap(Skybox);
-        InWorld->AddLight(SkyLight);
-    }
+    InWorld->SpawnActor<FSkyLightActor>(Skybox);
 
     // Add DirectionalLight
-    if (FDirectionalLight* DirectionalLight = NewObject<FDirectionalLight>())
+    if (FDirectionalLightActor* DirectionalLightActor = InWorld->SpawnActor<FDirectionalLightActor>(
+        Vector3(Math::DegreesToRadians(35.0f), Math::DegreesToRadians(135.0f), 0.0f)))
     {
+        FDirectionalLightComponent* DirectionalLight = DirectionalLightActor->GetLightComponent();
         DirectionalLight->SetShadowBias(0.0005f);
         DirectionalLight->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
-        DirectionalLight->SetRotation(Vector3(Math::DegreesToRadians(35.0f), Math::DegreesToRadians(135.0f), 0.0f));
-
-        InWorld->AddLight(DirectionalLight);
     }
 
     return true;
@@ -1114,17 +1047,14 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
 
     // Add PointLight
     const float Intensity = 10.0f;
-    if (FPointLight* PointLight = NewObject<FPointLight>())
+    if (FPointLightActor* PointLightActor = InWorld->SpawnActor<FPointLightActor>(Vector3(8.0f, 1.0f, -8.0f), true))
     {
-        PointLight->SetPosition(Vector3(8.0f, 1.0f, -8.0f));
+        FPointLightComponent* PointLight = PointLightActor->GetLightComponent();
         PointLight->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         PointLight->SetShadowBias(0.006f);
         PointLight->SetShadowNearPlane(0.01f);
         PointLight->SetShadowFarPlane(30.0f);
         PointLight->SetIntensity(Intensity);
-        PointLight->SetShadowCaster(true);
-
-        InWorld->AddLight(PointLight);
     }
 
     // Load Skybox
@@ -1135,40 +1065,21 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
         return false;
     }
 
-    // Add Camera
-    if (FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>())
+    if (!AddSandboxPlayer(InWorld, Skybox))
     {
-        Player->SetName("PlayerController");
-
-        // Add camera to the world
-        InWorld->AddCamera(Player->GetCamera());
-        InWorld->AddActor(Player);
-
-        // Add Skybox
-        if (FSkyboxComponent* SkyboxComponent = NewObject<FSkyboxComponent>())
-        {
-            // Set skybox cube-map
-            SkyboxComponent->SetCubeMap(Skybox);
-            Player->AddComponent(SkyboxComponent);
-        }
+        return false;
     }
 
     // Add SkyLight
-    if (FSkyLight* SkyLight = NewObject<FSkyLight>())
-    {
-        SkyLight->SetCubeMap(Skybox);
-        InWorld->AddLight(SkyLight);
-    }
+    InWorld->SpawnActor<FSkyLightActor>(Skybox);
 
     // Add DirectionalLight
-    if (FDirectionalLight* DirectionalLight = NewObject<FDirectionalLight>())
+    if (FDirectionalLightActor* DirectionalLightActor = InWorld->SpawnActor<FDirectionalLightActor>(Vector3(Math::DegreesToRadians(45.0f), 0.0f, 0.0f)))
     {
+        FDirectionalLightComponent* DirectionalLight = DirectionalLightActor->GetLightComponent();
         DirectionalLight->SetShadowBias(0.0005f);
         DirectionalLight->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
-        DirectionalLight->SetRotation(Vector3(Math::DegreesToRadians(45.0f), 0.0f, 0.0f));
-
-        InWorld->AddLight(DirectionalLight);
     }
 
     return true;

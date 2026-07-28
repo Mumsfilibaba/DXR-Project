@@ -5,8 +5,6 @@
 #include "Core/Math/Frustum.h"
 #include "Renderer/Scene/SceneObject.h"
 
-class FSkyLight;
-
 struct FSceneSkyLight : public FSceneObject
 {
     FSceneSkyLight(FScene* InScene, const FRHITextureRef& InSourceCubeMap);

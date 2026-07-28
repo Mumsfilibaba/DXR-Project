@@ -9,9 +9,9 @@
 #include "Application/Widgets/ViewportWidget.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #if EDITOR_BUILD
-#include "Engine/EditorEngine.h"
+    #include "Engine/EditorEngine.h"
 #else
-#include "Engine/RuntimeEngine.h"
+    #include "Engine/RuntimeEngine.h"
 #endif
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Resources/Material.h"
@@ -20,9 +20,8 @@
 #include "RendererCore/RenderSettings.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
-
 #if ENGINE_DEBUG_INPUT
-#include "Engine/Debug/InputDebugInputHandler.h"
+    #include "Engine/Debug/InputDebugInputHandler.h"
 #endif
 
 static FAutoConsoleCommand CCmdExit(
@@ -119,7 +118,6 @@ bool FEngine::CreateEngineWindow()
     
     EngineWindow = CreateWidget<FWindowWidget>(WindowInitializer);
 
-    // Initialize and show the game-window
     FApplication::Get().CreateWindow(EngineWindow);
     return true;
 }
@@ -179,13 +177,10 @@ void FEngine::OnEngineWindowClosed()
 
 void FEngine::OnEngineWindowMoved(const IntVector2& /* NewScreenPosition */)
 {
-    // LOG_INFO("Window Moved x=%d y=%d", NewScreenPosition.x, NewScreenPosition.y);
 }
 
 void FEngine::OnEngineWindowResized(const IntVector2& NewScreenSize)
 {
-    // LOG_INFO("Window Resized x=%d y=%d", NewScreenSize.x, NewScreenSize.y);
-
     IRendererModule* RendererModule = IRendererModule::Get();
     RendererModule->ResizeSwapChain(SceneViewport->GetRHISwapChain(), NewScreenSize.X, NewScreenSize.Y);
 
@@ -275,6 +270,7 @@ bool FEngine::Init()
 
     // Create a new world
     World = new FWorld();
+
     if (IRendererModule* Renderer = IRendererModule::Get())
     {
         if (IScene* RendererScene = Renderer->CreateScene(World))
@@ -387,6 +383,7 @@ void FEngine::Release()
         if (IRendererModule* Renderer = IRendererModule::Get())
         {
             Renderer->DestroyScene(World->GetSceneInterface());
+            World->ClearSceneInterface();
         }
 
         delete World;

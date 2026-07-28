@@ -3,8 +3,6 @@
 #include "Core/Containers/UniquePtr.h"
 #include "Renderer/Scene/MeshBatch.h"
 
-class FCamera;
-
 class FSceneView
 {
 public:

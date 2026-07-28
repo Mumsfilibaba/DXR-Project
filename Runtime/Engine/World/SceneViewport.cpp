@@ -2,6 +2,7 @@
 #include "Application/Application.h"
 #include "Application/Widgets/ViewportWidget.h"
 #include "Engine/World/Actors/PlayerInput.h"
+#include "Engine/World/Components/CameraComponent.h"
 #include "Engine/World/SceneViewport.h"
 #include "RHI/RHI.h"
 
@@ -76,7 +77,7 @@ void FSceneViewport::Tick()
 {
     if (World)
     {
-        FCamera* Camera = World->GetCamera();
+        FCameraComponent* Camera = World->GetActiveCamera();
         if (Camera && Viewport.IsValid())
         {
             const FRectangle& ViewportArea = Viewport->GetContentRectangle();

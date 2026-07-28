@@ -1,29 +1,19 @@
 #pragma once
 #include "Core/Math/Vector3.h"
-#include "Engine/Core/Object.h"
+#include "Engine/World/Components/SceneComponent.h"
 
-class ENGINE_API FLight : public FObject
+class ENGINE_API FLightComponent : public FSceneComponent
 {
 public:
-    FOBJECT_DECLARE_CLASS(FLight, FObject);
+    FOBJECT_DECLARE_CLASS(FLightComponent, FSceneComponent);
 
-    FLight(const FObjectInitializer& ObjectInitializer);
-    FLight(const FObjectInitializer& ObjectInitializer, float InShadowNearPlane, float InShadowFarPlane);
-    virtual ~FLight();
+    FLightComponent(const FObjectInitializer& ObjectInitializer);
+    virtual ~FLightComponent();
 
-    // Set color of a light
     void SetColor(const Vector3& InColor);
-
-    // Set intensity of the light
     void SetIntensity(float InIntensity);
-
-    // Set near-plane for shadows
     void SetShadowNearPlane(float InShadowNearPlane);
-
-    // Set near-plane for shadows
     void SetShadowFarPlane(float InShadowFarPlane);
-
-    // Set shadow-bias
     void SetShadowBias(float InShadowBias);
 
     FORCEINLINE const Vector3& GetColor() const
@@ -52,6 +42,8 @@ public:
     }
 
 protected:
+    FLightComponent(const FObjectInitializer& ObjectInitializer, float InShadowNearPlane, float InShadowFarPlane);
+
     Vector3 Color;
     float   Intensity;
     float   ShadowNearPlane;

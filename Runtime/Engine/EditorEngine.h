@@ -45,25 +45,21 @@ public:
     const TSharedPtr<FEditorStatsWidget>&            GetStatsWidget()            const { return StatsWidget; }
 
     void SetSelectedActor(FActor* InActor);
-    void SetSelectedLight(FLight* InLight);
-    void SetSelectedCamera(FCamera* InCamera);
-    void SetSelectedLightProbe(FLightProbe* InProbe);
     void ClearSelection();
 
-    FActor*      GetSelectedActor()      const { return SelectedActor; }
-    FLight*      GetSelectedLight()      const { return SelectedLight; }
-    FCamera*     GetSelectedCamera()     const { return SelectedCamera; }
-    FLightProbe* GetSelectedLightProbe() const { return SelectedLightProbe; }
+    FActor* GetSelectedActor() const
+    {
+        return SelectedActor;
+    }
 
 private:
     static constexpr EFormat ViewportImageFormat = EFormat::R8G8B8A8_Unorm;
 
     bool CreateViewportRenderTarget();
+    void OnActorRemoved(FActor* RemovedActor);
 
     FActor*                                   SelectedActor;
-    FLight*                                   SelectedLight;
-    FCamera*                                  SelectedCamera;
-    FLightProbe*                              SelectedLightProbe;
+    FDelegateHandle                           ActorRemovedDelegateHandle;
     TSharedPtr<FEditorDockspaceWidget>        DockspaceWidget;
     TSharedPtr<FEditorFooterWidget>           FooterWidget;
     TSharedPtr<FEditorOutputLogWidget>        OutputLogWidget;

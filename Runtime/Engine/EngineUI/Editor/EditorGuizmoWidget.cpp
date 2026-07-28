@@ -1,8 +1,10 @@
 #include "Engine/EditorEngine.h"
 #include "Engine/World/World.h"
 #include "Engine/World/Actors/Actor.h"
-#include "Engine/World/Lights/PointLight.h"
-#include "Engine/World/Reflections/LightProbe.h"
+#include "Engine/World/Components/CameraComponent.h"
+#include "Engine/World/Components/DirectionalLightComponent.h"
+#include "Engine/World/Components/LightProbeComponent.h"
+#include "Engine/World/Components/PointLightComponent.h"
 #include "Engine/EngineUI/Editor/EditorGuizmoWidget.h"
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h"
 #include "ImGuiPlugin/ImGuiCore.h"
@@ -90,7 +92,7 @@ void FEditorGuizmoWidget::Draw()
         return;
     }
 
-    FCamera* Camera = World->GetCamera();
+    FCameraComponent* Camera = World->GetActiveCamera();
     if (!Camera)
     {
         return;
@@ -107,6 +109,7 @@ void FEditorGuizmoWidget::Draw()
 
     const float ViewportWidth  = ViewportMax.x - ViewportMin.x;
     const float ViewportHeight = ViewportMax.y - ViewportMin.y;
+
     if (ViewportWidth <= 0.0f || ViewportHeight <= 0.0f)
     {
         return;
@@ -126,146 +129,61 @@ void FEditorGuizmoWidget::Draw()
 
     UpdateShortcuts(bViewportHovered);
 
-    // We only draw the Gizmo when something is selected.
-    FActor*      SelectedActor      = EditorEngine->GetSelectedActor();
-    FLightProbe* SelectedLightProbe = EditorEngine->GetSelectedLightProbe();
-    FLight*      SelectedLight      = EditorEngine->GetSelectedLight();
-    FCamera*     SelectedCamera     = EditorEngine->GetSelectedCamera();
-
-    const bool bHasAnySelection = (SelectedActor != nullptr) || (SelectedLightProbe != nullptr) || (SelectedLight != nullptr) || (SelectedCamera != nullptr);
-    if (!bHasAnySelection)
+    FActor* SelectedActor = EditorEngine->GetSelectedActor();
+    if (!SelectedActor)
     {
         return;
     }
 
     EditorGuizmo::SetRect(ViewportMin.x, ViewportMin.y, ViewportWidth, ViewportHeight);
+
     EditorGuizmo::SetOrthographic(false);
 
-    // ---------------------------------------------------------------------
-    // Actor (full TRS)
-    // ---------------------------------------------------------------------
+    EditorGuizmo::EOperation::Type EffectiveOperation = Operation;
 
-    if (SelectedActor) 
-    { 
-        Matrix4 Model = SelectedActor->GetTransform().GetTransformMatrix(); 
- 
-        const bool bChanged = EditorGuizmo::Manipulate(Camera->GetViewMatrix(), Camera->GetProjectionMatrix(), Operation, Mode, Model);
-        if (bChanged || EditorGuizmo::IsUsing())
+    if (SelectedActor->HasComponentOfType<FPointLightComponent>() || SelectedActor->HasComponentOfType<FLightProbeComponent>())
+    {
+        EffectiveOperation = EditorGuizmo::EOperation::Translate;
+    }
+    else if (SelectedActor->HasComponentOfType<FDirectionalLightComponent>())
+    {
+        EffectiveOperation = EditorGuizmo::EOperation::Rotate;
+    }
+    else if (SelectedActor->HasComponentOfType<FCameraComponent>() && EffectiveOperation == EditorGuizmo::EOperation::Scale)
+    {
+        EffectiveOperation = EditorGuizmo::EOperation::Translate;
+    }
+
+    Matrix4 Model = SelectedActor->GetTransform().GetTransformMatrix();
+
+    const bool bChanged = EditorGuizmo::Manipulate(Camera->GetViewMatrix(), Camera->GetProjectionMatrix(), EffectiveOperation, Mode, Model);
+    if (bChanged || EditorGuizmo::IsUsing())
+    {
+        Vector3 Translation;
+        Vector3 RotationDegrees;
+        Vector3 Scale;
+
+        EditorGuizmo::DecomposeMatrixToComponents(Model, Translation, RotationDegrees, Scale);
+
+        if (EffectiveOperation == EditorGuizmo::EOperation::Translate)
         {
-            Vector3 Translation;
-            Vector3 RotationDegrees;
-            Vector3 Scale;
-            EditorGuizmo::DecomposeMatrixToComponents(Model, Translation, RotationDegrees, Scale);
-
-            // Only commit the components that the current gizmo operation is expected to modify.
-            // This prevents Decompose->Recompose drift (e.g. translation/scale changing rotation).
-            if (Operation == EditorGuizmo::EOperation::Translate) 
+            SelectedActor->GetTransform().SetTranslation(Translation);
+        }
+        else if (EffectiveOperation == EditorGuizmo::EOperation::Rotate)
+        {
+            const Vector3 RotationRadians = Vector3::DegreesToRadians(RotationDegrees);
+            if (FCameraComponent* CameraComponent = SelectedActor->GetComponentOfType<FCameraComponent>())
             {
-                SelectedActor->GetTransform().SetTranslation(Translation); 
+                CameraComponent->SetRotation(RotationRadians);
             }
-            else if (Operation == EditorGuizmo::EOperation::Rotate) 
-            { 
-                SelectedActor->GetTransform().SetRotation(Vector3::DegreesToRadians(RotationDegrees)); 
-            }
-            else if (Operation == EditorGuizmo::EOperation::Scale) 
-            { 
-                SelectedActor->GetTransform().SetScale(Scale); 
-            } 
             else
-            { 
-                SelectedActor->GetTransform().SetTranslation(Translation); 
-                SelectedActor->GetTransform().SetRotation(Vector3::DegreesToRadians(RotationDegrees)); 
-                SelectedActor->GetTransform().SetScale(Scale); 
-            }
-        }
- 
-        return;
-    }
-
-    // ---------------------------------------------------------------------
-    // Camera (TR, no scale)
-    // ---------------------------------------------------------------------
-
-    if (SelectedCamera) 
-    { 
-        const Vector3 CamPos = SelectedCamera->GetPosition(); 
-        const Vector3 CamRot = SelectedCamera->GetRotation(); 
- 
-        Matrix4 Model = (Matrix4::Scale(Vector3(1.0f, 1.0f, 1.0f)) * Matrix4::RotationRollPitchYaw(CamRot)) * Matrix4::Translation(CamPos); 
- 
-        const bool bChanged = EditorGuizmo::Manipulate(Camera->GetViewMatrix(), Camera->GetProjectionMatrix(), Operation, Mode, Model); 
-        if (bChanged || EditorGuizmo::IsUsing()) 
-        { 
-            Vector3 Translation; 
-            Vector3 RotationDegrees; 
-            Vector3 Scale; 
-            EditorGuizmo::DecomposeMatrixToComponents(Model, Translation, RotationDegrees, Scale); 
- 
-            if (Operation == EditorGuizmo::EOperation::Translate) 
-            { 
-                SelectedCamera->SetPosition(Translation.X, Translation.Y, Translation.Z); 
-            } 
-            else if (Operation == EditorGuizmo::EOperation::Rotate) 
-            { 
-                const Vector3 RotationRadians = Vector3::DegreesToRadians(RotationDegrees); 
-                SelectedCamera->SetRotation(RotationRadians.X, RotationRadians.Y, RotationRadians.Z); 
-            } 
-            else 
-            { 
-                SelectedCamera->SetPosition(Translation.X, Translation.Y, Translation.Z); 
- 
-                const Vector3 RotationRadians = Vector3::DegreesToRadians(RotationDegrees); 
-                SelectedCamera->SetRotation(RotationRadians.X, RotationRadians.Y, RotationRadians.Z); 
-            }
-        }
- 
-        return;
-    } 
-
-    // ---------------------------------------------------------------------
-    // Light Probe (translation only)
-    // ---------------------------------------------------------------------
-
-    if (SelectedLightProbe)
-    {
-        const Vector3 Pos = SelectedLightProbe->GetPosition();
-        Matrix4 Model = Matrix4::Translation(Pos);
-
-        const bool bChanged = EditorGuizmo::Manipulate(Camera->GetViewMatrix(), Camera->GetProjectionMatrix(), EditorGuizmo::EOperation::Translate, EditorGuizmo::EMode::World, Model);
-        if (bChanged || EditorGuizmo::IsUsing())
-        {
-            Vector3 Translation;
-            Vector3 RotationDegrees;
-            Vector3 Scale;
-            EditorGuizmo::DecomposeMatrixToComponents(Model, Translation, RotationDegrees, Scale);
-
-            SelectedLightProbe->SetPosition(Translation);
-        }
-
-        return;
-    }
-
-    // ---------------------------------------------------------------------
-    // Point Light (translation only)
-    // ---------------------------------------------------------------------
-
-    if (SelectedLight)
-    {
-        if (FPointLight* PointLight = Cast<FPointLight>(SelectedLight))
-        {
-            const Vector3 Pos = PointLight->GetPosition();
-            Matrix4 Model = Matrix4::Translation(Pos);
-
-            const bool bChanged = EditorGuizmo::Manipulate(Camera->GetViewMatrix(), Camera->GetProjectionMatrix(), EditorGuizmo::EOperation::Translate, EditorGuizmo::EMode::World, Model);
-            if (bChanged || EditorGuizmo::IsUsing())
             {
-                Vector3 Translation;
-                Vector3 RotationDegrees;
-                Vector3 Scale;
-                EditorGuizmo::DecomposeMatrixToComponents(Model, Translation, RotationDegrees, Scale);
-
-                PointLight->SetPosition(Translation);
+                SelectedActor->GetTransform().SetRotation(RotationRadians);
             }
+        }
+        else if (EffectiveOperation == EditorGuizmo::EOperation::Scale)
+        {
+            SelectedActor->GetTransform().SetScale(Scale);
         }
     }
 }

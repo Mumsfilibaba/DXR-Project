@@ -1,0 +1,13 @@
+#pragma once
+#include "Engine/World/Components/ActorComponent.h"
+#include "Engine/World/Components/CameraComponent.h"
+#include "Engine/World/Components/DirectionalLightComponent.h"
+#include "Engine/World/Components/InputComponent.h"
+#include "Engine/World/Components/LightComponent.h"
+#include "Engine/World/Components/LightProbeComponent.h"
+#include "Engine/World/Components/PointLightComponent.h"
+#include "Engine/World/Components/SceneComponent.h"
+#include "Engine/World/Components/SkyboxComponent.h"
+#include "Engine/World/Components/SkyLightComponent.h"
+#include "Engine/World/Components/SpotLightComponent.h"
+#include "Engine/World/Components/StaticMeshComponent.h"

@@ -1,34 +1,28 @@
 #pragma once
 #include "Core/Math/Matrix4.h"
-#include "Engine/World/Lights/Light.h"
+#include "Engine/World/Components/LightComponent.h"
 
-class ENGINE_API FPointLight : public FLight
+class ENGINE_API FPointLightComponent : public FLightComponent
 {
 public:
-    FOBJECT_DECLARE_CLASS(FPointLight, FLight);
+    FOBJECT_DECLARE_CLASS(FPointLightComponent, FLightComponent);
 
-    FPointLight(const FObjectInitializer& ObjectInitializer);
-    ~FPointLight();
+    FPointLightComponent(const FObjectInitializer& ObjectInitializer);
+    ~FPointLightComponent();
 
-    void SetPosition(const Vector3& InPosition);
+    virtual void Tick(float DeltaTime) override;
+
+    void UpdateShadowMatrices();
     void SetShadowNearPlane(float InShadowNearPlane);
     void SetShadowFarPlane(float InShadowFarPlane);
+    void SetShadowCaster(bool bInShadowCaster);
 
-    FORCEINLINE void SetShadowCaster(bool bInShadowCaster)
-    {
-        bShadowCaster = bInShadowCaster;
-        CalculateMatrices();
-    }
-
-    FORCEINLINE bool IsShadowCaster() const
+    bool IsShadowCaster() const
     {
         return bShadowCaster;
     }
 
-    FORCEINLINE const Vector3& GetPosition() const
-    {
-        return Position;
-    }
+    const Vector3& GetPosition() const;
 
     FORCEINLINE const Matrix4& GetViewProjectionMatrix(uint32 Index) const
     {
@@ -54,6 +48,5 @@ private:
     Matrix4 ViewProjMatrices[6];
     Matrix4 ViewMatrices[6];
     Matrix4 ProjMatrices[6];
-    Vector3 Position;
     bool    bShadowCaster;
 };

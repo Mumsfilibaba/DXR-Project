@@ -813,8 +813,9 @@ FRHIShaderResourceView* FD3D12DeviceRHI::CreateShaderResourceView(FRHIResource* 
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc = {};
     Desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-    FRHIResource*   Resource      = nullptr;
-    FD3D12Resource* D3D12Resource = nullptr;
+    FRHIResource*        Resource      = nullptr;
+    FD3D12Resource*      D3D12Resource = nullptr;
+    FD3D12ResourceBase*  ViewOwner     = nullptr;
 
     if (InDesc.IsBufferSRV())
     {
@@ -826,6 +827,7 @@ FRHIShaderResourceView* FD3D12DeviceRHI::CreateShaderResourceView(FRHIResource* 
 
         Resource      = D3D12Buffer;
         D3D12Resource = D3D12Buffer->GetResource();
+        ViewOwner     = D3D12Buffer;
 
         const auto&  BufferDesc = InDesc.Buffer;
         const uint64 ByteOffset = D3D12Buffer->GetGPUVirtualAddress() - D3D12Buffer->GetResource()->GetGPUVirtualAddress();
@@ -885,6 +887,7 @@ FRHIShaderResourceView* FD3D12DeviceRHI::CreateShaderResourceView(FRHIResource* 
 
         Resource      = D3D12Texture;
         D3D12Resource = D3D12Texture->GetResource();
+        ViewOwner     = D3D12Texture;
 
         const bool bIsMultisampled = D3D12Texture->GetDesc().IsMultisampled();
         switch (InDesc.ViewDimension)
@@ -1028,6 +1031,12 @@ FRHIShaderResourceView* FD3D12DeviceRHI::CreateShaderResourceView(FRHIResource* 
         return nullptr;
     }
 
+    if (ViewOwner)
+    {
+        D3D12View->RegisterWithResource(ViewOwner);
+        CHECK(D3D12View->IsRegisteredWithResource(ViewOwner));
+    }
+
     return D3D12View.ReleaseOwnership();
 }
 
@@ -1039,8 +1048,9 @@ FRHIUnorderedAccessView* FD3D12DeviceRHI::CreateUnorderedAccessView(FRHIResource
         return nullptr;
     }
 
-    FRHIResource*   Resource      = nullptr;
-    FD3D12Resource* D3D12Resource = nullptr;
+    FRHIResource*        Resource      = nullptr;
+    FD3D12Resource*      D3D12Resource = nullptr;
+    FD3D12ResourceBase*  ViewOwner     = nullptr;
 
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc = {};
     if (InDesc.IsBufferUAV())
@@ -1053,6 +1063,7 @@ FRHIUnorderedAccessView* FD3D12DeviceRHI::CreateUnorderedAccessView(FRHIResource
 
         Resource      = D3D12Buffer;
         D3D12Resource = D3D12Buffer->GetResource();
+        ViewOwner     = D3D12Buffer;
 
         const auto&  BufferDesc = InDesc.Buffer;
         const uint64 ByteOffset = D3D12Buffer->GetGPUVirtualAddress() - D3D12Buffer->GetResource()->GetGPUVirtualAddress();
@@ -1113,6 +1124,7 @@ FRHIUnorderedAccessView* FD3D12DeviceRHI::CreateUnorderedAccessView(FRHIResource
 
         Resource      = D3D12Texture;
         D3D12Resource = D3D12Texture->GetResource();
+        ViewOwner     = D3D12Texture;
 
         switch (InDesc.ViewDimension)
         {
@@ -1220,6 +1232,8 @@ FRHIUnorderedAccessView* FD3D12DeviceRHI::CreateUnorderedAccessView(FRHIResource
         return nullptr;
     }
 
+    D3D12View->RegisterWithResource(ViewOwner);
+    CHECK(D3D12View->IsRegisteredWithResource(ViewOwner));
     return D3D12View.ReleaseOwnership();
 }
 

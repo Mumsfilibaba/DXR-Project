@@ -7,7 +7,7 @@
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIRayTracing.h"
 #include "Engine/World/World.h"
-#include "Engine/World/Lights/DirectionalLight.h"
+#include "Engine/World/Components/DirectionalLightComponent.h"
 #include "Engine/Resources/Material.h"
 #include "Renderer/RendererModule.h"
 #include "Renderer/RayTracingBindless.h"

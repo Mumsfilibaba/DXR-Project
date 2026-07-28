@@ -33,24 +33,28 @@
 #include "Engine/EngineUI/Editor/EditorFrameProfilerWidget.h"
 
 #include "Engine/World/Actors/Actor.h"
+#include "Engine/World/Actors/CameraActor.h"
+#include "Engine/World/Actors/DirectionalLightActor.h"
+#include "Engine/World/Actors/LightProbeActor.h"
 #include "Engine/World/Actors/PlayerController.h"
 #include "Engine/World/Actors/PlayerInput.h"
+#include "Engine/World/Actors/PointLightActor.h"
+#include "Engine/World/Actors/SkyLightActor.h"
+#include "Engine/World/Actors/SpotLightActor.h"
 
 #include "Engine/World/Components/ActorComponent.h"
+#include "Engine/World/Components/CameraComponent.h"
+#include "Engine/World/Components/DirectionalLightComponent.h"
 #include "Engine/World/Components/InputComponent.h"
+#include "Engine/World/Components/LightComponent.h"
+#include "Engine/World/Components/LightProbeComponent.h"
+#include "Engine/World/Components/PointLightComponent.h"
+#include "Engine/World/Components/SkyLightComponent.h"
+#include "Engine/World/Components/SpotLightComponent.h"
 #include "Engine/World/Components/StaticMeshComponent.h"
 #include "Engine/World/Components/SceneComponent.h"
 #include "Engine/World/Components/SkyboxComponent.h"
 
-#include "Engine/World/Lights/DirectionalLight.h"
-#include "Engine/World/Lights/Light.h"
-#include "Engine/World/Lights/PointLight.h"
-#include "Engine/World/Lights/SkyLight.h"
-#include "Engine/World/Lights/SpotLight.h"
-
-#include "Engine/World/Reflections/LightProbe.h"
-
-#include "Engine/World/Camera.h"
 #include "Engine/World/SceneViewport.h"
 #include "Engine/World/World.h"
 

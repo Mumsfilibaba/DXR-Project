@@ -1,5 +1,4 @@
 #include "RHI/RHITexture.h"
-#include "Engine/World/Lights/SkyLight.h"
 #include "RendererCore/TextureFactory.h"
 #include "Renderer/Scene/SceneSkyLight.h"
 #include "Renderer/FrameResources.h"

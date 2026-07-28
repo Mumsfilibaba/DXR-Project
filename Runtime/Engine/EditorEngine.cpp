@@ -19,13 +19,13 @@
 FEditorEngine::FEditorEngine()
     : FEngine()
     , SelectedActor(nullptr)
-    , SelectedLight(nullptr)
-    , SelectedCamera(nullptr)
-    , SelectedLightProbe(nullptr)
+    , ActorRemovedDelegateHandle()
     , DockspaceWidget(nullptr)
     , FooterWidget(nullptr)
     , OutputLogWidget(nullptr)
+    , ViewportWidget(nullptr)
     , SceneHierarchyWidget(nullptr)
+    , PropertiesWidget(nullptr)
     , ContentBrowserWidget(nullptr)
     , GuizmoWidget(nullptr)
     , RendererSettingsWidget(nullptr)
@@ -48,6 +48,8 @@ bool FEditorEngine::Init()
     {
         return false;
     }
+
+    ActorRemovedDelegateHandle = GetWorld()->GetOnActorRemovedEvent().AddRaw(this, &FEditorEngine::OnActorRemoved);
 
     if (IImguiPlugin::IsEnabled())
     {
@@ -89,6 +91,12 @@ bool FEditorEngine::InitPostRenderer()
 
 void FEditorEngine::Release()
 {
+    if (GetWorld() && ActorRemovedDelegateHandle.IsValid())
+    {
+        GetWorld()->GetOnActorRemovedEvent().Unbind(ActorRemovedDelegateHandle);
+        ActorRemovedDelegateHandle.Reset();
+    }
+
     if (IImguiPlugin::IsEnabled())
     {
         DockspaceWidget.Reset();
@@ -174,42 +182,20 @@ FSceneRenderPacket FEditorEngine::BuildRenderPacket()
 
 void FEditorEngine::SetSelectedActor(FActor* InActor)
 {
-    SelectedActor      = InActor;
-    SelectedLight      = nullptr;
-    SelectedCamera     = nullptr;
-    SelectedLightProbe = nullptr;
-}
-
-void FEditorEngine::SetSelectedLight(FLight* InLight)
-{
-    SelectedLight      = InLight;
-    SelectedActor      = nullptr;
-    SelectedCamera     = nullptr;
-    SelectedLightProbe = nullptr;
-}
-
-void FEditorEngine::SetSelectedCamera(FCamera* InCamera)
-{
-    SelectedCamera     = InCamera;
-    SelectedActor      = nullptr;
-    SelectedLight      = nullptr;
-    SelectedLightProbe = nullptr;
-}
-
-void FEditorEngine::SetSelectedLightProbe(FLightProbe* InProbe)
-{
-    SelectedLightProbe = InProbe;
-    SelectedActor      = nullptr;
-    SelectedLight      = nullptr;
-    SelectedCamera     = nullptr;
+    SelectedActor = InActor;
 }
 
 void FEditorEngine::ClearSelection()
 {
-    SelectedActor      = nullptr;
-    SelectedLight      = nullptr;
-    SelectedCamera     = nullptr;
-    SelectedLightProbe = nullptr;
+    SelectedActor = nullptr;
+}
+
+void FEditorEngine::OnActorRemoved(FActor* RemovedActor)
+{
+    if (SelectedActor == RemovedActor)
+    {
+        ClearSelection();
+    }
 }
 
 bool FEditorEngine::CreateViewportRenderTarget()

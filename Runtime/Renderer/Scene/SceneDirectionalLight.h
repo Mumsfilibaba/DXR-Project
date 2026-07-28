@@ -6,7 +6,6 @@
 #include "Renderer/Scene/SceneObject.h"
 #include "Renderer/Scene/SceneView.h"
 
-class FDirectionalLight;
 struct FDirectionalLightProxyUpdate;
 
 struct FSceneDirectionalLight : public FSceneObject

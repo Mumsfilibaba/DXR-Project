@@ -2,6 +2,14 @@
 #include "Engine/EditorEngine.h"
 #include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
+#include "Engine/World/Actors/Actor.h"
+#include "Engine/World/Components/CameraComponent.h"
+#include "Engine/World/Components/DirectionalLightComponent.h"
+#include "Engine/World/Components/LightComponent.h"
+#include "Engine/World/Components/LightProbeComponent.h"
+#include "Engine/World/Components/PointLightComponent.h"
+#include "Engine/World/Components/SkyLightComponent.h"
+#include "Engine/World/World.h"
 #include "ImGuiPlugin/ImGuiCore.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
@@ -65,12 +73,10 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
     // Shared colors
     // -----------------------------------------------------------------------------------------
 
-    const ImVec4 RowHoverBg            = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
-    const ImVec4 SearchBg              = ImVec4(15.0f / 255.0f, 15.0f / 255.0f, 15.0f / 255.0f, 1.0f);
-    const ImVec4 NameTextColor         = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
-    const ImVec4 TypeTextColor         = ImVec4(122.0f / 255.0f, 122.0f / 255.0f, 122.0f / 255.0f, 1.0f);
-    const ImU32  SelectedActiveColor   = IM_COL32(0, 112, 224, 255);
-    const ImU32  SelectedInactiveColor = IM_COL32(64, 87, 111, 255);
+    const ImVec4 RowHoverBg    = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
+    const ImVec4 SearchBg      = ImVec4(15.0f / 255.0f, 15.0f / 255.0f, 15.0f / 255.0f, 1.0f);
+    const ImVec4 NameTextColor = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
+    const ImVec4 TypeTextColor = ImVec4(122.0f / 255.0f, 122.0f / 255.0f, 122.0f / 255.0f, 1.0f);
 
     constexpr float DefaultRowHeight = 30.0f;
 
@@ -91,27 +97,34 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
         return;
     }
 
-    // Pull current selection
-    FActor*      SelectedActor      = EditorEngine->GetSelectedActor();
-    FLightProbe* SelectedLightProbe = EditorEngine->GetSelectedLightProbe();
-    FLight*      SelectedLight      = EditorEngine->GetSelectedLight();
-    FCamera*     SelectedCamera     = EditorEngine->GetSelectedCamera();
+    FActor* SelectedActor = EditorEngine->GetSelectedActor();
+    const bool bHasAnySelection = SelectedActor != nullptr;
 
-    const bool bHasAnySelection = (SelectedActor != nullptr) || (SelectedLightProbe != nullptr) || (SelectedLight != nullptr) || (SelectedCamera != nullptr);
+    bool bHasActors   = false;
+    bool bHasCameras  = false;
+    bool bHasLighting = false;
 
-    // Pull camera (Currently only a single camera)
-    FCamera* Camera = World->GetCamera();
+    const TArray<FActor*>& Actors = World->GetActors();
+    for (FActor* Actor : Actors)
+    {
+        if (!Actor)
+        {
+            continue;
+        }
 
-    // Scene data
-    const TArray<FActor*>&      Actors      = World->GetActors();
-    const TArray<FLight*>&      Lights      = World->GetLights();
-    const TArray<FLightProbe*>& LightProbes = World->GetLightProbes();
-
-    const bool bHasActors   = !Actors.IsEmpty();
-    const bool bHasLights   = !Lights.IsEmpty();
-    const bool bHasProbes   = !LightProbes.IsEmpty();
-    const bool bHasCameras  = Camera != nullptr;
-    const bool bHasLighting = bHasLights || bHasProbes;
+        if (Actor->HasComponentOfType<FCameraComponent>())
+        {
+            bHasCameras = true;
+        }
+        else if (Actor->HasComponentOfType<FLightComponent>() || Actor->HasComponentOfType<FLightProbeComponent>())
+        {
+            bHasLighting = true;
+        }
+        else
+        {
+            bHasActors = true;
+        }
+    }
 
     // -----------------------------------------------------------------------------------------
     // Search Field
@@ -364,93 +377,6 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
         return bOpen;
     };
 
-    const auto DrawLeafRow = [&](const CHAR* Label, const CHAR* Type, bool bSelected, void* Id, float Indent, auto&& OnClick)
-    {
-        ImGui::TableNextRow(ImGuiTableRowFlags_None, DefaultRowHeight);
-        
-        // -------------------------------------------------------------------------------------------
-        // Column 0: Empty
-        // -------------------------------------------------------------------------------------------
-        
-        ImGui::TableSetColumnIndex(0);
-
-        ImGui::PushID(Id);
-
-        const ImGuiSelectableFlags SelectableFlags =
-            ImGuiSelectableFlags_SpanAllColumns |
-            ImGuiSelectableFlags_AllowItemOverlap;
-
-        if (bSelected)
-        {
-            const ImU32 SelColor = bSelectionActiveInTable ? SelectedActiveColor : SelectedInactiveColor;
-            ImGui::PushStyleColor(ImGuiCol_Header, SelColor);
-            ImGui::PushStyleColor(ImGuiCol_HeaderHovered, SelColor);
-            ImGui::PushStyleColor(ImGuiCol_HeaderActive, SelColor);
-        }
-        else
-        {
-            ImGui::PushStyleColor(ImGuiCol_HeaderHovered, RowHoverBg);
-            ImGui::PushStyleColor(ImGuiCol_HeaderActive, RowHoverBg);
-        }
-
-        if (ImGui::Selectable("##Row", bSelected, SelectableFlags, ImVec2(0.0f, DefaultRowHeight)))
-        {
-            bSelectionActiveInTable = true;
-            OnClick();
-        }
-
-        if (bSelected)
-        {
-            ImGui::PopStyleColor(3);
-        }
-        else
-        {
-            ImGui::PopStyleColor(2);
-        }
-
-        const ImVec2 RowMin = ImGui::GetItemRectMin();
-        const ImVec2 RowMax = ImGui::GetItemRectMax();
-
-        const float TextHeight = ImGui::GetTextLineHeight();
-        const float TextY      = RowMin.y + (DefaultRowHeight - TextHeight) * 0.5f;
-
-        // -------------------------------------------------------------------------------------------
-        // Column 1: Label
-        // -------------------------------------------------------------------------------------------
-
-        ImGui::TableSetColumnIndex(1);
-
-        const ImVec2 ColPos = ImGui::GetCursorScreenPos();
-        const float  X      = ColPos.x + Indent + ImGui::GetFontSize() + 6.0f;
-
-        ImGui::PushStyleColor(ImGuiCol_Text, NameTextColor);
-        
-        {
-            TStaticArray<CHAR, 256> FilterBuf{};
-
-            const CHAR* FilterText  = EditorHelpers::GetTrimmedQuery(ActorSearchFilterBuffer.Data(), FilterBuf.Data(), static_cast<int32>(FilterBuf.Size()));
-            const ImU32 BaseTextU32 = ImGui::GetColorU32(ImGuiCol_Text);
-
-            EditorWidgets::DrawTextWithSearchHighlight(ImGui::GetWindowDrawList(), ImVec2(X, TextY), Label, FilterText, BaseTextU32, 1.0f, 1.0f, &RowMin, &RowMax);
-        }
-
-        ImGui::PopStyleColor();
-
-        // -------------------------------------------------------------------------------------------
-        // Column 2: Type
-        // -------------------------------------------------------------------------------------------
-        
-        ImGui::TableSetColumnIndex(2);
-        
-        ImGui::SetCursorScreenPos(ImVec2(ImGui::GetCursorScreenPos().x, TextY));
-        
-        ImGui::PushStyleColor(ImGuiCol_Text, TypeTextColor);
-        ImGui::TextUnformatted(Type);
-        ImGui::PopStyleColor();
-
-        ImGui::PopID();
-    };
-
     // -----------------------------------------------------------------------------------------
     // Build tree
     // -----------------------------------------------------------------------------------------
@@ -460,24 +386,22 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
         const bool bCamerasOpen = DrawFolderRow("Cameras", "Folder", "CamerasFolder", true, 0.0f);
         if (bCamerasOpen)
         {
-            bool bCameraFound = true;
-
-            const CHAR* Search = ActorSearchFilterBuffer.Data();
-            if (Search && Search[0] != '\0')
+            for (FActor* Actor : Actors)
             {
-                const CHAR* CameraName = "Main Camera";
-                if (!CString::Stristr(CameraName, Search) && !CString::Stristr("Camera", Search))
+                if (!Actor || !Actor->HasComponentOfType<FCameraComponent>())
                 {
-                    bCameraFound = false;
+                    continue;
                 }
-            }
 
-            if (bCameraFound)
-            {
-                DrawLeafRow("Main Camera", "Camera", Camera == SelectedCamera, reinterpret_cast<void*>(Camera), ChildIndent, [&]()
+                const CHAR*   Search = ActorSearchFilterBuffer.Data();
+                const String& Name   = Actor->GetName();
+
+                if (Search && Search[0] != '\0' && (Name.IsEmpty() || !CString::Stristr(*Name, Search)) && !CString::Stristr("Camera", Search))
                 {
-                    EditorEngine->SetSelectedCamera(Camera);
-                });
+                    continue;
+                }
+
+                DrawActorRow(Actor, "Camera", Actor == SelectedActor, ChildIndent);
             }
         }
     }
@@ -490,6 +414,11 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
             for (FActor* Actor : Actors)
             {
                 if (!Actor)
+                {
+                    continue;
+                }
+
+                if (Actor->HasComponentOfType<FCameraComponent>() || Actor->HasComponentOfType<FLightComponent>() || Actor->HasComponentOfType<FLightProbeComponent>())
                 {
                     continue;
                 }
@@ -514,72 +443,49 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
         const bool bLightingOpen = DrawFolderRow("Lighting", "Folder", "LightingFolder", true, 0.0f);
         if (bLightingOpen)
         {
-            if (bHasLights)
+            for (FActor* Actor : Actors)
             {
-                int32 LightIndex = 0;
-                for (FLight* Light : Lights)
+                if (!Actor)
                 {
-                    if (!Light)
-                    {
-                        continue;
-                    }
-
-                    const CHAR* TypeLabel = "Light";
-                    if (Cast<FPointLight>(Light))
-                    {
-                        TypeLabel = "PointLight";
-                    }
-                    else if (Cast<FDirectionalLight>(Light))
-                    {
-                        TypeLabel = "DirectionalLight";
-                    }
-
-                    TStaticArray<CHAR, 256> Label{};
-                    CString::Snprintf(Label.Data(), static_cast<int32>(Label.Size()), "%s %d", TypeLabel, LightIndex++);
-
-                    const CHAR* Search = ActorSearchFilterBuffer.Data();
-                    if (Search && Search[0] != '\0')
-                    {
-                        if (!CString::Stristr(Label.Data(), Search))
-                        {
-                            continue;
-                        }
-                    }
-
-                    DrawLeafRow(Label.Data(), TypeLabel, Light == SelectedLight, reinterpret_cast<void*>(Light), ChildIndent, [&]()
-                    {
-                        EditorEngine->SetSelectedLight(Light);
-                    });
+                    continue;
                 }
-            }
 
-            if (bHasProbes)
-            {
-                int32 ProbeIndex = 0;
-                for (FLightProbe* Probe : LightProbes)
+                const CHAR* TypeLabel = nullptr;
+                if (Actor->HasComponentOfType<FPointLightComponent>())
                 {
-                    if (!Probe)
-                    {
-                        continue;
-                    }
-
-                    TStaticArray<CHAR, 256> Label{};
-                    CString::Snprintf(Label.Data(), static_cast<int32>(Label.Size()), "LightProbe %d", ProbeIndex++);
-
-                    const CHAR* Search = ActorSearchFilterBuffer.Data();
-                    if (Search && Search[0] != '\0')
-                    {
-                        if (!CString::Stristr(Label.Data(), Search))
-                        {
-                            continue;
-                        }
-                    }
-
-                    DrawLeafRow(Label.Data(), "LightProbe", Probe == SelectedLightProbe, reinterpret_cast<void*>(Probe), ChildIndent, [&]()
-                    {
-                        EditorEngine->SetSelectedLightProbe(Probe);
-                    });
+                    TypeLabel = "PointLight";
                 }
+                else if (Actor->HasComponentOfType<FDirectionalLightComponent>())
+                {
+                    TypeLabel = "DirectionalLight";
+                }
+                else if (Actor->HasComponentOfType<FSkyLightComponent>())
+                {
+                    TypeLabel = "SkyLight";
+                }
+                else if (Actor->HasComponentOfType<FLightProbeComponent>())
+                {
+                    TypeLabel = "LightProbe";
+                }
+                else if (Actor->HasComponentOfType<FLightComponent>())
+                {
+                    TypeLabel = "Light";
+                }
+
+                if (!TypeLabel)
+                {
+                    continue;
+                }
+
+                const CHAR*   Search = ActorSearchFilterBuffer.Data();
+                const String& Name   = Actor->GetName();
+
+                if (Search && Search[0] != '\0' && (Name.IsEmpty() || !CString::Stristr(*Name, Search)) && !CString::Stristr(TypeLabel, Search))
+                {
+                    continue;
+                }
+
+                DrawActorRow(Actor, TypeLabel, Actor == SelectedActor, ChildIndent);
             }
         }
     }

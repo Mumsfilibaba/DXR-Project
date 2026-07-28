@@ -1,22 +1,26 @@
 #pragma once
-#include "Core/Math/Vector3.h"
 #include "Core/Math/Matrix4.h"
+#include "Core/Math/Vector3.h"
+#include "Engine/World/Components/SceneComponent.h"
 
-class ENGINE_API FCamera
+class ENGINE_API FCameraComponent : public FSceneComponent
 {
 public:
-    FCamera();
-    ~FCamera();
+    FOBJECT_DECLARE_CLASS(FCameraComponent, FSceneComponent);
 
-    void Move(float x, float y, float z);
-    void Rotate(float Pitch, float Yaw, float Roll);
-    
-    // NOTE: FieldOfView in degrees 
+    FCameraComponent(const FObjectInitializer& ObjectInitializer);
+    ~FCameraComponent();
+
+    void AddLocalMovement(float x, float y, float z);
+    void AddRotation(float Pitch, float Yaw, float Roll);
+
     void SetFieldOfView(float InFieldOfView);
     void SetNearPlane(float InNearPlane);
     void SetFarPlane(float InFarPlane);
     void SetPosition(float x, float y, float z);
+    void SetPosition(const Vector3& InPosition);
     void SetRotation(float Pitch, float Yaw, float Roll);
+    void SetRotation(const Vector3& InRotation);
 
     void UpdateProjectionMatrix(float InViewportWidth, float InViewportHeight);
     void UpdateViewMatrix();
@@ -57,15 +61,8 @@ public:
         return ViewProjectionNoTranslation;
     }
 
-    FORCEINLINE const Vector3& GetPosition() const
-    {
-        return Position;
-    }
-
-    FORCEINLINE const Vector3& GetRotation() const
-    {
-        return Rotation;
-    }
+    const Vector3& GetPosition() const;
+    const Vector3& GetRotation() const;
 
     FORCEINLINE const Vector3& GetForwardVector() const
     {
@@ -128,8 +125,6 @@ private:
     float   ViewportWidth;
     float   ViewportHeight;
     float   FieldOfView;
-    Vector3 Position;
-    Vector3 Rotation;
     Vector3 ForwardVector;
     Vector3 RightVector;
     Vector3 UpVector;
