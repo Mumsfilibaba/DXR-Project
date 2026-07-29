@@ -23,12 +23,14 @@ static D3D12_RESOURCE_DESC ApplyTightAlignmentFlag(const D3D12_RESOURCE_DESC& Re
 {
     D3D12_RESOURCE_DESC Result = ResourceDesc;
 
+#if D3D12_USE_TIGHT_ALIGNMENT
     if (GD3D12SupportTightAlignment)
     {
         // Tight-alignment resources must use Alignment=0 for Create/GetResourceAllocationInfo.
         Result.Flags    |= D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT;
         Result.Alignment = 0;
     }
+#endif
 
     return Result;
 }
@@ -50,7 +52,11 @@ FD3D12BuddyAllocator::FD3D12BuddyAllocator(FD3D12Device* InDevice, uint64 InBack
     , HeapType(InHeapType)
     , InitialState(InInitialState)
     , AllocationStrategy(InAllocationStrategy)
+#if D3D12_USE_TIGHT_ALIGNMENT
     , ResourceFlags(GD3D12SupportTightAlignment ? (InResourceFlags | D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) : InResourceFlags)
+#else
+    , ResourceFlags(InResourceFlags)
+#endif
     , BackingHeap(nullptr)
     , BackingResource(nullptr)
     , FreeOffsets()
@@ -780,7 +786,11 @@ FD3D12PoolAllocator::FD3D12PoolAllocator(FD3D12Device* InDevice, uint64 InPageSi
     , HeapType(InHeapType)
     , InitialState(InInitialState)
     , AllocationStrategy(InAllocationStrategy)
+#if D3D12_USE_TIGHT_ALIGNMENT
     , ResourceFlags(GD3D12SupportTightAlignment ? (InResourceFlags | D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) : InResourceFlags)
+#else
+    , ResourceFlags(InResourceFlags)
+#endif
     , FragmentedBytes(0)
     , Pages()
     , PagesCS()
@@ -2525,10 +2535,12 @@ int32 FD3D12BufferAllocator::RecordDefragMoves(FD3D12CommandContext* InCommandCo
         CHECK(OldResource->GetResourceState().IsSingleState());
 
         D3D12_RESOURCE_DESC ResourceDesc = OldResource->GetDesc();
+    #if D3D12_USE_TIGHT_ALIGNMENT
         if ((ResourceDesc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) != 0)
         {
             ResourceDesc.Alignment = 0;
         }
+    #endif
 
         const D3D12_RESOURCE_STATES CurrentState = OldResource->GetResourceState().GetState();
 
@@ -2965,7 +2977,11 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
 
     D3D12_RESOURCE_DESC AllocationDesc = ApplyTightAlignmentFlag(ResourceDesc);
 
+#if D3D12_USE_TIGHT_ALIGNMENT
     const bool bUseTightAlignment = (AllocationDesc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) != 0;
+#else
+    const bool bUseTightAlignment = false;
+#endif
     if (!bUseTightAlignment && CanUseSmallResourcePlacementAlignment(AllocationDesc))
     {
         AllocationDesc.Alignment = D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT;
@@ -3114,10 +3130,12 @@ int32 FD3D12TextureAllocator::RecordDefragMoves(FD3D12CommandContext* InCommandC
         CHECK(OldResource->GetResourceState().IsSingleState());
 
         D3D12_RESOURCE_DESC ResourceDesc = OldResource->GetDesc();
+    #if D3D12_USE_TIGHT_ALIGNMENT
         if ((ResourceDesc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) != 0)
         {
             ResourceDesc.Alignment = 0;
         }
+    #endif
 
         const D3D12_RESOURCE_STATES CurrentState = OldResource->GetResourceState().GetState();
 
@@ -3520,7 +3538,11 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
 
     D3D12_RESOURCE_DESC AllocationDesc = ApplyTightAlignmentFlag(ResourceDesc);
 
+#if D3D12_USE_TIGHT_ALIGNMENT
     const bool bUseTightAlignment = (AllocationDesc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) != 0;
+#else
+    const bool bUseTightAlignment = false;
+#endif
     if (!bUseTightAlignment && CanUseSmallResourcePlacementAlignment(AllocationDesc))
     {
         AllocationDesc.Alignment = D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT;

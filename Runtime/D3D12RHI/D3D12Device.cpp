@@ -2099,6 +2099,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
     // Tight Alignment Support
     // -------------------------------------------------------------------------------------------
 
+#if D3D12_USE_TIGHT_ALIGNMENT
     {
         D3D12_FEATURE_DATA_TIGHT_ALIGNMENT TightAlignment = {};
         HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_TIGHT_ALIGNMENT, &TightAlignment, sizeof(TightAlignment));
@@ -2120,6 +2121,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
             D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_TIGHT_ALIGNMENT query failed (hr=0x%08X)", hr);
         }
     }
+#endif
 
     // -------------------------------------------------------------------------------------------
     // Root Signature Version

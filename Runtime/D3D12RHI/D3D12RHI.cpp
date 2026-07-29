@@ -523,11 +523,13 @@ bool FD3D12DeviceRHI::InitializeDeviceFeatureSupport()
         #if D3D12_ENABLE_SHADER_EXECUTION_REORDERING
             GD3D12SupportsShaderExecutionReordering = true;
 
-            D3D12_FEATURE_DATA_D3D12_OPTIONS22 Features22 = {};
-            if (SUCCEEDED(GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS22, &Features22, sizeof(Features22))))
-            {
-                GD3D12ShaderExecutionReorderingActuallyReorders = Features22.ShaderExecutionReorderingActuallyReorders;
-            }
+            #if D3D12_SUPPORT_OPTIONS22
+                D3D12_FEATURE_DATA_D3D12_OPTIONS22 Features22 = {};
+                if (SUCCEEDED(GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS22, &Features22, sizeof(Features22))))
+                {
+                    GD3D12ShaderExecutionReorderingActuallyReorders = Features22.ShaderExecutionReorderingActuallyReorders;
+                }
+            #endif
         #endif
         }
     #endif

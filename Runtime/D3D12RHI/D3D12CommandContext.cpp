@@ -1147,11 +1147,13 @@ void FD3D12CommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegio
     CHECK(D3D12Resource != nullptr);
 
     D3D12_RESOURCE_DESC Desc = D3D12Resource->GetDesc();
+#if D3D12_USE_TIGHT_ALIGNMENT
     if ((Desc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) != 0)
     {
         // Query APIs require tight-alignment resources to use Alignment=0 in the desc.
         Desc.Alignment = 0;
     }
+#endif
 
     UINT64 RequiredSize = 0;
     UINT64 RowPitch     = 0;
@@ -1215,10 +1217,12 @@ void FD3D12CommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegio
     CHECK(D3D12Resource != nullptr);
 
     D3D12_RESOURCE_DESC Desc = D3D12Resource->GetDesc();
+#if D3D12_USE_TIGHT_ALIGNMENT
     if ((Desc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) != 0)
     {
         Desc.Alignment = 0;
     }
+#endif
 
     UINT64 RequiredSize = 0;
     UINT64 RowPitch     = 0;

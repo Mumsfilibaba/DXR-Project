@@ -493,10 +493,12 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
                 const UINT SubresourceIndex = MipIndex + ArraySlice * Desc.NumMipLevels;
 
                 D3D12_RESOURCE_DESC NativeResourceDesc = GetResource()->GetDesc();
+            #if D3D12_USE_TIGHT_ALIGNMENT
                 if ((NativeResourceDesc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) != 0)
                 {
                     NativeResourceDesc.Alignment = 0;
                 }
+            #endif
 
                 UINT64 RequiredSize = 0;
                 UINT64 RowPitch     = 0;
