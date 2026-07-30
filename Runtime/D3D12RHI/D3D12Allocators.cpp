@@ -35,6 +35,24 @@ static D3D12_RESOURCE_DESC ApplyTightAlignmentFlag(const D3D12_RESOURCE_DESC& Re
     return Result;
 }
 
+// Placed buffers must start on a 64KB-aligned heap offset. Tight alignment lifts that restriction.
+static uint64 GetBufferPoolAlignment(EAllocationStrategy InAllocationStrategy)
+{
+    if (InAllocationStrategy != EAllocationStrategy::SuballocatedHeap)
+    {
+        return D3D12_MIN_BUDDY_ALLOCATOR_BLOCK_SIZE;
+    }
+
+#if D3D12_USE_TIGHT_ALIGNMENT
+    if (GD3D12SupportTightAlignment)
+    {
+        return D3D12_MIN_BUDDY_ALLOCATOR_BLOCK_SIZE;
+    }
+#endif
+
+    return D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+}
+
 static D3D12_RESOURCE_STATES GetBufferCreationState(D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_STATES InitialResourceState)
 {
     if (HeapType == D3D12_HEAP_TYPE_DEFAULT && InitialResourceState != D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE)
@@ -2112,7 +2130,7 @@ FD3D12BufferAllocatorPool::FD3D12BufferAllocatorPool(FD3D12Device* InDevice, D3D
     , AllocationStrategy(InAllocationStrategy)
     , PageSizeBytes(InPageSizeBytes)
     , MaxSuballocationSize(InMaxSuballocationSize)
-    , PoolAllocator(InDevice, InPageSizeBytes, 16ull, InMaxSuballocationSize, InHeapType, InInitialState, InAllocationStrategy)
+    , PoolAllocator(InDevice, InPageSizeBytes, GetBufferPoolAlignment(InAllocationStrategy), InMaxSuballocationSize, InHeapType, InInitialState, InAllocationStrategy)
 {
 }
 
