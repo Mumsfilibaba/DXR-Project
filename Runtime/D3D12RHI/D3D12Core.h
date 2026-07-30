@@ -1207,6 +1207,24 @@ NODISCARD constexpr D3D12_SHADING_RATE ConvertShadingRate(EShadingRate ShadingRa
     return D3D12_SHADING_RATE();
 }
 
+NODISCARD constexpr EShaderModel ConvertShaderModel(D3D_SHADER_MODEL ShaderModel)
+{
+    switch (ShaderModel)
+    {
+        case D3D_SHADER_MODEL_6_0: return EShaderModel::SM_6_0;
+        case D3D_SHADER_MODEL_6_1: return EShaderModel::SM_6_1;
+        case D3D_SHADER_MODEL_6_2: return EShaderModel::SM_6_2;
+        case D3D_SHADER_MODEL_6_3: return EShaderModel::SM_6_3;
+        case D3D_SHADER_MODEL_6_4: return EShaderModel::SM_6_4;
+        case D3D_SHADER_MODEL_6_5: return EShaderModel::SM_6_5;
+        case D3D_SHADER_MODEL_6_6: return EShaderModel::SM_6_6;
+        case D3D_SHADER_MODEL_6_7: return EShaderModel::SM_6_7;
+        case D3D_SHADER_MODEL_6_8: return EShaderModel::SM_6_8;
+        case D3D_SHADER_MODEL_6_9: return EShaderModel::SM_6_9;
+        default:                   return EShaderModel::Unknown;
+    }
+}
+
 NODISCARD constexpr D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationStructureBuildFlags(EAccelerationStructureBuildFlags InFlags)
 {
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
