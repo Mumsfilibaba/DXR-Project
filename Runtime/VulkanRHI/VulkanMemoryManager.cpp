@@ -270,10 +270,13 @@ void* FVulkanMemoryManager::AllocateUploadMemory(uint64 SizeInBytes, uint64 Alig
 
 void* FVulkanMemoryManager::AllocateConstants(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryLocation& OutLocation)
 {
-    void* Result = DynamicConstantsAllocator.Allocate(SizeInBytes, Alignment, OutLocation);
+    const uint64 ConstantsAlignment = GetDevice()->GetPhysicalDevice()->GetProperties().limits.minUniformBufferOffsetAlignment;
+    const uint64 UsedAlignment      = Math::Max<uint64>(Alignment, ConstantsAlignment);
+
+    void* Result = DynamicConstantsAllocator.Allocate(SizeInBytes, UsedAlignment, OutLocation);
     if (!Result)
     {
-        Result = UploadHeapAllocator.Allocate(SizeInBytes, Alignment, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, OutLocation);
+        Result = UploadHeapAllocator.Allocate(SizeInBytes, UsedAlignment, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, OutLocation);
     }
     
     return Result;
@@ -1405,7 +1408,7 @@ bool FVulkanLinearAllocatorPage::Initialize()
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
     if (MemoryProperties & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
     {
-        return MemoryManager.AllocateUploadMemory(PageSizeBytes, 16, BufferUsageFlags, BackingLocation) != nullptr;
+        return MemoryManager.AllocateUploadMemory(PageSizeBytes, 0, BufferUsageFlags, BackingLocation) != nullptr;
     }
 
     return MemoryManager.AllocateBufferMemory(MemoryProperties, BufferUsageFlags, AllocateFlags, PageSizeBytes, 16, BackingLocation);

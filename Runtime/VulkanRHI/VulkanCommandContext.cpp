@@ -1058,7 +1058,7 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
     if (VulkanBuffer->GetDesc().IsTransient())
     {
         FVulkanMemoryLocation NewLocation(GetDevice());
-        void* MappedMemory = GetDevice()->GetMemoryManager().AllocateConstants(BufferRegion.Size, 0, NewLocation);
+        void* MappedMemory = GetDevice()->GetMemoryManager().AllocateConstants(BufferRegion.Size, VulkanBuffer->GetRequiredAlignment(), NewLocation);
         CHECK(MappedMemory != nullptr);
 
         Memory::Memcpy(MappedMemory, SrcData, BufferRegion.Size);
