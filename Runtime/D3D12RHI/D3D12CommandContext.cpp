@@ -962,7 +962,7 @@ void FD3D12CommandContext::SetMeshletPipelineState(class FRHIMeshletPipelineStat
 
 void FD3D12CommandContext::SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants)
 {
-    FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
+    MAYBE_UNUSED FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     CHECK(D3D12Shader != nullptr);
 
     ContextState.SetShaderConstants(reinterpret_cast<const uint32*>(ShaderConstants), NumShaderConstants);
@@ -1334,8 +1334,8 @@ void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src,
         const ETextureDimension SrcDimension = Src->GetDesc().Dimension;
         const ETextureDimension DstDimension = Dst->GetDesc().Dimension;
         
-        const uint32 SrcNumArrayLayers = RHIDimensionArrayLayers(SrcDimension, Src->GetDesc().NumArraySlices);
-        const uint32 DstNumArrayLayers = RHIDimensionArrayLayers(DstDimension, Dst->GetDesc().NumArraySlices);
+        MAYBE_UNUSED const uint32 SrcNumArrayLayers = RHIDimensionArrayLayers(SrcDimension, Src->GetDesc().NumArraySlices);
+        MAYBE_UNUSED const uint32 DstNumArrayLayers = RHIDimensionArrayLayers(DstDimension, Dst->GetDesc().NumArraySlices);
         CHECK(InCopyDesc.SrcArraySlice + InCopyDesc.NumArraySlices <= SrcNumArrayLayers);
         CHECK(InCopyDesc.DstArraySlice + InCopyDesc.NumArraySlices <= DstNumArrayLayers);
     }
@@ -1464,7 +1464,7 @@ void FD3D12CommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 Dst
     const uint32 CopyWidth    = SrcRight - SrcLeft;
     const uint32 CopyHeight   = SrcBottom - SrcTop;
     const uint32 RowPitch     = Math::AlignUp<uint32>(BytesPerPixel * CopyWidth, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
-    const uint64 RequiredSize = uint64(RowPitch) * uint64(CopyHeight);
+    MAYBE_UNUSED const uint64 RequiredSize = uint64(RowPitch) * uint64(CopyHeight);
 
     CHECK(EffectiveOffset + RequiredSize <= DstResource->GetSize());
 
@@ -1491,7 +1491,7 @@ void FD3D12CommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint6
 
     {
         const ETextureDimension SrcDimension = Src->GetDesc().Dimension;
-        const uint32 SrcNumArrayLayers = RHIDimensionArrayLayers(SrcDimension, Src->GetDesc().NumArraySlices);
+        MAYBE_UNUSED const uint32 SrcNumArrayLayers = RHIDimensionArrayLayers(SrcDimension, Src->GetDesc().NumArraySlices);
         CHECK(SrcArraySlice < SrcNumArrayLayers);
     }
 
@@ -1605,7 +1605,7 @@ void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FR
 
     {
         const ETextureDimension Dimension = Texture->GetDesc().Dimension;
-        const uint32 NumArrayLayers = RHIDimensionArrayLayers(Dimension, Texture->GetDesc().NumArraySlices);
+        MAYBE_UNUSED const uint32 NumArrayLayers = RHIDimensionArrayLayers(Dimension, Texture->GetDesc().NumArraySlices);
         CHECK(TextureTransition.ArraySlice == RHI_ALL_ARRAY_SLICES || TextureTransition.ArraySlice < NumArrayLayers);
     }
 
@@ -2197,7 +2197,7 @@ void FD3D12CommandContext::RequireTextureState(FRHITexture* Texture, const FRHIR
 
     {
         const ETextureDimension Dimension = Texture->GetDesc().Dimension;
-        const uint32 NumArrayLayers = RHIDimensionArrayLayers(Dimension, Texture->GetDesc().NumArraySlices);
+        MAYBE_UNUSED const uint32 NumArrayLayers = RHIDimensionArrayLayers(Dimension, Texture->GetDesc().NumArraySlices);
         CHECK(RequiredState.ArraySlice == RHI_ALL_ARRAY_SLICES || RequiredState.ArraySlice < NumArrayLayers);
     }
 

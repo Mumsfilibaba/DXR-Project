@@ -47,7 +47,9 @@ FVulkanGeometryAccelerationStructureRHI::FVulkanGeometryAccelerationStructureRHI
     , StaleGeometry(VK_NULL_HANDLE)
     , StaleGeometryLocation(InDevice)
     , TrackedAccelerationStructureMemory(0)
+#if VULKAN_STORE_DEBUG_NAMES
     , DebugName()
+#endif
 {
     STAT_ADD(STAT_RHI_BLASCount, 1);
 }
@@ -288,7 +290,9 @@ FVulkanSceneAccelerationStructureRHI::FVulkanSceneAccelerationStructureRHI(FVulk
     , View(nullptr)
     , Instances()
     , TrackedAccelerationStructureMemory(0)
+#if VULKAN_STORE_DEBUG_NAMES
     , DebugName()
+#endif
 {
     STAT_ADD(STAT_RHI_TLASCount, 1);
 }

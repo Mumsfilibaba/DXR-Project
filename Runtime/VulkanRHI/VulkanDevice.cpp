@@ -17,6 +17,8 @@
 template <typename FeatureStructType>
 static bool CheckRequiredFeaturesHelper(const FeatureStructType& Required, const FeatureStructType& Available, const char* StructName)
 {
+    UNREFERENCED_VARIABLE(StructName);
+
     TVulkanFeatureView<const FeatureStructType> RequiredView(Required);
     TVulkanFeatureView<const FeatureStructType> AvailableView(Available);
 

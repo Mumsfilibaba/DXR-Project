@@ -953,7 +953,7 @@ void FVulkanCommandContext::SetMeshletPipelineState(class FRHIMeshletPipelineSta
 
 void FVulkanCommandContext::SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants)
 {
-    FVulkanShader* VulkanShader = GetVulkanShader(Shader);
+    MAYBE_UNUSED FVulkanShader* VulkanShader = GetVulkanShader(Shader);
     CHECK(VulkanShader != nullptr);
     ContextState.SetPushConstants(reinterpret_cast<const uint32*>(ShaderConstants), NumShaderConstants);
 }
@@ -1330,8 +1330,8 @@ void FVulkanCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src
     {
         const ETextureDimension SrcDimension = Src->GetDesc().Dimension;
         const ETextureDimension DstDimension = Dst->GetDesc().Dimension;
-        const uint32 SrcNumArrayLayers = RHIDimensionArrayLayers(SrcDimension, Src->GetDesc().NumArraySlices);
-        const uint32 DstNumArrayLayers = RHIDimensionArrayLayers(DstDimension, Dst->GetDesc().NumArraySlices);
+        MAYBE_UNUSED const uint32 SrcNumArrayLayers = RHIDimensionArrayLayers(SrcDimension, Src->GetDesc().NumArraySlices);
+        MAYBE_UNUSED const uint32 DstNumArrayLayers = RHIDimensionArrayLayers(DstDimension, Dst->GetDesc().NumArraySlices);
         CHECK(CopyDesc.SrcArraySlice + CopyDesc.NumArraySlices <= SrcNumArrayLayers);
         CHECK(CopyDesc.DstArraySlice + CopyDesc.NumArraySlices <= DstNumArrayLayers);
     }
@@ -1434,7 +1434,7 @@ void FVulkanCommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint
 
     {
         const ETextureDimension SrcDimension = Src->GetDesc().Dimension;
-        const uint32 SrcNumArrayLayers = RHIDimensionArrayLayers(SrcDimension, Src->GetDesc().NumArraySlices);
+        MAYBE_UNUSED const uint32 SrcNumArrayLayers = RHIDimensionArrayLayers(SrcDimension, Src->GetDesc().NumArraySlices);
         CHECK(SrcArraySlice < SrcNumArrayLayers);
     }
 
@@ -2001,7 +2001,7 @@ void FVulkanCommandContext::TransitionTextureState(FRHITexture* Texture, const F
 
     {
         const ETextureDimension Dimension = Texture->GetDesc().Dimension;
-        const uint32 NumArrayLayers = RHIDimensionArrayLayers(Dimension, Texture->GetDesc().NumArraySlices);
+        MAYBE_UNUSED const uint32 NumArrayLayers = RHIDimensionArrayLayers(Dimension, Texture->GetDesc().NumArraySlices);
         CHECK(TextureTransition.ArraySlice == RHI_ALL_ARRAY_SLICES || TextureTransition.ArraySlice < NumArrayLayers);
     }
 
@@ -2171,7 +2171,7 @@ void FVulkanCommandContext::RequireTextureState(FRHITexture* Texture, const FRHI
 
     {
         const ETextureDimension Dimension = Texture->GetDesc().Dimension;
-        const uint32 NumArrayLayers = RHIDimensionArrayLayers(Dimension, Texture->GetDesc().NumArraySlices);
+        MAYBE_UNUSED const uint32 NumArrayLayers = RHIDimensionArrayLayers(Dimension, Texture->GetDesc().NumArraySlices);
         CHECK(RequiredState.ArraySlice == RHI_ALL_ARRAY_SLICES || RequiredState.ArraySlice < NumArrayLayers);
     }
 

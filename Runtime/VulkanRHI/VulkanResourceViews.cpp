@@ -64,6 +64,7 @@ FVulkanResourceView::~FVulkanResourceView()
 
 void FVulkanResourceView::OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryLocation* NewMemoryLocation)
 {
+    UNREFERENCED_VARIABLE(RelocatedResource);
     CHECK(RelocatedResource == OwnerResource);
 
     if (!NewMemoryLocation)

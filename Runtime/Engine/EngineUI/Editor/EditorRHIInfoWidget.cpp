@@ -66,6 +66,9 @@ void FEditorRHIInfoWidget::DrawBudgetSection()
 {
     ImGui::SeparatorText("Memory Budget");
 
+#if !STATS_ENABLED
+    ImGui::TextUnformatted("Memory statistics are compiled out in this build configuration.");
+#else
     const int64 LocalBudget = STAT_GET(STAT_RHI_LocalMemoryBudget);
     const int64 LocalUsage  = STAT_GET(STAT_RHI_LocalMemoryUsage);
 
@@ -99,6 +102,7 @@ void FEditorRHIInfoWidget::DrawBudgetSection()
     {
         ImGui::Text("  %s", NonLocalText);
     }
+#endif
 }
 
 void FEditorRHIInfoWidget::DrawCommandSubmission()

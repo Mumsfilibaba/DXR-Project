@@ -114,8 +114,7 @@ void FMallocLeakTracker::TrackAllocationMalloc(void* Block, uint64 Size)
 
     SCOPED_LOCK(AllocationsCS);
 
-    FAllocationInfo* ExistingInfo = Allocations.Find(Block);
-    CHECK(ExistingInfo == nullptr);
+    CHECK(Allocations.Find(Block) == nullptr);
     Allocations.Add(Block, FAllocationInfo{ Size });
 
     EnableTracking();
@@ -261,8 +260,7 @@ void FMallocStackTraceTracker::TrackAllocationMalloc(void* Block, uint64 Size)
 
     SCOPED_LOCK(AllocationsCS);
 
-    FAllocationStackTrace* ExistingInfo = Allocations.Find(Block);
-    CHECK(ExistingInfo == nullptr);
+    CHECK(Allocations.Find(Block) == nullptr);
     
     FAllocationStackTrace& Result = Allocations.Add(Block, FAllocationStackTrace());
     Result.StackDepth = FPlatformStackTrace::CaptureStackTrace(Result.StackTrace, NumStackTraces, 3);

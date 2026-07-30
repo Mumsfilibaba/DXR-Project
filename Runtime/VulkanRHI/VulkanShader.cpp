@@ -297,6 +297,7 @@ bool FVulkanShader::InitializeShaderLayout()
 
     spvc_context_set_error_callback(Context, [](void*, const CHAR* Error)
     {
+        UNREFERENCED_VARIABLE(Error);
         VULKAN_ERROR("[SPIRV-Cross Error] %s", Error);
     }, nullptr);
 
@@ -707,7 +708,7 @@ bool FVulkanShader::InitializeShaderLayout()
         }
 
         // TODO: We try and align all constants to a vec4/float4 since we do this in D3D12, check if this is necessary
-        constexpr size_t MaxBytes  = VULKAN_MAX_NUM_PUSH_CONSTANTS * sizeof(uint32);
+        MAYBE_UNUSED constexpr size_t MaxBytes = VULKAN_MAX_NUM_PUSH_CONSTANTS * sizeof(uint32);
         constexpr size_t Alignment = sizeof(float) * 4;
                 
         //size_t NumPushBytes = RangeOffset + Range;

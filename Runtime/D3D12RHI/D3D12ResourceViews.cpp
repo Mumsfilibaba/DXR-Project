@@ -106,6 +106,7 @@ void FD3D12View::UnregisterFromResource()
 
 void FD3D12View::OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
+    UNREFERENCED_VARIABLE(RelocatedResource);
     CHECK(RelocatedResource == OwnerResource);
 
     if (!NewResourceStorage)
@@ -257,7 +258,7 @@ void FD3D12ShaderResourceViewRHI::OnResourceRelocated(FD3D12ResourceBase* Reloca
 
     if (NewResourceStorage)
     {
-        const uint32 PreviousDescriptorVersion = GetDescriptorVersion();
+        MAYBE_UNUSED const uint32 PreviousDescriptorVersion = GetDescriptorVersion();
 
         D3D12_SHADER_RESOURCE_VIEW_DESC NewDesc = D3D12Desc;
         if (GetDesc().IsBufferSRV())
@@ -340,7 +341,7 @@ void FD3D12UnorderedAccessViewRHI::OnResourceRelocated(FD3D12ResourceBase* Reloc
 
     if (NewResourceStorage)
     {
-        const uint32 PreviousDescriptorVersion = GetDescriptorVersion();
+        MAYBE_UNUSED const uint32 PreviousDescriptorVersion = GetDescriptorVersion();
 
         D3D12_UNORDERED_ACCESS_VIEW_DESC NewDesc = D3D12Desc;
         if (GetDesc().IsBufferUAV())

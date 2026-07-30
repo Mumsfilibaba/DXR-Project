@@ -120,6 +120,9 @@ uint32 FD3D12ShaderBindingTable::GetSubTableBaseRecord(ERayTracingShaderRecordKi
 
 void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSignature, uint8* OutRecord, uint64 RecordByteOffset, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const String& ExportName, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings)
 {
+    UNREFERENCED_VARIABLE(RecordKind);
+    UNREFERENCED_VARIABLE(RecordIndex);
+
     void* Identifier = (Pipeline && !ExportName.IsEmpty()) ? Pipeline->GetShaderIdentifier(ExportName) : nullptr;
 
     bool bIdentifierIsZero = true;

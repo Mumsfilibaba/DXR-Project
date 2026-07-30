@@ -59,7 +59,7 @@ void FVulkanCommandContextState::PrepareGraphicsState()
     }
 
     CHECK(CommonGraphicsState.ViewInstancingState == GraphicsState.PipelineState->GetViewInstancingState());
-    FVulkanPipelineLayout* PipelineLayout = GraphicsState.PipelineState->GetPipelineLayout();
+    MAYBE_UNUSED FVulkanPipelineLayout* PipelineLayout = GraphicsState.PipelineState->GetPipelineLayout();
     CHECK(PipelineLayout != nullptr);
 
     CHECK(PipelineLayout == GraphicsState.CurrentDescriptorState->GetLayout());
@@ -184,7 +184,7 @@ void FVulkanCommandContextState::PrepareComputeState()
         return;
     }
 
-    FVulkanPipelineLayout* PipelineLayout = ComputeState.PipelineState->GetPipelineLayout();
+    MAYBE_UNUSED FVulkanPipelineLayout* PipelineLayout = ComputeState.PipelineState->GetPipelineLayout();
     CHECK(PipelineLayout == ComputeState.CurrentDescriptorState->GetLayout());
     if (ComputeState.CurrentDescriptorState->IsResourcesDirty())
     {
@@ -233,7 +233,7 @@ void FVulkanCommandContextState::PrepareMeshletState()
     }
 
     CHECK(CommonGraphicsState.ViewInstancingState == MeshletState.PipelineState->GetViewInstancingState());
-    FVulkanPipelineLayout* PipelineLayout = MeshletState.PipelineState->GetPipelineLayout();
+    MAYBE_UNUSED FVulkanPipelineLayout* PipelineLayout = MeshletState.PipelineState->GetPipelineLayout();
     CHECK(PipelineLayout != nullptr);
 
     CHECK(PipelineLayout == MeshletState.CurrentDescriptorState->GetLayout());

@@ -335,8 +335,7 @@ void FVulkanMemoryManager::FreeMemory(VkDeviceMemory Memory)
 {
     if (Memory != VK_NULL_HANDLE)
     {
-        const int64 Count = ActiveAllocationCount.Decrement();
-        CHECK(Count >= 0);
+        VERIFY(ActiveAllocationCount.Decrement() >= 0);
         vkFreeMemory(GetDevice()->GetVkDevice(), Memory, nullptr);
     }
 }

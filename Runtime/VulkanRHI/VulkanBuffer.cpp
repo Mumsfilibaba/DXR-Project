@@ -13,7 +13,9 @@ FVulkanBufferRHI::FVulkanBufferRHI(FVulkanDevice* InDevice, const FRHIBufferDesc
     , OwnedBuffer(VK_NULL_HANDLE)
     , RequiredAlignment(0)
     , BindlessHandle()
+#if VULKAN_STORE_DEBUG_NAMES
     , DebugName()
+#endif
 {
 }
 

@@ -2654,7 +2654,7 @@ void FD3D12BufferAllocator::FinalizeDefragMoves()
 {
     SCOPED_LOCK(PoolsCS);
 
-    const uint64 CompletedFenceValue = GetDevice()->GetFrameFence().GetCompletedValue();
+    MAYBE_UNUSED const uint64 CompletedFenceValue = GetDevice()->GetFrameFence().GetCompletedValue();
     for (int32 Index = PendingDefragMoves.Size() - 1; Index >= 0; --Index)
     {
         FD3D12PendingDefragMove& Move = PendingDefragMoves[Index];
@@ -3253,7 +3253,7 @@ void FD3D12TextureAllocator::FinalizeDefragMoves()
 {
     SCOPED_LOCK(PoolsCS);
 
-    const uint64 CompletedFenceValue = GetDevice()->GetFrameFence().GetCompletedValue();
+    MAYBE_UNUSED const uint64 CompletedFenceValue = GetDevice()->GetFrameFence().GetCompletedValue();
     for (int32 Index = PendingDefragMoves.Size() - 1; Index >= 0; --Index)
     {
         FD3D12PendingDefragMove& Move = PendingDefragMoves[Index];
