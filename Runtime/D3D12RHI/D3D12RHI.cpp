@@ -330,7 +330,7 @@ FRHITexture* FD3D12DeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDesc
     }
 #endif
 
-    TickCoreProgression();
+    FlushCompletedSubmissions();
     return NewTexture.ReleaseOwnership();
 }
 
@@ -377,7 +377,7 @@ FRHIBuffer* FD3D12DeviceRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, ER
     }
 #endif
 
-    TickCoreProgression();
+    FlushCompletedSubmissions();
     return NewBuffer.ReleaseOwnership();
 }
 
@@ -439,7 +439,7 @@ FRHISceneAccelerationStructure* FD3D12DeviceRHI::CreateSceneAccelerationStructur
 
     DirectCommandContext->FinishContext();
 
-    TickCoreProgression();
+    FlushCompletedSubmissions();
     return D3D12Scene.ReleaseOwnership();
 }
 
@@ -464,7 +464,7 @@ FRHIGeometryAccelerationStructure* FD3D12DeviceRHI::CreateGeometryAccelerationSt
 
     DirectCommandContext->FinishContext();
 
-    TickCoreProgression();
+    FlushCompletedSubmissions();
     return D3D12Geometry.ReleaseOwnership();
 }
 
@@ -1748,36 +1748,6 @@ void* FD3D12DeviceRHI::GetRHINativeCopyCommandQueue()
 {
     CHECK(Device != nullptr);
     return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Copy));
-}
-
-void FD3D12DeviceRHI::TickCoreProgression()
-{
-    Device->GetQueue(ED3D12CommandQueueType::Direct)->ProcessCommandQueue();
-
-    if (FD3D12LinearAllocator* StagingBufferAllocator = Device->GetStagingBufferAllocator())
-    {
-        StagingBufferAllocator->CleanUp();
-    }
-
-    if (FD3D12DynamicConstantsAllocator* DynamicConstantsAllocator = Device->GetDynamicConstantsAllocator())
-    {
-        DynamicConstantsAllocator->CleanUp();
-    }
-
-    if (FD3D12UploadHeapAllocator* UploadHeapAllocator = Device->GetUploadHeapAllocator())
-    {
-        UploadHeapAllocator->CleanUp();
-    }
-
-    if (FD3D12BufferAllocator* BufferAllocator = Device->GetBufferAllocator())
-    {
-        BufferAllocator->CleanUp();
-    }
-
-    if (FD3D12TextureAllocator* TextureAllocator = Device->GetTextureAllocator())
-    {
-        TextureAllocator->CleanUp();
-    }
 }
 
 void FD3D12DeviceRHI::FlushCompletedSubmissions()

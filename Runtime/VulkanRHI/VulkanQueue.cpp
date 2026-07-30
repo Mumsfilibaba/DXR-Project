@@ -418,24 +418,30 @@ void FVulkanQueue::SubmitCommands(FVulkanCommands* Commands)
     PendingSubmissions.Enqueue(Commands);
 
     const int32 MaxPending = CVarMaxPendingSubmissions.GetValue();
-    while (PendingSubmissions.Size() > MaxPending)
     {
-        FVulkanCommands* Oldest = nullptr;
-        if (PendingSubmissions.Peek(Oldest) && Oldest)
+        SCOPED_LOCK(ConsumerCS);
+
+        while (PendingSubmissions.Size() > MaxPending)
         {
-            Oldest->Fence->Wait(UINT64_MAX);
-            PendingSubmissions.Dequeue();
-            Oldest->PostExecute();
-        }
-        else
-        {
-            break;
+            FVulkanCommands* Oldest = nullptr;
+            if (PendingSubmissions.Peek(Oldest) && Oldest)
+            {
+                Oldest->Fence->Wait(UINT64_MAX);
+                PendingSubmissions.Dequeue();
+                Oldest->PostExecute();
+            }
+            else
+            {
+                break;
+            }
         }
     }
 }
 
 void FVulkanQueue::ProcessCommandQueue()
 {
+    SCOPED_LOCK(ConsumerCS);
+
     bool bProcess = true;
     while (bProcess)
     {

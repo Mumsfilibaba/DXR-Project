@@ -154,7 +154,6 @@ public:
 
 private:
     bool InitializeDeviceFeatureSupport();
-    void TickCoreProgression();
 
     template<typename... ArgTypes>
     void DeferDeletionInternal(ArgTypes&&... Args)

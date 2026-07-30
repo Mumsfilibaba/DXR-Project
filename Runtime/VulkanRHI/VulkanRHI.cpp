@@ -572,7 +572,7 @@ FRHITexture* FVulkanDeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDes
     }
 #endif
 
-    TickCoreProgression();
+    FlushCompletedSubmissions();
     return NewTexture.ReleaseOwnership();
 }
 
@@ -619,7 +619,7 @@ FRHIBuffer* FVulkanDeviceRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, E
     }
 #endif
 
-    TickCoreProgression();
+    FlushCompletedSubmissions();
     return NewBuffer.ReleaseOwnership();
 }
 
@@ -699,7 +699,7 @@ FRHISceneAccelerationStructure* FVulkanDeviceRHI::CreateSceneAccelerationStructu
 
     GraphicsCommandContext->FinishContext();
 
-    TickCoreProgression();
+    FlushCompletedSubmissions();
     return NewScene.ReleaseOwnership();
 }
 
@@ -724,7 +724,7 @@ FRHIGeometryAccelerationStructure* FVulkanDeviceRHI::CreateGeometryAccelerationS
 
     GraphicsCommandContext->FinishContext();
 
-    TickCoreProgression();
+    FlushCompletedSubmissions();
     return NewGeometry.ReleaseOwnership();
 }
 
@@ -1455,12 +1455,6 @@ void FVulkanDeviceRHI::EnqueueResourceDeletion(FRHIResource* Resource)
     {
         DeferDeletion(Resource);
     }
-}
-
-void FVulkanDeviceRHI::TickCoreProgression()
-{
-    Device->GetGraphicsQueue()->ProcessCommandQueue();
-    Device->GetMemoryManager().CleanUpAllocators();
 }
 
 void FVulkanDeviceRHI::FlushCompletedSubmissions()

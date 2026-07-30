@@ -177,7 +177,6 @@ public:
 #endif
 
 private:
-    void TickCoreProgression();
 
     template<typename... ArgTypes>
     void DeferDeletionInternal(ArgTypes&&... Args)
