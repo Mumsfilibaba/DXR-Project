@@ -2728,10 +2728,9 @@ void EditorWidgets::EndRichTextView(RichTextViewContext& InOutContext)
     ImGuiWindow* CurrentWindow = ImGui::GetCurrentWindow();
 
     const float FullLineHeight = InOutContext.LineHeight;
+    const float TotalHeight    = InOutContext.Padding.y + static_cast<float>(InOutContext.Lines.Size()) * FullLineHeight + InOutContext.Padding.y;
 
     {
-        const float TotalHeight = InOutContext.Padding.y + static_cast<float>(InOutContext.Lines.Size()) * FullLineHeight + InOutContext.Padding.y;
-
         const ImVec2 SavedCursorPos = ImGui::GetCursorPos();
         ImGui::Dummy(ImVec2(0.0f, TotalHeight));
         ImGui::SetCursorPos(SavedCursorPos);
@@ -3002,10 +3001,17 @@ void EditorWidgets::EndRichTextView(RichTextViewContext& InOutContext)
     // Scroll to bottom
     // -----------------------------------------------------------------------------------------
 
-    if (InOutContext.bScrollToBottom)
+    const float CurrentScrollMaxY = ImGui::GetScrollMaxY();
+    InOutContext.bIsScrolledToBottom = (CurrentScrollMaxY <= 0.0f) || (ImGui::GetScrollY() >= CurrentScrollMaxY - 1.0f);
+
+    const bool bStayPinned = InOutContext.bAutoScroll && InOutContext.bIsScrolledToBottom;
+
+    if ((InOutContext.bScrollToBottom || bStayPinned) && !InOutContext.bSelecting)
     {
-        ImGui::SetScrollHereY(1.0f);
-        InOutContext.bScrollToBottom = false;
+        ImGui::SetScrollFromPosY(ImGui::GetCursorStartPos().y + TotalHeight, 1.0f);
+
+        InOutContext.bScrollToBottom     = false;
+        InOutContext.bIsScrolledToBottom = true;
     }
 
     ImGui::EndChild();

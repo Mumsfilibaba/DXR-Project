@@ -8,7 +8,6 @@ FEditorOutputLogWidget::FEditorOutputLogWidget()
     : IOutputDevice()
     , bVisible(true)
     , bAutoScroll(true)
-    , bScrollToBottom(false)
     , bFilterInfo(true)
     , bFilterWarning(true)
     , bFilterError(true)
@@ -63,11 +62,6 @@ void FEditorOutputLogWidget::Log(ELogSeverity Severity, const String& Message)
     {
         const int32 Overflow = Messages.Size() - MaxMessages;
         Messages.RemoveAt(0, Overflow);
-    }
-
-    if (bAutoScroll)
-    {
-        bScrollToBottom = true;
     }
 }
 
@@ -361,12 +355,6 @@ void FEditorOutputLogWidget::DrawLogListRichText()
     const CHAR* Search     = SearchFilterBuffer.Data();
 
     RichTextCtx.bAutoScroll = bAutoScroll;
-
-    if (bScrollToBottom)
-    {
-        RichTextCtx.bScrollToBottom = true;
-        bScrollToBottom = false;
-    }
 
     const ImU32 DefaultTextU32   = ImGui::GetColorU32(ImGuiCol_Text);
     const ImU32 WarningTextU32   = IM_COL32(255, 255, 0, 255);
