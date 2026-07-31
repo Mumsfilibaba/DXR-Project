@@ -478,7 +478,10 @@ function BuildRules(Name)
                 LogWarning("Ignoring LinkOptions due to the kind being set to 'None'")
                 LogWarning("Ignoring Module due to the kind being set to 'None'")
             else
-                links(self.LinkLibraries)
+                if self.Kind ~= "StaticLib" then
+                    links(self.LinkLibraries)
+                end
+
                 links(self.LinkModules)
                 linkoptions(self.LinkOptions)
                 dependson(self.Modules)
@@ -616,11 +619,13 @@ function BuildRules(Name)
                     table.insert(self.LinkModules, CurrentModuleName)
                 end
 
-                -- Import macro when linking a dynamic module at compile time
-                if CurrentModule.bIsDynamic then
+                -- Third-party libraries own their API macro, so only engine modules get one here
+                if not CurrentModule.bIsLibrary then
                     local ModuleApiName = CurrentModule.Name:upper() .. "_API"
-                    if not CurrentModule.bRuntimeLinking then
+                    if CurrentModule.bIsDynamic and not CurrentModule.bRuntimeLinking then
                         ModuleApiName = ModuleApiName .. "=MODULE_IMPORT"
+                    else
+                        ModuleApiName = ModuleApiName .. "="
                     end
 
                     self.AddDefines({

@@ -78,7 +78,7 @@ void FPointLightComponent::SetShadowCaster(bool bInShadowCaster)
 const Vector3& FPointLightComponent::GetPosition() const
 {
     CHECK(GetActorOwner() != nullptr);
-    return GetActorOwner()->GetTransform().GetTranslation();
+    return GetActorOwner()->GetWorldTransform().GetTranslation();
 }
 
 void FPointLightComponent::CalculateMatrices()

@@ -1714,6 +1714,28 @@ void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const String& 
     }
 }
 
+static bool ApplyCommandLineOverride(const CHAR* InName, IConsoleVariable* Variable)
+{
+    StringView CommandLineValue;
+    if (!CommandLine::FindOption(InName, CommandLineValue))
+    {
+        return false;
+    }
+
+    if (CommandLineValue.IsEmpty())
+    {
+        // A bare switch means 'on'; SetAsBool maps sensibly onto all four variable types
+        Variable->SetAsBool(true, EConsoleVariableFlags::SetByCommandLine);
+    }
+    else
+    {
+        Variable->SetString(String(CommandLineValue), EConsoleVariableFlags::SetByCommandLine);
+    }
+
+    LOG_INFO("Set ConsoleVariable '%s' from the CommandLine", InName);
+    return true;
+}
+
 IConsoleObject* FConsoleManager::RegisterObject(const CHAR* InName, IConsoleObject* Object)
 {
     const String Name(InName);
@@ -1728,13 +1750,7 @@ IConsoleObject* FConsoleManager::RegisterObject(const CHAR* InName, IConsoleObje
     // TODO: Refactor this, right now it only works with a single ConfigFile
     if (IConsoleVariable* Variable = Object->AsVariable())
     {
-        StringView CommandLineValue;
-        if (CommandLine::FindOption(InName, CommandLineValue))
-        {
-            const String Value = String(CommandLineValue);
-            Variable->SetString(Value, EConsoleVariableFlags::SetByCommandLine);
-        }
-        else if (GConfig)
+        if (!ApplyCommandLineOverride(InName, Variable) && GConfig)
         {
             String Value;
             if (GConfig->GetString("", InName, Value))
@@ -1746,6 +1762,17 @@ IConsoleObject* FConsoleManager::RegisterObject(const CHAR* InName, IConsoleObje
 
     LOG_INFO("Registered ConsoleObject '%s'", *Name);
     return Result;
+}
+
+void FConsoleManager::LoadConsoleVariablesFromCommandLine()
+{
+    for (const auto& Pair : ConsoleObjects)
+    {
+        if (IConsoleVariable* Variable = Pair.Second ? Pair.Second->AsVariable() : nullptr)
+        {
+            ApplyCommandLineOverride(*Pair.First, Variable);
+        }
+    }
 }
 
 void FConsoleManager::GetConsoleObjects(TArray<TPair<String, IConsoleObject*>>& OutObjects) const

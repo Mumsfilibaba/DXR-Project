@@ -445,6 +445,13 @@ public:
     void DumpConsoleVariableValues(IOutputDevice& OutputDevice, const CHAR* Key = nullptr);
 
     /**
+     * @brief Apply every matching '-Name[=Value]' command-line option to the already-registered
+     *        ConsoleVariables. Required because variables in compile-linked modules register
+     *        during static initialization, before the command line has been parsed.
+     */
+    void LoadConsoleVariablesFromCommandLine();
+
+    /**
      * @brief Retrieve all the history that has been written to the console
      * @return An array containing string of all history written to the console
      */

@@ -439,6 +439,8 @@ void FVulkanDescriptorState::SetUniformBuffer(FVulkanBufferRHI* UniformBuffer, u
             const uint32 FlatIndex     = DynamicOffsetBasePerSet[DescriptorSetIndex] + DynamicIndex;
             const uint32 DynamicOffset = static_cast<uint32>(Offset);
 
+            CHECK((DynamicOffset % GetDevice()->GetPhysicalDevice()->GetProperties().limits.minUniformBufferOffsetAlignment) == 0);
+
             if (DynamicOffsets[FlatIndex] != DynamicOffset)
             {
                 DynamicOffsets[FlatIndex] = DynamicOffset;

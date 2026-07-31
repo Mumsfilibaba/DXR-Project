@@ -260,6 +260,9 @@ struct RHI
     /** Whether SV_RenderTargetArrayIndex is supported from the vertex shader stage */
     static RHI_API bool bSupportRenderTargetArrayIndexFromVertexShader;
 
+    /** Highest shader model the active device can execute. Answers "what profile may I compile", which is separate from the bSupports* flags answering "may I use this feature". */
+    static RHI_API EShaderModel MaxShaderModel;
+
     // -------------------------------------------------------------------------------------------
     // View Instancing
     // -------------------------------------------------------------------------------------------

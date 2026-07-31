@@ -98,6 +98,30 @@ static FAutoConsoleVariableRef CVarReflectionHalfRes(
     "Trace + denoise reflections at half resolution and bilateral-upsample to full res (faster, softer).",
     GReflectionHalfRes);
 
+static float GReflectionAtrousPhiColor = 4.0f;
+static FAutoConsoleVariableRef CVarReflectionAtrousPhiColor(
+    "Renderer.RayTracing.Reflections.AtrousPhiColor",
+    "Color sensitivity of the SVGF a-trous edge-stopping function. Lower preserves more detail but keeps more noise.",
+    GReflectionAtrousPhiColor);
+
+static float GReflectionMaxRayDistance = 10000.0f;
+static FAutoConsoleVariableRef CVarReflectionMaxRayDistance(
+    "Renderer.RayTracing.Reflections.MaxRayDistance",
+    "Maximum distance (TMax) traced by a reflection ray. Shorter distances trade far-field reflections for traversal cost.",
+    GReflectionMaxRayDistance);
+
+static float GReflectionMirrorRoughnessThreshold = 0.05f;
+static FAutoConsoleVariableRef CVarReflectionMirrorRoughnessThreshold(
+    "Renderer.RayTracing.Reflections.MirrorRoughnessThreshold",
+    "Surfaces below this roughness trace a perfect mirror ray; above it the direction is GGX importance-sampled.",
+    GReflectionMirrorRoughnessThreshold);
+
+static float GReflectionRayBias = 0.02f;
+static FAutoConsoleVariableRef CVarReflectionRayBias(
+    "Renderer.RayTracing.Reflections.RayBias",
+    "Distance the reflection ray origin is pushed along the surface normal to avoid self-intersection.",
+    GReflectionRayBias);
+
 FRayTracer::FRayTracer(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
     , CurrentSERHitGroupCapacity(0)
@@ -861,6 +885,10 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
             Constants.PointLightColor[LightIndex] = Vector4(LightColor.X, LightColor.Y, LightColor.Z, 0.0f);
         }
 
+        Constants.ReflectionMaxRayDistance           = Math::Max(1.0f, GReflectionMaxRayDistance);
+        Constants.ReflectionMirrorRoughnessThreshold = Math::Clamp(GReflectionMirrorRoughnessThreshold, 0.0f, 1.0f);
+        Constants.ReflectionRayBias                  = Math::Max(0.0f, GReflectionRayBias);
+
         CommandList.TransitionBufferState(Resources.RayTracingSceneConstantsBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
         CommandList.UpdateBuffer(Resources.RayTracingSceneConstantsBuffer.Get(), FBufferRegion(0, sizeof(FRayTracingSceneConstantsHLSL)), &Constants);
         CommandList.TransitionBufferState(Resources.RayTracingSceneConstantsBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
@@ -1207,7 +1235,7 @@ void FRayTracer::DenoiseReflections(FRHICommandList& CommandList, FFrameResource
             Constants.ScreenSize[0] = float(Width);
             Constants.ScreenSize[1] = float(Height);
             Constants.StepSize      = 1 << Iteration;
-            Constants.PhiColor      = 4.0f;
+            Constants.PhiColor      = Math::Max(0.0f, GReflectionAtrousPhiColor);
 
             CommandList.SetShaderConstants(Shader, &Constants, sizeof(Constants) / sizeof(uint32));
 

@@ -100,9 +100,9 @@ function TargetBuildRules(Name)
                 self.bIsDynamic = false
                 self.bEmbedThirdparties = true
 
-                -- Defines
+                -- Defines. Empty value, since a monolithic target exports nothing
                 self.AddDefines({
-                    ModuleApiName
+                    ModuleApiName .. "="
                 })
 
                 -- Generate the project

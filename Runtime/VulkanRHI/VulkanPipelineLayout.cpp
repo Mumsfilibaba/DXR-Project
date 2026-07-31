@@ -552,6 +552,7 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
 
             const auto CheckSlotCollision = [&](uint8 Slot, const CHAR* BucketName)
             {
+                UNREFERENCED_VARIABLE(BucketName);
                 if (Slot != UINT8_MAX && Slot != static_cast<uint8>(BindingIndex))
                 {
                     VULKAN_ERROR("Register namespace collision: %s register %u already maps to binding %u, now %u (RT stages must agree on the resource per register)",

@@ -160,7 +160,9 @@ void FEditorGuizmoWidget::Draw()
         EffectiveOperation = EditorGuizmo::EOperation::Translate;
     }
 
-    const Matrix4 ActorModel = SelectedActor->GetTransform().GetTransformMatrix();
+    const FActorTransform& ActorWorldTransform = SelectedActor->GetWorldTransform();
+
+    const Matrix4 ActorModel = ActorWorldTransform.GetTransformMatrix();
     Matrix4 Model = ActorModel;
 
     bool bUsingBoundsCenter = false;
@@ -191,33 +193,47 @@ void FEditorGuizmoWidget::Draw()
 
         EditorGuizmo::DecomposeMatrixToComponents(Model, Translation, RotationDegrees, Scale);
 
+        // The gizmo always manipulates the actor in world-space, only the component being manipulated is 
+        // taken from the gizmo, the remaining ones are carried over from the current world-space transform.
+        FActorTransform NewWorldTransform;
+        NewWorldTransform.SetTranslation(ActorWorldTransform.GetTranslation());
+        NewWorldTransform.SetRotation(ActorWorldTransform.GetRotation());
+        NewWorldTransform.SetScale(ActorWorldTransform.GetScale());
+
         if (EffectiveOperation == EditorGuizmo::EOperation::Translate)
         {
             if (bUsingBoundsCenter)
             {
                 const Vector3 TranslationDelta = Translation - InitialGizmoPosition;
-                SelectedActor->GetTransform().SetTranslation(SelectedActor->GetTransform().GetTranslation() + TranslationDelta);
+                NewWorldTransform.SetTranslation(ActorWorldTransform.GetTranslation() + TranslationDelta);
             }
             else
             {
-                SelectedActor->GetTransform().SetTranslation(Translation);
+                NewWorldTransform.SetTranslation(Translation);
             }
+
+            SelectedActor->SetWorldTransform(NewWorldTransform);
         }
         else if (EffectiveOperation == EditorGuizmo::EOperation::Rotate)
         {
             const Vector3 RotationRadians = Vector3::DegreesToRadians(RotationDegrees);
             if (FCameraComponent* CameraComponent = SelectedActor->GetComponentOfType<FCameraComponent>())
             {
-                CameraComponent->SetRotation(RotationRadians);
+                // The camera clamps and derives its direction vectors from the relative rotation, 
+                // so feed it that instead of overwriting the whole transform.
+                NewWorldTransform.SetRotation(RotationRadians);
+                CameraComponent->SetRotation(SelectedActor->ConvertWorldToRelativeTransform(NewWorldTransform).GetRotation());
             }
             else
             {
-                SelectedActor->GetTransform().SetRotation(RotationRadians);
+                NewWorldTransform.SetRotation(RotationRadians);
+                SelectedActor->SetWorldTransform(NewWorldTransform);
             }
         }
         else if (EffectiveOperation == EditorGuizmo::EOperation::Scale)
         {
-            SelectedActor->GetTransform().SetScale(Scale);
+            NewWorldTransform.SetScale(Scale);
+            SelectedActor->SetWorldTransform(NewWorldTransform);
         }
     }
 }

@@ -350,6 +350,10 @@ bool FVulkanDeviceRHI::Initialize()
     DeviceCreateInfo.OptionalFeatures.Features10.multiDrawIndirect       = VK_TRUE;
     DeviceCreateInfo.OptionalFeatures.Features10.pipelineStatisticsQuery = VK_TRUE;
     DeviceCreateInfo.OptionalFeatures.Features10.depthClamp              = VK_TRUE;
+
+    // Shader Model 6.9 promotes native 16-bit and 64-bit integer shader ops from optional to required.
+    DeviceCreateInfo.OptionalFeatures.Features10.shaderInt16 = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features10.shaderInt64 = VK_TRUE;
     
 #ifndef RELEASE_BUILD
     if (CVarVulkanEnableRobustBufferAccess.GetValue())
@@ -368,15 +372,24 @@ bool FVulkanDeviceRHI::Initialize()
     // Vulkan 1.1 Optional
     DeviceCreateInfo.OptionalFeatures.Features11.multiview = VK_TRUE;
 
+    // SM 6.2 defines the 16-bit scalar types as usable with memory operations, not just arithmetic.
+    DeviceCreateInfo.OptionalFeatures.Features11.storageBuffer16BitAccess           = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features11.uniformAndStorageBuffer16BitAccess = VK_TRUE;
+
     // Vulkan 1.2 Required 
     DeviceCreateInfo.RequiredFeatures.Features12.hostQueryReset      = VK_TRUE; 
     DeviceCreateInfo.RequiredFeatures.Features12.bufferDeviceAddress = VK_TRUE; 
     DeviceCreateInfo.RequiredFeatures.Features12.shaderOutputLayer   = VK_TRUE; 
     DeviceCreateInfo.RequiredFeatures.Features12.timelineSemaphore   = VK_TRUE; 
     
-    // Vulkan 1.2 Optional 
+    // Vulkan 1.2 Optional
     DeviceCreateInfo.OptionalFeatures.Features12.descriptorIndexing = VK_TRUE;
     DeviceCreateInfo.OptionalFeatures.Features12.drawIndirectCount  = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features12.shaderFloat16      = VK_TRUE;
+
+    // SM 6.6 adds 64-bit integer atomics on buffers and groupshared memory.
+    DeviceCreateInfo.OptionalFeatures.Features12.shaderBufferInt64Atomics = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features12.shaderSharedInt64Atomics = VK_TRUE;
 
     DeviceCreateInfo.OptionalFeatures.Features12.runtimeDescriptorArray                             = VK_TRUE;
     DeviceCreateInfo.OptionalFeatures.Features12.descriptorBindingPartiallyBound                    = VK_TRUE;
@@ -403,6 +416,9 @@ bool FVulkanDeviceRHI::Initialize()
 
     // Vulkan 1.3 Optional
     DeviceCreateInfo.OptionalFeatures.Features13.pipelineCreationCacheControl = VK_TRUE;
+
+    // SM 6.4 adds the packed dot-product intrinsics (dot4add_u8packed, dot4add_i8packed, dot2add).
+    DeviceCreateInfo.OptionalFeatures.Features13.shaderIntegerDotProduct = VK_TRUE;
 
     // Create physical device
     PhysicalDevice = new FVulkanPhysicalDevice(GetInstance());
@@ -556,7 +572,7 @@ FRHITexture* FVulkanDeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDes
     }
 #endif
 
-    TickCoreProgression();
+    FlushCompletedSubmissions();
     return NewTexture.ReleaseOwnership();
 }
 
@@ -603,7 +619,7 @@ FRHIBuffer* FVulkanDeviceRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, E
     }
 #endif
 
-    TickCoreProgression();
+    FlushCompletedSubmissions();
     return NewBuffer.ReleaseOwnership();
 }
 
@@ -683,7 +699,7 @@ FRHISceneAccelerationStructure* FVulkanDeviceRHI::CreateSceneAccelerationStructu
 
     GraphicsCommandContext->FinishContext();
 
-    TickCoreProgression();
+    FlushCompletedSubmissions();
     return NewScene.ReleaseOwnership();
 }
 
@@ -708,7 +724,7 @@ FRHIGeometryAccelerationStructure* FVulkanDeviceRHI::CreateGeometryAccelerationS
 
     GraphicsCommandContext->FinishContext();
 
-    TickCoreProgression();
+    FlushCompletedSubmissions();
     return NewGeometry.ReleaseOwnership();
 }
 
@@ -1439,12 +1455,6 @@ void FVulkanDeviceRHI::EnqueueResourceDeletion(FRHIResource* Resource)
     {
         DeferDeletion(Resource);
     }
-}
-
-void FVulkanDeviceRHI::TickCoreProgression()
-{
-    Device->GetGraphicsQueue()->ProcessCommandQueue();
-    Device->GetMemoryManager().CleanUpAllocators();
 }
 
 void FVulkanDeviceRHI::FlushCompletedSubmissions()

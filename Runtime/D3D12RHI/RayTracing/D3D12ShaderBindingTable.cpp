@@ -1,10 +1,22 @@
 #include "D3D12RHI/D3D12Device.h"
+#include "D3D12RHI/D3D12Buffer.h"
 #include "D3D12RHI/D3D12CommandList.h"
 #include "D3D12RHI/D3D12Descriptors.h"
+#include "D3D12RHI/D3D12ResourceViews.h"
 #include "D3D12RHI/D3D12RHI.h"
 #include "D3D12RHI/RayTracing/D3D12ShaderBindingTable.h"
 
 static_assert(sizeof(FD3D12ShaderBindingTableEntry) == 64, "FD3D12ShaderBindingTableEntry must be exactly 64 bytes (32-byte identifier + 4 local entries).");
+
+static FD3D12BufferRHI* GetViewedBuffer(FRHIResource* ViewedResource)
+{
+    if (!ViewedResource || ViewedResource->GetResourceType() != ERHIResourceType::Buffer)
+    {
+        return nullptr;
+    }
+
+    return FD3D12DeviceRHI::ResourceCast(static_cast<FRHIBuffer*>(ViewedResource));
+}
 
 FD3D12ShaderBindingTable::FD3D12ShaderBindingTable(FD3D12Device* InDevice, const FRHIShaderBindingTableDesc& InDesc)
     : FRHIShaderBindingTable(InDesc)
@@ -120,6 +132,9 @@ uint32 FD3D12ShaderBindingTable::GetSubTableBaseRecord(ERayTracingShaderRecordKi
 
 void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSignature, uint8* OutRecord, uint64 RecordByteOffset, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const String& ExportName, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings)
 {
+    UNREFERENCED_VARIABLE(RecordKind);
+    UNREFERENCED_VARIABLE(RecordIndex);
+
     void* Identifier = (Pipeline && !ExportName.IsEmpty()) ? Pipeline->GetShaderIdentifier(ExportName) : nullptr;
 
     bool bIdentifierIsZero = true;
@@ -160,21 +175,19 @@ void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSign
     const int8               UAVTableParamIndex     = Stage.GetRootParameterIndex(EResourceType::UAV);
 
     FD3D12PendingLocalTable PendingShaderResourceViewTable;
-    PendingShaderResourceViewTable.RecordByteOffset          = RecordByteOffset;
-    PendingShaderResourceViewTable.TableParamSlot            = (SRVTableParamIndex >= 0) ? static_cast<uint32>(SRVTableParamIndex) : 0;
-    PendingShaderResourceViewTable.HeapKind                  = ED3D12PendingLocalTableHeap::Resource;
-    PendingShaderResourceViewTable.bUsesUnorderedAccessViews = false;
+    PendingShaderResourceViewTable.RecordByteOffset = RecordByteOffset;
+    PendingShaderResourceViewTable.TableParamSlot   = (SRVTableParamIndex >= 0) ? static_cast<uint32>(SRVTableParamIndex) : 0;
+    PendingShaderResourceViewTable.DescriptorType   = ED3D12LocalTableDescriptorType::ShaderResourceView;
 
     FD3D12PendingLocalTable PendingUnorderedAccessViewTable;
-    PendingUnorderedAccessViewTable.RecordByteOffset          = RecordByteOffset;
-    PendingUnorderedAccessViewTable.TableParamSlot            = (UAVTableParamIndex >= 0) ? static_cast<uint32>(UAVTableParamIndex) : 0;
-    PendingUnorderedAccessViewTable.HeapKind                  = ED3D12PendingLocalTableHeap::Resource;
-    PendingUnorderedAccessViewTable.bUsesUnorderedAccessViews = true;
+    PendingUnorderedAccessViewTable.RecordByteOffset = RecordByteOffset;
+    PendingUnorderedAccessViewTable.TableParamSlot   = (UAVTableParamIndex >= 0) ? static_cast<uint32>(UAVTableParamIndex) : 0;
+    PendingUnorderedAccessViewTable.DescriptorType   = ED3D12LocalTableDescriptorType::UnorderedAccessView;
 
     FD3D12PendingLocalTable PendingSamplerTable;
     PendingSamplerTable.RecordByteOffset = RecordByteOffset;
     PendingSamplerTable.TableParamSlot   = (SamplerTableParamIndex >= 0) ? static_cast<uint32>(SamplerTableParamIndex) : 0;
-    PendingSamplerTable.HeapKind         = ED3D12PendingLocalTableHeap::Sampler;
+    PendingSamplerTable.DescriptorType   = ED3D12LocalTableDescriptorType::Sampler;
 
     bool bHasShaderResourceViewTable  = false;
     bool bHasUnorderedAccessViewTable = false;
@@ -225,15 +238,21 @@ void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSign
             case ERayTracingLocalBindingType::ShaderResourceView:
             {
                 FD3D12ShaderResourceViewRHI* ShaderResourceView = FD3D12DeviceRHI::ResourceCast(Binding.ShaderResourceView);
-                const FD3D12Resource*        Resource           = ShaderResourceView ? ShaderResourceView->GetViewResource() : nullptr;
-                const bool                   bIsBuffer          = Resource && Resource->GetDimension() == D3D12_RESOURCE_DIMENSION_BUFFER;
+                FD3D12BufferRHI*             ViewedBuffer       = (ShaderResourceView && ShaderResourceView->GetDesc().IsBufferSRV()) ? GetViewedBuffer(ShaderResourceView->GetResource()) : nullptr;
+                const bool                   bIsBuffer          = ViewedBuffer != nullptr;
 
                 const int8 ParamIndex = Stage.GetRootDescriptorParameterIndex(EResourceType::SRV, Register);
                 if (bIsBuffer && ParamIndex >= 0 && ParamIndex < D3D12_MAX_LOCAL_RECORD_ENTRIES)
                 {
-                    const D3D12_SHADER_RESOURCE_VIEW_DESC& ViewDesc = ShaderResourceView->GetD3D12Desc();
-                    const uint64 ElementSize = (ViewDesc.Buffer.Flags & D3D12_BUFFER_SRV_FLAG_RAW) ? 4ull : uint64(ViewDesc.Buffer.StructureByteStride);
-                    RootDescriptors[ParamIndex] = Resource->GetGPUVirtualAddress() + uint64(ViewDesc.Buffer.FirstElement) * ElementSize;
+                    const auto&  BufferViewDesc = ShaderResourceView->GetDesc().Buffer;
+                    const uint64 ElementSize    = GetBufferViewElementSize(ViewedBuffer->GetDesc(), BufferViewDesc);
+                    if (ElementSize == 0)
+                    {
+                        D3D12_ERROR("[FD3D12ShaderBindingTable]: Root SRV at register %u has a zero element size and cannot be addressed.", uint32(Register));
+                        break;
+                    }
+
+                    RootDescriptors[ParamIndex] = ViewedBuffer->GetGPUVirtualAddress() + uint64(BufferViewDesc.FirstElement) * ElementSize;
                 }
                 else if (bIsBuffer && ParamIndex >= D3D12_MAX_LOCAL_RECORD_ENTRIES)
                 {
@@ -261,15 +280,21 @@ void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSign
             case ERayTracingLocalBindingType::UnorderedAccessView:
             {
                 FD3D12UnorderedAccessViewRHI* UnorderedAccessView = FD3D12DeviceRHI::ResourceCast(Binding.UnorderedAccessView);
-                const FD3D12Resource*         Resource            = UnorderedAccessView ? UnorderedAccessView->GetViewResource() : nullptr;
-                const bool                    bIsBuffer           = Resource && Resource->GetDimension() == D3D12_RESOURCE_DIMENSION_BUFFER;
+                FD3D12BufferRHI*              ViewedBuffer        = (UnorderedAccessView && UnorderedAccessView->GetDesc().IsBufferUAV()) ? GetViewedBuffer(UnorderedAccessView->GetResource()) : nullptr;
+                const bool                    bIsBuffer           = ViewedBuffer != nullptr;
 
                 const int8 ParamIndex = Stage.GetRootDescriptorParameterIndex(EResourceType::UAV, Register);
                 if (bIsBuffer && ParamIndex >= 0 && ParamIndex < D3D12_MAX_LOCAL_RECORD_ENTRIES)
                 {
-                    const D3D12_UNORDERED_ACCESS_VIEW_DESC& ViewDesc = UnorderedAccessView->GetD3D12Desc();
-                    const uint64 ElementSize = (ViewDesc.Buffer.Flags & D3D12_BUFFER_UAV_FLAG_RAW) ? 4ull : uint64(ViewDesc.Buffer.StructureByteStride);
-                    RootDescriptors[ParamIndex] = Resource->GetGPUVirtualAddress() + uint64(ViewDesc.Buffer.FirstElement) * ElementSize;
+                    const auto&  BufferViewDesc = UnorderedAccessView->GetDesc().Buffer;
+                    const uint64 ElementSize    = GetBufferViewElementSize(ViewedBuffer->GetDesc(), BufferViewDesc);
+                    if (ElementSize == 0)
+                    {
+                        D3D12_ERROR("[FD3D12ShaderBindingTable]: Root UAV at register %u has a zero element size and cannot be addressed.", uint32(Register));
+                        break;
+                    }
+
+                    RootDescriptors[ParamIndex] = ViewedBuffer->GetGPUVirtualAddress() + uint64(BufferViewDesc.FirstElement) * ElementSize;
                 }
                 else if (bIsBuffer && ParamIndex >= D3D12_MAX_LOCAL_RECORD_ENTRIES)
                 {
@@ -383,7 +408,7 @@ uint32 FD3D12ShaderBindingTable::GetNumPendingLocalTableDescriptors() const
     uint32 Total = 0;
     for (const FD3D12PendingLocalTable& Pending : PendingLocalTables)
     {
-        if (Pending.HeapKind == ED3D12PendingLocalTableHeap::Resource)
+        if (IsResourceDescriptorHeap(Pending.DescriptorType))
         {
             Total += Pending.NumDescriptors;
         }
@@ -397,7 +422,7 @@ uint32 FD3D12ShaderBindingTable::GetNumPendingLocalSamplerDescriptors() const
     uint32 Total = 0;
     for (const FD3D12PendingLocalTable& Pending : PendingLocalTables)
     {
-        if (Pending.HeapKind == ED3D12PendingLocalTableHeap::Sampler)
+        if (IsSamplerDescriptorHeap(Pending.DescriptorType))
         {
             Total += Pending.NumDescriptors;
         }
@@ -451,11 +476,10 @@ void FD3D12ShaderBindingTable::ResolveLocalDescriptorTables(FD3D12CommandContext
 
     struct FResolvedTable
     {
-        uint32                      NumDescriptors;
-        ED3D12PendingLocalTableHeap HeapKind;
-        bool                        bUsesUnorderedAccessViews;
-        SIZE_T                      SourceHandles[FD3D12PendingLocalTable::MaxDescriptors];
-        uint32                      BaseHandle;
+        uint32                         NumDescriptors;
+        ED3D12LocalTableDescriptorType DescriptorType;
+        SIZE_T                         SourceHandles[FD3D12PendingLocalTable::MaxDescriptors];
+        uint32                         BaseHandle;
     };
 
     TArray<FResolvedTable> ResolvedTables;
@@ -466,28 +490,36 @@ void FD3D12ShaderBindingTable::ResolveLocalDescriptorTables(FD3D12CommandContext
             continue;
         }
 
-        const bool                        bIsSampler = (Pending.HeapKind == ED3D12PendingLocalTableHeap::Sampler);
-        FD3D12LocalDescriptorHeap&        TargetHeap = bIsSampler ? SamplerHeap : ResourceHeap;
-        const D3D12_DESCRIPTOR_HEAP_TYPE  HeapType   = bIsSampler ? D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER : D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+        const bool                       bIsSampler = IsSamplerDescriptorHeap(Pending.DescriptorType);
+        FD3D12LocalDescriptorHeap&       TargetHeap = bIsSampler ? SamplerHeap : ResourceHeap;
+        const D3D12_DESCRIPTOR_HEAP_TYPE HeapType   = bIsSampler ? D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER : D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 
         SIZE_T SourceHandles[FD3D12PendingLocalTable::MaxDescriptors] = {};
         for (uint32 SlotIndex = 0; SlotIndex < Pending.NumDescriptors; ++SlotIndex)
         {
-            D3D12_CPU_DESCRIPTOR_HANDLE Src;
-            if (bIsSampler)
+            D3D12_CPU_DESCRIPTOR_HANDLE Src = DefaultSRVHandle;
+            switch (Pending.DescriptorType)
             {
-                FD3D12SamplerStateRHI* SamplerState = Pending.Samplers[SlotIndex];
-                Src = SamplerState ? SamplerState->GetOfflineHandle() : DefaultSamplerHandle;
-            }
-            else if (Pending.bUsesUnorderedAccessViews)
-            {
-                FD3D12UnorderedAccessViewRHI* UnorderedAccessView = Pending.UnorderedAccessViews[SlotIndex];
-                Src = UnorderedAccessView ? UnorderedAccessView->GetOfflineHandle() : DefaultUAVHandle;
-            }
-            else
-            {
-                FD3D12ShaderResourceViewRHI* ShaderResourceView = Pending.ShaderResourceViews[SlotIndex];
-                Src = ShaderResourceView ? ShaderResourceView->GetOfflineHandle() : DefaultSRVHandle;
+                case ED3D12LocalTableDescriptorType::ShaderResourceView:
+                {
+                    FD3D12ShaderResourceViewRHI* ShaderResourceView = Pending.ShaderResourceViews[SlotIndex];
+                    Src = ShaderResourceView ? ShaderResourceView->GetOfflineHandle() : DefaultSRVHandle;
+                    break;
+                }
+
+                case ED3D12LocalTableDescriptorType::UnorderedAccessView:
+                {
+                    FD3D12UnorderedAccessViewRHI* UnorderedAccessView = Pending.UnorderedAccessViews[SlotIndex];
+                    Src = UnorderedAccessView ? UnorderedAccessView->GetOfflineHandle() : DefaultUAVHandle;
+                    break;
+                }
+
+                case ED3D12LocalTableDescriptorType::Sampler:
+                {
+                    FD3D12SamplerStateRHI* SamplerState = Pending.Samplers[SlotIndex];
+                    Src = SamplerState ? SamplerState->GetOfflineHandle() : DefaultSamplerHandle;
+                    break;
+                }
             }
 
             SourceHandles[SlotIndex] = Src.ptr;
@@ -498,7 +530,7 @@ void FD3D12ShaderBindingTable::ResolveLocalDescriptorTables(FD3D12CommandContext
         bool bFoundInCache = false;
         for (const FResolvedTable& Resolved : ResolvedTables)
         {
-            if (Resolved.NumDescriptors != Pending.NumDescriptors || Resolved.HeapKind != Pending.HeapKind || Resolved.bUsesUnorderedAccessViews != Pending.bUsesUnorderedAccessViews)
+            if (Resolved.NumDescriptors != Pending.NumDescriptors || Resolved.DescriptorType != Pending.DescriptorType)
             {
                 continue;
             }
@@ -522,10 +554,9 @@ void FD3D12ShaderBindingTable::ResolveLocalDescriptorTables(FD3D12CommandContext
             }
 
             FResolvedTable Resolved;
-            Resolved.NumDescriptors            = Pending.NumDescriptors;
-            Resolved.HeapKind                  = Pending.HeapKind;
-            Resolved.bUsesUnorderedAccessViews = Pending.bUsesUnorderedAccessViews;
-            Resolved.BaseHandle                = BaseHandle;
+            Resolved.NumDescriptors = Pending.NumDescriptors;
+            Resolved.DescriptorType = Pending.DescriptorType;
+            Resolved.BaseHandle     = BaseHandle;
             
             Memory::Memcpy(Resolved.SourceHandles, SourceHandles, sizeof(SourceHandles));
             ResolvedTables.Emplace(Resolved);

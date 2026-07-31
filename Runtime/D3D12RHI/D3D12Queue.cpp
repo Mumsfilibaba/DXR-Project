@@ -255,24 +255,30 @@ void FD3D12Queue::SubmitCommands(FD3D12Commands* Commands)
     PendingSubmissions.Enqueue(Commands);
 
     const int32 MaxPending = CVarMaxPendingSubmissions.GetValue();
-    while (PendingSubmissions.Size() > MaxPending)
     {
-        FD3D12Commands* Oldest = nullptr;
-        if (PendingSubmissions.Peek(Oldest) && Oldest)
+        SCOPED_LOCK(ConsumerCS);
+
+        while (PendingSubmissions.Size() > MaxPending)
         {
-            Oldest->SyncPoint.Wait();
-            PendingSubmissions.Dequeue();
-            Oldest->PostExecute();
-        }
-        else
-        {
-            break;
+            FD3D12Commands* Oldest = nullptr;
+            if (PendingSubmissions.Peek(Oldest) && Oldest)
+            {
+                Oldest->SyncPoint.Wait();
+                PendingSubmissions.Dequeue();
+                Oldest->PostExecute();
+            }
+            else
+            {
+                break;
+            }
         }
     }
 }
 
 void FD3D12Queue::ProcessCommandQueue()
 {
+    SCOPED_LOCK(ConsumerCS);
+
     bool bProcess = true;
     while (bProcess)
     {

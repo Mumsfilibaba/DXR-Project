@@ -331,10 +331,11 @@ bool FD3D12Shader::ValidateRequiresFlags(ED3D12ShaderFlags InFlags, const CHAR* 
     // Per-flag check is intentional so we surface every problem in a single shader-load.
     bool bAllSatisfied = true;
 
-    const CHAR* SafeName = (InShaderName != nullptr) ? InShaderName : "<unnamed>";
+    MAYBE_UNUSED const CHAR* SafeName = (InShaderName != nullptr) ? InShaderName : "<unnamed>";
 
     auto ReportMissing = [&](const CHAR* InFeature)
     {
+        UNREFERENCED_VARIABLE(InFeature);
         D3D12_ERROR("[FD3D12Shader] Shader '%s' requires '%s' which the current device does not support", SafeName, InFeature);
         bAllSatisfied = false;
     };

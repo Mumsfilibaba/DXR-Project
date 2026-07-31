@@ -93,7 +93,7 @@ void FCameraComponent::UpdateDirectionVectors()
 {
     CHECK(GetActorOwner() != nullptr);
 
-    const Vector3& Rotation = GetActorOwner()->GetTransform().GetRotation();
+    const Vector3& Rotation = GetActorOwner()->GetWorldTransform().GetRotation();
     
     const Matrix4 RotationMatrix = Matrix4::RotationRollPitchYaw(Rotation);
     ForwardVector = RotationMatrix.TransformNormal(Vector3::Forward);
@@ -128,7 +128,7 @@ void FCameraComponent::UpdateViewMatrix()
 
     UpdateDirectionVectors();
 
-    const Vector3& Position = GetActorOwner()->GetTransform().GetTranslation();
+    const Vector3& Position = GetActorOwner()->GetWorldTransform().GetTranslation();
     View        = Matrix4::LookTo(Position, ForwardVector, UpVector);
     ViewInverse = View.GetInverse();
 }
@@ -147,11 +147,11 @@ void FCameraComponent::UpdateWorldToClipSpaceMatrices()
 const Vector3& FCameraComponent::GetPosition() const
 {
     CHECK(GetActorOwner() != nullptr);
-    return GetActorOwner()->GetTransform().GetTranslation();
+    return GetActorOwner()->GetWorldTransform().GetTranslation();
 }
 
 const Vector3& FCameraComponent::GetRotation() const
 {
     CHECK(GetActorOwner() != nullptr);
-    return GetActorOwner()->GetTransform().GetRotation();
+    return GetActorOwner()->GetWorldTransform().GetRotation();
 }

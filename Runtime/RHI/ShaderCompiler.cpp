@@ -247,6 +247,24 @@ bool FShaderCompiler::InitializeDXC()
         return false;
     }
 
+    TComPtr<IDxcVersionInfo> VersionInfo;
+    if (SUCCEEDED(DxcCreateInstanceFunc(CLSID_DxcCompiler, IID_PPV_ARGS(&VersionInfo))))
+    {
+        uint32 Major = 0;
+        uint32 Minor = 0;
+        if (SUCCEEDED(VersionInfo->GetVersion(&Major, &Minor)))
+        {
+            uint32 Flags = 0;
+            VersionInfo->GetFlags(&Flags);
+
+            LOG_INFO("[FShaderCompiler]: Loaded 'dxcompiler' version %u.%u%s", Major, Minor, (Flags & DxcVersionInfoFlags_Debug) ? " (Debug)" : "");
+        }
+    }
+    else
+    {
+        LOG_WARNING("[FShaderCompiler]: Loaded 'dxcompiler' does not report version information");
+    }
+
     return true;
 }
 
@@ -289,6 +307,12 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
 {
     STAT_ADD(STAT_Shader_CompileCount, 1);
     OutByteCode.Clear();
+
+    if (RHI::MaxShaderModel != EShaderModel::Unknown && CompileInfo.ShaderModel > RHI::MaxShaderModel)
+    {
+        LOG_ERROR("[FShaderCompiler]: '%s' requests Shader Model %s but the device supports at most %s",
+            FilePath.IsEmpty() ? *CompileInfo.EntryPoint : *FilePath, ToString(CompileInfo.ShaderModel), ToString(RHI::MaxShaderModel));
+    }
 
     TComPtr<IDxcUtils> Utils;
     HRESULT hr = DxcCreateInstanceFunc(CLSID_DxcUtils, IID_PPV_ARGS(&Utils));

@@ -55,7 +55,7 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     const float3 ViewDir       = normalize(WorldPosition - CameraBuffer.PositionWS);
 
     float3 ReflectDirection;
-    if (Roughness < RAY_TRACING_MIRROR_ROUGHNESS_THRESHOLD)
+    if (Roughness < SceneConstants.ReflectionMirrorRoughnessThreshold)
     {
         ReflectDirection = normalize(reflect(ViewDir, WorldNormal));
     }
@@ -68,10 +68,10 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     }
 
     RayDesc Ray;
-    Ray.Origin    = WorldPosition + (WorldNormal * RAY_OFFSET);
+    Ray.Origin    = WorldPosition + (WorldNormal * SceneConstants.ReflectionRayBias);
     Ray.Direction = ReflectDirection;
     Ray.TMin      = 0.0f;
-    Ray.TMax      = 10000.0f;
+    Ray.TMax      = SceneConstants.ReflectionMaxRayDistance;
 
     RayQuery<RAY_FLAG_CULL_BACK_FACING_TRIANGLES> Query;
     Query.TraceRayInline(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, Ray);

@@ -39,10 +39,12 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResourc
         NumSubresources = D3D12CalculateSubresourceCount(Desc.MipLevels, ArraySize, 1);
 
         D3D12_RESOURCE_DESC QueryDesc = Desc;
+    #if D3D12_USE_TIGHT_ALIGNMENT
         if (QueryDesc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT)
         {
             QueryDesc.Alignment = 0;
         }
+    #endif
 
         const D3D12_RESOURCE_ALLOCATION_INFO AllocInfo = GetDevice()->GetD3D12Device()->GetResourceAllocationInfo(0, 1, &QueryDesc);
         if (AllocInfo.SizeInBytes != UINT64_MAX)
@@ -166,10 +168,12 @@ void FD3D12Resource::StartResidencyTracking()
     if (FD3D12ResidencyManager* ResidencyManager = GetDevice()->GetResidencyManager())
     {
         D3D12_RESOURCE_DESC QueryDesc = Desc;
+    #if D3D12_USE_TIGHT_ALIGNMENT
         if (QueryDesc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT)
         {
             QueryDesc.Alignment = 0;
         }
+    #endif
 
         const D3D12_RESOURCE_ALLOCATION_INFO AllocationInfo = GetDevice()->GetD3D12Device()->GetResourceAllocationInfo(0, 1, &QueryDesc);
         ResidencyHandle.Initialize(Resource.Get(), AllocationInfo.SizeInBytes);

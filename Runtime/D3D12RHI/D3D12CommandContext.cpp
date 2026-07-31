@@ -962,7 +962,7 @@ void FD3D12CommandContext::SetMeshletPipelineState(class FRHIMeshletPipelineStat
 
 void FD3D12CommandContext::SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants)
 {
-    FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
+    MAYBE_UNUSED FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     CHECK(D3D12Shader != nullptr);
 
     ContextState.SetShaderConstants(reinterpret_cast<const uint32*>(ShaderConstants), NumShaderConstants);
@@ -1147,11 +1147,13 @@ void FD3D12CommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegio
     CHECK(D3D12Resource != nullptr);
 
     D3D12_RESOURCE_DESC Desc = D3D12Resource->GetDesc();
+#if D3D12_USE_TIGHT_ALIGNMENT
     if ((Desc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) != 0)
     {
         // Query APIs require tight-alignment resources to use Alignment=0 in the desc.
         Desc.Alignment = 0;
     }
+#endif
 
     UINT64 RequiredSize = 0;
     UINT64 RowPitch     = 0;
@@ -1215,10 +1217,12 @@ void FD3D12CommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegio
     CHECK(D3D12Resource != nullptr);
 
     D3D12_RESOURCE_DESC Desc = D3D12Resource->GetDesc();
+#if D3D12_USE_TIGHT_ALIGNMENT
     if ((Desc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) != 0)
     {
         Desc.Alignment = 0;
     }
+#endif
 
     UINT64 RequiredSize = 0;
     UINT64 RowPitch     = 0;
@@ -1330,8 +1334,8 @@ void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src,
         const ETextureDimension SrcDimension = Src->GetDesc().Dimension;
         const ETextureDimension DstDimension = Dst->GetDesc().Dimension;
         
-        const uint32 SrcNumArrayLayers = RHIDimensionArrayLayers(SrcDimension, Src->GetDesc().NumArraySlices);
-        const uint32 DstNumArrayLayers = RHIDimensionArrayLayers(DstDimension, Dst->GetDesc().NumArraySlices);
+        MAYBE_UNUSED const uint32 SrcNumArrayLayers = RHIDimensionArrayLayers(SrcDimension, Src->GetDesc().NumArraySlices);
+        MAYBE_UNUSED const uint32 DstNumArrayLayers = RHIDimensionArrayLayers(DstDimension, Dst->GetDesc().NumArraySlices);
         CHECK(InCopyDesc.SrcArraySlice + InCopyDesc.NumArraySlices <= SrcNumArrayLayers);
         CHECK(InCopyDesc.DstArraySlice + InCopyDesc.NumArraySlices <= DstNumArrayLayers);
     }
@@ -1409,13 +1413,7 @@ void FD3D12CommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 Dst
  
     BarrierBatcher.FlushBarriers(GetCommandList()); 
  
-    if ((DstOffset % D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT) != 0) 
-    { 
-        D3D12_ERROR("CopyTextureRegionToBuffer requires DstOffset aligned to %u bytes. Offset=%llu", D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT, DstOffset); 
-        return; 
-    } 
- 
-    FD3D12BufferRHI* D3D12Destination = FD3D12DeviceRHI::ResourceCast(Dst); 
+    FD3D12BufferRHI* D3D12Destination = FD3D12DeviceRHI::ResourceCast(Dst);
     CHECK(D3D12Destination != nullptr); 
  
     FD3D12TextureRHI* D3D12Source = FD3D12DeviceRHI::ResourceCast(Src); 
@@ -1447,6 +1445,13 @@ void FD3D12CommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 Dst
     const FD3D12ResourceStorage& DstStorage = D3D12Destination->GetResourceStorage();
     const uint64 EffectiveOffset = DstOffset + DstStorage.GetResourceOffset();
 
+    if ((EffectiveOffset % D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT) != 0)
+    {
+        D3D12_ERROR("CopyTextureRegionToBuffer requires a %u-byte aligned destination offset. Offset=%llu SuballocationOffset=%llu",
+            D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT, DstOffset, DstStorage.GetResourceOffset());
+        return;
+    }
+
     D3D12_TEXTURE_COPY_LOCATION DestLocation = {};
     DestLocation.pResource                        = DstResource->GetD3D12Resource();
     DestLocation.Type                             = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
@@ -1460,9 +1465,9 @@ void FD3D12CommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 Dst
     const uint32 CopyWidth    = SrcRight - SrcLeft;
     const uint32 CopyHeight   = SrcBottom - SrcTop;
     const uint32 RowPitch     = Math::AlignUp<uint32>(BytesPerPixel * CopyWidth, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
-    const uint64 RequiredSize = uint64(RowPitch) * uint64(CopyHeight);
+    MAYBE_UNUSED const uint64 RequiredSize = uint64(RowPitch) * uint64(CopyHeight);
 
-    CHECK(EffectiveOffset + RequiredSize <= DstResource->GetSize());
+    CHECK(DstOffset + RequiredSize <= DstStorage.GetSize());
 
     DestLocation.PlacedFootprint.Footprint.Width    = CopyWidth;
     DestLocation.PlacedFootprint.Footprint.Height   = CopyHeight;
@@ -1487,17 +1492,11 @@ void FD3D12CommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint6
 
     {
         const ETextureDimension SrcDimension = Src->GetDesc().Dimension;
-        const uint32 SrcNumArrayLayers = RHIDimensionArrayLayers(SrcDimension, Src->GetDesc().NumArraySlices);
+        MAYBE_UNUSED const uint32 SrcNumArrayLayers = RHIDimensionArrayLayers(SrcDimension, Src->GetDesc().NumArraySlices);
         CHECK(SrcArraySlice < SrcNumArrayLayers);
     }
 
     BarrierBatcher.FlushBarriers(GetCommandList());
-
-    if ((DstOffset % D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT) != 0)
-    {
-        D3D12_ERROR("CopyTextureSubresourceToBuffer requires DstOffset aligned to %u bytes. Offset=%llu", D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT, DstOffset);
-        return;
-    }
 
     FD3D12BufferRHI* D3D12Destination = FD3D12DeviceRHI::ResourceCast(Dst);
     CHECK(D3D12Destination != nullptr);
@@ -1534,11 +1533,22 @@ void FD3D12CommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint6
     const uint32 RowPitch   = Math::AlignUp<uint32>(BytesPerPixel * CopyWidth, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 
     const FD3D12ResourceStorage& DstStorage = D3D12Destination->GetResourceStorage();
+    const uint64 EffectiveOffset = DstOffset + DstStorage.GetResourceOffset();
+
+    if ((EffectiveOffset % D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT) != 0)
+    {
+        D3D12_ERROR("CopyTextureSubresourceToBuffer requires a %u-byte aligned destination offset. Offset=%llu SuballocationOffset=%llu", 
+            D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT, DstOffset, DstStorage.GetResourceOffset());
+        return;
+    }
+
+    MAYBE_UNUSED const uint64 RequiredSize = uint64(RowPitch) * uint64(CopyHeight) * uint64(CopyDepth);
+    CHECK(DstOffset + RequiredSize <= DstStorage.GetSize());
 
     D3D12_TEXTURE_COPY_LOCATION DestLocation = {};
     DestLocation.pResource                          = DstResource->GetD3D12Resource();
     DestLocation.Type                               = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-    DestLocation.PlacedFootprint.Offset             = DstOffset + DstStorage.GetResourceOffset();
+    DestLocation.PlacedFootprint.Offset             = EffectiveOffset;
     DestLocation.PlacedFootprint.Footprint.Format   = ConvertFormat(Src->GetDesc().Format);
     DestLocation.PlacedFootprint.Footprint.Width    = CopyWidth;
     DestLocation.PlacedFootprint.Footprint.Height   = CopyHeight;
@@ -1601,7 +1611,7 @@ void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FR
 
     {
         const ETextureDimension Dimension = Texture->GetDesc().Dimension;
-        const uint32 NumArrayLayers = RHIDimensionArrayLayers(Dimension, Texture->GetDesc().NumArraySlices);
+        MAYBE_UNUSED const uint32 NumArrayLayers = RHIDimensionArrayLayers(Dimension, Texture->GetDesc().NumArraySlices);
         CHECK(TextureTransition.ArraySlice == RHI_ALL_ARRAY_SLICES || TextureTransition.ArraySlice < NumArrayLayers);
     }
 
@@ -2193,7 +2203,7 @@ void FD3D12CommandContext::RequireTextureState(FRHITexture* Texture, const FRHIR
 
     {
         const ETextureDimension Dimension = Texture->GetDesc().Dimension;
-        const uint32 NumArrayLayers = RHIDimensionArrayLayers(Dimension, Texture->GetDesc().NumArraySlices);
+        MAYBE_UNUSED const uint32 NumArrayLayers = RHIDimensionArrayLayers(Dimension, Texture->GetDesc().NumArraySlices);
         CHECK(RequiredState.ArraySlice == RHI_ALL_ARRAY_SLICES || RequiredState.ArraySlice < NumArrayLayers);
     }
 

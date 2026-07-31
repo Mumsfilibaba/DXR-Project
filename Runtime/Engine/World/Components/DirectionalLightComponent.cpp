@@ -34,7 +34,7 @@ Vector3 FDirectionalLightComponent::GetDirectionVector() const
 {
     CHECK(GetActorOwner() != nullptr);
 
-    const Vector3& Rotation = GetActorOwner()->GetTransform().GetRotation();
+    const Vector3& Rotation = GetActorOwner()->GetWorldTransform().GetRotation();
     const Matrix4 RotationMatrix = Matrix4::RotationRollPitchYaw(Rotation);
     return RotationMatrix.TransformNormal(-Vector3::Up).GetNormalized();
 }

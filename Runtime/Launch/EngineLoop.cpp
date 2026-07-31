@@ -176,6 +176,8 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
         return -1;
     }
 
+    FConsoleManager::Get().LoadConsoleVariablesFromCommandLine();
+
     if (!FThreadManager::Initialize())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to init ThreadManager");

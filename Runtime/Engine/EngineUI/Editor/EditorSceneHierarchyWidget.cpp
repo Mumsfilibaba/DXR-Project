@@ -14,12 +14,138 @@
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 
+// Payload identifier used when dragging an actor onto another actor in the outliner
+static const CHAR* ActorDragDropPayloadId = "SCENE_HIERARCHY_ACTOR";
+
+enum class EActorFolder : uint8
+{
+    Cameras,
+    Actors,
+    Lighting,
+};
+
+static const CHAR* GetActorTypeLabel(FActor* Actor)
+{
+    if (!Actor)
+    {
+        return "Actor";
+    }
+
+    if (Actor->HasComponentOfType<FCameraComponent>())
+    {
+        return "Camera";
+    }
+
+    if (Actor->HasComponentOfType<FPointLightComponent>())
+    {
+        return "PointLight";
+    }
+
+    if (Actor->HasComponentOfType<FDirectionalLightComponent>())
+    {
+        return "DirectionalLight";
+    }
+
+    if (Actor->HasComponentOfType<FSkyLightComponent>())
+    {
+        return "SkyLight";
+    }
+
+    if (Actor->HasComponentOfType<FLightProbeComponent>())
+    {
+        return "LightProbe";
+    }
+    
+    if (Actor->HasComponentOfType<FLightComponent>())
+    {
+        return "Light";
+    }
+
+    return "Actor";
+}
+
+static EActorFolder GetActorFolder(FActor* Actor)
+{
+    if (Actor->HasComponentOfType<FCameraComponent>())
+    {
+        return EActorFolder::Cameras;
+    }
+
+    if (Actor->HasComponentOfType<FLightComponent>() || Actor->HasComponentOfType<FLightProbeComponent>())
+    {
+        return EActorFolder::Lighting;
+    }
+
+    return EActorFolder::Actors;
+}
+
+static bool DoesActorMatchQuery(FActor* Actor, const CHAR* Query)
+{
+    const String& Name = Actor->GetName();
+    if (!Name.IsEmpty() && CString::Stristr(*Name, Query))
+    {
+        return true;
+    }
+
+    return CString::Stristr(GetActorTypeLabel(Actor), Query) != nullptr;
+}
+
+static bool DoesActorOrDescendantMatchQuery(FActor* Actor, const CHAR* Query)
+{
+    if (DoesActorMatchQuery(Actor, Query))
+    {
+        return true;
+    }
+
+    for (FActor* Child : Actor->GetChildActors())
+    {
+        if (Child && DoesActorOrDescendantMatchQuery(Child, Query))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static bool CanAttachActorTo(FActor* DraggedActor, FActor* TargetActor)
+{
+    if (!DraggedActor || !TargetActor || DraggedActor == TargetActor)
+    {
+        return false;
+    }
+
+    // Attaching an actor to one of its own descendants would create a cycle
+    if (TargetActor->IsAttachedTo(DraggedActor))
+    {
+        return false;
+    }
+
+    // Nothing to do when the actor already is a child of the drop-target
+    return DraggedActor->GetParentActor() != TargetActor;
+}
+
+static FActor* GetDraggedActor(const ImGuiPayload* Payload)
+{
+    if (!Payload || !Payload->IsDataType(ActorDragDropPayloadId) || Payload->DataSize != static_cast<int32>(sizeof(FActor*)))
+    {
+        return nullptr;
+    }
+
+    return *reinterpret_cast<FActor* const*>(Payload->Data);
+}
+
 FEditorSceneHierarchyWidget::FEditorSceneHierarchyWidget(FEditorEngine* InEditorEngine)
     : EditorEngine(InEditorEngine)
     , RenamingActor(nullptr)
+    , PendingAttachChild(nullptr)
+    , PendingAttachParent(nullptr)
+    , CollapsedActors()
     , bVisible(true)
     , bRequestRenameFocus(false)
     , bSelectionActiveInTable(false)
+    , bPendingAttachment(false)
+    , bDragHoveringSourceRow(false)
 {
     if (IImguiPlugin::IsEnabled())
     {
@@ -100,29 +226,37 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
     FActor* SelectedActor = EditorEngine->GetSelectedActor();
     const bool bHasAnySelection = SelectedActor != nullptr;
 
+    bDragHoveringSourceRow = false;
+
     bool bHasActors   = false;
     bool bHasCameras  = false;
     bool bHasLighting = false;
 
     const TArray<FActor*>& Actors = World->GetActors();
+
+    // Drop the collapsed state of actors that have been removed from the world, their addresses could otherwise be
+    // reused by a later actor that would then show up collapsed
+    if (!CollapsedActors.IsEmpty())
+    {
+        CollapsedActors.RemoveAllSwap([&Actors](FActor* CollapsedActor)
+        {
+            return !Actors.Contains(CollapsedActor);
+        });
+    }
+
+    // Only root-actors are placed in a folder, every other actor is nested underneath its parent
     for (FActor* Actor : Actors)
     {
-        if (!Actor)
+        if (!Actor || Actor->GetParentActor() || !PassesSearchFilter(Actor))
         {
             continue;
         }
 
-        if (Actor->HasComponentOfType<FCameraComponent>())
+        switch (GetActorFolder(Actor))
         {
-            bHasCameras = true;
-        }
-        else if (Actor->HasComponentOfType<FLightComponent>() || Actor->HasComponentOfType<FLightProbeComponent>())
-        {
-            bHasLighting = true;
-        }
-        else
-        {
-            bHasActors = true;
+            case EActorFolder::Cameras:  bHasCameras  = true; break;
+            case EActorFolder::Lighting: bHasLighting = true; break;
+            default:                     bHasActors   = true; break;
         }
     }
 
@@ -381,113 +515,32 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
     // Build tree
     // -----------------------------------------------------------------------------------------
 
-    if (bHasCameras)
+    const auto DrawFolderContents = [&](EActorFolder Folder)
     {
-        const bool bCamerasOpen = DrawFolderRow("Cameras", "Folder", "CamerasFolder", true, 0.0f);
-        if (bCamerasOpen)
+        for (FActor* Actor : Actors)
         {
-            for (FActor* Actor : Actors)
+            if (!Actor || Actor->GetParentActor() || GetActorFolder(Actor) != Folder || !PassesSearchFilter(Actor))
             {
-                if (!Actor || !Actor->HasComponentOfType<FCameraComponent>())
-                {
-                    continue;
-                }
-
-                const CHAR*   Search = ActorSearchFilterBuffer.Data();
-                const String& Name   = Actor->GetName();
-
-                if (Search && Search[0] != '\0' && (Name.IsEmpty() || !CString::Stristr(*Name, Search)) && !CString::Stristr("Camera", Search))
-                {
-                    continue;
-                }
-
-                DrawActorRow(Actor, "Camera", Actor == SelectedActor, ChildIndent);
+                continue;
             }
+
+            DrawActorRow(Actor, ChildIndent);
         }
+    };
+
+    if (bHasCameras && DrawFolderRow("Cameras", "Folder", "CamerasFolder", true, 0.0f))
+    {
+        DrawFolderContents(EActorFolder::Cameras);
     }
 
-    if (bHasActors)
+    if (bHasActors && DrawFolderRow("Actors", "Folder", "ActorsFolder", true, 0.0f))
     {
-        const bool bActorsOpen = DrawFolderRow("Actors", "Folder", "ActorsFolder", true, 0.0f);
-        if (bActorsOpen)
-        {
-            for (FActor* Actor : Actors)
-            {
-                if (!Actor)
-                {
-                    continue;
-                }
-
-                if (Actor->HasComponentOfType<FCameraComponent>() || Actor->HasComponentOfType<FLightComponent>() || Actor->HasComponentOfType<FLightProbeComponent>())
-                {
-                    continue;
-                }
-
-                const CHAR* Search = ActorSearchFilterBuffer.Data();
-                if (Search && Search[0] != '\0')
-                {
-                    const String& Name = Actor->GetName();
-                    if (Name.IsEmpty() || !CString::Stristr(*Name, Search))
-                    {
-                        continue;
-                    }
-                }
-
-                DrawActorRow(Actor, "Actor", Actor == SelectedActor, ChildIndent);
-            }
-        }
+        DrawFolderContents(EActorFolder::Actors);
     }
 
-    if (bHasLighting)
+    if (bHasLighting && DrawFolderRow("Lighting", "Folder", "LightingFolder", true, 0.0f))
     {
-        const bool bLightingOpen = DrawFolderRow("Lighting", "Folder", "LightingFolder", true, 0.0f);
-        if (bLightingOpen)
-        {
-            for (FActor* Actor : Actors)
-            {
-                if (!Actor)
-                {
-                    continue;
-                }
-
-                const CHAR* TypeLabel = nullptr;
-                if (Actor->HasComponentOfType<FPointLightComponent>())
-                {
-                    TypeLabel = "PointLight";
-                }
-                else if (Actor->HasComponentOfType<FDirectionalLightComponent>())
-                {
-                    TypeLabel = "DirectionalLight";
-                }
-                else if (Actor->HasComponentOfType<FSkyLightComponent>())
-                {
-                    TypeLabel = "SkyLight";
-                }
-                else if (Actor->HasComponentOfType<FLightProbeComponent>())
-                {
-                    TypeLabel = "LightProbe";
-                }
-                else if (Actor->HasComponentOfType<FLightComponent>())
-                {
-                    TypeLabel = "Light";
-                }
-
-                if (!TypeLabel)
-                {
-                    continue;
-                }
-
-                const CHAR*   Search = ActorSearchFilterBuffer.Data();
-                const String& Name   = Actor->GetName();
-
-                if (Search && Search[0] != '\0' && (Name.IsEmpty() || !CString::Stristr(*Name, Search)) && !CString::Stristr(TypeLabel, Search))
-                {
-                    continue;
-                }
-
-                DrawActorRow(Actor, TypeLabel, Actor == SelectedActor, ChildIndent);
-            }
-        }
+        DrawFolderContents(EActorFolder::Lighting);
     }
 
     ImGui::PopStyleVar(2); // CellPadding + ItemSpacing
@@ -496,6 +549,25 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
     ImGui::SetCursorPosX(SavedCursorX);
 
     ImGui::PopStyleColor(4);
+
+    // Dropping an actor on the empty area below the rows detaches it, which is what makes it a root-actor again
+    if (ImGui::BeginDragDropTargetCustom(ImRect(TableRectMin, TableRectMax), ImGui::GetID("##SceneOutlinerDetachTarget")))
+    {
+        const ImGuiDragDropFlags DragDropFlags =
+            ImGuiDragDropFlags_AcceptBeforeDelivery |
+            ImGuiDragDropFlags_AcceptNoDrawDefaultRect;
+
+        if (const ImGuiPayload* Payload = ImGui::AcceptDragDropPayload(ActorDragDropPayloadId, DragDropFlags))
+        {
+            FActor* DraggedActor = GetDraggedActor(Payload);
+            if (Payload->IsDelivery() && !bDragHoveringSourceRow && DraggedActor && DraggedActor->GetParentActor())
+            {
+                RequestAttachment(DraggedActor, nullptr);
+            }
+        }
+
+        ImGui::EndDragDropTarget();
+    }
 
     // -----------------------------------------------------------------------------------------
     // Context menu
@@ -536,6 +608,12 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
                     CString::Strncpy(ActorRenameBufferOriginal.Data(), *Name, ActorRenameBufferOriginal.Size());
                 }
             }
+        }
+
+        const bool bHasParent = bHasActorSelected && SelectedActorForMenu->GetParentActor() != nullptr;
+        if (EditorWidgets::MenuItem("Detach from Parent", nullptr, false, bHasParent))
+        {
+            RequestAttachment(SelectedActorForMenu, nullptr);
         }
 
         if (EditorWidgets::MenuItem("Copy", "Ctrl+C", false, false))
@@ -592,9 +670,11 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
             }
         }
     }
+
+    ApplyPendingAttachment();
 }
 
-void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const CHAR* Type, const bool bSelected, float Indent)
+void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
 {
     if (!Actor)
     {
@@ -602,6 +682,9 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const CHAR* Type, 
     }
 
     constexpr float DefaultRowHeight = 30.0f;
+
+    const CHAR* Type      = GetActorTypeLabel(Actor);
+    const bool  bSelected = (EditorEngine->GetSelectedActor() == Actor);
 
     const auto BeginActorRename = [this](FActor* InActor)
     {
@@ -716,6 +799,53 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const CHAR* Type, 
     const ImVec2 RowMin = ImGui::GetItemRectMin();
     const ImVec2 RowMax = ImGui::GetItemRectMax();
 
+    // -------------------------------------------------------------------------------------------
+    // Drag and drop, dropping an actor on another actor re-parents it
+    //
+    // The drop-target is registered before the drag-source, since the tooltip drawn by the drag-source replaces
+    // the last submitted item that BeginDragDropTarget resolves the row rectangle from
+    // -------------------------------------------------------------------------------------------
+
+    if (ImGui::BeginDragDropTarget())
+    {
+        const ImGuiDragDropFlags DragDropFlags =
+            ImGuiDragDropFlags_AcceptBeforeDelivery |
+            ImGuiDragDropFlags_AcceptNoDrawDefaultRect;
+
+        if (const ImGuiPayload* Payload = ImGui::AcceptDragDropPayload(ActorDragDropPayloadId, DragDropFlags))
+        {
+            FActor*    DraggedActor = GetDraggedActor(Payload);
+            const bool bCanAttach   = CanAttachActorTo(DraggedActor, Actor);
+
+            const ImU32 DropBorderColor = bCanAttach ? IM_COL32(0, 112, 224, 255) : IM_COL32(120, 120, 120, 160);
+            ImGui::GetWindowDrawList()->AddRect(RowMin, RowMax, DropBorderColor, 0.0f, ImDrawFlags_None, 2.0f);
+
+            if (bCanAttach && Payload->IsDelivery())
+            {
+                RequestAttachment(DraggedActor, Actor);
+            }
+        }
+
+        ImGui::EndDragDropTarget();
+    }
+    else if (ImGui::IsDragDropActive() && GetDraggedActor(ImGui::GetDragDropPayload()) == Actor)
+    {
+        // The row of the dragged actor never becomes a drop-target, remember it so that releasing the drag on top
+        // of it is treated as a cancelled drag instead of a detach
+        bDragHoveringSourceRow |= ImGui::IsMouseHoveringRect(RowMin, RowMax);
+    }
+
+    if (!bIsRenamingThis && ImGui::BeginDragDropSource())
+    {
+        FActor* PayloadActor = Actor;
+        ImGui::SetDragDropPayload(ActorDragDropPayloadId, &PayloadActor, sizeof(FActor*));
+
+        const String& DraggedName = Actor->GetName();
+        ImGui::TextUnformatted(DraggedName.IsEmpty() ? "Actor" : *DraggedName);
+
+        ImGui::EndDragDropSource();
+    }
+
     ImFont* Font = ImGui::GetFont();
 
     const float FontSize      = ImGui::GetFontSize();
@@ -737,17 +867,31 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const CHAR* Type, 
 
     const ImVec2 ColPos      = ImGui::GetCursorScreenPos();
     const float  ColWidth    = ImGui::GetContentRegionAvail().x;
-    const float  ColMinX     = ColPos.x;
     const float  ColMaxX     = ColPos.x + ColWidth;
-    const float  LabelStartX = ColPos.x + Indent + ArrowAdv + ArrowGap;
+    const float  ArrowStartX = ColPos.x + Indent;
+    const float  LabelStartX = ArrowStartX + ArrowAdv + ArrowGap;
     const ImVec2 MousePos    = ImGui::GetIO().MousePos;
-    const bool   bInLabelCol = (MousePos.x >= ColMinX && MousePos.x <= ColMaxX);
+    const bool   bInLabelCol = (MousePos.x >= LabelStartX && MousePos.x <= ColMaxX);
+    const bool   bInArrowCol = (MousePos.x >= ArrowStartX && MousePos.x < LabelStartX);
+
+    // -------------------------------------------------------------------------------------------
+    // Expand arrow, only actors that have children can be expanded
+    // -------------------------------------------------------------------------------------------
+
+    const bool bHasChildren = !Actor->GetChildActors().IsEmpty();
+
+    // While searching, the whole hierarchy is shown expanded so that matching descendants are always reachable
+    const bool bForceExpanded = ActorSearchFilterBuffer[0] != '\0';
 
     if (bRowPressed)
     {
         bSelectionActiveInTable = true;
 
-        if (!bSelected)
+        if (bHasChildren && bInArrowCol)
+        {
+            SetActorExpanded(Actor, !IsActorExpanded(Actor));
+        }
+        else if (!bSelected)
         {
             EditorEngine->SetSelectedActor(Actor);
             CancelActorRename();
@@ -760,6 +904,27 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const CHAR* Type, 
                 BeginActorRename(Actor);
                 bIsRenamingThis = true;
             }
+        }
+    }
+
+    const bool bExpanded = bHasChildren && (bForceExpanded || IsActorExpanded(Actor));
+
+    if (bHasChildren)
+    {
+        const float  IconSize = 16.0f;
+        const ImVec2 IconPos  = ImVec2(ArrowStartX, RowMin.y + (RowHeight - IconSize) * 0.5f);
+        const ImU32  IconTint = IM_COL32(101, 101, 101, 255);
+
+        ImDrawList* DrawList = ImGui::GetWindowDrawList();
+
+        ImTextureID ArrowIcon = bExpanded ? EditorIcons::CollapseArrowDown : EditorIcons::CollapseArrowRight;
+        if (ArrowIcon)
+        {
+            DrawList->AddImage(ArrowIcon, IconPos, ImVec2(IconPos.x + IconSize, IconPos.y + IconSize), ImVec2(0, 0), ImVec2(1, 1), IconTint);
+        }
+        else
+        {
+            ImGui::RenderArrow(DrawList, IconPos, IconTint, bExpanded ? ImGuiDir_Down : ImGuiDir_Right, 1.0f);
         }
     }
 
@@ -857,4 +1022,91 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const CHAR* Type, 
     ImGui::PopStyleColor();
 
     ImGui::PopID();
+
+    // Children are drawn outside of this row's ID scope, so that their ids do not change when they are re-parented
+    if (bExpanded)
+    {
+        DrawChildActorRows(Actor, Indent + ImGui::GetStyle().IndentSpacing);
+    }
+}
+
+void FEditorSceneHierarchyWidget::DrawChildActorRows(FActor* Actor, float Indent)
+{
+    for (FActor* Child : Actor->GetChildActors())
+    {
+        if (Child && PassesSearchFilter(Child))
+        {
+            DrawActorRow(Child, Indent);
+        }
+    }
+}
+
+bool FEditorSceneHierarchyWidget::PassesSearchFilter(FActor* Actor) const
+{
+    if (!Actor)
+    {
+        return false;
+    }
+
+    TStaticArray<CHAR, 256> QueryBuffer{};
+
+    const CHAR* Query = EditorHelpers::GetTrimmedQuery(ActorSearchFilterBuffer.Data(), QueryBuffer.Data(), static_cast<int32>(QueryBuffer.Size()));
+    if (!Query || Query[0] == '\0')
+    {
+        return true;
+    }
+
+    return DoesActorOrDescendantMatchQuery(Actor, Query);
+}
+
+bool FEditorSceneHierarchyWidget::IsActorExpanded(FActor* Actor) const
+{
+    return !CollapsedActors.Contains(Actor);
+}
+
+void FEditorSceneHierarchyWidget::SetActorExpanded(FActor* Actor, bool bExpanded)
+{
+    if (bExpanded)
+    {
+        CollapsedActors.Remove(Actor);
+    }
+    else if (!CollapsedActors.Contains(Actor))
+    {
+        CollapsedActors.Emplace(Actor);
+    }
+}
+
+void FEditorSceneHierarchyWidget::RequestAttachment(FActor* ChildActor, FActor* ParentActor)
+{
+    PendingAttachChild  = ChildActor;
+    PendingAttachParent = ParentActor;
+    bPendingAttachment  = true;
+}
+
+void FEditorSceneHierarchyWidget::ApplyPendingAttachment()
+{
+    if (!bPendingAttachment)
+    {
+        return;
+    }
+
+    if (PendingAttachChild)
+    {
+        if (PendingAttachParent)
+        {
+            if (PendingAttachChild->AttachToActor(PendingAttachParent, EAttachmentRule::KeepWorld))
+            {
+                // Make sure the newly attached actor is not hidden inside a collapsed parent
+                SetActorExpanded(PendingAttachParent, true);
+            }
+        }
+        else
+        {
+            PendingAttachChild->DetachFromParent(EAttachmentRule::KeepWorld);
+        }
+    }
+
+    PendingAttachChild  = nullptr;
+    PendingAttachParent = nullptr;
+    bPendingAttachment  = false;
 }

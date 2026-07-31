@@ -14,6 +14,25 @@ typedef TSharedRef<class FD3D12UnorderedAccessViewRHI> FD3D12UnorderedAccessView
 typedef TSharedRef<class FD3D12RenderTargetViewRHI>    FD3D12RenderTargetViewRHIRef;
 typedef TSharedRef<class FD3D12DepthStencilViewRHI>    FD3D12DepthStencilViewRHIRef;
 
+template<typename TBufferViewDesc>
+NODISCARD uint64 GetBufferViewElementSize(const FRHIBufferDesc& BufferDesc, const TBufferViewDesc& ViewDesc)
+{
+    switch (ViewDesc.Type)
+    {
+        case EBufferViewType::Structured:
+            return BufferDesc.Stride;
+        
+        case EBufferViewType::ByteAddress:
+            return sizeof(uint32);
+        
+        case EBufferViewType::Typed:
+            return GetByteStrideFromFormat(ViewDesc.Format);
+        
+        default:
+            return 0;
+    }
+}
+
 class FD3D12View : public FD3D12DeviceChild, public ID3D12ResourceRelocationListener
 {
 public:

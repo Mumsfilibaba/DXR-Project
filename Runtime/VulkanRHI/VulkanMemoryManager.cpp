@@ -103,6 +103,17 @@ void FVulkanMemoryLocation::Swap(FVulkanMemoryLocation& Other)
     ::Swap(LocationType, Other.LocationType);
     ::Swap(Owner, Other.Owner);
     ::Swap(AllocatorPointers.AsVoid, Other.AllocatorPointers.AsVoid);
+
+    UpdateOwnership();
+    Other.UpdateOwnership();
+}
+
+void FVulkanMemoryLocation::UpdateOwnership()
+{
+    if (AllocatorType == EVulkanAllocatorType::PoolAllocator && AllocatorPointers.PoolAllocator)
+    {
+        AllocatorPointers.PoolAllocator->TransferOwnership(AllocationData.Pool, this);
+    }
 }
 
 void FVulkanMemoryLocation::ReleaseMemory()
@@ -259,10 +270,13 @@ void* FVulkanMemoryManager::AllocateUploadMemory(uint64 SizeInBytes, uint64 Alig
 
 void* FVulkanMemoryManager::AllocateConstants(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryLocation& OutLocation)
 {
-    void* Result = DynamicConstantsAllocator.Allocate(SizeInBytes, Alignment, OutLocation);
+    const uint64 ConstantsAlignment = GetDevice()->GetPhysicalDevice()->GetProperties().limits.minUniformBufferOffsetAlignment;
+    const uint64 UsedAlignment      = Math::Max<uint64>(Alignment, ConstantsAlignment);
+
+    void* Result = DynamicConstantsAllocator.Allocate(SizeInBytes, UsedAlignment, OutLocation);
     if (!Result)
     {
-        Result = UploadHeapAllocator.Allocate(SizeInBytes, Alignment, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, OutLocation);
+        Result = UploadHeapAllocator.Allocate(SizeInBytes, UsedAlignment, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, OutLocation);
     }
     
     return Result;
@@ -321,8 +335,7 @@ void FVulkanMemoryManager::FreeMemory(VkDeviceMemory Memory)
 {
     if (Memory != VK_NULL_HANDLE)
     {
-        const int64 Count = ActiveAllocationCount.Decrement();
-        CHECK(Count >= 0);
+        VERIFY(ActiveAllocationCount.Decrement() >= 0);
         vkFreeMemory(GetDevice()->GetVkDevice(), Memory, nullptr);
     }
 }
@@ -944,7 +957,7 @@ bool FVulkanPoolAllocatorPage::TryAllocate(uint64 SizeInBytes, uint64 InAlignmen
     return false;
 }
 
-bool FVulkanPoolAllocatorPage::TryAllocateForDefrag(uint64 SizeInBytes, uint64 InAlignment, FVulkanPoolAllocatorAllocationData& OutData)
+bool FVulkanPoolAllocatorPage::TryAllocateForDefrag(uint64 SizeInBytes, uint64 InAlignment, uint32 InPageIndex, FVulkanPoolAllocatorAllocationData& OutData)
 {
     for (int32 Index = 0; Index < FreeRanges.Size(); ++Index)
     {
@@ -984,8 +997,10 @@ bool FVulkanPoolAllocatorPage::TryAllocateForDefrag(uint64 SizeInBytes, uint64 I
 
         UsedBytes += SizeInBytes;
 
-        OutData.Offset = AlignedOffset;
-        OutData.Size   = SizeInBytes;
+        OutData.Owner     = nullptr;
+        OutData.PageIndex = InPageIndex;
+        OutData.Offset    = AlignedOffset;
+        OutData.Size      = SizeInBytes;
 
         LiveAllocations.Add(OutData);
         return true;
@@ -994,16 +1009,18 @@ bool FVulkanPoolAllocatorPage::TryAllocateForDefrag(uint64 SizeInBytes, uint64 I
     return false;
 }
 
-void FVulkanPoolAllocatorPage::TransferOwnership(uint64 Offset, FVulkanMemoryLocation* NewLocation)
+bool FVulkanPoolAllocatorPage::TransferOwnership(uint64 Offset, FVulkanMemoryLocation* NewLocation)
 {
     for (FVulkanPoolAllocatorAllocationData& Alloc : LiveAllocations)
     {
         if (Alloc.Offset == Offset)
         {
             Alloc.Owner = NewLocation;
-            return;
+            return true;
         }
     }
+
+    return false;
 }
 
 void FVulkanPoolAllocatorPage::RecycleAllocation(uint64 Offset, uint64 SizeInBytes)
@@ -1018,14 +1035,18 @@ void FVulkanPoolAllocatorPage::RecycleAllocation(uint64 Offset, uint64 SizeInByt
     NewRange.Size   = SizeInBytes;
     FreeRanges.Add(NewRange);
 
+    MAYBE_UNUSED bool bRemoved = false;
     for (int32 Index = 0; Index < LiveAllocations.Size(); ++Index)
     {
         if (LiveAllocations[Index].Offset == Offset)
         {
             LiveAllocations.RemoveAtSwap(Index);
+            bRemoved = true;
             break;
         }
     }
+
+    CHECK(bRemoved);
 
     UsedBytes = UsedBytes > SizeInBytes ? (UsedBytes - SizeInBytes) : 0;
     CoalesceFreeRanges();
@@ -1241,9 +1262,9 @@ bool FVulkanPoolAllocator::TryAllocateForDefrag(uint64 SizeInBytes, uint64 InAli
             continue;
         }
 
-        if (Page->TryAllocateForDefrag(SizeInBytes, InAlignment, OutData))
+        if (Page->TryAllocateForDefrag(SizeInBytes, InAlignment, PageIndex, OutData))
         {
-            OutData.PageIndex = PageIndex;
+            CHECK(OutData.PageIndex == PageIndex);
             return true;
         }
     }
@@ -1253,7 +1274,18 @@ bool FVulkanPoolAllocator::TryAllocateForDefrag(uint64 SizeInBytes, uint64 InAli
 
 void FVulkanPoolAllocator::Deallocate(const FVulkanMemoryLocation& Location)
 {
-    FVulkanDeviceRHI::DeferDeletion(this, Location.GetPoolAllocationData());
+    const FVulkanPoolAllocatorAllocationData Data = Location.GetPoolAllocationData();
+
+    {
+        SCOPED_LOCK(PagesCS);
+
+        if (Data.PageIndex < static_cast<uint32>(Pages.Size()) && Pages[Data.PageIndex])
+        {
+            VERIFY(Pages[Data.PageIndex]->TransferOwnership(Data.Offset, nullptr));
+        }
+    }
+
+    FVulkanDeviceRHI::DeferDeletion(this, Data);
 }
 
 void FVulkanPoolAllocator::RecycleAllocation(const FVulkanPoolAllocatorAllocationData& AllocationData)
@@ -1284,7 +1316,7 @@ void FVulkanPoolAllocator::RecycleAllocation(const FVulkanPoolAllocatorAllocatio
     RebuildFragmentationData();
 }
 
-bool FVulkanPoolAllocator::GetDefragCandidate(FVulkanPoolAllocatorAllocationData& OutCandidate) const
+bool FVulkanPoolAllocator::GetDefragCandidate(FVulkanDefragCandidate& OutCandidate) const
 {
     SCOPED_LOCK(PagesCS);
 
@@ -1315,11 +1347,18 @@ bool FVulkanPoolAllocator::GetDefragCandidate(FVulkanPoolAllocatorAllocationData
     const FVulkanPoolAllocatorPage* SourcePage = Pages[BestPageIndex];
     for (const FVulkanPoolAllocatorAllocationData& LiveAlloc : SourcePage->GetLiveAllocations())
     {
-        if (LiveAlloc.Owner)
+        if (!LiveAlloc.Owner || !LiveAlloc.Owner->GetOwner())
         {
-            OutCandidate = LiveAlloc;
-            return true;
+            continue;
         }
+
+        OutCandidate.SourceLocation           = LiveAlloc.Owner;
+        OutCandidate.Owner                    = LiveAlloc.Owner->GetOwner();
+        OutCandidate.AllocationData           = LiveAlloc;
+        OutCandidate.AllocationData.PageIndex = BestPageIndex;
+        OutCandidate.BackingBuffer            = LiveAlloc.Owner->GetBackingBuffer();
+        OutCandidate.BufferOffset             = LiveAlloc.Owner->GetBufferOffset();
+        return true;
     }
 
     return false;
@@ -1336,7 +1375,7 @@ void FVulkanPoolAllocator::TransferOwnership(const FVulkanPoolAllocatorAllocatio
 
     if (Data.PageIndex < static_cast<uint32>(Pages.Size()) && Pages[Data.PageIndex])
     {
-        Pages[Data.PageIndex]->TransferOwnership(Data.Offset, NewLocation);
+        VERIFY(Pages[Data.PageIndex]->TransferOwnership(Data.Offset, NewLocation));
     }
 }
 
@@ -1368,7 +1407,7 @@ bool FVulkanLinearAllocatorPage::Initialize()
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
     if (MemoryProperties & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
     {
-        return MemoryManager.AllocateUploadMemory(PageSizeBytes, 16, BufferUsageFlags, BackingLocation) != nullptr;
+        return MemoryManager.AllocateUploadMemory(PageSizeBytes, 0, BufferUsageFlags, BackingLocation) != nullptr;
     }
 
     return MemoryManager.AllocateBufferMemory(MemoryProperties, BufferUsageFlags, AllocateFlags, PageSizeBytes, 16, BackingLocation);
@@ -1860,7 +1899,7 @@ bool FVulkanBufferAllocatorPool::TryAllocate(uint64 SizeInBytes, uint64 Alignmen
     return PoolAllocator.TryAllocate(SizeInBytes, Alignment, OutLocation);
 }
 
-bool FVulkanBufferAllocatorPool::GetDefragCandidate(FVulkanPoolAllocatorAllocationData& OutCandidate)
+bool FVulkanBufferAllocatorPool::GetDefragCandidate(FVulkanDefragCandidate& OutCandidate)
 {
     return PoolAllocator.GetDefragCandidate(OutCandidate);
 }
@@ -2050,7 +2089,7 @@ bool FVulkanBufferAllocator::TryAllocate(VkMemoryPropertyFlags MemoryProperties,
     return true;
 }
 
-bool FVulkanBufferAllocator::GetDefragCandidate(FVulkanPoolAllocatorAllocationData& OutCandidate, FVulkanBufferAllocatorPool*& OutPool)
+bool FVulkanBufferAllocator::GetDefragCandidate(FVulkanDefragCandidate& OutCandidate, FVulkanBufferAllocatorPool*& OutPool)
 {
     SCOPED_LOCK(PoolsCS);
 
@@ -2093,6 +2132,8 @@ void FVulkanBufferAllocator::DefragmentAllocations(FVulkanCommandContext* InComm
     {
         return;
     }
+
+    SCOPED_LOCK(PoolsCS);
 
     CHECK(InCommandContext != nullptr);
 
@@ -2143,33 +2184,29 @@ void FVulkanBufferAllocator::DefragmentAllocations(FVulkanCommandContext* InComm
 
     for (int32 MoveIndex = 0; MoveIndex < MovesAvailable; ++MoveIndex)
     {
-        FVulkanPoolAllocatorAllocationData Candidate = {};
+        FVulkanDefragCandidate Candidate;
         FVulkanBufferAllocatorPool* SourcePool = nullptr;
-        if (!GetDefragCandidate(Candidate, SourcePool))
-        {
-            break;
-        }
-
-        if (!Candidate.Owner || !Candidate.Owner->GetOwner() || !SourcePool)
+        if (!GetDefragCandidate(Candidate, SourcePool) || !SourcePool)
         {
             break;
         }
 
         FVulkanPoolAllocatorAllocationData NewAllocationData = {};
-        if (!SourcePool->TryAllocateForDefrag(Candidate.Size, SourcePool->GetAlignment(), Candidate.PageIndex, NewAllocationData))
+        if (!SourcePool->TryAllocateForDefrag(Candidate.AllocationData.Size, SourcePool->GetAlignment(), Candidate.AllocationData.PageIndex, NewAllocationData))
         {
             break;
         }
 
-        VkBuffer OldBuffer = Candidate.Owner->GetBackingBuffer();
+        VkBuffer OldBuffer = Candidate.BackingBuffer;
         if (OldBuffer == VK_NULL_HANDLE)
         {
+            SourcePool->GetPoolAllocator().RecycleAllocation(NewAllocationData);
             break;
         }
 
         VkBufferCreateInfo NewBufferCreateInfo = {};
         NewBufferCreateInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        NewBufferCreateInfo.size        = Candidate.Size;
+        NewBufferCreateInfo.size        = Candidate.AllocationData.Size;
         NewBufferCreateInfo.usage       = SourcePool->GetBufferUsageFlags();
         NewBufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -2177,6 +2214,7 @@ void FVulkanBufferAllocator::DefragmentAllocations(FVulkanCommandContext* InComm
         VkResult Result = vkCreateBuffer(GetDevice()->GetVkDevice(), &NewBufferCreateInfo, nullptr, &NewBuffer);
         if (VULKAN_FAILED(Result))
         {
+            SourcePool->GetPoolAllocator().RecycleAllocation(NewAllocationData);
             break;
         }
 
@@ -2185,6 +2223,7 @@ void FVulkanBufferAllocator::DefragmentAllocations(FVulkanCommandContext* InComm
         if (VULKAN_FAILED(Result))
         {
             vkDestroyBuffer(GetDevice()->GetVkDevice(), NewBuffer, nullptr);
+            SourcePool->GetPoolAllocator().RecycleAllocation(NewAllocationData);
             break;
         }
 
@@ -2199,23 +2238,23 @@ void FVulkanBufferAllocator::DefragmentAllocations(FVulkanCommandContext* InComm
         }
 
         VkBufferCopy Region = {};
-        Region.srcOffset = Candidate.Owner->GetBufferOffset();
+        Region.srcOffset = Candidate.BufferOffset;
         Region.dstOffset = 0;
-        Region.size      = Candidate.Size;
+        Region.size      = Candidate.AllocationData.Size;
 
         InCommandContext->GetCommandBuffer()->CopyBuffer(OldBuffer, NewBuffer, 1, &Region);
 
         FVulkanPendingDefragMove PendingMove = {};
-        PendingMove.SourceLocation        = Candidate.Owner;
+        PendingMove.SourceLocation       = Candidate.SourceLocation;
         PendingMove.NewBuffer            = NewBuffer;
         PendingMove.NewDeviceAddress     = NewDeviceAddress;
         PendingMove.Allocator            = &SourcePool->GetPoolAllocator();
-        PendingMove.OldAllocationData    = Candidate;
+        PendingMove.OldAllocationData    = Candidate.AllocationData;
         PendingMove.NewAllocationData    = NewAllocationData;
         PendingMove.FenceValueAtCreation = FrameFence.GetLastSignaledValue();
 
-        PendingMove.Allocator->TransferOwnership(Candidate, nullptr);
-        STAT_ADD(STAT_Vulkan_BufferDefragBytesMoved, Candidate.Size);
+        PendingMove.Allocator->TransferOwnership(Candidate.AllocationData, nullptr);
+        STAT_ADD(STAT_Vulkan_BufferDefragBytesMoved, Candidate.AllocationData.Size);
         PendingDefragMoves.Add(PendingMove);
     }
 
@@ -2224,6 +2263,8 @@ void FVulkanBufferAllocator::DefragmentAllocations(FVulkanCommandContext* InComm
 
 void FVulkanBufferAllocator::CancelPendingDefragMoves(FVulkanResource* Owner)
 {
+    SCOPED_LOCK(PoolsCS);
+
     for (int32 Index = PendingDefragMoves.Size() - 1; Index >= 0; --Index)
     {
         FVulkanPendingDefragMove& Move = PendingDefragMoves[Index];
@@ -2478,7 +2519,7 @@ bool FVulkanTextureAllocator::TryAllocate(VkImage Image, const VkImageCreateInfo
     return true;
 }
 
-bool FVulkanTextureAllocator::GetDefragCandidate(FVulkanPoolAllocatorAllocationData& OutCandidate, FVulkanPoolAllocator*& OutAllocator)
+bool FVulkanTextureAllocator::GetDefragCandidate(FVulkanDefragCandidate& OutCandidate, FVulkanPoolAllocator*& OutAllocator)
 {
     SCOPED_LOCK(PoolsCS);
 
@@ -2509,6 +2550,8 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
     {
         return;
     }
+
+    SCOPED_LOCK(PoolsCS);
 
     CHECK(InCommandContext != nullptr);
 
@@ -2568,26 +2611,21 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
     FVulkanBarrierBatcher& BarrierBatcher = InCommandContext->GetBarrierBatcher();
     for (int32 MoveIndex = 0; MoveIndex < MovesAvailable; ++MoveIndex)
     {
-        FVulkanPoolAllocatorAllocationData Candidate = {};
-        
-        FVulkanPoolAllocator* SourceAllocator = nullptr;
-        if (!GetDefragCandidate(Candidate, SourceAllocator))
-        {
-            break;
-        }
+        FVulkanDefragCandidate Candidate;
 
-        if (!Candidate.Owner || !Candidate.Owner->GetOwner() || !SourceAllocator)
+        FVulkanPoolAllocator* SourceAllocator = nullptr;
+        if (!GetDefragCandidate(Candidate, SourceAllocator) || !SourceAllocator)
         {
             break;
         }
 
         FVulkanPoolAllocatorAllocationData NewAllocationData = {};
-        if (!SourceAllocator->TryAllocateForDefrag(Candidate.Size, SourceAllocator->GetAlignment(), Candidate.PageIndex, NewAllocationData))
+        if (!SourceAllocator->TryAllocateForDefrag(Candidate.AllocationData.Size, SourceAllocator->GetAlignment(), Candidate.AllocationData.PageIndex, NewAllocationData))
         {
             break;
         }
 
-        FVulkanTextureRHI* Texture = static_cast<FVulkanTextureRHI*>(Candidate.Owner->GetOwner());
+        FVulkanTextureRHI* Texture = static_cast<FVulkanTextureRHI*>(Candidate.Owner);
         
         VkImage OldImage = Texture->GetVkImage();
         VkImage NewImage = VK_NULL_HANDLE;
@@ -2602,6 +2640,7 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
         VkResult Result = vkCreateImage(GetDevice()->GetVkDevice(), &RecreateInfo, nullptr, &NewImage);
         if (VULKAN_FAILED(Result))
         {
+            SourceAllocator->RecycleAllocation(NewAllocationData);
             break;
         }
 
@@ -2610,6 +2649,7 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
         if (VULKAN_FAILED(Result))
         {
             vkDestroyImage(GetDevice()->GetVkDevice(), NewImage, nullptr);
+            SourceAllocator->RecycleAllocation(NewAllocationData);
             break;
         }
 
@@ -2703,15 +2743,15 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
         }
 
         FVulkanPendingDefragMove PendingMove = {};
-        PendingMove.SourceLocation       = Candidate.Owner;
+        PendingMove.SourceLocation       = Candidate.SourceLocation;
         PendingMove.NewImage             = NewImage;
         PendingMove.Allocator            = SourceAllocator;
-        PendingMove.OldAllocationData    = Candidate;
+        PendingMove.OldAllocationData    = Candidate.AllocationData;
         PendingMove.NewAllocationData    = NewAllocationData;
         PendingMove.FenceValueAtCreation = FrameFence.GetLastSignaledValue();
 
-        SourceAllocator->TransferOwnership(Candidate, nullptr);
-        STAT_ADD(STAT_Vulkan_TextureDefragBytesMoved, Candidate.Size);
+        SourceAllocator->TransferOwnership(Candidate.AllocationData, nullptr);
+        STAT_ADD(STAT_Vulkan_TextureDefragBytesMoved, Candidate.AllocationData.Size);
         PendingDefragMoves.Add(PendingMove);
     }
 
@@ -2720,6 +2760,8 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
 
 void FVulkanTextureAllocator::CancelPendingDefragMoves(FVulkanResource* Owner)
 {
+    SCOPED_LOCK(PoolsCS);
+
     for (int32 Index = PendingDefragMoves.Size() - 1; Index >= 0; --Index)
     {
         FVulkanPendingDefragMove& Move = PendingDefragMoves[Index];

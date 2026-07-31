@@ -3,22 +3,6 @@
 #include "RHI/RHIShader.h"
 #include "RHI/ShaderCompilerInclude.h"
 
-enum class EShaderModel : uint8
-{
-    Unknown = 0,
-    SM_6_0  = 3,
-    SM_6_1  = 4,
-    SM_6_2  = 5,
-    SM_6_3  = 6,
-    SM_6_4  = 7,
-    SM_6_5  = 8,
-    SM_6_6  = 9,
-    SM_6_7  = 10,
-    SM_6_8  = 11,
-    SM_6_9  = 12,
-    SM_6_10 = 13,
-};
-
 enum class EShaderOutputLanguage : uint8
 {
     Unknown = 0,

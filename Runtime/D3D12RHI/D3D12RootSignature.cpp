@@ -813,7 +813,7 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
     CHECK(RootSignatureCost <= D3D12_MAX_ROOT_PARAMETER_COST);
 
     {
-        const uint32 DWordCost = Layout.ComputeCost();
+        MAYBE_UNUSED const uint32 DWordCost = Layout.ComputeCost();
 
         uint32 NumTables       = 0;
         uint32 NumRootCBVTotal = 0;

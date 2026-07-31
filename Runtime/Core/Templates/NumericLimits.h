@@ -53,18 +53,24 @@
 #define LIMITS_MIN_FLT ((float)(1.175494351e-38F))
 #define LIMITS_MAX_FLT ((float)(3.402823466e+38F))
 #define LIMITS_EPS_FLT ((float)(1.1920928955078125e-07F))
+#define LIMITS_INF_FLT (__builtin_huge_valf())
+#define LIMITS_NAN_FLT (__builtin_nanf("0"))
 
 // double constants
 #define LIMITS_DIGITS_DBL (53) // Number of mantissa bits for double
 #define LIMITS_MIN_DBL ((double)(2.2250738585072014e-308))
 #define LIMITS_MAX_DBL ((double)(1.7976931348623158e+308))
 #define LIMITS_EPS_DBL ((double)(2.2204460492503131e-16))
+#define LIMITS_INF_DBL (__builtin_huge_val())
+#define LIMITS_NAN_DBL (__builtin_nan("0"))
 
 // long double constants
 #define LIMITS_DIGITS_LDBL LIMITS_DIGITS_DBL
 #define LIMITS_MIN_LDBL LIMITS_MIN_DBL
 #define LIMITS_MAX_LDBL LIMITS_MAX_DBL
 #define LIMITS_EPS_LDBL LIMITS_EPS_DBL
+#define LIMITS_INF_LDBL LIMITS_INF_DBL
+#define LIMITS_NAN_LDBL LIMITS_NAN_DBL
 
 template<typename T>
 struct TNumericLimits;
@@ -509,12 +515,12 @@ public:
 
     NODISCARD static constexpr ValueType Infinity() noexcept
     {
-        return INFINITY;
+        return LIMITS_INF_FLT;
     }
 
     NODISCARD static constexpr ValueType NaN() noexcept
     {
-        return NAN;
+        return LIMITS_NAN_FLT;
     }
 };
 
@@ -553,12 +559,12 @@ public:
 
     NODISCARD static constexpr ValueType Infinity() noexcept
     {
-        return INFINITY;
+        return LIMITS_INF_DBL;
     }
 
     NODISCARD static constexpr ValueType NaN() noexcept
     {
-        return NAN;
+        return LIMITS_NAN_DBL;
     }
 };
 
@@ -597,11 +603,11 @@ public:
 
     NODISCARD static constexpr ValueType Infinity() noexcept
     {
-        return INFINITY;
+        return LIMITS_INF_LDBL;
     }
 
     NODISCARD static constexpr ValueType NaN() noexcept
     {
-        return NAN;
+        return LIMITS_NAN_LDBL;
     }
 };

@@ -262,9 +262,11 @@
 // -------------------------------------------------------------------------------------------------
 
 #if ENABLE_ASSERTS
-    #define CHECK(Condition) assert(Condition)
+    #define CHECK(Condition)  assert(Condition)
+    #define VERIFY(Condition) assert(Condition)
 #else
-    #define CHECK(Condition) ((void)0)
+    #define CHECK(Condition)  ((void)0)
+    #define VERIFY(Condition) ((void)(Condition))
 #endif
 
 // -------------------------------------------------------------------------------------------------

@@ -22,13 +22,13 @@ class FAccelerationStructureSerializationHelper
     struct FPendingSerialize
     {
         String                               CacheKey;
-        FRHIRayTracingAccelerationStructure* Source              = nullptr;
-        FRHIBuffer*                          SizeReadbackBuffer  = nullptr;
-        FRHIBuffer*                          SerializeDestBuffer = nullptr;
-        FRHIBuffer*                          BytesReadbackBuffer = nullptr;
-        uint64                               SerializedSize      = 0;
-        uint32                               FramesRemaining     = 0;
-        EStage                               Stage               = EStage::SizeQuery;
+        FRHIRayTracingAccelerationStructure* Source          = nullptr;
+        FRHIBufferRef                        SizeReadbackBuffer;
+        FRHIBufferRef                        SerializeDestBuffer;
+        FRHIBufferRef                        BytesReadbackBuffer;
+        uint64                               SerializedSize  = 0;
+        uint32                               FramesRemaining = 0;
+        EStage                               Stage           = EStage::SizeQuery;
     };
 
 public:
@@ -55,21 +55,19 @@ public:
         ReadbackDesc.Size   = sizeof(uint64) * 2;
         ReadbackDesc.Stride = sizeof(uint64);
 
-        FRHIBuffer* ReadbackBuffer = RHI::CreateBuffer(ReadbackDesc, EResourceAccess::CopyDest, nullptr);
+        FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(ReadbackDesc, EResourceAccess::CopyDest, nullptr);
         if (!ReadbackBuffer)
         {
             return;
         }
 
-        ReadbackBuffer->AddRef();
-
         FRHIRayTracingAccelerationStructure* Sources[] = { AccelerationStructure };
-        CommandList.WriteAccelerationStructurePostBuildInfo(ReadbackBuffer, 0, EAccelerationStructurePostBuildInfoType::Serialization, Sources, 1);
+        CommandList.WriteAccelerationStructurePostBuildInfo(ReadbackBuffer.Get(), 0, EAccelerationStructurePostBuildInfoType::Serialization, Sources, 1);
 
         FPendingSerialize Pending;
         Pending.Source             = AccelerationStructure;
         Pending.CacheKey           = CacheKey;
-        Pending.SizeReadbackBuffer = ReadbackBuffer;
+        Pending.SizeReadbackBuffer = ::Move(ReadbackBuffer);
         Pending.FramesRemaining    = ReadbackLatencyInFrames;
         Pending.Stage              = EStage::SizeQuery;
         PendingSerializes.Emplace(::Move(Pending));
@@ -104,11 +102,6 @@ public:
 
     void ReleaseAll()
     {
-        for (FPendingSerialize& Pending : PendingSerializes)
-        {
-            ReleasePendingBuffers(Pending);
-        }
-
         PendingSerializes.Clear();
     }
 
@@ -122,8 +115,7 @@ private:
             Pending.SizeReadbackBuffer->Unmap(0, sizeof(uint64));
         }
 
-        Pending.SizeReadbackBuffer->Release();
-        Pending.SizeReadbackBuffer = nullptr;
+        Pending.SizeReadbackBuffer.Reset();
 
         if (SerializedSize == 0)
         {
@@ -141,36 +133,23 @@ private:
         BytesReadbackDesc.Size   = SerializedSize;
         BytesReadbackDesc.Stride = 0;
 
-        FRHIBuffer* DestBuffer     = RHI::CreateBuffer(DestDesc, EResourceAccess::UnorderedAccess, nullptr);
-        FRHIBuffer* ReadbackBuffer = RHI::CreateBuffer(BytesReadbackDesc, EResourceAccess::CopyDest, nullptr);
+        FRHIBufferRef DestBuffer     = RHI::CreateBuffer(DestDesc, EResourceAccess::UnorderedAccess, nullptr);
+        FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(BytesReadbackDesc, EResourceAccess::CopyDest, nullptr);
 
         if (!DestBuffer || !ReadbackBuffer)
         {
-            if (DestBuffer)
-            {
-                DestBuffer->Release();
-            }
-
-            if (ReadbackBuffer)
-            {
-                ReadbackBuffer->Release();
-            }
-
             PendingSerializes.RemoveAt(Index);
             return;
         }
 
-        DestBuffer->AddRef();
-        ReadbackBuffer->AddRef();
-
-        CommandList.SerializeAccelerationStructure(Pending.Source, DestBuffer, 0);
-        CommandList.TransitionBufferState(DestBuffer, EResourceAccess::UnorderedAccess, EResourceAccess::CopySource);
+        CommandList.SerializeAccelerationStructure(Pending.Source, DestBuffer.Get(), 0);
+        CommandList.TransitionBufferState(DestBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::CopySource);
 
         const FRHIBufferCopyDesc CopyDesc(0, 0, static_cast<uint32>(SerializedSize));
-        CommandList.CopyBuffer(ReadbackBuffer, DestBuffer, CopyDesc);
+        CommandList.CopyBuffer(ReadbackBuffer.Get(), DestBuffer.Get(), CopyDesc);
 
-        Pending.SerializeDestBuffer = DestBuffer;
-        Pending.BytesReadbackBuffer = ReadbackBuffer;
+        Pending.SerializeDestBuffer = ::Move(DestBuffer);
+        Pending.BytesReadbackBuffer = ::Move(ReadbackBuffer);
         Pending.SerializedSize      = SerializedSize;
         Pending.FramesRemaining     = ReadbackLatencyInFrames;
         Pending.Stage               = EStage::Serialize;
@@ -211,29 +190,7 @@ private:
             }
         }
 
-        ReleasePendingBuffers(Pending);
         PendingSerializes.RemoveAt(Index);
-    }
-
-    static void ReleasePendingBuffers(FPendingSerialize& Pending)
-    {
-        if (Pending.SizeReadbackBuffer)
-        {
-            Pending.SizeReadbackBuffer->Release();
-            Pending.SizeReadbackBuffer = nullptr;
-        }
-
-        if (Pending.SerializeDestBuffer)
-        {
-            Pending.SerializeDestBuffer->Release();
-            Pending.SerializeDestBuffer = nullptr;
-        }
-
-        if (Pending.BytesReadbackBuffer)
-        {
-            Pending.BytesReadbackBuffer->Release();
-            Pending.BytesReadbackBuffer = nullptr;
-        }
     }
 
     FAccelerationStructureCache* Cache;

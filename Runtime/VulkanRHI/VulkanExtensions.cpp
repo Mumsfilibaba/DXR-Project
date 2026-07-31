@@ -504,6 +504,127 @@ public:
 };
 #endif
 
+#if VK_KHR_shader_maximal_reconvergence
+class FVulkanKHRShaderMaximalReconvergenceExtension : public FVulkanDeviceExtension
+{
+public:
+    FVulkanKHRShaderMaximalReconvergenceExtension()
+        : FVulkanDeviceExtension(VK_KHR_SHADER_MAXIMAL_RECONVERGENCE_EXTENSION_NAME, false, true)
+    {
+    }
+
+    virtual void PrepareDeviceFeatures(VkPhysicalDeviceFeatures2& OutFeatures) override final
+    {
+        AvailableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MAXIMAL_RECONVERGENCE_FEATURES_KHR;
+        AddToStructChain(OutFeatures, AvailableFeatures);
+    }
+
+    virtual void ProcessQueriedFeatures() override final
+    {
+        if (AvailableFeatures.shaderMaximalReconvergence == VK_TRUE)
+        {
+            GVulkanSupportsMaximalReconvergence = true;
+        }
+    }
+
+    virtual void PrepareDeviceCreateInfo(VkDeviceCreateInfo& OutDeviceCreateInfo) override final
+    {
+        if (!GVulkanSupportsMaximalReconvergence)
+        {
+            return;
+        }
+
+        EnableFeatures.sType                       = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MAXIMAL_RECONVERGENCE_FEATURES_KHR;
+        EnableFeatures.shaderMaximalReconvergence  = AvailableFeatures.shaderMaximalReconvergence;
+        AddToStructChain(OutDeviceCreateInfo, EnableFeatures);
+    }
+
+    VkPhysicalDeviceShaderMaximalReconvergenceFeaturesKHR EnableFeatures    = {};
+    VkPhysicalDeviceShaderMaximalReconvergenceFeaturesKHR AvailableFeatures = {};
+};
+#endif
+
+#if VK_KHR_shader_quad_control
+class FVulkanKHRShaderQuadControlExtension : public FVulkanDeviceExtension
+{
+public:
+    FVulkanKHRShaderQuadControlExtension()
+        : FVulkanDeviceExtension(VK_KHR_SHADER_QUAD_CONTROL_EXTENSION_NAME, false, true)
+    {
+    }
+
+    virtual void PrepareDeviceFeatures(VkPhysicalDeviceFeatures2& OutFeatures) override final
+    {
+        AvailableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_QUAD_CONTROL_FEATURES_KHR;
+        AddToStructChain(OutFeatures, AvailableFeatures);
+    }
+
+    virtual void ProcessQueriedFeatures() override final
+    {
+        // Registered after the maximal-reconvergence extension, so its global is already resolved here.
+        if (AvailableFeatures.shaderQuadControl == VK_TRUE && GVulkanSupportsMaximalReconvergence)
+        {
+            GVulkanSupportsQuadControl = true;
+        }
+    }
+
+    virtual void PrepareDeviceCreateInfo(VkDeviceCreateInfo& OutDeviceCreateInfo) override final
+    {
+        if (!GVulkanSupportsQuadControl)
+        {
+            return;
+        }
+
+        EnableFeatures.sType             = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_QUAD_CONTROL_FEATURES_KHR;
+        EnableFeatures.shaderQuadControl = AvailableFeatures.shaderQuadControl;
+        AddToStructChain(OutDeviceCreateInfo, EnableFeatures);
+    }
+
+    VkPhysicalDeviceShaderQuadControlFeaturesKHR EnableFeatures    = {};
+    VkPhysicalDeviceShaderQuadControlFeaturesKHR AvailableFeatures = {};
+};
+#endif
+
+#if VK_KHR_fragment_shader_barycentric
+class FVulkanKHRFragmentShaderBarycentricExtension : public FVulkanDeviceExtension
+{
+public:
+    FVulkanKHRFragmentShaderBarycentricExtension()
+        : FVulkanDeviceExtension(VK_KHR_FRAGMENT_SHADER_BARYCENTRIC_EXTENSION_NAME, false, true)
+    {
+    }
+
+    virtual void PrepareDeviceFeatures(VkPhysicalDeviceFeatures2& OutFeatures) override final
+    {
+        AvailableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR;
+        AddToStructChain(OutFeatures, AvailableFeatures);
+    }
+
+    virtual void ProcessQueriedFeatures() override final
+    {
+        if (AvailableFeatures.fragmentShaderBarycentric == VK_TRUE)
+        {
+            GVulkanSupportsFragmentBarycentric = true;
+        }
+    }
+
+    virtual void PrepareDeviceCreateInfo(VkDeviceCreateInfo& OutDeviceCreateInfo) override final
+    {
+        if (!GVulkanSupportsFragmentBarycentric)
+        {
+            return;
+        }
+
+        EnableFeatures.sType                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR;
+        EnableFeatures.fragmentShaderBarycentric = AvailableFeatures.fragmentShaderBarycentric;
+        AddToStructChain(OutDeviceCreateInfo, EnableFeatures);
+    }
+
+    VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR EnableFeatures    = {};
+    VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR AvailableFeatures = {};
+};
+#endif
+
 #if VK_EXT_transform_feedback
 class FVulkanEXTTransformFeedbackExtension : public FVulkanDeviceExtension
 {
@@ -698,6 +819,9 @@ void FVulkanDeviceExtension::RegisterExtensions(TArray<TUniquePtr<FVulkanDeviceE
 #if VK_EXT_swapchain_maintenance1
     OutExtensions.Add(MakeUniquePtr<FVulkanDeviceExtension>(VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME, false, true));
 #endif
+#if VK_NV_shader_subgroup_partitioned
+    OutExtensions.Add(MakeUniquePtr<FVulkanDeviceExtension>(VK_NV_SHADER_SUBGROUP_PARTITIONED_EXTENSION_NAME, false, true));
+#endif
 #if VK_EXT_ray_tracing_invocation_reorder
     OutExtensions.Add(MakeUniquePtr<FVulkanDeviceExtension>(VK_EXT_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME, false, true));
 #endif
@@ -743,6 +867,15 @@ void FVulkanDeviceExtension::RegisterExtensions(TArray<TUniquePtr<FVulkanDeviceE
 #endif
 #if VK_EXT_fragment_shader_interlock
     OutExtensions.Add(MakeUniquePtr<FVulkanEXTFragmentShaderInterlockExtension>());
+#endif
+#if VK_KHR_shader_maximal_reconvergence
+    OutExtensions.Add(MakeUniquePtr<FVulkanKHRShaderMaximalReconvergenceExtension>());
+#endif
+#if VK_KHR_shader_quad_control
+    OutExtensions.Add(MakeUniquePtr<FVulkanKHRShaderQuadControlExtension>());
+#endif
+#if VK_KHR_fragment_shader_barycentric
+    OutExtensions.Add(MakeUniquePtr<FVulkanKHRFragmentShaderBarycentricExtension>());
 #endif
 #if VK_EXT_transform_feedback
     OutExtensions.Add(MakeUniquePtr<FVulkanEXTTransformFeedbackExtension>());

@@ -11,6 +11,8 @@
 
 #include "TaskGraphTests.h"
 #include "RHIValidationHelperTests.h"
+#include "CommandLineTests.h"
+#include "ConsoleManagerCommandLineTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -39,6 +41,8 @@ int main(int Argc, const CHAR* Argv[])
 
     RUN_TEST("TaskGraph", TaskGraph_Test());
     RUN_TEST("RHIValidationHelpers", RHIValidationHelpers_Test());
+    RUN_TEST("CommandLine", CommandLine_Test());
+    RUN_TEST("ConsoleManagerCommandLine", ConsoleManagerCommandLine_Test());
 
     FTaskGraph::Release();
     FThreadManager::Release();
