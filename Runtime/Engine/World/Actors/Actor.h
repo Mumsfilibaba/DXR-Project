@@ -10,6 +10,12 @@
 class FWorld;
 class FActorComponent;
 
+enum class EAttachmentRule : uint8
+{
+    KeepWorld,    // Preserve the world-space transform, the relative transform is recalculated against the new parent
+    KeepRelative, // Preserve the relative transform, which means that the actor moves along with the new parent
+};
+
 class ENGINE_API FActorTransform
 {
 public:
@@ -28,6 +34,26 @@ public:
 
     void SetRotation(float x, float y, float z);
     void SetRotation(const Vector3& InRotation);
+
+    /**
+     * @brief Set the transform from a transformation-matrix
+     *
+     * The matrix is decomposed into translation, rotation and scale, but is also stored as-is, which means that
+     * any shear introduced by a chain of rotated and non-uniformly scaled transforms is preserved in the matrix.
+     *
+     * @param InMatrix Transformation-matrix to assign to the transform
+     */
+    void SetFromMatrix(const Matrix4& InMatrix);
+
+    /**
+     * @brief Retrieve a counter that is incremented every time the transform is modified
+     *
+     * @return Returns the current version of the transform
+     */
+    uint64 GetVersion() const
+    {
+        return Version;
+    }
 
     const Vector3& GetTranslation() const
     {
@@ -67,6 +93,7 @@ private:
     Vector3 Scale;
     Vector3 Rotation;
     Matrix4 TransformMatrix;
+    uint64  Version;
 };
 
 class ENGINE_API FActor : public FObject
@@ -116,6 +143,100 @@ public:
      * @param InComponent Component to remove from the Actor
      */
     void RemoveComponent(FActorComponent* InComponent);
+
+    /**
+     * @brief Attach this actor to another actor, making this actor a child of the specified parent
+     *
+     * The attachment is rejected if the new parent is the actor itself, if the new parent is a descendant of this
+     * actor, or if the actors belong to different worlds.
+     *
+     * @param NewParent Actor to attach to, or nullptr to detach the actor from its current parent
+     * @param Rule Determines if the world-space or the relative transform is preserved by the attachment
+     * @return Returns true if the actor was attached to the new parent
+     */
+    bool AttachToActor(FActor* NewParent, EAttachmentRule Rule = EAttachmentRule::KeepWorld);
+
+    /**
+     * @brief Detach the actor from its current parent, turning it back into a root-actor
+     *
+     * @param Rule Determines if the world-space or the relative transform is preserved by the detachment
+     */
+    void DetachFromParent(EAttachmentRule Rule = EAttachmentRule::KeepWorld);
+
+    /**
+     * @brief Detach all children from this actor, turning each of them into a root-actor
+     *
+     * @param Rule Determines if the world-space or the relative transform is preserved by the detachment
+     */
+    void DetachAllChildren(EAttachmentRule Rule = EAttachmentRule::KeepWorld);
+
+    /**
+     * @brief Check if the actor is attached to another actor, either directly or through one of its ancestors
+     *
+     * @param PossibleParent Actor to look for among the ancestors of this actor
+     * @return Returns true if the actor is a descendant of the specified actor
+     */
+    bool IsAttachedTo(const FActor* PossibleParent) const;
+
+    /**
+     * @brief Retrieve the world-space transform of the actor
+     *
+     * For root-actors this is the same as the relative transform, otherwise it is the relative transform composed
+     * with the world-space transform of the parent.
+     *
+     * @return Returns the world-space transform of the actor
+     */
+    const FActorTransform& GetWorldTransform() const;
+
+    /**
+     * @brief Set the world-space transform of the actor, the relative transform is recalculated from the parent
+     *
+     * @param InTransform New world-space transform of the actor
+     */
+    void SetWorldTransform(const FActorTransform& InTransform);
+
+    /**
+     * @brief Set the world-space transform of the actor from a transformation-matrix
+     *
+     * @param InMatrix New world-space transformation-matrix of the actor
+     */
+    void SetWorldTransformMatrix(const Matrix4& InMatrix);
+
+    /**
+     * @brief Convert a world-space transformation-matrix into a matrix relative to the parent of this actor
+     *
+     * For root-actors the matrix is returned unchanged, since relative and world-space are the same.
+     *
+     * @param InWorldMatrix World-space transformation-matrix to convert
+     * @return Returns the matrix expressed relative to the parent of the actor
+     */
+    Matrix4 ConvertWorldToRelativeMatrix(const Matrix4& InWorldMatrix) const;
+
+    /**
+     * @brief Convert a world-space transform into a transform relative to the parent of this actor
+     *
+     * @param InWorldTransform World-space transform to convert
+     * @return Returns the transform expressed relative to the parent of the actor
+     */
+    FActorTransform ConvertWorldToRelativeTransform(const FActorTransform& InWorldTransform) const;
+
+    /**
+     * @brief Retrieve the actor that this actor is attached to
+     *
+     * @return Returns the parent of the actor, or nullptr if the actor is a root-actor
+     */
+    FActor* GetParentActor() const
+    {
+        return ParentActor;
+    }
+
+    /**
+     * @return Returns all actors attached to this actor
+     */
+    const TArray<FActor*>& GetChildActors() const
+    {
+        return ChildActors;
+    }
 
     /**
      * @brief Set name of the actor
@@ -171,9 +292,9 @@ public:
     }
 
     /**
-     * @brief Set the transform of the actor
+     * @brief Set the transform of the actor, relative to its parent
      *
-     * @param InTransform New transform of the actor
+     * @param InTransform New relative transform of the actor
      */
     void SetTransform(const FActorTransform& InTransform)
     {
@@ -211,9 +332,12 @@ public:
     }
 
     /**
-     * @brief Retrieve the transform of the actor
+     * @brief Retrieve the transform of the actor, relative to its parent
      *
-     * @return Returns the transform of the actor
+     * For root-actors this is the same as the world-space transform, use GetWorldTransform to retrieve the
+     * world-space transform of an actor that may be attached to a parent.
+     *
+     * @return Returns the relative transform of the actor
      */
     FActorTransform& GetTransform()
     {
@@ -221,9 +345,9 @@ public:
     }
 
     /**
-     * @brief Retrieve the transform of the actor (const version)
+     * @brief Retrieve the transform of the actor, relative to its parent (const version)
      *
-     * @return Returns the transform of the actor
+     * @return Returns the relative transform of the actor
      */
     const FActorTransform& GetTransform() const
     {
@@ -271,10 +395,22 @@ public:
     }
 
 private:
+    
+    friend class FWorld;
+
+    void UnlinkFromParent();
+    void ClearAttachments();
+    void InvalidateWorldTransformCache() const;
+
     String                   Name;
     FWorld*                  World;
     FActorTransform          Transform;
     TArray<FActorComponent*> Components;
+    FActor*                  ParentActor;
+    TArray<FActor*>          ChildActors;
+    mutable FActorTransform  CachedWorldTransform;
+    mutable uint64           CachedLocalVersion;
+    mutable uint64           CachedParentVersion;
     bool                     bIsStartable : 1;
     bool                     bIsTickable  : 1;
 };

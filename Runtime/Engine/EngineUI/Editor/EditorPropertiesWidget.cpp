@@ -1,4 +1,5 @@
 #include "Engine/EditorEngine.h"
+#include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Components/CameraComponent.h"
 #include "Engine/World/Components/DirectionalLightComponent.h"
 #include "Engine/World/Components/LightComponent.h"
@@ -172,8 +173,13 @@ void FEditorPropertiesWidget::DrawWindowContents()
 
         const bool bHasMeshComponent       = MeshComponent != nullptr;
         const bool bHasComponentProperties = bHasMeshComponent || SelectedLight || SelectedCamera || SelectedLightProbe;
-        
-        if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen, bHasComponentProperties))
+
+        // An attached actor is placed relative to its parent, so the transform fields no longer edit world-space
+        FActor*    ParentActor = SelectedActor->GetParentActor();
+        const bool bIsAttached = ParentActor != nullptr;
+
+        const CHAR* TransformLabel = bIsAttached ? "Transform (Relative)" : "Transform";
+        if (DrawCollapsingHeader(TransformLabel, ImGuiTreeNodeFlags_DefaultOpen, bIsAttached || bHasComponentProperties))
         {
             if (EditorWidgets::BeginPropertyTable("##ActorTransformTable", LabelColumnWidth, RevertColumnWidth))
             {
@@ -222,6 +228,31 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 }
 
                 EditorWidgets::EndPropertyTable();
+            }
+        }
+
+        // Attachment
+        if (bIsAttached)
+        {
+            if (DrawCollapsingHeader("Attachment", ImGuiTreeNodeFlags_DefaultOpen, bHasComponentProperties))
+            {
+                if (EditorWidgets::BeginPropertyTable("##ActorAttachmentTable", LabelColumnWidth, RevertColumnWidth))
+                {
+                    EditorWidgets::PropertyRowLabel("Parent");
+
+                    const String& ParentName = ParentActor->GetName();
+
+                    ImGui::AlignTextToFramePadding();
+                    ImGui::TextUnformatted(ParentName.IsEmpty() ? "Actor" : *ParentName);
+                    ImGui::SameLine();
+
+                    if (ImGui::SmallButton("Detach"))
+                    {
+                        SelectedActor->DetachFromParent(EAttachmentRule::KeepWorld);
+                    }
+
+                    EditorWidgets::EndPropertyTable();
+                }
             }
         }
 
@@ -361,7 +392,9 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     
                     if (EditorWidgets::DrawFloat3Control("Translation", Translation, 0.0f, &Translation0, EVector3ControlType::Position))
                     {
-                        SelectedActor->GetTransform().SetTranslation(Translation);
+                        FActorTransform NewWorldTransform = SelectedActor->GetWorldTransform();
+                        NewWorldTransform.SetTranslation(Translation);
+                        SelectedActor->SetWorldTransform(NewWorldTransform);
                     }
 
                     EditorWidgets::EndPropertyTable();
@@ -432,7 +465,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
             {
                 if (EditorWidgets::BeginPropertyTable("##DirLightDirectionTable", LabelColumnWidth, RevertColumnWidth))
                 {
-                    Vector3 Rotation = SelectedActor->GetTransform().GetRotation();
+                    Vector3 Rotation = SelectedActor->GetWorldTransform().GetRotation();
                     
                     float RotationTheta = Math::RadiansToDegrees(Rotation.X);
                     float RotationPhi   = Math::RadiansToDegrees(Rotation.Y);
@@ -449,7 +482,9 @@ void FEditorPropertiesWidget::DrawWindowContents()
                         Rotation.X = Math::DegreesToRadians(RotationTheta);
                         Rotation.Y = Math::DegreesToRadians(RotationPhi);
 
-                        SelectedActor->GetTransform().SetRotation(Rotation);
+                        FActorTransform NewWorldTransform = SelectedActor->GetWorldTransform();
+                        NewWorldTransform.SetRotation(Rotation);
+                        SelectedActor->SetWorldTransform(NewWorldTransform);
                     }
 
                     const Vector3 Direction = DirectionalLight->GetDirectionVector();
@@ -625,7 +660,9 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 
                 if (EditorWidgets::DrawFloat3Control("Position", Position, 0.0f, &Position0, EVector3ControlType::Position))
                 {
-                    SelectedActor->GetTransform().SetTranslation(Position);
+                    FActorTransform NewWorldTransform = SelectedActor->GetWorldTransform();
+                    NewWorldTransform.SetTranslation(Position);
+                    SelectedActor->SetWorldTransform(NewWorldTransform);
                 }
 
                 EditorWidgets::EndPropertyTable();

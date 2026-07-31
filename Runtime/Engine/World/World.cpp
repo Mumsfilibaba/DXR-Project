@@ -29,6 +29,12 @@ FWorld::~FWorld()
         }
     }
 
+    // Drop all attachment links up-front, so that no actor dereferences an already deleted parent or child
+    for (FActor* CurrentActor : Actors)
+    {
+        CurrentActor->ClearAttachments();
+    }
+
     for (FActor* CurrentActor : Actors)
     {
         CurrentActor->SetWorld(nullptr);
@@ -112,6 +118,10 @@ void FWorld::RemoveActor(FActor* InActor)
     {
         return;
     }
+
+    // Children outlive their parent, they keep their placement and become root-actors instead
+    InActor->DetachAllChildren(EAttachmentRule::KeepWorld);
+    InActor->DetachFromParent(EAttachmentRule::KeepWorld);
 
     const bool bRemovedActiveCamera = ActiveCamera && ActiveCamera->GetActorOwner() == InActor;
     for (FActorComponent* Component : InActor->GetComponents())

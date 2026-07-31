@@ -248,7 +248,7 @@ FRenderUpdateBatch FScene::CollectRenderUpdates()
         FStaticMeshProxyUpdate Update;
         if (Component && Component->GetActorOwner())
         {
-            const FActorTransform& Transform = Component->GetActorOwner()->GetTransform();
+            const FActorTransform& Transform = Component->GetActorOwner()->GetWorldTransform();
             Update.TransformMatrix        = Transform.GetTransformMatrix();
             Update.TransformMatrixInverse = Transform.GetTransformMatrixInverse();
         }

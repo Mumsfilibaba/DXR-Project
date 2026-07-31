@@ -56,5 +56,5 @@ void FLightProbeComponent::SetCubeMap(const FRHITextureRef& InCubeMap)
 const Vector3& FLightProbeComponent::GetPosition() const
 {
     CHECK(GetActorOwner() != nullptr);
-    return GetActorOwner()->GetTransform().GetTranslation();
+    return GetActorOwner()->GetWorldTransform().GetTranslation();
 }
