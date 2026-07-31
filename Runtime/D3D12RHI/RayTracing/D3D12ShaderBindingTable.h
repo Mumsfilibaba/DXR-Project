@@ -15,11 +15,23 @@ class FD3D12CommandContext;
 class FD3D12LocalDescriptorHeap;
 typedef TSharedRef<class FD3D12ShaderBindingTable> FD3D12ShaderBindingTableRef;
 
-enum class ED3D12PendingLocalTableHeap : uint8
+enum class ED3D12LocalTableDescriptorType : uint8
 {
-    Resource, // CBV/SRV/UAV heap
-    Sampler,  // Sampler heap
+    ShaderResourceView,  // CBV/SRV/UAV heap
+    UnorderedAccessView, // CBV/SRV/UAV heap
+    Sampler,             // Sampler heap
 };
+
+constexpr bool IsSamplerDescriptorHeap(ED3D12LocalTableDescriptorType DescriptorType)
+{
+    return DescriptorType == ED3D12LocalTableDescriptorType::Sampler;
+}
+
+constexpr bool IsResourceDescriptorHeap(ED3D12LocalTableDescriptorType DescriptorType)
+{
+    return DescriptorType == ED3D12LocalTableDescriptorType::ShaderResourceView ||
+           DescriptorType == ED3D12LocalTableDescriptorType::UnorderedAccessView;
+}
 
 struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) FD3D12ShaderBindingTableEntry
 {
@@ -31,14 +43,13 @@ struct FD3D12PendingLocalTable
 {
     static constexpr uint32 MaxDescriptors = D3D12_MAX_LOCAL_TABLE_DESCRIPTORS;
 
-    uint64                        RecordByteOffset                     = 0;     // Record offset within CpuShadow
-    uint32                        TableParamSlot                       = 0;     // Index into FD3D12ShaderBindingTableEntry::RootDescriptors
-    uint32                        NumDescriptors                       = 0;     // Contiguous descriptors, indexed by table slot
-    ED3D12PendingLocalTableHeap   HeapKind                             = ED3D12PendingLocalTableHeap::Resource;
-    bool                          bUsesUnorderedAccessViews            = false; // Resource heap only: SRV-typed or UAV-typed
-    FD3D12ShaderResourceViewRHI*  ShaderResourceViews[MaxDescriptors]  = {};
-    FD3D12UnorderedAccessViewRHI* UnorderedAccessViews[MaxDescriptors] = {};
-    FD3D12SamplerStateRHI*        Samplers[MaxDescriptors]             = {};
+    uint64                         RecordByteOffset                     = 0; // Record offset within CpuShadow
+    uint32                         TableParamSlot                       = 0; // Index into FD3D12ShaderBindingTableEntry::RootDescriptors
+    uint32                         NumDescriptors                       = 0; // Contiguous descriptors, indexed by table slot
+    ED3D12LocalTableDescriptorType DescriptorType                       = ED3D12LocalTableDescriptorType::ShaderResourceView;
+    FD3D12ShaderResourceViewRHI*   ShaderResourceViews[MaxDescriptors]  = {};
+    FD3D12UnorderedAccessViewRHI*  UnorderedAccessViews[MaxDescriptors] = {};
+    FD3D12SamplerStateRHI*         Samplers[MaxDescriptors]             = {};
 };
 
 class FD3D12ShaderBindingTable : public FRHIShaderBindingTable, public FD3D12DeviceChild

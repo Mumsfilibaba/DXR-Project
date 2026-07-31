@@ -175,21 +175,19 @@ void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSign
     const int8               UAVTableParamIndex     = Stage.GetRootParameterIndex(EResourceType::UAV);
 
     FD3D12PendingLocalTable PendingShaderResourceViewTable;
-    PendingShaderResourceViewTable.RecordByteOffset          = RecordByteOffset;
-    PendingShaderResourceViewTable.TableParamSlot            = (SRVTableParamIndex >= 0) ? static_cast<uint32>(SRVTableParamIndex) : 0;
-    PendingShaderResourceViewTable.HeapKind                  = ED3D12PendingLocalTableHeap::Resource;
-    PendingShaderResourceViewTable.bUsesUnorderedAccessViews = false;
+    PendingShaderResourceViewTable.RecordByteOffset = RecordByteOffset;
+    PendingShaderResourceViewTable.TableParamSlot   = (SRVTableParamIndex >= 0) ? static_cast<uint32>(SRVTableParamIndex) : 0;
+    PendingShaderResourceViewTable.DescriptorType   = ED3D12LocalTableDescriptorType::ShaderResourceView;
 
     FD3D12PendingLocalTable PendingUnorderedAccessViewTable;
-    PendingUnorderedAccessViewTable.RecordByteOffset          = RecordByteOffset;
-    PendingUnorderedAccessViewTable.TableParamSlot            = (UAVTableParamIndex >= 0) ? static_cast<uint32>(UAVTableParamIndex) : 0;
-    PendingUnorderedAccessViewTable.HeapKind                  = ED3D12PendingLocalTableHeap::Resource;
-    PendingUnorderedAccessViewTable.bUsesUnorderedAccessViews = true;
+    PendingUnorderedAccessViewTable.RecordByteOffset = RecordByteOffset;
+    PendingUnorderedAccessViewTable.TableParamSlot   = (UAVTableParamIndex >= 0) ? static_cast<uint32>(UAVTableParamIndex) : 0;
+    PendingUnorderedAccessViewTable.DescriptorType   = ED3D12LocalTableDescriptorType::UnorderedAccessView;
 
     FD3D12PendingLocalTable PendingSamplerTable;
     PendingSamplerTable.RecordByteOffset = RecordByteOffset;
     PendingSamplerTable.TableParamSlot   = (SamplerTableParamIndex >= 0) ? static_cast<uint32>(SamplerTableParamIndex) : 0;
-    PendingSamplerTable.HeapKind         = ED3D12PendingLocalTableHeap::Sampler;
+    PendingSamplerTable.DescriptorType   = ED3D12LocalTableDescriptorType::Sampler;
 
     bool bHasShaderResourceViewTable  = false;
     bool bHasUnorderedAccessViewTable = false;
@@ -410,7 +408,7 @@ uint32 FD3D12ShaderBindingTable::GetNumPendingLocalTableDescriptors() const
     uint32 Total = 0;
     for (const FD3D12PendingLocalTable& Pending : PendingLocalTables)
     {
-        if (Pending.HeapKind == ED3D12PendingLocalTableHeap::Resource)
+        if (IsResourceDescriptorHeap(Pending.DescriptorType))
         {
             Total += Pending.NumDescriptors;
         }
@@ -424,7 +422,7 @@ uint32 FD3D12ShaderBindingTable::GetNumPendingLocalSamplerDescriptors() const
     uint32 Total = 0;
     for (const FD3D12PendingLocalTable& Pending : PendingLocalTables)
     {
-        if (Pending.HeapKind == ED3D12PendingLocalTableHeap::Sampler)
+        if (IsSamplerDescriptorHeap(Pending.DescriptorType))
         {
             Total += Pending.NumDescriptors;
         }
@@ -478,11 +476,10 @@ void FD3D12ShaderBindingTable::ResolveLocalDescriptorTables(FD3D12CommandContext
 
     struct FResolvedTable
     {
-        uint32                      NumDescriptors;
-        ED3D12PendingLocalTableHeap HeapKind;
-        bool                        bUsesUnorderedAccessViews;
-        SIZE_T                      SourceHandles[FD3D12PendingLocalTable::MaxDescriptors];
-        uint32                      BaseHandle;
+        uint32                         NumDescriptors;
+        ED3D12LocalTableDescriptorType DescriptorType;
+        SIZE_T                         SourceHandles[FD3D12PendingLocalTable::MaxDescriptors];
+        uint32                         BaseHandle;
     };
 
     TArray<FResolvedTable> ResolvedTables;
@@ -493,28 +490,36 @@ void FD3D12ShaderBindingTable::ResolveLocalDescriptorTables(FD3D12CommandContext
             continue;
         }
 
-        const bool                        bIsSampler = (Pending.HeapKind == ED3D12PendingLocalTableHeap::Sampler);
-        FD3D12LocalDescriptorHeap&        TargetHeap = bIsSampler ? SamplerHeap : ResourceHeap;
-        const D3D12_DESCRIPTOR_HEAP_TYPE  HeapType   = bIsSampler ? D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER : D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+        const bool                       bIsSampler = IsSamplerDescriptorHeap(Pending.DescriptorType);
+        FD3D12LocalDescriptorHeap&       TargetHeap = bIsSampler ? SamplerHeap : ResourceHeap;
+        const D3D12_DESCRIPTOR_HEAP_TYPE HeapType   = bIsSampler ? D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER : D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 
         SIZE_T SourceHandles[FD3D12PendingLocalTable::MaxDescriptors] = {};
         for (uint32 SlotIndex = 0; SlotIndex < Pending.NumDescriptors; ++SlotIndex)
         {
-            D3D12_CPU_DESCRIPTOR_HANDLE Src;
-            if (bIsSampler)
+            D3D12_CPU_DESCRIPTOR_HANDLE Src = DefaultSRVHandle;
+            switch (Pending.DescriptorType)
             {
-                FD3D12SamplerStateRHI* SamplerState = Pending.Samplers[SlotIndex];
-                Src = SamplerState ? SamplerState->GetOfflineHandle() : DefaultSamplerHandle;
-            }
-            else if (Pending.bUsesUnorderedAccessViews)
-            {
-                FD3D12UnorderedAccessViewRHI* UnorderedAccessView = Pending.UnorderedAccessViews[SlotIndex];
-                Src = UnorderedAccessView ? UnorderedAccessView->GetOfflineHandle() : DefaultUAVHandle;
-            }
-            else
-            {
-                FD3D12ShaderResourceViewRHI* ShaderResourceView = Pending.ShaderResourceViews[SlotIndex];
-                Src = ShaderResourceView ? ShaderResourceView->GetOfflineHandle() : DefaultSRVHandle;
+                case ED3D12LocalTableDescriptorType::ShaderResourceView:
+                {
+                    FD3D12ShaderResourceViewRHI* ShaderResourceView = Pending.ShaderResourceViews[SlotIndex];
+                    Src = ShaderResourceView ? ShaderResourceView->GetOfflineHandle() : DefaultSRVHandle;
+                    break;
+                }
+
+                case ED3D12LocalTableDescriptorType::UnorderedAccessView:
+                {
+                    FD3D12UnorderedAccessViewRHI* UnorderedAccessView = Pending.UnorderedAccessViews[SlotIndex];
+                    Src = UnorderedAccessView ? UnorderedAccessView->GetOfflineHandle() : DefaultUAVHandle;
+                    break;
+                }
+
+                case ED3D12LocalTableDescriptorType::Sampler:
+                {
+                    FD3D12SamplerStateRHI* SamplerState = Pending.Samplers[SlotIndex];
+                    Src = SamplerState ? SamplerState->GetOfflineHandle() : DefaultSamplerHandle;
+                    break;
+                }
             }
 
             SourceHandles[SlotIndex] = Src.ptr;
@@ -525,7 +530,7 @@ void FD3D12ShaderBindingTable::ResolveLocalDescriptorTables(FD3D12CommandContext
         bool bFoundInCache = false;
         for (const FResolvedTable& Resolved : ResolvedTables)
         {
-            if (Resolved.NumDescriptors != Pending.NumDescriptors || Resolved.HeapKind != Pending.HeapKind || Resolved.bUsesUnorderedAccessViews != Pending.bUsesUnorderedAccessViews)
+            if (Resolved.NumDescriptors != Pending.NumDescriptors || Resolved.DescriptorType != Pending.DescriptorType)
             {
                 continue;
             }
@@ -549,10 +554,9 @@ void FD3D12ShaderBindingTable::ResolveLocalDescriptorTables(FD3D12CommandContext
             }
 
             FResolvedTable Resolved;
-            Resolved.NumDescriptors            = Pending.NumDescriptors;
-            Resolved.HeapKind                  = Pending.HeapKind;
-            Resolved.bUsesUnorderedAccessViews = Pending.bUsesUnorderedAccessViews;
-            Resolved.BaseHandle                = BaseHandle;
+            Resolved.NumDescriptors = Pending.NumDescriptors;
+            Resolved.DescriptorType = Pending.DescriptorType;
+            Resolved.BaseHandle     = BaseHandle;
             
             Memory::Memcpy(Resolved.SourceHandles, SourceHandles, sizeof(SourceHandles));
             ResolvedTables.Emplace(Resolved);
