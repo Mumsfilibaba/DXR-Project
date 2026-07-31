@@ -1,5 +1,19 @@
 include "BuildTool_Common.lua"
 
+-- The xcode4 exporter drops vectorextensions, so the equivalent clang flag is passed by hand.
+local ClangVectorExtensionFlags =
+{
+    ["AVX512"] = "-mavx512f",
+    ["AVX2"]   = "-mavx2",
+    ["AVX"]    = "-mavx",
+    ["SSE4.2"] = "-msse4.2",
+    ["SSE4.1"] = "-msse4.1",
+    ["SSSE3"]  = "-mssse3",
+    ["SSE3"]   = "-msse3",
+    ["SSE2"]   = "-msse2",
+    ["SSE"]    = "-msse",
+}
+
 -- Build rules for a project
 function BuildRules(Name)
 
@@ -258,6 +272,31 @@ function BuildRules(Name)
             rtti(self.bEnableRuntimeTypeInfo and "On" or "Off")
             floatingpoint(self.FloatingPoint)
             vectorextensions(self.VectorExtensions)
+
+            -- Neither of the settings above reaches Xcode, which would leave macOS on clang's
+            -- default Penryn baseline and a different VectorMath backend than Windows.
+            if IsPlatformMac() then
+                local VectorFlag = ClangVectorExtensionFlags[self.VectorExtensions]
+                if VectorFlag then
+                    filter { "system:macosx" }
+                        buildoptions({
+                            VectorFlag
+                        })
+                    filter {}
+                elseif self.VectorExtensions and self.VectorExtensions ~= "Default" then
+                    LogWarning("No clang flag known for VectorExtensions '%s'", tostring(self.VectorExtensions))
+                end
+
+                -- Fast floating point in an optimized build implies -ffinite-math-only, which folds
+                -- every NaN/infinity check to false. Keep the rest of fast-math.
+                if self.FloatingPoint == "Fast" then
+                    filter { "system:macosx" }
+                        buildoptions({
+                            "-fno-finite-math-only"
+                        })
+                    filter {}
+                end
+            end
 
             -- Edit and Continue
             editandcontinue(self.bEnableEditAndContinue and "On" or "Off")

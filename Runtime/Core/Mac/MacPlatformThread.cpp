@@ -1,6 +1,7 @@
 #include "Core/Mac/MacPlatformThread.h"
 #include "Core/Mac/MacPlatformThreadMisc.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Platform/PlatformTLS.h"
 
 FGenericPlatformThread* FMacPlatformThread::Create(FRunnable* InRunnable, const CHAR* ThreadName, bool bSuspended)
 {

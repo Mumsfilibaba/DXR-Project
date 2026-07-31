@@ -75,6 +75,11 @@ workspace "EngineTests"
         }
     filter {}
 
+    -- optimize "Full" becomes -Ofast on Xcode, which folds away the NaN/infinity checks.
+    filter { "configurations:Release", "system:macosx" }
+        buildoptions { "-fno-fast-math" }
+    filter {}
+
     -- IDE options
     filter "action:vs*"
         defines
@@ -106,6 +111,49 @@ workspace "EngineTests"
             "PLATFORM_MACOS",
         }
     filter {}
+
+    -- Both platform folders are listed; AddPlatformRules excludes the wrong one per system.
+    local CorePlatformFiles =
+    {
+        "../Runtime/Core/Windows/WindowsPlatformStackTrace.cpp",
+        "../Runtime/Core/Windows/WindowsPlatformThread.cpp",
+        "../Runtime/Core/Windows/WindowsPlatformEvent.cpp",
+        "../Runtime/Core/Windows/WindowsPlatformFile.cpp",
+
+        "../Runtime/Core/Mac/MacPlatformStackTrace.cpp",
+        "../Runtime/Core/Mac/MacPlatformThread.cpp",
+        "../Runtime/Core/Mac/MacPlatformEvent.cpp",
+        "../Runtime/Core/Mac/MacPlatformFile.cpp",
+        "../Runtime/Core/Mac/MacPlatformLibrary.cpp",
+        "../Runtime/Core/Mac/MacPlatformMisc.cpp",
+    }
+
+    -- The xcode4 exporter drops forceincludes, so macOS gets the header as a compiler flag instead.
+    local function AddForceInclude(headerPath)
+        forceincludes { headerPath }
+
+        filter "system:macosx"
+            buildoptions { "-include", headerPath }
+        filter {}
+    end
+
+    local function AddPlatformRules()
+        filter "system:windows"
+            links { "Dbghelp.lib", "shlwapi.lib" }
+        filter {}
+
+        filter { "system:macosx", "files:**/Windows/**.cpp" }
+            flags { "ExcludeFromBuild" }
+        filter {}
+
+        filter { "system:macosx", "files:**.cpp" }
+            compileas "Objective-C++"
+        filter {}
+
+        filter "system:macosx"
+            links { "AppKit.framework" }
+        filter {}
+    end
 
     -- Container Tests
     project "Containers-Tests"
@@ -140,13 +188,9 @@ workspace "EngineTests"
             "../Runtime/Core/Generic/GenericPlatformStackTrace.cpp",
             "../Runtime/Core/Threading/ThreadManager.cpp",
             "../Runtime/Core/Misc/CRC.cpp",
-
-            -- TODO: Add Mac specifics
-            "../Runtime/Core/Windows/WindowsPlatformStackTrace.cpp",
-            "../Runtime/Core/Windows/WindowsPlatformThread.cpp",
-            "../Runtime/Core/Windows/WindowsPlatformEvent.cpp",
-            "../Runtime/Core/Windows/WindowsPlatformFile.cpp",
         }
+
+        files (CorePlatformFiles)
             
         -- In visual studio show natvis files
         filter "action:vs*"
@@ -170,19 +214,9 @@ workspace "EngineTests"
         -- The directly-compiled Core platform sources (e.g. WindowsPlatformFile.cpp) expect the
         -- logging macros the real Core build provides through its precompiled header. Force-include
         -- the lightweight logger header so LOG_* resolve without pulling in the full PCH.
-        forceincludes
-        {
-            path.getabsolute(_MAIN_SCRIPT_DIR .. "/../Runtime/Core/Misc/OutputDeviceLogger.h"),
-        }
+        AddForceInclude(path.getabsolute(_MAIN_SCRIPT_DIR .. "/../Runtime/Core/Misc/OutputDeviceLogger.h"))
 
-        -- Linking
-        filter "system:Windows"
-            links
-            {
-                "Dbghelp.lib",
-                "shlwapi.lib",
-            }
-        filter {}
+        AddPlatformRules()
     project "*"
     
     -- Math Tests
@@ -193,7 +227,7 @@ workspace "EngineTests"
     -- backend we generate one identical test executable per level and pin the selection by forcing
     -- the PLATFORM_SUPPORT_*_INTRIN macros above the target level to 0 (see Core/CoreDefines.h,
     -- which defines each level behind an #ifndef so these project defines win).
-    local function AddMathLibTest(projectName, extraDefines)
+    local function AddMathLibTest(projectName, extraDefines, extraBuildOptions)
         project (projectName)
             location (projectName)
             kind     "ConsoleApp"
@@ -231,13 +265,9 @@ workspace "EngineTests"
                 -- Math sources with out-of-line definitions used by the tests.
                 "../Runtime/Core/Math/Vector3.cpp",
                 "../Runtime/Core/Math/Quaternion.cpp",
-
-                -- TODO: Add Mac specifics
-                "../Runtime/Core/Windows/WindowsPlatformStackTrace.cpp",
-                "../Runtime/Core/Windows/WindowsPlatformThread.cpp",
-                "../Runtime/Core/Windows/WindowsPlatformEvent.cpp",
-                "../Runtime/Core/Windows/WindowsPlatformFile.cpp",
             }
+
+            files (CorePlatformFiles)
 
             -- In visual studio show natvis files
             filter "action:vs*"
@@ -259,24 +289,21 @@ workspace "EngineTests"
             -- The directly-compiled Core platform sources (e.g. WindowsPlatformFile.cpp) expect the
             -- logging macros the real Core build provides through its precompiled header. Force-include
             -- the lightweight logger header so LOG_* resolve without pulling in the full PCH.
-            forceincludes
-            {
-                path.getabsolute(_MAIN_SCRIPT_DIR .. "/../Runtime/Core/Misc/OutputDeviceLogger.h"),
-            }
+            AddForceInclude(path.getabsolute(_MAIN_SCRIPT_DIR .. "/../Runtime/Core/Misc/OutputDeviceLogger.h"))
 
             -- Backend-pinning defines (see comment above). SSE4.2 passes none and uses the default.
             if extraDefines then
                 defines (extraDefines)
             end
 
-            -- Linking
-            filter "system:Windows"
-                links
-                {
-                    "Dbghelp.lib",
-                    "shlwapi.lib",
-                }
-            filter {}
+            -- Clang defaults to Penryn on macOS, so levels above SSE4.1 need an explicit flag.
+            if extraBuildOptions then
+                filter "system:macosx"
+                    buildoptions (extraBuildOptions)
+                filter {}
+            end
+
+            AddPlatformRules()
         project "*"
     end
 
@@ -286,7 +313,7 @@ workspace "EngineTests"
     AddMathLibTest("MathLib-Tests-SSE3",   { "PLATFORM_SUPPORT_SSSE3_INTRIN=0", "PLATFORM_SUPPORT_SSE4_1_INTRIN=0", "PLATFORM_SUPPORT_SSE4_2_INTRIN=0" })
     AddMathLibTest("MathLib-Tests-SSSE3",  { "PLATFORM_SUPPORT_SSE4_1_INTRIN=0", "PLATFORM_SUPPORT_SSE4_2_INTRIN=0" })
     AddMathLibTest("MathLib-Tests-SSE4_1", { "PLATFORM_SUPPORT_SSE4_2_INTRIN=0" })
-    AddMathLibTest("MathLib-Tests-SSE4_2", nil)
+    AddMathLibTest("MathLib-Tests-SSE4_2", nil, { "-msse4.2" })
     
     -- Templates Tests
     project "Templates-Tests"
@@ -321,13 +348,9 @@ workspace "EngineTests"
             "../Runtime/Core/Generic/GenericPlatformThread.cpp",
             "../Runtime/Core/Generic/GenericPlatformStackTrace.cpp",
             "../Runtime/Core/Threading/ThreadManager.cpp",
-
-            -- TODO: Add Mac specifics
-            "../Runtime/Core/Windows/WindowsPlatformStackTrace.cpp",
-            "../Runtime/Core/Windows/WindowsPlatformThread.cpp",
-            "../Runtime/Core/Windows/WindowsPlatformEvent.cpp",
-            "../Runtime/Core/Windows/WindowsPlatformFile.cpp",
         }
+
+        files (CorePlatformFiles)
             
         -- In visual studio show natvis files
         filter "action:vs*"
@@ -349,19 +372,9 @@ workspace "EngineTests"
         -- The directly-compiled Core platform sources (e.g. WindowsPlatformFile.cpp) expect the
         -- logging macros the real Core build provides through its precompiled header. Force-include
         -- the lightweight logger header so LOG_* resolve without pulling in the full PCH.
-        forceincludes
-        {
-            path.getabsolute(_MAIN_SCRIPT_DIR .. "/../Runtime/Core/Misc/OutputDeviceLogger.h"),
-        }
+        AddForceInclude(path.getabsolute(_MAIN_SCRIPT_DIR .. "/../Runtime/Core/Misc/OutputDeviceLogger.h"))
 
-        -- Linking
-        filter "system:Windows"
-            links
-            {
-                "Dbghelp.lib",
-                "shlwapi.lib",
-            }
-        filter {}
+        AddPlatformRules()
     project "*"
 
     -- Core Tests (task graph)
@@ -412,13 +425,9 @@ workspace "EngineTests"
             "../Runtime/Core/Tasks/Tasks.cpp",
             "../Runtime/Core/Misc/FrameProfiler.cpp",
             "../Runtime/Core/Time/ElapsedTime.cpp",
-
-            -- TODO: Add Mac specifics
-            "../Runtime/Core/Windows/WindowsPlatformStackTrace.cpp",
-            "../Runtime/Core/Windows/WindowsPlatformThread.cpp",
-            "../Runtime/Core/Windows/WindowsPlatformEvent.cpp",
-            "../Runtime/Core/Windows/WindowsPlatformFile.cpp",
         }
+
+        files (CorePlatformFiles)
 
         -- Includes
         includedirs
@@ -430,10 +439,7 @@ workspace "EngineTests"
         -- The Core sources are compiled directly here (rather than linked), so replicate the two
         -- bits of configuration the real Core build provides: the PreCompiled.h force-include (for
         -- LOG_*, platform typedefs, etc.) and the engine-root path define used by EngineConfig.
-        forceincludes
-        {
-            path.getabsolute(_MAIN_SCRIPT_DIR .. "/../Runtime/Core/PreCompiled.h"),
-        }
+        AddForceInclude(path.getabsolute(_MAIN_SCRIPT_DIR .. "/../Runtime/Core/PreCompiled.h"))
 
         defines
         {
@@ -442,13 +448,6 @@ workspace "EngineTests"
             'PROJECT_NAME="CoreTests"',
         }
 
-        -- Linking
-        filter "system:Windows"
-            links
-            {
-                "Dbghelp.lib",
-                "shlwapi.lib",
-            }
-        filter {}
+        AddPlatformRules()
     project "*"
     
