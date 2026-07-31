@@ -38,7 +38,7 @@ void RayGen()
     const float3 ViewDir   = normalize(WorldPosition - CameraBuffer.PositionWS);
 
     float3 ReflectDirection;
-    if (Roughness < RAY_TRACING_MIRROR_ROUGHNESS_THRESHOLD)
+    if (Roughness < SceneConstants.ReflectionMirrorRoughnessThreshold)
     {
         ReflectDirection = normalize(reflect(ViewDir, WorldNormal));
     }
@@ -52,10 +52,10 @@ void RayGen()
     }
 
     RayDesc Ray;
-    Ray.Origin    = WorldPosition + (WorldNormal * RAY_OFFSET);
+    Ray.Origin    = WorldPosition + (WorldNormal * SceneConstants.ReflectionRayBias);
     Ray.Direction = ReflectDirection;
     Ray.TMin      = 0.0;
-    Ray.TMax      = 10000.0;
+    Ray.TMax      = SceneConstants.ReflectionMaxRayDistance;
 
     SER_RAY_PAYLOAD_STORAGE FRayPayload PayLoad;
     PayLoad.Color = float3(0.0f, 0.0f, 0.0f);
