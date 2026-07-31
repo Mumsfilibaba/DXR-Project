@@ -344,7 +344,6 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
     TArray<LPCWSTR> CompileArgs =
     {
         L"-HV 2021",     // Use HLSL 2021
-        L"-Gfa",         // Avoid flow-control
         L"-WX",          // Warnings as errors
         L"-Qembed_debug" // We are forced to embed debug information in order to get all the information we need
     };
@@ -362,6 +361,7 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
     {
         CompileArgs.Emplace(L"-O3"); // Highest optimization level
         CompileArgs.Emplace(L"-all-resources-bound");
+        CompileArgs.Emplace(L"-Gfa"); // Avoid flow-control. DXC rejects this on SM 5.1+ unless -all-resources-bound is also passed
     }
 
     // Add defines that identify the target shader backend

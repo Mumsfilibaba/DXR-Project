@@ -45,6 +45,8 @@ private:
     FRHIComputeShaderRef           PrimaryRayDebugShader;
     FRHIComputePipelineStateRef    PrimaryRayDebugPipeline;
     FRHIRayGenShaderRef            RayGenShaderSER;
+    FRHIRayMissShaderRef           RayMissShaderSER;
+    FRHIRayClosestHitShaderRef     RayClosestHitShaderSER;
     FRHIRayTracingPipelineStateRef SERPipeline;
     uint32                         CurrentSERHitGroupCapacity;
     uint32                         CurrentHitGroupCapacity;

@@ -292,39 +292,79 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
         return false;
     }
 
-    if (RHI::bSupportsShaderExecutionReordering && BindlessPipeline && RayMissShaderBindless && RayClosestHitShaderBindless)
+    if (RHI::bSupportsShaderExecutionReordering && BindlessPipeline)
     {
-        TArray<FShaderDefine> SERDefines =
-        { 
-            FShaderDefine("RAY_TRACING_BINDLESS", "1"),
-            FShaderDefine("RAY_TRACING_SHADER_EXECUTION_REORDERING", "1")
+        const auto InitializeSER = [&]() -> bool
+        {
+            TArray<FShaderDefine> SERDefines =
+            {
+                FShaderDefine("RAY_TRACING_BINDLESS", "1"),
+                FShaderDefine("RAY_TRACING_SHADER_EXECUTION_REORDERING", "1")
+            };
+
+            {
+                FShaderCompileInfo CompileInfo("RayGen", EShaderModel::SM_6_9, EShaderStage::RayGen, SERDefines);
+                if (!FShaderCompiler::Get().CompileFromFile("Shaders/RayGen.hlsl", CompileInfo, Code))
+                {
+                    return false;
+                }
+
+                RayGenShaderSER = RHI::CreateRayGenShader(Code);
+                if (!RayGenShaderSER)
+                {
+                    return false;
+                }
+            }
+
+            {
+                FShaderCompileInfo CompileInfo("ClosestHit", EShaderModel::SM_6_9, EShaderStage::RayClosestHit, SERDefines);
+                if (!FShaderCompiler::Get().CompileFromFile("Shaders/ClosestHit.hlsl", CompileInfo, Code))
+                {
+                    return false;
+                }
+
+                RayClosestHitShaderSER = RHI::CreateRayClosestHitShader(Code);
+                if (!RayClosestHitShaderSER)
+                {
+                    return false;
+                }
+            }
+
+            {
+                FShaderCompileInfo CompileInfo("Miss", EShaderModel::SM_6_9, EShaderStage::RayMiss, SERDefines);
+                if (!FShaderCompiler::Get().CompileFromFile("Shaders/Miss.hlsl", CompileInfo, Code))
+                {
+                    return false;
+                }
+
+                RayMissShaderSER = RHI::CreateRayMissShader(Code);
+                if (!RayMissShaderSER)
+                {
+                    return false;
+                }
+            }
+
+            FRHIRayTracingPipelineStateDesc PSODesc;
+            PSODesc.RayGenShaders           = { RayGenShaderSER.Get() };
+            PSODesc.MissShaders             = { RayMissShaderSER.Get() };
+            PSODesc.HitGroups               = { FRHIRayTracingHitGroupInfo("HitGroup", ERayTracingHitGroupType::Triangles, { RayClosestHitShaderSER.Get() }) };
+            PSODesc.MaxRecursionDepth       = 1;
+            PSODesc.MaxAttributeSizeInBytes = sizeof(FRayIntersectionAttributes);
+            PSODesc.MaxPayloadSizeInBytes   = sizeof(FRayPayload);
+            PSODesc.Flags                   = ERayTracingPipelineFlags::AllowShaderExecutionReordering;
+
+            SERPipeline = RHI::CreateRayTracingPipelineState(PSODesc);
+            return SERPipeline != nullptr;
         };
 
-        FShaderCompileInfo CompileInfo("RayGen", EShaderModel::SM_6_9, EShaderStage::RayGen, SERDefines);
-        if (FShaderCompiler::Get().CompileFromFile("Shaders/RayGen.hlsl", CompileInfo, Code))
-        {
-            RayGenShaderSER = RHI::CreateRayGenShader(Code);
-            if (RayGenShaderSER)
-            {
-                FRHIRayTracingPipelineStateDesc PSODesc;
-                PSODesc.RayGenShaders           = { RayGenShaderSER.Get() };
-                PSODesc.MissShaders             = { RayMissShaderBindless.Get() };
-                PSODesc.HitGroups               = { FRHIRayTracingHitGroupInfo("HitGroup", ERayTracingHitGroupType::Triangles, { RayClosestHitShaderBindless.Get() }) };
-                PSODesc.MaxRecursionDepth       = 1;
-                PSODesc.MaxAttributeSizeInBytes = sizeof(FRayIntersectionAttributes);
-                PSODesc.MaxPayloadSizeInBytes   = sizeof(FRayPayload);
-                PSODesc.Flags                   = ERayTracingPipelineFlags::AllowShaderExecutionReordering;
-
-                SERPipeline = RHI::CreateRayTracingPipelineState(PSODesc);
-            }
-        }
-
-        if (!SERPipeline)
+        if (!InitializeSER())
         {
             LOG_WARNING("[RayTracer]: SER ray tracing variant unavailable. The SER path will be disabled");
 
             SERPipeline.Reset();
             RayGenShaderSER.Reset();
+            RayMissShaderSER.Reset();
+            RayClosestHitShaderSER.Reset();
         }
     }
 
@@ -555,6 +595,8 @@ void FRayTracer::Release()
 
     SERPipeline.Reset();
     RayGenShaderSER.Reset();
+    RayMissShaderSER.Reset();
+    RayClosestHitShaderSER.Reset();
 
     InlineReflectionsPipeline.Reset();
     InlineReflectionsShader.Reset();
