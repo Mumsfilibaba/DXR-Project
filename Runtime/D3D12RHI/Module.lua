@@ -20,17 +20,17 @@ if IsPlatformWindows() then
             GetD3D12AgilitySDKIncludePath()
         })
 
-        -- Copy dynamic libraries from thirdparties folder
-        local AgilitySdkFolder   = JoinPath(D3D12RHI.GetTargetFolderPath(), GetD3D12AgilitySDKRedistFolderName())
-        local AgilitySdkBinaries = GetD3D12AgilitySDKBinaryPath()
-        D3D12RHI.AddPostBuildCommands({
+        -- Copy dynamic libraries from thirdparties folder into the folder that
+        -- D3D12_AGILITY_SDK_PATH points the D3D12 loader at
+        local AgilitySdkFolder  = JoinPath(D3D12RHI.GetTargetFolderPath(), GetD3D12AgilitySDKRedistFolderName())
+        local PostBuildCommands = {
             ('if not exist "%s" mkdir "%s"'):format(AgilitySdkFolder, AgilitySdkFolder), -- Ensure folder exists before copying
-            ('copy /Y "%s" "%s"\\'):format(JoinPath(AgilitySdkBinaries, "D3D12Core.dll"), AgilitySdkFolder),
-            ('copy /Y "%s" "%s"\\'):format(JoinPath(AgilitySdkBinaries, "D3D12Core.pdb"), AgilitySdkFolder),
-            ('copy /Y "%s" "%s"\\'):format(JoinPath(AgilitySdkBinaries, "d3d12SDKLayers.dll"), AgilitySdkFolder),
-            ('copy /Y "%s" "%s"\\'):format(JoinPath(AgilitySdkBinaries, "d3d12SDKLayers.pdb"), AgilitySdkFolder),
-            ('copy /Y "%s" "%s"\\'):format(JoinPath(AgilitySdkBinaries, "d3dconfig.exe"), AgilitySdkFolder),
-            ('copy /Y "%s" "%s"\\'):format(JoinPath(AgilitySdkBinaries, "d3dconfig.pdb"), AgilitySdkFolder),
-        })
+        }
+
+        for _, RedistFile in ipairs(GetD3D12AgilitySDKRedistFiles()) do
+            table.insert(PostBuildCommands, ('copy /Y "%s" "%s"\\'):format(RedistFile, AgilitySdkFolder))
+        end
+
+        D3D12RHI.AddPostBuildCommands(PostBuildCommands)
     end
 end
