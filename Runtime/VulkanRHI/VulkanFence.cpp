@@ -126,11 +126,11 @@ bool FVulkanTimelineFence::Initialize()
 uint64 FVulkanTimelineFence::Signal(FVulkanQueue& Queue)
 {
     ++CurrentValue;
-    CHECK(LastSignaledValue != CurrentValue);
+    CHECK(LastSignaledValue.Load() != CurrentValue);
 
     Queue.AddSignalTimelineSemaphore(TimelineSemaphore, CurrentValue);
-    LastSignaledValue = CurrentValue;
-    return LastSignaledValue;
+    LastSignaledValue.Store(CurrentValue);
+    return CurrentValue;
 }
 
 uint64 FVulkanTimelineFence::GetCompletedValue() const
@@ -156,7 +156,7 @@ uint64 FVulkanTimelineFence::GetCompletedValue() const
 bool FVulkanTimelineFence::WaitForValue(uint64 Value, uint64 TimeoutNs)
 {
     CHECK(VULKAN_CHECK_HANDLE(TimelineSemaphore));
-    CHECK(Value <= LastSignaledValue);
+    CHECK(Value <= LastSignaledValue.Load());
 
     uint64 CompletedValue = GetCompletedValue();
     if (Value <= CompletedValue)

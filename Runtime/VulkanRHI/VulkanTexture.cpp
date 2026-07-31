@@ -627,6 +627,7 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERes
         }
     }
 
+    MemoryLocation.FinalizeAllocation();
     return true;
 }
 

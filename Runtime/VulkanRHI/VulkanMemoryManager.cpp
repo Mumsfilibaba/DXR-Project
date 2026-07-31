@@ -57,6 +57,11 @@ static TAutoConsoleVariable<int32> CVarStagingBufferPageSize(
     "Page size for the staging buffer linear allocator in KB",
     4 * 1024);
 
+static TAutoConsoleVariable<int32> CVarDefragEligibilityDelay(
+    "VulkanRHI.DefragEligibilityDelay",
+    "Frames past the one carrying an allocation's initialization work before it may be defragmented",
+    1, 1, 16);
+
 static constexpr uint64 BUFFER_MIN_BLOCK  = 256ull;
 static constexpr uint64 UPLOAD_ALIGNMENT  = 256ull;
 
@@ -113,6 +118,14 @@ void FVulkanMemoryLocation::UpdateOwnership()
     if (AllocatorType == EVulkanAllocatorType::PoolAllocator && AllocatorPointers.PoolAllocator)
     {
         AllocatorPointers.PoolAllocator->TransferOwnership(AllocationData.Pool, this);
+    }
+}
+
+void FVulkanMemoryLocation::FinalizeAllocation()
+{
+    if (AllocatorType == EVulkanAllocatorType::PoolAllocator && AllocatorPointers.PoolAllocator)
+    {
+        AllocatorPointers.PoolAllocator->FinalizeAllocation(AllocationData.Pool);
     }
 }
 
@@ -1023,6 +1036,20 @@ bool FVulkanPoolAllocatorPage::TransferOwnership(uint64 Offset, FVulkanMemoryLoc
     return false;
 }
 
+bool FVulkanPoolAllocatorPage::FinalizeAllocation(uint64 Offset, uint64 EligibleFromFenceValue)
+{
+    for (FVulkanPoolAllocatorAllocationData& Alloc : LiveAllocations)
+    {
+        if (Alloc.Offset == Offset)
+        {
+            Alloc.EligibleFromFenceValue = EligibleFromFenceValue;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void FVulkanPoolAllocatorPage::RecycleAllocation(uint64 Offset, uint64 SizeInBytes)
 {
     if (SizeInBytes == 0)
@@ -1344,10 +1371,17 @@ bool FVulkanPoolAllocator::GetDefragCandidate(FVulkanDefragCandidate& OutCandida
         return false;
     }
 
+    const uint64 CompletedFenceValue = GetDevice()->GetFrameFence().GetCompletedValue();
+
     const FVulkanPoolAllocatorPage* SourcePage = Pages[BestPageIndex];
     for (const FVulkanPoolAllocatorAllocationData& LiveAlloc : SourcePage->GetLiveAllocations())
     {
         if (!LiveAlloc.Owner || !LiveAlloc.Owner->GetOwner())
+        {
+            continue;
+        }
+
+        if (CompletedFenceValue < LiveAlloc.EligibleFromFenceValue)
         {
             continue;
         }
@@ -1376,6 +1410,23 @@ void FVulkanPoolAllocator::TransferOwnership(const FVulkanPoolAllocatorAllocatio
     if (Data.PageIndex < static_cast<uint32>(Pages.Size()) && Pages[Data.PageIndex])
     {
         VERIFY(Pages[Data.PageIndex]->TransferOwnership(Data.Offset, NewLocation));
+    }
+}
+
+void FVulkanPoolAllocator::FinalizeAllocation(const FVulkanPoolAllocatorAllocationData& Data)
+{
+    if (Data.PageIndex == UINT32_MAX)
+    {
+        return;
+    }
+
+    SCOPED_LOCK(PagesCS);
+
+    if (Data.PageIndex < static_cast<uint32>(Pages.Size()) && Pages[Data.PageIndex])
+    {
+        const uint64 Delay        = static_cast<uint64>(CVarDefragEligibilityDelay.GetValue());
+        const uint64 EligibleFrom = GetDevice()->GetFrameFence().GetLastSignaledValue() + Delay;
+        VERIFY(Pages[Data.PageIndex]->FinalizeAllocation(Data.Offset, EligibleFrom));
     }
 }
 
@@ -2161,6 +2212,8 @@ void FVulkanBufferAllocator::DefragmentAllocations(FVulkanCommandContext* InComm
 
             Move.Allocator->TransferOwnership(Move.NewAllocationData, Move.SourceLocation);
 
+            Move.SourceLocation->FinalizeAllocation();
+
             Owner->ResourceRelocated(Move.SourceLocation);
         }
 
@@ -2581,6 +2634,8 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
             Move.SourceLocation->SetPoolAllocationData(Move.NewAllocationData);
 
             Move.Allocator->TransferOwnership(Move.NewAllocationData, Move.SourceLocation);
+
+            Move.SourceLocation->FinalizeAllocation();
 
             Owner->ResourceRelocated(Move.SourceLocation);
         }

@@ -47,10 +47,11 @@ struct FVulkanBuddyAllocatorAllocationData
 
 struct FVulkanPoolAllocatorAllocationData
 {
-    uint32                 PageIndex = UINT32_MAX;
-    uint64                 Offset    = 0;
-    uint64                 Size      = 0;
-    FVulkanMemoryLocation* Owner     = nullptr;
+    uint32                 PageIndex              = UINT32_MAX;
+    uint64                 Offset                 = 0;
+    uint64                 Size                   = 0;
+    FVulkanMemoryLocation* Owner                  = nullptr;
+    uint64                 EligibleFromFenceValue = UINT64_MAX;
 };
 
 struct FVulkanDefragCandidate
@@ -84,6 +85,7 @@ public:
     void ReleaseMemory();
     void Reset();
     void UpdateOwnership();
+    void FinalizeAllocation();
 
     bool IsValid()        const { return LocationType != EVulkanMemoryLocationType::Unknown; }
     bool IsSuballocated() const { return LocationType == EVulkanMemoryLocationType::Suballocated; }
@@ -278,6 +280,7 @@ public:
     
     void RecycleAllocation(uint64 Offset, uint64 SizeInBytes);
     bool TransferOwnership(uint64 Offset, FVulkanMemoryLocation* NewLocation);
+    bool FinalizeAllocation(uint64 Offset, uint64 EligibleFromFenceValue);
 
     FORCEINLINE bool IsEmpty() const
     {
@@ -346,6 +349,8 @@ public:
     bool GetDefragCandidate(FVulkanDefragCandidate& OutCandidate) const;
     void RecycleAllocation(const FVulkanPoolAllocatorAllocationData& AllocationData);
     void TransferOwnership(const FVulkanPoolAllocatorAllocationData& Data, FVulkanMemoryLocation* NewLocation);
+
+    void FinalizeAllocation(const FVulkanPoolAllocatorAllocationData& Data);
 
 #if VULKAN_ENABLE_STATS
     void UpdateMemoryStats(FVulkanAllocatorUsage& OutUsage) const;

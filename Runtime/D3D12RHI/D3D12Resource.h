@@ -40,10 +40,11 @@ enum class EResourceStorageType : uint8
 
 struct FD3D12PoolAllocatorAllocationData
 {
-    uint32                 PageIndex = UINT32_MAX;
-    uint64                 Offset    = 0;
-    uint64                 Size      = 0;
-    FD3D12ResourceStorage* Owner     = nullptr;
+    uint32                 PageIndex              = UINT32_MAX;
+    uint64                 Offset                 = 0;
+    uint64                 Size                   = 0;
+    FD3D12ResourceStorage* Owner                  = nullptr;
+    uint64                 EligibleFromFenceValue = UINT64_MAX;
 };
 
 struct FD3D12BuddyAllocatorAllocationData
@@ -71,6 +72,7 @@ public:
     
     void Swap(FD3D12ResourceStorage& Other);
     void UpdateOwnership();
+    void FinalizeAllocation();
     void ReleaseResource();
     void Reset();
     void ResetAllocator();

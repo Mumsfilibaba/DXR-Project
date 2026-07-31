@@ -258,6 +258,14 @@ void FD3D12ResourceStorage::UpdateOwnership()
     }
 }
 
+void FD3D12ResourceStorage::FinalizeAllocation()
+{
+    if (AllocatorType == ED3D12AllocatorType::PoolAllocator && AllocatorPointers.PoolAllocator)
+    {
+        AllocatorPointers.PoolAllocator->FinalizeAllocation(AllocationData.Pool);
+    }
+}
+
 void FD3D12ResourceStorage::Reset()
 {
     Memory::Memzero(&AllocationData, sizeof(AllocationData));

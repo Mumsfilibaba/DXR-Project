@@ -243,6 +243,7 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, EResour
         InCommandContext->FinishContext();
     }
 
+    ResourceStorage.FinalizeAllocation();
     return true;
 }
 

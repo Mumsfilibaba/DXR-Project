@@ -19,6 +19,11 @@ static TAutoConsoleVariable<bool> CVarD3D12LogMemoryAllocations(
     false);
 #endif
 
+static TAutoConsoleVariable<int32> CVarDefragEligibilityDelay(
+    "D3D12RHI.DefragEligibilityDelay",
+    "Frames past the one carrying an allocation's initialization work before it may be defragmented",
+    1, 1, 16);
+
 static D3D12_RESOURCE_DESC ApplyTightAlignmentFlag(const D3D12_RESOURCE_DESC& ResourceDesc)
 {
     D3D12_RESOURCE_DESC Result = ResourceDesc;
@@ -782,6 +787,20 @@ bool FD3D12PoolAllocatorPage::TransferOwnership(uint64 Offset, FD3D12ResourceSto
     return false;
 }
 
+bool FD3D12PoolAllocatorPage::FinalizeAllocation(uint64 Offset, uint64 EligibleFromFenceValue)
+{
+    for (FD3D12PoolAllocatorAllocationData& Alloc : LiveAllocations)
+    {
+        if (Alloc.Offset == Offset)
+        {
+            Alloc.EligibleFromFenceValue = EligibleFromFenceValue;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void FD3D12PoolAllocatorPage::CoalesceFreeRanges()
 {
     if (FreeRanges.IsEmpty())
@@ -1032,10 +1051,17 @@ bool FD3D12PoolAllocator::GetDefragCandidate(FD3D12DefragCandidate& OutCandidate
         return false;
     }
 
+    const uint64 CompletedFenceValue = GetDevice()->GetFrameFence().GetCompletedValue();
+
     const FD3D12PoolAllocatorPage* SourcePage = Pages[BestPageIndex];
     for (const FD3D12PoolAllocatorAllocationData& LiveAlloc : SourcePage->GetLiveAllocations())
     {
         if (!LiveAlloc.Owner || !LiveAlloc.Owner->GetOwner())
+        {
+            continue;
+        }
+
+        if (CompletedFenceValue < LiveAlloc.EligibleFromFenceValue)
         {
             continue;
         }
@@ -1267,6 +1293,23 @@ void FD3D12PoolAllocator::TransferOwnership(const FD3D12PoolAllocatorAllocationD
     if (Data.PageIndex < static_cast<uint32>(Pages.Size()) && Pages[Data.PageIndex])
     {
         VERIFY(Pages[Data.PageIndex]->TransferOwnership(Data.Offset, NewStorage));
+    }
+}
+
+void FD3D12PoolAllocator::FinalizeAllocation(const FD3D12PoolAllocatorAllocationData& Data)
+{
+    if (Data.PageIndex == UINT32_MAX)
+    {
+        return;
+    }
+
+    SCOPED_LOCK(PagesCS);
+
+    if (Data.PageIndex < static_cast<uint32>(Pages.Size()) && Pages[Data.PageIndex])
+    {
+        const uint64 Delay        = static_cast<uint64>(CVarDefragEligibilityDelay.GetValue());
+        const uint64 EligibleFrom = GetDevice()->GetFrameFence().GetLastSignaledValue() + Delay;
+        VERIFY(Pages[Data.PageIndex]->FinalizeAllocation(Data.Offset, EligibleFrom));
     }
 }
 
@@ -2702,6 +2745,8 @@ void FD3D12BufferAllocator::FinalizeDefragMoves()
         Storage->SetPoolAllocationData(Move.NewAllocationData);
         Storage->UpdateOwnership();
 
+        Storage->FinalizeAllocation();
+
         if (Owner)
         {
             Owner->ResourceRelocated(Storage);
@@ -3300,6 +3345,8 @@ void FD3D12TextureAllocator::FinalizeDefragMoves()
         Storage->SetGpuVirtualAddress(0);
         Storage->SetPoolAllocationData(Move.NewAllocationData);
         Storage->UpdateOwnership();
+
+        Storage->FinalizeAllocation();
 
         if (Owner)
         {

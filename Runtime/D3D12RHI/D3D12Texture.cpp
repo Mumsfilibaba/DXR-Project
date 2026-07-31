@@ -814,6 +814,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
         GetResource()->SetDefaultState(D3D12DefaultState);
     }
 
+    ResourceStorage.FinalizeAllocation();
     return true;
 }
 
