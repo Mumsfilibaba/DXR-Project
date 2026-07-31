@@ -6,8 +6,10 @@ struct Parse
     static FORCEINLINE void ParseLine(CHAR** Start)
     {
         CHAR* TempStart = *Start;
-        while(*TempStart != '\0' && *TempStart != '\n')
+        while (*TempStart != '\0' && *TempStart != '\n')
+        {
             ++TempStart;
+        }
 
         *Start = TempStart;
     }
@@ -16,7 +18,9 @@ struct Parse
     {
         const CHAR* TempStart = *Start;
         while (*TempStart != '\0' && *TempStart != '\n')
+        {
             ++TempStart;
+        }
 
         *Start = TempStart;
     }
@@ -25,7 +29,9 @@ struct Parse
     {
         CHAR* TempStart = *Start;
         while (*TempStart != '\0' && *TempStart == ' ')
+        {
             ++TempStart;
+        }
 
         *Start = TempStart;
     }
@@ -34,7 +40,9 @@ struct Parse
     {
         const CHAR* TempStart = *Start;
         while (*TempStart != '\0' && *TempStart == ' ')
+        {
             ++TempStart;
+        }
 
         *Start = TempStart;
     }
@@ -43,7 +51,9 @@ struct Parse
     {
         CHAR* TempStart = *Start;
         while (CharTraits::IsAlnum(*TempStart))
+        {
             ++TempStart;
+        }
 
         *Start = TempStart;
     }
@@ -52,7 +62,31 @@ struct Parse
     {
         const CHAR* TempStart = *Start;
         while (CharTraits::IsAlnum(*TempStart))
+        {
             ++TempStart;
+        }
+
+        *Start = TempStart;
+    }
+
+    static FORCEINLINE void ParseOptionName(const CHAR** Start)
+    {
+        const CHAR* TempStart = *Start;
+        while (CharTraits::IsAlnum(*TempStart) || (*TempStart == '.') || (*TempStart == '_'))
+        {
+            ++TempStart;
+        }
+
+        *Start = TempStart;
+    }
+
+    static FORCEINLINE void ParseValue(const CHAR** Start)
+    {
+        const CHAR* TempStart = *Start;
+        while ((*TempStart != '\0') && (*TempStart != ' '))
+        {
+            ++TempStart;
+        }
 
         *Start = TempStart;
     }

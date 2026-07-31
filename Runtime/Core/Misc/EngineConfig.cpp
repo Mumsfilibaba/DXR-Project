@@ -356,7 +356,13 @@ void FConfig::LoadConsoleVariables()
             {
                 if (IConsoleVariable* Variable = ConsoleManager.FindConsoleVariable(*Value.First))
                 {
-                    Variable->SetString(*Value.Second.CurrentValue, EConsoleVariableFlags::SetByConfigFile);
+                    // The command line outranks the config file, so never downgrade 
+                    // a variable that a '-Name=Value' option has already claimed.
+                    const EConsoleVariableFlags SetBy = Variable->GetFlags() & EConsoleVariableFlags::SetByMask;
+                    if (SetBy != EConsoleVariableFlags::SetByCommandLine)
+                    {
+                        Variable->SetString(*Value.Second.CurrentValue, EConsoleVariableFlags::SetByConfigFile);
+                    }
                 }
             }
         }
