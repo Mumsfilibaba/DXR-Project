@@ -7,25 +7,6 @@
 #include "D3D12RHI/D3D12SwapChain.h"
 #include "D3D12RHI/D3D12Texture.h"
 
-template<typename TBufferViewDesc>
-static uint64 GetBufferViewElementSize(const FRHIBufferDesc& BufferDesc, const TBufferViewDesc& ViewDesc)
-{
-    switch (ViewDesc.Type)
-    {
-        case EBufferViewType::Structured:
-            return BufferDesc.Stride;
-        
-        case EBufferViewType::ByteAddress:
-            return sizeof(uint32);
-        
-        case EBufferViewType::Typed:
-            return GetByteStrideFromFormat(ViewDesc.Format);
-        
-        default:
-            return 0;
-    }
-}
-
 static constexpr uint64 CalculateBufferFirstElement(uint32 FirstElement, uint64 ByteOffset, uint64 ElementSize)
 {
     return uint64(FirstElement) + (ByteOffset / ElementSize);

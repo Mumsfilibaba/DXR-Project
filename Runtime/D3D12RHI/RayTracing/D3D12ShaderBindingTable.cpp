@@ -1,10 +1,22 @@
 #include "D3D12RHI/D3D12Device.h"
+#include "D3D12RHI/D3D12Buffer.h"
 #include "D3D12RHI/D3D12CommandList.h"
 #include "D3D12RHI/D3D12Descriptors.h"
+#include "D3D12RHI/D3D12ResourceViews.h"
 #include "D3D12RHI/D3D12RHI.h"
 #include "D3D12RHI/RayTracing/D3D12ShaderBindingTable.h"
 
 static_assert(sizeof(FD3D12ShaderBindingTableEntry) == 64, "FD3D12ShaderBindingTableEntry must be exactly 64 bytes (32-byte identifier + 4 local entries).");
+
+static FD3D12BufferRHI* GetViewedBuffer(FRHIResource* ViewedResource)
+{
+    if (!ViewedResource || ViewedResource->GetResourceType() != ERHIResourceType::Buffer)
+    {
+        return nullptr;
+    }
+
+    return FD3D12DeviceRHI::ResourceCast(static_cast<FRHIBuffer*>(ViewedResource));
+}
 
 FD3D12ShaderBindingTable::FD3D12ShaderBindingTable(FD3D12Device* InDevice, const FRHIShaderBindingTableDesc& InDesc)
     : FRHIShaderBindingTable(InDesc)
@@ -228,15 +240,21 @@ void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSign
             case ERayTracingLocalBindingType::ShaderResourceView:
             {
                 FD3D12ShaderResourceViewRHI* ShaderResourceView = FD3D12DeviceRHI::ResourceCast(Binding.ShaderResourceView);
-                const FD3D12Resource*        Resource           = ShaderResourceView ? ShaderResourceView->GetViewResource() : nullptr;
-                const bool                   bIsBuffer          = Resource && Resource->GetDimension() == D3D12_RESOURCE_DIMENSION_BUFFER;
+                FD3D12BufferRHI*             ViewedBuffer       = (ShaderResourceView && ShaderResourceView->GetDesc().IsBufferSRV()) ? GetViewedBuffer(ShaderResourceView->GetResource()) : nullptr;
+                const bool                   bIsBuffer          = ViewedBuffer != nullptr;
 
                 const int8 ParamIndex = Stage.GetRootDescriptorParameterIndex(EResourceType::SRV, Register);
                 if (bIsBuffer && ParamIndex >= 0 && ParamIndex < D3D12_MAX_LOCAL_RECORD_ENTRIES)
                 {
-                    const D3D12_SHADER_RESOURCE_VIEW_DESC& ViewDesc = ShaderResourceView->GetD3D12Desc();
-                    const uint64 ElementSize = (ViewDesc.Buffer.Flags & D3D12_BUFFER_SRV_FLAG_RAW) ? 4ull : uint64(ViewDesc.Buffer.StructureByteStride);
-                    RootDescriptors[ParamIndex] = Resource->GetGPUVirtualAddress() + uint64(ViewDesc.Buffer.FirstElement) * ElementSize;
+                    const auto&  BufferViewDesc = ShaderResourceView->GetDesc().Buffer;
+                    const uint64 ElementSize    = GetBufferViewElementSize(ViewedBuffer->GetDesc(), BufferViewDesc);
+                    if (ElementSize == 0)
+                    {
+                        D3D12_ERROR("[FD3D12ShaderBindingTable]: Root SRV at register %u has a zero element size and cannot be addressed.", uint32(Register));
+                        break;
+                    }
+
+                    RootDescriptors[ParamIndex] = ViewedBuffer->GetGPUVirtualAddress() + uint64(BufferViewDesc.FirstElement) * ElementSize;
                 }
                 else if (bIsBuffer && ParamIndex >= D3D12_MAX_LOCAL_RECORD_ENTRIES)
                 {
@@ -264,15 +282,21 @@ void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSign
             case ERayTracingLocalBindingType::UnorderedAccessView:
             {
                 FD3D12UnorderedAccessViewRHI* UnorderedAccessView = FD3D12DeviceRHI::ResourceCast(Binding.UnorderedAccessView);
-                const FD3D12Resource*         Resource            = UnorderedAccessView ? UnorderedAccessView->GetViewResource() : nullptr;
-                const bool                    bIsBuffer           = Resource && Resource->GetDimension() == D3D12_RESOURCE_DIMENSION_BUFFER;
+                FD3D12BufferRHI*              ViewedBuffer        = (UnorderedAccessView && UnorderedAccessView->GetDesc().IsBufferUAV()) ? GetViewedBuffer(UnorderedAccessView->GetResource()) : nullptr;
+                const bool                    bIsBuffer           = ViewedBuffer != nullptr;
 
                 const int8 ParamIndex = Stage.GetRootDescriptorParameterIndex(EResourceType::UAV, Register);
                 if (bIsBuffer && ParamIndex >= 0 && ParamIndex < D3D12_MAX_LOCAL_RECORD_ENTRIES)
                 {
-                    const D3D12_UNORDERED_ACCESS_VIEW_DESC& ViewDesc = UnorderedAccessView->GetD3D12Desc();
-                    const uint64 ElementSize = (ViewDesc.Buffer.Flags & D3D12_BUFFER_UAV_FLAG_RAW) ? 4ull : uint64(ViewDesc.Buffer.StructureByteStride);
-                    RootDescriptors[ParamIndex] = Resource->GetGPUVirtualAddress() + uint64(ViewDesc.Buffer.FirstElement) * ElementSize;
+                    const auto&  BufferViewDesc = UnorderedAccessView->GetDesc().Buffer;
+                    const uint64 ElementSize    = GetBufferViewElementSize(ViewedBuffer->GetDesc(), BufferViewDesc);
+                    if (ElementSize == 0)
+                    {
+                        D3D12_ERROR("[FD3D12ShaderBindingTable]: Root UAV at register %u has a zero element size and cannot be addressed.", uint32(Register));
+                        break;
+                    }
+
+                    RootDescriptors[ParamIndex] = ViewedBuffer->GetGPUVirtualAddress() + uint64(BufferViewDesc.FirstElement) * ElementSize;
                 }
                 else if (bIsBuffer && ParamIndex >= D3D12_MAX_LOCAL_RECORD_ENTRIES)
                 {

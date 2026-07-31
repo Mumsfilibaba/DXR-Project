@@ -63,6 +63,12 @@ static D3D12_RESOURCE_STATES GetBufferCreationState(D3D12_HEAP_TYPE HeapType, D3
     return InitialResourceState;
 }
 
+static uint64 AlignOffsetInPage(const FD3D12LinearAllocatorPage& Page, uint64 InPageOffset, uint64 Alignment)
+{
+    const uint64 BackingOffset = Page.GetBackingResourceStorage().GetResourceOffset();
+    return Math::AlignUp<uint64>(BackingOffset + InPageOffset, Alignment) - BackingOffset;
+}
+
 FD3D12BuddyAllocator::FD3D12BuddyAllocator(FD3D12Device* InDevice, uint64 InBackingStorageSize, uint64 InMinBlockBytes, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy, D3D12_RESOURCE_FLAGS InResourceFlags)
     : FD3D12DeviceChild(InDevice)
     , BackingStorageSize(InBackingStorageSize)
@@ -265,14 +271,16 @@ bool FD3D12BuddyAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, FD3
         }
     }
 
-    const uint64 BlockSize = GetOrderBlockSize(Order);
 #if D3D12_ENABLE_STATS
-    TrackedUsedBytes.Add(static_cast<int64>(BlockSize));
-    TrackedWastedBytes.Add(static_cast<int64>(BlockSize - AllocationSize));
+    {
+        const uint64 BlockSize = GetOrderBlockSize(Order);
+        TrackedUsedBytes.Add(static_cast<int64>(BlockSize));
+        TrackedWastedBytes.Add(static_cast<int64>(BlockSize - AllocationSize));
+    }
 #endif
 
     OutStorage.Reset();
-    OutStorage.SetSize(BlockSize);
+    OutStorage.SetSize(AllocationSize);
 
     if (BackingResource)
     {
@@ -1389,7 +1397,7 @@ bool FD3D12BucketAllocator::TryAllocate(uint64 SizeInBytes, FD3D12ResourceStorag
         OutStorage.SetResourceOffset(AllocationData.Offset);
         OutStorage.SetGpuVirtualAddress(Bucket.BackingResource ? (Bucket.BackingResource->GetGPUVirtualAddress() + AllocationData.Offset) : 0);
         OutStorage.SetMappedBaseAddress(Bucket.MappedBaseAddress ? (Bucket.MappedBaseAddress + AllocationData.Offset) : nullptr);
-        OutStorage.SetSize(Bucket.BlockSize);
+        OutStorage.SetSize(SizeInBytes);
         OutStorage.SetStorageType(EResourceStorageType::SuballocatedResource);
 
         AllocationData.BucketIndex = BucketIndex;
@@ -1675,7 +1683,8 @@ void* FD3D12LinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D
     const uint64 UsedAlignment = Math::Max<uint64>(Alignment, 16ull);
     const uint64 SizeAligned   = Math::AlignUp<uint64>(SizeInBytes, UsedAlignment);
 
-    if (SizeAligned > PageSizeBytes)
+    const uint64 MaxAlignmentPadding = UsedAlignment - 1;
+    if (MaxAlignmentPadding >= PageSizeBytes || SizeAligned > PageSizeBytes - MaxAlignmentPadding)
     {
         if (HeapType == D3D12_HEAP_TYPE_UPLOAD)
         {
@@ -1721,7 +1730,7 @@ void* FD3D12LinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D
 
     SCOPED_LOCK(AllocatorCS);
 
-    const uint64 AlignedOffset = CurrentPage ? Math::AlignUp<uint64>(CurrentOffset, UsedAlignment) : PageSizeBytes;
+    const uint64 AlignedOffset = CurrentPage ? AlignOffsetInPage(*CurrentPage, CurrentOffset, UsedAlignment) : PageSizeBytes;
     if (AlignedOffset + SizeAligned > PageSizeBytes)
     {
         if (CurrentPage)
@@ -1739,9 +1748,8 @@ void* FD3D12LinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D
         CurrentOffset = 0;
     }
 
-    const uint64 AllocationOffset = Math::AlignUp<uint64>(CurrentOffset, UsedAlignment);
-
     const FD3D12ResourceStorage&    BackingStorage     = CurrentPage->GetBackingResourceStorage();
+    const uint64                    AllocationOffset   = AlignOffsetInPage(*CurrentPage, CurrentOffset, UsedAlignment);
     const uint64                    PageResourceOffset = BackingStorage.GetResourceOffset() + AllocationOffset;
     const D3D12_GPU_VIRTUAL_ADDRESS BaseGpuAddress     = BackingStorage.GetGPUVirtualAddress();
     const D3D12_GPU_VIRTUAL_ADDRESS PageGpuAddress     = BaseGpuAddress ? (BaseGpuAddress + AllocationOffset) : 0;

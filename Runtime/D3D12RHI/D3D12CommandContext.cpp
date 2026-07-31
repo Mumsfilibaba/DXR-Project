@@ -1413,13 +1413,7 @@ void FD3D12CommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 Dst
  
     BarrierBatcher.FlushBarriers(GetCommandList()); 
  
-    if ((DstOffset % D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT) != 0) 
-    { 
-        D3D12_ERROR("CopyTextureRegionToBuffer requires DstOffset aligned to %u bytes. Offset=%llu", D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT, DstOffset); 
-        return; 
-    } 
- 
-    FD3D12BufferRHI* D3D12Destination = FD3D12DeviceRHI::ResourceCast(Dst); 
+    FD3D12BufferRHI* D3D12Destination = FD3D12DeviceRHI::ResourceCast(Dst);
     CHECK(D3D12Destination != nullptr); 
  
     FD3D12TextureRHI* D3D12Source = FD3D12DeviceRHI::ResourceCast(Src); 
@@ -1451,6 +1445,13 @@ void FD3D12CommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 Dst
     const FD3D12ResourceStorage& DstStorage = D3D12Destination->GetResourceStorage();
     const uint64 EffectiveOffset = DstOffset + DstStorage.GetResourceOffset();
 
+    if ((EffectiveOffset % D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT) != 0)
+    {
+        D3D12_ERROR("CopyTextureRegionToBuffer requires a %u-byte aligned destination offset. Offset=%llu SuballocationOffset=%llu",
+            D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT, DstOffset, DstStorage.GetResourceOffset());
+        return;
+    }
+
     D3D12_TEXTURE_COPY_LOCATION DestLocation = {};
     DestLocation.pResource                        = DstResource->GetD3D12Resource();
     DestLocation.Type                             = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
@@ -1466,7 +1467,7 @@ void FD3D12CommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 Dst
     const uint32 RowPitch     = Math::AlignUp<uint32>(BytesPerPixel * CopyWidth, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
     MAYBE_UNUSED const uint64 RequiredSize = uint64(RowPitch) * uint64(CopyHeight);
 
-    CHECK(EffectiveOffset + RequiredSize <= DstResource->GetSize());
+    CHECK(DstOffset + RequiredSize <= DstStorage.GetSize());
 
     DestLocation.PlacedFootprint.Footprint.Width    = CopyWidth;
     DestLocation.PlacedFootprint.Footprint.Height   = CopyHeight;
@@ -1496,12 +1497,6 @@ void FD3D12CommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint6
     }
 
     BarrierBatcher.FlushBarriers(GetCommandList());
-
-    if ((DstOffset % D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT) != 0)
-    {
-        D3D12_ERROR("CopyTextureSubresourceToBuffer requires DstOffset aligned to %u bytes. Offset=%llu", D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT, DstOffset);
-        return;
-    }
 
     FD3D12BufferRHI* D3D12Destination = FD3D12DeviceRHI::ResourceCast(Dst);
     CHECK(D3D12Destination != nullptr);
@@ -1538,11 +1533,22 @@ void FD3D12CommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint6
     const uint32 RowPitch   = Math::AlignUp<uint32>(BytesPerPixel * CopyWidth, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 
     const FD3D12ResourceStorage& DstStorage = D3D12Destination->GetResourceStorage();
+    const uint64 EffectiveOffset = DstOffset + DstStorage.GetResourceOffset();
+
+    if ((EffectiveOffset % D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT) != 0)
+    {
+        D3D12_ERROR("CopyTextureSubresourceToBuffer requires a %u-byte aligned destination offset. Offset=%llu SuballocationOffset=%llu", 
+            D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT, DstOffset, DstStorage.GetResourceOffset());
+        return;
+    }
+
+    MAYBE_UNUSED const uint64 RequiredSize = uint64(RowPitch) * uint64(CopyHeight) * uint64(CopyDepth);
+    CHECK(DstOffset + RequiredSize <= DstStorage.GetSize());
 
     D3D12_TEXTURE_COPY_LOCATION DestLocation = {};
     DestLocation.pResource                          = DstResource->GetD3D12Resource();
     DestLocation.Type                               = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-    DestLocation.PlacedFootprint.Offset             = DstOffset + DstStorage.GetResourceOffset();
+    DestLocation.PlacedFootprint.Offset             = EffectiveOffset;
     DestLocation.PlacedFootprint.Footprint.Format   = ConvertFormat(Src->GetDesc().Format);
     DestLocation.PlacedFootprint.Footprint.Width    = CopyWidth;
     DestLocation.PlacedFootprint.Footprint.Height   = CopyHeight;

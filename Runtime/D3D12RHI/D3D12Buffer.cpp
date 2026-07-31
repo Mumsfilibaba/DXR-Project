@@ -193,15 +193,19 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, EResour
         void* MappedAddress = ResourceStorage.GetMappedBaseAddress();
         if (!MappedAddress)
         {
-            MappedAddress = D3D12Resource->MapRange(0, nullptr);
-            if (!MappedAddress)
+            // MapRange returns the base of the whole backing resource, so the suballocation offset has to be folded in here.
+            uint8* ResourceBase = reinterpret_cast<uint8*>(D3D12Resource->MapRange(0, nullptr));
+            if (!ResourceBase)
             {
                 D3D12_ERROR("Failed to map buffer data");
                 return false;
             }
 
-            Memory::Memcpy(MappedAddress, InInitialData, Desc.Size);
-            D3D12Resource->UnmapRange(0, nullptr);
+            const uint64 ResourceOffset = ResourceStorage.GetResourceOffset();
+            Memory::Memcpy(ResourceBase + ResourceOffset, InInitialData, Desc.Size);
+
+            const D3D12_RANGE WrittenRange = { ResourceOffset, ResourceOffset + Desc.Size };
+            D3D12Resource->UnmapRange(0, &WrittenRange);
         }
         else
         {
@@ -271,9 +275,12 @@ void* FD3D12BufferRHI::Map(uint64 Offset, uint64 Size)
         return static_cast<uint8*>(ResourceStorage.GetMappedBaseAddress()) + Offset;
     }
 
+    // MapRange returns the base of the whole backing resource, so the suballocation offset has to be folded in here.
+    const uint64 ResourceOffset = ResourceStorage.GetResourceOffset();
+
     D3D12_RANGE ReadRange = {};
-    ReadRange.Begin = Offset;
-    ReadRange.End   = Offset + MapSize;
+    ReadRange.Begin = ResourceOffset + Offset;
+    ReadRange.End   = ResourceOffset + Offset + MapSize;
 
     uint8* MappedData = reinterpret_cast<uint8*>(ResourceStorage.GetResource()->MapRange(0, &ReadRange));
     if (!MappedData)
@@ -281,20 +288,33 @@ void* FD3D12BufferRHI::Map(uint64 Offset, uint64 Size)
         return nullptr;
     }
 
-    return MappedData + Offset;
+    return MappedData + ResourceOffset + Offset;
 }
 
-void FD3D12BufferRHI::Unmap(uint64 /* Offset */, uint64 /* Size */)
+void FD3D12BufferRHI::Unmap(uint64 Offset, uint64 Size)
 {
     if (!ResourceStorage.GetResource())
     {
         return;
     }
 
-    if (!ResourceStorage.GetMappedBaseAddress())
+    if (ResourceStorage.GetMappedBaseAddress())
     {
-        ResourceStorage.GetResource()->UnmapRange(0, nullptr);
+        return;
     }
+
+    const uint64 BufferSize = ResourceStorage.GetSize();
+    CHECK(Offset <= BufferSize);
+
+    uint64 UnmapSize = Size;
+    if (UnmapSize == UINT64_MAX)
+    {
+        UnmapSize = BufferSize - Offset;
+    }
+
+    const uint64      ResourceOffset = ResourceStorage.GetResourceOffset();
+    const D3D12_RANGE WrittenRange   = { ResourceOffset + Offset, ResourceOffset + Offset + UnmapSize };
+    ResourceStorage.GetResource()->UnmapRange(0, &WrittenRange);
 }
 
 void FD3D12BufferRHI::SetDebugName(const String& InName)
