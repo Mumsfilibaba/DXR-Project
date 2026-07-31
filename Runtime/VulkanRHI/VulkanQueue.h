@@ -22,6 +22,7 @@ enum class EVulkanCommandsFlags : uint32
 ENUM_CLASS_OPERATORS(EVulkanCommandsFlags);
 
 class FVulkanCommandPool;
+struct FVulkanCommands;
 
 typedef TSharedRef<class FVulkanQueue> FVulkanQueueRef;
 

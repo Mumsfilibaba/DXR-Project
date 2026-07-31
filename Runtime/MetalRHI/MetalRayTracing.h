@@ -14,7 +14,6 @@ public:
     virtual ~FMetalGeometryAccelerationStructureRHI();
 
     // FRHIGeometryAccelerationStructure Interface
-    virtual void* GetRHIBaseInterface()        override final;
     virtual void* GetRHINativeResource() const override final;
 
     virtual void SetDebugName(const String& InName)       override final;
@@ -31,7 +30,6 @@ public:
     virtual ~FMetalSceneAccelerationStructureRHI();
 
     // FRHISceneAccelerationStructure Interface
-    virtual void* GetRHIBaseInterface()        override final;
     virtual void* GetRHINativeResource() const override final;
 
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final;

@@ -208,9 +208,9 @@ function GetEnginePath()
     return gEnginePath
 end
 
--- Join two paths
-function JoinPath(PathA, PathB)
-    return CreateOsPath(path.join(PathA, PathB))
+-- Join two or more paths
+function JoinPath(...)
+    return CreateOsPath(path.join(...))
 end
 
 -- Retrieve the path to the Runtime folder containing all the engine modules

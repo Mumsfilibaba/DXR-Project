@@ -1,3 +1,4 @@
+#include "Core/Containers/UniquePtr.h"
 #include "MetalRHI/MetalRHI.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
@@ -9,7 +10,7 @@ FMetalDeviceRHI* FMetalDeviceRHI::GMetalDeviceRHI = nullptr;
 FRHIDevice* FMetalModuleRHI::CreateDevice()
 {
     TUniquePtr<FMetalDeviceRHI> NewRHI = MakeUniquePtr<FMetalDeviceRHI>();
-    if (NewRHI->Initialize())
+    if (!NewRHI->Initialize())
     {
         return nullptr;
     }

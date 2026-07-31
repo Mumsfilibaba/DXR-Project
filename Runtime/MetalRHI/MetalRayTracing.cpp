@@ -12,11 +12,6 @@ void* FMetalGeometryAccelerationStructureRHI::GetRHINativeResource() const
     return nullptr;
 }
 
-void* FMetalGeometryAccelerationStructureRHI::GetRHIBaseInterface()
-{
-    return reinterpret_cast<void*>(this);
-}
-
 void FMetalGeometryAccelerationStructureRHI::SetDebugName(const String& InName)
 {
     DebugName = InName;
@@ -38,11 +33,6 @@ FMetalSceneAccelerationStructureRHI::~FMetalSceneAccelerationStructureRHI() = de
 void* FMetalSceneAccelerationStructureRHI::GetRHINativeResource() const
 {
     return nullptr;
-}
-
-void* FMetalSceneAccelerationStructureRHI::GetRHIBaseInterface()
-{
-    return reinterpret_cast<void*>(this);
 }
 
 FRHIShaderResourceView* FMetalSceneAccelerationStructureRHI::GetShaderResourceView() const

@@ -168,8 +168,8 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
 {
     SCOPED_AUTORELEASE_POOL();
 
-    DepthStencilState = MakeSharedRef<FMetalDepthStencilStateRHI>(GetDevice(), Desc.DepthStencilState);
-    if (!DepthStencilState || !DepthStencilState->Initialize())
+    DepthStencilState = MakeSharedRef<FMetalDepthStencilStateRHI>(Desc.DepthStencilState);
+    if (!DepthStencilState)
     {
         METAL_ERROR("Failed to create DepthStencilState for graphics PSO");
         return false;
