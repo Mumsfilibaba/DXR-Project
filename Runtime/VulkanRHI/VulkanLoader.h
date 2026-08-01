@@ -1,6 +1,10 @@
 #pragma once
 #include "VulkanRHI/VulkanCore.h"
 
+#if !defined(VK_HEADER_VERSION)
+    #error VulkanLoader.h reached before <vulkan/vulkan.h>, check where VulkanCore.h includes it.
+#endif
+
 // -------------------------------------------------------------------------------------------
 // Loader macros
 // -------------------------------------------------------------------------------------------
