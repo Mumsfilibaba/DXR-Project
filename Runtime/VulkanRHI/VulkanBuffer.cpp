@@ -275,7 +275,8 @@ bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, EReso
             InCommandContext->FinishContext();
         }
     }
-    
+
+    MemoryLocation.FinalizeAllocation();
     return true;
 }
 

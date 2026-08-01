@@ -218,7 +218,7 @@ void FD3D12BarrierBatcher::AddUnorderedAccessBarrier(ID3D12Resource* Resource)
     Barriers.Emplace(Barrier);
 }
 
-void FD3D12BarrierBatcher::AddAliasingBarrier(FD3D12Resource* InResourceAfter)
+void FD3D12BarrierBatcher::AddAliasingBarrier(FD3D12Resource* InResourceAfter, ID3D12Resource* ResourceBefore)
 {
     CHECK(InResourceAfter != nullptr);
 
@@ -230,17 +230,17 @@ void FD3D12BarrierBatcher::AddAliasingBarrier(FD3D12Resource* InResourceAfter)
     }
 #endif
 
-    AddAliasingBarrier(InResourceAfter->GetD3D12Resource());
+    AddAliasingBarrier(InResourceAfter->GetD3D12Resource(), ResourceBefore);
 }
 
-void FD3D12BarrierBatcher::AddAliasingBarrier(ID3D12Resource* ResourceAfter)
+void FD3D12BarrierBatcher::AddAliasingBarrier(ID3D12Resource* ResourceAfter, ID3D12Resource* ResourceBefore)
 {
     CHECK(ResourceAfter != nullptr);
 
     D3D12_RESOURCE_BARRIER Barrier = {};
     Barrier.Type                     = D3D12_RESOURCE_BARRIER_TYPE_ALIASING;
     Barrier.Flags                    = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    Barrier.Aliasing.pResourceBefore = nullptr;
+    Barrier.Aliasing.pResourceBefore = ResourceBefore;
     Barrier.Aliasing.pResourceAfter  = ResourceAfter;
 
     Barriers.Emplace(Barrier);
@@ -2383,10 +2383,10 @@ void FD3D12CommandContext::UnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
     BarrierBatcher.AddUnorderedAccessBarrier(D3D12Buffer->GetResource());
 }
 
-void FD3D12CommandContext::AliasingBarrier(FD3D12Resource* ResourceAfter)
+void FD3D12CommandContext::AliasingBarrier(FD3D12Resource* ResourceAfter, ID3D12Resource* ResourceBefore)
 {
     CHECK(ResourceAfter != nullptr);
-    BarrierBatcher.AddAliasingBarrier(ResourceAfter);
+    BarrierBatcher.AddAliasingBarrier(ResourceAfter, ResourceBefore);
 }
 
 void FD3D12CommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)

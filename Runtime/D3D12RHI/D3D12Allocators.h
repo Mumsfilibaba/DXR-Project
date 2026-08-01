@@ -154,6 +154,7 @@ public:
     void RecycleAllocation(uint64 Offset, uint64 SizeInBytes);
 
     bool TransferOwnership(uint64 Offset, FD3D12ResourceStorage* NewStorage);
+    bool FinalizeAllocation(uint64 Offset, uint64 EligibleFromFenceValue);
     
     bool Initialize();
 
@@ -227,6 +228,8 @@ public:
 
     bool GetDefragCandidate(FD3D12DefragCandidate& OutCandidate) const;
     void TransferOwnership(const FD3D12PoolAllocatorAllocationData& Data, FD3D12ResourceStorage* NewStorage);
+
+    void FinalizeAllocation(const FD3D12PoolAllocatorAllocationData& Data);
 
     FD3D12Heap* GetBackingHeap(uint32 PageIndex);
 

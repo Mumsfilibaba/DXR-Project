@@ -19,8 +19,8 @@ public:
     void AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, uint32 SubresourceIndex = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
     void AddUnorderedAccessBarrier(FD3D12Resource* InResource);
     void AddUnorderedAccessBarrier(ID3D12Resource* Resource);
-    void AddAliasingBarrier(FD3D12Resource* InResourceAfter);
-    void AddAliasingBarrier(ID3D12Resource* ResourceAfter);
+    void AddAliasingBarrier(FD3D12Resource* InResourceAfter, ID3D12Resource* ResourceBefore = nullptr);
+    void AddAliasingBarrier(ID3D12Resource* ResourceAfter, ID3D12Resource* ResourceBefore = nullptr);
     void FlushBarriers(FD3D12CommandList& CommandList);
 
     bool HasPendingBarriers() const 
@@ -148,7 +148,7 @@ public:
     void TransitionResourceState(FD3D12RenderTargetViewRHI* View);
     void TransitionResourceState(FD3D12DepthStencilViewRHI* View, D3D12_RESOURCE_STATES State);
 
-    void AliasingBarrier(FD3D12Resource* ResourceAfter);
+    void AliasingBarrier(FD3D12Resource* ResourceAfter, ID3D12Resource* ResourceBefore = nullptr);
 
     FD3D12CommandList& GetCommandList() 
     {
