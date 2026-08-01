@@ -140,7 +140,7 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    if (!CompilePipelineState(FrameResources, true))
+    if (RHI::bSupportsBindless && !CompilePipelineState(FrameResources, true))
     {
         return false;
     }
@@ -177,7 +177,7 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     RenderPassDesc.DepthStencilAttachment = FRHIDepthStencilAttachment(DepthStencilView, EAttachmentLoadAction::Load);
     CommandList.BeginRenderPass(RenderPassDesc);
 
-    const bool bBindless = GForwardPassBindless && FrameResources.MaterialDataBufferSRV.IsValid();
+    const bool bBindless = RHI::bSupportsBindless && GForwardPassBindless && FrameResources.MaterialDataBufferSRV.IsValid();
 
     FGraphicsPipelineStateInstance* PipelineInstance = PipelineStates.Find(MakeMaterialPSOKey(0, bBindless));
     if (!PipelineInstance)

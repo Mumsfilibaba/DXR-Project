@@ -33,7 +33,7 @@ FEditorNoJitterDepthPass::~FEditorNoJitterDepthPass()
 void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
 {
     const int32  MaterialFlags = static_cast<int32>(Material->GetMaterialFlags());
-    const bool   bBindless     = GPrePassBindless;
+    const bool   bBindless     = RHI::bSupportsBindless && GPrePassBindless;
     const uint64 PSOKey        = MakeMaterialPSOKey(MaterialFlags, bBindless);
 
     FGraphicsPipelineStateInstance* CachedPSO = MaterialPSOs.Find(PSOKey);
@@ -247,7 +247,7 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
-    const bool bBindless = GPrePassBindless && FrameResources.MaterialDataBufferSRV.IsValid();
+    const bool bBindless = RHI::bSupportsBindless && GPrePassBindless && FrameResources.MaterialDataBufferSRV.IsValid();
 
     for (const FMeshBatch& Batch : Scene->GetCameraView().GetMeshBatches())
     {

@@ -13,6 +13,8 @@ VULKAN_FUNCTION_DEFINITION(GetInstanceProcAddr);
 #define VULKAN_INSTANCE_FUNCTION_OPTIONAL(Name) VULKAN_FUNCTION_DEFINITION(Name);
 #define VULKAN_DEVICE_FUNCTION(Name) VULKAN_FUNCTION_DEFINITION(Name);
 #define VULKAN_DEVICE_FUNCTION_OPTIONAL(Name) VULKAN_FUNCTION_DEFINITION(Name);
+#define VULKAN_DEVICE_FUNCTION_ALIAS(Name, FallbackName) VULKAN_FUNCTION_DEFINITION(Name);
+#define VULKAN_DEVICE_FUNCTION_ALIAS_OPTIONAL(Name, FallbackName) VULKAN_FUNCTION_DEFINITION(Name);
 
 #include "VulkanRHI/VulkanFunctions.inl"
 
@@ -21,6 +23,8 @@ VULKAN_FUNCTION_DEFINITION(GetInstanceProcAddr);
 #undef VULKAN_INSTANCE_FUNCTION_OPTIONAL
 #undef VULKAN_DEVICE_FUNCTION
 #undef VULKAN_DEVICE_FUNCTION_OPTIONAL
+#undef VULKAN_DEVICE_FUNCTION_ALIAS
+#undef VULKAN_DEVICE_FUNCTION_ALIAS_OPTIONAL
 
 // -------------------------------------------------------------------------------------------
 // Loading
@@ -33,12 +37,16 @@ bool VulkanLoader::LoadGlobalFunctions()
     #define VULKAN_INSTANCE_FUNCTION_OPTIONAL(Name)
     #define VULKAN_DEVICE_FUNCTION(Name)
     #define VULKAN_DEVICE_FUNCTION_OPTIONAL(Name)
+    #define VULKAN_DEVICE_FUNCTION_ALIAS(Name, FallbackName)
+    #define VULKAN_DEVICE_FUNCTION_ALIAS_OPTIONAL(Name, FallbackName)
     #include "VulkanRHI/VulkanFunctions.inl"
     #undef VULKAN_GLOBAL_FUNCTION
     #undef VULKAN_INSTANCE_FUNCTION
     #undef VULKAN_INSTANCE_FUNCTION_OPTIONAL
     #undef VULKAN_DEVICE_FUNCTION
     #undef VULKAN_DEVICE_FUNCTION_OPTIONAL
+    #undef VULKAN_DEVICE_FUNCTION_ALIAS
+    #undef VULKAN_DEVICE_FUNCTION_ALIAS_OPTIONAL
 
     return true;
 }
@@ -58,6 +66,8 @@ bool VulkanLoader::LoadInstanceFunctions(FVulkanInstance* Instance)
     #define VULKAN_INSTANCE_FUNCTION_OPTIONAL(Name) VULKAN_TRY_LOAD_INSTANCE_FUNCTION(InstanceHandle, Name);
     #define VULKAN_DEVICE_FUNCTION(Name)
     #define VULKAN_DEVICE_FUNCTION_OPTIONAL(Name)
+    #define VULKAN_DEVICE_FUNCTION_ALIAS(Name, FallbackName)
+    #define VULKAN_DEVICE_FUNCTION_ALIAS_OPTIONAL(Name, FallbackName)
     
     #include "VulkanRHI/VulkanFunctions.inl"
 
@@ -66,6 +76,8 @@ bool VulkanLoader::LoadInstanceFunctions(FVulkanInstance* Instance)
     #undef VULKAN_INSTANCE_FUNCTION_OPTIONAL
     #undef VULKAN_DEVICE_FUNCTION
     #undef VULKAN_DEVICE_FUNCTION_OPTIONAL
+    #undef VULKAN_DEVICE_FUNCTION_ALIAS
+    #undef VULKAN_DEVICE_FUNCTION_ALIAS_OPTIONAL
 
     return true;
 }
@@ -85,6 +97,8 @@ bool VulkanLoader::LoadDeviceFunctions(FVulkanDevice* Device)
     #define VULKAN_INSTANCE_FUNCTION_OPTIONAL(Name)
     #define VULKAN_DEVICE_FUNCTION(Name) VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, Name);
     #define VULKAN_DEVICE_FUNCTION_OPTIONAL(Name) VULKAN_TRY_LOAD_DEVICE_FUNCTION(DeviceHandle, Name);
+    #define VULKAN_DEVICE_FUNCTION_ALIAS(Name, FallbackName) VULKAN_LOAD_DEVICE_FUNCTION_ALIAS(DeviceHandle, Name, FallbackName);
+    #define VULKAN_DEVICE_FUNCTION_ALIAS_OPTIONAL(Name, FallbackName) VULKAN_TRY_LOAD_DEVICE_FUNCTION_ALIAS(DeviceHandle, Name, FallbackName);
     
     #include "VulkanRHI/VulkanFunctions.inl"
 
@@ -93,6 +107,8 @@ bool VulkanLoader::LoadDeviceFunctions(FVulkanDevice* Device)
     #undef VULKAN_INSTANCE_FUNCTION_OPTIONAL
     #undef VULKAN_DEVICE_FUNCTION
     #undef VULKAN_DEVICE_FUNCTION_OPTIONAL
+    #undef VULKAN_DEVICE_FUNCTION_ALIAS
+    #undef VULKAN_DEVICE_FUNCTION_ALIAS_OPTIONAL
 
     return true;
 }

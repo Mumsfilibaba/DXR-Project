@@ -14,6 +14,10 @@ class FVulkanPoolAllocator;
 class FVulkanResource;
 class FVulkanMemoryLocation;
 class FVulkanCommandContext;
+class FVulkanDevice;
+
+void VulkanQueryBufferMemoryRequirements(FVulkanDevice* Device, const VkBufferCreateInfo& BufferCreateInfo, VkMemoryRequirements2& OutRequirements);
+void VulkanQueryImageMemoryRequirements(FVulkanDevice* Device, const VkImageCreateInfo& ImageCreateInfo, VkMemoryRequirements2& OutRequirements, VkImage ExistingImage = VK_NULL_HANDLE);
 
 enum class EVulkanAllocatorType : uint8
 {

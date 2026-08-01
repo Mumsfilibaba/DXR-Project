@@ -24,6 +24,7 @@ FNullDeviceRHI::FNullDeviceRHI()
 
     RHI::bSupportsGeometryShaders                       = true;
     RHI::bSupportRenderTargetArrayIndexFromVertexShader = true;
+    RHI::bSupportsBindless                              = false;
 
     // -------------------------------------------------------------------------------------------
     // View Instancing

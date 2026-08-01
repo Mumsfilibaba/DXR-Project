@@ -37,7 +37,6 @@ struct VULKANRHI_API FVulkanCoreFeatures
     VkPhysicalDeviceFeatures         Features10 = {};
     VkPhysicalDeviceVulkan11Features Features11 = {};
     VkPhysicalDeviceVulkan12Features Features12 = {};
-    VkPhysicalDeviceVulkan13Features Features13 = {};
 
     void BuildQueryChain(VkPhysicalDeviceFeatures2& Root);
     bool CheckRequired(VkPhysicalDevice PhysicalDevice) const;
@@ -81,7 +80,7 @@ struct FVulkanDefaultResources
 		: NullBuffer(VK_NULL_HANDLE)
 		, NullBufferLocation(nullptr)
 		, NullImage(VK_NULL_HANDLE)
-		, NullImageView(VK_NULL_HANDLE)
+		, NullImageViews()
 		, NullImageLocation(nullptr)
 		, NullSampler(VK_NULL_HANDLE)
 	{
@@ -91,8 +90,12 @@ struct FVulkanDefaultResources
 	{
 		CHECK(NullBuffer == VK_NULL_HANDLE);
 		CHECK(NullImage == VK_NULL_HANDLE);
-		CHECK(NullImageView == VK_NULL_HANDLE);
 		CHECK(NullSampler == VK_NULL_HANDLE);
+
+		for (VkImageView NullImageView : NullImageViews)
+		{
+			CHECK(NullImageView == VK_NULL_HANDLE);
+		}
 	}
 
 	bool Initialize(FVulkanDevice& Device);
@@ -100,10 +103,16 @@ struct FVulkanDefaultResources
 	bool InitializeNullBufferAndImage(FVulkanDevice& Device);
 	void Release(FVulkanDevice& Device);
 
+	VkImageView GetNullImageView(EVulkanNullImageViewType ViewType) const
+	{
+		CHECK(ViewType < EVulkanNullImageViewType::Count);
+		return NullImageViews[static_cast<uint32>(ViewType)];
+	}
+
 	VkBuffer              NullBuffer;
 	FVulkanMemoryLocation NullBufferLocation;
 	VkImage               NullImage;
-	VkImageView           NullImageView;
+	VkImageView           NullImageViews[static_cast<uint32>(EVulkanNullImageViewType::Count)];
 	FVulkanMemoryLocation NullImageLocation;
 	VkSampler             NullSampler;
 };

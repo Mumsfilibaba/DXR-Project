@@ -12,6 +12,7 @@
 #include "VulkanRHI/VulkanExtensions.h"
 #include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/Platform/VulkanPlatform.h"
+#include "RHI/RHI.h"
 #include "RHI/RHISamplerState.h"
 
 template <typename FeatureStructType>
@@ -80,8 +81,7 @@ void FVulkanCoreFeatures::BuildQueryChain(VkPhysicalDeviceFeatures2& Root)
 {
     Features11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
     Features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-    Features13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
-    AddAllToStructChain(Root, Features11, Features12, Features13);
+    AddAllToStructChain(Root, Features11, Features12);
 }
 
 bool FVulkanCoreFeatures::CheckRequired(VkPhysicalDevice PhysicalDevice) const
@@ -110,11 +110,6 @@ bool FVulkanCoreFeatures::CheckRequired(VkPhysicalDevice PhysicalDevice) const
     {
         return false;
     }
-    
-    if (!CheckRequiredFeaturesHelper(Features13, Available.Features13, "VkPhysicalDeviceVulkan13Features"))
-    {
-        return false;
-    }
 
     return true;
 }
@@ -124,16 +119,14 @@ void FVulkanCoreFeatures::EnableAvailable(FVulkanCoreFeatures& OutEnabled, const
     EnableAvailableFeaturesHelper(OutEnabled.Features10, Features10, Available.Features10);
     EnableAvailableFeaturesHelper(OutEnabled.Features11, Features11, Available.Features11);
     EnableAvailableFeaturesHelper(OutEnabled.Features12, Features12, Available.Features12);
-    EnableAvailableFeaturesHelper(OutEnabled.Features13, Features13, Available.Features13);
 }
 
 void FVulkanCoreFeatures::BuildEnableChain(VkPhysicalDeviceFeatures2& Root)
 {
     Features11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
     Features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-    Features13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
 
-    AddAllToStructChain(Root, Features11, Features12, Features13);
+    AddAllToStructChain(Root, Features11, Features12);
 }
 
 FVulkanPhysicalDevice::FVulkanPhysicalDevice(FVulkanInstance* InInstance)
@@ -201,9 +194,9 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCr
         VkPhysicalDeviceProperties AdapterProperties;
         vkGetPhysicalDeviceProperties(CurrentAdapter, &AdapterProperties);
 
-        if (AdapterProperties.apiVersion < VK_API_VERSION_1_3)
+        if (AdapterProperties.apiVersion < VULKAN_TARGET_API_VERSION)
         {
-            VULKAN_INFO("Skipping device '%s' since it's api-version is below Vulkan 1.3 (apiVersion=%s)", AdapterProperties.deviceName, *GetVersionAsString(AdapterProperties.apiVersion));
+            VULKAN_INFO("Skipping device '%s' since it's api-version is below Vulkan 1.2 (apiVersion=%s)", AdapterProperties.deviceName, *GetVersionAsString(AdapterProperties.apiVersion));
             continue;
         }
 
@@ -775,6 +768,20 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
 
     DeriveCoreCapabilities(InDeviceCreateInfo, AvailableFeatures, PhysicalDevice->GetProperties(), AvailableDeviceMultiviewProperties, AvailableDeviceSubgroupProperties);
 
+#if !VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
+    if (!GVulkanSupportsDynamicRendering)
+    {
+        VULKAN_ERROR_CRITICAL("Device does not support VK_KHR_dynamic_rendering, which is required");
+        return false;
+    }
+#endif
+
+    if (!GVulkanSupportsSynchronization2)
+    {
+        VULKAN_ERROR_CRITICAL("Device does not support VK_KHR_synchronization2, which is required");
+        return false;
+    }
+
     // -------------------------------------------------------------------------------------------
     // Resolve device layers
     // -------------------------------------------------------------------------------------------
@@ -911,6 +918,7 @@ bool FVulkanDevice::PostLoaderInitalize()
         }
     }
 
+    RHI::bSupportsBindless = BindlessDescriptorManager && BindlessDescriptorManager->IsEnabled();
     return true;
 }
 
@@ -942,17 +950,17 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
     VkBuffer DefaultBuffer = DefaultResources.NullBuffer;
     VkImage  DefaultImage  = DefaultResources.NullImage;
 
-    VkImageMemoryBarrier2 ImageBarrier = {};
-    ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+    VkImageMemoryBarrier2KHR ImageBarrier = {};
+    ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR;
     ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
     ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
     ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
     ImageBarrier.image                           = DefaultImage;
-    ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE;
-    ImageBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT;
-    ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
-    ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+    ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE_KHR;
+    ImageBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
+    ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
+    ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
     ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(VK_FORMAT_R8G8B8A8_UNORM);
     ImageBarrier.subresourceRange.baseArrayLayer = 0;
     ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
@@ -968,7 +976,7 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
     BufferImageCopy.imageSubresource.aspectMask     = ImageBarrier.subresourceRange.aspectMask;
     BufferImageCopy.imageSubresource.mipLevel       = 0;
     BufferImageCopy.imageSubresource.baseArrayLayer = 0;
-    BufferImageCopy.imageSubresource.layerCount     = 1;
+    BufferImageCopy.imageSubresource.layerCount     = VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS;
     BufferImageCopy.imageOffset                     = { 0, 0, 0 };
     BufferImageCopy.imageExtent                     = { VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, 1 };
 
@@ -977,9 +985,9 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
 
     ImageBarrier.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     ImageBarrier.newLayout     = VK_IMAGE_LAYOUT_GENERAL;
-    ImageBarrier.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
-    ImageBarrier.dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
-    ImageBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+    ImageBarrier.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
+    ImageBarrier.dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
+    ImageBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
     ImageBarrier.dstStageMask  = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
 
     CommandContext.GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
@@ -1380,6 +1388,7 @@ bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device
 
     VkImageCreateInfo ImageCreateInfo = {};
     ImageCreateInfo.sType                 = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    ImageCreateInfo.flags                 = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
     ImageCreateInfo.imageType             = VK_IMAGE_TYPE_2D;
     ImageCreateInfo.usage                 = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
     ImageCreateInfo.format                = VK_FORMAT_R8G8B8A8_UNORM;
@@ -1391,7 +1400,7 @@ bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device
     ImageCreateInfo.samples               = VK_SAMPLE_COUNT_1_BIT;
     ImageCreateInfo.tiling                = VK_IMAGE_TILING_OPTIMAL;
     ImageCreateInfo.initialLayout         = VK_IMAGE_LAYOUT_UNDEFINED;
-    ImageCreateInfo.arrayLayers           = 1;
+    ImageCreateInfo.arrayLayers           = VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS;
 
     VkResult Result = vkCreateImage(Device.GetVkDevice(), &ImageCreateInfo, nullptr, &NullImage);
     if (VULKAN_FAILED(Result))
@@ -1422,32 +1431,60 @@ bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device
         return false;
     }
 
-    // Create NullImageView
+    struct FNullViewDesc
+    {
+        EVulkanNullImageViewType ViewType;
+        VkImageViewType          VkViewType;
+        uint32                   LayerCount;
+        const CHAR*              DebugName;
+    };
+
+    const FNullViewDesc NullViewDescs[] =
+    {
+        { EVulkanNullImageViewType::Texture2D,        VK_IMAGE_VIEW_TYPE_2D,         1,                                 "NullImageView2D"        },
+        { EVulkanNullImageViewType::Texture2DArray,   VK_IMAGE_VIEW_TYPE_2D_ARRAY,   VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, "NullImageView2DArray"   },
+        { EVulkanNullImageViewType::TextureCube,      VK_IMAGE_VIEW_TYPE_CUBE,       VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, "NullImageViewCube"      },
+        { EVulkanNullImageViewType::TextureCubeArray, VK_IMAGE_VIEW_TYPE_CUBE_ARRAY, VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, "NullImageViewCubeArray" },
+    };
+
+    static_assert(ARRAY_COUNT(NullViewDescs) == static_cast<uint32>(EVulkanNullImageViewType::Count), "NullViewDescs is out of date");
+
     VkImageViewCreateInfo ImageViewCreateInfo = {};
     ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     ImageViewCreateInfo.flags                           = 0;
     ImageViewCreateInfo.format                          = ImageCreateInfo.format;
     ImageViewCreateInfo.image                           = NullImage;
-    ImageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
     ImageViewCreateInfo.components.r                    = VK_COMPONENT_SWIZZLE_R;
     ImageViewCreateInfo.components.g                    = VK_COMPONENT_SWIZZLE_G;
     ImageViewCreateInfo.components.b                    = VK_COMPONENT_SWIZZLE_B;
     ImageViewCreateInfo.components.a                    = VK_COMPONENT_SWIZZLE_A;
     ImageViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
     ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-    ImageViewCreateInfo.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
     ImageViewCreateInfo.subresourceRange.baseMipLevel   = 0;
     ImageViewCreateInfo.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
-    Result = vkCreateImageView(Device.GetVkDevice(), &ImageViewCreateInfo, nullptr, &NullImageView);
-    if (VULKAN_FAILED(Result))
+    for (const FNullViewDesc& ViewDesc : NullViewDescs)
     {
-        VULKAN_ERROR_CRITICAL("vkCreateImageView failed");
-        return false;
-    }
-    else
-    {
-        VulkanSetObjectName(Device.GetVkDevice(), "NullImageView", NullImageView, VK_OBJECT_TYPE_IMAGE_VIEW);
+        const uint32 ViewIndex = static_cast<uint32>(ViewDesc.ViewType);
+        if (ViewDesc.VkViewType == VK_IMAGE_VIEW_TYPE_CUBE_ARRAY && !GVulkanSupportsImageCubeArray)
+        {
+            NullImageViews[ViewIndex] = NullImageViews[static_cast<uint32>(EVulkanNullImageViewType::TextureCube)];
+            continue;
+        }
+
+        ImageViewCreateInfo.viewType                    = ViewDesc.VkViewType;
+        ImageViewCreateInfo.subresourceRange.layerCount = ViewDesc.LayerCount;
+
+        Result = vkCreateImageView(Device.GetVkDevice(), &ImageViewCreateInfo, nullptr, &NullImageViews[ViewIndex]);
+        if (VULKAN_FAILED(Result))
+        {
+            VULKAN_ERROR_CRITICAL("vkCreateImageView failed for '%s'", ViewDesc.DebugName);
+            return false;
+        }
+        else
+        {
+            VulkanSetObjectName(Device.GetVkDevice(), ViewDesc.DebugName, NullImageViews[ViewIndex], VK_OBJECT_TYPE_IMAGE_VIEW);
+        }
     }
 
     return true;
@@ -1463,9 +1500,25 @@ void FVulkanDefaultResources::Release(FVulkanDevice& Device)
         NullBufferLocation.ReleaseMemory();
     }
 
-    if (VULKAN_CHECK_HANDLE(NullImageView))
+    for (uint32 ViewIndex = 0; ViewIndex < ARRAY_COUNT(NullImageViews); ViewIndex++)
     {
-        vkDestroyImageView(VulkanDevice, NullImageView, nullptr);
+        VkImageView& NullImageView = NullImageViews[ViewIndex];
+        if (!VULKAN_CHECK_HANDLE(NullImageView))
+        {
+            continue;
+        }
+
+        bool bIsAlias = false;
+        for (uint32 PreviousIndex = 0; PreviousIndex < ViewIndex; PreviousIndex++)
+        {
+            bIsAlias |= (NullImageViews[PreviousIndex] == NullImageView);
+        }
+
+        if (!bIsAlias)
+        {
+            vkDestroyImageView(VulkanDevice, NullImageView, nullptr);
+        }
+
         NullImageView = VK_NULL_HANDLE;
     }
 

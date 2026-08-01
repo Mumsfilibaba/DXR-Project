@@ -135,7 +135,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
     FPointLightShaderCombination ShaderCombination;
     ShaderCombination.MaterialFlags  = static_cast<uint32>(Material->GetMaterialFlags());
     ShaderCombination.RenderPassType = RenderPassType;
-    ShaderCombination.bBindless      = GShadowsBindless;
+    ShaderCombination.bBindless      = RHI::bSupportsBindless && GShadowsBindless;
 
     FGraphicsPipelineStateInstance* CachedPointLightPSO = MaterialPSOs.Find(ShaderCombination);
     if (!CachedPointLightPSO)
@@ -478,7 +478,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 template<ECubeMapRenderPassType RenderPassType>
 void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene)
 {
-    const bool bBindless = GShadowsBindless && Resources.MaterialDataBufferSRV.IsValid();
+    const bool bBindless = RHI::bSupportsBindless && GShadowsBindless && Resources.MaterialDataBufferSRV.IsValid();
 
     // Clamp the number of shadow-casting point-lights
     const int32 NumPointLights = Math::Min<int32>(Scene->GetPointLights().Size(), Resources.MaxPointLightShadows);
@@ -886,7 +886,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
     FCascadedShadowsShaderCombination ShaderCombination;
     ShaderCombination.RenderPassType       = RenderPassType;
     ShaderCombination.bEnableDepthClipping = CVarCSMEnableDepthClipping.GetValue();
-    ShaderCombination.bBindless            = GShadowsBindless;
+    ShaderCombination.bBindless            = RHI::bSupportsBindless && GShadowsBindless;
     ShaderCombination.MaterialFlags        = static_cast<uint32>(Material->GetMaterialFlags());
 
     FGraphicsPipelineStateInstance* CachedDirectionalLightPSO = MaterialPSOs.Find(ShaderCombination);
@@ -1261,7 +1261,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 template<ECascadeRenderPassType RenderPassType>
 void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene)
 {
-    const bool bBindless = GShadowsBindless && Resources.MaterialDataBufferSRV.IsValid();
+    const bool bBindless = RHI::bSupportsBindless && GShadowsBindless && Resources.MaterialDataBufferSRV.IsValid();
 
     constexpr bool bIsSinglePass = 
         RenderPassType == ECascadeRenderPassType::SinglePass ||

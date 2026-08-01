@@ -891,6 +891,8 @@ bool FD3D12Device::Initialize()
             EffectiveBindlessSamplerCount, RequestedBindlessSamplerCount, NumOnlineSamplerDescriptors, SamplerDescriptorBlockSize);
     }
 
+    RHI::bSupportsBindless = bBindlessEnabled && (ResourceBindlessHeap != nullptr);
+
     // Initialize Offline Descriptor heaps
     ResourceOfflineDescriptorHeap = new FD3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     if (!ResourceOfflineDescriptorHeap->Initialize())

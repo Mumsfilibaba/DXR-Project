@@ -403,6 +403,7 @@ struct FVulkanDescriptorWrites
     TArray<VkBufferView>                                 DescriptorTexelBufferViews;
     TArray<VkWriteDescriptorSetAccelerationStructureKHR> DescriptorAccelerationStructureInfos;
     TArray<VkAccelerationStructureKHR>                   DescriptorAccelerationStructures;
+    TArray<EVulkanNullImageViewType>                     NullViewTypes;
 };
 
 enum class EVulkanDescriptorDirtyFlags : uint8

@@ -2,11 +2,13 @@
 // Included multiple times with different macro definitions for declaration, definition, and loading.
 //
 // Categories:
-//   VULKAN_GLOBAL_FUNCTION            - Pre-instance functions (loaded via vkGetInstanceProcAddr(NULL))
-//   VULKAN_INSTANCE_FUNCTION          - Core instance functions (must succeed)
-//   VULKAN_INSTANCE_FUNCTION_OPTIONAL - Extension instance functions (null is acceptable)
-//   VULKAN_DEVICE_FUNCTION            - Core device functions (must succeed)
-//   VULKAN_DEVICE_FUNCTION_OPTIONAL   - Extension device functions (null is acceptable)
+//   VULKAN_GLOBAL_FUNCTION                - Pre-instance functions (loaded via vkGetInstanceProcAddr(NULL))
+//   VULKAN_INSTANCE_FUNCTION              - Core instance functions (must succeed)
+//   VULKAN_INSTANCE_FUNCTION_OPTIONAL     - Extension instance functions (null is acceptable)
+//   VULKAN_DEVICE_FUNCTION                - Core device functions (must succeed)
+//   VULKAN_DEVICE_FUNCTION_OPTIONAL       - Extension device functions (null is acceptable)
+//   VULKAN_DEVICE_FUNCTION_ALIAS          - Promoted functions, loaded under the KHR name with the core name as fallback (must succeed)
+//   VULKAN_DEVICE_FUNCTION_ALIAS_OPTIONAL - Same, but null is acceptable
 
 // -------------------------------------------------------------------------------------------
 // Global Functions (Loaded before VkInstance creation)
@@ -118,8 +120,10 @@ VULKAN_DEVICE_FUNCTION(GetImageMemoryRequirements2)
 VULKAN_DEVICE_FUNCTION(GetBufferMemoryRequirements2)
 VULKAN_DEVICE_FUNCTION(GetImageSparseMemoryRequirements2)
 
-VULKAN_DEVICE_FUNCTION(GetDeviceBufferMemoryRequirements)
-VULKAN_DEVICE_FUNCTION(GetDeviceImageMemoryRequirements)
+#if VK_KHR_maintenance4
+VULKAN_DEVICE_FUNCTION_ALIAS_OPTIONAL(GetDeviceBufferMemoryRequirementsKHR, GetDeviceBufferMemoryRequirements)
+VULKAN_DEVICE_FUNCTION_ALIAS_OPTIONAL(GetDeviceImageMemoryRequirementsKHR, GetDeviceImageMemoryRequirements)
+#endif
 
 VULKAN_DEVICE_FUNCTION(CreateShaderModule)
 VULKAN_DEVICE_FUNCTION(DestroyShaderModule)
@@ -178,8 +182,10 @@ VULKAN_DEVICE_FUNCTION(CmdClearDepthStencilImage)
 VULKAN_DEVICE_FUNCTION(CmdResolveImage)
 VULKAN_DEVICE_FUNCTION(CmdBeginRenderPass)
 VULKAN_DEVICE_FUNCTION(CmdEndRenderPass)
-VULKAN_DEVICE_FUNCTION(CmdBeginRendering)
-VULKAN_DEVICE_FUNCTION(CmdEndRendering)
+#if VK_KHR_dynamic_rendering
+VULKAN_DEVICE_FUNCTION_ALIAS(CmdBeginRenderingKHR, CmdBeginRendering)
+VULKAN_DEVICE_FUNCTION_ALIAS(CmdEndRenderingKHR, CmdEndRendering)
+#endif
 VULKAN_DEVICE_FUNCTION(CmdSetViewport)
 VULKAN_DEVICE_FUNCTION(CmdSetScissor)
 VULKAN_DEVICE_FUNCTION(CmdSetBlendConstants)
@@ -191,7 +197,9 @@ VULKAN_DEVICE_FUNCTION(CmdBindPipeline)
 VULKAN_DEVICE_FUNCTION(CmdBindDescriptorSets)
 VULKAN_DEVICE_FUNCTION(CmdPushConstants)
 VULKAN_DEVICE_FUNCTION(CmdPipelineBarrier)
-VULKAN_DEVICE_FUNCTION(CmdPipelineBarrier2)
+#if VK_KHR_synchronization2
+VULKAN_DEVICE_FUNCTION_ALIAS(CmdPipelineBarrier2KHR, CmdPipelineBarrier2)
+#endif
 VULKAN_DEVICE_FUNCTION(CmdFillBuffer)
 VULKAN_DEVICE_FUNCTION(CmdCopyBuffer)
 VULKAN_DEVICE_FUNCTION(CmdCopyBufferToImage)

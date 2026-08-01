@@ -55,7 +55,7 @@ static void* SafeLoadDynamicLib(const CHAR* LibraryName)
     // Since the local lib folder is not check by default, check it as well
     const CHAR* Paths[] =
     {
-        "usr/local/lib/",
+        "/usr/local/lib/",
     };
     
     constexpr uint32 MaxFullPathLength = MaxNameLength + 128;

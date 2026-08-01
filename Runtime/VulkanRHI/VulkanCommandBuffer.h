@@ -89,14 +89,14 @@ class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
             vkCmdEndRenderPass(CommandBuffer);
         }
 
-        FORCEINLINE void BeginRendering(const VkRenderingInfo* RenderingInfo)
+        FORCEINLINE void BeginRendering(const VkRenderingInfoKHR* RenderingInfo)
         {
-            vkCmdBeginRendering(CommandBuffer, RenderingInfo);
+            vkCmdBeginRenderingKHR(CommandBuffer, RenderingInfo);
         }
 
         FORCEINLINE void EndRendering()
         {
-            vkCmdEndRendering(CommandBuffer);
+            vkCmdEndRenderingKHR(CommandBuffer);
         }
     
         FORCEINLINE void SetViewport(uint32 FirstViewport, uint32 ViewportCount, const VkViewport* Viewports)
@@ -219,9 +219,9 @@ class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
                 BufferMemoryBarrierCount, BufferMemoryBarriers, ImageMemoryBarrierCount, ImageMemoryBarriers);
         }
     
-        FORCEINLINE void PipelineBarrier2(const VkDependencyInfo* DependencyInfo)
+        FORCEINLINE void PipelineBarrier2(const VkDependencyInfoKHR* DependencyInfo)
         {
-            vkCmdPipelineBarrier2(CommandBuffer, DependencyInfo);
+            vkCmdPipelineBarrier2KHR(CommandBuffer, DependencyInfo);
         }
 
         FORCEINLINE void Draw(uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance)

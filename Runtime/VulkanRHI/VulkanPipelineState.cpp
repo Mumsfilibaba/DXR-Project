@@ -553,7 +553,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
 
     VkFormat ColorAttachmentFormats[RHI_MAX_RENDER_TARGETS] = {};
     
-    VkPipelineRenderingCreateInfo PipelineRenderingInfo = {};
+    VkPipelineRenderingCreateInfoKHR PipelineRenderingInfo = {};
     if (GVulkanUseDynamicRendering)
     {
         for (uint8 Index = 0; Index < InDesc.RasterizerOutputFormats.NumRenderTargets; Index++)
@@ -563,7 +563,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
 
         const VkFormat DepthStencilVkFormat = ConvertFormat(InDesc.RasterizerOutputFormats.DepthStencilFormat);
 
-        PipelineRenderingInfo.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+        PipelineRenderingInfo.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
         PipelineRenderingInfo.colorAttachmentCount    = InDesc.RasterizerOutputFormats.NumRenderTargets;
         PipelineRenderingInfo.pColorAttachmentFormats = ColorAttachmentFormats;
         PipelineRenderingInfo.depthAttachmentFormat   = DepthStencilVkFormat;
@@ -981,7 +981,7 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
 
     VkFormat ColorAttachmentFormats[RHI_MAX_RENDER_TARGETS] = {};
 
-    VkPipelineRenderingCreateInfo PipelineRenderingInfo = {};
+    VkPipelineRenderingCreateInfoKHR PipelineRenderingInfo = {};
     if (GVulkanUseDynamicRendering)
     {
         for (uint8 Index = 0; Index < InDesc.RasterizerOutputFormats.NumRenderTargets; Index++)
@@ -991,7 +991,7 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
 
         const VkFormat DepthStencilVkFormat = ConvertFormat(InDesc.RasterizerOutputFormats.DepthStencilFormat);
 
-        PipelineRenderingInfo.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+        PipelineRenderingInfo.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
         PipelineRenderingInfo.colorAttachmentCount    = InDesc.RasterizerOutputFormats.NumRenderTargets;
         PipelineRenderingInfo.pColorAttachmentFormats = ColorAttachmentFormats;
         PipelineRenderingInfo.depthAttachmentFormat   = DepthStencilVkFormat;

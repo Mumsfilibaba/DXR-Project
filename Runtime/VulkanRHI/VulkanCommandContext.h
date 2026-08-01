@@ -28,16 +28,16 @@ class FVulkanBarrierBatcher
         {
         }
 
-        TArray<VkMemoryBarrier2>       MemoryBarriers;
-        TArray<VkBufferMemoryBarrier2> BufferMemoryBarriers;
-        TArray<VkImageMemoryBarrier2>  ImageMemoryBarriers;
-        VkDependencyFlags              DependencyFlags;
+        TArray<VkMemoryBarrier2KHR>       MemoryBarriers;
+        TArray<VkBufferMemoryBarrier2KHR> BufferMemoryBarriers;
+        TArray<VkImageMemoryBarrier2KHR>  ImageMemoryBarriers;
+        VkDependencyFlags                 DependencyFlags;
     };
 
 public:
-    void AddMemoryBarrier(VkDependencyFlags DependencyFlags, const VkMemoryBarrier2& InBarrier);
-    void AddBufferMemoryBarrier(VkDependencyFlags DependencyFlags, const VkBufferMemoryBarrier2& InBarrier);
-    void AddImageMemoryBarrier(VkDependencyFlags DependencyFlags, const VkImageMemoryBarrier2& InBarrier);
+    void AddMemoryBarrier(VkDependencyFlags DependencyFlags, const VkMemoryBarrier2KHR& InBarrier);
+    void AddBufferMemoryBarrier(VkDependencyFlags DependencyFlags, const VkBufferMemoryBarrier2KHR& InBarrier);
+    void AddImageMemoryBarrier(VkDependencyFlags DependencyFlags, const VkImageMemoryBarrier2KHR& InBarrier);
     void FlushBarriers(FVulkanCommandBuffer& CommandBuffer);
     
     bool HasPendingBarriers() const
