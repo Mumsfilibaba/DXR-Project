@@ -10,6 +10,7 @@
 #include "RHI/RHIResources.h"
 #include "RHI/RayTracing/RHIRayTracingTypes.h"
 #include "VulkanRHI/VulkanConstants.h"
+#include "VulkanRHI/VulkanLoader.h"
 
 #if PLATFORM_MACOS
     // #define VK_USE_PLATFORM_MACOS_MVK
@@ -53,7 +54,14 @@ static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, Height) == OFFSETOF(V
 static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, Depth) == OFFSETOF(VkTraceRaysIndirectCommand2KHR, depth));
 #endif
 
-#include "VulkanRHI/VulkanLoader.h"
+enum class EVulkanNullImageViewType : uint8
+{
+    Texture2D        = 0,
+    Texture2DArray   = 1,
+    TextureCube      = 2,
+    TextureCubeArray = 3,
+    Count            = 4,
+};
 
 #if VULKAN_ENABLE_LOGGING
     #define VULKAN_ERROR_CRITICAL(...) \

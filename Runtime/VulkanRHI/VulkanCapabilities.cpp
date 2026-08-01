@@ -52,6 +52,7 @@ VULKANRHI_API bool   GVulkanSupportsSparseResidency3D           = false;
 VULKANRHI_API bool   GVulkanSupportsSparseResidencyAliased      = false;
 VULKANRHI_API bool   GVulkanSupportsGeometryShader              = false;
 VULKANRHI_API bool   GVulkanSupportsTessellation                = false;
+VULKANRHI_API bool   GVulkanSupportsImageCubeArray              = false;
 
 VULKANRHI_API uint32 GVulkanMaxMultiviewViewCount               = 1;
 VULKANRHI_API uint32 GVulkanMaxDrawIndirectCount                = 1;
@@ -282,6 +283,7 @@ void FVulkanDevice::DeriveCoreCapabilities(
     GVulkanSupportsSparseResidencyAliased = (CoreDeviceFeatures10.sparseResidencyAliased == VK_TRUE);
     GVulkanSupportsGeometryShader         = (GVulkanAllowGeometryShaders && CoreDeviceFeatures10.geometryShader == VK_TRUE);
     GVulkanSupportsTessellation           = (CoreDeviceFeatures10.tessellationShader == VK_TRUE);
+    GVulkanSupportsImageCubeArray         = (CoreDeviceFeatures10.imageCubeArray == VK_TRUE);
 
     if (AvailableFeatures.Features11.multiview)
     {

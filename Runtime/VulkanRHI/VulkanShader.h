@@ -143,6 +143,7 @@ struct FVulkanShaderInfo
     {
         EVulkanBindingType::Type BindingType;
         uint8                    BindingIndex;
+        EVulkanNullImageViewType NullViewType = EVulkanNullImageViewType::Texture2D;
         uint16                   OriginalBindingIndex;
     #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
         String                   DebugName;

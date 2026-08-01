@@ -374,18 +374,18 @@ public:
 };
 #endif
 
-#if VK_KHR_robustness2
-class FVulkanKHRRobustness2Extension : public FVulkanDeviceExtension
+#if VK_EXT_robustness2
+class FVulkanEXTRobustness2Extension : public FVulkanDeviceExtension
 {
 public:
-    FVulkanKHRRobustness2Extension()
-        : FVulkanDeviceExtension(VK_KHR_ROBUSTNESS_2_EXTENSION_NAME, false, GVulkanAllowNullDescriptors)
+    FVulkanEXTRobustness2Extension()
+        : FVulkanDeviceExtension(VK_EXT_ROBUSTNESS_2_EXTENSION_NAME, false, GVulkanAllowNullDescriptors)
     {
     }
 
     virtual void PrepareDeviceFeatures(VkPhysicalDeviceFeatures2& OutFeatures) override final
     {
-        AvailableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_KHR;
+        AvailableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
         AddToStructChain(OutFeatures, AvailableFeatures);
     }
 
@@ -412,7 +412,7 @@ public:
 
     virtual void PrepareDeviceCreateInfo(VkDeviceCreateInfo& OutDeviceCreateInfo) override final
     {
-        EnableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_KHR;
+        EnableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
 
         if (AvailableFeatures.robustImageAccess2)
         {
@@ -432,8 +432,8 @@ public:
         AddToStructChain(OutDeviceCreateInfo, EnableFeatures);
     }
 
-    VkPhysicalDeviceRobustness2FeaturesKHR AvailableFeatures = {};
-    VkPhysicalDeviceRobustness2FeaturesKHR EnableFeatures    = {};
+    VkPhysicalDeviceRobustness2FeaturesEXT AvailableFeatures = {};
+    VkPhysicalDeviceRobustness2FeaturesEXT EnableFeatures    = {};
 };
 #endif
 
@@ -1056,8 +1056,8 @@ void FVulkanDeviceExtension::RegisterExtensions(TArray<TUniquePtr<FVulkanDeviceE
 #if VK_EXT_conservative_rasterization
     OutExtensions.Add(MakeUniquePtr<FVulkanEXTConservativeRasterizationExtension>());
 #endif
-#if VK_KHR_robustness2
-    OutExtensions.Add(MakeUniquePtr<FVulkanKHRRobustness2Extension>());
+#if VK_EXT_robustness2
+    OutExtensions.Add(MakeUniquePtr<FVulkanEXTRobustness2Extension>());
 #endif
 #if VK_EXT_sample_locations
     OutExtensions.Add(MakeUniquePtr<FVulkanEXTSampleLocationsExtension>());

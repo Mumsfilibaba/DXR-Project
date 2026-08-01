@@ -97,6 +97,8 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
         DSWrites.DescriptorWrites.Resize(SetRemappingInfo.RemappingInfo.Size());
         Memory::Memzero(DSWrites.DescriptorWrites.Data(), DSWrites.DescriptorWrites.SizeInBytes());
 
+        DSWrites.NullViewTypes.Resize(SetRemappingInfo.RemappingInfo.Size());
+
         BoundResourceViews[DescriptorSetIndex].Resize(SetRemappingInfo.RemappingInfo.Size());
         Memory::Memzero(BoundResourceViews[DescriptorSetIndex].Data(), BoundResourceViews[DescriptorSetIndex].SizeInBytes());
         
@@ -111,6 +113,8 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
             const FVulkanDescriptorRemappingInfo::FRemappingInfo& Binding = SetRemappingInfo.RemappingInfo[Index];
             CHECK(Binding.BindingIndex == static_cast<uint32>(Index));
             
+            DSWrites.NullViewTypes[Index] = Binding.NullViewType;
+
             VkWriteDescriptorSet& WriteDescriptorSet = DSWrites.DescriptorWrites[Index];
             WriteDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             WriteDescriptorSet.descriptorType  = GetDescriptorTypeFromBindingType(Binding.BindingType);
@@ -205,7 +209,7 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
                     WriteDescriptorSet.pImageInfo = &DSWrites.DescriptorImageInfos[CurrentImageInfo++];
                     
                     VkDescriptorImageInfo* ImageInfo = const_cast<VkDescriptorImageInfo*>(WriteDescriptorSet.pImageInfo);
-                    ImageInfo->imageView   = DefaultResources.NullImageView;
+                    ImageInfo->imageView   = DefaultResources.GetNullImageView(DSWrites.NullViewTypes[Index]);
                     ImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
                     ImageInfo->sampler     = VK_NULL_HANDLE;
                     break;
@@ -539,7 +543,7 @@ void FVulkanDescriptorState::UpdateDescriptorSets(FVulkanTransientDescriptorAllo
             {
                 if (WriteInfo.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE || WriteInfo.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
                 {
-                    if (WriteInfo.pImageInfo->imageView == DefaultResources.NullImageView)
+                    if (WriteInfo.pImageInfo->imageView == DefaultResources.GetNullImageView(DSWrites.NullViewTypes[BindIdx]))
                     {
                         VULKAN_WARNING("Null image view descriptor '%s' (register t%u) at set=%d binding=%u (%s)",
                             BindingName, OriginalBinding, Index, WriteInfo.dstBinding, GetDescriptorTypeName(WriteInfo.descriptorType));
@@ -698,13 +702,15 @@ void FVulkanDescriptorState::ResetDescriptorBinding(uint32 DescriptorSetIndex, u
 
         case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
         {
-            DSBuilder.WriteStorageImage(BindingIndex, DefaultResources.NullImageView, VK_IMAGE_LAYOUT_GENERAL);
+            const VkImageView NullView = DefaultResources.GetNullImageView(DSWrites.NullViewTypes[BindingIndex]);
+            DSBuilder.WriteStorageImage(BindingIndex, NullView, VK_IMAGE_LAYOUT_GENERAL);
             break;
         }
 
         case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
         {
-            DSBuilder.WriteSampledImage(BindingIndex, DefaultResources.NullImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            const VkImageView NullView = DefaultResources.GetNullImageView(DSWrites.NullViewTypes[BindingIndex]);
+            DSBuilder.WriteSampledImage(BindingIndex, NullView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
             break;
         }
 

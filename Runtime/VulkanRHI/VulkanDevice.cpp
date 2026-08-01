@@ -974,7 +974,7 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
     BufferImageCopy.imageSubresource.aspectMask     = ImageBarrier.subresourceRange.aspectMask;
     BufferImageCopy.imageSubresource.mipLevel       = 0;
     BufferImageCopy.imageSubresource.baseArrayLayer = 0;
-    BufferImageCopy.imageSubresource.layerCount     = 1;
+    BufferImageCopy.imageSubresource.layerCount     = VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS;
     BufferImageCopy.imageOffset                     = { 0, 0, 0 };
     BufferImageCopy.imageExtent                     = { VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, 1 };
 
@@ -1386,6 +1386,7 @@ bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device
 
     VkImageCreateInfo ImageCreateInfo = {};
     ImageCreateInfo.sType                 = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    ImageCreateInfo.flags                 = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
     ImageCreateInfo.imageType             = VK_IMAGE_TYPE_2D;
     ImageCreateInfo.usage                 = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
     ImageCreateInfo.format                = VK_FORMAT_R8G8B8A8_UNORM;
@@ -1397,7 +1398,7 @@ bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device
     ImageCreateInfo.samples               = VK_SAMPLE_COUNT_1_BIT;
     ImageCreateInfo.tiling                = VK_IMAGE_TILING_OPTIMAL;
     ImageCreateInfo.initialLayout         = VK_IMAGE_LAYOUT_UNDEFINED;
-    ImageCreateInfo.arrayLayers           = 1;
+    ImageCreateInfo.arrayLayers           = VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS;
 
     VkResult Result = vkCreateImage(Device.GetVkDevice(), &ImageCreateInfo, nullptr, &NullImage);
     if (VULKAN_FAILED(Result))
@@ -1428,32 +1429,60 @@ bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device
         return false;
     }
 
-    // Create NullImageView
+    struct FNullViewDesc
+    {
+        EVulkanNullImageViewType ViewType;
+        VkImageViewType          VkViewType;
+        uint32                   LayerCount;
+        const CHAR*              DebugName;
+    };
+
+    const FNullViewDesc NullViewDescs[] =
+    {
+        { EVulkanNullImageViewType::Texture2D,        VK_IMAGE_VIEW_TYPE_2D,         1,                                 "NullImageView2D"        },
+        { EVulkanNullImageViewType::Texture2DArray,   VK_IMAGE_VIEW_TYPE_2D_ARRAY,   VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, "NullImageView2DArray"   },
+        { EVulkanNullImageViewType::TextureCube,      VK_IMAGE_VIEW_TYPE_CUBE,       VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, "NullImageViewCube"      },
+        { EVulkanNullImageViewType::TextureCubeArray, VK_IMAGE_VIEW_TYPE_CUBE_ARRAY, VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, "NullImageViewCubeArray" },
+    };
+
+    static_assert(ARRAY_COUNT(NullViewDescs) == static_cast<uint32>(EVulkanNullImageViewType::Count), "NullViewDescs is out of date");
+
     VkImageViewCreateInfo ImageViewCreateInfo = {};
     ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     ImageViewCreateInfo.flags                           = 0;
     ImageViewCreateInfo.format                          = ImageCreateInfo.format;
     ImageViewCreateInfo.image                           = NullImage;
-    ImageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
     ImageViewCreateInfo.components.r                    = VK_COMPONENT_SWIZZLE_R;
     ImageViewCreateInfo.components.g                    = VK_COMPONENT_SWIZZLE_G;
     ImageViewCreateInfo.components.b                    = VK_COMPONENT_SWIZZLE_B;
     ImageViewCreateInfo.components.a                    = VK_COMPONENT_SWIZZLE_A;
     ImageViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
     ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-    ImageViewCreateInfo.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
     ImageViewCreateInfo.subresourceRange.baseMipLevel   = 0;
     ImageViewCreateInfo.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
-    Result = vkCreateImageView(Device.GetVkDevice(), &ImageViewCreateInfo, nullptr, &NullImageView);
-    if (VULKAN_FAILED(Result))
+    for (const FNullViewDesc& ViewDesc : NullViewDescs)
     {
-        VULKAN_ERROR_CRITICAL("vkCreateImageView failed");
-        return false;
-    }
-    else
-    {
-        VulkanSetObjectName(Device.GetVkDevice(), "NullImageView", NullImageView, VK_OBJECT_TYPE_IMAGE_VIEW);
+        const uint32 ViewIndex = static_cast<uint32>(ViewDesc.ViewType);
+        if (ViewDesc.VkViewType == VK_IMAGE_VIEW_TYPE_CUBE_ARRAY && !GVulkanSupportsImageCubeArray)
+        {
+            NullImageViews[ViewIndex] = NullImageViews[static_cast<uint32>(EVulkanNullImageViewType::TextureCube)];
+            continue;
+        }
+
+        ImageViewCreateInfo.viewType                    = ViewDesc.VkViewType;
+        ImageViewCreateInfo.subresourceRange.layerCount = ViewDesc.LayerCount;
+
+        Result = vkCreateImageView(Device.GetVkDevice(), &ImageViewCreateInfo, nullptr, &NullImageViews[ViewIndex]);
+        if (VULKAN_FAILED(Result))
+        {
+            VULKAN_ERROR_CRITICAL("vkCreateImageView failed for '%s'", ViewDesc.DebugName);
+            return false;
+        }
+        else
+        {
+            VulkanSetObjectName(Device.GetVkDevice(), ViewDesc.DebugName, NullImageViews[ViewIndex], VK_OBJECT_TYPE_IMAGE_VIEW);
+        }
     }
 
     return true;
@@ -1469,9 +1498,25 @@ void FVulkanDefaultResources::Release(FVulkanDevice& Device)
         NullBufferLocation.ReleaseMemory();
     }
 
-    if (VULKAN_CHECK_HANDLE(NullImageView))
+    for (uint32 ViewIndex = 0; ViewIndex < ARRAY_COUNT(NullImageViews); ViewIndex++)
     {
-        vkDestroyImageView(VulkanDevice, NullImageView, nullptr);
+        VkImageView& NullImageView = NullImageViews[ViewIndex];
+        if (!VULKAN_CHECK_HANDLE(NullImageView))
+        {
+            continue;
+        }
+
+        bool bIsAlias = false;
+        for (uint32 PreviousIndex = 0; PreviousIndex < ViewIndex; PreviousIndex++)
+        {
+            bIsAlias |= (NullImageViews[PreviousIndex] == NullImageView);
+        }
+
+        if (!bIsAlias)
+        {
+            vkDestroyImageView(VulkanDevice, NullImageView, nullptr);
+        }
+
         NullImageView = VK_NULL_HANDLE;
     }
 
