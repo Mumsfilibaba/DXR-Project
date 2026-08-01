@@ -20,15 +20,16 @@ RhiModule.AddModules({
     "glslang",
 })
 
--- Copy dynamic libraries from thirdparties folder
-local Dest = RhiModule.GetTargetFolderPath()
+-- Deploy DXC from the thirdparties folder
 if IsPlatformWindows() then
+    local Dest = RhiModule.GetTargetFolderPath()
     RhiModule.AddPostBuildCommands({
         ('copy /Y "%s" "%s"\\'):format(CreateExternalThirdpartyPath("DXC/bin/dxil.dll"), Dest),
         ('copy /Y "%s" "%s"\\'):format(CreateExternalThirdpartyPath("DXC/bin/dxcompiler.dll"), Dest),
     })
 elseif IsPlatformMac() then
-    RhiModule.AddPostBuildCommands({
-        ('cp -f "%s" "%s"'):format(CreateExternalThirdpartyPath("DXC/bin/libdxcompiler.dylib"), Dest),
+    -- Copied into Contents/Frameworks by the executable that ends up using this module
+    RhiModule.AddExtraRuntimeLibraries({
+        CreateExternalThirdpartyPath("DXC/bin/libdxcompiler.dylib"),
     })
 end

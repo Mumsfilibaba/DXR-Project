@@ -9,9 +9,9 @@
 #  configuration. SandboxStandalone is the startup executable; the bare Sandbox
 #  scheme builds only the game module, and MetalRHI alone is faster still.
 #
-#  Returns xcodebuild's exit code so it can be used in automation. The window
-#  pauses at the end when interactive; pass --no-pause or set TESTS_NO_PAUSE=1
-#  to skip that.
+#  A successful build is followed by VerifyBundle.command. Returns the exit code
+#  of whichever step failed so it can be used in automation. The window pauses at
+#  the end when interactive; pass --no-pause or set TESTS_NO_PAUSE=1 to skip that.
 # ----------------------------------------------------------------------------
 
 # A non-interactive ssh session never runs path_helper, so /usr/local/bin is
@@ -105,6 +105,12 @@ else
 fi
 echo " Full log: $LOG"
 echo "------------------------------------------------------------"
+
+if [ $RC -eq 0 ]; then
+    echo
+    ./VerifyBundle.command "$CONFIG" --no-pause
+    RC=$?
+fi
 
 pause_if_needed
 exit $RC

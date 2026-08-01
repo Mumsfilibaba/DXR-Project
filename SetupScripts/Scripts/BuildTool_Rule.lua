@@ -109,6 +109,9 @@ function BuildRules(Name)
         bEmbedThirdparties = false,
         ExtraEmbedNames = {},
 
+        -- Source paths of extra dylibs to copy into the bundle
+        ExtraRuntimeLibraries = {},
+
         -- Dependencies (module names)
         Modules = {},
 
@@ -154,6 +157,7 @@ function BuildRules(Name)
     function self.AddDefines(InDefines) AddUniqueElements(InDefines, self.Defines) end
     function self.AddModules(InModules) AddUniqueElements(InModules, self.Modules) end
     function self.AddExtraEmbedNames(InExtraEmbedNames) AddUniqueElements(InExtraEmbedNames, self.ExtraEmbedNames) end
+    function self.AddExtraRuntimeLibraries(InExtraRuntimeLibraries) AddUniqueElements(InExtraRuntimeLibraries, self.ExtraRuntimeLibraries) end
     function self.AddLinkLibraries(InLinkLibraries) AddUniqueElements(InLinkLibraries, self.LinkLibraries) end
     function self.AddFrameworks(InFrameworks) AddUniqueElements(InFrameworks, self.Frameworks) end
     function self.AddForceIncludes(InForceIncludes) AddUniqueElements(InForceIncludes, self.ForceIncludes) end
@@ -544,6 +548,38 @@ function BuildRules(Name)
                     embed(self.Modules)
                     embed(self.ExtraEmbedNames)
                 end
+
+                -- embed() only decorates entries that are also linked, so runtime-loaded modules
+                -- and thirdparty dylibs never reach the bundle. Copy them in by hand instead.
+                if self.Kind == "WindowedApp" then
+                    local TargetPath = self.GetTargetFolderPath()
+
+                    local RuntimeLibraries = {}
+                    for _, ModuleName in ipairs(ExcludeElements(self.Modules, self.LinkModules)) do
+                        table.insert(RuntimeLibraries, JoinPath(TargetPath, "lib" .. ModuleName .. ".dylib"))
+                    end
+
+                    AddUniqueElements(self.ExtraRuntimeLibraries, RuntimeLibraries)
+
+                    LogInfo("--- Bundled runtime libraries for '%s' (Num=%d) ---", self.Name, #RuntimeLibraries)
+                    if #RuntimeLibraries > 0 then
+                        PrintTable("  Bundle '%s'", RuntimeLibraries)
+
+                        local FrameworksPath = JoinPath(TargetPath, self.Name .. ".app/Contents/Frameworks")
+
+                        local CopyCommands = {
+                            ('mkdir -p "%s"'):format(FrameworksPath)
+                        }
+
+                        -- Guarded because the source is absent in configurations that link the
+                        -- module statically, and the generated script runs under 'set -e'
+                        for _, SourcePath in ipairs(RuntimeLibraries) do
+                            table.insert(CopyCommands, ('if [ -f "%s" ]; then cp -f "%s" "%s/"; fi'):format(SourcePath, SourcePath, FrameworksPath))
+                        end
+
+                        postbuildcommands(CopyCommands)
+                    end
+                end
             filter {}
 
             -- Xcode specific settings
@@ -556,7 +592,10 @@ function BuildRules(Name)
                     ["ONLY_ACTIVE_ARCH"] = "YES",
                     ["ENABLE_HARDENED_RUNTIME"] = "NO",
                     ["GENERATE_INFOPLIST_FILE"] = "YES",
-                    ["LD_RUNPATH_SEARCH_PATHS"] = "/usr/local/lib/ $(INSTALL_PATH) @executable_path/../Frameworks",
+                    -- Xcode otherwise defaults to /usr/local/lib, and dyld resolves an absolute
+                    -- install name directly rather than against LC_RPATH
+                    ["DYLIB_INSTALL_NAME_BASE"] = "@rpath",
+                    ["LD_RUNPATH_SEARCH_PATHS"] = "@executable_path/../Frameworks @executable_path @loader_path",
                     ["GCC_ENABLE_AVX2_EXTENSIONS"] = "YES",
                 }
             filter {}
@@ -690,6 +729,7 @@ function BuildRules(Name)
                 self.AddModules(CurrentModule.Modules)
                 self.AddIncludeDirs(CurrentModule.IncludeDirs)
                 self.AddExternalIncludeDirs(CurrentModule.ExternalIncludeDirs)
+                self.AddExtraRuntimeLibraries(CurrentModule.ExtraRuntimeLibraries)
             else
                 LogError("Module '%s' has not been included", CurrentModuleName)
             end
