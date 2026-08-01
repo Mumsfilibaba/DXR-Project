@@ -688,12 +688,12 @@ bool FVulkanOpacityMicromap::Build(FVulkanCommandContext& CmdContext, const FRHI
         CmdContext.RequireBufferState(DescriptorBuffer, EResourceAccess::NonPixelShaderResource);
     }
 
-    VkMemoryBarrier2 ScratchBarrier = {};
-    ScratchBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2;
-    ScratchBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_HOST_BIT | VK_PIPELINE_STAGE_2_TRANSFER_BIT | VK_PIPELINE_STAGE_2_MICROMAP_BUILD_BIT_EXT;
-    ScratchBarrier.srcAccessMask = VK_ACCESS_2_HOST_WRITE_BIT | VK_ACCESS_2_TRANSFER_WRITE_BIT | VK_ACCESS_2_MICROMAP_WRITE_BIT_EXT;
+    VkMemoryBarrier2KHR ScratchBarrier = {};
+    ScratchBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2_KHR;
+    ScratchBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_HOST_BIT_KHR | VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR | VK_PIPELINE_STAGE_2_MICROMAP_BUILD_BIT_EXT;
+    ScratchBarrier.srcAccessMask = VK_ACCESS_2_HOST_WRITE_BIT_KHR | VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR | VK_ACCESS_2_MICROMAP_WRITE_BIT_EXT;
     ScratchBarrier.dstStageMask  = VK_PIPELINE_STAGE_2_MICROMAP_BUILD_BIT_EXT;
-    ScratchBarrier.dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_MICROMAP_READ_BIT_EXT | VK_ACCESS_2_MICROMAP_WRITE_BIT_EXT;
+    ScratchBarrier.dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT_KHR | VK_ACCESS_2_MICROMAP_READ_BIT_EXT | VK_ACCESS_2_MICROMAP_WRITE_BIT_EXT;
 
     CmdContext.GetBarrierBatcher().AddMemoryBarrier(0, ScratchBarrier);
     CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandBuffer());
