@@ -25,6 +25,12 @@ static TAutoConsoleVariable<int32> CVarMaxCommandsPerCommandList(
 
 static D3D12_RESOURCE_STATES D3D12ResolveRestingState(const FD3D12Resource* Resource, D3D12_RESOURCE_STATES DesiredState)
 {
+    // COMMON/PRESENT is a state in its own right and must never be promoted into the resting state.
+    if (DesiredState == D3D12_RESOURCE_STATE_COMMON)
+    {
+        return DesiredState;
+    }
+
     if (Resource->HasDefaultState())
     {
         const D3D12_RESOURCE_STATES Default = Resource->GetDefaultState();
@@ -117,72 +123,87 @@ void FD3D12BarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_
         return;
     }
 
-    for (TArray<D3D12_RESOURCE_BARRIER>::IteratorType It = Barriers.Iterator(); !It.IsEnd(); ++It)
+    int32 CoveringIndex           = -1;
+    bool  bCoveringStatesAllMatch = true;
+
+    for (int32 Index = 0; Index < Barriers.Size(); Index++)
     {
-        if (It->Type != D3D12_RESOURCE_BARRIER_TYPE_TRANSITION)
+        const D3D12_RESOURCE_BARRIER& Existing = Barriers[Index];
+        if (Existing.Type != D3D12_RESOURCE_BARRIER_TYPE_TRANSITION || Existing.Transition.pResource != Resource)
         {
             continue;
         }
 
-        const D3D12_RESOURCE_BARRIER& Existing = *It;
-        if (Existing.Transition.pResource != Resource)
+        const bool bCoversSubresource = (Existing.Transition.Subresource == SubresourceIndex)
+            || (Existing.Transition.Subresource == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
+            || (SubresourceIndex == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+
+        if (!bCoversSubresource)
         {
             continue;
         }
 
-        const bool bIsSameSubresource     = (Existing.Transition.Subresource == SubresourceIndex);
-        const bool bIsBothAllSubresources = (Existing.Transition.Subresource == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) && (SubresourceIndex == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
-        
-        if (!(bIsSameSubresource || bIsBothAllSubresources))
+        if (CoveringIndex >= 0 && Barriers[CoveringIndex].Transition.StateAfter != Existing.Transition.StateAfter)
         {
-            continue;
+            bCoveringStatesAllMatch = false;
         }
 
-        // Case 1: Redundant barrier (FirstRange->SecondRange then FirstRange->SecondRange again) => ignore new barrier
-        D3D12_RESOURCE_TRANSITION_BARRIER& ExistingTransitionBarrier = It->Transition;
-        if (ExistingTransitionBarrier.StateBefore == BeforeState && ExistingTransitionBarrier.StateAfter == AfterState)
-        {
-        #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
-            LOG_INFO("  Redundant barrier FirstRange->SecondRange kept (SubresourceIndex=%u, %s->%s)",SubresourceIndex, ToString(BeforeState), ToString(AfterState));
-        #endif
-            return;
-        }
+        CoveringIndex = Index;
+    }
 
-        // Case 2: Extend barrier (FirstRange->SecondRange then SecondRange->C) => FirstRange->C
-        if (ExistingTransitionBarrier.StateAfter == BeforeState)
+    if (CoveringIndex >= 0)
+    {
+        D3D12_RESOURCE_TRANSITION_BARRIER& Covering = Barriers[CoveringIndex].Transition;
+        if (Covering.Subresource == SubresourceIndex)
         {
-            ExistingTransitionBarrier.StateAfter = AfterState;
-        #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
-            LOG_INFO("  Extended barrier to %s->%s (SubresourceIndex=%u)", ToString(ExistingTransitionBarrier.StateBefore), ToString(ExistingTransitionBarrier.StateAfter), SubresourceIndex);
-        #endif
-
-            // If we changed state to the same before- and after-state, remove it
-            if (ExistingTransitionBarrier.StateBefore == ExistingTransitionBarrier.StateAfter)
+            // Case 1: Redundant barrier (FirstRange->SecondRange then FirstRange->SecondRange again) => ignore new barrier
+            if (Covering.StateBefore == BeforeState && Covering.StateAfter == AfterState)
             {
             #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
-                LOG_INFO("  Cancelled barrier (SubresourceIndex=%u, %s<->%s)", SubresourceIndex, ToString(ExistingTransitionBarrier.StateBefore), ToString(ExistingTransitionBarrier.StateAfter));
+                LOG_INFO("  Redundant barrier FirstRange->SecondRange kept (SubresourceIndex=%u, %s->%s)",SubresourceIndex, ToString(BeforeState), ToString(AfterState));
             #endif
-                Barriers.RemoveAt(It.GetIndex());
+                return;
             }
 
-            return;
+            // Case 2: Extend barrier (FirstRange->SecondRange then SecondRange->C) => FirstRange->C
+            if (Covering.StateAfter == BeforeState)
+            {
+                Covering.StateAfter = AfterState;
+            #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
+                LOG_INFO("  Extended barrier to %s->%s (SubresourceIndex=%u)", ToString(Covering.StateBefore), ToString(Covering.StateAfter), SubresourceIndex);
+            #endif
+
+                // If we changed state to the same before- and after-state, remove it
+                if (Covering.StateBefore == Covering.StateAfter)
+                {
+                #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
+                    LOG_INFO("  Cancelled barrier (SubresourceIndex=%u, %s<->%s)", SubresourceIndex, ToString(Covering.StateBefore), ToString(Covering.StateAfter));
+                #endif
+                    Barriers.RemoveAt(CoveringIndex);
+                }
+
+                return;
+            }
+
+        #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
+            D3D12_ERROR("Non-chained transition barrier. Resource=%p Subresource=%u Existing=%s(0x%X)->%s(0x%X) New=%s(0x%X)->%s(0x%X)",
+                Resource, SubresourceIndex, ToString(Covering.StateBefore), uint32(Covering.StateBefore), ToString(Covering.StateAfter),
+                uint32(Covering.StateAfter), ToString(BeforeState), uint32(BeforeState), ToString(AfterState), uint32(AfterState));
+            CHECK(false);
+        #endif
         }
 
-    #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
-        D3D12_ERROR(
-            "Non-chained transition barrier. Resource=%p Subresource=%u Existing=%s(0x%X)->%s(0x%X) New=%s(0x%X)->%s(0x%X)",
-            Resource,
-            SubresourceIndex,
-            ToString(ExistingTransitionBarrier.StateBefore),
-            uint32(ExistingTransitionBarrier.StateBefore),
-            ToString(ExistingTransitionBarrier.StateAfter),
-            uint32(ExistingTransitionBarrier.StateAfter),
-            ToString(BeforeState),
-            uint32(BeforeState),
-            ToString(AfterState),
-            uint32(AfterState));
-        CHECK(false);
-    #endif
+        // Case 3: the queued entry covers a different subresource range, so it cannot be rewritten in place.
+        // It still determines what state this subresource will be in by the time the new barrier runs, which
+        // is only knowable when every covering entry lands on the same state.
+        if (bCoveringStatesAllMatch)
+        {
+            BeforeState = Covering.StateAfter;
+            if (BeforeState == AfterState)
+            {
+                return;
+            }
+        }
     }
 
     // Otherwise: Add a new barrier.
@@ -236,6 +257,16 @@ void FD3D12BarrierBatcher::AddAliasingBarrier(FD3D12Resource* InResourceAfter, I
 void FD3D12BarrierBatcher::AddAliasingBarrier(ID3D12Resource* ResourceAfter, ID3D12Resource* ResourceBefore)
 {
     CHECK(ResourceAfter != nullptr);
+
+    // Keyed on the pair: the same resource can legitimately be aliased in from more than one predecessor.
+    for (const D3D12_RESOURCE_BARRIER& Existing : Barriers)
+    {
+        if (Existing.Type == D3D12_RESOURCE_BARRIER_TYPE_ALIASING && Existing.Aliasing.pResourceAfter == ResourceAfter &&
+            Existing.Aliasing.pResourceBefore == ResourceBefore)
+        {
+            return;
+        }
+    }
 
     D3D12_RESOURCE_BARRIER Barrier = {};
     Barrier.Type                     = D3D12_RESOURCE_BARRIER_TYPE_ALIASING;
@@ -337,7 +368,7 @@ FD3D12ResourceState& FD3D12CommandContext::RetrievePendingResourceState(FD3D12Re
     FD3D12ResourceState& LocalState = PendingResourceStates.FindOrAdd(Resource);
     if (!LocalState.IsInitialized())
     {
-        LocalState.Initialize(Resource->GetNumSubresources());
+        LocalState.Initialize(Math::Max(Resource->GetNumSubresources(), 1u));
         LocalState.SetState(D3D12_RESOURCE_STATE_TO_BE_DETERMINED);
     }
 
@@ -1616,12 +1647,20 @@ void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FR
     }
 
     FD3D12Resource* Resource = D3D12Texture->GetResource();
+    CHECK(Resource != nullptr);
 
-    const D3D12_RESOURCE_STATES D3D12BeforeState = ConvertResourceState(TextureTransition.BeforeState);
+    if (!Resource->IsHeapTypeDefault())
+    {
+        return;
+    }
+
+    const D3D12_RESOURCE_STATES D3D12BeforeState = D3D12ResolveRestingState(Resource, ConvertResourceState(TextureTransition.BeforeState));
     const D3D12_RESOURCE_STATES D3D12AfterState  = D3D12ResolveRestingState(Resource, ConvertResourceState(TextureTransition.AfterState));
 
+    const bool bIsPartialTransition = (TextureTransition.MipLevel != RHI_ALL_MIP_LEVELS || TextureTransition.ArraySlice != RHI_ALL_ARRAY_SLICES) && !Resource->HasMultiplePlanes();
+
     FD3D12ResourceState& LocalState = RetrievePendingResourceState(Resource);
-    if (TextureTransition.MipLevel != RHI_ALL_MIP_LEVELS || TextureTransition.ArraySlice != RHI_ALL_ARRAY_SLICES)
+    if (bIsPartialTransition)
     {
         const D3D12_RESOURCE_DESC& ResourceDesc = Resource->GetDesc();
         
@@ -1774,9 +1813,15 @@ void FD3D12CommandContext::TransitionBufferState(FRHIBuffer* Buffer, EResourceAc
     CHECK(D3D12Buffer != nullptr);
 
     FD3D12Resource* Resource = D3D12Buffer->GetResource();
+    CHECK(Resource != nullptr);
+
+    if (!Resource->IsHeapTypeDefault())
+    {
+        return;
+    }
 
     const D3D12_RESOURCE_STATES D3D12AfterState  = D3D12ResolveRestingState(Resource, ConvertResourceState(AfterState));
-    const D3D12_RESOURCE_STATES D3D12BeforeState = ConvertResourceState(BeforeState);
+    const D3D12_RESOURCE_STATES D3D12BeforeState = D3D12ResolveRestingState(Resource, ConvertResourceState(BeforeState));
 
     FD3D12ResourceState& LocalState = RetrievePendingResourceState(Resource);
 
@@ -1809,6 +1854,11 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12Resource* Resource, D3D
 {
     CHECK(Resource != nullptr);
 
+    if (!Resource->IsHeapTypeDefault())
+    {
+        return;
+    }
+
     AfterState = D3D12ResolveRestingState(Resource, AfterState);
 
     FD3D12ResourceState& LocalState = RetrievePendingResourceState(Resource);
@@ -1821,6 +1871,11 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12Resource* Resource, D3D
         }
         else
         {
+            if (D3D12IsReadStateSatisfied(CurrentState, AfterState))
+            {
+                return;
+            }
+
             BarrierBatcher.AddTransitionBarrier(Resource, CurrentState, AfterState);
         }
 
@@ -1837,6 +1892,11 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12Resource* Resource, D3D
             }
             else
             {
+                if (D3D12IsReadStateSatisfied(SubresourceState, AfterState))
+                {
+                    continue;
+                }
+
                 BarrierBatcher.AddTransitionBarrier(Resource, SubresourceState, AfterState, i);
             }
 
@@ -1850,6 +1910,11 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12Resource* Resource, D3D
     CHECK(Resource != nullptr);
     CHECK(BeforeState != D3D12_RESOURCE_STATE_TO_BE_DETERMINED);
 
+    if (!Resource->IsHeapTypeDefault())
+    {
+        return;
+    }
+
     AfterState = D3D12ResolveRestingState(Resource, AfterState);
 
     FD3D12ResourceState& LocalState = RetrievePendingResourceState(Resource);
@@ -1861,7 +1926,8 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12Resource* Resource, D3D
             AddPendingBarrier(Resource, BeforeState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
         }
 
-        BarrierBatcher.AddTransitionBarrier(Resource, BeforeState, AfterState);
+        const D3D12_RESOURCE_STATES EffectiveBeforeState = (CurrentState != D3D12_RESOURCE_STATE_TO_BE_DETERMINED) ? CurrentState : BeforeState;
+        BarrierBatcher.AddTransitionBarrier(Resource, EffectiveBeforeState, AfterState);
         LocalState.SetState(AfterState);
     }
     else
@@ -1874,7 +1940,8 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12Resource* Resource, D3D
                 AddPendingBarrier(Resource, BeforeState, i);
             }
 
-            BarrierBatcher.AddTransitionBarrier(Resource, BeforeState, AfterState, i);
+            const D3D12_RESOURCE_STATES EffectiveBeforeState = (SubresourceState != D3D12_RESOURCE_STATE_TO_BE_DETERMINED) ? SubresourceState : BeforeState;
+            BarrierBatcher.AddTransitionBarrier(Resource, EffectiveBeforeState, AfterState, i);
             LocalState.SetSubresourceState(i, AfterState);
         }
     }
@@ -1883,6 +1950,18 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12Resource* Resource, D3D
 void FD3D12CommandContext::TransitionResourceState(FD3D12Resource* Resource, D3D12_RESOURCE_STATES AfterState, uint32 FirstMip, uint32 NumMips, uint32 FirstArraySlice, uint32 NumArraySlices)
 {
     CHECK(Resource != nullptr);
+
+    if (!Resource->IsHeapTypeDefault())
+    {
+        return;
+    }
+
+    // Per-subresource indices only address plane 0 of a multi-plane format, so transition the whole resource.
+    if (Resource->HasMultiplePlanes())
+    {
+        TransitionResourceState(Resource, AfterState);
+        return;
+    }
 
     AfterState = D3D12ResolveRestingState(Resource, AfterState);
 
@@ -1906,6 +1985,11 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12Resource* Resource, D3D
             }
             else
             {
+                if (D3D12IsReadStateSatisfied(CurrentState, AfterState))
+                {
+                    continue;
+                }
+
                 BarrierBatcher.AddTransitionBarrier(Resource, CurrentState, AfterState, SubresourceIndex);
             }
 
@@ -2210,7 +2294,7 @@ void FD3D12CommandContext::RequireTextureState(FRHITexture* Texture, const FRHIR
     FD3D12Resource* Resource = D3D12Texture->GetResource();
     CHECK(Resource != nullptr);
 
-    if (!Resource->RequiresResourceStateTracking())
+    if (!Resource->RequiresResourceStateTracking() || !Resource->IsHeapTypeDefault())
     {
         EnsureDefaultState(Resource);
         return;
@@ -2222,8 +2306,10 @@ void FD3D12CommandContext::RequireTextureState(FRHITexture* Texture, const FRHIR
     const uint32 NumMipLevels   = ResourceDesc.MipLevels;
     const uint32 NumArraySlices = ResourceDesc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D ? ResourceDesc.DepthOrArraySize : 1u;
     
+    const bool bIsWholeResource = (RequiredState.MipLevel == RHI_ALL_MIP_LEVELS && RequiredState.ArraySlice == RHI_ALL_ARRAY_SLICES) || Resource->HasMultiplePlanes();
+
     FD3D12ResourceState& LocalState = RetrievePendingResourceState(Resource);
-    if (RequiredState.MipLevel == RHI_ALL_MIP_LEVELS && RequiredState.ArraySlice == RHI_ALL_ARRAY_SLICES)
+    if (bIsWholeResource)
     {
         if (LocalState.IsSingleState())
         {
@@ -2344,7 +2430,7 @@ void FD3D12CommandContext::RequireBufferState(FRHIBuffer* Buffer, EResourceAcces
     FD3D12Resource* Resource = D3D12Buffer->GetResource();
     CHECK(Resource != nullptr);
 
-    if (!Resource->RequiresResourceStateTracking())
+    if (!Resource->RequiresResourceStateTracking() || !Resource->IsHeapTypeDefault())
     {
         EnsureDefaultState(Resource);
         return;
@@ -2986,6 +3072,9 @@ void FD3D12CommandContext::WriteAccelerationStructurePostBuildInfo(FRHIBuffer* D
         BarrierBatcher.FlushBarriers(CmdList);
     }
 
+    TransitionResourceState(IntermediateStorage.GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    BarrierBatcher.FlushBarriers(CmdList);
+
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC PostBuildInfoDesc = {};
     PostBuildInfoDesc.DestBuffer = IntermediateStorage.GetGPUVirtualAddress();
     PostBuildInfoDesc.InfoType   = D3D12InfoType;
@@ -2993,7 +3082,7 @@ void FD3D12CommandContext::WriteAccelerationStructurePostBuildInfo(FRHIBuffer* D
     CmdList.GetGraphicsCommandList4()->EmitRaytracingAccelerationStructurePostbuildInfo(&PostBuildInfoDesc, NumSources, SourceAddresses.Data());
 
     BarrierBatcher.AddUnorderedAccessBarrier(IntermediateStorage.GetResource());
-    BarrierBatcher.AddTransitionBarrier(IntermediateStorage.GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    TransitionResourceState(IntermediateStorage.GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE);
     BarrierBatcher.FlushBarriers(CmdList);
 
     const FD3D12ResourceStorage& DstStorage = D3D12DestinationBuffer->GetResourceStorage();

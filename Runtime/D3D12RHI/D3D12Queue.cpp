@@ -423,15 +423,8 @@ void FD3D12Commands::PreExecute()
     {
         FD3D12Resource*      Resource   = It.GetKey();
         FD3D12ResourceState& LocalState = It.GetValue();
-
-        if (!Resource->RequiresResourceStateTracking() && Resource->HasDefaultState())
-        {
-            Resource->GetResourceState().SetState(Resource->GetDefaultState());
-        }
-        else
-        {
-            Resource->GetResourceState().ApplyResolvedStates(LocalState);
-        }
+        
+        Resource->GetResourceState().ApplyResolvedStates(LocalState);
     }
 
     PendingBarriers.Clear();

@@ -13,6 +13,16 @@ static void LogDescriptorHeapRollover(const String& PSOName, bool bCommandListSp
 }
 #endif
 
+static D3D12_RESOURCE_STATES D3D12GetShaderStageReadState(ED3D12CommandQueueType QueueType, EShaderVisibility::Type ShaderStage)
+{
+    const D3D12_RESOURCE_STATES StageState = (ShaderStage == EShaderVisibility::Pixel)
+        ? D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+        : D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+
+    const D3D12_RESOURCE_STATES AllowedState = StageState & D3D12GetAllowedReadStates(QueueType);
+    return AllowedState ? AllowedState : D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+}
+
 FD3D12CommandContextState::FD3D12CommandContextState(FD3D12Device* InDevice, FD3D12CommandContext& InContext)
     : FD3D12DeviceChild(InDevice)
     , Context(InContext)
@@ -61,9 +71,14 @@ void FD3D12CommandContextState::PrepareGraphicsState()
 
     if (FD3D12DepthStencilViewRHI* DepthStencilView = RenderTargetCache.DepthStencilView)
     {
-        const D3D12_RESOURCE_STATES DesiredState = DepthStencilView->IsReadOnly()
-            ? D3D12_RESOURCE_STATE_DEPTH_READ
-            : D3D12_RESOURCE_STATE_DEPTH_WRITE;
+        D3D12_RESOURCE_STATES DesiredState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+        if (DepthStencilView->IsReadOnly())
+        {
+            // PrepareResources ran first and already transitioned this texture for its SRV binds. Asking for
+            // DEPTH_READ on its own here would undo that and leave the shader reads without a barrier, so the
+            // accumulated read state is folded in. DEPTH_READ combines with the shader-read states.
+            DesiredState = D3D12_RESOURCE_STATE_DEPTH_READ | GetAccumulatedSRVReadState(DepthStencilView->GetViewResource(), D3D12_RESOURCE_STATE_DEPTH_READ);
+        }
 
         Context.TransitionResourceState(DepthStencilView, DesiredState);
     }
@@ -372,9 +387,14 @@ void FD3D12CommandContextState::PrepareMeshletState()
 
     if (FD3D12DepthStencilViewRHI* DepthStencilView = RenderTargetCache.DepthStencilView)
     {
-        const D3D12_RESOURCE_STATES DesiredState = DepthStencilView->IsReadOnly()
-            ? D3D12_RESOURCE_STATE_DEPTH_READ
-            : D3D12_RESOURCE_STATE_DEPTH_WRITE;
+        D3D12_RESOURCE_STATES DesiredState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+        if (DepthStencilView->IsReadOnly())
+        {
+            // PrepareResources ran first and already transitioned this texture for its SRV binds. Asking for
+            // DEPTH_READ on its own here would undo that and leave the shader reads without a barrier, so the
+            // accumulated read state is folded in; DEPTH_READ combines with the shader-read states.
+            DesiredState = D3D12_RESOURCE_STATE_DEPTH_READ | GetAccumulatedSRVReadState(DepthStencilView->GetViewResource(), D3D12_RESOURCE_STATE_DEPTH_READ);
+        }
 
         Context.TransitionResourceState(DepthStencilView, DesiredState);
     }
@@ -559,6 +579,94 @@ bool FD3D12CommandContextState::PrepareSamplers(FD3D12RootSignature* RootSignatu
     return bCommandListSplit;
 }
 
+void FD3D12CommandContextState::AccumulateSRVReadStates(FD3D12RootSignature* RootSignature, const uint32* NumSRVs, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage)
+{
+    SRVReadStates.Clear();
+
+    int32 NumContributingStages = 0;
+    for (EShaderVisibility::Type CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility::Type(CurrentStage + 1))
+    {
+        if (NumSRVs[CurrentStage] > 0)
+        {
+            NumContributingStages++;
+        }
+    }
+
+    const FD3D12DepthStencilViewRHI* DepthStencilView = ((ActivePipeline == EActivePipeline::Graphics) || (ActivePipeline == EActivePipeline::Meshlet))
+        ? CommonGraphicsState.RenderTargetCache.DepthStencilView
+        : nullptr;
+
+    const bool bHasReadOnlyDepth = DepthStencilView && DepthStencilView->IsReadOnly();
+
+    if (NumContributingStages < 2 && !bHasReadOnlyDepth)
+    {
+        return;
+    }
+
+    const ED3D12CommandQueueType QueueType = Context.GetQueueType();
+    for (EShaderVisibility::Type CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility::Type(CurrentStage + 1))
+    {
+        if (NumSRVs[CurrentStage] == 0)
+        {
+            continue;
+        }
+
+        const D3D12_RESOURCE_STATES StageState = D3D12GetShaderStageReadState(QueueType, CurrentStage);
+
+        const FD3D12DescriptorTableMapping& SRVMapping = RootSignature->GetDescriptorTableMapping(CurrentStage, EResourceType::SRV);
+        auto& SRVCache = CommonState.ShaderResourceViewCache.ResourceViews[CurrentStage];
+
+        for (uint32 Slot = 0; Slot < NumSRVs[CurrentStage]; Slot++)
+        {
+            const uint16 Register = SRVMapping.GetRegisterForSlot(static_cast<uint8>(Slot));
+
+            FD3D12ShaderResourceViewRHI* View = SRVCache[Register];
+            if (!View)
+            {
+                continue;
+            }
+
+            FD3D12Resource* Resource = View->GetViewResource();
+            if (!Resource)
+            {
+                continue;
+            }
+
+            FAccumulatedReadState* Existing = nullptr;
+            for (FAccumulatedReadState& ReadState : SRVReadStates)
+            {
+                if (ReadState.Resource == Resource)
+                {
+                    Existing = &ReadState;
+                    break;
+                }
+            }
+
+            if (Existing)
+            {
+                Existing->State |= StageState;
+            }
+            else
+            {
+                SRVReadStates.Emplace(FAccumulatedReadState{ Resource, StageState });
+            }
+        }
+    }
+}
+
+D3D12_RESOURCE_STATES FD3D12CommandContextState::GetAccumulatedSRVReadState(FD3D12Resource* Resource, D3D12_RESOURCE_STATES StageState) const
+{
+    for (const FAccumulatedReadState& ReadState : SRVReadStates)
+    {
+        if (ReadState.Resource == Resource)
+        {
+            return ReadState.State;
+        }
+    }
+
+    return StageState;
+}
+
 bool FD3D12CommandContextState::PrepareResources(FD3D12RootSignature* RootSignature, const FD3D12EffectiveDescriptorCounts* PipelineState, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage)
 {
     uint32 NumCBVs[EShaderVisibility::Count];
@@ -686,11 +794,11 @@ bool FD3D12CommandContextState::PrepareResources(FD3D12RootSignature* RootSignat
         break;
     }
 
+    AccumulateSRVReadStates(RootSignature, NumSRVs, StartStage, EndStage);
+
     for (EShaderVisibility::Type CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility::Type(CurrentStage + 1))
     {
-        const D3D12_RESOURCE_STATES SRVState = (CurrentStage == EShaderVisibility::Pixel)
-            ? D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
-            : D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+        const D3D12_RESOURCE_STATES SRVState = D3D12GetShaderStageReadState(Context.GetQueueType(), CurrentStage);
 
         if (NumCBVs[CurrentStage] > 0)
         {
@@ -763,7 +871,7 @@ bool FD3D12CommandContextState::PrepareResources(FD3D12RootSignature* RootSignat
                 const uint16 Register = SRVMapping.GetRegisterForSlot(static_cast<uint8>(Slot));
                 if (FD3D12ShaderResourceViewRHI* View = SRVCache[Register])
                 {
-                    Context.TransitionResourceState(View, SRVState);
+                    Context.TransitionResourceState(View, GetAccumulatedSRVReadState(View->GetViewResource(), SRVState));
 
                     if (!bAlreadyDirty)
                     {

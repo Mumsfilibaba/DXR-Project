@@ -159,6 +159,17 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
         return false;
     }
 
+    const ED3D12ResourceStateMode TextureStateMode = bHasDefaultState
+        ? ED3D12ResourceStateMode::SingleState
+        : ED3D12ResourceStateMode::MultipleStates;
+
+    GetResource()->SetResourceStateMode(TextureStateMode);
+
+    if (bHasDefaultState)
+    {
+        GetResource()->SetDefaultState(D3D12DefaultState);
+    }
+
     if (!Desc.IsNoDefaultSRV())
     {
         D3D12_SHADER_RESOURCE_VIEW_DESC ViewDesc = {};
@@ -439,10 +450,6 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
         DefaultDSV->RegisterWithResource(this);
         DepthStencilView = DefaultDSV;
     }
-
-    const ED3D12ResourceStateMode TextureStateMode = bHasDefaultState
-        ? ED3D12ResourceStateMode::SingleState
-        : ED3D12ResourceStateMode::MultipleStates;
 
     if (ResourceStorage.GetResource()->IsPlacedResource())
     {
@@ -805,13 +812,6 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
         }
 
         InCommandContext->FinishContext();
-    }
-
-    GetResource()->SetResourceStateMode(TextureStateMode);
-
-    if (bHasDefaultState)
-    {
-        GetResource()->SetDefaultState(D3D12DefaultState);
     }
 
     ResourceStorage.FinalizeAllocation();

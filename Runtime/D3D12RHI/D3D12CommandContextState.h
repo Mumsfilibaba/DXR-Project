@@ -145,6 +145,10 @@ private:
 
     void DirtyAllResources();
 
+    void AccumulateSRVReadStates(FD3D12RootSignature* InRootSignature, const uint32* NumSRVs, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
+
+    D3D12_RESOURCE_STATES GetAccumulatedSRVReadState(FD3D12Resource* Resource, D3D12_RESOURCE_STATES StageState) const;
+
     enum class EActivePipeline : uint8
     {
         Graphics,
@@ -273,4 +277,12 @@ private:
         FD3D12DescriptorCache          DescriptorCache;
         FD3D12ShaderConstantsCache     ShaderConstantsCache;
     } CommonState;
+
+    struct FAccumulatedReadState
+    {
+        FD3D12Resource*       Resource;
+        D3D12_RESOURCE_STATES State;
+    };
+
+    TArray<FAccumulatedReadState> SRVReadStates;
 };

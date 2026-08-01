@@ -17,6 +17,7 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResourc
     , StateMode(ED3D12ResourceStateMode::MultipleStates)
     , AllocationSize(0)
     , NumSubresources(0)
+    , PlaneCount(1)
     , bShouldDeferredRelease(true)
     , bHasClearValue(false)
     , bHasDefaultState(false)
@@ -35,8 +36,19 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResourc
             Address = Resource->GetGPUVirtualAddress();
         }
 
+        if (Desc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER)
+        {
+            D3D12_FEATURE_DATA_FORMAT_INFO FormatInfo = {};
+            FormatInfo.Format = Desc.Format;
+
+            if (SUCCEEDED(GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_FORMAT_INFO, &FormatInfo, sizeof(FormatInfo))) && FormatInfo.PlaneCount > 0)
+            {
+                PlaneCount = FormatInfo.PlaneCount;
+            }
+        }
+
         const uint32 ArraySize = Desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D ? Desc.DepthOrArraySize : 1u;
-        NumSubresources = D3D12CalculateSubresourceCount(Desc.MipLevels, ArraySize, 1);
+        NumSubresources = D3D12CalculateSubresourceCount(Desc.MipLevels, ArraySize, PlaneCount);
 
         D3D12_RESOURCE_DESC QueryDesc = Desc;
     #if D3D12_USE_TIGHT_ALIGNMENT
@@ -53,10 +65,7 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResourc
         }
     }
 
-    if (HeapType == D3D12_HEAP_TYPE_DEFAULT)
-    {
-        InitializeStateTracking(InInitialState);
-    }
+    InitializeStateTracking(InInitialState);
 }
 
 void FD3D12Resource::InitializeStateTracking(D3D12_RESOURCE_STATES InitialState)

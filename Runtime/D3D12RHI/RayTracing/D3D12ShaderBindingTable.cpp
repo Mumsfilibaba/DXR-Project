@@ -448,12 +448,12 @@ void FD3D12ShaderBindingTable::UploadCpuShadow(FD3D12CommandContext& CmdContext)
     CHECK(TableResourceStorage.GetResource() != nullptr);
     CHECK(TableResourceStorage.GetSize() >= RequiredSize);
 
-    CmdContext.GetBarrierBatcher().AddTransitionBarrier(TableResourceStorage.GetResource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+    CmdContext.TransitionResourceState(TableResourceStorage.GetResource(), D3D12_RESOURCE_STATE_COPY_DEST);
     
     const uint64 UploadOffset = TableResourceStorage.GetResourceOffset();
     CmdContext.UpdateBuffer(TableResourceStorage.GetResource(), FBufferRegion(UploadOffset, RequiredSize), CpuShadow.Data());
     
-    CmdContext.GetBarrierBatcher().AddTransitionBarrier(TableResourceStorage.GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    CmdContext.TransitionResourceState(TableResourceStorage.GetResource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 }
 
 void FD3D12ShaderBindingTable::Build(FD3D12CommandContext& CmdContext)
@@ -504,6 +504,12 @@ void FD3D12ShaderBindingTable::ResolveLocalDescriptorTables(FD3D12CommandContext
                 {
                     FD3D12ShaderResourceViewRHI* ShaderResourceView = Pending.ShaderResourceViews[SlotIndex];
                     Src = ShaderResourceView ? ShaderResourceView->GetOfflineHandle() : DefaultSRVHandle;
+
+                    if (ShaderResourceView)
+                    {
+                        CmdContext.TransitionResourceState(ShaderResourceView, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+                    }
+
                     break;
                 }
 
@@ -511,6 +517,12 @@ void FD3D12ShaderBindingTable::ResolveLocalDescriptorTables(FD3D12CommandContext
                 {
                     FD3D12UnorderedAccessViewRHI* UnorderedAccessView = Pending.UnorderedAccessViews[SlotIndex];
                     Src = UnorderedAccessView ? UnorderedAccessView->GetOfflineHandle() : DefaultUAVHandle;
+
+                    if (UnorderedAccessView)
+                    {
+                        CmdContext.TransitionResourceState(UnorderedAccessView);
+                    }
+
                     break;
                 }
 
