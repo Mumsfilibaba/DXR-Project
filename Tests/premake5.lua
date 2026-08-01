@@ -177,6 +177,7 @@ workspace "EngineTests"
             "TestCommon/**.h",
             "TestCommon/**.cpp",
 
+            "../Runtime/Core/Misc/Asserts.cpp",
             "../Runtime/Core/Misc/CoreGlobals.cpp",
             "../Runtime/Core/Misc/OutputDeviceLogger.cpp",
             "../Runtime/Core/Memory/Memory.cpp",
@@ -251,6 +252,7 @@ workspace "EngineTests"
                 "TestCommon/**.cpp",
 
                 -- Core dependencies required for the logger + allocator to link standalone.
+                "../Runtime/Core/Misc/Asserts.cpp",
                 "../Runtime/Core/Misc/CoreGlobals.cpp",
                 "../Runtime/Core/Misc/OutputDeviceLogger.cpp",
                 "../Runtime/Core/Memory/Memory.cpp",
@@ -338,6 +340,7 @@ workspace "EngineTests"
             "TestCommon/**.cpp",
 
             -- Core dependencies required for the logger + allocator to link standalone.
+            "../Runtime/Core/Misc/Asserts.cpp",
             "../Runtime/Core/Misc/CoreGlobals.cpp",
             "../Runtime/Core/Misc/OutputDeviceLogger.cpp",
             "../Runtime/Core/Memory/Memory.cpp",
@@ -400,6 +403,7 @@ workspace "EngineTests"
             "TestCommon/**.cpp",
 
             -- Core dependencies required to link the task graph standalone.
+            "../Runtime/Core/Misc/Asserts.cpp",
             "../Runtime/Core/Misc/CoreGlobals.cpp",
             "../Runtime/Core/Misc/OutputDeviceLogger.cpp",
             "../Runtime/Core/Misc/FileOutputDevice.cpp",

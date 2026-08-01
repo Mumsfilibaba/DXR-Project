@@ -1885,23 +1885,23 @@ struct FRHIBeginRenderPassDesc
     FRHIBeginRenderPassDesc() noexcept = default;
 
     FRHIBeginRenderPassDesc(const FRenderTargetAttachments& InRenderTargets, uint32 InNumRenderTargets) noexcept
-        : ShadingRateTexture(nullptr)
+        : ViewInstancingState()
         , DepthStencilAttachment()
         , RenderTargets(InRenderTargets)
         , NumRenderTargets(InNumRenderTargets)
         , StaticShadingRate(EShadingRate::VRS_1x1)
-        , ViewInstancingState()
+        , ShadingRateTexture(nullptr)
     {
     }
 
     FRHIBeginRenderPassDesc(const FRenderTargetAttachments& InRenderTargets, uint32 InNumRenderTargets, FRHIDepthStencilAttachment InDepthStencilAttachment,
         FRHITexture* InShadingRateTexture = nullptr, EShadingRate InStaticShadingRate = EShadingRate::VRS_1x1) noexcept
-        : ShadingRateTexture(InShadingRateTexture)
+        : ViewInstancingState()
         , DepthStencilAttachment(InDepthStencilAttachment)
         , RenderTargets(InRenderTargets)
         , NumRenderTargets(InNumRenderTargets)
         , StaticShadingRate(InStaticShadingRate)
-        , ViewInstancingState()
+        , ShadingRateTexture(InShadingRateTexture)
     {
     }
 

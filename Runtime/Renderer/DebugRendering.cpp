@@ -571,7 +571,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     return true;
 }
 
-void FDebugRenderer::PreparePipelineState(EFormat OutputFormat)
+void FDebugRenderer::PreparePipelineStateForFormat(EFormat OutputFormat)
 {
     if (!AABB_NoDepth_PSO || AABB_NoDepth_PSOFormat != OutputFormat)
     {

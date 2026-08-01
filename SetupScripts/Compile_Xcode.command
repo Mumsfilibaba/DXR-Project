@@ -89,12 +89,11 @@ echo "------------------------------------------------------------"
 echo " Building ${SCHEME} (${CONFIG})..."
 echo "------------------------------------------------------------"
 
-# The generated projects emit dozens of "file reference is a member of multiple
-# groups" warnings on every invocation, which bury real errors. Only errors and
-# the final result are shown; the full transcript is kept in $LOG.
+# The build is warning-free, so warnings are surfaced rather than filtered out. The full
+# transcript is still kept in $LOG.
 xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration "$CONFIG" build 2>&1 \
     | tee "$LOG" \
-    | grep -E "(error:|Undefined symbols|BUILD (SUCCEEDED|FAILED))"
+    | grep -E "(error:|warning:|Undefined symbols|BUILD (SUCCEEDED|FAILED))"
 RC=${PIPESTATUS[0]}
 
 echo

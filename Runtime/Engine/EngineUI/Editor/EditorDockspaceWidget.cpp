@@ -219,7 +219,6 @@ void FEditorDockspaceWidget::DrawMenuBar()
     const ImGuiStyle& Style = ImGui::GetStyle();
 
     const ImVec4 ToolbarBg    = Style.Colors[ImGuiCol_MenuBarBg];
-    const ImVec4 PopupBg      = Style.Colors[ImGuiCol_PopupBg];
     const ImVec4 HoveredColor = ImVec4(87.0f / 255.0f, 87.0f / 255.0f, 87.0f / 255.0f, 1.0f);
     const ImVec4 PressedColor = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
 

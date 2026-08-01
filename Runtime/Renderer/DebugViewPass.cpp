@@ -93,7 +93,7 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
     return true;
 }
 
-void FDebugViewPass::PreparePipelineState(EFormat OutputFormat)
+void FDebugViewPass::PreparePipelineStateForFormat(EFormat OutputFormat)
 {
     if (DebugPSO && DebugPSOFormat == OutputFormat)
     {

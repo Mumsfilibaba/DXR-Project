@@ -13,7 +13,7 @@ public:
 
     bool Initialize(FFrameResources& Resources);
 
-    void PreparePipelineState(EFormat OutputFormat);
+    void PreparePipelineStateForFormat(EFormat OutputFormat);
 
     void RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene, FRHITexture* InRenderTarget = nullptr, FRHITexture* InDepthTarget = nullptr);
     void RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene, FRHITexture* InRenderTarget = nullptr, FRHITexture* InDepthTarget = nullptr);

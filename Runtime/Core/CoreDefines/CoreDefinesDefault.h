@@ -46,6 +46,12 @@
     #define ENABLE_UNREFERENCED_VARIABLE_WARNING
 #endif
 
+// Disable format security warning
+#if !defined(DISABLE_FORMAT_SECURITY_WARNING)
+    #define DISABLE_FORMAT_SECURITY_WARNING
+    #define ENABLE_FORMAT_SECURITY_WARNING
+#endif
+
 // Disable unreachable code warning
 #if !defined(DISABLE_UNREACHABLE_CODE_WARNING)
     #define DISABLE_UNREACHABLE_CODE_WARNING

@@ -152,8 +152,8 @@ FVulkanCommandContext::FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQue
     , OcclusionQueryAllocator(InDevice, VK_QUERY_TYPE_OCCLUSION)
     , PipelineStatsQueryAllocator(InDevice, VK_QUERY_TYPE_PIPELINE_STATISTICS)
     , ContextState(InDevice, *this)
-    , ActiveQueryCount(0)
     , TransientDescriptorAllocator(nullptr)
+    , ActiveQueryCount(0)
 {
 #if !VULKAN_USE_DESCRIPTOR_CACHE
     TransientDescriptorAllocator = new FVulkanTransientDescriptorAllocator(InDevice, InDevice->GetDescriptorPoolManager());

@@ -12,6 +12,7 @@ public:
     FSkyLightActor(const FObjectInitializer& ObjectInitializer);
     ~FSkyLightActor();
 
+    using FActor::Initialize;
     void Initialize(const FRHITextureRef& InCubeMap);
 
     FSkyLightComponent* GetLightComponent() const

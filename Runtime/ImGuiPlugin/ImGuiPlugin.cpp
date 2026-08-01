@@ -469,7 +469,9 @@ void FImGuiPlugin::NewFrame(float DeltaTime)
     const bool bIsAppFocused = ForegroundWindow && (ForegroundWindow == MainWindow || PlatformWindow->IsChildWindow(PlatformForegroundWindow) || ForegroundViewport);
     if (bIsAppFocused)
     {
+    #ifndef EDITOR_BUILD
         const IntVector2 ForegroundWindowPosition = ForegroundWindow->GetPosition();
+    #endif
 
         const bool bIsTrackingMouse = FApplication::Get().IsTrackingCursor();
         if (PluginImGuiIO->WantSetMousePos)

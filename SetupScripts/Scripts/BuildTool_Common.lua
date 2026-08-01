@@ -164,6 +164,31 @@ function AddUniqueElements(Elements, Table)
     end
 end
 
+-- Returns the elements of Elements that do not appear in Excluded
+function ExcludeElements(Elements, Excluded)
+    if Elements == nil then
+        return {}
+    end
+
+    if Excluded == nil then
+        return Elements
+    end
+
+    local ExcludedSet = {}
+    for _, Value in ipairs(Excluded) do
+        ExcludedSet[Value] = true
+    end
+
+    local Result = {}
+    for _, Value in ipairs(Elements) do
+        if not ExcludedSet[Value] then
+            table.insert(Result, Value)
+        end
+    end
+
+    return Result
+end
+
 -- Module management functions
 local gModuleRules = {}
 

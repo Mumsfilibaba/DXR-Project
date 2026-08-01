@@ -74,6 +74,16 @@
         _Pragma("GCC diagnostic pop")
 #endif
 
+// Disable format security warning
+#if !defined(DISABLE_FORMAT_SECURITY_WARNING)
+    #define DISABLE_FORMAT_SECURITY_WARNING \
+        _Pragma("GCC diagnostic push") \
+        _Pragma("GCC diagnostic ignored \"-Wformat-security\"") \
+        _Pragma("GCC diagnostic ignored \"-Wformat-nonliteral\"")
+    #define ENABLE_FORMAT_SECURITY_WARNING \
+        _Pragma("GCC diagnostic pop")
+#endif
+
 // Disable unreachable code warning
 #if !defined(DISABLE_UNREACHABLE_CODE_WARNING)
     #define DISABLE_UNREACHABLE_CODE_WARNING \

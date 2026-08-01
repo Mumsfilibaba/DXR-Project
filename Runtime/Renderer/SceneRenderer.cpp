@@ -187,8 +187,7 @@ static FORCEINLINE bool IsRayTracingActive()
 }
 
 FSceneRenderer::FSceneRenderer()
-    : CommandList()
-    , Resources()
+    : Resources()
     , CameraBuffer()
     , HaltonState()
     , DepthPrePass(nullptr)
@@ -217,11 +216,12 @@ FSceneRenderer::FSceneRenderer()
     , DebugRenderer(nullptr)
     , DebugViewPass(nullptr)
     , RayTracer(this)
+    , LastFrameFinishedEvent(nullptr)
+    , TimestampQueries(nullptr)
+    , CommandList()
     , ShadingImage(nullptr)
     , ShadingRatePipeline(nullptr)
     , ShadingRateShader(nullptr)
-    , TimestampQueries(nullptr)
-    , LastFrameFinishedEvent(nullptr)
 {
 }
 
@@ -702,15 +702,15 @@ void FSceneRenderer::RenderThread_PrepareResources(const FSceneRenderView& Scene
     const EFormat OutputFormat = SceneRenderView.RenderTarget->GetDesc().Format;
 
 #if EDITOR_BUILD
-    TonemapPass->PreparePipelineState(RendererTextureFormats::SceneTargetFormat);
-    FinalCompositePass->PreparePipelineState(OutputFormat);
+    TonemapPass->PreparePipelineStateForFormat(RendererTextureFormats::SceneTargetFormat);
+    FinalCompositePass->PreparePipelineStateForFormat(OutputFormat);
 #else
-    TonemapPass->PreparePipelineState(OutputFormat);
+    TonemapPass->PreparePipelineStateForFormat(OutputFormat);
 #endif
 
-    FXAAPass->PreparePipelineState(OutputFormat);
-    DebugRenderer->PreparePipelineState(OutputFormat);
-    DebugViewPass->PreparePipelineState(OutputFormat);
+    FXAAPass->PreparePipelineStateForFormat(OutputFormat);
+    DebugRenderer->PreparePipelineStateForFormat(OutputFormat);
+    DebugViewPass->PreparePipelineStateForFormat(OutputFormat);
 }
 
 void FSceneRenderer::RenderThread_PrepareCameraData(const FSceneRenderView& /*SceneRenderView*/, FScene* Scene)
@@ -1135,7 +1135,7 @@ void FSceneRenderer::RenderThread_ProcessEditorObjectPickRequests(FRHICommandLis
     // Optional editor picking: copy a small region from the ObjectID render target to a readback buffer and signal a fence.
     {
         TScopedLock Lock(ObjectPickStateCS);
-        if (InFlightObjectPicks.Size() >= MaxInFlightObjectPicks)
+        if (InFlightObjectPicks.Size() >= static_cast<int32>(MaxInFlightObjectPicks))
         {
             return;
         }

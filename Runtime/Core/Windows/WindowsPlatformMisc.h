@@ -40,6 +40,28 @@ struct FWindowsPlatformMisc final : public FGenericPlatformMisc
         return ::IsDebuggerPresent();
     }
 
+    static FORCEINLINE EAssertDialogResult ShowAssertDialog(const CHAR* Title, const CHAR* Message)
+    {
+        // Matches the CRT assert dialog: Retry drops into the debugger, and is the 
+        // default button so that hitting Enter does not terminate the process.
+        const UINT Flags = MB_ICONERROR | MB_ABORTRETRYIGNORE | MB_DEFBUTTON2 | MB_TASKMODAL | MB_TOPMOST | MB_SETFOREGROUND;
+
+        switch (::MessageBoxA(nullptr, Message, Title, Flags))
+        {
+            case IDABORT:
+                return EAssertDialogResult::Abort;
+            
+            case IDRETRY:
+                return EAssertDialogResult::Debug;
+
+            case IDIGNORE:
+                return EAssertDialogResult::Ignore;
+
+            default:
+                return EAssertDialogResult::Abort;
+        }
+    }
+
     static FORCEINLINE void MemoryBarrier()
     {
     #if PLATFORM_ARCHITECTURE_X86_64

@@ -1008,28 +1008,6 @@ void FEditorContentBrowserWidget::DrawContentGrid()
     // Helper Lambdas
     // -----------------------------------------------------------------------------------------
 
-    const auto BuildFullPathForItem = [&](const FileInfo& InItem, CHAR* OutBuf, int32 OutBufSize)
-    {
-        if (!OutBuf || OutBufSize <= 0)
-        {
-            return;
-        }
-
-        TStaticArray<CHAR, 512> FolderPathBuf{};
-        BuildFolderPathString(SelectedFolderPath, FolderPathBuf.Data(), static_cast<int32>(FolderPathBuf.Size()));
-
-        const CHAR* ItemName = InItem.Name.IsEmpty() ? "" : *InItem.Name;
-
-        if (FolderPathBuf[0] != 0)
-        {
-            CString::Snprintf(OutBuf, OutBufSize, "%s/%s", FolderPathBuf.Data(), ItemName);
-        }
-        else
-        {
-            CString::Snprintf(OutBuf, OutBufSize, "%s", ItemName);
-        }
-    };
-
     const auto DrawLabelWithSearchHighlight = [&](ImDrawList* InDrawList, const ImVec2& InLabelMin, const ImVec2& InLabelMax, const CHAR* InText, const CHAR* InFilterText, ImU32 InBaseTextU32)
     {
         if (!InDrawList)

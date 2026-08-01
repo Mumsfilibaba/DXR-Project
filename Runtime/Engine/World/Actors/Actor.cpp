@@ -6,10 +6,10 @@
 FOBJECT_IMPLEMENT_CLASS(FActor);
 
 FActorTransform::FActorTransform()
-    : TransformMatrix()
-    , Translation(0.0f, 0.0f, 0.0f)
+    : Translation(0.0f, 0.0f, 0.0f)
     , Scale(1.0f, 1.0f, 1.0f)
     , Rotation(0.0f, 0.0f, 0.0f)
+    , TransformMatrix()
     , Version(0)
 {
     CalculateMatrix();
@@ -83,8 +83,6 @@ FActor::FActor(const FObjectInitializer& ObjectInitializer)
     : FObject(ObjectInitializer)
     , Name()
     , World(nullptr)
-    , bIsStartable(true)
-    , bIsTickable(true)
     , Transform()
     , Components()
     , ParentActor(nullptr)
@@ -92,6 +90,8 @@ FActor::FActor(const FObjectInitializer& ObjectInitializer)
     , CachedWorldTransform()
     , CachedLocalVersion(0)
     , CachedParentVersion(0)
+    , bIsStartable(true)
+    , bIsTickable(true)
 {
 }
 

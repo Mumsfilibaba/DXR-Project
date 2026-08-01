@@ -12,6 +12,8 @@ void RequestEngineExit(const CHAR* ExitReason)
     GIsEngineExitRequested = true;
 }
 
+bool GIsUnattended = false;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 CORE_API FMalloc* GMalloc = nullptr;

@@ -1,6 +1,7 @@
 #include "TestHarness.h"
 #include "TestConsoleOutputDevice.h"
 
+#include <Core/CoreGlobals.h>
 #include <Core/Misc/OutputDeviceLogger.h>
 
 FTestConsoleOutputDevice TestHarness::ConsoleDevice;
@@ -9,6 +10,9 @@ int32 TestHarness::NumFailed = 0;
 
 void TestHarness::Initialize()
 {
+    // No one is watching a test run, so a failed assert has to fail the run rather than block on a dialog
+    GIsUnattended = true;
+
     ConsoleDevice.OpenLogFile("TestResults.log");
     FOutputDeviceLogger::Get()->RegisterOutputDevice(&ConsoleDevice);
     

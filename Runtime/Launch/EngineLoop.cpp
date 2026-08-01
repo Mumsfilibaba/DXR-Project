@@ -160,6 +160,8 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
         LOG_WARNING("Invalid CommandLine");
     }
 
+    GIsUnattended = CommandLine::FindOption("unattended");
+
     if (!LoadCoreModules())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to load Core-Modules");

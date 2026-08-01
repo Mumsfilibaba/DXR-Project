@@ -11,8 +11,8 @@ class VULKANRHI_API FVulkanExtension
 public:
     FVulkanExtension(const CHAR* InExtensionName, bool bInRequired, bool bInShouldEnable)
         : ExtensionName(InExtensionName)
-        , bEnabled(false)
         , bRequired(bInRequired)
+        , bEnabled(false)
         , bShouldEnable(bInShouldEnable)
     {
     }
@@ -63,7 +63,7 @@ public:
     {
     }
 
-    virtual void PrepareInstanceCreateInfo(VkInstanceCreateInfo& OutInstanceCreateInfo) { }
+    virtual void PrepareInstanceCreateInfo(VkInstanceCreateInfo&) { }
 
 };
 
@@ -78,9 +78,9 @@ public:
     {
     }
 
-    virtual void PrepareDeviceFeatures(VkPhysicalDeviceFeatures2& OutFeatures)       { }
-    virtual void PrepareDeviceProperties(VkPhysicalDeviceProperties2& OutProperties) { }
-    virtual void PrepareDeviceCreateInfo(VkDeviceCreateInfo& OutDeviceCreateInfo)    { }
+    virtual void PrepareDeviceFeatures(VkPhysicalDeviceFeatures2&)       { }
+    virtual void PrepareDeviceProperties(VkPhysicalDeviceProperties2&) { }
+    virtual void PrepareDeviceCreateInfo(VkDeviceCreateInfo&)    { }
     virtual void ProcessQueriedFeatures() { }
 };
 

@@ -211,12 +211,12 @@ void FVulkanTimelineFence::GetDebugName(String& OutDebugName) const
 FVulkanFenceRHI::FVulkanFenceRHI(FVulkanDevice* InDevice)
     : FRHIFence()
     , FVulkanDeviceChild(InDevice)
-    , bUsesTimeline(false)
     , TimelineSemaphore(VK_NULL_HANDLE)
+    , SubmissionFence(nullptr)
     , NextValue(0)
     , TargetValue(0)
     , bHasPendingSignal(false)
-    , SubmissionFence(nullptr)
+    , bUsesTimeline(false)
 #if VULKAN_STORE_DEBUG_NAMES
     , DebugName()
 #endif

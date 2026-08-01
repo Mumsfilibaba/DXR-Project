@@ -120,7 +120,7 @@ bool FTonemapPass::Initialize(FFrameResources& FrameResources)
     return true;
 }
 
-void FTonemapPass::PreparePipelineState(EFormat OutputFormat)
+void FTonemapPass::PreparePipelineStateForFormat(EFormat OutputFormat)
 {
     if (TonemapPSO && TonemapPSOFormat == OutputFormat)
     {
@@ -344,7 +344,7 @@ bool FFinalCompositePass::Initialize(const FFrameResources& /*FrameResources*/)
     return true;
 }
 
-void FFinalCompositePass::PreparePipelineState(EFormat OutputFormat)
+void FFinalCompositePass::PreparePipelineStateForFormat(EFormat OutputFormat)
 {
     if (CompositePSO && CompositePSOFormat == OutputFormat)
     {
@@ -602,7 +602,7 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
     return true;
 }
 
-void FFXAAPass::PreparePipelineState(EFormat OutputFormat)
+void FFXAAPass::PreparePipelineStateForFormat(EFormat OutputFormat)
 {
     FRHIGraphicsPipelineStateDesc PSODesc;
     PSODesc.InputLayout                                    = nullptr;

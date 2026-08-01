@@ -401,7 +401,6 @@ void FEditorViewportWidget::Draw()
 
                 const ImVec2 LabelSize              = ImGui::CalcTextSize(MenuLabelText);
                 const ImVec2 ChildPos               = ImGui::GetWindowPos();
-                const ImVec2 ChildSize              = ImGui::GetWindowSize();
                 const ImVec2 ContentMin             = ImGui::GetWindowContentRegionMin();
                 const ImVec2 ContentMax             = ImGui::GetWindowContentRegionMax();
                 const float  ContentWidth           = ContentMax.x - ContentMin.x;
@@ -568,18 +567,14 @@ void FEditorViewportWidget::Draw()
                     EditorWidgets::MenuLabeledSeparator("VIEW MODE");
 
                     bool bRequestClosePopup = false;
-                    bool bAnyMainRowHovered = false;
 
                     for (const FDebugItem& Item : BaseViewItems)
                     {
-                        bool bRowHovered = false;
-                        if (DrawRadioMenuItem(Item.Label, DebugView == Item.View, true, false, &bRowHovered))
+                        if (DrawRadioMenuItem(Item.Label, DebugView == Item.View, true, false, nullptr))
                         {
                             DebugView          = Item.View;
                             bRequestClosePopup = true;
                         }
-
-                        bAnyMainRowHovered |= bRowHovered;
                     }
 
                     const auto DrawSubmenuOverlay = [&](const CHAR* Label, const PopupAnchor& Anchor)
@@ -622,7 +617,6 @@ void FEditorViewportWidget::Draw()
                         bool bShadowHovered = false;
 
                         const bool bShadowPressed = DrawSubmenuRow("Shadow Debug", ShadowAnchor, bShadowHovered, bShadowPopupOpen);
-                        bAnyMainRowHovered |= bShadowHovered;
 
                         if (bShadowPressed || (bAnyPopupOpen && bShadowHovered))
                         {
@@ -671,7 +665,6 @@ void FEditorViewportWidget::Draw()
                         bool bRayTracingHovered = false;
 
                         const bool bRayTracingPressed = DrawSubmenuRow("Ray Tracing", RayTracingAnchor, bRayTracingHovered, bRayTracingPopupOpen);
-                        bAnyMainRowHovered |= bRayTracingHovered;
 
                         if (bRayTracingPressed || (bAnyPopupOpen && bRayTracingHovered))
                         {
@@ -721,7 +714,6 @@ void FEditorViewportWidget::Draw()
                         bool bSecondaryHovered = false;
 
                         const bool bSecondaryPressed = DrawSubmenuRow("Secondary View", SecondaryAnchor, bSecondaryHovered, bSecondaryPopupOpen);
-                        bAnyMainRowHovered |= bSecondaryHovered;
 
                         if (bSecondaryPressed || (bAnyPopupOpen && bSecondaryHovered))
                         {

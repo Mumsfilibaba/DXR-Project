@@ -53,15 +53,15 @@ uint64 VkCalculateTextureUploadSize(VkFormat Format, uint32 Width, uint32 Height
 FVulkanTextureRHI::FVulkanTextureRHI(FVulkanDevice* InDevice, const FRHITextureDesc& InTextureDesc)
     : FVulkanTextureBase(InTextureDesc)
     , FVulkanResource(InDevice)
-#if VULKAN_STORE_DEBUG_NAMES
-    , DebugName()
-#endif
     , Image(VK_NULL_HANDLE)
     , CreateInfo{}
     , ShaderResourceView(nullptr)
     , UnorderedAccessView(nullptr)
     , RenderTargetView(nullptr)
     , DepthStencilView(nullptr)
+#if VULKAN_STORE_DEBUG_NAMES
+    , DebugName()
+#endif
 {
 }
 

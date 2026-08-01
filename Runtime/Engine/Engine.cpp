@@ -95,11 +95,11 @@ void FEngine::Destroy()
 }
 
 FEngine::FEngine()
-    : EngineWindow(nullptr)
+    : World(nullptr)
+    , GameModule(nullptr)
+    , EngineWindow(nullptr)
     , EngineViewportWidget(nullptr)
     , SceneViewport(nullptr)
-    , World(nullptr)
-    , GameModule(nullptr)
 {
 }
 

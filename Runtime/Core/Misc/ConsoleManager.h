@@ -200,26 +200,26 @@ struct IConsoleVariable : public IConsoleObject
      * @param OutValue Receives the min value when one is set
      * @return Returns true if a min bound is currently set on this variable
      */
-    virtual bool TryGetMinValueInt(int32& OutValue) const { return false; }
+    virtual bool TryGetMinValueInt(int32&) const { return false; }
 
     /**
      * @brief Retrieve the upper bound (clamp range) for an int32 ConsoleVariable
      * @param OutValue Receives the max value when one is set
      * @return Returns true if a max bound is currently set on this variable
      */
-    virtual bool TryGetMaxValueInt(int32& OutValue) const { return false; }
+    virtual bool TryGetMaxValueInt(int32&) const { return false; }
 
     /**
      * @brief Set the lower bound (clamp range) for an int32 ConsoleVariable
      *        No-op for non-int variants. Re-clamps the stored value if it falls below the new bound.
      */
-    virtual void SetMinValueInt(int32 InValue) {}
+    virtual void SetMinValueInt(int32) {}
 
     /**
      * @brief Set the upper bound (clamp range) for an int32 ConsoleVariable
      *        No-op for non-int variants. Re-clamps the stored value if it exceeds the new bound.
      */
-    virtual void SetMaxValueInt(int32 InValue) {}
+    virtual void SetMaxValueInt(int32) {}
 
     /**
      * @brief Clear the lower bound for an int32 ConsoleVariable. No-op for non-int variants.
@@ -236,26 +236,26 @@ struct IConsoleVariable : public IConsoleObject
      * @param OutValue Receives the min value when one is set
      * @return Returns true if a min bound is currently set on this variable
      */
-    virtual bool TryGetMinValueFloat(float& OutValue) const { return false; }
+    virtual bool TryGetMinValueFloat(float&) const { return false; }
 
     /**
      * @brief Retrieve the upper bound (clamp range) for a float ConsoleVariable
      * @param OutValue Receives the max value when one is set
      * @return Returns true if a max bound is currently set on this variable
      */
-    virtual bool TryGetMaxValueFloat(float& OutValue) const { return false; }
+    virtual bool TryGetMaxValueFloat(float&) const { return false; }
 
     /**
      * @brief Set the lower bound (clamp range) for a float ConsoleVariable
      *        No-op for non-float variants. Re-clamps the stored value if it falls below the new bound.
      */
-    virtual void SetMinValueFloat(float InValue) {}
+    virtual void SetMinValueFloat(float) {}
 
     /**
      * @brief Set the upper bound (clamp range) for a float ConsoleVariable
      *        No-op for non-float variants. Re-clamps the stored value if it exceeds the new bound.
      */
-    virtual void SetMaxValueFloat(float InValue) {}
+    virtual void SetMaxValueFloat(float) {}
 
     /**
      * @brief Clear the lower bound for a float ConsoleVariable. No-op for non-float variants.

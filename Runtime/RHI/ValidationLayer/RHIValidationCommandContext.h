@@ -6,7 +6,7 @@ class RHI_API FRHIValidationCommandContext : public IRHICommandContext
 {
 public:
     FRHIValidationCommandContext(IRHICommandContext* InRealContext);
-    ~FRHIValidationCommandContext();
+    virtual ~FRHIValidationCommandContext();
 
     virtual void BeginFrame() override final;
     virtual void EndFrame()   override final;

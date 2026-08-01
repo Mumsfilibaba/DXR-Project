@@ -2,7 +2,7 @@
 #include "RHI/RHIResources.h"
 #include "Engine/Engine.h"
 #include "Engine/Resources/Material.h"
-#include "Core/CoreDefines.h"
+#include "Core/Misc/Asserts.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 
 static_assert(sizeof(FRHIDescriptorHandle) == sizeof(uint32), "FRHIDescriptorHandle must be 4 bytes for the HLSL bitfield layout");

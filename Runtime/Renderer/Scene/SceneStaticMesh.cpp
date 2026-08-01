@@ -9,8 +9,8 @@
 
 FSceneStaticMesh::FSceneStaticMesh(FScene* InScene, const FStaticMeshInitData& InitData)
     : FSceneObject(InScene)
-    , Materials(InitData.Materials)
     , Mesh(InitData.Mesh)
+    , Materials(InitData.Materials)
     , Geometry(nullptr)
     , VertexBuffer(nullptr)
     , IndexBuffer(nullptr)

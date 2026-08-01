@@ -200,7 +200,6 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
     // -----------------------------------------------------------------------------------------
 
     const ImVec4 RowHoverBg    = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
-    const ImVec4 SearchBg      = ImVec4(15.0f / 255.0f, 15.0f / 255.0f, 15.0f / 255.0f, 1.0f);
     const ImVec4 NameTextColor = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
     const ImVec4 TypeTextColor = ImVec4(122.0f / 255.0f, 122.0f / 255.0f, 122.0f / 255.0f, 1.0f);
 

@@ -32,6 +32,8 @@ enum class ECommandContextPhase
 
 struct IRHICommandContext
 {
+    virtual ~IRHICommandContext() = default;
+
     /**
      * @brief Begins a frame on the RHI thread.
      */

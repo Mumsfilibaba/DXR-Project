@@ -7,8 +7,8 @@
 #include "ImGuiPlugin/ImGuiExtensions.h"
 
 FEditorFooterWidget::FEditorFooterWidget(const TSharedPtr<IOutputDevice>& InOutputDevice)
-    : OutputDevice(InOutputDevice)
-    , Candidates()
+    : Candidates()
+    , OutputDevice(InOutputDevice)
     , SelectedCandidateIndex(InvalidIndex)
     , HistoryIndex(InvalidIndex)
     , LastCursorPosition(0)

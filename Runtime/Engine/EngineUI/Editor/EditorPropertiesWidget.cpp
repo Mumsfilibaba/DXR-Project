@@ -264,7 +264,6 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 if (EditorWidgets::BeginPropertyTable("##MeshComponentMaterialTable", LabelColumnWidth, RevertColumnWidth))
                 {
                     FMaterialInfo MaterialInfo = MeshComponent->GetMaterial()->GetMaterialInfo();
-                    const FMaterialInfo MaterialOriginal = MaterialInfo;
 
                     // Albedo
                     {

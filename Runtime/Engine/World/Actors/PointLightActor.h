@@ -11,6 +11,7 @@ public:
     FPointLightActor(const FObjectInitializer& ObjectInitializer);
     ~FPointLightActor();
 
+    using FActor::Initialize;
     void Initialize(const Vector3& InPosition, bool bInShadowCaster);
 
     FPointLightComponent* GetLightComponent() const

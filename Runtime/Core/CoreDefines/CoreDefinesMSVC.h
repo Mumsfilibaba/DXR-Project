@@ -69,6 +69,15 @@
         __pragma(warning(pop))
 #endif
 
+// Disable format security warning
+#if !defined(DISABLE_FORMAT_SECURITY_WARNING)
+    #define DISABLE_FORMAT_SECURITY_WARNING \
+        __pragma(warning(push)) \
+        __pragma(warning(disable : 4774))
+    #define ENABLE_FORMAT_SECURITY_WARNING \
+        __pragma(warning(pop))
+#endif
+
 // Disable unreachable code warning
 #if !defined(DISABLE_UNREACHABLE_CODE_WARNING)
     #define DISABLE_UNREACHABLE_CODE_WARNING \

@@ -453,7 +453,6 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
     int32  GlobalVertexOffset = 0;
     int32  GlobalIndexOffset  = 0;
     ImVec2 ClipOffset = DrawData->DisplayPos;
-    ImVec2 ClipScale  = DrawData->FramebufferScale;
     
     for (int32 i = 0; i < DrawData->CmdListsCount; ++i)
     {

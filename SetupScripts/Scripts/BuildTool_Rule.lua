@@ -320,10 +320,12 @@ function BuildRules(Name)
                 cppdialect(self.CppVersion)
             end
 
-            -- /Zc:__cplusplus for VS
+            -- Conforming preprocessor and __cplusplus value for VS. The traditional MSVC
+            -- preprocessor mis-expands __VA_ARGS__, which CHECKF relies on.
             filter { "action:vs*" }
                 buildoptions({
-                    "/Zc:__cplusplus"
+                    "/Zc:__cplusplus",
+                    "/Zc:preprocessor"
                 })
             filter {}
 
@@ -523,7 +525,10 @@ function BuildRules(Name)
 
                 links(self.LinkModules)
                 linkoptions(self.LinkOptions)
-                dependson(self.Modules)
+
+                -- links() already establishes the build dependency; naming a module in both
+                -- makes the xcode4 generator emit a duplicate project reference.
+                dependson(ExcludeElements(self.Modules, self.LinkModules))
             end
 
             -- Xcode embedding

@@ -1360,9 +1360,9 @@ void FConsoleManager::SafeCreateConsoleManager()
 }
 
 FConsoleManager::FConsoleManager()
-    : ConsoleObjects()
+    : HistoryLength(CONSOLE_DEFAULT_HISTORY_LENGTH)
     , History()
-    , HistoryLength(CONSOLE_DEFAULT_HISTORY_LENGTH)
+    , ConsoleObjects()
 {
 }
 

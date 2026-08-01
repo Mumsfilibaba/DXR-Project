@@ -1599,7 +1599,6 @@ bool EditorWidgets::DrawConfirmDialog(ConfirmDialogContext& InOutContext)
         ImGuiWindowFlags_NoSavedSettings;
 
     bool bConfirmed = false;
-    bool bCancelled = false;
 
     if (ImGui::Begin(TitleText, &InOutContext.bVisible, WindowFlags))
     {
@@ -1633,13 +1632,11 @@ bool EditorWidgets::DrawConfirmDialog(ConfirmDialogContext& InOutContext)
         ImGui::SameLine(0.0f, Gap);
         if (DrawDialogButton("No", ImVec2(ButtonWidth, ButtonHeight)))
         {
-            bCancelled = true;
             InOutContext.bVisible = false;
         }
     }
     else
     {
-        bCancelled = true;
         InOutContext.bVisible = false;
     }
 

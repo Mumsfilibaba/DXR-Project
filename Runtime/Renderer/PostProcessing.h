@@ -33,7 +33,7 @@ public:
     bool CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height);
     void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FRHITexture* OutputTarget, bool bOutputSRGB);
 
-    void PreparePipelineState(EFormat OutputFormat);
+    void PreparePipelineStateForFormat(EFormat OutputFormat);
 
 private:
     FRHIGraphicsPipelineStateRef TonemapPSO;
@@ -79,7 +79,7 @@ public:
     bool Initialize(const FFrameResources& FrameResources);
     void Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources);
 
-    void PreparePipelineState(EFormat OutputFormat);
+    void PreparePipelineStateForFormat(EFormat OutputFormat);
 
 private:
     FRHIGraphicsPipelineStateRef CompositePSO;
@@ -101,7 +101,7 @@ public:
     bool Initialize(FFrameResources& FrameResources);
     void Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources);
 
-    void PreparePipelineState(EFormat OutputFormat);
+    void PreparePipelineStateForFormat(EFormat OutputFormat);
 
 private:
     FRHIGraphicsPipelineStateRef FXAAPSO;

@@ -206,7 +206,7 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
     NSError* Error = nil;
     MTLRenderPipelineReflection* PipelineReflection = nil;
     PipelineState = [GetDevice()->GetMTLDevice() newRenderPipelineStateWithDescriptor:Descriptor
-                                                                              options:MTLPipelineOptionArgumentInfo
+                                                                              options:MTLPipelineOptionBindingInfo
                                                                            reflection:&PipelineReflection
                                                                                 error:&Error];
     [Descriptor release];
@@ -219,35 +219,35 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
     }
 
     // Vertex function resources
-    for (MTLArgument* Argument in PipelineReflection.vertexArguments)
+    for (id<MTLBinding> Binding in PipelineReflection.vertexBindings)
     {
-        if (!Argument.active)
+        if (!Binding.used)
         {
             continue;
         }
 
-        if (Argument.type == MTLArgumentTypeBuffer)
+        if (Binding.type == MTLBindingTypeBuffer)
         {
             // NOTE: Might not be the best way, but for now it works since all shaders will have this name of vertexbuffers
-            if ([Argument.name containsString:@"vertexBuffer."])
+            if ([Binding.name containsString:@"vertexBuffer."])
             {
-                VertexBuffers.Emplace(static_cast<uint8>(Argument.index));
+                VertexBuffers.Emplace(static_cast<uint8>(Binding.index));
             }
             else
             {
                 const auto Index = NumBuffers[EShaderVisibility::Vertex]++;
                 CHECK(Index < BufferBindings[EShaderVisibility::Vertex].Size());
 
-                BufferBindings[EShaderVisibility::Vertex][Index] = static_cast<uint8>(Argument.index);
+                BufferBindings[EShaderVisibility::Vertex][Index] = static_cast<uint8>(Binding.index);
             }
         }
-        else if (Argument.type == MTLArgumentTypeTexture)
+        else if (Binding.type == MTLBindingTypeTexture)
         {
-            TextureBindings[EShaderVisibility::Vertex].Emplace(static_cast<uint8>(Argument.index));
+            TextureBindings[EShaderVisibility::Vertex].Emplace(static_cast<uint8>(Binding.index));
         }
-        else if (Argument.type == MTLArgumentTypeSampler)
+        else if (Binding.type == MTLBindingTypeSampler)
         {
-            SamplerBindings[EShaderVisibility::Vertex].Emplace(static_cast<uint8>(Argument.index));
+            SamplerBindings[EShaderVisibility::Vertex].Emplace(static_cast<uint8>(Binding.index));
         }
     }
 
@@ -256,27 +256,27 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
     SamplerBindings[EShaderVisibility::Vertex].Shrink();
 
     // Pixel function resources
-    for (MTLArgument* Argument in PipelineReflection.fragmentArguments)
+    for (id<MTLBinding> Binding in PipelineReflection.fragmentBindings)
     {
-        if (!Argument.active)
+        if (!Binding.used)
         {
             continue;
         }
 
-        if (Argument.type == MTLArgumentTypeBuffer)
+        if (Binding.type == MTLBindingTypeBuffer)
         {
             const auto Index = NumBuffers[EShaderVisibility::Pixel]++;
             CHECK(Index < BufferBindings[EShaderVisibility::Pixel].Size());
 
-            BufferBindings[EShaderVisibility::Pixel][Index] = static_cast<uint8>(Argument.index);
+            BufferBindings[EShaderVisibility::Pixel][Index] = static_cast<uint8>(Binding.index);
         }
-        else if (Argument.type == MTLArgumentTypeTexture)
+        else if (Binding.type == MTLBindingTypeTexture)
         {
-            TextureBindings[EShaderVisibility::Pixel].Emplace(static_cast<uint8>(Argument.index));
+            TextureBindings[EShaderVisibility::Pixel].Emplace(static_cast<uint8>(Binding.index));
         }
-        else if (Argument.type == MTLArgumentTypeSampler)
+        else if (Binding.type == MTLBindingTypeSampler)
         {
-            SamplerBindings[EShaderVisibility::Pixel].Emplace(static_cast<uint8>(Argument.index));
+            SamplerBindings[EShaderVisibility::Pixel].Emplace(static_cast<uint8>(Binding.index));
         }
     }
 
@@ -286,7 +286,7 @@ bool FMetalGraphicsPipelineStateRHI::Initialize()
     return true;
 }
 
-void FMetalGraphicsPipelineStateRHI::SetDebugName(const String& InName)
+void FMetalGraphicsPipelineStateRHI::SetDebugName(const String&)
 {
 }
 
@@ -300,7 +300,7 @@ void* FMetalGraphicsPipelineStateRHI::GetRHINativeState() const
     return (__bridge void*)PipelineState;
 }
 
-void FMetalComputePipelineStateRHI::SetDebugName(const String& InName)
+void FMetalComputePipelineStateRHI::SetDebugName(const String&)
 {
 }
 
@@ -314,7 +314,7 @@ void* FMetalComputePipelineStateRHI::GetRHINativeState() const
     return nullptr;
 }
 
-void FMetalRayTracingPipelineStateRHI::SetDebugName(const String& InName)
+void FMetalRayTracingPipelineStateRHI::SetDebugName(const String&)
 {
 }
 

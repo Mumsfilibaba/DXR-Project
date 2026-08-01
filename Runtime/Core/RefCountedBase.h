@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Misc/Asserts.h"
 #include "Core/Templates/Utility/NonCopyable.h"
 #include "Core/Threading/Atomic.h"
 

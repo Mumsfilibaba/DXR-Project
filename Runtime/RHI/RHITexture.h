@@ -141,10 +141,10 @@ struct FRHITextureDesc
         : Dimension(InDimension)
         , Format(InFormat)
         , UsageFlags(InUsageFlags)
-        , Extent(InExtent)
         , NumArraySlices(InNumArraySlices)
         , NumMipLevels(InNumMipLevels)
         , NumSamples(InNumSamples)
+        , Extent(InExtent)
         , ClearValue(InClearValue)
     {
     }

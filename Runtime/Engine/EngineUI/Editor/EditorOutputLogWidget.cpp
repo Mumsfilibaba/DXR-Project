@@ -6,16 +6,16 @@
 
 FEditorOutputLogWidget::FEditorOutputLogWidget()
     : IOutputDevice()
+    , SearchFilterBuffer()
+    , Messages()
+    , MessagesCS()
+    , RichTextCtx()
+    , ImGuiDelegateHandle()
     , bVisible(true)
     , bAutoScroll(true)
     , bFilterInfo(true)
     , bFilterWarning(true)
     , bFilterError(true)
-    , SearchFilterBuffer()
-    , Messages()
-    , MessagesCS()
-    , ImGuiDelegateHandle()
-    , RichTextCtx()
 {
     if (FOutputDeviceLogger* Logger = FOutputDeviceLogger::Get())
     {

@@ -11,6 +11,7 @@ public:
     FCameraActor(const FObjectInitializer& ObjectInitializer);
     ~FCameraActor();
 
+    using FActor::Initialize;
     void Initialize(const Vector3& InPosition, const Vector3& InRotation);
 
     FCameraComponent* GetCameraComponent() const
