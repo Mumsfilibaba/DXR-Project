@@ -336,6 +336,12 @@ bool FVulkanPipelineLayout::Initialize(const FVulkanPipelineLayoutInfo& LayoutIn
         bHasBindlessSet = VULKAN_CHECK_HANDLE(BindlessSetLayoutHandle);
     }
 
+    if (LayoutInfo.bAnyStageUsesBindless && !bHasBindlessSet)
+    {
+        VULKAN_ERROR("FVulkanPipelineLayout: Shader indexes the bindless heap but no bindless descriptor set is available");
+        return false;
+    }
+
     TArray<VkDescriptorSetLayout> SetLayouts;
     SetLayouts.Reserve(RegularLayouts.Size() + (bHasBindlessSet ? 1 : 0));
     

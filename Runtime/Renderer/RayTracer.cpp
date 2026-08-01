@@ -275,7 +275,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
         return BindlessPipeline != nullptr;
     };
 
-    if (!InitializeBindless())
+    if (!RHI::bSupportsBindless || !InitializeBindless())
     {
         LOG_WARNING("[RayTracer]: Bindless ray tracing variant unavailable. Only the explicit-binding path will be used");
 

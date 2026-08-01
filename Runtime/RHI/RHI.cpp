@@ -160,6 +160,7 @@ RHI_API void RHI::DumpCapabilities()
     LOG_INFO("[RHI] Max Shader Model                          : %s", ToString(RHI::MaxShaderModel));
     LOG_INFO("[RHI] Geometry Shaders                          : %s", YesNo(RHI::bSupportsGeometryShaders));
     LOG_INFO("[RHI] SV_RenderTargetArrayIndex from VS         : %s", YesNo(RHI::bSupportRenderTargetArrayIndexFromVertexShader));
+    LOG_INFO("[RHI] Bindless                                  : %s", YesNo(RHI::bSupportsBindless));
 
     // -------------------------------------------------------------------------------------------
     // View Instancing

@@ -66,7 +66,7 @@ FDepthPrePass::~FDepthPrePass()
 void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
 {
     const int32  MaterialFlags = static_cast<int32>(Material->GetMaterialFlags());
-    const bool   bBindless     = GPrePassBindless;
+    const bool   bBindless     = RHI::bSupportsBindless && GPrePassBindless;
     const uint64 PSOKey        = MakeMaterialPSOKey(MaterialFlags, bBindless);
 
     FGraphicsPipelineStateInstance* CachedPrePassPSO = MaterialPSOs.Find(PSOKey);
@@ -281,7 +281,7 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
-    const bool bBindless = GPrePassBindless && FrameResources.MaterialDataBufferSRV.IsValid();
+    const bool bBindless = RHI::bSupportsBindless && GPrePassBindless && FrameResources.MaterialDataBufferSRV.IsValid();
 
     for (const FMeshBatch& Batch : Scene->GetCameraView().GetMeshBatches())
     {
@@ -401,7 +401,7 @@ FDeferredBasePass::~FDeferredBasePass()
 void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
 {
     const int32 MaterialFlags = static_cast<int32>(Material->GetMaterialFlags());
-    const bool  bBindless     = GBasePassBindless;
+    const bool  bBindless     = RHI::bSupportsBindless && GBasePassBindless;
     const uint64 PSOKey       = MakeMaterialPSOKey(MaterialFlags, bBindless);
 
     FGraphicsPipelineStateInstance* CachedBasePassPSO = MaterialPSOs.Find(PSOKey);
@@ -656,7 +656,7 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
-    const bool bBindless = GBasePassBindless && FrameResources.MaterialDataBufferSRV.IsValid();
+    const bool bBindless = RHI::bSupportsBindless && GBasePassBindless && FrameResources.MaterialDataBufferSRV.IsValid();
 
     for (const FMeshBatch& Batch : Scene->GetCameraView().GetMeshBatches())
     {

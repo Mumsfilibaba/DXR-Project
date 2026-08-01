@@ -12,6 +12,7 @@
 #include "VulkanRHI/VulkanExtensions.h"
 #include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/Platform/VulkanPlatform.h"
+#include "RHI/RHI.h"
 #include "RHI/RHISamplerState.h"
 
 template <typename FeatureStructType>
@@ -917,6 +918,7 @@ bool FVulkanDevice::PostLoaderInitalize()
         }
     }
 
+    RHI::bSupportsBindless = BindlessDescriptorManager && BindlessDescriptorManager->IsEnabled();
     return true;
 }
 
