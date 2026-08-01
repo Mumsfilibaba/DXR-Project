@@ -197,7 +197,7 @@ bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
     VkApplicationInfo ApplicationInfo = {};
     ApplicationInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     ApplicationInfo.pNext              = nullptr;
-    ApplicationInfo.apiVersion         = VK_API_VERSION_1_3;
+    ApplicationInfo.apiVersion         = VULKAN_TARGET_API_VERSION;
     ApplicationInfo.pApplicationName   = "DXR-Project";
     ApplicationInfo.pEngineName        = "DXR-Engine";
     ApplicationInfo.engineVersion      = VK_MAKE_VERSION(1, 0, 0);

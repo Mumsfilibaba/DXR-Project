@@ -32,13 +32,13 @@ public:
     }
 
     // Convert EResourceAccess to Vulkan access flags
-    static VkAccessFlags2 ResourceStateToAccessFlags(EResourceAccess ResourceState);
+    static VkAccessFlags2KHR ResourceStateToAccessFlags(EResourceAccess ResourceState);
     
     // Convert EResourceAccess to Vulkan image layout
     static VkImageLayout ResourceStateToImageLayout(EResourceAccess ResourceState);
     
     // Convert EResourceAccess to Vulkan pipeline-stage flags
-    static VkPipelineStageFlags2 ResourceStateToPipelineStageFlags(EResourceAccess ResourceState);
+    static VkPipelineStageFlags2KHR ResourceStateToPipelineStageFlags(EResourceAccess ResourceState);
 
     static FVulkanTextureRHI*       ResourceCast(FRHITexture* Texture);
     static const FVulkanTextureRHI* ResourceCast(const FRHITexture* Texture);

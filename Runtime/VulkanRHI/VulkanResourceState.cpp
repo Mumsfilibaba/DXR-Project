@@ -63,7 +63,7 @@ VkImageLayout FVulkanImageLayoutState::GetImageLayout() const
     return ImageLayout;
 }
 
-void FVulkanBufferState::SetState(VkAccessFlags2 InAccess, VkPipelineStageFlags2 InStage)
+void FVulkanBufferState::SetState(VkAccessFlags2KHR InAccess, VkPipelineStageFlags2KHR InStage)
 {
     Access = InAccess;
     Stage  = InStage;

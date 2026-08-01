@@ -409,17 +409,6 @@ bool FVulkanDeviceRHI::Initialize()
     DeviceCreateInfo.OptionalFeatures.Features12.shaderUniformTexelBufferArrayNonUniformIndexing    = VK_TRUE;
     DeviceCreateInfo.OptionalFeatures.Features12.shaderStorageTexelBufferArrayNonUniformIndexing    = VK_TRUE;
 
-    // Vulkan 1.3 Required
-    DeviceCreateInfo.RequiredFeatures.Features13.dynamicRendering = VK_TRUE;
-    DeviceCreateInfo.RequiredFeatures.Features13.synchronization2 = VK_TRUE;
-    DeviceCreateInfo.RequiredFeatures.Features13.maintenance4     = VK_TRUE;
-
-    // Vulkan 1.3 Optional
-    DeviceCreateInfo.OptionalFeatures.Features13.pipelineCreationCacheControl = VK_TRUE;
-
-    // SM 6.4 adds the packed dot-product intrinsics (dot4add_u8packed, dot4add_i8packed, dot2add).
-    DeviceCreateInfo.OptionalFeatures.Features13.shaderIntegerDotProduct = VK_TRUE;
-
     // Create physical device
     PhysicalDevice = new FVulkanPhysicalDevice(GetInstance());
     if (!PhysicalDevice->Initialize(DeviceCreateInfo))
@@ -1474,63 +1463,63 @@ void FVulkanDeviceRHI::FlushDeletionQueue(FVulkanCommands* Commands)
     Commands->DeferredObjects = Move(DeferredObjects);
 }
 
-VkPipelineStageFlags2 FVulkanDeviceRHI::ResourceStateToPipelineStageFlags(EResourceAccess ResourceState)
+VkPipelineStageFlags2KHR FVulkanDeviceRHI::ResourceStateToPipelineStageFlags(EResourceAccess ResourceState)
 {
-    VkPipelineStageFlags2 AllShaderBits =
-        VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT |
-        VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT |
-        VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
+    VkPipelineStageFlags2KHR AllShaderBits =
+        VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT_KHR |
+        VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT_KHR |
+        VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT_KHR;
 
-    VkPipelineStageFlags2 AllNonPixelShaderBits =
-        VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT |
-        VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
+    VkPipelineStageFlags2KHR AllNonPixelShaderBits =
+        VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT_KHR |
+        VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT_KHR;
 
     if (GVulkanSupportsGeometryShader)
     {
-        AllShaderBits         |= VK_PIPELINE_STAGE_2_GEOMETRY_SHADER_BIT;
-        AllNonPixelShaderBits |= VK_PIPELINE_STAGE_2_GEOMETRY_SHADER_BIT;
+        AllShaderBits         |= VK_PIPELINE_STAGE_2_GEOMETRY_SHADER_BIT_KHR;
+        AllNonPixelShaderBits |= VK_PIPELINE_STAGE_2_GEOMETRY_SHADER_BIT_KHR;
     }
     
     if (GVulkanSupportsTessellation)
     {
-        AllShaderBits         |= VK_PIPELINE_STAGE_2_TESSELLATION_CONTROL_SHADER_BIT | VK_PIPELINE_STAGE_2_TESSELLATION_EVALUATION_SHADER_BIT;
-        AllNonPixelShaderBits |= VK_PIPELINE_STAGE_2_TESSELLATION_CONTROL_SHADER_BIT | VK_PIPELINE_STAGE_2_TESSELLATION_EVALUATION_SHADER_BIT;
+        AllShaderBits         |= VK_PIPELINE_STAGE_2_TESSELLATION_CONTROL_SHADER_BIT_KHR | VK_PIPELINE_STAGE_2_TESSELLATION_EVALUATION_SHADER_BIT_KHR;
+        AllNonPixelShaderBits |= VK_PIPELINE_STAGE_2_TESSELLATION_CONTROL_SHADER_BIT_KHR | VK_PIPELINE_STAGE_2_TESSELLATION_EVALUATION_SHADER_BIT_KHR;
     }
 
     if (ResourceState == EResourceAccess::Common || IsEnumFlagSet(ResourceState, EResourceAccess::GenericRead))
     {
-        return VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+        return VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR;
     }
 
-    VkPipelineStageFlags2 Stages = VK_PIPELINE_STAGE_2_NONE;
+    VkPipelineStageFlags2KHR Stages = VK_PIPELINE_STAGE_2_NONE_KHR;
     if (IsEnumFlagSet(ResourceState, EResourceAccess::CopyDest))
     {
-        Stages |= VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+        Stages |= VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::CopySource))
     {
-        Stages |= VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+        Stages |= VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::DepthRead))
     {
-        Stages |= VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
+        Stages |= VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT_KHR | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::DepthWrite))
     {
-        Stages |= VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
+        Stages |= VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT_KHR | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::IndexBuffer))
     {
-        Stages |= VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT;
+        Stages |= VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::VertexBuffer))
     {
-        Stages |= VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT;
+        Stages |= VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::NonPixelShaderResource))
@@ -1540,32 +1529,32 @@ VkPipelineStageFlags2 FVulkanDeviceRHI::ResourceStateToPipelineStageFlags(EResou
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::PixelShaderResource))
     {
-        Stages |= VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
+        Stages |= VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::Present))
     {
-        Stages |= VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
+        Stages |= VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::RenderTarget))
     {
-        Stages |= VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+        Stages |= VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::ResolveDest))
     {
-        Stages |= VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+        Stages |= VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::ResolveSource))
     {
-        Stages |= VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+        Stages |= VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::ShadingRateSource))
     {
-        Stages |= GVulkanSupportsFragmentShadingRate ? VK_PIPELINE_STAGE_2_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR : VK_PIPELINE_STAGE_2_NONE;
+        Stages |= GVulkanSupportsFragmentShadingRate ? VK_PIPELINE_STAGE_2_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR : VK_PIPELINE_STAGE_2_NONE_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::UnorderedAccess))
@@ -1580,103 +1569,103 @@ VkPipelineStageFlags2 FVulkanDeviceRHI::ResourceStateToPipelineStageFlags(EResou
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::IndirectArgument))
     {
-        Stages |= VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT;
+        Stages |= VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT_KHR;
     }
 
-    return Stages != VK_PIPELINE_STAGE_2_NONE ? Stages : VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+    return Stages != VK_PIPELINE_STAGE_2_NONE_KHR ? Stages : VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT_KHR;
 }
 
-VkAccessFlags2 FVulkanDeviceRHI::ResourceStateToAccessFlags(EResourceAccess ResourceState)
+VkAccessFlags2KHR FVulkanDeviceRHI::ResourceStateToAccessFlags(EResourceAccess ResourceState)
 {
     if (ResourceState == EResourceAccess::Common)
     {
-        return VK_ACCESS_2_NONE;
+        return VK_ACCESS_2_NONE_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::GenericRead))
     {
-        return VK_ACCESS_2_MEMORY_READ_BIT;
+        return VK_ACCESS_2_MEMORY_READ_BIT_KHR;
     }
 
-    VkAccessFlags2 Access = VK_ACCESS_2_NONE;
+    VkAccessFlags2KHR Access = VK_ACCESS_2_NONE_KHR;
     if (IsEnumFlagSet(ResourceState, EResourceAccess::CopyDest))
     {
-        Access |= VK_ACCESS_2_TRANSFER_WRITE_BIT;
+        Access |= VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::CopySource))
     {
-        Access |= VK_ACCESS_2_TRANSFER_READ_BIT;
+        Access |= VK_ACCESS_2_TRANSFER_READ_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::DepthRead))
     {
-        Access |= VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+        Access |= VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::DepthWrite))
     {
-        Access |= VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        Access |= VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT_KHR | VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::IndexBuffer))
     {
-        Access |= VK_ACCESS_2_INDEX_READ_BIT;
+        Access |= VK_ACCESS_2_INDEX_READ_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::VertexBuffer))
     {
-        Access |= VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT;
+        Access |= VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::NonPixelShaderResource))
     {
-        Access |= VK_ACCESS_2_SHADER_READ_BIT;
+        Access |= VK_ACCESS_2_SHADER_READ_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::PixelShaderResource))
     {
-        Access |= VK_ACCESS_2_SHADER_READ_BIT;
+        Access |= VK_ACCESS_2_SHADER_READ_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::Present))
     {
-        Access |= VK_ACCESS_2_MEMORY_READ_BIT;
+        Access |= VK_ACCESS_2_MEMORY_READ_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::RenderTarget))
     {
-        Access |= VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+        Access |= VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT_KHR | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::ResolveDest))
     {
-        Access |= VK_ACCESS_2_TRANSFER_WRITE_BIT;
+        Access |= VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::ResolveSource))
     {
-        Access |= VK_ACCESS_2_TRANSFER_READ_BIT;
+        Access |= VK_ACCESS_2_TRANSFER_READ_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::ShadingRateSource))
     {
-        Access |= GVulkanSupportsFragmentShadingRate ? VK_ACCESS_2_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR : VK_ACCESS_2_NONE;
+        Access |= GVulkanSupportsFragmentShadingRate ? VK_ACCESS_2_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR : VK_ACCESS_2_NONE_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::UnorderedAccess))
     {
-        Access |= VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT;
+        Access |= VK_ACCESS_2_SHADER_READ_BIT_KHR | VK_ACCESS_2_SHADER_WRITE_BIT_KHR;
     }
     
     if (IsEnumFlagSet(ResourceState, EResourceAccess::ConstantBuffer))
     {
-        Access |= VK_ACCESS_2_UNIFORM_READ_BIT;
+        Access |= VK_ACCESS_2_UNIFORM_READ_BIT_KHR;
     }
 
     if (IsEnumFlagSet(ResourceState, EResourceAccess::IndirectArgument))
     {
-        Access |= VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT;
+        Access |= VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT_KHR;
     }
 
     return Access;

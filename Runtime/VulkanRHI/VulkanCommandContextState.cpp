@@ -605,11 +605,11 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
 
     if (GVulkanUseDynamicRendering)
     {
-        VkRenderingAttachmentInfo ColorAttachments[RHI_MAX_RENDER_TARGETS] = {};
+        VkRenderingAttachmentInfoKHR ColorAttachments[RHI_MAX_RENDER_TARGETS] = {};
         for (uint32 i = 0; i < RenderTargetState.NumRenderTargets; i++)
         {
             const FRHIRenderPassAttachment& ColorAttachment = RenderPassDesc.RenderTargets[i];
-            ColorAttachments[i].sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+            ColorAttachments[i].sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
             ColorAttachments[i].imageView   = RenderTargetState.RenderTargetViews[i] ? RenderTargetState.RenderTargetViews[i]->GetImageViewInfo().ImageView : VK_NULL_HANDLE;
             ColorAttachments[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
             ColorAttachments[i].loadOp      = ConvertLoadAction(ColorAttachment.LoadAction);
@@ -617,8 +617,8 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
             ColorAttachments[i].clearValue  = ColorClearValues[i];
         }
 
-        VkRenderingAttachmentInfo DepthStencilAttachmentInfo = {};
-        VkRenderingAttachmentInfo StencilAttachmentInfo      = {};
+        VkRenderingAttachmentInfoKHR DepthStencilAttachmentInfo = {};
+        VkRenderingAttachmentInfoKHR StencilAttachmentInfo      = {};
 
         bool bHasStencil = false;
 
@@ -642,7 +642,7 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
                 DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL;
             }
 
-            DepthStencilAttachmentInfo.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+            DepthStencilAttachmentInfo.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
             DepthStencilAttachmentInfo.imageView   = RenderTargetState.DepthStencilView->GetImageViewInfo().ImageView;
             DepthStencilAttachmentInfo.imageLayout = DepthStencilLayout;
             DepthStencilAttachmentInfo.loadOp      = ConvertLoadAction(DepthStencilAttachment.LoadAction);
@@ -652,8 +652,8 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
             StencilAttachmentInfo = DepthStencilAttachmentInfo;
         }
 
-        VkRenderingInfo RenderingInfo = {};
-        RenderingInfo.sType                = VK_STRUCTURE_TYPE_RENDERING_INFO;
+        VkRenderingInfoKHR RenderingInfo = {};
+        RenderingInfo.sType                = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
         RenderingInfo.renderArea           = { {0, 0}, {RenderTargetState.RenderAreaWidth, RenderTargetState.RenderAreaHeight} };
         RenderingInfo.layerCount           = RenderTargetState.RenderingLayerCount;
         RenderingInfo.colorAttachmentCount = RenderTargetState.NumRenderTargets;
@@ -777,18 +777,18 @@ void FVulkanCommandContextState::ResumeRenderPass()
     const FVulkanRenderTargetState& RenderTargetState = CommonGraphicsState.RenderTargetState;
     if (GVulkanUseDynamicRendering)
     {
-        VkRenderingAttachmentInfo ColorAttachments[RHI_MAX_RENDER_TARGETS] = {};
+        VkRenderingAttachmentInfoKHR ColorAttachments[RHI_MAX_RENDER_TARGETS] = {};
         for (uint32 i = 0; i < RenderTargetState.NumRenderTargets; i++)
         {
-            ColorAttachments[i].sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+            ColorAttachments[i].sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
             ColorAttachments[i].imageView   = RenderTargetState.RenderTargetViews[i] ? RenderTargetState.RenderTargetViews[i]->GetImageViewInfo().ImageView : VK_NULL_HANDLE;
             ColorAttachments[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
             ColorAttachments[i].loadOp      = VK_ATTACHMENT_LOAD_OP_LOAD;
             ColorAttachments[i].storeOp     = ConvertStoreAction(RenderTargetState.ColorStoreActions[i]);
         }
 
-        VkRenderingAttachmentInfo DepthStencilAttachment = {};
-        VkRenderingAttachmentInfo StencilAttachment      = {};
+        VkRenderingAttachmentInfoKHR DepthStencilAttachment = {};
+        VkRenderingAttachmentInfoKHR StencilAttachment      = {};
 
         bool bHasStencil = false;
         
@@ -812,7 +812,7 @@ void FVulkanCommandContextState::ResumeRenderPass()
                 DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL;
             }
 
-            DepthStencilAttachment.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+            DepthStencilAttachment.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
             DepthStencilAttachment.imageView   = RenderTargetState.DepthStencilView->GetImageViewInfo().ImageView;
             DepthStencilAttachment.imageLayout = DepthStencilLayout;
             DepthStencilAttachment.loadOp      = VK_ATTACHMENT_LOAD_OP_LOAD;
@@ -821,8 +821,8 @@ void FVulkanCommandContextState::ResumeRenderPass()
             StencilAttachment = DepthStencilAttachment;
         }
 
-        VkRenderingInfo RenderingInfo = {};
-        RenderingInfo.sType                = VK_STRUCTURE_TYPE_RENDERING_INFO;
+        VkRenderingInfoKHR RenderingInfo = {};
+        RenderingInfo.sType                = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
         RenderingInfo.renderArea           = { {0, 0}, {RenderTargetState.RenderAreaWidth, RenderTargetState.RenderAreaHeight} };
         RenderingInfo.layerCount           = RenderTargetState.RenderingLayerCount;
         RenderingInfo.colorAttachmentCount = RenderTargetState.NumRenderTargets;

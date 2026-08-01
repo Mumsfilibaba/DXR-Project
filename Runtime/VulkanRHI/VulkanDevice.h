@@ -37,7 +37,6 @@ struct VULKANRHI_API FVulkanCoreFeatures
     VkPhysicalDeviceFeatures         Features10 = {};
     VkPhysicalDeviceVulkan11Features Features11 = {};
     VkPhysicalDeviceVulkan12Features Features12 = {};
-    VkPhysicalDeviceVulkan13Features Features13 = {};
 
     void BuildQueryChain(VkPhysicalDeviceFeatures2& Root);
     bool CheckRequired(VkPhysicalDevice PhysicalDevice) const;

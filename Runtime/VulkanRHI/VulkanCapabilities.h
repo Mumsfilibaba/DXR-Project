@@ -11,7 +11,6 @@ extern VULKANRHI_API bool   GVulkanAllowGeometryShaders;
 extern VULKANRHI_API bool   GVulkanAllowResetCommandBuffers;
 extern VULKANRHI_API bool   GVulkanRobustBufferAccessEnabled;
 extern VULKANRHI_API bool   GVulkanGPUAssistedValidationEnabled;
-
 extern VULKANRHI_API bool   GVulkanSupportsDepthClip;
 extern VULKANRHI_API bool   GVulkanSupportsDepthClamp;
 extern VULKANRHI_API bool   GVulkanSupportsNullDescriptors;
@@ -19,6 +18,9 @@ extern VULKANRHI_API bool   GVulkanSupportsRobustness2;
 extern VULKANRHI_API bool   GVulkanSupportsConservativeRasterization;
 extern VULKANRHI_API float  GVulkanMaxExtraPrimitiveOverestimationSize;
 extern VULKANRHI_API bool   GVulkanSupportsPipelineCacheControl;
+extern VULKANRHI_API bool   GVulkanSupportsDynamicRendering;
+extern VULKANRHI_API bool   GVulkanSupportsSynchronization2;
+extern VULKANRHI_API bool   GVulkanSupportsMaintenance4;
 extern VULKANRHI_API bool   GVulkanSupportsMultiviews;
 extern VULKANRHI_API bool   GVulkanSupportsBindless;
 extern VULKANRHI_API bool   GVulkanSupportsMutableDescriptorType;
@@ -29,7 +31,6 @@ extern VULKANRHI_API bool   GVulkanSupportsSparseResidency3D;
 extern VULKANRHI_API bool   GVulkanSupportsSparseResidencyAliased;
 extern VULKANRHI_API bool   GVulkanSupportsGeometryShader;
 extern VULKANRHI_API bool   GVulkanSupportsTessellation;
-
 extern VULKANRHI_API uint32 GVulkanMaxMultiviewViewCount;
 extern VULKANRHI_API uint32 GVulkanMaxDrawIndirectCount;
 

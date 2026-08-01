@@ -65,6 +65,75 @@ static TAutoConsoleVariable<int32> CVarDefragEligibilityDelay(
 static constexpr uint64 BUFFER_MIN_BLOCK  = 256ull;
 static constexpr uint64 UPLOAD_ALIGNMENT  = 256ull;
 
+void VulkanQueryBufferMemoryRequirements(FVulkanDevice* Device, const VkBufferCreateInfo& BufferCreateInfo, VkMemoryRequirements2& OutRequirements)
+{
+    VkDevice VulkanDevice = Device->GetVkDevice();
+
+#if VK_KHR_maintenance4
+    if (GVulkanSupportsMaintenance4)
+    {
+        VkDeviceBufferMemoryRequirementsKHR DeviceBufferMemReqInfo = {};
+        DeviceBufferMemReqInfo.sType       = VK_STRUCTURE_TYPE_DEVICE_BUFFER_MEMORY_REQUIREMENTS_KHR;
+        DeviceBufferMemReqInfo.pCreateInfo = &BufferCreateInfo;
+
+        vkGetDeviceBufferMemoryRequirementsKHR(VulkanDevice, &DeviceBufferMemReqInfo, &OutRequirements);
+        return;
+    }
+#endif
+
+    VkBuffer TempBuffer = VK_NULL_HANDLE;
+    if (VULKAN_FAILED(vkCreateBuffer(VulkanDevice, &BufferCreateInfo, nullptr, &TempBuffer)))
+    {
+        VULKAN_ERROR("Failed to create temporary buffer for a memory-requirement query");
+        return;
+    }
+
+    VkBufferMemoryRequirementsInfo2 BufferMemReqInfo = {};
+    BufferMemReqInfo.sType  = VK_STRUCTURE_TYPE_BUFFER_MEMORY_REQUIREMENTS_INFO_2;
+    BufferMemReqInfo.buffer = TempBuffer;
+
+    vkGetBufferMemoryRequirements2(VulkanDevice, &BufferMemReqInfo, &OutRequirements);
+    vkDestroyBuffer(VulkanDevice, TempBuffer, nullptr);
+}
+
+void VulkanQueryImageMemoryRequirements(FVulkanDevice* Device, const VkImageCreateInfo& ImageCreateInfo, VkMemoryRequirements2& OutRequirements, VkImage ExistingImage)
+{
+    VkDevice VulkanDevice = Device->GetVkDevice();
+
+#if VK_KHR_maintenance4
+    if (GVulkanSupportsMaintenance4)
+    {
+        VkDeviceImageMemoryRequirementsKHR DeviceImageMemReqInfo = {};
+        DeviceImageMemReqInfo.sType       = VK_STRUCTURE_TYPE_DEVICE_IMAGE_MEMORY_REQUIREMENTS_KHR;
+        DeviceImageMemReqInfo.pCreateInfo = &ImageCreateInfo;
+
+        vkGetDeviceImageMemoryRequirementsKHR(VulkanDevice, &DeviceImageMemReqInfo, &OutRequirements);
+        return;
+    }
+#endif
+
+    VkImage QueriedImage = ExistingImage;
+    if (!VULKAN_CHECK_HANDLE(QueriedImage))
+    {
+        if (VULKAN_FAILED(vkCreateImage(VulkanDevice, &ImageCreateInfo, nullptr, &QueriedImage)))
+        {
+            VULKAN_ERROR("Failed to create temporary image for a memory-requirement query");
+            return;
+        }
+    }
+
+    VkImageMemoryRequirementsInfo2 ImageMemReqInfo = {};
+    ImageMemReqInfo.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2;
+    ImageMemReqInfo.image = QueriedImage;
+
+    vkGetImageMemoryRequirements2(VulkanDevice, &ImageMemReqInfo, &OutRequirements);
+
+    if (QueriedImage != ExistingImage)
+    {
+        vkDestroyImage(VulkanDevice, QueriedImage, nullptr);
+    }
+}
+
 FVulkanMemoryLocation::FVulkanMemoryLocation(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , DeviceMemory(VK_NULL_HANDLE)
@@ -213,14 +282,10 @@ bool FVulkanMemoryManager::Initialize()
     BufferCreateInfo.usage       = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
     BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VkDeviceBufferMemoryRequirements DeviceBufferMemReqInfo = {};
-    DeviceBufferMemReqInfo.sType       = VK_STRUCTURE_TYPE_DEVICE_BUFFER_MEMORY_REQUIREMENTS;
-    DeviceBufferMemReqInfo.pCreateInfo = &BufferCreateInfo;
-
     VkMemoryRequirements2 MemReqs2 = {};
     MemReqs2.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
 
-    vkGetDeviceBufferMemoryRequirements(GetDevice()->GetVkDevice(), &DeviceBufferMemReqInfo, &MemReqs2);
+    VulkanQueryBufferMemoryRequirements(GetDevice(), BufferCreateInfo, MemReqs2);
 
     const int32 MemoryTypeIndex = GetDevice()->GetPhysicalDevice()->FindMemoryTypeIndex(MemReqs2.memoryRequirements.memoryTypeBits, UploadMemoryProperties);
     if (MemoryTypeIndex == TNumericLimits<int32>::Max())
@@ -1527,14 +1592,10 @@ void* FVulkanLinearAllocator::AllocateOversized(uint64 SizeInBytes, uint64 Align
     BufferCreateInfo.usage       = BufferUsageFlags;
     BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VkDeviceBufferMemoryRequirements DeviceBufferMemReqInfo = {};
-    DeviceBufferMemReqInfo.sType       = VK_STRUCTURE_TYPE_DEVICE_BUFFER_MEMORY_REQUIREMENTS;
-    DeviceBufferMemReqInfo.pCreateInfo = &BufferCreateInfo;
-
     VkMemoryRequirements2 MemReqs2 = {};
     MemReqs2.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
 
-    vkGetDeviceBufferMemoryRequirements(VulkanDevice, &DeviceBufferMemReqInfo, &MemReqs2);
+    VulkanQueryBufferMemoryRequirements(GetDevice(), BufferCreateInfo, MemReqs2);
 
     const VkMemoryRequirements& MemReqs = MemReqs2.memoryRequirements;
 
@@ -1808,16 +1869,10 @@ bool FVulkanBufferAllocator::TryAllocate(VkMemoryPropertyFlags MemoryProperties,
     BufferCreateInfo.usage       = UsageFlags;
     BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VkDevice VulkanDevice = GetDevice()->GetVkDevice();
-
-    VkDeviceBufferMemoryRequirements DeviceBufferMemReqInfo = {};
-    DeviceBufferMemReqInfo.sType       = VK_STRUCTURE_TYPE_DEVICE_BUFFER_MEMORY_REQUIREMENTS;
-    DeviceBufferMemReqInfo.pCreateInfo = &BufferCreateInfo;
-
     VkMemoryRequirements2 MemoryRequirements2 = {};
     MemoryRequirements2.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
 
-    vkGetDeviceBufferMemoryRequirements(VulkanDevice, &DeviceBufferMemReqInfo, &MemoryRequirements2);
+    VulkanQueryBufferMemoryRequirements(GetDevice(), BufferCreateInfo, MemoryRequirements2);
 
     const VkMemoryRequirements& MemoryRequirements = MemoryRequirements2.memoryRequirements;
 
@@ -2050,16 +2105,10 @@ bool FVulkanBufferAllocator::TryAllocate(VkMemoryPropertyFlags MemoryProperties,
     BufferCreateInfo.usage       = UsageFlags;
     BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VkDevice VulkanDevice = GetDevice()->GetVkDevice();
-
-    VkDeviceBufferMemoryRequirements DeviceBufferMemReqInfo = {};
-    DeviceBufferMemReqInfo.sType       = VK_STRUCTURE_TYPE_DEVICE_BUFFER_MEMORY_REQUIREMENTS;
-    DeviceBufferMemReqInfo.pCreateInfo = &BufferCreateInfo;
-
     VkMemoryRequirements2 MemoryRequirements2 = {};
     MemoryRequirements2.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
 
-    vkGetDeviceBufferMemoryRequirements(VulkanDevice, &DeviceBufferMemReqInfo, &MemoryRequirements2);
+    VulkanQueryBufferMemoryRequirements(GetDevice(), BufferCreateInfo, MemoryRequirements2);
 
     const VkMemoryRequirements& MemoryRequirements = MemoryRequirements2.memoryRequirements;
 
@@ -2440,21 +2489,15 @@ FVulkanTextureAllocator::ETexturePoolClass FVulkanTextureAllocator::ClassifyText
 
 bool FVulkanTextureAllocator::TryAllocate(VkImage Image, const VkImageCreateInfo& ImageCreateInfo, VkMemoryPropertyFlags MemoryProperties, VkMemoryAllocateFlags AllocateFlags, FVulkanMemoryLocation& OutLocation)
 {
-    VkDevice VulkanDevice = GetDevice()->GetVkDevice();
-
     VkMemoryDedicatedRequirements DedicatedRequirements = {};
     DedicatedRequirements.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS;
 
     VkMemoryRequirements2 MemoryRequirements2 = {};
     MemoryRequirements2.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
 
-    VkDeviceImageMemoryRequirements DeviceImageMemReqInfo = {};
-    DeviceImageMemReqInfo.sType       = VK_STRUCTURE_TYPE_DEVICE_IMAGE_MEMORY_REQUIREMENTS;
-    DeviceImageMemReqInfo.pCreateInfo = &ImageCreateInfo;
-
     AddToStructChain(MemoryRequirements2, DedicatedRequirements);
 
-    vkGetDeviceImageMemoryRequirements(VulkanDevice, &DeviceImageMemReqInfo, &MemoryRequirements2);
+    VulkanQueryImageMemoryRequirements(GetDevice(), ImageCreateInfo, MemoryRequirements2, Image);
 
     const VkMemoryRequirements& MemReqs = MemoryRequirements2.memoryRequirements;
     const bool bRequiresDedicated = DedicatedRequirements.requiresDedicatedAllocation == VK_TRUE || DedicatedRequirements.prefersDedicatedAllocation == VK_TRUE;
@@ -2711,30 +2754,30 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
         const VkImageAspectFlags AspectMask = GetImageAspectFlagsFromFormat(OldCreateInfo.format);
 
         {
-            VkImageMemoryBarrier2 SrcBarrier = {};
-            SrcBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
-            SrcBarrier.srcAccessMask                   = VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_MEMORY_WRITE_BIT;
-            SrcBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_READ_BIT;
+            VkImageMemoryBarrier2KHR SrcBarrier = {};
+            SrcBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR;
+            SrcBarrier.srcAccessMask                   = VK_ACCESS_2_MEMORY_READ_BIT_KHR | VK_ACCESS_2_MEMORY_WRITE_BIT_KHR;
+            SrcBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_READ_BIT_KHR;
             SrcBarrier.oldLayout                       = CurrentLayout;
             SrcBarrier.newLayout                       = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
             SrcBarrier.image                           = OldImage;
-            SrcBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
-            SrcBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+            SrcBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR;
+            SrcBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
             SrcBarrier.subresourceRange.aspectMask     = AspectMask;
             SrcBarrier.subresourceRange.baseArrayLayer = 0;
             SrcBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
             SrcBarrier.subresourceRange.baseMipLevel   = 0;
             SrcBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
-            VkImageMemoryBarrier2 DstBarrier = {};
-            DstBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+            VkImageMemoryBarrier2KHR DstBarrier = {};
+            DstBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR;
             DstBarrier.srcAccessMask                   = 0;
-            DstBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+            DstBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
             DstBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
             DstBarrier.newLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
             DstBarrier.image                           = NewImage;
-            DstBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
-            DstBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+            DstBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT_KHR;
+            DstBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
             DstBarrier.subresourceRange.aspectMask     = AspectMask;
             DstBarrier.subresourceRange.baseArrayLayer = 0;
             DstBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
@@ -2762,30 +2805,30 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
         }
 
         {
-            VkImageMemoryBarrier2 SrcBarrier = {};
-            SrcBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
-            SrcBarrier.srcAccessMask                   = VK_ACCESS_2_TRANSFER_READ_BIT;
-            SrcBarrier.dstAccessMask                   = VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_MEMORY_WRITE_BIT;
+            VkImageMemoryBarrier2KHR SrcBarrier = {};
+            SrcBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR;
+            SrcBarrier.srcAccessMask                   = VK_ACCESS_2_TRANSFER_READ_BIT_KHR;
+            SrcBarrier.dstAccessMask                   = VK_ACCESS_2_MEMORY_READ_BIT_KHR | VK_ACCESS_2_MEMORY_WRITE_BIT_KHR;
             SrcBarrier.oldLayout                       = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
             SrcBarrier.newLayout                       = CurrentLayout;
             SrcBarrier.image                           = OldImage;
-            SrcBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
-            SrcBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+            SrcBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
+            SrcBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR;
             SrcBarrier.subresourceRange.aspectMask     = AspectMask;
             SrcBarrier.subresourceRange.baseArrayLayer = 0;
             SrcBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
             SrcBarrier.subresourceRange.baseMipLevel   = 0;
             SrcBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
-            VkImageMemoryBarrier2 DstBarrier = {};
-            DstBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
-            DstBarrier.srcAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT;
-            DstBarrier.dstAccessMask                   = VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_MEMORY_WRITE_BIT;
+            VkImageMemoryBarrier2KHR DstBarrier = {};
+            DstBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR;
+            DstBarrier.srcAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
+            DstBarrier.dstAccessMask                   = VK_ACCESS_2_MEMORY_READ_BIT_KHR | VK_ACCESS_2_MEMORY_WRITE_BIT_KHR;
             DstBarrier.oldLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
             DstBarrier.newLayout                       = CurrentLayout;
             DstBarrier.image                           = NewImage;
-            DstBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
-            DstBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+            DstBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
+            DstBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR;
             DstBarrier.subresourceRange.aspectMask     = AspectMask;
             DstBarrier.subresourceRange.baseArrayLayer = 0;
             DstBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
@@ -2937,21 +2980,15 @@ FVulkanTextureAllocator::ETexturePoolClass FVulkanTextureAllocator::ClassifyText
 
 bool FVulkanTextureAllocator::TryAllocate(VkImage Image, const VkImageCreateInfo& ImageCreateInfo, VkMemoryPropertyFlags MemoryProperties, VkMemoryAllocateFlags AllocateFlags, FVulkanMemoryLocation& OutLocation)
 {
-    VkDevice VulkanDevice = GetDevice()->GetVkDevice();
-
     VkMemoryDedicatedRequirements DedicatedRequirements = {};
     DedicatedRequirements.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS;
 
     VkMemoryRequirements2 MemoryRequirements2 = {};
     MemoryRequirements2.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
 
-    VkDeviceImageMemoryRequirements DeviceImageMemReqInfo = {};
-    DeviceImageMemReqInfo.sType       = VK_STRUCTURE_TYPE_DEVICE_IMAGE_MEMORY_REQUIREMENTS;
-    DeviceImageMemReqInfo.pCreateInfo = &ImageCreateInfo;
-
     AddToStructChain(MemoryRequirements2, DedicatedRequirements);
 
-    vkGetDeviceImageMemoryRequirements(VulkanDevice, &DeviceImageMemReqInfo, &MemoryRequirements2);
+    VulkanQueryImageMemoryRequirements(GetDevice(), ImageCreateInfo, MemoryRequirements2, Image);
 
     const VkMemoryRequirements& MemReqs = MemoryRequirements2.memoryRequirements;
     const bool bRequiresDedicated = DedicatedRequirements.requiresDedicatedAllocation == VK_TRUE || DedicatedRequirements.prefersDedicatedAllocation == VK_TRUE;
@@ -3221,14 +3258,10 @@ void* FVulkanUploadHeapAllocator::AllocateOversized(uint64 SizeInBytes, uint64 A
     BufferCreateInfo.usage       = BufferUsageFlags;
     BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VkDeviceBufferMemoryRequirements DeviceBufferMemReqInfo = {};
-    DeviceBufferMemReqInfo.sType       = VK_STRUCTURE_TYPE_DEVICE_BUFFER_MEMORY_REQUIREMENTS;
-    DeviceBufferMemReqInfo.pCreateInfo = &BufferCreateInfo;
-
     VkMemoryRequirements2 MemReqs2 = {};
     MemReqs2.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
 
-    vkGetDeviceBufferMemoryRequirements(VulkanDevice, &DeviceBufferMemReqInfo, &MemReqs2);
+    VulkanQueryBufferMemoryRequirements(GetDevice(), BufferCreateInfo, MemReqs2);
 
     const VkMemoryRequirements& MemReqs = MemReqs2.memoryRequirements;
 

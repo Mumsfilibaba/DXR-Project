@@ -1199,6 +1199,9 @@ FVulkanBindlessDescriptorManager::~FVulkanBindlessDescriptorManager()
 
 bool FVulkanBindlessDescriptorManager::Initialize()
 {
+#if !VK_EXT_mutable_descriptor_type
+    return false;
+#else
     if (!GVulkanSupportsBindless || !CVarVulkanEnableBindless.GetValue())
     {
         return false;
@@ -1327,6 +1330,7 @@ bool FVulkanBindlessDescriptorManager::Initialize()
         ResourceCapacity, SamplerCapacity, VULKAN_BINDLESS_RUNTIME_SET_INDEX);
 
     return true;
+#endif
 }
 
 void FVulkanBindlessDescriptorManager::Release()

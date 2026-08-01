@@ -39,6 +39,9 @@ VULKANRHI_API bool   GVulkanSupportsRobustness2                 = false;
 VULKANRHI_API bool   GVulkanSupportsConservativeRasterization   = false;
 VULKANRHI_API float  GVulkanMaxExtraPrimitiveOverestimationSize = 0.0f;
 VULKANRHI_API bool   GVulkanSupportsPipelineCacheControl        = false;
+VULKANRHI_API bool   GVulkanSupportsDynamicRendering            = false;
+VULKANRHI_API bool   GVulkanSupportsSynchronization2            = false;
+VULKANRHI_API bool   GVulkanSupportsMaintenance4                = false;
 VULKANRHI_API bool   GVulkanSupportsMultiviews                  = false;
 VULKANRHI_API bool   GVulkanSupportsBindless                    = false;
 VULKANRHI_API bool   GVulkanSupportsMutableDescriptorType       = false;
@@ -241,6 +244,9 @@ VULKANRHI_API void DumpVulkanCapabilities()
     LOG_INFO("[VulkanRHI]   Transform Feedback                    : %s", YesNo(GVulkanSupportsTransformFeedback));
     LOG_INFO("[VulkanRHI]   Sparse Binding                        : %s", YesNo(GVulkanSupportsSparseBinding));
     LOG_INFO("[VulkanRHI]   Pipeline Cache Control                : %s", YesNo(GVulkanSupportsPipelineCacheControl));
+    LOG_INFO("[VulkanRHI]   Dynamic Rendering                     : %s", YesNo(GVulkanSupportsDynamicRendering));
+    LOG_INFO("[VulkanRHI]   Synchronization2                      : %s", YesNo(GVulkanSupportsSynchronization2));
+    LOG_INFO("[VulkanRHI]   Maintenance4                          : %s", YesNo(GVulkanSupportsMaintenance4));
     LOG_INFO("[VulkanRHI]   Shading Rate Tile Size                : %u", GVulkanShadingRateTileSize);
     LOG_INFO("[VulkanRHI]   Max Draw Indirect Count               : %u", GVulkanMaxDrawIndirectCount);
     LOG_INFO("[VulkanRHI]   Equivalent Shader Model               : %s", ToString(GVulkanShaderModel));
@@ -286,11 +292,6 @@ void FVulkanDevice::DeriveCoreCapabilities(
     {
         GVulkanSupportsMultiviews    = false;
         GVulkanMaxMultiviewViewCount = 1u;
-    }
-
-    if (AvailableFeatures.Features13.pipelineCreationCacheControl)
-    {
-        GVulkanSupportsPipelineCacheControl = true;
     }
 
     GVulkanSupportsBindless = (AvailableFeatures.Features12.descriptorIndexing         == VK_TRUE)
@@ -379,8 +380,7 @@ void FVulkanDevice::DeriveEnabledFeatureCapabilities(const FVulkanCoreFeatures& 
         && (EnabledFeatures.Features11.storageBuffer16BitAccess               == VK_TRUE)
         && (EnabledFeatures.Features11.uniformAndStorageBuffer16BitAccess     == VK_TRUE);
 
-    GVulkanSupportsInt64ShaderOps    = (EnabledFeatures.Features10.shaderInt64 == VK_TRUE);
-    GVulkanSupportsIntegerDotProduct = (EnabledFeatures.Features13.shaderIntegerDotProduct == VK_TRUE);
+    GVulkanSupportsInt64ShaderOps = (EnabledFeatures.Features10.shaderInt64 == VK_TRUE);
 
     GVulkanSupportsInt64Atomics = (EnabledFeatures.Features12.shaderBufferInt64Atomics == VK_TRUE)
         && (EnabledFeatures.Features12.shaderSharedInt64Atomics                        == VK_TRUE);

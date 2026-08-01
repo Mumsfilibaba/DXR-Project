@@ -21,9 +21,11 @@
 #define VK_NO_PROTOTYPES (1)
 #include <vulkan/vulkan.h>
 
-#if !defined(VK_VERSION_1_3)
-    #error Vulkan version must be 1.3 or above
+#if !defined(VK_VERSION_1_2)
+    #error Vulkan version must be 1.2 or above
 #endif
+
+#define VULKAN_TARGET_API_VERSION VK_API_VERSION_1_2
 
 static_assert(sizeof(FRHIDrawIndirectParameters) == sizeof(VkDrawIndirectCommand));
 static_assert(sizeof(FRHIDrawIndexedIndirectParameters) == sizeof(VkDrawIndexedIndirectCommand));
@@ -1749,11 +1751,15 @@ constexpr const CHAR* ToString(VkDescriptorType DescriptorType)
     case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:     return "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC";
     case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:     return "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC";
     case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:           return "VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT";
-    case VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK:       return "VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK";
+    case VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK_EXT:   return "VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK";
     case VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR: return "VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR";
     case VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV:  return "VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV";
+#if VK_QCOM_image_processing
     case VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM:     return "VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM";
+#endif
+#if VK_EXT_mutable_descriptor_type
     case VK_DESCRIPTOR_TYPE_MUTABLE_EXT:                return "VK_DESCRIPTOR_TYPE_MUTABLE_EXT";
+#endif
     
     default:
         return "Unknown VkDescriptorType";

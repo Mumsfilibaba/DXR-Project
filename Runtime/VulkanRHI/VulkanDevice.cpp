@@ -80,8 +80,7 @@ void FVulkanCoreFeatures::BuildQueryChain(VkPhysicalDeviceFeatures2& Root)
 {
     Features11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
     Features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-    Features13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
-    AddAllToStructChain(Root, Features11, Features12, Features13);
+    AddAllToStructChain(Root, Features11, Features12);
 }
 
 bool FVulkanCoreFeatures::CheckRequired(VkPhysicalDevice PhysicalDevice) const
@@ -110,11 +109,6 @@ bool FVulkanCoreFeatures::CheckRequired(VkPhysicalDevice PhysicalDevice) const
     {
         return false;
     }
-    
-    if (!CheckRequiredFeaturesHelper(Features13, Available.Features13, "VkPhysicalDeviceVulkan13Features"))
-    {
-        return false;
-    }
 
     return true;
 }
@@ -124,16 +118,14 @@ void FVulkanCoreFeatures::EnableAvailable(FVulkanCoreFeatures& OutEnabled, const
     EnableAvailableFeaturesHelper(OutEnabled.Features10, Features10, Available.Features10);
     EnableAvailableFeaturesHelper(OutEnabled.Features11, Features11, Available.Features11);
     EnableAvailableFeaturesHelper(OutEnabled.Features12, Features12, Available.Features12);
-    EnableAvailableFeaturesHelper(OutEnabled.Features13, Features13, Available.Features13);
 }
 
 void FVulkanCoreFeatures::BuildEnableChain(VkPhysicalDeviceFeatures2& Root)
 {
     Features11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
     Features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-    Features13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
 
-    AddAllToStructChain(Root, Features11, Features12, Features13);
+    AddAllToStructChain(Root, Features11, Features12);
 }
 
 FVulkanPhysicalDevice::FVulkanPhysicalDevice(FVulkanInstance* InInstance)
@@ -201,9 +193,9 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCr
         VkPhysicalDeviceProperties AdapterProperties;
         vkGetPhysicalDeviceProperties(CurrentAdapter, &AdapterProperties);
 
-        if (AdapterProperties.apiVersion < VK_API_VERSION_1_3)
+        if (AdapterProperties.apiVersion < VULKAN_TARGET_API_VERSION)
         {
-            VULKAN_INFO("Skipping device '%s' since it's api-version is below Vulkan 1.3 (apiVersion=%s)", AdapterProperties.deviceName, *GetVersionAsString(AdapterProperties.apiVersion));
+            VULKAN_INFO("Skipping device '%s' since it's api-version is below Vulkan 1.2 (apiVersion=%s)", AdapterProperties.deviceName, *GetVersionAsString(AdapterProperties.apiVersion));
             continue;
         }
 
@@ -775,6 +767,20 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
 
     DeriveCoreCapabilities(InDeviceCreateInfo, AvailableFeatures, PhysicalDevice->GetProperties(), AvailableDeviceMultiviewProperties, AvailableDeviceSubgroupProperties);
 
+#if !VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
+    if (!GVulkanSupportsDynamicRendering)
+    {
+        VULKAN_ERROR_CRITICAL("Device does not support VK_KHR_dynamic_rendering, which is required");
+        return false;
+    }
+#endif
+
+    if (!GVulkanSupportsSynchronization2)
+    {
+        VULKAN_ERROR_CRITICAL("Device does not support VK_KHR_synchronization2, which is required");
+        return false;
+    }
+
     // -------------------------------------------------------------------------------------------
     // Resolve device layers
     // -------------------------------------------------------------------------------------------
@@ -942,17 +948,17 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
     VkBuffer DefaultBuffer = DefaultResources.NullBuffer;
     VkImage  DefaultImage  = DefaultResources.NullImage;
 
-    VkImageMemoryBarrier2 ImageBarrier = {};
-    ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+    VkImageMemoryBarrier2KHR ImageBarrier = {};
+    ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR;
     ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
     ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
     ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
     ImageBarrier.image                           = DefaultImage;
-    ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE;
-    ImageBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT;
-    ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
-    ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+    ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE_KHR;
+    ImageBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
+    ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
+    ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
     ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(VK_FORMAT_R8G8B8A8_UNORM);
     ImageBarrier.subresourceRange.baseArrayLayer = 0;
     ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
@@ -977,9 +983,9 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
 
     ImageBarrier.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     ImageBarrier.newLayout     = VK_IMAGE_LAYOUT_GENERAL;
-    ImageBarrier.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
-    ImageBarrier.dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
-    ImageBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+    ImageBarrier.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
+    ImageBarrier.dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
+    ImageBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
     ImageBarrier.dstStageMask  = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
 
     CommandContext.GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);

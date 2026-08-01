@@ -3,8 +3,8 @@
 #include "VulkanRHI/VulkanCore.h"
 
 constexpr VkImageLayout          VK_IMAGE_LAYOUT_TO_BE_DETERMINED           = static_cast<VkImageLayout>(0x7FFFFFFF);
-constexpr VkAccessFlags2         VK_ACCESS_FLAGS_2_TO_BE_DETERMINED         = ~static_cast<VkAccessFlags2>(0);
-constexpr VkPipelineStageFlags2  VK_PIPELINE_STAGE_FLAGS_2_TO_BE_DETERMINED = ~static_cast<VkPipelineStageFlags2>(0);
+constexpr VkAccessFlags2KHR         VK_ACCESS_FLAGS_2_TO_BE_DETERMINED         = ~static_cast<VkAccessFlags2KHR>(0);
+constexpr VkPipelineStageFlags2KHR  VK_PIPELINE_STAGE_FLAGS_2_TO_BE_DETERMINED = ~static_cast<VkPipelineStageFlags2KHR>(0);
 
 class FVulkanTextureRHI;
 class FVulkanBufferRHI;
@@ -63,21 +63,21 @@ private:
 class FVulkanBufferState
 {
 public:
-    void SetState(VkAccessFlags2 InAccess, VkPipelineStageFlags2 InStage);
+    void SetState(VkAccessFlags2KHR InAccess, VkPipelineStageFlags2KHR InStage);
 
-    VkAccessFlags2 GetAccess() const
+    VkAccessFlags2KHR GetAccess() const
     {
         return Access;
     }
 
-    VkPipelineStageFlags2 GetStage() const
+    VkPipelineStageFlags2KHR GetStage() const
     {
         return Stage;
     }
 
 private:
-    VkAccessFlags2        Access = 0;
-    VkPipelineStageFlags2 Stage  = 0;
+    VkAccessFlags2KHR        Access = 0;
+    VkPipelineStageFlags2KHR Stage  = 0;
 };
 
 struct FVulkanPendingImageBarrier
@@ -90,6 +90,6 @@ struct FVulkanPendingImageBarrier
 struct FVulkanPendingBufferBarrier
 {
     FVulkanBufferRHI*     Buffer;
-    VkAccessFlags2        DesiredAccess;
-    VkPipelineStageFlags2 DesiredStage;
+    VkAccessFlags2KHR        DesiredAccess;
+    VkPipelineStageFlags2KHR DesiredStage;
 };
