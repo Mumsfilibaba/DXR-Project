@@ -1,4 +1,5 @@
 #include "Core/Containers/Array.h"
+#include "Core/Memory/Memory.h"
 #include "Core/Templates/CString.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Templates/NumericLimits.h"
@@ -75,6 +76,11 @@ static String GetQueuePropertiesAsString(const VkQueueFamilyProperties& Properti
     PropertyString += ')';
 
     return PropertyString;
+}
+
+FVulkanCoreFeatures::FVulkanCoreFeatures()
+{
+    Memory::Memzero(this);
 }
 
 void FVulkanCoreFeatures::BuildQueryChain(VkPhysicalDeviceFeatures2& Root)

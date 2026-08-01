@@ -71,6 +71,7 @@ function BuildRules(Name)
         Language = "C++",
         CppVersion = "C++20",
         SystemVersion = "latest",
+        MacOSVersion = "15.0",
         CharacterSet = "Ascii",
 
         Flags = {
@@ -329,8 +330,14 @@ function BuildRules(Name)
                 })
             filter {}
 
-            -- System SDK
-            systemversion(self.SystemVersion)
+            -- System SDK. "latest" picks the newest Windows SDK, but Xcode maps this
+            -- straight to MACOSX_DEPLOYMENT_TARGET, where it becomes an unparseable
+            -- LSMinimumSystemVersion that no run destination can satisfy.
+            if IsPlatformMac() then
+                systemversion(self.MacOSVersion)
+            else
+                systemversion(self.SystemVersion)
+            end
 
             -- CharacterSet
             local function MapCharacterSet(InCharacterSet)
