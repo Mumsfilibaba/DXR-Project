@@ -68,6 +68,16 @@ static D3D12_RESOURCE_STATES GetBufferCreationState(D3D12_HEAP_TYPE HeapType, D3
     return InitialResourceState;
 }
 
+static void InitializeBufferResourceState(FD3D12Resource* Resource, ED3D12ResourceStateMode StateMode, D3D12_RESOURCE_STATES InitialState)
+{
+    Resource->SetResourceStateMode(StateMode);
+
+    if (StateMode == ED3D12ResourceStateMode::SingleState)
+    {
+        Resource->SetDefaultState(InitialState);
+    }
+}
+
 static uint64 AlignOffsetInPage(const FD3D12LinearAllocatorPage& Page, uint64 InPageOffset, uint64 Alignment)
 {
     const uint64 BackingOffset = Page.GetBackingResourceStorage().GetResourceOffset();
@@ -165,12 +175,14 @@ bool FD3D12BuddyAllocator::Initialize()
 
     if (BackingResource)
     {
+        InitializeBufferResourceState(BackingResource.Get(), ED3D12ResourceStateMode::SingleState, InitialState);
+
         if (HeapType == D3D12_HEAP_TYPE_UPLOAD || HeapType == D3D12_HEAP_TYPE_READBACK)
         {
             MappedBaseAddress = static_cast<uint8*>(BackingResource->MapRange(0, nullptr));
         }
     }
-    
+
     const uint32 MaxOrder = GetOrderForSize(BackingStorageSize);
     FreeOffsets.Resize(MaxOrder + 1);
     FreeOffsets[MaxOrder].Add(0);
@@ -615,6 +627,8 @@ bool FD3D12PoolAllocatorPage::Initialize()
 
     if (BackingResource)
     {
+        InitializeBufferResourceState(BackingResource.Get(), ED3D12ResourceStateMode::SingleState, InitialState);
+
         BaseGpuVirtualAddress = BackingResource->GetGPUVirtualAddress();
         if (HeapType == D3D12_HEAP_TYPE_UPLOAD || HeapType == D3D12_HEAP_TYPE_READBACK)
         {
@@ -1629,41 +1643,54 @@ bool FD3D12LinearAllocatorPage::Initialize()
     {
         FD3D12UploadHeapAllocator* UploadHeapAllocator = CurrentDevice->GetUploadHeapAllocator();
         UploadHeapAllocator->Allocate(PageSizeBytes, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT, BackingResourceStorage);
-        return BackingResourceStorage.GetResource() != nullptr;
+    }
+    else
+    {
+        D3D12_RESOURCE_DESC Desc = {};
+        Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
+        Desc.Format             = DXGI_FORMAT_UNKNOWN;
+        Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        Desc.Width              = PageSizeBytes;
+        Desc.Height             = 1;
+        Desc.DepthOrArraySize   = 1;
+        Desc.MipLevels          = 1;
+        Desc.Alignment          = 0;
+        Desc.SampleDesc.Count   = 1;
+        Desc.SampleDesc.Quality = 0;
+
+        Desc = ApplyTightAlignmentFlag(Desc);
+
+        FD3D12ResourceRef Resource;
+        if (!CurrentDevice->CreateCommittedResource(Desc, HeapType, InitialState, nullptr, Resource))
+        {
+            return false;
+        }
+
+        void* MappedBaseAddress = nullptr;
+        if (HeapType == D3D12_HEAP_TYPE_UPLOAD || HeapType == D3D12_HEAP_TYPE_READBACK)
+        {
+            MappedBaseAddress = Resource->MapRange(0, nullptr);
+        }
+
+        BackingResourceStorage.InitStandalone(Resource.Get());
+        BackingResourceStorage.SetSize(PageSizeBytes);
+        BackingResourceStorage.SetResourceOffset(0);
+        BackingResourceStorage.SetGpuVirtualAddress(Resource->GetGPUVirtualAddress());
+        BackingResourceStorage.SetMappedBaseAddress(MappedBaseAddress);
     }
 
-    D3D12_RESOURCE_DESC Desc = {};
-    Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
-    Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
-    Desc.Format             = DXGI_FORMAT_UNKNOWN;
-    Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.Width              = PageSizeBytes;
-    Desc.Height             = 1;
-    Desc.DepthOrArraySize   = 1;
-    Desc.MipLevels          = 1;
-    Desc.Alignment          = 0;
-    Desc.SampleDesc.Count   = 1;
-    Desc.SampleDesc.Quality = 0;
-
-    Desc = ApplyTightAlignmentFlag(Desc);
-
-    FD3D12ResourceRef Resource;
-    if (!CurrentDevice->CreateCommittedResource(Desc, HeapType, InitialState, nullptr, Resource))
+    FD3D12Resource* PageResource = BackingResourceStorage.GetResource();
+    if (!PageResource)
     {
         return false;
     }
 
-    void* MappedBaseAddress = nullptr;
-    if (HeapType == D3D12_HEAP_TYPE_UPLOAD || HeapType == D3D12_HEAP_TYPE_READBACK)
+    if (BackingResourceStorage.GetStorageType() != EResourceStorageType::SuballocatedResource)
     {
-        MappedBaseAddress = Resource->MapRange(0, nullptr);
+        InitializeBufferResourceState(PageResource, ED3D12ResourceStateMode::SingleState, InitialState);
     }
 
-    BackingResourceStorage.InitStandalone(Resource.Get());
-    BackingResourceStorage.SetSize(PageSizeBytes);
-    BackingResourceStorage.SetResourceOffset(0);
-    BackingResourceStorage.SetGpuVirtualAddress(Resource->GetGPUVirtualAddress());
-    BackingResourceStorage.SetMappedBaseAddress(MappedBaseAddress);
     return true;
 }
 
@@ -1936,7 +1963,7 @@ bool FD3D12BufferAllocatorPool::Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOU
     return MultiBuddyAllocator.Supports(InHeapType, InInitialState, InAllocationStrategy, ResourceDesc.Flags);
 }
 
-bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InInitialState, uint64 InAlignment, FD3D12ResourceStorage& OutStorage)
+bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InInitialState, ED3D12ResourceStateMode InStateMode, uint64 InAlignment, FD3D12ResourceStorage& OutStorage)
 {
     D3D12_RESOURCE_DESC AllocationDesc = ApplyTightAlignmentFlag(ResourceDesc);
 
@@ -1962,6 +1989,8 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
         {
             return false;
         }
+
+        InitializeBufferResourceState(Resource.Get(), InStateMode, EffectiveInitialState);
 
         void* MappedBaseAddress = nullptr;
         if (InHeapType == D3D12_HEAP_TYPE_UPLOAD || InHeapType == D3D12_HEAP_TYPE_READBACK)
@@ -2011,6 +2040,8 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
         {
             return false;
         }
+
+        InitializeBufferResourceState(PlacedResource.Get(), InStateMode, EffectiveInitialState);
 
         OutStorage.SetResource(PlacedResource.Get());
         OutStorage.SetGpuVirtualAddress(PlacedResource->GetGPUVirtualAddress());
@@ -2167,7 +2198,7 @@ bool FD3D12BufferAllocator::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_
             continue;
         }
 
-        if (Pool->TryAllocate(InHeapType, AllocationDesc, EffectiveInitialState, Alignment, OutStorage))
+        if (Pool->TryAllocate(InHeapType, AllocationDesc, EffectiveInitialState, StateMode, Alignment, OutStorage))
         {
             return true;
         }
@@ -2181,7 +2212,7 @@ bool FD3D12BufferAllocator::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_
     }
 
     Pools.Add(NewPool);
-    return NewPool->TryAllocate(InHeapType, AllocationDesc, EffectiveInitialState, Alignment, OutStorage);
+    return NewPool->TryAllocate(InHeapType, AllocationDesc, EffectiveInitialState, StateMode, Alignment, OutStorage);
 }
 
 #else // D3D12_BUFFER_ALLOCATOR_USE_POOL_ALLOCATOR
@@ -2263,7 +2294,7 @@ bool FD3D12BufferAllocatorPool::Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOU
     return PoolAllocator.Supports(InHeapType, InInitialState, InAllocationStrategy, ResourceDesc, ResourceDesc.Flags);
 }
 
-bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InInitialState, uint64 InAlignment, FD3D12ResourceStorage& OutStorage)
+bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InInitialState, ED3D12ResourceStateMode InStateMode, uint64 InAlignment, FD3D12ResourceStorage& OutStorage)
 {
     D3D12_RESOURCE_DESC AllocationDesc = ApplyTightAlignmentFlag(ResourceDesc);
 
@@ -2286,6 +2317,8 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
         {
             return false;
         }
+
+        InitializeBufferResourceState(Resource.Get(), InStateMode, EffectiveInitialState);
 
         void* MappedBaseAddress = nullptr;
         if (InHeapType == D3D12_HEAP_TYPE_UPLOAD || InHeapType == D3D12_HEAP_TYPE_READBACK)
@@ -2337,8 +2370,14 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
             return false;
         }
 
+        InitializeBufferResourceState(PlacedResource.Get(), InStateMode, EffectiveInitialState);
+
         OutStorage.SetResource(PlacedResource.Get());
         OutStorage.SetGpuVirtualAddress(PlacedResource->GetGPUVirtualAddress());
+    }
+    else if (OutStorage.GetStorageType() == EResourceStorageType::Standalone)
+    {
+        InitializeBufferResourceState(OutStorage.GetResource(), InStateMode, EffectiveInitialState);
     }
 
     return true;
@@ -2513,7 +2552,7 @@ bool FD3D12BufferAllocator::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_
             continue;
         }
 
-        if (Pool->TryAllocate(InHeapType, AllocationDesc, EffectiveInitialState, Alignment, OutStorage))
+        if (Pool->TryAllocate(InHeapType, AllocationDesc, EffectiveInitialState, StateMode, Alignment, OutStorage))
         {
             return true;
         }
@@ -2527,7 +2566,7 @@ bool FD3D12BufferAllocator::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_
     }
 
     Pools.Add(NewPool);
-    return NewPool->TryAllocate(InHeapType, AllocationDesc, EffectiveInitialState, Alignment, OutStorage);
+    return NewPool->TryAllocate(InHeapType, AllocationDesc, EffectiveInitialState, StateMode, Alignment, OutStorage);
 }
 
 bool FD3D12BufferAllocator::GetDefragCandidate(FD3D12DefragCandidate& OutCandidate, FD3D12BufferAllocatorPool*& OutPool)

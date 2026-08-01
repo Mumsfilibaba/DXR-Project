@@ -198,8 +198,13 @@ public:
     }
 
     NODISCARD FORCEINLINE const FD3D12Resource* GetCounterResource() const
-    { 
-        return CounterResource.Get(); 
+    {
+        return CounterResource.Get();
+    }
+
+    NODISCARD FORCEINLINE FD3D12Resource* GetCounterResource()
+    {
+        return CounterResource.Get();
     }
 
 private:

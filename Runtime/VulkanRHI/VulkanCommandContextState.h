@@ -7,6 +7,7 @@
     #include "VulkanRHI/VulkanRenderPass.h"
 #endif
 
+class FVulkanBufferRHI;
 class FVulkanCommandContext;
 class FVulkanDescriptorState;
 class FVulkanResourceView;
@@ -25,12 +26,14 @@ struct FVulkanVertexBufferCache
     {
         Memory::Memzero(VertexBuffers, sizeof(VertexBuffers));
         Memory::Memzero(VertexBufferOffsets, sizeof(VertexBufferOffsets));
+        Memory::Memzero(BufferResources, sizeof(BufferResources));
         NumVertexBuffers = 0;
     }
 
-    VkBuffer     VertexBuffers[VULKAN_MAX_VERTEX_BUFFER_SLOTS];
-    VkDeviceSize VertexBufferOffsets[VULKAN_MAX_VERTEX_BUFFER_SLOTS];
-    uint32       NumVertexBuffers;
+    VkBuffer          VertexBuffers[VULKAN_MAX_VERTEX_BUFFER_SLOTS];
+    VkDeviceSize      VertexBufferOffsets[VULKAN_MAX_VERTEX_BUFFER_SLOTS];
+    FVulkanBufferRHI* BufferResources[VULKAN_MAX_VERTEX_BUFFER_SLOTS];
+    uint32            NumVertexBuffers;
 };
 
 struct FVulkanIndexBufferCache
@@ -42,14 +45,16 @@ struct FVulkanIndexBufferCache
 
     void Clear()
     {
-        IndexType   = VK_INDEX_TYPE_UINT32;
-        Offset      = 0;
-        IndexBuffer = VK_NULL_HANDLE;
+        IndexType      = VK_INDEX_TYPE_UINT32;
+        Offset         = 0;
+        IndexBuffer    = VK_NULL_HANDLE;
+        BufferResource = nullptr;
     }
 
-    VkBuffer     IndexBuffer;
-    VkDeviceSize Offset;
-    VkIndexType  IndexType;
+    VkBuffer          IndexBuffer;
+    VkDeviceSize      Offset;
+    VkIndexType       IndexType;
+    FVulkanBufferRHI* BufferResource;
 };
 
 struct FVulkanPushConstantsCache
@@ -81,13 +86,15 @@ struct FVulkanStreamOutputCache
         Memory::Memzero(Buffers, sizeof(Buffers));
         Memory::Memzero(Offsets, sizeof(Offsets));
         Memory::Memzero(Sizes, sizeof(Sizes));
+        Memory::Memzero(BufferResources, sizeof(BufferResources));
         NumBuffers = 0;
     }
 
-    VkBuffer     Buffers[VULKAN_MAX_STREAM_OUTPUT_BUFFER_COUNT];
-    VkDeviceSize Offsets[VULKAN_MAX_STREAM_OUTPUT_BUFFER_COUNT];
-    VkDeviceSize Sizes[VULKAN_MAX_STREAM_OUTPUT_BUFFER_COUNT];
-    uint32       NumBuffers;
+    VkBuffer          Buffers[VULKAN_MAX_STREAM_OUTPUT_BUFFER_COUNT];
+    VkDeviceSize      Offsets[VULKAN_MAX_STREAM_OUTPUT_BUFFER_COUNT];
+    VkDeviceSize      Sizes[VULKAN_MAX_STREAM_OUTPUT_BUFFER_COUNT];
+    FVulkanBufferRHI* BufferResources[VULKAN_MAX_STREAM_OUTPUT_BUFFER_COUNT];
+    uint32            NumBuffers;
 };
 
 struct FVulkanRenderTargetState
@@ -253,6 +260,12 @@ private:
 #if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     FVulkanRenderPassKey BuildRenderPassKey(const FVulkanRenderTargetState& RenderTargetState) const;
 #endif
+
+    void ResolveSampledImageLayouts(FVulkanDescriptorState* DescriptorState);
+    
+    void TransitionVertexAndIndexBuffers();
+    void TransitionRenderPassAttachments(const FVulkanRenderTargetState& RenderTargetState);
+    void TransitionAttachmentLayout(FVulkanResourceView* View, VkImageLayout Layout);
 
     struct FCachedDescriptorState
     {

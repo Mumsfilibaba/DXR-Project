@@ -20,6 +20,7 @@ struct FVulkanDescriptorSetKey
         uint64 Resource;
         uint64 Offset;
         uint64 Range;
+        uint64 Layout;
     };
 
     FVulkanDescriptorSetKey()
@@ -359,13 +360,15 @@ private:
         CHECK(pImageInfo != nullptr);
         
         const uint64 Resource = reinterpret_cast<uint64>(ImageView);
-        if (DescriptorSetKey.Resources[Binding].Resource != Resource)
+        const uint64 Layout   = static_cast<uint64>(ImageLayout);
+        if (DescriptorSetKey.Resources[Binding].Resource != Resource || DescriptorSetKey.Resources[Binding].Layout != Layout)
         {
             pImageInfo->sampler     = VK_NULL_HANDLE;
             pImageInfo->imageView   = ImageView;
             pImageInfo->imageLayout = ImageLayout;
             
             DescriptorSetKey.Resources[Binding].Resource = Resource;
+            DescriptorSetKey.Resources[Binding].Layout   = Layout;
             bKeyIsDirty = true;
         }
     }
@@ -423,6 +426,7 @@ public:
     void SetUniformBuffer(class FVulkanBufferRHI* UniformBuffer, uint32 DescriptorSetIndex, uint32 BindingIndex);
     void SetSampler(class FVulkanSamplerStateRHI* SamplerState, uint32 DescriptorSetIndex, uint32 BindingIndex);
 
+    void ResolveSampledImageLayouts(class FVulkanTextureRHI* ReadOnlyDepthTexture, VkImageLayout ReadOnlyDepthLayout);
     void TransitionBoundResources(class FVulkanCommandContext& Context);
 
     void UpdateDescriptorSets(class FVulkanTransientDescriptorAllocator* TransientAllocator);
@@ -481,12 +485,23 @@ public:
     }
 
 private:
-    
+
     // Binds all the DescriptorSets that we want to bind
     void BindDescriptorSets(class FVulkanCommandBuffer& CommandBuffer, VkPipelineBindPoint BindPoint);
 
     // Resets a particular bind point with null-descriptors to ensure that there is a valid resource bound
     void ResetDescriptorBinding(uint32 DescriptorSetIndex, uint32 BindingIndex);
+
+    // Remembers the buffer behind a buffer-view descriptor so that it can be transitioned before the next draw
+    void SetBoundBuffer(class FRHIResource* Resource, EResourceAccess Access, uint32 DescriptorSetIndex, uint32 BindingIndex);
+
+    // A buffer reached through a descriptor. Buffers are not tracked through their views like images are, so the
+    // buffer is remembered together with the access that its descriptor-type implies
+    struct FBoundBuffer
+    {
+        FVulkanBufferRHI* Buffer = nullptr;
+        EResourceAccess   Access = EResourceAccess::Common;
+    };
 
     FVulkanPipelineLayout*               Layout;
     const FVulkanDefaultResources&       DefaultResources;
@@ -496,6 +511,7 @@ private:
     TArray<FVulkanDescriptorPoolInfo>    DescriptorPoolInfos;
     uint64                               DescriptorSetVersion;
     TArray<TArray<FVulkanResourceView*>> BoundResourceViews;
+    TArray<TArray<FBoundBuffer>>         BoundBuffers;
     EVulkanDescriptorDirtyFlags          DirtyFlags = EVulkanDescriptorDirtyFlags::None;
     // Flat array of dynamic offsets passed directly to vkCmdBindDescriptorSets,
     // ordered by (set, binding). Indexed via DynamicOffsetBasePerSet + BindingToDynamicIndex.

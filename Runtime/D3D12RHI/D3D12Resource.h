@@ -178,7 +178,8 @@ public:
     void SetDebugName(const String& InDebugName);
     void GetDebugName(String& OutDebugName) const;
     
-    bool IsPlacedResource() const { return Heap != nullptr; }
+    bool IsPlacedResource()  const { return Heap != nullptr; }
+    bool IsHeapTypeDefault() const { return HeapType == D3D12_HEAP_TYPE_DEFAULT; }
 
     bool ShouldDeferredRelease() const { return bShouldDeferredRelease; }
     void DisableDeferredRelease()      { bShouldDeferredRelease = false; }
@@ -248,6 +249,16 @@ public:
         return NumSubresources;
     }
 
+    uint32 GetPlaneCount() const
+    {
+        return PlaneCount;
+    }
+
+    bool HasMultiplePlanes() const
+    {
+        return PlaneCount > 1;
+    }
+
     ID3D12Resource* GetD3D12Resource() const 
     { 
         return Resource.Get(); 
@@ -278,6 +289,7 @@ private:
     FD3D12HeapRef             Heap;
     uint64                    AllocationSize;
     uint32                    NumSubresources;
+    uint32                    PlaneCount;
     bool                      bShouldDeferredRelease : 1;
     bool                      bHasClearValue : 1;
     bool                      bHasDefaultState : 1;

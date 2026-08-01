@@ -177,16 +177,10 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, EResour
     }
 
     FD3D12Resource* D3D12Resource = ResourceStorage.GetResource();
-    D3D12Resource->SetResourceStateMode(StateMode);
 
     const bool bHasDefaultState = D3D12DefaultState != D3D12_RESOURCE_STATES(0);
-    if (bHasDefaultState)
-    {
-        D3D12Resource->SetDefaultState(D3D12DefaultState);
-    }
-
-    const bool bPlaced       = D3D12Resource->IsPlacedResource();
-    const bool bMappedUpload = InInitialData && (Desc.IsDynamic() || Desc.IsTransient());
+    const bool bPlaced          = D3D12Resource->IsPlacedResource();
+    const bool bMappedUpload    = InInitialData && (Desc.IsDynamic() || Desc.IsTransient());
 
     if (bMappedUpload)
     {

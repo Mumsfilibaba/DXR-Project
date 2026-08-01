@@ -228,6 +228,10 @@ bool FD3D12OpacityMicromapRHI::Build(FD3D12CommandContext& CmdContext, const FRH
     BuildAS.DestAccelerationStructureData    = ResultResourceStorage.GetGPUVirtualAddress();
     BuildAS.ScratchAccelerationStructureData = ScratchResourceStorage.GetGPUVirtualAddress();
 
+    CmdContext.TransitionTrackedResourceState(DescBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    CmdContext.TransitionTrackedResourceState(DataBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    CmdContext.TransitionTrackedResourceState(ScratchResourceStorage.GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
     CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandList());
     CmdContext.GetCommandList().GetGraphicsCommandList4()->BuildRaytracingAccelerationStructure(&BuildAS, 0, nullptr);
     return true;
@@ -367,8 +371,6 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
         {
             return false;
         }
-
-        CmdContext.GetBarrierBatcher().AddTransitionBarrier(ScratchResourceStorage.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     }
 
     UpdateAccelerationStructureMemoryStat();
@@ -377,6 +379,10 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
     AccelerationStructureDesc.Inputs                           = Inputs;
     AccelerationStructureDesc.DestAccelerationStructureData    = ResultResourceStorage.GetGPUVirtualAddress();
     AccelerationStructureDesc.ScratchAccelerationStructureData = ScratchResourceStorage.GetGPUVirtualAddress();
+
+    CmdContext.TransitionTrackedResourceState(VertexBuffer.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    CmdContext.TransitionTrackedResourceState(IndexBuffer.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    CmdContext.TransitionTrackedResourceState(ScratchResourceStorage.GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
     CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandList());
 
@@ -560,8 +566,6 @@ bool FD3D12SceneAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext
         {
             return false;
         }
-
-        CmdContext.GetBarrierBatcher().AddTransitionBarrier(ScratchResourceStorage.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     }
 
     TArray<D3D12_RAYTRACING_INSTANCE_DESC> InstanceDescs;
@@ -612,13 +616,11 @@ bool FD3D12SceneAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext
         {
             InstanceBuffer = Buffer;
         }
-
-        CmdContext.GetBarrierBatcher().AddTransitionBarrier(InstanceBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
     }
 
-    CmdContext.GetBarrierBatcher().AddTransitionBarrier(InstanceBuffer.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+    // UpdateBuffer takes the instance buffer to COPY_DEST itself, the build then reads it as a shader resource.
     CmdContext.UpdateBuffer(InstanceBuffer.Get(), FBufferRegion(0, InstanceDescs.SizeInBytes()), InstanceDescs.Data());
-    CmdContext.GetBarrierBatcher().AddTransitionBarrier(InstanceBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    CmdContext.TransitionTrackedResourceState(InstanceBuffer.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
     UpdateAccelerationStructureMemoryStat();
 

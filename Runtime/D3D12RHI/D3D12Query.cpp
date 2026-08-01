@@ -102,6 +102,9 @@ bool FD3D12QueryHeap::Initialize()
         return false;
     }
 
+    ReadbackResource->SetResourceStateMode(ED3D12ResourceStateMode::SingleState);
+    ReadbackResource->SetDefaultState(D3D12_RESOURCE_STATE_COPY_DEST);
+
     QueryHeap = NewQueryHeap;
 
     ResidencyHandle.Initialize(QueryHeap.Get(), QueryHeapDesc.Count * ResultStride);
