@@ -154,6 +154,11 @@ public:
     void TransitionImageLayout(FVulkanUnorderedAccessViewRHI* View);
     void TransitionImageLayout(FVulkanShaderResourceViewRHI* View, VkImageLayout Layout);
 
+    void RequireBufferState(class FVulkanBufferRHI* Buffer, EResourceAccess RequiredState);
+    void RequireBufferState(FVulkanUnorderedAccessViewRHI* View, EResourceAccess RequiredState);
+
+    void AddAccelerationStructureMemoryBarrier();
+
     void ObtainCommandBuffer();
     void FinishCommandBuffer(bool bFlushPool, bool bResolveQueries = true, FVulkanFence** OutFence = nullptr);
     void SplitCommandBuffer(bool bFlushPool, bool bWaitForQueue);
@@ -208,8 +213,6 @@ private:
     
     void CloseEventStack();
     void ReopenEventStack();
-
-    void RequireBufferState(class FVulkanBufferRHI* Buffer, EResourceAccess RequiredState);
 
     FVulkanBufferState&      RetrievePendingBufferState(class FVulkanBufferRHI* Buffer);
     FVulkanImageLayoutState& RetrievePendingImageState(class FVulkanTextureRHI* Texture);

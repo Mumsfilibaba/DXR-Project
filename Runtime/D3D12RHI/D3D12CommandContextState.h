@@ -138,6 +138,8 @@ private:
     bool PrepareResources(FD3D12RootSignature* InRootSignature, const FD3D12EffectiveDescriptorCounts* InPipelineState, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
     bool PrepareSamplers(FD3D12RootSignature* InRootSignature, const FD3D12EffectiveDescriptorCounts* InPipelineState, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
 
+    void TransitionVertexAndIndexBuffers();
+
     void BindResources(FD3D12RootSignature* InRootSignature, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
     void BindSamplers(FD3D12RootSignature* InRootSignature, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
 

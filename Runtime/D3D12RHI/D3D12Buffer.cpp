@@ -177,26 +177,10 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, EResour
     }
 
     FD3D12Resource* D3D12Resource = ResourceStorage.GetResource();
+
     const bool bHasDefaultState = D3D12DefaultState != D3D12_RESOURCE_STATES(0);
-
-    // Suballocated buffers share one ID3D12Resource with every other buffer on the page, so this metadata is
-    // shared too. Pool segregation by initial state is what keeps the writes consistent between tenants;
-    // assert on that rather than silently reinterpreting the page for the buffers already living on it.
-    if (ResourceStorage.GetStorageType() == EResourceStorageType::SuballocatedResource && D3D12Resource->HasDefaultState())
-    {
-        CHECK(bHasDefaultState && D3D12Resource->GetDefaultState() == D3D12DefaultState);
-        CHECK(D3D12Resource->GetResourceStateMode() == StateMode);
-    }
-
-    D3D12Resource->SetResourceStateMode(StateMode);
-
-    if (bHasDefaultState)
-    {
-        D3D12Resource->SetDefaultState(D3D12DefaultState);
-    }
-
-    const bool bPlaced       = D3D12Resource->IsPlacedResource();
-    const bool bMappedUpload = InInitialData && (Desc.IsDynamic() || Desc.IsTransient());
+    const bool bPlaced          = D3D12Resource->IsPlacedResource();
+    const bool bMappedUpload    = InInitialData && (Desc.IsDynamic() || Desc.IsTransient());
 
     if (bMappedUpload)
     {

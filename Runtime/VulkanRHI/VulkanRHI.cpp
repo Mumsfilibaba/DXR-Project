@@ -1583,6 +1583,26 @@ VkPipelineStageFlags2 FVulkanDeviceRHI::ResourceStateToPipelineStageFlags(EResou
         Stages |= VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT;
     }
 
+#if VK_EXT_transform_feedback
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::StreamOutput))
+    {
+        Stages |= GVulkanSupportsTransformFeedback ? VK_PIPELINE_STAGE_2_TRANSFORM_FEEDBACK_BIT_EXT : VK_PIPELINE_STAGE_2_NONE;
+    }
+#endif
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::RayTracingAccelerationStructure))
+    {
+        if (GVulkanSupportsAccelerationStructures)
+        {
+            Stages |= VK_PIPELINE_STAGE_2_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
+        }
+
+        if (GVulkanSupportsRayTracingPipeline)
+        {
+            Stages |= VK_PIPELINE_STAGE_2_RAY_TRACING_SHADER_BIT_KHR;
+        }
+    }
+
     return Stages != VK_PIPELINE_STAGE_2_NONE ? Stages : VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
 }
 
@@ -1677,6 +1697,18 @@ VkAccessFlags2 FVulkanDeviceRHI::ResourceStateToAccessFlags(EResourceAccess Reso
     if (IsEnumFlagSet(ResourceState, EResourceAccess::IndirectArgument))
     {
         Access |= VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT;
+    }
+
+#if VK_EXT_transform_feedback
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::StreamOutput))
+    {
+        Access |= GVulkanSupportsTransformFeedback ? VK_ACCESS_2_TRANSFORM_FEEDBACK_WRITE_BIT_EXT : VK_ACCESS_2_NONE;
+    }
+#endif
+
+    if (IsEnumFlagSet(ResourceState, EResourceAccess::RayTracingAccelerationStructure) && GVulkanSupportsAccelerationStructures)
+    {
+        Access |= VK_ACCESS_2_ACCELERATION_STRUCTURE_READ_BIT_KHR | VK_ACCESS_2_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
     }
 
     return Access;

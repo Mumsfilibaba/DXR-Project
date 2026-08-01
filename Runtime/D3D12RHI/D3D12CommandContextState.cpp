@@ -83,45 +83,26 @@ void FD3D12CommandContextState::PrepareGraphicsState()
         Context.TransitionResourceState(DepthStencilView, DesiredState);
     }
 
+    TransitionVertexAndIndexBuffers();
+
+#if D3D12_USE_ID3D12COMMANDLIST_5
+    Context.TransitionTrackedResourceState(CommonGraphicsState.ShadingRateImage, D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE);
+#endif
+}
+
+void FD3D12CommandContextState::TransitionVertexAndIndexBuffers()
+{
     for (uint32 i = 0; i < GraphicsState.VertexBufferCache.NumVertexBuffers; i++)
     {
-        if (FD3D12BufferRHI* Buffer = GraphicsState.VertexBufferCache.BufferResources[i])
-        {
-            if (Buffer->GetResource()->RequiresResourceStateTracking())
-            {
-                Context.TransitionResourceState(Buffer->GetResource(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-            }
-        }
+        Context.TransitionTrackedResourceState(GraphicsState.VertexBufferCache.BufferResources[i], D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
     }
 
-    if (FD3D12BufferRHI* Buffer = GraphicsState.IndexBufferCache.BufferResource)
-    {
-        if (Buffer->GetResource()->RequiresResourceStateTracking())
-        {
-            Context.TransitionResourceState(Buffer->GetResource(), D3D12_RESOURCE_STATE_INDEX_BUFFER);
-        }
-    }
+    Context.TransitionTrackedResourceState(GraphicsState.IndexBufferCache.BufferResource, D3D12_RESOURCE_STATE_INDEX_BUFFER);
 
     for (uint32 i = 0; i < GraphicsState.NumSOBuffers; i++)
     {
-        if (FD3D12BufferRHI* Buffer = GraphicsState.SOBuffers[i])
-        {
-            if (Buffer->GetResource()->RequiresResourceStateTracking())
-            {
-                Context.TransitionResourceState(Buffer->GetResource(), D3D12_RESOURCE_STATE_STREAM_OUT);
-            }
-        }
+        Context.TransitionTrackedResourceState(GraphicsState.SOBuffers[i], D3D12_RESOURCE_STATE_STREAM_OUT);
     }
-
-#if D3D12_USE_ID3D12COMMANDLIST_5
-    if (FD3D12TextureRHI* ShadingRateTexture = CommonGraphicsState.ShadingRateImage)
-    {
-        if (ShadingRateTexture->GetResource()->RequiresResourceStateTracking())
-        {
-            Context.TransitionResourceState(ShadingRateTexture->GetResource(), D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE);
-        }
-    }
-#endif
 }
 
 void FD3D12CommandContextState::BindGraphicsState()
@@ -399,14 +380,10 @@ void FD3D12CommandContextState::PrepareMeshletState()
         Context.TransitionResourceState(DepthStencilView, DesiredState);
     }
 
+    TransitionVertexAndIndexBuffers();
+
 #if D3D12_USE_ID3D12COMMANDLIST_5
-    if (FD3D12TextureRHI* ShadingRateTexture = CommonGraphicsState.ShadingRateImage)
-    {
-        if (ShadingRateTexture->GetResource()->RequiresResourceStateTracking())
-        {
-            Context.TransitionResourceState(ShadingRateTexture->GetResource(), D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE);
-        }
-    }
+    Context.TransitionTrackedResourceState(CommonGraphicsState.ShadingRateImage, D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE);
 #endif
 }
 
@@ -811,10 +788,7 @@ bool FD3D12CommandContextState::PrepareResources(FD3D12RootSignature* RootSignat
                 const uint16 Register = CBVMapping.GetRegisterForSlot(static_cast<uint8>(Slot));
                 if (FD3D12BufferRHI* Buffer = CBVCache[Register])
                 {
-                    if (Buffer->GetResource()->RequiresResourceStateTracking())
-                    {
-                        Context.TransitionResourceState(Buffer->GetResource(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-                    }
+                    Context.TransitionTrackedResourceState(Buffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
                     if (!bAlreadyDirty)
                     {
@@ -842,10 +816,7 @@ bool FD3D12CommandContextState::PrepareResources(FD3D12RootSignature* RootSignat
                 const uint16 Register = Stage.GetRootCBVRegister(RootCBVIdx);
                 if (FD3D12BufferRHI* Buffer = CBVCache[Register])
                 {
-                    if (Buffer->GetResource()->RequiresResourceStateTracking())
-                    {
-                        Context.TransitionResourceState(Buffer->GetResource(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-                    }
+                    Context.TransitionTrackedResourceState(Buffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
                     if (FD3D12ConstantBufferView* View = Buffer->GetOrCreateConstantBufferView())
                     {

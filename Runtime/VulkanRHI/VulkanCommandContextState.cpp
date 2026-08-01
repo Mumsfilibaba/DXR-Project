@@ -4,6 +4,24 @@
 #include "VulkanRHI/VulkanResourceViews.h"
 #include "VulkanRHI/VulkanRHI.h"
 
+static VkImageLayout GetDepthStencilAttachmentLayout(const FVulkanDepthStencilViewRHI* DepthStencilView)
+{
+    if (DepthStencilView->IsReadOnly())
+    {
+        return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+    }
+    else if (DepthStencilView->IsDepthReadOnly())
+    {
+        return VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL;
+    }
+    else if (DepthStencilView->IsStencilReadOnly())
+    {
+        return VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL;
+    }
+
+    return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+}
+
 FVulkanCommandContextState::FVulkanCommandContextState(FVulkanDevice* InDevice, FVulkanCommandContext& InContext)
     : FVulkanDeviceChild(InDevice)
     , GraphicsState()
@@ -63,6 +81,8 @@ void FVulkanCommandContextState::PrepareGraphicsState()
     CHECK(PipelineLayout != nullptr);
 
     CHECK(PipelineLayout == GraphicsState.CurrentDescriptorState->GetLayout());
+    ResolveSampledImageLayouts(GraphicsState.CurrentDescriptorState);
+
     if (GraphicsState.CurrentDescriptorState->IsResourcesDirty())
     {
         GraphicsState.CurrentDescriptorState->UpdateDescriptorSets(Context.GetTransientDescriptorAllocator());
@@ -70,6 +90,7 @@ void FVulkanCommandContextState::PrepareGraphicsState()
     }
 
     GraphicsState.CurrentDescriptorState->TransitionBoundResources(Context);
+    TransitionVertexAndIndexBuffers();
 
     if (Context.GetBarrierBatcher().HasPendingBarriers())
     {
@@ -85,6 +106,51 @@ void FVulkanCommandContextState::PrepareGraphicsState()
     {
         ResumeRenderPass();
     }
+}
+
+void FVulkanCommandContextState::ResolveSampledImageLayouts(FVulkanDescriptorState* DescriptorState)
+{
+    FVulkanTextureRHI* ReadOnlyDepthTexture = nullptr;
+    if (FVulkanResourceView* DepthStencilView = CommonGraphicsState.RenderTargetState.DepthStencilView)
+    {
+        if (GetDepthStencilAttachmentLayout(static_cast<const FVulkanDepthStencilViewRHI*>(DepthStencilView)) == VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL)
+        {
+            ReadOnlyDepthTexture = static_cast<FVulkanTextureRHI*>(DepthStencilView->GetOwnerResource());
+        }
+    }
+
+    DescriptorState->ResolveSampledImageLayouts(ReadOnlyDepthTexture, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+}
+
+void FVulkanCommandContextState::TransitionVertexAndIndexBuffers()
+{
+    const FVulkanVertexBufferCache& VertexBufferCache = GraphicsState.VertexBufferCache;
+    for (uint32 Index = 0; Index < VertexBufferCache.NumVertexBuffers; Index++)
+    {
+        if (FVulkanBufferRHI* VertexBuffer = VertexBufferCache.BufferResources[Index])
+        {
+            Context.RequireBufferState(VertexBuffer, EResourceAccess::VertexBuffer);
+        }
+    }
+
+    if (FVulkanBufferRHI* IndexBuffer = GraphicsState.IndexBufferCache.BufferResource)
+    {
+        Context.RequireBufferState(IndexBuffer, EResourceAccess::IndexBuffer);
+    }
+
+#if VK_EXT_transform_feedback
+    if (GVulkanSupportsTransformFeedback)
+    {
+        const FVulkanStreamOutputCache& StreamOutputCache = GraphicsState.StreamOutputCache;
+        for (uint32 Index = 0; Index < StreamOutputCache.NumBuffers; Index++)
+        {
+            if (FVulkanBufferRHI* StreamOutputBuffer = StreamOutputCache.BufferResources[Index])
+            {
+                Context.RequireBufferState(StreamOutputBuffer, EResourceAccess::StreamOutput);
+            }
+        }
+    }
+#endif
 }
 
 void FVulkanCommandContextState::BindGraphicsState()
@@ -237,6 +303,8 @@ void FVulkanCommandContextState::PrepareMeshletState()
     CHECK(PipelineLayout != nullptr);
 
     CHECK(PipelineLayout == MeshletState.CurrentDescriptorState->GetLayout());
+    ResolveSampledImageLayouts(MeshletState.CurrentDescriptorState);
+
     if (MeshletState.CurrentDescriptorState->IsResourcesDirty())
     {
         MeshletState.CurrentDescriptorState->UpdateDescriptorSets(Context.GetTransientDescriptorAllocator());
@@ -244,6 +312,7 @@ void FVulkanCommandContextState::PrepareMeshletState()
     }
 
     MeshletState.CurrentDescriptorState->TransitionBoundResources(Context);
+    TransitionVertexAndIndexBuffers();
 
     if (Context.GetBarrierBatcher().HasPendingBarriers())
     {
@@ -601,6 +670,8 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
         RenderTargetState.RenderingViewMask = ViewMask;
     }
 
+    TransitionRenderPassAttachments(RenderTargetState);
+
     Context.GetBarrierBatcher().FlushBarriers(Context.GetCommandBuffer());
 
     if (GVulkanUseDynamicRendering)
@@ -628,23 +699,9 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
             const FVulkanDepthStencilViewRHI* DepthStencilView = static_cast<const FVulkanDepthStencilViewRHI*>(RenderTargetState.DepthStencilView);
             bHasStencil = DepthStencilView->HasStencilFormat();
 
-            VkImageLayout DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-            if (DepthStencilView->IsReadOnly())
-            {
-                DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-            }
-            else if (DepthStencilView->IsDepthReadOnly())
-            {
-                DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL;
-            }
-            else if (DepthStencilView->IsStencilReadOnly())
-            {
-                DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL;
-            }
-
             DepthStencilAttachmentInfo.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             DepthStencilAttachmentInfo.imageView   = RenderTargetState.DepthStencilView->GetImageViewInfo().ImageView;
-            DepthStencilAttachmentInfo.imageLayout = DepthStencilLayout;
+            DepthStencilAttachmentInfo.imageLayout = GetDepthStencilAttachmentLayout(DepthStencilView);
             DepthStencilAttachmentInfo.loadOp      = ConvertLoadAction(DepthStencilAttachment.LoadAction);
             DepthStencilAttachmentInfo.storeOp     = ConvertStoreAction(DepthStencilAttachment.StoreAction);
             DepthStencilAttachmentInfo.clearValue  = DepthStencilClearValue;
@@ -732,6 +789,37 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
     ContextPhase = ECommandContextPhase::InsideRenderPass;
 }
 
+void FVulkanCommandContextState::TransitionRenderPassAttachments(const FVulkanRenderTargetState& RenderTargetState)
+{
+    for (uint32 Index = 0; Index < RenderTargetState.NumRenderTargets; Index++)
+    {
+        TransitionAttachmentLayout(RenderTargetState.RenderTargetViews[Index], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    }
+
+    if (FVulkanResourceView* DepthStencilView = RenderTargetState.DepthStencilView)
+    {
+        const VkImageLayout DepthStencilLayout = GetDepthStencilAttachmentLayout(static_cast<const FVulkanDepthStencilViewRHI*>(DepthStencilView));
+        TransitionAttachmentLayout(DepthStencilView, DepthStencilLayout);
+    }
+}
+
+void FVulkanCommandContextState::TransitionAttachmentLayout(FVulkanResourceView* View, VkImageLayout Layout)
+{
+    if (!View)
+    {
+        return;
+    }
+
+    FVulkanTextureRHI* Texture = static_cast<FVulkanTextureRHI*>(View->GetOwnerResource());
+    if (!Texture)
+    {
+        return;
+    }
+
+    const VkImageSubresourceRange& Range = View->GetImageViewInfo().SubresourceRange;
+    Context.TransitionImageLayout(Texture, Layout, Range.baseMipLevel, Range.levelCount, Range.baseArrayLayer, Range.layerCount);
+}
+
 void FVulkanCommandContextState::EndRenderPass()
 {
     CHECK(IsInsideRenderPass());
@@ -798,23 +886,9 @@ void FVulkanCommandContextState::ResumeRenderPass()
             const FVulkanDepthStencilViewRHI* DepthStencilView = static_cast<const FVulkanDepthStencilViewRHI*>(RenderTargetState.DepthStencilView);
             bHasStencil = DepthStencilView->HasStencilFormat();
 
-            VkImageLayout DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-            if (DepthStencilView->IsReadOnly())
-            {
-                DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-            }
-            else if (DepthStencilView->IsDepthReadOnly())
-            {
-                DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL;
-            }
-            else if (DepthStencilView->IsStencilReadOnly())
-            {
-                DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL;
-            }
-
             DepthStencilAttachment.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             DepthStencilAttachment.imageView   = RenderTargetState.DepthStencilView->GetImageViewInfo().ImageView;
-            DepthStencilAttachment.imageLayout = DepthStencilLayout;
+            DepthStencilAttachment.imageLayout = GetDepthStencilAttachmentLayout(DepthStencilView);
             DepthStencilAttachment.loadOp      = VK_ATTACHMENT_LOAD_OP_LOAD;
             DepthStencilAttachment.storeOp     = ConvertStoreAction(RenderTargetState.DepthStencilStoreAction);
 
@@ -1074,15 +1148,17 @@ void FVulkanCommandContextState::SetStreamOutputTargets(const TArrayView<FRHIBuf
         FVulkanBufferRHI* VulkanBuffer = FVulkanDeviceRHI::ResourceCast(Buffers[Index]);
         if (VulkanBuffer)
         {
-            GraphicsState.StreamOutputCache.Buffers[Index] = VulkanBuffer->GetVkBuffer();
-            GraphicsState.StreamOutputCache.Offsets[Index] = Offsets ? Offsets[Index] : 0;
-            GraphicsState.StreamOutputCache.Sizes[Index]   = VulkanBuffer->GetDesc().Size;
+            GraphicsState.StreamOutputCache.Buffers[Index]         = VulkanBuffer->GetVkBuffer();
+            GraphicsState.StreamOutputCache.Offsets[Index]         = Offsets ? Offsets[Index] : 0;
+            GraphicsState.StreamOutputCache.Sizes[Index]           = VulkanBuffer->GetDesc().Size;
+            GraphicsState.StreamOutputCache.BufferResources[Index] = VulkanBuffer;
         }
         else
         {
-            GraphicsState.StreamOutputCache.Buffers[Index] = VK_NULL_HANDLE;
-            GraphicsState.StreamOutputCache.Offsets[Index] = 0;
-            GraphicsState.StreamOutputCache.Sizes[Index]   = 0;
+            GraphicsState.StreamOutputCache.Buffers[Index]         = VK_NULL_HANDLE;
+            GraphicsState.StreamOutputCache.Offsets[Index]         = 0;
+            GraphicsState.StreamOutputCache.Sizes[Index]           = 0;
+            GraphicsState.StreamOutputCache.BufferResources[Index] = nullptr;
         }
     }
 
@@ -1109,6 +1185,8 @@ void FVulkanCommandContextState::SetVertexBuffer(FVulkanBufferRHI* VertexBuffer,
 
     VkBuffer     CurrentBuffer = GraphicsState.VertexBufferCache.VertexBuffers[VertexBufferSlot];
     VkDeviceSize CurrentOffset = GraphicsState.VertexBufferCache.VertexBufferOffsets[VertexBufferSlot];
+
+    GraphicsState.VertexBufferCache.BufferResources[VertexBufferSlot] = VertexBuffer;
 
     if (Buffer != CurrentBuffer || Offset != CurrentOffset || GVulkanForceBinding)
     {
@@ -1138,6 +1216,8 @@ void FVulkanCommandContextState::SetIndexBuffer(FVulkanBufferRHI* IndexBuffer, V
     VkBuffer     CurrentBuffer    = GraphicsState.IndexBufferCache.IndexBuffer;
     VkDeviceSize CurrentOffset    = GraphicsState.IndexBufferCache.Offset;
     VkIndexType  CurrentIndexType = GraphicsState.IndexBufferCache.IndexType;
+
+    GraphicsState.IndexBufferCache.BufferResource = IndexBuffer;
 
     if (Buffer != CurrentBuffer || Offset != CurrentOffset || IndexType != CurrentIndexType || GVulkanForceBinding)
     {

@@ -142,11 +142,15 @@ public:
     void TransitionResourceState(FD3D12Resource* Resource, D3D12_RESOURCE_STATES AfterState);
     void TransitionResourceState(FD3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
     void TransitionResourceState(FD3D12Resource* Resource, D3D12_RESOURCE_STATES AfterState, uint32 FirstMip, uint32 NumMips, uint32 FirstArraySlice, uint32 NumArraySlices);
-
+    
     void TransitionResourceState(FD3D12UnorderedAccessViewRHI* View);
     void TransitionResourceState(FD3D12ShaderResourceViewRHI* View, D3D12_RESOURCE_STATES State);
     void TransitionResourceState(FD3D12RenderTargetViewRHI* View);
     void TransitionResourceState(FD3D12DepthStencilViewRHI* View, D3D12_RESOURCE_STATES State);
+
+    void TransitionTrackedResourceState(FD3D12Resource* Resource, D3D12_RESOURCE_STATES AfterState);
+    void TransitionTrackedResourceState(FD3D12BufferRHI* Buffer, D3D12_RESOURCE_STATES AfterState);
+    void TransitionTrackedResourceState(FD3D12TextureRHI* Texture, D3D12_RESOURCE_STATES AfterState);
 
     void AliasingBarrier(FD3D12Resource* ResourceAfter, ID3D12Resource* ResourceBefore = nullptr);
 
@@ -192,6 +196,9 @@ private:
     void AddPendingBarrier(FD3D12Resource* Resource, D3D12_RESOURCE_STATES DesiredState, uint32 Subresource);
 
     void EnsureDefaultState(const FD3D12Resource* Resource) const;
+    void EnsureResourceState(const FD3D12Resource* Resource, D3D12_RESOURCE_STATES RequiredState) const;
+
+    NODISCARD D3D12_RESOURCE_STATES GetTrackedResourceState(const FD3D12Resource* Resource) const;
 
     FD3D12CommandList*                         CommandList;
     FD3D12CommandAllocator*                    CommandAllocator;
