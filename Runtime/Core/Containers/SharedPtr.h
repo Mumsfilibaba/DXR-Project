@@ -1508,19 +1508,3 @@ NODISCARD FORCEINLINE TSharedPtr<ToType> ReinterpretCastSharedPtr(TSharedPtr<Fro
     Type* NewObject = reinterpret_cast<Type*>(Object.Get());
     return TSharedPtr<ToType>(Move(Object), NewObject);
 }
-
-template<typename ToType, typename FromType>
-NODISCARD FORCEINLINE TSharedPtr<ToType> DynamicCastSharedPtr(const TSharedPtr<FromType>& Object) requires(TIsArray<ToType>::Value == TIsArray<FromType>::Value)
-{
-    typedef typename TRemoveExtent<ToType>::Type Type;
-    Type* NewObject = dynamic_cast<Type*>(Object.Get());
-    return TSharedPtr<ToType>(Object, NewObject);
-}
-
-template<typename ToType, typename FromType>
-NODISCARD FORCEINLINE TSharedPtr<ToType> DynamicCastSharedPtr(TSharedPtr<FromType>&& Object) requires(TIsArray<ToType>::Value == TIsArray<FromType>::Value)
-{
-    typedef typename TRemoveExtent<ToType>::Type Type;
-    Type* NewObject = dynamic_cast<Type*>(Object.Get());
-    return TSharedPtr<ToType>(Move(Object), NewObject);
-}
