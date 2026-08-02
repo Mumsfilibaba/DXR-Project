@@ -6,6 +6,7 @@
 
 bool FMacPlatformSystemClipboard::HasText()
 {
+    return FMacThreadManager::Get().MainThreadDispatchAndReturn(^
     {
         CHECK_COCOA_MAIN_THREAD();
         SCOPED_AUTORELEASE_POOL();
