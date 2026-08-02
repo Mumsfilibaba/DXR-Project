@@ -44,6 +44,7 @@ public:
     bool UpdateFontAtlas();
 
     void Render(FRHICommandList& CommandList);
+    void RenderPlatformWindows(FRHICommandList& CommandList);
     void RenderViewport(FRHICommandList& CommandList, ImDrawData* DrawData, FImGuiViewport& ViewportData, bool bClear);
     
     void OnCreateWindow(ImGuiViewport* InViewport);

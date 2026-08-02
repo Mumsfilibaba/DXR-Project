@@ -42,6 +42,7 @@ public:
     virtual void NewFrame(float DeltaTime) override final;
     virtual void Tick(float DeltaTime) override final;
     virtual void Draw(FRHICommandList& CommandList) override final;
+    virtual void DrawViewports(FRHICommandList& CommandList) override final;
 
     virtual FDelegateHandle AddBeginFrameDelegate(const FImGuiDelegate& Delegate) override final;
     virtual FDelegateHandle AddDrawDelegate(const FImGuiDelegate& Delegate) override final;

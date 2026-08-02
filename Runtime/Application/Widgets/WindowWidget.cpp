@@ -14,6 +14,7 @@ FWindowWidget::FWindowWidget()
     , CachedSize()
     , StyleFlags(EWindowStyleFlags::None)
     , bActivateOnShow(true)
+    , bAcceptsInput(true)
     , Overlay()
     , Content()
     , PlatformWindow(nullptr)
@@ -32,6 +33,7 @@ void FWindowWidget::Initialize(const FInitializer& Initializer)
     StyleFlags         = Initializer.StyleFlags;
     ParentWindowWidget = Initializer.ParentWindow;
     bActivateOnShow    = Initializer.bActivateOnShow;
+    bAcceptsInput      = Initializer.bAcceptsInput;
 
     // Windows should always receive focus, if the OS puts focus on the platform-window
     FWidget::SetActivationPolicy(EWidgetActivationPolicy::AutoFocusOnWindowActivate);
@@ -305,6 +307,19 @@ void FWindowWidget::SetStyle(EWindowStyleFlags InStyleFlags)
     }
 }
 
+void FWindowWidget::SetAcceptsInput(bool bInAcceptsInput)
+{
+    if (bAcceptsInput != bInAcceptsInput)
+    {
+        bAcceptsInput = bInAcceptsInput;
+
+        if (PlatformWindow)
+        {
+            PlatformWindow->SetAcceptsInput(bInAcceptsInput);
+        }
+    }
+}
+
 void FWindowWidget::SetPlatformWindow(const TSharedRef<FGenericWindow>& InPlatformWindow)
 {
     PlatformWindow = InPlatformWindow;
@@ -319,7 +334,8 @@ void FWindowWidget::SetPlatformWindow(const TSharedRef<FGenericWindow>& InPlatfo
         
         PlatformWindow->GetTitle(Title);
         
-        StyleFlags = PlatformWindow->GetStyle();
+        StyleFlags    = PlatformWindow->GetStyle();
+        bAcceptsInput = PlatformWindow->GetAcceptsInput();
     }
 }
 

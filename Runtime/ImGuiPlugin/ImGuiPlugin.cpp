@@ -497,6 +497,15 @@ void FImGuiPlugin::NewFrame(float DeltaTime)
         }
     }
 
+    ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
+    for (ImGuiViewport* PlatformViewport : PlatformState.Viewports)
+    {
+        if (FWindowWidget* ViewportWindow = reinterpret_cast<FWindowWidget*>(PlatformViewport->PlatformHandle))
+        {
+            ViewportWindow->SetAcceptsInput((PlatformViewport->Flags & ImGuiViewportFlags_NoInputs) == 0);
+        }
+    }
+
     ImGuiID MouseViewportID = 0;
     if (TSharedPtr<FWindowWidget> WindowUnderCursor = FApplication::Get().FindWindowUnderCursor())
     {
@@ -592,6 +601,14 @@ void FImGuiPlugin::Draw(FRHICommandList& CommandList)
     }
 }
 
+void FImGuiPlugin::DrawViewports(FRHICommandList& CommandList)
+{
+    if (Renderer)
+    {
+        Renderer->RenderPlatformWindows(CommandList);
+    }
+}
+
 FDelegateHandle FImGuiPlugin::AddDrawDelegate(const FImGuiDelegate& Delegate)
 {
     return DrawDelegates.Add(Delegate);
@@ -673,6 +690,9 @@ void FImGuiPlugin::UpdateMonitorInfo()
 {
     FApplication::Get().GetDisplayInfo(MonitorInfos);
 
+    // Rebound on every display change, so the list has to be emptied or it accumulates duplicates.
+    ImGui::GetPlatformIO().Monitors.resize(0);
+
     for (const FMonitorInfo& MonitorInfo : MonitorInfos)
     {
         ImGuiPlatformMonitor ImGuiMonitor;
@@ -727,6 +747,7 @@ void FImGuiPlugin::OnCreatePlatformWindow(ImGuiViewport* Viewport)
     WindowInitializer.StyleFlags      = WindowStyle;
     WindowInitializer.ParentWindow    = ParentWindow;
     WindowInitializer.bActivateOnShow = !(Viewport->Flags & ImGuiViewportFlags_NoFocusOnAppearing);
+    WindowInitializer.bAcceptsInput   = !(Viewport->Flags & ImGuiViewportFlags_NoInputs);
 
     ViewportData->Window = CreateWidget<FWindowWidget>(WindowInitializer);
     CHECK(ViewportData->Window != nullptr);
@@ -804,6 +825,8 @@ void FImGuiPlugin::OnUpdatePlatformWindow(ImGuiViewport* Viewport)
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
+
+    ViewportData->Window->SetAcceptsInput((Viewport->Flags & ImGuiViewportFlags_NoInputs) == 0);
 
     const EWindowStyleFlags WindowStyle = GetWindowStyleFromImGuiViewportFlags(Viewport->Flags);
     if (WindowStyle != ViewportData->Window->GetStyle())

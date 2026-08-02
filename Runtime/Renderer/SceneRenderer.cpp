@@ -1531,6 +1531,16 @@ void FSceneRenderer::SubmitUIAndPresent(const FSceneRenderPacket& Packet)
 {
     CHECK_MAIN_THREAD();
 
+    {
+        RHI_EVENT_SCOPE(UICommandList, "UI Viewports");
+        TRACE_SCOPE("Render UI Viewports");
+
+        if (IImguiPlugin::IsEnabled())
+        {
+            IImguiPlugin::Get().DrawViewports(UICommandList);
+        }
+    }
+
     if (Packet.SwapChain)
     {
         TRACE_SCOPE("Present SwapChain");

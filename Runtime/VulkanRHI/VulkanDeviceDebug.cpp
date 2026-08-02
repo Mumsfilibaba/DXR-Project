@@ -1,4 +1,4 @@
-SADaSD#include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/CRC.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
 #include "VulkanRHI/VulkanDevice.h"

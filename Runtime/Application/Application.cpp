@@ -275,9 +275,10 @@ void FApplication::CreateWindow(const TSharedPtr<FWindowWidget>& InWindow)
     }
     
     FGenericWindowInitializer WindowInitializer;
-    WindowInitializer.Title    = InWindow->GetTitle();
-    WindowInitializer.Style    = InWindow->GetStyle();
-    WindowInitializer.Position = InWindow->GetPosition();
+    WindowInitializer.Title         = InWindow->GetTitle();
+    WindowInitializer.Style         = InWindow->GetStyle();
+    WindowInitializer.Position      = InWindow->GetPosition();
+    WindowInitializer.bAcceptsInput = InWindow->GetAcceptsInput();
     
     if (TSharedPtr<FWindowWidget> ParentWindow = InWindow->GetParentWindow())
     {

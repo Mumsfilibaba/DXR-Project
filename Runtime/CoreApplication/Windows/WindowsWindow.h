@@ -154,6 +154,21 @@ public:
 
     virtual void SetStyle(EWindowStyleFlags InStyle) override final;
 
+    virtual EWindowStyleFlags GetStyle() const override final
+    {
+        return StyleParams;
+    }
+
+    virtual void SetAcceptsInput(bool bInAcceptsInput) override final
+    {
+        bAcceptsInput = bInAcceptsInput;
+    }
+
+    virtual bool GetAcceptsInput() const override final
+    {
+        return bAcceptsInput;
+    }
+
     virtual void SetPlatformHandle(void* InPlatformHandle) override final;
 
     virtual void* GetPlatformHandle() const override final 
@@ -189,6 +204,8 @@ private:
     FWindowsApplication* Application;
     HWND                 Window;
     FWindowsWindowStyle  Style;
+    EWindowStyleFlags    StyleParams;
     bool                 bIsFullscreen;
+    bool                 bAcceptsInput;
     WINDOWPLACEMENT      StoredPlacement;
 };

@@ -17,6 +17,8 @@ FMacWindow::FMacWindow(FMacApplication* InApplication)
     , Application(InApplication)
     , CocoaWindow(nullptr)
     , CocoaWindowView(nullptr)
+    , StyleParams(EWindowStyleFlags::None)
+    , bAcceptsInput(true)
 {
 }
 
@@ -87,6 +89,9 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
 
         const NSWindowLevel WindowLevel = (InInitializer.Style & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None ? NSFloatingWindowLevel : NSNormalWindowLevel;
         [CocoaWindow setLevel:WindowLevel];
+
+        bAcceptsInput = InInitializer.bAcceptsInput;
+        [CocoaWindow setIgnoresMouseEvents:!bAcceptsInput];
 
         if ((InInitializer.Style & EWindowStyleFlags::Titled) != EWindowStyleFlags::None)
         {
@@ -451,6 +456,28 @@ void FMacWindow::SetWindowOpacity(float Alpha)
             CocoaWindow.alphaValue = Alpha;
         }
         
+        FPlatformApplicationMisc::PumpMessages(true);
+    }, NSDefaultRunLoopMode, true);
+}
+
+void FMacWindow::SetAcceptsInput(bool bInAcceptsInput)
+{
+    if (bAcceptsInput == bInAcceptsInput)
+    {
+        return;
+    }
+
+    bAcceptsInput = bInAcceptsInput;
+
+    FMacThreadManager::Get().MainThreadDispatch(^
+    {
+        SCOPED_AUTORELEASE_POOL();
+
+        if (CocoaWindow)
+        {
+            [CocoaWindow setIgnoresMouseEvents:!bInAcceptsInput];
+        }
+
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
 }

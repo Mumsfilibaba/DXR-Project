@@ -150,6 +150,7 @@ struct FGenericWindowInitializer
         , Position(0, 0)
         , Style(EWindowStyleFlags::Default)
         , ParentWindow(nullptr)
+        , bAcceptsInput(true)
     {
     }
 
@@ -170,6 +171,9 @@ struct FGenericWindowInitializer
 
     /** @brief Pointer to a parent window, if this is a child window. */
     FGenericWindow* ParentWindow;
+
+    /** @brief False makes the window transparent to hit-testing, so input resolves to whatever is behind it. */
+    bool bAcceptsInput;
 };
 
 /**
@@ -371,13 +375,21 @@ public:
      * 
      * @return The EWindowStyleFlags that define this window's style.
      */
-    EWindowStyleFlags GetStyle() const
-    { 
-        return StyleParams;
-    }
+    virtual EWindowStyleFlags GetStyle() const { return EWindowStyleFlags::None; }
 
-protected:
-    EWindowStyleFlags StyleParams;
+    /**
+     * @brief Controls whether the window takes part in hit-testing.
+     *
+     * @param bInAcceptsInput False makes the window click-through, so the OS resolves input to whatever is behind it.
+     */
+    virtual void SetAcceptsInput(bool bInAcceptsInput) { }
+
+    /**
+     * @brief Retrieves whether the window takes part in hit-testing.
+     *
+     * @return False if the window is click-through. Platforms that do not implement this always report true.
+     */
+    virtual bool GetAcceptsInput() const { return true; }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING
