@@ -425,9 +425,9 @@ float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS,
 
 #if FILTER_MODE_PCSS
     // PCSS Step 1: With PCSS we need to calculate the number of blockers and the average depth
-    // CascadeMatrices CascadeMatrices = ShadowMatricesBuffer[CascadeIndex];
+    // FCascadeMatrices CascadeMatrices = ShadowMatricesBuffer[CascadeIndex];
 
-    // float4 PositionVS = mul(float4(PositionWS, 1.0), CascadeMatrices.View);
+    // float4 PositionVS = mul(float4(PositionWS, 1.0), UnpackMatrix(CascadeMatrices.View));
     // PositionVS.xyz /= PositionVS.w;
 
     // Calculate the blocker search radius
