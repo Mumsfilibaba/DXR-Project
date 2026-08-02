@@ -1,10 +1,12 @@
 #include "Engine/RuntimeEngine.h"
 #include "Engine/EngineUI/Runtime/RuntimeConsoleWidget.h"
 #include "Engine/EngineUI/Editor/EditorFrameProfilerWidget.h"
+#include "Engine/World/Components/CameraComponent.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
 
 FRuntimeEngine::FRuntimeEngine()
     : FEngine()
+    , LastRenderCamera(nullptr)
     , ConsoleWidget(nullptr)
     , ProfilerWidget(nullptr)
 {
@@ -56,6 +58,20 @@ FSceneRenderPacket FRuntimeEngine::BuildRenderPacket()
     FSceneRenderPacket Packet = FEngine::BuildRenderPacket();
     Packet.View.Scene        = GetWorld()->GetSceneInterface();
     Packet.View.RenderTarget = GetSceneViewport()->GetRHISwapChain()->GetBackBuffer();
+
+    if (FCameraComponent* Camera = GetWorld()->GetActiveCamera())
+    {
+        Camera->PrepareSceneViewInfo(Packet.View.CameraSnapshot);
+        
+        Packet.View.bHasCamera = true;
+        Packet.View.bCameraCut = Camera != LastRenderCamera;
+
+        LastRenderCamera = Camera;
+    }
+    else
+    {
+        LastRenderCamera = nullptr;
+    }
 
     return Packet;
 }

@@ -14,6 +14,7 @@ class FEditorGPUProfilerWidget;
 class FEditorFrameProfilerWidget;
 class FEditorRHIInfoWidget;
 class FEditorStatsWidget;
+class FCameraComponent;
 
 class ENGINE_API FEditorEngine : public FEngine
 {
@@ -47,6 +48,8 @@ public:
     void SetSelectedActor(FActor* InActor);
     void ClearSelection();
 
+    FCameraComponent* GetActiveViewportCamera() const;
+
     FActor* GetSelectedActor() const
     {
         return SelectedActor;
@@ -59,6 +62,7 @@ private:
     void OnActorRemoved(FActor* RemovedActor);
 
     FActor*                                   SelectedActor;
+    FCameraComponent*                         LastViewportCamera;
     FDelegateHandle                           ActorRemovedDelegateHandle;
     TSharedPtr<FEditorDockspaceWidget>        DockspaceWidget;
     TSharedPtr<FEditorFooterWidget>           FooterWidget;

@@ -81,6 +81,11 @@ public:
     void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources);
     bool CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height);
 
+    void InvalidateHistory()
+    {
+        bHistoryValid = false;
+    }
+
 private:
     FRHIComputePipelineStateRef TemporalAAPSO;
     FRHIComputeShaderRef        TemporalAAShader;

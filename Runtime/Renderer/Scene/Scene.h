@@ -21,7 +21,6 @@
 class FWorld;
 class FMaterial;
 class FActor;
-class FCameraComponent;
 class FDirectionalLightComponent;
 class FLightProbeComponent;
 class FPointLightComponent;
@@ -62,7 +61,6 @@ public:
 
     virtual void AddSceneComponent(FSceneComponent* InComponent) override final;
     virtual void RemoveSceneComponent(FSceneComponent* InComponent) override final;
-    virtual void SetActiveCamera(FCameraComponent* InCamera) override final;
 
     virtual FActor* GetActorByObjectID(uint32 ObjectID) const override final;
 
@@ -78,8 +76,8 @@ public:
     // Performs frustum culling and builds visible primitive batches.
     void RenderThread_PrepareViewsForRendering();
 
-    // Applies the batch collected by Tick(), runs culling, and reclaims retired proxies.
-    void RenderThread_ApplyAndCull();
+    // Applies the view camera and batch collected by Tick(), runs culling, and reclaims retired proxies.
+    void RenderThread_ApplyAndCull(const FCameraSnapshot& CameraSnapshot, bool bHasCamera);
 
     // Defers deletion of objects
     void DeferDeletion(FSceneObject* InObject);
@@ -163,7 +161,6 @@ private:
     TArray<FSceneLightProbe*>     LightProbes;
     TArray<FSceneObject*>         DeferredObjects;
     FCriticalSection              DeferredObjectsCS;
-    FCameraComponent*             CameraSource;
     TArray<FStaticMeshComponent*> StaticMeshSources;
     TArray<FPointLightComponent*> PointLightSources;
     TArray<FLightProbeComponent*> LightProbeSources;

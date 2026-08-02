@@ -5,7 +5,6 @@
 #include "Core/Tasks/Tasks.h"
 #include "Engine/World/World.h"
 #include "Engine/World/Actors/Actor.h"
-#include "Engine/World/Components/CameraComponent.h"
 #include "Engine/World/Components/DirectionalLightComponent.h"
 #include "Engine/World/Components/LightComponent.h"
 #include "Engine/World/Components/LightProbeComponent.h"
@@ -116,7 +115,6 @@ FScene::FScene(FWorld* InWorld)
     , LightProbes()
     , DeferredObjects()
     , DeferredObjectsCS()
-    , CameraSource(nullptr)
     , StaticMeshSources()
     , PointLightSources()
     , LightProbeSources()
@@ -163,7 +161,6 @@ FScene::~FScene()
     SAFE_DELETE(Camera);
 
     World                  = nullptr;
-    CameraSource           = nullptr;
     DirectionalLightSource = nullptr;
     SkyLightSource         = nullptr;
     SkyboxSource           = nullptr;
@@ -188,7 +185,7 @@ void FScene::Tick()
     LatestBatch = CollectRenderUpdates();
 }
 
-void FScene::RenderThread_ApplyAndCull()
+void FScene::RenderThread_ApplyAndCull(const FCameraSnapshot& CameraSnapshot, bool bHasCamera)
 {
     TRACE_SCOPE("Scene ApplyAndCull");
     CHECK_RENDER_THREAD();
@@ -201,6 +198,11 @@ void FScene::RenderThread_ApplyAndCull()
         return;
     }
 
+    if (bHasCamera && Camera)
+    {
+        Camera->Snapshot = CameraSnapshot;
+    }
+
     RenderThread_ApplyRenderUpdates(LatestBatch);
     RenderThread_PrepareViewsForRendering();
 }
@@ -210,36 +212,6 @@ FRenderUpdateBatch FScene::CollectRenderUpdates()
     TRACE_SCOPE("CollectRenderUpdates");
 
     FRenderUpdateBatch Batch;
-
-    // Camera
-    if (CameraSource)
-    {
-        Batch.bHasCamera = true;
-
-        FCameraSnapshot& Snapshot            = Batch.Camera;
-        Snapshot.View                        = CameraSource->GetViewMatrix();
-        Snapshot.ViewInverse                 = CameraSource->GetViewInverseMatrix();
-        Snapshot.Projection                  = CameraSource->GetProjectionMatrix();
-        Snapshot.ProjectionInverse           = CameraSource->GetProjectionInverseMatrix();
-        Snapshot.ViewProjection              = CameraSource->GetViewProjectionMatrix();
-        Snapshot.ViewProjectionInverse       = CameraSource->GetViewProjectionInverseMatrix();
-        Snapshot.ViewProjectionNoTranslation = CameraSource->GetViewProjectionWitoutTranslateMatrix();
-        Snapshot.Position                    = CameraSource->GetPosition();
-        Snapshot.Forward                     = CameraSource->GetForwardVector();
-        Snapshot.Right                       = CameraSource->GetRightVector();
-        Snapshot.Up                          = CameraSource->GetUpVector();
-        Snapshot.NearPlane                   = CameraSource->GetNearPlane();
-        Snapshot.FarPlane                    = CameraSource->GetFarPlane();
-        Snapshot.AspectRatio                 = CameraSource->GetAspectRatio();
-    }
-
-    Matrix4 CameraInvViewProj;
-    CameraInvViewProj.SetIdentity();
-
-    if (CameraSource)
-    {
-        CameraInvViewProj = CameraSource->GetViewProjectionInverseMatrix();
-    }
 
     // Static meshes
     Batch.StaticMeshUpdates.Reserve(StaticMeshSources.Size());
@@ -270,7 +242,6 @@ FRenderUpdateBatch FScene::CollectRenderUpdates()
         Update.ShadowPositionOffset        = DirectionalLightSource->GetShadowPositionOffset();
         Update.CascadeSplitLambda          = DirectionalLightSource->GetCascadeSplitLambda();
         Update.LightArea                   = DirectionalLightSource->GetLightArea();
-        Update.CameraViewProjectionInverse = CameraInvViewProj;
     }
 
     // Point lights
@@ -321,20 +292,15 @@ void FScene::RenderThread_ApplyRenderUpdates(const FRenderUpdateBatch& Batch)
 {
     TRACE_SCOPE("ApplyRenderUpdates");
 
-    if (Batch.bHasCamera && Camera)
-    {
-        Camera->Snapshot = Batch.Camera;
-    }
-
     const int32 NumMeshUpdates = Math::Min(Batch.StaticMeshUpdates.Size(), StaticMeshes.Size());
     for (int32 Index = 0; Index < NumMeshUpdates; ++Index)
     {
         StaticMeshes[Index]->RenderThread_ApplyUpdate(Batch.StaticMeshUpdates[Index]);
     }
 
-    if (Batch.bHasDirectionalLight && DirectionalLight)
+    if (Batch.bHasDirectionalLight && DirectionalLight && Camera)
     {
-        DirectionalLight->RenderThread_ApplyUpdate(Batch.DirectionalLight);
+        DirectionalLight->RenderThread_ApplyUpdate(Batch.DirectionalLight, Camera->Snapshot.ViewProjectionInverse);
     }
 
     const int32 NumPointLightUpdates = Math::Min(Batch.PointLightUpdates.Size(), PointLights.Size());
@@ -348,11 +314,6 @@ void FScene::RenderThread_ApplyRenderUpdates(const FRenderUpdateBatch& Batch)
     {
         LightProbes[Index]->RenderThread_ApplyUpdate(Batch.LightProbeUpdates[Index]);
     }
-}
-
-void FScene::SetActiveCamera(FCameraComponent* InCamera)
-{
-    CameraSource = InCamera;
 }
 
 void FScene::AddSceneComponent(FSceneComponent* InComponent)

@@ -604,7 +604,7 @@ void FSceneRenderer::RenderThread_RenderSceneFrame(const FSceneRenderPacket& Pac
 
     if (CurrentScene)
     {
-        CurrentScene->RenderThread_ApplyAndCull();
+        CurrentScene->RenderThread_ApplyAndCull(Packet.View.CameraSnapshot, Packet.View.bHasCamera);
     }
 
     RenderThread_RenderSceneView(Packet.View, Packet.SelectedObjectIDs);
@@ -713,7 +713,7 @@ void FSceneRenderer::RenderThread_PrepareResources(const FSceneRenderView& Scene
     DebugViewPass->PreparePipelineStateForFormat(OutputFormat);
 }
 
-void FSceneRenderer::RenderThread_PrepareCameraData(const FSceneRenderView& /*SceneRenderView*/, FScene* Scene)
+void FSceneRenderer::RenderThread_PrepareCameraData(const FSceneRenderView& SceneRenderView, FScene* Scene)
 {
     TRACE_SCOPE("PrepareCameraData");
 
@@ -776,6 +776,15 @@ void FSceneRenderer::RenderThread_PrepareCameraData(const FSceneRenderView& /*Sc
     CameraBuffer.ProjectionInv               = CameraBuffer.ProjectionInv.GetTranspose();
     CameraBuffer.ProjectionUnjittered        = CameraBuffer.ProjectionUnjittered.GetTranspose();
     CameraBuffer.ProjectionInvUnjittered     = CameraBuffer.ProjectionInvUnjittered.GetTranspose();
+
+    if (SceneRenderView.bCameraCut)
+    {
+        // Previous-frame matrices are already stored in GPU-transposed form.
+        CameraBuffer.PrevViewProjection = CameraBuffer.ViewProjection;
+        TemporalAA->InvalidateHistory();
+        RayTracer.InvalidateReflectionHistory();
+        HaltonState.SampleIndex = 0;
+    }
 
     // Update GPU Camera Buffer
     CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Resources.CameraBuffer.Get(), ERHIResourceState::ConstantBuffer, ERHIResourceState::CopyDest));
@@ -1521,6 +1530,16 @@ void FSceneRenderer::RecordUI()
 void FSceneRenderer::SubmitUIAndPresent(const FSceneRenderPacket& Packet)
 {
     CHECK_MAIN_THREAD();
+
+    {
+        RHI_EVENT_SCOPE(UICommandList, "UI Viewports");
+        TRACE_SCOPE("Render UI Viewports");
+
+        if (IImguiPlugin::IsEnabled())
+        {
+            IImguiPlugin::Get().DrawViewports(UICommandList);
+        }
+    }
 
     if (Packet.SwapChain)
     {

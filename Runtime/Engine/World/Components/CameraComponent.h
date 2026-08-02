@@ -3,6 +3,8 @@
 #include "Core/Math/Vector3.h"
 #include "Engine/World/Components/SceneComponent.h"
 
+struct FCameraSnapshot;
+
 class ENGINE_API FCameraComponent : public FSceneComponent
 {
 public:
@@ -25,6 +27,7 @@ public:
     void UpdateProjectionMatrix(float InViewportWidth, float InViewportHeight);
     void UpdateViewMatrix();
     void UpdateWorldToClipSpaceMatrices();
+    void PrepareSceneViewInfo(FCameraSnapshot& OutCameraSnapshot) const;
 
     FORCEINLINE const Matrix4& GetViewMatrix() const
     {

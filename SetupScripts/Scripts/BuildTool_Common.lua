@@ -405,7 +405,8 @@ local function IndexModuleFile(ScriptFilePath, SearchRootDir)
             gModuleIndex[ModuleName] = {
                 ScriptPath = ScriptFilePath,
                 ScriptDir  = ScriptDir,
-                Root       = RootLabel
+                Root       = RootLabel,
+                RootDir    = CreateOsPath(SearchRootDir)
             }
 
             LogInfo("Indexed module '%s' at '%s' (Root=%s)", ModuleName, CreateOsPath(ScriptFilePath), RootLabel)

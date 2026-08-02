@@ -69,9 +69,11 @@ FWindowsWindow::FWindowsWindow(FWindowsApplication* InApplication)
     : FGenericWindow()
     , Application(InApplication)
     , Window(0)
-    , bIsFullscreen(false)
-    , StoredPlacement()
     , Style()
+    , StyleParams(EWindowStyleFlags::None)
+    , bIsFullscreen(false)
+    , bAcceptsInput(true)
+    , StoredPlacement()
 {
 }
 
@@ -125,8 +127,9 @@ bool FWindowsWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         }
     }
 
-    StyleParams = InInitializer.Style;
-    Style       = NewStyle;
+    StyleParams   = InInitializer.Style;
+    Style         = NewStyle;
+    bAcceptsInput = InInitializer.bAcceptsInput;
 
     ::SetLastError(0);
     LONG_PTR Result = ::SetWindowLongPtrA(Window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
@@ -559,14 +562,9 @@ void FWindowsWindow::SetStyle(EWindowStyleFlags InStyle)
         Style = NewStyle;
     }
 
-    // If the new style includes TopMost, bring the window to the foreground
-    if ((InStyle & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None)
-    {
-        SetWindowFocus();
-    }
+    StyleParams = InStyle;
 
-    // Re-apply the shape so the window keeps its old position/size under the new style. 
-    // (This is since we want the window to maintain the *exact* client-area dimensions, 
-    // this is important, since style changes can affect the window's border size.)
+    const bool bTopMost = (InStyle & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None;
+    ::SetWindowPos(Window, bTopMost ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
     SetWindowShape(CurrentShape, true);
 }

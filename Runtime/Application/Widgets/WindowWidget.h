@@ -37,6 +37,7 @@ public:
             , Position()
             , StyleFlags(EWindowStyleFlags::Default)
             , bActivateOnShow(true)
+            , bAcceptsInput(true)
         {
         }
 
@@ -57,6 +58,9 @@ public:
 
         /** @brief Should the window be activated when we show the window. */
         bool bActivateOnShow;
+
+        /** @brief False makes the window transparent to hit-testing, so input resolves to whatever is behind it. */
+        bool bAcceptsInput;
     };
 
 public:
@@ -316,6 +320,13 @@ public:
     void SetOpacity(float Alpha);
 
     /**
+     * @brief Controls whether the window takes part in hit-testing.
+     *
+     * @param bInAcceptsInput False makes the window click-through, so the OS resolves input to whatever is behind it.
+     */
+    void SetAcceptsInput(bool bInAcceptsInput);
+
+    /**
      * @brief Gets the platform window.
      * 
      * @return A shared reference to the platform window.
@@ -369,6 +380,16 @@ public:
         return bActivateOnShow;
     }
 
+    /**
+     * @brief Gets whether the window takes part in hit-testing.
+     * 
+     * @return False if the window is click-through.
+     */
+    bool GetAcceptsInput() const
+    {
+        return bAcceptsInput;
+    }
+
 private:
     String                     Title;
     FOnWindowClosed            OnWindowClosedDelegate;
@@ -379,6 +400,7 @@ private:
     IntVector2                 CachedSize;
     EWindowStyleFlags          StyleFlags;
     bool                       bActivateOnShow;
+    bool                       bAcceptsInput;
     TSharedPtr<FWidget>        Overlay;
     TSharedPtr<FWidget>        Content;
     TSharedRef<FGenericWindow> PlatformWindow;

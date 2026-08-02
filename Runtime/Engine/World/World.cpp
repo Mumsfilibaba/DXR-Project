@@ -171,10 +171,6 @@ void FWorld::SetActiveCamera(FCameraComponent* InCamera)
     }
 
     ActiveCamera = InCamera;
-    if (Scene)
-    {
-        Scene->SetActiveCamera(ActiveCamera);
-    }
 }
 
 void FWorld::AddPlayerController(FPlayerController* InPlayerController)
@@ -248,7 +244,6 @@ void FWorld::SetSceneInterface(IScene* InScene)
         }
     }
 
-    Scene->SetActiveCamera(ActiveCamera);
 }
 
 void FWorld::ClearSceneInterface()

@@ -13,6 +13,8 @@ FSceneViewport::FSceneViewport(const TWeakPtr<FViewportWidget>& InViewport)
     , World(nullptr)
     , Viewport(InViewport)
     , RHISwapChain(nullptr)
+    , bPlayerInputEnabled(true)
+    , HighPrecisionMouseDelta()
 {
 }
 
@@ -86,8 +88,39 @@ void FSceneViewport::Tick()
     }
 }
 
+void FSceneViewport::SetPlayerInputEnabled(bool bEnabled)
+{
+    if (bPlayerInputEnabled == bEnabled)
+    {
+        return;
+    }
+
+    bPlayerInputEnabled     = bEnabled;
+    HighPrecisionMouseDelta = IntVector2();
+
+    if (!bPlayerInputEnabled)
+    {
+        if (FPlayerController* PlayerController = GetFirstPlayerController())
+        {
+            PlayerController->GetPlayerInput()->ClearInputStates();
+        }
+    }
+}
+
+IntVector2 FSceneViewport::ConsumeHighPrecisionMouseDelta()
+{
+    const IntVector2 Delta = HighPrecisionMouseDelta;
+    HighPrecisionMouseDelta = IntVector2();
+    return Delta;
+}
+
 FEventResponse FSceneViewport::OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent)
 {
+    if (!bPlayerInputEnabled)
+    {
+        return FEventResponse::Unhandled();
+    }
+
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
         PlayerController->GetPlayerInput()->OnAxisEvent(AnalogGamepadEvent.GetAnalogSource(), AnalogGamepadEvent.GetAnalogValue());
@@ -99,6 +132,11 @@ FEventResponse FSceneViewport::OnAnalogGamepadChange(const FAnalogGamepadEvent& 
 
 FEventResponse FSceneViewport::OnKeyDown(const FKeyEvent& KeyEvent)
 {
+    if (!bPlayerInputEnabled)
+    {
+        return FEventResponse::Unhandled();
+    }
+
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
         PlayerController->GetPlayerInput()->OnKeyEvent(KeyEvent.GetKey(), KeyEvent.IsDown(), KeyEvent.IsRepeat());
@@ -110,6 +148,11 @@ FEventResponse FSceneViewport::OnKeyDown(const FKeyEvent& KeyEvent)
 
 FEventResponse FSceneViewport::OnKeyUp(const FKeyEvent& KeyEvent)
 {
+    if (!bPlayerInputEnabled)
+    {
+        return FEventResponse::Unhandled();
+    }
+
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
         PlayerController->GetPlayerInput()->OnKeyEvent(KeyEvent.GetKey(), KeyEvent.IsDown(), KeyEvent.IsRepeat());
@@ -126,6 +169,11 @@ FEventResponse FSceneViewport::OnKeyChar(const FKeyEvent&)
 
 FEventResponse FSceneViewport::OnMouseMove(const FCursorEvent& CursorEvent)
 {
+    if (!bPlayerInputEnabled)
+    {
+        return FEventResponse::Unhandled();
+    }
+
     if (GetFirstPlayerController())
     {
         // NOTE: Just send to the first player-controller for now
@@ -138,6 +186,11 @@ FEventResponse FSceneViewport::OnMouseMove(const FCursorEvent& CursorEvent)
 
 FEventResponse FSceneViewport::OnMouseButtonDown(const FCursorEvent& CursorEvent)
 {
+    if (!bPlayerInputEnabled)
+    {
+        return FEventResponse::Unhandled();
+    }
+
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
         // NOTE: Just send to the first player-controller for now
@@ -150,6 +203,11 @@ FEventResponse FSceneViewport::OnMouseButtonDown(const FCursorEvent& CursorEvent
 
 FEventResponse FSceneViewport::OnMouseButtonUp(const FCursorEvent& CursorEvent)
 {
+    if (!bPlayerInputEnabled)
+    {
+        return FEventResponse::Unhandled();
+    }
+
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
         // NOTE: Just send to the first player-controller for now
@@ -162,6 +220,11 @@ FEventResponse FSceneViewport::OnMouseButtonUp(const FCursorEvent& CursorEvent)
 
 FEventResponse FSceneViewport::OnMouseScroll(const FCursorEvent& CursorEvent)
 {
+    if (!bPlayerInputEnabled)
+    {
+        return FEventResponse::Unhandled();
+    }
+
     if (GetFirstPlayerController())
     {
         // NOTE: Just send to the first player-controller for now
@@ -174,6 +237,11 @@ FEventResponse FSceneViewport::OnMouseScroll(const FCursorEvent& CursorEvent)
 
 FEventResponse FSceneViewport::OnMouseDoubleClick(const FCursorEvent& CursorEvent)
 {
+    if (!bPlayerInputEnabled)
+    {
+        return FEventResponse::Unhandled();
+    }
+
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
         // NOTE: Just send to the first player-controller for now
@@ -196,6 +264,15 @@ FEventResponse FSceneViewport::OnMouseEntered(const FCursorEvent& CursorEvent)
 
 FEventResponse FSceneViewport::OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent)
 {
+    if (!bPlayerInputEnabled)
+    {
+        const IntVector2 Delta = CursorEvent.GetCursorPos();
+        HighPrecisionMouseDelta.X += Delta.X;
+        HighPrecisionMouseDelta.Y += Delta.Y;
+        
+        return FEventResponse::Handled();
+    }
+
     return FEventResponse::Unhandled();
 }
 

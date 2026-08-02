@@ -31,31 +31,18 @@ public:
 
     // IViewport Interface
     virtual FEventResponse OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent) override;
-
     virtual FEventResponse OnKeyDown(const FKeyEvent& KeyEvent) override;
-
     virtual FEventResponse OnKeyUp(const FKeyEvent& KeyEvent) override;
-
     virtual FEventResponse OnKeyChar(const FKeyEvent&) override;
-
     virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent) override;
-
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
-
     virtual FEventResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override;
-
     virtual FEventResponse OnMouseScroll(const FCursorEvent& CursorEvent) override;
-
     virtual FEventResponse OnMouseDoubleClick(const FCursorEvent& CursorEvent) override;
-
     virtual FEventResponse OnMouseLeft(const FCursorEvent& CursorEvent) override;
-
     virtual FEventResponse OnMouseEntered(const FCursorEvent& CursorEvent) override;
-
     virtual FEventResponse OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent) override;
-
     virtual FEventResponse OnFocusLost() override;
-
     virtual FEventResponse OnFocusGained() override;
 
     virtual FRHISwapChainRef GetRHISwapChain() const override
@@ -79,6 +66,19 @@ public:
     }
 
 public:
+    void SetPlayerInputEnabled(bool bEnabled);
+    IntVector2 ConsumeHighPrecisionMouseDelta();
+    
+    bool IsPlayerInputEnabled() const
+    {
+        return bPlayerInputEnabled;
+    }
+    
+    FPlayerController* GetFirstPlayerController()
+    {
+        return World ? World->GetFirstPlayerController() : nullptr;
+    }
+
     void SetWorld(FWorld* InWorld) 
     { 
         World = InWorld; 
@@ -89,13 +89,10 @@ public:
         return World; 
     }
 
-    FPlayerController* GetFirstPlayerController()
-    {
-        return World ? World->GetFirstPlayerController() : nullptr;
-    }
-
 private:
     FWorld*                   World;
     TWeakPtr<FViewportWidget> Viewport;
     FRHISwapChainRef          RHISwapChain;
+    bool                      bPlayerInputEnabled;
+    IntVector2                HighPrecisionMouseDelta;
 };

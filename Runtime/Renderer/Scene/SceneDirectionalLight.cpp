@@ -19,7 +19,7 @@ FSceneDirectionalLight::FSceneDirectionalLight(FScene* InScene)
 
 FSceneDirectionalLight::~FSceneDirectionalLight() = default;
 
-void FSceneDirectionalLight::RenderThread_ApplyUpdate(const FDirectionalLightProxyUpdate& Update)
+void FSceneDirectionalLight::RenderThread_ApplyUpdate(const FDirectionalLightProxyUpdate& Update, const Matrix4& CameraViewProjectionInverse)
 {
     Color                = Update.Color;
     Direction            = Update.Direction;
@@ -44,7 +44,7 @@ void FSceneDirectionalLight::RenderThread_ApplyUpdate(const FDirectionalLightPro
     };
 
     // NOTE: Need to transpose since this matrix is assumed to be used on the GPU
-    Matrix4 InvViewProjection = Update.CameraViewProjectionInverse;
+    Matrix4 InvViewProjection = CameraViewProjectionInverse;
     InvViewProjection = InvViewProjection.GetTranspose();
 
     // Calculate the center of frustum

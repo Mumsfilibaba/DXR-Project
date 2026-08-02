@@ -330,16 +330,19 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
         RenderDrawData(CommandList, DrawData);
 
         CommandList.EndRenderPass();
-
-        ImGuiIO& IOState = ImGui::GetIO();
-        if (IOState.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-        {
-            ImGui::UpdatePlatformWindows();
-            ImGui::RenderPlatformWindowsDefault(nullptr, reinterpret_cast<void*>(&CommandList));
-        }
-
-        RenderedTextures.Clear();
     }
+}
+
+void FImGuiRenderer::RenderPlatformWindows(FRHICommandList& CommandList)
+{
+    ImGuiIO& IOState = ImGui::GetIO();
+    if (IOState.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault(nullptr, reinterpret_cast<void*>(&CommandList));
+    }
+
+    RenderedTextures.Clear();
 }
 
 void FImGuiRenderer::RenderViewport(FRHICommandList& CommandList, ImDrawData* DrawData, FImGuiViewport& ViewportData, bool bClear)
@@ -349,6 +352,7 @@ void FImGuiRenderer::RenderViewport(FRHICommandList& CommandList, ImDrawData* Dr
 
     PreparePipelineState(ViewportData.SwapChain->GetDesc().ColorFormat);
     PrepareDrawData(CommandList, DrawData);
+    PrepareTexturesForShaderResourceUsage(CommandList, DrawData);
 
     FRHIRenderTargetView* BackBufferRTV = ViewportData.SwapChain->GetBackBufferRenderTargetView();
     FRHIBeginRenderPassDesc RenderPassDesc({ FRHIRenderPassAttachment(BackBufferRTV, bClear ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load) }, 1);

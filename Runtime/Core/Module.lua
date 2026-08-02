@@ -27,7 +27,11 @@ function CoreModule.Generate()
         'PROJECT_NAME="' .. TargetName .. '"'
     })
 
-    local UnixProjectPath = path.translate(JoinPath(GetEnginePath(), TargetName), "/")
+    -- The target knows where its own Target.lua lives; targets outside <Engine>/<Name>
+    -- (the test suites, for one) would otherwise get a path that does not exist.
+    local TargetRule      = GetTargetRule(TargetName)
+    local TargetPath      = TargetRule and TargetRule.GetPath() or JoinPath(GetEnginePath(), TargetName)
+    local UnixProjectPath = path.translate(TargetPath, "/")
     local ProjectLocation = 'PROJECT_LOCATION="' .. UnixProjectPath .. '"'
     CoreModule.AddDefines({
         ProjectLocation

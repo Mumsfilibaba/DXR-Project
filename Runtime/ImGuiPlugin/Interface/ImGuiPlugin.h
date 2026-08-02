@@ -64,6 +64,7 @@ struct IImguiPlugin : public IModule
     virtual void NewFrame(float DeltaTime) = 0;
     virtual void Tick(float DeltaTime) = 0;
     virtual void Draw(FRHICommandList& CommandList) = 0;
+    virtual void DrawViewports(FRHICommandList& CommandList) = 0;
 
     virtual FDelegateHandle AddBeginFrameDelegate(const FImGuiDelegate& Delegate) = 0;
     virtual FDelegateHandle AddDrawDelegate(const FImGuiDelegate& Delegate) = 0;

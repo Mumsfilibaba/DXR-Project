@@ -41,6 +41,6 @@ packages/
 *.d3d12psocache
 *.d3d12psocache
 *.vkpsocache
-/Tests/Build
 *.log
 /Assets/RTASCache
+/Tests/Build

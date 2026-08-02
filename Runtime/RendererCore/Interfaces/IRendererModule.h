@@ -3,6 +3,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
 #include "RHI/RHITypes.h"
+#include "RendererCore/CameraSnapshot.h"
 #include "RendererCore/Interfaces/IScene.h"
 
 class FWorld;
@@ -33,10 +34,13 @@ struct FSceneRenderView
         Count,
     };
 
-    IScene*      Scene              = nullptr;
-    FRHITexture* RenderTarget       = nullptr;
-    EDebugView   DebugView          = EDebugView::None;
-    EDebugView   SecondaryDebugView = EDebugView::None;
+    IScene*         Scene              = nullptr;
+    FRHITexture*    RenderTarget       = nullptr;
+    EDebugView      DebugView          = EDebugView::None;
+    EDebugView      SecondaryDebugView = EDebugView::None;
+    FCameraSnapshot CameraSnapshot     = {};
+    bool            bHasCamera         = false;
+    bool            bCameraCut         = false;
 };
 
 struct FSceneRenderPacket
@@ -68,7 +72,7 @@ public:
     virtual void Tick() = 0;
 
     /**
-     * @brief Main thread: finish the previously kicked frame.
+     * @brief Main thread: Finish the previously kicked frame.
      * Waits for the in-flight scene-render task (its scene command list is already on the RHI FIFO),
      * then dispatches the UI/present command list recorded for that frame. Keeps one GPU frame in
      * flight. A no-op if no frame is pending (first frame / after a flush).
@@ -76,7 +80,7 @@ public:
     virtual void FinishPreviousFrame() = 0;
 
     /**
-     * @brief Main thread: drain the previously kicked frame without presenting it.
+     * @brief Main thread: Drain the previously kicked frame without presenting it.
      * Waits for the in-flight scene-render task (so the render thread no longer touches any
      * resources) and clears the pending-frame state, but does NOT dispatch the UI/present command
      * list. Used at shutdown when the window/surface is being torn down and the owed frame is unseen.
@@ -85,13 +89,13 @@ public:
     virtual void DiscardPendingFrame() = 0;
 
     /**
-     * @brief Main thread: record ImGui draw data for the current frame into the UI command list.
+     * @brief Main thread: Record ImGui draw data for the current frame into the UI command list.
      * Kept on the main thread so editor multi-viewport OS-window callbacks stay on the main thread.
      */
     virtual void RecordUI() = 0;
 
     /**
-     * @brief Main thread: kick the scene render for the current frame onto the render thread.
+     * @brief Main thread: Kick the scene render for the current frame onto the render thread.
      * The render task records BeginFrame + scene apply/cull + RenderSceneView into the scene command
      * list and dispatches it to the RHI FIFO. Returns immediately so the main thread can advance.
      */

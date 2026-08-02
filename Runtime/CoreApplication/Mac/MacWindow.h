@@ -74,6 +74,13 @@ public:
 
     virtual void SetWindowOpacity(float Alpha) override final;
 
+    virtual void SetAcceptsInput(bool bInAcceptsInput) override final;
+
+    virtual bool GetAcceptsInput() const override final
+    {
+        return bAcceptsInput;
+    }
+
     virtual void SetWindowShape(const FWindowShape& Shape, bool bMove) override final;
 
     virtual void GetWindowShape(FWindowShape& OutWindowShape) const override final;
@@ -87,6 +94,11 @@ public:
     virtual uint32 GetHeight() const override final;
 
     virtual void SetStyle(EWindowStyleFlags InStyle) override final;
+
+    virtual EWindowStyleFlags GetStyle() const override final
+    {
+        return StyleParams;
+    }
 
     virtual void SetPlatformHandle(void* InPlatformHandle) override final;
 
@@ -143,5 +155,7 @@ private:
     FMacApplication*  Application;
     FCocoaWindow*     CocoaWindow;
     FCocoaWindowView* CocoaWindowView;
-    IntVector2       Position;
+    IntVector2        Position;
+    EWindowStyleFlags StyleParams;
+    bool              bAcceptsInput;
 };

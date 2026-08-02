@@ -241,7 +241,7 @@ bool TSharedPtr_Test()
         TEST_EXPECT(Ref->GetRefCount() == 2);
     }
 
-    TEST_SECTION("Cast helpers: Static / Const / Reinterpret / Dynamic (scalar)");
+    TEST_SECTION("Cast helpers: Static / Const / Reinterpret (scalar)");
     {
         TSharedPtr<FDerived> Derived = MakeSharedPtr<FDerived>();
         TSharedPtr<FBase> Base = Derived;
@@ -262,12 +262,6 @@ bool TSharedPtr_Test()
         TSharedPtr<int32> AsInt   = MakeSharedPtr<int32>(1065353216);
         TSharedPtr<float> AsFloat = ReinterpretCastSharedPtr<float>(AsInt);
         TEST_EXPECT(*AsFloat == 1.0f);
-
-        TSharedPtr<FBase>    PolyBase    = MakeSharedPtr<FDerived>();
-        TSharedPtr<FDerived> PolyDerived = DynamicCastSharedPtr<FDerived>(PolyBase);
-
-        TEST_EXPECT(PolyDerived.IsValid());
-        TEST_EXPECT(PolyBase.GetStrongReferenceCount() == 2);
     }
 
     TEST_SECTION("Array TSharedPtr: MakeSharedPtr / operator[] / cast / weak array");

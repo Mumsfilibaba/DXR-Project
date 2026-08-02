@@ -459,6 +459,20 @@ LRESULT FWindowsApplication::ProcessMessage(HWND WindowHandle, UINT Message, WPA
             return ProcessRawInput(WindowHandle, Message, wParam, lParam);
         }
 
+        case WM_NCHITTEST:
+        {
+            const LONG_PTR UserData = ::GetWindowLongPtrA(WindowHandle, GWLP_USERDATA);
+            if (const FWindowsWindow* MsgWindow = reinterpret_cast<const FWindowsWindow*>(UserData))
+            {
+                if (!MsgWindow->GetAcceptsInput())
+                {
+                    return HTTRANSPARENT;
+                }
+            }
+
+            break;
+        }
+
         case WM_SIZING:
         {
             if (TSharedRef<FWindowsWindow> MsgWindow = GetWindowsWindowFromHWND(WindowHandle))
