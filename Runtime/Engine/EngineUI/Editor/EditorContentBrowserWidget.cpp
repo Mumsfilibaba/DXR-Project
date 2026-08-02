@@ -330,7 +330,7 @@ void FEditorContentBrowserWidget::DrawLayoutTable()
 
     const float OuterBorder = PanelBorder;
 
-    DrawList->AddRect(RootMin, RootMax, BorderColor, 0.0f, ImDrawListFlags_AntiAliasedLines, OuterBorder);
+    DrawList->AddRect(RootMin, RootMax, BorderColor, 0.0f, ImDrawFlags_None, OuterBorder);
 
     const ImVec2 InnerMin  = ImVec2(RootMin.x + OuterBorder, RootMin.y + OuterBorder);
     const ImVec2 InnerMax  = ImVec2(RootMax.x - OuterBorder, RootMax.y - OuterBorder);
@@ -351,8 +351,8 @@ void FEditorContentBrowserWidget::DrawLayoutTable()
     const ImVec2 RightMin = ImVec2(SplitMax.x, InnerMin.y);
     const ImVec2 RightMax = InnerMax;
 
-    DrawList->AddRect(LeftMin, LeftMax, BorderColor, 0.0f, ImDrawListFlags_AntiAliasedLines, PanelBorder);
-    DrawList->AddRect(RightMin, RightMax, BorderColor, 0.0f, ImDrawListFlags_AntiAliasedLines, PanelBorder);
+    DrawList->AddRect(LeftMin, LeftMax, BorderColor, 0.0f, ImDrawFlags_None, PanelBorder);
+    DrawList->AddRect(RightMin, RightMax, BorderColor, 0.0f, ImDrawFlags_None, PanelBorder);
 
     // -----------------------------------------------------------------------------------------
     // Splitter
@@ -384,13 +384,13 @@ void FEditorContentBrowserWidget::DrawLayoutTable()
 
     ImGui::SetCursorScreenPos(LeftMin);
 
-    ImGui::BeginChild("##CB_FolderPanelRoot", ImVec2(LeftWidth, InnerSize.y), false, ImGuiWindowFlags_NoScrollbar);
+    ImGui::BeginChild("##CB_FolderPanelRoot", ImVec2(LeftWidth, InnerSize.y), ImGuiChildFlags_None, ImGuiWindowFlags_NoScrollbar);
     DrawFolderPanel();
     ImGui::EndChild();
 
     ImGui::SetCursorScreenPos(RightMin);
 
-    ImGui::BeginChild("##CB_ContentPanelRoot", ImVec2(RightWidth, InnerSize.y), false, ImGuiWindowFlags_NoScrollbar);
+    ImGui::BeginChild("##CB_ContentPanelRoot", ImVec2(RightWidth, InnerSize.y), ImGuiChildFlags_None, ImGuiWindowFlags_NoScrollbar);
     DrawContentPanel();
     ImGui::EndChild();
 
@@ -447,7 +447,7 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
 
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ParentBackGround);
 
-    if (ImGui::BeginChild("##CB_Folders", ImVec2(0, 0), false, ImGuiWindowFlags_NoScrollbar))
+    if (ImGui::BeginChild("##CB_Folders", ImVec2(0, 0), ImGuiChildFlags_None, ImGuiWindowFlags_NoScrollbar))
     {
         ImGuiStyle& Style = ImGui::GetStyle();
 
@@ -470,7 +470,7 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
-        if (ImGui::BeginChild("##CB_FolderHeader", ImVec2(InnerWidth, HeaderHeight), false, ImGuiWindowFlags_NoScrollbar))
+        if (ImGui::BeginChild("##CB_FolderHeader", ImVec2(InnerWidth, HeaderHeight), ImGuiChildFlags_None, ImGuiWindowFlags_NoScrollbar))
         {
             const float PaddedWidth  = Math::Max(1.0f, InnerWidth - InnerPadding * 2.0f);
             const float PaddedHeight = Math::Max(1.0f, HeaderHeight - InnerPadding * 2.0f);
@@ -515,7 +515,7 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
         ImGui::PushStyleColor(ImGuiCol_ChildBg, ListBackGround);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(InnerPadding, InnerPadding));
 
-        if (ImGui::BeginChild("##CB_FoldersScroll", ImVec2(InnerWidth, ListHeight), false, 0))
+        if (ImGui::BeginChild("##CB_FoldersScroll", ImVec2(InnerWidth, ListHeight), ImGuiChildFlags_None, 0))
         {
             if (RootFolders.Size() > 0)
             {
@@ -810,7 +810,7 @@ void FEditorContentBrowserWidget::DrawContentPanel()
 
     FContentBrowserScrollShadowState ShadowState;
 
-    if (ImGui::BeginChild("##CB_GridScroll", ImVec2(ScrollWidth, ScrollHeight), false, 0))
+    if (ImGui::BeginChild("##CB_GridScroll", ImVec2(ScrollWidth, ScrollHeight), ImGuiChildFlags_None, 0))
     {
         DrawContentGrid();
         ShadowState = CaptureScrollShadowState();
@@ -1302,7 +1302,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                     const bool bInputHovered  = ImGui::IsItemHovered();
 
                     const ImU32 BorderColor = bActive ? BorderActive : (bInputHovered ? BorderHovered : BorderNormal);
-                    WindowDrawList->AddRect(ItemMin, ItemMax, BorderColor, 4.0f, ImDrawListFlags_AntiAliasedLines, 2.0f);
+                    WindowDrawList->AddRect(ItemMin, ItemMax, BorderColor, 4.0f, ImDrawFlags_None, 2.0f);
                 }
 
                 if (ImGui::IsItemActive() && ImGui::IsKeyPressed(ImGuiKey_Escape))
@@ -1998,7 +1998,7 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
     const ImU32 BorderCol   = bBarHovered ? BarBorderHover : BarBorderNormal;
 
     DrawList->AddRectFilled(BarMin, BarMax, BarBackGround, BarRounding);
-    DrawList->AddRect(BarMin, BarMax, BorderCol, BarRounding, ImDrawListFlags_AntiAliasedLines, BarBorderTh);
+    DrawList->AddRect(BarMin, BarMax, BorderCol, BarRounding, ImDrawFlags_None, BarBorderTh);
 
     DrawList->PushClipRect(BarMin, BarMax, true);
 
@@ -2122,7 +2122,7 @@ void FEditorContentBrowserWidget::DrawContentHeaderArea(const ImVec4& InBackGrou
     ImGui::PushStyleColor(ImGuiCol_ChildBg, InBackGround);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
-    if (ImGui::BeginChild("##CB_ContentHeader", ImVec2(0.0f, HeaderHeight), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
+    if (ImGui::BeginChild("##CB_ContentHeader", ImVec2(0.0f, HeaderHeight), ImGuiChildFlags_None, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
     {
         DrawContentHeaderBar();
 
@@ -2327,7 +2327,7 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
 
     const ImGuiSelectableFlags SelFlags =
         ImGuiSelectableFlags_SpanAllColumns |
-        ImGuiSelectableFlags_AllowItemOverlap;
+        ImGuiSelectableFlags_AllowOverlap;
 
     const bool bRowPressed = ImGui::Selectable("##FolderRow", (bSelected || bInSelectedPath), SelFlags, ImVec2(0.0f, RowHeight));
     const bool bRowHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
@@ -2538,7 +2538,7 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
             const ImU32 BorderColor = bActive ? BorderActive : (bHovered ? BorderHovered : BorderNormal);
 
             ImDrawList* RenameDrawList = ImGui::GetWindowDrawList();
-            RenameDrawList->AddRect(ItemMin, ItemMax, BorderColor, BorderRounding, ImDrawListFlags_AntiAliasedLines, BorderThickness);
+            RenameDrawList->AddRect(ItemMin, ItemMax, BorderColor, BorderRounding, ImDrawFlags_None, BorderThickness);
         }
 
         if (ImGui::IsItemActive() && ImGui::IsKeyPressed(ImGuiKey_Escape))
