@@ -96,7 +96,7 @@ static void DrawInputBorderLastItem(float Rounding = -1.0f, float Thickness = 2.
 
     ImVec2 Min = ImGui::GetItemRectMin();
     ImVec2 Max = ImGui::GetItemRectMax();
-    Window->DrawList->AddRect(Min, Max, Color, Rounding, ImDrawListFlags_AntiAliasedLines, Thickness);
+    Window->DrawList->AddRect(Min, Max, Color, Rounding, ImDrawFlags_None, Thickness);
 }
 
 static void DrawAxisLineForLastItem(ImU32 InColor)
@@ -1511,8 +1511,8 @@ void EditorWidgets::DrawErrorWindow(ErrorWindowContext& InOutContext)
         ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 0.0f);
         ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(26, 26, 26, 255));
 
-        const ImGuiWindowFlags ChildFlags = ImGuiWindowFlags_AlwaysUseWindowPadding;
-        ImGui::BeginChild("##FailedMoveList", ImVec2(0.0f, DesiredHeight), false, ChildFlags);
+        const ImGuiChildFlags ChildFlags = ImGuiChildFlags_AlwaysUseWindowPadding;
+        ImGui::BeginChild("##FailedMoveList", ImVec2(0.0f, DesiredHeight), ChildFlags, ImGuiWindowFlags_None);
 
         if (InOutContext.Entries.IsEmpty())
         {
@@ -1532,7 +1532,7 @@ void EditorWidgets::DrawErrorWindow(ErrorWindowContext& InOutContext)
 
         const ImVec2 ListMin = ImGui::GetItemRectMin();
         const ImVec2 ListMax = ImGui::GetItemRectMax();
-        ImGui::GetWindowDrawList()->AddRect(ListMin, ListMax, IM_COL32(36, 36, 36, 255), 0.0f, ImDrawListFlags_AntiAliasedLines, 3.0f);
+        ImGui::GetWindowDrawList()->AddRect(ListMin, ListMax, IM_COL32(36, 36, 36, 255), 0.0f, ImDrawFlags_None, 3.0f);
 
         ImGui::Spacing();
         ImGui::Spacing();
@@ -1669,7 +1669,7 @@ bool EditorWidgets::DrawDialogButton(const CHAR* Label, const ImVec2& Size)
 
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
     DrawList->AddRectFilled(Min, Max, BgColor, Rounding);
-    DrawList->AddRect(Min, Max, IM_COL32(15, 15, 15, 255), Rounding, ImDrawListFlags_AntiAliasedLines, BorderThickness);
+    DrawList->AddRect(Min, Max, IM_COL32(15, 15, 15, 255), Rounding, ImDrawFlags_None, BorderThickness);
 
     ImGui::PushFont(EditorFonts::SegoeUI_22);
 
@@ -1831,7 +1831,7 @@ bool EditorWidgets::DrawSearchField(const CHAR* InId, const CHAR* InHint, CHAR* 
         const bool bHover  = ImGui::IsMouseHoveringRect(FullRect.Min, FullRect.Max, true);
 
         const ImU32 BorderColor = bActive ? BorderColorActive : (bHover ? BorderColorHovered : BorderColorNormal);
-        DrawList->AddRect(Start, End, BorderColor, Rounding, ImDrawListFlags_AntiAliasedLines, BorderThick);
+        DrawList->AddRect(Start, End, BorderColor, Rounding, ImDrawFlags_None, BorderThick);
     }
 
     ImGui::SetCursorScreenPos(ImVec2(Start.x, Start.y + TotalHeight));
@@ -2071,7 +2071,7 @@ bool EditorWidgets::MenuItem(const CHAR* Label, const CHAR* Shortcut, bool bSele
     {
         const ImVec4 HoveredColor = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
         const ImU32  BorderColor  = EditorHelpers::MakeBrighterColorU32(HoveredColor, 0.20f);
-        DrawList->AddRect(RectMin, RectMax, BorderColor, 0.0f, ImDrawListFlags_AntiAliasedLines, 1.0f);
+        DrawList->AddRect(RectMin, RectMax, BorderColor, 0.0f, ImDrawFlags_None, 1.0f);
     }
 
     // -----------------------------------------------------------------------------------------
@@ -2233,7 +2233,7 @@ void EditorWidgets::MenuButton(const CHAR* Label, const CHAR* PopupId, bool bAny
         const ImU32 BorderColor = ImGui::GetColorU32(ImGuiCol_Border);
 
         ImDrawList* DrawList = ImGui::GetWindowDrawList();
-        DrawList->AddRect(OutAnchor.Min, OutAnchor.Max, BorderColor, 0.0f, ImDrawListFlags_AntiAliasedLines, 1.0f);
+        DrawList->AddRect(OutAnchor.Min, OutAnchor.Max, BorderColor, 0.0f, ImDrawFlags_None, 1.0f);
     }
 
     if (bThisPopupOpen)
@@ -2317,7 +2317,7 @@ bool EditorWidgets::BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Ancho
         const ImVec2 WinSize = ImGui::GetWindowSize();
         const ImVec2 Min     = ImVec2(WinPos.x + 1.0f, WinPos.y + 1.0f);
         const ImVec2 Max     = ImVec2(WinPos.x + WinSize.x - 1.0f, WinPos.y + WinSize.y - 1.0f);
-        DrawList->AddRect(Min, Max, IM_COL32(50, 50, 50, 255), 0.0f, ImDrawListFlags_AntiAliasedLines, 1.0f);
+        DrawList->AddRect(Min, Max, IM_COL32(50, 50, 50, 255), 0.0f, ImDrawFlags_None, 1.0f);
     }
     else
     {
@@ -2412,7 +2412,7 @@ bool EditorWidgets::BeginPopupContextWindow(const CHAR* PopupId, ImGuiPopupFlags
         const ImVec2 Max     = ImVec2(WinPos.x + WinSize.x - 1.0f, WinPos.y + WinSize.y - 1.0f);
 
         ImDrawList* DrawList = ImGui::GetWindowDrawList();
-        DrawList->AddRect(Min, Max, IM_COL32(50, 50, 50, 255), 0.0f, ImDrawListFlags_AntiAliasedLines, 1.0f);
+        DrawList->AddRect(Min, Max, IM_COL32(50, 50, 50, 255), 0.0f, ImDrawFlags_None, 1.0f);
     }
     else
     {
@@ -2440,7 +2440,7 @@ bool EditorWidgets::BeginPopupContextItem(const CHAR* PopupId)
         const ImVec2 Max     = ImVec2(WinPos.x + WinSize.x - 1.0f, WinPos.y + WinSize.y - 1.0f);
 
         ImDrawList* DrawList = ImGui::GetWindowDrawList();
-        DrawList->AddRect(Min, Max, IM_COL32(50, 50, 50, 255), 0.0f, ImDrawListFlags_AntiAliasedLines, 1.0f);
+        DrawList->AddRect(Min, Max, IM_COL32(50, 50, 50, 255), 0.0f, ImDrawFlags_None, 1.0f);
     }
     else
     {
@@ -2595,7 +2595,7 @@ bool EditorWidgets::BeginRichTextView(const CHAR* InId, const ImVec2& InSize, Ri
 
     InOutContext.ViewId = ImGui::GetID(InId);
 
-    const bool bOpen = ImGui::BeginChild(InId, InSize, true, Flags);
+    const bool bOpen = ImGui::BeginChild(InId, InSize, ImGuiChildFlags_Border, Flags);
     if (!bOpen)
     {
         return false;

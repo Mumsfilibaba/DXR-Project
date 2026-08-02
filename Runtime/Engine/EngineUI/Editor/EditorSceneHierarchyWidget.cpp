@@ -426,7 +426,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
         const ImGuiSelectableFlags SelectableFlags =
             ImGuiSelectableFlags_SpanAllColumns |
-            ImGuiSelectableFlags_AllowItemOverlap;
+            ImGuiSelectableFlags_AllowOverlap;
 
         ImGui::PushStyleColor(ImGuiCol_HeaderHovered, RowHoverBg);
         ImGui::PushStyleColor(ImGuiCol_HeaderActive, RowHoverBg);
@@ -767,7 +767,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
 
     const ImGuiSelectableFlags SelectableFlags =
         ImGuiSelectableFlags_SpanAllColumns |
-        ImGuiSelectableFlags_AllowItemOverlap;
+        ImGuiSelectableFlags_AllowOverlap;
 
     const ImU32  RowSelectedColor = bIsRenamingThis ? RowBlue_Rename : SelectedColor;
     const ImVec4 RowHoverBg       = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
@@ -978,7 +978,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
             const ImU32 BorderColor = bActive ? BorderActive : (bHovered ? BorderHovered : BorderNormal);
 
             ImDrawList* DrawList = ImGui::GetWindowDrawList();
-            DrawList->AddRect(ItemMin, ItemMax, BorderColor, BorderRounding, ImDrawListFlags_AntiAliasedLines, BorderThickness);
+            DrawList->AddRect(ItemMin, ItemMax, BorderColor, BorderRounding, ImDrawFlags_None, BorderThickness);
         }
 
         if (ImGui::IsItemActive() && ImGui::IsKeyPressed(ImGuiKey_Escape))

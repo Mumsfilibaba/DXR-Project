@@ -128,6 +128,10 @@ end
 -- Configurations for this workspace
 local gConfigurations = { }
 
+-- Premake treats the first configuration as the default: defaultConfigurationName in the
+-- Xcode projects and the initially selected configuration in the Visual Studio solution.
+local gPreferredConfiguration = "Development Editor"
+
 -- MSBuild properties that Premake cannot express, written next to the generated projects
 local gDirectoryBuildPropsContent =
 [[<Project>
@@ -414,6 +418,17 @@ function GenerateWorkspace()
         elseif CurrentTargetType == ETargetType.Program then
             LogHighlight("Need configuration for ETargetType.Program")
             -- TODO
+        end
+    end
+
+    -- Move the preferred configuration to the front so it becomes the default. It is absent
+    -- when the workspace has no editor target, in which case the existing order stands.
+    for i = 1, #gConfigurations do
+        if gConfigurations[i] == gPreferredConfiguration then
+            table.remove(gConfigurations, i)
+            table.insert(gConfigurations, 1, gPreferredConfiguration)
+            LogHighlight("Default configuration is '%s'", gPreferredConfiguration)
+            break
         end
     end
 

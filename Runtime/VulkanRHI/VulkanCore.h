@@ -232,19 +232,55 @@ private:
     }
 
 public:
-    static constexpr SIZE_T HeaderSize   = GetHeaderSize();
-    static constexpr SIZE_T FeatureBytes = (sizeof(T) >= HeaderSize) ? (sizeof(T) - HeaderSize) : 0u;
-    static constexpr SIZE_T FeatureCount = FeatureBytes / sizeof(VkBool32);
+    static constexpr SIZE_T HeaderSize      = GetHeaderSize();
+    static constexpr SIZE_T FeatureBytes    = (sizeof(T) >= HeaderSize) ? (sizeof(T) - HeaderSize) : 0u;
+    static constexpr SIZE_T MaxFeatureCount = FeatureBytes / sizeof(VkBool32);
 
     static_assert(TIsStandardLayout<T>::Value, "Features struct must be standard-layout.");
     static_assert((FeatureBytes % sizeof(VkBool32)) == 0, "Feature area must be composed of whole VkBool32 elements.");
 };
+
+// -------------------------------------------------------------------------------------------
+// Number of VkBool32 features a feature struct actually declares.
+// MaxFeatureCount above is derived from sizeof(), which also covers the tail padding the
+// compiler inserts to keep a pointer-aligned struct a whole number of alignments long. A
+// struct holding an odd number of features therefore reports one slot too many, and that
+// slot is indeterminate padding that must never be compared or written.
+// -------------------------------------------------------------------------------------------
+
+template <typename T>
+struct TVulkanFeatureCount;
+
+#define VULKAN_DECLARE_FEATURE_COUNT(StructType, LastMemberName)                                     \
+    template <>                                                                                      \
+    struct TVulkanFeatureCount<StructType>                                                           \
+    {                                                                                                \
+        static constexpr SIZE_T Value =                                                              \
+            ((OFFSETOF(StructType, LastMemberName) - TVulkanFeatureLayout<StructType>::HeaderSize) / \
+                sizeof(VkBool32)) + 1;                                                               \
+                                                                                                     \
+        static_assert(Value <= TVulkanFeatureLayout<StructType>::MaxFeatureCount,                    \
+            "'" #LastMemberName "' lies outside " #StructType ".");                                  \
+        static_assert((TVulkanFeatureLayout<StructType>::MaxFeatureCount - Value) * sizeof(VkBool32) \
+            < alignof(StructType),                                                                   \
+            "More than tail padding is unaccounted for in " #StructType                              \
+            ". Is '" #LastMemberName "' really its last member?");                                   \
+    }
+
+VULKAN_DECLARE_FEATURE_COUNT(VkPhysicalDeviceFeatures,         inheritedQueries);
+VULKAN_DECLARE_FEATURE_COUNT(VkPhysicalDeviceVulkan11Features, shaderDrawParameters);
+VULKAN_DECLARE_FEATURE_COUNT(VkPhysicalDeviceVulkan12Features, subgroupBroadcastDynamicId);
+
+static_assert(TVulkanFeatureCount<VkPhysicalDeviceVulkan12Features>::Value == 47);
+static_assert(TVulkanFeatureLayout<VkPhysicalDeviceVulkan12Features>::MaxFeatureCount == 48);
 
 template <typename T>
 class TVulkanFeatureView
 {
     typedef typename TRemoveConst<T>::Type NonConstType;
     typedef TVulkanFeatureLayout<NonConstType> LayoutType;
+
+    static constexpr SIZE_T FeatureCount = TVulkanFeatureCount<NonConstType>::Value;
 
 public:
     explicit TVulkanFeatureView(NonConstType& Features)
@@ -256,7 +292,7 @@ public:
 
     constexpr SIZE_T Size()
     {
-        return LayoutType::FeatureCount;
+        return FeatureCount;
     }
 
     VkBool32* Data()
@@ -276,7 +312,7 @@ public:
 
     VkBool32* End()
     {
-        return FeatureStart + LayoutType::FeatureCount;
+        return FeatureStart + FeatureCount;
     }
 
     const VkBool32* Begin() const
@@ -286,7 +322,7 @@ public:
 
     const VkBool32* End() const
     {
-        return FeatureStart + LayoutType::FeatureCount;
+        return FeatureStart + FeatureCount;
     }
 
     VkBool32& operator[](SIZE_T FeatureIndex)
@@ -309,6 +345,8 @@ class TVulkanFeatureView<const T>
     typedef typename TRemoveConst<T>::Type NonConstType;
     typedef TVulkanFeatureLayout<NonConstType> LayoutType;
 
+    static constexpr SIZE_T FeatureCount = TVulkanFeatureCount<NonConstType>::Value;
+
 public:
     explicit TVulkanFeatureView(const NonConstType& Features)
     {
@@ -319,7 +357,7 @@ public:
 
     constexpr SIZE_T Size()
     {
-        return LayoutType::FeatureCount;
+        return FeatureCount;
     }
 
     const VkBool32* Data() const
@@ -334,7 +372,7 @@ public:
 
     const VkBool32* End() const
     {
-        return FeatureStart + LayoutType::FeatureCount;
+        return FeatureStart + FeatureCount;
     }
 
     const VkBool32& operator[](SIZE_T FeatureIndex) const
