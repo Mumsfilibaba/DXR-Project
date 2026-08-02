@@ -19,7 +19,7 @@ bool TestQuaternion();
 
 int main()
 {
-    TestHarness::Initialize();
+    TestHarness::Initialize("TestResults_Core.log");
     LOG_INFO("=== Math Library Tests ===");
 
     RUN_TEST("IntPoint2", TestIntPoint2());

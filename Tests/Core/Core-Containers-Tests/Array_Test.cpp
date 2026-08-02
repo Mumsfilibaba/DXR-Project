@@ -1,6 +1,6 @@
 #include "Array_Test.h"
 
-#if RUN_TARRAY_TEST || RUN_TARRAY_BENCHMARKS
+#if RUN_TARRAY_TEST
 #include "TestUtils.h"
 
 #include <Core/Containers/Array.h>

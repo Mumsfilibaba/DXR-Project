@@ -157,9 +157,9 @@ if [ ! -d "$WORKSPACE" ]; then
 fi
 
 # xcodebuild has no "build everything" switch for a workspace, so the scheme list is
-# read back from the generated workspace. RunCompileTests.command relies on that,
-# since SandboxStandalone is only generated for a non-monolithic build and
-# ImGuiPlugin is loaded at runtime rather than linked.
+# read back from the generated workspace. AutomationScripts/RunCompileTests.command
+# relies on that, since SandboxStandalone is only generated for a non-monolithic build
+# and ImGuiPlugin is loaded at runtime rather than linked.
 if [ "$SCHEME" = "all" ]; then
     SCHEMES=$(xcodebuild -workspace "$WORKSPACE" -list 2>/dev/null \
         | awk '/Schemes:/ {found=1; next} found && NF {sub(/^[ \t]+/, ""); print}')

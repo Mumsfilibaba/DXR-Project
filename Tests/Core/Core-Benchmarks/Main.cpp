@@ -2,17 +2,13 @@
 #include <Core/CoreDefines.h>
 #include <Core/CoreGlobals.h>
 #include <Core/Memory/Malloc.h>
-#include <Core/Platform/PlatformMisc.h>
 #include <Core/Threading/ThreadManager.h>
 #include <Core/Tasks/TaskGraph.h>
 
 #include "TestCommon/TestHarness.h"
-#include "TestCommon/TestMacros.h"
 
-#include "TaskGraphTests.h"
-#include "RHIValidationHelperTests.h"
-#include "CommandLineTests.h"
-#include "ConsoleManagerCommandLineTests.h"
+#include "Array_Benchmark.h"
+#include "TaskGraph_Benchmark.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -26,8 +22,10 @@ int main(int Argc, const CHAR* Argv[])
     UNREFERENCED_VARIABLE(Argc);
     UNREFERENCED_VARIABLE(Argv);
 
-    TestHarness::Initialize();
-    LOG_INFO("=== Core Tests ===");
+    // The harness is used here for its logging and output-device setup only; benchmarks
+    // report timings rather than pass/fail, so there is nothing to tally.
+    TestHarness::Initialize("BenchmarkResults_Core.log");
+    LOG_INFO("=== Core Benchmarks ===");
 
     FThreadManager::Initialize();
 
@@ -39,15 +37,18 @@ int main(int Argc, const CHAR* Argv[])
         return -1;
     }
 
-    RUN_TEST("TaskGraph", TaskGraph_Test());
-    RUN_TEST("RHIValidationHelpers", RHIValidationHelpers_Test());
-    RUN_TEST("CommandLine", CommandLine_Test());
-    RUN_TEST("ConsoleManagerCommandLine", ConsoleManagerCommandLine_Test());
+#if RUN_TARRAY_BENCHMARKS
+    TArray_Benchmark();
+#endif
+
+#if RUN_TASKGRAPH_BENCHMARKS
+    TaskGraph_Benchmark();
+#endif
 
     FTaskGraph::Release();
     FThreadManager::Release();
 
-    const int32 ExitCode = TestHarness::Report();
+    LOG_INFO("=== Core Benchmarks complete ===");
     TestHarness::Shutdown();
-    return ExitCode;
+    return 0;
 }
