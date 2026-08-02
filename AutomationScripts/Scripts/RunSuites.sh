@@ -21,9 +21,9 @@
 #
 #  Core's math tests run once per vector backend (scalar + SSE, SSE2, SSE3,
 #  SSSE3, SSE4.1, SSE4.2). Each variant is a separate executable that pins the
-#  math backend via PLATFORM_SUPPORT_*_INTRIN defines (see Tests/premake5.lua),
-#  so every SIMD and scalar code path is actually compiled and validated. This
-#  applies unchanged on an Intel Mac.
+#  math backend via PLATFORM_SUPPORT_*_INTRIN defines (see
+#  Tests/Core/Core-Math-Tests/Target.lua), so every SIMD and scalar code path is
+#  actually compiled and validated. This applies unchanged on an Intel Mac.
 # ----------------------------------------------------------------------------
 
 # A non-interactive ssh session never runs path_helper, so /usr/local/bin is
@@ -85,7 +85,7 @@ if [ -n "$TESTS_NO_PAUSE" ]; then
 fi
 
 PREMAKE="$ROOT/SetupScripts/Premake/premake5"
-WORKSPACE="$ROOT/Tests/EngineTests.xcworkspace"
+WORKSPACE="$ROOT/Solutions/Tests/DXR-Engine Tests.xcworkspace"
 
 RC=0
 TOTAL=0
@@ -151,7 +151,7 @@ pause_if_needed() {
 run_suite() {
     NAME="$1"
     CONFIG="$2"
-    EXE="$BINDIR/$NAME/$NAME"
+    EXE="$BINDIR/$NAME"
 
     TOTAL=$((TOTAL + 1))
 
@@ -190,7 +190,7 @@ if [ ! -x "$PREMAKE" ]; then
     exit 1
 fi
 
-"$PREMAKE" xcode4 --file="$ROOT/Tests/premake5.lua"
+"$PREMAKE" xcode4 --file="$ROOT/Tests/build.lua" --platform=macOS --monolithic --buildsuffix=Tests
 if [ $? -ne 0 ]; then
     echo "[ERROR] Failed to generate the test workspace."
     pause_if_needed
@@ -230,7 +230,7 @@ for CONFIG in $CONFIGS; do
         fi
     done
 
-    BINDIR="$ROOT/Tests/Build/bin/$CONFIG-macosx-x64"
+    BINDIR="$ROOT/Build/bin/$CONFIG-macosx-x64-Tests"
     echo "----- MODULE: $MODULE | CONFIG: $CONFIG -----" >> "$LOG"
 
     for NAME in $TARGETS; do

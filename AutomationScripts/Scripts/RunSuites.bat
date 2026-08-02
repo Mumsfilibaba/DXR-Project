@@ -20,8 +20,9 @@ REM  configuration gate that used to live behind RUN_BENCHMARK in Config.h.
 REM
 REM  Core's math tests run once per vector backend (scalar + SSE, SSE2, SSE3,
 REM  SSSE3, SSE4.1, SSE4.2). Each variant is a separate executable that pins the
-REM  math backend via PLATFORM_SUPPORT_*_INTRIN defines (see Tests/premake5.lua),
-REM  so every SIMD and scalar code path is actually compiled and validated.
+REM  math backend via PLATFORM_SUPPORT_*_INTRIN defines (see
+REM  Tests/Core/Core-Math-Tests/Target.lua), so every SIMD and scalar code path is
+REM  actually compiled and validated.
 REM ----------------------------------------------------------------------------
 setlocal EnableDelayedExpansion
 
@@ -75,7 +76,7 @@ if defined ONLY_CONFIG if "!ONLY_CONFIG:~0,2!"=="--" (
 )
 
 set "PREMAKE=%ROOT%SetupScripts\Premake\premake5.exe"
-set "SOLUTION=%ROOT%Tests\EngineTests.sln"
+set "SOLUTION=%ROOT%Solutions\Tests\DXR-Engine Tests.sln"
 
 REM --- Resolve the suites and configurations for this module and mode --------
 set "TARGETS="
@@ -108,7 +109,7 @@ set "MSBUILD_TARGETS=!TARGETS: =;!"
 echo ------------------------------------------------------------
 echo  Generating test solution...
 echo ------------------------------------------------------------
-"%PREMAKE%" vs2022 --file="%ROOT%Tests\premake5.lua"
+"%PREMAKE%" vs2022 --file="%ROOT%Tests\build.lua" --platform=Windows --monolithic --buildsuffix=Tests
 if errorlevel 1 (
     echo [ERROR] Failed to generate the test solution.
     set "RC=1" & goto Finish
@@ -192,7 +193,7 @@ if errorlevel 1 (
     goto :eof
 )
 
-set "BINDIR=%ROOT%Tests\Build\bin\%CONFIG%-windows-x64"
+set "BINDIR=%ROOT%Build\bin\%CONFIG%-windows-x64-Tests"
 
 echo ----- MODULE: %MODULE% ^| CONFIG: %CONFIG% ----->> "%LOG%"
 
@@ -209,7 +210,7 @@ REM   %1 = suite name, %2 = configuration label (for reporting)
 :RunSuite
 set "NAME=%~1"
 set "CONFIG=%~2"
-set "EXE=%BINDIR%\%NAME%\%NAME%.exe"
+set "EXE=%BINDIR%\%NAME%.exe"
 set /a TOTAL+=1
 
 echo.

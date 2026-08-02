@@ -636,9 +636,8 @@ function BuildRules(Name)
                 ModuleRule.AddExternalIncludeDirs({
                     GetRuntimeFolderPath()
                 })
-            else
-                -- TODO: We might need to take another look at this if we add other folders than ThirdParty
-                -- Other folders: include the module's actual folder so consumers can do something like '#include <ModuleName/...>'
+            elseif ModuleInfo.Root == "ThirdParty" then
+                -- Include the module's actual folder so consumers can do something like '#include <ModuleName/...>'
                 ModuleRule.AddExternalIncludeDirs({
                     CreateOsPath(ModuleInfo.ScriptDir)
                 })
@@ -657,6 +656,30 @@ function BuildRules(Name)
                 -- Fix project-path (only if not already set)
                 if (not ModuleRule.ProjectFilePathOverride) or ModuleRule.ProjectFilePathOverride == "" then
                     ModuleRule.ProjectFilePathOverride = JoinPath("ThirdParty", RelativePath)
+                end
+            else
+                -- Any other search root (Tests, for one). Expose the module's parent folder
+                -- so consumers can keep writing '#include <ModuleName/...>'.
+                ModuleRule.AddExternalIncludeDirs({
+                    CreateOsPath(path.getdirectory(ModuleInfo.ScriptDir))
+                })
+
+                local RootDir      = ModuleInfo.RootDir or GetEnginePath()
+                local RelativePath = CreateOsPath(path.getrelative(RootDir, ModuleInfo.ScriptDir))
+
+                -- Fix grouping (only if not already set)
+                if (not ModuleRule.Group) or ModuleRule.Group == "" then
+                    ModuleRule.SetGroup(ModuleInfo.Root .. "/" .. (RelativePath:gsub("\\", "/")))
+                end
+
+                -- Fix output-path (only if not already set)
+                if (not ModuleRule.OutputPathOverride) or ModuleRule.OutputPathOverride == "" then
+                    ModuleRule.OutputPathOverride = JoinPath(ModuleInfo.Root, RelativePath)
+                end
+
+                -- Fix project-path (only if not already set)
+                if (not ModuleRule.ProjectFilePathOverride) or ModuleRule.ProjectFilePathOverride == "" then
+                    ModuleRule.ProjectFilePathOverride = JoinPath(ModuleInfo.Root, RelativePath)
                 end
             end
 
@@ -743,11 +766,22 @@ function BuildRules(Name)
             end
         end
 
+        -- A bIsLibrary module has no IMPLEMENT_ENGINE_MODULE and therefore no
+        -- LinkModule_ symbol to force.
+        local function HasLinkModuleSymbol(ModuleName)
+            if ModuleName == "Launch" then
+                return false
+            end
+
+            local ModuleRule = GetModuleRule(ModuleName)
+            return not (ModuleRule and ModuleRule.bIsLibrary)
+        end
+
         -- Add link options MSVC
         if BuildWithVisualStudio() and IsBuildMonolithic() then
             for i = 1, #self.LinkModules do
                 local ModuleName = self.LinkModules[i]
-                if ModuleName ~= "Launch" then
+                if HasLinkModuleSymbol(ModuleName) then
                     self.AddLinkOptions({
                         "/INCLUDE:LinkModule_" .. ModuleName
                     })
@@ -759,7 +793,7 @@ function BuildRules(Name)
         if IsPlatformMac() and IsBuildMonolithic() then
             for i = 1, #self.LinkModules do
                 local ModuleName = self.LinkModules[i]
-                if ModuleName ~= "Launch" then
+                if HasLinkModuleSymbol(ModuleName) then
                     -- Leading underscore required for Mach-O symbol names
                     self.AddLinkOptions({
                         "-Wl,-u,_LinkModule_" .. ModuleName

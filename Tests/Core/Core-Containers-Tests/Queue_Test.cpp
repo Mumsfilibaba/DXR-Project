@@ -8,6 +8,7 @@
 #include <Core/Containers/String.h>
 #include <Core/Containers/UniquePtr.h>
 #include <Core/Threading/Runnable.h>
+#include <Core/Threading/Atomic/AtomicInt.h>
 #include <Core/Platform/PlatformThread.h>
 
 // Single Producer, Single Consumer
@@ -49,7 +50,11 @@ namespace SPSCTest
 namespace MPSCTest
 {
     static TQueue<String, EQueueType::MPSC>* GQueue = nullptr;
-    static bool GIsRunning = true;
+
+    // Counts producers that have not finished yet. The consumer may only stop once the last
+    // one is done, so a single shared flag would let it quit while other producers are still
+    // enqueueing. It has to be atomic for the consumer to observe the writes at all.
+    static AtomicInt32 GActiveProducers(0);
 
     constexpr int64 NumItemsPerProducer = 500;
     constexpr int64 ProducerOffset      = 1000;
@@ -70,7 +75,7 @@ namespace MPSCTest
                 GQueue->Emplace(::Move(NewItem));
             }
 
-            GIsRunning = false;
+            GActiveProducers.Decrement();
             return 0;
         }
 
@@ -88,7 +93,7 @@ namespace MPSCTest
     {
         int32 Run()
         {
-            while (GIsRunning || !GQueue->IsEmpty())
+            while (GActiveProducers.Load() > 0 || !GQueue->IsEmpty())
             {
                 String NewItem;
                 if (GQueue->Dequeue(NewItem))
@@ -110,7 +115,7 @@ namespace MPSCTest
     {
         bool bResult = true;
 
-        GIsRunning = true;
+        GActiveProducers.Store(static_cast<int32>(NumProducers));
         GQueue = new TQueue<String, EQueueType::MPSC>;
         GItems = new TArray<String>;
 
@@ -168,7 +173,9 @@ namespace SPMCTest
     constexpr int64 NumConsumers = 6;
 
     static TQueue<String, EQueueType::SPMC>* GQueue = nullptr;
-    static bool GIsRunning = true;
+
+    // Atomic so the consumers are guaranteed to observe the producer's write
+    static AtomicInt32 GIsRunning(1);
 
     struct FProducerThread : public FRunnable
     {
@@ -180,7 +187,7 @@ namespace SPMCTest
                 GQueue->Enqueue(::Move(NewItem));
             }
 
-            GIsRunning = false;
+            GIsRunning.Store(0);
             return 0;
         }
 
@@ -194,7 +201,7 @@ namespace SPMCTest
     {
         int32 Run()
         {
-            while (GIsRunning || !GQueue->IsEmpty())
+            while (GIsRunning.Load() > 0 || !GQueue->IsEmpty())
             {
                 String NewItem;
                 if (GQueue->Dequeue(NewItem))
@@ -213,7 +220,7 @@ namespace SPMCTest
     {
         bool bResult = true;
 
-        GIsRunning = true;
+        GIsRunning.Store(1);
         GQueue = new TQueue<String, EQueueType::SPMC>;
 
         FGenericPlatformThread* Producer = FPlatformThread::Create(new FProducerThread, "ProducerThread", false);

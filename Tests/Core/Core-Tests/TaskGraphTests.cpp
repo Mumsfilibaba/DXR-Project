@@ -181,12 +181,17 @@ static bool Test_MainThreadPumpNoDeadlock()
 static bool Test_WorkStealingStress()
 {
     constexpr int32 NumChildTasks = 100000;
-    constexpr int32 MaxAttempts   = 16;
 
 #if STATS_ENABLED
+    // Stealing is opportunistic, so give it a few attempts before declaring it never engaged.
+    constexpr int32 MaxAttempts   = 16;
+
     const int64 StealsBefore  = STAT_GET(STAT_TaskGraph_StealSuccesses);
     const bool  bExpectSteals = FTaskGraph::Get().GetNumAnyThreadWorkers() > 1;
     int64       StealsDelta   = 0;
+#else
+    // Without the steal counter there is nothing to retry for.
+    constexpr int32 MaxAttempts   = 1;
 #endif
 
     for (int32 Attempt = 0; Attempt < MaxAttempts; ++Attempt)
@@ -220,8 +225,6 @@ static bool Test_WorkStealingStress()
         {
             break;
         }
-    #else
-        break;
     #endif
     }
 
