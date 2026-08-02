@@ -554,6 +554,11 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
         CompileArgs.Emplace(L"-fvk-bind-sampler-heap");
         CompileArgs.Emplace(L"1");
         CompileArgs.Emplace(L"31");
+
+        // Binding must match VULKAN_BINDLESS_COUNTER_MARKER_BINDIN. The heap has no counter descriptors, so this only exists to be rejected.
+        CompileArgs.Emplace(L"-fvk-bind-counter-heap");
+        CompileArgs.Emplace(L"16");
+        CompileArgs.Emplace(L"31");
     }
 
     // Build the arguments for the compiler

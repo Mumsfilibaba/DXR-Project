@@ -128,6 +128,18 @@ end
 -- Configurations for this workspace
 local gConfigurations = { }
 
+-- Target types contribute overlapping sets of configurations, so a workspace mixing
+-- Game and Program targets would otherwise list 'Debug' twice.
+local function AddConfiguration(ConfigName)
+    for i = 1, #gConfigurations do
+        if gConfigurations[i] == ConfigName then
+            return
+        end
+    end
+
+    table.insert(gConfigurations, ConfigName)
+end
+
 -- Premake treats the first configuration as the default: defaultConfigurationName in the
 -- Xcode projects and the initially selected configuration in the Visual Studio solution.
 local gPreferredConfiguration = "Development Editor"
@@ -377,20 +389,28 @@ function GenerateWorkspace()
         
         local TargetInfo = GetIndexedTargetInfo and GetIndexedTargetInfo(CurrentTargetName) or nil
         if TargetInfo and os.isfile(TargetInfo.ScriptPath) then
-            local ExistingRule = GetTargetRule and GetTargetRule(CurrentTargetName) or nil
-            if ExistingRule then
-                AddTargetType(ExistingRule.TargetType)
-            else
+            local TargetRule = GetTargetRule and GetTargetRule(CurrentTargetName) or nil
+            if not TargetRule then
                 LogInfo("Including script '%s' to include target '%s'", CreateOsPath(TargetInfo.ScriptPath), CurrentTargetName)
                 include(TargetInfo.ScriptPath)
 
-                local CreatedRule = GetTargetRule and GetTargetRule(CurrentTargetName) or nil
-                if CreatedRule then
-                    LogInfo("Target '%s' was created in script '%s'", CreatedRule.Name or CurrentTargetName, CreateOsPath(TargetInfo.ScriptPath))
-                    AddTargetType(CreatedRule.TargetType)
+                TargetRule = GetTargetRule and GetTargetRule(CurrentTargetName) or nil
+                if TargetRule then
+                    LogInfo("Target '%s' was created in script '%s'", TargetRule.Name or CurrentTargetName, CreateOsPath(TargetInfo.ScriptPath))
                 else
                     LogHighlightWarning("Found target '%s' at '%s', but it did not register.", CurrentTargetName, CreateOsPath(TargetInfo.ScriptPath))
                 end
+            end
+
+            if TargetRule then
+                -- Source path for the target (affects file globs, natvis, etc.). One script may
+                -- declare several targets and premake includes it only once, so this has to run
+                -- for targets that an earlier iteration already created.
+                if type(TargetRule.SetPath) == "function" then
+                    TargetRule.SetPath(TargetInfo.ScriptDir)
+                end
+
+                AddTargetType(TargetRule.TargetType)
             end
         else
             LogError("Target '%s' not found in indexed roots. Ensure it lives under a configured search root.", CurrentTargetName)
@@ -403,21 +423,26 @@ function GenerateWorkspace()
         if CurrentTargetType == ETargetType.Game then
             LogHighlight("Need configuration for ETargetType.Game")
 
-            table.insert(gConfigurations, "Debug")
-            table.insert(gConfigurations, "Development")
-            table.insert(gConfigurations, "Release")
-            table.insert(gConfigurations, "Debug Monolithic")
-            table.insert(gConfigurations, "Development Monolithic")
-            table.insert(gConfigurations, "Release Monolithic") 
+            AddConfiguration("Debug")
+            AddConfiguration("Development")
+            AddConfiguration("Release")
+            AddConfiguration("Debug Monolithic")
+            AddConfiguration("Development Monolithic")
+            AddConfiguration("Release Monolithic")
         elseif CurrentTargetType == ETargetType.Editor then
             LogHighlight("Need configuration for ETargetType.Editor")
 
-            table.insert(gConfigurations, "Debug Editor")
-            table.insert(gConfigurations, "Development Editor")
-            table.insert(gConfigurations, "Release Editor")
+            AddConfiguration("Debug Editor")
+            AddConfiguration("Development Editor")
+            AddConfiguration("Release Editor")
         elseif CurrentTargetType == ETargetType.Program then
             LogHighlight("Need configuration for ETargetType.Program")
-            -- TODO
+
+            -- No Monolithic/Editor variants: a Program is always statically linked and
+            -- has no editor build.
+            AddConfiguration("Debug")
+            AddConfiguration("Development")
+            AddConfiguration("Release")
         end
     end
 

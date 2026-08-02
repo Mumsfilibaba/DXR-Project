@@ -45,6 +45,7 @@ VULKANRHI_API bool   GVulkanSupportsMaintenance4                = false;
 VULKANRHI_API bool   GVulkanSupportsMultiviews                  = false;
 VULKANRHI_API bool   GVulkanSupportsBindless                    = false;
 VULKANRHI_API bool   GVulkanSupportsMutableDescriptorType       = false;
+VULKANRHI_API bool   GVulkanUseSplitBindlessHeap                = false;
 VULKANRHI_API bool   GVulkanSupportsDepthBoundsTest             = false;
 VULKANRHI_API bool   GVulkanSupportsSparseBinding               = false;
 VULKANRHI_API bool   GVulkanSupportsSparseResidency2D           = false;
@@ -238,6 +239,7 @@ VULKANRHI_API void DumpVulkanCapabilities()
     LOG_INFO("[VulkanRHI]   Force Binding                         : %s", YesNo(GVulkanForceBinding));
     LOG_INFO("[VulkanRHI]   Bindless                              : %s", YesNo(GVulkanSupportsBindless));
     LOG_INFO("[VulkanRHI]   Mutable Descriptor Type               : %s", YesNo(GVulkanSupportsMutableDescriptorType));
+    LOG_INFO("[VulkanRHI]   Bindless Heap Layout                  : %s", GVulkanUseSplitBindlessHeap ? "Split" : "Mutable");
     LOG_INFO("[VulkanRHI]   Bindless Resource Descriptor Limit    : %u", GVulkanMaxBindlessResourceDescriptors);
     LOG_INFO("[VulkanRHI]   Bindless Sampler Descriptor Limit     : %u", GVulkanMaxBindlessSamplerDescriptors);
     LOG_INFO("[VulkanRHI]   UpdateAfterBind Sampled Images        : %u", GVulkanMaxUpdateAfterBindDescriptorSetSampledImages);
@@ -406,18 +408,35 @@ void FVulkanDevice::DeriveCoreCapabilities(
     }
 #endif
 
-    if (GVulkanSupportsBindless && !GVulkanSupportsMutableDescriptorType)
+    if (GVulkanSupportsBindless)
     {
-        VULKAN_INFO("Bindless disabled: VK_EXT_mutable_descriptor_type not supported");
-        GVulkanSupportsBindless = false;
+    #if VULKAN_ENABLE_SPLIT_BINDLESS_HEAP
+        bool bForceSplitHeap = false;
+        if (IConsoleVariable* ForceSplitHeapVar = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.ForceSplitBindlessHeap"))
+        {
+            bForceSplitHeap = ForceSplitHeapVar->GetBool();
+        }
+
+        GVulkanUseSplitBindlessHeap = !GVulkanSupportsMutableDescriptorType || bForceSplitHeap;
+    #else
+        if (!GVulkanSupportsMutableDescriptorType)
+        {
+            VULKAN_INFO("Bindless disabled: VK_EXT_mutable_descriptor_type not supported and VULKAN_ENABLE_SPLIT_BINDLESS_HEAP is off");
+            GVulkanSupportsBindless = false;
+        }
+    #endif
     }
 
     if (GVulkanSupportsBindless)
     {
-        uint32 ResourceCeiling = Math::Min<uint32>(GVulkanMaxUpdateAfterBindDescriptorSetSampledImages, GVulkanMaxUpdateAfterBindDescriptorSetStorageImages);
+        // Uniform texel buffers share the sampled-image budget, storage texel buffers the storage-image one.
+        const uint32 NumImageArrays    = GVulkanUseSplitBindlessHeap ? 2u : 1u;
+        const uint32 NumResourceArrays = GVulkanUseSplitBindlessHeap ? VULKAN_BINDLESS_SPLIT_NUM_RESOURCE_BINDINGS : 1u;
+
+        uint32 ResourceCeiling = Math::Min<uint32>(GVulkanMaxUpdateAfterBindDescriptorSetSampledImages / NumImageArrays, GVulkanMaxUpdateAfterBindDescriptorSetStorageImages / NumImageArrays);
         ResourceCeiling        = Math::Min<uint32>(ResourceCeiling, GVulkanMaxUpdateAfterBindDescriptorSetUniformBuffers);
         ResourceCeiling        = Math::Min<uint32>(ResourceCeiling, GVulkanMaxUpdateAfterBindDescriptorSetStorageBuffers);
-        ResourceCeiling        = Math::Min<uint32>(ResourceCeiling, GVulkanMaxPerStageUpdateAfterBindResources);
+        ResourceCeiling        = Math::Min<uint32>(ResourceCeiling, GVulkanMaxPerStageUpdateAfterBindResources / NumResourceArrays);
 
         if (GVulkanSupportsAccelerationStructures)
         {
@@ -426,7 +445,9 @@ void FVulkanDevice::DeriveCoreCapabilities(
 
         // Samplers are not counted against maxPerStageUpdateAfterBindResources.
         GVulkanMaxBindlessResourceDescriptors = ResourceCeiling;
-        GVulkanMaxBindlessSamplerDescriptors  = GVulkanMaxUpdateAfterBindDescriptorSetSamplers;
+        GVulkanMaxBindlessSamplerDescriptors  = (GVulkanMaxUpdateAfterBindDescriptorSetSamplers > VULKAN_BINDLESS_RESERVED_SAMPLER_SLOTS)
+            ? (GVulkanMaxUpdateAfterBindDescriptorSetSamplers - VULKAN_BINDLESS_RESERVED_SAMPLER_SLOTS)
+            : 0u;
 
         if (GVulkanMaxBindlessResourceDescriptors < VULKAN_MIN_BINDLESS_RESOURCE_DESCRIPTORS)
         {

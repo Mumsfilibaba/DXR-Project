@@ -35,10 +35,14 @@ function TargetBuildRules(Name)
     -- The type of target. Decides if there should be a Standalone and DLL or if the app should be a ConsoleApp.
     self.TargetType = ETargetType.Game
     
-    -- Helper function for retrieving path
+    -- Helper functions for the target's source path. Defaults to <Engine>/<Name>; the
+    -- workspace overrides it with the folder the Target.lua was found in.
     local PathToTarget = JoinPath(GetEnginePath(), self.Name)
     function self.GetPath()
         return PathToTarget
+    end
+    function self.SetPath(NewPath)
+        PathToTarget = CreateOsPath(NewPath)
     end
 
     -- Inject module into the current module (i.e., put the files into the executable)
@@ -169,8 +173,29 @@ function TargetBuildRules(Name)
             LogError("TargetType=Editor is not implemented yet")
             -- TODO: Handle this case properly
         elseif self.TargetType == ETargetType.Program then
-            LogError("TargetType=Program is not implemented yet")
-            -- TODO: Handle this case properly
+            LogInfo("TargetType=Program")
+
+            -- A Program owns its own main(), so Launch is never injected and there is no
+            -- separate Standalone executable to generate.
+            if self.Kind == "SharedLib" or self.Kind == "WindowedApp" then
+                self.Kind = "ConsoleApp"
+            end
+
+            self.bIsDynamic         = false
+            self.bRuntimeLinking    = false
+            self.bEmbedThirdparties = true
+
+            -- Hyphens are legal in a target name but not in a macro, and a Program exports
+            -- nothing, so its API macro expands to nothing.
+            local SafeName = self.Name:gsub("[^%w_]", "_"):upper()
+            self.AddDefines({
+                'MODULE_NAME="' .. self.Name .. '"',
+                SafeName .. "_API="
+            })
+
+            LogInfo("--- Generating project for target '%s' ---", self.Name)
+            BaseGenerate()
+            LogInfo("--- Finished generating project for target '%s' ---", self.Name)
         end
     end
 

@@ -7,6 +7,7 @@
 #include <Core/Threading/Atomic/AtomicInt.h>
 #include <Core/Platform/PlatformThreadMisc.h>
 #include <Core/Platform/PlatformTime.h>
+#include <Core/Misc/OutputDeviceLogger.h>
 
 // ------------------------------------------------------------------------------------------------
 // Throughput of empty tasks driven through the graph. Prints tasks/sec so a change to the
