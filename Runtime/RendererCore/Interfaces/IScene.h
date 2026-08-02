@@ -2,7 +2,6 @@
 #include "Core/CoreTypes.h"
 
 class FActor;
-class FCameraComponent;
 class FSceneComponent;
 
 struct IScene
@@ -23,12 +22,6 @@ struct IScene
      * @param InComponent Scene component to unregister.
      */
     virtual void RemoveSceneComponent(FSceneComponent* InComponent) = 0;
-
-    /**
-     * @brief Sets the main-thread camera source used to create per-frame renderer snapshots.
-     * @param InCamera Active camera component, or nullptr to clear it.
-     */
-    virtual void SetActiveCamera(FCameraComponent* InCamera) = 0;
 
     /**
      * @brief Resolve an ObjectID (from the selection/picking buffer) back to an Actor.

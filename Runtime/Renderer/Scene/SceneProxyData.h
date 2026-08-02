@@ -5,24 +5,6 @@
 #include "Core/Math/Matrix4.h"
 #include "RHI/RHICore.h"
 
-struct FCameraSnapshot
-{
-    Matrix4 View                        = {};
-    Matrix4 ViewInverse                 = {};
-    Matrix4 Projection                  = {};
-    Matrix4 ProjectionInverse           = {};
-    Matrix4 ViewProjection              = {};
-    Matrix4 ViewProjectionInverse       = {};
-    Matrix4 ViewProjectionNoTranslation = {};
-    Vector3 Position                    = {};
-    Vector3 Forward                     = {};
-    Vector3 Right                       = {};
-    Vector3 Up                          = {};
-    float   NearPlane                   = 0.0f;
-    float   FarPlane                    = 0.0f;
-    float   AspectRatio                 = 0.0f;
-};
-
 struct FStaticMeshProxyUpdate
 {
     Matrix4 TransformMatrix        = {};
@@ -39,7 +21,6 @@ struct FDirectionalLightProxyUpdate
     float   ShadowPositionOffset        = 0.0f;
     float   CascadeSplitLambda          = 0.0f;
     float   LightArea                   = 0.0f;
-    Matrix4 CameraViewProjectionInverse = {}; 
 };
 
 struct FPointLightProxyUpdate
@@ -64,11 +45,9 @@ struct FLightProbeProxyUpdate
 
 struct FRenderUpdateBatch
 {
-    FCameraSnapshot                Camera;
     TArray<FStaticMeshProxyUpdate> StaticMeshUpdates;
     FDirectionalLightProxyUpdate   DirectionalLight;
     TArray<FPointLightProxyUpdate> PointLightUpdates;
     TArray<FLightProbeProxyUpdate> LightProbeUpdates;
-    bool                           bHasCamera           = false;
     bool                           bHasDirectionalLight = false;
 };

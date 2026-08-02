@@ -6,9 +6,14 @@
 #include "Application/Application.h"
 #include "RHI/RHIResources.h" 
 #include "Engine/Engine.h" 
+#include "Engine/EditorEngine.h"
 #include "Engine/EngineUI/Editor/EditorGuizmo.h" 
+#include "Engine/EngineUI/Editor/EditorCameraController.h"
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h" 
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
+#include "Engine/World/Components/CameraComponent.h"
+#include "Engine/World/SceneViewport.h"
+#include "Engine/World/World.h"
 #include "RendererCore/Interfaces/IRendererModule.h" 
 #include "ImGuiPlugin/ImGuiCore.h" 
 #include "ImGuiPlugin/ImGuiRenderer.h" 
@@ -19,18 +24,31 @@ static TAutoConsoleVariable<bool> CVarDrawFps(
     false,
     EConsoleVariableFlags::Default);
 
-FEditorViewportWidget::FEditorViewportWidget()
-    : CachedViewportSize(0, 0)
+FEditorViewportWidget::FEditorViewportWidget(FEditorEngine* InEditorEngine)
+    : EditorEngine(InEditorEngine)
+    , CameraController(MakeUniquePtr<FEditorCameraController>())
+    , CachedViewportSize(0, 0)
     , ViewportImage()
     , ImGuiDelegateHandle()
     , bVisible(true)
     , bViewportInputActive(false)
+    , bMouseLookActive(false)
+    , bCursorWasVisible(true)
+    , MouseLookRestorePosition()
+    , PendingCameraInput()
     , DebugView(FSceneRenderView::EDebugView::None)
     , SecondaryDebugView(FSceneRenderView::EDebugView::None)
     , GizmoPlacement(EGizmoPlacement::Center)
     , GizmoOrientation(EditorGuizmo::EMode::World)
     , GizmoOperation(EditorGuizmo::EOperation::Translate)
 {
+    CHECK(EditorEngine != nullptr);
+
+    if (const TSharedPtr<FSceneViewport> SceneViewport = EditorEngine->GetSceneViewport())
+    {
+        SceneViewport->SetPlayerInputEnabled(false);
+    }
+
     if (IImguiPlugin::IsEnabled())
     {
         ImGuiDelegateHandle = IImguiPlugin::Get().AddDrawDelegate(FImGuiDelegate::CreateRaw(this, &FEditorViewportWidget::Draw));
@@ -40,6 +58,8 @@ FEditorViewportWidget::FEditorViewportWidget()
 
 FEditorViewportWidget::~FEditorViewportWidget()
 {
+    EndMouseLook();
+
     if (IImguiPlugin::IsEnabled())
     {
         IImguiPlugin::Get().RemoveDrawDelegate(ImGuiDelegateHandle);
@@ -50,6 +70,7 @@ void FEditorViewportWidget::Draw()
 {
     if (!bVisible)
     {
+        EndMouseLook();
         return;
     }
 
@@ -399,7 +420,6 @@ void FEditorViewportWidget::Draw()
 
                 const CHAR* MenuLabelText = BuildClampedLabel(CurrentLabel, MaxTextWidth, MenuLabel);
 
-                const ImVec2 LabelSize              = ImGui::CalcTextSize(MenuLabelText);
                 const ImVec2 ChildPos               = ImGui::GetWindowPos();
                 const ImVec2 ChildSize              = ImGui::GetWindowSize();
                 const ImVec2 ContentMin             = ImGui::GetWindowContentRegionMin();
@@ -410,13 +430,16 @@ void FEditorViewportWidget::Draw()
                 const float  ScaleButtonWidth       = 52.0f;
                 const float  PlacementButtonWidth   = 56.0f;
                 const float  OrientationButtonWidth = 52.0f;
+                const float  CameraButtonWidth      = 118.0f;
                 const float  ToolbarControlGap      = 8.0f;
                 const float  LeftPadding            = 12.0f;
                 const float  ViewModeCursorX        = ContentMin.x + Math::Max(0.0f, ContentWidth - ButtonWidth - RightPadding);
+                const float  CameraCursorX          = ViewModeCursorX - ToolbarControlGap - CameraButtonWidth;
                 const float  CursorY                = ContentMin.y + 6.0f;
 
                 ImGui::SetCursorScreenPos(ImVec2(ChildPos.x + ContentMin.x + LeftPadding, ChildPos.y + CursorY));
 
+                const CHAR* CameraMenuPopupId     = "##ViewportCameraMenu";
                 const CHAR* ViewMenuPopupId       = "##ViewportViewModeMenu";
                 const CHAR* ShadowMenuPopupId     = "##ViewportShadowMenu";
                 const CHAR* RayTracingMenuPopupId = "##ViewportRayTracingMenu";
@@ -425,20 +448,22 @@ void FEditorViewportWidget::Draw()
 
                 const ImGuiPopupFlags PopupQueryFlags = ImGuiPopupFlags_AnyPopupLevel;
 
+                const bool bCameraPopupOpen     = ImGui::IsPopupOpen(CameraMenuPopupId, PopupQueryFlags);
                 const bool bViewPopupOpen       = ImGui::IsPopupOpen(ViewMenuPopupId, PopupQueryFlags);
                 const bool bShadowPopupOpen     = ImGui::IsPopupOpen(ShadowMenuPopupId, PopupQueryFlags);
                 const bool bRayTracingPopupOpen = ImGui::IsPopupOpen(RayTracingMenuPopupId, PopupQueryFlags);
                 const bool bSecondaryPopupOpen  = ImGui::IsPopupOpen(SecondaryMenuPopupId, PopupQueryFlags);
-                const bool bAnyPopupOpen        = bViewPopupOpen || bShadowPopupOpen || bRayTracingPopupOpen || bSecondaryPopupOpen;
+                const bool bAnyPopupOpen        = bCameraPopupOpen || bViewPopupOpen || bShadowPopupOpen || bRayTracingPopupOpen || bSecondaryPopupOpen;
 
+                PopupAnchor CameraMenuAnchor;
                 PopupAnchor ViewMenuAnchor;
-                const auto DrawViewModeButton = [&](const CHAR* Label, PopupAnchor& OutAnchor, bool& bOutHovered) -> bool
+                const auto DrawToolbarMenuButton = [&](const CHAR* Id, const CHAR* Label, float Width, bool bPopupOpen, PopupAnchor& OutAnchor, bool& bOutHovered) -> bool
                 {
                     const float ButtonHeightLocal = ButtonHeight;
 
-                    const ImVec2 ButtonSize = ImVec2(ButtonWidth, ButtonHeight);
+                    const ImVec2 ButtonSize = ImVec2(Width, ButtonHeight);
 
-                    const bool bPressed = ImGui::InvisibleButton("##ViewportViewModeButton", ButtonSize);
+                    const bool bPressed = ImGui::InvisibleButton(Id, ButtonSize);
                     const bool bHovered = ImGui::IsItemHovered();
                     const bool bHeld    = ImGui::IsItemActive();
 
@@ -449,7 +474,7 @@ void FEditorViewportWidget::Draw()
                     const ImU32 BgHover = IM_COL32(87, 87, 87, 255);
 
                     ImU32 Bg = BgIdle;
-                    if (bViewPopupOpen || bHeld || bHovered)
+                    if (bPopupOpen || bHeld || bHovered)
                     {
                         Bg = BgHover;
                     }
@@ -457,7 +482,8 @@ void FEditorViewportWidget::Draw()
                     ImDrawList* DrawList = ImGui::GetWindowDrawList();
                     DrawList->AddRectFilled(Min, Max, Bg, 6.0f);
 
-                    const float TextY = Min.y + (ButtonHeightLocal - LabelSize.y) * 0.5f;
+                    const ImVec2 ButtonLabelSize = ImGui::CalcTextSize(Label);
+                    const float TextY = Min.y + (ButtonHeightLocal - ButtonLabelSize.y) * 0.5f;
                     const float TextX = Min.x + ImGui::GetStyle().FramePadding.x;
 
                     DrawList->AddText(ImVec2(TextX, TextY), ImGui::GetColorU32(ImGuiCol_Text), Label);
@@ -552,11 +578,127 @@ void FEditorViewportWidget::Draw()
                     GizmoOrientation = EditorGuizmo::EMode::World;
                 }
 
+                ImGui::SetCursorScreenPos(ImVec2(ChildPos.x + CameraCursorX, ChildPos.y + CursorY));
+
+                bool bCameraHovered = false;
+                const bool bCameraPressed = DrawToolbarMenuButton(
+                    "##ViewportCameraButton",
+                    "Camera",
+                    CameraButtonWidth,
+                    bCameraPopupOpen,
+                    CameraMenuAnchor,
+                    bCameraHovered);
+
+                if (bCameraPressed || (bAnyPopupOpen && bCameraHovered))
+                {
+                    ImGui::OpenPopup(CameraMenuPopupId);
+                    CameraMenuAnchor.bRequestPosition = true;
+                }
+
+                if (EditorWidgets::BeginMenuPopup(CameraMenuPopupId, CameraMenuAnchor, 280.0f))
+                {
+                    FEditorCameraController* Controller = CameraController.Get();
+
+                    if (Controller)
+                    {
+                        EditorWidgets::MenuLabeledSeparator("NAVIGATION");
+
+                        const ImGuiStyle& CameraMenuStyle = ImGui::GetStyle();
+                        ImGui::PushStyleVar(
+                            ImGuiStyleVar_ItemSpacing,
+                            ImVec2(CameraMenuStyle.ItemSpacing.x, 8.0f));
+
+                        float MoveSpeed = Controller->GetMoveSpeed();
+                        ImGui::SetNextItemWidth(120.0f);
+                        if (ImGui::SliderFloat("Move Speed", &MoveSpeed, 0.1f, 200.0f, "%.1f"))
+                        {
+                            Controller->SetMoveSpeed(MoveSpeed);
+                        }
+
+                        float RotationSpeed = Controller->GetRotationSpeed();
+                        ImGui::SetNextItemWidth(120.0f);
+                        if (ImGui::SliderFloat("Rotation Speed", &RotationSpeed, 1.0f, 360.0f, "%.0f"))
+                        {
+                            Controller->SetRotationSpeed(RotationSpeed);
+                        }
+
+                        float MouseSensitivity = Controller->GetMouseSensitivity();
+                        ImGui::SetNextItemWidth(120.0f);
+                        if (ImGui::SliderFloat("Mouse Sensitivity", &MouseSensitivity, 0.01f, 2.0f, "%.2f"))
+                        {
+                            Controller->SetMouseSensitivity(MouseSensitivity);
+                        }
+
+                        ImGui::PopStyleVar();
+
+                        EditorWidgets::MenuSeparator();
+                        EditorWidgets::MenuLabeledSeparator("LENS");
+                        ImGui::PushStyleVar(
+                            ImGuiStyleVar_ItemSpacing,
+                            ImVec2(CameraMenuStyle.ItemSpacing.x, 8.0f));
+
+                        float FieldOfView = Controller->GetFieldOfView();
+                        ImGui::SetNextItemWidth(120.0f);
+                        if (ImGui::SliderFloat("Field of View", &FieldOfView, 30.0f, 120.0f, "%.0f deg"))
+                        {
+                            Controller->SetFieldOfView(FieldOfView);
+                        }
+
+                        float NearPlane = Controller->GetNearPlane();
+                        ImGui::SetNextItemWidth(120.0f);
+                        if (ImGui::InputFloat("Near Plane", &NearPlane, 0.001f, 0.01f, "%.3f"))
+                        {
+                            Controller->SetNearPlane(NearPlane);
+                        }
+
+                        float FarPlane = Controller->GetFarPlane();
+                        ImGui::SetNextItemWidth(120.0f);
+                        if (ImGui::InputFloat("Far Plane", &FarPlane, 1.0f, 10.0f, "%.1f"))
+                        {
+                            Controller->SetFarPlane(FarPlane);
+                        }
+
+                        ImGui::PopStyleVar();
+
+                        EditorWidgets::MenuSeparator();
+                        EditorWidgets::MenuLabeledSeparator("ACTIONS");
+
+                        if (ImGui::MenuItem("Reset Camera"))
+                        {
+                            Controller->Reset();
+                        }
+
+                        FActor* SelectedActor = EditorEngine ? EditorEngine->GetSelectedActor() : nullptr;
+                        if (ImGui::MenuItem("Focus Selected", nullptr, false, SelectedActor != nullptr))
+                        {
+                            Controller->FocusOn(SelectedActor);
+                        }
+
+                        if (ImGui::MenuItem("Attach To Selected", nullptr, false, SelectedActor != nullptr))
+                        {
+                            Controller->AttachTo(SelectedActor);
+                        }
+
+                        if (ImGui::MenuItem("Detach", nullptr, false, Controller->IsAttached()))
+                        {
+                            Controller->Detach();
+                        }
+                    }
+
+                    EditorWidgets::EndMenuPopup();
+                }
+
                 ImGui::SetCursorScreenPos(ImVec2(ChildPos.x + ViewModeCursorX, ChildPos.y + CursorY));
 
                 bool bViewHovered = false;
 
-                const bool bViewPressed = DrawViewModeButton(MenuLabelText, ViewMenuAnchor, bViewHovered);
+                const bool bViewPressed = DrawToolbarMenuButton(
+                    "##ViewportViewModeButton",
+                    MenuLabelText,
+                    ButtonWidth,
+                    bViewPopupOpen,
+                    ViewMenuAnchor,
+                    bViewHovered);
                 if (bViewPressed || (bAnyPopupOpen && bViewHovered))
                 {
                     ImGui::OpenPopup(ViewMenuPopupId);
@@ -842,6 +984,8 @@ void FEditorViewportWidget::Draw()
         const bool bClickedRight           = ImGui::IsItemClicked(ImGuiMouseButton_Right);
         const bool bClickedMiddle          = ImGui::IsItemClicked(ImGuiMouseButton_Middle);
         const bool bAnyItemClick           = bClickedLeft || bClickedRight || bClickedMiddle;
+        const bool bViewportImageHovered   = ImGui::IsItemHovered();
+        const bool bViewportImageActive    = ImGui::IsItemActive();
 
         if (bAnyItemClick)
         {
@@ -862,8 +1006,118 @@ void FEditorViewportWidget::Draw()
             EditorGuizmo::IsOver() || 
             EditorGuizmo::IsUsingViewManipulate() || 
             EditorGuizmo::IsViewManipulateHovered(); 
+
+        PendingCameraInput = FEditorCameraInputState();
+
+        IntVector2 RawMouseDelta;
+        if (const TSharedPtr<FSceneViewport> SceneViewport = EditorEngine->GetSceneViewport())
+        {
+            RawMouseDelta = SceneViewport->ConsumeHighPrecisionMouseDelta();
+        }
+
+        const bool bCanControlEditorCamera =
+            bViewportInputActive &&
+            !bBlockPickForGizmo &&
+            (bViewportImageHovered || bViewportImageActive || bMouseLookActive);
+
+        if (bCanControlEditorCamera)
+        {
+            const ImGuiIO& IO = ImGui::GetIO();
+
+            PendingCameraInput.LookDelta       = Vector2(IO.MouseDelta.x, IO.MouseDelta.y);
+            PendingCameraInput.PanDelta        = PendingCameraInput.LookDelta;
+            PendingCameraInput.WheelDelta      = IO.MouseWheel;
+            PendingCameraInput.bLeftMouseDown  = ImGui::IsMouseDown(ImGuiMouseButton_Left);
+            PendingCameraInput.bRightMouseDown = ImGui::IsMouseDown(ImGuiMouseButton_Right);
+            PendingCameraInput.bMiddleMouseDown = ImGui::IsMouseDown(ImGuiMouseButton_Middle);
+            PendingCameraInput.bAltDown         = IO.KeyAlt;
+            PendingCameraInput.bBoost           = IO.KeyShift || ImGui::IsKeyDown(ImGuiKey_GamepadL3);
+            PendingCameraInput.bFocusPressed    = ImGui::IsKeyPressed(ImGuiKey_F, false);
+            PendingCameraInput.bResetPressed    = ImGui::IsKeyPressed(ImGuiKey_R, false);
+
+            const float GamepadMoveRight =
+                ImGui::GetKeyData(ImGuiKey_GamepadLStickLeft)->AnalogValue -
+                ImGui::GetKeyData(ImGuiKey_GamepadLStickRight)->AnalogValue;
+            const float GamepadMoveForward =
+                ImGui::GetKeyData(ImGuiKey_GamepadLStickUp)->AnalogValue -
+                ImGui::GetKeyData(ImGuiKey_GamepadLStickDown)->AnalogValue;
+            const bool bKeyboardFlyActive =
+                PendingCameraInput.bRightMouseDown &&
+                !PendingCameraInput.bAltDown;
+
+            const float MoveRight =
+                (bKeyboardFlyActive && ImGui::IsKeyDown(ImGuiKey_A) ? 1.0f : 0.0f) -
+                (bKeyboardFlyActive && ImGui::IsKeyDown(ImGuiKey_D) ? 1.0f : 0.0f) +
+                GamepadMoveRight;
+            const float MoveUp =
+                (bKeyboardFlyActive && ImGui::IsKeyDown(ImGuiKey_Q) ? 1.0f : 0.0f) -
+                (bKeyboardFlyActive && ImGui::IsKeyDown(ImGuiKey_E) ? 1.0f : 0.0f);
+            const float MoveForward =
+                (bKeyboardFlyActive && ImGui::IsKeyDown(ImGuiKey_W) ? 1.0f : 0.0f) -
+                (bKeyboardFlyActive && ImGui::IsKeyDown(ImGuiKey_S) ? 1.0f : 0.0f) +
+                GamepadMoveForward;
+
+            PendingCameraInput.MoveAxis = Vector3(
+                Math::Clamp(MoveRight, -1.0f, 1.0f),
+                Math::Clamp(MoveUp, -1.0f, 1.0f),
+                Math::Clamp(MoveForward, -1.0f, 1.0f));
+            PendingCameraInput.bFlyActive =
+                bKeyboardFlyActive ||
+                Math::Abs(GamepadMoveRight) > 0.01f ||
+                Math::Abs(GamepadMoveForward) > 0.01f;
+
+            const float RotateRight =
+                (ImGui::IsKeyDown(ImGuiKey_RightArrow) ? 1.0f : 0.0f) -
+                (ImGui::IsKeyDown(ImGuiKey_LeftArrow) ? 1.0f : 0.0f) +
+                ImGui::GetKeyData(ImGuiKey_GamepadRStickRight)->AnalogValue -
+                ImGui::GetKeyData(ImGuiKey_GamepadRStickLeft)->AnalogValue;
+            const float RotateDown =
+                (ImGui::IsKeyDown(ImGuiKey_DownArrow) ? 1.0f : 0.0f) -
+                (ImGui::IsKeyDown(ImGuiKey_UpArrow) ? 1.0f : 0.0f) +
+                ImGui::GetKeyData(ImGuiKey_GamepadRStickDown)->AnalogValue -
+                ImGui::GetKeyData(ImGuiKey_GamepadRStickUp)->AnalogValue;
+
+            PendingCameraInput.RotationAxis = Vector2(
+                Math::Clamp(RotateRight, -1.0f, 1.0f),
+                Math::Clamp(RotateDown, -1.0f, 1.0f));
+
+            const bool bWantsMouseLook =
+                PendingCameraInput.bRightMouseDown &&
+                !PendingCameraInput.bAltDown;
+
+            if (bWantsMouseLook && !bMouseLookActive && bViewportImageHovered)
+            {
+                bMouseLookActive        = true;
+                bCursorWasVisible       = FApplication::Get().IsCursorVisible();
+                MouseLookRestorePosition = FApplication::Get().GetCursorPosition();
+                FApplication::Get().EnableHighPrecisionMouseForWindow(FApplication::Get().GetFocusWindow());
+                FApplication::Get().ShowCursor(false);
+            }
+
+            if (bMouseLookActive)
+            {
+                if (bWantsMouseLook)
+                {
+                    PendingCameraInput.LookDelta = Vector2(float(RawMouseDelta.X), float(RawMouseDelta.Y));
+                    FApplication::Get().SetCursorPosition(MouseLookRestorePosition);
+                }
+                else
+                {
+                    EndMouseLook();
+                }
+            }
+        }
+        else
+        {
+            EndMouseLook();
+        }
+
+        const bool bBlockPickForCamera =
+            bMouseLookActive ||
+             PendingCameraInput.bAltDown ||
+             PendingCameraInput.bMiddleMouseDown;
  
-        if (bWasViewportInputActive && bClickedLeft && !bBlockPickForGizmo && DebugView == FSceneRenderView::EDebugView::None) 
+        if (bWasViewportInputActive && bClickedLeft && !bBlockPickForGizmo && !bBlockPickForCamera && DebugView == FSceneRenderView::EDebugView::None)
         { 
             const ImVec2 MousePos = ImGui::GetMousePos(); 
  
@@ -944,6 +1198,48 @@ void FEditorViewportWidget::Draw()
     ImGui::End();
 
     ImGui::PopStyleVar(); // WindowPadding
+}
+
+void FEditorViewportWidget::Tick(float DeltaTime)
+{
+    if (CameraController)
+    {
+        CameraController->UpdateProjection(CachedViewportSize);
+        CameraController->Tick(DeltaTime, PendingCameraInput, EditorEngine ? EditorEngine->GetSelectedActor() : nullptr);
+    }
+
+    PendingCameraInput = FEditorCameraInputState();
+}
+
+FCameraComponent* FEditorViewportWidget::GetViewCamera() const
+{
+    return CameraController ? CameraController->GetCamera() : nullptr;
+}
+
+void FEditorViewportWidget::OnActorRemoved(FActor* Actor)
+{
+    if (CameraController)
+    {
+        CameraController->OnActorRemoved(Actor);
+    }
+}
+
+bool FEditorViewportWidget::ConsumeCameraCut()
+{
+    return CameraController && CameraController->ConsumeCameraCut();
+}
+
+void FEditorViewportWidget::EndMouseLook()
+{
+    if (!bMouseLookActive || !FApplication::IsInitialized())
+    {
+        bMouseLookActive = false;
+        return;
+    }
+
+    FApplication::Get().SetCursorPosition(MouseLookRestorePosition);
+    FApplication::Get().ShowCursor(bCursorWasVisible);
+    bMouseLookActive = false;
 }
 
 void FEditorViewportWidget::SetViewportWidget(const TSharedPtr<FViewportWidget>& InViewportWidget)

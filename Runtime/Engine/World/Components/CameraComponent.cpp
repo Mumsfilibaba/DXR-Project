@@ -1,6 +1,7 @@
 #include "Core/Math/Math.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Components/CameraComponent.h"
+#include "RendererCore/CameraSnapshot.h"
 
 FOBJECT_IMPLEMENT_CLASS(FCameraComponent);
 
@@ -142,6 +143,24 @@ void FCameraComponent::UpdateWorldToClipSpaceMatrices()
     ViewProjectionNoTranslation.SetIdentity();
     ViewProjectionNoTranslation.SetRotationAndScale(View3x3);
     ViewProjectionNoTranslation = ViewProjectionNoTranslation * Projection;
+}
+
+void FCameraComponent::PrepareSceneViewInfo(FCameraSnapshot& OutCameraSnapshot) const
+{
+    OutCameraSnapshot.View                        = View;
+    OutCameraSnapshot.ViewInverse                 = ViewInverse;
+    OutCameraSnapshot.Projection                  = Projection;
+    OutCameraSnapshot.ProjectionInverse           = ProjectionInverse;
+    OutCameraSnapshot.ViewProjection              = ViewProjection;
+    OutCameraSnapshot.ViewProjectionInverse       = ViewProjectionInverse;
+    OutCameraSnapshot.ViewProjectionNoTranslation = ViewProjectionNoTranslation;
+    OutCameraSnapshot.Position                    = GetPosition();
+    OutCameraSnapshot.Forward                     = ForwardVector;
+    OutCameraSnapshot.Right                       = RightVector;
+    OutCameraSnapshot.Up                          = UpVector;
+    OutCameraSnapshot.NearPlane                   = NearPlane;
+    OutCameraSnapshot.FarPlane                    = FarPlane;
+    OutCameraSnapshot.AspectRatio                 = AspectRatio;
 }
 
 const Vector3& FCameraComponent::GetPosition() const

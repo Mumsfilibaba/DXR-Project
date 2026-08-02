@@ -13,12 +13,14 @@
 #include "Engine/EngineUI/Editor/EditorFrameProfilerWidget.h"
 #include "Engine/EngineUI/Editor/EditorRHIInfoWidget.h"
 #include "Engine/EngineUI/Editor/EditorStatsWidget.h"
+#include "Engine/World/Components/CameraComponent.h"
 #include "RendererCore/RenderSettings.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
 
 FEditorEngine::FEditorEngine()
     : FEngine()
     , SelectedActor(nullptr)
+    , LastViewportCamera(nullptr)
     , ActorRemovedDelegateHandle()
     , DockspaceWidget(nullptr)
     , FooterWidget(nullptr)
@@ -66,7 +68,7 @@ bool FEditorEngine::Init()
         RHIInfoWidget          = MakeSharedPtr<FEditorRHIInfoWidget>();
         StatsWidget            = MakeSharedPtr<FEditorStatsWidget>();
 
-        ViewportWidget = MakeSharedPtr<FEditorViewportWidget>();
+        ViewportWidget = MakeSharedPtr<FEditorViewportWidget>(this);
         ViewportWidget->SetViewportWidget(GetViewportWidget());
     }
 
@@ -120,6 +122,11 @@ void FEditorEngine::Tick(float DeltaTime)
 {
     FEngine::Tick(DeltaTime);
 
+    if (ViewportWidget)
+    {
+        ViewportWidget->Tick(DeltaTime);
+    }
+
     // Consume any completed async editor pick results.
     if (FWorld* LocalWorld = GetWorld())
     {
@@ -168,6 +175,17 @@ FSceneRenderPacket FEditorEngine::BuildRenderPacket()
     Packet.View.DebugView          = ViewportWidget->GetDebugView();
     Packet.View.SecondaryDebugView = ViewportWidget->GetSecondaryDebugView();
 
+    FCameraComponent* ViewCamera = GetActiveViewportCamera();
+    if (ViewCamera)
+    {
+        ViewCamera->PrepareSceneViewInfo(Packet.View.CameraSnapshot);
+        Packet.View.bHasCamera = true;
+    }
+
+    const bool bCameraChanged = ViewCamera != LastViewportCamera;
+    Packet.View.bCameraCut = bCameraChanged || ViewportWidget->ConsumeCameraCut();
+    LastViewportCamera = ViewCamera;
+
     // Resolve the editor selection to a stable ObjectID on the main thread so the render thread never reads live editor state.
     if (FActor* Selected = GetSelectedActor())
     {
@@ -178,6 +196,11 @@ FSceneRenderPacket FEditorEngine::BuildRenderPacket()
     }
 
     return Packet;
+}
+
+FCameraComponent* FEditorEngine::GetActiveViewportCamera() const
+{
+    return ViewportWidget ? ViewportWidget->GetViewCamera() : nullptr;
 }
 
 void FEditorEngine::SetSelectedActor(FActor* InActor)
@@ -192,6 +215,11 @@ void FEditorEngine::ClearSelection()
 
 void FEditorEngine::OnActorRemoved(FActor* RemovedActor)
 {
+    if (ViewportWidget)
+    {
+        ViewportWidget->OnActorRemoved(RemovedActor);
+    }
+
     if (SelectedActor == RemovedActor)
     {
         ClearSelection();

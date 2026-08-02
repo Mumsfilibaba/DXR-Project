@@ -1,6 +1,8 @@
 #pragma once
 #include "Engine/Engine.h"
 
+class FCameraComponent;
+
 class ENGINE_API FRuntimeEngine : public FEngine
 {
 public:
@@ -14,6 +16,7 @@ public:
     virtual FSceneRenderPacket BuildRenderPacket() override final;
 
 private:
+    FCameraComponent*                            LastRenderCamera;
     TSharedPtr<class FRuntimeConsoleWidget>      ConsoleWidget;
     TSharedPtr<class FEditorFrameProfilerWidget> ProfilerWidget;
 };

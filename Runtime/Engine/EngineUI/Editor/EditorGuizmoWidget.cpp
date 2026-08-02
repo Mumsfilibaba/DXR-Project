@@ -1,5 +1,4 @@
 #include "Engine/EditorEngine.h"
-#include "Engine/World/World.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Components/CameraComponent.h"
 #include "Engine/World/Components/DirectionalLightComponent.h"
@@ -93,13 +92,7 @@ void FEditorGuizmoWidget::Draw()
         }
     }
 
-    FWorld* World = EditorEngine->GetWorld();
-    if (!World)
-    {
-        return;
-    }
-
-    FCameraComponent* Camera = World->GetActiveCamera();
+    FCameraComponent* Camera = EditorEngine->GetActiveViewportCamera();
     if (!Camera)
     {
         return;
