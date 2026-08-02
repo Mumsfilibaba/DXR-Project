@@ -135,9 +135,10 @@ if not defined MSBUILD (
 )
 
 REM --- Build -----------------------------------------------------------------
-REM  Without /t: MSBuild builds every project in the solution. RunCompileTests.bat
-REM  relies on that, since SandboxStandalone is only generated for a non-monolithic
-REM  build and ImGuiPlugin is loaded at runtime rather than linked.
+REM  Without /t: MSBuild builds every project in the solution.
+REM  AutomationScripts\RunCompileTests.bat relies on that, since SandboxStandalone is
+REM  only generated for a non-monolithic build and ImGuiPlugin is loaded at runtime
+REM  rather than linked.
 set "TARGET_ARG=/t:"%PROJECT%""
 set "WHAT=%PROJECT%"
 if /i "%PROJECT%"=="all" (

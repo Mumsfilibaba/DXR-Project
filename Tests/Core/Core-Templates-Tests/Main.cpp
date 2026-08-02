@@ -120,7 +120,7 @@ auto Func2(CHAR) -> int(*)()
 
 int main()
 {
-    TestHarness::Initialize();
+    TestHarness::Initialize("TestResults_Core.log");
     LOG_INFO("=== Template Tests ===");
 
     /* Is Same */

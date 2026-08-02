@@ -36,7 +36,9 @@ REM  set TESTS_NO_PAUSE=1 to skip the pause.
 REM ----------------------------------------------------------------------------
 setlocal EnableDelayedExpansion
 
-set "ROOT=%~dp0"
+REM  This script sits one level below the repo root; resolve it to a full path
+REM  so logged paths do not carry a "..\" through every message.
+for %%I in ("%~dp0..") do set "ROOT=%%~fI\"
 set "LOG=%ROOT%CompileResults.log"
 set "COMPILE=%ROOT%SetupScripts\Compile_VS2022.bat"
 

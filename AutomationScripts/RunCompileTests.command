@@ -39,7 +39,8 @@
 # absent and every Homebrew tool is invisible.
 export PATH="/usr/local/bin:$PATH"
 
-ROOT=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+# This script sits one level below the repo root.
+ROOT=$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )
 cd "$ROOT"
 
 LOG="${ROOT}/CompileResults.log"
@@ -102,7 +103,7 @@ if [ -n "$TESTS_NO_PAUSE" ]; then
 fi
 
 # Configuration names contain spaces, so they cannot live in the space-separated
-# list RunTests.sh uses for its suites.
+# list Scripts/RunSuites.sh uses for its suites.
 CONFIGS="Debug
 Development
 Release

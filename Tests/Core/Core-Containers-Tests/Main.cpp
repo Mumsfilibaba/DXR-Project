@@ -44,17 +44,6 @@ IMPLEMENT_NEW_AND_DELETE_OPERATORS();
 #endif
 
 /**
- * Benchmarks
- */
-
-void BenchMarks()
-{
-#if RUN_TARRAY_BENCHMARKS
-    TArray_Benchmark();
-#endif
-}
-
-/**
  * Tests
  */
 
@@ -169,15 +158,11 @@ int main(int Argc, const CHAR* Argv[])
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 
-    TestHarness::Initialize();
+    TestHarness::Initialize("TestResults_Core.log");
     LOG_INFO("=== Container Tests ===");
 
 #if RUN_TESTS
     Tests(Argc, Argv);
-#endif
-
-#if RUN_BENCHMARK
-    BenchMarks();
 #endif
 
     const int32 ExitCode = TestHarness::Report();
