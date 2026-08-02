@@ -48,7 +48,7 @@ FRHIDescriptorHandle FD3D12BufferRHI::GetBindlessHandle() const
 {
     if (!Desc.IsConstantBuffer())
     {
-        CHECK(false && "GetBindlessHandle called on a non-constant-buffer FD3D12BufferRHI");
+        CHECKF(false, "GetBindlessHandle called on a non-constant-buffer FD3D12BufferRHI");
         return FRHIDescriptorHandle();
     }
 

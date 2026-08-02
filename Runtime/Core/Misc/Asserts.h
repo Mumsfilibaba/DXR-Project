@@ -53,6 +53,7 @@ struct CORE_API Assert
 
     #define VERIFY(Condition) CHECK(Condition)
 #else
-    #define CHECK(Condition)  ((void)sizeof(!(Condition)))
-    #define VERIFY(Condition) ((void)(Condition))
+    #define CHECK(Condition)         ((void)sizeof(!(Condition)))
+    #define CHECKF(Condition, ...)   ((void)sizeof(!(Condition)))
+    #define VERIFY(Condition)        ((void)(Condition))
 #endif

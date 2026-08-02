@@ -19,6 +19,19 @@ newoption
     },
 }
 
+newoption
+{
+    trigger = "fatalwarnings",
+    description = "Treat compiler warnings as errors (thirdparty modules are exempt)"
+}
+
+newoption
+{
+    trigger = "buildsuffix",
+    value = "Name",
+    description = "Isolate generated projects and build artifacts under a named suffix"
+}
+
 local function NormalizePlatform(PlatformName)
     if not PlatformName then
         return nil
@@ -106,6 +119,21 @@ function IsBuildMonolithic()
     end
 
     return gIsMonolithic
+end
+
+-- Warning Management
+function IsFatalWarnings()
+    return _OPTIONS["fatalwarnings"] ~= nil
+end
+
+-- Suffix that keeps a generation from colliding with the solution and binaries of a normal one
+local function GetBuildSuffix()
+    local Suffix = _OPTIONS["buildsuffix"]
+    if type(Suffix) ~= "string" or Suffix == "" then
+        return nil
+    end
+
+    return Suffix
 end
 
 -- Check the action being used
@@ -254,6 +282,9 @@ end
 
 -- Retrieve the path to the Solutions folder containing solution and project files
 local gSolutionsFolderPath = JoinPath(gEnginePath, "Solutions")
+if GetBuildSuffix() then
+    gSolutionsFolderPath = JoinPath(gSolutionsFolderPath, GetBuildSuffix())
+end
 
 function GetSolutionsFolderPath()
     return gSolutionsFolderPath
@@ -268,6 +299,9 @@ end
 
 -- Output path for the binaries inside the buildfolder
 local gOutputConfigPath = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}"
+if GetBuildSuffix() then
+    gOutputConfigPath = gOutputConfigPath .. "-" .. GetBuildSuffix()
+end
 
 function GetOutputConfigPath()
     return gOutputConfigPath
