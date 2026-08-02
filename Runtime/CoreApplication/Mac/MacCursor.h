@@ -37,6 +37,8 @@ public:
 
 private:
     IntVector2 CurrentPosition;
-    bool        bIsPositionInitialized;
+    ECursor    CurrentCursor;
+    bool       bIsPositionInitialized;
+    bool       bIsCursorInitialized;
 };
 

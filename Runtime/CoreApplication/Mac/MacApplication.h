@@ -14,13 +14,6 @@
 @class FCocoaWindow;
 @class FMacApplicationObserver;
 
-/**
- * @enum EMacModifierKey
- * @brief Lists Mac-specific variants of modifier keys (e.g., left/right Shift, left/right Control).
- *
- * On macOS, it can be useful to distinguish between left/right keys, such as Control or Shift.
- * EMacModifierKey enumerates these specific variants as well as CapsLock and NumLock.
- */
 struct EMacModifierKey
 {
     enum Type
@@ -38,13 +31,6 @@ struct EMacModifierKey
     };
 };
 
-/**
- * @struct FDeferredMacEvent
- * @brief Stores information about a macOS event (NSEvent) that is deferred for later processing.
- *
- * Certain macOS events (like keyboard, mouse, or notifications) can be queued to be processed
- * at a convenient time (e.g., within FMacApplication::ProcessDeferredEvents). 
- */
 struct FDeferredMacEvent
 {
     FORCEINLINE FDeferredMacEvent()
@@ -52,6 +38,8 @@ struct FDeferredMacEvent
         , Event(nullptr)
         , CocoaWindow(nullptr)
         , Window(nullptr)
+        , ContentFrame(NSZeroRect)
+        , MouseLocation(NSZeroPoint)
         , EventType((NSEventType)0)
         , ModifierFlags(0)
         , ClickCount(0)
@@ -60,6 +48,7 @@ struct FDeferredMacEvent
         , Character((uint32)~0)
         , MouseButtonNumber(0)
         , KeyCode(0)
+        , bHasContentFrame(false)
         , bHasPreciseScrollingDeltas(false)
         , bIsRepeat(false)
     {
@@ -70,6 +59,8 @@ struct FDeferredMacEvent
         , Event(Other.Event ? [Other.Event retain] : nullptr)
         , CocoaWindow(Other.CocoaWindow ? [Other.CocoaWindow retain] : nullptr)
         , Window(Other.Window)
+        , ContentFrame(Other.ContentFrame)
+        , MouseLocation(Other.MouseLocation)
         , EventType(Other.EventType)
         , ModifierFlags(Other.ModifierFlags)
         , ClickCount(Other.ClickCount)
@@ -78,6 +69,7 @@ struct FDeferredMacEvent
         , Character(Other.Character)
         , MouseButtonNumber(Other.MouseButtonNumber)
         , KeyCode(Other.KeyCode)
+        , bHasContentFrame(Other.bHasContentFrame)
         , bHasPreciseScrollingDeltas(Other.bHasPreciseScrollingDeltas)
         , bIsRepeat(Other.bIsRepeat)
     {
@@ -104,7 +96,13 @@ struct FDeferredMacEvent
 
     /** @brief A shared reference to the engine-level FMacWindow associated with this event. */
     TSharedRef<FMacWindow> Window;
-    
+
+    /** @brief The content rect of the window, in Cocoa coordinates, valid when bHasContentFrame. */
+    NSRect ContentFrame;
+
+    /** @brief The cursor position in Cocoa coordinates at the time the event was deferred. */
+    NSPoint MouseLocation;
+
     /** @brief The NSEventType code (e.g., mouse move, key down, etc.). */
     NSEventType EventType;
 
@@ -129,6 +127,9 @@ struct FDeferredMacEvent
     /** @brief The key code for keyboard events (e.g., ANSI code). */
     uint16 KeyCode;
 
+    /** @brief Indicates if ContentFrame holds a captured geometry, which only geometry notifications do. */
+    bool bHasContentFrame;
+
     /** @brief Indicates if the scroll deltas are precise (e.g., from a trackpad). */
     bool bHasPreciseScrollingDeltas;
 
@@ -136,14 +137,26 @@ struct FDeferredMacEvent
     bool bIsRepeat;
 };
 
-/**
- * @class FMacApplication
- * @brief The macOS-specific implementation of the FGenericApplication interface.
- *
- * FMacApplication integrates with Cocoa to manage macOS windows, input devices, and the event loop.
- * It defers certain native events (FDeferredMacEvent) and processes them during the engine tick,
- * ensuring a consistent update loop across the engine. 
- */
+struct FMacScreenInfo
+{
+    /** @brief The full resolution frame of the monitor, in Cocoa coordinates. */
+    NSRect Frame;
+
+    /** @brief The usable frame of the monitor, excluding the menu-bar and the dock. */
+    NSRect VisibleFrame;
+
+    /** @brief The scale factor between points and backing store pixels. */
+    CGFloat BackingScaleFactor;
+
+    /** @brief The dots-per-inch of the monitor. */
+    uint32 DisplayDPI;
+
+    /** @brief A human readable name for the monitor. */
+    String DeviceName;
+
+    /** @brief True if this is the primary monitor. */
+    bool bIsPrimary;
+};
 
 class COREAPPLICATION_API FMacApplication final : public FGenericApplication
 {
@@ -151,9 +164,6 @@ public:
 
     /**
      * @brief Creates a new MacApplication instance and returns it as a FGenericApplication interface.
-     * 
-     * This function also initializes the global GMacApplication pointer, referencing the application instance.
-     * 
      * @return A shared pointer to the newly created FGenericApplication instance.
      */
     static TSharedPtr<FGenericApplication> Create();
@@ -256,6 +266,14 @@ public:
         return Observer;
     }
 
+    /**
+     * @brief Rebuilds the cached screen table from the current NSScreen layout.
+     * Must be called on the Cocoa main thread, since it queries NSScreen. Call it at startup and
+     * from every notification that can change the monitor arrangement, so that the coordinate
+     * converters never need to touch AppKit themselves.
+     */
+    void RefreshScreenCache();
+
 public:
 
     /**
@@ -273,24 +291,6 @@ public:
      * @return The monitor's DPI as a 32-bit integer.
      */
     static uint32 MonitorDPIFromScreen(NSScreen* Screen);
-
-    /**
-     * @brief Finds an NSScreen containing a specific point in Cocoa coordinates.
-     * 
-     * @param PositionX The X-coordinate in Cocoa space.
-     * @param PositionY The Y-coordinate in Cocoa space.
-     * @return A pointer to the NSScreen containing the point, or nullptr if none.
-     */
-    static NSScreen* FindScreenFromCocoaPoint(CGFloat PositionX, CGFloat PositionY);
-
-    /**
-     * @brief Finds an NSScreen based on a position in engine (virtual) coordinates.
-     * 
-     * @param PositionX The X-coordinate in engine coordinates.
-     * @param PositionY The Y-coordinate in engine coordinates.
-     * @return A pointer to the NSScreen containing that point, or nullptr if none.
-     */
-    static NSScreen* FindScreenFromEnginePoint(CGFloat PositionX, CGFloat PositionY);
 
     /**
      * @brief Converts a point from Cocoa (macOS) coordinates to engine coordinates.
@@ -333,6 +333,27 @@ public:
     static NSRect ConvertCocoaRectToEngine(CGFloat Width, CGFloat Height, CGFloat PositionX, CGFloat PositionY);
 
 private:
+
+    /**
+     * @brief Finds the cached screen containing a specific point in Cocoa coordinates.
+     *
+     * @param PositionX The X-coordinate in Cocoa space.
+     * @param PositionY The Y-coordinate in Cocoa space.
+     * @return The screen containing the point, the primary screen if none contains it, or nullptr
+     * if the cache is empty. The caller must hold ScreenCacheCS for as long as it uses the result.
+     */
+    static const FMacScreenInfo* FindScreenFromCocoaPoint(CGFloat PositionX, CGFloat PositionY);
+
+    /**
+     * @brief Finds the cached screen based on a position in engine (virtual) coordinates.
+     *
+     * @param PositionX The X-coordinate in engine coordinates.
+     * @param PositionY The Y-coordinate in engine coordinates.
+     * @return The screen containing the point, the primary screen if none contains it, or nullptr
+     * if the cache is empty. The caller must hold ScreenCacheCS for as long as it uses the result.
+     */
+    static const FMacScreenInfo* FindScreenFromEnginePoint(CGFloat PositionX, CGFloat PositionY);
+
     void ProcessDeferredEvent(const FDeferredMacEvent& DeferredEvent);
     void ProcessMouseMoveEvent(const FDeferredMacEvent& DeferredEvent);
     void ProcessMouseButtonEvent(const FDeferredMacEvent& DeferredEvent);
@@ -347,15 +368,14 @@ private:
     id LocalEventMonitor;
     id GlobalMouseMovedEventMonitor;
 
-    FMacApplicationObserver* Observer;
-    FCocoaWindow*            WindowUnderCursor;
-
-    NSUInteger             CurrentModifierFlags;
-    EMouseButtonName::Type LastPressedButton;
-
-    TSharedPtr<FMacCursor>     MacCursor;
-    TSharedPtr<FGCInputDevice> InputDevice;
-
+    FMacApplicationObserver*       Observer;
+    FCocoaWindow*                  WindowUnderCursor;
+    NSUInteger                     CurrentModifierFlags;
+    EMouseButtonName::Type         LastPressedButton;
+    TSharedPtr<FMacCursor>         MacCursor;
+    TSharedPtr<FGCInputDevice>     InputDevice;
+    TArray<FMacScreenInfo>         ScreenCache;
+    mutable FCriticalSection       ScreenCacheCS;
     TArray<TSharedRef<FMacWindow>> Windows;
     mutable FCriticalSection       WindowsCS;
     TArray<FCocoaWindow*>          ClosedCocoaWindows;

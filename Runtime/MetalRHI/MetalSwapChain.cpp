@@ -217,7 +217,6 @@ id<CAMetalDrawable> FMetalSwapChainRHI::GetDrawable()
 {
     SCOPED_AUTORELEASE_POOL();
     
-    // This can only be called on the mainthread
     if (!Drawable)
     {
         CAMetalLayer* MetalLayer = GetMetalLayer();

@@ -347,6 +347,9 @@ private:
     /** @brief Maps run loop modes to CFRunLoopSourceRefs. */
     CFMutableDictionaryRef SourceAndModeDictionary;
 
+    /** @brief Synchronization primitive for SourceAndModeDictionary. */
+    FCriticalSection SourceAndModeCS;
+
     /** @brief Queue of pending tasks to execute. */
     TQueue<FRunLoopTask*> Tasks;
 
@@ -430,6 +433,8 @@ public:
      * @param WaitMode The run loop mode to use while waiting.
      * @param WaitForCompletion If true, the calling thread will wait until the block has been executed.
      * @note This method schedules the provided block to be executed on the AppThread's run loop.
+     * @warning Must be asynchronous when called from the Cocoa main thread. The AppThread routinely
+     * blocks inside a synchronous MainThreadDispatch, so waiting on it from the main thread deadlocks.
      */
     void AppThreadDispatch(dispatch_block_t Block, NSString* WaitMode, bool WaitForCompletion);
 
@@ -462,6 +467,7 @@ public:
      * @param WaitMode The run loop mode to use while waiting.
      * @return The value returned by the executed block.
      * @note This method schedules the provided block to be executed on the AppThread and waits for its completion, returning the result produced by the block.
+     * @warning Since this always waits, it must never be called from the Cocoa main thread. See AppThreadDispatch.
      */
     template<typename ReturnType>
     inline ReturnType AppThreadDispatchAndReturn(ReturnType (^Block)(void), NSString* WaitMode)
@@ -480,7 +486,7 @@ private:
     FMacThreadManager();
     ~FMacThreadManager();
 
-    void DispatchOnThread(FRunLoopSourceContext* SourceContext, dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished);
+    void DispatchOnThread(FRunLoopSourceContext* SourceContext, bool bAlreadyOnTargetThread, dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished);
 
     void DestroyContexts();
 

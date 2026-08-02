@@ -1,77 +1,112 @@
 #include "Core/Mac/MacPlatformSystemClipboard.h"
+#include "Core/Mac/MacThreadManager.h"
 #include "Core/Memory/Memory.h"
+#include "Core/Platform/PlatformThreadMisc.h"
 #include <AppKit/AppKit.h>
 
 bool FMacPlatformSystemClipboard::HasText()
 {
-    NSPasteboard* Pasteboard = [NSPasteboard generalPasteboard];
-    if (!Pasteboard)
     {
-        return false;
-    }
+        CHECK_COCOA_MAIN_THREAD();
+        SCOPED_AUTORELEASE_POOL();
 
-    NSString* Str = [Pasteboard stringForType:NSPasteboardTypeString];
-    return (Str != nil && [Str length] > 0);
+        NSPasteboard* Pasteboard = [NSPasteboard generalPasteboard];
+        if (!Pasteboard)
+        {
+            return false;
+        }
+
+        NSString* Str = [Pasteboard stringForType:NSPasteboardTypeString];
+        return (Str != nil && [Str length] > 0);
+    }, NSDefaultRunLoopMode);
 }
 
 bool FMacPlatformSystemClipboard::GetText(String& OutText)
 {
     OutText.Clear();
 
-    NSPasteboard* Pasteboard = [NSPasteboard generalPasteboard];
-    if (!Pasteboard)
+    __block String Text;
+    const bool bResult = FMacThreadManager::Get().MainThreadDispatchAndReturn(^
+    {
+        CHECK_COCOA_MAIN_THREAD();
+        SCOPED_AUTORELEASE_POOL();
+
+        NSPasteboard* Pasteboard = [NSPasteboard generalPasteboard];
+        if (!Pasteboard)
+        {
+            return false;
+        }
+
+        NSString* Str = [Pasteboard stringForType:NSPasteboardTypeString];
+        if (!Str || [Str length] == 0)
+        {
+            return false;
+        }
+
+        const CHAR* Utf8 = [Str UTF8String];
+        if (!Utf8)
+        {
+            return false;
+        }
+
+        Text = String(Utf8);
+        return true;
+    }, NSDefaultRunLoopMode);
+
+    if (!bResult)
     {
         return false;
     }
 
-    NSString* Str = [Pasteboard stringForType:NSPasteboardTypeString];
-    if (!Str || [Str length] == 0)
-    {
-        return false;
-    }
-
-    const CHAR* Utf8 = [Str UTF8String];
-    if (!Utf8)
-    {
-        return false;
-    }
-
-    OutText = String(Utf8);
+    OutText = Move(Text);
     return true;
 }
 
 bool FMacPlatformSystemClipboard::SetText(const String& InText)
 {
-    NSPasteboard* Pasteboard = [NSPasteboard generalPasteboard];
-    if (!Pasteboard)
+    __block String Text = InText;
+    return FMacThreadManager::Get().MainThreadDispatchAndReturn(^
     {
-        return false;
-    }
+        CHECK_COCOA_MAIN_THREAD();
+        SCOPED_AUTORELEASE_POOL();
 
-    [Pasteboard clearContents];
+        NSPasteboard* Pasteboard = [NSPasteboard generalPasteboard];
+        if (!Pasteboard)
+        {
+            return false;
+        }
 
-    const CHAR* Utf8 = *InText;
-    if (!Utf8)
-    {
-        return false;
-    }
+        [Pasteboard clearContents];
 
-    NSString* Str = [NSString stringWithUTF8String:Utf8];
-    if (!Str)
-    {
-        return false;
-    }
+        const CHAR* Utf8 = *Text;
+        if (!Utf8)
+        {
+            return false;
+        }
 
-    return [Pasteboard setString:Str forType:NSPasteboardTypeString] == YES;
+        NSString* Str = [NSString stringWithUTF8String:Utf8];
+        if (!Str)
+        {
+            return false;
+        }
+
+        return [Pasteboard setString:Str forType:NSPasteboardTypeString] == YES;
+    }, NSDefaultRunLoopMode);
 }
 
 void FMacPlatformSystemClipboard::Clear()
 {
-    NSPasteboard* Pasteboard = [NSPasteboard generalPasteboard];
-    if (!Pasteboard)
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
-        return;
-    }
+        CHECK_COCOA_MAIN_THREAD();
+        SCOPED_AUTORELEASE_POOL();
 
-    [Pasteboard clearContents];
+        NSPasteboard* Pasteboard = [NSPasteboard generalPasteboard];
+        if (!Pasteboard)
+        {
+            return;
+        }
+
+        [Pasteboard clearContents];
+    }, NSDefaultRunLoopMode, true);
 }

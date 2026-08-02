@@ -1,5 +1,6 @@
 #include "Core/Mac/Mac.h"
 #include "Core/Mac/MacThreadManager.h"
+#include "Core/Platform/PlatformThreadMisc.h"
 #include "CoreApplication/Mac/MacApplicationMisc.h"
 #include <Appkit/Appkit.h>
 #include <Foundation/Foundation.h>
@@ -25,6 +26,8 @@ void FMacApplicationMisc::PumpMessages(bool bUntilEmpty)
 
     FMacThreadManager::Get().MainThreadDispatch(^
     {
+        CHECK_COCOA_MAIN_THREAD();
+
         NSMenu* MainMenu = [NSApp mainMenu];
         [MainMenu update];
     }, NSDefaultRunLoopMode, false);

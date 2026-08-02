@@ -6,6 +6,8 @@
 #include <sched.h>
 #include <Foundation/Foundation.h>
 
+#define CHECK_COCOA_MAIN_THREAD() CHECK(FPlatformThreadMisc::IsMainThread())
+
 struct FMacPlatformThreadMisc final : public FGenericPlatformThreadMisc
 {
     static FORCEINLINE uint32 GetNumProcessors()
@@ -41,3 +43,4 @@ struct FMacPlatformThreadMisc final : public FGenericPlatformThreadMisc
         __builtin_ia32_pause();
     }
 };
+

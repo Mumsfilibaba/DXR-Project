@@ -42,6 +42,7 @@
 {
     if (GMacApplication)
     {
+        GMacApplication->RefreshScreenCache();
         GMacApplication->DeferEvent(InNotification);
     }
 }
@@ -70,6 +71,8 @@ FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
     , LastPressedButton(EMouseButtonName::Unknown)
     , MacCursor(InCursor)
     , InputDevice(FGCInputDevice::CreateGCInputDevice())
+    , ScreenCache()
+    , ScreenCacheCS()
     , Windows()
     , WindowsCS()
     , ClosedWindows()
@@ -86,7 +89,9 @@ FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
     {
         SCOPED_AUTORELEASE_POOL();
         
-        CHECK(FPlatformThreadMisc::IsMainThread());
+        CHECK_COCOA_MAIN_THREAD();
+
+        RefreshScreenCache();
 
         /* ---------------------------------------------------------------------------------------------------------- */
         // We need to map input from the macOS specific key-codes etc. which needs to be initialized somewhere
@@ -193,6 +198,8 @@ FMacApplication::~FMacApplication()
 {
     FMacThreadManager::Get().MainThreadDispatch(^
     {
+        CHECK_COCOA_MAIN_THREAD();
+
         [[NSNotificationCenter defaultCenter] removeObserver:Observer name:NSApplicationDidBecomeActiveNotification object:nil];
         [[NSNotificationCenter defaultCenter] removeObserver:Observer name:NSApplicationDidResignActiveNotification object:nil];
         [[NSNotificationCenter defaultCenter] removeObserver:Observer name:NSApplicationDidChangeScreenParametersNotification object:nil];
@@ -257,6 +264,7 @@ void FMacApplication::Tick(float)
     {
         FMacThreadManager::Get().MainThreadDispatch(^
         {
+            CHECK_COCOA_MAIN_THREAD();
             SCOPED_AUTORELEASE_POOL();
             
             for (FCocoaWindow* CocoaWindow : LocalClosedCocoaWindows)
@@ -346,6 +354,8 @@ void FMacApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Window)
     __block TSharedRef<FMacWindow> MacWindow = StaticCastSharedRef<FMacWindow>(Window);
     FMacThreadManager::Get().MainThreadDispatch(^
     {
+        CHECK_COCOA_MAIN_THREAD();
+
         FCocoaWindow* CocoaWindow = MacWindow->GetCocoaWindow();
         [CocoaWindow makeKeyAndOrderFront:CocoaWindow];
     }, NSDefaultRunLoopMode, false);
@@ -355,6 +365,7 @@ TSharedRef<FGenericWindow> FMacApplication::GetActiveWindow() const
 {
     NSWindow* KeyWindow = FMacThreadManager::Get().MainThreadDispatchAndReturn(^
     {
+        CHECK_COCOA_MAIN_THREAD();
         SCOPED_AUTORELEASE_POOL();
         return [NSApp keyWindow];
     }, NSDefaultRunLoopMode);
@@ -369,32 +380,24 @@ TSharedRef<FGenericWindow> FMacApplication::GetWindowUnderCursor() const
 
 void FMacApplication::QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) const
 {
-    NSScreen* MainScreen = [NSScreen mainScreen];
+    TScopedLock Lock(ScreenCacheCS);
 
-    const int32 NumMonitors = static_cast<int32>(NSScreen.screens.count);
-    OutMonitorInfo.Resize(NumMonitors);
+    OutMonitorInfo.Resize(ScreenCache.Size());
 
     int32 Index = 0;
-    for (NSScreen* Screen in NSScreen.screens)
+    for (const FMacScreenInfo& Screen : ScreenCache)
     {
-        // This is the full resolution frame of the monitor
-        const NSRect ScreenFrame = Screen.frame;
-        
-        // This is the frame of the monitor that is usable. I.e the full resolution frame excluding the top
-        // menu-bar, and the dock-space.
-        const NSRect ScreenVisibleFrame = Screen.visibleFrame;
-        
         // Here we try and gather as much monitor information as possible and be consitent with the similar
         // information we can retrieve from the Win32 API in order to be consisitent across platforms.
         FMonitorInfo& MonitorInfo = OutMonitorInfo[Index++];
-        MonitorInfo.DeviceName     = FindMonitorName(Screen);
-        MonitorInfo.MainPosition   = IntVector2(ScreenFrame.origin.x, ScreenFrame.origin.y);
-        MonitorInfo.MainSize       = IntVector2(ScreenFrame.size.width, ScreenFrame.size.height);
-        MonitorInfo.WorkPosition   = IntVector2(ScreenVisibleFrame.origin.x, ScreenVisibleFrame.origin.y);
-        MonitorInfo.WorkSize       = IntVector2(ScreenVisibleFrame.size.width, ScreenVisibleFrame.size.height);
-        MonitorInfo.bIsPrimary     = MainScreen == Screen;
-        MonitorInfo.DisplayDPI     = MonitorDPIFromScreen(Screen);
-        MonitorInfo.DisplayScaling = Screen.backingScaleFactor;
+        MonitorInfo.DeviceName     = Screen.DeviceName;
+        MonitorInfo.MainPosition   = IntVector2(Screen.Frame.origin.x, Screen.Frame.origin.y);
+        MonitorInfo.MainSize       = IntVector2(Screen.Frame.size.width, Screen.Frame.size.height);
+        MonitorInfo.WorkPosition   = IntVector2(Screen.VisibleFrame.origin.x, Screen.VisibleFrame.origin.y);
+        MonitorInfo.WorkSize       = IntVector2(Screen.VisibleFrame.size.width, Screen.VisibleFrame.size.height);
+        MonitorInfo.bIsPrimary     = Screen.bIsPrimary;
+        MonitorInfo.DisplayDPI     = Screen.DisplayDPI;
+        MonitorInfo.DisplayScaling = Screen.BackingScaleFactor;
     }
 }
 
@@ -461,7 +464,9 @@ void FMacApplication::CloseWindow(const TSharedRef<FMacWindow>& Window)
 void FMacApplication::DeferEvent(NSObject* EventObject)
 {
     SCOPED_AUTORELEASE_POOL();
-    
+
+    CHECK_COCOA_MAIN_THREAD();
+
     FCocoaWindow* NewWindowUnderCursor = FindNSWindowUnderCursor();
     if (WindowUnderCursor != NewWindowUnderCursor)
     {
@@ -472,6 +477,9 @@ void FMacApplication::DeferEvent(NSObject* EventObject)
     if (EventObject)
     {
         FDeferredMacEvent NewDeferredEvent;
+
+        NewDeferredEvent.MouseLocation = [NSEvent mouseLocation];
+
         if ([EventObject isKindOfClass:[NSNotification class]])
         {
             NSNotification* Notification = reinterpret_cast<NSNotification*>(EventObject);
@@ -483,6 +491,23 @@ void FMacApplication::DeferEvent(NSObject* EventObject)
                 FCocoaWindow* EventWindow = reinterpret_cast<FCocoaWindow*>(NotificationObject);
                 NewDeferredEvent.CocoaWindow = [EventWindow retain];
                 NewDeferredEvent.Window      = FindWindowFromNSWindow(NewDeferredEvent.CocoaWindow);
+
+                NSNotificationName Name = NewDeferredEvent.NotificationName;
+                if (Name == NSWindowDidEnterFullScreenNotification)
+                {
+                    NewDeferredEvent.ContentFrame     = [EventWindow frame];
+                    NewDeferredEvent.bHasContentFrame = true;
+                }
+                else if (
+                    Name == NSWindowDidResizeNotification ||
+                    Name == NSWindowDidMoveNotification ||
+                    Name == NSWindowDidMiniaturizeNotification ||
+                    Name == NSWindowDidDeminiaturizeNotification ||
+                    Name == NSWindowDidExitFullScreenNotification)
+                {
+                    NewDeferredEvent.ContentFrame     = [EventWindow contentRectForFrameRect:EventWindow.frame];
+                    NewDeferredEvent.bHasContentFrame = true;
+                }
             }
         }
         else if ([EventObject isKindOfClass:[NSEvent class]])
@@ -575,7 +600,7 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& DeferredEven
         {
             ProcessWindowResized(DeferredEvent);
         }
-        else if (NotificationName == NSWindowDidMiniaturizeNotification)
+        else if (NotificationName == NSWindowDidDeminiaturizeNotification)
         {
             ProcessWindowResized(DeferredEvent);
         }
@@ -683,9 +708,9 @@ NSEvent* FMacApplication::OnNSEvent(NSEvent* Event)
     return ReturnEvent;
 }
 
-void FMacApplication::ProcessMouseMoveEvent(const FDeferredMacEvent&)
+void FMacApplication::ProcessMouseMoveEvent(const FDeferredMacEvent& DeferredEvent)
 {
-    const NSPoint MouseLocation  = [NSEvent mouseLocation];
+    const NSPoint MouseLocation  = DeferredEvent.MouseLocation;
     const NSPoint CursorPosition = ConvertCocoaPointToEngine(MouseLocation.x, MouseLocation.y);
     MacCursor->UpdateCursorPosition(IntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y)));
 
@@ -878,20 +903,13 @@ void FMacApplication::ProcessWindowResized(const FDeferredMacEvent& DeferredEven
 {
     // Start by giving other systems a chance to prepare for a window-resize
     MessageHandler->OnWindowResizing(DeferredEvent.Window);
- 
-    // When entering fullscreen the window size is the full frame
-    NSRect ContentFrame;
-    if (DeferredEvent.NotificationName == NSWindowDidEnterFullScreenNotification)
-    {
-        ContentFrame = [DeferredEvent.CocoaWindow frame];
-    }
-    else
-    {
-        ContentFrame = [DeferredEvent.CocoaWindow contentRectForFrameRect:DeferredEvent.CocoaWindow.frame];
-    }
+
+    // DeferEvent captures the geometry for every notification that reaches this function
+    CHECK(DeferredEvent.bHasContentFrame);
 
     // Convert the coordinates to the generic ones that are expected
-    ContentFrame = FMacApplication::ConvertEngineRectToCocoa(ContentFrame.size.width, ContentFrame.size.height, ContentFrame.origin.x, ContentFrame.origin.y);
+    NSRect ContentFrame = DeferredEvent.ContentFrame;
+    ContentFrame = FMacApplication::ConvertCocoaRectToEngine(ContentFrame.size.width, ContentFrame.size.height, ContentFrame.origin.x, ContentFrame.origin.y);
 
     // Window can move sometimes when resized so send and event about it
     const int32 PositionX = static_cast<int32>(ContentFrame.origin.x);
@@ -909,9 +927,10 @@ void FMacApplication::ProcessWindowResized(const FDeferredMacEvent& DeferredEven
 
 void FMacApplication::ProcessWindowMoved(const FDeferredMacEvent& DeferredEvent)
 {
-    // We always retrieve the contentRect in order to find out where the position are
-    NSRect ContentFrame = [DeferredEvent.CocoaWindow contentRectForFrameRect:DeferredEvent.CocoaWindow.frame];
-    ContentFrame = FMacApplication::ConvertEngineRectToCocoa(ContentFrame.size.width, ContentFrame.size.height, ContentFrame.origin.x, ContentFrame.origin.y);
+    CHECK(DeferredEvent.bHasContentFrame);
+
+    NSRect ContentFrame = DeferredEvent.ContentFrame;
+    ContentFrame = FMacApplication::ConvertCocoaRectToEngine(ContentFrame.size.width, ContentFrame.size.height, ContentFrame.origin.x, ContentFrame.origin.y);
     
     const int32 PositionX = static_cast<int32>(ContentFrame.origin.x);
     const int32 PositionY = static_cast<int32>(ContentFrame.origin.y);
@@ -1055,76 +1074,116 @@ uint32 FMacApplication::MonitorDPIFromScreen(NSScreen* Screen)
     return RoundedDPI;
 }
 
-NSScreen* FMacApplication::FindScreenFromCocoaPoint(CGFloat PositionX, CGFloat PositionY)
+void FMacApplication::RefreshScreenCache()
 {
-    NSPoint Position = NSMakePoint(PositionX, PositionY);
-    NSArray* ScreensArray = [NSScreen screens];
-    
-    // Find the screen that contains the point
-    NSScreen* Screen = nil;
-    for (NSScreen* CurrentScreen in ScreensArray)
+    SCOPED_AUTORELEASE_POOL();
+
+    CHECK_COCOA_MAIN_THREAD();
+
+    TArray<FMacScreenInfo> NewScreenCache;
+
+    NSScreen* MainScreen = [NSScreen mainScreen];
+    for (NSScreen* Screen in [NSScreen screens])
     {
-        NSRect ScreenFrame = [CurrentScreen frame];
-        if (NSPointInRect(Position, ScreenFrame))
+        FMacScreenInfo& ScreenInfo    = NewScreenCache.Emplace();
+        ScreenInfo.Frame              = [Screen frame];
+        ScreenInfo.VisibleFrame       = [Screen visibleFrame];
+        ScreenInfo.BackingScaleFactor = [Screen backingScaleFactor];
+        ScreenInfo.DisplayDPI         = MonitorDPIFromScreen(Screen);
+        ScreenInfo.DeviceName         = FindMonitorName(Screen);
+        ScreenInfo.bIsPrimary         = (Screen == MainScreen);
+    }
+
+    const int32 NumScreens = NewScreenCache.Size();
+
+    {
+        TScopedLock Lock(ScreenCacheCS);
+        ScreenCache = Move(NewScreenCache);
+    }
+
+    LOG_INFO("Refreshed screen cache, found %d monitor(s)", NumScreens);
+}
+
+const FMacScreenInfo* FMacApplication::FindScreenFromCocoaPoint(CGFloat PositionX, CGFloat PositionY)
+{
+    if (!GMacApplication || GMacApplication->ScreenCache.IsEmpty())
+    {
+        return nullptr;
+    }
+
+    const NSPoint Position = NSMakePoint(PositionX, PositionY);
+
+    // Find the screen that contains the point
+    const FMacScreenInfo* PrimaryScreen = nullptr;
+    for (const FMacScreenInfo& CurrentScreen : GMacApplication->ScreenCache)
+    {
+        if (NSPointInRect(Position, CurrentScreen.Frame))
         {
-            Screen = CurrentScreen;
-            break;
+            return &CurrentScreen;
+        }
+
+        if (CurrentScreen.bIsPrimary)
+        {
+            PrimaryScreen = &CurrentScreen;
         }
     }
 
     // If no screen contains the point, default to the main screen
-    if (!Screen)
-    {
-        Screen = [NSScreen mainScreen];
-    }
-    
-    return Screen;
+    return PrimaryScreen ? PrimaryScreen : &GMacApplication->ScreenCache.FirstElement();
 }
 
-NSScreen* FMacApplication::FindScreenFromEnginePoint(CGFloat PositionX, CGFloat PositionY)
+const FMacScreenInfo* FMacApplication::FindScreenFromEnginePoint(CGFloat PositionX, CGFloat PositionY)
 {
-    NSArray* ScreensArray = [NSScreen screens];
-    
+    if (!GMacApplication || GMacApplication->ScreenCache.IsEmpty())
+    {
+        return nullptr;
+    }
+
     // Since EngineX and EngineY are relative to the screen's top-left corner, we need to find the
     // screen that matches these coordinates.
-    NSScreen* Screen = nil;
-    for (NSScreen* CurrentScreen in ScreensArray)
+    const FMacScreenInfo* PrimaryScreen = nullptr;
+    for (const FMacScreenInfo& CurrentScreen : GMacApplication->ScreenCache)
     {
-        NSRect ScreenFrame = [CurrentScreen frame];
-        
-        // Screen's size
-        CGFloat ScreenWidth  = ScreenFrame.size.width;
-        CGFloat ScreenHeight = ScreenFrame.size.height;
-        
         // Check if the engine point falls within this screen's bounds
+        const CGFloat ScreenWidth  = CurrentScreen.Frame.size.width;
+        const CGFloat ScreenHeight = CurrentScreen.Frame.size.height;
         if (PositionX >= 0 && PositionX <= ScreenWidth && PositionY >= 0 && PositionY <= ScreenHeight)
         {
-            Screen = CurrentScreen;
-            break;
+            return &CurrentScreen;
+        }
+
+        if (CurrentScreen.bIsPrimary)
+        {
+            PrimaryScreen = &CurrentScreen;
         }
     }
-    
+
     // If no screen is found, default to the main screen
-    if (!Screen)
-    {
-        Screen = [NSScreen mainScreen];
-    }
-    
-    return Screen;
+    return PrimaryScreen ? PrimaryScreen : &GMacApplication->ScreenCache.FirstElement();
 }
 
 NSPoint FMacApplication::ConvertCocoaPointToEngine(CGFloat PositionX, CGFloat PositionY)
 {
-    NSScreen* Screen = FindScreenFromCocoaPoint(PositionX, PositionY);
-        
+    if (!GMacApplication)
+    {
+        return NSMakePoint(PositionX, PositionY);
+    }
+
+    TScopedLock Lock(GMacApplication->ScreenCacheCS);
+
+    const FMacScreenInfo* Screen = FindScreenFromCocoaPoint(PositionX, PositionY);
+    if (!Screen)
+    {
+        return NSMakePoint(PositionX, PositionY);
+    }
+
     // Adjust the point's coordinates relative to the screen (in points)
-    const NSRect ScreenFrame = [Screen frame];
-    CGFloat RelativeX = PositionX - ScreenFrame.origin.x;
-    CGFloat RelativeY = PositionY - ScreenFrame.origin.y;
-    
+    CGFloat RelativeX = PositionX - Screen->Frame.origin.x;
+    CGFloat RelativeY = PositionY - Screen->Frame.origin.y;
+
     // Convert the Y-coordinate from Cocoa (bottom-left origin) to engine (top-left origin)
-    CGFloat ConvertedY = ScreenFrame.size.height - RelativeY;
-    
+    CGFloat ConvertedY = Screen->Frame.size.height - RelativeY;
+
     // Create the converted point in pixels
     NSPoint ConvertedPoint = NSMakePoint(RelativeX, ConvertedY);
     return ConvertedPoint;
@@ -1132,13 +1191,23 @@ NSPoint FMacApplication::ConvertCocoaPointToEngine(CGFloat PositionX, CGFloat Po
 
 NSPoint FMacApplication::ConvertEnginePointToCocoa(CGFloat PositionX, CGFloat PositionY)
 {
-    NSScreen* Screen = FindScreenFromEnginePoint(PositionX, PositionY);
-    
+    if (!GMacApplication)
+    {
+        return NSMakePoint(PositionX, PositionY);
+    }
+
+    TScopedLock Lock(GMacApplication->ScreenCacheCS);
+
+    const FMacScreenInfo* Screen = FindScreenFromEnginePoint(PositionX, PositionY);
+    if (!Screen)
+    {
+        return NSMakePoint(PositionX, PositionY);
+    }
+
     // Convert the engine point to Cocoa's coordinate system
-    const NSRect ScreenFrame = [Screen frame];
-    CGFloat RelativeX = ScreenFrame.origin.x + PositionX;
-    CGFloat RelativeY = ScreenFrame.origin.y + (ScreenFrame.size.height - PositionY);
-    
+    CGFloat RelativeX = Screen->Frame.origin.x + PositionX;
+    CGFloat RelativeY = Screen->Frame.origin.y + (Screen->Frame.size.height - PositionY);
+
     // Create the converted point
     NSPoint CocoaPoint = NSMakePoint(RelativeX, RelativeY);
     return CocoaPoint;

@@ -239,8 +239,11 @@ FRunLoopSourceContext::FRunLoopSourceContext(CFRunLoopRef InRunLoop)
 
 FRunLoopSourceContext::~FRunLoopSourceContext()
 {
-    // Remove all sources associated with this run loop
-    CFDictionaryApplyFunction(SourceAndModeDictionary, &FRunLoopSourceContext::Destroy, RunLoop);
+    {
+        // Remove all sources associated with this run loop
+        SCOPED_LOCK(SourceAndModeCS);
+        CFDictionaryApplyFunction(SourceAndModeDictionary, &FRunLoopSourceContext::Destroy, RunLoop);
+    }
 
     CFRelease(SourceAndModeDictionary);
     CFRelease(RunLoop);
@@ -248,6 +251,8 @@ FRunLoopSourceContext::~FRunLoopSourceContext()
 
 void FRunLoopSourceContext::RegisterForMode(CFStringRef InRunLoopMode)
 {
+    SCOPED_LOCK(SourceAndModeCS);
+
     // Only register if not already present
     if(!CFDictionaryContainsKey(SourceAndModeDictionary, InRunLoopMode))
     {
@@ -292,6 +297,7 @@ void FRunLoopSourceContext::ScheduleBlock(dispatch_block_t Block, NSArray* InMod
     }
     
     // Signal all sources to inform them a new task is ready
+    SCOPED_LOCK(SourceAndModeCS);
     CFDictionaryApplyFunction(SourceAndModeDictionary, &FRunLoopSourceContext::Signal, nullptr);
 }
 
@@ -403,7 +409,7 @@ FMacThreadManager::~FMacThreadManager()
 
 void FMacThreadManager::RegisterMainThreadRunLoop()
 {
-    CHECK(FPlatformThreadMisc::IsMainThread());
+    CHECK_COCOA_MAIN_THREAD();
     CFRunLoopRef RunLoop = CFRunLoopGetCurrent();
     MainThreadContext = new FRunLoopSourceContext(RunLoop);
 }
@@ -489,14 +495,14 @@ void FMacThreadManager::PumpMessagesAppThread(bool bUntilEmpty)
 #endif
 }
 
-void FMacThreadManager::DispatchOnThread(FRunLoopSourceContext* SourceContext, dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished)
+void FMacThreadManager::DispatchOnThread(FRunLoopSourceContext* SourceContext, bool bAlreadyOnTargetThread, dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished)
 {
     // Copy the block to manage its memory correctly.
     dispatch_block_t CopiedBlock = Block_copy(Block);
 
-    if (FPlatformThreadMisc::IsMainThread())
+    if (bAlreadyOnTargetThread)
     {
-        // If already on the main thread, execute the block immediately.
+        // If already on the target thread, execute the block immediately.
         CopiedBlock();
     }
     else
@@ -549,13 +555,13 @@ void FMacThreadManager::DispatchOnThread(FRunLoopSourceContext* SourceContext, d
 void FMacThreadManager::MainThreadDispatch(dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished)
 {
     // Execute the block on the main thread.
-    DispatchOnThread(MainThreadContext, Block, WaitMode, bWaitUntilFinished);
+    DispatchOnThread(MainThreadContext, FPlatformThreadMisc::IsMainThread(), Block, WaitMode, bWaitUntilFinished);
 }
 
 void FMacThreadManager::AppThreadDispatch(dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished)
 {
     // Execute the block on the application thread.
-    DispatchOnThread(AppThreadContext, Block, WaitMode, bWaitUntilFinished);
+    DispatchOnThread(AppThreadContext, [NSThread isAppThread], Block, WaitMode, bWaitUntilFinished);
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -35,46 +35,43 @@ void FMacConsoleOutputDevice::CreateConsole()
 {
     if (!WindowHandle)
     {
-        SCOPED_AUTORELEASE_POOL();
-        
-        // Create the font
-        if (!Font)
-        {
-            Font = [NSFont fontWithName:@"Courier" size:12.0f];
-            [Font retain];
-        }
-        
-        // Init the textcolor (NOTE: This needs to be made before the attributes array is created)
-        InternalSetConsoleColor(EConsoleColor::White);
-        
-        // Init the backgroundcolor
-        if (!BackGroundColor)
-        {
-            BackGroundColor = [NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f];
-            [BackGroundColor retain];
-        }
-        
-        // Init the attributes and names used to create an attributed string
-        if (!Attributes)
-        {
-            Attributes = [NSMutableArray new];
-            [Attributes addObject:TextColor];
-            [Attributes addObject:BackGroundColor];
-            [Attributes addObject:Font];
-            [Attributes retain];
-        }
-        
-        if (!AttributeNames)
-        {
-            AttributeNames = [@[NSForegroundColorAttributeName, NSBackgroundColorAttributeName, NSFontAttributeName] mutableCopy];
-            [AttributeNames retain];
-        }
-        
-        // Create the window
         FMacThreadManager::Get().MainThreadDispatch(^
         {
+            CHECK_COCOA_MAIN_THREAD();
             SCOPED_AUTORELEASE_POOL();
+
+            if (!Font)
+            {
+                Font = [NSFont fontWithName:@"Courier" size:12.0f];
+                [Font retain];
+            }
             
+            // Init the textcolor (NOTE: This needs to be made before the attributes array is created)
+            InternalSetConsoleColor(EConsoleColor::White);
+            
+            // Init the backgroundcolor
+            if (!BackGroundColor)
+            {
+                BackGroundColor = [NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f];
+                [BackGroundColor retain];
+            }
+            
+            // Init the attributes and names used to create an attributed string
+            if (!Attributes)
+            {
+                Attributes = [NSMutableArray new];
+                [Attributes addObject:TextColor];
+                [Attributes addObject:BackGroundColor];
+                [Attributes addObject:Font];
+                [Attributes retain];
+            }
+            
+            if (!AttributeNames)
+            {
+                AttributeNames = [@[NSForegroundColorAttributeName, NSBackgroundColorAttributeName, NSFontAttributeName] mutableCopy];
+                [AttributeNames retain];
+            }
+
             const NSUInteger StyleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable | NSWindowStyleMaskMiniaturizable;
             
             // TODO: Control with console vars?
@@ -150,6 +147,7 @@ void FMacConsoleOutputDevice::DestroyConsole()
     {
         FMacThreadManager::Get().MainThreadDispatch(^
         {
+            CHECK_COCOA_MAIN_THREAD();
             SCOPED_AUTORELEASE_POOL();
         
             FPlatformApplicationMisc::PumpMessages(true);
@@ -164,7 +162,7 @@ void FMacConsoleOutputDevice::DestroyResources()
 {
     SCOPED_AUTORELEASE_POOL();
     
-    CHECK(FPlatformThreadMisc::IsMainThread());
+    CHECK_COCOA_MAIN_THREAD();
     
     [TextView release];
     [ScrollView release];
@@ -210,17 +208,14 @@ void FMacConsoleOutputDevice::Log(const String& Message)
     
     if (WindowHandle)
     {
-        SCOPED_AUTORELEASE_POOL();
-        
-        NSAttributedString* AttributedString = CreatePrintableString(Message);
-        [AttributedString retain];
-        
+        __block String LocalMessage = Message;
+
         FMacThreadManager::Get().MainThreadDispatch(^
         {
+            CHECK_COCOA_MAIN_THREAD();
             SCOPED_AUTORELEASE_POOL();
 
-            MainThreadAppendStringAndScroll(AttributedString);
-            [AttributedString release];
+            MainThreadAppendStringAndScroll(CreatePrintableString(LocalMessage));
         }, NSDefaultRunLoopMode, false);
 
         if(!GMacApplication)
@@ -236,8 +231,6 @@ void FMacConsoleOutputDevice::Log(ELogSeverity Severity, const String& Message)
     
     if (WindowHandle)
     {
-        SCOPED_AUTORELEASE_POOL();
-        
         EConsoleColor NewColor;
         if (Severity == ELogSeverity::Info)
         {
@@ -255,23 +248,24 @@ void FMacConsoleOutputDevice::Log(ELogSeverity Severity, const String& Message)
         {
             NewColor = EConsoleColor::White;
         }
-        
-        // Set the requested text color
-        InternalSetConsoleColor(NewColor);
 
-        NSAttributedString* AttributedString = CreatePrintableString(Message);
-        [AttributedString retain];
-        
+        // The colour changes bracket the append, so they have to stay inside the same block to keep
+        // the message and its colour together
+        __block String LocalMessage = Message;
+
         FMacThreadManager::Get().MainThreadDispatch(^
         {
+            CHECK_COCOA_MAIN_THREAD();
             SCOPED_AUTORELEASE_POOL();
 
-            MainThreadAppendStringAndScroll(AttributedString);
-            [AttributedString release];
-        }, NSDefaultRunLoopMode, false);
+            // Set the requested text color
+            InternalSetConsoleColor(NewColor);
 
-        // Return the color the original
-        InternalSetConsoleColor(EConsoleColor::White);
+            MainThreadAppendStringAndScroll(CreatePrintableString(LocalMessage));
+
+            // Return the color the original
+            InternalSetConsoleColor(EConsoleColor::White);
+        }, NSDefaultRunLoopMode, false);
 
         if(!GMacApplication)
         {
@@ -288,7 +282,9 @@ void FMacConsoleOutputDevice::Flush()
     {
         FMacThreadManager::Get().MainThreadDispatch(^
         {
+            CHECK_COCOA_MAIN_THREAD();
             SCOPED_AUTORELEASE_POOL();
+
             TextView.string = @"";
         }, NSDefaultRunLoopMode, false);
 
@@ -312,6 +308,7 @@ void FMacConsoleOutputDevice::SetTitle(const String& InTitle)
         
         FMacThreadManager::Get().MainThreadDispatch(^
         {
+            CHECK_COCOA_MAIN_THREAD();
             SCOPED_AUTORELEASE_POOL();
             
             WindowHandle.title = NewTitle;
@@ -328,11 +325,19 @@ void FMacConsoleOutputDevice::SetTitle(const String& InTitle)
 void FMacConsoleOutputDevice::SetTextColor(EConsoleColor Color)
 {
     SCOPED_LOCK(WindowCS);
-    InternalSetConsoleColor(Color);
+
+    // Asynchronous so that a caller holding WindowCS cannot deadlock against a main thread that is
+    // itself waiting for WindowCS inside Log. Blocks run in order, so the colour still lands before
+    // any message queued after this call.
+    FMacThreadManager::Get().MainThreadDispatch(^
+    {
+        InternalSetConsoleColor(Color);
+    }, NSDefaultRunLoopMode, false);
 }
 
 void FMacConsoleOutputDevice::InternalSetConsoleColor(EConsoleColor Color)
 {
+    CHECK_COCOA_MAIN_THREAD();
     SCOPED_AUTORELEASE_POOL();
             
     if (TextColor)
@@ -363,6 +368,7 @@ void FMacConsoleOutputDevice::InternalSetConsoleColor(EConsoleColor Color)
 
 NSAttributedString* FMacConsoleOutputDevice::CreatePrintableString(const String& String)
 {
+    CHECK_COCOA_MAIN_THREAD();
     SCOPED_AUTORELEASE_POOL();
 
     NSString* NativeString = [NSString stringWithFormat:@"%s\n", *String];
@@ -378,14 +384,14 @@ NSAttributedString* FMacConsoleOutputDevice::CreatePrintableString(const String&
     
     StringAttributes = [[NSDictionary alloc] initWithObjects:Attributes forKeys:AttributeNames];
     
-    // Create the actual string and return it
-    NSAttributedString* AttributedString = [[NSAttributedString alloc] initWithString:NativeString attributes:StringAttributes];
-    [AttributedString retain];
-    return AttributedString;
+    // Create the actual string and return it. Ownership passes to the caller, and
+    // MainThreadAppendStringAndScroll is the one that releases it.
+    return [[NSAttributedString alloc] initWithString:NativeString attributes:StringAttributes];
 }
 
 int32 FMacConsoleOutputDevice::MainThreadGetLineCount() const
 {
+    CHECK_COCOA_MAIN_THREAD();
     CHECK(WindowHandle != nil);
     
     NSString*  String        = TextView.string;
@@ -407,6 +413,7 @@ void FMacConsoleOutputDevice::OnWindowDidClose()
 
 void FMacConsoleOutputDevice::MainThreadAppendStringAndScroll(NSAttributedString* AttributedString)
 {
+    CHECK_COCOA_MAIN_THREAD();
     CHECK(WindowHandle != nil);
     
     SCOPED_AUTORELEASE_POOL();
