@@ -309,7 +309,8 @@ public:
 
 private:
     void DeriveCoreCapabilities(FVulkanDeviceCreateInfo& InDeviceCreateInfo, const FVulkanCoreFeatures& AvailableFeatures, const VkPhysicalDeviceProperties& CoreDeviceProperties10,
-        const VkPhysicalDeviceMultiviewProperties& MultiviewProperties, const VkPhysicalDeviceSubgroupProperties& SubgroupProperties);
+        const VkPhysicalDeviceMultiviewProperties& MultiviewProperties, const VkPhysicalDeviceSubgroupProperties& SubgroupProperties,
+        const VkPhysicalDeviceVulkan12Properties& CoreDeviceProperties12);
     void DeriveEnabledFeatureCapabilities(const FVulkanCoreFeatures& EnabledFeatures);
 
     using FSamplerMap = TMap<FVulkanHashableSamplerCreateInfo, VkSampler>;

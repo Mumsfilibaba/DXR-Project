@@ -624,6 +624,7 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
             RenderPassKey.DepthStencilFormat              = VulkanTexture->GetDesc().Format;
             RenderPassKey.DepthStencilActions.LoadAction  = DepthStencilAttachment.LoadAction;
             RenderPassKey.DepthStencilActions.StoreAction = DepthStencilAttachment.StoreAction;
+            RenderPassKey.DepthStencilFlags               = VulkanDepthStencilView->GetFlags();
         #endif
 
             DepthStencilClearValue.depthStencil.depth   = DepthStencilAttachment.ClearValue.Depth;

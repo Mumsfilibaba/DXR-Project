@@ -1267,6 +1267,7 @@ FVulkanBindlessDescriptorManager::~FVulkanBindlessDescriptorManager()
 bool FVulkanBindlessDescriptorManager::Initialize()
 {
 #if !VK_EXT_mutable_descriptor_type
+    VULKAN_INFO("Bindless descriptor manager disabled: VK_EXT_mutable_descriptor_type not supported");
     return false;
 #else
     if (!GVulkanSupportsBindless || !CVarVulkanEnableBindless.GetValue())
@@ -1282,13 +1283,20 @@ bool FVulkanBindlessDescriptorManager::Initialize()
         return false;
     }
 
-    ResourceCapacity = Math::Min<uint32>(RequestedResources, GVulkanMaxDescriptorSetSampledImages);
-    SamplerCapacity  = Math::Min<uint32>(RequestedSamplers,  GVulkanMaxDescriptorSetSamplers);
+    ResourceCapacity = Math::Min<uint32>(RequestedResources, GVulkanMaxBindlessResourceDescriptors);
+    SamplerCapacity  = Math::Min<uint32>(RequestedSamplers,  GVulkanMaxBindlessSamplerDescriptors);
 
     if (ResourceCapacity == 0 && SamplerCapacity == 0)
     {
         VULKAN_WARNING("Bindless capacities clamped to zero; bindless descriptor manager disabled");
         return false;
+    }
+
+    if (ResourceCapacity < RequestedResources || SamplerCapacity < RequestedSamplers)
+    {
+        VULKAN_WARNING("Bindless heap reduced by device limits: Resources=%u (requested %u, limit %u) Samplers=%u (requested %u, limit %u)",
+            ResourceCapacity, RequestedResources, GVulkanMaxBindlessResourceDescriptors,
+            SamplerCapacity,  RequestedSamplers,  GVulkanMaxBindlessSamplerDescriptors);
     }
     
     constexpr uint32 NumBaseMutableDescriptorTypes            = 6;

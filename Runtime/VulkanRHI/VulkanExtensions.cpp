@@ -57,12 +57,20 @@ public:
         AddToStructChain(OutFeatures, AvailableFeatures);
     }
 
+    virtual void PrepareDeviceProperties(VkPhysicalDeviceProperties2& OutProperties) override final
+    {
+        AvailableProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR;
+        AddToStructChain(OutProperties, AvailableProperties);
+    }
+
     virtual void ProcessQueriedFeatures() override final
     {
         if (AvailableFeatures.accelerationStructure == VK_TRUE)
         {
             GVulkanSupportsAccelerationStructures = true;
         }
+
+        GVulkanMaxUpdateAfterBindDescriptorSetAccelerationStructures = AvailableProperties.maxDescriptorSetUpdateAfterBindAccelerationStructures;
     }
 
     virtual void PrepareDeviceCreateInfo(VkDeviceCreateInfo& OutDeviceCreateInfo) override final
@@ -77,8 +85,9 @@ public:
         AddToStructChain(OutDeviceCreateInfo, EnableFeatures);
     }
 
-    VkPhysicalDeviceAccelerationStructureFeaturesKHR EnableFeatures    = {};
-    VkPhysicalDeviceAccelerationStructureFeaturesKHR AvailableFeatures = {};
+    VkPhysicalDeviceAccelerationStructureFeaturesKHR   EnableFeatures      = {};
+    VkPhysicalDeviceAccelerationStructureFeaturesKHR   AvailableFeatures   = {};
+    VkPhysicalDeviceAccelerationStructurePropertiesKHR AvailableProperties = {};
 };
 #endif
 
@@ -742,7 +751,7 @@ class FVulkanKHRDynamicRenderingExtension : public FVulkanDeviceExtension
 {
 public:
     FVulkanKHRDynamicRenderingExtension()
-        : FVulkanDeviceExtension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, true, true)
+        : FVulkanDeviceExtension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, !VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH, true)
     {
     }
 
@@ -965,7 +974,7 @@ void FVulkanInstanceExtension::RegisterExtensions(TArray<TUniquePtr<FVulkanInsta
 
 void FVulkanDeviceExtension::RegisterExtensions(TArray<TUniquePtr<FVulkanDeviceExtension>>& OutExtensions)
 {
-#if !VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH && VK_KHR_dynamic_rendering
+#if VK_KHR_dynamic_rendering
     OutExtensions.Add(MakeUniquePtr<FVulkanKHRDynamicRenderingExtension>());
 #endif
 #if VK_KHR_synchronization2

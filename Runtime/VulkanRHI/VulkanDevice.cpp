@@ -517,13 +517,6 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , bSupportsNVDiagnosticCheckpoints(false)
 #endif
 {
-#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
-    if (IConsoleVariable* UseDynamicRenderingVar = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.UseDynamicRendering"))
-    {
-        GVulkanUseDynamicRendering = UseDynamicRenderingVar->GetBool();
-    }
-#endif
-
 #if VULKAN_USE_DESCRIPTOR_CACHE
     DescriptorSetCache            = new FVulkanDescriptorSetCache(this);
 #else
@@ -733,6 +726,9 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
     VkPhysicalDeviceSubgroupProperties AvailableDeviceSubgroupProperties = {};
     AvailableDeviceSubgroupProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
 
+    VkPhysicalDeviceVulkan12Properties AvailableDeviceVulkan12Properties = {};
+    AvailableDeviceVulkan12Properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES;
+
     {
         AvailableFeatures.BuildQueryChain(AvailableDeviceFeatures2);
 
@@ -749,7 +745,7 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
     }
 
     {
-        AddAllToStructChain(AvailableDeviceProperties2, AvailableDeviceMultiviewProperties, AvailableDeviceSubgroupProperties);
+        AddAllToStructChain(AvailableDeviceProperties2, AvailableDeviceMultiviewProperties, AvailableDeviceSubgroupProperties, AvailableDeviceVulkan12Properties);
 
         for (const TUniquePtr<FVulkanDeviceExtension>& Extension : InDeviceCreateInfo.Extensions)
         {
@@ -766,7 +762,7 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
     // Set core GVulkan* globals from collected caps
     // -------------------------------------------------------------------------------------------
 
-    DeriveCoreCapabilities(InDeviceCreateInfo, AvailableFeatures, PhysicalDevice->GetProperties(), AvailableDeviceMultiviewProperties, AvailableDeviceSubgroupProperties);
+    DeriveCoreCapabilities(InDeviceCreateInfo, AvailableFeatures, PhysicalDevice->GetProperties(), AvailableDeviceMultiviewProperties, AvailableDeviceSubgroupProperties, AvailableDeviceVulkan12Properties);
 
 #if !VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     if (!GVulkanSupportsDynamicRendering)

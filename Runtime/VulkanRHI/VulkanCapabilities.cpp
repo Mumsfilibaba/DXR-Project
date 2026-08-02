@@ -148,6 +148,17 @@ VULKANRHI_API uint32 GVulkanMaxDescriptorSetStorageImages  = 0;
 VULKANRHI_API uint32 GVulkanMaxDescriptorSetUniformBuffers = 0;
 VULKANRHI_API uint32 GVulkanMaxDescriptorSetStorageBuffers = 0;
 
+VULKANRHI_API uint32 GVulkanMaxUpdateAfterBindDescriptorSetSamplers               = 0;
+VULKANRHI_API uint32 GVulkanMaxUpdateAfterBindDescriptorSetSampledImages          = 0;
+VULKANRHI_API uint32 GVulkanMaxUpdateAfterBindDescriptorSetStorageImages          = 0;
+VULKANRHI_API uint32 GVulkanMaxUpdateAfterBindDescriptorSetUniformBuffers         = 0;
+VULKANRHI_API uint32 GVulkanMaxUpdateAfterBindDescriptorSetStorageBuffers         = 0;
+VULKANRHI_API uint32 GVulkanMaxUpdateAfterBindDescriptorSetAccelerationStructures = 0;
+VULKANRHI_API uint32 GVulkanMaxPerStageUpdateAfterBindResources                   = 0;
+
+VULKANRHI_API uint32 GVulkanMaxBindlessResourceDescriptors = 0;
+VULKANRHI_API uint32 GVulkanMaxBindlessSamplerDescriptors  = 0;
+
 static EShaderModel DeriveEquivalentShaderModel(const FVulkanCoreFeatures& Features)
 {
     // SM 6.8 requires SV_StartVertexLocation and SV_StartInstanceLocation (Extended Command Information).
@@ -227,9 +238,18 @@ VULKANRHI_API void DumpVulkanCapabilities()
     LOG_INFO("[VulkanRHI]   Force Binding                         : %s", YesNo(GVulkanForceBinding));
     LOG_INFO("[VulkanRHI]   Bindless                              : %s", YesNo(GVulkanSupportsBindless));
     LOG_INFO("[VulkanRHI]   Mutable Descriptor Type               : %s", YesNo(GVulkanSupportsMutableDescriptorType));
+    LOG_INFO("[VulkanRHI]   Bindless Resource Descriptor Limit    : %u", GVulkanMaxBindlessResourceDescriptors);
+    LOG_INFO("[VulkanRHI]   Bindless Sampler Descriptor Limit     : %u", GVulkanMaxBindlessSamplerDescriptors);
+    LOG_INFO("[VulkanRHI]   UpdateAfterBind Sampled Images        : %u", GVulkanMaxUpdateAfterBindDescriptorSetSampledImages);
+    LOG_INFO("[VulkanRHI]   UpdateAfterBind Storage Images        : %u", GVulkanMaxUpdateAfterBindDescriptorSetStorageImages);
+    LOG_INFO("[VulkanRHI]   UpdateAfterBind Uniform Buffers       : %u", GVulkanMaxUpdateAfterBindDescriptorSetUniformBuffers);
+    LOG_INFO("[VulkanRHI]   UpdateAfterBind Storage Buffers       : %u", GVulkanMaxUpdateAfterBindDescriptorSetStorageBuffers);
+    LOG_INFO("[VulkanRHI]   UpdateAfterBind Samplers              : %u", GVulkanMaxUpdateAfterBindDescriptorSetSamplers);
+    LOG_INFO("[VulkanRHI]   UpdateAfterBind Accel Structures      : %u", GVulkanMaxUpdateAfterBindDescriptorSetAccelerationStructures);
+    LOG_INFO("[VulkanRHI]   UpdateAfterBind Per-Stage Resources   : %u", GVulkanMaxPerStageUpdateAfterBindResources);
     LOG_INFO("[VulkanRHI]   Null Descriptors                      : %s", YesNo(GVulkanSupportsNullDescriptors));
     LOG_INFO("[VulkanRHI]   Robustness2                           : %s", YesNo(GVulkanSupportsRobustness2));
-    LOG_INFO("[VulkanRHI]   Dynamic Rendering                     : %s", YesNo(GVulkanUseDynamicRendering));
+    LOG_INFO("[VulkanRHI]   Dynamic Rendering (In Use)            : %s", YesNo(GVulkanUseDynamicRendering));
     LOG_INFO("[VulkanRHI]   Geometry Shader                       : %s", YesNo(GVulkanSupportsGeometryShader));
     LOG_INFO("[VulkanRHI]   Tessellation                          : %s", YesNo(GVulkanSupportsTessellation));
     LOG_INFO("[VulkanRHI]   Mesh Shaders                          : %s", YesNo(GVulkanSupportsMeshShaders));
@@ -245,7 +265,7 @@ VULKANRHI_API void DumpVulkanCapabilities()
     LOG_INFO("[VulkanRHI]   Transform Feedback                    : %s", YesNo(GVulkanSupportsTransformFeedback));
     LOG_INFO("[VulkanRHI]   Sparse Binding                        : %s", YesNo(GVulkanSupportsSparseBinding));
     LOG_INFO("[VulkanRHI]   Pipeline Cache Control                : %s", YesNo(GVulkanSupportsPipelineCacheControl));
-    LOG_INFO("[VulkanRHI]   Dynamic Rendering                     : %s", YesNo(GVulkanSupportsDynamicRendering));
+    LOG_INFO("[VulkanRHI]   Dynamic Rendering (Supported)         : %s", YesNo(GVulkanSupportsDynamicRendering));
     LOG_INFO("[VulkanRHI]   Synchronization2                      : %s", YesNo(GVulkanSupportsSynchronization2));
     LOG_INFO("[VulkanRHI]   Maintenance4                          : %s", YesNo(GVulkanSupportsMaintenance4));
     LOG_INFO("[VulkanRHI]   Shading Rate Tile Size                : %u", GVulkanShadingRateTileSize);
@@ -272,7 +292,8 @@ void FVulkanDevice::DeriveCoreCapabilities(
     const FVulkanCoreFeatures&                 AvailableFeatures,
     const VkPhysicalDeviceProperties&          CoreDeviceProperties10,
     const VkPhysicalDeviceMultiviewProperties& MultiviewProperties,
-    const VkPhysicalDeviceSubgroupProperties&  SubgroupProperties)
+    const VkPhysicalDeviceSubgroupProperties&  SubgroupProperties,
+    const VkPhysicalDeviceVulkan12Properties&  CoreDeviceProperties12)
 {
     const VkPhysicalDeviceFeatures& CoreDeviceFeatures10 = AvailableFeatures.Features10;
 
@@ -351,6 +372,13 @@ void FVulkanDevice::DeriveCoreCapabilities(
     GVulkanMaxDescriptorSetUniformBuffers = CoreDeviceProperties10.limits.maxDescriptorSetUniformBuffers;
     GVulkanMaxDescriptorSetStorageBuffers = CoreDeviceProperties10.limits.maxDescriptorSetStorageBuffers;
 
+    GVulkanMaxUpdateAfterBindDescriptorSetSamplers       = CoreDeviceProperties12.maxDescriptorSetUpdateAfterBindSamplers;
+    GVulkanMaxUpdateAfterBindDescriptorSetSampledImages  = CoreDeviceProperties12.maxDescriptorSetUpdateAfterBindSampledImages;
+    GVulkanMaxUpdateAfterBindDescriptorSetStorageImages  = CoreDeviceProperties12.maxDescriptorSetUpdateAfterBindStorageImages;
+    GVulkanMaxUpdateAfterBindDescriptorSetUniformBuffers = CoreDeviceProperties12.maxDescriptorSetUpdateAfterBindUniformBuffers;
+    GVulkanMaxUpdateAfterBindDescriptorSetStorageBuffers = CoreDeviceProperties12.maxDescriptorSetUpdateAfterBindStorageBuffers;
+    GVulkanMaxPerStageUpdateAfterBindResources           = CoreDeviceProperties12.maxPerStageUpdateAfterBindResources;
+
     for (const TUniquePtr<FVulkanDeviceExtension>& Extension : InDeviceCreateInfo.Extensions)
     {
         if (Extension->IsEnabled())
@@ -359,10 +387,59 @@ void FVulkanDevice::DeriveCoreCapabilities(
         }
     }
 
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
+    bool bRequestDynamicRendering = true;
+    if (IConsoleVariable* UseDynamicRenderingVar = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.UseDynamicRendering"))
+    {
+        bRequestDynamicRendering = UseDynamicRenderingVar->GetBool();
+    }
+
+    GVulkanUseDynamicRendering = GVulkanSupportsDynamicRendering && bRequestDynamicRendering;
+
+    if (bRequestDynamicRendering && !GVulkanSupportsDynamicRendering)
+    {
+        VULKAN_WARNING("VK_KHR_dynamic_rendering is unavailable on this device, falling back to the VkRenderPass path");
+    }
+    else if (!GVulkanUseDynamicRendering)
+    {
+        VULKAN_INFO("Dynamic rendering disabled by VulkanRHI.UseDynamicRendering, using the VkRenderPass path");
+    }
+#endif
+
     if (GVulkanSupportsBindless && !GVulkanSupportsMutableDescriptorType)
     {
-        VULKAN_INFO("Bindless disabled: VK_EXT_mutable_descriptor_type not supported by this device");
+        VULKAN_INFO("Bindless disabled: VK_EXT_mutable_descriptor_type not supported");
         GVulkanSupportsBindless = false;
+    }
+
+    if (GVulkanSupportsBindless)
+    {
+        uint32 ResourceCeiling = Math::Min<uint32>(GVulkanMaxUpdateAfterBindDescriptorSetSampledImages, GVulkanMaxUpdateAfterBindDescriptorSetStorageImages);
+        ResourceCeiling        = Math::Min<uint32>(ResourceCeiling, GVulkanMaxUpdateAfterBindDescriptorSetUniformBuffers);
+        ResourceCeiling        = Math::Min<uint32>(ResourceCeiling, GVulkanMaxUpdateAfterBindDescriptorSetStorageBuffers);
+        ResourceCeiling        = Math::Min<uint32>(ResourceCeiling, GVulkanMaxPerStageUpdateAfterBindResources);
+
+        if (GVulkanSupportsAccelerationStructures)
+        {
+            ResourceCeiling = Math::Min<uint32>(ResourceCeiling, GVulkanMaxUpdateAfterBindDescriptorSetAccelerationStructures);
+        }
+
+        // Samplers are not counted against maxPerStageUpdateAfterBindResources.
+        GVulkanMaxBindlessResourceDescriptors = ResourceCeiling;
+        GVulkanMaxBindlessSamplerDescriptors  = GVulkanMaxUpdateAfterBindDescriptorSetSamplers;
+
+        if (GVulkanMaxBindlessResourceDescriptors < VULKAN_MIN_BINDLESS_RESOURCE_DESCRIPTORS)
+        {
+            VULKAN_INFO("Bindless disabled: device allows %u update-after-bind resource descriptors, below the minimum of %u",
+                GVulkanMaxBindlessResourceDescriptors, VULKAN_MIN_BINDLESS_RESOURCE_DESCRIPTORS);
+            GVulkanSupportsBindless = false;
+        }
+        else if (GVulkanMaxBindlessSamplerDescriptors < VULKAN_MIN_BINDLESS_SAMPLER_DESCRIPTORS)
+        {
+            VULKAN_INFO("Bindless disabled: device allows %u update-after-bind sampler descriptors, below the minimum of %u",
+                GVulkanMaxBindlessSamplerDescriptors, VULKAN_MIN_BINDLESS_SAMPLER_DESCRIPTORS);
+            GVulkanSupportsBindless = false;
+        }
     }
 
     GVulkanSupportsDepthClamp = (CoreDeviceFeatures10.depthClamp == VK_TRUE);

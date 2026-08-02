@@ -147,6 +147,15 @@ extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetSampledImages;
 extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetStorageImages;
 extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetUniformBuffers;
 extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetStorageBuffers;
+extern VULKANRHI_API uint32 GVulkanMaxUpdateAfterBindDescriptorSetSamplers;
+extern VULKANRHI_API uint32 GVulkanMaxUpdateAfterBindDescriptorSetSampledImages;
+extern VULKANRHI_API uint32 GVulkanMaxUpdateAfterBindDescriptorSetStorageImages;
+extern VULKANRHI_API uint32 GVulkanMaxUpdateAfterBindDescriptorSetUniformBuffers;
+extern VULKANRHI_API uint32 GVulkanMaxUpdateAfterBindDescriptorSetStorageBuffers;
+extern VULKANRHI_API uint32 GVulkanMaxUpdateAfterBindDescriptorSetAccelerationStructures;
+extern VULKANRHI_API uint32 GVulkanMaxPerStageUpdateAfterBindResources;
+extern VULKANRHI_API uint32 GVulkanMaxBindlessResourceDescriptors;
+extern VULKANRHI_API uint32 GVulkanMaxBindlessSamplerDescriptors;
 
 // -------------------------------------------------------------------------------------------
 // Vulkan Capabilitiy Logging
