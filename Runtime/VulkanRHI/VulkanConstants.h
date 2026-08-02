@@ -18,7 +18,7 @@
 
 #define VULKAN_DEFAULT_BUFFER_NUM_BYTES (65536)
 #define VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT (4)
-
+#define VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS (6)
 #define VULKAN_DEFAULT_QUERY_COUNT (65536)
 
 // AMD RDNA recommends staying below 13 DWORDs of user data in a PipelineLayout.

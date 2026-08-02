@@ -12,11 +12,11 @@ FWindowWidget::FWindowWidget()
     , OnWindowFocusChangedDelegate()
     , CachedPosition()
     , CachedSize()
+    , StyleFlags(EWindowStyleFlags::None)
+    , bActivateOnShow(true)
     , Overlay()
     , Content()
     , PlatformWindow(nullptr)
-    , StyleFlags(EWindowStyleFlags::None)
-    , bActivateOnShow(true)
 {
 }
 

@@ -11,9 +11,9 @@ class FAccelerationStructureCompactionHelper
 {
     struct FPendingCompaction
     {
-        FRHIRayTracingAccelerationStructure* Source             = nullptr;
-        FRHIBuffer*                          SizeReadbackBuffer = nullptr;
-        uint32                               FramesRemaining    = 0;
+        FRHIRayTracingAccelerationStructure* Source          = nullptr;
+        FRHIBufferRef                        SizeReadbackBuffer;
+        uint32                               FramesRemaining = 0;
     };
 
 public:
@@ -44,22 +44,20 @@ public:
         ReadbackDesc.Size   = sizeof(uint64);
         ReadbackDesc.Stride = sizeof(uint64);
 
-        FRHIBuffer* ReadbackBuffer = RHI::CreateBuffer(ReadbackDesc, EResourceAccess::CopyDest, nullptr);
+        FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(ReadbackDesc, ERHIResourceState::CopyDest, nullptr);
         if (!ReadbackBuffer)
         {
             return;
         }
 
-        ReadbackBuffer->AddRef();
-
         FRHIRayTracingAccelerationStructure* Sources[] = { AccelerationStructure };
-        CommandList.WriteAccelerationStructurePostBuildInfo(ReadbackBuffer, 0, EAccelerationStructurePostBuildInfoType::CompactedSize, Sources, 1);
+        CommandList.WriteAccelerationStructurePostBuildInfo(ReadbackBuffer.Get(), 0, EAccelerationStructurePostBuildInfoType::CompactedSize, Sources, 1);
 
         FPendingCompaction Pending;
         Pending.Source             = AccelerationStructure;
-        Pending.SizeReadbackBuffer = ReadbackBuffer;
+        Pending.SizeReadbackBuffer = ::Move(ReadbackBuffer);
         Pending.FramesRemaining    = ReadbackLatencyInFrames;
-        PendingCompactions.Emplace(Pending);
+        PendingCompactions.Emplace(::Move(Pending));
     }
 
     void Tick(FRHICommandList& CommandList)
@@ -85,7 +83,6 @@ public:
                 CommandList.CompactAccelerationStructure(Pending.Source, CompactedSize);
             }
 
-            Pending.SizeReadbackBuffer->Release();
             PendingCompactions.RemoveAt(Index);
         }
     }
@@ -97,14 +94,6 @@ public:
 
     void ReleaseAll()
     {
-        for (FPendingCompaction& Pending : PendingCompactions)
-        {
-            if (Pending.SizeReadbackBuffer)
-            {
-                Pending.SizeReadbackBuffer->Release();
-            }
-        }
-        
         PendingCompactions.Clear();
     }
 

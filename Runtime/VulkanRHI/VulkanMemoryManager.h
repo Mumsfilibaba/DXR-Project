@@ -14,6 +14,10 @@ class FVulkanPoolAllocator;
 class FVulkanResource;
 class FVulkanMemoryLocation;
 class FVulkanCommandContext;
+class FVulkanDevice;
+
+void VulkanQueryBufferMemoryRequirements(FVulkanDevice* Device, const VkBufferCreateInfo& BufferCreateInfo, VkMemoryRequirements2& OutRequirements);
+void VulkanQueryImageMemoryRequirements(FVulkanDevice* Device, const VkImageCreateInfo& ImageCreateInfo, VkMemoryRequirements2& OutRequirements, VkImage ExistingImage = VK_NULL_HANDLE);
 
 enum class EVulkanAllocatorType : uint8
 {
@@ -47,10 +51,20 @@ struct FVulkanBuddyAllocatorAllocationData
 
 struct FVulkanPoolAllocatorAllocationData
 {
-    uint32                 PageIndex = UINT32_MAX;
-    uint64                 Offset    = 0;
-    uint64                 Size      = 0;
-    FVulkanMemoryLocation* Owner     = nullptr;
+    uint32                 PageIndex              = UINT32_MAX;
+    uint64                 Offset                 = 0;
+    uint64                 Size                   = 0;
+    FVulkanMemoryLocation* Owner                  = nullptr;
+    uint64                 EligibleFromFenceValue = UINT64_MAX;
+};
+
+struct FVulkanDefragCandidate
+{
+    FVulkanMemoryLocation*             SourceLocation = nullptr;
+    FVulkanResource*                   Owner          = nullptr;
+    FVulkanPoolAllocatorAllocationData AllocationData = {};
+    VkBuffer                           BackingBuffer  = VK_NULL_HANDLE;
+    VkDeviceSize                       BufferOffset   = 0;
 };
 
 struct FVulkanPendingDefragMove
@@ -74,6 +88,8 @@ public:
     void Swap(FVulkanMemoryLocation& Other);
     void ReleaseMemory();
     void Reset();
+    void UpdateOwnership();
+    void FinalizeAllocation();
 
     bool IsValid()        const { return LocationType != EVulkanMemoryLocationType::Unknown; }
     bool IsSuballocated() const { return LocationType == EVulkanMemoryLocationType::Suballocated; }
@@ -262,12 +278,13 @@ public:
     ~FVulkanPoolAllocatorPage();
 
     bool TryAllocate(uint64 SizeInBytes, uint64 InAlignment, uint32 InPageIndex, FVulkanMemoryLocation& OutLocation);
-    bool TryAllocateForDefrag(uint64 SizeInBytes, uint64 InAlignment, FVulkanPoolAllocatorAllocationData& OutData);
+    bool TryAllocateForDefrag(uint64 SizeInBytes, uint64 InAlignment, uint32 InPageIndex, FVulkanPoolAllocatorAllocationData& OutData);
     
     bool Initialize();
     
     void RecycleAllocation(uint64 Offset, uint64 SizeInBytes);
-    void TransferOwnership(uint64 Offset, FVulkanMemoryLocation* NewLocation);
+    bool TransferOwnership(uint64 Offset, FVulkanMemoryLocation* NewLocation);
+    bool FinalizeAllocation(uint64 Offset, uint64 EligibleFromFenceValue);
 
     FORCEINLINE bool IsEmpty() const
     {
@@ -333,9 +350,11 @@ public:
     void Destroy();
     void CleanUp();
 
-    bool GetDefragCandidate(FVulkanPoolAllocatorAllocationData& OutCandidate) const;
+    bool GetDefragCandidate(FVulkanDefragCandidate& OutCandidate) const;
     void RecycleAllocation(const FVulkanPoolAllocatorAllocationData& AllocationData);
     void TransferOwnership(const FVulkanPoolAllocatorAllocationData& Data, FVulkanMemoryLocation* NewLocation);
+
+    void FinalizeAllocation(const FVulkanPoolAllocatorAllocationData& Data);
 
 #if VULKAN_ENABLE_STATS
     void UpdateMemoryStats(FVulkanAllocatorUsage& OutUsage) const;
@@ -435,7 +454,7 @@ public:
     bool Initialize();
     void CleanUp();
 
-    bool           GetDefragCandidate(FVulkanPoolAllocatorAllocationData& OutCandidate);
+    bool           GetDefragCandidate(FVulkanDefragCandidate& OutCandidate);
     bool           TryAllocateForDefrag(uint64 SizeInBytes, uint64 Alignment, uint32 ExcludePageIndex, FVulkanPoolAllocatorAllocationData& OutData);
     void           TransferOwnership(const FVulkanPoolAllocatorAllocationData& Data, FVulkanMemoryLocation* NewLocation);
     VkDeviceMemory GetBackingMemory(uint32 PageIndex);
@@ -528,7 +547,7 @@ public:
 #endif
 
 private:
-    bool GetDefragCandidate(FVulkanPoolAllocatorAllocationData& OutCandidate, FVulkanBufferAllocatorPool*& OutPool);
+    bool GetDefragCandidate(FVulkanDefragCandidate& OutCandidate, FVulkanBufferAllocatorPool*& OutPool);
     void ReleasePools();
 
     uint64                              PageSizeBytes;
@@ -598,7 +617,7 @@ public:
 
 private:
     ETexturePoolClass ClassifyTexture(VkImageUsageFlags UsageFlags, uint64 Alignment) const;
-    bool GetDefragCandidate(FVulkanPoolAllocatorAllocationData& OutCandidate, FVulkanPoolAllocator*& OutAllocator);
+    bool GetDefragCandidate(FVulkanDefragCandidate& OutCandidate, FVulkanPoolAllocator*& OutAllocator);
     void ReleasePools();
 
     uint64                           DefaultPageSizeBytes;

@@ -1,7 +1,6 @@
-#include "Array_Test.h"
+#include "Array_Benchmark.h"
 
-#if RUN_TARRAY_TEST || RUN_TARRAY_BENCHMARKS
-#include "TestUtils.h"
+#if RUN_TARRAY_BENCHMARKS
 #include "TestCommon/Benchmark.h"
 
 #include <Core/Containers/Array.h>
@@ -33,8 +32,6 @@ using TArrayAllocator = TInlineArrayAllocator<T, 1024>;
 template<typename T>
 using TArrayAllocator = TDefaultArrayAllocator<T>;
 #endif
-
-#if RUN_TARRAY_BENCHMARKS
 
 void TArray_Benchmark()
 {
@@ -705,5 +702,3 @@ void TArray_Benchmark()
 }
 
 #endif // RUN_TARRAY_BENCHMARKS
-
-#endif // RUN_TARRAY_TEST || RUN_TARRAY_BENCHMARKS

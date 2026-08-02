@@ -7,6 +7,7 @@
 #include "Core/Threading/Atomic.h"
 #include "Core/Containers/String.h"
 #include "VulkanRHI/VulkanCore.h"
+#include "VulkanRHI/VulkanCapabilities.h"
 #include "VulkanRHI/VulkanLoader.h"
 #include "VulkanRHI/VulkanExtensions.h"
 #include "VulkanRHI/VulkanMemoryManager.h"
@@ -22,117 +23,6 @@ class FVulkanPhysicalDevice;
 class FVulkanTimelineFence;
 class FVulkanQueue;
 
-// -------------------------------------------------------------------------------------------
-// Vulkan Device Feature Support
-// -------------------------------------------------------------------------------------------
-
-extern VULKANRHI_API bool   GVulkanForceBinding;
-extern VULKANRHI_API bool   GVulkanAllowNullDescriptors;
-extern VULKANRHI_API bool   GVulkanAllowGeometryShaders;
-extern VULKANRHI_API bool   GVulkanAllowResetCommandBuffers;
-extern VULKANRHI_API bool   GVulkanRobustBufferAccessEnabled;
-extern VULKANRHI_API bool   GVulkanGPUAssistedValidationEnabled;
-
-extern VULKANRHI_API bool   GVulkanSupportsDepthClip;
-extern VULKANRHI_API bool   GVulkanSupportsDepthClamp;
-extern VULKANRHI_API bool   GVulkanSupportsNullDescriptors;
-extern VULKANRHI_API bool   GVulkanSupportsRobustness2;
-extern VULKANRHI_API bool   GVulkanSupportsConservativeRasterization;
-extern VULKANRHI_API float  GVulkanMaxExtraPrimitiveOverestimationSize;
-extern VULKANRHI_API bool   GVulkanSupportsPipelineCacheControl;
-extern VULKANRHI_API bool   GVulkanSupportsMultiviews;
-extern VULKANRHI_API bool   GVulkanSupportsBindless;
-extern VULKANRHI_API bool   GVulkanSupportsMutableDescriptorType;
-extern VULKANRHI_API bool   GVulkanSupportsDepthBoundsTest;
-extern VULKANRHI_API bool   GVulkanSupportsSparseBinding;
-extern VULKANRHI_API bool   GVulkanSupportsSparseResidency2D;
-extern VULKANRHI_API bool   GVulkanSupportsSparseResidency3D;
-extern VULKANRHI_API bool   GVulkanSupportsSparseResidencyAliased;
-extern VULKANRHI_API bool   GVulkanSupportsGeometryShader;
-extern VULKANRHI_API bool   GVulkanSupportsTessellation;
-
-extern VULKANRHI_API uint32 GVulkanMaxMultiviewViewCount;
-extern VULKANRHI_API uint32 GVulkanMaxDrawIndirectCount;
-
-// -------------------------------------------------------------------------------------------
-// Programmable sample positions (VK_EXT_sample_locations)
-// -------------------------------------------------------------------------------------------
-
-extern VULKANRHI_API bool GVulkanSupportsSampleLocations;
-
-// -------------------------------------------------------------------------------------------
-// Programmable sample positions (VK_EXT_fragment_shader_interlock)
-// -------------------------------------------------------------------------------------------
-
-extern VULKANRHI_API bool GVulkanSupportsFragmentShaderInterlock;
-
-// -------------------------------------------------------------------------------------------
-// Ray Tracing (VK_KHR_ray_tracing_pipeline, VK_KHR_ray_query)
-// -------------------------------------------------------------------------------------------
-
-extern VULKANRHI_API bool GVulkanSupportsRayTracingPipeline; 
-extern VULKANRHI_API bool GVulkanSupportsRayQuery;
-extern VULKANRHI_API bool GVulkanSupportsAccelerationStructures;
-extern VULKANRHI_API bool GVulkanSupportsOpacityMicromap;
-extern VULKANRHI_API bool GVulkanSupportsShaderExecutionReordering;
-extern VULKANRHI_API bool GVulkanShaderExecutionReorderingActuallyReorders;
-extern VULKANRHI_API bool GVulkanSupportsClustersAndPTLAS;
-extern VULKANRHI_API bool GVulkanSupportsIndirectAccelerationStructureOperations;
-extern VULKANRHI_API bool GVulkanSupportsIndirectRayDispatch;
-
-// -------------------------------------------------------------------------------------------
-// Variable Rate Shading (VK_KHR_fragment_shading_rate)
-// -------------------------------------------------------------------------------------------
-
-extern VULKANRHI_API bool   GVulkanSupportsFragmentShadingRate;
-extern VULKANRHI_API uint32 GVulkanShadingRateTileSize;
-
-// -------------------------------------------------------------------------------------------
-// Mesh shaders (VK_EXT_mesh_shader)
-// -------------------------------------------------------------------------------------------
-
-extern VULKANRHI_API bool   GVulkanSupportsMeshShaders;
-extern VULKANRHI_API bool   GVulkanSupportsTaskShaders;
-extern VULKANRHI_API bool   GVulkanSupportsMeshShaderMultiview;
-extern VULKANRHI_API bool   GVulkanSupportsMeshShaderQueries;
-extern VULKANRHI_API bool   GVulkanSupportsMeshShaderPrimitiveFragmentShadingRate;
-extern VULKANRHI_API uint32 GVulkanMaxMeshOutputVertices;
-extern VULKANRHI_API uint32 GVulkanMaxMeshWorkGroupInvocations;
-extern VULKANRHI_API uint32 GVulkanMaxTaskWorkGroupInvocations;
-
-// -------------------------------------------------------------------------------------------
-// Transform Feedback / Stream Output (VK_EXT_transform_feedback)
-// -------------------------------------------------------------------------------------------
-
-extern VULKANRHI_API bool   GVulkanSupportsTransformFeedback;
-
-// -------------------------------------------------------------------------------------------
-// Dynamic Rendering (VK_KHR_dynamic_rendering / Vulkan 1.3)
-// -------------------------------------------------------------------------------------------
-
-#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
-extern VULKANRHI_API bool   GVulkanUseDynamicRendering;
-#else
-inline constexpr bool       GVulkanUseDynamicRendering = true;
-#endif
-
-// -------------------------------------------------------------------------------------------
-// Descriptor / Heap Limits
-// -------------------------------------------------------------------------------------------
-
-extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetSamplers;
-extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetSampledImages;
-extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetStorageImages;
-extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetUniformBuffers;
-extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetStorageBuffers;
-
-// -------------------------------------------------------------------------------------------
-// Vulkan Capabilitiy Logging
-// -------------------------------------------------------------------------------------------
-
-extern VULKANRHI_API void DumpVulkanCapabilities();
-extern VULKANRHI_API void DumpVulkanRayTracingCapabilities();
-
 enum class EVulkanCommandQueueType
 {
     Unknown  = 0, 
@@ -144,10 +34,11 @@ enum class EVulkanCommandQueueType
 
 struct VULKANRHI_API FVulkanCoreFeatures
 {
-    VkPhysicalDeviceFeatures         Features10 = {};
-    VkPhysicalDeviceVulkan11Features Features11 = {};
-    VkPhysicalDeviceVulkan12Features Features12 = {};
-    VkPhysicalDeviceVulkan13Features Features13 = {};
+    FVulkanCoreFeatures();
+
+    VkPhysicalDeviceFeatures         Features10;
+    VkPhysicalDeviceVulkan11Features Features11;
+    VkPhysicalDeviceVulkan12Features Features12;
 
     void BuildQueryChain(VkPhysicalDeviceFeatures2& Root);
     bool CheckRequired(VkPhysicalDevice PhysicalDevice) const;
@@ -191,7 +82,7 @@ struct FVulkanDefaultResources
 		: NullBuffer(VK_NULL_HANDLE)
 		, NullBufferLocation(nullptr)
 		, NullImage(VK_NULL_HANDLE)
-		, NullImageView(VK_NULL_HANDLE)
+		, NullImageViews()
 		, NullImageLocation(nullptr)
 		, NullSampler(VK_NULL_HANDLE)
 	{
@@ -201,8 +92,12 @@ struct FVulkanDefaultResources
 	{
 		CHECK(NullBuffer == VK_NULL_HANDLE);
 		CHECK(NullImage == VK_NULL_HANDLE);
-		CHECK(NullImageView == VK_NULL_HANDLE);
 		CHECK(NullSampler == VK_NULL_HANDLE);
+
+		for (VkImageView NullImageView : NullImageViews)
+		{
+			CHECK(NullImageView == VK_NULL_HANDLE);
+		}
 	}
 
 	bool Initialize(FVulkanDevice& Device);
@@ -210,10 +105,16 @@ struct FVulkanDefaultResources
 	bool InitializeNullBufferAndImage(FVulkanDevice& Device);
 	void Release(FVulkanDevice& Device);
 
+	VkImageView GetNullImageView(EVulkanNullImageViewType ViewType) const
+	{
+		CHECK(ViewType < EVulkanNullImageViewType::Count);
+		return NullImageViews[static_cast<uint32>(ViewType)];
+	}
+
 	VkBuffer              NullBuffer;
 	FVulkanMemoryLocation NullBufferLocation;
 	VkImage               NullImage;
-	VkImageView           NullImageView;
+	VkImageView           NullImageViews[static_cast<uint32>(EVulkanNullImageViewType::Count)];
 	FVulkanMemoryLocation NullImageLocation;
 	VkSampler             NullSampler;
 };
@@ -409,6 +310,11 @@ public:
     }
 
 private:
+    void DeriveCoreCapabilities(FVulkanDeviceCreateInfo& InDeviceCreateInfo, const FVulkanCoreFeatures& AvailableFeatures, const VkPhysicalDeviceProperties& CoreDeviceProperties10,
+        const VkPhysicalDeviceMultiviewProperties& MultiviewProperties, const VkPhysicalDeviceSubgroupProperties& SubgroupProperties,
+        const VkPhysicalDeviceVulkan12Properties& CoreDeviceProperties12);
+    void DeriveEnabledFeatureCapabilities(const FVulkanCoreFeatures& EnabledFeatures);
+
     using FSamplerMap = TMap<FVulkanHashableSamplerCreateInfo, VkSampler>;
 
     FVulkanInstance*                     Instance;

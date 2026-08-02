@@ -6,11 +6,14 @@ local LaunchModule = ModuleBuildRules("Launch")
 LaunchModule.bIsDynamic = false
 
 if IsPlatformWindows() then
-    LaunchModule.AddDefines({ 
-        "D3D12_AGILITY_SDK_EXPORTS=(1)",
-        "D3D12_AGILITY_SDK_VERSION=(619)",
-        "D3D12_AGILITY_SDK_PATH=\".\\\\D3D12\\\\\""
-    })
+    local AgilitySDKScript = JoinPath(GetRuntimeFolderPath(), "D3D12RHI/D3D12AgilitySDK.lua")
+    if os.isfile(AgilitySDKScript) then
+        include(AgilitySDKScript)
+        LaunchModule.AddDefines(GetD3D12AgilitySDKDefines())
+    else
+        LogWarning("[Launch] '%s' not found, disabling the D3D12 Agility SDK exports.", AgilitySDKScript)
+        LaunchModule.AddDefines({ "D3D12_AGILITY_SDK_EXPORTS=(0)" })
+    end
 end
 
 LaunchModule.AddModules({

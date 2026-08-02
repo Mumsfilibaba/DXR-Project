@@ -144,7 +144,7 @@ FVSCascadeOutput Cascade_VSMain(FVSInput Input)
     #endif
 
     // Unless we use a geometry-shader we transform the world-position here
-    const float4x4 LightViewProjection = CascadeMatrixBuffer[CascadeIndex].ViewProj;
+    const float4x4 LightViewProjection = UnpackMatrix(CascadeMatrixBuffer[CascadeIndex].ViewProj);
     Output.Position = mul(WorldPosition, LightViewProjection);
 #endif
 
@@ -177,7 +177,7 @@ void Cascade_GSMain(triangle FVSCascadeOutput Input[3], inout TriangleStream<FGS
         FGSCascadeOutput Output;
         Output.RenderTargetViewIndex = Cascade;
 
-        const float4x4 LightViewProjection = CascadeMatrixBuffer[Cascade].ViewProj;
+        const float4x4 LightViewProjection = UnpackMatrix(CascadeMatrixBuffer[Cascade].ViewProj);
 
         [unroll]
         for(int Vertex = 0; Vertex < 3; Vertex++)

@@ -116,6 +116,7 @@ private:
     FCriticalSection             CommandListsCS;
     FCommandsQueue               PendingSubmissions;
     FCriticalSection             SubmissionCS;
+    FCriticalSection             ConsumerCS;
     TArray<FD3D12QueryRange>     PendingQueryRanges;
     TArray<FD3D12Query>          PendingTimestampQueries;
     TArray<FD3D12Query>          PendingOcclusionQueries;

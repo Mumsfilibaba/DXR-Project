@@ -38,12 +38,12 @@ struct RHI
     // Create functions (Forward to RHI::Device)
     // -------------------------------------------------------------------------------------------
 
-    static FORCEINLINE FRHITexture* CreateTexture(const FRHITextureDesc& InTextureDesc, EResourceAccess InInitialState = EResourceAccess::Common, const IRHITextureData* InInitialData = nullptr)
+    static FORCEINLINE FRHITexture* CreateTexture(const FRHITextureDesc& InTextureDesc, ERHIResourceState InInitialState = ERHIResourceState::Common, const IRHITextureData* InInitialData = nullptr)
     {
         return Device->CreateTexture(InTextureDesc, InInitialState, InInitialData);
     }
 
-    static FORCEINLINE FRHIBuffer* CreateBuffer(const FRHIBufferDesc& InBufferDesc, EResourceAccess InInitialState = EResourceAccess::Common, const void* InInitialData = nullptr)
+    static FORCEINLINE FRHIBuffer* CreateBuffer(const FRHIBufferDesc& InBufferDesc, ERHIResourceState InInitialState = ERHIResourceState::Common, const void* InInitialData = nullptr)
     {
         return Device->CreateBuffer(InBufferDesc, InInitialState, InInitialData);
     }
@@ -259,6 +259,12 @@ struct RHI
 
     /** Whether SV_RenderTargetArrayIndex is supported from the vertex shader stage */
     static RHI_API bool bSupportRenderTargetArrayIndexFromVertexShader;
+
+    /** Highest shader model the active device can execute. Answers "what profile may I compile", which is separate from the bSupports* flags answering "may I use this feature". */
+    static RHI_API EShaderModel MaxShaderModel;
+
+    /** Whether shaders may index resources through the bindless heap (ResourceDescriptorHeap / SamplerDescriptorHeap). False also when the backend supports bindless but it is disabled by CVar. */
+    static RHI_API bool bSupportsBindless;
 
     // -------------------------------------------------------------------------------------------
     // View Instancing

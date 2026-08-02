@@ -166,7 +166,7 @@ public:
     FPointLightRenderPass(FSceneRenderer* InRenderer);
     virtual ~FPointLightRenderPass();
 
-    virtual void PreparePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final { }
+    virtual void PreparePipelineState(FMaterial*, const FFrameResources&) override final { }
 
     // This function creates or retrieves a pipeline state instance based on parameters
     FGraphicsPipelineStateInstance* CompilePipelineStateInstance(ECubeMapRenderPassType RenderPassType, FMaterial* Material, const FFrameResources& FrameResources);
@@ -256,7 +256,7 @@ public:
     FCascadedShadowsRenderPass(FSceneRenderer* InRenderer);
     virtual ~FCascadedShadowsRenderPass();
 
-    virtual void PreparePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final { }
+    virtual void PreparePipelineState(FMaterial*, const FFrameResources&) override final { }
 
     // This function creates or retrieves a pipeline state instance based on parameters
     FGraphicsPipelineStateInstance* CompilePipelineStateInstance(ECascadeRenderPassType RenderPassType, FMaterial* Material, const FFrameResources& FrameResources);

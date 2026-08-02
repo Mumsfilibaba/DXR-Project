@@ -47,7 +47,9 @@ FVulkanGeometryAccelerationStructureRHI::FVulkanGeometryAccelerationStructureRHI
     , StaleGeometry(VK_NULL_HANDLE)
     , StaleGeometryLocation(InDevice)
     , TrackedAccelerationStructureMemory(0)
+#if VULKAN_STORE_DEBUG_NAMES
     , DebugName()
+#endif
 {
     STAT_ADD(STAT_RHI_BLASCount, 1);
 }
@@ -191,6 +193,18 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
     AccelerationStructureBuildRangeInfo.transformOffset = 0;
 
     VkAccelerationStructureBuildRangeInfoKHR* BuildRangeInfos[] = { &AccelerationStructureBuildRangeInfo };
+
+    const ERHIResourceState BuildInputAccess = ERHIResourceState::NonPixelShaderResource | ERHIResourceState::RayTracingAccelerationStructure;
+
+    CmdContext.RequireBufferState(VertexBuffer.Get(), BuildInputAccess);
+    if (IndexBuffer)
+    {
+        CmdContext.RequireBufferState(IndexBuffer.Get(), BuildInputAccess);
+    }
+
+    CmdContext.AddAccelerationStructureMemoryBarrier();
+    CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandBuffer());
+
     CmdContext.GetCommandBuffer()->BuildAccelerationStructures(1, &AccelerationStructureBuildGeometryInfo, BuildRangeInfos);
 
     STAT_ADD(STAT_RHI_AccelerationStructureBuilds, 1);
@@ -251,6 +265,9 @@ bool FVulkanGeometryAccelerationStructureRHI::CompactInPlace(FVulkanCommandConte
     CopyInfo.dst   = CompactedGeometry;
     CopyInfo.mode  = VK_COPY_ACCELERATION_STRUCTURE_MODE_COMPACT_KHR;
 
+    CmdContext.AddAccelerationStructureMemoryBarrier();
+    CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandBuffer());
+
     CmdContext.GetCommandBuffer()->CopyAccelerationStructure(&CopyInfo);
 
     VkAccelerationStructureDeviceAddressInfoKHR AddressInfo = {};
@@ -288,7 +305,9 @@ FVulkanSceneAccelerationStructureRHI::FVulkanSceneAccelerationStructureRHI(FVulk
     , View(nullptr)
     , Instances()
     , TrackedAccelerationStructureMemory(0)
+#if VULKAN_STORE_DEBUG_NAMES
     , DebugName()
+#endif
 {
     STAT_ADD(STAT_RHI_TLASCount, 1);
 }
@@ -494,6 +513,11 @@ bool FVulkanSceneAccelerationStructureRHI::Build(FVulkanCommandContext& CmdConte
     BuildRangeInfo.transformOffset = 0;
 
     VkAccelerationStructureBuildRangeInfoKHR* BuildRangeInfos[] = { &BuildRangeInfo };
+
+    // The instance data was written through a host-visible mapping, the scratch may be reused from an earlier build.
+    CmdContext.AddAccelerationStructureMemoryBarrier();
+    CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandBuffer());
+
     CmdContext.GetCommandBuffer()->BuildAccelerationStructures(1, &BuildGeometryInfo, BuildRangeInfos);
 
     STAT_ADD(STAT_RHI_AccelerationStructureBuilds, 1);
@@ -633,14 +657,17 @@ bool FVulkanOpacityMicromap::Build(FVulkanCommandContext& CmdContext, const FRHI
 
     VulkanUpdateAccelerationStructureMemoryStat(TrackedMicromapMemory, MicromapLocation.GetSize() + ScratchLocation.GetSize());
 
+    FVulkanBufferRHI* DataBuffer       = FVulkanDeviceRHI::ResourceCast(BuildDesc.OpacityMicroTriangleDataBuffer);
+    FVulkanBufferRHI* DescriptorBuffer = FVulkanDeviceRHI::ResourceCast(BuildDesc.OMMDescriptorBuffer);
+
     VkDeviceOrHostAddressConstKHR MicroTriangleData = {};
-    if (FVulkanBufferRHI* DataBuffer = FVulkanDeviceRHI::ResourceCast(BuildDesc.OpacityMicroTriangleDataBuffer))
+    if (DataBuffer)
     {
         MicroTriangleData.deviceAddress = DataBuffer->GetDeviceAddress() + BuildDesc.OpacityMicroTriangleDataBufferOffset;
     }
 
     VkDeviceOrHostAddressConstKHR TriangleArray = {};
-    if (FVulkanBufferRHI* DescriptorBuffer = FVulkanDeviceRHI::ResourceCast(BuildDesc.OMMDescriptorBuffer))
+    if (DescriptorBuffer)
     {
         TriangleArray.deviceAddress = DescriptorBuffer->GetDeviceAddress() + BuildDesc.OMMDescriptorBufferOffset;
     }
@@ -650,6 +677,26 @@ bool FVulkanOpacityMicromap::Build(FVulkanCommandContext& CmdContext, const FRHI
     BuildInfo.triangleArray             = TriangleArray;
     BuildInfo.triangleArrayStride       = BuildDesc.OMMDescriptorStrideInBytes;
     BuildInfo.scratchData.deviceAddress = ScratchLocation.GetDeviceAddress();
+
+    if (DataBuffer)
+    {
+        CmdContext.RequireBufferState(DataBuffer, ERHIResourceState::NonPixelShaderResource);
+    }
+
+    if (DescriptorBuffer)
+    {
+        CmdContext.RequireBufferState(DescriptorBuffer, ERHIResourceState::NonPixelShaderResource);
+    }
+
+    VkMemoryBarrier2KHR ScratchBarrier = {};
+    ScratchBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2_KHR;
+    ScratchBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_HOST_BIT_KHR | VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR | VK_PIPELINE_STAGE_2_MICROMAP_BUILD_BIT_EXT;
+    ScratchBarrier.srcAccessMask = VK_ACCESS_2_HOST_WRITE_BIT_KHR | VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR | VK_ACCESS_2_MICROMAP_WRITE_BIT_EXT;
+    ScratchBarrier.dstStageMask  = VK_PIPELINE_STAGE_2_MICROMAP_BUILD_BIT_EXT;
+    ScratchBarrier.dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT_KHR | VK_ACCESS_2_MICROMAP_READ_BIT_EXT | VK_ACCESS_2_MICROMAP_WRITE_BIT_EXT;
+
+    CmdContext.GetBarrierBatcher().AddMemoryBarrier(0, ScratchBarrier);
+    CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandBuffer());
 
     CmdContext.GetCommandBuffer()->BuildMicromaps(1, &BuildInfo);
     return true;

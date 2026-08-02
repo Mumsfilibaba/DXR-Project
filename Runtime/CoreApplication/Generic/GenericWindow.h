@@ -183,6 +183,7 @@ struct FGenericWindowInitializer
 class FGenericWindow : public FRefCounted
 {
 public:
+
     /**
      * @brief Virtual destructor for FGenericWindow.
      */

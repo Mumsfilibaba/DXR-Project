@@ -1,23 +1,5 @@
 #pragma once
 
-#ifndef ENABLE_ASSERTS
-    #if !defined(RELEASE_BUILD)
-        #define ENABLE_ASSERTS (1)
-    #else
-        #define ENABLE_ASSERTS (0)
-    #endif
-#endif
-
-#if ENABLE_ASSERTS
-    #ifdef NDEBUG
-        #undef NDEBUG
-        #include <cassert>
-        #define NDEBUG
-    #else
-        #include <cassert>
-    #endif
-#endif
-
 #include <cstdint>
 #include <cstddef> // For std::max_align_t and offsetof
 #include <new>     // For __STDCPP_DEFAULT_NEW_ALIGNMENT__
@@ -255,16 +237,6 @@
     #else
         #define PLATFORM_SUPPORT_SME_INTRIN (0)
     #endif
-#endif
-
-// -------------------------------------------------------------------------------------------------
-// Assertion Control
-// -------------------------------------------------------------------------------------------------
-
-#if ENABLE_ASSERTS
-    #define CHECK(Condition) assert(Condition)
-#else
-    #define CHECK(Condition) ((void)0)
 #endif
 
 // -------------------------------------------------------------------------------------------------

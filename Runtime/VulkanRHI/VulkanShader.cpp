@@ -80,6 +80,20 @@ static uint16 ComputeEffectiveRegister(uint32 OriginalSet, uint32 RawBinding)
     return static_cast<uint16>(RawBinding);
 }
 
+static EVulkanNullImageViewType GetNullImageViewType(spvc_compiler Compiler, spvc_type_id TypeId)
+{
+    const spvc_type Type      = spvc_compiler_get_type_handle(Compiler, TypeId);
+    const SpvDim    Dimension = spvc_type_get_image_dimension(Type);
+    const bool      bArrayed  = spvc_type_get_image_arrayed(Type) != SPVC_FALSE;
+
+    if (Dimension == SpvDimCube)
+    {
+        return bArrayed ? EVulkanNullImageViewType::TextureCubeArray : EVulkanNullImageViewType::TextureCube;
+    }
+
+    return bArrayed ? EVulkanNullImageViewType::Texture2DArray : EVulkanNullImageViewType::Texture2D;
+}
+
 FVulkanDevice* FVulkanShaderModule::StaticDevice = nullptr;
 
 FVulkanShaderModule::FVulkanShaderModule(FVulkanDevice* InDevice, VkShaderModule InShaderModule)
@@ -297,6 +311,7 @@ bool FVulkanShader::InitializeShaderLayout()
 
     spvc_context_set_error_callback(Context, [](void*, const CHAR* Error)
     {
+        UNREFERENCED_VARIABLE(Error);
         VULKAN_ERROR("[SPIRV-Cross Error] %s", Error);
     }, nullptr);
 
@@ -382,6 +397,7 @@ bool FVulkanShader::InitializeShaderLayout()
             FVulkanShaderInfo::FResourceBinding Binding;
             Binding.BindingType          = EVulkanBindingType::SampledImage;
             Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
+            Binding.NullViewType         = GetNullImageViewType(Compiler, SampledImages[Index].base_type_id);
             Binding.OriginalBindingIndex = ComputeEffectiveRegister(OriginalSet, spvc_compiler_get_decoration(Compiler, SampledImages[Index].id, SpvDecorationBinding));
 
         #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
@@ -492,6 +508,7 @@ bool FVulkanShader::InitializeShaderLayout()
             FVulkanShaderInfo::FResourceBinding Binding;
             Binding.BindingType          = EVulkanBindingType::StorageImage;
             Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
+            Binding.NullViewType         = GetNullImageViewType(Compiler, StorageImages[Index].base_type_id);
             Binding.OriginalBindingIndex = ComputeEffectiveRegister(OriginalSet, spvc_compiler_get_decoration(Compiler, StorageImages[Index].id, SpvDecorationBinding));
 
         #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
@@ -707,7 +724,7 @@ bool FVulkanShader::InitializeShaderLayout()
         }
 
         // TODO: We try and align all constants to a vec4/float4 since we do this in D3D12, check if this is necessary
-        constexpr size_t MaxBytes  = VULKAN_MAX_NUM_PUSH_CONSTANTS * sizeof(uint32);
+        MAYBE_UNUSED constexpr size_t MaxBytes = VULKAN_MAX_NUM_PUSH_CONSTANTS * sizeof(uint32);
         constexpr size_t Alignment = sizeof(float) * 4;
                 
         //size_t NumPushBytes = RangeOffset + Range;

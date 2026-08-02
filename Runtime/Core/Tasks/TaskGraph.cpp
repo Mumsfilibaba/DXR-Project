@@ -32,6 +32,8 @@ static constexpr int32 MIN_ANYTHREAD_WORKERS = 2;
 
 static void AddPendingStat(ENamedThread::Type Lane, int64 Delta)
 {
+    UNREFERENCED_VARIABLE(Delta);
+
     switch (Lane)
     {
     case ENamedThread::AnyThread:

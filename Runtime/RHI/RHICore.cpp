@@ -27,8 +27,10 @@ static FAutoConsoleCommand CCmdDumpCapsCommand(
 // Shader / Pipeline
 // -------------------------------------------------------------------------------------------
 
-RHI_API bool RHI::bSupportsGeometryShaders                       = true;
-RHI_API bool RHI::bSupportRenderTargetArrayIndexFromVertexShader = true;
+RHI_API bool         RHI::bSupportsGeometryShaders                       = true;
+RHI_API bool         RHI::bSupportRenderTargetArrayIndexFromVertexShader = true;
+RHI_API EShaderModel RHI::MaxShaderModel                                 = EShaderModel::Unknown;
+RHI_API bool         RHI::bSupportsBindless                              = false;
 
 // -------------------------------------------------------------------------------------------
 // View Instancing

@@ -23,6 +23,8 @@ struct FMacPlatformMisc final : public FGenericPlatformMisc
 
     static bool IsDebuggerPresent();
 
+    static EAssertDialogResult ShowAssertDialog(const CHAR* Title, const CHAR* Message);
+
     static FORCEINLINE void MemoryBarrier() 
     {
         __sync_synchronize();

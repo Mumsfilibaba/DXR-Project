@@ -1,12 +1,17 @@
 #include "Core/Windows/WindowsPlatformStackTrace.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Platform/CriticalSection.h"
+#include "Core/Threading/ScopedLock.h"
 #include <dbghelp.h>
 
-static bool GSymbolsInitialized = false;
+static FCriticalSection GSymbolsCS;
+static int32            GSymbolsRefCount = 0;
 
 bool FWindowsPlatformStackTrace::InitializeSymbols()
 {
-    if (!GSymbolsInitialized)
+    TScopedLock Lock(GSymbolsCS);
+
+    if (GSymbolsRefCount == 0)
     {
         const uint32 SymOptionFlags = 
             SYMOPT_UNDNAME |
@@ -28,22 +33,21 @@ bool FWindowsPlatformStackTrace::InitializeSymbols()
         if (!Result)
         {
             LOG_ERROR("Failed to initialize Symbols");
-        }
-        else
-        {
-            GSymbolsInitialized = true;
+            return false;
         }
     }
 
-    return GSymbolsInitialized;
+    ++GSymbolsRefCount;
+    return true;
 }
 
 void FWindowsPlatformStackTrace::ReleaseSymbols()
 {
-    if (GSymbolsInitialized)
+    TScopedLock Lock(GSymbolsCS);
+
+    if ((GSymbolsRefCount > 0) && (--GSymbolsRefCount == 0))
     {
         ::SymCleanup(::GetCurrentProcess());
-        GSymbolsInitialized = false;
     }
 }
 
@@ -105,6 +109,7 @@ int32 FWindowsPlatformStackTrace::CaptureStackTrace(uint64* StackTrace, int32 Ma
         StackTrace[CurrentDepth++] = 0;
     }
 
+    ReleaseSymbols();
     return Depth;
 }
 
@@ -174,4 +179,6 @@ void FWindowsPlatformStackTrace::GetStackTraceEntryFromAddress(uint64 Address, F
     {
         LastError = ::GetLastError();
     }
+
+    ReleaseSymbols();
 }

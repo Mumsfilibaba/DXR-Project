@@ -1,9 +1,8 @@
 #pragma once
 #include "Config.h"
 
-#if RUN_TARRAY_TEST || RUN_TARRAY_BENCHMARKS
+#if RUN_TARRAY_TEST
 #include <Core/CoreTypes.h>
 
-void TArray_Benchmark();
 bool TArray_Test();
 #endif

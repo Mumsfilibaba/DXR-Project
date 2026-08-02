@@ -5,13 +5,6 @@
 // Defines
 #define RUN_TESTS (1)
 
-// Benchmarks run only in optimized builds; Debug timings are misleading.
-#if defined(DEVELOPMENT_BUILD) || defined(RELEASE_BUILD)
-    #define RUN_BENCHMARK (1)
-#else
-    #define RUN_BENCHMARK (0)
-#endif
-
 // Test Specific defines
 #define RUN_TARRAY_TEST (1)
 #define RUN_TARRAYVIEW_TEST (1)
@@ -35,6 +28,3 @@
 #define RUN_STRINGVIEW_SUITE (1)
 #define RUN_STATICSTRING_SUITE (1)
 #define RUN_CRC_TEST (1)
-
-// Benchmark Specific defines
-#define RUN_TARRAY_BENCHMARKS (1)

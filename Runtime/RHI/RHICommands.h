@@ -862,110 +862,58 @@ DECLARE_RHICOMMAND(FRHICommandBuildGeometryAccelerationStructure)
     FRHIGeometryAccelerationStructureBuildDesc BuildDesc;
 };
 
-DECLARE_RHICOMMAND(FRHICommandTransitionTextureState)
+DECLARE_RHICOMMAND(FRHICommandTransitionBarrier)
 {
-    FORCEINLINE FRHICommandTransitionTextureState(FRHITexture* InTexture, const FRHITextureTransition& InTextureTransition)
-        : Texture(InTexture)
-        , TextureTransition(InTextureTransition)
+    FORCEINLINE FRHICommandTransitionBarrier(const TArrayView<const FRHITransitionBarrierDesc> InTransitionDescs)
+        : TransitionDescs(InTransitionDescs)
     {
-        CHECK(Texture != nullptr);
+        for (const FRHITransitionBarrierDesc& Desc : TransitionDescs)
+        {
+            if (Desc.IsTexture())
+            {
+                CHECK(Desc.Texture.Resource != nullptr);
+            }
+            else
+            {
+                CHECK(Desc.Buffer.Resource != nullptr);
+            }
+
+            CHECK(!(Desc.IsSplitBegin() && Desc.IsSplitEnd()));
+        }
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.TransitionTextureState(Texture, TextureTransition);
+        CommandContext.TransitionBarrier(TransitionDescs);
     }
 
-    FRHITexture*          Texture;
-    FRHITextureTransition TextureTransition;
+    TArrayView<const FRHITransitionBarrierDesc> TransitionDescs;
 };
 
-DECLARE_RHICOMMAND(FRHICommandTransitionBufferState)
+DECLARE_RHICOMMAND(FRHICommandUnorderedAccessBarrier)
 {
-    FORCEINLINE FRHICommandTransitionBufferState(FRHIBuffer* InBuffer, EResourceAccess InBeforeState, EResourceAccess InAfterState)
-        : Buffer(InBuffer)
-        , BeforeState(InBeforeState)
-        , AfterState(InAfterState)
+    FORCEINLINE FRHICommandUnorderedAccessBarrier(const TArrayView<const FRHIUnorderedAccessBarrierDesc> InBarrierDescs)
+        : BarrierDescs(InBarrierDescs)
     {
-        CHECK(Buffer != nullptr);
+        for (const FRHIUnorderedAccessBarrierDesc& Desc : BarrierDescs)
+        {
+            if (Desc.IsTexture())
+            {
+                CHECK(Desc.Texture.Resource != nullptr);
+            }
+            else
+            {
+                CHECK(Desc.Buffer.Resource != nullptr);
+            }
+        }
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.TransitionBufferState(Buffer, BeforeState, AfterState);
+        CommandContext.UnorderedAccessBarrier(BarrierDescs);
     }
 
-    FRHIBuffer*     Buffer;
-    EResourceAccess BeforeState;
-    EResourceAccess AfterState;
-};
-
-DECLARE_RHICOMMAND(FRHICommandRequireTextureState)
-{
-    FORCEINLINE FRHICommandRequireTextureState(FRHITexture* InTexture, const FRHIRequiredTextureState& InRequiredState)
-        : Texture(InTexture)
-        , RequiredState(InRequiredState)
-    {
-        CHECK(Texture != nullptr);
-    }
-
-    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
-    {
-        CommandContext.RequireTextureState(Texture, RequiredState);
-    }
-
-    FRHITexture*             Texture;
-    FRHIRequiredTextureState RequiredState;
-};
-
-DECLARE_RHICOMMAND(FRHICommandRequireBufferState)
-{
-    FORCEINLINE FRHICommandRequireBufferState(FRHIBuffer* InBuffer, EResourceAccess InRequiredState)
-        : Buffer(InBuffer)
-        , RequiredState(InRequiredState)
-    {
-        CHECK(Buffer != nullptr);
-    }
-
-    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
-    {
-        CommandContext.RequireBufferState(Buffer, RequiredState);
-    }
-
-    FRHIBuffer*     Buffer;
-    EResourceAccess RequiredState;
-};
-
-DECLARE_RHICOMMAND(FRHICommandUnorderedAccessTextureBarrier)
-{
-    FORCEINLINE FRHICommandUnorderedAccessTextureBarrier(FRHITexture* InTexture)
-        : Texture(InTexture)
-    {
-        CHECK(Texture != nullptr);
-    }
-
-    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
-    {
-        CommandContext.UnorderedAccessTextureBarrier(Texture);
-    }
-
-    FRHITexture* Texture;
-};
-
-DECLARE_RHICOMMAND(FRHICommandUnorderedAccessBufferBarrier)
-{
-    FORCEINLINE FRHICommandUnorderedAccessBufferBarrier(FRHIBuffer* InBuffer)
-        : Buffer(InBuffer)
-    {
-        CHECK(Buffer != nullptr);
-    }
-
-    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
-    {
-        CommandContext.UnorderedAccessBufferBarrier(Buffer);
-    }
-
-    FRHIBuffer* Buffer;
+    TArrayView<const FRHIUnorderedAccessBarrierDesc> BarrierDescs;
 };
 
 DECLARE_RHICOMMAND(FRHICommandDraw)

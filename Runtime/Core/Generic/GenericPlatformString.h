@@ -75,7 +75,10 @@ struct FGenericPlatformString
     template<typename... ArgTypes>
     static FORCEINLINE int32 Snprintf(CHAR* Buffer, SIZE_T BufferSize, const CHAR* Format, ArgTypes&&... Args) noexcept
     {
+        // The format string is a literal at the call site, it cannot be one here.
+        DISABLE_FORMAT_SECURITY_WARNING
         return static_cast<int32>(::snprintf(Buffer, BufferSize, Format, Forward<ArgTypes>(Args)...));
+        ENABLE_FORMAT_SECURITY_WARNING
     }
 
     NODISCARD static FORCEINLINE CHAR* Strstr(const CHAR* String, const CHAR* Find) noexcept

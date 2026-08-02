@@ -62,9 +62,9 @@ static const CHAR* GetDescriptorTypeName(VkDescriptorType Type)
 FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanPipelineLayout* InLayout, const FVulkanDefaultResources& InDefaultResources)
     : FVulkanDeviceChild(InDevice)
     , Layout(InLayout)
+    , DefaultResources(InDefaultResources)
     , DescriptorSetHandles()
     , DescriptorSetBuilders()
-    , DefaultResources(InDefaultResources)
     , DescriptorSetVersion(0)
     , bDynamicOffsetsDirty(false)
 {
@@ -81,6 +81,7 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
     DescriptorSetBuilders.Resize(RemappingInfos.Size());
     DescriptorPoolInfos.Reserve(DescriptorSetHandles.Size());
     BoundResourceViews.Resize(RemappingInfos.Size());
+    BoundBuffers.Resize(RemappingInfos.Size());
     
     // Maps from a descriptor-type to the number of descriptors for this type
     TMap<VkDescriptorType, uint32> DescriptorCountMap;
@@ -97,8 +98,12 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
         DSWrites.DescriptorWrites.Resize(SetRemappingInfo.RemappingInfo.Size());
         Memory::Memzero(DSWrites.DescriptorWrites.Data(), DSWrites.DescriptorWrites.SizeInBytes());
 
+        DSWrites.NullViewTypes.Resize(SetRemappingInfo.RemappingInfo.Size());
+
         BoundResourceViews[DescriptorSetIndex].Resize(SetRemappingInfo.RemappingInfo.Size());
         Memory::Memzero(BoundResourceViews[DescriptorSetIndex].Data(), BoundResourceViews[DescriptorSetIndex].SizeInBytes());
+
+        BoundBuffers[DescriptorSetIndex].Resize(SetRemappingInfo.RemappingInfo.Size());
         
         // Init DescriptorWrites and count the other bindings
         uint32 NumImageInfos               = 0;
@@ -111,6 +116,8 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
             const FVulkanDescriptorRemappingInfo::FRemappingInfo& Binding = SetRemappingInfo.RemappingInfo[Index];
             CHECK(Binding.BindingIndex == static_cast<uint32>(Index));
             
+            DSWrites.NullViewTypes[Index] = Binding.NullViewType;
+
             VkWriteDescriptorSet& WriteDescriptorSet = DSWrites.DescriptorWrites[Index];
             WriteDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             WriteDescriptorSet.descriptorType  = GetDescriptorTypeFromBindingType(Binding.BindingType);
@@ -205,7 +212,7 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
                     WriteDescriptorSet.pImageInfo = &DSWrites.DescriptorImageInfos[CurrentImageInfo++];
                     
                     VkDescriptorImageInfo* ImageInfo = const_cast<VkDescriptorImageInfo*>(WriteDescriptorSet.pImageInfo);
-                    ImageInfo->imageView   = DefaultResources.NullImageView;
+                    ImageInfo->imageView   = DefaultResources.GetNullImageView(DSWrites.NullViewTypes[Index]);
                     ImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
                     ImageInfo->sampler     = VK_NULL_HANDLE;
                     break;
@@ -318,6 +325,9 @@ void FVulkanDescriptorState::SetSRV(FVulkanShaderResourceViewRHI* ShaderResource
 {
     CHECK(DescriptorSetIndex < static_cast<uint32>(DescriptorSetBuilders.Size()));
 
+    BoundResourceViews[DescriptorSetIndex][BindingIndex] = nullptr;
+    BoundBuffers[DescriptorSetIndex][BindingIndex]       = FBoundBuffer();
+
     FVulkanDescriptorSetBuilder& DSBuilder = DescriptorSetBuilders[DescriptorSetIndex];
     if (ShaderResourceView)
     {
@@ -335,7 +345,7 @@ void FVulkanDescriptorState::SetSRV(FVulkanShaderResourceViewRHI* ShaderResource
             {
                 const FVulkanResourceView::FStructuredBufferView& StructuredBufferView = ShaderResourceView->GetStructuredBufferInfo();
                 DSBuilder.WriteStorageBuffer(BindingIndex, StructuredBufferView.Buffer, StructuredBufferView.Offset, StructuredBufferView.Range);
-                BoundResourceViews[DescriptorSetIndex][BindingIndex] = nullptr;
+                SetBoundBuffer(ShaderResourceView->GetResource(), ERHIResourceState::ShaderResource, DescriptorSetIndex, BindingIndex);
                 break; 
             }
 
@@ -343,7 +353,7 @@ void FVulkanDescriptorState::SetSRV(FVulkanShaderResourceViewRHI* ShaderResource
             {
                 const FVulkanResourceView::FTypedBufferView& TypedBufferView = ShaderResourceView->GetTypedBufferInfo();
                 DSBuilder.WriteUniformTexelBuffer(BindingIndex, TypedBufferView.BufferView);
-                BoundResourceViews[DescriptorSetIndex][BindingIndex] = nullptr;
+                SetBoundBuffer(ShaderResourceView->GetResource(), ERHIResourceState::ShaderResource, DescriptorSetIndex, BindingIndex);
                 break;
             }
 
@@ -364,7 +374,6 @@ void FVulkanDescriptorState::SetSRV(FVulkanShaderResourceViewRHI* ShaderResource
     }
     else
     {
-        BoundResourceViews[DescriptorSetIndex][BindingIndex] = nullptr;
         ResetDescriptorBinding(DescriptorSetIndex, BindingIndex);
     }
 
@@ -374,7 +383,10 @@ void FVulkanDescriptorState::SetSRV(FVulkanShaderResourceViewRHI* ShaderResource
 void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAccessView, uint32 DescriptorSetIndex, uint32 BindingIndex)
 {
     CHECK(DescriptorSetIndex < static_cast<uint32>(DescriptorSetBuilders.Size()));
-    
+
+    BoundResourceViews[DescriptorSetIndex][BindingIndex] = nullptr;
+    BoundBuffers[DescriptorSetIndex][BindingIndex]       = FBoundBuffer();
+
     FVulkanDescriptorSetBuilder& DSBuilder = DescriptorSetBuilders[DescriptorSetIndex];
     if (UnorderedAccessView)
     {
@@ -392,7 +404,7 @@ void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAcce
             {
                 const FVulkanResourceView::FStructuredBufferView& StructuredBufferView = UnorderedAccessView->GetStructuredBufferInfo();
                 DSBuilder.WriteStorageBuffer(BindingIndex, StructuredBufferView.Buffer, StructuredBufferView.Offset, StructuredBufferView.Range);
-                BoundResourceViews[DescriptorSetIndex][BindingIndex] = nullptr;
+                SetBoundBuffer(UnorderedAccessView->GetResource(), ERHIResourceState::UnorderedAccess, DescriptorSetIndex, BindingIndex);
                 break;
             }
 
@@ -400,7 +412,7 @@ void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAcce
             {
                 const FVulkanResourceView::FTypedBufferView& TypedBufferView = UnorderedAccessView->GetTypedBufferInfo();
                 DSBuilder.WriteStorageTexelBuffer(BindingIndex, TypedBufferView.BufferView);
-                BoundResourceViews[DescriptorSetIndex][BindingIndex] = nullptr;
+                SetBoundBuffer(UnorderedAccessView->GetResource(), ERHIResourceState::UnorderedAccess, DescriptorSetIndex, BindingIndex);
                 break;
             }
 
@@ -413,16 +425,24 @@ void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAcce
     }
     else
     {
-        BoundResourceViews[DescriptorSetIndex][BindingIndex] = nullptr;
         ResetDescriptorBinding(DescriptorSetIndex, BindingIndex);
     }
 
     DirtyResources();
 }
 
+void FVulkanDescriptorState::SetBoundBuffer(FRHIResource* Resource, ERHIResourceState Access, uint32 DescriptorSetIndex, uint32 BindingIndex)
+{
+    FBoundBuffer& BoundBuffer = BoundBuffers[DescriptorSetIndex][BindingIndex];
+    BoundBuffer.Buffer = FVulkanDeviceRHI::ResourceCast(static_cast<FRHIBuffer*>(Resource));
+    BoundBuffer.Access = Access;
+}
+
 void FVulkanDescriptorState::SetUniformBuffer(FVulkanBufferRHI* UniformBuffer, uint32 DescriptorSetIndex, uint32 BindingIndex)
 {
     CHECK(DescriptorSetIndex < static_cast<uint32>(DescriptorSetBuilders.Size()));
+
+    BoundBuffers[DescriptorSetIndex][BindingIndex] = FBoundBuffer{ UniformBuffer, ERHIResourceState::ConstantBuffer };
 
     if (UniformBuffer)
     {
@@ -438,6 +458,8 @@ void FVulkanDescriptorState::SetUniformBuffer(FVulkanBufferRHI* UniformBuffer, u
 
             const uint32 FlatIndex     = DynamicOffsetBasePerSet[DescriptorSetIndex] + DynamicIndex;
             const uint32 DynamicOffset = static_cast<uint32>(Offset);
+
+            CHECK((DynamicOffset % GetDevice()->GetPhysicalDevice()->GetProperties().limits.minUniformBufferOffsetAlignment) == 0);
 
             if (DynamicOffsets[FlatIndex] != DynamicOffset)
             {
@@ -475,6 +497,42 @@ void FVulkanDescriptorState::SetSampler(FVulkanSamplerStateRHI* SamplerState, ui
     DirtyResources();
 }
 
+void FVulkanDescriptorState::ResolveSampledImageLayouts(FVulkanTextureRHI* ReadOnlyDepthTexture, VkImageLayout ReadOnlyDepthLayout)
+{
+    for (int32 SetIndex = 0; SetIndex < DescriptorSetWrites.Size(); SetIndex++)
+    {
+        const FVulkanDescriptorWrites& DSWrites  = DescriptorSetWrites[SetIndex];
+        FVulkanDescriptorSetBuilder&   DSBuilder = DescriptorSetBuilders[SetIndex];
+
+        for (int32 BindingIndex = 0; BindingIndex < DSWrites.DescriptorWrites.Size(); BindingIndex++)
+        {
+            if (DSWrites.DescriptorWrites[BindingIndex].descriptorType != VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE)
+            {
+                continue;
+            }
+
+            FVulkanResourceView* View = BoundResourceViews[SetIndex][BindingIndex];
+            if (!View)
+            {
+                continue;
+            }
+
+            FVulkanShaderResourceViewRHI* ShaderResourceView = static_cast<FVulkanShaderResourceViewRHI*>(View);
+            FVulkanTextureRHI*            Texture            = FVulkanDeviceRHI::ResourceCast(static_cast<FRHITexture*>(ShaderResourceView->GetResource()));
+
+            const bool          bIsReadOnlyDepth = ReadOnlyDepthTexture && Texture == ReadOnlyDepthTexture;
+            const VkImageLayout DesiredLayout    = bIsReadOnlyDepth ? ReadOnlyDepthLayout : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+            const VkDescriptorImageInfo* ImageInfo = DSWrites.DescriptorWrites[BindingIndex].pImageInfo;
+            if (ImageInfo && ImageInfo->imageLayout != DesiredLayout)
+            {
+                DSBuilder.WriteSampledImage(BindingIndex, View->GetImageViewInfo().ImageView, DesiredLayout);
+                DirtyResources();
+            }
+        }
+    }
+}
+
 void FVulkanDescriptorState::TransitionBoundResources(FVulkanCommandContext& Context)
 {
     for (int32 SetIndex = 0; SetIndex < DescriptorSetWrites.Size(); SetIndex++)
@@ -482,6 +540,12 @@ void FVulkanDescriptorState::TransitionBoundResources(FVulkanCommandContext& Con
         const FVulkanDescriptorWrites& DSWrites = DescriptorSetWrites[SetIndex];
         for (int32 BindingIndex = 0; BindingIndex < DSWrites.DescriptorWrites.Size(); BindingIndex++)
         {
+            const FBoundBuffer& BoundBuffer = BoundBuffers[SetIndex][BindingIndex];
+            if (BoundBuffer.Buffer)
+            {
+                Context.RequireBufferState(BoundBuffer.Buffer, BoundBuffer.Access);
+            }
+
             FVulkanResourceView* View = BoundResourceViews[SetIndex][BindingIndex];
             if (!View)
             {
@@ -495,9 +559,11 @@ void FVulkanDescriptorState::TransitionBoundResources(FVulkanCommandContext& Con
             }
             else if (Type == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE)
             {
-                Context.TransitionImageLayout(
-                    static_cast<FVulkanShaderResourceViewRHI*>(View),
-                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                const VkDescriptorImageInfo* ImageInfo = DSWrites.DescriptorWrites[BindingIndex].pImageInfo;
+                if (ImageInfo)
+                {
+                    Context.TransitionImageLayout(static_cast<FVulkanShaderResourceViewRHI*>(View), ImageInfo->imageLayout);
+                }
             }
         }
     }
@@ -537,7 +603,7 @@ void FVulkanDescriptorState::UpdateDescriptorSets(FVulkanTransientDescriptorAllo
             {
                 if (WriteInfo.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE || WriteInfo.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
                 {
-                    if (WriteInfo.pImageInfo->imageView == DefaultResources.NullImageView)
+                    if (WriteInfo.pImageInfo->imageView == DefaultResources.GetNullImageView(DSWrites.NullViewTypes[BindIdx]))
                     {
                         VULKAN_WARNING("Null image view descriptor '%s' (register t%u) at set=%d binding=%u (%s)",
                             BindingName, OriginalBinding, Index, WriteInfo.dstBinding, GetDescriptorTypeName(WriteInfo.descriptorType));
@@ -607,6 +673,7 @@ void FVulkanDescriptorState::Reset()
         for (int32 BindingIndex = 0; BindingIndex < DSWrites.DescriptorWrites.Size(); BindingIndex++)
         {
             BoundResourceViews[DescriptorSetIndex][BindingIndex] = nullptr;
+            BoundBuffers[DescriptorSetIndex][BindingIndex]       = FBoundBuffer();
             ResetDescriptorBinding(DescriptorSetIndex, BindingIndex);
         }
     }
@@ -696,13 +763,15 @@ void FVulkanDescriptorState::ResetDescriptorBinding(uint32 DescriptorSetIndex, u
 
         case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
         {
-            DSBuilder.WriteStorageImage(BindingIndex, DefaultResources.NullImageView, VK_IMAGE_LAYOUT_GENERAL);
+            const VkImageView NullView = DefaultResources.GetNullImageView(DSWrites.NullViewTypes[BindingIndex]);
+            DSBuilder.WriteStorageImage(BindingIndex, NullView, VK_IMAGE_LAYOUT_GENERAL);
             break;
         }
 
         case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
         {
-            DSBuilder.WriteSampledImage(BindingIndex, DefaultResources.NullImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            const VkImageView NullView = DefaultResources.GetNullImageView(DSWrites.NullViewTypes[BindingIndex]);
+            DSBuilder.WriteSampledImage(BindingIndex, NullView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
             break;
         }
 
@@ -1197,6 +1266,10 @@ FVulkanBindlessDescriptorManager::~FVulkanBindlessDescriptorManager()
 
 bool FVulkanBindlessDescriptorManager::Initialize()
 {
+#if !VK_EXT_mutable_descriptor_type
+    VULKAN_INFO("Bindless descriptor manager disabled: VK_EXT_mutable_descriptor_type not supported");
+    return false;
+#else
     if (!GVulkanSupportsBindless || !CVarVulkanEnableBindless.GetValue())
     {
         return false;
@@ -1210,13 +1283,20 @@ bool FVulkanBindlessDescriptorManager::Initialize()
         return false;
     }
 
-    ResourceCapacity = Math::Min<uint32>(RequestedResources, GVulkanMaxDescriptorSetSampledImages);
-    SamplerCapacity  = Math::Min<uint32>(RequestedSamplers,  GVulkanMaxDescriptorSetSamplers);
+    ResourceCapacity = Math::Min<uint32>(RequestedResources, GVulkanMaxBindlessResourceDescriptors);
+    SamplerCapacity  = Math::Min<uint32>(RequestedSamplers,  GVulkanMaxBindlessSamplerDescriptors);
 
     if (ResourceCapacity == 0 && SamplerCapacity == 0)
     {
         VULKAN_WARNING("Bindless capacities clamped to zero; bindless descriptor manager disabled");
         return false;
+    }
+
+    if (ResourceCapacity < RequestedResources || SamplerCapacity < RequestedSamplers)
+    {
+        VULKAN_WARNING("Bindless heap reduced by device limits: Resources=%u (requested %u, limit %u) Samplers=%u (requested %u, limit %u)",
+            ResourceCapacity, RequestedResources, GVulkanMaxBindlessResourceDescriptors,
+            SamplerCapacity,  RequestedSamplers,  GVulkanMaxBindlessSamplerDescriptors);
     }
     
     constexpr uint32 NumBaseMutableDescriptorTypes            = 6;
@@ -1325,6 +1405,7 @@ bool FVulkanBindlessDescriptorManager::Initialize()
         ResourceCapacity, SamplerCapacity, VULKAN_BINDLESS_RUNTIME_SET_INDEX);
 
     return true;
+#endif
 }
 
 void FVulkanBindlessDescriptorManager::Release()

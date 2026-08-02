@@ -1,3 +1,4 @@
+#include "Core/Containers/UniquePtr.h"
 #include "MetalRHI/MetalRHI.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
@@ -9,7 +10,7 @@ FMetalDeviceRHI* FMetalDeviceRHI::GMetalDeviceRHI = nullptr;
 FRHIDevice* FMetalModuleRHI::CreateDevice()
 {
     TUniquePtr<FMetalDeviceRHI> NewRHI = MakeUniquePtr<FMetalDeviceRHI>();
-    if (NewRHI->Initialize())
+    if (!NewRHI->Initialize())
     {
         return nullptr;
     }
@@ -76,7 +77,7 @@ bool FMetalDeviceRHI::Initialize()
     return true;
 }
 
-FRHITexture* FMetalDeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
+FRHITexture* FMetalDeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDesc, ERHIResourceState InInitialState, const IRHITextureData* InInitialData)
 {
     FMetalTextureRef NewTexture = new FMetalTextureRHI(GetMetalDevice(), InTextureDesc);
     if (!NewTexture->Initialize(InInitialState, InInitialData))
@@ -89,7 +90,7 @@ FRHITexture* FMetalDeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDesc
     }
 }
 
-FRHIBuffer* FMetalDeviceRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, EResourceAccess InInitialState, const void* InInitialData)
+FRHIBuffer* FMetalDeviceRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, ERHIResourceState InInitialState, const void* InInitialData)
 {
     FMetalBufferRef NewBuffer = new FMetalBufferRHI(GetMetalDevice(), InBufferDesc);
     if (!NewBuffer->Initialize(InInitialState, InInitialData))

@@ -11,6 +11,7 @@ public:
     FDirectionalLightActor(const FObjectInitializer& ObjectInitializer);
     ~FDirectionalLightActor();
 
+    using FActor::Initialize;
     void Initialize(const Vector3& InRotation);
 
     FDirectionalLightComponent* GetLightComponent() const

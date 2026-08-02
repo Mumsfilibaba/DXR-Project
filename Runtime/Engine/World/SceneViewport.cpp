@@ -10,9 +10,9 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 FSceneViewport::FSceneViewport(const TWeakPtr<FViewportWidget>& InViewport)
     : IViewport()
+    , World(nullptr)
     , Viewport(InViewport)
     , RHISwapChain(nullptr)
-    , World(nullptr)
     , bPlayerInputEnabled(true)
     , HighPrecisionMouseDelta()
 {
@@ -174,7 +174,7 @@ FEventResponse FSceneViewport::OnMouseMove(const FCursorEvent& CursorEvent)
         return FEventResponse::Unhandled();
     }
 
-    if (FPlayerController* PlayerController = GetFirstPlayerController())
+    if (GetFirstPlayerController())
     {
         // NOTE: Just send to the first player-controller for now
         // PlayerController->GetPlayerInput()->OnCursorEvent(CursorEvent);
@@ -225,7 +225,7 @@ FEventResponse FSceneViewport::OnMouseScroll(const FCursorEvent& CursorEvent)
         return FEventResponse::Unhandled();
     }
 
-    if (FPlayerController* PlayerController = GetFirstPlayerController())
+    if (GetFirstPlayerController())
     {
         // NOTE: Just send to the first player-controller for now
         // PlayerController->GetPlayerInput()->OnCursorEvent(CursorEvent);

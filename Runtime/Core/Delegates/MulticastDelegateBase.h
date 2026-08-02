@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Delegates/DelegateBase.h"
 #include "Core/Containers/Array.h"
+#include "Core/Misc/Asserts.h"
 
 class FMulticastDelegateBase
 {

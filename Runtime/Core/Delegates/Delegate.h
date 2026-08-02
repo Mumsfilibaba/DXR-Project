@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Delegates/DelegateBase.h"
+#include "Core/Misc/Asserts.h"
 #include "Core/Templates/TypeTraits.h"
 
 #define DECLARE_DELEGATE(DelegateName, ...) \

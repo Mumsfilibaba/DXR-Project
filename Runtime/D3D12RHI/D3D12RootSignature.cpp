@@ -72,6 +72,20 @@ static EResourceType::Type GetResourceType(D3D12_DESCRIPTOR_RANGE_TYPE Type)
     }
 }
 
+MAYBE_UNUSED static const CHAR* GetRootSignatureTypeName(ERootSignatureType Type)
+{
+    switch (Type)
+    {
+    case ERootSignatureType::Graphics:         return "Graphics";
+    case ERootSignatureType::Compute:          return "Compute";
+    case ERootSignatureType::RayTracingGlobal: return "RayTracingGlobal";
+    case ERootSignatureType::RayTracingLocal:  return "RayTracingLocal";
+
+    default:
+        return "Unknown";
+    }
+}
+
 static D3D12_DESCRIPTOR_RANGE_TYPE GetD3D12DescriptorRangeType(EResourceType::Type Type)
 {
     switch (Type)
@@ -391,6 +405,22 @@ void FD3D12RootSignatureLayout::ComputeRootCBVs()
 uint32 FD3D12RootSignatureLayout::ComputeCost() const
 {
     uint32 Cost = NumPushConstants;
+
+    if (Type == ERootSignatureType::RayTracingLocal)
+    {
+        for (uint32 Stage = 0; Stage < EShaderVisibility::Count; Stage++)
+        {
+            Cost += RegisterSets[Stage][EResourceType::CBV].GetCount() * 2;
+            Cost += RegisterSets[Stage][EResourceType::SRV].GetCount() * 2;
+            Cost += RegisterSets[Stage][EResourceType::UAV].GetCount() * 2;
+
+            Cost += LocalTableSRVSets[Stage].IsEmpty()     ? 0 : 1;
+            Cost += LocalTableUAVSets[Stage].IsEmpty()     ? 0 : 1;
+            Cost += LocalTableSamplerSets[Stage].IsEmpty() ? 0 : 1;
+        }
+
+        return Cost;
+    }
 
     for (uint32 Stage = 0; Stage < EShaderVisibility::Count; Stage++)
     {
@@ -813,29 +843,51 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
     CHECK(RootSignatureCost <= D3D12_MAX_ROOT_PARAMETER_COST);
 
     {
-        const uint32 DWordCost = Layout.ComputeCost();
+        MAYBE_UNUSED const uint32 DWordCost = Layout.ComputeCost();
 
-        uint32 NumTables       = 0;
-        uint32 NumRootCBVTotal = 0;
+        uint32 NumTables          = 0;
+        uint32 NumRootDescriptors = 0;
 
         for (uint32 s = 0; s < EShaderVisibility::Count; s++)
         {
-            NumRootCBVTotal += Layout.GetRootCBVRegisters(static_cast<EShaderVisibility::Type>(s)).GetCount();
-            for (uint32 t = 0; t < EResourceType::Count; t++)
+            const EShaderVisibility::Type Stage = static_cast<EShaderVisibility::Type>(s);
+            if (bIsLocalRootSignature)
             {
-                if (!Layout.GetRegisters(static_cast<EShaderVisibility::Type>(s), static_cast<EResourceType::Type>(t)).IsEmpty())
+                NumRootDescriptors += Layout.GetRegisters(Stage, EResourceType::CBV).GetCount();
+                NumRootDescriptors += Layout.GetRegisters(Stage, EResourceType::SRV).GetCount();
+                NumRootDescriptors += Layout.GetRegisters(Stage, EResourceType::UAV).GetCount();
+
+                NumTables += Layout.GetLocalTableSRVRegisters(Stage).IsEmpty()     ? 0 : 1;
+                NumTables += Layout.GetLocalTableUAVRegisters(Stage).IsEmpty()     ? 0 : 1;
+                NumTables += Layout.GetLocalTableSamplerRegisters(Stage).IsEmpty() ? 0 : 1;
+            }
+            else
+            {
+                NumRootDescriptors += Layout.GetRootCBVRegisters(Stage).GetCount();
+                for (uint32 t = 0; t < EResourceType::Count; t++)
                 {
-                    if (t != EResourceType::CBV || !Layout.GetRegisters(static_cast<EShaderVisibility::Type>(s), 
-                        static_cast<EResourceType::Type>(t)).IsSubsetOf(Layout.GetRootCBVRegisters(static_cast<EShaderVisibility::Type>(s))))
+                    if (!Layout.GetRegisters(Stage, static_cast<EResourceType::Type>(t)).IsEmpty())
                     {
-                        NumTables++;
+                        if (t != EResourceType::CBV || !Layout.GetRegisters(Stage, 
+                            static_cast<EResourceType::Type>(t)).IsSubsetOf(Layout.GetRootCBVRegisters(Stage)))
+                        {
+                            NumTables++;
+                        }
                     }
                 }
             }
         }
 
-        D3D12_INFO("[FD3D12RootSignatureDescHelper] RootSignature: %u DWORDs (%u tables, %u root CBVs, %u push constants)", 
-            DWordCost, NumTables, NumRootCBVTotal, Layout.GetNumPushConstants());
+        if (DWordCost > D3D12_TARGET_ROOT_SIGNATURE_DWORD_COST)
+        {
+            D3D12_WARNING("[FD3D12RootSignatureDescHelper] RootSignatureCost=%u DWORDs exceeds recommended %u (Type=%s, Tables=%u, RootDescriptors=%u, PushConstants=%u)",
+                DWordCost, D3D12_TARGET_ROOT_SIGNATURE_DWORD_COST, GetRootSignatureTypeName(Layout.GetType()), NumTables, NumRootDescriptors, Layout.GetNumPushConstants());
+        }
+        else
+        {
+            D3D12_INFO("[FD3D12RootSignatureDescHelper] RootSignatureCost=%u DWORDs (Type=%s, Tables=%u, RootDescriptors=%u, PushConstants=%u)",
+                DWordCost, GetRootSignatureTypeName(Layout.GetType()), NumTables, NumRootDescriptors, Layout.GetNumPushConstants());
+        }
     }
 
     if (Layout.GetAllowInputAssembler())

@@ -236,50 +236,6 @@ static bool Test_WorkStealingStress()
     return true;
 }
 
-// ------------------------------------------------------------------------------------------------
-// Benchmark: throughput of empty tasks driven through the graph. Not a pass/fail correctness test;
-// it prints tasks/sec so Phase 1.5 can be compared against the Phase 1 central-queue baseline.
-// ------------------------------------------------------------------------------------------------
-
-static bool Test_ThroughputBenchmark()
-{
-    constexpr int32 NumTasks = 200000;
-
-    AtomicInt32 Completed(0);
-
-    const uint64 Frequency = FPlatformTime::QueryPerformanceFrequency();
-    const uint64 Start     = FPlatformTime::QueryPerformanceCounter();
-
-    FTaskHandle Root = Tasks::Launch("BenchRoot", [&]()
-    {
-        for (int32 Index = 0; Index < NumTasks; ++Index)
-        {
-            Tasks::Async([&Completed]()
-            {
-                Completed.Increment();
-            });
-        }
-    });
-
-    Root.Wait();
-
-    while (Completed.Load() < NumTasks)
-    {
-        FPlatformThreadMisc::Pause();
-    }
-
-    const uint64 End = FPlatformTime::QueryPerformanceCounter();
-
-    const double Seconds      = (Frequency > 0) ? (static_cast<double>(End - Start) / static_cast<double>(Frequency)) : 0.0;
-    const double TasksPerSec  = (Seconds > 0.0) ? (static_cast<double>(NumTasks) / Seconds) : 0.0;
-
-    LOG_INFO("[BENCHMARK] %d tasks in %.3f ms (%.3f M tasks/sec) across %d workers",
-        NumTasks, Seconds * 1000.0, TasksPerSec / 1.0e6, FTaskGraph::Get().GetNumAnyThreadWorkers());
-
-    TG_CHECK(Completed.Load() == NumTasks);
-    return true;
-}
-
 bool TaskGraph_Test()
 {
     LOG_INFO("=== Task Graph Tests ===");
@@ -291,7 +247,6 @@ bool TaskGraph_Test()
     bResult = Test_ParallelFor()               && bResult;
     bResult = Test_MainThreadPumpNoDeadlock()  && bResult;
     bResult = Test_WorkStealingStress()        && bResult;
-    bResult = Test_ThroughputBenchmark()       && bResult;
 
     LOG_INFO(bResult ? "[TASK GRAPH TESTS SUCCEEDED]" : "[TASK GRAPH TESTS FAILED]");
     return bResult;

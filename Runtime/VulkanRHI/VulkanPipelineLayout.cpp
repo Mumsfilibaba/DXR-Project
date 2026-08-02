@@ -92,9 +92,10 @@ void FVulkanPipelineLayoutInfo::AddSetForStage(VkShaderStageFlagBits ShaderStage
         LayoutBinding.descriptorType     = GetDescriptorTypeFromBindingType(Binding.BindingType);
         LayoutInfo.Bindings.Add(LayoutBinding);
 
-        FVulkanDescriptorRemappingInfo::FRemappingInfo RemappingInfo;
+        FVulkanDescriptorRemappingInfo::FRemappingInfo RemappingInfo = {};
         RemappingInfo.BindingType          = Binding.BindingType;
         RemappingInfo.BindingIndex         = Binding.BindingIndex;
+        RemappingInfo.NullViewType         = Binding.NullViewType;
         RemappingInfo.OriginalBindingIndex = Binding.OriginalBindingIndex;
         LayoutRemappings.RemappingInfo.Add(RemappingInfo);
 
@@ -141,8 +142,9 @@ void FVulkanPipelineLayoutInfo::MergeSetForStage(VkShaderStageFlagBits ShaderSta
 
         if (ExistingIndex != -1)
         {
+            const bool bTypeConflict = (LayoutInfo.Bindings[ExistingIndex].descriptorType != DescriptorType) ||
+                (LayoutRemap.RemappingInfo[ExistingIndex].NullViewType != Binding.NullViewType);
 
-            const bool bTypeConflict = (LayoutInfo.Bindings[ExistingIndex].descriptorType != DescriptorType);
             bool bNameConflict = false;
         #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
             bNameConflict = (LayoutRemap.DebugNames[ExistingIndex] != Binding.DebugName);
@@ -168,9 +170,10 @@ void FVulkanPipelineLayoutInfo::MergeSetForStage(VkShaderStageFlagBits ShaderSta
 
         LayoutInfo.Bindings.Add(LayoutBinding);
 
-        FVulkanDescriptorRemappingInfo::FRemappingInfo RemappingInfo;
+        FVulkanDescriptorRemappingInfo::FRemappingInfo RemappingInfo = {};
         RemappingInfo.BindingType          = Binding.BindingType;
         RemappingInfo.BindingIndex         = static_cast<uint8>(MergedBinding);
+        RemappingInfo.NullViewType         = Binding.NullViewType;
         RemappingInfo.OriginalBindingIndex = Binding.OriginalBindingIndex;
 
         LayoutRemap.RemappingInfo.Add(RemappingInfo);
@@ -331,6 +334,12 @@ bool FVulkanPipelineLayout::Initialize(const FVulkanPipelineLayoutInfo& LayoutIn
     {
         BindlessSetLayoutHandle = BindlessManager->GetLayout();
         bHasBindlessSet = VULKAN_CHECK_HANDLE(BindlessSetLayoutHandle);
+    }
+
+    if (LayoutInfo.bAnyStageUsesBindless && !bHasBindlessSet)
+    {
+        VULKAN_ERROR("FVulkanPipelineLayout: Shader indexes the bindless heap but no bindless descriptor set is available");
+        return false;
     }
 
     TArray<VkDescriptorSetLayout> SetLayouts;
@@ -552,6 +561,7 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
 
             const auto CheckSlotCollision = [&](uint8 Slot, const CHAR* BucketName)
             {
+                UNREFERENCED_VARIABLE(BucketName);
                 if (Slot != UINT8_MAX && Slot != static_cast<uint8>(BindingIndex))
                 {
                     VULKAN_ERROR("Register namespace collision: %s register %u already maps to binding %u, now %u (RT stages must agree on the resource per register)",

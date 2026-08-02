@@ -361,34 +361,37 @@ public:
         EmplaceCommand<FRHICommandBuildGeometryAccelerationStructure>(RayTracingGeometry, BuildDesc);
     }
 
-    FORCEINLINE void TransitionTextureState(FRHITexture* Texture, const FRHITextureTransition& TextureTransition) noexcept
+    FORCEINLINE void TransitionBarrier(const TArrayView<const FRHITransitionBarrierDesc> InTransitionDescs) noexcept
     {
-        EmplaceCommand<FRHICommandTransitionTextureState>(Texture, TextureTransition);
+        TArrayView<const FRHITransitionBarrierDesc> TransitionDescs = AllocateArray(InTransitionDescs);
+        EmplaceCommand<FRHICommandTransitionBarrier>(TransitionDescs);
     }
 
-    FORCEINLINE void TransitionBufferState(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) noexcept
+    // Batches must pass a named array rather than a braced-init-list, which would be ambiguous with this overload
+    FORCEINLINE void TransitionBarrier(const FRHITransitionBarrierDesc& InTransitionDesc) noexcept
     {
-        EmplaceCommand<FRHICommandTransitionBufferState>(Buffer, BeforeState, AfterState);
+        TransitionBarrier(TArrayView<const FRHITransitionBarrierDesc>(&InTransitionDesc, 1));
     }
 
-    FORCEINLINE void RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState) noexcept
+    FORCEINLINE void UnorderedAccessBarrier(const TArrayView<const FRHIUnorderedAccessBarrierDesc> InBarrierDescs) noexcept
     {
-        EmplaceCommand<FRHICommandRequireTextureState>(Texture, RequiredState);
+        TArrayView<const FRHIUnorderedAccessBarrierDesc> BarrierDescs = AllocateArray(InBarrierDescs);
+        EmplaceCommand<FRHICommandUnorderedAccessBarrier>(BarrierDescs);
     }
 
-    FORCEINLINE void RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState) noexcept
+    FORCEINLINE void UnorderedAccessBarrier(const FRHIUnorderedAccessBarrierDesc& InBarrierDesc) noexcept
     {
-        EmplaceCommand<FRHICommandRequireBufferState>(Buffer, RequiredState);
+        UnorderedAccessBarrier(TArrayView<const FRHIUnorderedAccessBarrierDesc>(&InBarrierDesc, 1));
     }
 
-    FORCEINLINE void UnorderedAccessTextureBarrier(FRHITexture* Texture) noexcept
+    FORCEINLINE void UnorderedAccessBarrier(FRHITexture* Texture) noexcept
     {
-        EmplaceCommand<FRHICommandUnorderedAccessTextureBarrier>(Texture);
+        UnorderedAccessBarrier(FRHIUnorderedAccessBarrierDesc::CreateTexture(Texture));
     }
 
-    FORCEINLINE void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer) noexcept
+    FORCEINLINE void UnorderedAccessBarrier(FRHIBuffer* Buffer) noexcept
     {
-        EmplaceCommand<FRHICommandUnorderedAccessBufferBarrier>(Buffer);
+        UnorderedAccessBarrier(FRHIUnorderedAccessBarrierDesc::CreateBuffer(Buffer));
     }
 
     FORCEINLINE void Draw(uint32 VertexCount, uint32 StartVertexLocation) noexcept

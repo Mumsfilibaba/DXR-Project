@@ -19,6 +19,19 @@ newoption
     },
 }
 
+newoption
+{
+    trigger = "fatalwarnings",
+    description = "Treat compiler warnings as errors (thirdparty modules are exempt)"
+}
+
+newoption
+{
+    trigger = "buildsuffix",
+    value = "Name",
+    description = "Isolate generated projects and build artifacts under a named suffix"
+}
+
 local function NormalizePlatform(PlatformName)
     if not PlatformName then
         return nil
@@ -108,6 +121,21 @@ function IsBuildMonolithic()
     return gIsMonolithic
 end
 
+-- Warning Management
+function IsFatalWarnings()
+    return _OPTIONS["fatalwarnings"] ~= nil
+end
+
+-- Suffix that keeps a generation from colliding with the solution and binaries of a normal one
+local function GetBuildSuffix()
+    local Suffix = _OPTIONS["buildsuffix"]
+    if type(Suffix) ~= "string" or Suffix == "" then
+        return nil
+    end
+
+    return Suffix
+end
+
 -- Check the action being used
 function BuildWithXcode()
     return _ACTION == "xcode4"
@@ -164,6 +192,31 @@ function AddUniqueElements(Elements, Table)
     end
 end
 
+-- Returns the elements of Elements that do not appear in Excluded
+function ExcludeElements(Elements, Excluded)
+    if Elements == nil then
+        return {}
+    end
+
+    if Excluded == nil then
+        return Elements
+    end
+
+    local ExcludedSet = {}
+    for _, Value in ipairs(Excluded) do
+        ExcludedSet[Value] = true
+    end
+
+    local Result = {}
+    for _, Value in ipairs(Elements) do
+        if not ExcludedSet[Value] then
+            table.insert(Result, Value)
+        end
+    end
+
+    return Result
+end
+
 -- Module management functions
 local gModuleRules = {}
 
@@ -208,9 +261,9 @@ function GetEnginePath()
     return gEnginePath
 end
 
--- Join two paths
-function JoinPath(PathA, PathB)
-    return CreateOsPath(path.join(PathA, PathB))
+-- Join two or more paths
+function JoinPath(...)
+    return CreateOsPath(path.join(...))
 end
 
 -- Retrieve the path to the Runtime folder containing all the engine modules
@@ -229,6 +282,9 @@ end
 
 -- Retrieve the path to the Solutions folder containing solution and project files
 local gSolutionsFolderPath = JoinPath(gEnginePath, "Solutions")
+if GetBuildSuffix() then
+    gSolutionsFolderPath = JoinPath(gSolutionsFolderPath, GetBuildSuffix())
+end
 
 function GetSolutionsFolderPath()
     return gSolutionsFolderPath
@@ -243,6 +299,9 @@ end
 
 -- Output path for the binaries inside the buildfolder
 local gOutputConfigPath = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}"
+if GetBuildSuffix() then
+    gOutputConfigPath = gOutputConfigPath .. "-" .. GetBuildSuffix()
+end
 
 function GetOutputConfigPath()
     return gOutputConfigPath

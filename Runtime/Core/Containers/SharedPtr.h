@@ -194,8 +194,8 @@ namespace SharedPointerInternal
         TPointerReferenceHandler& operator=(TPointerReferenceHandler&&) = delete;
 
         TPointerReferenceHandler(ObjectType* InObject, DeleterType&& Deleter)
-            : FReferenceHandler<InThreadAccess>()
-            , TDeleterLocation<DeleterType>(Forward<DeleterType>(Deleter))
+            : TDeleterLocation<DeleterType>(Forward<DeleterType>(Deleter))
+            , FReferenceHandler<InThreadAccess>()
             , Object(InObject)
         {
         }

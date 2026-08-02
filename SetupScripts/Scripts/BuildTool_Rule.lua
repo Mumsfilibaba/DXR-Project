@@ -1,5 +1,19 @@
 include "BuildTool_Common.lua"
 
+-- The xcode4 exporter drops vectorextensions, so the equivalent clang flag is passed by hand.
+local ClangVectorExtensionFlags =
+{
+    ["AVX512"] = "-mavx512f",
+    ["AVX2"]   = "-mavx2",
+    ["AVX"]    = "-mavx",
+    ["SSE4.2"] = "-msse4.2",
+    ["SSE4.1"] = "-msse4.1",
+    ["SSSE3"]  = "-mssse3",
+    ["SSE3"]   = "-msse3",
+    ["SSE2"]   = "-msse2",
+    ["SSE"]    = "-msse",
+}
+
 -- Build rules for a project
 function BuildRules(Name)
 
@@ -57,6 +71,7 @@ function BuildRules(Name)
         Language = "C++",
         CppVersion = "C++20",
         SystemVersion = "latest",
+        MacOSVersion = "15.0",
         CharacterSet = "Ascii",
 
         Flags = {
@@ -93,6 +108,9 @@ function BuildRules(Name)
         -- macOS embedding
         bEmbedThirdparties = false,
         ExtraEmbedNames = {},
+
+        -- Source paths of extra dylibs to copy into the bundle
+        ExtraRuntimeLibraries = {},
 
         -- Dependencies (module names)
         Modules = {},
@@ -139,6 +157,7 @@ function BuildRules(Name)
     function self.AddDefines(InDefines) AddUniqueElements(InDefines, self.Defines) end
     function self.AddModules(InModules) AddUniqueElements(InModules, self.Modules) end
     function self.AddExtraEmbedNames(InExtraEmbedNames) AddUniqueElements(InExtraEmbedNames, self.ExtraEmbedNames) end
+    function self.AddExtraRuntimeLibraries(InExtraRuntimeLibraries) AddUniqueElements(InExtraRuntimeLibraries, self.ExtraRuntimeLibraries) end
     function self.AddLinkLibraries(InLinkLibraries) AddUniqueElements(InLinkLibraries, self.LinkLibraries) end
     function self.AddFrameworks(InFrameworks) AddUniqueElements(InFrameworks, self.Frameworks) end
     function self.AddForceIncludes(InForceIncludes) AddUniqueElements(InForceIncludes, self.ForceIncludes) end
@@ -243,6 +262,14 @@ function BuildRules(Name)
                 warnings("Off")
             else
                 warnings("Extra")
+
+                -- Only compile warnings are promoted. Linker diagnostics such as LNK4098 are not
+                -- actionable from here and would fail the build for reasons unrelated to the code.
+                if IsFatalWarnings() then
+                    flags({
+                        "FatalCompileWarnings"
+                    })
+                end
             end
 
             -- Handle exception settings
@@ -258,6 +285,31 @@ function BuildRules(Name)
             rtti(self.bEnableRuntimeTypeInfo and "On" or "Off")
             floatingpoint(self.FloatingPoint)
             vectorextensions(self.VectorExtensions)
+
+            -- Neither of the settings above reaches Xcode, which would leave macOS on clang's
+            -- default Penryn baseline and a different VectorMath backend than Windows.
+            if IsPlatformMac() then
+                local VectorFlag = ClangVectorExtensionFlags[self.VectorExtensions]
+                if VectorFlag then
+                    filter { "system:macosx" }
+                        buildoptions({
+                            VectorFlag
+                        })
+                    filter {}
+                elseif self.VectorExtensions and self.VectorExtensions ~= "Default" then
+                    LogWarning("No clang flag known for VectorExtensions '%s'", tostring(self.VectorExtensions))
+                end
+
+                -- Fast floating point in an optimized build implies -ffinite-math-only, which folds
+                -- every NaN/infinity check to false. Keep the rest of fast-math.
+                if self.FloatingPoint == "Fast" then
+                    filter { "system:macosx" }
+                        buildoptions({
+                            "-fno-finite-math-only"
+                        })
+                    filter {}
+                end
+            end
 
             -- Edit and Continue
             editandcontinue(self.bEnableEditAndContinue and "On" or "Off")
@@ -281,15 +333,23 @@ function BuildRules(Name)
                 cppdialect(self.CppVersion)
             end
 
-            -- /Zc:__cplusplus for VS
+            -- Conforming preprocessor and __cplusplus value for VS. The traditional MSVC
+            -- preprocessor mis-expands __VA_ARGS__, which CHECKF relies on.
             filter { "action:vs*" }
                 buildoptions({
-                    "/Zc:__cplusplus"
+                    "/Zc:__cplusplus",
+                    "/Zc:preprocessor"
                 })
             filter {}
 
-            -- System SDK
-            systemversion(self.SystemVersion)
+            -- System SDK. "latest" picks the newest Windows SDK, but Xcode maps this
+            -- straight to MACOSX_DEPLOYMENT_TARGET, where it becomes an unparseable
+            -- LSMinimumSystemVersion that no run destination can satisfy.
+            if IsPlatformMac() then
+                systemversion(self.MacOSVersion)
+            else
+                systemversion(self.SystemVersion)
+            end
 
             -- CharacterSet
             local function MapCharacterSet(InCharacterSet)
@@ -478,10 +538,16 @@ function BuildRules(Name)
                 LogWarning("Ignoring LinkOptions due to the kind being set to 'None'")
                 LogWarning("Ignoring Module due to the kind being set to 'None'")
             else
-                links(self.LinkLibraries)
+                if self.Kind ~= "StaticLib" then
+                    links(self.LinkLibraries)
+                end
+
                 links(self.LinkModules)
                 linkoptions(self.LinkOptions)
-                dependson(self.Modules)
+
+                -- links() already establishes the build dependency; naming a module in both
+                -- makes the xcode4 generator emit a duplicate project reference.
+                dependson(ExcludeElements(self.Modules, self.LinkModules))
             end
 
             -- Xcode embedding
@@ -489,6 +555,38 @@ function BuildRules(Name)
                 if self.bEmbedThirdparties then
                     embed(self.Modules)
                     embed(self.ExtraEmbedNames)
+                end
+
+                -- embed() only decorates entries that are also linked, so runtime-loaded modules
+                -- and thirdparty dylibs never reach the bundle. Copy them in by hand instead.
+                if self.Kind == "WindowedApp" then
+                    local TargetPath = self.GetTargetFolderPath()
+
+                    local RuntimeLibraries = {}
+                    for _, ModuleName in ipairs(ExcludeElements(self.Modules, self.LinkModules)) do
+                        table.insert(RuntimeLibraries, JoinPath(TargetPath, "lib" .. ModuleName .. ".dylib"))
+                    end
+
+                    AddUniqueElements(self.ExtraRuntimeLibraries, RuntimeLibraries)
+
+                    LogInfo("--- Bundled runtime libraries for '%s' (Num=%d) ---", self.Name, #RuntimeLibraries)
+                    if #RuntimeLibraries > 0 then
+                        PrintTable("  Bundle '%s'", RuntimeLibraries)
+
+                        local FrameworksPath = JoinPath(TargetPath, self.Name .. ".app/Contents/Frameworks")
+
+                        local CopyCommands = {
+                            ('mkdir -p "%s"'):format(FrameworksPath)
+                        }
+
+                        -- Guarded because the source is absent in configurations that link the
+                        -- module statically, and the generated script runs under 'set -e'
+                        for _, SourcePath in ipairs(RuntimeLibraries) do
+                            table.insert(CopyCommands, ('if [ -f "%s" ]; then cp -f "%s" "%s/"; fi'):format(SourcePath, SourcePath, FrameworksPath))
+                        end
+
+                        postbuildcommands(CopyCommands)
+                    end
                 end
             filter {}
 
@@ -502,7 +600,10 @@ function BuildRules(Name)
                     ["ONLY_ACTIVE_ARCH"] = "YES",
                     ["ENABLE_HARDENED_RUNTIME"] = "NO",
                     ["GENERATE_INFOPLIST_FILE"] = "YES",
-                    ["LD_RUNPATH_SEARCH_PATHS"] = "/usr/local/lib/ $(INSTALL_PATH) @executable_path/../Frameworks",
+                    -- Xcode otherwise defaults to /usr/local/lib, and dyld resolves an absolute
+                    -- install name directly rather than against LC_RPATH
+                    ["DYLIB_INSTALL_NAME_BASE"] = "@rpath",
+                    ["LD_RUNPATH_SEARCH_PATHS"] = "@executable_path/../Frameworks @executable_path @loader_path",
                     ["GCC_ENABLE_AVX2_EXTENSIONS"] = "YES",
                 }
             filter {}
@@ -616,11 +717,13 @@ function BuildRules(Name)
                     table.insert(self.LinkModules, CurrentModuleName)
                 end
 
-                -- Import macro when linking a dynamic module at compile time
-                if CurrentModule.bIsDynamic then
+                -- Third-party libraries own their API macro, so only engine modules get one here
+                if not CurrentModule.bIsLibrary then
                     local ModuleApiName = CurrentModule.Name:upper() .. "_API"
-                    if not CurrentModule.bRuntimeLinking then
+                    if CurrentModule.bIsDynamic and not CurrentModule.bRuntimeLinking then
                         ModuleApiName = ModuleApiName .. "=MODULE_IMPORT"
+                    else
+                        ModuleApiName = ModuleApiName .. "="
                     end
 
                     self.AddDefines({
@@ -634,6 +737,7 @@ function BuildRules(Name)
                 self.AddModules(CurrentModule.Modules)
                 self.AddIncludeDirs(CurrentModule.IncludeDirs)
                 self.AddExternalIncludeDirs(CurrentModule.ExternalIncludeDirs)
+                self.AddExtraRuntimeLibraries(CurrentModule.ExtraRuntimeLibraries)
             else
                 LogError("Module '%s' has not been included", CurrentModuleName)
             end

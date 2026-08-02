@@ -22,6 +22,7 @@ enum class EVulkanCommandsFlags : uint32
 ENUM_CLASS_OPERATORS(EVulkanCommandsFlags);
 
 class FVulkanCommandPool;
+struct FVulkanCommands;
 
 typedef TSharedRef<class FVulkanQueue> FVulkanQueueRef;
 
@@ -110,6 +111,7 @@ private:
     FCriticalSection             CommandPoolsCS;
     FCommandsQueue               PendingSubmissions;
     FCriticalSection             SubmissionCS;
+    FCriticalSection             ConsumerCS;
 #if !VULKAN_USE_CPU_QUERY_RESOLVE
     TArray<FVulkanQueryRange>    PendingQueryRanges;
     TArray<FVulkanQuery>         PendingTimestampQueries;

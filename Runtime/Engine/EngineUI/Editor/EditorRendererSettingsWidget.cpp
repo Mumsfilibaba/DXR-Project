@@ -1,12 +1,11 @@
 #include "Engine/EngineUI/Editor/EditorRendererSettingsWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
-
 #include "Core/CoreDefines.h"
 #include "Core/Containers/StaticArray.h"
 #include "Core/Math/Math.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Templates/CString.h"
-
+#include "RHI/RHI.h"
 #include "ImGuiPlugin/ImGuiCore.h"
 
 static constexpr float RendererSettingsLabelColumnWidth  = 310.0f;
@@ -112,6 +111,30 @@ void FEditorRendererSettingsWidget::CaptureDefaultsIfNeeded()
     CaptureInt("Renderer.SSAO.KernelSize");
     CaptureFloat("Renderer.SSAO.Radius");
     CaptureFloat("Renderer.SSAO.Bias");
+
+    // Ray tracing
+    CaptureBool("Renderer.Feature.RayTracing");
+    CaptureBool("Renderer.RayTracing.EnableLocalShaderBindings");
+    CaptureBool("Renderer.RayTracing.InlineReflections");
+    CaptureBool("Renderer.RayTracing.SER");
+    CaptureBool("Renderer.RayTracing.Compaction");
+    CaptureBool("Renderer.RayTracing.ASCache");
+
+    // Ray traced reflections
+    CaptureFloat("Renderer.Reflections.IndirectSpecularStrength");
+    CaptureBool("Renderer.RayTracing.Reflections.HalfRes");
+    CaptureFloat("Renderer.RayTracing.Reflections.MaxRayDistance");
+    CaptureFloat("Renderer.RayTracing.Reflections.MirrorRoughnessThreshold");
+    CaptureFloat("Renderer.RayTracing.Reflections.RayBias");
+    CaptureBool("Renderer.RayTracing.Reflections.Denoise");
+    CaptureFloat("Renderer.RayTracing.Reflections.TemporalAlpha");
+    CaptureFloat("Renderer.RayTracing.Reflections.MaxRadiance");
+    CaptureFloat("Renderer.RayTracing.Reflections.HistoryClampGamma");
+    CaptureFloat("Renderer.RayTracing.Reflections.MaxHistoryLength");
+    CaptureInt("Renderer.RayTracing.Reflections.NeighborhoodRadius");
+    CaptureFloat("Renderer.RayTracing.Reflections.CameraMotionMaxHistory");
+    CaptureInt("Renderer.RayTracing.Reflections.AtrousIterations");
+    CaptureFloat("Renderer.RayTracing.Reflections.AtrousPhiColor");
 
     // Anti-aliasing
     CaptureBool("Renderer.Feature.TemporalAA");
@@ -275,6 +298,16 @@ void FEditorRendererSettingsWidget::DrawWindow()
     if (DrawCollapsingHeader("SSAO", ImGuiTreeNodeFlags_None, true))
     {
         DrawSSAOSettings();
+    }
+
+    if (DrawCollapsingHeader("Ray Tracing", ImGuiTreeNodeFlags_None, true))
+    {
+        DrawRayTracingSettings();
+    }
+
+    if (DrawCollapsingHeader("Ray Traced Reflections", ImGuiTreeNodeFlags_None, true))
+    {
+        DrawRayTracingReflectionsSettings();
     }
 
     if (DrawCollapsingHeader("Temporal Anti-aliasing (TAA)", ImGuiTreeNodeFlags_None, true))
@@ -866,6 +899,286 @@ void FEditorRendererSettingsWidget::DrawSSAOSettings()
         if (EditorWidgets::DrawFloatProperty("Bias", Bias, 0.01f, 0.01f, 1.0f, "%.2f", true, RevertPtr))
         {
             CVarBias->SetAsFloat(Bias, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    EditorWidgets::EndPropertyTable();
+}
+
+void FEditorRendererSettingsWidget::DrawRayTracingSettings()
+{
+    if (!EditorWidgets::BeginPropertyTable("##RendererSettingsRayTracing", RendererSettingsLabelColumnWidth, RendererSettingsRevertColumnWidth))
+    {
+        return;
+    }
+
+    EditorWidgets::DrawTextProperty("Hardware support", RHI::bSupportsRayTracing ? "Supported" : "Unsupported");
+
+    if (IConsoleVariable* CVarEnableRayTracing = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.RayTracing"))
+    {
+        bool bEnableRayTracing  = CVarEnableRayTracing->GetBool();
+        bool bEnableRayTracing0 = false;
+
+        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.Feature.RayTracing", bEnableRayTracing0);
+        if (EditorWidgets::DrawCheckboxProperty("Enable ray tracing", bEnableRayTracing, RevertPtr, RHI::bSupportsRayTracing))
+        {
+            CVarEnableRayTracing->SetAsBool(bEnableRayTracing, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    if (IConsoleVariable* CVarLocalShaderBindings = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.EnableLocalShaderBindings"))
+    {
+        bool bLocalShaderBindings  = CVarLocalShaderBindings->GetBool();
+        bool bLocalShaderBindings0 = false;
+
+        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.RayTracing.EnableLocalShaderBindings", bLocalShaderBindings0);
+        if (EditorWidgets::DrawCheckboxProperty("Use local shader bindings", bLocalShaderBindings, RevertPtr, RHI::bSupportsShaderBindingTableDescriptors))
+        {
+            CVarLocalShaderBindings->SetAsBool(bLocalShaderBindings, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    bool bInlineReflections = false;
+    if (IConsoleVariable* CVarInlineReflections = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.InlineReflections"))
+    {
+        bInlineReflections = CVarInlineReflections->GetBool();
+
+        bool bInlineReflections0 = false;
+
+        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.RayTracing.InlineReflections", bInlineReflections0);
+        if (EditorWidgets::DrawCheckboxProperty("Inline reflections (RayQuery)", bInlineReflections, RevertPtr, RHI::bSupportsInlineRayTracing))
+        {
+            CVarInlineReflections->SetAsBool(bInlineReflections, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    if (IConsoleVariable* CVarSER = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.SER"))
+    {
+        bool bSER  = CVarSER->GetBool();
+        bool bSER0 = false;
+
+        // The inline path takes priority over SER, so SER has no effect while inline reflections are enabled
+        const bool  bSEREnabled = RHI::bSupportsShaderExecutionReordering && !bInlineReflections;
+        const bool* RevertPtr   = TryGetDefaultPtr(BoolDefaults, "Renderer.RayTracing.SER", bSER0);
+        if (EditorWidgets::DrawCheckboxProperty("Shader Execution Reordering", bSER, RevertPtr, bSEREnabled))
+        {
+            CVarSER->SetAsBool(bSER, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    if (IConsoleVariable* CVarCompaction = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Compaction"))
+    {
+        bool bCompaction  = CVarCompaction->GetBool();
+        bool bCompaction0 = false;
+
+        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.RayTracing.Compaction", bCompaction0);
+        if (EditorWidgets::DrawCheckboxProperty("BLAS compaction", bCompaction, RevertPtr, RHI::bSupportsRayTracing))
+        {
+            CVarCompaction->SetAsBool(bCompaction, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    if (IConsoleVariable* CVarASCache = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.ASCache"))
+    {
+        bool bASCache  = CVarASCache->GetBool();
+        bool bASCache0 = false;
+
+        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.RayTracing.ASCache", bASCache0);
+        if (EditorWidgets::DrawCheckboxProperty("Acceleration-structure disk cache", bASCache, RevertPtr, RHI::bSupportsRayTracing))
+        {
+            CVarASCache->SetAsBool(bASCache, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    EditorWidgets::EndPropertyTable();
+}
+
+void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
+{
+    if (!EditorWidgets::BeginPropertyTable("##RendererSettingsRayTracingReflections", RendererSettingsLabelColumnWidth, RendererSettingsRevertColumnWidth))
+    {
+        return;
+    }
+
+    bool bRayTracingActive = false;
+    if (IConsoleVariable* CVarEnableRayTracing = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.RayTracing"))
+    {
+        bRayTracingActive = CVarEnableRayTracing->GetBool() && RHI::bSupportsRayTracing;
+    }
+
+    // Also scales the image-based lighting contribution, so it stays editable when ray tracing is off
+    if (IConsoleVariable* CVarIndirectSpecularStrength = FConsoleManager::Get().FindConsoleVariable("Renderer.Reflections.IndirectSpecularStrength"))
+    {
+        float IndirectSpecularStrength  = Math::Clamp<float>(CVarIndirectSpecularStrength->GetFloat(), 0.0f, 4.0f);
+        float IndirectSpecularStrength0 = 0.0f;
+
+        const float* RevertPtr = TryGetDefaultPtr(FloatDefaults, "Renderer.Reflections.IndirectSpecularStrength", IndirectSpecularStrength0);
+        if (EditorWidgets::DrawFloatProperty("Indirect specular strength", IndirectSpecularStrength, 0.01f, 0.0f, 4.0f, "%.2f", true, RevertPtr))
+        {
+            CVarIndirectSpecularStrength->SetAsFloat(IndirectSpecularStrength, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    if (IConsoleVariable* CVarHalfRes = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.HalfRes"))
+    {
+        bool bHalfRes  = CVarHalfRes->GetBool();
+        bool bHalfRes0 = false;
+
+        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.RayTracing.Reflections.HalfRes", bHalfRes0);
+        if (EditorWidgets::DrawCheckboxProperty("Half resolution", bHalfRes, RevertPtr, bRayTracingActive))
+        {
+            CVarHalfRes->SetAsBool(bHalfRes, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    if (IConsoleVariable* CVarMaxRayDistance = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.MaxRayDistance"))
+    {
+        float MaxRayDistance  = Math::Clamp<float>(CVarMaxRayDistance->GetFloat(), 1.0f, 100000.0f);
+        float MaxRayDistance0 = 0.0f;
+
+        const float* RevertPtr = TryGetDefaultPtr(FloatDefaults, "Renderer.RayTracing.Reflections.MaxRayDistance", MaxRayDistance0);
+        if (EditorWidgets::DrawFloatProperty("Max ray distance", MaxRayDistance, 10.0f, 1.0f, 100000.0f, "%.0f", true, RevertPtr, bRayTracingActive))
+        {
+            CVarMaxRayDistance->SetAsFloat(MaxRayDistance, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    if (IConsoleVariable* CVarMirrorRoughnessThreshold = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.MirrorRoughnessThreshold"))
+    {
+        float MirrorRoughnessThreshold  = Math::Clamp<float>(CVarMirrorRoughnessThreshold->GetFloat(), 0.0f, 1.0f);
+        float MirrorRoughnessThreshold0 = 0.0f;
+
+        const float* RevertPtr = TryGetDefaultPtr(FloatDefaults, "Renderer.RayTracing.Reflections.MirrorRoughnessThreshold", MirrorRoughnessThreshold0);
+        if (EditorWidgets::DrawFloatProperty("Mirror roughness threshold", MirrorRoughnessThreshold, 0.001f, 0.0f, 1.0f, "%.3f", true, RevertPtr, bRayTracingActive))
+        {
+            CVarMirrorRoughnessThreshold->SetAsFloat(MirrorRoughnessThreshold, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    if (IConsoleVariable* CVarRayBias = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.RayBias"))
+    {
+        float RayBias  = Math::Clamp<float>(CVarRayBias->GetFloat(), 0.0f, 1.0f);
+        float RayBias0 = 0.0f;
+
+        const float* RevertPtr = TryGetDefaultPtr(FloatDefaults, "Renderer.RayTracing.Reflections.RayBias", RayBias0);
+        if (EditorWidgets::DrawFloatProperty("Ray bias", RayBias, 0.001f, 0.0f, 1.0f, "%.3f", true, RevertPtr, bRayTracingActive))
+        {
+            CVarRayBias->SetAsFloat(RayBias, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    bool bDenoise = false;
+    if (IConsoleVariable* CVarDenoise = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.Denoise"))
+    {
+        bDenoise = CVarDenoise->GetBool();
+
+        bool bDenoise0 = false;
+
+        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.RayTracing.Reflections.Denoise", bDenoise0);
+        if (EditorWidgets::DrawCheckboxProperty("Enable denoiser", bDenoise, RevertPtr, bRayTracingActive))
+        {
+            CVarDenoise->SetAsBool(bDenoise, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    const bool bDenoiserActive = bRayTracingActive && bDenoise;
+
+    if (IConsoleVariable* CVarTemporalAlpha = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.TemporalAlpha"))
+    {
+        float TemporalAlpha  = Math::Clamp<float>(CVarTemporalAlpha->GetFloat(), 0.01f, 1.0f);
+        float TemporalAlpha0 = 0.0f;
+
+        const float* RevertPtr = TryGetDefaultPtr(FloatDefaults, "Renderer.RayTracing.Reflections.TemporalAlpha", TemporalAlpha0);
+        if (EditorWidgets::DrawFloatProperty("Temporal alpha", TemporalAlpha, 0.01f, 0.01f, 1.0f, "%.2f", true, RevertPtr, bDenoiserActive))
+        {
+            CVarTemporalAlpha->SetAsFloat(TemporalAlpha, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    if (IConsoleVariable* CVarMaxRadiance = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.MaxRadiance"))
+    {
+        float MaxRadiance  = Math::Clamp<float>(CVarMaxRadiance->GetFloat(), 0.0f, 100.0f);
+        float MaxRadiance0 = 0.0f;
+
+        const float* RevertPtr = TryGetDefaultPtr(FloatDefaults, "Renderer.RayTracing.Reflections.MaxRadiance", MaxRadiance0);
+        if (EditorWidgets::DrawFloatProperty("Max radiance (firefly clamp)", MaxRadiance, 0.1f, 0.0f, 100.0f, "%.2f", true, RevertPtr, bDenoiserActive))
+        {
+            CVarMaxRadiance->SetAsFloat(MaxRadiance, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    if (IConsoleVariable* CVarHistoryClampGamma = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.HistoryClampGamma"))
+    {
+        float HistoryClampGamma  = Math::Clamp<float>(CVarHistoryClampGamma->GetFloat(), 0.0f, 10.0f);
+        float HistoryClampGamma0 = 0.0f;
+
+        const float* RevertPtr = TryGetDefaultPtr(FloatDefaults, "Renderer.RayTracing.Reflections.HistoryClampGamma", HistoryClampGamma0);
+        if (EditorWidgets::DrawFloatProperty("History clamp gamma", HistoryClampGamma, 0.01f, 0.0f, 10.0f, "%.2f", true, RevertPtr, bDenoiserActive))
+        {
+            CVarHistoryClampGamma->SetAsFloat(HistoryClampGamma, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    if (IConsoleVariable* CVarMaxHistoryLength = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.MaxHistoryLength"))
+    {
+        float MaxHistoryLength  = Math::Clamp<float>(CVarMaxHistoryLength->GetFloat(), 1.0f, 128.0f);
+        float MaxHistoryLength0 = 0.0f;
+
+        const float* RevertPtr = TryGetDefaultPtr(FloatDefaults, "Renderer.RayTracing.Reflections.MaxHistoryLength", MaxHistoryLength0);
+        if (EditorWidgets::DrawFloatProperty("Max history length", MaxHistoryLength, 1.0f, 1.0f, 128.0f, "%.0f", true, RevertPtr, bDenoiserActive))
+        {
+            CVarMaxHistoryLength->SetAsFloat(MaxHistoryLength, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    if (IConsoleVariable* CVarNeighborhoodRadius = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.NeighborhoodRadius"))
+    {
+        int32 NeighborhoodRadius  = Math::Clamp<int32>(CVarNeighborhoodRadius->GetInt(), 0, 8);
+        int32 NeighborhoodRadius0 = 0;
+
+        const int32* RevertPtr = TryGetDefaultPtr(IntDefaults, "Renderer.RayTracing.Reflections.NeighborhoodRadius", NeighborhoodRadius0);
+        if (EditorWidgets::DrawIntProperty("Neighborhood radius", NeighborhoodRadius, 1.0f, 0, 8, "%d", true, RevertPtr, bDenoiserActive))
+        {
+            CVarNeighborhoodRadius->SetAsInt(NeighborhoodRadius, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    if (IConsoleVariable* CVarCameraMotionMaxHistory = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.CameraMotionMaxHistory"))
+    {
+        float CameraMotionMaxHistory  = Math::Clamp<float>(CVarCameraMotionMaxHistory->GetFloat(), 0.0f, 64.0f);
+        float CameraMotionMaxHistory0 = 0.0f;
+
+        const float* RevertPtr = TryGetDefaultPtr(FloatDefaults, "Renderer.RayTracing.Reflections.CameraMotionMaxHistory", CameraMotionMaxHistory0);
+        if (EditorWidgets::DrawFloatProperty("Camera-motion max history", CameraMotionMaxHistory, 0.5f, 0.0f, 64.0f, "%.1f", true, RevertPtr, bDenoiserActive))
+        {
+            CVarCameraMotionMaxHistory->SetAsFloat(CameraMotionMaxHistory, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    int32 AtrousIterations = 0;
+    if (IConsoleVariable* CVarAtrousIterations = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.AtrousIterations"))
+    {
+        AtrousIterations = Math::Clamp<int32>(CVarAtrousIterations->GetInt(), 0, 8);
+
+        int32 AtrousIterations0 = 0;
+
+        const int32* RevertPtr = TryGetDefaultPtr(IntDefaults, "Renderer.RayTracing.Reflections.AtrousIterations", AtrousIterations0);
+        if (EditorWidgets::DrawIntProperty("A-trous iterations", AtrousIterations, 1.0f, 0, 8, "%d", true, RevertPtr, bDenoiserActive))
+        {
+            CVarAtrousIterations->SetAsInt(AtrousIterations, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    if (IConsoleVariable* CVarAtrousPhiColor = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.AtrousPhiColor"))
+    {
+        float AtrousPhiColor  = Math::Clamp<float>(CVarAtrousPhiColor->GetFloat(), 0.1f, 32.0f);
+        float AtrousPhiColor0 = 0.0f;
+
+        const bool   bSpatialActive = bDenoiserActive && (AtrousIterations > 0);
+        const float* RevertPtr      = TryGetDefaultPtr(FloatDefaults, "Renderer.RayTracing.Reflections.AtrousPhiColor", AtrousPhiColor0);
+        if (EditorWidgets::DrawFloatProperty("A-trous color phi", AtrousPhiColor, 0.1f, 0.1f, 32.0f, "%.2f", true, RevertPtr, bSpatialActive))
+        {
+            CVarAtrousPhiColor->SetAsFloat(AtrousPhiColor, EConsoleVariableFlags::SetByCode);
         }
     }
 

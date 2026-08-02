@@ -6,17 +6,16 @@
 
 FEditorOutputLogWidget::FEditorOutputLogWidget()
     : IOutputDevice()
-    , bVisible(true)
-    , bAutoScroll(true)
-    , bScrollToBottom(false)
-    , bFilterInfo(true)
-    , bFilterWarning(true)
-    , bFilterError(true)
     , SearchFilterBuffer()
     , Messages()
     , MessagesCS()
-    , ImGuiDelegateHandle()
     , RichTextCtx()
+    , ImGuiDelegateHandle()
+    , bVisible(true)
+    , bAutoScroll(true)
+    , bFilterInfo(true)
+    , bFilterWarning(true)
+    , bFilterError(true)
 {
     if (FOutputDeviceLogger* Logger = FOutputDeviceLogger::Get())
     {
@@ -63,11 +62,6 @@ void FEditorOutputLogWidget::Log(ELogSeverity Severity, const String& Message)
     {
         const int32 Overflow = Messages.Size() - MaxMessages;
         Messages.RemoveAt(0, Overflow);
-    }
-
-    if (bAutoScroll)
-    {
-        bScrollToBottom = true;
     }
 }
 
@@ -117,7 +111,7 @@ void FEditorOutputLogWidget::Draw()
 
         const ImGuiWindowFlags OutputLogHeaderFlags = ImGuiWindowFlags_NoScrollbar;
 
-        if (ImGui::BeginChild("##OutputLogHeader", ImVec2(ChildWidth, HeaderHeight), true, OutputLogHeaderFlags))
+        if (ImGui::BeginChild("##OutputLogHeader", ImVec2(ChildWidth, HeaderHeight), ImGuiChildFlags_Border, OutputLogHeaderFlags))
         {
             DrawFilterBar();
         }
@@ -152,7 +146,7 @@ void FEditorOutputLogWidget::Draw()
 
         const ImGuiWindowFlags OuterLogFlags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 
-        if (ImGui::BeginChild("##OutputLogOuter", ImVec2(ChildWidth, OutputHeight), true, OuterLogFlags))
+        if (ImGui::BeginChild("##OutputLogOuter", ImVec2(ChildWidth, OutputHeight), ImGuiChildFlags_Border, OuterLogFlags))
         {
             DrawLogListRichText();
         }
@@ -361,12 +355,6 @@ void FEditorOutputLogWidget::DrawLogListRichText()
     const CHAR* Search     = SearchFilterBuffer.Data();
 
     RichTextCtx.bAutoScroll = bAutoScroll;
-
-    if (bScrollToBottom)
-    {
-        RichTextCtx.bScrollToBottom = true;
-        bScrollToBottom = false;
-    }
 
     const ImU32 DefaultTextU32   = ImGui::GetColorU32(ImGuiCol_Text);
     const ImU32 WarningTextU32   = IM_COL32(255, 255, 0, 255);

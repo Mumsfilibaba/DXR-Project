@@ -39,7 +39,7 @@ FVulkanShaderBindingTable::FVulkanShaderBindingTable(FVulkanDevice* InDevice, co
 
     RecordStride = static_cast<uint32>(VulkanAlignUp(uint64(HandleSize) + GVulkanSBTLocalRecordBytes, Math::Max<uint32>(HandleAlignment, 1u)));
 
-    const uint32 MaxShaderGroupStride = Pipeline ? Pipeline->GetMaxShaderGroupStride() : 0;
+    MAYBE_UNUSED const uint32 MaxShaderGroupStride = Pipeline ? Pipeline->GetMaxShaderGroupStride() : 0;
     CHECK(MaxShaderGroupStride == 0 || RecordStride <= MaxShaderGroupStride);
 
     RayGenOffset   = 0;

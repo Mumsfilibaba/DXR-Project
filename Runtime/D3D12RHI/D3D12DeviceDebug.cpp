@@ -157,30 +157,14 @@ static VOID CALLBACK OnDeviceRemovedEvent(PVOID Context, BOOLEAN /*bTimerOrWaitF
     D3D12RHIDeviceRemovedHandler(reinterpret_cast<FD3D12Device*>(Context), "RemovedEvent");
 }
 
-void D3D12RHIDeviceRemovedHandler(FD3D12Device* Device, const char* Source)
+// Writes the DRED breadcrumbs and page-fault data for a removed device. Only produces anything
+// when DRED was armed before device creation, so every caller has to treat it as best-effort.
+static void D3D12RHIWriteDeviceRemovedDump(ID3D12Device* D3DDevice, HRESULT Reason, const char* Source)
 {
-    CHECK(Device != nullptr);
-
-    ID3D12Device* D3DDevice = Device->GetD3D12Device();
-
-    const HRESULT Reason = D3DDevice->GetDeviceRemovedReason();
-    if (Reason == S_OK)
-    {
-        return;
-    }
-
-    static AtomicBool Handled;
-    if (Handled.Exchange(true))
-    {
-        return;
-    }
-
-    D3D12_ERROR("[D3D12] Device Removed (Source=%s, Reason=0x%08X)", Source ? Source : "Unknown", static_cast<uint32>(Reason));
-
     TComPtr<ID3D12DeviceRemovedExtendedData1> DREDInterface;
     if (FAILED(D3DDevice->QueryInterface(IID_PPV_ARGS(&DREDInterface))))
     {
-        D3D12_ERROR("[D3D12] DRED interface unavailable - was DRED armed before device creation?");
+        D3D12_ERROR("[D3D12] DRED interface unavailable - was DRED armed before device creation? Set D3D12RHI.EnableDRED=true to capture breadcrumbs");
         return;
     }
 
@@ -304,9 +288,33 @@ void D3D12RHIDeviceRemovedHandler(FD3D12Device* Device, const char* Source)
 
     WriteAllocationNodes(DREDPageFaultOutput.pHeadExistingAllocationNode,    "ExistingAllocations");
     WriteAllocationNodes(DREDPageFaultOutput.pHeadRecentFreedAllocationNode, "RecentFreedAllocations");
+}
 
-    // Signal other systems that the device is removed
+void D3D12RHIDeviceRemovedHandler(FD3D12Device* Device, const char* Source)
+{
+    CHECK(Device != nullptr);
+
+    ID3D12Device* D3DDevice = Device->GetD3D12Device();
+
+    const HRESULT Reason = D3DDevice->GetDeviceRemovedReason();
+    if (Reason == S_OK)
+    {
+        return;
+    }
+
+    static AtomicBool Handled;
+    if (Handled.Exchange(true))
+    {
+        return;
+    }
+
+    D3D12_ERROR("[D3D12] Device Removed (Source=%s, Reason=0x%08X)", Source ? Source : "Unknown", static_cast<uint32>(Reason));
+
+    // Signal other systems that the device is removed. This runs before the dump below, which is
+    // long enough that process teardown can cut it short.
     CoreDelegates::DeviceRemovedDelegate.Broadcast();
+
+    D3D12RHIWriteDeviceRemovedDump(D3DDevice, Reason, Source);
 
     FPlatformApplicationMisc::MessageBox("Error", " [D3D12] Device Removed");
 }

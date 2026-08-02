@@ -2,14 +2,10 @@
 #include <Core/CoreDefines.h>
 #include <Core/CoreGlobals.h>
 #include <Core/Memory/Malloc.h>
-#include <Core/Platform/PlatformMisc.h>
-#include <Core/Threading/ThreadManager.h>
-#include <Core/Tasks/TaskGraph.h>
 
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
 
-#include "TaskGraphTests.h"
 #include "RHIValidationHelperTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
@@ -24,24 +20,10 @@ int main(int Argc, const CHAR* Argv[])
     UNREFERENCED_VARIABLE(Argc);
     UNREFERENCED_VARIABLE(Argv);
 
-    TestHarness::Initialize();
-    LOG_INFO("=== Core Tests ===");
+    TestHarness::Initialize("TestResults_RHI.log");
+    LOG_INFO("=== RHI Tests ===");
 
-    FThreadManager::Initialize();
-
-    if (!FTaskGraph::Initialize())
-    {
-        LOG_ERROR("Failed to initialize the task graph");
-        FThreadManager::Release();
-        TestHarness::Shutdown();
-        return -1;
-    }
-
-    RUN_TEST("TaskGraph", TaskGraph_Test());
     RUN_TEST("RHIValidationHelpers", RHIValidationHelpers_Test());
-
-    FTaskGraph::Release();
-    FThreadManager::Release();
 
     const int32 ExitCode = TestHarness::Report();
     TestHarness::Shutdown();

@@ -19,18 +19,43 @@ static TAutoConsoleVariable<bool> CVarD3D12LogMemoryAllocations(
     false);
 #endif
 
+static TAutoConsoleVariable<int32> CVarDefragEligibilityDelay(
+    "D3D12RHI.DefragEligibilityDelay",
+    "Frames past the one carrying an allocation's initialization work before it may be defragmented",
+    1, 1, 16);
+
 static D3D12_RESOURCE_DESC ApplyTightAlignmentFlag(const D3D12_RESOURCE_DESC& ResourceDesc)
 {
     D3D12_RESOURCE_DESC Result = ResourceDesc;
 
+#if D3D12_USE_TIGHT_ALIGNMENT
     if (GD3D12SupportTightAlignment)
     {
         // Tight-alignment resources must use Alignment=0 for Create/GetResourceAllocationInfo.
         Result.Flags    |= D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT;
         Result.Alignment = 0;
     }
+#endif
 
     return Result;
+}
+
+// Placed buffers must start on a 64KB-aligned heap offset. Tight alignment lifts that restriction.
+static uint64 GetBufferPoolAlignment(EAllocationStrategy InAllocationStrategy)
+{
+    if (InAllocationStrategy != EAllocationStrategy::SuballocatedHeap)
+    {
+        return D3D12_MIN_BUDDY_ALLOCATOR_BLOCK_SIZE;
+    }
+
+#if D3D12_USE_TIGHT_ALIGNMENT
+    if (GD3D12SupportTightAlignment)
+    {
+        return D3D12_MIN_BUDDY_ALLOCATOR_BLOCK_SIZE;
+    }
+#endif
+
+    return D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
 }
 
 static D3D12_RESOURCE_STATES GetBufferCreationState(D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_STATES InitialResourceState)
@@ -43,6 +68,22 @@ static D3D12_RESOURCE_STATES GetBufferCreationState(D3D12_HEAP_TYPE HeapType, D3
     return InitialResourceState;
 }
 
+static void InitializeBufferResourceState(FD3D12Resource* Resource, ED3D12ResourceStateMode StateMode, D3D12_RESOURCE_STATES InitialState)
+{
+    Resource->SetResourceStateMode(StateMode);
+
+    if (StateMode == ED3D12ResourceStateMode::SingleState)
+    {
+        Resource->SetDefaultState(InitialState);
+    }
+}
+
+static uint64 AlignOffsetInPage(const FD3D12LinearAllocatorPage& Page, uint64 InPageOffset, uint64 Alignment)
+{
+    const uint64 BackingOffset = Page.GetBackingResourceStorage().GetResourceOffset();
+    return Math::AlignUp<uint64>(BackingOffset + InPageOffset, Alignment) - BackingOffset;
+}
+
 FD3D12BuddyAllocator::FD3D12BuddyAllocator(FD3D12Device* InDevice, uint64 InBackingStorageSize, uint64 InMinBlockBytes, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy, D3D12_RESOURCE_FLAGS InResourceFlags)
     : FD3D12DeviceChild(InDevice)
     , BackingStorageSize(InBackingStorageSize)
@@ -50,7 +91,11 @@ FD3D12BuddyAllocator::FD3D12BuddyAllocator(FD3D12Device* InDevice, uint64 InBack
     , HeapType(InHeapType)
     , InitialState(InInitialState)
     , AllocationStrategy(InAllocationStrategy)
+#if D3D12_USE_TIGHT_ALIGNMENT
     , ResourceFlags(GD3D12SupportTightAlignment ? (InResourceFlags | D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) : InResourceFlags)
+#else
+    , ResourceFlags(InResourceFlags)
+#endif
     , BackingHeap(nullptr)
     , BackingResource(nullptr)
     , FreeOffsets()
@@ -130,12 +175,14 @@ bool FD3D12BuddyAllocator::Initialize()
 
     if (BackingResource)
     {
+        InitializeBufferResourceState(BackingResource.Get(), ED3D12ResourceStateMode::SingleState, InitialState);
+
         if (HeapType == D3D12_HEAP_TYPE_UPLOAD || HeapType == D3D12_HEAP_TYPE_READBACK)
         {
             MappedBaseAddress = static_cast<uint8*>(BackingResource->MapRange(0, nullptr));
         }
     }
-    
+
     const uint32 MaxOrder = GetOrderForSize(BackingStorageSize);
     FreeOffsets.Resize(MaxOrder + 1);
     FreeOffsets[MaxOrder].Add(0);
@@ -241,14 +288,16 @@ bool FD3D12BuddyAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, FD3
         }
     }
 
-    const uint64 BlockSize = GetOrderBlockSize(Order);
 #if D3D12_ENABLE_STATS
-    TrackedUsedBytes.Add(static_cast<int64>(BlockSize));
-    TrackedWastedBytes.Add(static_cast<int64>(BlockSize - AllocationSize));
+    {
+        const uint64 BlockSize = GetOrderBlockSize(Order);
+        TrackedUsedBytes.Add(static_cast<int64>(BlockSize));
+        TrackedWastedBytes.Add(static_cast<int64>(BlockSize - AllocationSize));
+    }
 #endif
 
     OutStorage.Reset();
-    OutStorage.SetSize(BlockSize);
+    OutStorage.SetSize(AllocationSize);
 
     if (BackingResource)
     {
@@ -578,6 +627,8 @@ bool FD3D12PoolAllocatorPage::Initialize()
 
     if (BackingResource)
     {
+        InitializeBufferResourceState(BackingResource.Get(), ED3D12ResourceStateMode::SingleState, InitialState);
+
         BaseGpuVirtualAddress = BackingResource->GetGPUVirtualAddress();
         if (HeapType == D3D12_HEAP_TYPE_UPLOAD || HeapType == D3D12_HEAP_TYPE_READBACK)
         {
@@ -662,7 +713,7 @@ bool FD3D12PoolAllocatorPage::TryAllocate(uint64 SizeInBytes, uint64 InAlignment
     return false;
 }
 
-bool FD3D12PoolAllocatorPage::TryAllocateForDefrag(uint64 SizeInBytes, uint64 InAlignment, FD3D12PoolAllocatorAllocationData& OutData)
+bool FD3D12PoolAllocatorPage::TryAllocateForDefrag(uint64 SizeInBytes, uint64 InAlignment, uint32 InPageIndex, FD3D12PoolAllocatorAllocationData& OutData)
 {
     for (int32 Index = 0; Index < FreeRanges.Size(); ++Index)
     {
@@ -699,9 +750,10 @@ bool FD3D12PoolAllocatorPage::TryAllocateForDefrag(uint64 SizeInBytes, uint64 In
 
         UsedBytes += SizeInBytes;
 
-        OutData.Owner = nullptr;
-        OutData.Offset = AlignedOffset;
-        OutData.Size   = SizeInBytes;
+        OutData.Owner     = nullptr;
+        OutData.PageIndex = InPageIndex;
+        OutData.Offset    = AlignedOffset;
+        OutData.Size      = SizeInBytes;
 
         LiveAllocations.Add(OutData);
         return true;
@@ -717,30 +769,50 @@ void FD3D12PoolAllocatorPage::RecycleAllocation(uint64 Offset, uint64 SizeInByte
         return;
     }
 
+    MAYBE_UNUSED bool bRemoved = false;
     for (int32 Index = 0; Index < LiveAllocations.Size(); ++Index)
     {
         if (LiveAllocations[Index].Offset == Offset)
         {
             LiveAllocations.RemoveAtSwap(Index);
+            bRemoved = true;
             break;
         }
     }
+
+    CHECK(bRemoved);
 
     FreeRanges.Add({Offset, SizeInBytes});
     UsedBytes = UsedBytes > SizeInBytes ? (UsedBytes - SizeInBytes) : 0;
     CoalesceFreeRanges();
 }
 
-void FD3D12PoolAllocatorPage::TransferOwnership(uint64 Offset, FD3D12ResourceStorage* NewStorage)
+bool FD3D12PoolAllocatorPage::TransferOwnership(uint64 Offset, FD3D12ResourceStorage* NewStorage)
 {
     for (FD3D12PoolAllocatorAllocationData& Alloc : LiveAllocations)
     {
         if (Alloc.Offset == Offset)
         {
             Alloc.Owner = NewStorage;
-            return;
+            return true;
         }
     }
+
+    return false;
+}
+
+bool FD3D12PoolAllocatorPage::FinalizeAllocation(uint64 Offset, uint64 EligibleFromFenceValue)
+{
+    for (FD3D12PoolAllocatorAllocationData& Alloc : LiveAllocations)
+    {
+        if (Alloc.Offset == Offset)
+        {
+            Alloc.EligibleFromFenceValue = EligibleFromFenceValue;
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void FD3D12PoolAllocatorPage::CoalesceFreeRanges()
@@ -780,7 +852,11 @@ FD3D12PoolAllocator::FD3D12PoolAllocator(FD3D12Device* InDevice, uint64 InPageSi
     , HeapType(InHeapType)
     , InitialState(InInitialState)
     , AllocationStrategy(InAllocationStrategy)
+#if D3D12_USE_TIGHT_ALIGNMENT
     , ResourceFlags(GD3D12SupportTightAlignment ? (InResourceFlags | D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) : InResourceFlags)
+#else
+    , ResourceFlags(InResourceFlags)
+#endif
     , FragmentedBytes(0)
     , Pages()
     , PagesCS()
@@ -956,7 +1032,7 @@ void FD3D12PoolAllocator::ReleaseStandaloneAllocation(uint64 SizeInBytes)
 }
 #endif
 
-bool FD3D12PoolAllocator::GetDefragCandidate(FD3D12PoolAllocatorAllocationData& OutCandidate) const
+bool FD3D12PoolAllocator::GetDefragCandidate(FD3D12DefragCandidate& OutCandidate) const
 {
     SCOPED_LOCK(PagesCS);
 
@@ -989,10 +1065,17 @@ bool FD3D12PoolAllocator::GetDefragCandidate(FD3D12PoolAllocatorAllocationData& 
         return false;
     }
 
+    const uint64 CompletedFenceValue = GetDevice()->GetFrameFence().GetCompletedValue();
+
     const FD3D12PoolAllocatorPage* SourcePage = Pages[BestPageIndex];
     for (const FD3D12PoolAllocatorAllocationData& LiveAlloc : SourcePage->GetLiveAllocations())
     {
         if (!LiveAlloc.Owner || !LiveAlloc.Owner->GetOwner())
+        {
+            continue;
+        }
+
+        if (CompletedFenceValue < LiveAlloc.EligibleFromFenceValue)
         {
             continue;
         }
@@ -1003,12 +1086,17 @@ bool FD3D12PoolAllocator::GetDefragCandidate(FD3D12PoolAllocatorAllocationData& 
             continue;
         }
 
-        if (Resource->GetResourceState().GetState() == D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE)
+        const D3D12_RESOURCE_STATES State = Resource->GetResourceState().GetState();
+        if (State == D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE)
         {
             continue;
         }
 
-        OutCandidate = LiveAlloc;
+        OutCandidate.SourceStorage            = LiveAlloc.Owner;
+        OutCandidate.Resource                 = MakeSharedRef<FD3D12Resource>(Resource);
+        OutCandidate.AllocationData           = LiveAlloc;
+        OutCandidate.AllocationData.PageIndex = BestPageIndex;
+        OutCandidate.ResourceState            = State;
         return true;
     }
 
@@ -1032,9 +1120,9 @@ bool FD3D12PoolAllocator::TryAllocateForDefrag(uint64 SizeInBytes, uint64 InAlig
             continue;
         }
 
-        if (Page->TryAllocateForDefrag(SizeInBytes, InAlignment, OutData))
+        if (Page->TryAllocateForDefrag(SizeInBytes, InAlignment, PageIndex, OutData))
         {
-            OutData.PageIndex = PageIndex;
+            CHECK(OutData.PageIndex == PageIndex);
             return true;
         }
     }
@@ -1172,7 +1260,7 @@ void FD3D12PoolAllocator::Deallocate(const FD3D12ResourceStorage& Storage)
 
         if (Data.PageIndex < static_cast<uint32>(Pages.Size()) && Pages[Data.PageIndex])
         {
-            Pages[Data.PageIndex]->TransferOwnership(Data.Offset, nullptr);
+            VERIFY(Pages[Data.PageIndex]->TransferOwnership(Data.Offset, nullptr));
         }
     }
 
@@ -1218,7 +1306,24 @@ void FD3D12PoolAllocator::TransferOwnership(const FD3D12PoolAllocatorAllocationD
 
     if (Data.PageIndex < static_cast<uint32>(Pages.Size()) && Pages[Data.PageIndex])
     {
-        Pages[Data.PageIndex]->TransferOwnership(Data.Offset, NewStorage);
+        VERIFY(Pages[Data.PageIndex]->TransferOwnership(Data.Offset, NewStorage));
+    }
+}
+
+void FD3D12PoolAllocator::FinalizeAllocation(const FD3D12PoolAllocatorAllocationData& Data)
+{
+    if (Data.PageIndex == UINT32_MAX)
+    {
+        return;
+    }
+
+    SCOPED_LOCK(PagesCS);
+
+    if (Data.PageIndex < static_cast<uint32>(Pages.Size()) && Pages[Data.PageIndex])
+    {
+        const uint64 Delay        = static_cast<uint64>(CVarDefragEligibilityDelay.GetValue());
+        const uint64 EligibleFrom = GetDevice()->GetFrameFence().GetLastSignaledValue() + Delay;
+        VERIFY(Pages[Data.PageIndex]->FinalizeAllocation(Data.Offset, EligibleFrom));
     }
 }
 
@@ -1349,7 +1454,7 @@ bool FD3D12BucketAllocator::TryAllocate(uint64 SizeInBytes, FD3D12ResourceStorag
         OutStorage.SetResourceOffset(AllocationData.Offset);
         OutStorage.SetGpuVirtualAddress(Bucket.BackingResource ? (Bucket.BackingResource->GetGPUVirtualAddress() + AllocationData.Offset) : 0);
         OutStorage.SetMappedBaseAddress(Bucket.MappedBaseAddress ? (Bucket.MappedBaseAddress + AllocationData.Offset) : nullptr);
-        OutStorage.SetSize(Bucket.BlockSize);
+        OutStorage.SetSize(SizeInBytes);
         OutStorage.SetStorageType(EResourceStorageType::SuballocatedResource);
 
         AllocationData.BucketIndex = BucketIndex;
@@ -1538,41 +1643,54 @@ bool FD3D12LinearAllocatorPage::Initialize()
     {
         FD3D12UploadHeapAllocator* UploadHeapAllocator = CurrentDevice->GetUploadHeapAllocator();
         UploadHeapAllocator->Allocate(PageSizeBytes, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT, BackingResourceStorage);
-        return BackingResourceStorage.GetResource() != nullptr;
+    }
+    else
+    {
+        D3D12_RESOURCE_DESC Desc = {};
+        Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
+        Desc.Format             = DXGI_FORMAT_UNKNOWN;
+        Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        Desc.Width              = PageSizeBytes;
+        Desc.Height             = 1;
+        Desc.DepthOrArraySize   = 1;
+        Desc.MipLevels          = 1;
+        Desc.Alignment          = 0;
+        Desc.SampleDesc.Count   = 1;
+        Desc.SampleDesc.Quality = 0;
+
+        Desc = ApplyTightAlignmentFlag(Desc);
+
+        FD3D12ResourceRef Resource;
+        if (!CurrentDevice->CreateCommittedResource(Desc, HeapType, InitialState, nullptr, Resource))
+        {
+            return false;
+        }
+
+        void* MappedBaseAddress = nullptr;
+        if (HeapType == D3D12_HEAP_TYPE_UPLOAD || HeapType == D3D12_HEAP_TYPE_READBACK)
+        {
+            MappedBaseAddress = Resource->MapRange(0, nullptr);
+        }
+
+        BackingResourceStorage.InitStandalone(Resource.Get());
+        BackingResourceStorage.SetSize(PageSizeBytes);
+        BackingResourceStorage.SetResourceOffset(0);
+        BackingResourceStorage.SetGpuVirtualAddress(Resource->GetGPUVirtualAddress());
+        BackingResourceStorage.SetMappedBaseAddress(MappedBaseAddress);
     }
 
-    D3D12_RESOURCE_DESC Desc = {};
-    Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
-    Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
-    Desc.Format             = DXGI_FORMAT_UNKNOWN;
-    Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.Width              = PageSizeBytes;
-    Desc.Height             = 1;
-    Desc.DepthOrArraySize   = 1;
-    Desc.MipLevels          = 1;
-    Desc.Alignment          = 0;
-    Desc.SampleDesc.Count   = 1;
-    Desc.SampleDesc.Quality = 0;
-
-    Desc = ApplyTightAlignmentFlag(Desc);
-
-    FD3D12ResourceRef Resource;
-    if (!CurrentDevice->CreateCommittedResource(Desc, HeapType, InitialState, nullptr, Resource))
+    FD3D12Resource* PageResource = BackingResourceStorage.GetResource();
+    if (!PageResource)
     {
         return false;
     }
 
-    void* MappedBaseAddress = nullptr;
-    if (HeapType == D3D12_HEAP_TYPE_UPLOAD || HeapType == D3D12_HEAP_TYPE_READBACK)
+    if (BackingResourceStorage.GetStorageType() != EResourceStorageType::SuballocatedResource)
     {
-        MappedBaseAddress = Resource->MapRange(0, nullptr);
+        InitializeBufferResourceState(PageResource, ED3D12ResourceStateMode::SingleState, InitialState);
     }
 
-    BackingResourceStorage.InitStandalone(Resource.Get());
-    BackingResourceStorage.SetSize(PageSizeBytes);
-    BackingResourceStorage.SetResourceOffset(0);
-    BackingResourceStorage.SetGpuVirtualAddress(Resource->GetGPUVirtualAddress());
-    BackingResourceStorage.SetMappedBaseAddress(MappedBaseAddress);
     return true;
 }
 
@@ -1635,7 +1753,8 @@ void* FD3D12LinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D
     const uint64 UsedAlignment = Math::Max<uint64>(Alignment, 16ull);
     const uint64 SizeAligned   = Math::AlignUp<uint64>(SizeInBytes, UsedAlignment);
 
-    if (SizeAligned > PageSizeBytes)
+    const uint64 MaxAlignmentPadding = UsedAlignment - 1;
+    if (MaxAlignmentPadding >= PageSizeBytes || SizeAligned > PageSizeBytes - MaxAlignmentPadding)
     {
         if (HeapType == D3D12_HEAP_TYPE_UPLOAD)
         {
@@ -1681,7 +1800,7 @@ void* FD3D12LinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D
 
     SCOPED_LOCK(AllocatorCS);
 
-    const uint64 AlignedOffset = CurrentPage ? Math::AlignUp<uint64>(CurrentOffset, UsedAlignment) : PageSizeBytes;
+    const uint64 AlignedOffset = CurrentPage ? AlignOffsetInPage(*CurrentPage, CurrentOffset, UsedAlignment) : PageSizeBytes;
     if (AlignedOffset + SizeAligned > PageSizeBytes)
     {
         if (CurrentPage)
@@ -1699,9 +1818,8 @@ void* FD3D12LinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D
         CurrentOffset = 0;
     }
 
-    const uint64 AllocationOffset = Math::AlignUp<uint64>(CurrentOffset, UsedAlignment);
-
     const FD3D12ResourceStorage&    BackingStorage     = CurrentPage->GetBackingResourceStorage();
+    const uint64                    AllocationOffset   = AlignOffsetInPage(*CurrentPage, CurrentOffset, UsedAlignment);
     const uint64                    PageResourceOffset = BackingStorage.GetResourceOffset() + AllocationOffset;
     const D3D12_GPU_VIRTUAL_ADDRESS BaseGpuAddress     = BackingStorage.GetGPUVirtualAddress();
     const D3D12_GPU_VIRTUAL_ADDRESS PageGpuAddress     = BaseGpuAddress ? (BaseGpuAddress + AllocationOffset) : 0;
@@ -1845,7 +1963,7 @@ bool FD3D12BufferAllocatorPool::Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOU
     return MultiBuddyAllocator.Supports(InHeapType, InInitialState, InAllocationStrategy, ResourceDesc.Flags);
 }
 
-bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InInitialState, uint64 InAlignment, FD3D12ResourceStorage& OutStorage)
+bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InInitialState, ED3D12ResourceStateMode InStateMode, uint64 InAlignment, FD3D12ResourceStorage& OutStorage)
 {
     D3D12_RESOURCE_DESC AllocationDesc = ApplyTightAlignmentFlag(ResourceDesc);
 
@@ -1871,6 +1989,8 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
         {
             return false;
         }
+
+        InitializeBufferResourceState(Resource.Get(), InStateMode, EffectiveInitialState);
 
         void* MappedBaseAddress = nullptr;
         if (InHeapType == D3D12_HEAP_TYPE_UPLOAD || InHeapType == D3D12_HEAP_TYPE_READBACK)
@@ -1920,6 +2040,8 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
         {
             return false;
         }
+
+        InitializeBufferResourceState(PlacedResource.Get(), InStateMode, EffectiveInitialState);
 
         OutStorage.SetResource(PlacedResource.Get());
         OutStorage.SetGpuVirtualAddress(PlacedResource->GetGPUVirtualAddress());
@@ -2076,7 +2198,7 @@ bool FD3D12BufferAllocator::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_
             continue;
         }
 
-        if (Pool->TryAllocate(InHeapType, AllocationDesc, EffectiveInitialState, Alignment, OutStorage))
+        if (Pool->TryAllocate(InHeapType, AllocationDesc, EffectiveInitialState, StateMode, Alignment, OutStorage))
         {
             return true;
         }
@@ -2090,7 +2212,7 @@ bool FD3D12BufferAllocator::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_
     }
 
     Pools.Add(NewPool);
-    return NewPool->TryAllocate(InHeapType, AllocationDesc, EffectiveInitialState, Alignment, OutStorage);
+    return NewPool->TryAllocate(InHeapType, AllocationDesc, EffectiveInitialState, StateMode, Alignment, OutStorage);
 }
 
 #else // D3D12_BUFFER_ALLOCATOR_USE_POOL_ALLOCATOR
@@ -2102,7 +2224,7 @@ FD3D12BufferAllocatorPool::FD3D12BufferAllocatorPool(FD3D12Device* InDevice, D3D
     , AllocationStrategy(InAllocationStrategy)
     , PageSizeBytes(InPageSizeBytes)
     , MaxSuballocationSize(InMaxSuballocationSize)
-    , PoolAllocator(InDevice, InPageSizeBytes, 16ull, InMaxSuballocationSize, InHeapType, InInitialState, InAllocationStrategy)
+    , PoolAllocator(InDevice, InPageSizeBytes, GetBufferPoolAlignment(InAllocationStrategy), InMaxSuballocationSize, InHeapType, InInitialState, InAllocationStrategy)
 {
 }
 
@@ -2172,7 +2294,7 @@ bool FD3D12BufferAllocatorPool::Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOU
     return PoolAllocator.Supports(InHeapType, InInitialState, InAllocationStrategy, ResourceDesc, ResourceDesc.Flags);
 }
 
-bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InInitialState, uint64 InAlignment, FD3D12ResourceStorage& OutStorage)
+bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InInitialState, ED3D12ResourceStateMode InStateMode, uint64 InAlignment, FD3D12ResourceStorage& OutStorage)
 {
     D3D12_RESOURCE_DESC AllocationDesc = ApplyTightAlignmentFlag(ResourceDesc);
 
@@ -2195,6 +2317,8 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
         {
             return false;
         }
+
+        InitializeBufferResourceState(Resource.Get(), InStateMode, EffectiveInitialState);
 
         void* MappedBaseAddress = nullptr;
         if (InHeapType == D3D12_HEAP_TYPE_UPLOAD || InHeapType == D3D12_HEAP_TYPE_READBACK)
@@ -2246,14 +2370,20 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
             return false;
         }
 
+        InitializeBufferResourceState(PlacedResource.Get(), InStateMode, EffectiveInitialState);
+
         OutStorage.SetResource(PlacedResource.Get());
         OutStorage.SetGpuVirtualAddress(PlacedResource->GetGPUVirtualAddress());
+    }
+    else if (OutStorage.GetStorageType() == EResourceStorageType::Standalone)
+    {
+        InitializeBufferResourceState(OutStorage.GetResource(), InStateMode, EffectiveInitialState);
     }
 
     return true;
 }
 
-bool FD3D12BufferAllocatorPool::GetDefragCandidate(FD3D12PoolAllocatorAllocationData& OutCandidate)
+bool FD3D12BufferAllocatorPool::GetDefragCandidate(FD3D12DefragCandidate& OutCandidate)
 {
     return PoolAllocator.GetDefragCandidate(OutCandidate);
 }
@@ -2422,7 +2552,7 @@ bool FD3D12BufferAllocator::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_
             continue;
         }
 
-        if (Pool->TryAllocate(InHeapType, AllocationDesc, EffectiveInitialState, Alignment, OutStorage))
+        if (Pool->TryAllocate(InHeapType, AllocationDesc, EffectiveInitialState, StateMode, Alignment, OutStorage))
         {
             return true;
         }
@@ -2436,10 +2566,10 @@ bool FD3D12BufferAllocator::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_
     }
 
     Pools.Add(NewPool);
-    return NewPool->TryAllocate(InHeapType, AllocationDesc, EffectiveInitialState, Alignment, OutStorage);
+    return NewPool->TryAllocate(InHeapType, AllocationDesc, EffectiveInitialState, StateMode, Alignment, OutStorage);
 }
 
-bool FD3D12BufferAllocator::GetDefragCandidate(FD3D12PoolAllocatorAllocationData& OutCandidate, FD3D12BufferAllocatorPool*& OutPool)
+bool FD3D12BufferAllocator::GetDefragCandidate(FD3D12DefragCandidate& OutCandidate, FD3D12BufferAllocatorPool*& OutPool)
 {
     SCOPED_LOCK(PoolsCS);
 
@@ -2481,21 +2611,18 @@ int32 FD3D12BufferAllocator::RecordDefragMoves(FD3D12CommandContext* InCommandCo
         return 0;
     }
 
+    SCOPED_LOCK(PoolsCS);
+
     CHECK(InCommandContext != nullptr);
     CHECK(InCommandContext->IsRecording());
     CHECK(PendingDefragMoves.IsEmpty());
 
     for (int32 MoveIndex = 0; MoveIndex < MaxMovesPerFrame; ++MoveIndex)
     {
-        FD3D12PoolAllocatorAllocationData Candidate = {};
+        FD3D12DefragCandidate Candidate;
         FD3D12BufferAllocatorPool* SourcePool = nullptr;
 
-        if (!GetDefragCandidate(Candidate, SourcePool))
-        {
-            break;
-        }
-
-        if (!Candidate.Owner || !Candidate.Owner->GetOwner() || !SourcePool)
+        if (!GetDefragCandidate(Candidate, SourcePool) || !SourcePool)
         {
             break;
         }
@@ -2503,7 +2630,7 @@ int32 FD3D12BufferAllocator::RecordDefragMoves(FD3D12CommandContext* InCommandCo
         CHECK(SourcePool->GetInitialState() != D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE);
 
         FD3D12PoolAllocatorAllocationData NewAllocationData = {};
-        if (!SourcePool->TryAllocateForDefrag(Candidate.Size, SourcePool->GetAlignment(), Candidate.PageIndex, NewAllocationData))
+        if (!SourcePool->TryAllocateForDefrag(Candidate.AllocationData.Size, SourcePool->GetAlignment(), Candidate.AllocationData.PageIndex, NewAllocationData))
         {
             break;
         }
@@ -2515,22 +2642,18 @@ int32 FD3D12BufferAllocator::RecordDefragMoves(FD3D12CommandContext* InCommandCo
             break;
         }
 
-        FD3D12Resource* OldResource = Candidate.Owner->GetResource();
-        if (!OldResource)
-        {
-            SourcePool->GetPoolAllocator().RecycleAllocation(NewAllocationData);
-            break;
-        }
-
-        CHECK(OldResource->GetResourceState().IsSingleState());
+        FD3D12Resource* OldResource = Candidate.Resource.Get();
+        CHECK(OldResource != nullptr);
 
         D3D12_RESOURCE_DESC ResourceDesc = OldResource->GetDesc();
+    #if D3D12_USE_TIGHT_ALIGNMENT
         if ((ResourceDesc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) != 0)
         {
             ResourceDesc.Alignment = 0;
         }
+    #endif
 
-        const D3D12_RESOURCE_STATES CurrentState = OldResource->GetResourceState().GetState();
+        const D3D12_RESOURCE_STATES CurrentState = Candidate.ResourceState;
 
         FD3D12ResourceRef NewResource;
         if (!GetDevice()->CreatePlacedResource(NewHeap, NewAllocationData.Offset, ResourceDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, NewResource))
@@ -2557,6 +2680,9 @@ int32 FD3D12BufferAllocator::RecordDefragMoves(FD3D12CommandContext* InCommandCo
             NewResource->SetDebugName(DefragDebugName);
         }
 
+        InCommandContext->AliasingBarrier(NewResource.Get());
+        InCommandContext->GetBarrierBatcher().FlushBarriers(InCommandContext->GetCommandList());
+
         InCommandContext->TransitionResourceState(OldResource, D3D12_RESOURCE_STATE_COPY_SOURCE);
         InCommandContext->TransitionResourceState(NewResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST);
         InCommandContext->GetBarrierBatcher().FlushBarriers(InCommandContext->GetCommandList());
@@ -2570,17 +2696,17 @@ int32 FD3D12BufferAllocator::RecordDefragMoves(FD3D12CommandContext* InCommandCo
         InCommandContext->GetBarrierBatcher().FlushBarriers(InCommandContext->GetCommandList());
 
         FD3D12PendingDefragMove PendingMove = {};
-        PendingMove.SourceStorage        = Candidate.Owner;
+        PendingMove.SourceStorage        = Candidate.SourceStorage;
         PendingMove.NewResource          = NewResource.Get();
         PendingMove.Allocator            = &SourcePool->GetPoolAllocator();
-        PendingMove.OldAllocationData    = Candidate;
+        PendingMove.OldAllocationData    = Candidate.AllocationData;
         PendingMove.NewAllocationData    = NewAllocationData;
         PendingMove.ResourceState        = CurrentState;
 
         NewResource->AddRef();
 
-        PendingMove.Allocator->TransferOwnership(Candidate, nullptr);
-        STAT_ADD(STAT_D3D12_BufferDefragBytesMoved, Candidate.Size);
+        PendingMove.Allocator->TransferOwnership(Candidate.AllocationData, nullptr);
+        STAT_ADD(STAT_D3D12_BufferDefragBytesMoved, Candidate.AllocationData.Size);
         PendingDefragMoves.Add(PendingMove);
     }
 
@@ -2590,6 +2716,8 @@ int32 FD3D12BufferAllocator::RecordDefragMoves(FD3D12CommandContext* InCommandCo
 
 void FD3D12BufferAllocator::SetDefragCompletionFence(uint64 CompletionFenceValue)
 {
+    SCOPED_LOCK(PoolsCS);
+
     CHECK(CompletionFenceValue != 0);
 
     for (FD3D12PendingDefragMove& Move : PendingDefragMoves)
@@ -2601,6 +2729,8 @@ void FD3D12BufferAllocator::SetDefragCompletionFence(uint64 CompletionFenceValue
 
 uint64 FD3D12BufferAllocator::GetDefragCompletionFence() const
 {
+    SCOPED_LOCK(PoolsCS);
+
     uint64 CompletionFenceValue = 0;
     for (const FD3D12PendingDefragMove& Move : PendingDefragMoves)
     {
@@ -2612,7 +2742,9 @@ uint64 FD3D12BufferAllocator::GetDefragCompletionFence() const
 
 void FD3D12BufferAllocator::FinalizeDefragMoves()
 {
-    const uint64 CompletedFenceValue = GetDevice()->GetFrameFence().GetCompletedValue();
+    SCOPED_LOCK(PoolsCS);
+
+    MAYBE_UNUSED const uint64 CompletedFenceValue = GetDevice()->GetFrameFence().GetCompletedValue();
     for (int32 Index = PendingDefragMoves.Size() - 1; Index >= 0; --Index)
     {
         FD3D12PendingDefragMove& Move = PendingDefragMoves[Index];
@@ -2652,6 +2784,8 @@ void FD3D12BufferAllocator::FinalizeDefragMoves()
         Storage->SetPoolAllocationData(Move.NewAllocationData);
         Storage->UpdateOwnership();
 
+        Storage->FinalizeAllocation();
+
         if (Owner)
         {
             Owner->ResourceRelocated(Storage);
@@ -2684,6 +2818,8 @@ void FD3D12BufferAllocator::FinalizeDefragMoves()
 
 void FD3D12BufferAllocator::CancelPendingDefragMoves(FD3D12ResourceBase* Owner)
 {
+    SCOPED_LOCK(PoolsCS);
+
     for (FD3D12PendingDefragMove& Move : PendingDefragMoves)
     {
         if (Move.SourceStorage && Move.SourceStorage->GetOwner() == Owner)
@@ -2800,7 +2936,7 @@ void FD3D12TextureAllocator::UpdateMemoryStats()
 }
 #endif
 
-bool FD3D12TextureAllocator::GetDefragCandidate(FD3D12PoolAllocatorAllocationData& OutCandidate, FD3D12PoolAllocator*& OutAllocator)
+bool FD3D12TextureAllocator::GetDefragCandidate(FD3D12DefragCandidate& OutCandidate, FD3D12PoolAllocator*& OutAllocator)
 {
     SCOPED_LOCK(PoolsCS);
 
@@ -2965,7 +3101,11 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
 
     D3D12_RESOURCE_DESC AllocationDesc = ApplyTightAlignmentFlag(ResourceDesc);
 
+#if D3D12_USE_TIGHT_ALIGNMENT
     const bool bUseTightAlignment = (AllocationDesc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) != 0;
+#else
+    const bool bUseTightAlignment = false;
+#endif
     if (!bUseTightAlignment && CanUseSmallResourcePlacementAlignment(AllocationDesc))
     {
         AllocationDesc.Alignment = D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT;
@@ -3072,27 +3212,24 @@ int32 FD3D12TextureAllocator::RecordDefragMoves(FD3D12CommandContext* InCommandC
         return 0;
     }
 
+    SCOPED_LOCK(PoolsCS);
+
     CHECK(InCommandContext != nullptr);
     CHECK(InCommandContext->IsRecording());
     CHECK(PendingDefragMoves.IsEmpty());
 
     for (int32 MoveIndex = 0; MoveIndex < MaxMovesPerFrame; ++MoveIndex)
     {
-        FD3D12PoolAllocatorAllocationData Candidate = {};
+        FD3D12DefragCandidate Candidate;
         FD3D12PoolAllocator* SourceAllocator = nullptr;
 
-        if (!GetDefragCandidate(Candidate, SourceAllocator))
-        {
-            break;
-        }
-
-        if (!Candidate.Owner || !Candidate.Owner->GetOwner() || !SourceAllocator)
+        if (!GetDefragCandidate(Candidate, SourceAllocator) || !SourceAllocator)
         {
             break;
         }
 
         FD3D12PoolAllocatorAllocationData NewAllocationData = {};
-        if (!SourceAllocator->TryAllocateForDefrag(Candidate.Size, SourceAllocator->GetAlignment(), Candidate.PageIndex, NewAllocationData))
+        if (!SourceAllocator->TryAllocateForDefrag(Candidate.AllocationData.Size, SourceAllocator->GetAlignment(), Candidate.AllocationData.PageIndex, NewAllocationData))
         {
             break;
         }
@@ -3104,22 +3241,18 @@ int32 FD3D12TextureAllocator::RecordDefragMoves(FD3D12CommandContext* InCommandC
             break;
         }
 
-        FD3D12Resource* OldResource = Candidate.Owner->GetResource();
-        if (!OldResource)
-        {
-            SourceAllocator->RecycleAllocation(NewAllocationData);
-            break;
-        }
-
-        CHECK(OldResource->GetResourceState().IsSingleState());
+        FD3D12Resource* OldResource = Candidate.Resource.Get();
+        CHECK(OldResource != nullptr);
 
         D3D12_RESOURCE_DESC ResourceDesc = OldResource->GetDesc();
+    #if D3D12_USE_TIGHT_ALIGNMENT
         if ((ResourceDesc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) != 0)
         {
             ResourceDesc.Alignment = 0;
         }
+    #endif
 
-        const D3D12_RESOURCE_STATES CurrentState = OldResource->GetResourceState().GetState();
+        const D3D12_RESOURCE_STATES CurrentState = Candidate.ResourceState;
 
         const D3D12_CLEAR_VALUE* ClearValue = OldResource->HasClearValue() ? &OldResource->GetClearValue() : nullptr;
 
@@ -3148,6 +3281,9 @@ int32 FD3D12TextureAllocator::RecordDefragMoves(FD3D12CommandContext* InCommandC
             NewResource->SetDebugName(DefragDebugName);
         }
 
+        InCommandContext->AliasingBarrier(NewResource.Get());
+        InCommandContext->GetBarrierBatcher().FlushBarriers(InCommandContext->GetCommandList());
+
         InCommandContext->TransitionResourceState(OldResource, D3D12_RESOURCE_STATE_COPY_SOURCE);
         InCommandContext->TransitionResourceState(NewResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST);
         InCommandContext->GetBarrierBatcher().FlushBarriers(InCommandContext->GetCommandList());
@@ -3161,17 +3297,17 @@ int32 FD3D12TextureAllocator::RecordDefragMoves(FD3D12CommandContext* InCommandC
         InCommandContext->GetBarrierBatcher().FlushBarriers(InCommandContext->GetCommandList());
 
         FD3D12PendingDefragMove PendingMove = {};
-        PendingMove.SourceStorage        = Candidate.Owner;
+        PendingMove.SourceStorage        = Candidate.SourceStorage;
         PendingMove.NewResource          = NewResource.Get();
         PendingMove.Allocator            = SourceAllocator;
-        PendingMove.OldAllocationData    = Candidate;
+        PendingMove.OldAllocationData    = Candidate.AllocationData;
         PendingMove.NewAllocationData    = NewAllocationData;
         PendingMove.ResourceState        = CurrentState;
 
         NewResource->AddRef();
 
-        SourceAllocator->TransferOwnership(Candidate, nullptr);
-        STAT_ADD(STAT_D3D12_TextureDefragBytesMoved, Candidate.Size);
+        SourceAllocator->TransferOwnership(Candidate.AllocationData, nullptr);
+        STAT_ADD(STAT_D3D12_TextureDefragBytesMoved, Candidate.AllocationData.Size);
         PendingDefragMoves.Add(PendingMove);
     }
 
@@ -3181,6 +3317,8 @@ int32 FD3D12TextureAllocator::RecordDefragMoves(FD3D12CommandContext* InCommandC
 
 void FD3D12TextureAllocator::SetDefragCompletionFence(uint64 CompletionFenceValue)
 {
+    SCOPED_LOCK(PoolsCS);
+
     CHECK(CompletionFenceValue != 0);
 
     for (FD3D12PendingDefragMove& Move : PendingDefragMoves)
@@ -3192,6 +3330,8 @@ void FD3D12TextureAllocator::SetDefragCompletionFence(uint64 CompletionFenceValu
 
 uint64 FD3D12TextureAllocator::GetDefragCompletionFence() const
 {
+    SCOPED_LOCK(PoolsCS);
+
     uint64 CompletionFenceValue = 0;
     for (const FD3D12PendingDefragMove& Move : PendingDefragMoves)
     {
@@ -3203,7 +3343,9 @@ uint64 FD3D12TextureAllocator::GetDefragCompletionFence() const
 
 void FD3D12TextureAllocator::FinalizeDefragMoves()
 {
-    const uint64 CompletedFenceValue = GetDevice()->GetFrameFence().GetCompletedValue();
+    SCOPED_LOCK(PoolsCS);
+
+    MAYBE_UNUSED const uint64 CompletedFenceValue = GetDevice()->GetFrameFence().GetCompletedValue();
     for (int32 Index = PendingDefragMoves.Size() - 1; Index >= 0; --Index)
     {
         FD3D12PendingDefragMove& Move = PendingDefragMoves[Index];
@@ -3243,6 +3385,8 @@ void FD3D12TextureAllocator::FinalizeDefragMoves()
         Storage->SetPoolAllocationData(Move.NewAllocationData);
         Storage->UpdateOwnership();
 
+        Storage->FinalizeAllocation();
+
         if (Owner)
         {
             Owner->ResourceRelocated(Storage);
@@ -3275,6 +3419,8 @@ void FD3D12TextureAllocator::FinalizeDefragMoves()
 
 void FD3D12TextureAllocator::CancelPendingDefragMoves(FD3D12ResourceBase* Owner)
 {
+    SCOPED_LOCK(PoolsCS);
+
     for (FD3D12PendingDefragMove& Move : PendingDefragMoves)
     {
         if (Move.SourceStorage && Move.SourceStorage->GetOwner() == Owner)
@@ -3520,7 +3666,11 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
 
     D3D12_RESOURCE_DESC AllocationDesc = ApplyTightAlignmentFlag(ResourceDesc);
 
+#if D3D12_USE_TIGHT_ALIGNMENT
     const bool bUseTightAlignment = (AllocationDesc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) != 0;
+#else
+    const bool bUseTightAlignment = false;
+#endif
     if (!bUseTightAlignment && CanUseSmallResourcePlacementAlignment(AllocationDesc))
     {
         AllocationDesc.Alignment = D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT;

@@ -247,6 +247,24 @@ bool FShaderCompiler::InitializeDXC()
         return false;
     }
 
+    TComPtr<IDxcVersionInfo> VersionInfo;
+    if (SUCCEEDED(DxcCreateInstanceFunc(CLSID_DxcCompiler, IID_PPV_ARGS(&VersionInfo))))
+    {
+        uint32 Major = 0;
+        uint32 Minor = 0;
+        if (SUCCEEDED(VersionInfo->GetVersion(&Major, &Minor)))
+        {
+            uint32 Flags = 0;
+            VersionInfo->GetFlags(&Flags);
+
+            LOG_INFO("[FShaderCompiler]: Loaded 'dxcompiler' version %u.%u%s", Major, Minor, (Flags & DxcVersionInfoFlags_Debug) ? " (Debug)" : "");
+        }
+    }
+    else
+    {
+        LOG_WARNING("[FShaderCompiler]: Loaded 'dxcompiler' does not report version information");
+    }
+
     return true;
 }
 
@@ -290,6 +308,12 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
     STAT_ADD(STAT_Shader_CompileCount, 1);
     OutByteCode.Clear();
 
+    if (RHI::MaxShaderModel != EShaderModel::Unknown && CompileInfo.ShaderModel > RHI::MaxShaderModel)
+    {
+        LOG_ERROR("[FShaderCompiler]: '%s' requests Shader Model %s but the device supports at most %s",
+            FilePath.IsEmpty() ? *CompileInfo.EntryPoint : *FilePath, ToString(CompileInfo.ShaderModel), ToString(RHI::MaxShaderModel));
+    }
+
     TComPtr<IDxcUtils> Utils;
     HRESULT hr = DxcCreateInstanceFunc(CLSID_DxcUtils, IID_PPV_ARGS(&Utils));
     if (FAILED(hr))
@@ -320,7 +344,6 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
     TArray<LPCWSTR> CompileArgs =
     {
         L"-HV 2021",     // Use HLSL 2021
-        L"-Gfa",         // Avoid flow-control
         L"-WX",          // Warnings as errors
         L"-Qembed_debug" // We are forced to embed debug information in order to get all the information we need
     };
@@ -338,6 +361,7 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
     {
         CompileArgs.Emplace(L"-O3"); // Highest optimization level
         CompileArgs.Emplace(L"-all-resources-bound");
+        CompileArgs.Emplace(L"-Gfa"); // Avoid flow-control. DXC rejects this on SM 5.1+ unless -all-resources-bound is also passed
     }
 
     // Add defines that identify the target shader backend

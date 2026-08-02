@@ -6,7 +6,7 @@ TSharedPtr<FGenericApplication> FGenericApplication::Create()
 }
 
 FGenericApplication::FGenericApplication(const TSharedPtr<ICursor>& InCursor)
-    : Cursor(InCursor)
-    , MessageHandler(nullptr)
+    : MessageHandler(nullptr)
+    , Cursor(InCursor)
 {
 }

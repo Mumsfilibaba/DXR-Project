@@ -48,7 +48,7 @@ FRHIDescriptorHandle FD3D12BufferRHI::GetBindlessHandle() const
 {
     if (!Desc.IsConstantBuffer())
     {
-        CHECK(false && "GetBindlessHandle called on a non-constant-buffer FD3D12BufferRHI");
+        CHECKF(false, "GetBindlessHandle called on a non-constant-buffer FD3D12BufferRHI");
         return FRHIDescriptorHandle();
     }
 
@@ -100,7 +100,7 @@ FD3D12BufferRHI::~FD3D12BufferRHI()
 #endif
 }
 
-bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData)
+bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIResourceState InInitialAccess, const void* InInitialData)
 {
     const uint64 Alignment   = GetBufferAlignment(Desc);
     const uint64 AlignedSize = Math::AlignUpToMultiple<uint64>(Desc.Size, Alignment);
@@ -118,10 +118,12 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, EResour
     ResourceDesc.SampleDesc.Count   = 1;
     ResourceDesc.SampleDesc.Quality = 0;
 
-    ED3D12ResourceStateMode StateMode         = ED3D12ResourceStateMode::MultipleStates;
+    const bool bIsManual = (ConvertResourceStateMode(Desc.TrackingMode) == ED3D12ResourceStateMode::ManualState);
+
+    ED3D12ResourceStateMode StateMode         = bIsManual ? ED3D12ResourceStateMode::ManualState : ED3D12ResourceStateMode::MultipleStates;
     D3D12_RESOURCE_STATES   D3D12InitialState = D3D12_RESOURCE_STATE_COMMON;
     D3D12_HEAP_TYPE         D3D12HeapType     = D3D12_HEAP_TYPE_DEFAULT;
-    D3D12_RESOURCE_STATES   D3D12DefaultState = DetermineDefaultBufferState(Desc.Flags);
+    D3D12_RESOURCE_STATES   D3D12DefaultState = bIsManual ? D3D12_RESOURCE_STATES(0) : DetermineDefaultBufferState(Desc.Flags);
 
     if (Desc.IsReadBack())
     {
@@ -177,31 +179,31 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, EResour
     }
 
     FD3D12Resource* D3D12Resource = ResourceStorage.GetResource();
-    D3D12Resource->SetResourceStateMode(StateMode);
+
+    Desc.TrackingMode = ConvertResourceStateMode(StateMode);
 
     const bool bHasDefaultState = D3D12DefaultState != D3D12_RESOURCE_STATES(0);
-    if (bHasDefaultState)
-    {
-        D3D12Resource->SetDefaultState(D3D12DefaultState);
-    }
-
-    const bool bPlaced       = D3D12Resource->IsPlacedResource();
-    const bool bMappedUpload = InInitialData && (Desc.IsDynamic() || Desc.IsTransient());
+    const bool bPlaced          = D3D12Resource->IsPlacedResource();
+    const bool bMappedUpload    = InInitialData && (Desc.IsDynamic() || Desc.IsTransient());
 
     if (bMappedUpload)
     {
         void* MappedAddress = ResourceStorage.GetMappedBaseAddress();
         if (!MappedAddress)
         {
-            MappedAddress = D3D12Resource->MapRange(0, nullptr);
-            if (!MappedAddress)
+            // MapRange returns the base of the whole backing resource, so the suballocation offset has to be folded in here.
+            uint8* ResourceBase = reinterpret_cast<uint8*>(D3D12Resource->MapRange(0, nullptr));
+            if (!ResourceBase)
             {
                 D3D12_ERROR("Failed to map buffer data");
                 return false;
             }
 
-            Memory::Memcpy(MappedAddress, InInitialData, Desc.Size);
-            D3D12Resource->UnmapRange(0, nullptr);
+            const uint64 ResourceOffset = ResourceStorage.GetResourceOffset();
+            Memory::Memcpy(ResourceBase + ResourceOffset, InInitialData, Desc.Size);
+
+            const D3D12_RANGE WrittenRange = { ResourceOffset, ResourceOffset + Desc.Size };
+            D3D12Resource->UnmapRange(0, &WrittenRange);
         }
         else
         {
@@ -210,7 +212,7 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, EResour
     }
 
     const bool bGpuUpload       = InInitialData && !bMappedUpload;
-    const bool bNeedsTransition = !InInitialData && !bHasDefaultState && (InInitialAccess != EResourceAccess::Common) && (D3D12HeapType == D3D12_HEAP_TYPE_DEFAULT);
+    const bool bNeedsTransition = !InInitialData && !bHasDefaultState && (InInitialAccess != ERHIResourceState::Common) && (D3D12HeapType == D3D12_HEAP_TYPE_DEFAULT);
 
     if (bPlaced || bGpuUpload || bNeedsTransition)
     {
@@ -239,6 +241,7 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, EResour
         InCommandContext->FinishContext();
     }
 
+    ResourceStorage.FinalizeAllocation();
     return true;
 }
 
@@ -271,9 +274,12 @@ void* FD3D12BufferRHI::Map(uint64 Offset, uint64 Size)
         return static_cast<uint8*>(ResourceStorage.GetMappedBaseAddress()) + Offset;
     }
 
+    // MapRange returns the base of the whole backing resource, so the suballocation offset has to be folded in here.
+    const uint64 ResourceOffset = ResourceStorage.GetResourceOffset();
+
     D3D12_RANGE ReadRange = {};
-    ReadRange.Begin = Offset;
-    ReadRange.End   = Offset + MapSize;
+    ReadRange.Begin = ResourceOffset + Offset;
+    ReadRange.End   = ResourceOffset + Offset + MapSize;
 
     uint8* MappedData = reinterpret_cast<uint8*>(ResourceStorage.GetResource()->MapRange(0, &ReadRange));
     if (!MappedData)
@@ -281,20 +287,33 @@ void* FD3D12BufferRHI::Map(uint64 Offset, uint64 Size)
         return nullptr;
     }
 
-    return MappedData + Offset;
+    return MappedData + ResourceOffset + Offset;
 }
 
-void FD3D12BufferRHI::Unmap(uint64 /* Offset */, uint64 /* Size */)
+void FD3D12BufferRHI::Unmap(uint64 Offset, uint64 Size)
 {
     if (!ResourceStorage.GetResource())
     {
         return;
     }
 
-    if (!ResourceStorage.GetMappedBaseAddress())
+    if (ResourceStorage.GetMappedBaseAddress())
     {
-        ResourceStorage.GetResource()->UnmapRange(0, nullptr);
+        return;
     }
+
+    const uint64 BufferSize = ResourceStorage.GetSize();
+    CHECK(Offset <= BufferSize);
+
+    uint64 UnmapSize = Size;
+    if (UnmapSize == UINT64_MAX)
+    {
+        UnmapSize = BufferSize - Offset;
+    }
+
+    const uint64      ResourceOffset = ResourceStorage.GetResourceOffset();
+    const D3D12_RANGE WrittenRange   = { ResourceOffset + Offset, ResourceOffset + Offset + UnmapSize };
+    ResourceStorage.GetResource()->UnmapRange(0, &WrittenRange);
 }
 
 void FD3D12BufferRHI::SetDebugName(const String& InName)

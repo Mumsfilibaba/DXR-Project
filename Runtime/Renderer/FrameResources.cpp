@@ -1,4 +1,4 @@
-#include "RHI/RHI.h"
+﻿#include "RHI/RHI.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Renderer/FrameResources.h"
@@ -55,7 +55,7 @@ bool FFrameResources::Initialize()
     BufferDesc.Size   = sizeof(FDirectionalLightDataHLSL);
     BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
-    DirectionalLightDataBuffer = RHI::CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
+    DirectionalLightDataBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
 
     if (!DirectionalLightDataBuffer)
     {
@@ -70,7 +70,7 @@ bool FFrameResources::Initialize()
 	BufferDesc.Stride = sizeof(FCascadeGenerationInfoHLSL);
 	BufferDesc.Size   = sizeof(FCascadeGenerationInfoHLSL);
 
-    CascadeGenerationDataBuffer = RHI::CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
+    CascadeGenerationDataBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
 
     if (!CascadeGenerationDataBuffer)
     {
@@ -88,7 +88,7 @@ bool FFrameResources::Initialize()
 	BufferDesc.Stride = PointLightsData.Stride();
 	BufferDesc.Size   = PointLightsData.CapacityInBytes();
 
-    PointLightsBuffer = RHI::CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
+    PointLightsBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
 
     if (!PointLightsBuffer)
     {
@@ -105,7 +105,7 @@ bool FFrameResources::Initialize()
 	BufferDesc.Stride = PointLightsPosRad.Stride();
 	BufferDesc.Size   = PointLightsPosRad.CapacityInBytes();
 
-    PointLightsPosRadBuffer = RHI::CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
+    PointLightsPosRadBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
     if (!PointLightsPosRadBuffer)
     {
         DEBUG_BREAK();
@@ -121,7 +121,7 @@ bool FFrameResources::Initialize()
 	BufferDesc.Stride = ShadowCastingPointLightsData.Stride();
 	BufferDesc.Size   = ShadowCastingPointLightsData.CapacityInBytes();
 
-    ShadowCastingPointLightsBuffer = RHI::CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
+    ShadowCastingPointLightsBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
     if (!ShadowCastingPointLightsBuffer)
     {
         DEBUG_BREAK();
@@ -137,7 +137,7 @@ bool FFrameResources::Initialize()
 	BufferDesc.Stride = ShadowCastingPointLightsPosRad.Stride();
 	BufferDesc.Size   = ShadowCastingPointLightsPosRad.CapacityInBytes();
 
-    ShadowCastingPointLightsPosRadBuffer = RHI::CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
+    ShadowCastingPointLightsPosRadBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
     if (!ShadowCastingPointLightsPosRadBuffer)
     {
         DEBUG_BREAK();
@@ -154,7 +154,7 @@ bool FFrameResources::Initialize()
 	BufferDesc.Stride = LightProbeInfos.Stride();
 	BufferDesc.Size   = LightProbeInfos.CapacityInBytes();
 
-    LightProbeBuffer = RHI::CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
+    LightProbeBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
     if (!LightProbeBuffer)
     {
         DEBUG_BREAK();
@@ -270,7 +270,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
 		BufferDesc.Size   = PointLightsData.CapacityInBytes();
 		BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
-        PointLightsBuffer = RHI::CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
+        PointLightsBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
         if (!PointLightsBuffer)
         {
             DEBUG_BREAK();
@@ -284,7 +284,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
 		BufferDesc.Size   = PointLightsPosRad.CapacityInBytes();
 		BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
-        PointLightsPosRadBuffer = RHI::CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
+        PointLightsPosRadBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
         if (!PointLightsPosRadBuffer)
         {
             DEBUG_BREAK();
@@ -298,7 +298,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
 		BufferDesc.Size   = ShadowCastingPointLightsData.CapacityInBytes();
 		BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
-        ShadowCastingPointLightsBuffer = RHI::CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
+        ShadowCastingPointLightsBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
         if (!ShadowCastingPointLightsBuffer)
         {
             DEBUG_BREAK();
@@ -312,7 +312,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
 		BufferDesc.Size   = ShadowCastingPointLightsPosRad.CapacityInBytes();
 		BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
-        ShadowCastingPointLightsPosRadBuffer = RHI::CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
+        ShadowCastingPointLightsPosRadBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
         if (!ShadowCastingPointLightsPosRadBuffer)
         {
             DEBUG_BREAK();
@@ -326,25 +326,28 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         BufferDesc.Size   = LightProbeInfos.CapacityInBytes();
         BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
-        LightProbeBuffer = RHI::CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
+        LightProbeBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
         if (!LightProbeBuffer)
         {
             DEBUG_BREAK();
         }
     }
 
-    // Directional-Light
-    CommandList.TransitionBufferState(DirectionalLightDataBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
-    CommandList.TransitionBufferState(CascadeGenerationDataBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
+    const FRHITransitionBarrierDesc ToCopyDest[] =
+    {
+        // Directional-Light
+        FRHITransitionBarrierDesc::CreateBuffer(DirectionalLightDataBuffer.Get(), ERHIResourceState::ConstantBuffer, ERHIResourceState::CopyDest),
+        FRHITransitionBarrierDesc::CreateBuffer(CascadeGenerationDataBuffer.Get(), ERHIResourceState::ConstantBuffer, ERHIResourceState::CopyDest),
+        // Point-Lights
+        FRHITransitionBarrierDesc::CreateBuffer(PointLightsBuffer.Get(), ERHIResourceState::ConstantBuffer, ERHIResourceState::CopyDest),
+        FRHITransitionBarrierDesc::CreateBuffer(PointLightsPosRadBuffer.Get(), ERHIResourceState::ConstantBuffer, ERHIResourceState::CopyDest),
+        FRHITransitionBarrierDesc::CreateBuffer(ShadowCastingPointLightsBuffer.Get(), ERHIResourceState::ConstantBuffer, ERHIResourceState::CopyDest),
+        FRHITransitionBarrierDesc::CreateBuffer(ShadowCastingPointLightsPosRadBuffer.Get(), ERHIResourceState::ConstantBuffer, ERHIResourceState::CopyDest),
+        // Light-Probes
+        FRHITransitionBarrierDesc::CreateBuffer(LightProbeBuffer.Get(), ERHIResourceState::ConstantBuffer, ERHIResourceState::CopyDest),
+    };
 
-    // Point-Lights
-    CommandList.TransitionBufferState(PointLightsBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
-    CommandList.TransitionBufferState(PointLightsPosRadBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
-    CommandList.TransitionBufferState(ShadowCastingPointLightsBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
-    CommandList.TransitionBufferState(ShadowCastingPointLightsPosRadBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
-
-    // Light-Probes
-    CommandList.TransitionBufferState(LightProbeBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
+    CommandList.TransitionBarrier(ToCopyDest);
 
     // Directional-Light
     if (DirectionalLightDataDirty)
@@ -378,18 +381,21 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         CommandList.UpdateBuffer(LightProbeBuffer.Get(), FBufferRegion(0, LightProbeInfos.SizeInBytes()), LightProbeInfos.Data());
     }
 
-    // Directional-Light
-    CommandList.TransitionBufferState(DirectionalLightDataBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
-    CommandList.TransitionBufferState(CascadeGenerationDataBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
+    const FRHITransitionBarrierDesc ToConstantBuffer[] =
+    {
+        // Directional-Light
+        FRHITransitionBarrierDesc::CreateBuffer(DirectionalLightDataBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ConstantBuffer),
+        FRHITransitionBarrierDesc::CreateBuffer(CascadeGenerationDataBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ConstantBuffer),
+        // Point-Lights
+        FRHITransitionBarrierDesc::CreateBuffer(PointLightsBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ConstantBuffer),
+        FRHITransitionBarrierDesc::CreateBuffer(PointLightsPosRadBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ConstantBuffer),
+        FRHITransitionBarrierDesc::CreateBuffer(ShadowCastingPointLightsBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ConstantBuffer),
+        FRHITransitionBarrierDesc::CreateBuffer(ShadowCastingPointLightsPosRadBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ConstantBuffer),
+        // Light-Probes
+        FRHITransitionBarrierDesc::CreateBuffer(LightProbeBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ConstantBuffer),
+    };
 
-    // Point-Lights
-    CommandList.TransitionBufferState(PointLightsBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
-    CommandList.TransitionBufferState(PointLightsPosRadBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
-    CommandList.TransitionBufferState(ShadowCastingPointLightsBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
-    CommandList.TransitionBufferState(ShadowCastingPointLightsPosRadBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
-
-    // Light-Probes
-    CommandList.TransitionBufferState(LightProbeBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
+    CommandList.TransitionBarrier(ToConstantBuffer);
 }
 
 void FFrameResources::Release()

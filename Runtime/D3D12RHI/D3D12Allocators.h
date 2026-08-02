@@ -128,6 +128,14 @@ private:
     mutable FCriticalSection      AllocatorsCS;
 };
 
+struct FD3D12DefragCandidate
+{
+    FD3D12ResourceStorage*            SourceStorage  = nullptr;
+    FD3D12ResourceRef                 Resource;
+    FD3D12PoolAllocatorAllocationData AllocationData = {};
+    D3D12_RESOURCE_STATES             ResourceState  = D3D12_RESOURCE_STATE_COMMON;
+};
+
 class FD3D12PoolAllocatorPage : public FD3D12DeviceChild
 {
 public:
@@ -142,10 +150,11 @@ public:
     ~FD3D12PoolAllocatorPage();
 
     bool TryAllocate(uint64 SizeInBytes, uint64 InAlignment, uint32 InPageIndex, FD3D12ResourceStorage& OutStorage);
-    bool TryAllocateForDefrag(uint64 SizeInBytes, uint64 InAlignment, FD3D12PoolAllocatorAllocationData& OutData);
+    bool TryAllocateForDefrag(uint64 SizeInBytes, uint64 InAlignment, uint32 InPageIndex, FD3D12PoolAllocatorAllocationData& OutData);
     void RecycleAllocation(uint64 Offset, uint64 SizeInBytes);
 
-    void TransferOwnership(uint64 Offset, FD3D12ResourceStorage* NewStorage);
+    bool TransferOwnership(uint64 Offset, FD3D12ResourceStorage* NewStorage);
+    bool FinalizeAllocation(uint64 Offset, uint64 EligibleFromFenceValue);
     
     bool Initialize();
 
@@ -217,8 +226,10 @@ public:
     void Destroy();
     void CleanUp();
 
-    bool GetDefragCandidate(FD3D12PoolAllocatorAllocationData& OutCandidate) const;
+    bool GetDefragCandidate(FD3D12DefragCandidate& OutCandidate) const;
     void TransferOwnership(const FD3D12PoolAllocatorAllocationData& Data, FD3D12ResourceStorage* NewStorage);
+
+    void FinalizeAllocation(const FD3D12PoolAllocatorAllocationData& Data);
 
     FD3D12Heap* GetBackingHeap(uint32 PageIndex);
 
@@ -404,13 +415,13 @@ public:
     FD3D12BufferAllocatorPool(FD3D12Device* InDevice, D3D12_HEAP_TYPE InHeapType, uint64 InPageSizeBytes, uint64 InMaxSuballocationSize, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy);
     ~FD3D12BufferAllocatorPool();
 
-    bool TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InitialState, uint64 Alignment, FD3D12ResourceStorage& OutStorage);
+    bool TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InitialState, ED3D12ResourceStateMode InStateMode, uint64 Alignment, FD3D12ResourceStorage& OutStorage);
     bool Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy, const D3D12_RESOURCE_DESC& ResourceDesc) const;
 
     bool Initialize();
     void CleanUp();
 
-    bool        GetDefragCandidate(FD3D12PoolAllocatorAllocationData& OutCandidate);
+    bool        GetDefragCandidate(FD3D12DefragCandidate& OutCandidate);
     bool        TryAllocateForDefrag(uint64 SizeInBytes, uint64 Alignment, uint32 ExcludePageIndex, FD3D12PoolAllocatorAllocationData& OutData);
     void        TransferOwnership(const FD3D12PoolAllocatorAllocationData& Data, FD3D12ResourceStorage* NewStorage);
     FD3D12Heap* GetBackingHeap(uint32 PageIndex);
@@ -452,7 +463,7 @@ public:
     FD3D12BufferAllocatorPool(FD3D12Device* InDevice, D3D12_HEAP_TYPE InHeapType, uint64 InPageSizeBytes, uint64 InMinBlockBytes, uint64 InMaxSuballocationSize, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy);
     ~FD3D12BufferAllocatorPool();
     
-    bool TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InitialState, uint64 Alignment, FD3D12ResourceStorage& OutStorage);
+    bool TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InitialState, ED3D12ResourceStateMode InStateMode, uint64 Alignment, FD3D12ResourceStorage& OutStorage);
     bool Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy, const D3D12_RESOURCE_DESC& ResourceDesc) const;
 
     bool Initialize();
@@ -508,14 +519,14 @@ public:
 #endif
 
 private:
-    bool GetDefragCandidate(FD3D12PoolAllocatorAllocationData& OutCandidate, FD3D12BufferAllocatorPool*& OutPool);
+    bool GetDefragCandidate(FD3D12DefragCandidate& OutCandidate, FD3D12BufferAllocatorPool*& OutPool);
     void ReleasePools();
 
     uint64                             PageSizeBytes;
     uint64                             MaxSuballocationSize;
     TArray<FD3D12BufferAllocatorPool*> Pools;
     TArray<FD3D12PendingDefragMove>    PendingDefragMoves;
-    FCriticalSection                   PoolsCS;
+    mutable FCriticalSection           PoolsCS;
 };
 
 #else
@@ -591,7 +602,7 @@ public:
 private:
     ETexturePoolClass ClassifyTexture(const D3D12_RESOURCE_DESC& Desc, uint64 Alignment) const;
     bool CanUseSmallResourcePlacementAlignment(const D3D12_RESOURCE_DESC& Desc) const;
-    bool GetDefragCandidate(FD3D12PoolAllocatorAllocationData& OutCandidate, FD3D12PoolAllocator*& OutAllocator);
+    bool GetDefragCandidate(FD3D12DefragCandidate& OutCandidate, FD3D12PoolAllocator*& OutAllocator);
     void ReleasePools();
 
     uint64                          CommittedThreshold;
@@ -599,7 +610,7 @@ private:
     uint64                          SmallPoolAlignment;
     FD3D12PoolAllocator*            Pools[TEXTURE_POOL_CLASS_COUNT];
     TArray<FD3D12PendingDefragMove> PendingDefragMoves;
-    FCriticalSection                PoolsCS;
+    mutable FCriticalSection        PoolsCS;
 };
 
 #else

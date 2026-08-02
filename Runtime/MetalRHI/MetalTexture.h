@@ -28,7 +28,7 @@ public:
     virtual void SetDebugName(const String& InName)       override final;
     virtual void GetDebugName(String& OutDebugName) const override final;
     
-    bool Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
+    bool Initialize(ERHIResourceState InInitialAccess, const IRHITextureData* InInitialData);
     
     id<MTLTexture> GetMTLTexture() const;
 

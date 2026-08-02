@@ -28,16 +28,16 @@ class FVulkanBarrierBatcher
         {
         }
 
-        TArray<VkMemoryBarrier2>       MemoryBarriers;
-        TArray<VkBufferMemoryBarrier2> BufferMemoryBarriers;
-        TArray<VkImageMemoryBarrier2>  ImageMemoryBarriers;
-        VkDependencyFlags              DependencyFlags;
+        TArray<VkMemoryBarrier2KHR>       MemoryBarriers;
+        TArray<VkBufferMemoryBarrier2KHR> BufferMemoryBarriers;
+        TArray<VkImageMemoryBarrier2KHR>  ImageMemoryBarriers;
+        VkDependencyFlags                 DependencyFlags;
     };
 
 public:
-    void AddMemoryBarrier(VkDependencyFlags DependencyFlags, const VkMemoryBarrier2& InBarrier);
-    void AddBufferMemoryBarrier(VkDependencyFlags DependencyFlags, const VkBufferMemoryBarrier2& InBarrier);
-    void AddImageMemoryBarrier(VkDependencyFlags DependencyFlags, const VkImageMemoryBarrier2& InBarrier);
+    void AddMemoryBarrier(VkDependencyFlags DependencyFlags, const VkMemoryBarrier2KHR& InBarrier);
+    void AddBufferMemoryBarrier(VkDependencyFlags DependencyFlags, const VkBufferMemoryBarrier2KHR& InBarrier);
+    void AddImageMemoryBarrier(VkDependencyFlags DependencyFlags, const VkImageMemoryBarrier2KHR& InBarrier);
     void FlushBarriers(FVulkanCommandBuffer& CommandBuffer);
     
     bool HasPendingBarriers() const
@@ -106,12 +106,8 @@ public:
     virtual void DiscardContents(class FRHITexture* Texture) override final;
     virtual void BuildSceneAccelerationStructure(FRHISceneAccelerationStructure* InRayTracingScene, const FRHISceneAccelerationStructureBuildDesc& InBuildDesc) override final;
     virtual void BuildGeometryAccelerationStructure(FRHIGeometryAccelerationStructure* InRayTracingGeometry, const FRHIGeometryAccelerationStructureBuildDesc& InBuildDesc) override final;
-    virtual void TransitionTextureState(FRHITexture* Texture, const FRHITextureTransition& TextureTransition) override final;
-    virtual void TransitionBufferState(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) override final;
-    virtual void RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState) override final;
-    virtual void RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState) override final;
-    virtual void UnorderedAccessTextureBarrier(FRHITexture* Texture) override final;
-    virtual void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer) override final;
+    virtual void TransitionBarrier(TArrayView<const FRHITransitionBarrierDesc> TransitionDescs) override final;
+    virtual void UnorderedAccessBarrier(TArrayView<const FRHIUnorderedAccessBarrierDesc> BarrierDescs) override final;
     virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation) override final;
     virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) override final;
     virtual void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) override final;
@@ -153,6 +149,16 @@ public:
     void TransitionImageLayout(FVulkanTextureRHI* Texture, VkImageLayout AfterLayout, uint32 FirstMip, uint32 NumMips, uint32 FirstArraySlice, uint32 NumArraySlices);
     void TransitionImageLayout(FVulkanUnorderedAccessViewRHI* View);
     void TransitionImageLayout(FVulkanShaderResourceViewRHI* View, VkImageLayout Layout);
+
+    void RequireBufferState(class FVulkanBufferRHI* Buffer, ERHIResourceState RequiredState);
+    void RequireBufferState(FVulkanUnorderedAccessViewRHI* View, ERHIResourceState RequiredState);
+
+    void TransitionBarrierTexture(const FRHITransitionBarrierDesc& Desc);
+    void TransitionBarrierBuffer(const FRHITransitionBarrierDesc& Desc);
+    
+    void ApplyTrackingModeChange(class FVulkanTextureRHI* Texture, const FRHITransitionBarrierDesc& Desc);
+
+    void AddAccelerationStructureMemoryBarrier();
 
     void ObtainCommandBuffer();
     void FinishCommandBuffer(bool bFlushPool, bool bResolveQueries = true, FVulkanFence** OutFence = nullptr);
@@ -208,8 +214,6 @@ private:
     
     void CloseEventStack();
     void ReopenEventStack();
-
-    void RequireBufferState(class FVulkanBufferRHI* Buffer, EResourceAccess RequiredState);
 
     FVulkanBufferState&      RetrievePendingBufferState(class FVulkanBufferRHI* Buffer);
     FVulkanImageLayoutState& RetrievePendingImageState(class FVulkanTextureRHI* Texture);

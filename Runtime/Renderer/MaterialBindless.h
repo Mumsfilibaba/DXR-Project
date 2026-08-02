@@ -1,8 +1,9 @@
 #pragma once
+#include "RHI/RHI.h"
 #include "RHI/RHIResources.h"
 #include "Engine/Engine.h"
 #include "Engine/Resources/Material.h"
-#include "Core/CoreDefines.h"
+#include "Core/Misc/Asserts.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 
 static_assert(sizeof(FRHIDescriptorHandle) == sizeof(uint32), "FRHIDescriptorHandle must be 4 bytes for the HLSL bitfield layout");
@@ -39,6 +40,12 @@ inline void FillMaterialHandles(const FMaterial& InMaterial, FMaterialHLSL& OutD
     FRHIShaderResourceView* MaterialSRV = SafeGetDefaultSRV(InMaterial.MaterialMap);
 
     const bool bHasRealNormalMap = (NormalSRV != nullptr);
+    OutData.NormalMapFlags = bHasRealNormalMap ? 1u : 0u;
+
+    if (!RHI::bSupportsBindless)
+    {
+        return;
+    }
 
     if (FEngine* Engine = FEngine::Get())
     {
@@ -82,6 +89,4 @@ inline void FillMaterialHandles(const FMaterial& InMaterial, FMaterialHLSL& OutD
     {
         OutData.SamplerHandle = MaterialSampler->GetBindlessHandle();
     }
-
-    OutData.NormalMapFlags = bHasRealNormalMap ? 1u : 0u;
 }

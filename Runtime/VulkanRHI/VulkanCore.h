@@ -21,9 +21,11 @@
 #define VK_NO_PROTOTYPES (1)
 #include <vulkan/vulkan.h>
 
-#if !defined(VK_VERSION_1_3)
-    #error Vulkan version must be 1.3 or above
+#if !defined(VK_VERSION_1_2)
+    #error Vulkan version must be 1.2 or above
 #endif
+
+#define VULKAN_TARGET_API_VERSION VK_API_VERSION_1_2
 
 static_assert(sizeof(FRHIDrawIndirectParameters) == sizeof(VkDrawIndirectCommand));
 static_assert(sizeof(FRHIDrawIndexedIndirectParameters) == sizeof(VkDrawIndexedIndirectCommand));
@@ -52,6 +54,15 @@ static_assert(OFFSETOF(FRHIDispatchRaysIndirectParameters, Depth) == OFFSETOF(Vk
 #endif
 
 #include "VulkanRHI/VulkanLoader.h"
+
+enum class EVulkanNullImageViewType : uint8
+{
+    Texture2D        = 0,
+    Texture2DArray   = 1,
+    TextureCube      = 2,
+    TextureCubeArray = 3,
+    Count            = 4,
+};
 
 #if VULKAN_ENABLE_LOGGING
     #define VULKAN_ERROR_CRITICAL(...) \
@@ -221,19 +232,55 @@ private:
     }
 
 public:
-    static constexpr SIZE_T HeaderSize   = GetHeaderSize();
-    static constexpr SIZE_T FeatureBytes = (sizeof(T) >= HeaderSize) ? (sizeof(T) - HeaderSize) : 0u;
-    static constexpr SIZE_T FeatureCount = FeatureBytes / sizeof(VkBool32);
+    static constexpr SIZE_T HeaderSize      = GetHeaderSize();
+    static constexpr SIZE_T FeatureBytes    = (sizeof(T) >= HeaderSize) ? (sizeof(T) - HeaderSize) : 0u;
+    static constexpr SIZE_T MaxFeatureCount = FeatureBytes / sizeof(VkBool32);
 
     static_assert(TIsStandardLayout<T>::Value, "Features struct must be standard-layout.");
     static_assert((FeatureBytes % sizeof(VkBool32)) == 0, "Feature area must be composed of whole VkBool32 elements.");
 };
+
+// -------------------------------------------------------------------------------------------
+// Number of VkBool32 features a feature struct actually declares.
+// MaxFeatureCount above is derived from sizeof(), which also covers the tail padding the
+// compiler inserts to keep a pointer-aligned struct a whole number of alignments long. A
+// struct holding an odd number of features therefore reports one slot too many, and that
+// slot is indeterminate padding that must never be compared or written.
+// -------------------------------------------------------------------------------------------
+
+template <typename T>
+struct TVulkanFeatureCount;
+
+#define VULKAN_DECLARE_FEATURE_COUNT(StructType, LastMemberName)                                     \
+    template <>                                                                                      \
+    struct TVulkanFeatureCount<StructType>                                                           \
+    {                                                                                                \
+        static constexpr SIZE_T Value =                                                              \
+            ((OFFSETOF(StructType, LastMemberName) - TVulkanFeatureLayout<StructType>::HeaderSize) / \
+                sizeof(VkBool32)) + 1;                                                               \
+                                                                                                     \
+        static_assert(Value <= TVulkanFeatureLayout<StructType>::MaxFeatureCount,                    \
+            "'" #LastMemberName "' lies outside " #StructType ".");                                  \
+        static_assert((TVulkanFeatureLayout<StructType>::MaxFeatureCount - Value) * sizeof(VkBool32) \
+            < alignof(StructType),                                                                   \
+            "More than tail padding is unaccounted for in " #StructType                              \
+            ". Is '" #LastMemberName "' really its last member?");                                   \
+    }
+
+VULKAN_DECLARE_FEATURE_COUNT(VkPhysicalDeviceFeatures,         inheritedQueries);
+VULKAN_DECLARE_FEATURE_COUNT(VkPhysicalDeviceVulkan11Features, shaderDrawParameters);
+VULKAN_DECLARE_FEATURE_COUNT(VkPhysicalDeviceVulkan12Features, subgroupBroadcastDynamicId);
+
+static_assert(TVulkanFeatureCount<VkPhysicalDeviceVulkan12Features>::Value == 47);
+static_assert(TVulkanFeatureLayout<VkPhysicalDeviceVulkan12Features>::MaxFeatureCount == 48);
 
 template <typename T>
 class TVulkanFeatureView
 {
     typedef typename TRemoveConst<T>::Type NonConstType;
     typedef TVulkanFeatureLayout<NonConstType> LayoutType;
+
+    static constexpr SIZE_T FeatureCount = TVulkanFeatureCount<NonConstType>::Value;
 
 public:
     explicit TVulkanFeatureView(NonConstType& Features)
@@ -245,7 +292,7 @@ public:
 
     constexpr SIZE_T Size()
     {
-        return LayoutType::FeatureCount;
+        return FeatureCount;
     }
 
     VkBool32* Data()
@@ -265,7 +312,7 @@ public:
 
     VkBool32* End()
     {
-        return FeatureStart + LayoutType::FeatureCount;
+        return FeatureStart + FeatureCount;
     }
 
     const VkBool32* Begin() const
@@ -275,7 +322,7 @@ public:
 
     const VkBool32* End() const
     {
-        return FeatureStart + LayoutType::FeatureCount;
+        return FeatureStart + FeatureCount;
     }
 
     VkBool32& operator[](SIZE_T FeatureIndex)
@@ -298,6 +345,8 @@ class TVulkanFeatureView<const T>
     typedef typename TRemoveConst<T>::Type NonConstType;
     typedef TVulkanFeatureLayout<NonConstType> LayoutType;
 
+    static constexpr SIZE_T FeatureCount = TVulkanFeatureCount<NonConstType>::Value;
+
 public:
     explicit TVulkanFeatureView(const NonConstType& Features)
     {
@@ -308,7 +357,7 @@ public:
 
     constexpr SIZE_T Size()
     {
-        return LayoutType::FeatureCount;
+        return FeatureCount;
     }
 
     const VkBool32* Data() const
@@ -323,7 +372,7 @@ public:
 
     const VkBool32* End() const
     {
-        return FeatureStart + LayoutType::FeatureCount;
+        return FeatureStart + FeatureCount;
     }
 
     const VkBool32& operator[](SIZE_T FeatureIndex) const
@@ -1749,11 +1798,15 @@ constexpr const CHAR* ToString(VkDescriptorType DescriptorType)
     case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:     return "VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC";
     case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:     return "VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC";
     case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:           return "VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT";
-    case VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK:       return "VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK";
+    case VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK_EXT:   return "VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK";
     case VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR: return "VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR";
     case VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV:  return "VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV";
+#if VK_QCOM_image_processing
     case VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM:     return "VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM";
+#endif
+#if VK_EXT_mutable_descriptor_type
     case VK_DESCRIPTOR_TYPE_MUTABLE_EXT:                return "VK_DESCRIPTOR_TYPE_MUTABLE_EXT";
+#endif
     
     default:
         return "Unknown VkDescriptorType";

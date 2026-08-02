@@ -1,11 +1,59 @@
 #include "Core/Mac/MacPlatformLibrary.h"
 #include "Core/Mac/MacPlatformMisc.h"
+#include "Core/Mac/MacPlatformFile.h"
+
+#include <sys/param.h>
 
 // Lazy mode resolves symbols when they are called for the first time, disable to load everything at loadtime
 #define ENABLE_LIBRARY_LAZY_MODE (1)
 
 // Enables logging to the NSLog
 #define ENABLE_DYLIB_ERROR_LOGGING (0)
+
+static const CHAR* BuildExecutableRelativeDir(CHAR* OutBuffer, uint32 BufferSize, const CHAR* Suffix)
+{
+    const CHAR* ExecutablePath = FMacPlatformFile::GetExecutablePath();
+    
+    const CHAR* LastSeparator = CString::Strrchr(ExecutablePath, '/');
+    if (!LastSeparator)
+    {
+        return "";
+    }
+    
+    const uint32 DirLength = static_cast<uint32>(LastSeparator - ExecutablePath) + 1;
+    if (DirLength + CString::Strlen(Suffix) >= BufferSize)
+    {
+        return "";
+    }
+    
+    Memory::Memcpy(OutBuffer, ExecutablePath, DirLength);
+    CString::Strcat(OutBuffer, Suffix);
+    return OutBuffer;
+}
+
+static const CHAR* GetExecutableDir()
+{
+    static CHAR StaticExecutableDir[MAXPATHLEN] = { 0 };
+    
+    if (!StaticExecutableDir[0])
+    {
+        return BuildExecutableRelativeDir(StaticExecutableDir, sizeof(StaticExecutableDir), "");
+    }
+    
+    return StaticExecutableDir;
+}
+
+static const CHAR* GetBundleFrameworksDir()
+{
+    static CHAR StaticFrameworksDir[MAXPATHLEN] = { 0 };
+    
+    if (!StaticFrameworksDir[0])
+    {
+        return BuildExecutableRelativeDir(StaticFrameworksDir, sizeof(StaticFrameworksDir), "../Frameworks/");
+    }
+    
+    return StaticFrameworksDir;
+}
 
 static void* SafeLoadDynamicLib(const CHAR* LibraryName)
 {
@@ -52,13 +100,15 @@ static void* SafeLoadDynamicLib(const CHAR* LibraryName)
     }
 #endif
     
-    // Since the local lib folder is not check by default, check it as well
     const CHAR* Paths[] =
     {
-        "usr/local/lib/",
+        "@rpath/",              // Resolved through the LC_RPATH of this image
+        GetBundleFrameworksDir(),
+        GetExecutableDir(),
+        "/usr/local/lib/",      // SDK-installed libraries such as the Vulkan loader
     };
     
-    constexpr uint32 MaxFullPathLength = MaxNameLength + 128;
+    constexpr uint32 MaxFullPathLength = MaxNameLength + MAXPATHLEN;
     CHAR FullPath[MaxFullPathLength];
     for (const CHAR* Path : Paths)
     {

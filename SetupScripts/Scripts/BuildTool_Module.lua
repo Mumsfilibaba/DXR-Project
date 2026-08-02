@@ -55,11 +55,10 @@ function ModuleBuildRules(Name)
         else
             local ModuleApiName = self.Name:upper() .. "_API"
             if self.bIsDynamic then
-                -- Add define to control the module implementation (for export/import)
                 ModuleApiName = ModuleApiName .. "=MODULE_EXPORT"
-
                 self.Kind = "SharedLib"
             else
+                ModuleApiName = ModuleApiName .. "="
                 self.Kind = "StaticLib"
             end
 

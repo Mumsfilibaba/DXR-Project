@@ -1,15 +1,19 @@
 #include "TestHarness.h"
 #include "TestConsoleOutputDevice.h"
 
+#include <Core/CoreGlobals.h>
 #include <Core/Misc/OutputDeviceLogger.h>
 
 FTestConsoleOutputDevice TestHarness::ConsoleDevice;
 int32 TestHarness::NumPassed = 0;
 int32 TestHarness::NumFailed = 0;
 
-void TestHarness::Initialize()
+void TestHarness::Initialize(const CHAR* LogFileName)
 {
-    ConsoleDevice.OpenLogFile("TestResults.log");
+    // No one is watching a test run, so a failed assert has to fail the run rather than block on a dialog
+    GIsUnattended = true;
+
+    ConsoleDevice.OpenLogFile(LogFileName);
     FOutputDeviceLogger::Get()->RegisterOutputDevice(&ConsoleDevice);
     
     NumPassed = 0;

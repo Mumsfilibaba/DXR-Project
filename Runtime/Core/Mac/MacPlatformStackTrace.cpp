@@ -1,6 +1,9 @@
 #include "Core/Mac/MacPlatformStackTrace.h"
 #include "Core/Platform/PlatformLibrary.h"
+#include "Core/Platform/CriticalSection.h"
+#include "Core/Threading/ScopedLock.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include <dlfcn.h>
 #include <execinfo.h>
 #include <mach/mach.h>
 #include <CoreFoundation/CoreFoundation.h>
@@ -68,8 +71,8 @@ extern "C"
     typedef CSSymbolOwnerRef(*PFN_CSSourceInfoGetSymbolOwner)(CSSourceInfoRef Info);
 }
 
-// Keeps track if the symbolification helpers has been initialized
-static bool GIsInitialized = false;
+static FCriticalSection GSymbolsCS;
+static int32            GSymbolsRefCount = 0;
 
 // Handle to the dynamic library
 static void* GCoreSymbolicationLibrary = nullptr;
@@ -88,35 +91,66 @@ static PFN_CSSourceInfoGetLineNumber  CSSourceInfoGetLineNumber  = nullptr;
 static PFN_CSSourceInfoGetSymbol      CSSourceInfoGetSymbol      = nullptr;
 static PFN_CSSourceInfoGetSymbolOwner CSSourceInfoGetSymbolOwner = nullptr;
 
+/** CoreSymbolication returns null for anything it has no information about */
+static void CopySymbolString(CHAR (&OutBuffer)[FStackTraceEntry::MaxNameLength], const CHAR* Value)
+{
+    if (Value)
+    {
+        CString::Strncpy(OutBuffer, Value, FStackTraceEntry::MaxNameLength);
+    }
+}
+
+static bool LoadSymbolFunctions()
+{
+    LOAD_FUNCTION(CSIsNull, GCoreSymbolicationLibrary);
+    LOAD_FUNCTION(CSRelease, GCoreSymbolicationLibrary);
+
+    LOAD_FUNCTION(CSSymbolicatorCreateWithPid, GCoreSymbolicationLibrary);
+    LOAD_FUNCTION(CSSymbolicatorGetSourceInfoWithAddressAtTime, GCoreSymbolicationLibrary);
+
+    LOAD_FUNCTION(CSSymbolGetName, GCoreSymbolicationLibrary);
+    LOAD_FUNCTION(CSSymbolOwnerGetName, GCoreSymbolicationLibrary);
+
+    LOAD_FUNCTION(CSSourceInfoGetPath, GCoreSymbolicationLibrary);
+    LOAD_FUNCTION(CSSourceInfoGetLineNumber, GCoreSymbolicationLibrary);
+    LOAD_FUNCTION(CSSourceInfoGetSymbol, GCoreSymbolicationLibrary);
+    LOAD_FUNCTION(CSSourceInfoGetSymbolOwner, GCoreSymbolicationLibrary);
+
+    return true;
+}
+
 bool FMacPlatformStackTrace::InitializeSymbols()
 {
-    if (!GIsInitialized)
-    {
-        GCoreSymbolicationLibrary = FPlatformLibrary::LoadDynamicLib("/System/Library/PrivateFrameworks/CoreSymbolication.framework/Versions/Current/CoreSymbolication");
-        if(GCoreSymbolicationLibrary)
-        {
-            LOAD_FUNCTION(CSIsNull, GCoreSymbolicationLibrary);
-            LOAD_FUNCTION(CSRelease, GCoreSymbolicationLibrary);
-            
-            LOAD_FUNCTION(CSSymbolicatorCreateWithPid, GCoreSymbolicationLibrary);
-            LOAD_FUNCTION(CSSymbolicatorGetSourceInfoWithAddressAtTime, GCoreSymbolicationLibrary);
-            
-            LOAD_FUNCTION(CSSymbolGetName, GCoreSymbolicationLibrary);
-            LOAD_FUNCTION(CSSymbolOwnerGetName, GCoreSymbolicationLibrary);
+    TScopedLock Lock(GSymbolsCS);
 
-            LOAD_FUNCTION(CSSourceInfoGetPath, GCoreSymbolicationLibrary);
-            LOAD_FUNCTION(CSSourceInfoGetLineNumber, GCoreSymbolicationLibrary);
-            LOAD_FUNCTION(CSSourceInfoGetSymbol, GCoreSymbolicationLibrary);
-            LOAD_FUNCTION(CSSourceInfoGetSymbolOwner, GCoreSymbolicationLibrary);
+    if (GSymbolsRefCount == 0)
+    {
+        // dlopen directly rather than through FPlatformLibrary, which decorates 
+        // the name into lib<Name>.dylib and so cannot express a framework path.
+        GCoreSymbolicationLibrary = ::dlopen("/System/Library/PrivateFrameworks/CoreSymbolication.framework/Versions/Current/CoreSymbolication", RTLD_LAZY);
+        if (!GCoreSymbolicationLibrary)
+        {
+            LOG_ERROR("Failed to load CoreSymbolication");
+            return false;
+        }
+
+        if (!LoadSymbolFunctions())
+        {
+            ::dlclose(GCoreSymbolicationLibrary);
+            GCoreSymbolicationLibrary = nullptr;
+            return false;
         }
     }
 
+    ++GSymbolsRefCount;
     return true;
 }
 
 void FMacPlatformStackTrace::ReleaseSymbols()
 {
-    if (GIsInitialized)
+    TScopedLock Lock(GSymbolsCS);
+
+    if ((GSymbolsRefCount > 0) && (--GSymbolsRefCount == 0))
     {
         CSIsNull  = nullptr;
         CSRelease = nullptr;
@@ -132,10 +166,8 @@ void FMacPlatformStackTrace::ReleaseSymbols()
         CSSourceInfoGetSymbol      = nullptr;
         CSSourceInfoGetSymbolOwner = nullptr;
 
-        FPlatformLibrary::FreeDynamicLib(GCoreSymbolicationLibrary);
+        ::dlclose(GCoreSymbolicationLibrary);
         GCoreSymbolicationLibrary = nullptr;
-        
-        GIsInitialized = false;
     }
 }
 
@@ -150,13 +182,8 @@ int32 FMacPlatformStackTrace::CaptureStackTrace(uint64* StackTrace, int32 MaxDep
     return ActualDepth;
 }
 
-void FMacPlatformStackTrace::GetStackTraceEntryFromAddress(uint64 Address, FStackTraceEntry& OutStackTraceEntry)
+static void SymbolicateWithCoreSymbolication(uint64 Address, FStackTraceEntry& OutStackTraceEntry)
 {
-    if (!InitializeSymbols())
-    {
-        return;
-    }
-
     pid_t ProcessID = getpid();
 
     CSSymbolicatorRef Symbolicator = CSSymbolicatorCreateWithPid(ProcessID);
@@ -165,19 +192,49 @@ void FMacPlatformStackTrace::GetStackTraceEntryFromAddress(uint64 Address, FStac
         CSSourceInfoRef Symbol = CSSymbolicatorGetSourceInfoWithAddressAtTime(Symbolicator, (vm_address_t)Address, kCSNow);
         if(!CSIsNull(Symbol))
         {
-            CString::Strncpy(OutStackTraceEntry.Filename, CSSourceInfoGetPath(Symbol), ARRAY_COUNT(OutStackTraceEntry.Filename));
-            CString::Strncpy(OutStackTraceEntry.FunctionName, CSSymbolGetName(CSSourceInfoGetSymbol(Symbol)), ARRAY_COUNT(OutStackTraceEntry.FunctionName));
-            
+            // Any of these can come back null for an address without full debug information
+            CopySymbolString(OutStackTraceEntry.Filename, CSSourceInfoGetPath(Symbol));
+
+            CSSymbolRef FunctionSymbol = CSSourceInfoGetSymbol(Symbol);
+            if (!CSIsNull(FunctionSymbol))
+            {
+                CopySymbolString(OutStackTraceEntry.FunctionName, CSSymbolGetName(FunctionSymbol));
+            }
+
             OutStackTraceEntry.Line = CSSourceInfoGetLineNumber(Symbol);
 
             CSSymbolOwnerRef Owner = CSSourceInfoGetSymbolOwner(Symbol);
             if(!CSIsNull(Owner))
             {
-                const CHAR* DylibName = CSSymbolOwnerGetName(Owner);
-                CString::Strncpy(OutStackTraceEntry.ModuleName, DylibName, ARRAY_COUNT(OutStackTraceEntry.ModuleName));
+                CopySymbolString(OutStackTraceEntry.ModuleName, CSSymbolOwnerGetName(Owner));
             }
         }
         
         CSRelease(Symbolicator);
+    }
+}
+
+void FMacPlatformStackTrace::GetStackTraceEntryFromAddress(uint64 Address, FStackTraceEntry& OutStackTraceEntry)
+{
+    if (InitializeSymbols())
+    {
+        SymbolicateWithCoreSymbolication(Address, OutStackTraceEntry);
+        ReleaseSymbols();
+    }
+
+    // CoreSymbolication only resolves an address when the binary has debug information 
+    // beside it, so fall back to the dynamic linker for at least a function and module name.
+    if (OutStackTraceEntry.FunctionName[0] == 0)
+    {
+        Dl_info Info;
+        if (::dladdr(reinterpret_cast<const void*>(Address), &Info))
+        {
+            CopySymbolString(OutStackTraceEntry.FunctionName, Info.dli_sname);
+
+            if (OutStackTraceEntry.ModuleName[0] == 0)
+            {
+                CopySymbolString(OutStackTraceEntry.ModuleName, Info.dli_fname);
+            }
+        }
     }
 }

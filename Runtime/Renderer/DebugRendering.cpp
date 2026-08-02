@@ -111,7 +111,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     VertexBufferDesc.Size   = SphereMesh.Vertices.SizeInBytes();
     VertexBufferDesc.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::Default;
 
-    SphereVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, EResourceAccess::Common, SphereMesh.Vertices.Data());
+    SphereVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::Common, SphereMesh.Vertices.Data());
 
     if (!SphereVertexBuffer)
     {
@@ -132,7 +132,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     IndexBufferDesc.Size   = SphereMeshSmallIndicies.SizeInBytes();
     IndexBufferDesc.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::Default;
 
-    SphereIndexBuffer = RHI::CreateBuffer(IndexBufferDesc, EResourceAccess::Common, SphereMeshSmallIndicies.Data());
+    SphereIndexBuffer = RHI::CreateBuffer(IndexBufferDesc, ERHIResourceState::Common, SphereMeshSmallIndicies.Data());
     if (!SphereIndexBuffer)
     {
         DEBUG_BREAK();
@@ -159,7 +159,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     VertexBufferDesc.Size   = AABBVertices.SizeInBytes();
     VertexBufferDesc.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::Default;
 
-    AABBVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, EResourceAccess::Common, AABBVertices.Data());
+    AABBVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::Common, AABBVertices.Data());
 
     if (!AABBVertexBuffer)
     {
@@ -192,7 +192,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     IndexBufferDesc.Size   = AABBWireframeIndices.SizeInBytes();
     IndexBufferDesc.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::Default;
 
-    AABBIndexBuffer_Wireframe = RHI::CreateBuffer(IndexBufferDesc, EResourceAccess::Common, AABBWireframeIndices.Data());
+    AABBIndexBuffer_Wireframe = RHI::CreateBuffer(IndexBufferDesc, ERHIResourceState::Common, AABBWireframeIndices.Data());
 
     if (!AABBIndexBuffer_Wireframe)
     {
@@ -226,7 +226,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
 	IndexBufferDesc.Size   = AABBSolidIndices.SizeInBytes();
 	IndexBufferDesc.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::Default;
 
-    AABBIndexBuffer_Solid = RHI::CreateBuffer(IndexBufferDesc, EResourceAccess::Common, AABBSolidIndices.Data());
+    AABBIndexBuffer_Solid = RHI::CreateBuffer(IndexBufferDesc, ERHIResourceState::Common, AABBSolidIndices.Data());
 
     if (!AABBIndexBuffer_Solid)
     {
@@ -571,7 +571,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     return true;
 }
 
-void FDebugRenderer::PreparePipelineState(EFormat OutputFormat)
+void FDebugRenderer::PreparePipelineStateForFormat(EFormat OutputFormat)
 {
     if (!AABB_NoDepth_PSO || AABB_NoDepth_PSOFormat != OutputFormat)
     {

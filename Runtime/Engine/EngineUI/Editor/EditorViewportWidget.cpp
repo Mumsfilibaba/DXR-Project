@@ -123,7 +123,7 @@ void FEditorViewportWidget::Draw()
             ImGui::PushStyleColor(ImGuiCol_ChildBg, ToolbarBg);
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
-            if (ImGui::BeginChild("##ViewportToolbar", ImVec2(0.0f, ToolbarHeight), false, ToolbarFlags))
+            if (ImGui::BeginChild("##ViewportToolbar", ImVec2(0.0f, ToolbarHeight), ImGuiChildFlags_None, ToolbarFlags))
             {
                 struct FDebugItem
                 {
@@ -421,7 +421,6 @@ void FEditorViewportWidget::Draw()
                 const CHAR* MenuLabelText = BuildClampedLabel(CurrentLabel, MaxTextWidth, MenuLabel);
 
                 const ImVec2 ChildPos               = ImGui::GetWindowPos();
-                const ImVec2 ChildSize              = ImGui::GetWindowSize();
                 const ImVec2 ContentMin             = ImGui::GetWindowContentRegionMin();
                 const ImVec2 ContentMax             = ImGui::GetWindowContentRegionMax();
                 const float  ContentWidth           = ContentMax.x - ContentMin.x;
@@ -448,11 +447,11 @@ void FEditorViewportWidget::Draw()
 
                 const ImGuiPopupFlags PopupQueryFlags = ImGuiPopupFlags_AnyPopupLevel;
 
-                const bool bCameraPopupOpen     = ImGui::IsPopupOpen(CameraMenuPopupId, PopupQueryFlags);
-                const bool bViewPopupOpen       = ImGui::IsPopupOpen(ViewMenuPopupId, PopupQueryFlags);
-                const bool bShadowPopupOpen     = ImGui::IsPopupOpen(ShadowMenuPopupId, PopupQueryFlags);
-                const bool bRayTracingPopupOpen = ImGui::IsPopupOpen(RayTracingMenuPopupId, PopupQueryFlags);
-                const bool bSecondaryPopupOpen  = ImGui::IsPopupOpen(SecondaryMenuPopupId, PopupQueryFlags);
+                const bool bCameraPopupOpen     = ImGui::IsPopupOpen(ImGui::GetID(CameraMenuPopupId), PopupQueryFlags);
+                const bool bViewPopupOpen       = ImGui::IsPopupOpen(ImGui::GetID(ViewMenuPopupId), PopupQueryFlags);
+                const bool bShadowPopupOpen     = ImGui::IsPopupOpen(ImGui::GetID(ShadowMenuPopupId), PopupQueryFlags);
+                const bool bRayTracingPopupOpen = ImGui::IsPopupOpen(ImGui::GetID(RayTracingMenuPopupId), PopupQueryFlags);
+                const bool bSecondaryPopupOpen  = ImGui::IsPopupOpen(ImGui::GetID(SecondaryMenuPopupId), PopupQueryFlags);
                 const bool bAnyPopupOpen        = bCameraPopupOpen || bViewPopupOpen || bShadowPopupOpen || bRayTracingPopupOpen || bSecondaryPopupOpen;
 
                 PopupAnchor CameraMenuAnchor;
@@ -710,18 +709,14 @@ void FEditorViewportWidget::Draw()
                     EditorWidgets::MenuLabeledSeparator("VIEW MODE");
 
                     bool bRequestClosePopup = false;
-                    bool bAnyMainRowHovered = false;
 
                     for (const FDebugItem& Item : BaseViewItems)
                     {
-                        bool bRowHovered = false;
-                        if (DrawRadioMenuItem(Item.Label, DebugView == Item.View, true, false, &bRowHovered))
+                        if (DrawRadioMenuItem(Item.Label, DebugView == Item.View, true, false, nullptr))
                         {
                             DebugView          = Item.View;
                             bRequestClosePopup = true;
                         }
-
-                        bAnyMainRowHovered |= bRowHovered;
                     }
 
                     const auto DrawSubmenuOverlay = [&](const CHAR* Label, const PopupAnchor& Anchor)
@@ -764,7 +759,6 @@ void FEditorViewportWidget::Draw()
                         bool bShadowHovered = false;
 
                         const bool bShadowPressed = DrawSubmenuRow("Shadow Debug", ShadowAnchor, bShadowHovered, bShadowPopupOpen);
-                        bAnyMainRowHovered |= bShadowHovered;
 
                         if (bShadowPressed || (bAnyPopupOpen && bShadowHovered))
                         {
@@ -802,7 +796,7 @@ void FEditorViewportWidget::Draw()
                             EditorWidgets::EndMenuPopup();
                         }
 
-                        if (ImGui::IsPopupOpen(ShadowMenuPopupId, PopupQueryFlags))
+                        if (ImGui::IsPopupOpen(ImGui::GetID(ShadowMenuPopupId), PopupQueryFlags))
                         {
                             DrawSubmenuOverlay("Shadow Debug", ShadowAnchor);
                         }
@@ -813,7 +807,6 @@ void FEditorViewportWidget::Draw()
                         bool bRayTracingHovered = false;
 
                         const bool bRayTracingPressed = DrawSubmenuRow("Ray Tracing", RayTracingAnchor, bRayTracingHovered, bRayTracingPopupOpen);
-                        bAnyMainRowHovered |= bRayTracingHovered;
 
                         if (bRayTracingPressed || (bAnyPopupOpen && bRayTracingHovered))
                         {
@@ -851,7 +844,7 @@ void FEditorViewportWidget::Draw()
                             EditorWidgets::EndMenuPopup();
                         }
 
-                        if (ImGui::IsPopupOpen(RayTracingMenuPopupId, PopupQueryFlags))
+                        if (ImGui::IsPopupOpen(ImGui::GetID(RayTracingMenuPopupId), PopupQueryFlags))
                         {
                             DrawSubmenuOverlay("Ray Tracing", RayTracingAnchor);
                         }
@@ -863,7 +856,6 @@ void FEditorViewportWidget::Draw()
                         bool bSecondaryHovered = false;
 
                         const bool bSecondaryPressed = DrawSubmenuRow("Secondary View", SecondaryAnchor, bSecondaryHovered, bSecondaryPopupOpen);
-                        bAnyMainRowHovered |= bSecondaryHovered;
 
                         if (bSecondaryPressed || (bAnyPopupOpen && bSecondaryHovered))
                         {
@@ -929,7 +921,7 @@ void FEditorViewportWidget::Draw()
                             EditorWidgets::EndMenuPopup();
                         }
 
-                        if (ImGui::IsPopupOpen(SecondaryMenuPopupId, PopupQueryFlags))
+                        if (ImGui::IsPopupOpen(ImGui::GetID(SecondaryMenuPopupId), PopupQueryFlags))
                         {
                             DrawSubmenuOverlay("Secondary View", SecondaryAnchor);
                         }
@@ -1166,7 +1158,7 @@ void FEditorViewportWidget::Draw()
             const ImVec2 BorderMin = ImVec2(ContentPos.x + 0.5f, ContentPos.y + 0.5f);
             const ImVec2 BorderMax = ImVec2(ContentPos.x + ContentSize.x - 0.5f, ContentPos.y + ContentSize.y - 0.5f);
 
-            DrawList->AddRect(BorderMin, BorderMax, BorderColorU32, 0.0f, ImDrawListFlags_AntiAliasedLines, BorderThickness);
+            DrawList->AddRect(BorderMin, BorderMax, BorderColorU32, 0.0f, ImDrawFlags_None, BorderThickness);
         }
 
         // ---------------------------------------------------------------------

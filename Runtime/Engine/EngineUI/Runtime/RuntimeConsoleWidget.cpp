@@ -12,10 +12,10 @@ FRuntimeConsoleWidget::FRuntimeConsoleWidget()
     , InputHandler()
     , ImGuiDelegateHandle()
     , Candidates()
-    , SelectedCandidateIndex(InvalidIndex)
-    , HistoryIndex(InvalidIndex)
     , Messages()
     , MessagesCS()
+    , SelectedCandidateIndex(InvalidIndex)
+    , HistoryIndex(InvalidIndex)
     , TextBuffer() 
     , bUpdateCursorPosition(false)
     , bIsActive(false)
@@ -127,7 +127,7 @@ void FRuntimeConsoleWidget::DrawConsole()
         {
             if (!Candidates.IsEmpty())
             {
-                ImGui::PushAllowKeyboardFocus(false);
+                ImGui::PushTabStop(false);
 
                 ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.6f, 0.6f, 0.6f, 1.0f));
                 ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.4f, 0.4f, 0.4f, 1.0f));
@@ -268,7 +268,7 @@ void FRuntimeConsoleWidget::DrawConsole()
                 ImGui::PopStyleColor();
                 ImGui::PopStyleColor();
 
-                ImGui::PopAllowKeyboardFocus();
+                ImGui::PopTabStop();
             }
             else
             {

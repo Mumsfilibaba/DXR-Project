@@ -12,6 +12,7 @@ public:
     FLightProbeActor(const FObjectInitializer& ObjectInitializer);
     ~FLightProbeActor();
 
+    using FActor::Initialize;
     void Initialize(const Vector3& InPosition, const FRHITextureRef& InCubeMap);
 
     FLightProbeComponent* GetLightProbeComponent() const

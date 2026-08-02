@@ -1,7 +1,7 @@
 #pragma once
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/ITextureImporter.h"
-#include "Engine/Assets/ImodelImporter.h"
+#include "Engine/Assets/IModelImporter.h"
 #include "Engine/Assets/ModelCreateInfo.h"
 #include "Engine/Assets/VertexFormat.h"
 

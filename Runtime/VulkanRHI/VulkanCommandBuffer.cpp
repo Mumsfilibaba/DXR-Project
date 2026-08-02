@@ -161,8 +161,8 @@ FVulkanCommandPool::FVulkanCommandPool(FVulkanDevice* InDevice, EVulkanCommandQu
     , CommandPool(VK_NULL_HANDLE)
     , Type(InType)
     , Flags(0)
-    , CommandBuffers()
     , AvailableCommandBuffers()
+    , CommandBuffers()
 {
 }
 

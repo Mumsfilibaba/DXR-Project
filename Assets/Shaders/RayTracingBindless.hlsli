@@ -24,6 +24,12 @@ struct FRayTracingSceneConstants
 
     // 176-304
     float4 PointLightColor[RT_MAX_POINT_LIGHTS];
+
+    // 304-320
+    float  ReflectionMaxRayDistance;
+    float  ReflectionMirrorRoughnessThreshold;
+    float  ReflectionRayBias;
+    float  Padding1;
 };
 
 struct FRayTracingGeometryIndices

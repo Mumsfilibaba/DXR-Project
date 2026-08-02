@@ -7,8 +7,8 @@
 #include "ImGuiPlugin/ImGuiExtensions.h"
 
 FEditorFooterWidget::FEditorFooterWidget(const TSharedPtr<IOutputDevice>& InOutputDevice)
-    : OutputDevice(InOutputDevice)
-    , Candidates()
+    : Candidates()
+    , OutputDevice(InOutputDevice)
     , SelectedCandidateIndex(InvalidIndex)
     , HistoryIndex(InvalidIndex)
     , LastCursorPosition(0)
@@ -47,8 +47,7 @@ void FEditorFooterWidget::Draw()
     const ImGuiWindowFlags ConsoleWindowFlags =
         ImGuiWindowFlags_NoMove |
         ImGuiWindowFlags_NoDecoration |
-        ImGuiWindowFlags_NoScrollWithMouse |
-        ImGuiWindowFlags_AlwaysAutoResize;
+        ImGuiWindowFlags_NoScrollWithMouse;
 
     const ImGuiChildFlags ConsoleChildWindowFlags = ImGuiChildFlags_None;
 
@@ -137,7 +136,7 @@ void FEditorFooterWidget::Draw()
             const bool bHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
             const ImU32 BorderColor = bActive ? BorderColorActive : (bHovered ? BorderColorHovered : BorderColorNormal);
-            DrawList->AddRect(InputRectMin, InputRectMax, BorderColor, InputRounding, ImDrawListFlags_AntiAliasedLines, EditorStyleVars::InputFieldBorderThickness);
+            DrawList->AddRect(InputRectMin, InputRectMax, BorderColor, InputRounding, ImDrawFlags_None, EditorStyleVars::InputFieldBorderThickness);
         }
 
         if (InputHandler)

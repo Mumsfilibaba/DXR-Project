@@ -54,16 +54,17 @@ struct RichTextViewContext
     RichTextSelectionPoint SelStart;
     RichTextSelectionPoint SelEnd;
 
-    ImGuiID ViewId          = 0;
-    ImVec2  Padding         = ImVec2(8.0f, 4.0f);
-    ImVec2  ContentStart    = ImVec2(0, 0);
-    float   LineHeight      = 0.0f;
-    float   CharWidth       = 0.0f;
-    bool    bAutoScroll     = true;
-    bool    bScrollToBottom = false;
-    bool    bSelecting      = false;
-    bool    bHasSelection   = false;
-    bool    bActive         = false;
+    ImGuiID ViewId              = 0;
+    ImVec2  Padding             = ImVec2(8.0f, 4.0f);
+    ImVec2  ContentStart        = ImVec2(0, 0);
+    float   LineHeight          = 0.0f;
+    float   CharWidth           = 0.0f;
+    bool    bAutoScroll         = true;
+    bool    bScrollToBottom     = false;
+    bool    bIsScrolledToBottom = true;
+    bool    bSelecting          = false;
+    bool    bHasSelection       = false;
+    bool    bActive             = false;
 };
 
 struct ErrorWindowContext

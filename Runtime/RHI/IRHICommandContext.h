@@ -20,7 +20,6 @@ struct FRHIHitGroupLocalShaderBinding;
 struct FRHIOpacityMicromapBuildDesc;
 struct FRHIRayTracingAccelerationStructureOperationDesc;
 struct FRHIGeometryAccelerationStructureInstance;
-struct FRHITextureTransition;
 
 enum class ECommandContextPhase
 {
@@ -32,6 +31,8 @@ enum class ECommandContextPhase
 
 struct IRHICommandContext
 {
+    virtual ~IRHICommandContext() = default;
+
     /**
      * @brief Begins a frame on the RHI thread.
      */
@@ -360,45 +361,19 @@ struct IRHICommandContext
     virtual void BuildGeometryAccelerationStructure(FRHIGeometryAccelerationStructure* RayTracingGeometry, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc) = 0;
 
     /**
-     * @brief Transition the ResourceState of a Texture resource.
-     * @param Texture Texture to transition ResourceState for
-     * @param TextureTransition Part of the texture to transition
+     * @brief Transition the ResourceState of a batch of texture and buffer resources. Entries 
+     * may freely mix textures and buffers. How each entry is handled depends on the tracking 
+     * mode the resource currently has: Static entries are dropped, Manual entries are emitted 
+     * verbatim from BeforeState, and Tracked entries have their before-state inferred.
+     * @param TransitionDescs Transitions to perform
      */
-    virtual void TransitionTextureState(FRHITexture* Texture, const FRHITextureTransition& TextureTransition) = 0;
+    virtual void TransitionBarrier(TArrayView<const FRHITransitionBarrierDesc> TransitionDescs) = 0;
 
     /**
-     * @brief Transition the ResourceState of a Buffer resource
-     * @param Buffer Buffer to transition ResourceState for
-     * @param BeforeState State that the Buffer had before the transition
-     * @param AfterState State that the Buffer have after the transition
+     * @brief Add UnorderedAccessBarriers, which should be issued between a write and a read of a resource in UnorderedAccessState.
+     * @param BarrierDescs Resources to issue barriers for, which may mix textures and buffers
      */
-    virtual void TransitionBufferState(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) = 0;
-
-    /**
-     * @brief Ensure a Texture resource is in the required state. The before-state is inferred from the tracked state.
-     * @param Texture Texture to transition
-     * @param RequiredState The state the texture must be in
-     */
-    virtual void RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState) = 0;
-
-    /**
-     * @brief Ensure a Buffer resource is in the required state. The before-state is inferred from the tracked state.
-     * @param Buffer Buffer to transition
-     * @param RequiredState The state the buffer must be in
-     */
-    virtual void RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState) = 0;
-
-    /**
-     * @brief Add a UnorderedAccessBarrier for a Texture resource, which should be issued before reading of a resource in UnorderedAccessState.
-     * @param Texture Texture to issue barrier for
-     */
-    virtual void UnorderedAccessTextureBarrier(FRHITexture* Texture) = 0;
-
-    /**
-     * @brief Add a UnorderedAccessBarrier for a Buffer resource, which should be issued before reading of a resource in UnorderedAccessState.
-     * @param Buffer Buffer to issue barrier for
-     */
-    virtual void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer) = 0;
+    virtual void UnorderedAccessBarrier(TArrayView<const FRHIUnorderedAccessBarrierDesc> BarrierDescs) = 0;
 
     /**
      * @brief Draws primitives using a non-indexed geometry.
@@ -653,8 +628,7 @@ struct IRHICommandContext
 
     /**
      * @brief Returns the backend-native command-list or command-buffer handle.
-     * @return D3D12: ID3D12GraphicsCommandList*. Vulkan: VkCommandBuffer*. Metal: nullptr.
-     * Null: nullptr.
+     * @return D3D12: ID3D12GraphicsCommandList*. Vulkan: VkCommandBuffer*. Metal: nullptr. Null: nullptr.
      */
     virtual void* GetRHINativeCommandList() = 0;
 };

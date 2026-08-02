@@ -34,7 +34,7 @@ TArray<FStackTraceEntry> FGenericPlatformStackTrace::GetStack(int32 MaxDepth, in
     // Ensure that static buffer does not overflow
     MaxDepth = Math::Min(MAX_STACK_DEPTH, MaxDepth + IgnoreCount);
 
-    const int32 Depth = CaptureStackTrace(StackTrace, MaxDepth);
+    const int32 Depth = FPlatformStackTrace::CaptureStackTrace(StackTrace, MaxDepth);
     for (int32 CurrentDepth = IgnoreCount; CurrentDepth < Depth; CurrentDepth++)
     {
         FStackTraceEntry& NewEntry = Stack.Emplace();

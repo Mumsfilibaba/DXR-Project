@@ -70,7 +70,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     VertexBufferDesc.Stride = SkyboxVertices.Stride();
     VertexBufferDesc.Flags  = EBufferFlags::Default | EBufferFlags::VertexBuffer;
 
-    SkyboxVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, SkyboxVertices.Data());
+    SkyboxVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::VertexBuffer, SkyboxVertices.Data());
     if (!SkyboxVertexBuffer)
     {
         return false;
@@ -86,7 +86,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     IndexBufferDesc.Size   = SkyboxIndexCount * IndexBufferDesc.Stride;
     IndexBufferDesc.Flags  = EBufferFlags::Default | EBufferFlags::IndexBuffer;
 
-    SkyboxIndexBuffer = RHI::CreateBuffer(IndexBufferDesc, EResourceAccess::IndexBuffer, (SkyboxIndexFormat == EIndexFormat::uint16) ?
+    SkyboxIndexBuffer = RHI::CreateBuffer(IndexBufferDesc, ERHIResourceState::IndexBuffer, (SkyboxIndexFormat == EIndexFormat::uint16) ?
         reinterpret_cast<void*>(SkyboxIndicies16.Data()) :
         reinterpret_cast<void*>(SkyboxIndicies32.Data()));
 

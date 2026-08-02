@@ -61,8 +61,7 @@ FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle, HICON InIco
     #endif
     }
 
-    const bool bResult = RegisterWindowClass();
-    CHECK(bResult == true);
+    VERIFY(RegisterWindowClass());
 
     // Initialize the Win32 -> EKeyboardKeyName mapping
     FWindowsInputMapper::Initialize();

@@ -128,9 +128,9 @@ bool FImGuiRenderer::InitializeRHI()
 
     TArray<FRHIInputElementDesc> InputElements =
     {
-        { "POSITION", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, pos)), 0, EVertexInputClass::Vertex, 0 },
-        { "TEXCOORD", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, uv)),  1, EVertexInputClass::Vertex, 0 },
-        { "COLOR",    0, EFormat::R8G8B8A8_Unorm, sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, col)), 2, EVertexInputClass::Vertex, 0 },
+        { "POSITION", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(offsetof(ImDrawVert, pos)), 0, EVertexInputClass::Vertex, 0 },
+        { "TEXCOORD", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(offsetof(ImDrawVert, uv)),  1, EVertexInputClass::Vertex, 0 },
+        { "COLOR",    0, EFormat::R8G8B8A8_Unorm, sizeof(ImDrawVert), 0, static_cast<uint32>(offsetof(ImDrawVert, col)), 2, EVertexInputClass::Vertex, 0 },
     };
 
     InputLayout = RHI::CreateInputLayout(InputElements);
@@ -345,7 +345,7 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
 void FImGuiRenderer::RenderViewport(FRHICommandList& CommandList, ImDrawData* DrawData, FImGuiViewport& ViewportData, bool bClear)
 {
     FRHITexture* BackBuffer = ViewportData.SwapChain->GetBackBuffer();
-    CommandList.TransitionTextureState(BackBuffer, FRHITextureTransition::Make(EResourceAccess::Present, EResourceAccess::RenderTarget));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::Present, ERHIResourceState::RenderTarget));
 
     PreparePipelineState(ViewportData.SwapChain->GetDesc().ColorFormat);
     PrepareDrawData(CommandList, DrawData);
@@ -357,7 +357,7 @@ void FImGuiRenderer::RenderViewport(FRHICommandList& CommandList, ImDrawData* Dr
     RenderDrawData(CommandList, DrawData);
     CommandList.EndRenderPass();
     
-    CommandList.TransitionTextureState(BackBuffer, FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::Present));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::RenderTarget, ERHIResourceState::Present));
 }
 
 void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* DrawData)
@@ -379,7 +379,7 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
         VertexBufferDesc.Size   = VertexBufferDesc.Stride * NewVertexCount;
         VertexBufferDesc.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
-        TSharedRef<FRHIBuffer> NewVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, EResourceAccess::GenericRead, nullptr);
+        TSharedRef<FRHIBuffer> NewVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::GenericRead, nullptr);
         if (NewVertexBuffer)
         {
             NewVertexBuffer->SetDebugName("ImGui VertexBuffer");
@@ -401,7 +401,7 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
         IndexBufferDesc.Size   = IndexBufferDesc.Stride * NewIndexCount;
         IndexBufferDesc.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
-        TSharedRef<FRHIBuffer> NewIndexBuffer = RHI::CreateBuffer(IndexBufferDesc, EResourceAccess::GenericRead, nullptr);
+        TSharedRef<FRHIBuffer> NewIndexBuffer = RHI::CreateBuffer(IndexBufferDesc, ERHIResourceState::GenericRead, nullptr);
         if (NewIndexBuffer)
         {
             NewIndexBuffer->SetDebugName("ImGui IndexBuffer");
@@ -414,8 +414,13 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
         }
     }
 
-    CommandList.TransitionBufferState(ViewportData->VertexBuffer.Get(), EResourceAccess::GenericRead, EResourceAccess::CopyDest);
-    CommandList.TransitionBufferState(ViewportData->IndexBuffer.Get(), EResourceAccess::GenericRead, EResourceAccess::CopyDest);
+    const FRHITransitionBarrierDesc ToCopyDest[] =
+    {
+        FRHITransitionBarrierDesc::CreateBuffer(ViewportData->VertexBuffer.Get(), ERHIResourceState::GenericRead, ERHIResourceState::CopyDest),
+        FRHITransitionBarrierDesc::CreateBuffer(ViewportData->IndexBuffer.Get(), ERHIResourceState::GenericRead, ERHIResourceState::CopyDest),
+    };
+
+    CommandList.TransitionBarrier(ToCopyDest);
 
     uint64 VertexOffset = 0;
     uint64 IndexOffset  = 0;
@@ -430,8 +435,13 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
         IndexOffset  += DrawCmdList->IdxBuffer.Size;
     }
 
-    CommandList.TransitionBufferState(ViewportData->VertexBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::GenericRead);
-    CommandList.TransitionBufferState(ViewportData->IndexBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::GenericRead);
+    const FRHITransitionBarrierDesc ToGenericRead[] =
+    {
+        FRHITransitionBarrierDesc::CreateBuffer(ViewportData->VertexBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::GenericRead),
+        FRHITransitionBarrierDesc::CreateBuffer(ViewportData->IndexBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::GenericRead),
+    };
+
+    CommandList.TransitionBarrier(ToGenericRead);
 }
 
 void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* DrawData)
@@ -453,7 +463,6 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
     int32  GlobalVertexOffset = 0;
     int32  GlobalIndexOffset  = 0;
     ImVec2 ClipOffset = DrawData->DisplayPos;
-    ImVec2 ClipScale  = DrawData->FramebufferScale;
     
     for (int32 i = 0; i < DrawData->CmdListsCount; ++i)
     {
@@ -637,7 +646,7 @@ void FImGuiRenderer::PrepareTextureForShaderResourceUsage(FRHICommandList& Comma
         return;
     }
 
-    CommandList.RequireTextureState(Texture, FRHIRequiredTextureState::Make(EResourceAccess::PixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Texture, ERHIResourceState::PixelShaderResource));
     RenderedTextures.Emplace(Texture);
 }
 

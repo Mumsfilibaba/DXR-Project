@@ -138,12 +138,18 @@ private:
     bool PrepareResources(FD3D12RootSignature* InRootSignature, const FD3D12EffectiveDescriptorCounts* InPipelineState, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
     bool PrepareSamplers(FD3D12RootSignature* InRootSignature, const FD3D12EffectiveDescriptorCounts* InPipelineState, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
 
+    void TransitionVertexAndIndexBuffers();
+
     void BindResources(FD3D12RootSignature* InRootSignature, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
     void BindSamplers(FD3D12RootSignature* InRootSignature, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
 
     void InternalSetRootSignature(FD3D12RootSignature* InRootSignature, bool bIsCompute);
 
     void DirtyAllResources();
+
+    void AccumulateSRVReadStates(FD3D12RootSignature* InRootSignature, const uint32* NumSRVs, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage);
+
+    D3D12_RESOURCE_STATES GetAccumulatedSRVReadState(FD3D12Resource* Resource, D3D12_RESOURCE_STATES StageState) const;
 
     enum class EActivePipeline : uint8
     {
@@ -273,4 +279,12 @@ private:
         FD3D12DescriptorCache          DescriptorCache;
         FD3D12ShaderConstantsCache     ShaderConstantsCache;
     } CommonState;
+
+    struct FAccumulatedReadState
+    {
+        FD3D12Resource*       Resource;
+        D3D12_RESOURCE_STATES State;
+    };
+
+    TArray<FAccumulatedReadState> SRVReadStates;
 };

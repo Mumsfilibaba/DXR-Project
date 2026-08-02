@@ -22,8 +22,8 @@ FD3D12Fence::~FD3D12Fence()
 
 bool FD3D12Fence::Initialize(uint64 InitialValue)
 {
-    CurrentValue      = InitialValue;
-    LastSignaledValue = InitialValue;
+    CurrentValue = InitialValue;
+    LastSignaledValue.Store(InitialValue);
 
     HRESULT Result = GetDevice()->GetD3D12Device()->CreateFence(InitialValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
     if (FAILED(Result))
@@ -47,7 +47,7 @@ uint64 FD3D12Fence::Signal(ID3D12CommandQueue* Queue)
     CHECK(Queue != nullptr);
 
     ++CurrentValue;
-    CHECK(LastSignaledValue != CurrentValue);
+    CHECK(LastSignaledValue.Load() != CurrentValue);
 
     HRESULT hResult = Queue->Signal(Fence.Get(), CurrentValue);
     if (FAILED(hResult))
@@ -56,15 +56,15 @@ uint64 FD3D12Fence::Signal(ID3D12CommandQueue* Queue)
         D3D12_ERROR_CRITICAL("[FD3D12Fence]: Failed to signal Fence on the GPU");
     }
 
-    LastSignaledValue = CurrentValue;
-    return LastSignaledValue;
+    LastSignaledValue.Store(CurrentValue);
+    return CurrentValue;
 }
 
 void FD3D12Fence::WaitGPU(ID3D12CommandQueue* Queue, uint64 Value)
 {
     CHECK(Queue != nullptr);
     CHECK(Fence != nullptr);
-    CHECK(Value <= LastSignaledValue);
+    CHECK(Value <= LastSignaledValue.Load());
 
     HRESULT hResult = Queue->Wait(Fence.Get(), Value);
     if (FAILED(hResult))

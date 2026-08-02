@@ -39,7 +39,7 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo, bool bCreateVertexAndIndexSR
     VertexBufferDesc.Size   = VertexCount * VertexBufferDesc.Stride;
     VertexBufferDesc.Flags  = BufferFlags | EBufferFlags::VertexBuffer;
 
-    VertexBuffers[EVertexStream::Packed] = RHI::CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, CreateInfo.Vertices.Data());
+    VertexBuffers[EVertexStream::Packed] = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::VertexBuffer, CreateInfo.Vertices.Data());
     if (!VertexBuffers[EVertexStream::Packed])
     {
         return false;
@@ -60,7 +60,7 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo, bool bCreateVertexAndIndexSR
 	VertexBufferDesc.Stride = sizeof(FVertexPosition);
 	VertexBufferDesc.Size   = VertexCount * VertexBufferDesc.Stride;
 
-    VertexBuffers[EVertexStream::Positions] = RHI::CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, VertexPositions.Data());
+    VertexBuffers[EVertexStream::Positions] = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::VertexBuffer, VertexPositions.Data());
     if (!VertexBuffers[EVertexStream::Positions])
     {
         return false;
@@ -81,7 +81,7 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo, bool bCreateVertexAndIndexSR
 	VertexBufferDesc.Stride = sizeof(FVertexNormal);
 	VertexBufferDesc.Size   = VertexCount * VertexBufferDesc.Stride;
 
-    VertexBuffers[EVertexStream::Normals] = RHI::CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, VertexNormals.Data());
+    VertexBuffers[EVertexStream::Normals] = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::VertexBuffer, VertexNormals.Data());
     if (!VertexBuffers[EVertexStream::Normals])
     {
         return false;
@@ -102,7 +102,7 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo, bool bCreateVertexAndIndexSR
     VertexBufferDesc.Stride = sizeof(FVertexTexCoord);
     VertexBufferDesc.Size   = VertexCount * VertexBufferDesc.Stride;
 
-    VertexBuffers[EVertexStream::TexCoords] = RHI::CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, VertexTexCoords.Data());
+    VertexBuffers[EVertexStream::TexCoords] = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::VertexBuffer, VertexTexCoords.Data());
     if (!VertexBuffers[EVertexStream::TexCoords])
     {
         return false;
@@ -140,7 +140,7 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo, bool bCreateVertexAndIndexSR
     IndexBufferDesc.Size   = IndexCount * IndexBufferDesc.Stride;
     IndexBufferDesc.Flags  = BufferFlags | EBufferFlags::IndexBuffer;
 
-    IndexBuffer = RHI::CreateBuffer(IndexBufferDesc, EResourceAccess::IndexBuffer, InitialIndicies);
+    IndexBuffer = RHI::CreateBuffer(IndexBufferDesc, ERHIResourceState::IndexBuffer, InitialIndicies);
     if (!IndexBuffer)
     {
         return false;

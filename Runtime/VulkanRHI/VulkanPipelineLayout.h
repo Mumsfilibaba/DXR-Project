@@ -87,8 +87,12 @@ struct FVulkanDescriptorRemappingInfo
     {
         EVulkanBindingType::Type BindingType;
         uint8                    BindingIndex;
+        EVulkanNullImageViewType NullViewType;
+        uint8                    Padding;
         uint16                   OriginalBindingIndex;
     };
+
+    static_assert(sizeof(FRemappingInfo) == 6, "FRemappingInfo must not contain implicit padding, it is hashed and compared as raw bytes");
 
     FVulkanDescriptorRemappingInfo()
         : RemappingInfo()

@@ -19,6 +19,12 @@ enum class EFormat : uint8;
 /** Alias for RHI_REMAINING_ARRAY_SLICES (all array layers) */
 #define RHI_ALL_ARRAY_SLICES (uint32(~0))
 
+/** Use this value to specify all plane slices of a texture (color, or both depth and stencil) */
+#define RHI_ALL_PLANE_SLICES (uint32(~0))
+
+/** Use this value to specify a buffer range that extends to the end of the buffer */
+#define RHI_WHOLE_SIZE (uint64(~0))
+
 /** Number of faces in a cube map texture */
 #define RHI_NUM_CUBE_FACES (6)
 
@@ -37,6 +43,42 @@ enum class EFormat : uint8;
 
 /** Maximum number of vertex buffers that can be bound at once */
 #define RHI_MAX_VERTEX_BUFFERS (32)
+
+enum class EShaderModel : uint8
+{
+    Unknown = 0,
+    SM_6_0  = 3,
+    SM_6_1  = 4,
+    SM_6_2  = 5,
+    SM_6_3  = 6,
+    SM_6_4  = 7,
+    SM_6_5  = 8,
+    SM_6_6  = 9,
+    SM_6_7  = 10,
+    SM_6_8  = 11,
+    SM_6_9  = 12,
+    SM_6_10 = 13,
+};
+
+NODISCARD constexpr const CHAR* ToString(EShaderModel ShaderModel)
+{
+    switch (ShaderModel)
+    {
+        case EShaderModel::SM_6_0:  return "SM_6_0";
+        case EShaderModel::SM_6_1:  return "SM_6_1";
+        case EShaderModel::SM_6_2:  return "SM_6_2";
+        case EShaderModel::SM_6_3:  return "SM_6_3";
+        case EShaderModel::SM_6_4:  return "SM_6_4";
+        case EShaderModel::SM_6_5:  return "SM_6_5";
+        case EShaderModel::SM_6_6:  return "SM_6_6";
+        case EShaderModel::SM_6_7:  return "SM_6_7";
+        case EShaderModel::SM_6_8:  return "SM_6_8";
+        case EShaderModel::SM_6_9:  return "SM_6_9";
+        case EShaderModel::SM_6_10: return "SM_6_10";
+
+        default: return "Unknown";
+    }
+}
 
 enum class ERayTracingTier : uint8
 {

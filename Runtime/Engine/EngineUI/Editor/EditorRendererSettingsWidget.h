@@ -34,6 +34,8 @@ private:
     void DrawPointLightShadowSettings();
     void DrawSkyboxSettings();
     void DrawSSAOSettings();
+    void DrawRayTracingSettings();
+    void DrawRayTracingReflectionsSettings();
     void DrawTAASettings();
     void DrawFXAASettings();
     void DrawDisplaySettings();

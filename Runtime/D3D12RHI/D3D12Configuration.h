@@ -32,7 +32,7 @@
 #endif
 
 #ifndef D3D12_ENABLE_RESOURCE_STATE_VALIDATION
-    #define D3D12_ENABLE_RESOURCE_STATE_VALIDATION (0)
+    #define D3D12_ENABLE_RESOURCE_STATE_VALIDATION (DEBUG_BUILD)
 #endif
 
 #ifndef D3D12_ENABLE_RESOURCE_STATE_LOGGING
@@ -297,4 +297,39 @@
     #else
         #define D3D12_ENABLE_INDIRECT_RAY_DISPATCH (0)
     #endif
+#endif
+
+// -------------------------------------------
+// Agility SDK feature availability
+// -------------------------------------------
+
+#ifndef D3D12_REQUIRED_AGILITY_SDK_VERSION
+    #define D3D12_REQUIRED_AGILITY_SDK_VERSION (619)
+#endif
+
+#if defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= D3D12_REQUIRED_AGILITY_SDK_VERSION)
+    #define D3D12_HAS_AGILITY_SDK (1)
+#else
+    #define D3D12_HAS_AGILITY_SDK (0)
+#endif
+
+#ifndef D3D12_ENABLE_TIGHT_ALIGNMENT
+    #define D3D12_ENABLE_TIGHT_ALIGNMENT (1)
+#endif
+
+#if D3D12_ENABLE_TIGHT_ALIGNMENT && D3D12_HAS_AGILITY_SDK
+    #define D3D12_USE_TIGHT_ALIGNMENT (1)
+#else
+    #define D3D12_USE_TIGHT_ALIGNMENT (0)
+#endif
+
+#if D3D12_HAS_AGILITY_SDK
+    #define D3D12_SUPPORT_OPTIONS22 (1)
+#else
+    #define D3D12_SUPPORT_OPTIONS22 (0)
+#endif
+
+// The Windows SDK headers declare the Opacity Micromap types but not this constant
+#ifndef D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_BYTE_ALIGNMENT
+    #define D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_BYTE_ALIGNMENT (128)
 #endif

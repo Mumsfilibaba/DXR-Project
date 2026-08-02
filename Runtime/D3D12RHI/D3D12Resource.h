@@ -40,10 +40,11 @@ enum class EResourceStorageType : uint8
 
 struct FD3D12PoolAllocatorAllocationData
 {
-    uint32                 PageIndex = UINT32_MAX;
-    uint64                 Offset    = 0;
-    uint64                 Size      = 0;
-    FD3D12ResourceStorage* Owner     = nullptr;
+    uint32                 PageIndex              = UINT32_MAX;
+    uint64                 Offset                 = 0;
+    uint64                 Size                   = 0;
+    FD3D12ResourceStorage* Owner                  = nullptr;
+    uint64                 EligibleFromFenceValue = UINT64_MAX;
 };
 
 struct FD3D12BuddyAllocatorAllocationData
@@ -71,6 +72,7 @@ public:
     
     void Swap(FD3D12ResourceStorage& Other);
     void UpdateOwnership();
+    void FinalizeAllocation();
     void ReleaseResource();
     void Reset();
     void ResetAllocator();
@@ -176,7 +178,8 @@ public:
     void SetDebugName(const String& InDebugName);
     void GetDebugName(String& OutDebugName) const;
     
-    bool IsPlacedResource() const { return Heap != nullptr; }
+    bool IsPlacedResource()  const { return Heap != nullptr; }
+    bool IsHeapTypeDefault() const { return HeapType == D3D12_HEAP_TYPE_DEFAULT; }
 
     bool ShouldDeferredRelease() const { return bShouldDeferredRelease; }
     void DisableDeferredRelease()      { bShouldDeferredRelease = false; }
@@ -221,6 +224,12 @@ public:
         bHasDefaultState = true;
     }
 
+    void ClearDefaultState()
+    {
+        DefaultState     = D3D12_RESOURCE_STATES(0);
+        bHasDefaultState = false;
+    }
+
     bool HasDefaultState() const
     {
         return bHasDefaultState;
@@ -244,6 +253,16 @@ public:
     uint32 GetNumSubresources() const 
     {
         return NumSubresources;
+    }
+
+    uint32 GetPlaneCount() const
+    {
+        return PlaneCount;
+    }
+
+    bool HasMultiplePlanes() const
+    {
+        return PlaneCount > 1;
     }
 
     ID3D12Resource* GetD3D12Resource() const 
@@ -276,6 +295,7 @@ private:
     FD3D12HeapRef             Heap;
     uint64                    AllocationSize;
     uint32                    NumSubresources;
+    uint32                    PlaneCount;
     bool                      bShouldDeferredRelease : 1;
     bool                      bHasClearValue : 1;
     bool                      bHasDefaultState : 1;

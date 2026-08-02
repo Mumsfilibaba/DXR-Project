@@ -191,10 +191,10 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     // Store final matrices
     {
         FCascadeMatrices Matrices;
-        Matrices.View        = View;
-        Matrices.ViewProj    = ViewProjection;
-        Matrices.InvView     = InvView;
-        Matrices.InvViewProj = InvViewProjection;
+        PackMatrix(View,              Matrices.View);
+        PackMatrix(ViewProjection,    Matrices.ViewProj);
+        PackMatrix(InvView,           Matrices.InvView);
+        PackMatrix(InvViewProjection, Matrices.InvViewProj);
 
         MatrixBuffer[CascadeIndex] = Matrices;
     }

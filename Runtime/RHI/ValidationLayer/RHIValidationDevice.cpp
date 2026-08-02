@@ -40,7 +40,7 @@ void FRHIValidationDevice::EndFrame()
     Device->EndFrame();
 }
 
-FRHITexture* FRHIValidationDevice::CreateTexture(const FRHITextureDesc& InTextureDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
+FRHITexture* FRHIValidationDevice::CreateTexture(const FRHITextureDesc& InTextureDesc, ERHIResourceState InInitialState, const IRHITextureData* InInitialData)
 {
 	// -------------------------------------------------------------------------------------------
 	// Basic sanity
@@ -343,7 +343,7 @@ FRHITexture* FRHIValidationDevice::CreateTexture(const FRHITextureDesc& InTextur
 	return Device->CreateTexture(InTextureDesc, InInitialState, InInitialData);
 }
 
-FRHIBuffer* FRHIValidationDevice::CreateBuffer(const FRHIBufferDesc& BufferDesc, EResourceAccess InitialState, const void* InitialData)
+FRHIBuffer* FRHIValidationDevice::CreateBuffer(const FRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const void* InitialData)
 {
     // -------------------------------------------------------------------------------------------
     // Basic sanity
@@ -429,19 +429,19 @@ FRHIBuffer* FRHIValidationDevice::CreateBuffer(const FRHIBufferDesc& BufferDesc,
         }
     }
 
-    if (IsEnumFlagSet(InitialState, EResourceAccess::CopyDest) && !IsBufferValidAsCopyDestination(BufferDesc))
+    if (IsEnumFlagSet(InitialState, ERHIResourceState::CopyDest) && !IsBufferValidAsCopyDestination(BufferDesc))
     {
         RHI_VALIDATION_ERROR("CreateBuffer: CopyDest initial access requires EBufferFlags::CopyDest or ReadBack memory.");
         return nullptr;
     }
 
-    if (IsEnumFlagSet(InitialState, EResourceAccess::CopySource) && !IsBufferValidAsCopySource(BufferDesc))
+    if (IsEnumFlagSet(InitialState, ERHIResourceState::CopySource) && !IsBufferValidAsCopySource(BufferDesc))
     {
         RHI_VALIDATION_ERROR("CreateBuffer: CopySource initial access requires EBufferFlags::CopySource.");
         return nullptr;
     }
 
-    if (IsEnumFlagSet(InitialState, EResourceAccess::IndirectArgument) && !bIsIndirectArguments)
+    if (IsEnumFlagSet(InitialState, ERHIResourceState::IndirectArgument) && !bIsIndirectArguments)
     {
         RHI_VALIDATION_ERROR("CreateBuffer: IndirectArgument initial access requires EBufferFlags::IndirectArguments.");
         return nullptr;

@@ -26,7 +26,7 @@ public:
     virtual void SetDebugName(const String& InName)       override final; 
     virtual void GetDebugName(String& OutDebugName) const override final; 
     
-    bool Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData);
+    bool Initialize(FD3D12CommandContext* InCommandContext, ERHIResourceState InInitialAccess, const void* InInitialData);
 
     void SetResource(FD3D12Resource* InResource); 
     

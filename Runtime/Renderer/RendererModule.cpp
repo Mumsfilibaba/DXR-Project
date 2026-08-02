@@ -34,7 +34,7 @@ FRendererModule::~FRendererModule()
 
 bool FRendererModule::Load()
 {
-    PreEngineInitHandle = CoreDelegates::PreEngineInitDelegate.AddLambda([this]()
+    PreEngineInitHandle = CoreDelegates::PreEngineInitDelegate.AddLambda([]()
     {
         if (IImguiPlugin::IsEnabled())
         {

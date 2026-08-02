@@ -19,3 +19,44 @@ bool FMacPlatformMisc::IsDebuggerPresent()
 
     return (Info.kp_proc.p_flag & P_TRACED) != 0;
 }
+
+EAssertDialogResult FMacPlatformMisc::ShowAssertDialog(const CHAR* Title, const CHAR* Message)
+{
+    // CFUserNotification rather than NSAlert: asserts fire from worker threads and from before an
+    // NSApplication exists, neither of which NSAlert supports
+    CFStringRef TitleRef   = CFStringCreateWithCString(nullptr, Title,   kCFStringEncodingUTF8);
+    CFStringRef MessageRef = CFStringCreateWithCString(nullptr, Message, kCFStringEncodingUTF8);
+
+    CFOptionFlags Response = 0;
+    const SInt32 Error = CFUserNotificationDisplayAlert(0.0, kCFUserNotificationStopAlertLevel, nullptr, nullptr, nullptr, 
+        TitleRef, MessageRef, CFSTR("Abort"), CFSTR("Debug"), CFSTR("Ignore"), &Response);
+    if (TitleRef)
+    {
+        CFRelease(TitleRef);
+    }
+
+    if (MessageRef)
+    {
+        CFRelease(MessageRef);
+    }
+
+    if (Error != 0)
+    {
+        return EAssertDialogResult::Abort;
+    }
+
+    switch (Response & 0x3)
+    {
+        case kCFUserNotificationDefaultResponse:
+            return EAssertDialogResult::Abort;
+
+        case kCFUserNotificationAlternateResponse:
+            return EAssertDialogResult::Debug;
+
+        case kCFUserNotificationOtherResponse:
+            return EAssertDialogResult::Ignore;
+
+        default:
+            return EAssertDialogResult::Abort;
+    }
+}

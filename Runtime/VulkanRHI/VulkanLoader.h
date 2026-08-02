@@ -1,6 +1,10 @@
 #pragma once
 #include "VulkanRHI/VulkanCore.h"
 
+#if !defined(VK_HEADER_VERSION)
+    #error VulkanLoader.h reached before <vulkan/vulkan.h>, check where VulkanCore.h includes it.
+#endif
+
 // -------------------------------------------------------------------------------------------
 // Loader macros
 // -------------------------------------------------------------------------------------------
@@ -30,6 +34,31 @@
         } \
     } while(false)
 
+#define VULKAN_LOAD_DEVICE_FUNCTION_ALIAS(Device, FunctionName, FallbackName) \
+    do \
+    { \
+        vk##FunctionName = reinterpret_cast<PFN_vk##FunctionName>(vkGetDeviceProcAddr(Device, "vk"#FunctionName)); \
+        if (!vk##FunctionName) \
+        { \
+            vk##FunctionName = reinterpret_cast<PFN_vk##FunctionName>(vkGetDeviceProcAddr(Device, "vk"#FallbackName)); \
+        } \
+        if (!vk##FunctionName) \
+        { \
+            VULKAN_ERROR_CRITICAL("Failed to load vk"#FunctionName" (or vk"#FallbackName")"); \
+            return false; \
+        } \
+    } while(false)
+
+#define VULKAN_TRY_LOAD_DEVICE_FUNCTION_ALIAS(Device, FunctionName, FallbackName) \
+    do \
+    { \
+        vk##FunctionName = reinterpret_cast<PFN_vk##FunctionName>(vkGetDeviceProcAddr(Device, "vk"#FunctionName)); \
+        if (!vk##FunctionName) \
+        { \
+            vk##FunctionName = reinterpret_cast<PFN_vk##FunctionName>(vkGetDeviceProcAddr(Device, "vk"#FallbackName)); \
+        } \
+    } while(false)
+
 #define VULKAN_TRY_LOAD_INSTANCE_FUNCTION(Instance, FunctionName) \
     vk##FunctionName = reinterpret_cast<PFN_vk##FunctionName>( \
         vkGetInstanceProcAddr(Instance, "vk"#FunctionName))
@@ -49,6 +78,8 @@ VULKAN_FUNCTION_DECLARATION(GetInstanceProcAddr);
 #define VULKAN_INSTANCE_FUNCTION_OPTIONAL(Name) VULKAN_FUNCTION_DECLARATION(Name);
 #define VULKAN_DEVICE_FUNCTION(Name) VULKAN_FUNCTION_DECLARATION(Name);
 #define VULKAN_DEVICE_FUNCTION_OPTIONAL(Name) VULKAN_FUNCTION_DECLARATION(Name);
+#define VULKAN_DEVICE_FUNCTION_ALIAS(Name, FallbackName) VULKAN_FUNCTION_DECLARATION(Name);
+#define VULKAN_DEVICE_FUNCTION_ALIAS_OPTIONAL(Name, FallbackName) VULKAN_FUNCTION_DECLARATION(Name);
 
 #include "VulkanRHI/VulkanFunctions.inl"
 
@@ -57,6 +88,8 @@ VULKAN_FUNCTION_DECLARATION(GetInstanceProcAddr);
 #undef VULKAN_INSTANCE_FUNCTION_OPTIONAL
 #undef VULKAN_DEVICE_FUNCTION
 #undef VULKAN_DEVICE_FUNCTION_OPTIONAL
+#undef VULKAN_DEVICE_FUNCTION_ALIAS
+#undef VULKAN_DEVICE_FUNCTION_ALIAS_OPTIONAL
 
 // -------------------------------------------------------------------------------------------
 // Loader

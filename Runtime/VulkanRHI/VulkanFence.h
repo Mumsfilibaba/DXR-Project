@@ -3,6 +3,7 @@
 #include "Core/Platform/CriticalSection.h"
 #include "Core/RefCountedBase.h"
 #include "Core/Threading/Atomic/AtomicBool.h"
+#include "Core/Threading/Atomic/AtomicInt.h"
 #include "RHI/RHIFence.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
 #include "VulkanRHI/VulkanLoader.h"
@@ -54,7 +55,7 @@ public:
 
     uint64 GetLastSignaledValue() const
     {
-        return LastSignaledValue;
+        return LastSignaledValue.Load();
     }
 
     uint64 GetCurrentValue() const
@@ -71,7 +72,7 @@ private:
     VkSemaphore    TimelineSemaphore;
     mutable uint64 LastCompletedValue;
     uint64         CurrentValue;
-    uint64         LastSignaledValue;
+    AtomicUInt64   LastSignaledValue;
 #if VULKAN_STORE_DEBUG_NAMES
     String         DebugName;
 #endif

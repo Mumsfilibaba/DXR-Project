@@ -601,6 +601,11 @@ bool FVulkanSwapChainRHI::Initialize()
 
 bool FVulkanSwapChainRHI::RecreateSurface()
 {
+	if (SwapChainResource && !RetiredSurface)
+	{
+		RetiredSurface = Surface;
+	}
+
 	Surface = new FVulkanSurface(GetDevice(), CommandContext->GetCommandQueue(), WindowHandle);
 	if (!Surface->Initialize())
 	{
@@ -678,7 +683,7 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
 	FVulkanSwapChainCreateInfo SwapChainCreateInfo;
 	SwapChainCreateInfo.ColorSpace        = ConvertColorSpace(CurrentColorSpace);
 	SwapChainCreateInfo.Surface           = Surface.Get();
-	SwapChainCreateInfo.PreviousSwapChain = SwapChainResource.Get();
+	SwapChainCreateInfo.PreviousSwapChain = RetiredSurface ? nullptr : SwapChainResource.Get();
 	SwapChainCreateInfo.BufferCount       = CVarBackbufferCount.GetValue();
 	SwapChainCreateInfo.Extent.width      = CreateWidth;
 	SwapChainCreateInfo.Extent.height     = CreateHeight;
@@ -696,6 +701,7 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
 	else
 	{
 		SwapChainResource = NewSwapChainResource;
+		RetiredSurface.Reset();
 	}
 
 	bActiveVSync          = SwapChainCreateInfo.bVerticalSync;
@@ -854,8 +860,9 @@ void FVulkanSwapChainRHI::DestroySwapChain()
     // Ensure that all work is completed
     CommandContext->GetCommandQueue().WaitForCompletion();
 
-    // Destroy the swapchain
+    // Destroy the swapchain, then the surface it was created from if that one has been retired.
     SwapChainResource.Reset();
+    RetiredSurface.Reset();
 
 	BackBufferIndex = 0;
 	SemaphoreIndex  = 0;

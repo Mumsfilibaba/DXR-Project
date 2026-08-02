@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/RefCountedBase.h"
 #include "Core/Threading/Atomic/AtomicBool.h"
+#include "Core/Threading/Atomic/AtomicInt.h"
 #include "RHI/RHIFence.h"
 #include "D3D12RHI/D3D12DeviceChild.h"
 
@@ -24,7 +25,8 @@ public:
     void SetDebugName(const String& Name);
 
     uint64 GetCurrentValue()      const { return CurrentValue; }
-    uint64 GetLastSignaledValue() const { return LastSignaledValue; }
+
+    uint64 GetLastSignaledValue() const { return LastSignaledValue.Load(); }
 
     ID3D12Fence* GetD3D12Fence() const
     {
@@ -36,7 +38,7 @@ private:
     HANDLE               Event;
     mutable uint64       LastCompletedValue;
     uint64               CurrentValue;
-    uint64               LastSignaledValue;
+    AtomicUInt64         LastSignaledValue;
 };
 
 class FD3D12FenceSyncPoint

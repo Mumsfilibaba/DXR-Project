@@ -19,6 +19,10 @@ struct FRayTracingSceneConstantsHLSL
     float   SunPadding1     = 0.0f;
     Vector4 PointLightPositionRadius[RT_MAX_POINT_LIGHTS];
     Vector4 PointLightColor[RT_MAX_POINT_LIGHTS];
+    float   ReflectionMaxRayDistance           = 10000.0f;
+    float   ReflectionMirrorRoughnessThreshold = 0.05f;
+    float   ReflectionRayBias                  = 0.02f;
+    float   Padding1                           = 0.0f;
 };
 
 struct FRayTracingGeometryIndicesHLSL
@@ -30,5 +34,5 @@ struct FRayTracingGeometryIndicesHLSL
 };
 
 static_assert(sizeof(FRHIDescriptorHandle) == sizeof(uint32), "FRHIDescriptorHandle must be 4 bytes for the HLSL layout");
-static_assert(sizeof(FRayTracingSceneConstantsHLSL) == 304, "FRayTracingSceneConstantsHLSL must match the HLSL constant buffer layout");
+static_assert(sizeof(FRayTracingSceneConstantsHLSL) == 320, "FRayTracingSceneConstantsHLSL must match the HLSL constant buffer layout");
 static_assert(sizeof(FRayTracingGeometryIndicesHLSL) == 16, "FRayTracingGeometryIndicesHLSL must match the HLSL structured-buffer layout");

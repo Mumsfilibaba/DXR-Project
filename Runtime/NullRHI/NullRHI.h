@@ -20,12 +20,12 @@ public:
     virtual void BeginFrame() override final { }
     virtual void EndFrame()   override final { }
 
-    virtual FRHITexture* CreateTexture(const FRHITextureDesc& InTextureDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final
+    virtual FRHITexture* CreateTexture(const FRHITextureDesc& InTextureDesc, ERHIResourceState InInitialState, const IRHITextureData* InInitialData) override final
     {
         return new FNullTextureRHI(InTextureDesc);
     }
 
-    virtual FRHIBuffer* CreateBuffer(const FRHIBufferDesc& InBufferDesc, EResourceAccess InInitialState, const void* InInitialData) override final
+    virtual FRHIBuffer* CreateBuffer(const FRHIBufferDesc& InBufferDesc, ERHIResourceState InInitialState, const void* InInitialData) override final
     {
         return new FNullBufferRHI(InBufferDesc);
     }

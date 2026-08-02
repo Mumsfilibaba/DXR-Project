@@ -47,7 +47,6 @@ private:
     FDelegateHandle         ImGuiDelegateHandle;
     bool                    bVisible;
     bool                    bAutoScroll;
-    bool                    bScrollToBottom;
     bool                    bFilterInfo;
     bool                    bFilterWarning;
     bool                    bFilterError;

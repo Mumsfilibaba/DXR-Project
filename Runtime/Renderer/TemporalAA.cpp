@@ -1,4 +1,4 @@
-#include "RHI/RHI.h"
+﻿#include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Renderer/TemporalAA.h"
@@ -91,16 +91,16 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
 
     if (!bHistoryValid)
     {
-        CommandList.TransitionTextureState(FrameResources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(FrameResources.SceneTarget.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::CopySource));
 
         for (FRHITextureRef& HistoryBuffer : TAAHistoryBuffers)
         {
-            CommandList.TransitionTextureState(HistoryBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::CopyDest));
+            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(HistoryBuffer.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::CopyDest));
             CommandList.CopyTexture(HistoryBuffer.Get(), FrameResources.SceneTarget.Get());
-            CommandList.TransitionTextureState(HistoryBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::NonPixelShaderResource));
+            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(HistoryBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::NonPixelShaderResource));
         }
 
-        CommandList.TransitionTextureState(FrameResources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::CopySource, EResourceAccess::UnorderedAccess));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(FrameResources.SceneTarget.Get(), ERHIResourceState::CopySource, ERHIResourceState::UnorderedAccess));
 
         CurrentBufferIndex = 0;
         bHistoryValid = true;
@@ -108,7 +108,7 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
         return;
     }
 
-    CommandList.TransitionTextureState(CurrentBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(CurrentBuffer.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::UnorderedAccess));
 
     CurrentBufferIndex = (CurrentBufferIndex + 1) % 2;
 
@@ -132,7 +132,7 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
     const uint32 ThreadsY = Math::DivideByMultiple(CurrentBuffer->GetDesc().Extent.Y, NumThreads);
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
-    CommandList.TransitionTextureState(CurrentBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(CurrentBuffer.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::NonPixelShaderResource));
 }
 
 bool FTemporalAA::CreateResources(FFrameResources& /* FrameResources */, uint32 Width, uint32 Height)
@@ -144,7 +144,7 @@ bool FTemporalAA::CreateResources(FFrameResources& /* FrameResources */, uint32 
     uint32 Index = 0;
     for (FRHITextureRef& TAABuffer : TAAHistoryBuffers)
     {
-        TAABuffer = RHI::CreateTexture(TAABufferDesc, EResourceAccess::NonPixelShaderResource);
+        TAABuffer = RHI::CreateTexture(TAABufferDesc, ERHIResourceState::NonPixelShaderResource);
         if (TAABuffer)
         {
             TAABuffer->SetDebugName(String::CreateFormatted("TAA History-Buffer[%u]", Index++));

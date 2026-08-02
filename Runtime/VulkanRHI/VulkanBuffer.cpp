@@ -13,7 +13,9 @@ FVulkanBufferRHI::FVulkanBufferRHI(FVulkanDevice* InDevice, const FRHIBufferDesc
     , OwnedBuffer(VK_NULL_HANDLE)
     , RequiredAlignment(0)
     , BindlessHandle()
+#if VULKAN_STORE_DEBUG_NAMES
     , DebugName()
+#endif
 {
 }
 
@@ -106,7 +108,19 @@ FVulkanBufferRHI::~FVulkanBufferRHI()
     }
 }
 
-bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData)
+static ERHIResourceStateTrackingMode VulkanResolveBufferTrackingMode(const FRHIBufferDesc& InDesc)
+{
+    if (InDesc.TrackingMode != ERHIResourceStateTrackingMode::Tracked)
+    {
+        return InDesc.TrackingMode;
+    }
+
+    return (InDesc.IsDynamic() || InDesc.IsTransient() || InDesc.IsReadBack())
+        ? ERHIResourceStateTrackingMode::Static
+        : ERHIResourceStateTrackingMode::Tracked;
+}
+
+bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, ERHIResourceState InInitialAccess, const void* InInitialData)
 {
     FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
 
@@ -262,18 +276,28 @@ bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, EReso
         {
             InCommandContext->StartContext();
             
-            InCommandContext->TransitionBufferState(this, EResourceAccess::Common, EResourceAccess::CopyDest);
+            InCommandContext->TransitionBarrier(MakeArrayView({ FRHITransitionBarrierDesc::CreateBuffer(this, ERHIResourceState::Common, ERHIResourceState::CopyDest) }));
             InCommandContext->UpdateBuffer(this, FBufferRegion(0, Desc.Size), InInitialData);
 
-            if (InInitialAccess != EResourceAccess::CopyDest)
+            if (InInitialAccess != ERHIResourceState::CopyDest)
             {
-                InCommandContext->TransitionBufferState(this, EResourceAccess::CopyDest, InInitialAccess);
+                InCommandContext->TransitionBarrier(MakeArrayView({ FRHITransitionBarrierDesc::CreateBuffer(this, ERHIResourceState::CopyDest, InInitialAccess) }));
             }
 
             InCommandContext->FinishContext();
         }
     }
-    
+
+    Desc.TrackingMode = VulkanResolveBufferTrackingMode(Desc);
+
+    if (Desc.TrackingMode == ERHIResourceStateTrackingMode::Static)
+    {
+        BufferState.SetDefaultState(
+            FVulkanDeviceRHI::ResourceStateToAccessFlags(InInitialAccess),
+            FVulkanDeviceRHI::ResourceStateToPipelineStageFlags(InInitialAccess));
+    }
+
+    MemoryLocation.FinalizeAllocation();
     return true;
 }
 

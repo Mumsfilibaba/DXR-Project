@@ -33,8 +33,8 @@ uint32 FGenericPlatformThread::AllocTLSSlot()
 }
 
 FGenericPlatformThread::FGenericPlatformThread(FRunnable* InRunnable, const CHAR* InThreadName)
-    : Runnable(InRunnable)
-    , Name(InThreadName)
+    : Name(InThreadName)
+    , Runnable(InRunnable)
 {
     FThreadManager::Get().RegisterThread(this);
 }

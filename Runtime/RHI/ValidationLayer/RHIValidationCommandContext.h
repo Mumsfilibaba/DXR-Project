@@ -6,7 +6,7 @@ class RHI_API FRHIValidationCommandContext : public IRHICommandContext
 {
 public:
     FRHIValidationCommandContext(IRHICommandContext* InRealContext);
-    ~FRHIValidationCommandContext();
+    virtual ~FRHIValidationCommandContext();
 
     virtual void BeginFrame() override final;
     virtual void EndFrame()   override final;
@@ -69,12 +69,8 @@ public:
     virtual void CompactAccelerationStructure(FRHIRayTracingAccelerationStructure* AccelerationStructure, uint64 CompactedSizeInBytes) override final;
     virtual void SerializeAccelerationStructure(FRHIRayTracingAccelerationStructure* Source, FRHIBuffer* DstBuffer, uint64 DstOffset) override final;
     virtual void DeserializeAccelerationStructure(FRHIRayTracingAccelerationStructure* Destination, FRHIBuffer* SourceBuffer, uint64 SourceOffset) override final;
-    virtual void TransitionTextureState(FRHITexture* Texture, const FRHITextureTransition& TextureTransition) override final;
-    virtual void TransitionBufferState(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) override final;
-    virtual void RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState) override final;
-    virtual void RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState) override final;
-    virtual void UnorderedAccessTextureBarrier(FRHITexture* Texture) override final;
-    virtual void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer) override final;
+    virtual void TransitionBarrier(TArrayView<const FRHITransitionBarrierDesc> TransitionDescs) override final;
+    virtual void UnorderedAccessBarrier(TArrayView<const FRHIUnorderedAccessBarrierDesc> BarrierDescs) override final;
     virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation) override final;
     virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) override final;
     virtual void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) override final;
@@ -100,7 +96,32 @@ public:
     virtual void* GetRHINativeCommandList() override final;
 
 private:
+
+    struct FOpenSplitKey
+    {
+        NODISCARD bool operator==(const FOpenSplitKey& Other) const noexcept = default;
+
+        const void* Resource;
+        uint32      FirstMipLevel;
+        uint32      NumMipLevels;
+        uint32      FirstArraySlice;
+        uint32      NumArraySlices;
+    };
+
+    struct FOpenSplit
+    {
+        FOpenSplitKey     Key;
+        ERHIResourceState BeforeState;
+        ERHIResourceState AfterState;
+    };
+
     bool ValidateRecordingPhase(const CHAR* Caller) const;
+    bool ValidateTransitionBarrierDesc(const FRHITransitionBarrierDesc& Desc);
+    bool ValidateUnorderedAccessBarrierDesc(const FRHIUnorderedAccessBarrierDesc& Desc);
+    bool ValidateNoOpenSplit(const void* Resource, const CHAR* Caller) const;
+
+    NODISCARD static FOpenSplitKey MakeSplitKey(const FRHITransitionBarrierDesc& Desc);
+    NODISCARD int32 FindOpenSplit(const FOpenSplitKey& Key) const;
 
     IRHICommandContext*          CommandContext;
     ECommandContextPhase         ContextPhase;
@@ -109,4 +130,5 @@ private:
     FRHIMeshletPipelineState*    MeshletPipelineState;
     FRHIRayTracingPipelineState* RayTracingPipelineState;
     TSet<FRHIQuery*>             ActiveQueries;
+    TArray<FOpenSplit>           OpenSplits;
 };

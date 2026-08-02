@@ -1,4 +1,5 @@
 #include "Core/Containers/Array.h"
+#include "Core/Memory/Memory.h"
 #include "Core/Templates/CString.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Templates/NumericLimits.h"
@@ -12,131 +13,14 @@
 #include "VulkanRHI/VulkanExtensions.h"
 #include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/Platform/VulkanPlatform.h"
+#include "RHI/RHI.h"
 #include "RHI/RHISamplerState.h"
-
-static FAutoConsoleCommand CCmdVulkanDumpRayTracingCapsCommand(
-    "VulkanRHI.DumpRayTracingCaps",
-    "Logs the backend-native Vulkan ray-tracing capability table (GVulkanSupports* RT globals)",
-    FConsoleCommandDelegate::CreateLambda([](StringView)
-    {
-        DumpVulkanRayTracingCapabilities();
-    }));
-
-static FAutoConsoleCommand CCmdVulkanDumpCapsCommand(
-    "VulkanRHI.DumpCaps",
-    "Logs the backend-native Vulkan capability table (GVulkan* globals) followed by the ray-tracing table",
-    FConsoleCommandDelegate::CreateLambda([](StringView)
-    {
-        DumpVulkanCapabilities();
-    }));
-
-// -------------------------------------------------------------------------------------------
-// Vulkan Device Feature Support
-// -------------------------------------------------------------------------------------------
-
-VULKANRHI_API bool   GVulkanForceBinding                        = false;
-VULKANRHI_API bool   GVulkanAllowNullDescriptors                = true;
-VULKANRHI_API bool   GVulkanAllowGeometryShaders                = true;
-VULKANRHI_API bool   GVulkanAllowResetCommandBuffers            = false;
-VULKANRHI_API bool   GVulkanRobustBufferAccessEnabled           = false;
-VULKANRHI_API bool   GVulkanGPUAssistedValidationEnabled        = false;
-
-VULKANRHI_API bool   GVulkanSupportsDepthClip                   = false;
-VULKANRHI_API bool   GVulkanSupportsDepthClamp                  = false;
-VULKANRHI_API bool   GVulkanSupportsNullDescriptors             = false;
-VULKANRHI_API bool   GVulkanSupportsRobustness2                 = false;
-VULKANRHI_API bool   GVulkanSupportsConservativeRasterization   = false;
-VULKANRHI_API float  GVulkanMaxExtraPrimitiveOverestimationSize = 0.0f;
-VULKANRHI_API bool   GVulkanSupportsPipelineCacheControl        = false;
-VULKANRHI_API bool   GVulkanSupportsMultiviews                  = false;
-VULKANRHI_API bool   GVulkanSupportsBindless                    = false;
-VULKANRHI_API bool   GVulkanSupportsMutableDescriptorType       = false;
-VULKANRHI_API bool   GVulkanSupportsDepthBoundsTest             = false;
-VULKANRHI_API bool   GVulkanSupportsSparseBinding               = false;
-VULKANRHI_API bool   GVulkanSupportsSparseResidency2D           = false;
-VULKANRHI_API bool   GVulkanSupportsSparseResidency3D           = false;
-VULKANRHI_API bool   GVulkanSupportsSparseResidencyAliased      = false;
-VULKANRHI_API bool   GVulkanSupportsGeometryShader              = false;
-VULKANRHI_API bool   GVulkanSupportsTessellation                = false;
-
-VULKANRHI_API uint32 GVulkanMaxMultiviewViewCount               = 1;
-VULKANRHI_API uint32 GVulkanMaxDrawIndirectCount                = 1;
-
-// -------------------------------------------------------------------------------------------
-// Programmable sample positions (VK_EXT_sample_locations)
-// -------------------------------------------------------------------------------------------
-
-VULKANRHI_API bool GVulkanSupportsSampleLocations = false;
-
-// -------------------------------------------------------------------------------------------
-// Fragment shader interlock (VK_EXT_fragment_shader_interlock)
-// -------------------------------------------------------------------------------------------
-
-VULKANRHI_API bool GVulkanSupportsFragmentShaderInterlock = false;
-
-// -------------------------------------------------------------------------------------------
-// Ray Tracing (VK_KHR_ray_tracing_pipeline, VK_KHR_ray_query)
-// -------------------------------------------------------------------------------------------
-
-VULKANRHI_API bool GVulkanSupportsRayTracingPipeline     = false;
-VULKANRHI_API bool GVulkanSupportsRayQuery               = false;
-VULKANRHI_API bool GVulkanSupportsAccelerationStructures = false;
-
-VULKANRHI_API bool GVulkanSupportsOpacityMicromap                         = false;
-VULKANRHI_API bool GVulkanSupportsShaderExecutionReordering               = false;
-VULKANRHI_API bool GVulkanShaderExecutionReorderingActuallyReorders       = false;
-VULKANRHI_API bool GVulkanSupportsClustersAndPTLAS                        = false;
-VULKANRHI_API bool GVulkanSupportsIndirectAccelerationStructureOperations = false;
-VULKANRHI_API bool GVulkanSupportsIndirectRayDispatch                     = false;
-
-// -------------------------------------------------------------------------------------------
-// Variable Rate Shading (VK_KHR_fragment_shading_rate)
-// -------------------------------------------------------------------------------------------
-
-VULKANRHI_API bool   GVulkanSupportsFragmentShadingRate = false;
-VULKANRHI_API uint32 GVulkanShadingRateTileSize         = 0;
-
-// -------------------------------------------------------------------------------------------
-// Mesh Shaders (VK_EXT_mesh_shader)
-// -------------------------------------------------------------------------------------------
-
-VULKANRHI_API bool   GVulkanSupportsMeshShaders                            = false;
-VULKANRHI_API bool   GVulkanSupportsTaskShaders                            = false;
-VULKANRHI_API bool   GVulkanSupportsMeshShaderMultiview                    = false;
-VULKANRHI_API bool   GVulkanSupportsMeshShaderQueries                      = false;
-VULKANRHI_API bool   GVulkanSupportsMeshShaderPrimitiveFragmentShadingRate = false;
-VULKANRHI_API uint32 GVulkanMaxMeshOutputVertices                          = 0;
-VULKANRHI_API uint32 GVulkanMaxMeshWorkGroupInvocations                    = 0;
-VULKANRHI_API uint32 GVulkanMaxTaskWorkGroupInvocations                    = 0;
-
-// -------------------------------------------------------------------------------------------
-// Transform Feedback / Stream Output (VK_EXT_transform_feedback)
-// -------------------------------------------------------------------------------------------
-
-VULKANRHI_API bool GVulkanSupportsTransformFeedback = false;
-
-// -------------------------------------------------------------------------------------------
-// Dynamic Rendering (VK_KHR_dynamic_rendering / Vulkan 1.3)
-// -------------------------------------------------------------------------------------------
-
-#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
-VULKANRHI_API bool GVulkanUseDynamicRendering = true;
-#endif
-
-// -------------------------------------------------------------------------------------------
-// Descriptor / Heap Limits
-// -------------------------------------------------------------------------------------------
-
-VULKANRHI_API uint32 GVulkanMaxDescriptorSetSamplers       = 0;
-VULKANRHI_API uint32 GVulkanMaxDescriptorSetSampledImages  = 0;
-VULKANRHI_API uint32 GVulkanMaxDescriptorSetStorageImages  = 0;
-VULKANRHI_API uint32 GVulkanMaxDescriptorSetUniformBuffers = 0;
-VULKANRHI_API uint32 GVulkanMaxDescriptorSetStorageBuffers = 0;
-
 
 template <typename FeatureStructType>
 static bool CheckRequiredFeaturesHelper(const FeatureStructType& Required, const FeatureStructType& Available, const char* StructName)
 {
+    UNREFERENCED_VARIABLE(StructName);
+
     TVulkanFeatureView<const FeatureStructType> RequiredView(Required);
     TVulkanFeatureView<const FeatureStructType> AvailableView(Available);
 
@@ -194,68 +78,16 @@ static String GetQueuePropertiesAsString(const VkQueueFamilyProperties& Properti
     return PropertyString;
 }
 
-VULKANRHI_API void DumpVulkanRayTracingCapabilities()
+FVulkanCoreFeatures::FVulkanCoreFeatures()
 {
-    const auto YesNo = [](bool bValue) -> const CHAR*
-    {
-        return bValue ? "Yes" : "No";
-    };
-
-    LOG_INFO("[VulkanRHI] ------------------------ Vulkan Ray Tracing Capabilities (native) ------------------------");
-    LOG_INFO("[VulkanRHI]   Ray Tracing Pipeline                  : %s", YesNo(GVulkanSupportsRayTracingPipeline));
-    LOG_INFO("[VulkanRHI]   Ray Query (Inline)                    : %s", YesNo(GVulkanSupportsRayQuery));
-    LOG_INFO("[VulkanRHI]   Acceleration Structures               : %s", YesNo(GVulkanSupportsAccelerationStructures));
-    LOG_INFO("[VulkanRHI]   Opacity Micromap                      : %s", YesNo(GVulkanSupportsOpacityMicromap));
-    LOG_INFO("[VulkanRHI]   Shader Execution Reordering           : %s", YesNo(GVulkanSupportsShaderExecutionReordering));
-    LOG_INFO("[VulkanRHI]   Shader Execution Reordering (Reorders): %s", YesNo(GVulkanShaderExecutionReorderingActuallyReorders));
-    LOG_INFO("[VulkanRHI]   Clusters + Partitioned Scene (PTLAS)  : %s", YesNo(GVulkanSupportsClustersAndPTLAS));
-    LOG_INFO("[VulkanRHI]   Indirect AS Operations                : %s", YesNo(GVulkanSupportsIndirectAccelerationStructureOperations));
-    LOG_INFO("[VulkanRHI]   Indirect Ray Dispatch                 : %s", YesNo(GVulkanSupportsIndirectRayDispatch));
-    LOG_INFO("[VulkanRHI] -----------------------------------------------------------------------------------------");
-}
-
-VULKANRHI_API void DumpVulkanCapabilities()
-{
-    const auto YesNo = [](bool bValue) -> const CHAR*
-    {
-        return bValue ? "Yes" : "No";
-    };
-
-    LOG_INFO("[VulkanRHI] --------------------------- Vulkan Capabilities (native) ---------------------------");
-    LOG_INFO("[VulkanRHI]   Force Binding                         : %s", YesNo(GVulkanForceBinding));
-    LOG_INFO("[VulkanRHI]   Bindless                              : %s", YesNo(GVulkanSupportsBindless));
-    LOG_INFO("[VulkanRHI]   Mutable Descriptor Type               : %s", YesNo(GVulkanSupportsMutableDescriptorType));
-    LOG_INFO("[VulkanRHI]   Null Descriptors                      : %s", YesNo(GVulkanSupportsNullDescriptors));
-    LOG_INFO("[VulkanRHI]   Robustness2                           : %s", YesNo(GVulkanSupportsRobustness2));
-    LOG_INFO("[VulkanRHI]   Dynamic Rendering                     : %s", YesNo(GVulkanUseDynamicRendering));
-    LOG_INFO("[VulkanRHI]   Geometry Shader                       : %s", YesNo(GVulkanSupportsGeometryShader));
-    LOG_INFO("[VulkanRHI]   Tessellation                          : %s", YesNo(GVulkanSupportsTessellation));
-    LOG_INFO("[VulkanRHI]   Mesh Shaders                          : %s", YesNo(GVulkanSupportsMeshShaders));
-    LOG_INFO("[VulkanRHI]   Task Shaders                          : %s", YesNo(GVulkanSupportsTaskShaders));
-    LOG_INFO("[VulkanRHI]   Fragment Shading Rate                 : %s", YesNo(GVulkanSupportsFragmentShadingRate));
-    LOG_INFO("[VulkanRHI]   Conservative Rasterization            : %s", YesNo(GVulkanSupportsConservativeRasterization));
-    LOG_INFO("[VulkanRHI]   Multiview                             : %s", YesNo(GVulkanSupportsMultiviews));
-    LOG_INFO("[VulkanRHI]   Depth Bounds Test                     : %s", YesNo(GVulkanSupportsDepthBoundsTest));
-    LOG_INFO("[VulkanRHI]   Depth Clip                            : %s", YesNo(GVulkanSupportsDepthClip));
-    LOG_INFO("[VulkanRHI]   Depth Clamp                           : %s", YesNo(GVulkanSupportsDepthClamp));
-    LOG_INFO("[VulkanRHI]   Sample Locations                      : %s", YesNo(GVulkanSupportsSampleLocations));
-    LOG_INFO("[VulkanRHI]   Fragment Shader Interlock             : %s", YesNo(GVulkanSupportsFragmentShaderInterlock));
-    LOG_INFO("[VulkanRHI]   Transform Feedback                    : %s", YesNo(GVulkanSupportsTransformFeedback));
-    LOG_INFO("[VulkanRHI]   Sparse Binding                        : %s", YesNo(GVulkanSupportsSparseBinding));
-    LOG_INFO("[VulkanRHI]   Pipeline Cache Control                : %s", YesNo(GVulkanSupportsPipelineCacheControl));
-    LOG_INFO("[VulkanRHI]   Shading Rate Tile Size                : %u", GVulkanShadingRateTileSize);
-    LOG_INFO("[VulkanRHI]   Max Draw Indirect Count               : %u", GVulkanMaxDrawIndirectCount);
-    LOG_INFO("[VulkanRHI] ----------------------------------------------------------------------------------");
-
-    DumpVulkanRayTracingCapabilities();
+    Memory::Memzero(this);
 }
 
 void FVulkanCoreFeatures::BuildQueryChain(VkPhysicalDeviceFeatures2& Root)
 {
     Features11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
     Features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-    Features13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
-    AddAllToStructChain(Root, Features11, Features12, Features13);
+    AddAllToStructChain(Root, Features11, Features12);
 }
 
 bool FVulkanCoreFeatures::CheckRequired(VkPhysicalDevice PhysicalDevice) const
@@ -284,11 +116,6 @@ bool FVulkanCoreFeatures::CheckRequired(VkPhysicalDevice PhysicalDevice) const
     {
         return false;
     }
-    
-    if (!CheckRequiredFeaturesHelper(Features13, Available.Features13, "VkPhysicalDeviceVulkan13Features"))
-    {
-        return false;
-    }
 
     return true;
 }
@@ -298,16 +125,14 @@ void FVulkanCoreFeatures::EnableAvailable(FVulkanCoreFeatures& OutEnabled, const
     EnableAvailableFeaturesHelper(OutEnabled.Features10, Features10, Available.Features10);
     EnableAvailableFeaturesHelper(OutEnabled.Features11, Features11, Available.Features11);
     EnableAvailableFeaturesHelper(OutEnabled.Features12, Features12, Available.Features12);
-    EnableAvailableFeaturesHelper(OutEnabled.Features13, Features13, Available.Features13);
 }
 
 void FVulkanCoreFeatures::BuildEnableChain(VkPhysicalDeviceFeatures2& Root)
 {
     Features11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
     Features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-    Features13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
 
-    AddAllToStructChain(Root, Features11, Features12, Features13);
+    AddAllToStructChain(Root, Features11, Features12);
 }
 
 FVulkanPhysicalDevice::FVulkanPhysicalDevice(FVulkanInstance* InInstance)
@@ -375,9 +200,9 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCr
         VkPhysicalDeviceProperties AdapterProperties;
         vkGetPhysicalDeviceProperties(CurrentAdapter, &AdapterProperties);
 
-        if (AdapterProperties.apiVersion < VK_API_VERSION_1_3)
+        if (AdapterProperties.apiVersion < VULKAN_TARGET_API_VERSION)
         {
-            VULKAN_INFO("Skipping device '%s' since it's api-version is below Vulkan 1.3 (apiVersion=%s)", AdapterProperties.deviceName, *GetVersionAsString(AdapterProperties.apiVersion));
+            VULKAN_INFO("Skipping device '%s' since it's api-version is below Vulkan 1.2 (apiVersion=%s)", AdapterProperties.deviceName, *GetVersionAsString(AdapterProperties.apiVersion));
             continue;
         }
 
@@ -698,13 +523,6 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , bSupportsNVDiagnosticCheckpoints(false)
 #endif
 {
-#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
-    if (IConsoleVariable* UseDynamicRenderingVar = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.UseDynamicRendering"))
-    {
-        GVulkanUseDynamicRendering = UseDynamicRenderingVar->GetBool();
-    }
-#endif
-
 #if VULKAN_USE_DESCRIPTOR_CACHE
     DescriptorSetCache            = new FVulkanDescriptorSetCache(this);
 #else
@@ -911,6 +729,12 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
     VkPhysicalDeviceMultiviewProperties AvailableDeviceMultiviewProperties = {};
     AvailableDeviceMultiviewProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES;
 
+    VkPhysicalDeviceSubgroupProperties AvailableDeviceSubgroupProperties = {};
+    AvailableDeviceSubgroupProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
+
+    VkPhysicalDeviceVulkan12Properties AvailableDeviceVulkan12Properties = {};
+    AvailableDeviceVulkan12Properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES;
+
     {
         AvailableFeatures.BuildQueryChain(AvailableDeviceFeatures2);
 
@@ -927,7 +751,7 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
     }
 
     {
-        AddToStructChain(AvailableDeviceProperties2, AvailableDeviceMultiviewProperties);
+        AddAllToStructChain(AvailableDeviceProperties2, AvailableDeviceMultiviewProperties, AvailableDeviceSubgroupProperties, AvailableDeviceVulkan12Properties);
 
         for (const TUniquePtr<FVulkanDeviceExtension>& Extension : InDeviceCreateInfo.Extensions)
         {
@@ -944,80 +768,20 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
     // Set core GVulkan* globals from collected caps
     // -------------------------------------------------------------------------------------------
 
-    const VkPhysicalDeviceFeatures&   CoreDeviceFeatures10   = AvailableFeatures.Features10;
-    const VkPhysicalDeviceProperties& CoreDeviceProperties10 = PhysicalDevice->GetProperties();
+    DeriveCoreCapabilities(InDeviceCreateInfo, AvailableFeatures, PhysicalDevice->GetProperties(), AvailableDeviceMultiviewProperties, AvailableDeviceSubgroupProperties, AvailableDeviceVulkan12Properties);
 
-    GVulkanSupportsDepthBoundsTest        = (CoreDeviceFeatures10.depthBounds == VK_TRUE);
-    GVulkanSupportsSparseBinding          = (CoreDeviceFeatures10.sparseBinding == VK_TRUE);
-    GVulkanSupportsSparseResidency2D      = (CoreDeviceFeatures10.sparseResidencyImage2D == VK_TRUE);
-    GVulkanSupportsSparseResidency3D      = (CoreDeviceFeatures10.sparseResidencyImage3D == VK_TRUE);
-    GVulkanSupportsSparseResidencyAliased = (CoreDeviceFeatures10.sparseResidencyAliased == VK_TRUE);
-    GVulkanSupportsGeometryShader         = (GVulkanAllowGeometryShaders && CoreDeviceFeatures10.geometryShader == VK_TRUE);
-    GVulkanSupportsTessellation           = (CoreDeviceFeatures10.tessellationShader == VK_TRUE);
-
-    if (AvailableFeatures.Features11.multiview)
+#if !VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
+    if (!GVulkanSupportsDynamicRendering)
     {
-        GVulkanSupportsMultiviews    = true;
-        GVulkanMaxMultiviewViewCount = Math::Max<uint32>(1u, AvailableDeviceMultiviewProperties.maxMultiviewViewCount);
+        VULKAN_ERROR_CRITICAL("Device does not support VK_KHR_dynamic_rendering, which is required");
+        return false;
     }
-    else
-    {
-        GVulkanSupportsMultiviews    = false;
-        GVulkanMaxMultiviewViewCount = 1u;
-    }
-
-    if (AvailableFeatures.Features13.pipelineCreationCacheControl)
-    {
-        GVulkanSupportsPipelineCacheControl = true;
-    }
-
-    GVulkanSupportsBindless = (AvailableFeatures.Features12.descriptorIndexing         == VK_TRUE)
-        && (AvailableFeatures.Features12.runtimeDescriptorArray                        == VK_TRUE)
-        && (AvailableFeatures.Features12.descriptorBindingPartiallyBound               == VK_TRUE)
-        && (AvailableFeatures.Features12.descriptorBindingSampledImageUpdateAfterBind  == VK_TRUE)
-        && (AvailableFeatures.Features12.descriptorBindingStorageImageUpdateAfterBind  == VK_TRUE)
-        && (AvailableFeatures.Features12.descriptorBindingUniformBufferUpdateAfterBind == VK_TRUE)
-        && (AvailableFeatures.Features12.descriptorBindingStorageBufferUpdateAfterBind == VK_TRUE)
-        && (AvailableFeatures.Features12.shaderSampledImageArrayNonUniformIndexing     == VK_TRUE)
-        && (AvailableFeatures.Features12.shaderStorageImageArrayNonUniformIndexing     == VK_TRUE)
-        && (AvailableFeatures.Features12.shaderStorageBufferArrayNonUniformIndexing    == VK_TRUE)
-        && (AvailableFeatures.Features12.shaderUniformBufferArrayNonUniformIndexing    == VK_TRUE);
-
-#if VULKAN_ENABLE_CRASH_MARKERS
-    #if VK_AMD_buffer_marker
-        bSupportsAMDBufferMarker = IsExtensionEnabled(VK_AMD_BUFFER_MARKER_EXTENSION_NAME);
-    #endif
-    #if VK_NV_device_diagnostic_checkpoints
-        bSupportsNVDiagnosticCheckpoints = IsExtensionEnabled(VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME);
-    #endif
 #endif
 
-    GVulkanMaxDrawIndirectCount           = CoreDeviceProperties10.limits.maxDrawIndirectCount;
-    GVulkanMaxDescriptorSetSamplers       = CoreDeviceProperties10.limits.maxDescriptorSetSamplers;
-    GVulkanMaxDescriptorSetSampledImages  = CoreDeviceProperties10.limits.maxDescriptorSetSampledImages;
-    GVulkanMaxDescriptorSetStorageImages  = CoreDeviceProperties10.limits.maxDescriptorSetStorageImages;
-    GVulkanMaxDescriptorSetUniformBuffers = CoreDeviceProperties10.limits.maxDescriptorSetUniformBuffers;
-    GVulkanMaxDescriptorSetStorageBuffers = CoreDeviceProperties10.limits.maxDescriptorSetStorageBuffers;
-
-    for (const TUniquePtr<FVulkanDeviceExtension>& Extension : InDeviceCreateInfo.Extensions)
+    if (!GVulkanSupportsSynchronization2)
     {
-        if (Extension->IsEnabled())
-        {
-            Extension->ProcessQueriedFeatures();
-        }
-    }
-
-    if (GVulkanSupportsBindless && !GVulkanSupportsMutableDescriptorType)
-    {
-        VULKAN_INFO("Bindless disabled: VK_EXT_mutable_descriptor_type not supported by this device");
-        GVulkanSupportsBindless = false;
-    }
-
-    GVulkanSupportsDepthClamp = (CoreDeviceFeatures10.depthClamp == VK_TRUE);
-
-    if (GVulkanSupportsDepthClip && !CoreDeviceFeatures10.depthClamp)
-    {
-        GVulkanSupportsDepthClip = false;
+        VULKAN_ERROR_CRITICAL("Device does not support VK_KHR_synchronization2, which is required");
+        return false;
     }
 
     // -------------------------------------------------------------------------------------------
@@ -1084,7 +848,7 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
     FVulkanCoreFeatures EnabledFeatures = InDeviceCreateInfo.RequiredFeatures;
     InDeviceCreateInfo.OptionalFeatures.EnableAvailable(EnabledFeatures, AvailableFeatures);
     
-    GVulkanRobustBufferAccessEnabled = (EnabledFeatures.Features10.robustBufferAccess == VK_TRUE);
+    DeriveEnabledFeatureCapabilities(EnabledFeatures);
 
     if ((GVulkanSupportsDepthClip || GVulkanSupportsDepthClamp) && AvailableFeatures.Features10.depthClamp)
     {
@@ -1156,321 +920,7 @@ bool FVulkanDevice::PostLoaderInitalize()
         }
     }
 
-    return true;
-}
-
-bool FVulkanDevice::InitializeDeviceFeatureSupport()
-{
-    // -------------------------------------------------------------------------------------------
-    // Baseline defaults
-    // -------------------------------------------------------------------------------------------
-
-    RHI::DefaultSwapChainFormat = GetVulkanDefaultBackBufferFormat();
-
-    RHI::bSupportsGeometryShaders                       = false;
-    RHI::bSupportRenderTargetArrayIndexFromVertexShader = false;
-
-    RHI::bSupportsViewInstancing     = false;
-    RHI::MaxViewInstanceCount        = 1;
-
-    RHI::bSupportsRayTracing         = false;
-    RHI::RayTracingTier              = ERayTracingTier::NotSupported;
-    RHI::RayTracingMaxRecursionDepth = 0;
-
-    RHI::bSupportsVRS                = false;
-    RHI::ShadingRateTier             = EShadingRateTier::NotSupported;
-    RHI::ShadingRateImageTileSize    = 0;
-
-    RHI::bSupportsDrawIndirect               = true;
-    RHI::bSupportsDrawIndirectCount          = false;
-    RHI::bSupportsDispatchIndirect           = true;
-    RHI::bSupportsDispatchMeshIndirect       = false;
-    RHI::bSupportsDispatchMeshIndirectCount  = false;
-    RHI::bSupportsDispatchRaysIndirect       = false;
-    RHI::MaxDrawIndirectCommandCount         = 1;
-    RHI::MaxDispatchMeshIndirectCommandCount = 1;
-
-    RHI::MaxTexture1DSize            = 0;
-    RHI::MaxTexture1DArrayLayers     = 0;
-    RHI::MaxTexture2DSize            = 0;
-    RHI::MaxTexture2DArrayLayers     = 0;
-    RHI::MaxTexture3DWidth           = 0;
-    RHI::MaxTexture3DHeight          = 0;
-    RHI::MaxTexture3DDepth           = 0;
-    RHI::MaxCubeTextureSize          = 0;
-    RHI::MaxCubeArrayCount           = 0;
-
-    RHI::MaxBufferSize               = 0;
-    RHI::MaxConstantBufferSize       = 0;
-    RHI::MaxStorageBufferSize        = 0;
-    RHI::StructuredBufferMinStride   = 4;
-    RHI::StructuredBufferMaxStride   = 2048;
-    RHI::RawBufferRequiredAlignment  = 4;
-
-    // -------------------------------------------------------------------------------------------
-    // Core features/properties
-    // -------------------------------------------------------------------------------------------
-
-    VkPhysicalDevice PhysicalDeviceHandle = GetPhysicalDevice()->GetVkPhysicalDevice();
-
-    // Core features
-    const VkPhysicalDeviceFeatures& PhysicalDeviceFeatures = PhysicalDevice->GetFeatures();
-    if (GVulkanAllowGeometryShaders && PhysicalDeviceFeatures.geometryShader)
-    {
-        RHI::bSupportsGeometryShaders = true;
-    }
-
-    // Core properties
-    const VkPhysicalDeviceProperties& PhysicalDeviceProperties = PhysicalDevice->GetProperties();
-
-    {
-        const VkPhysicalDeviceVulkan12Features& PhysicalDeviceFeatures12 = PhysicalDevice->GetFeaturesVulkan12();
-        RHI::bSupportsDrawIndirectCount  = PhysicalDeviceFeatures12.drawIndirectCount == VK_TRUE && vkCmdDrawIndirectCount && vkCmdDrawIndexedIndirectCount;
-        RHI::MaxDrawIndirectCommandCount = PhysicalDeviceFeatures.multiDrawIndirect ? PhysicalDeviceProperties.limits.maxDrawIndirectCount : 1;
-    #if VK_EXT_mesh_shader
-        RHI::bSupportsDispatchMeshIndirect       = GVulkanSupportsMeshShaders && vkCmdDrawMeshTasksIndirectEXT;
-        RHI::bSupportsDispatchMeshIndirectCount  = RHI::bSupportsDispatchMeshIndirect && RHI::bSupportsDrawIndirectCount && vkCmdDrawMeshTasksIndirectCountEXT;
-        RHI::MaxDispatchMeshIndirectCommandCount = RHI::bSupportsDispatchMeshIndirect ? RHI::MaxDrawIndirectCommandCount : 1;
-    #endif
-
-        // Texture / Image limits
-        RHI::MaxTexture1DSize        = PhysicalDeviceProperties.limits.maxImageDimension1D;
-        RHI::MaxTexture2DSize        = PhysicalDeviceProperties.limits.maxImageDimension2D;
-        RHI::MaxTexture3DWidth       = PhysicalDeviceProperties.limits.maxImageDimension3D;
-        RHI::MaxTexture3DHeight      = PhysicalDeviceProperties.limits.maxImageDimension3D;
-        RHI::MaxTexture3DDepth       = PhysicalDeviceProperties.limits.maxImageDimension3D;
-        RHI::MaxCubeTextureSize      = PhysicalDeviceProperties.limits.maxImageDimensionCube;
-        RHI::MaxTexture1DArrayLayers = PhysicalDeviceProperties.limits.maxImageArrayLayers;
-        RHI::MaxTexture2DArrayLayers = PhysicalDeviceProperties.limits.maxImageArrayLayers;
-        RHI::MaxCubeArrayCount       = PhysicalDeviceProperties.limits.maxImageArrayLayers / RHI_NUM_CUBE_FACES;
-
-        // Buffer / Memory Limits 
-        const uint32 MinBufferStride = sizeof(uint32); 
-        RHI::MaxConstantBufferSize      = PhysicalDeviceProperties.limits.maxUniformBufferRange; 
-        RHI::MaxStorageBufferSize       = PhysicalDeviceProperties.limits.maxStorageBufferRange; 
-        RHI::MaxBufferSize              = uint64(~0); 
-        RHI::StructuredBufferMinStride  = MinBufferStride; 
-        RHI::StructuredBufferMaxStride  = uint32(~0); 
-        RHI::RawBufferRequiredAlignment = MinBufferStride; 
-    } 
-
-    // -------------------------------------------------------------------------------------------
-    // SV_RenderTargetArrayIndex from VS (shaderOutputLayer in Vulkan 1.2)
-    // -------------------------------------------------------------------------------------------
-
-    const VkPhysicalDeviceVulkan12Features& PhysicalDeviceFeatures12 = PhysicalDevice->GetFeaturesVulkan12();
-    RHI::bSupportRenderTargetArrayIndexFromVertexShader = PhysicalDeviceFeatures12.shaderOutputLayer ? true : false;
-    RHI::bSupportsDynamicDepthBias = true;
-    RHI::bSupportsStreamOutput     = GVulkanSupportsTransformFeedback;
-
-    // -------------------------------------------------------------------------------------------
-    // Query Support
-    // -------------------------------------------------------------------------------------------
-
-    RHI::bSupportsTimestampQueries           = PhysicalDeviceProperties.limits.timestampComputeAndGraphics ? true : false;
-    RHI::bSupportsPipelineStatisticsQueries  = PhysicalDeviceFeatures.pipelineStatisticsQuery ? true : false;
-    RHI::bSupportsGPUTimestampBubblesRemoval = true;
-
-    // -------------------------------------------------------------------------------------------
-    // View Instancing (multiview)
-    // -------------------------------------------------------------------------------------------
-
-    if (GVulkanSupportsMultiviews)
-    {
-        RHI::MaxViewInstanceCount    = GVulkanMaxMultiviewViewCount;
-        RHI::bSupportsViewInstancing = RHI::MaxViewInstanceCount > 1;
-    }
-    else
-    {
-        RHI::MaxViewInstanceCount    = 1;
-        RHI::bSupportsViewInstancing = false;
-    }
-
-    // -------------------------------------------------------------------------------------------
-    // Ray Tracing
-    // Tier1_1: Only if VK_KHR_ray_query is available
-    // Tier1: Pipeline ray tracing without ray query
-    // Supports ray tracing if acceleration structures + (pipeline OR ray query)
-    // -------------------------------------------------------------------------------------------
-
-    const bool bHasRayTracingPipeline     = IsExtensionEnabled(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
-    const bool bHasRayQuery               = IsExtensionEnabled(VK_KHR_RAY_QUERY_EXTENSION_NAME);
-    const bool bHasAccelerationStructures = IsExtensionEnabled(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
-
-    if (bHasAccelerationStructures && bHasRayTracingPipeline)
-    {
-    #if VK_EXT_ray_tracing_invocation_reorder || VK_NV_ray_tracing_invocation_reorder
-        bool bHasInvocationReorder    = false;
-        bool bReorderActuallyReorders = false;
-    #endif
-    #if VK_EXT_ray_tracing_invocation_reorder
-        if (IsExtensionEnabled(VK_EXT_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME))
-        {
-            VkPhysicalDeviceRayTracingInvocationReorderPropertiesEXT ReorderProperties = {};
-            ReorderProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_EXT;
-
-            VkPhysicalDeviceProperties2 DeviceProperties2 = {};
-            DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-
-            AddToStructChain(DeviceProperties2, ReorderProperties);
-            vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
-
-            bHasInvocationReorder    = true;
-            bReorderActuallyReorders = (ReorderProperties.rayTracingInvocationReorderReorderingHint != VK_RAY_TRACING_INVOCATION_REORDER_MODE_NONE_EXT);
-        }
-    #endif
-    #if VK_NV_ray_tracing_invocation_reorder
-        if (!bHasInvocationReorder && IsExtensionEnabled(VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME))
-        {
-            VkPhysicalDeviceRayTracingInvocationReorderPropertiesNV ReorderProperties = {};
-            ReorderProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_NV;
-
-            VkPhysicalDeviceProperties2 DeviceProperties2 = {};
-            DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-
-            AddToStructChain(DeviceProperties2, ReorderProperties);
-            vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
-
-            bHasInvocationReorder    = true;
-            bReorderActuallyReorders = (ReorderProperties.rayTracingInvocationReorderReorderingHint != VK_RAY_TRACING_INVOCATION_REORDER_MODE_NONE_NV);
-        }
-    #endif
-
-        GVulkanSupportsOpacityMicromap                         = false;
-        GVulkanSupportsShaderExecutionReordering               = false;
-        GVulkanShaderExecutionReorderingActuallyReorders                 = false;
-        GVulkanSupportsClustersAndPTLAS                        = false;
-        GVulkanSupportsIndirectAccelerationStructureOperations = false;
-
-        RHI::bSupportsRayTracing         = true;
-        RHI::RayTracingTier              = bHasRayQuery ? ERayTracingTier::Tier1_1 : ERayTracingTier::Tier1;
-    #if VK_KHR_ray_tracing_pipeline
-        RHI::RayTracingMaxRecursionDepth = GetPhysicalDevice()->GetRayTracingPipelineProperties().maxRayRecursionDepth;
-    #else
-        RHI::RayTracingMaxRecursionDepth = 1;
-    #endif
-
-        RHI::bSupportsInlineRayTracing = bHasRayQuery;
-
-        // Vulkan has no in-place equivalent to D3D12 AddToStateObject
-        RHI::bSupportsRayTracingPipelineAdditions = false;
-
-        // Vulkan SBT records can only carry raw data / buffer device addresses, not image descriptors.
-        RHI::bSupportsShaderBindingTableDescriptors = false;
-
-    #if VK_KHR_ray_tracing_maintenance1 && VK_KHR_ray_tracing_pipeline
-        GVulkanSupportsIndirectRayDispatch = GVulkanSupportsIndirectRayDispatch && IsExtensionEnabled(VK_KHR_RAY_TRACING_MAINTENANCE_1_EXTENSION_NAME) && vkCmdTraceRaysIndirect2KHR;
-    #else
-        GVulkanSupportsIndirectRayDispatch = false;
-    #endif
-
-    #if VK_EXT_opacity_micromap
-        GVulkanSupportsOpacityMicromap = IsExtensionEnabled(VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME);
-    #endif
-    #if VK_EXT_ray_tracing_invocation_reorder || VK_NV_ray_tracing_invocation_reorder
-        GVulkanSupportsShaderExecutionReordering         = bHasInvocationReorder;
-        GVulkanShaderExecutionReorderingActuallyReorders = bReorderActuallyReorders;
-    #endif
-    #if VK_NV_cluster_acceleration_structure && VK_NV_partitioned_acceleration_structure
-        GVulkanSupportsClustersAndPTLAS =
-            IsExtensionEnabled(VK_NV_CLUSTER_ACCELERATION_STRUCTURE_EXTENSION_NAME) &&
-            IsExtensionEnabled(VK_NV_PARTITIONED_ACCELERATION_STRUCTURE_EXTENSION_NAME);
-        GVulkanSupportsIndirectAccelerationStructureOperations = GVulkanSupportsClustersAndPTLAS;
-
-        if (GVulkanSupportsClustersAndPTLAS)
-        {
-            VkPhysicalDeviceClusterAccelerationStructurePropertiesNV ClusterProperties = {};
-            ClusterProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_PROPERTIES_NV;
-
-            VkPhysicalDevicePartitionedAccelerationStructurePropertiesNV PartitionedProperties = {};
-            PartitionedProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PARTITIONED_ACCELERATION_STRUCTURE_PROPERTIES_NV;
-
-            VkPhysicalDeviceProperties2 ClusterDeviceProperties2 = {};
-            ClusterDeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-
-            AddToStructChain(ClusterDeviceProperties2, ClusterProperties);
-            AddToStructChain(ClusterDeviceProperties2, PartitionedProperties);
-
-            vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &ClusterDeviceProperties2);
-
-            RHI::RayTracingMaxTrianglesPerCluster      = ClusterProperties.maxTrianglesPerCluster;
-            RHI::RayTracingMaxVerticesPerCluster       = ClusterProperties.maxVerticesPerCluster;
-            RHI::RayTracingMaxPartitionedInstanceCount = PartitionedProperties.maxPartitionCount;
-        }
-    #endif
-
-        RHI::bSupportsOpacityMicromap                                  = GVulkanSupportsOpacityMicromap;
-        RHI::bSupportsShaderExecutionReordering                        = GVulkanSupportsShaderExecutionReordering;
-        RHI::bShaderExecutionReorderingActuallyReorders                = GVulkanShaderExecutionReorderingActuallyReorders;
-        RHI::bSupportsClustersAndPartitionedSceneAccelerationStructure = GVulkanSupportsClustersAndPTLAS;
-        RHI::bSupportsIndirectAccelerationStructureOperations          = GVulkanSupportsIndirectAccelerationStructureOperations;
-        RHI::bSupportsDispatchRaysIndirect                             = GVulkanSupportsIndirectRayDispatch;
-
-        DumpVulkanCapabilities();
-    }
-    else
-    {
-        GVulkanSupportsIndirectRayDispatch = false;
-        RHI::bSupportsRayTracing           = false;
-        RHI::RayTracingTier                = ERayTracingTier::NotSupported;
-        RHI::RayTracingMaxRecursionDepth   = 0;
-        RHI::bSupportsInlineRayTracing     = false;
-        RHI::bSupportsDispatchRaysIndirect = false;
-    }
-
-    // -------------------------------------------------------------------------------------------
-    // Variable Rate Shading (fragment shading rate)
-    // Tier2: If attachmentFragmentShadingRate (image-based) is supported
-    // Tier1: If pipeline/primitive shading rate is supported
-    // -------------------------------------------------------------------------------------------
-    
-    if (IsExtensionEnabled(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
-    {
-        // Query features
-        VkPhysicalDeviceFeatures2 DeviceFeatures2 = {};
-        DeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-
-        VkPhysicalDeviceFragmentShadingRateFeaturesKHR DeviceFragmentShadingRateFeatures = {};
-        DeviceFragmentShadingRateFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR;
-
-        AddToStructChain(DeviceFeatures2, DeviceFragmentShadingRateFeatures);
-
-        vkGetPhysicalDeviceFeatures2(PhysicalDeviceHandle, &DeviceFeatures2);
-
-        // Query properties (tile size)
-        VkPhysicalDeviceProperties2 DeviceProperties2 = {};
-        DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-
-        VkPhysicalDeviceFragmentShadingRatePropertiesKHR DeviceFragmentShadingRateProperties = {};
-        DeviceFragmentShadingRateProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
-
-        AddToStructChain(DeviceProperties2, DeviceFragmentShadingRateProperties);
-
-        vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
-
-        if (DeviceFragmentShadingRateFeatures.attachmentFragmentShadingRate)
-        {
-            RHI::ShadingRateTier = EShadingRateTier::Tier2; // image-based
-        }
-        else if (DeviceFragmentShadingRateFeatures.pipelineFragmentShadingRate || DeviceFragmentShadingRateFeatures.primitiveFragmentShadingRate)
-        {
-            RHI::ShadingRateTier = EShadingRateTier::Tier1; // per-draw/per-primitive
-        }
-        else
-        {
-            RHI::ShadingRateTier = EShadingRateTier::NotSupported;
-        }
-
-        RHI::ShadingRateImageTileSize = Math::Max<uint32>(1u, DeviceFragmentShadingRateProperties.minFragmentShadingRateAttachmentTexelSize.width);
-        RHI::bSupportsVRS             = RHI::ShadingRateTier != EShadingRateTier::NotSupported;
-    }
-    else
-    {
-        RHI::bSupportsVRS             = false;
-        RHI::ShadingRateTier          = EShadingRateTier::NotSupported;
-        RHI::ShadingRateImageTileSize = 0;
-    }
-
+    RHI::bSupportsBindless = BindlessDescriptorManager && BindlessDescriptorManager->IsEnabled();
     return true;
 }
 
@@ -1502,17 +952,17 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
     VkBuffer DefaultBuffer = DefaultResources.NullBuffer;
     VkImage  DefaultImage  = DefaultResources.NullImage;
 
-    VkImageMemoryBarrier2 ImageBarrier = {};
-    ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+    VkImageMemoryBarrier2KHR ImageBarrier = {};
+    ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR;
     ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
     ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
     ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
     ImageBarrier.image                           = DefaultImage;
-    ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE;
-    ImageBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT;
-    ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
-    ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+    ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE_KHR;
+    ImageBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
+    ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
+    ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
     ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(VK_FORMAT_R8G8B8A8_UNORM);
     ImageBarrier.subresourceRange.baseArrayLayer = 0;
     ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
@@ -1528,7 +978,7 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
     BufferImageCopy.imageSubresource.aspectMask     = ImageBarrier.subresourceRange.aspectMask;
     BufferImageCopy.imageSubresource.mipLevel       = 0;
     BufferImageCopy.imageSubresource.baseArrayLayer = 0;
-    BufferImageCopy.imageSubresource.layerCount     = 1;
+    BufferImageCopy.imageSubresource.layerCount     = VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS;
     BufferImageCopy.imageOffset                     = { 0, 0, 0 };
     BufferImageCopy.imageExtent                     = { VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, 1 };
 
@@ -1537,9 +987,9 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
 
     ImageBarrier.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     ImageBarrier.newLayout     = VK_IMAGE_LAYOUT_GENERAL;
-    ImageBarrier.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
-    ImageBarrier.dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
-    ImageBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+    ImageBarrier.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
+    ImageBarrier.dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
+    ImageBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
     ImageBarrier.dstStageMask  = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
 
     CommandContext.GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
@@ -1940,6 +1390,7 @@ bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device
 
     VkImageCreateInfo ImageCreateInfo = {};
     ImageCreateInfo.sType                 = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    ImageCreateInfo.flags                 = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
     ImageCreateInfo.imageType             = VK_IMAGE_TYPE_2D;
     ImageCreateInfo.usage                 = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
     ImageCreateInfo.format                = VK_FORMAT_R8G8B8A8_UNORM;
@@ -1951,7 +1402,7 @@ bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device
     ImageCreateInfo.samples               = VK_SAMPLE_COUNT_1_BIT;
     ImageCreateInfo.tiling                = VK_IMAGE_TILING_OPTIMAL;
     ImageCreateInfo.initialLayout         = VK_IMAGE_LAYOUT_UNDEFINED;
-    ImageCreateInfo.arrayLayers           = 1;
+    ImageCreateInfo.arrayLayers           = VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS;
 
     VkResult Result = vkCreateImage(Device.GetVkDevice(), &ImageCreateInfo, nullptr, &NullImage);
     if (VULKAN_FAILED(Result))
@@ -1982,32 +1433,60 @@ bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device
         return false;
     }
 
-    // Create NullImageView
+    struct FNullViewDesc
+    {
+        EVulkanNullImageViewType ViewType;
+        VkImageViewType          VkViewType;
+        uint32                   LayerCount;
+        const CHAR*              DebugName;
+    };
+
+    const FNullViewDesc NullViewDescs[] =
+    {
+        { EVulkanNullImageViewType::Texture2D,        VK_IMAGE_VIEW_TYPE_2D,         1,                                 "NullImageView2D"        },
+        { EVulkanNullImageViewType::Texture2DArray,   VK_IMAGE_VIEW_TYPE_2D_ARRAY,   VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, "NullImageView2DArray"   },
+        { EVulkanNullImageViewType::TextureCube,      VK_IMAGE_VIEW_TYPE_CUBE,       VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, "NullImageViewCube"      },
+        { EVulkanNullImageViewType::TextureCubeArray, VK_IMAGE_VIEW_TYPE_CUBE_ARRAY, VULKAN_DEFAULT_IMAGE_ARRAY_LAYERS, "NullImageViewCubeArray" },
+    };
+
+    static_assert(ARRAY_COUNT(NullViewDescs) == static_cast<uint32>(EVulkanNullImageViewType::Count), "NullViewDescs is out of date");
+
     VkImageViewCreateInfo ImageViewCreateInfo = {};
     ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     ImageViewCreateInfo.flags                           = 0;
     ImageViewCreateInfo.format                          = ImageCreateInfo.format;
     ImageViewCreateInfo.image                           = NullImage;
-    ImageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
     ImageViewCreateInfo.components.r                    = VK_COMPONENT_SWIZZLE_R;
     ImageViewCreateInfo.components.g                    = VK_COMPONENT_SWIZZLE_G;
     ImageViewCreateInfo.components.b                    = VK_COMPONENT_SWIZZLE_B;
     ImageViewCreateInfo.components.a                    = VK_COMPONENT_SWIZZLE_A;
     ImageViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
     ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-    ImageViewCreateInfo.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
     ImageViewCreateInfo.subresourceRange.baseMipLevel   = 0;
     ImageViewCreateInfo.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
-    Result = vkCreateImageView(Device.GetVkDevice(), &ImageViewCreateInfo, nullptr, &NullImageView);
-    if (VULKAN_FAILED(Result))
+    for (const FNullViewDesc& ViewDesc : NullViewDescs)
     {
-        VULKAN_ERROR_CRITICAL("vkCreateImageView failed");
-        return false;
-    }
-    else
-    {
-        VulkanSetObjectName(Device.GetVkDevice(), "NullImageView", NullImageView, VK_OBJECT_TYPE_IMAGE_VIEW);
+        const uint32 ViewIndex = static_cast<uint32>(ViewDesc.ViewType);
+        if (ViewDesc.VkViewType == VK_IMAGE_VIEW_TYPE_CUBE_ARRAY && !GVulkanSupportsImageCubeArray)
+        {
+            NullImageViews[ViewIndex] = NullImageViews[static_cast<uint32>(EVulkanNullImageViewType::TextureCube)];
+            continue;
+        }
+
+        ImageViewCreateInfo.viewType                    = ViewDesc.VkViewType;
+        ImageViewCreateInfo.subresourceRange.layerCount = ViewDesc.LayerCount;
+
+        Result = vkCreateImageView(Device.GetVkDevice(), &ImageViewCreateInfo, nullptr, &NullImageViews[ViewIndex]);
+        if (VULKAN_FAILED(Result))
+        {
+            VULKAN_ERROR_CRITICAL("vkCreateImageView failed for '%s'", ViewDesc.DebugName);
+            return false;
+        }
+        else
+        {
+            VulkanSetObjectName(Device.GetVkDevice(), ViewDesc.DebugName, NullImageViews[ViewIndex], VK_OBJECT_TYPE_IMAGE_VIEW);
+        }
     }
 
     return true;
@@ -2023,9 +1502,25 @@ void FVulkanDefaultResources::Release(FVulkanDevice& Device)
         NullBufferLocation.ReleaseMemory();
     }
 
-    if (VULKAN_CHECK_HANDLE(NullImageView))
+    for (uint32 ViewIndex = 0; ViewIndex < ARRAY_COUNT(NullImageViews); ViewIndex++)
     {
-        vkDestroyImageView(VulkanDevice, NullImageView, nullptr);
+        VkImageView& NullImageView = NullImageViews[ViewIndex];
+        if (!VULKAN_CHECK_HANDLE(NullImageView))
+        {
+            continue;
+        }
+
+        bool bIsAlias = false;
+        for (uint32 PreviousIndex = 0; PreviousIndex < ViewIndex; PreviousIndex++)
+        {
+            bIsAlias |= (NullImageViews[PreviousIndex] == NullImageView);
+        }
+
+        if (!bIsAlias)
+        {
+            vkDestroyImageView(VulkanDevice, NullImageView, nullptr);
+        }
+
         NullImageView = VK_NULL_HANDLE;
     }
 

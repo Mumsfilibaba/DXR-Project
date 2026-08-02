@@ -422,6 +422,7 @@ bool FD3D12RayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineSt
         Result = Device7->AddToStateObject(&RayTracingPipeline, BaseStateObject, IID_PPV_ARGS(&TempStateObject));
         if (FAILED(Result))
         {
+            D3D12_ERROR("[D3D12RayTracingPipelineState]: AddToStateObject failed (hr=0x%08X)", Result);
             DEBUG_BREAK();
             return false;
         }
@@ -436,6 +437,7 @@ bool FD3D12RayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineSt
         Result = GetDevice()->GetD3D12Device5()->CreateStateObject(&RayTracingPipeline, IID_PPV_ARGS(&TempStateObject));
         if (FAILED(Result))
         {
+            D3D12_ERROR("[D3D12RayTracingPipelineState]: CreateStateObject failed (hr=0x%08X)", Result);
             DEBUG_BREAK();
             return false;
         }

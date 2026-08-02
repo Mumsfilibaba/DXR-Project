@@ -3,8 +3,8 @@
 #include "VulkanRHI/VulkanCore.h"
 
 constexpr VkImageLayout          VK_IMAGE_LAYOUT_TO_BE_DETERMINED           = static_cast<VkImageLayout>(0x7FFFFFFF);
-constexpr VkAccessFlags2         VK_ACCESS_FLAGS_2_TO_BE_DETERMINED         = ~static_cast<VkAccessFlags2>(0);
-constexpr VkPipelineStageFlags2  VK_PIPELINE_STAGE_FLAGS_2_TO_BE_DETERMINED = ~static_cast<VkPipelineStageFlags2>(0);
+constexpr VkAccessFlags2KHR         VK_ACCESS_FLAGS_2_TO_BE_DETERMINED         = ~static_cast<VkAccessFlags2KHR>(0);
+constexpr VkPipelineStageFlags2KHR  VK_PIPELINE_STAGE_FLAGS_2_TO_BE_DETERMINED = ~static_cast<VkPipelineStageFlags2KHR>(0);
 
 class FVulkanTextureRHI;
 class FVulkanBufferRHI;
@@ -41,6 +41,12 @@ public:
         bHasDefaultLayout = true;
     }
 
+    void ClearDefaultLayout()
+    {
+        DefaultLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
+        bHasDefaultLayout = false;
+    }
+
     bool HasDefaultLayout() const
     {
         return bHasDefaultLayout;
@@ -49,6 +55,17 @@ public:
     VkImageLayout GetDefaultLayout() const
     {
         return DefaultLayout;
+    }
+
+    void AdoptTrackedState(const FVulkanImageLayoutState& Other)
+    {
+        const VkImageLayout PreservedDefault     = DefaultLayout;
+        const bool          bPreservedHasDefault = bHasDefaultLayout;
+
+        *this = Other;
+
+        DefaultLayout     = PreservedDefault;
+        bHasDefaultLayout = bPreservedHasDefault;
     }
 
 private:
@@ -63,21 +80,54 @@ private:
 class FVulkanBufferState
 {
 public:
-    void SetState(VkAccessFlags2 InAccess, VkPipelineStageFlags2 InStage);
+    void SetState(VkAccessFlags2KHR InAccess, VkPipelineStageFlags2KHR InStage);
 
-    VkAccessFlags2 GetAccess() const
+    VkAccessFlags2KHR GetAccess() const
     {
         return Access;
     }
 
-    VkPipelineStageFlags2 GetStage() const
+    VkPipelineStageFlags2KHR GetStage() const
     {
         return Stage;
     }
 
+    void SetDefaultState(VkAccessFlags2KHR InDefaultAccess, VkPipelineStageFlags2KHR InDefaultStage)
+    {
+        DefaultAccess    = InDefaultAccess;
+        DefaultStage     = InDefaultStage;
+        bHasDefaultState = true;
+    }
+
+    bool HasDefaultState() const
+    {
+        return bHasDefaultState;
+    }
+
+    VkAccessFlags2KHR GetDefaultAccess() const
+    {
+        return DefaultAccess;
+    }
+
+    void AdoptTrackedState(const FVulkanBufferState& Other)
+    {
+        const VkAccessFlags2KHR        PreservedAccess      = DefaultAccess;
+        const VkPipelineStageFlags2KHR PreservedStage       = DefaultStage;
+        const bool                     bPreservedHasDefault = bHasDefaultState;
+
+        *this = Other;
+
+        DefaultAccess    = PreservedAccess;
+        DefaultStage     = PreservedStage;
+        bHasDefaultState = bPreservedHasDefault;
+    }
+
 private:
-    VkAccessFlags2        Access = 0;
-    VkPipelineStageFlags2 Stage  = 0;
+    VkAccessFlags2KHR        Access           = 0;
+    VkPipelineStageFlags2KHR Stage            = 0;
+    VkAccessFlags2KHR        DefaultAccess    = 0;
+    VkPipelineStageFlags2KHR DefaultStage     = 0;
+    bool                     bHasDefaultState = false;
 };
 
 struct FVulkanPendingImageBarrier
@@ -90,6 +140,6 @@ struct FVulkanPendingImageBarrier
 struct FVulkanPendingBufferBarrier
 {
     FVulkanBufferRHI*     Buffer;
-    VkAccessFlags2        DesiredAccess;
-    VkPipelineStageFlags2 DesiredStage;
+    VkAccessFlags2KHR        DesiredAccess;
+    VkPipelineStageFlags2KHR DesiredStage;
 };

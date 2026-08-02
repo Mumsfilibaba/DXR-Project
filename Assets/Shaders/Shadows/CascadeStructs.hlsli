@@ -3,20 +3,34 @@
 
 #include "CoreDefines.hlsli"
 
+// Necessary to pack matrices like this in order to have it work on MoltenVK
 struct FCascadeMatrices
 {
     // 0-64
-    float4x4 View;
-    
+    float4 View[4];
+
     // 64-128
-    float4x4 ViewProj;
-    
+    float4 ViewProj[4];
+
     // 128-192
-    float4x4 InvView;
+    float4 InvView[4];
 
     // 192-256
-    float4x4 InvViewProj;
+    float4 InvViewProj[4];
 };
+
+void PackMatrix(float4x4 Matrix, out float4 Rows[4])
+{
+    Rows[0] = Matrix[0];
+    Rows[1] = Matrix[1];
+    Rows[2] = Matrix[2];
+    Rows[3] = Matrix[3];
+}
+
+float4x4 UnpackMatrix(float4 Rows[4])
+{
+    return float4x4(Rows[0], Rows[1], Rows[2], Rows[3]);
+}
 
 struct FCascadeSplit
 {

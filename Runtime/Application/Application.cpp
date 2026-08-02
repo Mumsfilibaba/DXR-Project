@@ -221,13 +221,13 @@ FApplication::FApplication(TSharedPtr<FGenericApplication> InPlatformApplication
     , PressedKeys()
     , PressedMouseButtons()
     , MonitorInfos()
-    , bIsMonitorInfoValid(false)
-    , bIsTrackingCursor(false)
     , FocusPath()
     , TrackedWidgets()
     , Windows()
     , InputHandlers()
     , OnMonitorConfigChangedEvent()
+    , bIsMonitorInfoValid(false)
+    , bIsTrackingCursor(false)
 {
     UpdateMonitorInfo();
 }
@@ -408,6 +408,11 @@ bool FApplication::OnGamepadButtonUp(EGamepadButtonName::Type Button, uint32 Gam
         {
             return InputHandler->OnKeyUp(KeyEvent);
         });
+
+    if (PreProcessResponse.IsEventHandled())
+    {
+        return true;
+    }
 
     const FEventResponse WidgetResponse = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(FocusPath), KeyEvent,
         [](const TSharedPtr<FWidget>& Widget, const FKeyEvent& KeyEvent)
