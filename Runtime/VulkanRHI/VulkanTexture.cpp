@@ -5,6 +5,29 @@
 #include "VulkanRHI/VulkanCommandContext.h"
 #include "RHI/RHIStats.h"
 
+static void VulkanTransitionInitialLayout(FVulkanCommandContext* CommandContext, VkImage Image, VkFormat Format, VkImageLayout AfterLayout)
+{
+    VkImageMemoryBarrier2KHR ImageBarrier = {};
+    ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR;
+    ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    ImageBarrier.newLayout                       = AfterLayout;
+    ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+    ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+    ImageBarrier.image                           = Image;
+    ImageBarrier.srcAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
+    ImageBarrier.dstAccessMask                   = VK_ACCESS_2_MEMORY_READ_BIT_KHR | VK_ACCESS_2_MEMORY_WRITE_BIT_KHR;
+    ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
+    ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR;
+    ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(Format);
+    ImageBarrier.subresourceRange.baseArrayLayer = 0;
+    ImageBarrier.subresourceRange.baseMipLevel   = 0;
+    ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+    ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+
+    CommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
+    CommandContext->GetBarrierBatcher().FlushBarriers(CommandContext->GetCommandBuffer());
+}
+
 uint32 VkCalculateTextureRowPitch(VkFormat Format, uint32 Width)
 {
     const bool bIsBlockCompressed = VkFormatIsBlockCompressed(Format);
@@ -129,7 +152,31 @@ FVulkanTextureRHI::~FVulkanTextureRHI()
     }
 }
 
-bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)
+static ERHIResourceStateTrackingMode VulkanResolveTextureTrackingMode(const FRHITextureDesc& InDesc)
+{
+    if (InDesc.TrackingMode != ERHIResourceStateTrackingMode::Tracked)
+    {
+        return InDesc.TrackingMode;
+    }
+
+    constexpr ETextureUsageFlags StatefulMask =
+        ETextureUsageFlags::RenderTarget |
+        ETextureUsageFlags::DepthStencil |
+        ETextureUsageFlags::UnorderedAccessTexture |
+        ETextureUsageFlags::ShadingRateTexture |
+        ETextureUsageFlags::Presentable |
+        ETextureUsageFlags::CopySource |
+        ETextureUsageFlags::CopyDest;
+
+    if ((InDesc.UsageFlags & StatefulMask) == ETextureUsageFlags::None && InDesc.IsShaderResourceTexture())
+    {
+        return ERHIResourceStateTrackingMode::Static;
+    }
+
+    return ERHIResourceStateTrackingMode::Tracked;
+}
+
+bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERHIResourceState InInitialAccess, const IRHITextureData* InInitialData)
 {
     const VkSampleCountFlagBits SampleCount = ConvertSampleCount(Desc.NumSamples);
     if (SampleCount < VK_SAMPLE_COUNT_1_BIT)
@@ -529,7 +576,7 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERes
             Depth  = Math::Max(1u, Depth >> 1);
         }
 
-        InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::CopyDest, InInitialAccess));
+        VulkanTransitionInitialLayout(InCommandContext, Image, ImageCreateInfo.format, FVulkanDeviceRHI::ResourceStateToImageLayout(InInitialAccess));
         InCommandContext->FinishContext();
     }
     else
@@ -605,26 +652,21 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERes
                 &SubresourceRange);
         }
 
-        InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::CopyDest, InInitialAccess));
+        VulkanTransitionInitialLayout(InCommandContext, Image, ImageCreateInfo.format, FVulkanDeviceRHI::ResourceStateToImageLayout(InInitialAccess));
         InCommandContext->FinishContext();
     }
 
-    const VkImageLayout InitialLayout = FVulkanDeviceRHI::ResourceStateToImageLayout(InInitialAccess);
-    const uint32 NumSubresources = ImageCreateInfo.mipLevels * ImageCreateInfo.arrayLayers;
+    const VkImageLayout InitialLayout   = FVulkanDeviceRHI::ResourceStateToImageLayout(InInitialAccess);
+    const uint32        NumSubresources = ImageCreateInfo.mipLevels * ImageCreateInfo.arrayLayers;
+
     ImageLayoutState.SetImageLayout(InitialLayout);
     ImageLayoutState.Initialize(Math::Max(NumSubresources, 1u));
 
-    {
-        constexpr ETextureUsageFlags WriteMask = 
-            ETextureUsageFlags::RenderTarget | 
-            ETextureUsageFlags::DepthStencil | 
-            ETextureUsageFlags::UnorderedAccessTexture | 
-            ETextureUsageFlags::Presentable;
+    Desc.TrackingMode = VulkanResolveTextureTrackingMode(Desc);
 
-        if ((Desc.UsageFlags & WriteMask) == ETextureUsageFlags::None && IsEnumFlagSet(Desc.UsageFlags, ETextureUsageFlags::ShaderResourceTexture))
-        {
-            ImageLayoutState.SetDefaultLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        }
+    if (Desc.TrackingMode == ERHIResourceStateTrackingMode::Static)
+    {
+        ImageLayoutState.SetDefaultLayout(InitialLayout);
     }
 
     MemoryLocation.FinalizeAllocation();

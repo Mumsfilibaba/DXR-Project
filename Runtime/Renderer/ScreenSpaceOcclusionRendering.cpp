@@ -1,4 +1,4 @@
-#include "Core/Math/Vector2.h"
+﻿#include "Core/Math/Vector2.h"
 #include "Core/Math/Vector3.h"
 #include "Core/Math/IntVector2.h"
 #include "Core/Misc/FrameProfiler.h"
@@ -211,7 +211,7 @@ void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameReso
         GPU_TRACE_SCOPE(CommandList, "SSAO Tracing");
 
         CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
-        CommandList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
+        CommandList.UnorderedAccessBarrier(FrameResources.SSAOBuffer.Get());
     }
 
     // Horizontal blur
@@ -225,7 +225,7 @@ void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameReso
         
         CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
-        CommandList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
+        CommandList.UnorderedAccessBarrier(FrameResources.SSAOBuffer.Get());
     }
 
     // Vertical blur
@@ -246,7 +246,7 @@ bool FScreenSpaceOcclusionPass::CreateResources(FFrameResources& FrameResources,
     const ETextureUsageFlags Flags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
 
     FRHITextureDesc SSAOBufferDesc = FRHITextureDesc::CreateTexture2D(RendererTextureFormats::SSAOBufferFormat, Width, Height, 1, 1, Flags);
-    FrameResources.SSAOBuffer = RHI::CreateTexture(SSAOBufferDesc, EResourceAccess::NonPixelShaderResource);
+    FrameResources.SSAOBuffer = RHI::CreateTexture(SSAOBufferDesc, ERHIResourceState::NonPixelShaderResource);
     if (!FrameResources.SSAOBuffer)
     {
         DEBUG_BREAK();

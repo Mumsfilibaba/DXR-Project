@@ -100,7 +100,7 @@ FD3D12BufferRHI::~FD3D12BufferRHI()
 #endif
 }
 
-bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData)
+bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIResourceState InInitialAccess, const void* InInitialData)
 {
     const uint64 Alignment   = GetBufferAlignment(Desc);
     const uint64 AlignedSize = Math::AlignUpToMultiple<uint64>(Desc.Size, Alignment);
@@ -118,10 +118,12 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, EResour
     ResourceDesc.SampleDesc.Count   = 1;
     ResourceDesc.SampleDesc.Quality = 0;
 
-    ED3D12ResourceStateMode StateMode         = ED3D12ResourceStateMode::MultipleStates;
+    const bool bIsManual = (ConvertResourceStateMode(Desc.TrackingMode) == ED3D12ResourceStateMode::ManualState);
+
+    ED3D12ResourceStateMode StateMode         = bIsManual ? ED3D12ResourceStateMode::ManualState : ED3D12ResourceStateMode::MultipleStates;
     D3D12_RESOURCE_STATES   D3D12InitialState = D3D12_RESOURCE_STATE_COMMON;
     D3D12_HEAP_TYPE         D3D12HeapType     = D3D12_HEAP_TYPE_DEFAULT;
-    D3D12_RESOURCE_STATES   D3D12DefaultState = DetermineDefaultBufferState(Desc.Flags);
+    D3D12_RESOURCE_STATES   D3D12DefaultState = bIsManual ? D3D12_RESOURCE_STATES(0) : DetermineDefaultBufferState(Desc.Flags);
 
     if (Desc.IsReadBack())
     {
@@ -178,6 +180,8 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, EResour
 
     FD3D12Resource* D3D12Resource = ResourceStorage.GetResource();
 
+    Desc.TrackingMode = ConvertResourceStateMode(StateMode);
+
     const bool bHasDefaultState = D3D12DefaultState != D3D12_RESOURCE_STATES(0);
     const bool bPlaced          = D3D12Resource->IsPlacedResource();
     const bool bMappedUpload    = InInitialData && (Desc.IsDynamic() || Desc.IsTransient());
@@ -208,7 +212,7 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, EResour
     }
 
     const bool bGpuUpload       = InInitialData && !bMappedUpload;
-    const bool bNeedsTransition = !InInitialData && !bHasDefaultState && (InInitialAccess != EResourceAccess::Common) && (D3D12HeapType == D3D12_HEAP_TYPE_DEFAULT);
+    const bool bNeedsTransition = !InInitialData && !bHasDefaultState && (InInitialAccess != ERHIResourceState::Common) && (D3D12HeapType == D3D12_HEAP_TYPE_DEFAULT);
 
     if (bPlaced || bGpuUpload || bNeedsTransition)
     {

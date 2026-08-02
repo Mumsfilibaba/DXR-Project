@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Core/Containers/Array.h"
 #include "Core/Containers/String.h"
 #include "Core/Math/Math.h"
@@ -55,7 +55,7 @@ public:
         ReadbackDesc.Size   = sizeof(uint64) * 2;
         ReadbackDesc.Stride = sizeof(uint64);
 
-        FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(ReadbackDesc, EResourceAccess::CopyDest, nullptr);
+        FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(ReadbackDesc, ERHIResourceState::CopyDest, nullptr);
         if (!ReadbackBuffer)
         {
             return;
@@ -133,8 +133,8 @@ private:
         BytesReadbackDesc.Size   = SerializedSize;
         BytesReadbackDesc.Stride = 0;
 
-        FRHIBufferRef DestBuffer     = RHI::CreateBuffer(DestDesc, EResourceAccess::UnorderedAccess, nullptr);
-        FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(BytesReadbackDesc, EResourceAccess::CopyDest, nullptr);
+        FRHIBufferRef DestBuffer     = RHI::CreateBuffer(DestDesc, ERHIResourceState::UnorderedAccess, nullptr);
+        FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(BytesReadbackDesc, ERHIResourceState::CopyDest, nullptr);
 
         if (!DestBuffer || !ReadbackBuffer)
         {
@@ -143,7 +143,7 @@ private:
         }
 
         CommandList.SerializeAccelerationStructure(Pending.Source, DestBuffer.Get(), 0);
-        CommandList.TransitionBufferState(DestBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::CopySource);
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(DestBuffer.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::CopySource));
 
         const FRHIBufferCopyDesc CopyDesc(0, 0, static_cast<uint32>(SerializedSize));
         CommandList.CopyBuffer(ReadbackBuffer.Get(), DestBuffer.Get(), CopyDesc);

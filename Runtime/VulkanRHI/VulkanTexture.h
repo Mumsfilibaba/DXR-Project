@@ -22,6 +22,11 @@ protected:
 
 public:
     virtual FVulkanTextureRHI* GetTextureInterface() const = 0;
+
+    void SetResourceStateTrackingMode(ERHIResourceStateTrackingMode InTrackingMode)
+    {
+        Desc.TrackingMode = InTrackingMode;
+    }
 };
 
 class FVulkanTextureRHI : public FVulkanTextureBase, public FVulkanResource
@@ -47,7 +52,7 @@ public:
     virtual void SetDebugName(const String& InName)       override final;
     virtual void GetDebugName(String& OutDebugName) const override final;
     
-    bool Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
+    bool Initialize(FVulkanCommandContext* InCommandContext, ERHIResourceState InInitialAccess, const IRHITextureData* InInitialData);
 
     void SetVkImage(VkImage InImage);
     

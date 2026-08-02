@@ -64,7 +64,7 @@ bool RHIValidationHelpers_Test()
     BufferDesc.Flags = EBufferFlags::Default | EBufferFlags::UnorderedAccessBuffer | EBufferFlags::IndirectArguments;
     TEST_EXPECT(BufferDesc.IsIndirectArguments());
     TEST_EXPECT(BufferDesc.IsUnorderedAccessBuffer());
-    TEST_EXPECT(StringView(ToString(EResourceAccess::IndirectArgument)) == StringView("IndirectArgument"));
+    TEST_EXPECT(StringView(ToString(ERHIResourceState::IndirectArgument)) == StringView("IndirectArgument"));
 
     TEST_END();
 }

@@ -1,4 +1,4 @@
-#include "Renderer/DebugViewPass.h"
+﻿#include "Renderer/DebugViewPass.h"
 #include "Core/Math/Math.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
@@ -171,13 +171,13 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
     FScissorRegion ScissorRegion(static_cast<float>(ViewWidth), static_cast<float>(ViewHeight), static_cast<float>(ViewX), static_cast<float>(ViewY));
     CommandList.SetScissorRect(ScissorRegion);
 
-    CommandList.RequireTextureState(RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::RenderTarget));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(RenderTarget, ERHIResourceState::RenderTarget));
 
     const auto RequirePixel = [&CommandList](FRHITexture* Texture)
     {
         if (Texture)
         {
-            CommandList.RequireTextureState(Texture, FRHIRequiredTextureState::Make(EResourceAccess::PixelShaderResource));
+            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Texture, ERHIResourceState::PixelShaderResource));
         }
     };
 
@@ -311,5 +311,5 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
 
     CommandList.EndRenderPass();
 
-    CommandList.RequireTextureState(RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::PixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(RenderTarget, ERHIResourceState::PixelShaderResource));
 }

@@ -1,4 +1,4 @@
-#include "Core/Misc/FrameProfiler.h"
+﻿#include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
@@ -157,7 +157,7 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
 
     GPU_TRACE_SCOPE(CommandList, "Forward Pass");
 
-    CommandList.TransitionTextureState(FrameResources.ShadowCascades.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(FrameResources.ShadowCascades.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource));
 
     const float RenderWidth  = float(FrameResources.CurrentRenderWidth);
     const float RenderHeight = float(FrameResources.CurrentRenderHeight);
@@ -183,7 +183,7 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     if (!PipelineInstance)
     {
         CommandList.EndRenderPass();
-        CommandList.TransitionTextureState(FrameResources.ShadowCascades.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(FrameResources.ShadowCascades.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource));
         DEBUG_BREAK();
         return;
     }
@@ -271,5 +271,5 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
 
     CommandList.EndRenderPass();
 
-    CommandList.TransitionTextureState(FrameResources.ShadowCascades.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(FrameResources.ShadowCascades.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource));
 }

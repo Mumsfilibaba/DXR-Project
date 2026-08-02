@@ -54,7 +54,7 @@ FRHIDescriptorHandle FMetalTextureRHI::GetBindlessSRVHandle() const
     return FRHIDescriptorHandle();
 }
 
-bool FMetalTextureRHI::Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)
+bool FMetalTextureRHI::Initialize(ERHIResourceState InInitialAccess, const IRHITextureData* InInitialData)
 {
     SCOPED_AUTORELEASE_POOL();
 

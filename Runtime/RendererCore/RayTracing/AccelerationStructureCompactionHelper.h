@@ -44,7 +44,7 @@ public:
         ReadbackDesc.Size   = sizeof(uint64);
         ReadbackDesc.Stride = sizeof(uint64);
 
-        FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(ReadbackDesc, EResourceAccess::CopyDest, nullptr);
+        FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(ReadbackDesc, ERHIResourceState::CopyDest, nullptr);
         if (!ReadbackBuffer)
         {
             return;

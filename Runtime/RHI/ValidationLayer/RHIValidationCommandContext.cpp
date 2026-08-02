@@ -58,6 +58,7 @@ void FRHIValidationCommandContext::StartContext()
     RayTracingPipelineState = nullptr;
 
     ActiveQueries.Clear();
+    OpenSplits.Clear();
 }
 
 void FRHIValidationCommandContext::FinishContext()
@@ -76,6 +77,13 @@ void FRHIValidationCommandContext::FinishContext()
     if (!ActiveQueries.IsEmpty())
     {
         RHI_VALIDATION_ERROR("FinishContext cannot be called while queries are active.");
+        return;
+    }
+
+    if (!OpenSplits.IsEmpty())
+    {
+        RHI_VALIDATION_ERROR("FinishContext cannot be called while %d split barrier(s) are still in flight. "
+            "Every BeginOnly barrier needs a matching EndOnly on the same context", OpenSplits.Size());
         return;
     }
 
@@ -1541,237 +1549,367 @@ void FRHIValidationCommandContext::DeserializeAccelerationStructure(FRHIRayTraci
     CommandContext->DeserializeAccelerationStructure(Destination, SourceBuffer, SourceOffset);
 }
 
-void FRHIValidationCommandContext::TransitionTextureState(FRHITexture* Texture, const FRHITextureTransition& TextureTransition)
+FRHIValidationCommandContext::FOpenSplitKey FRHIValidationCommandContext::MakeSplitKey(const FRHITransitionBarrierDesc& Desc)
 {
-    if (!ValidateRecordingPhase("TransitionTextureState"))
+    FOpenSplitKey Key;
+    if (Desc.IsTexture())
     {
-        return;
+        Key.Resource        = Desc.Texture.Resource;
+        Key.FirstMipLevel   = Desc.Texture.Subresources.FirstMipLevel;
+        Key.NumMipLevels    = Desc.Texture.Subresources.NumMipLevels;
+        Key.FirstArraySlice = Desc.Texture.Subresources.FirstArraySlice;
+        Key.NumArraySlices  = Desc.Texture.Subresources.NumArraySlices;
+    }
+    else
+    {
+        Key.Resource        = Desc.Buffer.Resource;
+        Key.FirstMipLevel   = 0;
+        Key.NumMipLevels    = RHI_ALL_MIP_LEVELS;
+        Key.FirstArraySlice = 0;
+        Key.NumArraySlices  = RHI_ALL_ARRAY_SLICES;
     }
 
-    if (!Texture)
+    return Key;
+}
+
+int32 FRHIValidationCommandContext::FindOpenSplit(const FOpenSplitKey& Key) const
+{
+    for (int32 Index = 0; Index < OpenSplits.Size(); Index++)
     {
-        RHI_VALIDATION_ERROR("Invalid to call TransitionTextureState when Texture is nullptr");
-        return;
+        if (OpenSplits[Index].Key == Key)
+        {
+            return Index;
+        }
     }
 
-	if (ContextPhase == ECommandContextPhase::InsideRenderPass)
-	{
-		RHI_VALIDATION_ERROR("Invalid to call TransitionTextureState when inside a render-pass");
-		return;
-	}
+    return -1;
+}
 
+bool FRHIValidationCommandContext::ValidateNoOpenSplit(const void* Resource, const CHAR* Caller) const
+{
+    for (const FOpenSplit& Split : OpenSplits)
     {
-        const ETextureUsageFlags Usage = Texture->GetDesc().UsageFlags;
-        const bool bCopyDest = IsEnumFlagSet(TextureTransition.AfterState, EResourceAccess::CopyDest) ||
-            IsEnumFlagSet(TextureTransition.BeforeState, EResourceAccess::CopyDest);
-        const bool bCopySource = IsEnumFlagSet(TextureTransition.AfterState, EResourceAccess::CopySource) ||
-            IsEnumFlagSet(TextureTransition.BeforeState, EResourceAccess::CopySource);
-        
+        if (Split.Key.Resource == Resource)
+        {
+            RHI_VALIDATION_ERROR("Invalid to call %s on a resource with a split barrier still in flight. "
+                "Complete the split with a matching EndOnly barrier first", Caller);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool FRHIValidationCommandContext::ValidateTransitionBarrierDesc(const FRHITransitionBarrierDesc& Desc)
+{
+    const bool bIsSplitBegin = Desc.IsSplitBegin();
+    const bool bIsSplitEnd   = Desc.IsSplitEnd();
+
+    if (bIsSplitBegin && bIsSplitEnd)
+    {
+        RHI_VALIDATION_ERROR("A transition barrier cannot set both BeginOnly and EndOnly");
+        return false;
+    }
+
+    // The after-state-only factories encode themselves as BeforeState == AfterState
+    const bool bInferBeforeState = (Desc.BeforeState == Desc.AfterState);
+
+    ERHIResourceStateTrackingMode TrackingMode = ERHIResourceStateTrackingMode::Tracked;
+    const void*                   Resource     = nullptr;
+
+    if (Desc.IsTexture())
+    {
+        FRHITexture* Texture = Desc.Texture.Resource;
+        if (!Texture)
+        {
+            RHI_VALIDATION_ERROR("Invalid to call TransitionBarrier when the texture is nullptr");
+            return false;
+        }
+
+        const FRHITextureDesc& TextureDesc  = Texture->GetDesc();
+        const ETextureUsageFlags Usage      = TextureDesc.UsageFlags;
+
+        Resource     = Texture;
+        TrackingMode = TextureDesc.TrackingMode;
+
+        const bool bCopyDest   = IsEnumFlagSet(Desc.AfterState, ERHIResourceState::CopyDest)   || IsEnumFlagSet(Desc.BeforeState, ERHIResourceState::CopyDest);
+        const bool bCopySource = IsEnumFlagSet(Desc.AfterState, ERHIResourceState::CopySource) || IsEnumFlagSet(Desc.BeforeState, ERHIResourceState::CopySource);
+
         if (bCopyDest && !IsEnumFlagSet(Usage, ETextureUsageFlags::CopyDest))
         {
             RHI_VALIDATION_ERROR("Transitioning a texture to/from CopyDest requires ETextureUsageFlags::CopyDest");
-            return;
+            return false;
         }
 
         if (bCopySource && !IsEnumFlagSet(Usage, ETextureUsageFlags::CopySource))
         {
             RHI_VALIDATION_ERROR("Transitioning a texture to/from CopySource requires ETextureUsageFlags::CopySource");
-            return;
+            return false;
+        }
+
+        const FRHITextureSubresourceRange& Subresources = Desc.Texture.Subresources;
+        const uint32 NumLayers = RHIDimensionArrayLayers(TextureDesc.Dimension, TextureDesc.NumArraySlices);
+
+        if (Subresources.NumMipLevels != RHI_ALL_MIP_LEVELS &&
+            (Subresources.FirstMipLevel + Subresources.NumMipLevels) > TextureDesc.NumMipLevels)
+        {
+            RHI_VALIDATION_ERROR("TransitionBarrier mip range [%u, %u) exceeds the texture's %u mip levels",
+                Subresources.FirstMipLevel, Subresources.FirstMipLevel + Subresources.NumMipLevels, TextureDesc.NumMipLevels);
+            return false;
+        }
+
+        if (Subresources.NumArraySlices != RHI_ALL_ARRAY_SLICES &&
+            (Subresources.FirstArraySlice + Subresources.NumArraySlices) > NumLayers)
+        {
+            RHI_VALIDATION_ERROR("TransitionBarrier array-slice range [%u, %u) exceeds the texture's %u layers",
+                Subresources.FirstArraySlice, Subresources.FirstArraySlice + Subresources.NumArraySlices, NumLayers);
+            return false;
+        }
+    }
+    else
+    {
+        FRHIBuffer* Buffer = Desc.Buffer.Resource;
+        if (!Buffer)
+        {
+            RHI_VALIDATION_ERROR("Invalid to call TransitionBarrier when the buffer is nullptr");
+            return false;
+        }
+
+        const FRHIBufferDesc& BufferDesc = Buffer->GetDesc();
+
+        Resource     = Buffer;
+        TrackingMode = BufferDesc.TrackingMode;
+
+        const bool bUsesCopyDest   = IsEnumFlagSet(Desc.BeforeState, ERHIResourceState::CopyDest)   || IsEnumFlagSet(Desc.AfterState, ERHIResourceState::CopyDest);
+        const bool bUsesCopySource = IsEnumFlagSet(Desc.BeforeState, ERHIResourceState::CopySource) || IsEnumFlagSet(Desc.AfterState, ERHIResourceState::CopySource);
+
+        if (bUsesCopyDest && !IsBufferValidAsCopyDestination(BufferDesc))
+        {
+            RHI_VALIDATION_ERROR("Transitioning a buffer to/from CopyDest requires EBufferFlags::CopyDest or ReadBack memory");
+            return false;
+        }
+
+        if (bUsesCopySource && !IsBufferValidAsCopySource(BufferDesc))
+        {
+            RHI_VALIDATION_ERROR("Transitioning a buffer to/from CopySource requires EBufferFlags::CopySource");
+            return false;
+        }
+
+        const bool bUsesIndirectArgument =
+            IsEnumFlagSet(Desc.BeforeState, ERHIResourceState::IndirectArgument) ||
+            IsEnumFlagSet(Desc.AfterState, ERHIResourceState::IndirectArgument);
+
+        if (bUsesIndirectArgument && !BufferDesc.IsIndirectArguments())
+        {
+            RHI_VALIDATION_ERROR("Transitioning a buffer to/from IndirectArgument requires EBufferFlags::IndirectArguments");
+            return false;
+        }
+
+        const FBufferRegion& Range = Desc.Buffer.Range;
+        if (Range.Size != RHI_WHOLE_SIZE && (Range.Offset + Range.Size) > BufferDesc.Size)
+        {
+            RHI_VALIDATION_ERROR("TransitionBarrier byte range [%llu, %llu) exceeds the buffer's size of %llu",
+                Range.Offset, Range.Offset + Range.Size, BufferDesc.Size);
+            return false;
         }
     }
 
-    CommandContext->TransitionTextureState(Texture, TextureTransition);
+    if (TrackingMode == ERHIResourceStateTrackingMode::Manual && bInferBeforeState)
+    {
+        RHI_VALIDATION_ERROR("A Manual resource has no tracked state to infer from, so TransitionBarrier requires "
+            "the two-state form. Use a Create* factory that takes both a before-state and an after-state");
+        return false;
+    }
+
+    if (Desc.IsTrackingModeChange())
+    {
+        if (Desc.IsBuffer())
+        {
+            RHI_VALIDATION_ERROR("Tracking-mode changes are only implemented for textures");
+            return false;
+        }
+
+        if (!Desc.Texture.Subresources.IsAllSubresources())
+        {
+            RHI_VALIDATION_ERROR("A tracking-mode change must cover the whole resource, not a subresource range");
+            return false;
+        }
+
+        if (Desc.IsSplit())
+        {
+            RHI_VALIDATION_ERROR("A tracking-mode change cannot ride on a split-barrier half");
+            return false;
+        }
+
+        if (Desc.NewTrackingMode == TrackingMode)
+        {
+            RHI_VALIDATION_ERROR("Redundant tracking-mode change: the resource is already %s", ToString(TrackingMode));
+            return false;
+        }
+    }
+
+    if (Desc.IsSplit() && TrackingMode != ERHIResourceStateTrackingMode::Tracked)
+    {
+        RHI_VALIDATION_ERROR("Split barriers are only valid on Tracked resources, but this one is %s", ToString(TrackingMode));
+        return false;
+    }
+
+    if (Desc.IsSplit() && bInferBeforeState)
+    {
+        RHI_VALIDATION_ERROR("A split barrier needs a concrete before-state at record time, so the after-state-only form is rejected");
+        return false;
+    }
+
+    const FOpenSplitKey Key        = MakeSplitKey(Desc);
+    const int32         SplitIndex = FindOpenSplit(Key);
+
+    if (bIsSplitBegin)
+    {
+        if (SplitIndex >= 0)
+        {
+            RHI_VALIDATION_ERROR("A second split-barrier begin was recorded over a range that already has one in flight");
+            return false;
+        }
+
+        OpenSplits.Emplace(FOpenSplit{ Key, Desc.BeforeState, Desc.AfterState });
+    }
+    else if (bIsSplitEnd)
+    {
+        if (SplitIndex < 0)
+        {
+            RHI_VALIDATION_ERROR("A split-barrier end has no matching begin on this context. Both halves must be recorded on the same context");
+            return false;
+        }
+
+        const FOpenSplit& Split = OpenSplits[SplitIndex];
+        if (Split.BeforeState != Desc.BeforeState || Split.AfterState != Desc.AfterState)
+        {
+            RHI_VALIDATION_ERROR("A split-barrier end must carry the same states as its begin. Begin was %s -> %s, end is %s -> %s",
+                ToString(Split.BeforeState), ToString(Split.AfterState), ToString(Desc.BeforeState), ToString(Desc.AfterState));
+            return false;
+        }
+
+        OpenSplits.RemoveAt(SplitIndex);
+    }
+    else if (!ValidateNoOpenSplit(Resource, "TransitionBarrier"))
+    {
+        return false;
+    }
+
+    return true;
 }
 
-void FRHIValidationCommandContext::TransitionBufferState(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)
+void FRHIValidationCommandContext::TransitionBarrier(TArrayView<const FRHITransitionBarrierDesc> TransitionDescs)
 {
-    if (!ValidateRecordingPhase("TransitionBufferState"))
+    if (!ValidateRecordingPhase("TransitionBarrier"))
     {
-        return;
-    }
-
-    if (!Buffer)
-    {
-        RHI_VALIDATION_ERROR("Invalid to call TransitionBufferState when Buffer is nullptr");
-        return;
-    }
-
-	if (ContextPhase == ECommandContextPhase::InsideRenderPass)
-	{
-		RHI_VALIDATION_ERROR("Invalid to call TransitionBufferState when inside a render-pass");
-		return;
-	}
-
-    const FRHIBufferDesc& BufferDesc = Buffer->GetDesc();
-
-    const bool bUsesCopyDest   = IsEnumFlagSet(BeforeState, EResourceAccess::CopyDest) || IsEnumFlagSet(AfterState, EResourceAccess::CopyDest);
-    const bool bUsesCopySource = IsEnumFlagSet(BeforeState, EResourceAccess::CopySource) || IsEnumFlagSet(AfterState, EResourceAccess::CopySource);
-
-    if (bUsesCopyDest && !IsBufferValidAsCopyDestination(BufferDesc))
-    {
-        RHI_VALIDATION_ERROR("Transitioning a buffer to/from CopyDest requires EBufferFlags::CopyDest or ReadBack memory");
-        return;
-    }
-
-    if (bUsesCopySource && !IsBufferValidAsCopySource(BufferDesc))
-    {
-        RHI_VALIDATION_ERROR("Transitioning a buffer to/from CopySource requires EBufferFlags::CopySource");
-        return;
-    }
-
-    const bool bUsesIndirectArgument =
-        IsEnumFlagSet(BeforeState, EResourceAccess::IndirectArgument) ||
-        IsEnumFlagSet(AfterState, EResourceAccess::IndirectArgument);
-    if (bUsesIndirectArgument && !BufferDesc.IsIndirectArguments())
-    {
-        RHI_VALIDATION_ERROR("Transitioning a buffer to/from IndirectArgument requires EBufferFlags::IndirectArguments");
-        return;
-    }
-
-    CommandContext->TransitionBufferState(Buffer, BeforeState, AfterState);
-}
-
-void FRHIValidationCommandContext::RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState)
-{
-    if (!ValidateRecordingPhase("RequireTextureState"))
-    {
-        return;
-    }
-
-    if (!Texture)
-    {
-        RHI_VALIDATION_ERROR("Invalid to call RequireTextureState when Texture is nullptr");
         return;
     }
 
     if (ContextPhase == ECommandContextPhase::InsideRenderPass)
     {
-        RHI_VALIDATION_ERROR("Invalid to call RequireTextureState when inside a render-pass");
+        RHI_VALIDATION_ERROR("Invalid to call TransitionBarrier when inside a render-pass");
         return;
     }
 
+    for (const FRHITransitionBarrierDesc& Desc : TransitionDescs)
     {
-        const ETextureUsageFlags Usage = Texture->GetDesc().UsageFlags;
-        if (IsEnumFlagSet(RequiredState.State, EResourceAccess::CopyDest) && !IsEnumFlagSet(Usage, ETextureUsageFlags::CopyDest))
+        if (!ValidateTransitionBarrierDesc(Desc))
         {
-            RHI_VALIDATION_ERROR("Requiring a texture in CopyDest requires ETextureUsageFlags::CopyDest");
             return;
         }
-        
-        if (IsEnumFlagSet(RequiredState.State, EResourceAccess::CopySource) && !IsEnumFlagSet(Usage, ETextureUsageFlags::CopySource))
+
+        CommandContext->TransitionBarrier(TArrayView<const FRHITransitionBarrierDesc>(&Desc, 1));
+    }
+}
+
+bool FRHIValidationCommandContext::ValidateUnorderedAccessBarrierDesc(const FRHIUnorderedAccessBarrierDesc& Desc)
+{
+    if (Desc.IsTexture())
+    {
+        FRHITexture* Texture = Desc.Texture.Resource;
+        if (!Texture)
         {
-            RHI_VALIDATION_ERROR("Requiring a texture in CopySource requires ETextureUsageFlags::CopySource");
-            return;
+            RHI_VALIDATION_ERROR("Invalid to call UnorderedAccessBarrier when the texture is nullptr");
+            return false;
         }
+
+        if (!Texture->GetDesc().IsUnorderedAccessTexture())
+        {
+            RHI_VALIDATION_ERROR("UnorderedAccessBarrier requires UnorderedAccessTexture usage.");
+            return false;
+        }
+
+        const FRHITextureDesc&             TextureDesc  = Texture->GetDesc();
+        const FRHITextureSubresourceRange& Subresources = Desc.Texture.Subresources;
+
+        const uint32 NumLayers = RHIDimensionArrayLayers(TextureDesc.Dimension, TextureDesc.NumArraySlices);
+
+        if (Subresources.NumMipLevels != RHI_ALL_MIP_LEVELS &&
+            (Subresources.FirstMipLevel + Subresources.NumMipLevels) > TextureDesc.NumMipLevels)
+        {
+            RHI_VALIDATION_ERROR("UnorderedAccessBarrier mip range [%u, %u) exceeds the texture's %u mip levels",
+                Subresources.FirstMipLevel, Subresources.FirstMipLevel + Subresources.NumMipLevels, TextureDesc.NumMipLevels);
+            return false;
+        }
+
+        if (Subresources.NumArraySlices != RHI_ALL_ARRAY_SLICES &&
+            (Subresources.FirstArraySlice + Subresources.NumArraySlices) > NumLayers)
+        {
+            RHI_VALIDATION_ERROR("UnorderedAccessBarrier array-slice range [%u, %u) exceeds the texture's %u layers",
+                Subresources.FirstArraySlice, Subresources.FirstArraySlice + Subresources.NumArraySlices, NumLayers);
+            return false;
+        }
+
+        return ValidateNoOpenSplit(Texture, "UnorderedAccessBarrier");
     }
 
-    const FRHITextureDesc& TextureDesc = Texture->GetDesc();
-    const uint32 NumLayers = RHIDimensionArrayLayers(TextureDesc.Dimension, TextureDesc.NumArraySlices);
-
-    if ((RequiredState.MipLevel != RHI_ALL_MIP_LEVELS && RequiredState.MipLevel >= TextureDesc.NumMipLevels) ||
-        (RequiredState.ArraySlice != RHI_ALL_ARRAY_SLICES && RequiredState.ArraySlice >= NumLayers))
-    {
-        RHI_VALIDATION_ERROR("RequireTextureState mip level or array slice exceeds the texture.");
-        return;
-    }
-
-    CommandContext->RequireTextureState(Texture, RequiredState);
-}
-
-void FRHIValidationCommandContext::RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState)
-{
-    if (!ValidateRecordingPhase("RequireBufferState"))
-    {
-        return;
-    }
-
+    FRHIBuffer* Buffer = Desc.Buffer.Resource;
     if (!Buffer)
     {
-        RHI_VALIDATION_ERROR("Invalid to call RequireBufferState when Buffer is nullptr");
-        return;
+        RHI_VALIDATION_ERROR("Invalid to call UnorderedAccessBarrier when the buffer is nullptr");
+        return false;
     }
-
-    if (ContextPhase == ECommandContextPhase::InsideRenderPass)
-    {
-        RHI_VALIDATION_ERROR("Invalid to call RequireBufferState when inside a render-pass");
-        return;
-    }
-
-    if (IsEnumFlagSet(RequiredState, EResourceAccess::CopyDest) && !IsBufferValidAsCopyDestination(Buffer->GetDesc()))
-    {
-        RHI_VALIDATION_ERROR("Requiring a buffer in CopyDest requires EBufferFlags::CopyDest or ReadBack memory");
-        return;
-    }
-
-    if (IsEnumFlagSet(RequiredState, EResourceAccess::CopySource) && !IsBufferValidAsCopySource(Buffer->GetDesc()))
-    {
-        RHI_VALIDATION_ERROR("Requiring a buffer in CopySource requires EBufferFlags::CopySource");
-        return;
-    }
-
-    if (IsEnumFlagSet(RequiredState, EResourceAccess::IndirectArgument) && !Buffer->GetDesc().IsIndirectArguments())
-    {
-        RHI_VALIDATION_ERROR("Requiring a buffer in IndirectArgument requires EBufferFlags::IndirectArguments");
-        return;
-    }
-
-    CommandContext->RequireBufferState(Buffer, RequiredState);
-}
-
-void FRHIValidationCommandContext::UnorderedAccessTextureBarrier(FRHITexture* Texture)
-{
-    if (!ValidateRecordingPhase("UnorderedAccessTextureBarrier"))
-    {
-        return;
-    }
-
-    if (!Texture)
-    {
-        RHI_VALIDATION_ERROR("Invalid to call UnorderedAccessTextureBarrier when Texture is nullptr");
-        return;
-    }
-
-	if (ContextPhase == ECommandContextPhase::InsideRenderPass)
-	{
-		RHI_VALIDATION_ERROR("Invalid to call UnorderedAccessTextureBarrier when inside a render-pass");
-		return;
-	}
-
-    if (!Texture->GetDesc().IsUnorderedAccessTexture())
-    {
-        RHI_VALIDATION_ERROR("UnorderedAccessTextureBarrier requires UnorderedAccessTexture usage.");
-        return;
-    }
-
-    CommandContext->UnorderedAccessTextureBarrier(Texture);
-}
-
-void FRHIValidationCommandContext::UnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
-{
-    if (!ValidateRecordingPhase("UnorderedAccessBufferBarrier"))
-    {
-        return;
-    }
-
-    if (!Buffer)
-    {
-        RHI_VALIDATION_ERROR("Invalid to call UnorderedAccessBufferBarrier when Buffer is nullptr");
-        return;
-    }
-
-	if (ContextPhase == ECommandContextPhase::InsideRenderPass)
-	{
-		RHI_VALIDATION_ERROR("Invalid to call UnorderedAccessBufferBarrier when inside a render-pass");
-		return;
-	}
 
     if (!Buffer->GetDesc().IsUnorderedAccessBuffer())
     {
-        RHI_VALIDATION_ERROR("UnorderedAccessBufferBarrier requires UnorderedAccessBuffer usage.");
+        RHI_VALIDATION_ERROR("UnorderedAccessBarrier requires UnorderedAccessBuffer usage.");
+        return false;
+    }
+
+    const FBufferRegion& Range = Desc.Buffer.Range;
+    if (Range.Size != RHI_WHOLE_SIZE && (Range.Offset + Range.Size) > Buffer->GetDesc().Size)
+    {
+        RHI_VALIDATION_ERROR("UnorderedAccessBarrier byte range [%llu, %llu) exceeds the buffer's size of %llu",
+            Range.Offset, Range.Offset + Range.Size, Buffer->GetDesc().Size);
+        return false;
+    }
+
+    return ValidateNoOpenSplit(Buffer, "UnorderedAccessBarrier");
+}
+
+void FRHIValidationCommandContext::UnorderedAccessBarrier(TArrayView<const FRHIUnorderedAccessBarrierDesc> BarrierDescs)
+{
+    if (!ValidateRecordingPhase("UnorderedAccessBarrier"))
+    {
         return;
     }
 
-    CommandContext->UnorderedAccessBufferBarrier(Buffer);
+    if (ContextPhase == ECommandContextPhase::InsideRenderPass)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call UnorderedAccessBarrier when inside a render-pass");
+        return;
+    }
+
+    for (const FRHIUnorderedAccessBarrierDesc& Desc : BarrierDescs)
+    {
+        if (!ValidateUnorderedAccessBarrierDesc(Desc))
+        {
+            return;
+        }
+    }
+
+    CommandContext->UnorderedAccessBarrier(BarrierDescs);
 }
 
 void FRHIValidationCommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)

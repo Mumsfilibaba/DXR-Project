@@ -173,14 +173,15 @@ struct FRHITextureDesc
 
     bool operator==(const FRHITextureDesc& Other) const noexcept = default;
 
-    ETextureDimension  Dimension      = ETextureDimension::None;
-    EFormat            Format         = EFormat::Unknown;
-    ETextureUsageFlags UsageFlags     = ETextureUsageFlags::None;
-    uint32             NumArraySlices = 0;
-    uint32             NumMipLevels   = 0;
-    uint32             NumSamples     = 0;
-    IntVector3         Extent         = { };
-    FClearValue        ClearValue     = { };
+    ETextureDimension             Dimension      = ETextureDimension::None;
+    EFormat                       Format         = EFormat::Unknown;
+    ETextureUsageFlags            UsageFlags     = ETextureUsageFlags::None;
+    uint32                        NumArraySlices = 0;
+    uint32                        NumMipLevels   = 0;
+    uint32                        NumSamples     = 0;
+    IntVector3                    Extent         = { };
+    FClearValue                   ClearValue     = { };
+    ERHIResourceStateTrackingMode TrackingMode   = ERHIResourceStateTrackingMode::Tracked;
 };
 
 class FRHITexture : public FRHIResource

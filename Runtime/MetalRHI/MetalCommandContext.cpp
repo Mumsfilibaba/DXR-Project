@@ -455,27 +455,11 @@ void FMetalCommandContext::BuildGeometryAccelerationStructure(FRHIGeometryAccele
 {
 }
 
-void FMetalCommandContext::TransitionTextureState(FRHITexture* Texture, const FRHITextureTransition& TextureTransition)
+void FMetalCommandContext::TransitionBarrier(TArrayView<const FRHITransitionBarrierDesc> TransitionDescs)
 {
 }
 
-void FMetalCommandContext::TransitionBufferState(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)
-{
-}
-
-void FMetalCommandContext::RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState)
-{
-}
-
-void FMetalCommandContext::RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState)
-{
-}
-
-void FMetalCommandContext::UnorderedAccessTextureBarrier(FRHITexture* Texture)
-{
-}
-
-void FMetalCommandContext::UnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
+void FMetalCommandContext::UnorderedAccessBarrier(TArrayView<const FRHIUnorderedAccessBarrierDesc> BarrierDescs)
 {
 }
 

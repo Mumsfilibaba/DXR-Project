@@ -374,7 +374,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
         IndicesDesc.Stride = sizeof(FRayTracingSceneConstantsHLSL);
         IndicesDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
-        Resources.RayTracingSceneConstantsBuffer = RHI::CreateBuffer(IndicesDesc, EResourceAccess::ConstantBuffer, nullptr);
+        Resources.RayTracingSceneConstantsBuffer = RHI::CreateBuffer(IndicesDesc, ERHIResourceState::ConstantBuffer, nullptr);
         if (!Resources.RayTracingSceneConstantsBuffer)
         {
             DEBUG_BREAK();
@@ -522,7 +522,7 @@ bool FRayTracer::CreateResources(FFrameResources& Resources, uint32 Width, uint3
     const ETextureUsageFlags UAVAndSRV = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
 
     FRHITextureDesc OutputDesc = FRHITextureDesc::CreateTexture2D(RendererTextureFormats::RayTracingOutputFormat, Width, Height, 1, 1, UAVAndSRV);
-    Resources.RayTracingOutput = RHI::CreateTexture(OutputDesc, EResourceAccess::UnorderedAccess);
+    Resources.RayTracingOutput = RHI::CreateTexture(OutputDesc, ERHIResourceState::UnorderedAccess);
 
     if (!Resources.RayTracingOutput)
     {
@@ -541,7 +541,7 @@ bool FRayTracer::CreateResources(FFrameResources& Resources, uint32 Width, uint3
     const auto CreateTarget = [&](EFormat Format, const CHAR* Name) -> FRHITextureRef
     {
         FRHITextureDesc Desc = FRHITextureDesc::CreateTexture2D(Format, ChainWidth, ChainHeight, 1, 1, UAVAndSRV);
-        FRHITextureRef Texture = RHI::CreateTexture(Desc, EResourceAccess::UnorderedAccess);
+        FRHITextureRef Texture = RHI::CreateTexture(Desc, ERHIResourceState::UnorderedAccess);
         if (Texture)
         {
             Texture->SetDebugName(Name);
@@ -837,7 +837,7 @@ void FRayTracer::BuildSceneAccelerationData(FRHICommandList& CommandList, FFrame
             TableDesc.Size   = TableDesc.Stride * GeometryTableCapacity;
             TableDesc.Flags  = EBufferFlags::ShaderResourceBuffer | EBufferFlags::Dynamic;
 
-            Resources.RayTracingGeometryTableBuffer = RHI::CreateBuffer(TableDesc, EResourceAccess::GenericRead, nullptr);
+            Resources.RayTracingGeometryTableBuffer = RHI::CreateBuffer(TableDesc, ERHIResourceState::GenericRead, nullptr);
             Resources.RayTracingGeometryTableSRV    = nullptr;
 
             if (Resources.RayTracingGeometryTableBuffer)
@@ -931,34 +931,39 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
         Constants.ReflectionMirrorRoughnessThreshold = Math::Clamp(GReflectionMirrorRoughnessThreshold, 0.0f, 1.0f);
         Constants.ReflectionRayBias                  = Math::Max(0.0f, GReflectionRayBias);
 
-        CommandList.TransitionBufferState(Resources.RayTracingSceneConstantsBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Resources.RayTracingSceneConstantsBuffer.Get(), ERHIResourceState::ConstantBuffer, ERHIResourceState::CopyDest));
         CommandList.UpdateBuffer(Resources.RayTracingSceneConstantsBuffer.Get(), FBufferRegion(0, sizeof(FRayTracingSceneConstantsHLSL)), &Constants);
-        CommandList.TransitionBufferState(Resources.RayTracingSceneConstantsBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Resources.RayTracingSceneConstantsBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ConstantBuffer));
     }
 
     if (Resources.IntegrationLUT)
     {
-        CommandList.RequireTextureState(Resources.IntegrationLUT.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.IntegrationLUT.Get(), ERHIResourceState::NonPixelShaderResource));
     }
 
     if (DiffuseCube)
     {
-        CommandList.RequireTextureState(DiffuseCube, FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(DiffuseCube, ERHIResourceState::NonPixelShaderResource));
     }
 
     if (SpecularCube)
     {
-        CommandList.RequireTextureState(SpecularCube, FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SpecularCube, ERHIResourceState::NonPixelShaderResource));
     }
 
     if (FSceneSkybox* Skybox = Scene->GetSkybox())
     {
-        CommandList.RequireTextureState(Skybox->CubeMap.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Skybox->CubeMap.Get(), ERHIResourceState::NonPixelShaderResource));
     }
 
-    CommandList.RequireTextureState(Resources.GBuffer[EGBufferIndex::Normal].Get(),   FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
-    CommandList.RequireTextureState(Resources.GBuffer[EGBufferIndex::Depth].Get(),    FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
-    CommandList.RequireTextureState(Resources.GBuffer[EGBufferIndex::Material].Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+    const FRHITransitionBarrierDesc GBufferToRead[] =
+    {
+        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Normal].Get(), ERHIResourceState::NonPixelShaderResource),
+        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Depth].Get(), ERHIResourceState::NonPixelShaderResource),
+        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Material].Get(), ERHIResourceState::NonPixelShaderResource),
+    };
+
+    CommandList.TransitionBarrier(GBufferToRead);
 
     FRHISamplerState* const EnvSampler = Resources.LightProbeSampler ? Resources.LightProbeSampler.Get() : Resources.GBufferSampler.Get();
     FRHISamplerState* const LUTSampler = Resources.IntegrationLUTSampler ? Resources.IntegrationLUTSampler.Get() : Resources.GBufferSampler.Get();
@@ -1016,7 +1021,7 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
 
     if (bInline)
     {
-        CommandList.RequireTextureState(TraceTarget, FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(TraceTarget, ERHIResourceState::UnorderedAccess));
 
         CommandList.SetComputePipelineState(InlineReflectionsPipeline.Get());
         BindReflectionGlobals(InlineReflectionsShader.Get());
@@ -1029,7 +1034,7 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
         const uint32 DispatchHeight  = Math::DivideByMultiple<uint32>(InlineHeight, ThreadCount);
 
         CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
-        CommandList.UnorderedAccessTextureBarrier(TraceTarget);
+        CommandList.UnorderedAccessBarrier(TraceTarget);
 
         if (bDenoise)
         {
@@ -1085,13 +1090,13 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
     FRHIRayGenShader* RayGenShaderForGlobals = bIsShaderExecutionReorderingEnabled ? RayGenShaderSER.Get() : (bBindless ? RayGenShaderBindless.Get() : RayGenShader.Get());
     BindReflectionGlobals(RayGenShaderForGlobals);
 
-    CommandList.RequireTextureState(TraceTarget, FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(TraceTarget, ERHIResourceState::UnorderedAccess));
 
     const uint32 Width  = TraceTarget->GetDesc().Extent.X;
     const uint32 Height = TraceTarget->GetDesc().Extent.Y;
     CommandList.DispatchRays(ShaderBindingTable, Width, Height, 1);
 
-    CommandList.UnorderedAccessTextureBarrier(TraceTarget);
+    CommandList.UnorderedAccessBarrier(TraceTarget);
 
     if (bDenoise)
     {
@@ -1116,7 +1121,7 @@ void FRayTracer::RenderPrimaryRayDebug(FRHICommandList& CommandList, FFrameResou
     }
 
     FRHITexture* Output = Resources.RayTracingOutput.Get();
-    CommandList.RequireTextureState(Output, FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Output, ERHIResourceState::UnorderedAccess));
 
     CommandList.SetComputePipelineState(PrimaryRayDebugPipeline.Get());
     CommandList.SetConstantBuffer(PrimaryRayDebugShader.Get(), Resources.CameraBuffer.Get(), 0);
@@ -1131,7 +1136,7 @@ void FRayTracer::RenderPrimaryRayDebug(FRHICommandList& CommandList, FFrameResou
     const uint32 DispatchHeight  = Math::DivideByMultiple<uint32>(Height, ThreadCount);
 
     CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
-    CommandList.UnorderedAccessTextureBarrier(Output);
+    CommandList.UnorderedAccessBarrier(Output);
 }
 
 void FRayTracer::DenoiseReflections(FRHICommandList& CommandList, FFrameResources& Resources)
@@ -1167,12 +1172,12 @@ void FRayTracer::DenoiseReflections(FRHICommandList& CommandList, FFrameResource
 
     const auto RequireSRV = [&](FRHITexture* Texture)
     {
-        CommandList.RequireTextureState(Texture, FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Texture, ERHIResourceState::NonPixelShaderResource));
     };
 
     const auto RequireUAV = [&](FRHITexture* Texture)
     {
-        CommandList.RequireTextureState(Texture, FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Texture, ERHIResourceState::UnorderedAccess));
     };
 
     // -----------------------------------------------------------------------------------------
@@ -1230,7 +1235,7 @@ void FRayTracer::DenoiseReflections(FRHICommandList& CommandList, FFrameResource
         CommandList.SetShaderConstants(Shader, &Constants, sizeof(Constants) / sizeof(uint32));
 
         CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
-        CommandList.UnorderedAccessTextureBarrier(TemporalTarget);
+        CommandList.UnorderedAccessBarrier(TemporalTarget);
 
         RequireSRV(HistoryCur);
         RequireSRV(MomentsCur);
@@ -1282,7 +1287,7 @@ void FRayTracer::DenoiseReflections(FRHICommandList& CommandList, FFrameResource
             CommandList.SetShaderConstants(Shader, &Constants, sizeof(Constants) / sizeof(uint32));
 
             CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
-            CommandList.UnorderedAccessTextureBarrier(Dest);
+            CommandList.UnorderedAccessBarrier(Dest);
 
             Source = Dest;
         }
@@ -1327,7 +1332,7 @@ void FRayTracer::DenoiseReflections(FRHICommandList& CommandList, FFrameResource
         CommandList.SetShaderConstants(Shader, &Constants, sizeof(Constants) / sizeof(uint32));
 
         CommandList.Dispatch(Math::DivideByMultiple<uint32>(FullWidth, ThreadCount), Math::DivideByMultiple<uint32>(FullHeight, ThreadCount), 1);
-        CommandList.UnorderedAccessTextureBarrier(FullOutput);
+        CommandList.UnorderedAccessBarrier(FullOutput);
     }
 
     bReflectionHistoryValid = true;

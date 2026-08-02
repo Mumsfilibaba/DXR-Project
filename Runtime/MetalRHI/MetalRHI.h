@@ -52,8 +52,8 @@ public:
     virtual void BeginFrame() override final;
     virtual void EndFrame()   override final;
 
-    virtual FRHITexture*                       CreateTexture(const FRHITextureDesc& InTextureDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final;
-    virtual FRHIBuffer*                        CreateBuffer(const FRHIBufferDesc& InBufferDesc, EResourceAccess InInitialState, const void* InInitialData) override final;
+    virtual FRHITexture*                       CreateTexture(const FRHITextureDesc& InTextureDesc, ERHIResourceState InInitialState, const IRHITextureData* InInitialData) override final;
+    virtual FRHIBuffer*                        CreateBuffer(const FRHIBufferDesc& InBufferDesc, ERHIResourceState InInitialState, const void* InInitialData) override final;
     virtual FRHISamplerState*                  CreateSamplerState(const FRHISamplerStateDesc& InSamplerDesc) override final;
     virtual FRHISwapChain*                     CreateSwapChain(const FRHISwapChainDesc& InSwapChainDesc) override final;
     virtual FRHIQuery*                         CreateQuery(EQueryType InQueryType) override final;

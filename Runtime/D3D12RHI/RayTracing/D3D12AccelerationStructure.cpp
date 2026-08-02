@@ -5,15 +5,6 @@
 #include "D3D12RHI/RayTracing/D3D12AccelerationStructure.h"
 #include "RHI/RHIStats.h"
 
-#if D3D12_ENABLE_OPACITY_MICROMAPS
-static D3D12_RAYTRACING_OPACITY_MICROMAP_FORMAT ConvertOpacityMicromapFormat(EOpacityMicromapFormat Format)
-{
-    return (Format == EOpacityMicromapFormat::OC1_4State)
-        ? D3D12_RAYTRACING_OPACITY_MICROMAP_FORMAT_OC1_4_STATE
-        : D3D12_RAYTRACING_OPACITY_MICROMAP_FORMAT_OC1_2_STATE;
-}
-#endif
-
 FD3D12AccelerationStructure::FD3D12AccelerationStructure(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , ResultResourceStorage(InDevice)

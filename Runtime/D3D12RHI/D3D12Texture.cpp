@@ -79,7 +79,7 @@ FRHIDescriptorHandle FD3D12TextureRHI::GetBindlessUAVHandle() const
     return UnorderedAccessView ? UnorderedAccessView->GetBindlessHandle() : FRHIDescriptorHandle();
 }
 
-bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)
+bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIResourceState InInitialAccess, const IRHITextureData* InInitialData)
 {
     D3D12_RESOURCE_DESC ResourceDesc = {};
     ResourceDesc.Dimension        = ConvertTextureDimension(Desc.Dimension);
@@ -131,7 +131,8 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
     const D3D12_RESOURCE_STATES CandidateDefaultState = DetermineDefaultTextureState(Desc.UsageFlags);
     const D3D12_RESOURCE_STATES RequestedInitialState = ConvertResourceState(InInitialAccess);
 
-    const bool bHasDefaultState = ShouldUseDefaultState(CandidateDefaultState, RequestedInitialState);
+    const bool bIsManual        = (ConvertResourceStateMode(Desc.TrackingMode) == ED3D12ResourceStateMode::ManualState);
+    const bool bHasDefaultState = !bIsManual && ShouldUseDefaultState(CandidateDefaultState, RequestedInitialState);
     const D3D12_RESOURCE_STATES D3D12DefaultState = bHasDefaultState ? CandidateDefaultState : D3D12_RESOURCE_STATES(0);
 
     D3D12_RESOURCE_STATES D3D12CreateState;
@@ -159,11 +160,11 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
         return false;
     }
 
-    const ED3D12ResourceStateMode TextureStateMode = bHasDefaultState
-        ? ED3D12ResourceStateMode::SingleState
-        : ED3D12ResourceStateMode::MultipleStates;
+    const ED3D12ResourceStateMode ResolvedStateMode = bIsManual ? ED3D12ResourceStateMode::ManualState
+        : (bHasDefaultState ? ED3D12ResourceStateMode::SingleState : ED3D12ResourceStateMode::MultipleStates);
 
-    GetResource()->SetResourceStateMode(TextureStateMode);
+    Desc.TrackingMode = ERHIResourceStateTrackingMode::Tracked;
+    GetResource()->SetResourceStateMode(ED3D12ResourceStateMode::MultipleStates);
 
     if (bHasDefaultState)
     {
@@ -584,13 +585,13 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
             Depth  = Math::Max(1u, Depth >> 1);
         }
 
-        const EResourceAccess RestingAccess = (bHasDefaultState && Desc.IsShaderResourceTexture())
-            ? EResourceAccess::ShaderResource
+        const ERHIResourceState RestingAccess = (bHasDefaultState && Desc.IsShaderResourceTexture())
+            ? ERHIResourceState::ShaderResource
             : InInitialAccess;
 
-        if (RestingAccess != EResourceAccess::CopyDest)
+        if (RestingAccess != ERHIResourceState::CopyDest)
         {
-            InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::CopyDest, RestingAccess));
+            InCommandContext->TransitionBarrier(MakeArrayView({ FRHITransitionBarrierDesc::CreateTexture(this, ERHIResourceState::CopyDest, RestingAccess) }));
         }
 
         InCommandContext->FinishContext();
@@ -601,9 +602,9 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
 
         if (Desc.IsRenderTarget())
         {
-            if (InInitialAccess != EResourceAccess::RenderTarget)
+            if (InInitialAccess != ERHIResourceState::RenderTarget)
             {
-                InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(InInitialAccess, EResourceAccess::RenderTarget));
+                InCommandContext->TransitionBarrier(MakeArrayView({ FRHITransitionBarrierDesc::CreateTexture(this, InInitialAccess, ERHIResourceState::RenderTarget) }));
             }
 
             InCommandContext->GetBarrierBatcher().FlushBarriers(InCommandContext->GetCommandList());
@@ -702,16 +703,16 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
                 0, 
                 nullptr);
 
-            if (InInitialAccess != EResourceAccess::RenderTarget)
+            if (InInitialAccess != ERHIResourceState::RenderTarget)
             {
-                InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::RenderTarget, InInitialAccess));
+                InCommandContext->TransitionBarrier(MakeArrayView({ FRHITransitionBarrierDesc::CreateTexture(this, ERHIResourceState::RenderTarget, InInitialAccess) }));
             }
         }
         else if (Desc.IsDepthStencil())
         {
-            if (InInitialAccess != EResourceAccess::DepthWrite)
+            if (InInitialAccess != ERHIResourceState::DepthWrite)
             {
-                InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(InInitialAccess, EResourceAccess::DepthWrite));
+                InCommandContext->TransitionBarrier(MakeArrayView({ FRHITransitionBarrierDesc::CreateTexture(this, InInitialAccess, ERHIResourceState::DepthWrite) }));
             }
 
             InCommandContext->GetBarrierBatcher().FlushBarriers(InCommandContext->GetCommandList());
@@ -805,13 +806,19 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
                 0, 
                 nullptr);
 
-            if (InInitialAccess != EResourceAccess::DepthWrite)
+            if (InInitialAccess != ERHIResourceState::DepthWrite)
             {
-                InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::DepthWrite, InInitialAccess));
+                InCommandContext->TransitionBarrier(MakeArrayView({ FRHITransitionBarrierDesc::CreateTexture(this, ERHIResourceState::DepthWrite, InInitialAccess) }));
             }
         }
 
         InCommandContext->FinishContext();
+    }
+
+    if (ResolvedStateMode != ED3D12ResourceStateMode::MultipleStates)
+    {
+        Desc.TrackingMode = ConvertResourceStateMode(ResolvedStateMode);
+        GetResource()->SetResourceStateMode(ResolvedStateMode);
     }
 
     ResourceStorage.FinalizeAllocation();

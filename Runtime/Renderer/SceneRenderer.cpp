@@ -284,7 +284,7 @@ bool FSceneRenderer::Initialize()
     ConstantBufferDesc.Stride = sizeof(FCameraHLSL);
     ConstantBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
-    Resources.CameraBuffer = RHI::CreateBuffer(ConstantBufferDesc, EResourceAccess::Common, nullptr);
+    Resources.CameraBuffer = RHI::CreateBuffer(ConstantBufferDesc, ERHIResourceState::Common, nullptr);
     if (!Resources.CameraBuffer)
     {
         LOG_ERROR("[Renderer]: Failed to create CameraBuffer");
@@ -300,7 +300,7 @@ bool FSceneRenderer::Initialize()
     PerObjectConstantBufferDesc.Stride = sizeof(FPerObjectHLSL);
     PerObjectConstantBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Transient;
 
-    Resources.PerObjectBuffer = RHI::CreateBuffer(PerObjectConstantBufferDesc, EResourceAccess::Common, nullptr);
+    Resources.PerObjectBuffer = RHI::CreateBuffer(PerObjectConstantBufferDesc, ERHIResourceState::Common, nullptr);
     if (!Resources.PerObjectBuffer)
     {
         LOG_ERROR("[Renderer]: Failed to create PerObjectBuffer");
@@ -590,7 +590,7 @@ void FSceneRenderer::RenderThread_BeginSceneCommandList(const FSceneRenderPacket
         TRACE_SCOPE("Prepare SwapChain");
 
         FRHITexture* BackBuffer = Packet.SwapChain->GetBackBuffer();
-        CommandList.TransitionTextureState(BackBuffer, FRHITextureTransition::Make(EResourceAccess::Present, EResourceAccess::RenderTarget));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::Present, ERHIResourceState::RenderTarget));
     }
 }
 
@@ -678,7 +678,7 @@ void FSceneRenderer::RenderThread_PrepareResources(const FSceneRenderView& Scene
                 MaterialBufferDesc.Size   = uint64(MaterialBufferDesc.Stride) * RequiredCount;
                 MaterialBufferDesc.Flags  = EBufferFlags::ShaderResourceBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
-                Resources.MaterialDataBuffer    = RHI::CreateBuffer(MaterialBufferDesc, EResourceAccess::GenericRead, nullptr);
+                Resources.MaterialDataBuffer    = RHI::CreateBuffer(MaterialBufferDesc, ERHIResourceState::GenericRead, nullptr);
                 Resources.MaterialDataBufferSRV = nullptr;
 
                 if (Resources.MaterialDataBuffer)
@@ -692,9 +692,9 @@ void FSceneRenderer::RenderThread_PrepareResources(const FSceneRenderView& Scene
 
             if (Resources.MaterialDataBuffer)
             {
-                CommandList.TransitionBufferState(Resources.MaterialDataBuffer.Get(), EResourceAccess::GenericRead, EResourceAccess::CopyDest);
+                CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Resources.MaterialDataBuffer.Get(), ERHIResourceState::GenericRead, ERHIResourceState::CopyDest));
                 CommandList.UpdateBuffer(Resources.MaterialDataBuffer.Get(), FBufferRegion(0, sizeof(FMaterialHLSL) * RequiredCount), Resources.MaterialData.Data());
-                CommandList.TransitionBufferState(Resources.MaterialDataBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::GenericRead);
+                CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Resources.MaterialDataBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::GenericRead));
             }
         }
     }
@@ -778,9 +778,9 @@ void FSceneRenderer::RenderThread_PrepareCameraData(const FSceneRenderView& /*Sc
     CameraBuffer.ProjectionInvUnjittered     = CameraBuffer.ProjectionInvUnjittered.GetTranspose();
 
     // Update GPU Camera Buffer
-    CommandList.TransitionBufferState(Resources.CameraBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Resources.CameraBuffer.Get(), ERHIResourceState::ConstantBuffer, ERHIResourceState::CopyDest));
     CommandList.UpdateBuffer(Resources.CameraBuffer.Get(), FBufferRegion(0, sizeof(FCameraHLSL)), &CameraBuffer);
-    CommandList.TransitionBufferState(Resources.CameraBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Resources.CameraBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ConstantBuffer));
 }
 
 void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneRenderView, const TArray<uint32>& SelectedObjectIDs)
@@ -801,11 +801,16 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
         return;
     }
 
-    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Albedo].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget));
-    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Normal].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget));
-    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Material].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget));
-    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Velocity].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget));
-    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Depth].Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::DepthWrite));
+    const FRHITransitionBarrierDesc GBufferToWrite[] =
+    {
+        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Albedo].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::RenderTarget),
+        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Normal].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::RenderTarget),
+        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Material].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::RenderTarget),
+        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Velocity].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::RenderTarget),
+        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Depth].Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::DepthWrite),
+    };
+
+    CommandList.TransitionBarrier(GBufferToWrite);
 
     // PrePass
     if (GPrePassEnabled)
@@ -824,7 +829,7 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
         RHI_EVENT_SCOPE(CommandList, "VRS Image");
         CommandList.SetShadingRate(EShadingRate::VRS_1x1);
 
-        CommandList.TransitionTextureState(ShadingImage.Get(), FRHITextureTransition::Make(EResourceAccess::ShadingRateSource, EResourceAccess::UnorderedAccess));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(ShadingImage.Get(), ERHIResourceState::ShadingRateSource, ERHIResourceState::UnorderedAccess));
 
         CommandList.SetComputePipelineState(ShadingRatePipeline.Get());
 
@@ -833,7 +838,7 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
 
         CommandList.Dispatch(ShadingImage->GetDesc().Extent.X, ShadingImage->GetDesc().Extent.Y, 1);
 
-        CommandList.TransitionTextureState(ShadingImage.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::ShadingRateSource));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(ShadingImage.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::ShadingRateSource));
 
         CommandList.SetShadingRateImage(ShadingImage.Get());
     }
@@ -855,12 +860,17 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
         DepthReducePass->Execute(CommandList, Resources, CurrentScene);
     }
 
-    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Albedo].Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource));
-    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Normal].Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource));
-    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Velocity].Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource));
-    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Material].Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource));
-    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource));
-    CommandList.TransitionTextureState(Resources.SSAOBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
+    const FRHITransitionBarrierDesc GBufferToRead[] =
+    {
+        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Albedo].Get(), ERHIResourceState::RenderTarget, ERHIResourceState::NonPixelShaderResource),
+        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Normal].Get(), ERHIResourceState::RenderTarget, ERHIResourceState::NonPixelShaderResource),
+        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Velocity].Get(), ERHIResourceState::RenderTarget, ERHIResourceState::NonPixelShaderResource),
+        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Material].Get(), ERHIResourceState::RenderTarget, ERHIResourceState::NonPixelShaderResource),
+        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Depth].Get(), ERHIResourceState::DepthWrite, ERHIResourceState::NonPixelShaderResource),
+        FRHITransitionBarrierDesc::CreateTexture(Resources.SSAOBuffer.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::UnorderedAccess),
+    };
+
+    CommandList.TransitionBarrier(GBufferToRead);
 
     const bool bIsRayTracingActive = IsRayTracingActive();
     if (bIsRayTracingActive)
@@ -900,7 +910,7 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
         CommandList.ClearUnorderedAccessViewFloat(Resources.SSAOBuffer->GetUnorderedAccessView(), Vector4(1.0f, 1.0f, 1.0f, 1.0f));
     }
 
-    CommandList.TransitionTextureState(Resources.SSAOBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.SSAOBuffer.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::NonPixelShaderResource));
 
     // Check for shadow texture resolution changes at runtime
     {
@@ -955,15 +965,15 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
     }
 
     // ShadowMask and GBuffer
-    CommandList.TransitionTextureState(Resources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::UnorderedAccess));
-    CommandList.TransitionTextureState(Resources.IntegrationLUT.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.SceneTarget.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::UnorderedAccess));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.IntegrationLUT.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource));
 
     if (CurrentScene)
     {
         if (FSceneSkyLight* SkyLight = CurrentScene->GetSkyLight())
         {
-            CommandList.TransitionTextureState(SkyLight->DiffuseCubeMap.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
-            CommandList.TransitionTextureState(SkyLight->SpecularCubeMap.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SkyLight->DiffuseCubeMap.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource));
+            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SkyLight->SpecularCubeMap.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource));
         }
     }
 
@@ -981,8 +991,8 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
     }
     else
     {
-        CommandList.TransitionTextureState(Resources.DirectionalShadowMask.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
-        CommandList.TransitionTextureState(Resources.CascadeIndexBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.DirectionalShadowMask.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::UnorderedAccess));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.CascadeIndexBuffer.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::UnorderedAccess));
 
         const Vector4 MaskClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         CommandList.ClearUnorderedAccessViewFloat(Resources.DirectionalShadowMask->GetUnorderedAccessView(), MaskClearColor);
@@ -990,16 +1000,16 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
         const Vector4 DebugClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         CommandList.ClearUnorderedAccessViewFloat(Resources.CascadeIndexBuffer->GetUnorderedAccessView(), DebugClearColor);
 
-        CommandList.TransitionTextureState(Resources.CascadeIndexBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
-        CommandList.TransitionTextureState(Resources.DirectionalShadowMask.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.CascadeIndexBuffer.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::NonPixelShaderResource));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.DirectionalShadowMask.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::NonPixelShaderResource));
     }
 
     // Main LightPass
     TiledLightPass->Execute(CommandList, Resources, CurrentScene);
 
     // The skybox pass binds depth as a ReadOnlyDepth DSV (bDepthWriteEnable = false)
-    CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Depth].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthRead));
-    CommandList.TransitionTextureState(Resources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::RenderTarget));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Depth].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::DepthRead));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.SceneTarget.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::RenderTarget));
 
     // Skybox Pass
     if (GSkyboxEnabled)
@@ -1007,19 +1017,19 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
         SkyboxRenderPass->Execute(CommandList, Resources, CurrentScene);
     }
 
-    CommandList.TransitionTextureState(Resources.PointLightShadowMaps.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.PointLightShadowMaps.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource));
 
 
     if (CurrentScene)
     {
         if (FSceneSkyLight* SkyLight = CurrentScene->GetSkyLight())
         {
-            CommandList.TransitionTextureState(SkyLight->DiffuseCubeMap.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
-            CommandList.TransitionTextureState(SkyLight->SpecularCubeMap.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
+            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SkyLight->DiffuseCubeMap.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource));
+            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SkyLight->SpecularCubeMap.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource));
         }
     }
 
-    CommandList.TransitionTextureState(Resources.IntegrationLUT.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.IntegrationLUT.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource));
 
     // Forward Pass
     // if (!Resources.ForwardVisibleCommands.IsEmpty())
@@ -1031,18 +1041,18 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
     if (GEnableTemporalAA)
     {
         // Source state matches the ReadOnlyDepth transition done before the skybox pass above.
-        CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthRead, EResourceAccess::NonPixelShaderResource));
-        CommandList.TransitionTextureState(Resources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::UnorderedAccess));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Depth].Get(), ERHIResourceState::DepthRead, ERHIResourceState::NonPixelShaderResource));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.SceneTarget.Get(), ERHIResourceState::RenderTarget, ERHIResourceState::UnorderedAccess));
 
         TemporalAA->Execute(CommandList, Resources);
 
-        CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Depth].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
-        CommandList.TransitionTextureState(Resources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Depth].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.SceneTarget.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::PixelShaderResource));
     }
     else
     {
-        CommandList.TransitionTextureState(Resources.GBuffer[EGBufferIndex::Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthRead, EResourceAccess::PixelShaderResource));
-        CommandList.TransitionTextureState(Resources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Depth].Get(), ERHIResourceState::DepthRead, ERHIResourceState::PixelShaderResource));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.SceneTarget.Get(), ERHIResourceState::RenderTarget, ERHIResourceState::PixelShaderResource));
     }
 
 #if EDITOR_BUILD
@@ -1081,9 +1091,9 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
             FRHITexture* DebugDepthTarget = Resources.GBuffer[EGBufferIndex::Depth].Get();
         #endif
 
-            CommandList.RequireTextureState(SceneRenderView.RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::RenderTarget));
+            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SceneRenderView.RenderTarget, ERHIResourceState::RenderTarget));
 
-            CommandList.TransitionTextureState(DebugDepthTarget, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::DepthWrite));
+            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(DebugDepthTarget, ERHIResourceState::PixelShaderResource, ERHIResourceState::DepthWrite));
 
             if (GDrawPointLights)
             {
@@ -1100,9 +1110,9 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
                 DebugRenderer->RenderObjectAABBs(CommandList, Resources, CurrentScene, SceneRenderView.RenderTarget, DebugDepthTarget);
             }
 
-            CommandList.TransitionTextureState(DebugDepthTarget, FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::PixelShaderResource));
+            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(DebugDepthTarget, ERHIResourceState::DepthWrite, ERHIResourceState::PixelShaderResource));
 
-            CommandList.RequireTextureState(SceneRenderView.RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::PixelShaderResource));
+            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SceneRenderView.RenderTarget, ERHIResourceState::PixelShaderResource));
         }
     }
 
@@ -1227,7 +1237,7 @@ void FSceneRenderer::RenderThread_ProcessEditorObjectPickRequests(FRHICommandLis
     ReadbackDesc.Size   = bTryFlipY ? (FlippedBaseOffset + FlippedRequiredSize) : NormalRequiredSize;
 
     FRHIFenceRef  Fence          = RHI::CreateFence();
-    FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(ReadbackDesc, EResourceAccess::CopyDest, nullptr);
+    FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(ReadbackDesc, ERHIResourceState::CopyDest, nullptr);
 
     if (!(ReadbackBuffer && Fence))
     {
@@ -1244,7 +1254,7 @@ void FSceneRenderer::RenderThread_ProcessEditorObjectPickRequests(FRHICommandLis
             RegionWidth, RegionHeight, CenterLocalX, CenterLocalY);
     }
 
-    InCommandList.TransitionTextureState(InResources.EditorObjectID_NoJitter.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::CopySource));
+    InCommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(InResources.EditorObjectID_NoJitter.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::CopySource));
 
     // Copy a rectangular neighborhood into a readback buffer.
     // We do one copy per row to control destination row stride across backends and keep D3D12 offsets 512-byte aligned.
@@ -1263,7 +1273,7 @@ void FSceneRenderer::RenderThread_ProcessEditorObjectPickRequests(FRHICommandLis
         }
     }
 
-    InCommandList.TransitionTextureState(InResources.EditorObjectID_NoJitter.Get(), FRHITextureTransition::Make(EResourceAccess::CopySource, EResourceAccess::PixelShaderResource));
+    InCommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(InResources.EditorObjectID_NoJitter.Get(), ERHIResourceState::CopySource, ERHIResourceState::PixelShaderResource));
     InCommandList.WriteFence(Fence.Get());
 
     FEditorObjectPickInFlight InFlight;
@@ -1517,7 +1527,7 @@ void FSceneRenderer::SubmitUIAndPresent(const FSceneRenderPacket& Packet)
         TRACE_SCOPE("Present SwapChain");
 
         FRHITexture* BackBuffer = Packet.SwapChain->GetBackBuffer();
-        UICommandList.TransitionTextureState(BackBuffer, FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::Present));
+        UICommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::RenderTarget, ERHIResourceState::Present));
         UICommandList.PresentSwapChain(Packet.SwapChain.Get(), GVSyncEnabled);
     }
 
@@ -1677,7 +1687,7 @@ void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
                 const ETextureUsageFlags UsageFlags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::ShadingRateTexture;
                 FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8_Uint, ShadingWidth, ShadingHeight, 1, 1, UsageFlags);
 
-                ShadingImage = RHI::CreateTexture(TextureDesc, EResourceAccess::ShadingRateSource);
+                ShadingImage = RHI::CreateTexture(TextureDesc, ERHIResourceState::ShadingRateSource);
                 if (ShadingImage)
                 {
                     ShadingImage->SetDebugName("Shading Rate Image");
@@ -1707,7 +1717,7 @@ bool FSceneRenderer::InitShadingImage()
     const ETextureUsageFlags UsageFlags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::ShadingRateTexture;
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, UsageFlags);
 
-    ShadingImage = RHI::CreateTexture(TextureDesc, EResourceAccess::ShadingRateSource);
+    ShadingImage = RHI::CreateTexture(TextureDesc, ERHIResourceState::ShadingRateSource);
     if (!ShadingImage)
     {
         DEBUG_BREAK();

@@ -7,6 +7,7 @@
 #include "RHI/RHICore.h"
 
 class FRHIBuffer;
+class FRHITexture;
 struct FRHIGeometryAccelerationStructureInstance;
 class FRHIShader;
 class FRHIVertexShader;
@@ -465,7 +466,7 @@ NODISCARD constexpr const CHAR* ToString(EComparisonFunc ComparisonFunc)
     }
 }
 
-enum class EResourceAccess : uint32
+enum class ERHIResourceState : uint32
 {
     Common                          = 0,
     ConstantBuffer                  = FLAG(0),
@@ -490,33 +491,33 @@ enum class EResourceAccess : uint32
     ShaderResource                  = NonPixelShaderResource | PixelShaderResource,
 };
 
-ENUM_CLASS_OPERATORS(EResourceAccess);
+ENUM_CLASS_OPERATORS(ERHIResourceState);
 
-NODISCARD constexpr const CHAR* ToString(EResourceAccess ResourceState)
+NODISCARD constexpr const CHAR* ToString(ERHIResourceState ResourceState)
 {
     switch (ResourceState)
     {
-    case EResourceAccess::Common:                          return "Common";
-    case EResourceAccess::ConstantBuffer:                  return "ConstantBuffer";
-    case EResourceAccess::IndexBuffer:                     return "IndexBuffer";
-    case EResourceAccess::VertexBuffer:                    return "VertexBuffer";
-    case EResourceAccess::RenderTarget:                    return "RenderTarget";
-    case EResourceAccess::UnorderedAccess:                 return "UnorderedAccess";
-    case EResourceAccess::DepthWrite:                      return "DepthWrite";
-    case EResourceAccess::DepthRead:                       return "DepthRead";
-    case EResourceAccess::NonPixelShaderResource:          return "NonPixelShaderResource";
-    case EResourceAccess::PixelShaderResource:             return "PixelShaderResource";
-    case EResourceAccess::CopyDest:                        return "CopyDest";
-    case EResourceAccess::CopySource:                      return "CopySource";
-    case EResourceAccess::ResolveDest:                     return "ResolveDest";
-    case EResourceAccess::ResolveSource:                   return "ResolveSource";
-    case EResourceAccess::RayTracingAccelerationStructure: return "RayTracingAccelerationStructure";
-    case EResourceAccess::ShadingRateSource:               return "ShadingRateSource";
-    case EResourceAccess::Present:                         return "Present";
-    case EResourceAccess::GenericRead:                     return "GenericRead";
-    case EResourceAccess::StreamOutput:                    return "StreamOutput";
-    case EResourceAccess::IndirectArgument:                return "IndirectArgument";
-    case EResourceAccess::ShaderResource:                  return "ShaderResource";
+    case ERHIResourceState::Common:                          return "Common";
+    case ERHIResourceState::ConstantBuffer:                  return "ConstantBuffer";
+    case ERHIResourceState::IndexBuffer:                     return "IndexBuffer";
+    case ERHIResourceState::VertexBuffer:                    return "VertexBuffer";
+    case ERHIResourceState::RenderTarget:                    return "RenderTarget";
+    case ERHIResourceState::UnorderedAccess:                 return "UnorderedAccess";
+    case ERHIResourceState::DepthWrite:                      return "DepthWrite";
+    case ERHIResourceState::DepthRead:                       return "DepthRead";
+    case ERHIResourceState::NonPixelShaderResource:          return "NonPixelShaderResource";
+    case ERHIResourceState::PixelShaderResource:             return "PixelShaderResource";
+    case ERHIResourceState::CopyDest:                        return "CopyDest";
+    case ERHIResourceState::CopySource:                      return "CopySource";
+    case ERHIResourceState::ResolveDest:                     return "ResolveDest";
+    case ERHIResourceState::ResolveSource:                   return "ResolveSource";
+    case ERHIResourceState::RayTracingAccelerationStructure: return "RayTracingAccelerationStructure";
+    case ERHIResourceState::ShadingRateSource:               return "ShadingRateSource";
+    case ERHIResourceState::Present:                         return "Present";
+    case ERHIResourceState::GenericRead:                     return "GenericRead";
+    case ERHIResourceState::StreamOutput:                    return "StreamOutput";
+    case ERHIResourceState::IndirectArgument:                return "IndirectArgument";
+    case ERHIResourceState::ShaderResource:                  return "ShaderResource";
     
     default: return "Unknown";
     }
@@ -800,6 +801,17 @@ struct FBufferRegion
     {
     }
 
+    /** The entire buffer. Distinct from the default-constructed region, whose zero Size means "no bytes" to UpdateBuffer */
+    NODISCARD static constexpr FBufferRegion Whole() noexcept
+    {
+        return FBufferRegion(0, RHI_WHOLE_SIZE);
+    }
+
+    NODISCARD constexpr bool IsWholeResource() const noexcept
+    {
+        return Offset == 0 && Size == RHI_WHOLE_SIZE;
+    }
+
     uint64 Offset = 0;
     uint64 Size   = 0;
 };
@@ -955,50 +967,283 @@ struct FRHIGeometryAccelerationStructureBuildDesc
     bool         bUpdate      = false;
 };
 
-struct FRHITextureTransition
+enum class ERHIResourceStateTrackingMode : uint8
 {
-    NODISCARD static constexpr FRHITextureTransition Make(EResourceAccess BeforeState, EResourceAccess AfterState) noexcept
-    {
-        return FRHITextureTransition{ BeforeState, AfterState, RHI_ALL_MIP_LEVELS, RHI_ALL_ARRAY_SLICES };
-    }
+    /** Backend tracks state per subresource and infers BeforeState. The desc's BeforeState is only validated */
+    Tracked = 0,
 
-    NODISCARD static constexpr FRHITextureTransition MakePartial(EResourceAccess BeforeState, EResourceAccess AfterState,
-        uint32 MipLevel, uint32 ArraySlice = RHI_ALL_ARRAY_SLICES) noexcept
-    {
-        return FRHITextureTransition{ BeforeState, AfterState, MipLevel, ArraySlice };
-    }
+    /** Resource never transitions. All transition requests targeting it are dropped */
+    Static = 1,
 
-    EResourceAccess BeforeState = EResourceAccess::Common;
-    EResourceAccess AfterState  = EResourceAccess::Common;
-    uint32          MipLevel    = RHI_ALL_MIP_LEVELS;
-    uint32          ArraySlice  = RHI_ALL_ARRAY_SLICES;
+    /** Backend never tracks and never implicitly transitions. The desc's BeforeState is used verbatim */
+    Manual = 2,
 };
 
-struct FRHIBufferTransition
+NODISCARD constexpr const CHAR* ToString(ERHIResourceStateTrackingMode TrackingMode)
 {
-    NODISCARD static constexpr FRHIBufferTransition Make(EResourceAccess BeforeState, EResourceAccess AfterState) noexcept
+    switch (TrackingMode)
     {
-        return FRHIBufferTransition{ BeforeState, AfterState };
-    }
+    case ERHIResourceStateTrackingMode::Tracked: return "Tracked";
+    case ERHIResourceStateTrackingMode::Static:  return "Static";
+    case ERHIResourceStateTrackingMode::Manual:  return "Manual";
 
-    EResourceAccess BeforeState = EResourceAccess::Common;
-    EResourceAccess AfterState  = EResourceAccess::Common;
+    default: return "Unknown";
+    }
+}
+
+enum class ERHIBarrierFlags : uint8
+{
+    None = 0,
+
+    /** Split barrier begin. The transition starts here and must be completed by a matching EndOnly */
+    BeginOnly = FLAG(0),
+
+    /** Split barrier end. Completes a transition started by a matching BeginOnly */
+    EndOnly = FLAG(1),
+
+    /** Prior contents of the resource are undefined and may be discarded */
+    Discard = FLAG(2),
+
+    /** Once the transition lands, install NewTrackingMode with AfterState as the new baseline */
+    ChangeTrackingMode = FLAG(3),
 };
 
-struct FRHIRequiredTextureState
+ENUM_CLASS_OPERATORS(ERHIBarrierFlags);
+
+enum class ERHIBarrierResourceType : uint8
 {
-    NODISCARD static constexpr FRHIRequiredTextureState Make(EResourceAccess State) noexcept
-    {
-        return FRHIRequiredTextureState{ State, RHI_ALL_MIP_LEVELS, RHI_ALL_ARRAY_SLICES };
-    }
-
-    NODISCARD static constexpr FRHIRequiredTextureState MakePartial(EResourceAccess State, uint32 MipLevel, uint32 ArraySlice = RHI_ALL_ARRAY_SLICES) noexcept
-    {
-        return FRHIRequiredTextureState{ State, MipLevel, ArraySlice };
-    }
-
-    EResourceAccess State      = EResourceAccess::Common;
-    uint32          MipLevel   = RHI_ALL_MIP_LEVELS;
-    uint32          ArraySlice = RHI_ALL_ARRAY_SLICES;
+    Texture = 0,
+    Buffer  = 1,
 };
 
+struct FRHITextureSubresourceRange
+{
+    NODISCARD static constexpr FRHITextureSubresourceRange All() noexcept
+    {
+        return FRHITextureSubresourceRange{ 0, RHI_ALL_MIP_LEVELS, 0, RHI_ALL_ARRAY_SLICES, 0, RHI_ALL_PLANE_SLICES };
+    }
+
+    NODISCARD static constexpr FRHITextureSubresourceRange MakeMip(uint32 MipLevel, uint32 ArraySlice = RHI_ALL_ARRAY_SLICES) noexcept
+    {
+        const bool bAllMips   = (MipLevel   == RHI_ALL_MIP_LEVELS);
+        const bool bAllSlices = (ArraySlice == RHI_ALL_ARRAY_SLICES);
+
+        return FRHITextureSubresourceRange
+        {
+            bAllMips   ? 0u : MipLevel,
+            bAllMips   ? RHI_ALL_MIP_LEVELS   : 1u,
+            bAllSlices ? 0u : ArraySlice,
+            bAllSlices ? RHI_ALL_ARRAY_SLICES : 1u,
+            0,
+            RHI_ALL_PLANE_SLICES
+        };
+    }
+
+    NODISCARD constexpr bool IsAllSubresources() const noexcept
+    {
+        return FirstMipLevel   == 0 && NumMipLevels   == RHI_ALL_MIP_LEVELS
+            && FirstArraySlice == 0 && NumArraySlices == RHI_ALL_ARRAY_SLICES
+            && FirstPlaneSlice == 0 && NumPlaneSlices == RHI_ALL_PLANE_SLICES;
+    }
+
+    uint32 FirstMipLevel;
+    uint32 NumMipLevels;
+    uint32 FirstArraySlice;
+    uint32 NumArraySlices;
+    uint32 FirstPlaneSlice;
+    uint32 NumPlaneSlices;
+};
+
+struct FRHITransitionBarrierDesc
+{
+public:
+    struct FTextureTransition
+    {
+        FRHITexture*                Resource;
+        FRHITextureSubresourceRange Subresources;
+    };
+
+    struct FBufferTransition
+    {
+        FRHIBuffer*   Resource;
+        FBufferRegion Range;
+    };
+
+public:
+    FRHITransitionBarrierDesc() noexcept { }
+
+    NODISCARD static FRHITransitionBarrierDesc CreateTexture(FRHITexture* InTexture, ERHIResourceState InAfterState) noexcept
+    {
+        return CreateTextureSubresource(InTexture, InAfterState, InAfterState, FRHITextureSubresourceRange::All(), ERHIBarrierFlags::None);
+    }
+
+    NODISCARD static FRHITransitionBarrierDesc CreateTexture(FRHITexture* InTexture, ERHIResourceState InBeforeState, ERHIResourceState InAfterState) noexcept
+    {
+        return CreateTextureSubresource(InTexture, InBeforeState, InAfterState, FRHITextureSubresourceRange::All(), ERHIBarrierFlags::None);
+    }
+
+    NODISCARD static FRHITransitionBarrierDesc CreateTextureMip(FRHITexture* InTexture, ERHIResourceState InBeforeState, ERHIResourceState InAfterState,
+        uint32 InMipLevel, uint32 InArraySlice = RHI_ALL_ARRAY_SLICES) noexcept
+    {
+        return CreateTextureSubresource(InTexture, InBeforeState, InAfterState, FRHITextureSubresourceRange::MakeMip(InMipLevel, InArraySlice), ERHIBarrierFlags::None);
+    }
+
+    NODISCARD static FRHITransitionBarrierDesc CreateTextureSubresource(FRHITexture* InTexture, ERHIResourceState InBeforeState, ERHIResourceState InAfterState,
+        const FRHITextureSubresourceRange& InSubresources, ERHIBarrierFlags InFlags = ERHIBarrierFlags::None) noexcept
+    {
+        FRHITransitionBarrierDesc Desc;
+        Desc.BeforeState          = InBeforeState;
+        Desc.AfterState           = InAfterState;
+        Desc.Flags                = InFlags;
+        Desc.ResourceType         = ERHIBarrierResourceType::Texture;
+        Desc.NewTrackingMode      = ERHIResourceStateTrackingMode::Tracked;
+        Desc.Texture.Resource     = InTexture;
+        Desc.Texture.Subresources = InSubresources;
+        return Desc;
+    }
+
+    NODISCARD static FRHITransitionBarrierDesc CreateTextureModeChange(FRHITexture* InTexture, ERHIResourceState InBeforeState,
+        ERHIResourceState InAfterState, ERHIResourceStateTrackingMode InNewMode) noexcept
+    {
+        FRHITransitionBarrierDesc Desc = CreateTextureSubresource(InTexture, InBeforeState, InAfterState, 
+            FRHITextureSubresourceRange::All(), ERHIBarrierFlags::ChangeTrackingMode);
+        Desc.NewTrackingMode = InNewMode;
+        return Desc;
+    }
+
+    NODISCARD static FRHITransitionBarrierDesc CreateBuffer(FRHIBuffer* InBuffer, ERHIResourceState InAfterState) noexcept
+    {
+        return CreateBufferRange(InBuffer, InAfterState, InAfterState, FBufferRegion::Whole(), ERHIBarrierFlags::None);
+    }
+
+    NODISCARD static FRHITransitionBarrierDesc CreateBuffer(FRHIBuffer* InBuffer, ERHIResourceState InBeforeState, ERHIResourceState InAfterState) noexcept
+    {
+        return CreateBufferRange(InBuffer, InBeforeState, InAfterState, FBufferRegion::Whole(), ERHIBarrierFlags::None);
+    }
+
+    NODISCARD static FRHITransitionBarrierDesc CreateBufferRange(FRHIBuffer* InBuffer, ERHIResourceState InBeforeState, ERHIResourceState InAfterState,
+        const FBufferRegion& InRange, ERHIBarrierFlags InFlags = ERHIBarrierFlags::None) noexcept
+    {
+        FRHITransitionBarrierDesc Desc;
+        Desc.BeforeState     = InBeforeState;
+        Desc.AfterState      = InAfterState;
+        Desc.Flags           = InFlags;
+        Desc.ResourceType    = ERHIBarrierResourceType::Buffer;
+        Desc.NewTrackingMode = ERHIResourceStateTrackingMode::Tracked;
+        Desc.Buffer.Resource = InBuffer;
+        Desc.Buffer.Range    = InRange;
+        return Desc;
+    }
+
+    NODISCARD static FRHITransitionBarrierDesc CreateTextureSplitBegin(FRHITexture* InTexture, ERHIResourceState InBeforeState, ERHIResourceState InAfterState) noexcept
+    {
+        return CreateTextureSubresource(InTexture, InBeforeState, InAfterState, FRHITextureSubresourceRange::All(), ERHIBarrierFlags::BeginOnly);
+    }
+
+    NODISCARD static FRHITransitionBarrierDesc CreateTextureSplitEnd(FRHITexture* InTexture, ERHIResourceState InBeforeState, ERHIResourceState InAfterState) noexcept
+    {
+        return CreateTextureSubresource(InTexture, InBeforeState, InAfterState, FRHITextureSubresourceRange::All(), ERHIBarrierFlags::EndOnly);
+    }
+
+    NODISCARD static FRHITransitionBarrierDesc CreateTextureSubresourceSplitBegin(FRHITexture* InTexture, ERHIResourceState InBeforeState, ERHIResourceState InAfterState,
+        const FRHITextureSubresourceRange& InSubresources) noexcept
+    {
+        return CreateTextureSubresource(InTexture, InBeforeState, InAfterState, InSubresources, ERHIBarrierFlags::BeginOnly);
+    }
+
+    NODISCARD static FRHITransitionBarrierDesc CreateTextureSubresourceSplitEnd(FRHITexture* InTexture, ERHIResourceState InBeforeState, ERHIResourceState InAfterState,
+        const FRHITextureSubresourceRange& InSubresources) noexcept
+    {
+        return CreateTextureSubresource(InTexture, InBeforeState, InAfterState, InSubresources, ERHIBarrierFlags::EndOnly);
+    }
+
+    NODISCARD static FRHITransitionBarrierDesc CreateBufferSplitBegin(FRHIBuffer* InBuffer, ERHIResourceState InBeforeState, ERHIResourceState InAfterState) noexcept
+    {
+        return CreateBufferRange(InBuffer, InBeforeState, InAfterState, FBufferRegion::Whole(), ERHIBarrierFlags::BeginOnly);
+    }
+
+    NODISCARD static FRHITransitionBarrierDesc CreateBufferSplitEnd(FRHIBuffer* InBuffer, ERHIResourceState InBeforeState, ERHIResourceState InAfterState) noexcept
+    {
+        return CreateBufferRange(InBuffer, InBeforeState, InAfterState, FBufferRegion::Whole(), ERHIBarrierFlags::EndOnly);
+    }
+
+    NODISCARD constexpr bool IsTexture()            const noexcept { return ResourceType == ERHIBarrierResourceType::Texture; }
+    NODISCARD constexpr bool IsBuffer()             const noexcept { return ResourceType == ERHIBarrierResourceType::Buffer; }
+    NODISCARD constexpr bool IsSplitBegin()         const noexcept { return (Flags & ERHIBarrierFlags::BeginOnly) != ERHIBarrierFlags::None; }
+    NODISCARD constexpr bool IsSplitEnd()           const noexcept { return (Flags & ERHIBarrierFlags::EndOnly) != ERHIBarrierFlags::None; }
+    NODISCARD constexpr bool IsSplit()              const noexcept { return IsSplitBegin() || IsSplitEnd(); }
+    NODISCARD constexpr bool IsDiscard()            const noexcept { return (Flags & ERHIBarrierFlags::Discard) != ERHIBarrierFlags::None; }
+    NODISCARD constexpr bool IsTrackingModeChange() const noexcept { return (Flags & ERHIBarrierFlags::ChangeTrackingMode) != ERHIBarrierFlags::None; }
+
+    ERHIResourceState             BeforeState;
+    ERHIResourceState             AfterState;
+    ERHIBarrierFlags              Flags;
+    ERHIBarrierResourceType       ResourceType;
+    ERHIResourceStateTrackingMode NewTrackingMode;
+
+    union
+    {
+        FTextureTransition Texture;
+        FBufferTransition  Buffer;
+    };
+};
+
+struct FRHIUnorderedAccessBarrierDesc
+{
+public:
+    struct FTextureBarrier
+    {
+        FRHITexture*                Resource;
+        FRHITextureSubresourceRange Subresources;
+    };
+
+    struct FBufferBarrier
+    {
+        FRHIBuffer*   Resource;
+        FBufferRegion Range;
+    };
+
+public:
+    FRHIUnorderedAccessBarrierDesc() noexcept { }
+
+    NODISCARD static FRHIUnorderedAccessBarrierDesc CreateTexture(FRHITexture* InTexture) noexcept
+    {
+        return CreateTextureSubresource(InTexture, FRHITextureSubresourceRange::All());
+    }
+
+    NODISCARD static FRHIUnorderedAccessBarrierDesc CreateTextureSubresource(FRHITexture* InTexture, const FRHITextureSubresourceRange& InSubresources) noexcept
+    {
+        FRHIUnorderedAccessBarrierDesc Desc;
+        Desc.ResourceType         = ERHIBarrierResourceType::Texture;
+        Desc.Texture.Resource     = InTexture;
+        Desc.Texture.Subresources = InSubresources;
+        return Desc;
+    }
+
+    NODISCARD static FRHIUnorderedAccessBarrierDesc CreateBuffer(FRHIBuffer* InBuffer) noexcept
+    {
+        return CreateBufferRange(InBuffer, FBufferRegion::Whole());
+    }
+
+    NODISCARD static FRHIUnorderedAccessBarrierDesc CreateBufferRange(FRHIBuffer* InBuffer, const FBufferRegion& InRange) noexcept
+    {
+        FRHIUnorderedAccessBarrierDesc Desc;
+        Desc.ResourceType    = ERHIBarrierResourceType::Buffer;
+        Desc.Buffer.Resource = InBuffer;
+        Desc.Buffer.Range    = InRange;
+        return Desc;
+    }
+
+    NODISCARD constexpr bool IsTexture() const noexcept { return ResourceType == ERHIBarrierResourceType::Texture; }
+    NODISCARD constexpr bool IsBuffer()  const noexcept { return ResourceType == ERHIBarrierResourceType::Buffer; }
+
+    ERHIBarrierResourceType ResourceType;
+    union
+    {
+        FTextureBarrier Texture;
+        FBufferBarrier  Buffer;
+    };
+};
+
+static_assert(TIsTriviallyCopyable<FRHITransitionBarrierDesc>::Value, "FRHITransitionBarrierDesc must be trivially copyable");
+static_assert(TIsTriviallyCopyable<FRHIUnorderedAccessBarrierDesc>::Value, "FRHIUnorderedAccessBarrierDesc must be trivially copyable");

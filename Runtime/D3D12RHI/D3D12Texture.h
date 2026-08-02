@@ -20,6 +20,11 @@ protected:
 
 public:
     virtual FD3D12TextureRHI* GetTextureInterface() const = 0;
+
+    void SetResourceStateTrackingMode(ERHIResourceStateTrackingMode InTrackingMode)
+    {
+        Desc.TrackingMode = InTrackingMode;
+    }
 };
 
 class FD3D12TextureRHI : public FD3D12TextureBase, public FD3D12ResourceBase
@@ -45,7 +50,7 @@ public:
     virtual void SetDebugName(const String& InName)       override final;
     virtual void GetDebugName(String& OutDebugName) const override final;
     
-    bool Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
+    bool Initialize(FD3D12CommandContext* InCommandContext, ERHIResourceState InInitialAccess, const IRHITextureData* InInitialData);
     
     DXGI_FORMAT GetDXGIFormat() const 
     { 

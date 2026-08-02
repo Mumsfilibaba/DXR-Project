@@ -129,13 +129,13 @@ void FVulkanCommandContextState::TransitionVertexAndIndexBuffers()
     {
         if (FVulkanBufferRHI* VertexBuffer = VertexBufferCache.BufferResources[Index])
         {
-            Context.RequireBufferState(VertexBuffer, EResourceAccess::VertexBuffer);
+            Context.RequireBufferState(VertexBuffer, ERHIResourceState::VertexBuffer);
         }
     }
 
     if (FVulkanBufferRHI* IndexBuffer = GraphicsState.IndexBufferCache.BufferResource)
     {
-        Context.RequireBufferState(IndexBuffer, EResourceAccess::IndexBuffer);
+        Context.RequireBufferState(IndexBuffer, ERHIResourceState::IndexBuffer);
     }
 
 #if VK_EXT_transform_feedback
@@ -146,7 +146,7 @@ void FVulkanCommandContextState::TransitionVertexAndIndexBuffers()
         {
             if (FVulkanBufferRHI* StreamOutputBuffer = StreamOutputCache.BufferResources[Index])
             {
-                Context.RequireBufferState(StreamOutputBuffer, EResourceAccess::StreamOutput);
+                Context.RequireBufferState(StreamOutputBuffer, ERHIResourceState::StreamOutput);
             }
         }
     }

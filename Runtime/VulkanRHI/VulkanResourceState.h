@@ -41,6 +41,12 @@ public:
         bHasDefaultLayout = true;
     }
 
+    void ClearDefaultLayout()
+    {
+        DefaultLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
+        bHasDefaultLayout = false;
+    }
+
     bool HasDefaultLayout() const
     {
         return bHasDefaultLayout;
@@ -49,6 +55,17 @@ public:
     VkImageLayout GetDefaultLayout() const
     {
         return DefaultLayout;
+    }
+
+    void AdoptTrackedState(const FVulkanImageLayoutState& Other)
+    {
+        const VkImageLayout PreservedDefault     = DefaultLayout;
+        const bool          bPreservedHasDefault = bHasDefaultLayout;
+
+        *this = Other;
+
+        DefaultLayout     = PreservedDefault;
+        bHasDefaultLayout = bPreservedHasDefault;
     }
 
 private:
@@ -75,9 +92,42 @@ public:
         return Stage;
     }
 
+    void SetDefaultState(VkAccessFlags2KHR InDefaultAccess, VkPipelineStageFlags2KHR InDefaultStage)
+    {
+        DefaultAccess    = InDefaultAccess;
+        DefaultStage     = InDefaultStage;
+        bHasDefaultState = true;
+    }
+
+    bool HasDefaultState() const
+    {
+        return bHasDefaultState;
+    }
+
+    VkAccessFlags2KHR GetDefaultAccess() const
+    {
+        return DefaultAccess;
+    }
+
+    void AdoptTrackedState(const FVulkanBufferState& Other)
+    {
+        const VkAccessFlags2KHR        PreservedAccess      = DefaultAccess;
+        const VkPipelineStageFlags2KHR PreservedStage       = DefaultStage;
+        const bool                     bPreservedHasDefault = bHasDefaultState;
+
+        *this = Other;
+
+        DefaultAccess    = PreservedAccess;
+        DefaultStage     = PreservedStage;
+        bHasDefaultState = bPreservedHasDefault;
+    }
+
 private:
-    VkAccessFlags2KHR        Access = 0;
-    VkPipelineStageFlags2KHR Stage  = 0;
+    VkAccessFlags2KHR        Access           = 0;
+    VkPipelineStageFlags2KHR Stage            = 0;
+    VkAccessFlags2KHR        DefaultAccess    = 0;
+    VkPipelineStageFlags2KHR DefaultStage     = 0;
+    bool                     bHasDefaultState = false;
 };
 
 struct FVulkanPendingImageBarrier

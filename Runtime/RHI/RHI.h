@@ -38,12 +38,12 @@ struct RHI
     // Create functions (Forward to RHI::Device)
     // -------------------------------------------------------------------------------------------
 
-    static FORCEINLINE FRHITexture* CreateTexture(const FRHITextureDesc& InTextureDesc, EResourceAccess InInitialState = EResourceAccess::Common, const IRHITextureData* InInitialData = nullptr)
+    static FORCEINLINE FRHITexture* CreateTexture(const FRHITextureDesc& InTextureDesc, ERHIResourceState InInitialState = ERHIResourceState::Common, const IRHITextureData* InInitialData = nullptr)
     {
         return Device->CreateTexture(InTextureDesc, InInitialState, InInitialData);
     }
 
-    static FORCEINLINE FRHIBuffer* CreateBuffer(const FRHIBufferDesc& InBufferDesc, EResourceAccess InInitialState = EResourceAccess::Common, const void* InInitialData = nullptr)
+    static FORCEINLINE FRHIBuffer* CreateBuffer(const FRHIBufferDesc& InBufferDesc, ERHIResourceState InInitialState = ERHIResourceState::Common, const void* InInitialData = nullptr)
     {
         return Device->CreateBuffer(InBufferDesc, InInitialState, InInitialData);
     }

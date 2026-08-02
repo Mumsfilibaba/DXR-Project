@@ -176,6 +176,7 @@ private:
     void*                                           WindowHandle;
     FVulkanCommandContext*                          CommandContext;
     FVulkanSurfaceRef                               Surface;
+    FVulkanSurfaceRef                               RetiredSurface;
     FVulkanSwapChainRef                             SwapChainResource;
     FVulkanBackBufferProxyTextureRHIRef             BackBufferProxy;
     FVulkanBackBufferProxyRenderTargetViewRHIRef    BackBufferProxyRenderTargetView;

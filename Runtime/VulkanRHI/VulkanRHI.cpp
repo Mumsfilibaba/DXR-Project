@@ -539,7 +539,7 @@ void FVulkanDeviceRHI::EndFrame()
     }
 }
 
-FRHITexture* FVulkanDeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
+FRHITexture* FVulkanDeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDesc, ERHIResourceState InInitialState, const IRHITextureData* InInitialData)
 {
     FVulkanTextureRHIRef NewTexture = new FVulkanTextureRHI(GetDevice(), InTextureDesc);
     if (!NewTexture->Initialize(GraphicsCommandContext, InInitialState, InInitialData))
@@ -565,7 +565,7 @@ FRHITexture* FVulkanDeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDes
     return NewTexture.ReleaseOwnership();
 }
 
-FRHIBuffer* FVulkanDeviceRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, EResourceAccess InInitialState, const void* InInitialData)
+FRHIBuffer* FVulkanDeviceRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, ERHIResourceState InInitialState, const void* InInitialData)
 {
     FVulkanBufferRHIRef NewBuffer = new FVulkanBufferRHI(GetDevice(), InBufferDesc);
     if (!NewBuffer->Initialize(GraphicsCommandContext, InInitialState, InInitialData))
@@ -1463,7 +1463,7 @@ void FVulkanDeviceRHI::FlushDeletionQueue(FVulkanCommands* Commands)
     Commands->DeferredObjects = Move(DeferredObjects);
 }
 
-VkPipelineStageFlags2KHR FVulkanDeviceRHI::ResourceStateToPipelineStageFlags(EResourceAccess ResourceState)
+VkPipelineStageFlags2KHR FVulkanDeviceRHI::ResourceStateToPipelineStageFlags(ERHIResourceState ResourceState)
 {
     VkPipelineStageFlags2KHR AllShaderBits =
         VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT_KHR |
@@ -1486,100 +1486,100 @@ VkPipelineStageFlags2KHR FVulkanDeviceRHI::ResourceStateToPipelineStageFlags(ERe
         AllNonPixelShaderBits |= VK_PIPELINE_STAGE_2_TESSELLATION_CONTROL_SHADER_BIT_KHR | VK_PIPELINE_STAGE_2_TESSELLATION_EVALUATION_SHADER_BIT_KHR;
     }
 
-    if (ResourceState == EResourceAccess::Common || IsEnumFlagSet(ResourceState, EResourceAccess::GenericRead))
+    if (ResourceState == ERHIResourceState::Common || IsEnumFlagSet(ResourceState, ERHIResourceState::GenericRead))
     {
         return VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR;
     }
 
     VkPipelineStageFlags2KHR Stages = VK_PIPELINE_STAGE_2_NONE_KHR;
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::CopyDest))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::CopyDest))
     {
         Stages |= VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::CopySource))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::CopySource))
     {
         Stages |= VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::DepthRead))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::DepthRead))
     {
         Stages |= VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT_KHR | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::DepthWrite))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::DepthWrite))
     {
         Stages |= VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT_KHR | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::IndexBuffer))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::IndexBuffer))
     {
         Stages |= VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::VertexBuffer))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::VertexBuffer))
     {
         Stages |= VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::NonPixelShaderResource))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::NonPixelShaderResource))
     {
         Stages |= AllNonPixelShaderBits;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::PixelShaderResource))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::PixelShaderResource))
     {
         Stages |= VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::Present))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::Present))
     {
         Stages |= VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::RenderTarget))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::RenderTarget))
     {
         Stages |= VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::ResolveDest))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::ResolveDest))
     {
         Stages |= VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::ResolveSource))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::ResolveSource))
     {
         Stages |= VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::ShadingRateSource))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::ShadingRateSource))
     {
         Stages |= GVulkanSupportsFragmentShadingRate ? VK_PIPELINE_STAGE_2_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR : VK_PIPELINE_STAGE_2_NONE_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::UnorderedAccess))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::UnorderedAccess))
     {
         Stages |= AllShaderBits;
     }
     
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::ConstantBuffer))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::ConstantBuffer))
     {
         Stages |= AllShaderBits;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::IndirectArgument))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::IndirectArgument))
     {
         Stages |= VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT_KHR;
     }
 
 #if VK_EXT_transform_feedback
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::StreamOutput))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::StreamOutput))
     {
         Stages |= GVulkanSupportsTransformFeedback ? VK_PIPELINE_STAGE_2_TRANSFORM_FEEDBACK_BIT_EXT : VK_PIPELINE_STAGE_2_NONE_KHR;
     }
 #endif
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::RayTracingAccelerationStructure))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::RayTracingAccelerationStructure))
     {
         if (GVulkanSupportsAccelerationStructures)
         {
@@ -1595,107 +1595,107 @@ VkPipelineStageFlags2KHR FVulkanDeviceRHI::ResourceStateToPipelineStageFlags(ERe
     return Stages != VK_PIPELINE_STAGE_2_NONE_KHR ? Stages : VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT_KHR;
 }
 
-VkAccessFlags2KHR FVulkanDeviceRHI::ResourceStateToAccessFlags(EResourceAccess ResourceState)
+VkAccessFlags2KHR FVulkanDeviceRHI::ResourceStateToAccessFlags(ERHIResourceState ResourceState)
 {
-    if (ResourceState == EResourceAccess::Common)
+    if (ResourceState == ERHIResourceState::Common)
     {
         return VK_ACCESS_2_NONE_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::GenericRead))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::GenericRead))
     {
         return VK_ACCESS_2_MEMORY_READ_BIT_KHR;
     }
 
     VkAccessFlags2KHR Access = VK_ACCESS_2_NONE_KHR;
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::CopyDest))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::CopyDest))
     {
         Access |= VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::CopySource))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::CopySource))
     {
         Access |= VK_ACCESS_2_TRANSFER_READ_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::DepthRead))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::DepthRead))
     {
         Access |= VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::DepthWrite))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::DepthWrite))
     {
         Access |= VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT_KHR | VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::IndexBuffer))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::IndexBuffer))
     {
         Access |= VK_ACCESS_2_INDEX_READ_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::VertexBuffer))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::VertexBuffer))
     {
         Access |= VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::NonPixelShaderResource))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::NonPixelShaderResource))
     {
         Access |= VK_ACCESS_2_SHADER_READ_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::PixelShaderResource))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::PixelShaderResource))
     {
         Access |= VK_ACCESS_2_SHADER_READ_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::Present))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::Present))
     {
         Access |= VK_ACCESS_2_MEMORY_READ_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::RenderTarget))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::RenderTarget))
     {
         Access |= VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT_KHR | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::ResolveDest))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::ResolveDest))
     {
         Access |= VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::ResolveSource))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::ResolveSource))
     {
         Access |= VK_ACCESS_2_TRANSFER_READ_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::ShadingRateSource))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::ShadingRateSource))
     {
         Access |= GVulkanSupportsFragmentShadingRate ? VK_ACCESS_2_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR : VK_ACCESS_2_NONE_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::UnorderedAccess))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::UnorderedAccess))
     {
         Access |= VK_ACCESS_2_SHADER_READ_BIT_KHR | VK_ACCESS_2_SHADER_WRITE_BIT_KHR;
     }
     
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::ConstantBuffer))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::ConstantBuffer))
     {
         Access |= VK_ACCESS_2_UNIFORM_READ_BIT_KHR;
     }
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::IndirectArgument))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::IndirectArgument))
     {
         Access |= VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT_KHR;
     }
 
 #if VK_EXT_transform_feedback
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::StreamOutput))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::StreamOutput))
     {
         Access |= GVulkanSupportsTransformFeedback ? VK_ACCESS_2_TRANSFORM_FEEDBACK_WRITE_BIT_EXT : VK_ACCESS_2_NONE_KHR;
     }
 #endif
 
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::RayTracingAccelerationStructure) && GVulkanSupportsAccelerationStructures)
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::RayTracingAccelerationStructure) && GVulkanSupportsAccelerationStructures)
     {
         Access |= VK_ACCESS_2_ACCELERATION_STRUCTURE_READ_BIT_KHR | VK_ACCESS_2_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
     }
@@ -1703,33 +1703,33 @@ VkAccessFlags2KHR FVulkanDeviceRHI::ResourceStateToAccessFlags(EResourceAccess R
     return Access;
 }
 
-VkImageLayout FVulkanDeviceRHI::ResourceStateToImageLayout(EResourceAccess ResourceState)
+VkImageLayout FVulkanDeviceRHI::ResourceStateToImageLayout(ERHIResourceState ResourceState)
 {
-    if (IsEnumFlagSet(ResourceState, EResourceAccess::PixelShaderResource) ||
-        IsEnumFlagSet(ResourceState, EResourceAccess::NonPixelShaderResource))
+    if (IsEnumFlagSet(ResourceState, ERHIResourceState::PixelShaderResource) ||
+        IsEnumFlagSet(ResourceState, ERHIResourceState::NonPixelShaderResource))
     {
         return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     }
 
     switch (ResourceState)
     {
-        case EResourceAccess::Common:                 return VK_IMAGE_LAYOUT_GENERAL;
-        case EResourceAccess::CopyDest:               return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        case EResourceAccess::CopySource:             return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-        case EResourceAccess::DepthRead:              return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-        case EResourceAccess::DepthWrite:             return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-        case EResourceAccess::IndexBuffer:            return VK_IMAGE_LAYOUT_UNDEFINED;
-        case EResourceAccess::VertexBuffer:           return VK_IMAGE_LAYOUT_UNDEFINED;
-        case EResourceAccess::NonPixelShaderResource: return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        case EResourceAccess::PixelShaderResource:    return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        case EResourceAccess::Present:                return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-        case EResourceAccess::RenderTarget:           return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        case EResourceAccess::ResolveDest:            return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        case EResourceAccess::ResolveSource:          return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-        case EResourceAccess::ShadingRateSource:      return VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
-        case EResourceAccess::UnorderedAccess:        return VK_IMAGE_LAYOUT_GENERAL;
-        case EResourceAccess::ConstantBuffer:         return VK_IMAGE_LAYOUT_UNDEFINED;
-        case EResourceAccess::GenericRead:            return VK_IMAGE_LAYOUT_UNDEFINED;
+        case ERHIResourceState::Common:                 return VK_IMAGE_LAYOUT_GENERAL;
+        case ERHIResourceState::CopyDest:               return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case ERHIResourceState::CopySource:             return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        case ERHIResourceState::DepthRead:              return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+        case ERHIResourceState::DepthWrite:             return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        case ERHIResourceState::IndexBuffer:            return VK_IMAGE_LAYOUT_UNDEFINED;
+        case ERHIResourceState::VertexBuffer:           return VK_IMAGE_LAYOUT_UNDEFINED;
+        case ERHIResourceState::NonPixelShaderResource: return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        case ERHIResourceState::PixelShaderResource:    return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        case ERHIResourceState::Present:                return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        case ERHIResourceState::RenderTarget:           return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        case ERHIResourceState::ResolveDest:            return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case ERHIResourceState::ResolveSource:          return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        case ERHIResourceState::ShadingRateSource:      return VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
+        case ERHIResourceState::UnorderedAccess:        return VK_IMAGE_LAYOUT_GENERAL;
+        case ERHIResourceState::ConstantBuffer:         return VK_IMAGE_LAYOUT_UNDEFINED;
+        case ERHIResourceState::GenericRead:            return VK_IMAGE_LAYOUT_UNDEFINED;
         default:                                      return VK_IMAGE_LAYOUT_UNDEFINED;
     }
 }

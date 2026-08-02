@@ -45,9 +45,10 @@ struct FRHIBufferDesc
     NODISCARD constexpr bool IsAccelerationStructure() const { return IsEnumFlagSet(Flags, EBufferFlags::AccelerationStructure); }
     NODISCARD constexpr bool IsIndirectArguments()     const { return IsEnumFlagSet(Flags, EBufferFlags::IndirectArguments); }
 
-    EBufferFlags Flags  = EBufferFlags::None;
-    uint32       Stride = 0;
-    uint64       Size   = 0;
+    EBufferFlags                  Flags        = EBufferFlags::None;
+    uint32                        Stride       = 0;
+    uint64                        Size         = 0;
+    ERHIResourceStateTrackingMode TrackingMode = ERHIResourceStateTrackingMode::Tracked;
 };
 
 class FRHIBuffer : public FRHIResource 

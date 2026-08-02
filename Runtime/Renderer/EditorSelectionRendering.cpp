@@ -1,4 +1,4 @@
-#include "Core/Misc/FrameProfiler.h"
+﻿#include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Resources/Material.h"
@@ -208,7 +208,7 @@ bool FEditorNoJitterDepthPass::CreateResources(FFrameResources& FrameResources, 
     const FClearValue        DepthClearValue(RendererTextureFormats::DepthBufferFormat, 1.0f, 0);
 
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(RendererTextureFormats::DepthBufferFormat, Width, Height, 1, 1, Usage, DepthClearValue);
-    FrameResources.EditorNoJitterDepth = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
+    FrameResources.EditorNoJitterDepth = RHI::CreateTexture(TextureDesc, ERHIResourceState::PixelShaderResource);
     if (!FrameResources.EditorNoJitterDepth)
     {
         return false;
@@ -225,7 +225,7 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
         return;
     }
 
-    CommandList.TransitionTextureState(FrameResources.EditorNoJitterDepth.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::DepthWrite));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(FrameResources.EditorNoJitterDepth.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::DepthWrite));
 
     RHI_EVENT_SCOPE(CommandList, "Editor NoJitter Depth");
     TRACE_SCOPE("Editor NoJitter Depth");
@@ -344,7 +344,7 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
 
     CommandList.EndRenderPass();
 
-    CommandList.TransitionTextureState(FrameResources.EditorNoJitterDepth.Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(FrameResources.EditorNoJitterDepth.Get(), ERHIResourceState::DepthWrite, ERHIResourceState::PixelShaderResource));
 }
 
 FEditorSelectionIDPass::FEditorSelectionIDPass(FSceneRenderer* InRenderer)
@@ -527,7 +527,7 @@ bool FEditorSelectionIDPass::CreateResources(FFrameResources& FrameResources, ui
     const FClearValue        ClearValue(RendererTextureFormats::ObjectIDFormat, 0.0f, 0.0f, 0.0f, 0.0f);
 
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(RendererTextureFormats::ObjectIDFormat, Width, Height, 1, 1, Usage, ClearValue);
-    FrameResources.EditorObjectID_NoJitter = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
+    FrameResources.EditorObjectID_NoJitter = RHI::CreateTexture(TextureDesc, ERHIResourceState::PixelShaderResource);
     if (!FrameResources.EditorObjectID_NoJitter)
     {
         return false;
@@ -544,8 +544,8 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
         return;
     }
 
-    CommandList.TransitionTextureState(FrameResources.EditorNoJitterDepth.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::DepthWrite)); 
-    CommandList.TransitionTextureState(FrameResources.EditorObjectID_NoJitter.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(FrameResources.EditorNoJitterDepth.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::DepthWrite)); 
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(FrameResources.EditorObjectID_NoJitter.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::RenderTarget));
 
     RHI_EVENT_SCOPE(CommandList, "Editor SelectionID");
     TRACE_SCOPE("Editor SelectionID");
@@ -658,8 +658,8 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
 
     CommandList.EndRenderPass();
 
-    CommandList.TransitionTextureState(FrameResources.EditorObjectID_NoJitter.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource)); 
-    CommandList.TransitionTextureState(FrameResources.EditorNoJitterDepth.Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::PixelShaderResource)); 
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(FrameResources.EditorObjectID_NoJitter.Get(), ERHIResourceState::RenderTarget, ERHIResourceState::PixelShaderResource)); 
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(FrameResources.EditorNoJitterDepth.Get(), ERHIResourceState::DepthWrite, ERHIResourceState::PixelShaderResource)); 
 }
 
 #endif

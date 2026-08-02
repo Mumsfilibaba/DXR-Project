@@ -22,7 +22,7 @@ public:
     virtual void SetDebugName(const String& InName)       override final;
     virtual void GetDebugName(String& OutDebugName) const override final;
     
-    bool Initialize(EResourceAccess InInitialAccess, const void* InInitialData);
+    bool Initialize(ERHIResourceState InInitialAccess, const void* InInitialData);
     
     FORCEINLINE id<MTLBuffer> GetMTLBuffer() const 
     { 

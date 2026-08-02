@@ -646,14 +646,14 @@ void FVulkanCommands::PreExecute()
     {
         FVulkanTextureRHI*       Texture    = It.GetKey();
         FVulkanImageLayoutState& LocalState = It.GetValue();
-        Texture->GetImageLayoutState() = LocalState;
+        Texture->GetImageLayoutState().AdoptTrackedState(LocalState);
     }
 
     for (auto It = PendingBufferStates.CreateIterator(); !It.IsEnd(); ++It)
     {
         FVulkanBufferRHI*   Buffer     = It.GetKey();
         FVulkanBufferState& LocalState = It.GetValue();
-        Buffer->GetBufferState() = LocalState;
+        Buffer->GetBufferState().AdoptTrackedState(LocalState);
     }
 
     PendingImageBarriers.Clear();

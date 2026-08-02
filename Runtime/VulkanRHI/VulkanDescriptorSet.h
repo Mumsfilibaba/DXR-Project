@@ -493,14 +493,14 @@ private:
     void ResetDescriptorBinding(uint32 DescriptorSetIndex, uint32 BindingIndex);
 
     // Remembers the buffer behind a buffer-view descriptor so that it can be transitioned before the next draw
-    void SetBoundBuffer(class FRHIResource* Resource, EResourceAccess Access, uint32 DescriptorSetIndex, uint32 BindingIndex);
+    void SetBoundBuffer(class FRHIResource* Resource, ERHIResourceState Access, uint32 DescriptorSetIndex, uint32 BindingIndex);
 
     // A buffer reached through a descriptor. Buffers are not tracked through their views like images are, so the
     // buffer is remembered together with the access that its descriptor-type implies
     struct FBoundBuffer
     {
         FVulkanBufferRHI* Buffer = nullptr;
-        EResourceAccess   Access = EResourceAccess::Common;
+        ERHIResourceState   Access = ERHIResourceState::Common;
     };
 
     FVulkanPipelineLayout*               Layout;

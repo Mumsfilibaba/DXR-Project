@@ -47,7 +47,7 @@ void FMetalBufferRHI::Unmap(uint64 Offset, uint64 Size)
 {
 }
 
-bool FMetalBufferRHI::Initialize(EResourceAccess InInitialAccess, const void* InInitialData)
+bool FMetalBufferRHI::Initialize(ERHIResourceState InInitialAccess, const void* InInitialData)
 {
     SCOPED_AUTORELEASE_POOL();
     

@@ -11,7 +11,7 @@ public:
     FVulkanBufferRHI(FVulkanDevice* InDevice, const FRHIBufferDesc& InBufferDesc);
     ~FVulkanBufferRHI();
 
-    bool Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData);
+    bool Initialize(FVulkanCommandContext* InCommandContext, ERHIResourceState InInitialAccess, const void* InInitialData);
 
     // FRHIBuffer Interface
     virtual void* GetRHINativeResource() const override final;

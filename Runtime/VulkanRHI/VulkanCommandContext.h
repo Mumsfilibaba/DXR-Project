@@ -106,12 +106,8 @@ public:
     virtual void DiscardContents(class FRHITexture* Texture) override final;
     virtual void BuildSceneAccelerationStructure(FRHISceneAccelerationStructure* InRayTracingScene, const FRHISceneAccelerationStructureBuildDesc& InBuildDesc) override final;
     virtual void BuildGeometryAccelerationStructure(FRHIGeometryAccelerationStructure* InRayTracingGeometry, const FRHIGeometryAccelerationStructureBuildDesc& InBuildDesc) override final;
-    virtual void TransitionTextureState(FRHITexture* Texture, const FRHITextureTransition& TextureTransition) override final;
-    virtual void TransitionBufferState(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) override final;
-    virtual void RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState) override final;
-    virtual void RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState) override final;
-    virtual void UnorderedAccessTextureBarrier(FRHITexture* Texture) override final;
-    virtual void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer) override final;
+    virtual void TransitionBarrier(TArrayView<const FRHITransitionBarrierDesc> TransitionDescs) override final;
+    virtual void UnorderedAccessBarrier(TArrayView<const FRHIUnorderedAccessBarrierDesc> BarrierDescs) override final;
     virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation) override final;
     virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) override final;
     virtual void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) override final;
@@ -154,8 +150,13 @@ public:
     void TransitionImageLayout(FVulkanUnorderedAccessViewRHI* View);
     void TransitionImageLayout(FVulkanShaderResourceViewRHI* View, VkImageLayout Layout);
 
-    void RequireBufferState(class FVulkanBufferRHI* Buffer, EResourceAccess RequiredState);
-    void RequireBufferState(FVulkanUnorderedAccessViewRHI* View, EResourceAccess RequiredState);
+    void RequireBufferState(class FVulkanBufferRHI* Buffer, ERHIResourceState RequiredState);
+    void RequireBufferState(FVulkanUnorderedAccessViewRHI* View, ERHIResourceState RequiredState);
+
+    void TransitionBarrierTexture(const FRHITransitionBarrierDesc& Desc);
+    void TransitionBarrierBuffer(const FRHITransitionBarrierDesc& Desc);
+    
+    void ApplyTrackingModeChange(class FVulkanTextureRHI* Texture, const FRHITransitionBarrierDesc& Desc);
 
     void AddAccelerationStructureMemoryBarrier();
 

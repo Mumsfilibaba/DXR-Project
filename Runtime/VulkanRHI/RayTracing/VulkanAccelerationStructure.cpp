@@ -194,7 +194,7 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
 
     VkAccelerationStructureBuildRangeInfoKHR* BuildRangeInfos[] = { &AccelerationStructureBuildRangeInfo };
 
-    const EResourceAccess BuildInputAccess = EResourceAccess::NonPixelShaderResource | EResourceAccess::RayTracingAccelerationStructure;
+    const ERHIResourceState BuildInputAccess = ERHIResourceState::NonPixelShaderResource | ERHIResourceState::RayTracingAccelerationStructure;
 
     CmdContext.RequireBufferState(VertexBuffer.Get(), BuildInputAccess);
     if (IndexBuffer)
@@ -680,12 +680,12 @@ bool FVulkanOpacityMicromap::Build(FVulkanCommandContext& CmdContext, const FRHI
 
     if (DataBuffer)
     {
-        CmdContext.RequireBufferState(DataBuffer, EResourceAccess::NonPixelShaderResource);
+        CmdContext.RequireBufferState(DataBuffer, ERHIResourceState::NonPixelShaderResource);
     }
 
     if (DescriptorBuffer)
     {
-        CmdContext.RequireBufferState(DescriptorBuffer, EResourceAccess::NonPixelShaderResource);
+        CmdContext.RequireBufferState(DescriptorBuffer, ERHIResourceState::NonPixelShaderResource);
     }
 
     VkMemoryBarrier2KHR ScratchBarrier = {};

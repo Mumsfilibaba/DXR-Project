@@ -1,4 +1,4 @@
-#include "RHI/ShaderCompiler.h"
+﻿#include "RHI/ShaderCompiler.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Renderer/PostProcessing.h"
@@ -167,7 +167,7 @@ bool FTonemapPass::CreateResources(FFrameResources& FrameResources, uint32 Width
     const FClearValue ClearValue(RendererTextureFormats::SceneTargetFormat, 0.0f, 0.0f, 0.0f, 1.0f);
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(RendererTextureFormats::SceneTargetFormat, Width, Height, 1, 1, Usage, ClearValue);
 
-    FrameResources.TonemappedTarget = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
+    FrameResources.TonemappedTarget = RHI::CreateTexture(TextureDesc, ERHIResourceState::PixelShaderResource);
     if (!FrameResources.TonemappedTarget)
     {
         return false;
@@ -219,7 +219,7 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     const bool bNeedsTransition = !OutputTarget->GetDesc().IsPresentable();
     if (bNeedsTransition)
     {
-        CommandList.TransitionTextureState(OutputTarget, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(OutputTarget, ERHIResourceState::PixelShaderResource, ERHIResourceState::RenderTarget));
     }
 
     FRHIRenderTargetView* RenderTargetView = OutputTarget->GetRenderTargetView();
@@ -251,7 +251,7 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
 
     if (bNeedsTransition)
     {
-        CommandList.TransitionTextureState(OutputTarget, FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(OutputTarget, ERHIResourceState::RenderTarget, ERHIResourceState::PixelShaderResource));
     }
 }
 
@@ -396,7 +396,7 @@ void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRend
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
-    CommandList.RequireTextureState(SceneRenderView.RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::RenderTarget));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SceneRenderView.RenderTarget, ERHIResourceState::RenderTarget));
 
     FRHIRenderTargetView* RenderTargetView = SceneRenderView.RenderTarget->GetRenderTargetView();
 
@@ -474,7 +474,7 @@ void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRend
 
     CommandList.EndRenderPass();
 
-    CommandList.RequireTextureState(SceneRenderView.RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::PixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SceneRenderView.RenderTarget, ERHIResourceState::PixelShaderResource));
 }
 #endif
 
@@ -672,7 +672,7 @@ void FFXAAPass::Execute(FRHICommandList& CommandList, const FSceneRenderView& Sc
     FScissorRegion ScissorRegion(Settings.Width, Settings.Height, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
-    CommandList.RequireTextureState(SceneRenderView.RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::RenderTarget));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SceneRenderView.RenderTarget, ERHIResourceState::RenderTarget));
 
     FRHIRenderTargetView* RenderTargetView = SceneRenderView.RenderTarget->GetRenderTargetView();
 
@@ -702,5 +702,5 @@ void FFXAAPass::Execute(FRHICommandList& CommandList, const FSceneRenderView& Sc
 
     CommandList.EndRenderPass();
 
-    CommandList.RequireTextureState(SceneRenderView.RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::PixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SceneRenderView.RenderTarget, ERHIResourceState::PixelShaderResource));
 }

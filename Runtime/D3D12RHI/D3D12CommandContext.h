@@ -15,8 +15,8 @@ class FD3D12ShaderBindingTable;
 class FD3D12BarrierBatcher
 {
 public:
-    void AddTransitionBarrier(FD3D12Resource* InResource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, uint32 SubresourceIndex = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
-    void AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, uint32 SubresourceIndex = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+    void AddTransitionBarrier(FD3D12Resource* InResource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, uint32 SubresourceIndex = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, D3D12_RESOURCE_BARRIER_FLAGS Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+    void AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, uint32 SubresourceIndex = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, D3D12_RESOURCE_BARRIER_FLAGS Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
     void AddUnorderedAccessBarrier(FD3D12Resource* InResource);
     void AddUnorderedAccessBarrier(ID3D12Resource* Resource);
     void AddAliasingBarrier(FD3D12Resource* InResourceAfter, ID3D12Resource* ResourceBefore = nullptr);
@@ -102,12 +102,8 @@ public:
     virtual void DispatchRaysIndirect(FRHIShaderBindingTable* ShaderBindingTable, FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset) override final;
     virtual void BuildOpacityMicromap(FRHIOpacityMicromap* OpacityMicromap, const FRHIOpacityMicromapBuildDesc& BuildDesc) override final;
     virtual void ExecuteIndirectRayTracingAccelerationStructureOperations(const FRHIRayTracingAccelerationStructureOperationDesc* Operations, uint32 NumOperations) override final;
-    virtual void TransitionTextureState(FRHITexture* Texture, const FRHITextureTransition& TextureTransition) override final;
-    virtual void TransitionBufferState(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) override final;
-    virtual void RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState) override final;
-    virtual void RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState) override final;
-    virtual void UnorderedAccessTextureBarrier(FRHITexture* Texture) override final;
-    virtual void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer) override final;
+    virtual void TransitionBarrier(TArrayView<const FRHITransitionBarrierDesc> TransitionDescs) override final;
+    virtual void UnorderedAccessBarrier(TArrayView<const FRHIUnorderedAccessBarrierDesc> BarrierDescs) override final;
     virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation) override final;
     virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) override final;
     virtual void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) override final;
@@ -194,6 +190,12 @@ private:
 
     FD3D12ResourceState& RetrievePendingResourceState(FD3D12Resource* Resource);
     void AddPendingBarrier(FD3D12Resource* Resource, D3D12_RESOURCE_STATES DesiredState, uint32 Subresource);
+
+    void TransitionBarrierTexture(const FRHITransitionBarrierDesc& Desc);
+    void TransitionBarrierBuffer(const FRHITransitionBarrierDesc& Desc);
+
+    bool EmitTrackedTransition(FD3D12Resource* Resource, D3D12_RESOURCE_STATES CurrentState, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, uint32 SubresourceIndex, D3D12_RESOURCE_BARRIER_FLAGS BarrierFlags, bool bInferBeforeState);
+    void ApplyTrackingModeChange(FD3D12TextureRHI* Texture, const FRHITransitionBarrierDesc& Desc);
 
     void EnsureDefaultState(const FD3D12Resource* Resource) const;
     void EnsureResourceState(const FD3D12Resource* Resource, D3D12_RESOURCE_STATES RequiredState) const;

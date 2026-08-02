@@ -224,6 +224,12 @@ public:
         bHasDefaultState = true;
     }
 
+    void ClearDefaultState()
+    {
+        DefaultState     = D3D12_RESOURCE_STATES(0);
+        bHasDefaultState = false;
+    }
+
     bool HasDefaultState() const
     {
         return bHasDefaultState;

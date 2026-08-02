@@ -1,4 +1,4 @@
-#include "Renderer/SelectionOutlinePass.h"
+﻿#include "Renderer/SelectionOutlinePass.h"
 #if EDITOR_BUILD
     #include "RHI/RHI.h"
     #include "RHI/ShaderCompiler.h"
@@ -85,7 +85,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
     const FClearValue ClearValue(EFormat::R8_Unorm, 0.0f, 0.0f, 0.0f, 1.0f);
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8_Unorm, Width, Height, 1, 1, Usage, ClearValue);
 
-    SelectionMask = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
+    SelectionMask = RHI::CreateTexture(TextureDesc, ERHIResourceState::PixelShaderResource);
     if (!SelectionMask)
     {
         return false;
@@ -93,7 +93,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
 
     SelectionMask->SetDebugName("SelectionMask");
 
-    DilationTemp = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
+    DilationTemp = RHI::CreateTexture(TextureDesc, ERHIResourceState::PixelShaderResource);
     if (!DilationTemp)
     {
         return false;
@@ -101,7 +101,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
 
     DilationTemp->SetDebugName("SelectionMask Dilate Temp");
 
-    DilatedMask = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
+    DilatedMask = RHI::CreateTexture(TextureDesc, ERHIResourceState::PixelShaderResource);
     if (!DilatedMask)
     {
         return false;
@@ -109,7 +109,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
 
     DilatedMask->SetDebugName("SelectionMask Dilated");
 
-    ErosionTemp = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
+    ErosionTemp = RHI::CreateTexture(TextureDesc, ERHIResourceState::PixelShaderResource);
     if (!ErosionTemp)
     {
         return false;
@@ -117,7 +117,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
 
     ErosionTemp->SetDebugName("SelectionMask Erode Temp");
 
-    ErodedMask = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
+    ErodedMask = RHI::CreateTexture(TextureDesc, ERHIResourceState::PixelShaderResource);
     if (!ErodedMask)
     {
         return false;
@@ -125,7 +125,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
 
     ErodedMask->SetDebugName("SelectionMask Eroded");
 
-    RingMask = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
+    RingMask = RHI::CreateTexture(TextureDesc, ERHIResourceState::PixelShaderResource);
     if (!RingMask)
     {
         return false;
@@ -143,7 +143,7 @@ bool FSelectionOutlinePass::CreateSelectedIDsBuffer()
     BufferDesc.Size   = uint64(BufferDesc.Stride) * MaxSelectedIDs;
     BufferDesc.Flags  = EBufferFlags::ShaderResourceBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
 
-    SelectedIDsBuffer = RHI::CreateBuffer(BufferDesc, EResourceAccess::PixelShaderResource, nullptr);
+    SelectedIDsBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::PixelShaderResource, nullptr);
     if (!SelectedIDsBuffer)
     {
         return false;
@@ -400,9 +400,9 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
         IDs[Index] = SelectedIDs[Index];
     }
 
-    CommandList.TransitionBufferState(SelectedIDsBuffer.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::CopyDest);
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(SelectedIDsBuffer.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::CopyDest));
     CommandList.UpdateBuffer(SelectedIDsBuffer.Get(), FBufferRegion(0, sizeof(IDs)), IDs);
-    CommandList.TransitionBufferState(SelectedIDsBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(SelectedIDsBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::PixelShaderResource));
 
     struct FSelectionOutlineConstantsHLSL
     {
@@ -439,7 +439,7 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
     // Pass 1: SelectedMask (ObjectID -> 0/1)
     // ---------------------------------------------------------------------------
 
-    CommandList.TransitionTextureState(SelectionMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SelectionMask.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::RenderTarget));
 
     {
         FRHIRenderTargetView* RenderTargetView = SelectionMask->GetRenderTargetView();
@@ -467,7 +467,7 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
         CommandList.EndRenderPass();
     }
 
-    CommandList.TransitionTextureState(SelectionMask.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SelectionMask.Get(), ERHIResourceState::RenderTarget, ERHIResourceState::PixelShaderResource));
 
     // ---------------------------------------------------------------------------
     // Pass 2: Erosion (min filter) to pull outline closer to the object
@@ -476,7 +476,7 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
     if (InnerRadius > 0)
     {
         // Horizontal erosion
-        CommandList.TransitionTextureState(ErosionTemp.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(ErosionTemp.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::RenderTarget));
 
         {
         FRHIRenderTargetView* RenderTargetView = ErosionTemp->GetRenderTargetView();
@@ -504,10 +504,10 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
             CommandList.EndRenderPass();
         }
 
-        CommandList.TransitionTextureState(ErosionTemp.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(ErosionTemp.Get(), ERHIResourceState::RenderTarget, ERHIResourceState::PixelShaderResource));
 
         // Vertical erosion
-        CommandList.TransitionTextureState(ErodedMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(ErodedMask.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::RenderTarget));
 
         {
         FRHIRenderTargetView* RenderTargetView = ErodedMask->GetRenderTargetView();
@@ -535,7 +535,7 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
             CommandList.EndRenderPass();
         }
 
-        CommandList.TransitionTextureState(ErodedMask.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(ErodedMask.Get(), ERHIResourceState::RenderTarget, ERHIResourceState::PixelShaderResource));
         InnerMaskTexture = ErodedMask.Get();
     }
 
@@ -543,7 +543,7 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
     // Pass 3: Horizontal dilation
     // ---------------------------------------------------------------------------
 
-    CommandList.TransitionTextureState(DilationTemp.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(DilationTemp.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::RenderTarget));
 
     {
         FRHIRenderTargetView* RenderTargetView = DilationTemp->GetRenderTargetView();
@@ -571,13 +571,13 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
         CommandList.EndRenderPass();
     }
 
-    CommandList.TransitionTextureState(DilationTemp.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(DilationTemp.Get(), ERHIResourceState::RenderTarget, ERHIResourceState::PixelShaderResource));
 
     // ---------------------------------------------------------------------------
     // Pass 4: Vertical dilation
     // ---------------------------------------------------------------------------
 
-    CommandList.TransitionTextureState(DilatedMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(DilatedMask.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::RenderTarget));
 
     {
         FRHIRenderTargetView* RenderTargetView = DilatedMask->GetRenderTargetView();
@@ -605,13 +605,13 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
         CommandList.EndRenderPass();
     }
 
-    CommandList.TransitionTextureState(DilatedMask.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(DilatedMask.Get(), ERHIResourceState::RenderTarget, ERHIResourceState::PixelShaderResource));
 
     // ---------------------------------------------------------------------------
     // Pass 5: Resolve ring mask (Outer - Inner) with optional smoothing
     // ---------------------------------------------------------------------------
 
-    CommandList.TransitionTextureState(RingMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(RingMask.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::RenderTarget));
 
     {
         FRHIRenderTargetView* RenderTargetView = RingMask->GetRenderTargetView();
@@ -640,7 +640,7 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
         CommandList.EndRenderPass();
     }
 
-    CommandList.TransitionTextureState(RingMask.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(RingMask.Get(), ERHIResourceState::RenderTarget, ERHIResourceState::PixelShaderResource));
 }
 
 #endif // EDITOR_BUILD

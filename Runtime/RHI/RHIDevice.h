@@ -72,7 +72,7 @@ struct FRHIDevice
      * @param InInitialData Initial data of the texture.
      * @return The newly created texture.
      */
-    virtual FRHITexture* CreateTexture(const FRHITextureDesc& InTextureDesc, EResourceAccess InInitialState = EResourceAccess::Common, const IRHITextureData* InInitialData = nullptr) = 0;
+    virtual FRHITexture* CreateTexture(const FRHITextureDesc& InTextureDesc, ERHIResourceState InInitialState = ERHIResourceState::Common, const IRHITextureData* InInitialData = nullptr) = 0;
 
     /**
      * @brief Creates a buffer.
@@ -81,7 +81,7 @@ struct FRHIDevice
      * @param InInitialData Initial data of the buffer.
      * @return The newly created buffer.
      */
-    virtual FRHIBuffer* CreateBuffer(const FRHIBufferDesc& InBufferDesc, EResourceAccess InInitialState = EResourceAccess::Common, const void* InInitialData = nullptr) = 0;
+    virtual FRHIBuffer* CreateBuffer(const FRHIBufferDesc& InBufferDesc, ERHIResourceState InInitialState = ERHIResourceState::Common, const void* InInitialData = nullptr) = 0;
 
     /**
      * @brief Creates a sampler state.

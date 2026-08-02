@@ -1,4 +1,4 @@
-#include "Core/Templates/NumericLimits.h"
+﻿#include "Core/Templates/NumericLimits.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "RendererCore/TextureCompressor.h"
@@ -276,7 +276,7 @@ bool FTextureCompressor::CompressSinglePass64(FRHICommandList& CommandList, cons
     const uint32 NumMips = Math::Min(Math::MipCountAboveMinSize(SourceDesc.Extent.X, SourceDesc.Extent.Y, BC_BLOCK_SIZE), SourceDesc.NumMipLevels);
 
     FRHITextureDesc CompressedTexDesc = FRHITextureDesc::CreateTexture2D(EFormat::R32G32_Uint, BlocksX, BlocksY, NumMips, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::CopySource);
-    FRHITextureRef  CompressedTex     = RHI::CreateTexture(CompressedTexDesc, EResourceAccess::UnorderedAccess);
+    FRHITextureRef  CompressedTex     = RHI::CreateTexture(CompressedTexDesc, ERHIResourceState::UnorderedAccess);
 
     if (!CompressedTex)
     {
@@ -285,7 +285,7 @@ bool FTextureCompressor::CompressSinglePass64(FRHICommandList& CommandList, cons
     }
 
     FRHITextureDesc OutputDesc = FRHITextureDesc::CreateTexture2D(OutputFormat, SourceDesc.Extent.X, SourceDesc.Extent.Y, NumMips, 1, ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::CopyDest);
-    OutTexture = RHI::CreateTexture(OutputDesc, EResourceAccess::CopyDest);
+    OutTexture = RHI::CreateTexture(OutputDesc, ERHIResourceState::CopyDest);
 
     if (!OutTexture)
     {
@@ -327,7 +327,7 @@ bool FTextureCompressor::CompressSinglePass64(FRHICommandList& CommandList, cons
     }
 
     CommandList.SetComputePipelineState(PSO);
-    CommandList.TransitionTextureState(SrcTexture.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SrcTexture.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource));
 
     int32 MipWidth  = SourceDesc.Extent.X;
     int32 MipHeight = SourceDesc.Extent.Y;
@@ -351,7 +351,7 @@ bool FTextureCompressor::CompressSinglePass64(FRHICommandList& CommandList, cons
         const int32 ThreadGroupsX = Math::DivideByMultiple(MipBlocksX, int32(CS_NUM_THREADS));
         const int32 ThreadGroupsY = Math::DivideByMultiple(MipBlocksY, int32(CS_NUM_THREADS));
         CommandList.Dispatch(ThreadGroupsX, ThreadGroupsY, 1);
-        CommandList.UnorderedAccessTextureBarrier(CompressedTex.Get());
+        CommandList.UnorderedAccessBarrier(CompressedTex.Get());
 
         MipWidth  = Math::Max(MipWidth / 2, 1);
         MipHeight = Math::Max(MipHeight / 2, 1);
@@ -370,9 +370,10 @@ bool FTextureCompressor::CompressSinglePass64(FRHICommandList& CommandList, cons
     CopyDesc.NumArraySlices = 1;
     CopyDesc.NumMipLevels   = NumMips;
 
-    CommandList.TransitionTextureState(CompressedTex.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(CompressedTex.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::CopySource));
     CommandList.CopyTextureRegion(OutTexture.Get(), CompressedTex.Get(), CopyDesc);
-    CommandList.TransitionTextureState(OutTexture.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::ShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTextureModeChange(
+        OutTexture.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ShaderResource, ERHIResourceStateTrackingMode::Static));
     return true;
 }
 
@@ -390,7 +391,7 @@ bool FTextureCompressor::CompressSinglePass128(FRHICommandList& CommandList, con
     const uint32 NumMips = Math::Min(Math::MipCountAboveMinSize(SourceDesc.Extent.X, SourceDesc.Extent.Y, BC_BLOCK_SIZE), SourceDesc.NumMipLevels);
 
     FRHITextureDesc CompressedTexDesc = FRHITextureDesc::CreateTexture2D(EFormat::R32G32B32A32_Uint, BlocksX, BlocksY, NumMips, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::CopySource);
-    FRHITextureRef CompressedTex = RHI::CreateTexture(CompressedTexDesc, EResourceAccess::UnorderedAccess);
+    FRHITextureRef CompressedTex = RHI::CreateTexture(CompressedTexDesc, ERHIResourceState::UnorderedAccess);
     if (!CompressedTex)
     {
         LOG_ERROR("[FTextureCompressor] Failed to create temporary compressed texture");
@@ -398,7 +399,7 @@ bool FTextureCompressor::CompressSinglePass128(FRHICommandList& CommandList, con
     }
 
     FRHITextureDesc OutputDesc = FRHITextureDesc::CreateTexture2D(OutputFormat, SourceDesc.Extent.X, SourceDesc.Extent.Y, NumMips, 1, ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::CopyDest);
-    OutTexture = RHI::CreateTexture(OutputDesc, EResourceAccess::CopyDest);
+    OutTexture = RHI::CreateTexture(OutputDesc, ERHIResourceState::CopyDest);
     if (!OutTexture)
     {
         LOG_ERROR("[FTextureCompressor] Failed to create compressed texture");
@@ -439,7 +440,7 @@ bool FTextureCompressor::CompressSinglePass128(FRHICommandList& CommandList, con
     }
 
     CommandList.SetComputePipelineState(PSO);
-    CommandList.TransitionTextureState(SrcTexture.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SrcTexture.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource));
 
     int32 MipWidth  = SourceDesc.Extent.X;
     int32 MipHeight = SourceDesc.Extent.Y;
@@ -463,7 +464,7 @@ bool FTextureCompressor::CompressSinglePass128(FRHICommandList& CommandList, con
         const int32 ThreadGroupsX = Math::DivideByMultiple(MipBlocksX, int32(CS_NUM_THREADS));
         const int32 ThreadGroupsY = Math::DivideByMultiple(MipBlocksY, int32(CS_NUM_THREADS));
         CommandList.Dispatch(ThreadGroupsX, ThreadGroupsY, 1);
-        CommandList.UnorderedAccessTextureBarrier(CompressedTex.Get());
+        CommandList.UnorderedAccessBarrier(CompressedTex.Get());
 
         MipWidth  = Math::Max(MipWidth / 2, 1);
         MipHeight = Math::Max(MipHeight / 2, 1);
@@ -482,9 +483,10 @@ bool FTextureCompressor::CompressSinglePass128(FRHICommandList& CommandList, con
     CopyDesc.NumArraySlices = 1;
     CopyDesc.NumMipLevels   = NumMips;
 
-    CommandList.TransitionTextureState(CompressedTex.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(CompressedTex.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::CopySource));
     CommandList.CopyTextureRegion(OutTexture.Get(), CompressedTex.Get(), CopyDesc);
-    CommandList.TransitionTextureState(OutTexture.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::ShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTextureModeChange(
+        OutTexture.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ShaderResource, ERHIResourceStateTrackingMode::Static));
     return true;
 }
 
@@ -601,7 +603,7 @@ bool FTextureCompressor::CompressBC6(FRHICommandList& CommandList, const FRHITex
     const uint32 NumMips = Math::Min(Math::MipCountAboveMinSize(SourceDesc.Extent.X, SourceDesc.Extent.Y, BC_BLOCK_SIZE), SourceDesc.NumMipLevels);
 
     FRHITextureDesc CompressedTexDesc = FRHITextureDesc::CreateTexture2D(EFormat::R32G32B32A32_Uint, BlocksX, BlocksY, NumMips, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::CopySource);
-    FRHITextureRef  CompressedTex     = RHI::CreateTexture(CompressedTexDesc, EResourceAccess::UnorderedAccess);
+    FRHITextureRef  CompressedTex     = RHI::CreateTexture(CompressedTexDesc, ERHIResourceState::UnorderedAccess);
     
     if (!CompressedTex)
     {
@@ -610,7 +612,7 @@ bool FTextureCompressor::CompressBC6(FRHICommandList& CommandList, const FRHITex
     }
 
     FRHITextureDesc OutputDesc = FRHITextureDesc::CreateTexture2D(EFormat::BC6H_UF16, SourceDesc.Extent.X, SourceDesc.Extent.Y, NumMips, 1, ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::CopyDest);
-    OutTexture = RHI::CreateTexture(OutputDesc, EResourceAccess::CopyDest);
+    OutTexture = RHI::CreateTexture(OutputDesc, ERHIResourceState::CopyDest);
     
     if (!OutTexture)
     {
@@ -652,7 +654,7 @@ bool FTextureCompressor::CompressBC6(FRHICommandList& CommandList, const FRHITex
     }
 
     CommandList.SetComputePipelineState(BC6HCompressionPSO.Get());
-    CommandList.TransitionTextureState(SrcTexture.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SrcTexture.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource));
 
     int32 MipWidth  = SourceDesc.Extent.X;
     int32 MipHeight = SourceDesc.Extent.Y;
@@ -676,7 +678,7 @@ bool FTextureCompressor::CompressBC6(FRHICommandList& CommandList, const FRHITex
         const int32 ThreadGroupsX = Math::DivideByMultiple(MipBlocksX, int32(CS_NUM_THREADS));
         const int32 ThreadGroupsY = Math::DivideByMultiple(MipBlocksY, int32(CS_NUM_THREADS));
         CommandList.Dispatch(ThreadGroupsX, ThreadGroupsY, 1);
-        CommandList.UnorderedAccessTextureBarrier(CompressedTex.Get());
+        CommandList.UnorderedAccessBarrier(CompressedTex.Get());
 
         MipWidth  = Math::Max(MipWidth / 2, 1);
         MipHeight = Math::Max(MipHeight / 2, 1);
@@ -695,9 +697,10 @@ bool FTextureCompressor::CompressBC6(FRHICommandList& CommandList, const FRHITex
     CopyDesc.NumArraySlices = 1;
     CopyDesc.NumMipLevels   = NumMips;
 
-    CommandList.TransitionTextureState(CompressedTex.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(CompressedTex.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::CopySource));
     CommandList.CopyTextureRegion(OutTexture.Get(), CompressedTex.Get(), CopyDesc);
-    CommandList.TransitionTextureState(OutTexture.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::ShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTextureModeChange(
+        OutTexture.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ShaderResource, ERHIResourceStateTrackingMode::Static));
     return true;
 }
 
@@ -768,8 +771,8 @@ bool FTextureCompressor::CompressBC7(FRHICommandList& CommandList, const FRHITex
     BufferDesc.Stride = StructuredStride;
     BufferDesc.Size   = BufferSize;
 
-    FRHIBufferRef BufA = RHI::CreateBuffer(BufferDesc, EResourceAccess::UnorderedAccess);
-    FRHIBufferRef BufB = RHI::CreateBuffer(BufferDesc, EResourceAccess::UnorderedAccess);
+    FRHIBufferRef BufA = RHI::CreateBuffer(BufferDesc, ERHIResourceState::UnorderedAccess);
+    FRHIBufferRef BufB = RHI::CreateBuffer(BufferDesc, ERHIResourceState::UnorderedAccess);
     if (!BufA || !BufB)
     {
         LOG_ERROR("[FTextureCompressor] BC7: Failed to create structured buffers for mode selection");
@@ -794,7 +797,7 @@ bool FTextureCompressor::CompressBC7(FRHICommandList& CommandList, const FRHITex
 
     // Intermediate texture with full mip chain for EncodeBlockCS output
     FRHITextureDesc CompressedTexDesc = FRHITextureDesc::CreateTexture2D(EFormat::R32G32B32A32_Uint, BlocksX, BlocksY, NumMips, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::CopySource);
-    FRHITextureRef  CompressedTex     = RHI::CreateTexture(CompressedTexDesc, EResourceAccess::UnorderedAccess);
+    FRHITextureRef  CompressedTex     = RHI::CreateTexture(CompressedTexDesc, ERHIResourceState::UnorderedAccess);
     
     if (!CompressedTex)
     {
@@ -803,7 +806,7 @@ bool FTextureCompressor::CompressBC7(FRHICommandList& CommandList, const FRHITex
     }
 
     FRHITextureDesc OutputDesc = FRHITextureDesc::CreateTexture2D(EFormat::BC7_UNorm, SourceDesc.Extent.X, SourceDesc.Extent.Y, NumMips, 1, ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::CopyDest);
-    OutTexture = RHI::CreateTexture(OutputDesc, EResourceAccess::CopyDest);
+    OutTexture = RHI::CreateTexture(OutputDesc, ERHIResourceState::CopyDest);
     
     if (!OutTexture)
     {
@@ -845,7 +848,7 @@ bool FTextureCompressor::CompressBC7(FRHICommandList& CommandList, const FRHITex
         CompressedUAVs.Emplace(CompressedUAV);
     }
 
-    CommandList.TransitionTextureState(SrcTexture.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SrcTexture.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource));
 
     FBC7CompressionBufferHLSL ConstBuffer;
     ConstBuffer.Format       = BC7_UNORM_FORMAT;
@@ -875,11 +878,11 @@ bool FTextureCompressor::CompressBC7(FRHICommandList& CommandList, const FRHITex
         const uint32 NumGroups = Math::DivideByMultiple(ConstBuffer.NumTotalBlocks, BlocksPerGroup);
         CommandList.Dispatch(NumGroups, 1, 1);
 
-        CommandList.UnorderedAccessBufferBarrier(OutBuf);
+        CommandList.UnorderedAccessBarrier(OutBuf);
         if (InBuf)
         {
-            CommandList.TransitionBufferState(OutBuf, EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
-            CommandList.TransitionBufferState(InBuf, EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
+            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(OutBuf, ERHIResourceState::UnorderedAccess, ERHIResourceState::NonPixelShaderResource));
+            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(InBuf, ERHIResourceState::NonPixelShaderResource, ERHIResourceState::UnorderedAccess));
         }
     };
 
@@ -903,7 +906,7 @@ bool FTextureCompressor::CompressBC7(FRHICommandList& CommandList, const FRHITex
         DispatchTryModePass(BC7TryMode456Shader.Get(), BC7TryMode456PSO.Get(),
             nullptr, UavA.Get(), nullptr, BufA.Get(), 0, BC7_BLOCKS_PER_GROUP_456);
 
-        CommandList.TransitionBufferState(BufA.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(BufA.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::NonPixelShaderResource));
 
         // Pass 2: TryMode137CS (mode=1) BufA -> BufB
         DispatchTryModePass(BC7TryMode137Shader.Get(), BC7TryMode137PSO.Get(),
@@ -936,13 +939,13 @@ bool FTextureCompressor::CompressBC7(FRHICommandList& CommandList, const FRHITex
 
         const uint32 EncodeGroups = Math::DivideByMultiple(MipTotalBlocks, static_cast<uint32>(BC7_BLOCKS_PER_GROUP_ENC));
         CommandList.Dispatch(EncodeGroups, 1, 1);
-        CommandList.UnorderedAccessTextureBarrier(CompressedTex.Get());
+        CommandList.UnorderedAccessBarrier(CompressedTex.Get());
 
         // After the 7-pass pipeline: BufA is in UAV state, BufB is in SRV state.
         // Transition BufB back to UAV for the next mip iteration.
         if (Mip + 1 < NumMips)
         {
-            CommandList.TransitionBufferState(BufB.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
+            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(BufB.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::UnorderedAccess));
         }
 
         MipWidth  = Math::Max(MipWidth / 2, 1);
@@ -962,9 +965,10 @@ bool FTextureCompressor::CompressBC7(FRHICommandList& CommandList, const FRHITex
     CopyDesc.NumArraySlices = 1;
     CopyDesc.NumMipLevels   = NumMips;
 
-    CommandList.TransitionTextureState(CompressedTex.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(CompressedTex.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::CopySource));
     CommandList.CopyTextureRegion(OutTexture.Get(), CompressedTex.Get(), CopyDesc);
-    CommandList.TransitionTextureState(OutTexture.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::ShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTextureModeChange(
+        OutTexture.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ShaderResource, ERHIResourceStateTrackingMode::Static));
     return true;
 }
 
@@ -1005,7 +1009,7 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
     // Calculate the amount of compressed miplevels
     CompressedTexDesc.NumMipLevels = Math::Max<int32>(static_cast<int32>(SourceDesc.NumMipLevels) - NumMipsSkipped, 1);
 
-    FRHITextureRef CompressedTex = RHI::CreateTexture(CompressedTexDesc, EResourceAccess::UnorderedAccess);
+    FRHITextureRef CompressedTex = RHI::CreateTexture(CompressedTexDesc, ERHIResourceState::UnorderedAccess);
     if (!CompressedTex)
     {
         LOG_ERROR("[FTextureCompressor] Failed to create temporary compressed texture");
@@ -1056,7 +1060,7 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
     OutputDesc.Extent       = SourceDesc.Extent;
     OutputDesc.NumMipLevels = CompressedTexDesc.NumMipLevels;
 
-    OutCubeMap = RHI::CreateTexture(OutputDesc, EResourceAccess::CopyDest);
+    OutCubeMap = RHI::CreateTexture(OutputDesc, ERHIResourceState::CopyDest);
     if (!OutCubeMap)
     {
         LOG_ERROR("[FTextureCompressor] Failed to create compressed texture");
@@ -1070,7 +1074,7 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
     // Compress the texture
     CommandList.SetComputePipelineState(BC6HCompressionCubePSO.Get());
 
-    CommandList.TransitionTextureState(SrcCubeMap.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SrcCubeMap.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource));
     
     int32 CurrentFaceSize         = SourceDesc.Extent.X;
     int32 CurrentFaceSizeInBlocks = CompressedTexDesc.Extent.X;
@@ -1098,7 +1102,7 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
         const uint32 ThreadsY = Math::DivideByMultiple(CompressedTexDesc.Extent.Y, CS_NUM_THREADS);
         CommandList.Dispatch(ThreadsX, ThreadsY, NumArraySlices);
 
-        CommandList.UnorderedAccessTextureBarrier(CompressedTex.Get());
+        CommandList.UnorderedAccessBarrier(CompressedTex.Get());
 
         CurrentFaceSize         = CurrentFaceSize / 2;
         CurrentFaceSizeInBlocks = CurrentFaceSizeInBlocks / 2;
@@ -1117,11 +1121,12 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
     CopyDesc.NumMipLevels   = CompressedTexDesc.NumMipLevels;
     CopyDesc.NumArraySlices = RHI_NUM_CUBE_FACES;
 
-    CommandList.TransitionTextureState(CompressedTex.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(CompressedTex.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::CopySource));
 
     CommandList.CopyTextureRegion(OutCubeMap.Get(), CompressedTex.Get(), CopyDesc);
 
-    CommandList.TransitionTextureState(OutCubeMap.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::ShaderResource));
-    CommandList.TransitionTextureState(SrcCubeMap.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTextureModeChange(
+        OutCubeMap.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ShaderResource, ERHIResourceStateTrackingMode::Static));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SrcCubeMap.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource));
     return true;
 }

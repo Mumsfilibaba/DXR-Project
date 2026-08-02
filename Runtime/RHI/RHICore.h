@@ -19,6 +19,12 @@ enum class EFormat : uint8;
 /** Alias for RHI_REMAINING_ARRAY_SLICES (all array layers) */
 #define RHI_ALL_ARRAY_SLICES (uint32(~0))
 
+/** Use this value to specify all plane slices of a texture (color, or both depth and stencil) */
+#define RHI_ALL_PLANE_SLICES (uint32(~0))
+
+/** Use this value to specify a buffer range that extends to the end of the buffer */
+#define RHI_WHOLE_SIZE (uint64(~0))
+
 /** Number of faces in a cube map texture */
 #define RHI_NUM_CUBE_FACES (6)
 

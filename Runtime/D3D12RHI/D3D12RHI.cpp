@@ -308,7 +308,7 @@ void FD3D12DeviceRHI::EndFrame(FD3D12CommandContext* InCommandContext)
 #endif
 }
 
-FRHITexture* FD3D12DeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
+FRHITexture* FD3D12DeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDesc, ERHIResourceState InInitialState, const IRHITextureData* InInitialData)
 {
     FD3D12TextureRHIRef NewTexture = new FD3D12TextureRHI(GetDevice(), InTextureDesc);
     if (!NewTexture->Initialize(DirectCommandContext, InInitialState, InInitialData))
@@ -334,7 +334,7 @@ FRHITexture* FD3D12DeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDesc
     return NewTexture.ReleaseOwnership();
 }
 
-FRHIBuffer* FD3D12DeviceRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, EResourceAccess InInitialState, const void* InInitialData)
+FRHIBuffer* FD3D12DeviceRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, ERHIResourceState InInitialState, const void* InInitialData)
 {
     FD3D12BufferRHIRef NewBuffer = new FD3D12BufferRHI(GetDevice(), InBufferDesc);
     if (!NewBuffer->Initialize(DirectCommandContext, InInitialState, InInitialData))
