@@ -1,5 +1,6 @@
 #include "VulkanRHI/VulkanShader.h"
 #include "VulkanRHI/VulkanConstants.h"
+#include "VulkanRHI/VulkanDescriptorSet.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanLoader.h"
 #include "VulkanRHI/VulkanPipelineLayout.h"
@@ -92,6 +93,13 @@ static EVulkanNullImageViewType GetNullImageViewType(spvc_compiler Compiler, spv
     }
 
     return bArrayed ? EVulkanNullImageViewType::Texture2DArray : EVulkanNullImageViewType::Texture2D;
+}
+
+// Buffer<T> and RWBuffer<T> reflect as images. Only the dimension separates them from a texture.
+static bool IsTexelBuffer(spvc_compiler Compiler, spvc_type_id TypeId)
+{
+    const spvc_type Type = spvc_compiler_get_type_handle(Compiler, TypeId);
+    return spvc_type_get_image_dimension(Type) == SpvDimBuffer;
 }
 
 FVulkanDevice* FVulkanShaderModule::StaticDevice = nullptr;
@@ -283,10 +291,24 @@ bool FVulkanShader::PatchShaderBindings(FSpirvArray& OutSpirv, FVulkanPipelineLa
         PatchedCode[Offsets.DescriptorSetOffset] = DescriptorSetIndex;
     }
 
+#if VULKAN_ENABLE_SPLIT_BINDLESS_HEAP
+    FVulkanBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager();
+    const bool bSplitHeap = (BindlessManager != nullptr) && (BindlessManager->GetMode() == EVulkanBindlessMode::Split);
+#endif
+
     for (const FVulkanShaderInfo::FBindingOffsets& Offsets : ShaderInfo.HeapBindingOffsets)
     {
         CHECK(Offsets.DescriptorSetOffset != UINT32_MAX);
         PatchedCode[Offsets.DescriptorSetOffset] = VULKAN_BINDLESS_RUNTIME_SET_INDEX;
+
+    #if VULKAN_ENABLE_SPLIT_BINDLESS_HEAP
+        if (bSplitHeap)
+        {
+            CHECK(Offsets.BindingOffset   != UINT32_MAX);
+            CHECK(Offsets.HeapBindingType != EVulkanBindingType::Count);
+            PatchedCode[Offsets.BindingOffset] = GetBindlessBindingForType(GetDescriptorTypeFromBindingType(Offsets.HeapBindingType));
+        }
+    #endif
     }
 
     OutSpirv = Move(PatchedCode);
@@ -390,7 +412,8 @@ bool FVulkanShader::InitializeShaderLayout()
                     return false;
                 }
 
-                ShaderInfo.HeapBindingOffsets.Add({ DescriptorSetOffset, BindingOffset });
+                ShaderInfo.HeapBindingOffsets.Add({ DescriptorSetOffset, BindingOffset,
+                    IsTexelBuffer(Compiler, SampledImages[Index].base_type_id) ? EVulkanBindingType::TexelBufferRead : EVulkanBindingType::SampledImage });
                 continue;
             }
 
@@ -446,7 +469,7 @@ bool FVulkanShader::InitializeShaderLayout()
                     return false;
                 }
 
-                ShaderInfo.HeapBindingOffsets.Add({ DescriptorSetOffset, BindingOffset });
+                ShaderInfo.HeapBindingOffsets.Add({ DescriptorSetOffset, BindingOffset, EVulkanBindingType::Sampler });
                 continue;
             }
 
@@ -501,7 +524,8 @@ bool FVulkanShader::InitializeShaderLayout()
                     return false;
                 }
 
-                ShaderInfo.HeapBindingOffsets.Add({ DescriptorSetOffset, BindingOffset });
+                ShaderInfo.HeapBindingOffsets.Add({ DescriptorSetOffset, BindingOffset,
+                    IsTexelBuffer(Compiler, StorageImages[Index].base_type_id) ? EVulkanBindingType::TexelBufferReadWrite : EVulkanBindingType::StorageImage });
                 continue;
             }
 
@@ -557,7 +581,7 @@ bool FVulkanShader::InitializeShaderLayout()
                     return false;
                 }
 
-                ShaderInfo.HeapBindingOffsets.Add({ DescriptorSetOffset, BindingOffset });
+                ShaderInfo.HeapBindingOffsets.Add({ DescriptorSetOffset, BindingOffset, EVulkanBindingType::UniformBuffer });
                 continue;
             }
 
@@ -604,6 +628,14 @@ bool FVulkanShader::InitializeShaderLayout()
             if (OriginalSet == VULKAN_BINDLESS_HEAP_MARKER_SET)
             {
                 const uint32 OriginalBinding = spvc_compiler_get_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationBinding);
+                if (OriginalBinding == VULKAN_BINDLESS_COUNTER_MARKER_BINDING)
+                {
+                    VULKAN_ERROR_CRITICAL("Shader takes a counter on a heap-indexed RW/Append/Consume buffer. "
+                        "The bindless heap has no counter descriptors; use an explicit RWByteAddressBuffer counter at a regular register instead.");
+                    spvc_context_destroy(Context);
+                    return false;
+                }
+
                 if (OriginalBinding != VULKAN_BINDLESS_RESOURCE_BINDING)
                 {
                     VULKAN_ERROR_CRITICAL("Resource at marker set %u must sit at binding %u (got %u). HLSL must not declare regular resources at space%u.",
@@ -612,7 +644,7 @@ bool FVulkanShader::InitializeShaderLayout()
                     return false;
                 }
 
-                ShaderInfo.HeapBindingOffsets.Add({ DescriptorSetOffset, BindingOffset });
+                ShaderInfo.HeapBindingOffsets.Add({ DescriptorSetOffset, BindingOffset, EVulkanBindingType::StorageBufferRead });
                 continue;
             }
 
@@ -678,7 +710,7 @@ bool FVulkanShader::InitializeShaderLayout()
                     return false;
                 }
 
-                ShaderInfo.HeapBindingOffsets.Add({ DescriptorSetOffset, BindingOffset });
+                ShaderInfo.HeapBindingOffsets.Add({ DescriptorSetOffset, BindingOffset, EVulkanBindingType::AccelerationStructure });
                 continue;
             }
 
