@@ -24,6 +24,7 @@ extern VULKANRHI_API bool   GVulkanSupportsMaintenance4;
 extern VULKANRHI_API bool   GVulkanSupportsMultiviews;
 extern VULKANRHI_API bool   GVulkanSupportsBindless;
 extern VULKANRHI_API bool   GVulkanSupportsMutableDescriptorType;
+extern VULKANRHI_API bool   GVulkanUseSplitBindlessHeap;
 extern VULKANRHI_API bool   GVulkanSupportsDepthBoundsTest;
 extern VULKANRHI_API bool   GVulkanSupportsSparseBinding;
 extern VULKANRHI_API bool   GVulkanSupportsSparseResidency2D;

@@ -623,6 +623,14 @@ struct FVulkanPendingBindlessWrite
     };
 };
 
+// Split is the fallback heap for devices without VK_EXT_mutable_descriptor_type, such as MoltenVK.
+enum class EVulkanBindlessMode : uint8
+{
+    Disabled = 0,
+    Mutable  = 1,
+    Split    = 2,
+};
+
 class VULKANRHI_API FVulkanBindlessDescriptorManager : public FVulkanDeviceChild
 {
 public:
@@ -645,7 +653,12 @@ public:
 
     NODISCARD FORCEINLINE bool IsEnabled() const
     {
-        return bIsEnabled;
+        return Mode != EVulkanBindlessMode::Disabled;
+    }
+
+    NODISCARD FORCEINLINE EVulkanBindlessMode GetMode() const
+    {
+        return Mode;
     }
 
     NODISCARD FORCEINLINE VkDescriptorSetLayout GetLayout() const
@@ -671,7 +684,9 @@ public:
 private:
     void RecycleSlot(FRHIDescriptorHandle Handle);
 
-    bool                                bIsEnabled;
+    NODISCARD uint32 GetBindingForDescriptorType(VkDescriptorType DescriptorType) const;
+
+    EVulkanBindlessMode                 Mode;
     VkDescriptorPool                    DescriptorPool;
     VkDescriptorSetLayout               SetLayout;
     VkDescriptorSet                     DescriptorSet;

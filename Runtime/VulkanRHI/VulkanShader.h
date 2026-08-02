@@ -131,12 +131,29 @@ inline VkDescriptorType GetDescriptorTypeFromBindingType(EVulkanBindingType::Typ
     return DescriptorTypes[BindingType];
 }
 
+inline uint32 GetBindlessBindingForType(VkDescriptorType DescriptorType)
+{
+    switch (DescriptorType)
+    {
+        case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:              return VULKAN_BINDLESS_SPLIT_BINDING_SAMPLED_IMAGE;
+        case VK_DESCRIPTOR_TYPE_SAMPLER:                    return VULKAN_BINDLESS_SPLIT_BINDING_SAMPLER;
+        case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:              return VULKAN_BINDLESS_SPLIT_BINDING_STORAGE_IMAGE;
+        case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:             return VULKAN_BINDLESS_SPLIT_BINDING_UNIFORM_BUFFER;
+        case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:             return VULKAN_BINDLESS_SPLIT_BINDING_STORAGE_BUFFER;
+        case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:       return VULKAN_BINDLESS_SPLIT_BINDING_UNIFORM_TEXEL;
+        case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:       return VULKAN_BINDLESS_SPLIT_BINDING_STORAGE_TEXEL;
+        case VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR: return VULKAN_BINDLESS_SPLIT_BINDING_ACCEL_STRUCT;
+        default:                                            return VULKAN_BINDLESS_RESOURCE_BINDING;
+    }
+}
+
 struct FVulkanShaderInfo
 {
     struct FBindingOffsets
     {
-        uint32 DescriptorSetOffset = UINT32_MAX;
-        uint32 BindingOffset       = UINT32_MAX;
+        uint32                   DescriptorSetOffset = UINT32_MAX;
+        uint32                   BindingOffset       = UINT32_MAX;
+        EVulkanBindingType::Type HeapBindingType     = EVulkanBindingType::Count;
     };
     
     struct FResourceBinding
