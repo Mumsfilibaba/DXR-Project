@@ -566,5 +566,5 @@ void FWindowsWindow::SetStyle(EWindowStyleFlags InStyle)
 
     const bool bTopMost = (InStyle & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None;
     ::SetWindowPos(Window, bTopMost ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
-    ::SetWindowShape(CurrentShape, true);
+    SetWindowShape(CurrentShape, true);
 }
