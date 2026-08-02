@@ -105,6 +105,7 @@ FD3D12CommandList* FD3D12Queue::ObtainCommandList(FD3D12CommandAllocator* Comman
             return nullptr;
         }
 
+        CommandList->SetDebugName(String::CreateFormatted("%s CommandList %d", ToString(CommandListType), CommandLists.Size()));
         CommandLists.Add(CommandList);
     }
     else

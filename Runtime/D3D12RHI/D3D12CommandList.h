@@ -116,8 +116,18 @@ public:
 
     FORCEINLINE void SetDebugName(const String& Name)
     {
-        WString WideName = CharToWide(Name);
-        CmdList->SetName(*WideName);
+        DebugName = Name;
+
+        if (CmdList)
+        {
+            WString WideName = CharToWide(Name);
+            CmdList->SetName(*WideName);
+        }
+    }
+
+    FORCEINLINE const String& GetDebugName() const
+    {
+        return DebugName;
     }
 
     FORCEINLINE CommandList<ID3D12GraphicsCommandList> operator->()
@@ -254,6 +264,7 @@ private:
     TComPtr<ID3D12GraphicsCommandList10> CmdList10;
 #endif
     FD3D12ResidencySet                   ResidencySet;
+    String                               DebugName;
     uint32                               NumCommands;
     bool                                 bIsReady;
 };

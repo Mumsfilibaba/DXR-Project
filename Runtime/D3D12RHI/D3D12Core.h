@@ -333,6 +333,22 @@ NODISCARD constexpr D3D12_COMMAND_LIST_TYPE ToCommandListType(ED3D12CommandQueue
     return D3D12_COMMAND_LIST_TYPE(-1);
 }
 
+NODISCARD constexpr const CHAR* ToString(D3D12_COMMAND_LIST_TYPE CommandListType)
+{
+    switch (CommandListType)
+    {
+        case D3D12_COMMAND_LIST_TYPE_DIRECT:        return "Direct";
+        case D3D12_COMMAND_LIST_TYPE_BUNDLE:        return "Bundle";
+        case D3D12_COMMAND_LIST_TYPE_COMPUTE:       return "Compute";
+        case D3D12_COMMAND_LIST_TYPE_COPY:          return "Copy";
+        case D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE:  return "VideoDecode";
+        case D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS: return "VideoProcess";
+        case D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE:  return "VideoEncode";
+
+        default: return "Unknown";
+    }
+}
+
 enum class ED3D12GlobalDescriptorHeapType : uint8
 {
     Resource = 0, // CBV/SRV/UAV global online heap (D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
