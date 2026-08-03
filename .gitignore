@@ -14,6 +14,7 @@ imgui.ini
 
 # Ignore all compiled files
 /Build/
+/Tests/Build/
 /ThirdParty/Build/
 /ThirdParty/bin/
 /ThirdParty/bin-int/
