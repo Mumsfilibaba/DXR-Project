@@ -1,5 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Misc/EngineConfig.h"
+#include "Core/Misc/Config.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/FileOutputDevice.h"
 #include "Core/Misc/CommandLine.h"

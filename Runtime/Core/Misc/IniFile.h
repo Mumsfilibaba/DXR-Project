@@ -3,23 +3,23 @@
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Map.h"
 
-struct FConfigValue
+struct FIniValue
 {
-    FConfigValue() = default;
-    FConfigValue(FConfigValue&& Other) = default;
-    FConfigValue(const FConfigValue& Other) = default;
-    ~FConfigValue() = default;
+    FIniValue() = default;
+    FIniValue(FIniValue&& Other) = default;
+    FIniValue(const FIniValue& Other) = default;
+    ~FIniValue() = default;
 
-    FConfigValue& operator=(FConfigValue&& Other) = default;
-    FConfigValue& operator=(const FConfigValue& Other) = default;
+    FIniValue& operator=(FIniValue&& Other) = default;
+    FIniValue& operator=(const FIniValue& Other) = default;
 
-    explicit FConfigValue(String&& InString)
+    explicit FIniValue(String&& InString)
         : SavedValue(InString)
         , CurrentValue(::Move(InString))
     {
     }
 
-    explicit FConfigValue(const String& InString)
+    explicit FIniValue(const String& InString)
         : SavedValue(InString)
         , CurrentValue(InString)
     {
@@ -37,12 +37,12 @@ struct FConfigValue
         SavedValue = CurrentValue;
     }
 
-    bool operator==(const FConfigValue& Other) const 
+    bool operator==(const FIniValue& Other) const 
     {
         return SavedValue == Other.SavedValue && CurrentValue == Other.CurrentValue;
     }
 
-    bool operator!=(const FConfigValue& Other) const
+    bool operator!=(const FIniValue& Other) const
     {
         return !(*this == Other);
     }
@@ -54,10 +54,10 @@ struct FConfigValue
     String CurrentValue;
 };
 
-struct CORE_API FConfigSection
+struct CORE_API FIniSection
 {
-    FConfigSection();
-    FConfigSection(const CHAR* InName);
+    FIniSection();
+    FIniSection(const CHAR* InName);
 
     /** @brief Restores all values in the section */
     void Restore();
@@ -65,33 +65,39 @@ struct CORE_API FConfigSection
     /** @brief Dump the values to a string */
     void DumpToString(String& OutString);
 
-    bool operator==(const FConfigSection& Other) const
+    bool operator==(const FIniSection& Other) const
     {
         return (Name == Other.Name) && (Values == Other.Values);
     }
 
-    bool operator!=(const FConfigSection& Other) const
+    bool operator!=(const FIniSection& Other) const
     {
         return !(*this == Other);
     }
 
-    String                     Name;
-    TMap<String, FConfigValue> Values;
+    String                  Name;
+    TMap<String, FIniValue> Values;
 };
 
-struct CORE_API FConfigFile
+struct CORE_API FIniFile
 {
-    FConfigFile()
+    FIniFile()
         : Filename()
         , Sections()
     {
     }
 
+    /** @brief Reads the file at 'InFilename' and parses it, existing values are overwritten */
+    bool LoadFromFile(const String& InFilename);
+
+    /** @brief Parses ini-formatted text, note that 'InText' is modified in place while parsing */
+    void ParseFromText(TArray<CHAR>& InText);
+
     /** @return Looks up a value from any section and returns nullptr if not found */
-    FConfigValue* FindValue(const CHAR* Name);
+    FIniValue* FindValue(const CHAR* Name);
 
     /** @return Looks up a value from the section with 'SectionName' and returns nullptr if not found */
-    FConfigValue* FindValue(const CHAR* SectionName, const CHAR* Name);
+    FIniValue* FindValue(const CHAR* SectionName, const CHAR* Name);
 
      /** @brief Set a string from the Engine config */
     bool SetString(const CHAR* SectionName, const CHAR* Name, const String& NewValue);
@@ -123,35 +129,16 @@ struct CORE_API FConfigFile
 	/** @brief Prints the content into a string */
 	void DumpToString(String& OutString);
 
-    bool operator==(const FConfigFile& Other) const
+    bool operator==(const FIniFile& Other) const
     {
         return Filename == Other.Filename && Sections == Other.Sections;
     }
 
-    bool operator!=(const FConfigFile& Other) const
+    bool operator!=(const FIniFile& Other) const
     {
         return !(*this == Other);
     }
 
-    String                       Filename;
-    TMap<String, FConfigSection> Sections;
-};
-
-extern CORE_API FConfigFile* GConfig;
-
-class CORE_API FConfig
-{
-public:
-    static bool Initialize();
-    static void Release();
-
-    FConfigFile* LoadFile(const String& Filename);
-
-    void LoadConsoleVariables();
-
-private:
-    FConfig();
-
-    TMap<String, FConfigFile> ConfigFiles;
-    static FConfig* GlobalConfig;
+    String                    Filename;
+    TMap<String, FIniSection> Sections;
 };

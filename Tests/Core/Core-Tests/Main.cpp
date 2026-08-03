@@ -12,6 +12,7 @@
 #include "TaskGraphTests.h"
 #include "CommandLineTests.h"
 #include "ConsoleManagerCommandLineTests.h"
+#include "IniFileTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -41,6 +42,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("TaskGraph", TaskGraph_Test());
     RUN_TEST("CommandLine", CommandLine_Test());
     RUN_TEST("ConsoleManagerCommandLine", ConsoleManagerCommandLine_Test());
+    RUN_TEST("IniFile", IniFile_Test());
 
     FTaskGraph::Release();
     FThreadManager::Release();
