@@ -22,6 +22,35 @@ static VkImageLayout GetDepthStencilAttachmentLayout(const FVulkanDepthStencilVi
     return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 }
 
+#if VULKAN_VALIDATE_IMAGE_LAYOUTS
+static void AddRenderPassAttachmentLayouts(FVulkanCommandBuffer& CommandBuffer, const FVulkanRenderTargetState& RenderTargetState,
+    const VkRenderingAttachmentInfoKHR* ColorAttachments, const VkRenderingAttachmentInfoKHR* DepthStencilAttachment)
+{
+    const auto AddView = [&CommandBuffer](const FVulkanResourceView* View, VkImageLayout Layout)
+    {
+        if (!View)
+        {
+            return;
+        }
+
+        if (const FVulkanTextureRHI* Texture = static_cast<const FVulkanTextureRHI*>(View->GetOwnerResource()))
+        {
+            CommandBuffer.AddImageLayoutForValidation(Texture->GetVkImage(), Layout, Layout, true, "BeginRendering");
+        }
+    };
+
+    for (uint32 Index = 0; Index < RenderTargetState.NumRenderTargets; Index++)
+    {
+        AddView(RenderTargetState.RenderTargetViews[Index], ColorAttachments[Index].imageLayout);
+    }
+
+    if (DepthStencilAttachment)
+    {
+        AddView(RenderTargetState.DepthStencilView, DepthStencilAttachment->imageLayout);
+    }
+}
+#endif
+
 FVulkanCommandContextState::FVulkanCommandContextState(FVulkanDevice* InDevice, FVulkanCommandContext& InContext)
     : FVulkanDeviceChild(InDevice)
     , GraphicsState()
@@ -720,6 +749,10 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
         RenderingInfo.pStencilAttachment   = (bHasDepthStencil && bHasStencil) ? &StencilAttachmentInfo : nullptr;
         RenderingInfo.viewMask             = RenderTargetState.RenderingViewMask;
 
+    #if VULKAN_VALIDATE_IMAGE_LAYOUTS
+        AddRenderPassAttachmentLayouts(Context.GetCommandBuffer(), RenderTargetState, ColorAttachments, bHasDepthStencil ? &DepthStencilAttachmentInfo : nullptr);
+    #endif
+
         Context.GetCommandBuffer()->BeginRendering(&RenderingInfo);
     }
 #if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
@@ -905,6 +938,10 @@ void FVulkanCommandContextState::ResumeRenderPass()
         RenderingInfo.pDepthAttachment     = bHasDepthStencil ? &DepthStencilAttachment : nullptr;
         RenderingInfo.pStencilAttachment   = (bHasDepthStencil && bHasStencil) ? &StencilAttachment : nullptr;
         RenderingInfo.viewMask             = RenderTargetState.RenderingViewMask;
+
+    #if VULKAN_VALIDATE_IMAGE_LAYOUTS
+        AddRenderPassAttachmentLayouts(Context.GetCommandBuffer(), RenderTargetState, ColorAttachments, bHasDepthStencil ? &DepthStencilAttachment : nullptr);
+    #endif
 
         Context.GetCommandBuffer()->BeginRendering(&RenderingInfo);
     }

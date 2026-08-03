@@ -170,6 +170,18 @@ void FVulkanBarrierBatcher::FlushBarriers(FVulkanCommandBuffer& CommandBuffer)
 
     for (FBatch& Batch : Batches)
     {
+    #if VULKAN_VALIDATE_IMAGE_LAYOUTS
+        for (const VkImageMemoryBarrier2KHR& Barrier : Batch.ImageMemoryBarriers)
+        {
+            const VkImageSubresourceRange& Range = Barrier.subresourceRange;
+            const bool bWholeImage = 
+                Range.baseMipLevel == 0 && Range.levelCount == VK_REMAINING_MIP_LEVELS &&
+                Range.baseArrayLayer == 0 && Range.layerCount == VK_REMAINING_ARRAY_LAYERS;
+
+            CommandBuffer.AddImageLayoutForValidation(Barrier.image, Barrier.oldLayout, Barrier.newLayout, bWholeImage, "PipelineBarrier");
+        }
+    #endif
+
         DependencyInfo.pMemoryBarriers          = Batch.MemoryBarriers.Data();
         DependencyInfo.memoryBarrierCount       = Batch.MemoryBarriers.Size();
         DependencyInfo.pImageMemoryBarriers     = Batch.ImageMemoryBarriers.Data();
@@ -315,13 +327,13 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQu
 
     CommandBuffer->InsertEndTimestamp(TimestampQueryAllocator);
 
+    const bool bHasPendingState = 
+        !PendingImageBarriers.IsEmpty() || !PendingBufferBarriers.IsEmpty() ||
+        !PendingImageStates.IsEmpty() || !PendingBufferStates.IsEmpty();
+
     const uint32 NumCommands = CommandBuffer->GetNumCommands();
-    if (NumCommands == 0)
+    if (NumCommands == 0 && !bHasPendingState)
     {
-        PendingImageBarriers.Clear();
-        PendingBufferBarriers.Clear();
-        PendingImageStates.Clear();
-        PendingBufferStates.Clear();
         ContextState.ResetStateForNewCommandBuffer();
 
         CommandBuffer->End();
