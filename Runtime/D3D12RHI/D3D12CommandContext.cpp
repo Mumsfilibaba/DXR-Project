@@ -464,8 +464,10 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
     BarrierBatcher.FlushBarriers(GetCommandList());
     CommandList->InsertEndTimestamp(TimingQueryAllocator);
 
+    const bool bHasPendingState = !PendingBarriers.IsEmpty() || !PendingResourceStates.IsEmpty();
+
     const uint32 RecordedCommands = CommandList->GetNumCommands();
-    if (RecordedCommands > 0)
+    if (RecordedCommands > 0 || bHasPendingState)
     {
         if (bResolveQueries)
         {

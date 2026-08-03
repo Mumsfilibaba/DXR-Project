@@ -2670,7 +2670,7 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
             FVulkanTextureRHI* Texture = static_cast<FVulkanTextureRHI*>(Owner);
             OldImage = Texture->GetVkImage();
 
-            Texture->SetVkImage(Move.NewImage);
+            Texture->SetVkImage(Move.NewImage, Move.RestLayout);
 
             Move.SourceLocation->SetMemory(Move.Allocator->GetBackingMemory(Move.NewAllocationData.PageIndex));
             Move.SourceLocation->SetMemoryOffset(Move.NewAllocationData.Offset);
@@ -2847,6 +2847,7 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
         PendingMove.OldAllocationData    = Candidate.AllocationData;
         PendingMove.NewAllocationData    = NewAllocationData;
         PendingMove.FenceValueAtCreation = FrameFence.GetLastSignaledValue();
+        PendingMove.RestLayout           = CurrentLayout;
 
         SourceAllocator->TransferOwnership(Candidate.AllocationData, nullptr);
         STAT_ADD(STAT_Vulkan_TextureDefragBytesMoved, Candidate.AllocationData.Size);

@@ -54,7 +54,7 @@ public:
     
     bool Initialize(FVulkanCommandContext* InCommandContext, ERHIResourceState InInitialAccess, const IRHITextureData* InInitialData);
 
-    void SetVkImage(VkImage InImage);
+    void SetVkImage(VkImage InImage, VkImageLayout InLayout);
     
     FVulkanImageLayoutState&       GetImageLayoutState()       { return ImageLayoutState; }
     const FVulkanImageLayoutState& GetImageLayoutState() const { return ImageLayoutState; }

@@ -659,8 +659,8 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERHI
     const VkImageLayout InitialLayout   = FVulkanDeviceRHI::ResourceStateToImageLayout(InInitialAccess);
     const uint32        NumSubresources = ImageCreateInfo.mipLevels * ImageCreateInfo.arrayLayers;
 
-    ImageLayoutState.SetImageLayout(InitialLayout);
     ImageLayoutState.Initialize(Math::Max(NumSubresources, 1u));
+    ImageLayoutState.SetImageLayout(InitialLayout);
 
     Desc.TrackingMode = VulkanResolveTextureTrackingMode(Desc);
 
@@ -673,7 +673,7 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERHI
     return true;
 }
 
-void FVulkanTextureRHI::SetVkImage(VkImage InImage)
+void FVulkanTextureRHI::SetVkImage(VkImage InImage, VkImageLayout InLayout)
 {
     Image = InImage;
 
@@ -687,7 +687,14 @@ void FVulkanTextureRHI::SetVkImage(VkImage InImage)
 
     const uint32 NumSubresources = CreateInfo.mipLevels * CreateInfo.arrayLayers;
     ImageLayoutState.Initialize(Math::Max(NumSubresources, 1u));
-    ImageLayoutState.SetImageLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    ImageLayoutState.SetImageLayout(InLayout);
+
+#if VULKAN_STORE_DEBUG_NAMES
+    if (!DebugName.IsEmpty() && VULKAN_CHECK_HANDLE(Image))
+    {
+        VulkanSetObjectName(GetDevice()->GetVkDevice(), *DebugName, Image, VK_OBJECT_TYPE_IMAGE);
+    }
+#endif
 }
 
 void FVulkanTextureRHI::SetDebugName(const String& InName)

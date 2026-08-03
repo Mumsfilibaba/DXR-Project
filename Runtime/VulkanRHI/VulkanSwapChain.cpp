@@ -806,8 +806,7 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
     int32 Index = 0;
     for (VkImage Image : SwapChainImages)
     {
-        BackBuffers[Index].Texture->SetVkImage(Image);
-        BackBuffers[Index].Texture->GetImageLayoutState().SetImageLayout(VK_IMAGE_LAYOUT_UNDEFINED);
+        BackBuffers[Index].Texture->SetVkImage(Image, VK_IMAGE_LAYOUT_UNDEFINED);
 
         FVulkanTextureRHI* BackBufferTexture = BackBuffers[Index].Texture.Get();
 

@@ -77,6 +77,7 @@ struct FVulkanPendingDefragMove
     FVulkanPoolAllocatorAllocationData OldAllocationData    = {};
     FVulkanPoolAllocatorAllocationData NewAllocationData    = {};
     uint64                             FenceValueAtCreation = 0;
+    VkImageLayout                      RestLayout           = VK_IMAGE_LAYOUT_UNDEFINED;
 };
 
 class FVulkanMemoryLocation : public FVulkanDeviceChild, public FNonCopyable

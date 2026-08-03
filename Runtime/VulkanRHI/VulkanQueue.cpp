@@ -18,10 +18,33 @@ static TAutoConsoleVariable<int32> CVarMaxPendingSubmissions(
     "Maximum number of pending GPU submissions before the CPU waits for the GPU to catch up",
     32);
 
+#if VULKAN_VALIDATE_IMAGE_LAYOUTS
+static TAutoConsoleVariable<int32> CVarBreakOnImageLayoutDesync(
+    "VulkanRHI.BreakOnImageLayoutDesync",
+    "Break into the debugger when a submission disagrees with the tracked image layout, instead of only logging it",
+    0);
+#endif
+
 static uint64 ToNanoseconds(uint64 Timestamp)
 {
     return static_cast<uint64>(static_cast<double>(Timestamp) * static_cast<double>(VulkanDeviceLimits::TimestampPeriod));
 }
+
+#if VULKAN_VALIDATE_IMAGE_LAYOUTS
+static void ReportImageLayoutDesync(FVulkanTextureRHI* Texture, const CHAR* Phase, const CHAR* RecordingSite, VkImageLayout CommandBufferLayout, VkImageLayout TrackedLayout)
+{
+    String TextureName;
+    Texture->GetDebugName(TextureName);
+
+    VULKAN_ERROR("Image layout desync (%s) on '%s' recorded by %s: the submission says %s but the tracker says %s",
+        Phase, *TextureName, RecordingSite ? RecordingSite : "<unknown>", ToString(CommandBufferLayout), ToString(TrackedLayout));
+
+    if (CVarBreakOnImageLayoutDesync.GetValue() != 0)
+    {
+        DEBUG_BREAK();
+    }
+}
+#endif
 
 FVulkanQueue::FVulkanQueue(FVulkanDevice* InDevice, EVulkanCommandQueueType InQueueType)
     : FVulkanDeviceChild(InDevice)
@@ -642,6 +665,10 @@ void FVulkanCommands::PreExecute()
         }
     }
 
+#if VULKAN_VALIDATE_IMAGE_LAYOUTS
+    ValidateImageLayouts();
+#endif
+
     for (auto It = PendingImageStates.CreateIterator(); !It.IsEnd(); ++It)
     {
         FVulkanTextureRHI*       Texture    = It.GetKey();
@@ -661,6 +688,85 @@ void FVulkanCommands::PreExecute()
     PendingImageStates.Clear();
     PendingBufferStates.Clear();
 }
+
+#if VULKAN_VALIDATE_IMAGE_LAYOUTS
+void FVulkanCommands::ValidateImageLayouts()
+{
+    TMap<VkImage, FVulkanTextureRHI*> ImageToTexture;
+    for (auto It = PendingImageStates.CreateIterator(); !It.IsEnd(); ++It)
+    {
+        FVulkanTextureRHI* Texture = It.GetKey();
+        if (Texture && VULKAN_CHECK_HANDLE(Texture->GetVkImage()))
+        {
+            ImageToTexture.FindOrAdd(Texture->GetVkImage()) = Texture;
+        }
+    }
+
+    TMap<VkImage, VkImageLayout>                     SimulatedLayouts;
+    TMap<VkImage, FVulkanImageLayoutValidationEntry> BatchEntries;
+
+    for (FVulkanCommandBuffer* CommandBuffer : CommandBuffers)
+    {
+        TMap<VkImage, FVulkanImageLayoutValidationEntry>& Entries = CommandBuffer->GetImageLayoutValidationEntries();
+        for (auto It = Entries.CreateIterator(); !It.IsEnd(); ++It)
+        {
+            const VkImage                            Image = It.GetKey();
+            const FVulkanImageLayoutValidationEntry& Entry = It.GetValue();
+
+            FVulkanTextureRHI** TexturePtr = ImageToTexture.Find(Image);
+            FVulkanTextureRHI*  Texture    = TexturePtr ? *TexturePtr : nullptr;
+
+            const bool bCheckable = Entry.bWholeImage && Texture != nullptr && Texture->GetImageLayoutState().AreAllSubresourcesSameLayout();
+            if (bCheckable && Entry.ExpectedEntryLayout != VK_IMAGE_LAYOUT_UNDEFINED)
+            {
+                const VkImageLayout* Simulated = SimulatedLayouts.Find(Image);
+                const VkImageLayout  Tracked   = Simulated ? *Simulated : Texture->GetImageLayoutState().GetImageLayout();
+
+                if (Tracked != Entry.ExpectedEntryLayout && Tracked != VK_IMAGE_LAYOUT_TO_BE_DETERMINED)
+                {
+                    ReportImageLayoutDesync(Texture, "entry", Entry.RecordingSite, Entry.ExpectedEntryLayout, Tracked);
+                }
+            }
+
+            if (Entry.bWholeImage)
+            {
+                SimulatedLayouts.FindOrAdd(Image) = Entry.FinalLayout;
+                BatchEntries.FindOrAdd(Image)     = Entry;
+            }
+            else
+            {
+                SimulatedLayouts.Remove(Image);
+                BatchEntries.Remove(Image);
+            }
+        }
+    }
+
+    for (auto It = BatchEntries.CreateIterator(); !It.IsEnd(); ++It)
+    {
+        const VkImage                            Image = It.GetKey();
+        const FVulkanImageLayoutValidationEntry& Entry = It.GetValue();
+
+        FVulkanTextureRHI** TexturePtr = ImageToTexture.Find(Image);
+        FVulkanTextureRHI*  Texture    = TexturePtr ? *TexturePtr : nullptr;
+        if (!Texture)
+        {
+            continue;
+        }
+
+        FVulkanImageLayoutState* LocalState = PendingImageStates.Find(Texture);
+        if (!LocalState || !LocalState->AreAllSubresourcesSameLayout())
+        {
+            continue;
+        }
+
+        const VkImageLayout AdoptedLayout = LocalState->GetImageLayout();
+        if (AdoptedLayout != VK_IMAGE_LAYOUT_TO_BE_DETERMINED && AdoptedLayout != Entry.FinalLayout)
+        {
+            ReportImageLayoutDesync(Texture, "exit", Entry.RecordingSite, Entry.FinalLayout, AdoptedLayout);
+        }
+    }
+}
+#endif
 
 void FVulkanCommands::Execute()
 {

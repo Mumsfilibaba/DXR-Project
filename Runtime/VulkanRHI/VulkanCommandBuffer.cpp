@@ -81,6 +81,10 @@ bool FVulkanCommandBuffer::Begin(VkCommandBufferUsageFlags Flags)
     OcclusionQueries.Clear();
     PipelineStatsQueries.Clear();
 
+#if VULKAN_VALIDATE_IMAGE_LAYOUTS
+    ImageLayoutValidationEntries.Clear();
+#endif
+
     VkCommandBufferBeginInfo BeginInfo = {};
     BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     BeginInfo.flags = Flags;
@@ -109,6 +113,26 @@ bool FVulkanCommandBuffer::End()
     bIsRecording = false;
     return true;
 }
+
+#if VULKAN_VALIDATE_IMAGE_LAYOUTS
+void FVulkanCommandBuffer::AddImageLayoutForValidation(VkImage Image, VkImageLayout EntryLayout, VkImageLayout ResultLayout, bool bWholeImage, const CHAR* RecordingSite)
+{
+    if (!VULKAN_CHECK_HANDLE(Image))
+    {
+        return;
+    }
+
+    FVulkanImageLayoutValidationEntry& Entry = ImageLayoutValidationEntries.FindOrAdd(Image);
+    if (Entry.RecordingSite == nullptr)
+    {
+        Entry.ExpectedEntryLayout = EntryLayout;
+        Entry.RecordingSite       = RecordingSite;
+    }
+
+    Entry.bWholeImage = Entry.bWholeImage && bWholeImage;
+    Entry.FinalLayout = ResultLayout;
+}
+#endif
 
 void FVulkanCommandBuffer::InsertBeginTimestamp(FVulkanQueryAllocator& Allocator)
 {

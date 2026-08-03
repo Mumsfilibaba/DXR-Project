@@ -1,10 +1,21 @@
 #pragma once
+#include "Core/Containers/Map.h"
 #include "Core/Containers/Queue.h"
 #include "VulkanRHI/VulkanFence.h"
 #include "VulkanRHI/VulkanQuery.h"
 
 class FVulkanCommandPool;
 class FVulkanQueryAllocator;
+
+#if VULKAN_VALIDATE_IMAGE_LAYOUTS
+struct FVulkanImageLayoutValidationEntry
+{
+    VkImageLayout ExpectedEntryLayout = VK_IMAGE_LAYOUT_UNDEFINED; // The layout the buffer assumes the image is already in when the buffer starts executing.
+    VkImageLayout FinalLayout         = VK_IMAGE_LAYOUT_UNDEFINED; // The layout the buffer leaves the image in.
+    const CHAR*   RecordingSite       = nullptr;
+    bool          bWholeImage         = true;                      // Cleared as soon as anything touches a strict subset of the subresources, since a single layout per image can no longer describe the state.
+};
+#endif
 
 class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
 {
@@ -436,6 +447,15 @@ public:
         return &CommandBuffer;
     }
 
+#if VULKAN_VALIDATE_IMAGE_LAYOUTS
+    void AddImageLayoutForValidation(VkImage Image, VkImageLayout EntryLayout, VkImageLayout ResultLayout, bool bWholeImage, const CHAR* RecordingSite);
+
+    TMap<VkImage, FVulkanImageLayoutValidationEntry>& GetImageLayoutValidationEntries()
+    {
+        return ImageLayoutValidationEntries;
+    }
+#endif
+
 private:
     FVulkanCommandPool*  OwnerPool;
     FCommandBuffer       CommandBuffer;
@@ -447,6 +467,9 @@ private:
     TArray<FVulkanQuery> TimestampQueries;
     TArray<FVulkanQuery> OcclusionQueries;
     TArray<FVulkanQuery> PipelineStatsQueries;
+#if VULKAN_VALIDATE_IMAGE_LAYOUTS
+    TMap<VkImage, FVulkanImageLayoutValidationEntry> ImageLayoutValidationEntries;
+#endif
 };
 
 class FVulkanCommandPool : public FVulkanDeviceChild, FNonCopyable

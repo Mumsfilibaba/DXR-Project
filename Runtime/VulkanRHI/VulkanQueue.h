@@ -134,6 +134,10 @@ struct FVulkanCommands
     void Execute();
     void PostExecute();
 
+#if VULKAN_VALIDATE_IMAGE_LAYOUTS
+    void ValidateImageLayouts();
+#endif
+
     void AddCommandPool(FVulkanCommandPool* InCommandPool)
     {
         CommandPools.Add(InCommandPool);

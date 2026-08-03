@@ -39,8 +39,6 @@ packages/
 *.pipelinecache
 /Solutions
 *.d3d12psocache
-*.d3d12psocache
 *.vkpsocache
 *.log
 /Assets/RTASCache
-/Tests/Build
