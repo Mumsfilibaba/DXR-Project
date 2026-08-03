@@ -51,6 +51,9 @@
 #undef CreateWindow
 #undef CreateSemaphore
 #undef CreateDirectory
+#undef RemoveDirectory
+#undef DeleteFile
+#undef MoveFile
 
 #undef InterlockedAdd
 #undef InterlockedAnd

@@ -13,6 +13,9 @@
 #include "CommandLineTests.h"
 #include "ConsoleManagerCommandLineTests.h"
 #include "IniFileTests.h"
+#include "JsonParserTests.h"
+#include "JsonWriterTests.h"
+#include "JsonArchiveTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -43,6 +46,9 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("CommandLine", CommandLine_Test());
     RUN_TEST("ConsoleManagerCommandLine", ConsoleManagerCommandLine_Test());
     RUN_TEST("IniFile", IniFile_Test());
+    RUN_TEST("JsonParser", JsonParser_Test());
+    RUN_TEST("JsonWriter", JsonWriter_Test());
+    RUN_TEST("JsonArchive", JsonArchive_Test());
 
     FTaskGraph::Release();
     FThreadManager::Release();

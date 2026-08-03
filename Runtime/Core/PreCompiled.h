@@ -104,6 +104,15 @@
 #include "Core/Platform/PlatformTLS.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 
+#include "Core/Json/Json.h"
+#include "Core/Json/JsonArchive.h"
+#include "Core/Json/JsonMath.h"
+#include "Core/Json/JsonReader.h"
+#include "Core/Json/JsonSerializer.h"
+#include "Core/Json/JsonTypes.h"
+#include "Core/Json/JsonValue.h"
+#include "Core/Json/JsonWriter.h"
+
 #include "Core/Math/AABB.h"
 #include "Core/Math/Color.h"
 #include "Core/Math/Float.h"

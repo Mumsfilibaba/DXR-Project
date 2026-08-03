@@ -209,7 +209,7 @@ struct FGenericPlatformString
 
     NODISCARD static FORCEINLINE double Strtod(const CHAR* String, CHAR** End) noexcept
     {
-        return static_cast<float>(::strtod(String, End));
+        return static_cast<double>(::strtod(String, End));
     }
 
     NODISCARD static FORCEINLINE long double Strtold(const CHAR* String, CHAR** End) noexcept

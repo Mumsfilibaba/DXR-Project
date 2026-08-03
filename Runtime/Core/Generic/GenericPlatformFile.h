@@ -175,6 +175,21 @@ struct CORE_API FGenericPlatformFile
         return false;
     }
 
+    static FORCEINLINE bool RemoveDirectory(const CHAR* Path)
+    {
+        return false;
+    }
+
+    static FORCEINLINE bool DeleteFile(const CHAR* Path)
+    {
+        return false;
+    }
+
+    static FORCEINLINE bool MoveFile(const CHAR* FromFilename, const CHAR* ToFilename)
+    {
+        return false;
+    }
+
     static FORCEINLINE bool IsPathRelative(const CHAR* Path)
     {
         return false;

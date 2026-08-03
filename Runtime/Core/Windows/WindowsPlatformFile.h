@@ -77,8 +77,26 @@ struct CORE_API FWindowsPlatformFile : public FGenericPlatformFile
 
     static FORCEINLINE bool CreateDirectory(const CHAR* Path)
     {
-        // Success if the directory was created now or already existed
+        // Success if the directory was created now or already existed.
         return ::CreateDirectoryA(Path, nullptr) || (::GetLastError() == ERROR_ALREADY_EXISTS);
+    }
+
+    static FORCEINLINE bool RemoveDirectory(const CHAR* Path)
+    {
+        // Success if the directory is gone now or was never there.
+        return ::RemoveDirectoryA(Path) || (::GetLastError() == ERROR_FILE_NOT_FOUND) || (::GetLastError() == ERROR_PATH_NOT_FOUND);
+    }
+
+    static FORCEINLINE bool DeleteFile(const CHAR* Path)
+    {
+        // Success if the file is gone now or was never there.
+        return ::DeleteFileA(Path) || (::GetLastError() == ERROR_FILE_NOT_FOUND) || (::GetLastError() == ERROR_PATH_NOT_FOUND);
+    }
+
+    static FORCEINLINE bool MoveFile(const CHAR* FromFilename, const CHAR* ToFilename)
+    {
+        // MOVEFILE_REPLACE_EXISTING is what makes this usable when swapping a file.
+        return ::MoveFileExA(FromFilename, ToFilename, MOVEFILE_REPLACE_EXISTING) != FALSE;
     }
 
     static FORCEINLINE bool IsPathRelative(const CHAR* Filepath)

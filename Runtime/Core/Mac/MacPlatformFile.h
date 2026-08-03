@@ -3,6 +3,8 @@
 #include "Core/Generic/GenericPlatformFile.h"
 #include <sys/stat.h>
 #include <cerrno>
+#include <cstdio>
+#include <unistd.h>
 
 class CORE_API FMacFileHandle : public IPlatformFile
 {
@@ -80,8 +82,26 @@ struct CORE_API FMacPlatformFile final : public FGenericPlatformFile
 
     static FORCEINLINE bool CreateDirectory(const CHAR* Path)
     {
-        // Success if the directory was created now or already existed
+        // Success if the directory was created now or already existed.
         return (::mkdir(Path, 0755) == 0) || (errno == EEXIST);
+    }
+
+    static FORCEINLINE bool RemoveDirectory(const CHAR* Path)
+    {
+        // Success if the directory is gone now or was never there.
+        return (::rmdir(Path) == 0) || (errno == ENOENT);
+    }
+
+    static FORCEINLINE bool DeleteFile(const CHAR* Path)
+    {
+        // Success if the file is gone now or was never there.
+        return (::unlink(Path) == 0) || (errno == ENOENT);
+    }
+
+    static FORCEINLINE bool MoveFile(const CHAR* FromFilename, const CHAR* ToFilename)
+    {
+        // Rename replaces an existing destination.
+        return ::rename(FromFilename, ToFilename) == 0;
     }
 
     static FORCEINLINE bool IsPathRelative(const CHAR* Filepath)
