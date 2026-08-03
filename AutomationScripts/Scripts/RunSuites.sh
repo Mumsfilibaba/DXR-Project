@@ -16,6 +16,9 @@
 #  readable when launched interactively. For automation, pass --no-pause or
 #  set TESTS_NO_PAUSE=1 to skip the pause.
 #
+#  Every suite runs under a watchdog so a deadlock fails that suite instead of
+#  wedging the whole run. Set SUITE_TIMEOUT to change the limit in seconds.
+#
 #  Benchmarks skip Debug entirely; those timings are misleading. This is the
 #  configuration gate that used to live behind RUN_BENCHMARK in Config.h.
 #
@@ -147,6 +150,30 @@ pause_if_needed() {
     fi
 }
 
+# Seconds a single suite may run before the watchdog kills it.
+SUITE_TIMEOUT=${SUITE_TIMEOUT:-300}
+
+# --- Runs a command under a watchdog, returning its exit code --------------
+#  macOS ships no timeout(1), so a background sleep does the job. A killed
+#  suite surfaces as exit code 137 (128 + SIGKILL) and is reported as a
+#  timeout, which keeps a deadlocked test from blocking the run forever.
+run_with_timeout() {
+    ( cd "$ROOT" && "$@" ) &
+    local SuitePid=$!
+
+    ( sleep "$SUITE_TIMEOUT"; kill -9 "$SuitePid" 2>/dev/null ) &
+    local WatchdogPid=$!
+
+    wait "$SuitePid"
+    local SuiteEc=$?
+
+    # Retire the watchdog so it cannot outlive the suite and kill a reused pid.
+    kill "$WatchdogPid" 2>/dev/null
+    wait "$WatchdogPid" 2>/dev/null
+
+    return $SuiteEc
+}
+
 # --- Runs a single suite executable and tallies the result -----------------
 run_suite() {
     NAME="$1"
@@ -168,11 +195,14 @@ run_suite() {
 
     # Run from the repo root so each executable appends to the same log beside
     # it (the harness opens the log with a relative path).
-    ( cd "$ROOT" && "$EXE" )
+    run_with_timeout "$EXE"
     EC=$?
 
     # Any non-zero exit code is a failure, including signals from a crash.
-    if [ $EC -ne 0 ]; then
+    if [ $EC -eq 137 ]; then
+        echo "[RESULT] $NAME ($CONFIG) TIMED OUT after ${SUITE_TIMEOUT}s"
+        FAILED=$((FAILED + 1))
+    elif [ $EC -ne 0 ]; then
         echo "[RESULT] $NAME ($CONFIG) FAILED (exit code $EC)"
         FAILED=$((FAILED + 1))
     else

@@ -2,6 +2,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/Templates/Utility.h"
 #include "Core/Threading/Atomic.h"
+#include "Core/Threading/HazardPointer.h"
 #include "Core/Platform/PlatformMisc.h"
 #include "Core/Platform/PlatformAtomic.h"
 
@@ -20,7 +21,7 @@ class TQueue
 {
     struct FNode
     {
-        FNode* volatile                NextNode;
+        TAtomicPointer<FNode*>         NextNode;
         TTypeAlignedBytes<ElementType> Item;
         bool                           bHasItem;
     };
@@ -35,11 +36,12 @@ public:
     TQueue()
         : Head(nullptr)
         , Tail(nullptr)
+        , NumElements(0)
     {
         // Create a dummy node to simplify edge cases.
-        Head = CreateDummyNode();
-        Tail = Head;
-        NumElements = 0;
+        FNode* DummyNode = CreateDummyNode();
+        Head.Store(DummyNode, EMemoryOrder::Relaxed);
+        Tail.Store(DummyNode, EMemoryOrder::Relaxed);
     }
 
     /**
@@ -48,15 +50,24 @@ public:
     ~TQueue()
     {
         // Drain all nodes including the final dummy.
-        while (Tail != nullptr)
+        FNode* Node = Tail.Load(EMemoryOrder::Relaxed);
+        while (Node != nullptr)
         {
-            FNode* Node = Tail;
-            Tail = Tail->NextNode;
+            FNode* NextNode = Node->NextNode.Load(EMemoryOrder::Relaxed);
             DeleteNode(Node);
+            Node = NextNode;
         }
 
-        Head = nullptr;
-        NumElements = 0;
+        Head.Store(nullptr, EMemoryOrder::Relaxed);
+        Tail.Store(nullptr, EMemoryOrder::Relaxed);
+        NumElements.Store(0);
+
+        if constexpr (QueueType == EQueueType::SPMC)
+        {
+            // Nodes retired by consumers may still be pending reclamation, including any left
+            // behind by consumer threads that have already exited.
+            FHazardPointerDomain::Get().Collect();
+        }
     }
 
     /**
@@ -66,45 +77,7 @@ public:
      */
     bool Dequeue(ElementType& OutElement)
     {
-        FNode* NextNode;
-        if constexpr (QueueType == EQueueType::SPMC)
-        {
-            NextNode = reinterpret_cast<FNode*>(FPlatformAtomic::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
-        }
-        else
-        {
-            NextNode = Tail->NextNode;
-        }
-
-        // Empty queue
-        if (NextNode == nullptr)
-        {
-            return false;
-        }
-
-        CHECK(NextNode->bHasItem);
-
-        // Move out the item
-        OutElement = Move(*reinterpret_cast<ElementType*>(NextNode->Item.Data));
-
-        // Destruct the item and make this node the new dummy tail.
-        DestroyItemInNode(NextNode);
-
-        // Advance tail
-        FNode* PreviousTail;
-        if constexpr (QueueType == EQueueType::SPMC)
-        {
-            PreviousTail = reinterpret_cast<FNode*>(FPlatformAtomic::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail), NextNode));
-        }
-        else
-        {
-            PreviousTail = Tail;
-            Tail = NextNode;
-        }
-
-        DeleteNode(PreviousTail);
-        NumElements--;
-        return true;
+        return DequeueInternal(&OutElement);
     }
 
     /**
@@ -113,42 +86,7 @@ public:
      */
     bool Dequeue()
     {
-        FNode* NextNode;
-        if constexpr (QueueType == EQueueType::SPMC)
-        {
-            NextNode = reinterpret_cast<FNode*>(FPlatformAtomic::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
-        }
-        else
-        {
-            NextNode = Tail->NextNode;
-        }
-
-        // Empty queue
-        if (NextNode == nullptr)
-        {
-            return false;
-        }
-
-        CHECK(NextNode->bHasItem);
-
-        // Destruct the item and make this node the new dummy tail.
-        DestroyItemInNode(NextNode);
-
-        // Advance tail
-        FNode* PreviousTail;
-        if constexpr (QueueType == EQueueType::SPMC)
-        {
-            PreviousTail = reinterpret_cast<FNode*>(FPlatformAtomic::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail), NextNode));
-        }
-        else
-        {
-            PreviousTail = Tail;
-            Tail = NextNode;
-        }
-
-        DeleteNode(PreviousTail);
-        NumElements--;
-        return true;
+        return DequeueInternal(nullptr);
     }
 
     /**
@@ -157,34 +95,17 @@ public:
      */
     void DequeueAll(TArray<ElementType>& OutArray)
     {
-        FNode* TailToDequeue;
-        if constexpr (QueueType != EQueueType::SPSC)
-        {
-            // Detach producer head from consumer tail (keep dummy tail).
-            FPlatformAtomic::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Head), Tail);
-            TailToDequeue = reinterpret_cast<FNode*>(FPlatformAtomic::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
-        }
-        else
-        {
-            Head           = Tail;
-            TailToDequeue  = Tail->NextNode;
-            Tail->NextNode = nullptr;
-        }
+        // Bounded by the count observed on entry so a producer running alongside this cannot keep
+        // the call spinning. Draining through Dequeue keeps the head private to the producer and
+        // inherits whichever reclamation the queue type uses.
+        int32 NumToDequeue = NumElements.Load();
+        OutArray.Reserve(OutArray.Size() + NumToDequeue);
 
-        // Snapshot element count
-        int32 LocalNumElements = NumElements.Load();
-        NumElements = 0;
-        OutArray.Reserve(LocalNumElements);
-
-        // Drain detached list
-        FNode* Current = TailToDequeue;
-        while (Current)
+        ElementType Item;
+        while (NumToDequeue > 0 && Dequeue(Item))
         {
-            CHECK(Current->bHasItem);
-            OutArray.Add(Move(*reinterpret_cast<ElementType*>(Current->Item.Data)));
-            FNode* Next = Current->NextNode;
-            DeleteNode(Current);
-            Current = Next;
+            OutArray.Add(Move(Item));
+            --NumToDequeue;
         }
     }
 
@@ -193,9 +114,12 @@ public:
      */
     void Clear()
     {
-        while (Dequeue());
+        while (Dequeue())
+        {
+            // Dequeue until empty
+        }
 
-        NumElements = 0;
+        NumElements.Store(0);
     }
 
     /**
@@ -235,17 +159,20 @@ public:
         FNode* PreviousHead;
         if constexpr (QueueType == EQueueType::MPSC)
         {
-            PreviousHead = reinterpret_cast<FNode*>(FPlatformAtomic::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Head), NewNode));
-            FPlatformAtomic::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&PreviousHead->NextNode), NewNode);
+            PreviousHead = Head.Exchange(NewNode);
         }
         else
         {
-            PreviousHead = Head;
-            Head = NewNode;
-            PreviousHead->NextNode = NewNode;
+            // Only the single producer ever touches the head.
+            PreviousHead = Head.Load(EMemoryOrder::Relaxed);
+            Head.Store(NewNode, EMemoryOrder::Relaxed);
         }
 
-        NumElements++;
+        // Publishes the item constructed in CreateNode along with the link. PreviousHead cannot
+        // have been retired: a node is only retired once its link is non-null, and this store is
+        // what makes it non-null.
+        PreviousHead->NextNode.Store(NewNode, EMemoryOrder::Release);
+        NumElements.Increment();
         return true;
     }
 
@@ -272,7 +199,9 @@ public:
      */
     bool Peek(ElementType& OutItem) const
     {
-        FNode* Next = Tail->NextNode;
+        StaticAssertPeekIsSafe();
+
+        FNode* Next = Tail.Load(EMemoryOrder::Relaxed)->NextNode.Load(EMemoryOrder::Acquire);
         if (Next == nullptr)
         {
             return false;
@@ -288,7 +217,9 @@ public:
      */
     ElementType* Peek()
     {
-        FNode* Next = Tail->NextNode;
+        StaticAssertPeekIsSafe();
+
+        FNode* Next = Tail.Load(EMemoryOrder::Relaxed)->NextNode.Load(EMemoryOrder::Acquire);
         if (Next == nullptr)
         {
             return nullptr;
@@ -303,7 +234,9 @@ public:
      */
     const ElementType* Peek() const
     {
-        FNode* Next = Tail->NextNode;
+        StaticAssertPeekIsSafe();
+
+        FNode* Next = Tail.Load(EMemoryOrder::Relaxed)->NextNode.Load(EMemoryOrder::Acquire);
         if (Next == nullptr)
         {
             return nullptr;
@@ -314,11 +247,109 @@ public:
     }
 
 private:
+    static void StaticAssertPeekIsSafe()
+    {
+        static_assert(QueueType != EQueueType::SPMC, "Peek is unsafe on an SPMC queue, another consumer can destroy the item while it is read. Use Dequeue instead.");
+    }
+
+    FORCEINLINE bool DequeueInternal(ElementType* OutElement)
+    {
+        if constexpr (QueueType == EQueueType::SPMC)
+        {
+            return DequeueMultiConsumer(OutElement);
+        }
+        else
+        {
+            return DequeueSingleConsumer(OutElement);
+        }
+    }
+
+    bool DequeueSingleConsumer(ElementType* OutElement)
+    {
+        FNode* PreviousTail = Tail.Load(EMemoryOrder::Relaxed);
+        FNode* NextNode     = PreviousTail->NextNode.Load(EMemoryOrder::Acquire);
+
+        // Empty queue
+        if (NextNode == nullptr)
+        {
+            return false;
+        }
+
+        CHECK(NextNode->bHasItem);
+
+        if (OutElement != nullptr)
+        {
+            *OutElement = Move(*reinterpret_cast<ElementType*>(NextNode->Item.Data));
+        }
+
+        // Destruct the item and make this node the new dummy tail.
+        DestroyItemInNode(NextNode);
+        Tail.Store(NextNode, EMemoryOrder::Relaxed);
+        NumElements.Decrement();
+
+        DeleteNode(PreviousTail);
+        return true;
+    }
+
+    bool DequeueMultiConsumer(ElementType* OutElement)
+    {
+        FHazardPointerGuard Guard;
+        for (;;)
+        {
+            FNode* PreviousTail = Tail.Load(EMemoryOrder::Acquire);
+            Guard.Protect(0, PreviousTail);
+
+            // Only safe to dereference once the hazard is published and the tail still names the
+            // node, otherwise another consumer may already have retired it.
+            if (Tail.Load(EMemoryOrder::Acquire) != PreviousTail)
+            {
+                continue;
+            }
+
+            FNode* NextNode = PreviousTail->NextNode.Load(EMemoryOrder::Acquire);
+            if (NextNode == nullptr)
+            {
+                return false;
+            }
+
+            // Published before the claim, so whichever consumer eventually retires this node
+            // cannot free it while the item is still being moved out below.
+            Guard.Protect(1, NextNode);
+
+            if (!Tail.CompareExchange(NextNode, PreviousTail))
+            {
+                continue;
+            }
+
+            CHECK(NextNode->bHasItem);
+
+            if (OutElement != nullptr)
+            {
+                *OutElement = Move(*reinterpret_cast<ElementType*>(NextNode->Item.Data));
+            }
+
+            // Destruct the item, which this consumer now owns alone. NextNode has already become
+            // the new dummy tail.
+            DestroyItemInNode(NextNode);
+            NumElements.Decrement();
+
+            Guard.ClearAll();
+            FHazardPointerDomain::Get().Retire(PreviousTail, &DeleteRetiredNode);
+            return true;
+        }
+    }
+
+    static void DeleteRetiredNode(void* Node)
+    {
+        FNode* NodeToDelete = static_cast<FNode*>(Node);
+        CHECK(!NodeToDelete->bHasItem);
+        delete NodeToDelete;
+    }
 
     FORCEINLINE FNode* CreateDummyNode()
     {
         FNode* Result = new FNode();
-        Result->NextNode = nullptr;
+        Result->NextNode.Store(nullptr, EMemoryOrder::Relaxed);
         Result->bHasItem = false;
         return Result;
     }
@@ -327,7 +358,7 @@ private:
     FNode* CreateNode(ArgTypes&&... Args)
     {
         FNode* Result = new FNode();
-        Result->NextNode = nullptr;
+        Result->NextNode.Store(nullptr, EMemoryOrder::Relaxed);
         Result->bHasItem = true;
         new(reinterpret_cast<void*>(Result->Item.Data)) ElementType(Forward<ArgTypes>(Args)...);
         return Result;
@@ -350,7 +381,7 @@ private:
     }
 
 private:
-    FNode* volatile Head;
-    FNode* volatile Tail;
-    AtomicInt32     NumElements;
+    TAtomicPointer<FNode*> Head;
+    TAtomicPointer<FNode*> Tail;
+    AtomicInt32            NumElements;
 };
