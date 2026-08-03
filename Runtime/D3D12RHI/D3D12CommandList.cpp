@@ -86,6 +86,7 @@ FD3D12CommandAllocator* FD3D12CommandAllocatorManager::ObtainAllocator()
             return nullptr;
         }
 
+        CommandAllocator->SetDebugName(String::CreateFormatted("%s CommandAllocator %d", ToString(CommandListType), CommandAllocators.Size()));
         CommandAllocators.Add(CommandAllocator);
     }
 

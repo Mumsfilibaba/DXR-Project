@@ -3,7 +3,7 @@
 #include <Core/Containers/String.h>
 #include <Core/Misc/CommandLine.h>
 #include <Core/Misc/ConsoleManager.h>
-#include <Core/Misc/EngineConfig.h>
+#include <Core/Misc/Config.h>
 
 #include "TestCommon/TestMacros.h"
 
@@ -103,12 +103,12 @@ bool ConsoleManagerCommandLine_Test()
     TEST_SECTION("The command line outranks the config file");
     {
         // Stand in a config of our own so the assertion does not depend on Engine.ini
-        FConfigFile TestConfig;
-        FConfigSection& Section = TestConfig.Sections.FindOrAdd("");
-        Section.Values.Add("Test.Contested", FConfigValue(String("FromConfig")));
-        Section.Values.Add("Test.ConfigOnly", FConfigValue(String("FromConfig")));
+        FIniFile TestConfig;
+        FIniSection& Section = TestConfig.Sections.FindOrAdd("");
+        Section.Values.Add("Test.Contested", FIniValue(String("FromConfig")));
+        Section.Values.Add("Test.ConfigOnly", FIniValue(String("FromConfig")));
 
-        FConfigFile* PreviousConfig = GConfig;
+        FIniFile* PreviousConfig = GConfig;
         GConfig = &TestConfig;
 
         {
@@ -129,11 +129,11 @@ bool ConsoleManagerCommandLine_Test()
 
     TEST_SECTION("A partial name match does not suppress the config file");
     {
-        FConfigFile TestConfig;
-        FConfigSection& Section = TestConfig.Sections.FindOrAdd("");
-        Section.Values.Add("Test.Type", FConfigValue(String("FromConfig")));
+        FIniFile TestConfig;
+        FIniSection& Section = TestConfig.Sections.FindOrAdd("");
+        Section.Values.Add("Test.Type", FIniValue(String("FromConfig")));
 
-        FConfigFile* PreviousConfig = GConfig;
+        FIniFile* PreviousConfig = GConfig;
         GConfig = &TestConfig;
 
         {

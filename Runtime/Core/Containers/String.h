@@ -417,7 +417,8 @@ public:
 
         const SizeType WrittenLength = CStringType::Strlen(WrittenString);
         const SizeType OldSize       = Length();
-        const SizeType NewSize       = (OldSize > 0) ? WrittenLength : WrittenLength + 1;
+        const SizeType NewSize       = CharData.IsEmpty() ? WrittenLength + 1 : WrittenLength;
+
         CharData.AppendUninitialized(NewSize);
 
         CStringType::Strncpy(CharData.Data() + OldSize, WrittenString, WrittenLength);

@@ -6,7 +6,7 @@
 #include "Core/Tasks/Tasks.h"
 #include "Core/Misc/CoreDelegates.h"
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "Core/Misc/EngineConfig.h"
+#include "Core/Misc/Config.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/CommandLine.h"
@@ -174,7 +174,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
 
     if (!FConfig::Initialize())
     {
-        LOG_ERROR("Failed to initialize EngineConfig");
+        LOG_ERROR("Failed to initialize Config");
         return -1;
     }
 

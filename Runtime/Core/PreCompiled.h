@@ -131,11 +131,12 @@
 #include "Core/Memory/NewOperators.h"
 
 #include "Core/Misc/CommandLine.h"
+#include "Core/Misc/Config.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/CoreDelegates.h"
 #include "Core/Misc/Debug.h"
-#include "Core/Misc/EngineConfig.h"
 #include "Core/Misc/FrameProfiler.h"
+#include "Core/Misc/IniFile.h"
 #include "Core/Misc/IOutputDevice.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 

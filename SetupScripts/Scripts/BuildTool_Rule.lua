@@ -551,7 +551,7 @@ function BuildRules(Name)
             end
 
             -- Xcode embedding
-            filter { "action:xcode4" }
+            if BuildWithXcode() then
                 if self.bEmbedThirdparties then
                     embed(self.Modules)
                     embed(self.ExtraEmbedNames)
@@ -588,7 +588,7 @@ function BuildRules(Name)
                         postbuildcommands(CopyCommands)
                     end
                 end
-            filter {}
+            end
 
             -- Xcode specific settings
             filter { "action:xcode4" }
