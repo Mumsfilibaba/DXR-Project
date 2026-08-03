@@ -84,6 +84,7 @@ public:
     virtual FRHIGeometryAccelerationStructure*         CreateGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc) override final;
     virtual FRHIShaderResourceView*                    CreateShaderResourceView(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc) override final;
     virtual FRHIUnorderedAccessView*                   CreateUnorderedAccessView(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc) override final;
+    virtual FRHIUnorderedAccessView*                   CreateSamplerFeedbackUnorderedAccessView(FRHITexture* InFeedbackTexture, FRHITexture* InTargetedTexture) override final;
     virtual FRHIRenderTargetView*                      CreateRenderTargetView(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc) override final;
     virtual FRHIDepthStencilView*                      CreateDepthStencilView(FRHIResource* InResource, const FRHIDepthStencilViewDesc& InDesc) override final;
     virtual FRHIComputeShader*                         CreateComputeShader(const TArray<uint8>& ShaderCode) override final;

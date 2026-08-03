@@ -29,6 +29,12 @@ enum class ECommandContextPhase
     RenderPassPaused,
 };
 
+enum class ESamplerFeedbackTranscodeMode : uint8
+{
+    Decode = 0, // Opaque feedback map -> R8_UINT
+    Encode = 1, // R8_UINT -> opaque feedback map
+};
+
 struct IRHICommandContext
 {
     virtual ~IRHICommandContext() = default;
@@ -295,6 +301,16 @@ struct IRHICommandContext
      * @param Src Source texture to resolve
      */
     virtual void ResolveTexture(FRHITexture* Dst, FRHITexture* Src) = 0;
+
+    /**
+     * @brief Transcodes between an opaque sampler feedback map and an application-readable R8_UINT texture.
+     * @param Dst Destination: the R8_UINT texture when decoding, the feedback map when encoding.
+     * @param DstSubresource Destination subresource, or RHI_ALL_SUBRESOURCES.
+     * @param Src Source: the feedback map when decoding, the R8_UINT texture when encoding.
+     * @param SrcSubresource Source subresource, or RHI_ALL_SUBRESOURCES.
+     * @param Mode Whether to decode from or encode into the opaque representation.
+     */
+    virtual void TranscodeSamplerFeedback(FRHITexture* Dst, uint32 DstSubresource, FRHITexture* Src, uint32 SrcSubresource, ESamplerFeedbackTranscodeMode Mode) = 0;
 
     /**
      * @brief Copies the contents from one buffer to another

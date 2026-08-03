@@ -296,7 +296,9 @@ FD3D12UnorderedAccessViewRHI::FD3D12UnorderedAccessViewRHI(FD3D12Device* InDevic
     : FD3D12UnorderedAccessViewBase(InResource, InRHIDesc)
     , FD3D12View(InDevice, InOfflineHeap)
     , CounterResource(nullptr)
+    , TargetedResource(nullptr)
     , D3D12Desc()
+    , ViewType(ED3D12UnorderedAccessViewType::Standard)
 {
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
@@ -323,6 +325,21 @@ void FD3D12UnorderedAccessViewRHI::OnResourceRelocated(FD3D12ResourceBase* Reloc
     if (NewResourceStorage)
     {
         MAYBE_UNUSED const uint32 PreviousDescriptorVersion = GetDescriptorVersion();
+
+    #if D3D12_USE_SAMPLER_FEEDBACK
+        if (ViewType == ED3D12UnorderedAccessViewType::SamplerFeedback)
+        {
+            if (!UpdateSamplerFeedbackView(TargetedResource.Get(), NewResourceStorage->GetResource()))
+            {
+                D3D12_ERROR_CRITICAL("[FD3D12UnorderedAccessViewRHI] Failed to refresh a relocated sampler feedback view");
+                return;
+            }
+
+            CHECK(GetViewResource() == NewResourceStorage->GetResource());
+            CHECK(GetDescriptorVersion() == PreviousDescriptorVersion + 1);
+            return;
+        }
+    #endif
 
         D3D12_UNORDERED_ACCESS_VIEW_DESC NewDesc = D3D12Desc;
         if (GetDesc().IsBufferUAV())
@@ -381,6 +398,50 @@ bool FD3D12UnorderedAccessViewRHI::UpdateView(FD3D12Resource* InCounterResource,
     IncrementDescriptorVersion();
     return true;
 }
+
+#if D3D12_USE_SAMPLER_FEEDBACK
+bool FD3D12UnorderedAccessViewRHI::InitializeSamplerFeedback(FD3D12Resource* InTargetedResource, FD3D12Resource* InFeedbackResource)
+{
+    if (!AllocateHandle())
+    {
+        return false;
+    }
+
+    ViewType = ED3D12UnorderedAccessViewType::SamplerFeedback;
+    return UpdateSamplerFeedbackView(InTargetedResource, InFeedbackResource);
+}
+
+bool FD3D12UnorderedAccessViewRHI::UpdateSamplerFeedbackView(FD3D12Resource* InTargetedResource, FD3D12Resource* InFeedbackResource)
+{
+    if (!Descriptor)
+    {
+        D3D12_ERROR_CRITICAL("[FD3D12UnorderedAccessViewRHI] Invalid Descriptor");
+        return false;
+    }
+
+    ID3D12Device8* D3D12Device8 = GetDevice()->GetD3D12Device8();
+    if (!D3D12Device8)
+    {
+        D3D12_ERROR_CRITICAL("[FD3D12UnorderedAccessViewRHI] Sampler feedback views require ID3D12Device8");
+        return false;
+    }
+
+    TargetedResource = MakeSharedRef<FD3D12Resource>(InTargetedResource);
+    ViewResource     = MakeSharedRef<FD3D12Resource>(InFeedbackResource);
+
+    if (ViewResource)
+    {
+        CHECK((InFeedbackResource->GetDesc().Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0);
+    }
+
+    ID3D12Resource* D3D12ViewResource     = ViewResource     ? ViewResource->GetD3D12Resource()     : nullptr;
+    ID3D12Resource* D3D12TargetedResource = TargetedResource ? TargetedResource->GetD3D12Resource() : nullptr;
+    D3D12Device8->CreateSamplerFeedbackUnorderedAccessView(D3D12TargetedResource, D3D12ViewResource, GetOfflineHandle());
+
+    IncrementDescriptorVersion();
+    return true;
+}
+#endif
 
 FD3D12RenderTargetViewRHI::FD3D12RenderTargetViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource, const FRHIRenderTargetViewDesc& InRHIDesc)
     : FD3D12RenderTargetViewBase(InResource, InRHIDesc)

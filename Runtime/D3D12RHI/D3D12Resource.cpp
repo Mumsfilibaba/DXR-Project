@@ -5,6 +5,25 @@
 #include "D3D12RHI/D3D12ResidencyManager.h"
 #include "D3D12RHI/D3D12Stats.h"
 
+#if D3D12_USE_RESOURCE_DESC1
+FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource2* InResource, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, const D3D12_CLEAR_VALUE* InClearValue, FD3D12Heap* InHeap)
+    : FD3D12Resource(InDevice, static_cast<ID3D12Resource*>(InResource), InHeapType, InInitialState, InClearValue, InHeap)
+{
+    if (!InResource)
+    {
+        return;
+    }
+
+    const D3D12_RESOURCE_DESC1           Desc1     = InResource->GetDesc1();
+    const D3D12_RESOURCE_ALLOCATION_INFO AllocInfo = GetDevice()->GetD3D12Device8()->GetResourceAllocationInfo2(0, 1, &Desc1, nullptr);
+
+    if (AllocInfo.SizeInBytes != UINT64_MAX)
+    {
+        AllocationSize = AllocInfo.SizeInBytes;
+    }
+}
+#endif
+
 FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResource, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, const D3D12_CLEAR_VALUE* InClearValue, FD3D12Heap* InHeap)
     : FRefCountedBase()
     , FD3D12DeviceChild(InDevice)
@@ -66,6 +85,26 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResourc
     }
 
     InitializeStateTracking(InInitialState);
+}
+
+FD3D12Resource::~FD3D12Resource()
+{
+#if D3D12_ENABLE_STATS
+    if (!IsPlacedResource() && AllocationSize > 0)
+    {
+        STAT_SUBTRACT(STAT_D3D12_CommittedResourceMemory, AllocationSize);
+        STAT_SUBTRACT(STAT_D3D12_CommittedResourceCount, 1);
+
+        switch (HeapType)
+        {
+        case D3D12_HEAP_TYPE_DEFAULT:  STAT_SUBTRACT(STAT_D3D12_CommittedDefaultMemory,  AllocationSize); break;
+        case D3D12_HEAP_TYPE_UPLOAD:   STAT_SUBTRACT(STAT_D3D12_CommittedUploadMemory,   AllocationSize); break;
+        case D3D12_HEAP_TYPE_READBACK: STAT_SUBTRACT(STAT_D3D12_CommittedReadbackMemory, AllocationSize); break;
+        }
+    }
+#endif
+
+    EndResidencyTracking();
 }
 
 void FD3D12Resource::InitializeStateTracking(D3D12_RESOURCE_STATES InitialState)
@@ -150,26 +189,6 @@ void FD3D12Resource::GetDebugName(String& OutDebugName) const
             OutDebugName.Clear();
         }
     }
-}
-
-FD3D12Resource::~FD3D12Resource()
-{
-#if D3D12_ENABLE_STATS
-    if (!IsPlacedResource() && AllocationSize > 0)
-    {
-        STAT_SUBTRACT(STAT_D3D12_CommittedResourceMemory, AllocationSize);
-        STAT_SUBTRACT(STAT_D3D12_CommittedResourceCount, 1);
-
-        switch (HeapType)
-        {
-        case D3D12_HEAP_TYPE_DEFAULT:  STAT_SUBTRACT(STAT_D3D12_CommittedDefaultMemory,  AllocationSize); break;
-        case D3D12_HEAP_TYPE_UPLOAD:   STAT_SUBTRACT(STAT_D3D12_CommittedUploadMemory,   AllocationSize); break;
-        case D3D12_HEAP_TYPE_READBACK: STAT_SUBTRACT(STAT_D3D12_CommittedReadbackMemory, AllocationSize); break;
-        }
-    }
-#endif
-
-    EndResidencyTracking();
 }
 
 void FD3D12Resource::StartResidencyTracking()

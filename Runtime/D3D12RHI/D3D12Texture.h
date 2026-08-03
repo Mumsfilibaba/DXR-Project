@@ -67,6 +67,9 @@ public:
         }
     }
 
+private:
+    bool InitializeSamplerFeedbackMap(ERHIResourceState InInitialAccess);
+
 protected:
     FD3D12ShaderResourceViewRHIRef  ShaderResourceView;
     FD3D12UnorderedAccessViewRHIRef UnorderedAccessView;

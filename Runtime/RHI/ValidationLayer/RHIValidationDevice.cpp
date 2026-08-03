@@ -313,7 +313,10 @@ FRHITexture* FRHIValidationDevice::CreateTexture(const FRHITextureDesc& InTextur
         return nullptr;
     }
 
-    if (bIsUAV && !IsTypelessFormat(InTextureDesc.Format) && !Device->QueryUAVFormatSupport(InTextureDesc.Format))
+    const bool bIsSamplerFeedback = InTextureDesc.IsSamplerFeedbackTexture();
+
+    // Opaque feedback formats are always UAV-writable but report no conventional format support.
+    if (bIsUAV && !bIsSamplerFeedback && !IsTypelessFormat(InTextureDesc.Format) && !Device->QueryUAVFormatSupport(InTextureDesc.Format))
     {
         RHI_VALIDATION_ERROR("CreateTexture: format '%s' does not support unordered access.", ToString(InTextureDesc.Format));
         return nullptr;
@@ -326,6 +329,66 @@ FRHITexture* FRHIValidationDevice::CreateTexture(const FRHITextureDesc& InTextur
             RHI_VALIDATION_ERROR("CreateTexture: ShadingRateTexture requires a single-sample Texture2D with one mip.");
             return nullptr;
         }
+    }
+
+    if (bIsSamplerFeedback)
+    {
+        if (!RHI::bSupportsSamplerFeedback)
+        {
+            RHI_VALIDATION_ERROR("CreateTexture: sampler feedback is not supported on this backend (see RHI.DumpCaps).");
+            return nullptr;
+        }
+
+        if (!IsSamplerFeedbackFormat(InTextureDesc.Format))
+        {
+            RHI_VALIDATION_ERROR("CreateTexture: SamplerFeedback requires SamplerFeedbackMinMipOpaque or SamplerFeedbackMipRegionUsedOpaque. (Got '%s').",
+                ToString(InTextureDesc.Format));
+            return nullptr;
+        }
+
+        if (InTextureDesc.Dimension != ETextureDimension::Texture2D && InTextureDesc.Dimension != ETextureDimension::Texture2DArray)
+        {
+            RHI_VALIDATION_ERROR("CreateTexture: SamplerFeedback requires Texture2D or Texture2DArray. (Got '%s').", ToString(InTextureDesc.Dimension));
+            return nullptr;
+        }
+
+        if (InTextureDesc.NumSamples != 1)
+        {
+            RHI_VALIDATION_ERROR("CreateTexture: SamplerFeedback requires a single-sampled texture. (NumSamples=%u).", InTextureDesc.NumSamples);
+            return nullptr;
+        }
+
+        // Each mip region dimension must be a power of two, at least 4, and at most half the paired mip-0 extent.
+        const IntVector3 MipRegion = InTextureDesc.SamplerFeedbackMipRegion;
+        if (MipRegion.X <= 0 || MipRegion.Y <= 0)
+        {
+            RHI_VALIDATION_ERROR("CreateTexture: SamplerFeedback requires a SamplerFeedbackMipRegion with positive X and Y. (Got %d,%d).", MipRegion.X, MipRegion.Y);
+            return nullptr;
+        }
+
+        if (!Math::IsPowerOfTwo(static_cast<uint32>(MipRegion.X)) || !Math::IsPowerOfTwo(static_cast<uint32>(MipRegion.Y)))
+        {
+            RHI_VALIDATION_ERROR("CreateTexture: SamplerFeedbackMipRegion dimensions must be powers of two. (Got %d,%d).", MipRegion.X, MipRegion.Y);
+            return nullptr;
+        }
+
+        if (MipRegion.X < 4 || MipRegion.Y < 4)
+        {
+            RHI_VALIDATION_ERROR("CreateTexture: SamplerFeedbackMipRegion dimensions must be >= 4. (Got %d,%d).", MipRegion.X, MipRegion.Y);
+            return nullptr;
+        }
+
+        if (MipRegion.X > InTextureDesc.Extent.X / 2 || MipRegion.Y > InTextureDesc.Extent.Y / 2)
+        {
+            RHI_VALIDATION_ERROR("CreateTexture: SamplerFeedbackMipRegion (%d,%d) must not exceed half the paired texture extent (%d,%d).",
+                MipRegion.X, MipRegion.Y, InTextureDesc.Extent.X, InTextureDesc.Extent.Y);
+            return nullptr;
+        }
+    }
+    else if (IsSamplerFeedbackFormat(InTextureDesc.Format))
+    {
+        RHI_VALIDATION_ERROR("CreateTexture: format '%s' requires ETextureUsageFlags::SamplerFeedback.", ToString(InTextureDesc.Format));
+        return nullptr;
     }
 
 	if (InTextureDesc.IsMultisampled() && bIsUAV)
@@ -823,6 +886,12 @@ FRHIUnorderedAccessView* FRHIValidationDevice::CreateUnorderedAccessView(FRHIRes
         return nullptr;
     }
 
+    if (InDesc.IsSamplerFeedbackUAV())
+    {
+        RHI_VALIDATION_ERROR("CreateUnorderedAccessView: sampler feedback views must be created with CreateSamplerFeedbackUnorderedAccessView");
+        return nullptr;
+    }
+
     if (InDesc.IsBufferUAV())
     {
         if (InResource->GetResourceType() != ERHIResourceType::Buffer)
@@ -957,6 +1026,43 @@ FRHIUnorderedAccessView* FRHIValidationDevice::CreateUnorderedAccessView(FRHIRes
     }
 
     return Device->CreateUnorderedAccessView(InResource, InDesc);
+}
+
+FRHIUnorderedAccessView* FRHIValidationDevice::CreateSamplerFeedbackUnorderedAccessView(FRHITexture* InFeedbackTexture, FRHITexture* InTargetedTexture)
+{
+    if (!RHI::bSupportsSamplerFeedback)
+    {
+        RHI_VALIDATION_ERROR("CreateSamplerFeedbackUnorderedAccessView: sampler feedback is not supported on this backend (see RHI.DumpCaps).");
+        return nullptr;
+    }
+
+    if (!InFeedbackTexture || !InFeedbackTexture->GetDesc().IsSamplerFeedbackTexture())
+    {
+        RHI_VALIDATION_ERROR("CreateSamplerFeedbackUnorderedAccessView: feedback texture must have ETextureUsageFlags::SamplerFeedback");
+        return nullptr;
+    }
+
+    // A null paired texture is legal; shader writes through the view become no-ops.
+    if (InTargetedTexture)
+    {
+        const FRHITextureDesc& FeedbackDesc = InFeedbackTexture->GetDesc();
+        const FRHITextureDesc& TargetedDesc = InTargetedTexture->GetDesc();
+
+        if (FeedbackDesc.Extent.X != TargetedDesc.Extent.X || FeedbackDesc.Extent.Y != TargetedDesc.Extent.Y ||
+            FeedbackDesc.NumMipLevels != TargetedDesc.NumMipLevels || FeedbackDesc.NumArraySlices != TargetedDesc.NumArraySlices)
+        {
+            RHI_VALIDATION_ERROR("CreateSamplerFeedbackUnorderedAccessView: feedback map must match the paired texture's extent, mip count and array size");
+            return nullptr;
+        }
+
+        if (TargetedDesc.IsMultisampled())
+        {
+            RHI_VALIDATION_ERROR("CreateSamplerFeedbackUnorderedAccessView: the paired texture must be single-sampled");
+            return nullptr;
+        }
+    }
+
+    return Device->CreateSamplerFeedbackUnorderedAccessView(InFeedbackTexture, InTargetedTexture);
 }
 
 FRHIRenderTargetView* FRHIValidationDevice::CreateRenderTargetView(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc)

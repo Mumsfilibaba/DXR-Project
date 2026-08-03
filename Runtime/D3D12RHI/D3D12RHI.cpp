@@ -915,6 +915,43 @@ FRHIUnorderedAccessView* FD3D12DeviceRHI::CreateUnorderedAccessView(FRHIResource
     return D3D12View.ReleaseOwnership();
 }
 
+FRHIUnorderedAccessView* FD3D12DeviceRHI::CreateSamplerFeedbackUnorderedAccessView(FRHITexture* InFeedbackTexture, FRHITexture* InTargetedTexture)
+{
+#if D3D12_USE_SAMPLER_FEEDBACK
+    if (!InFeedbackTexture)
+    {
+        D3D12_WARNING("Cannot create a SamplerFeedback UnorderedAccessView without a feedback texture");
+        return nullptr;
+    }
+
+    FD3D12TextureRHI* D3D12Targeted = FD3D12DeviceRHI::ResourceCast(InTargetedTexture);
+    FD3D12TextureRHI* D3D12Feedback = FD3D12DeviceRHI::ResourceCast(InFeedbackTexture);
+
+    if (!D3D12Feedback || !D3D12Feedback->GetResource())
+    {
+        D3D12_WARNING("Feedback texture does not have a valid D3D12Resource");
+        return nullptr;
+    }
+
+    const FRHIUnorderedAccessViewDesc ViewDesc = FRHIUnorderedAccessViewDesc::CreateSamplerFeedback(InFeedbackTexture->GetDesc().Format);    
+    FD3D12UnorderedAccessViewRHIRef D3D12View = new FD3D12UnorderedAccessViewRHI(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), InFeedbackTexture, ViewDesc);
+    if (!D3D12View->InitializeSamplerFeedback(D3D12Targeted ? D3D12Targeted->GetResource() : nullptr, D3D12Feedback->GetResource()))
+    {
+        return nullptr;
+    }
+
+    D3D12View->RegisterWithResource(D3D12Feedback);
+    CHECK(D3D12View->IsRegisteredWithResource(D3D12Feedback));
+    return D3D12View.ReleaseOwnership();
+#else
+    UNREFERENCED_VARIABLE(InFeedbackTexture);
+    UNREFERENCED_VARIABLE(InTargetedTexture);
+
+    D3D12_ERROR("Sampler feedback is not available in this SDK configuration");
+    return nullptr;
+#endif
+}
+
 FRHIRenderTargetView* FD3D12DeviceRHI::CreateRenderTargetView(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc)
 {
     if (!InResource)

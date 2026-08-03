@@ -719,6 +719,9 @@ bool FD3D12DeviceRHI::InitializeDeviceFeatureSupport()
     RHI::ShadingRateTier             = EShadingRateTier::NotSupported;
     RHI::ShadingRateImageTileSize    = 0;
 
+    RHI::bSupportsSamplerFeedback    = false;
+    RHI::SamplerFeedbackTier         = ESamplerFeedbackTier::NotSupported;
+
     RHI::bSupportsDrawIndirect               = true;
     RHI::bSupportsDrawIndirectCount          = true;
     RHI::bSupportsDispatchIndirect           = true;
@@ -927,6 +930,32 @@ bool FD3D12DeviceRHI::InitializeDeviceFeatureSupport()
             RHI::ShadingRateImageTileSize = 0;
         }
     }
+
+    // -------------------------------------------------------------------------------------------
+    // Sampler Feedback
+    // -------------------------------------------------------------------------------------------
+
+#if D3D12_USE_SAMPLER_FEEDBACK
+    if (GetDevice()->GetD3D12Device8() != nullptr)
+    {
+        switch (GD3D12SamplerFeedbackTier)
+        {
+        case D3D12_SAMPLER_FEEDBACK_TIER_0_9:
+            RHI::SamplerFeedbackTier = ESamplerFeedbackTier::Tier0_9;
+            break;
+
+        case D3D12_SAMPLER_FEEDBACK_TIER_1_0:
+            RHI::SamplerFeedbackTier = ESamplerFeedbackTier::Tier1_0;
+            break;
+
+        default:
+            RHI::SamplerFeedbackTier = ESamplerFeedbackTier::NotSupported;
+            break;
+        }
+    }
+#endif
+
+    RHI::bSupportsSamplerFeedback = RHI::SamplerFeedbackTier != ESamplerFeedbackTier::NotSupported;
 
     // -------------------------------------------------------------------------------------------
     // Programmable Sample Positions

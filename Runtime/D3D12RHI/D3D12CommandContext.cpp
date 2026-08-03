@@ -1248,6 +1248,50 @@ void FD3D12CommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
     ContextState.FlushSamplePositions();
 }
 
+void FD3D12CommandContext::TranscodeSamplerFeedback(FRHITexture* Dst, uint32 DstSubresource, FRHITexture* Src, uint32 SrcSubresource, ESamplerFeedbackTranscodeMode Mode)
+{
+    CHECK(Dst != nullptr);
+    CHECK(Src != nullptr);
+
+#if D3D12_USE_SAMPLER_FEEDBACK
+    if (!GetCommandList().GetGraphicsCommandList1().IsValid())
+    {
+        D3D12_ERROR("TranscodeSamplerFeedback requires ID3D12GraphicsCommandList1");
+        return;
+    }
+
+    FD3D12TextureRHI* D3D12Source      = FD3D12DeviceRHI::ResourceCast(Src);
+    FD3D12TextureRHI* D3D12Destination = FD3D12DeviceRHI::ResourceCast(Dst);
+
+    ConditionalSplitCommandList();
+
+    TransitionTrackedResourceState(D3D12Source, D3D12_RESOURCE_STATE_RESOLVE_SOURCE);
+    TransitionTrackedResourceState(D3D12Destination, D3D12_RESOURCE_STATE_RESOLVE_DEST);
+
+    BarrierBatcher.FlushBarriers(GetCommandList());
+
+    GetCommandList().UpdateResidency(D3D12Destination->GetResource()->GetResidencyHandle());
+    GetCommandList().UpdateResidency(D3D12Source->GetResource()->GetResidencyHandle());
+
+    GetCommandList().GetGraphicsCommandList1()->ResolveSubresourceRegion(
+        D3D12Destination->GetResource()->GetD3D12Resource(),
+        DstSubresource,
+        0,
+        0,
+        D3D12Source->GetResource()->GetD3D12Resource(),
+        SrcSubresource,
+        nullptr,
+        DXGI_FORMAT_R8_UINT,
+        Mode == ESamplerFeedbackTranscodeMode::Decode ? D3D12_RESOLVE_MODE_DECODE_SAMPLER_FEEDBACK : D3D12_RESOLVE_MODE_ENCODE_SAMPLER_FEEDBACK);
+#else
+    UNREFERENCED_VARIABLE(DstSubresource);
+    UNREFERENCED_VARIABLE(SrcSubresource);
+    UNREFERENCED_VARIABLE(Mode);
+
+    D3D12_ERROR("Sampler feedback is not available in this SDK configuration");
+#endif
+}
+
 void FD3D12CommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData)
 {
     if (!BufferRegion.Size)

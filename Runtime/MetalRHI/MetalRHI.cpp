@@ -43,6 +43,9 @@ FMetalDeviceRHI::FMetalDeviceRHI()
     RHI::bSupportsDispatchRaysIndirect       = false;
     RHI::MaxDrawIndirectCommandCount         = 0;
     RHI::MaxDispatchMeshIndirectCommandCount = 0;
+
+    RHI::bSupportsSamplerFeedback            = false;
+    RHI::SamplerFeedbackTier                 = ESamplerFeedbackTier::NotSupported;
 }
 
 FMetalDeviceRHI::~FMetalDeviceRHI()
@@ -175,6 +178,12 @@ FRHIUnorderedAccessView* FMetalDeviceRHI::CreateUnorderedAccessView(FRHIResource
         return new FMetalUnorderedAccessViewRHI(GetMetalDevice(), InResource, InDesc);
     }
 
+    return nullptr;
+}
+
+FRHIUnorderedAccessView* FMetalDeviceRHI::CreateSamplerFeedbackUnorderedAccessView(FRHITexture* /* InFeedbackTexture */, FRHITexture* /* InTargetedTexture */)
+{
+    METAL_ERROR("CreateSamplerFeedbackUnorderedAccessView: sampler feedback is not supported by the Metal backend");
     return nullptr;
 }
 

@@ -944,6 +944,12 @@ FRHIUnorderedAccessView* FVulkanDeviceRHI::CreateUnorderedAccessView(FRHIResourc
     }
 }
 
+FRHIUnorderedAccessView* FVulkanDeviceRHI::CreateSamplerFeedbackUnorderedAccessView(FRHITexture* /* InFeedbackTexture */, FRHITexture* /* InTargetedTexture */)
+{
+    VULKAN_ERROR("CreateSamplerFeedbackUnorderedAccessView: sampler feedback is not supported by the Vulkan backend");
+    return nullptr;
+}
+
 FRHIRenderTargetView* FVulkanDeviceRHI::CreateRenderTargetView(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc)
 {
     if (!InResource)

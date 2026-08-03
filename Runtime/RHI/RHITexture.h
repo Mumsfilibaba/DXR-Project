@@ -19,6 +19,7 @@ enum class ETextureUsageFlags
     CopySource                = FLAG(11), // Texture rests as a copy source (staging/upload)
     CopyDest                  = FLAG(12), // Texture rests as a copy destination (readback/staging)
     SamplePositionsCompatible = FLAG(13), // Depth/stencil texture may be rendered with custom sample positions
+    SamplerFeedback           = FLAG(14), // Opaque sampler feedback map paired with a sampled texture
 };
 
 ENUM_CLASS_OPERATORS(ETextureUsageFlags);
@@ -117,6 +118,42 @@ struct FRHITextureDesc
         return FRHITextureDesc(ETextureDimension::Texture2DArray, InFormat, IntVector3(InWidth, InHeight, 0), InArraySlices, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
     }
 
+    NODISCARD static FRHITextureDesc CreateSamplerFeedbackTexture2D(EFormat InFormat, uint32 InPairedWidth, uint32 InPairedHeight,
+        uint32 InPairedMipLevels, IntVector3 InMipRegion)
+    {
+        const ETextureUsageFlags UsageFlags =
+            ETextureUsageFlags::SamplerFeedback | 
+            ETextureUsageFlags::UnorderedAccessTexture |
+            ETextureUsageFlags::NoDefaultSRV | 
+            ETextureUsageFlags::NoDefaultUAV |
+            ETextureUsageFlags::NoDefaultRTV | 
+            ETextureUsageFlags::NoDefaultDSV;
+
+        FRHITextureDesc Desc(ETextureDimension::Texture2D, InFormat, IntVector3(InPairedWidth, InPairedHeight, 0),
+            1, InPairedMipLevels, 1, UsageFlags);
+
+        Desc.SamplerFeedbackMipRegion = InMipRegion;
+        return Desc;
+    }
+
+    NODISCARD static FRHITextureDesc CreateSamplerFeedbackTexture2DArray(EFormat InFormat, uint32 InPairedWidth, uint32 InPairedHeight,
+        uint32 InPairedArraySlices, uint32 InPairedMipLevels, IntVector3 InMipRegion)
+    {
+        const ETextureUsageFlags UsageFlags =
+            ETextureUsageFlags::SamplerFeedback | 
+            ETextureUsageFlags::UnorderedAccessTexture |
+            ETextureUsageFlags::NoDefaultSRV | 
+            ETextureUsageFlags::NoDefaultUAV |
+            ETextureUsageFlags::NoDefaultRTV | 
+            ETextureUsageFlags::NoDefaultDSV;
+
+        FRHITextureDesc Desc(ETextureDimension::Texture2DArray, InFormat, IntVector3(InPairedWidth, InPairedHeight, 0),
+            InPairedArraySlices, InPairedMipLevels, 1, UsageFlags);
+
+        Desc.SamplerFeedbackMipRegion = InMipRegion;
+        return Desc;
+    }
+
     NODISCARD static FRHITextureDesc CreateTextureCube(EFormat InFormat, uint32 InExtent, uint32 InNumMipLevels, uint32 InNumSamples, 
         ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
     {
@@ -171,19 +208,21 @@ struct FRHITextureDesc
     NODISCARD constexpr bool IsCopySource()                const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::CopySource); }
     NODISCARD constexpr bool IsCopyDest()                  const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::CopyDest); }
     NODISCARD constexpr bool IsSamplePositionsCompatible() const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::SamplePositionsCompatible); }
+    NODISCARD constexpr bool IsSamplerFeedbackTexture()    const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::SamplerFeedback); }
     NODISCARD constexpr bool IsMultisampled()              const { return (NumSamples > 1); }
 
     bool operator==(const FRHITextureDesc& Other) const noexcept = default;
 
-    ETextureDimension             Dimension      = ETextureDimension::None;
-    EFormat                       Format         = EFormat::Unknown;
-    ETextureUsageFlags            UsageFlags     = ETextureUsageFlags::None;
-    uint32                        NumArraySlices = 0;
-    uint32                        NumMipLevels   = 0;
-    uint32                        NumSamples     = 0;
-    IntVector3                    Extent         = { };
-    FClearValue                   ClearValue     = { };
-    ERHIResourceStateTrackingMode TrackingMode   = ERHIResourceStateTrackingMode::Tracked;
+    ETextureDimension             Dimension                = ETextureDimension::None;
+    EFormat                       Format                   = EFormat::Unknown;
+    ETextureUsageFlags            UsageFlags               = ETextureUsageFlags::None;
+    uint32                        NumArraySlices           = 0;
+    uint32                        NumMipLevels             = 0;
+    uint32                        NumSamples               = 0;
+    IntVector3                    Extent                   = { };
+    FClearValue                   ClearValue               = { };
+    ERHIResourceStateTrackingMode TrackingMode             = ERHIResourceStateTrackingMode::Tracked;
+    IntVector3                    SamplerFeedbackMipRegion = { };
 };
 
 class FRHITexture : public FRHIResource

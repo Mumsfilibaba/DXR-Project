@@ -140,7 +140,6 @@ public:
 
     // FRHIShaderResourceView Interface
     virtual void* GetRHINativeHandle() const override final;
-
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
 
     // ID3D12ResourceRelocationListener Interface
@@ -156,6 +155,15 @@ public:
 
 private:
     D3D12_SHADER_RESOURCE_VIEW_DESC D3D12Desc;
+};
+
+enum class ED3D12UnorderedAccessViewType : uint8
+{
+    /** Described by a D3D12_UNORDERED_ACCESS_VIEW_DESC, created via CreateUnorderedAccessView */
+    Standard = 0,
+
+    /** Described by a feedback/paired resource pair, created via CreateSamplerFeedbackUnorderedAccessView */
+    SamplerFeedback = 1,
 };
 
 class FD3D12UnorderedAccessViewBase : public FRHIUnorderedAccessView
@@ -180,7 +188,6 @@ public:
  
     // FRHIUnorderedAccessView Interface
     virtual void* GetRHINativeHandle() const override final;
-
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
 
     // FD3D12UnorderedAccessViewBase Interface
@@ -191,6 +198,11 @@ public:
 
     bool Initialize(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
     bool UpdateView(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
+
+#if D3D12_USE_SAMPLER_FEEDBACK
+    bool InitializeSamplerFeedback(FD3D12Resource* InTargetedResource, FD3D12Resource* InFeedbackResource);
+    bool UpdateSamplerFeedbackView(FD3D12Resource* InTargetedResource, FD3D12Resource* InFeedbackResource);
+#endif
 
     NODISCARD FORCEINLINE const D3D12_UNORDERED_ACCESS_VIEW_DESC& GetD3D12Desc() const
     {
@@ -207,9 +219,16 @@ public:
         return CounterResource.Get();
     }
 
+    NODISCARD FORCEINLINE ED3D12UnorderedAccessViewType GetViewType() const
+    {
+        return ViewType;
+    }
+
 private:
     FD3D12ResourceRef                CounterResource;
+    FD3D12ResourceRef                TargetedResource;
     D3D12_UNORDERED_ACCESS_VIEW_DESC D3D12Desc;
+    ED3D12UnorderedAccessViewType    ViewType;
 };
 
 class FD3D12RenderTargetViewBase : public FRHIRenderTargetView

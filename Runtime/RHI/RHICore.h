@@ -28,6 +28,9 @@ enum class EFormat : uint8;
 /** Number of faces in a cube map texture */
 #define RHI_NUM_CUBE_FACES (6)
 
+/** Use this value to address every subresource at once (sampler feedback transcode) */
+#define RHI_ALL_SUBRESOURCES (uint32(~0))
+
 // -------------------------------------------------------------------------------------------
 // Fixed Hardware / API Binding Limits
 // -------------------------------------------------------------------------------------------
@@ -123,6 +126,26 @@ NODISCARD constexpr const CHAR* ToString(EShadingRateTier ShadingRateTier)
         case EShadingRateTier::Tier1:        return "Tier1";
         case EShadingRateTier::Tier2:        return "Tier2";
         
+        default: return "Unknown";
+    }
+}
+
+enum class ESamplerFeedbackTier : uint8
+{
+    NotSupported = 0,
+
+    Tier0_9 = 1,
+    Tier1_0 = 2,
+};
+
+NODISCARD constexpr const CHAR* ToString(ESamplerFeedbackTier SamplerFeedbackTier)
+{
+    switch (SamplerFeedbackTier)
+    {
+        case ESamplerFeedbackTier::NotSupported: return "NotSupported";
+        case ESamplerFeedbackTier::Tier0_9:      return "Tier0_9";
+        case ESamplerFeedbackTier::Tier1_0:      return "Tier1_0";
+
         default: return "Unknown";
     }
 }

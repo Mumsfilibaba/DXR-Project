@@ -81,6 +81,11 @@ FRHIDescriptorHandle FD3D12TextureRHI::GetBindlessUAVHandle() const
 
 bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIResourceState InInitialAccess, const IRHITextureData* InInitialData)
 {
+    if (Desc.IsSamplerFeedbackTexture())
+    {
+        return InitializeSamplerFeedbackMap(InInitialAccess);
+    }
+
     D3D12_RESOURCE_DESC ResourceDesc = {};
     ResourceDesc.Dimension        = ConvertTextureDimension(Desc.Dimension);
     ResourceDesc.Flags            = ConvertTextureFlags(Desc.UsageFlags);
@@ -823,6 +828,51 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
 
     ResourceStorage.FinalizeAllocation();
     return true;
+}
+
+bool FD3D12TextureRHI::InitializeSamplerFeedbackMap(ERHIResourceState InInitialAccess)
+{
+#if D3D12_USE_SAMPLER_FEEDBACK
+    D3D12_RESOURCE_DESC1 ResourceDesc = {};
+    ResourceDesc.Dimension                = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    ResourceDesc.Format                   = ConvertFormat(Desc.Format);
+    ResourceDesc.Width                    = Desc.Extent.X;
+    ResourceDesc.Height                   = Desc.Extent.Y;
+    ResourceDesc.DepthOrArraySize         = static_cast<UINT16>(RHIDimensionArrayLayers(Desc.Dimension, Desc.NumArraySlices));
+    ResourceDesc.MipLevels                = static_cast<UINT16>(Desc.NumMipLevels);
+    ResourceDesc.Alignment                = 0;
+    ResourceDesc.SampleDesc.Count         = 1;
+    ResourceDesc.SampleDesc.Quality       = 0;
+    ResourceDesc.Layout                   = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+    ResourceDesc.Flags                    = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
+    ResourceDesc.SamplerFeedbackMipRegion = 
+    { 
+        static_cast<UINT>(Desc.SamplerFeedbackMipRegion.X),
+        static_cast<UINT>(Desc.SamplerFeedbackMipRegion.Y),
+        static_cast<UINT>(Math::Max(Desc.SamplerFeedbackMipRegion.Z, 1))
+    };
+
+    FD3D12ResourceRef NewResource;
+    if (!GetDevice()->CreateCommittedResource2(ResourceDesc, D3D12_HEAP_TYPE_DEFAULT, ConvertResourceState(InInitialAccess), nullptr, NewResource))
+    {
+        return false;
+    }
+
+    ResourceStorage.InitStandalone(NewResource.Get());
+    ResourceStorage.SetSize(NewResource->GetAllocationSize());
+
+    Desc.TrackingMode = ERHIResourceStateTrackingMode::Tracked;
+    GetResource()->SetResourceStateMode(ED3D12ResourceStateMode::MultipleStates);
+
+    ResourceStorage.FinalizeAllocation();
+    return true;
+#else
+    UNREFERENCED_VARIABLE(InInitialAccess);
+
+    D3D12_ERROR("Sampler feedback is not available in this SDK configuration");
+    return false;
+#endif
 }
 
 void FD3D12TextureRHI::SetDebugName(const String& InName)

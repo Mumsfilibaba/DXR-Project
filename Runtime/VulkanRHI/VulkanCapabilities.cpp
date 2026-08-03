@@ -516,6 +516,9 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     RHI::ShadingRateTier             = EShadingRateTier::NotSupported;
     RHI::ShadingRateImageTileSize    = 0;
 
+    RHI::bSupportsSamplerFeedback    = false;
+    RHI::SamplerFeedbackTier         = ESamplerFeedbackTier::NotSupported;
+
     RHI::bSupportsProgrammableSamplePositions = false;
     RHI::SamplePositionsTier                  = ESamplePositionsTier::NotSupported;
     RHI::MaxSamplePositionGridWidth           = 0;

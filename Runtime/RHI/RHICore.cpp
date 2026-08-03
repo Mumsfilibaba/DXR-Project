@@ -70,6 +70,13 @@ RHI_API EShadingRateTier RHI::ShadingRateTier          = EShadingRateTier::NotSu
 RHI_API uint32           RHI::ShadingRateImageTileSize = 0;
 
 // -------------------------------------------------------------------------------------------
+// Sampler Feedback
+// -------------------------------------------------------------------------------------------
+
+RHI_API bool                 RHI::bSupportsSamplerFeedback = false;
+RHI_API ESamplerFeedbackTier RHI::SamplerFeedbackTier      = ESamplerFeedbackTier::NotSupported;
+
+// -------------------------------------------------------------------------------------------
 // Programmable Sample Positions
 // -------------------------------------------------------------------------------------------
 

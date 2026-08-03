@@ -184,6 +184,12 @@ RHI_API void RHI::DumpCapabilities()
     LOG_INFO("[RHI]   Shading Rate Image Tile Size            : %u", RHI::ShadingRateImageTileSize);
 
     // -------------------------------------------------------------------------------------------
+    // Sampler Feedback
+    // -------------------------------------------------------------------------------------------
+    LOG_INFO("[RHI] Sampler Feedback                          : %s", YesNo(RHI::bSupportsSamplerFeedback));
+    LOG_INFO("[RHI]   Tier                                    : %s", ToString(RHI::SamplerFeedbackTier));
+
+    // -------------------------------------------------------------------------------------------
     // Programmable Sample Positions
     // -------------------------------------------------------------------------------------------
     LOG_INFO("[RHI] Programmable Sample Positions             : %s", YesNo(RHI::bSupportsProgrammableSamplePositions));

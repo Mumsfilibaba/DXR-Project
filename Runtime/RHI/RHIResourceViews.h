@@ -71,6 +71,7 @@ enum class EViewDimension : uint8
     TextureCubeArray,
     Texture3D,
     AccelerationStructure,
+    SamplerFeedback,
 };
 
 enum class EDepthStencilViewFlags : uint8
@@ -96,6 +97,7 @@ NODISCARD constexpr const CHAR* ToString(EViewDimension Dimension)
         case EViewDimension::TextureCubeArray:      return "TextureCubeArray";
         case EViewDimension::Texture3D:             return "Texture3D";
         case EViewDimension::AccelerationStructure: return "AccelerationStructure";
+        case EViewDimension::SamplerFeedback:       return "SamplerFeedback";
         default:                                    return "None";
     }
 }
@@ -107,7 +109,8 @@ NODISCARD constexpr bool IsBufferViewDimension(EViewDimension Dimension)
 
 NODISCARD constexpr bool IsTextureViewDimension(EViewDimension Dimension)
 {
-    return Dimension != EViewDimension::None && Dimension != EViewDimension::Buffer && Dimension != EViewDimension::AccelerationStructure;
+    return Dimension != EViewDimension::None && Dimension != EViewDimension::Buffer && 
+        Dimension != EViewDimension::AccelerationStructure && Dimension != EViewDimension::SamplerFeedback;
 }
 
 NODISCARD constexpr bool IsCubeViewDimension(EViewDimension Dimension)
@@ -118,6 +121,11 @@ NODISCARD constexpr bool IsCubeViewDimension(EViewDimension Dimension)
 NODISCARD constexpr bool IsAccelerationStructureViewDimension(EViewDimension Dimension)
 {
     return Dimension == EViewDimension::AccelerationStructure;
+}
+
+NODISCARD constexpr bool IsSamplerFeedbackViewDimension(EViewDimension Dimension)
+{
+    return Dimension == EViewDimension::SamplerFeedback;
 }
 
 NODISCARD inline bool IsViewDimensionCompatible(ETextureDimension TextureDimension, EViewDimension ViewDimension)
@@ -131,19 +139,27 @@ NODISCARD inline bool IsViewDimensionCompatible(ETextureDimension TextureDimensi
     {
         case ETextureDimension::Texture1D:
             return ViewDimension == EViewDimension::Texture1D;
+
         case ETextureDimension::Texture1DArray:
             return ViewDimension == EViewDimension::Texture1D || ViewDimension == EViewDimension::Texture1DArray;
+
         case ETextureDimension::Texture2D:
             return ViewDimension == EViewDimension::Texture2D;
+        
         case ETextureDimension::Texture2DArray:
             return ViewDimension == EViewDimension::Texture2D || ViewDimension == EViewDimension::Texture2DArray;
+
         case ETextureDimension::TextureCube:
-            return ViewDimension == EViewDimension::TextureCube || ViewDimension == EViewDimension::Texture2DArray || ViewDimension == EViewDimension::Texture2D;
+            return ViewDimension == EViewDimension::TextureCube || ViewDimension == EViewDimension::Texture2DArray || 
+                ViewDimension == EViewDimension::Texture2D;
+        
         case ETextureDimension::TextureCubeArray:
-            return ViewDimension == EViewDimension::TextureCubeArray || ViewDimension == EViewDimension::TextureCube ||
-                   ViewDimension == EViewDimension::Texture2DArray || ViewDimension == EViewDimension::Texture2D;
+            return ViewDimension == EViewDimension::TextureCubeArray || ViewDimension == EViewDimension::TextureCube || 
+                ViewDimension == EViewDimension::Texture2DArray || ViewDimension == EViewDimension::Texture2D;
+                   
         case ETextureDimension::Texture3D:
             return ViewDimension == EViewDimension::Texture3D;
+
         default:
             return false;
     }
@@ -421,18 +437,25 @@ public:
         {
             case EViewDimension::Texture1D:
                 return Texture1D.Format;
+
             case EViewDimension::Texture1DArray:
                 return Texture1DArray.Format;
+
             case EViewDimension::Texture2D:
                 return Texture2D.Format;
+
             case EViewDimension::Texture2DArray:
                 return Texture2DArray.Format;
+
             case EViewDimension::TextureCube:
                 return TextureCube.Format;
+
             case EViewDimension::TextureCubeArray:
                 return TextureCubeArray.Format;
+
             case EViewDimension::Texture3D:
                 return Texture3D.Format;
+
             default:
                 return EFormat::Unknown;
         }
@@ -449,29 +472,37 @@ public:
         {
             case EViewDimension::Buffer:
                 return Buffer == Other.Buffer;
+
             case EViewDimension::Texture1D: 
                 return Texture1D == Other.Texture1D;
+                
             case EViewDimension::Texture1DArray:
                 return Texture1DArray == Other.Texture1DArray;
+
             case EViewDimension::Texture2D:
                 return Texture2D == Other.Texture2D;
+
             case EViewDimension::Texture2DArray:
                 return Texture2DArray == Other.Texture2DArray;
+
             case EViewDimension::TextureCube:
                 return TextureCube == Other.TextureCube;
+
             case EViewDimension::TextureCubeArray:
                 return TextureCubeArray == Other.TextureCubeArray;
+
             case EViewDimension::Texture3D:
                 return Texture3D == Other.Texture3D;
+
             case EViewDimension::AccelerationStructure:
                 return AccelerationStructure == Other.AccelerationStructure;
+
             default:
                 return true;
         }
     }
 
     EViewDimension ViewDimension;
-
     union
     {
         FBufferSRV                Buffer;
@@ -617,30 +648,39 @@ struct THash<FRHIShaderResourceViewDesc>
             case EViewDimension::Buffer:
                 HashCombine(Result, THash<FRHIShaderResourceViewDesc::FBufferSRV>::GetHash(Value.Buffer));
                 break;
+
             case EViewDimension::Texture1D:
                 HashCombine(Result, THash<FRHIShaderResourceViewDesc::FTexture1DSRV>::GetHash(Value.Texture1D));
                 break;
+
             case EViewDimension::Texture1DArray:
                 HashCombine(Result, THash<FRHIShaderResourceViewDesc::FTexture1DArraySRV>::GetHash(Value.Texture1DArray));
                 break;
+
             case EViewDimension::Texture2D:
                 HashCombine(Result, THash<FRHIShaderResourceViewDesc::FTexture2DSRV>::GetHash(Value.Texture2D));
                 break;
+
             case EViewDimension::Texture2DArray:
                 HashCombine(Result, THash<FRHIShaderResourceViewDesc::FTexture2DArraySRV>::GetHash(Value.Texture2DArray));
                 break;
+
             case EViewDimension::TextureCube:
                 HashCombine(Result, THash<FRHIShaderResourceViewDesc::FTextureCubeSRV>::GetHash(Value.TextureCube));
                 break;
+
             case EViewDimension::TextureCubeArray:
                 HashCombine(Result, THash<FRHIShaderResourceViewDesc::FTextureCubeArraySRV>::GetHash(Value.TextureCubeArray));
                 break;
+
             case EViewDimension::Texture3D:
                 HashCombine(Result, THash<FRHIShaderResourceViewDesc::FTexture3DSRV>::GetHash(Value.Texture3D));
                 break;
+
             case EViewDimension::AccelerationStructure:
                 HashCombine(Result, THash<FRHIShaderResourceViewDesc::FAccelerationStructureSRV>::GetHash(Value.AccelerationStructure));
                 break;
+
             default:
                 break;
         }
@@ -726,6 +766,13 @@ public:
         uint8   MipLevel;
         uint16  FirstWSlice;
         uint16  WSize;
+    };
+
+    struct FSamplerFeedbackUAV
+    {
+        constexpr bool operator==(const FSamplerFeedbackUAV& Other) const noexcept = default;
+
+        EFormat Format;
     };
 
 public:
@@ -824,6 +871,14 @@ public:
         return Desc;
     }
 
+    NODISCARD static FRHIUnorderedAccessViewDesc CreateSamplerFeedback(EFormat InFormat)
+    {
+        FRHIUnorderedAccessViewDesc Desc;
+        Desc.ViewDimension          = EViewDimension::SamplerFeedback;
+        Desc.SamplerFeedback.Format = InFormat;
+        return Desc;
+    }
+
 public:
     FRHIUnorderedAccessViewDesc() noexcept
         : ViewDimension(EViewDimension::None)
@@ -831,8 +886,9 @@ public:
     {
     }
 
-    NODISCARD constexpr bool IsBufferUAV()  const { return IsBufferViewDimension(ViewDimension); }
-    NODISCARD constexpr bool IsTextureUAV() const { return IsTextureViewDimension(ViewDimension); }
+    NODISCARD constexpr bool IsBufferUAV()          const { return IsBufferViewDimension(ViewDimension); }
+    NODISCARD constexpr bool IsTextureUAV()         const { return IsTextureViewDimension(ViewDimension); }
+    NODISCARD constexpr bool IsSamplerFeedbackUAV() const { return IsSamplerFeedbackViewDimension(ViewDimension); }
 
     NODISCARD FORCEINLINE EFormat GetFormat() const noexcept
     {
@@ -840,18 +896,28 @@ public:
         {
             case EViewDimension::Texture1D:
                 return Texture1D.Format;
+
             case EViewDimension::Texture1DArray:
                 return Texture1DArray.Format;
+
             case EViewDimension::Texture2D:
                 return Texture2D.Format;
+
             case EViewDimension::Texture2DArray:
                 return Texture2DArray.Format;
+
             case EViewDimension::TextureCube:
                 return TextureCube.Format;
+
             case EViewDimension::TextureCubeArray:
                 return TextureCubeArray.Format;
+
             case EViewDimension::Texture3D:
                 return Texture3D.Format;
+
+            case EViewDimension::SamplerFeedback:
+                return SamplerFeedback.Format;
+
             default:
                 return EFormat::Unknown;
         }
@@ -868,27 +934,37 @@ public:
         {
             case EViewDimension::Buffer:
                 return Buffer == Other.Buffer;
+
             case EViewDimension::Texture1D:
                 return Texture1D == Other.Texture1D;
+
             case EViewDimension::Texture1DArray:
                 return Texture1DArray == Other.Texture1DArray;
+
             case EViewDimension::Texture2D:
                 return Texture2D == Other.Texture2D;
+
             case EViewDimension::Texture2DArray:
                 return Texture2DArray == Other.Texture2DArray;
+
             case EViewDimension::TextureCube:
                 return TextureCube == Other.TextureCube;
+
             case EViewDimension::TextureCubeArray:
                 return TextureCubeArray == Other.TextureCubeArray;
+
             case EViewDimension::Texture3D:
                 return Texture3D == Other.Texture3D;
+
+            case EViewDimension::SamplerFeedback:
+                return SamplerFeedback == Other.SamplerFeedback;
+
             default:
                 return true;
         }
     }
 
     EViewDimension ViewDimension;
-
     union
     {
         FBufferUAV           Buffer;
@@ -899,6 +975,7 @@ public:
         FTextureCubeUAV      TextureCube;
         FTextureCubeArrayUAV TextureCubeArray;
         FTexture3DUAV        Texture3D;
+        FSamplerFeedbackUAV  SamplerFeedback;
     };
 };
 
@@ -1002,6 +1079,15 @@ struct THash<FRHIUnorderedAccessViewDesc::FTexture3DUAV>
 };
 
 template<>
+struct THash<FRHIUnorderedAccessViewDesc::FSamplerFeedbackUAV>
+{
+    NODISCARD static uint64 GetHash(const FRHIUnorderedAccessViewDesc::FSamplerFeedbackUAV& Value)
+    {
+        return UnderlyingTypeValue(Value.Format);
+    }
+};
+
+template<>
 struct THash<FRHIUnorderedAccessViewDesc>
 {
     NODISCARD static uint64 GetHash(const FRHIUnorderedAccessViewDesc& Value)
@@ -1012,27 +1098,39 @@ struct THash<FRHIUnorderedAccessViewDesc>
             case EViewDimension::Buffer:
                 HashCombine(Result, THash<FRHIUnorderedAccessViewDesc::FBufferUAV>::GetHash(Value.Buffer));
                 break;
+
             case EViewDimension::Texture1D:
                 HashCombine(Result, THash<FRHIUnorderedAccessViewDesc::FTexture1DUAV>::GetHash(Value.Texture1D));
                 break;
+
             case EViewDimension::Texture1DArray:
                 HashCombine(Result, THash<FRHIUnorderedAccessViewDesc::FTexture1DArrayUAV>::GetHash(Value.Texture1DArray));
                 break;
+
             case EViewDimension::Texture2D:
                 HashCombine(Result, THash<FRHIUnorderedAccessViewDesc::FTexture2DUAV>::GetHash(Value.Texture2D));
                 break;
+
             case EViewDimension::Texture2DArray:
                 HashCombine(Result, THash<FRHIUnorderedAccessViewDesc::FTexture2DArrayUAV>::GetHash(Value.Texture2DArray));
                 break;
+
             case EViewDimension::TextureCube:
                 HashCombine(Result, THash<FRHIUnorderedAccessViewDesc::FTextureCubeUAV>::GetHash(Value.TextureCube));
                 break;
+
             case EViewDimension::TextureCubeArray:
                 HashCombine(Result, THash<FRHIUnorderedAccessViewDesc::FTextureCubeArrayUAV>::GetHash(Value.TextureCubeArray));
                 break;
+
             case EViewDimension::Texture3D:
                 HashCombine(Result, THash<FRHIUnorderedAccessViewDesc::FTexture3DUAV>::GetHash(Value.Texture3D));
                 break;
+
+            case EViewDimension::SamplerFeedback:
+                HashCombine(Result, THash<FRHIUnorderedAccessViewDesc::FSamplerFeedbackUAV>::GetHash(Value.SamplerFeedback));
+                break;
+
             default:
                 break;
         }
@@ -1197,18 +1295,25 @@ public:
         {
             case EViewDimension::Texture1D:
                 return Texture1D.Format;
+
             case EViewDimension::Texture1DArray:
                 return Texture1DArray.Format;
+
             case EViewDimension::Texture2D:
                 return Texture2D.Format;
+
             case EViewDimension::Texture2DArray:
                 return Texture2DArray.Format;
+
             case EViewDimension::TextureCube:
                 return TextureCube.Format;
+
             case EViewDimension::TextureCubeArray:
                 return TextureCubeArray.Format;
+
             case EViewDimension::Texture3D:
                 return Texture3D.Format;
+
             default:
                 return EFormat::Unknown;
         }
@@ -1225,25 +1330,31 @@ public:
         {
             case EViewDimension::Texture1D:
                 return Texture1D == Other.Texture1D;
+
             case EViewDimension::Texture1DArray:
                 return Texture1DArray == Other.Texture1DArray;
+
             case EViewDimension::Texture2D:
                 return Texture2D == Other.Texture2D;
+
             case EViewDimension::Texture2DArray:
                 return Texture2DArray == Other.Texture2DArray;
+
             case EViewDimension::TextureCube:
                 return TextureCube == Other.TextureCube;
+
             case EViewDimension::TextureCubeArray:
                 return TextureCubeArray == Other.TextureCubeArray;
+
             case EViewDimension::Texture3D:
                 return Texture3D == Other.Texture3D;
+
             default:
                 return true;
         }
     }
 
     EViewDimension ViewDimension;
-
     union
     {
         FTexture1DRTV        Texture1D;
@@ -1354,24 +1465,31 @@ struct THash<FRHIRenderTargetViewDesc>
             case EViewDimension::Texture1D:
                 HashCombine(Result, THash<FRHIRenderTargetViewDesc::FTexture1DRTV>::GetHash(Value.Texture1D));
                 break;
+
             case EViewDimension::Texture1DArray:
                 HashCombine(Result, THash<FRHIRenderTargetViewDesc::FTexture1DArrayRTV>::GetHash(Value.Texture1DArray));
                 break;
+
             case EViewDimension::Texture2D:
                 HashCombine(Result, THash<FRHIRenderTargetViewDesc::FTexture2DRTV>::GetHash(Value.Texture2D));
                 break;
+
             case EViewDimension::Texture2DArray:
                 HashCombine(Result, THash<FRHIRenderTargetViewDesc::FTexture2DArrayRTV>::GetHash(Value.Texture2DArray));
                 break;
+
             case EViewDimension::TextureCube:
                 HashCombine(Result, THash<FRHIRenderTargetViewDesc::FTextureCubeRTV>::GetHash(Value.TextureCube));
                 break;
+
             case EViewDimension::TextureCubeArray:
                 HashCombine(Result, THash<FRHIRenderTargetViewDesc::FTextureCubeArrayRTV>::GetHash(Value.TextureCubeArray));
                 break;
+
             case EViewDimension::Texture3D:
                 HashCombine(Result, THash<FRHIRenderTargetViewDesc::FTexture3DRTV>::GetHash(Value.Texture3D));
                 break;
+
             default:
                 break;
         }
@@ -1524,16 +1642,22 @@ public:
         {
             case EViewDimension::Texture1D:
                 return Texture1D.Format;
+
             case EViewDimension::Texture1DArray:
                 return Texture1DArray.Format;
+
             case EViewDimension::Texture2D:
                 return Texture2D.Format;
+
             case EViewDimension::Texture2DArray:
                 return Texture2DArray.Format;
+
             case EViewDimension::TextureCube:
                 return TextureCube.Format;
+
             case EViewDimension::TextureCubeArray:
                 return TextureCubeArray.Format;
+
             default:
                 return EFormat::Unknown;
         }
@@ -1550,16 +1674,22 @@ public:
         {
             case EViewDimension::Texture1D:
                 return Texture1D == Other.Texture1D;
+
             case EViewDimension::Texture1DArray:
                 return Texture1DArray == Other.Texture1DArray;
+
             case EViewDimension::Texture2D:
                 return Texture2D == Other.Texture2D;
+
             case EViewDimension::Texture2DArray:
                 return Texture2DArray == Other.Texture2DArray;
+
             case EViewDimension::TextureCube:
                 return TextureCube == Other.TextureCube;
+
             case EViewDimension::TextureCubeArray:
                 return TextureCubeArray == Other.TextureCubeArray;
+
             default:
                 return true;
         }
@@ -1587,7 +1717,6 @@ public:
 
     EViewDimension         ViewDimension;
     EDepthStencilViewFlags Flags;
-
     union
     {
         FTexture1DDSV        Texture1D;
@@ -1684,21 +1813,27 @@ struct THash<FRHIDepthStencilViewDesc>
             case EViewDimension::Texture1D:
                 HashCombine(Result, THash<FRHIDepthStencilViewDesc::FTexture1DDSV>::GetHash(Value.Texture1D));
                 break;
+
             case EViewDimension::Texture1DArray:
                 HashCombine(Result, THash<FRHIDepthStencilViewDesc::FTexture1DArrayDSV>::GetHash(Value.Texture1DArray));
                 break;
+
             case EViewDimension::Texture2D:
                 HashCombine(Result, THash<FRHIDepthStencilViewDesc::FTexture2DDSV>::GetHash(Value.Texture2D));
                 break;
+
             case EViewDimension::Texture2DArray:
                 HashCombine(Result, THash<FRHIDepthStencilViewDesc::FTexture2DArrayDSV>::GetHash(Value.Texture2DArray));
                 break;
+
             case EViewDimension::TextureCube:
                 HashCombine(Result, THash<FRHIDepthStencilViewDesc::FTextureCubeDSV>::GetHash(Value.TextureCube));
                 break;
+
             case EViewDimension::TextureCubeArray:
                 HashCombine(Result, THash<FRHIDepthStencilViewDesc::FTextureCubeArrayDSV>::GetHash(Value.TextureCubeArray));
                 break;
+                
             default:
                 break;
         }

@@ -135,6 +135,10 @@ public:
     
     bool CreateCommittedResource(const D3D12_RESOURCE_DESC& Desc, D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceRef& OutResource);
     bool CreatePlacedResource(FD3D12Heap* Heap, uint64 Offset, const D3D12_RESOURCE_DESC& Desc, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceRef& OutResource);
+#if D3D12_USE_RESOURCE_DESC1
+    bool CreateCommittedResource2(const D3D12_RESOURCE_DESC1& Desc, D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceRef& OutResource);
+    bool CreatePlacedResource1(FD3D12Heap* Heap, uint64 Offset, const D3D12_RESOURCE_DESC1& Desc, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceRef& OutResource);
+#endif
     bool CreateHeap(const D3D12_HEAP_DESC& Desc, FD3D12HeapRef& OutHeap);
     
     bool SupportsSwapChainFormat(DXGI_FORMAT DXGIFormat, ESwapChainUsageFlags Usage) const;

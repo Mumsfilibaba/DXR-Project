@@ -185,6 +185,14 @@ struct FRHIDevice
     virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc) = 0;
 
     /**
+     * @brief Creates a sampler feedback unordered access view pairing a feedback map with the texture it records feedback for.
+     * @param InFeedbackTexture Feedback map, must carry ETextureUsageFlags::SamplerFeedback.
+     * @param InTargetedTexture Paired texture being sampled. May be nullptr, in which case shader writes are discarded.
+     * @return The newly created view (nullptr when sampler feedback is unsupported).
+     */
+    virtual FRHIUnorderedAccessView* CreateSamplerFeedbackUnorderedAccessView(FRHITexture* InFeedbackTexture, FRHITexture* InTargetedTexture) = 0;
+
+    /**
      * @brief Creates a new render target view for a texture.
      * @param InResource Texture to create the view for.
      * @param InDesc Structure containing information about the render target view (must have an explicit EViewDimension).

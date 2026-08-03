@@ -140,6 +140,9 @@ enum class EFormat : uint8
     BC7_Typeless          = 89,
     BC7_UNorm             = 90,
     BC7_UNorm_SRGB        = 91,
+
+    SamplerFeedbackMinMipOpaque        = 189,
+    SamplerFeedbackMipRegionUsedOpaque = 190,
 };
 
 NODISCARD constexpr const CHAR* ToString(EFormat Format)
@@ -228,6 +231,9 @@ NODISCARD constexpr const CHAR* ToString(EFormat Format)
         case EFormat::BC7_UNorm:                return "BC7_UNorm";
         case EFormat::BC7_UNorm_SRGB:           return "BC7_UNorm_SRGB";
 
+        case EFormat::SamplerFeedbackMinMipOpaque:        return "SamplerFeedbackMinMipOpaque";
+        case EFormat::SamplerFeedbackMipRegionUsedOpaque: return "SamplerFeedbackMipRegionUsedOpaque";
+
         default: return "Unknown";
     }
 }
@@ -315,7 +321,14 @@ NODISCARD constexpr uint32 GetByteStrideFromFormat(EFormat Format)
 
 NODISCARD constexpr bool IsBlockCompressed(EFormat Format)
 {
-    return UnderlyingTypeValue(Format) >= UnderlyingTypeValue(EFormat::BC1_Typeless);
+    return UnderlyingTypeValue(Format) >= UnderlyingTypeValue(EFormat::BC1_Typeless)
+        && UnderlyingTypeValue(Format) <= UnderlyingTypeValue(EFormat::BC7_UNorm_SRGB);
+}
+
+NODISCARD constexpr bool IsSamplerFeedbackFormat(EFormat Format)
+{
+    return Format == EFormat::SamplerFeedbackMinMipOpaque
+        || Format == EFormat::SamplerFeedbackMipRegionUsedOpaque;
 }
 
 NODISCARD constexpr bool IsStencilFormat(EFormat Format)

@@ -163,6 +163,9 @@ private:
 class FD3D12Resource : public FD3D12DeviceChild, public FRefCountedBase
 {
 public:
+#if D3D12_USE_RESOURCE_DESC1
+    FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource2* InResource, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, const D3D12_CLEAR_VALUE* InClearValue = nullptr, FD3D12Heap* InHeap = nullptr);
+#endif
     FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResource, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, const D3D12_CLEAR_VALUE* InClearValue = nullptr, FD3D12Heap* InHeap = nullptr);
     ~FD3D12Resource();
 

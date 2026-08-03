@@ -703,6 +703,29 @@ DECLARE_RHICOMMAND(FRHICommandResolveTexture)
     FRHITexture* Src;
 };
 
+DECLARE_RHICOMMAND(FRHICommandTranscodeSamplerFeedback)
+{
+    FORCEINLINE FRHICommandTranscodeSamplerFeedback(FRHITexture* InDst, uint32 InDstSubresource, FRHITexture* InSrc, uint32 InSrcSubresource, ESamplerFeedbackTranscodeMode InMode)
+        : Dst(InDst)
+        , Src(InSrc)
+        , DstSubresource(InDstSubresource)
+        , SrcSubresource(InSrcSubresource)
+        , Mode(InMode)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.TranscodeSamplerFeedback(Dst, DstSubresource, Src, SrcSubresource, Mode);
+    }
+
+    FRHITexture*                  Dst;
+    FRHITexture*                  Src;
+    uint32                        DstSubresource;
+    uint32                        SrcSubresource;
+    ESamplerFeedbackTranscodeMode Mode;
+};
+
 DECLARE_RHICOMMAND(FRHICommandCopyBuffer)
 {
     FORCEINLINE FRHICommandCopyBuffer(FRHIBuffer* InDst, FRHIBuffer* InSrc, const FRHIBufferCopyDesc& InCopyBufferDesc)

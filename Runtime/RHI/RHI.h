@@ -118,6 +118,11 @@ struct RHI
         return Device->CreateUnorderedAccessView(InResource, InDesc);
     }
 
+    static FORCEINLINE FRHIUnorderedAccessView* CreateSamplerFeedbackUnorderedAccessView(FRHITexture* InFeedbackTexture, FRHITexture* InTargetedTexture)
+    {
+        return Device->CreateSamplerFeedbackUnorderedAccessView(InFeedbackTexture, InTargetedTexture);
+    }
+
     static FORCEINLINE FRHIRenderTargetView* CreateRenderTargetView(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc)
     {
         return Device->CreateRenderTargetView(InResource, InDesc);
@@ -346,6 +351,16 @@ struct RHI
 
     /** Shading rate image tile size (e.g., 16x16) */
     static RHI_API uint32 ShadingRateImageTileSize;
+
+    // -------------------------------------------------------------------------------------------
+    // Sampler Feedback
+    // -------------------------------------------------------------------------------------------
+
+    /** Whether sampler feedback maps and feedback UAVs are supported */
+    static RHI_API bool bSupportsSamplerFeedback;
+
+    /** Sampler feedback tier (Tier0_9, Tier1_0) */
+    static RHI_API ESamplerFeedbackTier SamplerFeedbackTier;
 
     // -------------------------------------------------------------------------------------------
     // Programmable Sample Positions

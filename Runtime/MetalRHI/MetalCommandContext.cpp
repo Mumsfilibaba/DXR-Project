@@ -396,6 +396,10 @@ void FMetalCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
 {
 }
 
+void FMetalCommandContext::TranscodeSamplerFeedback(FRHITexture* Dst, uint32 DstSubresource, FRHITexture* Src, uint32 SrcSubresource, ESamplerFeedbackTranscodeMode Mode)
+{
+}
+
 void FMetalCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyDesc)
 {
     FMetalBufferRHI* MetalDst = GetMetalBuffer(Dst);

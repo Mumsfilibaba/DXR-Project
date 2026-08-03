@@ -321,6 +321,11 @@ public:
         EmplaceCommand<FRHICommandResolveTexture>(Dst, Src);
     }
 
+    FORCEINLINE void TranscodeSamplerFeedback(FRHITexture* Dst, uint32 DstSubresource, FRHITexture* Src, uint32 SrcSubresource, ESamplerFeedbackTranscodeMode Mode) noexcept
+    {
+        EmplaceCommand<FRHICommandTranscodeSamplerFeedback>(Dst, DstSubresource, Src, SrcSubresource, Mode);
+    }
+
     FORCEINLINE void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyDesc) noexcept
     {
         EmplaceCommand<FRHICommandCopyBuffer>(Dst, Src, CopyDesc);

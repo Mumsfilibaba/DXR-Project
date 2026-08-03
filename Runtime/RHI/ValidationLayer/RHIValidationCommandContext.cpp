@@ -751,6 +751,115 @@ void FRHIValidationCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture*
     CommandContext->ResolveTexture(Dst, Src);
 }
 
+void FRHIValidationCommandContext::TranscodeSamplerFeedback(FRHITexture* Dst, uint32 DstSubresource, FRHITexture* Src, uint32 SrcSubresource, ESamplerFeedbackTranscodeMode Mode)
+{
+    if (!ValidateRecordingPhase("TranscodeSamplerFeedback"))
+    {
+        return;
+    }
+
+    if (!RHI::bSupportsSamplerFeedback)
+    {
+        RHI_VALIDATION_ERROR("TranscodeSamplerFeedback: sampler feedback is not supported on this backend (see RHI.DumpCaps).");
+        return;
+    }
+
+    if (!Dst)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call TranscodeSamplerFeedback when Dst is nullptr");
+        return;
+    }
+
+    if (!Src)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call TranscodeSamplerFeedback when Src is nullptr");
+        return;
+    }
+
+    const bool bDecode = (Mode == ESamplerFeedbackTranscodeMode::Decode);
+
+    // Decoding reads the opaque map and writes R8_UINT; encoding does the reverse.
+    FRHITexture* const OpaqueTexture     = bDecode ? Src : Dst;
+    FRHITexture* const ReadableTexture   = bDecode ? Dst : Src;
+    const uint32       OpaqueSubresource = bDecode ? SrcSubresource : DstSubresource;
+
+    const FRHITextureDesc& OpaqueDesc   = OpaqueTexture->GetDesc();
+    const FRHITextureDesc& ReadableDesc = ReadableTexture->GetDesc();
+
+    if (!OpaqueDesc.IsSamplerFeedbackTexture())
+    {
+        RHI_VALIDATION_ERROR("TranscodeSamplerFeedback: the %s must have ETextureUsageFlags::SamplerFeedback when %s.",
+            bDecode ? "source" : "destination", bDecode ? "decoding" : "encoding");
+        return;
+    }
+
+    if (ReadableDesc.IsSamplerFeedbackTexture())
+    {
+        RHI_VALIDATION_ERROR("TranscodeSamplerFeedback: exactly one side may be a sampler feedback map, but both are.");
+        return;
+    }
+
+    if (ReadableDesc.Format != EFormat::R8_Uint)
+    {
+        RHI_VALIDATION_ERROR("TranscodeSamplerFeedback: the non-opaque side must be R8_Uint. (Got '%s').", ToString(ReadableDesc.Format));
+        return;
+    }
+
+    if (ReadableDesc.Dimension != ETextureDimension::Texture2D && ReadableDesc.Dimension != ETextureDimension::Texture2DArray)
+    {
+        RHI_VALIDATION_ERROR("TranscodeSamplerFeedback: the non-opaque side must be Texture2D or Texture2DArray. (Got '%s').", ToString(ReadableDesc.Dimension));
+        return;
+    }
+
+    const IntVector3 MipRegion = OpaqueDesc.SamplerFeedbackMipRegion;
+    if (MipRegion.X <= 0 || MipRegion.Y <= 0)
+    {
+        RHI_VALIDATION_ERROR("TranscodeSamplerFeedback: the feedback map has an invalid SamplerFeedbackMipRegion (%d,%d).", MipRegion.X, MipRegion.Y);
+        return;
+    }
+
+    const int32 MinWidth  = Math::DivideByMultiple(OpaqueDesc.Extent.X, static_cast<uint32>(MipRegion.X));
+    const int32 MinHeight = Math::DivideByMultiple(OpaqueDesc.Extent.Y, static_cast<uint32>(MipRegion.Y));
+
+    if (ReadableDesc.Extent.X < MinWidth || ReadableDesc.Extent.Y < MinHeight)
+    {
+        RHI_VALIDATION_ERROR("TranscodeSamplerFeedback: the non-opaque side (%d,%d) is smaller than the required (%d,%d) for a (%d,%d) feedback map with a (%d,%d) mip region.",
+            ReadableDesc.Extent.X, ReadableDesc.Extent.Y, MinWidth, MinHeight,
+            OpaqueDesc.Extent.X, OpaqueDesc.Extent.Y, MipRegion.X, MipRegion.Y);
+        return;
+    }
+
+    if (ReadableDesc.NumArraySlices != OpaqueDesc.NumArraySlices)
+    {
+        RHI_VALIDATION_ERROR("TranscodeSamplerFeedback: array sizes must match. (Feedback=%u, Readable=%u).",
+            OpaqueDesc.NumArraySlices, ReadableDesc.NumArraySlices);
+        return;
+    }
+
+    if (OpaqueDesc.Format == EFormat::SamplerFeedbackMinMipOpaque)
+    {
+        if (ReadableDesc.NumMipLevels != 1)
+        {
+            RHI_VALIDATION_ERROR("TranscodeSamplerFeedback: MinMip transcodes require a single-mip non-opaque side. (NumMipLevels=%u).", ReadableDesc.NumMipLevels);
+            return;
+        }
+
+        if (OpaqueSubresource != RHI_ALL_SUBRESOURCES)
+        {
+            RHI_VALIDATION_ERROR("TranscodeSamplerFeedback: MinMip transcodes require RHI_ALL_SUBRESOURCES on the opaque side. (Got %u).", OpaqueSubresource);
+            return;
+        }
+    }
+    else if (ReadableDesc.NumMipLevels != OpaqueDesc.NumMipLevels)
+    {
+        RHI_VALIDATION_ERROR("TranscodeSamplerFeedback: MipRegionUsed transcodes require matching mip counts. (Feedback=%u, Readable=%u).",
+            OpaqueDesc.NumMipLevels, ReadableDesc.NumMipLevels);
+        return;
+    }
+
+    CommandContext->TranscodeSamplerFeedback(Dst, DstSubresource, Src, SrcSubresource, Mode);
+}
+
 void FRHIValidationCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyDesc)
 {
     if (!ValidateRecordingPhase("CopyBuffer"))

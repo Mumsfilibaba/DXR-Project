@@ -1380,6 +1380,11 @@ void FVulkanCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
         &ImageResolve);
 }
 
+void FVulkanCommandContext::TranscodeSamplerFeedback(FRHITexture* /* Dst */, uint32 /* DstSubresource */, FRHITexture* /* Src */, uint32 /* SrcSubresource */, ESamplerFeedbackTranscodeMode /* Mode */)
+{
+    VULKAN_ERROR("TranscodeSamplerFeedback: sampler feedback is not supported by the Vulkan backend");
+}
+
 void FVulkanCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyDesc)
 {
     FVulkanBufferRHI* SrcVulkanBuffer = FVulkanDeviceRHI::ResourceCast(Src);

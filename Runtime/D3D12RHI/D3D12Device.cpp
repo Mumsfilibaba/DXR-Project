@@ -1401,6 +1401,97 @@ bool FD3D12Device::CreatePlacedResource(FD3D12Heap* Heap, uint64 Offset, const D
     return true;
 }
 
+#if D3D12_USE_RESOURCE_DESC1
+bool FD3D12Device::CreateCommittedResource2(const D3D12_RESOURCE_DESC1& Desc, D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceRef& OutResource)
+{
+    if (!GetD3D12Device8())
+    {
+        D3D12_ERROR("[FD3D12Device] CreateCommittedResource2 requires ID3D12Device8");
+        return false;
+    }
+
+    D3D12_HEAP_PROPERTIES HeapProperties = {};
+    HeapProperties.Type                 = HeapType;
+    HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+    HeapProperties.VisibleNodeMask      = NodeMask ? NodeMask : 1;
+    HeapProperties.CreationNodeMask     = NodeMask ? NodeMask : 1;
+
+    TComPtr<ID3D12Resource2> NewResource;
+    const HRESULT Result = GetD3D12Device8()->CreateCommittedResource2(
+        &HeapProperties,
+        D3D12_HEAP_FLAG_NONE,
+        &Desc,
+        InitialState,
+        ClearValue,
+        nullptr, // No protected session
+        IID_PPV_ARGS(&NewResource));
+
+    if (FAILED(Result))
+    {
+        D3D12_ERROR("[FD3D12Device] CreateCommittedResource2 failed");
+        return false;
+    }
+
+    OutResource = new FD3D12Resource(this, NewResource.ReleaseOwnership(), HeapType, InitialState, ClearValue);
+
+#if D3D12_ENABLE_STATS
+    {
+        const uint64 Size = OutResource->GetAllocationSize();
+        STAT_ADD(STAT_D3D12_CommittedResourceMemory, Size);
+        STAT_ADD(STAT_D3D12_CommittedResourceCount, 1);
+
+        switch (HeapType)
+        {
+        case D3D12_HEAP_TYPE_DEFAULT:  STAT_ADD(STAT_D3D12_CommittedDefaultMemory,  Size); break;
+        case D3D12_HEAP_TYPE_UPLOAD:   STAT_ADD(STAT_D3D12_CommittedUploadMemory,   Size); break;
+        case D3D12_HEAP_TYPE_READBACK: STAT_ADD(STAT_D3D12_CommittedReadbackMemory, Size); break;
+        }
+    }
+#endif
+
+    if (HeapType == D3D12_HEAP_TYPE_DEFAULT)
+    {
+        OutResource->StartResidencyTracking();
+    }
+
+    return true;
+}
+
+bool FD3D12Device::CreatePlacedResource1(FD3D12Heap* Heap, uint64 Offset, const D3D12_RESOURCE_DESC1& Desc, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceRef& OutResource)
+{
+    if (!Heap)
+    {
+        D3D12_ERROR("[FD3D12Device] CreatePlacedResource1 requires a valid Heap");
+        return false;
+    }
+
+    if (!GetD3D12Device8())
+    {
+        D3D12_ERROR("[FD3D12Device] CreatePlacedResource1 requires ID3D12Device8");
+        return false;
+    }
+
+    TComPtr<ID3D12Resource2> NewResource;
+    const HRESULT Result = GetD3D12Device8()->CreatePlacedResource1(
+        Heap->GetD3D12Heap(),
+        Offset,
+        &Desc,
+        InitialState,
+        ClearValue,
+        IID_PPV_ARGS(&NewResource));
+
+    if (FAILED(Result))
+    {
+        D3D12_ERROR("[FD3D12Device] CreatePlacedResource1 failed");
+        return false;
+    }
+
+    OutResource = new FD3D12Resource(this, NewResource.ReleaseOwnership(), Heap->GetHeapType(), InitialState, ClearValue, Heap);
+    return true;
+}
+#endif
+
 bool FD3D12Device::CreateHeap(const D3D12_HEAP_DESC& Desc, FD3D12HeapRef& OutHeap)
 {
     TComPtr<ID3D12Heap> NewHeap;

@@ -60,6 +60,8 @@ public:
         return new FNullUnorderedAccessViewRHI(InResource, InDesc);
     }
 
+    virtual FRHIUnorderedAccessView* CreateSamplerFeedbackUnorderedAccessView(FRHITexture*, FRHITexture*) override final { return nullptr; }
+
     virtual FRHIRenderTargetView* CreateRenderTargetView(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc) override final
     {
         return new FNullRenderTargetViewRHI(InResource, InDesc);

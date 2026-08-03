@@ -275,6 +275,34 @@
     #define D3D12_USE_ID3D12COMMANDLIST_10 (0)
 #endif
 
+// -------------------------------------------
+// ID3D12Resource interface availability
+// -------------------------------------------
+
+#ifdef __ID3D12Resource1_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12RESOURCE_1 (1)
+#else
+    #define D3D12_USE_ID3D12RESOURCE_1 (0)
+#endif
+
+#ifdef __ID3D12Resource2_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12RESOURCE_2 (1)
+#else
+    #define D3D12_USE_ID3D12RESOURCE_2 (0)
+#endif
+
+#if D3D12_USE_ID3D12DEVICE_8 && D3D12_USE_ID3D12RESOURCE_2
+    #define D3D12_USE_RESOURCE_DESC1 (1)
+#else
+    #define D3D12_USE_RESOURCE_DESC1 (0)
+#endif
+
+#if D3D12_USE_RESOURCE_DESC1 && D3D12_USE_ID3D12COMMANDLIST_1
+    #define D3D12_USE_SAMPLER_FEEDBACK (1)
+#else
+    #define D3D12_USE_SAMPLER_FEEDBACK (0)
+#endif
+
 #ifndef D3D12_ENABLE_OPACITY_MICROMAPS
     #define D3D12_ENABLE_OPACITY_MICROMAPS (1)
 #endif
