@@ -240,7 +240,7 @@ FD3D12ResourceStorage::FD3D12ResourceStorage(FD3D12Device* InDevice)
     , Resource(nullptr)
     , Owner(nullptr)
     , ResourceOffset(0)
-    , GpuVirtualAddress(0)
+    , GPUVirtualAddress(0)
     , MappedBaseAddress(nullptr)
     , Size(0)
     , AllocatorType(ED3D12AllocatorType::None)
@@ -265,7 +265,7 @@ void FD3D12ResourceStorage::Swap(FD3D12ResourceStorage& Other)
 
     ::Swap(Resource, Other.Resource);
     ::Swap(ResourceOffset, Other.ResourceOffset);
-    ::Swap(GpuVirtualAddress, Other.GpuVirtualAddress);
+    ::Swap(GPUVirtualAddress, Other.GPUVirtualAddress);
     ::Swap(MappedBaseAddress, Other.MappedBaseAddress);
     ::Swap(Size, Other.Size);
     ::Swap(AllocatorType, Other.AllocatorType);
@@ -306,7 +306,7 @@ void FD3D12ResourceStorage::Reset()
     }
 
     ResourceOffset    = 0;
-    GpuVirtualAddress = 0;
+    GPUVirtualAddress = 0;
     MappedBaseAddress = nullptr;
     Size              = 0;
     StorageType       = EResourceStorageType::Unknown;
@@ -391,7 +391,7 @@ void FD3D12ResourceStorage::InitStandalone(FD3D12Resource* InResource)
 
     Resource          = InResource;
     ResourceOffset    = 0;
-    GpuVirtualAddress = InResource ? InResource->GetGPUVirtualAddress() : 0;
+    GPUVirtualAddress = InResource ? InResource->GetGPUVirtualAddress() : 0;
     MappedBaseAddress = nullptr;
     StorageType       = EResourceStorageType::Standalone;
 }

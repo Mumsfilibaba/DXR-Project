@@ -81,16 +81,16 @@ public:
     FORCEINLINE bool IsValid()          const { return StorageType != EResourceStorageType::Unknown; }
     FORCEINLINE bool IsPlacedResource() const { return StorageType == EResourceStorageType::SuballocatedHeap; }
 
-    FORCEINLINE void*                GetMappedBaseAddress() const { return MappedBaseAddress; }
-    FORCEINLINE uint64               GetSize()              const { return Size; }
-    FORCEINLINE uint64               GetResourceOffset()    const { return ResourceOffset; }
-    FORCEINLINE uint64               GetGPUVirtualAddress() const { return GpuVirtualAddress; }
-    FORCEINLINE void*                GetAllocator()         const { return AllocatorPointers.AsVoid; }
-    FORCEINLINE FD3D12Resource*      GetResource()          const { return Resource; }
-    FORCEINLINE FD3D12ResourceBase*  GetOwner()             const { return Owner; }
-    FORCEINLINE FD3D12PoolAllocator* GetPoolAllocator()     const { return (AllocatorType == ED3D12AllocatorType::PoolAllocator) ? AllocatorPointers.PoolAllocator : nullptr; }
-    FORCEINLINE ED3D12AllocatorType  GetAllocatorType()     const { return AllocatorType; }
-    FORCEINLINE EResourceStorageType GetStorageType()       const { return StorageType; }
+    FORCEINLINE void*                     GetMappedBaseAddress() const { return MappedBaseAddress; }
+    FORCEINLINE uint64                    GetSize()              const { return Size; }
+    FORCEINLINE uint64                    GetResourceOffset()    const { return ResourceOffset; }
+    FORCEINLINE D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const { return GPUVirtualAddress; }
+    FORCEINLINE void*                     GetAllocator()         const { return AllocatorPointers.AsVoid; }
+    FORCEINLINE FD3D12Resource*           GetResource()          const { return Resource; }
+    FORCEINLINE FD3D12ResourceBase*       GetOwner()             const { return Owner; }
+    FORCEINLINE FD3D12PoolAllocator*      GetPoolAllocator()     const { return (AllocatorType == ED3D12AllocatorType::PoolAllocator) ? AllocatorPointers.PoolAllocator : nullptr; }
+    FORCEINLINE ED3D12AllocatorType       GetAllocatorType()     const { return AllocatorType; }
+    FORCEINLINE EResourceStorageType      GetStorageType()       const { return StorageType; }
 
     FORCEINLINE const FD3D12PoolAllocatorAllocationData&   GetPoolAllocationData()   const { return AllocationData.Pool; }
     FORCEINLINE const FD3D12BuddyAllocatorAllocationData&  GetBuddyAllocationData()  const { return AllocationData.Buddy; }
@@ -98,7 +98,7 @@ public:
 
     FORCEINLINE void SetSize(uint64 InSize)                                              { Size = InSize; }
     FORCEINLINE void SetResourceOffset(uint64 InResourceOffset)                          { ResourceOffset = InResourceOffset; }
-    FORCEINLINE void SetGpuVirtualAddress(D3D12_GPU_VIRTUAL_ADDRESS InGpuVirtualAddress) { GpuVirtualAddress = InGpuVirtualAddress; }
+    FORCEINLINE void SetGPUVirtualAddress(D3D12_GPU_VIRTUAL_ADDRESS InGPUVirtualAddress) { GPUVirtualAddress = InGPUVirtualAddress; }
     FORCEINLINE void SetMappedBaseAddress(void* InMappedBaseAddress)                     { MappedBaseAddress = InMappedBaseAddress; }
     FORCEINLINE void SetStorageType(EResourceStorageType InStorageType)                  { StorageType = InStorageType; }
     FORCEINLINE void SetOwner(FD3D12ResourceBase* InOwner)                               { Owner = InOwner; }
@@ -153,7 +153,7 @@ private:
     FD3D12Resource*           Resource;
     FD3D12ResourceBase*       Owner;
     uint64                    ResourceOffset;
-    D3D12_GPU_VIRTUAL_ADDRESS GpuVirtualAddress;
+    D3D12_GPU_VIRTUAL_ADDRESS GPUVirtualAddress;
     void*                     MappedBaseAddress;
     uint64                    Size;
     ED3D12AllocatorType       AllocatorType;
@@ -171,116 +171,70 @@ public:
 
     void* MapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range);
     void  UnmapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range);
-    
+
     void DeferredRelease();
-    
+
     void StartResidencyTracking();
     void EndResidencyTracking();
     bool RequiresResourceStateTracking() const;
 
     void SetDebugName(const String& InDebugName);
     void GetDebugName(String& OutDebugName) const;
-    
-    bool IsPlacedResource()  const { return Heap != nullptr; }
-    bool IsHeapTypeDefault() const { return HeapType == D3D12_HEAP_TYPE_DEFAULT; }
 
-    bool ShouldDeferredRelease() const { return bShouldDeferredRelease; }
-    void DisableDeferredRelease()      { bShouldDeferredRelease = false; }
+    FORCEINLINE bool IsPlacedResource()      const { return Heap != nullptr; }
+    FORCEINLINE bool IsHeapTypeDefault()     const { return HeapType == D3D12_HEAP_TYPE_DEFAULT; }
+    FORCEINLINE bool ShouldDeferredRelease() const { return bShouldDeferredRelease; }
+    FORCEINLINE bool HasClearValue()         const { return bHasClearValue; }
+    FORCEINLINE bool HasDefaultState()       const { return bHasDefaultState; }
+    FORCEINLINE bool HasMultiplePlanes()     const { return PlaneCount > 1; }
 
     // Texture Accessors
-    uint64 GetWidth()  const { return Desc.Width; }
-    uint64 GetHeight() const { return Desc.Height; }
-    uint64 GetDepth()  const { return Desc.DepthOrArraySize; }
+    FORCEINLINE uint64 GetWidth()  const { return Desc.Width; }
+    FORCEINLINE uint64 GetHeight() const { return Desc.Height; }
+    FORCEINLINE uint64 GetDepth()  const { return Desc.DepthOrArraySize; }
 
     // Buffer Accessors
-    uint64                    GetSize()              const { return Desc.Width; }
-    D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const { return Address; }
-    
+    FORCEINLINE uint64                    GetSize()              const { return Desc.Width; }
+    FORCEINLINE D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const { return Address; }
+
     // Resource Accessors
-    FD3D12ResourceState&       GetResourceState()       { return ResourceState; }
-    const FD3D12ResourceState& GetResourceState() const { return ResourceState; }
+    FORCEINLINE FD3D12ResourceState&       GetResourceState()       { return ResourceState; }
+    FORCEINLINE const FD3D12ResourceState& GetResourceState() const { return ResourceState; }
 
-    D3D12_RESOURCE_DIMENSION GetDimension()  const { return Desc.Dimension; }
-    D3D12_HEAP_TYPE          GetHeapType()   const { return HeapType; }
-    const D3D12_CLEAR_VALUE& GetClearValue() const { return ClearValue; }
-    FD3D12Heap*              GetHeap()       const { return Heap.Get(); }
+    FORCEINLINE ID3D12Resource*            GetD3D12Resource() const { return Resource.Get(); }
+    FORCEINLINE const D3D12_RESOURCE_DESC& GetDesc()          const { return Desc; }
+    FORCEINLINE const D3D12_CLEAR_VALUE&   GetClearValue()    const { return ClearValue; }
+    FORCEINLINE D3D12_RESOURCE_DIMENSION   GetDimension()     const { return Desc.Dimension; }
+    FORCEINLINE D3D12_HEAP_TYPE            GetHeapType()      const { return HeapType; }
+    FORCEINLINE D3D12_RESOURCE_STATES      GetDefaultState()  const { return DefaultState; }
+    FORCEINLINE FD3D12Heap*                GetHeap()          const { return Heap.Get(); }
 
-    FD3D12ResidencyHandle* GetResidencyHandle()
-    {
-        return Heap ? Heap->GetResidencyHandle() : &ResidencyHandle;
-    }
+    FORCEINLINE ED3D12ResourceStateMode GetResourceStateMode() const { return StateMode; }
+    FORCEINLINE uint64                  GetAllocationSize()    const { return AllocationSize; }
+    FORCEINLINE uint32                  GetNumSubresources()   const { return NumSubresources; }
+    FORCEINLINE uint32                  GetPlaneCount()        const { return PlaneCount; }
 
-    void SetClearValue(const D3D12_CLEAR_VALUE& InClearValue)
+    FORCEINLINE FD3D12ResidencyHandle* GetResidencyHandle() { return Heap ? Heap->GetResidencyHandle() : &ResidencyHandle; }
+
+    FORCEINLINE void DisableDeferredRelease()                                  { bShouldDeferredRelease = false; }
+    FORCEINLINE void SetResourceStateMode(ED3D12ResourceStateMode InStateMode) { StateMode = InStateMode; }
+
+    FORCEINLINE void SetClearValue(const D3D12_CLEAR_VALUE& InClearValue)
     {
         ClearValue     = InClearValue;
         bHasClearValue = true;
     }
 
-    bool HasClearValue() const
-    {
-        return bHasClearValue;
-    }
-
-    void SetDefaultState(D3D12_RESOURCE_STATES InDefaultState)
+    FORCEINLINE void SetDefaultState(D3D12_RESOURCE_STATES InDefaultState)
     {
         DefaultState     = InDefaultState;
         bHasDefaultState = true;
     }
 
-    void ClearDefaultState()
+    FORCEINLINE void ClearDefaultState()
     {
         DefaultState     = D3D12_RESOURCE_STATES(0);
         bHasDefaultState = false;
-    }
-
-    bool HasDefaultState() const
-    {
-        return bHasDefaultState;
-    }
-
-    D3D12_RESOURCE_STATES GetDefaultState() const
-    {
-        return DefaultState;
-    }
-
-    void SetResourceStateMode(ED3D12ResourceStateMode InStateMode)
-    {
-        StateMode = InStateMode;
-    }
-
-    ED3D12ResourceStateMode GetResourceStateMode() const
-    {
-        return StateMode;
-    }
-
-    uint32 GetNumSubresources() const 
-    {
-        return NumSubresources;
-    }
-
-    uint32 GetPlaneCount() const
-    {
-        return PlaneCount;
-    }
-
-    bool HasMultiplePlanes() const
-    {
-        return PlaneCount > 1;
-    }
-
-    ID3D12Resource* GetD3D12Resource() const 
-    { 
-        return Resource.Get(); 
-    }
-
-    const D3D12_RESOURCE_DESC& GetDesc() const
-    {
-        return Desc;
-    }
-
-    uint64 GetAllocationSize() const
-    {
-        return AllocationSize;
     }
 
 private:
