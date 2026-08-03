@@ -43,13 +43,15 @@ void FMetalCommandContext::StartContext()
     id<MTLCommandQueue> CommandQueue = GetDevice()->GetMTLCommandQueue();
     CommandBuffer = [CommandQueue commandBuffer];
 
-    ContextState.ResetStateForNewCommandBuffer();
+    ContextState.BeginCommandBuffer();
 }
 
 void FMetalCommandContext::FinishContext()
 {
     CHECK(CommandBuffer != nil);
-    
+
+    ContextState.EndCommandBuffer();
+
     CopyContext.FinishEncoder();
     
     [CommandBuffer commit];
@@ -235,6 +237,11 @@ void FMetalCommandContext::SetStencilRef(uint32 StencilRef)
 void FMetalCommandContext::SetDepthBias(float DepthBias, float DepthBiasClamp, float SlopeScaledDepthBias)
 {
     ContextState.SetDepthBias(DepthBias, DepthBiasClamp, SlopeScaledDepthBias);
+}
+
+void FMetalCommandContext::SetSamplePositions(const FRHISamplePositionsDesc& SamplePositionsDesc)
+{
+    UNREFERENCED_VARIABLE(SamplePositionsDesc);
 }
 
 void FMetalCommandContext::SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets)

@@ -275,6 +275,7 @@ void FVulkanPipeline::SetDebugName(const String& InName)
 FVulkanGraphicsPipelineStateRHI::FVulkanGraphicsPipelineStateRHI(FVulkanDevice* InDevice)
     : FRHIGraphicsPipelineState()
     , FVulkanPipeline(InDevice)
+    , bUsesSampleLocations(false)
 {
 }
 
@@ -490,6 +491,21 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
     MultisamplingCreateInfo.alphaToCoverageEnable = VK_FALSE;
     MultisamplingCreateInfo.alphaToOneEnable      = VK_FALSE;
 
+#if VK_EXT_sample_locations
+    const bool bUseSampleLocations = InDesc.MultiSampleState.bProgrammableSamplePositions && GVulkanSupportsSampleLocations;
+
+    VkPipelineSampleLocationsStateCreateInfoEXT SampleLocationsCreateInfo = {};
+    if (bUseSampleLocations)
+    {
+        SampleLocationsCreateInfo.sType                     = VK_STRUCTURE_TYPE_PIPELINE_SAMPLE_LOCATIONS_STATE_CREATE_INFO_EXT;
+        SampleLocationsCreateInfo.sampleLocationsEnable     = VK_TRUE;
+        SampleLocationsCreateInfo.sampleLocationsInfo.sType = VK_STRUCTURE_TYPE_SAMPLE_LOCATIONS_INFO_EXT;
+        AddToStructChain(MultisamplingCreateInfo, SampleLocationsCreateInfo);
+    }
+#else
+    const bool bUseSampleLocations = false;
+#endif
+
     // DepthStencilState CreateInfo
     VkPipelineDepthStencilStateCreateInfo DepthStencilStateCreateInfo;
     if (FVulkanDepthStencilStateRHI* DepthStencilState = FVulkanDeviceRHI::ResourceCast(InDesc.DepthStencilState))
@@ -522,12 +538,15 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
         VK_DYNAMIC_STATE_BLEND_CONSTANTS,
         VK_DYNAMIC_STATE_STENCIL_REFERENCE,
         VK_DYNAMIC_STATE_DEPTH_BIAS,
+        VK_DYNAMIC_STATE_SAMPLE_LOCATIONS_EXT, // Must stay last: only counted when the pipeline opts in
     };
 
     VkPipelineDynamicStateCreateInfo DynamicStateCreateInfo = {};
     DynamicStateCreateInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    DynamicStateCreateInfo.dynamicStateCount = ARRAY_COUNT(DynamicStates);
+    DynamicStateCreateInfo.dynamicStateCount = ARRAY_COUNT(DynamicStates) - (bUseSampleLocations ? 0 : 1);
     DynamicStateCreateInfo.pDynamicStates    = DynamicStates;
+
+    bUsesSampleLocations = bUseSampleLocations;
 
     if (InDesc.ViewInstancingState.bEnableViewInstancing)
     {
@@ -754,6 +773,7 @@ FVulkanMeshletPipelineStateRHI::FVulkanMeshletPipelineStateRHI(FVulkanDevice* In
     : FRHIMeshletPipelineState()
     , FVulkanPipeline(InDevice)
     , ViewInstancingState()
+    , bUsesSampleLocations(false)
 {
 }
 
@@ -918,6 +938,21 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
     MultisamplingCreateInfo.alphaToCoverageEnable = VK_FALSE;
     MultisamplingCreateInfo.alphaToOneEnable      = VK_FALSE;
 
+#if VK_EXT_sample_locations
+    const bool bUseSampleLocations = InDesc.MultiSampleState.bProgrammableSamplePositions && GVulkanSupportsSampleLocations;
+
+    VkPipelineSampleLocationsStateCreateInfoEXT SampleLocationsCreateInfo = {};
+    if (bUseSampleLocations)
+    {
+        SampleLocationsCreateInfo.sType                     = VK_STRUCTURE_TYPE_PIPELINE_SAMPLE_LOCATIONS_STATE_CREATE_INFO_EXT;
+        SampleLocationsCreateInfo.sampleLocationsEnable     = VK_TRUE;
+        SampleLocationsCreateInfo.sampleLocationsInfo.sType = VK_STRUCTURE_TYPE_SAMPLE_LOCATIONS_INFO_EXT;
+        AddToStructChain(MultisamplingCreateInfo, SampleLocationsCreateInfo);
+    }
+#else
+    const bool bUseSampleLocations = false;
+#endif
+
     // DepthStencilState CreateInfo
     VkPipelineDepthStencilStateCreateInfo DepthStencilStateCreateInfo;
     if (FVulkanDepthStencilStateRHI* DepthStencilState = FVulkanDeviceRHI::ResourceCast(InDesc.DepthStencilState))
@@ -950,12 +985,15 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
         VK_DYNAMIC_STATE_BLEND_CONSTANTS,
         VK_DYNAMIC_STATE_STENCIL_REFERENCE,
         VK_DYNAMIC_STATE_DEPTH_BIAS,
+        VK_DYNAMIC_STATE_SAMPLE_LOCATIONS_EXT, // Must stay last: only counted when the pipeline opts in
     };
 
     VkPipelineDynamicStateCreateInfo DynamicStateCreateInfo = {};
     DynamicStateCreateInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    DynamicStateCreateInfo.dynamicStateCount = ARRAY_COUNT(DynamicStates);
+    DynamicStateCreateInfo.dynamicStateCount = ARRAY_COUNT(DynamicStates) - (bUseSampleLocations ? 0 : 1);
     DynamicStateCreateInfo.pDynamicStates    = DynamicStates;
+
+    bUsesSampleLocations = bUseSampleLocations;
 
     if (InDesc.ViewInstancingState.bEnableViewInstancing)
     {

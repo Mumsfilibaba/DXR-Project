@@ -202,13 +202,14 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FFrameResour
         }
 
         FRHIGraphicsPipelineStateDesc PSODesc;
-        PSODesc.InputLayout                                = NewPipelineInstance.InputLayout.Get();
-        PSODesc.BlendState                                 = NewPipelineInstance.BlendState.Get();
-        PSODesc.DepthStencilState                          = NewPipelineInstance.DepthStencilState.Get();
-        PSODesc.RasterizerState                            = NewPipelineInstance.RasterizerState.Get();
-        PSODesc.VertexShader                               = NewPipelineInstance.VertexShader.Get();
-        PSODesc.PixelShader                                = NewPipelineInstance.PixelShader.Get();
-        PSODesc.RasterizerOutputFormats.DepthStencilFormat = RendererTextureFormats::DepthBufferFormat;
+        PSODesc.InputLayout                                   = NewPipelineInstance.InputLayout.Get();
+        PSODesc.BlendState                                    = NewPipelineInstance.BlendState.Get();
+        PSODesc.DepthStencilState                             = NewPipelineInstance.DepthStencilState.Get();
+        PSODesc.RasterizerState                               = NewPipelineInstance.RasterizerState.Get();
+        PSODesc.VertexShader                                  = NewPipelineInstance.VertexShader.Get();
+        PSODesc.PixelShader                                   = NewPipelineInstance.PixelShader.Get();
+        PSODesc.RasterizerOutputFormats.DepthStencilFormat    = RendererTextureFormats::DepthBufferFormat;
+        PSODesc.MultiSampleState.bProgrammableSamplePositions = RHI::bSupportsProgrammableSamplePositions;
 
         NewPipelineInstance.PipelineState = RHI::CreateGraphicsPipelineState(PSODesc);
         if (!NewPipelineInstance.PipelineState)
@@ -240,7 +241,13 @@ bool FDepthPrePass::CreateResources(FFrameResources& FrameResources, uint32 Widt
         return true;
     }
 
-    const ETextureUsageFlags Usage = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture;
+    // The prepass and base pass may rasterize this depth buffer with the hardware TAA jitter.
+    ETextureUsageFlags Usage = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture;
+    if (RHI::bSupportsProgrammableSamplePositions)
+    {
+        Usage |= ETextureUsageFlags::SamplePositionsCompatible;
+    }
+
     const FClearValue DepthClearValue(RendererTextureFormats::DepthBufferFormat, 1.0f, 0);
 
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(RendererTextureFormats::DepthBufferFormat, Width, Height, 1, 1, Usage, DepthClearValue);
@@ -534,6 +541,7 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FFrameRe
         PSODesc.RasterizerOutputFormats.RenderTargetFormats[3] = RendererTextureFormats::VelocityFormat;
         PSODesc.RasterizerOutputFormats.NumRenderTargets       = EGBufferIndex::NumRenderTargets;
         PSODesc.RasterizerOutputFormats.DepthStencilFormat     = RendererTextureFormats::DepthBufferFormat;
+        PSODesc.MultiSampleState.bProgrammableSamplePositions  = RHI::bSupportsProgrammableSamplePositions;
 
         NewPipelineInstance.PipelineState = RHI::CreateGraphicsPipelineState(PSODesc);
         if (!NewPipelineInstance.PipelineState)

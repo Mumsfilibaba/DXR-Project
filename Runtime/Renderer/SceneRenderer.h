@@ -73,14 +73,13 @@ struct FCameraHLSL
     float   AspectRatio = 0.0f;
 
     // 624-640
-    Vector2 Jitter;
-    Vector2 PrevJitter;
+    Vector2 ProjectionJitter;
+    Vector2 PrevProjectionJitter;
 
     // 640-656
     float   ViewportWidth  = 0.0f;
     float   ViewportHeight = 0.0f;
-    float   Padding0       = 0.0f;
-    float   Padding1       = 0.0f;
+    Vector2 ImageJitter;
 
     // 656-672
     Vector3 PrevPosition;
@@ -222,6 +221,11 @@ private:
     FFrameCounterState           FrameCounter;
     FCameraHLSL                  CameraBuffer;
     FHaltonState                 HaltonState;
+
+    FRHISamplePositionsDesc      FrameSamplePositions;
+    FRHISamplePositionsDesc      PrevFrameSamplePositions;
+    bool                         bUseHardwareJitter = false;
+
     FDepthPrePass*               DepthPrePass;
     FDeferredBasePass*           BasePass;
     FDepthReducePass*            DepthReducePass;

@@ -40,7 +40,12 @@ extern VULKANRHI_API uint32 GVulkanMaxDrawIndirectCount;
 // Programmable sample positions (VK_EXT_sample_locations)
 // -------------------------------------------------------------------------------------------
 
-extern VULKANRHI_API bool GVulkanSupportsSampleLocations;
+extern VULKANRHI_API bool       GVulkanSupportsSampleLocations;
+extern VULKANRHI_API VkFlags    GVulkanSampleLocationSampleCounts;
+extern VULKANRHI_API VkExtent2D GVulkanMaxSampleLocationGridSize;
+extern VULKANRHI_API uint32     GVulkanSampleLocationSubPixelBits;
+extern VULKANRHI_API bool       GVulkanVariableSampleLocations;
+extern VULKANRHI_API float      GVulkanSampleLocationCoordinateRange[2];
 
 // -------------------------------------------------------------------------------------------
 // Programmable sample positions (VK_EXT_fragment_shader_interlock)

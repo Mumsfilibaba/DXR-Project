@@ -257,6 +257,14 @@ void FVulkanCommandContextState::BindGraphicsState()
         CommonGraphicsState.bBindDepthBias = false;
     }
 
+#if VK_EXT_sample_locations
+    if (GraphicsState.PipelineState->UsesSampleLocations() && (CommonGraphicsState.bBindSampleLocations || GVulkanForceBinding))
+    {
+        Context.GetCommandBuffer()->SetSampleLocations(&CommonGraphicsState.SampleLocationsInfo);
+        CommonGraphicsState.bBindSampleLocations = false;
+    }
+#endif
+
 #if VK_EXT_transform_feedback
     if (GraphicsState.bBindStreamOutputTargets && GVulkanSupportsTransformFeedback)
     {
@@ -415,6 +423,14 @@ void FVulkanCommandContextState::BindMeshletState()
         Context.GetCommandBuffer()->SetDepthBias(CommonGraphicsState.DepthBias[0], CommonGraphicsState.DepthBias[1], CommonGraphicsState.DepthBias[2]);
         CommonGraphicsState.bBindDepthBias = false;
     }
+
+#if VK_EXT_sample_locations
+    if (MeshletState.PipelineState->UsesSampleLocations() && (CommonGraphicsState.bBindSampleLocations || GVulkanForceBinding))
+    {
+        Context.GetCommandBuffer()->SetSampleLocations(&CommonGraphicsState.SampleLocationsInfo);
+        CommonGraphicsState.bBindSampleLocations = false;
+    }
+#endif
 }
 
 void FVulkanCommandContextState::BindPushConstants(FVulkanPipelineLayout* PipelineLayout, EPushConstantsPipeline::Type Pipeline)
@@ -491,9 +507,19 @@ void FVulkanCommandContextState::ResetState()
     RayTracingState.bBindPipelineState     = true;
     RayTracingState.bBindPushConstants     = true;
     bMeshletPipelineActive                 = false;
+
+#if VK_EXT_sample_locations
+    Memory::Memzero(CommonGraphicsState.SampleLocations, sizeof(CommonGraphicsState.SampleLocations));
+    Memory::Memzero(&CommonGraphicsState.SampleLocationsInfo, sizeof(CommonGraphicsState.SampleLocationsInfo));
+
+    CommonGraphicsState.bUsingCustomSampleLocations = false;
+    CommonGraphicsState.bBindSampleLocations        = false;
+
+    SetSamplePositions(FRHISamplePositionsDesc());
+#endif
 }
 
-void FVulkanCommandContextState::ResetStateForNewCommandBuffer()
+void FVulkanCommandContextState::BeginCommandBuffer()
 {
     GraphicsState.bBindIndexBuffer         = true;
     CommonGraphicsState.bBindBlendFactor   = true;
@@ -511,6 +537,10 @@ void FVulkanCommandContextState::ResetStateForNewCommandBuffer()
     MeshletState.bBindPushConstants        = true;
     RayTracingState.bBindPipelineState     = true;
     RayTracingState.bBindPushConstants     = true;
+
+#if VK_EXT_sample_locations
+    CommonGraphicsState.bBindSampleLocations = GVulkanSupportsSampleLocations;
+#endif
 
     if (GraphicsState.CurrentDescriptorState)
     {
@@ -531,6 +561,11 @@ void FVulkanCommandContextState::ResetStateForNewCommandBuffer()
     {
         RayTracingState.CurrentDescriptorState->DirtyDescriptorSet();
     }
+}
+
+void FVulkanCommandContextState::EndCommandBuffer()
+{
+    // Nothing needs closing out yet; the hook exists as the counterpart to BeginCommandBuffer.
 }
 
 #if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
@@ -1187,6 +1222,53 @@ void FVulkanCommandContextState::SetDepthBias(float InDepthBias, float InDepthBi
         Memory::Memcpy(CommonGraphicsState.DepthBias, NewValues, sizeof(NewValues));
         CommonGraphicsState.bBindDepthBias = true;
     }
+}
+
+void FVulkanCommandContextState::SetSamplePositions(const FRHISamplePositionsDesc& SamplePositionsDesc)
+{
+#if VK_EXT_sample_locations
+    if (!GVulkanSupportsSampleLocations)
+    {
+        return;
+    }
+
+    const bool bCustom = SamplePositionsDesc.NumSamplesPerPixel > 0;
+
+    // Vulkan places the pixel center at (0.5, 0.5), so an offset of zero maps to the standard 1x location.
+    const uint32 NumSamplesPerPixel = bCustom ? SamplePositionsDesc.NumSamplesPerPixel : 1;
+    const uint32 GridWidth          = bCustom ? SamplePositionsDesc.GridWidth  : 1;
+    const uint32 GridHeight         = bCustom ? SamplePositionsDesc.GridHeight : 1;
+    const uint32 NumLocations       = NumSamplesPerPixel * GridWidth * GridHeight;
+    CHECK(NumLocations <= RHI_MAX_SAMPLE_POSITIONS);
+
+    VkSampleLocationEXT NewLocations[RHI_MAX_SAMPLE_POSITIONS] = { };
+    for (uint32 Index = 0; Index < NumLocations; ++Index)
+    {
+        const FRHISamplePosition Position = bCustom ? SamplePositionsDesc.Positions[Index] : FRHISamplePosition();
+        NewLocations[Index].x = Math::Clamp(0.5f + Position.X, GVulkanSampleLocationCoordinateRange[0], GVulkanSampleLocationCoordinateRange[1]);
+        NewLocations[Index].y = Math::Clamp(0.5f + Position.Y, GVulkanSampleLocationCoordinateRange[0], GVulkanSampleLocationCoordinateRange[1]);
+    }
+
+    const uint32 LocationArraySize = sizeof(VkSampleLocationEXT) * NumLocations;
+    if (CommonGraphicsState.SampleLocationsInfo.sampleLocationsCount != NumLocations ||
+        Memory::Memcmp(CommonGraphicsState.SampleLocations, NewLocations, LocationArraySize) != 0)
+    {
+        Memory::Memcpy(CommonGraphicsState.SampleLocations, NewLocations, LocationArraySize);
+
+        CommonGraphicsState.SampleLocationsInfo.sType                   = VK_STRUCTURE_TYPE_SAMPLE_LOCATIONS_INFO_EXT;
+        CommonGraphicsState.SampleLocationsInfo.pNext                   = nullptr;
+        CommonGraphicsState.SampleLocationsInfo.sampleLocationsPerPixel = ConvertSampleCount(NumSamplesPerPixel);
+        CommonGraphicsState.SampleLocationsInfo.sampleLocationGridSize  = VkExtent2D{ GridWidth, GridHeight };
+        CommonGraphicsState.SampleLocationsInfo.sampleLocationsCount    = NumLocations;
+        CommonGraphicsState.SampleLocationsInfo.pSampleLocations        = CommonGraphicsState.SampleLocations;
+
+        CommonGraphicsState.bBindSampleLocations = true;
+    }
+
+    CommonGraphicsState.bUsingCustomSampleLocations = bCustom;
+#else
+    UNREFERENCED_VARIABLE(SamplePositionsDesc);
+#endif
 }
 
 void FVulkanCommandContextState::SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets)

@@ -549,9 +549,10 @@ struct FRHIViewInstancingState
 
 struct FRHIMultiSampleState
 {
-    uint32 SampleCount   = 1;
-    uint32 SampleQuality = 0;
-    uint32 SampleMask    = RHI_DEFAULT_SAMPLE_MASK;
+    uint32 SampleCount                  = 1;
+    uint32 SampleQuality                = 0;
+    uint32 SampleMask                   = RHI_DEFAULT_SAMPLE_MASK;
+    bool   bProgrammableSamplePositions = false;
 };
 
 struct FRHIStreamOutputEntry

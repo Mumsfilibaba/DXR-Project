@@ -219,17 +219,8 @@ void FD3D12CommandContextState::BindGraphicsState()
         CommonGraphicsState.bBindStencilRef = false;
     }
 
-#if D3D12_ENABLE_DYNAMIC_DEPTH_BIAS && D3D12_USE_ID3D12COMMANDLIST_9
-    if (CommonGraphicsState.bBindDepthBias)
-    {
-        Context.GetCommandList().GetGraphicsCommandList9()->RSSetDepthBias(
-            CommonGraphicsState.DepthBias[0], 
-            CommonGraphicsState.DepthBias[1], 
-            CommonGraphicsState.DepthBias[2]);
-
-        CommonGraphicsState.bBindDepthBias = false;
-    }
-#endif
+    FlushDepthBias();
+    FlushSamplePositions();
 
     if (GraphicsState.bBindStreamOutputTargets)
     {
@@ -476,6 +467,9 @@ void FD3D12CommandContextState::BindMeshletState()
 
         CommonGraphicsState.bBindStencilRef = false;
     }
+
+    FlushDepthBias();
+    FlushSamplePositions();
 }
 
 bool FD3D12CommandContextState::PrepareSamplers(FD3D12RootSignature* RootSignature, const FD3D12EffectiveDescriptorCounts* PipelineState, EShaderVisibility::Type StartStage, EShaderVisibility::Type EndStage)
@@ -1091,7 +1085,12 @@ void FD3D12CommandContextState::ResetState()
 
     Memory::Memzero(CommonGraphicsState.ScissorRects, sizeof(CommonGraphicsState.ScissorRects));
     CommonGraphicsState.NumScissorRects = 0;
-    
+
+    Memory::Memzero(CommonGraphicsState.SamplePositions, sizeof(CommonGraphicsState.SamplePositions));
+    CommonGraphicsState.NumSamplesPerPixel      = 0;
+    CommonGraphicsState.NumSamplePositionPixels = 0;
+    CommonGraphicsState.bBindSamplePositions    = false;
+
     GraphicsState.PipelineState               = nullptr;
     CommonGraphicsState.ShadingRate           = D3D12_SHADING_RATE_1X1;
     CommonGraphicsState.ShadingRateImage      = nullptr;
@@ -1131,7 +1130,7 @@ void FD3D12CommandContextState::ResetStateResources()
     CommonState.UnorderedAccessViewCache.DirtyResourcesAll();
 }
 
-void FD3D12CommandContextState::ResetStateForNewCommandList()
+void FD3D12CommandContextState::BeginCommandList()
 {
     CommonState.DescriptorCache.DirtyDescriptorHeaps();
     CommonState.DescriptorCache.DirtyStateResources();
@@ -1162,6 +1161,9 @@ void FD3D12CommandContextState::ResetStateForNewCommandList()
     CommonGraphicsState.bBindDepthBias        = true;
 #endif
 
+    // A fresh command list already starts at the default positions, so only a custom pattern needs re-applying.
+    CommonGraphicsState.bBindSamplePositions  = (CommonGraphicsState.NumSamplesPerPixel > 0);
+
     ComputeState.bBindPipelineState           = true;
     ComputeState.bBindShaderConstants         = true;
 
@@ -1169,6 +1171,9 @@ void FD3D12CommandContextState::ResetStateForNewCommandList()
     MeshletState.bBindShaderConstants         = true;
 
     RayTracingState.bBindShaderConstants      = true;
+
+    // Applied up front instead of being left dirty.
+    FlushSamplePositions();
 }
 
 void FD3D12CommandContextState::SetGraphicsPipelineState(FD3D12GraphicsPipelineStateRHI* InGraphicsPipelineState)
@@ -1290,6 +1295,16 @@ void FD3D12CommandContextState::SetMeshletPipelineState(FD3D12MeshletPipelineSta
 
         MeshletState.PipelineState      = MakeSharedRef<FD3D12MeshletPipelineStateRHI>(InMeshletPipelineState);
         MeshletState.bBindPipelineState = true;
+
+    #if D3D12_ENABLE_DYNAMIC_DEPTH_BIAS && D3D12_USE_ID3D12COMMANDLIST_9
+        if (GD3D12SupportDynamicDepthBias)
+        {
+            CommonGraphicsState.DepthBias[0]   = 0.0f;
+            CommonGraphicsState.DepthBias[1]   = 0.0f;
+            CommonGraphicsState.DepthBias[2]   = 0.0f;
+            CommonGraphicsState.bBindDepthBias = true;
+        }
+    #endif
     }
 }
 
@@ -1407,6 +1422,72 @@ void FD3D12CommandContextState::SetDepthBias(float InDepthBias, float InDepthBia
         Memory::Memcpy(CommonGraphicsState.DepthBias, NewValues, sizeof(NewValues));
         CommonGraphicsState.bBindDepthBias = true;
     }
+}
+
+void FD3D12CommandContextState::SetSamplePositions(const D3D12_SAMPLE_POSITION* InSamplePositions, uint32 InNumSamplesPerPixel, uint32 InNumPixels)
+{
+    const uint32 NumPositions = InNumSamplesPerPixel * InNumPixels;
+    CHECK(NumPositions <= RHI_MAX_SAMPLE_POSITIONS);
+
+    const uint32 PositionArraySize = sizeof(D3D12_SAMPLE_POSITION) * NumPositions;
+    if (CommonGraphicsState.NumSamplesPerPixel      != InNumSamplesPerPixel ||
+        CommonGraphicsState.NumSamplePositionPixels != InNumPixels          ||
+        Memory::Memcmp(CommonGraphicsState.SamplePositions, InSamplePositions, PositionArraySize) != 0)
+    {
+        Memory::Memcpy(CommonGraphicsState.SamplePositions, InSamplePositions, PositionArraySize);
+
+        CommonGraphicsState.NumSamplesPerPixel       = InNumSamplesPerPixel;
+        CommonGraphicsState.NumSamplePositionPixels  = InNumPixels;
+        CommonGraphicsState.bBindSamplePositions     = true;
+    }
+
+    // D3D12 associates sample positions with depth-buffer contents, so they have to be live for the
+    // clears and transitions that follow rather than only for the next draw.
+    FlushSamplePositions();
+}
+
+void FD3D12CommandContextState::FlushDepthBias()
+{
+#if D3D12_ENABLE_DYNAMIC_DEPTH_BIAS && D3D12_USE_ID3D12COMMANDLIST_9
+    if (CommonGraphicsState.bBindDepthBias && Context.GetCommandList().GetGraphicsCommandList9().IsValid())
+    {
+        Context.GetCommandList().GetGraphicsCommandList9()->RSSetDepthBias(
+            CommonGraphicsState.DepthBias[0],
+            CommonGraphicsState.DepthBias[1],
+            CommonGraphicsState.DepthBias[2]);
+
+        CommonGraphicsState.bBindDepthBias = false;
+    }
+#endif
+}
+
+void FD3D12CommandContextState::FlushSamplePositions()
+{
+#if D3D12_USE_ID3D12COMMANDLIST_1
+    if (CommonGraphicsState.bBindSamplePositions && Context.GetCommandList().GetGraphicsCommandList1().IsValid())
+    {
+        // Zero counts restore the hardware defaults.
+        Context.GetCommandList().GetGraphicsCommandList1()->SetSamplePositions(
+            CommonGraphicsState.NumSamplesPerPixel,
+            CommonGraphicsState.NumSamplePositionPixels,
+            CommonGraphicsState.NumSamplesPerPixel > 0 ? CommonGraphicsState.SamplePositions : nullptr);
+
+        CommonGraphicsState.bBindSamplePositions = false;
+    }
+#endif
+}
+
+void FD3D12CommandContextState::FlushDefaultSamplePositions()
+{
+#if D3D12_USE_ID3D12COMMANDLIST_1
+    if (CommonGraphicsState.NumSamplesPerPixel > 0 && Context.GetCommandList().GetGraphicsCommandList1().IsValid())
+    {
+        Context.GetCommandList().GetGraphicsCommandList1()->SetSamplePositions(0, 0, nullptr);
+
+        // Keep the cached pattern dirty so the paired FlushSamplePositions can put it back.
+        CommonGraphicsState.bBindSamplePositions = true;
+    }
+#endif
 }
 
 void FD3D12CommandContextState::SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets)

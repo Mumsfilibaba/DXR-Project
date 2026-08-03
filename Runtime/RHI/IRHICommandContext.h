@@ -144,6 +144,12 @@ struct IRHICommandContext
     virtual void SetDepthBias(float DepthBias, float DepthBiasClamp, float SlopeScaledDepthBias) = 0;
 
     /**
+     * @brief Set custom rasterizer sample positions (requires RHI::bSupportsProgrammableSamplePositions).
+     * @param SamplePositionsDesc Positions to use, or NumSamplesPerPixel = 0 to restore the defaults
+     */
+    virtual void SetSamplePositions(const FRHISamplePositionsDesc& SamplePositionsDesc) = 0;
+
+    /**
      * @brief Sets the vertex buffers used by subsequent draw commands.
      * @param InVertexBuffers Vertex buffers to bind.
      * @param BufferSlot First vertex-buffer slot receiving the array.

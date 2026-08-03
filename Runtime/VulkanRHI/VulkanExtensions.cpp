@@ -463,7 +463,18 @@ public:
 
     virtual void ProcessQueriedFeatures() override final
     {
-        GVulkanSupportsSampleLocations = true;
+        if (AvailableProperties.sampleLocationSampleCounts == 0)
+        {
+            return;
+        }
+
+        GVulkanSupportsSampleLocations          = true;
+        GVulkanSampleLocationSampleCounts       = AvailableProperties.sampleLocationSampleCounts;
+        GVulkanMaxSampleLocationGridSize        = AvailableProperties.maxSampleLocationGridSize;
+        GVulkanSampleLocationSubPixelBits       = AvailableProperties.sampleLocationSubPixelBits;
+        GVulkanVariableSampleLocations          = AvailableProperties.variableSampleLocations == VK_TRUE;
+        GVulkanSampleLocationCoordinateRange[0] = AvailableProperties.sampleLocationCoordinateRange[0];
+        GVulkanSampleLocationCoordinateRange[1] = AvailableProperties.sampleLocationCoordinateRange[1];
     }
 
     VkPhysicalDeviceSampleLocationsPropertiesEXT AvailableProperties = {};

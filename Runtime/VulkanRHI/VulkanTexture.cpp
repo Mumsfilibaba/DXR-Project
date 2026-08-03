@@ -221,6 +221,13 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERHI
         ImageCreateInfo.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
     }
 
+#if VK_EXT_sample_locations
+    if (Desc.IsDepthStencil() && Desc.IsSamplePositionsCompatible() && GVulkanSupportsSampleLocations)
+    {
+        ImageCreateInfo.flags |= VK_IMAGE_CREATE_SAMPLE_LOCATIONS_COMPATIBLE_DEPTH_BIT_EXT;
+    }
+#endif
+
     if (Desc.IsCopySource())
     {
         ImageCreateInfo.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;

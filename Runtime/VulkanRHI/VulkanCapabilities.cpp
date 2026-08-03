@@ -62,7 +62,12 @@ VULKANRHI_API uint32 GVulkanMaxDrawIndirectCount                = 1;
 // Programmable sample positions (VK_EXT_sample_locations)
 // -------------------------------------------------------------------------------------------
 
-VULKANRHI_API bool GVulkanSupportsSampleLocations = false;
+VULKANRHI_API bool       GVulkanSupportsSampleLocations          = false;
+VULKANRHI_API VkFlags    GVulkanSampleLocationSampleCounts       = 0;
+VULKANRHI_API VkExtent2D GVulkanMaxSampleLocationGridSize        = { 0, 0 };
+VULKANRHI_API uint32     GVulkanSampleLocationSubPixelBits       = 0;
+VULKANRHI_API bool       GVulkanVariableSampleLocations          = false;
+VULKANRHI_API float      GVulkanSampleLocationCoordinateRange[2] = { 0.0f, 1.0f };
 
 // -------------------------------------------------------------------------------------------
 // Fragment shader interlock (VK_EXT_fragment_shader_interlock)
@@ -511,6 +516,12 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     RHI::ShadingRateTier             = EShadingRateTier::NotSupported;
     RHI::ShadingRateImageTileSize    = 0;
 
+    RHI::bSupportsProgrammableSamplePositions = false;
+    RHI::SamplePositionsTier                  = ESamplePositionsTier::NotSupported;
+    RHI::MaxSamplePositionGridWidth           = 0;
+    RHI::MaxSamplePositionGridHeight          = 0;
+    RHI::SupportedSamplePositionSampleCounts  = 0;
+
     RHI::bSupportsDrawIndirect               = true;
     RHI::bSupportsDrawIndirectCount          = false;
     RHI::bSupportsDispatchIndirect           = true;
@@ -799,6 +810,23 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
         RHI::bSupportsVRS             = false;
         RHI::ShadingRateTier          = EShadingRateTier::NotSupported;
         RHI::ShadingRateImageTileSize = 0;
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // Programmable Sample Positions (VK_EXT_sample_locations)
+    // -------------------------------------------------------------------------------------------
+
+    RHI::bSupportsProgrammableSamplePositions = GVulkanSupportsSampleLocations;
+    if (GVulkanSupportsSampleLocations)
+    {
+        RHI::MaxSamplePositionGridWidth  = GVulkanMaxSampleLocationGridSize.width;
+        RHI::MaxSamplePositionGridHeight = GVulkanMaxSampleLocationGridSize.height;
+        RHI::SamplePositionsTier         = (RHI::MaxSamplePositionGridWidth >= 2 && RHI::MaxSamplePositionGridHeight >= 2)
+            ? ESamplePositionsTier::Tier2
+            : ESamplePositionsTier::Tier1;
+
+        // VkSampleCountFlagBits values are already 1/2/4/8/16, so the mask maps across directly.
+        RHI::SupportedSamplePositionSampleCounts = GVulkanSampleLocationSampleCounts;
     }
 
     return true;

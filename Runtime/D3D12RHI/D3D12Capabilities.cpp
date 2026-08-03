@@ -928,6 +928,39 @@ bool FD3D12DeviceRHI::InitializeDeviceFeatureSupport()
         }
     }
 
+    // -------------------------------------------------------------------------------------------
+    // Programmable Sample Positions
+    // -------------------------------------------------------------------------------------------
+
+#if D3D12_USE_ID3D12COMMANDLIST_1
+    switch (GD3D12ProgrammableSamplePositionsTier)
+    {
+    default:
+    case D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER_NOT_SUPPORTED:
+        RHI::SamplePositionsTier = ESamplePositionsTier::NotSupported;
+        break;
+
+    case D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER_1:
+        RHI::SamplePositionsTier         = ESamplePositionsTier::Tier1;
+        RHI::MaxSamplePositionGridWidth  = 1;
+        RHI::MaxSamplePositionGridHeight = 1;
+        break;
+
+    case D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER_2:
+        RHI::SamplePositionsTier         = ESamplePositionsTier::Tier2;
+        RHI::MaxSamplePositionGridWidth  = 2;
+        RHI::MaxSamplePositionGridHeight = 2;
+        break;
+    }
+
+    RHI::bSupportsProgrammableSamplePositions = RHI::SamplePositionsTier != ESamplePositionsTier::NotSupported;
+    if (RHI::bSupportsProgrammableSamplePositions)
+    {
+        // D3D12 accepts 1, 2, 4, 8 and 16 samples per pixel at every tier.
+        RHI::SupportedSamplePositionSampleCounts = 1u | 2u | 4u | 8u | 16u;
+    }
+#endif
+
     RHI::bSupportsDynamicDepthBias           = GD3D12SupportDynamicDepthBias;
     RHI::bSupportsStreamOutput               = true;
     RHI::bSupportsTimestampQueries           = true;

@@ -151,6 +151,13 @@ class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
             vkCmdSetDepthBias(CommandBuffer, DepthBiasConstantFactor, DepthBiasClamp, DepthBiasSlopeFactor);
         }
 
+    #if VK_EXT_sample_locations
+        FORCEINLINE void SetSampleLocations(const VkSampleLocationsInfoEXT* SampleLocationsInfo)
+        {
+            vkCmdSetSampleLocationsEXT(CommandBuffer, SampleLocationsInfo);
+        }
+    #endif
+
     #if VK_EXT_transform_feedback
         FORCEINLINE void BindTransformFeedbackBuffers(uint32 FirstBinding, uint32 BindingCount, const VkBuffer* Buffers, const VkDeviceSize* Offsets, const VkDeviceSize* Sizes)
         {

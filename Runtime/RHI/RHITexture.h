@@ -6,18 +6,19 @@ enum class ETextureUsageFlags
 {
     None = 0,
 
-    RenderTarget           = FLAG(1),  // RenderTargetView
-    DepthStencil           = FLAG(2),  // DepthStencilView
-    UnorderedAccessTexture = FLAG(3),  // UnorderedAccessView
-    ShaderResourceTexture  = FLAG(4),  // ShaderResourceView
-    ShadingRateTexture     = FLAG(5),  // Indicates that the texture is going to be used as a shading rate texture
-    Presentable            = FLAG(6),  // Indicates that the texture is a BackBuffer resource
-    NoDefaultSRV           = FLAG(7),  // Do not create a default ShaderResourceView at texture creation time
-    NoDefaultUAV           = FLAG(8),  // Do not create a default UnorderedAccessView at texture creation time
-    NoDefaultRTV           = FLAG(9),  // Do not create a default RenderTargetView at texture creation time
-    NoDefaultDSV           = FLAG(10), // Do not create a default DepthStencilView at texture creation time
-    CopySource             = FLAG(11), // Texture rests as a copy source (staging/upload)
-    CopyDest               = FLAG(12), // Texture rests as a copy destination (readback/staging)
+    RenderTarget              = FLAG(1),  // RenderTargetView
+    DepthStencil              = FLAG(2),  // DepthStencilView
+    UnorderedAccessTexture    = FLAG(3),  // UnorderedAccessView
+    ShaderResourceTexture     = FLAG(4),  // ShaderResourceView
+    ShadingRateTexture        = FLAG(5),  // Indicates that the texture is going to be used as a shading rate texture
+    Presentable               = FLAG(6),  // Indicates that the texture is a BackBuffer resource
+    NoDefaultSRV              = FLAG(7),  // Do not create a default ShaderResourceView at texture creation time
+    NoDefaultUAV              = FLAG(8),  // Do not create a default UnorderedAccessView at texture creation time
+    NoDefaultRTV              = FLAG(9),  // Do not create a default RenderTargetView at texture creation time
+    NoDefaultDSV              = FLAG(10), // Do not create a default DepthStencilView at texture creation time
+    CopySource                = FLAG(11), // Texture rests as a copy source (staging/upload)
+    CopyDest                  = FLAG(12), // Texture rests as a copy destination (readback/staging)
+    SamplePositionsCompatible = FLAG(13), // Depth/stencil texture may be rendered with custom sample positions
 };
 
 ENUM_CLASS_OPERATORS(ETextureUsageFlags);
@@ -157,19 +158,20 @@ struct FRHITextureDesc
     NODISCARD constexpr bool IsTextureCubeArray() const { return (Dimension == ETextureDimension::TextureCubeArray); }
     NODISCARD constexpr bool IsTexture3D()        const { return (Dimension == ETextureDimension::Texture3D); }
 
-    NODISCARD constexpr bool IsShaderResourceTexture()  const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::ShaderResourceTexture); }
-    NODISCARD constexpr bool IsUnorderedAccessTexture() const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::UnorderedAccessTexture); }
-    NODISCARD constexpr bool IsRenderTarget()           const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::RenderTarget); }
-    NODISCARD constexpr bool IsDepthStencil()           const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::DepthStencil); }
-    NODISCARD constexpr bool IsPresentable()            const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::Presentable); }
-    NODISCARD constexpr bool IsShadingRateTexture()     const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::ShadingRateTexture); }
-    NODISCARD constexpr bool IsNoDefaultSRV()           const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::NoDefaultSRV); }
-    NODISCARD constexpr bool IsNoDefaultUAV()           const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::NoDefaultUAV); }
-    NODISCARD constexpr bool IsNoDefaultRTV()           const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::NoDefaultRTV); }
-    NODISCARD constexpr bool IsNoDefaultDSV()           const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::NoDefaultDSV); }
-    NODISCARD constexpr bool IsCopySource()             const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::CopySource); }
-    NODISCARD constexpr bool IsCopyDest()               const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::CopyDest); }
-    NODISCARD constexpr bool IsMultisampled()           const { return (NumSamples > 1); }
+    NODISCARD constexpr bool IsShaderResourceTexture()     const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::ShaderResourceTexture); }
+    NODISCARD constexpr bool IsUnorderedAccessTexture()    const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::UnorderedAccessTexture); }
+    NODISCARD constexpr bool IsRenderTarget()              const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::RenderTarget); }
+    NODISCARD constexpr bool IsDepthStencil()              const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::DepthStencil); }
+    NODISCARD constexpr bool IsPresentable()               const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::Presentable); }
+    NODISCARD constexpr bool IsShadingRateTexture()        const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::ShadingRateTexture); }
+    NODISCARD constexpr bool IsNoDefaultSRV()              const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::NoDefaultSRV); }
+    NODISCARD constexpr bool IsNoDefaultUAV()              const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::NoDefaultUAV); }
+    NODISCARD constexpr bool IsNoDefaultRTV()              const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::NoDefaultRTV); }
+    NODISCARD constexpr bool IsNoDefaultDSV()              const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::NoDefaultDSV); }
+    NODISCARD constexpr bool IsCopySource()                const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::CopySource); }
+    NODISCARD constexpr bool IsCopyDest()                  const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::CopyDest); }
+    NODISCARD constexpr bool IsSamplePositionsCompatible() const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::SamplePositionsCompatible); }
+    NODISCARD constexpr bool IsMultisampled()              const { return (NumSamples > 1); }
 
     bool operator==(const FRHITextureDesc& Other) const noexcept = default;
 

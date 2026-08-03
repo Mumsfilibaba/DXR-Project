@@ -180,8 +180,16 @@ RHI_API void RHI::DumpCapabilities()
     // Variable Rate Shading (VRS)
     // -------------------------------------------------------------------------------------------
     LOG_INFO("[RHI] Variable Rate Shading                     : %s", YesNo(RHI::bSupportsVRS));
-    LOG_INFO("[RHI]   Tier                                    : %s", ToString(RHI::ShadingRateTier)); 
+    LOG_INFO("[RHI]   Tier                                    : %s", ToString(RHI::ShadingRateTier));
     LOG_INFO("[RHI]   Shading Rate Image Tile Size            : %u", RHI::ShadingRateImageTileSize);
+
+    // -------------------------------------------------------------------------------------------
+    // Programmable Sample Positions
+    // -------------------------------------------------------------------------------------------
+    LOG_INFO("[RHI] Programmable Sample Positions             : %s", YesNo(RHI::bSupportsProgrammableSamplePositions));
+    LOG_INFO("[RHI]   Tier                                    : %s", ToString(RHI::SamplePositionsTier));
+    LOG_INFO("[RHI]   Max Grid Size                           : %ux%u", RHI::MaxSamplePositionGridWidth, RHI::MaxSamplePositionGridHeight);
+    LOG_INFO("[RHI]   Supported Sample Counts (mask)          : 0x%X", RHI::SupportedSamplePositionSampleCounts);
     
     // -------------------------------------------------------------------------------------------
     // Draw Indirect

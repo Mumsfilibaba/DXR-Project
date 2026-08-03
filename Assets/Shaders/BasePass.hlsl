@@ -321,7 +321,7 @@ FPSOutput PSMain(FPSInput Input)
     // Velocity
     float3 PositionNDC     = (Input.ClipPosition.xyz / Input.ClipPosition.w);
     float3 PrevPositionNDC = (Input.PrevClipPosition.xyz / Input.PrevClipPosition.w);
-    float2 Velocity        = (PositionNDC.xy - CameraBuffer.Jitter) - (PrevPositionNDC.xy - CameraBuffer.PrevJitter);
+    float2 Velocity        = (PositionNDC.xy - CameraBuffer.ProjectionJitter) - (PrevPositionNDC.xy - CameraBuffer.PrevProjectionJitter);
 
     // Output
     FPSOutput Output;

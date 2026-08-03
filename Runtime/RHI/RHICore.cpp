@@ -70,6 +70,16 @@ RHI_API EShadingRateTier RHI::ShadingRateTier          = EShadingRateTier::NotSu
 RHI_API uint32           RHI::ShadingRateImageTileSize = 0;
 
 // -------------------------------------------------------------------------------------------
+// Programmable Sample Positions
+// -------------------------------------------------------------------------------------------
+
+RHI_API bool                 RHI::bSupportsProgrammableSamplePositions = false;
+RHI_API ESamplePositionsTier RHI::SamplePositionsTier                  = ESamplePositionsTier::NotSupported;
+RHI_API uint32               RHI::MaxSamplePositionGridWidth           = 0;
+RHI_API uint32               RHI::MaxSamplePositionGridHeight          = 0;
+RHI_API uint32               RHI::SupportedSamplePositionSampleCounts  = 0;
+
+// -------------------------------------------------------------------------------------------
 // Draw Indirect
 // -------------------------------------------------------------------------------------------
 

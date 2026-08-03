@@ -283,6 +283,10 @@ VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdDrawMeshTasksIndirectEXT)
 VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdDrawMeshTasksIndirectCountEXT)
 #endif
 
+#if VK_EXT_sample_locations
+VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdSetSampleLocationsEXT)
+#endif
+
 #if VK_AMD_buffer_marker
 VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdWriteBufferMarkerAMD)
 #endif

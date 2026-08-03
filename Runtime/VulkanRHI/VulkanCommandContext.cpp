@@ -114,11 +114,22 @@ void FVulkanBarrierBatcher::AddBufferMemoryBarrier(VkDependencyFlags DependencyF
     Batch.BufferMemoryBarriers.Add(InBarrier);
 }
 
-void FVulkanBarrierBatcher::AddImageMemoryBarrier(VkDependencyFlags DependencyFlags, const VkImageMemoryBarrier2KHR& InBarrier)
+void FVulkanBarrierBatcher::AddImageMemoryBarrier(VkDependencyFlags DependencyFlags, const VkImageMemoryBarrier2KHR& InIncomingBarrier)
 {
-    CHECK(InBarrier.sType == VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR);
-    CHECK(InBarrier.srcQueueFamilyIndex == VK_QUEUE_FAMILY_IGNORED);
-    CHECK(InBarrier.dstQueueFamilyIndex == VK_QUEUE_FAMILY_IGNORED);
+    CHECK(InIncomingBarrier.sType == VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR);
+    CHECK(InIncomingBarrier.srcQueueFamilyIndex == VK_QUEUE_FAMILY_IGNORED);
+    CHECK(InIncomingBarrier.dstQueueFamilyIndex == VK_QUEUE_FAMILY_IGNORED);
+
+    VkImageMemoryBarrier2KHR InBarrier = InIncomingBarrier;
+
+#if VK_EXT_sample_locations
+    constexpr VkImageAspectFlags DepthStencilAspects = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+    if (bHasCustomSampleLocations && (InBarrier.subresourceRange.aspectMask & DepthStencilAspects) != 0)
+    {
+        CHECK(InBarrier.pNext == nullptr);
+        InBarrier.pNext = &SampleLocationsInfo;
+    }
+#endif
 
     for (FBatch& Batch : Batches)
     {
@@ -162,6 +173,26 @@ void FVulkanBarrierBatcher::AddImageMemoryBarrier(VkDependencyFlags DependencyFl
     FBatch& Batch = Batches.Emplace(DependencyFlags);
     Batch.ImageMemoryBarriers.Add(InBarrier);
 }
+
+#if VK_EXT_sample_locations
+void FVulkanBarrierBatcher::SetCustomSampleLocations(const VkSampleLocationsInfoEXT* InSampleLocationsInfo)
+{
+    if (!InSampleLocationsInfo || GVulkanVariableSampleLocations)
+    {
+        bHasCustomSampleLocations = false;
+        return;
+    }
+
+    CHECK(InSampleLocationsInfo->sampleLocationsCount <= RHI_MAX_SAMPLE_POSITIONS);
+    Memory::Memcpy(SampleLocations, InSampleLocationsInfo->pSampleLocations, sizeof(VkSampleLocationEXT) * InSampleLocationsInfo->sampleLocationsCount);
+
+    SampleLocationsInfo                  = *InSampleLocationsInfo;
+    SampleLocationsInfo.pNext            = nullptr;
+    SampleLocationsInfo.pSampleLocations = SampleLocations;
+
+    bHasCustomSampleLocations = true;
+}
+#endif
 
 void FVulkanBarrierBatcher::FlushBarriers(FVulkanCommandBuffer& CommandBuffer)
 {
@@ -280,6 +311,8 @@ void FVulkanCommandContext::ObtainCommandBuffer()
         CommandBuffer->InsertBeginTimestamp(TimestampQueryAllocator);
 
         ReopenEventStack();
+
+        ContextState.BeginCommandBuffer();
     }
 
     if (!Commands)
@@ -323,6 +356,8 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQu
 {
     CHECK(CommandBuffer != nullptr);
 
+    ContextState.EndCommandBuffer();
+
     BarrierBatcher.FlushBarriers(GetCommandBuffer());
 
     CommandBuffer->InsertEndTimestamp(TimestampQueryAllocator);
@@ -343,8 +378,6 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQu
 
     if (NumCommands == 0 && !bHasPendingState)
     {
-        ContextState.ResetStateForNewCommandBuffer();
-
         CommandBuffer->End();
         CommandPool->RecycleBuffer(CommandBuffer);
         CommandBuffer = nullptr;
@@ -476,8 +509,6 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQu
     FVulkanDeviceRHI::Get()->FlushDeletionQueue(Commands);
     Commands->Queue.SubmitCommands(Commands);
     Commands = nullptr;
-
-    ContextState.ResetStateForNewCommandBuffer();
 }
 
 void FVulkanCommandContext::SplitCommandBuffer(bool bFlushPool, bool bWaitForQueue)
@@ -992,6 +1023,15 @@ void FVulkanCommandContext::SetStencilRef(uint32 StencilRef)
 void FVulkanCommandContext::SetDepthBias(float DepthBias, float DepthBiasClamp, float SlopeScaledDepthBias)
 {
     ContextState.SetDepthBias(DepthBias, DepthBiasClamp, SlopeScaledDepthBias);
+}
+
+void FVulkanCommandContext::SetSamplePositions(const FRHISamplePositionsDesc& SamplePositionsDesc)
+{
+    ContextState.SetSamplePositions(SamplePositionsDesc);
+
+#if VK_EXT_sample_locations
+    BarrierBatcher.SetCustomSampleLocations(ContextState.GetCustomSampleLocationsInfo());
+#endif
 }
 
 void FVulkanCommandContext::SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets)

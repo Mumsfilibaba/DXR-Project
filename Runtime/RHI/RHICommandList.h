@@ -204,6 +204,11 @@ public:
         EmplaceCommand<FRHICommandSetDepthBias>(DepthBias, DepthBiasClamp, SlopeScaledDepthBias);
     }
 
+    FORCEINLINE void SetSamplePositions(const FRHISamplePositionsDesc& SamplePositionsDesc) noexcept
+    {
+        EmplaceCommand<FRHICommandSetSamplePositions>(SamplePositionsDesc);
+    }
+
     FORCEINLINE void SetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot) noexcept
     {
         TArrayView<FRHIBuffer* const> VertexBuffers = AllocateArray(InVertexBuffers);

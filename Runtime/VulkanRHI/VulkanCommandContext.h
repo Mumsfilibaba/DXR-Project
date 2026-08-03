@@ -37,16 +37,25 @@ class FVulkanBarrierBatcher
 public:
     void AddMemoryBarrier(VkDependencyFlags DependencyFlags, const VkMemoryBarrier2KHR& InBarrier);
     void AddBufferMemoryBarrier(VkDependencyFlags DependencyFlags, const VkBufferMemoryBarrier2KHR& InBarrier);
-    void AddImageMemoryBarrier(VkDependencyFlags DependencyFlags, const VkImageMemoryBarrier2KHR& InBarrier);
+    void AddImageMemoryBarrier(VkDependencyFlags DependencyFlags, const VkImageMemoryBarrier2KHR& InIncomingBarrier);
     void FlushBarriers(FVulkanCommandBuffer& CommandBuffer);
-    
+
+#if VK_EXT_sample_locations
+    void SetCustomSampleLocations(const VkSampleLocationsInfoEXT* InSampleLocationsInfo);
+#endif
+
     bool HasPendingBarriers() const
     {
         return !Batches.IsEmpty();
     }
 
 private:
-    TArray<FBatch> Batches;
+    TArray<FBatch>           Batches;
+#if VK_EXT_sample_locations
+    VkSampleLocationEXT      SampleLocations[RHI_MAX_SAMPLE_POSITIONS] = { };
+    VkSampleLocationsInfoEXT SampleLocationsInfo                       = { };
+    bool                     bHasCustomSampleLocations                 = false;
+#endif
 };
 
 class FVulkanCommandContext : public IRHICommandContext, public FVulkanDeviceChild
@@ -78,6 +87,7 @@ public:
     virtual void SetBlendFactor(const Vector4& Color) override final;
     virtual void SetStencilRef(uint32 StencilRef) override final;
     virtual void SetDepthBias(float DepthBias, float DepthBiasClamp, float SlopeScaledDepthBias) override final;
+    virtual void SetSamplePositions(const FRHISamplePositionsDesc& SamplePositionsDesc) override final;
     virtual void SetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot) override final;
     virtual void SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat) override final;
     virtual void SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets) override final;

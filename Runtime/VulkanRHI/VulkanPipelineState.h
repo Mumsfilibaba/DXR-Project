@@ -138,9 +138,15 @@ public:
     {
         return ViewInstancingState;
     }
-    
+
+    FORCEINLINE bool UsesSampleLocations() const
+    {
+        return bUsesSampleLocations;
+    }
+
 private:
     FRHIViewInstancingState ViewInstancingState;
+    bool                    bUsesSampleLocations;
 };
 
 class FVulkanComputePipelineStateRHI : public FRHIComputePipelineState, public FVulkanPipeline
@@ -177,8 +183,14 @@ public:
         return ViewInstancingState;
     }
 
+    FORCEINLINE bool UsesSampleLocations() const
+    {
+        return bUsesSampleLocations;
+    }
+
 private:
     FRHIViewInstancingState ViewInstancingState;
+    bool                    bUsesSampleLocations;
 };
 
 struct FVulkanPipelineDataHeader

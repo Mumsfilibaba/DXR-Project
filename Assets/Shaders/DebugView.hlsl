@@ -91,8 +91,8 @@ float3 CascadeIndexToColor(uint CascadeIndex)
 
 float ComputeViewDepth(float2 TexCoord, float Depth)
 {
-    const float X = TexCoord.x * 2.0 - 1.0 - CameraBuffer.Jitter.x;
-    const float Y = (1.0 - TexCoord.y) * 2.0 - 1.0 - CameraBuffer.Jitter.y;
+    const float X = TexCoord.x * 2.0 - 1.0 - CameraBuffer.ImageJitter.x;
+    const float Y = (1.0 - TexCoord.y) * 2.0 - 1.0 - CameraBuffer.ImageJitter.y;
     
     const float4 ProjectedPos = float4(X, Y, Depth, 1.0);
     const float4 WorldPos4    = mul(ProjectedPos, CameraBuffer.ViewProjectionInvUnjittered);

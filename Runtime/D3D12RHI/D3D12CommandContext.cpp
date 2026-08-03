@@ -408,6 +408,8 @@ void FD3D12CommandContext::ObtainCommandList()
 
         CommandList->InsertBeginTimestamp(TimingQueryAllocator);
         ReopenEventStack();
+
+        ContextState.BeginCommandList();
     }
 
     if (!Commands)
@@ -443,6 +445,8 @@ void FD3D12CommandContext::AddPendingBarrier(FD3D12Resource* Resource, D3D12_RES
 void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolveQueries)
 {
     TRACE_FUNCTION_SCOPE();
+
+    ContextState.EndCommandList();
 
     // -------------------------------------------------------------------------------------------
     // Drain bindless descriptor writes accumulated during recording. The bindless heap aliases
@@ -575,8 +579,6 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
         PendingBarriers.Clear();
         PendingResourceStates.Clear();
     }
-
-    ContextState.ResetStateForNewCommandList();
 }
 
 void FD3D12CommandContext::SplitCommandList(bool bFlushAllocator, bool bWaitForQueue)
@@ -1042,6 +1044,27 @@ void FD3D12CommandContext::SetDepthBias(float DepthBias, float DepthBiasClamp, f
     ContextState.SetDepthBias(DepthBias, DepthBiasClamp, SlopeScaledDepthBias);
 }
 
+void FD3D12CommandContext::SetSamplePositions(const FRHISamplePositionsDesc& SamplePositionsDesc)
+{
+    BarrierBatcher.FlushBarriers(GetCommandList());
+
+    D3D12_SAMPLE_POSITION SamplePositions[RHI_MAX_SAMPLE_POSITIONS] = { };
+
+    const uint32 NumPixels    = SamplePositionsDesc.NumSamplesPerPixel > 0 ? uint32(SamplePositionsDesc.GridWidth) * uint32(SamplePositionsDesc.GridHeight) : 0;
+    const uint32 NumPositions = uint32(SamplePositionsDesc.NumSamplesPerPixel) * NumPixels;
+    CHECK(NumPositions <= RHI_MAX_SAMPLE_POSITIONS);
+
+    // D3D12 stores positions as signed 1/16ths of a pixel relative to the center.
+    for (uint32 Index = 0; Index < NumPositions; ++Index)
+    {
+        const FRHISamplePosition& Position = SamplePositionsDesc.Positions[Index];
+        SamplePositions[Index].X = static_cast<INT8>(Math::Clamp(Math::RoundToInt(Position.X * 16.0f), -8, 7));
+        SamplePositions[Index].Y = static_cast<INT8>(Math::Clamp(Math::RoundToInt(Position.Y * 16.0f), -8, 7));
+    }
+
+    ContextState.SetSamplePositions(SamplePositions, SamplePositionsDesc.NumSamplesPerPixel, NumPixels);
+}
+
 void FD3D12CommandContext::SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets)
 {
     ContextState.SetStreamOutputTargets(Buffers, Offsets);
@@ -1211,12 +1234,18 @@ void FD3D12CommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
     GetCommandList().UpdateResidency(D3D12Destination->GetResource()->GetResidencyHandle());
     GetCommandList().UpdateResidency(D3D12Source->GetResource()->GetResidencyHandle());
 
+    // D3D12 requires the default sample positions to be active for ResolveSubresource.
+    ContextState.FlushDefaultSamplePositions();
+
     GetCommandList()->ResolveSubresource(
         D3D12Destination->GetResource()->GetD3D12Resource(),
         0,
         D3D12Source->GetResource()->GetD3D12Resource(),
         0,
         DstFormat);
+
+    // Restore straight away rather than waiting for the next draw.
+    ContextState.FlushSamplePositions();
 }
 
 void FD3D12CommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData)

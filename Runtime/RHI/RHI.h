@@ -348,6 +348,25 @@ struct RHI
     static RHI_API uint32 ShadingRateImageTileSize;
 
     // -------------------------------------------------------------------------------------------
+    // Programmable Sample Positions
+    // -------------------------------------------------------------------------------------------
+
+    /** Whether programmable sample positions are supported */
+    static RHI_API bool bSupportsProgrammableSamplePositions;
+
+    /** Programmable sample position tier (Tier1 = uniform, Tier2 = per-pixel in a 2x2 quad) */
+    static RHI_API ESamplePositionsTier SamplePositionsTier;
+
+    /** Maximum pixel-grid width that can carry distinct positions (1 or 2) */
+    static RHI_API uint32 MaxSamplePositionGridWidth;
+
+    /** Maximum pixel-grid height that can carry distinct positions (1 or 2) */
+    static RHI_API uint32 MaxSamplePositionGridHeight;
+
+    /** Bitmask of sample counts that accept custom positions, using the sample count as the bit value */
+    static RHI_API uint32 SupportedSamplePositionSampleCounts;
+
+    // -------------------------------------------------------------------------------------------
     // Draw Indirect
     // -------------------------------------------------------------------------------------------
 

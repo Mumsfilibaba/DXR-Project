@@ -187,7 +187,8 @@ public:
     void BindRayTracingState();
 
     void ResetState();
-    void ResetStateForNewCommandBuffer();
+    void BeginCommandBuffer();
+    void EndCommandBuffer();
 
     void EvictStaleDescriptorStates();
 
@@ -205,6 +206,7 @@ public:
     void SetBlendFactor(const float BlendFactor[4]);
     void SetStencilRef(uint32 InStencilRef);
     void SetDepthBias(float InDepthBias, float InDepthBiasClamp, float InSlopeScaledDepthBias);
+    void SetSamplePositions(const FRHISamplePositionsDesc& SamplePositionsDesc);
     void SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets);
     void SetVertexBuffer(FVulkanBufferRHI* VertexBuffer, uint32 VertexBufferSlot);
     void SetIndexBuffer(FVulkanBufferRHI* IndexBuffer, VkIndexType IndexFormat);
@@ -284,6 +286,13 @@ public:
         }
     }
 
+#if VK_EXT_sample_locations
+    FORCEINLINE const VkSampleLocationsInfoEXT* GetCustomSampleLocationsInfo() const
+    {
+        return CommonGraphicsState.bUsingCustomSampleLocations ? &CommonGraphicsState.SampleLocationsInfo : nullptr;
+    }
+#endif
+
 private:
 #if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     FVulkanRenderPassKey BuildRenderPassKey(const FVulkanRenderTargetState& RenderTargetState) const;
@@ -314,6 +323,12 @@ private:
             Memory::Memzero(DepthBias, sizeof(DepthBias));
             Memory::Memzero(Viewports, sizeof(Viewports));
             Memory::Memzero(ScissorRects, sizeof(ScissorRects));
+
+        #if VK_EXT_sample_locations
+            Memory::Memzero(SampleLocations, sizeof(SampleLocations));
+            Memory::Memzero(&SampleLocationsInfo, sizeof(SampleLocationsInfo));
+            bUsingCustomSampleLocations = false;
+        #endif
         }
 
         FRHIViewInstancingState  ViewInstancingState;
@@ -326,11 +341,18 @@ private:
         uint32                   NumScissorRects;
         FVulkanRenderTargetState RenderTargetState;
 
-        bool bBindBlendFactor  : 1;
-        bool bBindStencilRef   : 1;
-        bool bBindDepthBias    : 1;
-        bool bBindScissorRects : 1;
-        bool bBindViewports    : 1;
+    #if VK_EXT_sample_locations
+        VkSampleLocationEXT      SampleLocations[RHI_MAX_SAMPLE_POSITIONS];
+        VkSampleLocationsInfoEXT SampleLocationsInfo;
+        bool                     bUsingCustomSampleLocations;
+    #endif
+
+        bool bBindBlendFactor     : 1;
+        bool bBindStencilRef      : 1;
+        bool bBindDepthBias       : 1;
+        bool bBindSampleLocations : 1;
+        bool bBindScissorRects    : 1;
+        bool bBindViewports       : 1;
     } CommonGraphicsState;
 
     struct FGraphicsState

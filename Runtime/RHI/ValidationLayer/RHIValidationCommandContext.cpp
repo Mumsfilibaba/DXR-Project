@@ -300,6 +300,52 @@ void FRHIValidationCommandContext::SetDepthBias(float DepthBias, float DepthBias
     CommandContext->SetDepthBias(DepthBias, DepthBiasClamp, SlopeScaledDepthBias);
 }
 
+void FRHIValidationCommandContext::SetSamplePositions(const FRHISamplePositionsDesc& SamplePositionsDesc)
+{
+    if (!RHI::bSupportsProgrammableSamplePositions)
+    {
+        RHI_VALIDATION_ERROR("SetSamplePositions called but programmable sample positions are not supported on this device");
+        return;
+    }
+
+    if (SamplePositionsDesc.NumSamplesPerPixel > 0)
+    {
+        if (SamplePositionsDesc.GridWidth  > RHI::MaxSamplePositionGridWidth ||
+            SamplePositionsDesc.GridHeight > RHI::MaxSamplePositionGridHeight)
+        {
+            RHI_VALIDATION_ERROR("SetSamplePositions grid %ux%u exceeds the device maximum of %ux%u",
+                SamplePositionsDesc.GridWidth, SamplePositionsDesc.GridHeight, RHI::MaxSamplePositionGridWidth, RHI::MaxSamplePositionGridHeight);
+            return;
+        }
+
+        if ((RHI::SupportedSamplePositionSampleCounts & SamplePositionsDesc.NumSamplesPerPixel) == 0)
+        {
+            RHI_VALIDATION_ERROR("SetSamplePositions with %u samples per pixel is not supported on this device",
+                SamplePositionsDesc.NumSamplesPerPixel);
+            return;
+        }
+
+        const uint32 NumPositions = uint32(SamplePositionsDesc.NumSamplesPerPixel) * uint32(SamplePositionsDesc.GridWidth) * uint32(SamplePositionsDesc.GridHeight);
+        if (NumPositions > RHI_MAX_SAMPLE_POSITIONS)
+        {
+            RHI_VALIDATION_ERROR("SetSamplePositions requires %u positions, exceeding RHI_MAX_SAMPLE_POSITIONS", NumPositions);
+            return;
+        }
+
+        for (uint32 Index = 0; Index < NumPositions; ++Index)
+        {
+            const FRHISamplePosition& Position = SamplePositionsDesc.Positions[Index];
+            if (Position.X < -0.5f || Position.X >= 0.5f || Position.Y < -0.5f || Position.Y >= 0.5f)
+            {
+                RHI_VALIDATION_ERROR("SetSamplePositions position %u (%f, %f) is outside the valid range [-0.5, 0.5)", Index, Position.X, Position.Y);
+                return;
+            }
+        }
+    }
+
+    CommandContext->SetSamplePositions(SamplePositionsDesc);
+}
+
 void FRHIValidationCommandContext::SetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot)
 {
     if (!ValidateRecordingPhase("SetVertexBuffers"))

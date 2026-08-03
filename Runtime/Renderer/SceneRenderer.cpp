@@ -44,6 +44,13 @@ static FAutoConsoleVariableRef CVarEnableTemporalAA(
     GEnableTemporalAA,
     EConsoleVariableFlags::Default);
 
+static bool GTemporalAAHardwareJitter = false;
+static FAutoConsoleVariableRef CVarTemporalAAHardwareJitter(
+    "Renderer.TemporalAA.HardwareJitter",
+    "Applies TAA sub-pixel jitter via programmable sample positions instead of a projection-matrix offset",
+    GTemporalAAHardwareJitter,
+    EConsoleVariableFlags::Default);
+
 static bool GEnableVariableRateShading = false;
 static FAutoConsoleVariableRef CVarEnableVariableRateShading(
     "Renderer.Feature.VariableRateShading",
@@ -744,25 +751,58 @@ void FSceneRenderer::RenderThread_PrepareCameraData(const FSceneRenderView& Scen
     CameraBuffer.ViewportWidth               = float(Resources.CurrentRenderWidth);
     CameraBuffer.ViewportHeight              = float(Resources.CurrentRenderHeight);
 
+    bUseHardwareJitter   = GEnableTemporalAA && GTemporalAAHardwareJitter && RHI::bSupportsProgrammableSamplePositions && (RHI::SupportedSamplePositionSampleCounts & 1) != 0;
+    FrameSamplePositions = FRHISamplePositionsDesc();
+
+    CameraBuffer.PrevProjectionJitter = CameraBuffer.ProjectionJitter;
+
     if (GEnableTemporalAA)
     {
         const Vector2 CameraJitter    = HaltonState.NextSample();
         const Vector2 ClipSpaceJitter = CameraJitter / Vector2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
 
-        // Add Jitter to projection matrix
-        Matrix4 JitterOffset          = Matrix4::Translation(Vector3(ClipSpaceJitter.X, ClipSpaceJitter.Y, 0.0f));
-        CameraBuffer.Projection        = CameraBuffer.Projection * JitterOffset;
-        CameraBuffer.ProjectionInv     = CameraBuffer.Projection.GetInverse();
-        // Calculate new ViewProjection
-        CameraBuffer.ViewProjection    = CameraBuffer.View * CameraBuffer.Projection;
-        CameraBuffer.ViewProjectionInv = CameraBuffer.ViewProjection.GetInverse();
-        CameraBuffer.PrevJitter        = CameraBuffer.Jitter;
-        CameraBuffer.Jitter            = ClipSpaceJitter;
+        if (bUseHardwareJitter)
+        {
+            // The rasterizer moves the sample instead of the projection, so the matrices
+            // stay unjittered and the velocity pass has nothing to subtract back out.
+            CameraBuffer.ProjectionJitter = Vector2(0.0f);
+
+            // Moving the sample within the pixel shifts the image the opposite way, so this is the negated
+            // jitter. HaltonState.NextSample() returns [-1, 1], so halving lands in [-0.5, 0.5]; the upper 
+            // bound is exclusive and both backends quantize to 1/16th of a pixel, so 7/16 is the largest 
+            // usable offset.
+            constexpr float MinSampleOffset = -0.5f;
+            constexpr float MaxSampleOffset = 7.0f / 16.0f;
+
+            FrameSamplePositions.NumSamplesPerPixel = 1;
+            FrameSamplePositions.GridWidth          = 1;
+            FrameSamplePositions.GridHeight         = 1;
+            FrameSamplePositions.Positions[0]       = FRHISamplePosition(
+                Math::Clamp(-CameraJitter.X * 0.5f, MinSampleOffset, MaxSampleOffset),
+                Math::Clamp(CameraJitter.Y * 0.5f, MinSampleOffset, MaxSampleOffset));
+        }
+        else
+        {
+            CameraBuffer.ProjectionJitter = ClipSpaceJitter;
+
+            // Add Jitter to projection matrix
+            Matrix4 JitterOffset           = Matrix4::Translation(Vector3(ClipSpaceJitter.X, ClipSpaceJitter.Y, 0.0f));
+            CameraBuffer.Projection        = CameraBuffer.Projection * JitterOffset;
+            CameraBuffer.ProjectionInv     = CameraBuffer.Projection.GetInverse();
+
+            // Calculate new ViewProjection
+            CameraBuffer.ViewProjection    = CameraBuffer.View * CameraBuffer.Projection;
+            CameraBuffer.ViewProjectionInv = CameraBuffer.ViewProjection.GetInverse();
+        }
+
+        // Both paths land the same offset in the image, so anything reconstructing 
+        // from screen coordinates uses this regardless of which one produced it.
+        CameraBuffer.ImageJitter = ClipSpaceJitter;
     }
     else
     {
-        CameraBuffer.PrevJitter = Vector2(0.0f);
-        CameraBuffer.Jitter     = Vector2(0.0f);
+        CameraBuffer.ProjectionJitter = Vector2(0.0f);
+        CameraBuffer.ImageJitter      = Vector2(0.0f);
     }
 
     // Prepare matrices for the GPU
@@ -780,7 +820,8 @@ void FSceneRenderer::RenderThread_PrepareCameraData(const FSceneRenderView& Scen
     if (SceneRenderView.bCameraCut)
     {
         // Previous-frame matrices are already stored in GPU-transposed form.
-        CameraBuffer.PrevViewProjection = CameraBuffer.ViewProjection;
+        CameraBuffer.PrevViewProjection   = CameraBuffer.ViewProjection;
+        CameraBuffer.PrevProjectionJitter = CameraBuffer.ProjectionJitter;
         TemporalAA->InvalidateHistory();
         RayTracer.InvalidateReflectionHistory();
         HaltonState.SampleIndex = 0;
@@ -819,7 +860,26 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
         FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Depth].Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::DepthWrite),
     };
 
+    // D3D12 ties a depth buffer's contents to the sample pattern that produced them.
+    const bool bRestorePrevSamplePositions = PrevFrameSamplePositions.NumSamplesPerPixel > 0;
+    if (bRestorePrevSamplePositions)
+    {
+        CommandList.SetSamplePositions(PrevFrameSamplePositions);
+    }
+
     CommandList.TransitionBarrier(GBufferToWrite);
+
+    // Offset the raster sample so the prepass and base pass produce the TAA jitter without a matrix offset.
+    if (bUseHardwareJitter)
+    {
+        CommandList.SetSamplePositions(FrameSamplePositions);
+    }
+    else if (bRestorePrevSamplePositions)
+    {
+        CommandList.SetSamplePositions(FRHISamplePositionsDesc());
+    }
+
+    PrevFrameSamplePositions = bUseHardwareJitter ? FrameSamplePositions : FRHISamplePositionsDesc();
 
     // PrePass
     if (GPrePassEnabled)
@@ -880,6 +940,13 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
     };
 
     CommandList.TransitionBarrier(GBufferToRead);
+
+    // The lighting and SSAO work in between is compute, and it transitions other depth resources (shadow maps)
+    // that were rendered with the default pattern, so drop back to it until the depth buffer is touched again.
+    if (bUseHardwareJitter)
+    {
+        CommandList.SetSamplePositions(FRHISamplePositionsDesc());
+    }
 
     const bool bIsRayTracingActive = IsRayTracingActive();
     if (bIsRayTracingActive)
@@ -1016,6 +1083,17 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
     // Main LightPass
     TiledLightPass->Execute(CommandList, Resources, CurrentScene);
 
+    // Moved ahead of the depth transitions below so no other depth resource is transitioned while the scene
+    // depth's sample pattern is bound.
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.PointLightShadowMaps.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource));
+
+    // The skybox depth-tests against the jittered depth buffer, so it belongs inside the jittered window
+    // together with the transitions that carry that buffer through to the TAA resolve.
+    if (bUseHardwareJitter)
+    {
+        CommandList.SetSamplePositions(FrameSamplePositions);
+    }
+
     // The skybox pass binds depth as a ReadOnlyDepth DSV (bDepthWriteEnable = false)
     CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Depth].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::DepthRead));
     CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.SceneTarget.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::RenderTarget));
@@ -1025,8 +1103,6 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
     {
         SkyboxRenderPass->Execute(CommandList, Resources, CurrentScene);
     }
-
-    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.PointLightShadowMaps.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource));
 
 
     if (CurrentScene)
@@ -1064,6 +1140,13 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
         CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.SceneTarget.Get(), ERHIResourceState::RenderTarget, ERHIResourceState::PixelShaderResource));
     }
 
+    // The scene depth is done being written and transitioned, so drop back to the default pattern before the
+    // editor and UI passes. FEditorNoJitterDepthPass in particular exists to give picking a stable depth buffer.
+    if (bUseHardwareJitter)
+    {
+        CommandList.SetSamplePositions(FRHISamplePositionsDesc());
+    }
+
 #if EDITOR_BUILD
     {
         EditorNoJitterDepthPass->Execute(CommandList, Resources, CurrentScene); 
@@ -1096,9 +1179,18 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
         {
         #if EDITOR_BUILD
             FRHITexture* DebugDepthTarget = Resources.EditorNoJitterDepth.Get();
+            const bool   bDebugDepthIsJittered = false;
         #else
             FRHITexture* DebugDepthTarget = Resources.GBuffer[EGBufferIndex::Depth].Get();
+            // Outside the editor the debug geometry shares the jittered scene depth, so its transitions and
+            // draws have to keep agreeing with the pattern that buffer was rendered with.
+            const bool   bDebugDepthIsJittered = PrevFrameSamplePositions.NumSamplesPerPixel > 0;
         #endif
+
+            if (bDebugDepthIsJittered)
+            {
+                CommandList.SetSamplePositions(PrevFrameSamplePositions);
+            }
 
             CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SceneRenderView.RenderTarget, ERHIResourceState::RenderTarget));
 
@@ -1122,6 +1214,11 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
             CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(DebugDepthTarget, ERHIResourceState::DepthWrite, ERHIResourceState::PixelShaderResource));
 
             CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SceneRenderView.RenderTarget, ERHIResourceState::PixelShaderResource));
+
+            if (bDebugDepthIsJittered)
+            {
+                CommandList.SetSamplePositions(FRHISamplePositionsDesc());
+            }
         }
     }
 
@@ -1619,6 +1716,9 @@ void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
 {
     if ((Resources.CurrentRenderWidth != InWidth || Resources.CurrentRenderHeight != InHeight) && InWidth > 0 && InHeight > 0)
     {
+        // A recreated depth buffer starts out on the default sample pattern again.
+        PrevFrameSamplePositions = FRHISamplePositionsDesc();
+
         if (!DepthPrePass->CreateResources(Resources, InWidth, InHeight))
         {
             DEBUG_BREAK();

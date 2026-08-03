@@ -62,7 +62,13 @@ public:
     void DirtyShaderConstants(EShaderConstantsPipeline::Type Pipeline);
     void ResetState();
     void ResetStateResources();
-    void ResetStateForNewCommandList();
+
+    void BeginCommandList();
+    void EndCommandList() { }
+
+    void FlushDepthBias();
+    void FlushSamplePositions();
+    void FlushDefaultSamplePositions();
 
     void SetGraphicsPipelineState(FD3D12GraphicsPipelineStateRHI* InGraphicsPipelineState);
     void SetComputePipelineState(FD3D12ComputePipelineStateRHI* InComputePipelineState);
@@ -76,6 +82,7 @@ public:
     void SetBlendFactor(const float BlendFactor[4]);
     void SetStencilRef(uint32 InStencilRef);
     void SetDepthBias(float InDepthBias, float InDepthBiasClamp, float InSlopeScaledDepthBias);
+    void SetSamplePositions(const D3D12_SAMPLE_POSITION* InSamplePositions, uint32 InNumSamplesPerPixel, uint32 InNumPixels);
     void SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets);
     void SetVertexBuffer(FD3D12BufferRHI* VertexBuffer, uint32 VertexBufferSlot);
     void SetIndexBuffer(FD3D12BufferRHI* IndexBuffer, DXGI_FORMAT IndexFormat);
@@ -213,6 +220,10 @@ private:
             Memory::Memzero(DepthBias, sizeof(DepthBias));
             Memory::Memzero(Viewports, sizeof(Viewports));
             Memory::Memzero(ScissorRects, sizeof(ScissorRects));
+
+            Memory::Memzero(SamplePositions, sizeof(SamplePositions));
+            NumSamplesPerPixel      = 0;
+            NumSamplePositionPixels = 0;
         }
 
         float                   BlendFactor[4];
@@ -224,6 +235,9 @@ private:
         FD3D12TextureRHI*       ShadingRateImage;
         D3D12_SHADING_RATE      ShadingRate;
         float                   DepthBias[3]; // DepthBias, DepthBiasClamp, SlopeScaledDepthBias
+        D3D12_SAMPLE_POSITION   SamplePositions[RHI_MAX_SAMPLE_POSITIONS];
+        uint32                  NumSamplesPerPixel;      // 0 means the hardware defaults
+        uint32                  NumSamplePositionPixels;
         FD3D12RenderTargetCache RenderTargetCache;
         FD3D12RootSignature*    BoundRootSignature;
 
@@ -231,6 +245,7 @@ private:
         bool bBindBlendFactor      : 1;
         bool bBindStencilRef       : 1;
         bool bBindDepthBias        : 1;
+        bool bBindSamplePositions  : 1;
         bool bBindScissorRects     : 1;
         bool bBindViewports        : 1;
         bool bBindShadingRate      : 1;

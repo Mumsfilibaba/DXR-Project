@@ -272,7 +272,9 @@ public:
 
     void ResetState();
     void ResetStateResources();
-    void ResetStateForNewCommandBuffer();
+
+    void BeginCommandBuffer();
+    void EndCommandBuffer() {}
 
     void SetGraphicsPipelineState(FMetalGraphicsPipelineStateRHI* InGraphicsPipelineState);
     void SetComputePipelineState(FMetalComputePipelineStateRHI* InComputePipelineState);

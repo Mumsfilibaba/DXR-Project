@@ -929,6 +929,39 @@ struct FScissorRegion
     float PositionY = 0.0f;
 };
 
+struct FRHISamplePosition
+{
+    constexpr FRHISamplePosition() noexcept = default;
+
+    constexpr FRHISamplePosition(float InX, float InY) noexcept
+        : X(InX)
+        , Y(InY)
+    {
+    }
+
+    constexpr bool operator==(const FRHISamplePosition& Other) const noexcept = default;
+
+    // Offset from the pixel center in pixels, +Y down. Valid range [-0.5, 0.5).
+    float X = 0.0f;
+    float Y = 0.0f;
+};
+
+struct FRHISamplePositionsDesc
+{
+    constexpr FRHISamplePositionsDesc() noexcept = default;
+
+    constexpr bool operator==(const FRHISamplePositionsDesc& Other) const noexcept = default;
+
+    // Pixel-major: Positions[PixelIndex * NumSamplesPerPixel + SampleIndex],
+    // where PixelIndex walks the GridWidth x GridHeight block in row-major order.
+    FRHISamplePosition Positions[RHI_MAX_SAMPLE_POSITIONS] = { };
+
+    // 0 restores the hardware default positions.
+    uint8 NumSamplesPerPixel = 0;
+    uint8 GridWidth          = 1;
+    uint8 GridHeight         = 1;
+};
+
 struct FRHISceneAccelerationStructureBuildDesc
 {
     constexpr FRHISceneAccelerationStructureBuildDesc() noexcept = default;

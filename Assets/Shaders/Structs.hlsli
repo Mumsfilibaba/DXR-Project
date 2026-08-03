@@ -46,14 +46,15 @@ struct FCamera
     float    AspectRatio;
 
     // 752-768
-    float2   Jitter;
-    float2   PrevJitter;
+    // Offset baked into ViewProjection/PrevViewProjection. Zero when the rasterizer applies the jitter.
+    float2   ProjectionJitter;
+    float2   PrevProjectionJitter;
 
     // 768-784
     float    ViewportWidth;
     float    ViewportHeight;
-    float    Padding0;
-    float    Padding1;
+    // Offset present in the rendered image, however it was produced.
+    float2   ImageJitter;
 
     // 784-800
     float3   PrevPositionWS;

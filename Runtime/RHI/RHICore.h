@@ -44,6 +44,9 @@ enum class EFormat : uint8;
 /** Maximum number of vertex buffers that can be bound at once */
 #define RHI_MAX_VERTEX_BUFFERS (32)
 
+/** Maximum sample positions in one description: a 2x2 pixel grid at 16 samples per pixel */
+#define RHI_MAX_SAMPLE_POSITIONS (64)
+
 enum class EShaderModel : uint8
 {
     Unknown = 0,
@@ -120,6 +123,26 @@ NODISCARD constexpr const CHAR* ToString(EShadingRateTier ShadingRateTier)
         case EShadingRateTier::Tier1:        return "Tier1";
         case EShadingRateTier::Tier2:        return "Tier2";
         
+        default: return "Unknown";
+    }
+}
+
+enum class ESamplePositionsTier : uint8
+{
+    NotSupported = 0,
+
+    Tier1 = 1, // One set of positions shared by every pixel
+    Tier2 = 2, // Per-pixel positions within a 2x2 quad
+};
+
+NODISCARD constexpr const CHAR* ToString(ESamplePositionsTier SamplePositionsTier)
+{
+    switch (SamplePositionsTier)
+    {
+        case ESamplePositionsTier::NotSupported: return "NotSupported";
+        case ESamplePositionsTier::Tier1:        return "Tier1";
+        case ESamplePositionsTier::Tier2:        return "Tier2";
+
         default: return "Unknown";
     }
 }

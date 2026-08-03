@@ -41,7 +41,7 @@ void FMetalCommandContextState::ResetStateResources()
     CommonState.ShaderConstantsCache.Clear();
 }
 
-void FMetalCommandContextState::ResetStateForNewCommandBuffer()
+void FMetalCommandContextState::BeginCommandBuffer()
 {
     GraphicsState.bBindPipelineState     = GraphicsState.PipelineState != nullptr;
     GraphicsState.bBindPrimitiveTopology = GraphicsState.PrimitiveType != MTLPrimitiveType(-1);

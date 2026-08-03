@@ -303,6 +303,21 @@ DECLARE_RHICOMMAND(FRHICommandSetDepthBias)
     float SlopeScaledDepthBias;
 };
 
+DECLARE_RHICOMMAND(FRHICommandSetSamplePositions)
+{
+    FORCEINLINE FRHICommandSetSamplePositions(const FRHISamplePositionsDesc& InSamplePositionsDesc)
+        : SamplePositionsDesc(InSamplePositionsDesc)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.SetSamplePositions(SamplePositionsDesc);
+    }
+
+    FRHISamplePositionsDesc SamplePositionsDesc;
+};
+
 DECLARE_RHICOMMAND(FRHICommandSetVertexBuffers)
 {
     FORCEINLINE FRHICommandSetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 InStartSlot)
