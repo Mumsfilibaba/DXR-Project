@@ -689,7 +689,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
         }
         else
         {
-            D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_D3D12_OPTIONS19 query failed (hr=0x%08X)", hr);
+            D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_D3D12_OPTIONS21 query failed (hr=0x%08X)", hr);
         }
     }
 
