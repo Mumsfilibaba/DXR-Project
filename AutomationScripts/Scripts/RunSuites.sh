@@ -16,8 +16,9 @@
 #  readable when launched interactively. For automation, pass --no-pause or
 #  set TESTS_NO_PAUSE=1 to skip the pause.
 #
-#  Every suite runs under a watchdog so a deadlock fails that suite instead of
-#  wedging the whole run. Set SUITE_TIMEOUT to change the limit in seconds.
+#  Test suites run under a watchdog so a deadlock fails that suite instead of
+#  wedging the whole run. Set SUITE_TIMEOUT to change the limit in seconds, or
+#  to 0 to disable it, which is what benchmarks default to.
 #
 #  Benchmarks skip Debug entirely; those timings are misleading. This is the
 #  configuration gate that used to live behind RUN_BENCHMARK in Config.h.
@@ -150,16 +151,30 @@ pause_if_needed() {
     fi
 }
 
-# Seconds a single suite may run before the watchdog kills it.
-SUITE_TIMEOUT=${SUITE_TIMEOUT:-300}
+# Seconds a single suite may run before the watchdog kills it. Zero disables the
+# watchdog, which is the default for benchmarks: those are expected to run far
+# longer than any test, so a limit would only ever fire on a healthy run.
+if [ "$MODE" = "benchmarks" ]; then
+    SUITE_TIMEOUT=${SUITE_TIMEOUT:-0}
+else
+    SUITE_TIMEOUT=${SUITE_TIMEOUT:-300}
+fi
 
 # --- Runs a command under a watchdog, returning its exit code --------------
 #  macOS ships no timeout(1), so a background sleep does the job. A killed
 #  suite surfaces as exit code 137 (128 + SIGKILL) and is reported as a
 #  timeout, which keeps a deadlocked test from blocking the run forever.
 run_with_timeout() {
-    ( cd "$ROOT" && "$@" ) &
+    # exec so the pid below is the suite itself. Without it the pid belongs to the
+    # wrapping subshell, and killing that reports a timeout while the suite keeps
+    # running, reparented to init and still holding the pipeline's stdout open.
+    ( cd "$ROOT" && exec "$@" ) &
     local SuitePid=$!
+
+    if [ "$SUITE_TIMEOUT" -le 0 ]; then
+        wait "$SuitePid"
+        return $?
+    fi
 
     ( sleep "$SUITE_TIMEOUT"; kill -9 "$SuitePid" 2>/dev/null ) &
     local WatchdogPid=$!
