@@ -332,6 +332,15 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQu
         !PendingImageStates.IsEmpty() || !PendingBufferStates.IsEmpty();
 
     const uint32 NumCommands = CommandBuffer->GetNumCommands();
+
+#if DEBUG_BUILD
+    const uint32 CommandBudget = static_cast<uint32>(CVarMaxCommandsPerCommandBuffer.GetValue());
+    if (NumCommands > (CommandBudget * 2))
+    {
+        VULKAN_WARNING("Command-buffer closed with %u commands against a budget of %u - a recording path is likely missing a ConditionalSplitCommandBuffer() call", NumCommands, CommandBudget);
+    }
+#endif
+
     if (NumCommands == 0 && !bHasPendingState)
     {
         ContextState.ResetStateForNewCommandBuffer();
@@ -495,7 +504,7 @@ void FVulkanCommandContext::SplitCommandBuffer(bool bFlushPool, bool bWaitForQue
 
 void FVulkanCommandContext::ConditionalSplitCommandBuffer()
 {
-    if (ActiveQueryCount > 0)
+    if (!CommandBuffer || ActiveQueryCount > 0)
     {
         return;
     }
@@ -701,6 +710,8 @@ void FVulkanCommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTa
     FVulkanRenderTargetViewRHI* VulkanRenderTargetView = FVulkanDeviceRHI::ResourceCast(RenderTargetView);
     CHECK(VulkanRenderTargetView != nullptr);
 
+    ConditionalSplitCommandBuffer();
+
     const FVulkanResourceView::FImageView& ImageViewInfo = VulkanRenderTargetView->GetImageViewInfo();
 
     {
@@ -754,6 +765,8 @@ void FVulkanCommandContext::ClearDepthStencilView(FRHIDepthStencilView* DepthSte
 {
     FVulkanDepthStencilViewRHI* VulkanDepthStencilView = FVulkanDeviceRHI::ResourceCast(DepthStencilView);
     CHECK(VulkanDepthStencilView != nullptr);
+
+    ConditionalSplitCommandBuffer();
 
     const FVulkanResourceView::FImageView& ImageViewInfo = VulkanDepthStencilView->GetImageViewInfo();
 
@@ -809,7 +822,9 @@ void FVulkanCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessVie
 {
     FVulkanUnorderedAccessViewRHI* VulkanUnorderedAccessView = FVulkanDeviceRHI::ResourceCast(UnorderedAccessView);
     CHECK(VulkanUnorderedAccessView != nullptr);
-    
+
+    ConditionalSplitCommandBuffer();
+
     VkClearColorValue VulkanClearColor;
     Memory::Memcpy(VulkanClearColor.float32, ClearColor.XYZW, sizeof(VulkanClearColor.float32));
 
@@ -867,6 +882,8 @@ void FVulkanCommandContext::ClearUnorderedAccessViewUint(FRHIUnorderedAccessView
 {
     FVulkanUnorderedAccessViewRHI* VulkanUnorderedAccessView = FVulkanDeviceRHI::ResourceCast(UnorderedAccessView);
     CHECK(VulkanUnorderedAccessView != nullptr);
+
+    ConditionalSplitCommandBuffer();
 
     const FVulkanResourceView::EType Type = VulkanUnorderedAccessView->GetType();
     if (Type == FVulkanResourceView::EType::ImageView)
@@ -1019,7 +1036,7 @@ void FVulkanCommandContext::SetShaderConstants(FRHIShader* Shader, const void* S
 {
     MAYBE_UNUSED FVulkanShader* VulkanShader = GetVulkanShader(Shader);
     CHECK(VulkanShader != nullptr);
-    ContextState.SetPushConstants(reinterpret_cast<const uint32*>(ShaderConstants), NumShaderConstants);
+    ContextState.SetPushConstants(Shader->GetShaderStage(), reinterpret_cast<const uint32*>(ShaderConstants), NumShaderConstants);
 }
 
 void FVulkanCommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 RegisterIndex)
@@ -1143,6 +1160,8 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
     }
     else
     {
+        ConditionalSplitCommandBuffer();
+
         FVulkanMemoryLocation UploadLocation(GetDevice());
         void* MappedMemory = GetDevice()->GetMemoryManager().AllocateUploadMemory(
             BufferRegion.Size, 
@@ -1173,6 +1192,8 @@ void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegi
 {
     FVulkanTextureRHI* VulkanTexture = FVulkanDeviceRHI::ResourceCast(Dst);
     CHECK(VulkanTexture != nullptr);
+
+    ConditionalSplitCommandBuffer();
 
     const VkFormat Format       = VulkanTexture->GetVkFormat();
     const uint64   RequiredSize = VkCalculateTextureUploadSize(Format, TextureRegion.Width, TextureRegion.Height);
@@ -1225,6 +1246,8 @@ void FVulkanCommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegi
 {
     FVulkanTextureRHI* VulkanTexture = FVulkanDeviceRHI::ResourceCast(Dst);
     CHECK(VulkanTexture != nullptr);
+
+    ConditionalSplitCommandBuffer();
 
     const VkFormat Format       = VulkanTexture->GetVkFormat();
     const uint32   RowPitch     = VkCalculateTextureRowPitch(Format, TextureRegion.Width);
@@ -1288,7 +1311,9 @@ void FVulkanCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
     CHECK(SrcVulkanTexture->GetDesc().Extent.X == DstVulkanTexture->GetDesc().Extent.X);
     CHECK(SrcVulkanTexture->GetDesc().Extent.Y == DstVulkanTexture->GetDesc().Extent.Y);
     CHECK(SrcVulkanTexture->GetDesc().Extent.Z == DstVulkanTexture->GetDesc().Extent.Z);
-    
+
+    ConditionalSplitCommandBuffer();
+
     VkImageResolve ImageResolve = {};
     ImageResolve.srcSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
     ImageResolve.srcSubresource.mipLevel       = 0;
@@ -1323,6 +1348,8 @@ void FVulkanCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const F
     FVulkanBufferRHI* DstVulkanBuffer = FVulkanDeviceRHI::ResourceCast(Dst);
     CHECK(DstVulkanBuffer != nullptr);
 
+    ConditionalSplitCommandBuffer();
+
     VkBufferCopy BufferCopy = {};
     BufferCopy.srcOffset = SrcVulkanBuffer->GetBindOffset() + CopyDesc.SrcOffset;
     BufferCopy.dstOffset = DstVulkanBuffer->GetBindOffset() + CopyDesc.DstOffset;
@@ -1352,7 +1379,9 @@ void FVulkanCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
     CHECK(SrcVulkanTexture->GetDesc().Extent.Z     == DstVulkanTexture->GetDesc().Extent.Z);
     CHECK(SrcVulkanTexture->GetDesc().NumMipLevels == DstVulkanTexture->GetDesc().NumMipLevels);
     CHECK(SrcVulkanTexture->GetDesc().Dimension    == DstVulkanTexture->GetDesc().Dimension);
-    
+
+    ConditionalSplitCommandBuffer();
+
     constexpr uint32 MaxCopies = 15;
     VkImageCopy ImageCopies[MaxCopies];
     
@@ -1408,7 +1437,9 @@ void FVulkanCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src
         CHECK(CopyDesc.SrcArraySlice + CopyDesc.NumArraySlices <= SrcNumArrayLayers);
         CHECK(CopyDesc.DstArraySlice + CopyDesc.NumArraySlices <= DstNumArrayLayers);
     }
-    
+
+    ConditionalSplitCommandBuffer();
+
     constexpr uint32 MaxCopies = 15;
     VkImageCopy ImageCopy[MaxCopies];
     
@@ -1475,6 +1506,8 @@ void FVulkanCommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 Ds
     FVulkanBufferRHI* DstVulkanBuffer = FVulkanDeviceRHI::ResourceCast(Dst);
     CHECK(DstVulkanBuffer != nullptr);
 
+    ConditionalSplitCommandBuffer();
+
     TransitionImageLayout(SrcVulkanTexture, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
     RequireBufferState(DstVulkanBuffer, ERHIResourceState::CopyDest);
     BarrierBatcher.FlushBarriers(GetCommandBuffer());
@@ -1521,6 +1554,8 @@ void FVulkanCommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint
 
     FVulkanBufferRHI* DstVulkanBuffer = FVulkanDeviceRHI::ResourceCast(Dst);
     CHECK(DstVulkanBuffer != nullptr);
+
+    ConditionalSplitCommandBuffer();
 
     TransitionImageLayout(SrcVulkanTexture, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
     RequireBufferState(DstVulkanBuffer, ERHIResourceState::CopyDest);
@@ -1586,6 +1621,8 @@ void FVulkanCommandContext::DiscardContents(FRHITexture* Resource)
         return;
     }
 
+    ConditionalSplitCommandBuffer();
+
     FVulkanImageLayoutState& LocalState = RetrievePendingImageState(VulkanTexture);
 
     VkImageLayout CurrentLayout = LocalState.GetImageLayout();
@@ -1619,6 +1656,8 @@ void FVulkanCommandContext::DiscardContents(FRHITexture* Resource)
     ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
     BarrierBatcher.AddImageMemoryBarrier(0, ImageBarrier);
+
+    LocalState.SetImageLayout(CurrentLayout);
 }
 
 void FVulkanCommandContext::BuildSceneAccelerationStructure(FRHISceneAccelerationStructure* InRayTracingScene, const FRHISceneAccelerationStructureBuildDesc& InBuildDesc)
@@ -1628,6 +1667,8 @@ void FVulkanCommandContext::BuildSceneAccelerationStructure(FRHISceneAcceleratio
     {
         return;
     }
+
+    ConditionalSplitCommandBuffer();
 
     if (!VulkanScene->Build(*this, InBuildDesc))
     {
@@ -1642,6 +1683,8 @@ void FVulkanCommandContext::BuildGeometryAccelerationStructure(FRHIGeometryAccel
     {
         return;
     }
+
+    ConditionalSplitCommandBuffer();
 
     if (!VulkanGeometry->Build(*this, InBuildDesc))
     {
@@ -1679,6 +1722,8 @@ void FVulkanCommandContext::CopyAccelerationStructure(FRHIRayTracingAcceleration
         }
     }
 
+    ConditionalSplitCommandBuffer();
+
     VkCopyAccelerationStructureInfoKHR CopyInfo = {};
     CopyInfo.sType = VK_STRUCTURE_TYPE_COPY_ACCELERATION_STRUCTURE_INFO_KHR;
     CopyInfo.src   = FVulkanDeviceRHI::ResourceCast(Source)->GetVkAccelerationStructure();
@@ -1707,6 +1752,8 @@ void FVulkanCommandContext::CompactAccelerationStructure(FRHIRayTracingAccelerat
     if (AccelerationStructure->GetAccelerationStructureType() == ERayTracingAccelerationStructureType::Geometry)
     {
         FVulkanGeometryAccelerationStructureRHI* Geometry = FVulkanDeviceRHI::ResourceCast(static_cast<FRHIGeometryAccelerationStructure*>(AccelerationStructure));
+
+        ConditionalSplitCommandBuffer();
         Geometry->CompactInPlace(*this, CompactedSizeInBytes);
     }
     else
@@ -1728,6 +1775,8 @@ void FVulkanCommandContext::SerializeAccelerationStructure(FRHIRayTracingAcceler
         VULKAN_WARNING("SerializeAccelerationStructure: missing destination/source or vkCmdCopyAccelerationStructureToMemoryKHR not loaded");
         return;
     }
+
+    ConditionalSplitCommandBuffer();
 
     VkCopyAccelerationStructureToMemoryInfoKHR CopyInfo = {};
     CopyInfo.sType              = VK_STRUCTURE_TYPE_COPY_ACCELERATION_STRUCTURE_TO_MEMORY_INFO_KHR;
@@ -1755,6 +1804,8 @@ void FVulkanCommandContext::DeserializeAccelerationStructure(FRHIRayTracingAccel
         VULKAN_WARNING("DeserializeAccelerationStructure: missing destination/source or vkCmdCopyMemoryToAccelerationStructureKHR not loaded");
         return;
     }
+
+    ConditionalSplitCommandBuffer();
 
     VkCopyMemoryToAccelerationStructureInfoKHR CopyInfo = {};
     CopyInfo.sType             = VK_STRUCTURE_TYPE_COPY_MEMORY_TO_ACCELERATION_STRUCTURE_INFO_KHR;
@@ -1819,6 +1870,8 @@ void FVulkanCommandContext::WriteAccelerationStructurePostBuildInfo(FRHIBuffer* 
     {
         return;
     }
+
+    ConditionalSplitCommandBuffer();
 
     VkQueryPoolCreateInfo QueryPoolCreateInfo = {};
     QueryPoolCreateInfo.sType      = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
@@ -1885,6 +1938,7 @@ void FVulkanCommandContext::BuildOpacityMicromap(FRHIOpacityMicromap* OpacityMic
 {
     if (FVulkanOpacityMicromap* VulkanMicromap = FVulkanDeviceRHI::ResourceCast(OpacityMicromap))
     {
+        ConditionalSplitCommandBuffer();
         VulkanMicromap->Build(*this, BuildDesc);
     }
 }
@@ -1904,6 +1958,8 @@ void FVulkanCommandContext::DispatchRays(FRHIShaderBindingTable* ShaderBindingTa
     }
 
     CHECK(VulkanShaderBindingTable->GetPipeline() == ContextState.GetRayTracingPipelineState());
+
+    ConditionalSplitCommandBuffer();
 
     ContextState.PrepareRayTracingState();
     ContextState.BindRayTracingState();
@@ -1936,6 +1992,8 @@ void FVulkanCommandContext::DispatchRaysIndirect(FRHIShaderBindingTable* ShaderB
 
     CHECK(VulkanShaderBindingTable->GetPipeline() == ContextState.GetRayTracingPipelineState());
 
+    ConditionalSplitCommandBuffer();
+
     RequireBufferState(VulkanArgumentBuffer, ERHIResourceState::IndirectArgument);
 
     ContextState.PrepareRayTracingState();
@@ -1963,6 +2021,8 @@ void FVulkanCommandContext::ExecuteIndirectRayTracingAccelerationStructureOperat
     {
         return;
     }
+
+    ConditionalSplitCommandBuffer();
 
     BarrierBatcher.FlushBarriers(GetCommandBuffer());
 

@@ -5,7 +5,41 @@
 #include "D3D12RHI/D3D12PipelineState.h"
 
 class FD3D12RayTracingPipelineStateRHI;
+
 typedef TSharedRef<class FD3D12RayTracingPipelineStateRHI> FD3D12RayTracingPipelineStateRHIRef;
+
+struct EShaderConstantsPipeline
+{
+    enum Type : int32
+    {
+        Graphics = 0,
+        Compute,
+        RayTracing,
+        Count
+    };
+};
+
+FORCEINLINE EShaderConstantsPipeline::Type GetShaderConstantsPipeline(EShaderStage ShaderStage)
+{
+    if (IsShaderStageRayTracing(ShaderStage))
+    {
+        return EShaderConstantsPipeline::RayTracing;
+    }
+    else if (ShaderStage == EShaderStage::Compute)
+    {
+        return EShaderConstantsPipeline::Compute;
+    }
+    else
+    {
+        return EShaderConstantsPipeline::Graphics;
+    }
+}
+
+// Ray tracing dispatches through the compute root-signature slot, the meshlet pipeline through the graphics one.
+FORCEINLINE bool IsComputeRootSignatureSlot(EShaderConstantsPipeline::Type Pipeline)
+{
+    return Pipeline == EShaderConstantsPipeline::Compute || Pipeline == EShaderConstantsPipeline::RayTracing;
+}
 
 class FD3D12CommandContextState : public FD3D12DeviceChild
 {
@@ -24,7 +58,8 @@ public:
     void BindMeshletState();
     void BindRayTracingState();
 
-    void BindShaderConstants(FD3D12RootSignature* InRootSignature, EShaderVisibility::Type ShaderStage);
+    void BindShaderConstants(FD3D12RootSignature* InRootSignature, EShaderConstantsPipeline::Type Pipeline);
+    void DirtyShaderConstants(EShaderConstantsPipeline::Type Pipeline);
     void ResetState();
     void ResetStateResources();
     void ResetStateForNewCommandList();
@@ -48,7 +83,7 @@ public:
     void SetUAV(FD3D12UnorderedAccessViewRHI* UnorderedAccessView, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex);
     void SetCBV(FD3D12BufferRHI* Buffer, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex);
     void SetSampler(FD3D12SamplerStateRHI* SamplerState, EShaderVisibility::Type ShaderStage, uint32 SamplerIndex);
-    void SetShaderConstants(const uint32* ShaderConstants, uint32 NumShaderConstants);
+    void SetShaderConstants(EShaderStage ShaderStage, const uint32* ShaderConstants, uint32 NumShaderConstants);
 
     FORCEINLINE FD3D12CommandContext& GetContext()
     {
@@ -258,6 +293,8 @@ private:
     struct FRayTracingState
     {
         FD3D12RayTracingPipelineStateRHIRef PipelineState;
+
+        bool bBindShaderConstants : 1;
     } RayTracingState;
 
     struct FCommonComputeState
@@ -277,7 +314,7 @@ private:
         FD3D12UnorderedAccessViewCache UnorderedAccessViewCache;
         FD3D12SamplerStateCache        SamplerStateCache;
         FD3D12DescriptorCache          DescriptorCache;
-        FD3D12ShaderConstantsCache     ShaderConstantsCache;
+        FD3D12ShaderConstantsCache     ShaderConstantsCache[EShaderConstantsPipeline::Count];
     } CommonState;
 
     struct FAccumulatedReadState

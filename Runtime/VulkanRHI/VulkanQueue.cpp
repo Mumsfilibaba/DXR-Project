@@ -533,6 +533,11 @@ void FVulkanCommands::PreExecute()
 
     FVulkanBarrierBatcher BarrierBatcher;
 
+    const auto ResolveSourceLayout = [](VkImageLayout Layout)
+    {
+        return (Layout == VK_IMAGE_LAYOUT_TO_BE_DETERMINED) ? VK_IMAGE_LAYOUT_UNDEFINED : Layout;
+    };
+
     for (const FVulkanPendingImageBarrier& Pending : PendingImageBarriers)
     {
         FVulkanImageLayoutState& GlobalState = Pending.Texture->GetImageLayoutState();
@@ -544,7 +549,7 @@ void FVulkanCommands::PreExecute()
         {
             if (GlobalState.AreAllSubresourcesSameLayout())
             {
-                const VkImageLayout GlobalLayout = GlobalState.GetImageLayout();
+                const VkImageLayout GlobalLayout = ResolveSourceLayout(GlobalState.GetImageLayout());
                 if (GlobalLayout != Pending.DesiredLayout)
                 {
                     VkImageMemoryBarrier2KHR Barrier = {};
@@ -571,7 +576,7 @@ void FVulkanCommands::PreExecute()
                 const uint32 NumSubresources = GlobalState.GetNumSubresources();
                 for (uint32 i = 0; i < NumSubresources; i++)
                 {
-                    const VkImageLayout GlobalLayout = GlobalState.GetSubresourceLayout(i);
+                    const VkImageLayout GlobalLayout = ResolveSourceLayout(GlobalState.GetSubresourceLayout(i));
                     if (GlobalLayout != Pending.DesiredLayout)
                     {
                         const uint32 MipLevel   = i % CreateInfo.mipLevels;
@@ -600,7 +605,7 @@ void FVulkanCommands::PreExecute()
         }
         else
         {
-            const VkImageLayout GlobalLayout = GlobalState.GetSubresourceLayout(Pending.Subresource);
+            const VkImageLayout GlobalLayout = ResolveSourceLayout(GlobalState.GetSubresourceLayout(Pending.Subresource));
             if (GlobalLayout != Pending.DesiredLayout)
             {
                 const uint32 MipLevel   = Pending.Subresource % CreateInfo.mipLevels;

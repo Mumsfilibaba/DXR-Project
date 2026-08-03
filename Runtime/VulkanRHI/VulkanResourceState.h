@@ -2,7 +2,7 @@
 #include "Core/Containers/Array.h"
 #include "VulkanRHI/VulkanCore.h"
 
-constexpr VkImageLayout          VK_IMAGE_LAYOUT_TO_BE_DETERMINED           = static_cast<VkImageLayout>(0x7FFFFFFF);
+constexpr VkImageLayout             VK_IMAGE_LAYOUT_TO_BE_DETERMINED           = static_cast<VkImageLayout>(0x7FFFFFFF);
 constexpr VkAccessFlags2KHR         VK_ACCESS_FLAGS_2_TO_BE_DETERMINED         = ~static_cast<VkAccessFlags2KHR>(0);
 constexpr VkPipelineStageFlags2KHR  VK_PIPELINE_STAGE_FLAGS_2_TO_BE_DETERMINED = ~static_cast<VkPipelineStageFlags2KHR>(0);
 
@@ -19,6 +19,8 @@ public:
 
     VkImageLayout GetImageLayout() const;
     VkImageLayout GetSubresourceLayout(uint32 Subresource) const;
+
+    void AdoptTrackedState(const FVulkanImageLayoutState& Other);
 
     bool IsInitialized() const
     {
@@ -55,17 +57,6 @@ public:
     VkImageLayout GetDefaultLayout() const
     {
         return DefaultLayout;
-    }
-
-    void AdoptTrackedState(const FVulkanImageLayoutState& Other)
-    {
-        const VkImageLayout PreservedDefault     = DefaultLayout;
-        const bool          bPreservedHasDefault = bHasDefaultLayout;
-
-        *this = Other;
-
-        DefaultLayout     = PreservedDefault;
-        bHasDefaultLayout = bPreservedHasDefault;
     }
 
 private:
@@ -139,7 +130,7 @@ struct FVulkanPendingImageBarrier
 
 struct FVulkanPendingBufferBarrier
 {
-    FVulkanBufferRHI*     Buffer;
+    FVulkanBufferRHI*        Buffer;
     VkAccessFlags2KHR        DesiredAccess;
     VkPipelineStageFlags2KHR DesiredStage;
 };

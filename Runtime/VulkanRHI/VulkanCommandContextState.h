@@ -74,6 +74,33 @@ struct FVulkanPushConstantsCache
     uint32 NumConstants;
 };
 
+struct EPushConstantsPipeline
+{
+    enum Type : int32
+    {
+        Graphics = 0,
+        Compute,
+        RayTracing,
+        Count
+    };
+};
+
+FORCEINLINE EPushConstantsPipeline::Type GetPushConstantsPipeline(EShaderStage ShaderStage)
+{
+    if (IsShaderStageRayTracing(ShaderStage))
+    {
+        return EPushConstantsPipeline::RayTracing;
+    }
+    else if (ShaderStage == EShaderStage::Compute)
+    {
+        return EPushConstantsPipeline::Compute;
+    }
+    else
+    {
+        return EPushConstantsPipeline::Graphics;
+    }
+}
+
 struct FVulkanStreamOutputCache
 {
     FVulkanStreamOutputCache()
@@ -155,7 +182,8 @@ public:
     void BindGraphicsState();
     void BindComputeState();
     void BindMeshletState();
-    void BindPushConstants(FVulkanPipelineLayout* PipelineLayout);
+    void BindPushConstants(FVulkanPipelineLayout* PipelineLayout, EPushConstantsPipeline::Type Pipeline);
+    void DirtyPushConstants();
     void BindRayTracingState();
 
     void ResetState();
@@ -180,7 +208,7 @@ public:
     void SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets);
     void SetVertexBuffer(FVulkanBufferRHI* VertexBuffer, uint32 VertexBufferSlot);
     void SetIndexBuffer(FVulkanBufferRHI* IndexBuffer, VkIndexType IndexFormat);
-    void SetPushConstants(const uint32* ShaderConstants, uint32 NumShaderConstants);
+    void SetPushConstants(EShaderStage ShaderStage, const uint32* ShaderConstants, uint32 NumShaderConstants);
     void SetSRV(FVulkanShaderResourceViewRHI* ShaderResourceView, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex);
     void SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAccessView, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex);
     void SetUniformBuffer(FVulkanBufferRHI* UniformBuffer, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex);
@@ -399,7 +427,7 @@ private:
 
     struct FCommonState
     {
-        FVulkanPushConstantsCache PushConstantsCache;
+        FVulkanPushConstantsCache PushConstantsCache[EPushConstantsPipeline::Count];
     } CommonState;
     
     FVulkanCommandContext& Context;

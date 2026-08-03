@@ -1,4 +1,5 @@
 #include "VulkanRHI/VulkanResourceState.h"
+#include "Core/Math/Math.h"
 
 void FVulkanImageLayoutState::Initialize(uint32 InNumSubresources)
 {
@@ -61,6 +62,45 @@ VkImageLayout FVulkanImageLayoutState::GetImageLayout() const
 {
     CHECK(bAllSameLayout);
     return ImageLayout;
+}
+
+void FVulkanImageLayoutState::AdoptTrackedState(const FVulkanImageLayoutState& Other)
+{
+    if (!Other.IsInitialized())
+    {
+        return;
+    }
+
+    if (!IsInitialized())
+    {
+        Initialize(Other.NumSubresources);
+        SetImageLayout(VK_IMAGE_LAYOUT_UNDEFINED);
+    }
+
+    if (Other.bAllSameLayout)
+    {
+        if (Other.ImageLayout != VK_IMAGE_LAYOUT_TO_BE_DETERMINED)
+        {
+            SetImageLayout(Other.ImageLayout);
+        }
+
+        return;
+    }
+
+    if (bAllSameLayout)
+    {
+        SetImageLayout(ImageLayout);
+    }
+
+    const uint32 NumToAdopt = Math::Min(NumSubresources, Other.NumSubresources);
+    for (uint32 Subresource = 0; Subresource < NumToAdopt; Subresource++)
+    {
+        const VkImageLayout Layout = Other.GetSubresourceLayout(Subresource);
+        if (Layout != VK_IMAGE_LAYOUT_TO_BE_DETERMINED)
+        {
+            SetSubresourceLayout(Subresource, Layout);
+        }
+    }
 }
 
 void FVulkanBufferState::SetState(VkAccessFlags2KHR InAccess, VkPipelineStageFlags2KHR InStage)

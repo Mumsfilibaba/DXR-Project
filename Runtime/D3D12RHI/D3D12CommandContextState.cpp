@@ -172,7 +172,7 @@ void FD3D12CommandContextState::BindGraphicsState()
 
     if (GraphicsState.bBindShaderConstants)
     {
-        BindShaderConstants(RootSignature, EShaderVisibility::Pixel);
+        BindShaderConstants(RootSignature, EShaderConstantsPipeline::Graphics);
         GraphicsState.bBindShaderConstants = false;
     }
 
@@ -294,7 +294,7 @@ void FD3D12CommandContextState::BindComputeState()
 
     if (ComputeState.bBindShaderConstants)
     {
-        BindShaderConstants(RootSignature, EShaderVisibility::All);
+        BindShaderConstants(RootSignature, EShaderConstantsPipeline::Compute);
         ComputeState.bBindShaderConstants = false;
     }
 }
@@ -335,10 +335,10 @@ void FD3D12CommandContextState::BindRayTracingState()
     BindResources(GlobalRootSignature, EShaderVisibility::All, EShaderVisibility::All);
     BindSamplers(GlobalRootSignature, EShaderVisibility::All, EShaderVisibility::All);
 
-    if (ComputeState.bBindShaderConstants)
+    if (RayTracingState.bBindShaderConstants)
     {
-        BindShaderConstants(GlobalRootSignature, EShaderVisibility::All);
-        ComputeState.bBindShaderConstants = false;
+        BindShaderConstants(GlobalRootSignature, EShaderConstantsPipeline::RayTracing);
+        RayTracingState.bBindShaderConstants = false;
     }
 
     ComputeState.bBindPipelineState = true;
@@ -442,7 +442,7 @@ void FD3D12CommandContextState::BindMeshletState()
 
     if (MeshletState.bBindShaderConstants)
     {
-        BindShaderConstants(RootSignature, EShaderVisibility::Mesh);
+        BindShaderConstants(RootSignature, EShaderConstantsPipeline::Graphics);
         MeshletState.bBindShaderConstants = false;
     }
 
@@ -1041,27 +1041,40 @@ void FD3D12CommandContextState::BindSamplers(FD3D12RootSignature* RootSignature,
     }
 }
 
-void FD3D12CommandContextState::BindShaderConstants(FD3D12RootSignature* InRootSignature, EShaderVisibility::Type ShaderStage)
+void FD3D12CommandContextState::BindShaderConstants(FD3D12RootSignature* InRootSignature, EShaderConstantsPipeline::Type Pipeline)
 {
-    int32 ParameterIndex = InRootSignature->Get32BitConstantsIndex();
-    if (ParameterIndex >= 0)
+    const int32 ParameterIndex = InRootSignature->Get32BitConstantsIndex();
+    if (ParameterIndex < 0)
     {
-        FD3D12ShaderConstantsCache& ConstantCache = CommonState.ShaderConstantsCache;
-        if (ShaderStage == EShaderVisibility::All)
-        {
-            Context.GetCommandList()->SetComputeRoot32BitConstants(ParameterIndex, ConstantCache.NumConstants, ConstantCache.Constants, 0);
-        }
-        else
-        {
-            Context.GetCommandList()->SetGraphicsRoot32BitConstants(ParameterIndex, ConstantCache.NumConstants, ConstantCache.Constants, 0);
-        }
+        return;
+    }
+
+    const FD3D12ShaderConstantsCache& ConstantCache = CommonState.ShaderConstantsCache[Pipeline];
+
+    const uint32 NumConstants = Math::Min(ConstantCache.NumConstants, InRootSignature->GetNum32BitConstants());
+    if (NumConstants == 0)
+    {
+        return;
+    }
+
+    if (IsComputeRootSignatureSlot(Pipeline))
+    {
+        Context.GetCommandList()->SetComputeRoot32BitConstants(ParameterIndex, NumConstants, ConstantCache.Constants, 0);
+    }
+    else
+    {
+        Context.GetCommandList()->SetGraphicsRoot32BitConstants(ParameterIndex, NumConstants, ConstantCache.Constants, 0);
     }
 }
 
 void FD3D12CommandContextState::ResetState()
 {
     CommonState.DescriptorCache.DirtyState();
-    CommonState.ShaderConstantsCache.Clear();
+
+    for (FD3D12ShaderConstantsCache& ConstantCache : CommonState.ShaderConstantsCache)
+    {
+        ConstantCache.Clear();
+    }
 
     CommonState.ConstantBufferCache.Clear();
     CommonState.ShaderResourceViewCache.Clear();
@@ -1105,6 +1118,7 @@ void FD3D12CommandContextState::ResetState()
     MeshletState.bBindShaderConstants         = true;
 
     RayTracingState.PipelineState             = nullptr;
+    RayTracingState.bBindShaderConstants      = true;
 }
 
 void FD3D12CommandContextState::ResetStateResources()
@@ -1153,6 +1167,8 @@ void FD3D12CommandContextState::ResetStateForNewCommandList()
 
     MeshletState.bBindPipelineState           = true;
     MeshletState.bBindShaderConstants         = true;
+
+    RayTracingState.bBindShaderConstants      = true;
 }
 
 void FD3D12CommandContextState::SetGraphicsPipelineState(FD3D12GraphicsPipelineStateRHI* InGraphicsPipelineState)
@@ -1524,17 +1540,36 @@ void FD3D12CommandContextState::SetSampler(FD3D12SamplerStateRHI* SamplerState, 
     }
 }
 
-void FD3D12CommandContextState::SetShaderConstants(const uint32* ShaderConstants, uint32 NumShaderConstants)
+void FD3D12CommandContextState::SetShaderConstants(EShaderStage ShaderStage, const uint32* ShaderConstants, uint32 NumShaderConstants)
 {
-    FD3D12ShaderConstantsCache& ConstantCache = CommonState.ShaderConstantsCache;
+    const EShaderConstantsPipeline::Type Pipeline = GetShaderConstantsPipeline(ShaderStage);
+
+    FD3D12ShaderConstantsCache& ConstantCache = CommonState.ShaderConstantsCache[Pipeline];
     if (NumShaderConstants != ConstantCache.NumConstants || Memory::Memcmp(ShaderConstants, ConstantCache.Constants, sizeof(uint32) * NumShaderConstants) != 0)
     {
         Memory::Memcpy(ConstantCache.Constants, ShaderConstants, sizeof(uint32) * NumShaderConstants);
         ConstantCache.NumConstants = NumShaderConstants;
-        
+
+        DirtyShaderConstants(Pipeline);
+    }
+}
+
+void FD3D12CommandContextState::DirtyShaderConstants(EShaderConstantsPipeline::Type Pipeline)
+{
+    switch (Pipeline)
+    {
+    case EShaderConstantsPipeline::Graphics:
         GraphicsState.bBindShaderConstants = true;
-        ComputeState.bBindShaderConstants  = true;
         MeshletState.bBindShaderConstants  = true;
+        break;
+    case EShaderConstantsPipeline::Compute:
+        ComputeState.bBindShaderConstants = true;
+        break;
+    case EShaderConstantsPipeline::RayTracing:
+        RayTracingState.bBindShaderConstants = true;
+        break;
+    default:
+        break;
     }
 }
 
@@ -1573,4 +1608,14 @@ void FD3D12CommandContextState::InternalSetRootSignature(FD3D12RootSignature* In
     CommonState.ShaderResourceViewCache.DirtyDescriptorTableAll();
     CommonState.UnorderedAccessViewCache.DirtyDescriptorTableAll();
     CommonState.SamplerStateCache.DirtyDescriptorTableAll();
+
+    if (bIsCompute)
+    {
+        DirtyShaderConstants(EShaderConstantsPipeline::Compute);
+        DirtyShaderConstants(EShaderConstantsPipeline::RayTracing);
+    }
+    else
+    {
+        DirtyShaderConstants(EShaderConstantsPipeline::Graphics);
+    }
 }

@@ -205,7 +205,7 @@ void FVulkanCommandContextState::BindGraphicsState()
     FVulkanPipelineLayout* PipelineLayout = GraphicsState.PipelineState->GetPipelineLayout();
     if (GraphicsState.bBindPushConstants || GVulkanForceBinding)
     {
-        BindPushConstants(PipelineLayout);
+        BindPushConstants(PipelineLayout, EPushConstantsPipeline::Graphics);
         GraphicsState.bBindPushConstants = false;
     }
 
@@ -315,7 +315,7 @@ void FVulkanCommandContextState::BindComputeState()
     FVulkanPipelineLayout* PipelineLayout = ComputeState.PipelineState->GetPipelineLayout();
     if (ComputeState.bBindPushConstants || GVulkanForceBinding)
     {
-        BindPushConstants(PipelineLayout);
+        BindPushConstants(PipelineLayout, EPushConstantsPipeline::Compute);
         ComputeState.bBindPushConstants = false;
     }
 }
@@ -382,7 +382,7 @@ void FVulkanCommandContextState::BindMeshletState()
     FVulkanPipelineLayout* PipelineLayout = MeshletState.PipelineState->GetPipelineLayout();
     if (MeshletState.bBindPushConstants || GVulkanForceBinding)
     {
-        BindPushConstants(PipelineLayout);
+        BindPushConstants(PipelineLayout, EPushConstantsPipeline::Graphics);
         MeshletState.bBindPushConstants = false;
     }
 
@@ -417,7 +417,7 @@ void FVulkanCommandContextState::BindMeshletState()
     }
 }
 
-void FVulkanCommandContextState::BindPushConstants(FVulkanPipelineLayout* PipelineLayout)
+void FVulkanCommandContextState::BindPushConstants(FVulkanPipelineLayout* PipelineLayout, EPushConstantsPipeline::Type Pipeline)
 {
     FPushConstantsInfo ConstantsInfo = PipelineLayout->GetConstantsInfo();
     if (ConstantsInfo.NumConstants > 0)
@@ -428,13 +428,24 @@ void FVulkanCommandContextState::BindPushConstants(FVulkanPipelineLayout* Pipeli
             ConstantsInfo.StageFlags, 
             0, 
             ConstantsInfo.NumConstants * sizeof(uint32), 
-            CommonState.PushConstantsCache.Constants);
+            CommonState.PushConstantsCache[Pipeline].Constants);
     }
+}
+
+void FVulkanCommandContextState::DirtyPushConstants()
+{
+    GraphicsState.bBindPushConstants   = true;
+    ComputeState.bBindPushConstants    = true;
+    MeshletState.bBindPushConstants    = true;
+    RayTracingState.bBindPushConstants = true;
 }
 
 void FVulkanCommandContextState::ResetState()
 {
-    CommonState.PushConstantsCache.Clear();
+    for (FVulkanPushConstantsCache& ConstantCache : CommonState.PushConstantsCache)
+    {
+        ConstantCache.Clear();
+    }
 
     GraphicsState.VertexBufferCache.Clear();
     GraphicsState.IndexBufferCache.Clear();
@@ -1266,18 +1277,19 @@ void FVulkanCommandContextState::SetIndexBuffer(FVulkanBufferRHI* IndexBuffer, V
     }
 }
 
-void FVulkanCommandContextState::SetPushConstants(const uint32* ShaderConstants, uint32 NumShaderConstants)
+void FVulkanCommandContextState::SetPushConstants(EShaderStage ShaderStage, const uint32* ShaderConstants, uint32 NumShaderConstants)
 {
-    FVulkanPushConstantsCache& ConstantCache = CommonState.PushConstantsCache;
+    const EPushConstantsPipeline::Type Pipeline = GetPushConstantsPipeline(ShaderStage);
+
+    FVulkanPushConstantsCache& ConstantCache = CommonState.PushConstantsCache[Pipeline];
     if (NumShaderConstants != ConstantCache.NumConstants || 
         Memory::Memcmp(ShaderConstants, ConstantCache.Constants, sizeof(uint32) * NumShaderConstants) != 0 || GVulkanForceBinding)
     {
         Memory::Memcpy(ConstantCache.Constants, ShaderConstants, sizeof(uint32) * NumShaderConstants);
 
-        ConstantCache.NumConstants       = NumShaderConstants;
-        GraphicsState.bBindPushConstants = true;
-        ComputeState.bBindPushConstants  = true;
-        MeshletState.bBindPushConstants  = true;
+        ConstantCache.NumConstants = NumShaderConstants;
+
+        DirtyPushConstants();
     }
 }
 
@@ -1560,7 +1572,7 @@ void FVulkanCommandContextState::BindRayTracingState()
     FVulkanPipelineLayout* PipelineLayout = RayTracingState.PipelineState->GetPipelineLayout();
     if (RayTracingState.bBindPushConstants || GVulkanForceBinding)
     {
-        BindPushConstants(PipelineLayout);
+        BindPushConstants(PipelineLayout, EPushConstantsPipeline::RayTracing);
         RayTracingState.bBindPushConstants = false;
     }
 #endif

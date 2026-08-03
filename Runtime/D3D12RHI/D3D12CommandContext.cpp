@@ -464,9 +464,17 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
     BarrierBatcher.FlushBarriers(GetCommandList());
     CommandList->InsertEndTimestamp(TimingQueryAllocator);
 
-    const bool bHasPendingState = !PendingBarriers.IsEmpty() || !PendingResourceStates.IsEmpty();
-
+    const bool   bHasPendingState = !PendingBarriers.IsEmpty() || !PendingResourceStates.IsEmpty();
     const uint32 RecordedCommands = CommandList->GetNumCommands();
+
+#if DEBUG_BUILD
+    const uint32 CommandBudget = static_cast<uint32>(CVarMaxCommandsPerCommandList.GetValue());
+    if (RecordedCommands > (CommandBudget * 2))
+    {
+        D3D12_WARNING("Command-list closed with %u commands against a budget of %u - a recording path is likely missing a ConditionalSplitCommandList() call", RecordedCommands, CommandBudget);
+    }
+#endif
+
     if (RecordedCommands > 0 || bHasPendingState)
     {
         if (bResolveQueries)
@@ -816,6 +824,8 @@ void FD3D12CommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTar
     FD3D12RenderTargetViewRHI* D3D12RenderTargetView = FD3D12DeviceRHI::ResourceCast(RenderTargetView);
     CHECK(D3D12RenderTargetView != nullptr);
 
+    ConditionalSplitCommandList();
+
     TransitionResourceState(D3D12RenderTargetView);
 
     BarrierBatcher.FlushBarriers(GetCommandList());
@@ -827,6 +837,8 @@ void FD3D12CommandContext::ClearDepthStencilView(FRHIDepthStencilView* DepthSten
 {
     FD3D12DepthStencilViewRHI* D3D12DepthStencilView = FD3D12DeviceRHI::ResourceCast(DepthStencilView);
     CHECK(D3D12DepthStencilView != nullptr);
+
+    ConditionalSplitCommandList();
 
     TransitionResourceState(D3D12DepthStencilView, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
@@ -845,6 +857,8 @@ void FD3D12CommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView
 {
     FD3D12UnorderedAccessViewRHI* D3D12UnorderedAccessView = FD3D12DeviceRHI::ResourceCast(UnorderedAccessView);
     CHECK(D3D12UnorderedAccessView != nullptr);
+
+    ConditionalSplitCommandList();
 
     TransitionResourceState(D3D12UnorderedAccessView);
 
@@ -886,6 +900,8 @@ void FD3D12CommandContext::ClearUnorderedAccessViewUint(FRHIUnorderedAccessView*
 {
     FD3D12UnorderedAccessViewRHI* D3D12UnorderedAccessView = FD3D12DeviceRHI::ResourceCast(UnorderedAccessView);
     CHECK(D3D12UnorderedAccessView != nullptr);
+
+    ConditionalSplitCommandList();
 
     TransitionResourceState(D3D12UnorderedAccessView);
 
@@ -1069,7 +1085,7 @@ void FD3D12CommandContext::SetShaderConstants(FRHIShader* Shader, const void* Sh
     MAYBE_UNUSED FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     CHECK(D3D12Shader != nullptr);
 
-    ContextState.SetShaderConstants(reinterpret_cast<const uint32*>(ShaderConstants), NumShaderConstants);
+    ContextState.SetShaderConstants(Shader->GetShaderStage(), reinterpret_cast<const uint32*>(ShaderConstants), NumShaderConstants);
 }
 
 void FD3D12CommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 RegisterIndex)
@@ -1185,6 +1201,8 @@ void FD3D12CommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
         return;
     }
 
+    ConditionalSplitCommandList();
+
     TransitionTrackedResourceState(D3D12Source, D3D12_RESOURCE_STATE_RESOLVE_SOURCE);
     TransitionTrackedResourceState(D3D12Destination, D3D12_RESOURCE_STATE_RESOLVE_DEST);
 
@@ -1236,6 +1254,8 @@ void FD3D12CommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& Bu
     }
     else
     {
+        ConditionalSplitCommandList();
+
         const FBufferRegion AdjustedRegion(BufferRegion.Offset + D3D12Destination->GetResourceStorage().GetResourceOffset(), BufferRegion.Size);
         UpdateBuffer(D3D12Destination->GetResource(), AdjustedRegion, SrcData);
     }
@@ -1250,6 +1270,8 @@ void FD3D12CommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegio
 
     FD3D12Resource* D3D12Resource = D3D12Destination->GetResource();
     CHECK(D3D12Resource != nullptr);
+
+    ConditionalSplitCommandList();
 
     TransitionTrackedResourceState(D3D12Resource, D3D12_RESOURCE_STATE_COPY_DEST);
 
@@ -1322,6 +1344,8 @@ void FD3D12CommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegio
 
     FD3D12Resource* D3D12Resource = D3D12Destination->GetResource();
     CHECK(D3D12Resource != nullptr);
+
+    ConditionalSplitCommandList();
 
     TransitionTrackedResourceState(D3D12Resource, D3D12_RESOURCE_STATE_COPY_DEST);
 
@@ -1401,6 +1425,8 @@ void FD3D12CommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FR
     FD3D12BufferRHI* D3D12Source = FD3D12DeviceRHI::ResourceCast(Src);
     CHECK(D3D12Source != nullptr);
 
+    ConditionalSplitCommandList();
+
     TransitionTrackedResourceState(D3D12Source, D3D12_RESOURCE_STATE_COPY_SOURCE);
     TransitionTrackedResourceState(D3D12Destination, D3D12_RESOURCE_STATE_COPY_DEST);
 
@@ -1430,6 +1456,8 @@ void FD3D12CommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
 
     FD3D12TextureRHI* D3D12Source = FD3D12DeviceRHI::ResourceCast(Src);
     CHECK(D3D12Source != nullptr);
+
+    ConditionalSplitCommandList();
 
     TransitionTrackedResourceState(D3D12Source, D3D12_RESOURCE_STATE_COPY_SOURCE);
     TransitionTrackedResourceState(D3D12Destination, D3D12_RESOURCE_STATE_COPY_DEST);
@@ -1462,6 +1490,8 @@ void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src,
     
     FD3D12TextureRHI* D3D12Source = FD3D12DeviceRHI::ResourceCast(Src);
     CHECK(D3D12Source != nullptr);
+
+    ConditionalSplitCommandList();
 
     GetCommandList().UpdateResidency(D3D12Destination->GetResource()->GetResidencyHandle());
     GetCommandList().UpdateResidency(D3D12Source->GetResource()->GetResidencyHandle());
@@ -1536,6 +1566,8 @@ void FD3D12CommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 Dst
  
     FD3D12TextureRHI* D3D12Source = FD3D12DeviceRHI::ResourceCast(Src); 
     CHECK(D3D12Source != nullptr);
+
+    ConditionalSplitCommandList();
 
     TransitionTrackedResourceState(D3D12Source, D3D12_RESOURCE_STATE_COPY_SOURCE);
     TransitionTrackedResourceState(D3D12Destination, D3D12_RESOURCE_STATE_COPY_DEST);
@@ -1624,6 +1656,8 @@ void FD3D12CommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint6
 
     FD3D12TextureRHI* D3D12Source = FD3D12DeviceRHI::ResourceCast(Src);
     CHECK(D3D12Source != nullptr);
+
+    ConditionalSplitCommandList();
 
     TransitionTrackedResourceState(D3D12Source, D3D12_RESOURCE_STATE_COPY_SOURCE);
     TransitionTrackedResourceState(D3D12Destination, D3D12_RESOURCE_STATE_COPY_DEST);
@@ -1732,6 +1766,8 @@ void FD3D12CommandContext::DiscardContents(FRHITexture* Texture)
         return;
     }
 
+    ConditionalSplitCommandList();
+
     TransitionTrackedResourceState(D3D12Texture, DiscardState);
     BarrierBatcher.FlushBarriers(GetCommandList());
 
@@ -1742,6 +1778,8 @@ void FD3D12CommandContext::BuildSceneAccelerationStructure(FRHISceneAcceleration
 {
     CHECK(RayTracingScene != nullptr);
 
+    ConditionalSplitCommandList();
+
     BarrierBatcher.FlushBarriers(GetCommandList());
 
     FD3D12SceneAccelerationStructureRHI* D3D12RayTracingScene = FD3D12DeviceRHI::ResourceCast(RayTracingScene);
@@ -1751,6 +1789,8 @@ void FD3D12CommandContext::BuildSceneAccelerationStructure(FRHISceneAcceleration
 void FD3D12CommandContext::BuildGeometryAccelerationStructure(FRHIGeometryAccelerationStructure* RayTracingGeometry, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc)
 {
     CHECK(RayTracingGeometry != nullptr);
+
+    ConditionalSplitCommandList();
 
     BarrierBatcher.FlushBarriers(GetCommandList());
 
@@ -2560,7 +2600,7 @@ void FD3D12CommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, ui
 
 void FD3D12CommandContext::ConditionalSplitCommandList()
 {
-    if (ActiveQueryCount > 0)
+    if (!CommandList || ActiveQueryCount > 0)
     {
         return;
     }
@@ -2993,6 +3033,7 @@ void FD3D12CommandContext::BuildOpacityMicromap(FRHIOpacityMicromap* OpacityMicr
 #if D3D12_ENABLE_OPACITY_MICROMAPS
     if (FD3D12OpacityMicromapRHI* D3D12OpacityMicromap = FD3D12DeviceRHI::ResourceCast(OpacityMicromap))
     {
+        ConditionalSplitCommandList();
         D3D12OpacityMicromap->Build(*this, BuildDesc);
     }
 #else
@@ -3216,6 +3257,7 @@ void FD3D12CommandContext::CompactAccelerationStructure(FRHIRayTracingAccelerati
 
     if (D3D12AccelerationStructure)
     {
+        ConditionalSplitCommandList();
         D3D12AccelerationStructure->CompactInPlace(*this, CompactedSizeInBytes);
     }
 #else
