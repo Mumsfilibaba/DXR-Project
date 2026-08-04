@@ -214,7 +214,7 @@ echo "------------------------------------------------------------"
 
 if [ $RC -eq 0 ]; then
     echo
-    ./VerifyBundle.command "$CONFIG" --no-pause
+    ./VerifyBundle.command "$CONFIG" ${SUFFIX:+--suffix "$SUFFIX"} --no-pause
     RC=$?
 fi
 

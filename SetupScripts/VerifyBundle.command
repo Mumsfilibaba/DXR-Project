@@ -5,7 +5,13 @@
 #  name, reference nothing outside the bundle or the OS, keep a clean runpath,
 #  and every dylib the engine dlopen's must actually be inside the bundle.
 #
-#    VerifyBundle.command [configuration] [--no-pause]
+#    VerifyBundle.command [configuration] [options]
+#
+#  Options:
+#    --no-pause       Never wait for a keypress before closing.
+#    --suffix <name>  Verify the bundle in Build/bin/<config>-macosx-x64-<name>
+#                     instead of the unsuffixed one, matching the --suffix
+#                     passed to Compile_Xcode.command.
 #
 #  Defaults to the "Development Editor" configuration. The check is purely
 #  static, so unlike a launch test it also works over SSH.
@@ -21,13 +27,31 @@ cd "${DIR}"
 ROOT=$( cd "${DIR}/.." && pwd )
 
 CONFIG="Development Editor"
+SUFFIX=""
 NO_PAUSE=0
 POSITIONAL=0
+EXPECT_VALUE=""
 
 for arg in "$@"; do
+    if [ -n "$EXPECT_VALUE" ]; then
+        case "$arg" in
+            --*)
+                echo "[ERROR] $EXPECT_VALUE requires a value, got: $arg"
+                exit 2
+                ;;
+        esac
+
+        SUFFIX="$arg"
+        EXPECT_VALUE=""
+        continue
+    fi
+
     case "$arg" in
         --no-pause)
             NO_PAUSE=1
+            ;;
+        --suffix)
+            EXPECT_VALUE="--suffix"
             ;;
         *)
             if [ $POSITIONAL -eq 0 ]; then
@@ -40,6 +64,11 @@ for arg in "$@"; do
             ;;
     esac
 done
+
+if [ -n "$EXPECT_VALUE" ]; then
+    echo "[ERROR] $EXPECT_VALUE requires a value."
+    exit 2
+fi
 
 if [ -n "$TESTS_NO_PAUSE" ]; then
     NO_PAUSE=1
@@ -54,6 +83,9 @@ pause_if_needed() {
 }
 
 BIN="${ROOT}/Build/bin/${CONFIG}-macosx-x64"
+if [ -n "$SUFFIX" ]; then
+    BIN="${BIN}-${SUFFIX}"
+fi
 
 if [ ! -d "$BIN" ]; then
     echo "[SKIP] No build output for configuration '${CONFIG}'."

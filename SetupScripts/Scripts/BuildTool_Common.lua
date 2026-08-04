@@ -12,7 +12,6 @@ newoption
     trigger = "platform",
     value = "CurrentPlatform",
     description = "Specify the platform to use",
-    default = "Windows",
     allowed = { 
         { "Windows" },
         { "macOS" }
@@ -78,7 +77,7 @@ end
 do
     local Explicit = NormalizePlatform(_OPTIONS["platform"])
     if not Explicit then
-        _OPTIONS["platform"] = GuessPlatformFromHost() or GuessPlatformFromAction() or "Windows"
+        _OPTIONS["platform"] = GuessPlatformFromAction() or GuessPlatformFromHost() or "Windows"
         LogHighlight("No --platform specified. Defaulting to '%s'.", _OPTIONS["platform"])
     else
         _OPTIONS["platform"] = Explicit
@@ -103,11 +102,6 @@ end
 
 function IsPlatformMac()
     return _OPTIONS["platform"] == "macOS"
-end
-
--- Global settings
-if type(gSettings) ~= "table" then
-    gSettings = {}
 end
 
 -- Monolithic Build Management
@@ -312,11 +306,6 @@ function CreateExternalThirdpartyPath(ThirdpartyPath)
     return JoinPath(GetExternalThirdPartyFolderPath(), ThirdpartyPath)
 end
 
--- Deep copy a table
-function Copy(Source)
-    return table.deepcopy(Source)
-end
-
 -- Shared local helpers
 local function NormalizePath(Path)
     Path = CreateOsPath(Path or "")
@@ -362,16 +351,16 @@ function AddModuleSearchRoot(RootPath)
     local AbsolutePath = ResolveAbsolutePath(RootPath)
     local NewKey       = NormalizePath(AbsolutePath)
 
+    local StoredPath = CreateOsPath(AbsolutePath):gsub("[/\\]+$", "")
+
     -- Dedupe using normalized keys (case/sep-insensitive)
-    for ExistingIndex, ExistingRoot in ipairs(gModuleSearchRoots) do
+    for _, ExistingRoot in ipairs(gModuleSearchRoots) do
         if NormalizePath(ExistingRoot) == NewKey then
             LogHighlightWarning("AddModuleSearchRoot: '%s' already present. Skipping ..", StoredPath)
             return
         end
     end
 
-    -- Store a cleaned absolute path but keep original casing (helpful on macOS)
-    local StoredPath = CreateOsPath(AbsolutePath):gsub("[/\\]+$", "")
     table.insert(gModuleSearchRoots, StoredPath)
 
     -- new root -> enable (re)scan
@@ -445,7 +434,7 @@ local function SearchForModuleFiles()
 
     table.sort(gModuleSearchRoots, function(ValA, ValB) return ValA:lower() < ValB:lower() end)
 
-    for RootIndex, RootDirectory in ipairs(gModuleSearchRoots) do
+    for _, RootDirectory in ipairs(gModuleSearchRoots) do
         if os.isdir(RootDirectory) then
             LogHighlight("Scanning directory '%s'", CreateOsPath(RootDirectory))
             ScanModuleRoot(RootDirectory)
@@ -479,16 +468,16 @@ function AddTargetSearchRoot(RootPath)
     local AbsolutePath = ResolveAbsolutePath(RootPath)
     local NewKey       = NormalizePath(AbsolutePath)
 
+    local StoredPath = CreateOsPath(AbsolutePath):gsub("[/\\]+$", "")
+
     -- Dedupe using normalized keys (case/sep-insensitive)
-    for ExistingIndex, ExistingRoot in ipairs(gTargetSearchRoots) do
+    for _, ExistingRoot in ipairs(gTargetSearchRoots) do
         if NormalizePath(ExistingRoot) == NewKey then
             LogHighlightWarning("AddTargetSearchRoot: '%s' already present. Skipping ..", StoredPath)
             return
         end
     end
 
-    -- Store a cleaned absolute path but keep original casing (helpful on macOS)
-    local StoredPath = CreateOsPath(AbsolutePath):gsub("[/\\]+$", "")
     table.insert(gTargetSearchRoots, StoredPath)
 
     -- new root -> enable (re)scan
@@ -539,9 +528,9 @@ local function ScanTargetRoot(RootDirectory)
     }
 
     local Seen = {}
-    for PatternIndex, Pattern in ipairs(Patterns) do
+    for _, Pattern in ipairs(Patterns) do
         local Files = os.matchfiles(Pattern)
-        for FileIndex, ScriptPath in ipairs(Files) do
+        for _, ScriptPath in ipairs(Files) do
             local Key = string.lower(path.translate(ScriptPath, '/'))
             if not Seen[Key] then
                 Seen[Key] = true
@@ -561,7 +550,7 @@ local function SearchForTargetFiles()
 
     table.sort(gTargetSearchRoots, function(ValA, ValB) return ValA:lower() < ValB:lower() end)
 
-    for RootIndex, RootDir in ipairs(gTargetSearchRoots) do
+    for _, RootDir in ipairs(gTargetSearchRoots) do
         if os.isdir(RootDir) then
             LogHighlight("Scanning directory '%s' for targets", CreateOsPath(RootDir))
             ScanTargetRoot(RootDir)

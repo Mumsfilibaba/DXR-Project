@@ -3,11 +3,11 @@ set -euo pipefail
 
 # ------------------------------------------------------------------------------------
 # Args:
-#   --nopause : do not wait for keypress at the end
+#   --no-pause : do not wait for keypress at the end (--nopause still accepted)
 # ------------------------------------------------------------------------------------
 NO_PAUSE=0
 for arg in "$@"; do
-  if [[ "$arg" == "--nopause" ]]; then
+  if [[ "$arg" == "--no-pause" || "$arg" == "--nopause" ]]; then
     NO_PAUSE=1
   fi
 done

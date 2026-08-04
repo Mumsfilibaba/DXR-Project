@@ -253,10 +253,6 @@ function BuildRules(Name)
                 optimize("Full")
             filter {}
 
-            filter "configurations:*Production*"
-                optimize("Full")
-            filter {}
-
             -- Setup warning handles
             if self.bSilenceWarnings then
                 warnings("Off")
@@ -378,9 +374,9 @@ function BuildRules(Name)
             location(FullProjectFolderPath)
 
             -- Output dirs
-            local FullObjectFolderPath = self.GetTargetFolderPath()
-            LogInfo("Target location '%s'", FullObjectFolderPath)
-            targetdir(FullObjectFolderPath)
+            local FullTargetFolderPath = self.GetTargetFolderPath()
+            LogInfo("Target location '%s'", FullTargetFolderPath)
+            targetdir(FullTargetFolderPath)
 
             local FullIntermediateFolderPath = self.GetObjectFilesFolderPath()
             LogInfo("Object files location '%s'", FullIntermediateFolderPath)

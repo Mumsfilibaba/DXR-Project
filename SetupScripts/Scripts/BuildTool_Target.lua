@@ -170,8 +170,7 @@ function TargetBuildRules(Name)
                 LogInfo("--- Finished generating standalone client executable project for target '%s' ---", self.Name)
             end
         elseif self.TargetType == ETargetType.Editor then
-            LogError("TargetType=Editor is not implemented yet")
-            -- TODO: Handle this case properly
+            LogInfo("TargetType=Editor contributes configurations only, no project")
         elseif self.TargetType == ETargetType.Program then
             LogInfo("TargetType=Program")
 

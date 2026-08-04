@@ -1,2 +1,2 @@
-.\Premake\\premake5.exe clean
+.\Premake\premake5.exe clean
 pause

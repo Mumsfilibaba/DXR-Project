@@ -112,19 +112,6 @@ local function AddTargetType(TargetType)
     return true
 end
 
-local function HasTargetType(TargetType)
-    return gUsedTargetTypesSet[TargetType] == true
-end
-
-local function GetUsedTargetTypes()
-    return gUsedTargetTypes
-end
-
-local function ClearUsedTargetTypes()
-    gUsedTargetTypes    = {}
-    gUsedTargetTypesSet = {}
-end
-
 -- Configurations for this workspace
 local gConfigurations = { }
 
