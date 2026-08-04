@@ -9,8 +9,10 @@
 #include "CoreApplication/Platform/PlatformInputMapper.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
+
 #include <AppKit/AppKit.h>
 #include <IOKit/graphics/IOGraphicsLib.h>
+#include <IOKit/hidsystem/ev_keymap.h>
 
 @interface FMacApplicationObserver : NSObject
 
@@ -69,6 +71,8 @@ FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
     , WindowUnderCursor(nullptr)
     , CurrentModifierFlags(0)
     , LastPressedButton(EMouseButtonName::Unknown)
+    , HighPrecisionMouseRemainder()
+    , bHighPrecisionMouseEnabled(false)
     , MacCursor(InCursor)
     , InputDevice(FGCInputDevice::CreateGCInputDevice())
     , ScreenCache()
@@ -312,14 +316,36 @@ FInputDevice* FMacApplication::GetInputDevice()
 
 bool FMacApplication::SupportsHighPrecisionMouse() const
 {
-    // TODO: Implement high precision mouse
-    return false;
+    return true;
 }
 
-bool FMacApplication::EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>&)
+bool FMacApplication::SetHighPrecisionMouseMode(const TSharedRef<FGenericWindow>&, EHighPrecisionMouseMode Mode)
 {
-    // TODO: Implement high precision mouse
-    return false;
+    const bool bEnable = (Mode == EHighPrecisionMouseMode::Enabled);
+    if (bEnable == bHighPrecisionMouseEnabled)
+    {
+        return true;
+    }
+
+    if (bEnable)
+    {
+        CGAssociateMouseAndMouseCursorPosition(false);
+
+        if (CGEventSourceRef EventSource = CGEventSourceCreate(kCGEventSourceStateHIDSystemState))
+        {
+            CGEventSourceSetLocalEventsSuppressionInterval(EventSource, 0.0);
+            CFRelease(EventSource);
+        }
+
+        HighPrecisionMouseRemainder = Vector2();
+    }
+    else
+    {
+        CGAssociateMouseAndMouseCursorPosition(true);
+    }
+
+    bHighPrecisionMouseEnabled = bEnable;
+    return true;
 }
 
 FModifierKeyState FMacApplication::GetModifierKeyState() const
@@ -569,6 +595,15 @@ void FMacApplication::DeferEvent(NSObject* EventObject)
                     break;
                 }
 
+                case NSEventTypeMouseMoved:
+                case NSEventTypeLeftMouseDragged:
+                case NSEventTypeRightMouseDragged:
+                case NSEventTypeOtherMouseDragged:
+                {
+                    NewDeferredEvent.MouseDelta = Vector2([CurrentEvent deltaX], [CurrentEvent deltaY]);
+                    break;
+                }
+
                 default:
                 {
                     break;
@@ -710,6 +745,23 @@ NSEvent* FMacApplication::OnNSEvent(NSEvent* Event)
 
 void FMacApplication::ProcessMouseMoveEvent(const FDeferredMacEvent& DeferredEvent)
 {
+    if (bHighPrecisionMouseEnabled)
+    {
+        HighPrecisionMouseRemainder = HighPrecisionMouseRemainder + DeferredEvent.MouseDelta;
+
+        const int32 DeltaX = static_cast<int32>(HighPrecisionMouseRemainder.X);
+        const int32 DeltaY = static_cast<int32>(HighPrecisionMouseRemainder.Y);
+        
+        if (DeltaX != 0 || DeltaY != 0)
+        {
+            HighPrecisionMouseRemainder.X -= static_cast<float>(DeltaX);
+            HighPrecisionMouseRemainder.Y -= static_cast<float>(DeltaY);
+            MessageHandler->OnHighPrecisionMouseInput(DeltaX, DeltaY);
+        }
+
+        return;
+    }
+
     const NSPoint MouseLocation  = DeferredEvent.MouseLocation;
     const NSPoint CursorPosition = ConvertCocoaPointToEngine(MouseLocation.x, MouseLocation.y);
     MacCursor->UpdateCursorPosition(IntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y)));
@@ -806,27 +858,35 @@ void FMacApplication::ProcessUpdatedModfierFlags(const FDeferredMacEvent& Deferr
 {
     // NSUinteger seems to be defined as a unsigned long, which would be equal to a uint64 on macOS
     const uint64 ModifierFlags = DeferredEvent.ModifierFlags;
-    if (ModifierFlags != CurrentModifierFlags)
+
+    if (DeferredEvent.EventType != NSEventTypeFlagsChanged)
     {
-        ProcessModfierKey(EMacModifierKey::LeftControl, ModifierFlags);
-        ProcessModfierKey(EMacModifierKey::RightControl, ModifierFlags);
-        ProcessModfierKey(EMacModifierKey::LeftShift, ModifierFlags);
-        ProcessModfierKey(EMacModifierKey::RightShift, ModifierFlags);
-        ProcessModfierKey(EMacModifierKey::LeftCommand, ModifierFlags);
-        ProcessModfierKey(EMacModifierKey::RightCommand, ModifierFlags);
-        ProcessModfierKey(EMacModifierKey::LeftAlt, ModifierFlags);
-        ProcessModfierKey(EMacModifierKey::RightAlt, ModifierFlags);
-        ProcessModfierKey(EMacModifierKey::CapsLock, ModifierFlags);
-        ProcessModfierKey(EMacModifierKey::NumLock, ModifierFlags);
-        
-        // Save the modifier flag so that we can change what is changed
-        CurrentModifierFlags = ModifierFlags;
+        constexpr uint64 DeviceIndependentFlags = static_cast<uint64>(NSEventModifierFlagDeviceIndependentFlagsMask);
+        CurrentModifierFlags = (CurrentModifierFlags & ~DeviceIndependentFlags) | (ModifierFlags & DeviceIndependentFlags);
+        return;
     }
+
+    if (ModifierFlags == CurrentModifierFlags)
+    {
+        return;
+    }
+
+    const uint64 PreviousModifierFlags = CurrentModifierFlags;
+    CurrentModifierFlags = ModifierFlags;
+
+    ProcessModfierKey(EMacModifierKey::LeftControl, ModifierFlags, PreviousModifierFlags);
+    ProcessModfierKey(EMacModifierKey::RightControl, ModifierFlags, PreviousModifierFlags);
+    ProcessModfierKey(EMacModifierKey::LeftShift, ModifierFlags, PreviousModifierFlags);
+    ProcessModfierKey(EMacModifierKey::RightShift, ModifierFlags, PreviousModifierFlags);
+    ProcessModfierKey(EMacModifierKey::LeftCommand, ModifierFlags, PreviousModifierFlags);
+    ProcessModfierKey(EMacModifierKey::RightCommand, ModifierFlags, PreviousModifierFlags);
+    ProcessModfierKey(EMacModifierKey::LeftAlt, ModifierFlags, PreviousModifierFlags);
+    ProcessModfierKey(EMacModifierKey::RightAlt, ModifierFlags, PreviousModifierFlags);
+    ProcessModfierKey(EMacModifierKey::CapsLock, ModifierFlags, PreviousModifierFlags);
+    ProcessModfierKey(EMacModifierKey::NumLock, ModifierFlags, PreviousModifierFlags);
 }
 
-#include <IOKit/hidsystem/ev_keymap.h>
-
-void FMacApplication::ProcessModfierKey(EMacModifierKey::Type MacModifierKey, uint64 ModifierKeyFlags)
+void FMacApplication::ProcessModfierKey(EMacModifierKey::Type MacModifierKey, uint64 ModifierKeyFlags, uint64 PreviousModifierKeyFlags)
 {
     // Quick access to the modifer key masks. The values for these can be found inside the IOKit/hidsystem/ev_keymap.h
     // header but we have redefined them here to avoid including IOKit.
@@ -876,8 +936,8 @@ void FMacApplication::ProcessModfierKey(EMacModifierKey::Type MacModifierKey, ui
     // Retrieve the key-mask
     const uint64 KeyFlag = ModifierKeyMask[MacModifierKey];
 
-    const bool bIsPressed     = (KeyFlag & ModifierKeyFlags)     != 0;
-    const bool bIsPrevPressed = (KeyFlag & CurrentModifierFlags) != 0;
+    const bool bIsPressed     = (KeyFlag & ModifierKeyFlags)         != 0;
+    const bool bIsPrevPressed = (KeyFlag & PreviousModifierKeyFlags) != 0;
 
     if (bIsPressed)
     {

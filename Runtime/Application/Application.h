@@ -161,13 +161,14 @@ public:
     void UnregisterInputHandler(const TSharedPtr<FInputHandler>& InputHandler);
 
     /**
-     * @brief Enables high-precision mouse input (raw input) for a specified window, if the platform supports it.
-     * On Windows, this leverages raw input events. On other platforms, this may be unavailable.
+     * @brief Enables or disables high-precision (relative) mouse input, if the platform supports it.
+     * On Windows this leverages raw input events, on macOS it detaches the cursor from the pointer.
      * 
-     * @param Window The window to enable raw input on.
-     * @return True if successfully enabled, otherwise false.
+     * @param Window The window that should receive raw input. Only used when enabling.
+     * @param Mode Whether to enter or leave high-precision mode.
+     * @return True if the mode was applied, otherwise false.
      */
-    bool EnableHighPrecisionMouseForWindow(const TSharedPtr<FWindowWidget>& Window);
+    bool SetHighPrecisionMouseMode(const TSharedPtr<FWindowWidget>& Window, EHighPrecisionMouseMode Mode);
 
     /**
      * @brief Retrieves the current modifier key state (e.g., whether Ctrl, Alt, or Shift are pressed).

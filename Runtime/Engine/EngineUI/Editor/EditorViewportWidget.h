@@ -89,6 +89,7 @@ private:
     bool                                bVisible;
     bool                                bViewportInputActive;
     bool                                bMouseLookActive;
+    bool                                bRawLookActive;
     bool                                bCursorWasVisible;
     IntVector2                          MouseLookRestorePosition;
     FEditorCameraInputState             PendingCameraInput;

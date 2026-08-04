@@ -2194,6 +2194,100 @@ bool EditorWidgets::MenuItem(const CHAR* Label, const CHAR* Shortcut, bool bSele
     return bEnabled && bPressed;
 }
 
+namespace
+{
+    enum class EMenuFloatWidget : uint8
+    {
+        Slider = 0,
+        Drag   = 1,
+    };
+}
+
+static bool MenuFloatRow(
+    EMenuFloatWidget WidgetType,
+    const CHAR*      Label,
+    float&           InOutValue,
+    float            Speed,
+    float            MinValue,
+    float            MaxValue,
+    const CHAR*      Format,
+    float            ValueWidth,
+    bool             bEnabled)
+{
+    ImGuiWindow* Window = ImGui::GetCurrentWindow();
+    if (!Window || Window->SkipItems)
+    {
+        return false;
+    }
+
+    constexpr float MenuIndentX = 20.0f;
+    constexpr float PaddingY    = 4.0f;
+
+    const float RowWidth  = ImGui::GetContentRegionAvail().x;
+    const float RowHeight = Math::Max(ImGui::GetFontSize() + PaddingY * 2.0f, ImGui::GetFrameHeight());
+
+    ImGui::PushID(Label);
+
+    const ImVec2 RectMin = ImGui::GetCursorScreenPos();
+    ImGui::Dummy(ImVec2(RowWidth, RowHeight));
+    const ImVec2 RectMax = ImVec2(RectMin.x + RowWidth, RectMin.y + RowHeight);
+
+    ImDrawList* DrawList = ImGui::GetWindowDrawList();
+    DrawList->AddRectFilled(RectMin, RectMax, ImGui::GetColorU32(ImGuiCol_Header), 0.0f);
+
+    const ImVec2 LabelSize = ImGui::CalcTextSize(Label);
+    const float  LabelY    = RectMin.y + (RowHeight - LabelSize.y) * 0.5f + 0.5f;
+
+    const float FieldWidth = Math::Min(ValueWidth, Math::Max(RowWidth - MenuIndentX * 2.0f, 1.0f));
+    const float FieldX     = RectMax.x - MenuIndentX - FieldWidth;
+    const float FieldY     = RectMin.y + (RowHeight - ImGui::GetFrameHeight()) * 0.5f;
+
+    DrawList->PushClipRect(ImVec2(RectMin.x + MenuIndentX, RectMin.y), ImVec2(Math::Max(FieldX - 8.0f, RectMin.x + MenuIndentX + 1.0f), RectMax.y), true);
+    DrawList->AddText(ImVec2(RectMin.x + MenuIndentX, LabelY), ImGui::GetColorU32(bEnabled ? ImGuiCol_Text : ImGuiCol_TextDisabled), Label);
+    DrawList->PopClipRect();
+
+    ImGui::SetCursorScreenPos(ImVec2(FieldX, FieldY));
+    ImGui::SetNextItemWidth(FieldWidth);
+
+    if (!bEnabled)
+    {
+        ImGui::BeginDisabled();
+    }
+
+    bool bChanged = false;
+    if (WidgetType == EMenuFloatWidget::Slider)
+    {
+        bChanged = ImGui::SliderFloat("##Value", &InOutValue, MinValue, MaxValue, Format);
+    }
+    else
+    {
+        bChanged = ImGui::DragFloat("##Value", &InOutValue, Speed, MinValue, MaxValue, Format);
+    }
+
+    DrawInputBorderLastItem(ImGui::GetStyle().FrameRounding);
+
+    if (!bEnabled)
+    {
+        ImGui::EndDisabled();
+    }
+
+    // The field was placed by hand, so put the cursor back on the row the Dummy reserved.
+    ImGui::SetCursorScreenPos(ImVec2(RectMin.x, RectMax.y));
+    ImGui::PopID();
+
+    return bEnabled && bChanged;
+}
+
+bool EditorWidgets::MenuSliderFloat(const CHAR* Label, float& InOutValue, float MinValue, float MaxValue, const CHAR* Format, float ValueWidth, bool bEnabled)
+{
+    return MenuFloatRow(EMenuFloatWidget::Slider, Label, InOutValue, 0.0f, MinValue, MaxValue, Format, ValueWidth, bEnabled);
+}
+
+bool EditorWidgets::MenuDragFloat(const CHAR* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const CHAR* Format, float ValueWidth, bool bEnabled)
+{
+    return MenuFloatRow(EMenuFloatWidget::Drag, Label, InOutValue, Speed, MinValue, MaxValue, Format, ValueWidth, bEnabled);
+}
+
 void EditorWidgets::MenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder)
 {
     const bool bThisPopupOpen = ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None);

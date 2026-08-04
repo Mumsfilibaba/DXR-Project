@@ -187,6 +187,8 @@ struct ENGINE_API EditorWidgets
     static void MenuSeparator(float Thickness = 1.0f, float PaddingY = 4.0f);
     static void MenuLabeledSeparator(const CHAR* Label, float Thickness = 1.0f, float PaddingY = 4.0f);
     static bool MenuItem(const CHAR* Label, const CHAR* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true, bool bDrawBorder = false);
+    static bool MenuSliderFloat(const CHAR* Label, float& InOutValue, float MinValue, float MaxValue, const CHAR* Format, float ValueWidth = 96.0f, bool bEnabled = true);
+    static bool MenuDragFloat(const CHAR* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const CHAR* Format, float ValueWidth = 96.0f, bool bEnabled = true);
     static void MenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder = false);
     
     static void EndMenuPopup();

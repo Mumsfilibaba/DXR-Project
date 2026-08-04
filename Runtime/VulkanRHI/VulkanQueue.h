@@ -136,6 +136,7 @@ struct FVulkanCommands
 
 #if VULKAN_VALIDATE_IMAGE_LAYOUTS
     void ValidateImageLayouts();
+    void ValidatePendingBarrierOrdering();
 #endif
 
     void AddCommandPool(FVulkanCommandPool* InCommandPool)
