@@ -6,9 +6,15 @@
 enum class EShaderOutputLanguage : uint8
 {
     Unknown = 0,
-    HLSL    = 1, // DXIL for D3D12RHI
-    MSL     = 2, // Metal Shading Language for MetalRHI
-    SPIRV   = 3, // SPIR-V for VulkanRHI
+
+    /** DXIL for D3D12RHI */
+    HLSL = 1,
+
+    /** Metal Shading Language for MetalRHI */
+    MSL = 2,
+
+    /** SPIR-V for VulkanRHI */
+    SPIRV = 3,
 };
 
 struct FShaderDefine

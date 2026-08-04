@@ -1292,10 +1292,12 @@ bool FVulkanBindlessDescriptorManager::Initialize()
         return false;
     }
 
+    EVulkanBindlessMode SelectedMode = EVulkanBindlessMode::Mutable;
 #if VULKAN_ENABLE_SPLIT_BINDLESS_HEAP
-    const EVulkanBindlessMode SelectedMode = GVulkanUseSplitBindlessHeap ? EVulkanBindlessMode::Split : EVulkanBindlessMode::Mutable;
-#else
-    const EVulkanBindlessMode SelectedMode = EVulkanBindlessMode::Mutable;
+    if (GVulkanUseSplitBindlessHeap)
+    {
+        SelectedMode = EVulkanBindlessMode::Split;
+    }
 #endif
 
     const uint32 RequestedResources = static_cast<uint32>(Math::Max<int32>(0, CVarVulkanNumBindlessResourceDescriptors.GetValue()));

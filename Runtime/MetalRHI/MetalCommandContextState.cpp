@@ -120,7 +120,7 @@ void FMetalCommandContextState::SetRenderTargets(FMetalRenderTargetViewRHI* cons
 
 void FMetalCommandContextState::SetViewports(const MTLViewport* Viewports, uint32 NumViewports)
 {
-    CHECK(NumViewports <= kMaxViewports);
+    CHECK(NumViewports <= MAX_VIEWPORTS);
 
     if (Viewports && NumViewports > 0)
     {
@@ -133,7 +133,7 @@ void FMetalCommandContextState::SetViewports(const MTLViewport* Viewports, uint3
 
 void FMetalCommandContextState::SetScissorRects(const MTLScissorRect* ScissorRects, uint32 NumScissorRects)
 {
-    CHECK(NumScissorRects <= kMaxViewports);
+    CHECK(NumScissorRects <= MAX_VIEWPORTS);
 
     if (ScissorRects && NumScissorRects > 0)
     {
@@ -201,7 +201,7 @@ void FMetalCommandContextState::SetPrimitiveType(MTLPrimitiveType PrimitiveType)
 void FMetalCommandContextState::SetSRV(FMetalShaderResourceViewRHI* ShaderResourceView, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex)
 {
     CHECK(ShaderStage < EShaderVisibility::Count);
-    CHECK(ResourceIndex < kMaxSRVs);
+    CHECK(ResourceIndex < MAX_SRVS);
 
     FMetalShaderResourceViewCache& Cache = CommonState.ShaderResourceViewCache;
     Cache.ResourceViews[ShaderStage][ResourceIndex] = ShaderResourceView;
@@ -212,7 +212,7 @@ void FMetalCommandContextState::SetSRV(FMetalShaderResourceViewRHI* ShaderResour
 void FMetalCommandContextState::SetUAV(FMetalUnorderedAccessViewRHI* UnorderedAccessView, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex)
 {
     CHECK(ShaderStage < EShaderVisibility::Count);
-    CHECK(ResourceIndex < kMaxUAVs);
+    CHECK(ResourceIndex < MAX_UAVS);
 
     FMetalUnorderedAccessViewCache& Cache = CommonState.UnorderedAccessViewCache;
     Cache.ResourceViews[ShaderStage][ResourceIndex] = UnorderedAccessView;
@@ -223,7 +223,7 @@ void FMetalCommandContextState::SetUAV(FMetalUnorderedAccessViewRHI* UnorderedAc
 void FMetalCommandContextState::SetCBV(FMetalBufferRHI* Buffer, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex)
 {
     CHECK(ShaderStage < EShaderVisibility::Count);
-    CHECK(ResourceIndex < kMaxConstantBuffers);
+    CHECK(ResourceIndex < MAX_CONSTANT_BUFFERS);
 
     FMetalConstantBufferCache& Cache = CommonState.ConstantBufferCache;
     Cache.ConstantBuffers[ShaderStage][ResourceIndex] = Buffer;
@@ -234,7 +234,7 @@ void FMetalCommandContextState::SetCBV(FMetalBufferRHI* Buffer, EShaderVisibilit
 void FMetalCommandContextState::SetSampler(FMetalSamplerStateRHI* SamplerState, EShaderVisibility::Type ShaderStage, uint32 SamplerIndex)
 {
     CHECK(ShaderStage < EShaderVisibility::Count);
-    CHECK(SamplerIndex < kMaxSamplerStates);
+    CHECK(SamplerIndex < MAX_SAMPLER_STATES);
 
     FMetalSamplerStateCache& Cache = CommonState.SamplerStateCache;
     Cache.SamplerStates[ShaderStage][SamplerIndex] = SamplerState;
@@ -245,7 +245,7 @@ void FMetalCommandContextState::SetSampler(FMetalSamplerStateRHI* SamplerState, 
 void FMetalCommandContextState::SetShaderConstants(EShaderVisibility::Type ShaderStage, const uint32* ShaderConstants, uint32 NumShaderConstants)
 {
     CHECK(ShaderStage < EShaderVisibility::Count);
-    CHECK(NumShaderConstants <= kMaxShaderConstants);
+    CHECK(NumShaderConstants <= MAX_SHADER_CONSTANTS);
 
     FMetalShaderConstantsCache& Cache = CommonState.ShaderConstantsCache;
     if (ShaderConstants && NumShaderConstants > 0)
@@ -490,11 +490,11 @@ void FMetalCommandContextState::BindGraphicsResources(EShaderVisibility::Type Sh
 
             if (ShaderStage == EShaderVisibility::Vertex)
             {
-                [Encoder setVertexTexture:MTLTextureHandle atIndex:kMaxSRVs + Index];
+                [Encoder setVertexTexture:MTLTextureHandle atIndex:MAX_SRVS + Index];
             }
             else if (ShaderStage == EShaderVisibility::Pixel)
             {
-                [Encoder setFragmentTexture:MTLTextureHandle atIndex:kMaxSRVs + Index];
+                [Encoder setFragmentTexture:MTLTextureHandle atIndex:MAX_SRVS + Index];
             }
         }
 
@@ -610,7 +610,7 @@ void FMetalCommandContextState::BindComputeResources()
         {
             FMetalUnorderedAccessViewRHI* View = UAVCache.ResourceViews[EShaderVisibility::Compute][Index];
             id<MTLTexture> MTLTextureHandle    = View ? View->GetMTLTexture() : nil;
-            [Encoder setTexture:MTLTextureHandle atIndex:kMaxSRVs + Index];
+            [Encoder setTexture:MTLTextureHandle atIndex:MAX_SRVS + Index];
         }
 
         UAVCache.ClearResourcesDirty(EShaderVisibility::Compute);
@@ -657,7 +657,7 @@ void FMetalCommandContextState::BindComputeShaderConstants()
     }
 
     const NSUInteger ByteLength = NumConstants * sizeof(uint32);
-    [Encoder setBytes:Cache.Constants[EShaderVisibility::Compute] length:ByteLength atIndex:kMaxConstantBuffers];
+    [Encoder setBytes:Cache.Constants[EShaderVisibility::Compute] length:ByteLength atIndex:MAX_CONSTANT_BUFFERS];
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

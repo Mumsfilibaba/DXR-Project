@@ -33,7 +33,7 @@ struct EShaderVisibility
         Task,
         Mesh,
         RayTracing,
-        Count = RayTracing + 1
+        Count = RayTracing + 1,
     };
 };
 

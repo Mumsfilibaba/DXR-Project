@@ -6,10 +6,16 @@
 
 enum class EBufferViewType : uint8
 {
-    Unknown = 0,  // Unknown
-    Structured,   // StructuredBuffer<T>, RWStructuredBuffer<T>
-    ByteAddress,  // ByteAddressBuffer, RWByteAddressBuffer
-    Typed,        // Buffer<T>, RWBuffer<T>
+    Unknown = 0,
+
+    /** StructuredBuffer<T>, RWStructuredBuffer<T> */
+    Structured,
+
+    /** ByteAddressBuffer, RWByteAddressBuffer */
+    ByteAddress,
+
+    /** Buffer<T>, RWBuffer<T> */
+    Typed,
 };
 
 NODISCARD constexpr const CHAR* ToString(EBufferViewType ViewType)
@@ -25,9 +31,13 @@ NODISCARD constexpr const CHAR* ToString(EBufferViewType ViewType)
 
 enum class EAttachmentLoadAction : uint8
 {
-    DontCare = 0, // Don't care
-    Load,         // Use the stored data when RenderPass begin
-    Clear,        // Clear data when RenderPass begin
+    DontCare = 0,
+
+    /** Use the stored data when RenderPass begin */
+    Load,
+
+    /** Clear data when RenderPass begin */
+    Clear,
 };
 
 NODISCARD constexpr const CHAR* ToString(EAttachmentLoadAction LoadAction)
@@ -44,8 +54,10 @@ NODISCARD constexpr const CHAR* ToString(EAttachmentLoadAction LoadAction)
 
 enum class EAttachmentStoreAction : uint8
 {
-    DontCare = 0, // Don't care
-    Store,        // Store the data after the RenderPass is finished
+    DontCare = 0,
+
+    /** Store the data after the RenderPass is finished */
+    Store,
 };
 
 NODISCARD constexpr const CHAR* ToString(EAttachmentStoreAction StoreAction)

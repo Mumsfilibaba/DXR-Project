@@ -23,7 +23,7 @@ struct EShaderVisibility
         Compute = 0,
         Vertex  = 1,
         Pixel   = 2,
-        Count   = Pixel + 1
+        Count   = Pixel + 1,
     };
 };
 

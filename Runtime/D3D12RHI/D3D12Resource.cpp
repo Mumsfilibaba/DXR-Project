@@ -244,7 +244,7 @@ FD3D12ResourceStorage::FD3D12ResourceStorage(FD3D12Device* InDevice)
     , MappedBaseAddress(nullptr)
     , Size(0)
     , AllocatorType(ED3D12AllocatorType::None)
-    , StorageType(EResourceStorageType::Unknown)
+    , StorageType(ED3D12ResourceStorageType::Unknown)
 {
     Memory::Memzero(&AllocationData, sizeof(AllocationData));
 }
@@ -309,18 +309,18 @@ void FD3D12ResourceStorage::Reset()
     GPUVirtualAddress = 0;
     MappedBaseAddress = nullptr;
     Size              = 0;
-    StorageType       = EResourceStorageType::Unknown;
+    StorageType       = ED3D12ResourceStorageType::Unknown;
 }
 
 void FD3D12ResourceStorage::ReleaseResource()
 {
-    if (StorageType == EResourceStorageType::Unknown)
+    if (StorageType == ED3D12ResourceStorageType::Unknown)
     {
         Reset();
         return;
     }
 
-    if (StorageType == EResourceStorageType::Standalone)
+    if (StorageType == ED3D12ResourceStorageType::Standalone)
     {
     #if D3D12_ENABLE_STATS
         if (AllocatorType == ED3D12AllocatorType::PoolAllocator && AllocatorPointers.PoolAllocator)
@@ -357,7 +357,7 @@ void FD3D12ResourceStorage::ReleaseResource()
     }
 
     // For SuballocatedHeap, we own the placed resource
-    if (StorageType == EResourceStorageType::SuballocatedHeap && Resource && Resource->ShouldDeferredRelease())
+    if (StorageType == ED3D12ResourceStorageType::SuballocatedHeap && Resource && Resource->ShouldDeferredRelease())
     {
         Resource->DeferredRelease();
     }
@@ -393,7 +393,7 @@ void FD3D12ResourceStorage::InitStandalone(FD3D12Resource* InResource)
     ResourceOffset    = 0;
     GPUVirtualAddress = InResource ? InResource->GetGPUVirtualAddress() : 0;
     MappedBaseAddress = nullptr;
-    StorageType       = EResourceStorageType::Standalone;
+    StorageType       = ED3D12ResourceStorageType::Standalone;
 }
 
 void FD3D12ResourceStorage::ResetAllocator()

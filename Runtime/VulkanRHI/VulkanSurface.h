@@ -6,12 +6,18 @@
 
 typedef TSharedRef<class FVulkanSurface> FVulkanSurfaceRef;
 
-enum class ESurfaceStatus
+enum class ESurfaceStatus : uint8
 {
-	Ok,
-	ZeroSized,   // Window has been minimized or no drawable size
-	SurfaceLost, // Must recreate VkSurfaceKHR
-	Error        // Unexpected error (log)
+    Ok,
+
+    /** Window has been minimized or no drawable size */
+    ZeroSized,
+
+    /** Must recreate VkSurfaceKHR */
+    SurfaceLost,
+
+    /** Unexpected error (log) */
+    Error,
 };
 
 constexpr const CHAR* ToString(ESurfaceStatus Status)

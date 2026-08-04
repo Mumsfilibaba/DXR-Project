@@ -61,7 +61,7 @@ bool FMetalBufferRHI::Initialize(ERHIResourceState InInitialAccess, const void* 
         ResourceOptions |= MTLResourceStorageModePrivate | MTLResourceCPUCacheModeWriteCombined;
     }
     
-    const uint64 Alignment   = Desc.IsConstantBuffer() ? kConstantBufferAlignment : kBufferAlignment;
+    const uint64 Alignment   = Desc.IsConstantBuffer() ? CONSTANT_BUFFER_ALIGNMENT : BUFFER_ALIGNMENT;
     const uint64 AlignedSize = Math::AlignUp(Desc.Size, Alignment);
     
     id<MTLDevice> Device = GetDevice()->GetMTLDevice();

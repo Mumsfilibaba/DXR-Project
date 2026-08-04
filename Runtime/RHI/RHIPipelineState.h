@@ -18,7 +18,7 @@ enum class EStencilOp : uint8
     DecrSat = 5,
     Invert  = 6,
     Incr    = 7,
-    Decr    = 8
+    Decr    = 8,
 };
 
 NODISCARD constexpr const CHAR* ToString(EStencilOp StencilOp)
@@ -122,7 +122,7 @@ enum class ECullMode : uint8
 {
     None  = 1,
     Front = 2,
-    Back  = 3
+    Back  = 3,
 };
 
 NODISCARD constexpr const CHAR* ToString(ECullMode CullMode)
@@ -140,7 +140,7 @@ NODISCARD constexpr const CHAR* ToString(ECullMode CullMode)
 enum class EFillMode : uint8
 {
     WireFrame = 1,
-    Solid     = 2
+    Solid     = 2,
 };
 
 NODISCARD constexpr const CHAR* ToString(EFillMode FillMode)
@@ -236,7 +236,7 @@ enum class EBlendType : uint8
     Src1Color      = 14,
     InvSrc1Color   = 15,
     Src1Alpha      = 16,
-    InvSrc1Alpha   = 17
+    InvSrc1Alpha   = 17,
 };
 
 NODISCARD constexpr const CHAR* ToString(EBlendType  Blend)
@@ -271,7 +271,7 @@ enum class EBlendOp : uint8
     Subtract    = 2,
     RevSubtract = 3,
     Min         = 4,
-    Max         = 5
+    Max         = 5,
 };
 
 NODISCARD constexpr const CHAR* ToString(EBlendOp BlendOp)
@@ -305,7 +305,7 @@ enum class ELogicOp : uint8
     AndReverse   = 12,
     AndInverted  = 13,
     OrReverse    = 14,
-    OrInverted   = 15
+    OrInverted   = 15,
 };
 
 NODISCARD constexpr const CHAR* ToString(ELogicOp LogicOp)
@@ -340,7 +340,7 @@ enum class EColorWriteFlags : uint8
     Green = FLAG(1),
     Blue  = FLAG(2),
     Alpha = FLAG(3),
-    All   = Red | Green | Blue | Alpha
+    All   = Red | Green | Blue | Alpha,
 };
 
 ENUM_CLASS_OPERATORS(EColorWriteFlags);

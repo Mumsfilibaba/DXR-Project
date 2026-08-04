@@ -623,7 +623,7 @@ struct FVulkanPendingBindlessWrite
     };
 };
 
-// Split is the fallback heap for devices without VK_EXT_mutable_descriptor_type, such as MoltenVK.
+/** Split is the fallback heap for devices without VK_EXT_mutable_descriptor_type, such as MoltenVK */
 enum class EVulkanBindlessMode : uint8
 {
     Disabled = 0,

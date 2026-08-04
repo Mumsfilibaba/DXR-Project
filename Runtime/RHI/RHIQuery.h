@@ -1,7 +1,7 @@
 #pragma once
 #include "RHI/RHIResource.h"
 
-enum class EQueryType
+enum class EQueryType : uint8
 {
     Unknown = 0,
     Timestamp,
@@ -11,8 +11,11 @@ enum class EQueryType
 
 enum class EQueryResultMode : uint8
 {
-    Available, // Non-blocking: process any completed GPU work and return the current result
-    Wait,      // Blocking: wait for all pending GPU work to finish before returning the result
+    /** Non-blocking: process any completed GPU work and return the current result */
+    Available,
+
+    /** Blocking: wait for all pending GPU work to finish before returning the result */
+    Wait,
 };
 
 NODISCARD constexpr const CHAR* ToString(EQueryType QueryType)

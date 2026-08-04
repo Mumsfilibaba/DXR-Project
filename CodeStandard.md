@@ -262,6 +262,64 @@ struct EMyEnum
 
 * Note that enumerators in the wrapped form do **not** repeat the enum name as a prefix - the wrapping struct already provides the namespace. Use `EMyEnum::Something0` at the call site, and `EMyEnum::Type` when naming the type of a variable, parameter, return value or template non-type parameter.
 
+#### Enum Formatting
+* The underlying type is always explicit. Pick the smallest type that holds every value, which is `uint8` for most enums. Flag enums need enough bits for the highest flag, so an enum reaching `FLAG(14)` needs `uint16` rather than `uint8`.
+
+* A value is spelled out when the value itself carries information: flags (`FLAG(n)`, `(1 << n)`), a mapping onto an external API or file format, a deliberate gap, or a first enumerator anchored somewhere other than the start. Numbering a plain sequence is allowed but never required, since the numbers only restate the position:
+```
+// Fine - the positions are arbitrary, so the numbers would add nothing
+enum class EActivePipeline : uint8
+{
+    Graphics,
+    Compute,
+    Meshlet,
+    RayTracing,
+};
+
+// Spelled out because the values mirror D3D12_HEAP_TYPE
+enum class EHeapType : uint8
+{
+    Default  = 1,
+    Upload   = 2,
+    ReadBack = 3,
+};
+```
+
+* Whichever form an enum already uses, stay with it. Do not add numbers to an unnumbered sequence, and do not strip them from a numbered one.
+
+* An enumerator that needs documenting gets a `/** */` comment on the line above, never a trailing `//`. The documented enumerator is separated from its neighbours by a blank line:
+```
+enum class EMyEnum : uint8
+{
+    /** Described by a D3D12_UNORDERED_ACCESS_VIEW_DESC, created via CreateUnorderedAccessView */
+    Standard = 0,
+
+    /** Described by a feedback/paired resource pair, created via CreateSamplerFeedbackUnorderedAccessView */
+    SamplerFeedback = 1,
+};
+```
+
+* Enumerators that are self-explanatory are left undocumented. Runs of undocumented enumerators stay packed together with their values column-aligned:
+```
+enum class EMyFlags : uint8
+{
+    None = 0,
+
+    /** The transition starts here and must be completed by a matching EndOnly */
+    BeginOnly = FLAG(0),
+
+    /** Completes a transition opened by a matching BeginOnly */
+    EndOnly = FLAG(1),
+
+    Texture = FLAG(2),
+    Buffer  = FLAG(3),
+};
+```
+
+* The last enumerator carries a trailing comma.
+
+* Enum bodies are indented with 4 spaces (8 when the enum is nested inside a type).
+
 ### Union
 * Unions use 'F' as prefix, for example
 

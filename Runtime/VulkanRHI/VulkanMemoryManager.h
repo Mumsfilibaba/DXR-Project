@@ -23,14 +23,14 @@ enum class EVulkanAllocatorType : uint8
 {
     None,
     BuddyAllocator,
-    PoolAllocator
+    PoolAllocator,
 };
 
 enum class EVulkanMemoryLocationType : uint8
 {
     Unknown,
     Dedicated,
-    Suballocated
+    Suballocated,
 };
 
 #if VULKAN_ENABLE_STATS

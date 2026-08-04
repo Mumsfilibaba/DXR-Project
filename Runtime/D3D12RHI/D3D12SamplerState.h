@@ -11,9 +11,9 @@ struct FD3D12SamplerStateIdentifier
     static constexpr uint16 InvalidIdentifier = 0xffff;
 
 public:
-    enum class EGenerate
+    enum class EGenerate : uint8
     {
-        New
+        New,
     };
 
     FD3D12SamplerStateIdentifier()

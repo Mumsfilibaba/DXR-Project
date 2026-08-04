@@ -29,7 +29,7 @@ static TAutoConsoleVariable<bool> CVarMapMin16FloatToFloat(
     "RelaxedPrecision codegen bug). Disable to keep native min-precision types (also sets MIN16FLOAT_AVAILABLE).",
     true);
 
-enum class EDXCPart
+enum class EDXCPart : uint32
 {
     Container               = DXC_FOURCC('D', 'X', 'B', 'C'),
     ResourceDef             = DXC_FOURCC('R', 'D', 'E', 'F'),

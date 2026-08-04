@@ -143,7 +143,7 @@ struct FMetalConstantBufferCache : public FMetalResourceCache
 
         for (uint32 Stage = 0; Stage < EShaderVisibility::Count; Stage++)
         {
-            for (uint32 Index = 0; Index < kMaxConstantBuffers; Index++)
+            for (uint32 Index = 0; Index < MAX_CONSTANT_BUFFERS; Index++)
             {
                 ConstantBuffers[Stage][Index] = nullptr;
             }
@@ -152,7 +152,7 @@ struct FMetalConstantBufferCache : public FMetalResourceCache
         }
     }
 
-    FMetalBufferRHI* ConstantBuffers[EShaderVisibility::Count][kMaxConstantBuffers];
+    FMetalBufferRHI* ConstantBuffers[EShaderVisibility::Count][MAX_CONSTANT_BUFFERS];
     uint8            NumBuffers[EShaderVisibility::Count];
 };
 
@@ -169,7 +169,7 @@ struct FMetalShaderResourceViewCache : public FMetalResourceCache
 
         for (uint32 Stage = 0; Stage < EShaderVisibility::Count; Stage++)
         {
-            for (uint32 Index = 0; Index < kMaxSRVs; Index++)
+            for (uint32 Index = 0; Index < MAX_SRVS; Index++)
             {
                 ResourceViews[Stage][Index] = nullptr;
             }
@@ -178,7 +178,7 @@ struct FMetalShaderResourceViewCache : public FMetalResourceCache
         }
     }
 
-    FMetalShaderResourceViewRHI* ResourceViews[EShaderVisibility::Count][kMaxSRVs];
+    FMetalShaderResourceViewRHI* ResourceViews[EShaderVisibility::Count][MAX_SRVS];
     uint8                        NumViews[EShaderVisibility::Count];
 };
 
@@ -195,7 +195,7 @@ struct FMetalUnorderedAccessViewCache : public FMetalResourceCache
 
         for (uint32 Stage = 0; Stage < EShaderVisibility::Count; Stage++)
         {
-            for (uint32 Index = 0; Index < kMaxUAVs; Index++)
+            for (uint32 Index = 0; Index < MAX_UAVS; Index++)
             {
                 ResourceViews[Stage][Index] = nullptr;
             }
@@ -204,7 +204,7 @@ struct FMetalUnorderedAccessViewCache : public FMetalResourceCache
         }
     }
 
-    FMetalUnorderedAccessViewRHI* ResourceViews[EShaderVisibility::Count][kMaxUAVs];
+    FMetalUnorderedAccessViewRHI* ResourceViews[EShaderVisibility::Count][MAX_UAVS];
     uint8                         NumViews[EShaderVisibility::Count];
 };
 
@@ -221,7 +221,7 @@ struct FMetalSamplerStateCache : public FMetalResourceCache
 
         for (uint32 Stage = 0; Stage < EShaderVisibility::Count; Stage++)
         {
-            for (uint32 Index = 0; Index < kMaxSamplerStates; Index++)
+            for (uint32 Index = 0; Index < MAX_SAMPLER_STATES; Index++)
             {
                 SamplerStates[Stage][Index] = nullptr;
             }
@@ -230,7 +230,7 @@ struct FMetalSamplerStateCache : public FMetalResourceCache
         }
     }
 
-    FMetalSamplerStateRHI* SamplerStates[EShaderVisibility::Count][kMaxSamplerStates];
+    FMetalSamplerStateRHI* SamplerStates[EShaderVisibility::Count][MAX_SAMPLER_STATES];
     uint8                  NumSamplers[EShaderVisibility::Count];
 };
 
@@ -250,7 +250,7 @@ struct FMetalShaderConstantsCache
         }
     }
 
-    uint32 Constants[EShaderVisibility::Count][kMaxShaderConstants];
+    uint32 Constants[EShaderVisibility::Count][MAX_SHADER_CONSTANTS];
     uint32 NumConstants[EShaderVisibility::Count];
 };
 
@@ -408,9 +408,9 @@ private:
         float                          BlendFactor[4];
         uint32                         StencilRef;
         float                          DepthBias[3];
-        MTLViewport                    Viewports[kMaxViewports];
+        MTLViewport                    Viewports[MAX_VIEWPORTS];
         uint32                         NumViewports;
-        MTLScissorRect                 ScissorRects[kMaxViewports];
+        MTLScissorRect                 ScissorRects[MAX_VIEWPORTS];
         uint32                         NumScissorRects;
         FMetalRenderTargetCache        RenderTargetCache;
         FMetalIndexBufferCache         IndexBufferCache;

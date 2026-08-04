@@ -21,7 +21,7 @@ struct FRHIOpacityMicromapBuildDesc;
 struct FRHIRayTracingAccelerationStructureOperationDesc;
 struct FRHIGeometryAccelerationStructureInstance;
 
-enum class ECommandContextPhase
+enum class ECommandContextPhase : uint8
 {
     Finished = 0,
     Recording,
@@ -31,8 +31,11 @@ enum class ECommandContextPhase
 
 enum class ESamplerFeedbackTranscodeMode : uint8
 {
-    Decode = 0, // Opaque feedback map -> R8_UINT
-    Encode = 1, // R8_UINT -> opaque feedback map
+    /** Opaque feedback map -> R8_UINT */
+    Decode = 0,
+
+    /** R8_UINT -> opaque feedback map */
+    Encode = 1,
 };
 
 struct IRHICommandContext

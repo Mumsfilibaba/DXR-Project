@@ -16,7 +16,7 @@ typedef TSharedRef<class FVulkanDepthStencilViewRHI> FVulkanDepthStencilViewRHIR
 class FVulkanResourceView : public FVulkanDeviceChild, public IVulkanResourceRelocationListener
 {
 public:
-    enum class EType
+    enum class EType : uint8
     {
         None = 0,
         StructuredBufferView,

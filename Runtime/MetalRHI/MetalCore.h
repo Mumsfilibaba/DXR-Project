@@ -69,22 +69,19 @@
         do { } while(false)
 #endif
 
-enum : uint32
-{
-    kMaxSRVs            = 16,
-    kMaxUAVs            = 16,
-    kMaxConstantBuffers = 16,
-    kMaxSamplerStates   = 16,
-    
-    kMaxTextures        = 32,
-    kMaxBuffers         = 48,
+constexpr uint32 MAX_SRVS             = 16;
+constexpr uint32 MAX_UAVS             = 16;
+constexpr uint32 MAX_CONSTANT_BUFFERS = 16;
+constexpr uint32 MAX_SAMPLER_STATES   = 16;
 
-    kMaxShaderConstants = 32,
-    kMaxViewports       = 16,
-    
-    kBufferAlignment         = 16,
-    kConstantBufferAlignment = 256,
-};
+constexpr uint32 MAX_TEXTURES = 32;
+constexpr uint32 MAX_BUFFERS  = 48;
+
+constexpr uint32 MAX_SHADER_CONSTANTS = 32;
+constexpr uint32 MAX_VIEWPORTS        = 16;
+
+constexpr uint32 BUFFER_ALIGNMENT          = 16;
+constexpr uint32 CONSTANT_BUFFER_ALIGNMENT = 256;
 
 constexpr MTLLoadAction ConvertAttachmentLoadAction(EAttachmentLoadAction LoadAction)
 {

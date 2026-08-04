@@ -54,23 +54,23 @@ static bool IsLegalRegisterSpace(const D3D12_SHADER_INPUT_BIND_DESC& ShaderBindD
     #define MAKEFOURCC(a, b, c, d) (unsigned int)((unsigned char)(a) | ((unsigned char)(b) << 8) | ((unsigned char)(c) << 16) | ((unsigned char)(d) << 24))
 #endif
 
-enum DxilFourCC
+enum DxilFourCC : uint32
 {
-	DFCC_Container               = MAKEFOURCC('D', 'X', 'B', 'C'),
-	DFCC_ResourceDef             = MAKEFOURCC('R', 'D', 'E', 'F'),
-	DFCC_InputSignature          = MAKEFOURCC('I', 'S', 'G', '1'),
-	DFCC_OutputSignature         = MAKEFOURCC('O', 'S', 'G', '1'),
-	DFCC_PatchConstantSignature  = MAKEFOURCC('P', 'S', 'G', '1'),
-	DFCC_ShaderStatistics        = MAKEFOURCC('S', 'T', 'A', 'T'),
-	DFCC_ShaderDebugInfoDXIL     = MAKEFOURCC('I', 'L', 'D', 'B'),
-	DFCC_ShaderDebugName         = MAKEFOURCC('I', 'L', 'D', 'N'),
-	DFCC_FeatureInfo             = MAKEFOURCC('S', 'F', 'I', '0'),
-	DFCC_PrivateData             = MAKEFOURCC('P', 'R', 'I', 'V'),
-	DFCC_RootSignature           = MAKEFOURCC('R', 'T', 'S', '0'),
-	DFCC_DXIL                    = MAKEFOURCC('D', 'X', 'I', 'L'),
-	DFCC_PipelineStateValidation = MAKEFOURCC('P', 'S', 'V', '0'),
-	DFCC_RuntimeData             = MAKEFOURCC('R', 'D', 'A', 'T'),
-	DFCC_ShaderHash              = MAKEFOURCC('H', 'A', 'S', 'H'),
+    DFCC_Container               = MAKEFOURCC('D', 'X', 'B', 'C'),
+    DFCC_ResourceDef             = MAKEFOURCC('R', 'D', 'E', 'F'),
+    DFCC_InputSignature          = MAKEFOURCC('I', 'S', 'G', '1'),
+    DFCC_OutputSignature         = MAKEFOURCC('O', 'S', 'G', '1'),
+    DFCC_PatchConstantSignature  = MAKEFOURCC('P', 'S', 'G', '1'),
+    DFCC_ShaderStatistics        = MAKEFOURCC('S', 'T', 'A', 'T'),
+    DFCC_ShaderDebugInfoDXIL     = MAKEFOURCC('I', 'L', 'D', 'B'),
+    DFCC_ShaderDebugName         = MAKEFOURCC('I', 'L', 'D', 'N'),
+    DFCC_FeatureInfo             = MAKEFOURCC('S', 'F', 'I', '0'),
+    DFCC_PrivateData             = MAKEFOURCC('P', 'R', 'I', 'V'),
+    DFCC_RootSignature           = MAKEFOURCC('R', 'T', 'S', '0'),
+    DFCC_DXIL                    = MAKEFOURCC('D', 'X', 'I', 'L'),
+    DFCC_PipelineStateValidation = MAKEFOURCC('P', 'S', 'V', '0'),
+    DFCC_RuntimeData             = MAKEFOURCC('R', 'D', 'A', 'T'),
+    DFCC_ShaderHash              = MAKEFOURCC('H', 'A', 'S', 'H'),
 };
 
 #undef MAKEFOURCC

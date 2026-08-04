@@ -8,22 +8,49 @@ enum class EBufferFlags : uint16
 { 
     None = 0,
 
-    Default               = FLAG(1),  // Default device memory (memory class, not a resource-state policy)
-    Dynamic               = FLAG(2),  // Dynamic memory (D3D12 upload heap)
-    ReadBack              = FLAG(3),  // Read-back memory; CopyDest usage is implicit
-    Transient             = FLAG(4),  // Per-frame ephemeral upload memory, contents not preserved across frames
-    ConstantBuffer        = FLAG(5),  // Can be used as ConstantBuffer
-    UnorderedAccessBuffer = FLAG(6),  // Can be used in UnorderedAccessViews
-    ShaderResourceBuffer  = FLAG(7),  // Can be used in ShaderResourceViews
-    VertexBuffer          = FLAG(8),  // Can be used as VertexBuffer
-    IndexBuffer           = FLAG(9),  // Can be used as IndexBuffer
-    StreamOutputBuffer    = FLAG(10), // Can be used as a StreamOutput target
-    CopySource            = FLAG(11), // May be used explicitly as a runtime copy source
-    CopyDest              = FLAG(12), // May be used explicitly as a runtime copy destination
-    AccelerationStructure = FLAG(13), // Participates in AS copy/serialize/build ops; requires AS (256B) allocation alignment
-    IndirectArguments     = FLAG(14), // May be consumed by indirect draw/dispatch commands
+    /** Default device memory (memory class, not a resource-state policy) */
+    Default = FLAG(1),
 
-    RWBuffer = UnorderedAccessBuffer | ShaderResourceBuffer
+    /** Dynamic memory (D3D12 upload heap) */
+    Dynamic = FLAG(2),
+
+    /** Read-back memory; CopyDest usage is implicit */
+    ReadBack = FLAG(3),
+
+    /** Per-frame ephemeral upload memory, contents not preserved across frames */
+    Transient = FLAG(4),
+
+    /** Can be used as ConstantBuffer */
+    ConstantBuffer = FLAG(5),
+
+    /** Can be used in UnorderedAccessViews */
+    UnorderedAccessBuffer = FLAG(6),
+
+    /** Can be used in ShaderResourceViews */
+    ShaderResourceBuffer = FLAG(7),
+
+    /** Can be used as VertexBuffer */
+    VertexBuffer = FLAG(8),
+
+    /** Can be used as IndexBuffer */
+    IndexBuffer = FLAG(9),
+
+    /** Can be used as a StreamOutput target */
+    StreamOutputBuffer = FLAG(10),
+
+    /** May be used explicitly as a runtime copy source */
+    CopySource = FLAG(11),
+
+    /** May be used explicitly as a runtime copy destination */
+    CopyDest = FLAG(12),
+
+    /** Participates in AS copy/serialize/build ops; requires AS (256B) allocation alignment */
+    AccelerationStructure = FLAG(13),
+
+    /** May be consumed by indirect draw/dispatch commands */
+    IndirectArguments = FLAG(14),
+
+    RWBuffer = UnorderedAccessBuffer | ShaderResourceBuffer,
 };
 
 ENUM_CLASS_OPERATORS(EBufferFlags);

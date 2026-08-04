@@ -2,29 +2,56 @@
 #include "Core/Containers/String.h"
 #include "RHI/RHIResource.h"
 
-enum class ETextureUsageFlags
+enum class ETextureUsageFlags : uint16
 {
     None = 0,
 
-    RenderTarget              = FLAG(1),  // RenderTargetView
-    DepthStencil              = FLAG(2),  // DepthStencilView
-    UnorderedAccessTexture    = FLAG(3),  // UnorderedAccessView
-    ShaderResourceTexture     = FLAG(4),  // ShaderResourceView
-    ShadingRateTexture        = FLAG(5),  // Indicates that the texture is going to be used as a shading rate texture
-    Presentable               = FLAG(6),  // Indicates that the texture is a BackBuffer resource
-    NoDefaultSRV              = FLAG(7),  // Do not create a default ShaderResourceView at texture creation time
-    NoDefaultUAV              = FLAG(8),  // Do not create a default UnorderedAccessView at texture creation time
-    NoDefaultRTV              = FLAG(9),  // Do not create a default RenderTargetView at texture creation time
-    NoDefaultDSV              = FLAG(10), // Do not create a default DepthStencilView at texture creation time
-    CopySource                = FLAG(11), // Texture rests as a copy source (staging/upload)
-    CopyDest                  = FLAG(12), // Texture rests as a copy destination (readback/staging)
-    SamplePositionsCompatible = FLAG(13), // Depth/stencil texture may be rendered with custom sample positions
-    SamplerFeedback           = FLAG(14), // Opaque sampler feedback map paired with a sampled texture
+    /** RenderTargetView */
+    RenderTarget = FLAG(1),
+
+    /** DepthStencilView */
+    DepthStencil = FLAG(2),
+
+    /** UnorderedAccessView */
+    UnorderedAccessTexture = FLAG(3),
+
+    /** ShaderResourceView */
+    ShaderResourceTexture = FLAG(4),
+
+    /** Indicates that the texture is going to be used as a shading rate texture */
+    ShadingRateTexture = FLAG(5),
+
+    /** Indicates that the texture is a BackBuffer resource */
+    Presentable = FLAG(6),
+
+    /** Do not create a default ShaderResourceView at texture creation time */
+    NoDefaultSRV = FLAG(7),
+
+    /** Do not create a default UnorderedAccessView at texture creation time */
+    NoDefaultUAV = FLAG(8),
+
+    /** Do not create a default RenderTargetView at texture creation time */
+    NoDefaultRTV = FLAG(9),
+
+    /** Do not create a default DepthStencilView at texture creation time */
+    NoDefaultDSV = FLAG(10),
+
+    /** Texture rests as a copy source (staging/upload) */
+    CopySource = FLAG(11),
+
+    /** Texture rests as a copy destination (readback/staging) */
+    CopyDest = FLAG(12),
+
+    /** Depth/stencil texture may be rendered with custom sample positions */
+    SamplePositionsCompatible = FLAG(13),
+
+    /** Opaque sampler feedback map paired with a sampled texture */
+    SamplerFeedback = FLAG(14),
 };
 
 ENUM_CLASS_OPERATORS(ETextureUsageFlags);
 
-enum class ETextureDimension
+enum class ETextureDimension : uint8
 {
     None = 0,
     

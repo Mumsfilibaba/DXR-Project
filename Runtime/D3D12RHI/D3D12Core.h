@@ -300,7 +300,7 @@ NODISCARD inline FRHIDepthStencilViewDesc GetDefaultDepthStencilViewDescForTextu
     return FRHIDepthStencilViewDesc{};
 }
 
-enum class ED3D12CommandQueueType
+enum class ED3D12CommandQueueType : uint8
 {
     Direct  = 0,
     Compute = 1,
@@ -351,8 +351,11 @@ NODISCARD constexpr const CHAR* ToString(D3D12_COMMAND_LIST_TYPE CommandListType
 
 enum class ED3D12GlobalDescriptorHeapType : uint8
 {
-    Resource = 0, // CBV/SRV/UAV global online heap (D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
-    Sampler  = 1, // Sampler global online heap (D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER)
+    /** CBV/SRV/UAV global online heap (D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) */
+    Resource = 0,
+
+    /** Sampler global online heap (D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER) */
+    Sampler = 1,
 
     Count
 };
@@ -377,7 +380,7 @@ enum class ED3D12ResourceStateMode : uint8
     MultipleStates,
 
     /** Backend never tracks. The caller owns every transition and supplies it verbatim */
-    ManualState
+    ManualState,
 };
 
 NODISCARD constexpr ED3D12ResourceStateMode ConvertResourceStateMode(ERHIResourceStateTrackingMode TrackingMode)

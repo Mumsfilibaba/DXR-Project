@@ -17,7 +17,7 @@ struct FD3D12DeferredObject
     // Go through an array of deferred resources and delete them
     static void ProcessItems(const TArray<FD3D12DeferredObject>& Items);
 
-    enum class EType
+    enum class EType : uint8
     {
         D3DResource           = 1,
         D3DHeap               = 2,

@@ -7,7 +7,7 @@
 
 typedef TSharedRef<class FD3D12RootSignature> FD3D12RootSignatureRef;
 
-enum class ERootSignatureType
+enum class ERootSignatureType : uint8
 {
     Unknown          = 0,
     Graphics         = 1,

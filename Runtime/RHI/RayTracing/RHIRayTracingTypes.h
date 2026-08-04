@@ -33,8 +33,8 @@ enum class EAccelerationStructureBuildFlags : uint8
     PreferFastBuild = FLAG(3),
     AllowCompaction = FLAG(4),
 
-    /** Hint for streaming / scratch-tight scenarios. */
-    MinimizeMemory  = FLAG(5),
+    /** Hint for streaming / scratch-tight scenarios */
+    MinimizeMemory = FLAG(5),
 };
 
 ENUM_CLASS_OPERATORS(EAccelerationStructureBuildFlags);
@@ -108,9 +108,9 @@ NODISCARD constexpr const CHAR* ToString(ERayTracingAccelerationStructureType Ty
 
 enum class EAccelerationStructurePostBuildInfoType : uint8
 {
-    CompactedSize     = 0,
-    CurrentSize       = 1,
-    Serialization     = 2,
+    CompactedSize      = 0,
+    CurrentSize        = 1,
+    Serialization      = 2,
     ToolsVisualization = 3,
 };
 

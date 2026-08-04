@@ -161,7 +161,7 @@ private:
     TSharedRef<FMetalRasterizerStateRHI>          RasterizerState;
     id<MTLRenderPipelineState>                    PipelineState;
     TArray<FMetalResourceBinding>                 VertexBuffers;
-    TStaticArray<uint8, kMaxConstantBuffers>      BufferBindings[EShaderVisibility::Count];
+    TStaticArray<uint8, MAX_CONSTANT_BUFFERS>     BufferBindings[EShaderVisibility::Count];
     TStaticArray<uint8, EShaderVisibility::Count> NumBuffers;
     TArray<FMetalResourceBinding>                 TextureBindings[EShaderVisibility::Count];
     TArray<FMetalResourceBinding>                 SamplerBindings[EShaderVisibility::Count];

@@ -154,8 +154,11 @@ enum class ESamplePositionsTier : uint8
 {
     NotSupported = 0,
 
-    Tier1 = 1, // One set of positions shared by every pixel
-    Tier2 = 2, // Per-pixel positions within a 2x2 quad
+    /** One set of positions shared by every pixel */
+    Tier1 = 1,
+
+    /** Per-pixel positions within a 2x2 quad */
+    Tier2 = 2,
 };
 
 NODISCARD constexpr const CHAR* ToString(ESamplePositionsTier SamplePositionsTier)

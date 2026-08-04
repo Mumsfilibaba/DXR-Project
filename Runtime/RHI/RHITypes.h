@@ -449,7 +449,7 @@ NODISCARD constexpr ECubeFace GetCubeFaceFromIndex(uint32 Index)
     return Index > UnderlyingTypeValue(ECubeFace::NegZ) ? static_cast<ECubeFace>(-1) : static_cast<ECubeFace>(Index);
 }
 
-enum class EComparisonFunc
+enum class EComparisonFunc : uint8
 {
     Unknown      = 0,
     Never        = 1,
@@ -459,7 +459,7 @@ enum class EComparisonFunc
     Greater      = 5,
     NotEqual     = 6,
     GreaterEqual = 7,
-    Always       = 8
+    Always       = 8,
 };
 
 NODISCARD constexpr const CHAR* ToString(EComparisonFunc ComparisonFunc)
@@ -536,7 +536,7 @@ NODISCARD constexpr const CHAR* ToString(ERHIResourceState ResourceState)
     }
 }
 
-enum class EPrimitiveTopology
+enum class EPrimitiveTopology : uint8
 {
     Undefined     = 0,
     PointList     = 1,
@@ -594,7 +594,7 @@ enum class EDescriptorType : uint32
     UnorderedAccess = 1,
     ShaderResource  = 2,
     ConstantBuffer  = 3,
-    Sampler         = 4
+    Sampler         = 4,
 };
 
 NODISCARD constexpr const CHAR* ToString(EDescriptorType DescriptorType)
@@ -613,10 +613,7 @@ NODISCARD constexpr const CHAR* ToString(EDescriptorType DescriptorType)
 struct FRHIDescriptorHandle
 {
     // NOTE: Be specific in terms of bits in order to cancel warnings about truncation
-    enum : uint32
-    {
-        InvalidHandle = ((1 << 24) - 1)
-    };
+    static constexpr uint32 InvalidHandle = ((1 << 24) - 1);
 
     constexpr FRHIDescriptorHandle() noexcept
         : Handle(0)

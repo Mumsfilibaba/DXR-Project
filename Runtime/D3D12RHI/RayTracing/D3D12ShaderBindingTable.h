@@ -17,9 +17,14 @@ typedef TSharedRef<class FD3D12ShaderBindingTable> FD3D12ShaderBindingTableRef;
 
 enum class ED3D12LocalTableDescriptorType : uint8
 {
-    ShaderResourceView,  // CBV/SRV/UAV heap
-    UnorderedAccessView, // CBV/SRV/UAV heap
-    Sampler,             // Sampler heap
+    /** CBV/SRV/UAV heap */
+    ShaderResourceView,
+
+    /** CBV/SRV/UAV heap */
+    UnorderedAccessView,
+
+    /** Sampler heap */
+    Sampler,
 };
 
 constexpr bool IsSamplerDescriptorHeap(ED3D12LocalTableDescriptorType DescriptorType)

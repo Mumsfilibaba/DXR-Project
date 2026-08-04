@@ -16,12 +16,12 @@ struct FRHIRayTracingAccelerationStructureClusterLimits
 
 enum class ERayTracingAccelerationStructureOperationType : uint8
 {
-    BuildClusterAccelerationStructureFromTriangles  = 0,
-    BuildClusterTemplatesFromTriangles              = 1,
-    InstantiateClusterTemplates                     = 2,
-    BuildGeometryAccelerationStructureFromClusters  = 3,
-    MoveClusterObjects                              = 4,
-    PartitionedSceneAccelerationStructure           = 5,
+    BuildClusterAccelerationStructureFromTriangles = 0,
+    BuildClusterTemplatesFromTriangles             = 1,
+    InstantiateClusterTemplates                    = 2,
+    BuildGeometryAccelerationStructureFromClusters = 3,
+    MoveClusterObjects                             = 4,
+    PartitionedSceneAccelerationStructure          = 5,
 };
 
 enum class ERayTracingAccelerationStructureOperationFlags : uint8

@@ -23,12 +23,12 @@ class FVulkanPhysicalDevice;
 class FVulkanTimelineFence;
 class FVulkanQueue;
 
-enum class EVulkanCommandQueueType
+enum class EVulkanCommandQueueType : uint8
 {
-    Unknown  = 0, 
-    Graphics = 1, 
-    Copy     = 2, 
-    Compute  = 3, 
+    Unknown  = 0,
+    Graphics = 1,
+    Copy     = 2,
+    Compute  = 3,
     Present  = 4,
 };
 

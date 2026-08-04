@@ -26,7 +26,7 @@ class FD3D12CommandContext;
 enum class EAllocationStrategy : uint8
 {
     SuballocatedHeap,
-    SuballocatedResource
+    SuballocatedResource,
 };
 
 NODISCARD inline const char* ToString(EAllocationStrategy Strategy)

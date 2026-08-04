@@ -10,7 +10,7 @@ enum class ERayTracingHitGroupType : uint8
 {
     Unknown    = 0,
     Triangles  = 1,
-    Procedural = 2
+    Procedural = 2,
 };
 
 enum class ERayTracingPipelineFlags : uint8

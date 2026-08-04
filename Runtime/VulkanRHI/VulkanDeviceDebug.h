@@ -59,7 +59,7 @@ VULKANRHI_API bool VulkanCheckDeviceLost(VkResult Result);
 
 #if VULKAN_ENABLE_CRASH_MARKERS
 
-enum class ECrashMarkerExtension
+enum class ECrashMarkerExtension : uint8
 {
     None,
     AMDBufferMarker,

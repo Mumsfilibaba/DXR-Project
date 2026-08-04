@@ -305,14 +305,14 @@ bool FD3D12BuddyAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, FD3
         OutStorage.SetResourceOffset(Offset);
         OutStorage.SetGPUVirtualAddress(BackingResource->GetGPUVirtualAddress() + Offset);
         OutStorage.SetMappedBaseAddress(MappedBaseAddress ? (MappedBaseAddress + Offset) : nullptr);
-        OutStorage.SetStorageType(EResourceStorageType::SuballocatedResource);
+        OutStorage.SetStorageType(ED3D12ResourceStorageType::SuballocatedResource);
     }
     else
     {
         OutStorage.SetResourceOffset(0);
         OutStorage.SetGPUVirtualAddress(0);
         OutStorage.SetMappedBaseAddress(nullptr);
-        OutStorage.SetStorageType(EResourceStorageType::SuballocatedHeap);
+        OutStorage.SetStorageType(ED3D12ResourceStorageType::SuballocatedHeap);
     }
 
     FD3D12BuddyAllocatorAllocationData AllocationData = {};
@@ -687,13 +687,13 @@ bool FD3D12PoolAllocatorPage::TryAllocate(uint64 SizeInBytes, uint64 InAlignment
             OutStorage.SetResource(BackingResource.Get());
             OutStorage.SetGPUVirtualAddress(BackingResource->GetGPUVirtualAddress() + AlignedOffset);
             OutStorage.SetResourceOffset(AlignedOffset);
-            OutStorage.SetStorageType(EResourceStorageType::SuballocatedResource);
+            OutStorage.SetStorageType(ED3D12ResourceStorageType::SuballocatedResource);
         }
         else
         {
             OutStorage.SetGPUVirtualAddress(0);
             OutStorage.SetResourceOffset(0);
-            OutStorage.SetStorageType(EResourceStorageType::SuballocatedHeap);
+            OutStorage.SetStorageType(ED3D12ResourceStorageType::SuballocatedHeap);
         }
 
         OutStorage.SetMappedBaseAddress(MappedBaseAddress ? (MappedBaseAddress + AlignedOffset) : nullptr);
@@ -1243,8 +1243,8 @@ bool FD3D12PoolAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc, D
 
 void FD3D12PoolAllocator::Deallocate(const FD3D12ResourceStorage& Storage)
 {
-    const EResourceStorageType StorageType = Storage.GetStorageType();
-    if (StorageType != EResourceStorageType::SuballocatedHeap && StorageType != EResourceStorageType::SuballocatedResource)
+    const ED3D12ResourceStorageType StorageType = Storage.GetStorageType();
+    if (StorageType != ED3D12ResourceStorageType::SuballocatedHeap && StorageType != ED3D12ResourceStorageType::SuballocatedResource)
     {
         return;
     }
@@ -1455,7 +1455,7 @@ bool FD3D12BucketAllocator::TryAllocate(uint64 SizeInBytes, FD3D12ResourceStorag
         OutStorage.SetGPUVirtualAddress(Bucket.BackingResource ? (Bucket.BackingResource->GetGPUVirtualAddress() + AllocationData.Offset) : 0);
         OutStorage.SetMappedBaseAddress(Bucket.MappedBaseAddress ? (Bucket.MappedBaseAddress + AllocationData.Offset) : nullptr);
         OutStorage.SetSize(SizeInBytes);
-        OutStorage.SetStorageType(EResourceStorageType::SuballocatedResource);
+        OutStorage.SetStorageType(ED3D12ResourceStorageType::SuballocatedResource);
 
         AllocationData.BucketIndex = BucketIndex;
         AllocationData.SlotIndex   = 0;
@@ -1686,7 +1686,7 @@ bool FD3D12LinearAllocatorPage::Initialize()
         return false;
     }
 
-    if (BackingResourceStorage.GetStorageType() != EResourceStorageType::SuballocatedResource)
+    if (BackingResourceStorage.GetStorageType() != ED3D12ResourceStorageType::SuballocatedResource)
     {
         InitializeBufferResourceState(PageResource, ED3D12ResourceStateMode::SingleState, InitialState);
     }
@@ -1836,7 +1836,7 @@ void* FD3D12LinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D
     OutStorage.SetGPUVirtualAddress(PageGpuAddress);
     OutStorage.SetMappedBaseAddress(MappedBase ? (MappedBase + AllocationOffset) : nullptr);
     OutStorage.SetSize(SizeAligned);
-    OutStorage.SetStorageType(EResourceStorageType::SuballocatedResource);
+    OutStorage.SetStorageType(ED3D12ResourceStorageType::SuballocatedResource);
 
     CurrentOffset = AllocationOffset + SizeAligned;
     return OutStorage.GetMappedBaseAddress();
@@ -2027,7 +2027,7 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
         return false;
     }
 
-    if (OutStorage.GetStorageType() == EResourceStorageType::SuballocatedHeap)
+    if (OutStorage.GetStorageType() == ED3D12ResourceStorageType::SuballocatedHeap)
     {
         FD3D12BuddyAllocator* BuddyAllocator = static_cast<FD3D12BuddyAllocator*>(OutStorage.GetAllocator());
         FD3D12Heap* BackingHeap = BuddyAllocator->GetBackingHeap();
@@ -2354,7 +2354,7 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
         return false;
     }
 
-    if (OutStorage.GetStorageType() == EResourceStorageType::SuballocatedHeap)
+    if (OutStorage.GetStorageType() == ED3D12ResourceStorageType::SuballocatedHeap)
     {
         const FD3D12PoolAllocatorAllocationData PoolAllocationData = OutStorage.GetPoolAllocationData();
 
@@ -2375,7 +2375,7 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
         OutStorage.SetResource(PlacedResource.Get());
         OutStorage.SetGPUVirtualAddress(PlacedResource->GetGPUVirtualAddress());
     }
-    else if (OutStorage.GetStorageType() == EResourceStorageType::Standalone)
+    else if (OutStorage.GetStorageType() == ED3D12ResourceStorageType::Standalone)
     {
         InitializeBufferResourceState(OutStorage.GetResource(), InStateMode, EffectiveInitialState);
     }
@@ -3166,8 +3166,8 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
         return false;
     }
 
-    const EResourceStorageType PoolStorageType = PoolResourceStorage.GetStorageType();
-    if (PoolStorageType == EResourceStorageType::Standalone)
+    const ED3D12ResourceStorageType PoolStorageType = PoolResourceStorage.GetStorageType();
+    if (PoolStorageType == ED3D12ResourceStorageType::Standalone)
     {
         OutStorage.Swap(PoolResourceStorage);
         OutStorage.SetSize(AllocationInfo.SizeInBytes);
@@ -3175,7 +3175,7 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
     }
     
     const FD3D12PoolAllocatorAllocationData PoolAllocationData = PoolResourceStorage.GetPoolAllocationData();
-    if (PoolStorageType != EResourceStorageType::SuballocatedHeap || PoolAllocationData.PageIndex == UINT32_MAX)
+    if (PoolStorageType != ED3D12ResourceStorageType::SuballocatedHeap || PoolAllocationData.PageIndex == UINT32_MAX)
     {
         PoolResourceStorage.ReleaseResource();
         return false;
@@ -3200,7 +3200,7 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
     OutStorage.SetResourceOffset(0);
     OutStorage.SetGPUVirtualAddress(0);
     OutStorage.SetMappedBaseAddress(nullptr);
-    OutStorage.SetStorageType(EResourceStorageType::SuballocatedHeap);
+    OutStorage.SetStorageType(ED3D12ResourceStorageType::SuballocatedHeap);
     OutStorage.SetSize(AllocationInfo.SizeInBytes);
     return true;
 }
@@ -3714,7 +3714,7 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
         return false;
     }
 
-    if (PoolResourceStorage.GetStorageType() != EResourceStorageType::SuballocatedHeap)
+    if (PoolResourceStorage.GetStorageType() != ED3D12ResourceStorageType::SuballocatedHeap)
     {
         PoolResourceStorage.ReleaseResource();
         return false;
@@ -3747,7 +3747,7 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
     OutStorage.SetResource(NewResource.Get());
     OutStorage.SetGPUVirtualAddress(0);
     OutStorage.SetMappedBaseAddress(nullptr);
-    OutStorage.SetStorageType(EResourceStorageType::SuballocatedHeap);
+    OutStorage.SetStorageType(ED3D12ResourceStorageType::SuballocatedHeap);
     OutStorage.SetSize(AllocationInfo.SizeInBytes);
     return true;
 }

@@ -73,7 +73,7 @@ enum class ED3D12DescriptorState : uint8
 {
     None                 = 0,
     ResourcesDirty       = (1 << 0),
-    DescriptorTableDirty = (1 << 1)
+    DescriptorTableDirty = (1 << 1),
 };
 ENUM_CLASS_OPERATORS(ED3D12DescriptorState)
 

@@ -7,7 +7,7 @@
 
 struct EResourceType
 {
-    enum Type
+    enum Type : uint8
     {
         SRV = 0,
         UAV,

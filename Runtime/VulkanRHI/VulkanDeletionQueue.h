@@ -14,17 +14,22 @@ struct FVulkanDeferredObject
 {
     static void ProcessItems(FVulkanDevice* Device, TArray<FVulkanDeferredObject>& Items);
 
-    enum class EType
+    enum class EType : uint8
     {
-        RHIResource               = 1,
-        VulkanResource            = 2,
-        BuddyAllocatorBlock       = 3,
-        PoolAllocatorBlock        = 4,
-        DedicatedBufferAllocation = 5, // dedicated buffer (owns VkBuffer + VkDeviceMemory)
-        DedicatedAllocation       = 6, // dedicated memory only (image memory; VkImage destroyed by the texture)
-        LinearAllocatorPage       = 7,
-        DescriptorPool            = 8,
-        QueryPool                 = 9,
+        RHIResource         = 1,
+        VulkanResource      = 2,
+        BuddyAllocatorBlock = 3,
+        PoolAllocatorBlock  = 4,
+
+        /** Dedicated buffer (owns VkBuffer + VkDeviceMemory) */
+        DedicatedBufferAllocation = 5,
+
+        /** Dedicated memory only (image memory; VkImage destroyed by the texture) */
+        DedicatedAllocation = 6,
+
+        LinearAllocatorPage = 7,
+        DescriptorPool      = 8,
+        QueryPool           = 9,
     };
 
     FVulkanDeferredObject(FRHIResource* InResource)

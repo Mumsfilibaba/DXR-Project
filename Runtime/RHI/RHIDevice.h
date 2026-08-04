@@ -36,7 +36,7 @@ NODISCARD constexpr const CHAR* ToString(ERHIType RenderLayerApi)
     }
 }
 
-enum class EVideoMemoryType
+enum class EVideoMemoryType : uint8
 {
     Local = 1,
     NonLocal,

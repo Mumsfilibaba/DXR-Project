@@ -33,6 +33,12 @@ static uint64 ToNanoseconds(uint64 Timestamp)
 #if VULKAN_VALIDATE_IMAGE_LAYOUTS
 static void ReportImageLayoutDesync(FVulkanTextureRHI* Texture, const CHAR* Phase, const CHAR* RecordingSite, VkImageLayout CommandBufferLayout, VkImageLayout TrackedLayout)
 {
+    // Only the log message consumes these, and logging compiles out in Release
+    UNREFERENCED_VARIABLE(Phase);
+    UNREFERENCED_VARIABLE(RecordingSite);
+    UNREFERENCED_VARIABLE(CommandBufferLayout);
+    UNREFERENCED_VARIABLE(TrackedLayout);
+
     String TextureName;
     Texture->GetDebugName(TextureName);
 

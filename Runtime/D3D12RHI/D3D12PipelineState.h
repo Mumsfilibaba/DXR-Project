@@ -10,7 +10,7 @@ typedef TSharedRef<class FD3D12GraphicsPipelineStateRHI>   FD3D12GraphicsPipelin
 typedef TSharedRef<class FD3D12ComputePipelineStateRHI>    FD3D12ComputePipelineStateRHIRef;
 typedef TSharedRef<class FD3D12MeshletPipelineStateRHI>    FD3D12MeshletPipelineStateRHIRef;
 
-enum class ED3D12PipelineType
+enum class ED3D12PipelineType : uint8
 {
     Unknown    = 0,
     Graphics   = 1,
