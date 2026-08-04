@@ -689,7 +689,7 @@ int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* Callbac
                         else
                         {
                             // If we currently have not pressed the history, then we set the index to the last history entry
-                            HistoryIndex = History.LastElementIndex();
+                            HistoryIndex = History.LastIndex();
                         }
                     }
                     else if (CallbackData->EventKey == ImGuiKey_DownArrow)
@@ -734,7 +734,7 @@ int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* Callbac
                 {
                     if (SelectedCandidateIndex <= 0)
                     {
-                        SelectedCandidateIndex = Candidates.LastElementIndex();
+                        SelectedCandidateIndex = Candidates.LastIndex();
                     }
                     else
                     {
@@ -743,7 +743,7 @@ int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* Callbac
                 }
                 else if (CallbackData->EventKey == ImGuiKey_DownArrow)
                 {
-                    if (SelectedCandidateIndex >= Candidates.LastElementIndex())
+                    if (SelectedCandidateIndex >= Candidates.LastIndex())
                     {
                         SelectedCandidateIndex = 0;
                     }

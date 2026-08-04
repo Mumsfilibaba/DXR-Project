@@ -237,7 +237,7 @@ void FActor::DetachAllChildren(EAttachmentRule Rule)
 {
     while (!ChildActors.IsEmpty())
     {
-        ChildActors.LastElement()->DetachFromParent(Rule);
+        ChildActors.Last()->DetachFromParent(Rule);
     }
 }
 

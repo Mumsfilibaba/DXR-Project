@@ -115,7 +115,7 @@ public:
                     }
                     else
                     {
-                        const int32 LastIndex = Delegates.LastElementIndex();
+                        const int32 LastIndex = Delegates.LastIndex();
                         ::Swap(Delegate, Delegates[LastIndex]);
                         Delegates.Pop();
                         --Index;
@@ -257,7 +257,7 @@ protected:
     {
         if (!IsLocked() && !Delegates.IsEmpty())
         {
-            int32 Next = Delegates.LastElementIndex();
+            int32 Next = Delegates.LastIndex();
             for (int32 Index = Next; Index >= 0; Index--)
             {
                 FDelegateBase& Delegate = Delegates[Index];
@@ -271,7 +271,7 @@ protected:
                 }
             }
 
-            int32 NumEmptyElements = Delegates.LastElementIndex() - Next;
+            int32 NumEmptyElements = Delegates.LastIndex() - Next;
             if (NumEmptyElements > 0)
             {
                 Delegates.Pop(NumEmptyElements);

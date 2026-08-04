@@ -516,7 +516,7 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
         }
         else
         {
-            const FD3D12ShaderBytecode& ByteCode = ShadersWithRootSignature.FirstElement()->GetByteCode();
+            const FD3D12ShaderBytecode& ByteCode = ShadersWithRootSignature.First()->GetByteCode();
 
             RootSignature = new FD3D12RootSignature(GetDevice());
             if (!RootSignature->Initialize(ByteCode.GetCode(), ByteCode.GetCodeSize()))
@@ -1165,7 +1165,7 @@ bool FD3D12MeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDes
         }
         else
         {
-            const FD3D12ShaderBytecode& ByteCode = ShadersWithRootSignature.FirstElement()->GetByteCode();
+            const FD3D12ShaderBytecode& ByteCode = ShadersWithRootSignature.First()->GetByteCode();
 
             RootSignature = new FD3D12RootSignature(GetDevice());
             if (!RootSignature->Initialize(ByteCode.GetCode(), ByteCode.GetCodeSize()))

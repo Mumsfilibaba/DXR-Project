@@ -344,7 +344,7 @@ void FTaskGraph::SubmitReadyTask(FGraphTask* Task)
 
         if (!Lane.IdleWorkers.IsEmpty())
         {
-            WorkerToWake = Lane.IdleWorkers.LastElement();
+            WorkerToWake = Lane.IdleWorkers.Last();
             Lane.IdleWorkers.Pop();
             WorkerToWake->bIsIdle.Store(false);
         }
@@ -366,7 +366,7 @@ void FTaskGraph::WakeOneAnyThreadWorker()
 
         if (!Lane.IdleWorkers.IsEmpty())
         {
-            WorkerToWake = Lane.IdleWorkers.LastElement();
+            WorkerToWake = Lane.IdleWorkers.Last();
             Lane.IdleWorkers.Pop();
             WorkerToWake->bIsIdle.Store(false);
         }
@@ -386,7 +386,7 @@ FGraphTask* FTaskGraph::PopFromNamedLane(FNamedLane& Lane)
     {
         if (!Lane.Queue[Priority].IsEmpty())
         {
-            FGraphTask* Task = Lane.Queue[Priority].FirstElement();
+            FGraphTask* Task = Lane.Queue[Priority].First();
             Lane.Queue[Priority].RemoveAt(0);
             AddPendingStat(Lane.LaneType, -1);
             return Task;
@@ -405,7 +405,7 @@ FGraphTask* FTaskGraph::PopFromCentralAnyThread()
     {
         if (!Lane.Queue[Priority].IsEmpty())
         {
-            FGraphTask* Task = Lane.Queue[Priority].FirstElement();
+            FGraphTask* Task = Lane.Queue[Priority].First();
             Lane.Queue[Priority].RemoveAt(0);
             AddPendingStat(ENamedThread::AnyThread, -1);
             return Task;

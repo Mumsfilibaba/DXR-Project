@@ -188,7 +188,7 @@ FVulkanQueryAllocator::~FVulkanQueryAllocator()
 bool FVulkanQueryAllocator::Allocate(FVulkanQuery& OutQuery, uint64* ResultTarget, EVulkanQueryType InType)
 {
     bool bNeedNewPool = Ranges.IsEmpty()
-        || Ranges.LastElement().Count >= Ranges.LastElement().Pool->NumQueries;
+        || Ranges.Last().Count >= Ranges.Last().Pool->NumQueries;
 
     if (bNeedNewPool)
     {
@@ -199,7 +199,7 @@ bool FVulkanQueryAllocator::Allocate(FVulkanQuery& OutQuery, uint64* ResultTarge
         Ranges.Add(FVulkanQueryRange(Pool, 0, 0));
     }
 
-    FVulkanQueryRange& Range = Ranges.LastElement();
+    FVulkanQueryRange& Range = Ranges.Last();
     OutQuery = FVulkanQuery(Range.Pool, Range.StartIndex + Range.Count, ResultTarget, InType);
     Range.Count++;
     return true;

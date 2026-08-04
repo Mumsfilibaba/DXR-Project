@@ -944,19 +944,19 @@ public:
 
     /**
      * @brief Retrieve the last index that can be used to retrieve an element from the view
-     * @return Returns the index to the last element of the view
+     * @return Returns the index to the last element, or InvalidIndex if the view is empty
      */
-    NODISCARD FORCEINLINE SizeType LastElementIndex() const
+    NODISCARD FORCEINLINE SizeType LastIndex() const
     {
         const SizeType CurrentLength = Length();
-        return (CurrentLength > 0) ? (CurrentLength - 1) : 0;
+        return (CurrentLength > 0) ? (CurrentLength - 1) : InvalidIndex;
     }
 
     /**
      * @brief Retrieve the first element of the view
      * @return Returns a reference to the first element of the view
      */
-    NODISCARD FORCEINLINE const CharType& FirstElement() const
+    NODISCARD FORCEINLINE const CharType& First() const
     {
         CHECK(!IsEmpty());
         return ViewStart[0];
@@ -966,10 +966,10 @@ public:
      * @brief Retrieve the last element of the view
      * @return Returns a reference to the last element of the view
      */
-    NODISCARD FORCEINLINE const CharType& LastElement() const
+    NODISCARD FORCEINLINE const CharType& Last() const
     {
         CHECK(!IsEmpty());
-        return ViewStart[LastElementIndex()];
+        return ViewStart[LastIndex()];
     }
 
 public:
@@ -981,7 +981,7 @@ public:
      */
     NODISCARD FORCEINLINE const CharType& operator[](SizeType Index) const
     {
-        CHECK(Index < Length());
+        CHECK(Index >= 0 && Index < Length());
         return ViewStart[Index];
     }
 

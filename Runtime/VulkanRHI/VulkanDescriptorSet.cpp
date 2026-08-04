@@ -921,7 +921,7 @@ FVulkanDescriptorPool* FVulkanDescriptorPoolManager::AcquirePool(const FVulkanDe
     {
         if (!FreeList->IsEmpty())
         {
-            FFreePool Entry = FreeList->LastElement();
+            FFreePool Entry = FreeList->Last();
             FreeList->RemoveAt(FreeList->Size() - 1);
             return Entry.Pool;
         }
@@ -1507,7 +1507,7 @@ FRHIDescriptorHandle FVulkanBindlessDescriptorManager::Allocate(EDescriptorType 
         uint32 SlotIndex = 0;
         if (!FreeSamplerStack.IsEmpty())
         {
-            SlotIndex = FreeSamplerStack.LastElement();
+            SlotIndex = FreeSamplerStack.Last();
             FreeSamplerStack.Pop();
         }
         else
@@ -1527,7 +1527,7 @@ FRHIDescriptorHandle FVulkanBindlessDescriptorManager::Allocate(EDescriptorType 
     uint32 SlotIndex = 0;
     if (!FreeResourceStack.IsEmpty())
     {
-        SlotIndex = FreeResourceStack.LastElement();
+        SlotIndex = FreeResourceStack.Last();
         FreeResourceStack.Pop();
     }
     else

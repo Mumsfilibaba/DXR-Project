@@ -165,7 +165,7 @@ FD3D12QueryAllocator::~FD3D12QueryAllocator()
 
 bool FD3D12QueryAllocator::Allocate(FD3D12Query& OutQuery, uint64* ResultTarget, ED3D12QueryType InType)
 {
-    const bool bNeedNewHeap = Ranges.IsEmpty() || Ranges.LastElement().Count >= Ranges.LastElement().Heap->NumQueries;
+    const bool bNeedNewHeap = Ranges.IsEmpty() || Ranges.Last().Count >= Ranges.Last().Heap->NumQueries;
     if (bNeedNewHeap)
     {
         FD3D12QueryHeap* Heap = GetDevice()->ObtainQueryHeap(HeapType);
@@ -177,7 +177,7 @@ bool FD3D12QueryAllocator::Allocate(FD3D12Query& OutQuery, uint64* ResultTarget,
         Ranges.Add(FD3D12QueryRange(Heap, 0, 0));
     }
 
-    FD3D12QueryRange& Range = Ranges.LastElement();
+    FD3D12QueryRange& Range = Ranges.Last();
     OutQuery = FD3D12Query(Range.Heap, Range.StartIndex + Range.Count, ResultTarget, InType);
     Range.Count++;
     return true;

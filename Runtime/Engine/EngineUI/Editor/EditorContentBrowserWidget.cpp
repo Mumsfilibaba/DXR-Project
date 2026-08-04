@@ -2867,7 +2867,7 @@ void FEditorContentBrowserWidget::ToggleItemSelection(int32 InIndex)
 
             if (LastSelectedItemIndex == InIndex)
             {
-                LastSelectedItemIndex = (SelectedItemIndices.Size() > 0) ? SelectedItemIndices.LastElement() : -1;
+                LastSelectedItemIndex = (SelectedItemIndices.Size() > 0) ? SelectedItemIndices.Last() : -1;
             }
 
             return;
@@ -2952,7 +2952,7 @@ bool FEditorContentBrowserWidget::MoveItemsToFolder(const TArray<int32>& InSourc
 
     TArray<int32> TargetParentPath = InTargetFolderPath;
 
-    const int32 TargetFolderIndexOriginal = TargetParentPath.LastElement();
+    const int32 TargetFolderIndexOriginal = TargetParentPath.Last();
     TargetParentPath.Pop();
 
     FileInfo* TargetParent = GetFolderFromPath(TargetParentPath);
@@ -3396,7 +3396,7 @@ void FEditorContentBrowserWidget::NavigateBack()
 
     ForwardHistory.Add(SelectedFolderPath);
 
-    const TArray<int32> Prev = BackHistory.LastElement();
+    const TArray<int32> Prev = BackHistory.Last();
     BackHistory.Pop();
 
     SelectedFolderPath = Prev;
@@ -3414,7 +3414,7 @@ void FEditorContentBrowserWidget::NavigateForward()
 
     BackHistory.Add(SelectedFolderPath);
 
-    const TArray<int32> Next = ForwardHistory.LastElement();
+    const TArray<int32> Next = ForwardHistory.Last();
     ForwardHistory.Pop();
 
     SelectedFolderPath = Next;
@@ -3593,7 +3593,7 @@ void FEditorContentBrowserWidget::QueueFolderMoveRequests(const TArray<TArray<in
         }
 
         TArray<int32> SourceParentPath = SourcePath;
-        const int32 SourceIndex = SourceParentPath.LastElement();
+        const int32 SourceIndex = SourceParentPath.Last();
         SourceParentPath.Pop();
 
         int32 GroupIndex = -1;
@@ -4012,7 +4012,7 @@ void FEditorContentBrowserWidget::DeleteSelectedFolderInTree()
     }
 
     TArray<int32> ParentPath = SelectedFolderPath;
-    const int32 FolderIndex = ParentPath.LastElement();
+    const int32 FolderIndex = ParentPath.Last();
     ParentPath.Pop();
 
     FileInfo* ParentFolder = GetFolderFromPath(ParentPath);

@@ -1735,7 +1735,7 @@ FD3D12LinearAllocatorPage* FD3D12LinearAllocator::AcquirePage()
 {
     if (!PagePool.IsEmpty())
     {
-        FD3D12LinearAllocatorPage* Page = PagePool.LastElement();
+        FD3D12LinearAllocatorPage* Page = PagePool.Last();
         PagePool.Pop();
         return Page;
     }
@@ -1856,7 +1856,7 @@ void FD3D12LinearAllocator::CleanUp()
 
     while (PagePool.Size() > MAX_POOL_PAGES)
     {
-        delete PagePool.LastElement();
+        delete PagePool.Last();
         PagePool.Pop();
     }
 }

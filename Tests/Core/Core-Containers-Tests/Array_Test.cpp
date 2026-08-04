@@ -51,15 +51,40 @@ bool TArray_Test()
         TEST_EXPECT(!Array.IsValidIndex(-1));
     }
 
-    TEST_SECTION("TArray::FirstElement / LastElement");
+    TEST_SECTION("TArray::First / Last");
     {
         TArray<int32> Array = { 10, 20, 40 };
-        TEST_EXPECT(Array.FirstElement() == 10);
-        TEST_EXPECT(Array.LastElement() == 40);
+        TEST_EXPECT(Array.First() == 10);
+        TEST_EXPECT(Array.Last() == 40);
 
         const TArray<int32>& ConstArray = Array;
-        TEST_EXPECT(ConstArray.FirstElement() == 10);
-        TEST_EXPECT(ConstArray.LastElement() == 40);
+        TEST_EXPECT(ConstArray.First() == 10);
+        TEST_EXPECT(ConstArray.Last() == 40);
+    }
+
+    TEST_SECTION("TArray::LastIndex");
+    {
+        const TArray<int32> Array = { 10, 20, 40 };
+        TEST_EXPECT_EQ(Array.LastIndex(), 2);
+
+        const TArray<int32> Single = { 10 };
+        TEST_EXPECT_EQ(Single.LastIndex(), 0);
+
+        const TArray<int32> Empty;
+        TEST_EXPECT_EQ(Empty.LastIndex(), TArray<int32>::InvalidIndex);
+        TEST_EXPECT(!Empty.IsValidIndex(Empty.LastIndex()));
+
+        TArray<int32> Cleared = { 1, 2, 3 };
+        Cleared.Clear();
+        TEST_EXPECT_EQ(Cleared.LastIndex(), TArray<int32>::InvalidIndex);
+
+        int32 Visits = 0;
+        for (int32 Index = Empty.LastIndex(); Index >= 0; --Index)
+        {
+            ++Visits;
+        }
+
+        TEST_EXPECT_EQ(Visits, 0);
     }
 
     TEST_SECTION("TArray metadata (Stride/SizeInBytes/CapacityInBytes)");
@@ -104,6 +129,29 @@ bool TArray_Test()
         });
 
         TEST_EXPECT(Array == TArray<int32>({ 40, 30, 20, 10 }));
+    }
+
+    TEST_SECTION("TArray::Sort (empty / single / populated)");
+    {
+        TArray<int32> Empty;
+        Empty.Sort();
+        TEST_EXPECT(Empty.IsEmpty());
+
+        TArray<int32> Single = { 42 };
+        Single.Sort();
+        TEST_EXPECT(Single == TArray<int32>({ 42 }));
+
+        TArray<int32> Array = { 30, 10, 40, 20 };
+        Array.Sort();
+        TEST_EXPECT(Array == TArray<int32>({ 10, 20, 30, 40 }));
+
+        TArray<int32> EmptyPredicate;
+        EmptyPredicate.SortWithPredicate([](int32 Left, int32 Right)
+        {
+            return Left > Right;
+        });
+
+        TEST_EXPECT(EmptyPredicate.IsEmpty());
     }
 
     TEST_SECTION("TArray::RemoveAtSwap / RemoveSingleSwap / RemoveAllSwap");

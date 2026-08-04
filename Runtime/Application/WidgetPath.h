@@ -77,7 +77,7 @@ public:
 
     FORCEINLINE int32 LastIndex() const
     {
-        return Widgets.LastElementIndex();
+        return Widgets.LastIndex();
     }
 
     FORCEINLINE int32 Size() const

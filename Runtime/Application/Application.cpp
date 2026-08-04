@@ -43,7 +43,7 @@ struct FEventDispatcher
         
         bool ShouldProcess() const
         {
-            return Index >= 0 && !Widgets.IsEmpty();
+            return Index >= 0;
         }
         
         void Next()

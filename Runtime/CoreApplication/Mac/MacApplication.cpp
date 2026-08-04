@@ -1129,7 +1129,7 @@ const FMacScreenInfo* FMacApplication::FindScreenFromCocoaPoint(CGFloat Position
     }
 
     // If no screen contains the point, default to the main screen
-    return PrimaryScreen ? PrimaryScreen : &GMacApplication->ScreenCache.FirstElement();
+    return PrimaryScreen ? PrimaryScreen : &GMacApplication->ScreenCache.First();
 }
 
 const FMacScreenInfo* FMacApplication::FindScreenFromEnginePoint(CGFloat PositionX, CGFloat PositionY)
@@ -1159,7 +1159,7 @@ const FMacScreenInfo* FMacApplication::FindScreenFromEnginePoint(CGFloat Positio
     }
 
     // If no screen is found, default to the main screen
-    return PrimaryScreen ? PrimaryScreen : &GMacApplication->ScreenCache.FirstElement();
+    return PrimaryScreen ? PrimaryScreen : &GMacApplication->ScreenCache.First();
 }
 
 NSPoint FMacApplication::ConvertCocoaPointToEngine(CGFloat PositionX, CGFloat PositionY)

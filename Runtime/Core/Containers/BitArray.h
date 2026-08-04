@@ -589,7 +589,7 @@ public:
      */
     NODISCARD FORCEINLINE BitReferenceType operator[](SizeType BitIndex)
     {
-        CHECK(BitIndex < NumBits);
+        CHECK(IsValidIndex(BitIndex));
         const SizeType ElementIndex = GetArrayIndexOfBit(BitIndex);
         CHECK(ElementIndex < NumElements);
 
@@ -604,7 +604,7 @@ public:
      */
     NODISCARD FORCEINLINE const ConstBitReferenceType operator[](SizeType BitIndex) const
     {
-        CHECK(BitIndex < NumBits);
+        CHECK(IsValidIndex(BitIndex));
         const SizeType ElementIndex = GetArrayIndexOfBit(BitIndex);
         CHECK(ElementIndex < NumElements);
 

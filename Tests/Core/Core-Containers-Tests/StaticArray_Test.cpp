@@ -16,7 +16,7 @@ bool TStaticArray_Test()
         TEST_EXPECT_EQ(Array.Size(), 5);
         TEST_EXPECT_EQ(Array.Capacity(), 5);
         TEST_EXPECT_EQ(Array.SizeInBytes(), static_cast<int32>(5 * sizeof(int32)));
-        TEST_EXPECT_EQ(Array.LastElementIndex(), 4);
+        TEST_EXPECT_EQ(Array.LastIndex(), 4);
         TEST_EXPECT_EQ(Array[0], 10);
         TEST_EXPECT_EQ(Array[4], 50);
         TEST_EXPECT(Array.IsValidIndex(0));
@@ -25,17 +25,17 @@ bool TStaticArray_Test()
         TEST_EXPECT(!Array.IsValidIndex(-1));
     }
 
-    TEST_SECTION("FirstElement / LastElement / Data");
+    TEST_SECTION("First / Last / Data");
     {
         TStaticArray<int32, 5> Array = { 1, 2, 3, 4, 5 };
-        TEST_EXPECT_EQ(Array.FirstElement(), 1);
-        TEST_EXPECT_EQ(Array.LastElement(), 5);
+        TEST_EXPECT_EQ(Array.First(), 1);
+        TEST_EXPECT_EQ(Array.Last(), 5);
         TEST_EXPECT(Array.Data() != nullptr);
         TEST_EXPECT_EQ(Array.Data()[2], 3);
 
         const TStaticArray<int32, 5>& ConstArray = Array;
-        TEST_EXPECT_EQ(ConstArray.FirstElement(), 1);
-        TEST_EXPECT_EQ(ConstArray.LastElement(), 5);
+        TEST_EXPECT_EQ(ConstArray.First(), 1);
+        TEST_EXPECT_EQ(ConstArray.Last(), 5);
     }
 
     TEST_SECTION("Fill / Memzero");

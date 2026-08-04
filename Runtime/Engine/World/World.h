@@ -165,7 +165,7 @@ public:
     {
         if (!PlayerControllers.IsEmpty())
         {
-            return PlayerControllers.FirstElement();
+            return PlayerControllers.First();
         }
 
         return nullptr;

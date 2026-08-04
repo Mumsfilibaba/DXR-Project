@@ -1201,11 +1201,11 @@ public:
 
     /**
      * @brief Retrieve the last index that can be used to retrieve an element from the array
-     * @return Returns the index to the last element of the array
+     * @return Returns the index to the last element, or InvalidIndex if the string is empty
      */
-    NODISCARD FORCEINLINE SizeType LastElementIndex() const
+    NODISCARD FORCEINLINE SizeType LastIndex() const
     {
-        return (StringLength > 0) ? (StringLength - 1) : 0;
+        return (StringLength > 0) ? (StringLength - 1) : InvalidIndex;
     }
 
     /**
@@ -1239,8 +1239,9 @@ public:
      * @brief Retrieve the first element of the array
      * @return Returns a reference to the first element of the array
      */
-    NODISCARD FORCEINLINE CharType& FirstElement()
+    NODISCARD FORCEINLINE CharType& First()
     {
+        CHECK(!IsEmpty());
         return CharData[0];
     }
 
@@ -1248,8 +1249,9 @@ public:
      * @brief Retrieve the first element of the array
      * @return Returns a reference to the first element of the array
      */
-    NODISCARD FORCEINLINE const CharType& FirstElement() const
+    NODISCARD FORCEINLINE const CharType& First() const
     {
+        CHECK(!IsEmpty());
         return CharData[0];
     }
 
@@ -1257,18 +1259,26 @@ public:
      * @brief Retrieve the last element of the array
      * @return Returns a reference to the last element of the array
      */
-    NODISCARD FORCEINLINE CharType& LastElement()
+    NODISCARD FORCEINLINE CharType& Last()
     {
-        return CharData[LastElementIndex()];
+        CHECK(!IsEmpty());
+
+        // Deliberately not LastIndex(): that now reports InvalidIndex when empty. The
+        // null-terminator invariant makes index 0 the in-bounds answer for an empty string.
+        return CharData[(StringLength > 0) ? (StringLength - 1) : 0];
     }
 
     /**
      * @brief Retrieve the last element of the array
      * @return Returns a reference to the last element of the array
      */
-    NODISCARD FORCEINLINE const CharType& LastElement() const
+    NODISCARD FORCEINLINE const CharType& Last() const
     {
-        return CharData[LastElementIndex()];
+        CHECK(!IsEmpty());
+
+        // Deliberately not LastIndex(): that now reports InvalidIndex when empty. The
+        // null-terminator invariant makes index 0 the in-bounds answer for an empty string.
+        return CharData[(StringLength > 0) ? (StringLength - 1) : 0];
     }
 
 public:
@@ -1334,7 +1344,7 @@ public:
      */
     NODISCARD FORCEINLINE CharType& operator[](SizeType Index)
     {
-        CHECK(Index < Length());
+        CHECK(Index >= 0 && Index < Length());
         return CharData[Index];
     }
 
@@ -1345,7 +1355,7 @@ public:
      */
     NODISCARD FORCEINLINE const CharType& operator[](SizeType Index) const
     {
-        CHECK(Index < Length());
+        CHECK(Index >= 0 && Index < Length());
         return CharData[Index];
     }
 

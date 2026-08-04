@@ -19,21 +19,23 @@ bool TArrayView_Test()
         TEST_EXPECT(!ArrayView.IsEmpty());
         TEST_EXPECT_EQ(ArrayView[0], 10);
         TEST_EXPECT_EQ(ArrayView[4], 50);
-        TEST_EXPECT_EQ(ArrayView.LastElementIndex(), 4);
+        TEST_EXPECT_EQ(ArrayView.LastIndex(), 4);
         TEST_EXPECT(ArrayView.IsValidIndex(4));
         TEST_EXPECT(!ArrayView.IsValidIndex(5));
 
         TArrayView<int32> Empty(Values, 0);
         TEST_EXPECT(Empty.IsEmpty());
+        TEST_EXPECT_EQ(Empty.LastIndex(), TArrayView<int32>::InvalidIndex);
+        TEST_EXPECT(!Empty.IsValidIndex(Empty.LastIndex()));
     }
 
-    TEST_SECTION("Construct from TArray / FirstElement / LastElement / Data");
+    TEST_SECTION("Construct from TArray / First / Last / Data");
     {
         TArray<int32> Source = { 1, 2, 3, 4 };
         TArrayView<int32> ArrayView(Source);
         TEST_EXPECT_EQ(ArrayView.Size(), 4);
-        TEST_EXPECT_EQ(ArrayView.FirstElement(), 1);
-        TEST_EXPECT_EQ(ArrayView.LastElement(), 4);
+        TEST_EXPECT_EQ(ArrayView.First(), 1);
+        TEST_EXPECT_EQ(ArrayView.Last(), 4);
         TEST_EXPECT_EQ(ArrayView.Data(), Source.Data());
     }
 

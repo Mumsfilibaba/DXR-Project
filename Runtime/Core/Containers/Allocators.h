@@ -132,7 +132,7 @@ class TInlineArrayAllocator
     public:
         typedef int32 SizeType;
 
-        NODISCARD constexpr ElementType* GetElements() const
+        NODISCARD constexpr ElementType* GetAllocation() const
         {
             return reinterpret_cast<ElementType*>(InlineAllocation);
         }
@@ -151,7 +151,7 @@ public:
 
     TInlineArrayAllocator()
     {
-        Memory::Memzero(InlineAllocation.GetElements(), InlineAllocation.Size());
+        Memory::Memzero(InlineAllocation.GetAllocation(), InlineAllocation.Size());
     }
 
     FORCEINLINE ~TInlineArrayAllocator()
@@ -173,7 +173,7 @@ public:
 
                 if (CurrentCount > 0)
                 {
-                    ::RelocateObjects<ElementType>(reinterpret_cast<void*>(DynamicAllocation.GetAllocation()), InlineAllocation.GetElements(), CurrentCount);
+                    ::RelocateObjects<ElementType>(reinterpret_cast<void*>(DynamicAllocation.GetAllocation()), InlineAllocation.GetAllocation(), CurrentCount);
                 }
             }
             else
@@ -190,13 +190,13 @@ public:
                 CurrentCount = (CurrentCount <= NumInlineElements) ? CurrentCount : NumInlineElements;
                 if (CurrentCount > 0)
                 {
-                    ::RelocateObjects<ElementType>(reinterpret_cast<void*>(InlineAllocation.GetElements()), DynamicAllocation.GetAllocation(), CurrentCount);
+                    ::RelocateObjects<ElementType>(reinterpret_cast<void*>(InlineAllocation.GetAllocation()), DynamicAllocation.GetAllocation(), CurrentCount);
                 }
 
                 Free();
             }
 
-            return InlineAllocation.GetElements();
+            return InlineAllocation.GetAllocation();
         }
     }
 
@@ -204,7 +204,7 @@ public:
     {
         if (!DynamicAllocation.HasAllocation())
         {
-            Memory::Memzero(reinterpret_cast<void*>(InlineAllocation.GetElements()), InlineAllocation.Size());
+            Memory::Memzero(reinterpret_cast<void*>(InlineAllocation.GetAllocation()), InlineAllocation.Size());
         }
         else
         {
@@ -229,11 +229,11 @@ public:
             if (NumElements > 0)
             {
                 CHECK(NumElements <= NumInlineElements);
-                ::RelocateObjects<ElementType>(InlineAllocation.GetElements(), Other.InlineAllocation.GetElements(), NumElements);
+                ::RelocateObjects<ElementType>(InlineAllocation.GetAllocation(), Other.InlineAllocation.GetAllocation(), NumElements);
             }
 
             // Clear the source inline storage after relocation (raw storage, safe).
-            Memory::Memzero(reinterpret_cast<void*>(Other.InlineAllocation.GetElements()), Other.InlineAllocation.Size());
+            Memory::Memzero(reinterpret_cast<void*>(Other.InlineAllocation.GetAllocation()), Other.InlineAllocation.Size());
         }
 
         // Steal heap allocation (if any). This also frees our current heap allocation if we had one.
@@ -255,8 +255,8 @@ public:
 
         if (!Other.DynamicAllocation.HasAllocation())
         {
-            Memory::Memmove(reinterpret_cast<void*>(InlineAllocation.GetElements()), reinterpret_cast<const void*>(Other.InlineAllocation.GetElements()), InlineAllocation.Size());
-            Memory::Memzero(reinterpret_cast<void*>(Other.InlineAllocation.GetElements()), Other.InlineAllocation.Size());
+            Memory::Memmove(reinterpret_cast<void*>(InlineAllocation.GetAllocation()), reinterpret_cast<const void*>(Other.InlineAllocation.GetAllocation()), InlineAllocation.Size());
+            Memory::Memzero(reinterpret_cast<void*>(Other.InlineAllocation.GetAllocation()), Other.InlineAllocation.Size());
         }
 
         DynamicAllocation.MoveFrom(::Move(Other.DynamicAllocation));
@@ -264,7 +264,7 @@ public:
 
     NODISCARD FORCEINLINE ElementType* GetAllocation() const
     {
-        return IsHeapAllocated() ? DynamicAllocation.GetAllocation() : InlineAllocation.GetElements();
+        return IsHeapAllocated() ? DynamicAllocation.GetAllocation() : InlineAllocation.GetAllocation();
     }
 
     NODISCARD FORCEINLINE bool HasAllocation() const

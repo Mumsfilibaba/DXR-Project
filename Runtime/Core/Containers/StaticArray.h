@@ -45,7 +45,7 @@ public:
      * @brief Retrieve the first element of the array
      * @return Returns a reference to the first element of the array
      */
-    NODISCARD FORCEINLINE ElementType& FirstElement()
+    NODISCARD FORCEINLINE ElementType& First()
     {
         return Elements[0];
     }
@@ -54,7 +54,7 @@ public:
      * @brief Retrieve the first element of the array
      * @return Returns a reference to the first element of the array
      */
-    NODISCARD FORCEINLINE const ElementType& FirstElement() const
+    NODISCARD FORCEINLINE const ElementType& First() const
     {
         return Elements[0];
     }
@@ -63,7 +63,7 @@ public:
      * @brief Retrieve the last element of the array
      * @return Returns a reference to the last element of the array
      */
-    NODISCARD FORCEINLINE ElementType& LastElement()
+    NODISCARD FORCEINLINE ElementType& Last()
     {
         return Elements[NUM_ELEMENTS - 1];
     }
@@ -72,7 +72,7 @@ public:
      * @brief Retrieve the last element of the array
      * @return Returns a reference to the last element of the array
      */
-    NODISCARD FORCEINLINE const ElementType& LastElement() const
+    NODISCARD FORCEINLINE const ElementType& Last() const
     {
         return Elements[NUM_ELEMENTS - 1];
     }
@@ -244,7 +244,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& operator[](SizeType Index)
     {
-        CHECK(Index < NUM_ELEMENTS);
+        CHECK(IsValidIndex(Index));
         return Elements[Index];
     }
 
@@ -255,7 +255,7 @@ public:
      */
     NODISCARD FORCEINLINE const ElementType& operator[](SizeType Index) const
     {
-        CHECK(Index < NUM_ELEMENTS);
+        CHECK(IsValidIndex(Index));
         return Elements[Index];
     }
 
@@ -287,7 +287,7 @@ public:
      * @brief Retrieve the last index that can be used to retrieve an element from the array
      * @return Returns the index to the last element of the array
      */
-    NODISCARD constexpr SizeType LastElementIndex() const
+    NODISCARD constexpr SizeType LastIndex() const
     {
         return NUM_ELEMENTS - 1;
     }

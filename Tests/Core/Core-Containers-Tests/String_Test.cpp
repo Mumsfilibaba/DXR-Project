@@ -30,15 +30,26 @@ bool TString_Test()
 
         Str.Pop();
         TEST_EXPECT(Str.Equals("Hello World"));
+
+        TEST_EXPECT_EQ(Str.Length(), 11);
+        TEST_EXPECT_EQ(Str.Data()[Str.Length()], '\0');
     }
 
-    TEST_SECTION("FirstElement / LastElement / indexing");
+    TEST_SECTION("First / Last / indexing");
     {
         String Str = "abcde";
-        TEST_EXPECT_EQ(Str.FirstElement(), 'a');
+        TEST_EXPECT_EQ(Str.First(), 'a');
         TEST_EXPECT_EQ(Str[2], 'c');
-        TEST_EXPECT_EQ(Str.LastElementIndex(), 4);
-        TEST_EXPECT_EQ(Str.LastElement(), 'e');
+        TEST_EXPECT_EQ(Str.LastIndex(), 4);
+        TEST_EXPECT_EQ(Str.Last(), 'e');
+
+        const String Empty;
+        TEST_EXPECT(Empty.IsEmpty());
+        TEST_EXPECT_EQ(Empty.LastIndex(), String::InvalidIndex);
+
+        String Cleared = "abc";
+        Cleared.Clear();
+        TEST_EXPECT_EQ(Cleared.LastIndex(), String::InvalidIndex);
     }
 
     TEST_SECTION("ToLower / ToUpper (copy + inline)");

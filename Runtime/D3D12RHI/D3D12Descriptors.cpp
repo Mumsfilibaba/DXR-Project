@@ -92,7 +92,7 @@ FD3D12OfflineDescriptor FD3D12OfflineDescriptorHeap::Allocate()
     }
 
     FOfflineHeap& OfflineHeap = Heaps[HeapIndex];
-    FD3D12DescriptorRange& Range = OfflineHeap.FreeList.FirstElement();
+    FD3D12DescriptorRange& Range = OfflineHeap.FreeList.First();
 
     FD3D12OfflineDescriptor Result(Range.Start, HeapIndex);
     Range.Start.ptr += DescriptorSize;
@@ -369,7 +369,7 @@ FRHIDescriptorHandle FD3D12BindlessDescriptorHeap::Allocate(EDescriptorType InTy
     uint32 SlotIndex = 0;
     if (!FreeStack.IsEmpty())
     {
-        SlotIndex = FreeStack.LastElement();
+        SlotIndex = FreeStack.Last();
         FreeStack.Pop();
     }
     else

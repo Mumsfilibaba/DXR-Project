@@ -1325,8 +1325,10 @@ public:
         const SizeType CurrentLength = Length();
         if (CurrentLength > 0)
         {
+            // Popping drops the old null-terminator, so the character being removed becomes
+            // the last element and is where the new terminator belongs.
             CharData.Pop();
-            CharData[CurrentLength] = 0;
+            CharData[CurrentLength - 1] = 0;
         }
     }
 
@@ -1475,20 +1477,21 @@ public:
 
     /**
      * @brief Retrieve the last index that can be used to retrieve an element from the array
-     * @return Returns the index to the last element of the array
+     * @return Returns the index to the last element, or InvalidIndex if the string is empty
      */
-    NODISCARD FORCEINLINE SizeType LastElementIndex() const
+    NODISCARD FORCEINLINE SizeType LastIndex() const
     {
         const SizeType CurrentSize = Size();
-        return (CurrentSize > 0) ? (CurrentSize - 1) : 0;
+        return (CurrentSize > 0) ? (CurrentSize - 1) : InvalidIndex;
     }
 
     /**
      * @brief Retrieve the first element of the array
      * @return Returns a reference to the first element of the array
      */
-    NODISCARD FORCEINLINE CharType& FirstElement()
+    NODISCARD FORCEINLINE CharType& First()
     {
+        CHECK(!IsEmpty());
         return CharData[0];
     }
 
@@ -1496,8 +1499,9 @@ public:
      * @brief Retrieve the first element of the array
      * @return Returns a reference to the first element of the array
      */
-    NODISCARD FORCEINLINE const CharType& FirstElement() const
+    NODISCARD FORCEINLINE const CharType& First() const
     {
+        CHECK(!IsEmpty());
         return CharData[0];
     }
 
@@ -1505,20 +1509,24 @@ public:
      * @brief Retrieve the last element of the array
      * @return Returns a reference to the last element of the array
      */
-    NODISCARD FORCEINLINE CharType& LastElement()
+    NODISCARD FORCEINLINE CharType& Last()
     {
-        const SizeType TempLastIndex = LastElementIndex();
-        return CharData[TempLastIndex];
+        CHECK(!IsEmpty());
+
+        const SizeType CurrentSize = Size();
+        return CharData[(CurrentSize > 0) ? (CurrentSize - 1) : 0];
     }
 
     /**
      * @brief Retrieve the last element of the array
      * @return Returns a reference to the last element of the array
      */
-    NODISCARD FORCEINLINE const CharType& LastElement() const
+    NODISCARD FORCEINLINE const CharType& Last() const
     {
-        const SizeType TempLastIndex = LastElementIndex();
-        return CharData[TempLastIndex];
+        CHECK(!IsEmpty());
+
+        const SizeType CurrentSize = Size();
+        return CharData[(CurrentSize > 0) ? (CurrentSize - 1) : 0];
     }
 
 public:
@@ -1564,7 +1572,7 @@ public:
      */
     NODISCARD FORCEINLINE CharType& operator[](SizeType Index)
     {
-        CHECK(Index < Length());
+        CHECK(Index >= 0 && Index < Length());
         return CharData[Index];
     }
 
@@ -1575,7 +1583,7 @@ public:
      */
     NODISCARD FORCEINLINE const CharType& operator[](SizeType Index) const
     {
-        CHECK(Index < Length());
+        CHECK(Index >= 0 && Index < Length());
         return CharData[Index];
     }
 

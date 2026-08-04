@@ -1571,7 +1571,7 @@ FVulkanLinearAllocatorPage* FVulkanLinearAllocator::AcquirePage()
 {
     if (!PagePool.IsEmpty())
     {
-        FVulkanLinearAllocatorPage* Page = PagePool.LastElement();
+        FVulkanLinearAllocatorPage* Page = PagePool.Last();
         PagePool.Pop();
         return Page;
     }
@@ -1740,7 +1740,7 @@ void FVulkanLinearAllocator::CleanUp()
 
     while (PagePool.Size() > MAX_POOL_PAGES)
     {
-        delete PagePool.LastElement();
+        delete PagePool.Last();
         PagePool.Pop();
     }
 }

@@ -1094,7 +1094,7 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
         if (!Scene->GetLightProbes().IsEmpty())
         {
             // TODO: Support more than the first probe
-            if (FSceneLightProbe* LightProbe = Scene->GetLightProbes().FirstElement())
+            if (FSceneLightProbe* LightProbe = Scene->GetLightProbes().First())
             {
                 CommandList.SetShaderResourceView(LightPassShader, LightProbe->DiffuseCubeMap->GetShaderResourceView(), 8);
                 CommandList.SetShaderResourceView(LightPassShader, LightProbe->SpecularCubeMap->GetShaderResourceView(), 9);

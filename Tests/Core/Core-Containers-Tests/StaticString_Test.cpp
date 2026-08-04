@@ -16,10 +16,12 @@ bool StaticString_Suite()
         StaticString<64> Empty;
         TEST_EXPECT(Empty.IsEmpty());
         TEST_EXPECT_EQ(Empty.Length(), 0);
+        TEST_EXPECT_EQ(Empty.LastIndex(), StaticString<64>::InvalidIndex);
 
         StaticString<64> Hello = "Hello";
         TEST_EXPECT_EQ(Hello.Length(), 5);
         TEST_EXPECT_EQ(Hello[0], 'H');
+        TEST_EXPECT_EQ(Hello.LastIndex(), 4);
 
         StaticString<64> Sub = StaticString<64>("Hello World", 5);
         TEST_EXPECT(Sub.Equals("Hello"));

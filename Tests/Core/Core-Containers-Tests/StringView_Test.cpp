@@ -14,12 +14,14 @@ bool StringView_Suite()
         StringView Empty;
         TEST_EXPECT(Empty.IsEmpty());
         TEST_EXPECT_EQ(Empty.Length(), 0);
+        TEST_EXPECT_EQ(Empty.LastIndex(), StringView::InvalidIndex);
 
         StringView View("Hello, World");
         TEST_EXPECT_EQ(View.Length(), 12);
         TEST_EXPECT(!View.IsEmpty());
         TEST_EXPECT_EQ(View[0], 'H');
         TEST_EXPECT_EQ(View[11], 'd');
+        TEST_EXPECT_EQ(View.LastIndex(), 11);
 
         const CHAR* LongString = "This is a long string";
         StringView Slice = StringView(LongString, 4, 5);

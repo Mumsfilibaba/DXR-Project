@@ -323,7 +323,7 @@ public:
     {
         EnsureCapacity(ArraySize + 1);
         new(reinterpret_cast<void*>(Allocator.GetAllocation() + (ArraySize++))) ElementType(Forward<ArgTypes>(Args)...);
-        return LastElement();
+        return Last();
     }
 
     /**
@@ -888,7 +888,7 @@ public:
      */
     FORCEINLINE void Sort()
     {
-        SortInternal(0, LastElementIndex(), [](const ElementType& First, const ElementType& Second)
+        SortInternal(0, LastIndex(), [](const ElementType& First, const ElementType& Second)
         {
             return (First < Second);
         });
@@ -900,7 +900,7 @@ public:
     template<typename PredicateType>
     FORCEINLINE void SortWithPredicate(PredicateType&& Predicate)
     {
-        SortInternal(0, LastElementIndex(), Forward<PredicateType>(Predicate));
+        SortInternal(0, LastIndex(), Forward<PredicateType>(Predicate));
     }
 
     /**
@@ -946,7 +946,7 @@ public:
      * @brief Retrieve the first element of the array (non-const)
      * @return Returns a reference to the first element of the array
      */
-    NODISCARD FORCEINLINE ElementType& FirstElement()
+    NODISCARD FORCEINLINE ElementType& First()
     {
         CHECK(!IsEmpty());
         ElementType* Array = Allocator.GetAllocation();
@@ -957,7 +957,7 @@ public:
      * @brief Retrieve the first element of the array (const)
      * @return Returns a reference to the first element of the array
      */
-    NODISCARD FORCEINLINE const ElementType& FirstElement() const
+    NODISCARD FORCEINLINE const ElementType& First() const
     {
         CHECK(!IsEmpty());
         const ElementType* Array = Allocator.GetAllocation();
@@ -968,22 +968,22 @@ public:
      * @brief Retrieve the last element of the array (non-const)
      * @return Returns a reference to the last element of the array
      */
-    NODISCARD FORCEINLINE ElementType& LastElement()
+    NODISCARD FORCEINLINE ElementType& Last()
     {
         CHECK(!IsEmpty());
         ElementType* Array = Allocator.GetAllocation();
-        return Array[LastElementIndex()];
+        return Array[LastIndex()];
     }
 
     /**
      * @brief Retrieve the last element of the array (const)
      * @return Returns a reference to the last element of the array
      */
-    NODISCARD FORCEINLINE const ElementType& LastElement() const
+    NODISCARD FORCEINLINE const ElementType& Last() const
     {
         CHECK(!IsEmpty());
         const ElementType* Array = Allocator.GetAllocation();
-        return Array[LastElementIndex()];
+        return Array[LastIndex()];
     }
 
     /**
@@ -1006,11 +1006,11 @@ public:
 
     /**
      * @brief Retrieve the last index that can be used to retrieve an element from the array
-     * @return Returns the index to the last element of the array
+     * @return Returns the index to the last element, or InvalidIndex if the array is empty
      */
-    NODISCARD FORCEINLINE SizeType LastElementIndex() const
+    NODISCARD FORCEINLINE SizeType LastIndex() const
     {
-        return ArraySize ? ArraySize - 1 : 0;
+        return ArraySize ? (ArraySize - 1) : InvalidIndex;
     }
 
     /**
@@ -1251,6 +1251,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& operator[](SizeType Index)
     {
+        CHECK(IsValidIndex(Index));
         return Allocator.GetAllocation()[Index];
     }
 
@@ -1261,6 +1262,7 @@ public:
      */
     NODISCARD FORCEINLINE const ElementType& operator[](SizeType Index) const
     {
+        CHECK(IsValidIndex(Index));
         return Allocator.GetAllocation()[Index];
     }
 

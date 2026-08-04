@@ -124,8 +124,8 @@ private:
 
     FJsonArchive(FJsonValue* InSaveRoot, const FJsonValue* InLoadRoot);
 
-    NODISCARD FScope&       CurrentScope()       { return Scopes.LastElement(); }
-    NODISCARD const FScope& CurrentScope() const { return Scopes.LastElement(); }
+    NODISCARD FScope&       CurrentScope()       { return Scopes.Last(); }
+    NODISCARD const FScope& CurrentScope() const { return Scopes.Last(); }
 
     void PushNamedScope(const CHAR* Name, EJsonType ContainerType);
     void PushElementScope(EJsonType ContainerType);
