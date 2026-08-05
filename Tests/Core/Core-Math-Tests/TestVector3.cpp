@@ -26,6 +26,11 @@ bool TestVector3()
     TEST_SECTION("Vector3::ProjectOn");
     TEST_EXPECT(Vector3(4.0f, 5.0f, 3.0f).ProjectOn(Vector3(1.0f, 0.0f, 0.0f)).IsEqual(Vector3(4.0f, 0.0f, 0.0f)));
 
+    TEST_SECTION("Vector3::GetOrthonormalTo");
+    TEST_EXPECT(Vector3(1.0f, 1.0f, 0.0f).GetOrthonormalTo(Vector3(1.0f, 0.0f, 0.0f)).IsEqual(Vector3(0.0f, 1.0f, 0.0f)));
+    TEST_EXPECT(Vector3(1.0f, 1.0f, 0.0f).GetOrthonormalTo(Vector3(3.0f, 0.0f, 0.0f)).IsEqual(Vector3(0.0f, 1.0f, 0.0f)));
+    TEST_EXPECT(Vector3(2.0f, 0.0f, 0.0f).GetOrthonormalTo(Vector3(1.0f, 0.0f, 0.0f)).IsEqual(Vector3(0.0f, 0.0f, 0.0f)));
+
     TEST_SECTION("Vector3::GetReflected");
     TEST_EXPECT(Vector3(1.0f, 2.0f, -2.0f).GetReflected(Vector3(0.0f, 1.0f, 0.0f)).IsEqual(Vector3(1.0f, -2.0f, -2.0f)));
 

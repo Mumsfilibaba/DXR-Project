@@ -1,6 +1,10 @@
 #ifndef PARALLAX_MAPPING_HLSLI
 #define PARALLAX_MAPPING_HLSLI 1
 
+#ifndef ENABLE_PARALLAX_CLIPPING
+    #define ENABLE_PARALLAX_CLIPPING 0
+#endif
+
 float ParallaxSampleHeight(Texture2D<float> HeightTex, SamplerState HeightSampler, float2 TexCoords, float2 TexCoordsDx, float2 TexCoordsDy)
 {
     return saturate(1.0f - HeightTex.SampleGrad(HeightSampler, TexCoords, TexCoordsDx, TexCoordsDy));
@@ -48,18 +52,18 @@ float2 ParallaxMapUV(Texture2D<float> HeightTex, SamplerState HeightSampler, flo
 
     float2 FinalTexCoords = (PrevTexCoords * Weight) + (CurrentTexCoords * (1.0f - Weight));
 
-    const float2 UvFwidth   = abs(TexCoordsDx) + abs(TexCoordsDy);
-    const float2 ClipMargin = UvFwidth * 0.5f;
-
-    if (FinalTexCoords.x < -ClipMargin.x || FinalTexCoords.x > 1.0f + ClipMargin.x ||
-        FinalTexCoords.y < -ClipMargin.y || FinalTexCoords.y > 1.0f + ClipMargin.y)
+#if ENABLE_PARALLAX_CLIPPING
+    const float2 ClipMargin = (abs(TexCoordsDx) + abs(TexCoordsDy)) * 0.5f;
+    if (any(FinalTexCoords < -ClipMargin) || any(FinalTexCoords > 1.0f + ClipMargin))
     {
         bDiscard = true;
         return FinalTexCoords;
     }
 
-    FinalTexCoords = saturate(FinalTexCoords);
+    return saturate(FinalTexCoords);
+#else
     return FinalTexCoords;
+#endif
 }
 
 #endif // PARALLAX_MAPPING_HLSLI

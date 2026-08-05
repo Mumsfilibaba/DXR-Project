@@ -1229,6 +1229,59 @@ void EditorWidgets::DrawTextProperty(const CHAR* Label, const CHAR* ValueText)
     ApplyHoveredRowBg(bRowHovered);
 }
 
+void EditorWidgets::DrawTextureProperty(const CHAR* Label, ImTextureID Texture, float PreviewSize)
+{
+    ImGuiTable* Table = ImGui::GetCurrentTable();
+    if (!Table)
+    {
+        return;
+    }
+
+    const float RowHeight = Math::Max(PreviewSize, ImGui::GetFrameHeight());
+    ImGui::TableNextRow();
+
+    bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
+
+    ImGui::TableSetColumnIndex(0);
+
+    {
+        const float LabelIndent = 24.0f;
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndent);
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted(Label);
+    }
+
+    ImGui::TableSetColumnIndex(1);
+
+    if (Texture)
+    {
+        ImGui::Image(Texture, ImVec2(PreviewSize, PreviewSize));
+
+        ImGuiStyle& Style = ImGui::GetStyle();
+        DrawInputBorderLastItem(Style.FrameRounding);
+
+        const bool bPreviewHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+        bRowHovered |= bPreviewHovered;
+
+        if (bPreviewHovered && ImGui::BeginTooltip())
+        {
+            const float ZoomedSize = 256.0f;
+            ImGui::Image(Texture, ImVec2(ZoomedSize, ZoomedSize));
+            ImGui::EndTooltip();
+        }
+    }
+    else
+    {
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextDisabled("None");
+        bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    }
+
+    ImGui::TableSetColumnIndex(2);
+
+    ApplyHoveredRowBg(bRowHovered);
+}
+
 void EditorWidgets::DrawReadOnlyFloat3Property(const CHAR* Label, const Vector3& Value)
 {
     ImGuiTable* Table = ImGui::GetCurrentTable();

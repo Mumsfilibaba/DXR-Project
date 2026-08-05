@@ -39,6 +39,7 @@ FEditorViewportWidget::FEditorViewportWidget(FEditorEngine* InEditorEngine)
     , PendingCameraInput()
     , DebugView(FSceneRenderView::EDebugView::None)
     , SecondaryDebugView(FSceneRenderView::EDebugView::None)
+    , DebugViewChannelMask(FSceneRenderView::EDebugViewChannel::All)
     , GizmoPlacement(EGizmoPlacement::Center)
     , GizmoOrientation(EditorGuizmo::EMode::World)
     , GizmoOperation(EditorGuizmo::EOperation::Translate)
@@ -928,6 +929,78 @@ void FEditorViewportWidget::Draw()
                         }
                     }
 
+                    {
+                        EditorWidgets::MenuLabeledSeparator("CHANNELS");
+
+                        // Isolating a component only means anything once a debug view is being drawn
+                        const bool bChannelsEnabled = DebugView != FSceneRenderView::EDebugView::None;
+                        if (!bChannelsEnabled)
+                        {
+                            ImGui::BeginDisabled();
+                        }
+
+                        const float ChannelIndentX     = 20.0f;
+                        const float ChannelRowWidth    = ImGui::GetContentRegionAvail().x - (ChannelIndentX * 2.0f);
+                        const float ChannelButtonWidth = Math::Max(Math::Floor(ChannelRowWidth * 0.25f), 1.0f);
+                        const float ChannelHeight      = ImGui::GetFrameHeight();
+
+                        const auto DrawChannelToggle = [&](const CHAR* Id, const CHAR* Label, FSceneRenderView::EDebugViewChannel Channel, ImDrawFlags Corners)
+                        {
+                            const bool bSelected = IsEnumFlagSet(DebugViewChannelMask, Channel);
+
+                            const bool bPressed = ImGui::InvisibleButton(Id, ImVec2(ChannelButtonWidth, ChannelHeight));
+                            const bool bHovered = ImGui::IsItemHovered();
+                            const bool bHeld    = ImGui::IsItemActive();
+
+                            const ImVec2 Min = ImGui::GetItemRectMin();
+                            const ImVec2 Max = ImGui::GetItemRectMax();
+
+                            const ImU32 BgIdle          = IM_COL32(56, 56, 56, 255);
+                            const ImU32 BgHover         = IM_COL32(87, 87, 87, 255);
+                            const ImU32 BgSelected      = IM_COL32(9, 92, 176, 255);
+                            const ImU32 BgSelectedHover = IM_COL32(15, 110, 205, 255);
+
+                            ImU32 Bg = bSelected ? BgSelected : BgIdle;
+                            if (bHovered || bHeld)
+                            {
+                                Bg = bSelected ? BgSelectedHover : BgHover;
+                            }
+
+                            ImDrawList* DrawList = ImGui::GetWindowDrawList();
+
+                            // Routed through GetColorU32 so the row fades with the rest of the menu while it is disabled
+                            DrawList->AddRectFilled(Min, Max, ImGui::GetColorU32(Bg), 6.0f, Corners);
+
+                            const ImVec2 TextSize = ImGui::CalcTextSize(Label);
+                            const ImVec2 TextPos  = ImVec2(Min.x + (ChannelButtonWidth - TextSize.x) * 0.5f, Min.y + (ChannelHeight - TextSize.y) * 0.5f);
+
+                            DrawList->AddText(TextPos, ImGui::GetColorU32(ImGuiCol_Text), Label);
+
+                            if (bPressed)
+                            {
+                                DebugViewChannelMask ^= Channel;
+                            }
+                        };
+
+                        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ChannelIndentX);
+
+                        DrawChannelToggle("##DebugViewChannelR", "R", FSceneRenderView::EDebugViewChannel::Red, ImDrawFlags_RoundCornersLeft);
+
+                        ImGui::SameLine(0.0f, 0.0f);
+                        DrawChannelToggle("##DebugViewChannelG", "G", FSceneRenderView::EDebugViewChannel::Green, ImDrawFlags_RoundCornersNone);
+
+                        ImGui::SameLine(0.0f, 0.0f);
+                        DrawChannelToggle("##DebugViewChannelB", "B", FSceneRenderView::EDebugViewChannel::Blue, ImDrawFlags_RoundCornersNone);
+
+                        ImGui::SameLine(0.0f, 0.0f);
+                        DrawChannelToggle("##DebugViewChannelA", "A", FSceneRenderView::EDebugViewChannel::Alpha, ImDrawFlags_RoundCornersRight);
+
+                        if (!bChannelsEnabled)
+                        {
+                            ImGui::EndDisabled();
+                        }
+                    }
+
                     if (bRequestClosePopup)
                     {
                         ImGui::CloseCurrentPopup();
@@ -1291,4 +1364,9 @@ FSceneRenderView::EDebugView FEditorViewportWidget::GetDebugView() const
 FSceneRenderView::EDebugView FEditorViewportWidget::GetSecondaryDebugView() const
 {
     return SecondaryDebugView;
+}
+
+FSceneRenderView::EDebugViewChannel FEditorViewportWidget::GetDebugViewChannelMask() const
+{
+    return DebugViewChannelMask;
 }

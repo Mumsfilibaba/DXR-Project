@@ -50,15 +50,16 @@ void ClosestHit(inout FRayPayload PayLoad, in BuiltInTriangleIntersectionAttribu
     TransformHitSurfaceToWorld(Surface, ObjectToWorld3x4(), WorldToObject3x4());
 
     const float3 FacingViewDir = normalize(-WorldRayDirection());
-    const bool   bHasNormalMap = (MaterialData.NormalMapFlags != 0);
+    const bool   bHasNormalMap = HasNormalMap(MaterialData);
     
     float3 Normal;
     if (bHasNormalMap && length(Surface.Tangent) > 1e-4f)
     {
-        const float3 MappedNormal = UnpackNormalBC5(NormalTex.SampleLevel(MaterialSampler, Surface.TexCoord, 0).rgb);
-        const float3 Bitangent    = normalize(cross(Surface.Normal, Surface.Tangent));
+        const float3 SampledNormal = UnpackNormalBC5(NormalTex.SampleLevel(MaterialSampler, Surface.TexCoord, 0).rgb);
+        const float3 MappedNormal  = ApplyNormalMapAxis(SampledNormal, IsNormalMapPositiveY(MaterialData));
+        const float  TangentSign   = Surface.TangentSign * GeometryIndices.DeterminantSign;
 
-        Normal = ApplyNormalMapping(MappedNormal, Surface.Normal, Surface.Tangent, Bitangent);
+        Normal = DecodeTangentNormal(MappedNormal, Surface.Normal, Surface.Tangent, TangentSign);
     }
     else
     {

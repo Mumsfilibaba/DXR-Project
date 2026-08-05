@@ -27,10 +27,10 @@ struct FRayTracingSceneConstantsHLSL
 
 struct FRayTracingGeometryIndicesHLSL
 {
-    FRHIDescriptorHandle VerticesHandle = {};
-    FRHIDescriptorHandle IndicesHandle  = {};
-    uint32               MaterialIndex  = 0;
-    uint32               Padding0       = 0;
+    FRHIDescriptorHandle VerticesHandle  = {};
+    FRHIDescriptorHandle IndicesHandle   = {};
+    uint32               MaterialIndex   = 0;
+    float                DeterminantSign = 1.0f; // -1 when the instance transform mirrors, matching FPerObject.
 };
 
 static_assert(sizeof(FRHIDescriptorHandle) == sizeof(uint32), "FRHIDescriptorHandle must be 4 bytes for the HLSL layout");

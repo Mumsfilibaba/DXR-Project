@@ -5,6 +5,7 @@
 #include "ColorSpaceTransforms.hlsli"
 #include "FastMath.hlsli"
 #include "ParallaxMapping.hlsli"
+#include "TangentSpace.hlsli"
 
 #ifndef ENABLE_PARALLAX_MAPPING
     #define ENABLE_PARALLAX_MAPPING (0)
@@ -146,22 +147,15 @@ struct FVSInput
 {
     float3 Position : POSITION0;
     float3 Normal   : NORMAL0;
-    float3 Tangent  : TANGENT0;
+    float4 Tangent  : TANGENT0;
     float2 TexCoord : TEXCOORD0;
 };
 
 struct FVSOutput
 {
     float3 Normal           : NORMAL0;
-    float3 Tangent          : TANGENT0;
-    float3 Bitangent        : BITANGENT0;
+    float4 Tangent          : TANGENT0;
     float2 TexCoord	        : TEXCOORD0;
-
-#if ENABLE_PARALLAX_MAPPING
-    float3 TangentViewPos   : TANGENTVIEWPOS0;
-    float3 TangentPosition  : TANGENTPOSITION0;
-#endif
-
     float3 PositionWS       : POSITION0;
     float4 ClipPosition     : POSITION1;
     float4 PrevClipPosition : POSITION2;
@@ -174,33 +168,18 @@ FVSOutput VSMain(FVSInput Input)
     const float3 PositionWS3 = TransformPositionWS(PerObjectBuffer, Input.Position);
     const float4 PositionWS  = float4(PositionWS3, 1.0);
 
-    // Normal
-    float3 Normal = normalize(TransformDirectionInvT(PerObjectBuffer, Input.Normal));
-
-    // Tangent 
-    float3 Tangent = normalize(TransformDirectionInvT(PerObjectBuffer, Input.Tangent));
-    Tangent = normalize(Tangent - dot(Tangent, Normal) * Normal);
-    
-    // Bitangent 
-    float3 Bitangent = normalize(cross(Tangent, Normal));
+    const float3 Normal  = TransformDirectionInvT(PerObjectBuffer, Input.Normal);
+    const float3 Tangent = TransformDirectionWS(PerObjectBuffer, Input.Tangent.xyz);
 
     FVSOutput Output;
     Output.Normal           = Normal;
-    Output.Tangent          = Tangent;
-    Output.Bitangent        = Bitangent;
+    Output.Tangent          = float4(Tangent, Input.Tangent.w * PerObjectBuffer.DeterminantSign);
     Output.Position         = mul(PositionWS, CameraBuffer.ViewProjection);
     Output.PositionWS       = PositionWS3;
     Output.ClipPosition     = Output.Position;
     // TODO: Handle moving objects (aka PrevTransform)
     Output.PrevClipPosition = mul(PositionWS, CameraBuffer.PrevViewProjection);
     Output.TexCoord         = Input.TexCoord;
-
-#if ENABLE_PARALLAX_MAPPING
-    const float3x3 TangentSpace = float3x3(Tangent, Bitangent, Normal);
-    Output.TangentViewPos  = mul(TangentSpace, CameraBuffer.PositionWS);
-    Output.TangentPosition = mul(TangentSpace, PositionWS.xyz);
-#endif
-
     return Output;
 }
 
@@ -211,19 +190,13 @@ FVSOutput VSMain(FVSInput Input)
 struct FPSInput
 {
     float3 Normal           : NORMAL0;
-    float3 Tangent          : TANGENT0;
-    float3 Bitangent        : BITANGENT0;
+    float4 Tangent          : TANGENT0;
     float2 TexCoord         : TEXCOORD0;
-
-#if ENABLE_PARALLAX_MAPPING
-    float3 TangentViewPos   : TANGENTVIEWPOS0;
-    float3 TangentPosition  : TANGENTPOSITION0;
-#endif
-
     float3 PositionWS       : POSITION0;
     float4 ClipPosition     : POSITION1;
     float4 PrevClipPosition : POSITION2;
     float4 Position         : SV_Position;
+    bool   bIsFrontFace     : SV_IsFrontFace;
 };
 
 struct FPSOutput
@@ -238,20 +211,32 @@ FPSOutput PSMain(FPSInput Input)
 {
     const FMaterial MaterialData = Materials[PerObjectBuffer.MaterialIndex];
 
-    float2 TexCoords = Input.TexCoord;
+    float2 TexCoords     = Input.TexCoord;
+    float3 SurfaceNormal = Input.Normal;
+    float  TangentSign   = Input.Tangent.w;
 
-    // Handle parallax mapping (mesh UVs are already V-flipped at import time)
+#if ENABLE_DOUBLE_SIDED
+    if (!Input.bIsFrontFace)
+    {
+        SurfaceNormal = -SurfaceNormal;
+        TangentSign   = -TangentSign;
+    }
+#endif
+
 #if ENABLE_PARALLAX_MAPPING
-    const float2 TexCoordsDx = ddx(TexCoords);
-    const float2 TexCoordsDy = ddy(TexCoords);
-    const float3 ViewDir     = normalize(Input.TangentViewPos - Input.TangentPosition);
+    const float2   TexCoordsDx    = ddx(TexCoords);
+    const float2   TexCoordsDy    = ddy(TexCoords);
+    const float3x3 WorldToTangent = CreateWorldToTangent(SurfaceNormal, Input.Tangent.xyz, TangentSign);
+    const float3   ViewDir        = normalize(mul(WorldToTangent, CameraBuffer.PositionWS - Input.PositionWS));
 
     bool bParallaxDiscard = false;
     TexCoords = ApplyParallax(MaterialData, TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, bParallaxDiscard);
-    if (bParallaxDiscard)
-    {
-        discard;
-    }
+    #if ENABLE_PARALLAX_CLIPPING
+        if (bParallaxDiscard)
+        {
+            discard;
+        }
+    #endif
 #endif
 
     // Sample albedo (alpha in .a channel)
@@ -271,24 +256,11 @@ FPSOutput PSMain(FPSInput Input)
 #if ENABLE_NORMAL_MAPPING
     float3 SampledNormal = GetNormal(TexCoords);
     SampledNormal = UnpackNormalBC5(SampledNormal);
+    SampledNormal = ApplyNormalMapAxis(SampledNormal, IsNormalMapPositiveY(MaterialData));
 
-    // Ensure Tangent frame is orthogonal
-    float3 Tangent   = normalize(Input.Tangent);
-    float3 Bitangent = normalize(Input.Bitangent);
-    float3 Normal    = normalize(Input.Normal);
-    Normal = ApplyNormalMapping(SampledNormal, Normal, Tangent, Bitangent);
+    float3 Normal = DecodeTangentNormal(SampledNormal, SurfaceNormal, Input.Tangent.xyz, TangentSign);
 #else
-    float3 Normal = normalize(Input.Normal);
-#endif
-
-#if ENABLE_DOUBLE_SIDED
-    {
-        const float3 ViewDir = normalize(CameraBuffer.PositionWS - Input.PositionWS);
-        if (dot(Normal, ViewDir) < 0.0f)
-        {
-            Normal = -Normal;
-        }
-    }
+    float3 Normal = normalize(SurfaceNormal);
 #endif
 
     // Pack the normal and prepare for output

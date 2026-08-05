@@ -32,6 +32,7 @@ public:
 
     FSceneRenderView::EDebugView GetDebugView() const;
     FSceneRenderView::EDebugView GetSecondaryDebugView() const;
+    FSceneRenderView::EDebugViewChannel GetDebugViewChannelMask() const;
     FCameraComponent* GetViewCamera() const;
 
     void OnActorRemoved(FActor* Actor);
@@ -95,6 +96,7 @@ private:
     FEditorCameraInputState             PendingCameraInput;
     FSceneRenderView::EDebugView        DebugView;
     FSceneRenderView::EDebugView        SecondaryDebugView;
+    FSceneRenderView::EDebugViewChannel DebugViewChannelMask;
     EGizmoPlacement                     GizmoPlacement;
     EditorGuizmo::EMode                 GizmoOrientation;
     EditorGuizmo::EOperation::Type      GizmoOperation;

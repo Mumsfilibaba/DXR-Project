@@ -15,7 +15,7 @@ public:
     void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene);
 
 private:
-    bool CompilePipelineState(FFrameResources& FrameResources, bool bBindless);
+    bool CompilePipelineState(FFrameResources& FrameResources, bool bBindless, bool bEnableParallax, bool bEnableClipping);
 
     TMap<uint64, FGraphicsPipelineStateInstance> PipelineStates;
 };

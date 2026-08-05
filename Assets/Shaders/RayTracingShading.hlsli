@@ -5,11 +5,13 @@
 #include "PBRHelpers.hlsli"
 #include "ImageBasedLighting.hlsli"
 #include "RayTracingBindless.hlsli"
+#include "TangentSpace.hlsli"
 
 struct FHitSurface
 {
     float3 Normal;  
     float3 Tangent; 
+    float  TangentSign;
     float2 TexCoord;
 };
 
@@ -30,11 +32,12 @@ FHitSurface InterpolateTriangleHit(StructuredBuffer<FVertex> InVertices, ByteAdd
         (InVertices[Indices[1]].Tangent * BarycentricCoords.y) +
         (InVertices[Indices[2]].Tangent * BarycentricCoords.z));
 
+    Surface.TangentSign = InVertices[Indices[0]].TangentSign;
+
     Surface.TexCoord =
         (InVertices[Indices[0]].TexCoord * BarycentricCoords.x) +
         (InVertices[Indices[1]].TexCoord * BarycentricCoords.y) +
         (InVertices[Indices[2]].TexCoord * BarycentricCoords.z);
-    Surface.TexCoord.y = 1.0f - Surface.TexCoord.y;
 
     return Surface;
 }

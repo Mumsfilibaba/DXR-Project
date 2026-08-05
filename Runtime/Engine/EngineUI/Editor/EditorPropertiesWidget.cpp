@@ -17,6 +17,8 @@ FEditorPropertiesWidget::FEditorPropertiesWidget(FEditorEngine* InEditorEngine)
     : EditorEngine(InEditorEngine)
     , ImGuiDelegateHandle()
     , bVisible(true)
+    , MaterialSelectionOwner(nullptr)
+    , SelectedMaterialIndex(0)
 {
     if (IImguiPlugin::IsEnabled())
     {
@@ -56,6 +58,19 @@ void FEditorPropertiesWidget::Draw()
     ImGui::End();
 
     ImGui::PopStyleVar(2);
+}
+
+ImTextureID FEditorPropertiesWidget::GetTexturePreview(int32 Slot, const FRHITextureRef& Texture)
+{
+    FImGuiTexture& Preview = MaterialTexturePreviews[Slot];
+    if (Preview.GetTexture() != Texture.Get())
+    {
+        Preview = FImGuiTexture(Texture);
+        Preview.bEnableBlending      = false;
+        Preview.bEnableLinearSampler = true;
+    }
+
+    return Preview.ShaderResourceView ? reinterpret_cast<ImTextureID>(&Preview) : nullptr;
 }
 
 void FEditorPropertiesWidget::DrawWindowContents()
@@ -259,85 +274,256 @@ void FEditorPropertiesWidget::DrawWindowContents()
         // MeshComponent
         if (bHasMeshComponent)
         {
-            if (DrawCollapsingHeader("MeshComponent", ImGuiTreeNodeFlags_DefaultOpen, false))
+            if (MaterialSelectionOwner != SelectedActor)
             {
-                if (EditorWidgets::BeginPropertyTable("##MeshComponentMaterialTable", LabelColumnWidth, RevertColumnWidth))
+                MaterialSelectionOwner = SelectedActor;
+                SelectedMaterialIndex  = 0;
+            }
+
+            const int32 NumMaterials = MeshComponent->GetNumMaterials();
+            SelectedMaterialIndex = Math::Clamp<int32>(SelectedMaterialIndex, 0, Math::Max<int32>(NumMaterials - 1, 0));
+
+            TSharedPtr<FMaterial> Material = MeshComponent->GetMaterial(SelectedMaterialIndex);
+            if (Material)
+            {
+                DrawLabelWithSeperator("StaticMesh");
+
+                const FMaterialInfo& MaterialInfo = Material->GetMaterialInfo();
+
+                const auto IsMaterialFlagSet = [&Material](EMaterialFlags Flag) -> bool
                 {
-                    FMaterialInfo MaterialInfo = MeshComponent->GetMaterial()->GetMaterialInfo();
+                    return IsEnumFlagSet(Material->GetMaterialInfo().MaterialFlags, Flag);
+                };
 
-                    // Albedo
+                const bool bHasHeightMap = Material->HasHeightMap();
+
+                if (DrawCollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen, true))
+                {
+                    if (EditorWidgets::BeginPropertyTable("##MeshComponentMaterialTable", LabelColumnWidth, RevertColumnWidth))
                     {
-                        FFloatColor Albedo = MaterialInfo.Albedo;
-                        const FFloatColor Albedo0 = FFloatColor::White;
-
-                        if (EditorWidgets::DrawColor3Property("Albedo", Albedo, Albedo0))
+                        if (NumMaterials > 1)
                         {
-                            MeshComponent->GetMaterial()->SetAlbedo(Albedo);
+                            TArray<String> MaterialLabels;
+                            MaterialLabels.Reserve(NumMaterials);
+
+                            for (int32 Index = 0; Index < NumMaterials; Index++)
+                            {
+                                TSharedPtr<FMaterial> Entry = MeshComponent->GetMaterial(Index);
+                                if (Entry && !Entry->GetName().IsEmpty())
+                                {
+                                    MaterialLabels.Emplace(String::CreateFormatted("%d: %s", Index, *Entry->GetName()));
+                                }
+                                else
+                                {
+                                    MaterialLabels.Emplace(String::CreateFormatted("%d: <unnamed>", Index));
+                                }
+                            }
+
+                            TArray<const CHAR*> MaterialLabelText;
+                            MaterialLabelText.Reserve(NumMaterials);
+
+                            for (const String& Label : MaterialLabels)
+                            {
+                                MaterialLabelText.Add(*Label);
+                            }
+
+                            const int32 SelectedMaterialIndex0 = 0;
+                            EditorWidgets::DrawComboProperty("Material", SelectedMaterialIndex, MaterialLabelText.Data(), MaterialLabelText.Size(), &SelectedMaterialIndex0);
+                        }
+
+                        // Albedo
+                        {
+                            FFloatColor Albedo = MaterialInfo.Albedo;
+                            const FFloatColor Albedo0 = FFloatColor::White;
+
+                            if (EditorWidgets::DrawColor3Property("Albedo", Albedo, Albedo0))
+                            {
+                                Material->SetAlbedo(Albedo);
+                            }
+                        }
+
+                        // Roughness
+                        {
+                            float Roughness = MaterialInfo.Roughness;
+                            const float Roughness0 = 0.0f;
+
+                            if (EditorWidgets::DrawFloatProperty("Roughness", Roughness, 0.01f, 0.01f, 1.0f, "%.2f", true, &Roughness0))
+                            {
+                                Material->SetRoughness(Roughness);
+                            }
+                        }
+
+                        // Metallic
+                        {
+                            float Metallic = MaterialInfo.Metallic;
+                            const float Metallic0 = 0.0f;
+
+                            if (EditorWidgets::DrawFloatProperty("Metallic", Metallic, 0.01f, 0.01f, 1.0f, "%.2f", true, &Metallic0))
+                            {
+                                Material->SetMetallic(Metallic);
+                            }
+                        }
+
+                        // AO
+                        {
+                            float AO = MaterialInfo.AmbientOcclusion;
+                            const float AO0 = 1.0f;
+
+                            if (EditorWidgets::DrawFloatProperty("AO", AO, 0.01f, 0.01f, 1.0f, "%.2f", true, &AO0))
+                            {
+                                Material->SetAmbientOcclusion(AO);
+                            }
+                        }
+
+                        EditorWidgets::EndPropertyTable();
+                    }
+                }
+
+                if (DrawCollapsingHeader("Textures", ImGuiTreeNodeFlags_DefaultOpen, true))
+                {
+                    if (EditorWidgets::BeginPropertyTable("##MeshComponentTexturesTable", LabelColumnWidth, RevertColumnWidth))
+                    {
+                        EditorWidgets::DrawTextureProperty("Albedo", GetTexturePreview(MaterialTextureSlot_Albedo, Material->AlbedoMap));
+                        EditorWidgets::DrawTextureProperty("Normal", GetTexturePreview(MaterialTextureSlot_Normal, Material->NormalMap));
+                        EditorWidgets::DrawTextureProperty("Height", GetTexturePreview(MaterialTextureSlot_Height, Material->HeightMap));
+                        EditorWidgets::DrawTextureProperty("Material", GetTexturePreview(MaterialTextureSlot_Material, Material->MaterialMap));
+
+                        EditorWidgets::EndPropertyTable();
+                    }
+                }
+
+                if (DrawCollapsingHeader("Material Flags", ImGuiTreeNodeFlags_DefaultOpen, bHasHeightMap))
+                {
+                    if (EditorWidgets::BeginPropertyTable("##MeshComponentMaterialFlagsTable", LabelColumnWidth, RevertColumnWidth))
+                    {
+                        // Normal mapping
+                        {
+                            bool bEnableNormalMapping = IsMaterialFlagSet(EMaterialFlags::EnableNormalMapping);
+
+                            if (EditorWidgets::DrawCheckboxProperty("Normal Mapping", bEnableNormalMapping, nullptr, Material->NormalMap.IsValid()))
+                            {
+                                Material->EnableNormalMapping(bEnableNormalMapping);
+                            }
+                        }
+
+                        if (IsMaterialFlagSet(EMaterialFlags::EnableNormalMapping) && Material->NormalMap.IsValid())
+                        {
+                            static const CHAR* const NormalMapAxisItems[] =
+                            {
+                                "-Y (DirectX)",
+                                "+Y (OpenGL)"
+                            };
+
+                            constexpr int32 NormalMapAxisCount = static_cast<int32>(ARRAY_COUNT(NormalMapAxisItems));
+
+                            int32 NormalMapAxis = IsMaterialFlagSet(EMaterialFlags::NormalMapPositiveY) ? 1 : 0;
+
+                            ImGui::Indent(12.0f);
+
+                            if (EditorWidgets::DrawComboProperty("Normal Map Axis", NormalMapAxis, NormalMapAxisItems, NormalMapAxisCount, nullptr))
+                            {
+                                Material->SetNormalMapPositiveY(NormalMapAxis == 1);
+                            }
+
+                            ImGui::Unindent(12.0f);
+                        }
+
+                        // Alpha mask
+                        {
+                            bool bEnableAlphaMask = IsMaterialFlagSet(EMaterialFlags::EnableAlpha);
+
+                            if (EditorWidgets::DrawCheckboxProperty("Alpha Mask", bEnableAlphaMask, nullptr, Material->AlbedoMap.IsValid()))
+                            {
+                                Material->EnableAlphaMask(bEnableAlphaMask);
+                            }
+                        }
+
+                        // Double sided
+                        {
+                            bool bDoubleSided = IsMaterialFlagSet(EMaterialFlags::DoubleSided);
+
+                            if (EditorWidgets::DrawCheckboxProperty("Double Sided", bDoubleSided, nullptr))
+                            {
+                                Material->EnableDoubleSided(bDoubleSided);
+                            }
+                        }
+
+                        // Height map
+                        {
+                            bool bEnableHeightMap = IsMaterialFlagSet(EMaterialFlags::EnableHeight);
+
+                            if (EditorWidgets::DrawCheckboxProperty("Height Map", bEnableHeightMap, nullptr, Material->HeightMap.IsValid()))
+                            {
+                                Material->EnableHeightMap(bEnableHeightMap);
+                            }
+                        }
+
+                        // Parallax clipping
+                        {
+                            bool bEnableParallaxClipping = IsMaterialFlagSet(EMaterialFlags::EnableParallaxClipping);
+
+                            if (EditorWidgets::DrawCheckboxProperty("Parallax Clipping", bEnableParallaxClipping, nullptr, Material->HasHeightMap()))
+                            {
+                                Material->EnableParallaxClipping(bEnableParallaxClipping);
+                            }
+                        }
+
+                        // Force forward pass
+                        {
+                            bool bForceForwardPass = IsMaterialFlagSet(EMaterialFlags::ForceForwardPass);
+
+                            if (EditorWidgets::DrawCheckboxProperty("Force Forward Pass", bForceForwardPass, nullptr))
+                            {
+                                Material->ForceForwardPass(bForceForwardPass);
+                            }
+                        }
+
+                        EditorWidgets::EndPropertyTable();
+                    }
+                }
+
+                if (bHasHeightMap)
+                {
+                    if (DrawCollapsingHeader("Parallax", ImGuiTreeNodeFlags_DefaultOpen, false))
+                    {
+                        if (EditorWidgets::BeginPropertyTable("##MeshComponentParallaxTable", LabelColumnWidth, RevertColumnWidth))
+                        {
+                            // Height scale
+                            {
+                                float ParallaxHeightScale = MaterialInfo.ParallaxHeightScale;
+                                const float ParallaxHeightScale0 = 0.03f;
+
+                                if (EditorWidgets::DrawFloatProperty("Height Scale", ParallaxHeightScale, 0.001f, 0.0f, 0.2f, "%.3f", true, &ParallaxHeightScale0))
+                                {
+                                    Material->SetParallaxHeightScale(ParallaxHeightScale);
+                                }
+                            }
+
+                            // Min layers
+                            {
+                                float ParallaxMinLayers = MaterialInfo.ParallaxMinLayers;
+                                const float ParallaxMinLayers0 = 32.0f;
+
+                                if (EditorWidgets::DrawFloatProperty("Min Layers", ParallaxMinLayers, 1.0f, 1.0f, 128.0f, "%.0f", true, &ParallaxMinLayers0))
+                                {
+                                    Material->SetParallaxLayers(ParallaxMinLayers, Material->GetParallaxMaxLayers());
+                                }
+                            }
+
+                            // Max layers
+                            {
+                                float ParallaxMaxLayers = MaterialInfo.ParallaxMaxLayers;
+                                const float ParallaxMaxLayers0 = 64.0f;
+
+                                if (EditorWidgets::DrawFloatProperty("Max Layers", ParallaxMaxLayers, 1.0f, 1.0f, 256.0f, "%.0f", true, &ParallaxMaxLayers0))
+                                {
+                                    Material->SetParallaxLayers(Material->GetParallaxMinLayers(), ParallaxMaxLayers);
+                                }
+                            }
+
+                            EditorWidgets::EndPropertyTable();
                         }
                     }
-
-                    // Roughness
-                    {
-                        float Roughness = MaterialInfo.Roughness;
-                        const float Roughness0 = 0.0f;
-
-                        if (EditorWidgets::DrawFloatProperty("Roughness", Roughness, 0.01f, 0.01f, 1.0f, "%.2f", true, &Roughness0))
-                        {
-                            MeshComponent->GetMaterial()->SetRoughness(Roughness);
-                        }
-                    }
-
-                    // Metallic
-                    {
-                        float Metallic = MaterialInfo.Metallic;
-                        const float Metallic0 = 0.0f;
-
-                        if (EditorWidgets::DrawFloatProperty("Metallic", Metallic, 0.01f, 0.01f, 1.0f, "%.2f", true, &Metallic0))
-                        {
-                            MeshComponent->GetMaterial()->SetMetallic(Metallic);
-                        }
-                    }
-
-                    // AO
-                    {
-                        float AO = MaterialInfo.AmbientOcclusion;
-                        const float AO0 = 1.0f;
-                        
-                        if (EditorWidgets::DrawFloatProperty("AO", AO, 0.01f, 0.01f, 1.0f, "%.2f", true, &AO0))
-                        {
-                            MeshComponent->GetMaterial()->SetAmbientOcclusion(AO);
-                        }
-                    }
-
-                    // Parallax height scale
-                    if (MeshComponent->GetMaterial()->HasHeightMap())
-                    {
-                        float ParallaxHeightScale = MaterialInfo.ParallaxHeightScale;
-                        const float ParallaxHeightScale0 = 0.03f;
-
-                        if (EditorWidgets::DrawFloatProperty("Parallax Height Scale", ParallaxHeightScale, 0.001f, 0.0f, 0.2f, "%.3f", true, &ParallaxHeightScale0))
-                        {
-                            MeshComponent->GetMaterial()->SetParallaxHeightScale(ParallaxHeightScale);
-                        }
-
-                        float ParallaxMinLayers = MaterialInfo.ParallaxMinLayers;
-                        const float ParallaxMinLayers0 = 32.0f;
-
-                        if (EditorWidgets::DrawFloatProperty("Parallax Min Layers", ParallaxMinLayers, 1.0f, 1.0f, 128.0f, "%.0f", true, &ParallaxMinLayers0))
-                        {
-                            MeshComponent->GetMaterial()->SetParallaxLayers(ParallaxMinLayers, MeshComponent->GetMaterial()->GetParallaxMaxLayers());
-                        }
-
-                        float ParallaxMaxLayers = MaterialInfo.ParallaxMaxLayers;
-                        const float ParallaxMaxLayers0 = 64.0f;
-
-                        if (EditorWidgets::DrawFloatProperty("Parallax Max Layers", ParallaxMaxLayers, 1.0f, 1.0f, 256.0f, "%.0f", true, &ParallaxMaxLayers0))
-                        {
-                            MeshComponent->GetMaterial()->SetParallaxLayers(MeshComponent->GetMaterial()->GetParallaxMinLayers(), ParallaxMaxLayers);
-                        }
-                    }
-
-                    EditorWidgets::EndPropertyTable();
                 }
             }
         }

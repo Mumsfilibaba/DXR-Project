@@ -92,5 +92,6 @@ private:
     float                    PanSpeed;
     float                    ZoomSpeed;
     float                    DragDollySpeed;
+    float                    SpeedAdjustRate;
     bool                     bCameraCutPending;
 };

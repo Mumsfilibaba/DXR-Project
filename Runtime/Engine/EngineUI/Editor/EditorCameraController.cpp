@@ -23,6 +23,7 @@ FEditorCameraController::FEditorCameraController()
     , PanSpeed(0.002f)
     , ZoomSpeed(0.15f)
     , DragDollySpeed(0.033f)
+    , SpeedAdjustRate(0.05f)
     , bCameraCutPending(true)
 {
     CameraActor = NewObject<FCameraActor>();
@@ -338,14 +339,13 @@ void FEditorCameraController::HandleMouse(float DeltaTime, const FEditorCameraIn
 
     if (Input.WheelDelta != 0.0f)
     {
-        if (Input.bRightMouseDown)
+        if (Input.bAltDown)
         {
-            const float Multiplier = 1.0f + Math::Abs(Input.WheelDelta) * 0.1f;
-            SetMoveSpeed(MoveSpeed * (Input.WheelDelta > 0.0f ? Multiplier : (1.0f / Multiplier)));
+            Dolly(Input.WheelDelta);
         }
         else
         {
-            Dolly(Input.WheelDelta);
+            SetMoveSpeed(MoveSpeed * Math::Exp(Input.WheelDelta * SpeedAdjustRate));
         }
     }
 }

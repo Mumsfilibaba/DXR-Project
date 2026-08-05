@@ -205,6 +205,16 @@ public:
     }
 
     /**
+     * @brief Removes the component of this vector that lies along another vector, then normalizes the result.
+     * @param Other The vector to make this vector orthogonal to.
+     * @return A unit vector orthogonal to Other, or a zero vector when the two are parallel.
+     */
+    FORCEINLINE Vector3 GetOrthonormalTo(const Vector3& Other) const noexcept
+    {
+        return (*this - ProjectOn(Other)).GetNormalized();
+    }
+
+    /**
      * @brief Reflects this vector around a normal vector.
      * @param Normal The normal vector to reflect around (should be normalized).
      * @return The reflected vector.

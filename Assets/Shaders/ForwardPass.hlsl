@@ -6,9 +6,14 @@
 #include "Shadows/CascadeStructs.hlsli"
 #include "Shadows/ShadowHelpers.hlsli"
 #include "ParallaxMapping.hlsli"
+#include "TangentSpace.hlsli"
 
 #ifndef BINDLESS_FORWARD_PASS
     #define BINDLESS_FORWARD_PASS (0)
+#endif
+
+#ifndef ENABLE_PARALLAX_MAPPING
+    #define ENABLE_PARALLAX_MAPPING (0)
 #endif
 
 #if BINDLESS_FORWARD_PASS
@@ -69,7 +74,10 @@ TextureCubeArray<float> PointLightShadowMaps  : register(t4);
     Texture2D<float4> AlbedoTex       : register(t5);
     Texture2D<float4> NormalTex       : register(t6);
     Texture2D<float3> MaterialMap     : register(t7);
-    Texture2D<float>  HeightMap       : register(t8);
+
+    #if ENABLE_PARALLAX_MAPPING
+        Texture2D<float> HeightMap : register(t8);
+    #endif
 #endif
 
 // ------------------------------------------------------------------------------------------------
@@ -80,51 +88,29 @@ struct FVSInput
 {
     float3 Position : POSITION0;
     float3 Normal   : NORMAL0;
-    float3 Tangent  : TANGENT0;
+    float4 Tangent  : TANGENT0;
     float2 TexCoord : TEXCOORD0;
 };
 
 struct FVSOutput
 {
-    float3 WorldPosition   : POSITION0;
-    float3 Normal          : NORMAL0;
-    float3 Tangent         : TANGENT0;
-    float3 Bitangent       : BITANGENT0;
-    float2 TexCoord        : TEXCOORD0;
-    float3 TangentViewPos  : TANGENTVIEWPOS0;
-    float3 TangentPosition : TANGENTPOSITION0;
-    float4 Position        : SV_Position;
+    float3 WorldPosition : POSITION0;
+    float3 Normal        : NORMAL0;
+    float4 Tangent       : TANGENT0;
+    float2 TexCoord      : TEXCOORD0;
+    float4 Position      : SV_Position;
 };
 
 FVSOutput VSMain(FVSInput Input)
 {
     FVSOutput Output;
-
-    // Normal
-    float3 Normal = normalize(TransformDirectionInvT(PerObjectBuffer, Input.Normal));
-
-    // Tangent
-    float3 Tangent = normalize(TransformDirectionInvT(PerObjectBuffer, Input.Tangent));
-    Tangent = normalize(Tangent - dot(Tangent, Normal) * Normal);
-
-    // Bitangent
-    float3 Bitangent = normalize(cross(Tangent, Normal));
-
-    Output.Normal    = Normal;
-    Output.Tangent   = Tangent;
-    Output.Bitangent = Bitangent;
-
+    Output.Normal   = TransformDirectionInvT(PerObjectBuffer, Input.Normal);
+    Output.Tangent  = float4(TransformDirectionWS(PerObjectBuffer, Input.Tangent.xyz), Input.Tangent.w * PerObjectBuffer.DeterminantSign);
     Output.TexCoord = Input.TexCoord;
 
     const float3 WorldPosition3 = TransformPositionWS(PerObjectBuffer, Input.Position);
     Output.Position      = mul(float4(WorldPosition3, 1.0), CameraBuffer.ViewProjection);
     Output.WorldPosition = WorldPosition3;
-
-    float3x3 TangentSpace = float3x3(Tangent, Bitangent, Normal);
-    TangentSpace          = transpose(TangentSpace);
-    
-    Output.TangentViewPos  = mul(CameraBuffer.PositionWS, TangentSpace);
-    Output.TangentPosition = mul(WorldPosition3, TangentSpace);
 
     return Output;
 }
@@ -135,29 +121,33 @@ FVSOutput VSMain(FVSInput Input)
 
 struct FPSInput
 {
-    float3 WorldPosition   : POSITION0;
-    float3 Normal          : NORMAL0;
-    float3 Tangent         : TANGENT0;
-    float3 Bitangent       : BITANGENT0;
-    float2 TexCoord        : TEXCOORD0;
-    float3 TangentViewPos  : TANGENTVIEWPOS0;
-    float3 TangentPosition : TANGENTPOSITION0;
-    bool   bIsFrontFace    : SV_IsFrontFace;
+    float3 WorldPosition : POSITION0;
+    float3 Normal        : NORMAL0;
+    float4 Tangent       : TANGENT0;
+    float2 TexCoord      : TEXCOORD0;
+    bool   bIsFrontFace  : SV_IsFrontFace;
 };
 
 float4 PSMain(FPSInput Input) : SV_Target0
 {
     const FMaterial MaterialData = Materials[PerObjectBuffer.MaterialIndex];
 
-    float2 TexCoords = Input.TexCoord;
+    float2 TexCoords     = Input.TexCoord;
+    float3 SurfaceNormal = Input.Normal;
+    float  TangentSign   = Input.Tangent.w;
 
-#if 0 
-    if (MaterialData.EnableHeight != 0)
+    if (!Input.bIsFrontFace)
     {
-        const float2 TexCoordsDx = ddx(TexCoords);
-        const float2 TexCoordsDy = ddy(TexCoords);
+        SurfaceNormal = -SurfaceNormal;
+        TangentSign   = -TangentSign;
+    }
 
-        float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
+#if ENABLE_PARALLAX_MAPPING
+    {
+        const float2   TexCoordsDx    = ddx(TexCoords);
+        const float2   TexCoordsDy    = ddy(TexCoords);
+        const float3x3 WorldToTangent = CreateWorldToTangent(SurfaceNormal, Input.Tangent.xyz, TangentSign);
+        const float3   ViewDir        = normalize(mul(WorldToTangent, CameraBuffer.PositionWS - Input.WorldPosition));
 
         bool bParallaxDiscard = false;
     #if BINDLESS_FORWARD_PASS
@@ -165,10 +155,12 @@ float4 PSMain(FPSInput Input) : SV_Target0
     #else
         TexCoords = ParallaxMapUV(HeightMap, MaterialSampler, TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, MaterialData.ParallaxHeightScale, MaterialData.ParallaxMinLayers, MaterialData.ParallaxMaxLayers, bParallaxDiscard);
     #endif
+    #if ENABLE_PARALLAX_CLIPPING
         if (bParallaxDiscard)
         {
             discard;
         }
+    #endif
     }
 #endif
 
@@ -187,23 +179,15 @@ float4 PSMain(FPSInput Input) : SV_Target0
     const float3 WorldPosition = Input.WorldPosition;
     const float3 V             = normalize(CameraBuffer.PositionWS - WorldPosition);
 
-    float3 N = normalize(Input.Normal);
-    if (!Input.bIsFrontFace)
-    {
-        N = -N;
-    }
-
 #if BINDLESS_FORWARD_PASS
     float3 SampledNormal = GetNormalBindless(MaterialData).Sample(GetMaterialSamplerBindless(MaterialData), TexCoords).rgb;
 #else
     float3 SampledNormal = NormalTex.Sample(MaterialSampler, TexCoords).rgb;
 #endif
-    SampledNormal        = UnpackNormal(SampledNormal);
-    
-    float3 Tangent   = normalize(Input.Tangent);
-    float3 Bitangent = normalize(Input.Bitangent);
-    float3 Normal    = normalize(N);
-    N = ApplyNormalMapping(SampledNormal, Normal, Tangent, Bitangent);
+    SampledNormal = UnpackNormal(SampledNormal);
+    SampledNormal = ApplyNormalMapAxis(SampledNormal, IsNormalMapPositiveY(MaterialData));
+
+    float3 N = DecodeTangentNormal(SampledNormal, SurfaceNormal, Input.Tangent.xyz, TangentSign);
 
     // Sample packed materialparam texture (R=AO, G=Roughness, B=Metallic)
 #if BINDLESS_FORWARD_PASS

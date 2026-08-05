@@ -33,4 +33,8 @@
     constexpr bool IsEnumFlagSet(EnumType EnumMask, EnumType EnumFlag) noexcept \
     { \
         return UnderlyingTypeValue((EnumMask) & (EnumFlag)) != 0; \
+    } \
+    inline EnumType& SetEnumFlag(EnumType& EnumMask, EnumType EnumFlag, bool bEnabled) noexcept \
+    { \
+        return bEnabled ? (EnumMask |= EnumFlag) : (EnumMask &= ~EnumFlag); \
     }

@@ -2,6 +2,7 @@
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
+#include "Core/Templates/Utility/EnumOperators.h"
 #include "RHI/RHITypes.h"
 #include "RendererCore/CameraSnapshot.h"
 #include "RendererCore/Interfaces/IScene.h"
@@ -34,14 +35,27 @@ struct FSceneRenderView
         Count,
     };
 
-    IScene*         Scene              = nullptr;
-    FRHITexture*    RenderTarget       = nullptr;
-    EDebugView      DebugView          = EDebugView::None;
-    EDebugView      SecondaryDebugView = EDebugView::None;
-    FCameraSnapshot CameraSnapshot     = {};
-    bool            bHasCamera         = false;
-    bool            bCameraCut         = false;
+    enum class EDebugViewChannel : int32
+    {
+        None  = 0,
+        Red   = FLAG(0),
+        Green = FLAG(1),
+        Blue  = FLAG(2),
+        Alpha = FLAG(3),
+        All   = Red | Green | Blue | Alpha,
+    };
+
+    IScene*           Scene                = nullptr;
+    FRHITexture*      RenderTarget         = nullptr;
+    EDebugView        DebugView            = EDebugView::None;
+    EDebugView        SecondaryDebugView   = EDebugView::None;
+    EDebugViewChannel DebugViewChannelMask = EDebugViewChannel::All;
+    FCameraSnapshot   CameraSnapshot       = {};
+    bool              bHasCamera           = false;
+    bool              bCameraCut           = false;
 };
+
+ENUM_CLASS_OPERATORS(FSceneRenderView::EDebugViewChannel);
 
 struct FSceneRenderPacket
 {

@@ -50,6 +50,7 @@ void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const F
     if (Material->HasHeightMap())
     {
         ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(1)");
+        ShaderDefines.Emplace("ENABLE_PARALLAX_CLIPPING", Material->HasParallaxClipping() ? "(1)" : "(0)");
     }
     else
     {
@@ -65,6 +66,7 @@ void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const F
         ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
     }
 
+    ShaderDefines.Emplace("ENABLE_DOUBLE_SIDED", Material->IsDoubleSided() ? "(1)" : "(0)");
     ShaderDefines.Emplace("BINDLESS_PRE_PASS", bBindless ? "(1)" : "(0)");
 
     const EShaderModel TargetShaderModel = bBindless ? EShaderModel::SM_6_6 : EShaderModel::SM_6_2;
@@ -78,6 +80,7 @@ void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const F
 
     FGraphicsPipelineStateInstance NewPipelineInstance;
     NewPipelineInstance.VertexShader = RHI::CreateVertexShader(ShaderCode);
+
     if (!NewPipelineInstance.VertexShader)
     {
         DEBUG_BREAK();
@@ -126,6 +129,7 @@ void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const F
 
     FRHIBlendStateDesc BlendStateDesc;
     NewPipelineInstance.BlendState = RHI::CreateBlendState(BlendStateDesc);
+
     if (!NewPipelineInstance.BlendState)
     {
         DEBUG_BREAK();
@@ -183,9 +187,7 @@ void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const F
     }
     else
     {
-        const String DebugName = String::CreateFormatted("Editor NoJitter Depth PSO%s %d",
-            bBindless ? " [Bindless]" : "",
-            MaterialFlags);
+        const String DebugName = String::CreateFormatted("Editor NoJitter Depth PSO%s %d", bBindless ? " [Bindless]" : "", MaterialFlags);
         NewPipelineInstance.PipelineState->SetDebugName(DebugName);
     }
 
@@ -204,11 +206,12 @@ bool FEditorNoJitterDepthPass::CreateResources(FFrameResources& FrameResources, 
         return true;
     }
 
-    const ETextureUsageFlags Usage = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture;
-    const FClearValue        DepthClearValue(RendererTextureFormats::DepthBufferFormat, 1.0f, 0);
+    const ETextureUsageFlags Usage           = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture;
+    const FClearValue        DepthClearValue = FClearValue(RendererTextureFormats::DepthBufferFormat, 1.0f, 0);
 
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(RendererTextureFormats::DepthBufferFormat, Width, Height, 1, 1, Usage, DepthClearValue);
     FrameResources.EditorNoJitterDepth = RHI::CreateTexture(TextureDesc, ERHIResourceState::PixelShaderResource);
+
     if (!FrameResources.EditorNoJitterDepth)
     {
         return false;
@@ -272,6 +275,12 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
 
         CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
+        // The parallax march reads the camera position in the pixel shader, so it needs the camera buffer as well.
+        if (Material->HasHeightMap())
+        {
+            CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+        }
+
         if (Material->HasAlphaMask() || Material->HasHeightMap())
         {
             if (Material->HasHeightMap())
@@ -328,8 +337,9 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
             }
 
             CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat); 
-  
+
             StaticMesh->PerObjectBuffer.MaterialIndex = Material->GetBufferIndex();
+
             CommandList.UpdateBuffer(FrameResources.PerObjectBuffer.Get(), FBufferRegion(0, sizeof(FPerObjectHLSL)), &StaticMesh->PerObjectBuffer);
             CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.PerObjectBuffer.Get(), 1);
 
@@ -376,6 +386,7 @@ void FEditorSelectionIDPass::PreparePipelineState(FMaterial* Material, const FFr
     if (Material->HasHeightMap())
     {
         ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(1)");
+        ShaderDefines.Emplace("ENABLE_PARALLAX_CLIPPING", Material->HasParallaxClipping() ? "(1)" : "(0)");
     }
     else
     {
@@ -390,6 +401,8 @@ void FEditorSelectionIDPass::PreparePipelineState(FMaterial* Material, const FFr
     {
         ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
     }
+
+    ShaderDefines.Emplace("ENABLE_DOUBLE_SIDED", Material->IsDoubleSided() ? "(1)" : "(0)");
 
     FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, ShaderDefines);
     if (!FShaderCompiler::Get().CompileFromFile("Shaders/EditorSelectionID.hlsl", CompileInfo, ShaderCode))
@@ -601,6 +614,8 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
 
         if (Material->HasHeightMap())
         {
+            CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+
             CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
             CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), FrameResources.MaterialDataBufferSRV.Get(), 2);
         }

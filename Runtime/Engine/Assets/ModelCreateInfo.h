@@ -58,9 +58,10 @@ struct ENGINE_API FMeshCreateInfo
     void CalculateHardNormals();
     void CalculateSoftNormals();
     void CalculateTangents();
+    void CalculateTangentSigns();
+    void SplitTangentSeams();
 
     void ValidateTangents();
-
     void ReverseHandedness();
     void InvertAxisX();
 

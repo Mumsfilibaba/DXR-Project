@@ -147,6 +147,8 @@ struct ENGINE_API EditorWidgets
     static void DrawTextProperty(const CHAR* Label, const CHAR* ValueText);
     static void DrawReadOnlyFloat3Property(const CHAR* Label, const Vector3& Value);
 
+    static void DrawTextureProperty(const CHAR* Label, ImTextureID Texture, float PreviewSize = 48.0f);
+
     static bool DrawColor3Property(const CHAR* Label, float* InOutColor, const float* InRevertColor, bool bEnabled, ImGuiColorEditFlags Flags);
  
     static FORCEINLINE bool DrawColor3Property(const CHAR* Label, FFloatColor& InOutColor, const FFloatColor& InRevertColor, bool bEnabled = true, ImGuiColorEditFlags Flags = ImGuiColorEditFlags_None)

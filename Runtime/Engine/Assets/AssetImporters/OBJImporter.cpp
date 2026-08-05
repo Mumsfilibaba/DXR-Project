@@ -162,18 +162,17 @@ bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
             SubMeshInfo.VertexCount = MeshCreateInfo.Vertices.Size() - SubMeshInfo.BaseVertex;
             SubMeshInfo.IndexCount  = MeshCreateInfo.Indices.Size() - SubMeshInfo.StartIndex;
             MeshCreateInfo.SubMeshes.Add(SubMeshInfo);
+        }
 
-            // Calculate tangents and create mesh
-            MeshCreateInfo.CalculateTangents();
+        MeshCreateInfo.CalculateTangents();
 
-            if (Shape.name.empty())
-            {
-                MeshCreateInfo.Name = String::CreateFormatted("%s_%d", *FilenameWithoutPath, ShapeIndex);
-            }
-            else
-            {
-                MeshCreateInfo.Name = Shape.name.c_str();
-            }
+        if (Shape.name.empty())
+        {
+            MeshCreateInfo.Name = String::CreateFormatted("%s_%d", *FilenameWithoutPath, ShapeIndex);
+        }
+        else
+        {
+            MeshCreateInfo.Name = Shape.name.c_str();
         }
 
         OutModelInfo.Meshes.Add(Move(MeshCreateInfo));

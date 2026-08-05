@@ -9,12 +9,14 @@
 
 enum class EMaterialFlags : int32
 {
-    None                = 0,       // No flags
-    EnableHeight        = FLAG(0), // Enable HeightMaps (Parallax Occlusion Mapping)
-    EnableAlpha         = FLAG(1), // Enable Alpha Textures (alpha in AlbedoMap.a)
-    EnableNormalMapping = FLAG(2), // Enable Normal Mapping
-    DoubleSided         = FLAG(5), // The Material should be rendered without culling
-    ForceForwardPass    = FLAG(6), // This material should be rendered in the ForwardPass
+    None                    = 0,       // No flags
+    EnableHeight            = FLAG(0), // Enable HeightMaps (Parallax Occlusion Mapping)
+    EnableAlpha             = FLAG(1), // Enable Alpha Textures (alpha in AlbedoMap.a)
+    EnableNormalMapping     = FLAG(2), // Enable Normal Mapping
+    EnableParallaxClipping  = FLAG(3), // Discard where the parallax offset leaves the UV tile.
+    NormalMapPositiveY      = FLAG(4), // The NormalMap is authored green-up (+Y, "OpenGL") rather than green-down (-Y, "DirectX")
+    DoubleSided             = FLAG(5), // The Material should be rendered without culling
+    ForceForwardPass        = FLAG(6), // This material should be rendered in the ForwardPass
 };
 
 ENUM_CLASS_OPERATORS(EMaterialFlags);
@@ -44,6 +46,16 @@ struct FMaterialInfo
     EMaterialFlags MaterialFlags;
 };
 
+// Mirrored by the NORMAL_MAP_FLAG_* defines in Assets/Shaders/Structs.hlsli
+enum class ENormalMapFlags : uint32
+{
+    None      = 0,
+    Enabled   = (1u << 0), // A real normal map is bound, rather than the fallback flat one
+    PositiveY = (1u << 1), // Green has to be flipped on the way in to reach the engine's basis
+};
+
+ENUM_CLASS_OPERATORS(ENormalMapFlags);
+
 struct FMaterialHLSL
 {
     // 0-16 
@@ -65,7 +77,7 @@ struct FMaterialHLSL
     // 48-64
     FRHIDescriptorHandle HeightHandle   = {};
     FRHIDescriptorHandle SamplerHandle  = {};
-    uint32               NormalMapFlags = 0;
+    ENormalMapFlags      NormalMapFlags = ENormalMapFlags::None;
     uint32               Padding0       = 0;
 };
 
@@ -91,29 +103,35 @@ public:
     
     void EnableHeightMap(bool bEnableHeightMap);
     void EnableAlphaMask(bool bEnableAlphaMask);
+    void EnableNormalMapping(bool bEnableNormalMapping);
+    void SetNormalMapPositiveY(bool bPositiveY);
     void EnableDoubleSided(bool bIsDoubleSided);
+    void EnableParallaxClipping(bool bEnableParallaxClipping);
 
     void SetParallaxHeightScale(float InParallaxHeightScale);
     void SetParallaxLayers(float InParallaxMinLayers, float InParallaxMaxLayers);
     
     void SetName(const String& InName);
 
-    bool HasAlphaMask() const { return (MaterialInfo.MaterialFlags & EMaterialFlags::EnableAlpha) != EMaterialFlags::None; }
-    bool HasHeightMap() const { return (MaterialInfo.MaterialFlags & EMaterialFlags::EnableHeight) != EMaterialFlags::None; }
-    bool HasNormalMap() const { return (MaterialInfo.MaterialFlags & EMaterialFlags::EnableNormalMapping) != EMaterialFlags::None; }
-    bool IsDoubleSided() const { return (MaterialInfo.MaterialFlags & EMaterialFlags::DoubleSided) != EMaterialFlags::None; }
-    
-    bool ShouldRenderInForwardPass() const { return (MaterialInfo.MaterialFlags & EMaterialFlags::ForceForwardPass) != EMaterialFlags::None; }
+    bool HasAlphaMask()         const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::EnableAlpha); }
+    bool HasHeightMap()         const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::EnableHeight) && HeightMap.IsValid(); }
+    bool HasNormalMap()         const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::EnableNormalMapping); }
+    bool IsNormalMapPositiveY() const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::NormalMapPositiveY); }
+    bool HasParallaxClipping()  const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::EnableParallaxClipping) && HasHeightMap(); }
+
+    bool IsDoubleSided() const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::DoubleSided); }
+
+    bool ShouldRenderInForwardPass() const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::ForceForwardPass); }
     bool ShouldRenderInPrePass()     const { return !ShouldRenderInForwardPass(); }
 
-    bool SupportsPixelDiscard() const { return (MaterialInfo.MaterialFlags & (EMaterialFlags::EnableHeight | EMaterialFlags::EnableAlpha)) != EMaterialFlags::None; }
+    bool SupportsPixelDiscard() const { return HasHeightMap() || HasAlphaMask(); }
 
     FRHISamplerState* GetMaterialSampler() const
     {
         return Sampler.Get();
     }
 
-    // Index into the global shared material StructuredBuffer (assigned each frame by the renderer).
+    // Index into the global shared material StructuredBuffer.
     int32 GetBufferIndex() const
     {
         return BufferIndex;
@@ -126,7 +144,13 @@ public:
 
     EMaterialFlags GetMaterialFlags() const 
     {
-        return MaterialInfo.MaterialFlags;
+        EMaterialFlags Flags = MaterialInfo.MaterialFlags;
+        if (!HeightMap.IsValid())
+        {
+            Flags &= ~(EMaterialFlags::EnableHeight | EMaterialFlags::EnableParallaxClipping);
+        }
+
+        return Flags;
     }
 
     const FMaterialInfo& GetMaterialInfo() const
@@ -155,10 +179,10 @@ public:
     }
 
 public:
-    FRHITextureRef AlbedoMap;    // RGB=BaseColor, A=Opacity
-    FRHITextureRef NormalMap;    // Tangent-space normal (BC5)
-    FRHITextureRef MaterialMap;  // R=AO, G=Roughness, B=Metallic (BC1)
-    FRHITextureRef HeightMap;    // Parallax height (BC4)
+    FRHITextureRef AlbedoMap;   // RGB=BaseColor, A=Opacity
+    FRHITextureRef NormalMap;   // Tangent-space normal (BC5)
+    FRHITextureRef MaterialMap; // R=AO, G=Roughness, B=Metallic (BC1)
+    FRHITextureRef HeightMap;   // Parallax height (BC4)
 
 private:
     String              Name;

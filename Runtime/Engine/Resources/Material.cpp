@@ -68,34 +68,37 @@ void FMaterial::SetMaterialFlags(EMaterialFlags InFlags, bool bUpdateOnly)
 
 void FMaterial::ForceForwardPass(bool bForceForwardRender)
 {
-    if (bForceForwardRender)
-    {
-        MaterialInfo.MaterialFlags |= EMaterialFlags::ForceForwardPass;
-    }
+    SetEnumFlag(MaterialInfo.MaterialFlags, EMaterialFlags::ForceForwardPass, bForceForwardRender);
 }
 
 void FMaterial::EnableHeightMap(bool bEnableHeightMap)
 {
-    if (bEnableHeightMap)
-    {
-        MaterialInfo.MaterialFlags |= EMaterialFlags::EnableHeight;
-    }
+    SetEnumFlag(MaterialInfo.MaterialFlags, EMaterialFlags::EnableHeight, bEnableHeightMap);
 }
 
 void FMaterial::EnableAlphaMask(bool bEnableAlphaMask)
 {
-    if (bEnableAlphaMask)
-    {
-        MaterialInfo.MaterialFlags |= EMaterialFlags::EnableAlpha;
-    }
+    SetEnumFlag(MaterialInfo.MaterialFlags, EMaterialFlags::EnableAlpha, bEnableAlphaMask);
+}
+
+void FMaterial::EnableNormalMapping(bool bEnableNormalMapping)
+{
+    SetEnumFlag(MaterialInfo.MaterialFlags, EMaterialFlags::EnableNormalMapping, bEnableNormalMapping);
+}
+
+void FMaterial::SetNormalMapPositiveY(bool bPositiveY)
+{
+    SetEnumFlag(MaterialInfo.MaterialFlags, EMaterialFlags::NormalMapPositiveY, bPositiveY);
 }
 
 void FMaterial::EnableDoubleSided(bool bIsDoubleSided)
 {
-    if (bIsDoubleSided)
-    {
-        MaterialInfo.MaterialFlags |= EMaterialFlags::DoubleSided;
-    }
+    SetEnumFlag(MaterialInfo.MaterialFlags, EMaterialFlags::DoubleSided, bIsDoubleSided);
+}
+
+void FMaterial::EnableParallaxClipping(bool bEnableParallaxClipping)
+{
+    SetEnumFlag(MaterialInfo.MaterialFlags, EMaterialFlags::EnableParallaxClipping, bEnableParallaxClipping);
 }
 
 void FMaterial::SetParallaxHeightScale(float InParallaxHeightScale)

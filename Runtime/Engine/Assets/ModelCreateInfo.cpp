@@ -4,6 +4,46 @@
 #include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Assets/ModelCreateInfo.h"
+#include "Core/Containers/Map.h"
+
+// Below this a tangent is treated as collapsed, since normalizing it in a shader would produce NaN.
+constexpr float TangentLengthSquaredEpsilon = 1.0e-12f;
+
+struct FTriangleTangentFrame
+{
+    Vector3 Tangent;
+    Vector3 Bitangent;
+    float   Determinant;
+};
+
+// Lengyel's method
+static FTriangleTangentFrame ComputeTriangleTangentFrame(const FVertex& Vertex0, const FVertex& Vertex1, const FVertex& Vertex2)
+{
+    const Vector3 Edge1    = Vertex1.Position - Vertex0.Position;
+    const Vector3 Edge2    = Vertex2.Position - Vertex0.Position;
+    const Vector2 DeltaUV1 = Vertex1.TexCoord - Vertex0.TexCoord;
+    const Vector2 DeltaUV2 = Vertex2.TexCoord - Vertex0.TexCoord;
+
+    FTriangleTangentFrame Frame;
+    Frame.Determinant = DeltaUV1.X * DeltaUV2.Y - DeltaUV2.X * DeltaUV1.Y;
+
+    const float RcpDenom = Math::Abs<float>(Frame.Determinant) > 0.0f ? 1.0f / Frame.Determinant : 0.0f;
+
+    Frame.Tangent.X = RcpDenom * (DeltaUV2.Y * Edge1.X - DeltaUV1.Y * Edge2.X);
+    Frame.Tangent.Y = RcpDenom * (DeltaUV2.Y * Edge1.Y - DeltaUV1.Y * Edge2.Y);
+    Frame.Tangent.Z = RcpDenom * (DeltaUV2.Y * Edge1.Z - DeltaUV1.Y * Edge2.Z);
+
+    Frame.Bitangent.X = RcpDenom * (DeltaUV1.X * Edge2.X - DeltaUV2.X * Edge1.X);
+    Frame.Bitangent.Y = RcpDenom * (DeltaUV1.X * Edge2.Y - DeltaUV2.X * Edge1.Y);
+    Frame.Bitangent.Z = RcpDenom * (DeltaUV1.X * Edge2.Z - DeltaUV2.X * Edge1.Z);
+
+    return Frame;
+}
+
+static float DeriveTangentSign(const Vector3& Normal, const Vector3& Tangent, const Vector3& AccumulatedBitangent)
+{
+    return (Normal.CrossProduct(Tangent).DotProduct(AccumulatedBitangent) < 0.0f) ? -1.0f : 1.0f;
+}
 
 TArray<uint16> FMeshCreateInfo::GetSmallIndices() const
 {
@@ -25,6 +65,7 @@ void FMeshCreateInfo::Optimize(uint32 StartVertex)
 
     uint32 k = 0;
     uint32 j = 0;
+
     for (uint32 i = StartVertex; i < VertexCount; i++)
     {
         for (j = 0; j < VertexCount; j++)
@@ -106,11 +147,6 @@ void FMeshCreateInfo::CalculateSoftNormals()
     }
 }
 
-static Vector3 GetOrthoNormal(const Vector3& Tangent, const Vector3& Normal)
-{
-    return (Tangent - (Tangent.DotProduct(Normal)) * Normal).GetNormalized();
-};
-
 void FMeshCreateInfo::CalculateTangents()
 {
     CHECK(Indices.Size() % 3 == 0);
@@ -118,46 +154,143 @@ void FMeshCreateInfo::CalculateTangents()
     TArray<Vector3> TangentAccumulation;
     TangentAccumulation.Resize(Vertices.Size());
 
+    TArray<Vector3> BitangentAccumulation;
+    BitangentAccumulation.Resize(Vertices.Size());
+
     for (int32 i = 0; i < Indices.Size(); i += 3)
     {
         const uint32 Index0 = Indices[i + 0];
         const uint32 Index1 = Indices[i + 1];
         const uint32 Index2 = Indices[i + 2];
 
-        Vector3 Edge1    = Vertices[Index1].Position - Vertices[Index0].Position;
-        Vector3 Edge2    = Vertices[Index2].Position - Vertices[Index0].Position;
-        Vector2 DeltaUV1 = Vertices[Index1].TexCoord - Vertices[Index0].TexCoord;
-        Vector2 DeltaUV2 = Vertices[Index2].TexCoord - Vertices[Index0].TexCoord;
+        const FTriangleTangentFrame Frame = ComputeTriangleTangentFrame(Vertices[Index0], Vertices[Index1], Vertices[Index2]);
+        TangentAccumulation[Index0] += Frame.Tangent;
+        TangentAccumulation[Index1] += Frame.Tangent;
+        TangentAccumulation[Index2] += Frame.Tangent;
 
-        const float Denom    = DeltaUV1.X * DeltaUV2.Y - DeltaUV2.X * DeltaUV1.Y;
-        const float RcpDenom = Math::Abs<float>(Denom) > 0.0f ? 1.0f / Denom : 0.0f;
-
-        Vector3 Tangent;
-        Tangent.X = RcpDenom * (DeltaUV2.Y * Edge1.X - DeltaUV1.Y * Edge2.X);
-        Tangent.Y = RcpDenom * (DeltaUV2.Y * Edge1.Y - DeltaUV1.Y * Edge2.Y);
-        Tangent.Z = RcpDenom * (DeltaUV2.Y * Edge1.Z - DeltaUV1.Y * Edge2.Z);
-
-        TangentAccumulation[Index0] += Tangent;
-        TangentAccumulation[Index1] += Tangent;
-        TangentAccumulation[Index2] += Tangent;
+        BitangentAccumulation[Index0] += Frame.Bitangent;
+        BitangentAccumulation[Index1] += Frame.Bitangent;
+        BitangentAccumulation[Index2] += Frame.Bitangent;
     }
 
     for (int32 i = 0; i < Vertices.Size(); i++)
     {
-        Vector3 Tangent = TangentAccumulation[i].Normalize();
-        Vertices[i].Tangent = GetOrthoNormal(Tangent, Vertices[i].Normal);
+        const Vector3 Tangent = TangentAccumulation[i].GetNormalized();
+        Vertices[i].Tangent     = Tangent.GetOrthonormalTo(Vertices[i].Normal);
+        Vertices[i].TangentSign = DeriveTangentSign(Vertices[i].Normal, Vertices[i].Tangent, BitangentAccumulation[i]);
+    }
+
+    ValidateTangents();
+    SplitTangentSeams();
+}
+
+void FMeshCreateInfo::CalculateTangentSigns()
+{
+    CHECK(Indices.Size() % 3 == 0);
+
+    TArray<Vector3> BitangentAccumulation;
+    BitangentAccumulation.Resize(Vertices.Size());
+
+    for (int32 i = 0; i < Indices.Size(); i += 3)
+    {
+        const uint32 Index0 = Indices[i + 0];
+        const uint32 Index1 = Indices[i + 1];
+        const uint32 Index2 = Indices[i + 2];
+
+        const FTriangleTangentFrame Frame = ComputeTriangleTangentFrame(Vertices[Index0], Vertices[Index1], Vertices[Index2]);
+        BitangentAccumulation[Index0] += Frame.Bitangent;
+        BitangentAccumulation[Index1] += Frame.Bitangent;
+        BitangentAccumulation[Index2] += Frame.Bitangent;
+    }
+
+    for (int32 i = 0; i < Vertices.Size(); i++)
+    {
+        Vertices[i].TangentSign = DeriveTangentSign(Vertices[i].Normal, Vertices[i].Tangent, BitangentAccumulation[i]);
+    }
+
+    ValidateTangents();
+    SplitTangentSeams();
+}
+
+void FMeshCreateInfo::SplitTangentSeams()
+{
+    CHECK(Indices.Size() % 3 == 0);
+
+    const int32 OriginalVertexCount = Vertices.Size();
+
+    TMap<uint32, uint32> SplitLookup;
+    for (int32 i = 0; i < Indices.Size(); i += 3)
+    {
+        const FTriangleTangentFrame Frame = ComputeTriangleTangentFrame(Vertices[Indices[i + 0]], Vertices[Indices[i + 1]], Vertices[Indices[i + 2]]);
+        if (Frame.Determinant == 0.0f)
+        {
+            continue;
+        }
+
+        const float TriangleSign = (Frame.Determinant < 0.0f) ? -1.0f : 1.0f;
+
+        for (int32 Corner = 0; Corner < 3; Corner++)
+        {
+            const uint32 VertexIndex = Indices[i + Corner];
+            if (Vertices[VertexIndex].TangentSign == TriangleSign)
+            {
+                continue;
+            }
+
+            // The sign is binary, so one duplicate per original vertex covers every triangle that disagrees with it.
+            if (uint32* ExistingSplit = SplitLookup.Find(VertexIndex))
+            {
+                Indices[i + Corner] = *ExistingSplit;
+                continue;
+            }
+
+            FVertex SplitVertex = Vertices[VertexIndex];
+            SplitVertex.TangentSign = TriangleSign;
+
+            const uint32 SplitIndex = static_cast<uint32>(Vertices.Size());
+            Vertices.Add(SplitVertex);
+
+            SplitLookup[VertexIndex] = SplitIndex;
+            Indices[i + Corner]      = SplitIndex;
+        }
+    }
+
+    // Duplicates are appended to the end of the shared vertex array and reached through absolute indices, so they
+    // do not belong to whichever submesh happens to be last. Rebuild every range from the indices it actually uses.
+    const int32 NumSplitVertices = Vertices.Size() - OriginalVertexCount;
+    if (NumSplitVertices > 0)
+    {
+        for (FSubMeshInfo& SubMesh : SubMeshes)
+        {
+            if (SubMesh.IndexCount == 0)
+            {
+                continue;
+            }
+
+            uint32 MinIndex = ~uint32(0);
+            uint32 MaxIndex = 0;
+
+            const int32 IndexBegin = static_cast<int32>(SubMesh.StartIndex);
+            const int32 IndexEnd   = IndexBegin + static_cast<int32>(SubMesh.IndexCount);
+            for (int32 i = IndexBegin; i < IndexEnd; i++)
+            {
+                MinIndex = (Indices[i] < MinIndex) ? Indices[i] : MinIndex;
+                MaxIndex = (Indices[i] > MaxIndex) ? Indices[i] : MaxIndex;
+            }
+
+            SubMesh.BaseVertex  = MinIndex;
+            SubMesh.VertexCount = (MaxIndex - MinIndex) + 1;
+        }
     }
 }
 
 void FMeshCreateInfo::ValidateTangents()
 {
+    // A tangent that collapsed to zero is as unusable as a NaN.
     const auto IsValid = [](const Vector3& Vector)
     {
-        return !Vector.ContainsInfinity() && !Vector.ContainsNaN();
+        return !Vector.ContainsInfinity() && !Vector.ContainsNaN() && Vector.GetLengthSquared() > TangentLengthSquaredEpsilon;
     };
-
-    TArray<Vector3> TangentAccumulation;
-    TangentAccumulation.Resize(Vertices.Size());
 
     // Loop over each triangle (assumes indices are in groups of 3).
     for (int32 i = 0; i < Indices.Size(); i += 3)
@@ -170,7 +303,6 @@ void FMeshCreateInfo::ValidateTangents()
         FVertex& Vertex2 = Vertices[Index1];
         FVertex& Vertex3 = Vertices[Index2];
 
-        // Use Vector3's member functions to check for infinity or NaN in normals and tangents.
         const bool bValid1 = IsValid(Vertex1.Tangent);
         const bool bValid2 = IsValid(Vertex2.Tangent);
         const bool bValid3 = IsValid(Vertex3.Tangent);
@@ -183,28 +315,27 @@ void FMeshCreateInfo::ValidateTangents()
             Vector3 Edge2 = Vertex3.Position - Vertex1.Position;
 
             // Calculate the triangle's normal using the cross product, then normalize.
-            Vector3 TriangleNormal = Edge1.CrossProduct(Edge2).GetNormalized();
-
-            // Select an arbitrary vector not parallel to the normal.
-            Vector3 Arbitrary = (Math::Abs<float>(TriangleNormal.X) < 0.9f) ? Vector3(1.0f, 0.0f, 0.0f) : Vector3(0.0f, 1.0f, 0.0f);
-
-            // Compute a tangent vector perpendicular to the normal.
+            Vector3 TriangleNormal  = Edge1.CrossProduct(Edge2).GetNormalized();
+            Vector3 Arbitrary       = (Math::Abs<float>(TriangleNormal.X) < 0.9f) ? Vector3(1.0f, 0.0f, 0.0f) : Vector3(0.0f, 1.0f, 0.0f);
             Vector3 TriangleTangent = TriangleNormal.CrossProduct(Arbitrary).GetNormalized();
 
             // Update vertices with invalid tangent.
             if (!bValid1)
             {
-                Vertex1.Tangent = GetOrthoNormal(TriangleTangent, TriangleNormal);
+                Vertex1.Tangent     = TriangleTangent.GetOrthonormalTo(TriangleNormal);
+                Vertex1.TangentSign = 1.0f;
             }
 
             if (!bValid2)
             {
-                Vertex2.Tangent = GetOrthoNormal(TriangleTangent, TriangleNormal);
+                Vertex2.Tangent     = TriangleTangent.GetOrthonormalTo(TriangleNormal);
+                Vertex2.TangentSign = 1.0f;
             }
 
             if (!bValid3)
             {
-                Vertex3.Tangent = GetOrthoNormal(TriangleTangent, TriangleNormal);
+                Vertex3.Tangent     = TriangleTangent.GetOrthonormalTo(TriangleNormal);
+                Vertex3.TangentSign = 1.0f;
             }
         }
     }
@@ -222,12 +353,12 @@ void FMeshCreateInfo::ReverseHandedness()
         Indices[i + 2]   = TempIndex;
     }
 
-    // Invert Z for positions, normals, and tangents
     for (int32 i = 0; i < Vertices.Size(); ++i)
     {
-        Vertices[i].Position.Z *= -1.0f;
-        Vertices[i].Normal.Z   *= -1.0f;
-        Vertices[i].Tangent.Z  *= -1.0f;
+        Vertices[i].Position.Z  *= -1.0f;
+        Vertices[i].Normal.Z    *= -1.0f;
+        Vertices[i].Tangent.Z   *= -1.0f;
+        Vertices[i].TangentSign *= -1.0f;
     }
 }
 
@@ -241,12 +372,12 @@ void FMeshCreateInfo::InvertAxisX()
         Indices[i + 2] = TempIndex;
     }
 
-    // Invert X for positions, normals, and tangents
     for (int32 i = 0; i < Vertices.Size(); ++i)
     {
-        Vertices[i].Position.X *= -1.0f;
-        Vertices[i].Normal.X   *= -1.0f;
-        Vertices[i].Tangent.X  *= -1.0f;
+        Vertices[i].Position.X  *= -1.0f;
+        Vertices[i].Normal.X    *= -1.0f;
+        Vertices[i].Tangent.X   *= -1.0f;
+        Vertices[i].TangentSign *= -1.0f;
     }
 }
 
@@ -258,6 +389,7 @@ void FMeshCreateInfo::Subdivide(uint32 Subdivisions)
     }
 
     FVertex TempVertices[3];
+
     uint32 IndexCount     = 0;
     uint32 VertexCount    = 0;
     uint32 OldVertexCount = 0;
@@ -324,17 +456,25 @@ void FMeshCreateInfo::Subdivide(uint32 Subdivisions)
             Vector3 Tangent1 = Vertices[Indices[j + 1]].Tangent;
             Vector3 Tangent2 = Vertices[Indices[j + 2]].Tangent;
 
-            Vector3 Tangent = Tangent0 + Tangent1;
-            Tangent = Tangent * 0.5f;
+            Vector3 Tangent         = Tangent0 + Tangent1;
+            Tangent                 = Tangent * 0.5f;
             TempVertices[0].Tangent = Tangent.GetNormalized();
 
-            Tangent = Tangent0 + Tangent2;
-            Tangent = Tangent * 0.5f;
+            Tangent                 = Tangent0 + Tangent2;
+            Tangent                 = Tangent * 0.5f;
             TempVertices[1].Tangent = Tangent.GetNormalized();
 
-            Tangent = Tangent1 + Tangent2;
-            Tangent = Tangent * 0.5f;
+            Tangent                 = Tangent1 + Tangent2;
+            Tangent                 = Tangent * 0.5f;
             TempVertices[2].Tangent = Tangent.GetNormalized();
+
+            const float TangentSign0 = Vertices[Indices[j]].TangentSign;
+            const float TangentSign1 = Vertices[Indices[j + 1]].TangentSign;
+            const float TangentSign2 = Vertices[Indices[j + 2]].TangentSign;
+
+            TempVertices[0].TangentSign = TangentSign0 == TangentSign1 ? TangentSign0 : 1.0f;
+            TempVertices[1].TangentSign = TangentSign0 == TangentSign2 ? TangentSign0 : 1.0f;
+            TempVertices[2].TangentSign = TangentSign1 == TangentSign2 ? TangentSign1 : 1.0f;
 
             // Add the new Vertices
             Vertices.Emplace(TempVertices[0]);
@@ -395,10 +535,10 @@ FMeshCreateInfo MeshFactory::CreateCube(float Width, float Height, float Depth) 
         { Vector3(HalfWidth, -HalfHeight,  HalfDepth), Vector3(1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(1.0f, 1.0f) },
 
         // LEFT FACE
-        { Vector3(-HalfWidth,  HalfHeight, -HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(0.0f, 1.0f) },
-        { Vector3(-HalfWidth,  HalfHeight,  HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(1.0f, 1.0f) },
-        { Vector3(-HalfWidth, -HalfHeight, -HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(0.0f, 0.0f) },
-        { Vector3(-HalfWidth, -HalfHeight,  HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(1.0f, 0.0f) },
+        { Vector3(-HalfWidth,  HalfHeight, -HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(0.0f, 0.0f) },
+        { Vector3(-HalfWidth,  HalfHeight,  HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(1.0f, 0.0f) },
+        { Vector3(-HalfWidth, -HalfHeight, -HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(0.0f, 1.0f) },
+        { Vector3(-HalfWidth, -HalfHeight,  HalfDepth), Vector3(-1.0f,  0.0f,  0.0f), Vector3(0.0f,  0.0f, 1.0f), Vector2(1.0f, 1.0f) },
 
         // TOP FACE
         { Vector3(-HalfWidth,  HalfHeight,  HalfDepth), Vector3(0.0f,  1.0f,  0.0f), Vector3(1.0f,  0.0f, 0.0f), Vector2(0.0f, 0.0f) },
@@ -440,6 +580,7 @@ FMeshCreateInfo MeshFactory::CreateCube(float Width, float Height, float Depth) 
         21, 23, 22
     };
 
+    CubeInfo.CalculateTangents();
     return CubeInfo;
 }
 
@@ -492,6 +633,7 @@ FMeshCreateInfo MeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
     PlaneInfo.Vertices.Shrink();
     PlaneInfo.Indices.Shrink();
 
+    PlaneInfo.CalculateTangents();
     return PlaneInfo;
 }
 
@@ -1108,6 +1250,8 @@ FMeshCreateInfo MeshFactory::CreatePyramid(float Width, float Depth, float Heigh
     MeshInfo.Indices.Add(Side3Index + 0);
     MeshInfo.Indices.Add(Side3Index + 2);
     MeshInfo.Indices.Add(Side3Index + 1);
+
+    MeshInfo.CalculateTangents();
     return MeshInfo;
 }
 
@@ -1150,7 +1294,7 @@ FMeshCreateInfo MeshFactory::CreateCylinder(uint32 Sides, float Radius, float He
 
     // Generate bottom cap vertices
     const uint32 BottomCenterIndex = static_cast<uint32>(MeshInfo.Vertices.Size());
-    
+
     FVertex BottomCenterVertex;
     BottomCenterVertex.Position = Vector3(0.0f, -HalfHeight, 0.0f);
     BottomCenterVertex.Normal   = Vector3(0.0f, -1.0f, 0.0f);
@@ -1211,6 +1355,7 @@ FMeshCreateInfo MeshFactory::CreateCylinder(uint32 Sides, float Radius, float He
     // Generate indices for the bottom cap
     const uint32 BottomStartIndex        = BottomCenterIndex + 1;
     const uint32 BottomCenterVertexIndex = BottomCenterIndex;
+
     for (uint32 i = 0; i < Sides; ++i)
     {
         const uint32 CurrIndex = BottomStartIndex + i;
@@ -1238,5 +1383,6 @@ FMeshCreateInfo MeshFactory::CreateCylinder(uint32 Sides, float Radius, float He
         MeshInfo.Indices.Add(BottomNext);
     }
 
+    MeshInfo.CalculateTangents();
     return MeshInfo;
 }

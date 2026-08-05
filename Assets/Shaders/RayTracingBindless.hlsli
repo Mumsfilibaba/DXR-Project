@@ -10,21 +10,16 @@ struct FRayTracingSceneConstants
     uint NumSkyLightMips;  // Mip count of the specular cube-map
     uint NumPointLights;   // Number of valid entries in the point-light arrays
     uint Padding0;
-
     // 16-32
     float3 SunDirection;
     float  SunPadding0;
-
     // 32-48
     float3 SunColor;
     float  SunPadding1;
-    
     // 48-176
     float4 PointLightPositionRadius[RT_MAX_POINT_LIGHTS];
-
     // 176-304
     float4 PointLightColor[RT_MAX_POINT_LIGHTS];
-
     // 304-320
     float  ReflectionMaxRayDistance;
     float  ReflectionMirrorRoughnessThreshold;
@@ -35,10 +30,10 @@ struct FRayTracingSceneConstants
 struct FRayTracingGeometryIndices
 {
     // 0-16
-    uint VerticesHandle;
-    uint IndicesHandle;
-    uint MaterialIndex;
-    uint Padding0;
+    uint  VerticesHandle;
+    uint  IndicesHandle;
+    uint  MaterialIndex;
+    float DeterminantSign;
 };
 
 #endif

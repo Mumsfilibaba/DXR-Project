@@ -2,6 +2,7 @@
 #include "TransformHelpers.hlsli"
 #include "Constants.hlsli"
 #include "ParallaxMapping.hlsli"
+#include "TangentSpace.hlsli"
 
 #ifndef ENABLE_PARALLAX_MAPPING
     #define ENABLE_PARALLAX_MAPPING (0)
@@ -9,6 +10,10 @@
 
 #ifndef ENABLE_ALPHA_MASK
     #define ENABLE_ALPHA_MASK (0)
+#endif
+
+#ifndef ENABLE_DOUBLE_SIDED
+    #define ENABLE_DOUBLE_SIDED (0)
 #endif
 
 #ifndef USE_UNJITTERED_CAMERA
@@ -52,7 +57,7 @@ struct FVSInput
 
 #if ENABLE_PARALLAX_MAPPING
     float3 Normal  : NORMAL0;
-    float3 Tangent : TANGENT0;
+    float4 Tangent : TANGENT0;
 #endif
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
@@ -67,8 +72,9 @@ struct FVSOutput
 #endif
 
 #if ENABLE_PARALLAX_MAPPING 
-    float3 TangentViewPos  : TANGENTVIEWPOS0;
-    float3 TangentPosition : TANGENTPOSITION0;
+    float3 Normal     : NORMAL0;
+    float4 Tangent    : TANGENT0;
+    float3 PositionWS : POSITION0;
 #endif
 
     float4 Position : SV_Position;
@@ -89,19 +95,9 @@ FVSOutput VSMain(FVSInput Input)
 #endif
 
 #if ENABLE_PARALLAX_MAPPING
-    // Normal
-    float3 Normal = normalize(TransformDirectionInvT(PerObjectBuffer, Input.Normal));
-
-    // Tangent
-    float3 Tangent = normalize(TransformDirectionInvT(PerObjectBuffer, Input.Tangent));
-    Tangent = normalize(Tangent - dot(Tangent, Normal) * Normal);
-
-    // Bitangent
-    float3 Bitangent = normalize(cross(Tangent, Normal));
-
-    const float3x3 TangentSpace = float3x3(Tangent, Bitangent, Normal);
-    Output.TangentViewPos  = mul(TangentSpace, CameraBuffer.PositionWS);
-    Output.TangentPosition = mul(TangentSpace, PositionWS3);
+    Output.Normal     = TransformDirectionInvT(PerObjectBuffer, Input.Normal);
+    Output.Tangent    = float4(TransformDirectionWS(PerObjectBuffer, Input.Tangent.xyz), Input.Tangent.w * PerObjectBuffer.DeterminantSign);
+    Output.PositionWS = PositionWS3;
 #endif
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
@@ -120,8 +116,13 @@ struct FPSInput
     float2 TexCoord : TEXCOORD0;
     
 #if ENABLE_PARALLAX_MAPPING 
-    float3 TangentViewPos  : TANGENTVIEWPOS0;
-    float3 TangentPosition : TANGENTPOSITION0;
+    float3 Normal     : NORMAL0;
+    float4 Tangent    : TANGENT0;
+    float3 PositionWS : POSITION0;
+
+    #if ENABLE_DOUBLE_SIDED
+        bool bIsFrontFace : SV_IsFrontFace;
+    #endif
 #endif
 };
 
@@ -135,10 +136,21 @@ void PSMain(FPSInput Input)
 #endif
 
 #if ENABLE_PARALLAX_MAPPING
-    const float2 TexCoordsDx = ddx(TexCoords);
-    const float2 TexCoordsDy = ddy(TexCoords);
+    float3 SurfaceNormal = Input.Normal;
+    float  TangentSign   = Input.Tangent.w;
 
-    float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
+    #if ENABLE_DOUBLE_SIDED
+        if (!Input.bIsFrontFace)
+        {
+            SurfaceNormal = -SurfaceNormal;
+            TangentSign   = -TangentSign;
+        }
+    #endif
+
+    const float2   TexCoordsDx    = ddx(TexCoords);
+    const float2   TexCoordsDy    = ddy(TexCoords);
+    const float3x3 WorldToTangent = CreateWorldToTangent(SurfaceNormal, Input.Tangent.xyz, TangentSign);
+    const float3   ViewDir        = normalize(mul(WorldToTangent, CameraBuffer.PositionWS - Input.PositionWS));
 
     bool bParallaxDiscard = false;
 #if BINDLESS_PRE_PASS
@@ -146,10 +158,12 @@ void PSMain(FPSInput Input)
 #else
     TexCoords = ParallaxMapUV(HeightTex, MaterialSampler, TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, MaterialData.ParallaxHeightScale, MaterialData.ParallaxMinLayers, MaterialData.ParallaxMaxLayers, bParallaxDiscard);
 #endif
-    if (bParallaxDiscard)
-    {
-        discard;
-    }
+    #if ENABLE_PARALLAX_CLIPPING
+        if (bParallaxDiscard)
+        {
+            discard;
+        }
+    #endif
 #endif
 
 #if ENABLE_ALPHA_MASK
