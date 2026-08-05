@@ -86,6 +86,7 @@ public:
     using FPlatformMath::CeilToInt;
     using FPlatformMath::Exp;
     using FPlatformMath::Log2;
+    using FPlatformMath::Pow;
     using FPlatformMath::Asin;
     using FPlatformMath::Acos;
     using FPlatformMath::Atan2;

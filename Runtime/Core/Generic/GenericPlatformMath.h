@@ -121,6 +121,16 @@ struct FGenericPlatformMath
         return ::log2(Value);
     }
 
+    static FORCEINLINE float Pow(float Base, float Exponent)
+    {
+        return ::powf(Base, Exponent);
+    }
+
+    static FORCEINLINE double Pow(double Base, double Exponent)
+    {
+        return ::pow(Base, Exponent);
+    }
+
     static FORCEINLINE float Asin(float Value)
     {
         return ::asinf(Value);

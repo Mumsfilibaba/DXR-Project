@@ -4,6 +4,10 @@
 struct FWindowsPlatformString final : public FGenericPlatformString
 {
     using FGenericPlatformString::Strtoui64;
+    using FGenericPlatformString::Atoi;
+    using FGenericPlatformString::Atoi64;
+    using FGenericPlatformString::Atof;
+    using FGenericPlatformString::Atod;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CHAR

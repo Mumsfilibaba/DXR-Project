@@ -16,6 +16,7 @@
 #include "JsonParserTests.h"
 #include "JsonWriterTests.h"
 #include "JsonArchiveTests.h"
+#include "BlueNoiseGeneratorTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -49,6 +50,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("JsonParser", JsonParser_Test());
     RUN_TEST("JsonWriter", JsonWriter_Test());
     RUN_TEST("JsonArchive", JsonArchive_Test());
+    RUN_TEST("BlueNoiseGenerator", BlueNoiseGenerator_Test());
 
     FTaskGraph::Release();
     FThreadManager::Release();
