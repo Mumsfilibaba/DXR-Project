@@ -12,7 +12,6 @@ newoption
     trigger = "platform",
     value = "CurrentPlatform",
     description = "Specify the platform to use",
-    default = "Windows",
     allowed = { 
         { "Windows" },
         { "macOS" }
@@ -30,6 +29,18 @@ newoption
     trigger = "buildsuffix",
     value = "Name",
     description = "Isolate generated projects and build artifacts under a named suffix"
+}
+
+newoption
+{
+    trigger = "architecture",
+    value = "TargetArchitecture",
+    description = "Specify the CPU architecture to build for",
+    allowed = {
+        { "x86_64" },
+        { "arm64" },
+        { "universal" }
+    },
 }
 
 local function NormalizePlatform(PlatformName)
@@ -78,7 +89,7 @@ end
 do
     local Explicit = NormalizePlatform(_OPTIONS["platform"])
     if not Explicit then
-        _OPTIONS["platform"] = GuessPlatformFromHost() or GuessPlatformFromAction() or "Windows"
+        _OPTIONS["platform"] = GuessPlatformFromAction() or GuessPlatformFromHost() or "Windows"
         LogHighlight("No --platform specified. Defaulting to '%s'.", _OPTIONS["platform"])
     else
         _OPTIONS["platform"] = Explicit
@@ -105,9 +116,99 @@ function IsPlatformMac()
     return _OPTIONS["platform"] == "macOS"
 end
 
--- Global settings
-if type(gSettings) ~= "table" then
-    gSettings = {}
+-- Architecture Management
+local function NormalizeArchitecture(ArchitectureName)
+    if not ArchitectureName then
+        return nil
+    end
+
+    ArchitectureName = tostring(ArchitectureName):lower()
+    if ArchitectureName == "x86_64" or ArchitectureName == "x64" or ArchitectureName == "amd64" then
+        return "x86_64"
+    end
+    if ArchitectureName == "arm64" or ArchitectureName == "aarch64" then
+        return "arm64"
+    end
+    if ArchitectureName == "universal" then
+        return "universal"
+    end
+
+    return ArchitectureName
+end
+
+-- The bundled premake exposes no os.hostarch(), so uname is the only source here.
+local function GuessArchitectureFromHost()
+    if os.host() ~= "macosx" then
+        return "x86_64"
+    end
+
+    local Machine = os.outputof("uname -m")
+    return NormalizeArchitecture(Machine and Machine:gsub("%s+", "")) or "x86_64"
+end
+
+-- Initialize default if missing or unrecognized
+do
+    local Explicit = NormalizeArchitecture(_OPTIONS["architecture"])
+    if not Explicit then
+        _OPTIONS["architecture"] = GuessArchitectureFromHost()
+        LogHighlight("No --architecture specified. Defaulting to '%s'.", _OPTIONS["architecture"])
+    else
+        _OPTIONS["architecture"] = Explicit
+    end
+
+    -- A fat binary is a Mach-O concept; nothing equivalent exists on Windows.
+    if _OPTIONS["architecture"] == "universal" and not IsPlatformMac() then
+        LogWarning("--architecture=universal is macOS only. Falling back to 'x86_64'.")
+        _OPTIONS["architecture"] = "x86_64"
+    end
+end
+
+function GetTargetArchitecture()
+    return _OPTIONS["architecture"]
+end
+
+function IsArchitectureUniversal()
+    return GetTargetArchitecture() == "universal"
+end
+
+-- True when at least one slice is an x86 target, so x86-only compiler settings still apply
+function TargetsX86()
+    local Architecture = GetTargetArchitecture()
+    return Architecture == "x86_64" or Architecture == "universal"
+end
+
+local gArchitecturePlatformNames =
+{
+    ["x86_64"]    = "x64",
+    ["arm64"]     = "ARM64",
+    ["universal"] = "Universal",
+}
+
+function GetArchitecturePlatformName()
+    return gArchitecturePlatformNames[GetTargetArchitecture()]
+end
+
+local gPremakeArchitectures =
+{
+    ["x86_64"]    = "x86_64",
+    ["arm64"]     = "ARM64",
+    ["universal"] = "universal",
+}
+
+function GetPremakeArchitecture()
+    return gPremakeArchitectures[GetTargetArchitecture()]
+end
+
+-- The xcode4 exporter emits no ARCHS of its own, so this list alone decides the slices built
+local gXcodeArchitectures =
+{
+    ["x86_64"]    = { "x86_64" },
+    ["arm64"]     = { "arm64" },
+    ["universal"] = { "x86_64", "arm64" },
+}
+
+function GetXcodeArchs()
+    return gXcodeArchitectures[GetTargetArchitecture()]
 end
 
 -- Monolithic Build Management
@@ -119,6 +220,38 @@ function IsBuildMonolithic()
     end
 
     return gIsMonolithic
+end
+
+ELayout = 
+{ 
+    Modular    = 1, 
+    Monolithic = 2 
+}
+
+function GetGeneratedLayouts()
+    if IsBuildMonolithic() then
+        return { ELayout.Monolithic }
+    end
+
+    if BuildWithVisualStudio() then
+        return { ELayout.Modular, ELayout.Monolithic }
+    end
+
+    return { ELayout.Modular }
+end
+
+-- True when the configuration names decide the layout rather than the generation
+function HasPerConfigurationLayouts()
+    return #GetGeneratedLayouts() > 1
+end
+
+function GetLayoutConfigFilter(Layout)
+    if not HasPerConfigurationLayouts() then
+        return nil
+    end
+
+    return Layout == ELayout.Monolithic and "configurations:*Monolithic*"
+                                         or "configurations:not *Monolithic*"
 end
 
 -- Warning Management
@@ -299,6 +432,13 @@ end
 
 -- Output path for the binaries inside the buildfolder
 local gOutputConfigPath = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}"
+
+-- When the configuration name carries the layout there is nothing to disambiguate. When it
+-- does not, a monolithic generation would otherwise overwrite the modular binaries.
+if IsBuildMonolithic() and not HasPerConfigurationLayouts() then
+    gOutputConfigPath = gOutputConfigPath .. "-Monolithic"
+end
+
 if GetBuildSuffix() then
     gOutputConfigPath = gOutputConfigPath .. "-" .. GetBuildSuffix()
 end
@@ -310,11 +450,6 @@ end
 -- Make path relative to the thirdparty folder
 function CreateExternalThirdpartyPath(ThirdpartyPath)
     return JoinPath(GetExternalThirdPartyFolderPath(), ThirdpartyPath)
-end
-
--- Deep copy a table
-function Copy(Source)
-    return table.deepcopy(Source)
 end
 
 -- Shared local helpers
@@ -362,16 +497,16 @@ function AddModuleSearchRoot(RootPath)
     local AbsolutePath = ResolveAbsolutePath(RootPath)
     local NewKey       = NormalizePath(AbsolutePath)
 
+    local StoredPath = CreateOsPath(AbsolutePath):gsub("[/\\]+$", "")
+
     -- Dedupe using normalized keys (case/sep-insensitive)
-    for ExistingIndex, ExistingRoot in ipairs(gModuleSearchRoots) do
+    for _, ExistingRoot in ipairs(gModuleSearchRoots) do
         if NormalizePath(ExistingRoot) == NewKey then
             LogHighlightWarning("AddModuleSearchRoot: '%s' already present. Skipping ..", StoredPath)
             return
         end
     end
 
-    -- Store a cleaned absolute path but keep original casing (helpful on macOS)
-    local StoredPath = CreateOsPath(AbsolutePath):gsub("[/\\]+$", "")
     table.insert(gModuleSearchRoots, StoredPath)
 
     -- new root -> enable (re)scan
@@ -445,7 +580,7 @@ local function SearchForModuleFiles()
 
     table.sort(gModuleSearchRoots, function(ValA, ValB) return ValA:lower() < ValB:lower() end)
 
-    for RootIndex, RootDirectory in ipairs(gModuleSearchRoots) do
+    for _, RootDirectory in ipairs(gModuleSearchRoots) do
         if os.isdir(RootDirectory) then
             LogHighlight("Scanning directory '%s'", CreateOsPath(RootDirectory))
             ScanModuleRoot(RootDirectory)
@@ -479,16 +614,16 @@ function AddTargetSearchRoot(RootPath)
     local AbsolutePath = ResolveAbsolutePath(RootPath)
     local NewKey       = NormalizePath(AbsolutePath)
 
+    local StoredPath = CreateOsPath(AbsolutePath):gsub("[/\\]+$", "")
+
     -- Dedupe using normalized keys (case/sep-insensitive)
-    for ExistingIndex, ExistingRoot in ipairs(gTargetSearchRoots) do
+    for _, ExistingRoot in ipairs(gTargetSearchRoots) do
         if NormalizePath(ExistingRoot) == NewKey then
             LogHighlightWarning("AddTargetSearchRoot: '%s' already present. Skipping ..", StoredPath)
             return
         end
     end
 
-    -- Store a cleaned absolute path but keep original casing (helpful on macOS)
-    local StoredPath = CreateOsPath(AbsolutePath):gsub("[/\\]+$", "")
     table.insert(gTargetSearchRoots, StoredPath)
 
     -- new root -> enable (re)scan
@@ -539,9 +674,9 @@ local function ScanTargetRoot(RootDirectory)
     }
 
     local Seen = {}
-    for PatternIndex, Pattern in ipairs(Patterns) do
+    for _, Pattern in ipairs(Patterns) do
         local Files = os.matchfiles(Pattern)
-        for FileIndex, ScriptPath in ipairs(Files) do
+        for _, ScriptPath in ipairs(Files) do
             local Key = string.lower(path.translate(ScriptPath, '/'))
             if not Seen[Key] then
                 Seen[Key] = true
@@ -561,7 +696,7 @@ local function SearchForTargetFiles()
 
     table.sort(gTargetSearchRoots, function(ValA, ValB) return ValA:lower() < ValB:lower() end)
 
-    for RootIndex, RootDir in ipairs(gTargetSearchRoots) do
+    for _, RootDir in ipairs(gTargetSearchRoots) do
         if os.isdir(RootDir) then
             LogHighlight("Scanning directory '%s' for targets", CreateOsPath(RootDir))
             ScanTargetRoot(RootDir)

@@ -22,6 +22,12 @@
 #define DEBUG_VIEW_RAY_TRACING_REFLECTIONS_VARIANCE 16
 #define DEBUG_VIEW_RAY_TRACING_REFLECTIONS_HISTORY 17
 
+// Mirrors FSceneRenderView::EDebugViewChannel
+#define DEBUG_VIEW_CHANNEL_RED   1
+#define DEBUG_VIEW_CHANNEL_GREEN 2
+#define DEBUG_VIEW_CHANNEL_BLUE  4
+#define DEBUG_VIEW_CHANNEL_ALPHA 8
+
 Texture2D<float4>     GBufferAlbedo        : register(t0);  // rgb = base color
 Texture2D<float4>     GBufferNormal        : register(t1);  // rgb = world-space normal (packed)
 Texture2D<float4>     GBufferMaterial      : register(t2);  // r   = Roughness, g = Metallic, b = AO
@@ -57,10 +63,31 @@ SHADER_CONSTANT_BLOCK_BEGIN
 
     // 32-48
     int   bIsOutputSceneTarget;
+    int   ChannelMask;
     float MirrorRoughnessThreshold; // Roughness below which the tracer takes a perfect mirror ray
     float MaxHistoryLength;         // Normalizes the history-length view
-    float Padding0;
 SHADER_CONSTANT_BLOCK_END
+
+float3 ApplyChannelMask(float3 Color, float Alpha, int ChannelMask)
+{
+    const bool bRed   = (ChannelMask & DEBUG_VIEW_CHANNEL_RED)   != 0;
+    const bool bGreen = (ChannelMask & DEBUG_VIEW_CHANNEL_GREEN) != 0;
+    const bool bBlue  = (ChannelMask & DEBUG_VIEW_CHANNEL_BLUE)  != 0;
+    const bool bAlpha = (ChannelMask & DEBUG_VIEW_CHANNEL_ALPHA) != 0;
+
+    if (bAlpha && !bRed && !bGreen && !bBlue)
+    {
+        return Alpha.xxx;
+    }
+
+    float3 Result = float3(bRed ? Color.r : 0.0, bGreen ? Color.g : 0.0, bBlue ? Color.b : 0.0);
+    if (bAlpha)
+    {
+        Result *= Alpha;
+    }
+
+    return Result;
+}
 
 float3 VisualizeDepth(float Depth)
 {
@@ -117,6 +144,7 @@ float ComputeViewDepth(float2 TexCoord, float Depth)
 float4 Main(float2 TexCoord : TEXCOORD0) : SV_Target
 {
     float3 Color = 0.0;
+    float  Alpha = 1.0;
 
     const float2 FullTexCoord = TexCoord;
     if (Constants.DebugMode == DEBUG_VIEW_SHADOW_MASK)
@@ -126,7 +154,9 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_Target
     }
     else if (Constants.DebugMode == DEBUG_VIEW_GBUFFER_ALBEDO)
     {
-        Color = GBufferAlbedo.SampleLevel(LinearSampler, FullTexCoord, 0).rgb;
+        const float4 AlbedoSample = GBufferAlbedo.SampleLevel(LinearSampler, FullTexCoord, 0);
+        Color = AlbedoSample.rgb;
+        Alpha = AlbedoSample.a;
     }
     else if (Constants.DebugMode == DEBUG_VIEW_GBUFFER_NORMAL)
     {
@@ -243,6 +273,8 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_Target
     {
         Color = 0.0;
     }
+
+    Color = ApplyChannelMask(Color, Alpha, Constants.ChannelMask);
 
     if (Constants.bIsOutputSceneTarget == 0)
     {

@@ -4,12 +4,14 @@ setlocal EnableExtensions EnableDelayedExpansion
 REM ------------------------------------------------------------------------------------
 REM Args:
 REM   --keepopen : internal flag that means we are already running in the spawned window
-REM   --nopause  : never pause at the end
+REM   --no-pause : never pause at the end (--nopause still accepted)
 REM ------------------------------------------------------------------------------------
 set "KEEP_OPEN=0"
 set "NO_PAUSE=0"
 
 if /I "%~1"=="--keepopen" set "KEEP_OPEN=1"
+if /I "%~1"=="--no-pause" set "NO_PAUSE=1"
+if /I "%~2"=="--no-pause" set "NO_PAUSE=1"
 if /I "%~1"=="--nopause"  set "NO_PAUSE=1"
 if /I "%~2"=="--nopause"  set "NO_PAUSE=1"
 
@@ -93,14 +95,14 @@ call :LogLine "[OK] Git LFS found."
 set GIT_LFS_SKIP_SMUDGE=
 
 echo.
-echo [INFO] Updating Git LFS hooks in repo root...
-call :LogLine "[INFO] Updating Git LFS hooks in repo root..."
+echo [INFO] Installing Git LFS hooks in repo root...
+call :LogLine "[INFO] Installing Git LFS hooks in repo root..."
 
-call :RunAndTee "git lfs update --force"
+call :RunAndTee "git lfs install --local --force"
 if errorlevel 1 (
   echo.
-  echo [ERROR] git lfs update --force failed in repo root.
-  call :LogLine "[ERROR] git lfs update --force failed in repo root."
+  echo [ERROR] git lfs install failed in repo root.
+  call :LogLine "[ERROR] git lfs install failed in repo root."
   goto :Fail
 )
 
@@ -116,8 +118,8 @@ if errorlevel 1 (
 
 REM --- 3) Submodules: LFS update and pull ---
 echo.
-echo [INFO] Updating Git LFS hooks and pulling in submodules...
-call :LogLine "[INFO] Updating Git LFS hooks + pulling in submodules..."
+echo [INFO] Installing Git LFS hooks and pulling in submodules...
+call :LogLine "[INFO] Installing Git LFS hooks + pulling in submodules..."
 
 for /f "tokens=2 delims= " %%P in ('git config -f .gitmodules --get-regexp ^submodule\..*\.path$ 2^>nul') do (
   set /a SUBMODULE_COUNT+=1
@@ -131,11 +133,11 @@ for /f "tokens=2 delims= " %%P in ('git config -f .gitmodules --get-regexp ^subm
   if exist "%%P" (
     pushd "%%P" >nul
 
-    call :RunAndTee "git lfs update --force"
+    call :RunAndTee "git lfs install --local --force"
     if errorlevel 1 (
       popd >nul
-      echo [ERROR] git lfs update --force failed in %%P
-      call :LogLine "[ERROR] git lfs update --force failed in %%P"
+      echo [ERROR] git lfs install failed in %%P
+      call :LogLine "[ERROR] git lfs install failed in %%P"
       goto :Fail
     )
 

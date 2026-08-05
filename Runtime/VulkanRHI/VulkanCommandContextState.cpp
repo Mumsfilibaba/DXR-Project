@@ -940,9 +940,11 @@ void FVulkanCommandContextState::ResumeRenderPass()
 {
     CHECK(IsRenderPassPaused());
 
+    const FVulkanRenderTargetState& RenderTargetState = CommonGraphicsState.RenderTargetState;
+    TransitionRenderPassAttachments(RenderTargetState);
+
     Context.GetBarrierBatcher().FlushBarriers(Context.GetCommandBuffer());
 
-    const FVulkanRenderTargetState& RenderTargetState = CommonGraphicsState.RenderTargetState;
     if (GVulkanUseDynamicRendering)
     {
         VkRenderingAttachmentInfoKHR ColorAttachments[RHI_MAX_RENDER_TARGETS] = {};

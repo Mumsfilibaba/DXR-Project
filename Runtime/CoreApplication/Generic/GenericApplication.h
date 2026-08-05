@@ -31,6 +31,16 @@ enum class EModifierFlag : uint32
 ENUM_CLASS_OPERATORS(EModifierFlag);
 
 /**
+ * @enum EHighPrecisionMouseMode
+ * @brief Selects whether the platform reports absolute cursor positions or relative mouse deltas.
+ */
+enum class EHighPrecisionMouseMode : uint8
+{
+    Disabled = 0,
+    Enabled  = 1,
+};
+
+/**
  * @class FModifierKeyState
  * @brief Encapsulates the state of modifier keys (Ctrl, Alt, Shift, etc.).
  *
@@ -332,13 +342,14 @@ public:
     virtual bool SupportsHighPrecisionMouse() const { return false; }
 
     /**
-     * @brief Enables high-precision mouse events for a specific window, if the platform supports it.
+     * @brief Enables or disables high-precision (relative) mouse events.
      * 
      * By default, returns true but does nothing. Override in platform-specific classes to enable raw input or equivalent.
-     * @param Window The window to enable high-precision mouse input for.
-     * @return True if successfully enabled, false if not supported.
+     * @param Window The window that should receive high-precision mouse input. Only used when enabling.
+     * @param Mode Whether to enter or leave high-precision mode.
+     * @return True if the mode was applied, false if not supported.
      */
-    virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) { return true; }
+    virtual bool SetHighPrecisionMouseMode(const TSharedRef<FGenericWindow>& Window, EHighPrecisionMouseMode Mode) { return true; }
 
     /**
      * @brief Retrieves the current state of modifier keys (Shift, Ctrl, Alt, etc.).

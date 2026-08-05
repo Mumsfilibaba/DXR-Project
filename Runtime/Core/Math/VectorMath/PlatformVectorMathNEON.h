@@ -407,6 +407,12 @@ public:
         return VectorFromUInt(vdupq_n_u32(0x80000000u));
     }
 
+    static FORCEINLINE FFloat128 VECTORCALL VectorMaskXYZ() noexcept
+    {
+        // All bits set in x, y and z; w cleared.
+        return VectorFromUInt(vsetq_lane_u32(0u, vdupq_n_u32(0xFFFFFFFFu), 3));
+    }
+
     static FORCEINLINE FFloat128 VECTORCALL VectorNegate(FFloat128 Vector) noexcept
     {
         return VectorXor(Vector, VectorSignMask());

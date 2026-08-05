@@ -24,12 +24,17 @@ AddTarget("Core-Templates-Tests")
 AddTarget("Core-Benchmarks")
 
 AddTarget("Core-Math-Tests-Scalar")
-AddTarget("Core-Math-Tests-SSE")
-AddTarget("Core-Math-Tests-SSE2")
-AddTarget("Core-Math-Tests-SSE3")
-AddTarget("Core-Math-Tests-SSSE3")
-AddTarget("Core-Math-Tests-SSE4_1")
-AddTarget("Core-Math-Tests-SSE4_2")
+
+if TargetsX86() then
+    AddTarget("Core-Math-Tests-SSE")
+    AddTarget("Core-Math-Tests-SSE2")
+    AddTarget("Core-Math-Tests-SSE3")
+    AddTarget("Core-Math-Tests-SSSE3")
+    AddTarget("Core-Math-Tests-SSE4_1")
+    AddTarget("Core-Math-Tests-SSE4_2")
+else
+    AddTarget("Core-Math-Tests-NEON")
+end
 
 AddTarget("RHI-Tests")
 

@@ -75,7 +75,7 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo, bool bCreateVertexAndIndexSR
     for (int32 Index = 0; Index < VertexCount; Index++)
     {
         const FVertex& Vertex = CreateInfo.Vertices[Index];
-        VertexNormals[Index] = FVertexNormal(Vertex.Normal, Vertex.Tangent);
+        VertexNormals[Index] = FVertexNormal(Vertex.Normal, Vertex.Tangent, Vertex.TangentSign);
     }
 
 	VertexBufferDesc.Stride = sizeof(FVertexNormal);

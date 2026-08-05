@@ -224,8 +224,14 @@ bool FWindowsApplication::SupportsHighPrecisionMouse() const
     return false;
 }
 
-bool FWindowsApplication::EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window)
+bool FWindowsApplication::SetHighPrecisionMouseMode(const TSharedRef<FGenericWindow>& Window, EHighPrecisionMouseMode Mode)
 {
+    if (Mode == EHighPrecisionMouseMode::Disabled)
+    {
+        // RIDEV_REMOVE requires a null hwndTarget, so the window cannot be honored on this path.
+        return UnregisterRawInputDevices();
+    }
+
     TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
     if (WindowsWindow && WindowsWindow->IsValid())
     {

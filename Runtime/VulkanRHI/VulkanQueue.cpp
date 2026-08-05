@@ -537,6 +537,10 @@ void FVulkanCommands::PreExecute()
         CommandBuffer->PipelineStatsQueries.Clear();
     }
 
+#if VULKAN_VALIDATE_IMAGE_LAYOUTS
+    ValidatePendingBarrierOrdering();
+#endif
+
     FVulkanBarrierBatcher BarrierBatcher;
 
     const auto ResolveSourceLayout = [](VkImageLayout Layout)
@@ -701,6 +705,48 @@ void FVulkanCommands::PreExecute()
 }
 
 #if VULKAN_VALIDATE_IMAGE_LAYOUTS
+void FVulkanCommands::ValidatePendingBarrierOrdering()
+{
+    TMap<VkImage, FVulkanImageLayoutValidationEntry> FirstEntries;
+    for (FVulkanCommandBuffer* CommandBuffer : CommandBuffers)
+    {
+        TMap<VkImage, FVulkanImageLayoutValidationEntry>& Entries = CommandBuffer->GetImageLayoutValidationEntries();
+        for (auto It = Entries.CreateIterator(); !It.IsEnd(); ++It)
+        {
+            const VkImage Image = It.GetKey();
+            if (!FirstEntries.Contains(Image))
+            {
+                FirstEntries.FindOrAdd(Image) = It.GetValue();
+            }
+        }
+    }
+
+    for (const FVulkanPendingImageBarrier& Pending : PendingImageBarriers)
+    {
+        if (!Pending.Texture)
+        {
+            continue;
+        }
+
+        const VkImage Image = Pending.Texture->GetVkImage();
+        if (!VULKAN_CHECK_HANDLE(Image))
+        {
+            continue;
+        }
+
+        const FVulkanImageLayoutValidationEntry* Entry = FirstEntries.Find(Image);
+        if (!Entry || !Entry->bWholeImage || Entry->ExpectedEntryLayout == VK_IMAGE_LAYOUT_UNDEFINED)
+        {
+            continue;
+        }
+
+        if (Entry->ExpectedEntryLayout != Pending.DesiredLayout)
+        {
+            ReportImageLayoutDesync(Pending.Texture, "hoisted fixup", Entry->RecordingSite, Entry->ExpectedEntryLayout, Pending.DesiredLayout);
+        }
+    }
+}
+
 void FVulkanCommands::ValidateImageLayouts()
 {
     TMap<VkImage, FVulkanTextureRHI*> ImageToTexture;

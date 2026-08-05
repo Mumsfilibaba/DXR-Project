@@ -17,6 +17,17 @@ static FAutoConsoleVariableRef CVarForwardPassBindless(
     "When true, the forward pass samples per-material textures (Albedo / Normal / Material / Height) and the material sampler via SM 6.6 ResourceDescriptorHeap[] / SamplerDescriptorHeap[] and a per-material indices buffer instead of register bindings. Full-frame SRVs / samplers (sky, integration LUT, shadow maps) remain non-bindless.",
     GForwardPassBindless);
 
+static uint64 MakeForwardPSOKey(bool bBindless, bool bEnableParallax, bool bEnableClipping)
+{
+    int32 Flags = bEnableParallax ? static_cast<int32>(EMaterialFlags::EnableHeight) : 0;
+    if (bEnableClipping)
+    {
+        Flags |= static_cast<int32>(EMaterialFlags::EnableParallaxClipping);
+    }
+
+    return MakeMaterialPSOKey(Flags, bBindless);
+}
+
 FForwardPass::FForwardPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
 {
@@ -27,13 +38,14 @@ FForwardPass::~FForwardPass()
     PipelineStates.Clear();
 }
 
-bool FForwardPass::CompilePipelineState(FFrameResources& FrameResources, bool bBindless)
+bool FForwardPass::CompilePipelineState(FFrameResources& FrameResources, bool bBindless, bool bEnableParallax, bool bEnableClipping)
 {
     TArray<FShaderDefine> Defines =
     {
-        { "ENABLE_PARALLAX_MAPPING", "1" },
-        { "ENABLE_NORMAL_MAPPING",   "1" },
-        { "BINDLESS_FORWARD_PASS", bBindless ? "(1)" : "(0)" },
+        { "ENABLE_PARALLAX_MAPPING",  bEnableParallax ? "(1)" : "(0)" },
+        { "ENABLE_PARALLAX_CLIPPING", bEnableClipping ? "(1)" : "(0)" },
+        { "ENABLE_NORMAL_MAPPING",    "1" },
+        { "BINDLESS_FORWARD_PASS",    bBindless ? "(1)" : "(0)" },
     };
 
     const EShaderModel TargetShaderModel = bBindless ? EShaderModel::SM_6_6 : EShaderModel::SM_6_2;
@@ -126,23 +138,36 @@ bool FForwardPass::CompilePipelineState(FFrameResources& FrameResources, bool bB
         return false;
     }
 
-    const String DebugName = String::CreateFormatted("ForwardPass PipelineState%s", bBindless ? " [Bindless]" : "");
+    const String DebugName = String::CreateFormatted("ForwardPass PipelineState%s%s%s",
+        bEnableParallax ? " [Parallax]" : "",
+        bEnableClipping ? " [Clipping]" : "",
+        bBindless ? " [Bindless]" : "");
     NewInstance.PipelineState->SetDebugName(DebugName);
 
-    PipelineStates.Add(MakeMaterialPSOKey(0, bBindless), Move(NewInstance));
+    PipelineStates.Add(MakeForwardPSOKey(bBindless, bEnableParallax, bEnableClipping), Move(NewInstance));
     return true;
 }
 
 bool FForwardPass::Initialize(FFrameResources& FrameResources)
 {
-    if (!CompilePipelineState(FrameResources, false))
+    struct FVariant
     {
-        return false;
-    }
+        bool bEnableParallax;
+        bool bEnableClipping;
+    };
 
-    if (RHI::bSupportsBindless && !CompilePipelineState(FrameResources, true))
+    const FVariant Variants[] = { { false, false }, { true, false }, { true, true } };
+    for (const FVariant& Variant : Variants)
     {
-        return false;
+        if (!CompilePipelineState(FrameResources, false, Variant.bEnableParallax, Variant.bEnableClipping))
+        {
+            return false;
+        }
+
+        if (RHI::bSupportsBindless && !CompilePipelineState(FrameResources, true, Variant.bEnableParallax, Variant.bEnableClipping))
+        {
+            return false;
+        }
     }
 
     return true;
@@ -179,46 +204,39 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
 
     const bool bBindless = RHI::bSupportsBindless && GForwardPassBindless && FrameResources.MaterialDataBufferSRV.IsValid();
 
-    FGraphicsPipelineStateInstance* PipelineInstance = PipelineStates.Find(MakeMaterialPSOKey(0, bBindless));
-    if (!PipelineInstance)
+    const auto BindFrameResources = [&](FRHIPixelShader* PShader)
     {
-        CommandList.EndRenderPass();
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(FrameResources.ShadowCascades.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource));
-        DEBUG_BREAK();
-        return;
-    }
+        CommandList.SetConstantBuffer(PShader, FrameResources.CameraBuffer.Get(), 0);
+        // TODO: Fix point-light count in shader
+        //CmdList.SetConstantBuffer(PShader, LightSetup.PointLightsBuffer.Get(), 1);
+        //CmdList.SetConstantBuffer(PShader, LightSetup.PointLightsPosRadBuffer.Get(), 2);
+        CommandList.SetConstantBuffer(PShader, FrameResources.ShadowCastingPointLightsBuffer.Get(), 3);
+        CommandList.SetConstantBuffer(PShader, FrameResources.ShadowCastingPointLightsPosRadBuffer.Get(), 4);
+        CommandList.SetConstantBuffer(PShader, FrameResources.DirectionalLightDataBuffer.Get(), 5);
 
-    FRHIVertexShaderRef VShader = PipelineInstance->VertexShader;
-    FRHIPixelShaderRef  PShader = PipelineInstance->PixelShader;
-
-    CommandList.SetGraphicsPipelineState(PipelineInstance->PipelineState.Get());
-
-    CommandList.SetConstantBuffer(PShader.Get(), FrameResources.CameraBuffer.Get(), 0);
-    // TODO: Fix point-light count in shader
-    //CmdList.SetConstantBuffer(PShader.Get(), LightSetup.PointLightsBuffer.Get(), 1);
-    //CmdList.SetConstantBuffer(PShader.Get(), LightSetup.PointLightsPosRadBuffer.Get(), 2);
-    CommandList.SetConstantBuffer(PShader.Get(), FrameResources.ShadowCastingPointLightsBuffer.Get(), 3);
-    CommandList.SetConstantBuffer(PShader.Get(), FrameResources.ShadowCastingPointLightsPosRadBuffer.Get(), 4);
-    CommandList.SetConstantBuffer(PShader.Get(), FrameResources.DirectionalLightDataBuffer.Get(), 5);
-
-    if (Scene)
-    {
-        if (FSceneSkyLight* SkyLight = Scene->GetSkyLight())
+        if (Scene)
         {
-            CommandList.SetShaderResourceView(PShader.Get(), SkyLight->DiffuseCubeMap->GetShaderResourceView(), 0);
-            CommandList.SetShaderResourceView(PShader.Get(), SkyLight->SpecularCubeMap->GetShaderResourceView(), 1);
+            if (FSceneSkyLight* SkyLight = Scene->GetSkyLight())
+            {
+                CommandList.SetShaderResourceView(PShader, SkyLight->DiffuseCubeMap->GetShaderResourceView(), 0);
+                CommandList.SetShaderResourceView(PShader, SkyLight->SpecularCubeMap->GetShaderResourceView(), 1);
+            }
         }
-    }
 
-    CommandList.SetShaderResourceView(PShader.Get(), FrameResources.IntegrationLUT->GetShaderResourceView(), 2);
-    //TODO: Fix directional-light shadows
-    //CmdList.SetShaderResourceView(PShader.Get(), LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 3);
-    CommandList.SetShaderResourceView(PShader.Get(), FrameResources.PointLightShadowMaps->GetShaderResourceView(), 4);
+        CommandList.SetShaderResourceView(PShader, FrameResources.IntegrationLUT->GetShaderResourceView(), 2);
+        //TODO: Fix directional-light shadows
+        //CmdList.SetShaderResourceView(PShader, LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 3);
+        CommandList.SetShaderResourceView(PShader, FrameResources.PointLightShadowMaps->GetShaderResourceView(), 4);
 
-    CommandList.SetSamplerState(PShader.Get(), FrameResources.IntegrationLUTSampler.Get(), 1);
-    CommandList.SetSamplerState(PShader.Get(), FrameResources.LightProbeSampler.Get(), 2);
-    CommandList.SetSamplerState(PShader.Get(), FrameResources.PointLightShadowSampler.Get(), 3);
-    //CmdList.SetSamplerState(PShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 4);
+        CommandList.SetSamplerState(PShader, FrameResources.IntegrationLUTSampler.Get(), 1);
+        CommandList.SetSamplerState(PShader, FrameResources.LightProbeSampler.Get(), 2);
+        CommandList.SetSamplerState(PShader, FrameResources.PointLightShadowSampler.Get(), 3);
+        //CmdList.SetSamplerState(PShader, FrameResources.DirectionalLightShadowSampler.Get(), 4);
+    };
+
+    FGraphicsPipelineStateInstance* PipelineInstance = nullptr;
+    FRHIVertexShaderRef             VShader;
+    FRHIPixelShaderRef              PShader;
 
     for (const FMeshBatch& Batch : Scene->GetCameraView().GetMeshBatches())
     {
@@ -227,7 +245,26 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
         {
             continue;
         }
-        
+
+        const bool bEnableParallax = Material->HasHeightMap();
+
+        FGraphicsPipelineStateInstance* MaterialPipeline = PipelineStates.Find(MakeForwardPSOKey(bBindless, bEnableParallax, Material->HasParallaxClipping()));
+        if (!MaterialPipeline)
+        {
+            DEBUG_BREAK();
+            continue;
+        }
+
+        if (MaterialPipeline != PipelineInstance)
+        {
+            PipelineInstance = MaterialPipeline;
+            VShader          = PipelineInstance->VertexShader;
+            PShader          = PipelineInstance->PixelShader;
+
+            CommandList.SetGraphicsPipelineState(PipelineInstance->PipelineState.Get());
+            BindFrameResources(PShader.Get());
+        }
+
         CommandList.SetShaderResourceView(PShader.Get(), FrameResources.MaterialDataBufferSRV.Get(), 9);
 
         if (bBindless)
@@ -239,7 +276,11 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
             CommandList.SetShaderResourceView(PShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 5);
             CommandList.SetShaderResourceView(PShader.Get(), Material->NormalMap->GetShaderResourceView(), 6);
             CommandList.SetShaderResourceView(PShader.Get(), Material->MaterialMap->GetShaderResourceView(), 7);
-            CommandList.SetShaderResourceView(PShader.Get(), Material->HeightMap->GetShaderResourceView(), 8);
+
+            if (bEnableParallax)
+            {
+                CommandList.SetShaderResourceView(PShader.Get(), Material->HeightMap->GetShaderResourceView(), 8);
+            }
 
             FRHISamplerState* SamplerState = Material->GetMaterialSampler();
             CommandList.SetSamplerState(PShader.Get(), SamplerState, 0);

@@ -147,6 +147,8 @@ struct ENGINE_API EditorWidgets
     static void DrawTextProperty(const CHAR* Label, const CHAR* ValueText);
     static void DrawReadOnlyFloat3Property(const CHAR* Label, const Vector3& Value);
 
+    static void DrawTextureProperty(const CHAR* Label, ImTextureID Texture, float PreviewSize = 48.0f);
+
     static bool DrawColor3Property(const CHAR* Label, float* InOutColor, const float* InRevertColor, bool bEnabled, ImGuiColorEditFlags Flags);
  
     static FORCEINLINE bool DrawColor3Property(const CHAR* Label, FFloatColor& InOutColor, const FFloatColor& InRevertColor, bool bEnabled = true, ImGuiColorEditFlags Flags = ImGuiColorEditFlags_None)
@@ -187,6 +189,8 @@ struct ENGINE_API EditorWidgets
     static void MenuSeparator(float Thickness = 1.0f, float PaddingY = 4.0f);
     static void MenuLabeledSeparator(const CHAR* Label, float Thickness = 1.0f, float PaddingY = 4.0f);
     static bool MenuItem(const CHAR* Label, const CHAR* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true, bool bDrawBorder = false);
+    static bool MenuSliderFloat(const CHAR* Label, float& InOutValue, float MinValue, float MaxValue, const CHAR* Format, float ValueWidth = 96.0f, bool bEnabled = true);
+    static bool MenuDragFloat(const CHAR* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const CHAR* Format, float ValueWidth = 96.0f, bool bEnabled = true);
     static void MenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder = false);
     
     static void EndMenuPopup();

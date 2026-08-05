@@ -18,7 +18,8 @@ function ModuleBuildRules(Name)
         return nil
     end
 
-    -- Determines if the module should be dynamic. Overridden by monolithic build.
+    -- Determines if the module should be dynamic. Only consulted for the modular layout;
+    -- see IsDynamicIn() below.
     self.bIsDynamic = true
 
     -- Determines if linking should be performed at runtime (ignored if bIsDynamic is false)
@@ -39,35 +40,44 @@ function ModuleBuildRules(Name)
 
         LogInfo("--- Generating Module '%s' ---", self.Name)
 
-        -- Handle monolithic build
-        if IsBuildMonolithic() and (not self.bIsLibrary) then
-            self.bIsDynamic      = false
-            self.bRuntimeLinking = false
-            
-            LogInfo("Build is monolithic")
-        else
-            LogInfo("Build is NOT monolithic")
-        end
-
-        -- Dynamic or static
-        if self.bIsLibrary then
-            self.Kind = self.bIsDynamic and "SharedLib" or "StaticLib"
-        else
-            local ModuleApiName = self.Name:upper() .. "_API"
-            if self.bIsDynamic then
-                ModuleApiName = ModuleApiName .. "=MODULE_EXPORT"
-                self.Kind = "SharedLib"
-            else
-                ModuleApiName = ModuleApiName .. "="
-                self.Kind = "StaticLib"
+        function self.IsDynamicIn(Layout)
+            if self.bIsLibrary then
+                return self.bIsDynamic
             end
 
-            -- Always add module name and API as defines
+            return Layout == ELayout.Modular and self.bIsDynamic or false
+        end
+
+        function self.IsRuntimeLinkedIn(Layout)
+            if self.bIsLibrary then
+                return self.bRuntimeLinking
+            end
+
+            return Layout == ELayout.Modular and self.bRuntimeLinking or false
+        end
+
+        function self.KindIn(Layout)
+            return self.IsDynamicIn(Layout) and "SharedLib" or "StaticLib"
+        end
+
+        function self.ApiDefineIn(Layout)
+            if self.bIsLibrary then
+                return nil
+            end
+
+            local ModuleApiName = self.Name:upper() .. "_API"
+            return self.IsDynamicIn(Layout) and (ModuleApiName .. "=MODULE_EXPORT")
+                                             or (ModuleApiName .. "=")
+        end
+
+        -- The module name does not vary by layout
+        if not self.bIsLibrary then
             self.AddDefines({
-                'MODULE_NAME="' .. self.Name .. '"',
-                ModuleApiName
+                'MODULE_NAME="' .. self.Name .. '"'
             })
         end
+
+        self.Kind = self.KindIn(GetGeneratedLayouts()[1])
 
         -- Generate the project
         BaseGenerate()

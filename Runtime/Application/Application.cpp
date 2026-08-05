@@ -807,10 +807,7 @@ bool FApplication::OnHighPrecisionMouseInput(int32 MouseX, int32 MouseY)
         return true;
     }
 
-    FWidgetPath CursorPath;
-    FindWidgetsUnderCursor(CursorPath);
-
-    const FEventResponse WidgetResponse = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(CursorPath), CursorEvent,
+    const FEventResponse WidgetResponse = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(FocusPath), CursorEvent,
         [](const TSharedPtr<FWidget>& Widget, const FCursorEvent& CursorEvent)
         {
             return Widget->OnHighPrecisionMouseInput(CursorEvent);
@@ -919,17 +916,15 @@ bool FApplication::OnMonitorConfigurationChange()
     return true;
 }
 
-bool FApplication::EnableHighPrecisionMouseForWindow(const TSharedPtr<FWindowWidget>& Window)
+bool FApplication::SetHighPrecisionMouseMode(const TSharedPtr<FWindowWidget>& Window, EHighPrecisionMouseMode Mode)
 { 
-    if (Window)
+    TSharedRef<FGenericWindow> PlatformWindow = Window ? Window->GetPlatformWindow() : nullptr;
+    if (Mode == EHighPrecisionMouseMode::Enabled && !PlatformWindow)
     {
-        if (TSharedRef<FGenericWindow> PlatformWindow = Window->GetPlatformWindow())
-        {
-            return PlatformApplication->EnableHighPrecisionMouseForWindow(PlatformWindow);
-        }
+        return false;
     }
 
-    return false;
+    return PlatformApplication->SetHighPrecisionMouseMode(PlatformWindow, Mode);
 }
 
 FModifierKeyState FApplication::GetModifierKeyState() const

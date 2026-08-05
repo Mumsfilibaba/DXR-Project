@@ -125,8 +125,6 @@ local function CommonSetup(Module)
 
     if IsPlatformWindows() then
         Module.AddDefines({ "GLSLANG_OSINCLUDE_WIN32" })
-        -- If you add BuildOptions support to BuildRules, you can also do:
-        -- Module.AddBuildOptions({ "/Zc:threadSafeInit-" })
     else
         Module.AddDefines({ "GLSLANG_OSINCLUDE_UNIX" })
     end

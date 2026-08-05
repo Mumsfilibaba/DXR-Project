@@ -81,6 +81,7 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FFrameResour
         if (Material->HasHeightMap())
         {
             ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(1)");
+            ShaderDefines.Emplace("ENABLE_PARALLAX_CLIPPING", Material->HasParallaxClipping() ? "(1)" : "(0)");
         }
         else
         {
@@ -96,6 +97,15 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FFrameResour
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
         }
 
+        if (Material->IsDoubleSided())
+        {
+            ShaderDefines.Emplace("ENABLE_DOUBLE_SIDED", "(1)");
+        }
+        else
+        {
+            ShaderDefines.Emplace("ENABLE_DOUBLE_SIDED", "(0)");
+        }
+
         ShaderDefines.Emplace("BINDLESS_PRE_PASS", bBindless ? "(1)" : "(0)");
 
         const EShaderModel TargetShaderModel = bBindless ? EShaderModel::SM_6_6 : EShaderModel::SM_6_2;
@@ -109,6 +119,7 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FFrameResour
 
         FGraphicsPipelineStateInstance NewPipelineInstance;
         NewPipelineInstance.VertexShader = RHI::CreateVertexShader(ShaderCode);
+
         if (!NewPipelineInstance.VertexShader)
         {
             DEBUG_BREAK();
@@ -164,6 +175,7 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FFrameResour
 
         FRHIBlendStateDesc BlendStateDesc;
         NewPipelineInstance.BlendState = RHI::CreateBlendState(BlendStateDesc);
+
         if (!NewPipelineInstance.BlendState)
         {
             DEBUG_BREAK();
@@ -255,6 +267,7 @@ bool FDepthPrePass::CreateResources(FFrameResources& FrameResources, uint32 Widt
 
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(RendererTextureFormats::DepthBufferFormat, Width, Height, 1, 1, Usage, DepthClearValue);
     FrameResources.GBuffer[EGBufferIndex::Depth] = RHI::CreateTexture(TextureDesc, ERHIResourceState::PixelShaderResource);
+
     if (FrameResources.GBuffer[EGBufferIndex::Depth])
     {
         FrameResources.GBuffer[EGBufferIndex::Depth]->SetDebugName("GBuffer DepthStencil");
@@ -312,9 +325,14 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
 
         FRHIGraphicsPipelineState* PipelineState = PipelineInstance->PipelineState.Get();
         CHECK(PipelineState  != nullptr);
+        
         CommandList.SetGraphicsPipelineState(PipelineState);
-
         CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+
+        if (Material->HasHeightMap())
+        {
+            CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+        }
 
         if (Material->HasAlphaMask() || Material->HasHeightMap())
         {
@@ -423,6 +441,7 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FFrameRe
         if (Material->HasHeightMap())
         {
             ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(1)");
+            ShaderDefines.Emplace("ENABLE_PARALLAX_CLIPPING", Material->HasParallaxClipping() ? "(1)" : "(0)");
         }
         else
         {

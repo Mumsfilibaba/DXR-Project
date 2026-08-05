@@ -15,12 +15,15 @@ REM  Options:
 REM    --no-pause        Never wait for a keypress before closing.
 REM    --skip-generate   Build the existing solution without regenerating it.
 REM    --fatal-warnings  Treat compiler warnings as errors (engine modules only).
-REM    --monolithic      Link all modules statically into the executable.
 REM    --suffix <name>   Generate into Solutions\<name> and write binaries to
 REM                      Build\bin\<config>-windows-x64-<name>, so a build can
 REM                      run without disturbing the normal solution.
 REM    --log <path>      Append the build transcript to <path> as well, while
 REM                      still printing it to the console.
+REM
+REM  Static linking is a configuration here rather than an option: build one of
+REM  the "* Monolithic" configurations instead of passing a flag at generation
+REM  time. One solution carries both layouts.
 REM
 REM  Returns a non-zero exit code if the build fails, so it can be used in
 REM  automation. The window pauses at the end when interactive; pass --no-pause
@@ -38,7 +41,6 @@ set "LOGFILE="
 set "NO_PAUSE=0"
 set "SKIP_GENERATE=0"
 set "FATAL_WARNINGS=0"
-set "MONOLITHIC=0"
 set "POSITIONAL=0"
 set "RC=0"
 
@@ -52,7 +54,9 @@ if /i "%~1"=="--no-pause" (
 ) else if /i "%~1"=="--fatal-warnings" (
     set "FATAL_WARNINGS=1"
 ) else if /i "%~1"=="--monolithic" (
-    set "MONOLITHIC=1"
+    echo [ERROR] --monolithic is no longer a generation flag. Build one of the
+    echo         "* Monolithic" configurations instead.
+    set "RC=2" & goto Finish
 ) else if /i "%~1"=="--suffix" (
     if "%~2"=="" (
         echo [ERROR] --suffix requires a name.
@@ -101,7 +105,6 @@ if defined SUFFIX set "SOLUTION=%ROOT%\Solutions\%SUFFIX%\DXR-Engine Sandbox.sln
 set "PREMAKE_ARGS=vs2022 --file=../build.lua --platform=Windows"
 if defined SUFFIX set "PREMAKE_ARGS=%PREMAKE_ARGS% --buildsuffix=%SUFFIX%"
 if "%FATAL_WARNINGS%"=="1" set "PREMAKE_ARGS=%PREMAKE_ARGS% --fatalwarnings"
-if "%MONOLITHIC%"=="1" set "PREMAKE_ARGS=%PREMAKE_ARGS% --monolithic"
 
 REM --- Generate the solution -------------------------------------------------
 if "%SKIP_GENERATE%"=="0" (
@@ -136,9 +139,8 @@ if not defined MSBUILD (
 
 REM --- Build -----------------------------------------------------------------
 REM  Without /t: MSBuild builds every project in the solution.
-REM  AutomationScripts\RunCompileTests.bat relies on that, since SandboxStandalone is
-REM  only generated for a non-monolithic build and ImGuiPlugin is loaded at runtime
-REM  rather than linked.
+REM  AutomationScripts\RunCompileTests.bat relies on that, since ImGuiPlugin is loaded
+REM  at runtime rather than linked and so is nothing else's dependency.
 set "TARGET_ARG=/t:"%PROJECT%""
 set "WHAT=%PROJECT%"
 if /i "%PROJECT%"=="all" (

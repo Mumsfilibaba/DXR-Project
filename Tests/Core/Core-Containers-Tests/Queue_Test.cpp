@@ -50,11 +50,7 @@ namespace SPSCTest
 namespace MPSCTest
 {
     static TQueue<String, EQueueType::MPSC>* GQueue = nullptr;
-
-    // Counts producers that have not finished yet. The consumer may only stop once the last
-    // one is done, so a single shared flag would let it quit while other producers are still
-    // enqueueing. It has to be atomic for the consumer to observe the writes at all.
-    static AtomicInt32 GActiveProducers(0);
+    static AtomicInt32                       GActiveProducers(0);
 
     constexpr int64 NumItemsPerProducer = 500;
     constexpr int64 ProducerOffset      = 1000;
@@ -242,7 +238,7 @@ namespace SPMCTest
             TotalItems.Append(static_cast<FConsumerThread*>(Consumer->GetRunnable())->Items);
         }
 
-        bResult = (TotalItems.IsEmpty() == false) && bResult;
+        bResult = (TotalItems.Size() == NumItems) && bResult;
 
         for (int32 Index = 0; Index < NumItems; ++Index)
         {
@@ -358,11 +354,59 @@ bool TQueue_Test()
         TEST_EXPECT(Out.Contains(7));
     }
 
+    TEST_SECTION("SPMC single consumer: FIFO / Clear / DequeueAll");
+    {
+        TQueue<int32, EQueueType::SPMC> Queue;
+        TEST_EXPECT(Queue.IsEmpty());
+        TEST_EXPECT_EQ(Queue.Size(), 0);
+
+        int32 Value = 0;
+        TEST_EXPECT(!Queue.Dequeue(Value));
+
+        TEST_EXPECT(Queue.Enqueue(10));
+        TEST_EXPECT(Queue.Enqueue(20));
+        TEST_EXPECT(Queue.Enqueue(30));
+        TEST_EXPECT_EQ(Queue.Size(), 3);
+
+        TEST_EXPECT(Queue.Dequeue(Value));
+        TEST_EXPECT_EQ(Value, 10);
+        TEST_EXPECT(Queue.Dequeue(Value));
+        TEST_EXPECT_EQ(Value, 20);
+        TEST_EXPECT_EQ(Queue.Size(), 1);
+
+        TEST_EXPECT(Queue.Dequeue());
+        TEST_EXPECT(Queue.IsEmpty());
+        TEST_EXPECT(!Queue.Dequeue(Value));
+
+        Queue.Enqueue(1);
+        Queue.Enqueue(2);
+        Queue.Clear();
+        TEST_EXPECT(Queue.IsEmpty());
+        TEST_EXPECT_EQ(Queue.Size(), 0);
+
+        Queue.Enqueue(5);
+        Queue.Enqueue(6);
+        Queue.Enqueue(7);
+
+        TArray<int32> Out;
+        Queue.DequeueAll(Out);
+
+        TEST_EXPECT_EQ(Out.Size(), 3);
+        TEST_EXPECT(Queue.IsEmpty());
+        TEST_EXPECT_EQ(Out[0], 5);
+        TEST_EXPECT_EQ(Out[1], 6);
+        TEST_EXPECT_EQ(Out[2], 7);
+    }
+
     TEST_SECTION("Concurrency: SPSC / MPSC / SPMC");
     {
-        TEST_EXPECT(SPSCTest::Test());
-        TEST_EXPECT(MPSCTest::Test());
-        TEST_EXPECT(SPMCTest::Test());
+        constexpr int32 NumConcurrencyIterations = 8;
+        for (int32 Iteration = 0; Iteration < NumConcurrencyIterations; ++Iteration)
+        {
+            TEST_EXPECT(SPSCTest::Test());
+            TEST_EXPECT(MPSCTest::Test());
+            TEST_EXPECT(SPMCTest::Test());
+        }
     }
 
     TEST_SECTION("TQueue enqueue/dequeue stress (FInstanced, FIFO + no leaks)");
@@ -390,6 +434,42 @@ bool TQueue_Test()
             if (!bOrdered)
             {
                 LOG_ERROR("[STRESS FAIL] TQueue seed=%u size=%d", Seed, TargetSize);
+            }
+
+            TEST_EXPECT(bOrdered);
+            TEST_EXPECT(Queue.IsEmpty());
+            TEST_EXPECT(FInstanced::LiveCount() == 0);
+        }
+
+        TEST_EXPECT(FInstanced::LiveCount() == 0);
+    }
+
+    TEST_SECTION("TQueue SPMC enqueue/dequeue stress (FInstanced, FIFO + no leaks)");
+    {
+        FInstanced::Reset();
+
+        STRESS_SWEEP(TargetSize, Seed, Stress::DefaultSeedCount)
+        {
+            TQueue<FInstanced, EQueueType::SPMC> Queue;
+            for (int32 Step = 0; Step < TargetSize; ++Step)
+            {
+                Queue.Enqueue(FInstanced(Step));
+            }
+
+            TEST_EXPECT_EQ(Queue.Size(), TargetSize);
+            TEST_EXPECT(FInstanced::LiveCount() == TargetSize);
+
+            bool bOrdered = true;
+            for (int32 Step = 0; Step < TargetSize; ++Step)
+            {
+                FInstanced Out;
+                const bool bPopped = Queue.Dequeue(Out);
+                bOrdered = bOrdered && bPopped && (Out.GetId() == Step) && Out.IsPayloadValid();
+            }
+
+            if (!bOrdered)
+            {
+                LOG_ERROR("[STRESS FAIL] TQueue SPMC seed=%u size=%d", Seed, TargetSize);
             }
 
             TEST_EXPECT(bOrdered);

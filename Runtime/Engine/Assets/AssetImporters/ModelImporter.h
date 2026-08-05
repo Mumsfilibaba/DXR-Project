@@ -7,7 +7,7 @@
 #include "Engine/Assets/IModelImporter.h"
 
 #define MODEL_FORMAT_VERSION_MAJOR (0)
-#define MODEL_FORMAT_VERSION_MINOR (6)
+#define MODEL_FORMAT_VERSION_MINOR (8)
 #define MODEL_FORMAT_MAX_NAME_LENGTH (256)
 #define MODEL_FORMAT_INVALID_TEXTURE_ID (-1)
 

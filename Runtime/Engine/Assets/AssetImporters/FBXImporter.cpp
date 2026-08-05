@@ -293,6 +293,10 @@ bool FFBXImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
         {
             MeshCreateInfo.CalculateTangents();
         }
+        else
+        {
+            MeshCreateInfo.CalculateTangentSigns();
+        }
 
         // Add the mesh to our scene
         if (!MeshCreateInfo.Vertices.IsEmpty())

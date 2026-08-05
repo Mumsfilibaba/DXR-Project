@@ -45,6 +45,7 @@ struct FDeferredMacEvent
         , ClickCount(0)
         , ScrollPhase(NSEventPhaseNone)
         , ScrollDelta()
+        , MouseDelta()
         , Character((uint32)~0)
         , MouseButtonNumber(0)
         , KeyCode(0)
@@ -66,6 +67,7 @@ struct FDeferredMacEvent
         , ClickCount(Other.ClickCount)
         , ScrollPhase(Other.ScrollPhase)
         , ScrollDelta(Other.ScrollDelta)
+        , MouseDelta(Other.MouseDelta)
         , Character(Other.Character)
         , MouseButtonNumber(Other.MouseButtonNumber)
         , KeyCode(Other.KeyCode)
@@ -117,6 +119,9 @@ struct FDeferredMacEvent
 
     /** @brief Scroll deltas (X, Y) for wheel/trackpad scrolling. */
     Vector2 ScrollDelta;
+
+    /** @brief Relative motion (X, Y) in Cocoa coordinates, valid for move and drag events. */
+    Vector2 MouseDelta;
 
     /** @brief Character code for keyboard events, if applicable (e.g., key down). */
     uint32 Character;
@@ -188,7 +193,7 @@ public:
 
     virtual bool SupportsHighPrecisionMouse() const override final;
 
-    virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) override final;
+    virtual bool SetHighPrecisionMouseMode(const TSharedRef<FGenericWindow>& Window, EHighPrecisionMouseMode Mode) override final;
 
     virtual FModifierKeyState GetModifierKeyState() const override final;
 
@@ -361,7 +366,7 @@ private:
     void ProcessMouseHoverEvent(const FDeferredMacEvent& DeferredEvent);
     void ProcessKeyEvent(const FDeferredMacEvent& DeferredEvent);
     void ProcessUpdatedModfierFlags(const FDeferredMacEvent& DeferredEvent);
-    void ProcessModfierKey(EMacModifierKey::Type MacModifierKey, uint64 ModifierKeyFlags);
+    void ProcessModfierKey(EMacModifierKey::Type MacModifierKey, uint64 ModifierKeyFlags, uint64 PreviousModifierKeyFlags);
     void ProcessWindowResized(const FDeferredMacEvent& DeferredEvent);
     void ProcessWindowMoved(const FDeferredMacEvent& DeferredEvent);
 
@@ -372,6 +377,8 @@ private:
     FCocoaWindow*                  WindowUnderCursor;
     NSUInteger                     CurrentModifierFlags;
     EMouseButtonName::Type         LastPressedButton;
+    Vector2                        HighPrecisionMouseRemainder;
+    bool                           bHighPrecisionMouseEnabled;
     TSharedPtr<FMacCursor>         MacCursor;
     TSharedPtr<FGCInputDevice>     InputDevice;
     TArray<FMacScreenInfo>         ScreenCache;

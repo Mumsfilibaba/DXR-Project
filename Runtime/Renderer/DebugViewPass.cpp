@@ -300,9 +300,9 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
         int32 TargetWidth              = 0;
         int32 TargetHeight             = 0;
         int32 bIsOutputSceneTarget     = 0;
+        int32 ChannelMask              = 0;
         float MirrorRoughnessThreshold = 0.0f;
         float MaxHistoryLength         = 1.0f;
-        float Padding0                 = 0.0f;
     } Constants;
 
     Constants.DebugMode            = static_cast<int32>(DebugView);
@@ -314,6 +314,7 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
     Constants.TargetWidth          = TargetWidth;
     Constants.TargetHeight         = TargetHeight;
     Constants.bIsOutputSceneTarget = (RenderTarget->GetDesc().Format == RendererTextureFormats::SceneTargetFormat) ? 1 : 0;
+    Constants.ChannelMask          = static_cast<int32>(SceneRenderView.DebugViewChannelMask);
 
     Constants.MirrorRoughnessThreshold = Math::Clamp(GReflectionMirrorRoughnessThreshold, 0.0f, 1.0f);
     Constants.MaxHistoryLength         = Math::Max(1.0f, GReflectionMaxHistoryLength);

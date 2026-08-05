@@ -272,7 +272,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         MaterialInfo.AmbientOcclusion = 1.0f;
         MaterialInfo.Metallic         = 1.0f;
         MaterialInfo.Roughness        = 1.0f;
-        MaterialInfo.MaterialFlags   |= EMaterialFlags::EnableHeight | EMaterialFlags::EnableNormalMapping;
+        MaterialInfo.MaterialFlags   |= EMaterialFlags::EnableHeight | EMaterialFlags::EnableNormalMapping | EMaterialFlags::EnableParallaxClipping | EMaterialFlags::NormalMapPositiveY;
 
         FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
         if (NewComponent)

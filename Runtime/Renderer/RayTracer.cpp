@@ -818,7 +818,8 @@ void FRayTracer::BuildSceneAccelerationData(FRHICommandList& CommandList, FFrame
             {
                 Geo.IndicesHandle = IndexBufferSRV->GetBindlessHandle();
             }
-            Geo.MaterialIndex = Material->GetBufferIndex();
+            Geo.MaterialIndex   = Material->GetBufferIndex();
+            Geo.DeterminantSign = StaticMesh->PerObjectBuffer.DeterminantSign;
 
             if (int32(InstanceIndex) >= Resources.RayTracingGeometryTableData.Size())
             {

@@ -170,10 +170,11 @@ FSceneRenderPacket FEditorEngine::BuildRenderPacket()
     TRACE_FUNCTION_SCOPE();
 
     FSceneRenderPacket Packet = FEngine::BuildRenderPacket();
-    Packet.View.Scene              = GetWorld()->GetSceneInterface();
-    Packet.View.RenderTarget       = ViewportImage.Get();
-    Packet.View.DebugView          = ViewportWidget->GetDebugView();
-    Packet.View.SecondaryDebugView = ViewportWidget->GetSecondaryDebugView();
+    Packet.View.Scene                = GetWorld()->GetSceneInterface();
+    Packet.View.RenderTarget         = ViewportImage.Get();
+    Packet.View.DebugView            = ViewportWidget->GetDebugView();
+    Packet.View.SecondaryDebugView   = ViewportWidget->GetSecondaryDebugView();
+    Packet.View.DebugViewChannelMask = ViewportWidget->GetDebugViewChannelMask();
 
     FCameraComponent* ViewCamera = GetActiveViewportCamera();
     if (ViewCamera)

@@ -22,13 +22,15 @@ struct FStaticMeshInitData
 
 struct FPerObjectHLSL
 {
-    Matrix3x4 Transform     = {}; // Row-major float3x4 affine transform. Shaders treat positions as column vectors: result = Transform * float4(Position, 1).
-    Matrix3x4 TransformInvT = {}; // Inverse-transpose for normal/tangent transforms (w=0 so translation is ignored).
-    uint32    ObjectID      = 0;
-    uint32    MaterialIndex = 0; // Index into the shared material StructuredBuffer (FMaterial::GetBufferIndex()).
-    uint32    Padding1      = 0;
-    uint32    Padding2      = 0;
+    Matrix3x4 Transform       = {};   // Row-major float3x4 affine transform.
+    Matrix3x4 TransformInvT   = {};   // Inverse-transpose for normal/tangent transforms.
+    uint32    ObjectID        = 0;
+    uint32    MaterialIndex   = 0;    // Index into the shared material StructuredBuffer (FMaterial::GetBufferIndex()).
+    float     DeterminantSign = 1.0f; // -1 when the transform mirrors, which reverses tangent-space handedness.
+    uint32    Padding2        = 0;
 };
+
+static_assert(sizeof(FPerObjectHLSL) == 112, "FPerObjectHLSL must match FPerObject in Structs.hlsli");
 
 MARK_AS_REALLOCATABLE(FPerObjectHLSL);
 

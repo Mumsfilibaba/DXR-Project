@@ -20,7 +20,10 @@ FEditorCameraController::FEditorCameraController()
     , MoveSpeed(15.0f)
     , RotationSpeed(45.0f)
     , MouseSensitivity(0.15f)
-    , PanSpeed(0.02f)
+    , PanSpeed(0.002f)
+    , ZoomSpeed(0.15f)
+    , DragDollySpeed(0.033f)
+    , SpeedAdjustRate(0.05f)
     , bCameraCutPending(true)
 {
     CameraActor = NewObject<FCameraActor>();
@@ -221,6 +224,11 @@ void FEditorCameraController::SetMouseSensitivity(float Value)
     MouseSensitivity = Math::Clamp(Value, 0.01f, 2.0f);
 }
 
+void FEditorCameraController::SetPanSpeed(float Value)
+{
+    PanSpeed = Math::Clamp(Value, 0.0002f, 0.02f);
+}
+
 void FEditorCameraController::SetFieldOfView(float Value)
 {
     if (FCameraComponent* Camera = GetCamera())
@@ -302,14 +310,18 @@ void FEditorCameraController::HandleMouse(float DeltaTime, const FEditorCameraIn
         return;
     }
 
-    if (Input.bAltDown && Input.bLeftMouseDown)
+    const bool bPanChord = Input.bAltDown && (Input.bMiddleMouseDown || (Input.bCmdDown && Input.bLeftMouseDown));
+    if (bPanChord)
+    {
+        Pan(Input.PanDelta);
+    }
+    else if (Input.bAltDown && Input.bLeftMouseDown)
     {
         Orbit(Input.LookDelta);
     }
     else if (Input.bAltDown && Input.bRightMouseDown)
     {
-        OrbitDistance = Math::Clamp(OrbitDistance + Input.LookDelta.Y * PanSpeed, 0.1f, 100000.0f);
-        Camera->SetPosition(OrbitPivot - Camera->GetForwardVector() * OrbitDistance);
+        Dolly(-Input.LookDelta.Y * DragDollySpeed);
     }
     else if (Input.bRightMouseDown)
     {
@@ -325,16 +337,16 @@ void FEditorCameraController::HandleMouse(float DeltaTime, const FEditorCameraIn
         Camera->AddRotation(Pitch, Yaw, 0.0f);
     }
 
-    if (Input.bAltDown && Input.bMiddleMouseDown)
-    {
-        Pan(Input.PanDelta);
-    }
-
     if (Input.WheelDelta != 0.0f)
     {
-        const float StepCount  = Math::Abs(Input.WheelDelta);
-        const float Multiplier = 1.0f + StepCount * 0.1f;
-        SetMoveSpeed(MoveSpeed * (Input.WheelDelta > 0.0f ? Multiplier : (1.0f / Multiplier)));
+        if (Input.bAltDown)
+        {
+            Dolly(Input.WheelDelta);
+        }
+        else
+        {
+            SetMoveSpeed(MoveSpeed * Math::Exp(Input.WheelDelta * SpeedAdjustRate));
+        }
     }
 }
 
@@ -361,9 +373,26 @@ void FEditorCameraController::Pan(const Vector2& Delta)
         return;
     }
 
+    const float Scale = PanSpeed * Math::Max(OrbitDistance, 1.0f);
+
+    // Both axes drag the scene with the cursor. The X sign looks wrong for that, but RightVector is
+    // Forward x Up and so points to the camera's left.
     const Vector3 PreviousPosition = Camera->GetPosition();
-    Camera->AddLocalMovement(-Delta.X * PanSpeed, Delta.Y * PanSpeed, 0.0f);
+    Camera->AddLocalMovement(Delta.X * Scale, Delta.Y * Scale, 0.0f);
     OrbitPivot += Camera->GetPosition() - PreviousPosition;
+    Velocity = Vector3(0.0f);
+}
+
+void FEditorCameraController::Dolly(float Steps)
+{
+    FCameraComponent* Camera = GetCamera();
+    if (!Camera)
+    {
+        return;
+    }
+
+    OrbitDistance = Math::Clamp(OrbitDistance * Math::Exp(-Steps * ZoomSpeed), 0.1f, 100000.0f);
+    Camera->SetPosition(OrbitPivot - Camera->GetForwardVector() * OrbitDistance);
     Velocity = Vector3(0.0f);
 }
 

@@ -40,7 +40,11 @@ struct FMacPlatformThreadMisc final : public FGenericPlatformThreadMisc
 
     static FORCEINLINE void Pause() 
     {
+    #if PLATFORM_ARCHITECTURE_X86_64
         __builtin_ia32_pause();
+    #elif PLATFORM_ARCHITECTURE_ARM64
+        __builtin_arm_yield();
+    #endif
     }
 };
 

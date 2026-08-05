@@ -19,6 +19,7 @@ struct FEditorCameraInputState
     bool    bRightMouseDown  = false;
     bool    bMiddleMouseDown = false;
     bool    bAltDown         = false;
+    bool    bCmdDown         = false;
     bool    bBoost           = false;
     bool    bFlyActive       = false;
     bool    bFocusPressed    = false;
@@ -47,6 +48,7 @@ public:
     float GetMoveSpeed() const { return MoveSpeed; }
     float GetRotationSpeed() const { return RotationSpeed; }
     float GetMouseSensitivity() const { return MouseSensitivity; }
+    float GetPanSpeed() const { return PanSpeed; }
     float GetFieldOfView() const;
     float GetNearPlane() const;
     float GetFarPlane() const;
@@ -54,6 +56,7 @@ public:
     void SetMoveSpeed(float Value);
     void SetRotationSpeed(float Value);
     void SetMouseSensitivity(float Value);
+    void SetPanSpeed(float Value);
     void SetFieldOfView(float Value);
     void SetNearPlane(float Value);
     void SetFarPlane(float Value);
@@ -66,6 +69,7 @@ private:
     void HandleMouse(float DeltaTime, const FEditorCameraInputState& Input);
     void Orbit(const Vector2& Delta);
     void Pan(const Vector2& Delta);
+    void Dolly(float Steps);
 
     void MarkCameraCut()
     {
@@ -86,5 +90,8 @@ private:
     float                    RotationSpeed;
     float                    MouseSensitivity;
     float                    PanSpeed;
+    float                    ZoomSpeed;
+    float                    DragDollySpeed;
+    float                    SpeedAdjustRate;
     bool                     bCameraCutPending;
 };

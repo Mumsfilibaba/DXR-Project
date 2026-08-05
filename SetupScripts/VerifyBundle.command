@@ -5,15 +5,24 @@
 #  name, reference nothing outside the bundle or the OS, keep a clean runpath,
 #  and every dylib the engine dlopen's must actually be inside the bundle.
 #
-#    VerifyBundle.command [configuration] [--no-pause]
+#    VerifyBundle.command [configuration] [options]
+#
+#  Options:
+#    --no-pause       Never wait for a keypress before closing.
+#    --monolithic     Verify the bundle a monolithic generation produced, which
+#                     lands beside the modular one rather than replacing it.
+#    --suffix <name>  Verify the bundle in Build/bin/<config>-macosx-<arch>-<name>
+#                     instead of the unsuffixed one, matching the --suffix
+#                     passed to Compile_Xcode.command.
+#    --arch <name>    Which architecture was built: x86_64, arm64 or universal.
+#                     Selects the output folder and the slices every binary is
+#                     required to carry. Defaults to x86_64.
 #
 #  Defaults to the "Development Editor" configuration. The check is purely
 #  static, so unlike a launch test it also works over SSH.
 # ----------------------------------------------------------------------------
 
-# A non-interactive ssh session never runs path_helper, so /usr/local/bin is
-# absent and every Homebrew tool is invisible.
-export PATH="/usr/local/bin:$PATH"
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd "${DIR}"
@@ -21,13 +30,44 @@ cd "${DIR}"
 ROOT=$( cd "${DIR}/.." && pwd )
 
 CONFIG="Development Editor"
+SUFFIX=""
+ARCH=""
 NO_PAUSE=0
+MONOLITHIC=0
 POSITIONAL=0
+EXPECT_VALUE=""
 
 for arg in "$@"; do
+    if [ -n "$EXPECT_VALUE" ]; then
+        case "$arg" in
+            --*)
+                echo "[ERROR] $EXPECT_VALUE requires a value, got: $arg"
+                exit 2
+                ;;
+        esac
+
+        if [ "$EXPECT_VALUE" = "--arch" ]; then
+            ARCH="$arg"
+        else
+            SUFFIX="$arg"
+        fi
+
+        EXPECT_VALUE=""
+        continue
+    fi
+
     case "$arg" in
         --no-pause)
             NO_PAUSE=1
+            ;;
+        --monolithic)
+            MONOLITHIC=1
+            ;;
+        --suffix)
+            EXPECT_VALUE="--suffix"
+            ;;
+        --arch)
+            EXPECT_VALUE="--arch"
             ;;
         *)
             if [ $POSITIONAL -eq 0 ]; then
@@ -41,6 +81,11 @@ for arg in "$@"; do
     esac
 done
 
+if [ -n "$EXPECT_VALUE" ]; then
+    echo "[ERROR] $EXPECT_VALUE requires a value."
+    exit 2
+fi
+
 if [ -n "$TESTS_NO_PAUSE" ]; then
     NO_PAUSE=1
 fi
@@ -53,7 +98,21 @@ pause_if_needed() {
     fi
 }
 
-BIN="${ROOT}/Build/bin/${CONFIG}-macosx-x64"
+case "$ARCH" in
+    arm64)     TOKEN="ARM64" ;;
+    universal) TOKEN="Universal" ;;
+    *)         TOKEN="x64" ;;
+esac
+
+BIN="${ROOT}/Build/bin/${CONFIG}-macosx-${TOKEN}"
+
+if [ $MONOLITHIC -eq 1 ]; then
+    BIN="${BIN}-Monolithic"
+fi
+
+if [ -n "$SUFFIX" ]; then
+    BIN="${BIN}-${SUFFIX}"
+fi
 
 if [ ! -d "$BIN" ]; then
     echo "[SKIP] No build output for configuration '${CONFIG}'."
@@ -97,7 +156,6 @@ if [ ! -x "$EXECUTABLE" ]; then
     exit 1
 fi
 
-# Anything else resolves through a path baked in at link time, which breaks once the bundle moves
 is_allowed_dependency() {
     case "$1" in
         @rpath/*|/usr/lib/*|/System/*) return 0 ;;
@@ -105,8 +163,6 @@ is_allowed_dependency() {
     esac
 }
 
-# The install name is what every dependent records, so an absolute one there defeats the runpath
-# no matter how the dependent was linked
 check_install_name() {
     local LIBRARY="$1"
     local LEAF
@@ -131,6 +187,25 @@ check_dependencies() {
             fail "${LEAF} depends on '${DEPENDENCY}', which lives outside the bundle"
         fi
     done < <( otool -L "$BINARY" | tail -n +2 | awk '{ print $1 }' )
+}
+
+case "$ARCH" in
+    universal) EXPECTED_ARCHS="x86_64 arm64" ;;
+    arm64)     EXPECTED_ARCHS="arm64" ;;
+    *)         EXPECTED_ARCHS="x86_64" ;;
+esac
+
+check_architectures() {
+    local BINARY="$1"
+    local LEAF
+    LEAF=$( basename "$BINARY" )
+
+    local ACTUAL
+    ACTUAL=$( lipo -archs "$BINARY" 2>/dev/null )
+
+    if [ "$ACTUAL" != "$EXPECTED_ARCHS" ]; then
+        fail "${LEAF} has architectures '${ACTUAL}', expected '${EXPECTED_ARCHS}'"
+    fi
 }
 
 check_runpath() {
@@ -177,8 +252,8 @@ for LIBRARY in "$BIN"/*.dylib; do
     check_install_name "$LIBRARY"
     check_dependencies "$LIBRARY"
     check_runpath "$LIBRARY"
+    check_architectures "$LIBRARY"
 
-    # Runtime modules are dlopen'd rather than linked, so no other check covers them
     LEAF=$( basename "$LIBRARY" )
     if [ ! -f "${FRAMEWORKS}/${LEAF}" ]; then
         fail "${LEAF} is built but missing from Contents/Frameworks"
@@ -188,8 +263,8 @@ done
 check_dependencies "$EXECUTABLE"
 check_runpath "$EXECUTABLE"
 check_rpath_dependencies_present "$EXECUTABLE"
+check_architectures "$EXECUTABLE"
 
-# dlopen'd by ShaderCompiler.cpp, so it appears in no binary's dependency list
 if [ ! -f "${FRAMEWORKS}/libdxcompiler.dylib" ]; then
     fail "libdxcompiler.dylib is missing from Contents/Frameworks"
 fi

@@ -14,7 +14,9 @@ REM ----------------------------------------------------------------------------
 setlocal EnableDelayedExpansion
 
 set "NO_PAUSE=0"
-if /i "%~1"=="--no-pause" set "NO_PAUSE=1"
+for %%A in (%*) do (
+    if /i "%%~A"=="--no-pause" set "NO_PAUSE=1"
+)
 if defined TESTS_NO_PAUSE set "NO_PAUSE=1"
 
 set "ARGS=%*"

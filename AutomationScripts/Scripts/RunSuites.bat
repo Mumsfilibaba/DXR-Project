@@ -15,6 +15,10 @@ REM  The window pauses at the end (on success or failure) so results stay
 REM  readable when launched interactively. For automation, pass --no-pause or
 REM  set TESTS_NO_PAUSE=1 to skip the pause.
 REM
+REM  Test suites run under a watchdog so a deadlock fails that suite instead of
+REM  wedging the whole run. Set SUITE_TIMEOUT to change the limit in whole
+REM  seconds, or to 0 to disable it, which is what benchmarks default to.
+REM
 REM  Benchmarks skip Debug entirely; those timings are misleading. This is the
 REM  configuration gate that used to live behind RUN_BENCHMARK in Config.h.
 REM
@@ -101,6 +105,17 @@ if not defined TARGETS (
     echo [ERROR] No %MODE% are registered for module '%MODULE%'.
     echo         Add it to the dispatch block in %SCRIPT_NAME%.
     set "RC=2" & goto Finish
+)
+
+REM  Seconds a single suite may run before the watchdog kills it. Zero disables
+REM  the watchdog, which is the default for benchmarks: those are expected to run
+REM  far longer than any test, so a limit would only ever fire on a healthy run.
+if not defined SUITE_TIMEOUT (
+    if /i "%MODE%"=="benchmarks" (
+        set "SUITE_TIMEOUT=0"
+    ) else (
+        set "SUITE_TIMEOUT=300"
+    )
 )
 
 REM  MSBuild takes the projects to build as a semicolon-separated list.
@@ -193,7 +208,9 @@ if errorlevel 1 (
     goto :eof
 )
 
-set "BINDIR=%ROOT%Build\bin\%CONFIG%-windows-x64-Tests"
+REM  The tests workspace is generated with --monolithic, and a generation whose
+REM  configuration names do not carry the layout gets it in the output folder instead.
+set "BINDIR=%ROOT%Build\bin\%CONFIG%-windows-x64-Monolithic-Tests"
 
 echo ----- MODULE: %MODULE% ^| CONFIG: %CONFIG% ----->> "%LOG%"
 
@@ -223,15 +240,49 @@ if not exist "%EXE%" (
     goto :eof
 )
 
+if "%SUITE_TIMEOUT%"=="0" goto RunSuiteUnbounded
+
+call :RunWithTimeout
+set "EC=!WATCHDOG_EC!"
+goto RunSuiteReport
+
+:RunSuiteUnbounded
 "%EXE%"
 set "EC=!errorlevel!"
+
+:RunSuiteReport
 REM Any non-zero exit code is a failure, including negative crash codes
 REM (e.g. -1073741819 / 0xC0000005 access violation), which "geq 1" would miss.
-if !EC! neq 0 (
+if !EC! equ 137 (
+    echo [RESULT] %NAME% ^(%CONFIG%^) TIMED OUT after %SUITE_TIMEOUT%s
+    set /a FAILED+=1
+) else if !EC! neq 0 (
     echo [RESULT] %NAME% ^(%CONFIG%^) FAILED ^(exit code !EC!^)
     set /a FAILED+=1
 ) else (
     echo [RESULT] %NAME% ^(%CONFIG%^) PASSED
 )
 
+goto :eof
+
+REM --- Runs one suite under a watchdog, returning the code in WATCHDOG_EC ---
+REM  Windows has no command-line timeout, so PowerShell owns the wait and the
+REM  kill. A killed suite surfaces as 137, matching the shell script, so both
+REM  report a hang the same way.
+REM
+REM  taskkill takes the whole tree: killing only the suite would leave anything
+REM  it spawned running and still holding the console, which is the failure the
+REM  watchdog exists to prevent.
+REM
+REM  The exe and working directory travel through the environment rather than the
+REM  command line, so paths containing spaces need no extra layer of quoting.
+REM
+REM  Reading $p.Handle is load bearing: without it ExitCode can come back empty
+REM  once the process has gone, and an empty code would exit 0 and report a
+REM  failing suite as passed.
+:RunWithTimeout
+set "SUITE_EXE=%EXE%"
+set "SUITE_CWD=%ROOT%"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$p = Start-Process -FilePath $env:SUITE_EXE -WorkingDirectory $env:SUITE_CWD -NoNewWindow -PassThru; $null = $p.Handle; if ($p.WaitForExit([int]$env:SUITE_TIMEOUT * 1000)) { $p.WaitForExit(); exit $p.ExitCode }; $null = taskkill /T /F /PID $p.Id 2>&1; exit 137"
+set "WATCHDOG_EC=!errorlevel!"
 goto :eof

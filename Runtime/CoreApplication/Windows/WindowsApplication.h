@@ -130,7 +130,7 @@ public:
 
     virtual bool SupportsHighPrecisionMouse() const override final;
 
-    virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) override final;
+    virtual bool SetHighPrecisionMouseMode(const TSharedRef<FGenericWindow>& Window, EHighPrecisionMouseMode Mode) override final;
 
     virtual FModifierKeyState GetModifierKeyState() const override final;
 

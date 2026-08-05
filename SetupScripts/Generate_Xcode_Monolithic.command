@@ -5,9 +5,9 @@ cd "${DIR}"
 # Optional: x86_64, arm64 or universal. Defaults to the host architecture.
 ARCH="${1:-}"
 
-./Premake/premake5 xcode4 --file=../Tests/build.lua --platform=macOS --monolithic --buildsuffix=Tests ${ARCH:+--architecture="$ARCH"}
+./Premake/premake5 xcode4 --file=../build.lua --platform=macOS --monolithic ${ARCH:+--architecture="$ARCH"}
 RC=$?
 if [ $RC -ne 0 ]; then
-    echo "[ERROR] Failed to generate the Xcode test workspace."
+    echo "[ERROR] Failed to generate the monolithic Xcode workspace."
 fi
 exit $RC

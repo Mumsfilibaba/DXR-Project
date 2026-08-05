@@ -323,10 +323,10 @@ bool FSceneRenderer::Initialize()
     // Initialize standard input layout
     TArray<FRHIInputElementDesc> InputElements =
     {
-        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0,  0, EVertexInputClass::Vertex, 0 },
-        { "NORMAL",   0, EFormat::R32G32B32_Float, sizeof(FVertexNormal),   1, 0,  1, EVertexInputClass::Vertex, 0 },
-        { "TANGENT",  0, EFormat::R32G32B32_Float, sizeof(FVertexNormal),   1, 12, 2, EVertexInputClass::Vertex, 0 },
-        { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertexTexCoord), 2, 0,  3, EVertexInputClass::Vertex, 0 },
+        { "POSITION", 0, EFormat::R32G32B32_Float,    sizeof(FVertexPosition), 0, 0,  0, EVertexInputClass::Vertex, 0 },
+        { "NORMAL",   0, EFormat::R32G32B32_Float,    sizeof(FVertexNormal),   1, 0,  1, EVertexInputClass::Vertex, 0 },
+        { "TANGENT",  0, EFormat::R32G32B32A32_Float, sizeof(FVertexNormal),   1, 12, 2, EVertexInputClass::Vertex, 0 },
+        { "TEXCOORD", 0, EFormat::R32G32_Float,       sizeof(FVertexTexCoord), 2, 0,  3, EVertexInputClass::Vertex, 0 },
     };
 
     Resources.MeshInputLayout = RHI::CreateInputLayout(InputElements);

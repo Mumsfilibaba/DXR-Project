@@ -101,11 +101,12 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         const float3 HitViewDir = normalize(-Ray.Direction);
 
         float3 Normal;
-        if (MaterialData.NormalMapFlags != 0 && length(Surface.Tangent) > 1e-4f)
+        if (HasNormalMap(MaterialData) && length(Surface.Tangent) > 1e-4f)
         {
-            const float3 MappedNormal = UnpackNormalBC5(NormalTex.SampleLevel(MaterialSampler, Surface.TexCoord, 0).rgb);
-            const float3 Bitangent    = normalize(cross(Surface.Normal, Surface.Tangent));
-            Normal = ApplyNormalMapping(MappedNormal, Surface.Normal, Surface.Tangent, Bitangent);
+            const float3 SampledNormal = UnpackNormalBC5(NormalTex.SampleLevel(MaterialSampler, Surface.TexCoord, 0).rgb);
+            const float3 MappedNormal  = ApplyNormalMapAxis(SampledNormal, IsNormalMapPositiveY(MaterialData));
+            const float  TangentSign   = Surface.TangentSign * GeometryIndices.DeterminantSign;
+            Normal = DecodeTangentNormal(MappedNormal, Surface.Normal, Surface.Tangent, TangentSign);
         }
         else
         {

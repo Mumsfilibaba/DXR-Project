@@ -112,19 +112,6 @@ local function AddTargetType(TargetType)
     return true
 end
 
-local function HasTargetType(TargetType)
-    return gUsedTargetTypesSet[TargetType] == true
-end
-
-local function GetUsedTargetTypes()
-    return gUsedTargetTypes
-end
-
-local function ClearUsedTargetTypes()
-    gUsedTargetTypes    = {}
-    gUsedTargetTypesSet = {}
-end
-
 -- Configurations for this workspace
 local gConfigurations = { }
 
@@ -205,7 +192,7 @@ function GenerateSolutionFiles()
 
     -- Platforms
     platforms({
-        "x64"
+        GetArchitecturePlatformName()
     })
 
     -- Configurations
@@ -266,34 +253,15 @@ function GenerateSolutionFiles()
     filter {}
 
     -- Architecture for all projects
-    architecture "x86_64"
+    architecture(GetPremakeArchitecture())
 
-    -- Static vs dynamic CRT (MSVC only)
-    filter "action:vs*"
-        if IsBuildMonolithic() then
-            staticruntime "On" -- /MT(d)
-        else
-            staticruntime "Off" -- /MD(d)
-        end
+    -- Static vs dynamic CRT (MSVC only
+    filter { "action:vs*", "configurations:*Monolithic*" }
+        staticruntime "On"  -- /MT(d)
     filter {}
 
-    -- Architecture defines
-    filter "architecture:x86"
-        defines({
-            "ARCHITECTURE_X86=(1)"
-        })
-    filter {}
-
-    filter "architecture:x86_64"
-        defines({
-            "PLATFORM_ARCHITECTURE_X86_64=(1)"
-        })
-    filter {}
-
-    filter "architecture:ARM"
-        defines({
-            "PLATFORM_ARCHITECTURE_ARM=(1)"
-        })
+    filter { "action:vs*", "configurations:not *Monolithic*" }
+        staticruntime "Off" -- /MD(d)
     filter {}
 
     -- Startup project name
@@ -314,14 +282,11 @@ local function ComputeStartProjectName()
         return
     end
 
-    -- If non-monolithic, prefer "<Name>Standalone" if it exists, else fallback to "<Name>"
     local FirstTarget = gTargets[1]
-    if not IsBuildMonolithic() then
-        local Standalone = FirstTarget .. "Standalone"
-        if HasProjectRule(Standalone) then
-            gStartProjectName = Standalone
-            return
-        end
+    local Standalone  = FirstTarget .. "Standalone"
+    if HasProjectRule(Standalone) then
+        gStartProjectName = Standalone
+        return
     end
 
     -- Default
@@ -354,13 +319,6 @@ function GenerateWorkspace()
 
     LogInfo("Engine Path ='%s'", CreateOsPath(GetEnginePath()))
     LogInfo("RuntimeFolderPath = '%s'", CreateOsPath(GetRuntimeFolderPath()))
-
-    -- Check if the command line overrides monolithic builds
-    if IsBuildMonolithic() then
-        AddGlobalDefines({
-            "MONOLITHIC_BUILD=(1)"
-        })
-    end
 
     -- IDE Defines
     if BuildWithVisualStudio() then
@@ -403,9 +361,6 @@ function GenerateWorkspace()
             end
 
             if TargetRule then
-                -- Source path for the target (affects file globs, natvis, etc.). One script may
-                -- declare several targets and premake includes it only once, so this has to run
-                -- for targets that an earlier iteration already created.
                 if type(TargetRule.SetPath) == "function" then
                     TargetRule.SetPath(TargetInfo.ScriptDir)
                 end
@@ -426,15 +381,24 @@ function GenerateWorkspace()
             AddConfiguration("Debug")
             AddConfiguration("Development")
             AddConfiguration("Release")
-            AddConfiguration("Debug Monolithic")
-            AddConfiguration("Development Monolithic")
-            AddConfiguration("Release Monolithic")
+
+            if HasPerConfigurationLayouts() then
+                AddConfiguration("Debug Monolithic")
+                AddConfiguration("Development Monolithic")
+                AddConfiguration("Release Monolithic")
+            end
         elseif CurrentTargetType == ETargetType.Editor then
             LogHighlight("Need configuration for ETargetType.Editor")
 
             AddConfiguration("Debug Editor")
             AddConfiguration("Development Editor")
             AddConfiguration("Release Editor")
+
+            if HasPerConfigurationLayouts() then
+                AddConfiguration("Debug Editor Monolithic")
+                AddConfiguration("Development Editor Monolithic")
+                AddConfiguration("Release Editor Monolithic")
+            end
         elseif CurrentTargetType == ETargetType.Program then
             LogHighlight("Need configuration for ETargetType.Program")
 
@@ -446,8 +410,6 @@ function GenerateWorkspace()
         end
     end
 
-    -- Move the preferred configuration to the front so it becomes the default. It is absent
-    -- when the workspace has no editor target, in which case the existing order stands.
     for i = 1, #gConfigurations do
         if gConfigurations[i] == gPreferredConfiguration then
             table.remove(gConfigurations, i)

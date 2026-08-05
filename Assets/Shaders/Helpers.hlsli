@@ -113,20 +113,6 @@ float3 Lerp(float3 Start, float3 End, float Factor)
 // Normal-Mapping Helpers
 // ------------------------------------------------------------------------------------------------
 
-float3 ApplyNormalMapping(float3 TangantNormal, float3 Normal, float3 Tangent, float3 Bitangent)
-{
-    float3x3 TangentSpace = float3x3(Tangent, Bitangent, Normal);
-    return normalize(mul(TangantNormal, TangentSpace));
-}
-
-#if MIN16FLOAT_AVAILABLE
-min16float3 ApplyNormalMapping(min16float3 TangantNormal, min16float3 Normal, min16float3 Tangent, min16float3 Bitangent)
-{
-    min16float3x3 TangentSpace = min16float3x3(Tangent, Bitangent, Normal);
-    return normalize(mul(TangantNormal, TangentSpace));
-}
-#endif
-
 float3 UnpackNormal(float3 TextureSample)
 {
     return normalize((TextureSample * 2.0) - 1.0);
@@ -156,6 +142,16 @@ min16float3 UnpackNormalBC5(min16float3 TextureSample)
 	return min16float3(NormalXY.xy, NormalZ);
 }
 #endif
+
+float3 ApplyNormalMapAxis(float3 TangentNormal, bool bPositiveY)
+{
+    if (bPositiveY)
+    {
+        TangentNormal.y = -TangentNormal.y;
+    }
+
+    return TangentNormal;
+}
 
 float3 PackNormal(float3 Normal)
 {

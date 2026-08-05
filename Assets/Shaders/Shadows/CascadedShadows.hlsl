@@ -2,6 +2,8 @@
 #include "TransformHelpers.hlsli"
 #include "Constants.hlsli"
 #include "CascadeStructs.hlsli"
+#include "ParallaxMapping.hlsli"
+#include "TangentSpace.hlsli"
 
 #ifndef ENABLE_ALPHA_MASK
     #define ENABLE_ALPHA_MASK 0
@@ -72,13 +74,25 @@ StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
         #endif
         #if ENABLE_PARALLAX_MAPPING
             Texture2D<float> HeightMap : register(t1);
+
+            #define MATERIAL_ARRAY_REGISTER t2
+            #include "MaterialArray.hlsli"
         #endif
     #endif
+#endif
+
+#if ENABLE_PARALLAX_MAPPING
+    ConstantBuffer<FCascadeGenerationInfo> CascadeGenerationBuffer : register(b3);
 #endif
 
 struct FVSInput
 {
     float3 Position : POSITION0;
+
+#if ENABLE_PARALLAX_MAPPING
+    float3 Normal  : NORMAL0;
+    float4 Tangent : TANGENT0;
+#endif
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
@@ -97,6 +111,11 @@ struct FVSCascadeOutput
 {
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
+#endif
+
+#if ENABLE_PARALLAX_MAPPING
+    float3 Normal  : NORMAL0;
+    float4 Tangent : TANGENT0;
 #endif
 
 // For geometry-shader instancing we output the worldposition to GS otherwise we want to output final position directly
@@ -122,6 +141,11 @@ FVSCascadeOutput Cascade_VSMain(FVSInput Input)
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING 
     Output.TexCoord = Input.TexCoord;
+#endif
+
+#if ENABLE_PARALLAX_MAPPING
+    Output.Normal  = TransformDirectionInvT(PerObjectBuffer, Input.Normal);
+    Output.Tangent = float4(TransformDirectionWS(PerObjectBuffer, Input.Tangent.xyz), Input.Tangent.w * PerObjectBuffer.DeterminantSign);
 #endif
 
     const float3 WorldPositionWS = TransformPositionWS(PerObjectBuffer, Input.Position);
@@ -160,6 +184,11 @@ struct FGSCascadeOutput
     float2 TexCoord : TEXCOORD0;
 #endif
 
+#if ENABLE_PARALLAX_MAPPING
+    float3 Normal  : NORMAL0;
+    float4 Tangent : TANGENT0;
+#endif
+
     float4 Position : SV_Position;
     uint RenderTargetViewIndex : SV_RenderTargetArrayIndex;
 };
@@ -186,6 +215,11 @@ void Cascade_GSMain(triangle FVSCascadeOutput Input[3], inout TriangleStream<FGS
             Output.TexCoord = Input[Vertex].TexCoord;
         #endif
 
+        #if ENABLE_PARALLAX_MAPPING
+            Output.Normal  = Input[Vertex].Normal;
+            Output.Tangent = Input[Vertex].Tangent;
+        #endif
+
             Output.Position = mul(Input[Vertex].WorldPosition, LightViewProjection);
             OutStream.Append(Output);
         }
@@ -198,6 +232,11 @@ void Cascade_GSMain(triangle FVSCascadeOutput Input[3], inout TriangleStream<FGS
 struct FPSCascadeInput
 {
     float2 TexCoord : TEXCOORD0;
+
+#if ENABLE_PARALLAX_MAPPING
+    float3 Normal  : NORMAL0;
+    float4 Tangent : TANGENT0;
+#endif
 };
 
 // ------------------------------------------------------------------------------------------------
@@ -209,7 +248,29 @@ void Cascade_PSMain(FPSCascadeInput Input)
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoords = Input.TexCoord;
 
-    // TODO: Perform Parallax mapping
+    #if ENABLE_PARALLAX_MAPPING
+    {
+        const FMaterial ParallaxMaterial = Materials[PerObjectBuffer.MaterialIndex];
+
+        const float2   TexCoordsDx    = ddx(TexCoords);
+        const float2   TexCoordsDy    = ddy(TexCoords);
+        const float3x3 WorldToTangent = CreateWorldToTangent(Input.Normal, Input.Tangent.xyz, Input.Tangent.w);
+        const float3   LightDir       = normalize(mul(WorldToTangent, -CascadeGenerationBuffer.LightDirection));
+
+        bool bParallaxDiscard = false;
+        #if BINDLESS_SHADOWS
+            TexCoords = ParallaxMapUV(GetHeightBindless(ParallaxMaterial), GetMaterialSamplerBindless(ParallaxMaterial), TexCoords, LightDir, TexCoordsDx, TexCoordsDy, ParallaxMaterial.ParallaxHeightScale, ParallaxMaterial.ParallaxMinLayers, ParallaxMaterial.ParallaxMaxLayers, bParallaxDiscard);
+        #else
+            TexCoords = ParallaxMapUV(HeightMap, MaterialSampler, TexCoords, LightDir, TexCoordsDx, TexCoordsDy, ParallaxMaterial.ParallaxHeightScale, ParallaxMaterial.ParallaxMinLayers, ParallaxMaterial.ParallaxMaxLayers, bParallaxDiscard);
+        #endif
+        #if ENABLE_PARALLAX_CLIPPING
+            if (bParallaxDiscard)
+            {
+                discard;
+            }
+        #endif
+    }
+    #endif
 
     #if ENABLE_ALPHA_MASK
         #if BINDLESS_SHADOWS

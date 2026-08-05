@@ -14,10 +14,16 @@
 #    --no-pause        Never wait for a keypress before closing.
 #    --skip-generate   Build the existing workspace without regenerating it.
 #    --fatal-warnings  Treat compiler warnings as errors (engine modules only).
-#    --monolithic      Link all modules statically into the executable.
+#    --monolithic      Link all modules statically into the executable. Xcode
+#                      cannot express this per configuration, so it is chosen at
+#                      generation time and the output folder gains a
+#                      "-Monolithic" segment to keep it apart.
 #    --suffix <name>   Generate into Solutions/<name> and write binaries to
-#                      Build/bin/<config>-macosx-x64-<name>, so a build can run
-#                      without disturbing the normal workspace.
+#                      Build/bin/<config>-macosx-<arch>-<name>, so a build can
+#                      run without disturbing the normal workspace.
+#    --arch <name>     Build for x86_64, arm64 or universal. Defaults to the
+#                      host architecture. The output folder is named after it,
+#                      x64, ARM64 or Universal, so the three do not collide.
 #    --log <path>      Append the build transcript to <path> instead of
 #                      overwriting the default CompileXcode.log.
 #
@@ -26,9 +32,9 @@
 #  the end when interactive; pass --no-pause or set TESTS_NO_PAUSE=1 to skip that.
 # ----------------------------------------------------------------------------
 
-# A non-interactive ssh session never runs path_helper, so /usr/local/bin is
-# absent and every Homebrew tool is invisible.
-export PATH="/usr/local/bin:$PATH"
+# A non-interactive ssh session never runs path_helper, so the Homebrew prefixes
+# are absent and every tool installed through it is invisible.
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd "${DIR}"
@@ -39,6 +45,7 @@ LOG="${ROOT}/CompileXcode.log"
 SCHEME="SandboxStandalone"
 CONFIG="Development Editor"
 SUFFIX=""
+ARCH=""
 NO_PAUSE=0
 SKIP_GENERATE=0
 FATAL_WARNINGS=0
@@ -60,6 +67,8 @@ for arg in "$@"; do
 
         if [ "$EXPECT_VALUE" = "--suffix" ]; then
             SUFFIX="$arg"
+        elif [ "$EXPECT_VALUE" = "--arch" ]; then
+            ARCH="$arg"
         else
             LOG="$arg"
             KEEP_LOG=1
@@ -84,6 +93,9 @@ for arg in "$@"; do
             ;;
         --suffix)
             EXPECT_VALUE="--suffix"
+            ;;
+        --arch)
+            EXPECT_VALUE="--arch"
             ;;
         --log)
             EXPECT_VALUE="--log"
@@ -120,6 +132,9 @@ else
 fi
 
 PREMAKE_ARGS=(xcode4 --file=../build.lua --platform=macOS)
+if [ -n "$ARCH" ]; then
+    PREMAKE_ARGS+=("--architecture=${ARCH}")
+fi
 if [ -n "$SUFFIX" ]; then
     PREMAKE_ARGS+=("--buildsuffix=${SUFFIX}")
 fi
@@ -158,8 +173,8 @@ fi
 
 # xcodebuild has no "build everything" switch for a workspace, so the scheme list is
 # read back from the generated workspace. AutomationScripts/RunCompileTests.command
-# relies on that, since SandboxStandalone is only generated for a non-monolithic build
-# and ImGuiPlugin is loaded at runtime rather than linked.
+# relies on that, since ImGuiPlugin is loaded at runtime rather than linked and so
+# never appears as a dependency of any scheme.
 if [ "$SCHEME" = "all" ]; then
     SCHEMES=$(xcodebuild -workspace "$WORKSPACE" -list 2>/dev/null \
         | awk '/Schemes:/ {found=1; next} found && NF {sub(/^[ \t]+/, ""); print}')
@@ -191,7 +206,10 @@ while IFS= read -r NAME; do
 
     # The build is warning-free, so warnings are surfaced rather than filtered out. The full
     # transcript is still kept in $LOG.
-    xcodebuild -workspace "$WORKSPACE" -scheme "$NAME" -configuration "$CONFIG" build 2>&1 \
+    # A generic destination keeps a cross-architecture build from being filtered out by the
+    # run destination Xcode would otherwise infer from the host.
+    xcodebuild -workspace "$WORKSPACE" -scheme "$NAME" -configuration "$CONFIG" \
+        -destination 'generic/platform=macOS' build 2>&1 \
         | tee -a "$LOG" \
         | grep -E "(error:|warning:|Undefined symbols|BUILD (SUCCEEDED|FAILED))"
     EC=${PIPESTATUS[0]}
@@ -214,7 +232,7 @@ echo "------------------------------------------------------------"
 
 if [ $RC -eq 0 ]; then
     echo
-    ./VerifyBundle.command "$CONFIG" --no-pause
+    ./VerifyBundle.command "$CONFIG" $( [ $MONOLITHIC -eq 1 ] && echo --monolithic ) ${SUFFIX:+--suffix "$SUFFIX"} ${ARCH:+--arch "$ARCH"} --no-pause
     RC=$?
 fi
 

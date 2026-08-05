@@ -40,7 +40,12 @@ inline void FillMaterialHandles(const FMaterial& InMaterial, FMaterialHLSL& OutD
     FRHIShaderResourceView* MaterialSRV = SafeGetDefaultSRV(InMaterial.MaterialMap);
 
     const bool bHasRealNormalMap = (NormalSRV != nullptr);
-    OutData.NormalMapFlags = bHasRealNormalMap ? 1u : 0u;
+
+    OutData.NormalMapFlags = bHasRealNormalMap ? ENormalMapFlags::Enabled : ENormalMapFlags::None;
+    if (InMaterial.IsNormalMapPositiveY())
+    {
+        OutData.NormalMapFlags |= ENormalMapFlags::PositiveY;
+    }
 
     if (!RHI::bSupportsBindless)
     {

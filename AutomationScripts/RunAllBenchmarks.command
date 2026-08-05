@@ -14,7 +14,7 @@
 #  Options are forwarded to every module runner. See Scripts/RunSuites.sh.
 # ----------------------------------------------------------------------------
 
-export PATH="/usr/local/bin:$PATH"
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
