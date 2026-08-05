@@ -67,6 +67,7 @@ public:
     void EndCommandList() { }
 
     void FlushDepthBias();
+    void FlushDepthBounds();
     void FlushSamplePositions();
     void FlushDefaultSamplePositions();
 
@@ -82,6 +83,7 @@ public:
     void SetBlendFactor(const float BlendFactor[4]);
     void SetStencilRef(uint32 InStencilRef);
     void SetDepthBias(float InDepthBias, float InDepthBiasClamp, float InSlopeScaledDepthBias);
+    void SetDepthBounds(float InMinDepth, float InMaxDepth);
     void SetSamplePositions(const D3D12_SAMPLE_POSITION* InSamplePositions, uint32 InNumSamplesPerPixel, uint32 InNumPixels);
     void SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets);
     void SetVertexBuffer(FD3D12BufferRHI* VertexBuffer, uint32 VertexBufferSlot);
@@ -218,6 +220,10 @@ private:
             StencilRef = 0;
 
             Memory::Memzero(DepthBias, sizeof(DepthBias));
+
+            DepthBounds[0] = 0.0f;
+            DepthBounds[1] = 1.0f;
+
             Memory::Memzero(Viewports, sizeof(Viewports));
             Memory::Memzero(ScissorRects, sizeof(ScissorRects));
 
@@ -234,7 +240,8 @@ private:
         uint32                  NumScissorRects;
         FD3D12TextureRHI*       ShadingRateImage;
         D3D12_SHADING_RATE      ShadingRate;
-        float                   DepthBias[3]; // DepthBias, DepthBiasClamp, SlopeScaledDepthBias
+        float                   DepthBias[3];   // DepthBias, DepthBiasClamp, SlopeScaledDepthBias
+        float                   DepthBounds[2]; // MinDepth, MaxDepth
         D3D12_SAMPLE_POSITION   SamplePositions[RHI_MAX_SAMPLE_POSITIONS];
         uint32                  NumSamplesPerPixel;      // 0 means the hardware defaults
         uint32                  NumSamplePositionPixels;
@@ -245,6 +252,7 @@ private:
         bool bBindBlendFactor      : 1;
         bool bBindStencilRef       : 1;
         bool bBindDepthBias        : 1;
+        bool bBindDepthBounds      : 1;
         bool bBindSamplePositions  : 1;
         bool bBindScissorRects     : 1;
         bool bBindViewports        : 1;

@@ -204,6 +204,11 @@ public:
         EmplaceCommand<FRHICommandSetDepthBias>(DepthBias, DepthBiasClamp, SlopeScaledDepthBias);
     }
 
+    FORCEINLINE void SetDepthBounds(float MinDepth, float MaxDepth) noexcept
+    {
+        EmplaceCommand<FRHICommandSetDepthBounds>(MinDepth, MaxDepth);
+    }
+
     FORCEINLINE void SetSamplePositions(const FRHISamplePositionsDesc& SamplePositionsDesc) noexcept
     {
         EmplaceCommand<FRHICommandSetSamplePositions>(SamplePositionsDesc);

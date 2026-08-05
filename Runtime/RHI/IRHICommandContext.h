@@ -153,6 +153,13 @@ struct IRHICommandContext
     virtual void SetDepthBias(float DepthBias, float DepthBiasClamp, float SlopeScaledDepthBias) = 0;
 
     /**
+     * @brief Set the depth bounds range (requires RHI::bSupportsDepthBoundsTest).
+     * @param MinDepth Minimum stored depth that passes the test, in 0..1 depth-buffer space.
+     * @param MaxDepth Maximum stored depth that passes the test, in 0..1 depth-buffer space.
+     */
+    virtual void SetDepthBounds(float MinDepth, float MaxDepth) = 0;
+
+    /**
      * @brief Set custom rasterizer sample positions (requires RHI::bSupportsProgrammableSamplePositions).
      * @param SamplePositionsDesc Positions to use, or NumSamplesPerPixel = 0 to restore the defaults
      */

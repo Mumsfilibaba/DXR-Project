@@ -481,6 +481,9 @@ struct RHI
     /** Whether dynamic depth bias (RSSetDepthBias) is supported */
     static RHI_API bool bSupportsDynamicDepthBias;
 
+    /** Whether the depth bounds test is supported */
+    static RHI_API bool bSupportsDepthBoundsTest;
+
     /** Whether stream output / transform feedback is supported */
     static RHI_API bool bSupportsStreamOutput;
 

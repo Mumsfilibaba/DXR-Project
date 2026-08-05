@@ -128,6 +128,7 @@ RHI_API uint32 RHI::RawBufferRequiredAlignment           = 4;
 RHI_API uint32 RHI::AccelerationStructureBufferAlignment = 256;
 
 RHI_API bool RHI::bSupportsDynamicDepthBias = false;
+RHI_API bool RHI::bSupportsDepthBoundsTest  = false;
 RHI_API bool RHI::bSupportsStreamOutput     = false;
 
 // -------------------------------------------------------------------------------------------

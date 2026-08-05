@@ -1044,6 +1044,11 @@ void FD3D12CommandContext::SetDepthBias(float DepthBias, float DepthBiasClamp, f
     ContextState.SetDepthBias(DepthBias, DepthBiasClamp, SlopeScaledDepthBias);
 }
 
+void FD3D12CommandContext::SetDepthBounds(float MinDepth, float MaxDepth)
+{
+    ContextState.SetDepthBounds(MinDepth, MaxDepth);
+}
+
 void FD3D12CommandContext::SetSamplePositions(const FRHISamplePositionsDesc& SamplePositionsDesc)
 {
     BarrierBatcher.FlushBarriers(GetCommandList());

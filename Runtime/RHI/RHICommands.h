@@ -303,6 +303,23 @@ DECLARE_RHICOMMAND(FRHICommandSetDepthBias)
     float SlopeScaledDepthBias;
 };
 
+DECLARE_RHICOMMAND(FRHICommandSetDepthBounds)
+{
+    FORCEINLINE FRHICommandSetDepthBounds(float InMinDepth, float InMaxDepth)
+        : MinDepth(InMinDepth)
+        , MaxDepth(InMaxDepth)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.SetDepthBounds(MinDepth, MaxDepth);
+    }
+
+    float MinDepth;
+    float MaxDepth;
+};
+
 DECLARE_RHICOMMAND(FRHICommandSetSamplePositions)
 {
     FORCEINLINE FRHICommandSetSamplePositions(const FRHISamplePositionsDesc& InSamplePositionsDesc)

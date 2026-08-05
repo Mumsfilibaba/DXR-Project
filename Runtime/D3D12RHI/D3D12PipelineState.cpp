@@ -241,6 +241,7 @@ FD3D12GraphicsPipelineStateRHI::FD3D12GraphicsPipelineStateRHI(FD3D12Device* InD
     : FRHIGraphicsPipelineState()
     , FD3D12PipelineState(InDevice)
     , ShaderFlags(ED3D12ShaderFlags::None)
+    , bDepthBoundsTestEnable(false)
 {
 }
 
@@ -427,7 +428,8 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
     FD3D12DepthStencilStateRHI* D3D12DepthStencilState = FD3D12DeviceRHI::ResourceCast(Desc.DepthStencilState);
     if (D3D12DepthStencilState)
     {
-        DepthStencilDesc = D3D12DepthStencilState->GetD3D12Desc();
+        DepthStencilDesc       = D3D12DepthStencilState->GetD3D12Desc();
+        bDepthBoundsTestEnable = D3D12DepthStencilState->GetDesc().bDepthBoundsTestEnable && GD3D12DepthBoundsTestSupported;
     }
     else
     {
@@ -962,6 +964,7 @@ FD3D12MeshletPipelineStateRHI::FD3D12MeshletPipelineStateRHI(FD3D12Device* InDev
     : FRHIMeshletPipelineState()
     , FD3D12PipelineState(InDevice)
     , ShaderFlags(ED3D12ShaderFlags::None)
+    , bDepthBoundsTestEnable(false)
 {
 }
 
@@ -1093,7 +1096,8 @@ bool FD3D12MeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDes
     FD3D12DepthStencilStateRHI* D3D12DepthStencilState = FD3D12DeviceRHI::ResourceCast(Desc.DepthStencilState);
     if (D3D12DepthStencilState)
     {
-        DepthStencilDesc = D3D12DepthStencilState->GetD3D12Desc();
+        DepthStencilDesc       = D3D12DepthStencilState->GetD3D12Desc();
+        bDepthBoundsTestEnable = D3D12DepthStencilState->GetDesc().bDepthBoundsTestEnable && GD3D12DepthBoundsTestSupported;
     }
     else
     {

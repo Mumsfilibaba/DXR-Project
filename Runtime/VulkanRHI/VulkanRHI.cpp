@@ -350,6 +350,7 @@ bool FVulkanDeviceRHI::Initialize()
     DeviceCreateInfo.OptionalFeatures.Features10.multiDrawIndirect       = VK_TRUE;
     DeviceCreateInfo.OptionalFeatures.Features10.pipelineStatisticsQuery = VK_TRUE;
     DeviceCreateInfo.OptionalFeatures.Features10.depthClamp              = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features10.depthBounds             = VK_TRUE;
 
     // Shader Model 6.9 promotes native 16-bit and 64-bit integer shader ops from optional to required.
     DeviceCreateInfo.OptionalFeatures.Features10.shaderInt16 = VK_TRUE;

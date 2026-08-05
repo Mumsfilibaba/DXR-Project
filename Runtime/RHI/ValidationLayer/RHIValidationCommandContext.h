@@ -28,6 +28,7 @@ public:
     virtual void SetBlendFactor(const Vector4& Color) override final;
     virtual void SetStencilRef(uint32 StencilRef) override final;
     virtual void SetDepthBias(float DepthBias, float DepthBiasClamp, float SlopeScaledDepthBias) override final;
+    virtual void SetDepthBounds(float MinDepth, float MaxDepth) override final;
     virtual void SetSamplePositions(const FRHISamplePositionsDesc& SamplePositionsDesc) override final;
     virtual void SetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot) override final;
     virtual void SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat) override final;

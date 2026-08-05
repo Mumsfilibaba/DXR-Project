@@ -991,6 +991,7 @@ bool FD3D12DeviceRHI::InitializeDeviceFeatureSupport()
 #endif
 
     RHI::bSupportsDynamicDepthBias           = GD3D12SupportDynamicDepthBias;
+    RHI::bSupportsDepthBoundsTest            = GD3D12DepthBoundsTestSupported;
     RHI::bSupportsStreamOutput               = true;
     RHI::bSupportsTimestampQueries           = true;
     RHI::bSupportsPipelineStatisticsQueries  = true;

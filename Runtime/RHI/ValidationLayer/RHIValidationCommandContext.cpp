@@ -300,6 +300,23 @@ void FRHIValidationCommandContext::SetDepthBias(float DepthBias, float DepthBias
     CommandContext->SetDepthBias(DepthBias, DepthBiasClamp, SlopeScaledDepthBias);
 }
 
+void FRHIValidationCommandContext::SetDepthBounds(float MinDepth, float MaxDepth)
+{
+    if (!RHI::bSupportsDepthBoundsTest)
+    {
+        RHI_VALIDATION_ERROR("SetDepthBounds called but the depth bounds test is not supported on this device");
+        return;
+    }
+
+    if (MinDepth > MaxDepth || MinDepth < 0.0f || MaxDepth > 1.0f)
+    {
+        RHI_VALIDATION_ERROR("SetDepthBounds requires 0.0 <= MinDepth <= MaxDepth <= 1.0 (got %f, %f)", MinDepth, MaxDepth);
+        return;
+    }
+
+    CommandContext->SetDepthBounds(MinDepth, MaxDepth);
+}
+
 void FRHIValidationCommandContext::SetSamplePositions(const FRHISamplePositionsDesc& SamplePositionsDesc)
 {
     if (!RHI::bSupportsProgrammableSamplePositions)

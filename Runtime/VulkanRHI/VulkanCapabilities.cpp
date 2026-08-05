@@ -304,7 +304,6 @@ void FVulkanDevice::DeriveCoreCapabilities(
 {
     const VkPhysicalDeviceFeatures& CoreDeviceFeatures10 = AvailableFeatures.Features10;
 
-    GVulkanSupportsDepthBoundsTest        = (CoreDeviceFeatures10.depthBounds == VK_TRUE);
     GVulkanSupportsSparseBinding          = (CoreDeviceFeatures10.sparseBinding == VK_TRUE);
     GVulkanSupportsSparseResidency2D      = (CoreDeviceFeatures10.sparseResidencyImage2D == VK_TRUE);
     GVulkanSupportsSparseResidency3D      = (CoreDeviceFeatures10.sparseResidencyImage3D == VK_TRUE);
@@ -487,6 +486,8 @@ void FVulkanDevice::DeriveEnabledFeatureCapabilities(const FVulkanCoreFeatures& 
 
     GVulkanSupportsInt64ShaderOps = (EnabledFeatures.Features10.shaderInt64 == VK_TRUE);
 
+    GVulkanSupportsDepthBoundsTest = (EnabledFeatures.Features10.depthBounds == VK_TRUE);
+
     GVulkanSupportsInt64Atomics = (EnabledFeatures.Features12.shaderBufferInt64Atomics == VK_TRUE)
         && (EnabledFeatures.Features12.shaderSharedInt64Atomics                        == VK_TRUE);
 
@@ -605,6 +606,7 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     const VkPhysicalDeviceVulkan12Features& PhysicalDeviceFeatures12 = PhysicalDevice->GetFeaturesVulkan12();
     RHI::bSupportRenderTargetArrayIndexFromVertexShader = PhysicalDeviceFeatures12.shaderOutputLayer ? true : false;
     RHI::bSupportsDynamicDepthBias = true;
+    RHI::bSupportsDepthBoundsTest  = GVulkanSupportsDepthBoundsTest;
     RHI::bSupportsStreamOutput     = GVulkanSupportsTransformFeedback;
 
     // -------------------------------------------------------------------------------------------

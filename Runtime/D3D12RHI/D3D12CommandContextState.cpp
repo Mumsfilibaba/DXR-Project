@@ -220,6 +220,7 @@ void FD3D12CommandContextState::BindGraphicsState()
     }
 
     FlushDepthBias();
+    FlushDepthBounds();
     FlushSamplePositions();
 
     if (GraphicsState.bBindStreamOutputTargets)
@@ -469,6 +470,7 @@ void FD3D12CommandContextState::BindMeshletState()
     }
 
     FlushDepthBias();
+    FlushDepthBounds();
     FlushSamplePositions();
 }
 
@@ -1161,6 +1163,10 @@ void FD3D12CommandContextState::BeginCommandList()
     CommonGraphicsState.bBindDepthBias        = true;
 #endif
 
+#if D3D12_ENABLE_DEPTH_BOUNDS_TEST && D3D12_USE_ID3D12COMMANDLIST_1
+    CommonGraphicsState.bBindDepthBounds      = true;
+#endif
+
     // A fresh command list already starts at the default positions, so only a custom pattern needs re-applying.
     CommonGraphicsState.bBindSamplePositions  = (CommonGraphicsState.NumSamplesPerPixel > 0);
 
@@ -1227,6 +1233,16 @@ void FD3D12CommandContextState::SetGraphicsPipelineState(FD3D12GraphicsPipelineS
             CommonGraphicsState.DepthBias[1]   = 0.0f;
             CommonGraphicsState.DepthBias[2]   = 0.0f;
             CommonGraphicsState.bBindDepthBias = true;
+        }
+    #endif
+
+    #if D3D12_ENABLE_DEPTH_BOUNDS_TEST && D3D12_USE_ID3D12COMMANDLIST_1
+        if (GD3D12DepthBoundsTestSupported && 
+            (InGraphicsPipelineState == nullptr || !InGraphicsPipelineState->IsDepthBoundsTestEnabled()))
+        {
+            CommonGraphicsState.DepthBounds[0]   = 0.0f;
+            CommonGraphicsState.DepthBounds[1]   = 1.0f;
+            CommonGraphicsState.bBindDepthBounds = true;
         }
     #endif
     }
@@ -1303,6 +1319,16 @@ void FD3D12CommandContextState::SetMeshletPipelineState(FD3D12MeshletPipelineSta
             CommonGraphicsState.DepthBias[1]   = 0.0f;
             CommonGraphicsState.DepthBias[2]   = 0.0f;
             CommonGraphicsState.bBindDepthBias = true;
+        }
+    #endif
+
+    #if D3D12_ENABLE_DEPTH_BOUNDS_TEST && D3D12_USE_ID3D12COMMANDLIST_1
+        if (GD3D12DepthBoundsTestSupported && 
+            (InMeshletPipelineState == nullptr || !InMeshletPipelineState->IsDepthBoundsTestEnabled()))
+        {
+            CommonGraphicsState.DepthBounds[0]   = 0.0f;
+            CommonGraphicsState.DepthBounds[1]   = 1.0f;
+            CommonGraphicsState.bBindDepthBounds = true;
         }
     #endif
     }
@@ -1424,6 +1450,21 @@ void FD3D12CommandContextState::SetDepthBias(float InDepthBias, float InDepthBia
     }
 }
 
+void FD3D12CommandContextState::SetDepthBounds(float InMinDepth, float InMaxDepth)
+{
+    const float NewValues[2] = 
+    { 
+        InMinDepth, 
+        InMaxDepth 
+    };
+
+    if (Memory::Memcmp(CommonGraphicsState.DepthBounds, NewValues, sizeof(NewValues)) != 0)
+    {
+        Memory::Memcpy(CommonGraphicsState.DepthBounds, NewValues, sizeof(NewValues));
+        CommonGraphicsState.bBindDepthBounds = true;
+    }
+}
+
 void FD3D12CommandContextState::SetSamplePositions(const D3D12_SAMPLE_POSITION* InSamplePositions, uint32 InNumSamplesPerPixel, uint32 InNumPixels)
 {
     const uint32 NumPositions = InNumSamplesPerPixel * InNumPixels;
@@ -1457,6 +1498,20 @@ void FD3D12CommandContextState::FlushDepthBias()
             CommonGraphicsState.DepthBias[2]);
 
         CommonGraphicsState.bBindDepthBias = false;
+    }
+#endif
+}
+
+void FD3D12CommandContextState::FlushDepthBounds()
+{
+#if D3D12_ENABLE_DEPTH_BOUNDS_TEST && D3D12_USE_ID3D12COMMANDLIST_1
+    if (CommonGraphicsState.bBindDepthBounds && Context.GetCommandList().GetGraphicsCommandList1().IsValid())
+    {
+        Context.GetCommandList().GetGraphicsCommandList1()->OMSetDepthBounds(
+            CommonGraphicsState.DepthBounds[0],
+            CommonGraphicsState.DepthBounds[1]);
+
+        CommonGraphicsState.bBindDepthBounds = false;
     }
 #endif
 }

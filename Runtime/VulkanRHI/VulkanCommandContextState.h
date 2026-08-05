@@ -206,6 +206,7 @@ public:
     void SetBlendFactor(const float BlendFactor[4]);
     void SetStencilRef(uint32 InStencilRef);
     void SetDepthBias(float InDepthBias, float InDepthBiasClamp, float InSlopeScaledDepthBias);
+    void SetDepthBounds(float InMinDepth, float InMaxDepth);
     void SetSamplePositions(const FRHISamplePositionsDesc& SamplePositionsDesc);
     void SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets);
     void SetVertexBuffer(FVulkanBufferRHI* VertexBuffer, uint32 VertexBufferSlot);
@@ -321,6 +322,10 @@ private:
         {
             Memory::Memzero(BlendFactor, sizeof(BlendFactor));
             Memory::Memzero(DepthBias, sizeof(DepthBias));
+
+            DepthBounds[0] = 0.0f;
+            DepthBounds[1] = 1.0f;
+
             Memory::Memzero(Viewports, sizeof(Viewports));
             Memory::Memzero(ScissorRects, sizeof(ScissorRects));
 
@@ -334,6 +339,7 @@ private:
         FRHIViewInstancingState  ViewInstancingState;
         float                    BlendFactor[4];
         float                    DepthBias[3];
+        float                    DepthBounds[2]; // MinDepth, MaxDepth
         uint32                   StencilRef;
         VkViewport               Viewports[VULKAN_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
         uint32                   NumViewports;
@@ -350,6 +356,7 @@ private:
         bool bBindBlendFactor     : 1;
         bool bBindStencilRef      : 1;
         bool bBindDepthBias       : 1;
+        bool bBindDepthBounds     : 1;
         bool bBindSampleLocations : 1;
         bool bBindScissorRects    : 1;
         bool bBindViewports       : 1;

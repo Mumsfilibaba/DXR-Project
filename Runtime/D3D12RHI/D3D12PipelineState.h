@@ -338,6 +338,11 @@ public:
         return ShaderFlags;
     }
 
+    FORCEINLINE bool IsDepthBoundsTestEnabled() const
+    {
+        return bDepthBoundsTestEnable;
+    }
+
     FORCEINLINE FD3D12VertexShaderRHI*   GetVertexShader()   const { return VertexShader.Get(); }
     FORCEINLINE FD3D12HullShaderRHI*     GetHullShader()     const { return HullShader.Get(); }
     FORCEINLINE FD3D12DomainShaderRHI*   GetDomainShader()   const { return DomainShader.Get(); }
@@ -347,6 +352,7 @@ public:
 private:
     D3D12_PRIMITIVE_TOPOLOGY            PrimitiveTopology;
     ED3D12ShaderFlags                   ShaderFlags;
+    bool                                bDepthBoundsTestEnable;
     TSharedRef<FD3D12VertexShaderRHI>   VertexShader;
     TSharedRef<FD3D12HullShaderRHI>     HullShader;
     TSharedRef<FD3D12DomainShaderRHI>   DomainShader;
@@ -511,12 +517,18 @@ public:
         return ShaderFlags;
     }
 
+    FORCEINLINE bool IsDepthBoundsTestEnabled() const
+    {
+        return bDepthBoundsTestEnable;
+    }
+
     FORCEINLINE FD3D12AmplificationShaderRHI* GetAmplificationShader() const { return AmplificationShader.Get(); }
     FORCEINLINE FD3D12MeshShaderRHI*          GetMeshShader()          const { return MeshShader.Get(); }
     FORCEINLINE FD3D12PixelShaderRHI*         GetPixelShader()         const { return PixelShader.Get(); }
 
 private:
     ED3D12ShaderFlags                        ShaderFlags;
+    bool                                     bDepthBoundsTestEnable;
     TSharedRef<FD3D12AmplificationShaderRHI> AmplificationShader;
     TSharedRef<FD3D12MeshShaderRHI>          MeshShader;
     TSharedRef<FD3D12PixelShaderRHI>         PixelShader;

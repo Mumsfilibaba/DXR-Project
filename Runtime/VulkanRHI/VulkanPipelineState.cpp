@@ -116,7 +116,7 @@ FVulkanDepthStencilStateRHI::FVulkanDepthStencilStateRHI(const FRHIDepthStencilS
     CreateInfo.depthTestEnable       = InDesc.bDepthEnable;
     CreateInfo.depthWriteEnable      = InDesc.bDepthWriteEnable;
     CreateInfo.depthCompareOp        = ConvertComparisonFunc(InDesc.DepthFunc);
-    CreateInfo.depthBoundsTestEnable = VK_FALSE;
+    CreateInfo.depthBoundsTestEnable = (InDesc.bDepthBoundsTestEnable && GVulkanSupportsDepthBoundsTest) ? VK_TRUE : VK_FALSE;
     CreateInfo.stencilTestEnable     = InDesc.bStencilEnable;
     CreateInfo.front                 = ConvertStencilState(InDesc.FrontFace);
     CreateInfo.back                  = ConvertStencilState(InDesc.BackFace);
@@ -276,6 +276,7 @@ FVulkanGraphicsPipelineStateRHI::FVulkanGraphicsPipelineStateRHI(FVulkanDevice* 
     : FRHIGraphicsPipelineState()
     , FVulkanPipeline(InDevice)
     , bUsesSampleLocations(false)
+    , bDepthBoundsTestEnable(false)
 {
 }
 
@@ -518,6 +519,8 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
         return false;
     }
 
+    const bool bUseDepthBounds = (DepthStencilStateCreateInfo.depthBoundsTestEnable == VK_TRUE);
+
     // BlendState CreateInfo
     VkPipelineColorBlendStateCreateInfo BlendStateCreateInfo;
     if (FVulkanBlendStateRHI* BlendState = FVulkanDeviceRHI::ResourceCast(InDesc.BlendState))
@@ -531,22 +534,32 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
     }
 
     // Dynamic-State CreateInfo
-    VkDynamicState DynamicStates[] = 
+    VkDynamicState DynamicStates[7];
+    uint32         NumDynamicStates = 0;
+
+    DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_VIEWPORT;
+    DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_SCISSOR;
+    DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_BLEND_CONSTANTS;
+    DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_STENCIL_REFERENCE;
+    DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_DEPTH_BIAS;
+
+    if (bUseDepthBounds)
     {
-        VK_DYNAMIC_STATE_VIEWPORT,
-        VK_DYNAMIC_STATE_SCISSOR,
-        VK_DYNAMIC_STATE_BLEND_CONSTANTS,
-        VK_DYNAMIC_STATE_STENCIL_REFERENCE,
-        VK_DYNAMIC_STATE_DEPTH_BIAS,
-        VK_DYNAMIC_STATE_SAMPLE_LOCATIONS_EXT, // Must stay last: only counted when the pipeline opts in
-    };
+        DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_DEPTH_BOUNDS;
+    }
+
+    if (bUseSampleLocations)
+    {
+        DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_SAMPLE_LOCATIONS_EXT;
+    }
 
     VkPipelineDynamicStateCreateInfo DynamicStateCreateInfo = {};
     DynamicStateCreateInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    DynamicStateCreateInfo.dynamicStateCount = ARRAY_COUNT(DynamicStates) - (bUseSampleLocations ? 0 : 1);
+    DynamicStateCreateInfo.dynamicStateCount = NumDynamicStates;
     DynamicStateCreateInfo.pDynamicStates    = DynamicStates;
 
-    bUsesSampleLocations = bUseSampleLocations;
+    bUsesSampleLocations   = bUseSampleLocations;
+    bDepthBoundsTestEnable = bUseDepthBounds;
 
     if (InDesc.ViewInstancingState.bEnableViewInstancing)
     {
@@ -774,6 +787,7 @@ FVulkanMeshletPipelineStateRHI::FVulkanMeshletPipelineStateRHI(FVulkanDevice* In
     , FVulkanPipeline(InDevice)
     , ViewInstancingState()
     , bUsesSampleLocations(false)
+    , bDepthBoundsTestEnable(false)
 {
 }
 
@@ -965,6 +979,8 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
         return false;
     }
 
+    const bool bUseDepthBounds = (DepthStencilStateCreateInfo.depthBoundsTestEnable == VK_TRUE);
+
     // BlendState CreateInfo
     VkPipelineColorBlendStateCreateInfo BlendStateCreateInfo;
     if (FVulkanBlendStateRHI* BlendState = FVulkanDeviceRHI::ResourceCast(InDesc.BlendState))
@@ -978,22 +994,32 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
     }
 
     // Dynamic-State CreateInfo
-    VkDynamicState DynamicStates[] =
+    VkDynamicState DynamicStates[7];
+    uint32         NumDynamicStates = 0;
+
+    DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_VIEWPORT;
+    DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_SCISSOR;
+    DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_BLEND_CONSTANTS;
+    DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_STENCIL_REFERENCE;
+    DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_DEPTH_BIAS;
+
+    if (bUseDepthBounds)
     {
-        VK_DYNAMIC_STATE_VIEWPORT,
-        VK_DYNAMIC_STATE_SCISSOR,
-        VK_DYNAMIC_STATE_BLEND_CONSTANTS,
-        VK_DYNAMIC_STATE_STENCIL_REFERENCE,
-        VK_DYNAMIC_STATE_DEPTH_BIAS,
-        VK_DYNAMIC_STATE_SAMPLE_LOCATIONS_EXT, // Must stay last: only counted when the pipeline opts in
-    };
+        DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_DEPTH_BOUNDS;
+    }
+
+    if (bUseSampleLocations)
+    {
+        DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_SAMPLE_LOCATIONS_EXT;
+    }
 
     VkPipelineDynamicStateCreateInfo DynamicStateCreateInfo = {};
     DynamicStateCreateInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    DynamicStateCreateInfo.dynamicStateCount = ARRAY_COUNT(DynamicStates) - (bUseSampleLocations ? 0 : 1);
+    DynamicStateCreateInfo.dynamicStateCount = NumDynamicStates;
     DynamicStateCreateInfo.pDynamicStates    = DynamicStates;
 
-    bUsesSampleLocations = bUseSampleLocations;
+    bUsesSampleLocations   = bUseSampleLocations;
+    bDepthBoundsTestEnable = bUseDepthBounds;
 
     if (InDesc.ViewInstancingState.bEnableViewInstancing)
     {

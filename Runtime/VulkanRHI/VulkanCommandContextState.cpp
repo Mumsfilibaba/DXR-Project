@@ -257,6 +257,12 @@ void FVulkanCommandContextState::BindGraphicsState()
         CommonGraphicsState.bBindDepthBias = false;
     }
 
+    if (GraphicsState.PipelineState->IsDepthBoundsTestEnabled() && (CommonGraphicsState.bBindDepthBounds || GVulkanForceBinding))
+    {
+        Context.GetCommandBuffer()->SetDepthBounds(CommonGraphicsState.DepthBounds[0], CommonGraphicsState.DepthBounds[1]);
+        CommonGraphicsState.bBindDepthBounds = false;
+    }
+
 #if VK_EXT_sample_locations
     if (GraphicsState.PipelineState->UsesSampleLocations() && (CommonGraphicsState.bBindSampleLocations || GVulkanForceBinding))
     {
@@ -424,6 +430,12 @@ void FVulkanCommandContextState::BindMeshletState()
         CommonGraphicsState.bBindDepthBias = false;
     }
 
+    if (MeshletState.PipelineState->IsDepthBoundsTestEnabled() && (CommonGraphicsState.bBindDepthBounds || GVulkanForceBinding))
+    {
+        Context.GetCommandBuffer()->SetDepthBounds(CommonGraphicsState.DepthBounds[0], CommonGraphicsState.DepthBounds[1]);
+        CommonGraphicsState.bBindDepthBounds = false;
+    }
+
 #if VK_EXT_sample_locations
     if (MeshletState.PipelineState->UsesSampleLocations() && (CommonGraphicsState.bBindSampleLocations || GVulkanForceBinding))
     {
@@ -469,6 +481,9 @@ void FVulkanCommandContextState::ResetState()
     Memory::Memzero(CommonGraphicsState.BlendFactor, sizeof(CommonGraphicsState.BlendFactor));
     Memory::Memzero(CommonGraphicsState.DepthBias, sizeof(CommonGraphicsState.DepthBias));
 
+    CommonGraphicsState.DepthBounds[0] = 0.0f;
+    CommonGraphicsState.DepthBounds[1] = 1.0f;
+
     GraphicsState.StreamOutputCache.Clear();
     CommonGraphicsState.StencilRef = 0;
     
@@ -485,6 +500,7 @@ void FVulkanCommandContextState::ResetState()
     CommonGraphicsState.bBindBlendFactor   = true;
     CommonGraphicsState.bBindStencilRef    = true;
     CommonGraphicsState.bBindDepthBias     = true;
+    CommonGraphicsState.bBindDepthBounds   = true;
     GraphicsState.bBindPipelineState       = true;
     CommonGraphicsState.bBindScissorRects  = true;
     CommonGraphicsState.bBindViewports     = true;
@@ -525,6 +541,7 @@ void FVulkanCommandContextState::BeginCommandBuffer()
     CommonGraphicsState.bBindBlendFactor   = true;
     CommonGraphicsState.bBindStencilRef    = true;
     CommonGraphicsState.bBindDepthBias     = true;
+    CommonGraphicsState.bBindDepthBounds   = true;
     GraphicsState.bBindPipelineState       = true;
     CommonGraphicsState.bBindScissorRects  = true;
     CommonGraphicsState.bBindViewports     = true;
@@ -1068,6 +1085,10 @@ void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelin
         CommonGraphicsState.DepthBias[1]   = 0.0f;
         CommonGraphicsState.DepthBias[2]   = 0.0f;
         CommonGraphicsState.bBindDepthBias = true;
+
+        CommonGraphicsState.DepthBounds[0]   = 0.0f;
+        CommonGraphicsState.DepthBounds[1]   = 1.0f;
+        CommonGraphicsState.bBindDepthBounds = true;
     }
 }
 
@@ -1223,6 +1244,21 @@ void FVulkanCommandContextState::SetDepthBias(float InDepthBias, float InDepthBi
     {
         Memory::Memcpy(CommonGraphicsState.DepthBias, NewValues, sizeof(NewValues));
         CommonGraphicsState.bBindDepthBias = true;
+    }
+}
+
+void FVulkanCommandContextState::SetDepthBounds(float InMinDepth, float InMaxDepth)
+{
+    const float NewValues[2] = 
+    { 
+        InMinDepth, 
+        InMaxDepth
+    };
+
+    if (Memory::Memcmp(CommonGraphicsState.DepthBounds, NewValues, sizeof(NewValues)) != 0 || GVulkanForceBinding)
+    {
+        Memory::Memcpy(CommonGraphicsState.DepthBounds, NewValues, sizeof(NewValues));
+        CommonGraphicsState.bBindDepthBounds = true;
     }
 }
 
