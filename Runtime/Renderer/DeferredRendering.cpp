@@ -6,6 +6,9 @@
 #include "Engine/Resources/Material.h"
 #include "Renderer/DeferredRendering.h"
 #include "Renderer/MaterialBindless.h"
+#include "Renderer/ReflectionSettings.h"
+#include "Renderer/RenderFeatureSettings.h"
+#include "Renderer/ShadowSettings.h"
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
@@ -1038,11 +1041,7 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
 
     GPU_TRACE_SCOPE(CommandList, "Light Pass");
 
-    bool bDrawCascades = false;
-    if (IConsoleVariable* CVarDrawCascades = FConsoleManager::Get().FindConsoleVariable("Renderer.Debug.DrawCascades"))
-    {
-        bDrawCascades = CVarDrawCascades->GetBool();
-    }
+    const bool bDrawCascades = GCSMDebugCascades;
 
     FRHIComputeShader* LightPassShader;
     if (GDrawTileDebug)
@@ -1066,13 +1065,7 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[EGBufferIndex::Material]->GetShaderResourceView(), 2);
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[EGBufferIndex::Depth]->GetShaderResourceView(), 3);
 
-    bool bRayTracingEnabled = false;
-    if (IConsoleVariable* CVarRayTracing = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.RayTracing"))
-    {
-        bRayTracingEnabled = CVarRayTracing->GetBool();
-    }
-
-    const bool bUseRayTracingReflections = RHI::bSupportsRayTracing && bRayTracingEnabled && FrameResources.RayTracingOutput;
+    const bool bUseRayTracingReflections = RHI::bSupportsRayTracing && GRayTracingEnabled && GReflectionsEnabled && FrameResources.RayTracingOutput;
     if (bUseRayTracingReflections)
     {
         CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(FrameResources.RayTracingOutput.Get(), ERHIResourceState::NonPixelShaderResource));
@@ -1165,22 +1158,8 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
         }
     }
 
-    // Enable point-light shadows based on CVar
-    if (IConsoleVariable* CVarEnablePointLightShadows = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.PointLightShadows"))
-    {
-        LightPassSettings.bEnablePointLightShadows = CVarEnablePointLightShadows->GetInt();
-    }
-    else
-    {
-        LightPassSettings.bEnablePointLightShadows = 1;
-    }
-
-    // ... also check the shadows CVar if the shadows should be enabled or not
-    if (IConsoleVariable* CVarEnableShadows = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.Shadows"))
-    {
-        const int32 ShadowSetting = CVarEnableShadows->GetInt();
-        LightPassSettings.bEnablePointLightShadows = LightPassSettings.bEnablePointLightShadows & ShadowSetting;
-    }
+    // Point-light shadows also require the master shadow toggle
+    LightPassSettings.bEnablePointLightShadows = (GPointLightShadowsEnabled && GShadowsEnabled) ? 1 : 0;
 
     constexpr uint32 NumConstants = sizeof(FLightPassSettingsHLSL) / sizeof(uint32);
     CommandList.SetShaderConstants(LightPassShader, &LightPassSettings, NumConstants);

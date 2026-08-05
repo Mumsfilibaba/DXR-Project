@@ -6,6 +6,7 @@
 #include "RendererCore/RayTracing/AccelerationStructureCompactionHelper.h"
 #include "RendererCore/RayTracing/AccelerationStructureSerializationHelper.h"
 #include "Core/Containers/UniquePtr.h"
+#include "Engine/Resources/Texture.h"
 #include "Engine/World/World.h"
 #include "Renderer/RenderPass.h"
 #include "Renderer/FrameResources.h"
@@ -32,46 +33,49 @@ public:
     }
 
 private:
-    FRHIRayTracingPipelineStateRef LocalPipeline;
-    FRHIRayGenShaderRef            RayGenShader;
-    FRHIRayMissShaderRef           RayMissShader;
-    FRHIRayClosestHitShaderRef     RayClosestHitShader;
-    FRHIRayTracingPipelineStateRef BindlessPipeline;
-    FRHIRayGenShaderRef            RayGenShaderBindless;
-    FRHIRayMissShaderRef           RayMissShaderBindless;
-    FRHIRayClosestHitShaderRef     RayClosestHitShaderBindless;
-    FRHIComputeShaderRef           InlineReflectionsShader;
-    FRHIComputePipelineStateRef    InlineReflectionsPipeline;
-    FRHIComputeShaderRef           PrimaryRayDebugShader;
-    FRHIComputePipelineStateRef    PrimaryRayDebugPipeline;
-    FRHIRayGenShaderRef            RayGenShaderSER;
-    FRHIRayMissShaderRef           RayMissShaderSER;
-    FRHIRayClosestHitShaderRef     RayClosestHitShaderSER;
-    FRHIRayTracingPipelineStateRef SERPipeline;
-    uint32                         CurrentSERHitGroupCapacity;
-    uint32                         CurrentHitGroupCapacity;
-    uint32                         CurrentBindlessHitGroupCapacity;
-    uint32                         GeometryTableCapacity;
+    void DenoiseReflections(FRHICommandList& CommandList, FFrameResources& Resources);
+    void BuildSceneAccelerationData(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene, bool bNeedBindlessData);
 
+    void LoadReflectionNoiseMask();
+    FRHITexture* GetReflectionNoiseMask() const;
+
+    FRHIRayTracingPipelineStateRef                     LocalPipeline;
+    FRHIRayGenShaderRef                                RayGenShader;
+    FRHIRayMissShaderRef                               RayMissShader;
+    FRHIRayClosestHitShaderRef                         RayClosestHitShader;
+    FRHIRayTracingPipelineStateRef                     BindlessPipeline;
+    FRHIRayGenShaderRef                                RayGenShaderBindless;
+    FRHIRayMissShaderRef                               RayMissShaderBindless;
+    FRHIRayClosestHitShaderRef                         RayClosestHitShaderBindless;
+    FRHIComputeShaderRef                               InlineReflectionsShader;
+    FRHIComputePipelineStateRef                        InlineReflectionsPipeline;
+    FRHIComputeShaderRef                               PrimaryRayDebugShader;
+    FRHIComputePipelineStateRef                        PrimaryRayDebugPipeline;
+    FRHIRayGenShaderRef                                RayGenShaderSER;
+    FRHIRayMissShaderRef                               RayMissShaderSER;
+    FRHIRayClosestHitShaderRef                         RayClosestHitShaderSER;
+    FRHIRayTracingPipelineStateRef                     SERPipeline;
+    uint32                                             CurrentSERHitGroupCapacity;
+    uint32                                             CurrentHitGroupCapacity;
+    uint32                                             CurrentBindlessHitGroupCapacity;
+    uint32                                             GeometryTableCapacity;
     FAccelerationStructureCache                        ASCache;
     TUniquePtr<FDiskAccelerationStructureCacheBackend> ASCacheBackend;
     FAccelerationStructureCompactionHelper             CompactionHelper;
     FAccelerationStructureSerializationHelper          SerializationHelper;
     TArray<FRHIRayTracingAccelerationStructure*>       CompactionRequested;
     TArray<FRHIRayTracingAccelerationStructure*>       SerializationRequested;
-
-    FRHIComputeShaderRef           ReflectionTemporalShader;
-    FRHIComputePipelineStateRef    ReflectionTemporalPipeline;
-    FRHIComputeShaderRef           ReflectionAtrousShader;
-    FRHIComputePipelineStateRef    ReflectionAtrousPipeline;
-    FRHIComputeShaderRef           ReflectionUpsampleShader;
-    FRHIComputePipelineStateRef    ReflectionUpsamplePipeline;
-    uint32                         ReflectionHistoryIndex;
-    bool                           bReflectionHistoryValid;
-    bool                           bDenoiserHalfRes;
-    uint32                         DenoiserFullWidth;
-    uint32                         DenoiserFullHeight;
-
-    void DenoiseReflections(FRHICommandList& CommandList, FFrameResources& Resources);
-    void BuildSceneAccelerationData(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene, bool bNeedBindlessData);
+    FRHIComputeShaderRef                               ReflectionTemporalShader;
+    FRHIComputePipelineStateRef                        ReflectionTemporalPipeline;
+    FRHIComputeShaderRef                               ReflectionAtrousShader;
+    FRHIComputePipelineStateRef                        ReflectionAtrousPipeline;
+    FRHIComputeShaderRef                               ReflectionUpsampleShader;
+    FRHIComputePipelineStateRef                        ReflectionUpsamplePipeline;
+    uint32                                             ReflectionHistoryIndex;
+    bool                                               bReflectionHistoryValid;
+    bool                                               bDenoiserHalfRes;
+    uint32                                             DenoiserFullWidth;
+    uint32                                             DenoiserFullHeight;
+    FTextureRef                                        ReflectionNoiseTexture;
+    uint32                                             ReflectionNoiseSize;
 };

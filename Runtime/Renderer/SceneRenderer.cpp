@@ -16,6 +16,8 @@
 #include "Renderer/MaterialBindless.h"
 #include "Renderer/SceneRenderer.h"
 #include "Renderer/EditorSelectionRendering.h"
+#include "Renderer/RenderFeatureSettings.h"
+#include "Renderer/ShadowSettings.h"
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
 #include "RendererCore/TextureFactory.h"
@@ -95,7 +97,7 @@ static FAutoConsoleVariableRef CVarBasePassEnabled(
     GBasePassEnabled,
     EConsoleVariableFlags::Default);
 
-static bool GShadowsEnabled = true;
+bool GShadowsEnabled = true;
 static FAutoConsoleVariableRef CVarShadowsEnabled(
     "Renderer.Feature.Shadows",
     "Enables Rendering of ShadowMaps",
@@ -109,7 +111,7 @@ static FAutoConsoleVariableRef CVarShadowMaskEnabled(
     GShadowMaskEnabled,
     EConsoleVariableFlags::Default);
 
-static bool GPointLightShadowsEnabled = true;
+bool GPointLightShadowsEnabled = true;
 static FAutoConsoleVariableRef CVarPointLightShadowsEnabled(
     "Renderer.Feature.PointLightShadows",
     "Enables Rendering of PointLight ShadowMaps",
@@ -165,14 +167,14 @@ static FAutoConsoleVariableRef CVarFrustumCullEnabled(
     GFrustumCullEnabled,
     EConsoleVariableFlags::Default);
 
-static bool GRayTracingEnabled = false;
+bool GRayTracingEnabled = false;
 static FAutoConsoleVariableRef CVarRayTracingEnabled(
     "Renderer.Feature.RayTracing",
     "Enables ray-traced reflections. Only takes effect when the hardware reports ray tracing support; otherwise the renderer falls back to image-based lighting.",
     GRayTracingEnabled,
     EConsoleVariableFlags::Default);
 
-static bool GCSMTightFrustum = true;
+bool GCSMTightFrustum = true;
 static FAutoConsoleVariableRef CVarCSMTightFrustum(
     "Renderer.CSM.TightFrustum",
     "Set to true to reduce the DepthBuffer to find the Min- and Max Depth in the DepthBuffer to be able to create a tight frustum that fits the scene",
@@ -995,24 +997,18 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
             return Math::ClosestPowerOfTwo(Math::Clamp(Value, MinSize, MaxSize));
         };
 
-        if (IConsoleVariable* CVarCascade = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.CascadeSize"))
+        const int32 NewCascadeSize = ClampAndSnapPow2(512, 4096, GCSMCascadeSize);
+        if (NewCascadeSize != Resources.CascadeSize)
         {
-            const int32 NewCascadeSize = ClampAndSnapPow2(512, 4096, CVarCascade->GetInt());
-            if (NewCascadeSize != Resources.CascadeSize)
-            {
-                Resources.CascadeSize = NewCascadeSize;
-                CascadedShadowsRenderPass->CreateResources(Resources);
-            }
+            Resources.CascadeSize = NewCascadeSize;
+            CascadedShadowsRenderPass->CreateResources(Resources);
         }
 
-        if (IConsoleVariable* CVarPointLight = FConsoleManager::Get().FindConsoleVariable("Renderer.Shadows.PointLightShadowMapSize"))
+        const int32 NewPointLightSize = ClampAndSnapPow2(128, 1024, GPointLightShadowMapSize);
+        if (NewPointLightSize != Resources.PointLightShadowSize)
         {
-            const int32 NewPointLightSize = ClampAndSnapPow2(128, 1024, CVarPointLight->GetInt());
-            if (NewPointLightSize != Resources.PointLightShadowSize)
-            {
-                Resources.PointLightShadowSize = NewPointLightSize;
-                PointLightRenderPass->CreateResources(Resources);
-            }
+            Resources.PointLightShadowSize = NewPointLightSize;
+            PointLightRenderPass->CreateResources(Resources);
         }
     }
 

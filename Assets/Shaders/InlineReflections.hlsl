@@ -7,6 +7,7 @@
 #include "RayTracingShading.hlsli"
 #include "BindlessHelpers.hlsli"
 #include "MaterialBindless.hlsli"
+#include "Reflections/ReflectionSampling.hlsli"
 
 ConstantBuffer<FCamera>                     CameraBuffer   : register(b0);
 ConstantBuffer<FRayTracingSceneConstants>   SceneConstants : register(b1);
@@ -61,9 +62,8 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     }
     else
     {
-        uint   Seed = InitRandom(Pixel, OutputWidth, SceneConstants.FrameIndex);
-        float2 Xi   = NextRandom2(Seed);
-        float3 H    = ImportanceSampleGGX(Xi, Roughness, WorldNormal);
+        float2 Xi = SampleReflectionXi(Pixel, uint2(OutputWidth, OutputHeight), SceneConstants);
+        float3 H  = ImportanceSampleGGX(Xi, Roughness, WorldNormal);
         ReflectDirection = normalize(reflect(ViewDir, H));
     }
 

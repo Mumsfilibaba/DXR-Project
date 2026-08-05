@@ -23,6 +23,10 @@ struct FRayTracingSceneConstantsHLSL
     float   ReflectionMirrorRoughnessThreshold = 0.05f;
     float   ReflectionRayBias                  = 0.02f;
     float   Padding1                           = 0.0f;
+    uint32  ReflectionSampler                  = 0;
+    uint32  ReflectionNoiseSize                = 0;
+    uint32  Padding2                           = 0;
+    uint32  Padding3                           = 0;
 };
 
 struct FRayTracingGeometryIndicesHLSL
@@ -34,5 +38,5 @@ struct FRayTracingGeometryIndicesHLSL
 };
 
 static_assert(sizeof(FRHIDescriptorHandle) == sizeof(uint32), "FRHIDescriptorHandle must be 4 bytes for the HLSL layout");
-static_assert(sizeof(FRayTracingSceneConstantsHLSL) == 320, "FRayTracingSceneConstantsHLSL must match the HLSL constant buffer layout");
+static_assert(sizeof(FRayTracingSceneConstantsHLSL) == 336, "FRayTracingSceneConstantsHLSL must match the HLSL constant buffer layout");
 static_assert(sizeof(FRayTracingGeometryIndicesHLSL) == 16, "FRayTracingGeometryIndicesHLSL must match the HLSL structured-buffer layout");

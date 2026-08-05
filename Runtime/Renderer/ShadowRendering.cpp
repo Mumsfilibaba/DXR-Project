@@ -9,6 +9,7 @@
 #include "Engine/World/Components/DirectionalLightComponent.h"
 #include "Renderer/MaterialBindless.h"
 #include "Renderer/ShadowRendering.h"
+#include "Renderer/ShadowSettings.h"
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
@@ -31,16 +32,18 @@ static TAutoConsoleVariable<bool> CVarPointLightsEnableGeometryShaderInstancing(
     true,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarCSMDebugCascades(
+bool GCSMDebugCascades = false;
+static FAutoConsoleVariableRef CVarCSMDebugCascades(
     "Renderer.Debug.DrawCascades",
     "Draws an overlay that shows which pixel uses what shadow cascade",
-    false,
+    GCSMDebugCascades,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarCSMStableCascades(
+bool GCSMStableCascades = true;
+static FAutoConsoleVariableRef CVarCSMStableCascades(
     "Renderer.CSM.StableCascades",
     "Set to true to enable stable cascades when generating shadow cascade matrices",
-    true,
+    GCSMStableCascades,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarCSMEnableSinglePassRendering(
@@ -1858,7 +1861,7 @@ void FShadowMaskRenderPass::RetrieveCurrentCombinationBasedOnCVar(FShadowMaskSha
 {
     OutCombination.FilterMode                   = static_cast<ECSMFilterMode>(Math::Clamp<int32>(CVarCSMFilterMode.GetValue(), 0, 1));
     OutCombination.FilterFunction               = static_cast<ECSMFilterFunction>(Math::Clamp<int32>(CVarCSMFilterFunction.GetValue(), 0, 2));
-    OutCombination.bDebugMode                   = CVarCSMDebugCascades.GetValue();
+    OutCombination.bDebugMode                   = GCSMDebugCascades;
     OutCombination.bBlendCascades               = CVarCSMBlendCascades.GetValue();
     OutCombination.bSelectCascadeFromProjection = CVarCSMSelectCascadeFromProjection.GetValue();
     OutCombination.bRotateSamples               = CVarCSMRotateSamples.GetValue();

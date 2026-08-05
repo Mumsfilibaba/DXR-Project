@@ -30,6 +30,12 @@ struct FRayTracingSceneConstants
     float  ReflectionMirrorRoughnessThreshold;
     float  ReflectionRayBias;
     float  Padding1;
+
+    // 320-336
+    uint   ReflectionSampler;   // One of REFLECTION_SAMPLER_*
+    uint   ReflectionNoiseSize; // Edge length of the blue noise mask; 0 when no mask is bound
+    uint   Padding2;
+    uint   Padding3;
 };
 
 struct FRayTracingGeometryIndices

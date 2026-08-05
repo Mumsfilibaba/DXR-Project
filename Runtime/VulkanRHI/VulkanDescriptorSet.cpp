@@ -242,6 +242,9 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
                 case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
                 {
                     WriteDescriptorSet.pTexelBufferView = &DSWrites.DescriptorTexelBufferViews[CurrentTexelBufferView++];
+
+                    VkBufferView* BufferView = const_cast<VkBufferView*>(WriteDescriptorSet.pTexelBufferView);
+                    *BufferView = DefaultResources.NullBufferView;
                     break;
                 }
 
@@ -787,6 +790,18 @@ void FVulkanDescriptorState::ResetDescriptorBinding(uint32 DescriptorSetIndex, u
         case VK_DESCRIPTOR_TYPE_SAMPLER:
         {
             DSBuilder.WriteSampler(BindingIndex, DefaultResources.NullSampler);
+            break;
+        }
+
+        case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
+        {
+            DSBuilder.WriteUniformTexelBuffer(BindingIndex, DefaultResources.NullBufferView);
+            break;
+        }
+
+        case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
+        {
+            DSBuilder.WriteStorageTexelBuffer(BindingIndex, DefaultResources.NullBufferView);
             break;
         }
 

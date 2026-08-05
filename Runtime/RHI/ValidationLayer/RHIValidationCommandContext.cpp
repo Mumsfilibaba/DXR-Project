@@ -1387,6 +1387,13 @@ void FRHIValidationCommandContext::DispatchRays(FRHIShaderBindingTable* ShaderBi
         return;
     }
 
+    const uint32 NumHitGroupExports = RayTracingPipelineState->GetNumExportNames(ERayTracingShaderRecordKind::HitGroup);
+    if (NumHitGroupExports > 0 && ShaderBindingTable->GetDesc().NumHitGroupRecords == 0)
+    {
+        RHI_VALIDATION_ERROR("DispatchRays: ShaderBindingTable has no hit-group records while the bound pipeline declares %u hit-group export(s). Any ray that hits geometry would read a shader record from a null table.", NumHitGroupExports);
+        return;
+    }
+
     if (Width == 0 || Height == 0 || Depth == 0)
     {
         RHI_VALIDATION_ERROR("DispatchRays: dispatch dimensions must be non-zero (%u, %u, %u).", Width, Height, Depth);

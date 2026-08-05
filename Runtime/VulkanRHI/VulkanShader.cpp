@@ -266,13 +266,12 @@ bool FVulkanShader::PatchShaderBindings(FSpirvArray& OutSpirv, FVulkanPipelineLa
 
     CHECK(Layout != nullptr);
     CHECK(ShaderInfo.BindingOffsets.Size() == ShaderInfo.ResourceBindings.Size());
-
-    FSpirvArray PatchedCode = SpirvCode;
-
+    
     // BindingOffsets is index-aligned with ResourceBindings. Resolve the final binding number from the
     // (merged) layout and write both decorations. For non-RT shaders this resolves to the same dense
     // BindingIndex as before. For ray tracing it resolves to the shared merged binding.
-
+    
+    FSpirvArray PatchedCode = SpirvCode;
     for (int32 Index = 0; Index < ShaderInfo.BindingOffsets.Size(); Index++)
     {
         const FVulkanShaderInfo::FBindingOffsets& Offsets  = ShaderInfo.BindingOffsets[Index];
@@ -283,7 +282,15 @@ bool FVulkanShader::PatchShaderBindings(FSpirvArray& OutSpirv, FVulkanPipelineLa
 
         uint32 RemappedBinding = 0;
         const bool bFound = Layout->GetRemappedBinding(ShaderVisibility, Binding.BindingType, Binding.OriginalBindingIndex, RemappedBinding);
-        CHECK(ShaderVisibility == EShaderVisibility::RayTracing || (bFound && RemappedBinding == Binding.BindingIndex));
+
+        // Ray tracing merges several stages into one layout, so its bindings legitimately move. Every other
+        // stage must land on its own slot; anything else means two registers collided in one namespace.
+        if (ShaderVisibility != EShaderVisibility::RayTracing && (!bFound || RemappedBinding != Binding.BindingIndex))
+        {
+            VULKAN_ERROR_CRITICAL("Binding %u (register %u, %s) did not resolve to its own layout slot (found=%s, remapped=%u)",
+                Binding.BindingIndex, Binding.OriginalBindingIndex, ToString(Binding.BindingType), bFound ? "yes" : "no", RemappedBinding);
+            return false;
+        }
 
         const uint32 FinalBinding = bFound ? RemappedBinding : Binding.BindingIndex;
 
@@ -418,7 +425,7 @@ bool FVulkanShader::InitializeShaderLayout()
             }
 
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType          = EVulkanBindingType::SampledImage;
+            Binding.BindingType          = IsTexelBuffer(Compiler, SampledImages[Index].base_type_id) ? EVulkanBindingType::TexelBufferRead : EVulkanBindingType::SampledImage;
             Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
             Binding.NullViewType         = GetNullImageViewType(Compiler, SampledImages[Index].base_type_id);
             Binding.OriginalBindingIndex = ComputeEffectiveRegister(OriginalSet, spvc_compiler_get_decoration(Compiler, SampledImages[Index].id, SpvDecorationBinding));
@@ -530,7 +537,7 @@ bool FVulkanShader::InitializeShaderLayout()
             }
 
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType          = EVulkanBindingType::StorageImage;
+            Binding.BindingType          = IsTexelBuffer(Compiler, StorageImages[Index].base_type_id) ? EVulkanBindingType::TexelBufferReadWrite : EVulkanBindingType::StorageImage;
             Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
             Binding.NullViewType         = GetNullImageViewType(Compiler, StorageImages[Index].base_type_id);
             Binding.OriginalBindingIndex = ComputeEffectiveRegister(OriginalSet, spvc_compiler_get_decoration(Compiler, StorageImages[Index].id, SpvDecorationBinding));
@@ -652,20 +659,29 @@ bool FVulkanShader::InitializeShaderLayout()
             Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
             Binding.OriginalBindingIndex = ComputeEffectiveRegister(OriginalSet, spvc_compiler_get_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationBinding));
 
-            const String BaseTypeName = spvc_compiler_get_name(Compiler, StorageBuffers[Index].base_type_id);
+            size_t NumBlockDecorations = 0;
+            const SpvDecoration* BlockDecorations = nullptr;
+            if (spvc_compiler_get_buffer_block_decorations(Compiler, StorageBuffers[Index].id, &BlockDecorations, &NumBlockDecorations) != SPVC_SUCCESS)
+            {
+                VULKAN_ERROR_CRITICAL("Failed to read buffer block decorations for storage buffer at register %u", Binding.OriginalBindingIndex);
+                spvc_context_destroy(Context);
+                return false;
+            }
 
-            const bool bIsUAV = BaseTypeName.Contains("RWStructuredBuffer");
-            if (bIsUAV)
+            bool bIsReadOnly = false;
+            for (size_t DecorationIndex = 0; DecorationIndex < NumBlockDecorations; DecorationIndex++)
             {
-                Binding.BindingType = EVulkanBindingType::StorageBufferReadWrite;
+                if (BlockDecorations[DecorationIndex] == SpvDecorationNonWritable)
+                {
+                    bIsReadOnly = true;
+                    break;
+                }
             }
-            else
-            {
-                Binding.BindingType = EVulkanBindingType::StorageBufferRead;
-            }
+
+            Binding.BindingType = bIsReadOnly ? EVulkanBindingType::StorageBufferRead : EVulkanBindingType::StorageBufferReadWrite;
 
         #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
-            Binding.DebugName = Move(BaseTypeName);
+            Binding.DebugName = spvc_compiler_get_name(Compiler, StorageBuffers[Index].base_type_id);
         #endif
 
             ShaderInfo.BindingOffsets.Add({ DescriptorSetOffset, BindingOffset });

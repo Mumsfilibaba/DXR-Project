@@ -122,6 +122,7 @@ void FEditorRendererSettingsWidget::CaptureDefaultsIfNeeded()
 
     // Ray traced reflections
     CaptureFloat("Renderer.Reflections.IndirectSpecularStrength");
+    CaptureBool("Renderer.RayTracing.Reflections.Enable");
     CaptureBool("Renderer.RayTracing.Reflections.HalfRes");
     CaptureFloat("Renderer.RayTracing.Reflections.MaxRayDistance");
     CaptureFloat("Renderer.RayTracing.Reflections.MirrorRoughnessThreshold");
@@ -135,9 +136,11 @@ void FEditorRendererSettingsWidget::CaptureDefaultsIfNeeded()
     CaptureFloat("Renderer.RayTracing.Reflections.CameraMotionMaxHistory");
     CaptureInt("Renderer.RayTracing.Reflections.AtrousIterations");
     CaptureFloat("Renderer.RayTracing.Reflections.AtrousPhiColor");
+    CaptureInt("Renderer.RayTracing.Reflections.Sampler");
 
     // Anti-aliasing
     CaptureBool("Renderer.Feature.TemporalAA");
+    CaptureBool("Renderer.TemporalAA.HardwareJitter");
     CaptureBool("Renderer.Feature.FXAA");
     CaptureBool("Renderer.Debug.FXAADebug");
 
@@ -198,7 +201,7 @@ void FEditorRendererSettingsWidget::DrawWindow()
         ImGui::PopStyleVar(2);
     };
 
-    const auto DrawCollapsingHeader = [](const CHAR* Label, ImGuiTreeNodeFlags Flags, const bool bDrawBottomBorder)
+    const auto DrawCollapsingHeader = [](const CHAR* Label, ImGuiTreeNodeFlags Flags, const bool bDrawBottomBorder, const bool bFullWidthBorder = true)
     {
         ImGuiStyle& Style = ImGui::GetStyle();
 
@@ -257,7 +260,9 @@ void FEditorRendererSettingsWidget::DrawWindow()
 
                 if (bDrawBottomBorder)
                 {
-                    Window->DrawList->AddLine(ImVec2(HeaderMin.x, Y), ImVec2(HeaderMax.x, Y), Color, Thickness);
+                    const float LineMinX = bFullWidthBorder ? Window->WorkRect.Min.x : HeaderMin.x;
+                    const float LineMaxX = bFullWidthBorder ? Window->WorkRect.Max.x : HeaderMax.x;
+                    Window->DrawList->AddLine(ImVec2(LineMinX, Y), ImVec2(LineMaxX, Y), Color, Thickness);
                 }
 
                 const ImVec2 Cursor = ImGui::GetCursorScreenPos();
@@ -278,16 +283,20 @@ void FEditorRendererSettingsWidget::DrawWindow()
     if (DrawCollapsingHeader("Shadows", ImGuiTreeNodeFlags_None, true))
     {
         DrawShadowSettings();
-    }
 
-    if (DrawCollapsingHeader("Cascaded Shadow Maps", ImGuiTreeNodeFlags_None, true))
-    {
-        DrawCascadedShadowSettings();
-    }
+        ImGui::Indent();
 
-    if (DrawCollapsingHeader("Point-light Shadow Maps", ImGuiTreeNodeFlags_None, true))
-    {
-        DrawPointLightShadowSettings();
+        if (DrawCollapsingHeader("Cascaded Shadow Maps", ImGuiTreeNodeFlags_None, true, false))
+        {
+            DrawCascadedShadowSettings();
+        }
+
+        if (DrawCollapsingHeader("Point-light Shadow Maps", ImGuiTreeNodeFlags_None, true))
+        {
+            DrawPointLightShadowSettings();
+        }
+
+        ImGui::Unindent();
     }
 
     if (DrawCollapsingHeader("Skybox", ImGuiTreeNodeFlags_None, true))
@@ -303,11 +312,15 @@ void FEditorRendererSettingsWidget::DrawWindow()
     if (DrawCollapsingHeader("Ray Tracing", ImGuiTreeNodeFlags_None, true))
     {
         DrawRayTracingSettings();
-    }
 
-    if (DrawCollapsingHeader("Ray Traced Reflections", ImGuiTreeNodeFlags_None, true))
-    {
-        DrawRayTracingReflectionsSettings();
+        ImGui::Indent();
+
+        if (DrawCollapsingHeader("Reflections", ImGuiTreeNodeFlags_None, true))
+        {
+            DrawRayTracingReflectionsSettings();
+        }
+
+        ImGui::Unindent();
     }
 
     if (DrawCollapsingHeader("Temporal Anti-aliasing (TAA)", ImGuiTreeNodeFlags_None, true))
@@ -418,6 +431,16 @@ void FEditorRendererSettingsWidget::DrawShadowSettings()
         }
     }
 
+    EditorWidgets::EndPropertyTable();
+}
+
+void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
+{
+    if (!EditorWidgets::BeginPropertyTable("##RendererSettingsCSM", RendererSettingsLabelColumnWidth, RendererSettingsRevertColumnWidth))
+    {
+        return;
+    }
+
     if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.SunShadows"))
     {
         bool bValue  = CVar->GetBool();
@@ -442,18 +465,6 @@ void FEditorRendererSettingsWidget::DrawShadowSettings()
         }
     }
 
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.PointLightShadows"))
-    {
-        bool bValue  = CVar->GetBool();
-        bool bValue0 = false;
-
-        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.Feature.PointLightShadows", bValue0);
-        if (EditorWidgets::DrawCheckboxProperty("Enable point-light shadows", bValue, RevertPtr))
-        {
-            CVar->SetAsBool(bValue, EConsoleVariableFlags::SetByCode);
-        }
-    }
-
     if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.TightFrustum"))
     {
         bool bValue  = CVar->GetBool();
@@ -464,16 +475,6 @@ void FEditorRendererSettingsWidget::DrawShadowSettings()
         {
             CVar->SetAsBool(bValue, EConsoleVariableFlags::SetByCode);
         }
-    }
-
-    EditorWidgets::EndPropertyTable();
-}
-
-void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
-{
-    if (!EditorWidgets::BeginPropertyTable("##RendererSettingsCSM", RendererSettingsLabelColumnWidth, RendererSettingsRevertColumnWidth))
-    {
-        return;
     }
 
     if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.CascadeSize"))
@@ -747,6 +748,18 @@ void FEditorRendererSettingsWidget::DrawPointLightShadowSettings()
         return;
     }
 
+    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.PointLightShadows"))
+    {
+        bool bValue  = CVar->GetBool();
+        bool bValue0 = false;
+
+        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.Feature.PointLightShadows", bValue0);
+        if (EditorWidgets::DrawCheckboxProperty("Enable point-light shadows", bValue, RevertPtr))
+        {
+            CVar->SetAsBool(bValue, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
     if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.Shadows.PointLightShadowMapSize"))
     {
         static const CHAR* PointResItems[] = { "128", "256", "512", "1024" };
@@ -1006,14 +1019,29 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
         bRayTracingActive = CVarEnableRayTracing->GetBool() && RHI::bSupportsRayTracing;
     }
 
-    // Also scales the image-based lighting contribution, so it stays editable when ray tracing is off
+    bool bReflectionsEnabled = false;
+    if (IConsoleVariable* CVarEnableReflections = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.Enable"))
+    {
+        bReflectionsEnabled = CVarEnableReflections->GetBool();
+
+        bool bEnableReflections0 = false;
+
+        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.RayTracing.Reflections.Enable", bEnableReflections0);
+        if (EditorWidgets::DrawCheckboxProperty("Enable", bReflectionsEnabled, RevertPtr, bRayTracingActive))
+        {
+            CVarEnableReflections->SetAsBool(bReflectionsEnabled, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    const bool bReflectionsActive = bRayTracingActive && bReflectionsEnabled;
+
     if (IConsoleVariable* CVarIndirectSpecularStrength = FConsoleManager::Get().FindConsoleVariable("Renderer.Reflections.IndirectSpecularStrength"))
     {
         float IndirectSpecularStrength  = Math::Clamp<float>(CVarIndirectSpecularStrength->GetFloat(), 0.0f, 4.0f);
         float IndirectSpecularStrength0 = 0.0f;
 
         const float* RevertPtr = TryGetDefaultPtr(FloatDefaults, "Renderer.Reflections.IndirectSpecularStrength", IndirectSpecularStrength0);
-        if (EditorWidgets::DrawFloatProperty("Indirect specular strength", IndirectSpecularStrength, 0.01f, 0.0f, 4.0f, "%.2f", true, RevertPtr))
+        if (EditorWidgets::DrawFloatProperty("Indirect specular strength", IndirectSpecularStrength, 0.01f, 0.0f, 4.0f, "%.2f", true, RevertPtr, bReflectionsActive))
         {
             CVarIndirectSpecularStrength->SetAsFloat(IndirectSpecularStrength, EConsoleVariableFlags::SetByCode);
         }
@@ -1025,7 +1053,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
         bool bHalfRes0 = false;
 
         const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.RayTracing.Reflections.HalfRes", bHalfRes0);
-        if (EditorWidgets::DrawCheckboxProperty("Half resolution", bHalfRes, RevertPtr, bRayTracingActive))
+        if (EditorWidgets::DrawCheckboxProperty("Half resolution", bHalfRes, RevertPtr, bReflectionsActive))
         {
             CVarHalfRes->SetAsBool(bHalfRes, EConsoleVariableFlags::SetByCode);
         }
@@ -1037,7 +1065,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
         float MaxRayDistance0 = 0.0f;
 
         const float* RevertPtr = TryGetDefaultPtr(FloatDefaults, "Renderer.RayTracing.Reflections.MaxRayDistance", MaxRayDistance0);
-        if (EditorWidgets::DrawFloatProperty("Max ray distance", MaxRayDistance, 10.0f, 1.0f, 100000.0f, "%.0f", true, RevertPtr, bRayTracingActive))
+        if (EditorWidgets::DrawFloatProperty("Max ray distance", MaxRayDistance, 10.0f, 1.0f, 100000.0f, "%.0f", true, RevertPtr, bReflectionsActive))
         {
             CVarMaxRayDistance->SetAsFloat(MaxRayDistance, EConsoleVariableFlags::SetByCode);
         }
@@ -1049,7 +1077,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
         float MirrorRoughnessThreshold0 = 0.0f;
 
         const float* RevertPtr = TryGetDefaultPtr(FloatDefaults, "Renderer.RayTracing.Reflections.MirrorRoughnessThreshold", MirrorRoughnessThreshold0);
-        if (EditorWidgets::DrawFloatProperty("Mirror roughness threshold", MirrorRoughnessThreshold, 0.001f, 0.0f, 1.0f, "%.3f", true, RevertPtr, bRayTracingActive))
+        if (EditorWidgets::DrawFloatProperty("Mirror roughness threshold", MirrorRoughnessThreshold, 0.001f, 0.0f, 1.0f, "%.3f", true, RevertPtr, bReflectionsActive))
         {
             CVarMirrorRoughnessThreshold->SetAsFloat(MirrorRoughnessThreshold, EConsoleVariableFlags::SetByCode);
         }
@@ -1061,9 +1089,29 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
         float RayBias0 = 0.0f;
 
         const float* RevertPtr = TryGetDefaultPtr(FloatDefaults, "Renderer.RayTracing.Reflections.RayBias", RayBias0);
-        if (EditorWidgets::DrawFloatProperty("Ray bias", RayBias, 0.001f, 0.0f, 1.0f, "%.3f", true, RevertPtr, bRayTracingActive))
+        if (EditorWidgets::DrawFloatProperty("Ray bias", RayBias, 0.001f, 0.0f, 1.0f, "%.3f", true, RevertPtr, bReflectionsActive))
         {
             CVarRayBias->SetAsFloat(RayBias, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    if (IConsoleVariable* CVarSampler = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.Sampler"))
+    {
+        // Order matches REFLECTION_SAMPLER_* in Shaders/Reflections/ReflectionSampling.hlsli.
+        static const CHAR* const Items[] =
+        {
+            "White noise", "Halton", "Blue noise"
+        };
+
+        constexpr int32 ItemCount = static_cast<int32>(ARRAY_COUNT(Items));
+
+        int32 Sampler  = Math::Clamp<int32>(CVarSampler->GetInt(), 0, ItemCount - 1);
+        int32 Sampler0 = 0;
+
+        const int32* RevertPtr = TryGetDefaultPtr(IntDefaults, "Renderer.RayTracing.Reflections.Sampler", Sampler0);
+        if (EditorWidgets::DrawComboProperty("GGX sampler", Sampler, Items, ItemCount, RevertPtr, bReflectionsActive))
+        {
+            CVarSampler->SetAsInt(Sampler, EConsoleVariableFlags::SetByCode);
         }
     }
 
@@ -1075,13 +1123,13 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
         bool bDenoise0 = false;
 
         const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.RayTracing.Reflections.Denoise", bDenoise0);
-        if (EditorWidgets::DrawCheckboxProperty("Enable denoiser", bDenoise, RevertPtr, bRayTracingActive))
+        if (EditorWidgets::DrawCheckboxProperty("Enable denoiser", bDenoise, RevertPtr, bReflectionsActive))
         {
             CVarDenoise->SetAsBool(bDenoise, EConsoleVariableFlags::SetByCode);
         }
     }
 
-    const bool bDenoiserActive = bRayTracingActive && bDenoise;
+    const bool bDenoiserActive = bReflectionsActive && bDenoise;
 
     if (IConsoleVariable* CVarTemporalAlpha = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.TemporalAlpha"))
     {
@@ -1192,6 +1240,7 @@ void FEditorRendererSettingsWidget::DrawTAASettings()
         return;
     }
 
+    bool bTemporalAAActive = false;
     if (IConsoleVariable* CVarEnableTemporalAA = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.TemporalAA"))
     {
         bool bEnableTemporalAA  = CVarEnableTemporalAA->GetBool();
@@ -1201,6 +1250,22 @@ void FEditorRendererSettingsWidget::DrawTAASettings()
         if (EditorWidgets::DrawCheckboxProperty("Enable TemporalAA", bEnableTemporalAA, RevertPtr))
         {
             CVarEnableTemporalAA->SetAsBool(bEnableTemporalAA, EConsoleVariableFlags::SetByCode);
+        }
+
+        bTemporalAAActive = bEnableTemporalAA;
+    }
+
+    if (IConsoleVariable* CVarHardwareJitter = FConsoleManager::Get().FindConsoleVariable("Renderer.TemporalAA.HardwareJitter"))
+    {
+        const bool bSupported = RHI::bSupportsProgrammableSamplePositions && ((RHI::SupportedSamplePositionSampleCounts & 1) != 0);
+
+        bool bHardwareJitter  = CVarHardwareJitter->GetBool();
+        bool bHardwareJitter0 = false;
+
+        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.TemporalAA.HardwareJitter", bHardwareJitter0);
+        if (EditorWidgets::DrawCheckboxProperty("Hardware jitter", bHardwareJitter, RevertPtr, bTemporalAAActive && bSupported))
+        {
+            CVarHardwareJitter->SetAsBool(bHardwareJitter, EConsoleVariableFlags::SetByCode);
         }
     }
 

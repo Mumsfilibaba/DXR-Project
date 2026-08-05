@@ -80,6 +80,7 @@ struct FVulkanDefaultResources
 {
 	FVulkanDefaultResources()
 		: NullBuffer(VK_NULL_HANDLE)
+		, NullBufferView(VK_NULL_HANDLE)
 		, NullBufferLocation(nullptr)
 		, NullImage(VK_NULL_HANDLE)
 		, NullImageViews()
@@ -91,6 +92,7 @@ struct FVulkanDefaultResources
 	~FVulkanDefaultResources()
 	{
 		CHECK(NullBuffer == VK_NULL_HANDLE);
+		CHECK(NullBufferView == VK_NULL_HANDLE);
 		CHECK(NullImage == VK_NULL_HANDLE);
 		CHECK(NullSampler == VK_NULL_HANDLE);
 
@@ -112,6 +114,7 @@ struct FVulkanDefaultResources
 	}
 
 	VkBuffer              NullBuffer;
+	VkBufferView          NullBufferView;
 	FVulkanMemoryLocation NullBufferLocation;
 	VkImage               NullImage;
 	VkImageView           NullImageViews[static_cast<uint32>(EVulkanNullImageViewType::Count)];

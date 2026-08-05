@@ -2,17 +2,20 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Renderer/FrameResources.h"
+#include "Renderer/ShadowSettings.h"
 #include "Renderer/Scene/Scene.h"
 
-static TAutoConsoleVariable<int32> CVarCSMCascadeSize(
+int32 GCSMCascadeSize = 2048;
+static FAutoConsoleVariableRef CVarCSMCascadeSize(
     "Renderer.CSM.CascadeSize",
     "Specifies the resolution of each Shadow Cascade",
-    2048);
+    GCSMCascadeSize);
 
-static TAutoConsoleVariable<int32> CVarPointLightShadowMapSize(
+int32 GPointLightShadowMapSize = 512;
+static FAutoConsoleVariableRef CVarPointLightShadowMapSize(
     "Renderer.Shadows.PointLightShadowMapSize",
     "Specifies the resolution of each Shadow Cascade",
-    512);
+    GPointLightShadowMapSize);
 
 static TAutoConsoleVariable<int32> CVarEnvironmentIrradianceProbeSize(
     "Renderer.Environment.IrradianceProbeSize",
@@ -44,8 +47,8 @@ FFrameResources::~FFrameResources()
 bool FFrameResources::Initialize()
 {
     // Initialize the light-setup from CVars
-    CascadeSize                 = ClampTextureSize(512, 4096, CVarCSMCascadeSize.GetValue());
-    PointLightShadowSize        = ClampTextureSize(128, 1024, CVarPointLightShadowMapSize.GetValue());
+    CascadeSize                 = ClampTextureSize(512, 4096, GCSMCascadeSize);
+    PointLightShadowSize        = ClampTextureSize(128, 1024, GPointLightShadowMapSize);
     IrradianceProbeSize         = ClampTextureSize(32, 512, CVarEnvironmentIrradianceProbeSize.GetValue());
     SpecularIrradianceProbeSize = ClampTextureSize(256, 1024, CVarEnvironmentSpecularIrradianceProbeSize.GetValue());
 
@@ -205,23 +208,8 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         CascadeGenerationData.CascadeResolution   = static_cast<float>(CascadeSize);
         CascadeGenerationData.MaxCascadeIndex     = Math::Max(NUM_SHADOW_CASCADES - 1, 0);
 
-        if (IConsoleVariable* CVarCSMTightFrustum = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.TightFrustum"))
-        {
-            CascadeGenerationData.bEnableTightFrustum = CVarCSMTightFrustum->GetBool();
-        }
-        else
-        {
-            CascadeGenerationData.bEnableTightFrustum = true;
-        }
-
-        if (IConsoleVariable* CVarCSMStableCascades = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.StableCascades"))
-        {
-            CascadeGenerationData.bEnableStableCascades = CVarCSMStableCascades->GetBool();
-        }
-        else
-        {
-            CascadeGenerationData.bEnableStableCascades = true;
-        }
+        CascadeGenerationData.bEnableTightFrustum   = GCSMTightFrustum;
+        CascadeGenerationData.bEnableStableCascades = GCSMStableCascades;
 
         CascadeGenerationDataDirty = true;
     }
@@ -439,6 +427,8 @@ void FFrameResources::Release()
     RayTracingScene.Reset();
     RayTracingOutput.Reset();
     RayTracingShaderBindingTable.Reset();
+    RayTracingBindlessShaderBindingTable.Reset();
+    RayTracingSERShaderBindingTable.Reset();
     RayTracingHitGroupBindings.Clear();
     RayTracingGeometryInstances.Clear();
     RayTracingMeshToHitGroupIndex.Clear();

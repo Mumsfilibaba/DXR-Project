@@ -1335,6 +1335,8 @@ bool FVulkanDefaultResources::InitializeNullBuffer(FVulkanDevice& Device)
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
 		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
 		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
+		VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT |
+		VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT |
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
 		VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
 
@@ -1366,6 +1368,24 @@ bool FVulkanDefaultResources::InitializeNullBuffer(FVulkanDevice& Device)
     {
         VULKAN_ERROR_CRITICAL("Failed to bind NullBuffer memory");
         return false;
+    }
+
+    VkBufferViewCreateInfo BufferViewCreateInfo = {};
+    BufferViewCreateInfo.sType  = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
+    BufferViewCreateInfo.buffer = NullBuffer;
+    BufferViewCreateInfo.format = VK_FORMAT_R32_UINT;
+    BufferViewCreateInfo.offset = 0;
+    BufferViewCreateInfo.range  = VK_WHOLE_SIZE;
+
+    VkResult ViewResult = vkCreateBufferView(Device.GetVkDevice(), &BufferViewCreateInfo, nullptr, &NullBufferView);
+    if (VULKAN_FAILED(ViewResult))
+    {
+        VULKAN_ERROR_CRITICAL("Failed to create NullBufferView");
+        return false;
+    }
+    else
+    {
+        VulkanSetObjectName(Device.GetVkDevice(), "NullBufferView", NullBufferView, VK_OBJECT_TYPE_BUFFER_VIEW);
     }
 
     return true;
@@ -1495,6 +1515,12 @@ bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device
 void FVulkanDefaultResources::Release(FVulkanDevice& Device)
 {
     VkDevice VulkanDevice = Device.GetVkDevice();
+    if (VULKAN_CHECK_HANDLE(NullBufferView))
+    {
+        vkDestroyBufferView(VulkanDevice, NullBufferView, nullptr);
+        NullBufferView = VK_NULL_HANDLE;
+    }
+
     if (VULKAN_CHECK_HANDLE(NullBuffer))
     {
         vkDestroyBuffer(VulkanDevice, NullBuffer, nullptr);

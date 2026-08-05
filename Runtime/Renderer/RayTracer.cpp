@@ -5,10 +5,13 @@
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Engine.h"
+#include "Engine/Assets/AssetManager.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/Model.h"
+#include "Engine/Resources/Texture.h"
 #include "Renderer/RayTracer.h"
 #include "Renderer/RayTracingBindless.h"
+#include "Renderer/ReflectionSettings.h"
 #include "Renderer/RendererStats.h"
 #include "Renderer/SceneRenderer.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
@@ -44,6 +47,12 @@ static FAutoConsoleVariableRef CVarRayTracingSER(
     "When true, reflections use a Shader-Execution-Reordering RayGen (HitObject/MaybeReorderThread, SM 6.9) over the bindless path. Requires SER support. No-op reorder on API-only devices.",
     GRayTracingSER);
 
+bool GReflectionsEnabled = true;
+static FAutoConsoleVariableRef CVarReflectionsEnabled(
+    "Renderer.RayTracing.Reflections.Enable",
+    "Enables ray-traced reflections. Acceleration structures are still built while this is off, so other ray traced effects keep working and re-enabling does not rebuild the scene.",
+    GReflectionsEnabled);
+
 static bool GReflectionDenoise = true;
 static FAutoConsoleVariableRef CVarReflectionDenoise(
     "Renderer.RayTracing.Reflections.Denoise",
@@ -74,7 +83,7 @@ static FAutoConsoleVariableRef CVarReflectionHistoryClampGamma(
     "Width (in neighborhood std-devs) of the temporal history clamp used to suppress motion ghosting. Lower = tighter/less ghosting but more noise. <= 0 disables history rectification.",
     GReflectionHistoryClampGamma);
 
-static float GReflectionMaxHistoryLength = 32.0f;
+float GReflectionMaxHistoryLength = 32.0f;
 static FAutoConsoleVariableRef CVarReflectionMaxHistoryLength(
     "Renderer.RayTracing.Reflections.MaxHistoryLength",
     "Maximum number of frames of reflection temporal accumulation. Shorter = faster response / less ghosting, longer = smoother / more ghosting.",
@@ -110,7 +119,7 @@ static FAutoConsoleVariableRef CVarReflectionMaxRayDistance(
     "Maximum distance (TMax) traced by a reflection ray. Shorter distances trade far-field reflections for traversal cost.",
     GReflectionMaxRayDistance);
 
-static float GReflectionMirrorRoughnessThreshold = 0.05f;
+float GReflectionMirrorRoughnessThreshold = 0.05f;
 static FAutoConsoleVariableRef CVarReflectionMirrorRoughnessThreshold(
     "Renderer.RayTracing.Reflections.MirrorRoughnessThreshold",
     "Surfaces below this roughness trace a perfect mirror ray; above it the direction is GGX importance-sampled.",
@@ -121,6 +130,26 @@ static FAutoConsoleVariableRef CVarReflectionRayBias(
     "Renderer.RayTracing.Reflections.RayBias",
     "Distance the reflection ray origin is pushed along the surface normal to avoid self-intersection.",
     GReflectionRayBias);
+
+// Mirrors REFLECTION_SAMPLER_* in Shaders/Reflections/ReflectionSampling.hlsli.
+struct EReflectionSampler
+{
+    enum Type : int32
+    {
+        White     = 0,
+        Halton    = 1,
+        BlueNoise = 2,
+
+        Min = White,
+        Max = BlueNoise,
+    };
+};
+
+static int32 GReflectionSampler = EReflectionSampler::BlueNoise;
+static FAutoConsoleVariableRef CVarReflectionSampler(
+    "Renderer.RayTracing.Reflections.Sampler",
+    "Sequence used to importance-sample the GGX lobe for reflection rays: 0 = white noise, 1 = Halton, 2 = blue noise. Falls back to white noise when the blue noise mask failed to load.",
+    GReflectionSampler);
 
 FRayTracer::FRayTracer(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -134,6 +163,7 @@ FRayTracer::FRayTracer(FSceneRenderer* InRenderer)
     , bDenoiserHalfRes(false)
     , DenoiserFullWidth(0)
     , DenoiserFullHeight(0)
+    , ReflectionNoiseSize(0)
 {
 }
 
@@ -503,6 +533,8 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
         }
     }
 
+    LoadReflectionNoiseMask();
+
     if (!CreateResources(Resources, Resources.CurrentRenderWidth, Resources.CurrentRenderHeight))
     {
         DEBUG_BREAK();
@@ -581,6 +613,47 @@ bool FRayTracer::NeedsReflectionReconfigure() const
     return bWantHalfRes != bDenoiserHalfRes;
 }
 
+void FRayTracer::LoadReflectionNoiseMask()
+{
+    String FullPath = Paths::GetAssetDir();
+    if (!FullPath.EndsWith("/"))
+    {
+        FullPath += "/";
+    }
+
+    FullPath += "Textures/Noise/BlueNoise_Vec2_128_RG.dds";
+
+    ReflectionNoiseTexture = FAssetManager::Get().LoadTexture(FullPath, false);
+    if (!ReflectionNoiseTexture)
+    {
+        LOG_WARNING("[RayTracer]: Failed to load reflection noise mask '%s'. The blue noise sampler will fall back to white noise", *FullPath);
+        return;
+    }
+
+    FTexture2D* Texture2D = ReflectionNoiseTexture->GetTexture2D();
+    if (!Texture2D || (Texture2D->GetWidth() != Texture2D->GetHeight()))
+    {
+        LOG_WARNING("[RayTracer]: Reflection noise mask '%s' is not square. The blue noise sampler will fall back to white noise", *FullPath);
+
+        ReflectionNoiseTexture.Reset();
+        return;
+    }
+
+    ReflectionNoiseSize = Texture2D->GetWidth();
+    LOG_INFO("[RayTracer]: Loaded reflection noise mask '%s' (%ux%u)", *FullPath, ReflectionNoiseSize, ReflectionNoiseSize);
+}
+
+FRHITexture* FRayTracer::GetReflectionNoiseMask() const
+{
+    if (!ReflectionNoiseTexture)
+    {
+        return nullptr;
+    }
+
+    FTexture2D* Texture2D = ReflectionNoiseTexture->GetTexture2D();
+    return Texture2D ? Texture2D->GetRHITexture().Get() : nullptr;
+}
+
 void FRayTracer::Release()
 {
     LocalPipeline.Reset();
@@ -611,6 +684,9 @@ void FRayTracer::Release()
     ReflectionUpsamplePipeline.Reset();
     ReflectionUpsampleShader.Reset();
     bReflectionHistoryValid = false;
+
+    ReflectionNoiseTexture.Reset();
+    ReflectionNoiseSize = 0;
 
     CompactionHelper.ReleaseAll();
     SerializationHelper.ReleaseAll();
@@ -891,6 +967,12 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
 
     BuildSceneAccelerationData(CommandList, Resources, Scene, bNeedBindlessData);
 
+    if (!GReflectionsEnabled)
+    {
+        bReflectionHistoryValid = false;
+        return;
+    }
+
     {
         FRayTracingSceneConstantsHLSL Constants;
         Constants.FrameIndex = GetRenderer()->GetFrameCounter().GetFrameIndex();
@@ -930,6 +1012,8 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
         Constants.ReflectionMaxRayDistance           = Math::Max(1.0f, GReflectionMaxRayDistance);
         Constants.ReflectionMirrorRoughnessThreshold = Math::Clamp(GReflectionMirrorRoughnessThreshold, 0.0f, 1.0f);
         Constants.ReflectionRayBias                  = Math::Max(0.0f, GReflectionRayBias);
+        Constants.ReflectionSampler                  = static_cast<uint32>(Math::Clamp<int32>(GReflectionSampler, EReflectionSampler::Min, EReflectionSampler::Max));
+        Constants.ReflectionNoiseSize                = ReflectionNoiseSize;
 
         CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Resources.RayTracingSceneConstantsBuffer.Get(), ERHIResourceState::ConstantBuffer, ERHIResourceState::CopyDest));
         CommandList.UpdateBuffer(Resources.RayTracingSceneConstantsBuffer.Get(), FBufferRegion(0, sizeof(FRayTracingSceneConstantsHLSL)), &Constants);
@@ -967,6 +1051,12 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
 
     FRHISamplerState* const EnvSampler = Resources.LightProbeSampler ? Resources.LightProbeSampler.Get() : Resources.GBufferSampler.Get();
     FRHISamplerState* const LUTSampler = Resources.IntegrationLUTSampler ? Resources.IntegrationLUTSampler.Get() : Resources.GBufferSampler.Get();
+
+    FRHITexture* const NoiseMask = GetReflectionNoiseMask();
+    if (NoiseMask)
+    {
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(NoiseMask, ERHIResourceState::NonPixelShaderResource));
+    }
 
     const auto BindReflectionGlobals = [&](auto* Shader)
     {
@@ -1010,6 +1100,11 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
         if (Resources.RayTracingGeometryTableSRV)
         {
             CommandList.SetShaderResourceView(Shader, Resources.RayTracingGeometryTableSRV.Get(), 9);
+        }
+
+        if (NoiseMask)
+        {
+            CommandList.SetShaderResourceView(Shader, NoiseMask->GetShaderResourceView(), 10);
         }
 
         CommandList.SetUnorderedAccessView(Shader, TraceTarget->GetUnorderedAccessView(), 0);

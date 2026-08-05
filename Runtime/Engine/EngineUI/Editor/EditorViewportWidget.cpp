@@ -155,6 +155,8 @@ void FEditorViewportWidget::Draw()
                     { "Reflections Radiance",        FSceneRenderView::EDebugView::RayTracingReflectionsRaw },
                     { "Reflections Temporal Filter", FSceneRenderView::EDebugView::RayTracingReflectionsTemporal },
                     { "Reflections Spatial Filter",  FSceneRenderView::EDebugView::RayTracingReflectionsSpatial },
+                    { "Reflections Variance",        FSceneRenderView::EDebugView::RayTracingReflectionsVariance },
+                    { "Reflections History Length",  FSceneRenderView::EDebugView::RayTracingReflectionsHistory },
                     { "Geometry Debug",              FSceneRenderView::EDebugView::RayTracingPrimaryID },
                 };
 

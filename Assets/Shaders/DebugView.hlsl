@@ -19,10 +19,12 @@
 #define DEBUG_VIEW_RAY_TRACING_REFLECTIONS_TEMPORAL 13
 #define DEBUG_VIEW_RAY_TRACING_REFLECTIONS_SPATIAL 14
 #define DEBUG_VIEW_RAY_TRACING_PRIMARY_ID 15
+#define DEBUG_VIEW_RAY_TRACING_REFLECTIONS_VARIANCE 16
+#define DEBUG_VIEW_RAY_TRACING_REFLECTIONS_HISTORY 17
 
 Texture2D<float4>     GBufferAlbedo        : register(t0);  // rgb = base color
 Texture2D<float4>     GBufferNormal        : register(t1);  // rgb = world-space normal (packed)
-Texture2D<float4>     GBufferMaterial      : register(t2);  // r   = AO, g = Roughness, b = Metallic
+Texture2D<float4>     GBufferMaterial      : register(t2);  // r   = Roughness, g = Metallic, b = AO
 Texture2D<float4>     GBufferVelocity      : register(t3);  // rg  = NDC motion vector
 Texture2D<float>      GBufferDepth         : register(t4);  // r   = device depth
 Texture2D<float>      ShadowMask           : register(t5);  // r   = directional shadow factor
@@ -32,7 +34,8 @@ Texture2D<uint>       CascadeIndexBuffer   : register(t8);  // r   = selected ca
 Texture2D<float4>     LitSceneBuffer       : register(t9);  // rgb = composited lit scene color
 Texture2D<float4>     RayTracedReflections : register(t10); // rgb = final a-trous resolved reflection radiance
 Texture2D<float4>     ReflectionTrace      : register(t11); // rgb = raw 1-spp traced reflection radiance, a = hit distance
-Texture2D<float4>     ReflectionTemporal   : register(t12); // rgb = temporally-accumulated radiance (current ReflectionHistory)
+Texture2D<float4>     ReflectionTemporal   : register(t12); // rgb = accumulated radiance, a = history length (current ReflectionHistory)
+Texture2D<float2>     ReflectionMoments    : register(t13); // r   = luma mean, g = luma^2 mean (current ReflectionMoments)
 
 SamplerState LinearSampler : register(s0);
 SamplerState PointSampler  : register(s1);
@@ -52,8 +55,11 @@ SHADER_CONSTANT_BLOCK_BEGIN
     int TargetWidth;
     int TargetHeight;
 
-    // 32-36
-    int bIsOutputSceneTarget;
+    // 32-48
+    int   bIsOutputSceneTarget;
+    float MirrorRoughnessThreshold; // Roughness below which the tracer takes a perfect mirror ray
+    float MaxHistoryLength;         // Normalizes the history-length view
+    float Padding0;
 SHADER_CONSTANT_BLOCK_END
 
 float3 VisualizeDepth(float Depth)
@@ -87,6 +93,12 @@ float3 CascadeIndexToColor(uint CascadeIndex)
     }
 
     return float3(1.0, 1.0, 1.0);
+}
+
+float3 HeatRamp(float Value)
+{
+    const float T = saturate(Value);
+    return saturate(float3(T * 3.0 - 1.5, 1.0 - abs(T * 3.0 - 1.5), 1.5 - T * 3.0));
 }
 
 float ComputeViewDepth(float2 TexCoord, float Depth)
@@ -214,6 +226,18 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_Target
     else if (Constants.DebugMode == DEBUG_VIEW_RAY_TRACING_PRIMARY_ID)
     {
         Color = RayTracedReflections.SampleLevel(PointSampler, FullTexCoord, 0).rgb;
+    }
+    else if (Constants.DebugMode == DEBUG_VIEW_RAY_TRACING_REFLECTIONS_VARIANCE)
+    {
+        const float2 Moments  = ReflectionMoments.SampleLevel(PointSampler, FullTexCoord, 0).rg;
+        const float  Variance = max(0.0, Moments.g - (Moments.r * Moments.r));
+
+        Color = HeatRamp(log2(1.0 + Variance) * 0.25);
+    }
+    else if (Constants.DebugMode == DEBUG_VIEW_RAY_TRACING_REFLECTIONS_HISTORY)
+    {
+        const float HistoryLength = ReflectionTemporal.SampleLevel(PointSampler, FullTexCoord, 0).a;
+        Color = HeatRamp(1.0 - saturate(HistoryLength / max(Constants.MaxHistoryLength, 1.0)));
     }
     else
     {

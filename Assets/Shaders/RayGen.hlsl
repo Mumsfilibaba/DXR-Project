@@ -5,6 +5,7 @@
 #include "RayTracingHelpers.hlsli"
 #include "RayTracingBindless.hlsli"
 #include "RayTracingSER.hlsli"
+#include "Reflections/ReflectionSampling.hlsli"
 
 ConstantBuffer<FCamera>                     CameraBuffer    : register(b0);
 ConstantBuffer<FRayTracingSceneConstants>   SceneConstants  : register(b1);
@@ -44,10 +45,9 @@ void RayGen()
     }
     else
     {
-        uint   Seed = InitRandom(DispatchIndex.xy, DispatchDimensions.x, SceneConstants.FrameIndex);
-        float2 Xi   = NextRandom2(Seed);
-        float3 H    = ImportanceSampleGGX(Xi, Roughness, WorldNormal);
-        
+        float2 Xi = SampleReflectionXi(DispatchIndex.xy, DispatchDimensions.xy, SceneConstants);
+        float3 H  = ImportanceSampleGGX(Xi, Roughness, WorldNormal);
+
         ReflectDirection = normalize(reflect(ViewDir, H));
     }
 

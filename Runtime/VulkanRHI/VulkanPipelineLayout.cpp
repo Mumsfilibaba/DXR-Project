@@ -45,8 +45,9 @@ static EResourceType::Type GetResourceBucket(EVulkanBindingType::Type BindingTyp
     case EVulkanBindingType::Sampler:
     case EVulkanBindingType::ImmutableSampler:       return EResourceType::Sampler;
     case EVulkanBindingType::StorageImage:
-    case EVulkanBindingType::StorageBufferReadWrite: return EResourceType::UAV;
-    default:                                         return EResourceType::SRV; // SampledImage, StorageBufferRead, AccelerationStructure
+    case EVulkanBindingType::StorageBufferReadWrite:
+    case EVulkanBindingType::TexelBufferReadWrite:   return EResourceType::UAV;
+    default:                                         return EResourceType::SRV; // SampledImage, StorageBufferRead, TexelBufferRead, AccelerationStructure
     }
 }
 
@@ -584,6 +585,7 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
 
             case EVulkanBindingType::SampledImage:
             case EVulkanBindingType::StorageBufferRead:
+            case EVulkanBindingType::TexelBufferRead:
             case EVulkanBindingType::AccelerationStructure:
                 CheckSlotCollision(StageMapping.SRVMappings[RemappingInfo.OriginalBindingIndex], "SRV");
                 StageMapping.SRVMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
@@ -591,6 +593,7 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
 
             case EVulkanBindingType::StorageImage:
             case EVulkanBindingType::StorageBufferReadWrite:
+            case EVulkanBindingType::TexelBufferReadWrite:
                 CheckSlotCollision(StageMapping.UAVMappings[RemappingInfo.OriginalBindingIndex], "UAV");
                 StageMapping.UAVMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;

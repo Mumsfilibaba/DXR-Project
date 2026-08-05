@@ -4,6 +4,7 @@
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "Renderer/Performance/GPUProfiler.h"
+#include "Renderer/ReflectionSettings.h"
 
 FDebugViewPass::FDebugViewPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -202,6 +203,8 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
     RequirePixelIfNotRT(FrameResources.RayTracingOutput.Get());
     RequirePixelIfNotRT(FrameResources.ReflectionTrace.Get());
     RequirePixelIfNotRT(FrameResources.ReflectionDenoised[0].Get());
+    RequirePixelIfNotRT(FrameResources.ReflectionHistory[FrameResources.ReflectionHistoryIndex].Get());
+    RequirePixelIfNotRT(FrameResources.ReflectionMoments[FrameResources.ReflectionHistoryIndex].Get());
 
     FRHIRenderTargetView* RenderTargetView = RenderTarget->GetRenderTargetView();
 
@@ -273,6 +276,11 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
         CommandList.SetShaderResourceView(DebugPixelShader.Get(), TemporalHistory->GetShaderResourceView(), 12);
     }
 
+    if (FRHITexture* TemporalMoments = FrameResources.ReflectionMoments[FrameResources.ReflectionHistoryIndex].Get())
+    {
+        CommandList.SetShaderResourceView(DebugPixelShader.Get(), TemporalMoments->GetShaderResourceView(), 13);
+    }
+
     CommandList.SetConstantBuffer(DebugPixelShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
     FRHISamplerState* PointSampler  = FrameResources.GBufferSampler.Get();
@@ -283,15 +291,18 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
 
     struct FDebugViewConstants
     {
-        int32 DebugMode          = 0;
-        int32 ShadowMapSize      = 0;
-        int32 OutputWidth        = 0;
-        int32 OutputHeight       = 0;
-        int32 ViewX              = 0;
-        int32 ViewY              = 0;
-        int32 TargetWidth        = 0;
-        int32 TargetHeight       = 0;
-        int32 bIsOutputSceneTarget = 0;
+        int32 DebugMode                = 0;
+        int32 ShadowMapSize            = 0;
+        int32 OutputWidth              = 0;
+        int32 OutputHeight             = 0;
+        int32 ViewX                    = 0;
+        int32 ViewY                    = 0;
+        int32 TargetWidth              = 0;
+        int32 TargetHeight             = 0;
+        int32 bIsOutputSceneTarget     = 0;
+        float MirrorRoughnessThreshold = 0.0f;
+        float MaxHistoryLength         = 1.0f;
+        float Padding0                 = 0.0f;
     } Constants;
 
     Constants.DebugMode            = static_cast<int32>(DebugView);
@@ -303,6 +314,9 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
     Constants.TargetWidth          = TargetWidth;
     Constants.TargetHeight         = TargetHeight;
     Constants.bIsOutputSceneTarget = (RenderTarget->GetDesc().Format == RendererTextureFormats::SceneTargetFormat) ? 1 : 0;
+
+    Constants.MirrorRoughnessThreshold = Math::Clamp(GReflectionMirrorRoughnessThreshold, 0.0f, 1.0f);
+    Constants.MaxHistoryLength         = Math::Max(1.0f, GReflectionMaxHistoryLength);
 
     constexpr uint32 NumConstants = sizeof(FDebugViewConstants) / sizeof(uint32);
     CommandList.SetShaderConstants(DebugPixelShader.Get(), &Constants, NumConstants);

@@ -31,6 +31,8 @@ struct FSceneRenderView
         RayTracingReflectionsTemporal,
         RayTracingReflectionsSpatial, 
         RayTracingPrimaryID,          
+        RayTracingReflectionsVariance,
+        RayTracingReflectionsHistory, 
         Count,
     };
 
