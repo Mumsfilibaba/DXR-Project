@@ -1,17 +1,11 @@
 include "BuildTool_Common.lua"
 
--- The xcode4 exporter drops vectorextensions, so the equivalent clang flag is passed by hand.
-local ClangVectorExtensionFlags =
+local XcodeVectorExtensions =
 {
-    ["AVX512"] = "-mavx512f",
-    ["AVX2"]   = "-mavx2",
-    ["AVX"]    = "-mavx",
-    ["SSE4.2"] = "-msse4.2",
-    ["SSE4.1"] = "-msse4.1",
-    ["SSSE3"]  = "-mssse3",
-    ["SSE3"]   = "-msse3",
-    ["SSE2"]   = "-msse2",
-    ["SSE"]    = "-msse",
+    ["AVX512"] = "avx512",
+    ["AVX2"]   = "avx2",
+    ["AVX"]    = "avx",
+    ["SSE4.2"] = "sse4.2",
 }
 
 -- Build rules for a project
@@ -288,31 +282,16 @@ function BuildRules(Name)
             -- Run-Time Type Information
             rtti(self.bEnableRuntimeTypeInfo and "On" or "Off")
             floatingpoint(self.FloatingPoint)
-            vectorextensions(self.VectorExtensions)
 
-            -- Neither of the settings above reaches Xcode, which would leave macOS on clang's
-            -- default Penryn baseline and a different VectorMath backend than Windows.
-            if IsPlatformMac() then
-                local VectorFlag = ClangVectorExtensionFlags[self.VectorExtensions]
-                if VectorFlag then
-                    filter { "system:macosx" }
-                        buildoptions({
-                            VectorFlag
-                        })
-                    filter {}
-                elseif self.VectorExtensions and self.VectorExtensions ~= "Default" then
-                    LogWarning("No clang flag known for VectorExtensions '%s'", tostring(self.VectorExtensions))
-                end
+            -- MSVC's /arch has no ARM spelling, so an ARM target has to fall back to the default
+            vectorextensions(TargetsX86() and self.VectorExtensions or "Default")
 
-                -- Fast floating point in an optimized build implies -ffinite-math-only, which folds
-                -- every NaN/infinity check to false. Keep the rest of fast-math.
-                if self.FloatingPoint == "Fast" then
-                    filter { "system:macosx" }
-                        buildoptions({
-                            "-fno-finite-math-only"
-                        })
-                    filter {}
-                end
+            if IsPlatformMac() and self.FloatingPoint == "Fast" then
+                filter { "system:macosx" }
+                    buildoptions({
+                        "-fno-finite-math-only"
+                    })
+                filter {}
             end
 
             -- Edit and Continue
@@ -337,8 +316,7 @@ function BuildRules(Name)
                 cppdialect(self.CppVersion)
             end
 
-            -- Conforming preprocessor and __cplusplus value for VS. The traditional MSVC
-            -- preprocessor mis-expands __VA_ARGS__, which CHECKF relies on.
+            -- Conforming preprocessor and __cplusplus value for VS.
             filter { "action:vs*" }
                 buildoptions({
                     "/Zc:__cplusplus",
@@ -625,20 +603,24 @@ function BuildRules(Name)
 
             -- Xcode specific settings
             filter { "action:xcode4" }
-                xcodebuildsettings
+                local XcodeSettings =
                 {
                     ["PRODUCT_BUNDLE_IDENTIFIER"] = "com.DXREngine." .. self.Name,
                     ["CODE_SIGN_STYLE"] = "Automatic",
-                    ["ARCHS"] = "x86_64",
-                    ["ONLY_ACTIVE_ARCH"] = "YES",
+                    ["ARCHS"] = GetXcodeArchs(),
+                    ["ONLY_ACTIVE_ARCH"] = "NO",
                     ["ENABLE_HARDENED_RUNTIME"] = "NO",
                     ["GENERATE_INFOPLIST_FILE"] = "YES",
-                    -- Xcode otherwise defaults to /usr/local/lib, and dyld resolves an absolute
-                    -- install name directly rather than against LC_RPATH
                     ["DYLIB_INSTALL_NAME_BASE"] = "@rpath",
                     ["LD_RUNPATH_SEARCH_PATHS"] = "@executable_path/../Frameworks @executable_path @loader_path",
-                    ["GCC_ENABLE_AVX2_EXTENSIONS"] = "YES",
                 }
+
+                local VectorLevel = XcodeVectorExtensions[self.VectorExtensions]
+                if VectorLevel then
+                    XcodeSettings["CLANG_X86_VECTOR_INSTRUCTIONS"] = VectorLevel
+                end
+
+                xcodebuildsettings(XcodeSettings)
             filter {}
 
         -- End project

@@ -192,7 +192,7 @@ function GenerateSolutionFiles()
 
     -- Platforms
     platforms({
-        "x64"
+        GetArchitecturePlatformName()
     })
 
     -- Configurations
@@ -253,7 +253,7 @@ function GenerateSolutionFiles()
     filter {}
 
     -- Architecture for all projects
-    architecture "x86_64"
+    architecture(GetPremakeArchitecture())
 
     -- Static vs dynamic CRT (MSVC only
     filter { "action:vs*", "configurations:*Monolithic*" }
@@ -262,25 +262,6 @@ function GenerateSolutionFiles()
 
     filter { "action:vs*", "configurations:not *Monolithic*" }
         staticruntime "Off" -- /MD(d)
-    filter {}
-
-    -- Architecture defines
-    filter "architecture:x86"
-        defines({
-            "ARCHITECTURE_X86=(1)"
-        })
-    filter {}
-
-    filter "architecture:x86_64"
-        defines({
-            "PLATFORM_ARCHITECTURE_X86_64=(1)"
-        })
-    filter {}
-
-    filter "architecture:ARM"
-        defines({
-            "PLATFORM_ARCHITECTURE_ARM=(1)"
-        })
     filter {}
 
     -- Startup project name
@@ -380,9 +361,6 @@ function GenerateWorkspace()
             end
 
             if TargetRule then
-                -- Source path for the target (affects file globs, natvis, etc.). One script may
-                -- declare several targets and premake includes it only once, so this has to run
-                -- for targets that an earlier iteration already created.
                 if type(TargetRule.SetPath) == "function" then
                     TargetRule.SetPath(TargetInfo.ScriptDir)
                 end

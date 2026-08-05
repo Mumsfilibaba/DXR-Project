@@ -31,6 +31,18 @@ newoption
     description = "Isolate generated projects and build artifacts under a named suffix"
 }
 
+newoption
+{
+    trigger = "architecture",
+    value = "TargetArchitecture",
+    description = "Specify the CPU architecture to build for",
+    allowed = {
+        { "x86_64" },
+        { "arm64" },
+        { "universal" }
+    },
+}
+
 local function NormalizePlatform(PlatformName)
     if not PlatformName then
         return nil
@@ -102,6 +114,101 @@ end
 
 function IsPlatformMac()
     return _OPTIONS["platform"] == "macOS"
+end
+
+-- Architecture Management
+local function NormalizeArchitecture(ArchitectureName)
+    if not ArchitectureName then
+        return nil
+    end
+
+    ArchitectureName = tostring(ArchitectureName):lower()
+    if ArchitectureName == "x86_64" or ArchitectureName == "x64" or ArchitectureName == "amd64" then
+        return "x86_64"
+    end
+    if ArchitectureName == "arm64" or ArchitectureName == "aarch64" then
+        return "arm64"
+    end
+    if ArchitectureName == "universal" then
+        return "universal"
+    end
+
+    return ArchitectureName
+end
+
+-- The bundled premake exposes no os.hostarch(), so uname is the only source here.
+local function GuessArchitectureFromHost()
+    if os.host() ~= "macosx" then
+        return "x86_64"
+    end
+
+    local Machine = os.outputof("uname -m")
+    return NormalizeArchitecture(Machine and Machine:gsub("%s+", "")) or "x86_64"
+end
+
+-- Initialize default if missing or unrecognized
+do
+    local Explicit = NormalizeArchitecture(_OPTIONS["architecture"])
+    if not Explicit then
+        _OPTIONS["architecture"] = GuessArchitectureFromHost()
+        LogHighlight("No --architecture specified. Defaulting to '%s'.", _OPTIONS["architecture"])
+    else
+        _OPTIONS["architecture"] = Explicit
+    end
+
+    -- A fat binary is a Mach-O concept; nothing equivalent exists on Windows.
+    if _OPTIONS["architecture"] == "universal" and not IsPlatformMac() then
+        LogWarning("--architecture=universal is macOS only. Falling back to 'x86_64'.")
+        _OPTIONS["architecture"] = "x86_64"
+    end
+end
+
+function GetTargetArchitecture()
+    return _OPTIONS["architecture"]
+end
+
+function IsArchitectureUniversal()
+    return GetTargetArchitecture() == "universal"
+end
+
+-- True when at least one slice is an x86 target, so x86-only compiler settings still apply
+function TargetsX86()
+    local Architecture = GetTargetArchitecture()
+    return Architecture == "x86_64" or Architecture == "universal"
+end
+
+local gArchitecturePlatformNames =
+{
+    ["x86_64"]    = "x64",
+    ["arm64"]     = "ARM64",
+    ["universal"] = "Universal",
+}
+
+function GetArchitecturePlatformName()
+    return gArchitecturePlatformNames[GetTargetArchitecture()]
+end
+
+local gPremakeArchitectures =
+{
+    ["x86_64"]    = "x86_64",
+    ["arm64"]     = "ARM64",
+    ["universal"] = "universal",
+}
+
+function GetPremakeArchitecture()
+    return gPremakeArchitectures[GetTargetArchitecture()]
+end
+
+-- The xcode4 exporter emits no ARCHS of its own, so this list alone decides the slices built
+local gXcodeArchitectures =
+{
+    ["x86_64"]    = { "x86_64" },
+    ["arm64"]     = { "arm64" },
+    ["universal"] = { "x86_64", "arm64" },
+}
+
+function GetXcodeArchs()
+    return gXcodeArchitectures[GetTargetArchitecture()]
 end
 
 -- Monolithic Build Management

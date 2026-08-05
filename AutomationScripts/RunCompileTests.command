@@ -18,7 +18,8 @@
 #
 #  Both live beside the workspace you work in rather than replacing it, so this
 #  is safe to run with Xcode open. The flip side is that the first run is a cold
-#  build; later runs are incremental.
+#  build; later runs are incremental. A non-default --arch appends its name to
+#  both folders, so each architecture keeps its own incremental build.
 #
 #  Usage:
 #    RunCompileTests.command [options]
@@ -29,17 +30,18 @@
 #    --modular-only      Skip the monolithic pass.
 #    --monolithic-only   Skip the modular pass.
 #    --config <name>     Build only the named configuration, e.g. "Release".
+#    --arch <name>       Build for x86_64, arm64 or universal. Defaults to the
+#                        host architecture. Each architecture gets its own
+#                        workspace and binaries, so switching between them does
+#                        not invalidate the other's incremental build.
 #
 #  The window pauses at the end (on success or failure) so results stay
 #  readable when launched interactively. For automation, pass --no-pause or
 #  set TESTS_NO_PAUSE=1 to skip the pause.
 # ----------------------------------------------------------------------------
 
-# A non-interactive ssh session never runs path_helper, so /usr/local/bin is
-# absent and every Homebrew tool is invisible.
-export PATH="/usr/local/bin:$PATH"
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
-# This script sits one level below the repo root.
 ROOT=$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )
 cd "$ROOT"
 
@@ -51,22 +53,28 @@ CLEAN=0
 RUN_MODULAR=1
 RUN_MONOLITHIC=1
 ONLY_CONFIG=""
-EXPECT_CONFIG=0
+ARCH=""
+EXPECT_VALUE=""
 
 TOTAL=0
 FAILED=0
 
 for arg in "$@"; do
-    if [ $EXPECT_CONFIG -eq 1 ]; then
+    if [ -n "$EXPECT_VALUE" ]; then
         case "$arg" in
             --*)
-                echo "[ERROR] --config requires a configuration name, got: $arg"
+                echo "[ERROR] $EXPECT_VALUE requires a value, got: $arg"
                 exit 2
                 ;;
         esac
 
-        ONLY_CONFIG="$arg"
-        EXPECT_CONFIG=0
+        if [ "$EXPECT_VALUE" = "--arch" ]; then
+            ARCH="$arg"
+        else
+            ONLY_CONFIG="$arg"
+        fi
+
+        EXPECT_VALUE=""
         continue
     fi
 
@@ -84,7 +92,10 @@ for arg in "$@"; do
             RUN_MODULAR=0
             ;;
         --config)
-            EXPECT_CONFIG=1
+            EXPECT_VALUE="--config"
+            ;;
+        --arch)
+            EXPECT_VALUE="--arch"
             ;;
         *)
             echo "[ERROR] Unexpected argument: $arg"
@@ -93,8 +104,8 @@ for arg in "$@"; do
     esac
 done
 
-if [ $EXPECT_CONFIG -eq 1 ]; then
-    echo "[ERROR] --config requires a configuration name."
+if [ -n "$EXPECT_VALUE" ]; then
+    echo "[ERROR] $EXPECT_VALUE requires a value."
     exit 2
 fi
 
@@ -102,11 +113,16 @@ if [ -n "$TESTS_NO_PAUSE" ]; then
     NO_PAUSE=1
 fi
 
-# Configuration names contain spaces, so they cannot live in the space-separated
-# list Scripts/RunSuites.sh uses for its suites.
-#
-# Monolithic is not a configuration on Xcode, it is the layout each pass generates,
-# so the three "* Monolithic" names are gone and each pass covers all six.
+if [ -z "$ARCH" ]; then
+    ARCH=$( uname -m )
+
+fi
+case "$ARCH" in
+    arm64)     ARCH_SUFFIX="Arm64" ;;
+    universal) ARCH_SUFFIX="Universal" ;;
+    *)         ARCH_SUFFIX="" ;;
+esac
+
 CONFIGS="Debug
 Development
 Release
@@ -220,11 +236,11 @@ fi
 rm -f "$LOG"
 
 if [ $RUN_MODULAR -eq 1 ]; then
-    run_pass "Modular" "CompileTest" ""
+    run_pass "Modular ${ARCH}" "CompileTest${ARCH_SUFFIX}" "--arch $ARCH"
 fi
 
 if [ $RUN_MONOLITHIC -eq 1 ]; then
-    run_pass "Monolithic" "CompileTestMono" "--monolithic"
+    run_pass "Monolithic ${ARCH}" "CompileTestMono${ARCH_SUFFIX}" "--monolithic --arch $ARCH"
 fi
 
 if [ $TOTAL -eq 0 ]; then
