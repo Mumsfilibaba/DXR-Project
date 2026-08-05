@@ -21,7 +21,7 @@ static FD3D12BufferRHI* GetViewedBuffer(FRHIResource* ViewedResource)
 FD3D12ShaderBindingTable::FD3D12ShaderBindingTable(FD3D12Device* InDevice, const FRHIShaderBindingTableDesc& InDesc)
     : FRHIShaderBindingTable(InDesc)
     , FD3D12DeviceChild(InDevice)
-    , Pipeline(FD3D12DeviceRHI::ResourceCast(InDesc.Pipeline))
+    , Pipeline(MakeSharedRef<FD3D12RayTracingPipelineStateRHI>(FD3D12DeviceRHI::ResourceCast(InDesc.Pipeline)))
     , NumRayGen(Math::Max<uint32>(InDesc.NumRayGenerationShaders, 1u))
     , NumMiss(InDesc.NumMissShaders)
     , NumCallable(InDesc.NumCallableShaders)
@@ -30,11 +30,6 @@ FD3D12ShaderBindingTable::FD3D12ShaderBindingTable(FD3D12Device* InDevice, const
     , CpuShadow()
     , TableResourceStorage(InDevice)
 {
-    if (Pipeline)
-    {
-        Pipeline->AddRef();
-    }
-
     const uint32 TotalRecords = NumRayGen + NumMiss + NumHitGroup + NumCallable;
     CpuShadow.Resize(int32(TotalRecords * RecordStride));
     Memory::Memzero(CpuShadow.Data(), CpuShadow.SizeInBytes());
