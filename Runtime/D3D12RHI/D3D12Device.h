@@ -153,7 +153,7 @@ public:
     FD3D12QueryHeapManager*          GetQueryHeapManager(EQueryType QueryType);
     FD3D12QueryHeap*                 ObtainQueryHeap(D3D12_QUERY_HEAP_TYPE HeapType);
     void                             RecycleQueryHeap(FD3D12QueryHeap* Heap);
-    int32                            QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
+    bool                             QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount, uint32& OutQuality);
 
     FD3D12RootSignatureManager&      GetRootSignatureManager()              const { return *RootSignatureManager; }
     FD3D12PipelineStateManager&      GetPipelineStateManager()              const { return *PipelineStateManager; }

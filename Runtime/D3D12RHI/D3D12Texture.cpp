@@ -106,14 +106,15 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
         ResourceDesc.DepthOrArraySize = static_cast<UINT16>(RHIDimensionArrayLayers(Desc.Dimension, Desc.NumArraySlices));
     }
 
+    ResourceDesc.SampleDesc.Quality = 0;
+
     if (Desc.NumSamples > 1)
     {
-        const int32 Quality = GetDevice()->QueryMultisampleQuality(ResourceDesc.Format, Desc.NumSamples);
-        ResourceDesc.SampleDesc.Quality = Quality - 1;
-    }
-    else
-    {
-        ResourceDesc.SampleDesc.Quality = 0;
+        if (!GetDevice()->QueryMultisampleQuality(ResourceDesc.Format, Desc.NumSamples, ResourceDesc.SampleDesc.Quality))
+        {
+            D3D12_ERROR("[FD3D12TextureRHI] SampleCount '%u' is not supported for format '%s'", Desc.NumSamples, ToString(ResourceDesc.Format));
+            return false;
+        }
     }
 
     D3D12_CLEAR_VALUE ClearValue = {};
