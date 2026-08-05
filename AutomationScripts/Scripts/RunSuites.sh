@@ -275,7 +275,9 @@ for CONFIG in $CONFIGS; do
         fi
     done
 
-    BINDIR="$ROOT/Build/bin/$CONFIG-macosx-x64-Tests"
+    # The tests workspace is generated with --monolithic, and a generation whose
+    # configuration names do not carry the layout gets it in the output folder instead.
+    BINDIR="$ROOT/Build/bin/$CONFIG-macosx-x64-Monolithic-Tests"
     echo "----- MODULE: $MODULE | CONFIG: $CONFIG -----" >> "$LOG"
 
     for NAME in $TARGETS; do

@@ -8,17 +8,15 @@ REM  Warnings are errors here (engine modules only; thirdparty modules set
 REM  bSilenceWarnings and stay exempt), so this catches the warnings that only
 REM  appear in configurations nobody builds day to day.
 REM
-REM  Everything runs twice, because "Monolithic" is only a configuration *name*
-REM  in the generated solution. What actually links the modules statically is
-REM  the --monolithic flag passed to premake at generation time, so the two
-REM  layouts need two separate generations:
+REM  MSBuild keeps ConfigurationType per configuration, so one generation carries
+REM  both layouts and the "* Monolithic" configurations link statically for real.
+REM  That makes this a single pass over twelve configurations:
 REM
-REM    Pass 1  modular     -> Solutions\CompileTest      + Build\bin\*-CompileTest
-REM    Pass 2  monolithic  -> Solutions\CompileTestMono  + Build\bin\*-CompileTestMono
+REM    Solutions\CompileTest + Build\bin\*-CompileTest
 REM
-REM  Both live beside the solution you work in rather than replacing it, so this
-REM  is safe to run with Visual Studio open. The flip side is that the first run
-REM  is a cold build; later runs are incremental.
+REM  It lives beside the solution you work in rather than replacing it, so this is
+REM  safe to run with Visual Studio open. The flip side is that the first run is a
+REM  cold build; later runs are incremental.
 REM
 REM  Usage:
 REM    RunCompileTests.bat [options]
@@ -26,8 +24,6 @@ REM
 REM  Options:
 REM    --no-pause          Never wait for a keypress before closing.
 REM    --clean             Delete the isolated solutions and binaries first.
-REM    --modular-only      Skip the monolithic pass.
-REM    --monolithic-only   Skip the modular pass.
 REM    --config <name>     Build only the named configuration, e.g. "Release".
 REM
 REM  The window pauses at the end (on success or failure) so results stay
@@ -44,8 +40,6 @@ set "COMPILE=%ROOT%SetupScripts\Compile_VS2022.bat"
 
 set "NO_PAUSE=0"
 set "CLEAN=0"
-set "RUN_MODULAR=1"
-set "RUN_MONOLITHIC=1"
 set "ONLY_CONFIG="
 set "RC=0"
 
@@ -56,10 +50,6 @@ if /i "%~1"=="--no-pause" (
     set "NO_PAUSE=1"
 ) else if /i "%~1"=="--clean" (
     set "CLEAN=1"
-) else if /i "%~1"=="--modular-only" (
-    set "RUN_MONOLITHIC=0"
-) else if /i "%~1"=="--monolithic-only" (
-    set "RUN_MODULAR=0"
 ) else if /i "%~1"=="--config" (
     if "%~2"=="" (
         echo [ERROR] --config requires a configuration name.
@@ -103,8 +93,8 @@ if "%CLEAN%"=="1" (
 REM --- Start each run from a clean combined log -----------------------------
 del /q "%LOG%" 2>nul
 
-if "%RUN_MODULAR%"=="1"    call :RunPass "Modular"    "CompileTest"     ""
-if "%RUN_MONOLITHIC%"=="1" call :RunPass "Monolithic" "CompileTestMono" "--monolithic"
+REM  One generation now covers both layouts, because monolithic is a configuration.
+call :RunPass "All" "CompileTest" ""
 
 if !TOTAL! equ 0 (
     echo.
@@ -114,7 +104,7 @@ if !TOTAL! equ 0 (
 
 echo.
 echo ------------------------------------------------------------
-echo  Compile summary: !TOTAL! ^(pass x config^) built, !FAILED! failed.
+echo  Compile summary: !TOTAL! configuration^(s^) built, !FAILED! failed.
 echo  Full output written to: %LOG%
 echo ------------------------------------------------------------
 echo Compile summary: !TOTAL! built, !FAILED! failed.>> "%LOG%"
@@ -154,7 +144,7 @@ set "PASS_NAME=%~1"
 set "PASS_SUFFIX=%~2"
 set "PASS_EXTRA=%~3"
 
-REM  Only the first configuration regenerates; the other eight reuse the result.
+REM  Only the first configuration regenerates; the other eleven reuse the result.
 set "PASS_GENERATED=0"
 
 echo.
@@ -166,6 +156,7 @@ for %%C in (
     "Debug" "Development" "Release"
     "Debug Monolithic" "Development Monolithic" "Release Monolithic"
     "Debug Editor" "Development Editor" "Release Editor"
+    "Debug Editor Monolithic" "Development Editor Monolithic" "Release Editor Monolithic"
 ) do (
     if defined ONLY_CONFIG (
         if /i "%%~C"=="!ONLY_CONFIG!" call :BuildConfig "%%~C"

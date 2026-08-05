@@ -255,13 +255,13 @@ function GenerateSolutionFiles()
     -- Architecture for all projects
     architecture "x86_64"
 
-    -- Static vs dynamic CRT (MSVC only)
-    filter "action:vs*"
-        if IsBuildMonolithic() then
-            staticruntime "On" -- /MT(d)
-        else
-            staticruntime "Off" -- /MD(d)
-        end
+    -- Static vs dynamic CRT (MSVC only
+    filter { "action:vs*", "configurations:*Monolithic*" }
+        staticruntime "On"  -- /MT(d)
+    filter {}
+
+    filter { "action:vs*", "configurations:not *Monolithic*" }
+        staticruntime "Off" -- /MD(d)
     filter {}
 
     -- Architecture defines
@@ -301,14 +301,11 @@ local function ComputeStartProjectName()
         return
     end
 
-    -- If non-monolithic, prefer "<Name>Standalone" if it exists, else fallback to "<Name>"
     local FirstTarget = gTargets[1]
-    if not IsBuildMonolithic() then
-        local Standalone = FirstTarget .. "Standalone"
-        if HasProjectRule(Standalone) then
-            gStartProjectName = Standalone
-            return
-        end
+    local Standalone  = FirstTarget .. "Standalone"
+    if HasProjectRule(Standalone) then
+        gStartProjectName = Standalone
+        return
     end
 
     -- Default
@@ -341,13 +338,6 @@ function GenerateWorkspace()
 
     LogInfo("Engine Path ='%s'", CreateOsPath(GetEnginePath()))
     LogInfo("RuntimeFolderPath = '%s'", CreateOsPath(GetRuntimeFolderPath()))
-
-    -- Check if the command line overrides monolithic builds
-    if IsBuildMonolithic() then
-        AddGlobalDefines({
-            "MONOLITHIC_BUILD=(1)"
-        })
-    end
 
     -- IDE Defines
     if BuildWithVisualStudio() then
@@ -413,15 +403,24 @@ function GenerateWorkspace()
             AddConfiguration("Debug")
             AddConfiguration("Development")
             AddConfiguration("Release")
-            AddConfiguration("Debug Monolithic")
-            AddConfiguration("Development Monolithic")
-            AddConfiguration("Release Monolithic")
+
+            if HasPerConfigurationLayouts() then
+                AddConfiguration("Debug Monolithic")
+                AddConfiguration("Development Monolithic")
+                AddConfiguration("Release Monolithic")
+            end
         elseif CurrentTargetType == ETargetType.Editor then
             LogHighlight("Need configuration for ETargetType.Editor")
 
             AddConfiguration("Debug Editor")
             AddConfiguration("Development Editor")
             AddConfiguration("Release Editor")
+
+            if HasPerConfigurationLayouts() then
+                AddConfiguration("Debug Editor Monolithic")
+                AddConfiguration("Development Editor Monolithic")
+                AddConfiguration("Release Editor Monolithic")
+            end
         elseif CurrentTargetType == ETargetType.Program then
             LogHighlight("Need configuration for ETargetType.Program")
 
@@ -433,8 +432,6 @@ function GenerateWorkspace()
         end
     end
 
-    -- Move the preferred configuration to the front so it becomes the default. It is absent
-    -- when the workspace has no editor target, in which case the existing order stands.
     for i = 1, #gConfigurations do
         if gConfigurations[i] == gPreferredConfiguration then
             table.remove(gConfigurations, i)

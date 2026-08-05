@@ -8,13 +8,13 @@
 #  bSilenceWarnings and stay exempt), so this catches the warnings that only
 #  appear in configurations nobody builds day to day.
 #
-#  Everything runs twice, because "Monolithic" is only a configuration *name*
-#  in the generated workspace. What actually links the modules statically is
-#  the --monolithic flag passed to premake at generation time, so the two
-#  layouts need two separate generations:
+#  Everything runs twice, because an Xcode target has a single product type and
+#  therefore a single layout. What links the modules statically is the
+#  --monolithic flag passed to premake at generation time, so the two layouts
+#  need two separate generations:
 #
 #    Pass 1  modular     -> Solutions/CompileTest      + Build/bin/*-CompileTest
-#    Pass 2  monolithic  -> Solutions/CompileTestMono  + Build/bin/*-CompileTestMono
+#    Pass 2  monolithic  -> Solutions/CompileTestMono  + Build/bin/*-Monolithic-CompileTestMono
 #
 #  Both live beside the workspace you work in rather than replacing it, so this
 #  is safe to run with Xcode open. The flip side is that the first run is a cold
@@ -104,12 +104,12 @@ fi
 
 # Configuration names contain spaces, so they cannot live in the space-separated
 # list Scripts/RunSuites.sh uses for its suites.
+#
+# Monolithic is not a configuration on Xcode, it is the layout each pass generates,
+# so the three "* Monolithic" names are gone and each pass covers all six.
 CONFIGS="Debug
 Development
 Release
-Debug Monolithic
-Development Monolithic
-Release Monolithic
 Debug Editor
 Development Editor
 Release Editor"
@@ -179,7 +179,7 @@ run_pass() {
     PASS_SUFFIX="$2"
     PASS_EXTRA="$3"
 
-    # Only the first configuration regenerates; the other eight reuse the result.
+    # Only the first configuration regenerates; the other five reuse the result.
     PASS_GENERATED=0
 
     echo

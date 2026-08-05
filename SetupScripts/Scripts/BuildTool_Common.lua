@@ -115,6 +115,38 @@ function IsBuildMonolithic()
     return gIsMonolithic
 end
 
+ELayout = 
+{ 
+    Modular    = 1, 
+    Monolithic = 2 
+}
+
+function GetGeneratedLayouts()
+    if IsBuildMonolithic() then
+        return { ELayout.Monolithic }
+    end
+
+    if BuildWithVisualStudio() then
+        return { ELayout.Modular, ELayout.Monolithic }
+    end
+
+    return { ELayout.Modular }
+end
+
+-- True when the configuration names decide the layout rather than the generation
+function HasPerConfigurationLayouts()
+    return #GetGeneratedLayouts() > 1
+end
+
+function GetLayoutConfigFilter(Layout)
+    if not HasPerConfigurationLayouts() then
+        return nil
+    end
+
+    return Layout == ELayout.Monolithic and "configurations:*Monolithic*"
+                                         or "configurations:not *Monolithic*"
+end
+
 -- Warning Management
 function IsFatalWarnings()
     return _OPTIONS["fatalwarnings"] ~= nil
@@ -293,6 +325,13 @@ end
 
 -- Output path for the binaries inside the buildfolder
 local gOutputConfigPath = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}"
+
+-- When the configuration name carries the layout there is nothing to disambiguate. When it
+-- does not, a monolithic generation would otherwise overwrite the modular binaries.
+if IsBuildMonolithic() and not HasPerConfigurationLayouts() then
+    gOutputConfigPath = gOutputConfigPath .. "-Monolithic"
+end
+
 if GetBuildSuffix() then
     gOutputConfigPath = gOutputConfigPath .. "-" .. GetBuildSuffix()
 end

@@ -9,6 +9,8 @@
 #
 #  Options:
 #    --no-pause       Never wait for a keypress before closing.
+#    --monolithic     Verify the bundle a monolithic generation produced, which
+#                     lands beside the modular one rather than replacing it.
 #    --suffix <name>  Verify the bundle in Build/bin/<config>-macosx-x64-<name>
 #                     instead of the unsuffixed one, matching the --suffix
 #                     passed to Compile_Xcode.command.
@@ -29,6 +31,7 @@ ROOT=$( cd "${DIR}/.." && pwd )
 CONFIG="Development Editor"
 SUFFIX=""
 NO_PAUSE=0
+MONOLITHIC=0
 POSITIONAL=0
 EXPECT_VALUE=""
 
@@ -49,6 +52,9 @@ for arg in "$@"; do
     case "$arg" in
         --no-pause)
             NO_PAUSE=1
+            ;;
+        --monolithic)
+            MONOLITHIC=1
             ;;
         --suffix)
             EXPECT_VALUE="--suffix"
@@ -83,6 +89,12 @@ pause_if_needed() {
 }
 
 BIN="${ROOT}/Build/bin/${CONFIG}-macosx-x64"
+
+# Must match GetOutputConfigPath(): the layout segment comes before the suffix
+if [ $MONOLITHIC -eq 1 ]; then
+    BIN="${BIN}-Monolithic"
+fi
+
 if [ -n "$SUFFIX" ]; then
     BIN="${BIN}-${SUFFIX}"
 fi

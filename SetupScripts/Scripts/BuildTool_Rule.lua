@@ -122,6 +122,10 @@ function BuildRules(Name)
         -- Linker options (mostly Windows)
         LinkOptions = {},
 
+        -- Names whose LinkModule_ symbol must survive dead-stripping in a monolithic build
+        -- even though they are not module dependencies, such as the game library
+        ForceLinkNames = {},
+
         -- Post-build steps (strings)
         PostBuildCommands = {},
 
@@ -147,6 +151,12 @@ function BuildRules(Name)
         return self.bIsGenerated
     end
 
+    -- Most rules have one kind regardless of layout. Module rules and the game target
+    -- override this, because Visual Studio switches them per configuration.
+    function self.KindIn(Layout)
+        return self.Kind
+    end
+
     -- Adders
     function self.AddFlags(InFlags) AddUniqueElements(InFlags, self.Flags) end
     function self.AddIncludeDirs(InIncludeDirs) AddUniqueElements(InIncludeDirs, self.IncludeDirs) end
@@ -163,6 +173,7 @@ function BuildRules(Name)
     function self.AddForceIncludes(InForceIncludes) AddUniqueElements(InForceIncludes, self.ForceIncludes) end
     function self.AddLibraryPaths(InLibraryPaths) AddUniqueElements(InLibraryPaths, self.LibraryPaths) end
     function self.AddLinkOptions(InLinkOptions) AddUniqueElements(InLinkOptions, self.LinkOptions) end
+    function self.AddForceLinkNames(InForceLinkNames) AddUniqueElements(InForceLinkNames, self.ForceLinkNames) end
     function self.AddPostBuildCommands(InPostBuildCommands) AddUniqueElements(InPostBuildCommands, self.PostBuildCommands) end
 
     -- Helper for adding the .framework extension to frameworks (idempotent)
@@ -270,9 +281,6 @@ function BuildRules(Name)
 
             -- Handle exception settings
             exceptionhandling(self.ExceptionHandling)
-
-            -- Build type
-            kind(self.Kind)
 
             -- Add flags
             flags(self.Flags)
@@ -446,14 +454,19 @@ function BuildRules(Name)
                 PrintTable("  Linking library '%s'", self.LinkLibraries)
             end
 
-            LogInfo("--- Link modules for module '%s' (Num LinkModules=%d) ---", self.Name, #self.LinkModules)
-            if #self.LinkModules > 0 then
-                PrintTable("  Linking module '%s'", self.LinkModules)
-            end
+            for _, Layout in ipairs(GetGeneratedLayouts()) do
+                local Result     = self.LayoutResults[Layout]
+                local LayoutName = (Layout == ELayout.Monolithic) and "Monolithic" or "Modular"
 
-            LogInfo("--- Link options for module '%s' (Num LinkOptions=%d) ---", self.Name, #self.LinkOptions)
-            if #self.LinkOptions > 0 then
-                PrintTable("  Link options '%s'", self.LinkOptions)
+                LogInfo("--- %s link modules for module '%s' (Num LinkModules=%d) ---", LayoutName, self.Name, #Result.LinkModules)
+                if #Result.LinkModules > 0 then
+                    PrintTable("  Linking module '%s'", Result.LinkModules)
+                end
+
+                LogInfo("--- %s link options for module '%s' (Num LinkOptions=%d) ---", LayoutName, self.Name, #Result.LinkOptions)
+                if #Result.LinkOptions > 0 then
+                    PrintTable("  Link options '%s'", Result.LinkOptions)
+                end
             end
 
             LogInfo("--- Modules used by module '%s' (Num Modules=%d) ---", self.Name, #self.Modules)
@@ -527,23 +540,42 @@ function BuildRules(Name)
                 end
             end
 
-            -- Link / depend
+            -- Link / depend. Kind is emitted here because it varies per layout.
             if self.Kind == "None" then
+                kind(self.Kind)
+
                 LogWarning("Ignoring LinkLibraries due to the kind being set to 'None'")
                 LogWarning("Ignoring LinkModules due to the kind being set to 'None'")
                 LogWarning("Ignoring LinkOptions due to the kind being set to 'None'")
                 LogWarning("Ignoring Module due to the kind being set to 'None'")
             else
-                if self.Kind ~= "StaticLib" then
-                    links(self.LinkLibraries)
+                for _, Layout in ipairs(GetGeneratedLayouts()) do
+                    local Result       = self.LayoutResults[Layout]
+                    local LayoutKind   = self.KindIn(Layout)
+                    local LayoutFilter = GetLayoutConfigFilter(Layout)
+
+                    -- nil on Xcode, where the generation is a single layout already
+                    if LayoutFilter then
+                        filter(LayoutFilter)
+                    end
+
+                    kind(LayoutKind)
+                    defines(Result.Defines)
+                    linkoptions(Result.LinkOptions)
+
+                    if LayoutKind ~= "StaticLib" then
+                        links(self.LinkLibraries)
+                        links(Result.LinkModules)
+                    else
+                        dependson(Result.LinkModules)
+                    end
+
+                    dependson(ExcludeElements(self.Modules, Result.LinkModules))
+
+                    if LayoutFilter then
+                        filter({})
+                    end
                 end
-
-                links(self.LinkModules)
-                linkoptions(self.LinkOptions)
-
-                -- links() already establishes the build dependency; naming a module in both
-                -- makes the xcode4 generator emit a duplicate project reference.
-                dependson(ExcludeElements(self.Modules, self.LinkModules))
             end
 
             -- Xcode embedding
@@ -558,9 +590,16 @@ function BuildRules(Name)
                 if self.Kind == "WindowedApp" then
                     local TargetPath = self.GetTargetFolderPath()
 
+                    -- Xcode only ever generates one layout, so there is exactly one result
+                    local Layout = GetGeneratedLayouts()[1]
+                    local Result = self.LayoutResults[Layout]
+
                     local RuntimeLibraries = {}
-                    for _, ModuleName in ipairs(ExcludeElements(self.Modules, self.LinkModules)) do
-                        table.insert(RuntimeLibraries, JoinPath(TargetPath, "lib" .. ModuleName .. ".dylib"))
+                    for _, ModuleName in ipairs(ExcludeElements(self.Modules, Result.LinkModules)) do
+                        local ModuleRule = GetModuleRule(ModuleName)
+                        if ModuleRule and ModuleRule.IsDynamicIn(Layout) then
+                            table.insert(RuntimeLibraries, JoinPath(TargetPath, "lib" .. ModuleName .. ".dylib"))
+                        end
                     end
 
                     AddUniqueElements(self.ExtraRuntimeLibraries, RuntimeLibraries)
@@ -575,8 +614,6 @@ function BuildRules(Name)
                             ('mkdir -p "%s"'):format(FrameworksPath)
                         }
 
-                        -- Guarded because the source is absent in configurations that link the
-                        -- module statically, and the generated script runs under 'set -e'
                         for _, SourcePath in ipairs(RuntimeLibraries) do
                             table.insert(CopyCommands, ('if [ -f "%s" ]; then cp -f "%s" "%s/"; fi'):format(SourcePath, SourcePath, FrameworksPath))
                         end
@@ -726,44 +763,6 @@ function BuildRules(Name)
         -- Add framework extension
         self.AddFrameworkExtension()
 
-        -- Solve modules (propagate include/link info)
-        for Index = 1, #self.Modules do
-            local CurrentModuleName = self.Modules[Index]
-            local CurrentModule     = GetModuleRule(CurrentModuleName)
-
-            if CurrentModule then
-                if not CurrentModule.bRuntimeLinking then
-                    table.insert(self.LinkModules, CurrentModuleName)
-                end
-
-                -- Third-party libraries own their API macro, so only engine modules get one here
-                if not CurrentModule.bIsLibrary then
-                    local ModuleApiName = CurrentModule.Name:upper() .. "_API"
-                    if CurrentModule.bIsDynamic and not CurrentModule.bRuntimeLinking then
-                        ModuleApiName = ModuleApiName .. "=MODULE_IMPORT"
-                    else
-                        ModuleApiName = ModuleApiName .. "="
-                    end
-
-                    self.AddDefines({
-                        ModuleApiName
-                    })
-                end
-
-                self.AddLibraryPaths(CurrentModule.LibraryPaths)
-                self.AddLinkLibraries(CurrentModule.LinkLibraries)
-                self.AddFrameworks(CurrentModule.Frameworks)
-                self.AddModules(CurrentModule.Modules)
-                self.AddIncludeDirs(CurrentModule.IncludeDirs)
-                self.AddExternalIncludeDirs(CurrentModule.ExternalIncludeDirs)
-                self.AddExtraRuntimeLibraries(CurrentModule.ExtraRuntimeLibraries)
-            else
-                LogError("Module '%s' has not been included", CurrentModuleName)
-            end
-        end
-
-        -- A bIsLibrary module has no IMPLEMENT_ENGINE_MODULE and therefore no
-        -- LinkModule_ symbol to force.
         local function HasLinkModuleSymbol(ModuleName)
             if ModuleName == "Launch" then
                 return false
@@ -773,29 +772,80 @@ function BuildRules(Name)
             return not (ModuleRule and ModuleRule.bIsLibrary)
         end
 
-        -- Add link options MSVC
-        if BuildWithVisualStudio() and IsBuildMonolithic() then
-            for i = 1, #self.LinkModules do
-                local ModuleName = self.LinkModules[i]
-                if HasLinkModuleSymbol(ModuleName) then
-                    self.AddLinkOptions({
-                        "/INCLUDE:LinkModule_" .. ModuleName
-                    })
-                end
-            end
-        end
+        self.LayoutResults = {}
 
-        -- macOS / Xcode
-        if IsPlatformMac() and IsBuildMonolithic() then
-            for i = 1, #self.LinkModules do
-                local ModuleName = self.LinkModules[i]
-                if HasLinkModuleSymbol(ModuleName) then
-                    -- Leading underscore required for Mach-O symbol names
-                    self.AddLinkOptions({
-                        "-Wl,-u,_LinkModule_" .. ModuleName
-                    })
+        for _, Layout in ipairs(GetGeneratedLayouts()) do
+            local Result = {
+                LinkModules = {},
+                Defines     = {},
+                LinkOptions = {},
+            }
+
+            AddUniqueElements(self.LinkOptions, Result.LinkOptions)
+
+            local Index = 1
+            while Index <= #self.Modules do
+                local CurrentModuleName = self.Modules[Index]
+                local CurrentModule     = GetModuleRule(CurrentModuleName)
+
+                if CurrentModule then
+                    if not CurrentModule.IsRuntimeLinkedIn(Layout) then
+                        table.insert(Result.LinkModules, CurrentModuleName)
+                    end
+
+                    -- Third-party libraries own their API macro, so only engine modules get one here
+                    if not CurrentModule.bIsLibrary then
+                        local ModuleApiName = CurrentModule.Name:upper() .. "_API"
+                        if CurrentModule.IsDynamicIn(Layout) and not CurrentModule.IsRuntimeLinkedIn(Layout) then
+                            ModuleApiName = ModuleApiName .. "=MODULE_IMPORT"
+                        else
+                            ModuleApiName = ModuleApiName .. "="
+                        end
+
+                        AddUniqueElements({ ModuleApiName }, Result.Defines)
+                    end
+
+                    self.AddLibraryPaths(CurrentModule.LibraryPaths)
+                    self.AddLinkLibraries(CurrentModule.LinkLibraries)
+                    self.AddFrameworks(CurrentModule.Frameworks)
+                    self.AddModules(CurrentModule.Modules)
+                    self.AddIncludeDirs(CurrentModule.IncludeDirs)
+                    self.AddExternalIncludeDirs(CurrentModule.ExternalIncludeDirs)
+                    self.AddExtraRuntimeLibraries(CurrentModule.ExtraRuntimeLibraries)
+                else
+                    LogError("Module '%s' has not been included", CurrentModuleName)
+                end
+
+                Index = Index + 1
+            end
+
+            -- The rule's own API macro follows its own kind
+            if self.ApiDefineIn then
+                AddUniqueElements({ self.ApiDefineIn(Layout) }, Result.Defines)
+            end
+
+            if Layout == ELayout.Monolithic then
+                AddUniqueElements({ "MONOLITHIC_BUILD=(1)" }, Result.Defines)
+
+                -- Leading underscore required for Mach-O symbol names
+                local AnchorPrefix = BuildWithVisualStudio() and "/INCLUDE:LinkModule_"
+                                                              or "-Wl,-u,_LinkModule_"
+
+                local AnchorNames = {}
+                for _, ModuleName in ipairs(Result.LinkModules) do
+                    if HasLinkModuleSymbol(ModuleName) then
+                        table.insert(AnchorNames, ModuleName)
+                    end
+                end
+
+                AddUniqueElements(self.ForceLinkNames, AnchorNames)
+
+                for _, AnchorName in ipairs(AnchorNames) do
+                    table.insert(Result.LinkOptions, AnchorPrefix .. AnchorName)
                 end
             end
+
+            self.LayoutResults[Layout] = Result
         end
 
         -- PCH force-include

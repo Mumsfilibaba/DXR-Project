@@ -208,7 +208,9 @@ if errorlevel 1 (
     goto :eof
 )
 
-set "BINDIR=%ROOT%Build\bin\%CONFIG%-windows-x64-Tests"
+REM  The tests workspace is generated with --monolithic, and a generation whose
+REM  configuration names do not carry the layout gets it in the output folder instead.
+set "BINDIR=%ROOT%Build\bin\%CONFIG%-windows-x64-Monolithic-Tests"
 
 echo ----- MODULE: %MODULE% ^| CONFIG: %CONFIG% ----->> "%LOG%"
 

@@ -14,7 +14,10 @@
 #    --no-pause        Never wait for a keypress before closing.
 #    --skip-generate   Build the existing workspace without regenerating it.
 #    --fatal-warnings  Treat compiler warnings as errors (engine modules only).
-#    --monolithic      Link all modules statically into the executable.
+#    --monolithic      Link all modules statically into the executable. Xcode
+#                      cannot express this per configuration, so it is chosen at
+#                      generation time and the output folder gains a
+#                      "-Monolithic" segment to keep it apart.
 #    --suffix <name>   Generate into Solutions/<name> and write binaries to
 #                      Build/bin/<config>-macosx-x64-<name>, so a build can run
 #                      without disturbing the normal workspace.
@@ -158,8 +161,8 @@ fi
 
 # xcodebuild has no "build everything" switch for a workspace, so the scheme list is
 # read back from the generated workspace. AutomationScripts/RunCompileTests.command
-# relies on that, since SandboxStandalone is only generated for a non-monolithic build
-# and ImGuiPlugin is loaded at runtime rather than linked.
+# relies on that, since ImGuiPlugin is loaded at runtime rather than linked and so
+# never appears as a dependency of any scheme.
 if [ "$SCHEME" = "all" ]; then
     SCHEMES=$(xcodebuild -workspace "$WORKSPACE" -list 2>/dev/null \
         | awk '/Schemes:/ {found=1; next} found && NF {sub(/^[ \t]+/, ""); print}')
@@ -214,7 +217,7 @@ echo "------------------------------------------------------------"
 
 if [ $RC -eq 0 ]; then
     echo
-    ./VerifyBundle.command "$CONFIG" ${SUFFIX:+--suffix "$SUFFIX"} --no-pause
+    ./VerifyBundle.command "$CONFIG" $( [ $MONOLITHIC -eq 1 ] && echo --monolithic ) ${SUFFIX:+--suffix "$SUFFIX"} --no-pause
     RC=$?
 fi
 

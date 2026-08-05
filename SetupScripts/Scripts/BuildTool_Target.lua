@@ -60,6 +60,15 @@ function TargetBuildRules(Name)
                     Rule.AddIncludeDirs(Launch.IncludeDirs)
                     Rule.AddExternalIncludeDirs(Launch.ExternalIncludeDirs)
                     Rule.AddForceIncludes(Launch.ForceIncludes)
+
+                    local ApiPrefix = Launch.Name:upper() .. "_API="
+                    for _, Result in pairs(Rule.LayoutResults) do
+                        for Index, Define in ipairs(Result.Defines) do
+                            if Define:sub(1, #ApiPrefix) == ApiPrefix then
+                                Result.Defines[Index] = ApiPrefix
+                            end
+                        end
+                    end
                 else
                     LogError("Found the Launch Module among dependencies, but it has not been initialized")
                 end
@@ -78,7 +87,9 @@ function TargetBuildRules(Name)
 
         LogInfo("--- Generating Target '%s' ---", self.Name)
   
-        if IsBuildMonolithic() then
+        if HasPerConfigurationLayouts() then
+            LogInfo("Target '%s' carries both layouts, selected by configuration", self.Name)
+        elseif IsBuildMonolithic() then
             LogInfo("Target '%s' is monolithic", self.Name)
         else
             LogInfo("Target '%s' is NOT monolithic", self.Name)
@@ -96,79 +107,71 @@ function TargetBuildRules(Name)
             local UpperCaseName = self.Name:upper()
             local ModuleApiName = UpperCaseName .. "_API"
 
-            -- In a monolithic build, the client is linked statically
-            -- TODO: Should this be created as a module instead?
-            if IsBuildMonolithic() then
-                self.Kind = "WindowedApp"
-                self.bRuntimeLinking = false
-                self.bIsDynamic = false
-                self.bEmbedThirdparties = true
+            self.bRuntimeLinking    = true
+            self.bIsDynamic         = true
+            self.bEmbedThirdparties = false
 
-                -- Defines. Empty value, since a monolithic target exports nothing
-                self.AddDefines({
-                    ModuleApiName .. "="
-                })
-
-                -- Generate the project
-                LogInfo("--- Generating project for target '%s' ---", self.Name)
-                BaseGenerate()
-                InjectLaunchModule(self)
-                LogInfo("--- Finished generating project for target '%s' ---", self.Name)
-            else
-                self.Kind = "SharedLib"
-                self.bRuntimeLinking = true
-                self.bIsDynamic = true
-                
-                self.AddDefines({
-                    ModuleApiName .. "=MODULE_EXPORT"
-                })
-                
-                -- Generate the project
-                LogInfo("--- Generating project for target '%s' ---", self.Name)
-                BaseGenerate()
-                LogInfo("--- Finished generating project for target '%s' ---", self.Name)
-                
-                -- Standalone executable
-                LogInfo("--- Generating Standalone client executable project for target '%s' ---", self.Name)
-                
-                local Executable = BuildRules(self.Name .. "Standalone")
-                Executable.Kind = "WindowedApp"
-                Executable.bEmbedThirdparties = true
-
-                -- Link the module
-                Executable.AddModules(self.Modules)
-                
-                Executable.AddLinkLibraries({
-                    self.Name
-                })
-                Executable.AddExtraEmbedNames({
-                    self.Name
-                })
-                
-                if IsPlatformMac() then
-                    Executable.AddFrameworks({
-                        "AppKit"
-                    })
-                end
-
-                -- Setup Defines
-                Executable.AddDefines({
-                    ModuleApiName
-                })
-
-                -- Overwrite all exclude files
-                Executable.ExcludeFiles = {}
-        
-                -- Includes can be included in a thirdparty header and therefore necessary in this module as well
-                Executable.AddIncludeDirs(self.IncludeDirs)
-                Executable.AddExternalIncludeDirs(self.ExternalIncludeDirs)
-
-                -- Generate Standalone executable
-                Executable.Generate()
-                InjectLaunchModule(Executable)
-
-                LogInfo("--- Finished generating standalone client executable project for target '%s' ---", self.Name)
+            function self.KindIn(Layout)
+                return Layout == ELayout.Modular and "SharedLib" or "StaticLib"
             end
+
+            function self.ApiDefineIn(Layout)
+                return Layout == ELayout.Modular and (ModuleApiName .. "=MODULE_EXPORT")
+                                                  or (ModuleApiName .. "=")
+            end
+
+            self.Kind = self.KindIn(GetGeneratedLayouts()[1])
+
+            -- Generate the project
+            LogInfo("--- Generating project for target '%s' ---", self.Name)
+            BaseGenerate()
+            LogInfo("--- Finished generating project for target '%s' ---", self.Name)
+
+            -- Standalone executable
+            LogInfo("--- Generating Standalone client executable project for target '%s' ---", self.Name)
+
+            local Executable = BuildRules(self.Name .. "Standalone")
+            Executable.Kind = "WindowedApp"
+            Executable.bEmbedThirdparties = true
+
+            -- Link the module
+            Executable.AddModules(self.Modules)
+
+            Executable.AddLinkLibraries({
+                self.Name
+            })
+            Executable.AddExtraEmbedNames({
+                self.Name
+            })
+
+            Executable.AddForceLinkNames({
+                self.Name
+            })
+
+            if IsPlatformMac() then
+                Executable.AddFrameworks({
+                    "AppKit"
+                })
+            end
+
+            -- The executable consumes the game library rather than exporting it
+            function Executable.ApiDefineIn(Layout)
+                return Layout == ELayout.Modular and (ModuleApiName .. "=MODULE_IMPORT")
+                                                  or (ModuleApiName .. "=")
+            end
+
+            -- Overwrite all exclude files
+            Executable.ExcludeFiles = {}
+
+            -- Includes can be included in a thirdparty header and therefore necessary in this module as well
+            Executable.AddIncludeDirs(self.IncludeDirs)
+            Executable.AddExternalIncludeDirs(self.ExternalIncludeDirs)
+
+            -- Generate Standalone executable
+            Executable.Generate()
+            InjectLaunchModule(Executable)
+
+            LogInfo("--- Finished generating standalone client executable project for target '%s' ---", self.Name)
         elseif self.TargetType == ETargetType.Editor then
             LogInfo("TargetType=Editor contributes configurations only, no project")
         elseif self.TargetType == ETargetType.Program then
