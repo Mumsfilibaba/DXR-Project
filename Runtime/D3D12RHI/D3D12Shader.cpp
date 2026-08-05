@@ -1,3 +1,4 @@
+#include "Core/Math/Math.h"
 #include "Core/Misc/CRC.h"
 #include "Core/RefCountedBase.h"
 #include "D3D12RHI/D3D12Shader.h"
@@ -47,6 +48,43 @@ static bool IsLegalRegisterSpace(const D3D12_SHADER_INPUT_BIND_DESC& ShaderBindD
     }
 
     return false;
+}
+
+static bool ValidatePushConstantBinding(const D3D12_SHADER_INPUT_BIND_DESC& ShaderBindDesc, uint32 SizeInBytes, uint32 ExistingNumPushConstants, uint32& OutNumPushConstants)
+{
+    constexpr uint32 BytesPerConstant = sizeof(uint32);
+    MAYBE_UNUSED constexpr uint32 MaxSizeInBytes = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT * BytesPerConstant;
+
+    if (ShaderBindDesc.BindCount > 1)
+    {
+        D3D12_ERROR_CRITICAL("Shader Parameter '%s' is an array of %u 32-bit constant buffers, only a single constant buffer is supported in register space %u.",
+            ShaderBindDesc.Name, ShaderBindDesc.BindCount, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
+        return false;
+    }
+
+    if (ExistingNumPushConstants != 0)
+    {
+        D3D12_ERROR_CRITICAL("Shader Parameter '%s' declares a second 32-bit constant buffer, only one is supported per shader.", ShaderBindDesc.Name);
+        return false;
+    }
+
+    if (SizeInBytes == 0)
+    {
+        D3D12_ERROR_CRITICAL("Shader Parameter '%s' at register %u is a 32-bit constant buffer, but its size could not be retrieved from reflection.",
+            ShaderBindDesc.Name, ShaderBindDesc.BindPoint);
+        return false;
+    }
+
+    const uint32 NumShaderConstants = Math::DivideByMultiple(SizeInBytes, BytesPerConstant);
+    if (NumShaderConstants > D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT)
+    {
+        D3D12_ERROR_CRITICAL("Shader Parameter '%s' is %u bytes (%u 32-bit constants), which exceeds the maximum of %u constants (%u bytes).",
+            ShaderBindDesc.Name, SizeInBytes, NumShaderConstants, D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT, MaxSizeInBytes);
+        return false;
+    }
+
+    OutNumPushConstants = NumShaderConstants;
+    return true;
 }
 
 
@@ -622,8 +660,8 @@ bool FD3D12Shader::GetShaderResourceBindings(ID3D12ShaderReflection* Reflection,
 
             if (ShaderBindDesc.Space == D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
             {
-                const uint8 NumShaderConstants = static_cast<uint8>(SizeInBytes) / static_cast<uint8>(sizeof(uint32));
-                if (ShaderBindDesc.BindCount > 1 || NumShaderConstants > D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT || NewBindingInfo.NumPushConstants != 0)
+                uint32 NumShaderConstants = 0;
+                if (!ValidatePushConstantBinding(ShaderBindDesc, SizeInBytes, NewBindingInfo.NumPushConstants, NumShaderConstants))
                 {
                     return false;
                 }
@@ -694,8 +732,8 @@ bool FD3D12RayTracingShader::GetShaderResourceBindings(ID3D12FunctionReflection*
 
             if (ShaderBindDesc.Space == D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
             {
-                const uint8 NumShaderConstants = static_cast<uint8>(SizeInBytes) / static_cast<uint8>(sizeof(uint32));
-                if (ShaderBindDesc.BindCount > 1 || NumShaderConstants > D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT || NewBindingInfo.NumPushConstants != 0)
+                uint32 NumShaderConstants = 0;
+                if (!ValidatePushConstantBinding(ShaderBindDesc, SizeInBytes, NewBindingInfo.NumPushConstants, NumShaderConstants))
                 {
                     return false;
                 }
