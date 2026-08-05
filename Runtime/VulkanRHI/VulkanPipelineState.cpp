@@ -1392,7 +1392,14 @@ bool FVulkanPipelineStateManager::LoadCacheFromFile()
     // Validate that the file is valid
     if (Memory::Memcmp(DataHeader.Magic, "VKPSO", sizeof(DataHeader.Magic)) != 0)
     {
-        VULKAN_WARNING("Invalid PipelineCacheHeader");
+        VULKAN_WARNING("PipelineCacheHeader contains an invalid magic");
+        return false;
+    }
+
+    // The data always begins with a FVulkanPipelineCacheHeader, so anything smaller cannot be valid
+    if (DataHeader.DataSize < sizeof(FVulkanPipelineCacheHeader))
+    {
+        VULKAN_WARNING("PipelineCacheHeader reports a size of %llu bytes, which is smaller than the PipelineCacheHeader", DataHeader.DataSize);
         return false;
     }
 
@@ -1400,7 +1407,16 @@ bool FVulkanPipelineStateManager::LoadCacheFromFile()
     constexpr uint64 MaxCacheSize = 1024 * 1024 * 1024;
     if (DataHeader.DataSize >= MaxCacheSize)
     {
-        VULKAN_WARNING("Invalid PipelineCacheHeader");
+        VULKAN_WARNING("PipelineCacheHeader reports a size of %llu bytes, which exceeds the limit of %llu bytes", DataHeader.DataSize, MaxCacheSize);
+        return false;
+    }
+
+    // The header should account for the remainder of the file exactly, otherwise the file is truncated or the header is corrupt
+    const int64 CacheFileSize    = CacheFile->Size();
+    const int64 ExpectedFileSize = static_cast<int64>(sizeof(FVulkanPipelineDataHeader) + DataHeader.DataSize);
+    if (CacheFileSize != ExpectedFileSize)
+    {
+        VULKAN_WARNING("PipelineCacheHeader reports a size of %llu bytes, which does not match the file-size of %lld bytes", DataHeader.DataSize, CacheFileSize);
         return false;
     }
 
@@ -1410,12 +1426,6 @@ bool FVulkanPipelineStateManager::LoadCacheFromFile()
     if (BytesRead != static_cast<int64>(DataHeader.DataSize))
     {
         VULKAN_WARNING("Something went wrong when reading PipelineCache");
-        return false;
-    }
-    
-    if (static_cast<uint64>(DataHeader.DataSize) < sizeof(FVulkanPipelineCacheHeader))
-    {
-        VULKAN_WARNING("PipelineCache is smaller than PipelineCacheHeader");
         return false;
     }
 
