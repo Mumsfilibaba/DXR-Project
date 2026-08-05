@@ -322,7 +322,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         MaterialInfo.Albedo           = FFloatColor::White;
         MaterialInfo.AmbientOcclusion = 1.0f;
         MaterialInfo.Metallic         = 1.0f;
-        MaterialInfo.Roughness        = 0.5f;
+        MaterialInfo.Roughness        = 0.2f;
         MaterialInfo.MaterialFlags    = EMaterialFlags::None;
 
         FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();

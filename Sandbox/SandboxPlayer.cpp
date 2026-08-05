@@ -157,8 +157,17 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     CameraSpeed = CameraSpeed * DampingFactor;
     CameraSpeed = CameraSpeed + (CameraAcceleration * DeltaTime);
 
-    const Vector3 Speed = CameraSpeed * DeltaTime;
-    Camera->AddLocalMovement(Speed.X, Speed.Y, Speed.Z);
+    constexpr float RestSpeed = 1.0e-3f;
+    if ((CameraAcceleration.GetLengthSquared() <= 0.0f) && (CameraSpeed.GetLengthSquared() <= (RestSpeed * RestSpeed)))
+    {
+        CameraSpeed = Vector3();
+    }
+
+    if (CameraSpeed.GetLengthSquared() > 0.0f)
+    {
+        const Vector3 Speed = CameraSpeed * DeltaTime;
+        Camera->AddLocalMovement(Speed.X, Speed.Y, Speed.Z);
+    }
 }
 
 void FSandboxPlayerController::SetupInputComponent()
