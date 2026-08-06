@@ -716,9 +716,9 @@ bool FApplication::OnMouseButtonDoubleClick(EMouseButtonName::Type Button, FModi
     return WidgetResponse.IsEventHandled();
 }
 
-bool FApplication::OnMouseScrolled(float WheelDelta, bool bVertical)
+bool FApplication::OnMouseScrolled(float WheelDelta, EScrollAxis ScrollAxis)
 {
-    const FCursorEvent CursorEvent(EInputEventType::MouseScrolled, PlatformApplication->GetModifierKeyState(), WheelDelta, bVertical);
+    const FCursorEvent CursorEvent(EInputEventType::MouseScrolled, PlatformApplication->GetModifierKeyState(), WheelDelta, ScrollAxis);
 
     const FEventResponse PreProcessResponse = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)

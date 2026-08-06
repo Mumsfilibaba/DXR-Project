@@ -24,6 +24,9 @@ static TAutoConsoleVariable<bool> CVarDrawFps(
     false,
     EConsoleVariableFlags::Default);
 
+constexpr float SPEED_OVERLAY_HOLD_TIME = 0.9f;
+constexpr float SPEED_OVERLAY_FADE_TIME = 0.35f;
+
 FEditorViewportWidget::FEditorViewportWidget(FEditorEngine* InEditorEngine)
     : EditorEngine(InEditorEngine)
     , CameraController(MakeUniquePtr<FEditorCameraController>())
@@ -37,6 +40,7 @@ FEditorViewportWidget::FEditorViewportWidget(FEditorEngine* InEditorEngine)
     , bCursorWasVisible(true)
     , MouseLookRestorePosition()
     , PendingCameraInput()
+    , SpeedOverlayTimer(0.0f)
     , DebugView(FSceneRenderView::EDebugView::None)
     , SecondaryDebugView(FSceneRenderView::EDebugView::None)
     , DebugViewChannelMask(FSceneRenderView::EDebugViewChannel::All)
@@ -607,7 +611,7 @@ void FEditorViewportWidget::Draw()
                         EditorWidgets::MenuLabeledSeparator("NAVIGATION");
 
                         float MoveSpeed = Controller->GetMoveSpeed();
-                        if (EditorWidgets::MenuSliderFloat("Move Speed", MoveSpeed, 0.1f, 200.0f, "%.1f"))
+                        if (EditorWidgets::MenuSliderFloat("Move Speed", MoveSpeed, FEditorCameraController::MinMoveSpeed, FEditorCameraController::MaxMoveSpeed, "%.1f"))
                         {
                             Controller->SetMoveSpeed(MoveSpeed);
                         }
@@ -1095,7 +1099,7 @@ void FEditorViewportWidget::Draw()
 
             PendingCameraInput.LookDelta        = Vector2(IO.MouseDelta.x, IO.MouseDelta.y);
             PendingCameraInput.PanDelta         = PendingCameraInput.LookDelta;
-            PendingCameraInput.WheelDelta       = Math::Clamp(IO.MouseWheel, -4.0f, 4.0f);
+            PendingCameraInput.WheelDelta       = IO.MouseWheel;
             PendingCameraInput.bLeftMouseDown   = ImGui::IsMouseDown(ImGuiMouseButton_Left);
             PendingCameraInput.bRightMouseDown  = ImGui::IsMouseDown(ImGuiMouseButton_Right);
             PendingCameraInput.bMiddleMouseDown = ImGui::IsMouseDown(ImGuiMouseButton_Middle);
@@ -1187,6 +1191,13 @@ void FEditorViewportWidget::Draw()
         }
         else
         {
+            if (bViewportImageHovered && !bBlockPickForGizmo)
+            {
+                const ImGuiIO& IO = ImGui::GetIO();
+                PendingCameraInput.WheelDelta = IO.MouseWheel;
+                PendingCameraInput.bAltDown   = IO.KeyAlt;
+            }
+
             EndMouseLook();
         }
 
@@ -1249,8 +1260,14 @@ void FEditorViewportWidget::Draw()
         }
 
         // ---------------------------------------------------------------------
-        // FPS counter
+        // Corner overlays
         // ---------------------------------------------------------------------
+
+        const float OverlayMargin  = 6.0f;
+        const float OverlayPadding = 4.0f;
+        const float OverlayRight   = ContentPos.x + ContentSize.x - OverlayMargin;
+
+        float OverlayTop = ContentPos.y + OverlayMargin;
 
         if (CVarDrawFps.GetValue())
         {
@@ -1262,15 +1279,52 @@ void FEditorViewportWidget::Draw()
             const ImFont* Font     = ImGui::GetFont();
             const ImVec2  TextSize = Font->CalcTextSizeA(Font->FontSize, FLT_MAX, 0.0f, FpsText);
 
-            const float Margin  = 6.0f;
-            const float Padding = 4.0f;
-
-            const ImVec2 BoxMax  = ImVec2(ContentPos.x + ContentSize.x - Margin, ContentPos.y + Margin + TextSize.y + Padding * 2.0f);
-            const ImVec2 BoxMin  = ImVec2(BoxMax.x - TextSize.x - Padding * 2.0f, ContentPos.y + Margin);
-            const ImVec2 TextPos = ImVec2(BoxMin.x + Padding, BoxMin.y + Padding);
+            const ImVec2 BoxMin  = ImVec2(OverlayRight - TextSize.x - OverlayPadding * 2.0f, OverlayTop);
+            const ImVec2 BoxMax  = ImVec2(OverlayRight, OverlayTop + TextSize.y + OverlayPadding * 2.0f);
+            const ImVec2 TextPos = ImVec2(BoxMin.x + OverlayPadding, BoxMin.y + OverlayPadding);
 
             DrawList->AddRectFilled(BoxMin, BoxMax, IM_COL32(32, 32, 32, 192), 0.0f);
             DrawList->AddText(TextPos, IM_COL32(0, 255, 50, 255), FpsText);
+
+            OverlayTop = BoxMax.y + OverlayMargin;
+        }
+
+        if (SpeedOverlayTimer > 0.0f && CameraController)
+        {
+            const float Alpha        = Math::Clamp(SpeedOverlayTimer / SPEED_OVERLAY_FADE_TIME, 0.0f, 1.0f);
+            const float MinSpeed     = FEditorCameraController::MinMoveSpeed;
+            const float MaxSpeed     = FEditorCameraController::MaxMoveSpeed;
+            const float Speed        = Math::Clamp(CameraController->GetMoveSpeed(), MinSpeed, MaxSpeed);
+            const float Fraction     = Math::Log2(Speed / MinSpeed) / Math::Log2(MaxSpeed / MinSpeed);
+            const float TrackWidth   = 120.0f;
+            const float TrackHeight  = 4.0f;
+            const float HandleRadius = 5.0f;
+
+            const ImVec2 BoxMin = ImVec2(OverlayRight - (TrackWidth + (OverlayPadding + HandleRadius) * 2.0f), OverlayTop);
+            const ImVec2 BoxMax = ImVec2(OverlayRight, OverlayTop + (HandleRadius + OverlayPadding) * 2.0f);
+
+            const float TrackLeft = BoxMin.x + OverlayPadding + HandleRadius;
+            const float TrackY    = (BoxMin.y + BoxMax.y) * 0.5f;
+            const float HandleX   = TrackLeft + TrackWidth * Fraction;
+
+            const ImU32 BackgroundColor = IM_COL32(32, 32, 32, static_cast<int32>(192.0f * Alpha));
+            const ImU32 TrackColor      = IM_COL32(51, 51, 51, static_cast<int32>(255.0f * Alpha));
+            const ImU32 FillColor       = IM_COL32(9, 92, 176, static_cast<int32>(255.0f * Alpha));
+            const ImU32 HandleColor     = IM_COL32(220, 220, 220, static_cast<int32>(255.0f * Alpha));
+
+            ImDrawList* DrawList = ImGui::GetWindowDrawList();
+            DrawList->AddRectFilled(BoxMin, BoxMax, BackgroundColor, 3.0f);
+            DrawList->AddRectFilled(
+                ImVec2(TrackLeft, TrackY - TrackHeight * 0.5f),
+                ImVec2(TrackLeft + TrackWidth, TrackY + TrackHeight * 0.5f),
+                TrackColor,
+                TrackHeight * 0.5f);
+            DrawList->AddRectFilled(
+                ImVec2(TrackLeft, TrackY - TrackHeight * 0.5f),
+                ImVec2(HandleX, TrackY + TrackHeight * 0.5f),
+                FillColor,
+                TrackHeight * 0.5f);
+            DrawList->AddCircleFilled(ImVec2(HandleX, TrackY), HandleRadius, HandleColor);
         }
     }
 
@@ -1285,6 +1339,15 @@ void FEditorViewportWidget::Tick(float DeltaTime)
     {
         CameraController->UpdateProjection(CachedViewportSize);
         CameraController->Tick(DeltaTime, PendingCameraInput, EditorEngine ? EditorEngine->GetSelectedActor() : nullptr);
+
+        if (CameraController->ConsumeMoveSpeedChanged())
+        {
+            SpeedOverlayTimer = SPEED_OVERLAY_HOLD_TIME + SPEED_OVERLAY_FADE_TIME;
+        }
+        else
+        {
+            SpeedOverlayTimer = Math::Max(SpeedOverlayTimer - DeltaTime, 0.0f);
+        }
     }
 
     PendingCameraInput = FEditorCameraInputState();

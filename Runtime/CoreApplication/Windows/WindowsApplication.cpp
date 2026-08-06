@@ -730,9 +730,9 @@ void FWindowsApplication::ProcessDeferredMessage(const FWindowsDeferredMessage& 
         case WM_MOUSEWHEEL:
         case WM_MOUSEHWHEEL:
         {
-            bool bIsVertical = (Message.MessageType == WM_MOUSEWHEEL);
+            EScrollAxis ScrollAxis = (Message.MessageType == WM_MOUSEWHEEL) ? EScrollAxis::Vertical : EScrollAxis::Horizontal;
             float WheelDelta = static_cast<float>(GET_WHEEL_DELTA_WPARAM(Message.wParam)) / static_cast<float>(WHEEL_DELTA);
-            MessageHandler->OnMouseScrolled(WheelDelta, bIsVertical);
+            MessageHandler->OnMouseScrolled(WheelDelta, ScrollAxis);
             break;
         }
 

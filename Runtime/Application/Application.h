@@ -76,7 +76,7 @@ public:
 
     virtual bool OnMouseButtonDoubleClick(EMouseButtonName::Type Button, FModifierKeyState ModifierKeyState) override final;
 
-    virtual bool OnMouseScrolled(float WheelDelta, bool bVertical) override final;
+    virtual bool OnMouseScrolled(float WheelDelta, EScrollAxis ScrollAxis) override final;
 
     virtual bool OnMouseEntered() override final;
 

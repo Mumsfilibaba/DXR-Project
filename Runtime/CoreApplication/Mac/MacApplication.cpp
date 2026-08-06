@@ -51,6 +51,11 @@
 
 @end
 
+static CGFloat NormalizeWheelDetent(CGFloat Delta)
+{
+    return (Delta > 0.0) ? 1.0 : ((Delta < 0.0) ? -1.0 : 0.0);
+}
+
 FMacApplication* GMacApplication = nullptr;
 
 TSharedPtr<FGenericApplication> FMacApplication::Create()
@@ -829,24 +834,33 @@ void FMacApplication::ProcessMouseButtonEvent(const FDeferredMacEvent& DeferredE
 
 void FMacApplication::ProcessMouseScrollEvent(const FDeferredMacEvent& DeferredEvent)
 {
-    if (DeferredEvent.ScrollPhase != NSEventPhaseCancelled)
+    if (DeferredEvent.ScrollPhase == NSEventPhaseCancelled)
     {
-        CGFloat ScrollDeltaX = DeferredEvent.ScrollDelta.X;
-        CGFloat ScrollDeltaY = DeferredEvent.ScrollDelta.Y;
-        if (DeferredEvent.bHasPreciseScrollingDeltas)
-        {
-            ScrollDeltaX *= 0.1;
-            ScrollDeltaY *= 0.1;
-        }
-        
-        if (Math::Abs(ScrollDeltaX) > 0.0f)
-        {
-            MessageHandler->OnMouseScrolled(ScrollDeltaX, false);
-        }
-        if (Math::Abs(ScrollDeltaY) > 0.0f)
-        {
-            MessageHandler->OnMouseScrolled(ScrollDeltaY, true);
-        }
+        return;
+    }
+
+    CGFloat ScrollDeltaX = DeferredEvent.ScrollDelta.X;
+    CGFloat ScrollDeltaY = DeferredEvent.ScrollDelta.Y;
+
+    if (DeferredEvent.bHasPreciseScrollingDeltas)
+    {
+        constexpr CGFloat PointsPerDetent = 0.1;
+        ScrollDeltaX *= PointsPerDetent;
+        ScrollDeltaY *= PointsPerDetent;
+    }
+    else
+    {
+        ScrollDeltaX = NormalizeWheelDetent(ScrollDeltaX);
+        ScrollDeltaY = NormalizeWheelDetent(ScrollDeltaY);
+    }
+
+    if (Math::Abs(ScrollDeltaX) > 0.0f)
+    {
+        MessageHandler->OnMouseScrolled(ScrollDeltaX, EScrollAxis::Horizontal);
+    }
+    if (Math::Abs(ScrollDeltaY) > 0.0f)
+    {
+        MessageHandler->OnMouseScrolled(ScrollDeltaY, EScrollAxis::Vertical);
     }
 }
 
