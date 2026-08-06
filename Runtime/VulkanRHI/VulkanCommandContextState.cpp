@@ -539,7 +539,7 @@ void FVulkanCommandContextState::BeginCommandBuffer()
     RayTracingState.bBindPushConstants     = true;
 
 #if VK_EXT_sample_locations
-    CommonGraphicsState.bBindSampleLocations = GVulkanSupportsSampleLocations;
+    CommonGraphicsState.bBindSampleLocations = GVulkanSupportsSampleLocations && CommonGraphicsState.SampleLocationsInfo.sampleLocationsCount > 0;
 #endif
 
     if (GraphicsState.CurrentDescriptorState)
@@ -1238,6 +1238,12 @@ void FVulkanCommandContextState::SetSamplePositions(const FRHISamplePositionsDes
 
     // Vulkan places the pixel center at (0.5, 0.5), so an offset of zero maps to the standard 1x location.
     const uint32 NumSamplesPerPixel = bCustom ? SamplePositionsDesc.NumSamplesPerPixel : 1;
+
+    if ((GVulkanSampleLocationSampleCounts & ConvertSampleCount(NumSamplesPerPixel)) == 0)
+    {
+        return;
+    }
+
     const uint32 GridWidth          = bCustom ? SamplePositionsDesc.GridWidth  : 1;
     const uint32 GridHeight         = bCustom ? SamplePositionsDesc.GridHeight : 1;
     const uint32 NumLocations       = NumSamplesPerPixel * GridWidth * GridHeight;

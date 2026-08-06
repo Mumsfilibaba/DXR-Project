@@ -216,6 +216,8 @@ FVulkanBlendStateRHI::FVulkanBlendStateRHI(const FRHIBlendStateDesc& InDesc)
 {
     Memory::Memzero(&CreateInfo);
 
+    Memory::Memzero(BlendAttachmentStates, sizeof(BlendAttachmentStates));
+
     // NOTE: Blend constants are configured as dynamic state
     CreateInfo.sType           = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     CreateInfo.logicOpEnable   = InDesc.bLogicOpEnable;
@@ -492,7 +494,9 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
     MultisamplingCreateInfo.alphaToOneEnable      = VK_FALSE;
 
 #if VK_EXT_sample_locations
-    const bool bUseSampleLocations = InDesc.MultiSampleState.bProgrammableSamplePositions && GVulkanSupportsSampleLocations;
+    const bool bUseSampleLocations = InDesc.MultiSampleState.bProgrammableSamplePositions
+        && GVulkanSupportsSampleLocations
+        && (GVulkanSampleLocationSampleCounts & MultisamplingCreateInfo.rasterizationSamples) != 0;
 
     VkPipelineSampleLocationsStateCreateInfoEXT SampleLocationsCreateInfo = {};
     if (bUseSampleLocations)
@@ -939,7 +943,9 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
     MultisamplingCreateInfo.alphaToOneEnable      = VK_FALSE;
 
 #if VK_EXT_sample_locations
-    const bool bUseSampleLocations = InDesc.MultiSampleState.bProgrammableSamplePositions && GVulkanSupportsSampleLocations;
+    const bool bUseSampleLocations = InDesc.MultiSampleState.bProgrammableSamplePositions
+        && GVulkanSupportsSampleLocations
+        && (GVulkanSampleLocationSampleCounts & MultisamplingCreateInfo.rasterizationSamples) != 0;
 
     VkPipelineSampleLocationsStateCreateInfoEXT SampleLocationsCreateInfo = {};
     if (bUseSampleLocations)

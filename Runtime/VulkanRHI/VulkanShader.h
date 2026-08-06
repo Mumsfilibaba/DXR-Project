@@ -214,6 +214,7 @@ public:
     bool PatchShaderBindings(FSpirvArray& OutSpirv, class FVulkanPipelineLayout* Layout, uint32 DescriptorSetIndex);
     bool StripGoogleSpirvRequirements(const FSpirvArray& InWords, FSpirvArray& OutWords);
     bool ValidateNoGoogleSpirvRequirements(const FSpirvArray& Words, String* OutErrorMessage = nullptr);
+    bool ForceUnknownStorageImageFormats(const FSpirvArray& InWords, FSpirvArray& OutWords);
 
     EShaderVisibility::Type GetShaderVisibility() const
     {
