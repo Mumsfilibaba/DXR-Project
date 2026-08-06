@@ -5,6 +5,7 @@
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Assets/AssetManager.h"
+#include "Engine/Assets/MeshFactory.h"
 #include "RendererCore/TextureFactory.h"
 #include "Renderer/SkyboxRenderPass.h"
 #include "Renderer/Scene/Scene.h"
@@ -42,7 +43,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
 
     // Create a sphere used for the Skybox
     {
-        FMeshCreateInfo SkyboxMesh = MeshFactory::CreateSphere(0);
+        FMeshData SkyboxMesh = MeshFactory::CreateSphere(0);
         SkyboxIndexCount = SkyboxMesh.Indices.Size();
 
         // Indices

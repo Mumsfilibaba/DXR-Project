@@ -10,7 +10,7 @@
 #include "Engine/Assets/AssetImporters/FBXImporter.h"
 #include "Engine/Assets/AssetImporters/OBJImporter.h"
 
-bool FModelImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags, FModelCreateInfo& OutCreateInfo)
+bool FModelImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags, FModelData& OutModelData)
 {
     FByteInputStream InputStream;
 
@@ -59,7 +59,7 @@ bool FModelImporter::ImportFromFile(const StringView& InFilename, EMeshImportFla
     const ModelFormat::FModelHeader* ModelHeader = InputStream.PeekData<ModelFormat::FModelHeader>();
 
     // Load MeshData
-    OutCreateInfo.Meshes.Resize(ModelHeader->NumMeshes);
+    OutModelData.Meshes.Resize(ModelHeader->NumMeshes);
 
     // 3) Mesh Headers
     const ModelFormat::FMeshInfo*    MeshHeaders = InputStream.PeekData<ModelFormat::FMeshInfo>(ModelHeader->MeshDataOffset);
@@ -80,24 +80,24 @@ bool FModelImporter::ImportFromFile(const StringView& InFilename, EMeshImportFla
 
     for (int32 MeshIdx = 0; MeshIdx < ModelHeader->NumMeshes; ++MeshIdx)
     {
-        FMeshCreateInfo& MeshCreateInfo = OutCreateInfo.Meshes[MeshIdx];
+        FMeshData& MeshData = OutModelData.Meshes[MeshIdx];
 
         const ModelFormat::FMeshInfo& MeshHeader = MeshHeaders[MeshIdx];
         MAYBE_UNUSED const int32 Length = CString::Strlen(MeshHeader.Name);
         CHECK(Length < MODEL_FORMAT_MAX_NAME_LENGTH);
 
-        MeshCreateInfo.Name = MeshHeader.Name;
+        MeshData.Name = MeshHeader.Name;
         LOG_INFO("Loaded Mesh '%s'", MeshHeader.Name);
 
         const ModelFormat::FSubMeshInfo* SubMeshes = SubMeshData + MeshHeader.FirstSubMesh;
-        MeshCreateInfo.SubMeshes.Resize(MeshHeader.NumSubMeshes);
+        MeshData.SubMeshes.Resize(MeshHeader.NumSubMeshes);
 
-        MeshCreateInfo.Declaration       = FVertexDeclaration::GetOrCreate(static_cast<EVertexAttributeFlags>(MeshHeader.AttributeFlags));
-        MeshCreateInfo.PackedVertexCount = MeshHeader.NumVertices;
+        MeshData.Declaration       = FVertexDeclaration::GetOrCreate(static_cast<EVertexAttributeFlags>(MeshHeader.AttributeFlags));
+        MeshData.PackedVertexCount = MeshHeader.NumVertices;
 
         for (uint8 StreamIndex = 0; StreamIndex < VERTEX_MAX_STREAMS; StreamIndex++)
         {
-            const uint16 Stride = MeshCreateInfo.Declaration.GetStreamStride(StreamIndex);
+            const uint16 Stride = MeshData.Declaration.GetStreamStride(StreamIndex);
             if (Stride == 0)
             {
                 continue;
@@ -105,20 +105,20 @@ bool FModelImporter::ImportFromFile(const StringView& InFilename, EMeshImportFla
 
             const int32  ByteOffset = ModelHeader->StreamDataOffset[StreamIndex] + (MeshHeader.FirstVertex * StreamStrides[StreamIndex]);
             const uint8* StreamData = InputStream.PeekData<uint8>(ByteOffset);
-            MeshCreateInfo.PackedStreams[StreamIndex].Reset(StreamData, MeshHeader.NumVertices * Stride);
+            MeshData.PackedStreams[StreamIndex].Reset(StreamData, MeshHeader.NumVertices * Stride);
         }
 
         const uint32* Indices = IndexData + MeshHeader.FirstIndex;
-        MeshCreateInfo.Indices.Reset(Indices, MeshHeader.NumIndices);
+        MeshData.Indices.Reset(Indices, MeshHeader.NumIndices);
 
         for (int32 SubMeshIdx = 0; SubMeshIdx < MeshHeader.NumSubMeshes; SubMeshIdx++)
         {
-            FSubMeshInfo& SubMeshInfo = MeshCreateInfo.SubMeshes[SubMeshIdx];
-            SubMeshInfo.BaseVertex    = SubMeshes[SubMeshIdx].BaseVertex;
-            SubMeshInfo.VertexCount   = SubMeshes[SubMeshIdx].NumVertices;
-            SubMeshInfo.StartIndex    = SubMeshes[SubMeshIdx].StartIndex;
-            SubMeshInfo.IndexCount    = SubMeshes[SubMeshIdx].NumIndicies;
-            SubMeshInfo.MaterialIndex = SubMeshes[SubMeshIdx].MaterialIndex;
+            FSubMesh& SubMesh     = MeshData.SubMeshes[SubMeshIdx];
+            SubMesh.BaseVertex    = SubMeshes[SubMeshIdx].BaseVertex;
+            SubMesh.VertexCount   = SubMeshes[SubMeshIdx].NumVertices;
+            SubMesh.StartIndex    = SubMeshes[SubMeshIdx].StartIndex;
+            SubMesh.IndexCount    = SubMeshes[SubMeshIdx].NumIndicies;
+            SubMesh.MaterialIndex = SubMeshes[SubMeshIdx].MaterialIndex;
         }
     }
 
@@ -163,27 +163,27 @@ bool FModelImporter::ImportFromFile(const StringView& InFilename, EMeshImportFla
     };
 
     // Construct Materials
-    OutCreateInfo.Materials.Resize(ModelHeader->NumMaterials);
+    OutModelData.Materials.Resize(ModelHeader->NumMaterials);
 
     // 6) Materials
     const ModelFormat::FMaterialInfo* Materials = InputStream.PeekData<ModelFormat::FMaterialInfo>(ModelHeader->MaterialDataOffset);
     for (int32 Index = 0; Index < ModelHeader->NumMaterials; ++Index)
     {
-        FMaterialCreateInfo& MaterialCreateInfo = OutCreateInfo.Materials[Index];
-        MaterialCreateInfo.Textures[EMaterialTexture::Diffuse]          = RetrieveTexture(Materials[Index].DiffuseTextureIdx);
-        MaterialCreateInfo.Textures[EMaterialTexture::Normal]           = RetrieveTexture(Materials[Index].NormalTextureIdx);
-        MaterialCreateInfo.Textures[EMaterialTexture::Specular]         = RetrieveTexture(Materials[Index].SpecularTextureIdx);
-        MaterialCreateInfo.Textures[EMaterialTexture::Roughness]        = RetrieveTexture(Materials[Index].RoughnessTextureIdx);
-        MaterialCreateInfo.Textures[EMaterialTexture::AmbientOcclusion] = RetrieveTexture(Materials[Index].AmbientOcclusionTextureIdx);
-        MaterialCreateInfo.Textures[EMaterialTexture::Metallic]         = RetrieveTexture(Materials[Index].MetallicTextureIdx);
-        MaterialCreateInfo.Textures[EMaterialTexture::Emissive]         = RetrieveTexture(Materials[Index].EmissiveTextureIdx);
-        MaterialCreateInfo.Textures[EMaterialTexture::AlphaMask]        = RetrieveTexture(Materials[Index].AlphaMaskTextureIdx);
+        FMaterialData& MaterialData = OutModelData.Materials[Index];
+        MaterialData.Textures[EMaterialTexture::Diffuse]          = RetrieveTexture(Materials[Index].DiffuseTextureIdx);
+        MaterialData.Textures[EMaterialTexture::Normal]           = RetrieveTexture(Materials[Index].NormalTextureIdx);
+        MaterialData.Textures[EMaterialTexture::Specular]         = RetrieveTexture(Materials[Index].SpecularTextureIdx);
+        MaterialData.Textures[EMaterialTexture::Roughness]        = RetrieveTexture(Materials[Index].RoughnessTextureIdx);
+        MaterialData.Textures[EMaterialTexture::AmbientOcclusion] = RetrieveTexture(Materials[Index].AmbientOcclusionTextureIdx);
+        MaterialData.Textures[EMaterialTexture::Metallic]         = RetrieveTexture(Materials[Index].MetallicTextureIdx);
+        MaterialData.Textures[EMaterialTexture::Emissive]         = RetrieveTexture(Materials[Index].EmissiveTextureIdx);
+        MaterialData.Textures[EMaterialTexture::AlphaMask]        = RetrieveTexture(Materials[Index].AlphaMaskTextureIdx);
         
-        MaterialCreateInfo.MaterialFlags = static_cast<EMaterialFlags>(Materials[Index].MaterialFlags);
-        MaterialCreateInfo.Diffuse       = Materials[Index].Diffuse;
-        MaterialCreateInfo.Roughness     = Materials[Index].Roughness;
-        MaterialCreateInfo.AmbientFactor = Materials[Index].AO;
-        MaterialCreateInfo.Metallic      = Materials[Index].Metallic;
+        MaterialData.MaterialFlags = static_cast<EMaterialFlags>(Materials[Index].MaterialFlags);
+        MaterialData.Diffuse       = Materials[Index].Diffuse;
+        MaterialData.Roughness     = Materials[Index].Roughness;
+        MaterialData.AmbientFactor = Materials[Index].AO;
+        MaterialData.Metallic      = Materials[Index].Metallic;
     }
 
     return true;
@@ -194,7 +194,7 @@ bool FModelImporter::MatchExtenstion(const StringView& FileName)
     return FileName.EndsWith(".dxrmesh", EStringCaseType::NoCase);
 }
 
-bool FModelSerializer::Serialize(const String& Filename, const FModelCreateInfo& ModelInfo)
+bool FModelSerializer::Serialize(const String& Filename, const FModelData& ModelData)
 {
     ModelFormat::FModelHeader ModelHeader;
     Memory::Memzero(&ModelHeader, sizeof(ModelFormat::FModelHeader));
@@ -203,7 +203,7 @@ bool FModelSerializer::Serialize(const String& Filename, const FModelCreateInfo&
     OutputStream.AddUninitialized<ModelFormat::FModelHeader>();
 
     // Count mesh-primitives and prepare headers
-    ModelHeader.NumMeshes      = ModelInfo.Meshes.Size();
+    ModelHeader.NumMeshes      = ModelData.Meshes.Size();
     ModelHeader.MeshDataOffset = OutputStream.AddUninitialized<ModelFormat::FMeshInfo>(ModelHeader.NumMeshes);
 
     struct FPackedMesh
@@ -212,11 +212,11 @@ bool FModelSerializer::Serialize(const String& Filename, const FModelCreateInfo&
     };
 
     TArray<FPackedMesh> PackedMeshes;
-    PackedMeshes.Resize(ModelInfo.Meshes.Size());
+    PackedMeshes.Resize(ModelData.Meshes.Size());
 
-    for (int32 MeshIdx = 0; MeshIdx < ModelInfo.Meshes.Size(); ++MeshIdx)
+    for (int32 MeshIdx = 0; MeshIdx < ModelData.Meshes.Size(); ++MeshIdx)
     {
-        if (!ModelInfo.Meshes[MeshIdx].PackVertexStreams(PackedMeshes[MeshIdx].Streams))
+        if (!ModelData.Meshes[MeshIdx].PackVertexStreams(PackedMeshes[MeshIdx].Streams))
         {
             return false;
         }
@@ -229,20 +229,20 @@ bool FModelSerializer::Serialize(const String& Filename, const FModelCreateInfo&
     int32 MeshDataOffset = ModelHeader.MeshDataOffset;
     for (int32 MeshIdx = 0; MeshIdx < ModelHeader.NumMeshes; ++MeshIdx)
     {
-        const FMeshCreateInfo& MeshCreateInfo = ModelInfo.Meshes[MeshIdx];
+        const FMeshData& MeshData = ModelData.Meshes[MeshIdx];
 
         ModelFormat::FMeshInfo Header;
         Memory::Memzero(&Header, sizeof(ModelFormat::FMeshInfo));
 
         Header.FirstVertex    = NumVertices;
-        Header.NumVertices    = MeshCreateInfo.Vertices.Size();
+        Header.NumVertices    = MeshData.Vertices.Size();
         Header.FirstIndex     = NumIndicies;
-        Header.NumIndices     = MeshCreateInfo.Indices.Size();
+        Header.NumIndices     = MeshData.Indices.Size();
         Header.FirstSubMesh   = NumSubMeshes;
-        Header.NumSubMeshes   = MeshCreateInfo.SubMeshes.Size();
-        Header.AttributeFlags = static_cast<int32>(MeshCreateInfo.Declaration.GetAttributeFlags());
+        Header.NumSubMeshes   = MeshData.SubMeshes.Size();
+        Header.AttributeFlags = static_cast<int32>(MeshData.Declaration.GetAttributeFlags());
 
-        CString::Strncpy(Header.Name, *MeshCreateInfo.Name, MODEL_FORMAT_MAX_NAME_LENGTH);
+        CString::Strncpy(Header.Name, *MeshData.Name, MODEL_FORMAT_MAX_NAME_LENGTH);
         MeshDataOffset += OutputStream.Write(Header, MeshDataOffset);
 
         NumVertices  += Header.NumVertices;
@@ -251,11 +251,11 @@ bool FModelSerializer::Serialize(const String& Filename, const FModelCreateInfo&
     }
 
     uint16 StreamStrides[VERTEX_MAX_STREAMS] = {};
-    for (const FMeshCreateInfo& MeshCreateInfo : ModelInfo.Meshes)
+    for (const FMeshData& MeshData : ModelData.Meshes)
     {
         for (uint8 StreamIndex = 0; StreamIndex < VERTEX_MAX_STREAMS; StreamIndex++)
         {
-            StreamStrides[StreamIndex] = Math::Max(StreamStrides[StreamIndex], MeshCreateInfo.Declaration.GetStreamStride(StreamIndex));
+            StreamStrides[StreamIndex] = Math::Max(StreamStrides[StreamIndex], MeshData.Declaration.GetStreamStride(StreamIndex));
         }
     }
 
@@ -283,7 +283,7 @@ bool FModelSerializer::Serialize(const String& Filename, const FModelCreateInfo&
 
     for (int32 MeshIdx = 0; MeshIdx < ModelHeader.NumMeshes; ++MeshIdx)
     {
-        const FMeshCreateInfo& MeshCreateInfo = ModelInfo.Meshes[MeshIdx];
+        const FMeshData& MeshData = ModelData.Meshes[MeshIdx];
 
         for (uint8 StreamIndex = 0; StreamIndex < VERTEX_MAX_STREAMS; StreamIndex++)
         {
@@ -298,28 +298,28 @@ bool FModelSerializer::Serialize(const String& Filename, const FModelCreateInfo&
                 OutputStream.Write(StreamData.Data(), StreamData.Size(), StreamDataOffset[StreamIndex]);
             }
 
-            StreamDataOffset[StreamIndex] += MeshCreateInfo.Vertices.Size() * StreamStrides[StreamIndex];
+            StreamDataOffset[StreamIndex] += MeshData.Vertices.Size() * StreamStrides[StreamIndex];
         }
 
-        IndexDataOffset += OutputStream.Write(MeshCreateInfo.Indices.Data(), MeshCreateInfo.Indices.Size(), IndexDataOffset);
+        IndexDataOffset += OutputStream.Write(MeshData.Indices.Data(), MeshData.Indices.Size(), IndexDataOffset);
 
-        for (int32 SubMeshIdx = 0; SubMeshIdx < MeshCreateInfo.SubMeshes.Size(); SubMeshIdx++)
+        for (int32 SubMeshIdx = 0; SubMeshIdx < MeshData.SubMeshes.Size(); SubMeshIdx++)
         {
-            const FSubMeshInfo& SubMeshInfo = MeshCreateInfo.SubMeshes[SubMeshIdx];
+            const FSubMesh& SubMesh = MeshData.SubMeshes[SubMeshIdx];
 
             // SubMesh vertices and indices are based on the mesh and not the model
-            ModelFormat::FSubMeshInfo SubMesh;
-            SubMesh.BaseVertex    = SubMeshInfo.BaseVertex;
-            SubMesh.NumVertices   = SubMeshInfo.VertexCount;
-            SubMesh.StartIndex    = SubMeshInfo.StartIndex;
-            SubMesh.NumIndicies   = SubMeshInfo.IndexCount;
-            SubMesh.MaterialIndex = SubMeshInfo.MaterialIndex;
-            SubMeshDataOffset += OutputStream.Write(SubMesh, SubMeshDataOffset);
+            ModelFormat::FSubMeshInfo SubMeshHeader;
+            SubMeshHeader.BaseVertex    = SubMesh.BaseVertex;
+            SubMeshHeader.NumVertices   = SubMesh.VertexCount;
+            SubMeshHeader.StartIndex    = SubMesh.StartIndex;
+            SubMeshHeader.NumIndicies   = SubMesh.IndexCount;
+            SubMeshHeader.MaterialIndex = SubMesh.MaterialIndex;
+            SubMeshDataOffset += OutputStream.Write(SubMeshHeader, SubMeshDataOffset);
         }
     }
 
     // Prepare material primitives
-    ModelHeader.NumMaterials       = ModelInfo.Materials.Size();
+    ModelHeader.NumMaterials       = ModelData.Materials.Size();
     ModelHeader.MaterialDataOffset = OutputStream.AddUninitialized<ModelFormat::FMaterialInfo>(ModelHeader.NumMaterials);
 
     // Create a new TextureIndex
@@ -348,24 +348,24 @@ bool FModelSerializer::Serialize(const String& Filename, const FModelCreateInfo&
     int32 MaterialDataOffset = ModelHeader.MaterialDataOffset;
     for (int32 MaterialIdx = 0; MaterialIdx < ModelHeader.NumMaterials; MaterialIdx++)
     {
-        const FMaterialCreateInfo& MaterialCreateInfo = ModelInfo.Materials[MaterialIdx];
+        const FMaterialData& MaterialData = ModelData.Materials[MaterialIdx];
 
         ModelFormat::FMaterialInfo Material;
         Memory::Memzero(&Material, sizeof(ModelFormat::FMaterialInfo));
 
-        Material.DiffuseTextureIdx          = CreateTextureIndex(MaterialCreateInfo.Textures[EMaterialTexture::Diffuse]);
-        Material.NormalTextureIdx           = CreateTextureIndex(MaterialCreateInfo.Textures[EMaterialTexture::Normal]);
-        Material.SpecularTextureIdx         = CreateTextureIndex(MaterialCreateInfo.Textures[EMaterialTexture::Specular]);
-        Material.EmissiveTextureIdx         = CreateTextureIndex(MaterialCreateInfo.Textures[EMaterialTexture::Emissive]);
-        Material.AmbientOcclusionTextureIdx = CreateTextureIndex(MaterialCreateInfo.Textures[EMaterialTexture::AmbientOcclusion]);
-        Material.RoughnessTextureIdx        = CreateTextureIndex(MaterialCreateInfo.Textures[EMaterialTexture::Roughness]);
-        Material.MetallicTextureIdx         = CreateTextureIndex(MaterialCreateInfo.Textures[EMaterialTexture::Metallic]);
-        Material.AlphaMaskTextureIdx        = CreateTextureIndex(MaterialCreateInfo.Textures[EMaterialTexture::AlphaMask]);
-        Material.Diffuse                    = MaterialCreateInfo.Diffuse;
-        Material.AO                         = MaterialCreateInfo.AmbientFactor;
-        Material.Roughness                  = MaterialCreateInfo.Roughness;
-        Material.Metallic                   = MaterialCreateInfo.Metallic;
-        Material.MaterialFlags              = static_cast<int32>(MaterialCreateInfo.MaterialFlags);
+        Material.DiffuseTextureIdx          = CreateTextureIndex(MaterialData.Textures[EMaterialTexture::Diffuse]);
+        Material.NormalTextureIdx           = CreateTextureIndex(MaterialData.Textures[EMaterialTexture::Normal]);
+        Material.SpecularTextureIdx         = CreateTextureIndex(MaterialData.Textures[EMaterialTexture::Specular]);
+        Material.EmissiveTextureIdx         = CreateTextureIndex(MaterialData.Textures[EMaterialTexture::Emissive]);
+        Material.AmbientOcclusionTextureIdx = CreateTextureIndex(MaterialData.Textures[EMaterialTexture::AmbientOcclusion]);
+        Material.RoughnessTextureIdx        = CreateTextureIndex(MaterialData.Textures[EMaterialTexture::Roughness]);
+        Material.MetallicTextureIdx         = CreateTextureIndex(MaterialData.Textures[EMaterialTexture::Metallic]);
+        Material.AlphaMaskTextureIdx        = CreateTextureIndex(MaterialData.Textures[EMaterialTexture::AlphaMask]);
+        Material.Diffuse                    = MaterialData.Diffuse;
+        Material.AO                         = MaterialData.AmbientFactor;
+        Material.Roughness                  = MaterialData.Roughness;
+        Material.Metallic                   = MaterialData.Metallic;
+        Material.MaterialFlags              = static_cast<int32>(MaterialData.MaterialFlags);
         
         MaterialDataOffset += OutputStream.Write(Material, MaterialDataOffset);
     }

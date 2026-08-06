@@ -70,7 +70,7 @@ static auto LoadMaterialTexture(const String& Path, const ofbx::Material* Materi
     return FTexture2DRef();
 }
 
-bool FFBXImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags InFlags, FModelCreateInfo& OutModelInfo)
+bool FFBXImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags InFlags, FModelData& OutModelData)
 {
     const String Filename = String(InFilename);
 
@@ -117,8 +117,8 @@ bool FFBXImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
     UniqueMaterials.Reserve(MaterialCount);
 
     // Estimate resource count
-    OutModelInfo.Meshes.Reserve(FBXScene->getMeshCount());
-    OutModelInfo.Materials.Reserve(MaterialCount);
+    OutModelData.Meshes.Reserve(FBXScene->getMeshCount());
+    OutModelData.Materials.Reserve(MaterialCount);
 
     // Convert data
     const String Path = ExtractPath(Filename);
@@ -139,23 +139,23 @@ bool FFBXImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
 
             LOG_INFO("[FFBXImporter] Loading Material '%s'", CurrentMaterial->name);
 
-            FMaterialCreateInfo MaterialCreateInfo;
-            MaterialCreateInfo.Name = CurrentMaterial->name;
+            FMaterialData MaterialData;
+            MaterialData.Name = CurrentMaterial->name;
 
-            MaterialCreateInfo.Textures[EMaterialTexture::Diffuse]          = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::DIFFUSE);
-            MaterialCreateInfo.Textures[EMaterialTexture::Normal]           = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::NORMAL);
-            MaterialCreateInfo.Textures[EMaterialTexture::Specular]         = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::SPECULAR);
-            MaterialCreateInfo.Textures[EMaterialTexture::Emissive]         = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::EMISSIVE);
-            MaterialCreateInfo.Textures[EMaterialTexture::AmbientOcclusion] = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::AMBIENT);
+            MaterialData.Textures[EMaterialTexture::Diffuse]          = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::DIFFUSE);
+            MaterialData.Textures[EMaterialTexture::Normal]           = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::NORMAL);
+            MaterialData.Textures[EMaterialTexture::Specular]         = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::SPECULAR);
+            MaterialData.Textures[EMaterialTexture::Emissive]         = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::EMISSIVE);
+            MaterialData.Textures[EMaterialTexture::AmbientOcclusion] = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::AMBIENT);
 
-            MaterialCreateInfo.Diffuse       = Vector3(CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b);
-            MaterialCreateInfo.AmbientFactor = 1.0f; // CurrentMaterial->getSpecularColor().r;
-            MaterialCreateInfo.Roughness     = 1.0f; // CurrentMaterial->getSpecularColor().g;
-            MaterialCreateInfo.Metallic      = 1.0f; // CurrentMaterial->getSpecularColor().b;
+            MaterialData.Diffuse       = Vector3(CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b);
+            MaterialData.AmbientFactor = 1.0f; // CurrentMaterial->getSpecularColor().r;
+            MaterialData.Roughness     = 1.0f; // CurrentMaterial->getSpecularColor().g;
+            MaterialData.Metallic      = 1.0f; // CurrentMaterial->getSpecularColor().b;
 
             // TODO: Other material properties
-            UniqueMaterials[CurrentMaterial->id] = OutModelInfo.Materials.Size();
-            OutModelInfo.Materials.Add(Move(MaterialCreateInfo));
+            UniqueMaterials[CurrentMaterial->id] = OutModelData.Materials.Size();
+            OutModelData.Materials.Add(Move(MaterialData));
         }
 
         const bool bApplyScaleFactor = (InFlags & EMeshImportFlags::ApplyScaleFactor) != EMeshImportFlags::None;
@@ -173,10 +173,10 @@ bool FFBXImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
 
         const int32 PartitionCount = GeometryData.getPartitionCount();
 
-        FMeshCreateInfo MeshCreateInfo;
-        MeshCreateInfo.Indices.Reserve(Positions.count);
-        MeshCreateInfo.Vertices.Reserve(Positions.values_count);
-        MeshCreateInfo.SubMeshes.Resize(PartitionCount);
+        FMeshData MeshData;
+        MeshData.Indices.Reserve(Positions.count);
+        MeshData.Vertices.Reserve(Positions.values_count);
+        MeshData.SubMeshes.Resize(PartitionCount);
 
         // Clear the mesh data to start a new mesh
         UniqueVertices.Reserve(Positions.values_count);
@@ -190,9 +190,9 @@ bool FFBXImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
             PartitionIndicies.Resize(FbxPartition.max_polygon_triangles * NumIndiciesPerTriangle);
 
             // Create a new partition for the mesh
-            FSubMeshInfo& SubMeshInfo = MeshCreateInfo.SubMeshes[PartitionIdx];
-            SubMeshInfo.BaseVertex = MeshCreateInfo.Vertices.Size();
-            SubMeshInfo.StartIndex = MeshCreateInfo.Indices.Size();
+            FSubMesh& SubMesh = MeshData.SubMeshes[PartitionIdx];
+            SubMesh.BaseVertex = MeshData.Vertices.Size();
+            SubMesh.StartIndex = MeshData.Indices.Size();
 
             // Go through each polygon and add it to the mesh
             for (int32 PolygonIdx = 0; PolygonIdx < FbxPartition.polygon_count; ++PolygonIdx)
@@ -243,31 +243,31 @@ bool FFBXImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
                     }
                     else
                     {
-                        UniqueIndex = static_cast<uint32>(MeshCreateInfo.Vertices.Size());
+                        UniqueIndex = static_cast<uint32>(MeshData.Vertices.Size());
                         UniqueVertices[Vertex] = UniqueIndex;
-                        MeshCreateInfo.Vertices.Add(Vertex);
+                        MeshData.Vertices.Add(Vertex);
                     }
 
-                    MeshCreateInfo.Indices.Emplace(UniqueIndex);
+                    MeshData.Indices.Emplace(UniqueIndex);
                 }
             }
 
             // Set the number of vertices/indices for this partition
-            SubMeshInfo.VertexCount = MeshCreateInfo.Vertices.Size() - SubMeshInfo.BaseVertex;
-            SubMeshInfo.IndexCount  = MeshCreateInfo.Indices.Size() - SubMeshInfo.StartIndex;
+            SubMesh.VertexCount = MeshData.Vertices.Size() - SubMesh.BaseVertex;
+            SubMesh.IndexCount  = MeshData.Indices.Size() - SubMesh.StartIndex;
 
             // Add material index to the mesh
-            SubMeshInfo.MaterialIndex = INVALID_MATERIAL_INDEX;
+            SubMesh.MaterialIndex = INVALID_MATERIAL_INDEX;
             if (PartitionIdx < CurrentMesh->getMaterialCount())
             {
                 const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial(PartitionIdx);
                 if (uint32* ExistingMaterialIndex = UniqueMaterials.Find(CurrentMaterial->id))
                 {
-                    SubMeshInfo.MaterialIndex = *ExistingMaterialIndex;
+                    SubMesh.MaterialIndex = *ExistingMaterialIndex;
                 }
             }
 
-            if (SubMeshInfo.MaterialIndex == INVALID_MATERIAL_INDEX)
+            if (SubMesh.MaterialIndex == INVALID_MATERIAL_INDEX)
             {
                 LOG_WARNING("[FFBXImporter] Partition in Mesh '%s' has no material", CurrentMesh->name);
             }
@@ -278,32 +278,32 @@ bool FFBXImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
         {
             if (GlobalSettings->CoordAxis == ofbx::CoordSystem_RightHanded)
             {
-                MeshCreateInfo.ReverseHandedness();
+                MeshData.ReverseHandedness();
             }
         }
 
         if ((InFlags & EMeshImportFlags::InvertAxisX) != EMeshImportFlags::None)
         {
-            MeshCreateInfo.InvertAxisX();
+            MeshData.InvertAxisX();
         }
 
         // If there are no tangents, then we calculate them
         const bool bRecalculateTangents = (InFlags & EMeshImportFlags::RecalculateTangents) != EMeshImportFlags::None;
         if (!Tangents.values || bRecalculateTangents)
         {
-            MeshCreateInfo.CalculateTangents();
+            MeshData.CalculateTangents();
         }
         else
         {
-            MeshCreateInfo.CalculateTangentSigns();
+            MeshData.CalculateTangentSigns();
         }
 
         // Add the mesh to our scene
-        if (!MeshCreateInfo.Vertices.IsEmpty())
+        if (!MeshData.Vertices.IsEmpty())
         {
             LOG_INFO("[FFBXImporter] Loaded Mesh '%s'", CurrentMesh->name);
-            MeshCreateInfo.Name = CurrentMesh->name;
-            OutModelInfo.Meshes.Add(Move(MeshCreateInfo));
+            MeshData.Name = CurrentMesh->name;
+            OutModelData.Meshes.Add(Move(MeshData));
         }
         else
         {
@@ -311,12 +311,12 @@ bool FFBXImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
         }
     }
 
-    OutModelInfo.Meshes.Shrink();
-    OutModelInfo.Materials.Shrink();
+    OutModelData.Meshes.Shrink();
+    OutModelData.Materials.Shrink();
 
     FBXScene->destroy();
 
-    LOG_INFO("[FFBXImporter]: Loaded Model '%s' which contains %d meshes and %d materials", *Filename, OutModelInfo.Meshes.Size(), OutModelInfo.Materials.Size());
+    LOG_INFO("[FFBXImporter]: Loaded Model '%s' which contains %d meshes and %d materials", *Filename, OutModelData.Meshes.Size(), OutModelData.Materials.Size());
     return true;
 }
 

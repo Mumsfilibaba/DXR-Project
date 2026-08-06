@@ -3,6 +3,7 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
+#include "Engine/Assets/MeshFactory.h"
 #include "Engine/Resources/Model.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Renderer/DebugRendering.h"
@@ -103,7 +104,7 @@ FDebugRenderer::~FDebugRenderer()
 
 bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
 {
-    FMeshCreateInfo SphereMesh = MeshFactory::CreateSphere(2, 0.35f);
+    FMeshData SphereMesh = MeshFactory::CreateSphere(2, 0.35f);
 
     // VertexBuffer
     FRHIBufferDesc VertexBufferDesc;

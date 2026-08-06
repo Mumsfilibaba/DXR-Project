@@ -8,7 +8,7 @@
 
 #include <tiny_obj_loader.h>
 
-bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags /* Flags */, FModelCreateInfo& OutModelInfo)
+bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags /* Flags */, FModelData& OutModelData)
 {
     // Load Scene File
     std::string                      Warning;
@@ -49,29 +49,29 @@ bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
         };
 
         // Create new material with default properties
-        FMaterialCreateInfo MaterialCreateInfo;
-        MaterialCreateInfo.Textures[EMaterialTexture::Metallic]  = LoadMaterialTexture(Mat.ambient_texname);
-        MaterialCreateInfo.Textures[EMaterialTexture::Diffuse]   = LoadMaterialTexture(Mat.diffuse_texname);
-        MaterialCreateInfo.Textures[EMaterialTexture::Roughness] = LoadMaterialTexture(Mat.specular_highlight_texname);
-        MaterialCreateInfo.Textures[EMaterialTexture::Normal]    = LoadMaterialTexture(Mat.bump_texname);
-        MaterialCreateInfo.Textures[EMaterialTexture::AlphaMask] = LoadMaterialTexture(Mat.alpha_texname);
+        FMaterialData MaterialData;
+        MaterialData.Textures[EMaterialTexture::Metallic]  = LoadMaterialTexture(Mat.ambient_texname);
+        MaterialData.Textures[EMaterialTexture::Diffuse]   = LoadMaterialTexture(Mat.diffuse_texname);
+        MaterialData.Textures[EMaterialTexture::Roughness] = LoadMaterialTexture(Mat.specular_highlight_texname);
+        MaterialData.Textures[EMaterialTexture::Normal]    = LoadMaterialTexture(Mat.bump_texname);
+        MaterialData.Textures[EMaterialTexture::AlphaMask] = LoadMaterialTexture(Mat.alpha_texname);
         
-        MaterialCreateInfo.Diffuse       = Vector3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
-        MaterialCreateInfo.Metallic      = Mat.ambient[0];
-        MaterialCreateInfo.AmbientFactor = 1.0f;
-        MaterialCreateInfo.Roughness     = 1.0f;
-        MaterialCreateInfo.MaterialFlags = EMaterialFlags::None;
+        MaterialData.Diffuse       = Vector3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
+        MaterialData.Metallic      = Mat.ambient[0];
+        MaterialData.AmbientFactor = 1.0f;
+        MaterialData.Roughness     = 1.0f;
+        MaterialData.MaterialFlags = EMaterialFlags::None;
 
         if (Mat.name.empty())
         {
-            MaterialCreateInfo.Name = String::CreateFormatted("%s_material_%d", *FilenameWithoutPath, SceneMaterialIndex);
+            MaterialData.Name = String::CreateFormatted("%s_material_%d", *FilenameWithoutPath, SceneMaterialIndex);
         }
         else
         {
-            MaterialCreateInfo.Name = String(Mat.name.c_str());
+            MaterialData.Name = String(Mat.name.c_str());
         }
         
-        OutModelInfo.Materials.Add(Move(MaterialCreateInfo));
+        OutModelData.Materials.Add(Move(MaterialData));
         SceneMaterialIndex++;
     }
 
@@ -90,8 +90,8 @@ bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
         const uint32 IndexCount = static_cast<uint32>(Shape.mesh.indices.size());
 
         // Start a new mesh
-        FMeshCreateInfo MeshCreateInfo;
-        MeshCreateInfo.Indices.Reserve(IndexCount);
+        FMeshData MeshData;
+        MeshData.Indices.Reserve(IndexCount);
         UniqueVertices.Clear();
 
         uint32 CurrentIndex = 0;
@@ -102,13 +102,13 @@ bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
             const int32 MaterialID = Shape.mesh.material_ids[Face];
 
             // Create a new partition for the mesh
-            FSubMeshInfo SubMeshInfo;
-            SubMeshInfo.BaseVertex = MeshCreateInfo.Vertices.Size();
-            SubMeshInfo.StartIndex = MeshCreateInfo.Indices.Size();
+            FSubMesh SubMesh;
+            SubMesh.BaseVertex = MeshData.Vertices.Size();
+            SubMesh.StartIndex = MeshData.Indices.Size();
             
             if (MaterialID >= 0)
             {
-                SubMeshInfo.MaterialIndex = MaterialID;
+                SubMesh.MaterialIndex = MaterialID;
             }
             
             // Retrieve all vertices/indicies for this partition
@@ -150,36 +150,36 @@ bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
                 }
                 else
                 {
-                    VertexIndex = static_cast<uint32>(MeshCreateInfo.Vertices.Size());
+                    VertexIndex = static_cast<uint32>(MeshData.Vertices.Size());
                     UniqueVertices[Vertex] = VertexIndex;
-                    MeshCreateInfo.Vertices.Add(Vertex);
+                    MeshData.Vertices.Add(Vertex);
                 }
                 
-                MeshCreateInfo.Indices.Add(VertexIndex);
+                MeshData.Indices.Add(VertexIndex);
             }
 
             // Set the number of vertices/indices for this partition
-            SubMeshInfo.VertexCount = MeshCreateInfo.Vertices.Size() - SubMeshInfo.BaseVertex;
-            SubMeshInfo.IndexCount  = MeshCreateInfo.Indices.Size() - SubMeshInfo.StartIndex;
-            MeshCreateInfo.SubMeshes.Add(SubMeshInfo);
+            SubMesh.VertexCount = MeshData.Vertices.Size() - SubMesh.BaseVertex;
+            SubMesh.IndexCount  = MeshData.Indices.Size() - SubMesh.StartIndex;
+            MeshData.SubMeshes.Add(SubMesh);
         }
 
-        MeshCreateInfo.CalculateTangents();
+        MeshData.CalculateTangents();
 
         if (Shape.name.empty())
         {
-            MeshCreateInfo.Name = String::CreateFormatted("%s_%d", *FilenameWithoutPath, ShapeIndex);
+            MeshData.Name = String::CreateFormatted("%s_%d", *FilenameWithoutPath, ShapeIndex);
         }
         else
         {
-            MeshCreateInfo.Name = Shape.name.c_str();
+            MeshData.Name = Shape.name.c_str();
         }
 
-        OutModelInfo.Meshes.Add(Move(MeshCreateInfo));
+        OutModelData.Meshes.Add(Move(MeshData));
         ShapeIndex++;
     }
 
-    LOG_INFO("[FOBJImporter]: Loaded Model '%s' which contains %d models and %d materials", *Filename, OutModelInfo.Meshes.Size(), OutModelInfo.Materials.Size());
+    LOG_INFO("[FOBJImporter]: Loaded Model '%s' which contains %d models and %d materials", *Filename, OutModelData.Meshes.Size(), OutModelData.Materials.Size());
     return true;
 }
 

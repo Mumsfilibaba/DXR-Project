@@ -3,7 +3,7 @@
 #include "Core/Containers/String.h"
 #include "Core/Containers/Map.h"
 #include "Core/Templates/TypeTraits.h"
-#include "Engine/Assets/ModelCreateInfo.h"
+#include "Engine/Assets/ModelData.h"
 #include "Engine/Assets/IModelImporter.h"
 
 #define MODEL_FORMAT_VERSION_MAJOR (0)
@@ -102,7 +102,7 @@ struct ENGINE_API FModelImporter : public IModelImporter
 {
     virtual ~FModelImporter() = default;
 
-    virtual bool ImportFromFile(const StringView& Filename, EMeshImportFlags Flags, FModelCreateInfo& OutCreateInfo) override final;
+    virtual bool ImportFromFile(const StringView& Filename, EMeshImportFlags Flags, FModelData& OutModelData) override final;
     virtual bool MatchExtenstion(const StringView& FileName) override final;
 };
 
@@ -110,5 +110,5 @@ struct ENGINE_API FModelSerializer
 {
     virtual ~FModelSerializer() = default;
 
-    bool Serialize(const String& Filename, const FModelCreateInfo& ModelInfo);
+    bool Serialize(const String& Filename, const FModelData& ModelData);
 };
