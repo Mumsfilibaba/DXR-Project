@@ -468,6 +468,17 @@ void FVulkanCommandContextState::DirtyPushConstants()
     RayTracingState.bBindPushConstants = true;
 }
 
+void FVulkanCommandContextState::DirtyComputeBindings()
+{
+    ComputeState.bBindPipelineState = true;
+    ComputeState.bBindPushConstants = true;
+
+    if (ComputeState.CurrentDescriptorState)
+    {
+        ComputeState.CurrentDescriptorState->DirtyDescriptorSet();
+    }
+}
+
 void FVulkanCommandContextState::ResetState()
 {
     for (FVulkanPushConstantsCache& ConstantCache : CommonState.PushConstantsCache)

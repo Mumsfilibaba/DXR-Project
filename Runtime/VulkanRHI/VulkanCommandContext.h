@@ -3,6 +3,7 @@
 #include "Core/Containers/Map.h"
 #include "Core/Platform/CriticalSection.h"
 #include "RHI/IRHICommandContext.h"
+#include "VulkanRHI/VulkanBufferClear.h"
 #include "VulkanRHI/VulkanCommandContextState.h"
 #include "VulkanRHI/VulkanDescriptorSet.h"
 #include "VulkanRHI/VulkanQuery.h"
@@ -164,6 +165,9 @@ public:
 
     void RequireBufferState(class FVulkanBufferRHI* Buffer, ERHIResourceState RequiredState);
     void RequireBufferState(FVulkanUnorderedAccessViewRHI* View, ERHIResourceState RequiredState);
+
+    void ClearBufferUnorderedAccessView(FVulkanUnorderedAccessViewRHI* View, const uint32 Values[4], bool bIsFloat);
+    bool ClearBufferUnorderedAccessViewCompute(FVulkanUnorderedAccessViewRHI* View, const FVulkanBufferClearRegion& Region, const uint32 Values[4], bool bIsFloat);
 
     void TransitionBarrierTexture(const FRHITransitionBarrierDesc& Desc);
     void TransitionBarrierBuffer(const FRHITransitionBarrierDesc& Desc);

@@ -139,3 +139,22 @@ VulkanRHI.AddExternalIncludeDirs({
 VulkanRHI.AddLibraryPaths({
     VulkanLibraries,
 })
+
+-- Fall back to the dxc the Vulkan SDK ships, which is the only one available on platforms where
+-- none is committed to ThirdParty.
+local DxcExecutable = ResolveDxcExecutable(VulkanBinaries)
+LogHighlight('DXC path=%s', DxcExecutable)
+
+-- The buffer-clear shader is compiled to SPIR-V headers as a build step so that creating the clear
+-- pipelines never has to touch the shader compiler or the disk.
+AddGeneratedShaderHeaderRule(VulkanRHI, {
+    Compiler     = DxcExecutable,
+    Source       = 'Shaders/Internal/ClearBufferUAV.hlsl',
+    Arguments    = GetSpirvShaderArguments('cs_6_2'),
+    SymbolPrefix = 'GVulkanClearBufferUAV_',
+    Permutations = {
+        { Name = 'Float', Defines = { 'CLEAR_ELEMENT_UINT=0', 'CLEAR_ELEMENT_SINT=0' } },
+        { Name = 'Uint',  Defines = { 'CLEAR_ELEMENT_UINT=1', 'CLEAR_ELEMENT_SINT=0' } },
+        { Name = 'Sint',  Defines = { 'CLEAR_ELEMENT_UINT=0', 'CLEAR_ELEMENT_SINT=1' } },
+    },
+})

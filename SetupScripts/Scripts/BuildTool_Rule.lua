@@ -123,6 +123,11 @@ function BuildRules(Name)
         -- Post-build steps (strings)
         PostBuildCommands = {},
 
+        -- Per-file custom build steps, each { FilePattern, Message, Commands, Outputs }. The
+        -- generator reruns one only when its file is newer than its outputs, so these suit
+        -- generated sources that are checked in.
+        CustomBuildRules = {},
+
         -- Is this rule generated yet? (rules should only be generated once)
         bIsGenerated = false
     }
@@ -158,6 +163,7 @@ function BuildRules(Name)
     function self.AddFiles(InFiles) AddUniqueElements(InFiles, self.Files) end
     function self.SetFiles(InFiles) self.Files = InFiles end
     function self.AddExcludeFiles(InExcludeFiles) AddUniqueElements(InExcludeFiles, self.ExcludeFiles) end
+    function self.RemoveExcludeFiles(InExcludeFiles) self.ExcludeFiles = ExcludeElements(self.ExcludeFiles, InExcludeFiles) end
     function self.AddDefines(InDefines) AddUniqueElements(InDefines, self.Defines) end
     function self.AddModules(InModules) AddUniqueElements(InModules, self.Modules) end
     function self.AddExtraEmbedNames(InExtraEmbedNames) AddUniqueElements(InExtraEmbedNames, self.ExtraEmbedNames) end
@@ -169,6 +175,7 @@ function BuildRules(Name)
     function self.AddLinkOptions(InLinkOptions) AddUniqueElements(InLinkOptions, self.LinkOptions) end
     function self.AddForceLinkNames(InForceLinkNames) AddUniqueElements(InForceLinkNames, self.ForceLinkNames) end
     function self.AddPostBuildCommands(InPostBuildCommands) AddUniqueElements(InPostBuildCommands, self.PostBuildCommands) end
+    function self.AddCustomBuildRules(InCustomBuildRules) AddUniqueElements(InCustomBuildRules, self.CustomBuildRules) end
 
     -- Helper for adding the .framework extension to frameworks (idempotent)
     local function EndsWith(str, suffix)
@@ -462,6 +469,13 @@ function BuildRules(Name)
                 PrintTable("  Post-Build-Command '%s'", self.PostBuildCommands)
             end
 
+            LogInfo("--- Custom-Build-Rules '%s' (Num Custom-Build-Rules=%d) ---", self.Name, #self.CustomBuildRules)
+            for _, CustomBuildRule in ipairs(self.CustomBuildRules) do
+                LogInfo("  Custom-Build-Rule for '%s'", CustomBuildRule.FilePattern)
+                PrintTable("    Command '%s'", CustomBuildRule.Commands)
+                PrintTable("    Output '%s'", CustomBuildRule.Outputs)
+            end
+
             -- Force includes / include dirs / defines / libs / files / postbuild
             forceincludes(self.ForceIncludes)
             includedirs(self.IncludeDirs)
@@ -470,6 +484,14 @@ function BuildRules(Name)
             libdirs(self.LibraryPaths)
             files(self.Files)
             postbuildcommands(self.PostBuildCommands)
+
+            for _, CustomBuildRule in ipairs(self.CustomBuildRules) do
+                filter({ "files:" .. CustomBuildRule.FilePattern })
+                    buildmessage(CustomBuildRule.Message)
+                    buildcommands(CustomBuildRule.Commands)
+                    buildoutputs(CustomBuildRule.Outputs)
+                filter({})
+            end
 
             -- Exclude OS-specific files
             if IsPlatformWindows() then
