@@ -4,6 +4,7 @@
 #include "Engine/World/World.h"
 #include "Renderer/RenderPass.h"
 #include "Renderer/FrameResources.h"
+#include "Renderer/Scene/MeshBatch.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
 
 #define NUM_FRUSTUM_PLANES (6)
@@ -138,10 +139,13 @@ struct FPointLightShaderCombination
             // True when this PSO routes Albedo / Material sampler via SM 6.6 bindless heaps
             bool bBindless;
 
-            // Explicit padding to keep the struct equal in size to Hash for stable hashing
-            uint16 Padding0;
+            // The vertex declaration whose input layout is baked into this PSO
+            uint8 DeclarationID;
 
-            // Material-flags
+            // Explicit padding to keep the struct equal in size to Hash for stable hashing
+            uint8 Padding0;
+
+            // Material-flags, already narrowed to what the declaration can feed
             uint32 MaterialFlags;
         };
 
@@ -166,10 +170,9 @@ public:
     FPointLightRenderPass(FSceneRenderer* InRenderer);
     virtual ~FPointLightRenderPass();
 
-    virtual void PreparePipelineState(FMaterial*, const FFrameResources&) override final { }
+    virtual void PreparePipelineState(FMaterial*, const FVertexDeclaration&, const FFrameResources&) override final { }
 
-    // This function creates or retrieves a pipeline state instance based on parameters
-    FGraphicsPipelineStateInstance* CompilePipelineStateInstance(ECubeMapRenderPassType RenderPassType, FMaterial* Material, const FFrameResources& FrameResources);
+    FGraphicsPipelineStateInstance* CompilePipelineStateInstance(ECubeMapRenderPassType RenderPassType, const FMeshBatch& Batch, const FFrameResources& FrameResources);
 
     bool Initialize(FFrameResources& Resources);
     bool CreateResources(FFrameResources& Resources);
@@ -228,10 +231,10 @@ struct FCascadedShadowsShaderCombination
             // True when this PSO routes Albedo / Material sampler via SM 6.6 bindless heaps
             bool bBindless;
 
-            // Explicit padding to keep the struct equal in size to Hash for stable hashing
-            uint8 Padding0;
+            // The vertex declaration whose input layout is baked into this PSO
+            uint8 DeclarationID;
 
-            // Material-flags
+            // Material-flags, already narrowed to what the declaration can feed
             uint32 MaterialFlags;
         };
 
@@ -256,10 +259,9 @@ public:
     FCascadedShadowsRenderPass(FSceneRenderer* InRenderer);
     virtual ~FCascadedShadowsRenderPass();
 
-    virtual void PreparePipelineState(FMaterial*, const FFrameResources&) override final { }
+    virtual void PreparePipelineState(FMaterial*, const FVertexDeclaration&, const FFrameResources&) override final { }
 
-    // This function creates or retrieves a pipeline state instance based on parameters
-    FGraphicsPipelineStateInstance* CompilePipelineStateInstance(ECascadeRenderPassType RenderPassType, FMaterial* Material, const FFrameResources& FrameResources);
+    FGraphicsPipelineStateInstance* CompilePipelineStateInstance(ECascadeRenderPassType RenderPassType, const FMeshBatch& Batch, const FFrameResources& FrameResources);
 
     bool Initialize(FFrameResources& Resources);
     bool CreateResources(FFrameResources& Resources);

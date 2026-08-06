@@ -66,8 +66,17 @@ bool FModelImporter::ImportFromFile(const StringView& InFilename, EMeshImportFla
     const ModelFormat::FSubMeshInfo* SubMeshData = InputStream.PeekData<ModelFormat::FSubMeshInfo>(ModelHeader->SubMeshDataOffset);
 
     // 4) Geometry Buffers
-    const FVertex* VertexData = InputStream.PeekData<FVertex>(ModelHeader->VertexDataOffset);
-    const uint32*  IndexData  = InputStream.PeekData<uint32>(ModelHeader->IndexDataOffset);
+    const uint32* IndexData = InputStream.PeekData<uint32>(ModelHeader->IndexDataOffset);
+
+    uint16 StreamStrides[VERTEX_MAX_STREAMS] = {};
+    for (int32 MeshIdx = 0; MeshIdx < ModelHeader->NumMeshes; ++MeshIdx)
+    {
+        const FVertexDeclaration& Declaration = FVertexDeclaration::GetOrCreate(static_cast<EVertexAttributeFlags>(MeshHeaders[MeshIdx].AttributeFlags));
+        for (uint8 StreamIndex = 0; StreamIndex < VERTEX_MAX_STREAMS; StreamIndex++)
+        {
+            StreamStrides[StreamIndex] = Math::Max(StreamStrides[StreamIndex], Declaration.GetStreamStride(StreamIndex));
+        }
+    }
 
     for (int32 MeshIdx = 0; MeshIdx < ModelHeader->NumMeshes; ++MeshIdx)
     {
@@ -83,8 +92,21 @@ bool FModelImporter::ImportFromFile(const StringView& InFilename, EMeshImportFla
         const ModelFormat::FSubMeshInfo* SubMeshes = SubMeshData + MeshHeader.FirstSubMesh;
         MeshCreateInfo.SubMeshes.Resize(MeshHeader.NumSubMeshes);
 
-        const FVertex* Vertices = VertexData + MeshHeader.FirstVertex;
-        MeshCreateInfo.Vertices.Reset(Vertices, MeshHeader.NumVertices);
+        MeshCreateInfo.Declaration       = FVertexDeclaration::GetOrCreate(static_cast<EVertexAttributeFlags>(MeshHeader.AttributeFlags));
+        MeshCreateInfo.PackedVertexCount = MeshHeader.NumVertices;
+
+        for (uint8 StreamIndex = 0; StreamIndex < VERTEX_MAX_STREAMS; StreamIndex++)
+        {
+            const uint16 Stride = MeshCreateInfo.Declaration.GetStreamStride(StreamIndex);
+            if (Stride == 0)
+            {
+                continue;
+            }
+
+            const int32  ByteOffset = ModelHeader->StreamDataOffset[StreamIndex] + (MeshHeader.FirstVertex * StreamStrides[StreamIndex]);
+            const uint8* StreamData = InputStream.PeekData<uint8>(ByteOffset);
+            MeshCreateInfo.PackedStreams[StreamIndex].Reset(StreamData, MeshHeader.NumVertices * Stride);
+        }
 
         const uint32* Indices = IndexData + MeshHeader.FirstIndex;
         MeshCreateInfo.Indices.Reset(Indices, MeshHeader.NumIndices);
@@ -184,6 +206,22 @@ bool FModelSerializer::Serialize(const String& Filename, const FModelCreateInfo&
     ModelHeader.NumMeshes      = ModelInfo.Meshes.Size();
     ModelHeader.MeshDataOffset = OutputStream.AddUninitialized<ModelFormat::FMeshInfo>(ModelHeader.NumMeshes);
 
+    struct FPackedMesh
+    {
+        TArray<uint8> Streams[VERTEX_MAX_STREAMS];
+    };
+
+    TArray<FPackedMesh> PackedMeshes;
+    PackedMeshes.Resize(ModelInfo.Meshes.Size());
+
+    for (int32 MeshIdx = 0; MeshIdx < ModelInfo.Meshes.Size(); ++MeshIdx)
+    {
+        if (!ModelInfo.Meshes[MeshIdx].PackVertexStreams(PackedMeshes[MeshIdx].Streams))
+        {
+            return false;
+        }
+    }
+
     int32 NumVertices  = 0;
     int32 NumIndicies  = 0;
     int32 NumSubMeshes = 0;
@@ -196,12 +234,13 @@ bool FModelSerializer::Serialize(const String& Filename, const FModelCreateInfo&
         ModelFormat::FMeshInfo Header;
         Memory::Memzero(&Header, sizeof(ModelFormat::FMeshInfo));
 
-        Header.FirstVertex  = NumVertices;
-        Header.NumVertices  = MeshCreateInfo.Vertices.Size();
-        Header.FirstIndex   = NumIndicies;
-        Header.NumIndices   = MeshCreateInfo.Indices.Size();
-        Header.FirstSubMesh = NumSubMeshes;
-        Header.NumSubMeshes = MeshCreateInfo.SubMeshes.Size();
+        Header.FirstVertex    = NumVertices;
+        Header.NumVertices    = MeshCreateInfo.Vertices.Size();
+        Header.FirstIndex     = NumIndicies;
+        Header.NumIndices     = MeshCreateInfo.Indices.Size();
+        Header.FirstSubMesh   = NumSubMeshes;
+        Header.NumSubMeshes   = MeshCreateInfo.SubMeshes.Size();
+        Header.AttributeFlags = static_cast<int32>(MeshCreateInfo.Declaration.GetAttributeFlags());
 
         CString::Strncpy(Header.Name, *MeshCreateInfo.Name, MODEL_FORMAT_MAX_NAME_LENGTH);
         MeshDataOffset += OutputStream.Write(Header, MeshDataOffset);
@@ -211,23 +250,58 @@ bool FModelSerializer::Serialize(const String& Filename, const FModelCreateInfo&
         NumSubMeshes += Header.NumSubMeshes;
     }
 
-    // Initialize the mesh-primitives
-    ModelHeader.VertexDataOffset  = OutputStream.AddUninitialized<FVertex>(NumVertices);
+    uint16 StreamStrides[VERTEX_MAX_STREAMS] = {};
+    for (const FMeshCreateInfo& MeshCreateInfo : ModelInfo.Meshes)
+    {
+        for (uint8 StreamIndex = 0; StreamIndex < VERTEX_MAX_STREAMS; StreamIndex++)
+        {
+            StreamStrides[StreamIndex] = Math::Max(StreamStrides[StreamIndex], MeshCreateInfo.Declaration.GetStreamStride(StreamIndex));
+        }
+    }
+
+    for (uint8 StreamIndex = 0; StreamIndex < VERTEX_MAX_STREAMS; StreamIndex++)
+    {
+        ModelHeader.StreamDataOffset[StreamIndex] = StreamStrides[StreamIndex] > 0
+            ? OutputStream.AddUninitialized<uint8>(NumVertices * StreamStrides[StreamIndex])
+            : 0;
+    }
+
     ModelHeader.NumVertices       = NumVertices;
     ModelHeader.IndexDataOffset   = OutputStream.AddUninitialized<uint32>(NumIndicies);
     ModelHeader.NumIndicies       = NumIndicies;
     ModelHeader.SubMeshDataOffset = OutputStream.AddUninitialized<ModelFormat::FSubMeshInfo>(NumSubMeshes);
     ModelHeader.NumSubMeshes      = NumSubMeshes;
 
-    int32 VertexDataOffset  = ModelHeader.VertexDataOffset;
+    int32 StreamDataOffset[VERTEX_MAX_STREAMS];
+    for (uint8 StreamIndex = 0; StreamIndex < VERTEX_MAX_STREAMS; StreamIndex++)
+    {
+        StreamDataOffset[StreamIndex] = ModelHeader.StreamDataOffset[StreamIndex];
+    }
+
     int32 IndexDataOffset   = ModelHeader.IndexDataOffset;
     int32 SubMeshDataOffset = ModelHeader.SubMeshDataOffset;
 
     for (int32 MeshIdx = 0; MeshIdx < ModelHeader.NumMeshes; ++MeshIdx)
     {
         const FMeshCreateInfo& MeshCreateInfo = ModelInfo.Meshes[MeshIdx];
-        VertexDataOffset += OutputStream.Write(MeshCreateInfo.Vertices.Data(), MeshCreateInfo.Vertices.Size(), VertexDataOffset);
-        IndexDataOffset  += OutputStream.Write(MeshCreateInfo.Indices.Data(), MeshCreateInfo.Indices.Size(), IndexDataOffset);
+
+        for (uint8 StreamIndex = 0; StreamIndex < VERTEX_MAX_STREAMS; StreamIndex++)
+        {
+            if (StreamStrides[StreamIndex] == 0)
+            {
+                continue;
+            }
+
+            const TArray<uint8>& StreamData = PackedMeshes[MeshIdx].Streams[StreamIndex];
+            if (!StreamData.IsEmpty())
+            {
+                OutputStream.Write(StreamData.Data(), StreamData.Size(), StreamDataOffset[StreamIndex]);
+            }
+
+            StreamDataOffset[StreamIndex] += MeshCreateInfo.Vertices.Size() * StreamStrides[StreamIndex];
+        }
+
+        IndexDataOffset += OutputStream.Write(MeshCreateInfo.Indices.Data(), MeshCreateInfo.Indices.Size(), IndexDataOffset);
 
         for (int32 SubMeshIdx = 0; SubMeshIdx < MeshCreateInfo.SubMeshes.Size(); SubMeshIdx++)
         {

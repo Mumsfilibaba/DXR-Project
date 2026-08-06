@@ -88,14 +88,14 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         const FRayTracingGeometryIndices GeometryIndices = GeometryTable[Query.CommittedInstanceID()];
         const FMaterial                  MaterialData    = Materials[GeometryIndices.MaterialIndex];
 
-        StructuredBuffer<FVertex> InVertices      = GetResourceFromPackedDescriptorIndexNonUniform(GeometryIndices.VerticesHandle);
-        ByteAddressBuffer         InIndices       = GetResourceFromPackedDescriptorIndexNonUniform(GeometryIndices.IndicesHandle);
-        Texture2D<float4>         AlbedoTex       = GetResourceFromPackedDescriptorIndexNonUniform(MaterialData.AlbedoHandle);
-        Texture2D<float4>         NormalTex       = GetResourceFromPackedDescriptorIndexNonUniform(MaterialData.NormalHandle);
-        Texture2D<float4>         MaterialTex     = GetResourceFromPackedDescriptorIndexNonUniform(MaterialData.MaterialHandle);
-        SamplerState              MaterialSampler = GetMaterialSamplerBindless(MaterialData);
+        StructuredBuffer<FVertexAttributes> InAttributes    = GetResourceFromPackedDescriptorIndexNonUniform(GeometryIndices.AttributesHandle);
+        ByteAddressBuffer                   InIndices       = GetResourceFromPackedDescriptorIndexNonUniform(GeometryIndices.IndicesHandle);
+        Texture2D<float4>                   AlbedoTex       = GetResourceFromPackedDescriptorIndexNonUniform(MaterialData.AlbedoHandle);
+        Texture2D<float4>                   NormalTex       = GetResourceFromPackedDescriptorIndexNonUniform(MaterialData.NormalHandle);
+        Texture2D<float4>                   MaterialTex     = GetResourceFromPackedDescriptorIndexNonUniform(MaterialData.MaterialHandle);
+        SamplerState                        MaterialSampler = GetMaterialSamplerBindless(MaterialData);
 
-        FHitSurface Surface = InterpolateTriangleHit(InVertices, InIndices, Query.CommittedPrimitiveIndex(), Query.CommittedTriangleBarycentrics());
+        FHitSurface Surface = InterpolateTriangleHit(InAttributes, InIndices, Query.CommittedPrimitiveIndex(), Query.CommittedTriangleBarycentrics());
         TransformHitSurfaceToWorld(Surface, Query.CommittedObjectToWorld3x4(), Query.CommittedWorldToObject3x4());
 
         const float3 HitViewDir = normalize(-Ray.Direction);

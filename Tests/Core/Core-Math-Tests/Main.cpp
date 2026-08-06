@@ -17,6 +17,8 @@ bool TestMatrix4();
 
 bool TestQuaternion();
 
+bool TestFormatStructs();
+
 int main()
 {
     TestHarness::Initialize("TestResults_Core.log");
@@ -37,6 +39,8 @@ int main()
     RUN_TEST("Matrix4", TestMatrix4());
 
     RUN_TEST("Quaternion", TestQuaternion());
+
+    RUN_TEST("FormatStructs", TestFormatStructs());
 
     const int32 ExitCode = TestHarness::Report();
     TestHarness::Shutdown();

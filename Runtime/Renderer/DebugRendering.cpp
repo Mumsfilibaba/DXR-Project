@@ -107,7 +107,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
 
     // VertexBuffer
     FRHIBufferDesc VertexBufferDesc;
-    VertexBufferDesc.Stride = sizeof(FVertex);
+    VertexBufferDesc.Stride = sizeof(FSourceVertex);
     VertexBufferDesc.Size   = SphereMesh.Vertices.SizeInBytes();
     VertexBufferDesc.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::Default;
 
@@ -331,10 +331,10 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
         }
     }
 
-    // Position-only input layout for debug sphere meshes (interleaved FVertex buffer, only Position used by shaders)
+    // Position-only input layout for debug sphere meshes (interleaved FSourceVertex buffer, only Position used by shaders)
     TArray<FRHIInputElementDesc> DebugSphereElements =
     {
-        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertex), 0, 0, 0, EVertexInputClass::Vertex, 0 },
+        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FSourceVertex), 0, 0, 0, EVertexInputClass::Vertex, 0 },
     };
 
     DebugSphereInputLayout = RHI::CreateInputLayout(DebugSphereElements);

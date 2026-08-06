@@ -87,7 +87,7 @@ TextureCubeArray<float> PointLightShadowMaps  : register(t4);
 struct FVSInput
 {
     float3 Position : POSITION0;
-    float3 Normal   : NORMAL0;
+    float4 Normal   : NORMAL0;
     float4 Tangent  : TANGENT0;
     float2 TexCoord : TEXCOORD0;
 };
@@ -104,7 +104,7 @@ struct FVSOutput
 FVSOutput VSMain(FVSInput Input)
 {
     FVSOutput Output;
-    Output.Normal   = TransformDirectionInvT(PerObjectBuffer, Input.Normal);
+    Output.Normal   = TransformDirectionInvT(PerObjectBuffer, Input.Normal.xyz);
     Output.Tangent  = float4(TransformDirectionWS(PerObjectBuffer, Input.Tangent.xyz), Input.Tangent.w * PerObjectBuffer.DeterminantSign);
     Output.TexCoord = Input.TexCoord;
 

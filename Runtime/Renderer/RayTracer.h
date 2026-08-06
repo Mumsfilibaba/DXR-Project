@@ -25,7 +25,7 @@ public:
 
     void PreRender(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);
     void RenderPrimaryRayDebug(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);
-    void ReleaseRayTracingGeometry(FScene* Scene);
+    void ReleaseRayTracingResources(FScene* Scene);
 
     void InvalidateReflectionHistory()
     {

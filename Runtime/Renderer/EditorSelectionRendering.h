@@ -14,7 +14,7 @@ public:
     explicit FEditorNoJitterDepthPass(FSceneRenderer* InRenderer);
     virtual ~FEditorNoJitterDepthPass();
 
-    virtual void PreparePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final;
+    virtual void PreparePipelineState(FMaterial* Material, const FVertexDeclaration& Declaration, const FFrameResources& FrameResources) override final;
 
     bool Initialize(FFrameResources& FrameResources);
     bool CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height);
@@ -30,14 +30,14 @@ public:
     explicit FEditorSelectionIDPass(FSceneRenderer* InRenderer);
     virtual ~FEditorSelectionIDPass();
 
-    virtual void PreparePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final;
+    virtual void PreparePipelineState(FMaterial* Material, const FVertexDeclaration& Declaration, const FFrameResources& FrameResources) override final;
 
     bool Initialize(FFrameResources& FrameResources);
     bool CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height);
     void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene);
 
 private:
-    TMap<int32, FGraphicsPipelineStateInstance> MaterialPSOs;
+    TMap<uint64, FGraphicsPipelineStateInstance> MaterialPSOs;
 };
 
 #endif

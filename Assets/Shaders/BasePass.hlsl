@@ -146,7 +146,7 @@ float2 ApplyParallax(FMaterial MaterialData, float2 TexCoords, float3 ViewDir, f
 struct FVSInput
 {
     float3 Position : POSITION0;
-    float3 Normal   : NORMAL0;
+    float4 Normal   : NORMAL0;
     float4 Tangent  : TANGENT0;
     float2 TexCoord : TEXCOORD0;
 };
@@ -168,7 +168,7 @@ FVSOutput VSMain(FVSInput Input)
     const float3 PositionWS3 = TransformPositionWS(PerObjectBuffer, Input.Position);
     const float4 PositionWS  = float4(PositionWS3, 1.0);
 
-    const float3 Normal  = TransformDirectionInvT(PerObjectBuffer, Input.Normal);
+    const float3 Normal  = TransformDirectionInvT(PerObjectBuffer, Input.Normal.xyz);
     const float3 Tangent = TransformDirectionWS(PerObjectBuffer, Input.Tangent.xyz);
 
     FVSOutput Output;

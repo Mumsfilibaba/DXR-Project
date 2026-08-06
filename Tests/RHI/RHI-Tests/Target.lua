@@ -8,5 +8,6 @@ RHITests.Kind       = "ConsoleApp"
 RHITests.AddModules({
     "Core",
     "RHI",
+    "RendererCore",
     "TestCommon",
 })

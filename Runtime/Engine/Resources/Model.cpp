@@ -5,10 +5,12 @@
 #include "Engine/Resources/Model.h"
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/TextureCompressor.h"
+#include "RendererCore/VertexStreamCache.h"
 
 FMesh::FMesh()
-    : VertexBuffers()
-    , VertexBufferSRVs()
+    : Declaration()
+    , VertexStreams()
+    , AttributeBufferSRV(nullptr)
     , IndexBuffer(nullptr)
     , IndexBufferSRV(nullptr)
     , RayTracingGeometry(nullptr)
@@ -24,93 +26,21 @@ FMesh::~FMesh()
 {
 }
 
-bool FMesh::Init(const FMeshCreateInfo& CreateInfo, bool bCreateVertexAndIndexSRVs)
+bool FMesh::Init(const FMeshCreateInfo& CreateInfo, bool bCreateRayTracingResources)
 {
     const bool bEnableRayTracing = RHI::bSupportsRayTracing;
 
-    VertexCount = CreateInfo.Vertices.Size();
+    Declaration = CreateInfo.Declaration;
+    VertexCount = CreateInfo.PackedVertexCount > 0 ? CreateInfo.PackedVertexCount : CreateInfo.Vertices.Size();
     IndexCount  = CreateInfo.Indices.Size();
 
+    if (!CreateVertexStreams(CreateInfo))
+    {
+        return false;
+    }
+
+
     const EBufferFlags BufferFlags = bEnableRayTracing ? EBufferFlags::ShaderResourceBuffer | EBufferFlags::Default : EBufferFlags::Default;
-
-    // Create VertexBuffer
-    FRHIBufferDesc VertexBufferDesc;
-    VertexBufferDesc.Stride = sizeof(FVertex);
-    VertexBufferDesc.Size   = VertexCount * VertexBufferDesc.Stride;
-    VertexBufferDesc.Flags  = BufferFlags | EBufferFlags::VertexBuffer;
-
-    VertexBuffers[EVertexStream::Packed] = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::VertexBuffer, CreateInfo.Vertices.Data());
-    if (!VertexBuffers[EVertexStream::Packed])
-    {
-        return false;
-    }
-    else
-    {
-        VertexBuffers[EVertexStream::Packed]->SetDebugName("VertexBuffer");
-    }
-
-    // Create VertexPositionBuffer
-    TArray<FVertexPosition> VertexPositions(VertexCount);
-    for (int32 Index = 0; Index < VertexCount; Index++)
-    {
-        const FVertex& Vertex = CreateInfo.Vertices[Index];
-        VertexPositions[Index] = Vertex.Position;
-    }
-
-	VertexBufferDesc.Stride = sizeof(FVertexPosition);
-	VertexBufferDesc.Size   = VertexCount * VertexBufferDesc.Stride;
-
-    VertexBuffers[EVertexStream::Positions] = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::VertexBuffer, VertexPositions.Data());
-    if (!VertexBuffers[EVertexStream::Positions])
-    {
-        return false;
-    }
-    else
-    {
-        VertexBuffers[EVertexStream::Positions]->SetDebugName("VertexPositionBuffer");
-    }
-
-    // Create VertexNormalBuffer
-    TArray<FVertexNormal> VertexNormals(VertexCount);
-    for (int32 Index = 0; Index < VertexCount; Index++)
-    {
-        const FVertex& Vertex = CreateInfo.Vertices[Index];
-        VertexNormals[Index] = FVertexNormal(Vertex.Normal, Vertex.Tangent, Vertex.TangentSign);
-    }
-
-	VertexBufferDesc.Stride = sizeof(FVertexNormal);
-	VertexBufferDesc.Size   = VertexCount * VertexBufferDesc.Stride;
-
-    VertexBuffers[EVertexStream::Normals] = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::VertexBuffer, VertexNormals.Data());
-    if (!VertexBuffers[EVertexStream::Normals])
-    {
-        return false;
-    }
-    else
-    {
-        VertexBuffers[EVertexStream::Normals]->SetDebugName("VertexNormalBuffer");
-    }
-    
-    // Create VertexTexCoordBuffer
-    TArray<FVertexTexCoord> VertexTexCoords(VertexCount);
-    for (int32 Index = 0; Index < VertexCount; Index++)
-    {
-        const FVertex& Vertex = CreateInfo.Vertices[Index];
-        VertexTexCoords[Index] = Vertex.TexCoord;
-    }
-
-    VertexBufferDesc.Stride = sizeof(FVertexTexCoord);
-    VertexBufferDesc.Size   = VertexCount * VertexBufferDesc.Stride;
-
-    VertexBuffers[EVertexStream::TexCoords] = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::VertexBuffer, VertexTexCoords.Data());
-    if (!VertexBuffers[EVertexStream::TexCoords])
-    {
-        return false;
-    }
-    else
-    {
-        VertexBuffers[EVertexStream::TexCoords]->SetDebugName("VertexTexCoordBuffer");
-    }
 
     // If we can get away with 16-bit indices, store them in this array
     TArray<uint16> NewIndicies;
@@ -150,9 +80,9 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo, bool bCreateVertexAndIndexSR
         IndexBuffer->SetDebugName("IndexBuffer");
     }
 
-    if (bCreateVertexAndIndexSRVs)
+    if (bCreateRayTracingResources)
     {
-        if (!CreateVertexAndIndexSRVs())
+        if (!EnsureRayTracingResources())
         {
             return false;
         }
@@ -192,54 +122,117 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo, bool bCreateVertexAndIndexSR
     return true;
 }
 
-bool FMesh::CreateVertexAndIndexSRVs()
+bool FMesh::CreateVertexStreams(const FMeshCreateInfo& CreateInfo)
 {
-    if (VertexBufferSRVs[EVertexStream::Packed])
+    static const CHAR* StreamDebugNames[VERTEX_MAX_STREAMS] =
     {
-        return true;
-    }
+        "PositionStream",
+        "AttributeStream",
+        "ColorStream",
+        "VertexStream3"
+    };
 
-    if (!VertexBuffers[EVertexStream::Packed] || !VertexBuffers[EVertexStream::Positions] || !VertexBuffers[EVertexStream::Normals] || !VertexBuffers[EVertexStream::TexCoords] || !IndexBuffer)
+    const EBufferFlags AttributeFlags = RHI::bSupportsRayTracing ? EBufferFlags::ShaderResourceBuffer : EBufferFlags::None;
+
+    TArray<uint8> PackedStreams[VERTEX_MAX_STREAMS];
+    const bool    bUsePrePacked = CreateInfo.PackedVertexCount > 0;
+
+    if (!bUsePrePacked && !CreateInfo.PackVertexStreams(PackedStreams))
     {
         return false;
     }
 
-    for (int32 StreamIndex = 0; StreamIndex < EVertexStream::Count; StreamIndex++)
+    for (uint8 StreamIndex = 0; StreamIndex < Declaration.GetNumStreams(); StreamIndex++)
     {
-        VertexBufferSRVs[StreamIndex] = RHI::CreateShaderResourceView(VertexBuffers[StreamIndex].Get(), FRHIShaderResourceViewDesc::CreateBuffer(0, VertexCount));
-        if (!VertexBufferSRVs[StreamIndex])
+        const uint16 Stride = Declaration.GetStreamStride(StreamIndex);
+        if (Stride == 0)
+        {
+            continue;
+        }
+
+        const TArray<uint8>& StreamData   = bUsePrePacked ? CreateInfo.PackedStreams[StreamIndex] : PackedStreams[StreamIndex];
+        const int32          ExpectedSize = VertexCount * Stride;
+
+        if (StreamData.Size() != ExpectedSize)
+        {
+            LOG_ERROR("Mesh '%s' carries %d bytes for stream %u but its declaration needs %d",
+                CreateInfo.Name.Data(), StreamData.Size(), uint32(StreamIndex), ExpectedSize);
+            return false;
+        }
+
+        FRHIBufferDesc StreamDesc;
+        StreamDesc.Stride = Stride;
+        StreamDesc.Size   = StreamData.SizeInBytes();
+        StreamDesc.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::Default;
+
+        if (StreamIndex == EVertexStreamIndex::Attributes)
+        {
+            StreamDesc.Flags |= AttributeFlags;
+        }
+
+        VertexStreams[StreamIndex] = RHI::CreateBuffer(StreamDesc, ERHIResourceState::VertexBuffer, StreamData.Data());
+        if (!VertexStreams[StreamIndex])
         {
             return false;
         }
-    }
 
-    IndexBufferSRV = RHI::CreateShaderResourceView(IndexBuffer.Get(), FRHIShaderResourceViewDesc::CreateBuffer(0, IndexCount, EBufferViewType::ByteAddress));
-    if (!IndexBufferSRV)
-    {
-        return false;
+        VertexStreams[StreamIndex]->SetDebugName(StreamDebugNames[StreamIndex]);
     }
 
     return true;
 }
 
-bool FMesh::CreateRayTracingGeometry()
+void FMesh::SetVertexBuffers(FRHICommandList& CommandList, const FVertexStreamBinding& Binding) const
+{
+    FRHIBuffer* Buffers[VERTEX_MAX_STREAMS];
+    for (uint8 Index = 0; Index < Binding.NumStreams; Index++)
+    {
+        Buffers[Index] = VertexStreams[Binding.StreamIndices[Index]].Get();
+        CHECK(Buffers[Index] != nullptr);
+    }
+
+    CommandList.SetVertexBuffers(MakeArrayView(Buffers, Binding.NumStreams), 0);
+}
+
+bool FMesh::EnsureRayTracingResources()
 {
     if (RayTracingGeometry)
     {
         return true;
     }
 
-    if (!RHI::bSupportsRayTracing || !VertexBuffers[EVertexStream::Packed] || !IndexBuffer)
+    if (!RHI::bSupportsRayTracing)
     {
         return false;
     }
 
-    if (!CreateVertexAndIndexSRVs())
+    FRHIBuffer* AttributeBuffer = GetAttributeBuffer();
+    if (!AttributeBuffer || !IndexBuffer || IndexFormat != EIndexFormat::uint32)
     {
+        LOG_ERROR("Mesh '%s' was not created ray-tracing-ready and cannot be ray traced", MeshName.Data());
+        CHECK(false);
         return false;
     }
 
-    FRHIGeometryAccelerationStructureDesc GeometryDesc(VertexBuffers[EVertexStream::Packed].Get(), VertexCount, IndexBuffer.Get(), IndexCount, IndexFormat, EAccelerationStructureBuildFlags::AllowCompaction);
+    if (!AttributeBufferSRV)
+    {
+        AttributeBufferSRV = RHI::CreateShaderResourceView(AttributeBuffer, FRHIShaderResourceViewDesc::CreateBuffer(0, VertexCount));
+        if (!AttributeBufferSRV)
+        {
+            return false;
+        }
+    }
+
+    if (!IndexBufferSRV)
+    {
+        IndexBufferSRV = RHI::CreateShaderResourceView(IndexBuffer.Get(), FRHIShaderResourceViewDesc::CreateBuffer(0, IndexCount, EBufferViewType::ByteAddress));
+        if (!IndexBufferSRV)
+        {
+            return false;
+        }
+    }
+
+    FRHIGeometryAccelerationStructureDesc GeometryDesc(GetPositionBuffer(), VertexCount, IndexBuffer.Get(), IndexCount, IndexFormat, EAccelerationStructureBuildFlags::AllowCompaction);
     RayTracingGeometry = RHI::CreateGeometryAccelerationStructure(GeometryDesc);
     if (!RayTracingGeometry)
     {
@@ -250,9 +243,11 @@ bool FMesh::CreateRayTracingGeometry()
     return true;
 }
 
-void FMesh::ReleaseRayTracingGeometry()
+void FMesh::ReleaseRayTracingResources()
 {
     RayTracingGeometry.Reset();
+    AttributeBufferSRV.Reset();
+    IndexBufferSRV.Reset();
 }
 
 bool FMesh::BuildAccelerationStructure(FRHICommandList& CommandList)
@@ -263,7 +258,7 @@ bool FMesh::BuildAccelerationStructure(FRHICommandList& CommandList)
     }
 
     FRHIGeometryAccelerationStructureBuildDesc BuildDesc;
-    BuildDesc.VertexBuffer = VertexBuffers[EVertexStream::Packed].Get();
+    BuildDesc.VertexBuffer = GetPositionBuffer();
     BuildDesc.NumVertices  = VertexCount;
     BuildDesc.IndexBuffer  = IndexBuffer.Get();
     BuildDesc.NumIndices   = IndexCount;
@@ -274,26 +269,6 @@ bool FMesh::BuildAccelerationStructure(FRHICommandList& CommandList)
     return true;
 }
 
-FRHIBuffer* FMesh::GetVertexBuffer(EVertexStream::Type VertexStream) const
-{
-    if (VertexStream < 0 || VertexStream >= EVertexStream::Count)
-    {
-        return nullptr;
-    }
-
-    return VertexBuffers[VertexStream].Get();
-}
-
-FRHIShaderResourceView* FMesh::GetVertexBufferSRV(EVertexStream::Type VertexStream) const
-{
-    if (VertexStream < 0 || VertexStream >= EVertexStream::Count)
-    {
-        return nullptr;
-    }
-
-    return VertexBufferSRVs[VertexStream].Get();
-}
-
 void FMesh::CreateBoundingBox(const FMeshCreateInfo& CreateInfo)
 {
     static constexpr const float Inf = TNumericLimits<float>::Infinity();
@@ -301,10 +276,25 @@ void FMesh::CreateBoundingBox(const FMeshCreateInfo& CreateInfo)
     Vector3 MinBounds = Vector3( Inf,  Inf,  Inf);
     Vector3 MaxBounds = Vector3(-Inf, -Inf, -Inf);
 
-    for (const FVertex& Vertex : CreateInfo.Vertices)
+    if (CreateInfo.PackedVertexCount > 0)
     {
-        MinBounds = Vector3::Min(MinBounds, Vertex.Position);
-        MaxBounds = Vector3::Max(MaxBounds, Vertex.Position);
+        const TArray<uint8>& PositionStream = CreateInfo.PackedStreams[EVertexStreamIndex::Position];
+        const uint16         Stride         = Declaration.GetStreamStride(EVertexStreamIndex::Position);
+
+        for (int32 Index = 0; Index < CreateInfo.PackedVertexCount; Index++)
+        {
+            const Vector3& Position = *reinterpret_cast<const Vector3*>(PositionStream.Data() + (Index * Stride));
+            MinBounds = Vector3::Min(MinBounds, Position);
+            MaxBounds = Vector3::Max(MaxBounds, Position);
+        }
+    }
+    else
+    {
+        for (const FSourceVertex& Vertex : CreateInfo.Vertices)
+        {
+            MinBounds = Vector3::Min(MinBounds, Vertex.Position);
+            MaxBounds = Vector3::Max(MaxBounds, Vertex.Position);
+        }
     }
 
     BoundingBox.Max = MaxBounds;

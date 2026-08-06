@@ -76,17 +76,14 @@ struct FShadowPointLight
     float Padding2;
 };
 
-struct FVertex
+// Mirrors FVertexAttributes in Runtime/Engine/Assets/VertexFormat.h.
+struct FVertexAttributes
 {
-    // 0-12
-    float3 Position;
-    // 12-24
-    float3 Normal;
-    // 24-36
-    float3 Tangent;
-    // 36-40
-    float TangentSign;
-    // 40-48
+    // 0-8
+    uint2 PackedNormal;  // R16G16B16A16_Snorm, w unused
+    // 8-16
+    uint2 PackedTangent; // R16G16B16A16_Snorm, w carries the tangent handedness sign
+    // 16-24
     float2 TexCoord;
 };
 

@@ -4,6 +4,7 @@
 #include "RHI/RHICommandList.h"
 #include "Renderer/RenderPass.h"
 #include "Renderer/FrameResources.h"
+#include "Renderer/Scene/MeshBatch.h"
 
 class FForwardPass : public FRenderPass
 {
@@ -15,7 +16,7 @@ public:
     void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene);
 
 private:
-    bool CompilePipelineState(FFrameResources& FrameResources, bool bBindless, bool bEnableParallax, bool bEnableClipping);
+    FGraphicsPipelineStateInstance* CompilePipelineState(bool bBindless, bool bEnableParallax, bool bEnableClipping, const FVertexDeclaration& Declaration);
 
     TMap<uint64, FGraphicsPipelineStateInstance> PipelineStates;
 };

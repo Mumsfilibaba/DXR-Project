@@ -47,7 +47,7 @@ struct FVSInput
     float3 Position : POSITION0;
 
 #if ENABLE_PARALLAX_MAPPING
-    float3 Normal  : NORMAL0;
+    float4 Normal  : NORMAL0;
     float4 Tangent : TANGENT0;
 #endif
 
@@ -85,7 +85,7 @@ FVSOutput VSMain(FVSInput Input)
 #endif
   
 #if ENABLE_PARALLAX_MAPPING 
-    Output.Normal     = TransformDirectionInvT(PerObjectBuffer, Input.Normal);
+    Output.Normal     = TransformDirectionInvT(PerObjectBuffer, Input.Normal.xyz);
     Output.Tangent    = float4(TransformDirectionWS(PerObjectBuffer, Input.Tangent.xyz), Input.Tangent.w * PerObjectBuffer.DeterminantSign);
     Output.PositionWS = PositionWS3;
 #endif

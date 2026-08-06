@@ -7,7 +7,7 @@
 #include "Engine/Assets/IModelImporter.h"
 
 #define MODEL_FORMAT_VERSION_MAJOR (0)
-#define MODEL_FORMAT_VERSION_MINOR (8)
+#define MODEL_FORMAT_VERSION_MINOR (9)
 #define MODEL_FORMAT_MAX_NAME_LENGTH (256)
 #define MODEL_FORMAT_INVALID_TEXTURE_ID (-1)
 
@@ -27,37 +27,39 @@ namespace ModelFormat
 
     struct FModelHeader
     {
-        int32 MeshDataOffset;     // Offset to where the MeshData starts
-        int32 NumMeshes;          // Number of Meshes
+        int32 MeshDataOffset;                       // Offset to where the MeshData starts
+        int32 NumMeshes;                            // Number of Meshes
         
-        int32 MaterialDataOffset; // Offset to where the MaterialData starts
-        int32 NumMaterials;       // Number of Materials
+        int32 MaterialDataOffset;                   // Offset to where the MaterialData starts
+        int32 NumMaterials;                         // Number of Materials
         
-        int32 SubMeshDataOffset;  // Offset to where the SubMeshData starts
-        int32 NumSubMeshes;       // Number of SubMeshes
+        int32 SubMeshDataOffset;                    // Offset to where the SubMeshData starts
+        int32 NumSubMeshes;                         // Number of SubMeshes
         
-        int32 VertexDataOffset;   // Offset to where the VertexData starts
-        int32 NumVertices;        // Number of Vertices
+        int32 StreamDataOffset[VERTEX_MAX_STREAMS]; // Vertices are stored in the GPU stream layout, one blob per stream. A stream the declaration does not use has an offset of zero.
+        int32 NumVertices;                          // Number of Vertices
         
-        int32 IndexDataOffset;    // Offset to where the IndexData starts
-        int32 NumIndicies;        // Number of Indicies
+        int32 IndexDataOffset;                      // Offset to where the IndexData starts
+        int32 NumIndicies;                          // Number of Indicies
         
-        int32 TextureDataOffset;  // Offset to where the TextureData starts
-        int32 NumTextures;        // Number of Textures
+        int32 TextureDataOffset;                    // Offset to where the TextureData starts
+        int32 NumTextures;                          // Number of Textures
     };
 
     struct FMeshInfo
     {
         CHAR  Name[MODEL_FORMAT_MAX_NAME_LENGTH]; // Name of the mesh
         
-        int32 FirstSubMesh; // First SubMesh in the SubMeshArray
-        int32 NumSubMeshes; // Number of SubMeshes for this Mesh
+        int32 FirstSubMesh;                       // First SubMesh in the SubMeshArray
+        int32 NumSubMeshes;                       // Number of SubMeshes for this Mesh
         
-        int32 FirstVertex;  // First Vertex in the VertexArray
-        int32 NumVertices;  // Number of Vertices for this Mesh
+        int32 FirstVertex;                        // First Vertex in each stream
+        int32 NumVertices;                        // Number of Vertices for this Mesh
         
-        int32 FirstIndex;   // First Index in the IndexArray
-        int32 NumIndices;   // Number of Indicies for this Mesh
+        int32 FirstIndex;                         // First Index in the IndexArray
+        int32 NumIndices;                         // Number of Indicies for this Mesh
+
+        int32 AttributeFlags;                     // EVertexAttributeFlags this mesh's streams were packed for
     };
 
     struct FSubMeshInfo

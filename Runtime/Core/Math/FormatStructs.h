@@ -15,6 +15,10 @@ static constexpr int32 FRG16F_COLOR_BITS = 16;
 // FRGBA16F Constants
 static constexpr int32 FRGBA16F_COLOR_BITS = 16;
 
+// FRGBA16Snorm Constants
+static constexpr int32 FRGBA16SNORM_COLOR_BITS = 16;
+static constexpr float FRGBA16SNORM_MAX        = 32767.0f;
+
 #pragma pack(push, 1) // Ensure no padding
 
 /**
@@ -338,6 +342,166 @@ struct THash<FRGBA16F>
     static uint64 GetHash(const FRGBA16F& Value)
     {
         return THash<decltype(Value.ARGB)>::GetHash(Value.ARGB);
+    }
+};
+
+/**
+ * @brief Four signed-normalized 16-bit channels in R, G, B, A memory order.
+ */
+struct FRGBA16Snorm
+{
+    /**
+     * @brief Encodes a float in [-1, 1] to a signed-normalized 16-bit channel.
+     * @param Value Value to encode, clamped to the representable range.
+     * @return The encoded channel.
+     */
+    static FORCEINLINE int16 EncodeChannel(float Value)
+    {
+        const float Clamped = Math::Clamp(Value, -1.0f, 1.0f);
+        return static_cast<int16>(Math::RoundToInt(Clamped * FRGBA16SNORM_MAX));
+    }
+
+    /**
+     * @brief Decodes a signed-normalized 16-bit channel to a float in [-1, 1].
+     * @param Value Channel to decode.
+     * @return The decoded value.
+     */
+    static FORCEINLINE float DecodeChannel(int16 Value)
+    {
+        // -32768 maps below -1.0f, which every API clamps rather than represents.
+        return Math::Max(static_cast<float>(Value) / FRGBA16SNORM_MAX, -1.0f);
+    }
+
+    /**
+     * @brief Default constructor initializes all channels to zero.
+     */
+    FORCEINLINE FRGBA16Snorm()
+        : RGBA(0)
+    {
+    }
+
+    /**
+     * @brief Constructs FRGBA16Snorm with pre-encoded channel values.
+     * @param InR 16-bit Red value.
+     * @param InG 16-bit Green value.
+     * @param InB 16-bit Blue value.
+     * @param InA 16-bit Alpha value.
+     */
+    FORCEINLINE FRGBA16Snorm(int16 InR, int16 InG, int16 InB, int16 InA)
+        : R(InR)
+        , G(InG)
+        , B(InB)
+        , A(InA)
+    {
+    }
+
+    /**
+     * @brief Constructs FRGBA16Snorm from signed-normalized float values.
+     * @param InR Red component (-1.0f to 1.0f).
+     * @param InG Green component (-1.0f to 1.0f).
+     * @param InB Blue component (-1.0f to 1.0f).
+     * @param InA Alpha component (-1.0f to 1.0f, default is 0).
+     */
+    FORCEINLINE FRGBA16Snorm(float InR, float InG, float InB, float InA = 0.0f)
+        : R(EncodeChannel(InR))
+        , G(EncodeChannel(InG))
+        , B(EncodeChannel(InB))
+        , A(EncodeChannel(InA))
+    {
+    }
+
+    /**
+     * @brief Constructs FRGBA16Snorm from a vector and a separate fourth channel.
+     * @param InRGB Red, Green and Blue components (-1.0f to 1.0f).
+     * @param InA Alpha component (-1.0f to 1.0f, default is 0).
+     */
+    FORCEINLINE explicit FRGBA16Snorm(const Vector3& InRGB, float InA = 0.0f)
+        : R(EncodeChannel(InRGB.X))
+        , G(EncodeChannel(InRGB.Y))
+        , B(EncodeChannel(InRGB.Z))
+        , A(EncodeChannel(InA))
+    {
+    }
+
+    /**
+     * @brief Decodes the Red, Green and Blue channels into a vector.
+     * @return The decoded vector.
+     */
+    FORCEINLINE Vector3 ToVector3() const
+    {
+        return Vector3(DecodeChannel(R), DecodeChannel(G), DecodeChannel(B));
+    }
+
+    /**
+     * @brief Decodes the Alpha channel.
+     * @return The decoded value.
+     */
+    FORCEINLINE float GetAlpha() const
+    {
+        return DecodeChannel(A);
+    }
+
+    /**
+     * @brief Packs the RGBA channels into a 64-bit unsigned integer.
+     * @return A 64-bit unsigned integer representing the packed RGBA channels.
+     */
+    FORCEINLINE uint64 ToPackedRGBA() const
+    {
+        return RGBA;
+    }
+
+    /**
+     * @brief Equality operator.
+     * @param Other The right-hand side FRGBA16Snorm to compare with.
+     * @return True if all channels are equal.
+     */
+    FORCEINLINE bool operator==(const FRGBA16Snorm& Other) const
+    {
+        return RGBA == Other.RGBA;
+    }
+
+    /**
+     * @brief Inequality operator.
+     * @param Other The right-hand side FRGBA16Snorm to compare with.
+     * @return True if any channel differs.
+     */
+    FORCEINLINE bool operator!=(const FRGBA16Snorm& Other) const
+    {
+        return !(*this == Other);
+    }
+
+public:
+
+    union
+    {
+        struct
+        {
+            /** @brief 16-bit Red channel */
+            int16 R;
+
+            /** @brief 16-bit Green channel */
+            int16 G;
+
+            /** @brief 16-bit Blue channel */
+            int16 B;
+
+            /** @brief 16-bit Alpha channel */
+            int16 A;
+        };
+
+        uint64 RGBA;
+    };
+};
+
+static_assert(sizeof(FRGBA16Snorm) == sizeof(uint64), "FRGBA16Snorm is assumed to have the same size as a uint64");
+MARK_AS_REALLOCATABLE(FRGBA16Snorm);
+
+template<>
+struct THash<FRGBA16Snorm>
+{
+    static uint64 GetHash(const FRGBA16Snorm& Value)
+    {
+        return THash<decltype(Value.RGBA)>::GetHash(Value.RGBA);
     }
 };
 

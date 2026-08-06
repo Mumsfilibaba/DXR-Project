@@ -36,7 +36,7 @@ struct FRayTracingSceneConstants
 struct FRayTracingGeometryIndices
 {
     // 0-16
-    uint  VerticesHandle;
+    uint  AttributesHandle;
     uint  IndicesHandle;
     uint  MaterialIndex;
     float DeterminantSign;

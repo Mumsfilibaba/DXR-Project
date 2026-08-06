@@ -4,9 +4,9 @@
 #include "Core/Math/Vector3.h"
 #include "Core/Math/FormatStructs.h"
 
-struct FVertex
+struct FSourceVertex
 {
-    FVertex()
+    FSourceVertex()
         : Position()
         , Normal()
         , Tangent()
@@ -15,7 +15,7 @@ struct FVertex
     {
     }
 
-    FVertex(const Vector3& InPosition, const Vector3& InNormal, const Vector3& InTangent, const Vector2& InTexCoord)
+    FSourceVertex(const Vector3& InPosition, const Vector3& InNormal, const Vector3& InTangent, const Vector2& InTexCoord)
         : Position(InPosition)
         , Normal(InNormal)
         , Tangent(InTangent)
@@ -24,7 +24,7 @@ struct FVertex
     {
     }
 
-    FVertex(const Vector3& InPosition, const Vector3& InNormal, const Vector3& InTangent, float InTangentSign, const Vector2& InTexCoord)
+    FSourceVertex(const Vector3& InPosition, const Vector3& InNormal, const Vector3& InTangent, float InTangentSign, const Vector2& InTexCoord)
         : Position(InPosition)
         , Normal(InNormal)
         , Tangent(InTangent)
@@ -33,12 +33,12 @@ struct FVertex
     {
     }
 
-    bool operator==(const FVertex& Other) const
+    bool operator==(const FSourceVertex& Other) const
     {
         return Position == Other.Position && Normal == Other.Normal && Tangent == Other.Tangent && TangentSign == Other.TangentSign && TexCoord == Other.TexCoord;
     }
 
-    bool operator!=(const FVertex& Other) const
+    bool operator!=(const FSourceVertex& Other) const
     {
         return !(*this == Other);
     }
@@ -46,16 +46,16 @@ struct FVertex
     Vector3 Position;
     Vector3 Normal;
     Vector3 Tangent;
-    float   TangentSign; // MikkTSpace handedness: Bitangent = TangentSign * cross(Normal, Tangent)
+    float   TangentSign;
     Vector2 TexCoord;
 };
 
-static_assert(sizeof(FVertex) == 48, "FVertex must match the HLSL FVertex layout");
+static_assert(sizeof(FSourceVertex) == 48, "FSourceVertex must match the layout the .dxrmesh cache writes");
 
 template<>
-struct THash<FVertex>
+struct THash<FSourceVertex>
 {
-    static uint64 GetHash(const FVertex& Vertex)
+    static uint64 GetHash(const FSourceVertex& Vertex)
     {
         uint64 Result = THash<Vector3>::GetHash(Vertex.Position);
         HashCombine<Vector3>(Result, Vertex.Normal);
@@ -66,155 +66,49 @@ struct THash<FVertex>
     }
 };
 
-struct FVertexPacked
+struct FVertexAttributes
 {
-    FVertexPacked()
-        : Position()
-        , Normal()
+    FVertexAttributes()
+        : Normal()
         , Tangent()
         , TexCoord()
     {
     }
 
-    FVertexPacked(const Vector3& InPosition, const FR10G10B10A2& InNormal, const FR10G10B10A2& InTangent, const Vector2& InTexCoord)
-        : Position(InPosition)
-        , Normal(InNormal)
-        , Tangent(InTangent)
+    FVertexAttributes(const Vector3& InNormal, const Vector3& InTangent, float InTangentSign, const Vector2& InTexCoord)
+        : Normal(InNormal)
+        , Tangent(InTangent, InTangentSign)
         , TexCoord(InTexCoord)
     {
     }
 
-    bool operator==(const FVertexPacked& Other) const
+    bool operator==(const FVertexAttributes& Other) const
     {
-        return Position == Other.Position && Normal == Other.Normal && Tangent == Other.Tangent && TexCoord == Other.TexCoord;
+        return Normal == Other.Normal && Tangent == Other.Tangent && TexCoord == Other.TexCoord;
     }
 
-    bool operator!=(const FVertexPacked& Other) const
+    bool operator!=(const FVertexAttributes& Other) const
     {
         return !(*this == Other);
     }
 
-    Vector3      Position;
-    FR10G10B10A2 Normal;
-    FR10G10B10A2 Tangent;
+    FRGBA16Snorm Normal;   // w unused
+    FRGBA16Snorm Tangent;  // w = handedness sign
     Vector2      TexCoord;
 };
 
-struct FVertexPosition
-{
-    FVertexPosition()
-        : Position()
-    {
-    }
-
-    FVertexPosition(const Vector3& InPosition)
-        : Position(InPosition)
-    {
-    }
-
-    bool operator==(const FVertexPosition& Other) const
-    {
-        return Position == Other.Position;
-    }
-
-    bool operator!=(const FVertexPosition& Other) const
-    {
-        return !(*this == Other);
-    }
-
-    Vector3 Position;
-};
-
-static_assert(sizeof(FVertexPosition) == 12, "FVertexPosition must match the mesh input layout");
+static_assert(sizeof(FVertexAttributes) == 24, "FVertexAttributes must match the attribute stream stride");
+static_assert(OFFSETOF(FVertexAttributes, Tangent) == 8, "The TANGENT input element expects Tangent at offset 8");
+static_assert(OFFSETOF(FVertexAttributes, TexCoord) == 16, "The TEXCOORD input element expects TexCoord at offset 16");
 
 template<>
-struct THash<FVertexPosition>
+struct THash<FVertexAttributes>
 {
-    static uint64 GetHash(const FVertexPosition& Vertex)
+    static uint64 GetHash(const FVertexAttributes& Vertex)
     {
-        return THash<Vector3>::GetHash(Vertex.Position);
-    }
-};
-
-struct FVertexNormal
-{
-    FVertexNormal()
-        : Normal()
-        , Tangent()
-        , TangentSign(1.0f)
-    {
-    }
-
-    FVertexNormal(const Vector3& InNormal, const Vector3& InTangent, float InTangentSign)
-        : Normal(InNormal)
-        , Tangent(InTangent)
-        , TangentSign(InTangentSign)
-    {
-    }
-
-    bool operator==(const FVertexNormal& Other) const
-    {
-        return Normal == Other.Normal && Tangent == Other.Tangent && TangentSign == Other.TangentSign;
-    }
-
-    bool operator!=(const FVertexNormal& Other) const
-    {
-        return !(*this == Other);
-    }
-
-    Vector3 Normal;
-    Vector3 Tangent;
-    float   TangentSign;
-};
-
-// The TANGENT input element reads xyz from Tangent and w from TangentSign as a single float4.
-static_assert(sizeof(FVertexNormal) == 28, "FVertexNormal must match the mesh input layout");
-static_assert(OFFSETOF(FVertexNormal, Tangent) == 12, "TANGENT input element expects Tangent at offset 12");
-
-template<>
-struct THash<FVertexNormal>
-{
-    static uint64 GetHash(const FVertexNormal& Vertex)
-    {
-        uint64 Result = THash<Vector3>::GetHash(Vertex.Normal);
-        HashCombine<Vector3>(Result, Vertex.Tangent);
-        HashCombine<float>(Result, Vertex.TangentSign);
+        uint64 Result = THash<FRGBA16Snorm>::GetHash(Vertex.Normal);
+        HashCombine<FRGBA16Snorm>(Result, Vertex.Tangent);
+        HashCombine<Vector2>(Result, Vertex.TexCoord);
         return Result;
-    }
-};
-
-struct FVertexTexCoord
-{
-    FVertexTexCoord()
-        : TexCoord()
-    {
-    }
-
-    FVertexTexCoord(const Vector2& InTexCoord)
-        : TexCoord(InTexCoord)
-    {
-    }
-
-    bool operator==(const FVertexTexCoord& Other) const
-    {
-        return TexCoord == Other.TexCoord;
-    }
-
-    bool operator!=(const FVertexTexCoord& Other) const
-    {
-        return !(*this == Other);
-    }
-
-    Vector2 TexCoord;
-};
-
-static_assert(sizeof(FVertexTexCoord) == 8, "FVertexTexCoord must match the mesh input layout");
-
-template<>
-struct THash<FVertexTexCoord>
-{
-    static uint64 GetHash(const FVertexTexCoord& Vertex)
-    {
-        return THash<Vector2>::GetHash(Vertex.TexCoord);
     }
 };
