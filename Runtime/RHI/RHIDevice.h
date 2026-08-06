@@ -293,6 +293,20 @@ struct FRHIDevice
     virtual FRHIRayMissShader* CreateRayMissShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
+     * @brief Creates a new ray intersection shader, used by procedural (AABB) hit groups.
+     * @param ShaderCode Shader bytecode used to create the shader.
+     * @return The newly created shader.
+     */
+    virtual FRHIRayIntersectionShader* CreateRayIntersectionShader(const TArray<uint8>& ShaderCode) = 0;
+
+    /**
+     * @brief Creates a new ray callable shader, invoked through CallShader from other ray-tracing stages.
+     * @param ShaderCode Shader bytecode used to create the shader.
+     * @return The newly created shader.
+     */
+    virtual FRHIRayCallableShader* CreateRayCallableShader(const TArray<uint8>& ShaderCode) = 0;
+
+    /**
      * @brief Creates a new depth-stencil state.
      * @param InDesc Information about the depth-stencil state.
      * @return The newly created depth-stencil state.

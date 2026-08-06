@@ -10,11 +10,13 @@ typedef TSharedRef<class FMetalShader>                 FMetalShaderRef;
 typedef TSharedRef<class FMetalVertexShaderRHI>        FMetalVertexShaderRef;
 typedef TSharedRef<class FMetalPixelShaderRHI>         FMetalPixelShaderRef;
 typedef TSharedRef<class FMetalComputeShaderRHI>       FMetalComputeShaderRef;
-typedef TSharedRef<class FMetalRayTracingShader>       FMetalRayTracingShaderRef;
-typedef TSharedRef<class FMetalRayGenShaderRHI>        FMetalRayGenShaderRef;
-typedef TSharedRef<class FMetalRayAnyHitShaderRHI>     FMetalRayAnyHitShaderRef;
-typedef TSharedRef<class FMetalRayClosestHitShaderRHI> FMetalRayClosestHitShaderRef;
-typedef TSharedRef<class FMetalRayMissShaderRHI>       FMetalRayMissShaderRef;
+typedef TSharedRef<class FMetalRayTracingShader>         FMetalRayTracingShaderRef;
+typedef TSharedRef<class FMetalRayGenShaderRHI>          FMetalRayGenShaderRef;
+typedef TSharedRef<class FMetalRayAnyHitShaderRHI>       FMetalRayAnyHitShaderRef;
+typedef TSharedRef<class FMetalRayClosestHitShaderRHI>   FMetalRayClosestHitShaderRef;
+typedef TSharedRef<class FMetalRayMissShaderRHI>         FMetalRayMissShaderRef;
+typedef TSharedRef<class FMetalRayIntersectionShaderRHI> FMetalRayIntersectionShaderRef;
+typedef TSharedRef<class FMetalRayCallableShaderRHI>     FMetalRayCallableShaderRef;
 
 struct EShaderVisibility
 {
@@ -136,6 +138,28 @@ class FMetalRayMissShaderRHI : public FRHIRayMissShader, public FMetalRayTracing
 public:
     FMetalRayMissShaderRHI(FMetalDevice* InDevice);
     virtual ~FMetalRayMissShaderRHI();
+
+    // FRHIShader Interface
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
+};
+
+class FMetalRayIntersectionShaderRHI : public FRHIRayIntersectionShader, public FMetalRayTracingShader
+{
+public:
+    FMetalRayIntersectionShaderRHI(FMetalDevice* InDevice);
+    virtual ~FMetalRayIntersectionShaderRHI();
+
+    // FRHIShader Interface
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
+};
+
+class FMetalRayCallableShaderRHI : public FRHIRayCallableShader, public FMetalRayTracingShader
+{
+public:
+    FMetalRayCallableShaderRHI(FMetalDevice* InDevice);
+    virtual ~FMetalRayCallableShaderRHI();
 
     // FRHIShader Interface
     virtual void* GetRHINativeHandle()  override final;

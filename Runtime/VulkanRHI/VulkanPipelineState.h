@@ -144,9 +144,15 @@ public:
         return bUsesSampleLocations;
     }
 
+    FORCEINLINE bool IsDepthBoundsTestEnabled() const
+    {
+        return bDepthBoundsTestEnable;
+    }
+
 private:
     FRHIViewInstancingState ViewInstancingState;
     bool                    bUsesSampleLocations;
+    bool                    bDepthBoundsTestEnable;
 };
 
 class FVulkanComputePipelineStateRHI : public FRHIComputePipelineState, public FVulkanPipeline
@@ -188,9 +194,15 @@ public:
         return bUsesSampleLocations;
     }
 
+    FORCEINLINE bool IsDepthBoundsTestEnabled() const
+    {
+        return bDepthBoundsTestEnable;
+    }
+
 private:
     FRHIViewInstancingState ViewInstancingState;
     bool                    bUsesSampleLocations;
+    bool                    bDepthBoundsTestEnable;
 };
 
 struct FVulkanPipelineDataHeader

@@ -298,7 +298,7 @@ void FEditorCameraController::HandleFlyMovement(float DeltaTime, const FEditorCa
 
     if (Movement.GetLengthSquared() > 0.0f)
     {
-        OrbitPivot = Camera->GetPosition() + Camera->GetForwardVector() * OrbitDistance;
+        AnchorOrbitPivot();
     }
 }
 
@@ -328,6 +328,8 @@ void FEditorCameraController::HandleMouse(float DeltaTime, const FEditorCameraIn
         const float Pitch = Math::DegreesToRadians(Input.LookDelta.Y * MouseSensitivity);
         const float Yaw   = Math::DegreesToRadians(Input.LookDelta.X * MouseSensitivity);
         Camera->AddRotation(Pitch, Yaw, 0.0f);
+
+        AnchorOrbitPivot();
     }
 
     if (Input.RotationAxis.GetLengthSquared() > 0.0f)
@@ -335,18 +337,28 @@ void FEditorCameraController::HandleMouse(float DeltaTime, const FEditorCameraIn
         const float Pitch = Math::DegreesToRadians(Input.RotationAxis.Y * RotationSpeed * DeltaTime);
         const float Yaw   = Math::DegreesToRadians(Input.RotationAxis.X * RotationSpeed * DeltaTime);
         Camera->AddRotation(Pitch, Yaw, 0.0f);
+
+        AnchorOrbitPivot();
     }
 
     if (Input.WheelDelta != 0.0f)
     {
         if (Input.bAltDown)
         {
-            Dolly(Input.WheelDelta);
+            SetMoveSpeed(MoveSpeed * Math::Exp(Input.WheelDelta * SpeedAdjustRate));
         }
         else
         {
-            SetMoveSpeed(MoveSpeed * Math::Exp(Input.WheelDelta * SpeedAdjustRate));
+            ZoomForward(Input.WheelDelta);
         }
+    }
+}
+
+void FEditorCameraController::AnchorOrbitPivot()
+{
+    if (FCameraComponent* Camera = GetCamera())
+    {
+        OrbitPivot = Camera->GetPosition() + Camera->GetForwardVector() * OrbitDistance;
     }
 }
 
@@ -394,5 +406,18 @@ void FEditorCameraController::Dolly(float Steps)
     OrbitDistance = Math::Clamp(OrbitDistance * Math::Exp(-Steps * ZoomSpeed), 0.1f, 100000.0f);
     Camera->SetPosition(OrbitPivot - Camera->GetForwardVector() * OrbitDistance);
     Velocity = Vector3(0.0f);
+}
+
+void FEditorCameraController::ZoomForward(float Steps)
+{
+    FCameraComponent* Camera = GetCamera();
+    if (!Camera)
+    {
+        return;
+    }
+
+    const float Distance = Math::Max(OrbitDistance, 1.0f) * (1.0f - Math::Exp(-Steps * ZoomSpeed));
+    Camera->AddLocalMovement(0.0f, 0.0f, Distance);
+    AnchorOrbitPivot();
 }
 

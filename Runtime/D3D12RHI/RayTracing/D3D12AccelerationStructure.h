@@ -72,9 +72,15 @@ public:
         return IndexBuffer.Get();
     }
 
+    FD3D12BufferRHI* GetAABBBuffer() const
+    {
+        return AABBBuffer.Get();
+    }
+
 private:
     TSharedRef<FD3D12BufferRHI> VertexBuffer;
     TSharedRef<FD3D12BufferRHI> IndexBuffer;
+    TSharedRef<FD3D12BufferRHI> AABBBuffer;
 };
 
 #if D3D12_ENABLE_OPACITY_MICROMAPS

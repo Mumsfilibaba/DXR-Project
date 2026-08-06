@@ -193,6 +193,16 @@ struct RHI
         return Device->CreateRayMissShader(ShaderCode);
     }
 
+    static FORCEINLINE FRHIRayIntersectionShader* CreateRayIntersectionShader(const TArray<uint8>& ShaderCode)
+    {
+        return Device->CreateRayIntersectionShader(ShaderCode);
+    }
+
+    static FORCEINLINE FRHIRayCallableShader* CreateRayCallableShader(const TArray<uint8>& ShaderCode)
+    {
+        return Device->CreateRayCallableShader(ShaderCode);
+    }
+
     static FORCEINLINE FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
     {
         return Device->CreateDepthStencilState(InDesc);
@@ -480,6 +490,9 @@ struct RHI
 
     /** Whether dynamic depth bias (RSSetDepthBias) is supported */
     static RHI_API bool bSupportsDynamicDepthBias;
+
+    /** Whether the depth bounds test is supported */
+    static RHI_API bool bSupportsDepthBoundsTest;
 
     /** Whether stream output / transform feedback is supported */
     static RHI_API bool bSupportsStreamOutput;

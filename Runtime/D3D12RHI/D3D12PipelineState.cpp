@@ -241,6 +241,7 @@ FD3D12GraphicsPipelineStateRHI::FD3D12GraphicsPipelineStateRHI(FD3D12Device* InD
     : FRHIGraphicsPipelineState()
     , FD3D12PipelineState(InDevice)
     , ShaderFlags(ED3D12ShaderFlags::None)
+    , bDepthBoundsTestEnable(false)
 {
 }
 
@@ -427,7 +428,8 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
     FD3D12DepthStencilStateRHI* D3D12DepthStencilState = FD3D12DeviceRHI::ResourceCast(Desc.DepthStencilState);
     if (D3D12DepthStencilState)
     {
-        DepthStencilDesc = D3D12DepthStencilState->GetD3D12Desc();
+        DepthStencilDesc       = D3D12DepthStencilState->GetD3D12Desc();
+        bDepthBoundsTestEnable = D3D12DepthStencilState->GetDesc().bDepthBoundsTestEnable && GD3D12DepthBoundsTestSupported;
     }
     else
     {
@@ -962,6 +964,7 @@ FD3D12MeshletPipelineStateRHI::FD3D12MeshletPipelineStateRHI(FD3D12Device* InDev
     : FRHIMeshletPipelineState()
     , FD3D12PipelineState(InDevice)
     , ShaderFlags(ED3D12ShaderFlags::None)
+    , bDepthBoundsTestEnable(false)
 {
 }
 
@@ -1093,7 +1096,8 @@ bool FD3D12MeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDes
     FD3D12DepthStencilStateRHI* D3D12DepthStencilState = FD3D12DeviceRHI::ResourceCast(Desc.DepthStencilState);
     if (D3D12DepthStencilState)
     {
-        DepthStencilDesc = D3D12DepthStencilState->GetD3D12Desc();
+        DepthStencilDesc       = D3D12DepthStencilState->GetD3D12Desc();
+        bDepthBoundsTestEnable = D3D12DepthStencilState->GetDesc().bDepthBoundsTestEnable && GD3D12DepthBoundsTestSupported;
     }
     else
     {
@@ -1721,7 +1725,13 @@ bool FD3D12PipelineStateManager::LoadCacheFromFile()
 
     if (Memory::Memcmp(Header.Magic, "D3D12PSO", sizeof(Header.Magic)) != 0)
     {
-        D3D12_WARNING("Invalid PipelineCacheHeader");
+        D3D12_WARNING("PipelineCacheHeader contains an invalid magic");
+        return false;
+    }
+
+    if (Header.DataSize == 0)
+    {
+        D3D12_WARNING("PipelineCacheHeader reports an empty PipelineCache");
         return false;
     }
 
@@ -1729,11 +1739,27 @@ bool FD3D12PipelineStateManager::LoadCacheFromFile()
     constexpr uint64 MaxCacheSize = 1024 * 1024 * 1024;
     if (Header.DataSize >= MaxCacheSize)
     {
-        D3D12_WARNING("Invalid PipelineCacheHeader");
+        D3D12_WARNING("PipelineCacheHeader reports a size of %llu bytes, which exceeds the limit of %llu bytes", Header.DataSize, MaxCacheSize);
         return false;
     }
 
-    PipelineData     = Memory::Malloc(Header.DataSize);
+    // The header should account for the remainder of the file exactly, otherwise the file is truncated or the header is corrupt
+    const int64 CacheFileSize    = CacheFile->Size();
+    const int64 ExpectedFileSize = static_cast<int64>(sizeof(FD3D12PipelineDiskHeader) + Header.DataSize);
+    if (CacheFileSize != ExpectedFileSize)
+    {
+        D3D12_WARNING("PipelineCacheHeader reports a size of %llu bytes, which does not match the file-size of %lld bytes", Header.DataSize, CacheFileSize);
+        return false;
+    }
+
+    void* NewPipelineData = Memory::Malloc(Header.DataSize);
+    if (!NewPipelineData)
+    {
+        D3D12_WARNING("Failed to allocate %llu bytes for the PipelineCache", Header.DataSize);
+        return false;
+    }
+
+    PipelineData     = NewPipelineData;
     PipelineDataSize = Header.DataSize;
 
     BytesRead = CacheFile->Read(reinterpret_cast<uint8*>(PipelineData), static_cast<uint32>(PipelineDataSize));

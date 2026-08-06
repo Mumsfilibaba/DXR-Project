@@ -52,14 +52,15 @@ struct FRHIDepthStencilStateDesc
 
     constexpr bool operator==(const FRHIDepthStencilStateDesc& Other) const noexcept = default;
 
-    EComparisonFunc DepthFunc         = EComparisonFunc::Less;
-    bool            bDepthWriteEnable = true;
-    bool            bDepthEnable      = true;
-    uint32          StencilReadMask   = RHI_DEFAULT_STENCIl_MASK;
-    uint32          StencilWriteMask  = RHI_DEFAULT_STENCIl_MASK;
-    bool            bStencilEnable    = false;
-    FStencilState   FrontFace         = { };
-    FStencilState   BackFace          = { };
+    EComparisonFunc DepthFunc              = EComparisonFunc::Less;
+    bool            bDepthWriteEnable      = true;
+    bool            bDepthEnable           = true;
+    uint32          StencilReadMask        = RHI_DEFAULT_STENCIl_MASK;
+    uint32          StencilWriteMask       = RHI_DEFAULT_STENCIl_MASK;
+    bool            bStencilEnable         = false;
+    bool            bDepthBoundsTestEnable = false;
+    FStencilState   FrontFace              = { };
+    FStencilState   BackFace               = { };
 };
 
 template<>
@@ -86,6 +87,7 @@ struct THash<FRHIDepthStencilStateDesc>
         HashCombine(Result, Value.StencilReadMask);
         HashCombine(Result, Value.StencilWriteMask);
         HashCombine(Result, Value.bStencilEnable);
+        HashCombine(Result, Value.bDepthBoundsTestEnable);
         HashCombine(Result, THash<FRHIDepthStencilStateDesc::FStencilState>::GetHash(Value.FrontFace));
         HashCombine(Result, THash<FRHIDepthStencilStateDesc::FStencilState>::GetHash(Value.BackFace));
         return Result;

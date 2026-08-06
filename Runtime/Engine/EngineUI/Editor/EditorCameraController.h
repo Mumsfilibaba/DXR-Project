@@ -67,9 +67,11 @@ private:
     void UpdateAttachedCamera();
     void HandleFlyMovement(float DeltaTime, const FEditorCameraInputState& Input);
     void HandleMouse(float DeltaTime, const FEditorCameraInputState& Input);
+    void AnchorOrbitPivot();
     void Orbit(const Vector2& Delta);
     void Pan(const Vector2& Delta);
     void Dolly(float Steps);
+    void ZoomForward(float Steps);
 
     void MarkCameraCut()
     {

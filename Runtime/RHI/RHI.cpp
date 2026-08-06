@@ -196,7 +196,12 @@ RHI_API void RHI::DumpCapabilities()
     LOG_INFO("[RHI]   Tier                                    : %s", ToString(RHI::SamplePositionsTier));
     LOG_INFO("[RHI]   Max Grid Size                           : %ux%u", RHI::MaxSamplePositionGridWidth, RHI::MaxSamplePositionGridHeight);
     LOG_INFO("[RHI]   Supported Sample Counts (mask)          : 0x%X", RHI::SupportedSamplePositionSampleCounts);
-    
+
+    // -------------------------------------------------------------------------------------------
+    // Depth Bounds Test
+    // -------------------------------------------------------------------------------------------
+    LOG_INFO("[RHI] Depth Bounds Test                         : %s", YesNo(RHI::bSupportsDepthBoundsTest));
+
     // -------------------------------------------------------------------------------------------
     // Draw Indirect
     // -------------------------------------------------------------------------------------------

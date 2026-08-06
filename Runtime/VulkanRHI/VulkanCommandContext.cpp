@@ -1025,6 +1025,11 @@ void FVulkanCommandContext::SetDepthBias(float DepthBias, float DepthBiasClamp, 
     ContextState.SetDepthBias(DepthBias, DepthBiasClamp, SlopeScaledDepthBias);
 }
 
+void FVulkanCommandContext::SetDepthBounds(float MinDepth, float MaxDepth)
+{
+    ContextState.SetDepthBounds(MinDepth, MaxDepth);
+}
+
 void FVulkanCommandContext::SetSamplePositions(const FRHISamplePositionsDesc& SamplePositionsDesc)
 {
     ContextState.SetSamplePositions(SamplePositionsDesc);

@@ -239,6 +239,12 @@ void FMetalCommandContext::SetDepthBias(float DepthBias, float DepthBiasClamp, f
     ContextState.SetDepthBias(DepthBias, DepthBiasClamp, SlopeScaledDepthBias);
 }
 
+void FMetalCommandContext::SetDepthBounds(float MinDepth, float MaxDepth)
+{
+    UNREFERENCED_VARIABLE(MinDepth);
+    UNREFERENCED_VARIABLE(MaxDepth);
+}
+
 void FMetalCommandContext::SetSamplePositions(const FRHISamplePositionsDesc& SamplePositionsDesc)
 {
     UNREFERENCED_VARIABLE(SamplePositionsDesc);

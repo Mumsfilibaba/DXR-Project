@@ -24,6 +24,7 @@ class FRHIRayCallableShader;
 class FRHIRayMissShader;
 class FRHIRayAnyHitShader;
 class FRHIRayClosestHitShader;
+class FRHIRayIntersectionShader;
 class FRHIShaderResourceView;
 class FRHIUnorderedAccessView;
 class FRHIRenderTargetView;
@@ -972,6 +973,30 @@ struct FRHISamplePositionsDesc
     uint8 GridHeight         = 1;
 };
 
+enum class ERayTracingGeometryType : uint8
+{
+    Triangles       = 0,
+    ProceduralAABBs = 1,
+};
+
+NODISCARD constexpr const CHAR* ToString(ERayTracingGeometryType Type)
+{
+    switch (Type)
+    {
+        case ERayTracingGeometryType::Triangles:       return "Triangles";
+        case ERayTracingGeometryType::ProceduralAABBs: return "ProceduralAABBs";
+        default:                                       return "Unknown";
+    }
+}
+
+struct FRHIRayTracingAABB
+{
+    float MinX, MinY, MinZ;
+    float MaxX, MaxY, MaxZ;
+};
+
+static_assert(sizeof(FRHIRayTracingAABB) == 24, "FRHIRayTracingAABB must match D3D12_RAYTRACING_AABB / VkAabbPositionsKHR");
+
 struct FRHISceneAccelerationStructureBuildDesc
 {
     constexpr FRHISceneAccelerationStructureBuildDesc() noexcept = default;
@@ -1002,12 +1027,25 @@ struct FRHIGeometryAccelerationStructureBuildDesc
     {
     }
 
-    FRHIBuffer*  VertexBuffer = nullptr;
-    uint32       NumVertices  = 0;
-    FRHIBuffer*  IndexBuffer  = nullptr;
-    uint32       NumIndices   = 0;
-    EIndexFormat IndexFormat  = EIndexFormat::uint32;
-    bool         bUpdate      = false;
+    constexpr FRHIGeometryAccelerationStructureBuildDesc(FRHIBuffer* AABBBuffer, uint32 NumAABBs, uint32 AABBStride, bool bUpdate) noexcept
+        : AABBBuffer(AABBBuffer)
+        , NumAABBs(NumAABBs)
+        , AABBStride(AABBStride)
+        , GeometryType(ERayTracingGeometryType::ProceduralAABBs)
+        , bUpdate(bUpdate)
+    {
+    }
+
+    FRHIBuffer*             VertexBuffer = nullptr;
+    uint32                  NumVertices  = 0;
+    FRHIBuffer*             IndexBuffer  = nullptr;
+    uint32                  NumIndices   = 0;
+    EIndexFormat            IndexFormat  = EIndexFormat::uint32;
+    FRHIBuffer*             AABBBuffer   = nullptr;
+    uint32                  NumAABBs     = 0;
+    uint32                  AABBStride   = sizeof(FRHIRayTracingAABB);
+    ERayTracingGeometryType GeometryType = ERayTracingGeometryType::Triangles;
+    bool                    bUpdate      = false;
 };
 
 enum class ERHIResourceStateTrackingMode : uint8

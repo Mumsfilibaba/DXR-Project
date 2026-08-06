@@ -132,6 +132,16 @@ public:
         return new TNullRHIShader<FRHIRayMissShader>();
     }
 
+    virtual class FRHIRayIntersectionShader* CreateRayIntersectionShader(const TArray<uint8>& ShaderCode) override final
+    {
+        return new FNullRayIntersectionShaderRHI();
+    }
+
+    virtual class FRHIRayCallableShader* CreateRayCallableShader(const TArray<uint8>& ShaderCode) override final
+    {
+        return new FNullRayCallableShaderRHI();
+    }
+
     virtual class FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc) override final
     {
         return new FNullDepthStencilStateRHI(InDesc);

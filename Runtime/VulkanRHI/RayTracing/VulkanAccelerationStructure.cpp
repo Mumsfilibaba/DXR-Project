@@ -44,6 +44,7 @@ FVulkanGeometryAccelerationStructureRHI::FVulkanGeometryAccelerationStructureRHI
     , ScratchLocation(InDevice)
     , VertexBuffer(nullptr)
     , IndexBuffer(nullptr)
+    , AABBBuffer(nullptr)
     , StaleGeometry(VK_NULL_HANDLE)
     , StaleGeometryLocation(InDevice)
     , TrackedAccelerationStructureMemory(0)
@@ -100,26 +101,59 @@ void FVulkanGeometryAccelerationStructureRHI::GetDebugName(String& OutDebugName)
 
 bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdContext, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc)
 {
-    VertexBuffer = MakeSharedRef<FVulkanBufferRHI>(BuildDesc.VertexBuffer);
-    IndexBuffer  = MakeSharedRef<FVulkanBufferRHI>(BuildDesc.IndexBuffer);
-
-    VkDeviceOrHostAddressConstKHR VertexData = {};
-    VertexData.deviceAddress = VertexBuffer->GetDeviceAddress();
-
-    VkDeviceOrHostAddressConstKHR IndexData = {};
-    IndexData.deviceAddress = IndexBuffer->GetDeviceAddress();
+    const bool bIsProceduralGeometry = (GetGeometryType() == ERayTracingGeometryType::ProceduralAABBs);
 
     VkAccelerationStructureGeometryKHR AccelerationStructureGeometry = {};
-    AccelerationStructureGeometry.sType                           = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
-    AccelerationStructureGeometry.flags                           = VK_GEOMETRY_OPAQUE_BIT_KHR;
-    AccelerationStructureGeometry.geometryType                    = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
-    AccelerationStructureGeometry.geometry.triangles.sType        = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
-    AccelerationStructureGeometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
-    AccelerationStructureGeometry.geometry.triangles.maxVertex    = Math::Max<uint32>(BuildDesc.NumVertices - 1, 1);
-    AccelerationStructureGeometry.geometry.triangles.vertexStride = VertexBuffer->GetDesc().Stride;
-    AccelerationStructureGeometry.geometry.triangles.vertexData   = VertexData;
-    AccelerationStructureGeometry.geometry.triangles.indexType    = ConvertIndexFormat(BuildDesc.IndexFormat);
-    AccelerationStructureGeometry.geometry.triangles.indexData    = IndexData;
+    AccelerationStructureGeometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+    AccelerationStructureGeometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+
+    uint32 PrimitiveCount = 0;
+
+    if (bIsProceduralGeometry)
+    {
+        AABBBuffer = MakeSharedRef<FVulkanBufferRHI>(BuildDesc.AABBBuffer);
+        if (!AABBBuffer)
+        {
+            VULKAN_ERROR_CRITICAL("Procedural geometry requires an AABB buffer");
+            return false;
+        }
+
+        VkDeviceOrHostAddressConstKHR AABBData = {};
+        AABBData.deviceAddress = AABBBuffer->GetDeviceAddress();
+
+        AccelerationStructureGeometry.geometryType          = VK_GEOMETRY_TYPE_AABBS_KHR;
+        AccelerationStructureGeometry.geometry.aabbs.sType  = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_AABBS_DATA_KHR;
+        AccelerationStructureGeometry.geometry.aabbs.data   = AABBData;
+        AccelerationStructureGeometry.geometry.aabbs.stride = BuildDesc.AABBStride;
+
+        PrimitiveCount = BuildDesc.NumAABBs;
+    }
+    else
+    {
+        VertexBuffer = MakeSharedRef<FVulkanBufferRHI>(BuildDesc.VertexBuffer);
+        IndexBuffer  = MakeSharedRef<FVulkanBufferRHI>(BuildDesc.IndexBuffer);
+
+        VkDeviceOrHostAddressConstKHR VertexData = {};
+        VertexData.deviceAddress = VertexBuffer->GetDeviceAddress();
+
+        VkDeviceOrHostAddressConstKHR IndexData = {};
+        IndexData.deviceAddress = IndexBuffer->GetDeviceAddress();
+
+        AccelerationStructureGeometry.geometryType                    = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+        AccelerationStructureGeometry.geometry.triangles.sType        = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
+        AccelerationStructureGeometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
+        AccelerationStructureGeometry.geometry.triangles.maxVertex    = Math::Max<uint32>(BuildDesc.NumVertices - 1, 1);
+        AccelerationStructureGeometry.geometry.triangles.vertexStride = VertexBuffer->GetDesc().Stride;
+        AccelerationStructureGeometry.geometry.triangles.vertexData   = VertexData;
+        AccelerationStructureGeometry.geometry.triangles.indexType    = ConvertIndexFormat(BuildDesc.IndexFormat);
+        AccelerationStructureGeometry.geometry.triangles.indexData    = IndexData;
+
+        PrimitiveCount = BuildDesc.NumIndices / 3;
+        if ((BuildDesc.NumIndices % 3) != 0)
+        {
+            VULKAN_WARNING("Creating acceleration structure with an indexcount that is not a multiple of 3");
+        }
+    }
 
     VkAccelerationStructureBuildGeometryInfoKHR AccelerationStructureBuildGeometryInfo = {};
     AccelerationStructureBuildGeometryInfo.sType         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
@@ -132,17 +166,11 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
     VkAccelerationStructureBuildSizesInfoKHR AccelerationStructureBuildSizesInfo = {};
     AccelerationStructureBuildSizesInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 
-    const uint32 NumTriangles = BuildDesc.NumIndices / 3;
-    if ((BuildDesc.NumIndices % 3) != 0)
-    {
-        VULKAN_WARNING("Creating acceleration structure with an indexcount that is not a multiple of 3");
-    }
-
     vkGetAccelerationStructureBuildSizesKHR(
         GetDevice()->GetVkDevice(), 
         VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, 
         &AccelerationStructureBuildGeometryInfo, 
-        &NumTriangles, 
+        &PrimitiveCount, 
         &AccelerationStructureBuildSizesInfo);
 
     const VkMemoryAllocateFlags AllocateFlags    = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
@@ -187,7 +215,7 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
     AccelerationStructureBuildGeometryInfo.scratchData.deviceAddress = ScratchLocation.GetDeviceAddress();
 
     VkAccelerationStructureBuildRangeInfoKHR AccelerationStructureBuildRangeInfo = {};
-    AccelerationStructureBuildRangeInfo.primitiveCount  = NumTriangles;
+    AccelerationStructureBuildRangeInfo.primitiveCount  = PrimitiveCount;
     AccelerationStructureBuildRangeInfo.primitiveOffset = 0;
     AccelerationStructureBuildRangeInfo.firstVertex     = 0;
     AccelerationStructureBuildRangeInfo.transformOffset = 0;
@@ -196,10 +224,17 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
 
     const ERHIResourceState BuildInputAccess = ERHIResourceState::NonPixelShaderResource | ERHIResourceState::RayTracingAccelerationStructure;
 
-    CmdContext.RequireBufferState(VertexBuffer.Get(), BuildInputAccess);
-    if (IndexBuffer)
+    if (bIsProceduralGeometry)
     {
-        CmdContext.RequireBufferState(IndexBuffer.Get(), BuildInputAccess);
+        CmdContext.RequireBufferState(AABBBuffer.Get(), BuildInputAccess);
+    }
+    else
+    {
+        CmdContext.RequireBufferState(VertexBuffer.Get(), BuildInputAccess);
+        if (IndexBuffer)
+        {
+            CmdContext.RequireBufferState(IndexBuffer.Get(), BuildInputAccess);
+        }
     }
 
     CmdContext.AddAccelerationStructureMemoryBarrier();

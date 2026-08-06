@@ -239,6 +239,7 @@ FD3D12GeometryAccelerationStructureRHI::FD3D12GeometryAccelerationStructureRHI(F
     , FD3D12AccelerationStructure(InDevice)
     , VertexBuffer(nullptr)
     , IndexBuffer(nullptr)
+    , AABBBuffer(nullptr)
 {
     STAT_ADD(STAT_RHI_BLASCount, 1);
 }
@@ -256,22 +257,42 @@ void* FD3D12GeometryAccelerationStructureRHI::GetRHINativeResource() const
 
 bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc)
 {
-    VertexBuffer = MakeSharedRef<FD3D12BufferRHI>(BuildDesc.VertexBuffer);
-    IndexBuffer  = MakeSharedRef<FD3D12BufferRHI>(BuildDesc.IndexBuffer);
+    const bool bIsProceduralGeometry = (GetGeometryType() == ERayTracingGeometryType::ProceduralAABBs);
 
     D3D12_RAYTRACING_GEOMETRY_DESC GeometryDesc = {};
-    GeometryDesc.Type                                 = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
-    GeometryDesc.Triangles.VertexBuffer.StartAddress  = VertexBuffer->GetGPUVirtualAddress();
-    GeometryDesc.Triangles.VertexBuffer.StrideInBytes = VertexBuffer->GetDesc().Stride;
-    GeometryDesc.Triangles.VertexFormat               = DXGI_FORMAT_R32G32B32_FLOAT;
-    GeometryDesc.Triangles.VertexCount                = BuildDesc.NumVertices;
-    GeometryDesc.Flags                                = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+    GeometryDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
 
-    if (IndexBuffer)
+    if (bIsProceduralGeometry)
     {
-        GeometryDesc.Triangles.IndexFormat = ConvertIndexFormat(BuildDesc.IndexFormat);
-        GeometryDesc.Triangles.IndexBuffer = IndexBuffer->GetGPUVirtualAddress();
-        GeometryDesc.Triangles.IndexCount  = BuildDesc.NumIndices;
+        AABBBuffer = MakeSharedRef<FD3D12BufferRHI>(BuildDesc.AABBBuffer);
+        if (!AABBBuffer)
+        {
+            D3D12_ERROR_CRITICAL("[D3D12RayTracingGeometry]: Procedural geometry requires an AABB buffer");
+            return false;
+        }
+
+        GeometryDesc.Type                      = D3D12_RAYTRACING_GEOMETRY_TYPE_PROCEDURAL_PRIMITIVE_AABBS;
+        GeometryDesc.AABBs.AABBCount           = BuildDesc.NumAABBs;
+        GeometryDesc.AABBs.AABBs.StartAddress  = AABBBuffer->GetGPUVirtualAddress();
+        GeometryDesc.AABBs.AABBs.StrideInBytes = BuildDesc.AABBStride;
+    }
+    else
+    {
+        VertexBuffer = MakeSharedRef<FD3D12BufferRHI>(BuildDesc.VertexBuffer);
+        IndexBuffer  = MakeSharedRef<FD3D12BufferRHI>(BuildDesc.IndexBuffer);
+
+        GeometryDesc.Type                                 = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
+        GeometryDesc.Triangles.VertexBuffer.StartAddress  = VertexBuffer->GetGPUVirtualAddress();
+        GeometryDesc.Triangles.VertexBuffer.StrideInBytes = VertexBuffer->GetDesc().Stride;
+        GeometryDesc.Triangles.VertexFormat               = DXGI_FORMAT_R32G32B32_FLOAT;
+        GeometryDesc.Triangles.VertexCount                = BuildDesc.NumVertices;
+
+        if (IndexBuffer)
+        {
+            GeometryDesc.Triangles.IndexFormat = ConvertIndexFormat(BuildDesc.IndexFormat);
+            GeometryDesc.Triangles.IndexBuffer = IndexBuffer->GetGPUVirtualAddress();
+            GeometryDesc.Triangles.IndexCount  = BuildDesc.NumIndices;
+        }
     }
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs = {};
@@ -371,8 +392,16 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
     AccelerationStructureDesc.DestAccelerationStructureData    = ResultResourceStorage.GetGPUVirtualAddress();
     AccelerationStructureDesc.ScratchAccelerationStructureData = ScratchResourceStorage.GetGPUVirtualAddress();
 
-    CmdContext.TransitionTrackedResourceState(VertexBuffer.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-    CmdContext.TransitionTrackedResourceState(IndexBuffer.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    if (bIsProceduralGeometry)
+    {
+        CmdContext.TransitionTrackedResourceState(AABBBuffer.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    }
+    else
+    {
+        CmdContext.TransitionTrackedResourceState(VertexBuffer.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        CmdContext.TransitionTrackedResourceState(IndexBuffer.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    }
+
     CmdContext.TransitionTrackedResourceState(ScratchResourceStorage.GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
     CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandList());
@@ -389,6 +418,11 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
     if (IndexBuffer)
     {
         CommandList.UpdateResidency(IndexBuffer->GetResource()->GetResidencyHandle());
+    }
+
+    if (AABBBuffer)
+    {
+        CommandList.UpdateResidency(AABBBuffer->GetResource()->GetResidencyHandle());
     }
 
 #if D3D12_USE_ID3D12COMMANDLIST_4

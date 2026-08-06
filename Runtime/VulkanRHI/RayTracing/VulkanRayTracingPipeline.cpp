@@ -212,6 +212,28 @@ bool FVulkanRayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineS
         GetExportNameArray(ERayTracingShaderRecordKind::HitGroup).Emplace(HitGroup.Name);
     }
 
+    // Callable groups (general).
+    for (FRHIRayCallableShader* Callable : InDesc.CallableShaders)
+    {
+        const uint32 StageIndex = AddStage(Callable);
+
+        VkRayTracingShaderGroupCreateInfoKHR Group = {};
+        Group.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
+        Group.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+        Group.generalShader      = StageIndex;
+        Group.closestHitShader   = VK_SHADER_UNUSED_KHR;
+        Group.anyHitShader       = VK_SHADER_UNUSED_KHR;
+        Group.intersectionShader = VK_SHADER_UNUSED_KHR;
+        ShaderGroups.Add(Group);
+
+        FVulkanRayTracingShader* VulkanCallable = GetVulkanRayTracingShader(Callable);
+
+        const String CallableName = VulkanCallable ? VulkanCallable->GetIdentifier() : String();
+        GroupNames.Add(CallableName);
+
+        GetExportNameArray(ERayTracingShaderRecordKind::Callable).Emplace(CallableName);
+    }
+
     // Resolve shader modules now that the layout exists (binding patching needs it).
     for (int32 Index = 0; Index < StageShaders.Size(); ++Index)
     {

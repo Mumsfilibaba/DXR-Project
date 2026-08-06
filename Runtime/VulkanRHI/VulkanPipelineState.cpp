@@ -116,7 +116,7 @@ FVulkanDepthStencilStateRHI::FVulkanDepthStencilStateRHI(const FRHIDepthStencilS
     CreateInfo.depthTestEnable       = InDesc.bDepthEnable;
     CreateInfo.depthWriteEnable      = InDesc.bDepthWriteEnable;
     CreateInfo.depthCompareOp        = ConvertComparisonFunc(InDesc.DepthFunc);
-    CreateInfo.depthBoundsTestEnable = VK_FALSE;
+    CreateInfo.depthBoundsTestEnable = (InDesc.bDepthBoundsTestEnable && GVulkanSupportsDepthBoundsTest) ? VK_TRUE : VK_FALSE;
     CreateInfo.stencilTestEnable     = InDesc.bStencilEnable;
     CreateInfo.front                 = ConvertStencilState(InDesc.FrontFace);
     CreateInfo.back                  = ConvertStencilState(InDesc.BackFace);
@@ -278,6 +278,7 @@ FVulkanGraphicsPipelineStateRHI::FVulkanGraphicsPipelineStateRHI(FVulkanDevice* 
     : FRHIGraphicsPipelineState()
     , FVulkanPipeline(InDevice)
     , bUsesSampleLocations(false)
+    , bDepthBoundsTestEnable(false)
 {
 }
 
@@ -522,6 +523,8 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
         return false;
     }
 
+    const bool bUseDepthBounds = (DepthStencilStateCreateInfo.depthBoundsTestEnable == VK_TRUE);
+
     // BlendState CreateInfo
     VkPipelineColorBlendStateCreateInfo BlendStateCreateInfo;
     if (FVulkanBlendStateRHI* BlendState = FVulkanDeviceRHI::ResourceCast(InDesc.BlendState))
@@ -535,22 +538,32 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
     }
 
     // Dynamic-State CreateInfo
-    VkDynamicState DynamicStates[] = 
+    VkDynamicState DynamicStates[7];
+    uint32         NumDynamicStates = 0;
+
+    DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_VIEWPORT;
+    DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_SCISSOR;
+    DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_BLEND_CONSTANTS;
+    DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_STENCIL_REFERENCE;
+    DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_DEPTH_BIAS;
+
+    if (bUseDepthBounds)
     {
-        VK_DYNAMIC_STATE_VIEWPORT,
-        VK_DYNAMIC_STATE_SCISSOR,
-        VK_DYNAMIC_STATE_BLEND_CONSTANTS,
-        VK_DYNAMIC_STATE_STENCIL_REFERENCE,
-        VK_DYNAMIC_STATE_DEPTH_BIAS,
-        VK_DYNAMIC_STATE_SAMPLE_LOCATIONS_EXT, // Must stay last: only counted when the pipeline opts in
-    };
+        DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_DEPTH_BOUNDS;
+    }
+
+    if (bUseSampleLocations)
+    {
+        DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_SAMPLE_LOCATIONS_EXT;
+    }
 
     VkPipelineDynamicStateCreateInfo DynamicStateCreateInfo = {};
     DynamicStateCreateInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    DynamicStateCreateInfo.dynamicStateCount = ARRAY_COUNT(DynamicStates) - (bUseSampleLocations ? 0 : 1);
+    DynamicStateCreateInfo.dynamicStateCount = NumDynamicStates;
     DynamicStateCreateInfo.pDynamicStates    = DynamicStates;
 
-    bUsesSampleLocations = bUseSampleLocations;
+    bUsesSampleLocations   = bUseSampleLocations;
+    bDepthBoundsTestEnable = bUseDepthBounds;
 
     if (InDesc.ViewInstancingState.bEnableViewInstancing)
     {
@@ -778,6 +791,7 @@ FVulkanMeshletPipelineStateRHI::FVulkanMeshletPipelineStateRHI(FVulkanDevice* In
     , FVulkanPipeline(InDevice)
     , ViewInstancingState()
     , bUsesSampleLocations(false)
+    , bDepthBoundsTestEnable(false)
 {
 }
 
@@ -971,6 +985,8 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
         return false;
     }
 
+    const bool bUseDepthBounds = (DepthStencilStateCreateInfo.depthBoundsTestEnable == VK_TRUE);
+
     // BlendState CreateInfo
     VkPipelineColorBlendStateCreateInfo BlendStateCreateInfo;
     if (FVulkanBlendStateRHI* BlendState = FVulkanDeviceRHI::ResourceCast(InDesc.BlendState))
@@ -984,22 +1000,32 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
     }
 
     // Dynamic-State CreateInfo
-    VkDynamicState DynamicStates[] =
+    VkDynamicState DynamicStates[7];
+    uint32         NumDynamicStates = 0;
+
+    DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_VIEWPORT;
+    DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_SCISSOR;
+    DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_BLEND_CONSTANTS;
+    DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_STENCIL_REFERENCE;
+    DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_DEPTH_BIAS;
+
+    if (bUseDepthBounds)
     {
-        VK_DYNAMIC_STATE_VIEWPORT,
-        VK_DYNAMIC_STATE_SCISSOR,
-        VK_DYNAMIC_STATE_BLEND_CONSTANTS,
-        VK_DYNAMIC_STATE_STENCIL_REFERENCE,
-        VK_DYNAMIC_STATE_DEPTH_BIAS,
-        VK_DYNAMIC_STATE_SAMPLE_LOCATIONS_EXT, // Must stay last: only counted when the pipeline opts in
-    };
+        DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_DEPTH_BOUNDS;
+    }
+
+    if (bUseSampleLocations)
+    {
+        DynamicStates[NumDynamicStates++] = VK_DYNAMIC_STATE_SAMPLE_LOCATIONS_EXT;
+    }
 
     VkPipelineDynamicStateCreateInfo DynamicStateCreateInfo = {};
     DynamicStateCreateInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    DynamicStateCreateInfo.dynamicStateCount = ARRAY_COUNT(DynamicStates) - (bUseSampleLocations ? 0 : 1);
+    DynamicStateCreateInfo.dynamicStateCount = NumDynamicStates;
     DynamicStateCreateInfo.pDynamicStates    = DynamicStates;
 
-    bUsesSampleLocations = bUseSampleLocations;
+    bUsesSampleLocations   = bUseSampleLocations;
+    bDepthBoundsTestEnable = bUseDepthBounds;
 
     if (InDesc.ViewInstancingState.bEnableViewInstancing)
     {
@@ -1372,7 +1398,14 @@ bool FVulkanPipelineStateManager::LoadCacheFromFile()
     // Validate that the file is valid
     if (Memory::Memcmp(DataHeader.Magic, "VKPSO", sizeof(DataHeader.Magic)) != 0)
     {
-        VULKAN_WARNING("Invalid PipelineCacheHeader");
+        VULKAN_WARNING("PipelineCacheHeader contains an invalid magic");
+        return false;
+    }
+
+    // The data always begins with a FVulkanPipelineCacheHeader, so anything smaller cannot be valid
+    if (DataHeader.DataSize < sizeof(FVulkanPipelineCacheHeader))
+    {
+        VULKAN_WARNING("PipelineCacheHeader reports a size of %llu bytes, which is smaller than the PipelineCacheHeader", DataHeader.DataSize);
         return false;
     }
 
@@ -1380,7 +1413,16 @@ bool FVulkanPipelineStateManager::LoadCacheFromFile()
     constexpr uint64 MaxCacheSize = 1024 * 1024 * 1024;
     if (DataHeader.DataSize >= MaxCacheSize)
     {
-        VULKAN_WARNING("Invalid PipelineCacheHeader");
+        VULKAN_WARNING("PipelineCacheHeader reports a size of %llu bytes, which exceeds the limit of %llu bytes", DataHeader.DataSize, MaxCacheSize);
+        return false;
+    }
+
+    // The header should account for the remainder of the file exactly, otherwise the file is truncated or the header is corrupt
+    const int64 CacheFileSize    = CacheFile->Size();
+    const int64 ExpectedFileSize = static_cast<int64>(sizeof(FVulkanPipelineDataHeader) + DataHeader.DataSize);
+    if (CacheFileSize != ExpectedFileSize)
+    {
+        VULKAN_WARNING("PipelineCacheHeader reports a size of %llu bytes, which does not match the file-size of %lld bytes", DataHeader.DataSize, CacheFileSize);
         return false;
     }
 
@@ -1390,12 +1432,6 @@ bool FVulkanPipelineStateManager::LoadCacheFromFile()
     if (BytesRead != static_cast<int64>(DataHeader.DataSize))
     {
         VULKAN_WARNING("Something went wrong when reading PipelineCache");
-        return false;
-    }
-    
-    if (static_cast<uint64>(DataHeader.DataSize) < sizeof(FVulkanPipelineCacheHeader))
-    {
-        VULKAN_WARNING("PipelineCache is smaller than PipelineCacheHeader");
         return false;
     }
 
