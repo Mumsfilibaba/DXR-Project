@@ -1474,6 +1474,34 @@ FRHIRayMissShader* FD3D12DeviceRHI::CreateRayMissShader(const TArray<uint8>& Sha
     }
 }
 
+FRHIRayIntersectionShader* FD3D12DeviceRHI::CreateRayIntersectionShader(const TArray<uint8>& ShaderCode)
+{
+    FD3D12RayIntersectionShaderRHIRef NewShader = new FD3D12RayIntersectionShaderRHI(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        D3D12_ERROR_CRITICAL("[FD3D12DeviceRHI]: Failed to retrieve Shader Identifier");
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
+}
+
+FRHIRayCallableShader* FD3D12DeviceRHI::CreateRayCallableShader(const TArray<uint8>& ShaderCode)
+{
+    FD3D12RayCallableShaderRHIRef NewShader = new FD3D12RayCallableShaderRHI(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        D3D12_ERROR_CRITICAL("[FD3D12DeviceRHI]: Failed to retrieve Shader Identifier");
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
+}
+
 FRHIDepthStencilState* FD3D12DeviceRHI::CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
 {
     return new FD3D12DepthStencilStateRHI(InDesc);

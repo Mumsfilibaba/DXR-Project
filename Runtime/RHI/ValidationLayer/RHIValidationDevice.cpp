@@ -712,19 +712,22 @@ FRHIGeometryAccelerationStructure* FRHIValidationDevice::CreateGeometryAccelerat
         return nullptr;
     }
 
-    if (!InGeometryDesc.VertexBuffer || InGeometryDesc.NumVertices == 0 ||
-        !InGeometryDesc.VertexBuffer->GetDesc().IsVertexBuffer())
+    if (InGeometryDesc.GeometryType != ERayTracingGeometryType::ProceduralAABBs)
     {
-        RHI_VALIDATION_ERROR("CreateGeometryAccelerationStructure requires a vertex buffer and non-zero vertex count.");
-        return nullptr;
-    }
+        if (!InGeometryDesc.VertexBuffer || InGeometryDesc.NumVertices == 0 ||
+            !InGeometryDesc.VertexBuffer->GetDesc().IsVertexBuffer())
+        {
+            RHI_VALIDATION_ERROR("CreateGeometryAccelerationStructure requires a vertex buffer and non-zero vertex count.");
+            return nullptr;
+        }
 
-    if (InGeometryDesc.NumIndices > 0 &&
-        (!InGeometryDesc.IndexBuffer || !InGeometryDesc.IndexBuffer->GetDesc().IsIndexBuffer() ||
-         InGeometryDesc.IndexFormat == EIndexFormat::Unknown))
-    {
-        RHI_VALIDATION_ERROR("CreateGeometryAccelerationStructure indexed geometry requires an index buffer and valid index format.");
-        return nullptr;
+        if (InGeometryDesc.NumIndices > 0 &&
+            (!InGeometryDesc.IndexBuffer || !InGeometryDesc.IndexBuffer->GetDesc().IsIndexBuffer() ||
+             InGeometryDesc.IndexFormat == EIndexFormat::Unknown))
+        {
+            RHI_VALIDATION_ERROR("CreateGeometryAccelerationStructure indexed geometry requires an index buffer and valid index format.");
+            return nullptr;
+        }
     }
 
     if (InGeometryDesc.IsClusteredGeometry() && !RHI::bSupportsClustersAndPartitionedSceneAccelerationStructure)
@@ -1413,6 +1416,28 @@ FRHIRayMissShader* FRHIValidationDevice::CreateRayMissShader(const TArray<uint8>
     return Device->CreateRayMissShader(ShaderCode);
 }
 
+FRHIRayIntersectionShader* FRHIValidationDevice::CreateRayIntersectionShader(const TArray<uint8>& ShaderCode)
+{
+    if (!RHI::bSupportsRayTracing || ShaderCode.IsEmpty())
+    {
+        RHI_VALIDATION_ERROR("CreateRayIntersectionShader requires ray-tracing support and non-empty bytecode.");
+        return nullptr;
+    }
+
+    return Device->CreateRayIntersectionShader(ShaderCode);
+}
+
+FRHIRayCallableShader* FRHIValidationDevice::CreateRayCallableShader(const TArray<uint8>& ShaderCode)
+{
+    if (!RHI::bSupportsRayTracing || ShaderCode.IsEmpty())
+    {
+        RHI_VALIDATION_ERROR("CreateRayCallableShader requires ray-tracing support and non-empty bytecode.");
+        return nullptr;
+    }
+
+    return Device->CreateRayCallableShader(ShaderCode);
+}
+
 FRHIDepthStencilState* FRHIValidationDevice::CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
 {
     return Device->CreateDepthStencilState(InDesc);
@@ -1542,6 +1567,45 @@ FRHIRayTracingPipelineState* FRHIValidationDevice::CreateRayTracingPipelineState
         if (!Shader)
         {
             RHI_VALIDATION_ERROR("CreateRayTracingPipelineState: MissShaders cannot contain nullptr.");
+            return nullptr;
+        }
+    }
+
+    for (FRHIRayCallableShader* Shader : InDesc.CallableShaders)
+    {
+        if (!Shader)
+        {
+            RHI_VALIDATION_ERROR("CreateRayTracingPipelineState: CallableShaders cannot contain nullptr.");
+            return nullptr;
+        }
+    }
+
+    for (const FRHIRayTracingHitGroupInfo& HitGroup : InDesc.HitGroups)
+    {
+        uint32 NumIntersectionShaders = 0;
+        for (FRHIRayTracingShader* Shader : HitGroup.Shaders)
+        {
+            if (!Shader)
+            {
+                RHI_VALIDATION_ERROR("CreateRayTracingPipelineState: HitGroup '%s' cannot contain nullptr shaders.", *HitGroup.Name);
+                return nullptr;
+            }
+
+            if (Shader->GetShaderStage() == EShaderStage::RayIntersection)
+            {
+                ++NumIntersectionShaders;
+            }
+        }
+
+        const bool bIsProcedural = (HitGroup.Type == ERayTracingHitGroupType::Procedural);
+        if (bIsProcedural && NumIntersectionShaders != 1)
+        {
+            RHI_VALIDATION_ERROR("CreateRayTracingPipelineState: procedural HitGroup '%s' requires exactly one intersection shader (found %u).", *HitGroup.Name, NumIntersectionShaders);
+            return nullptr;
+        }
+        else if (!bIsProcedural && NumIntersectionShaders != 0)
+        {
+            RHI_VALIDATION_ERROR("CreateRayTracingPipelineState: triangle HitGroup '%s' cannot contain an intersection shader.", *HitGroup.Name);
             return nullptr;
         }
     }

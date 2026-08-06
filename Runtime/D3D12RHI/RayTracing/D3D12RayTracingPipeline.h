@@ -35,7 +35,7 @@ struct FD3D12RootSignatureAssociation
 
 struct FD3D12HitGroup
 {
-    FD3D12HitGroup(const WString& InHitGroupName, const WString& InClosestHit, const WString& InAnyHit, const WString& InIntersection)
+    FD3D12HitGroup(const WString& InHitGroupName, ERayTracingHitGroupType InHitGroupType, const WString& InClosestHit, const WString& InAnyHit, const WString& InIntersection)
         : Desc()
         , HitGroupName(InHitGroupName)
         , ClosestHit(InClosestHit)
@@ -44,16 +44,23 @@ struct FD3D12HitGroup
     {
         Memory::Memzero(&Desc);
 
-        Desc.Type                   = D3D12_HIT_GROUP_TYPE_TRIANGLES;
-        Desc.HitGroupExport         = *HitGroupName;
-        Desc.ClosestHitShaderImport = *ClosestHit;
+        Desc.Type = (InHitGroupType == ERayTracingHitGroupType::Procedural)
+            ? D3D12_HIT_GROUP_TYPE_PROCEDURAL_PRIMITIVE
+            : D3D12_HIT_GROUP_TYPE_TRIANGLES;
+
+        Desc.HitGroupExport = *HitGroupName;
+
+        if (ClosestHit != L"")
+        {
+            Desc.ClosestHitShaderImport = *ClosestHit;
+        }
 
         if (AnyHit != L"")
         {
             Desc.AnyHitShaderImport = *AnyHit;
         }
 
-        if (Desc.Type != D3D12_HIT_GROUP_TYPE_TRIANGLES)
+        if (Desc.Type == D3D12_HIT_GROUP_TYPE_PROCEDURAL_PRIMITIVE && Intersection != L"")
         {
             Desc.IntersectionShaderImport = *Intersection;
         }
@@ -104,9 +111,9 @@ public:
         Libraries.Emplace(ByteCode, ExportNames);
     }
 
-    void AddHitGroup(const WString& HitGroupName, const WString& ClosestHit, const WString& AnyHit, const WString& Intersection)
+    void AddHitGroup(const WString& HitGroupName, ERayTracingHitGroupType HitGroupType, const WString& ClosestHit, const WString& AnyHit, const WString& Intersection)
     {
-        HitGroups.Emplace(HitGroupName, ClosestHit, AnyHit, Intersection);
+        HitGroups.Emplace(HitGroupName, HitGroupType, ClosestHit, AnyHit, Intersection);
     }
 
     void AddRootSignatureAssociation(ID3D12RootSignature* RootSignature, const TArray<WString>& ShaderExportNames)

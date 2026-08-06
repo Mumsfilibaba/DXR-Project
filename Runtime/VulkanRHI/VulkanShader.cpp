@@ -1023,6 +1023,22 @@ FVulkanRayMissShaderRHI::FVulkanRayMissShaderRHI(FVulkanDevice* InDevice)
 
 FVulkanRayMissShaderRHI::~FVulkanRayMissShaderRHI() = default;
 
+FVulkanRayIntersectionShaderRHI::FVulkanRayIntersectionShaderRHI(FVulkanDevice* InDevice)
+    : FRHIRayIntersectionShader()
+    , FVulkanRayTracingShader(InDevice)
+{
+}
+
+FVulkanRayIntersectionShaderRHI::~FVulkanRayIntersectionShaderRHI() = default;
+
+FVulkanRayCallableShaderRHI::FVulkanRayCallableShaderRHI(FVulkanDevice* InDevice)
+    : FRHIRayCallableShader()
+    , FVulkanRayTracingShader(InDevice)
+{
+}
+
+FVulkanRayCallableShaderRHI::~FVulkanRayCallableShaderRHI() = default;
+
 FVulkanComputeShaderRHI::FVulkanComputeShaderRHI(FVulkanDevice* InDevice)
     : FRHIComputeShader()
     , FVulkanShader(InDevice, EShaderVisibility::Compute)
@@ -1086,6 +1102,16 @@ void* FVulkanRayMissShaderRHI::GetRHINativeHandle()
     return reinterpret_cast<void*>(&SpirvCode);
 }
 
+void* FVulkanRayIntersectionShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(&SpirvCode);
+}
+
+void* FVulkanRayCallableShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(&SpirvCode);
+}
+
 void* FVulkanComputeShaderRHI::GetRHINativeHandle()
 {
     return reinterpret_cast<void*>(&SpirvCode);
@@ -1142,6 +1168,16 @@ void* FVulkanRayClosestHitShaderRHI::GetRHIBaseInterface()
 }
 
 void* FVulkanRayMissShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FVulkanRayTracingShader*>(this);
+}
+
+void* FVulkanRayIntersectionShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FVulkanRayTracingShader*>(this);
+}
+
+void* FVulkanRayCallableShaderRHI::GetRHIBaseInterface()
 {
     return static_cast<FVulkanRayTracingShader*>(this);
 }

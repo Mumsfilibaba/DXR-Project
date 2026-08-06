@@ -14,11 +14,13 @@ typedef TSharedRef<class FVulkanPixelShaderRHI>         FVulkanPixelShaderRHIRef
 typedef TSharedRef<class FVulkanMeshShaderRHI>          FVulkanMeshShaderRHIRef;
 typedef TSharedRef<class FVulkanAmplificationShaderRHI> FVulkanAmplificationShaderRHIRef;
 typedef TSharedRef<class FVulkanComputeShaderRHI>       FVulkanComputeShaderRHIRef;
-typedef TSharedRef<class FVulkanRayTracingShader>       FVulkanRayTracingShaderRef;
-typedef TSharedRef<class FVulkanRayGenShaderRHI>        FVulkanRayGenShaderRHIRef;
-typedef TSharedRef<class FVulkanRayAnyHitShaderRHI>     FVulkanRayAnyHitShaderRHIRef;
-typedef TSharedRef<class FVulkanRayClosestHitShaderRHI> FVulkanRayClosestHitShaderRHIRef;
-typedef TSharedRef<class FVulkanRayMissShaderRHI>       FVulkanRayMissShaderRHIRef;
+typedef TSharedRef<class FVulkanRayTracingShader>         FVulkanRayTracingShaderRef;
+typedef TSharedRef<class FVulkanRayGenShaderRHI>          FVulkanRayGenShaderRHIRef;
+typedef TSharedRef<class FVulkanRayAnyHitShaderRHI>       FVulkanRayAnyHitShaderRHIRef;
+typedef TSharedRef<class FVulkanRayClosestHitShaderRHI>   FVulkanRayClosestHitShaderRHIRef;
+typedef TSharedRef<class FVulkanRayMissShaderRHI>         FVulkanRayMissShaderRHIRef;
+typedef TSharedRef<class FVulkanRayIntersectionShaderRHI> FVulkanRayIntersectionShaderRHIRef;
+typedef TSharedRef<class FVulkanRayCallableShaderRHI>     FVulkanRayCallableShaderRHIRef;
 
 struct EShaderVisibility
 {
@@ -373,6 +375,28 @@ class FVulkanRayMissShaderRHI : public FRHIRayMissShader, public FVulkanRayTraci
 public:
     FVulkanRayMissShaderRHI(FVulkanDevice* InDevice);
     virtual ~FVulkanRayMissShaderRHI();
+
+    // FRHIShader Interface
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
+};
+
+class FVulkanRayIntersectionShaderRHI : public FRHIRayIntersectionShader, public FVulkanRayTracingShader
+{
+public:
+    FVulkanRayIntersectionShaderRHI(FVulkanDevice* InDevice);
+    virtual ~FVulkanRayIntersectionShaderRHI();
+
+    // FRHIShader Interface
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
+};
+
+class FVulkanRayCallableShaderRHI : public FRHIRayCallableShader, public FVulkanRayTracingShader
+{
+public:
+    FVulkanRayCallableShaderRHI(FVulkanDevice* InDevice);
+    virtual ~FVulkanRayCallableShaderRHI();
 
     // FRHIShader Interface
     virtual void* GetRHINativeHandle()  override final;

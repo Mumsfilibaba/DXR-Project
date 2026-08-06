@@ -55,6 +55,7 @@ private:
     FVulkanMemoryLocation      ScratchLocation;
     FVulkanBufferRHIRef        VertexBuffer;
     FVulkanBufferRHIRef        IndexBuffer;
+    FVulkanBufferRHIRef        AABBBuffer;
     VkAccelerationStructureKHR StaleGeometry;
     FVulkanMemoryLocation      StaleGeometryLocation;
     uint64                     TrackedAccelerationStructureMemory;

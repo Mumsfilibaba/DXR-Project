@@ -193,6 +193,16 @@ struct RHI
         return Device->CreateRayMissShader(ShaderCode);
     }
 
+    static FORCEINLINE FRHIRayIntersectionShader* CreateRayIntersectionShader(const TArray<uint8>& ShaderCode)
+    {
+        return Device->CreateRayIntersectionShader(ShaderCode);
+    }
+
+    static FORCEINLINE FRHIRayCallableShader* CreateRayCallableShader(const TArray<uint8>& ShaderCode)
+    {
+        return Device->CreateRayCallableShader(ShaderCode);
+    }
+
     static FORCEINLINE FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
     {
         return Device->CreateDepthStencilState(InDesc);

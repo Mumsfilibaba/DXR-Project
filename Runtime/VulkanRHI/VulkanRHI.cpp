@@ -1160,6 +1160,32 @@ FRHIRayMissShader* FVulkanDeviceRHI::CreateRayMissShader(const TArray<uint8>& Sh
     }
 }
 
+FRHIRayIntersectionShader* FVulkanDeviceRHI::CreateRayIntersectionShader(const TArray<uint8>& ShaderCode)
+{
+    FVulkanRayIntersectionShaderRHIRef NewShader = new FVulkanRayIntersectionShaderRHI(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
+}
+
+FRHIRayCallableShader* FVulkanDeviceRHI::CreateRayCallableShader(const TArray<uint8>& ShaderCode)
+{
+    FVulkanRayCallableShaderRHIRef NewShader = new FVulkanRayCallableShaderRHI(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
+}
+
 FRHIDepthStencilState* FVulkanDeviceRHI::CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
 {
     return new FVulkanDepthStencilStateRHI(InDesc);

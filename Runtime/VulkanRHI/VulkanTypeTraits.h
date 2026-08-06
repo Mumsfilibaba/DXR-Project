@@ -40,6 +40,8 @@ class FVulkanRayGenShaderRHI;
 class FVulkanRayAnyHitShaderRHI;
 class FVulkanRayClosestHitShaderRHI;
 class FVulkanRayMissShaderRHI;
+class FVulkanRayIntersectionShaderRHI;
+class FVulkanRayCallableShaderRHI;
 
 template<typename T>
 struct TVulkanRHIResourceType
@@ -229,4 +231,14 @@ template<> struct TVulkanRHIResourceType<FRHIRayClosestHitShader>
 template<> struct TVulkanRHIResourceType<FRHIRayMissShader>
 {
     typedef FVulkanRayMissShaderRHI Type;
+};
+
+template<> struct TVulkanRHIResourceType<FRHIRayIntersectionShader>
+{
+    typedef FVulkanRayIntersectionShaderRHI Type;
+};
+
+template<> struct TVulkanRHIResourceType<FRHIRayCallableShader>
+{
+    typedef FVulkanRayCallableShaderRHI Type;
 };

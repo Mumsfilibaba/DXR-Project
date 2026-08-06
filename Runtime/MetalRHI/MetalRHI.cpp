@@ -303,6 +303,32 @@ FRHIRayMissShader* FMetalDeviceRHI::CreateRayMissShader(const TArray<uint8>& Sha
     }
 }
 
+FRHIRayIntersectionShader* FMetalDeviceRHI::CreateRayIntersectionShader(const TArray<uint8>& ShaderCode)
+{
+    FMetalRayIntersectionShaderRef NewShader = new FMetalRayIntersectionShaderRHI(GetMetalDevice());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
+}
+
+FRHIRayCallableShader* FMetalDeviceRHI::CreateRayCallableShader(const TArray<uint8>& ShaderCode)
+{
+    FMetalRayCallableShaderRef NewShader = new FMetalRayCallableShaderRHI(GetMetalDevice());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
+}
+
 FRHIDepthStencilState* FMetalDeviceRHI::CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
 {
     FMetalDepthStencilStateRef NewDepthStencilState = new FMetalDepthStencilStateRHI(GetMetalDevice(), InDesc);

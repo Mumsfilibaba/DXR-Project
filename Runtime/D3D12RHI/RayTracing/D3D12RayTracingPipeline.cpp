@@ -294,7 +294,7 @@ bool FD3D12RayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineSt
             }
         }
 
-        PipelineStream.AddHitGroup(CharToWide(HitGroup.Name), ClosestHitName, AnyHitName, IntersectionName);
+        PipelineStream.AddHitGroup(CharToWide(HitGroup.Name), HitGroup.Type, ClosestHitName, AnyHitName, IntersectionName);
         GetExportNameArray(ERayTracingShaderRecordKind::HitGroup).Emplace(HitGroup.Name);
 
         if (!HitGroupMemberShaders.IsEmpty())
@@ -343,6 +343,29 @@ bool FD3D12RayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineSt
         PipelineStream.AddLibrary(D3D12MissShader->GetByteCode().GetD3D12Bytecode(), { MissIdentifier });
         PipelineStream.AddRootSignatureAssociation(MissLocalRootSignature->GetD3D12RootSignature(), { MissIdentifier });
         PipelineStream.PayLoadExportNames.Emplace(MissIdentifier);
+    }
+
+    // Collect and add all Callable shaders
+    for (FRHIRayCallableShader* Callable : Desc.CallableShaders)
+    {
+        FD3D12RayCallableShaderRHI* D3D12CallableShader = FD3D12DeviceRHI::ResourceCast(Callable);
+        Shaders.Emplace(D3D12CallableShader);
+
+        FD3D12RootSignatureLayout CallableLocalLayout        = BuildLocalLayoutFromBindingInfo(D3D12CallableShader->GetLocalBindingInfo());
+        FD3D12RootSignatureRef    CallableLocalRootSignature = MakeSharedRef<FD3D12RootSignature>(RootSignatureManager.GetOrCreateRootSignature(CallableLocalLayout));
+
+        if (!CallableLocalRootSignature)
+        {
+            return false;
+        }
+
+        LocalRootSignatures.Add(D3D12CallableShader->GetIdentifier(), CallableLocalRootSignature);
+        GetExportNameArray(ERayTracingShaderRecordKind::Callable).Emplace(D3D12CallableShader->GetIdentifier());
+
+        WString CallableIdentifier = CharToWide(D3D12CallableShader->GetIdentifier());
+        PipelineStream.AddLibrary(D3D12CallableShader->GetByteCode().GetD3D12Bytecode(), { CallableIdentifier });
+        PipelineStream.AddRootSignatureAssociation(CallableLocalRootSignature->GetD3D12RootSignature(), { CallableIdentifier });
+        PipelineStream.PayLoadExportNames.Emplace(CallableIdentifier);
     }
 
     PipelineStream.ShaderConfig.MaxAttributeSizeInBytes  = Desc.MaxAttributeSizeInBytes;

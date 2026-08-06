@@ -39,6 +39,8 @@ class FD3D12RayGenShaderRHI;
 class FD3D12RayAnyHitShaderRHI;
 class FD3D12RayClosestHitShaderRHI;
 class FD3D12RayMissShaderRHI;
+class FD3D12RayIntersectionShaderRHI;
+class FD3D12RayCallableShaderRHI;
 
 template<typename T>
 struct TD3D12RHIResourceType
@@ -208,4 +210,14 @@ template<> struct TD3D12RHIResourceType<FRHIRayClosestHitShader>
 template<> struct TD3D12RHIResourceType<FRHIRayMissShader>
 {
     typedef FD3D12RayMissShaderRHI Type;
+};
+
+template<> struct TD3D12RHIResourceType<FRHIRayIntersectionShader>
+{
+    typedef FD3D12RayIntersectionShaderRHI Type;
+};
+
+template<> struct TD3D12RHIResourceType<FRHIRayCallableShader>
+{
+    typedef FD3D12RayCallableShaderRHI Type;
 };

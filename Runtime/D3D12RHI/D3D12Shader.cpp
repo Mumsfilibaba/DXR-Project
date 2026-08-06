@@ -1043,6 +1043,22 @@ FD3D12RayMissShaderRHI::FD3D12RayMissShaderRHI(FD3D12Device* InDevice)
 
 FD3D12RayMissShaderRHI::~FD3D12RayMissShaderRHI() = default;
 
+FD3D12RayIntersectionShaderRHI::FD3D12RayIntersectionShaderRHI(FD3D12Device* InDevice)
+    : FRHIRayIntersectionShader()
+    , FD3D12RayTracingShader(InDevice)
+{
+}
+
+FD3D12RayIntersectionShaderRHI::~FD3D12RayIntersectionShaderRHI() = default;
+
+FD3D12RayCallableShaderRHI::FD3D12RayCallableShaderRHI(FD3D12Device* InDevice)
+    : FRHIRayCallableShader()
+    , FD3D12RayTracingShader(InDevice)
+{
+}
+
+FD3D12RayCallableShaderRHI::~FD3D12RayCallableShaderRHI() = default;
+
 FD3D12ComputeShaderRHI::FD3D12ComputeShaderRHI(FD3D12Device* InDevice)
     : FRHIComputeShader()
     , FD3D12Shader(InDevice, EShaderVisibility::All)
@@ -1107,6 +1123,16 @@ void* FD3D12RayMissShaderRHI::GetRHINativeHandle()
     return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode());
 }
 
+void* FD3D12RayIntersectionShaderRHI::GetRHINativeHandle()
+{
+    return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode());
+}
+
+void* FD3D12RayCallableShaderRHI::GetRHINativeHandle()
+{
+    return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode());
+}
+
 void* FD3D12ComputeShaderRHI::GetRHINativeHandle()
 {
     return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode());
@@ -1163,6 +1189,16 @@ void* FD3D12RayClosestHitShaderRHI::GetRHIBaseInterface()
 }
 
 void* FD3D12RayMissShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FD3D12RayTracingShader*>(this);
+}
+
+void* FD3D12RayIntersectionShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FD3D12RayTracingShader*>(this);
+}
+
+void* FD3D12RayCallableShaderRHI::GetRHIBaseInterface()
 {
     return static_cast<FD3D12RayTracingShader*>(this);
 }

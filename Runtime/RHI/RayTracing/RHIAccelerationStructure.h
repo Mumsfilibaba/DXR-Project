@@ -44,6 +44,7 @@ struct FRHIGeometryAccelerationStructureDesc
     uint32                           NumIndices           = 0;
     EIndexFormat                     IndexFormat          = EIndexFormat::Unknown;
     EAccelerationStructureBuildFlags Flags                = EAccelerationStructureBuildFlags::None;
+    ERayTracingGeometryType          GeometryType         = ERayTracingGeometryType::Triangles;
     bool                             bIsClusteredGeometry = false;
 };
 
@@ -110,10 +111,20 @@ class FRHIGeometryAccelerationStructure : public FRHIRayTracingAccelerationStruc
 protected:
     explicit FRHIGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
         : FRHIRayTracingAccelerationStructure(ERHIResourceType::GeometryAccelerationStructure, ERayTracingAccelerationStructureType::Geometry, InGeometryDesc.Flags)
+        , GeometryType(InGeometryDesc.GeometryType)
     {
     }
 
     virtual ~FRHIGeometryAccelerationStructure() = default;
+
+public:
+    NODISCARD ERayTracingGeometryType GetGeometryType() const
+    {
+        return GeometryType;
+    }
+
+protected:
+    ERayTracingGeometryType GeometryType;
 };
 
 class FRHISceneAccelerationStructure : public FRHIRayTracingAccelerationStructure

@@ -97,6 +97,8 @@ public:
     virtual FRHIRayAnyHitShader*                       CreateRayAnyHitShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIRayClosestHitShader*                   CreateRayClosestHitShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIRayMissShader*                         CreateRayMissShader(const TArray<uint8>& ShaderCode) override final;
+    virtual FRHIRayIntersectionShader*                 CreateRayIntersectionShader(const TArray<uint8>& ShaderCode) override final;
+    virtual FRHIRayCallableShader*                     CreateRayCallableShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIDepthStencilState*                     CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc) override final;
     virtual FRHIRasterizerState*                       CreateRasterizerState(const FRHIRasterizerStateDesc& InDesc) override final;
     virtual FRHIBlendState*                            CreateBlendState(const FRHIBlendStateDesc& InDesc) override final;

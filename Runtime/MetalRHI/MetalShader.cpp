@@ -121,6 +121,22 @@ FMetalRayMissShaderRHI::FMetalRayMissShaderRHI(FMetalDevice* InDevice)
 
 FMetalRayMissShaderRHI::~FMetalRayMissShaderRHI() = default;
 
+FMetalRayIntersectionShaderRHI::FMetalRayIntersectionShaderRHI(FMetalDevice* InDevice)
+    : FRHIRayIntersectionShader()
+    , FMetalRayTracingShader(InDevice)
+{
+}
+
+FMetalRayIntersectionShaderRHI::~FMetalRayIntersectionShaderRHI() = default;
+
+FMetalRayCallableShaderRHI::FMetalRayCallableShaderRHI(FMetalDevice* InDevice)
+    : FRHIRayCallableShader()
+    , FMetalRayTracingShader(InDevice)
+{
+}
+
+FMetalRayCallableShaderRHI::~FMetalRayCallableShaderRHI() = default;
+
 void* FMetalVertexShaderRHI::GetRHINativeHandle()
 {
     return reinterpret_cast<void*>(GetMTLFunction());
@@ -177,6 +193,26 @@ void* FMetalRayMissShaderRHI::GetRHINativeHandle()
 }
 
 void* FMetalRayMissShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FMetalRayTracingShader*>(this);
+}
+
+void* FMetalRayIntersectionShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(GetMTLFunction());
+}
+
+void* FMetalRayIntersectionShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FMetalRayTracingShader*>(this);
+}
+
+void* FMetalRayCallableShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(GetMTLFunction());
+}
+
+void* FMetalRayCallableShaderRHI::GetRHIBaseInterface()
 {
     return static_cast<FMetalRayTracingShader*>(this);
 }

@@ -31,6 +31,8 @@ class FMetalRayGenShaderRHI;
 class FMetalRayAnyHitShaderRHI;
 class FMetalRayClosestHitShaderRHI;
 class FMetalRayMissShaderRHI;
+class FMetalRayIntersectionShaderRHI;
+class FMetalRayCallableShaderRHI;
 
 template<typename T>
 struct TMetalRHIResourceType
@@ -180,4 +182,14 @@ template<> struct TMetalRHIResourceType<FRHIRayClosestHitShader>
 template<> struct TMetalRHIResourceType<FRHIRayMissShader>
 {
     typedef FMetalRayMissShaderRHI Type;
+};
+
+template<> struct TMetalRHIResourceType<FRHIRayIntersectionShader>
+{
+    typedef FMetalRayIntersectionShaderRHI Type;
+};
+
+template<> struct TMetalRHIResourceType<FRHIRayCallableShader>
+{
+    typedef FMetalRayCallableShaderRHI Type;
 };

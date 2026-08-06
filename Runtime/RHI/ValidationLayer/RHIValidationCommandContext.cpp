@@ -1246,17 +1246,41 @@ void FRHIValidationCommandContext::BuildGeometryAccelerationStructure(FRHIGeomet
         return;
     }
 
-    if (!BuildDesc.VertexBuffer || BuildDesc.NumVertices == 0 || !BuildDesc.VertexBuffer->GetDesc().IsVertexBuffer())
+    if (BuildDesc.GeometryType != RayTracingGeometry->GetGeometryType())
     {
-        RHI_VALIDATION_ERROR("BuildGeometryAccelerationStructure requires a vertex buffer and non-zero vertex count.");
+        RHI_VALIDATION_ERROR("BuildGeometryAccelerationStructure: build geometry type '%s' does not match the type '%s' the acceleration structure was created with.",
+            ToString(BuildDesc.GeometryType), ToString(RayTracingGeometry->GetGeometryType()));
         return;
     }
 
-    if (BuildDesc.NumIndices > 0 &&
-        (!BuildDesc.IndexBuffer || !BuildDesc.IndexBuffer->GetDesc().IsIndexBuffer() || BuildDesc.IndexFormat == EIndexFormat::Unknown))
+    if (BuildDesc.GeometryType == ERayTracingGeometryType::ProceduralAABBs)
     {
-        RHI_VALIDATION_ERROR("BuildGeometryAccelerationStructure indexed geometry requires an index buffer and valid format.");
-        return;
+        if (!BuildDesc.AABBBuffer || BuildDesc.NumAABBs == 0)
+        {
+            RHI_VALIDATION_ERROR("BuildGeometryAccelerationStructure requires an AABB buffer and non-zero AABB count for procedural geometry.");
+            return;
+        }
+
+        if (BuildDesc.AABBStride == 0 || (BuildDesc.AABBStride % 16) != 0)
+        {
+            RHI_VALIDATION_ERROR("BuildGeometryAccelerationStructure: AABBStride (%u) must be a non-zero multiple of 16.", BuildDesc.AABBStride);
+            return;
+        }
+    }
+    else
+    {
+        if (!BuildDesc.VertexBuffer || BuildDesc.NumVertices == 0 || !BuildDesc.VertexBuffer->GetDesc().IsVertexBuffer())
+        {
+            RHI_VALIDATION_ERROR("BuildGeometryAccelerationStructure requires a vertex buffer and non-zero vertex count.");
+            return;
+        }
+
+        if (BuildDesc.NumIndices > 0 &&
+            (!BuildDesc.IndexBuffer || !BuildDesc.IndexBuffer->GetDesc().IsIndexBuffer() || BuildDesc.IndexFormat == EIndexFormat::Unknown))
+        {
+            RHI_VALIDATION_ERROR("BuildGeometryAccelerationStructure indexed geometry requires an index buffer and valid format.");
+            return;
+        }
     }
 
     if (BuildDesc.bUpdate && !IsEnumFlagSet(RayTracingGeometry->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate))

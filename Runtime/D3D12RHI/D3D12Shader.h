@@ -16,11 +16,13 @@ typedef TSharedRef<class FD3D12PixelShaderRHI>         FD3D12PixelShaderRHIRef;
 typedef TSharedRef<class FD3D12MeshShaderRHI>          FD3D12MeshShaderRHIRef;
 typedef TSharedRef<class FD3D12AmplificationShaderRHI> FD3D12AmplificationShaderRHIRef;
 typedef TSharedRef<class FD3D12ComputeShaderRHI>       FD3D12ComputeShaderRHIRef;
-typedef TSharedRef<class FD3D12RayTracingShader>       FD3D12RayTracingShaderRef;
-typedef TSharedRef<class FD3D12RayGenShaderRHI>        FD3D12RayGenShaderRHIRef;
-typedef TSharedRef<class FD3D12RayAnyHitShaderRHI>     FD3D12RayAnyHitShaderRHIRef;
-typedef TSharedRef<class FD3D12RayClosestHitShaderRHI> FD3D12RayClosestHitShaderRHIRef;
-typedef TSharedRef<class FD3D12RayMissShaderRHI>       FD3D12RayMissShaderRHIRef;
+typedef TSharedRef<class FD3D12RayTracingShader>         FD3D12RayTracingShaderRef;
+typedef TSharedRef<class FD3D12RayGenShaderRHI>          FD3D12RayGenShaderRHIRef;
+typedef TSharedRef<class FD3D12RayAnyHitShaderRHI>       FD3D12RayAnyHitShaderRHIRef;
+typedef TSharedRef<class FD3D12RayClosestHitShaderRHI>   FD3D12RayClosestHitShaderRHIRef;
+typedef TSharedRef<class FD3D12RayMissShaderRHI>         FD3D12RayMissShaderRHIRef;
+typedef TSharedRef<class FD3D12RayIntersectionShaderRHI> FD3D12RayIntersectionShaderRHIRef;
+typedef TSharedRef<class FD3D12RayCallableShaderRHI>     FD3D12RayCallableShaderRHIRef;
 
 enum class ED3D12ShaderFlags : uint32
 {
@@ -415,6 +417,28 @@ class FD3D12RayMissShaderRHI : public FRHIRayMissShader, public FD3D12RayTracing
 public:
     FD3D12RayMissShaderRHI(FD3D12Device* InDevice);
     virtual ~FD3D12RayMissShaderRHI();
+
+    // FRHIShader Interface
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
+};
+
+class FD3D12RayIntersectionShaderRHI : public FRHIRayIntersectionShader, public FD3D12RayTracingShader
+{
+public:
+    FD3D12RayIntersectionShaderRHI(FD3D12Device* InDevice);
+    virtual ~FD3D12RayIntersectionShaderRHI();
+
+    // FRHIShader Interface
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
+};
+
+class FD3D12RayCallableShaderRHI : public FRHIRayCallableShader, public FD3D12RayTracingShader
+{
+public:
+    FD3D12RayCallableShaderRHI(FD3D12Device* InDevice);
+    virtual ~FD3D12RayCallableShaderRHI();
 
     // FRHIShader Interface
     virtual void* GetRHINativeHandle()  override final;
