@@ -1506,8 +1506,10 @@ bool FD3D12Device::CreateHeap(const D3D12_HEAP_DESC& Desc, FD3D12HeapRef& OutHea
     return true;
 }
 
-int32 FD3D12Device::QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount)
+bool FD3D12Device::QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount, uint32& OutQuality)
 {
+    OutQuality = 0;
+
     D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS Data = {};
     Data.Flags       = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
     Data.Format      = Format;
@@ -1517,10 +1519,17 @@ int32 FD3D12Device::QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCou
     if (FAILED(hr))
     {
         D3D12_ERROR("[FD3D12Device] CheckFeatureSupport failed");
-        return 0;
+        return false;
     }
 
-    return static_cast<uint32>(Data.NumQualityLevels - 1);
+    // Zero quality levels means the device does not support this sample-count for this format
+    if (Data.NumQualityLevels == 0)
+    {
+        return false;
+    }
+
+    // Quality 0 is the standard multisample pattern, valid indices are [0, NumQualityLevels - 1]
+    return true;
 }
 
 bool FD3D12Device::SupportsSwapChainFormat(DXGI_FORMAT DXGIFormat, ESwapChainUsageFlags Usage) const
