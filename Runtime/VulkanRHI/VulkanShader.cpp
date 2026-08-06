@@ -6,13 +6,25 @@
 #include "VulkanRHI/VulkanPipelineLayout.h"
 #include "Core/Misc/CRC.h"
 
+#define SPV_ENABLE_UTILITY_CODE
 #include <spirv_cross_c.h>
 
 namespace SpirvOps
 {
+    constexpr uint16 OpName                   = 5;
+    constexpr uint16 OpMemberName             = 6;
     constexpr uint16 OpExtension              = 10;
     constexpr uint16 OpCapability             = 17;
+    constexpr uint16 OpTypeVector             = 23;
+    constexpr uint16 OpTypeMatrix             = 24;
     constexpr uint16 OpTypeImage              = 25;
+    constexpr uint16 OpTypeSampler            = 26;
+    constexpr uint16 OpTypeSampledImage       = 27;
+    constexpr uint16 OpTypeArray              = 28;
+    constexpr uint16 OpTypeRuntimeArray       = 29;
+    constexpr uint16 OpTypeStruct             = 30;
+    constexpr uint16 OpTypePointer            = 32;
+    constexpr uint16 OpTypeFunction           = 33;
     constexpr uint16 OpDecorate               = 71;
     constexpr uint16 OpMemberDecorate         = 72;
     constexpr uint16 OpDecorateString         = 5632;
@@ -63,6 +75,133 @@ static bool SpvReadLiteralString(const uint32* Inst, uint16 InstWords, uint16 St
 static constexpr uint32 SpvMakeInstructionHeader(uint16 OpCode, uint16 InstWords)
 {
     return (static_cast<uint32>(InstWords) << 16) | static_cast<uint32>(OpCode);
+}
+
+static bool SpvIsAnnotationOrDebugName(uint16 OpCode)
+{
+    switch (OpCode)
+    {
+        case SpirvOps::OpName:
+        case SpirvOps::OpMemberName:
+        case SpirvOps::OpDecorate:
+        case SpirvOps::OpMemberDecorate:
+        case SpirvOps::OpDecorateId:
+        case SpirvOps::OpDecorateString:
+        case SpirvOps::OpMemberDecorateString:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+static bool SpvIsMergeableTypeDeclaration(uint16 OpCode)
+{
+    switch (OpCode)
+    {
+        case SpirvOps::OpTypeVector:
+        case SpirvOps::OpTypeMatrix:
+        case SpirvOps::OpTypeImage:
+        case SpirvOps::OpTypeSampler:
+        case SpirvOps::OpTypeSampledImage:
+        case SpirvOps::OpTypePointer:
+        case SpirvOps::OpTypeFunction:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+static void SpvRemapId(uint32& InOutId, const TMap<uint32, uint32>& IdRemap)
+{
+    if (const uint32* Remapped = IdRemap.Find(InOutId))
+    {
+        InOutId = *Remapped;
+    }
+}
+
+static void SpvRemapTypeOperands(TArray<uint32>& Instruction, const TMap<uint32, uint32>& IdRemap)
+{
+    const uint16 OpCode   = static_cast<uint16>(Instruction[0] & 0xFFFFu);
+    const int32  NumWords = Instruction.Size();
+
+    bool bHasResult     = false;
+    bool bHasResultType = false;
+    SpvHasResultAndType(static_cast<SpvOp>(OpCode), &bHasResult, &bHasResultType);
+
+    if (bHasResultType && NumWords >= 2)
+    {
+        SpvRemapId(Instruction[1], IdRemap);
+    }
+
+    switch (OpCode)
+    {
+        case SpirvOps::OpTypeVector:
+        case SpirvOps::OpTypeMatrix:
+        case SpirvOps::OpTypeSampledImage:
+        case SpirvOps::OpTypeArray:
+        case SpirvOps::OpTypeRuntimeArray:
+        {
+            if (NumWords >= 3)
+            {
+                SpvRemapId(Instruction[2], IdRemap);
+            }
+            break;
+        }
+
+        case SpirvOps::OpTypePointer:
+        {
+            if (NumWords >= 4)
+            {
+                SpvRemapId(Instruction[3], IdRemap);
+            }
+            break;
+        }
+
+        case SpirvOps::OpTypeStruct:
+        case SpirvOps::OpTypeFunction:
+        {
+            for (int32 WordIndex = 2; WordIndex < NumWords; ++WordIndex)
+            {
+                SpvRemapId(Instruction[WordIndex], IdRemap);
+            }
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+
+static uint64 SpvHashTypeDeclaration(const TArray<uint32>& Instruction)
+{
+    uint64 Hash = CRC32::Generate(Instruction.Data(), sizeof(uint32));
+    if (Instruction.Size() > 2)
+    {
+        const uint64 OperandBytes = static_cast<uint64>(Instruction.Size() - 2) * sizeof(uint32);
+        HashCombine(Hash, CRC32::Generate(Instruction.Data() + 2, OperandBytes));
+    }
+
+    return Hash;
+}
+
+static bool SpvTypeDeclarationsMatch(const uint32* Existing, const TArray<uint32>& Candidate)
+{
+    if (Existing[0] != Candidate[0])
+    {
+        return false;
+    }
+
+    for (int32 WordIndex = 2; WordIndex < Candidate.Size(); ++WordIndex)
+    {
+        if (Existing[WordIndex] != Candidate[WordIndex])
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 static bool IsOneOfGoogleExtensions(const CHAR* Name)
@@ -245,11 +384,26 @@ TSharedRef<FVulkanShaderModule> FVulkanShader::GetOrCreateShaderModule(FVulkanPi
         return nullptr;
     }
 
-    FSpirvArray FinalCode;
-    if (!ForceUnknownStorageImageFormats(StrippedCode, FinalCode))
+    FSpirvArray RewrittenCode;
+    bool bRewroteFormats = false;
+    if (!ForceUnknownStorageImageFormats(StrippedCode, RewrittenCode, bRewroteFormats))
     {
         VULKAN_ERROR_CRITICAL("Failed to rewrite storage-image formats");
         return nullptr;
+    }
+
+    FSpirvArray FinalCode;
+    if (bRewroteFormats)
+    {
+        if (!MergeDuplicateTypeDeclarations(RewrittenCode, FinalCode))
+        {
+            VULKAN_ERROR_CRITICAL("Failed to merge duplicate type declarations");
+            return nullptr;
+        }
+    }
+    else
+    {
+        FinalCode = Move(RewrittenCode);
     }
 
     VkShaderModuleCreateInfo ShaderModuleCreateInfo = {};
@@ -961,9 +1115,10 @@ bool FVulkanShader::ValidateNoGoogleSpirvRequirements(const FSpirvArray& Words, 
     return true;
 }
 
-bool FVulkanShader::ForceUnknownStorageImageFormats(const FSpirvArray& InWords, FSpirvArray& OutWords)
+bool FVulkanShader::ForceUnknownStorageImageFormats(const FSpirvArray& InWords, FSpirvArray& OutWords, bool& bOutRewroteFormats)
 {
     OutWords.Clear();
+    bOutRewroteFormats = false;
 
     if (InWords.Size() < 5)
     {
@@ -1010,6 +1165,8 @@ bool FVulkanShader::ForceUnknownStorageImageFormats(const FSpirvArray& InWords, 
 
         Read += InstWords;
     }
+
+    bOutRewroteFormats = bNeedsRewrite;
 
     if (!bNeedsRewrite)
     {
@@ -1062,6 +1219,103 @@ bool FVulkanShader::ForceUnknownStorageImageFormats(const FSpirvArray& InWords, 
         {
             OutWords[InstStart + SpirvOps::OpTypeImageFormatWord] = SpirvOps::ImageFormatUnknown;
         }
+
+        Read += InstWords;
+    }
+
+    return true;
+}
+
+bool FVulkanShader::MergeDuplicateTypeDeclarations(const FSpirvArray& InWords, FSpirvArray& OutWords)
+{
+    OutWords.Clear();
+
+    if (InWords.Size() < 5)
+    {
+        return false;
+    }
+
+    const uint32* Words     = InWords.Data();
+    const uint32  WordCount = static_cast<uint32>(InWords.Size());
+
+    TMap<uint32, uint32> IdRemap;        // Merged-away result id -> surviving result id
+    TMap<uint64, int32>  TypeSignatures; // Type signature -> offset of the surviving declaration in CanonicalWords
+
+    TArray<uint32> CanonicalWords;
+    TArray<uint32> Instruction;
+
+    uint32 Read = 5;
+    while (Read < WordCount)
+    {
+        const uint16 OpCode    = static_cast<uint16>(Words[Read] & 0xFFFFu);
+        const uint16 InstWords = static_cast<uint16>(Words[Read] >> 16);
+
+        if (InstWords == 0 || (Read + InstWords) > WordCount)
+        {
+            return false;
+        }
+
+        if (SpvIsMergeableTypeDeclaration(OpCode) && InstWords >= 2)
+        {
+            Instruction.Clear();
+            for (uint16 WordIndex = 0; WordIndex < InstWords; ++WordIndex)
+            {
+                Instruction.Add(Words[Read + WordIndex]);
+            }
+
+            SpvRemapTypeOperands(Instruction, IdRemap);
+
+            const uint64 Signature = SpvHashTypeDeclaration(Instruction);
+
+            // On a hash collision the exact comparison fails and the declaration is left alone
+            const int32* ExistingOffset = TypeSignatures.Find(Signature);
+            if (ExistingOffset && SpvTypeDeclarationsMatch(CanonicalWords.Data() + *ExistingOffset, Instruction))
+            {
+                IdRemap.Add(Instruction[1], CanonicalWords[*ExistingOffset + 1]);
+            }
+            else if (!ExistingOffset)
+            {
+                TypeSignatures.Add(Signature, CanonicalWords.Size());
+                CanonicalWords.Append(Instruction);
+            }
+        }
+
+        Read += InstWords;
+    }
+
+    if (IdRemap.IsEmpty())
+    {
+        OutWords = InWords;
+        return true;
+    }
+
+    OutWords.Reserve(InWords.Size());
+    for (uint32 Index = 0; Index < 5; ++Index)
+    {
+        OutWords.Add(Words[Index]);
+    }
+
+    Read = 5;
+    while (Read < WordCount)
+    {
+        const uint16 OpCode    = static_cast<uint16>(Words[Read] & 0xFFFFu);
+        const uint16 InstWords = static_cast<uint16>(Words[Read] >> 16);
+
+        const bool bTargetsMergedId = (InstWords >= 2) && IdRemap.Contains(Words[Read + 1]);
+        if (bTargetsMergedId && (SpvIsAnnotationOrDebugName(OpCode) || SpvIsMergeableTypeDeclaration(OpCode)))
+        {
+            Read += InstWords;
+            continue;
+        }
+
+        Instruction.Clear();
+        for (uint16 WordIndex = 0; WordIndex < InstWords; ++WordIndex)
+        {
+            Instruction.Add(Words[Read + WordIndex]);
+        }
+
+        SpvRemapTypeOperands(Instruction, IdRemap);
+        OutWords.Append(Instruction);
 
         Read += InstWords;
     }
