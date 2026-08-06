@@ -317,6 +317,9 @@ function GenerateWorkspace()
         EngineLocation
     })
 
+    -- Must run before the file globs so the generated header ends up in the Core project
+    GenerateBuildStampHeader()
+
     LogInfo("Engine Path ='%s'", CreateOsPath(GetEnginePath()))
     LogInfo("RuntimeFolderPath = '%s'", CreateOsPath(GetRuntimeFolderPath()))
 

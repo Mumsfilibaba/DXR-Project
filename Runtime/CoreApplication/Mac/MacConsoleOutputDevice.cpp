@@ -95,6 +95,7 @@ void FMacConsoleOutputDevice::CreateConsole()
             NSSize ContentSize = [ScrollView contentSize];
             TextView = [[NSTextView alloc] initWithFrame:NSMakeRect(0.0, 0.0, ContentSize.width, ContentSize.height)];
             [TextView setEditable:NO];
+            [TextView setSelectable:YES];
             
             TextView.minSize = NSMakeSize(0.0f, ContentSize.height);
             TextView.maxSize = NSMakeSize(TNumericLimits<float>::Max(), TNumericLimits<float>::Max());
@@ -129,6 +130,7 @@ void FMacConsoleOutputDevice::CreateConsole()
             
             [WindowHandle setOpaque:YES];
             [WindowHandle makeKeyAndOrderFront:WindowHandle];
+            [WindowHandle makeFirstResponder:TextView];
 
             if(!GMacApplication)
             {
@@ -421,6 +423,13 @@ void FMacConsoleOutputDevice::MainThreadAppendStringAndScroll(NSAttributedString
     // TODO: CVar
     const NSUInteger MaxLineCount = 512;
     
+    // Only follow the tail when the view is already there
+    NSClipView*   ClipView     = ScrollView.contentView;
+    const CGFloat DocumentMaxY = NSMaxY([ScrollView.documentView bounds]);
+    const bool    bWasAtBottom = (DocumentMaxY - NSMaxY(ClipView.documentVisibleRect)) <= 1.0;
+    
+    NSRange Selection = [TextView selectedRange];
+    
     NSTextStorage* Storage = TextView.textStorage;
     [Storage beginEditing];
     
@@ -444,14 +453,37 @@ void FMacConsoleOutputDevice::MainThreadAppendStringAndScroll(NSAttributedString
         
         NSRange Range = NSMakeRange(0, LineIndex);
         [Storage deleteCharactersInRange:Range];
+        
+        // Slide the selection back by whatever was trimmed off the head
+        if (Selection.length > 0)
+        {
+            if (Selection.location >= LineIndex)
+            {
+                Selection.location -= LineIndex;
+            }
+            else
+            {
+                const NSUInteger Removed = LineIndex - Selection.location;
+                Selection.location = 0;
+                Selection.length   = (Selection.length > Removed) ? (Selection.length - Removed) : 0;
+            }
+        }
     }
     
     // Add the new String
     [Storage appendAttributedString:AttributedString];
     [Storage endEditing];
     
+    if (Selection.length > 0)
+    {
+        [TextView setSelectedRange:Selection];
+    }
+    
     // Scroll
-    [TextView scrollToEndOfDocument:TextView];
+    if (bWasAtBottom)
+    {
+        [TextView scrollToEndOfDocument:TextView];
+    }
     
     [AttributedString release];
 }

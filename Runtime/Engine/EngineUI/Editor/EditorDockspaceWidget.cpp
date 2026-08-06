@@ -12,6 +12,7 @@
 #include "Engine/EngineUI/Editor/EditorFrameProfilerWidget.h"
 #include "Engine/EngineUI/Editor/EditorRHIInfoWidget.h"
 #include "Engine/EngineUI/Editor/EditorStatsWidget.h"
+#include "Engine/EngineUI/Editor/EditorAboutWidget.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiCore.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
@@ -422,6 +423,19 @@ void FEditorDockspaceWidget::DrawMenuBar()
                     {
                         EditorWidgets::MenuItem("Engine Stats", nullptr, false, false);
                     }
+
+                    if (FEditorAboutWidget* AboutWidget = EditorEngine->GetAboutWidget().Get())
+                    {
+                        bool bVisible = AboutWidget->IsVisible();
+                        if (EditorWidgets::MenuItem("About", nullptr, bVisible))
+                        {
+                            AboutWidget->SetVisible(!bVisible);
+                        }
+                    }
+                    else
+                    {
+                        EditorWidgets::MenuItem("About", nullptr, false, false);
+                    }
                 }
 
                 EditorWidgets::EndMenuPopup();
@@ -438,7 +452,19 @@ void FEditorDockspaceWidget::DrawMenuBar()
             if (EditorWidgets::BeginMenuPopup(PopupHelp, HelpAnchor))
             {
                 EditorWidgets::MenuLabeledSeparator("About");
-                EditorWidgets::MenuItem("About");
+
+                if (FEditorAboutWidget* AboutWidget = EditorEngine ? EditorEngine->GetAboutWidget().Get() : nullptr)
+                {
+                    if (EditorWidgets::MenuItem("About"))
+                    {
+                        AboutWidget->SetVisible(true);
+                    }
+                }
+                else
+                {
+                    EditorWidgets::MenuItem("About", nullptr, false, false);
+                }
+
                 EditorWidgets::EndMenuPopup();
             }
         }

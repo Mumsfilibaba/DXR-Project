@@ -14,6 +14,7 @@ class FEditorGPUProfilerWidget;
 class FEditorFrameProfilerWidget;
 class FEditorRHIInfoWidget;
 class FEditorStatsWidget;
+class FEditorAboutWidget;
 class FCameraComponent;
 
 class ENGINE_API FEditorEngine : public FEngine
@@ -44,6 +45,7 @@ public:
     const TSharedPtr<FEditorFrameProfilerWidget>&    GetFrameProfilerWidget()    const { return FrameProfilerWidget; }
     const TSharedPtr<FEditorRHIInfoWidget>&          GetRHIInfoWidget()          const { return RHIInfoWidget; }
     const TSharedPtr<FEditorStatsWidget>&            GetStatsWidget()            const { return StatsWidget; }
+    const TSharedPtr<FEditorAboutWidget>&            GetAboutWidget()            const { return AboutWidget; }
 
     void SetSelectedActor(FActor* InActor);
     void ClearSelection();
@@ -77,6 +79,7 @@ private:
     TSharedPtr<FEditorFrameProfilerWidget>    FrameProfilerWidget;
     TSharedPtr<FEditorRHIInfoWidget>          RHIInfoWidget;
     TSharedPtr<FEditorStatsWidget>            StatsWidget;
+    TSharedPtr<FEditorAboutWidget>            AboutWidget;
     FRHITextureRef                            ViewportImage;
     IntVector2                                ViewportImageSize;
 };

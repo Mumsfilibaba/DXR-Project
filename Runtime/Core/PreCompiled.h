@@ -73,7 +73,7 @@
     #include "Core/Windows/WindowsPlatformTLS.h"
     #include "Core/Windows/WindowsPlatformThread.h"
     #include "Core/Windows/WindowsPlatformThreadMisc.h"
-#elif PLATFORM_MAC
+#elif PLATFORM_MACOS
     #include "Core/Mac/Mac.h"
     #include "Core/Mac/MacConditionVariable.h"
     #include "Core/Mac/MacCriticalSection.h"

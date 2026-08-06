@@ -6,6 +6,13 @@
 
 struct FImGuiTexture;
 
+// Name of the platform's shortcut modifier, for composing menu shortcut labels
+#if PLATFORM_MACOS
+    #define EDITOR_SHORTCUT_MOD "Cmd"
+#else
+    #define EDITOR_SHORTCUT_MOD "Ctrl"
+#endif
+
 enum class EVector3ControlType : uint8
 {
     Default,
@@ -144,7 +151,7 @@ struct ENGINE_API EditorWidgets
     static bool DrawIntProperty(const CHAR* Label, int32& InOutValue, float Speed, int32 MinValue, int32 MaxValue, const CHAR* Format, bool bUseSlider, const int32* InRevertValue, bool bEnabled = true);
     static bool DrawCheckboxProperty(const CHAR* Label, bool& InOutValue, const bool* InRevertValue, bool bEnabled = true);
     static bool DrawComboProperty(const CHAR* Label, int32& InOutValue, const CHAR* const* Items, int32 ItemCount, const int32* InRevertValue, bool bEnabled = true);
-    static void DrawTextProperty(const CHAR* Label, const CHAR* ValueText);
+    static bool DrawTextProperty(const CHAR* Label, const CHAR* ValueText);
     static void DrawReadOnlyFloat3Property(const CHAR* Label, const Vector3& Value);
 
     static void DrawTextureProperty(const CHAR* Label, ImTextureID Texture, float PreviewSize = 48.0f);
@@ -217,6 +224,7 @@ struct ENGINE_API EditorWidgets
     static void EndRichTextView(RichTextViewContext& InOutContext);
 
     static String GetSelectedRichText(const RichTextViewContext& InContext);
+    static String GetAllRichText(const RichTextViewContext& InContext);
 
     // -----------------------------------------------------------------------------------------
     // Buttons

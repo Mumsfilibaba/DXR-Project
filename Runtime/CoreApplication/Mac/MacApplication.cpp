@@ -153,6 +153,18 @@ FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
         [AppMenu addItem:[NSMenuItem separatorItem]];
         [AppMenu addItemWithTitle:@"Quit DXR-Engine" action:@selector(terminate:) keyEquivalent:@"q"];
 
+        // Create the edit menu
+        NSMenuItem* EditMenuItem = [MenuBar addItemWithTitle:@"" action:nil keyEquivalent:@""];
+
+        NSMenu* EditMenu = [[NSMenu alloc] initWithTitle:@"Edit"];
+        EditMenuItem.submenu = EditMenu;
+
+        [EditMenu addItemWithTitle:@"Cut" action:@selector(cut:) keyEquivalent:@"x"];
+        [EditMenu addItemWithTitle:@"Copy" action:@selector(copy:) keyEquivalent:@"c"];
+        [EditMenu addItemWithTitle:@"Paste" action:@selector(paste:) keyEquivalent:@"v"];
+        [EditMenu addItem:[NSMenuItem separatorItem]];
+        [EditMenu addItemWithTitle:@"Select All" action:@selector(selectAll:) keyEquivalent:@"a"];
+
         // Create the window menu
         NSMenuItem* WindowMenuItem = [MenuBar addItemWithTitle:@"" action:nil keyEquivalent:@""];
 
@@ -487,18 +499,23 @@ void FMacApplication::CloseWindow(const TSharedRef<FMacWindow>& Window)
     }
 }
 
-void FMacApplication::DeferEvent(NSObject* EventObject)
+void FMacApplication::UpdateWindowUnderCursor()
 {
-    SCOPED_AUTORELEASE_POOL();
-
-    CHECK_COCOA_MAIN_THREAD();
-
     FCocoaWindow* NewWindowUnderCursor = FindNSWindowUnderCursor();
     if (WindowUnderCursor != NewWindowUnderCursor)
     {
         [WindowUnderCursor release];
         WindowUnderCursor = [NewWindowUnderCursor retain];
     }
+}
+
+void FMacApplication::DeferEvent(NSObject* EventObject)
+{
+    SCOPED_AUTORELEASE_POOL();
+
+    CHECK_COCOA_MAIN_THREAD();
+
+    UpdateWindowUnderCursor();
     
     if (EventObject)
     {
@@ -724,20 +741,34 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& DeferredEven
 
 NSEvent* FMacApplication::OnNSEvent(NSEvent* Event)
 {
+    NSWindow* EventWindow = [Event window];
+    if (EventWindow && ![EventWindow isKindOfClass:[FCocoaWindow class]])
+    {
+        UpdateWindowUnderCursor();
+
+        // Modifier state is global rather than per-window
+        if (Event.type == NSEventTypeFlagsChanged)
+        {
+            DeferEvent(Event);
+        }
+
+        return Event;
+    }
+
     NSEvent* ReturnEvent = Event;
     DeferEvent(Event);
-    
+
     switch(Event.type)
     {
         case NSEventTypeKeyDown:
         case NSEventTypeKeyUp:
             ReturnEvent = nullptr;
             break;
-            
+
         default:
             break;
     }
-    
+
     // If the event is returned it is continued to be sent down the responder change, and for events
     // that we want to stop sending we are returning nullptr.
     return ReturnEvent;

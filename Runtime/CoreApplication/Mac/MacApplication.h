@@ -246,6 +246,11 @@ public:
     FCocoaWindow* FindNSWindowUnderCursor() const;
 
     /**
+     * @brief Updates the cached window under the mouse cursor.
+     */
+    void UpdateWindowUnderCursor();
+
+    /**
      * @brief Finds the FMacWindow associated with a given NSWindow.
      * 
      * @param Window The native NSWindow to locate in the engine-level window array.
