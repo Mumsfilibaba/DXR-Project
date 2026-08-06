@@ -8,6 +8,7 @@
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
+#include "RendererCore/VertexStreamCache.h"
 #include "Core/Misc/ConsoleManager.h"
 
 #if EDITOR_BUILD
@@ -30,11 +31,13 @@ FEditorNoJitterDepthPass::~FEditorNoJitterDepthPass()
     MaterialPSOs.Clear();
 }
 
-void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
+void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const FVertexDeclaration& Declaration, const FFrameResources& /* FrameResources */)
 {
-    const int32  MaterialFlags = static_cast<int32>(Material->GetMaterialFlags());
+    const FMaterialFeatures Features(Material, Declaration);
+
+    const int32  MaterialFlags = static_cast<int32>(Features.Flags);
     const bool   bBindless     = RHI::bSupportsBindless && GPrePassBindless;
-    const uint64 PSOKey        = MakeMaterialPSOKey(MaterialFlags, bBindless);
+    const uint64 PSOKey        = MakeMaterialPSOKey(MaterialFlags, bBindless, Declaration.GetID());
 
     FGraphicsPipelineStateInstance* CachedPSO = MaterialPSOs.Find(PSOKey);
     if (CachedPSO)
@@ -47,17 +50,17 @@ void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const F
 
     ShaderDefines.Emplace("USE_UNJITTERED_CAMERA", GEditorSelectionUseUnjitteredCamera ? "(1)" : "(0)");
 
-    if (Material->HasHeightMap())
+    if (Features.HasHeightMap())
     {
         ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(1)");
-        ShaderDefines.Emplace("ENABLE_PARALLAX_CLIPPING", Material->HasParallaxClipping() ? "(1)" : "(0)");
+        ShaderDefines.Emplace("ENABLE_PARALLAX_CLIPPING", Features.HasParallaxClipping() ? "(1)" : "(0)");
     }
     else
     {
         ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(0)");
     }
 
-    if (Material->HasAlphaMask())
+    if (Features.HasAlphaMask())
     {
         ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
     }
@@ -66,7 +69,7 @@ void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const F
         ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
     }
 
-    ShaderDefines.Emplace("ENABLE_DOUBLE_SIDED", Material->IsDoubleSided() ? "(1)" : "(0)");
+    ShaderDefines.Emplace("ENABLE_DOUBLE_SIDED", Features.IsDoubleSided() ? "(1)" : "(0)");
     ShaderDefines.Emplace("BINDLESS_PRE_PASS", bBindless ? "(1)" : "(0)");
 
     const EShaderModel TargetShaderModel = bBindless ? EShaderModel::SM_6_6 : EShaderModel::SM_6_2;
@@ -87,7 +90,7 @@ void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const F
         return;
     }
 
-    const bool bWantPixelShader = Material->HasHeightMap() || Material->HasAlphaMask();
+    const bool bWantPixelShader = Features.HasHeightMap() || Features.HasAlphaMask();
     if (bWantPixelShader)
     {
         CompileInfo = FShaderCompileInfo("PSMain", TargetShaderModel, EShaderStage::Pixel, ShaderDefines);
@@ -118,7 +121,7 @@ void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const F
     }
 
     FRHIRasterizerStateDesc RasterizerStateDesc;
-    RasterizerStateDesc.CullMode = Material->IsDoubleSided() ? ECullMode::None : ECullMode::Back;
+    RasterizerStateDesc.CullMode = Features.IsDoubleSided() ? ECullMode::None : ECullMode::Back;
 
     NewPipelineInstance.RasterizerState = RHI::CreateRasterizerState(RasterizerStateDesc);
     if (!NewPipelineInstance.RasterizerState)
@@ -136,42 +139,15 @@ void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const F
         return;
     }
 
-    if (Material->HasHeightMap())
+    NewPipelineInstance.StreamBinding = FVertexStreamCache::Get().GetBinding(Declaration, Features.GetDepthOnlyAttributes());
+    if (!NewPipelineInstance.StreamBinding)
     {
-        NewPipelineInstance.InputLayout = FrameResources.MeshInputLayout;
-    }
-    else if (Material->HasAlphaMask())
-    {
-        TArray<FRHIInputElementDesc> InputElements =
-        {
-            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 },
-            { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertexTexCoord), 1, 0, 1, EVertexInputClass::Vertex, 0 }
-        };
-
-        NewPipelineInstance.InputLayout = RHI::CreateInputLayout(InputElements);
-        if (!NewPipelineInstance.InputLayout)
-        {
-            DEBUG_BREAK();
-            return;
-        }
-    }
-    else
-    {
-        TArray<FRHIInputElementDesc> InputElements =
-        {
-            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 }
-        };
-
-        NewPipelineInstance.InputLayout = RHI::CreateInputLayout(InputElements);
-        if (!NewPipelineInstance.InputLayout)
-        {
-            DEBUG_BREAK();
-            return;
-        }
+        DEBUG_BREAK();
+        return;
     }
 
     FRHIGraphicsPipelineStateDesc PSODesc;
-    PSODesc.InputLayout                                = NewPipelineInstance.InputLayout.Get();
+    PSODesc.InputLayout                                = NewPipelineInstance.StreamBinding->InputLayout.Get();
     PSODesc.BlendState                                 = NewPipelineInstance.BlendState.Get();
     PSODesc.DepthStencilState                          = NewPipelineInstance.DepthStencilState.Get();
     PSODesc.RasterizerState                            = NewPipelineInstance.RasterizerState.Get();
@@ -262,7 +238,9 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
             continue;
         }
 
-        const uint64 PSOKey = MakeMaterialPSOKey(static_cast<int32>(Material->GetMaterialFlags()), bBindless);
+        const FMaterialFeatures Features(Batch.EffectiveMaterialFlags);
+
+        const uint64 PSOKey = MakeMaterialPSOKey(static_cast<int32>(Features.Flags), bBindless, Batch.Declaration.GetID());
         FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(PSOKey);
         if (!PipelineInstance)
         {
@@ -276,26 +254,26 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
         CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
         // The parallax march reads the camera position in the pixel shader, so it needs the camera buffer as well.
-        if (Material->HasHeightMap())
+        if (Features.HasHeightMap())
         {
             CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), FrameResources.CameraBuffer.Get(), 0);
         }
 
-        if (Material->HasAlphaMask() || Material->HasHeightMap())
+        if (Features.HasAlphaMask() || Features.HasHeightMap())
         {
-            if (Material->HasHeightMap())
+            if (Features.HasHeightMap())
             {
                 CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), FrameResources.MaterialDataBufferSRV.Get(), 2);
             }
 
             CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
 
-            if (Material->HasAlphaMask())
+            if (Features.HasAlphaMask())
             {
                 CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
             }
 
-            if (Material->HasHeightMap())
+            if (Features.HasHeightMap())
             {
                 CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
             }
@@ -305,37 +283,7 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
         {
             FSceneStaticMesh* StaticMesh = MeshReference.StaticMesh;
 
-            if (Material->HasHeightMap())
-            {
-                FRHIBuffer* VertexBuffers[] =
-                {
-                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
-                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Normals),
-                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
-                };
-
-                CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
-            }
-            else if (Material->HasAlphaMask())
-            {
-                FRHIBuffer* VertexBuffers[] =
-                {
-                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
-                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
-                };
-
-                CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
-            }
-            else
-            {
-                FRHIBuffer* VertexBuffers[] =
-                {
-                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
-                };
-
-                CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
-            }
-
+            StaticMesh->Mesh->SetVertexBuffers(CommandList, *PipelineInstance->StreamBinding);
             CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat); 
 
             StaticMesh->PerObjectBuffer.MaterialIndex = Material->GetBufferIndex();
@@ -368,11 +316,13 @@ FEditorSelectionIDPass::~FEditorSelectionIDPass()
     MaterialPSOs.Clear();
 }
 
-void FEditorSelectionIDPass::PreparePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
+void FEditorSelectionIDPass::PreparePipelineState(FMaterial* Material, const FVertexDeclaration& Declaration, const FFrameResources& /* FrameResources */)
 {
-    const int32 MaterialFlags = static_cast<int32>(Material->GetMaterialFlags());
+    const FMaterialFeatures Features(Material, Declaration);
 
-    FGraphicsPipelineStateInstance* CachedPSO = MaterialPSOs.Find(MaterialFlags);
+    const uint64 PSOKey = MakeMaterialPSOKey(static_cast<int32>(Features.Flags), false, Declaration.GetID());
+
+    FGraphicsPipelineStateInstance* CachedPSO = MaterialPSOs.Find(PSOKey);
     if (CachedPSO)
     {
         return;
@@ -383,17 +333,17 @@ void FEditorSelectionIDPass::PreparePipelineState(FMaterial* Material, const FFr
 
     ShaderDefines.Emplace("USE_UNJITTERED_CAMERA", GEditorSelectionUseUnjitteredCamera ? "(1)" : "(0)");
 
-    if (Material->HasHeightMap())
+    if (Features.HasHeightMap())
     {
         ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(1)");
-        ShaderDefines.Emplace("ENABLE_PARALLAX_CLIPPING", Material->HasParallaxClipping() ? "(1)" : "(0)");
+        ShaderDefines.Emplace("ENABLE_PARALLAX_CLIPPING", Features.HasParallaxClipping() ? "(1)" : "(0)");
     }
     else
     {
         ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(0)");
     }
 
-    if (Material->HasAlphaMask())
+    if (Features.HasAlphaMask())
     {
         ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
     }
@@ -402,7 +352,7 @@ void FEditorSelectionIDPass::PreparePipelineState(FMaterial* Material, const FFr
         ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
     }
 
-    ShaderDefines.Emplace("ENABLE_DOUBLE_SIDED", Material->IsDoubleSided() ? "(1)" : "(0)");
+    ShaderDefines.Emplace("ENABLE_DOUBLE_SIDED", Features.IsDoubleSided() ? "(1)" : "(0)");
 
     FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, ShaderDefines);
     if (!FShaderCompiler::Get().CompileFromFile("Shaders/EditorSelectionID.hlsl", CompileInfo, ShaderCode))
@@ -446,7 +396,7 @@ void FEditorSelectionIDPass::PreparePipelineState(FMaterial* Material, const FFr
     }
 
     FRHIRasterizerStateDesc RasterizerStateDesc;
-    RasterizerStateDesc.CullMode = Material->IsDoubleSided() ? ECullMode::None : ECullMode::Back;
+    RasterizerStateDesc.CullMode = Features.IsDoubleSided() ? ECullMode::None : ECullMode::Back;
 
     NewPipelineInstance.RasterizerState = RHI::CreateRasterizerState(RasterizerStateDesc);
     if (!NewPipelineInstance.RasterizerState)
@@ -464,42 +414,15 @@ void FEditorSelectionIDPass::PreparePipelineState(FMaterial* Material, const FFr
         return;
     }
 
-    if (Material->HasHeightMap())
+    NewPipelineInstance.StreamBinding = FVertexStreamCache::Get().GetBinding(Declaration, Features.GetDepthOnlyAttributes());
+    if (!NewPipelineInstance.StreamBinding)
     {
-        NewPipelineInstance.InputLayout = FrameResources.MeshInputLayout;
-    }
-    else if (Material->HasAlphaMask())
-    {
-        TArray<FRHIInputElementDesc> InputElements =
-        {
-            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 },
-            { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertexTexCoord), 1, 0, 1, EVertexInputClass::Vertex, 0 }
-        };
-
-        NewPipelineInstance.InputLayout = RHI::CreateInputLayout(InputElements);
-        if (!NewPipelineInstance.InputLayout)
-        {
-            DEBUG_BREAK();
-            return;
-        }
-    }
-    else
-    {
-        TArray<FRHIInputElementDesc> InputElements =
-        {
-            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 }
-        };
-
-        NewPipelineInstance.InputLayout = RHI::CreateInputLayout(InputElements);
-        if (!NewPipelineInstance.InputLayout)
-        {
-            DEBUG_BREAK();
-            return;
-        }
+        DEBUG_BREAK();
+        return;
     }
 
     FRHIGraphicsPipelineStateDesc PSODesc;
-    PSODesc.InputLayout                                    = NewPipelineInstance.InputLayout.Get();
+    PSODesc.InputLayout                                    = NewPipelineInstance.StreamBinding->InputLayout.Get();
     PSODesc.BlendState                                     = NewPipelineInstance.BlendState.Get();
     PSODesc.DepthStencilState                              = NewPipelineInstance.DepthStencilState.Get();
     PSODesc.RasterizerState                                = NewPipelineInstance.RasterizerState.Get();
@@ -517,11 +440,11 @@ void FEditorSelectionIDPass::PreparePipelineState(FMaterial* Material, const FFr
     }
     else
     {
-        const String DebugName = String::CreateFormatted("Editor SelectionID PSO %d", MaterialFlags);
+        const String DebugName = String::CreateFormatted("Editor SelectionID PSO %d", static_cast<int32>(Features.Flags));
         NewPipelineInstance.PipelineState->SetDebugName(DebugName);
     }
 
-    MaterialPSOs.Add(MaterialFlags, Move(NewPipelineInstance));
+    MaterialPSOs.Add(PSOKey, Move(NewPipelineInstance));
 }
 
 bool FEditorSelectionIDPass::Initialize(FFrameResources& FrameResources)
@@ -593,7 +516,9 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
             continue;
         }
 
-        FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(static_cast<int32>(Material->GetMaterialFlags()));
+        const FMaterialFeatures Features(Batch.EffectiveMaterialFlags);
+
+        FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(MakeMaterialPSOKey(static_cast<int32>(Features.Flags), false, Batch.Declaration.GetID()));
         if (!PipelineInstance)
         {
             DEBUG_BREAK();
@@ -607,12 +532,12 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
 
         CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
 
-        if (Material->HasAlphaMask())
+        if (Features.HasAlphaMask())
         {
             CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
         }
 
-        if (Material->HasHeightMap())
+        if (Features.HasHeightMap())
         {
             CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
@@ -624,37 +549,7 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
         {
             FSceneStaticMesh* StaticMesh = MeshReference.StaticMesh;
 
-            if (Material->HasHeightMap())
-            {
-                FRHIBuffer* VertexBuffers[] =
-                {
-                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
-                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Normals),
-                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
-                };
-
-                CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
-            }
-            else if (Material->HasAlphaMask())
-            {
-                FRHIBuffer* VertexBuffers[] =
-                {
-                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
-                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
-                };
-
-                CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
-            }
-            else
-            {
-                FRHIBuffer* VertexBuffers[] =
-                {
-                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
-                };
-
-                CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
-            }
-
+            StaticMesh->Mesh->SetVertexBuffers(CommandList, *PipelineInstance->StreamBinding);
             CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
 
             StaticMesh->PerObjectBuffer.MaterialIndex = Material->GetBufferIndex();

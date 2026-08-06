@@ -6,6 +6,7 @@
 #include "ImageBasedLighting.hlsli"
 #include "RayTracingBindless.hlsli"
 #include "TangentSpace.hlsli"
+#include "VertexPacking.hlsli"
 
 struct FHitSurface
 {
@@ -15,29 +16,35 @@ struct FHitSurface
     float2 TexCoord;
 };
 
-FHitSurface InterpolateTriangleHit(StructuredBuffer<FVertex> InVertices, ByteAddressBuffer InIndices, uint PrimitiveIndex, float2 Barycentrics)
+FHitSurface InterpolateTriangleHit(StructuredBuffer<FVertexAttributes> InAttributes, ByteAddressBuffer InIndices, uint PrimitiveIndex, float2 Barycentrics)
 {
     const uint   TriangleIndexStride = 3 * 4;
     const uint3  Indices             = InIndices.Load3(PrimitiveIndex * TriangleIndexStride);
     const float3 BarycentricCoords   = float3(1.0f - Barycentrics.x - Barycentrics.y, Barycentrics.x, Barycentrics.y);
 
+    const FVertexAttributes Attributes0 = InAttributes[Indices[0]];
+    const FVertexAttributes Attributes1 = InAttributes[Indices[1]];
+    const FVertexAttributes Attributes2 = InAttributes[Indices[2]];
+
+    const float4 Tangent0 = UnpackSnorm16x4(Attributes0.PackedTangent);
+
     FHitSurface Surface;
     Surface.Normal = normalize(
-        (InVertices[Indices[0]].Normal * BarycentricCoords.x) +
-        (InVertices[Indices[1]].Normal * BarycentricCoords.y) +
-        (InVertices[Indices[2]].Normal * BarycentricCoords.z));
+        (UnpackSnorm16x4(Attributes0.PackedNormal).xyz * BarycentricCoords.x) +
+        (UnpackSnorm16x4(Attributes1.PackedNormal).xyz * BarycentricCoords.y) +
+        (UnpackSnorm16x4(Attributes2.PackedNormal).xyz * BarycentricCoords.z));
 
     Surface.Tangent = normalize(
-        (InVertices[Indices[0]].Tangent * BarycentricCoords.x) +
-        (InVertices[Indices[1]].Tangent * BarycentricCoords.y) +
-        (InVertices[Indices[2]].Tangent * BarycentricCoords.z));
+        (Tangent0.xyz                                   * BarycentricCoords.x) +
+        (UnpackSnorm16x4(Attributes1.PackedTangent).xyz * BarycentricCoords.y) +
+        (UnpackSnorm16x4(Attributes2.PackedTangent).xyz * BarycentricCoords.z));
 
-    Surface.TangentSign = InVertices[Indices[0]].TangentSign;
+    Surface.TangentSign = Tangent0.w;
 
     Surface.TexCoord =
-        (InVertices[Indices[0]].TexCoord * BarycentricCoords.x) +
-        (InVertices[Indices[1]].TexCoord * BarycentricCoords.y) +
-        (InVertices[Indices[2]].TexCoord * BarycentricCoords.z);
+        (Attributes0.TexCoord * BarycentricCoords.x) +
+        (Attributes1.TexCoord * BarycentricCoords.y) +
+        (Attributes2.TexCoord * BarycentricCoords.z);
 
     return Surface;
 }

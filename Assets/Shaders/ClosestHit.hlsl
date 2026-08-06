@@ -23,12 +23,12 @@ SamplerState EnvironmentSampler : register(s2);
 SamplerState LUTSampler         : register(s3);
 
 #if !RAY_TRACING_BINDLESS
-    StructuredBuffer<FVertex> InVertices      : register(t0, D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL);
-    ByteAddressBuffer         InIndices       : register(t1, D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL);
-    Texture2D<float4>         AlbedoTex       : register(t2, D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL);
-    Texture2D<float4>         NormalTex       : register(t3, D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL);
-    Texture2D<float4>         MaterialTex     : register(t4, D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL);
-    SamplerState              MaterialSampler : register(s0, D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL);
+    StructuredBuffer<FVertexAttributes> InAttributes    : register(t0, D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL);
+    ByteAddressBuffer                   InIndices       : register(t1, D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL);
+    Texture2D<float4>                   AlbedoTex       : register(t2, D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL);
+    Texture2D<float4>                   NormalTex       : register(t3, D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL);
+    Texture2D<float4>                   MaterialTex     : register(t4, D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL);
+    SamplerState                        MaterialSampler : register(s0, D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL);
 #endif
 
 [shader("closesthit")]
@@ -38,15 +38,15 @@ void ClosestHit(inout FRayPayload PayLoad, in BuiltInTriangleIntersectionAttribu
     const FMaterial                  MaterialData    = Materials[GeometryIndices.MaterialIndex];
 
 #if RAY_TRACING_BINDLESS
-    StructuredBuffer<FVertex> InVertices      = GetResourceFromPackedDescriptorIndex(GeometryIndices.VerticesHandle);
-    ByteAddressBuffer         InIndices       = GetResourceFromPackedDescriptorIndex(GeometryIndices.IndicesHandle);
-    Texture2D<float4>         AlbedoTex       = GetResourceFromPackedDescriptorIndex(MaterialData.AlbedoHandle);
-    Texture2D<float4>         NormalTex       = GetResourceFromPackedDescriptorIndex(MaterialData.NormalHandle);
-    Texture2D<float4>         MaterialTex     = GetResourceFromPackedDescriptorIndex(MaterialData.MaterialHandle);
-    SamplerState              MaterialSampler = GetMaterialSamplerBindless(MaterialData);
+    StructuredBuffer<FVertexAttributes> InAttributes    = GetResourceFromPackedDescriptorIndex(GeometryIndices.AttributesHandle);
+    ByteAddressBuffer                   InIndices       = GetResourceFromPackedDescriptorIndex(GeometryIndices.IndicesHandle);
+    Texture2D<float4>                   AlbedoTex       = GetResourceFromPackedDescriptorIndex(MaterialData.AlbedoHandle);
+    Texture2D<float4>                   NormalTex       = GetResourceFromPackedDescriptorIndex(MaterialData.NormalHandle);
+    Texture2D<float4>                   MaterialTex     = GetResourceFromPackedDescriptorIndex(MaterialData.MaterialHandle);
+    SamplerState                        MaterialSampler = GetMaterialSamplerBindless(MaterialData);
 #endif
 
-    FHitSurface Surface = InterpolateTriangleHit(InVertices, InIndices, PrimitiveIndex(), IntersectionAttributes.barycentrics);
+    FHitSurface Surface = InterpolateTriangleHit(InAttributes, InIndices, PrimitiveIndex(), IntersectionAttributes.barycentrics);
     TransformHitSurfaceToWorld(Surface, ObjectToWorld3x4(), WorldToObject3x4());
 
     const float3 FacingViewDir = normalize(-WorldRayDirection());

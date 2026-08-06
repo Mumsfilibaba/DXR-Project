@@ -320,22 +320,6 @@ bool FSceneRenderer::Initialize()
         Resources.PerObjectBuffer->SetDebugName("PerObjectBuffer");
     }
 
-    // Initialize standard input layout
-    TArray<FRHIInputElementDesc> InputElements =
-    {
-        { "POSITION", 0, EFormat::R32G32B32_Float,    sizeof(FVertexPosition), 0, 0,  0, EVertexInputClass::Vertex, 0 },
-        { "NORMAL",   0, EFormat::R32G32B32_Float,    sizeof(FVertexNormal),   1, 0,  1, EVertexInputClass::Vertex, 0 },
-        { "TANGENT",  0, EFormat::R32G32B32A32_Float, sizeof(FVertexNormal),   1, 12, 2, EVertexInputClass::Vertex, 0 },
-        { "TEXCOORD", 0, EFormat::R32G32_Float,       sizeof(FVertexTexCoord), 2, 0,  3, EVertexInputClass::Vertex, 0 },
-    };
-
-    Resources.MeshInputLayout = RHI::CreateInputLayout(InputElements);
-    if (!Resources.MeshInputLayout)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
     {
         FRHISamplerStateDesc SamplerStateDesc;
         SamplerStateDesc.AddressU       = ESamplerMode::Clamp;
@@ -653,20 +637,31 @@ void FSceneRenderer::RenderThread_PrepareResources(const FSceneRenderView& Scene
     {
         Resources.MaterialData.Clear();
 
+        // TODO: Only do this once?
+        for (const FSceneStaticMesh* StaticMesh : Scene->GetStaticMeshes())
+        {
+            const FVertexDeclaration& Declaration = StaticMesh->Mesh->GetVertexDeclaration();
+            for (const TSharedPtr<FMaterial>& MaterialRef : StaticMesh->Materials)
+            {
+                FMaterial* Material = MaterialRef.Get();
+                if (!Material)
+                {
+                    continue;
+                }
+
+            #if EDITOR_BUILD
+                EditorNoJitterDepthPass->PreparePipelineState(Material, Declaration, Resources);
+                EditorSelectionIDPass->PreparePipelineState(Material, Declaration, Resources);
+            #endif
+
+                DepthPrePass->PreparePipelineState(Material, Declaration, Resources);
+                BasePass->PreparePipelineState(Material, Declaration, Resources);
+            }
+        }
+
         int32 MaterialIndex = 0;
         for (FMaterial* Material : Scene->GetMaterials())
         {
-        // TODO: Only do this once?
-        #if EDITOR_BUILD
-            EditorNoJitterDepthPass->PreparePipelineState(Material, Resources);
-            EditorSelectionIDPass->PreparePipelineState(Material, Resources);
-        #endif
-
-            DepthPrePass->PreparePipelineState(Material, Resources);
-            BasePass->PreparePipelineState(Material, Resources);
-            CascadedShadowsRenderPass->PreparePipelineState(Material, Resources);
-            PointLightRenderPass->PreparePipelineState(Material, Resources);
-
             Material->SetBufferIndex(MaterialIndex++);
 
             FMaterialHLSL MaterialEntry;
@@ -965,7 +960,7 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
     {
         if (bRayTracingWasActive)
         {
-            RayTracer.ReleaseRayTracingGeometry(CurrentScene);
+            RayTracer.ReleaseRayTracingResources(CurrentScene);
         }
         
         STAT_SET(STAT_RT_Active,                  0);

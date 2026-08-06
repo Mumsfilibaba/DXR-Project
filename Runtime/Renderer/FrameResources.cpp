@@ -422,8 +422,6 @@ void FFrameResources::Release()
     ReducedDepthBuffer[0].Reset();
     ReducedDepthBuffer[1].Reset();
 
-    MeshInputLayout.Reset();
-
     RayTracingScene.Reset();
     RayTracingOutput.Reset();
     RayTracingShaderBindingTable.Reset();

@@ -7,6 +7,9 @@
 #include "Engine/EngineModule.h"
 #include "Engine/Resources/Resource.h"
 #include "Engine/Assets/ModelCreateInfo.h"
+#include "RendererCore/VertexDeclaration.h"
+
+struct FVertexStreamBinding;
 
 struct FSubMesh
 {
@@ -25,34 +28,40 @@ struct FSubMesh
     int32  MaterialIndex;
 };
 
-struct EVertexStream
-{
-    enum Type
-    {
-        Packed    = 0,
-        Positions = 1,
-        Normals   = 2,
-        TexCoords = 3,
-        Count,
-    };
-};
-
 class ENGINE_API FMesh
 {
 public:
     FMesh();
     ~FMesh();
 
-    bool Init(const FMeshCreateInfo& CreateInfo, bool bCreateVertexAndIndexSRVs = false);
+    bool Init(const FMeshCreateInfo& CreateInfo, bool bCreateRayTracingResources = false);
     bool BuildAccelerationStructure(FRHICommandList& CommandList);
 
-    bool CreateVertexAndIndexSRVs();
-    bool CreateRayTracingGeometry();
-    void ReleaseRayTracingGeometry();
+    bool EnsureRayTracingResources();
+    void ReleaseRayTracingResources();
 
-    FRHIBuffer*             GetVertexBuffer(EVertexStream::Type VertexStream)    const;
-    FRHIShaderResourceView* GetVertexBufferSRV(EVertexStream::Type VertexStream) const;
-    
+    void SetVertexBuffers(FRHICommandList& CommandList, const FVertexStreamBinding& Binding) const;
+
+    const FVertexDeclaration& GetVertexDeclaration() const
+    {
+        return Declaration;
+    }
+
+    FRHIBuffer* GetPositionBuffer() const
+    {
+        return VertexStreams[EVertexStreamIndex::Position].Get();
+    }
+
+    FRHIBuffer* GetAttributeBuffer() const
+    {
+        return VertexStreams[EVertexStreamIndex::Attributes].Get();
+    }
+
+    FRHIShaderResourceView* GetAttributeBufferSRV() const
+    {
+        return AttributeBufferSRV.Get();
+    }
+
     FRHIBuffer* GetIndexBuffer() const
     {
         return IndexBuffer.Get();
@@ -110,10 +119,12 @@ public:
     
 private:
     void CreateBoundingBox(const FMeshCreateInfo& CreateInfo);
+    bool CreateVertexStreams(const FMeshCreateInfo& CreateInfo);
 
     String                               MeshName;
-    FRHIBufferRef                        VertexBuffers[EVertexStream::Count];
-    FRHIShaderResourceViewRef            VertexBufferSRVs[EVertexStream::Count];
+    FVertexDeclaration                   Declaration;
+    FRHIBufferRef                        VertexStreams[VERTEX_MAX_STREAMS];
+    FRHIShaderResourceViewRef            AttributeBufferSRV;
     FRHIBufferRef                        IndexBuffer;
     FRHIShaderResourceViewRef            IndexBufferSRV;
     FRHIGeometryAccelerationStructureRef RayTracingGeometry;

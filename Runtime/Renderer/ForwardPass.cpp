@@ -10,6 +10,10 @@
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
+#include "RendererCore/VertexStreamCache.h"
+
+static constexpr EVertexAttributeFlags FORWARD_PASS_ATTRIBUTES = 
+    EVertexAttributeFlags::Position | EVertexAttributeFlags::TangentBasis | EVertexAttributeFlags::TexCoord0;
 
 static bool GForwardPassBindless = false;
 static FAutoConsoleVariableRef CVarForwardPassBindless(
@@ -17,7 +21,7 @@ static FAutoConsoleVariableRef CVarForwardPassBindless(
     "When true, the forward pass samples per-material textures (Albedo / Normal / Material / Height) and the material sampler via SM 6.6 ResourceDescriptorHeap[] / SamplerDescriptorHeap[] and a per-material indices buffer instead of register bindings. Full-frame SRVs / samplers (sky, integration LUT, shadow maps) remain non-bindless.",
     GForwardPassBindless);
 
-static uint64 MakeForwardPSOKey(bool bBindless, bool bEnableParallax, bool bEnableClipping)
+static uint64 MakeForwardPSOKey(bool bBindless, bool bEnableParallax, bool bEnableClipping, uint8 DeclarationID)
 {
     int32 Flags = bEnableParallax ? static_cast<int32>(EMaterialFlags::EnableHeight) : 0;
     if (bEnableClipping)
@@ -25,7 +29,7 @@ static uint64 MakeForwardPSOKey(bool bBindless, bool bEnableParallax, bool bEnab
         Flags |= static_cast<int32>(EMaterialFlags::EnableParallaxClipping);
     }
 
-    return MakeMaterialPSOKey(Flags, bBindless);
+    return MakeMaterialPSOKey(Flags, bBindless, DeclarationID);
 }
 
 FForwardPass::FForwardPass(FSceneRenderer* InRenderer)
@@ -38,7 +42,7 @@ FForwardPass::~FForwardPass()
     PipelineStates.Clear();
 }
 
-bool FForwardPass::CompilePipelineState(FFrameResources& FrameResources, bool bBindless, bool bEnableParallax, bool bEnableClipping)
+FGraphicsPipelineStateInstance* FForwardPass::CompilePipelineState(bool bBindless, bool bEnableParallax, bool bEnableClipping, const FVertexDeclaration& Declaration)
 {
     TArray<FShaderDefine> Defines =
     {
@@ -58,28 +62,28 @@ bool FForwardPass::CompilePipelineState(FFrameResources& FrameResources, bool bB
     if (!FShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
         DEBUG_BREAK();
-        return false;
+        return nullptr;
     }
 
     NewInstance.VertexShader = RHI::CreateVertexShader(ShaderCode);
     if (!NewInstance.VertexShader)
     {
         DEBUG_BREAK();
-        return false;
+        return nullptr;
     }
 
     CompileInfo = FShaderCompileInfo("PSMain", TargetShaderModel, EShaderStage::Pixel, Defines);
     if (!FShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
         DEBUG_BREAK();
-        return false;
+        return nullptr;
     }
 
     NewInstance.PixelShader = RHI::CreatePixelShader(ShaderCode);
     if (!NewInstance.PixelShader)
     {
         DEBUG_BREAK();
-        return false;
+        return nullptr;
     }
 
     FRHIDepthStencilStateDesc DepthStencilStateDesc;
@@ -91,7 +95,7 @@ bool FForwardPass::CompilePipelineState(FFrameResources& FrameResources, bool bB
     if (!NewInstance.DepthStencilState)
     {
         DEBUG_BREAK();
-        return false;
+        return nullptr;
     }
 
     FRHIRasterizerStateDesc RasterizerStateDesc;
@@ -101,7 +105,7 @@ bool FForwardPass::CompilePipelineState(FFrameResources& FrameResources, bool bB
     if (!NewInstance.RasterizerState)
     {
         DEBUG_BREAK();
-        return false;
+        return nullptr;
     }
 
     FRHIBlendStateDesc BlendStateDesc;
@@ -114,15 +118,20 @@ bool FForwardPass::CompilePipelineState(FFrameResources& FrameResources, bool bB
     if (!NewInstance.BlendState)
     {
         DEBUG_BREAK();
-        return false;
+        return nullptr;
     }
 
-    NewInstance.InputLayout = FrameResources.MeshInputLayout;
+    NewInstance.StreamBinding = FVertexStreamCache::Get().GetBinding(Declaration, FORWARD_PASS_ATTRIBUTES);
+    if (!NewInstance.StreamBinding)
+    {
+        DEBUG_BREAK();
+        return nullptr;
+    }
 
     FRHIGraphicsPipelineStateDesc PSODesc;
     PSODesc.VertexShader                                   = NewInstance.VertexShader.Get();
     PSODesc.PixelShader                                    = NewInstance.PixelShader.Get();
-    PSODesc.InputLayout                                    = NewInstance.InputLayout.Get();
+    PSODesc.InputLayout                                    = NewInstance.StreamBinding->InputLayout.Get();
     PSODesc.DepthStencilState                              = NewInstance.DepthStencilState.Get();
     PSODesc.BlendState                                     = NewInstance.BlendState.Get();
     PSODesc.RasterizerState                                = NewInstance.RasterizerState.Get();
@@ -135,20 +144,22 @@ bool FForwardPass::CompilePipelineState(FFrameResources& FrameResources, bool bB
     if (!NewInstance.PipelineState)
     {
         DEBUG_BREAK();
-        return false;
+        return nullptr;
     }
 
-    const String DebugName = String::CreateFormatted("ForwardPass PipelineState%s%s%s",
+    const String DebugName = String::CreateFormatted("ForwardPass PipelineState%s%s%s [Declaration %u]",
         bEnableParallax ? " [Parallax]" : "",
         bEnableClipping ? " [Clipping]" : "",
-        bBindless ? " [Bindless]" : "");
+        bBindless ? " [Bindless]" : "",
+        static_cast<uint32>(Declaration.GetID()));
     NewInstance.PipelineState->SetDebugName(DebugName);
 
-    PipelineStates.Add(MakeForwardPSOKey(bBindless, bEnableParallax, bEnableClipping), Move(NewInstance));
-    return true;
+    const uint64 Key = MakeForwardPSOKey(bBindless, bEnableParallax, bEnableClipping, Declaration.GetID());
+    PipelineStates.Add(Key, Move(NewInstance));
+    return PipelineStates.Find(Key);
 }
 
-bool FForwardPass::Initialize(FFrameResources& FrameResources)
+bool FForwardPass::Initialize(FFrameResources& /* FrameResources */)
 {
     struct FVariant
     {
@@ -156,15 +167,17 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
         bool bEnableClipping;
     };
 
+    const FVertexDeclaration& Declaration = FVertexDeclaration::GetStandardStaticMesh();
+
     const FVariant Variants[] = { { false, false }, { true, false }, { true, true } };
     for (const FVariant& Variant : Variants)
     {
-        if (!CompilePipelineState(FrameResources, false, Variant.bEnableParallax, Variant.bEnableClipping))
+        if (!CompilePipelineState(false, Variant.bEnableParallax, Variant.bEnableClipping, Declaration))
         {
             return false;
         }
 
-        if (RHI::bSupportsBindless && !CompilePipelineState(FrameResources, true, Variant.bEnableParallax, Variant.bEnableClipping))
+        if (RHI::bSupportsBindless && !CompilePipelineState(true, Variant.bEnableParallax, Variant.bEnableClipping, Declaration))
         {
             return false;
         }
@@ -246,9 +259,17 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
             continue;
         }
 
-        const bool bEnableParallax = Material->HasHeightMap();
+        const FMaterialFeatures Features(Batch.EffectiveMaterialFlags);
 
-        FGraphicsPipelineStateInstance* MaterialPipeline = PipelineStates.Find(MakeForwardPSOKey(bBindless, bEnableParallax, Material->HasParallaxClipping()));
+        const bool bEnableParallax = Features.HasHeightMap();
+        const bool bEnableClipping = Features.HasParallaxClipping();
+
+        FGraphicsPipelineStateInstance* MaterialPipeline = PipelineStates.Find(MakeForwardPSOKey(bBindless, bEnableParallax, bEnableClipping, Batch.Declaration.GetID()));
+        if (!MaterialPipeline)
+        {
+            MaterialPipeline = CompilePipelineState(bBindless, bEnableParallax, bEnableClipping, Batch.Declaration);
+        }
+
         if (!MaterialPipeline)
         {
             DEBUG_BREAK();
@@ -290,14 +311,7 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
         {
             FSceneStaticMesh* StaticMesh = MeshReference.StaticMesh;
 
-            FRHIBuffer* VertexBuffers[] =
-            {
-                StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
-                StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Normals),
-                StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
-            };
-
-            CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
+            StaticMesh->Mesh->SetVertexBuffers(CommandList, *PipelineInstance->StreamBinding);
             CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
 
             StaticMesh->PerObjectBuffer.MaterialIndex = Material->GetBufferIndex();

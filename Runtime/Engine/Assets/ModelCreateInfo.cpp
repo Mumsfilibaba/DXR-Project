@@ -17,7 +17,7 @@ struct FTriangleTangentFrame
 };
 
 // Lengyel's method
-static FTriangleTangentFrame ComputeTriangleTangentFrame(const FVertex& Vertex0, const FVertex& Vertex1, const FVertex& Vertex2)
+static FTriangleTangentFrame ComputeTriangleTangentFrame(const FSourceVertex& Vertex0, const FSourceVertex& Vertex1, const FSourceVertex& Vertex2)
 {
     const Vector3 Edge1    = Vertex1.Position - Vertex0.Position;
     const Vector3 Edge2    = Vertex2.Position - Vertex0.Position;
@@ -43,6 +43,86 @@ static FTriangleTangentFrame ComputeTriangleTangentFrame(const FVertex& Vertex0,
 static float DeriveTangentSign(const Vector3& Normal, const Vector3& Tangent, const Vector3& AccumulatedBitangent)
 {
     return (Normal.CrossProduct(Tangent).DotProduct(AccumulatedBitangent) < 0.0f) ? -1.0f : 1.0f;
+}
+
+FMeshCreateInfo::FMeshCreateInfo()
+    : Name()
+    , SubMeshes()
+    , Indices()
+    , Vertices()
+    , Declaration(FVertexDeclaration::GetStandardStaticMesh())
+    , PackedStreams()
+    , PackedVertexCount(0)
+{
+}
+
+FMeshCreateInfo::FMeshCreateInfo(const FMeshCreateInfo& Other) = default;
+
+FMeshCreateInfo::FMeshCreateInfo(FMeshCreateInfo&& Other) = default;
+
+FMeshCreateInfo::~FMeshCreateInfo() = default;
+
+FMeshCreateInfo& FMeshCreateInfo::operator=(const FMeshCreateInfo& Other) = default;
+
+FMeshCreateInfo& FMeshCreateInfo::operator=(FMeshCreateInfo&& Other) = default;
+
+static_assert(TIsMoveConstructible<FMeshCreateInfo>::Value,
+    "FMeshCreateInfo is moved into FModelCreateInfo::Meshes by the importers; without a move constructor TArray silently deep-copies every mesh");
+
+bool FMeshCreateInfo::PackVertexStreams(TArray<uint8> (&OutStreams)[VERTEX_MAX_STREAMS]) const
+{
+    const int32 VertexCount = Vertices.Size();
+
+    for (uint8 StreamIndex = 0; StreamIndex < Declaration.GetNumStreams(); StreamIndex++)
+    {
+        const uint16 Stride = Declaration.GetStreamStride(StreamIndex);
+        if (Stride == 0)
+        {
+            continue;
+        }
+
+        TArray<uint8>& StreamData = OutStreams[StreamIndex];
+        StreamData.Resize(VertexCount * Stride);
+
+        for (const FVertexAttributeInfo& Attribute : Declaration.GetAttributes())
+        {
+            if (Attribute.StreamIndex != StreamIndex)
+            {
+                continue;
+            }
+
+            for (int32 Index = 0; Index < VertexCount; Index++)
+            {
+                const FSourceVertex& Vertex = Vertices[Index];
+                void* Destination = StreamData.Data() + (Index * Stride) + Attribute.ByteOffset;
+
+                switch (Attribute.Element)
+                {
+                    case EVertexElement::Position:
+                        *reinterpret_cast<Vector3*>(Destination) = Vertex.Position;
+                        break;
+
+                    case EVertexElement::Normal:
+                        *reinterpret_cast<FRGBA16Snorm*>(Destination) = FRGBA16Snorm(Vertex.Normal);
+                        break;
+
+                    case EVertexElement::Tangent:
+                        *reinterpret_cast<FRGBA16Snorm*>(Destination) = FRGBA16Snorm(Vertex.Tangent, Vertex.TangentSign);
+                        break;
+
+                    case EVertexElement::TexCoord0:
+                        *reinterpret_cast<Vector2*>(Destination) = Vertex.TexCoord;
+                        break;
+
+                    default:
+                        LOG_ERROR("Mesh '%s' declares vertex element %u, which FSourceVertex cannot provide", Name.Data(), UnderlyingTypeValue(Attribute.Element));
+                        return false;
+                }
+            }
+        }
+    }
+
+    return true;
 }
 
 TArray<uint16> FMeshCreateInfo::GetSmallIndices() const
@@ -104,9 +184,9 @@ void FMeshCreateInfo::CalculateHardNormals()
 
     for (int32 i = 0; i < Indices.Size(); i += 3)
     {
-        FVertex& Vertex0 = Vertices[Indices[i + 0]];
-        FVertex& Vertex1 = Vertices[Indices[i + 1]];
-        FVertex& Vertex2 = Vertices[Indices[i + 2]];
+        FSourceVertex& Vertex0 = Vertices[Indices[i + 0]];
+        FSourceVertex& Vertex1 = Vertices[Indices[i + 1]];
+        FSourceVertex& Vertex2 = Vertices[Indices[i + 2]];
 
         Vector3 Edge0  = Vertex2.Position - Vertex0.Position;
         Vector3 Edge1  = Vertex1.Position - Vertex0.Position;
@@ -128,9 +208,9 @@ void FMeshCreateInfo::CalculateSoftNormals()
 
     for (int32 i = 0; i < Indices.Size(); i += 3)
     {
-        FVertex& Vertex0 = Vertices[Indices[i + 0]];
-        FVertex& Vertex1 = Vertices[Indices[i + 1]];
-        FVertex& Vertex2 = Vertices[Indices[i + 2]];
+        FSourceVertex& Vertex0 = Vertices[Indices[i + 0]];
+        FSourceVertex& Vertex1 = Vertices[Indices[i + 1]];
+        FSourceVertex& Vertex2 = Vertices[Indices[i + 2]];
 
         Vector3 Edge0  = Vertex2.Position - Vertex0.Position;
         Vector3 Edge1  = Vertex1.Position - Vertex0.Position;
@@ -244,7 +324,7 @@ void FMeshCreateInfo::SplitTangentSeams()
                 continue;
             }
 
-            FVertex SplitVertex = Vertices[VertexIndex];
+            FSourceVertex SplitVertex = Vertices[VertexIndex];
             SplitVertex.TangentSign = TriangleSign;
 
             const uint32 SplitIndex = static_cast<uint32>(Vertices.Size());
@@ -299,9 +379,9 @@ void FMeshCreateInfo::ValidateTangents()
         const uint32 Index1 = Indices[i + 1];
         const uint32 Index2 = Indices[i + 2];
 
-        FVertex& Vertex1 = Vertices[Index0];
-        FVertex& Vertex2 = Vertices[Index1];
-        FVertex& Vertex3 = Vertices[Index2];
+        FSourceVertex& Vertex1 = Vertices[Index0];
+        FSourceVertex& Vertex2 = Vertices[Index1];
+        FSourceVertex& Vertex3 = Vertices[Index2];
 
         const bool bValid1 = IsValid(Vertex1.Tangent);
         const bool bValid2 = IsValid(Vertex2.Tangent);
@@ -388,7 +468,7 @@ void FMeshCreateInfo::Subdivide(uint32 Subdivisions)
         return;
     }
 
-    FVertex TempVertices[3];
+    FSourceVertex TempVertices[3];
 
     uint32 IndexCount     = 0;
     uint32 VertexCount    = 0;
@@ -1007,7 +1087,7 @@ FMeshCreateInfo MeshFactory::CreateTeapot(uint32 Tessellation) noexcept
     };
 
     // Function to evaluate a point and normal on a Bezier patch
-    const auto EvaluateBezierPatch = [&](const float ControlPoints[16][3], float u, float v, FVertex& Vertex)
+    const auto EvaluateBezierPatch = [&](const float ControlPoints[16][3], float u, float v, FSourceVertex& Vertex)
     {
         float Bu[4];
         float Bv[4];
@@ -1082,7 +1162,7 @@ FMeshCreateInfo MeshFactory::CreateTeapot(uint32 Tessellation) noexcept
             {
                 const float s = static_cast<float>(v) / static_cast<float>(Tessellation);
 
-                FVertex Vertex;
+                FSourceVertex Vertex;
                 EvaluateBezierPatch(PatchControlPoints, t, s, Vertex);
                 MeshInfo.Vertices.Add(Vertex);
             }
@@ -1121,17 +1201,17 @@ FMeshCreateInfo MeshFactory::CreatePyramid(float Width, float Depth, float Heigh
     float HalfDepth = Depth / 2.0f;
 
     // Bottom vertices
-    FVertex v0;
+    FSourceVertex v0;
     v0.Position = Vector3(-HalfWidth, 0.0f, -HalfDepth); // Front-left
-    FVertex v1;
+    FSourceVertex v1;
     v1.Position = Vector3( HalfWidth, 0.0f, -HalfDepth); // Front-right
-    FVertex v2;
+    FSourceVertex v2;
     v2.Position = Vector3( HalfWidth, 0.0f,  HalfDepth); // Back-right
-    FVertex v3;
+    FSourceVertex v3;
     v3.Position = Vector3(-HalfWidth, 0.0f,  HalfDepth); // Back-left
 
     // Apex vertex
-    FVertex v4;
+    FSourceVertex v4;
     v4.Position = Vector3(0.0f, Height, 0.0f); // Top center
 
     // Base normal
@@ -1172,9 +1252,9 @@ FMeshCreateInfo MeshFactory::CreatePyramid(float Width, float Depth, float Heigh
     MeshInfo.Indices.Add(BaseIndex + 3);
 
     // Side 1 (v0, v1, v4)
-    FVertex s0v0 = v0;
-    FVertex s0v1 = v1;
-    FVertex s0v4 = v4;
+    FSourceVertex s0v0 = v0;
+    FSourceVertex s0v1 = v1;
+    FSourceVertex s0v4 = v4;
     s0v0.Normal   = Normal0;
     s0v1.Normal   = Normal0;
     s0v4.Normal   = Normal0;
@@ -1192,9 +1272,9 @@ FMeshCreateInfo MeshFactory::CreatePyramid(float Width, float Depth, float Heigh
     MeshInfo.Indices.Add(Side0Index + 1);
 
     // Side 2 (v1, v2, v4)
-    FVertex s1v0 = v1;
-    FVertex s1v1 = v2;
-    FVertex s1v4 = v4;
+    FSourceVertex s1v0 = v1;
+    FSourceVertex s1v1 = v2;
+    FSourceVertex s1v4 = v4;
     s1v0.Normal   = Normal1;
     s1v1.Normal   = Normal1;
     s1v4.Normal   = Normal1;
@@ -1212,9 +1292,9 @@ FMeshCreateInfo MeshFactory::CreatePyramid(float Width, float Depth, float Heigh
     MeshInfo.Indices.Add(Side1Index + 1);
 
     // Side 3 (v2, v3, v4)
-    FVertex s2v0 = v2;
-    FVertex s2v1 = v3;
-    FVertex s2v4 = v4;
+    FSourceVertex s2v0 = v2;
+    FSourceVertex s2v1 = v3;
+    FSourceVertex s2v4 = v4;
     s2v0.Normal   = Normal2;
     s2v1.Normal   = Normal2;
     s2v4.Normal   = Normal2;
@@ -1232,9 +1312,9 @@ FMeshCreateInfo MeshFactory::CreatePyramid(float Width, float Depth, float Heigh
     MeshInfo.Indices.Add(Side2Index + 1);
 
     // Side 4 (v3, v0, v4)
-    FVertex s3v0 = v3;
-    FVertex s3v1 = v0;
-    FVertex s3v4 = v4;
+    FSourceVertex s3v0 = v3;
+    FSourceVertex s3v1 = v0;
+    FSourceVertex s3v4 = v4;
     s3v0.Normal   = Normal3;
     s3v1.Normal   = Normal3;
     s3v4.Normal   = Normal3;
@@ -1273,7 +1353,7 @@ FMeshCreateInfo MeshFactory::CreateCylinder(uint32 Sides, float Radius, float He
     const float DeltaAngle = 2.0f * Math::Constants::PI / static_cast<float>(Sides);
 
     // Generate top cap vertices
-    FVertex TopCenterVertex;
+    FSourceVertex TopCenterVertex;
     TopCenterVertex.Position = Vector3(0.0f, HalfHeight, 0.0f);
     TopCenterVertex.Normal   = Vector3(0.0f, 1.0f, 0.0f);
     TopCenterVertex.TexCoord = Vector2(0.5f, 0.5f); // Center of the texture
@@ -1285,7 +1365,7 @@ FMeshCreateInfo MeshFactory::CreateCylinder(uint32 Sides, float Radius, float He
         const float X     = Radius * cosf(Angle);
         const float Z     = Radius * sinf(Angle);
         
-        FVertex Vertex;
+        FSourceVertex Vertex;
         Vertex.Position = Vector3(X, HalfHeight, Z);
         Vertex.Normal   = Vector3(0.0f, 1.0f, 0.0f);
         Vertex.TexCoord = Vector2((cosf(Angle) + 1.0f) * 0.5f, (sinf(Angle) + 1.0f) * 0.5f); // Map to [0,1]
@@ -1295,7 +1375,7 @@ FMeshCreateInfo MeshFactory::CreateCylinder(uint32 Sides, float Radius, float He
     // Generate bottom cap vertices
     const uint32 BottomCenterIndex = static_cast<uint32>(MeshInfo.Vertices.Size());
 
-    FVertex BottomCenterVertex;
+    FSourceVertex BottomCenterVertex;
     BottomCenterVertex.Position = Vector3(0.0f, -HalfHeight, 0.0f);
     BottomCenterVertex.Normal   = Vector3(0.0f, -1.0f, 0.0f);
     BottomCenterVertex.TexCoord = Vector2(0.5f, 0.5f);
@@ -1307,7 +1387,7 @@ FMeshCreateInfo MeshFactory::CreateCylinder(uint32 Sides, float Radius, float He
         const float X     = Radius * cosf(Angle);
         const float Z     = Radius * sinf(Angle);
 
-        FVertex Vertex;
+        FSourceVertex Vertex;
         Vertex.Position = Vector3(X, -HalfHeight, Z);
         Vertex.Normal   = Vector3(0.0f, -1.0f, 0.0f);
         Vertex.TexCoord = Vector2((cosf(Angle) + 1.0f) * 0.5f, (sinf(Angle) + 1.0f) * 0.5f);
@@ -1326,14 +1406,14 @@ FMeshCreateInfo MeshFactory::CreateCylinder(uint32 Sides, float Radius, float He
         const Vector3 Normal = Vector3(X, 0.0f, Z).Normalize();
 
         // Top vertex
-        FVertex TopVertex;
+        FSourceVertex TopVertex;
         TopVertex.Position = Vector3(X, HalfHeight, Z);
         TopVertex.Normal   = Normal;
         TopVertex.TexCoord = Vector2(U, 0.0f); // V = 0 at the top
         MeshInfo.Vertices.Add(TopVertex);
 
         // Bottom vertex
-        FVertex BottomVertex;
+        FSourceVertex BottomVertex;
         BottomVertex.Position = Vector3(X, -HalfHeight, Z);
         BottomVertex.Normal   = Normal;
         BottomVertex.TexCoord = Vector2(U, 1.0f); // V = 1 at the bottom

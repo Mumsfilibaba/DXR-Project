@@ -58,7 +58,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
 
         // Vertices
         SkyboxVertices.Reserve(SkyboxMesh.Vertices.Size());
-        for (const FVertex& Vertex : SkyboxMesh.Vertices)
+        for (const FSourceVertex& Vertex : SkyboxMesh.Vertices)
         {
             SkyboxVertices.Emplace(Vertex.Position);
         }

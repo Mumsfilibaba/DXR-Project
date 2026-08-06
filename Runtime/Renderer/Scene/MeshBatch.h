@@ -3,8 +3,9 @@
 #include "Core/Math/Vector3.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Map.h"
+#include "Engine/Resources/Material.h"
+#include "RendererCore/VertexDeclaration.h"
 
-class FMaterial;
 struct FSceneStaticMesh;
 
 struct FMeshBatch
@@ -29,12 +30,14 @@ struct FMeshBatch
         uint32            IndexCount;
     };
 
-    FMeshBatch(FMaterial* InMaterial);
+    FMeshBatch(FMaterial* InMaterial, const FVertexDeclaration& InDeclaration);
     ~FMeshBatch();
     
     void AddStaticMesh(FSceneStaticMesh* StaticMesh, int32 MaterialIndex);
 
     FMaterial*             Material;
+    FVertexDeclaration     Declaration;
+    EMaterialFlags         EffectiveMaterialFlags;
     TArray<FMeshReference> MeshReferences;
 };
 
@@ -46,6 +49,6 @@ struct FMeshBatcher
     void AddStaticMesh(FSceneStaticMesh* StaticMesh);
     void Clear();
 
-    TArray<FMeshBatch>      MeshBatches;
-    TMap<FMaterial*, int32> MaterialToBatchIndex;
+    TArray<FMeshBatch>  MeshBatches;
+    TMap<uint64, int32> BatchLookup;
 };

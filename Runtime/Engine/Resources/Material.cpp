@@ -2,7 +2,24 @@
 #include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
 #include "Engine/Engine.h"
+#include "RendererCore/VertexDeclaration.h"
 #include "Core/Math/Math.h"
+
+EMaterialFlags FMaterial::GetSupportedMaterialFlags(const FVertexDeclaration& Declaration)
+{
+    EMaterialFlags Supported = EMaterialFlags::DoubleSided | EMaterialFlags::ForceForwardPass;
+
+    const bool bHasTangentBasis = Declaration.HasAttributes(EVertexAttributeFlags::TangentBasis);
+    const bool bHasTexCoord     = Declaration.HasAttributes(EVertexAttributeFlags::TexCoord0);
+
+    SetEnumFlag(Supported, EMaterialFlags::EnableAlpha, bHasTexCoord);
+    SetEnumFlag(Supported, EMaterialFlags::EnableNormalMapping, bHasTangentBasis && bHasTexCoord);
+    SetEnumFlag(Supported, EMaterialFlags::NormalMapPositiveY, bHasTangentBasis && bHasTexCoord);
+    SetEnumFlag(Supported, EMaterialFlags::EnableHeight, bHasTangentBasis && bHasTexCoord);
+    SetEnumFlag(Supported, EMaterialFlags::EnableParallaxClipping, bHasTangentBasis && bHasTexCoord);
+
+    return Supported;
+}
 
 FMaterial::FMaterial(const FMaterialInfo& InMaterialInfo)
     : AlbedoMap()

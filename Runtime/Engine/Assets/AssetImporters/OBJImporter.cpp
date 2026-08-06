@@ -76,7 +76,7 @@ bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
     }
 
     // Construct Scene
-    TMap<FVertex, uint32> UniqueVertices;
+    TMap<FSourceVertex, uint32> UniqueVertices;
 
     constexpr uint32 NumIndiciesPerTriangle  = 3;
     constexpr uint32 NumPositionsPerTriangle = 3;
@@ -125,7 +125,7 @@ bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
                 const tinyobj::index_t& Index = Shape.mesh.indices[CurrentIndex];
                 CHECK(Index.vertex_index >= 0);
 
-                FVertex Vertex;
+                FSourceVertex Vertex;
 
                 const uint32 PositionIndex = NumPositionsPerTriangle * Index.vertex_index;
                 Vertex.Position = Vector3(Attributes.vertices[PositionIndex + 0], Attributes.vertices[PositionIndex + 1], Attributes.vertices[PositionIndex + 2]);

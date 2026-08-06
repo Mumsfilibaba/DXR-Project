@@ -20,6 +20,7 @@
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Engine.h"
 #include "RendererCore/TextureFactory.h"
+#include "RendererCore/VertexStreamCache.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
 IMPLEMENT_ENGINE_MODULE(IModule, Launch);
@@ -219,6 +220,11 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
         return -1;
     }
 
+    if (!FVertexStreamCache::Initialize())
+    {
+        return -1;
+    }
+
     CoreDelegates::PreInitFinishedDelegate.Broadcast();
     return 0;
 }
@@ -346,6 +352,7 @@ void FEngineLoop::Release()
 
     // Release all RHI resources
     FTextureFactory::Release();
+    FVertexStreamCache::Release();
 
     // Wait for RHI thread and shutdown RHI Layer
     RHI::Release();

@@ -343,9 +343,8 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
     // Add compile arguments
     TArray<LPCWSTR> CompileArgs =
     {
-        L"-HV 2021",     // Use HLSL 2021
-        L"-WX",          // Warnings as errors
-        L"-Qembed_debug" // We are forced to embed debug information in order to get all the information we need
+        L"-HV 2021", // Use HLSL 2021
+        L"-WX"       // Warnings as errors
     };
 
     CompileArgs.Emplace(L"-I");
@@ -354,6 +353,7 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
     if (CVarShaderDebug.GetValue())
     {
         CompileArgs.Emplace(L"-Zi");
+        CompileArgs.Emplace(L"-Qembed_debug");
     }
 
     // Optimization level 3
@@ -481,10 +481,9 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
         LPCWSTR PreProcessArgs[] = 
         { 
             L"-P",
-            L"dummy.hlsl",
         };
 
-        PreProcessorArguments->AddArguments(PreProcessArgs, 2);
+        PreProcessorArguments->AddArguments(PreProcessArgs, 1);
     }
 
     // Preprocess shader source

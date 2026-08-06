@@ -821,7 +821,9 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     // Programmable Sample Positions (VK_EXT_sample_locations)
     // -------------------------------------------------------------------------------------------
 
-    RHI::bSupportsProgrammableSamplePositions = GVulkanSupportsSampleLocations;
+    const bool bSupportsSingleSampleLocations = (GVulkanSampleLocationSampleCounts & VK_SAMPLE_COUNT_1_BIT) != 0;
+
+    RHI::bSupportsProgrammableSamplePositions = GVulkanSupportsSampleLocations && bSupportsSingleSampleLocations;
     if (GVulkanSupportsSampleLocations)
     {
         RHI::MaxSamplePositionGridWidth  = GVulkanMaxSampleLocationGridSize.width;

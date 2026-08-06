@@ -12,7 +12,7 @@ FSceneStaticMesh::FSceneStaticMesh(FScene* InScene, const FStaticMeshInitData& I
     , Mesh(InitData.Mesh)
     , Materials(InitData.Materials)
     , Geometry(nullptr)
-    , VertexBuffer(nullptr)
+    , PositionBuffer(nullptr)
     , IndexBuffer(nullptr)
     , NumVertices(0)
     , NumIndices(0)
@@ -20,14 +20,31 @@ FSceneStaticMesh::FSceneStaticMesh(FScene* InScene, const FStaticMeshInitData& I
 {
     CHECK(Mesh != nullptr);
 
-    Geometry     = Mesh->GetRayTracingGeometry();
-    VertexBuffer = Mesh->GetVertexBuffer(EVertexStream::Packed);
-    NumVertices  = Mesh->GetVertexCount();
-    IndexBuffer  = Mesh->GetIndexBuffer();
-    NumIndices   = Mesh->GetIndexCount();
-    IndexFormat  = Mesh->GetIndexFormat();
+    Geometry       = Mesh->GetRayTracingGeometry();
+    PositionBuffer = Mesh->GetPositionBuffer();
+    NumVertices    = Mesh->GetVertexCount();
+    IndexBuffer    = Mesh->GetIndexBuffer();
+    NumIndices     = Mesh->GetIndexCount();
+    IndexFormat    = Mesh->GetIndexFormat();
 
     PerObjectBuffer.ObjectID = InitData.ObjectID;
+
+    for (const TSharedPtr<FMaterial>& Material : Materials)
+    {
+        if (!Material)
+        {
+            continue;
+        }
+
+        const EMaterialFlags RequestedFlags = Material->GetMaterialFlags();
+        const EMaterialFlags EffectiveFlags = RequestedFlags & FMaterial::GetSupportedMaterialFlags(Mesh->GetVertexDeclaration());
+
+        if (EffectiveFlags != RequestedFlags)
+        {
+            LOG_WARNING("Mesh '%s' lacks the vertex attributes material '%s' needs, so features 0x%x were disabled for it",
+                Mesh->GetName().Data(), Material->GetName().Data(), static_cast<uint32>(RequestedFlags & ~EffectiveFlags));
+        }
+    }
 }
 
 FSceneStaticMesh::~FSceneStaticMesh() = default;

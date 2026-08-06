@@ -58,7 +58,7 @@ struct FSceneStaticMesh : public FSceneObject
     TSharedPtr<FMesh>                  Mesh;
     TArray<TSharedPtr<FMaterial>>      Materials;
     FRHIGeometryAccelerationStructure* Geometry;
-    FRHIBuffer*                        VertexBuffer;
+    FRHIBuffer*                        PositionBuffer;
     FRHIBuffer*                        IndexBuffer;
     uint32                             NumVertices;
     uint32                             NumIndices;

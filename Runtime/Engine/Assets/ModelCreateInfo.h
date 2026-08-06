@@ -6,6 +6,7 @@
 #include "Engine/Assets/VertexFormat.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/Texture.h"
+#include "RendererCore/VertexDeclaration.h"
 #include "RHI/RHITypes.h"
 
 struct EMaterialTexture
@@ -44,13 +45,13 @@ struct FSubMeshInfo
 
 struct ENGINE_API FMeshCreateInfo
 {
-    FMeshCreateInfo()
-        : Name()
-        , SubMeshes()
-        , Indices()
-        , Vertices()
-    {
-    }
+    FMeshCreateInfo();
+    FMeshCreateInfo(const FMeshCreateInfo& Other);
+    FMeshCreateInfo(FMeshCreateInfo&& Other);
+    ~FMeshCreateInfo();
+
+    FMeshCreateInfo& operator=(const FMeshCreateInfo& Other);
+    FMeshCreateInfo& operator=(FMeshCreateInfo&& Other);
 
     void Subdivide(uint32 Subdivisions = 1);
     void Optimize(uint32 StartVertex = 0);
@@ -65,12 +66,17 @@ struct ENGINE_API FMeshCreateInfo
     void ReverseHandedness();
     void InvertAxisX();
 
+    bool PackVertexStreams(TArray<uint8> (&OutStreams)[VERTEX_MAX_STREAMS]) const;
+
     TArray<uint16> GetSmallIndices() const;
 
-    String               Name;
-    TArray<FSubMeshInfo> SubMeshes;
-    TArray<uint32>       Indices;
-    TArray<FVertex>      Vertices;
+    String                Name;
+    TArray<FSubMeshInfo>  SubMeshes;
+    TArray<uint32>        Indices;
+    TArray<FSourceVertex> Vertices;
+    FVertexDeclaration    Declaration;
+    TArray<uint8>         PackedStreams[VERTEX_MAX_STREAMS];
+    int32                 PackedVertexCount;
 };
 
 struct FMaterialCreateInfo
@@ -82,7 +88,7 @@ struct FMaterialCreateInfo
         , AmbientFactor(1.0f)
         , Roughness(1.0f)
         , Metallic()
-    , MaterialFlags(EMaterialFlags::None)
+        , MaterialFlags(EMaterialFlags::None)
     {
     }
 

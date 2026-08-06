@@ -1,8 +1,10 @@
 #include "Renderer/Scene/MeshBatch.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
 
-FMeshBatch::FMeshBatch(FMaterial* InMaterial)
+FMeshBatch::FMeshBatch(FMaterial* InMaterial, const FVertexDeclaration& InDeclaration)
     : Material(InMaterial)
+    , Declaration(InDeclaration)
+    , EffectiveMaterialFlags(InMaterial->GetMaterialFlags() & FMaterial::GetSupportedMaterialFlags(InDeclaration))
     , MeshReferences()
 {
 }
@@ -27,7 +29,7 @@ void FMeshBatch::AddStaticMesh(FSceneStaticMesh* StaticMesh, int32 MaterialIndex
 
 FMeshBatcher::FMeshBatcher()
     : MeshBatches()
-    , MaterialToBatchIndex()
+    , BatchLookup()
 {
 }
 
@@ -35,22 +37,26 @@ FMeshBatcher::~FMeshBatcher() = default;
 
 void FMeshBatcher::AddStaticMesh(FSceneStaticMesh* StaticMesh)
 {
+    const FVertexDeclaration& Declaration = StaticMesh->Mesh->GetVertexDeclaration();
+
     const int32 NumMaterials = StaticMesh->GetNumMaterials();
     for (int32 MaterialIndex = 0; MaterialIndex < NumMaterials; MaterialIndex++)
     {
         TSharedPtr<FMaterial> Material = StaticMesh->GetMaterial(MaterialIndex);
 
+        const uint64 BatchKey = (reinterpret_cast<uint64>(Material.Get()) << 8) | Declaration.GetID();
+
         int32 BatchIndex;
-        if (int32* ExistingBatchIndex = MaterialToBatchIndex.Find(Material.Get()))
+        if (int32* ExistingBatchIndex = BatchLookup.Find(BatchKey))
         {
             BatchIndex = *ExistingBatchIndex;
         }
         else
         {
             BatchIndex = MeshBatches.Size();
-            MeshBatches.Emplace(Material.Get());
+            MeshBatches.Emplace(Material.Get(), Declaration);
 
-            MaterialToBatchIndex.Add(Material.Get(), BatchIndex);
+            BatchLookup.Add(BatchKey, BatchIndex);
         }
 
         MeshBatches[BatchIndex].AddStaticMesh(StaticMesh, MaterialIndex);
@@ -60,5 +66,5 @@ void FMeshBatcher::AddStaticMesh(FSceneStaticMesh* StaticMesh)
 void FMeshBatcher::Clear()
 {
     MeshBatches.Clear();
-    MaterialToBatchIndex.Clear();
+    BatchLookup.Clear();
 }

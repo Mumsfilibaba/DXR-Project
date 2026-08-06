@@ -14,7 +14,7 @@ public:
     FDepthPrePass(FSceneRenderer* InRenderer);
     virtual ~FDepthPrePass();
 
-    virtual void PreparePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final;
+    virtual void PreparePipelineState(FMaterial* Material, const FVertexDeclaration& Declaration, const FFrameResources& FrameResources) override final;
     
     bool Initialize(FFrameResources& FrameResources);
     bool CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height);
@@ -30,7 +30,7 @@ public:
     FDeferredBasePass(FSceneRenderer* InRenderer);
     virtual ~FDeferredBasePass();
 
-    virtual void PreparePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final;
+    virtual void PreparePipelineState(FMaterial* Material, const FVertexDeclaration& Declaration, const FFrameResources& FrameResources) override final;
 
     bool Initialize(FFrameResources& FrameResources);
     bool CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height);

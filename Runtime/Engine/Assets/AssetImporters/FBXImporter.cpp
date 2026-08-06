@@ -113,7 +113,7 @@ bool FFBXImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
 
     // Unique tables
     TMap<uint64, uint32>  UniqueMaterials;
-    TMap<FVertex, uint32> UniqueVertices;
+    TMap<FSourceVertex, uint32> UniqueVertices;
     UniqueMaterials.Reserve(MaterialCount);
 
     // Estimate resource count
@@ -201,7 +201,7 @@ bool FFBXImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
                 const ofbx::GeometryPartition::Polygon& Polygon = FbxPartition.polygons[PolygonIdx];
                 const int32 NumIndicies = ofbx::triangulate(GeometryData, Polygon, PartitionIndicies.Data());
 
-                FVertex Vertex;
+                FSourceVertex Vertex;
                 for (int32 IndexIdx = 0; IndexIdx < NumIndicies; ++IndexIdx)
                 {
                     const int32 VertexIdx = PartitionIndicies[IndexIdx];

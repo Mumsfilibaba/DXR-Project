@@ -696,7 +696,7 @@ void FRayTracer::Release()
     ASCacheBackend.Reset();
 }
 
-void FRayTracer::ReleaseRayTracingGeometry(FScene* Scene)
+void FRayTracer::ReleaseRayTracingResources(FScene* Scene)
 {
     if (Scene)
     {
@@ -704,7 +704,7 @@ void FRayTracer::ReleaseRayTracingGeometry(FScene* Scene)
         {
             if (StaticMesh && StaticMesh->Mesh)
             {
-                StaticMesh->Mesh->ReleaseRayTracingGeometry();
+                StaticMesh->Mesh->ReleaseRayTracingResources();
             }
         }
     }
@@ -734,7 +734,7 @@ void FRayTracer::BuildSceneAccelerationData(FRHICommandList& CommandList, FFrame
         }
 
         const bool bHadGeometry = StaticMesh->Mesh->GetRayTracingGeometry() != nullptr;
-        StaticMesh->Mesh->CreateRayTracingGeometry();
+        StaticMesh->Mesh->EnsureRayTracingResources();
 
         FRHIGeometryAccelerationStructure* Geometry = StaticMesh->Mesh->GetRayTracingGeometry();
         if (!Geometry)
@@ -772,8 +772,8 @@ void FRayTracer::BuildSceneAccelerationData(FRHICommandList& CommandList, FFrame
 
         const uint32 InstanceIndex = NextInstanceIndex++;
 
-        FRHIShaderResourceView* VertexBufferSRV = StaticMesh->Mesh->GetVertexBufferSRV(EVertexStream::Packed);
-        FRHIShaderResourceView* IndexBufferSRV  = StaticMesh->Mesh->GetIndexBufferSRV();
+        FRHIShaderResourceView* AttributeBufferSRV = StaticMesh->Mesh->GetAttributeBufferSRV();
+        FRHIShaderResourceView* IndexBufferSRV     = StaticMesh->Mesh->GetIndexBufferSRV();
 
         const Matrix3x4 InstanceTransform = StaticMesh->PerObjectBuffer.Transform;
 
@@ -790,9 +790,9 @@ void FRayTracer::BuildSceneAccelerationData(FRHICommandList& CommandList, FFrame
             TArray<FRHIHitGroupLocalShaderBinding>& Record = Resources.RayTracingHitGroupBindings.Emplace();
             if (!bNeedBindlessData)
             {
-                if (VertexBufferSRV)
+                if (AttributeBufferSRV)
                 {
-                    Record.Add(FRHIHitGroupLocalShaderBinding::MakeShaderResourceView(VertexBufferSRV, 0));
+                    Record.Add(FRHIHitGroupLocalShaderBinding::MakeShaderResourceView(AttributeBufferSRV, 0));
                 }
 
                 if (IndexBufferSRV)
@@ -809,9 +809,9 @@ void FRayTracer::BuildSceneAccelerationData(FRHICommandList& CommandList, FFrame
 
         {
             FRayTracingGeometryIndicesHLSL Geo;
-            if (VertexBufferSRV)
+            if (AttributeBufferSRV)
             {
-                Geo.VerticesHandle = VertexBufferSRV->GetBindlessHandle();
+                Geo.AttributesHandle = AttributeBufferSRV->GetBindlessHandle();
             }
 
             if (IndexBufferSRV)

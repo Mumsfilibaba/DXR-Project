@@ -21,6 +21,8 @@ enum class EMaterialFlags : int32
 
 ENUM_CLASS_OPERATORS(EMaterialFlags);
 
+class FVertexDeclaration;
+
 struct FMaterialInfo
 {
     FMaterialInfo()
@@ -86,6 +88,9 @@ static_assert(sizeof(FMaterialHLSL) == 64, "FMaterialHLSL must match the HLSL Ma
 
 class ENGINE_API FMaterial
 {
+public:
+    static EMaterialFlags GetSupportedMaterialFlags(const FVertexDeclaration& Declaration);
+
 public:
     FMaterial(const FMaterialInfo& InMaterialInfo);
     ~FMaterial();

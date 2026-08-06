@@ -11,6 +11,8 @@
 namespace SpirvOps
 {
     constexpr uint16 OpExtension              = 10;
+    constexpr uint16 OpCapability             = 17;
+    constexpr uint16 OpTypeImage              = 25;
     constexpr uint16 OpDecorate               = 71;
     constexpr uint16 OpMemberDecorate         = 72;
     constexpr uint16 OpDecorateString         = 5632;
@@ -20,6 +22,18 @@ namespace SpirvOps
     constexpr uint32 DecorationHlslCounterBufferGOOGLE = 5634;
     constexpr uint32 DecorationHlslSemanticGOOGLE      = 5635;
     constexpr uint32 DecorationUserTypeGOOGLE          = 5636;
+
+    constexpr uint32 CapabilityStorageImageReadWithoutFormat  = 55;
+    constexpr uint32 CapabilityStorageImageWriteWithoutFormat = 56;
+
+    constexpr uint32 ImageFormatUnknown = 0;
+
+    // OpTypeImage operand layout: [1] Result, [2] SampledType, [3] Dim, [4] Depth, [5] Arrayed, [6] MS,
+    // [7] Sampled, [8] ImageFormat. A Sampled operand of 2 means the image is used as a storage image.
+    constexpr uint16 OpTypeImageMinWords     = 9;
+    constexpr uint16 OpTypeImageSampledWord  = 7;
+    constexpr uint16 OpTypeImageFormatWord   = 8;
+    constexpr uint32 ImageSampledStorage     = 2;
 }
 
 static bool SpvReadLiteralString(const uint32* Inst, uint16 InstWords, uint16 StartWord, CHAR* OutBuf, uint32 BufSize)
@@ -44,6 +58,11 @@ static bool SpvReadLiteralString(const uint32* Inst, uint16 InstWords, uint16 St
 
     OutBuf[i < BufSize ? i : BufSize - 1] = '\0';
     return false;
+}
+
+static constexpr uint32 SpvMakeInstructionHeader(uint16 OpCode, uint16 InstWords)
+{
+    return (static_cast<uint32>(InstWords) << 16) | static_cast<uint32>(OpCode);
 }
 
 static bool IsOneOfGoogleExtensions(const CHAR* Name)
@@ -226,10 +245,17 @@ TSharedRef<FVulkanShaderModule> FVulkanShader::GetOrCreateShaderModule(FVulkanPi
         return nullptr;
     }
 
+    FSpirvArray FinalCode;
+    if (!ForceUnknownStorageImageFormats(StrippedCode, FinalCode))
+    {
+        VULKAN_ERROR_CRITICAL("Failed to rewrite storage-image formats");
+        return nullptr;
+    }
+
     VkShaderModuleCreateInfo ShaderModuleCreateInfo = {};
     ShaderModuleCreateInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    ShaderModuleCreateInfo.pCode    = StrippedCode.Data();
-    ShaderModuleCreateInfo.codeSize = StrippedCode.SizeInBytes();
+    ShaderModuleCreateInfo.pCode    = FinalCode.Data();
+    ShaderModuleCreateInfo.codeSize = FinalCode.SizeInBytes();
 
     VkShaderModule ShaderModule = VK_NULL_HANDLE;
 
@@ -927,6 +953,114 @@ bool FVulkanShader::ValidateNoGoogleSpirvRequirements(const FSpirvArray& Words, 
                     return false;
                 }
             }
+        }
+
+        Read += InstWords;
+    }
+
+    return true;
+}
+
+bool FVulkanShader::ForceUnknownStorageImageFormats(const FSpirvArray& InWords, FSpirvArray& OutWords)
+{
+    OutWords.Clear();
+
+    if (InWords.Size() < 5)
+    {
+        return false;
+    }
+
+    const uint32* Words     = InWords.Data();
+    const uint32  WordCount = static_cast<uint32>(InWords.Size());
+
+    bool bNeedsRewrite         = false;
+    bool bHasWriteWithoutFormat = false;
+    bool bHasReadWithoutFormat  = false;
+
+    uint32 Read = 5;
+    while (Read < WordCount)
+    {
+        const uint16 OpCode    = static_cast<uint16>(Words[Read] & 0xFFFFu);
+        const uint16 InstWords = static_cast<uint16>(Words[Read] >> 16);
+
+        if (InstWords == 0 || (Read + InstWords) > WordCount)
+        {
+            return false;
+        }
+
+        if (OpCode == SpirvOps::OpCapability && InstWords >= 2)
+        {
+            if (Words[Read + 1] == SpirvOps::CapabilityStorageImageWriteWithoutFormat)
+            {
+                bHasWriteWithoutFormat = true;
+            }
+            else if (Words[Read + 1] == SpirvOps::CapabilityStorageImageReadWithoutFormat)
+            {
+                bHasReadWithoutFormat = true;
+            }
+        }
+        else if (OpCode == SpirvOps::OpTypeImage && InstWords >= SpirvOps::OpTypeImageMinWords)
+        {
+            if (Words[Read + SpirvOps::OpTypeImageSampledWord] == SpirvOps::ImageSampledStorage &&
+                Words[Read + SpirvOps::OpTypeImageFormatWord]  != SpirvOps::ImageFormatUnknown)
+            {
+                bNeedsRewrite = true;
+            }
+        }
+
+        Read += InstWords;
+    }
+
+    if (!bNeedsRewrite)
+    {
+        OutWords = InWords;
+        return true;
+    }
+
+    const bool bAddWriteWithoutFormat = !bHasWriteWithoutFormat;
+    const bool bAddReadWithoutFormat  = !bHasReadWithoutFormat;
+
+    OutWords.Reserve(InWords.Size() + 4);
+    for (uint32 Index = 0; Index < 5; ++Index)
+    {
+        OutWords.Add(Words[Index]);
+    }
+
+    bool bWroteCapabilities = false;
+
+    Read = 5;
+    while (Read < WordCount)
+    {
+        const uint16 OpCode    = static_cast<uint16>(Words[Read] & 0xFFFFu);
+        const uint16 InstWords = static_cast<uint16>(Words[Read] >> 16);
+
+        if (!bWroteCapabilities && OpCode != SpirvOps::OpCapability)
+        {
+            if (bAddWriteWithoutFormat)
+            {
+                OutWords.Add(SpvMakeInstructionHeader(SpirvOps::OpCapability, 2));
+                OutWords.Add(SpirvOps::CapabilityStorageImageWriteWithoutFormat);
+            }
+
+            if (bAddReadWithoutFormat)
+            {
+                OutWords.Add(SpvMakeInstructionHeader(SpirvOps::OpCapability, 2));
+                OutWords.Add(SpirvOps::CapabilityStorageImageReadWithoutFormat);
+            }
+
+            bWroteCapabilities = true;
+        }
+
+        const int32 InstStart = OutWords.Size();
+        for (uint16 WordIndex = 0; WordIndex < InstWords; ++WordIndex)
+        {
+            OutWords.Add(Words[Read + WordIndex]);
+        }
+
+        if (OpCode == SpirvOps::OpTypeImage && InstWords >= SpirvOps::OpTypeImageMinWords &&
+            OutWords[InstStart + SpirvOps::OpTypeImageSampledWord] == SpirvOps::ImageSampledStorage)
+        {
+            OutWords[InstStart + SpirvOps::OpTypeImageFormatWord] = SpirvOps::ImageFormatUnknown;
         }
 
         Read += InstWords;
