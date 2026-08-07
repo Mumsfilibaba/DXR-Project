@@ -630,7 +630,7 @@ FVulkanRenderPassKey FVulkanCommandContextState::BuildRenderPassKey(const FVulka
         NumSamples = Math::Max<uint8>(static_cast<uint8>(Texture->GetDesc().NumSamples), NumSamples);
     }
 
-    RenderPassKey.NumSamples = NumSamples;
+    RenderPassKey.SampleCountLog2 = SampleCountToLog2(NumSamples);
 
     if (CommonGraphicsState.ViewInstancingState.bEnableViewInstancing)
     {
@@ -751,7 +751,7 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
     }
 
 #if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
-    RenderPassKey.NumSamples = NumSamples;
+    RenderPassKey.SampleCountLog2 = SampleCountToLog2(NumSamples);
     if (RenderPassDesc.ViewInstancingState.bEnableViewInstancing)
     {
         RenderPassKey.ViewInstancingState = RenderPassDesc.ViewInstancingState;
@@ -1286,7 +1286,7 @@ void FVulkanCommandContextState::SetSamplePositions(const FRHISamplePositionsDes
     // Vulkan places the pixel center at (0.5, 0.5), so an offset of zero maps to the standard 1x location.
     const uint32 NumSamplesPerPixel = bCustom ? SamplePositionsDesc.NumSamplesPerPixel : 1;
 
-    if ((GVulkanSampleLocationSampleCounts & ConvertSampleCount(NumSamplesPerPixel)) == 0)
+    if (!IsSampleCountSupported(GVulkanSampleLocationSampleCounts, NumSamplesPerPixel))
     {
         return;
     }

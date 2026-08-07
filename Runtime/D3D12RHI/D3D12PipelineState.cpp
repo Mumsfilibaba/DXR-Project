@@ -280,6 +280,7 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
     D3D12_PRIMITIVE_TOPOLOGY_TYPE      PrimitiveTopologyType    = {};
     D3D12_INDEX_BUFFER_STRIP_CUT_VALUE IndexBufferStripCutValue = {};
     DXGI_SAMPLE_DESC                   SampleDesc               = {};
+    UINT                               SampleMask               = UINT_MAX;
     D3D12_STREAM_OUTPUT_DESC           StreamOutputDesc         = {};
     D3D12_PIPELINE_STATE_FLAGS         PipelineStateFlags       = D3D12_PIPELINE_STATE_FLAG_NONE;
 
@@ -465,7 +466,8 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
     // MSAA
     {
         SampleDesc.Count   = Desc.MultiSampleState.SampleCount;
-        SampleDesc.Quality = Desc.MultiSampleState.SampleQuality;
+        SampleDesc.Quality = D3D12_DEFAULT_MULTISAMPLE_QUALITY;
+        SampleMask         = Desc.MultiSampleState.SampleMask;
     }
 
     // Shader-flags
@@ -654,6 +656,7 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
     PipelineKey.DepthStencilHash         = D3D12DepthStencilState->GetHash();
     PipelineKey.BlendStateHash           = D3D12BlendState->GetHash();
     PipelineKey.SampleDesc               = SampleDesc;
+    PipelineKey.SampleMask               = SampleMask;
 
     PipelineKey.VSHash = VertexShader->GetHash();
     PipelineKey.HSHash = HullShader     ? HullShader->GetHash()     : FD3D12ShaderHash();
@@ -685,6 +688,7 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
         PipelineStream.DepthStencilDesc         = DepthStencilDesc;
         PipelineStream.BlendStateDesc           = BlendStateDesc;
         PipelineStream.SampleDesc               = SampleDesc;
+        PipelineStream.SampleMask               = SampleMask;
         PipelineStream.IndexBufferStripCutValue = IndexBufferStripCutValue;
         PipelineStream.StreamOutputDesc         = StreamOutputDesc;
         PipelineStream.PipelineStateFlags       = PipelineStateFlags;
@@ -747,7 +751,7 @@ bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateD
         LegacyDesc.GS                    = GeometryShaderCode;
         LegacyDesc.PS                    = PixelShaderCode;
         LegacyDesc.BlendState            = BlendStateDesc;
-        LegacyDesc.SampleMask            = UINT_MAX;
+        LegacyDesc.SampleMask            = SampleMask;
         LegacyDesc.RasterizerState       = RasterizerDesc;
         LegacyDesc.DepthStencilState     = DepthStencilDesc;
         LegacyDesc.InputLayout           = InputLayoutDesc;
@@ -999,6 +1003,7 @@ bool FD3D12MeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDes
     D3D12_DEPTH_STENCIL_DESC   DepthStencilDesc        = {};
     D3D12_BLEND_DESC           BlendStateDesc          = {};
     DXGI_SAMPLE_DESC           SampleDesc              = {};
+    UINT                       SampleMask              = UINT_MAX;
     D3D12_PIPELINE_STATE_FLAGS PipelineStateFlags      = D3D12_PIPELINE_STATE_FLAG_NONE;
 
     // ShaderStages
@@ -1120,7 +1125,8 @@ bool FD3D12MeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDes
     // MSAA
     {
         SampleDesc.Count   = Desc.MultiSampleState.SampleCount;
-        SampleDesc.Quality = Desc.MultiSampleState.SampleQuality;
+        SampleDesc.Quality = D3D12_DEFAULT_MULTISAMPLE_QUALITY;
+        SampleMask         = Desc.MultiSampleState.SampleMask;
     }
 
     // Shader-flags
@@ -1265,6 +1271,7 @@ bool FD3D12MeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDes
     PipelineKey.DepthStencilHash   = D3D12DepthStencilState->GetHash();
     PipelineKey.BlendStateHash     = D3D12BlendState->GetHash();
     PipelineKey.SampleDesc         = SampleDesc;
+    PipelineKey.SampleMask         = SampleMask;
 
     PipelineKey.ASHash = AmplificationShader ? AmplificationShader->GetHash() : FD3D12ShaderHash();
     PipelineKey.MSHash = MeshShader->GetHash();
@@ -1292,6 +1299,7 @@ bool FD3D12MeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDes
     PipelineStream.DepthStencilDesc         = DepthStencilDesc;
     PipelineStream.BlendStateDesc           = BlendStateDesc;
     PipelineStream.SampleDesc               = SampleDesc;
+    PipelineStream.SampleMask               = SampleMask;
     PipelineStream.PipelineStateFlags       = PipelineStateFlags;
     PipelineStream.ViewInstancingDesc.Flags = ViewInstanceDesc.Flags;
 

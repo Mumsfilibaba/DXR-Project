@@ -22,6 +22,34 @@ static TAutoConsoleVariable<int32> CVarPipelineCacheSaveInterval(
     "Minimum interval in seconds between automatic pipeline cache saves",
     30);
 
+static bool ResolveEffectiveSampleCount(const FRHIMultiSampleState& MultiSampleState, const FRHIRasterizerStateDesc& RasterizerDesc, const FRHIGraphicsPipelineFormats& OutputFormats, const CHAR* DebugContext, uint32& OutSampleCount)
+{
+    OutSampleCount = 0;
+
+    uint32 SampleCount = Math::Max<uint32>(1u, MultiSampleState.SampleCount);
+    if (RasterizerDesc.ForcedSampleCount != 0)
+    {
+        if (OutputFormats.DepthStencilFormat == EFormat::Unknown)
+        {
+            SampleCount = RasterizerDesc.ForcedSampleCount;
+        }
+        else
+        {
+            VULKAN_WARNING("%s: ForcedSampleCount=%u ignored because a depth-stencil format is bound", DebugContext, RasterizerDesc.ForcedSampleCount);
+        }
+    }
+
+    if (!IsSampleCountSupported(GVulkanSupportedSampleCounts, SampleCount))
+    {
+        VULKAN_ERROR("%s: %ux MSAA is unsupported by this device (supported mask 0x%02x, highest %ux)",
+            DebugContext, SampleCount, GVulkanSupportedSampleCounts, GetMaxSampleCount(GVulkanSupportedSampleCounts));
+        return false;
+    }
+
+    OutSampleCount = SampleCount;
+    return true;
+}
+
 FVulkanInputLayoutRHI::FVulkanInputLayoutRHI(const TArray<FRHIInputElementDesc>& InInputElements)
     : FRHIInputLayout()
 	, InputElements(InInputElements)
@@ -484,33 +512,6 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
         return false;
     }
 
-    // MultiSampling CreateInfo
-    VkPipelineMultisampleStateCreateInfo MultisamplingCreateInfo = {};
-    MultisamplingCreateInfo.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    MultisamplingCreateInfo.sampleShadingEnable   = VK_FALSE;
-    MultisamplingCreateInfo.rasterizationSamples  = VK_SAMPLE_COUNT_1_BIT;
-    MultisamplingCreateInfo.minSampleShading      = 1.0f;
-    MultisamplingCreateInfo.pSampleMask           = nullptr;
-    MultisamplingCreateInfo.alphaToCoverageEnable = VK_FALSE;
-    MultisamplingCreateInfo.alphaToOneEnable      = VK_FALSE;
-
-#if VK_EXT_sample_locations
-    const bool bUseSampleLocations = InDesc.MultiSampleState.bProgrammableSamplePositions
-        && GVulkanSupportsSampleLocations
-        && (GVulkanSampleLocationSampleCounts & MultisamplingCreateInfo.rasterizationSamples) != 0;
-
-    VkPipelineSampleLocationsStateCreateInfoEXT SampleLocationsCreateInfo = {};
-    if (bUseSampleLocations)
-    {
-        SampleLocationsCreateInfo.sType                     = VK_STRUCTURE_TYPE_PIPELINE_SAMPLE_LOCATIONS_STATE_CREATE_INFO_EXT;
-        SampleLocationsCreateInfo.sampleLocationsEnable     = VK_TRUE;
-        SampleLocationsCreateInfo.sampleLocationsInfo.sType = VK_STRUCTURE_TYPE_SAMPLE_LOCATIONS_INFO_EXT;
-        AddToStructChain(MultisamplingCreateInfo, SampleLocationsCreateInfo);
-    }
-#else
-    const bool bUseSampleLocations = false;
-#endif
-
     // DepthStencilState CreateInfo
     VkPipelineDepthStencilStateCreateInfo DepthStencilStateCreateInfo;
     if (FVulkanDepthStencilStateRHI* DepthStencilState = FVulkanDeviceRHI::ResourceCast(InDesc.DepthStencilState))
@@ -536,6 +537,46 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
         VULKAN_ERROR_CRITICAL("BlendState cannot be nullptr");
         return false;
     }
+
+    uint32 EffectiveSampleCount = 0;
+    if (!ResolveEffectiveSampleCount(InDesc.MultiSampleState, InDesc.RasterizerState->GetDesc(),
+        InDesc.RasterizerOutputFormats, "GraphicsPipeline", EffectiveSampleCount))
+    {
+        return false;
+    }
+
+    const VkSampleMask SampleMaskValues[2] =
+    {
+        InDesc.MultiSampleState.SampleMask,
+        0xFFFFFFFFu
+    };
+
+    VkPipelineMultisampleStateCreateInfo MultisamplingCreateInfo = {};
+    MultisamplingCreateInfo.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    MultisamplingCreateInfo.sampleShadingEnable   = VK_FALSE;
+    MultisamplingCreateInfo.rasterizationSamples  = ConvertSampleCount(EffectiveSampleCount);
+    MultisamplingCreateInfo.minSampleShading      = 1.0f;
+    MultisamplingCreateInfo.pSampleMask           = SampleMaskValues;
+    MultisamplingCreateInfo.alphaToCoverageEnable = InDesc.BlendState->GetDesc().bAlphaToCoverageEnable ? VK_TRUE : VK_FALSE;
+    MultisamplingCreateInfo.alphaToOneEnable      = VK_FALSE;
+
+#if VK_EXT_sample_locations
+    const bool bUseSampleLocations = InDesc.MultiSampleState.bProgrammableSamplePositions
+        && GVulkanSupportsSampleLocations
+        && IsSampleCountSupported(GVulkanSampleLocationSampleCounts, EffectiveSampleCount);
+
+    VkPipelineSampleLocationsStateCreateInfoEXT SampleLocationsCreateInfo = {};
+    if (bUseSampleLocations)
+    {
+        SampleLocationsCreateInfo.sType                     = VK_STRUCTURE_TYPE_PIPELINE_SAMPLE_LOCATIONS_STATE_CREATE_INFO_EXT;
+        SampleLocationsCreateInfo.sampleLocationsEnable     = VK_TRUE;
+        SampleLocationsCreateInfo.sampleLocationsInfo.sType = VK_STRUCTURE_TYPE_SAMPLE_LOCATIONS_INFO_EXT;
+
+        AddToStructChain(MultisamplingCreateInfo, SampleLocationsCreateInfo);
+    }
+#else
+    const bool bUseSampleLocations = false;
+#endif
 
     // Dynamic-State CreateInfo
     VkDynamicState DynamicStates[7];
@@ -628,7 +669,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
     else
     {
         FVulkanRenderPassKey RenderPassKey;
-        RenderPassKey.NumSamples                      = InDesc.MultiSampleState.SampleCount;
+        RenderPassKey.SampleCountLog2                 = SampleCountToLog2(EffectiveSampleCount);
         RenderPassKey.DepthStencilFormat              = InDesc.RasterizerOutputFormats.DepthStencilFormat;
         RenderPassKey.DepthStencilActions.LoadAction  = EAttachmentLoadAction::Load;
         RenderPassKey.DepthStencilActions.StoreAction = EAttachmentStoreAction::Store;
@@ -946,33 +987,6 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
         return false;
     }
 
-    // MultiSampling CreateInfo
-    VkPipelineMultisampleStateCreateInfo MultisamplingCreateInfo = {};
-    MultisamplingCreateInfo.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    MultisamplingCreateInfo.sampleShadingEnable   = VK_FALSE;
-    MultisamplingCreateInfo.rasterizationSamples  = VK_SAMPLE_COUNT_1_BIT;
-    MultisamplingCreateInfo.minSampleShading      = 1.0f;
-    MultisamplingCreateInfo.pSampleMask           = nullptr;
-    MultisamplingCreateInfo.alphaToCoverageEnable = VK_FALSE;
-    MultisamplingCreateInfo.alphaToOneEnable      = VK_FALSE;
-
-#if VK_EXT_sample_locations
-    const bool bUseSampleLocations = InDesc.MultiSampleState.bProgrammableSamplePositions
-        && GVulkanSupportsSampleLocations
-        && (GVulkanSampleLocationSampleCounts & MultisamplingCreateInfo.rasterizationSamples) != 0;
-
-    VkPipelineSampleLocationsStateCreateInfoEXT SampleLocationsCreateInfo = {};
-    if (bUseSampleLocations)
-    {
-        SampleLocationsCreateInfo.sType                     = VK_STRUCTURE_TYPE_PIPELINE_SAMPLE_LOCATIONS_STATE_CREATE_INFO_EXT;
-        SampleLocationsCreateInfo.sampleLocationsEnable     = VK_TRUE;
-        SampleLocationsCreateInfo.sampleLocationsInfo.sType = VK_STRUCTURE_TYPE_SAMPLE_LOCATIONS_INFO_EXT;
-        AddToStructChain(MultisamplingCreateInfo, SampleLocationsCreateInfo);
-    }
-#else
-    const bool bUseSampleLocations = false;
-#endif
-
     // DepthStencilState CreateInfo
     VkPipelineDepthStencilStateCreateInfo DepthStencilStateCreateInfo;
     if (FVulkanDepthStencilStateRHI* DepthStencilState = FVulkanDeviceRHI::ResourceCast(InDesc.DepthStencilState))
@@ -998,6 +1012,45 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
         VULKAN_ERROR_CRITICAL("BlendState cannot be nullptr");
         return false;
     }
+
+    uint32 EffectiveSampleCount = 0;
+    if (!ResolveEffectiveSampleCount(InDesc.MultiSampleState, InDesc.RasterizerState->GetDesc(),
+        InDesc.RasterizerOutputFormats, "MeshletPipeline", EffectiveSampleCount))
+    {
+        return false;
+    }
+
+    const VkSampleMask SampleMaskValues[2] =
+    {
+        InDesc.MultiSampleState.SampleMask,
+        0xFFFFFFFFu
+    };
+
+    VkPipelineMultisampleStateCreateInfo MultisamplingCreateInfo = {};
+    MultisamplingCreateInfo.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    MultisamplingCreateInfo.sampleShadingEnable   = VK_FALSE;
+    MultisamplingCreateInfo.rasterizationSamples  = ConvertSampleCount(EffectiveSampleCount);
+    MultisamplingCreateInfo.minSampleShading      = 1.0f;
+    MultisamplingCreateInfo.pSampleMask           = SampleMaskValues;
+    MultisamplingCreateInfo.alphaToCoverageEnable = InDesc.BlendState->GetDesc().bAlphaToCoverageEnable ? VK_TRUE : VK_FALSE;
+    MultisamplingCreateInfo.alphaToOneEnable      = VK_FALSE;
+
+#if VK_EXT_sample_locations
+    const bool bUseSampleLocations = InDesc.MultiSampleState.bProgrammableSamplePositions
+        && GVulkanSupportsSampleLocations
+        && IsSampleCountSupported(GVulkanSampleLocationSampleCounts, EffectiveSampleCount);
+
+    VkPipelineSampleLocationsStateCreateInfoEXT SampleLocationsCreateInfo = {};
+    if (bUseSampleLocations)
+    {
+        SampleLocationsCreateInfo.sType                     = VK_STRUCTURE_TYPE_PIPELINE_SAMPLE_LOCATIONS_STATE_CREATE_INFO_EXT;
+        SampleLocationsCreateInfo.sampleLocationsEnable     = VK_TRUE;
+        SampleLocationsCreateInfo.sampleLocationsInfo.sType = VK_STRUCTURE_TYPE_SAMPLE_LOCATIONS_INFO_EXT;
+        AddToStructChain(MultisamplingCreateInfo, SampleLocationsCreateInfo);
+    }
+#else
+    const bool bUseSampleLocations = false;
+#endif
 
     // Dynamic-State CreateInfo
     VkDynamicState DynamicStates[7];
@@ -1094,7 +1147,7 @@ bool FVulkanMeshletPipelineStateRHI::Initialize(const FRHIMeshletPipelineStateDe
     else
     {
         FVulkanRenderPassKey RenderPassKey;
-        RenderPassKey.NumSamples                      = InDesc.MultiSampleState.SampleCount;
+        RenderPassKey.SampleCountLog2                 = SampleCountToLog2(EffectiveSampleCount);
         RenderPassKey.DepthStencilFormat              = InDesc.RasterizerOutputFormats.DepthStencilFormat;
         RenderPassKey.DepthStencilActions.LoadAction  = EAttachmentLoadAction::Load;
         RenderPassKey.DepthStencilActions.StoreAction = EAttachmentStoreAction::Store;

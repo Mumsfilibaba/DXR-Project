@@ -288,7 +288,6 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         PSODesc.PrimitiveTopology                          = EPrimitiveTopology::TriangleList;
         PSODesc.RasterizerState                            = NewPipelineStateInstance.RasterizerState.Get();
         PSODesc.MultiSampleState.SampleCount               = 1;
-        PSODesc.MultiSampleState.SampleQuality             = 0;
         PSODesc.MultiSampleState.SampleMask                = RHI_DEFAULT_SAMPLE_MASK;
         PSODesc.VertexShader                               = NewPipelineStateInstance.VertexShader.Get();
         PSODesc.PixelShader                                = NewPipelineStateInstance.PixelShader.Get();
@@ -1031,7 +1030,6 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         PSODesc.PrimitiveTopology              = EPrimitiveTopology::TriangleList;
         PSODesc.RasterizerState                = NewPipelineStateInstance.RasterizerState.Get();
         PSODesc.MultiSampleState.SampleCount   = 1;
-        PSODesc.MultiSampleState.SampleQuality = 0;
         PSODesc.MultiSampleState.SampleMask    = RHI_DEFAULT_SAMPLE_MASK;
         PSODesc.VertexShader                   = NewPipelineStateInstance.VertexShader.Get();
         PSODesc.PixelShader                    = NewPipelineStateInstance.PixelShader.Get();

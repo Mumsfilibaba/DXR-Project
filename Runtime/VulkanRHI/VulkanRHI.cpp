@@ -1377,6 +1377,38 @@ bool FVulkanDeviceRHI::QueryUAVFormatSupport(EFormat Format) const
     return false;
 }
 
+bool FVulkanDeviceRHI::QuerySupportedSampleCounts(EFormat Format, uint32& OutSampleCounts) const
+{
+    OutSampleCounts = 0;
+
+    const VkFormat VulkanFormat = ConvertFormat(Format);
+    if (VulkanFormat == VK_FORMAT_UNDEFINED)
+    {
+        return false;
+    }
+
+    const VkImageAspectFlags AspectFlags     = GetImageAspectFlagsFromFormat(VulkanFormat);
+    const bool               bIsDepthStencil = (AspectFlags & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)) != 0;
+
+    VkImageFormatProperties ImageFormatProperties = {};
+    const VkResult Result = vkGetPhysicalDeviceImageFormatProperties(
+        PhysicalDevice->GetVkPhysicalDevice(),
+        VulkanFormat,
+        VK_IMAGE_TYPE_2D,
+        VK_IMAGE_TILING_OPTIMAL,
+        bIsDepthStencil ? VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT : VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        0,
+        &ImageFormatProperties);
+
+    if (Result != VK_SUCCESS)
+    {
+        return false;
+    }
+
+    OutSampleCounts = ImageFormatProperties.sampleCounts;
+    return OutSampleCounts != 0;
+}
+
 bool FVulkanDeviceRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode)
 {
     FVulkanQueryRHI* VulkanQuery = FVulkanDeviceRHI::ResourceCast(Query);

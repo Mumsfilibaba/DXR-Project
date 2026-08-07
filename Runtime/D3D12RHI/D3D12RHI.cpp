@@ -1720,6 +1720,28 @@ bool FD3D12DeviceRHI::QueryUAVFormatSupport(EFormat Format) const
     return true;
 }
 
+bool FD3D12DeviceRHI::QuerySupportedSampleCounts(EFormat Format, uint32& OutSampleCounts) const
+{
+    OutSampleCounts = 0;
+
+    const DXGI_FORMAT DxgiFormat = ConvertFormat(Format);
+    if (DxgiFormat == DXGI_FORMAT_UNKNOWN)
+    {
+        return false;
+    }
+
+    for (uint32 SampleCount = 1; SampleCount <= D3D12_MAX_MULTISAMPLE_SAMPLE_COUNT; SampleCount <<= 1)
+    {
+        uint32 Quality = 0;
+        if (Device->QueryMultisampleQuality(DxgiFormat, SampleCount, Quality))
+        {
+            OutSampleCounts |= SampleCount;
+        }
+    }
+
+    return OutSampleCounts != 0;
+}
+
 bool FD3D12DeviceRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode)
 {
     FD3D12QueryRHI* D3D12Query = FD3D12DeviceRHI::ResourceCast(Query);

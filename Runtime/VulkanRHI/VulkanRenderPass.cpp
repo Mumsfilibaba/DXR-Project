@@ -68,7 +68,7 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
     TArray<VkAttachmentDescription> Attachments;
 
     // Number of samples (MSAA)
-    const VkSampleCountFlagBits SampleCount = ConvertSampleCount(Key.NumSamples);
+    const VkSampleCountFlagBits SampleCount = ConvertSampleCount(1u << Key.SampleCountLog2);
     if (SampleCount < VK_SAMPLE_COUNT_1_BIT)
     {
         VULKAN_ERROR_CRITICAL("Invalid SampleCount");

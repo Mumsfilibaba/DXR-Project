@@ -428,6 +428,12 @@ bool FMetalDeviceRHI::QueryUAVFormatSupport(EFormat Format) const
     return true;
 }
 
+bool FMetalDeviceRHI::QuerySupportedSampleCounts(EFormat Format, uint32& OutSampleCounts) const
+{
+    OutSampleCounts = RHI_SAMPLE_COUNT_1;
+    return true;
+}
+
 bool FMetalDeviceRHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryInfo) const
 {
     OutMemoryInfo = FRHIVideoMemoryInfo();

@@ -36,7 +36,7 @@ struct FVulkanRenderPassKey
             EFormat                  DepthStencilFormat;
             FVulkanRenderPassActions DepthStencilActions;
             EDepthStencilViewFlags   DepthStencilFlags;
-            uint8                    NumSamples : 4;
+            uint8                    SampleCountLog2 : 4; // 0 = 1x ... 6 = 64x
             uint8                    NumRenderTargets : 4;
             FRHIViewInstancingState  ViewInstancingState;
             EFormat                  RenderTargetFormats[RHI_MAX_RENDER_TARGETS];

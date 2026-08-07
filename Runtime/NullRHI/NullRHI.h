@@ -211,6 +211,12 @@ public:
         return true;
     }
 
+    virtual bool QuerySupportedSampleCounts(EFormat Format, uint32& OutSampleCounts) const override final
+    {
+        OutSampleCounts = RHI_SAMPLE_COUNT_1 | RHI_SAMPLE_COUNT_2 | RHI_SAMPLE_COUNT_4 | RHI_SAMPLE_COUNT_8;
+        return true;
+    }
+
     virtual bool QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryInfo) const override final
     {
         OutMemoryInfo.MemoryType   = MemoryType;

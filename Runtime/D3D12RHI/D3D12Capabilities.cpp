@@ -986,7 +986,7 @@ bool FD3D12DeviceRHI::InitializeDeviceFeatureSupport()
     if (RHI::bSupportsProgrammableSamplePositions)
     {
         // D3D12 accepts 1, 2, 4, 8 and 16 samples per pixel at every tier.
-        RHI::SupportedSamplePositionSampleCounts = 1u | 2u | 4u | 8u | 16u;
+        RHI::SupportedSamplePositionSampleCounts = RHI_SAMPLE_COUNT_1 | RHI_SAMPLE_COUNT_2 | RHI_SAMPLE_COUNT_4 | RHI_SAMPLE_COUNT_8 | RHI_SAMPLE_COUNT_16;
     }
 #endif
 

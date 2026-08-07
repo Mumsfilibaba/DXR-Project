@@ -6,6 +6,43 @@
 
 using namespace RHIValidationInternal;
 
+static bool ValidateAttachmentSampleCount(const CHAR* Caller, FRHIDevice* Device, const CHAR* Attachment, EFormat Format, uint32 SampleCount)
+{
+    uint32 SupportedSampleCounts = 0;
+    if (!Device->QuerySupportedSampleCounts(Format, SupportedSampleCounts))
+    {
+        RHI_VALIDATION_ERROR("%s: %s format '%s' cannot be used as an attachment.", Caller, Attachment, ToString(Format));
+        return false;
+    }
+
+    if (!IsSampleCountSupported(SupportedSampleCounts, SampleCount))
+    {
+        RHI_VALIDATION_ERROR("%s: sample count %u is unsupported for %s format '%s' (supported mask 0x%X).",
+            Caller, SampleCount, Attachment, ToString(Format), SupportedSampleCounts);
+        return false;
+    }
+
+    return true;
+}
+
+static bool ValidateOutputFormatsSampleCount(const CHAR* Caller, FRHIDevice* Device, const FRHIGraphicsPipelineFormats& OutputFormats, uint32 SampleCount)
+{
+    for (uint32 Index = 0; Index < OutputFormats.NumRenderTargets; ++Index)
+    {
+        if (!ValidateAttachmentSampleCount(Caller, Device, "render-target", OutputFormats.RenderTargetFormats[Index], SampleCount))
+        {
+            return false;
+        }
+    }
+
+    if (OutputFormats.DepthStencilFormat != EFormat::Unknown)
+    {
+        return ValidateAttachmentSampleCount(Caller, Device, "depth-stencil", OutputFormats.DepthStencilFormat, SampleCount);
+    }
+
+    return true;
+}
+
 FRHIValidationDevice::FRHIValidationDevice(FRHIDevice* InRealRHI)
     : FRHIDevice()
     , Device(InRealRHI)
@@ -1499,6 +1536,24 @@ FRHIGraphicsPipelineState* FRHIValidationDevice::CreateGraphicsPipelineState(con
         return nullptr;
     }
 
+    if (!ValidateOutputFormatsSampleCount("CreateGraphicsPipelineState", Device, InDesc.RasterizerOutputFormats, InDesc.MultiSampleState.SampleCount))
+    {
+        return nullptr;
+    }
+
+    if (InDesc.MultiSampleState.SampleMask == 0)
+    {
+        RHI_VALIDATION_ERROR("CreateGraphicsPipelineState: SampleMask of 0 discards every sample.");
+        return nullptr;
+    }
+
+    if (InDesc.RasterizerState && InDesc.RasterizerState->GetDesc().ForcedSampleCount != 0 &&
+        InDesc.RasterizerOutputFormats.DepthStencilFormat != EFormat::Unknown)
+    {
+        RHI_VALIDATION_ERROR("CreateGraphicsPipelineState: ForcedSampleCount requires no depth-stencil format.");
+        return nullptr;
+    }
+
     return Device->CreateGraphicsPipelineState(InDesc);
 }
 
@@ -1526,6 +1581,24 @@ FRHIMeshletPipelineState* FRHIValidationDevice::CreateMeshletPipelineState(const
         !Math::IsPowerOfTwo(InDesc.MultiSampleState.SampleCount))
     {
         RHI_VALIDATION_ERROR("CreateMeshletPipelineState: invalid render-target count or sample count.");
+        return nullptr;
+    }
+
+    if (!ValidateOutputFormatsSampleCount("CreateMeshletPipelineState", Device, InDesc.RasterizerOutputFormats, InDesc.MultiSampleState.SampleCount))
+    {
+        return nullptr;
+    }
+
+    if (InDesc.MultiSampleState.SampleMask == 0)
+    {
+        RHI_VALIDATION_ERROR("CreateMeshletPipelineState: SampleMask of 0 discards every sample.");
+        return nullptr;
+    }
+
+    if (InDesc.RasterizerState && InDesc.RasterizerState->GetDesc().ForcedSampleCount != 0 &&
+        InDesc.RasterizerOutputFormats.DepthStencilFormat != EFormat::Unknown)
+    {
+        RHI_VALIDATION_ERROR("CreateMeshletPipelineState: ForcedSampleCount requires no depth-stencil format.");
         return nullptr;
     }
 
@@ -1908,6 +1981,11 @@ void* FRHIValidationDevice::GetRHINativeCopyCommandQueue()
 bool FRHIValidationDevice::QueryUAVFormatSupport(EFormat Format) const
 {
     return Device->QueryUAVFormatSupport(Format);
+}
+
+bool FRHIValidationDevice::QuerySupportedSampleCounts(EFormat Format, uint32& OutSampleCounts) const
+{
+    return Device->QuerySupportedSampleCounts(Format, OutSampleCounts);
 }
 
 bool FRHIValidationDevice::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryInfo) const
