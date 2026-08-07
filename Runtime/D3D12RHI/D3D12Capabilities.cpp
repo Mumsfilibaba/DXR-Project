@@ -705,6 +705,8 @@ bool FD3D12DeviceRHI::InitializeDeviceFeatureSupport()
     RHI::DefaultSwapChainFormat = GetD3D12DefaultBackBufferFormat();
 
     RHI::bSupportsGeometryShaders                       = true; // Geometry Shaders are always supported
+    RHI::bSupportsTessellation                          = true; // Tessellation is always supported
+    RHI::MaxPatchControlPoints                          = RHI_MAX_PATCH_CONTROL_POINTS;
     RHI::bSupportRenderTargetArrayIndexFromVertexShader = false;
     RHI::MaxShaderModel                                 = EShaderModel::Unknown;
 

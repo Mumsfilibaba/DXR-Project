@@ -48,6 +48,9 @@ enum class EFormat : uint8;
 /** Maximum number of vertex buffers that can be bound at once */
 #define RHI_MAX_VERTEX_BUFFERS (32)
 
+/** Maximum number of control points in a single tessellation patch */
+#define RHI_MAX_PATCH_CONTROL_POINTS (32)
+
 /** Maximum sample positions in one description: a 2x2 pixel grid at 16 samples per pixel */
 #define RHI_MAX_SAMPLE_POSITIONS (64)
 

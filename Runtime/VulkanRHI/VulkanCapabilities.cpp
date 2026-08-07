@@ -309,7 +309,6 @@ void FVulkanDevice::DeriveCoreCapabilities(
     GVulkanSupportsSparseResidency3D      = (CoreDeviceFeatures10.sparseResidencyImage3D == VK_TRUE);
     GVulkanSupportsSparseResidencyAliased = (CoreDeviceFeatures10.sparseResidencyAliased == VK_TRUE);
     GVulkanSupportsGeometryShader         = (GVulkanAllowGeometryShaders && CoreDeviceFeatures10.geometryShader == VK_TRUE);
-    GVulkanSupportsTessellation           = (CoreDeviceFeatures10.tessellationShader == VK_TRUE);
     GVulkanSupportsImageCubeArray         = (CoreDeviceFeatures10.imageCubeArray == VK_TRUE);
 
     if (AvailableFeatures.Features11.multiview)
@@ -489,6 +488,7 @@ void FVulkanDevice::DeriveEnabledFeatureCapabilities(const FVulkanCoreFeatures& 
     GVulkanSupportsInt64ShaderOps = (EnabledFeatures.Features10.shaderInt64 == VK_TRUE);
 
     GVulkanSupportsDepthBoundsTest = (EnabledFeatures.Features10.depthBounds == VK_TRUE);
+    GVulkanSupportsTessellation    = (EnabledFeatures.Features10.tessellationShader == VK_TRUE);
 
     GVulkanSupportsInt64Atomics = (EnabledFeatures.Features12.shaderBufferInt64Atomics == VK_TRUE)
         && (EnabledFeatures.Features12.shaderSharedInt64Atomics                        == VK_TRUE);
@@ -506,6 +506,8 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     RHI::DefaultSwapChainFormat = GetVulkanDefaultBackBufferFormat();
 
     RHI::bSupportsGeometryShaders                       = false;
+    RHI::bSupportsTessellation                          = false;
+    RHI::MaxPatchControlPoints                          = 0;
     RHI::bSupportRenderTargetArrayIndexFromVertexShader = false;
 
     RHI::bSupportsViewInstancing     = false;
@@ -609,7 +611,13 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     RHI::bSupportRenderTargetArrayIndexFromVertexShader = PhysicalDeviceFeatures12.shaderOutputLayer ? true : false;
     RHI::bSupportsDynamicDepthBias = true;
     RHI::bSupportsDepthBoundsTest  = GVulkanSupportsDepthBoundsTest;
+    RHI::bSupportsTessellation     = GVulkanSupportsTessellation;
     RHI::bSupportsStreamOutput     = GVulkanSupportsTransformFeedback;
+
+    if (GVulkanSupportsTessellation)
+    {
+        RHI::MaxPatchControlPoints = Math::Min<uint32>(PhysicalDeviceProperties.limits.maxTessellationPatchSize, RHI_MAX_PATCH_CONTROL_POINTS);
+    }
 
     // -------------------------------------------------------------------------------------------
     // Query Support

@@ -539,27 +539,153 @@ NODISCARD constexpr const CHAR* ToString(ERHIResourceState ResourceState)
 
 enum class EPrimitiveTopology : uint8
 {
-    Undefined     = 0,
-    PointList     = 1,
-    LineList      = 2,
-    LineStrip     = 3,
-    TriangleList  = 4,
-    TriangleStrip = 5,
+    Undefined              = 0,
+    PointList              = 1,
+    LineList               = 2,
+    LineStrip              = 3,
+    TriangleList           = 4,
+    TriangleStrip          = 5,
+    LineListAdjacency      = 6,
+    LineStripAdjacency     = 7,
+    TriangleListAdjacency  = 8,
+    TriangleStripAdjacency = 9,
+    PatchList_1            = 10,
+    PatchList_2            = 11,
+    PatchList_3            = 12,
+    PatchList_4            = 13,
+    PatchList_5            = 14,
+    PatchList_6            = 15,
+    PatchList_7            = 16,
+    PatchList_8            = 17,
+    PatchList_9            = 18,
+    PatchList_10           = 19,
+    PatchList_11           = 20,
+    PatchList_12           = 21,
+    PatchList_13           = 22,
+    PatchList_14           = 23,
+    PatchList_15           = 24,
+    PatchList_16           = 25,
+    PatchList_17           = 26,
+    PatchList_18           = 27,
+    PatchList_19           = 28,
+    PatchList_20           = 29,
+    PatchList_21           = 30,
+    PatchList_22           = 31,
+    PatchList_23           = 32,
+    PatchList_24           = 33,
+    PatchList_25           = 34,
+    PatchList_26           = 35,
+    PatchList_27           = 36,
+    PatchList_28           = 37,
+    PatchList_29           = 38,
+    PatchList_30           = 39,
+    PatchList_31           = 40,
+    PatchList_32           = 41,
 };
+
+static_assert(UnderlyingTypeValue(EPrimitiveTopology::PatchList_32) - UnderlyingTypeValue(EPrimitiveTopology::PatchList_1) == (RHI_MAX_PATCH_CONTROL_POINTS - 1),
+    "PatchList enumerators must be contiguous and cover exactly RHI_MAX_PATCH_CONTROL_POINTS counts");
 
 NODISCARD constexpr const CHAR* ToString(EPrimitiveTopology ResourceState)
 {
     switch (ResourceState)
     {
-    case EPrimitiveTopology::Undefined:     return "Undefined";
-    case EPrimitiveTopology::PointList:     return "PointList";
-    case EPrimitiveTopology::LineList:      return "LineList";
-    case EPrimitiveTopology::LineStrip:     return "LineStrip";
-    case EPrimitiveTopology::TriangleList:  return "TriangleList";
-    case EPrimitiveTopology::TriangleStrip: return "TriangleStrip";
+    case EPrimitiveTopology::Undefined:              return "Undefined";
+    case EPrimitiveTopology::PointList:              return "PointList";
+    case EPrimitiveTopology::LineList:               return "LineList";
+    case EPrimitiveTopology::LineStrip:              return "LineStrip";
+    case EPrimitiveTopology::TriangleList:           return "TriangleList";
+    case EPrimitiveTopology::TriangleStrip:          return "TriangleStrip";
+    case EPrimitiveTopology::LineListAdjacency:      return "LineListAdjacency";
+    case EPrimitiveTopology::LineStripAdjacency:     return "LineStripAdjacency";
+    case EPrimitiveTopology::TriangleListAdjacency:  return "TriangleListAdjacency";
+    case EPrimitiveTopology::TriangleStripAdjacency: return "TriangleStripAdjacency";
+    case EPrimitiveTopology::PatchList_1:            return "PatchList_1";
+    case EPrimitiveTopology::PatchList_2:            return "PatchList_2";
+    case EPrimitiveTopology::PatchList_3:            return "PatchList_3";
+    case EPrimitiveTopology::PatchList_4:            return "PatchList_4";
+    case EPrimitiveTopology::PatchList_5:            return "PatchList_5";
+    case EPrimitiveTopology::PatchList_6:            return "PatchList_6";
+    case EPrimitiveTopology::PatchList_7:            return "PatchList_7";
+    case EPrimitiveTopology::PatchList_8:            return "PatchList_8";
+    case EPrimitiveTopology::PatchList_9:            return "PatchList_9";
+    case EPrimitiveTopology::PatchList_10:           return "PatchList_10";
+    case EPrimitiveTopology::PatchList_11:           return "PatchList_11";
+    case EPrimitiveTopology::PatchList_12:           return "PatchList_12";
+    case EPrimitiveTopology::PatchList_13:           return "PatchList_13";
+    case EPrimitiveTopology::PatchList_14:           return "PatchList_14";
+    case EPrimitiveTopology::PatchList_15:           return "PatchList_15";
+    case EPrimitiveTopology::PatchList_16:           return "PatchList_16";
+    case EPrimitiveTopology::PatchList_17:           return "PatchList_17";
+    case EPrimitiveTopology::PatchList_18:           return "PatchList_18";
+    case EPrimitiveTopology::PatchList_19:           return "PatchList_19";
+    case EPrimitiveTopology::PatchList_20:           return "PatchList_20";
+    case EPrimitiveTopology::PatchList_21:           return "PatchList_21";
+    case EPrimitiveTopology::PatchList_22:           return "PatchList_22";
+    case EPrimitiveTopology::PatchList_23:           return "PatchList_23";
+    case EPrimitiveTopology::PatchList_24:           return "PatchList_24";
+    case EPrimitiveTopology::PatchList_25:           return "PatchList_25";
+    case EPrimitiveTopology::PatchList_26:           return "PatchList_26";
+    case EPrimitiveTopology::PatchList_27:           return "PatchList_27";
+    case EPrimitiveTopology::PatchList_28:           return "PatchList_28";
+    case EPrimitiveTopology::PatchList_29:           return "PatchList_29";
+    case EPrimitiveTopology::PatchList_30:           return "PatchList_30";
+    case EPrimitiveTopology::PatchList_31:           return "PatchList_31";
+    case EPrimitiveTopology::PatchList_32:           return "PatchList_32";
     
     default: return "Unknown";
     }
+}
+
+NODISCARD constexpr bool IsPatchTopology(EPrimitiveTopology PrimitiveTopology)
+{
+    return PrimitiveTopology >= EPrimitiveTopology::PatchList_1 && PrimitiveTopology <= EPrimitiveTopology::PatchList_32;
+}
+
+NODISCARD constexpr bool IsAdjacencyTopology(EPrimitiveTopology PrimitiveTopology)
+{
+    switch (PrimitiveTopology)
+    {
+    case EPrimitiveTopology::LineListAdjacency:
+    case EPrimitiveTopology::LineStripAdjacency:
+    case EPrimitiveTopology::TriangleListAdjacency:
+    case EPrimitiveTopology::TriangleStripAdjacency: return true;
+    
+    default: return false;
+    }
+}
+
+NODISCARD constexpr bool IsStripTopology(EPrimitiveTopology PrimitiveTopology)
+{
+    switch (PrimitiveTopology)
+    {
+    case EPrimitiveTopology::LineStrip:
+    case EPrimitiveTopology::TriangleStrip:
+    case EPrimitiveTopology::LineStripAdjacency:
+    case EPrimitiveTopology::TriangleStripAdjacency: return true;
+    
+    default: return false;
+    }
+}
+
+NODISCARD constexpr uint32 GetNumPatchControlPoints(EPrimitiveTopology PrimitiveTopology)
+{
+    if (!IsPatchTopology(PrimitiveTopology))
+    {
+        return 0;
+    }
+
+    return uint32(UnderlyingTypeValue(PrimitiveTopology) - UnderlyingTypeValue(EPrimitiveTopology::PatchList_1)) + 1;
+}
+
+NODISCARD constexpr EPrimitiveTopology MakePatchListTopology(uint32 NumPatchControlPoints)
+{
+    if (NumPatchControlPoints == 0 || NumPatchControlPoints > RHI_MAX_PATCH_CONTROL_POINTS)
+    {
+        return EPrimitiveTopology::Undefined;
+    }
+
+    return static_cast<EPrimitiveTopology>(UnderlyingTypeValue(EPrimitiveTopology::PatchList_1) + (NumPatchControlPoints - 1));
 }
 
 enum class EShadingRate : uint8

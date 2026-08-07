@@ -494,6 +494,18 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
     InputAssemblyCreateInfo.topology               = ConvertPrimitiveTopology(InDesc.PrimitiveTopology);
     InputAssemblyCreateInfo.primitiveRestartEnable = InDesc.bPrimitiveRestartEnable ? VK_TRUE : VK_FALSE;
 
+    // Tessellation CreateInfo
+    const bool bHasTessellation = (InDesc.HullShader != nullptr) && (InDesc.DomainShader != nullptr);
+    if (bHasTessellation && !GVulkanSupportsTessellation)
+    {
+        VULKAN_ERROR_CRITICAL("Tessellation shaders are not supported by this device");
+        return false;
+    }
+
+    VkPipelineTessellationStateCreateInfo TessellationStateCreateInfo = {};
+    TessellationStateCreateInfo.sType              = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
+    TessellationStateCreateInfo.patchControlPoints = GetNumPatchControlPoints(InDesc.PrimitiveTopology);
+
     // Viewport CreateInfo
     VkPipelineViewportStateCreateInfo ViewportStateCreateInfo = {};
     ViewportStateCreateInfo.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -618,6 +630,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
     PipelineCreateInfo.pStages             = ShaderStages.Data();
     PipelineCreateInfo.pVertexInputState   = &VertexInputStateCreateInfo;
     PipelineCreateInfo.pInputAssemblyState = &InputAssemblyCreateInfo;
+    PipelineCreateInfo.pTessellationState  = bHasTessellation ? &TessellationStateCreateInfo : nullptr;
     PipelineCreateInfo.pViewportState      = &ViewportStateCreateInfo;
     PipelineCreateInfo.pRasterizationState = &RasterizerStateCreateInfo;
     PipelineCreateInfo.pMultisampleState   = &MultisamplingCreateInfo;
