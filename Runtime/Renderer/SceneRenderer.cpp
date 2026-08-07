@@ -1,4 +1,5 @@
 #include "Core/Math/Frustum.h"
+#include "Core/Templates/Utility/BitCast.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Time/Timespan.h"
@@ -1008,8 +1009,10 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
     }
 
     // Render Shadows
+    FSceneDirectionalLight* DirectionalLight = CurrentScene ? CurrentScene->GetDirectionalLight() : nullptr;
+
     const bool bEnableShadows    = GShadowsEnabled;
-    const bool bEnableSunShadows = GSunShadowsEnabled;
+    const bool bEnableSunShadows = GSunShadowsEnabled && (!DirectionalLight || DirectionalLight->bCastShadows);
 
     if (bEnableShadows)
     {
@@ -1328,10 +1331,16 @@ void FSceneRenderer::RenderThread_ProcessEditorObjectPickRequests(FRHICommandLis
         FlipY0 = FY0;
     }
 
+    // D32_Float and R32_Uint are both 4 bytes over the same rectangle, so the depth window reuses the normal row stride.
+    const bool   bCopyDepth        = InResources.EditorNoJitterDepth.IsValid();
+    const uint64 WindowsEnd        = bTryFlipY ? (FlippedBaseOffset + FlippedRequiredSize) : NormalRequiredSize;
+    const uint64 DepthBaseOffset   = Math::AlignUp<uint64>(WindowsEnd, 512ull);
+    const uint64 DepthRequiredSize = bCopyDepth ? (NormalRowStrideBytes * uint64(RegionHeight)) : 0ull;
+
     FRHIBufferDesc ReadbackDesc;
     ReadbackDesc.Flags  = EBufferFlags::ReadBack;
     ReadbackDesc.Stride = BytesPerPixel;
-    ReadbackDesc.Size   = bTryFlipY ? (FlippedBaseOffset + FlippedRequiredSize) : NormalRequiredSize;
+    ReadbackDesc.Size   = bCopyDepth ? (DepthBaseOffset + DepthRequiredSize) : WindowsEnd;
 
     FRHIFenceRef  Fence          = RHI::CreateFence();
     FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(ReadbackDesc, ERHIResourceState::CopyDest, nullptr);
@@ -1371,10 +1380,26 @@ void FSceneRenderer::RenderThread_ProcessEditorObjectPickRequests(FRHICommandLis
     }
 
     InCommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(InResources.EditorObjectID_NoJitter.Get(), ERHIResourceState::CopySource, ERHIResourceState::PixelShaderResource));
+
+    // Same rectangle out of the stable depth buffer, so the pick also reports where the surface is.
+    if (bCopyDepth)
+    {
+        InCommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(InResources.EditorNoJitterDepth.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::CopySource));
+
+        for (uint32 Row = 0; Row < RegionHeight; ++Row)
+        {
+            const uint64 DstOffset = DepthBaseOffset + (NormalRowStrideBytes * uint64(Row));
+            InCommandList.CopyTextureRegionToBuffer(ReadbackBuffer.Get(), DstOffset, InResources.EditorNoJitterDepth.Get(), FTextureRegion2D(RegionWidth, 1, uint32(X0), uint32(Y0) + Row), 0);
+        }
+
+        InCommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(InResources.EditorNoJitterDepth.Get(), ERHIResourceState::CopySource, ERHIResourceState::PixelShaderResource));
+    }
+
     InCommandList.WriteFence(Fence.Get());
 
     FEditorObjectPickInFlight InFlight;
     InFlight.Scene                 = CurrentScene;
+    InFlight.RequestId             = Request.RequestId;
     InFlight.ReadbackBuffer        = ReadbackBuffer;
     InFlight.Fence                 = Fence;
     InFlight.SampleRadius          = uint32(SampleRadius);
@@ -1395,6 +1420,9 @@ void FSceneRenderer::RenderThread_ProcessEditorObjectPickRequests(FRHICommandLis
     InFlight.FlippedHeight         = FlippedRegionHeight;
     InFlight.FlippedCenterX        = FlippedCenterLocalX;
     InFlight.FlippedCenterY        = FlippedCenterLocalY;
+    InFlight.bHasDepthWindow       = bCopyDepth ? 1u : 0u;
+    InFlight.DepthBaseOffset       = uint32(DepthBaseOffset);
+    InFlight.DepthRowStrideBytes   = uint32(NormalRowStrideBytes);
 
     {
         TScopedLock Lock(ObjectPickStateCS);
@@ -1403,21 +1431,22 @@ void FSceneRenderer::RenderThread_ProcessEditorObjectPickRequests(FRHICommandLis
 }
 #endif
 
-void FSceneRenderer::RequestEditorObjectPick(FScene* Scene, uint32 PixelX, uint32 PixelY)  
+void FSceneRenderer::RequestEditorObjectPick(FScene* Scene, uint32 PixelX, uint32 PixelY, uint64 RequestId)
 {  
 #if EDITOR_BUILD 
     if (Scene)  
     { 
-        PendingObjectPicks.Enqueue(FEditorObjectPickRequest{ Scene, PixelX, PixelY }); 
+        PendingObjectPicks.Enqueue(FEditorObjectPickRequest{ Scene, PixelX, PixelY, RequestId });
     } 
 #else
     UNREFERENCED_VARIABLE(Scene);
     UNREFERENCED_VARIABLE(PixelX);
     UNREFERENCED_VARIABLE(PixelY);
+    UNREFERENCED_VARIABLE(RequestId);
 #endif
 } 
  
-bool FSceneRenderer::PollEditorObjectPickResult(FScene* Scene, uint32& OutObjectID) 
+bool FSceneRenderer::PollEditorObjectPickResult(FScene* Scene, FEditorPickResult& OutResult)
 { 
 #if EDITOR_BUILD
     if (!Scene) 
@@ -1525,6 +1554,56 @@ bool FSceneRenderer::PollEditorObjectPickResult(FScene* Scene, uint32& OutObject
                             InFlight.FlippedCenterX,
                             InFlight.FlippedCenterY);
                     }
+                    
+                    auto ChooseDepthFromWindow = [&](uint32 CenterX, uint32 CenterY, float& OutDepth) -> bool
+                    {
+                        auto ReadDepth = [&](uint32 X, uint32 Y) -> float
+                        {
+                            const uint32 Bits = ReadPixel(InFlight.DepthBaseOffset, InFlight.DepthRowStrideBytes, InFlight.NormalWidth, InFlight.NormalHeight, X, Y);
+                            return BitCast<float>(Bits);
+                        };
+
+                        const float CenterDepth = ReadDepth(CenterX, CenterY);
+                        if (CenterDepth > 0.0f && CenterDepth < 1.0f)
+                        {
+                            OutDepth = CenterDepth;
+                            return true;
+                        }
+
+                        // Nearest valid sample, mirroring the ObjectID fallback.
+                        float BestDepth = 1.0f;
+                        int32 BestDist2 = INT32_MAX;
+
+                        for (uint32 Y = 0; Y < InFlight.NormalHeight; ++Y)
+                        {
+                            for (uint32 X = 0; X < InFlight.NormalWidth; ++X)
+                            {
+                                const float SampleDepth = ReadDepth(X, Y);
+                                if (SampleDepth <= 0.0f || SampleDepth >= 1.0f)
+                                {
+                                    continue;
+                                }
+
+                                const int32 Dx    = int32(X) - int32(CenterX);
+                                const int32 Dy    = int32(Y) - int32(CenterY);
+                                const int32 Dist2 = Dx * Dx + Dy * Dy;
+
+                                if (Dist2 < BestDist2)
+                                {
+                                    BestDist2 = Dist2;
+                                    BestDepth = SampleDepth;
+                                }
+                            }
+                        }
+
+                        OutDepth = BestDepth;
+                        return BestDist2 != INT32_MAX;
+                    };
+
+                    if (InFlight.bHasDepthWindow != 0)
+                    {
+                        OutResult.bHasDepth = ChooseDepthFromWindow(InFlight.NormalCenterX, InFlight.NormalCenterY, OutResult.DeviceDepth);
+                    }
 
                     if (GEditorPickDebug)
                     {
@@ -1577,7 +1656,9 @@ bool FSceneRenderer::PollEditorObjectPickResult(FScene* Scene, uint32& OutObject
                 }
             }
 
-            OutObjectID = ObjectID;
+            OutResult.RequestId = InFlight.RequestId;
+            OutResult.ObjectID  = ObjectID;
+
             InFlightObjectPicks.RemoveAtSwap(Index);
             return true;
         }
@@ -1586,7 +1667,7 @@ bool FSceneRenderer::PollEditorObjectPickResult(FScene* Scene, uint32& OutObject
     return false; 
 #else
     UNREFERENCED_VARIABLE(Scene);
-    OutObjectID = 0;
+    OutResult = FEditorPickResult();
     return false;
 #endif
 } 

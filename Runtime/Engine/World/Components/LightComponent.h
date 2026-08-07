@@ -12,6 +12,7 @@ public:
 
     void SetColor(const Vector3& InColor);
     void SetIntensity(float InIntensity);
+    void SetCastShadows(bool bInCastShadows);
     void SetShadowNearPlane(float InShadowNearPlane);
     void SetShadowFarPlane(float InShadowFarPlane);
     void SetShadowBias(float InShadowBias);
@@ -24,6 +25,11 @@ public:
     FORCEINLINE float GetIntensity() const
     {
         return Intensity;
+    }
+
+    FORCEINLINE bool CastsShadows() const
+    {
+        return bCastShadows;
     }
 
     FORCEINLINE float GetShadowNearPlane() const
@@ -49,4 +55,5 @@ protected:
     float   ShadowNearPlane;
     float   ShadowFarPlane;
     float   ShadowBias;
+    bool    bCastShadows;
 };

@@ -7,18 +7,15 @@
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include <imgui_internal.h>
 
-float  EditorStyleVars::MainMenuBarHeight = 28.0f;
-
-ImVec2 EditorStyleVars::InputFieldFramePadding    = ImVec2(12.0f, 6.0f);
-float  EditorStyleVars::InputFieldBorderThickness = 2.0f;
-float  EditorStyleVars::InputFieldBorderRounding  = 16.0f;
-ImU32  EditorStyleVars::InputFieldBorderColor     = IM_COL32(100, 136, 234, 255);
-ImVec4 EditorStyleVars::InputFieldSelectionColor  = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
-
-ImVec2 EditorStyleVars::SceneHierarchyItemSpacing    = ImVec2(8.0f, 8.0f);
-ImVec2 EditorStyleVars::SceneHierarchyWindowPadding  = ImVec2(8.0f, 8.0f);
-float  EditorStyleVars::SceneHierarchyTableRowHeight = 32.0f;
-
+float  EditorStyleVars::MainMenuBarHeight                     = 28.0f;
+ImVec2 EditorStyleVars::InputFieldFramePadding                = ImVec2(12.0f, 6.0f);
+float  EditorStyleVars::InputFieldBorderThickness             = 2.0f;
+float  EditorStyleVars::InputFieldBorderRounding              = 16.0f;
+ImU32  EditorStyleVars::InputFieldBorderColor                 = IM_COL32(100, 136, 234, 255);
+ImVec4 EditorStyleVars::InputFieldSelectionColor              = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
+ImVec2 EditorStyleVars::SceneHierarchyItemSpacing             = ImVec2(8.0f, 8.0f);
+ImVec2 EditorStyleVars::SceneHierarchyWindowPadding           = ImVec2(8.0f, 8.0f);
+float  EditorStyleVars::SceneHierarchyTableRowHeight          = 32.0f;
 ImVec2 EditorStyleVars::PropertiesItemSpacing                 = ImVec2(8.0f, 8.0f);
 ImVec2 EditorStyleVars::PropertiesWindowPadding               = ImVec2(8.0f, 8.0f);
 ImVec2 EditorStyleVars::PropertiesCollapsingHeaderItemSpacing = ImVec2(8.0f, 2.0f);
@@ -66,7 +63,9 @@ static bool BeginFullRowHoverCatcher(float RowHeight)
         ImGuiSelectableFlags_Disabled;
 
     ImGui::Selectable("##RowHover", false, HoverFlags, ImVec2(0.0f, RowHeight));
-    const bool bHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+
+    const bool bHovered = ImGui::IsItemHovered(
+        ImGuiHoveredFlags_AllowWhenDisabled | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
     ImGui::SetCursorScreenPos(Cursor);
     return bHovered;
@@ -96,6 +95,7 @@ static void DrawInputBorderLastItem(float Rounding = -1.0f, float Thickness = 2.
 
     ImVec2 Min = ImGui::GetItemRectMin();
     ImVec2 Max = ImGui::GetItemRectMax();
+
     Window->DrawList->AddRect(Min, Max, Color, Rounding, ImDrawFlags_None, Thickness);
 }
 
@@ -2408,20 +2408,11 @@ void EditorWidgets::MenuButton(const CHAR* Label, const CHAR* PopupId, bool bAny
     }
 }
 
-static void PopMenuPopupStyle()
-{
-    ImGui::PopFont();
-    ImGui::PopStyleColor(7); // PopupBg, Border, Text, TextDisabled, Header, HeaderHovered, HeaderActive
-    ImGui::PopStyleVar(5);   // WindowBorderSize, PopupBorderSize, PopupRounding, WindowPadding, ItemSpacing
-}
+static constexpr float MenuPopupPadY     = 10.0f;
+static constexpr float MenuFinalMinWidth = MenuDefaultMinWidth + (MenuContentIndentX * 2.0f);
 
-bool EditorWidgets::BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Anchor, float MinWidth)
+static void PushMenuChromeStyle()
 {
-    if (Anchor.bRequestPosition || ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None))
-    {
-        ImGui::SetNextWindowPos(ImVec2(Anchor.Min.x, Anchor.Max.y), ImGuiCond_Always);
-    }
-
     // -----------------------------------------------------------------------------------------
     // Styling Vars
     // -----------------------------------------------------------------------------------------
@@ -2432,11 +2423,6 @@ bool EditorWidgets::BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Ancho
     const ImVec4 ShortcutColor = ImVec4(175.0f / 255.0f, 175.0f / 255.0f, 175.0f / 255.0f, 1.0f);
     const ImVec4 HoverBlue     = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
 
-    constexpr float PopupPadY      = 10.0f;
-    constexpr float ContentIndentX = 20.0f;
-
-    const float FinalMinWidth = MinWidth + (ContentIndentX * 2.0f);
-
     // -----------------------------------------------------------------------------------------
     // Style vars
     // -----------------------------------------------------------------------------------------
@@ -2444,7 +2430,7 @@ bool EditorWidgets::BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Ancho
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 1.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, PopupPadY));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, MenuPopupPadY));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
 
     // -----------------------------------------------------------------------------------------
@@ -2467,27 +2453,46 @@ bool EditorWidgets::BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Ancho
     CHECK(Font != nullptr);
 
     ImGui::PushFont(Font);
+}
 
-    // -----------------------------------------------------------------------------------------
-    // Open menu
-    // -----------------------------------------------------------------------------------------
+static void PopMenuChromeStyle()
+{
+    ImGui::PopFont();
+    ImGui::PopStyleColor(7); // PopupBg, Border, Text, TextDisabled, Header, HeaderHovered, HeaderActive
+    ImGui::PopStyleVar(5);   // WindowBorderSize, PopupBorderSize, PopupRounding, WindowPadding, ItemSpacing
+}
 
+static void DrawMenuFrame()
+{
+    const ImVec2 WinPos  = ImGui::GetWindowPos();
+    const ImVec2 WinSize = ImGui::GetWindowSize();
+    const ImVec2 Min     = ImVec2(WinPos.x + 1.0f, WinPos.y + 1.0f);
+    const ImVec2 Max     = ImVec2(WinPos.x + WinSize.x - 1.0f, WinPos.y + WinSize.y - 1.0f);
+
+    ImDrawList* DrawList = ImGui::GetWindowDrawList();
+    DrawList->AddRect(Min, Max, IM_COL32(50, 50, 50, 255), 0.0f, ImDrawFlags_None, 1.0f);
+}
+
+bool EditorWidgets::BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Anchor, float MinWidth)
+{
+    if (Anchor.bRequestPosition || ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None))
+    {
+        ImGui::SetNextWindowPos(ImVec2(Anchor.Min.x, Anchor.Max.y), ImGuiCond_Always);
+    }
+
+    PushMenuChromeStyle();
+
+    const float FinalMinWidth = MinWidth + (MenuContentIndentX * 2.0f);
     ImGui::SetNextWindowSizeConstraints(ImVec2(FinalMinWidth, 0.0f), ImVec2(FLT_MAX, FLT_MAX));
 
     const bool bOpen = ImGui::BeginPopup(PopupId);
     if (bOpen)
     {
-        ImDrawList* DrawList = ImGui::GetWindowDrawList();
-
-        const ImVec2 WinPos  = ImGui::GetWindowPos();
-        const ImVec2 WinSize = ImGui::GetWindowSize();
-        const ImVec2 Min     = ImVec2(WinPos.x + 1.0f, WinPos.y + 1.0f);
-        const ImVec2 Max     = ImVec2(WinPos.x + WinSize.x - 1.0f, WinPos.y + WinSize.y - 1.0f);
-        DrawList->AddRect(Min, Max, IM_COL32(50, 50, 50, 255), 0.0f, ImDrawFlags_None, 1.0f);
+        DrawMenuFrame();
     }
     else
     {
-        PopMenuPopupStyle();
+        PopMenuChromeStyle();
     }
 
     return bOpen;
@@ -2495,90 +2500,58 @@ bool EditorWidgets::BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Ancho
 
 void EditorWidgets::EndMenuPopup()
 {
-    PopMenuPopupStyle();
+    PopMenuChromeStyle();
     ImGui::EndPopup();
 }
 
-static constexpr float ContextMenuPopupPadY      = 10.0f;
-static constexpr float ContextMenuContentIndentX = 20.0f;
-static constexpr float ContextMenuMinWidth       = 180.0f;
-static constexpr float ContextMenuFinalMinWidth  = ContextMenuMinWidth + (ContextMenuContentIndentX * 2.0f);
-
-static void PushContextMenuStyle()
+static void PushContextMenuExtras()
 {
-    // -----------------------------------------------------------------------------------------
-    // Styling Vars
-    // -----------------------------------------------------------------------------------------
+    const ImVec4 ContextMenuPopupBg = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
 
-    const ImVec4 ContextMenuPopupBg       = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
-    const ImVec4 ContextMenuPopupBorder   = ImVec4(63.0f / 255.0f, 63.0f / 255.0f, 63.0f / 255.0f, 1.0f);
-    const ImVec4 ContextMenuTextColor     = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-    const ImVec4 ContextMenuShortcutColor = ImVec4(175.0f / 255.0f, 175.0f / 255.0f, 175.0f / 255.0f, 1.0f);
-    const ImVec4 ContextMenuHoverBlue     = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
-
-    // -----------------------------------------------------------------------------------------
-    // Style vars
-    // -----------------------------------------------------------------------------------------
-
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 1.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, ContextMenuPopupPadY));
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
 
-    // -----------------------------------------------------------------------------------------
-    // Style colors
-    // -----------------------------------------------------------------------------------------
-
-    ImGui::PushStyleColor(ImGuiCol_PopupBg, ContextMenuPopupBg);
-    ImGui::PushStyleColor(ImGuiCol_Border, ContextMenuPopupBorder);
-    ImGui::PushStyleColor(ImGuiCol_Text, ContextMenuTextColor);
-    ImGui::PushStyleColor(ImGuiCol_TextDisabled, ContextMenuShortcutColor);
-    ImGui::PushStyleColor(ImGuiCol_Header, ContextMenuPopupBg);
-    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ContextMenuHoverBlue);
-    ImGui::PushStyleColor(ImGuiCol_HeaderActive, ContextMenuHoverBlue);
     ImGui::PushStyleColor(ImGuiCol_FrameBg, ContextMenuPopupBg);
     ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ContextMenuPopupBg);
     ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ContextMenuPopupBg);
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ContextMenuPopupBg);
+}
 
-    // -----------------------------------------------------------------------------------------
-    // Font
-    // -----------------------------------------------------------------------------------------
+static void PopContextMenuExtras()
+{
+    ImGui::PopStyleColor(4); // FrameBg, FrameBgHovered, FrameBgActive, ChildBg
+    ImGui::PopStyleVar(1);   // FramePadding
+}
 
-    ImFont* Font = EditorFonts::SegoeUI_18 ? EditorFonts::SegoeUI_18 : EditorFonts::DefaultFont;
-    CHECK(Font != nullptr);
-
-    ImGui::PushFont(Font);
+static void PushContextMenuStyle()
+{
+    PushMenuChromeStyle();
+    PushContextMenuExtras();
 }
 
 static void PopContextMenuStyle()
 {
-    ImGui::PopFont();
-    ImGui::PopStyleColor(11);
-    ImGui::PopStyleVar(6);
+    PopContextMenuExtras();
+    PopMenuChromeStyle();
+}
+
+static void DrawContextMenuFrame()
+{
+    // The viewport keeps its own cursor set, so a menu drawn over it has to claim the arrow back.
+    ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
+
+    DrawMenuFrame();
 }
 
 bool EditorWidgets::BeginPopupContextWindow(const CHAR* PopupId, ImGuiPopupFlags Flags)
 {
     PushContextMenuStyle();
 
-    ImGui::SetNextWindowSizeConstraints(ImVec2(ContextMenuFinalMinWidth, 0.0f), ImVec2(FLT_MAX, FLT_MAX));
+    ImGui::SetNextWindowSizeConstraints(ImVec2(MenuFinalMinWidth, 0.0f), ImVec2(FLT_MAX, FLT_MAX));
 
     const bool bOpen = ImGui::BeginPopupContextWindow(PopupId, Flags);
     if (bOpen)
     {
-        // Set cursor to arrow when context menu is open
-        ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
-
-        const ImVec2 WinPos  = ImGui::GetWindowPos();
-        const ImVec2 WinSize = ImGui::GetWindowSize();
-        const ImVec2 Min     = ImVec2(WinPos.x + 1.0f, WinPos.y + 1.0f);
-        const ImVec2 Max     = ImVec2(WinPos.x + WinSize.x - 1.0f, WinPos.y + WinSize.y - 1.0f);
-
-        ImDrawList* DrawList = ImGui::GetWindowDrawList();
-        DrawList->AddRect(Min, Max, IM_COL32(50, 50, 50, 255), 0.0f, ImDrawFlags_None, 1.0f);
+        DrawContextMenuFrame();
     }
     else
     {
@@ -2592,21 +2565,12 @@ bool EditorWidgets::BeginPopupContextItem(const CHAR* PopupId)
 {
     PushContextMenuStyle();
 
-    ImGui::SetNextWindowSizeConstraints(ImVec2(ContextMenuFinalMinWidth, 0.0f), ImVec2(FLT_MAX, FLT_MAX));
+    ImGui::SetNextWindowSizeConstraints(ImVec2(MenuFinalMinWidth, 0.0f), ImVec2(FLT_MAX, FLT_MAX));
 
     const bool bOpen = ImGui::BeginPopupContextItem(PopupId);
     if (bOpen)
     {
-        // Set cursor to arrow when context menu is open
-        ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
-
-        const ImVec2 WinPos  = ImGui::GetWindowPos();
-        const ImVec2 WinSize = ImGui::GetWindowSize();
-        const ImVec2 Min     = ImVec2(WinPos.x + 1.0f, WinPos.y + 1.0f);
-        const ImVec2 Max     = ImVec2(WinPos.x + WinSize.x - 1.0f, WinPos.y + WinSize.y - 1.0f);
-
-        ImDrawList* DrawList = ImGui::GetWindowDrawList();
-        DrawList->AddRect(Min, Max, IM_COL32(50, 50, 50, 255), 0.0f, ImDrawFlags_None, 1.0f);
+        DrawContextMenuFrame();
     }
     else
     {
@@ -2614,6 +2578,197 @@ bool EditorWidgets::BeginPopupContextItem(const CHAR* PopupId)
     }
 
     return bOpen;
+}
+
+bool EditorWidgets::BeginPopupContext(const CHAR* PopupId)
+{
+    PushContextMenuStyle();
+
+    ImGui::SetNextWindowSizeConstraints(ImVec2(MenuFinalMinWidth, 0.0f), ImVec2(FLT_MAX, FLT_MAX));
+
+    // Unlike BeginPopupContextItem this does not do its own mouse-release detection, so the caller decides when the
+    // popup opens. Callers that treat a drag differently from a click need that.
+    const bool bOpen = ImGui::BeginPopup(PopupId);
+    if (bOpen)
+    {
+        DrawContextMenuFrame();
+    }
+    else
+    {
+        PopContextMenuStyle();
+    }
+
+    return bOpen;
+}
+
+static constexpr float SubMenuArrowSize = 12.0f;
+
+static void DrawSubMenuArrow(ImDrawList* DrawList, const ImVec2& RectMin, const ImVec2& RectMax, float RowHeight, float LabelY)
+{
+    const float  ArrowY   = RectMin.y + (RowHeight - SubMenuArrowSize) * 0.5f;
+    const float  ArrowX   = RectMax.x - MenuContentIndentX - SubMenuArrowSize;
+    const ImVec2 ArrowMin = ImVec2(ArrowX, ArrowY);
+    const ImVec2 ArrowMax = ImVec2(ArrowX + SubMenuArrowSize, ArrowY + SubMenuArrowSize);
+
+    if (EditorIcons::RightArrowIcon)
+    {
+        DrawList->AddImage(EditorIcons::RightArrowIcon, ArrowMin, ArrowMax, ImVec2(0, 0), ImVec2(1, 1), ImGui::GetColorU32(ImGuiCol_Text));
+    }
+    else
+    {
+        DrawList->AddText(ImVec2(ArrowX, LabelY), ImGui::GetColorU32(ImGuiCol_Text), ">");
+    }
+}
+
+bool EditorWidgets::MenuSubMenuRow(const CHAR* Label, PopupAnchor& OutAnchor, bool& bOutHovered, bool bForceActive, float LabelIndentX)
+{
+    const float PaddingY  = 4.0f;
+    const float RowHeight = ImGui::GetFontSize() + PaddingY * 2.0f;
+    const float RowWidth  = ImGui::GetContentRegionAvail().x;
+
+    ImGui::PushID(Label);
+
+    const ImGuiSelectableFlags Flags =
+        ImGuiSelectableFlags_SpanAvailWidth |
+        ImGuiSelectableFlags_NoPadWithHalfSpacing |
+        ImGuiSelectableFlags_DontClosePopups;
+
+    const bool bPressed = ImGui::Selectable("##row", false, Flags, ImVec2(RowWidth, RowHeight));
+    const bool bHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    const bool bActive  = ImGui::IsItemActive();
+
+    const ImVec2 RectMin = ImGui::GetItemRectMin();
+    const ImVec2 RectMax = ImGui::GetItemRectMax();
+
+    ImDrawList* DrawList = ImGui::GetWindowDrawList();
+
+    ImU32 Background = ImGui::GetColorU32(ImGuiCol_Header);
+    if (bActive || bForceActive)
+    {
+        Background = ImGui::GetColorU32(ImGuiCol_HeaderActive);
+    }
+    else if (bHovered)
+    {
+        Background = ImGui::GetColorU32(ImGuiCol_HeaderHovered);
+    }
+
+    DrawList->AddRectFilled(RectMin, RectMax, Background, 0.0f);
+
+    const ImVec2 LabelSize = ImGui::CalcTextSize(Label);
+    const float  LabelX    = RectMin.x + LabelIndentX;
+    const float  LabelY    = RectMin.y + (RowHeight - LabelSize.y) * 0.5f;
+
+    DrawList->AddText(ImVec2(LabelX, LabelY), ImGui::GetColorU32(ImGuiCol_Text), Label);
+
+    DrawSubMenuArrow(DrawList, RectMin, RectMax, RowHeight, LabelY);
+
+    OutAnchor.Min              = RectMin;
+    OutAnchor.Max              = RectMax;
+    OutAnchor.bRequestPosition = false;
+
+    bOutHovered = bHovered;
+
+    ImGui::PopID();
+
+    return bPressed;
+}
+
+void EditorWidgets::MenuSubMenuOverlay(const CHAR* Label, const PopupAnchor& Anchor, float LabelIndentX)
+{
+    if (Anchor.Max.x <= Anchor.Min.x || Anchor.Max.y <= Anchor.Min.y)
+    {
+        return;
+    }
+
+    ImDrawList* DrawList = ImGui::GetWindowDrawList();
+    DrawList->AddRectFilled(Anchor.Min, Anchor.Max, ImGui::GetColorU32(ImGuiCol_HeaderActive), 0.0f);
+
+    const float  RowHeight = Anchor.Max.y - Anchor.Min.y;
+    const ImVec2 LabelSize = ImGui::CalcTextSize(Label);
+    const float  LabelX    = Anchor.Min.x + LabelIndentX;
+    const float  LabelY    = Anchor.Min.y + (RowHeight - LabelSize.y) * 0.5f;
+
+    DrawList->AddText(ImVec2(LabelX, LabelY), ImGui::GetColorU32(ImGuiCol_Text), Label);
+
+    DrawSubMenuArrow(DrawList, Anchor.Min, Anchor.Max, RowHeight, LabelY);
+}
+
+struct FSubMenuFrame
+{
+    bool bChildOpen = false;
+};
+
+static TArray<FSubMenuFrame> GSubMenuStack;
+
+bool EditorWidgets::BeginSubMenu(FSubMenuState& InOutState, const CHAR* PopupId, const CHAR* Label, bool bEnabled)
+{
+    InOutState.Label   = Label;
+    InOutState.PopupId = PopupId;
+
+    const bool bPopupOpen = ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None);
+
+    if (!bEnabled)
+    {
+        ImGui::BeginDisabled();
+    }
+
+    const bool bPressed = MenuSubMenuRow(Label, InOutState.Anchor, InOutState.bRowHovered, bPopupOpen, InOutState.LabelIndentX);
+
+    if (!bEnabled)
+    {
+        ImGui::EndDisabled();
+        return false;
+    }
+
+    if (bPressed || InOutState.bRowHovered)
+    {
+        ImGui::OpenPopup(PopupId);
+        InOutState.Anchor.bRequestPosition = true;
+    }
+
+    const ImVec2 FlyoutPos = ImVec2(InOutState.Anchor.Max.x - MenuSubMenuOverlapX, InOutState.Anchor.Min.y);
+
+    PopupAnchor FlyoutAnchor;
+    FlyoutAnchor.Min              = FlyoutPos;
+    FlyoutAnchor.Max              = FlyoutPos;
+    FlyoutAnchor.bRequestPosition = InOutState.Anchor.bRequestPosition;
+
+    const bool bOpen = BeginMenuPopup(PopupId, FlyoutAnchor, InOutState.MinWidth);
+    if (bOpen)
+    {
+        ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
+
+        if (!GSubMenuStack.IsEmpty())
+        {
+            GSubMenuStack.Last().bChildOpen = true;
+        }
+
+        GSubMenuStack.Add(FSubMenuFrame());
+    }
+
+    return bOpen;
+}
+
+void EditorWidgets::EndSubMenu(FSubMenuState& InOutState)
+{
+    bool bChildOpen = false;
+    if (!GSubMenuStack.IsEmpty())
+    {
+        bChildOpen = GSubMenuStack.Last().bChildOpen;
+        GSubMenuStack.RemoveAt(GSubMenuStack.Size() - 1);
+    }
+
+    const bool  bFlyoutHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    const float BridgeMaxX     = InOutState.Anchor.Max.x + 4.0f;
+    const bool  bBridgeHovered = ImGui::IsMouseHoveringRect(InOutState.Anchor.Min, ImVec2(BridgeMaxX, InOutState.Anchor.Max.y), false);
+
+    if (!(bFlyoutHovered || InOutState.bRowHovered || bBridgeHovered || bChildOpen))
+    {
+        ImGui::CloseCurrentPopup();
+    }
+
+    EndMenuPopup();
+    MenuSubMenuOverlay(InOutState.Label, InOutState.Anchor, InOutState.LabelIndentX);
 }
 
 void EditorWidgets::EndPopupContext()

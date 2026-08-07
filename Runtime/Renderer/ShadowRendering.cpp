@@ -467,8 +467,25 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 {
     const bool bBindless = RHI::bSupportsBindless && GShadowsBindless && Resources.MaterialDataBufferSRV.IsValid();
 
-    // Clamp the number of shadow-casting point-lights
-    const int32 NumPointLights = Math::Min<int32>(Scene->GetPointLights().Size(), Resources.MaxPointLightShadows);
+    const int32 MaxShadowCasters = static_cast<int32>(Resources.MaxPointLightShadows);
+
+    TArray<FScenePointLight*> ShadowCasters;
+    ShadowCasters.Reserve(MaxShadowCasters);
+
+    for (FScenePointLight* ScenePointLight : Scene->GetPointLights())
+    {
+        if (ShadowCasters.Size() >= MaxShadowCasters)
+        {
+            break;
+        }
+
+        if (ScenePointLight && ScenePointLight->bCastShadows)
+        {
+            ShadowCasters.Add(ScenePointLight);
+        }
+    }
+
+    const int32 NumPointLights = ShadowCasters.Size();
 
     constexpr bool bIsSinglePass = RenderPassType == ECubeMapRenderPassType::SinglePass || RenderPassType == ECubeMapRenderPassType::GeometryShaderSinglePass;
     if constexpr (bIsSinglePass)
@@ -478,7 +495,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
         for (int32 LightIndex = 0; LightIndex < NumPointLights; ++LightIndex)
         {
-            FScenePointLight* ScenePointLight = Scene->GetPointLights()[LightIndex];
+            FScenePointLight* ScenePointLight = ShadowCasters[LightIndex];
             for (int32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)
             {
                 const FScenePointLight::FShadowData& Data = ScenePointLight->ShadowData[FaceIndex];
@@ -597,7 +614,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
         for (int32 LightIndex = 0; LightIndex < NumPointLights; ++LightIndex)
         {
-            FScenePointLight* ScenePointLight = Scene->GetPointLights()[LightIndex];
+            FScenePointLight* ScenePointLight = ShadowCasters[LightIndex];
             for (uint32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; ++FaceIndex)
             {
                 FScenePointLight::FShadowData& Data = ScenePointLight->ShadowData[FaceIndex];

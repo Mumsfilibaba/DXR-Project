@@ -7,6 +7,7 @@ FScenePointLight::FScenePointLight(FScene* InScene)
     , Color()
     , ShadowBias(0.0f)
     , ShadowFarPlane(0.0f)
+    , bCastShadows(true)
 {
 }
 
@@ -18,6 +19,7 @@ void FScenePointLight::RenderThread_ApplyUpdate(const FPointLightProxyUpdate& Up
     Position       = Update.Position;
     ShadowBias     = Update.ShadowBias;
     ShadowFarPlane = Update.ShadowFarPlane;
+    bCastShadows   = Update.bCastShadows;
 
     for (int32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)
     {

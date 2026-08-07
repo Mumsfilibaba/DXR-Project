@@ -590,10 +590,18 @@ void FEditorPropertiesWidget::DrawWindowContents()
             {
                 if (EditorWidgets::BeginPropertyTable("##PointLightShadowsTable", LabelColumnWidth, RevertColumnWidth))
                 {
+                    bool bCastShadows = PointLight->CastsShadows();
+                    const bool bCastShadows0 = true;
+
+                    if (EditorWidgets::DrawCheckboxProperty("Cast shadows", bCastShadows, &bCastShadows0))
+                    {
+                        PointLight->SetCastShadows(bCastShadows);
+                    }
+
                     float ShadowBias = PointLight->GetShadowBias();
                     const float ShadowBias0 = 0.005f;
                     
-                    if (EditorWidgets::DrawFloatProperty("Shadow-bias", ShadowBias, 0.0001f, 0.0001f, 0.1f, "%.4f", true, &ShadowBias0))
+                    if (EditorWidgets::DrawFloatProperty("Shadow-bias", ShadowBias, 0.0001f, 0.0001f, 0.1f, "%.4f", true, &ShadowBias0, bCastShadows))
                     {
                         PointLight->SetShadowBias(ShadowBias);
                     }
@@ -601,11 +609,13 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float ShadowNearPlane = PointLight->GetShadowNearPlane();
                     const float ShadowNearPlane0 = 1.0f;
                     
-                    if (EditorWidgets::DrawFloatProperty("Shadow near-plane", ShadowNearPlane, 0.01f, 0.01f, 1.0f, "%.2f", true, &ShadowNearPlane0))
+                    if (EditorWidgets::DrawFloatProperty("Shadow near-plane", ShadowNearPlane, 0.01f, 0.01f, 1.0f, "%.2f", true, &ShadowNearPlane0, bCastShadows))
                     {
                         PointLight->SetShadowNearPlane(ShadowNearPlane);
                     }
 
+                    // The far-plane doubles as the light's radius, so it stays editable for a light that
+                    // casts no shadow.
                     float ShadowFarPlane = PointLight->GetShadowFarPlane();
                     const float ShadowFarPlane0 = 30.0f;
 
@@ -683,10 +693,18 @@ void FEditorPropertiesWidget::DrawWindowContents()
             {
                 if (EditorWidgets::BeginPropertyTable("##DirLightShadowsTable", LabelColumnWidth, RevertColumnWidth))
                 {
+                    bool bCastShadows = DirectionalLight->CastsShadows();
+                    const bool bCastShadows0 = true;
+
+                    if (EditorWidgets::DrawCheckboxProperty("Cast shadows", bCastShadows, &bCastShadows0))
+                    {
+                        DirectionalLight->SetCastShadows(bCastShadows);
+                    }
+
                     float ShadowBias = DirectionalLight->GetShadowBias();
                     const float ShadowBias0 = 0.005f;
                     
-                    if (EditorWidgets::DrawFloatProperty("Shadow-bias", ShadowBias, 0.0001f, 0.0001f, 0.1f, "%.4f", true, &ShadowBias0))
+                    if (EditorWidgets::DrawFloatProperty("Shadow-bias", ShadowBias, 0.0001f, 0.0001f, 0.1f, "%.4f", true, &ShadowBias0, bCastShadows))
                     {
                         DirectionalLight->SetShadowBias(ShadowBias);
                     }
@@ -694,7 +712,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float Lambda = DirectionalLight->GetCascadeSplitLambda();
                     const float Lambda0 = 0.95f;
                     
-                    if (EditorWidgets::DrawFloatProperty("Cascade Split Lambda", Lambda, 0.01f, 0.0f, 1.0f, "%.2f", true, &Lambda0))
+                    if (EditorWidgets::DrawFloatProperty("Cascade Split Lambda", Lambda, 0.01f, 0.0f, 1.0f, "%.2f", true, &Lambda0, bCastShadows))
                     {
                         DirectionalLight->SetCascadeSplitLambda(Lambda);
                     }
@@ -702,7 +720,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float Offset = DirectionalLight->GetShadowPositionOffset();
                     const float Offset0 = 200.0f;
                     
-                    if (EditorWidgets::DrawFloatProperty("Cascade Position Offset", Offset, 1.0f, 0.0f, 1000.0f, "%.1f", true, &Offset0))
+                    if (EditorWidgets::DrawFloatProperty("Cascade Position Offset", Offset, 1.0f, 0.0f, 1000.0f, "%.1f", true, &Offset0, bCastShadows))
                     {
                         DirectionalLight->SetShadowPositionOffset(Offset);
                     }
@@ -710,7 +728,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float ShadowNearPlane = DirectionalLight->GetShadowNearPlane();
                     const float ShadowNearPlane0 = 120.0f;
                     
-                    if (EditorWidgets::DrawFloatProperty("Shadow near-plane", ShadowNearPlane, 1.0f, 0.0f, 1000.0f, "%.1f", true, &ShadowNearPlane0))
+                    if (EditorWidgets::DrawFloatProperty("Shadow near-plane", ShadowNearPlane, 1.0f, 0.0f, 1000.0f, "%.1f", true, &ShadowNearPlane0, bCastShadows))
                     {
                         DirectionalLight->SetShadowNearPlane(ShadowNearPlane);
                     }
@@ -718,7 +736,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float ShadowFarPlane = DirectionalLight->GetShadowFarPlane();
                     const float ShadowFarPlane0 = 250.0f;
                     
-                    if (EditorWidgets::DrawFloatProperty("Shadow far-plane", ShadowFarPlane, 1.0f, 0.0f, 1000.0f, "%.1f", true, &ShadowFarPlane0))
+                    if (EditorWidgets::DrawFloatProperty("Shadow far-plane", ShadowFarPlane, 1.0f, 0.0f, 1000.0f, "%.1f", true, &ShadowFarPlane0, bCastShadows))
                     {
                         DirectionalLight->SetShadowFarPlane(ShadowFarPlane);
                     }
@@ -726,7 +744,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float LightArea = DirectionalLight->GetLightArea();
                     const float LightArea0 = 0.05f;
 
-                    if (EditorWidgets::DrawFloatProperty("Light area", LightArea, 0.01f, 0.0f, 1.0f, "%.2f", true, &LightArea0))
+                    if (EditorWidgets::DrawFloatProperty("Light area", LightArea, 0.01f, 0.0f, 1.0f, "%.2f", true, &LightArea0, bCastShadows))
                     {
                         DirectionalLight->SetLightArea(LightArea);
                     }

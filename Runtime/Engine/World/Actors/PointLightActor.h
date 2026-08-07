@@ -12,7 +12,7 @@ public:
     ~FPointLightActor();
 
     using FActor::Initialize;
-    void Initialize(const Vector3& InPosition, bool bInShadowCaster);
+    void Initialize(const Vector3& InPosition, bool bInCastShadows);
 
     FPointLightComponent* GetLightComponent() const
     {

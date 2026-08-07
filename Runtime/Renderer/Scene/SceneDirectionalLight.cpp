@@ -13,6 +13,7 @@ FSceneDirectionalLight::FSceneDirectionalLight(FScene* InScene)
     , ShadowFarPlane(0.0f)
     , ShadowBias(0.0f)
     , LightArea(0.05f)
+    , bCastShadows(true)
 {
     ShadowMatrix.SetIdentity();
 }
@@ -29,6 +30,7 @@ void FSceneDirectionalLight::RenderThread_ApplyUpdate(const FDirectionalLightPro
     ShadowPositionOffset = Update.ShadowPositionOffset;
     CascadeSplitLambda   = Update.CascadeSplitLambda;
     LightArea            = Update.LightArea;
+    bCastShadows         = Update.bCastShadows;
 
     // Update ShadowMatrix
     Vector3 FrustumCorners[8] =

@@ -1,7 +1,6 @@
 #include "Core/Math/Math.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Components/PointLightComponent.h"
-#include "Engine/World/World.h"
 
 FOBJECT_IMPLEMENT_CLASS(FPointLightComponent);
 
@@ -10,10 +9,8 @@ FPointLightComponent::FPointLightComponent(const FObjectInitializer& ObjectIniti
     , ViewProjMatrices()
     , ViewMatrices()
     , ProjMatrices()
-    , bShadowCaster(false)
 {
     SetTickable(true);
-    CalculateMatrices();
 }
 
 FPointLightComponent::~FPointLightComponent()
@@ -48,33 +45,6 @@ void FPointLightComponent::SetShadowFarPlane(float InShadowFarPlane)
     }
 }
 
-void FPointLightComponent::SetShadowCaster(bool bInShadowCaster)
-{
-    if (bShadowCaster == bInShadowCaster)
-    {
-        return;
-    }
-
-    bShadowCaster = bInShadowCaster;
-
-    if (FActor* OwnerActor = GetActorOwner())
-    {
-        if (FWorld* World = OwnerActor->GetWorld())
-        {
-            if (bShadowCaster)
-            {
-                World->AddSceneComponent(this);
-            }
-            else
-            {
-                World->RemoveSceneComponent(this);
-            }
-        }
-    }
-
-    CalculateMatrices();
-}
-
 const Vector3& FPointLightComponent::GetPosition() const
 {
     CHECK(GetActorOwner() != nullptr);
@@ -83,12 +53,10 @@ const Vector3& FPointLightComponent::GetPosition() const
 
 void FPointLightComponent::CalculateMatrices()
 {
-    if (!bShadowCaster)
+    if (!bCastShadows || !GetActorOwner())
     {
         return;
     }
-
-    CHECK(GetActorOwner() != nullptr);
 
     const Vector3 Directions[6] =
     {

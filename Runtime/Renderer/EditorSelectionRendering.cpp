@@ -182,7 +182,7 @@ bool FEditorNoJitterDepthPass::CreateResources(FFrameResources& FrameResources, 
         return true;
     }
 
-    const ETextureUsageFlags Usage           = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture;
+    const ETextureUsageFlags Usage           = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::CopySource;
     const FClearValue        DepthClearValue = FClearValue(RendererTextureFormats::DepthBufferFormat, 1.0f, 0);
 
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(RendererTextureFormats::DepthBufferFormat, Width, Height, 1, 1, Usage, DepthClearValue);

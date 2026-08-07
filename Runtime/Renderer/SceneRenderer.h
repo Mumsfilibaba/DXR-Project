@@ -154,8 +154,8 @@ public:
     // Dispatches the UI command list plus present for the frame described by Packet.
     void SubmitUIAndPresent(const FSceneRenderPacket& Packet);
 
-    void RequestEditorObjectPick(FScene* Scene, uint32 PixelX, uint32 PixelY); 
-    bool PollEditorObjectPickResult(FScene* Scene, uint32& OutObjectID); 
+    void RequestEditorObjectPick(FScene* Scene, uint32 PixelX, uint32 PixelY, uint64 RequestId);
+    bool PollEditorObjectPickResult(FScene* Scene, FEditorPickResult& OutResult);
  
     void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth, uint32 InHeight, EFormat InFormat = EFormat::Unknown, EColorSpace InColorSpace = EColorSpace::Unknown); 
     void ResizeResources(uint32 InWidth, uint32 InHeight);
@@ -269,11 +269,13 @@ private:
         FScene* Scene = nullptr;
         uint32  PixelX = 0;
         uint32  PixelY = 0;
+        uint64  RequestId = 0;
     };
 
     struct FEditorObjectPickInFlight
     {
         FScene*       Scene = nullptr;
+        uint64        RequestId = 0;
 
         FRHIFenceRef  Fence;
         FRHIBufferRef ReadbackBuffer;
@@ -300,6 +302,11 @@ private:
         uint32        FlippedHeight         = 0;
         uint32        FlippedCenterX        = 0;
         uint32        FlippedCenterY        = 0;
+
+        // Depth window, always the same rectangle as the normal ObjectID window.
+        uint32        bHasDepthWindow : 1 = 0;
+        uint32        DepthBaseOffset     = 0;
+        uint32        DepthRowStrideBytes = 0;
     };
 
     static constexpr uint32 MaxInFlightObjectPicks = 4;

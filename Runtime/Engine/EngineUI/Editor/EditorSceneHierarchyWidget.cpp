@@ -2,6 +2,7 @@
 #include "Engine/EditorEngine.h"
 #include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
+#include "Engine/EngineUI/Editor/EditorActorFactory.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Components/CameraComponent.h"
 #include "Engine/World/Components/DirectionalLightComponent.h"
@@ -576,20 +577,33 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
     {
         EditorWidgets::MenuLabeledSeparator("Create");
 
-        if (EditorWidgets::MenuItem("Add Actor", nullptr, false, false))
+        bool bRequestClosePopup = false;
+
+        // Spawned at the origin, since a hierarchy row has no cursor ray to place against.
         {
-            // TODO
+            FSubMenuState AddActorSubMenu;
+            if (EditorWidgets::BeginSubMenu(AddActorSubMenu, "##SceneHierarchyAddActorMenu", "Add Actor"))
+            {
+                if (FActor* NewActor = EditorActorFactory::DrawPlaceActorMenu(World, Vector3(0.0f, 0.0f, 0.0f)))
+                {
+                    EditorEngine->SetSelectedActor(NewActor);
+                    bRequestClosePopup = true;
+                }
+
+                EditorWidgets::EndSubMenu(AddActorSubMenu);
+            }
         }
 
         EditorWidgets::MenuLabeledSeparator("Common");
-        
-        if (EditorWidgets::MenuItem("Delete", "Delete", false, false))
-        {
-            // TODO
-        }
 
         FActor* SelectedActorForMenu = EditorEngine->GetSelectedActor();
         const bool bHasActorSelected = (SelectedActorForMenu != nullptr);
+
+        if (EditorWidgets::MenuItem("Delete", "Delete", false, bHasActorSelected))
+        {
+            EditorEngine->RequestDeleteActor(SelectedActorForMenu);
+        }
+
         if (EditorWidgets::MenuItem("Rename", "F2", false, bHasActorSelected))
         {
             if (SelectedActorForMenu)
@@ -623,6 +637,11 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
         if (EditorWidgets::MenuItem("Copy", "Ctrl+V", false, false))
         {
             // TODO
+        }
+
+        if (bRequestClosePopup)
+        {
+            ImGui::CloseCurrentPopup();
         }
 
         EditorWidgets::EndPopupContext();

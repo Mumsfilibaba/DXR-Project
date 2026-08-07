@@ -25,8 +25,8 @@ public:
     
     virtual void KickSceneRender(FSceneRenderPacket&& Packet) override final;
  
-    virtual void RequestEditorObjectPick(IScene* Scene, uint32 PixelX, uint32 PixelY) override final; 
-    virtual bool PollEditorObjectPickResult(IScene* Scene, uint32& OutObjectID)       override final; 
+    virtual void RequestEditorObjectPick(IScene* Scene, uint32 PixelX, uint32 PixelY, uint64 RequestId) override final;
+    virtual bool PollEditorObjectPickResult(IScene* Scene, FEditorPickResult& OutResult)                override final;
  
     virtual void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 Width, uint32 Height, EFormat Format = EFormat::Unknown, EColorSpace ColorSpace = EColorSpace::Unknown) override final; 
 

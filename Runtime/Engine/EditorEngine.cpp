@@ -14,6 +14,7 @@
 #include "Engine/EngineUI/Editor/EditorRHIInfoWidget.h"
 #include "Engine/EngineUI/Editor/EditorStatsWidget.h"
 #include "Engine/EngineUI/Editor/EditorAboutWidget.h"
+#include "Engine/EngineUI/Editor/EditorActorFactory.h"
 #include "Engine/World/Components/CameraComponent.h"
 #include "RendererCore/RenderSettings.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
@@ -23,6 +24,9 @@ FEditorEngine::FEditorEngine()
     , SelectedActor(nullptr)
     , LastViewportCamera(nullptr)
     , ActorRemovedDelegateHandle()
+    , NextPickRequestId(1)
+    , PendingPickPurposes()
+    , PendingActorDeletions()
     , DockspaceWidget(nullptr)
     , FooterWidget(nullptr)
     , OutputLogWidget(nullptr)
@@ -120,11 +124,28 @@ void FEditorEngine::Release()
         AboutWidget.Reset();
     }
 
+    // The cached primitive meshes own RHI buffers, so they cannot outlive the RHI.
+    EditorActorFactory::ReleaseCachedMeshes();
+
     FEngine::Release();
 }
 
 void FEditorEngine::Tick(float DeltaTime)
 {
+    // Deletions are queued by the editor UI while it is iterating the actor list, so they are applied here instead.
+    if (!PendingActorDeletions.IsEmpty())
+    {
+        if (FWorld* LocalWorld = GetWorld())
+        {
+            for (FActor* PendingActor : PendingActorDeletions)
+            {
+                LocalWorld->RemoveActor(PendingActor);
+            }
+        }
+
+        PendingActorDeletions.Clear();
+    }
+
     FEngine::Tick(DeltaTime);
 
     if (ViewportWidget)
@@ -137,21 +158,29 @@ void FEditorEngine::Tick(float DeltaTime)
     {
         if (IRendererModule* RendererModule = IRendererModule::Get())
         {
-            uint32 PickedObjectID = 0;
-            if (RendererModule->PollEditorObjectPickResult(LocalWorld->GetSceneInterface(), PickedObjectID))
+            FEditorPickResult PickResult;
+            if (RendererModule->PollEditorObjectPickResult(LocalWorld->GetSceneInterface(), PickResult))
             {
                 IScene* Scene       = LocalWorld->GetSceneInterface();
-                FActor* PickedActor = Scene ? Scene->GetActorByObjectID(PickedObjectID) : nullptr;
+                FActor* PickedActor = Scene ? Scene->GetActorByObjectID(PickResult.ObjectID) : nullptr;
 
                 if (IConsoleVariable* PickDebug = FConsoleManager::Get().FindConsoleVariable("Editor.Pick.Debug"))
                 {
                     if (PickDebug->GetBool())
                     {
-                        LOG_INFO("[EditorPick] Completed. ObjectID=%u Actor=%s", PickedObjectID, PickedActor ? *PickedActor->GetName() : "nullptr");
+                        LOG_INFO("[EditorPick] Completed. ObjectID=%u Actor=%s", PickResult.ObjectID, PickedActor ? *PickedActor->GetName() : "nullptr");
                     }
                 }
 
-                if (PickedActor)
+                const EEditorPickPurpose Purpose = ConsumePickPurpose(PickResult.RequestId);
+                if (Purpose == EEditorPickPurpose::ContextMenu)
+                {
+                    if (ViewportWidget)
+                    {
+                        ViewportWidget->OnContextMenuPickResult(PickResult, PickedActor);
+                    }
+                }
+                else if (PickedActor)
                 {
                     SetSelectedActor(PickedActor);
                 }
@@ -217,6 +246,57 @@ void FEditorEngine::SetSelectedActor(FActor* InActor)
 void FEditorEngine::ClearSelection()
 {
     SelectedActor = nullptr;
+}
+
+uint64 FEditorEngine::RequestPick(uint32 PixelX, uint32 PixelY, EEditorPickPurpose Purpose)
+{
+    FWorld* LocalWorld = GetWorld();
+    if (!LocalWorld)
+    {
+        return 0;
+    }
+
+    IRendererModule* RendererModule = IRendererModule::Get();
+    if (!RendererModule)
+    {
+        return 0;
+    }
+
+    const uint64 RequestId = NextPickRequestId++;
+    PendingPickPurposes.Add(TPair<uint64, EEditorPickPurpose>(RequestId, Purpose));
+
+    // The renderer silently drops requests it cannot service, so age out ids that never came back.
+    constexpr int32 MaxPendingPickPurposes = 16;
+    while (PendingPickPurposes.Size() > MaxPendingPickPurposes)
+    {
+        PendingPickPurposes.RemoveAt(0);
+    }
+
+    RendererModule->RequestEditorObjectPick(LocalWorld->GetSceneInterface(), PixelX, PixelY, RequestId);
+    return RequestId;
+}
+
+void FEditorEngine::RequestDeleteActor(FActor* InActor)
+{
+    if (InActor && !PendingActorDeletions.Contains(InActor))
+    {
+        PendingActorDeletions.Add(InActor);
+    }
+}
+
+EEditorPickPurpose FEditorEngine::ConsumePickPurpose(uint64 RequestId)
+{
+    for (int32 Index = 0; Index < PendingPickPurposes.Size(); ++Index)
+    {
+        if (PendingPickPurposes[Index].First == RequestId)
+        {
+            const EEditorPickPurpose Purpose = PendingPickPurposes[Index].Second;
+            PendingPickPurposes.RemoveAt(Index);
+            return Purpose;
+        }
+    }
+
+    return EEditorPickPurpose::Selection;
 }
 
 void FEditorEngine::OnActorRemoved(FActor* RemovedActor)

@@ -28,6 +28,24 @@ struct PopupAnchor
     bool   bRequestPosition = false;
 };
 
+inline constexpr float MenuContentIndentX    = 20.0f;
+inline constexpr float MenuItemPaddingX      = 8.0f;
+inline constexpr float MenuLabelIndentX      = MenuContentIndentX + MenuItemPaddingX;
+inline constexpr float MenuRadioLabelIndentX = 42.0f;
+inline constexpr float MenuDefaultMinWidth   = 180.0f;
+inline constexpr float MenuSubMenuOverlapX   = 2.0f;
+
+struct FSubMenuState
+{
+    PopupAnchor Anchor;
+
+    const CHAR* Label        = nullptr;
+    const CHAR* PopupId      = nullptr;
+    float       LabelIndentX = MenuLabelIndentX;
+    float       MinWidth     = MenuDefaultMinWidth;
+    bool        bRowHovered  = false;
+};
+
 struct RichTextSpan
 {
     String Text;
@@ -192,7 +210,14 @@ struct ENGINE_API EditorWidgets
     static bool BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Anchor, float MinWidth = 180.0f);
     static bool BeginPopupContextWindow(const CHAR* PopupId, ImGuiPopupFlags Flags = ImGuiPopupFlags_MouseButtonRight);
     static bool BeginPopupContextItem(const CHAR* PopupId);
-    
+    static bool BeginPopupContext(const CHAR* PopupId);
+
+    static bool BeginSubMenu(FSubMenuState& InOutState, const CHAR* PopupId, const CHAR* Label, bool bEnabled = true);
+    static void EndSubMenu(FSubMenuState& InOutState);
+
+    static bool MenuSubMenuRow(const CHAR* Label, PopupAnchor& OutAnchor, bool& bOutHovered, bool bForceActive, float LabelIndentX = MenuLabelIndentX);
+    static void MenuSubMenuOverlay(const CHAR* Label, const PopupAnchor& Anchor, float LabelIndentX = MenuLabelIndentX);
+
     static void MenuSeparator(float Thickness = 1.0f, float PaddingY = 4.0f);
     static void MenuLabeledSeparator(const CHAR* Label, float Thickness = 1.0f, float PaddingY = 4.0f);
     static bool MenuItem(const CHAR* Label, const CHAR* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true, bool bDrawBorder = false);

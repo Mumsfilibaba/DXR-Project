@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Containers/Pair.h"
 #include "Engine/Engine.h"
 
 class FEditorDockspaceWidget;
@@ -16,6 +17,12 @@ class FEditorRHIInfoWidget;
 class FEditorStatsWidget;
 class FEditorAboutWidget;
 class FCameraComponent;
+
+enum class EEditorPickPurpose : uint8
+{
+    Selection,
+    ContextMenu,
+};
 
 class ENGINE_API FEditorEngine : public FEngine
 {
@@ -50,6 +57,9 @@ public:
     void SetSelectedActor(FActor* InActor);
     void ClearSelection();
 
+    uint64 RequestPick(uint32 PixelX, uint32 PixelY, EEditorPickPurpose Purpose);
+    void RequestDeleteActor(FActor* InActor);
+
     FCameraComponent* GetActiveViewportCamera() const;
 
     FActor* GetSelectedActor() const
@@ -63,9 +73,14 @@ private:
     bool CreateViewportRenderTarget();
     void OnActorRemoved(FActor* RemovedActor);
 
+    EEditorPickPurpose ConsumePickPurpose(uint64 RequestId);
+
     FActor*                                   SelectedActor;
     FCameraComponent*                         LastViewportCamera;
     FDelegateHandle                           ActorRemovedDelegateHandle;
+    uint64                                    NextPickRequestId;
+    TArray<TPair<uint64, EEditorPickPurpose>> PendingPickPurposes;
+    TArray<FActor*>                           PendingActorDeletions;
     TSharedPtr<FEditorDockspaceWidget>        DockspaceWidget;
     TSharedPtr<FEditorFooterWidget>           FooterWidget;
     TSharedPtr<FEditorOutputLogWidget>        OutputLogWidget;
