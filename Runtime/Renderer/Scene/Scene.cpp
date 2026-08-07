@@ -242,6 +242,7 @@ FRenderUpdateBatch FScene::CollectRenderUpdates()
         Update.ShadowPositionOffset        = DirectionalLightSource->GetShadowPositionOffset();
         Update.CascadeSplitLambda          = DirectionalLightSource->GetCascadeSplitLambda();
         Update.LightArea                   = DirectionalLightSource->GetLightArea();
+        Update.bCastShadows                = DirectionalLightSource->CastsShadows();
     }
 
     // Point lights
@@ -257,6 +258,7 @@ FRenderUpdateBatch FScene::CollectRenderUpdates()
             Update.ShadowBias      = PointLight->GetShadowBias();
             Update.ShadowNearPlane = PointLight->GetShadowNearPlane();
             Update.ShadowFarPlane  = PointLight->GetShadowFarPlane();
+            Update.bCastShadows    = PointLight->CastsShadows();
 
             for (int32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)
             {
@@ -394,7 +396,7 @@ void FScene::AddSkyLight(FSkyLightComponent* InSkyLight)
 
 void FScene::AddPointLight(FPointLightComponent* InPointLight)
 {
-    if (!InPointLight || !InPointLight->IsShadowCaster())
+    if (!InPointLight)
     {
         return;
     }
@@ -676,6 +678,11 @@ void FScene::RenderThread_PrepareViewsForRendering()
     // Prepare point-light shadow-views
     for (FScenePointLight* PointLight : PointLights)
     {
+        if (!PointLight->bCastShadows)
+        {
+            continue;
+        }
+
         // Multi-pass (One pass per face)
         for (int32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)
         {
@@ -702,6 +709,11 @@ void FScene::RenderThread_PrepareViewsForRendering()
         // Update the visibility PointLights
         for (FScenePointLight* PointLight : PointLights)
         {
+            if (!PointLight->bCastShadows)
+            {
+                continue;
+            }
+
             // Check if for each face if a primitive is visible...
             bool bIsVisibleSinglePass = false;
             for (int32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)

@@ -4,11 +4,12 @@ FOBJECT_IMPLEMENT_CLASS(FLightComponent);
 
 FLightComponent::FLightComponent(const FObjectInitializer& ObjectInitializer)
     : FSceneComponent(ObjectInitializer)
-    , Color()
+    , Color(1.0f, 1.0f, 1.0f)
     , Intensity(1.0f)
     , ShadowNearPlane(0.0f)
     , ShadowFarPlane(0.0f)
     , ShadowBias(0.005f)
+    , bCastShadows(true)
 {
 }
 
@@ -17,11 +18,12 @@ FLightComponent::FLightComponent(
     float InShadowNearPlane,
     float InShadowFarPlane)
     : FSceneComponent(ObjectInitializer)
-    , Color()
+    , Color(1.0f, 1.0f, 1.0f)
     , Intensity(1.0f)
     , ShadowNearPlane(InShadowNearPlane)
     , ShadowFarPlane(InShadowFarPlane)
     , ShadowBias(0.005f)
+    , bCastShadows(true)
 {
 }
 
@@ -37,6 +39,11 @@ void FLightComponent::SetColor(const Vector3& InColor)
 void FLightComponent::SetIntensity(float InIntensity)
 {
     Intensity = InIntensity;
+}
+
+void FLightComponent::SetCastShadows(bool bInCastShadows)
+{
+    bCastShadows = bInCastShadows;
 }
 
 void FLightComponent::SetShadowNearPlane(float InShadowNearPlane)

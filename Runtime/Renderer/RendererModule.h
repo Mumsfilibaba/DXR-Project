@@ -25,8 +25,8 @@ public:
     
     virtual void KickSceneRender(FSceneRenderPacket&& Packet) override final;
  
-    virtual void RequestEditorObjectPick(IScene* Scene, uint32 PixelX, uint32 PixelY) override final; 
-    virtual bool PollEditorObjectPickResult(IScene* Scene, uint32& OutObjectID)       override final; 
+    virtual void RequestEditorObjectPick(IScene* Scene, uint32 PixelX, uint32 PixelY, uint64 RequestId) override final;
+    virtual bool PollEditorObjectPickResult(IScene* Scene, FEditorPickResult& OutResult)                override final;
 
     virtual void RequestEditorObjectPickRect(IScene* Scene, uint32 MinX, uint32 MinY, uint32 MaxX, uint32 MaxY) override final;
     virtual bool PollEditorObjectPickRectResult(IScene* Scene, TArray<uint32>& OutObjectIDs)                    override final;

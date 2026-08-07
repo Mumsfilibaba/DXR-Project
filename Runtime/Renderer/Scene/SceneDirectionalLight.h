@@ -27,4 +27,5 @@ struct FSceneDirectionalLight : public FSceneObject
     float      ShadowPositionOffset;
     float      CascadeSplitLambda;
     float      LightArea;
+    bool       bCastShadows;
 };

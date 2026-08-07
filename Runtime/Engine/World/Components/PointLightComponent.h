@@ -15,12 +15,6 @@ public:
     void UpdateShadowMatrices();
     void SetShadowNearPlane(float InShadowNearPlane);
     void SetShadowFarPlane(float InShadowFarPlane);
-    void SetShadowCaster(bool bInShadowCaster);
-
-    bool IsShadowCaster() const
-    {
-        return bShadowCaster;
-    }
 
     const Vector3& GetPosition() const;
 
@@ -48,5 +42,4 @@ private:
     Matrix4 ViewProjMatrices[6];
     Matrix4 ViewMatrices[6];
     Matrix4 ProjMatrices[6];
-    bool    bShadowCaster;
 };

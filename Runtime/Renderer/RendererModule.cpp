@@ -158,32 +158,33 @@ void FRendererModule::KickSceneRender(FSceneRenderPacket&& Packet)
         });
 }
 
-void FRendererModule::RequestEditorObjectPick(IScene* Scene, uint32 PixelX, uint32 PixelY) 
+void FRendererModule::RequestEditorObjectPick(IScene* Scene, uint32 PixelX, uint32 PixelY, uint64 RequestId)
 { 
 #if EDITOR_BUILD 
     if (Renderer) 
     { 
-        Renderer->RequestEditorObjectPick(static_cast<FScene*>(Scene), PixelX, PixelY); 
+        Renderer->RequestEditorObjectPick(static_cast<FScene*>(Scene), PixelX, PixelY, RequestId);
     } 
 #else 
     UNREFERENCED_VARIABLE(Scene); 
     UNREFERENCED_VARIABLE(PixelX); 
     UNREFERENCED_VARIABLE(PixelY); 
+    UNREFERENCED_VARIABLE(RequestId);
 #endif 
 } 
  
-bool FRendererModule::PollEditorObjectPickResult(IScene* Scene, uint32& OutObjectID) 
+bool FRendererModule::PollEditorObjectPickResult(IScene* Scene, FEditorPickResult& OutResult)
 { 
 #if EDITOR_BUILD 
     if (Renderer) 
     { 
-        return Renderer->PollEditorObjectPickResult(static_cast<FScene*>(Scene), OutObjectID); 
+        return Renderer->PollEditorObjectPickResult(static_cast<FScene*>(Scene), OutResult);
     } 
  
     return false; 
 #else 
     UNREFERENCED_VARIABLE(Scene); 
-    OutObjectID = 0; 
+    OutResult = FEditorPickResult();
     return false; 
 #endif 
 } 

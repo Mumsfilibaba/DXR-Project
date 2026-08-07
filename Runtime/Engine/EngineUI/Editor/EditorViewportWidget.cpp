@@ -11,6 +11,7 @@
 #include "Engine/EngineUI/Editor/EditorCameraController.h"
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h" 
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
+#include "Engine/EngineUI/Editor/EditorActorFactory.h"
 #include "Engine/World/Components/CameraComponent.h"
 #include "Engine/World/SceneViewport.h"
 #include "Engine/World/World.h"
@@ -26,6 +27,8 @@ static TAutoConsoleVariable<bool> CVarDrawFps(
 
 constexpr float SPEED_OVERLAY_HOLD_TIME = 0.9f;
 constexpr float SPEED_OVERLAY_FADE_TIME = 0.35f;
+
+constexpr const CHAR* VIEWPORT_CONTEXT_MENU_ID = "ViewportContextMenu";
 
 FEditorViewportWidget::FEditorViewportWidget(FEditorEngine* InEditorEngine)
     : EditorEngine(InEditorEngine)
@@ -45,6 +48,13 @@ FEditorViewportWidget::FEditorViewportWidget(FEditorEngine* InEditorEngine)
     , bMarqueeAdditive(false)
     , PendingCameraInput()
     , SpeedOverlayTimer(0.0f)
+    , bRightMousePressedOnImage(false)
+    , RightMouseDragDistance(0.0f)
+    , ContextMenuPickRequestId(0)
+    , ContextMenuNdc(0.0f, 0.0f)
+    , ContextMenuViewProjectionInverse()
+    , ContextMenuLocation(0.0f, 0.0f, 0.0f)
+    , ContextMenuActor(nullptr)
     , DebugView(FSceneRenderView::EDebugView::None)
     , SecondaryDebugView(FSceneRenderView::EDebugView::None)
     , DebugViewChannelMask(FSceneRenderView::EDebugViewChannel::All)
@@ -390,9 +400,6 @@ void FEditorViewportWidget::Draw()
                 const CHAR* RayTracingMenuPopupId = "##ViewportRayTracingMenu";
                 const CHAR* SecondaryMenuPopupId  = "##ViewportSecondaryMenu";
 
-                // Pushes the submenu labels past the radio circles that DrawRadioMenuItem draws on the sibling rows
-                const float SubmenuLabelIndentX = 6.0f + LabelGapFromCircle;
-
                 const ImGuiPopupFlags PopupQueryFlags = ImGuiPopupFlags_AnyPopupLevel;
 
                 // A submenu is only ever open while the View menu that hosts it is, so it needs no term of its own
@@ -666,74 +673,92 @@ void FEditorViewportWidget::Draw()
                         }
                     }
 
-                    if (EditorWidgets::BeginSubMenu("Shadow Debug", ShadowMenuPopupId, true, SubmenuLabelIndentX, 240.0f))
                     {
-                        for (const FDebugItem& Item : ShadowDebugItems)
-                        {
-                            if (DrawRadioMenuItem(Item.Label, DebugView == Item.View, true, true, nullptr))
-                            {
-                                DebugView          = Item.View;
-                                bRequestClosePopup = true;
-                            }
-                        }
+                        FSubMenuState ShadowSubMenu;
+                        ShadowSubMenu.LabelIndentX = MenuRadioLabelIndentX;
+                        ShadowSubMenu.MinWidth     = 240.0f;
 
-                        EditorWidgets::EndSubMenu();
+                        if (EditorWidgets::BeginSubMenu(ShadowSubMenu, ShadowMenuPopupId, "Shadow Debug"))
+                        {
+                            for (const FDebugItem& Item : ShadowDebugItems)
+                            {
+                                if (DrawRadioMenuItem(Item.Label, DebugView == Item.View, true, true, nullptr))
+                                {
+                                    DebugView          = Item.View;
+                                    bRequestClosePopup = true;
+                                }
+                            }
+
+                            EditorWidgets::EndSubMenu(ShadowSubMenu);
+                        }
                     }
 
-                    if (EditorWidgets::BeginSubMenu("Ray Tracing", RayTracingMenuPopupId, true, SubmenuLabelIndentX, 240.0f))
                     {
-                        for (const FDebugItem& Item : RayTracingDebugItems)
-                        {
-                            if (DrawRadioMenuItem(Item.Label, DebugView == Item.View, true, true, nullptr))
-                            {
-                                DebugView          = Item.View;
-                                bRequestClosePopup = true;
-                            }
-                        }
+                        FSubMenuState RayTracingSubMenu;
+                        RayTracingSubMenu.LabelIndentX = MenuRadioLabelIndentX;
+                        RayTracingSubMenu.MinWidth     = 240.0f;
 
-                        EditorWidgets::EndSubMenu();
+                        if (EditorWidgets::BeginSubMenu(RayTracingSubMenu, RayTracingMenuPopupId, "Ray Tracing"))
+                        {
+                            for (const FDebugItem& Item : RayTracingDebugItems)
+                            {
+                                if (DrawRadioMenuItem(Item.Label, DebugView == Item.View, true, true, nullptr))
+                                {
+                                    DebugView          = Item.View;
+                                    bRequestClosePopup = true;
+                                }
+                            }
+
+                            EditorWidgets::EndSubMenu(RayTracingSubMenu);
+                        }
                     }
 
-                    if (EditorWidgets::BeginSubMenu("Secondary View", SecondaryMenuPopupId, true, SubmenuLabelIndentX, 240.0f))
                     {
-                        if (DrawRadioMenuItem("None", SecondaryDebugView == FSceneRenderView::EDebugView::None, true, true, nullptr))
-                        {
-                            SecondaryDebugView = FSceneRenderView::EDebugView::None;
-                            bRequestClosePopup = true;
-                        }
+                        FSubMenuState SecondarySubMenu;
+                        SecondarySubMenu.LabelIndentX = MenuRadioLabelIndentX;
+                        SecondarySubMenu.MinWidth     = 240.0f;
 
-                        EditorWidgets::MenuSeparator();
-
-                        for (const FDebugItem& Item : BaseViewItems)
+                        if (EditorWidgets::BeginSubMenu(SecondarySubMenu, SecondaryMenuPopupId, "Secondary View"))
                         {
-                            const bool bIsLitEntry = (Item.View == FSceneRenderView::EDebugView::None);
-                            const FSceneRenderView::EDebugView TargetView = bIsLitEntry ? FSceneRenderView::EDebugView::Lit : Item.View;
-                            if (DrawRadioMenuItem(Item.Label, SecondaryDebugView == TargetView, true, true, nullptr))
+                            if (DrawRadioMenuItem("None", SecondaryDebugView == FSceneRenderView::EDebugView::None, true, true, nullptr))
                             {
-                                SecondaryDebugView = TargetView;
+                                SecondaryDebugView = FSceneRenderView::EDebugView::None;
                                 bRequestClosePopup = true;
                             }
-                        }
 
-                        for (const FDebugItem& Item : ShadowDebugItems)
-                        {
-                            if (DrawRadioMenuItem(Item.Label, SecondaryDebugView == Item.View, true, true, nullptr))
+                            EditorWidgets::MenuSeparator();
+
+                            for (const FDebugItem& Item : BaseViewItems)
                             {
-                                SecondaryDebugView = Item.View;
-                                bRequestClosePopup = true;
+                                const bool bIsLitEntry = (Item.View == FSceneRenderView::EDebugView::None);
+                                const FSceneRenderView::EDebugView TargetView = bIsLitEntry ? FSceneRenderView::EDebugView::Lit : Item.View;
+                                if (DrawRadioMenuItem(Item.Label, SecondaryDebugView == TargetView, true, true, nullptr))
+                                {
+                                    SecondaryDebugView = TargetView;
+                                    bRequestClosePopup = true;
+                                }
                             }
-                        }
 
-                        for (const FDebugItem& Item : RayTracingDebugItems)
-                        {
-                            if (DrawRadioMenuItem(Item.Label, SecondaryDebugView == Item.View, true, true, nullptr))
+                            for (const FDebugItem& Item : ShadowDebugItems)
                             {
-                                SecondaryDebugView = Item.View;
-                                bRequestClosePopup = true;
+                                if (DrawRadioMenuItem(Item.Label, SecondaryDebugView == Item.View, true, true, nullptr))
+                                {
+                                    SecondaryDebugView = Item.View;
+                                    bRequestClosePopup = true;
+                                }
                             }
-                        }
 
-                        EditorWidgets::EndSubMenu();
+                            for (const FDebugItem& Item : RayTracingDebugItems)
+                            {
+                                if (DrawRadioMenuItem(Item.Label, SecondaryDebugView == Item.View, true, true, nullptr))
+                                {
+                                    SecondaryDebugView = Item.View;
+                                    bRequestClosePopup = true;
+                                }
+                            }
+
+                            EditorWidgets::EndSubMenu(SecondarySubMenu);
+                        }
                     }
 
                     {
@@ -888,9 +913,24 @@ void FEditorViewportWidget::Draw()
             RawMouseDelta = SceneViewport->ConsumeHighPrecisionMouseDelta();
         }
 
+        const bool bContextMenuOpen = ImGui::IsPopupOpen(VIEWPORT_CONTEXT_MENU_ID);
+        if (bClickedRight)
+        {
+            bRightMousePressedOnImage = true;
+            RightMouseDragDistance    = 0.0f;
+        }
+
+        if (bRightMousePressedOnImage && ImGui::IsMouseDown(ImGuiMouseButton_Right))
+        {
+            const ImVec2 MouseDelta = ImGui::GetIO().MouseDelta;
+            RightMouseDragDistance += Math::Abs(MouseDelta.x) + Math::Abs(MouseDelta.y);
+            RightMouseDragDistance += float(Math::Abs(RawMouseDelta.X) + Math::Abs(RawMouseDelta.Y));
+        }
+
         const bool bCanControlEditorCamera =
             bViewportInputActive &&
             !bBlockPickForGizmo &&
+            !bContextMenuOpen &&
             (bViewportImageHovered || bViewportImageActive || bMouseLookActive);
 
         if (bCanControlEditorCamera)
@@ -991,7 +1031,7 @@ void FEditorViewportWidget::Draw()
         }
         else
         {
-            if (bViewportImageHovered && !bBlockPickForGizmo)
+            if (bViewportImageHovered && !bBlockPickForGizmo && !bContextMenuOpen)
             {
                 const ImGuiIO& IO = ImGui::GetIO();
                 PendingCameraInput.WheelDelta = IO.MouseWheel;
@@ -1003,6 +1043,7 @@ void FEditorViewportWidget::Draw()
 
         const bool bBlockPickForCamera =
             bMouseLookActive ||
+             bContextMenuOpen ||
              PendingCameraInput.bAltDown ||
              PendingCameraInput.bCmdDown ||
              PendingCameraInput.bMiddleMouseDown;
@@ -1043,28 +1084,16 @@ void FEditorViewportWidget::Draw()
             const bool bWasDrag  = ImGui::IsMouseDragPastThreshold(ImGuiMouseButton_Left);
             const bool bOnImage  = LocalXf >= 0.0f && LocalYf >= 0.0f && LocalXf < ImageSize.x && LocalYf < ImageSize.y;
 
-            if (bPickArmed && bPickAllowed && !bWasDrag && bOnImage)
+            if (bPickArmed && bPickAllowed && !bWasDrag && bOnImage && EditorEngine)
             {
-                if (FEngine::IsInitialized())
-                {
-                    if (FWorld* World = FEngine::Get()->GetWorld())
-                    {
-                        if (IRendererModule* RendererModule = IRendererModule::Get())
-                        {
-                            uint32 PixelX = 0;
-                            uint32 PixelY = 0;
-                            ViewportPointToPixel(ClickPos, PixelX, PixelY);
+                uint32 PixelX = 0;
+                uint32 PixelY = 0;
+                ViewportPointToPixel(ClickPos, PixelX, PixelY);
 
-                            // The result lands a frame or more later, so the modifier held right now has to be recorded
-                            if (EditorEngine)
-                            {
-                                EditorEngine->SetPendingPickAdditive(ImGui::GetIO().KeyCtrl);
-                            }
+                // The result lands a frame or more later, so the modifier held right now has to be recorded
+                EditorEngine->SetPendingPickAdditive(ImGui::GetIO().KeyCtrl);
 
-                            RendererModule->RequestEditorObjectPick(World->GetSceneInterface(), PixelX, PixelY);
-                        }
-                    }
-                }
+                EditorEngine->RequestPick(PixelX, PixelY, EEditorPickPurpose::Selection);
             }
 
             bPickArmed = false;
@@ -1144,6 +1173,59 @@ void FEditorViewportWidget::Draw()
         {
             EditorEngine->RequestDeleteActors(EditorEngine->GetSelectedActors());
         }
+
+        // ---------------------------------------------------------------------
+        // Context menu
+        // ---------------------------------------------------------------------
+
+        constexpr float ContextMenuDragThreshold = 4.0f;
+
+        const bool bWantsContextMenu =
+            bRightMousePressedOnImage &&
+            bViewportImageHovered &&
+            ImGui::IsMouseReleased(ImGuiMouseButton_Right) &&
+            RightMouseDragDistance <= ContextMenuDragThreshold &&
+            !bBlockPickForGizmo &&
+            !PendingCameraInput.bAltDown &&
+            !PendingCameraInput.bCmdDown &&
+            !PendingCameraInput.bMiddleMouseDown;
+
+        if (ImGui::IsMouseReleased(ImGuiMouseButton_Right))
+        {
+            bRightMousePressedOnImage = false;
+        }
+
+        if (bWantsContextMenu)
+        {
+            const ImVec2 MousePos = ImGui::GetMousePos();
+            const float  SafeW    = ImageSize.x > 0.0f ? ImageSize.x : 1.0f;
+            const float  SafeH    = ImageSize.y > 0.0f ? ImageSize.y : 1.0f;
+
+            ContextMenuNdc = Vector2(
+                ((MousePos.x - ImageMin.x) / SafeW) * 2.0f - 1.0f,
+                1.0f - ((MousePos.y - ImageMin.y) / SafeH) * 2.0f);
+
+            if (FCameraComponent* Camera = GetViewCamera())
+            {
+                ContextMenuViewProjectionInverse = Camera->GetViewProjectionInverseMatrix();
+            }
+
+            ContextMenuActor         = nullptr;
+            ContextMenuPickRequestId = 0;
+            ComputeFallbackPlacement(ContextMenuNdc, ContextMenuLocation);
+
+            uint32 PixelX = 0;
+            uint32 PixelY = 0;
+
+            if (ComputeViewportPixel(ImageMin, ImageSize, PixelX, PixelY))
+            {
+                ContextMenuPickRequestId = EditorEngine->RequestPick(PixelX, PixelY, EEditorPickPurpose::ContextMenu);
+            }
+
+            ImGui::OpenPopup(VIEWPORT_CONTEXT_MENU_ID);
+        }
+
+        DrawContextMenu();
 
         // ---------------------------------------------------------------------
         // Active border
@@ -1267,6 +1349,118 @@ void FEditorViewportWidget::OnActorRemoved(FActor* Actor)
     {
         CameraController->OnActorRemoved(Actor);
     }
+
+    if (ContextMenuActor == Actor)
+    {
+        ContextMenuActor = nullptr;
+    }
+}
+
+bool FEditorViewportWidget::ComputeFallbackPlacement(const Vector2& Ndc, Vector3& OutLocation) const
+{
+    FCameraComponent* Camera = GetViewCamera();
+    if (!Camera)
+    {
+        return false;
+    }
+
+    const Matrix4& ViewProjectionInverse = Camera->GetViewProjectionInverseMatrix();
+
+    const Vector4 NearWorld = ViewProjectionInverse.Transform(Vector4(Ndc.X, Ndc.Y, 0.0f, 1.0f));
+    const Vector4 FarWorld  = ViewProjectionInverse.Transform(Vector4(Ndc.X, Ndc.Y, 1.0f, 1.0f));
+
+    if (Math::Abs(NearWorld.W) < 1e-6f || Math::Abs(FarWorld.W) < 1e-6f)
+    {
+        return false;
+    }
+
+    const Vector3 RayStart     = Vector3(NearWorld.X, NearWorld.Y, NearWorld.Z) / NearWorld.W;
+    const Vector3 RayEnd       = Vector3(FarWorld.X, FarWorld.Y, FarWorld.Z) / FarWorld.W;
+    const Vector3 RayDirection = (RayEnd - RayStart).GetNormalized();
+
+    constexpr float MaxGroundDistance = 1000.0f;
+
+    if (Math::Abs(RayDirection.Y) > 1e-4f)
+    {
+        const float Distance = -RayStart.Y / RayDirection.Y;
+        if (Distance > 0.0f && Distance < MaxGroundDistance)
+        {
+            OutLocation = RayStart + (RayDirection * Distance);
+            return true;
+        }
+    }
+
+    constexpr float DefaultDistance = 10.0f;
+
+    OutLocation = Camera->GetPosition() + (Camera->GetForwardVector() * DefaultDistance);
+    return true;
+}
+
+void FEditorViewportWidget::DrawContextMenu()
+{
+    if (!EditorWidgets::BeginPopupContext(VIEWPORT_CONTEXT_MENU_ID))
+    {
+        return;
+    }
+
+    FWorld* World = FEngine::IsInitialized() ? FEngine::Get()->GetWorld() : nullptr;
+
+    EditorWidgets::MenuLabeledSeparator("Place Actor");
+
+    bool bRequestClosePopup = false;
+
+    if (FActor* NewActor = EditorActorFactory::DrawPlaceActorMenu(World, ContextMenuLocation))
+    {
+        EditorEngine->SetSelectedActor(NewActor);
+        bRequestClosePopup = true;
+    }
+
+    if (ContextMenuActor)
+    {
+        EditorWidgets::MenuLabeledSeparator("Actor");
+
+        if (EditorWidgets::MenuItem("Focus", "F"))
+        {
+            if (CameraController)
+            {
+                CameraController->FocusOn(ContextMenuActor);
+            }
+        }
+
+        if (EditorWidgets::MenuItem("Delete", "Delete"))
+        {
+            EditorEngine->RequestDeleteActor(ContextMenuActor);
+            ContextMenuActor = nullptr;
+        }
+    }
+
+    if (bRequestClosePopup)
+    {
+        ImGui::CloseCurrentPopup();
+    }
+
+    EditorWidgets::EndPopupContext();
+}
+
+void FEditorViewportWidget::OnContextMenuPickResult(const FEditorPickResult& Result, FActor* PickedActor)
+{
+    if (Result.RequestId != ContextMenuPickRequestId)
+    {
+        return;
+    }
+
+    ContextMenuActor = PickedActor;
+
+    if (Result.bHasDepth)
+    {
+        const Vector4 Clip  = Vector4(ContextMenuNdc.X, ContextMenuNdc.Y, Result.DeviceDepth, 1.0f);
+        const Vector4 World = ContextMenuViewProjectionInverse.Transform(Clip);
+
+        if (Math::Abs(World.W) > 1e-6f)
+        {
+            ContextMenuLocation = Vector3(World.X, World.Y, World.Z) / World.W;
+        }
+    }
 }
 
 bool FEditorViewportWidget::ConsumeCameraCut()
@@ -1292,6 +1486,34 @@ void FEditorViewportWidget::EndMouseLook()
 
     bMouseLookActive = false;
     bRawLookActive   = false;
+}
+
+bool FEditorViewportWidget::ComputeViewportPixel(const ImVec2& ImageMin, const ImVec2& ImageSize, uint32& OutPixelX, uint32& OutPixelY) const
+{
+    const ImVec2 MousePos = ImGui::GetMousePos();
+
+    const float LocalXf = MousePos.x - ImageMin.x;
+    const float LocalYf = MousePos.y - ImageMin.y;
+
+    if (LocalXf < 0.0f || LocalYf < 0.0f || LocalXf >= ImageSize.x || LocalYf >= ImageSize.y)
+    {
+        return false;
+    }
+
+    FRHITexture* ViewportTexture = ViewportImage.GetTexture();
+
+    const uint32 RenderWidth  = ViewportTexture ? ViewportTexture->GetDesc().Extent.X : static_cast<uint32>(ImageSize.x);
+    const uint32 RenderHeight = ViewportTexture ? ViewportTexture->GetDesc().Extent.Y : static_cast<uint32>(ImageSize.y);
+
+    const float SafeW = ImageSize.x > 0.0f ? ImageSize.x : 1.0f;
+    const float SafeH = ImageSize.y > 0.0f ? ImageSize.y : 1.0f;
+
+    const float U = LocalXf / SafeW;
+    const float V = LocalYf / SafeH;
+
+    OutPixelX = RenderWidth  > 0 ? Math::Min(static_cast<uint32>(U * float(RenderWidth)),  RenderWidth  - 1) : 0;
+    OutPixelY = RenderHeight > 0 ? Math::Min(static_cast<uint32>(V * float(RenderHeight)), RenderHeight - 1) : 0;
+    return true;
 }
 
 void FEditorViewportWidget::SetViewportWidget(const TSharedPtr<FViewportWidget>& InViewportWidget)

@@ -2,6 +2,7 @@
 #include "Engine/EditorEngine.h"
 #include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
+#include "Engine/EngineUI/Editor/EditorActorFactory.h"
 #include "Engine/World/ActorFilter.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/World.h"
@@ -503,9 +504,21 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
         EditorWidgets::MenuLabeledSeparator("Create");
 
-        if (EditorWidgets::MenuItem("Add Actor", nullptr, false, false))
+        bool bRequestClosePopup = false;
+
+        // Spawned at the origin, since a hierarchy row has no cursor ray to place against.
         {
-            // TODO
+            FSubMenuState AddActorSubMenu;
+            if (EditorWidgets::BeginSubMenu(AddActorSubMenu, "##SceneHierarchyAddActorMenu", "Add Actor"))
+            {
+                if (FActor* NewActor = EditorActorFactory::DrawPlaceActorMenu(World, Vector3(0.0f, 0.0f, 0.0f)))
+                {
+                    EditorEngine->SetSelectedActor(NewActor);
+                    bRequestClosePopup = true;
+                }
+
+                EditorWidgets::EndSubMenu(AddActorSubMenu);
+            }
         }
 
         if (EditorWidgets::MenuItem("Add Filter"))
@@ -565,7 +578,8 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
             }
         }
 
-        if (EditorWidgets::BeginSubMenu("Move To Filter", "##MoveToFilterMenu", bHasActorSelected || bHasFilterSelected))
+        FSubMenuState MoveToFilterSubMenu;
+        if (EditorWidgets::BeginSubMenu(MoveToFilterSubMenu, "##MoveToFilterMenu", "Move To Filter", bHasActorSelected || bHasFilterSelected))
         {
             FActorFilter* MovedFilter = bHasActorSelected ? nullptr : SelectedFilter;
 
@@ -604,7 +618,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
                 EditorWidgets::MenuItem("No Filters", nullptr, false, false);
             }
 
-            EditorWidgets::EndSubMenu();
+            EditorWidgets::EndSubMenu(MoveToFilterSubMenu);
         }
 
         // Enabled as soon as any one of the selected actors is nested, and detaches every one that is
@@ -626,6 +640,11 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
         if (EditorWidgets::MenuItem("Copy", "Ctrl+V", false, false))
         {
             // TODO
+        }
+
+        if (bRequestClosePopup)
+        {
+            ImGui::CloseCurrentPopup();
         }
 
         EditorWidgets::EndPopupContext();
@@ -1291,22 +1310,26 @@ void FEditorSceneHierarchyWidget::DrawMoveToFilterMenu(FActorFilter* Filter, con
             MoveHere();
         }
     }
-    else if (EditorWidgets::BeginSubMenu(*Filter->GetName(), "##MoveToFilterChildren"))
+    else
     {
-        // A filter with children is a destination as well as a branch, so it needs an entry of its own
-        if (EditorWidgets::MenuItem("Move Here", nullptr, bIsMember, bEnabled))
+        FSubMenuState ChildrenSubMenu;
+        if (EditorWidgets::BeginSubMenu(ChildrenSubMenu, "##MoveToFilterChildren", *Filter->GetName()))
         {
-            MoveHere();
+            // A filter with children is a destination as well as a branch, so it needs an entry of its own
+            if (EditorWidgets::MenuItem("Move Here", nullptr, bIsMember, bEnabled))
+            {
+                MoveHere();
+            }
+
+            EditorWidgets::MenuSeparator();
+
+            for (FActorFilter* Child : ChildFilters)
+            {
+                DrawMoveToFilterMenu(Child, TargetActors, TargetFilter);
+            }
+
+            EditorWidgets::EndSubMenu(ChildrenSubMenu);
         }
-
-        EditorWidgets::MenuSeparator();
-
-        for (FActorFilter* Child : ChildFilters)
-        {
-            DrawMoveToFilterMenu(Child, TargetActors, TargetFilter);
-        }
-
-        EditorWidgets::EndSubMenu();
     }
 
     ImGui::PopID();

@@ -181,7 +181,6 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
     PointLightsData.Clear();
     ShadowCastingPointLightsPosRad.Clear();
     ShadowCastingPointLightsData.Clear();
-    ShadowCastingPointLightsData.Clear();
     LightProbeInfos.Clear();
 
     // Update DirectionalLight
@@ -214,24 +213,36 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         CascadeGenerationDataDirty = true;
     }
 
-    // Update PointLights. Only shadow-casting point lights become scene proxies.
     for (int32 Index = 0; Index < Scene->GetPointLights().Size(); Index++)
     {
         FScenePointLight* PointLight = Scene->GetPointLights()[Index];
 
-        const float Radius = PointLight->ShadowFarPlane;
-        Vector4 PositionAndRadius = Vector4(PointLight->Position, Radius);
+        const float   Radius            = PointLight->ShadowFarPlane;
+        const Vector4 PositionAndRadius = Vector4(PointLight->Position, Radius);
 
-        FShadowCastingPointLightDataHLSL Data;
-        Data.Color      = PointLight->Color;
-        Data.FarPlane   = PointLight->ShadowFarPlane;
-        Data.ShadowBias = PointLight->ShadowBias;
-        Data.Padding0   = 0.0f;
-        Data.Padding1   = 0.0f;
-        Data.Padding2   = 0.0f;
+        const bool bHasShadowSlot = PointLight->bCastShadows && ShadowCastingPointLightsData.Size() < static_cast<int32>(MaxPointLightShadows);
+        if (bHasShadowSlot)
+        {
+            FShadowCastingPointLightDataHLSL Data;
+            Data.Color      = PointLight->Color;
+            Data.FarPlane   = PointLight->ShadowFarPlane;
+            Data.ShadowBias = PointLight->ShadowBias;
+            Data.Padding0   = 0.0f;
+            Data.Padding1   = 0.0f;
+            Data.Padding2   = 0.0f;
 
-        ShadowCastingPointLightsData.Emplace(Data);
-        ShadowCastingPointLightsPosRad.Emplace(PositionAndRadius);
+            ShadowCastingPointLightsData.Emplace(Data);
+            ShadowCastingPointLightsPosRad.Emplace(PositionAndRadius);
+        }
+        else if (PointLightsData.Size() < MAX_LIGHTS_PER_TILE)
+        {
+            FPointLightDataHLSL Data;
+            Data.Color    = PointLight->Color;
+            Data.Padding0 = 0.0f;
+
+            PointLightsData.Emplace(Data);
+            PointLightsPosRad.Emplace(PositionAndRadius);
+        }
     }
 
     // Update LightProbes

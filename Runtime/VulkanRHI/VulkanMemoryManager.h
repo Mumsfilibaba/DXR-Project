@@ -89,32 +89,31 @@ public:
     void Swap(FVulkanMemoryLocation& Other);
     void ReleaseMemory();
     void Reset();
+    void ResetAllocator();
     void UpdateOwnership();
     void FinalizeAllocation();
 
-    bool IsValid()        const { return LocationType != EVulkanMemoryLocationType::Unknown; }
-    bool IsSuballocated() const { return LocationType == EVulkanMemoryLocationType::Suballocated; }
+    FORCEINLINE bool IsValid()        const { return LocationType != EVulkanMemoryLocationType::Unknown; }
+    FORCEINLINE bool IsSuballocated() const { return LocationType == EVulkanMemoryLocationType::Suballocated; }
 
-    FORCEINLINE VkDeviceMemory            GetMemory()            const { return DeviceMemory; }
-    FORCEINLINE VkDeviceSize              GetMemoryOffset()      const { return MemoryOffset; }
-    FORCEINLINE VkBuffer                  GetBackingBuffer()     const { return BackingBuffer; }
-    FORCEINLINE VkDeviceSize              GetBufferOffset()      const { return BufferOffset; }
-    FORCEINLINE VkDeviceAddress           GetDeviceAddress()     const { return DeviceAddress; }
-    FORCEINLINE void*                     GetMappedBaseAddress() const { return MappedBaseAddress; }
-    FORCEINLINE VkDeviceSize              GetSize()              const { return Size; }
-    FORCEINLINE EVulkanAllocatorType      GetAllocatorType()     const { return AllocatorType; }
-    FORCEINLINE EVulkanMemoryLocationType GetLocationType()      const { return LocationType; }
-    FORCEINLINE FVulkanResource*          GetOwner()             const { return Owner; }
+    // Memory Accessors
+    FORCEINLINE VkDeviceMemory  GetMemory()            const { return DeviceMemory; }
+    FORCEINLINE VkDeviceSize    GetMemoryOffset()      const { return MemoryOffset; }
+    FORCEINLINE VkDeviceSize    GetSize()              const { return Size; }
+    FORCEINLINE void*           GetMappedBaseAddress() const { return MappedBaseAddress; }
 
-    FORCEINLINE FVulkanBuddyAllocator* GetBuddyAllocator() const
-    {
-        return (AllocatorType == EVulkanAllocatorType::BuddyAllocator) ? AllocatorPointers.BuddyAllocator : nullptr;
-    }
+    // Buffer Accessors
+    FORCEINLINE VkBuffer        GetBackingBuffer()     const { return BackingBuffer; }
+    FORCEINLINE VkDeviceSize    GetBufferOffset()      const { return BufferOffset; }
+    FORCEINLINE VkDeviceAddress GetDeviceAddress()     const { return DeviceAddress; }
 
-    FORCEINLINE FVulkanPoolAllocator* GetPoolAllocator() const
-    {
-        return (AllocatorType == EVulkanAllocatorType::PoolAllocator) ? AllocatorPointers.PoolAllocator : nullptr;
-    }
+    // Allocator Accessors
+    FORCEINLINE void*                     GetAllocator()      const { return AllocatorPointers.AsVoid; }
+    FORCEINLINE FVulkanBuddyAllocator*    GetBuddyAllocator() const { return (AllocatorType == EVulkanAllocatorType::BuddyAllocator) ? AllocatorPointers.BuddyAllocator : nullptr; }
+    FORCEINLINE FVulkanPoolAllocator*     GetPoolAllocator()  const { return (AllocatorType == EVulkanAllocatorType::PoolAllocator) ? AllocatorPointers.PoolAllocator : nullptr; }
+    FORCEINLINE FVulkanResource*          GetOwner()          const { return Owner; }
+    FORCEINLINE EVulkanAllocatorType      GetAllocatorType()  const { return AllocatorType; }
+    FORCEINLINE EVulkanMemoryLocationType GetLocationType()   const { return LocationType; }
 
     FORCEINLINE const FVulkanPoolAllocatorAllocationData&  GetPoolAllocationData()  const { return AllocationData.Pool; }
     FORCEINLINE const FVulkanBuddyAllocatorAllocationData& GetBuddyAllocationData() const { return AllocationData.Buddy; }
@@ -145,23 +144,13 @@ public:
     FORCEINLINE void SetBuddyAllocationData(const FVulkanBuddyAllocatorAllocationData& InData) { AllocationData.Buddy = InData; }
 
 private:
-    VkDeviceMemory            DeviceMemory;
-    VkDeviceSize              MemoryOffset;
-    VkBuffer                  BackingBuffer;
-    VkDeviceSize              BufferOffset;
-    VkDeviceAddress           DeviceAddress;
-    void*                     MappedBaseAddress;
-    VkDeviceSize              Size;
-    EVulkanAllocatorType      AllocatorType;
-    EVulkanMemoryLocationType LocationType;
-    FVulkanResource*          Owner;
 
     union FAllocationData
     {
         FVulkanPoolAllocatorAllocationData  Pool;
         FVulkanBuddyAllocatorAllocationData Buddy;
 
-        FAllocationData() { }
+        FAllocationData() {}
     } AllocationData;
 
     union FAllocatorPointers
@@ -174,8 +163,19 @@ private:
             : AsVoid(nullptr)
         {
         }
-        
+
     } AllocatorPointers;
+
+    VkDeviceMemory            DeviceMemory;
+    VkDeviceSize              MemoryOffset;
+    VkBuffer                  BackingBuffer;
+    VkDeviceSize              BufferOffset;
+    VkDeviceAddress           DeviceAddress;
+    void*                     MappedBaseAddress;
+    VkDeviceSize              Size;
+    FVulkanResource*          Owner;
+    EVulkanAllocatorType      AllocatorType;
+    EVulkanMemoryLocationType LocationType;
 };
 
 class FVulkanBuddyAllocator : public FVulkanDeviceChild

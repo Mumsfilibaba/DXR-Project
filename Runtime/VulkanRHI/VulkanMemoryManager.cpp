@@ -143,11 +143,9 @@ FVulkanMemoryLocation::FVulkanMemoryLocation(FVulkanDevice* InDevice)
     , DeviceAddress(0)
     , MappedBaseAddress(nullptr)
     , Size(0)
+    , Owner(nullptr)
     , AllocatorType(EVulkanAllocatorType::None)
     , LocationType(EVulkanMemoryLocationType::Unknown)
-    , Owner(nullptr)
-    , AllocationData()
-    , AllocatorPointers()
 {
 }
 
@@ -244,17 +242,23 @@ void FVulkanMemoryLocation::ReleaseMemory()
 
 void FVulkanMemoryLocation::Reset()
 {
-    DeviceMemory             = VK_NULL_HANDLE;
-    MemoryOffset             = 0;
-    BackingBuffer            = VK_NULL_HANDLE;
-    BufferOffset             = 0;
-    DeviceAddress            = 0;
-    MappedBaseAddress        = nullptr;
-    Size                     = 0;
-    AllocatorType            = EVulkanAllocatorType::None;
-    LocationType              = EVulkanMemoryLocationType::Unknown;
-    Owner                    = nullptr;
+    ResetAllocator();
+
+    DeviceMemory      = VK_NULL_HANDLE;
+    MemoryOffset      = 0;
+    BackingBuffer     = VK_NULL_HANDLE;
+    BufferOffset      = 0;
+    DeviceAddress     = 0;
+    MappedBaseAddress = nullptr;
+    Size              = 0;
+    Owner             = nullptr;
+    LocationType      = EVulkanMemoryLocationType::Unknown;
+}
+
+void FVulkanMemoryLocation::ResetAllocator()
+{
     AllocatorPointers.AsVoid = nullptr;
+    AllocatorType            = EVulkanAllocatorType::None;
 }
 
 FVulkanMemoryManager::FVulkanMemoryManager(FVulkanDevice* InDevice)

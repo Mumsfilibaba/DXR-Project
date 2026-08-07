@@ -33,4 +33,5 @@ struct FScenePointLight : public FSceneObject
     Vector3      Color;            // Pre-multiplied by intensity.
     float        ShadowBias;
     float        ShadowFarPlane;   // Doubles as the light radius for shading.
+    bool         bCastShadows;     // Decides which of the two point-light buffers the light feeds.
 };

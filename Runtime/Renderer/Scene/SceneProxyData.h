@@ -21,6 +21,7 @@ struct FDirectionalLightProxyUpdate
     float   ShadowPositionOffset        = 0.0f;
     float   CascadeSplitLambda          = 0.0f;
     float   LightArea                   = 0.0f;
+    bool    bCastShadows                = true;
 };
 
 struct FPointLightProxyUpdate
@@ -33,6 +34,7 @@ struct FPointLightProxyUpdate
     Matrix4 ViewMatrix[RHI_NUM_CUBE_FACES]     = {};
     Matrix4 ProjMatrix[RHI_NUM_CUBE_FACES]     = {};
     Matrix4 ViewProjMatrix[RHI_NUM_CUBE_FACES] = {};
+    bool    bCastShadows                       = true;
 };
 
 struct FLightProbeProxyUpdate

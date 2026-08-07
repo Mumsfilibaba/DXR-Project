@@ -67,6 +67,14 @@ struct FSceneRenderPacket
     uint64           FrameIndex = 0;
 };
 
+struct FEditorPickResult
+{
+    uint64 RequestId   = 0;
+    uint32 ObjectID    = 0;
+    float  DeviceDepth = 1.0f;
+    bool   bHasDepth   = false;
+};
+
 struct IRendererModule : public IModule
 {
 public:
@@ -117,11 +125,11 @@ public:
      */
     virtual void KickSceneRender(FSceneRenderPacket&& Packet) = 0;
  
-    /** @brief Request an async editor ObjectID pick at the given pixel (in render target space). */ 
-    virtual void RequestEditorObjectPick(IScene* Scene, uint32 PixelX, uint32 PixelY) = 0; 
+    /** @brief Request an async editor pick at the given pixel (in render target space). */
+    virtual void RequestEditorObjectPick(IScene* Scene, uint32 PixelX, uint32 PixelY, uint64 RequestId) = 0;
  
-    /** @brief Poll for a completed editor ObjectID pick. Returns true if a result was produced. */ 
-    virtual bool PollEditorObjectPickResult(IScene* Scene, uint32& OutObjectID) = 0; 
+    /** @brief Poll for a completed editor pick. Returns true if a result was produced. */
+    virtual bool PollEditorObjectPickResult(IScene* Scene, FEditorPickResult& OutResult) = 0;
 
     /** @brief Request an async editor ObjectID pick over a rectangle (in render target space), for box-select. */
     virtual void RequestEditorObjectPickRect(IScene* Scene, uint32 MinX, uint32 MinY, uint32 MaxX, uint32 MaxY) = 0;

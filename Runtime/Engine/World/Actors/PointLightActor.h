@@ -12,7 +12,7 @@ public:
     ~FPointLightActor();
 
     using FActor::Initialize;
-    void Initialize(const Vector3& InPosition, bool bInShadowCaster);
+    void Initialize(const Vector3& InPosition, bool bInCastShadows);
 
     virtual const CHAR* GetTypeLabel() const override
     {
