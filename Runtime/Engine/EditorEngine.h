@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Containers/Array.h"
 #include "Engine/Engine.h"
 
 class FEditorDockspaceWidget;
@@ -48,7 +49,25 @@ public:
     const TSharedPtr<FEditorAboutWidget>&            GetAboutWidget()            const { return AboutWidget; }
 
     void SetSelectedActor(FActor* InActor);
+    void SetSelectedActors(const TArray<FActor*>& InActors);
+    void AddSelectedActor(FActor* InActor);
+    void RemoveSelectedActor(FActor* InActor);
+    void ToggleSelectedActor(FActor* InActor);
     void ClearSelection();
+
+    bool IsActorSelected(FActor* InActor) const;
+
+    void RequestDeleteActors(const TArray<FActor*>& InActors);
+
+    void SetPendingPickAdditive(bool bAdditive)
+    {
+        bPendingPickAdditive = bAdditive;
+    }
+
+    void SetPendingRectPickAdditive(bool bAdditive)
+    {
+        bPendingRectPickAdditive = bAdditive;
+    }
 
     FCameraComponent* GetActiveViewportCamera() const;
 
@@ -57,13 +76,21 @@ public:
         return SelectedActor;
     }
 
+    const TArray<FActor*>& GetSelectedActors() const
+    {
+        return SelectedActors;
+    }
+
 private:
     static constexpr EFormat ViewportImageFormat = EFormat::R8G8B8A8_Unorm;
 
     bool CreateViewportRenderTarget();
     void OnActorRemoved(FActor* RemovedActor);
+    void DrainPendingDestroyActors();
 
     FActor*                                   SelectedActor;
+    TArray<FActor*>                           SelectedActors;
+    TArray<FActor*>                           PendingDestroyActors;
     FCameraComponent*                         LastViewportCamera;
     FDelegateHandle                           ActorRemovedDelegateHandle;
     TSharedPtr<FEditorDockspaceWidget>        DockspaceWidget;
@@ -82,4 +109,6 @@ private:
     TSharedPtr<FEditorAboutWidget>            AboutWidget;
     FRHITextureRef                            ViewportImage;
     IntVector2                                ViewportImageSize;
+    bool                                      bPendingPickAdditive;
+    bool                                      bPendingRectPickAdditive;
 };

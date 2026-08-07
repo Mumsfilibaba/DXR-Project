@@ -2091,16 +2091,19 @@ void EditorWidgets::MenuLabeledSeparator(const CHAR* Label, float Thickness, flo
     }
 }
 
+static constexpr float MenuRowPaddingY = 4.0f;
+static constexpr float MenuRowIndentX  = 20.0f;
+
 bool EditorWidgets::MenuItem(const CHAR* Label, const CHAR* Shortcut, bool bSelected, bool bEnabled, bool bDrawBorder)
 {
     const float PaddingX    = 8.0f;
-    const float PaddingY    = 4.0f;
+    const float PaddingY    = MenuRowPaddingY;
     const float RowHeight   = ImGui::GetFontSize() + PaddingY * 2.0f;
     const float RowWidth    = ImGui::GetContentRegionAvail().x;
     const float CheckSize   = ImGui::GetFontSize() * 0.85f;
     const float GapRight    = 8.0f;
     const float ClipGap     = 4.0f;
-    const float MenuIndentX = 20.0f;
+    const float MenuIndentX = MenuRowIndentX;
     const float IconGutterX = 0.0f;
 
     ImGui::PushID(Label);
@@ -2360,7 +2363,7 @@ bool EditorWidgets::MenuDragFloat(const CHAR* Label, float& InOutValue, float Sp
     return MenuFloatRow(EMenuFloatWidget::Drag, Label, InOutValue, Speed, MinValue, MaxValue, Format, ValueWidth, bEnabled);
 }
 
-void EditorWidgets::MenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder)
+void EditorWidgets::MenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, FPopupAnchor& OutAnchor, bool bDrawBorder)
 {
     const bool bThisPopupOpen = ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None);
     OutAnchor.bRequestPosition = false;
@@ -2415,7 +2418,7 @@ static void PopMenuPopupStyle()
     ImGui::PopStyleVar(5);   // WindowBorderSize, PopupBorderSize, PopupRounding, WindowPadding, ItemSpacing
 }
 
-bool EditorWidgets::BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Anchor, float MinWidth)
+bool EditorWidgets::BeginMenuPopup(const CHAR* PopupId, const FPopupAnchor& Anchor, float MinWidth)
 {
     if (Anchor.bRequestPosition || ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None))
     {
@@ -2620,6 +2623,145 @@ void EditorWidgets::EndPopupContext()
 {
     PopContextMenuStyle();
     ImGui::EndPopup();
+}
+
+// -----------------------------------------------------------------------------------------
+// Sub menus
+// -----------------------------------------------------------------------------------------
+
+struct FSubMenuFrame
+{
+    ImVec2      RowMin;
+    ImVec2      RowMax;
+    const CHAR* Label;
+    float       ExtraLabelIndentX;
+    bool        bRowHovered;
+};
+
+// A stack rather than a single slot, so that a submenu can host another submenu
+static TArray<FSubMenuFrame> GSubMenuStack;
+
+static void DrawSubMenuRowBody(const ImVec2& RowMin, const ImVec2& RowMax, const CHAR* Label, float ExtraLabelIndentX, ImU32 Background)
+{
+    ImDrawList* DrawList = ImGui::GetWindowDrawList();
+    DrawList->AddRectFilled(RowMin, RowMax, Background, 0.0f);
+
+    const float  RowHeight = RowMax.y - RowMin.y;
+    const ImVec2 LabelSize = ImGui::CalcTextSize(Label);
+    const float  LabelX    = RowMin.x + MenuRowIndentX + ExtraLabelIndentX;
+    const float  LabelY    = RowMin.y + (RowHeight - LabelSize.y) * 0.5f;
+
+    DrawList->AddText(ImVec2(LabelX, LabelY), ImGui::GetColorU32(ImGuiCol_Text), Label);
+
+    const float ArrowSize = 12.0f;
+    const float ArrowX    = RowMax.x - MenuRowIndentX - ArrowSize;
+    const float ArrowY    = RowMin.y + (RowHeight - ArrowSize) * 0.5f;
+
+    if (EditorIcons::RightArrowIcon)
+    {
+        const ImVec2 ArrowMin = ImVec2(ArrowX, ArrowY);
+        const ImVec2 ArrowMax = ImVec2(ArrowX + ArrowSize, ArrowY + ArrowSize);
+        DrawList->AddImage(EditorIcons::RightArrowIcon, ArrowMin, ArrowMax, ImVec2(0, 0), ImVec2(1, 1), ImGui::GetColorU32(ImGuiCol_Text));
+    }
+    else
+    {
+        DrawList->AddText(ImVec2(ArrowX, LabelY), ImGui::GetColorU32(ImGuiCol_Text), ">");
+    }
+}
+
+bool EditorWidgets::BeginSubMenu(const CHAR* Label, const CHAR* PopupId, bool bEnabled, float ExtraLabelIndentX, float MinWidth)
+{
+    const ImGuiID PopupImGuiId = ImGui::GetID(PopupId);
+    const bool    bPopupOpen   = ImGui::IsPopupOpen(PopupImGuiId, ImGuiPopupFlags_AnyPopupLevel);
+
+    ImGui::PushID(Label);
+
+    if (!bEnabled)
+    {
+        ImGui::BeginDisabled();
+    }
+
+    const ImGuiSelectableFlags SelectableFlags =
+        ImGuiSelectableFlags_SpanAvailWidth |
+        ImGuiSelectableFlags_NoPadWithHalfSpacing;
+
+    const float RowHeight = ImGui::GetFontSize() + MenuRowPaddingY * 2.0f;
+    const float RowWidth  = ImGui::GetContentRegionAvail().x;
+
+    const bool bPressed = ImGui::Selectable("##row", false, SelectableFlags, ImVec2(RowWidth, RowHeight));
+    const bool bHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+
+    const ImVec2 RowMin = ImGui::GetItemRectMin();
+    const ImVec2 RowMax = ImGui::GetItemRectMax();
+
+    ImU32 Background = ImGui::GetColorU32(ImGuiCol_Header);
+    if (ImGui::IsItemActive() || bPopupOpen)
+    {
+        Background = ImGui::GetColorU32(ImGuiCol_HeaderActive);
+    }
+    else if (bHovered)
+    {
+        Background = ImGui::GetColorU32(ImGuiCol_HeaderHovered);
+    }
+
+    DrawSubMenuRowBody(RowMin, RowMax, Label, ExtraLabelIndentX, Background);
+
+    if (!bEnabled)
+    {
+        ImGui::EndDisabled();
+    }
+
+    ImGui::PopID();
+
+    FPopupAnchor Anchor;
+    Anchor.Min              = ImVec2(RowMax.x, RowMin.y);
+    Anchor.Max              = ImVec2(RowMax.x, RowMin.y);
+    Anchor.bRequestPosition = false;
+
+    if (!bEnabled)
+    {
+        if (bPopupOpen && BeginMenuPopup(PopupId, Anchor, MinWidth))
+        {
+            ImGui::CloseCurrentPopup();
+            EndMenuPopup();
+        }
+
+        return false;
+    }
+
+    if (bPressed || bHovered)
+    {
+        ImGui::OpenPopup(PopupId);
+        Anchor.bRequestPosition = true;
+    }
+
+    const bool bOpen = BeginMenuPopup(PopupId, Anchor, MinWidth);
+    if (bOpen)
+    {
+        GSubMenuStack.Emplace(FSubMenuFrame{ RowMin, RowMax, Label, ExtraLabelIndentX, bHovered });
+    }
+
+    return bOpen;
+}
+
+void EditorWidgets::EndSubMenu()
+{
+    CHECK(!GSubMenuStack.IsEmpty());
+
+    const FSubMenuFrame Frame = GSubMenuStack.Last();
+    GSubMenuStack.RemoveAt(GSubMenuStack.Size() - 1);
+
+    const bool bPopupHovered  = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    const bool bBridgeHovered = ImGui::IsMouseHoveringRect(Frame.RowMin, ImVec2(Frame.RowMax.x + 4.0f, Frame.RowMax.y), false);
+
+    if (!bPopupHovered && !Frame.bRowHovered && !bBridgeHovered)
+    {
+        ImGui::CloseCurrentPopup();
+    }
+
+    EndMenuPopup();
+
+    DrawSubMenuRowBody(Frame.RowMin, Frame.RowMax, Frame.Label, Frame.ExtraLabelIndentX, ImGui::GetColorU32(ImGuiCol_HeaderActive));
 }
 
 bool EditorWidgets::BeginPropertyTable(const CHAR* TableId, float LabelColumnWidth, float RevertColumnWidth)

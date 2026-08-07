@@ -9,6 +9,7 @@
 
 class FWorld;
 class FActorComponent;
+class FActorFilter;
 
 enum class EAttachmentRule : uint8
 {
@@ -312,6 +313,16 @@ public:
     }
 
     /**
+     * @brief Retrieve a label describing the type of the actor, used to present the actor in editor tooling
+     *
+     * @return Returns the type-label of the actor
+     */
+    virtual const CHAR* GetTypeLabel() const
+    {
+        return "Actor";
+    }
+
+    /**
      * @brief Retrieve the World that owns the actor
      *
      * @return Returns the World that owns the actor
@@ -329,6 +340,37 @@ public:
     void SetWorld(FWorld* InWorld)
     {
         World = InWorld;
+    }
+
+    /**
+     * @brief Place the actor in a filter, which decides where it is shown in the scene-hierarchy
+     *
+     * Filters only exist to organise the editor's scene-hierarchy, so outside an editor build this does nothing
+     * and the actor carries no filter at all. Scene-setup code can keep calling it unconditionally.
+     *
+     * @param InFilter Filter to place the actor in, or nullptr to move it to the root of the hierarchy
+     */
+    void SetFilter(FActorFilter* InFilter)
+    {
+    #if EDITOR_BUILD
+        Filter = InFilter;
+    #else
+        UNREFERENCED_VARIABLE(InFilter);
+    #endif
+    }
+
+    /**
+     * @brief Retrieve the filter the actor was placed in
+     *
+     * @return Returns the filter the actor was placed in, or nullptr when it sits at the root or outside an editor build
+     */
+    FActorFilter* GetFilter() const
+    {
+    #if EDITOR_BUILD
+        return Filter;
+    #else
+        return nullptr;
+    #endif
     }
 
     /**
@@ -404,6 +446,9 @@ private:
 
     String                   Name;
     FWorld*                  World;
+#if EDITOR_BUILD
+    FActorFilter*            Filter;
+#endif
     FActorTransform          Transform;
     TArray<FActorComponent*> Components;
     FActor*                  ParentActor;

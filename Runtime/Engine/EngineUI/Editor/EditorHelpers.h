@@ -21,7 +21,7 @@ enum class EVector3ControlType : uint8
     Scale,
 };
 
-struct PopupAnchor
+struct FPopupAnchor
 {
     ImVec2 Min = ImVec2(0.0f, 0.0f);
     ImVec2 Max = ImVec2(0.0f, 0.0f);
@@ -189,19 +189,21 @@ struct ENGINE_API EditorWidgets
     // Popup
     // -----------------------------------------------------------------------------------------
 
-    static bool BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Anchor, float MinWidth = 180.0f);
+    static bool BeginMenuPopup(const CHAR* PopupId, const FPopupAnchor& Anchor, float MinWidth = 180.0f);
     static bool BeginPopupContextWindow(const CHAR* PopupId, ImGuiPopupFlags Flags = ImGuiPopupFlags_MouseButtonRight);
     static bool BeginPopupContextItem(const CHAR* PopupId);
+    static bool BeginSubMenu(const CHAR* Label, const CHAR* PopupId, bool bEnabled = true, float ExtraLabelIndentX = 0.0f, float MinWidth = 180.0f);
     
     static void MenuSeparator(float Thickness = 1.0f, float PaddingY = 4.0f);
     static void MenuLabeledSeparator(const CHAR* Label, float Thickness = 1.0f, float PaddingY = 4.0f);
     static bool MenuItem(const CHAR* Label, const CHAR* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true, bool bDrawBorder = false);
     static bool MenuSliderFloat(const CHAR* Label, float& InOutValue, float MinValue, float MaxValue, const CHAR* Format, float ValueWidth = 96.0f, bool bEnabled = true);
     static bool MenuDragFloat(const CHAR* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const CHAR* Format, float ValueWidth = 96.0f, bool bEnabled = true);
-    static void MenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder = false);
+    static void MenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, FPopupAnchor& OutAnchor, bool bDrawBorder = false);
     
     static void EndMenuPopup();
     static void EndPopupContext();
+    static void EndSubMenu();
 
     // -----------------------------------------------------------------------------------------
     // Property Table

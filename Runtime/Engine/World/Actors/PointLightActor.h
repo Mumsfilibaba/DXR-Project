@@ -14,6 +14,11 @@ public:
     using FActor::Initialize;
     void Initialize(const Vector3& InPosition, bool bInShadowCaster);
 
+    virtual const CHAR* GetTypeLabel() const override
+    {
+        return "PointLight";
+    }
+
     FPointLightComponent* GetLightComponent() const
     {
         return LightComponent;

@@ -93,6 +93,10 @@ private:
     bool                                bRawLookActive;
     bool                                bCursorWasVisible;
     IntVector2                          MouseLookRestorePosition;
+    Vector2                             MarqueeStartPos;
+    bool                                bPickArmed;
+    bool                                bMarqueeActive;
+    bool                                bMarqueeAdditive;
     FEditorCameraInputState             PendingCameraInput;
     float                               SpeedOverlayTimer;
     FSceneRenderView::EDebugView        DebugView;

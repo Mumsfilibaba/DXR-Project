@@ -187,6 +187,38 @@ bool FRendererModule::PollEditorObjectPickResult(IScene* Scene, uint32& OutObjec
     return false; 
 #endif 
 } 
+
+void FRendererModule::RequestEditorObjectPickRect(IScene* Scene, uint32 MinX, uint32 MinY, uint32 MaxX, uint32 MaxY)
+{
+#if EDITOR_BUILD
+    if (Renderer)
+    {
+        Renderer->RequestEditorObjectPickRect(static_cast<FScene*>(Scene), MinX, MinY, MaxX, MaxY);
+    }
+#else
+    UNREFERENCED_VARIABLE(Scene);
+    UNREFERENCED_VARIABLE(MinX);
+    UNREFERENCED_VARIABLE(MinY);
+    UNREFERENCED_VARIABLE(MaxX);
+    UNREFERENCED_VARIABLE(MaxY);
+#endif
+}
+
+bool FRendererModule::PollEditorObjectPickRectResult(IScene* Scene, TArray<uint32>& OutObjectIDs)
+{
+#if EDITOR_BUILD
+    if (Renderer)
+    {
+        return Renderer->PollEditorObjectPickRectResult(static_cast<FScene*>(Scene), OutObjectIDs);
+    }
+
+    return false;
+#else
+    UNREFERENCED_VARIABLE(Scene);
+    OutObjectIDs.Clear();
+    return false;
+#endif
+}
  
 void FRendererModule::ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace)
 {

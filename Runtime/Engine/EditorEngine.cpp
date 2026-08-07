@@ -21,6 +21,8 @@
 FEditorEngine::FEditorEngine()
     : FEngine()
     , SelectedActor(nullptr)
+    , SelectedActors()
+    , PendingDestroyActors()
     , LastViewportCamera(nullptr)
     , ActorRemovedDelegateHandle()
     , DockspaceWidget(nullptr)
@@ -39,6 +41,8 @@ FEditorEngine::FEditorEngine()
     , AboutWidget(nullptr)
     , ViewportImage(nullptr)
     , ViewportImageSize()
+    , bPendingPickAdditive(false)
+    , bPendingRectPickAdditive(false)
 {
 }
 
@@ -153,15 +157,51 @@ void FEditorEngine::Tick(float DeltaTime)
 
                 if (PickedActor)
                 {
-                    SetSelectedActor(PickedActor);
+                    if (bPendingPickAdditive)
+                    {
+                        ToggleSelectedActor(PickedActor);
+                    }
+                    else
+                    {
+                        SetSelectedActor(PickedActor);
+                    }
                 }
-                else
+                else if (!bPendingPickAdditive)
                 {
+                    // Ctrl-clicking empty space is a miss while building a selection, not a request to drop it.
                     ClearSelection();
                 }
             }
+
+            // Box select hands back every object with a visible pixel inside the dragged rectangle.
+            TArray<uint32> PickedObjectIDs;
+            if (RendererModule->PollEditorObjectPickRectResult(LocalWorld->GetSceneInterface(), PickedObjectIDs))
+            {
+                TArray<FActor*> PickedActors;
+                if (bPendingRectPickAdditive)
+                {
+                    PickedActors = SelectedActors;
+                }
+
+                if (IScene* Scene = LocalWorld->GetSceneInterface())
+                {
+                    PickedActors.Reserve(PickedActors.Size() + PickedObjectIDs.Size());
+
+                    for (uint32 ObjectID : PickedObjectIDs)
+                    {
+                        if (FActor* PickedActor = Scene->GetActorByObjectID(ObjectID))
+                        {
+                            PickedActors.Add(PickedActor);
+                        }
+                    }
+                }
+
+                SetSelectedActors(PickedActors);
+            }
         }
     }
+
+    DrainPendingDestroyActors();
 
     const IntVector2 Size = ViewportWidget->GetViewportSize();
     if (ViewportImageSize != Size)
@@ -192,10 +232,12 @@ FSceneRenderPacket FEditorEngine::BuildRenderPacket()
     Packet.View.bCameraCut = bCameraChanged || ViewportWidget->ConsumeCameraCut();
     LastViewportCamera = ViewCamera;
 
-    // Resolve the editor selection to a stable ObjectID on the main thread so the render thread never reads live editor state.
-    if (FActor* Selected = GetSelectedActor())
+    // Resolve the editor selection to stable ObjectIDs on the main thread so the render thread never reads live editor state.
+    if (IScene* Scene = Packet.View.Scene)
     {
-        if (IScene* Scene = Packet.View.Scene)
+        Packet.SelectedObjectIDs.Reserve(SelectedActors.Size());
+
+        for (FActor* Selected : SelectedActors)
         {
             Packet.SelectedObjectIDs.Add(Scene->GetOrCreateObjectID(Selected));
         }
@@ -211,12 +253,95 @@ FCameraComponent* FEditorEngine::GetActiveViewportCamera() const
 
 void FEditorEngine::SetSelectedActor(FActor* InActor)
 {
+    SelectedActors.Clear();
+
+    if (InActor)
+    {
+        SelectedActors.Add(InActor);
+    }
+
     SelectedActor = InActor;
+}
+
+void FEditorEngine::SetSelectedActors(const TArray<FActor*>& InActors)
+{
+    SelectedActors.Clear();
+    SelectedActors.Reserve(InActors.Size());
+
+    for (FActor* Actor : InActors)
+    {
+        if (Actor && !SelectedActors.Contains(Actor))
+        {
+            SelectedActors.Add(Actor);
+        }
+    }
+
+    // The most recently added actor becomes the primary, which is the one a range-select ends on.
+    SelectedActor = SelectedActors.IsEmpty() ? nullptr : SelectedActors[SelectedActors.Size() - 1];
+}
+
+void FEditorEngine::AddSelectedActor(FActor* InActor)
+{
+    if (!InActor)
+    {
+        return;
+    }
+
+    // Re-adding moves the actor to the back so that it takes over as the primary.
+    SelectedActors.Remove(InActor);
+    SelectedActors.Add(InActor);
+
+    SelectedActor = InActor;
+}
+
+void FEditorEngine::RemoveSelectedActor(FActor* InActor)
+{
+    if (!InActor || !SelectedActors.Remove(InActor))
+    {
+        return;
+    }
+
+    if (SelectedActor == InActor)
+    {
+        SelectedActor = SelectedActors.IsEmpty() ? nullptr : SelectedActors[SelectedActors.Size() - 1];
+    }
+}
+
+void FEditorEngine::ToggleSelectedActor(FActor* InActor)
+{
+    if (IsActorSelected(InActor))
+    {
+        RemoveSelectedActor(InActor);
+    }
+    else
+    {
+        AddSelectedActor(InActor);
+    }
 }
 
 void FEditorEngine::ClearSelection()
 {
+    SelectedActors.Clear();
     SelectedActor = nullptr;
+}
+
+bool FEditorEngine::IsActorSelected(FActor* InActor) const
+{
+    return InActor && SelectedActors.Contains(InActor);
+}
+
+void FEditorEngine::RequestDeleteActors(const TArray<FActor*>& InActors)
+{
+    PendingDestroyActors.Reserve(PendingDestroyActors.Size() + InActors.Size());
+
+    for (FActor* Actor : InActors)
+    {
+        // Queueing the same actor twice would destroy it twice during the drain.
+        if (Actor && !PendingDestroyActors.Contains(Actor))
+        {
+            PendingDestroyActors.Add(Actor);
+        }
+    }
 }
 
 void FEditorEngine::OnActorRemoved(FActor* RemovedActor)
@@ -226,9 +351,32 @@ void FEditorEngine::OnActorRemoved(FActor* RemovedActor)
         ViewportWidget->OnActorRemoved(RemovedActor);
     }
 
-    if (SelectedActor == RemovedActor)
+    RemoveSelectedActor(RemovedActor);
+    PendingDestroyActors.Remove(RemovedActor);
+}
+
+void FEditorEngine::DrainPendingDestroyActors()
+{
+    if (PendingDestroyActors.IsEmpty())
     {
-        ClearSelection();
+        return;
+    }
+
+    FWorld* LocalWorld = GetWorld();
+    if (!LocalWorld)
+    {
+        PendingDestroyActors.Clear();
+        return;
+    }
+
+    // RemoveActor broadcasts back into OnActorRemoved, which edits this queue, so hand it off before destroying anything.
+    const TArray<FActor*> ActorsToDestroy = PendingDestroyActors;
+    PendingDestroyActors.Clear();
+
+    for (FActor* DestroyActor : ActorsToDestroy)
+    {
+        // RemoveActor re-roots the children instead of destroying them, so a parent and one of its children can both be in this list in any order.
+        LocalWorld->RemoveActor(DestroyActor);
     }
 }
 
