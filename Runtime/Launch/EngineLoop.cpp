@@ -313,6 +313,8 @@ void FEngineLoop::Tick()
     IRendererModule* RendererModule = IRendererModule::Get();
     RendererModule->FinishPreviousFrame();
 
+    FApplication::Get().ProcessDeferredEvents();
+
     FEngine::Get()->Tick(DeltaTime);
 
     RendererModule->RecordUI();

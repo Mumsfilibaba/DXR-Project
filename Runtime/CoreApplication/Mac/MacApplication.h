@@ -27,7 +27,6 @@ struct EMacModifierKey
         LeftAlt,
         RightAlt,
         CapsLock,
-        NumLock,
     };
 };
 
@@ -76,7 +75,33 @@ struct FDeferredMacEvent
         , bIsRepeat(Other.bIsRepeat)
     {
     }
-    
+
+    FORCEINLINE FDeferredMacEvent(FDeferredMacEvent&& Other)
+        : NotificationName(Other.NotificationName)
+        , Event(Other.Event)
+        , CocoaWindow(Other.CocoaWindow)
+        , Window(Move(Other.Window))
+        , ContentFrame(Other.ContentFrame)
+        , MouseLocation(Other.MouseLocation)
+        , EventType(Other.EventType)
+        , ModifierFlags(Other.ModifierFlags)
+        , ClickCount(Other.ClickCount)
+        , ScrollPhase(Other.ScrollPhase)
+        , ScrollDelta(Other.ScrollDelta)
+        , MouseDelta(Other.MouseDelta)
+        , Character(Other.Character)
+        , MouseButtonNumber(Other.MouseButtonNumber)
+        , KeyCode(Other.KeyCode)
+        , bHasContentFrame(Other.bHasContentFrame)
+        , bHasPreciseScrollingDeltas(Other.bHasPreciseScrollingDeltas)
+        , bIsRepeat(Other.bIsRepeat)
+    {
+        // Ownership of the retains transfers here, so the source must not release them
+        Other.NotificationName = nullptr;
+        Other.Event            = nullptr;
+        Other.CocoaWindow      = nullptr;
+    }
+
     FORCEINLINE ~FDeferredMacEvent()
     {
         @autoreleasepool
@@ -85,6 +110,85 @@ struct FDeferredMacEvent
             [Event release];
             [CocoaWindow release];
         }
+    }
+
+    FORCEINLINE FDeferredMacEvent& operator=(const FDeferredMacEvent& Other)
+    {
+        if (this != &Other)
+        {
+            NSNotificationName NewNotificationName = Other.NotificationName ? [Other.NotificationName retain] : nullptr;
+            NSEvent*           NewEvent            = Other.Event            ? [Other.Event retain]            : nullptr;
+            FCocoaWindow*      NewCocoaWindow      = Other.CocoaWindow      ? [Other.CocoaWindow retain]      : nullptr;
+
+            @autoreleasepool
+            {
+                [NotificationName release];
+                [Event release];
+                [CocoaWindow release];
+            }
+
+            NotificationName = NewNotificationName;
+            Event            = NewEvent;
+            CocoaWindow      = NewCocoaWindow;
+
+            Window                     = Other.Window;
+            ContentFrame               = Other.ContentFrame;
+            MouseLocation              = Other.MouseLocation;
+            EventType                  = Other.EventType;
+            ModifierFlags              = Other.ModifierFlags;
+            ClickCount                 = Other.ClickCount;
+            ScrollPhase                = Other.ScrollPhase;
+            ScrollDelta                = Other.ScrollDelta;
+            MouseDelta                 = Other.MouseDelta;
+            Character                  = Other.Character;
+            MouseButtonNumber          = Other.MouseButtonNumber;
+            KeyCode                    = Other.KeyCode;
+            bHasContentFrame           = Other.bHasContentFrame;
+            bHasPreciseScrollingDeltas = Other.bHasPreciseScrollingDeltas;
+            bIsRepeat                  = Other.bIsRepeat;
+        }
+
+        return *this;
+    }
+
+    FORCEINLINE FDeferredMacEvent& operator=(FDeferredMacEvent&& Other)
+    {
+        if (this != &Other)
+        {
+            @autoreleasepool
+            {
+                [NotificationName release];
+                [Event release];
+                [CocoaWindow release];
+            }
+
+            NotificationName = Other.NotificationName;
+            Event            = Other.Event;
+            CocoaWindow      = Other.CocoaWindow;
+
+            // Ownership of the retains transfers here, so the source must not release them
+            Other.NotificationName = nullptr;
+            Other.Event            = nullptr;
+            Other.CocoaWindow      = nullptr;
+
+            Window                     = Move(Other.Window);
+            ContentFrame               = Other.ContentFrame;
+            MouseLocation              = Other.MouseLocation;
+            EventType                  = Other.EventType;
+            ModifierFlags              = Other.ModifierFlags;
+            ClickCount                 = Other.ClickCount;
+            ScrollPhase                = Other.ScrollPhase;
+            ScrollDelta                = Other.ScrollDelta;
+            MouseDelta                 = Other.MouseDelta;
+            Character                  = Other.Character;
+            MouseButtonNumber          = Other.MouseButtonNumber;
+            KeyCode                    = Other.KeyCode;
+            bHasContentFrame           = Other.bHasContentFrame;
+            bHasPreciseScrollingDeltas = Other.bHasPreciseScrollingDeltas;
+            bIsRepeat                  = Other.bIsRepeat;
+        }
+
+        return *this;
     }
 
     /** @brief The name of the notification associated with this event, if any. */
@@ -166,202 +270,57 @@ struct FMacScreenInfo
 class COREAPPLICATION_API FMacApplication final : public FGenericApplication
 {
 public:
-
-    /**
-     * @brief Creates a new MacApplication instance and returns it as a FGenericApplication interface.
-     * @return A shared pointer to the newly created FGenericApplication instance.
-     */
     static TSharedPtr<FGenericApplication> Create();
 
-public:
+    static String FindMonitorName(NSScreen* Screen);
+    static uint32 MonitorDPIFromScreen(NSScreen* Screen);
+    static NSPoint ConvertCocoaPointToEngine(CGFloat PositionX, CGFloat PositionY);
+    static NSPoint ConvertEnginePointToCocoa(CGFloat PositionX, CGFloat PositionY);
+    static NSRect ConvertEngineRectToCocoa(CGFloat Width, CGFloat Height, CGFloat PositionX, CGFloat PositionY);
+    static NSRect ConvertCocoaRectToEngine(CGFloat Width, CGFloat Height, CGFloat PositionX, CGFloat PositionY);
 
+public:
     FMacApplication(const TSharedPtr<FMacCursor>& InCursor);
     virtual ~FMacApplication();
 
     // FGenericApplication Interface
     virtual TSharedRef<FGenericWindow> CreateWindow() override final;
-
     virtual void Tick(float Delta) override final;
-
     virtual void ProcessEvents() override final;
-
     virtual void ProcessDeferredEvents() override final;
-
     virtual void UpdateInputDevices() override final;
-
     virtual FInputDevice* GetInputDevice() override final;
-
     virtual bool SupportsHighPrecisionMouse() const override final;
-
     virtual bool SetHighPrecisionMouseMode(const TSharedRef<FGenericWindow>& Window, EHighPrecisionMouseMode Mode) override final;
-
     virtual FModifierKeyState GetModifierKeyState() const override final;
-
     virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) override final;
-
+    virtual void SetCapture(const TSharedRef<FGenericWindow>& Window) override final;
     virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const override final;
-
     virtual TSharedRef<FGenericWindow> GetActiveWindow() const override final;
-
+    virtual TSharedRef<FGenericWindow> GetCapture() const override final;
     virtual void QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) const override final;
-
     virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler) override final;
 
-    /**
-     * @brief Defers an NSObject event (NSEvent, NSNotification, etc.) for later processing.
-     * 
-     * Stores the event in a queue until ProcessDeferredEvents is called.
-     * @param EventObject The macOS NSObject representing the event.
-     */
     void DeferEvent(NSObject* EventObject);
-
-    /**
-     * @brief NSEvent handler invoked by the local event monitor callback.
-     * 
-     * This function intercepts macOS events and defers them for processing.
-     * @param Event The NSEvent being handled.
-     * @return The processed NSEvent (returned unchanged by default).
-     */
     NSEvent* OnNSEvent(NSEvent* Event);
 
-    /**
-     * @brief Handles the destruction of a window, ensuring engine-side cleanup.
-     * 
-     * @param Window The engine-level window that was destroyed.
-     */
-    void OnWindowDestroyed(const TSharedRef<FMacWindow>& Window);
-
-    /**
-     * @brief Called before a macOS window is resized. Provides a chance for pre-resize logic.
-     * 
-     * @param Window The FMacWindow about to be resized.
-     */
-    void OnWindowWillResize(const TSharedRef<FMacWindow>& Window);
-
-    /**
-     * @brief Finds the Cocoa (NSWindow) currently under the mouse cursor, if any.
-     * 
-     * @return A pointer to the FCocoaWindow under the cursor, or nullptr if none found.
-     */
     FCocoaWindow* FindNSWindowUnderCursor() const;
-
-    /**
-     * @brief Updates the cached window under the mouse cursor.
-     */
-    void UpdateWindowUnderCursor();
-
-    /**
-     * @brief Finds the FMacWindow associated with a given NSWindow.
-     * 
-     * @param Window The native NSWindow to locate in the engine-level window array.
-     * @return A shared reference to the corresponding FMacWindow, or nullptr if not found.
-     */
     TSharedRef<FMacWindow> FindWindowFromNSWindow(NSWindow* Window) const;
 
-    /**
-     * @brief Closes the specified engine window, eventually destroying its platform counterpart.
-     * 
-     * Once closed, OnWindowClosed is triggered, leading to final removal of references and memory cleanup.
-     * @param Window The FMacWindow to close.
-     */
-    void CloseWindow(const TSharedRef<FMacWindow>& Window);
+    void OnWindowDestroyed(const TSharedRef<FMacWindow>& Window);
+    void OnWindowWillResize(const TSharedRef<FMacWindow>& Window);
 
-    /**
-     * @brief Retrieves the application observer that manages system-level macOS notifications.
-     * 
-     * @return A pointer to the FMacApplicationObserver instance, or nullptr if none.
-     */
+    void UpdateWindowUnderCursor();
+    void CloseWindow(const TSharedRef<FMacWindow>& Window);
+    void RefreshScreenCache();
+
     FMacApplicationObserver* GetApplicationObserver() const
     {
         return Observer;
     }
 
-    /**
-     * @brief Rebuilds the cached screen table from the current NSScreen layout.
-     * Must be called on the Cocoa main thread, since it queries NSScreen. Call it at startup and
-     * from every notification that can change the monitor arrangement, so that the coordinate
-     * converters never need to touch AppKit themselves.
-     */
-    void RefreshScreenCache();
-
-public:
-
-    /**
-     * @brief Retrieves a human-readable name for a monitor (NSScreen).
-     * 
-     * @param Screen The NSScreen representing the monitor.
-     * @return An String containing the monitor's name.
-     */
-    static String FindMonitorName(NSScreen* Screen);
-
-    /**
-     * @brief Calculates the DPI for a specific NSScreen.
-     * 
-     * @param Screen The NSScreen representing the monitor.
-     * @return The monitor's DPI as a 32-bit integer.
-     */
-    static uint32 MonitorDPIFromScreen(NSScreen* Screen);
-
-    /**
-     * @brief Converts a point from Cocoa (macOS) coordinates to engine coordinates.
-     * 
-     * @param PositionX The X-coordinate in Cocoa space.
-     * @param PositionY The Y-coordinate in Cocoa space.
-     * @return The converted NSPoint in engine coordinates.
-     */
-    static NSPoint ConvertCocoaPointToEngine(CGFloat PositionX, CGFloat PositionY);
-
-    /**
-     * @brief Converts a point from engine coordinates to Cocoa (macOS) coordinates.
-     * 
-     * @param PositionX The X-coordinate in engine space.
-     * @param PositionY The Y-coordinate in engine space.
-     * @return The converted NSPoint in Cocoa coordinates.
-     */
-    static NSPoint ConvertEnginePointToCocoa(CGFloat PositionX, CGFloat PositionY);
-
-    /**
-     * @brief Converts a rectangle from engine coordinates to Cocoa coordinates.
-     * 
-     * @param Width The rectangle's width in engine coordinates.
-     * @param Height The rectangle's height in engine coordinates.
-     * @param PositionX The rectangle's X-position in engine coordinates.
-     * @param PositionY The rectangle's Y-position in engine coordinates.
-     * @return The converted rectangle as an NSRect in Cocoa coordinates.
-     */
-    static NSRect ConvertEngineRectToCocoa(CGFloat Width, CGFloat Height, CGFloat PositionX, CGFloat PositionY);
-
-    /**
-     * @brief Converts a rectangle from Cocoa coordinates to engine coordinates.
-     * 
-     * @param Width The rectangle's width in Cocoa coordinates.
-     * @param Height The rectangle's height in Cocoa coordinates.
-     * @param PositionX The rectangle's X-position in Cocoa coordinates.
-     * @param PositionY The rectangle's Y-position in Cocoa coordinates.
-     * @return The converted rectangle as an NSRect in engine coordinates.
-     */
-    static NSRect ConvertCocoaRectToEngine(CGFloat Width, CGFloat Height, CGFloat PositionX, CGFloat PositionY);
-
 private:
-
-    /**
-     * @brief Finds the cached screen containing a specific point in Cocoa coordinates.
-     *
-     * @param PositionX The X-coordinate in Cocoa space.
-     * @param PositionY The Y-coordinate in Cocoa space.
-     * @return The screen containing the point, the primary screen if none contains it, or nullptr
-     * if the cache is empty. The caller must hold ScreenCacheCS for as long as it uses the result.
-     */
     static const FMacScreenInfo* FindScreenFromCocoaPoint(CGFloat PositionX, CGFloat PositionY);
-
-    /**
-     * @brief Finds the cached screen based on a position in engine (virtual) coordinates.
-     *
-     * @param PositionX The X-coordinate in engine coordinates.
-     * @param PositionY The Y-coordinate in engine coordinates.
-     * @return The screen containing the point, the primary screen if none contains it, or nullptr
-     * if the cache is empty. The caller must hold ScreenCacheCS for as long as it uses the result.
-     */
     static const FMacScreenInfo* FindScreenFromEnginePoint(CGFloat PositionX, CGFloat PositionY);
 
     void ProcessDeferredEvent(const FDeferredMacEvent& DeferredEvent);
@@ -375,11 +334,13 @@ private:
     void ProcessWindowResized(const FDeferredMacEvent& DeferredEvent);
     void ProcessWindowMoved(const FDeferredMacEvent& DeferredEvent);
 
-    id LocalEventMonitor;
-    id GlobalMouseMovedEventMonitor;
-
+    id                             LocalEventMonitor;
+    id                             GlobalMouseMovedEventMonitor;
     FMacApplicationObserver*       Observer;
     FCocoaWindow*                  WindowUnderCursor;
+    mutable FCriticalSection       WindowUnderCursorCS;
+    FCocoaWindow*                  CapturedWindow;
+    mutable FCriticalSection       CapturedWindowCS;
     NSUInteger                     CurrentModifierFlags;
     EMouseButtonName::Type         LastPressedButton;
     Vector2                        HighPrecisionMouseRemainder;

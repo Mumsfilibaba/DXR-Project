@@ -16,14 +16,6 @@
     return self;
 }
 
-- (BOOL) windowShouldClose:(NSWindow*) Sender
-{
-    SCOPED_AUTORELEASE_POOL();
-    
-    [Sender release];
-    return YES;
-}
-
 - (BOOL) acceptsFirstResponder
 {
     return NO;
@@ -31,7 +23,16 @@
 
 - (void) windowWillClose:(NSNotification*) Notification
 {
-    ConsoleWindow->OnWindowDidClose();
+    @autoreleasepool
+    {
+        [self setDelegate:nil];
+    }
+
+    if (ConsoleWindow)
+    {
+        ConsoleWindow->OnWindowDidClose();
+        ConsoleWindow = nullptr;
+    }
 }
 
 + (NSString*) convertStringWithArgs:(const CHAR*) Format Args:(va_list)Args

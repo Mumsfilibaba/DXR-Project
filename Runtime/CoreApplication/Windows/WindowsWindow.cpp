@@ -171,15 +171,6 @@ void FWindowsWindow::Show(bool bFocus)
 	}
 }
 
-void FWindowsWindow::Destroy()
-{
-    if (IsValid())
-    {
-        ::DestroyWindow(Window);
-        Window = 0;
-    }
-}
-
 void FWindowsWindow::Minimize()
 {
     if (IsValid())
@@ -193,6 +184,15 @@ void FWindowsWindow::Maximize()
     if (IsValid())
     {
         ::ShowWindow(Window, SW_MAXIMIZE);
+    }
+}
+
+void FWindowsWindow::Destroy()
+{
+    if (IsValid())
+    {
+        ::DestroyWindow(Window);
+        Window = 0;
     }
 }
 
@@ -259,6 +259,12 @@ void FWindowsWindow::ToggleFullscreen()
     }
 }
 
+bool FWindowsWindow::IsActiveWindow() const
+{
+    HWND ForegroundWindow = ::GetForegroundWindow();
+    return (ForegroundWindow == Window);
+}
+
 bool FWindowsWindow::IsValid() const
 {
     return ::IsWindow(Window) == TRUE;
@@ -303,12 +309,6 @@ void FWindowsWindow::SetWindowFocus()
         ::SetForegroundWindow(Window);
         ::SetFocus(Window);
     }
-}
-
-bool FWindowsWindow::IsActiveWindow() const
-{
-    HWND ForegroundWindow = ::GetForegroundWindow();
-    return (ForegroundWindow == Window);
 }
 
 void FWindowsWindow::SetTitle(const String& Title)
@@ -504,6 +504,38 @@ uint32 FWindowsWindow::GetHeight() const
     return static_cast<uint32>(Rect.bottom - Rect.top);
 }
 
+void FWindowsWindow::SetStyle(EWindowStyleFlags InStyle)
+{
+    if (!IsValid())
+    {
+        return;
+    }
+
+    // Grab the current shape (position & size) before we change style.
+    FWindowShape CurrentShape;
+    GetWindowShape(CurrentShape);
+
+    // Convert EWindowStyleFlags into WinAPI style/exstyle flags
+    const FWindowsWindowStyle NewStyle = GetWindowsWindowStyle(InStyle);
+    if (NewStyle != Style)
+    {
+        ::SetWindowLong(Window, GWL_STYLE, NewStyle.Style);
+        ::SetWindowLong(Window, GWL_EXSTYLE, NewStyle.StyleEx);
+
+        // Necessary when modifying window style
+        ::ShowWindow(Window, SW_SHOWNA);
+
+        // Cache the new style
+        Style = NewStyle;
+    }
+
+    StyleParams = InStyle;
+
+    const bool bTopMost = (InStyle & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None;
+    ::SetWindowPos(Window, bTopMost ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+    SetWindowShape(CurrentShape, true);
+}
+
 void FWindowsWindow::SetPlatformHandle(void* InPlatformHandle)
 {
     HWND InWindowHandle = reinterpret_cast<HWND>(InPlatformHandle);
@@ -535,36 +567,4 @@ void FWindowsWindow::SetPlatformHandle(void* InPlatformHandle)
     {
         LOG_ERROR("[FWindowsWindow]: Tried to set an invalid WindowHandle");
     }
-}
-
-void FWindowsWindow::SetStyle(EWindowStyleFlags InStyle)
-{
-    if (!IsValid())
-    {
-        return;
-    }
-
-    // Grab the current shape (position & size) before we change style.
-    FWindowShape CurrentShape;
-    GetWindowShape(CurrentShape);
-
-    // Convert EWindowStyleFlags into WinAPI style/exstyle flags
-    const FWindowsWindowStyle NewStyle = GetWindowsWindowStyle(InStyle);
-    if (NewStyle != Style)
-    {
-        ::SetWindowLong(Window, GWL_STYLE, NewStyle.Style);
-        ::SetWindowLong(Window, GWL_EXSTYLE, NewStyle.StyleEx);
-
-        // Necessary when modifying window style
-        ::ShowWindow(Window, SW_SHOWNA);
-
-        // Cache the new style
-        Style = NewStyle;
-    }
-
-    StyleParams = InStyle;
-
-    const bool bTopMost = (InStyle & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None;
-    ::SetWindowPos(Window, bTopMost ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
-    SetWindowShape(CurrentShape, true);
 }

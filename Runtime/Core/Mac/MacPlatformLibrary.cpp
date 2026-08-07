@@ -55,7 +55,13 @@ static const CHAR* GetBundleFrameworksDir()
     return StaticFrameworksDir;
 }
 
-static void* SafeLoadDynamicLib(const CHAR* LibraryName)
+#if ENABLE_LIBRARY_LAZY_MODE
+    #define DEFAULT_DYLIB_MODE RTLD_LAZY
+#else
+    #define DEFAULT_DYLIB_MODE RTLD_NOW
+#endif
+
+static void* SafeLoadDynamicLib(const CHAR* LibraryName, int32 Mode = DEFAULT_DYLIB_MODE)
 {
     // Try and avoid dynamic memory allocation inside of this function
     const CHAR* Prefix    = FMacPlatformLibrary::GetDynamicLibPrefix();
@@ -75,12 +81,6 @@ static void* SafeLoadDynamicLib(const CHAR* LibraryName)
     CString::Strcat(RealName, Prefix);
     CString::Strcat(RealName, LibraryName);
     CString::Strcat(RealName, Extension);
-    
-#if ENABLE_LIBRARY_LAZY_MODE
-    const int32 Mode = RTLD_LAZY;
-#else
-    const int32 Mode = RTLD_NOW;
-#endif
     
     // Now try and load
     void* Handle = ::dlopen(RealName, Mode);
@@ -102,10 +102,10 @@ static void* SafeLoadDynamicLib(const CHAR* LibraryName)
     
     const CHAR* Paths[] =
     {
-        "@rpath/",              // Resolved through the LC_RPATH of this image
+        "@rpath/",                // Resolved through the LC_RPATH of this image
         GetBundleFrameworksDir(),
         GetExecutableDir(),
-        "/usr/local/lib/",      // SDK-installed libraries such as the Vulkan loader
+        "/usr/local/lib/",        // SDK-installed libraries such as the Vulkan loader
     };
     
     constexpr uint32 MaxFullPathLength = MaxNameLength + MAXPATHLEN;
@@ -158,14 +158,6 @@ void* FMacPlatformLibrary::LoadDynamicLib(const CHAR* LibraryName)
 
 void* FMacPlatformLibrary::GetLoadedHandle(const CHAR* LibraryName)
 { 
-    void* Handle = SafeLoadDynamicLib(LibraryName);
-    
-    // Handle is ref-counted so release the new ref-count in order to have parity with windows
-    if (Handle)
-    {
-        ::dlclose(Handle);
-        return Handle;
-    }
-    
-    return nullptr;
+    // RTLD_NOLOAD returns a handle only if the library is already loaded, for parity with windows
+    return SafeLoadDynamicLib(LibraryName, RTLD_LAZY | RTLD_NOLOAD);
 }

@@ -4,6 +4,7 @@
 #include "Core/Threading/Atomic.h"
 #include <AppKit/AppKit.h>
 #include <Foundation/Foundation.h>
+#include <pthread/qos.h>
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -11,26 +12,6 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 static NSThread* GAppThread = nil;
 
-/**
- * @brief Extends NSThread to introduce the concept of an "application thread" as a counterpart to the main thread.
- *
- * This category leverages a global reference (GAppThread) to a specific NSThread instance, treating it
- * as the designated application thread. Through these methods, it becomes easy to check whether the current 
- * thread is the appointed application thread or to retrieve a handle to it. If no application thread has been 
- * set, these methods transparently fall back to the main thread, ensuring a consistent and stable default.
- *
- * - `+(NSThread*) appThread` attempts to return the globally recognized application thread. If none has been 
- *   established, it returns the main thread. This provides a unified way to retrieve the special application 
- *   thread for code paths that need to be sure they are running on the correct thread context.
- *
- * - `+(BOOL) isAppThread` and `-(BOOL) isAppThread` determine if the current or a given thread instance is the 
- *   application thread, respectively. This can be critical in scenarios where you must guarantee certain tasks 
- *   run on this thread, similarly to how one ensures tasks run on the main thread in a UI-centric application.
- *
- * Together, these extensions allow developers to define, identify, and rely upon a particular thread as the 
- * designated application thread, enhancing control over threading models and execution policies within the 
- * application.
- */
 @implementation NSThread (FAppThread)
 
 +(NSThread*) appThread
@@ -57,29 +38,6 @@ static NSThread* GAppThread = nil;
 
 @end
 
-/**
- * @brief Implements the FAppThread class, a dedicated NSThread subclass for the application’s primary thread.
- *
- * This implementation ensures that a global reference (GAppThread) is maintained to identify this 
- * thread as the "application thread." When initialized, the thread’s global pointer is set, allowing 
- * the rest of the application to reliably reference it. This is comparable to the main thread concept, 
- * but for a custom-defined "AppThread."
- *
- * Key behaviors:
- * - During initialization (`-init` and `-initWithTarget:selector:object:`), this thread instance 
- *   assigns itself to GAppThread, establishing it as the official application thread.
- * - In the `-main` method, the thread’s scheduling parameters are adjusted to give it a high 
- *   priority. It then registers a run loop specific to this thread, sets a human-readable name 
- *   ("AppThread"), and invokes its superclass’s `-main` to run any queued tasks.
- *   After the run loop finishes, it coordinates with the main thread to restore conditions for 
- *   sudden termination, depending on whether the engine is requested to exit.
- * - Upon deallocation (`-dealloc`), it clears the global reference to this thread (GAppThread), 
- *   ensuring other parts of the code no longer mistakenly reference a destroyed thread.
- *
- * By providing a well-defined, globally identifiable "AppThread," this implementation facilitates 
- * thread-specific operations and event handling that may be critical in complex, multi-threaded 
- * applications.
- */
 @implementation FAppThread
 
 -(id) init
@@ -106,14 +64,7 @@ static NSThread* GAppThread = nil;
 
 -(void) main
 {
-    struct sched_param SchedParams;
-    Memory::Memzero(&SchedParams, sizeof(SchedParams));
-
-    int32 Policy = SCHED_RR;
-    pthread_getschedparam(pthread_self(), &Policy, &SchedParams);
-
-    SchedParams.sched_priority = sched_get_priority_max(2);
-    pthread_setschedparam(pthread_self(), Policy, &SchedParams);
+    pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);
 
     // Register the runloop for this current thread
     FMacThreadManager::Get().RegisterAppThreadRunLoop();
@@ -148,25 +99,6 @@ static NSThread* GAppThread = nil;
 
 @end
 
-/**
- * @brief Implements the FRunLoopSource class, a thin Objective-C wrapper around a CFRunLoopSourceContext-based source.
- *
- * This implementation manages the lifecycle of a run loop source and provides methods 
- * to schedule, cancel, and perform actions associated with that source on a specified 
- * run loop and mode. By encapsulating the raw CFRunLoopSourceContext pointer, it ensures 
- * that the underlying context is properly retained and released, and that the source 
- * is consistently managed.
- *
- * FRunLoopSource bridges the gap between low-level Core Foundation run loop sources and 
- * higher-level Objective-C code. It initializes with a given context, increasing its 
- * reference count for lifetime management. Once scheduled on a run loop with a particular mode, 
- * it can later be canceled or triggered to perform its defined action.
- *
- * The perform method confirms that it is being executed in the correct context (i.e., 
- * the correct run loop and mode), ensuring that the source’s callbacks fire only under 
- * the intended conditions. This pattern helps avoid concurrency issues, ensures that 
- * cleanup occurs as expected, and simplifies interaction with run loop sources.
- */
 @implementation FRunLoopSource
 
 - (id)initWithContext:(FRunLoopSourceContext*)InContext
@@ -310,33 +242,33 @@ void FRunLoopSourceContext::Execute(CFStringRef InRunLoopMode)
         Tasks.DequeueAll(NewTasks);
     }
 
-    bool bDone = false;
-    while (!bDone)
+    TArray<FRunLoopTask*> DeferredTasks;
+    for (FRunLoopTask* Task : NewTasks)
     {
-        bDone = true;
-
-        // Process tasks that apply to the current mode
-        for (int32 Index = 0; Index < NewTasks.Size(); Index++)
+        if (!Task)
         {
-            FRunLoopTask* Task = NewTasks[Index];
-            if (Task && [Task->RunLoopModes containsObject:(NSString*)InRunLoopMode])
-            {
-                // Execute the task
-                NewTasks.RemoveAt(Index);
-                Task->Block();
-                delete Task;
-                
-                bDone = false;
-                break; // Break and restart the loop to re-check the updated array
-            }
+            continue;
+        }
+
+        if ([Task->RunLoopModes containsObject:(NSString*)InRunLoopMode])
+        {
+            Task->Block();
+            delete Task;
+        }
+        else
+        {
+            DeferredTasks.Emplace(Task);
         }
     }
-}
 
-void FRunLoopSourceContext::RunInMode(CFStringRef RunMode)
-{
-    // Run the run loop in the given mode until no more events
-    CFRunLoopRunInMode(RunMode, 0, true);
+    if (!DeferredTasks.IsEmpty())
+    {
+        SCOPED_LOCK(TasksCS);
+        for (FRunLoopTask* Task : DeferredTasks)
+        {
+            Tasks.Emplace(Task);
+        }
+    }
 }
 
 void FRunLoopSourceContext::WakeUp()
@@ -352,6 +284,7 @@ void FRunLoopSourceContext::Destroy(const void* Key, const void* Value, void* Co
     {
         CFStringRef        RunMode = (CFStringRef)Key;
         CFRunLoopSourceRef Source  = (CFRunLoopSourceRef)Value;
+
         // Remove the source from the run loop
         CFRunLoopRemoveSource(RunLoop, Source, RunMode);
     }
@@ -472,7 +405,9 @@ void FMacThreadManager::PumpMessagesAppThread(bool bUntilEmpty)
 
 #if APP_THREAD_ENABLED
     // Run the run loop in the default mode without a timeout.
-    CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0, false);
+    while ((CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0, false) == kCFRunLoopRunHandledSource) && bUntilEmpty)
+    {
+    }
 #else
     // Ensure the NSApp is valid.
     CHECK(NSApp != nil);
@@ -528,13 +463,11 @@ void FMacThreadManager::DispatchOnThread(FRunLoopSourceContext* SourceContext, b
             // Schedule the waitable block on the run loop context.
             SourceContext->ScheduleBlock(WaitableBlock, ScheduleModes);
 
-            // Continuously run the run loop until the semaphore is signaled.
             do
             {
-                CFStringRef CurrentMode = (CFStringRef)WaitMode;
                 SourceContext->WakeUp();
-                SourceContext->RunInMode(CurrentMode);
-            } while (dispatch_semaphore_wait(WaitSemaphore, dispatch_time(0, 100000ull)));
+                CFRunLoopRunInMode((CFStringRef)WaitMode, 0, true);
+            } while (dispatch_semaphore_wait(WaitSemaphore, dispatch_time(DISPATCH_TIME_NOW, 100000ull)));
 
             // Release the waitable block and semaphore.
             Block_release(WaitableBlock);

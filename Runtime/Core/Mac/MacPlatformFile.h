@@ -12,7 +12,7 @@ class CORE_API FMacFileHandle : public IPlatformFile
 
 public:
     FMacFileHandle(int32 InFileHandle, bool bInReadOnly);
-    virtual ~FMacFileHandle() = default;
+    virtual ~FMacFileHandle();
 
     virtual bool SeekFromStart(int64 InOffset) override final;
     virtual bool SeekFromCurrent(int64 InOffset) override final;
@@ -26,7 +26,7 @@ public:
     virtual void Close() override final;
 
 private:
-    int32 FileHandle = -1;
+    int32 FileHandle;
     bool  bReadOnly;
 };
 
@@ -34,7 +34,7 @@ class CORE_API FMacAsyncFileHandle : public IPlatformAsyncFile
 {
 public:
     FMacAsyncFileHandle(int32 InFileDescriptor);
-    virtual ~FMacAsyncFileHandle() = default;
+    virtual ~FMacAsyncFileHandle();
 
     virtual bool WriteAsync(const uint8* Src, uint32 BytesToWrite) override final;
     virtual void WaitForPendingWrites() override final;
@@ -51,6 +51,7 @@ private:
     int32                  FileDescriptor;
     int64                  WriteOffset;
     TArray<FPendingWrite*> PendingWrites;
+    bool                   bHasWriteError;
 };
 
 struct CORE_API FMacPlatformFile final : public FGenericPlatformFile

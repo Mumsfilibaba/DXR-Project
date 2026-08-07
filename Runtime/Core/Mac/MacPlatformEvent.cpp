@@ -1,7 +1,9 @@
 #include "Core/Mac/MacPlatformEvent.h"
 #include "Core/Platform/PlatformAtomic.h"
+#include "Core/Platform/PlatformThreadMisc.h"
 #include "Core/Templates/NumericLimits.h"
 #include <sys/time.h>
+#include <time.h>
 #include <Foundation/Foundation.h>
 
 FGenericPlatformEvent* FMacPlatformEvent::Create(bool bManualReset)
@@ -48,9 +50,11 @@ FMacPlatformEvent::~FMacPlatformEvent()
         LockMutex();
 
         bInitialized = false;
-        while (NumWaitingThreads)
+
+        while (FPlatformAtomic::Read(&NumWaitingThreads) > 0)
         {
             UnlockMutex();
+            FPlatformThreadMisc::Yield();
             LockMutex();
         }
 
@@ -111,11 +115,11 @@ void FMacPlatformEvent::Trigger()
 void FMacPlatformEvent::Wait(uint64 Milliseconds)
 {
     CHECK(bInitialized == true);
-    
-    struct timeval StartTime;
+
+    struct timespec StartTime = {};
     if ((Milliseconds > 0) && (Milliseconds != TNumericLimits<uint64>::Max()))
     {
-        ::gettimeofday(&StartTime, nullptr);
+        ::clock_gettime(CLOCK_MONOTONIC, &StartTime);
     }
 
     LockMutex();
@@ -143,23 +147,20 @@ void FMacPlatformEvent::Wait(uint64 Milliseconds)
             }
             else
             {
-                const uint64 TimeMS = (StartTime.tv_usec / 1000) + Milliseconds;
-
                 struct timespec TimeOut;
-                TimeOut.tv_sec  = StartTime.tv_sec + (TimeMS / 1000);
-                TimeOut.tv_nsec = (TimeMS % 1000) * 1000000;
+                TimeOut.tv_sec  = static_cast<time_t>(Milliseconds / 1000);
+                TimeOut.tv_nsec = static_cast<long>((Milliseconds % 1000) * 1000000);
 
-                const auto Result = pthread_cond_timedwait(&Condition, &Mutex, &TimeOut);
+                const auto Result = pthread_cond_timedwait_relative_np(&Condition, &Mutex, &TimeOut);
                 CHECK((Result == 0) || (Result == ETIMEDOUT));
 
-                struct timeval Now;
-                struct timeval Difference;
-                gettimeofday(&Now, nullptr);
+                struct timespec Now;
+                ::clock_gettime(CLOCK_MONOTONIC, &Now);
 
-                SubtractTimevals(&Now, &StartTime, &Difference);
+                const int64  ElapsedNS = (static_cast<int64>(Now.tv_sec - StartTime.tv_sec) * 1000000000ll) + static_cast<int64>(Now.tv_nsec - StartTime.tv_nsec);
+                const uint64 ElapsedMS = (ElapsedNS > 0) ? static_cast<uint64>(ElapsedNS / 1000000ll) : 0;
 
-                const uint64 DifferenceMS = ((Difference.tv_sec * 1000) + (Difference.tv_usec / 1000));
-                Milliseconds = ((DifferenceMS >= Milliseconds) ? 0 : (Milliseconds - DifferenceMS));
+                Milliseconds = ((ElapsedMS >= Milliseconds) ? 0 : (Milliseconds - ElapsedMS));
                 StartTime    = Now;
             }
             
@@ -175,6 +176,7 @@ void FMacPlatformEvent::Wait(uint64 Milliseconds)
 void FMacPlatformEvent::Reset()
 {
     CHECK(bInitialized == true);
+
     LockMutex();
     Triggered = ETriggerType::None;
     UnlockMutex();

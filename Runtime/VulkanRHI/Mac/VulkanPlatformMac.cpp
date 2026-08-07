@@ -29,7 +29,9 @@ VkResult VulkanPlatformMac::CreateSurface(VkInstance Instance, void* WindowHandl
         // Set BackgroundColor to black
         CGColorRef BackgroundColor = CGColorGetConstantColor(kCGColorBlack);
         [MetalLayer setBackgroundColor:BackgroundColor];
-        [MetalLayer setContentsScale:1.0f];
+
+        NSScreen* Screen = CocoaWindow.screen ? CocoaWindow.screen : [NSScreen mainScreen];
+        [MetalLayer setContentsScale:Screen.backingScaleFactor];
 
         // Create a new MetalWindowView instead of the standard CocoaView (Use the same frame)
         FCocoaWindowView* CocoaWindowView = CocoaWindow.contentView;
@@ -41,7 +43,7 @@ VkResult VulkanPlatformMac::CreateSurface(VkInstance Instance, void* WindowHandl
     
     if (!bResult)
     {
-        return VK_ERROR_EXTENSION_NOT_PRESENT;
+        return VK_ERROR_INITIALIZATION_FAILED;
     }
 
     // Create the vulkan surface

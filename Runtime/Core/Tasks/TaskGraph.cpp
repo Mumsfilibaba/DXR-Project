@@ -588,18 +588,16 @@ void FTaskGraph::WaitForEvent(FTaskEvent* Event, FTimespan Timeout)
 
     if (Worker)
     {
-        // On a worker thread, help drain anonymous work while waiting.
         while (!Event->IsComplete())
         {
             if (!TryExecuteOneAnyThreadTask())
             {
-                Event->WaitUntilComplete(FTimespan::Milliseconds(1));
+                Event->WaitUntilComplete(FTimespan::Milliseconds(50));
             }
         }
 
         return;
     }
 
-    // Unmanaged thread: simply block on the completion event.
     Event->WaitUntilComplete(Timeout);
 }

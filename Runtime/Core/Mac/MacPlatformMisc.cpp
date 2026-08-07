@@ -22,8 +22,8 @@ bool FMacPlatformMisc::IsDebuggerPresent()
 
 EAssertDialogResult FMacPlatformMisc::ShowAssertDialog(const CHAR* Title, const CHAR* Message)
 {
-    // CFUserNotification rather than NSAlert: asserts fire from worker threads and from before an
-    // NSApplication exists, neither of which NSAlert supports
+    // CFUserNotification rather than NSAlert: asserts fire from worker threads
+    // and from before an NSApplication exists, neither of which NSAlert supports.
     CFStringRef TitleRef   = CFStringCreateWithCString(nullptr, Title,   kCFStringEncodingUTF8);
     CFStringRef MessageRef = CFStringCreateWithCString(nullptr, Message, kCFStringEncodingUTF8);
 

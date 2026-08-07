@@ -22,8 +22,6 @@
 // Based on https://github.com/mountainstorm/CoreSymbolication
 extern "C"
 {
-    /* Types */
-
     struct CSTypeRef 
     {
         void* CppData;
@@ -44,27 +42,21 @@ extern "C"
     typedef int (^CSSymbolIterator)(CSSymbolRef Symbol);
     typedef int (^CSSourceInfoIterator)(CSSourceInfoRef SourceInfo);
 
-    /* Defines */
-
     #define kCSNow (0x80000000u)
     
     /* Utility functions */
-
     typedef Boolean(*PFN_CSIsNull)(CSTypeRef CS);
     typedef void(*PFN_CSRelease)(CSTypeRef CS);
 
     /* Symbolicator functions */
-
     typedef CSSymbolicatorRef(*PFN_CSSymbolicatorCreateWithPid)(pid_t pid);
     typedef CSSourceInfoRef(*PFN_CSSymbolicatorGetSourceInfoWithAddressAtTime)(CSSymbolicatorRef Symbolicator, vm_address_t Address, uint64_t Time);
     
     /* Symbol functions */
-
     typedef const char* (*PFN_CSSymbolGetName)(CSSymbolRef Symbol);
     typedef const char* (*PFN_CSSymbolOwnerGetName)(CSSymbolOwnerRef Owner);
 
     /* Source functions */
-
     typedef const char*(*PFN_CSSourceInfoGetPath)(CSSourceInfoRef Info);
     typedef int(*PFN_CSSourceInfoGetLineNumber)(CSSourceInfoRef Info);
     typedef CSSymbolRef(*PFN_CSSourceInfoGetSymbol)(CSSourceInfoRef Info);
@@ -77,19 +69,19 @@ static int32            GSymbolsRefCount = 0;
 // Handle to the dynamic library
 static void* GCoreSymbolicationLibrary = nullptr;
 
-static PFN_CSIsNull  CSIsNull  = nullptr;
-static PFN_CSRelease CSRelease = nullptr;
+// Symbolicator for the process
+static CSSymbolicatorRef GSymbolicator = {};
 
+static PFN_CSIsNull                                     CSIsNull                                     = nullptr;
+static PFN_CSRelease                                    CSRelease                                    = nullptr;
 static PFN_CSSymbolicatorCreateWithPid                  CSSymbolicatorCreateWithPid                  = nullptr;
 static PFN_CSSymbolicatorGetSourceInfoWithAddressAtTime CSSymbolicatorGetSourceInfoWithAddressAtTime = nullptr;
-
-static PFN_CSSymbolGetName      CSSymbolGetName      = nullptr;
-static PFN_CSSymbolOwnerGetName CSSymbolOwnerGetName = nullptr;
-
-static PFN_CSSourceInfoGetPath        CSSourceInfoGetPath        = nullptr;
-static PFN_CSSourceInfoGetLineNumber  CSSourceInfoGetLineNumber  = nullptr;
-static PFN_CSSourceInfoGetSymbol      CSSourceInfoGetSymbol      = nullptr;
-static PFN_CSSourceInfoGetSymbolOwner CSSourceInfoGetSymbolOwner = nullptr;
+static PFN_CSSymbolGetName                              CSSymbolGetName                              = nullptr;
+static PFN_CSSymbolOwnerGetName                         CSSymbolOwnerGetName                         = nullptr;
+static PFN_CSSourceInfoGetPath                          CSSourceInfoGetPath                          = nullptr;
+static PFN_CSSourceInfoGetLineNumber                    CSSourceInfoGetLineNumber                    = nullptr;
+static PFN_CSSourceInfoGetSymbol                        CSSourceInfoGetSymbol                        = nullptr;
+static PFN_CSSourceInfoGetSymbolOwner                   CSSourceInfoGetSymbolOwner                   = nullptr;
 
 /** CoreSymbolication returns null for anything it has no information about */
 static void CopySymbolString(CHAR (&OutBuffer)[FStackTraceEntry::MaxNameLength], const CHAR* Value)
@@ -140,6 +132,8 @@ bool FMacPlatformStackTrace::InitializeSymbols()
             GCoreSymbolicationLibrary = nullptr;
             return false;
         }
+
+        GSymbolicator = CSSymbolicatorCreateWithPid(getpid());
     }
 
     ++GSymbolsRefCount;
@@ -152,6 +146,13 @@ void FMacPlatformStackTrace::ReleaseSymbols()
 
     if ((GSymbolsRefCount > 0) && (--GSymbolsRefCount == 0))
     {
+        if (!CSIsNull(GSymbolicator))
+        {
+            CSRelease(GSymbolicator);
+        }
+
+        GSymbolicator = {};
+
         CSIsNull  = nullptr;
         CSRelease = nullptr;
 
@@ -184,12 +185,9 @@ int32 FMacPlatformStackTrace::CaptureStackTrace(uint64* StackTrace, int32 MaxDep
 
 static void SymbolicateWithCoreSymbolication(uint64 Address, FStackTraceEntry& OutStackTraceEntry)
 {
-    pid_t ProcessID = getpid();
-
-    CSSymbolicatorRef Symbolicator = CSSymbolicatorCreateWithPid(ProcessID);
-    if(!CSIsNull(Symbolicator))
+    if (!CSIsNull(GSymbolicator))
     {
-        CSSourceInfoRef Symbol = CSSymbolicatorGetSourceInfoWithAddressAtTime(Symbolicator, (vm_address_t)Address, kCSNow);
+        CSSourceInfoRef Symbol = CSSymbolicatorGetSourceInfoWithAddressAtTime(GSymbolicator, (vm_address_t)Address, kCSNow);
         if(!CSIsNull(Symbol))
         {
             // Any of these can come back null for an address without full debug information
@@ -209,8 +207,6 @@ static void SymbolicateWithCoreSymbolication(uint64 Address, FStackTraceEntry& O
                 CopySymbolString(OutStackTraceEntry.ModuleName, CSSymbolOwnerGetName(Owner));
             }
         }
-        
-        CSRelease(Symbolicator);
     }
 }
 

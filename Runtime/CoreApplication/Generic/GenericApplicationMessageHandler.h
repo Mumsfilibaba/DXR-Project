@@ -271,6 +271,17 @@ struct FGenericApplicationMessageHandler
     {
         return false;
     }
+
+    /**
+     * @brief Called once per transition when the application gains or loses activation. Not called when focus moves between windows of this application.
+     * 
+     * @param bIsActive True when the application became active.
+     * @return true if the event was handled, false otherwise.
+     */
+    virtual bool OnApplicationActivationChanged(bool bIsActive)
+    {
+        return false;
+    }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

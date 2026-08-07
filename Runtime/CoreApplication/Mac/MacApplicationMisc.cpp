@@ -23,12 +23,4 @@ void FMacApplicationMisc::MessageBox(const String& Title, const String& Message)
 void FMacApplicationMisc::PumpMessages(bool bUntilEmpty)
 {
     FMacThreadManager::PumpMessagesAppThread(bUntilEmpty);
-
-    FMacThreadManager::Get().MainThreadDispatch(^
-    {
-        CHECK_COCOA_MAIN_THREAD();
-
-        NSMenu* MainMenu = [NSApp mainMenu];
-        [MainMenu update];
-    }, NSDefaultRunLoopMode, false);
 }

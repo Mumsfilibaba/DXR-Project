@@ -257,46 +257,6 @@ public:
     virtual TSharedRef<FGenericWindow> CreateWindow() { return nullptr; }
 
     /**
-     * @brief Sets a new active window.
-     * 
-     * By default, this method does nothing; platform-specific applications should override it to implement actual behavior.
-     * @param Window The window to set as active.
-     */
-    virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) { }
-
-    /**
-     * @brief Sets the window that should have mouse capture.
-     *
-     * This method is mainly relevant on Windows platforms. By default, does nothing; override for actual capture logic.
-     * @param Window The window to capture the mouse.
-     */
-    virtual void SetCapture(const TSharedRef<FGenericWindow>& Window) { }
-
-    /**
-     * @brief Retrieves the window currently under the mouse cursor.
-     * 
-     * By default, returns nullptr. Override to return an appropriate window reference on supported platforms.
-     * @return A shared reference to the window under the mouse cursor or nullptr if not supported.
-     */
-    virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const { return nullptr; }
-
-    /**
-     * @brief Retrieves the window that currently has mouse capture.
-     * 
-     * By default, returns nullptr. Override to return the actual captured window on supported platforms.
-     * @return A shared reference to the captured window or nullptr if none.
-     */
-    virtual TSharedRef<FGenericWindow> GetCapture() const { return nullptr; }
-
-    /**
-     * @brief Retrieves the current active (focused) window.
-     * 
-     * By default, returns nullptr. Platform implementations should override to return the window with focus.
-     * @return A shared reference to the active window or nullptr if none.
-     */
-    virtual TSharedRef<FGenericWindow> GetActiveWindow() const { return nullptr; }
-
-    /**
      * @brief Processes platform messages and any deferred actions for the application.
      * 
      * @param Delta The time elapsed since the last tick (in seconds).
@@ -359,6 +319,46 @@ public:
      * @return The current modifier key state.
      */
     virtual FModifierKeyState GetModifierKeyState() const { return FModifierKeyState(); }
+
+    /**
+     * @brief Sets a new active window.
+     * 
+     * By default, this method does nothing; platform-specific applications should override it to implement actual behavior.
+     * @param Window The window to set as active.
+     */
+    virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) { }
+
+    /**
+     * @brief Sets the window that should have mouse capture.
+     *
+     * This method is mainly relevant on Windows platforms. By default, does nothing; override for actual capture logic.
+     * @param Window The window to capture the mouse.
+     */
+    virtual void SetCapture(const TSharedRef<FGenericWindow>& Window) { }
+
+    /**
+     * @brief Retrieves the window currently under the mouse cursor.
+     * 
+     * By default, returns nullptr. Override to return an appropriate window reference on supported platforms.
+     * @return A shared reference to the window under the mouse cursor or nullptr if not supported.
+     */
+    virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const { return nullptr; }
+
+    /**
+     * @brief Retrieves the current active (focused) window.
+     * 
+     * By default, returns nullptr. Platform implementations should override to return the window with focus.
+     * @return A shared reference to the active window or nullptr if none.
+     */
+    virtual TSharedRef<FGenericWindow> GetActiveWindow() const { return nullptr; }
+
+    /**
+     * @brief Retrieves the window that currently has mouse capture.
+     * 
+     * By default, returns nullptr. Override to return the actual captured window on supported platforms.
+     * @return A shared reference to the captured window or nullptr if none.
+     */
+    virtual TSharedRef<FGenericWindow> GetCapture() const { return nullptr; }
 
     /**
      * @brief Gathers information on monitors connected to the system.

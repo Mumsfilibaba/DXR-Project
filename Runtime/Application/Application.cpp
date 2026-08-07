@@ -226,8 +226,12 @@ FApplication::FApplication(TSharedPtr<FGenericApplication> InPlatformApplication
     , Windows()
     , InputHandlers()
     , OnMonitorConfigChangedEvent()
+    , FocusWindow()
+    , LastCursorPosition()
     , bIsMonitorInfoValid(false)
+    , bIsCursorPositionValid(false)
     , bIsTrackingCursor(false)
+    , bIsApplicationActive(true)
 {
     UpdateMonitorInfo();
 }
@@ -368,6 +372,32 @@ void FApplication::ProcessEvents()
 void FApplication::ProcessDeferredEvents()
 {
     PlatformApplication->ProcessDeferredEvents();
+
+    if (!bIsApplicationActive || !FocusWindow.IsValid())
+    {
+        ReleaseAllPressedInput();
+    }
+}
+
+void FApplication::ReleaseAllPressedInput()
+{
+    if (!PressedKeys.IsEmpty())
+    {
+        const TSet<EKeyboardKeyName::Type> KeysToRelease = PressedKeys;
+        for (EKeyboardKeyName::Type Key : KeysToRelease)
+        {
+            OnKeyUp(Key, GetModifierKeyState());
+        }
+    }
+
+    if (!PressedMouseButtons.IsEmpty())
+    {
+        const TSet<EMouseButtonName::Type> ButtonsToRelease = PressedMouseButtons;
+        for (EMouseButtonName::Type Button : ButtonsToRelease)
+        {
+            OnMouseButtonUp(Button, GetModifierKeyState());
+        }
+    }
 }
 
 void FApplication::UpdateInputDevices()
@@ -545,7 +575,16 @@ bool FApplication::OnKeyChar(uint32 Character)
 
 bool FApplication::OnMouseMove(int32 MouseX, int32 MouseY)
 {
-    const FCursorEvent CursorEvent(EInputEventType::MouseMoved, IntVector2(MouseX, MouseY), PlatformApplication->GetModifierKeyState());
+    const IntVector2 CursorPosition(MouseX, MouseY);
+    if (bIsCursorPositionValid && LastCursorPosition == CursorPosition)
+    {
+        return false;
+    }
+
+    bIsCursorPositionValid = true;
+    LastCursorPosition     = CursorPosition;
+
+    const FCursorEvent CursorEvent(EInputEventType::MouseMoved, CursorPosition, PlatformApplication->GetModifierKeyState());
 
     const FEventResponse PreProcessResponse = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
@@ -857,6 +896,12 @@ bool FApplication::OnWindowFocusLost(const TSharedRef<FGenericWindow>& PlatformW
 
     if (TSharedPtr<FWindowWidget> Window = FindWindowFromGenericWindow(PlatformWindow))
     {
+        // A focus-lost for the outgoing window can arrive after the incoming one gained focus
+        if (FocusWindow.Get() == Window.Get())
+        {
+            FocusWindow = nullptr;
+        }
+
         Window->OnWindowFocusChanged(false);
         bResult = true;
     }
@@ -882,6 +927,7 @@ bool FApplication::OnWindowFocusGained(const TSharedRef<FGenericWindow>& Platfor
         }
 
         SetFocusWidget(FocusWidget);
+        FocusWindow = Window;
 
         Window->OnWindowFocusChanged(true);
         bResult = true;
@@ -913,6 +959,12 @@ bool FApplication::OnMonitorConfigurationChange()
 
     // Then notify listeners that the monitor configuration has changed.
     OnMonitorConfigChangedEvent.Broadcast();
+    return true;
+}
+
+bool FApplication::OnApplicationActivationChanged(bool bIsActive)
+{
+    bIsApplicationActive = bIsActive;
     return true;
 }
 
@@ -1123,12 +1175,12 @@ void FApplication::GetDisplayInfo(TArray<FMonitorInfo>& OutMonitorInfo)
 
 TSharedPtr<FWindowWidget> FApplication::GetFocusWindow() const
 {
-    if (TSharedRef<FGenericWindow> ActiveWindow = PlatformApplication->GetActiveWindow())
+    if (!FocusWindow.IsValid())
     {
-        return FindWindowFromGenericWindow(ActiveWindow);
+        return nullptr;
     }
 
-    return nullptr;
+    return TSharedPtr<FWindowWidget>(FocusWindow);
 }
 
 TSharedPtr<FWidget> FApplication::GetFocusLeafWidget() const
