@@ -3,13 +3,16 @@
 #include "Core/Containers/Queue.h"
 #include "Core/Containers/Map.h"
 #include "Core/Templates/Utility/EnumOperators.h"
+#include "Core/Threading/Atomic/AtomicInt.h"
 #include "D3D12RHI/D3D12CommandList.h"
 #include "D3D12RHI/D3D12Fence.h"
 #include "D3D12RHI/D3D12DeletionQueue.h"
+#include "D3D12RHI/D3D12RecyclePool.h"
 #include "D3D12RHI/D3D12ResourceState.h"
 #include "D3D12RHI/D3D12Query.h"
 
 class FD3D12Device;
+class FD3D12CommandContext;
 
 enum class ED3D12CommandsFlags : uint32
 {
@@ -69,14 +72,27 @@ public:
 
     FD3D12CommandList* ObtainCommandList(FD3D12CommandAllocator* CommandAllocator, ID3D12PipelineState* InitialPipelineState);
     void RecycleCommandList(FD3D12CommandList* InCommandList);
+
+    FD3D12CommandAllocator* ObtainAllocator();
+    void RecycleAllocator(FD3D12CommandAllocator* InAllocator);
+
+    FD3D12CommandContext* ObtainCommandContext();
+    void ReleaseCommandContext(FD3D12CommandContext* InContext);
+    void PruneCommandContexts(uint64 CurrentFrame);
     
     FD3D12FenceSyncPoint ExecuteCommandList(FD3D12CommandList* InCommandList, bool bWaitForCompletion);
     FD3D12FenceSyncPoint ExecuteCommandLists(FD3D12CommandList* const* InCommandLists, uint32 NumCommandLists, bool bWaitForCompletion);
-
-    void SubmitCommands(FD3D12Commands* Commands);
+    
+    FD3D12FenceSyncPoint SubmitCommands(FD3D12Commands* Commands);
     void ProcessCommandQueue();
-
+    
     void WaitForCompletion();
+
+    template<typename FunctorType>
+    void ForEachLiveCommandContext(FunctorType&& Functor)
+    {
+        CommandContextPool.ForEachTracked(Forward<FunctorType>(Functor));
+    }
 
     FD3D12Fence& GetSubmissionFence()
     {
@@ -106,20 +122,21 @@ public:
 private:
     typedef TQueue<FD3D12Commands*, EQueueType::MPSC> FCommandsQueue;
 
-    ED3D12CommandQueueType const QueueType;
-    D3D12_COMMAND_LIST_TYPE      CommandListType;
-    UINT64                       Frequency;
-    FD3D12FenceRef               SubmissionFence;
-    TComPtr<ID3D12CommandQueue>  CommandQueue;
-    TQueue<FD3D12CommandList*>   AvailableCommandLists;
-    TArray<FD3D12CommandList*>   CommandLists;
-    FCriticalSection             CommandListsCS;
-    FCommandsQueue               PendingSubmissions;
-    FCriticalSection             SubmissionCS;
-    FCriticalSection             ConsumerCS;
-    TArray<FD3D12QueryRange>     PendingQueryRanges;
-    TArray<FD3D12Query>          PendingTimestampQueries;
-    TArray<FD3D12Query>          PendingOcclusionQueries;
-    TArray<FD3D12Query>          PendingPipelineStatsQueries;
-    TArray<FD3D12QueryRHI*>      PendingQueryRHIs;
+    ED3D12CommandQueueType const              QueueType;
+    D3D12_COMMAND_LIST_TYPE                   CommandListType;
+    UINT64                                    Frequency;
+    FD3D12FenceRef                            SubmissionFence;
+    TComPtr<ID3D12CommandQueue>               CommandQueue;
+    TD3D12RecyclePool<FD3D12CommandList>      CommandListPool;
+    TD3D12RecyclePool<FD3D12CommandAllocator> AllocatorPool;
+    TD3D12RecyclePool<FD3D12CommandContext>   CommandContextPool;
+    TAtomicInt<uint64>                        CurrentFrame;
+    FCommandsQueue                            PendingSubmissions;
+    FCriticalSection                          SubmissionCS;
+    FCriticalSection                          ConsumerCS;
+    TArray<FD3D12QueryRange>                  PendingQueryRanges;
+    TArray<FD3D12Query>                       PendingTimestampQueries;
+    TArray<FD3D12Query>                       PendingOcclusionQueries;
+    TArray<FD3D12Query>                       PendingPipelineStatsQueries;
+    TArray<FD3D12QueryRHI*>                   PendingQueryRHIs;
 };

@@ -19,6 +19,16 @@ static TAutoConsoleVariable<bool> CVarEnableGPUTimeout(
     "Enables or disables the GPU timeout on all ID3D12CommandQueues",
     true);
 
+static TAutoConsoleVariable<int32> CVarCommandContextMaxIdleFrames(
+    "D3D12RHI.CommandContextPool.MaxIdleFrames",
+    "Number of frames a pooled CommandContext may sit unused before it is destroyed",
+    16);
+
+static TAutoConsoleVariable<int32> CVarCommandContextMinRetained(
+    "D3D12RHI.CommandContextPool.MinRetained",
+    "Number of CommandContexts the pool keeps alive regardless of how long they have been idle",
+    2);
+
 FD3D12Queue::FD3D12Queue(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType)
     : FD3D12DeviceChild(InDevice)
     , QueueType(InQueueType)
@@ -26,18 +36,17 @@ FD3D12Queue::FD3D12Queue(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueT
     , Frequency(0)
     , SubmissionFence(nullptr)
     , CommandQueue(nullptr)
-    , CommandLists()
 {
 }
 
 FD3D12Queue::~FD3D12Queue()
 {
-    TScopedLock Lock(CommandListsCS);
+    WaitForCompletion();
+    ProcessCommandQueue();
 
-    for (FD3D12CommandList* CommandList : CommandLists)
-    {
-        delete CommandList;
-    }
+    CommandContextPool.DestroyAll();
+    CommandListPool.DestroyAll();
+    AllocatorPool.DestroyAll();
 }
 
 bool FD3D12Queue::Initialize()
@@ -89,33 +98,23 @@ bool FD3D12Queue::Initialize()
 
 FD3D12CommandList* FD3D12Queue::ObtainCommandList(FD3D12CommandAllocator* CommandAllocator, ID3D12PipelineState* InitialPipelineState)
 {
-    TScopedLock Lock(CommandListsCS);
-
-    FD3D12CommandList* CommandList;
-    if (AvailableCommandLists.IsEmpty())
+    FD3D12CommandList* CommandList = CommandListPool.Acquire([&](int32 Index) -> FD3D12CommandList*
     {
-        CommandList = new FD3D12CommandList(GetDevice());
-        if (!CommandList->Initialize(CommandListType, CommandAllocator, InitialPipelineState))
+        FD3D12CommandList* NewCommandList = new FD3D12CommandList(GetDevice());
+        if (!NewCommandList->Initialize(CommandListType, CommandAllocator, InitialPipelineState))
         {
+            delete NewCommandList;
             return nullptr;
         }
 
-        if (!CommandList->Reset(CommandAllocator))
-        {
-            return nullptr;
-        }
+        NewCommandList->SetDebugName(String::CreateFormatted("%s CommandList %d", ToString(CommandListType), Index));
+        return NewCommandList;
+    });
 
-        CommandList->SetDebugName(String::CreateFormatted("%s CommandList %d", ToString(CommandListType), CommandLists.Size()));
-        CommandLists.Add(CommandList);
-    }
-    else
+    if (!CommandList || !CommandList->Reset(CommandAllocator))
     {
-        AvailableCommandLists.Dequeue(CommandList);
-        if (!CommandList->Reset(CommandAllocator))
-        {
-            DEBUG_BREAK();
-            return nullptr;
-        }
+        DEBUG_BREAK();
+        return nullptr;
     }
 
     return CommandList;
@@ -123,10 +122,84 @@ FD3D12CommandList* FD3D12Queue::ObtainCommandList(FD3D12CommandAllocator* Comman
 
 void FD3D12Queue::RecycleCommandList(FD3D12CommandList* InCommandList)
 {
-    CHECK(InCommandList != nullptr);
-    
-    TScopedLock Lock(CommandListsCS);
-    AvailableCommandLists.Enqueue(InCommandList);
+    CommandListPool.Release(InCommandList);
+}
+
+FD3D12CommandAllocator* FD3D12Queue::ObtainAllocator()
+{
+    return AllocatorPool.Acquire([this](int32 Index) -> FD3D12CommandAllocator*
+    {
+        FD3D12CommandAllocator* NewAllocator = new FD3D12CommandAllocator(GetDevice(), QueueType);
+        if (!NewAllocator->Initialize())
+        {
+            DEBUG_BREAK();
+            delete NewAllocator;
+            return nullptr;
+        }
+
+        NewAllocator->SetDebugName(String::CreateFormatted("%s CommandAllocator %d", ToString(CommandListType), Index));
+        return NewAllocator;
+    });
+}
+
+void FD3D12Queue::RecycleAllocator(FD3D12CommandAllocator* InAllocator)
+{
+    CHECK(InAllocator != nullptr);
+
+    // Unlike a command list, an allocator resets on release rather than acquire.
+    if (!InAllocator->Reset())
+    {
+        DEBUG_BREAK();
+    }
+
+    AllocatorPool.Release(InAllocator);
+}
+
+FD3D12CommandContext* FD3D12Queue::ObtainCommandContext()
+{
+    FD3D12CommandContext* CommandContext = CommandContextPool.Acquire([this](int32) -> FD3D12CommandContext*
+    {
+        FD3D12CommandContext* NewCommandContext = new FD3D12CommandContext(GetDevice(), *this);
+        if (!NewCommandContext->Initialize())
+        {
+            DEBUG_BREAK();
+            delete NewCommandContext;
+            return nullptr;
+        }
+
+        return NewCommandContext;
+    });
+
+    if (!CommandContext)
+    {
+        D3D12_ERROR_CRITICAL("Failed to Obtain CommandContext");
+    }
+
+    return CommandContext;
+}
+
+void FD3D12Queue::ReleaseCommandContext(FD3D12CommandContext* InContext)
+{
+    CHECK(InContext != nullptr);
+    CHECK(!InContext->IsRecording());
+
+    InContext->RetireTransientObjects();
+
+    InContext->SetLastUsedFrame(CurrentFrame.Load());
+    CommandContextPool.Release(InContext);
+}
+
+void FD3D12Queue::PruneCommandContexts(uint64 InCurrentFrame)
+{
+    CurrentFrame.Store(InCurrentFrame);
+
+    const uint64 MaxIdleFrames = static_cast<uint64>(Math::Max<int32>(0, CVarCommandContextMaxIdleFrames.GetValue()));
+    const int32  MinRetained   = Math::Max<int32>(0, CVarCommandContextMinRetained.GetValue());
+
+    CommandContextPool.PruneFree(MinRetained, [InCurrentFrame, MaxIdleFrames](FD3D12CommandContext* Context)
+    {
+        return (InCurrentFrame - Context->GetLastUsedFrame()) > MaxIdleFrames;
+    });
 }
 
 FD3D12FenceSyncPoint FD3D12Queue::ExecuteCommandList(FD3D12CommandList* InCommandList, bool bWaitForCompletion)
@@ -193,12 +266,12 @@ FD3D12FenceSyncPoint FD3D12Queue::ExecuteCommandLists(FD3D12CommandList* const* 
     return FD3D12FenceSyncPoint(SubmissionFence.Get(), FenceValue);
 }
 
-void FD3D12Queue::SubmitCommands(FD3D12Commands* Commands)
+FD3D12FenceSyncPoint FD3D12Queue::SubmitCommands(FD3D12Commands* Commands)
 {
     CHECK(Commands != nullptr);
     if (Commands->IsEmpty())
     {
-        return;
+        return FD3D12FenceSyncPoint();
     }
 
     TScopedLock Lock(SubmissionCS);
@@ -253,6 +326,7 @@ void FD3D12Queue::SubmitCommands(FD3D12Commands* Commands)
 
     Commands->Execute();
 
+    const FD3D12FenceSyncPoint SyncPoint = Commands->SyncPoint;
     PendingSubmissions.Enqueue(Commands);
 
     const int32 MaxPending = CVarMaxPendingSubmissions.GetValue();
@@ -274,6 +348,8 @@ void FD3D12Queue::SubmitCommands(FD3D12Commands* Commands)
             }
         }
     }
+
+    return SyncPoint;
 }
 
 void FD3D12Queue::ProcessCommandQueue()
@@ -404,7 +480,7 @@ void FD3D12Commands::PreExecute()
 
     if (BarrierBatcher.HasPendingBarriers())
     {
-        FD3D12CommandAllocator* FixupAllocator = Device->GetCommandAllocatorManager(Queue->GetQueueType())->ObtainAllocator();
+        FD3D12CommandAllocator* FixupAllocator = Queue->ObtainAllocator();
 
         FD3D12CommandList* FixupCommandList = Queue->ObtainCommandList(FixupAllocator, nullptr);
         BarrierBatcher.FlushBarriers(*FixupCommandList);
@@ -603,9 +679,7 @@ void FD3D12Commands::PostExecute()
 
     for (int32 AllocIdx = 0; AllocIdx < CommandAllocators.Size(); AllocIdx++)
     {
-        FD3D12CommandAllocator*        CommandAllocator        = CommandAllocators[AllocIdx];
-        FD3D12CommandAllocatorManager* CommandAllocatorManager = Device->GetCommandAllocatorManager(CommandAllocator->GetQueueType());
-        CommandAllocatorManager->RecycleAllocator(CommandAllocator);
+        Queue->RecycleAllocator(CommandAllocators[AllocIdx]);
     }
 
     CommandAllocators.Clear();

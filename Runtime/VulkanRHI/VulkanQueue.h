@@ -4,12 +4,14 @@
 #include "Core/Containers/Queue.h"
 #include "Core/Containers/Map.h"
 #include "Core/Templates/Utility/EnumOperators.h"
+#include "Core/Threading/Atomic/AtomicInt.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
 #include "VulkanRHI/VulkanQuery.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
 #include "VulkanRHI/VulkanDeletionQueue.h"
 #include "VulkanRHI/VulkanFence.h"
+#include "VulkanRHI/VulkanRecyclePool.h"
 #include "VulkanRHI/VulkanResourceState.h"
 #include "VulkanRHI/VulkanCommandBuffer.h"
 
@@ -22,6 +24,7 @@ enum class EVulkanCommandsFlags : uint32
 ENUM_CLASS_OPERATORS(EVulkanCommandsFlags);
 
 class FVulkanCommandPool;
+class FVulkanCommandContext;
 struct FVulkanCommands;
 
 typedef TSharedRef<class FVulkanQueue> FVulkanQueueRef;
@@ -36,7 +39,12 @@ public:
     
     FVulkanCommandPool* ObtainCommandPool();
     void RecycleCommandPool(FVulkanCommandPool* InCommandPool);
-    
+    void RetireCommandPoolDeferred(FVulkanCommandPool* InCommandPool);
+
+    FVulkanCommandContext* ObtainCommandContext();
+    void ReleaseCommandContext(FVulkanCommandContext* InContext);
+    void PruneCommandContexts(uint64 CurrentFrame);
+
     bool ExecuteCommandBuffer(class FVulkanCommandBuffer* const* CommandBuffers, uint32 NumCommandBuffers, class FVulkanFence* Fence);
     
     void SubmitCommands(FVulkanCommands* Commands);
@@ -52,16 +60,15 @@ public:
     
     void WaitForCompletion();
 
-    // Create empty submit that waits for the semaphores and waits for completion
     bool FlushWaitSemaphoresAndWait();
-
-    // Drop any pending WAIT/SIGNAL entries without submitting them. Caller must ensure the GPU is idle
-    // (e.g. via WaitForCompletion) so that discarding the referenced binary/timeline semaphores is safe.
     void ClearPendingSemaphores();
-
-    // Remove all pending WAIT and SIGNAL entries that reference the given semaphore (binary or timeline).
-    // Keeps WaitSemaphores/WaitStages/WaitSemaphoreValues in lockstep and likewise for Signal*.
     void RemovePendingSemaphore(VkSemaphore Semaphore);
+
+    template<typename FunctorType>
+    void ForEachLiveCommandContext(FunctorType&& Functor)
+    {
+        CommandContextPool.ForEachTracked(Forward<FunctorType>(Functor));
+    }
 
     void SetDebugName(const String& Name)
     {
@@ -98,29 +105,31 @@ public:
 private:
     typedef TQueue<FVulkanCommands*, EQueueType::MPSC> FCommandsQueue;
 
-    VkQueue                      Queue;
-    uint32                       QueueFamilyIndex;
-    EVulkanCommandQueueType      QueueType;
-    TArray<VkSemaphore>          WaitSemaphores;
-    TArray<VkPipelineStageFlags> WaitStages;
-    TArray<uint64>               WaitSemaphoreValues;
-    TArray<VkSemaphore>          SignalSemaphores;
-    TArray<uint64>               SignalSemaphoreValues;
-    TQueue<FVulkanCommandPool*>  AvailableCommandPools;
-    TArray<FVulkanCommandPool*>  CommandPools;
-    FCriticalSection             CommandPoolsCS;
-    FCommandsQueue               PendingSubmissions;
-    FCriticalSection             SubmissionCS;
-    FCriticalSection             ConsumerCS;
+    VkQueue                                   Queue;
+    uint32                                    QueueFamilyIndex;
+    EVulkanCommandQueueType                   QueueType;
+    TArray<VkSemaphore>                       WaitSemaphores;
+    TArray<VkPipelineStageFlags>              WaitStages;
+    TArray<uint64>                            WaitSemaphoreValues;
+    TArray<VkSemaphore>                       SignalSemaphores;
+    TArray<uint64>                            SignalSemaphoreValues;
+    TVulkanRecyclePool<FVulkanCommandPool>    CommandPoolPool;
+    TVulkanRecyclePool<FVulkanCommandContext> CommandContextPool;
+    TArray<FVulkanCommandPool*>               DeferredCommandPools;
+    FCriticalSection                          DeferredCommandPoolsCS;
+    TAtomicInt<uint64>                        CurrentFrame;
+    FCommandsQueue                            PendingSubmissions;
+    FCriticalSection                          SubmissionCS;
+    FCriticalSection                          ConsumerCS;
 #if !VULKAN_USE_CPU_QUERY_RESOLVE
-    TArray<FVulkanQueryRange>    PendingQueryRanges;
-    TArray<FVulkanQuery>         PendingTimestampQueries;
-    TArray<FVulkanQuery>         PendingOcclusionQueries;
-    TArray<FVulkanQuery>         PendingPipelineStatsQueries;
-    TArray<FVulkanQueryRHI*>     PendingQueryRHIs;
+    TArray<FVulkanQueryRange>                 PendingQueryRanges;
+    TArray<FVulkanQuery>                      PendingTimestampQueries;
+    TArray<FVulkanQuery>                      PendingOcclusionQueries;
+    TArray<FVulkanQuery>                      PendingPipelineStatsQueries;
+    TArray<FVulkanQueryRHI*>                  PendingQueryRHIs;
 #endif
 #if VULKAN_STORE_DEBUG_NAMES
-    String                       DebugName;
+    String                                    DebugName;
 #endif
 };
 

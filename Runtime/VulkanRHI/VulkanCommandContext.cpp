@@ -240,6 +240,7 @@ FVulkanCommandContext::FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQue
     , ContextState(InDevice, *this)
     , TransientDescriptorAllocator(nullptr)
     , ActiveQueryCount(0)
+    , LastUsedFrame(0)
 {
 #if !VULKAN_USE_DESCRIPTOR_CACHE
     TransientDescriptorAllocator = new FVulkanTransientDescriptorAllocator(InDevice, InDevice->GetDescriptorPoolManager());
@@ -314,6 +315,8 @@ void FVulkanCommandContext::ObtainCommandBuffer()
         ReopenEventStack();
 
         ContextState.BeginCommandBuffer();
+
+        FVulkanDeviceRHI::Get()->NotifyCommandBufferOpened();
     }
 
     if (!Commands)
@@ -382,6 +385,8 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQu
         CommandBuffer->End();
         CommandPool->RecycleBuffer(CommandBuffer);
         CommandBuffer = nullptr;
+
+        FVulkanDeviceRHI::Get()->NotifyCommandBufferRetired(nullptr);
 
         FVulkanFenceManager& FenceManager = GetDevice()->GetFenceManager();
         FenceManager.RecycleFence(Commands->Fence);
@@ -507,7 +512,7 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQu
         *OutFence = Commands->Fence;
     }
 
-    FVulkanDeviceRHI::Get()->FlushDeletionQueue(Commands);
+    FVulkanDeviceRHI::Get()->NotifyCommandBufferRetired(Commands);
     Commands->Queue.SubmitCommands(Commands);
     Commands = nullptr;
 }
@@ -536,6 +541,8 @@ void FVulkanCommandContext::SplitCommandBuffer(bool bFlushPool, bool bWaitForQue
 
 void FVulkanCommandContext::ConditionalSplitCommandBuffer()
 {
+    VerifyOwnerThread();
+
     if (!CommandBuffer || ActiveQueryCount > 0)
     {
         return;
@@ -559,6 +566,42 @@ void FVulkanCommandContext::ConditionalSplitCommandBuffer()
             ContextState.ResumeRenderPass();
         }
     }
+}
+
+void FVulkanCommandContext::RetireTransientObjects()
+{
+    CHECK(!IsRecording());
+
+    if (CommandBuffer)
+    {
+        FinishCommandBuffer(true);
+    }
+
+    if (CommandPool)
+    {
+        Queue.RetireCommandPoolDeferred(CommandPool);
+        CommandPool = nullptr;
+    }
+
+    TArray<FVulkanQueryRange> AbandonedRanges;
+    TimestampQueryAllocator.Reset(AbandonedRanges);
+    OcclusionQueryAllocator.Reset(AbandonedRanges);
+    PipelineStatsQueryAllocator.Reset(AbandonedRanges);
+
+    for (const FVulkanQueryRange& Range : AbandonedRanges)
+    {
+        GetDevice()->RecycleQueryPool(Range.Pool);
+    }
+
+    PendingImageBarriers.Clear();
+    PendingBufferBarriers.Clear();
+    PendingImageStates.Clear();
+    PendingBufferStates.Clear();
+    PendingQueries.Clear();
+    EventStack.Clear();
+
+    ContextState.ResetState();
+    CHECK(Commands == nullptr);
 }
 
 void FVulkanCommandContext::ForceFlushCommandPool()
@@ -589,12 +632,12 @@ void FVulkanCommandContext::ForceFlushCommandPool()
 void FVulkanCommandContext::StartContext()
 {
     // -------------------------------------------------------------------------------------------
-    // NOTE: This context is intended to be used from a single thread. The lock only enforces 
-    // that the same thread which starts the context is the one that later finishes it. Once 
-    // the codebase guarantees single-threaded use per context, this lock can be removed.
+    // A context is recorded by exactly one thread for the length of a session. Contexts are 
+    // borrowed from the queue rather than shared, so this only stamps the owning thread for the 
+    // asserts that catch a second thread wandering in.
     // -------------------------------------------------------------------------------------------
 
-    CommandContextCS.Lock();
+    AcquireOwnership();
 
     // -------------------------------------------------------------------------------------------
     // Phase Transition: Finished -> Recording
@@ -656,12 +699,36 @@ void FVulkanCommandContext::FinishContext()
     ContextState.OnFinishRecording();
 
     // -------------------------------------------------------------------------------------------
-    // See note in StartContext(): once guaranteed single-threaded use is enforced by design, 
-    // this lock can be removed.
+    // The session is over, so the context can be handed to another thread.
     // -------------------------------------------------------------------------------------------
     
-    CommandContextCS.Unlock();
+    ReleaseOwnership();
 }
+
+#if VULKAN_VALIDATE_CONTEXT_THREAD_OWNERSHIP
+void FVulkanCommandContext::AcquireOwnership()
+{
+    CHECK(OwnerThreadID.Load() == CORE_INVALID_THREAD_ID);
+    OwnerThreadID.Store(FPlatformTLS::GetCurrentThreadID());
+}
+
+void FVulkanCommandContext::ReleaseOwnership()
+{
+    VerifyOwnerThread();
+    OwnerThreadID.Store(CORE_INVALID_THREAD_ID);
+}
+
+void FVulkanCommandContext::VerifyOwnerThread() const
+{
+    CHECK(OwnerThreadID.Load() == FPlatformTLS::GetCurrentThreadID());
+}
+
+void FVulkanCommandContext::VerifyExclusiveAccess() const
+{
+    const uint32 CurrentOwner = OwnerThreadID.Load();
+    CHECK(CurrentOwner == CORE_INVALID_THREAD_ID || CurrentOwner == FPlatformTLS::GetCurrentThreadID());
+}
+#endif
 
 void FVulkanCommandContext::BeginQuery(FRHIQuery* Query)
 {
@@ -3378,7 +3445,7 @@ void FVulkanCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Wid
 
 void FVulkanCommandContext::ClearState()
 {
-    SCOPED_LOCK(CommandContextCS);
+    VerifyExclusiveAccess();
 
     if (IsRecording())
     {
@@ -3397,8 +3464,8 @@ void FVulkanCommandContext::ClearState()
 
 void FVulkanCommandContext::Flush()
 {
-    SCOPED_LOCK(CommandContextCS);
-    
+    VerifyExclusiveAccess();
+
     if (IsRecording())
     {
         if (CommandBuffer)

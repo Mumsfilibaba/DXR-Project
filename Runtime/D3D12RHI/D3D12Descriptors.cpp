@@ -175,7 +175,6 @@ FD3D12OnlineDescriptorHeap::FD3D12OnlineDescriptorHeap(FD3D12Device* InDevice, D
     , DescriptorCount(0)
     , BlockSize(0)
     , BindlessReservedCount(0)
-    , Generation(0)
     , Heap(nullptr)
     , AvailableBlockQueue()
     , BlockQueue()
@@ -235,75 +234,6 @@ bool FD3D12OnlineDescriptorHeap::Initialize(uint32 InDescriptorCount, uint32 InB
     return true;
 }
 
-bool FD3D12OnlineDescriptorHeap::Reallocate(uint32 NewDescriptorCount, uint32 InBindlessReservedCount)
-{
-    CHECK(InBindlessReservedCount <= NewDescriptorCount);
-    CHECK(NewDescriptorCount > DescriptorCount);
-
-    TScopedLock Lock(BlockQueueCS);
-
-    CHECK(AvailableBlockQueue.Size() == BlockQueue.Size() && 
-        "Reallocate requires every online descriptor block to be recycled (drain GPU + flush deferred deletions first)");
-
-    D3D12_DESCRIPTOR_HEAP_DESC Desc;
-    Memory::Memzero(&Desc);
-
-    Desc.Type           = Type;
-    Desc.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-    Desc.NumDescriptors = NewDescriptorCount;
-    Desc.NodeMask       = GetDevice()->GetNodeMask();
-
-    TComPtr<ID3D12DescriptorHeap> NewHeap;
-    HRESULT Result = GetDevice()->GetD3D12Device()->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&NewHeap));
-    if (FAILED(Result))
-    {
-        D3D12_ERROR("[FD3D12OnlineDescriptorHeap]: FAILED to reallocate DescriptorHeap to %u (HRESULT=0x%08X). Keeping existing heap.",
-            NewDescriptorCount, static_cast<uint32>(Result));
-        return false;
-    }
-
-    while (!AvailableBlockQueue.IsEmpty())
-    {
-        FD3D12OnlineDescriptorBlock* Discarded = nullptr;
-        AvailableBlockQueue.Dequeue(Discarded);
-    }
-
-    for (FD3D12OnlineDescriptorBlock* Block : BlockQueue)
-    {
-        delete Block;
-    }
-
-    BlockQueue.Clear();
-
-    if (Heap)
-    {
-        Heap.Reset();
-    }
-
-    Heap                  = new FD3D12DescriptorHeap(GetDevice(), NewHeap.Get(), Desc.Type, Desc.Flags, Desc.NumDescriptors);
-    DescriptorCount       = NewDescriptorCount;
-    BindlessReservedCount = InBindlessReservedCount;
-
-    const uint32 BlockRegionSize = (NewDescriptorCount > InBindlessReservedCount) ? (NewDescriptorCount - InBindlessReservedCount) : 0;
-    const uint32 NumBlocks       = BlockRegionSize / BlockSize;
-
-    uint32 HandleOffset = InBindlessReservedCount;
-    for (uint32 Index = 0; Index < NumBlocks; ++Index)
-    {
-        FD3D12OnlineDescriptorBlock* NewBlock = new FD3D12OnlineDescriptorBlock(HandleOffset, BlockSize);
-        AvailableBlockQueue.Enqueue(NewBlock);
-        BlockQueue.Add(NewBlock);
-        HandleOffset += BlockSize;
-    }
-
-    ++Generation;
-
-    D3D12_INFO("[FD3D12OnlineDescriptorHeap]: Reallocated DescriptorHeap. NumDescriptors=%u BindlessReserved=%u Generation=%u",
-        NewDescriptorCount, InBindlessReservedCount, Generation);
-
-    return true;
-}
-
 FD3D12OnlineDescriptorBlock* FD3D12OnlineDescriptorHeap::AllocateBlock()
 {
     TScopedLock Lock(BlockQueueCS);
@@ -327,12 +257,6 @@ void FD3D12OnlineDescriptorHeap::RecycleBlock(FD3D12OnlineDescriptorBlock* InBlo
     TScopedLock Lock(BlockQueueCS);
     AvailableBlockQueue.Enqueue(InBlock);
 }
-
-void FD3D12OnlineDescriptorHeap::RecycleBlockDeferred(FD3D12OnlineDescriptorBlock* InBlock)
-{
-    FD3D12DeviceRHI::DeferDeletion(this, InBlock);
-}
-
 
 FD3D12BindlessDescriptorHeap::FD3D12BindlessDescriptorHeap(FD3D12OnlineDescriptorHeap& InGlobalHeap, uint32 InCapacity)
     : FD3D12DeviceChild(InGlobalHeap.GetDevice())
@@ -500,41 +424,4 @@ void FD3D12BindlessDescriptorHeap::Flush()
         SrcStarts.Data(),
         nullptr,
         HeapType);
-}
-
-void FD3D12BindlessDescriptorHeap::Rebuild(FD3D12OnlineDescriptorHeap& NewGlobalHeap)
-{
-    CHECK(NewGlobalHeap.GetHeap() != nullptr);
-    CHECK(NewGlobalHeap.GetNumDescriptors() >= Capacity);
-
-    AliasedHeap = new FD3D12DescriptorHeap(NewGlobalHeap.GetHeap(), 0, Capacity);
-
-    {
-        TScopedLock Lock(PendingWritesCS);
-
-        TArray<D3D12_CPU_DESCRIPTOR_HANDLE> LiveSources;
-        {
-            TScopedLock AllocLock(AllocCS);
-            LiveSources = SlotSources;
-        }
-
-        const uint32 LiveCount = static_cast<uint32>(LiveSources.Size());
-        PendingWrites.Reserve(PendingWrites.Size() + LiveCount);
-
-        uint32 PopulatedSlots = 0;
-        for (uint32 Index = 0; Index < LiveCount; ++Index)
-        {
-            if (LiveSources[Index].ptr != 0)
-            {
-                FD3D12PendingBindlessWrite& Write = PendingWrites.Emplace();
-                Write.DestSlot  = Index;
-                Write.SrcHandle = LiveSources[Index];
-                ++PopulatedSlots;
-            }
-        }
-
-        D3D12_WARNING("[Bindless] Rebuild onto new global heap: Capacity=%u LiveDescriptors=%u", Capacity, PopulatedSlots);
-    }
-
-    Flush();
 }

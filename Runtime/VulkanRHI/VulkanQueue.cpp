@@ -18,6 +18,16 @@ static TAutoConsoleVariable<int32> CVarMaxPendingSubmissions(
     "Maximum number of pending GPU submissions before the CPU waits for the GPU to catch up",
     32);
 
+static TAutoConsoleVariable<int32> CVarCommandContextMaxIdleFrames(
+    "VulkanRHI.CommandContextPool.MaxIdleFrames",
+    "Number of frames a pooled CommandContext may sit unused before it is destroyed",
+    16);
+
+static TAutoConsoleVariable<int32> CVarCommandContextMinRetained(
+    "VulkanRHI.CommandContextPool.MinRetained",
+    "Number of CommandContexts the pool keeps alive regardless of how long they have been idle",
+    2);
+
 #if VULKAN_VALIDATE_IMAGE_LAYOUTS
 static TAutoConsoleVariable<int32> CVarBreakOnImageLayoutDesync(
     "VulkanRHI.BreakOnImageLayoutDesync",
@@ -62,24 +72,17 @@ FVulkanQueue::FVulkanQueue(FVulkanDevice* InDevice, EVulkanCommandQueueType InQu
     , WaitSemaphoreValues()
     , SignalSemaphores()
     , SignalSemaphoreValues()
-    , AvailableCommandPools()
-    , CommandPools()
-    , CommandPoolsCS()
 {
 }
 
 FVulkanQueue::~FVulkanQueue()
 {
-    SCOPED_LOCK(CommandPoolsCS);
+    WaitForCompletion();
+    ProcessCommandQueue();
 
-    for (FVulkanCommandPool* CommandPool : CommandPools)
-    {
-        delete CommandPool;
-    }
+    CommandContextPool.DestroyAll();
+    CommandPoolPool.DestroyAll();
 
-    CommandPools.Clear();
-    AvailableCommandPools.Clear();
-    
     Queue = VK_NULL_HANDLE;
 }
 
@@ -95,42 +98,87 @@ bool FVulkanQueue::Initialize()
 
 FVulkanCommandPool* FVulkanQueue::ObtainCommandPool()
 {
-    SCOPED_LOCK(CommandPoolsCS);
-
-    if (!AvailableCommandPools.IsEmpty())
+    FVulkanCommandPool* CommandPool = CommandPoolPool.Acquire([this](int32) -> FVulkanCommandPool*
     {
-        FVulkanCommandPool* CommandPool;
-        if (AvailableCommandPools.Dequeue(CommandPool))
+        const VkCommandPoolCreateFlags CommandPoolFlags = GVulkanAllowResetCommandBuffers ? VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT : 0;
+
+        FVulkanCommandPool* NewCommandPool = new FVulkanCommandPool(GetDevice(), QueueType);
+        if (!NewCommandPool->Initialize(CommandPoolFlags))
         {
-            CommandPool->Reset(0);
-            return CommandPool;
+            DEBUG_BREAK();
+            delete NewCommandPool;
+            return nullptr;
         }
-    }
 
-    const VkCommandPoolCreateFlags CommandPoolFlags = GVulkanAllowResetCommandBuffers ? VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT : 0;
-    FVulkanCommandPool* CommandPool = new FVulkanCommandPool(GetDevice(), QueueType);
-    if (!CommandPool->Initialize(CommandPoolFlags))
+        return NewCommandPool;
+    });
+
+    if (CommandPool)
     {
-        DEBUG_BREAK();
-        delete CommandPool;
-        return nullptr;
+        CommandPool->Reset(0);
     }
 
-    CommandPools.Add(CommandPool);
     return CommandPool;
 }
 
 void FVulkanQueue::RecycleCommandPool(FVulkanCommandPool* InCommandPool)
 {
-    if (InCommandPool)
+    CommandPoolPool.Release(InCommandPool);
+}
+
+void FVulkanQueue::RetireCommandPoolDeferred(FVulkanCommandPool* InCommandPool)
+{
+    CHECK(InCommandPool != nullptr);
+
+    SCOPED_LOCK(DeferredCommandPoolsCS);
+    DeferredCommandPools.Add(InCommandPool);
+}
+
+FVulkanCommandContext* FVulkanQueue::ObtainCommandContext()
+{
+    FVulkanCommandContext* CommandContext = CommandContextPool.Acquire([this](int32) -> FVulkanCommandContext*
     {
-        SCOPED_LOCK(CommandPoolsCS);
-        AvailableCommandPools.Enqueue(InCommandPool);
-    }
-    else
+        FVulkanCommandContext* NewCommandContext = new FVulkanCommandContext(GetDevice(), *this);
+        if (!NewCommandContext->Initialize())
+        {
+            DEBUG_BREAK();
+            delete NewCommandContext;
+            return nullptr;
+        }
+
+        return NewCommandContext;
+    });
+
+    if (!CommandContext)
     {
-        LOG_WARNING("Trying to Recycle an invalid CommandPool");
+        VULKAN_ERROR_CRITICAL("Failed to Obtain CommandContext");
     }
+
+    return CommandContext;
+}
+
+void FVulkanQueue::ReleaseCommandContext(FVulkanCommandContext* InContext)
+{
+    CHECK(InContext != nullptr);
+    CHECK(!InContext->IsRecording());
+
+    InContext->RetireTransientObjects();
+
+    InContext->SetLastUsedFrame(CurrentFrame.Load());
+    CommandContextPool.Release(InContext);
+}
+
+void FVulkanQueue::PruneCommandContexts(uint64 InCurrentFrame)
+{
+    CurrentFrame.Store(InCurrentFrame);
+
+    const uint64 MaxIdleFrames = static_cast<uint64>(Math::Max<int32>(0, CVarCommandContextMaxIdleFrames.GetValue()));
+    const int32  MinRetained   = Math::Max<int32>(0, CVarCommandContextMinRetained.GetValue());
+
+    CommandContextPool.PruneFree(MinRetained, [InCurrentFrame, MaxIdleFrames](FVulkanCommandContext* Context)
+    {
+        return (InCurrentFrame - Context->GetLastUsedFrame()) > MaxIdleFrames;
+    });
 }
 
 bool FVulkanQueue::ExecuteCommandBuffer(FVulkanCommandBuffer* const* CommandBuffers, uint32 NumCommandBuffers, FVulkanFence* Fence)
@@ -471,7 +519,9 @@ void FVulkanQueue::ProcessCommandQueue()
 {
     SCOPED_LOCK(ConsumerCS);
 
-    bool bProcess = true;
+    bool bProcess    = true;
+    bool bFullyDrain = false;
+
     while (bProcess)
     {
         FVulkanCommands* Commands = nullptr;
@@ -490,8 +540,21 @@ void FVulkanQueue::ProcessCommandQueue()
         }
         else
         {
-            bProcess = false;
+            bFullyDrain = true;
+            bProcess    = false;
         }
+    }
+
+    if (bFullyDrain)
+    {
+        SCOPED_LOCK(DeferredCommandPoolsCS);
+        
+        for (FVulkanCommandPool* CommandPool : DeferredCommandPools)
+        {
+            CommandPoolPool.Release(CommandPool);
+        }
+
+        DeferredCommandPools.Clear();
     }
 }
 

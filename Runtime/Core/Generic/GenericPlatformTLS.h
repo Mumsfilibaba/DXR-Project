@@ -6,6 +6,10 @@
     #define CORE_INVALID_TLS_INDEX uint32(0xffffffff)
 #endif
 
+#ifndef CORE_INVALID_THREAD_ID
+    #define CORE_INVALID_THREAD_ID uint32(0)
+#endif
+
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct FGenericPlatformTLS

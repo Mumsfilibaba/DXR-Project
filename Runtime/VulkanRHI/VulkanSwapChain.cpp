@@ -575,11 +575,12 @@ bool FVulkanSwapChainRHI::Initialize()
         BackBufferProxy->SetProxyUnorderedAccessView(BackBufferProxyUnorderedAccessView.Get());
     }
     
-    // We need to start the context since that locks it to this thread
     CommandContext->StartContext();
 
     if (!CreateSwapChain(Desc.Width, Desc.Height))
     {
+        CommandContext->FinishContext();
+        CommandContext->Flush();
         return false;
     }
 
@@ -591,8 +592,7 @@ bool FVulkanSwapChainRHI::Initialize()
         CommandContext->Flush();
         return false;
     }
-    
-    // Unlock the context from this thread
+
     CommandContext->FinishContext();
     CommandContext->Flush();
 

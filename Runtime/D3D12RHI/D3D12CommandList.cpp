@@ -51,61 +51,6 @@ bool FD3D12CommandAllocator::Reset()
     return SUCCEEDED(Result);
 }
 
-FD3D12CommandAllocatorManager::FD3D12CommandAllocatorManager(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType)
-    : FD3D12DeviceChild(InDevice)
-    , QueueType(InQueueType)
-    , CommandListType(ToCommandListType(QueueType))
-    , AvailableAllocators()
-    , CommandAllocators()
-{
-}
-
-FD3D12CommandAllocatorManager::~FD3D12CommandAllocatorManager()
-{
-    for (FD3D12CommandAllocator* CommandAllocator : CommandAllocators)
-    {
-        delete CommandAllocator;
-    }
-}
-
-FD3D12CommandAllocator* FD3D12CommandAllocatorManager::ObtainAllocator()
-{
-    TScopedLock Lock(CommandAllocatorsCS);
-
-    FD3D12CommandAllocator* CommandAllocator;
-    if (!AvailableAllocators.IsEmpty())
-    {
-        AvailableAllocators.Dequeue(CommandAllocator);
-    }
-    else
-    {
-        CommandAllocator = new FD3D12CommandAllocator(GetDevice(), QueueType);
-        if (!CommandAllocator->Initialize())
-        {
-            DEBUG_BREAK();
-            return nullptr;
-        }
-
-        CommandAllocator->SetDebugName(String::CreateFormatted("%s CommandAllocator %d", ToString(CommandListType), CommandAllocators.Size()));
-        CommandAllocators.Add(CommandAllocator);
-    }
-
-    return CommandAllocator;
-}
-
-void FD3D12CommandAllocatorManager::RecycleAllocator(FD3D12CommandAllocator* InAllocator)
-{
-    CHECK(InAllocator != nullptr);
-
-    if (!InAllocator->Reset())
-    {
-        DEBUG_BREAK();
-    }
-
-    TScopedLock Lock(CommandAllocatorsCS);
-    AvailableAllocators.Enqueue(InAllocator);
-}
-
 FD3D12CommandList::FD3D12CommandList(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , CmdList(nullptr)

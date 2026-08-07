@@ -1,5 +1,6 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Containers/UniquePtr.h"
+#include "Core/Tasks/Tasks.h"
 #include "Core/Threading/ScopedLock.h"
 #include "CoreApplication/Windows/WindowsWindow.h"
 #include "RHI/RHIStats.h"
@@ -113,6 +114,8 @@ FD3D12DeviceRHI::FD3D12DeviceRHI()
     : FRHIDevice()
     , Device(nullptr)
     , DirectCommandContext(nullptr)
+    , FrameNumber(0)
+    , NumOpenCommandLists(0)
 {
     if (!GD3D12DeviceRHI)
     {
@@ -168,8 +171,11 @@ FD3D12DeviceRHI::~FD3D12DeviceRHI()
     // Flush any objects that might need the context
     FlushDeferredDeletions();
 
-    // Then delete the context
-    SAFE_DELETE(DirectCommandContext);
+    if (DirectCommandContext)
+    {
+        DirectCommandContext->GetQueue().ReleaseCommandContext(DirectCommandContext);
+        DirectCommandContext = nullptr;
+    }
 
     // Delete all samplers
     {
@@ -215,9 +221,9 @@ bool FD3D12DeviceRHI::Initialize()
         return false;
     }
 
-    // Initialize context
-    DirectCommandContext = new FD3D12CommandContext(GetDevice(), ED3D12CommandQueueType::Direct);
-    if (!(DirectCommandContext && DirectCommandContext->Initialize()))
+    // The default context stays borrowed for the lifetime of the RHI, because the swap-chain caches it.
+    DirectCommandContext = Device->GetQueue(ED3D12CommandQueueType::Direct)->ObtainCommandContext();
+    if (!DirectCommandContext)
     {
         return false;
     }
@@ -243,7 +249,13 @@ void FD3D12DeviceRHI::BeginFrame(FD3D12CommandContext* InCommandContext)
         return;
     }
 
-    Device->GetQueue(ED3D12CommandQueueType::Direct)->ProcessCommandQueue();
+    FD3D12Queue* DirectQueue = Device->GetQueue(ED3D12CommandQueueType::Direct);
+    DirectQueue->ProcessCommandQueue();
+
+    FrameNumber++;
+    
+    DirectQueue->PruneCommandContexts(FrameNumber);
+
     Device->BeginFrame(InCommandContext);
 
     if (FD3D12ResidencyManager* ResidencyManager = Device->GetResidencyManager())
@@ -310,8 +322,10 @@ void FD3D12DeviceRHI::EndFrame(FD3D12CommandContext* InCommandContext)
 
 FRHITexture* FD3D12DeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDesc, ERHIResourceState InInitialState, const IRHITextureData* InInitialData)
 {
+    FD3D12BorrowedCommandContext UploadContext(*GetDevice()->GetQueue(ED3D12CommandQueueType::Direct));
+
     FD3D12TextureRHIRef NewTexture = new FD3D12TextureRHI(GetDevice(), InTextureDesc);
-    if (!NewTexture->Initialize(DirectCommandContext, InInitialState, InInitialData))
+    if (!NewTexture->Initialize(UploadContext.Get(), InInitialState, InInitialData))
     {
         return nullptr;
     }
@@ -336,8 +350,10 @@ FRHITexture* FD3D12DeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDesc
 
 FRHIBuffer* FD3D12DeviceRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, ERHIResourceState InInitialState, const void* InInitialData)
 {
+    FD3D12BorrowedCommandContext UploadContext(*GetDevice()->GetQueue(ED3D12CommandQueueType::Direct));
+
     FD3D12BufferRHIRef NewBuffer = new FD3D12BufferRHI(GetDevice(), InBufferDesc);
-    if (!NewBuffer->Initialize(DirectCommandContext, InInitialState, InInitialData))
+    if (!NewBuffer->Initialize(UploadContext.Get(), InInitialState, InInitialData))
     {
         return nullptr;
     }
@@ -428,16 +444,16 @@ FRHISceneAccelerationStructure* FD3D12DeviceRHI::CreateSceneAccelerationStructur
     BuildDesc.NumInstances = InSceneDesc.Instances.Size();
     BuildDesc.bUpdate      = false;
 
-    DirectCommandContext->StartContext();
-
     FD3D12SceneAccelerationStructureRHIRef D3D12Scene = new FD3D12SceneAccelerationStructureRHI(GetDevice(), InSceneDesc);
-    if (!D3D12Scene->Build(*DirectCommandContext, BuildDesc))
-    {
-        DEBUG_BREAK();
-        D3D12Scene.Reset();
-    }
 
-    DirectCommandContext->FinishContext();
+    {
+        FD3D12ScopedCommandContext BuildContext(*GetDevice()->GetQueue(ED3D12CommandQueueType::Direct));
+        if (!D3D12Scene->Build(*BuildContext, BuildDesc))
+        {
+            DEBUG_BREAK();
+            D3D12Scene.Reset();
+        }
+    }
 
     FlushCompletedSubmissions();
     return D3D12Scene.ReleaseOwnership();
@@ -453,16 +469,16 @@ FRHIGeometryAccelerationStructure* FD3D12DeviceRHI::CreateGeometryAccelerationSt
     BuildDesc.IndexFormat  = InGeometryDesc.IndexFormat;
     BuildDesc.bUpdate      = false;
 
-    DirectCommandContext->StartContext();
-
     FD3D12GeometryAccelerationStructureRHIRef D3D12Geometry = new FD3D12GeometryAccelerationStructureRHI(GetDevice(), InGeometryDesc);
-    if (!D3D12Geometry->Build(*DirectCommandContext, BuildDesc))
-    {
-        DEBUG_BREAK();
-        D3D12Geometry.Reset();
-    }
 
-    DirectCommandContext->FinishContext();
+    {
+        FD3D12ScopedCommandContext BuildContext(*GetDevice()->GetQueue(ED3D12CommandQueueType::Direct));
+        if (!D3D12Geometry->Build(*BuildContext, BuildDesc))
+        {
+            DEBUG_BREAK();
+            D3D12Geometry.Reset();
+        }
+    }
 
     FlushCompletedSubmissions();
     return D3D12Geometry.ReleaseOwnership();
@@ -1657,6 +1673,17 @@ FRHISwapChain* FD3D12DeviceRHI::CreateSwapChain(const FRHISwapChainDesc& InSwapC
 {
     CHECK(InSwapChainDesc.WindowHandle != nullptr);
 
+    if (!Tasks::IsInRHIThread())
+    {
+        FRHISwapChain* NewSwapChain = nullptr;
+        Tasks::LaunchOnRHIThread("D3D12CreateSwapChain", [this, &NewSwapChain, &InSwapChainDesc]()
+        {
+            NewSwapChain = CreateSwapChain(InSwapChainDesc);
+        }).Wait();
+
+        return NewSwapChain;
+    }
+
     FD3D12SwapChainRHIRef NewSwapChain = new FD3D12SwapChainRHI(GetDevice(), DirectCommandContext, InSwapChainDesc);
     if (!NewSwapChain->Initialize(DirectCommandContext))
     {
@@ -1842,14 +1869,39 @@ void FD3D12DeviceRHI::FlushCompletedSubmissions()
     Device->GetQueue(ED3D12CommandQueueType::Direct)->ProcessCommandQueue();
 }
 
-void FD3D12DeviceRHI::FlushDeletionQueue(FD3D12Commands* Commands)
+void FD3D12DeviceRHI::NotifyCommandListOpened()
 {
-    CHECK(Commands != nullptr);
-    if (Commands->IsEmpty())
+    TScopedLock Lock(DeferredObjectsCS);
+    NumOpenCommandLists++;
+}
+
+void FD3D12DeviceRHI::NotifyCommandListRetired(FD3D12Commands* Commands)
+{
+    TScopedLock Lock(DeferredObjectsCS);
+
+    CHECK(NumOpenCommandLists > 0);
+    NumOpenCommandLists--;
+
+    // -------------------------------------------------------------------------------------------
+    // A command list holds references to everything it recorded until it is submitted, so these
+    // objects may only be destroyed by a batch the GPU is guaranteed to reach last. That is only
+    // true of this batch once no other list is outstanding. While one is, destroying now would
+    // pull a resource out from under a list that has not even been closed yet. 
+    // Leave the queue for a later retire.
+    // -------------------------------------------------------------------------------------------
+
+    if (NumOpenCommandLists > 0)
     {
         return;
     }
 
-    TScopedLock Lock(DeferredObjectsCS);
-    Commands->DeferredObjects = Move(DeferredObjects);
+    // -------------------------------------------------------------------------------------------
+    // A discarded list passes no batch, and an empty batch is never submitted, so in both cases
+    // nothing would ever run PostExecute to process the objects.
+    // -------------------------------------------------------------------------------------------
+
+    if (Commands && !Commands->IsEmpty())
+    {
+        Commands->DeferredObjects = Move(DeferredObjects);
+    }
 }

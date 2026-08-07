@@ -8,6 +8,7 @@
 #include "VulkanRHI/VulkanConfiguration.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
 #include "VulkanRHI/VulkanFence.h"
+#include "VulkanRHI/VulkanRecyclePool.h"
 #if !VULKAN_USE_CPU_QUERY_RESOLVE
     #include "VulkanRHI/VulkanMemoryManager.h"
 #endif
@@ -214,9 +215,7 @@ public:
     void RecyclePool(FVulkanQueryPool* Pool);
 
 private:
-    VkQueryType               QueryType;
-    int32                     QueriesPerPool;
-    TQueue<FVulkanQueryPool*> AvailablePools;
-    TArray<FVulkanQueryPool*> AllPools;
-    FCriticalSection          PoolsCS;
+    VkQueryType                          QueryType;
+    int32                                QueriesPerPool;
+    TVulkanRecyclePool<FVulkanQueryPool> QueryPoolPool;
 };

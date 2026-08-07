@@ -2,11 +2,14 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Map.h"
 #include "Core/Platform/CriticalSection.h"
+#include "Core/Platform/PlatformTLS.h"
+#include "Core/Threading/Atomic/AtomicInt.h"
 #include "RHI/IRHICommandContext.h"
 #include "VulkanRHI/VulkanBufferClear.h"
 #include "VulkanRHI/VulkanCommandContextState.h"
 #include "VulkanRHI/VulkanDescriptorSet.h"
 #include "VulkanRHI/VulkanQuery.h"
+#include "VulkanRHI/VulkanQueue.h"
 #include "VulkanRHI/VulkanResourceState.h"
 
 class FVulkanDevice;
@@ -180,6 +183,30 @@ public:
     void FinishCommandBuffer(bool bFlushPool, bool bResolveQueries = true, FVulkanFence** OutFence = nullptr);
     void SplitCommandBuffer(bool bFlushPool, bool bWaitForQueue);
 
+    void RetireTransientObjects();
+
+#if VULKAN_VALIDATE_CONTEXT_THREAD_OWNERSHIP
+    void AcquireOwnership();
+    void ReleaseOwnership();
+    void VerifyOwnerThread()     const;
+    void VerifyExclusiveAccess() const;
+#else
+    FORCEINLINE void AcquireOwnership()            { }
+    FORCEINLINE void ReleaseOwnership()            { }
+    FORCEINLINE void VerifyOwnerThread()     const { }
+    FORCEINLINE void VerifyExclusiveAccess() const { }
+#endif
+
+    void SetLastUsedFrame(uint64 InFrameNumber)
+    {
+        LastUsedFrame = InFrameNumber;
+    }
+
+    uint64 GetLastUsedFrame() const
+    {
+        return LastUsedFrame;
+    }
+
     bool IsRecording()        const { return ContextState.IsRecording(); }
     bool IsInsideRenderPass() const { return ContextState.IsInsideRenderPass(); }
     
@@ -251,7 +278,57 @@ private:
     FVulkanTransientDescriptorAllocator*              TransientDescriptorAllocator;
     int32                                             ActiveQueryCount;
     TArray<String>                                    EventStack;
+    uint64                                            LastUsedFrame;
+#if VULKAN_VALIDATE_CONTEXT_THREAD_OWNERSHIP
+    TAtomicInt<uint32>                                OwnerThreadID;
+#endif
+};
 
-    // TODO: The whole CommandContext should only be used from one thread at a time
-    FCriticalSection CommandContextCS;
+class FVulkanBorrowedCommandContext : FNonCopyable
+{
+public:
+    explicit FVulkanBorrowedCommandContext(FVulkanQueue& InQueue)
+        : Queue(InQueue)
+        , Context(InQueue.ObtainCommandContext())
+    {
+    }
+
+    ~FVulkanBorrowedCommandContext()
+    {
+        Queue.ReleaseCommandContext(Context);
+    }
+
+    FVulkanCommandContext* Get() const
+    {
+        return Context;
+    }
+
+    FVulkanCommandContext& operator*() const
+    {
+        return *Context;
+    }
+
+    FVulkanCommandContext* operator->() const
+    {
+        return Context;
+    }
+
+protected:
+    FVulkanQueue&          Queue;
+    FVulkanCommandContext* Context;
+};
+
+class FVulkanScopedCommandContext : public FVulkanBorrowedCommandContext
+{
+public:
+    explicit FVulkanScopedCommandContext(FVulkanQueue& InQueue)
+        : FVulkanBorrowedCommandContext(InQueue)
+    {
+        Context->StartContext();
+    }
+
+    ~FVulkanScopedCommandContext()
+    {
+        Context->FinishContext();
+    }
 };

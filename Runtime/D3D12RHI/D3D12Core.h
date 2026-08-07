@@ -349,28 +349,6 @@ NODISCARD constexpr const CHAR* ToString(D3D12_COMMAND_LIST_TYPE CommandListType
     }
 }
 
-enum class ED3D12GlobalDescriptorHeapType : uint8
-{
-    /** CBV/SRV/UAV global online heap (D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) */
-    Resource = 0,
-
-    /** Sampler global online heap (D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER) */
-    Sampler = 1,
-
-    Count
-};
-
-NODISCARD constexpr const CHAR* ToString(ED3D12GlobalDescriptorHeapType HeapType)
-{
-    switch (HeapType)
-    {
-        case ED3D12GlobalDescriptorHeapType::Resource: return "Resource";
-        case ED3D12GlobalDescriptorHeapType::Sampler:  return "Sampler";
-    }
-
-    return "Unknown";
-}
-
 enum class ED3D12ResourceStateMode : uint8
 {
     /** Resource permanently occupies one state. Transitions targeting it are dropped */

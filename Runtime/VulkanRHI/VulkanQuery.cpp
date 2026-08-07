@@ -223,41 +223,33 @@ FVulkanQueryPoolManager::FVulkanQueryPoolManager(FVulkanDevice* InDevice, VkQuer
 
 FVulkanQueryPoolManager::~FVulkanQueryPoolManager()
 {
-    TScopedLock Lock(PoolsCS);
-    for (FVulkanQueryPool* Pool : AllPools)
-    {
-        delete Pool;
-    }
-    AllPools.Clear();
+    QueryPoolPool.DestroyAll();
 }
 
 FVulkanQueryPool* FVulkanQueryPoolManager::ObtainPool()
 {
-    TScopedLock Lock(PoolsCS);
+    FVulkanQueryPool* Pool = QueryPoolPool.Acquire([this](int32 Index) -> FVulkanQueryPool*
+    {
+        FVulkanQueryPool* NewPool = new FVulkanQueryPool(GetDevice(), QueryType, QueriesPerPool);
+        if (!NewPool->Initialize())
+        {
+            delete NewPool;
+            return nullptr;
+        }
 
-    FVulkanQueryPool* Pool = nullptr;
-    if (AvailablePools.Dequeue(Pool))
+        NewPool->SetDebugName(String::CreateFormatted("QueryPool [%d]", Index));
+        return NewPool;
+    });
+
+    if (Pool)
     {
         Pool->ResetPool();
-        return Pool;
     }
 
-    Pool = new FVulkanQueryPool(GetDevice(), QueryType, QueriesPerPool);
-    if (!Pool->Initialize())
-    {
-        delete Pool;
-        return nullptr;
-    }
-
-    const String DebugName = String::CreateFormatted("QueryPool [%d]", AllPools.Size());
-    Pool->SetDebugName(DebugName);
-
-    AllPools.Add(Pool);
     return Pool;
 }
 
 void FVulkanQueryPoolManager::RecyclePool(FVulkanQueryPool* Pool)
 {
-    TScopedLock Lock(PoolsCS);
-    AvailablePools.Enqueue(Pool);
+    QueryPoolPool.Release(Pool);
 }

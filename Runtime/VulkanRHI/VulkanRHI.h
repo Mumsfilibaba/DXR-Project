@@ -140,7 +140,9 @@ public:
 
     virtual ERHIType GetRHIType() const override final;
 
-    void FlushDeletionQueue(FVulkanCommands* Commands);
+    void NotifyCommandBufferOpened();
+    void NotifyCommandBufferRetired(FVulkanCommands* Commands);
+
     void FlushCompletedSubmissions();
 
     FVulkanInstance* GetInstance()
@@ -198,7 +200,9 @@ private:
     FVulkanPhysicalDevice*        PhysicalDevice;
     FVulkanDevice*                Device;
     FVulkanCommandContext*        GraphicsCommandContext;
+    uint64                        FrameNumber;
     TArray<FVulkanDeferredObject> DeferredObjects;
+    int32                         NumOpenCommandBuffers;
     FCriticalSection              DeferredObjectsCS;
     FSamplerStateMap              SamplerStateMap;
     FCriticalSection              SamplerStateMapCS;
