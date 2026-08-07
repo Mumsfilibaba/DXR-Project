@@ -51,52 +51,32 @@ public:
     }
     
 public:
-
     FApplication(TSharedPtr<FGenericApplication> InPlatformApplication);
     virtual ~FApplication();
 
     // FGenericApplicationMessageHandler Interface Overrides
     virtual bool OnGamepadButtonUp(EGamepadButtonName::Type Button, uint32 GamepadIndex) override final;
-
     virtual bool OnGamepadButtonDown(EGamepadButtonName::Type Button, uint32 GamepadIndex, bool bIsRepeat) override final;
-
     virtual bool OnAnalogGamepadChange(EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float AnalogValue) override final;
-
     virtual bool OnKeyUp(EKeyboardKeyName::Type KeyCode, FModifierKeyState ModifierKeyState) override final;
-
     virtual bool OnKeyDown(EKeyboardKeyName::Type KeyCode, bool bIsRepeat, FModifierKeyState ModifierKeyState) override final;
-
     virtual bool OnKeyChar(uint32 Character) override final;
-
     virtual bool OnMouseMove(int32 MouseX, int32 MouseY) override final;
-
     virtual bool OnMouseButtonDown(const TSharedRef<FGenericWindow>& PlatformWindow, EMouseButtonName::Type Button, FModifierKeyState ModifierKeyState) override final;
-
     virtual bool OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeyState ModifierKeyState) override final;
-
     virtual bool OnMouseButtonDoubleClick(EMouseButtonName::Type Button, FModifierKeyState ModifierKeyState) override final;
-
-    virtual bool OnMouseScrolled(float WheelDelta, bool bVertical) override final;
-
+    virtual bool OnMouseScrolled(float WheelDelta, EScrollAxis ScrollAxis) override final;
     virtual bool OnMouseEntered() override final;
-
     virtual bool OnMouseLeft() override final;
-
     virtual bool OnHighPrecisionMouseInput(int32 MouseX, int32 MouseY) override final;
-
     virtual bool OnWindowResized(const TSharedRef<FGenericWindow>& Window, uint32 Width, uint32 Height) override final;
-
     virtual bool OnWindowResizing(const TSharedRef<FGenericWindow>& Window) override final;
-
     virtual bool OnWindowMoved(const TSharedRef<FGenericWindow>& Window, int32 MouseX, int32 MouseY) override final;
-
     virtual bool OnWindowFocusLost(const TSharedRef<FGenericWindow>& Window) override final;
-
     virtual bool OnWindowFocusGained(const TSharedRef<FGenericWindow>& Window) override final;
-
     virtual bool OnWindowClosed(const TSharedRef<FGenericWindow>& Window) override final;
-
     virtual bool OnMonitorConfigurationChange() override final;
+    virtual bool OnApplicationActivationChanged(bool bIsActive) override final;
 
     /**
      * @brief Adds a new window to the application and creates its underlying platform window. 
@@ -228,40 +208,11 @@ public:
     bool IsGamePadConnected() const;
 
     /**
-     * @brief Checks if the application is currently tracking a mouse drag operation. This is set to true 
-     * when the left mouse button is pressed, and remains true until it is released.
-     * 
-     * @return True if a mouse drag operation is in progress, otherwise false.
-     */
-    bool IsTrackingCursor() const { return bIsTrackingCursor; }
-    
-    /**
      * @brief Overrides the existing platform application with a new FGenericApplication instance.
      * 
      * @param InPlatformApplication The new platform application to set.
      */
     void OverridePlatformApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication);
-    
-    /**
-     * @brief Retrieves the current platform application interface.
-     * 
-     * @return A shared pointer to the current FGenericApplication.
-     */
-    TSharedPtr<FGenericApplication> GetPlatformApplication() const { return PlatformApplication; }
-
-    /**
-     * @brief Retrieves the primary input device interface (e.g., for gamepads).
-     * 
-     * @return A pointer to the current FInputDevice instance, or nullptr if none.
-     */
-    FInputDevice* GetInputDevice() const { return PlatformApplication->GetInputDevice(); }
-
-    /**
-     * @brief Retrieves the cursor interface being used by the platform application.
-     * 
-     * @return A shared pointer to the ICursor interface, or nullptr if unsupported.
-     */
-    TSharedPtr<ICursor> GetCursor() const { return PlatformApplication->GetCursor(); }
 
     /**
      * @brief Gets the window that currently has focus (for receiving keyboard input, etc.).
@@ -338,16 +289,69 @@ public:
     void GetDisplayInfo(TArray<FMonitorInfo>& OutMonitorInfo);
 
     /**
+     * @brief Checks if the application is currently tracking a mouse drag operation. This is set to true 
+     * when the left mouse button is pressed, and remains true until it is released.
+     * 
+     * @return True if a mouse drag operation is in progress, otherwise false.
+     */
+    FORCEINLINE bool IsTrackingCursor() const
+    {
+        return bIsTrackingCursor;
+    }
+
+    /**
+     * @brief Checks if the application is the active one on the desktop.
+     *
+     * @return True if the application is active, otherwise false.
+     */
+    FORCEINLINE bool IsApplicationActive() const
+    {
+        return bIsApplicationActive;
+    }
+
+    /**
+     * @brief Retrieves the current platform application interface.
+     * 
+     * @return A shared pointer to the current FGenericApplication.
+     */
+    FORCEINLINE TSharedPtr<FGenericApplication> GetPlatformApplication() const
+    {
+        return PlatformApplication;
+    }
+
+    /**
+     * @brief Retrieves the primary input device interface (e.g., for gamepads).
+     * 
+     * @return A pointer to the current FInputDevice instance, or nullptr if none.
+     */
+    FORCEINLINE FInputDevice* GetInputDevice() const
+    {
+        return PlatformApplication->GetInputDevice();
+    }
+
+    /**
+     * @brief Retrieves the cursor interface being used by the platform application.
+     * 
+     * @return A shared pointer to the ICursor interface, or nullptr if unsupported.
+     */
+    FORCEINLINE TSharedPtr<ICursor> GetCursor() const
+    {
+        return PlatformApplication->GetCursor();
+    }
+
+    /**
      * @brief Accessor for the monitor configuration changed event.
      * 
      * @return A reference to the event triggered when monitors are added/removed or their configuration changes.
      */
-    FOnMonitorConfigChangedEvent& GetOnMonitorConfigChangedEvent()
+    FORCEINLINE FOnMonitorConfigChangedEvent& GetOnMonitorConfigChangedEvent()
     {
         return OnMonitorConfigChangedEvent;
     }
 
 private:
+    void ReleaseAllPressedInput();
+
     TSharedPtr<FGenericApplication>   PlatformApplication;
     TSet<EKeyboardKeyName::Type>      PressedKeys;
     TSet<EMouseButtonName::Type>      PressedMouseButtons;
@@ -357,8 +361,12 @@ private:
     TArray<TSharedPtr<FWindowWidget>> Windows;
     TArray<TSharedPtr<FInputHandler>> InputHandlers;
     FOnMonitorConfigChangedEvent      OnMonitorConfigChangedEvent;
-    bool                              bIsMonitorInfoValid;
-    bool                              bIsTrackingCursor;
+    TWeakPtr<FWindowWidget>           FocusWindow;
+    IntVector2                        LastCursorPosition;
+    bool                              bIsMonitorInfoValid : 1;
+    bool                              bIsCursorPositionValid : 1;
+    bool                              bIsTrackingCursor : 1;
+    bool                              bIsApplicationActive : 1;
 
     static TSharedPtr<FApplication> GApplicationInstance;
 };

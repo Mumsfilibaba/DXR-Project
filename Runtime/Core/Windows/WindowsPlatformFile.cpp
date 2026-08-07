@@ -11,6 +11,8 @@ FWindowsFileHandle::FWindowsFileHandle(HANDLE InFileHandle)
     UpdateFileSize();
 }
 
+FWindowsFileHandle::~FWindowsFileHandle() = default;
+
 bool FWindowsFileHandle::SeekFromStart(int64 InOffset)
 {
     CHECK(IsValid());
@@ -272,6 +274,8 @@ FWindowsAsyncFileHandle::FWindowsAsyncFileHandle(HANDLE InFileHandle)
     , WriteOffset(0)
 {
 }
+
+FWindowsAsyncFileHandle::~FWindowsAsyncFileHandle() = default;
 
 bool FWindowsAsyncFileHandle::WriteAsync(const uint8* Src, uint32 BytesToWrite)
 {

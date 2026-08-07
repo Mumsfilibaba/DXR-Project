@@ -6,7 +6,7 @@ class CORE_API FWindowsFileHandle : public IPlatformFile
 {
 public:
     FWindowsFileHandle(HANDLE InFileHandle);
-    virtual ~FWindowsFileHandle() = default;
+    virtual ~FWindowsFileHandle();
 
     virtual bool SeekFromStart(int64 InOffset) override final;
     virtual bool SeekFromCurrent(int64 InOffset) override final;
@@ -31,7 +31,7 @@ class CORE_API FWindowsAsyncFileHandle : public IPlatformAsyncFile
 {
 public:
     FWindowsAsyncFileHandle(HANDLE InFileHandle);
-    virtual ~FWindowsAsyncFileHandle() = default;
+    virtual ~FWindowsAsyncFileHandle();
 
     virtual bool WriteAsync(const uint8* Src, uint32 BytesToWrite) override final;
     virtual void WaitForPendingWrites() override final;

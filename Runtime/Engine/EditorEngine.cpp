@@ -13,6 +13,7 @@
 #include "Engine/EngineUI/Editor/EditorFrameProfilerWidget.h"
 #include "Engine/EngineUI/Editor/EditorRHIInfoWidget.h"
 #include "Engine/EngineUI/Editor/EditorStatsWidget.h"
+#include "Engine/EngineUI/Editor/EditorAboutWidget.h"
 #include "Engine/World/Components/CameraComponent.h"
 #include "RendererCore/RenderSettings.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
@@ -35,6 +36,7 @@ FEditorEngine::FEditorEngine()
     , FrameProfilerWidget(nullptr)
     , RHIInfoWidget(nullptr)
     , StatsWidget(nullptr)
+    , AboutWidget(nullptr)
     , ViewportImage(nullptr)
     , ViewportImageSize()
 {
@@ -67,6 +69,7 @@ bool FEditorEngine::Init()
         FrameProfilerWidget    = MakeSharedPtr<FEditorFrameProfilerWidget>();
         RHIInfoWidget          = MakeSharedPtr<FEditorRHIInfoWidget>();
         StatsWidget            = MakeSharedPtr<FEditorStatsWidget>();
+        AboutWidget            = MakeSharedPtr<FEditorAboutWidget>();
 
         ViewportWidget = MakeSharedPtr<FEditorViewportWidget>(this);
         ViewportWidget->SetViewportWidget(GetViewportWidget());
@@ -113,6 +116,8 @@ void FEditorEngine::Release()
         GPUProfilerWidget.Reset();
         FrameProfilerWidget.Reset();
         RHIInfoWidget.Reset();
+        StatsWidget.Reset();
+        AboutWidget.Reset();
     }
 
     FEngine::Release();

@@ -243,14 +243,6 @@ public:
     virtual bool IsActiveWindow() const { return false; }
 
     /**
-     * @brief Repositions the window on screen.
-     * 
-     * @param x The new X-coordinate of the window's position.
-     * @param y The new Y-coordinate of the window's position.
-     */
-    virtual void SetWindowPos(int32 x, int32 y) { }
-
-    /**
      * @brief Checks if the underlying platform handle for this window is valid.
      * 
      * @return True if the OS handle is valid, otherwise false.
@@ -297,6 +289,14 @@ public:
      * @param OutTitle An String that will receive the window's title.
      */
     virtual void GetTitle(String& OutTitle) const { }
+
+    /**
+     * @brief Repositions the window on screen.
+     * 
+     * @param x The new X-coordinate of the window's position.
+     * @param y The new Y-coordinate of the window's position.
+     */
+    virtual void SetWindowPos(int32 x, int32 y) { }
 
     /**
      * @brief Sets the overall window opacity.
@@ -350,20 +350,6 @@ public:
     virtual uint32 GetHeight() const { return 0; }
 
     /**
-     * @brief Sets the platform-specific handle for this window (if needed).
-     * 
-     * @param InPlatformHandle A pointer to the platform window handle.
-     */
-    virtual void SetPlatformHandle(void* InPlatformHandle) { }
-
-    /**
-     * @brief Retrieves the underlying platform-specific handle for this window.
-     * 
-     * @return A pointer to the OS handle, or nullptr if invalid.
-     */
-    virtual void* GetPlatformHandle() const { return nullptr; }
-
-    /**
      * @brief Applies style flags to the window (e.g., resizable, closable).
      * 
      * @param Style The style flags to set.
@@ -390,6 +376,20 @@ public:
      * @return False if the window is click-through. Platforms that do not implement this always report true.
      */
     virtual bool GetAcceptsInput() const { return true; }
+
+    /**
+     * @brief Sets the platform-specific handle for this window (if needed).
+     * 
+     * @param InPlatformHandle A pointer to the platform window handle.
+     */
+    virtual void SetPlatformHandle(void* InPlatformHandle) { }
+
+    /**
+     * @brief Retrieves the underlying platform-specific handle for this window.
+     * 
+     * @return A pointer to the OS handle, or nullptr if invalid.
+     */
+    virtual void* GetPlatformHandle() const { return nullptr; }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

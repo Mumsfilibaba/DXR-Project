@@ -327,7 +327,7 @@ bool FImGuiEventHandler::OnMouseButtonUp(const FCursorEvent& CursorEvent)
 bool FImGuiEventHandler::OnMouseScrolled(const FCursorEvent& CursorEvent)
 {
     ImGuiIO& UIState = ImGui::GetIO();
-    if (CursorEvent.IsScrollVertical())
+    if (CursorEvent.GetScrollAxis() == EScrollAxis::Vertical)
     {
         UIState.AddMouseWheelEvent(0.0f, CursorEvent.GetScrollDelta());
     }

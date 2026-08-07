@@ -94,6 +94,7 @@ private:
     bool                                bCursorWasVisible;
     IntVector2                          MouseLookRestorePosition;
     FEditorCameraInputState             PendingCameraInput;
+    float                               SpeedOverlayTimer;
     FSceneRenderView::EDebugView        DebugView;
     FSceneRenderView::EDebugView        SecondaryDebugView;
     FSceneRenderView::EDebugViewChannel DebugViewChannelMask;

@@ -8,5 +8,6 @@
 
 @interface FCocoaWindowView : NSView
 {
+    NSTrackingArea* TrackingArea;
 }
 @end

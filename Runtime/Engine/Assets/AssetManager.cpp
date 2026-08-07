@@ -310,10 +310,10 @@ TSharedRef<FModel> FAssetManager::LoadModel(const String& Filename, EMeshImportF
     }
 
     // Insert the a new model into the AssetManager
-    const auto InsertModel = [this](const String& Filename, const FModelCreateInfo& InCreateInfo)
+    const auto InsertModel = [this](const String& Filename, const FModelData& InModelData)
     {
-        TSharedRef<FModel> NewModel = new FModel();
-        if (!NewModel->Init(InCreateInfo))
+        TSharedRef<FModel> NewModel = FModel::Create(InModelData);
+        if (!NewModel)
         {
             return TSharedRef<FModel>(nullptr);
         }
@@ -325,7 +325,7 @@ TSharedRef<FModel> FAssetManager::LoadModel(const String& Filename, EMeshImportF
     };
 
     TSharedRef<FModel> NewModel;
-    FModelCreateInfo NewCreateInfo;
+    FModelData NewModelData;
 
     // If we have enabled serialization then look up the cached model
     const bool bEnableAssetConversion = CVarEnableAssetConversion.GetValue();
@@ -335,9 +335,9 @@ TSharedRef<FModel> FAssetManager::LoadModel(const String& Filename, EMeshImportF
         {
             const StringView FileNameView(*ExistingPath);
 
-            if (ModelImporter->ImportFromFile(FileNameView, Flags, NewCreateInfo))
+            if (ModelImporter->ImportFromFile(FileNameView, Flags, NewModelData))
             {
-                NewModel = InsertModel(FinalPath, NewCreateInfo);
+                NewModel = InsertModel(FinalPath, NewModelData);
             }
 
             if (NewModel)
@@ -363,7 +363,7 @@ TSharedRef<FModel> FAssetManager::LoadModel(const String& Filename, EMeshImportF
             const StringView FileNameView(FinalPath);
             if (Importer->MatchExtenstion(FileNameView))
             {
-                bResult = Importer->ImportFromFile(FileNameView, Flags, NewCreateInfo);
+                bResult = Importer->ImportFromFile(FileNameView, Flags, NewModelData);
                 break;
             }
         }
@@ -371,7 +371,7 @@ TSharedRef<FModel> FAssetManager::LoadModel(const String& Filename, EMeshImportF
 
     if (bResult)
     {
-        NewModel = InsertModel(FinalPath, NewCreateInfo);
+        NewModel = InsertModel(FinalPath, NewModelData);
     }
 
     if (!NewModel)
@@ -383,7 +383,7 @@ TSharedRef<FModel> FAssetManager::LoadModel(const String& Filename, EMeshImportF
     if (bEnableAssetConversion)
     {
         const String NewFilename = ReplaceExtension(FinalPath, ".dxrmesh");
-        if (ModelSerializer->Serialize(NewFilename, NewCreateInfo))
+        if (ModelSerializer->Serialize(NewFilename, NewModelData))
         {
             AssetRegistry->AddEntry(FinalPath, NewFilename);
         }

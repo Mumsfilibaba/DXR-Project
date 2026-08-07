@@ -11,6 +11,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/CommandLine.h"
 #include "Core/Misc/Paths.h"
+#include "Core/Misc/BuildInfo.h"
 #include "Core/Misc/FileOutputDevice.h"
 #include "Application/Application.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
@@ -81,6 +82,10 @@ static bool InitializeOutputDevices()
 
 static void LogStartupInformation()
 {
+    LOG_INFO("Engine=%s %s", BuildInfo::GetEngineName(), BuildInfo::GetVersionString());
+    LOG_INFO("Configuration=%s (%s)", BuildInfo::GetConfigurationName(), BuildInfo::GetLinkageName());
+    LOG_INFO("Platform=%s %s", BuildInfo::GetPlatformName(), BuildInfo::GetArchitectureName());
+    LOG_INFO("Commit=%s%s (%s)", BuildInfo::GetCommit(), BuildInfo::IsWorkingTreeDirty() ? " (modified)" : "", BuildInfo::GetBranch());
     LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");
     LOG_INFO("ProjectName=%s", *Paths::GetProjectName());
     LOG_INFO("ProjectDir=%s", *Paths::GetProjectDir());
@@ -307,6 +312,8 @@ void FEngineLoop::Tick()
 
     IRendererModule* RendererModule = IRendererModule::Get();
     RendererModule->FinishPreviousFrame();
+
+    FApplication::Get().ProcessDeferredEvents();
 
     FEngine::Get()->Tick(DeltaTime);
 

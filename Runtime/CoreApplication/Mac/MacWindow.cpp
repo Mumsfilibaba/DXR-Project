@@ -160,6 +160,15 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         [CocoaWindow setContentView:CocoaWindowView];
         [CocoaWindow makeFirstResponder:CocoaWindowView];
 
+        if (InInitializer.ParentWindow)
+        {
+            FMacWindow* ParentMacWindow = static_cast<FMacWindow*>(InInitializer.ParentWindow);
+            if (FCocoaWindow* ParentCocoaWindow = ParentMacWindow->GetCocoaWindow())
+            {
+                [ParentCocoaWindow addChildWindow:CocoaWindow ordered:NSWindowAbove];
+            }
+        }
+
         if ((InInitializer.Style & EWindowStyleFlags::NoTaskBarIcon) == EWindowStyleFlags::None)
         {
             [NSApp addWindowsItem:CocoaWindow title:InInitializer.Title.GetNSString() filename:NO];
@@ -245,7 +254,19 @@ void FMacWindow::Destroy()
     if (CocoaWindow)
     {
         SCOPED_AUTORELEASE_POOL();
-        
+
+        // Pairs with the addWindowsItem in Initialize, and is a no-op for a window never added
+        FCocoaWindow* WindowToRemove = CocoaWindow;
+        FMacThreadManager::Get().MainThreadDispatch(^
+        {
+            if (NSWindow* ParentCocoaWindow = [WindowToRemove parentWindow])
+            {
+                [ParentCocoaWindow removeChildWindow:WindowToRemove];
+            }
+
+            [NSApp removeWindowsItem:WindowToRemove];
+        }, NSDefaultRunLoopMode, true);
+
         TSharedRef<FMacWindow> ThisWindow = MakeSharedRef<FMacWindow>(this);
         Application->OnWindowDestroyed(ThisWindow);
         CocoaWindow = nullptr;
@@ -351,22 +372,23 @@ bool FMacWindow::IsMaximized() const
 bool FMacWindow::IsChildWindow(const TSharedRef<FGenericWindow>& ChildWindow) const
 {
     TSharedRef<FMacWindow> MacChildWindow = StaticCastSharedRef<FMacWindow>(ChildWindow);
+    if (!MacChildWindow || !CocoaWindow)
+    {
+        return false;
+    }
 
     __block bool bIsChildWindow = false;
     FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
 
-        if (CocoaWindow)
+        // Walks the whole chain rather than just the direct children, to match Win32 IsChild
+        for (NSWindow* Ancestor = [MacChildWindow->GetCocoaWindow() parentWindow]; Ancestor; Ancestor = [Ancestor parentWindow])
         {
-            for (NSWindow* ChildWindow in CocoaWindow.childWindows)
+            if (Ancestor == CocoaWindow)
             {
-                FCocoaWindow* CocoaWindow = NSClassCast<FCocoaWindow>(ChildWindow);
-                if (CocoaWindow && CocoaWindow == MacChildWindow->GetCocoaWindow())
-                {
-                    bIsChildWindow = true;
-                    break;
-                }
+                bIsChildWindow = true;
+                break;
             }
         }
     }, NSDefaultRunLoopMode, true);
@@ -460,28 +482,6 @@ void FMacWindow::SetWindowOpacity(float Alpha)
     }, NSDefaultRunLoopMode, true);
 }
 
-void FMacWindow::SetAcceptsInput(bool bInAcceptsInput)
-{
-    if (bAcceptsInput == bInAcceptsInput)
-    {
-        return;
-    }
-
-    bAcceptsInput = bInAcceptsInput;
-
-    FMacThreadManager::Get().MainThreadDispatch(^
-    {
-        SCOPED_AUTORELEASE_POOL();
-
-        if (CocoaWindow)
-        {
-            [CocoaWindow setIgnoresMouseEvents:!bInAcceptsInput];
-        }
-
-        FPlatformApplicationMisc::PumpMessages(true);
-    }, NSDefaultRunLoopMode, true);
-}
-
 void FMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 {
     FMacThreadManager::Get().MainThreadDispatch(^
@@ -534,6 +534,39 @@ void FMacWindow::GetWindowShape(FWindowShape& OutWindowShape) const
     OutWindowShape.Position.Y = ContentRect.origin.y;
 }
 
+void FMacWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const
+{
+    __block NSRect Frame = NSMakeRect(0, 0, 0, 0);
+    FMacThreadManager::Get().MainThreadDispatch(^
+    {
+        SCOPED_AUTORELEASE_POOL();
+
+        if (CocoaWindow)
+        {
+            NSScreen* Screen = CocoaWindow ? CocoaWindow.screen : [NSScreen mainScreen];
+            Frame = Screen.frame;
+        }
+    }, NSDefaultRunLoopMode, true);
+
+    OutWidth  = Frame.size.width;
+    OutHeight = Frame.size.height;
+}
+
+float FMacWindow::GetWindowDPIScale() const
+{
+    __block CGFloat Scale = 1.0f;
+    FMacThreadManager::Get().MainThreadDispatch(^
+    {
+        SCOPED_AUTORELEASE_POOL();
+        if (CocoaWindow)
+        {
+            Scale = CocoaWindow.backingScaleFactor;
+        }
+    }, NSDefaultRunLoopMode, true);
+
+    return static_cast<float>(Scale);
+}
+
 uint32 FMacWindow::GetWidth() const
 {
     __block NSSize Size = NSMakeSize(0, 0);
@@ -568,68 +601,6 @@ uint32 FMacWindow::GetHeight() const
     }, NSDefaultRunLoopMode, true);
 
     return uint32(Size.height);
-}
-
-void FMacWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const
-{
-    __block NSRect Frame = NSMakeRect(0, 0, 0, 0);
-    FMacThreadManager::Get().MainThreadDispatch(^
-    {
-        SCOPED_AUTORELEASE_POOL();
-
-        if (CocoaWindow)
-        {
-            NSScreen* Screen = CocoaWindow ? CocoaWindow.screen : [NSScreen mainScreen];
-            Frame = Screen.frame;
-        }
-    }, NSDefaultRunLoopMode, true);
-
-    OutWidth  = Frame.size.width;
-    OutHeight = Frame.size.height;
-}
-
-float FMacWindow::GetWindowDPIScale() const
-{
-    __block CGFloat Scale = 1.0f;
-    FMacThreadManager::Get().MainThreadDispatch(^
-    {
-        SCOPED_AUTORELEASE_POOL();
-        if (CocoaWindow)
-        {
-            Scale = CocoaWindow.backingScaleFactor;
-        }
-    }, NSDefaultRunLoopMode, true);
-
-    return static_cast<float>(Scale);
-}
-
-void FMacWindow::SetPlatformHandle(void* InPlatformHandle)
-{
-    if (InPlatformHandle)
-    {
-        FMacThreadManager::Get().MainThreadDispatch(^
-        {
-            SCOPED_AUTORELEASE_POOL();
-            
-            // Make sure that the handle sent in is of correct type
-            if (FCocoaWindow* NewWindow = NSClassCast<FCocoaWindow>(reinterpret_cast<NSObject*>(InPlatformHandle)))
-            {
-                if (FCocoaWindowView* NewWindowView = NSClassCast<FCocoaWindowView>(NewWindow.contentView))
-                {
-                    CocoaWindow     = NewWindow;
-                    CocoaWindowView = NewWindowView;
-                }
-                else
-                {
-                    LOG_ERROR("WindowView is not of the expected type");
-                }
-            }
-            else
-            {
-                LOG_ERROR("WindowView is not of the expected type");
-            }
-        }, NSDefaultRunLoopMode, true);
-    }
 }
 
 void FMacWindow::SetStyle(EWindowStyleFlags InStyle)
@@ -716,10 +687,76 @@ void FMacWindow::SetStyle(EWindowStyleFlags InStyle)
             [CocoaWindow setStyleMask:WindowStyle];
             [CocoaWindow setCollectionBehavior:Behavior];
             
+            const bool bWasInWindowsMenu = (StyleParams & EWindowStyleFlags::NoTaskBarIcon) == EWindowStyleFlags::None;
+            const bool bIsInWindowsMenu  = (InStyle & EWindowStyleFlags::NoTaskBarIcon) == EWindowStyleFlags::None;
+
+            if (bWasInWindowsMenu != bIsInWindowsMenu)
+            {
+                if (bIsInWindowsMenu)
+                {
+                    [NSApp addWindowsItem:CocoaWindow title:[CocoaWindow title] filename:NO];
+                }
+                else
+                {
+                    [NSApp removeWindowsItem:CocoaWindow];
+                }
+            }
+            
             // Set styleflags
             StyleParams = InStyle;
         }
 
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
+}
+
+void FMacWindow::SetAcceptsInput(bool bInAcceptsInput)
+{
+    if (bAcceptsInput == bInAcceptsInput)
+    {
+        return;
+    }
+
+    bAcceptsInput = bInAcceptsInput;
+
+    FMacThreadManager::Get().MainThreadDispatch(^
+    {
+        SCOPED_AUTORELEASE_POOL();
+
+        if (CocoaWindow)
+        {
+            [CocoaWindow setIgnoresMouseEvents:!bInAcceptsInput];
+        }
+
+        FPlatformApplicationMisc::PumpMessages(true);
+    }, NSDefaultRunLoopMode, true);
+}
+
+void FMacWindow::SetPlatformHandle(void* InPlatformHandle)
+{
+    if (InPlatformHandle)
+    {
+        FMacThreadManager::Get().MainThreadDispatch(^
+        {
+            SCOPED_AUTORELEASE_POOL();
+            
+            // Make sure that the handle sent in is of correct type
+            if (FCocoaWindow* NewWindow = NSClassCast<FCocoaWindow>(reinterpret_cast<NSObject*>(InPlatformHandle)))
+            {
+                if (FCocoaWindowView* NewWindowView = NSClassCast<FCocoaWindowView>(NewWindow.contentView))
+                {
+                    CocoaWindow     = NewWindow;
+                    CocoaWindowView = NewWindowView;
+                }
+                else
+                {
+                    LOG_ERROR("WindowView is not of the expected type");
+                }
+            }
+            else
+            {
+                LOG_ERROR("WindowView is not of the expected type");
+            }
+        }, NSDefaultRunLoopMode, true);
+    }
 }

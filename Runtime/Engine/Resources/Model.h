@@ -6,35 +6,21 @@
 #include "RHI/RHICommandList.h"
 #include "Engine/EngineModule.h"
 #include "Engine/Resources/Resource.h"
-#include "Engine/Assets/ModelCreateInfo.h"
+#include "Engine/Assets/MeshData.h"
+#include "Engine/Assets/ModelData.h"
 #include "RendererCore/VertexDeclaration.h"
 
 struct FVertexStreamBinding;
 
-struct FSubMesh
-{
-    FSubMesh()
-        : BaseVertex(0)
-        , VertexCount(0)
-        , StartIndex(0)
-        , IndexCount(0)
-    {
-    }
-    
-    uint32 BaseVertex;
-    uint32 VertexCount;
-    uint32 StartIndex;
-    uint32 IndexCount;
-    int32  MaterialIndex;
-};
-
 class ENGINE_API FMesh
 {
+public:
+    static TSharedPtr<FMesh> Create(const FMeshData& MeshData, bool bCreateRayTracingResources = false);
+
 public:
     FMesh();
     ~FMesh();
 
-    bool Init(const FMeshCreateInfo& CreateInfo, bool bCreateRayTracingResources = false);
     bool BuildAccelerationStructure(FRHICommandList& CommandList);
 
     bool EnsureRayTracingResources();
@@ -77,11 +63,6 @@ public:
         return RayTracingGeometry.Get();
     }
     
-    void AddSubMesh(const FSubMesh& InSubMesh)
-    {
-        SubMeshes.Add(InSubMesh);
-    }
-    
     const FSubMesh& GetSubMesh(int32 Index) const
     {
         return SubMeshes[Index];
@@ -118,8 +99,14 @@ public:
     }
     
 private:
-    void CreateBoundingBox(const FMeshCreateInfo& CreateInfo);
-    bool CreateVertexStreams(const FMeshCreateInfo& CreateInfo);
+    bool Initialize(const FMeshData& MeshData, bool bCreateRayTracingResources);
+    void CreateBoundingBox(const FMeshData& MeshData);
+    bool CreateVertexStreams(const FMeshData& MeshData);
+
+    void AddSubMesh(const FSubMesh& InSubMesh)
+    {
+        SubMeshes.Add(InSubMesh);
+    }
 
     String                               MeshName;
     FVertexDeclaration                   Declaration;
@@ -138,10 +125,12 @@ private:
 class ENGINE_API FModel : public FResource
 {
 public:
+    static TSharedRef<FModel> Create(const FModelData& ModelData);
+
+public:
     FModel();
     ~FModel();
 
-    bool Init(const FModelCreateInfo& CreateInfo);
     bool BuildAccelerationStructure(FRHICommandList& CommandList);
     void AddToWorld(class FWorld* World);
 
@@ -176,6 +165,8 @@ public:
     }
 
 private:
+    bool Initialize(const FModelData& ModelData);
+
     TArray<TSharedPtr<FMesh>>     Meshes;
     TArray<TSharedPtr<FMaterial>> Materials;
     float                         UniformScale;

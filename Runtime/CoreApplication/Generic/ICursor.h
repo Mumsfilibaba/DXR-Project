@@ -46,9 +46,9 @@ struct ICursor
      /**
       * @brief Set the cursor visibility
       * 
-      * @param bIsVisible The new visibility of the cursor, true to show it and false to hide it
+      * @param bVisible The new visibility of the cursor, true to show it and false to hide it
       */
-    virtual void SetVisibility(bool bIsVisible) = 0;
+    virtual void SetVisibility(bool bVisible) = 0;
 
      /**
       * @return Returns the mouse visibility 

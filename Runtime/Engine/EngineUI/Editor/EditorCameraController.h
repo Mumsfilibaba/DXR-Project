@@ -29,6 +29,9 @@ struct FEditorCameraInputState
 class FEditorCameraController
 {
 public:
+    static constexpr float MinMoveSpeed = 0.1f;
+    static constexpr float MaxMoveSpeed = 200.0f;
+
     FEditorCameraController();
     ~FEditorCameraController();
 
@@ -44,6 +47,7 @@ public:
     void OnActorRemoved(FActor* Actor);
 
     bool ConsumeCameraCut();
+    bool ConsumeMoveSpeedChanged();
 
     float GetMoveSpeed() const { return MoveSpeed; }
     float GetRotationSpeed() const { return RotationSpeed; }
@@ -96,4 +100,5 @@ private:
     float                    DragDollySpeed;
     float                    SpeedAdjustRate;
     bool                     bCameraCutPending;
+    bool                     bMoveSpeedChangedPending;
 };

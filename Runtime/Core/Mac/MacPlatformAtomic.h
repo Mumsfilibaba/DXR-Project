@@ -1,9 +1,6 @@
 #pragma once
 #include "Core/Generic/GenericPlatformAtomic.h"
 
-/**
- * @brief Maps an EMemoryOrder template argument to the corresponding GCC __ATOMIC_* constant.
- */
 template<EMemoryOrder Order>
 static constexpr auto GetGCCMemoryOrder()
 {
@@ -29,14 +26,6 @@ static constexpr auto GetGCCMemoryOrder()
     }
 }
 
-/**
- * @brief Maps an EMemoryOrder template argument to the corresponding GCC __ATOMIC_* constant
- *        for the failure-order parameter of __atomic_compare_exchange_n.
- *
- * The failure order may not be __ATOMIC_RELEASE or __ATOMIC_ACQ_REL and may not be stronger
- * than the success order, so Release and AcquireRelease are clamped to Relaxed and Acquire
- * respectively.
- */
 template<EMemoryOrder Order>
 static constexpr auto GetGCCFailureMemoryOrder()
 {

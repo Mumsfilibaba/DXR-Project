@@ -459,17 +459,26 @@ void FEditorOutputLogWidget::DrawLogListRichText()
         {
             EditorWidgets::MenuLabeledSeparator("Output Log");
 
-            if (EditorWidgets::MenuItem("Select All", nullptr, false, true))
+            if (EditorWidgets::MenuItem("Select All", EDITOR_SHORTCUT_MOD "+A", false, true))
             {
                 EditorWidgets::RichTextSelectAll(RichTextCtx);
             }
 
-            if (EditorWidgets::MenuItem("Copy", nullptr, false, RichTextCtx.bHasSelection))
+            if (EditorWidgets::MenuItem("Copy", EDITOR_SHORTCUT_MOD "+C", false, RichTextCtx.bHasSelection))
             {
                 const String Selected = EditorWidgets::GetSelectedRichText(RichTextCtx);
                 if (!Selected.IsEmpty())
                 {
                     ImGui::SetClipboardText(*Selected);
+                }
+            }
+
+            if (EditorWidgets::MenuItem("Copy All", nullptr, false, !RichTextCtx.Lines.IsEmpty()))
+            {
+                const String All = EditorWidgets::GetAllRichText(RichTextCtx);
+                if (!All.IsEmpty())
+                {
+                    ImGui::SetClipboardText(*All);
                 }
             }
 

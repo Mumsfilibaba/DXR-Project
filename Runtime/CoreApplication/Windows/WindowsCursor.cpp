@@ -3,6 +3,11 @@
 #include "CoreApplication/Windows/WindowsCursor.h"
 #include "CoreApplication/Windows/WindowsWindow.h"
 
+FWindowsCursor::FWindowsCursor()
+    : FGenericCursor()
+{
+}
+
 void FWindowsCursor::SetCursor(ECursor Cursor)
 {
     LPSTR CursorName = NULL;
@@ -11,30 +16,39 @@ void FWindowsCursor::SetCursor(ECursor Cursor)
     case ECursor::Arrow:
         CursorName = IDC_ARROW;
         break;
+
     case ECursor::TextInput:
         CursorName = IDC_IBEAM;
         break;
+
     case ECursor::ResizeAll:
         CursorName = IDC_SIZEALL;
         break;
+
     case ECursor::ResizeEW:
         CursorName = IDC_SIZEWE;
         break;
+
     case ECursor::ResizeNS:
         CursorName = IDC_SIZENS;
         break;
+
     case ECursor::ResizeNESW:
         CursorName = IDC_SIZENESW;
         break;
+
     case ECursor::ResizeNWSE:
         CursorName = IDC_SIZENWSE;
         break;
+
     case ECursor::Hand:
         CursorName = IDC_HAND;
         break;
+
     case ECursor::NotAllowed:
         CursorName = IDC_NO;
         break;
+
     default:
         CursorName = NULL;
         break;

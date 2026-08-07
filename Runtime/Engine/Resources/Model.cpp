@@ -26,15 +26,26 @@ FMesh::~FMesh()
 {
 }
 
-bool FMesh::Init(const FMeshCreateInfo& CreateInfo, bool bCreateRayTracingResources)
+TSharedPtr<FMesh> FMesh::Create(const FMeshData& MeshData, bool bCreateRayTracingResources)
+{
+    TSharedPtr<FMesh> Mesh = MakeSharedPtr<FMesh>();
+    if (!Mesh->Initialize(MeshData, bCreateRayTracingResources))
+    {
+        return nullptr;
+    }
+
+    return Mesh;
+}
+
+bool FMesh::Initialize(const FMeshData& MeshData, bool bCreateRayTracingResources)
 {
     const bool bEnableRayTracing = RHI::bSupportsRayTracing;
 
-    Declaration = CreateInfo.Declaration;
-    VertexCount = CreateInfo.PackedVertexCount > 0 ? CreateInfo.PackedVertexCount : CreateInfo.Vertices.Size();
-    IndexCount  = CreateInfo.Indices.Size();
+    Declaration = MeshData.Declaration;
+    VertexCount = MeshData.PackedVertexCount > 0 ? MeshData.PackedVertexCount : MeshData.Vertices.Size();
+    IndexCount  = MeshData.Indices.Size();
 
-    if (!CreateVertexStreams(CreateInfo))
+    if (!CreateVertexStreams(MeshData))
     {
         return false;
     }
@@ -51,9 +62,9 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo, bool bCreateRayTracingResour
     IndexFormat = (IndexCount < TNumericLimits<uint16>::Max()) && !bEnableRayTracing ? EIndexFormat::uint16 : EIndexFormat::uint32;
     if (IndexFormat == EIndexFormat::uint16)
     {
-        NewIndicies.Reserve(CreateInfo.Indices.Size());
+        NewIndicies.Reserve(MeshData.Indices.Size());
 
-        for (uint32 Index : CreateInfo.Indices)
+        for (uint32 Index : MeshData.Indices)
         {
             NewIndicies.Emplace(uint16(Index));
         }
@@ -62,7 +73,7 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo, bool bCreateRayTracingResour
     }
     else
     {
-        InitialIndicies = CreateInfo.Indices.Data();
+        InitialIndicies = MeshData.Indices.Data();
     }
 
 	FRHIBufferDesc IndexBufferDesc;
@@ -89,40 +100,25 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo, bool bCreateRayTracingResour
     }
     
     // Add submeshes
-    if (!CreateInfo.SubMeshes.IsEmpty())
+    if (!MeshData.SubMeshes.IsEmpty())
     {
-        SubMeshes.Reserve(CreateInfo.SubMeshes.Size());
-        
-        for (const FSubMeshInfo& MeshPartition : CreateInfo.SubMeshes)
-        {
-            FSubMesh NewSubMesh;
-            NewSubMesh.BaseVertex    = MeshPartition.BaseVertex;
-            NewSubMesh.VertexCount   = MeshPartition.VertexCount;
-            NewSubMesh.StartIndex    = MeshPartition.StartIndex;
-            NewSubMesh.IndexCount    = MeshPartition.IndexCount;
-            NewSubMesh.MaterialIndex = MeshPartition.MaterialIndex;
-            AddSubMesh(NewSubMesh);
-        }
+        SubMeshes = MeshData.SubMeshes;
     }
     else
     {
-        SubMeshes.Reserve(1);
-        
-        FSubMesh NewSubMesh;
-        NewSubMesh.BaseVertex  = 0;
-        NewSubMesh.VertexCount = VertexCount;
-        NewSubMesh.StartIndex  = 0;
-        NewSubMesh.IndexCount  = IndexCount;
-        
-        AddSubMesh(NewSubMesh);
+        FSubMesh WholeMesh;
+        WholeMesh.VertexCount = VertexCount;
+        WholeMesh.IndexCount  = IndexCount;
+
+        AddSubMesh(WholeMesh);
     }
 
-    MeshName = CreateInfo.Name;
-    CreateBoundingBox(CreateInfo);
+    MeshName = MeshData.Name;
+    CreateBoundingBox(MeshData);
     return true;
 }
 
-bool FMesh::CreateVertexStreams(const FMeshCreateInfo& CreateInfo)
+bool FMesh::CreateVertexStreams(const FMeshData& MeshData)
 {
     static const CHAR* StreamDebugNames[VERTEX_MAX_STREAMS] =
     {
@@ -135,9 +131,9 @@ bool FMesh::CreateVertexStreams(const FMeshCreateInfo& CreateInfo)
     const EBufferFlags AttributeFlags = RHI::bSupportsRayTracing ? EBufferFlags::ShaderResourceBuffer : EBufferFlags::None;
 
     TArray<uint8> PackedStreams[VERTEX_MAX_STREAMS];
-    const bool    bUsePrePacked = CreateInfo.PackedVertexCount > 0;
+    const bool    bUsePrePacked = MeshData.PackedVertexCount > 0;
 
-    if (!bUsePrePacked && !CreateInfo.PackVertexStreams(PackedStreams))
+    if (!bUsePrePacked && !MeshData.PackVertexStreams(PackedStreams))
     {
         return false;
     }
@@ -150,13 +146,13 @@ bool FMesh::CreateVertexStreams(const FMeshCreateInfo& CreateInfo)
             continue;
         }
 
-        const TArray<uint8>& StreamData   = bUsePrePacked ? CreateInfo.PackedStreams[StreamIndex] : PackedStreams[StreamIndex];
+        const TArray<uint8>& StreamData   = bUsePrePacked ? MeshData.PackedStreams[StreamIndex] : PackedStreams[StreamIndex];
         const int32          ExpectedSize = VertexCount * Stride;
 
         if (StreamData.Size() != ExpectedSize)
         {
             LOG_ERROR("Mesh '%s' carries %d bytes for stream %u but its declaration needs %d",
-                CreateInfo.Name.Data(), StreamData.Size(), uint32(StreamIndex), ExpectedSize);
+                MeshData.Name.Data(), StreamData.Size(), uint32(StreamIndex), ExpectedSize);
             return false;
         }
 
@@ -269,19 +265,19 @@ bool FMesh::BuildAccelerationStructure(FRHICommandList& CommandList)
     return true;
 }
 
-void FMesh::CreateBoundingBox(const FMeshCreateInfo& CreateInfo)
+void FMesh::CreateBoundingBox(const FMeshData& MeshData)
 {
     static constexpr const float Inf = TNumericLimits<float>::Infinity();
 
     Vector3 MinBounds = Vector3( Inf,  Inf,  Inf);
     Vector3 MaxBounds = Vector3(-Inf, -Inf, -Inf);
 
-    if (CreateInfo.PackedVertexCount > 0)
+    if (MeshData.PackedVertexCount > 0)
     {
-        const TArray<uint8>& PositionStream = CreateInfo.PackedStreams[EVertexStreamIndex::Position];
+        const TArray<uint8>& PositionStream = MeshData.PackedStreams[EVertexStreamIndex::Position];
         const uint16         Stride         = Declaration.GetStreamStride(EVertexStreamIndex::Position);
 
-        for (int32 Index = 0; Index < CreateInfo.PackedVertexCount; Index++)
+        for (int32 Index = 0; Index < MeshData.PackedVertexCount; Index++)
         {
             const Vector3& Position = *reinterpret_cast<const Vector3*>(PositionStream.Data() + (Index * Stride));
             MinBounds = Vector3::Min(MinBounds, Position);
@@ -290,7 +286,7 @@ void FMesh::CreateBoundingBox(const FMeshCreateInfo& CreateInfo)
     }
     else
     {
-        for (const FSourceVertex& Vertex : CreateInfo.Vertices)
+        for (const FSourceVertex& Vertex : MeshData.Vertices)
         {
             MinBounds = Vector3::Min(MinBounds, Vertex.Position);
             MaxBounds = Vector3::Max(MaxBounds, Vertex.Position);
@@ -313,17 +309,28 @@ FModel::~FModel()
 {
 }
 
-bool FModel::Init(const FModelCreateInfo& CreateInfo)
+TSharedRef<FModel> FModel::Create(const FModelData& ModelData)
 {
-    UniformScale = CreateInfo.Scale;
+    TSharedRef<FModel> Model = new FModel();
+    if (!Model->Initialize(ModelData))
+    {
+        return nullptr;
+    }
+
+    return Model;
+}
+
+bool FModel::Initialize(const FModelData& ModelData)
+{
+    UniformScale = ModelData.Scale;
     
-    const int32 NumMeshes = CreateInfo.Meshes.Size();
+    const int32 NumMeshes = ModelData.Meshes.Size();
     Meshes.Reserve(NumMeshes);
     
     for (int32 Index = 0; Index < NumMeshes; Index++)
     {
-        TSharedPtr<FMesh> Mesh = MakeSharedPtr<FMesh>();
-        if (!Mesh->Init(CreateInfo.Meshes[Index]))
+        TSharedPtr<FMesh> Mesh = FMesh::Create(ModelData.Meshes[Index]);
+        if (!Mesh)
         {
             return false;
         }
@@ -331,40 +338,40 @@ bool FModel::Init(const FModelCreateInfo& CreateInfo)
         Meshes.Add(Mesh);
     }
     
-    if (Meshes.Size() != CreateInfo.Meshes.Size())
+    if (Meshes.Size() != ModelData.Meshes.Size())
     {
         DEBUG_BREAK();
         return false;
     }
     
-    const int32 NumMaterials = CreateInfo.Materials.Size();
+    const int32 NumMaterials = ModelData.Materials.Size();
     Materials.Reserve(NumMaterials);
     
-    const auto GetRHITexture = [=](const FModelCreateInfo& ModelCreateInfo, EMaterialTexture::Type MaterialTexture, int32 MaterialIndex)
+    const auto GetRHITexture = [=](const FModelData& InModelData, EMaterialTexture::Type MaterialTexture, int32 MaterialIndex)
     {
-        const FTexture2DRef Texture = ModelCreateInfo.Materials[MaterialIndex].Textures[MaterialTexture];
+        const FTexture2DRef Texture = InModelData.Materials[MaterialIndex].Textures[MaterialTexture];
         return Texture ? Texture->GetRHITexture() : FEngine::Get()->BaseTexture;
     };
     
     for (int32 Index = 0; Index < NumMaterials; Index++)
     {
         FMaterialInfo MaterialInfo;
-        MaterialInfo.Albedo           = FFloatColor(CreateInfo.Materials[Index].Diffuse);
-        MaterialInfo.AmbientOcclusion = CreateInfo.Materials[Index].AmbientFactor;
-        MaterialInfo.Metallic         = CreateInfo.Materials[Index].Metallic;
-        MaterialInfo.Roughness        = CreateInfo.Materials[Index].Roughness;
-        MaterialInfo.MaterialFlags    = CreateInfo.Materials[Index].MaterialFlags & (EMaterialFlags::EnableHeight | EMaterialFlags::EnableAlpha | EMaterialFlags::EnableNormalMapping | EMaterialFlags::DoubleSided | EMaterialFlags::ForceForwardPass);
+        MaterialInfo.Albedo           = FFloatColor(ModelData.Materials[Index].Diffuse);
+        MaterialInfo.AmbientOcclusion = ModelData.Materials[Index].AmbientFactor;
+        MaterialInfo.Metallic         = ModelData.Materials[Index].Metallic;
+        MaterialInfo.Roughness        = ModelData.Materials[Index].Roughness;
+        MaterialInfo.MaterialFlags    = ModelData.Materials[Index].MaterialFlags & (EMaterialFlags::EnableHeight | EMaterialFlags::EnableAlpha | EMaterialFlags::EnableNormalMapping | EMaterialFlags::DoubleSided | EMaterialFlags::ForceForwardPass);
         
-        if (CreateInfo.Materials[Index].Textures[EMaterialTexture::Normal])
+        if (ModelData.Materials[Index].Textures[EMaterialTexture::Normal])
         {
             MaterialInfo.MaterialFlags |= EMaterialFlags::EnableNormalMapping;
         }
 
         TSharedPtr<FMaterial> Material = MakeSharedPtr<FMaterial>(MaterialInfo);
-        Material->AlbedoMap = GetRHITexture(CreateInfo, EMaterialTexture::Diffuse, Index);
+        Material->AlbedoMap = GetRHITexture(ModelData, EMaterialTexture::Diffuse, Index);
 
         // If a separate AlphaMask texture exists, bake it into AlbedoMap.a
-        const FTexture2DRef& AlphaMaskTex = CreateInfo.Materials[Index].Textures[EMaterialTexture::AlphaMask];
+        const FTexture2DRef& AlphaMaskTex = ModelData.Materials[Index].Textures[EMaterialTexture::AlphaMask];
         if (AlphaMaskTex)
         {
             FRHITextureRef AlbedoWithAlpha;
@@ -372,19 +379,19 @@ bool FModel::Init(const FModelCreateInfo& CreateInfo)
             {
                 Material->AlbedoMap = AlbedoWithAlpha;
                 Material->EnableAlphaMask(true);
-                LOG_INFO("[FModel] Baked separate alpha mask into AlbedoMap.a for material '%s'", *CreateInfo.Materials[Index].Name);
+                LOG_INFO("[FModel] Baked separate alpha mask into AlbedoMap.a for material '%s'", *ModelData.Materials[Index].Name);
             }
         }
 
-        if (CreateInfo.Materials[Index].Textures[EMaterialTexture::Normal])
+        if (ModelData.Materials[Index].Textures[EMaterialTexture::Normal])
         {
-            Material->NormalMap = CreateInfo.Materials[Index].Textures[EMaterialTexture::Normal]->GetRHITexture();
+            Material->NormalMap = ModelData.Materials[Index].Textures[EMaterialTexture::Normal]->GetRHITexture();
         }
 
-        const FTexture2DRef& SpecularTex  = CreateInfo.Materials[Index].Textures[EMaterialTexture::Specular];
-        const FTexture2DRef& RoughnessTex = CreateInfo.Materials[Index].Textures[EMaterialTexture::Roughness];
-        const FTexture2DRef& MetallicTex  = CreateInfo.Materials[Index].Textures[EMaterialTexture::Metallic];
-        const FTexture2DRef& AOTex        = CreateInfo.Materials[Index].Textures[EMaterialTexture::AmbientOcclusion];
+        const FTexture2DRef& SpecularTex  = ModelData.Materials[Index].Textures[EMaterialTexture::Specular];
+        const FTexture2DRef& RoughnessTex = ModelData.Materials[Index].Textures[EMaterialTexture::Roughness];
+        const FTexture2DRef& MetallicTex  = ModelData.Materials[Index].Textures[EMaterialTexture::Metallic];
+        const FTexture2DRef& AOTex        = ModelData.Materials[Index].Textures[EMaterialTexture::AmbientOcclusion];
 
         if (SpecularTex)
         {
@@ -401,7 +408,7 @@ bool FModel::Init(const FModelCreateInfo& CreateInfo)
             if (FTextureFactory::Get().PackMaterialParamsTexture(AOInput, RoughnessInput, MetallicInput, PackedMaterial))
             {
                 Material->MaterialMap = PackedMaterial;
-                LOG_INFO("[FModel] Packed separate AO/Roughness/Metallic into MaterialMap for material '%s'", *CreateInfo.Materials[Index].Name);
+                LOG_INFO("[FModel] Packed separate AO/Roughness/Metallic into MaterialMap for material '%s'", *ModelData.Materials[Index].Name);
             }
             else
             {
@@ -468,12 +475,12 @@ bool FModel::Init(const FModelCreateInfo& CreateInfo)
         TryCompressBC1(Material->MaterialMap);
 
         Material->Initialize();
-        Material->SetName(CreateInfo.Materials[Index].Name);
+        Material->SetName(ModelData.Materials[Index].Name);
         
         Materials.Add(Material);
     }
     
-    if (Materials.Size() != CreateInfo.Materials.Size())
+    if (Materials.Size() != ModelData.Materials.Size())
     {
         DEBUG_BREAK();
         return false;

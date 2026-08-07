@@ -303,6 +303,22 @@ constexpr const CHAR* ToString(EMouseButtonName::Type Button)
     }
 }
 
+enum class EScrollAxis : uint8
+{
+    Horizontal,
+    Vertical,
+};
+
+constexpr const CHAR* ToString(EScrollAxis ScrollAxis)
+{
+    switch (ScrollAxis)
+    {
+    case EScrollAxis::Horizontal: return "Horizontal";
+    case EScrollAxis::Vertical:   return "Vertical";
+    default:                      return "Unknown";
+    }
+}
+
 struct EGamepadButtonName
 {
     enum Type : uint8

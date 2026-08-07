@@ -1,16 +1,25 @@
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
+#include "Core/Threading/ScopedLock.h"
 #include "Core/Platform/PlatformTime.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "CoreApplication/Mac/GCInputDevice.h"
 #include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
 
+// The upper bound is the number of bits available to the RepeatCount
 static TAutoConsoleVariable<int32> CVarGameControllerButtonRepeatDelay(
     "GameController.ButtonRepeatDelay",
     "Number of repeated messages that gets ignored before sending repeat events",
     60,
+    0,
+    (1 << 7) - 1,
     EConsoleVariableFlags::Default);
+
+// The XInput thresholds normalized, so a stick behaves the same on both platforms: 7849/32767, 8689/32767 and 30/255
+static constexpr float GLeftThumbDeadZone  = 0.24f;
+static constexpr float GRightThumbDeadZone = 0.27f;
+static constexpr float GTriggerDeadZone    = 0.12f;
 
 @interface FGCConnectionObserver : NSObject
 {
@@ -70,6 +79,7 @@ FGCInputDevice::FGCInputDevice()
     , bIsDeviceConnected(false)
 {
     // Ensure that the gamepadstates are starting at zero
+    Memory::Memzero(ConnectedGamepads, sizeof(ConnectedGamepads));
     Memory::Memzero(GamepadStates, sizeof(FGCGamepadState) * NUM_MAX_GAMEPADS);
     
     // Add an observer for new controller connections
@@ -83,15 +93,28 @@ FGCInputDevice::~FGCInputDevice()
     [[NSNotificationCenter defaultCenter] removeObserver:Observer name:GCControllerDidConnectNotification object:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:Observer name:GCControllerDidDisconnectNotification object:nil];
     [Observer release];
+
+    SCOPED_LOCK(GamepadsCS);
+    for (int32 Index = 0; Index < NUM_MAX_GAMEPADS; Index++)
+    {
+        [ConnectedGamepads[Index] release];
+        ConnectedGamepads[Index] = nullptr;
+    }
 }
 
 void FGCInputDevice::UpdateDeviceState()
 {
+    GCController* Snapshot[NUM_MAX_GAMEPADS];
+    {
+        SCOPED_LOCK(GamepadsCS);
+        Memory::Memcpy(Snapshot, ConnectedGamepads, sizeof(Snapshot));
+    }
+
     // Update the state for all the controllers that are connected
-    for (int32 Index = 0; Index < ConnectedGamepads.Size(); Index++)
+    for (int32 Index = 0; Index < NUM_MAX_GAMEPADS; Index++)
     {
         // TODO: For now only exteneded gamepads are supported
-        if (GCExtendedGamepad* ExtendedGamepad = ConnectedGamepads[Index].extendedGamepad)
+        if (GCExtendedGamepad* ExtendedGamepad = Snapshot[Index].extendedGamepad)
         {
             ProcessInputState(ExtendedGamepad, Index);
         }
@@ -104,23 +127,58 @@ void FGCInputDevice::HandleControllerConnected(GCController* InController)
     
     // TODO: For now, only extended gamepads are supported, we should look into supporting other types
     GCExtendedGamepad* ExtendedGamepad = InController.extendedGamepad;
-    if (ExtendedGamepad && (ConnectedGamepads.Size() < NUM_MAX_GAMEPADS))
+    if (!ExtendedGamepad)
     {
-        ConnectedGamepads.AddUnique(InController);
-        bIsDeviceConnected = true;
+        return;
+    }
+
+    SCOPED_LOCK(GamepadsCS);
+
+    for (int32 Index = 0; Index < NUM_MAX_GAMEPADS; Index++)
+    {
+        if (ConnectedGamepads[Index] == InController)
+        {
+            return;
+        }
+    }
+
+    for (int32 Index = 0; Index < NUM_MAX_GAMEPADS; Index++)
+    {
+        if (!ConnectedGamepads[Index])
+        {
+            ConnectedGamepads[Index] = [InController retain];
+            Memory::Memzero(&GamepadStates[Index], sizeof(FGCGamepadState));
+
+            bIsDeviceConnected.Store(true);
+            return;
+        }
     }
 }
 
 void FGCInputDevice::HandleControllerDisconnected(GCController* InController)
 {
     CHECK(InController != nullptr);
-    
-    ConnectedGamepads.Remove(InController);
-    
-    if (ConnectedGamepads.IsEmpty())
+
+    SCOPED_LOCK(GamepadsCS);
+
+    bool bAnyConnected = false;
+    for (int32 Index = 0; Index < NUM_MAX_GAMEPADS; Index++)
     {
-        bIsDeviceConnected = false;
+        if (ConnectedGamepads[Index] == InController)
+        {
+            ReleaseHeldButtons(Index);
+
+            [ConnectedGamepads[Index] release];
+            ConnectedGamepads[Index] = nullptr;
+            Memory::Memzero(&GamepadStates[Index], sizeof(FGCGamepadState));
+        }
+        else if (ConnectedGamepads[Index])
+        {
+            bAnyConnected = true;
+        }
     }
+
+    bIsDeviceConnected.Store(bAnyConnected);
 }
 
 void FGCInputDevice::ProcessInputState(GCExtendedGamepad* InGamepad, uint32 GamepadIndex)
@@ -133,12 +191,9 @@ void FGCInputDevice::ProcessInputState(GCExtendedGamepad* InGamepad, uint32 Game
 
     FGCGamepadState& CurrentState = GamepadStates[GamepadIndex];
 
-    // MaxButtonRepeatDelay is based on the number of bits available to the RepeatCount
-    constexpr int32 MaxButtonRepeatDelay = (1 << 7) - 1;
-        
-    // Clamp the repeat delay (TODO: Add support for clamping inside of CVars)
-    const int32 RepeatDelay = Math::Clamp(CVarGameControllerButtonRepeatDelay.GetValue(), 0, MaxButtonRepeatDelay);
-        
+    const int32 RepeatDelay = CVarGameControllerButtonRepeatDelay.GetValue();
+
+
     // Store the current states
     bool bCurrentStates[EGamepadButtonName::Count];
     Memory::Memzero(bCurrentStates, sizeof(bCurrentStates));
@@ -195,27 +250,30 @@ void FGCInputDevice::ProcessInputState(GCExtendedGamepad* InGamepad, uint32 Game
     }
 
     // Handle Analog States
-    const auto DispatchAnalogMessage = [CurrentMessageHandler](EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float CurrentValue, float NewValue)
+    const auto DispatchAnalogMessage = [CurrentMessageHandler](EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float CurrentValue, float NewValue, float DeadZone)
     {
-        if (CurrentValue != NewValue)
+        const bool bValueChanged    = (CurrentValue != NewValue);
+        const bool bOutsideDeadZone = (Math::Abs(NewValue) > DeadZone);
+
+        if (bValueChanged || bOutsideDeadZone)
         {
             CurrentMessageHandler->OnAnalogGamepadChange(AnalogSource, GamepadIndex, NewValue);
         }
     };
 
     // Right Trigger
-    DispatchAnalogMessage(EAnalogSourceName::RightTrigger, GamepadIndex, CurrentState.RightTrigger, InGamepad.rightTrigger.value);
+    DispatchAnalogMessage(EAnalogSourceName::RightTrigger, GamepadIndex, CurrentState.RightTrigger, InGamepad.rightTrigger.value, GTriggerDeadZone);
 
     // Left Trigger
-    DispatchAnalogMessage(EAnalogSourceName::LeftTrigger, GamepadIndex, CurrentState.LeftTrigger, InGamepad.leftTrigger.value);
+    DispatchAnalogMessage(EAnalogSourceName::LeftTrigger, GamepadIndex, CurrentState.LeftTrigger, InGamepad.leftTrigger.value, GTriggerDeadZone);
 
     // Right Thumb
-    DispatchAnalogMessage(EAnalogSourceName::RightThumbX, GamepadIndex, CurrentState.RightThumbX, InGamepad.rightThumbstick.xAxis.value);
-    DispatchAnalogMessage(EAnalogSourceName::RightThumbY, GamepadIndex, CurrentState.RightThumbY, InGamepad.rightThumbstick.yAxis.value);
+    DispatchAnalogMessage(EAnalogSourceName::RightThumbX, GamepadIndex, CurrentState.RightThumbX, InGamepad.rightThumbstick.xAxis.value, GRightThumbDeadZone);
+    DispatchAnalogMessage(EAnalogSourceName::RightThumbY, GamepadIndex, CurrentState.RightThumbY, InGamepad.rightThumbstick.yAxis.value, GRightThumbDeadZone);
 
     // Left Thumb
-    DispatchAnalogMessage(EAnalogSourceName::LeftThumbX, GamepadIndex, CurrentState.LeftThumbX, InGamepad.leftThumbstick.xAxis.value);
-    DispatchAnalogMessage(EAnalogSourceName::LeftThumbY, GamepadIndex, CurrentState.LeftThumbY, InGamepad.leftThumbstick.yAxis.value);
+    DispatchAnalogMessage(EAnalogSourceName::LeftThumbX, GamepadIndex, CurrentState.LeftThumbX, InGamepad.leftThumbstick.xAxis.value, GLeftThumbDeadZone);
+    DispatchAnalogMessage(EAnalogSourceName::LeftThumbY, GamepadIndex, CurrentState.LeftThumbY, InGamepad.leftThumbstick.yAxis.value, GLeftThumbDeadZone);
 
     CurrentState.RightThumbX  = InGamepad.rightThumbstick.xAxis.value;
     CurrentState.RightThumbY  = InGamepad.rightThumbstick.yAxis.value;
@@ -223,4 +281,26 @@ void FGCInputDevice::ProcessInputState(GCExtendedGamepad* InGamepad, uint32 Game
     CurrentState.LeftThumbY   = InGamepad.leftThumbstick.yAxis.value;
     CurrentState.RightTrigger = InGamepad.rightTrigger.value;
     CurrentState.LeftTrigger  = InGamepad.leftTrigger.value;
+}
+
+void FGCInputDevice::ReleaseHeldButtons(uint32 GamepadIndex)
+{
+    TSharedPtr<FGenericApplicationMessageHandler> CurrentMessageHandler = GetMessageHandler();
+    if (!CurrentMessageHandler)
+    {
+        return;
+    }
+
+    FGCGamepadState& CurrentState = GamepadStates[GamepadIndex];
+    for (int32 ButtonIndex = 1; ButtonIndex < EGamepadButtonName::Count; ButtonIndex++)
+    {
+        FGCButtonState& ButtonState = CurrentState.Buttons[ButtonIndex];
+        if (ButtonState.bState)
+        {
+            CurrentMessageHandler->OnGamepadButtonUp(static_cast<EGamepadButtonName::Type>(ButtonIndex), GamepadIndex);
+
+            ButtonState.bState      = 0;
+            ButtonState.RepeatCount = 0;
+        }
+    }
 }

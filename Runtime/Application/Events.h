@@ -89,7 +89,7 @@ public:
         , Key(Keys::Unknown)
         , CursorPosition()
         , ScrollDelta(0.0f)
-        , bIsScrollVertical(false)
+        , ScrollAxis(EScrollAxis::Vertical)
         , bIsDown(false)
     {
     }
@@ -99,7 +99,7 @@ public:
         , Key(Keys::Unknown)
         , CursorPosition()
         , ScrollDelta(0.0f)
-        , bIsScrollVertical(false)
+        , ScrollAxis(EScrollAxis::Vertical)
         , bIsDown(false)
     {
     }
@@ -109,7 +109,7 @@ public:
         , Key(Keys::Unknown)
         , CursorPosition(InCursorPosition)
         , ScrollDelta(0.0f)
-        , bIsScrollVertical(false)
+        , ScrollAxis(EScrollAxis::Vertical)
         , bIsDown(false)
     {
     }
@@ -119,7 +119,7 @@ public:
         , Key(InKey)
         , CursorPosition()
         , ScrollDelta(0.0f)
-        , bIsScrollVertical(false)
+        , ScrollAxis(EScrollAxis::Vertical)
         , bIsDown(false)
     {
         CHECK(InKey.IsMouseButton());
@@ -130,18 +130,18 @@ public:
         , Key(InKey)
         , CursorPosition()
         , ScrollDelta(0.0f)
-        , bIsScrollVertical(false)
+        , ScrollAxis(EScrollAxis::Vertical)
         , bIsDown(bInIsDown)
     {
         CHECK(InKey.IsMouseButton());
     }
 
-    FCursorEvent(EInputEventType InEventType, const FModifierKeyState& InModifierKeys, float InScrollDelta, bool bInIsScrollVertical)
+    FCursorEvent(EInputEventType InEventType, const FModifierKeyState& InModifierKeys, float InScrollDelta, EScrollAxis InScrollAxis)
         : FInputEvent(InEventType, InModifierKeys)
         , Key(Keys::Unknown)
         , CursorPosition()
         , ScrollDelta(InScrollDelta)
-        , bIsScrollVertical(bInIsScrollVertical)
+        , ScrollAxis(InScrollAxis)
         , bIsDown(false)
     {
     }
@@ -156,9 +156,9 @@ public:
         return CursorPosition;
     }
 
-    bool IsScrollVertical() const
+    EScrollAxis GetScrollAxis() const
     {
-        return bIsScrollVertical;
+        return ScrollAxis;
     }
 
     bool IsDown() const
@@ -172,11 +172,11 @@ public:
     }
 
 private:
-    FKey       Key;
-    IntVector2 CursorPosition;
-    float      ScrollDelta;
-    bool       bIsScrollVertical : 1;
-    bool       bIsDown : 1;
+    FKey        Key;
+    IntVector2  CursorPosition;
+    float       ScrollDelta;
+    EScrollAxis ScrollAxis;
+    bool        bIsDown : 1;
 };
 
 class FKeyEvent : public FInputEvent

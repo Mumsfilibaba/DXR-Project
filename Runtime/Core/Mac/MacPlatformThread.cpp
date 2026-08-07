@@ -6,9 +6,10 @@
 FGenericPlatformThread* FMacPlatformThread::Create(FRunnable* InRunnable, const CHAR* ThreadName, bool bSuspended)
 {
     FMacPlatformThread* NewThread = new FMacPlatformThread(InRunnable, ThreadName);
-    if (!bSuspended)
+    if (!bSuspended && !NewThread->Start())
     {
-        NewThread->Start();
+        delete NewThread;
+        return nullptr;
     }
 
     return NewThread;
@@ -17,21 +18,38 @@ FGenericPlatformThread* FMacPlatformThread::Create(FRunnable* InRunnable, const 
 FMacPlatformThread::FMacPlatformThread(FRunnable* InRunnable, const CHAR* ThreadName)
     : FGenericPlatformThread(InRunnable, ThreadName)
     , Thread()
+    , bIsJoinable(false)
 { 
+}
+
+FMacPlatformThread::~FMacPlatformThread()
+{
+    if (bIsJoinable)
+    {
+        ::pthread_detach(Thread);
+        bIsJoinable = false;
+    }
 }
 
 bool FMacPlatformThread::Start()
 {
-    const int32 Result = ::pthread_create(&Thread, nullptr, FMacPlatformThread::ThreadRoutine, reinterpret_cast<void*>(this));
+    CHECK(!bIsJoinable);
+
+    pthread_attr_t Attributes;
+    ::pthread_attr_init(&Attributes);
+    ::pthread_attr_set_qos_class_np(&Attributes, QOS_CLASS_USER_INITIATED, 0);
+
+    const int32 Result = ::pthread_create(&Thread, &Attributes, FMacPlatformThread::ThreadRoutine, reinterpret_cast<void*>(this));
+    ::pthread_attr_destroy(&Attributes);
+
     if (Result)
     {
         LOG_ERROR("[FMacPlatformThread] Failed to create thread");
         return false;
     }
-    else
-    {
-        return true;
-    }
+
+    bIsJoinable = true;
+    return true;
 }
 
 void FMacPlatformThread::Kill(bool bWaitUntilCompletion)
@@ -43,13 +61,23 @@ void FMacPlatformThread::Kill(bool bWaitUntilCompletion)
 
     if (bWaitUntilCompletion)
     {
-        ::pthread_join(Thread, nullptr);
+        WaitForCompletion();
+    }
+    else if (bIsJoinable)
+    {
+        ::pthread_detach(Thread);
+        bIsJoinable = false;
     }
 }
 
 void FMacPlatformThread::WaitForCompletion()
 {
-    ::pthread_join(Thread, nullptr);
+    // Cleared before the join so a racing second call cannot join a handle the first one freed
+    if (bIsJoinable)
+    {
+        bIsJoinable = false;
+        ::pthread_join(Thread, nullptr);
+    }
 }
 
 void* FMacPlatformThread::GetPlatformHandle()

@@ -1,8 +1,11 @@
 #include "Core/Mac/MacPlatformFile.h"
+#include "Core/Mac/MacPlatformMisc.h"
 #include "Core/Platform/PlatformString.h"
 #include "Core/Memory/Memory.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 #include <aio.h>
 #include <fcntl.h>
+#include <string.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -15,6 +18,8 @@ FMacFileHandle::FMacFileHandle(int32 InFileHandle, bool bInReadOnly)
     , bReadOnly(bInReadOnly)
 {
 }
+
+FMacFileHandle::~FMacFileHandle() = default;
 
 bool FMacFileHandle::SeekFromStart(int64 InOffset)
 {
@@ -37,7 +42,11 @@ bool FMacFileHandle::SeekFromEnd(int64 InOffset)
 int64 FMacFileHandle::Size() const
 {
     struct stat FileInfo;
-    ::fstat(FileHandle, &FileInfo);
+    if (::fstat(FileHandle, &FileInfo) != 0)
+    {
+        return -1;
+    }
+
     return FileInfo.st_size;
 }
 
@@ -52,14 +61,18 @@ int32 FMacFileHandle::Read(uint8* Dst, uint32 BytesToRead)
     CHECK(IsValid());
     CHECK(Dst != nullptr);
 
-    int64 MaxReadSize = MaxReadWriteSize;   
+    int64 MaxReadSize = MaxReadWriteSize;
     int64 BytesRead   = 0;
+
     while (BytesToRead)
     {
         const int64 Size = Math::Min<int64>(MaxReadSize, BytesToRead);
         const int64 Read = ::read(FileHandle, Dst, Size);
+
         if (Read >= 0)
         {
+            BytesRead += Read;
+
             // File was smaller so we are already finished
             if (Read != Size)
             {
@@ -67,9 +80,9 @@ int32 FMacFileHandle::Read(uint8* Dst, uint32 BytesToRead)
             }
 
             // Update vars and read again to satisfy the BytesToRead
-            BytesRead   += Read;
             Dst         += Size;
             BytesToRead -= Size;
+
             CHECK(BytesToRead >= 0);
         }
         else if (Read == -1)
@@ -100,6 +113,12 @@ int32 FMacFileHandle::Write(const uint8* Src, uint32 BytesToWrite)
     {
         const int64 Size    = Math::Min<int64>(MaxReadWriteSize, BytesToWrite);
         const int64 Written = ::write(FileHandle, Src, Size);
+
+        if (Written < 0)
+        {
+            return (BytesWritten > 0) ? static_cast<int32>(BytesWritten) : -1;
+        }
+
         BytesWritten += Written;
 
         if (Written != Size)
@@ -109,6 +128,7 @@ int32 FMacFileHandle::Write(const uint8* Src, uint32 BytesToWrite)
 
         Src          += Size;
         BytesToWrite -= Size;
+        
         CHECK(BytesToWrite >= 0);
     }
 
@@ -165,8 +185,11 @@ struct FMacAsyncFileHandle::FPendingWrite
 FMacAsyncFileHandle::FMacAsyncFileHandle(int32 InFileDescriptor)
     : FileDescriptor(InFileDescriptor)
     , WriteOffset(0)
+    , bHasWriteError(false)
 {
 }
+
+FMacAsyncFileHandle::~FMacAsyncFileHandle() = default;
 
 bool FMacAsyncFileHandle::WriteAsync(const uint8* Src, uint32 BytesToWrite)
 {
@@ -216,10 +239,16 @@ void FMacAsyncFileHandle::WaitForPendingWrites()
 
         for (int32 i = PendingWrites.Size() - 1; i >= 0; --i)
         {
-            int32 Error = ::aio_error(&PendingWrites[i]->ControlBlock);
+            const int32 Error = ::aio_error(&PendingWrites[i]->ControlBlock);
             if (Error != EINPROGRESS)
             {
-                ::aio_return(&PendingWrites[i]->ControlBlock);
+                const ssize_t Written = ::aio_return(&PendingWrites[i]->ControlBlock);
+                if (Error != 0 || Written < 0)
+                {
+                    LOG_ERROR("[FMacAsyncFileHandle] Async write failed: %s", strerror(Error));
+                    bHasWriteError = true;
+                }
+
                 FreePendingWrite(PendingWrites[i]);
                 PendingWrites.RemoveAt(i);
             }
@@ -256,10 +285,16 @@ void FMacAsyncFileHandle::GarbageCollectCompleted()
 {
     for (int32 i = PendingWrites.Size() - 1; i >= 0; --i)
     {
-        int32 Error = ::aio_error(&PendingWrites[i]->ControlBlock);
+        const int32 Error = ::aio_error(&PendingWrites[i]->ControlBlock);
         if (Error != EINPROGRESS)
         {
-            ::aio_return(&PendingWrites[i]->ControlBlock);
+            const ssize_t Written = ::aio_return(&PendingWrites[i]->ControlBlock);
+            if (Error != 0 || Written < 0)
+            {
+                LOG_ERROR("[FMacAsyncFileHandle] Async write failed: %s", strerror(Error));
+                bHasWriteError = true;
+            }
+
             FreePendingWrite(PendingWrites[i]);
             PendingWrites.RemoveAt(i);
         }
@@ -291,6 +326,9 @@ IPlatformAsyncFile* FMacPlatformFile::OpenForAsyncWrite(const String& Filename, 
     int32 FileHandle = ::open(*Filename, Flags, PermissionFlags);
     if (FileHandle < 0)
     {
+        String ErrorString;
+        const int32 ErrorCode = FMacPlatformMisc::GetLastErrorString(ErrorString);
+        LOG_ERROR("Failed to open '%s' for async write with error %d '%s'", *Filename, ErrorCode, *ErrorString);
         return nullptr;
     }
 
@@ -298,6 +336,11 @@ IPlatformAsyncFile* FMacPlatformFile::OpenForAsyncWrite(const String& Filename, 
     const int32 Result = ::flock(FileHandle, LockFlags);
     if (Result != 0)
     {
+        // Read before the close, since that overwrites errno
+        String ErrorString;
+        const int32 ErrorCode = FMacPlatformMisc::GetLastErrorString(ErrorString);
+        LOG_ERROR("Failed to lock '%s' for async write with error %d '%s'", *Filename, ErrorCode, *ErrorString);
+
         ::close(FileHandle);
         return nullptr;
     }
@@ -310,6 +353,9 @@ IPlatformFile* FMacPlatformFile::OpenForRead(const String& Filename)
     int32 FileHandle = ::open(*Filename, O_RDONLY);
     if (FileHandle < 0)
     {
+        String ErrorString;
+        const int32 ErrorCode = FMacPlatformMisc::GetLastErrorString(ErrorString);
+        LOG_ERROR("Failed to open '%s' for read with error %d '%s'", *Filename, ErrorCode, *ErrorString);
         return nullptr;
     }
 
@@ -320,6 +366,11 @@ IPlatformFile* FMacPlatformFile::OpenForRead(const String& Filename)
     const int32 Result = ::flock(FileHandle, LockFlags);
     if (Result != 0)
     {
+        // Read before the close, since that overwrites errno
+        String ErrorString;
+        const int32 ErrorCode = FMacPlatformMisc::GetLastErrorString(ErrorString);
+        LOG_ERROR("Failed to lock '%s' for read with error %d '%s'", *Filename, ErrorCode, *ErrorString);
+
         ::close(FileHandle);
         return nullptr;
     }
@@ -351,6 +402,9 @@ IPlatformFile* FMacPlatformFile::OpenForWrite(const String& Filename, bool bTrun
     int32 FileHandle = ::open(*Filename, Flags, PermissonFlags);
     if (FileHandle < 0)
     {
+        String ErrorString;
+        const int32 ErrorCode = FMacPlatformMisc::GetLastErrorString(ErrorString);
+        LOG_ERROR("Failed to open '%s' for write with error %d '%s'", *Filename, ErrorCode, *ErrorString);
         return nullptr;
     }
 
@@ -361,6 +415,11 @@ IPlatformFile* FMacPlatformFile::OpenForWrite(const String& Filename, bool bTrun
     const int32 Result = ::flock(FileHandle, LockFlags);
     if (Result != 0)
     {
+        // Read before the close, since that overwrites errno
+        String ErrorString;
+        const int32 ErrorCode = FMacPlatformMisc::GetLastErrorString(ErrorString);
+        LOG_ERROR("Failed to lock '%s' for write with error %d '%s'", *Filename, ErrorCode, *ErrorString);
+
         ::close(FileHandle);
         return nullptr;
     }
@@ -376,6 +435,9 @@ String FMacPlatformFile::GetCurrentWorkingDirectory()
     CHAR* CurrentDirectory = ::getcwd(Buffer, sizeof(Buffer));
     if (!CurrentDirectory)
     {
+        String ErrorString;
+        const int32 ErrorCode = FMacPlatformMisc::GetLastErrorString(ErrorString);
+        LOG_ERROR("GetCurrentWorkingDirectory failed with error %d '%s'", ErrorCode, *ErrorString);
         return String();
     }
     else
@@ -393,11 +455,12 @@ const CHAR* FMacPlatformFile::GetExecutablePath()
         SCOPED_AUTORELEASE_POOL();
         
         NSString* ExecutablePathNS = [[NSBundle mainBundle] executablePath];
-        const CHAR* ExecutablePath = [ExecutablePathNS UTF8String];
-        
-        const uint64 Length = FPlatformString::Strlen(ExecutablePath);
-        FPlatformString::Strncpy(StaticExecutablePath, ExecutablePath, MAXPATHLEN);
-        StaticExecutablePath[Length] = 0;
+
+        if (const CHAR* ExecutablePath = [ExecutablePathNS UTF8String])
+        {
+            FPlatformString::Strncpy(StaticExecutablePath, ExecutablePath, MAXPATHLEN);
+            StaticExecutablePath[MAXPATHLEN - 1] = 0;
+        }
     }
 
     return StaticExecutablePath;

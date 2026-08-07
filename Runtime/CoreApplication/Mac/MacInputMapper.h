@@ -35,17 +35,22 @@ public:
             case EKeyboardKeyName::LeftShift:
             case EKeyboardKeyName::RightShift:
                 return NSEventModifierFlagShift;
+
             case EKeyboardKeyName::LeftControl:
             case EKeyboardKeyName::RightControl:
                 return NSEventModifierFlagControl;
+
             case EKeyboardKeyName::LeftAlt:
             case EKeyboardKeyName::RightAlt:
                 return NSEventModifierFlagOption;
+
             case EKeyboardKeyName::LeftSuper:
             case EKeyboardKeyName::RightSuper:
                 return NSEventModifierFlagCommand;
+
             case EKeyboardKeyName::CapsLock:
                 return NSEventModifierFlagCapsLock;
+
             default:
                 return 0;
         }

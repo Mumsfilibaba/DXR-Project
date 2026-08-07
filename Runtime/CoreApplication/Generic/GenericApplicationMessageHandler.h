@@ -152,10 +152,10 @@ struct FGenericApplicationMessageHandler
      * @brief Called when the mouse wheel is scrolled.
      * 
      * @param WheelDelta The amount the wheel has scrolled.
-     * @param bVertical Indicates whether the scroll is vertical (true) or horizontal (false).
+     * @param ScrollAxis The axis that was scrolled along.
      * @return true if the event was handled, false otherwise.
      */
-    virtual bool OnMouseScrolled(float WheelDelta, bool bVertical)
+    virtual bool OnMouseScrolled(float WheelDelta, EScrollAxis ScrollAxis)
     {
         return false;
     }
@@ -268,6 +268,17 @@ struct FGenericApplicationMessageHandler
      * @return true if the event was handled, false otherwise.
      */
     virtual bool OnMonitorConfigurationChange()
+    {
+        return false;
+    }
+
+    /**
+     * @brief Called once per transition when the application gains or loses activation. Not called when focus moves between windows of this application.
+     * 
+     * @param bIsActive True when the application became active.
+     * @return true if the event was handled, false otherwise.
+     */
+    virtual bool OnApplicationActivationChanged(bool bIsActive)
     {
         return false;
     }

@@ -185,10 +185,39 @@
     self = [super initWithFrame:Frame];
     if (self)
     {
+        TrackingArea = nil;
+        [self updateTrackingAreas];
         return self;
     }
     
     return nil;
+}
+
+- (void)dealloc
+{
+    if (TrackingArea)
+    {
+        [self removeTrackingArea:TrackingArea];
+        [TrackingArea release];
+        TrackingArea = nil;
+    }
+    
+    [super dealloc];
+}
+
+- (void)updateTrackingAreas
+{
+    if (TrackingArea)
+    {
+        [self removeTrackingArea:TrackingArea];
+        [TrackingArea release];
+    }
+    
+    const NSTrackingAreaOptions Options = NSTrackingMouseEnteredAndExited | NSTrackingActiveInKeyWindow | NSTrackingInVisibleRect;
+    TrackingArea = [[NSTrackingArea alloc] initWithRect:[self bounds] options:Options owner:self userInfo:nil];
+    [self addTrackingArea:TrackingArea];
+    
+    [super updateTrackingAreas];
 }
 
 - (BOOL)preservesContentDuringLiveResize
@@ -308,6 +337,32 @@
         {
             [super otherMouseUp:Event];
         }
+    }
+}
+
+- (void)mouseEntered:(NSEvent*)Event
+{
+    @autoreleasepool
+    {
+        if (GMacApplication)
+        {
+            GMacApplication->DeferEvent(Event);
+        }
+        
+        [super mouseEntered:Event];
+    }
+}
+
+- (void)mouseExited:(NSEvent*)Event
+{
+    @autoreleasepool
+    {
+        if (GMacApplication)
+        {
+            GMacApplication->DeferEvent(Event);
+        }
+        
+        [super mouseExited:Event];
     }
 }
 

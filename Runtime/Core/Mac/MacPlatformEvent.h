@@ -15,6 +15,7 @@ public:
     static FGenericPlatformEvent* Create(bool bManualReset);
     static void Recycle(FGenericPlatformEvent* InEvent);
 
+public:
     virtual void Trigger() override final;
     virtual void Wait(uint64 Milliseconds) override final;
     virtual void Reset() override final;
@@ -42,29 +43,8 @@ private:
         CHECK(Result == 0);
     }
 
-    static void SubtractTimevals(const struct timeval* This, struct timeval* Subtract, struct timeval* OutDifference)
-    {
-        if (This->tv_usec < Subtract->tv_usec)
-        {
-            const auto nsec = ((Subtract->tv_usec - This->tv_usec) / 1000000) + 1;
-            Subtract->tv_usec -= 1000000 * nsec;
-            Subtract->tv_sec  += nsec;
-        }
-
-        if (This->tv_usec - Subtract->tv_usec > 1000000)
-        {
-            const auto nsec = (This->tv_usec - Subtract->tv_usec) / 1000000;
-            Subtract->tv_usec += 1000000 * nsec;
-            Subtract->tv_sec  -= nsec;
-        }
-
-        OutDifference->tv_sec  = This->tv_sec - Subtract->tv_sec;
-        OutDifference->tv_usec = This->tv_usec - Subtract->tv_usec;
-    }  
-
-    bool bInitialized;
-    bool bManualReset;
-
+    bool                  bInitialized : 1;
+    bool                  bManualReset : 1;
     volatile ETriggerType Triggered;
     volatile int32        NumWaitingThreads;
     pthread_mutex_t       Mutex;

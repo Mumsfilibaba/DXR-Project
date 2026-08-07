@@ -100,7 +100,7 @@ void FMacInputMapper::Initialize()
     KeyCodeFromScanCodeTable[0x4F] = EKeyboardKeyName::F18;
     KeyCodeFromScanCodeTable[0x50] = EKeyboardKeyName::F19;
     KeyCodeFromScanCodeTable[0x5A] = EKeyboardKeyName::F20;
-    KeyCodeFromScanCodeTable[0x47] = EKeyboardKeyName::NumLock;
+    // 0x47 is the keypad Clear key, and a Mac keyboard has no NumLock at all, so it stays unmapped
     KeyCodeFromScanCodeTable[0x29] = EKeyboardKeyName::Semicolon;
     KeyCodeFromScanCodeTable[0x2B] = EKeyboardKeyName::Comma;
     KeyCodeFromScanCodeTable[0x1B] = EKeyboardKeyName::Minus;
@@ -115,9 +115,9 @@ void FMacInputMapper::Initialize()
     KeyCodeFromScanCodeTable[0x3A] = EKeyboardKeyName::LeftAlt;
     KeyCodeFromScanCodeTable[0x37] = EKeyboardKeyName::LeftSuper;
     KeyCodeFromScanCodeTable[0x3C] = EKeyboardKeyName::RightShift;
-    KeyCodeFromScanCodeTable[0x3E] = EKeyboardKeyName::LeftControl;
+    KeyCodeFromScanCodeTable[0x3E] = EKeyboardKeyName::RightControl;
     KeyCodeFromScanCodeTable[0x36] = EKeyboardKeyName::RightSuper;
-    KeyCodeFromScanCodeTable[0x3D] = EKeyboardKeyName::LeftAlt;
+    KeyCodeFromScanCodeTable[0x3D] = EKeyboardKeyName::RightAlt;
     KeyCodeFromScanCodeTable[0x6E] = EKeyboardKeyName::Menu;
     KeyCodeFromScanCodeTable[0x18] = EKeyboardKeyName::Equal;
     KeyCodeFromScanCodeTable[0x2C] = EKeyboardKeyName::Slash;

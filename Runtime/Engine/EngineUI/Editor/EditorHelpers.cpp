@@ -344,6 +344,24 @@ static String BuildSelectedText(const RichTextViewContext& Ctx)
     return Result;
 }
 
+static String BuildAllText(const RichTextViewContext& Ctx)
+{
+    String Result;
+
+    for (int32 L = 0; L < Ctx.Lines.Size(); ++L)
+    {
+        const RichTextLine& Line = Ctx.Lines[L];
+        for (int32 s = 0; s < Line.Spans.Size(); ++s)
+        {
+            Result += Line.Spans[s].Text;
+        }
+
+        Result += "\n";
+    }
+
+    return Result;
+}
+
 static RichTextSelectionPoint GetMouseSelectionPoint(const RichTextViewContext& Ctx, const ImVec2& MousePos)
 {
     RichTextSelectionPoint P{};
@@ -1195,13 +1213,13 @@ bool EditorWidgets::DrawCheckboxProperty(const CHAR* Label, bool& InOutValue, co
     return bEnabled && bResult;
 }
 
-void EditorWidgets::DrawTextProperty(const CHAR* Label, const CHAR* ValueText)
+bool EditorWidgets::DrawTextProperty(const CHAR* Label, const CHAR* ValueText)
 {
     ImGuiTable* Table = ImGui::GetCurrentTable();
     if (!Table)
     {
         ImGui::Text("%s: %s", Label, ValueText ? ValueText : "");
-        return;
+        return false;
     }
 
     const float RowHeight = ImGui::GetFrameHeight();
@@ -1227,6 +1245,7 @@ void EditorWidgets::DrawTextProperty(const CHAR* Label, const CHAR* ValueText)
     ImGui::TableSetColumnIndex(2);
 
     ApplyHoveredRowBg(bRowHovered);
+    return bRowHovered;
 }
 
 void EditorWidgets::DrawTextureProperty(const CHAR* Label, ImTextureID Texture, float PreviewSize)
@@ -2763,16 +2782,7 @@ bool EditorWidgets::BeginRichTextView(const CHAR* InId, const ImVec2& InSize, Ri
         }
         if (EditorWidgets::MenuItem("Copy All"))
         {
-            String All;
-            for (int32 L = 0; L < InOutContext.Lines.Size(); ++L)
-            {
-                const RichTextLine& Line = InOutContext.Lines[L];
-                for (int32 s = 0; s < Line.Spans.Size(); ++s)
-                {
-                    All += Line.Spans[s].Text;
-                }
-                All += "\n";
-            }
+            const String All = BuildAllText(InOutContext);
             ImGui::SetClipboardText(*All);
         }
         if (EditorWidgets::MenuItem("Clear Selection", nullptr, false, InOutContext.bHasSelection))
@@ -2807,6 +2817,11 @@ void EditorWidgets::RichTextSelectAll(RichTextViewContext& InOutContext)
 String EditorWidgets::GetSelectedRichText(const RichTextViewContext& InContext)
 {
     return BuildSelectedText(InContext);
+}
+
+String EditorWidgets::GetAllRichText(const RichTextViewContext& InContext)
+{
+    return BuildAllText(InContext);
 }
 
 void EditorWidgets::RichTextNewLine(RichTextViewContext& InOutContext)

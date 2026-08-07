@@ -42,6 +42,7 @@ FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle, HICON InIco
     , XInputDevice()
     , bIsTrackingMouse(false)
     , bDeferredMessagesEnabled(false)
+    , bIsApplicationActive(true)
     , Messages()
     , MessagesCS()
     , WindowsMessageListeners()
@@ -86,75 +87,6 @@ FWindowsApplication::~FWindowsApplication()
     {
         GWindowsApplication = nullptr;
     }
-}
-
-bool FWindowsApplication::RegisterWindowClass()
-{
-    WNDCLASSA WindowClass;
-    Memory::Memzero(&WindowClass);
-
-    WindowClass.style         = CS_DBLCLKS | CS_HREDRAW | CS_OWNDC;
-    WindowClass.hInstance     = InstanceHandle;
-    WindowClass.hIcon         = Icon;
-    WindowClass.lpszClassName = FWindowsWindow::GetClassName();
-    WindowClass.hbrBackground = static_cast<HBRUSH>(::GetStockObject(BLACK_BRUSH));
-    WindowClass.hCursor       = ::LoadCursor(nullptr, IDC_ARROW);
-    WindowClass.lpfnWndProc   = &FWindowsApplication::WindowProc;
-
-    ATOM ClassAtom = ::RegisterClassA(&WindowClass);
-    if (ClassAtom == 0)
-    {
-        LOG_ERROR("[FWindowsApplication]: FAILED to register WindowClass\n");
-        return false;
-    }
-
-    return true;
-}
-
-bool FWindowsApplication::RegisterRawInputDevices(HWND Window)
-{
-    constexpr uint32 DeviceCount = 1;
-    RAWINPUTDEVICE Devices[DeviceCount];
-    Memory::Memzero(Devices, sizeof(Devices));
-
-    // Register Mouse as a raw input device
-    Devices[0].dwFlags     = 0;
-    Devices[0].hwndTarget  = Window;
-    Devices[0].usUsage     = 0x02; // Mouse usage
-    Devices[0].usUsagePage = 0x01; // Generic desktop controls
-
-    const BOOL bResult = ::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
-    if (!bResult)
-    {
-        LOG_ERROR("[FWindowsApplication] Failed to register Raw Input devices");
-        return false;
-    }
-
-    LOG_INFO("[FWindowsApplication] Registered Raw Input devices");
-    return true;
-}
-
-bool FWindowsApplication::UnregisterRawInputDevices()
-{
-    constexpr uint32 DeviceCount = 1;
-    RAWINPUTDEVICE Devices[DeviceCount];
-    Memory::Memzero(Devices, sizeof(Devices));
-
-    // Unregister Mouse
-    Devices[0].dwFlags     = RIDEV_REMOVE;
-    Devices[0].hwndTarget  = nullptr;
-    Devices[0].usUsage     = 0x02; // Mouse usage
-    Devices[0].usUsagePage = 0x01; // Generic desktop controls
-
-    const BOOL bResult = ::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
-    if (!bResult)
-    {
-        LOG_ERROR("[FWindowsApplication] Failed to unregister Raw Input devices");
-        return false;
-    }
-
-    LOG_INFO("[FWindowsApplication] Unregistered Raw Input devices");
-    return true;
 }
 
 TSharedRef<FGenericWindow> FWindowsApplication::CreateWindow()
@@ -273,6 +205,16 @@ FModifierKeyState FWindowsApplication::GetModifierKeyState() const
     return FModifierKeyState(ModifierFlags);
 }
 
+void FWindowsApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Window)
+{
+    TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
+    if (WindowsWindow && WindowsWindow->IsValid())
+    {
+        HWND ActiveWindow = WindowsWindow->GetWindowHandle();
+        ::SetActiveWindow(ActiveWindow);
+    }
+}
+
 void FWindowsApplication::SetCapture(const TSharedRef<FGenericWindow>& Window)
 {
     TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
@@ -287,26 +229,25 @@ void FWindowsApplication::SetCapture(const TSharedRef<FGenericWindow>& Window)
     }
 }
 
-void FWindowsApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Window)
+TSharedRef<FGenericWindow> FWindowsApplication::GetWindowUnderCursor() const
 {
-    TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
-    if (WindowsWindow && WindowsWindow->IsValid())
-    {
-        HWND ActiveWindow = WindowsWindow->GetWindowHandle();
-        ::SetActiveWindow(ActiveWindow);
-    }
-}
+    POINT CursorPos;
+    ::GetCursorPos(&CursorPos);
 
-TSharedRef<FGenericWindow> FWindowsApplication::GetCapture() const
-{
-    HWND CaptureWindow = ::GetCapture();
-    return GetWindowsWindowFromHWND(CaptureWindow);
+    HWND Handle = ::WindowFromPoint(CursorPos);
+    return GetWindowsWindowFromHWND(Handle);
 }
 
 TSharedRef<FGenericWindow> FWindowsApplication::GetActiveWindow() const
 {
     HWND Foreground = ::GetForegroundWindow();
     return GetWindowsWindowFromHWND(Foreground);
+}
+
+TSharedRef<FGenericWindow> FWindowsApplication::GetCapture() const
+{
+    HWND CaptureWindow = ::GetCapture();
+    return GetWindowsWindowFromHWND(CaptureWindow);
 }
 
 void FWindowsApplication::QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) const
@@ -319,15 +260,6 @@ void FWindowsApplication::SetMessageHandler(const TSharedPtr<FGenericApplication
 {
     FGenericApplication::SetMessageHandler(InMessageHandler);
     XInputDevice.SetMessageHandler(InMessageHandler);
-}
-
-TSharedRef<FGenericWindow> FWindowsApplication::GetWindowUnderCursor() const
-{
-    POINT CursorPos;
-    ::GetCursorPos(&CursorPos);
-
-    HWND Handle = ::WindowFromPoint(CursorPos);
-    return GetWindowsWindowFromHWND(Handle);
 }
 
 TSharedRef<FWindowsWindow> FWindowsApplication::GetWindowsWindowFromHWND(HWND InWindow) const
@@ -346,6 +278,19 @@ TSharedRef<FWindowsWindow> FWindowsApplication::GetWindowsWindowFromHWND(HWND In
 
     // Return a null shared ref if not found
     return nullptr;
+}
+
+void FWindowsApplication::DeferMessage(const FWindowsDeferredMessage& InDeferredMessage)
+{
+    if (bDeferredMessagesEnabled)
+    {
+        TScopedLock<FCriticalSection> Lock(MessagesCS);
+        Messages.Emplace(InDeferredMessage);
+    }
+    else
+    {
+        ProcessDeferredMessage(InDeferredMessage);
+    }
 }
 
 void FWindowsApplication::AddWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& NewListener)
@@ -433,6 +378,131 @@ BOOL FWindowsApplication::EnumerateMonitors(HMONITOR Monitor, HDC /*DeviceContex
     return TRUE; // Continue enumeration
 }
 
+bool FWindowsApplication::RegisterWindowClass()
+{
+    WNDCLASSA WindowClass;
+    Memory::Memzero(&WindowClass);
+
+    WindowClass.style         = CS_DBLCLKS | CS_HREDRAW | CS_OWNDC;
+    WindowClass.hInstance     = InstanceHandle;
+    WindowClass.hIcon         = Icon;
+    WindowClass.lpszClassName = FWindowsWindow::GetClassName();
+    WindowClass.hbrBackground = static_cast<HBRUSH>(::GetStockObject(BLACK_BRUSH));
+    WindowClass.hCursor       = ::LoadCursor(nullptr, IDC_ARROW);
+    WindowClass.lpfnWndProc   = &FWindowsApplication::WindowProc;
+
+    ATOM ClassAtom = ::RegisterClassA(&WindowClass);
+    if (ClassAtom == 0)
+    {
+        LOG_ERROR("[FWindowsApplication]: FAILED to register WindowClass\n");
+        return false;
+    }
+
+    return true;
+}
+
+bool FWindowsApplication::RegisterRawInputDevices(HWND Window)
+{
+    constexpr uint32 DeviceCount = 1;
+    RAWINPUTDEVICE Devices[DeviceCount];
+    Memory::Memzero(Devices, sizeof(Devices));
+
+    // Register Mouse as a raw input device
+    Devices[0].dwFlags     = 0;
+    Devices[0].hwndTarget  = Window;
+    Devices[0].usUsage     = 0x02; // Mouse usage
+    Devices[0].usUsagePage = 0x01; // Generic desktop controls
+
+    const BOOL bResult = ::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
+    if (!bResult)
+    {
+        LOG_ERROR("[FWindowsApplication] Failed to register Raw Input devices");
+        return false;
+    }
+
+    LOG_INFO("[FWindowsApplication] Registered Raw Input devices");
+    return true;
+}
+
+bool FWindowsApplication::UnregisterRawInputDevices()
+{
+    constexpr uint32 DeviceCount = 1;
+    RAWINPUTDEVICE Devices[DeviceCount];
+    Memory::Memzero(Devices, sizeof(Devices));
+
+    // Unregister Mouse
+    Devices[0].dwFlags     = RIDEV_REMOVE;
+    Devices[0].hwndTarget  = nullptr;
+    Devices[0].usUsage     = 0x02; // Mouse usage
+    Devices[0].usUsagePage = 0x01; // Generic desktop controls
+
+    const BOOL bResult = ::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
+    if (!bResult)
+    {
+        LOG_ERROR("[FWindowsApplication] Failed to unregister Raw Input devices");
+        return false;
+    }
+
+    LOG_INFO("[FWindowsApplication] Unregistered Raw Input devices");
+    return true;
+}
+
+LRESULT FWindowsApplication::ProcessRawInput(HWND WindowHandle, UINT Message, WPARAM wParam, LPARAM lParam)
+{
+    HRAWINPUT RawInputHandle = reinterpret_cast<HRAWINPUT>(lParam);
+
+    // Query size of raw input
+    UINT Size = 0;
+    ::GetRawInputData(RawInputHandle, RID_INPUT, nullptr, &Size, sizeof(RAWINPUTHEADER));
+
+    TUniquePtr<uint8[]> Buffer = MakeUniquePtr<uint8[]>(Size);
+
+    // Retrieve the raw input data
+    UINT ResultSize = ::GetRawInputData(RawInputHandle, RID_INPUT, Buffer.Get(), &Size, sizeof(RAWINPUTHEADER));
+    if (ResultSize != Size)
+    {
+        LOG_ERROR("[FWindowsApplication] GetRawInputData returned incorrect size");
+        return 0;
+    }
+
+    RAWINPUT* RawInputData = reinterpret_cast<RAWINPUT*>(Buffer.Get());
+    if (!RawInputData)
+    {
+        return 0;
+    }
+
+    switch (RawInputData->header.dwType)
+    {
+        case RIM_TYPEMOUSE:
+        {
+            int32 DeltaX = RawInputData->data.mouse.lLastX;
+            int32 DeltaY = RawInputData->data.mouse.lLastY;
+
+            if (DeltaX != 0 || DeltaY != 0)
+            {
+                FWindowsDeferredMessage DeferredMsg;
+                DeferredMsg.Window       = GetWindowsWindowFromHWND(WindowHandle);
+                DeferredMsg.WindowHandle = WindowHandle;
+                DeferredMsg.MessageType  = Message;
+                DeferredMsg.wParam       = wParam;
+                DeferredMsg.lParam       = lParam;
+                DeferredMsg.MouseDelta   = IntVector2(DeltaX, DeltaY);
+
+                DeferMessage(DeferredMsg);
+            }
+
+            return 0;
+        }
+
+        default:
+        {
+            break;
+        }
+    }
+
+    return ::DefRawInputProc(&RawInputData, 1, sizeof(RAWINPUTHEADER));
+}
+
 LRESULT FWindowsApplication::ProcessMessage(HWND WindowHandle, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     LRESULT ResultFromListeners = 0;
@@ -496,6 +566,7 @@ LRESULT FWindowsApplication::ProcessMessage(HWND WindowHandle, UINT Message, WPA
         case WM_MOUSELEAVE:
         case WM_SETFOCUS:
         case WM_KILLFOCUS:
+        case WM_ACTIVATEAPP:
         case WM_SIZE:
         case WM_SYSKEYUP:
         case WM_KEYUP:
@@ -549,75 +620,6 @@ LRESULT FWindowsApplication::ProcessMessage(HWND WindowHandle, UINT Message, WPA
     return ::DefWindowProc(WindowHandle, Message, wParam, lParam);
 }
 
-void FWindowsApplication::DeferMessage(const FWindowsDeferredMessage& InDeferredMessage)
-{
-    if (bDeferredMessagesEnabled)
-    {
-        TScopedLock<FCriticalSection> Lock(MessagesCS);
-        Messages.Emplace(InDeferredMessage);
-    }
-    else
-    {
-        ProcessDeferredMessage(InDeferredMessage);
-    }
-}
-
-LRESULT FWindowsApplication::ProcessRawInput(HWND WindowHandle, UINT Message, WPARAM wParam, LPARAM lParam)
-{
-    HRAWINPUT RawInputHandle = reinterpret_cast<HRAWINPUT>(lParam);
-
-    // Query size of raw input
-    UINT Size = 0;
-    ::GetRawInputData(RawInputHandle, RID_INPUT, nullptr, &Size, sizeof(RAWINPUTHEADER));
-
-    TUniquePtr<uint8[]> Buffer = MakeUniquePtr<uint8[]>(Size);
-
-    // Retrieve the raw input data
-    UINT ResultSize = ::GetRawInputData(RawInputHandle, RID_INPUT, Buffer.Get(), &Size, sizeof(RAWINPUTHEADER));
-    if (ResultSize != Size)
-    {
-        LOG_ERROR("[FWindowsApplication] GetRawInputData returned incorrect size");
-        return 0;
-    }
-
-    RAWINPUT* RawInputData = reinterpret_cast<RAWINPUT*>(Buffer.Get());
-    if (!RawInputData)
-    {
-        return 0;
-    }
-
-    switch (RawInputData->header.dwType)
-    {
-        case RIM_TYPEMOUSE:
-        {
-            int32 DeltaX = RawInputData->data.mouse.lLastX;
-            int32 DeltaY = RawInputData->data.mouse.lLastY;
-
-            if (DeltaX != 0 || DeltaY != 0)
-            {
-                FWindowsDeferredMessage DeferredMsg;
-                DeferredMsg.Window       = GetWindowsWindowFromHWND(WindowHandle);
-                DeferredMsg.WindowHandle = WindowHandle;
-                DeferredMsg.MessageType  = Message;
-                DeferredMsg.wParam       = wParam;
-                DeferredMsg.lParam       = lParam;
-                DeferredMsg.MouseDelta   = IntVector2(DeltaX, DeltaY);
-
-                DeferMessage(DeferredMsg);
-            }
-
-            return 0;
-        }
-
-        default:
-        {
-            break;
-        }
-    }
-
-    return ::DefRawInputProc(&RawInputData, 1, sizeof(RAWINPUTHEADER));
-}
-
 void FWindowsApplication::ProcessDeferredMessage(const FWindowsDeferredMessage& Message)
 {
     switch (Message.MessageType)
@@ -637,6 +639,19 @@ void FWindowsApplication::ProcessDeferredMessage(const FWindowsDeferredMessage& 
             if (Message.Window)
             {
                 MessageHandler->OnWindowFocusLost(Message.Window);
+            }
+
+            break;
+        }
+
+        case WM_ACTIVATEAPP:
+        {
+            // Sent once per top-level window, so collapse it down to one call per transition
+            const bool bIsActive = (Message.wParam != FALSE);
+            if (bIsActive != bIsApplicationActive)
+            {
+                bIsApplicationActive = bIsActive;
+                MessageHandler->OnApplicationActivationChanged(bIsActive);
             }
 
             break;
@@ -730,9 +745,9 @@ void FWindowsApplication::ProcessDeferredMessage(const FWindowsDeferredMessage& 
         case WM_MOUSEWHEEL:
         case WM_MOUSEHWHEEL:
         {
-            bool bIsVertical = (Message.MessageType == WM_MOUSEWHEEL);
+            EScrollAxis ScrollAxis = (Message.MessageType == WM_MOUSEWHEEL) ? EScrollAxis::Vertical : EScrollAxis::Horizontal;
             float WheelDelta = static_cast<float>(GET_WHEEL_DELTA_WPARAM(Message.wParam)) / static_cast<float>(WHEEL_DELTA);
-            MessageHandler->OnMouseScrolled(WheelDelta, bIsVertical);
+            MessageHandler->OnMouseScrolled(WheelDelta, ScrollAxis);
             break;
         }
 

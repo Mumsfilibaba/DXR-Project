@@ -5,6 +5,7 @@
 #include <Core/Misc/OutputDeviceLogger.h>
 #include <Engine/Engine.h>
 #include <Engine/Assets/AssetManager.h>
+#include <Engine/Assets/MeshFactory.h>
 #include <Engine/World/World.h>
 #include <Engine/World/Actors/Actors.h>
 #include <Engine/World/Components/Components.h>
@@ -142,10 +143,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     Sponza->AddToWorld(InWorld);
 
     // Create Spheres
-    FMeshCreateInfo SphereMeshInfo = MeshFactory::CreateSphere(3);
-
-    TSharedPtr<FMesh> SphereMesh = MakeSharedPtr<FMesh>();
-    SphereMesh->Init(SphereMeshInfo);
+    TSharedPtr<FMesh> SphereMesh = FMesh::Create(MeshFactory::CreateSphere(3));
 
     constexpr float  SphereOffset   = 1.25f;
     constexpr uint32 SphereCountX   = 8;
@@ -301,9 +299,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             NewMaterial->Initialize();
             NewMaterial->SetName("GateMaterial");
 
-            FMeshCreateInfo CubeMeshData = MeshFactory::CreateCube();
-            TSharedPtr<FMesh> CubeMesh = MakeSharedPtr<FMesh>();
-            CubeMesh->Init(CubeMeshData);
+            TSharedPtr<FMesh> CubeMesh = FMesh::Create(MeshFactory::CreateCube());
 
             NewComponent->SetMesh(CubeMesh);
             NewComponent->SetMaterial(NewMaterial);
@@ -335,9 +331,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             NewMaterial->Initialize();
             NewMaterial->SetName("PlaneMaterial");
 
-            FMeshCreateInfo PlaneMeshData = MeshFactory::CreatePlane(10, 10);
-            TSharedPtr<FMesh> PlaneMesh = MakeSharedPtr<FMesh>();
-            PlaneMesh->Init(PlaneMeshData);
+            TSharedPtr<FMesh> PlaneMesh = FMesh::Create(MeshFactory::CreatePlane(10, 10));
 
             NewComponent->SetMesh(PlaneMesh);
             NewComponent->SetMaterial(NewMaterial);
@@ -369,10 +363,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             NewMaterial->Initialize();
             NewMaterial->SetName("ConeMaterial");
 
-            FMeshCreateInfo ConeMeshData = MeshFactory::CreateCone(32, 0.5f);
-
-            TSharedPtr<FMesh> ConeMesh = MakeSharedPtr<FMesh>();
-            ConeMesh->Init(ConeMeshData);
+            TSharedPtr<FMesh> ConeMesh = FMesh::Create(MeshFactory::CreateCone(32, 0.5f));
 
             NewComponent->SetMesh(ConeMesh);
             NewComponent->SetMaterial(NewMaterial);
@@ -404,10 +395,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             NewMaterial->Initialize();
             NewMaterial->SetName("TorusMaterial");
 
-            FMeshCreateInfo TorusMeshData = MeshFactory::CreateTorus(1.0f, 0.4f, 48, 32);
-
-            TSharedPtr<FMesh> TorusMesh = MakeSharedPtr<FMesh>();
-            TorusMesh->Init(TorusMeshData);
+            TSharedPtr<FMesh> TorusMesh = FMesh::Create(MeshFactory::CreateTorus(1.0f, 0.4f, 48, 32));
 
             NewComponent->SetMesh(TorusMesh);
             NewComponent->SetMaterial(NewMaterial);
@@ -440,10 +428,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             NewMaterial->Initialize();
             NewMaterial->SetName("TeapotMaterial");
 
-            FMeshCreateInfo TeapotMeshData = MeshFactory::CreateTeapot(12);
-
-            TSharedPtr<FMesh> TeapotMesh = MakeSharedPtr<FMesh>();
-            TeapotMesh->Init(TeapotMeshData);
+            TSharedPtr<FMesh> TeapotMesh = FMesh::Create(MeshFactory::CreateTeapot(12));
 
             NewComponent->SetMesh(TeapotMesh);
             NewComponent->SetMaterial(NewMaterial);
@@ -475,10 +460,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             NewMaterial->Initialize();
             NewMaterial->SetName("PyramidMaterial");
 
-            FMeshCreateInfo PyramidMeshData = MeshFactory::CreatePyramid(2.0f, 2.0f, 2.0f);
-
-            TSharedPtr<FMesh> PyramidMesh = MakeSharedPtr<FMesh>();
-            PyramidMesh->Init(PyramidMeshData);
+            TSharedPtr<FMesh> PyramidMesh = FMesh::Create(MeshFactory::CreatePyramid(2.0f, 2.0f, 2.0f));
 
             NewComponent->SetMesh(PyramidMesh);
             NewComponent->SetMaterial(NewMaterial);
@@ -554,10 +536,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     CylinderMaterial->Initialize();
     CylinderMaterial->SetName("CylinderMaterial");
 
-    FMeshCreateInfo CylinderMeshData = MeshFactory::CreateCylinder(32, 0.4f, 5.0f);
-
-    TSharedPtr<FMesh> CylinderMesh = MakeSharedPtr<FMesh>();
-    CylinderMesh->Init(CylinderMeshData);
+    TSharedPtr<FMesh> CylinderMesh = FMesh::Create(MeshFactory::CreateCylinder(32, 0.4f, 5.0f));
 
     constexpr uint32 NumCylinders = 8;
     for (uint32 i = 0; i < NumCylinders; i++)
@@ -916,10 +895,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
         FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
         if (NewComponent)
         {
-            FMeshCreateInfo PlaneMeshData = MeshFactory::CreatePlane(10, 10);
-
-            TSharedPtr<FMesh> PlaneMesh = MakeSharedPtr<FMesh>();
-            PlaneMesh->Init(PlaneMeshData);
+            TSharedPtr<FMesh> PlaneMesh = FMesh::Create(MeshFactory::CreatePlane(10, 10));
 
             NewComponent->SetMesh(PlaneMesh);
             NewComponent->SetMaterial(BasicMaterial);
@@ -938,10 +914,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
         FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
         if (NewComponent)
         {
-            FMeshCreateInfo CylinderMeshData = MeshFactory::CreateCylinder(16, 0.5f, 2.0f);
-
-            TSharedPtr<FMesh> CylinderMesh = MakeSharedPtr<FMesh>();
-            CylinderMesh->Init(CylinderMeshData);
+            TSharedPtr<FMesh> CylinderMesh = FMesh::Create(MeshFactory::CreateCylinder(16, 0.5f, 2.0f));
 
             NewComponent->SetMesh(CylinderMesh);
             NewComponent->SetMaterial(BasicMaterial);
@@ -950,10 +923,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
     }
 
     // Create small hut
-    FMeshCreateInfo CubeMeshData = MeshFactory::CreateCube();
-
-    TSharedPtr<FMesh> CubeMesh = MakeSharedPtr<FMesh>();
-    CubeMesh->Init(CubeMeshData);
+    TSharedPtr<FMesh> CubeMesh = FMesh::Create(MeshFactory::CreateCube());
 
     if (FActor* NewActor = InWorld->CreateActor())
     {

@@ -2,7 +2,9 @@
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/ITextureImporter.h"
 #include "Engine/Assets/IModelImporter.h"
-#include "Engine/Assets/ModelCreateInfo.h"
+#include "Engine/Assets/MeshData.h"
+#include "Engine/Assets/MeshFactory.h"
+#include "Engine/Assets/ModelData.h"
 #include "Engine/Assets/VertexFormat.h"
 
 #include "Engine/Assets/AssetImporters/FBXImporter.h"

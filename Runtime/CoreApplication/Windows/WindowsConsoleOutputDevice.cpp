@@ -6,14 +6,14 @@ FGenericConsoleOutputDevice* FWindowsConsoleOutputDevice::Create()
     return new FWindowsConsoleOutputDevice();
 }
 
-FWindowsConsoleOutputDevice::FWindowsConsoleOutputDevice()
-    : ConsoleHandle(0)
-{
-}
-
 FWindowsConsoleOutputDevice::~FWindowsConsoleOutputDevice()
 {
     Show(false); // Hides/frees console if open
+}
+
+FWindowsConsoleOutputDevice::FWindowsConsoleOutputDevice()
+    : ConsoleHandle(0)
+{
 }
 
 void FWindowsConsoleOutputDevice::Show(bool bShow)
@@ -158,12 +158,15 @@ void FWindowsConsoleOutputDevice::SetTextColor(EConsoleColor Color)
         case EConsoleColor::Red:
             wColor = FOREGROUND_RED | FOREGROUND_INTENSITY;
             break;
+
         case EConsoleColor::Green:
             wColor = FOREGROUND_GREEN | FOREGROUND_INTENSITY;
             break;
+
         case EConsoleColor::Yellow:
             wColor = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
             break;
+
         case EConsoleColor::White:
         default:
             // wColor stays as white

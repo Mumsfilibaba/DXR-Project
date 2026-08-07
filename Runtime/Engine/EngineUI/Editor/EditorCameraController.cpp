@@ -25,6 +25,7 @@ FEditorCameraController::FEditorCameraController()
     , DragDollySpeed(0.033f)
     , SpeedAdjustRate(0.05f)
     , bCameraCutPending(true)
+    , bMoveSpeedChangedPending(false)
 {
     CameraActor = NewObject<FCameraActor>();
     CHECK(CameraActor != nullptr);
@@ -191,6 +192,13 @@ bool FEditorCameraController::ConsumeCameraCut()
     return bWasPending;
 }
 
+bool FEditorCameraController::ConsumeMoveSpeedChanged()
+{
+    const bool bWasPending = bMoveSpeedChangedPending;
+    bMoveSpeedChangedPending = false;
+    return bWasPending;
+}
+
 float FEditorCameraController::GetFieldOfView() const
 {
     const FCameraComponent* Camera = GetCamera();
@@ -211,7 +219,7 @@ float FEditorCameraController::GetFarPlane() const
 
 void FEditorCameraController::SetMoveSpeed(float Value)
 {
-    MoveSpeed = Math::Clamp(Value, 0.1f, 200.0f);
+    MoveSpeed = Math::Clamp(Value, MinMoveSpeed, MaxMoveSpeed);
 }
 
 void FEditorCameraController::SetRotationSpeed(float Value)
@@ -345,9 +353,15 @@ void FEditorCameraController::HandleMouse(float DeltaTime, const FEditorCameraIn
     {
         if (Input.bAltDown)
         {
+            const float PreviousMoveSpeed = MoveSpeed;
             SetMoveSpeed(MoveSpeed * Math::Exp(Input.WheelDelta * SpeedAdjustRate));
+
+            if (MoveSpeed != PreviousMoveSpeed)
+            {
+                bMoveSpeedChangedPending = true;
+            }
         }
-        else
+        else if (!Input.bRightMouseDown)
         {
             ZoomForward(Input.WheelDelta);
         }
@@ -416,7 +430,7 @@ void FEditorCameraController::ZoomForward(float Steps)
         return;
     }
 
-    const float Distance = Math::Max(OrbitDistance, 1.0f) * (1.0f - Math::Exp(-Steps * ZoomSpeed));
+    const float Distance = Math::Max(OrbitDistance, 1.0f) * Steps * ZoomSpeed;
     Camera->AddLocalMovement(0.0f, 0.0f, Distance);
     AnchorOrbitPivot();
 }

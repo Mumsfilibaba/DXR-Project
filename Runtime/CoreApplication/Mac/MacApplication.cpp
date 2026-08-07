@@ -51,6 +51,11 @@
 
 @end
 
+static CGFloat NormalizeWheelDetent(CGFloat Delta)
+{
+    return (Delta > 0.0) ? 1.0 : ((Delta < 0.0) ? -1.0 : 0.0);
+}
+
 FMacApplication* GMacApplication = nullptr;
 
 TSharedPtr<FGenericApplication> FMacApplication::Create()
@@ -63,12 +68,190 @@ TSharedPtr<FGenericApplication> FMacApplication::Create()
     return NewMacApplication;
 }
 
+String FMacApplication::FindMonitorName(NSScreen* Screen)
+{
+    if (!Screen)
+    {
+        return "Unknown Display";
+    }
+    
+    // If the localizedName is available (macOS 10.15 and above) then call that
+    if ([Screen respondsToSelector:@selector(localizedName)])
+    {
+        NSString* MonitorName = [Screen valueForKey:@"localizedName"];
+        if (MonitorName)
+        {
+            return MonitorName;
+        }
+    }
+
+    // Retrieve the displayID from the NSScreen
+    CGDirectDisplayID DisplayID = static_cast<CGDirectDisplayID>([[[Screen deviceDescription] objectForKey:@"NSScreenNumber"] unsignedIntValue]);
+    
+    io_iterator_t Iterator;
+    if (IOServiceGetMatchingServices(MACH_PORT_NULL, IOServiceMatching("IODisplayConnect"), &Iterator) != 0)
+    {
+        return "Unknown Display";
+    }
+    
+    io_service_t    Service;
+    CFDictionaryRef DisplayInfo;
+    while ((Service = IOIteratorNext(Iterator)) != 0)
+    {
+        DisplayInfo = IODisplayCreateInfoDictionary(Service, kIODisplayOnlyPreferredName);
+        
+        CFNumberRef VendorIDRef  = (CFNumberRef)CFDictionaryGetValue(DisplayInfo, CFSTR(kDisplayVendorID));
+        CFNumberRef ProductIDRef = (CFNumberRef)CFDictionaryGetValue(DisplayInfo, CFSTR(kDisplayProductID));
+
+        if (!VendorIDRef || !ProductIDRef)
+        {
+            CFRelease(DisplayInfo);
+            continue;
+        }
+        
+        uint32 VendorID;
+        uint32 ProductID;
+        CFNumberGetValue(VendorIDRef, kCFNumberIntType, &VendorID);
+        CFNumberGetValue(ProductIDRef, kCFNumberIntType, &ProductID);
+        
+        if (CGDisplayVendorNumber(DisplayID) == VendorID && CGDisplayModelNumber(DisplayID) == ProductID)
+        {
+            break;
+        }
+        
+        CFRelease(DisplayInfo);
+    }
+    
+    IOObjectRelease(Iterator);
+    if (!Service)
+    {
+        return "Unknown Display";
+    }
+
+    CFDictionaryRef Names = (CFDictionaryRef)CFDictionaryGetValue(DisplayInfo, CFSTR(kDisplayProductName));
+    
+    CFStringRef NameRef;
+    if (!Names || !CFDictionaryGetValueIfPresent(Names, CFSTR("en_US"), reinterpret_cast<const void**>(&NameRef)))
+    {
+        CFRelease(DisplayInfo);
+        return "Unknown Display";
+    }
+    
+    NSString* MonitorName = (__bridge NSString*)NameRef;
+    
+    // Store the string name, since we need to release the original string (via the DisplayInfo) before we return
+    String Result(MonitorName);
+    
+    // Release DisplayInfo
+    CFRelease(DisplayInfo);
+
+    // Finally return the result
+    return Result;
+}
+
+uint32 FMacApplication::MonitorDPIFromScreen(NSScreen* Screen)
+{
+    const float BackingScaleFactor = [Screen backingScaleFactor];
+    
+    // Retrieve the pixel dimensions of the screen
+    const NSRect Frame = [Screen frame];
+    
+    CGFloat PixelWidth  = CGRectGetWidth(Frame) * BackingScaleFactor;
+    CGFloat PixelHeight = CGRectGetHeight(Frame) * BackingScaleFactor;
+
+    // Retrieve the physical dimensions of the screen in millimeters
+    const CGDirectDisplayID DisplayID = static_cast<CGDirectDisplayID>([[[Screen deviceDescription] objectForKey:@"NSScreenNumber"] unsignedIntValue]);
+    const CGSize PhysicalSize = CGDisplayScreenSize(DisplayID);
+
+    // Zero for a display that reports no EDID, fall back to the default rather than divide by it
+    if (PhysicalSize.width <= 0.0 || PhysicalSize.height <= 0.0)
+    {
+        return 72;
+    }
+
+    // Calculate the DPI
+    const CGFloat InchToMillimeterFactor = 25.4;
+    const CGFloat ScreenWidthDPI         = PixelWidth  / (PhysicalSize.width  / InchToMillimeterFactor);
+    const CGFloat ScreenHeightDPI        = PixelHeight / (PhysicalSize.height / InchToMillimeterFactor);
+
+    // Use the average of width and height DPI values
+    CGFloat ScreenDPI = (ScreenWidthDPI + ScreenHeightDPI) / 2.0;
+
+    // Round and convert to uint32
+    const uint32 RoundedDPI = static_cast<uint32>(Math::RoundToInt(ScreenDPI));
+    return RoundedDPI;
+}
+
+NSPoint FMacApplication::ConvertCocoaPointToEngine(CGFloat PositionX, CGFloat PositionY)
+{
+    if (!GMacApplication)
+    {
+        return NSMakePoint(PositionX, PositionY);
+    }
+
+    TScopedLock Lock(GMacApplication->ScreenCacheCS);
+
+    const FMacScreenInfo* Screen = FindScreenFromCocoaPoint(PositionX, PositionY);
+    if (!Screen)
+    {
+        return NSMakePoint(PositionX, PositionY);
+    }
+
+    // Adjust the point's coordinates relative to the screen (in points)
+    CGFloat RelativeX = PositionX - Screen->Frame.origin.x;
+    CGFloat RelativeY = PositionY - Screen->Frame.origin.y;
+
+    // Convert the Y-coordinate from Cocoa (bottom-left origin) to engine (top-left origin)
+    CGFloat ConvertedY = Screen->Frame.size.height - RelativeY;
+
+    // Create the converted point in pixels
+    NSPoint ConvertedPoint = NSMakePoint(RelativeX, ConvertedY);
+    return ConvertedPoint;
+}
+
+NSPoint FMacApplication::ConvertEnginePointToCocoa(CGFloat PositionX, CGFloat PositionY)
+{
+    if (!GMacApplication)
+    {
+        return NSMakePoint(PositionX, PositionY);
+    }
+
+    TScopedLock Lock(GMacApplication->ScreenCacheCS);
+
+    const FMacScreenInfo* Screen = FindScreenFromEnginePoint(PositionX, PositionY);
+    if (!Screen)
+    {
+        return NSMakePoint(PositionX, PositionY);
+    }
+
+    // Convert the engine point to Cocoa's coordinate system
+    CGFloat RelativeX = Screen->Frame.origin.x + PositionX;
+    CGFloat RelativeY = Screen->Frame.origin.y + (Screen->Frame.size.height - PositionY);
+
+    // Create the converted point
+    NSPoint CocoaPoint = NSMakePoint(RelativeX, RelativeY);
+    return CocoaPoint;
+}
+
+NSRect FMacApplication::ConvertEngineRectToCocoa(CGFloat Width, CGFloat Height, CGFloat PositionX, CGFloat PositionY)
+{
+    const NSPoint Position = ConvertEnginePointToCocoa(PositionX, PositionY);
+    return NSMakeRect(Position.x, Position.y - Height + 1.0f, Width, Height);
+}
+
+NSRect FMacApplication::ConvertCocoaRectToEngine(CGFloat Width, CGFloat Height, CGFloat PositionX, CGFloat PositionY)
+{
+    const NSPoint Position = ConvertCocoaPointToEngine(PositionX, PositionY);
+    return NSMakeRect(Position.x, Position.y - Height + 1.0f, Width, Height);
+}
+
 FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
     : FGenericApplication(InCursor)
     , LocalEventMonitor(nullptr)
     , GlobalMouseMovedEventMonitor(nullptr)
     , Observer(nullptr)
     , WindowUnderCursor(nullptr)
+    , CapturedWindow(nullptr)
     , CurrentModifierFlags(0)
     , LastPressedButton(EMouseButtonName::Unknown)
     , HighPrecisionMouseRemainder()
@@ -97,40 +280,8 @@ FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
 
         RefreshScreenCache();
 
-        /* ---------------------------------------------------------------------------------------------------------- */
-        // We need to map input from the macOS specific key-codes etc. which needs to be initialized somewhere
-        // and this seems like the best place to do this, however we might need to move this if the input-mapping
-        // is necessary somewhere else at an earlier point than at the MacApplication initalization time.
-        /* ---------------------------------------------------------------------------------------------------------- */
         FPlatformInputMapper::Initialize();
-        
-        /* ---------------------------------------------------------------------------------------------------------- */
-        // Initialize the default macOS menu programmatically.
-        //
-        // Since this application does not use a NIB (Interface Builder) file, which typically contains
-        // information about the application's menu structure, we need to create the menu manually.
-        //
-        // This code sets up the main menu bar (`NSMenu`) for the application, including the application
-        // menu and the window menu. The application menu contains standard items such as "About",
-        // "Services", "Hide", "Quit", etc. The window menu includes items like "Minimize", "Zoom",
-        // "Bring All to Front", and "Enter Full Screen".
-        //
-        // The application menu is associated with the first item of the main menu bar and is configured
-        // with standard selectors to provide expected macOS behaviors. For example:
-        //   - "About DXR-Engine" opens the standard About panel.
-        //   - "Hide DXR-Engine" hides the application.
-        //   - "Quit DXR-Engine" terminates the application.
-        //
-        // TODO: Probably not call this DXR-Engine but read from some file what the application is actually called
-        //
-        // The window menu is associated with the second item of the main menu bar and provides window
-        // management actions, such as minimizing and zooming windows, and entering full-screen mode.
-        //
-        // By manually creating and configuring the menu bar we ensure that the application integrates
-        // properly with macOS conventions and provides a familiar user experience, even without using
-        // a NIB file.
-        /* ---------------------------------------------------------------------------------------------------------- */
-        
+
         // Initialize the default macOS menu
         NSMenu*     MenuBar     = [NSMenu new];
         NSMenuItem* AppMenuItem = [MenuBar addItemWithTitle:@"" action:nil keyEquivalent:@""];
@@ -152,6 +303,18 @@ FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
         [AppMenu addItemWithTitle:@"Show All" action:@selector(unhideAllApplications:) keyEquivalent:@""];
         [AppMenu addItem:[NSMenuItem separatorItem]];
         [AppMenu addItemWithTitle:@"Quit DXR-Engine" action:@selector(terminate:) keyEquivalent:@"q"];
+
+        // Create the edit menu
+        NSMenuItem* EditMenuItem = [MenuBar addItemWithTitle:@"" action:nil keyEquivalent:@""];
+
+        NSMenu* EditMenu = [[NSMenu alloc] initWithTitle:@"Edit"];
+        EditMenuItem.submenu = EditMenu;
+
+        [EditMenu addItemWithTitle:@"Cut" action:@selector(cut:) keyEquivalent:@"x"];
+        [EditMenu addItemWithTitle:@"Copy" action:@selector(copy:) keyEquivalent:@"c"];
+        [EditMenu addItemWithTitle:@"Paste" action:@selector(paste:) keyEquivalent:@"v"];
+        [EditMenu addItem:[NSMenuItem separatorItem]];
+        [EditMenu addItemWithTitle:@"Select All" action:@selector(selectAll:) keyEquivalent:@"a"];
 
         // Create the window menu
         NSMenuItem* WindowMenuItem = [MenuBar addItemWithTitle:@"" action:nil keyEquivalent:@""];
@@ -220,6 +383,9 @@ FMacApplication::~FMacApplication()
         
         [WindowUnderCursor release];
         WindowUnderCursor = nil;
+
+        [CapturedWindow release];
+        CapturedWindow = nil;
     }, NSDefaultRunLoopMode, true);
 
     Windows.Clear();
@@ -387,6 +553,35 @@ void FMacApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Window)
     }, NSDefaultRunLoopMode, false);
 }
 
+void FMacApplication::SetCapture(const TSharedRef<FGenericWindow>& Window)
+{
+    FCocoaWindow* NewCapturedWindow = nullptr;
+    if (TSharedRef<FMacWindow> MacWindow = StaticCastSharedRef<FMacWindow>(Window))
+    {
+        NewCapturedWindow = MacWindow->GetCocoaWindow();
+    }
+
+    TScopedLock Lock(CapturedWindowCS);
+    if (CapturedWindow != NewCapturedWindow)
+    {
+        [CapturedWindow release];
+        CapturedWindow = [NewCapturedWindow retain];
+    }
+}
+
+TSharedRef<FGenericWindow> FMacApplication::GetWindowUnderCursor() const
+{
+    FCocoaWindow* CurrentWindowUnderCursor = nullptr;
+    {
+        TScopedLock Lock(WindowUnderCursorCS);
+        CurrentWindowUnderCursor = [WindowUnderCursor retain];
+    }
+
+    TSharedRef<FGenericWindow> Result = FindWindowFromNSWindow(CurrentWindowUnderCursor);
+    [CurrentWindowUnderCursor release];
+    return Result;
+}
+
 TSharedRef<FGenericWindow> FMacApplication::GetActiveWindow() const
 {
     NSWindow* KeyWindow = FMacThreadManager::Get().MainThreadDispatchAndReturn(^
@@ -399,9 +594,18 @@ TSharedRef<FGenericWindow> FMacApplication::GetActiveWindow() const
     return FindWindowFromNSWindow(KeyWindow);
 }
 
-TSharedRef<FGenericWindow> FMacApplication::GetWindowUnderCursor() const
+TSharedRef<FGenericWindow> FMacApplication::GetCapture() const
 {
-    return FindWindowFromNSWindow(WindowUnderCursor);
+    // Retained across the lookup, or the main thread can drop the last reference during it
+    FCocoaWindow* CurrentCapturedWindow = nullptr;
+    {
+        TScopedLock Lock(CapturedWindowCS);
+        CurrentCapturedWindow = [CapturedWindow retain];
+    }
+
+    TSharedRef<FGenericWindow> Result = FindWindowFromNSWindow(CurrentCapturedWindow);
+    [CurrentCapturedWindow release];
+    return Result;
 }
 
 void FMacApplication::QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) const
@@ -413,8 +617,6 @@ void FMacApplication::QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) con
     int32 Index = 0;
     for (const FMacScreenInfo& Screen : ScreenCache)
     {
-        // Here we try and gather as much monitor information as possible and be consitent with the similar
-        // information we can retrieve from the Win32 API in order to be consisitent across platforms.
         FMonitorInfo& MonitorInfo = OutMonitorInfo[Index++];
         MonitorInfo.DeviceName     = Screen.DeviceName;
         MonitorInfo.MainPosition   = IntVector2(Screen.Frame.origin.x, Screen.Frame.origin.y);
@@ -437,68 +639,13 @@ void FMacApplication::SetMessageHandler(const TSharedPtr<FGenericApplicationMess
     }
 }
 
-FCocoaWindow* FMacApplication::FindNSWindowUnderCursor() const
-{
-    SCOPED_AUTORELEASE_POOL();
-    
-    const NSInteger WindowNumber = [NSWindow windowNumberAtPoint:[NSEvent mouseLocation] belowWindowWithWindowNumber:0];
-    
-    const NSWindow* Window = [NSApp windowWithWindowNumber:WindowNumber];
-    if (!Window)
-    {
-        return nullptr;
-    }
-    
-    // Only return the Window if it is a CocoaWindow
-    return [Window isKindOfClass:[FCocoaWindow class]] ? reinterpret_cast<FCocoaWindow*>(Window) : nullptr;
-}
-
-TSharedRef<FMacWindow> FMacApplication::FindWindowFromNSWindow(NSWindow* Window) const
-{
-    if (!Window)
-    {
-        return nullptr;
-    }
-    
-    if ([Window isKindOfClass:[FCocoaWindow class]])
-    {
-        TScopedLock Lock(WindowsCS);
-
-        FCocoaWindow* CocoaWindow = reinterpret_cast<FCocoaWindow*>(Window);
-        for (const TSharedRef<FMacWindow>& MacWindow : Windows)
-        {
-            if (CocoaWindow == reinterpret_cast<FCocoaWindow*>(MacWindow->GetPlatformHandle()))
-            {
-                return MacWindow;
-            }
-        }
-    }
-    
-    return nullptr;
-}
-
-void FMacApplication::CloseWindow(const TSharedRef<FMacWindow>& Window)
-{
-    TScopedLock Lock(ClosedWindowsCS);
-    
-    if (!ClosedWindows.Contains(Window))
-    {
-        ClosedWindows.Emplace(Window);
-    }
-}
-
 void FMacApplication::DeferEvent(NSObject* EventObject)
 {
     SCOPED_AUTORELEASE_POOL();
 
     CHECK_COCOA_MAIN_THREAD();
 
-    FCocoaWindow* NewWindowUnderCursor = FindNSWindowUnderCursor();
-    if (WindowUnderCursor != NewWindowUnderCursor)
-    {
-        [WindowUnderCursor release];
-        WindowUnderCursor = [NewWindowUnderCursor retain];
-    }
+    UpdateWindowUnderCursor();
     
     if (EventObject)
     {
@@ -550,10 +697,11 @@ void FMacApplication::DeferEvent(NSObject* EventObject)
                 NewDeferredEvent.CocoaWindow = [EventWindow retain];
                 NewDeferredEvent.Window      = FindWindowFromNSWindow(NewDeferredEvent.CocoaWindow);
             }
-            
+
             // We have to be careful what events call certain functions, since invalid calls raises an exception
             // causing the deferred events to not be put into the deferred-events array, which means that the event
             // will not be processed properly and the events "disappear".
+
             switch(NewDeferredEvent.EventType)
             {
                 case NSEventTypeKeyUp:
@@ -612,526 +760,129 @@ void FMacApplication::DeferEvent(NSObject* EventObject)
         }
         
         TScopedLock Lock(DeferredEventsCS);
-        DeferredEvents.Emplace(NewDeferredEvent);
-    }
-}
-
-void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& DeferredEvent)
-{
-    SCOPED_AUTORELEASE_POOL();
-    
-    if (DeferredEvent.NotificationName)
-    {
-        NSNotificationName NotificationName = DeferredEvent.NotificationName;
-        if (NotificationName == NSWindowDidMoveNotification)
-        {
-            ProcessWindowMoved(DeferredEvent);
-        }
-        else if (NotificationName == NSWindowDidResizeNotification)
-        {
-            ProcessWindowResized(DeferredEvent);
-        }
-        else if (NotificationName == NSWindowDidMiniaturizeNotification)
-        {
-            ProcessWindowResized(DeferredEvent);
-        }
-        else if (NotificationName == NSWindowDidDeminiaturizeNotification)
-        {
-            ProcessWindowResized(DeferredEvent);
-        }
-        else if (NotificationName == NSWindowDidEnterFullScreenNotification)
-        {
-            ProcessWindowResized(DeferredEvent);
-        }
-        else if (NotificationName == NSWindowDidExitFullScreenNotification)
-        {
-            ProcessWindowResized(DeferredEvent);
-        }
-        else if (NotificationName == NSWindowDidBecomeMainNotification)
-        {
-            MessageHandler->OnWindowFocusGained(DeferredEvent.Window);
-        }
-        else if (NotificationName == NSWindowDidResignMainNotification)
-        {
-            MessageHandler->OnWindowFocusLost(DeferredEvent.Window);
-        }
-        else if (NotificationName == NSApplicationDidChangeScreenParametersNotification)
-        {
-            MessageHandler->OnMonitorConfigurationChange();
-        }
-    }
-    else if (DeferredEvent.Event)
-    {
-        switch(DeferredEvent.EventType)
-        {
-            case NSEventTypeFlagsChanged:
-            {
-                ProcessUpdatedModfierFlags(DeferredEvent);
-                break;
-            }
-                
-            case NSEventTypeKeyUp:
-            case NSEventTypeKeyDown:
-            {
-                ProcessUpdatedModfierFlags(DeferredEvent);
-                ProcessKeyEvent(DeferredEvent);
-                break;
-            }
-
-            case NSEventTypeLeftMouseUp:
-            case NSEventTypeRightMouseUp:
-            case NSEventTypeOtherMouseUp:
-            case NSEventTypeLeftMouseDown:
-            case NSEventTypeRightMouseDown:
-            case NSEventTypeOtherMouseDown:
-            {
-                ProcessUpdatedModfierFlags(DeferredEvent);
-                ProcessMouseButtonEvent(DeferredEvent);
-                break;
-            }
-
-            case NSEventTypeMouseMoved:
-            case NSEventTypeLeftMouseDragged:
-            case NSEventTypeOtherMouseDragged:
-            case NSEventTypeRightMouseDragged:
-            {
-                ProcessUpdatedModfierFlags(DeferredEvent);
-                ProcessMouseMoveEvent(DeferredEvent);
-                break;
-            }
-               
-            case NSEventTypeScrollWheel:
-            {
-                ProcessUpdatedModfierFlags(DeferredEvent);
-                ProcessMouseScrollEvent(DeferredEvent);
-                break;
-            }
-
-            case NSEventTypeMouseEntered:
-            case NSEventTypeMouseExited:
-            {
-                ProcessMouseHoverEvent(DeferredEvent);
-                break;
-            }
-
-            default:
-            {
-                break;
-            }
-        }
+        DeferredEvents.Emplace(Move(NewDeferredEvent));
     }
 }
 
 NSEvent* FMacApplication::OnNSEvent(NSEvent* Event)
 {
+    NSWindow* EventWindow = [Event window];
+    if (EventWindow && ![EventWindow isKindOfClass:[FCocoaWindow class]])
+    {
+        UpdateWindowUnderCursor();
+
+        // Modifier state is global rather than per-window
+        if (Event.type == NSEventTypeFlagsChanged)
+        {
+            DeferEvent(Event);
+        }
+
+        return Event;
+    }
+
     NSEvent* ReturnEvent = Event;
     DeferEvent(Event);
-    
+
     switch(Event.type)
     {
         case NSEventTypeKeyDown:
         case NSEventTypeKeyUp:
             ReturnEvent = nullptr;
             break;
-            
+
         default:
             break;
     }
-    
-    // If the event is returned it is continued to be sent down the responder change, and for events
-    // that we want to stop sending we are returning nullptr.
+
+    // If the event is returned it is continued to be sent down the responder change,
+    // and for events that we want to stop sending we are returning nullptr.
     return ReturnEvent;
 }
 
-void FMacApplication::ProcessMouseMoveEvent(const FDeferredMacEvent& DeferredEvent)
+FCocoaWindow* FMacApplication::FindNSWindowUnderCursor() const
 {
-    if (bHighPrecisionMouseEnabled)
-    {
-        HighPrecisionMouseRemainder = HighPrecisionMouseRemainder + DeferredEvent.MouseDelta;
-
-        const int32 DeltaX = static_cast<int32>(HighPrecisionMouseRemainder.X);
-        const int32 DeltaY = static_cast<int32>(HighPrecisionMouseRemainder.Y);
-        
-        if (DeltaX != 0 || DeltaY != 0)
-        {
-            HighPrecisionMouseRemainder.X -= static_cast<float>(DeltaX);
-            HighPrecisionMouseRemainder.Y -= static_cast<float>(DeltaY);
-            MessageHandler->OnHighPrecisionMouseInput(DeltaX, DeltaY);
-        }
-
-        return;
-    }
-
-    const NSPoint MouseLocation  = DeferredEvent.MouseLocation;
-    const NSPoint CursorPosition = ConvertCocoaPointToEngine(MouseLocation.x, MouseLocation.y);
-    MacCursor->UpdateCursorPosition(IntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y)));
-
-    MessageHandler->OnMouseMove(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
-}
-
-void FMacApplication::ProcessMouseButtonEvent(const FDeferredMacEvent& DeferredEvent)
-{
-    // Convert the MouseButton into engine enum
-    const EMouseButtonName::Type CurrentMouseButton = FPlatformInputMapper::GetButtonFromIndex(DeferredEvent.MouseButtonNumber);
-
-    // MouseDown otherwise it is a MouseUp event
-    if (DeferredEvent.EventType == NSEventTypeLeftMouseDown || DeferredEvent.EventType == NSEventTypeRightMouseDown || DeferredEvent.EventType == NSEventTypeOtherMouseDown)
-    {
-        constexpr uint32 DoubleClickEvenCount = 2;
-        if (LastPressedButton == CurrentMouseButton && (DeferredEvent.ClickCount % DoubleClickEvenCount) == 0)
-        {
-            MessageHandler->OnMouseButtonDoubleClick(CurrentMouseButton, GetModifierKeyState());
-        }
-        else
-        {
-            MessageHandler->OnMouseButtonDown(DeferredEvent.Window, CurrentMouseButton, GetModifierKeyState());
-        }
-
-        // Save the mousebutton to handle double-click events
-        LastPressedButton = CurrentMouseButton;
-    }
-    else
-    {
-        MessageHandler->OnMouseButtonUp(CurrentMouseButton, GetModifierKeyState());
-    }
-}
-
-void FMacApplication::ProcessMouseScrollEvent(const FDeferredMacEvent& DeferredEvent)
-{
-    if (DeferredEvent.ScrollPhase != NSEventPhaseCancelled)
-    {
-        CGFloat ScrollDeltaX = DeferredEvent.ScrollDelta.X;
-        CGFloat ScrollDeltaY = DeferredEvent.ScrollDelta.Y;
-        if (DeferredEvent.bHasPreciseScrollingDeltas)
-        {
-            ScrollDeltaX *= 0.1;
-            ScrollDeltaY *= 0.1;
-        }
-        
-        if (Math::Abs(ScrollDeltaX) > 0.0f)
-        {
-            MessageHandler->OnMouseScrolled(ScrollDeltaX, false);
-        }
-        if (Math::Abs(ScrollDeltaY) > 0.0f)
-        {
-            MessageHandler->OnMouseScrolled(ScrollDeltaY, true);
-        }
-    }
-}
-
-void FMacApplication::ProcessMouseHoverEvent(const FDeferredMacEvent& DeferredEvent)
-{
-    if (DeferredEvent.Window)
-    {
-        if (DeferredEvent.EventType == NSEventTypeMouseEntered)
-        {
-            MessageHandler->OnMouseEntered();
-        }
-        else if (DeferredEvent.EventType == NSEventTypeMouseExited)
-        {
-            MessageHandler->OnMouseLeft();
-        }
-    }
-}
-
-void FMacApplication::ProcessKeyEvent(const FDeferredMacEvent& DeferredEvent)
-{
-    const EKeyboardKeyName::Type KeyName = FPlatformInputMapper::GetKeyCodeFromScanCode(DeferredEvent.KeyCode);
-    if (DeferredEvent.EventType == NSEventTypeKeyDown)
-    {
-        // First notify about a key being down...
-        MessageHandler->OnKeyDown(KeyName, DeferredEvent.bIsRepeat, GetModifierKeyState());
+    SCOPED_AUTORELEASE_POOL();
     
-        // ... then send the character
-        if (DeferredEvent.Character != uint32(-1))
-        {
-            MessageHandler->OnKeyChar(DeferredEvent.Character);
-        }
-    }
-    else if (DeferredEvent.EventType == NSEventTypeKeyUp)
-    {
-        MessageHandler->OnKeyUp(KeyName, GetModifierKeyState());
-    }
-}
-
-void FMacApplication::ProcessUpdatedModfierFlags(const FDeferredMacEvent& DeferredEvent)
-{
-    // NSUinteger seems to be defined as a unsigned long, which would be equal to a uint64 on macOS
-    const uint64 ModifierFlags = DeferredEvent.ModifierFlags;
-
-    if (DeferredEvent.EventType != NSEventTypeFlagsChanged)
-    {
-        constexpr uint64 DeviceIndependentFlags = static_cast<uint64>(NSEventModifierFlagDeviceIndependentFlagsMask);
-        CurrentModifierFlags = (CurrentModifierFlags & ~DeviceIndependentFlags) | (ModifierFlags & DeviceIndependentFlags);
-        return;
-    }
-
-    if (ModifierFlags == CurrentModifierFlags)
-    {
-        return;
-    }
-
-    const uint64 PreviousModifierFlags = CurrentModifierFlags;
-    CurrentModifierFlags = ModifierFlags;
-
-    ProcessModfierKey(EMacModifierKey::LeftControl, ModifierFlags, PreviousModifierFlags);
-    ProcessModfierKey(EMacModifierKey::RightControl, ModifierFlags, PreviousModifierFlags);
-    ProcessModfierKey(EMacModifierKey::LeftShift, ModifierFlags, PreviousModifierFlags);
-    ProcessModfierKey(EMacModifierKey::RightShift, ModifierFlags, PreviousModifierFlags);
-    ProcessModfierKey(EMacModifierKey::LeftCommand, ModifierFlags, PreviousModifierFlags);
-    ProcessModfierKey(EMacModifierKey::RightCommand, ModifierFlags, PreviousModifierFlags);
-    ProcessModfierKey(EMacModifierKey::LeftAlt, ModifierFlags, PreviousModifierFlags);
-    ProcessModfierKey(EMacModifierKey::RightAlt, ModifierFlags, PreviousModifierFlags);
-    ProcessModfierKey(EMacModifierKey::CapsLock, ModifierFlags, PreviousModifierFlags);
-    ProcessModfierKey(EMacModifierKey::NumLock, ModifierFlags, PreviousModifierFlags);
-}
-
-void FMacApplication::ProcessModfierKey(EMacModifierKey::Type MacModifierKey, uint64 ModifierKeyFlags, uint64 PreviousModifierKeyFlags)
-{
-    // Quick access to the modifer key masks. The values for these can be found inside the IOKit/hidsystem/ev_keymap.h
-    // header but we have redefined them here to avoid including IOKit.
-    static constexpr uint64 ModifierKeyMask[] =
-    {
-        0x00000001, // LeftCtrl
-        0x00002000, // RightCtrl
-
-        0x00000002, // LeftShift
-        0x00000004, // RightShift
-
-        0x00000008, // LeftCmd
-        0x00000010, // RightCmd
-
-        0x00000020, // LeftAlt
-        0x00000040, // RightAlt
-        
-        0x00010000, // CapsLock
-        // TODO: NumLock
-    };
-
-    // Quick access to the keyboard names for the modifier keys
-    static constexpr EKeyboardKeyName::Type KeyBoardNames[] =
-    {
-        EKeyboardKeyName::LeftControl,
-        EKeyboardKeyName::RightControl,
-
-        EKeyboardKeyName::LeftShift,
-        EKeyboardKeyName::RightShift,
-
-        EKeyboardKeyName::LeftSuper,
-        EKeyboardKeyName::RightSuper,
-
-        EKeyboardKeyName::LeftAlt,
-        EKeyboardKeyName::RightAlt,
-        
-        EKeyboardKeyName::CapsLock,
-        // TODO: NumLock
-    };
-
-    // Ensure that the modifier key is within the allowed range
-    CHECK(MacModifierKey >= EMacModifierKey::LeftControl && MacModifierKey <= EMacModifierKey::NumLock);
+    const NSInteger WindowNumber = [NSWindow windowNumberAtPoint:[NSEvent mouseLocation] belowWindowWithWindowNumber:0];
     
-    // Retrieve the key-name
-    const EKeyboardKeyName::Type KeyName = KeyBoardNames[MacModifierKey];
-
-    // Retrieve the key-mask
-    const uint64 KeyFlag = ModifierKeyMask[MacModifierKey];
-
-    const bool bIsPressed     = (KeyFlag & ModifierKeyFlags)         != 0;
-    const bool bIsPrevPressed = (KeyFlag & PreviousModifierKeyFlags) != 0;
-
-    if (bIsPressed)
+    const NSWindow* Window = [NSApp windowWithWindowNumber:WindowNumber];
+    if (!Window)
     {
-        bool bIsRepeat = false;
-        if (bIsPrevPressed)
-        {
-            bIsRepeat = true;
-        }
-        
-        MessageHandler->OnKeyDown(KeyName, bIsRepeat, GetModifierKeyState());
-    }
-    else
-    {
-        if (bIsPrevPressed)
-        {
-            // Modifier is currently NOT down, if the key was down previously, we send a key up event
-            MessageHandler->OnKeyUp(KeyName, GetModifierKeyState());
-        }
-    }
-}
-
-void FMacApplication::ProcessWindowResized(const FDeferredMacEvent& DeferredEvent)
-{
-    // Start by giving other systems a chance to prepare for a window-resize
-    MessageHandler->OnWindowResizing(DeferredEvent.Window);
-
-    // DeferEvent captures the geometry for every notification that reaches this function
-    CHECK(DeferredEvent.bHasContentFrame);
-
-    // Convert the coordinates to the generic ones that are expected
-    NSRect ContentFrame = DeferredEvent.ContentFrame;
-    ContentFrame = FMacApplication::ConvertCocoaRectToEngine(ContentFrame.size.width, ContentFrame.size.height, ContentFrame.origin.x, ContentFrame.origin.y);
-
-    // Window can move sometimes when resized so send and event about it
-    const int32 PositionX = static_cast<int32>(ContentFrame.origin.x);
-    const int32 PositionY = static_cast<int32>(ContentFrame.origin.y);
-    
-    const IntVector2 CachedPosition = DeferredEvent.Window->GetCachedPosition();
-    if (CachedPosition.X != PositionX || CachedPosition.Y != PositionY)
-    {
-        MessageHandler->OnWindowMoved(DeferredEvent.Window, PositionX, PositionY);
-        DeferredEvent.Window->SetCachedPosition(IntVector2(PositionX, PositionY));
+        return nullptr;
     }
     
-    MessageHandler->OnWindowResized(DeferredEvent.Window, uint32(ContentFrame.size.width), uint32(ContentFrame.size.height));
+    // Only return the Window if it is a CocoaWindow
+    return [Window isKindOfClass:[FCocoaWindow class]] ? reinterpret_cast<FCocoaWindow*>(Window) : nullptr;
 }
 
-void FMacApplication::ProcessWindowMoved(const FDeferredMacEvent& DeferredEvent)
+TSharedRef<FMacWindow> FMacApplication::FindWindowFromNSWindow(NSWindow* Window) const
 {
-    CHECK(DeferredEvent.bHasContentFrame);
-
-    NSRect ContentFrame = DeferredEvent.ContentFrame;
-    ContentFrame = FMacApplication::ConvertCocoaRectToEngine(ContentFrame.size.width, ContentFrame.size.height, ContentFrame.origin.x, ContentFrame.origin.y);
-    
-    const int32 PositionX = static_cast<int32>(ContentFrame.origin.x);
-    const int32 PositionY = static_cast<int32>(ContentFrame.origin.y);
-    
-    const IntVector2 CachedPosition = DeferredEvent.Window->GetCachedPosition();
-    if (CachedPosition.X != PositionX || CachedPosition.Y != PositionY)
+    if (!Window)
     {
-        MessageHandler->OnWindowMoved(DeferredEvent.Window, PositionX, PositionY);
-        DeferredEvent.Window->SetCachedPosition(IntVector2(PositionX, PositionY));
+        return nullptr;
     }
+    
+    if ([Window isKindOfClass:[FCocoaWindow class]])
+    {
+        TScopedLock Lock(WindowsCS);
+
+        FCocoaWindow* CocoaWindow = reinterpret_cast<FCocoaWindow*>(Window);
+        for (const TSharedRef<FMacWindow>& MacWindow : Windows)
+        {
+            if (CocoaWindow == reinterpret_cast<FCocoaWindow*>(MacWindow->GetPlatformHandle()))
+            {
+                return MacWindow;
+            }
+        }
+    }
+    
+    return nullptr;
 }
 
 void FMacApplication::OnWindowDestroyed(const TSharedRef<FMacWindow>& Window)
 {
-    // Schedule the removal and deletion of the CocoaWindow, the window will later actually be released
-    // during the next call to FMacApplication::Tick.
     FCocoaWindow* CocoaWindow = Window->GetCocoaWindow();
-    if (CocoaWindow && !ClosedCocoaWindows.Contains(CocoaWindow))
+    if (CocoaWindow)
     {
         TScopedLock Lock(ClosedCocoaWindowsCS);
-        ClosedCocoaWindows.Add(CocoaWindow);
+        if (!ClosedCocoaWindows.Contains(CocoaWindow))
+        {
+            ClosedCocoaWindows.Add(CocoaWindow);
+        }
     }
     
     // Remove the MacWindow
-    TScopedLock Lock(ClosedCocoaWindowsCS);
-    Windows.Remove(Window);
+    {
+        TScopedLock Lock(WindowsCS);
+        Windows.Remove(Window);
+    }
 }
 
 void FMacApplication::OnWindowWillResize(const TSharedRef<FMacWindow>& Window)
 {
-    // This callback allows other engine systems (Mainly the FApplication) to be notifies when a
-    // window is about to be resized. This can for example be when we want to wait for the GPU to finish
-    // rendering before we resize the window.
     MessageHandler->OnWindowResizing(Window);
 }
 
-String FMacApplication::FindMonitorName(NSScreen* Screen)
+void FMacApplication::UpdateWindowUnderCursor()
 {
-    if (!Screen)
-    {
-        return "Unknown Display";
-    }
-    
-    // If the localizedName is available (macOS 10.15 and above) then call that
-    if ([Screen respondsToSelector:@selector(localizedName)])
-    {
-        NSString* MonitorName = [Screen valueForKey:@"localizedName"];
-        if (MonitorName)
-        {
-            return MonitorName;
-        }
-    }
+    FCocoaWindow* NewWindowUnderCursor = FindNSWindowUnderCursor();
 
-    // Retrieve the displayID from the NSScreen
-    CGDirectDisplayID DisplayID = static_cast<CGDirectDisplayID>([[[Screen deviceDescription] objectForKey:@"NSScreenNumber"] unsignedIntValue]);
-    
-    io_iterator_t Iterator;
-    if (IOServiceGetMatchingServices(MACH_PORT_NULL, IOServiceMatching("IODisplayConnect"), &Iterator) != 0)
+    TScopedLock Lock(WindowUnderCursorCS);
+    if (WindowUnderCursor != NewWindowUnderCursor)
     {
-        return "Unknown Display";
+        [WindowUnderCursor release];
+        WindowUnderCursor = [NewWindowUnderCursor retain];
     }
-    
-    io_service_t    Service;
-    CFDictionaryRef DisplayInfo;
-    while ((Service = IOIteratorNext(Iterator)) != 0)
-    {
-        DisplayInfo = IODisplayCreateInfoDictionary(Service, kIODisplayOnlyPreferredName);
-        
-        CFNumberRef VendorIDRef  = (CFNumberRef)CFDictionaryGetValue(DisplayInfo, CFSTR(kDisplayVendorID));
-        CFNumberRef ProductIDRef = (CFNumberRef)CFDictionaryGetValue(DisplayInfo, CFSTR(kDisplayProductID));
-        if (!VendorIDRef || !ProductIDRef)
-        {
-            CFRelease(DisplayInfo);
-            continue;
-        }
-        
-        uint32 VendorID;
-        uint32 ProductID;
-        CFNumberGetValue(VendorIDRef, kCFNumberIntType, &VendorID);
-        CFNumberGetValue(ProductIDRef, kCFNumberIntType, &ProductID);
-        
-        if (CGDisplayVendorNumber(DisplayID) == VendorID && CGDisplayModelNumber(DisplayID) == ProductID)
-        {
-            break;
-        }
-        
-        CFRelease(DisplayInfo);
-    }
-    
-    IOObjectRelease(Iterator);
-    if (!Service)
-    {
-        return "Unknown Display";
-    }
-
-    CFDictionaryRef Names = (CFDictionaryRef)CFDictionaryGetValue(DisplayInfo, CFSTR(kDisplayProductName));
-    
-    CFStringRef NameRef;
-    if (!Names || !CFDictionaryGetValueIfPresent(Names, CFSTR("en_US"), reinterpret_cast<const void**>(&NameRef)))
-    {
-        CFRelease(DisplayInfo);
-        return "Unknown Display";
-    }
-    
-    NSString* MonitorName = (__bridge NSString*)NameRef;
-    
-    // Store the string name, since we need to release the original string (via the DisplayInfo) before we return
-    String Result(MonitorName);
-    
-    // Release DisplayInfo
-    CFRelease(DisplayInfo);
-
-    // Finally return the result
-    return Result;
 }
 
-uint32 FMacApplication::MonitorDPIFromScreen(NSScreen* Screen)
+void FMacApplication::CloseWindow(const TSharedRef<FMacWindow>& Window)
 {
-    const float BackingScaleFactor = [Screen backingScaleFactor];
+    TScopedLock Lock(ClosedWindowsCS);
     
-    // Retrieve the pixel dimensions of the screen
-    const NSRect Frame = [Screen frame];
-    
-    CGFloat PixelWidth  = CGRectGetWidth(Frame) * BackingScaleFactor;
-    CGFloat PixelHeight = CGRectGetHeight(Frame) * BackingScaleFactor;
-
-    // Retrieve the physical dimensions of the screen in millimeters
-    const CGFloat InchToMillimeterFactor = 25.4;
-    CGFloat PhysicalWidth  = CGRectGetWidth(Frame) * InchToMillimeterFactor / Frame.size.width;
-    CGFloat PhysicalHeight = CGRectGetHeight(Frame) * InchToMillimeterFactor / Frame.size.height;
-
-    // Calculate the DPI
-    const CGFloat ScreenWidthDPI  = PixelWidth / PhysicalWidth;
-    const CGFloat ScreenHeightDPI = PixelHeight / PhysicalHeight;
-
-    // Use the average of width and height DPI values
-    CGFloat ScreenDPI = (ScreenWidthDPI + ScreenHeightDPI) / 2.0;
-
-    // Round and convert to uint32
-    const uint32 RoundedDPI = static_cast<uint32>(Math::RoundToInt(ScreenDPI));
-    return RoundedDPI;
+    if (!ClosedWindows.Contains(Window))
+    {
+        ClosedWindows.Emplace(Window);
+    }
 }
 
 void FMacApplication::RefreshScreenCache()
@@ -1222,65 +973,383 @@ const FMacScreenInfo* FMacApplication::FindScreenFromEnginePoint(CGFloat Positio
     return PrimaryScreen ? PrimaryScreen : &GMacApplication->ScreenCache.First();
 }
 
-NSPoint FMacApplication::ConvertCocoaPointToEngine(CGFloat PositionX, CGFloat PositionY)
+void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& DeferredEvent)
 {
-    if (!GMacApplication)
+    SCOPED_AUTORELEASE_POOL();
+    
+    if (DeferredEvent.NotificationName)
     {
-        return NSMakePoint(PositionX, PositionY);
+        NSNotificationName NotificationName = DeferredEvent.NotificationName;
+        if (NotificationName == NSWindowDidMoveNotification)
+        {
+            ProcessWindowMoved(DeferredEvent);
+        }
+        else if (NotificationName == NSWindowDidResizeNotification)
+        {
+            ProcessWindowResized(DeferredEvent);
+        }
+        else if (NotificationName == NSWindowDidMiniaturizeNotification)
+        {
+            ProcessWindowResized(DeferredEvent);
+        }
+        else if (NotificationName == NSWindowDidDeminiaturizeNotification)
+        {
+            ProcessWindowResized(DeferredEvent);
+        }
+        else if (NotificationName == NSWindowDidEnterFullScreenNotification)
+        {
+            ProcessWindowResized(DeferredEvent);
+        }
+        else if (NotificationName == NSWindowDidExitFullScreenNotification)
+        {
+            ProcessWindowResized(DeferredEvent);
+        }
+        else if (NotificationName == NSWindowDidBecomeMainNotification)
+        {
+            MessageHandler->OnWindowFocusGained(DeferredEvent.Window);
+        }
+        else if (NotificationName == NSWindowDidResignMainNotification)
+        {
+            MessageHandler->OnWindowFocusLost(DeferredEvent.Window);
+        }
+        else if (NotificationName == NSApplicationDidChangeScreenParametersNotification)
+        {
+            MessageHandler->OnMonitorConfigurationChange();
+        }
+        else if (NotificationName == NSApplicationDidBecomeActiveNotification)
+        {
+            MessageHandler->OnApplicationActivationChanged(true);
+        }
+        else if (NotificationName == NSApplicationDidResignActiveNotification)
+        {
+            MessageHandler->OnApplicationActivationChanged(false);
+        }
     }
-
-    TScopedLock Lock(GMacApplication->ScreenCacheCS);
-
-    const FMacScreenInfo* Screen = FindScreenFromCocoaPoint(PositionX, PositionY);
-    if (!Screen)
+    else if (DeferredEvent.Event)
     {
-        return NSMakePoint(PositionX, PositionY);
+        switch(DeferredEvent.EventType)
+        {
+            case NSEventTypeFlagsChanged:
+            {
+                ProcessUpdatedModfierFlags(DeferredEvent);
+                break;
+            }
+                
+            case NSEventTypeKeyUp:
+            case NSEventTypeKeyDown:
+            {
+                ProcessUpdatedModfierFlags(DeferredEvent);
+                ProcessKeyEvent(DeferredEvent);
+                break;
+            }
+
+            case NSEventTypeLeftMouseUp:
+            case NSEventTypeRightMouseUp:
+            case NSEventTypeOtherMouseUp:
+            case NSEventTypeLeftMouseDown:
+            case NSEventTypeRightMouseDown:
+            case NSEventTypeOtherMouseDown:
+            {
+                ProcessUpdatedModfierFlags(DeferredEvent);
+                ProcessMouseButtonEvent(DeferredEvent);
+                break;
+            }
+
+            case NSEventTypeMouseMoved:
+            case NSEventTypeLeftMouseDragged:
+            case NSEventTypeOtherMouseDragged:
+            case NSEventTypeRightMouseDragged:
+            {
+                ProcessUpdatedModfierFlags(DeferredEvent);
+                ProcessMouseMoveEvent(DeferredEvent);
+                break;
+            }
+               
+            case NSEventTypeScrollWheel:
+            {
+                ProcessUpdatedModfierFlags(DeferredEvent);
+                ProcessMouseScrollEvent(DeferredEvent);
+                break;
+            }
+
+            case NSEventTypeMouseEntered:
+            case NSEventTypeMouseExited:
+            {
+                ProcessMouseHoverEvent(DeferredEvent);
+                break;
+            }
+
+            default:
+            {
+                break;
+            }
+        }
     }
-
-    // Adjust the point's coordinates relative to the screen (in points)
-    CGFloat RelativeX = PositionX - Screen->Frame.origin.x;
-    CGFloat RelativeY = PositionY - Screen->Frame.origin.y;
-
-    // Convert the Y-coordinate from Cocoa (bottom-left origin) to engine (top-left origin)
-    CGFloat ConvertedY = Screen->Frame.size.height - RelativeY;
-
-    // Create the converted point in pixels
-    NSPoint ConvertedPoint = NSMakePoint(RelativeX, ConvertedY);
-    return ConvertedPoint;
 }
 
-NSPoint FMacApplication::ConvertEnginePointToCocoa(CGFloat PositionX, CGFloat PositionY)
+void FMacApplication::ProcessMouseMoveEvent(const FDeferredMacEvent& DeferredEvent)
 {
-    if (!GMacApplication)
+    if (bHighPrecisionMouseEnabled)
     {
-        return NSMakePoint(PositionX, PositionY);
+        HighPrecisionMouseRemainder = HighPrecisionMouseRemainder + DeferredEvent.MouseDelta;
+
+        const int32 DeltaX = static_cast<int32>(HighPrecisionMouseRemainder.X);
+        const int32 DeltaY = static_cast<int32>(HighPrecisionMouseRemainder.Y);
+        
+        if (DeltaX != 0 || DeltaY != 0)
+        {
+            HighPrecisionMouseRemainder.X -= static_cast<float>(DeltaX);
+            HighPrecisionMouseRemainder.Y -= static_cast<float>(DeltaY);
+            MessageHandler->OnHighPrecisionMouseInput(DeltaX, DeltaY);
+        }
+
+        return;
     }
 
-    TScopedLock Lock(GMacApplication->ScreenCacheCS);
+    const NSPoint MouseLocation  = DeferredEvent.MouseLocation;
+    const NSPoint CursorPosition = ConvertCocoaPointToEngine(MouseLocation.x, MouseLocation.y);
+    MacCursor->UpdateCursorPosition(IntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y)));
 
-    const FMacScreenInfo* Screen = FindScreenFromEnginePoint(PositionX, PositionY);
-    if (!Screen)
+    MessageHandler->OnMouseMove(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
+}
+
+void FMacApplication::ProcessMouseButtonEvent(const FDeferredMacEvent& DeferredEvent)
+{
+    // Convert the MouseButton into engine enum
+    const EMouseButtonName::Type CurrentMouseButton = FPlatformInputMapper::GetButtonFromIndex(DeferredEvent.MouseButtonNumber);
+
+    // MouseDown otherwise it is a MouseUp event
+    if (DeferredEvent.EventType == NSEventTypeLeftMouseDown || DeferredEvent.EventType == NSEventTypeRightMouseDown || DeferredEvent.EventType == NSEventTypeOtherMouseDown)
     {
-        return NSMakePoint(PositionX, PositionY);
+        if (LastPressedButton == CurrentMouseButton && DeferredEvent.ClickCount == 2)
+        {
+            MessageHandler->OnMouseButtonDoubleClick(CurrentMouseButton, GetModifierKeyState());
+        }
+        else
+        {
+            MessageHandler->OnMouseButtonDown(DeferredEvent.Window, CurrentMouseButton, GetModifierKeyState());
+        }
+
+        // Save the mousebutton to handle double-click events
+        LastPressedButton = CurrentMouseButton;
+    }
+    else
+    {
+        MessageHandler->OnMouseButtonUp(CurrentMouseButton, GetModifierKeyState());
+    }
+}
+
+void FMacApplication::ProcessMouseScrollEvent(const FDeferredMacEvent& DeferredEvent)
+{
+    if (DeferredEvent.ScrollPhase == NSEventPhaseCancelled)
+    {
+        return;
     }
 
-    // Convert the engine point to Cocoa's coordinate system
-    CGFloat RelativeX = Screen->Frame.origin.x + PositionX;
-    CGFloat RelativeY = Screen->Frame.origin.y + (Screen->Frame.size.height - PositionY);
+    CGFloat ScrollDeltaX = DeferredEvent.ScrollDelta.X;
+    CGFloat ScrollDeltaY = DeferredEvent.ScrollDelta.Y;
 
-    // Create the converted point
-    NSPoint CocoaPoint = NSMakePoint(RelativeX, RelativeY);
-    return CocoaPoint;
+    if (DeferredEvent.bHasPreciseScrollingDeltas)
+    {
+        constexpr CGFloat PointsPerDetent = 0.1;
+        ScrollDeltaX *= PointsPerDetent;
+        ScrollDeltaY *= PointsPerDetent;
+    }
+    else
+    {
+        ScrollDeltaX = NormalizeWheelDetent(ScrollDeltaX);
+        ScrollDeltaY = NormalizeWheelDetent(ScrollDeltaY);
+    }
+
+    if (Math::Abs(ScrollDeltaX) > 0.0f)
+    {
+        MessageHandler->OnMouseScrolled(ScrollDeltaX, EScrollAxis::Horizontal);
+    }
+    if (Math::Abs(ScrollDeltaY) > 0.0f)
+    {
+        MessageHandler->OnMouseScrolled(ScrollDeltaY, EScrollAxis::Vertical);
+    }
 }
 
-NSRect FMacApplication::ConvertEngineRectToCocoa(CGFloat Width, CGFloat Height, CGFloat PositionX, CGFloat PositionY)
+void FMacApplication::ProcessMouseHoverEvent(const FDeferredMacEvent& DeferredEvent)
 {
-    const NSPoint Position = ConvertEnginePointToCocoa(PositionX, PositionY);
-    return NSMakeRect(Position.x, Position.y - Height + 1.0f, Width, Height);
+    if (DeferredEvent.Window)
+    {
+        if (DeferredEvent.EventType == NSEventTypeMouseEntered)
+        {
+            MessageHandler->OnMouseEntered();
+        }
+        else if (DeferredEvent.EventType == NSEventTypeMouseExited)
+        {
+            MessageHandler->OnMouseLeft();
+        }
+    }
 }
 
-NSRect FMacApplication::ConvertCocoaRectToEngine(CGFloat Width, CGFloat Height, CGFloat PositionX, CGFloat PositionY)
+void FMacApplication::ProcessKeyEvent(const FDeferredMacEvent& DeferredEvent)
 {
-    const NSPoint Position = ConvertCocoaPointToEngine(PositionX, PositionY);
-    return NSMakeRect(Position.x, Position.y - Height + 1.0f, Width, Height);
+    const EKeyboardKeyName::Type KeyName = FPlatformInputMapper::GetKeyCodeFromScanCode(DeferredEvent.KeyCode);
+    if (DeferredEvent.EventType == NSEventTypeKeyDown)
+    {
+        // First notify about a key being down...
+        MessageHandler->OnKeyDown(KeyName, DeferredEvent.bIsRepeat, GetModifierKeyState());
+    
+        // ... then send the character
+        if (DeferredEvent.Character != uint32(-1))
+        {
+            MessageHandler->OnKeyChar(DeferredEvent.Character);
+        }
+    }
+    else if (DeferredEvent.EventType == NSEventTypeKeyUp)
+    {
+        MessageHandler->OnKeyUp(KeyName, GetModifierKeyState());
+    }
+}
+
+void FMacApplication::ProcessUpdatedModfierFlags(const FDeferredMacEvent& DeferredEvent)
+{
+    // NSUinteger seems to be defined as a unsigned long, which would be equal to a uint64 on macOS
+    const uint64 ModifierFlags = DeferredEvent.ModifierFlags;
+
+    if (DeferredEvent.EventType != NSEventTypeFlagsChanged)
+    {
+        constexpr uint64 DeviceIndependentFlags = static_cast<uint64>(NSEventModifierFlagDeviceIndependentFlagsMask);
+        CurrentModifierFlags = (CurrentModifierFlags & ~DeviceIndependentFlags) | (ModifierFlags & DeviceIndependentFlags);
+        return;
+    }
+
+    if (ModifierFlags == CurrentModifierFlags)
+    {
+        return;
+    }
+
+    const uint64 PreviousModifierFlags = CurrentModifierFlags;
+    CurrentModifierFlags = ModifierFlags;
+
+    ProcessModfierKey(EMacModifierKey::LeftControl, ModifierFlags, PreviousModifierFlags);
+    ProcessModfierKey(EMacModifierKey::RightControl, ModifierFlags, PreviousModifierFlags);
+    ProcessModfierKey(EMacModifierKey::LeftShift, ModifierFlags, PreviousModifierFlags);
+    ProcessModfierKey(EMacModifierKey::RightShift, ModifierFlags, PreviousModifierFlags);
+    ProcessModfierKey(EMacModifierKey::LeftCommand, ModifierFlags, PreviousModifierFlags);
+    ProcessModfierKey(EMacModifierKey::RightCommand, ModifierFlags, PreviousModifierFlags);
+    ProcessModfierKey(EMacModifierKey::LeftAlt, ModifierFlags, PreviousModifierFlags);
+    ProcessModfierKey(EMacModifierKey::RightAlt, ModifierFlags, PreviousModifierFlags);
+    ProcessModfierKey(EMacModifierKey::CapsLock, ModifierFlags, PreviousModifierFlags);
+}
+
+void FMacApplication::ProcessModfierKey(EMacModifierKey::Type MacModifierKey, uint64 ModifierKeyFlags, uint64 PreviousModifierKeyFlags)
+{
+    // Quick access to the modifer key masks. The values for these can be found inside the IOKit/hidsystem/ev_keymap.h
+    // header but we have redefined them here to avoid including IOKit.
+    static constexpr uint64 ModifierKeyMask[] =
+    {
+        0x00000001, // LeftCtrl
+        0x00002000, // RightCtrl
+
+        0x00000002, // LeftShift
+        0x00000004, // RightShift
+
+        0x00000008, // LeftCmd
+        0x00000010, // RightCmd
+
+        0x00000020, // LeftAlt
+        0x00000040, // RightAlt
+        
+        0x00010000, // CapsLock
+    };
+
+    // Quick access to the keyboard names for the modifier keys
+    static constexpr EKeyboardKeyName::Type KeyBoardNames[] =
+    {
+        EKeyboardKeyName::LeftControl,
+        EKeyboardKeyName::RightControl,
+
+        EKeyboardKeyName::LeftShift,
+        EKeyboardKeyName::RightShift,
+
+        EKeyboardKeyName::LeftSuper,
+        EKeyboardKeyName::RightSuper,
+
+        EKeyboardKeyName::LeftAlt,
+        EKeyboardKeyName::RightAlt,
+        
+        EKeyboardKeyName::CapsLock,
+    };
+
+    static_assert(ARRAY_COUNT(ModifierKeyMask) == ARRAY_COUNT(KeyBoardNames), "Modifier key tables must stay the same length");
+
+    // Ensure that the modifier key is within the allowed range
+    CHECK(MacModifierKey >= EMacModifierKey::LeftControl && MacModifierKey < static_cast<int32>(ARRAY_COUNT(ModifierKeyMask)));
+    
+    // Retrieve the key-name
+    const EKeyboardKeyName::Type KeyName = KeyBoardNames[MacModifierKey];
+
+    // Retrieve the key-mask
+    const uint64 KeyFlag = ModifierKeyMask[MacModifierKey];
+
+    const bool bIsPressed     = (KeyFlag & ModifierKeyFlags)         != 0;
+    const bool bIsPrevPressed = (KeyFlag & PreviousModifierKeyFlags) != 0;
+
+    if (bIsPressed)
+    {
+        bool bIsRepeat = false;
+        if (bIsPrevPressed)
+        {
+            bIsRepeat = true;
+        }
+        
+        MessageHandler->OnKeyDown(KeyName, bIsRepeat, GetModifierKeyState());
+    }
+    else
+    {
+        if (bIsPrevPressed)
+        {
+            // Modifier is currently NOT down, if the key was down previously, we send a key up event
+            MessageHandler->OnKeyUp(KeyName, GetModifierKeyState());
+        }
+    }
+}
+
+void FMacApplication::ProcessWindowResized(const FDeferredMacEvent& DeferredEvent)
+{
+    // Start by giving other systems a chance to prepare for a window-resize
+    MessageHandler->OnWindowResizing(DeferredEvent.Window);
+
+    // DeferEvent captures the geometry for every notification that reaches this function
+    CHECK(DeferredEvent.bHasContentFrame);
+
+    // Convert the coordinates to the generic ones that are expected
+    NSRect ContentFrame = DeferredEvent.ContentFrame;
+    ContentFrame = FMacApplication::ConvertCocoaRectToEngine(ContentFrame.size.width, ContentFrame.size.height, ContentFrame.origin.x, ContentFrame.origin.y);
+
+    // Window can move sometimes when resized so send and event about it
+    const int32 PositionX = static_cast<int32>(ContentFrame.origin.x);
+    const int32 PositionY = static_cast<int32>(ContentFrame.origin.y);
+    
+    const IntVector2 CachedPosition = DeferredEvent.Window->GetCachedPosition();
+    if (CachedPosition.X != PositionX || CachedPosition.Y != PositionY)
+    {
+        MessageHandler->OnWindowMoved(DeferredEvent.Window, PositionX, PositionY);
+        DeferredEvent.Window->SetCachedPosition(IntVector2(PositionX, PositionY));
+    }
+    
+    MessageHandler->OnWindowResized(DeferredEvent.Window, uint32(ContentFrame.size.width), uint32(ContentFrame.size.height));
+}
+
+void FMacApplication::ProcessWindowMoved(const FDeferredMacEvent& DeferredEvent)
+{
+    CHECK(DeferredEvent.bHasContentFrame);
+
+    NSRect ContentFrame = DeferredEvent.ContentFrame;
+    ContentFrame = FMacApplication::ConvertCocoaRectToEngine(ContentFrame.size.width, ContentFrame.size.height, ContentFrame.origin.x, ContentFrame.origin.y);
+    
+    const int32 PositionX = static_cast<int32>(ContentFrame.origin.x);
+    const int32 PositionY = static_cast<int32>(ContentFrame.origin.y);
+    
+    const IntVector2 CachedPosition = DeferredEvent.Window->GetCachedPosition();
+    if (CachedPosition.X != PositionX || CachedPosition.Y != PositionY)
+    {
+        MessageHandler->OnWindowMoved(DeferredEvent.Window, PositionX, PositionY);
+        DeferredEvent.Window->SetCachedPosition(IntVector2(PositionX, PositionY));
+    }
 }
