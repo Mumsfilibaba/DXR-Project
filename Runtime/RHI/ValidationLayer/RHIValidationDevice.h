@@ -61,6 +61,7 @@ public:
     virtual IRHICommandContext* ObtainCommandContext() override final;
 
     virtual bool QueryUAVFormatSupport(EFormat Format) const override final;
+    virtual bool QuerySupportedSampleCounts(EFormat Format, uint32& OutSampleCounts) const override final;
     virtual bool QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryInfo) const override final;
 
     virtual bool GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode) override final;

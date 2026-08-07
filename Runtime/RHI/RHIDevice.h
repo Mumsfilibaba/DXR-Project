@@ -389,6 +389,17 @@ struct FRHIDevice
     virtual bool QueryUAVFormatSupport(EFormat Format) const = 0;
 
     /**
+     * @brief Retrieves the sample counts usable with the specified format when bound as a render-target
+     * or depth-stencil attachment. Support is not necessarily contiguous, so the result is a mask rather
+     * than a maximum.
+     * @param Format Format to check.
+     * @param OutSampleCounts Variable to store the bitmask of supported sample counts, using the sample
+     * count as the bit value. Set to zero when the query fails.
+     * @return True if the format can be used as an attachment and the mask was retrieved successfully.
+     */
+    virtual bool QuerySupportedSampleCounts(EFormat Format, uint32& OutSampleCounts) const = 0;
+
+    /**
      * @brief Retrieves memory statistics from the RHI.
      * @param MemoryType The type of video memory to query.
      * @param OutMemoryInfo Variable to store the memory statistics.

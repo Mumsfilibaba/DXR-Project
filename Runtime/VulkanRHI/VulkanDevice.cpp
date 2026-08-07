@@ -3,6 +3,8 @@
 #include "Core/Templates/CString.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Templates/NumericLimits.h"
+#include "RHI/RHI.h"
+#include "RHI/RHISamplerState.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanFence.h"
 #include "VulkanRHI/VulkanLoader.h"
@@ -13,8 +15,9 @@
 #include "VulkanRHI/VulkanExtensions.h"
 #include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/Platform/VulkanPlatform.h"
-#include "RHI/RHI.h"
-#include "RHI/RHISamplerState.h"
+#include "VulkanRHI/Generated/ClearBufferUAV_Float.h"
+#include "VulkanRHI/Generated/ClearBufferUAV_Uint.h"
+#include "VulkanRHI/Generated/ClearBufferUAV_Sint.h"
 
 template <typename FeatureStructType>
 static bool CheckRequiredFeaturesHelper(const FeatureStructType& Required, const FeatureStructType& Available, const char* StructName)
@@ -553,6 +556,7 @@ FVulkanDevice::~FVulkanDevice()
     SAFE_DELETE(GraphicsQueue);
 
     // Release default resources
+    BufferClearPipelines.Release();
     DefaultResources.Release(*this);
 
     // Release all samplers
@@ -1558,4 +1562,90 @@ void FVulkanDefaultResources::Release(FVulkanDevice& Device)
     }
 
     NullSampler = VK_NULL_HANDLE;
+}
+
+FVulkanComputePipelineStateRHI* FVulkanBufferClearPipelines::GetOrCreatePipeline(FVulkanDevice& Device, EVulkanBufferClearType ClearType)
+{
+    const uint32 ClearTypeIndex = static_cast<uint32>(ClearType);
+    CHECK(ClearTypeIndex < NumClearTypes);
+
+    TScopedLock Lock(CriticalSection);
+
+    if (Pipelines[ClearTypeIndex])
+    {
+        return Pipelines[ClearTypeIndex].Get();
+    }
+
+    // Creation that failed once will fail again, and the clear can be called every frame.
+    if (bCreationFailed[ClearTypeIndex])
+    {
+        return nullptr;
+    }
+
+    bCreationFailed[ClearTypeIndex] = true;
+
+    const uint8* EmbeddedCode = nullptr;
+    uint32       EmbeddedSize = 0;
+
+    switch (ClearType)
+    {
+        case EVulkanBufferClearType::Uint:
+        {
+            EmbeddedCode = GVulkanClearBufferUAV_Uint;
+            EmbeddedSize = ARRAY_COUNT(GVulkanClearBufferUAV_Uint);
+            break;
+        }
+
+        case EVulkanBufferClearType::Sint:
+        {
+            EmbeddedCode = GVulkanClearBufferUAV_Sint;
+            EmbeddedSize = ARRAY_COUNT(GVulkanClearBufferUAV_Sint);
+            break;
+        }
+
+        default:
+        {
+            EmbeddedCode = GVulkanClearBufferUAV_Float;
+            EmbeddedSize = ARRAY_COUNT(GVulkanClearBufferUAV_Float);
+            break;
+        }
+    }
+
+    TArray<uint8> ShaderCode(EmbeddedCode, static_cast<int32>(EmbeddedSize));
+
+    FVulkanComputeShaderRHIRef ClearShader = new FVulkanComputeShaderRHI(&Device);
+    if (!ClearShader->Initialize(ShaderCode))
+    {
+        VULKAN_ERROR("Failed to create the internal buffer-clear shader");
+        return nullptr;
+    }
+
+    FRHIComputePipelineStateDesc PipelineDesc;
+    PipelineDesc.Shader = ClearShader.Get();
+
+    FVulkanComputePipelineStateRHIRef ClearPipeline = new FVulkanComputePipelineStateRHI(&Device);
+    if (!ClearPipeline->Initialize(PipelineDesc))
+    {
+        VULKAN_ERROR("Failed to create the internal buffer-clear pipeline");
+        return nullptr;
+    }
+
+    ClearPipeline->SetDebugName("Internal BufferUAV Clear");
+
+    Shaders[ClearTypeIndex]         = ClearShader;
+    Pipelines[ClearTypeIndex]       = ClearPipeline;
+    bCreationFailed[ClearTypeIndex] = false;
+    
+    return Pipelines[ClearTypeIndex].Get();
+}
+
+void FVulkanBufferClearPipelines::Release()
+{
+    TScopedLock Lock(CriticalSection);
+
+    for (uint32 Index = 0; Index < NumClearTypes; Index++)
+    {
+        Pipelines[Index].Reset();
+        Shaders[Index].Reset();
+    }
 }

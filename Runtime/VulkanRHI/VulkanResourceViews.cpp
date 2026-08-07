@@ -49,6 +49,8 @@ FVulkanResourceView::~FVulkanResourceView()
 
         TypedBufferInfo.Buffer     = VK_NULL_HANDLE;
         TypedBufferInfo.BufferView = VK_NULL_HANDLE;
+        TypedBufferInfo.Offset     = 0;
+        TypedBufferInfo.Range      = 0;
     }
     else if (Type == EType::StructuredBufferView)
     {
@@ -160,7 +162,7 @@ bool FVulkanResourceView::InitializeStructuredBufferView(VkBuffer InBuffer, VkDe
     return true;
 }
 
-bool FVulkanResourceView::InitializeTypedBufferView(VkBuffer InBuffer, VkFormat InFormat, VkDeviceSize InOffset, VkDeviceSize InRange)
+bool FVulkanResourceView::InitializeTypedBufferView(VkBuffer InBuffer, VkFormat InFormat, VkDeviceSize InOffset, VkDeviceSize InRange, VkDeviceSize InViewOffset)
 {
     if (!VULKAN_CHECK_HANDLE(InBuffer))
     {
@@ -190,8 +192,9 @@ bool FVulkanResourceView::InitializeTypedBufferView(VkBuffer InBuffer, VkFormat 
     Type                       = EType::TypedBufferView;
     TypedBufferInfo.Buffer     = InBuffer;
     TypedBufferInfo.Format     = InFormat;
+    TypedBufferInfo.Offset     = InOffset;
     TypedBufferInfo.Range      = (InRange == 0) ? VK_WHOLE_SIZE : InRange;
-    TypedBufferInfo.ViewOffset = InOffset;
+    TypedBufferInfo.ViewOffset = InViewOffset;
 
     IncrementDescriptorVersion();
     return true;
@@ -437,7 +440,7 @@ void FVulkanShaderResourceViewRHI::OnResourceRelocated(FVulkanResource* Relocate
             }
 
             const VkDeviceSize Offset = VulkanBuffer->GetBindOffset() + TypedBufferInfo.ViewOffset;
-            InitializeTypedBufferView(VulkanBuffer->GetBindVkBuffer(), TypedBufferInfo.Format, Offset, TypedBufferInfo.Range);
+            InitializeTypedBufferView(VulkanBuffer->GetBindVkBuffer(), TypedBufferInfo.Format, Offset, TypedBufferInfo.Range, TypedBufferInfo.ViewOffset);
         }
     }
 }
@@ -464,7 +467,7 @@ bool FVulkanShaderResourceViewRHI::Initialize(FRHIResource* InResource, const FR
                 const VkDeviceSize Range        = ElementSize * BufferDesc.NumElements;
                 const VkDeviceSize Offset       = VulkanBuffer->GetBindOffset() + ViewOffset;
 
-                if (!InitializeTypedBufferView(VulkanBuffer->GetBindVkBuffer(), VulkanFormat, Offset, Range))
+                if (!InitializeTypedBufferView(VulkanBuffer->GetBindVkBuffer(), VulkanFormat, Offset, Range, ViewOffset))
                 {
                     return false;
                 }
@@ -731,7 +734,7 @@ void FVulkanUnorderedAccessViewRHI::OnResourceRelocated(FVulkanResource* Relocat
             }
 
             const VkDeviceSize Offset = VulkanBuffer->GetBindOffset() + TypedBufferInfo.ViewOffset;
-            InitializeTypedBufferView(VulkanBuffer->GetBindVkBuffer(), TypedBufferInfo.Format, Offset, TypedBufferInfo.Range);
+            InitializeTypedBufferView(VulkanBuffer->GetBindVkBuffer(), TypedBufferInfo.Format, Offset, TypedBufferInfo.Range, TypedBufferInfo.ViewOffset);
         }
     }
 }
@@ -758,7 +761,7 @@ bool FVulkanUnorderedAccessViewRHI::Initialize(FRHIResource* InResource, const F
                 const VkDeviceSize Range        = ElementSize * BufferDesc.NumElements;
                 const VkDeviceSize Offset       = VulkanBuffer->GetBindOffset() + ViewOffset;
 
-                if (!InitializeTypedBufferView(VulkanBuffer->GetBindVkBuffer(), VulkanFormat, Offset, Range))
+                if (!InitializeTypedBufferView(VulkanBuffer->GetBindVkBuffer(), VulkanFormat, Offset, Range, ViewOffset))
                 {
                     return false;
                 }
@@ -936,6 +939,7 @@ bool FVulkanUnorderedAccessViewRHI::Initialize(FRHIResource* InResource, const F
     }
     else
     {
+        VULKAN_ERROR_CRITICAL("Unsupported ViewDimension '%s' for UAV", ToString(InDesc.ViewDimension));
         return false;
     }
 }

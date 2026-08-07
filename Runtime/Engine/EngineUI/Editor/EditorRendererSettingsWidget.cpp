@@ -1257,7 +1257,7 @@ void FEditorRendererSettingsWidget::DrawTAASettings()
 
     if (IConsoleVariable* CVarHardwareJitter = FConsoleManager::Get().FindConsoleVariable("Renderer.TemporalAA.HardwareJitter"))
     {
-        const bool bSupported = RHI::bSupportsProgrammableSamplePositions && ((RHI::SupportedSamplePositionSampleCounts & 1) != 0);
+        const bool bSupported = RHI::bSupportsProgrammableSamplePositions && IsSampleCountSupported(RHI::SupportedSamplePositionSampleCounts, RHI_SAMPLE_COUNT_1);
 
         bool bHardwareJitter  = CVarHardwareJitter->GetBool();
         bool bHardwareJitter0 = false;

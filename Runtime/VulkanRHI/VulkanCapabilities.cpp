@@ -25,38 +25,37 @@ static FAutoConsoleCommand CCmdVulkanDumpCapsCommand(
 // Vulkan Device Feature Support
 // -------------------------------------------------------------------------------------------
 
-VULKANRHI_API bool   GVulkanForceBinding                        = false;
-VULKANRHI_API bool   GVulkanAllowNullDescriptors                = true;
-VULKANRHI_API bool   GVulkanAllowGeometryShaders                = true;
-VULKANRHI_API bool   GVulkanAllowResetCommandBuffers            = false;
-VULKANRHI_API bool   GVulkanRobustBufferAccessEnabled           = false;
-VULKANRHI_API bool   GVulkanGPUAssistedValidationEnabled        = false;
-
-VULKANRHI_API bool   GVulkanSupportsDepthClip                   = false;
-VULKANRHI_API bool   GVulkanSupportsDepthClamp                  = false;
-VULKANRHI_API bool   GVulkanSupportsNullDescriptors             = false;
-VULKANRHI_API bool   GVulkanSupportsRobustness2                 = false;
-VULKANRHI_API bool   GVulkanSupportsConservativeRasterization   = false;
-VULKANRHI_API float  GVulkanMaxExtraPrimitiveOverestimationSize = 0.0f;
-VULKANRHI_API bool   GVulkanSupportsPipelineCacheControl        = false;
-VULKANRHI_API bool   GVulkanSupportsDynamicRendering            = false;
-VULKANRHI_API bool   GVulkanSupportsSynchronization2            = false;
-VULKANRHI_API bool   GVulkanSupportsMaintenance4                = false;
-VULKANRHI_API bool   GVulkanSupportsMultiviews                  = false;
-VULKANRHI_API bool   GVulkanSupportsBindless                    = false;
-VULKANRHI_API bool   GVulkanSupportsMutableDescriptorType       = false;
-VULKANRHI_API bool   GVulkanUseSplitBindlessHeap                = false;
-VULKANRHI_API bool   GVulkanSupportsDepthBoundsTest             = false;
-VULKANRHI_API bool   GVulkanSupportsSparseBinding               = false;
-VULKANRHI_API bool   GVulkanSupportsSparseResidency2D           = false;
-VULKANRHI_API bool   GVulkanSupportsSparseResidency3D           = false;
-VULKANRHI_API bool   GVulkanSupportsSparseResidencyAliased      = false;
-VULKANRHI_API bool   GVulkanSupportsGeometryShader              = false;
-VULKANRHI_API bool   GVulkanSupportsTessellation                = false;
-VULKANRHI_API bool   GVulkanSupportsImageCubeArray              = false;
-
-VULKANRHI_API uint32 GVulkanMaxMultiviewViewCount               = 1;
-VULKANRHI_API uint32 GVulkanMaxDrawIndirectCount                = 1;
+VULKANRHI_API bool    GVulkanForceBinding                        = false;
+VULKANRHI_API bool    GVulkanAllowNullDescriptors                = true;
+VULKANRHI_API bool    GVulkanAllowGeometryShaders                = true;
+VULKANRHI_API bool    GVulkanAllowResetCommandBuffers            = false;
+VULKANRHI_API bool    GVulkanRobustBufferAccessEnabled           = false;
+VULKANRHI_API bool    GVulkanGPUAssistedValidationEnabled        = false;
+VULKANRHI_API bool    GVulkanSupportsDepthClip                   = false;
+VULKANRHI_API bool    GVulkanSupportsDepthClamp                  = false;
+VULKANRHI_API bool    GVulkanSupportsNullDescriptors             = false;
+VULKANRHI_API bool    GVulkanSupportsRobustness2                 = false;
+VULKANRHI_API bool    GVulkanSupportsConservativeRasterization   = false;
+VULKANRHI_API float   GVulkanMaxExtraPrimitiveOverestimationSize = 0.0f;
+VULKANRHI_API bool    GVulkanSupportsPipelineCacheControl        = false;
+VULKANRHI_API bool    GVulkanSupportsDynamicRendering            = false;
+VULKANRHI_API bool    GVulkanSupportsSynchronization2            = false;
+VULKANRHI_API bool    GVulkanSupportsMaintenance4                = false;
+VULKANRHI_API bool    GVulkanSupportsMultiviews                  = false;
+VULKANRHI_API bool    GVulkanSupportsBindless                    = false;
+VULKANRHI_API bool    GVulkanSupportsMutableDescriptorType       = false;
+VULKANRHI_API bool    GVulkanUseSplitBindlessHeap                = false;
+VULKANRHI_API bool    GVulkanSupportsDepthBoundsTest             = false;
+VULKANRHI_API bool    GVulkanSupportsSparseBinding               = false;
+VULKANRHI_API bool    GVulkanSupportsSparseResidency2D           = false;
+VULKANRHI_API bool    GVulkanSupportsSparseResidency3D           = false;
+VULKANRHI_API bool    GVulkanSupportsSparseResidencyAliased      = false;
+VULKANRHI_API bool    GVulkanSupportsGeometryShader              = false;
+VULKANRHI_API bool    GVulkanSupportsTessellation                = false;
+VULKANRHI_API bool    GVulkanSupportsImageCubeArray              = false;
+VULKANRHI_API uint32  GVulkanMaxMultiviewViewCount               = 1;
+VULKANRHI_API uint32  GVulkanMaxDrawIndirectCount                = 1;
+VULKANRHI_API VkFlags GVulkanSupportedSampleCounts               = VK_SAMPLE_COUNT_1_BIT;
 
 // -------------------------------------------------------------------------------------------
 // Programmable sample positions (VK_EXT_sample_locations)
@@ -268,6 +267,7 @@ VULKANRHI_API void DumpVulkanCapabilities()
     LOG_INFO("[VulkanRHI]   Depth Clip                            : %s", YesNo(GVulkanSupportsDepthClip));
     LOG_INFO("[VulkanRHI]   Depth Clamp                           : %s", YesNo(GVulkanSupportsDepthClamp));
     LOG_INFO("[VulkanRHI]   Sample Locations                      : %s", YesNo(GVulkanSupportsSampleLocations));
+    LOG_INFO("[VulkanRHI]   Supported Sample Counts               : 0x%02x", GVulkanSupportedSampleCounts);
     LOG_INFO("[VulkanRHI]   Fragment Shader Interlock             : %s", YesNo(GVulkanSupportsFragmentShaderInterlock));
     LOG_INFO("[VulkanRHI]   Transform Feedback                    : %s", YesNo(GVulkanSupportsTransformFeedback));
     LOG_INFO("[VulkanRHI]   Sparse Binding                        : %s", YesNo(GVulkanSupportsSparseBinding));
@@ -372,6 +372,8 @@ void FVulkanDevice::DeriveCoreCapabilities(
 #endif
 
     GVulkanMaxDrawIndirectCount           = CoreDeviceProperties10.limits.maxDrawIndirectCount;
+    GVulkanSupportedSampleCounts          = CoreDeviceProperties10.limits.framebufferColorSampleCounts
+                                          & CoreDeviceProperties10.limits.framebufferDepthSampleCounts;
     GVulkanMaxDescriptorSetSamplers       = CoreDeviceProperties10.limits.maxDescriptorSetSamplers;
     GVulkanMaxDescriptorSetSampledImages  = CoreDeviceProperties10.limits.maxDescriptorSetSampledImages;
     GVulkanMaxDescriptorSetStorageImages  = CoreDeviceProperties10.limits.maxDescriptorSetStorageImages;
@@ -821,7 +823,7 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     // Programmable Sample Positions (VK_EXT_sample_locations)
     // -------------------------------------------------------------------------------------------
 
-    const bool bSupportsSingleSampleLocations = (GVulkanSampleLocationSampleCounts & VK_SAMPLE_COUNT_1_BIT) != 0;
+    const bool bSupportsSingleSampleLocations = IsSampleCountSupported(GVulkanSampleLocationSampleCounts, RHI_SAMPLE_COUNT_1);
 
     RHI::bSupportsProgrammableSamplePositions = GVulkanSupportsSampleLocations && bSupportsSingleSampleLocations;
     if (GVulkanSupportsSampleLocations)

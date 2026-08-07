@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Core.h"
+#include "Core/Templates/Bits.h"
 
 enum class EFormat : uint8;
 
@@ -49,6 +50,44 @@ enum class EFormat : uint8;
 
 /** Maximum sample positions in one description: a 2x2 pixel grid at 16 samples per pixel */
 #define RHI_MAX_SAMPLE_POSITIONS (64)
+
+// -------------------------------------------------------------------------------------------
+// MSAA Sample Counts
+// -------------------------------------------------------------------------------------------
+
+#define RHI_SAMPLE_COUNT_1  (1)
+#define RHI_SAMPLE_COUNT_2  (2)
+#define RHI_SAMPLE_COUNT_4  (4)
+#define RHI_SAMPLE_COUNT_8  (8)
+#define RHI_SAMPLE_COUNT_16 (16)
+#define RHI_SAMPLE_COUNT_32 (32)
+#define RHI_SAMPLE_COUNT_64 (64)
+
+/** Highest sample count any backend reports; a mask only ever holds bits 1 through this value */
+#define RHI_MAX_SAMPLE_COUNT (RHI_SAMPLE_COUNT_64)
+
+/** Every bit a well-formed sample-count mask may contain */
+#define RHI_ALL_SAMPLE_COUNTS (uint32((RHI_MAX_SAMPLE_COUNT << 1) - 1))
+
+NODISCARD constexpr bool IsSampleCountSupported(uint32 SampleCountMask, uint32 SampleCount)
+{
+    return SampleCount != 0 && (SampleCount & (SampleCount - 1)) == 0 && (SampleCountMask & SampleCount) != 0;
+}
+
+NODISCARD constexpr uint32 GetMaxSampleCount(uint32 SampleCountMask)
+{
+    const uint32 ValidBits = SampleCountMask & RHI_ALL_SAMPLE_COUNTS;
+    return ValidBits != 0 ? (1u << Bits::MostSignificant<uint32>(ValidBits)) : 0u;
+}
+
+NODISCARD constexpr uint32 ClampSampleCountToMask(uint32 SampleCountMask, uint32 DesiredSampleCount)
+{
+    const uint32 Desired = DesiredSampleCount != 0 ? DesiredSampleCount : uint32(RHI_SAMPLE_COUNT_1);
+
+    // Keep only the counts that are no greater than the desired one, then take the highest of those.
+    const uint32 Candidates = Desired >= RHI_MAX_SAMPLE_COUNT ? RHI_ALL_SAMPLE_COUNTS : ((Desired << 1) - 1);
+    return GetMaxSampleCount(SampleCountMask & Candidates);
+}
 
 enum class EShaderModel : uint8
 {

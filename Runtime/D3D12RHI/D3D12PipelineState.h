@@ -269,6 +269,12 @@ struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) FD3D12GraphicsPipelineStre
         D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type17 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_FLAGS;
         D3D12_PIPELINE_STATE_FLAGS PipelineStateFlags = D3D12_PIPELINE_STATE_FLAG_NONE;
     };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type18 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_MASK;
+        UINT SampleMask = UINT_MAX;
+    };
 };
 #endif
 
@@ -312,6 +318,7 @@ struct FD3D12GraphicsPipelineKey
     DXGI_FORMAT                        DepthBufferFormat        = { };
     D3D12_RT_FORMAT_ARRAY              RenderTargetInfo         = { };
     DXGI_SAMPLE_DESC                   SampleDesc               = { };
+    UINT                               SampleMask               = 0;
 };
 
 class FD3D12GraphicsPipelineStateRHI : public FRHIGraphicsPipelineState, public FD3D12PipelineState
@@ -480,6 +487,12 @@ struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) FD3D12MeshletPipelineStrea
         D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type11 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_FLAGS;
         D3D12_PIPELINE_STATE_FLAGS PipelineStateFlags = D3D12_PIPELINE_STATE_FLAG_NONE;
     };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type12 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_MASK;
+        UINT SampleMask = UINT_MAX;
+    };
 };
 #endif
 
@@ -496,6 +509,7 @@ struct FD3D12MeshletPipelineKey
     DXGI_FORMAT           DepthBufferFormat  = { };
     D3D12_RT_FORMAT_ARRAY RenderTargetInfo   = { };
     DXGI_SAMPLE_DESC      SampleDesc         = { };
+    UINT                  SampleMask         = 0;
 };
 
 class FD3D12MeshletPipelineStateRHI : public FRHIMeshletPipelineState, public FD3D12PipelineState

@@ -7,6 +7,7 @@
 #include "Core/Threading/Atomic.h"
 #include "Core/Containers/String.h"
 #include "VulkanRHI/VulkanCore.h"
+#include "VulkanRHI/VulkanBufferClear.h"
 #include "VulkanRHI/VulkanCapabilities.h"
 #include "VulkanRHI/VulkanLoader.h"
 #include "VulkanRHI/VulkanExtensions.h"
@@ -120,6 +121,27 @@ struct FVulkanDefaultResources
 	VkImageView           NullImageViews[static_cast<uint32>(EVulkanNullImageViewType::Count)];
 	FVulkanMemoryLocation NullImageLocation;
 	VkSampler             NullSampler;
+};
+
+struct FVulkanBufferClearPipelines
+{
+    static constexpr uint32 NumClearTypes = static_cast<uint32>(EVulkanBufferClearType::Count);
+
+    FVulkanBufferClearPipelines()
+        : Shaders()
+        , Pipelines()
+        , CriticalSection()
+    {
+        Memory::Memzero(bCreationFailed, sizeof(bCreationFailed));
+    }
+
+    FVulkanComputePipelineStateRHI* GetOrCreatePipeline(FVulkanDevice& Device, EVulkanBufferClearType ClearType);
+    void Release();
+
+    FVulkanComputeShaderRHIRef        Shaders[NumClearTypes];
+    FVulkanComputePipelineStateRHIRef Pipelines[NumClearTypes];
+    bool                              bCreationFailed[NumClearTypes];
+    FCriticalSection                  CriticalSection;
 };
 
 struct FVulkanHashableSamplerCreateInfo
@@ -263,6 +285,7 @@ public:
     FVulkanPipelineStateManager&      GetPipelineStateManager()      { return *PipelineStateManager; }
     FVulkanBindlessDescriptorManager* GetBindlessDescriptorManager() { return BindlessDescriptorManager; }
     FVulkanDefaultResources&          GetDefaultResources()          { return DefaultResources; }
+    FVulkanBufferClearPipelines&      GetBufferClearPipelines()      { return BufferClearPipelines; }
 
 #if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     FVulkanRenderPassCache& GetRenderPassCache()
@@ -341,6 +364,7 @@ private:
     FVulkanQueryPoolManager*             OcclusionQueryPoolManager;
     FVulkanQueryPoolManager*             PipelineStatsQueryPoolManager;
     FVulkanDefaultResources              DefaultResources;
+    FVulkanBufferClearPipelines          BufferClearPipelines;
     TSet<String>                         ExtensionNames;
     TSet<String>                         LayerNames;
     TOptional<FVulkanQueueFamilyIndices> QueueIndicies;

@@ -798,6 +798,17 @@ constexpr VkSampleCountFlagBits ConvertSampleCount(uint32 NumSamples)
     }
 }
 
+constexpr uint8 SampleCountToLog2(uint32 NumSamples)
+{
+    uint8 Result = 0;
+    while ((1u << Result) < NumSamples && Result < 6)
+    {
+        ++Result;
+    }
+
+    return Result;
+}
+
 constexpr VkAttachmentLoadOp ConvertLoadAction(EAttachmentLoadAction LoadAction)
 {
     switch (LoadAction)

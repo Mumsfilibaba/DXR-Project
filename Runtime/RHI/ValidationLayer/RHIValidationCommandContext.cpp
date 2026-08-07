@@ -335,7 +335,7 @@ void FRHIValidationCommandContext::SetSamplePositions(const FRHISamplePositionsD
             return;
         }
 
-        if ((RHI::SupportedSamplePositionSampleCounts & SamplePositionsDesc.NumSamplesPerPixel) == 0)
+        if (!IsSampleCountSupported(RHI::SupportedSamplePositionSampleCounts, SamplePositionsDesc.NumSamplesPerPixel))
         {
             RHI_VALIDATION_ERROR("SetSamplePositions with %u samples per pixel is not supported on this device",
                 SamplePositionsDesc.NumSamplesPerPixel);

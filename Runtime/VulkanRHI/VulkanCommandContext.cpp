@@ -2,6 +2,7 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHIShader.h"
 #include "VulkanRHI/VulkanCommandContext.h"
+#include "VulkanRHI/VulkanBufferClear.h"
 #include "VulkanRHI/VulkanResourceViews.h"
 #include "VulkanRHI/VulkanTexture.h"
 #include "VulkanRHI/VulkanSwapChain.h"
@@ -849,6 +850,148 @@ void FVulkanCommandContext::ClearDepthStencilView(FRHIDepthStencilView* DepthSte
     }
 }
 
+bool FVulkanCommandContext::ClearBufferUnorderedAccessViewCompute(FVulkanUnorderedAccessViewRHI* View, const FVulkanBufferClearRegion& Region, const uint32 Values[4], bool bIsFloat)
+{
+    if (View->GetType() != FVulkanResourceView::EType::TypedBufferView)
+    {
+        return false;
+    }
+
+    const FRHIUnorderedAccessViewDesc::FBufferUAV& BufferUAV = View->GetDesc().Buffer;
+
+    EVulkanBufferClearType ClearType;
+    if (!VulkanClearBufferUAV::GetClearType(BufferUAV.Format, ClearType))
+    {
+        return false;
+    }
+
+    const bool bIsFloatFormat = (ClearType == EVulkanBufferClearType::Float);
+    if (bIsFloat != bIsFloatFormat)
+    {
+        return false;
+    }
+
+    const uint32 ElementStride = GetByteStrideFromFormat(BufferUAV.Format);
+    if (ElementStride == 0)
+    {
+        return false;
+    }
+
+    const uint32 NumElements = (BufferUAV.NumElements != 0) ? BufferUAV.NumElements : static_cast<uint32>(Region.Size / ElementStride);
+    if (NumElements == 0)
+    {
+        return true;
+    }
+
+    FVulkanComputePipelineStateRHI* ClearPipeline = GetDevice()->GetBufferClearPipelines().GetOrCreatePipeline(*GetDevice(), ClearType);
+    if (!ClearPipeline)
+    {
+        return false;
+    }
+
+    FVulkanPipelineLayout* Layout = ClearPipeline->GetPipelineLayout();
+    if (!Layout)
+    {
+        return false;
+    }
+
+    uint32 DescriptorSetIndex;
+    uint32 BindingIndex;
+    if (!Layout->GetDescriptorBinding(EShaderVisibility::Compute, EResourceType::UAV, 0, DescriptorSetIndex, BindingIndex))
+    {
+        VULKAN_ERROR("The internal buffer-clear shader does not expose its output buffer");
+        return false;
+    }
+
+    const VkBufferView BufferView = View->GetTypedBufferInfo().BufferView;
+
+    VkWriteDescriptorSet DescriptorWrite = {};
+    DescriptorWrite.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    DescriptorWrite.descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
+    DescriptorWrite.descriptorCount  = 1;
+    DescriptorWrite.dstBinding       = BindingIndex;
+    DescriptorWrite.pTexelBufferView = &BufferView;
+
+    const VkDescriptorSetLayout SetLayout = Layout->GetVkDescriptorSetLayout(DescriptorSetIndex);
+
+    FVulkanDescriptorSetBuilder DescriptorSetBuilder;
+    DescriptorSetBuilder.SetupDescriptorWrites(SetLayout, &DescriptorWrite, 1);
+    DescriptorSetBuilder.WriteStorageTexelBuffer(0, BufferView);
+
+    FVulkanDescriptorPoolInfo PoolInfo;
+    PoolInfo.DescriptorSetLayout = SetLayout;
+    PoolInfo.DescriptorSizes.Emplace(VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1);
+    PoolInfo.GenerateHash();
+
+    VkDescriptorSet DescriptorSet = VK_NULL_HANDLE;
+
+#if VULKAN_USE_DESCRIPTOR_CACHE
+    DescriptorSetBuilder.UpdateHash();
+    if (!GetDevice()->GetDescriptorSetCache().FindOrCreateDescriptorSet(PoolInfo, DescriptorSetBuilder, DescriptorSet))
+#else
+    if (!GetTransientDescriptorAllocator()->AllocateDescriptorSet(PoolInfo, DescriptorSetBuilder, DescriptorSet))
+#endif
+    {
+        VULKAN_ERROR("Failed to allocate a DescriptorSet for the internal buffer-clear dispatch");
+        return false;
+    }
+
+    RequireBufferState(View, ERHIResourceState::UnorderedAccess);
+    BarrierBatcher.FlushBarriers(GetCommandBuffer());
+
+    struct FClearConstants
+    {
+        uint32 ClearValue[4];
+        uint32 NumElements;
+    } ClearConstants;
+
+    Memory::Memcpy(ClearConstants.ClearValue, Values, sizeof(ClearConstants.ClearValue));
+    ClearConstants.NumElements = NumElements;
+
+    const FPushConstantsInfo& ConstantsInfo = Layout->GetConstantsInfo();
+    const VkPipelineLayout    VulkanLayout  = Layout->GetVkPipelineLayout();
+
+    const uint32 FirstSet = Layout->HasBindlessSet() ? (VULKAN_BINDLESS_RUNTIME_SET_INDEX + 1 + DescriptorSetIndex) : DescriptorSetIndex;
+
+    GetCommandBuffer()->BindPipeline(VK_PIPELINE_BIND_POINT_COMPUTE, ClearPipeline->GetVkPipeline());
+    GetCommandBuffer()->BindDescriptorSets(VK_PIPELINE_BIND_POINT_COMPUTE, VulkanLayout, FirstSet, 1, &DescriptorSet, 0, nullptr);
+    GetCommandBuffer()->PushConstants(VulkanLayout, ConstantsInfo.StageFlags, 0,
+        Math::Min<uint32>(ConstantsInfo.NumConstants * sizeof(uint32), sizeof(ClearConstants)), &ClearConstants);
+
+    constexpr uint32 NumThreadsPerGroup = 64;
+    GetCommandBuffer()->Dispatch(Math::DivideByMultiple(NumElements, NumThreadsPerGroup), 1, 1);
+
+    ContextState.DirtyComputeBindings();
+    return true;
+}
+
+void FVulkanCommandContext::ClearBufferUnorderedAccessView(FVulkanUnorderedAccessViewRHI* View, const uint32 Values[4], bool bIsFloat)
+{
+    const FVulkanBufferClearRegion Region = VulkanClearBufferUAV::ResolveRegion(View);
+    if (!Region.bIsValid)
+    {
+        return;
+    }
+
+    const FRHIUnorderedAccessViewDesc::FBufferUAV& BufferUAV = View->GetDesc().Buffer;
+
+    uint32 Pattern = 0;
+    if (!VulkanClearBufferUAV::PackPattern(BufferUAV.Type, BufferUAV.Format, Values, bIsFloat, Pattern))
+    {
+        if (ClearBufferUnorderedAccessViewCompute(View, Region, Values, bIsFloat))
+        {
+            return;
+        }
+
+        VULKAN_WARNING("Clear of a '%s' buffer UAV cannot be expressed as a 32-bit fill; using the first component", ToString(BufferUAV.Format));
+    }
+
+    RequireBufferState(View, ERHIResourceState::CopyDest);
+    BarrierBatcher.FlushBarriers(GetCommandBuffer());
+
+    GetCommandBuffer()->FillBuffer(Region.Buffer, Region.Offset, Region.Size, Pattern);
+}
+
 void FVulkanCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const Vector4& ClearColor)
 {
     FVulkanUnorderedAccessViewRHI* VulkanUnorderedAccessView = FVulkanDeviceRHI::ResourceCast(UnorderedAccessView);
@@ -856,12 +999,12 @@ void FVulkanCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessVie
 
     ConditionalSplitCommandBuffer();
 
-    VkClearColorValue VulkanClearColor;
-    Memory::Memcpy(VulkanClearColor.float32, ClearColor.XYZW, sizeof(VulkanClearColor.float32));
-
     const FVulkanResourceView::EType Type = VulkanUnorderedAccessView->GetType();
     if (Type == FVulkanResourceView::EType::ImageView)
     {
+        VkClearColorValue VulkanClearColor;
+        Memory::Memcpy(VulkanClearColor.float32, ClearColor.XYZW, sizeof(VulkanClearColor.float32));
+
         TransitionImageLayout(VulkanUnorderedAccessView);
         BarrierBatcher.FlushBarriers(GetCommandBuffer());
 
@@ -873,39 +1016,27 @@ void FVulkanCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessVie
             1, 
             &ImageViewInfo.SubresourceRange);
     }
-    else if (Type == FVulkanResourceView::EType::StructuredBufferView)
+    else if (Type == FVulkanResourceView::EType::StructuredBufferView || Type == FVulkanResourceView::EType::TypedBufferView)
     {
-        uint32 FillData;
-        Memory::Memcpy(&FillData, &ClearColor.X, sizeof(uint32));
+        const uint32 Values[4] =
+        {
+            BitCast<uint32>(ClearColor.X),
+            BitCast<uint32>(ClearColor.Y),
+            BitCast<uint32>(ClearColor.Z),
+            BitCast<uint32>(ClearColor.W),
+        };
 
-        RequireBufferState(VulkanUnorderedAccessView, ERHIResourceState::CopyDest);
-        BarrierBatcher.FlushBarriers(GetCommandBuffer());
-
-        const FVulkanResourceView::FStructuredBufferView& BufferDesc = VulkanUnorderedAccessView->GetStructuredBufferInfo();
-        GetCommandBuffer()->FillBuffer(
-            BufferDesc.Buffer, 
-            BufferDesc.Offset, 
-            BufferDesc.Range, 
-            FillData);
+        ClearBufferUnorderedAccessView(VulkanUnorderedAccessView, Values, true);
     }
-    else if (Type == FVulkanResourceView::EType::TypedBufferView)
+    else if (Type == FVulkanResourceView::EType::AccelerationStructureView)
     {
-        uint32 FillData;
-        Memory::Memcpy(&FillData, &ClearColor.X, sizeof(uint32));
-
-        RequireBufferState(VulkanUnorderedAccessView, ERHIResourceState::CopyDest);
-        BarrierBatcher.FlushBarriers(GetCommandBuffer());
-        
-        const FVulkanResourceView::FTypedBufferView& BufferDesc = VulkanUnorderedAccessView->GetTypedBufferInfo();
-        GetCommandBuffer()->FillBuffer(
-            BufferDesc.Buffer, 
-            0, 
-            VK_WHOLE_SIZE, 
-            FillData);
+        // Only an SRV is ever initialized over an acceleration structure, so a UAV carrying this
+        // type means the view's type field is corrupt.
+        CHECKF(false, "ClearUnorderedAccessViewFloat: a UAV cannot view an acceleration structure");
     }
     else
     {
-        VULKAN_ERROR("Unsupported UAV type for ClearUnorderedAccessViewFloat");
+        VULKAN_ERROR("ClearUnorderedAccessViewFloat: the UAV was never successfully initialized");
     }
 }
 
@@ -933,35 +1064,19 @@ void FVulkanCommandContext::ClearUnorderedAccessViewUint(FRHIUnorderedAccessView
             1, 
             &ImageViewInfo.SubresourceRange);
     }
-    else if (Type == FVulkanResourceView::EType::StructuredBufferView)
+    else if (Type == FVulkanResourceView::EType::StructuredBufferView || Type == FVulkanResourceView::EType::TypedBufferView)
     {
-        const FVulkanResourceView::FStructuredBufferView& BufferDesc = VulkanUnorderedAccessView->GetStructuredBufferInfo();
-
-        RequireBufferState(VulkanUnorderedAccessView, ERHIResourceState::CopyDest);
-        BarrierBatcher.FlushBarriers(GetCommandBuffer());
-        
-        GetCommandBuffer()->FillBuffer(
-            BufferDesc.Buffer, 
-            BufferDesc.Offset, 
-            BufferDesc.Range, 
-            Values[0]);
+        ClearBufferUnorderedAccessView(VulkanUnorderedAccessView, Values, false);
     }
-    else if (Type == FVulkanResourceView::EType::TypedBufferView)
+    else if (Type == FVulkanResourceView::EType::AccelerationStructureView)
     {
-        const FVulkanResourceView::FTypedBufferView& BufferDesc = VulkanUnorderedAccessView->GetTypedBufferInfo();
-
-        RequireBufferState(VulkanUnorderedAccessView, ERHIResourceState::CopyDest);
-        BarrierBatcher.FlushBarriers(GetCommandBuffer());
-
-        GetCommandBuffer()->FillBuffer(
-            BufferDesc.Buffer, 
-            0, 
-            VK_WHOLE_SIZE, 
-            Values[0]);
+        // Only an SRV is ever initialized over an acceleration structure, so a UAV carrying this
+        // type means the view's type field is corrupt.
+        CHECKF(false, "ClearUnorderedAccessViewUint: a UAV cannot view an acceleration structure");
     }
     else
     {
-        VULKAN_ERROR("Unsupported UAV type for ClearUnorderedAccessViewUint");
+        VULKAN_ERROR("ClearUnorderedAccessViewUint: the UAV was never successfully initialized");
     }
 }
 

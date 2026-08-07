@@ -38,8 +38,9 @@ public:
         VkBuffer     Buffer;
         VkBufferView BufferView;
         VkFormat     Format;
+        VkDeviceSize Offset;     // Absolute offset into Buffer
         VkDeviceSize Range;
-        VkDeviceSize ViewOffset;
+        VkDeviceSize ViewOffset; // Offset relative to the owning resource
     };
 
     struct FImageView
@@ -75,7 +76,7 @@ public:
         uint32 InLevelCount);
 
     bool InitializeStructuredBufferView(VkBuffer InBuffer, VkDeviceSize InOffset, VkDeviceSize InRange, VkDeviceSize InViewOffset);
-    bool InitializeTypedBufferView(VkBuffer InBuffer, VkFormat InFormat, VkDeviceSize InOffset, VkDeviceSize InRange);
+    bool InitializeTypedBufferView(VkBuffer InBuffer, VkFormat InFormat, VkDeviceSize InOffset, VkDeviceSize InRange, VkDeviceSize InViewOffset);
     bool InitializeAccelerationStructureView(VkAccelerationStructureKHR InAccelerationStructure);
 
     void RegisterToResource(FVulkanResource* InOwner);

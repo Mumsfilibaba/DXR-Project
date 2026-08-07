@@ -748,7 +748,7 @@ void FSceneRenderer::RenderThread_PrepareCameraData(const FSceneRenderView& Scen
     CameraBuffer.ViewportWidth               = float(Resources.CurrentRenderWidth);
     CameraBuffer.ViewportHeight              = float(Resources.CurrentRenderHeight);
 
-    bUseHardwareJitter   = GEnableTemporalAA && GTemporalAAHardwareJitter && RHI::bSupportsProgrammableSamplePositions && (RHI::SupportedSamplePositionSampleCounts & 1) != 0;
+    bUseHardwareJitter   = GEnableTemporalAA && GTemporalAAHardwareJitter && RHI::bSupportsProgrammableSamplePositions && IsSampleCountSupported(RHI::SupportedSamplePositionSampleCounts, RHI_SAMPLE_COUNT_1);
     FrameSamplePositions = FRHISamplePositionsDesc();
 
     CameraBuffer.PrevProjectionJitter = CameraBuffer.ProjectionJitter;
