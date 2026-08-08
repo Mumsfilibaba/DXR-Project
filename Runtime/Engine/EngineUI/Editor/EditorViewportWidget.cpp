@@ -42,6 +42,10 @@ FEditorViewportWidget::FEditorViewportWidget(FEditorEngine* InEditorEngine)
     , bRawLookActive(false)
     , bCursorWasVisible(true)
     , MouseLookRestorePosition()
+    , MarqueeStartPos()
+    , bPickArmed(false)
+    , bMarqueeActive(false)
+    , bMarqueeAdditive(false)
     , PendingCameraInput()
     , SpeedOverlayTimer(0.0f)
     , bRightMousePressedOnImage(false)
@@ -398,16 +402,14 @@ void FEditorViewportWidget::Draw()
 
                 const ImGuiPopupFlags PopupQueryFlags = ImGuiPopupFlags_AnyPopupLevel;
 
-                const bool bCameraPopupOpen     = ImGui::IsPopupOpen(ImGui::GetID(CameraMenuPopupId), PopupQueryFlags);
-                const bool bViewPopupOpen       = ImGui::IsPopupOpen(ImGui::GetID(ViewMenuPopupId), PopupQueryFlags);
-                const bool bShadowPopupOpen     = ImGui::IsPopupOpen(ImGui::GetID(ShadowMenuPopupId), PopupQueryFlags);
-                const bool bRayTracingPopupOpen = ImGui::IsPopupOpen(ImGui::GetID(RayTracingMenuPopupId), PopupQueryFlags);
-                const bool bSecondaryPopupOpen  = ImGui::IsPopupOpen(ImGui::GetID(SecondaryMenuPopupId), PopupQueryFlags);
-                const bool bAnyPopupOpen        = bCameraPopupOpen || bViewPopupOpen || bShadowPopupOpen || bRayTracingPopupOpen || bSecondaryPopupOpen;
+                // A submenu is only ever open while the View menu that hosts it is, so it needs no term of its own
+                const bool bCameraPopupOpen = ImGui::IsPopupOpen(ImGui::GetID(CameraMenuPopupId), PopupQueryFlags);
+                const bool bViewPopupOpen   = ImGui::IsPopupOpen(ImGui::GetID(ViewMenuPopupId), PopupQueryFlags);
+                const bool bAnyPopupOpen    = bCameraPopupOpen || bViewPopupOpen;
 
-                PopupAnchor CameraMenuAnchor;
-                PopupAnchor ViewMenuAnchor;
-                const auto DrawToolbarMenuButton = [&](const CHAR* Id, const CHAR* Label, float Width, bool bPopupOpen, PopupAnchor& OutAnchor, bool& bOutHovered) -> bool
+                FPopupAnchor CameraMenuAnchor;
+                FPopupAnchor ViewMenuAnchor;
+                const auto DrawToolbarMenuButton = [&](const CHAR* Id, const CHAR* Label, float Width, bool bPopupOpen, FPopupAnchor& OutAnchor, bool& bOutHovered) -> bool
                 {
                     const float ButtonHeightLocal = ButtonHeight;
 
@@ -1046,15 +1048,130 @@ void FEditorViewportWidget::Draw()
              PendingCameraInput.bCmdDown ||
              PendingCameraInput.bMiddleMouseDown;
  
-        if (bWasViewportInputActive && bClickedLeft && !bBlockPickForGizmo && !bBlockPickForCamera && DebugView == FSceneRenderView::EDebugView::None)
-        { 
-            uint32 PixelX = 0;
-            uint32 PixelY = 0;
+        // Maps a point on the drawn image to a texel of the ObjectID target, shared by the click pick and the box select
+        const auto ViewportPointToPixel = [&](const ImVec2& ScreenPos, uint32& OutPixelX, uint32& OutPixelY)
+        {
+            FRHITexture* ViewportTexture = ViewportImage.GetTexture();
 
-            if (ComputeViewportPixel(ImageMin, ImageSize, PixelX, PixelY))
+            const uint32 RenderWidth  = ViewportTexture ? ViewportTexture->GetDesc().Extent.X : static_cast<uint32>(ContentSize.x);
+            const uint32 RenderHeight = ViewportTexture ? ViewportTexture->GetDesc().Extent.Y : static_cast<uint32>(ContentSize.y);
+
+            const float SafeW = ImageSize.x > 0.0f ? ImageSize.x : 1.0f;
+            const float SafeH = ImageSize.y > 0.0f ? ImageSize.y : 1.0f;
+
+            const float U = Math::Clamp((ScreenPos.x - ImageMin.x) / SafeW, 0.0f, 1.0f);
+            const float V = Math::Clamp((ScreenPos.y - ImageMin.y) / SafeH, 0.0f, 1.0f);
+
+            OutPixelX = RenderWidth  > 0 ? Math::Min(static_cast<uint32>(U * float(RenderWidth)),  RenderWidth  - 1) : 0;
+            OutPixelY = RenderHeight > 0 ? Math::Min(static_cast<uint32>(V * float(RenderHeight)), RenderHeight - 1) : 0;
+        };
+
+        const bool bPickAllowed = !bBlockPickForGizmo && !bBlockPickForCamera && DebugView == FSceneRenderView::EDebugView::None;
+
+        if (bClickedLeft)
+        {
+            // The press only arms the pick, which fires on release, so that a drag becomes a box select and not both
+            bPickArmed = bWasViewportInputActive && bPickAllowed;
+        }
+
+        if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+        {
+            const ImVec2 ClickPos = ImGui::GetIO().MouseClickedPos[ImGuiMouseButton_Left];
+
+            const float LocalXf = ClickPos.x - ImageMin.x;
+            const float LocalYf = ClickPos.y - ImageMin.y;
+
+            const bool bWasDrag  = ImGui::IsMouseDragPastThreshold(ImGuiMouseButton_Left);
+            const bool bOnImage  = LocalXf >= 0.0f && LocalYf >= 0.0f && LocalXf < ImageSize.x && LocalYf < ImageSize.y;
+
+            if (bPickArmed && bPickAllowed && !bWasDrag && bOnImage && EditorEngine)
             {
+                uint32 PixelX = 0;
+                uint32 PixelY = 0;
+                ViewportPointToPixel(ClickPos, PixelX, PixelY);
+
+                // The result lands a frame or more later, so the modifier held right now has to be recorded
+                EditorEngine->SetPendingPickAdditive(ImGui::GetIO().KeyCtrl);
+
                 EditorEngine->RequestPick(PixelX, PixelY, EEditorPickPurpose::Selection);
             }
+
+            bPickArmed = false;
+        }
+
+        // ---------------------------------------------------------------------
+        // Box select, a plain left-drag over the image is otherwise unused
+        // ---------------------------------------------------------------------
+
+        if (!bPickAllowed)
+        {
+            bMarqueeActive = false;
+        }
+        else if (!bMarqueeActive && bViewportImageActive && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+        {
+            const ImVec2 DragStart = ImGui::GetIO().MouseClickedPos[ImGuiMouseButton_Left];
+
+            const bool bStartedOnImage =
+                DragStart.x >= ImageMin.x && DragStart.x < (ImageMin.x + ImageSize.x) &&
+                DragStart.y >= ImageMin.y && DragStart.y < (ImageMin.y + ImageSize.y);
+
+            if (bStartedOnImage)
+            {
+                bMarqueeActive   = true;
+                bMarqueeAdditive = ImGui::GetIO().KeyCtrl || ImGui::GetIO().KeyShift;
+                MarqueeStartPos  = Vector2(DragStart.x, DragStart.y);
+            }
+        }
+
+        if (bMarqueeActive)
+        {
+            const ImVec2 MarqueeEnd = ImGui::GetMousePos();
+
+            const ImVec2 BoxMin = ImVec2(Math::Min(MarqueeStartPos.X, MarqueeEnd.x), Math::Min(MarqueeStartPos.Y, MarqueeEnd.y));
+            const ImVec2 BoxMax = ImVec2(Math::Max(MarqueeStartPos.X, MarqueeEnd.x), Math::Max(MarqueeStartPos.Y, MarqueeEnd.y));
+
+            ImDrawList* DrawList = ImGui::GetWindowDrawList();
+            DrawList->AddRectFilled(BoxMin, BoxMax, IM_COL32(0, 112, 224, 48));
+            DrawList->AddRect(BoxMin, BoxMax, IM_COL32(0, 112, 224, 255));
+
+            if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+            {
+                bMarqueeActive = false;
+
+                if (FEngine::IsInitialized())
+                {
+                    if (FWorld* World = FEngine::Get()->GetWorld())
+                    {
+                        if (IRendererModule* RendererModule = IRendererModule::Get())
+                        {
+                            uint32 MinPixelX = 0;
+                            uint32 MinPixelY = 0;
+                            uint32 MaxPixelX = 0;
+                            uint32 MaxPixelY = 0;
+
+                            ViewportPointToPixel(BoxMin, MinPixelX, MinPixelY);
+                            ViewportPointToPixel(BoxMax, MaxPixelX, MaxPixelY);
+
+                            if (EditorEngine)
+                            {
+                                EditorEngine->SetPendingRectPickAdditive(bMarqueeAdditive);
+                            }
+
+                            RendererModule->RequestEditorObjectPickRect(World->GetSceneInterface(), MinPixelX, MinPixelY, MaxPixelX, MaxPixelY);
+                        }
+                    }
+                }
+            }
+        }
+
+        // ---------------------------------------------------------------------
+        // Delete the selection, so a box-select can be followed straight by Delete
+        // ---------------------------------------------------------------------
+
+        if (EditorEngine && !EditorGuizmo::IsUsingAny() && !ImGui::GetIO().WantTextInput &&
+            ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && ImGui::IsKeyPressed(ImGuiKey_Delete))
+        {
+            EditorEngine->RequestDeleteActors(EditorEngine->GetSelectedActors());
         }
 
         // ---------------------------------------------------------------------

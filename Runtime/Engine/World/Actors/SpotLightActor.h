@@ -11,6 +11,11 @@ public:
     FSpotLightActor(const FObjectInitializer& ObjectInitializer);
     ~FSpotLightActor();
 
+    virtual const CHAR* GetTypeLabel() const override
+    {
+        return "SpotLight";
+    }
+
     FSpotLightComponent* GetLightComponent() const
     {
         return LightComponent;

@@ -514,12 +514,9 @@ bool FD3D12CommandContextState::PrepareSamplers(FD3D12RootSignature* RootSignatu
 
                 if (!CommonState.DescriptorCache.GetSamplerHeap().Realloc())
                 {
-                    if (!GetDevice()->ReallocateGlobalDescriptorHeap(ED3D12GlobalDescriptorHeapType::Sampler) || 
-                        !CommonState.DescriptorCache.GetSamplerHeap().Realloc())
-                    {
-                        D3D12_ERROR("Failed to allocate sampler descriptor block after CommandList split + heap reallocate");
-                        return bCommandListSplit;
-                    }
+                    D3D12_ERROR("Out of sampler descriptor blocks after a CommandList split. The global sampler heap holds %u blocks, which is too few for the number of contexts recording concurrently",
+                        GetDevice()->GetGlobalSamplerHeap().GetNumBlocks());
+                    return bCommandListSplit;
                 }
             }
 
@@ -700,12 +697,9 @@ bool FD3D12CommandContextState::PrepareResources(FD3D12RootSignature* RootSignat
 
                 if (!CommonState.DescriptorCache.GetResourceHeap().Realloc())
                 {
-                    if (!GetDevice()->ReallocateGlobalDescriptorHeap(ED3D12GlobalDescriptorHeapType::Resource) ||
-                        !CommonState.DescriptorCache.GetResourceHeap().Realloc())
-                    {
-                        D3D12_ERROR("Failed to allocate resource descriptor block after CommandList split + heap reallocate");
-                        return bCommandListSplit;
-                    }
+                    D3D12_ERROR("Out of resource descriptor blocks after a CommandList split. The global resource heap holds %u blocks, which is too few for the number of contexts recording concurrently",
+                        GetDevice()->GetGlobalResourceHeap().GetNumBlocks());
+                    return bCommandListSplit;
                 }
             }
 
@@ -1144,6 +1138,10 @@ void FD3D12CommandContextState::BeginCommandList()
     CommonState.SamplerStateCache.DirtyResourcesAll();
 
     GraphicsState.bBindIndexBuffer            = true;
+    GraphicsState.bBindVertexBuffers          = true;
+    GraphicsState.bBindShaderConstants        = true;
+    GraphicsState.bBindPrimitiveTopology      = true;
+    GraphicsState.bBindStreamOutputTargets    = (GraphicsState.NumSOBuffers > 0);
     CommonGraphicsState.bBindRenderTargets    = true;
     CommonGraphicsState.bBindBlendFactor      = true;
     CommonGraphicsState.bBindStencilRef       = true;
@@ -1154,20 +1152,13 @@ void FD3D12CommandContextState::BeginCommandList()
     ComputeCommonState.BoundRootSignature     = nullptr;
     CommonGraphicsState.bBindShadingRate      = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_1;
     CommonGraphicsState.bBindShadingRateImage = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_2;
-    GraphicsState.bBindVertexBuffers          = true;
-    GraphicsState.bBindShaderConstants        = true;
-    GraphicsState.bBindPrimitiveTopology      = true;
-    GraphicsState.bBindStreamOutputTargets    = (GraphicsState.NumSOBuffers > 0);
 
 #if D3D12_ENABLE_DYNAMIC_DEPTH_BIAS && D3D12_USE_ID3D12COMMANDLIST_9
     CommonGraphicsState.bBindDepthBias        = true;
 #endif
-
 #if D3D12_ENABLE_DEPTH_BOUNDS_TEST && D3D12_USE_ID3D12COMMANDLIST_1
     CommonGraphicsState.bBindDepthBounds      = true;
 #endif
-
-    // A fresh command list already starts at the default positions, so only a custom pattern needs re-applying.
     CommonGraphicsState.bBindSamplePositions  = (CommonGraphicsState.NumSamplesPerPixel > 0);
 
     ComputeState.bBindPipelineState           = true;
@@ -1178,7 +1169,6 @@ void FD3D12CommandContextState::BeginCommandList()
 
     RayTracingState.bBindShaderConstants      = true;
 
-    // Applied up front instead of being left dirty.
     FlushSamplePositions();
 }
 

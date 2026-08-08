@@ -349,28 +349,6 @@ NODISCARD constexpr const CHAR* ToString(D3D12_COMMAND_LIST_TYPE CommandListType
     }
 }
 
-enum class ED3D12GlobalDescriptorHeapType : uint8
-{
-    /** CBV/SRV/UAV global online heap (D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) */
-    Resource = 0,
-
-    /** Sampler global online heap (D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER) */
-    Sampler = 1,
-
-    Count
-};
-
-NODISCARD constexpr const CHAR* ToString(ED3D12GlobalDescriptorHeapType HeapType)
-{
-    switch (HeapType)
-    {
-        case ED3D12GlobalDescriptorHeapType::Resource: return "Resource";
-        case ED3D12GlobalDescriptorHeapType::Sampler:  return "Sampler";
-    }
-
-    return "Unknown";
-}
-
 enum class ED3D12ResourceStateMode : uint8
 {
     /** Resource permanently occupies one state. Transitions targeting it are dropped */
@@ -988,6 +966,8 @@ NODISCARD constexpr D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(E
     {
         case EPrimitiveTopology::LineList:
         case EPrimitiveTopology::LineStrip:
+        case EPrimitiveTopology::LineListAdjacency:
+        case EPrimitiveTopology::LineStripAdjacency:
             return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
 
         case EPrimitiveTopology::PointList:
@@ -995,26 +975,41 @@ NODISCARD constexpr D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(E
 
         case EPrimitiveTopology::TriangleList:
         case EPrimitiveTopology::TriangleStrip:
+        case EPrimitiveTopology::TriangleListAdjacency:
+        case EPrimitiveTopology::TriangleStripAdjacency:
             return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
         default:
-            return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
+            return IsPatchTopology(PrimitiveTopology) ? D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH : D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
     }
 }
 
 NODISCARD constexpr D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitiveTopology PrimitiveTopology)
 {
-    switch (PrimitiveTopology)
+    // Both patch ranges are contiguous and one-based, so the whole range maps by a single offset
+    static_assert(D3D_PRIMITIVE_TOPOLOGY_32_CONTROL_POINT_PATCHLIST - D3D_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST == (RHI_MAX_PATCH_CONTROL_POINTS - 1),
+        "D3D_PRIMITIVE_TOPOLOGY_N_CONTROL_POINT_PATCHLIST enumerators must be contiguous");
+
+    if (IsPatchTopology(PrimitiveTopology))
     {
-        case EPrimitiveTopology::LineList:      return D3D_PRIMITIVE_TOPOLOGY_LINELIST;
-        case EPrimitiveTopology::LineStrip:     return D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
-        case EPrimitiveTopology::PointList:     return D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
-        case EPrimitiveTopology::TriangleList:  return D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-        case EPrimitiveTopology::TriangleStrip: return D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
-        case EPrimitiveTopology::Undefined:     return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+        return static_cast<D3D12_PRIMITIVE_TOPOLOGY>(D3D_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST + (GetNumPatchControlPoints(PrimitiveTopology) - 1));
     }
 
-    return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+    switch (PrimitiveTopology)
+    {
+        case EPrimitiveTopology::LineList:               return D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+        case EPrimitiveTopology::LineStrip:              return D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
+        case EPrimitiveTopology::PointList:              return D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+        case EPrimitiveTopology::TriangleList:           return D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        case EPrimitiveTopology::TriangleStrip:          return D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+        case EPrimitiveTopology::LineListAdjacency:      return D3D_PRIMITIVE_TOPOLOGY_LINELIST_ADJ;
+        case EPrimitiveTopology::LineStripAdjacency:     return D3D_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ;
+        case EPrimitiveTopology::TriangleListAdjacency:  return D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST_ADJ;
+        case EPrimitiveTopology::TriangleStripAdjacency: return D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ;
+        case EPrimitiveTopology::Undefined:              return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+
+        default:                                         return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+    }
 }
 
 NODISCARD constexpr D3D12_RESOURCE_STATES ConvertResourceState(ERHIResourceState ResourceState)

@@ -45,8 +45,16 @@ static TAutoConsoleVariable<int32> CVarResourceOnlineDescriptorBlockSize(
 
 static TAutoConsoleVariable<int32> CVarSamplerOnlineDescriptorBlockSize(
     "D3D12RHI.SamplerOnlineDescriptorBlockSize",
-    "Number of descriptors in each Sampler OnlineDescriptorHeap", 
-    256);
+    "Number of descriptors in each Sampler OnlineDescriptorHeap. The sampler heap is capped at 2048 "
+    "descriptors by D3D12, so this directly sets how many blocks exist to share between every "
+    "concurrently recording context and every block still pending GPU completion.",
+    64);
+
+static TAutoConsoleVariable<int32> CVarMinExpectedDescriptorBlocks(
+    "D3D12RHI.MinExpectedDescriptorBlocks",
+    "Block count each global descriptor heap is expected to provide. Falling below this warns at "
+    "startup rather than stalling mysteriously once several contexts record at once.",
+    16);
 
 static TAutoConsoleVariable<bool> CVarEnableBindless(
     "D3D12RHI.EnableBindless",
@@ -378,9 +386,6 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
     , DirectQueue(nullptr)
     , CopyQueue(nullptr)
     , ComputeQueue(nullptr)
-    , DirectCommandAllocatorManager(nullptr)
-    , CopyCommandAllocatorManager(nullptr)
-    , ComputeCommandAllocatorManager(nullptr)
     , PipelineStateManager(nullptr)
     , StagingBufferAllocator(nullptr)
     , DynamicConstantsAllocator(nullptr)
@@ -446,10 +451,6 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
     , DeviceRemovedEvent(nullptr)
     , DeviceRemovedWait(nullptr)
 {
-    // Create CommandAllocatorManagers
-    DirectCommandAllocatorManager  = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Direct);
-    CopyCommandAllocatorManager    = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Copy);
-    ComputeCommandAllocatorManager = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Compute);
 }
 
 FD3D12Device::~FD3D12Device()
@@ -489,19 +490,13 @@ FD3D12Device::~FD3D12Device()
     SAFE_DELETE(OcclusionQueryHeapManager);
     SAFE_DELETE(PipelineStatsQueryHeapManager);
 
-    // Destroy all CommandLists
+    // Destroy the queues, and with them the command lists and allocators they own
     SAFE_DELETE(DirectQueue);
     SAFE_DELETE(ComputeQueue);
     SAFE_DELETE(CopyQueue);
 
-    // Destroy all CommandAllocators
-    SAFE_DELETE(DirectCommandAllocatorManager);
-    SAFE_DELETE(CopyCommandAllocatorManager);
-    SAFE_DELETE(ComputeCommandAllocatorManager);
-
     // Drain #1: release everything deferred so far (e.g. the DefaultDescriptors views reset
-    // above, plus any allocator-backed resources) while the descriptor heaps AND allocators
-    // are still alive.
+    // above, plus any allocator-backed resources) while the descriptor heaps are still alive.
     FD3D12DeviceRHI::FlushDeferredDeletions();
 
     // Release Heaps. Bindless heaps must be released before the global heaps they alias.
@@ -889,6 +884,21 @@ bool FD3D12Device::Initialize()
         SamplerBindlessHeap = new FD3D12BindlessDescriptorHeap(*GlobalSamplerHeap, EffectiveBindlessSamplerCount);
         D3D12_INFO("[FD3D12Device]: Bindless sampler heap. Capacity=%u (Requested=%u Heap=%u BlockSize=%u)",
             EffectiveBindlessSamplerCount, RequestedBindlessSamplerCount, NumOnlineSamplerDescriptors, SamplerDescriptorBlockSize);
+    }
+
+    {
+        const uint32 MinExpectedBlocks = static_cast<uint32>(Math::Max<int32>(1, CVarMinExpectedDescriptorBlocks.GetValue()));
+        if (GlobalResourceHeap->GetNumBlocks() < MinExpectedBlocks)
+        {
+            D3D12_WARNING("[FD3D12Device]: Global resource descriptor heap provides only %u blocks (expected at least %u). Lower D3D12RHI.ResourceOnlineDescriptorBlockSize or D3D12RHI.NumBindlessResourceDescriptors.",
+                GlobalResourceHeap->GetNumBlocks(), MinExpectedBlocks);
+        }
+
+        if (GlobalSamplerHeap->GetNumBlocks() < MinExpectedBlocks)
+        {
+            D3D12_WARNING("[FD3D12Device]: Global sampler descriptor heap provides only %u blocks (expected at least %u). Lower D3D12RHI.SamplerOnlineDescriptorBlockSize or D3D12RHI.NumBindlessSamplerDescriptors.",
+                GlobalSamplerHeap->GetNumBlocks(), MinExpectedBlocks);
+        }
     }
 
     RHI::bSupportsBindless = bBindlessEnabled && (ResourceBindlessHeap != nullptr);
@@ -1607,29 +1617,6 @@ void FD3D12Device::WaitForGPU()
     }
 }
 
-FD3D12CommandAllocatorManager* FD3D12Device::GetCommandAllocatorManager(ED3D12CommandQueueType QueueType)
-{
-    if (QueueType == ED3D12CommandQueueType::Direct)
-    {
-        CHECK(DirectCommandAllocatorManager->GetQueueType() == ED3D12CommandQueueType::Direct);
-        return DirectCommandAllocatorManager;
-    }
-    else if (QueueType == ED3D12CommandQueueType::Copy)
-    {
-        CHECK(CopyCommandAllocatorManager->GetQueueType() == ED3D12CommandQueueType::Copy);
-        return CopyCommandAllocatorManager;
-    }
-    else if (QueueType == ED3D12CommandQueueType::Compute)
-    {
-        CHECK(ComputeCommandAllocatorManager->GetQueueType() == ED3D12CommandQueueType::Compute);
-        return ComputeCommandAllocatorManager;
-    }
-    else
-    {
-        return nullptr;
-    }
-}
-
 FD3D12QueryHeapManager* FD3D12Device::GetQueryHeapManager(EQueryType QueryType)
 {
     if (QueryType == EQueryType::Timestamp)
@@ -1713,46 +1700,4 @@ void FD3D12Device::RecycleQueryHeap(FD3D12QueryHeap* Heap)
         default:
             break;
     }
-}
-
-bool FD3D12Device::ReallocateGlobalDescriptorHeap(ED3D12GlobalDescriptorHeapType HeapType)
-{
-    FD3D12OnlineDescriptorHeap*   GlobalHeap   = nullptr;
-    FD3D12BindlessDescriptorHeap* BindlessHeap = nullptr;
-    uint32                        Cap          = 0;
-
-    switch (HeapType)
-    {
-        case ED3D12GlobalDescriptorHeapType::Resource:
-            GlobalHeap   = GlobalResourceHeap;
-            BindlessHeap = ResourceBindlessHeap;
-            Cap          = Math::Min<uint32>(D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, GD3D12MaxResourceDescriptorHeapSize);
-            break;
-        case ED3D12GlobalDescriptorHeapType::Sampler:
-            GlobalHeap   = GlobalSamplerHeap;
-            BindlessHeap = SamplerBindlessHeap;
-            Cap          = Math::Min<uint32>(D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT, GD3D12MaxSamplerDescriptorHeapSize);
-            break;
-    }
-
-    CHECK(GlobalHeap != nullptr);
-
-    if (GlobalHeap->GetNumDescriptors() >= Cap)
-    {
-        D3D12_ERROR("[FD3D12Device]: Cannot reallocate global %s descriptor heap -- already at cap of %u", ToString(HeapType), Cap);
-        return false;
-    }
-
-    const uint32 BindlessReserved = GlobalHeap->GetBindlessReservedCount();
-    if (!GlobalHeap->Reallocate(Cap, BindlessReserved))
-    {
-        return false;
-    }
-
-    if (BindlessHeap)
-    {
-        BindlessHeap->Rebuild(*GlobalHeap);
-    }
-
-    return true;
 }

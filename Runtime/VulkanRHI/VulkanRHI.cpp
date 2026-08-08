@@ -1,4 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Tasks/Tasks.h"
 #include "VulkanRHI/VulkanRHI.h"
 #include "VulkanRHI/VulkanLoader.h"
 #include "VulkanRHI/VulkanExtensions.h"
@@ -190,6 +191,8 @@ FVulkanDeviceRHI::FVulkanDeviceRHI()
     , PhysicalDevice(nullptr)
     , Device(nullptr)
     , GraphicsCommandContext(nullptr)
+    , FrameNumber(0)
+    , NumOpenCommandBuffers(0)
 #if VULKAN_ENABLE_CRASH_MARKERS
     , CrashMarkers(nullptr)
 #endif
@@ -244,8 +247,11 @@ FVulkanDeviceRHI::~FVulkanDeviceRHI()
     // Flush before submitting since some objects needs the CommandContext
     FlushDeletionQueue();
 
-    // Delete the Default Context
-    SAFE_DELETE(GraphicsCommandContext);
+    if (GraphicsCommandContext)
+    {
+        GraphicsCommandContext->GetCommandQueue().ReleaseCommandContext(GraphicsCommandContext);
+        GraphicsCommandContext = nullptr;
+    }
 
     // Then delete all samplers
     {
@@ -456,9 +462,8 @@ bool FVulkanDeviceRHI::Initialize()
     }
 #endif
 
-    // Initialize Default CommandContext
-    GraphicsCommandContext = new FVulkanCommandContext(Device, *Device->GetGraphicsQueue());
-    if (!GraphicsCommandContext->Initialize())
+    GraphicsCommandContext = Device->GetGraphicsQueue()->ObtainCommandContext();
+    if (!GraphicsCommandContext)
     {
         VULKAN_ERROR_CRITICAL("Failed to initialize VulkanCommandContext");
         return false;
@@ -482,7 +487,12 @@ void FVulkanDeviceRHI::BeginFrame()
         VulkanDeviceLimits::TimestampPeriod = Properties.limits.timestampPeriod;
     }
 
-    Device->GetGraphicsQueue()->ProcessCommandQueue();
+    FVulkanQueue* GraphicsQueue = Device->GetGraphicsQueue();
+    GraphicsQueue->ProcessCommandQueue();
+
+    FrameNumber++;
+
+    GraphicsQueue->PruneCommandContexts(FrameNumber);
 
 #if VULKAN_USE_DESCRIPTOR_CACHE
     Device->GetDescriptorSetCache().EvictStaleDescriptorSets(0);
@@ -497,9 +507,10 @@ void FVulkanDeviceRHI::BeginFrame()
     }
 #endif
 
-    // NOTE: Currently only GraphicsCommandContext exists. When additional contexts
-    // are added (async compute, copy), iterate all contexts here.
-    GraphicsCommandContext->GetContextState().EvictStaleDescriptorStates();
+    GraphicsQueue->ForEachLiveCommandContext([](FVulkanCommandContext& Context)
+    {
+        Context.GetContextState().EvictStaleDescriptorStates();
+    });
 
     Device->GetMemoryManager().CleanUpAllocators();
 
@@ -542,8 +553,10 @@ void FVulkanDeviceRHI::EndFrame()
 
 FRHITexture* FVulkanDeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDesc, ERHIResourceState InInitialState, const IRHITextureData* InInitialData)
 {
+    FVulkanBorrowedCommandContext UploadContext(*GetDevice()->GetGraphicsQueue());
+
     FVulkanTextureRHIRef NewTexture = new FVulkanTextureRHI(GetDevice(), InTextureDesc);
-    if (!NewTexture->Initialize(GraphicsCommandContext, InInitialState, InInitialData))
+    if (!NewTexture->Initialize(UploadContext.Get(), InInitialState, InInitialData))
     {
         return nullptr;
     }
@@ -568,8 +581,10 @@ FRHITexture* FVulkanDeviceRHI::CreateTexture(const FRHITextureDesc& InTextureDes
 
 FRHIBuffer* FVulkanDeviceRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, ERHIResourceState InInitialState, const void* InInitialData)
 {
+    FVulkanBorrowedCommandContext UploadContext(*GetDevice()->GetGraphicsQueue());
+
     FVulkanBufferRHIRef NewBuffer = new FVulkanBufferRHI(GetDevice(), InBufferDesc);
-    if (!NewBuffer->Initialize(GraphicsCommandContext, InInitialState, InInitialData))
+    if (!NewBuffer->Initialize(UploadContext.Get(), InInitialState, InInitialData))
     {
         return nullptr;
     }
@@ -644,6 +659,17 @@ FRHISwapChain* FVulkanDeviceRHI::CreateSwapChain(const FRHISwapChainDesc& InSwap
 {
     CHECK(InSwapChainDesc.WindowHandle != nullptr);
 
+    if (!Tasks::IsInRHIThread())
+    {
+        FRHISwapChain* NewSwapChain = nullptr;
+        Tasks::LaunchOnRHIThread("VulkanCreateSwapChain", [this, &NewSwapChain, &InSwapChainDesc]()
+        {
+            NewSwapChain = CreateSwapChain(InSwapChainDesc);
+        }).Wait();
+
+        return NewSwapChain;
+    }
+
     FVulkanSwapChainRHIRef NewSwapChain = new FVulkanSwapChainRHI(Device, GraphicsCommandContext, InSwapChainDesc);
     if (!NewSwapChain->Initialize())
     {
@@ -678,16 +704,16 @@ FRHISceneAccelerationStructure* FVulkanDeviceRHI::CreateSceneAccelerationStructu
     BuildDesc.NumInstances = InSceneDesc.Instances.Size();
     BuildDesc.bUpdate      = false;
 
-    GraphicsCommandContext->StartContext();
-
     FVulkanSceneAccelerationStructureRHIRef NewScene = new FVulkanSceneAccelerationStructureRHI(GetDevice(), InSceneDesc);
-    if (!NewScene->Build(*GraphicsCommandContext, BuildDesc))
-    {
-        DEBUG_BREAK();
-        NewScene.Reset();
-    }
 
-    GraphicsCommandContext->FinishContext();
+    {
+        FVulkanScopedCommandContext BuildContext(*GetDevice()->GetGraphicsQueue());
+        if (!NewScene->Build(*BuildContext, BuildDesc))
+        {
+            DEBUG_BREAK();
+            NewScene.Reset();
+        }
+    }
 
     FlushCompletedSubmissions();
     return NewScene.ReleaseOwnership();
@@ -703,16 +729,16 @@ FRHIGeometryAccelerationStructure* FVulkanDeviceRHI::CreateGeometryAccelerationS
     BuildDesc.IndexFormat  = InGeometryDesc.IndexFormat;
     BuildDesc.bUpdate      = false;
 
-    GraphicsCommandContext->StartContext();
-
     FVulkanGeometryAccelerationStructureRHIRef NewGeometry = new FVulkanGeometryAccelerationStructureRHI(GetDevice(), InGeometryDesc);
-    if (!NewGeometry->Build(*GraphicsCommandContext, BuildDesc))
-    {
-        DEBUG_BREAK();
-        NewGeometry.Reset();
-    }
 
-    GraphicsCommandContext->FinishContext();
+    {
+        FVulkanScopedCommandContext BuildContext(*GetDevice()->GetGraphicsQueue());
+        if (!NewGeometry->Build(*BuildContext, BuildDesc))
+        {
+            DEBUG_BREAK();
+            NewGeometry.Reset();
+        }
+    }
 
     FlushCompletedSubmissions();
     return NewGeometry.ReleaseOwnership();
@@ -1516,16 +1542,41 @@ void FVulkanDeviceRHI::FlushCompletedSubmissions()
     Device->GetGraphicsQueue()->ProcessCommandQueue();
 }
 
-void FVulkanDeviceRHI::FlushDeletionQueue(FVulkanCommands* Commands)
+void FVulkanDeviceRHI::NotifyCommandBufferOpened()
 {
-    CHECK(Commands != nullptr);
-    if (Commands->IsEmpty())
+    TScopedLock Lock(DeferredObjectsCS);
+    NumOpenCommandBuffers++;
+}
+
+void FVulkanDeviceRHI::NotifyCommandBufferRetired(FVulkanCommands* Commands)
+{
+    TScopedLock Lock(DeferredObjectsCS);
+
+    CHECK(NumOpenCommandBuffers > 0);
+    NumOpenCommandBuffers--;
+
+    // -------------------------------------------------------------------------------------------
+    // A command buffer holds references to everything it recorded until it is submitted, so these
+    // objects may only be destroyed by a batch the GPU is guaranteed to reach last. That is only
+    // true of this batch once no other buffer is outstanding: while one is, destroying now would
+    // pull a resource out from under a buffer that has not even been ended yet. Leave the queue
+    // for a later retire.
+    // -------------------------------------------------------------------------------------------
+
+    if (NumOpenCommandBuffers > 0)
     {
         return;
     }
 
-    TScopedLock Lock(DeferredObjectsCS);
-    Commands->DeferredObjects = Move(DeferredObjects);
+    // -------------------------------------------------------------------------------------------
+    // A discarded buffer passes no batch, and an empty batch is never submitted, so in both cases
+    // nothing would ever run PostExecute to process the objects.
+    // -------------------------------------------------------------------------------------------
+    
+    if (Commands && !Commands->IsEmpty())
+    {
+        Commands->DeferredObjects = Move(DeferredObjects);
+    }
 }
 
 VkPipelineStageFlags2KHR FVulkanDeviceRHI::ResourceStateToPipelineStageFlags(ERHIResourceState ResourceState)

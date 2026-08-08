@@ -201,17 +201,15 @@ void FRHICommandListExecutor::ExecuteCommandList(FRHICommandList& CommandList)
         FRHICommandList* NewCommandList = new FRHICommandList();
         NewCommandList->ExchangeState(CommandList);
 
-        // Execute with the default command-context for now
         NewCommandList->SetCommandContext(DefaultCommandContext);
 
-        Tasks::LaunchOnRHIThread("RHIExecuteCommandList",
-            [NewCommandList]()
-            {
-                TRACE_FUNCTION_SCOPE();
+        Tasks::LaunchOnRHIThread("RHIExecuteCommandList", [NewCommandList]()
+        {
+            TRACE_FUNCTION_SCOPE();
 
-                NewCommandList->Execute();
-                delete NewCommandList;
-            });
+            NewCommandList->Execute();
+            delete NewCommandList;
+        });
     }
     else
     {

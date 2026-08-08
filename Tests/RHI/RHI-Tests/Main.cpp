@@ -6,6 +6,7 @@
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
 
+#include "PrimitiveTopologyTests.h"
 #include "RHIValidationHelperTests.h"
 #include "ShaderPermutationTests.h"
 #include "VertexDeclarationTests.h"
@@ -28,6 +29,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("RHIValidationHelpers", RHIValidationHelpers_Test());
     RUN_TEST("ShaderPermutation", ShaderPermutation_Test());
     RUN_TEST("VertexDeclaration", VertexDeclaration_Test());
+    RUN_TEST("PrimitiveTopology", PrimitiveTopology_Test());
 
     const int32 ExitCode = TestHarness::Report();
     TestHarness::Shutdown();

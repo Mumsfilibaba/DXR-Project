@@ -15,6 +15,11 @@ public:
     using FActor::Initialize;
     void Initialize(const FRHITextureRef& InCubeMap);
 
+    virtual const CHAR* GetTypeLabel() const override
+    {
+        return "SkyLight";
+    }
+
     FSkyLightComponent* GetLightComponent() const
     {
         return LightComponent;

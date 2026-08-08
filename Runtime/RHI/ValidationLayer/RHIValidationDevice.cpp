@@ -1339,6 +1339,12 @@ FRHIVertexShader* FRHIValidationDevice::CreateVertexShader(const TArray<uint8>& 
 
 FRHIHullShader* FRHIValidationDevice::CreateHullShader(const TArray<uint8>& ShaderCode)
 {
+    if (!RHI::bSupportsTessellation)
+    {
+        RHI_VALIDATION_ERROR("CreateHullShader: tessellation shaders are not supported by this device.");
+        return nullptr;
+    }
+
     if (ShaderCode.IsEmpty())
     {
         RHI_VALIDATION_ERROR("CreateHullShader: shader bytecode cannot be empty.");
@@ -1350,6 +1356,12 @@ FRHIHullShader* FRHIValidationDevice::CreateHullShader(const TArray<uint8>& Shad
 
 FRHIDomainShader* FRHIValidationDevice::CreateDomainShader(const TArray<uint8>& ShaderCode)
 {
+    if (!RHI::bSupportsTessellation)
+    {
+        RHI_VALIDATION_ERROR("CreateDomainShader: tessellation shaders are not supported by this device.");
+        return nullptr;
+    }
+
     if (ShaderCode.IsEmpty())
     {
         RHI_VALIDATION_ERROR("CreateDomainShader: shader bytecode cannot be empty.");
@@ -1506,6 +1518,33 @@ FRHIGraphicsPipelineState* FRHIValidationDevice::CreateGraphicsPipelineState(con
     if ((InDesc.HullShader == nullptr) != (InDesc.DomainShader == nullptr))
     {
         RHI_VALIDATION_ERROR("CreateGraphicsPipelineState: HullShader and DomainShader must be provided together.");
+        return nullptr;
+    }
+
+    const bool bHasTessellation = InDesc.HullShader != nullptr;
+    const bool bIsPatchTopology = IsPatchTopology(InDesc.PrimitiveTopology);
+    
+    if (bHasTessellation != bIsPatchTopology)
+    {
+        RHI_VALIDATION_ERROR("CreateGraphicsPipelineState: a patch topology and tessellation shaders require each other (topology '%s').", ToString(InDesc.PrimitiveTopology));
+        return nullptr;
+    }
+
+    if (bIsPatchTopology && GetNumPatchControlPoints(InDesc.PrimitiveTopology) > RHI::MaxPatchControlPoints)
+    {
+        RHI_VALIDATION_ERROR("CreateGraphicsPipelineState: topology '%s' exceeds the device limit of %u patch control points.", ToString(InDesc.PrimitiveTopology), RHI::MaxPatchControlPoints);
+        return nullptr;
+    }
+
+    if (IsAdjacencyTopology(InDesc.PrimitiveTopology) && !RHI::bSupportsGeometryShaders)
+    {
+        RHI_VALIDATION_ERROR("CreateGraphicsPipelineState: adjacency topologies require geometry shader support.");
+        return nullptr;
+    }
+
+    if (InDesc.bPrimitiveRestartEnable && !IsStripTopology(InDesc.PrimitiveTopology))
+    {
+        RHI_VALIDATION_ERROR("CreateGraphicsPipelineState: primitive restart requires a strip topology (topology '%s').", ToString(InDesc.PrimitiveTopology));
         return nullptr;
     }
 

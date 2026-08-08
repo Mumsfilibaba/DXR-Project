@@ -770,15 +770,25 @@ constexpr VkColorComponentFlags ConvertColorWriteFlags(EColorWriteFlags ColorWri
 
 constexpr VkPrimitiveTopology ConvertPrimitiveTopology(EPrimitiveTopology PrimitiveTopology)
 {
+    // Vulkan has a single patch topology, and takes the control-point count through pTessellationState instead
+    if (IsPatchTopology(PrimitiveTopology))
+    {
+        return VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
+    }
+
     switch (PrimitiveTopology)
     {
-        case EPrimitiveTopology::LineList:      return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-        case EPrimitiveTopology::LineStrip:     return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
-        case EPrimitiveTopology::PointList:     return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
-        case EPrimitiveTopology::TriangleList:  return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        case EPrimitiveTopology::TriangleStrip: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+        case EPrimitiveTopology::LineList:               return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+        case EPrimitiveTopology::LineStrip:              return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+        case EPrimitiveTopology::PointList:              return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+        case EPrimitiveTopology::TriangleList:           return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        case EPrimitiveTopology::TriangleStrip:          return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+        case EPrimitiveTopology::LineListAdjacency:      return VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY;
+        case EPrimitiveTopology::LineStripAdjacency:     return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY;
+        case EPrimitiveTopology::TriangleListAdjacency:  return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY;
+        case EPrimitiveTopology::TriangleStripAdjacency: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY;
         
-        default:                                return VkPrimitiveTopology(-1);
+        default:                                         return VkPrimitiveTopology(-1);
     }
 }
 

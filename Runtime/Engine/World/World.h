@@ -1,10 +1,13 @@
 #pragma once
 #include "Core/Time/Timespan.h"
 #include "Core/Containers/Array.h"
+#include "Core/Containers/ArrayView.h"
+#include "Core/Containers/String.h"
 #include "Core/Delegates/Event.h"
 #include "Engine/World/Actors/PlayerController.h"
 #include "RendererCore/Interfaces/IScene.h"
 
+class FActorFilter;
 class FCameraComponent;
 class FSceneComponent;
 
@@ -87,6 +90,51 @@ public:
     void RemoveActor(FActor* InActor);
 
     /**
+     * @brief Create a filter that actors can be placed in. Filters are presented in the scene-hierarchy in the 
+     * order they were created. Names only have to be unique among the filters sharing a parent. Filters exist 
+     * purely to organise the editor's scene-hierarchy. Outside an editor build no filter is created and this 
+     * returns nullptr, which every other function here accepts, so scene-setup code needs no branching.
+     *
+     * @param InName Name of the filter, an existing filter is returned if the name is already taken in the parent
+     * @param InParent Filter to nest the new filter inside, or nullptr to place it at the root of the hierarchy
+     * @return Returns the filter, or nullptr outside an editor build
+     */
+    FActorFilter* CreateActorFilter(const String& InName, FActorFilter* InParent = nullptr);
+
+    /**
+     * @brief Look for a filter by name among the filters nested directly inside a parent
+     *
+     * @param InName Name of the filter to look for
+     * @param InParent Filter to search inside, or nullptr to search the root of the hierarchy
+     * @return Returns the filter with the given name, or nullptr if no such filter exists
+     */
+    FActorFilter* FindActorFilter(const String& InName, FActorFilter* InParent = nullptr) const;
+
+    /**
+     * @brief Move a filter, and everything nested inside it, into another filter. A filter cannot 
+     * be moved into itself or into one of its own descendants, such a move is ignored.
+     *
+     * @param InFilter Filter to move
+     * @param InParent Filter to nest it inside, or nullptr to move it to the root of the hierarchy
+     */
+    void SetActorFilterParent(FActorFilter* InFilter, FActorFilter* InParent);
+
+    /**
+     * @brief Destroy a filter, every actor and filter inside it moves up into the destroyed filter's parent
+     *
+     * @param InFilter Filter to destroy
+     */
+    void DestroyActorFilter(FActorFilter* InFilter);
+
+    /**
+     * @brief Set the filter that actors added from now on are placed in Only affects actors added
+     * after this call, SetFilter remains the way to place a single actor.
+     *
+     * @param InFilter Filter to place new actors in, or nullptr to leave them at the root
+     */
+    void SetCurrentFilter(FActorFilter* InFilter);
+
+    /**
      * @brief Sets the camera component used for rendering the world
      *
      * @param InCamera Camera component to make active, or nullptr to clear
@@ -151,6 +199,30 @@ public:
     }
 
     /**
+     * @return Returns every filter in the world, in creation order, and an empty view outside an editor build
+     */
+    TArrayView<FActorFilter* const> GetActorFilters() const
+    {
+    #if EDITOR_BUILD
+        return ActorFilters;
+    #else
+        return { };
+    #endif
+    }
+
+    /**
+     * @return Returns the filter new actors are currently placed in, or nullptr
+     */
+    FActorFilter* GetCurrentFilter() const
+    {
+    #if EDITOR_BUILD
+        return CurrentFilter;
+    #else
+        return nullptr;
+    #endif
+    }
+
+    /**
      * @return Returns a reference to an array of all actors in the world
      */
     const TArray<FPlayerController*>& GetPlayerControllers() const
@@ -183,6 +255,10 @@ private:
     IScene*                    Scene;
     FCameraComponent*          ActiveCamera;
     TArray<FActor*>            Actors;
+#if EDITOR_BUILD
+    TArray<FActorFilter*>      ActorFilters;
+    FActorFilter*              CurrentFilter;
+#endif
     TArray<FPlayerController*> PlayerControllers;
     FOnActorRemovedEvent       OnActorRemovedEvent;
 };

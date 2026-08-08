@@ -34,15 +34,12 @@ public:
         Get()->DeferDeletionInternal(Forward<ArgTypes>(Args)...);
     }
 
-    // Drains the deferred-deletion queue until empty (flushing RHI deletes between passes).
     static void FlushDeferredDeletions();
 
     static FD3D12TextureRHI*                   ResourceCast(FRHITexture* Texture);
     static const FD3D12TextureRHI*             ResourceCast(const FRHITexture* Texture);
-    
     static FD3D12UnorderedAccessViewRHI*       ResourceCast(FRHIUnorderedAccessView* UnorderedAccessView);
     static const FD3D12UnorderedAccessViewRHI* ResourceCast(const FRHIUnorderedAccessView* UnorderedAccessView);
-
     static FD3D12RenderTargetViewRHI*          ResourceCast(FRHIRenderTargetView* RenderTargetView);
     static const FD3D12RenderTargetViewRHI*    ResourceCast(const FRHIRenderTargetView* RenderTargetView);
 
@@ -138,7 +135,9 @@ public:
 
     virtual ERHIType GetRHIType() const override final;
 
-    void FlushDeletionQueue(FD3D12Commands* Commands);
+    void NotifyCommandListOpened();
+    void NotifyCommandListRetired(FD3D12Commands* Commands);
+
     void FlushCompletedSubmissions();
 
     FD3D12Adapter* GetAdapter() const
@@ -171,7 +170,9 @@ private:
     FD3D12Adapter*               Adapter;
     FD3D12Device*                Device;
     FD3D12CommandContext*        DirectCommandContext;
+    uint64                       FrameNumber;
     TArray<FD3D12DeferredObject> DeferredObjects;
+    int32                        NumOpenCommandLists;
     FCriticalSection             DeferredObjectsCS;
     FSamplerStateMap             SamplerStateMap;
     FCriticalSection             SamplerStateMapCS;

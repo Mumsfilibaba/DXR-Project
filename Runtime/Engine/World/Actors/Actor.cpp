@@ -83,6 +83,9 @@ FActor::FActor(const FObjectInitializer& ObjectInitializer)
     : FObject(ObjectInitializer)
     , Name()
     , World(nullptr)
+#if EDITOR_BUILD
+    , Filter(nullptr)
+#endif
     , Transform()
     , Components()
     , ParentActor(nullptr)

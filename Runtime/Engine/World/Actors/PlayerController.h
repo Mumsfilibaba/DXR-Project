@@ -15,6 +15,11 @@ public:
     virtual void SetupInputComponent();
     virtual void Tick(float DeltaTime) override;
 
+    virtual const CHAR* GetTypeLabel() const override
+    {
+        return "PlayerController";
+    }
+
     FInputComponent* GetInputComponent() const
     {
         CHECK(InputComponent != nullptr);

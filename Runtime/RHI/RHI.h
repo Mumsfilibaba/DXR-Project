@@ -406,6 +406,12 @@ struct RHI
     /** Whether the device supports geometry shaders */
     static RHI_API bool bSupportsGeometryShaders;
 
+    /** Whether the device supports hull and domain (tessellation) shaders */
+    static RHI_API bool bSupportsTessellation;
+
+    /** Maximum control points per patch, zero when tessellation is unsupported */
+    static RHI_API uint32 MaxPatchControlPoints;
+
     /** Whether SV_RenderTargetArrayIndex is supported from the vertex shader stage */
     static RHI_API bool bSupportRenderTargetArrayIndexFromVertexShader;
 

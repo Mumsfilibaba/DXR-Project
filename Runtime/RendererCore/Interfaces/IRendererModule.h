@@ -130,6 +130,12 @@ public:
  
     /** @brief Poll for a completed editor pick. Returns true if a result was produced. */
     virtual bool PollEditorObjectPickResult(IScene* Scene, FEditorPickResult& OutResult) = 0;
+
+    /** @brief Request an async editor ObjectID pick over a rectangle (in render target space), for box-select. */
+    virtual void RequestEditorObjectPickRect(IScene* Scene, uint32 MinX, uint32 MinY, uint32 MaxX, uint32 MaxY) = 0;
+
+    /** @brief Poll for a completed editor rectangle pick. Returns true if a result was produced, filling in every unique ObjectID found. */
+    virtual bool PollEditorObjectPickRectResult(IScene* Scene, TArray<uint32>& OutObjectIDs) = 0;
  
     /**
      * @brief Queue an extent/format/color-space change for a swap-chain. The change is coalesced 

@@ -178,11 +178,9 @@ public:
     ~FD3D12OnlineDescriptorHeap();
 
     bool Initialize(uint32 InDescriptorCount, uint32 InBlockSize, uint32 InBindlessReservedCount = 0);
-    bool Reallocate(uint32 NewDescriptorCount, uint32 InBindlessReservedCount);
 
     NODISCARD FD3D12OnlineDescriptorBlock* AllocateBlock();
     void RecycleBlock(FD3D12OnlineDescriptorBlock* InBlock);
-    void RecycleBlockDeferred(FD3D12OnlineDescriptorBlock* InBlock);
 
     NODISCARD FORCEINLINE FD3D12DescriptorHeap* GetHeap() const
     { 
@@ -204,9 +202,15 @@ public:
         return BindlessReservedCount;
     }
 
-    NODISCARD FORCEINLINE uint32 GetGeneration() const
+    NODISCARD FORCEINLINE uint32 GetNumBlocks() const
     {
-        return Generation;
+        return static_cast<uint32>(BlockQueue.Size());
+    }
+
+    NODISCARD bool HasAvailableBlock() const
+    {
+        TScopedLock Lock(BlockQueueCS);
+        return !AvailableBlockQueue.IsEmpty();
     }
 
 private:
@@ -214,11 +218,10 @@ private:
     uint32                               DescriptorCount;
     uint32                               BlockSize;
     uint32                               BindlessReservedCount;
-    uint32                               Generation;
     FD3D12DescriptorHeapRef              Heap;
     TQueue<FD3D12OnlineDescriptorBlock*> AvailableBlockQueue;
     TArray<FD3D12OnlineDescriptorBlock*> BlockQueue;
-    FCriticalSection                     BlockQueueCS;
+    mutable FCriticalSection             BlockQueueCS;
 };
 
 struct FD3D12PendingBindlessWrite
@@ -240,7 +243,6 @@ public:
     void EnqueueWrite(FRHIDescriptorHandle Handle, D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle);
     void WriteSlotImmediate(FRHIDescriptorHandle Handle, D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle);
     void Flush();
-    void Rebuild(FD3D12OnlineDescriptorHeap& NewGlobalHeap);
 
     NODISCARD FORCEINLINE FD3D12DescriptorHeap* GetAliasedHeap() const
     {

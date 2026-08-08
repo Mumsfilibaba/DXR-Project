@@ -2091,16 +2091,19 @@ void EditorWidgets::MenuLabeledSeparator(const CHAR* Label, float Thickness, flo
     }
 }
 
+static constexpr float MenuRowPaddingY = 4.0f;
+static constexpr float MenuRowIndentX  = 20.0f;
+
 bool EditorWidgets::MenuItem(const CHAR* Label, const CHAR* Shortcut, bool bSelected, bool bEnabled, bool bDrawBorder)
 {
     const float PaddingX    = 8.0f;
-    const float PaddingY    = 4.0f;
+    const float PaddingY    = MenuRowPaddingY;
     const float RowHeight   = ImGui::GetFontSize() + PaddingY * 2.0f;
     const float RowWidth    = ImGui::GetContentRegionAvail().x;
     const float CheckSize   = ImGui::GetFontSize() * 0.85f;
     const float GapRight    = 8.0f;
     const float ClipGap     = 4.0f;
-    const float MenuIndentX = 20.0f;
+    const float MenuIndentX = MenuRowIndentX;
     const float IconGutterX = 0.0f;
 
     ImGui::PushID(Label);
@@ -2360,7 +2363,7 @@ bool EditorWidgets::MenuDragFloat(const CHAR* Label, float& InOutValue, float Sp
     return MenuFloatRow(EMenuFloatWidget::Drag, Label, InOutValue, Speed, MinValue, MaxValue, Format, ValueWidth, bEnabled);
 }
 
-void EditorWidgets::MenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder)
+void EditorWidgets::MenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, FPopupAnchor& OutAnchor, bool bDrawBorder)
 {
     const bool bThisPopupOpen = ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None);
     OutAnchor.bRequestPosition = false;
@@ -2473,7 +2476,7 @@ static void DrawMenuFrame()
     DrawList->AddRect(Min, Max, IM_COL32(50, 50, 50, 255), 0.0f, ImDrawFlags_None, 1.0f);
 }
 
-bool EditorWidgets::BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Anchor, float MinWidth)
+bool EditorWidgets::BeginMenuPopup(const CHAR* PopupId, const FPopupAnchor& Anchor, float MinWidth)
 {
     if (Anchor.bRequestPosition || ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None))
     {
@@ -2620,7 +2623,7 @@ static void DrawSubMenuArrow(ImDrawList* DrawList, const ImVec2& RectMin, const 
     }
 }
 
-bool EditorWidgets::MenuSubMenuRow(const CHAR* Label, PopupAnchor& OutAnchor, bool& bOutHovered, bool bForceActive, float LabelIndentX)
+bool EditorWidgets::MenuSubMenuRow(const CHAR* Label, FPopupAnchor& OutAnchor, bool& bOutHovered, bool bForceActive, float LabelIndentX)
 {
     const float PaddingY  = 4.0f;
     const float RowHeight = ImGui::GetFontSize() + PaddingY * 2.0f;
@@ -2673,7 +2676,7 @@ bool EditorWidgets::MenuSubMenuRow(const CHAR* Label, PopupAnchor& OutAnchor, bo
     return bPressed;
 }
 
-void EditorWidgets::MenuSubMenuOverlay(const CHAR* Label, const PopupAnchor& Anchor, float LabelIndentX)
+void EditorWidgets::MenuSubMenuOverlay(const CHAR* Label, const FPopupAnchor& Anchor, float LabelIndentX)
 {
     if (Anchor.Max.x <= Anchor.Min.x || Anchor.Max.y <= Anchor.Min.y)
     {
@@ -2728,7 +2731,7 @@ bool EditorWidgets::BeginSubMenu(FSubMenuState& InOutState, const CHAR* PopupId,
 
     const ImVec2 FlyoutPos = ImVec2(InOutState.Anchor.Max.x - MenuSubMenuOverlapX, InOutState.Anchor.Min.y);
 
-    PopupAnchor FlyoutAnchor;
+    FPopupAnchor FlyoutAnchor;
     FlyoutAnchor.Min              = FlyoutPos;
     FlyoutAnchor.Max              = FlyoutPos;
     FlyoutAnchor.bRequestPosition = InOutState.Anchor.bRequestPosition;

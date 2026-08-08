@@ -21,7 +21,7 @@ enum class EVector3ControlType : uint8
     Scale,
 };
 
-struct PopupAnchor
+struct FPopupAnchor
 {
     ImVec2 Min = ImVec2(0.0f, 0.0f);
     ImVec2 Max = ImVec2(0.0f, 0.0f);
@@ -37,13 +37,13 @@ inline constexpr float MenuSubMenuOverlapX   = 2.0f;
 
 struct FSubMenuState
 {
-    PopupAnchor Anchor;
+    FPopupAnchor Anchor;
 
-    const CHAR* Label        = nullptr;
-    const CHAR* PopupId      = nullptr;
-    float       LabelIndentX = MenuLabelIndentX;
-    float       MinWidth     = MenuDefaultMinWidth;
-    bool        bRowHovered  = false;
+    const CHAR*  Label        = nullptr;
+    const CHAR*  PopupId      = nullptr;
+    float        LabelIndentX = MenuLabelIndentX;
+    float        MinWidth     = MenuDefaultMinWidth;
+    bool         bRowHovered  = false;
 };
 
 struct RichTextSpan
@@ -207,7 +207,7 @@ struct ENGINE_API EditorWidgets
     // Popup
     // -----------------------------------------------------------------------------------------
 
-    static bool BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Anchor, float MinWidth = 180.0f);
+    static bool BeginMenuPopup(const CHAR* PopupId, const FPopupAnchor& Anchor, float MinWidth = 180.0f);
     static bool BeginPopupContextWindow(const CHAR* PopupId, ImGuiPopupFlags Flags = ImGuiPopupFlags_MouseButtonRight);
     static bool BeginPopupContextItem(const CHAR* PopupId);
     static bool BeginPopupContext(const CHAR* PopupId);
@@ -215,15 +215,15 @@ struct ENGINE_API EditorWidgets
     static bool BeginSubMenu(FSubMenuState& InOutState, const CHAR* PopupId, const CHAR* Label, bool bEnabled = true);
     static void EndSubMenu(FSubMenuState& InOutState);
 
-    static bool MenuSubMenuRow(const CHAR* Label, PopupAnchor& OutAnchor, bool& bOutHovered, bool bForceActive, float LabelIndentX = MenuLabelIndentX);
-    static void MenuSubMenuOverlay(const CHAR* Label, const PopupAnchor& Anchor, float LabelIndentX = MenuLabelIndentX);
+    static bool MenuSubMenuRow(const CHAR* Label, FPopupAnchor& OutAnchor, bool& bOutHovered, bool bForceActive, float LabelIndentX = MenuLabelIndentX);
+    static void MenuSubMenuOverlay(const CHAR* Label, const FPopupAnchor& Anchor, float LabelIndentX = MenuLabelIndentX);
 
     static void MenuSeparator(float Thickness = 1.0f, float PaddingY = 4.0f);
     static void MenuLabeledSeparator(const CHAR* Label, float Thickness = 1.0f, float PaddingY = 4.0f);
     static bool MenuItem(const CHAR* Label, const CHAR* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true, bool bDrawBorder = false);
     static bool MenuSliderFloat(const CHAR* Label, float& InOutValue, float MinValue, float MaxValue, const CHAR* Format, float ValueWidth = 96.0f, bool bEnabled = true);
     static bool MenuDragFloat(const CHAR* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const CHAR* Format, float ValueWidth = 96.0f, bool bEnabled = true);
-    static void MenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder = false);
+    static void MenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, FPopupAnchor& OutAnchor, bool bDrawBorder = false);
     
     static void EndMenuPopup();
     static void EndPopupContext();

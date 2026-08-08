@@ -1,3 +1,4 @@
+#include "Core/Containers/Set.h"
 #include "Core/Math/Frustum.h"
 #include "Core/Templates/Utility/BitCast.h"
 #include "Core/Misc/FrameProfiler.h"
@@ -88,6 +89,13 @@ static FAutoConsoleVariableRef CVarEditorPickDebug(
     "Editor.Pick.Debug",
     "Logs editor picking requests and readback results.",
     GEditorPickDebug,
+    EConsoleVariableFlags::Default);
+
+static int32 GEditorPickMaxRectRows = 512;
+static FAutoConsoleVariableRef CVarEditorPickMaxRectRows(
+    "Editor.Pick.MaxRectRows",
+    "Caps how many rows a box-select reads back, stepping over the source rows when the box is taller. A full-viewport box at 4K would otherwise read back 33 MB.",
+    GEditorPickMaxRectRows,
     EConsoleVariableFlags::Default);
 #endif
 
@@ -1281,15 +1289,39 @@ void FSceneRenderer::RenderThread_ProcessEditorObjectPickRequests(FRHICommandLis
 
     const int32 RequestedRadius = GEditorPickSearchRadius;
     const int32 SampleRadius    = Math::Clamp(RequestedRadius, 0, 64);
-    const bool  bTryFlipY       = GEditorPickTryFlipY;
+    const bool  bIsRect         = Request.bIsRect;
 
-    const int32 X0 = Math::Clamp<int32>(int32(PixelX) - SampleRadius, 0, int32(TexWidth) - 1);
-    const int32 X1 = Math::Clamp<int32>(int32(PixelX) + SampleRadius, 0, int32(TexWidth) - 1);
-    const int32 Y0 = Math::Clamp<int32>(int32(PixelY) - SampleRadius, 0, int32(TexHeight) - 1);
-    const int32 Y1 = Math::Clamp<int32>(int32(PixelY) + SampleRadius, 0, int32(TexHeight) - 1);
+    // The flipped-Y window is a click-tolerance debug aid for point picks and means nothing for a box
+    const bool  bTryFlipY = GEditorPickTryFlipY && !bIsRect;
+
+    int32 X0 = 0;
+    int32 X1 = 0;
+    int32 Y0 = 0;
+    int32 Y1 = 0;
+
+    if (bIsRect)
+    {
+        X0 = int32(PixelX);
+        Y0 = int32(PixelY);
+        X1 = int32(Math::Clamp(Math::Max(Request.MaxX, Request.PixelX), PixelX, TexWidth - 1));
+        Y1 = int32(Math::Clamp(Math::Max(Request.MaxY, Request.PixelY), PixelY, TexHeight - 1));
+    }
+    else
+    {
+        X0 = Math::Clamp<int32>(int32(PixelX) - SampleRadius, 0, int32(TexWidth) - 1);
+        X1 = Math::Clamp<int32>(int32(PixelX) + SampleRadius, 0, int32(TexWidth) - 1);
+        Y0 = Math::Clamp<int32>(int32(PixelY) - SampleRadius, 0, int32(TexHeight) - 1);
+        Y1 = Math::Clamp<int32>(int32(PixelY) + SampleRadius, 0, int32(TexHeight) - 1);
+    }
+
+    const uint32 SourceHeight = uint32((Y1 - Y0) + 1);
+
+    // Reading back every row of a full-viewport box would cost tens of megabytes, so tall boxes step over source rows
+    const uint32 MaxRows = bIsRect ? uint32(Math::Max(GEditorPickMaxRectRows, 1)) : SourceHeight;
+    const uint32 RowStep = Math::Max(1u, (SourceHeight + MaxRows - 1) / MaxRows);
 
     const uint32 RegionWidth  = uint32((X1 - X0) + 1);
-    const uint32 RegionHeight = uint32((Y1 - Y0) + 1);
+    const uint32 RegionHeight = (SourceHeight + RowStep - 1) / RowStep;
     const uint32 CenterLocalX = uint32(int32(PixelX) - X0);
     const uint32 CenterLocalY = uint32(int32(PixelY) - Y0);
 
@@ -1355,9 +1387,9 @@ void FSceneRenderer::RenderThread_ProcessEditorObjectPickRequests(FRHICommandLis
 
     if (GEditorPickDebug)
     {
-        LOG_INFO("[EditorPick] Request. Pixel=(%u,%u) Tex=%ux%u Radius=%d TryFlipY=%s Region=(%u,%u) CenterLocal=(%u,%u)",
-            PixelX, PixelY, TexWidth, TexHeight, SampleRadius, bTryFlipY ? "true" : "false",
-            RegionWidth, RegionHeight, CenterLocalX, CenterLocalY);
+        LOG_INFO("[EditorPick] Request. Rect=%s Pixel=(%u,%u) Tex=%ux%u Radius=%d TryFlipY=%s Region=(%u,%u) RowStep=%u CenterLocal=(%u,%u)",
+            bIsRect ? "true" : "false", PixelX, PixelY, TexWidth, TexHeight, SampleRadius, bTryFlipY ? "true" : "false",
+            RegionWidth, RegionHeight, RowStep, CenterLocalX, CenterLocalY);
     }
 
     InCommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(InResources.EditorObjectID_NoJitter.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::CopySource));
@@ -1366,8 +1398,9 @@ void FSceneRenderer::RenderThread_ProcessEditorObjectPickRequests(FRHICommandLis
     // We do one copy per row to control destination row stride across backends and keep D3D12 offsets 512-byte aligned.
     for (uint32 Row = 0; Row < RegionHeight; ++Row)
     {
-        const uint64 DstOffset = NormalRowStrideBytes * uint64(Row);
-        InCommandList.CopyTextureRegionToBuffer(ReadbackBuffer.Get(), DstOffset, InResources.EditorObjectID_NoJitter.Get(), FTextureRegion2D(RegionWidth, 1, uint32(X0), uint32(Y0) + Row), 0);
+        const uint64 DstOffset  = NormalRowStrideBytes * uint64(Row);
+        const uint32 SourceRowY = uint32(Y0) + (Row * RowStep);
+        InCommandList.CopyTextureRegionToBuffer(ReadbackBuffer.Get(), DstOffset, InResources.EditorObjectID_NoJitter.Get(), FTextureRegion2D(RegionWidth, 1, uint32(X0), SourceRowY), 0);
     }
 
     if (bTryFlipY)
@@ -1403,6 +1436,7 @@ void FSceneRenderer::RenderThread_ProcessEditorObjectPickRequests(FRHICommandLis
     InFlight.ReadbackBuffer        = ReadbackBuffer;
     InFlight.Fence                 = Fence;
     InFlight.SampleRadius          = uint32(SampleRadius);
+    InFlight.bIsRectPick           = bIsRect ? 1u : 0u;
     InFlight.PixelX                = PixelX;
     InFlight.PixelY                = PixelY;
     InFlight.TexWidth              = TexWidth;
@@ -1436,7 +1470,7 @@ void FSceneRenderer::RequestEditorObjectPick(FScene* Scene, uint32 PixelX, uint3
 #if EDITOR_BUILD 
     if (Scene)  
     { 
-        PendingObjectPicks.Enqueue(FEditorObjectPickRequest{ Scene, PixelX, PixelY, RequestId });
+        PendingObjectPicks.Enqueue(FEditorObjectPickRequest{ Scene, PixelX, PixelY, PixelX, PixelY, false, RequestId });
     } 
 #else
     UNREFERENCED_VARIABLE(Scene);
@@ -1445,6 +1479,29 @@ void FSceneRenderer::RequestEditorObjectPick(FScene* Scene, uint32 PixelX, uint3
     UNREFERENCED_VARIABLE(RequestId);
 #endif
 } 
+
+void FSceneRenderer::RequestEditorObjectPickRect(FScene* Scene, uint32 MinX, uint32 MinY, uint32 MaxX, uint32 MaxY)
+{
+#if EDITOR_BUILD
+    if (Scene)
+    {
+        // The corners arrive in drag order, so a box dragged up or to the left has to be normalized first
+        const uint32 Left   = Math::Min(MinX, MaxX);
+        const uint32 Right  = Math::Max(MinX, MaxX);
+        const uint32 Top    = Math::Min(MinY, MaxY);
+        const uint32 Bottom = Math::Max(MinY, MaxY);
+
+        // A rect pick has no purpose to route back, so it carries no request id
+        PendingObjectPicks.Enqueue(FEditorObjectPickRequest{ Scene, Left, Top, Right, Bottom, true, 0 });
+    }
+#else
+    UNREFERENCED_VARIABLE(Scene);
+    UNREFERENCED_VARIABLE(MinX);
+    UNREFERENCED_VARIABLE(MinY);
+    UNREFERENCED_VARIABLE(MaxX);
+    UNREFERENCED_VARIABLE(MaxY);
+#endif
+}
  
 bool FSceneRenderer::PollEditorObjectPickResult(FScene* Scene, FEditorPickResult& OutResult)
 { 
@@ -1460,7 +1517,7 @@ bool FSceneRenderer::PollEditorObjectPickResult(FScene* Scene, FEditorPickResult
     for (int32 Index = 0; Index < InFlightObjectPicks.Size(); ++Index)
     {
         const FEditorObjectPickInFlight& InFlight = InFlightObjectPicks[Index];
-        if (InFlight.Scene != Scene)
+        if (InFlight.Scene != Scene || InFlight.bIsRectPick)
         {
             continue;
         }
@@ -1671,6 +1728,99 @@ bool FSceneRenderer::PollEditorObjectPickResult(FScene* Scene, FEditorPickResult
     return false;
 #endif
 } 
+
+bool FSceneRenderer::PollEditorObjectPickRectResult(FScene* Scene, TArray<uint32>& OutObjectIDs)
+{
+#if EDITOR_BUILD
+    if (!Scene)
+    {
+        return false;
+    }
+
+    // InFlightObjectPicks is mutated on the render thread (ProcessEditorObjectPickRequests).
+    TScopedLock Lock(ObjectPickStateCS);
+
+    for (int32 Index = 0; Index < InFlightObjectPicks.Size(); ++Index)
+    {
+        const FEditorObjectPickInFlight& InFlight = InFlightObjectPicks[Index];
+        if (InFlight.Scene != Scene || !InFlight.bIsRectPick)
+        {
+            continue;
+        }
+
+        if (!InFlight.Fence || !InFlight.Fence->IsSignaled() || !InFlight.ReadbackBuffer)
+        {
+            continue;
+        }
+
+        OutObjectIDs.Clear();
+
+        const uint32 BytesPerPixel = InFlight.ReadbackBuffer->GetDesc().Stride ? InFlight.ReadbackBuffer->GetDesc().Stride : sizeof(uint32);
+        const uint64 BufferSize    = InFlight.ReadbackBuffer->GetDesc().Size;
+
+        if (BytesPerPixel >= sizeof(uint32) && BufferSize >= sizeof(uint32))
+        {
+            if (void* Data = InFlight.ReadbackBuffer->Map(0, BufferSize))
+            {
+                const uint8* Base = reinterpret_cast<const uint8*>(Data);
+
+                // A full-viewport box is millions of pixels, so the dedup is hashed rather than a linear scan
+                TSet<uint32> SeenObjectIDs;
+
+                // Neighbouring pixels almost always belong to the same object, so a run skips the lookup entirely
+                uint32 LastObjectID = 0;
+
+                // Every distinct object with a visible pixel inside the box is selected, which is what makes a box
+                // select respect occlusion for free: an actor hidden behind geometry never wrote a pixel here
+                for (uint32 Y = 0; Y < InFlight.NormalHeight; ++Y)
+                {
+                    for (uint32 X = 0; X < InFlight.NormalWidth; ++X)
+                    {
+                        const uint64 Offset = uint64(InFlight.NormalBaseOffset) + (uint64(InFlight.NormalRowStrideBytes) * uint64(Y)) + (uint64(BytesPerPixel) * uint64(X));
+                        if (Offset + sizeof(uint32) > BufferSize)
+                        {
+                            continue;
+                        }
+
+                        const uint32 ObjectID = *reinterpret_cast<const uint32*>(Base + Offset);
+                        if (ObjectID == 0 || ObjectID == LastObjectID)
+                        {
+                            continue;
+                        }
+
+                        LastObjectID = ObjectID;
+
+                        bool bAlreadySeen = false;
+                        SeenObjectIDs.Add(ObjectID, &bAlreadySeen);
+
+                        if (!bAlreadySeen)
+                        {
+                            OutObjectIDs.Add(ObjectID);
+                        }
+                    }
+                }
+
+                InFlight.ReadbackBuffer->Unmap(0, BufferSize);
+            }
+        }
+
+        if (GEditorPickDebug)
+        {
+            LOG_INFO("[EditorPick] RectReadback. Region=(%u,%u) UniqueIDs=%d",
+                InFlight.NormalWidth, InFlight.NormalHeight, OutObjectIDs.Size());
+        }
+
+        InFlightObjectPicks.RemoveAtSwap(Index);
+        return true;
+    }
+
+    return false;
+#else
+    UNREFERENCED_VARIABLE(Scene);
+    OutObjectIDs.Clear();
+    return false;
+#endif
+}
 
 void FSceneRenderer::RecordUI()
 {

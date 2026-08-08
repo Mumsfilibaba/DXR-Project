@@ -41,28 +41,6 @@ private:
     TComPtr<ID3D12CommandAllocator> Allocator;
 };
 
-class FD3D12CommandAllocatorManager : public FD3D12DeviceChild, FNonCopyable
-{
-public:
-    FD3D12CommandAllocatorManager(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType);
-    ~FD3D12CommandAllocatorManager();
-
-    FD3D12CommandAllocator* ObtainAllocator();
-    void RecycleAllocator(FD3D12CommandAllocator* InAllocator);
-
-    ED3D12CommandQueueType GetQueueType() const
-    {
-        return QueueType;
-    }
-
-private:
-    ED3D12CommandQueueType const    QueueType;
-    D3D12_COMMAND_LIST_TYPE         CommandListType;
-    TQueue<FD3D12CommandAllocator*> AvailableAllocators;
-    TArray<FD3D12CommandAllocator*> CommandAllocators;
-    FCriticalSection                CommandAllocatorsCS;
-};
-
 class FD3D12CommandList : public FD3D12DeviceChild, FNonCopyable
 {
     friend struct FD3D12Commands;

@@ -156,6 +156,9 @@ public:
 
     void RequestEditorObjectPick(FScene* Scene, uint32 PixelX, uint32 PixelY, uint64 RequestId);
     bool PollEditorObjectPickResult(FScene* Scene, FEditorPickResult& OutResult);
+
+    void RequestEditorObjectPickRect(FScene* Scene, uint32 MinX, uint32 MinY, uint32 MaxX, uint32 MaxY);
+    bool PollEditorObjectPickRectResult(FScene* Scene, TArray<uint32>& OutObjectIDs);
  
     void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth, uint32 InHeight, EFormat InFormat = EFormat::Unknown, EColorSpace InColorSpace = EColorSpace::Unknown); 
     void ResizeResources(uint32 InWidth, uint32 InHeight);
@@ -267,8 +270,13 @@ private:
     struct FEditorObjectPickRequest
     {
         FScene* Scene = nullptr;
-        uint32  PixelX = 0;
-        uint32  PixelY = 0;
+
+        // For a rect pick these are the top-left corner and MaxX/MaxY the bottom-right, for a point pick they are the pixel
+        uint32  PixelX    = 0;
+        uint32  PixelY    = 0;
+        uint32  MaxX      = 0;
+        uint32  MaxY      = 0;
+        bool    bIsRect   = false;
         uint64  RequestId = 0;
     };
 
@@ -285,6 +293,9 @@ private:
         uint32        PixelY       = 0;
         uint32        TexWidth     = 0;
         uint32        TexHeight    = 0;
+
+        // A rect pick collects every ID in the window instead of the one nearest its center
+        uint32        bIsRectPick : 1 = 0;
 
         // Normal window (around PixelX/PixelY).
         uint32        NormalBaseOffset     = 0;

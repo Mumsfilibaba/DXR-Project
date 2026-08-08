@@ -4,6 +4,7 @@
 #include "RHI/RHIResources.h"
 #include "D3D12RHI/D3D12Resource.h"
 #include "D3D12RHI/D3D12Fence.h"
+#include "D3D12RHI/D3D12RecyclePool.h"
 
 #define D3D12_INVALID_QUERY_INDEX (-1)
 
@@ -193,9 +194,7 @@ public:
     void RecycleHeap(FD3D12QueryHeap* Heap);
 
 private:
-    D3D12_QUERY_HEAP_TYPE    HeapType;
-    int32                    QueriesPerHeap;
-    TQueue<FD3D12QueryHeap*> AvailableHeaps;
-    TArray<FD3D12QueryHeap*> AllHeaps;
-    FCriticalSection         HeapsCS;
+    D3D12_QUERY_HEAP_TYPE              HeapType;
+    int32                              QueriesPerHeap;
+    TD3D12RecyclePool<FD3D12QueryHeap> HeapPool;
 };

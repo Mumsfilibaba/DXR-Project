@@ -130,9 +130,7 @@ public:
     void CancelPendingDefragMoves(FD3D12ResourceBase* Owner);
 
     void WaitForGPU();
-        
-    bool ReallocateGlobalDescriptorHeap(ED3D12GlobalDescriptorHeapType HeapType);
-    
+
     bool CreateCommittedResource(const D3D12_RESOURCE_DESC& Desc, D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceRef& OutResource);
     bool CreatePlacedResource(FD3D12Heap* Heap, uint64 Offset, const D3D12_RESOURCE_DESC& Desc, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceRef& OutResource);
 #if D3D12_USE_RESOURCE_DESC1
@@ -149,7 +147,6 @@ public:
 
     ID3D12CommandQueue*              GetD3D12CommandQueue(ED3D12CommandQueueType QueueType);
     FD3D12Queue*                     GetQueue(ED3D12CommandQueueType QueueType);
-    FD3D12CommandAllocatorManager*   GetCommandAllocatorManager(ED3D12CommandQueueType QueueType);
     FD3D12QueryHeapManager*          GetQueryHeapManager(EQueryType QueryType);
     FD3D12QueryHeap*                 ObtainQueryHeap(D3D12_QUERY_HEAP_TYPE HeapType);
     void                             RecycleQueryHeap(FD3D12QueryHeap* Heap);
@@ -267,9 +264,6 @@ private:
     FD3D12Queue*                     DirectQueue;
     FD3D12Queue*                     CopyQueue;
     FD3D12Queue*                     ComputeQueue;
-    FD3D12CommandAllocatorManager*   DirectCommandAllocatorManager;
-    FD3D12CommandAllocatorManager*   CopyCommandAllocatorManager;
-    FD3D12CommandAllocatorManager*   ComputeCommandAllocatorManager;
 
     FD3D12QueryHeapManager*          TimingQueryHeapManager;
     FD3D12QueryHeapManager*          OcclusionQueryHeapManager;

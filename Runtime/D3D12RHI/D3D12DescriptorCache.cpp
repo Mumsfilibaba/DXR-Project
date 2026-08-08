@@ -74,7 +74,7 @@ bool FD3D12LocalDescriptorHeap::Realloc()
     FD3D12OnlineDescriptorHeap& GlobalHeap = bIsSamplerHeap ? GetDevice()->GetGlobalSamplerHeap() : GetDevice()->GetGlobalResourceHeap();
     if (Block)
     {
-        GlobalHeap.RecycleBlockDeferred(Block);
+        Context.DeferDescriptorBlockRecycle(GlobalHeap, Block);
         Block = nullptr;
         Heap.Reset();
     }
@@ -88,15 +88,15 @@ bool FD3D12LocalDescriptorHeap::Realloc()
     {
         Heap = new FD3D12DescriptorHeap(GlobalHeap.GetHeap(), Block->HandleOffset, Block->NumDescriptors);
     #if D3D12_ENABLE_DESCRIPTOR_HEAP_ROLLOVER_LOGGING
-        D3D12_INFO("[DescriptorCache] Realloc new block: heap=%s HandleOffset=%u NumDescriptors=%u generation=%u",
-            bIsSamplerHeap ? "Sampler" : "Resource", Block->HandleOffset, Block->NumDescriptors, GlobalHeap.GetGeneration());
+        D3D12_INFO("[DescriptorCache] Realloc new block: heap=%s HandleOffset=%u NumDescriptors=%u",
+            bIsSamplerHeap ? "Sampler" : "Resource", Block->HandleOffset, Block->NumDescriptors);
     #endif
         return true;
     }
     else
     {
-        D3D12_WARNING("[DescriptorCache] Realloc FAILED (no free block; forces command-list split): heap=%s generation=%u",
-            bIsSamplerHeap ? "Sampler" : "Resource", GlobalHeap.GetGeneration());
+        D3D12_WARNING("[DescriptorCache] Realloc FAILED (no free block; forces command-list split): heap=%s NumBlocks=%u",
+            bIsSamplerHeap ? "Sampler" : "Resource", GlobalHeap.GetNumBlocks());
         return false;
     }
 }

@@ -23,6 +23,8 @@ FNullDeviceRHI::FNullDeviceRHI()
     // -------------------------------------------------------------------------------------------
 
     RHI::bSupportsGeometryShaders                       = true;
+    RHI::bSupportsTessellation                          = true;
+    RHI::MaxPatchControlPoints                          = RHI_MAX_PATCH_CONTROL_POINTS;
     RHI::bSupportRenderTargetArrayIndexFromVertexShader = true;
     RHI::bSupportsBindless                              = false;
 

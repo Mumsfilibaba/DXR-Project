@@ -349,7 +349,7 @@ void FD3D12BarrierBatcher::FlushBarriers(FD3D12CommandList& CommandList)
     Barriers.Clear();
 }
 
-FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType)
+FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, FD3D12Queue& InQueue)
     : IRHICommandContext()
     , FD3D12DeviceChild(InDevice)
     , CommandList(nullptr)
@@ -359,10 +359,10 @@ FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, ED3D12Command
     , TimingQueryAllocator(InDevice, D3D12_QUERY_HEAP_TYPE_TIMESTAMP)
     , OcclusionQueryAllocator(InDevice, D3D12_QUERY_HEAP_TYPE_OCCLUSION)
     , PipelineStatsQueryAllocator(InDevice, GetPipelineStatsHeapType())
-    , QueueType(InQueueType)
+    , Queue(InQueue)
+    , LastUsedFrame(0)
     , ActiveQueryCount(0)
     , bIsRecording(false)
-    , CommandContextCS()
 {
 }
 
@@ -383,24 +383,18 @@ void FD3D12CommandContext::ObtainCommandList()
 {
     TRACE_FUNCTION_SCOPE();
 
-    FD3D12CommandAllocatorManager* CommandAllocatorManager = GetDevice()->GetCommandAllocatorManager(QueueType);
-    CHECK(CommandAllocatorManager != nullptr);
-
     if (!CommandAllocator)
     {
-        CommandAllocator = CommandAllocatorManager->ObtainAllocator();
+        CommandAllocator = Queue.ObtainAllocator();
         if (!CommandAllocator)
         {
             D3D12_ERROR_CRITICAL("Failed to Obtain CommandAllocator");
         }
     }
 
-    FD3D12Queue* Queue = GetDevice()->GetQueue(QueueType);
-    CHECK(Queue != nullptr);
-
     if (!CommandList)
     {
-        CommandList = Queue->ObtainCommandList(CommandAllocator, nullptr);
+        CommandList = Queue.ObtainCommandList(CommandAllocator, nullptr);
         if (!CommandList)
         {
             D3D12_ERROR_CRITICAL("Failed to initialize CommandList");
@@ -410,11 +404,68 @@ void FD3D12CommandContext::ObtainCommandList()
         ReopenEventStack();
 
         ContextState.BeginCommandList();
+
+        FD3D12DeviceRHI::Get()->NotifyCommandListOpened();
     }
 
     if (!Commands)
     {
-        Commands = new FD3D12Commands(GetDevice(), Queue);
+        Commands = new FD3D12Commands(GetDevice(), &Queue);
+    }
+}
+
+void FD3D12CommandContext::DeferDescriptorBlockRecycle(FD3D12OnlineDescriptorHeap& Heap, FD3D12OnlineDescriptorBlock* Block)
+{
+    CHECK(Block != nullptr);
+
+    VerifyExclusiveAccess();
+    DeferredObjects.Emplace(&Heap, Block);
+}
+
+void FD3D12CommandContext::RetireTransientObjects()
+{
+    CHECK(!bIsRecording);
+
+    if (CommandList)
+    {
+        CommandList->Close();
+
+        Queue.RecycleCommandList(CommandList);
+        CommandList = nullptr;
+
+        FD3D12DeviceRHI::Get()->NotifyCommandListRetired(nullptr);
+    }
+
+    if (CommandAllocator)
+    {
+        Queue.RecycleAllocator(CommandAllocator);
+        CommandAllocator = nullptr;
+    }
+
+    TArray<FD3D12QueryRange> AbandonedRanges;
+    TimingQueryAllocator.Reset(AbandonedRanges);
+    OcclusionQueryAllocator.Reset(AbandonedRanges);
+    PipelineStatsQueryAllocator.Reset(AbandonedRanges);
+
+    for (const FD3D12QueryRange& Range : AbandonedRanges)
+    {
+        GetDevice()->RecycleQueryHeap(Range.Heap);
+    }
+
+    FD3D12DeferredObject::ProcessItems(DeferredObjects);
+    DeferredObjects.Clear();
+
+    PendingBarriers.Clear();
+    PendingResourceStates.Clear();
+    PendingQueries.Clear();
+    EventStack.Clear();
+
+    ContextState.ResetState();
+
+    if (Commands)
+    {
+        delete Commands;
+        Commands = nullptr;
     }
 }
 
@@ -442,7 +493,7 @@ void FD3D12CommandContext::AddPendingBarrier(FD3D12Resource* Resource, D3D12_RES
     PendingBarriers.Add(PendingBarrier);
 }
 
-void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolveQueries)
+void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolveQueries, FD3D12FenceSyncPoint* OutSyncPoint)
 {
     TRACE_FUNCTION_SCOPE();
 
@@ -569,15 +620,31 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
 
         Commands->PendingQueries = Move(PendingQueries);
 
-        FD3D12DeviceRHI::Get()->FlushDeletionQueue(Commands);
+        FD3D12DeviceRHI::Get()->NotifyCommandListRetired(Commands);
 
-        Commands->Queue->SubmitCommands(Commands);
+        Commands->DeferredObjects.Append(DeferredObjects);
+        DeferredObjects.Clear();
+
+        const FD3D12FenceSyncPoint SyncPoint = Commands->Queue->SubmitCommands(Commands);
         Commands = nullptr;
+
+        if (OutSyncPoint)
+        {
+            *OutSyncPoint = SyncPoint;
+        }
     }
     else
     {
         PendingBarriers.Clear();
         PendingResourceStates.Clear();
+
+        FD3D12DeferredObject::ProcessItems(DeferredObjects);
+        DeferredObjects.Clear();
+
+        if (OutSyncPoint)
+        {
+            *OutSyncPoint = FD3D12FenceSyncPoint();
+        }
     }
 }
 
@@ -587,7 +654,7 @@ void FD3D12CommandContext::SplitCommandList(bool bFlushAllocator, bool bWaitForQ
 
     if (bWaitForQueue)
     {
-        FD3D12Fence& Fence = GetDevice()->GetQueue(QueueType)->GetSubmissionFence();
+        FD3D12Fence& Fence = Queue.GetSubmissionFence();
         Fence.WaitForValue(Fence.GetLastSignaledValue());
     }
 
@@ -600,7 +667,7 @@ void FD3D12CommandContext::SplitCommandListAndResetState(bool bFlushAllocator, b
 
     if (bWaitForQueue)
     {
-        FD3D12Fence& Fence = GetDevice()->GetQueue(QueueType)->GetSubmissionFence();
+        FD3D12Fence& Fence = Queue.GetSubmissionFence();
         Fence.WaitForValue(Fence.GetLastSignaledValue());
     }
 
@@ -615,8 +682,23 @@ void FD3D12CommandContext::SplitCommandListForDescriptorHeapRollover()
         CommandList ? CommandList->GetNumCommands() : 0u);
 #endif
 
-    SplitCommandList(true, true);
-    FD3D12DeviceRHI::Get()->FlushCompletedSubmissions();
+    FD3D12FenceSyncPoint SyncPoint;
+    FinishCommandList(true, false, &SyncPoint);
+
+    Queue.ProcessCommandQueue();
+
+    if (SyncPoint.IsValid() && !HasAvailableDescriptorBlock())
+    {
+        SyncPoint.Wait();
+        Queue.ProcessCommandQueue();
+    }
+
+    ObtainCommandList();
+}
+
+bool FD3D12CommandContext::HasAvailableDescriptorBlock() const
+{
+    return GetDevice()->GetGlobalResourceHeap().HasAvailableBlock() && GetDevice()->GetGlobalSamplerHeap().HasAvailableBlock();
 }
 
 void FD3D12CommandContext::BeginFrame()
@@ -632,12 +714,11 @@ void FD3D12CommandContext::EndFrame()
 void FD3D12CommandContext::StartContext()
 {
     // -------------------------------------------------------------------------------------------
-    // NOTE: This context is intended to be used from a single thread. The lock only enforces 
-    // that the same thread which starts the context is the one that later finishes it. Once 
-    // the codebase guarantees single-threaded use per context, this lock can be removed.
+    // A context is owned by exactly one thread for the duration of a recording session: callers
+    // borrow one from FD3D12Queue and hand it back in FinishContext.
     // -------------------------------------------------------------------------------------------
 
-    CommandContextCS.Lock();
+    AcquireOwnership();
 
     // -------------------------------------------------------------------------------------------
     // Phase Transition: Finished -> Recording
@@ -685,12 +766,36 @@ void FD3D12CommandContext::FinishContext()
     bIsRecording = false;
 
     // -------------------------------------------------------------------------------------------
-    // See note in StartContext(): once guaranteed single-threaded use is enforced by design, 
-    // this lock can be removed.
+    // Ownership Transition: this thread -> unowned
     // -------------------------------------------------------------------------------------------
 
-    CommandContextCS.Unlock();
+    ReleaseOwnership();
 }
+
+#if D3D12_VALIDATE_CONTEXT_THREAD_OWNERSHIP
+void FD3D12CommandContext::AcquireOwnership()
+{
+    CHECK(OwnerThreadID.Load() == CORE_INVALID_THREAD_ID);
+    OwnerThreadID.Store(FPlatformTLS::GetCurrentThreadID());
+}
+
+void FD3D12CommandContext::ReleaseOwnership()
+{
+    VerifyOwnerThread();
+    OwnerThreadID.Store(CORE_INVALID_THREAD_ID);
+}
+
+void FD3D12CommandContext::VerifyOwnerThread() const
+{
+    CHECK(OwnerThreadID.Load() == FPlatformTLS::GetCurrentThreadID());
+}
+
+void FD3D12CommandContext::VerifyExclusiveAccess() const
+{
+    const uint32 CurrentOwner = OwnerThreadID.Load();
+    CHECK(CurrentOwner == CORE_INVALID_THREAD_ID || CurrentOwner == FPlatformTLS::GetCurrentThreadID());
+}
+#endif
 
 void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferRegion& BufferRegion, const void* SrcData)
 {
@@ -1811,7 +1916,7 @@ void FD3D12CommandContext::WriteFence(FRHIFence* Fence)
     FD3D12FenceRHI* D3D12Fence = FD3D12DeviceRHI::ResourceCast(Fence);
 
     SplitCommandList(true, false);
-    D3D12Fence->Signal(GetDevice()->GetD3D12CommandQueue(QueueType));
+    D3D12Fence->Signal(Queue.GetD3D12CommandQueue());
 }
 
 void FD3D12CommandContext::DiscardContents(FRHITexture* Texture)
@@ -2678,6 +2783,8 @@ void FD3D12CommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, ui
 
 void FD3D12CommandContext::ConditionalSplitCommandList()
 {
+    VerifyOwnerThread();
+
     if (!CommandList || ActiveQueryCount > 0)
     {
         return;
@@ -3426,19 +3533,16 @@ void FD3D12CommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Widt
 
 void FD3D12CommandContext::ClearState()
 {
-    SCOPED_LOCK(CommandContextCS);
- 
+    VerifyExclusiveAccess();
+
     if (CommandList)
     {
         FinishCommandList(true);
         ObtainCommandList();
     }
 
-    FD3D12Queue* Queue = GetDevice()->GetQueue(QueueType);
-    CHECK(Queue != nullptr);
-
-    FD3D12Fence& Fence = Queue->GetSubmissionFence();
-    Fence.Signal(Queue->GetD3D12CommandQueue());
+    FD3D12Fence& Fence = Queue.GetSubmissionFence();
+    Fence.Signal(Queue.GetD3D12CommandQueue());
     Fence.WaitForValue(Fence.GetLastSignaledValue());
 
     ContextState.ResetState();
@@ -3446,7 +3550,7 @@ void FD3D12CommandContext::ClearState()
 
 void FD3D12CommandContext::Flush()
 {
-    SCOPED_LOCK(CommandContextCS);
+    VerifyExclusiveAccess();
 
     if (CommandList)
     {
@@ -3454,11 +3558,8 @@ void FD3D12CommandContext::Flush()
         ObtainCommandList();
     }
 
-    FD3D12Queue* Queue = GetDevice()->GetQueue(QueueType);
-    CHECK(Queue != nullptr);
-
-    FD3D12Fence& Fence = Queue->GetSubmissionFence();
-    Fence.Signal(Queue->GetD3D12CommandQueue());
+    FD3D12Fence& Fence = Queue.GetSubmissionFence();
+    Fence.Signal(Queue.GetD3D12CommandQueue());
     Fence.WaitForValue(Fence.GetLastSignaledValue());
 }
 

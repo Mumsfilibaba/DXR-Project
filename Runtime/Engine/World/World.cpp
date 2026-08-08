@@ -1,4 +1,5 @@
 #include "Engine/World/World.h"
+#include "Engine/World/ActorFilter.h"
 #include "Engine/World/Components/CameraComponent.h"
 #include "Engine/World/Components/SceneComponent.h"
 
@@ -6,6 +7,10 @@ FWorld::FWorld()
     : Scene(nullptr)
     , ActiveCamera(nullptr)
     , Actors()
+#if EDITOR_BUILD
+    , ActorFilters()
+    , CurrentFilter(nullptr)
+#endif
     , PlayerControllers()
     , OnActorRemovedEvent()
 {
@@ -44,6 +49,16 @@ FWorld::~FWorld()
     Actors.Clear();
     PlayerControllers.Clear();
     ActiveCamera = nullptr;
+
+#if EDITOR_BUILD
+    for (FActorFilter* CurrentActorFilter : ActorFilters)
+    {
+        SAFE_DELETE(CurrentActorFilter);
+    }
+
+    ActorFilters.Clear();
+    CurrentFilter = nullptr;
+#endif
 }
 
 FActor* FWorld::CreateActor()
@@ -95,6 +110,9 @@ void FWorld::AddActor(FActor* InActor)
         // Set this scene to be the owner of the added actor
         CHECK(InActor->GetWorld() == nullptr);
         InActor->SetWorld(this);
+    #if EDITOR_BUILD
+        InActor->SetFilter(CurrentFilter);
+    #endif
         Actors.Emplace(InActor);
 
         if (FPlayerController* PlayerController = Cast<FPlayerController>(InActor))
@@ -161,6 +179,154 @@ void FWorld::RemoveActor(FActor* InActor)
         }
     }
 }
+
+#if EDITOR_BUILD
+
+FActorFilter* FWorld::CreateActorFilter(const String& InName, FActorFilter* InParent)
+{
+    if (FActorFilter* ExistingFilter = FindActorFilter(InName, InParent))
+    {
+        return ExistingFilter;
+    }
+
+    FActorFilter* NewFilter = new FActorFilter(InName);
+    ActorFilters.Emplace(NewFilter);
+
+    // ActorFilters owns every filter regardless of depth, the parent link only decides where it is presented
+    if (InParent)
+    {
+        NewFilter->ParentFilter = InParent;
+        InParent->ChildFilters.Emplace(NewFilter);
+    }
+
+    return NewFilter;
+}
+
+FActorFilter* FWorld::FindActorFilter(const String& InName, FActorFilter* InParent) const
+{
+    const TArray<FActorFilter*>& SearchScope = InParent ? InParent->ChildFilters : ActorFilters;
+
+    const int32 FilterIndex = SearchScope.FindWithPredicate([&InName, InParent](FActorFilter* Filter)
+    {
+        // The root scope is the whole array, so filters nested deeper have to be skipped by hand
+        if (!Filter || (!InParent && Filter->GetParentFilter()))
+        {
+            return false;
+        }
+
+        return Filter->GetName() == InName;
+    });
+
+    return (FilterIndex != SearchScope.InvalidIndex) ? SearchScope[FilterIndex] : nullptr;
+}
+
+void FWorld::SetActorFilterParent(FActorFilter* InFilter, FActorFilter* InParent)
+{
+    if (!InFilter || InFilter == InParent)
+    {
+        return;
+    }
+
+    // Nesting a filter inside its own descendant would cut the subtree loose from the hierarchy
+    if (InParent && InParent->IsDescendantOf(InFilter))
+    {
+        return;
+    }
+
+    if (FActorFilter* OldParent = InFilter->ParentFilter)
+    {
+        OldParent->ChildFilters.Remove(InFilter);
+    }
+
+    InFilter->ParentFilter = InParent;
+
+    if (InParent)
+    {
+        InParent->ChildFilters.Emplace(InFilter);
+    }
+}
+
+void FWorld::DestroyActorFilter(FActorFilter* InFilter)
+{
+    if (!InFilter || !ActorFilters.Remove(InFilter))
+    {
+        return;
+    }
+
+    // Nothing inside a destroyed filter is lost, it all moves up one level instead
+    FActorFilter* PromotedParent = InFilter->ParentFilter;
+
+    // Unlinked before anything is promoted, so the dying filter cannot show up beside what it used to hold
+    if (PromotedParent)
+    {
+        PromotedParent->ChildFilters.Remove(InFilter);
+        InFilter->ParentFilter = nullptr;
+    }
+
+    for (FActor* Actor : Actors)
+    {
+        if (Actor->GetFilter() == InFilter)
+        {
+            Actor->SetFilter(PromotedParent);
+        }
+    }
+
+    // Copied since SetActorFilterParent removes from the very array that would be iterated
+    const TArray<FActorFilter*> PromotedChildren = InFilter->ChildFilters;
+    for (FActorFilter* Child : PromotedChildren)
+    {
+        SetActorFilterParent(Child, PromotedParent);
+    }
+
+    if (CurrentFilter == InFilter)
+    {
+        CurrentFilter = PromotedParent;
+    }
+
+    SAFE_DELETE(InFilter);
+}
+
+void FWorld::SetCurrentFilter(FActorFilter* InFilter)
+{
+    CHECK(!InFilter || ActorFilters.Contains(InFilter));
+    CurrentFilter = InFilter;
+}
+
+#else
+
+FActorFilter* FWorld::CreateActorFilter(const String& InName, FActorFilter* InParent)
+{
+    UNREFERENCED_VARIABLE(InName);
+    UNREFERENCED_VARIABLE(InParent);
+    return nullptr;
+}
+
+FActorFilter* FWorld::FindActorFilter(const String& InName, FActorFilter* InParent) const
+{
+    UNREFERENCED_VARIABLE(InName);
+    UNREFERENCED_VARIABLE(InParent);
+    return nullptr;
+}
+
+void FWorld::SetActorFilterParent(FActorFilter* InFilter, FActorFilter* InParent)
+{
+    UNREFERENCED_VARIABLE(InFilter);
+    UNREFERENCED_VARIABLE(InParent);
+}
+
+void FWorld::DestroyActorFilter(FActorFilter* InFilter)
+{
+    UNREFERENCED_VARIABLE(InFilter);
+}
+
+void FWorld::SetCurrentFilter(FActorFilter* InFilter)
+{
+    // CreateActorFilter never hands one out here, so anything but nullptr came from somewhere that kept a stale pointer
+    CHECK(!InFilter);
+    UNREFERENCED_VARIABLE(InFilter);
+}
+
+#endif
 
 void FWorld::SetActiveCamera(FCameraComponent* InCamera)
 {

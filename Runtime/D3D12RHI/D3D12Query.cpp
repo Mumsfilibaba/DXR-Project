@@ -202,40 +202,26 @@ FD3D12QueryHeapManager::FD3D12QueryHeapManager(FD3D12Device* InDevice, D3D12_QUE
 
 FD3D12QueryHeapManager::~FD3D12QueryHeapManager()
 {
-    TScopedLock Lock(HeapsCS);
-    for (FD3D12QueryHeap* Heap : AllHeaps)
-    {
-        delete Heap;
-    }
-    AllHeaps.Clear();
+    HeapPool.DestroyAll();
 }
 
 FD3D12QueryHeap* FD3D12QueryHeapManager::ObtainHeap()
 {
-    TScopedLock Lock(HeapsCS);
-
-    FD3D12QueryHeap* Heap = nullptr;
-    if (AvailableHeaps.Dequeue(Heap))
+    return HeapPool.Acquire([this](int32 Index) -> FD3D12QueryHeap*
     {
-        return Heap;
-    }
+        FD3D12QueryHeap* NewHeap = new FD3D12QueryHeap(GetDevice(), HeapType, QueriesPerHeap);
+        if (!NewHeap->Initialize())
+        {
+            delete NewHeap;
+            return nullptr;
+        }
 
-    Heap = new FD3D12QueryHeap(GetDevice(), HeapType, QueriesPerHeap);
-    if (!Heap->Initialize())
-    {
-        delete Heap;
-        return nullptr;
-    }
-
-    const String DebugName = String::CreateFormatted("QueryHeap [%d]", AllHeaps.Size());
-    Heap->SetDebugName(DebugName);
-
-    AllHeaps.Add(Heap);
-    return Heap;
+        NewHeap->SetDebugName(String::CreateFormatted("QueryHeap [%d]", Index));
+        return NewHeap;
+    });
 }
 
 void FD3D12QueryHeapManager::RecycleHeap(FD3D12QueryHeap* Heap)
 {
-    TScopedLock Lock(HeapsCS);
-    AvailableHeaps.Enqueue(Heap);
+    HeapPool.Release(Heap);
 }

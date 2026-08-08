@@ -1,11 +1,14 @@
 #pragma once
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Map.h"
+#include "Core/Platform/PlatformTLS.h"
+#include "Core/Threading/Atomic/AtomicInt.h"
 #include "RHI/IRHICommandContext.h"
 #include "D3D12RHI/D3D12Fence.h"
 #include "D3D12RHI/D3D12RootSignature.h"
 #include "D3D12RHI/D3D12CommandList.h"
 #include "D3D12RHI/D3D12Query.h"
+#include "D3D12RHI/D3D12Queue.h"
 #include "D3D12RHI/D3D12Texture.h"
 #include "D3D12RHI/D3D12CommandContextState.h"
 #include "D3D12RHI/D3D12ResourceState.h"
@@ -35,7 +38,7 @@ private:
 class FD3D12CommandContext : public IRHICommandContext, public FD3D12DeviceChild
 {
 public:
-    FD3D12CommandContext(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType);
+    FD3D12CommandContext(FD3D12Device* InDevice, FD3D12Queue& InQueue);
     ~FD3D12CommandContext();
 
     bool Initialize();
@@ -131,10 +134,14 @@ public:
     virtual void* GetRHINativeCommandList() override final;
 
     void ObtainCommandList();
-    void FinishCommandList(bool bFlushAllocator, bool bResolveQueries = true);
+    void FinishCommandList(bool bFlushAllocator, bool bResolveQueries = true, FD3D12FenceSyncPoint* OutSyncPoint = nullptr);
     void SplitCommandList(bool bFlushAllocator, bool bWaitForQueue);
     void SplitCommandListAndResetState(bool bFlushAllocator, bool bWaitForQueue);
     void SplitCommandListForDescriptorHeapRollover();
+    bool HasAvailableDescriptorBlock() const;
+
+    void RetireTransientObjects();
+    void DeferDescriptorBlockRecycle(FD3D12OnlineDescriptorHeap& Heap, FD3D12OnlineDescriptorBlock* Block);
     
     void UpdateBuffer(FD3D12Resource* Resource, const FBufferRegion& BufferRegion, const void* SourceData);
     
@@ -153,36 +160,63 @@ public:
 
     void AliasingBarrier(FD3D12Resource* ResourceAfter, ID3D12Resource* ResourceBefore = nullptr);
 
-    FD3D12CommandList& GetCommandList() 
+#if D3D12_VALIDATE_CONTEXT_THREAD_OWNERSHIP
+    void AcquireOwnership();
+    void ReleaseOwnership();
+    void VerifyOwnerThread()     const;
+    void VerifyExclusiveAccess() const;
+#else
+    FORCEINLINE void AcquireOwnership()            { }
+    FORCEINLINE void ReleaseOwnership()            { }
+    FORCEINLINE void VerifyOwnerThread()     const { }
+    FORCEINLINE void VerifyExclusiveAccess() const { }
+#endif
+
+    FORCEINLINE FD3D12CommandList& GetCommandList() 
     {
         CHECK(CommandList != nullptr);
         return *CommandList; 
     }
 
-    FD3D12Commands& GetCommands()
+    FORCEINLINE FD3D12Commands& GetCommands()
     {
         CHECK(Commands != nullptr);
         return *Commands;
     }
 
-    FD3D12BarrierBatcher& GetBarrierBatcher()
+    FORCEINLINE FD3D12BarrierBatcher& GetBarrierBatcher()
     {
         return BarrierBatcher;
     }
 
-    ED3D12CommandQueueType GetQueueType() const
+    FORCEINLINE FD3D12Queue& GetQueue() const
     {
-        return QueueType;
+        return Queue;
     }
 
-    bool IsRecording() const
+    FORCEINLINE ED3D12CommandQueueType GetQueueType() const
+    {
+        return Queue.GetQueueType();
+    }
+
+    FORCEINLINE bool IsRecording() const
     {
         return bIsRecording;
     }
 
-    bool NeedsCommandList() const
+    FORCEINLINE bool NeedsCommandList() const
     {
         return CommandList == nullptr;
+    }
+
+    FORCEINLINE void SetLastUsedFrame(uint64 InFrame)
+    {
+        LastUsedFrame = InFrame;
+    }
+
+    FORCEINLINE uint64 GetLastUsedFrame() const
+    {
+        return LastUsedFrame;
     }
 
 private:
@@ -216,11 +250,62 @@ private:
     TArray<FD3D12PendingBarrier>               PendingBarriers;
     TMap<FD3D12Resource*, FD3D12ResourceState> PendingResourceStates;
     TArray<FD3D12QueryRHI*>                    PendingQueries;
-    ED3D12CommandQueueType                     QueueType;
+    TArray<FD3D12DeferredObject>               DeferredObjects;
+    FD3D12Queue&                               Queue;
     TArray<String>                             EventStack;
+    uint64                                     LastUsedFrame;
     int32                                      ActiveQueryCount;
+#if D3D12_VALIDATE_CONTEXT_THREAD_OWNERSHIP
+    TAtomicInt<uint32>                         OwnerThreadID;
+#endif
     bool                                       bIsRecording : 1;
+};
 
-    // TODO: The whole CommandContext should only be used from one thread at a time
-    FCriticalSection CommandContextCS;
+class FD3D12BorrowedCommandContext : FNonCopyable
+{
+public:
+    explicit FD3D12BorrowedCommandContext(FD3D12Queue& InQueue)
+        : Queue(InQueue)
+        , Context(InQueue.ObtainCommandContext())
+    {
+    }
+
+    ~FD3D12BorrowedCommandContext()
+    {
+        Queue.ReleaseCommandContext(Context);
+    }
+
+    FORCEINLINE FD3D12CommandContext* Get() const
+    {
+        return Context;
+    }
+
+    FORCEINLINE FD3D12CommandContext& operator*() const
+    {
+        return *Context;
+    }
+
+    FORCEINLINE FD3D12CommandContext* operator->() const
+    {
+        return Context;
+    }
+
+protected:
+    FD3D12Queue&          Queue;
+    FD3D12CommandContext* Context;
+};
+
+class FD3D12ScopedCommandContext : public FD3D12BorrowedCommandContext
+{
+public:
+    explicit FD3D12ScopedCommandContext(FD3D12Queue& InQueue)
+        : FD3D12BorrowedCommandContext(InQueue)
+    {
+        Context->StartContext();
+    }
+
+    ~FD3D12ScopedCommandContext()
+    {
+        Context->FinishContext();
+    }
 };

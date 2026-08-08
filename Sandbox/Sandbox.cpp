@@ -7,6 +7,7 @@
 #include <Engine/Assets/AssetManager.h>
 #include <Engine/Assets/MeshFactory.h>
 #include <Engine/World/World.h>
+#include <Engine/World/ActorFilter.h>
 #include <Engine/World/Actors/Actors.h>
 #include <Engine/World/Components/Components.h>
 #include <RendererCore/TextureFactory.h>
@@ -52,7 +53,7 @@ static void TryCompressBC5(FTextureCompressor& Compressor, FRHITextureRef& Textu
     }
 }
 
-static bool AddSandboxPlayer(FWorld* World, const FRHITextureRef& Skybox)
+static bool AddSandboxPlayer(FWorld* World, const FRHITextureRef& Skybox, FActorFilter* CamerasFilter = nullptr, FActorFilter* ActorsFilter = nullptr)
 {
     FCameraActor* CameraActor = World->SpawnActor<FCameraActor>(Vector3(0.0f, 10.0f, -2.0f), Vector3(0.0f, 0.0f, 0.0f));
     FSandboxPlayerController* Player = World->SpawnActor<FSandboxPlayerController>();
@@ -63,7 +64,10 @@ static bool AddSandboxPlayer(FWorld* World, const FRHITextureRef& Skybox)
     }
 
     CameraActor->SetName("Main Camera");
+    CameraActor->SetFilter(CamerasFilter);
+
     Player->SetName("PlayerController");
+    Player->SetFilter(ActorsFilter);
     Player->SetCameraActor(CameraActor);
     World->SetActiveCamera(CameraActor->GetCameraComponent());
 
@@ -127,6 +131,13 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     {
         return false;
     }
+
+    // Filters are presented in the scene-hierarchy in the order they are created
+    FActorFilter* CamerasFilter  = InWorld->CreateActorFilter("Cameras");
+    FActorFilter* ActorsFilter   = InWorld->CreateActorFilter("Actors");
+    FActorFilter* LightingFilter = InWorld->CreateActorFilter("Lighting");
+
+    InWorld->SetCurrentFilter(ActorsFilter);
 
     Sponza->SetUniformScale(0.015f);
 
@@ -557,6 +568,8 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         }
     }
 
+    InWorld->SetCurrentFilter(nullptr);
+
     // Load Skybox
     FRHITextureRef Skybox = LoadCubeMapFromPanorama(ENGINE_LOCATION"/Assets/Textures/arches.hdr");
     if (!Skybox)
@@ -565,7 +578,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         return false;
     }
 
-    if (!AddSandboxPlayer(InWorld, Skybox))
+    if (!AddSandboxPlayer(InWorld, Skybox, CamerasFilter, ActorsFilter))
     {
         return false;
     }
@@ -576,6 +589,8 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
     if (FPointLightActor* PointLightActor0 = InWorld->SpawnActor<FPointLightActor>(Vector3(15.0f, 2.5f, 0.0f), true))
     {
+        PointLightActor0->SetFilter(LightingFilter);
+
         FPointLightComponent* PointLight0 = PointLightActor0->GetLightComponent();
         PointLight0->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         PointLight0->SetShadowBias(0.02f);
@@ -585,6 +600,8 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
     if (FPointLightActor* PointLightActor1 = InWorld->SpawnActor<FPointLightActor>(Vector3(-15.0f, 2.5f, 0.0f), true))
     {
+        PointLightActor1->SetFilter(LightingFilter);
+
         FPointLightComponent* PointLight1 = PointLightActor1->GetLightComponent();
         PointLight1->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         PointLight1->SetShadowBias(0.02f);
@@ -594,6 +611,8 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
     if (FPointLightActor* PointLightActor2 = InWorld->SpawnActor<FPointLightActor>(Vector3(17.0f, 10.0f, 6.0f), true))
     {
+        PointLightActor2->SetFilter(LightingFilter);
+
         FPointLightComponent* PointLight2 = PointLightActor2->GetLightComponent();
         PointLight2->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         PointLight2->SetShadowBias(0.02f);
@@ -603,6 +622,8 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
     if (FPointLightActor* PointLightActor3 = InWorld->SpawnActor<FPointLightActor>(Vector3(-18.0f, 10.0f, 6.0f), true))
     {
+        PointLightActor3->SetFilter(LightingFilter);
+
         FPointLightComponent* PointLight3 = PointLightActor3->GetLightComponent();
         PointLight3->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         PointLight3->SetShadowBias(0.02f);
@@ -612,6 +633,8 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
     if (FPointLightActor* PointLightActor4 = InWorld->SpawnActor<FPointLightActor>(Vector3(17.0f, 10.0f, -7.0f), true))
     {
+        PointLightActor4->SetFilter(LightingFilter);
+
         FPointLightComponent* PointLight4 = PointLightActor4->GetLightComponent();
         PointLight4->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         PointLight4->SetShadowBias(0.02f);
@@ -621,6 +644,8 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
     if (FPointLightActor* PointLightActor5 = InWorld->SpawnActor<FPointLightActor>(Vector3(-18.0f, 10.0f, -7.0f), true))
     {
+        PointLightActor5->SetFilter(LightingFilter);
+
         FPointLightComponent* PointLight5 = PointLightActor5->GetLightComponent();
         PointLight5->SetColor(Vector3(1.0f, 1.0f, 1.0f));
         PointLight5->SetShadowBias(0.02f);
@@ -652,12 +677,17 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 #endif
 
     // Add SkyLight
-    InWorld->SpawnActor<FSkyLightActor>(Skybox);
+    if (FSkyLightActor* SkyLightActor = InWorld->SpawnActor<FSkyLightActor>(Skybox))
+    {
+        SkyLightActor->SetFilter(LightingFilter);
+    }
 
     // Add DirectionalLight
     if (FDirectionalLightActor* DirectionalLightActor = InWorld->SpawnActor<FDirectionalLightActor>(
         Vector3(Math::DegreesToRadians(35.0f), Math::DegreesToRadians(135.0f), 0.0f)))
     {
+        DirectionalLightActor->SetFilter(LightingFilter);
+
         FDirectionalLightComponent* DirectionalLight = DirectionalLightActor->GetLightComponent();
         DirectionalLight->SetShadowBias(0.0005f);
         DirectionalLight->SetColor(Vector3(1.0f, 1.0f, 1.0f));
