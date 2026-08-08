@@ -70,7 +70,7 @@ class FForwardPassPS : public FForwardPassShaderRules
 IMPLEMENT_SHADER_TYPE(FForwardPassVS, "Shaders/ForwardPass.hlsl", "VSMain", EShaderModel::SM_6_2);
 IMPLEMENT_SHADER_TYPE(FForwardPassPS, "Shaders/ForwardPass.hlsl", "PSMain", EShaderModel::SM_6_2);
 
-NODISCARD static FGraphicsPipelineKey MakeForwardPassPSOKey(bool bBindless, bool bEnableParallax, bool bEnableClipping, const FVertexDeclaration& Declaration)
+NODISCARD static FGraphicsPipelineKey CreateForwardPassPSOKey(bool bBindless, bool bEnableParallax, bool bEnableClipping, const FVertexDeclaration& Declaration)
 {
     const FForwardPassShaderRules::FPermutation Permutation = FForwardPassShaderRules::Create(bBindless, bEnableParallax, bEnableClipping);
     return FGraphicsPipelineKey(Permutation.GetPermutationID(), 0, Declaration.GetID());
@@ -88,7 +88,7 @@ FForwardPass::~FForwardPass()
 
 FGraphicsPipelineStateInstance* FForwardPass::CompilePipelineState(bool bBindless, bool bEnableParallax, bool bEnableClipping, const FVertexDeclaration& Declaration)
 {
-    const FGraphicsPipelineKey         Key         = MakeForwardPassPSOKey(bBindless, bEnableParallax, bEnableClipping, Declaration);
+    const FGraphicsPipelineKey         Key         = CreateForwardPassPSOKey(bBindless, bEnableParallax, bEnableClipping, Declaration);
     const FForwardPassVS::FPermutation Permutation = FForwardPassVS::FPermutation(Key.PermutationID);
 
     FGraphicsPipelineStateInstance NewInstance;
@@ -273,7 +273,7 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
         const bool bEnableParallax = Features.HasHeightMap();
         const bool bEnableClipping = Features.HasParallaxClipping();
 
-        const FGraphicsPipelineKey PSOKey = MakeForwardPassPSOKey(bBindless, bEnableParallax, bEnableClipping, Batch.Declaration);
+        const FGraphicsPipelineKey PSOKey = CreateForwardPassPSOKey(bBindless, bEnableParallax, bEnableClipping, Batch.Declaration);
 
         FGraphicsPipelineStateInstance* MaterialPipeline = PipelineStates.Find(PSOKey);
         if (!MaterialPipeline)

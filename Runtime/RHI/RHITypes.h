@@ -390,6 +390,81 @@ NODISCARD constexpr const CHAR* ToString(EColorSpace ColorSpace)
     }
 }
 
+/** A CIE 1931 xy chromaticity coordinate. */
+struct FRHIChromaticity
+{
+    constexpr bool operator==(const FRHIChromaticity&) const noexcept = default;
+
+    float X = 0.0f;
+    float Y = 0.0f;
+};
+
+struct FRHIHDRMetadata
+{
+    constexpr bool operator==(const FRHIHDRMetadata&) const noexcept = default;
+
+    /** Rec.2020 primaries with a D65 white point over a 0.001-1000 nit mastering range. */
+    NODISCARD static FRHIHDRMetadata CreateHDR10Default()
+    {
+        FRHIHDRMetadata Result;
+        Result.RedPrimary                = { 0.708f,  0.292f  };
+        Result.GreenPrimary              = { 0.170f,  0.797f  };
+        Result.BluePrimary               = { 0.131f,  0.046f  };
+        Result.WhitePoint                = { 0.3127f, 0.3290f };
+        Result.MaxMasteringLuminance     = 1000.0f;
+        Result.MinMasteringLuminance     = 0.001f;
+        Result.MaxContentLightLevel      = 1000.0f;
+        Result.MaxFrameAverageLightLevel = 400.0f;
+        Result.bIsValid                  = true;
+        return Result;
+    }
+
+    NODISCARD static uint16 EncodeChromaticity(float Value)
+    {
+        return static_cast<uint16>(Math::Clamp(Math::RoundToInt(Value / 0.00002f), 0, 65535));
+    }
+
+    NODISCARD static uint32 EncodeMinLuminance(float Nits)
+    {
+        return static_cast<uint32>(Math::Max(Math::RoundToInt(Nits / 0.0001f), 0));
+    }
+
+    NODISCARD static uint16 EncodeNits16(float Nits)
+    {
+        return static_cast<uint16>(Math::Clamp(Math::RoundToInt(Nits), 0, 65535));
+    }
+
+    FRHIChromaticity RedPrimary;
+    FRHIChromaticity GreenPrimary;
+    FRHIChromaticity BluePrimary;
+    FRHIChromaticity WhitePoint;
+
+    /** Mastering display luminance range, in nits. */
+    float MaxMasteringLuminance = 0.0f;
+    float MinMasteringLuminance = 0.0f;
+
+    /** MaxCLL: brightest single pixel in the content, in nits. */
+    float MaxContentLightLevel = 0.0f;
+
+    /** MaxFALL: brightest frame average across the content, in nits. */
+    float MaxFrameAverageLightLevel = 0.0f;
+
+    bool bIsValid = false;
+};
+
+struct FRHIDisplayHDRInfo
+{
+    FRHIChromaticity RedPrimary;
+    FRHIChromaticity GreenPrimary;
+    FRHIChromaticity BluePrimary;
+    FRHIChromaticity WhitePoint;
+    EColorSpace      ColorSpace            = EColorSpace::Unknown;
+    float            MinLuminance          = 0.0f;
+    float            MaxLuminance          = 0.0f;
+    float            MaxFullFrameLuminance = 0.0f;
+    uint32           BitsPerColor          = 0;
+};
+
 enum class EIndexFormat : uint8
 {
     Unknown = 0,
@@ -678,7 +753,7 @@ NODISCARD constexpr uint32 GetNumPatchControlPoints(EPrimitiveTopology Primitive
     return uint32(UnderlyingTypeValue(PrimitiveTopology) - UnderlyingTypeValue(EPrimitiveTopology::PatchList_1)) + 1;
 }
 
-NODISCARD constexpr EPrimitiveTopology MakePatchListTopology(uint32 NumPatchControlPoints)
+NODISCARD constexpr EPrimitiveTopology CreatePatchListTopology(uint32 NumPatchControlPoints)
 {
     if (NumPatchControlPoints == 0 || NumPatchControlPoints > RHI_MAX_PATCH_CONTROL_POINTS)
     {

@@ -49,6 +49,7 @@ struct FRHISwapChainDesc
     bool                 bFramePacing = false;
     ESwapChainUsageFlags Usage        = ESwapChainUsageFlags::RenderTarget;
     EColorSpace          ColorSpace   = EColorSpace::Unknown;
+    FRHIHDRMetadata      HDRMetadata  = {};
 };
 
 class FRHISwapChain : public FRHIResource
@@ -85,9 +86,21 @@ public:
     
     virtual bool IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const = 0;
 
+    /**
+     * @brief Queries the HDR capabilities of the display this swap-chain currently presents to.
+     * @param OutInfo Receives the display info on success.
+     * @return False when the backend or the display cannot report HDR capabilities.
+     */
+    virtual bool QueryDisplayHDRInfo(FRHIDisplayHDRInfo& OutInfo) const = 0;
+
     NODISCARD const FRHISwapChainDesc& GetDesc() const
     {
         return Desc;
+    }
+
+    NODISCARD const FRHIHDRMetadata& GetHDRMetadata() const
+    {
+        return Desc.HDRMetadata;
     }
 
 protected:

@@ -596,6 +596,21 @@ bool FVulkanSwapChainRHI::Initialize()
     CommandContext->FinishContext();
     CommandContext->Flush();
 
+    if (CurrentColorSpace == EColorSpace::RGB_Full_G2084_None_P2020 && !Desc.HDRMetadata.bIsValid)
+    {
+        FRHIHDRMetadata DefaultMetadata = RHI::GetDefaultHDRMetadata();
+
+        FRHIDisplayHDRInfo DisplayInfo;
+        if (RHI::ShouldUseDisplayLuminance() && QueryDisplayHDRInfo(DisplayInfo))
+        {
+            DefaultMetadata.MinMasteringLuminance     = DisplayInfo.MinLuminance;
+            DefaultMetadata.MaxMasteringLuminance     = DisplayInfo.MaxLuminance;
+            DefaultMetadata.MaxFrameAverageLightLevel = DisplayInfo.MaxFullFrameLuminance;
+        }
+
+        SetHDRMetadata(DefaultMetadata);
+    }
+
     return true;
 }
 
@@ -846,6 +861,9 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
 	// Reset indices. AcquireNextImage callers will populate BackBufferIndex.
 	SemaphoreIndex  = 0;
 	BackBufferIndex = 0;
+
+    // VK_EXT_hdr_metadata is per-VkSwapchainKHR and does not carry over from the retired one.
+    ApplyHDRMetadata();
     return true;
 }
 
@@ -1163,6 +1181,55 @@ bool FVulkanSwapChainRHI::IsFormatSupported(EFormat Format, EColorSpace ColorSpa
         }
     }
     
+    return false;
+}
+
+bool FVulkanSwapChainRHI::SetHDRMetadata(const FRHIHDRMetadata& Metadata)
+{
+    Desc.HDRMetadata = Metadata;
+    return ApplyHDRMetadata();
+}
+
+bool FVulkanSwapChainRHI::ApplyHDRMetadata()
+{
+#if VK_EXT_hdr_metadata
+    // VK_EXT_hdr_metadata has no way to clear metadata once submitted, so an invalid metadata is simply not applied rather than reset.
+    if (!Desc.HDRMetadata.bIsValid || CurrentColorSpace != EColorSpace::RGB_Full_G2084_None_P2020)
+    {
+        return false;
+    }
+
+    if (!SwapChainResource || !GetDevice()->IsExtensionEnabled(VK_EXT_HDR_METADATA_EXTENSION_NAME) || !vkSetHdrMetadataEXT)
+    {
+        return false;
+    }
+
+    const FRHIHDRMetadata& Source = Desc.HDRMetadata;
+
+    VkHdrMetadataEXT HdrMetadata          = {};
+    HdrMetadata.sType                     = VK_STRUCTURE_TYPE_HDR_METADATA_EXT;
+    HdrMetadata.displayPrimaryRed         = { Source.RedPrimary.X,   Source.RedPrimary.Y   };
+    HdrMetadata.displayPrimaryGreen       = { Source.GreenPrimary.X, Source.GreenPrimary.Y };
+    HdrMetadata.displayPrimaryBlue        = { Source.BluePrimary.X,  Source.BluePrimary.Y  };
+    HdrMetadata.whitePoint                = { Source.WhitePoint.X,   Source.WhitePoint.Y   };
+    HdrMetadata.maxLuminance              = Source.MaxMasteringLuminance;
+    HdrMetadata.minLuminance              = Source.MinMasteringLuminance;
+    HdrMetadata.maxContentLightLevel      = Source.MaxContentLightLevel;
+    HdrMetadata.maxFrameAverageLightLevel = Source.MaxFrameAverageLightLevel;
+
+    const VkSwapchainKHR VkSwapChain = SwapChainResource->GetVkSwapChain();
+    vkSetHdrMetadataEXT(GetDevice()->GetVkDevice(), 1, &VkSwapChain, &HdrMetadata);
+
+    VULKAN_INFO("FVulkanSwapChainRHI: HDR10 metadata set (max=%.1f nits, min=%.4f nits, MaxCLL=%.1f, MaxFALL=%.1f)",
+        Source.MaxMasteringLuminance, Source.MinMasteringLuminance, Source.MaxContentLightLevel, Source.MaxFrameAverageLightLevel);
+    return true;
+#else
+    return false;
+#endif
+}
+
+bool FVulkanSwapChainRHI::QueryDisplayHDRInfo(FRHIDisplayHDRInfo& /*OutInfo*/) const
+{
     return false;
 }
 

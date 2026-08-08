@@ -89,6 +89,7 @@ public:
     virtual void DispatchMeshIndirectCount(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, FRHIBuffer* CountBuffer, uint64 CountBufferOffset, uint32 MaxCommandCount) override final;
     virtual void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) override final;
     virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace) override final;
+    virtual void SetSwapChainHDRMetadata(FRHISwapChain* SwapChain, const FRHIHDRMetadata& Metadata) override final;
 
     virtual void ClearState() override final;
     virtual void Flush() override final;
@@ -123,7 +124,7 @@ private:
     bool ValidateUnorderedAccessBarrierDesc(const FRHIUnorderedAccessBarrierDesc& Desc);
     bool ValidateNoOpenSplit(const void* Resource, const CHAR* Caller) const;
 
-    NODISCARD static FOpenSplitKey MakeSplitKey(const FRHITransitionBarrierDesc& Desc);
+    NODISCARD static FOpenSplitKey CreateSplitKey(const FRHITransitionBarrierDesc& Desc);
     NODISCARD int32 FindOpenSplit(const FOpenSplitKey& Key) const;
 
     IRHICommandContext*          CommandContext;

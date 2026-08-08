@@ -1752,7 +1752,7 @@ void FRHIValidationCommandContext::DeserializeAccelerationStructure(FRHIRayTraci
     CommandContext->DeserializeAccelerationStructure(Destination, SourceBuffer, SourceOffset);
 }
 
-FRHIValidationCommandContext::FOpenSplitKey FRHIValidationCommandContext::MakeSplitKey(const FRHITransitionBarrierDesc& Desc)
+FRHIValidationCommandContext::FOpenSplitKey FRHIValidationCommandContext::CreateSplitKey(const FRHITransitionBarrierDesc& Desc)
 {
     FOpenSplitKey Key;
     if (Desc.IsTexture())
@@ -1963,7 +1963,7 @@ bool FRHIValidationCommandContext::ValidateTransitionBarrierDesc(const FRHITrans
         return false;
     }
 
-    const FOpenSplitKey Key        = MakeSplitKey(Desc);
+    const FOpenSplitKey Key        = CreateSplitKey(Desc);
     const int32         SplitIndex = FindOpenSplit(Key);
 
     if (bIsSplitBegin)
@@ -2380,6 +2380,48 @@ void FRHIValidationCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uin
     }
 
     CommandContext->ResizeSwapChain(SwapChain, Width, Height, Format, ColorSpace);
+}
+
+void FRHIValidationCommandContext::SetSwapChainHDRMetadata(FRHISwapChain* SwapChain, const FRHIHDRMetadata& Metadata)
+{
+    if (!SwapChain)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call SetSwapChainHDRMetadata when SwapChain is nullptr");
+        return;
+    }
+
+    if (Metadata.bIsValid)
+    {
+        const FRHIChromaticity Primaries[] =
+        {
+            Metadata.RedPrimary, Metadata.GreenPrimary, Metadata.BluePrimary, Metadata.WhitePoint
+        };
+
+        for (const FRHIChromaticity& Primary : Primaries)
+        {
+            if (Primary.X < 0.0f || Primary.X > 1.0f || Primary.Y < 0.0f || Primary.Y > 1.0f)
+            {
+                RHI_VALIDATION_ERROR("SetSwapChainHDRMetadata requires CIE xy chromaticity in 0.0..1.0 (got %f, %f)", Primary.X, Primary.Y);
+                return;
+            }
+        }
+
+        if (Metadata.MinMasteringLuminance < 0.0f || Metadata.MaxMasteringLuminance < Metadata.MinMasteringLuminance)
+        {
+            RHI_VALIDATION_ERROR("SetSwapChainHDRMetadata requires 0.0 <= MinMasteringLuminance <= MaxMasteringLuminance (got %f, %f)",
+                Metadata.MinMasteringLuminance, Metadata.MaxMasteringLuminance);
+            return;
+        }
+
+        if (Metadata.MaxContentLightLevel < 0.0f || Metadata.MaxFrameAverageLightLevel < 0.0f)
+        {
+            RHI_VALIDATION_ERROR("SetSwapChainHDRMetadata requires non-negative MaxCLL / MaxFALL (got %f, %f)",
+                Metadata.MaxContentLightLevel, Metadata.MaxFrameAverageLightLevel);
+            return;
+        }
+    }
+
+    CommandContext->SetSwapChainHDRMetadata(SwapChain, Metadata);
 }
 
 void FRHIValidationCommandContext::ClearState()

@@ -596,6 +596,12 @@ void FMetalCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Widt
     MetalSwapChain->Resize(ResolvedWidth, ResolvedHeight);
 }
 
+void FMetalCommandContext::SetSwapChainHDRMetadata(FRHISwapChain* SwapChain, const FRHIHDRMetadata& Metadata)
+{
+    FMetalSwapChainRHI* MetalSwapChain = static_cast<FMetalSwapChainRHI*>(SwapChain);
+    MetalSwapChain->SetHDRMetadata(Metadata);
+}
+
 void FMetalCommandContext::ClearState()
 {
     ContextState.ResetState();

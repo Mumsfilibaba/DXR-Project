@@ -62,7 +62,7 @@ public:
     static bool Initialize();
     static void Release();
 
-    NODISCARD static FShaderPermutationDesc MakePermutationDesc(int32 PermutationID);
+    NODISCARD static FShaderPermutationDesc CreatePermutationDesc(int32 PermutationID);
 
     static FORCEINLINE FShaderCache& Get()
     {

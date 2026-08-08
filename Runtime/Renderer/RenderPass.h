@@ -94,7 +94,7 @@ struct FMaterialFeatures
 
     EVertexAttributeFlags GetDepthOnlyAttributes() const
     {
-        return MakeDepthOnlyAttributes(HasHeightMap(), HasAlphaMask());
+        return CreateDepthOnlyAttributes(HasHeightMap(), HasAlphaMask());
     }
 
     NODISCARD FMaterialPermutation CreatePermutation() const

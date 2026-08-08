@@ -145,7 +145,7 @@ void FShaderCache::FlushCompiledShaders()
     }
 }
 
-FShaderPermutationDesc FShaderCache::MakePermutationDesc(int32 PermutationID)
+FShaderPermutationDesc FShaderCache::CreatePermutationDesc(int32 PermutationID)
 {
     FShaderPermutationDesc Desc;
     Desc.PermutationID                      = PermutationID;
@@ -171,7 +171,7 @@ FRHIShaderRef FShaderCache::GetOrCompile(FShaderType& Type, int32 PermutationID)
         }
     }
 
-    const FShaderPermutationDesc Desc = MakePermutationDesc(PermutationID);
+    const FShaderPermutationDesc Desc = CreatePermutationDesc(PermutationID);
     if (!Type.ShouldCompilePermutation(Desc))
     {
         return FRHIShaderRef();

@@ -661,6 +661,15 @@ struct RHI
      * will end up with.
      */
     static RHI_API EFormat DefaultSwapChainFormat;
+
+    /**
+     * Builds the mastering-display metadata a swap-chain applies when it resolves to an HDR
+     * color space and the caller supplied none. Reads the RHI.HDR.* CVars.
+     */
+    static RHI_API FRHIHDRMetadata GetDefaultHDRMetadata();
+
+    /** Whether a swap-chain should prefer display-reported luminance over the CVar values. */
+    static RHI_API bool ShouldUseDisplayLuminance();
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

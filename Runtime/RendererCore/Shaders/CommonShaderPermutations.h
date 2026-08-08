@@ -25,7 +25,7 @@ class FRequiredAttributes : public TShaderPermutationInt<EVertexAttributeFlags, 
     SHADER_PERMUTATION_DEFINE("VERTEX_ATTRIBUTES");
 };
 
-NODISCARD inline EVertexAttributeFlags MakeDepthOnlyAttributes(bool bParallax, bool bAlphaMask)
+NODISCARD inline EVertexAttributeFlags CreateDepthOnlyAttributes(bool bParallax, bool bAlphaMask)
 {
     EVertexAttributeFlags Attributes = EVertexAttributeFlags::Position;
     if (bParallax || bAlphaMask)
@@ -45,7 +45,7 @@ template<typename PermutationType>
 NODISCARD PermutationType RemapDepthOnlyAttributes(PermutationType Permutation)
 {
     Permutation.template Set<FRequiredAttributes>(
-        MakeDepthOnlyAttributes(Permutation.template Get<FParallax>(), Permutation.template Get<FAlphaMask>()));
+        CreateDepthOnlyAttributes(Permutation.template Get<FParallax>(), Permutation.template Get<FAlphaMask>()));
     return Permutation;
 }
 

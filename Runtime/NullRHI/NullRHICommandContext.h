@@ -105,6 +105,12 @@ struct FNullRHICommandContext final : public IRHICommandContext
         NullSwapChain->Resize(ResolvedWidth, ResolvedHeight, Format, ColorSpace);
     }
 
+    virtual void SetSwapChainHDRMetadata(FRHISwapChain* SwapChain, const FRHIHDRMetadata& Metadata) override final
+    {
+        FNullSwapChainRHI* NullSwapChain = static_cast<FNullSwapChainRHI*>(SwapChain);
+        NullSwapChain->SetHDRMetadata(Metadata);
+    }
+
     virtual void ClearState() override final { }
 
     virtual void Flush() override final { }
