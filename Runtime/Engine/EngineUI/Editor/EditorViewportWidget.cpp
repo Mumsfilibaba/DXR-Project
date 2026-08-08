@@ -34,6 +34,8 @@ FEditorViewportWidget::FEditorViewportWidget(FEditorEngine* InEditorEngine)
     : EditorEngine(InEditorEngine)
     , CameraController(MakeUniquePtr<FEditorCameraController>())
     , CachedViewportSize(0, 0)
+    , CachedImageMin(0.0f, 0.0f)
+    , CachedImageSize(0.0f, 0.0f)
     , ViewportImage()
     , ImGuiDelegateHandle()
     , bVisible(true)
@@ -87,6 +89,14 @@ FEditorViewportWidget::~FEditorViewportWidget()
 }
 
 void FEditorViewportWidget::Draw()
+{
+    PendingCameraInput = FEditorCameraInputState();
+
+    DrawViewportWindow();
+    UpdateCamera(ImGui::GetIO().DeltaTime);
+}
+
+void FEditorViewportWidget::DrawViewportWindow()
 {
     if (!bVisible)
     {
@@ -864,6 +874,9 @@ void FEditorViewportWidget::Draw()
         const ImVec2 ImageMin  = ImGui::GetItemRectMin();
         const ImVec2 ImageSize = ImGui::GetItemRectSize();
 
+        CachedImageMin  = ImageMin;
+        CachedImageSize = ImageSize;
+
         // ---------------------------------------------------------------------
         // Viewport activation
         // ---------------------------------------------------------------------
@@ -902,10 +915,8 @@ void FEditorViewportWidget::Draw()
         const bool bBlockPickForGizmo = 
             EditorGuizmo::IsUsingAny() || 
             EditorGuizmo::IsOver() || 
-            EditorGuizmo::IsUsingViewManipulate() || 
-            EditorGuizmo::IsViewManipulateHovered(); 
-
-        PendingCameraInput = FEditorCameraInputState();
+            EditorGuizmo::IsUsingViewManipulate() ||
+            EditorGuizmo::IsViewManipulateHovered();
 
         IntVector2 RawMouseDelta;
         if (const TSharedPtr<FSceneViewport> SceneViewport = EditorEngine->GetSceneViewport())
@@ -1318,7 +1329,7 @@ void FEditorViewportWidget::Draw()
     ImGui::PopStyleVar(); // WindowPadding
 }
 
-void FEditorViewportWidget::Tick(float DeltaTime)
+void FEditorViewportWidget::UpdateCamera(float DeltaTime)
 {
     if (CameraController)
     {
@@ -1334,8 +1345,6 @@ void FEditorViewportWidget::Tick(float DeltaTime)
             SpeedOverlayTimer = Math::Max(SpeedOverlayTimer - DeltaTime, 0.0f);
         }
     }
-
-    PendingCameraInput = FEditorCameraInputState();
 }
 
 FCameraComponent* FEditorViewportWidget::GetViewCamera() const

@@ -137,11 +137,6 @@ void FEditorEngine::Tick(float DeltaTime)
 {
     FEngine::Tick(DeltaTime);
 
-    if (ViewportWidget)
-    {
-        ViewportWidget->Tick(DeltaTime);
-    }
-
     // Consume any completed async editor pick results.
     if (FWorld* LocalWorld = GetWorld())
     {

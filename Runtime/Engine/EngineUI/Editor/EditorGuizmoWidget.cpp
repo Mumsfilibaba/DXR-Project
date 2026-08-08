@@ -9,6 +9,26 @@
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h"
 #include "ImGuiPlugin/ImGuiCore.h"
 
+static void CompensateGizmoPivot(const FActorTransform& OldTransform, const Vector3& GizmoPosition, FActorTransform& InOutTransform)
+{
+    const Vector3 OldScale = OldTransform.GetScale();
+    if (Math::Abs(OldScale.X) < Math::Constants::Epsilon || 
+        Math::Abs(OldScale.Y) < Math::Constants::Epsilon || 
+        Math::Abs(OldScale.Z) < Math::Constants::Epsilon)
+    {
+        return;
+    }
+
+    const Matrix4 OldBasis = Matrix4::Scale(OldScale)                  * Matrix4::RotationRollPitchYaw(OldTransform.GetRotation());
+    const Matrix4 NewBasis = Matrix4::Scale(InOutTransform.GetScale()) * Matrix4::RotationRollPitchYaw(InOutTransform.GetRotation());
+
+    const Vector4 PivotOffset      = Vector4(GizmoPosition - OldTransform.GetTranslation(), 0.0f);
+    const Vector4 PivotOffsetLocal = OldBasis.GetInverse().Transform(PivotOffset);
+    const Vector4 PivotOffsetWorld = NewBasis.Transform(PivotOffsetLocal);
+
+    InOutTransform.SetTranslation(GizmoPosition - Vector3(PivotOffsetWorld.X, PivotOffsetWorld.Y, PivotOffsetWorld.Z));
+}
+
 static bool HasSelectedAncestor(const FEditorEngine* EditorEngine, FActor* Actor)
 {
     for (FActor* Parent = Actor->GetParentActor(); Parent; Parent = Parent->GetParentActor())
@@ -93,46 +113,55 @@ void FEditorGuizmoWidget::UpdateShortcuts(bool bViewportHovered)
 
 void FEditorGuizmoWidget::Draw()
 {
+    if (!DrawGuizmo())
+    {
+        EditorGuizmo::CancelUsing();
+    }
+}
+
+bool FEditorGuizmoWidget::DrawGuizmo()
+{
     if (!bVisible)
     {
-        return;
+        return false;
     }
 
     if (!EditorEngine)
     {
-        return;
+        return false;
     }
 
     const TSharedPtr<FEditorViewportWidget>& Viewport = EditorEngine->GetEditorViewportWidget();
-    if (Viewport)
+    if (!Viewport)
     {
-        if (Viewport->GetDebugView() != FSceneRenderView::EDebugView::None)
-        {
-            return;
-        }
+        return false;
+    }
+
+    if (Viewport->GetDebugView() != FSceneRenderView::EDebugView::None)
+    {
+        return false;
     }
 
     FCameraComponent* Camera = EditorEngine->GetActiveViewportCamera();
     if (!Camera)
     {
-        return;
+        return false;
     }
 
     ImGuiWindow* ViewportWindow = ImGui::FindWindowByName("Viewport");
     if (!ViewportWindow)
     {
-        return;
+        return false;
     }
 
-    const ImVec2 ViewportMin = ViewportWindow->ContentRegionRect.Min;
-    const ImVec2 ViewportMax = ViewportWindow->ContentRegionRect.Max;
+    // The scene image, not the window content region, since the latter starts at the top of the toolbar
+    const ImVec2 ViewportMin  = Viewport->GetViewportImageMin();
+    const ImVec2 ViewportSize = Viewport->GetViewportImageSize();
+    const ImVec2 ViewportMax  = ImVec2(ViewportMin.x + ViewportSize.x, ViewportMin.y + ViewportSize.y);
 
-    const float ViewportWidth  = ViewportMax.x - ViewportMin.x;
-    const float ViewportHeight = ViewportMax.y - ViewportMin.y;
-
-    if (ViewportWidth <= 0.0f || ViewportHeight <= 0.0f)
+    if (ViewportSize.x <= 0.0f || ViewportSize.y <= 0.0f)
     {
-        return;
+        return false;
     }
 
     EditorGuizmo::SetAlternativeWindow(ViewportWindow);
@@ -152,16 +181,16 @@ void FEditorGuizmoWidget::Draw()
     const TArray<FActor*>& SelectedActors = EditorEngine->GetSelectedActors();
     if (SelectedActors.IsEmpty())
     {
-        return;
+        return false;
     }
 
-    EditorGuizmo::SetRect(ViewportMin.x, ViewportMin.y, ViewportWidth, ViewportHeight);
+    EditorGuizmo::SetRect(ViewportMin.x, ViewportMin.y, ViewportSize.x, ViewportSize.y);
     EditorGuizmo::SetOrthographic(false);
 
-    const EditorGuizmo::EOperation::Type Operation   = Viewport ? Viewport->GetGizmoOperation()   : EditorGuizmo::EOperation::Translate;
-    const EditorGuizmo::EMode            Orientation = Viewport ? Viewport->GetGizmoOrientation() : EditorGuizmo::EMode::World;
+    const EditorGuizmo::EOperation::Type Operation   = Viewport->GetGizmoOperation();
+    const EditorGuizmo::EMode            Orientation = Viewport->GetGizmoOrientation();
 
-    const bool bUseBoundsCenter = Viewport && Viewport->GetGizmoPlacement() == FEditorViewportWidget::EGizmoPlacement::Center;
+    const bool bUseBoundsCenter = Viewport->GetGizmoPlacement() == FEditorViewportWidget::EGizmoPlacement::Center;
 
     const Matrix4& View       = Camera->GetViewMatrix();
     const Matrix4& Projection = Camera->GetProjectionMatrix();
@@ -169,11 +198,10 @@ void FEditorGuizmoWidget::Draw()
     if (SelectedActors.Size() == 1)
     {
         DrawSingleActor(SelectedActors[0], View, Projection, Operation, Orientation, bUseBoundsCenter);
+        return true;
     }
-    else
-    {
-        DrawMultipleActors(SelectedActors, View, Projection, Operation, Orientation, bUseBoundsCenter);
-    }
+
+    return DrawMultipleActors(SelectedActors, View, Projection, Operation, Orientation, bUseBoundsCenter);
 }
 
 Vector3 FEditorGuizmoWidget::GetActorGizmoPoint(FActor* Actor, bool bUseBoundsCenter) const
@@ -256,18 +284,22 @@ void FEditorGuizmoWidget::DrawSingleActor(FActor* Actor, const Matrix4& View, co
             else
             {
                 NewWorldTransform.SetRotation(RotationRadians);
+                CompensateGizmoPivot(ActorWorldTransform, InitialGizmoPosition, NewWorldTransform);
+
                 Actor->SetWorldTransform(NewWorldTransform);
             }
         }
         else if (EffectiveOperation == EditorGuizmo::EOperation::Scale)
         {
             NewWorldTransform.SetScale(Scale);
+            CompensateGizmoPivot(ActorWorldTransform, InitialGizmoPosition, NewWorldTransform);
+
             Actor->SetWorldTransform(NewWorldTransform);
         }
     }
 }
 
-void FEditorGuizmoWidget::DrawMultipleActors(const TArray<FActor*>& Actors, const Matrix4& View, const Matrix4& Projection, EditorGuizmo::EOperation::Type Operation, EditorGuizmo::EMode Orientation, bool bUseBoundsCenter)
+bool FEditorGuizmoWidget::DrawMultipleActors(const TArray<FActor*>& Actors, const Matrix4& View, const Matrix4& Projection, EditorGuizmo::EOperation::Type Operation, EditorGuizmo::EMode Orientation, bool bUseBoundsCenter)
 {
     if (!EditorGuizmo::IsUsing())
     {
@@ -276,7 +308,7 @@ void FEditorGuizmoWidget::DrawMultipleActors(const TArray<FActor*>& Actors, cons
 
     if (DragActors.IsEmpty())
     {
-        return;
+        return false;
     }
 
     Matrix4 Model = GizmoMatrix;
@@ -286,7 +318,7 @@ void FEditorGuizmoWidget::DrawMultipleActors(const TArray<FActor*>& Actors, cons
 
     if (!bChanged && !EditorGuizmo::IsUsing())
     {
-        return;
+        return true;
     }
 
     const Matrix4 Delta = GizmoStartMatrix.GetInverse() * GizmoMatrix;
@@ -305,6 +337,8 @@ void FEditorGuizmoWidget::DrawMultipleActors(const TArray<FActor*>& Actors, cons
             CameraComponent->SetRotation(Actor->GetTransform().GetRotation());
         }
     }
+
+    return true;
 }
 
 void FEditorGuizmoWidget::CaptureMultiDragState(const TArray<FActor*>& Actors, EditorGuizmo::EMode Orientation, bool bUseBoundsCenter)

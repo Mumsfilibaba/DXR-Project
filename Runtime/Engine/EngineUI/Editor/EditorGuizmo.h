@@ -108,7 +108,9 @@ public:
     static bool IsUsingViewManipulate();
     static bool IsViewManipulateHovered();
     static bool IsUsingAny();
+
     static void Enable(bool bEnable);
+    static void CancelUsing();
 
     static void DecomposeMatrixToComponents(const float* Matrix, float* Translation, float* Rotation, float* Scale);
     static void RecomposeMatrixFromComponents(const float* Translation, const float* Rotation, const float* Scale, float* Matrix);

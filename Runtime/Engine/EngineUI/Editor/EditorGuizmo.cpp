@@ -643,6 +643,78 @@ static float ComputeAngleOnPlan()
     return Math::Atan2(SinAngle, CosAngle); 
 } 
 
+static Vector4 ComputeRotationViewDir()
+{
+    Vector4 ViewDirNormalized;
+    if (GuizmoContext.bIsOrthographic)
+    {
+        Matrix4 ViewInverse = GuizmoContext.ViewMat.GetInverse();
+        ViewDirNormalized    = Vector4(-ViewInverse.M[2][0], -ViewInverse.M[2][1], -ViewInverse.M[2][2], 0.0f);
+    }
+    else
+    {
+        // Match the "front" half used for picking (camera-forward depth test).
+        // The arc we render should be the half that's closer to the camera, which is opposite the camera forward direction.
+        ViewDirNormalized = (-GuizmoContext.CameraDir).GetNormalized();
+    }
+
+    return GuizmoContext.ModelInverse.Transform(Vector4(ViewDirNormalized.X, ViewDirNormalized.Y, ViewDirNormalized.Z, 0.0f));
+}
+
+static float ComputeRotationAngleStart(const Vector4& ViewDir, int32 Axis)
+{
+    return Math::Atan2(
+        ViewDir[(4 - Axis) % 3], 
+        ViewDir[(3 - Axis) % 3]) + (GuizmoContext.bIsOrthographic ? Math::Constants::PI : -Math::Constants::PI) * 0.5f;
+}
+
+static ImVec2 ComputeRotationCirclePoint(float AngleStart, int32 Axis, int32 SegmentIndex, int32 CircleMul)
+{
+    const float Angle = AngleStart + static_cast<float>(CircleMul) * Math::Constants::PI * 
+        (static_cast<float>(SegmentIndex) / static_cast<float>(CircleMul * HalfCircleSegmentCount));
+
+    Vector4 AxisPos  = Vector4(Math::Cos(Angle), Math::Sin(Angle), 0.0f, 0.0f);
+    Vector4 Position = Vector4(AxisPos[Axis], AxisPos[(Axis + 1) % 3], AxisPos[(Axis + 2) % 3], 0.0f);
+    Position = Position * GuizmoContext.ScreenFactor * RotationDisplayFactor;
+
+    return WorldToPos(Position, GuizmoContext.MVP);
+}
+
+static void ComputeRotationRadius(EditorGuizmo::EOperation::Type Op)
+{
+    GuizmoContext.RadiusSquareCenter = ScreenRotateSize * GuizmoContext.Height;
+
+    if (!Intersects(Op, EditorGuizmo::EOperation::Rotate))
+    {
+        return;
+    }
+
+    const Vector4 ViewDir        = ComputeRotationViewDir();
+    const Vector4 ModelPosition  = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
+    const ImVec2  CenterPosition = WorldToPos(ModelPosition, GuizmoContext.ViewProjection);
+
+    for (int32 Axis = 0; Axis < 3; Axis++)
+    {
+        if (!Intersects(Op, static_cast<EditorGuizmo::EOperation::Type>(EditorGuizmo::EOperation::RotateZ >> Axis)))
+        {
+            continue;
+        }
+
+        const bool bIsAxisMasked = ((1 << (2 - Axis)) & GuizmoContext.AxisMask) != 0;
+        if (bIsAxisMasked)
+        {
+            continue;
+        }
+
+        const ImVec2 ArcStart   = ComputeRotationCirclePoint(ComputeRotationAngleStart(ViewDir, Axis), Axis, 0, 1);
+        const float  RadiusAxis = Math::Sqrt(ImLengthSqr(CenterPosition - ArcStart));
+        if (RadiusAxis > GuizmoContext.RadiusSquareCenter)
+        {
+            GuizmoContext.RadiusSquareCenter = RadiusAxis;
+        }
+    }
+}
+
 static void DrawRotationGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
 {
     if (!Intersects(Op, EditorGuizmo::EOperation::Rotate))
@@ -658,21 +730,7 @@ static void DrawRotationGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
     ImU32 Colors[7];
     ComputeColors(Colors, Type, EditorGuizmo::EOperation::Rotate);
 
-    Vector4 ViewDirNormalized;
-    if (GuizmoContext.bIsOrthographic)
-    {
-        Matrix4 ViewInverse = GuizmoContext.ViewMat.GetInverse();
-        ViewDirNormalized    = Vector4(-ViewInverse.M[2][0], -ViewInverse.M[2][1], -ViewInverse.M[2][2], 0.0f);
-    }
-    else
-    {
-        // Match the "front" half used for picking (camera-forward depth test).
-        // The arc we render should be the half that's closer to the camera, which is opposite the camera forward direction.
-        ViewDirNormalized = (-GuizmoContext.CameraDir).GetNormalized();
-    }
-
-    ViewDirNormalized = GuizmoContext.ModelInverse.Transform(Vector4(ViewDirNormalized.X, ViewDirNormalized.Y, ViewDirNormalized.Z, 0.0f));
-    GuizmoContext.RadiusSquareCenter = ScreenRotateSize * GuizmoContext.Height;
+    const Vector4 ViewDirNormalized = ComputeRotationViewDir();
 
     bool bHasRSC = Intersects(Op, EditorGuizmo::EOperation::RotateScreen);
     for (int32 Axis = 0; Axis < 3; Axis++)
@@ -693,33 +751,16 @@ static void DrawRotationGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
 
         ImVec2* CirclePos = reinterpret_cast<ImVec2*>(alloca(sizeof(ImVec2) * (CircleMul * HalfCircleSegmentCount + 1)));
 
-        float AngleStart = Math::Atan2(
-            ViewDirNormalized[(4 - Axis) % 3], 
-            ViewDirNormalized[(3 - Axis) % 3]) + (GuizmoContext.bIsOrthographic ? Math::Constants::PI : -Math::Constants::PI) * 0.5f;
-
+        const float AngleStart = ComputeRotationAngleStart(ViewDirNormalized, Axis);
         for (int32 CircleSegmentIndex = 0; CircleSegmentIndex < CircleMul * HalfCircleSegmentCount + 1; CircleSegmentIndex++)
         {
-            float Angle = AngleStart + static_cast<float>(CircleMul) * Math::Constants::PI * (static_cast<float>(CircleSegmentIndex) / static_cast<float>(CircleMul * HalfCircleSegmentCount));
-           
-            Vector4 AxisPos  = Vector4(Math::Cos(Angle), Math::Sin(Angle), 0.0f, 0.0f);
-            Vector4 Position = Vector4(AxisPos[Axis], AxisPos[(Axis + 1) % 3], AxisPos[(Axis + 2) % 3], 0.0f);
-            Position = Position * GuizmoContext.ScreenFactor * RotationDisplayFactor;
-
-            CirclePos[CircleSegmentIndex] = WorldToPos(Position, GuizmoContext.MVP);
+            CirclePos[CircleSegmentIndex] = ComputeRotationCirclePoint(AngleStart, Axis, CircleSegmentIndex, CircleMul);
         }
 
         if (!GuizmoContext.bUsing || bUsingAxis)
         {
             DrawList->AddPolyline(CirclePos, CircleMul * HalfCircleSegmentCount + 1, Colors[3 - Axis], false,
                 GuizmoContext.Style.RotationLineThickness);
-        }
-
-        Vector4 ModelPosition = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
-
-        float RadiusAxis = Math::Sqrt((ImLengthSqr(WorldToPos(ModelPosition, GuizmoContext.ViewProjection) - CirclePos[0])));
-        if (RadiusAxis > GuizmoContext.RadiusSquareCenter)
-        {
-            GuizmoContext.RadiusSquareCenter = RadiusAxis;
         }
     }
 
@@ -2321,9 +2362,17 @@ void EditorGuizmo::Enable(bool bEnable)
     GuizmoContext.bEnable = bEnable;
     if (!bEnable)
     {
-        GuizmoContext.bUsing       = false;
-        GuizmoContext.bUsingBounds = false;
+        EditorGuizmo::CancelUsing();
     }
+}
+
+void EditorGuizmo::CancelUsing()
+{
+    GuizmoContext.bUsing       = false;
+    GuizmoContext.bUsingBounds = false;
+    GuizmoContext.EditingID    = static_cast<ImGuiID>(-1);
+    GuizmoContext.Scale        = Vector4(1.0f, 1.0f, 1.0f, 0.0f);
+    GuizmoContext.ScaleLast    = Vector4(1.0f, 1.0f, 1.0f, 0.0f);
 }
 
 void EditorGuizmo::DecomposeMatrixToComponents(const float* Matrix, float* Translation, float* Rotation, float* Scale) 
@@ -2618,6 +2667,8 @@ bool EditorGuizmo::Manipulate(const float* View, const float* Projection, Editor
     // Scale is always local or Matrix will be skewed when applying world Scale or oriented Matrix
     ComputeContext(View, Projection, InOutMatrix, (Operation & EditorGuizmo::EOperation::Scale) ? EditorGuizmo::EMode::Local : Mode);
 
+    ComputeRotationRadius(Operation);
+
     // Set delta to identity
     if (OutDeltaMatrix)
     {
@@ -2646,6 +2697,11 @@ bool EditorGuizmo::Manipulate(const float* View, const float* Projection, Editor
               HandleScale(InOutMatrix, OutDeltaMatrix, Operation, Type, Snap) ||
               HandleRotation(InOutMatrix, OutDeltaMatrix, Operation, Type, Snap);
        }
+    }
+
+    if (GuizmoContext.bUsing && !ImGui::GetIO().MouseDown[0])
+    {
+       EditorGuizmo::CancelUsing();
     }
 
     if (LocalBounds && !GuizmoContext.bUsing)

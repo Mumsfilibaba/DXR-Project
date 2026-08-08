@@ -21,24 +21,33 @@ public:
 
     FEditorViewportWidget(FEditorEngine* InEditorEngine);
     ~FEditorViewportWidget();
-    
+
     void Draw();
-    void Tick(float DeltaTime);
-    
+
     void SetViewportWidget(const TSharedPtr<FViewportWidget>& ViewportWidget);
     void SetViewportImage(FRHITextureRef InViewportImage);
-    
+
     IntVector2 GetViewportSize() const;
-    
+
     FSceneRenderView::EDebugView GetDebugView() const;
     FSceneRenderView::EDebugView GetSecondaryDebugView() const;
     FSceneRenderView::EDebugViewChannel GetDebugViewChannelMask() const;
     FCameraComponent* GetViewCamera() const;
-
+    
     void OnActorRemoved(FActor* Actor);
     void OnContextMenuPickResult(const FEditorPickResult& Result, FActor* PickedActor);
-
+    
     bool ConsumeCameraCut();
+
+    ImVec2 GetViewportImageMin() const
+    {
+        return CachedImageMin;
+    }
+
+    ImVec2 GetViewportImageSize() const
+    {
+        return CachedImageSize;
+    }
 
     EGizmoPlacement GetGizmoPlacement() const
     {
@@ -81,6 +90,8 @@ public:
     }
 
 private:
+    void DrawViewportWindow();
+    void UpdateCamera(float DeltaTime);
     void EndMouseLook();
     void DrawContextMenu();
 
@@ -91,6 +102,8 @@ private:
     TUniquePtr<FEditorCameraController> CameraController;
     TSharedPtr<FViewportWidget>         ViewportWidget;
     IntVector2                          CachedViewportSize;
+    ImVec2                              CachedImageMin;
+    ImVec2                              CachedImageSize;
     FImGuiTexture                       ViewportImage;
     FDelegateHandle                     ImGuiDelegateHandle;
     bool                                bVisible;
