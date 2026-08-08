@@ -233,6 +233,10 @@ VULKAN_DEVICE_FUNCTION_OPTIONAL(QueuePresentKHR)
 VULKAN_DEVICE_FUNCTION_OPTIONAL(GetSwapchainImagesKHR)
 #endif
 
+#if VK_EXT_hdr_metadata
+VULKAN_DEVICE_FUNCTION_OPTIONAL(SetHdrMetadataEXT)
+#endif
+
 #if VK_KHR_acceleration_structure
 VULKAN_DEVICE_FUNCTION_OPTIONAL(CreateAccelerationStructureKHR)
 VULKAN_DEVICE_FUNCTION_OPTIONAL(DestroyAccelerationStructureKHR)

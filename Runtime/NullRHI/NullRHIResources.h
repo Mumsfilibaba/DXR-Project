@@ -502,6 +502,17 @@ public:
         return Format != EFormat::Unknown && ColorSpace != EColorSpace::Unknown;
     }
 
+    virtual bool QueryDisplayHDRInfo(FRHIDisplayHDRInfo& /*OutInfo*/) const override final
+    {
+        return false;
+    }
+
+    bool SetHDRMetadata(const FRHIHDRMetadata& Metadata)
+    {
+        Desc.HDRMetadata = Metadata;
+        return true;
+    }
+
     uint32 GetCurrentBackBufferIndex() const
     {
         return BackBufferIndex;

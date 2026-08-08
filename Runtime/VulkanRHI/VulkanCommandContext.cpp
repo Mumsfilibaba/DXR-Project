@@ -3445,6 +3445,12 @@ void FVulkanCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Wid
     VulkanSwapChain->Resize(Width, Height, Format, ColorSpace);
 }
 
+void FVulkanCommandContext::SetSwapChainHDRMetadata(FRHISwapChain* SwapChain, const FRHIHDRMetadata& Metadata)
+{
+    FVulkanSwapChainRHI* VulkanSwapChain = FVulkanDeviceRHI::ResourceCast(SwapChain);
+    VulkanSwapChain->SetHDRMetadata(Metadata);
+}
+
 void FVulkanCommandContext::ClearState()
 {
     VerifyExclusiveAccess();

@@ -564,6 +564,11 @@ public:
         EmplaceCommand<FRHICommandResizeSwapChain>(SwapChain, Width, Height, Format, ColorSpace);
     }
 
+    FORCEINLINE void SetSwapChainHDRMetadata(FRHISwapChain* SwapChain, const FRHIHDRMetadata& Metadata) noexcept
+    {
+        EmplaceCommand<FRHICommandSetSwapChainHDRMetadata>(SwapChain, Metadata);
+    }
+
     FORCEINLINE void PushEvent(const StringView& Name) noexcept
     {
         StringView AllocatedName = AllocateString(*Name);

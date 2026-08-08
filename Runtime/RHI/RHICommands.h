@@ -1572,3 +1572,21 @@ DECLARE_RHICOMMAND(FRHICommandResizeSwapChain)
     EFormat        Format;
     EColorSpace    ColorSpace;
 };
+
+DECLARE_RHICOMMAND(FRHICommandSetSwapChainHDRMetadata)
+{
+    FORCEINLINE FRHICommandSetSwapChainHDRMetadata(FRHISwapChain* InSwapChain, const FRHIHDRMetadata& InMetadata)
+        : SwapChain(InSwapChain)
+        , Metadata(InMetadata)
+    {
+        CHECK(SwapChain != nullptr);
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.SetSwapChainHDRMetadata(SwapChain, Metadata);
+    }
+
+    FRHISwapChain*  SwapChain;
+    FRHIHDRMetadata Metadata;
+};

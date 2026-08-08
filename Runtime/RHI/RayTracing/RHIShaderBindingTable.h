@@ -33,7 +33,7 @@ enum class ERayTracingLocalBindingType : uint8
 
 struct FRHIHitGroupLocalShaderBinding
 {
-    static FRHIHitGroupLocalShaderBinding MakeConstantBuffer(FRHIBuffer* InBuffer, uint32 RegisterIndex)
+    static FRHIHitGroupLocalShaderBinding CreateConstantBuffer(FRHIBuffer* InBuffer, uint32 RegisterIndex)
     {
         FRHIHitGroupLocalShaderBinding Result;
         Result.Type          = ERayTracingLocalBindingType::ConstantBuffer;
@@ -42,7 +42,7 @@ struct FRHIHitGroupLocalShaderBinding
         return Result;
     }
 
-    static FRHIHitGroupLocalShaderBinding MakeShaderResourceView(FRHIShaderResourceView* InView, uint32 RegisterIndex)
+    static FRHIHitGroupLocalShaderBinding CreateShaderResourceView(FRHIShaderResourceView* InView, uint32 RegisterIndex)
     {
         FRHIHitGroupLocalShaderBinding Result;
         Result.Type               = ERayTracingLocalBindingType::ShaderResourceView;
@@ -51,7 +51,7 @@ struct FRHIHitGroupLocalShaderBinding
         return Result;
     }
 
-    static FRHIHitGroupLocalShaderBinding MakeUnorderedAccessView(FRHIUnorderedAccessView* InView, uint32 RegisterIndex)
+    static FRHIHitGroupLocalShaderBinding CreateUnorderedAccessView(FRHIUnorderedAccessView* InView, uint32 RegisterIndex)
     {
         FRHIHitGroupLocalShaderBinding Result;
         Result.Type                = ERayTracingLocalBindingType::UnorderedAccessView;
@@ -60,7 +60,7 @@ struct FRHIHitGroupLocalShaderBinding
         return Result;
     }
 
-    static FRHIHitGroupLocalShaderBinding MakeSamplerState(FRHISamplerState* InState, uint32 RegisterIndex)
+    static FRHIHitGroupLocalShaderBinding CreateSamplerState(FRHISamplerState* InState, uint32 RegisterIndex)
     {
         FRHIHitGroupLocalShaderBinding Result;
         Result.Type          = ERayTracingLocalBindingType::SamplerState;

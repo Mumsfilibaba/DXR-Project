@@ -101,11 +101,13 @@ public:
     virtual FRHIUnorderedAccessView* GetBackBufferUnorderedAccessView() const override final;
 
     virtual bool IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const override final;
+    virtual bool QueryDisplayHDRInfo(FRHIDisplayHDRInfo& OutInfo) const override final;
 
     bool Initialize();
     
     bool Resize(uint32 InWidth, uint32 InHeight, EFormat NewFormat, EColorSpace NewColorSpace);
     bool Present(bool bVerticalSync);
+    bool SetHDRMetadata(const FRHIHDRMetadata& Metadata);
 
     void ClaimPendingSemaphores(FVulkanCommands& InCommands);
     void NotifyBackBufferAccessed();
@@ -167,6 +169,7 @@ private:
     bool RecreateSurface();
     bool ValidateSurfaceAndSize(uint32& OutWidth, uint32& OutHeight);
     bool CreateSwapChain(uint32 InWidth, uint32 InHeight);
+    bool ApplyHDRMetadata();
     void DestroySwapChain();
     void ClaimPendingAcquireSemaphore(FVulkanCommands& InCommands);
 

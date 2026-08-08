@@ -19,6 +19,32 @@ static FAutoConsoleCommand CCmdDumpCapsCommand(
         RHI::DumpCapabilities();
     }));
 
+static TAutoConsoleVariable<bool> CVarHDRUseDisplayLuminance(
+    "RHI.HDR.UseDisplayLuminance",
+    "Derive the mastering luminance range from the display instead of the RHI.HDR.*Luminance CVars, "
+    "on backends that can report it.",
+    true);
+
+static TAutoConsoleVariable<float> CVarHDRMaxMasteringLuminance(
+    "RHI.HDR.MaxMasteringLuminance",
+    "Maximum mastering-display luminance in nits.",
+    1000.0f);
+
+static TAutoConsoleVariable<float> CVarHDRMinMasteringLuminance(
+    "RHI.HDR.MinMasteringLuminance",
+    "Minimum mastering-display luminance in nits.",
+    0.001f);
+
+static TAutoConsoleVariable<float> CVarHDRMaxContentLightLevel(
+    "RHI.HDR.MaxContentLightLevel",
+    "MaxCLL: brightest single pixel in the content, in nits.",
+    1000.0f);
+
+static TAutoConsoleVariable<float> CVarHDRMaxFrameAverageLightLevel(
+    "RHI.HDR.MaxFrameAverageLightLevel",
+    "MaxFALL: brightest frame average across the content, in nits.",
+    400.0f);
+
 // -------------------------------------------------------------------------------------------
 // Feature Support
 // -------------------------------------------------------------------------------------------
@@ -146,6 +172,21 @@ RHI_API bool RHI::bSupportsGPUTimestampBubblesRemoval = false;
 // -------------------------------------------------------------------------------------------
 
 RHI_API EFormat RHI::DefaultSwapChainFormat = EFormat::Unknown;
+
+RHI_API FRHIHDRMetadata RHI::GetDefaultHDRMetadata()
+{
+    FRHIHDRMetadata Metadata           = FRHIHDRMetadata::CreateHDR10Default();
+    Metadata.MaxMasteringLuminance     = CVarHDRMaxMasteringLuminance.GetValue();
+    Metadata.MinMasteringLuminance     = CVarHDRMinMasteringLuminance.GetValue();
+    Metadata.MaxContentLightLevel      = CVarHDRMaxContentLightLevel.GetValue();
+    Metadata.MaxFrameAverageLightLevel = CVarHDRMaxFrameAverageLightLevel.GetValue();
+    return Metadata;
+}
+
+RHI_API bool RHI::ShouldUseDisplayLuminance()
+{
+    return CVarHDRUseDisplayLuminance.GetValue();
+}
 
 // -------------------------------------------------------------------------------------------
 // Ray-tracing capability reporting

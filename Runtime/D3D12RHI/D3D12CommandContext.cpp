@@ -3531,6 +3531,12 @@ void FD3D12CommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Widt
     D3D12SwapChain->Resize(this, Width, Height, Format, ColorSpace);
 }
 
+void FD3D12CommandContext::SetSwapChainHDRMetadata(FRHISwapChain* SwapChain, const FRHIHDRMetadata& Metadata)
+{
+    FD3D12SwapChainRHI* D3D12SwapChain = FD3D12DeviceRHI::ResourceCast(SwapChain);
+    D3D12SwapChain->SetHDRMetadata(Metadata);
+}
+
 void FD3D12CommandContext::ClearState()
 {
     VerifyExclusiveAccess();

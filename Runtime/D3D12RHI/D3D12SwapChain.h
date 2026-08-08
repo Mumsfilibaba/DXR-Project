@@ -34,11 +34,13 @@ public:
     virtual FRHIUnorderedAccessView* GetBackBufferUnorderedAccessView() const override final;
 
     virtual bool IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const override final;
+    virtual bool QueryDisplayHDRInfo(FRHIDisplayHDRInfo& OutInfo) const override final;
 
     bool Initialize(FD3D12CommandContext* InCommandContext);
     
     bool Resize(FD3D12CommandContext* InCommandContext, uint32 Width, uint32 Height, EFormat NewFormat, EColorSpace NewColorSpace);
     bool Present(bool bVerticalSync);
+    bool SetHDRMetadata(const FRHIHDRMetadata& Metadata);
 
     FD3D12TextureRHI* GetCurrentBackBuffer() const
     {
@@ -77,6 +79,7 @@ public:
 
 private:
     bool RetrieveBackBuffers();
+    bool ApplyHDRMetadata();
     void ApplySettingsChanges();
 
     struct FBackBufferData
@@ -87,6 +90,7 @@ private:
     };
 
     TComPtr<IDXGISwapChain3>                       SwapChain;
+    TComPtr<IDXGISwapChain4>                       SwapChain4;
     FD3D12CommandContext*                          CommandContext;
     FD3D12BackBufferProxyTextureRHIRef             BackBufferProxy;
     FD3D12BackBufferProxyRenderTargetViewRHIRef    BackBufferProxyRenderTargetView;

@@ -152,13 +152,13 @@ class FDepthReductionCS
 IMPLEMENT_SHADER_TYPE(FDepthReductionInitialCS, "Shaders/DepthReduction.hlsl", "ReductionMainInital", EShaderModel::SM_6_2);
 IMPLEMENT_SHADER_TYPE(FDepthReductionCS,        "Shaders/DepthReduction.hlsl", "ReductionMain",       EShaderModel::SM_6_2);
 
-NODISCARD static FGraphicsPipelineKey MakePrePassPSOKey(const FMaterialFeatures& Features, bool bBindless, const FVertexDeclaration& Declaration)
+NODISCARD static FGraphicsPipelineKey CreatePrePassPSOKey(const FMaterialFeatures& Features, bool bBindless, const FVertexDeclaration& Declaration)
 {
     const FPrePassShaderRules::FPermutation Permutation = FPrePassShaderRules::Create(Features, bBindless, false);
     return FGraphicsPipelineKey(Permutation.GetPermutationID(), 0, Declaration.GetID());
 }
 
-NODISCARD static FGraphicsPipelineKey MakeBasePassPSOKey(const FMaterialFeatures& Features, bool bBindless, const FVertexDeclaration& Declaration)
+NODISCARD static FGraphicsPipelineKey CreateBasePassPSOKey(const FMaterialFeatures& Features, bool bBindless, const FVertexDeclaration& Declaration)
 {
     const FBasePassShaderRules::FPermutation Permutation = FBasePassShaderRules::Create(Features, bBindless);
     return FGraphicsPipelineKey(Permutation.GetPermutationID(), 0, Declaration.GetID());
@@ -182,7 +182,7 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FVertexDecla
     const int32 MaterialFlags = static_cast<int32>(Features.Flags);
     const bool  bBindless     = RHI::bSupportsBindless && GPrePassBindless;
 
-    const FGraphicsPipelineKey     PSOKey      = MakePrePassPSOKey(Features, bBindless, Declaration);
+    const FGraphicsPipelineKey     PSOKey      = CreatePrePassPSOKey(Features, bBindless, Declaration);
     const FPrePassVS::FPermutation Permutation = FPrePassVS::FPermutation(PSOKey.PermutationID);
 
     FGraphicsPipelineStateInstance* CachedPrePassPSO = MaterialPSOs.Find(PSOKey);
@@ -338,7 +338,7 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
 
         const FMaterialFeatures Features(Batch.EffectiveMaterialFlags);
 
-        const FGraphicsPipelineKey PSOKey = MakePrePassPSOKey(Features, bBindless, Batch.Declaration);
+        const FGraphicsPipelineKey PSOKey = CreatePrePassPSOKey(Features, bBindless, Batch.Declaration);
 
         FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(PSOKey);
         if (!PipelineInstance)
@@ -428,7 +428,7 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FVertexD
     const int32 MaterialFlags = static_cast<int32>(Features.Flags);
     const bool  bBindless     = RHI::bSupportsBindless && GBasePassBindless;
 
-    const FGraphicsPipelineKey      PSOKey      = MakeBasePassPSOKey(Features, bBindless, Declaration);
+    const FGraphicsPipelineKey      PSOKey      = CreateBasePassPSOKey(Features, bBindless, Declaration);
     const FBasePassVS::FPermutation Permutation = FBasePassVS::FPermutation(PSOKey.PermutationID);
 
     FGraphicsPipelineStateInstance* CachedBasePassPSO = MaterialPSOs.Find(PSOKey);
@@ -625,7 +625,7 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
 
         const FMaterialFeatures Features(Batch.EffectiveMaterialFlags);
 
-        const FGraphicsPipelineKey PSOKey = MakeBasePassPSOKey(Features, bBindless, Batch.Declaration);
+        const FGraphicsPipelineKey PSOKey = CreateBasePassPSOKey(Features, bBindless, Batch.Declaration);
 
         FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(PSOKey);
         if (!PipelineInstance)

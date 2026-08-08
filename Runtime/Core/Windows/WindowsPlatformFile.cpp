@@ -171,7 +171,8 @@ IPlatformFile* FWindowsPlatformFile::OpenForRead(const String& Filename)
 {
     ::SetLastError(S_OK);
 
-    HANDLE NewHandle = CreateFileA(*Filename, GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    // Readers must not lock each other out; permutations of one shader are compiled in parallel and share a source file.
+    HANDLE NewHandle = ::CreateFileA(*Filename, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
     if (NewHandle == INVALID_HANDLE_VALUE)
     {
         const DWORD LastError = ::GetLastError();

@@ -260,6 +260,12 @@ bool FD3D12SwapChainRHI::Initialize(FD3D12CommandContext* InCommandContext)
             return false;
         }
 
+        // Optional: only needed for SetHDRMetaData. Absence downgrades HDR output, not correctness.
+        if (FAILED(DXGISwapChain1.GetAs<IDXGISwapChain4>(&SwapChain4)))
+        {
+            D3D12_WARNING("[FD3D12SwapChainRHI]: IDXGISwapChain4 unavailable; HDR metadata will not be submitted");
+        }
+
         NumBackBuffers = NumSwapChainBuffers;
 
         if (Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
@@ -302,6 +308,21 @@ bool FD3D12SwapChainRHI::Initialize(FD3D12CommandContext* InCommandContext)
 
         CurrentColorSpace = ResolvedColorSpace;
         Desc.ColorSpace   = ResolvedColorSpace;
+    }
+
+    if (CurrentColorSpace == EColorSpace::RGB_Full_G2084_None_P2020 && !Desc.HDRMetadata.bIsValid)
+    {
+        FRHIHDRMetadata DefaultMetadata = RHI::GetDefaultHDRMetadata();
+
+        FRHIDisplayHDRInfo DisplayInfo;
+        if (RHI::ShouldUseDisplayLuminance() && QueryDisplayHDRInfo(DisplayInfo))
+        {
+            DefaultMetadata.MinMasteringLuminance     = DisplayInfo.MinLuminance;
+            DefaultMetadata.MaxMasteringLuminance     = DisplayInfo.MaxLuminance;
+            DefaultMetadata.MaxFrameAverageLightLevel = DisplayInfo.MaxFullFrameLuminance;
+        }
+
+        SetHDRMetadata(DefaultMetadata);
     }
 
     if (!RetrieveBackBuffers())
@@ -413,6 +434,12 @@ bool FD3D12SwapChainRHI::Resize(FD3D12CommandContext* InCommandContext, uint32 I
         D3D12_INFO("[FD3D12SwapChainRHI]: Color space changed to %s", ToString(EffectiveColorSpace));
     }
 
+    // ResizeBuffers can drop the metadata, and a color-space change can invalidate it.
+    if (bNeedsResizeBuffers || bColorSpaceChanged)
+    {
+        ApplyHDRMetadata();
+    }
+
     // Apply frame latency changes if needed.
     if (Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
     {
@@ -498,6 +525,95 @@ bool FD3D12SwapChainRHI::IsFormatSupported(EFormat Format, EColorSpace ColorSpac
     }
 
     return (SupportFlags & DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG_PRESENT) != 0;
+}
+
+bool FD3D12SwapChainRHI::SetHDRMetadata(const FRHIHDRMetadata& Metadata)
+{
+    Desc.HDRMetadata = Metadata;
+    return ApplyHDRMetadata();
+}
+
+bool FD3D12SwapChainRHI::ApplyHDRMetadata()
+{
+    if (!SwapChain4)
+    {
+        return false;
+    }
+
+    const bool bIsHDRColorSpace = (CurrentColorSpace == EColorSpace::RGB_Full_G2084_None_P2020);
+    if (!Desc.HDRMetadata.bIsValid || !bIsHDRColorSpace)
+    {
+        return SUCCEEDED(SwapChain4->SetHDRMetaData(DXGI_HDR_METADATA_TYPE_NONE, 0, nullptr));
+    }
+
+    const FRHIHDRMetadata& Source = Desc.HDRMetadata;
+
+    DXGI_HDR_METADATA_HDR10 HDR10 = {};
+    HDR10.RedPrimary[0]             = FRHIHDRMetadata::EncodeChromaticity(Source.RedPrimary.X);
+    HDR10.RedPrimary[1]             = FRHIHDRMetadata::EncodeChromaticity(Source.RedPrimary.Y);
+    HDR10.GreenPrimary[0]           = FRHIHDRMetadata::EncodeChromaticity(Source.GreenPrimary.X);
+    HDR10.GreenPrimary[1]           = FRHIHDRMetadata::EncodeChromaticity(Source.GreenPrimary.Y);
+    HDR10.BluePrimary[0]            = FRHIHDRMetadata::EncodeChromaticity(Source.BluePrimary.X);
+    HDR10.BluePrimary[1]            = FRHIHDRMetadata::EncodeChromaticity(Source.BluePrimary.Y);
+    HDR10.WhitePoint[0]             = FRHIHDRMetadata::EncodeChromaticity(Source.WhitePoint.X);
+    HDR10.WhitePoint[1]             = FRHIHDRMetadata::EncodeChromaticity(Source.WhitePoint.Y);
+    HDR10.MaxMasteringLuminance     = static_cast<UINT>(Math::Max(Math::RoundToInt(Source.MaxMasteringLuminance), 0));
+    HDR10.MinMasteringLuminance     = FRHIHDRMetadata::EncodeMinLuminance(Source.MinMasteringLuminance);
+    HDR10.MaxContentLightLevel      = FRHIHDRMetadata::EncodeNits16(Source.MaxContentLightLevel);
+    HDR10.MaxFrameAverageLightLevel = FRHIHDRMetadata::EncodeNits16(Source.MaxFrameAverageLightLevel);
+
+    const HRESULT Result = SwapChain4->SetHDRMetaData(DXGI_HDR_METADATA_TYPE_HDR10, sizeof(HDR10), &HDR10);
+    if (FAILED(Result))
+    {
+        D3D12_WARNING("[FD3D12SwapChainRHI]: SetHDRMetaData failed (hr=0x%x)", static_cast<uint32>(Result));
+        return false;
+    }
+
+    D3D12_INFO("[FD3D12SwapChainRHI]: HDR10 metadata set (max=%.1f nits, min=%.4f nits, MaxCLL=%.1f, MaxFALL=%.1f)",
+        Source.MaxMasteringLuminance, Source.MinMasteringLuminance, Source.MaxContentLightLevel, Source.MaxFrameAverageLightLevel);
+    return true;
+}
+
+bool FD3D12SwapChainRHI::QueryDisplayHDRInfo(FRHIDisplayHDRInfo& OutInfo) const
+{
+#if DXGI_1_6
+    if (!SwapChain)
+    {
+        return false;
+    }
+
+    TComPtr<IDXGIOutput> Output;
+    if (FAILED(SwapChain->GetContainingOutput(&Output)) || !Output)
+    {
+        return false;
+    }
+
+    TComPtr<IDXGIOutput6> Output6;
+    if (FAILED(Output.GetAs<IDXGIOutput6>(&Output6)))
+    {
+        return false;
+    }
+
+    DXGI_OUTPUT_DESC1 OutputDesc = {};
+    if (FAILED(Output6->GetDesc1(&OutputDesc)))
+    {
+        return false;
+    }
+
+    OutInfo.RedPrimary            = { OutputDesc.RedPrimary[0],   OutputDesc.RedPrimary[1]   };
+    OutInfo.GreenPrimary          = { OutputDesc.GreenPrimary[0], OutputDesc.GreenPrimary[1] };
+    OutInfo.BluePrimary           = { OutputDesc.BluePrimary[0],  OutputDesc.BluePrimary[1]  };
+    OutInfo.WhitePoint            = { OutputDesc.WhitePoint[0],   OutputDesc.WhitePoint[1]   };
+    OutInfo.ColorSpace            = ConvertColorSpace(OutputDesc.ColorSpace);
+    OutInfo.MinLuminance          = OutputDesc.MinLuminance;
+    OutInfo.MaxLuminance          = OutputDesc.MaxLuminance;
+    OutInfo.MaxFullFrameLuminance = OutputDesc.MaxFullFrameLuminance;
+    OutInfo.BitsPerColor          = OutputDesc.BitsPerColor;
+    return true;
+#else
+    (void)OutInfo;
+    return false;
+#endif
 }
 
 bool FD3D12SwapChainRHI::Present(bool bVerticalSync)

@@ -1030,6 +1030,9 @@ void FVulkanDeviceExtension::RegisterExtensions(TArray<TUniquePtr<FVulkanDeviceE
 #if VK_EXT_memory_budget
     OutExtensions.Add(MakeUniquePtr<FVulkanDeviceExtension>(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME, false, true));
 #endif
+#if VK_EXT_hdr_metadata
+    OutExtensions.Add(MakeUniquePtr<FVulkanDeviceExtension>(VK_EXT_HDR_METADATA_EXTENSION_NAME, false, true));
+#endif
 #if VK_EXT_descriptor_buffer
     OutExtensions.Add(MakeUniquePtr<FVulkanDeviceExtension>(VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME, false, !GVulkanGPUAssistedValidationEnabled));
 #endif

@@ -638,6 +638,13 @@ struct IRHICommandContext
     virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace) = 0;
 
     /**
+     * @brief Submits mastering-display metadata for the swap-chain.
+     * @param SwapChain The swap-chain to mutate.
+     * @param Metadata The metadata to submit, or an invalid metadata to clear it.
+     */
+    virtual void SetSwapChainHDRMetadata(FRHISwapChain* SwapChain, const FRHIHDRMetadata& Metadata) = 0;
+
+    /**
      * @brief Clears the state of the context, clearing all bound references currently bound
      */
     virtual void ClearState() = 0;

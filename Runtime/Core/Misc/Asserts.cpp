@@ -59,7 +59,7 @@ static TSet<uint64>& GetSuppressedSites()
 }
 
 /** The __FILE__ literal for a given call site always has the same address, so the pointer identifies the file without hashing its contents. */
-static uint64 MakeSiteKey(const CHAR* Filename, int32 Line)
+static uint64 CreateSiteKey(const CHAR* Filename, int32 Line)
 {
     const uint64 FileKey = static_cast<uint64>(reinterpret_cast<uintptr_t>(Filename));
     return (FileKey * 1099511628211ull) ^ static_cast<uint64>(Line);
@@ -100,7 +100,7 @@ EAssertAction Assert::OnFailed(const CHAR* Expression, const CHAR* Filename, int
     // Held across the dialog so two threads asserting at once do not stack up two modal windows
     TScopedLock Lock(GetAssertCriticalSection());
 
-    const uint64 SiteKey       = MakeSiteKey(Filename, Line);
+    const uint64 SiteKey       = CreateSiteKey(Filename, Line);
     const bool   bIsSuppressed = GetSuppressedSites().Contains(SiteKey);
     const bool   bIsFirstHit   = !GetReportedSites().Contains(SiteKey);
 

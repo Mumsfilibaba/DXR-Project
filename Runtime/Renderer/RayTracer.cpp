@@ -578,18 +578,18 @@ void FRayTracer::BuildSceneAccelerationData(FRHICommandList& CommandList, FFrame
             {
                 if (AttributeBufferSRV)
                 {
-                    Record.Add(FRHIHitGroupLocalShaderBinding::MakeShaderResourceView(AttributeBufferSRV, 0));
+                    Record.Add(FRHIHitGroupLocalShaderBinding::CreateShaderResourceView(AttributeBufferSRV, 0));
                 }
 
                 if (IndexBufferSRV)
                 {
-                    Record.Add(FRHIHitGroupLocalShaderBinding::MakeShaderResourceView(IndexBufferSRV, 1));
+                    Record.Add(FRHIHitGroupLocalShaderBinding::CreateShaderResourceView(IndexBufferSRV, 1));
                 }
 
-                Record.Add(FRHIHitGroupLocalShaderBinding::MakeShaderResourceView(AlbedoSRV, 2));
-                Record.Add(FRHIHitGroupLocalShaderBinding::MakeShaderResourceView(NormalSRV, 3));
-                Record.Add(FRHIHitGroupLocalShaderBinding::MakeShaderResourceView(MaterialSRV, 4));
-                Record.Add(FRHIHitGroupLocalShaderBinding::MakeSamplerState(Material->GetMaterialSampler(), 0));
+                Record.Add(FRHIHitGroupLocalShaderBinding::CreateShaderResourceView(AlbedoSRV, 2));
+                Record.Add(FRHIHitGroupLocalShaderBinding::CreateShaderResourceView(NormalSRV, 3));
+                Record.Add(FRHIHitGroupLocalShaderBinding::CreateShaderResourceView(MaterialSRV, 4));
+                Record.Add(FRHIHitGroupLocalShaderBinding::CreateSamplerState(Material->GetMaterialSampler(), 0));
             }
         }
 

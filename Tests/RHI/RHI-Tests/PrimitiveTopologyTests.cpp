@@ -49,15 +49,15 @@ bool PrimitiveTopology_Test()
     TEST_EXPECT_EQ(GetNumPatchControlPoints(EPrimitiveTopology::PatchList_32), uint32(RHI_MAX_PATCH_CONTROL_POINTS));
     for (uint32 NumControlPoints = 1; NumControlPoints <= RHI_MAX_PATCH_CONTROL_POINTS; ++NumControlPoints)
     {
-        const EPrimitiveTopology Topology = MakePatchListTopology(NumControlPoints);
+        const EPrimitiveTopology Topology = CreatePatchListTopology(NumControlPoints);
         TEST_EXPECT(IsPatchTopology(Topology));
         TEST_EXPECT_EQ(GetNumPatchControlPoints(Topology), NumControlPoints);
     }
 
-    TEST_EXPECT_EQ(MakePatchListTopology(1), EPrimitiveTopology::PatchList_1);
-    TEST_EXPECT_EQ(MakePatchListTopology(RHI_MAX_PATCH_CONTROL_POINTS), EPrimitiveTopology::PatchList_32);
-    TEST_EXPECT_EQ(MakePatchListTopology(0), EPrimitiveTopology::Undefined);
-    TEST_EXPECT_EQ(MakePatchListTopology(RHI_MAX_PATCH_CONTROL_POINTS + 1), EPrimitiveTopology::Undefined);
+    TEST_EXPECT_EQ(CreatePatchListTopology(1), EPrimitiveTopology::PatchList_1);
+    TEST_EXPECT_EQ(CreatePatchListTopology(RHI_MAX_PATCH_CONTROL_POINTS), EPrimitiveTopology::PatchList_32);
+    TEST_EXPECT_EQ(CreatePatchListTopology(0), EPrimitiveTopology::Undefined);
+    TEST_EXPECT_EQ(CreatePatchListTopology(RHI_MAX_PATCH_CONTROL_POINTS + 1), EPrimitiveTopology::Undefined);
 
     TEST_END();
 }

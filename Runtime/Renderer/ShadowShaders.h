@@ -48,7 +48,7 @@ enum class ECSMFilterFunction : uint8
 };
 
 template<typename ShaderRules, typename PassKindDimension>
-NODISCARD typename ShaderRules::FPermutation MakeShadowPermutation(const FMaterialFeatures& Features, bool bBindless, typename PassKindDimension::Type PassKind)
+NODISCARD typename ShaderRules::FPermutation CreateShadowPermutation(const FMaterialFeatures& Features, bool bBindless, typename PassKindDimension::Type PassKind)
 {
     typename ShaderRules::FPermutation Permutation;
     Permutation.template Set<FParallax>(Features.HasHeightMap());
@@ -75,7 +75,7 @@ struct FPointLightShadowRules
 
     NODISCARD static FPermutation Create(const FMaterialFeatures& Features, bool bBindless, FPassKind::Type PassKind)
     {
-        return MakeShadowPermutation<FPointLightShadowRules, FPassKind>(Features, bBindless, PassKind);
+        return CreateShadowPermutation<FPointLightShadowRules, FPassKind>(Features, bBindless, PassKind);
     }
 
     NODISCARD static FPermutation RemapPermutation(FPermutation Permutation)
@@ -138,7 +138,7 @@ struct FCascadeShadowRules
 
     NODISCARD static FPermutation Create(const FMaterialFeatures& Features, bool bBindless, FPassKind::Type PassKind)
     {
-        return MakeShadowPermutation<FCascadeShadowRules, FPassKind>(Features, bBindless, PassKind);
+        return CreateShadowPermutation<FCascadeShadowRules, FPassKind>(Features, bBindless, PassKind);
     }
 
     NODISCARD static FPermutation RemapPermutation(FPermutation Permutation)

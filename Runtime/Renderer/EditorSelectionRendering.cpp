@@ -59,13 +59,13 @@ class FSelectionIDPS : public FSelectionIDShaderRules
 IMPLEMENT_SHADER_TYPE(FSelectionIDVS, "Shaders/EditorSelectionID.hlsl", "VSMain", EShaderModel::SM_6_2);
 IMPLEMENT_SHADER_TYPE(FSelectionIDPS, "Shaders/EditorSelectionID.hlsl", "PSMain", EShaderModel::SM_6_2);
 
-NODISCARD static FGraphicsPipelineKey MakeNoJitterDepthPSOKey(const FMaterialFeatures& Features, bool bBindless, const FVertexDeclaration& Declaration)
+NODISCARD static FGraphicsPipelineKey CreateNoJitterDepthPSOKey(const FMaterialFeatures& Features, bool bBindless, const FVertexDeclaration& Declaration)
 {
     const FPrePassShaderRules::FPermutation Permutation = FPrePassShaderRules::Create(Features, bBindless, GEditorSelectionUseUnjitteredCamera);
     return FGraphicsPipelineKey(Permutation.GetPermutationID(), 0, Declaration.GetID());
 }
 
-NODISCARD static FGraphicsPipelineKey MakeSelectionIDPSOKey(const FMaterialFeatures& Features, const FVertexDeclaration& Declaration)
+NODISCARD static FGraphicsPipelineKey CreateSelectionIDPSOKey(const FMaterialFeatures& Features, const FVertexDeclaration& Declaration)
 {
     const FSelectionIDShaderRules::FPermutation Permutation = FSelectionIDShaderRules::Create(Features);
     return FGraphicsPipelineKey(Permutation.GetPermutationID(), 0, Declaration.GetID());
@@ -89,7 +89,7 @@ void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const F
     const int32 MaterialFlags = static_cast<int32>(Features.Flags);
     const bool  bBindless     = RHI::bSupportsBindless && GPrePassBindless;
 
-    const FGraphicsPipelineKey     PSOKey      = MakeNoJitterDepthPSOKey(Features, bBindless, Declaration);
+    const FGraphicsPipelineKey     PSOKey      = CreateNoJitterDepthPSOKey(Features, bBindless, Declaration);
     const FPrePassVS::FPermutation Permutation = FPrePassVS::FPermutation(PSOKey.PermutationID);
 
     FGraphicsPipelineStateInstance* CachedPSO = MaterialPSOs.Find(PSOKey);
@@ -239,7 +239,7 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
 
         const FMaterialFeatures Features(Batch.EffectiveMaterialFlags);
 
-        const FGraphicsPipelineKey PSOKey = MakeNoJitterDepthPSOKey(Features, bBindless, Batch.Declaration);
+        const FGraphicsPipelineKey PSOKey = CreateNoJitterDepthPSOKey(Features, bBindless, Batch.Declaration);
 
         FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(PSOKey);
         if (!PipelineInstance)
@@ -321,7 +321,7 @@ void FEditorSelectionIDPass::PreparePipelineState(FMaterial* Material, const FVe
 {
     const FMaterialFeatures Features(Material, Declaration);
 
-    const FGraphicsPipelineKey         PSOKey      = MakeSelectionIDPSOKey(Features, Declaration);
+    const FGraphicsPipelineKey         PSOKey      = CreateSelectionIDPSOKey(Features, Declaration);
     const FSelectionIDVS::FPermutation Permutation = FSelectionIDVS::FPermutation(PSOKey.PermutationID);
 
     FGraphicsPipelineStateInstance* CachedPSO = MaterialPSOs.Find(PSOKey);
@@ -470,7 +470,7 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
 
         const FMaterialFeatures Features(Batch.EffectiveMaterialFlags);
 
-        const FGraphicsPipelineKey PSOKey = MakeSelectionIDPSOKey(Features, Batch.Declaration);
+        const FGraphicsPipelineKey PSOKey = CreateSelectionIDPSOKey(Features, Batch.Declaration);
 
         FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(PSOKey);
         if (!PipelineInstance)

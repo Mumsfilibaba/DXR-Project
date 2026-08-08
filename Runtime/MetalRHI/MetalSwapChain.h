@@ -34,13 +34,14 @@ public:
     virtual FRHIUnorderedAccessView* GetBackBufferUnorderedAccessView() const override final;
 
     virtual bool IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const override final;
+    virtual bool QueryDisplayHDRInfo(FRHIDisplayHDRInfo& /*OutInfo*/) const override final { return false; }
 
     bool Initialize();
     
     bool Resize(uint32 InWidth, uint32 InHeight);
     bool Present(bool bVerticalSync);
+    bool SetHDRMetadata(const FRHIHDRMetadata& /*Metadata*/) { return false; }
 
-    /** @return Returns the current drawable, will release it during next call to present */
     id<CAMetalDrawable> GetDrawable();
     id<MTLTexture>      GetDrawableTexture();
 
