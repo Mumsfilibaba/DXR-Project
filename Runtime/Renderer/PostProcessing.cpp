@@ -1,6 +1,6 @@
-﻿#include "RHI/ShaderCompiler.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Renderer/CommonShaders.h"
 #include "Renderer/PostProcessing.h"
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/SceneRenderer.h"
@@ -26,6 +26,35 @@ static FAutoConsoleVariableRef CVarTonemappingReinhardIntensity(
     "Intensity/\"Exposure\" when using Reinhard tonemapping",
     GTonemappingReinhardIntensity,
     EConsoleVariableFlags::Default);
+
+class FTonemappingPS
+{
+    DECLARE_SHADER_TYPE(FTonemappingPS, EShaderStage::Pixel);
+
+    using FPermutation = TShaderPermutation<>;
+};
+
+IMPLEMENT_SHADER_TYPE(FTonemappingPS, "Shaders/Tonemapping.hlsl", "TonemappingPS", EShaderModel::SM_6_2);
+
+class FFinalCompositePS
+{
+    DECLARE_SHADER_TYPE(FFinalCompositePS, EShaderStage::Pixel);
+
+    using FPermutation = TShaderPermutation<>;
+};
+
+IMPLEMENT_SHADER_TYPE(FFinalCompositePS, "Shaders/FinalComposite.hlsl", "Main", EShaderModel::SM_6_2);
+
+class FFXAADebug : SHADER_PERMUTATION_BOOL("ENABLE_DEBUG");
+
+class FFXAAPS
+{
+    DECLARE_SHADER_TYPE(FFXAAPS, EShaderStage::Pixel);
+
+    using FPermutation = TShaderPermutation<FFXAADebug>;
+};
+
+IMPLEMENT_SHADER_TYPE(FFXAAPS, "Shaders/FXAA_PS.hlsl", "Main", EShaderModel::SM_6_2);
 
 FTonemapPass::FTonemapPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -55,30 +84,14 @@ bool FTonemapPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    TArray<uint8> ShaderCode;
-
-    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    TonemapVertexShader = RHI::CreateVertexShader(ShaderCode);
+    TonemapVertexShader = FShaderCache::Get().GetShader<FFullscreenVS>();
     if (!TonemapVertexShader)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    CompileInfo = FShaderCompileInfo("TonemappingPS", EShaderModel::SM_6_2, EShaderStage::Pixel);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/Tonemapping.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    TonemapShader = RHI::CreatePixelShader(ShaderCode);
+    TonemapShader = FShaderCache::Get().GetShader<FTonemappingPS>();
     if (!TonemapShader)
     {
         DEBUG_BREAK();
@@ -279,30 +292,14 @@ FFinalCompositePass::~FFinalCompositePass()
 
 bool FFinalCompositePass::Initialize(const FFrameResources& /*FrameResources*/)
 {
-    TArray<uint8> ShaderCode;
-
-    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    CompositeVertexShader = RHI::CreateVertexShader(ShaderCode);
+    CompositeVertexShader = FShaderCache::Get().GetShader<FFullscreenVS>();
     if (!CompositeVertexShader)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/FinalComposite.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    CompositeShader = RHI::CreatePixelShader(ShaderCode);
+    CompositeShader = FShaderCache::Get().GetShader<FFinalCompositePS>();
     if (!CompositeShader)
     {
         DEBUG_BREAK();
@@ -505,30 +502,17 @@ FFXAAPass::~FFXAAPass()
 
 bool FFXAAPass::Initialize(FFrameResources& FrameResources)
 {
-    TArray<uint8> ShaderCode;
-
-    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    FXAAVertexShader = RHI::CreateVertexShader(ShaderCode);
+    FXAAVertexShader = FShaderCache::Get().GetShader<FFullscreenVS>();
     if (!FXAAVertexShader)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
+    FFXAAPS::FPermutation FXAAPermutation;
+    FXAAPermutation.Set<FFXAADebug>(false);
 
-    FXAAShader = RHI::CreatePixelShader(ShaderCode);
+    FXAAShader = FShaderCache::Get().GetShader<FFXAAPS>(FXAAPermutation);
     if (!FXAAShader)
     {
         DEBUG_BREAK();
@@ -567,19 +551,9 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    TArray<FShaderDefine> Defines =
-    {
-        { "ENABLE_DEBUG", "(1)" }
-    };
+    FXAAPermutation.Set<FFXAADebug>(true);
 
-    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    FXAADebugShader = RHI::CreatePixelShader(ShaderCode);
+    FXAADebugShader = FShaderCache::Get().GetShader<FFXAAPS>(FXAAPermutation);
     if (!FXAADebugShader)
     {
         DEBUG_BREAK();

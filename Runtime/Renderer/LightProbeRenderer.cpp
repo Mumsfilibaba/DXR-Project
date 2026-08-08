@@ -1,5 +1,4 @@
 #include "RHI/RHI.h"
-#include "RHI/ShaderCompiler.h"
 #include "Renderer/LightProbeRenderer.h"
 
 FLightProbeRenderer::FLightProbeRenderer(FSceneRenderer* InRenderer)

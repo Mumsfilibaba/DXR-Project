@@ -3,7 +3,6 @@
 #include "Core/Misc/Paths.h"
 #include "Core/Templates/CString.h"
 #include "RHI/RHI.h"
-#include "RHI/ShaderCompiler.h"
 #include "Engine/Engine.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Resources/Material.h"
@@ -171,230 +170,83 @@ FRayTracer::~FRayTracer()
 {
 }
 
+FRayTracingVariant FRayTracer::CreateVariant(const FRayTracingPermutation& Permutation)
+{
+    FRHIRayGenShaderRef        RayGenShader     = FShaderCache::Get().GetShader<FRayGenShader>(Permutation);
+    FRHIRayMissShaderRef       MissShader       = FShaderCache::Get().GetShader<FRayMissShader>(Permutation);
+    FRHIRayClosestHitShaderRef ClosestHitShader = FShaderCache::Get().GetShader<FRayClosestHitShader>(Permutation);
+
+    if (!RayGenShader || !MissShader || !ClosestHitShader)
+    {
+        return FRayTracingVariant();
+    }
+
+    FRHIRayTracingPipelineStateDesc PSODesc;
+    PSODesc.RayGenShaders           = { RayGenShader.Get() };
+    PSODesc.MissShaders             = { MissShader.Get() };
+    PSODesc.HitGroups               = { FRHIRayTracingHitGroupInfo("HitGroup", ERayTracingHitGroupType::Triangles, { ClosestHitShader.Get() }) };
+    PSODesc.MaxRecursionDepth       = 1;
+    PSODesc.MaxAttributeSizeInBytes = sizeof(FRayIntersectionAttributes);
+    PSODesc.MaxPayloadSizeInBytes   = sizeof(FRayPayload);
+    PSODesc.Flags                   = Permutation.Get<FRayTracingSER>()
+        ? ERayTracingPipelineFlags::AllowShaderExecutionReordering
+        : ERayTracingPipelineFlags::None;
+
+    FRayTracingVariant Variant;
+    Variant.Pipeline = RHI::CreateRayTracingPipelineState(PSODesc);
+    if (!Variant.Pipeline)
+    {
+        return FRayTracingVariant();
+    }
+
+    Variant.RayGenShader = RayGenShader;
+    return Variant;
+}
+
 bool FRayTracer::Initialize(FFrameResources& Resources)
 {
-    TArray<uint8> Code;
-
-    const auto InitializeExplicit = [&]() -> bool
-    {
-        {
-            FShaderCompileInfo CompileInfo("RayGen", EShaderModel::SM_6_3, EShaderStage::RayGen);
-            if (!FShaderCompiler::Get().CompileFromFile("Shaders/RayGen.hlsl", CompileInfo, Code))
-            {
-                return false;
-            }
-
-            RayGenShader = RHI::CreateRayGenShader(Code);
-            if (!RayGenShader)
-            {
-                return false;
-            }
-        }
-
-        {
-            FShaderCompileInfo CompileInfo("ClosestHit", EShaderModel::SM_6_3, EShaderStage::RayClosestHit);
-            if (!FShaderCompiler::Get().CompileFromFile("Shaders/ClosestHit.hlsl", CompileInfo, Code))
-            {
-                return false;
-            }
-
-            RayClosestHitShader = RHI::CreateRayClosestHitShader(Code);
-            if (!RayClosestHitShader)
-            {
-                return false;
-            }
-        }
-
-        {
-            FShaderCompileInfo CompileInfo("Miss", EShaderModel::SM_6_3, EShaderStage::RayMiss);
-            if (!FShaderCompiler::Get().CompileFromFile("Shaders/Miss.hlsl", CompileInfo, Code))
-            {
-                return false;
-            }
-
-            RayMissShader = RHI::CreateRayMissShader(Code);
-            if (!RayMissShader)
-            {
-                return false;
-            }
-        }
-
-        FRHIRayTracingPipelineStateDesc PSODesc;
-        PSODesc.RayGenShaders           = { RayGenShader.Get() };
-        PSODesc.MissShaders             = { RayMissShader.Get() };
-        PSODesc.HitGroups               = { FRHIRayTracingHitGroupInfo("HitGroup", ERayTracingHitGroupType::Triangles, { RayClosestHitShader.Get() }) };
-        PSODesc.MaxRecursionDepth       = 1;
-        PSODesc.MaxAttributeSizeInBytes = sizeof(FRayIntersectionAttributes);
-        PSODesc.MaxPayloadSizeInBytes   = sizeof(FRayPayload);
-
-        LocalPipeline = RHI::CreateRayTracingPipelineState(PSODesc);
-        return LocalPipeline != nullptr;
-    };
-
     if (RHI::bSupportsShaderBindingTableDescriptors)
     {
-        if (!InitializeExplicit())
+        FRayTracingPermutation Permutation;
+        Permutation.Set<FBindless>(false);
+        Permutation.Set<FRayTracingSER>(false);
+
+        LocalVariant = CreateVariant(Permutation);
+        if (!LocalVariant)
         {
             LOG_WARNING("[RayTracer]: Explicit ray tracing variant unavailable. Only the bindless path will be used");
-
-            LocalPipeline.Reset();
-            RayGenShader.Reset();
-            RayMissShader.Reset();
-            RayClosestHitShader.Reset();
         }
     }
 
-    const auto InitializeBindless = [&]() -> bool
     {
-        TArray<FShaderDefine> Defines =
-        {
-            FShaderDefine("RAY_TRACING_BINDLESS", "1")
-        };
+        FRayTracingPermutation Permutation;
+        Permutation.Set<FBindless>(true);
+        Permutation.Set<FRayTracingSER>(false);
 
+        BindlessVariant = CreateVariant(Permutation);
+        if (!BindlessVariant)
         {
-            FShaderCompileInfo CompileInfo("RayGen", EShaderModel::SM_6_6, EShaderStage::RayGen, Defines);
-            if (!FShaderCompiler::Get().CompileFromFile("Shaders/RayGen.hlsl", CompileInfo, Code))
-            {
-                return false;
-            }
-
-            RayGenShaderBindless = RHI::CreateRayGenShader(Code);
-            if (!RayGenShaderBindless)
-            {
-                return false;
-            }
+            LOG_WARNING("[RayTracer]: Bindless ray tracing variant unavailable. Only the explicit-binding path will be used");
         }
-
-        {
-            FShaderCompileInfo CompileInfo("ClosestHit", EShaderModel::SM_6_6, EShaderStage::RayClosestHit, Defines);
-            if (!FShaderCompiler::Get().CompileFromFile("Shaders/ClosestHit.hlsl", CompileInfo, Code))
-            {
-                return false;
-            }
-
-            RayClosestHitShaderBindless = RHI::CreateRayClosestHitShader(Code);
-            if (!RayClosestHitShaderBindless)
-            {
-                return false;
-            }
-        }
-
-        {
-            FShaderCompileInfo CompileInfo("Miss", EShaderModel::SM_6_6, EShaderStage::RayMiss, Defines);
-            if (!FShaderCompiler::Get().CompileFromFile("Shaders/Miss.hlsl", CompileInfo, Code))
-            {
-                return false;
-            }
-
-            RayMissShaderBindless = RHI::CreateRayMissShader(Code);
-            if (!RayMissShaderBindless)
-            {
-                return false;
-            }
-        }
-
-        FRHIRayTracingPipelineStateDesc PSODesc;
-        PSODesc.RayGenShaders           = { RayGenShaderBindless.Get() };
-        PSODesc.MissShaders             = { RayMissShaderBindless.Get() };
-        PSODesc.HitGroups               = { FRHIRayTracingHitGroupInfo("HitGroup", ERayTracingHitGroupType::Triangles, { RayClosestHitShaderBindless.Get() }) };
-        PSODesc.MaxRecursionDepth       = 1;
-        PSODesc.MaxAttributeSizeInBytes = sizeof(FRayIntersectionAttributes);
-        PSODesc.MaxPayloadSizeInBytes   = sizeof(FRayPayload);
-
-        BindlessPipeline = RHI::CreateRayTracingPipelineState(PSODesc);
-        return BindlessPipeline != nullptr;
-    };
-
-    if (!RHI::bSupportsBindless || !InitializeBindless())
-    {
-        LOG_WARNING("[RayTracer]: Bindless ray tracing variant unavailable. Only the explicit-binding path will be used");
-
-        BindlessPipeline.Reset();
-        RayGenShaderBindless.Reset();
-        RayMissShaderBindless.Reset();
-        RayClosestHitShaderBindless.Reset();
     }
 
-    if (!LocalPipeline && !BindlessPipeline)
+    if (!LocalVariant && !BindlessVariant)
     {
         LOG_ERROR("[RayTracer]: No usable ray tracing pipeline (neither explicit nor bindless could be created)");
         DEBUG_BREAK();
         return false;
     }
 
-    if (RHI::bSupportsShaderExecutionReordering && BindlessPipeline)
+    if (BindlessVariant)
     {
-        const auto InitializeSER = [&]() -> bool
-        {
-            TArray<FShaderDefine> SERDefines =
-            {
-                FShaderDefine("RAY_TRACING_BINDLESS", "1"),
-                FShaderDefine("RAY_TRACING_SHADER_EXECUTION_REORDERING", "1")
-            };
+        FRayTracingPermutation Permutation;
+        Permutation.Set<FBindless>(true);
+        Permutation.Set<FRayTracingSER>(true);
 
-            {
-                FShaderCompileInfo CompileInfo("RayGen", EShaderModel::SM_6_9, EShaderStage::RayGen, SERDefines);
-                if (!FShaderCompiler::Get().CompileFromFile("Shaders/RayGen.hlsl", CompileInfo, Code))
-                {
-                    return false;
-                }
-
-                RayGenShaderSER = RHI::CreateRayGenShader(Code);
-                if (!RayGenShaderSER)
-                {
-                    return false;
-                }
-            }
-
-            {
-                FShaderCompileInfo CompileInfo("ClosestHit", EShaderModel::SM_6_9, EShaderStage::RayClosestHit, SERDefines);
-                if (!FShaderCompiler::Get().CompileFromFile("Shaders/ClosestHit.hlsl", CompileInfo, Code))
-                {
-                    return false;
-                }
-
-                RayClosestHitShaderSER = RHI::CreateRayClosestHitShader(Code);
-                if (!RayClosestHitShaderSER)
-                {
-                    return false;
-                }
-            }
-
-            {
-                FShaderCompileInfo CompileInfo("Miss", EShaderModel::SM_6_9, EShaderStage::RayMiss, SERDefines);
-                if (!FShaderCompiler::Get().CompileFromFile("Shaders/Miss.hlsl", CompileInfo, Code))
-                {
-                    return false;
-                }
-
-                RayMissShaderSER = RHI::CreateRayMissShader(Code);
-                if (!RayMissShaderSER)
-                {
-                    return false;
-                }
-            }
-
-            FRHIRayTracingPipelineStateDesc PSODesc;
-            PSODesc.RayGenShaders           = { RayGenShaderSER.Get() };
-            PSODesc.MissShaders             = { RayMissShaderSER.Get() };
-            PSODesc.HitGroups               = { FRHIRayTracingHitGroupInfo("HitGroup", ERayTracingHitGroupType::Triangles, { RayClosestHitShaderSER.Get() }) };
-            PSODesc.MaxRecursionDepth       = 1;
-            PSODesc.MaxAttributeSizeInBytes = sizeof(FRayIntersectionAttributes);
-            PSODesc.MaxPayloadSizeInBytes   = sizeof(FRayPayload);
-            PSODesc.Flags                   = ERayTracingPipelineFlags::AllowShaderExecutionReordering;
-
-            SERPipeline = RHI::CreateRayTracingPipelineState(PSODesc);
-            return SERPipeline != nullptr;
-        };
-
-        if (!InitializeSER())
+        SERVariant = CreateVariant(Permutation);
+        if (!SERVariant && RHI::bSupportsShaderExecutionReordering)
         {
             LOG_WARNING("[RayTracer]: SER ray tracing variant unavailable. The SER path will be disabled");
-
-            SERPipeline.Reset();
-            RayGenShaderSER.Reset();
-            RayMissShaderSER.Reset();
-            RayClosestHitShaderSER.Reset();
         }
     }
 
@@ -417,115 +269,60 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
     ASCacheBackend = MakeUniquePtr<FDiskAccelerationStructureCacheBackend>(Paths::GetAssetDir() + "/RTASCache");
     ASCache.SetBackend(ASCacheBackend.Get());
 
-    if (RHI::bSupportsInlineRayTracing)
+    const auto CreateComputePipeline = [](FRHIComputeShaderRef& OutShader, const CHAR* DebugName) -> FRHIComputePipelineStateRef
     {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_6, EShaderStage::Compute);
-        if (FShaderCompiler::Get().CompileFromFile("Shaders/InlineReflections.hlsl", CompileInfo, Code))
+        if (!OutShader)
         {
-            InlineReflectionsShader = RHI::CreateComputeShader(Code);
-            if (InlineReflectionsShader)
-            {
-                FRHIComputePipelineStateDesc PSODesc;
-                PSODesc.Shader = InlineReflectionsShader.Get();
-
-                InlineReflectionsPipeline = RHI::CreateComputePipelineState(PSODesc);
-                if (InlineReflectionsPipeline)
-                {
-                    InlineReflectionsPipeline->SetDebugName("Inline RT Reflections PSO");
-                }
-            }
+            return nullptr;
         }
 
+        FRHIComputePipelineStateDesc PSODesc;
+        PSODesc.Shader = OutShader.Get();
+
+        FRHIComputePipelineStateRef Pipeline = RHI::CreateComputePipelineState(PSODesc);
+        if (Pipeline)
+        {
+            Pipeline->SetDebugName(DebugName);
+        }
+        else
+        {
+            OutShader.Reset();
+        }
+
+        return Pipeline;
+    };
+
+    if (RHI::bSupportsInlineRayTracing)
+    {
+        InlineReflectionsShader   = FShaderCache::Get().GetShader<FInlineReflectionsCS>();
+        InlineReflectionsPipeline = CreateComputePipeline(InlineReflectionsShader, "Inline RT Reflections PSO");
         if (!InlineReflectionsPipeline)
         {
             LOG_WARNING("[RayTracer]: Inline ray tracing reflections pipeline unavailable. The inline path will be disabled");
-
-            InlineReflectionsShader.Reset();
-            InlineReflectionsPipeline.Reset();
         }
 
-        FShaderCompileInfo PrimaryDebugInfo("Main", EShaderModel::SM_6_6, EShaderStage::Compute);
-        if (FShaderCompiler::Get().CompileFromFile("Shaders/PrimaryRayDebug.hlsl", PrimaryDebugInfo, Code))
-        {
-            PrimaryRayDebugShader = RHI::CreateComputeShader(Code);
-            if (PrimaryRayDebugShader)
-            {
-                FRHIComputePipelineStateDesc PSODesc;
-                PSODesc.Shader = PrimaryRayDebugShader.Get();
-
-                PrimaryRayDebugPipeline = RHI::CreateComputePipelineState(PSODesc);
-                if (PrimaryRayDebugPipeline)
-                {
-                    PrimaryRayDebugPipeline->SetDebugName("RT Primary-Ray Debug PSO");
-                }
-            }
-        }
-
+        PrimaryRayDebugShader   = FShaderCache::Get().GetShader<FPrimaryRayDebugCS>();
+        PrimaryRayDebugPipeline = CreateComputePipeline(PrimaryRayDebugShader, "RT Primary-Ray Debug PSO");
         if (!PrimaryRayDebugPipeline)
         {
             LOG_WARNING("[RayTracer]: Primary-ray debug pipeline unavailable. The RT primary-ID debug view will be disabled");
-
-            PrimaryRayDebugShader.Reset();
-            PrimaryRayDebugPipeline.Reset();
         }
     }
 
     {
-        FShaderCompileInfo TemporalInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-        if (FShaderCompiler::Get().CompileFromFile("Shaders/Reflections/ReflectionTemporal.hlsl", TemporalInfo, Code))
-        {
-            ReflectionTemporalShader = RHI::CreateComputeShader(Code);
-            if (ReflectionTemporalShader)
-            {
-                FRHIComputePipelineStateDesc PSODesc;
-                PSODesc.Shader = ReflectionTemporalShader.Get();
+        ReflectionTemporalShader   = FShaderCache::Get().GetShader<FReflectionTemporalCS>();
+        ReflectionTemporalPipeline = CreateComputePipeline(ReflectionTemporalShader, "Reflection Temporal PSO");
 
-                ReflectionTemporalPipeline = RHI::CreateComputePipelineState(PSODesc);
-                if (ReflectionTemporalPipeline)
-                {
-                    ReflectionTemporalPipeline->SetDebugName("Reflection Temporal PSO");
-                }
-            }
-        }
+        ReflectionAtrousShader   = FShaderCache::Get().GetShader<FReflectionAtrousCS>();
+        ReflectionAtrousPipeline = CreateComputePipeline(ReflectionAtrousShader, "Reflection A-Trous PSO");
 
-        FShaderCompileInfo AtrousInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-        if (FShaderCompiler::Get().CompileFromFile("Shaders/Reflections/ReflectionAtrous.hlsl", AtrousInfo, Code))
-        {
-            ReflectionAtrousShader = RHI::CreateComputeShader(Code);
-            if (ReflectionAtrousShader)
-            {
-                FRHIComputePipelineStateDesc PSODesc;
-                PSODesc.Shader = ReflectionAtrousShader.Get();
-
-                ReflectionAtrousPipeline = RHI::CreateComputePipelineState(PSODesc);
-                if (ReflectionAtrousPipeline)
-                {
-                    ReflectionAtrousPipeline->SetDebugName("Reflection A-Trous PSO");
-                }
-            }
-        }
-
-        FShaderCompileInfo UpsampleInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-        if (FShaderCompiler::Get().CompileFromFile("Shaders/Reflections/ReflectionUpsample.hlsl", UpsampleInfo, Code))
-        {
-            ReflectionUpsampleShader = RHI::CreateComputeShader(Code);
-            if (ReflectionUpsampleShader)
-            {
-                FRHIComputePipelineStateDesc PSODesc;
-                PSODesc.Shader = ReflectionUpsampleShader.Get();
-
-                ReflectionUpsamplePipeline = RHI::CreateComputePipelineState(PSODesc);
-                if (ReflectionUpsamplePipeline)
-                {
-                    ReflectionUpsamplePipeline->SetDebugName("Reflection Upsample PSO");
-                }
-            }
-        }
+        ReflectionUpsampleShader   = FShaderCache::Get().GetShader<FReflectionUpsampleCS>();
+        ReflectionUpsamplePipeline = CreateComputePipeline(ReflectionUpsampleShader, "Reflection Upsample PSO");
 
         if (!ReflectionTemporalPipeline || !ReflectionAtrousPipeline)
         {
             LOG_WARNING("[RayTracer]: Reflection denoiser pipelines unavailable. Reflections will use the raw trace");
-            
+
             ReflectionTemporalPipeline.Reset();
             ReflectionTemporalShader.Reset();
             ReflectionAtrousPipeline.Reset();
@@ -656,20 +453,9 @@ FRHITexture* FRayTracer::GetReflectionNoiseMask() const
 
 void FRayTracer::Release()
 {
-    LocalPipeline.Reset();
-    RayGenShader.Reset();
-    RayMissShader.Reset();
-    RayClosestHitShader.Reset();
-
-    BindlessPipeline.Reset();
-    RayGenShaderBindless.Reset();
-    RayMissShaderBindless.Reset();
-    RayClosestHitShaderBindless.Reset();
-
-    SERPipeline.Reset();
-    RayGenShaderSER.Reset();
-    RayMissShaderSER.Reset();
-    RayClosestHitShaderSER.Reset();
+    LocalVariant.Reset();
+    BindlessVariant.Reset();
+    SERVariant.Reset();
 
     InlineReflectionsPipeline.Reset();
     InlineReflectionsShader.Reset();
@@ -955,10 +741,10 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
         }
     }
 
-    const bool bExplicitAvailable                  = RHI::bSupportsShaderBindingTableDescriptors && LocalPipeline;
-    const bool bBindless                           = (!GRayTracingEnableLocalShaderBindings || !bExplicitAvailable) && BindlessPipeline;
+    const bool bExplicitAvailable                  = RHI::bSupportsShaderBindingTableDescriptors && LocalVariant;
+    const bool bBindless                           = (!GRayTracingEnableLocalShaderBindings || !bExplicitAvailable) && BindlessVariant;
     const bool bInline                             = GRayTracingInlineReflections && RHI::bSupportsInlineRayTracing && InlineReflectionsPipeline;
-    const bool bIsShaderExecutionReorderingEnabled = !bInline && GRayTracingSER && RHI::bSupportsShaderExecutionReordering && SERPipeline;
+    const bool bIsShaderExecutionReorderingEnabled = !bInline && GRayTracingSER && RHI::bSupportsShaderExecutionReordering && SERVariant;
     const bool bNeedBindlessData                   = bBindless || bInline || bIsShaderExecutionReorderingEnabled;
     const bool bDenoise                            = GReflectionDenoise && ReflectionTemporalPipeline && ReflectionAtrousPipeline && Resources.ReflectionTrace;
 
@@ -1139,7 +925,8 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
         return;
     }
 
-    FRHIRayTracingPipelineState* ActivePipeline           = bIsShaderExecutionReorderingEnabled ? SERPipeline.Get() : (bBindless ? BindlessPipeline.Get() : LocalPipeline.Get());
+    const FRayTracingVariant&    ActiveVariant            = bIsShaderExecutionReorderingEnabled ? SERVariant : (bBindless ? BindlessVariant : LocalVariant);
+    FRHIRayTracingPipelineState* ActivePipeline           = ActiveVariant.Pipeline.Get();
     FRHIShaderBindingTableRef&   ActiveShaderBindingTable = bIsShaderExecutionReorderingEnabled ? Resources.RayTracingSERShaderBindingTable : (bBindless ? Resources.RayTracingBindlessShaderBindingTable : Resources.RayTracingShaderBindingTable);
     uint32&                      ActiveCapacity           = bIsShaderExecutionReorderingEnabled ? CurrentSERHitGroupCapacity : (bBindless ? CurrentBindlessHitGroupCapacity : CurrentHitGroupCapacity);
 
@@ -1183,8 +970,7 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
 
     CommandList.SetRayTracingPipelineState(ActivePipeline);
 
-    FRHIRayGenShader* RayGenShaderForGlobals = bIsShaderExecutionReorderingEnabled ? RayGenShaderSER.Get() : (bBindless ? RayGenShaderBindless.Get() : RayGenShader.Get());
-    BindReflectionGlobals(RayGenShaderForGlobals);
+    BindReflectionGlobals(ActiveVariant.RayGenShader.Get());
 
     CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(TraceTarget, ERHIResourceState::UnorderedAccess));
 

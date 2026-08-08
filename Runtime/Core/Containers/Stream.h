@@ -1,5 +1,7 @@
 #pragma once
 #include "Core/Core.h"
+#include "Core/Memory/Memory.h"
+#include "Core/Templates/Utility/AddressOf.h"
 
 class FByteOutputStream
 {

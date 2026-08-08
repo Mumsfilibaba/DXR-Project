@@ -1,6 +1,10 @@
 #include "Structs.hlsli"
 #include "Constants.hlsli"
 
+#ifndef HORIZONTAL_PASS
+    #define HORIZONTAL_PASS (0)
+#endif
+
 TEXTURE_FORMAT_UNKNOWN RWTexture2D<min16float> Texture : register(u0);
 
 SHADER_CONSTANT_BLOCK_BEGIN
@@ -49,7 +53,7 @@ void Main(uint3 GroupThreadID : SV_GroupThreadID, uint3 DispatchThreadID : SV_Di
         const int        Offset = OFFSETS[Index];
         const min16float Weight = KERNEL[Index];
         
-    #ifdef HORIZONTAL_PASS
+    #if HORIZONTAL_PASS
         const int2 CurrentTexCoord = int2(GroupThreadID.x + Offset, GroupThreadID.y);
     #else
         const int2 CurrentTexCoord = int2(GroupThreadID.x, GroupThreadID.y + Offset);
@@ -58,7 +62,7 @@ void Main(uint3 GroupThreadID : SV_GroupThreadID, uint3 DispatchThreadID : SV_Di
         // Going outside of the cache? 
         if (any(CurrentTexCoord >= MAX_SIZE) || any(CurrentTexCoord < int2(0, 0)))
         {
-        #ifdef HORIZONTAL_PASS
+        #if HORIZONTAL_PASS
             const int2 CurrentPixel = int2(min(max(Pixel.x + Offset, 0), Constants.ScreenSize.x - 1), Pixel.y);
         #else
             const int2 CurrentPixel = int2(Pixel.x, min(max(Pixel.y + Offset, 0), Constants.ScreenSize.y - 1));

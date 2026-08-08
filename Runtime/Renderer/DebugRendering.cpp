@@ -2,14 +2,111 @@
 #include "Core/Math/Matrix4.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
-#include "RHI/ShaderCompiler.h"
 #include "Engine/Assets/MeshFactory.h"
 #include "Engine/Resources/Model.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Renderer/DebugRendering.h"
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneLightProbe.h"
+#include "Renderer/CommonShaders.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
+
+template<typename ShaderType>
+struct TDebugShaderEnvironment
+{
+    static void ModifyCompilationEnvironment(const FShaderPermutationDesc&, FShaderCompilationEnvironment& Environment)
+    {
+        Environment.SetDefine(ShaderType::DebugDefine, "(1)");
+    }
+};
+
+class FDebugAABBVS : public TDebugShaderEnvironment<FDebugAABBVS>
+{
+    DECLARE_SHADER_TYPE(FDebugAABBVS, EShaderStage::Vertex);
+
+    static constexpr const CHAR* DebugDefine = "AABB_DEBUG";
+
+    using FPermutation = TShaderPermutation<>;
+};
+
+IMPLEMENT_SHADER_TYPE(FDebugAABBVS, "Shaders/Debug.hlsl", "AABB_VSMain", EShaderModel::SM_6_2);
+
+class FDebugAABBPS : public TDebugShaderEnvironment<FDebugAABBPS>
+{
+    DECLARE_SHADER_TYPE(FDebugAABBPS, EShaderStage::Pixel);
+
+    static constexpr const CHAR* DebugDefine = "AABB_DEBUG";
+
+    using FPermutation = TShaderPermutation<>;
+};
+
+IMPLEMENT_SHADER_TYPE(FDebugAABBPS, "Shaders/Debug.hlsl", "AABB_PSMain", EShaderModel::SM_6_2);
+
+class FDebugLightVS : public TDebugShaderEnvironment<FDebugLightVS>
+{
+    DECLARE_SHADER_TYPE(FDebugLightVS, EShaderStage::Vertex);
+
+    static constexpr const CHAR* DebugDefine = "POINTLIGHT_DEBUG";
+
+    using FPermutation = TShaderPermutation<>;
+};
+
+IMPLEMENT_SHADER_TYPE(FDebugLightVS, "Shaders/Debug.hlsl", "Light_VSMain", EShaderModel::SM_6_2);
+
+class FDebugLightPS : public TDebugShaderEnvironment<FDebugLightPS>
+{
+    DECLARE_SHADER_TYPE(FDebugLightPS, EShaderStage::Pixel);
+
+    static constexpr const CHAR* DebugDefine = "POINTLIGHT_DEBUG";
+
+    using FPermutation = TShaderPermutation<>;
+};
+
+IMPLEMENT_SHADER_TYPE(FDebugLightPS, "Shaders/Debug.hlsl", "Light_PSMain", EShaderModel::SM_6_2);
+
+class FDebugAABBSolidVS : public TDebugShaderEnvironment<FDebugAABBSolidVS>
+{
+    DECLARE_SHADER_TYPE(FDebugAABBSolidVS, EShaderStage::Vertex);
+
+    static constexpr const CHAR* DebugDefine = "AABB_SOLID_DEBUG";
+
+    using FPermutation = TShaderPermutation<>;
+};
+
+IMPLEMENT_SHADER_TYPE(FDebugAABBSolidVS, "Shaders/Debug.hlsl", "AABBSolidDebug_VSMain", EShaderModel::SM_6_2);
+
+class FDebugAABBSolidPS : public TDebugShaderEnvironment<FDebugAABBSolidPS>
+{
+    DECLARE_SHADER_TYPE(FDebugAABBSolidPS, EShaderStage::Pixel);
+
+    static constexpr const CHAR* DebugDefine = "AABB_SOLID_DEBUG";
+
+    using FPermutation = TShaderPermutation<>;
+};
+
+IMPLEMENT_SHADER_TYPE(FDebugAABBSolidPS, "Shaders/Debug.hlsl", "AABBSolidDebug_PSMain", EShaderModel::SM_6_2);
+
+class FDebugProbeVS : public TDebugShaderEnvironment<FDebugProbeVS>
+{
+    DECLARE_SHADER_TYPE(FDebugProbeVS, EShaderStage::Vertex);
+
+    static constexpr const CHAR* DebugDefine = "LIGHTPROBE_DEBUG";
+
+    using FPermutation = TShaderPermutation<>;
+};
+
+IMPLEMENT_SHADER_TYPE(FDebugProbeVS, "Shaders/Debug.hlsl", "Probe_VSMain", EShaderModel::SM_6_2);
+
+class FDebugProbePS : public TDebugShaderEnvironment<FDebugProbePS>
+{
+    DECLARE_SHADER_TYPE(FDebugProbePS, EShaderStage::Pixel);
+
+    static constexpr const CHAR* DebugDefine = "LIGHTPROBE_DEBUG";
+
+    using FPermutation = TShaderPermutation<>;
+};
+
+IMPLEMENT_SHADER_TYPE(FDebugProbePS, "Shaders/Debug.hlsl", "Probe_PSMain", EShaderModel::SM_6_2);
 
 struct FAABBShaderInfoHLSL
 {
@@ -245,33 +342,14 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
 
     // AABB Wireframe
     {
-        TArray<FShaderDefine> AABBDefines =
-        {
-            { "AABB_DEBUG", "(1)" }
-        };
-
-        FShaderCompileInfo CompileInfo("AABB_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, AABBDefines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        AABB_VS = RHI::CreateVertexShader(ShaderCode);
+        AABB_VS = FShaderCache::Get().GetShader<FDebugAABBVS>();
         if (!AABB_VS)
         {
             DEBUG_BREAK();
             return false;
         }
 
-        CompileInfo = FShaderCompileInfo("AABB_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, AABBDefines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        AABB_PS = RHI::CreatePixelShader(ShaderCode);
+        AABB_PS = FShaderCache::Get().GetShader<FDebugAABBPS>();
         if (!AABB_PS)
         {
             DEBUG_BREAK();
@@ -347,33 +425,14 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
 
     // Point-Light Debug
     {
-        TArray<FShaderDefine> PointLightDefines =
-        {
-            { "POINTLIGHT_DEBUG", "(1)" }
-        };
-
-        FShaderCompileInfo CompileInfo("Light_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, PointLightDefines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        LightDebug_VS = RHI::CreateVertexShader(ShaderCode);
+        LightDebug_VS = FShaderCache::Get().GetShader<FDebugLightVS>();
         if (!LightDebug_VS)
         {
             DEBUG_BREAK();
             return false;
         }
 
-        CompileInfo = FShaderCompileInfo("Light_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, PointLightDefines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        LightDebug_PS = RHI::CreatePixelShader(ShaderCode);
+        LightDebug_PS = FShaderCache::Get().GetShader<FDebugLightPS>();
         if (!LightDebug_PS)
         {
             DEBUG_BREAK();
@@ -415,33 +474,14 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
 
     // AABB Solid
     {
-        TArray<FShaderDefine> AABBSolidDebugDefines =
-        {
-            { "AABB_SOLID_DEBUG", "(1)" }
-        };
-
-        FShaderCompileInfo CompileInfo("AABBSolidDebug_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, AABBSolidDebugDefines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        AABBSolid_VS = RHI::CreateVertexShader(ShaderCode);
+        AABBSolid_VS = FShaderCache::Get().GetShader<FDebugAABBSolidVS>();
         if (!AABBSolid_VS)
         {
             DEBUG_BREAK();
             return false;
         }
 
-        CompileInfo = FShaderCompileInfo("AABBSolidDebug_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, AABBSolidDebugDefines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        AABBSolid_PS = RHI::CreatePixelShader(ShaderCode);
+        AABBSolid_PS = FShaderCache::Get().GetShader<FDebugAABBSolidPS>();
         if (!AABBSolid_PS)
         {
             DEBUG_BREAK();
@@ -503,33 +543,14 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
 
     // Light-Probe Debug
     {
-        TArray<FShaderDefine> LightProbeDefines =
-        {
-            { "LIGHTPROBE_DEBUG", "(1)" }
-        };
-
-        FShaderCompileInfo CompileInfo("Probe_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, LightProbeDefines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        ProbeDebug_VS = RHI::CreateVertexShader(ShaderCode);
+        ProbeDebug_VS = FShaderCache::Get().GetShader<FDebugProbeVS>();
         if (!ProbeDebug_VS)
         {
             DEBUG_BREAK();
             return false;
         }
 
-        CompileInfo = FShaderCompileInfo("Probe_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, LightProbeDefines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        ProbeDebug_PS = RHI::CreatePixelShader(ShaderCode);
+        ProbeDebug_PS = FShaderCache::Get().GetShader<FDebugProbePS>();
         if (!ProbeDebug_PS)
         {
             DEBUG_BREAK();

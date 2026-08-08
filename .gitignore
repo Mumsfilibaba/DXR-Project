@@ -41,6 +41,8 @@ packages/
 /Solutions
 *.d3d12psocache
 *.vkpsocache
+*.shadermanifest
+*.shaderbytecode
 *.log
 /Assets/RTASCache
 

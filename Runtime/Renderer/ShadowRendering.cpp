@@ -2,7 +2,6 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "RHI/RHI.h"
-#include "RHI/ShaderCompiler.h"
 #include "RHI/RHIPipelineState.h"
 #include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
@@ -138,66 +137,21 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
 {
     const FMaterialFeatures Features(Batch.EffectiveMaterialFlags);
 
-    FPointLightShaderCombination ShaderCombination;
-    ShaderCombination.MaterialFlags  = static_cast<uint32>(Features.Flags);
-    ShaderCombination.RenderPassType = RenderPassType;
-    ShaderCombination.bBindless      = RHI::bSupportsBindless && GShadowsBindless;
-    ShaderCombination.DeclarationID  = Batch.Declaration.GetID();
+    const int32 MaterialFlags = static_cast<int32>(Features.Flags);
+    const bool  bBindless     = RHI::bSupportsBindless && GShadowsBindless;
 
-    FGraphicsPipelineStateInstance* CachedPointLightPSO = MaterialPSOs.Find(ShaderCombination);
+    const FPointLightShadowVS::FPermutation Permutation = FPointLightShadowRules::Create(Features, bBindless, RenderPassType);
+
+    // Double-sidedness only picks a cull mode, so it keys the pipeline rather than the shader
+    const uint32 PipelineFlags = Features.IsDoubleSided() ? PIPELINE_FLAG_DOUBLE_SIDED : 0u;
+
+    const FGraphicsPipelineKey PSOKey(Permutation.GetPermutationID(), PipelineFlags, Batch.Declaration.GetID());
+
+    FGraphicsPipelineStateInstance* CachedPointLightPSO = MaterialPSOs.Find(PSOKey);
     if (!CachedPointLightPSO)
     {
-        TArray<uint8>         ShaderCode;
-        TArray<FShaderDefine> ShaderDefines;
-
-        if (Features.HasHeightMap())
-        {
-            ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(1)");
-            ShaderDefines.Emplace("ENABLE_PARALLAX_CLIPPING", Features.HasParallaxClipping() ? "(1)" : "(0)");
-        }
-        else
-        {
-            ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(0)");
-        }
-
-        if (Features.HasAlphaMask())
-        {
-            ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
-        }
-        else
-        {
-            ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
-        }
-        
-        if (ShaderCombination.RenderPassType == ECubeMapRenderPassType::SinglePass)
-        {
-            ShaderDefines.Emplace("ENABLE_POINTLIGHT_VS_INSTANCING", "(1)");
-            ShaderDefines.Emplace("ENABLE_POINTLIGHT_GS_INSTANCING", "(0)");
-        }
-        else if (ShaderCombination.RenderPassType == ECubeMapRenderPassType::GeometryShaderSinglePass)
-        {
-            ShaderDefines.Emplace("ENABLE_POINTLIGHT_VS_INSTANCING", "(0)");
-            ShaderDefines.Emplace("ENABLE_POINTLIGHT_GS_INSTANCING", "(1)");
-        }
-        else
-        {
-            ShaderDefines.Emplace("ENABLE_POINTLIGHT_VS_INSTANCING", "(0)");
-            ShaderDefines.Emplace("ENABLE_POINTLIGHT_GS_INSTANCING", "(0)");
-        }
-
-        ShaderDefines.Emplace("BINDLESS_SHADOWS", ShaderCombination.bBindless ? "(1)" : "(0)");
-
-        const EShaderModel TargetShaderModel = ShaderCombination.bBindless ? EShaderModel::SM_6_6 : EShaderModel::SM_6_2;
-
-        FShaderCompileInfo CompileInfo("Point_VSMain", TargetShaderModel, EShaderStage::Vertex, ShaderDefines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/PointLightShadows.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return nullptr;
-        }
-
         FGraphicsPipelineStateInstance NewPipelineStateInstance;
-        NewPipelineStateInstance.VertexShader = RHI::CreateVertexShader(ShaderCode);
+        NewPipelineStateInstance.VertexShader = FShaderCache::Get().GetShader<FPointLightShadowVS>(Permutation);
 
         if (!NewPipelineStateInstance.VertexShader)
         {
@@ -205,16 +159,9 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
             return nullptr;
         }
 
-        if (ShaderCombination.RenderPassType == ECubeMapRenderPassType::GeometryShaderSinglePass)
+        if (RenderPassType == ECubeMapRenderPassType::GeometryShaderSinglePass)
         {
-            CompileInfo = FShaderCompileInfo("Point_GSMain", TargetShaderModel, EShaderStage::Geometry, ShaderDefines);
-            if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/PointLightShadows.hlsl", CompileInfo, ShaderCode))
-            {
-                DEBUG_BREAK();
-                return nullptr;
-            }
-
-            NewPipelineStateInstance.GeometryShader = RHI::CreateGeometryShader(ShaderCode);
+            NewPipelineStateInstance.GeometryShader = FShaderCache::Get().GetShader<FPointLightShadowGS>(Permutation);
             if (!NewPipelineStateInstance.GeometryShader)
             {
                 DEBUG_BREAK();
@@ -222,8 +169,8 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
             }
         }
 
-        CompileInfo = FShaderCompileInfo("Point_PSMain", TargetShaderModel, EShaderStage::Pixel, ShaderDefines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/PointLightShadows.hlsl", CompileInfo, ShaderCode))
+        NewPipelineStateInstance.PixelShader = FShaderCache::Get().GetShader<FPointLightShadowPS>(Permutation);
+        if (!NewPipelineStateInstance.PixelShader)
         {
             DEBUG_BREAK();
             return nullptr;
@@ -236,68 +183,40 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
             return nullptr;
         }
 
-        NewPipelineStateInstance.PixelShader = RHI::CreatePixelShader(ShaderCode);
-        if (!NewPipelineStateInstance.PixelShader)
-        {
-            DEBUG_BREAK();
-            return nullptr;
-        }
-
         FRHIDepthStencilStateDesc DepthStencilStateDesc;
         DepthStencilStateDesc.DepthFunc         = EComparisonFunc::LessEqual;
         DepthStencilStateDesc.bDepthEnable      = true;
         DepthStencilStateDesc.bDepthWriteEnable = true;
 
-        NewPipelineStateInstance.DepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
-        if (!NewPipelineStateInstance.DepthStencilState)
-        {
-            DEBUG_BREAK();
-            return nullptr;
-        }
-
         FRHIRasterizerStateDesc RasterizerStateDesc;
-        if (Features.IsDoubleSided())
-        {
-            RasterizerStateDesc.CullMode = ECullMode::None;
-        }
-        else
-        {
-            RasterizerStateDesc.CullMode = ECullMode::Back;
-        }
-
-        NewPipelineStateInstance.RasterizerState = RHI::CreateRasterizerState(RasterizerStateDesc);
-        if (!NewPipelineStateInstance.RasterizerState)
-        {
-            DEBUG_BREAK();
-            return nullptr;
-        }
+        RasterizerStateDesc.CullMode = Features.IsDoubleSided() ? ECullMode::None : ECullMode::Back;
 
         FRHIBlendStateDesc BlendStateDesc;
-        NewPipelineStateInstance.BlendState = RHI::CreateBlendState(BlendStateDesc);
-        if (!NewPipelineStateInstance.BlendState)
+
+        FRHIRasterizerStateRef   RasterizerState   = RHI::CreateRasterizerState(RasterizerStateDesc);
+        FRHIBlendStateRef        BlendState        = RHI::CreateBlendState(BlendStateDesc);
+        FRHIDepthStencilStateRef DepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
+
+        if (!DepthStencilState || !RasterizerState || !BlendState)
         {
             DEBUG_BREAK();
             return nullptr;
         }
 
         FRHIGraphicsPipelineStateDesc PSODesc;
-        PSODesc.BlendState                                 = NewPipelineStateInstance.BlendState.Get();
-        PSODesc.DepthStencilState                          = NewPipelineStateInstance.DepthStencilState.Get();
+        PSODesc.BlendState                                 = BlendState.Get();
+        PSODesc.DepthStencilState                          = DepthStencilState.Get();
         PSODesc.bPrimitiveRestartEnable                    = false;
         PSODesc.InputLayout                                = NewPipelineStateInstance.StreamBinding->InputLayout.Get();
         PSODesc.PrimitiveTopology                          = EPrimitiveTopology::TriangleList;
-        PSODesc.RasterizerState                            = NewPipelineStateInstance.RasterizerState.Get();
+        PSODesc.RasterizerState                            = RasterizerState.Get();
         PSODesc.MultiSampleState.SampleCount               = 1;
         PSODesc.MultiSampleState.SampleMask                = RHI_DEFAULT_SAMPLE_MASK;
         PSODesc.VertexShader                               = NewPipelineStateInstance.VertexShader.Get();
+        PSODesc.GeometryShader                             = NewPipelineStateInstance.GeometryShader.Get();
         PSODesc.PixelShader                                = NewPipelineStateInstance.PixelShader.Get();
         PSODesc.RasterizerOutputFormats.NumRenderTargets   = 0;
         PSODesc.RasterizerOutputFormats.DepthStencilFormat = RendererTextureFormats::ShadowMapFormat;
-
-        if (ShaderCombination.RenderPassType == ECubeMapRenderPassType::GeometryShaderSinglePass)
-        {
-            PSODesc.GeometryShader = NewPipelineStateInstance.GeometryShader.Get();
-        }
 
         NewPipelineStateInstance.PipelineState = RHI::CreateGraphicsPipelineState(PSODesc);
         if (!NewPipelineStateInstance.PipelineState)
@@ -308,13 +227,13 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         else
         {
             const String DebugName = String::CreateFormatted("Point ShadowMap PipelineState%s %d",
-                ShaderCombination.bBindless ? " [Bindless]" : "",
-                ShaderCombination.MaterialFlags);
+                bBindless ? " [Bindless]" : "",
+                MaterialFlags);
             NewPipelineStateInstance.PipelineState->SetDebugName(DebugName);
         }
 
         // Return the new instance
-        FGraphicsPipelineStateInstance& NewInstance = MaterialPSOs.Add(ShaderCombination, Move(NewPipelineStateInstance));
+        FGraphicsPipelineStateInstance& NewInstance = MaterialPSOs.Add(PSOKey, Move(NewPipelineStateInstance));
         return &NewInstance;
     }
     else
@@ -726,16 +645,7 @@ FCascadeGenerationPass::~FCascadeGenerationPass()
 
 bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
 {
-    TArray<uint8> ShaderCode;
-
-    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/CascadeMatrixGen.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    CascadeGenShader = RHI::CreateComputeShader(ShaderCode);
+    CascadeGenShader = FShaderCache::Get().GetShader<FCascadeMatrixGenCS>();
     if (!CascadeGenShader)
     {
         DEBUG_BREAK();
@@ -873,76 +783,21 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
 {
     const FMaterialFeatures Features(Batch.EffectiveMaterialFlags);
 
-    FCascadedShadowsShaderCombination ShaderCombination;
-    ShaderCombination.RenderPassType       = RenderPassType;
-    ShaderCombination.bEnableDepthClipping = CVarCSMEnableDepthClipping.GetValue();
-    ShaderCombination.bBindless            = RHI::bSupportsBindless && GShadowsBindless;
-    ShaderCombination.DeclarationID        = Batch.Declaration.GetID();
-    ShaderCombination.MaterialFlags        = static_cast<uint32>(Features.Flags);
+    const int32 MaterialFlags        = static_cast<int32>(Features.Flags);
+    const bool  bBindless            = RHI::bSupportsBindless && GShadowsBindless;
+    const bool  bEnableDepthClipping = CVarCSMEnableDepthClipping.GetValue();
 
-    FGraphicsPipelineStateInstance* CachedDirectionalLightPSO = MaterialPSOs.Find(ShaderCombination);
+    const uint32 PipelineFlags =
+        (Features.IsDoubleSided() ? PIPELINE_FLAG_DOUBLE_SIDED : 0u) | (bEnableDepthClipping ? PIPELINE_FLAG_DEPTH_CLIPPING : 0u);
+
+    const FCascadeShadowVS::FPermutation Permutation = FCascadeShadowRules::Create(Features, bBindless, RenderPassType);
+    const FGraphicsPipelineKey           PSOKey(Permutation.GetPermutationID(), PipelineFlags, Batch.Declaration.GetID());
+
+    FGraphicsPipelineStateInstance* CachedDirectionalLightPSO = MaterialPSOs.Find(PSOKey);
     if (!CachedDirectionalLightPSO)
     {
-        TArray<uint8>         ShaderCode;
-        TArray<FShaderDefine> ShaderDefines;
-
-        if (Features.HasHeightMap())
-        {
-            ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(1)");
-            ShaderDefines.Emplace("ENABLE_PARALLAX_CLIPPING", Features.HasParallaxClipping() ? "(1)" : "(0)");
-        }
-        else
-        {
-            ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(0)");
-        }
-
-        if (Features.HasAlphaMask())
-        {
-            ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
-        }
-        else
-        {
-            ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
-        }
-
-        if (RenderPassType == ECascadeRenderPassType::SinglePass)
-        {
-            ShaderDefines.Emplace("ENABLE_CASCADE_VS_INSTANCING", "(1)");
-            ShaderDefines.Emplace("ENABLE_CASCADE_GS_INSTANCING", "(0)");
-            ShaderDefines.Emplace("ENABLE_CASCADE_VIEW_INSTANCING", "(0)");
-        }
-        else if (RenderPassType == ECascadeRenderPassType::GeometryShaderSinglePass)
-        {
-            ShaderDefines.Emplace("ENABLE_CASCADE_VS_INSTANCING", "(0)");
-            ShaderDefines.Emplace("ENABLE_CASCADE_GS_INSTANCING", "(1)");
-            ShaderDefines.Emplace("ENABLE_CASCADE_VIEW_INSTANCING", "(0)");
-        }
-        else if (RenderPassType == ECascadeRenderPassType::ViewInstancingSinglePass)
-        {
-            ShaderDefines.Emplace("ENABLE_CASCADE_VS_INSTANCING", "(0)");
-            ShaderDefines.Emplace("ENABLE_CASCADE_GS_INSTANCING", "(0)");
-            ShaderDefines.Emplace("ENABLE_CASCADE_VIEW_INSTANCING", "(1)");
-        }
-        else
-        {
-            ShaderDefines.Emplace("ENABLE_CASCADE_VS_INSTANCING", "(0)");
-            ShaderDefines.Emplace("ENABLE_CASCADE_GS_INSTANCING", "(0)");
-            ShaderDefines.Emplace("ENABLE_CASCADE_VIEW_INSTANCING", "(0)");
-        }
-
-        ShaderDefines.Emplace("BINDLESS_SHADOWS", ShaderCombination.bBindless ? "(1)" : "(0)");
-
-        const EShaderModel TargetShaderModel = ShaderCombination.bBindless ? EShaderModel::SM_6_6 : EShaderModel::SM_6_2;
-
-        FShaderCompileInfo CompileInfo("Cascade_VSMain", TargetShaderModel, EShaderStage::Vertex, ShaderDefines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/CascadedShadows.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return nullptr;
-        }
-
         FGraphicsPipelineStateInstance NewPipelineStateInstance;
-        NewPipelineStateInstance.VertexShader = RHI::CreateVertexShader(ShaderCode);
+        NewPipelineStateInstance.VertexShader = FShaderCache::Get().GetShader<FCascadeShadowVS>(Permutation);
 
         if (!NewPipelineStateInstance.VertexShader)
         {
@@ -952,14 +807,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
 
         if (RenderPassType == ECascadeRenderPassType::GeometryShaderSinglePass)
         {
-            CompileInfo = FShaderCompileInfo("Cascade_GSMain", TargetShaderModel, EShaderStage::Geometry, ShaderDefines);
-            if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/CascadedShadows.hlsl", CompileInfo, ShaderCode))
-            {
-                DEBUG_BREAK();
-                return nullptr;
-            }
-
-            NewPipelineStateInstance.GeometryShader = RHI::CreateGeometryShader(ShaderCode);
+            NewPipelineStateInstance.GeometryShader = FShaderCache::Get().GetShader<FCascadeShadowGS>(Permutation);
             if (!NewPipelineStateInstance.GeometryShader)
             {
                 DEBUG_BREAK();
@@ -967,17 +815,11 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
             }
         }
 
+        // Only materials that can discard fragments need a PixelShader, the rest render depth-only
         const bool bWantPixelShader = Features.HasHeightMap() || Features.HasAlphaMask();
         if (bWantPixelShader)
         {
-            CompileInfo = FShaderCompileInfo("Cascade_PSMain", TargetShaderModel, EShaderStage::Pixel, ShaderDefines);
-            if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/CascadedShadows.hlsl", CompileInfo, ShaderCode))
-            {
-                DEBUG_BREAK();
-                return nullptr;
-            }
-
-            NewPipelineStateInstance.PixelShader = RHI::CreatePixelShader(ShaderCode);
+            NewPipelineStateInstance.PixelShader = FShaderCache::Get().GetShader<FCascadeShadowPS>(Permutation);
             if (!NewPipelineStateInstance.PixelShader)
             {
                 DEBUG_BREAK();
@@ -997,15 +839,8 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         DepthStencilStateDesc.bDepthEnable      = true;
         DepthStencilStateDesc.bDepthWriteEnable = true;
 
-        NewPipelineStateInstance.DepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
-        if (!NewPipelineStateInstance.DepthStencilState)
-        {
-            DEBUG_BREAK();
-            return nullptr;
-        }
-
         FRHIRasterizerStateDesc RasterizerStateDesc;
-        RasterizerStateDesc.bDepthClipEnable = ShaderCombination.bEnableDepthClipping;
+        RasterizerStateDesc.bDepthClipEnable = bEnableDepthClipping;
 
         if (!RHI::bSupportsDynamicDepthBias)
         {
@@ -1014,52 +849,38 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
             RasterizerStateDesc.SlopeScaledDepthBias = 1.0f;
         }
 
-        if (Features.IsDoubleSided())
-        {
-            RasterizerStateDesc.CullMode = ECullMode::None;
-        }
-        else
-        {
-            RasterizerStateDesc.CullMode = ECullMode::Back;
-        }
-
-        NewPipelineStateInstance.RasterizerState = RHI::CreateRasterizerState(RasterizerStateDesc);
-        if (!NewPipelineStateInstance.RasterizerState)
-        {
-            DEBUG_BREAK();
-            return nullptr;
-        }
+        RasterizerStateDesc.CullMode = Features.IsDoubleSided() ? ECullMode::None : ECullMode::Back;
 
         FRHIBlendStateDesc BlendStateDesc;
-        NewPipelineStateInstance.BlendState = RHI::CreateBlendState(BlendStateDesc);
 
-        if (!NewPipelineStateInstance.BlendState)
+        FRHIRasterizerStateRef   RasterizerState   = RHI::CreateRasterizerState(RasterizerStateDesc);
+        FRHIBlendStateRef        BlendState        = RHI::CreateBlendState(BlendStateDesc);
+        FRHIDepthStencilStateRef DepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
+
+        if (!DepthStencilState || !RasterizerState || !BlendState)
         {
             DEBUG_BREAK();
             return nullptr;
         }
 
         FRHIGraphicsPipelineStateDesc PSODesc;
-        PSODesc.BlendState                     = NewPipelineStateInstance.BlendState.Get();
-        PSODesc.DepthStencilState              = NewPipelineStateInstance.DepthStencilState.Get();
-        PSODesc.bPrimitiveRestartEnable        = false;
-        PSODesc.InputLayout                    = NewPipelineStateInstance.StreamBinding->InputLayout.Get();
-        PSODesc.PrimitiveTopology              = EPrimitiveTopology::TriangleList;
-        PSODesc.RasterizerState                = NewPipelineStateInstance.RasterizerState.Get();
-        PSODesc.MultiSampleState.SampleCount   = 1;
-        PSODesc.MultiSampleState.SampleMask    = RHI_DEFAULT_SAMPLE_MASK;
-        PSODesc.VertexShader                   = NewPipelineStateInstance.VertexShader.Get();
-        PSODesc.PixelShader                    = NewPipelineStateInstance.PixelShader.Get();
+        PSODesc.BlendState                   = BlendState.Get();
+        PSODesc.DepthStencilState            = DepthStencilState.Get();
+        PSODesc.bPrimitiveRestartEnable      = false;
+        PSODesc.InputLayout                  = NewPipelineStateInstance.StreamBinding->InputLayout.Get();
+        PSODesc.PrimitiveTopology            = EPrimitiveTopology::TriangleList;
+        PSODesc.RasterizerState              = RasterizerState.Get();
+        PSODesc.MultiSampleState.SampleCount = 1;
+        PSODesc.MultiSampleState.SampleMask  = RHI_DEFAULT_SAMPLE_MASK;
+        PSODesc.VertexShader                 = NewPipelineStateInstance.VertexShader.Get();
+        PSODesc.GeometryShader               = NewPipelineStateInstance.GeometryShader.Get();
+        PSODesc.PixelShader                  = NewPipelineStateInstance.PixelShader.Get();
 
         if (RenderPassType == ECascadeRenderPassType::ViewInstancingSinglePass)
         {
             PSODesc.ViewInstancingState.StartRenderTargetArrayIndex = 0;
             PSODesc.ViewInstancingState.NumArraySlices              = NUM_SHADOW_CASCADES;
             PSODesc.ViewInstancingState.bEnableViewInstancing       = true;
-        }
-        else if (RenderPassType == ECascadeRenderPassType::GeometryShaderSinglePass)
-        {
-            PSODesc.GeometryShader = NewPipelineStateInstance.GeometryShader.Get();
         }
 
         PSODesc.RasterizerOutputFormats.DepthStencilFormat = RendererTextureFormats::ShadowMapFormat;
@@ -1073,12 +894,12 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         }
         else
         {
-            const String DebugName = String::CreateFormatted("CSM PipelineState%s %d", ShaderCombination.bBindless ? " [Bindless]" : "", ShaderCombination.MaterialFlags);
+            const String DebugName = String::CreateFormatted("CSM PipelineState%s %d", bBindless ? " [Bindless]" : "", MaterialFlags);
             NewPipelineStateInstance.PipelineState->SetDebugName(DebugName);
         }
 
         // Return the new instance
-        FGraphicsPipelineStateInstance& NewInstance = MaterialPSOs.Add(ShaderCombination, Move(NewPipelineStateInstance));
+        FGraphicsPipelineStateInstance& NewInstance = MaterialPSOs.Add(PSOKey, Move(NewPipelineStateInstance));
         return &NewInstance;
     }
     else
@@ -1476,11 +1297,8 @@ bool FShadowMaskRenderPass::Initialize(FFrameResources& Resources)
         return false;
     }
 
-    FShadowMaskShaderCombination Combination;
-    RetrieveCurrentCombinationBasedOnCVar(Combination);
-
     FComputePipelineStateInstance Instance;
-    if (!RetrievePipelineState(Combination, Instance))
+    if (!RetrievePipelineState(CreateCurrentPermutation(), Instance))
     {
         return false;
     }
@@ -1573,19 +1391,20 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
     CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.DirectionalShadowMask.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::UnorderedAccess));
 
-    FShadowMaskShaderCombination Combination;
-    RetrieveCurrentCombinationBasedOnCVar(Combination);
-    Combination.bDebugMode |= bForceDebugMode;
+    FShadowMaskCS::FPermutation Permutation = CreateCurrentPermutation();
+
+    const bool bDebugMode = Permutation.Get<FCSMDebug>() || bForceDebugMode;
+    Permutation.Set<FCSMDebug>(bDebugMode);
 
     FComputePipelineStateInstance PipelineStateInstance;
-    if (!RetrievePipelineState(Combination, PipelineStateInstance))
+    if (!RetrievePipelineState(Permutation, PipelineStateInstance))
     {
         CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.DirectionalShadowMask.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::NonPixelShaderResource));
         DEBUG_BREAK();
         return;
     }
 
-    if (Combination.bDebugMode)
+    if (bDebugMode)
     {
         CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.CascadeIndexBuffer.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::UnorderedAccess));
     }
@@ -1604,7 +1423,7 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
     CommandList.SetUnorderedAccessView(PipelineStateInstance.Shader.Get(), Resources.DirectionalShadowMask->GetUnorderedAccessView(), 0);
 
-    if (Combination.bDebugMode)
+    if (bDebugMode)
     {
         CommandList.SetUnorderedAccessView(PipelineStateInstance.Shader.Get(), Resources.CascadeIndexBuffer->GetUnorderedAccessView(), 1);
     }
@@ -1619,157 +1438,23 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
     CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.DirectionalShadowMask.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::NonPixelShaderResource));
-    if (Combination.bDebugMode)
+    if (bDebugMode)
     {
         CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.CascadeIndexBuffer.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::NonPixelShaderResource));
     }
 }
 
-bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombination& Combination, FComputePipelineStateInstance& OutPSO)
+bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskCS::FPermutation& Permutation, FComputePipelineStateInstance& OutPSO)
 {
-    if (FComputePipelineStateInstance* PipelineState = PipelineStates.Find(Combination))
+    const int32 PermutationID = FShadowMaskCS::RemapPermutation(Permutation).GetPermutationID();
+    if (FComputePipelineStateInstance* PipelineState = PipelineStates.Find(PermutationID))
     {
         OutPSO = *PipelineState;
         return true;
     }
 
-    TArray<uint8> ShaderCode;
-    TArray<FShaderDefine> Defines;
-
-    String DebugName = "ShadowMask PSO (";
-
-    // Filter function
-    if (Combination.FilterFunction == ECSMFilterFunction::Grid)
-    {
-        Defines.Emplace("FILTER_FUNCTION_GRID", "1");
-        Defines.Emplace("FILTER_FUNCTION_POISSON_DISK", "0");
-        Defines.Emplace("FILTER_FUNCTION_VOGEL_DISK", "0");
-        DebugName += "Grid ";
-    }
-    else if (Combination.FilterFunction == ECSMFilterFunction::PoissonDisk)
-    {
-        Defines.Emplace("FILTER_FUNCTION_GRID", "0");
-        Defines.Emplace("FILTER_FUNCTION_POISSON_DISK", "1");
-        Defines.Emplace("FILTER_FUNCTION_VOGEL_DISK", "0");
-        DebugName += "Poisson-Disk ";
-    }
-    else if (Combination.FilterFunction == ECSMFilterFunction::VogelDisk)
-    {
-        Defines.Emplace("FILTER_FUNCTION_GRID", "0");
-        Defines.Emplace("FILTER_FUNCTION_POISSON_DISK", "0");
-        Defines.Emplace("FILTER_FUNCTION_VOGEL_DISK", "1");
-        DebugName += "Vogel-Disk ";
-    }
-    else
-    {
-        Defines.Emplace("FILTER_FUNCTION_GRID", "0");
-        Defines.Emplace("FILTER_FUNCTION_POISSON_DISK", "0");
-        Defines.Emplace("FILTER_FUNCTION_VOGEL_DISK", "0");
-    }
-
-    // Filter mode
-    if (Combination.FilterMode == ECSMFilterMode::PCF)
-    {
-        Defines.Emplace("FILTER_MODE_PCF", "1");
-        Defines.Emplace("FILTER_MODE_PCSS", "0");
-        DebugName += " (PCF) ";
-    }
-    else if (Combination.FilterMode == ECSMFilterMode::PCSS)
-    {
-        Defines.Emplace("FILTER_MODE_PCF", "0");
-        Defines.Emplace("FILTER_MODE_PCSS", "1");
-        DebugName += " (PCSS) ";
-    }
-    else
-    {
-        Defines.Emplace("FILTER_MODE_PCF", "0");
-        Defines.Emplace("FILTER_MODE_PCSS", "0");
-    }
-
-    // Debug-mode
-    if (Combination.bDebugMode)
-    {
-        Defines.Emplace("ENABLE_DEBUG", "1");
-        DebugName += " Debug ";
-    }
-    else
-    {
-        Defines.Emplace("ENABLE_DEBUG", "0");
-    }
-
-    // Rotate samples
-    if (Combination.bRotateSamples)
-    {
-        Defines.Emplace("ROTATE_SAMPLES", "1");
-        DebugName += " RotateSamples ";
-    }
-    else
-    {
-        Defines.Emplace("ROTATE_SAMPLES", "0");
-    }
-
-    // Select cascades from projection
-    if (Combination.bSelectCascadeFromProjection)
-    {
-        Defines.Emplace("SELECT_CASCADE_FROM_PROJECTION", "1");
-        DebugName += " CascadeFromProjection ";
-    }
-    else
-    {
-        Defines.Emplace("SELECT_CASCADE_FROM_PROJECTION", "0");
-    }
-
-    // Blend cascades
-    if (Combination.bBlendCascades)
-    {
-        Defines.Emplace("ENABLE_CASCADE_BLENDING", "1");
-        DebugName += " BlendCascades ";
-    }
-    else
-    {
-        Defines.Emplace("ENABLE_CASCADE_BLENDING", "0");
-    }
-
-    // Number of samples (only needed as compile-time define for Poisson disk fixed arrays)
-    if (Combination.FilterFunction != ECSMFilterFunction::VogelDisk)
-    {
-        if (Combination.NumSamples <= 16)
-        {
-            Defines.Emplace("NUM_SAMPLES", "16");
-            DebugName += " NumSamples=16";
-        }
-        else if (Combination.NumSamples <= 32)
-        {
-            Defines.Emplace("NUM_SAMPLES", "32");
-            DebugName += " NumSamples=32";
-        }
-        else if (Combination.NumSamples <= 64)
-        {
-            Defines.Emplace("NUM_SAMPLES", "64");
-            DebugName += " NumSamples=64";
-        }
-        else if (Combination.NumSamples <= 128)
-        {
-            Defines.Emplace("NUM_SAMPLES", "128");
-            DebugName += " NumSamples=128";
-        }
-    }
-    else
-    {
-        DebugName += " NumSamples=runtime";
-    }
-
-    DebugName += ")";
-
-    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/ShadowMaskGen.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
     FComputePipelineStateInstance PipelineStateInstance;
-    PipelineStateInstance.Shader = RHI::CreateComputeShader(ShaderCode);
+    PipelineStateInstance.Shader = FShaderCache::Get().GetShader<FShadowMaskCS>(Permutation);
 
     if (!PipelineStateInstance.Shader)
     {
@@ -1788,29 +1473,26 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
     }
     else
     {
-        PipelineStateInstance.PipelineState->SetDebugName(DebugName);
+        PipelineStateInstance.PipelineState->SetDebugName(String::CreateFormatted("ShadowMask PSO (Permutation %d)", PermutationID));
     }
 
-    PipelineStates.Add(Combination, PipelineStateInstance);
+    PipelineStates.Add(PermutationID, PipelineStateInstance);
     OutPSO = PipelineStateInstance;
     return true;
 }
 
-void FShadowMaskRenderPass::RetrieveCurrentCombinationBasedOnCVar(FShadowMaskShaderCombination& OutCombination)
+FShadowMaskCS::FPermutation FShadowMaskRenderPass::CreateCurrentPermutation()
 {
-    OutCombination.FilterMode                   = static_cast<ECSMFilterMode>(Math::Clamp<int32>(CVarCSMFilterMode.GetValue(), 0, 1));
-    OutCombination.FilterFunction               = static_cast<ECSMFilterFunction>(Math::Clamp<int32>(CVarCSMFilterFunction.GetValue(), 0, 2));
-    OutCombination.bDebugMode                   = GCSMDebugCascades;
-    OutCombination.bBlendCascades               = CVarCSMBlendCascades.GetValue();
-    OutCombination.bSelectCascadeFromProjection = CVarCSMSelectCascadeFromProjection.GetValue();
-    OutCombination.bRotateSamples               = CVarCSMRotateSamples.GetValue();
+    const ECSMFilterFunction FilterFunction = static_cast<ECSMFilterFunction>(Math::Clamp<int32>(CVarCSMFilterFunction.GetValue(), 0, static_cast<int32>(ECSMFilterFunction::Count) - 1));
 
-    if (OutCombination.FilterFunction == ECSMFilterFunction::VogelDisk)
-    {
-        OutCombination.NumSamples = 0;
-    }
-    else
-    {
-        OutCombination.NumSamples = CVarCSMNumPoissonDiscSamples.GetValue();
-    }
+    FShadowMaskCS::FPermutation Permutation;
+    Permutation.Set<FCSMFilterModeDim>(static_cast<ECSMFilterMode>(Math::Clamp<int32>(CVarCSMFilterMode.GetValue(), 0, static_cast<int32>(ECSMFilterMode::Count) - 1)));
+    Permutation.Set<FCSMFilterFunctionDim>(FilterFunction);
+    Permutation.Set<FCSMDebug>(GCSMDebugCascades);
+    Permutation.Set<FCSMBlendCascades>(CVarCSMBlendCascades.GetValue());
+    Permutation.Set<FCSMCascadeFromProjection>(CVarCSMSelectCascadeFromProjection.GetValue());
+    Permutation.Set<FCSMRotateSamples>(CVarCSMRotateSamples.GetValue());
+    Permutation.Set<FCSMNumSamples>(FCSMNumSamples::FromSampleCount(CVarCSMNumPoissonDiscSamples.GetValue()));
+
+    return FShadowMaskCS::RemapPermutation(Permutation);
 }

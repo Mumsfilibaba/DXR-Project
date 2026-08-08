@@ -11,19 +11,20 @@
     #define ENABLE_PARALLAX_MAPPING 0
 #endif
 
-#ifndef BINDLESS_SHADOWS
-    #define BINDLESS_SHADOWS (0)
-#endif
-
 #define NUM_CUBE_FACES 6
 
-#ifndef ENABLE_POINTLIGHT_VS_INSTANCING
-    #define ENABLE_POINTLIGHT_VS_INSTANCING 0
+// Mirrors ECubeMapRenderPassType.
+#define POINTLIGHT_PASS_UNKNOWN     0
+#define POINTLIGHT_PASS_MULTI       1
+#define POINTLIGHT_PASS_SINGLE      2
+#define POINTLIGHT_PASS_GEOMETRY    3
+
+#ifndef POINTLIGHT_PASS_KIND
+    #define POINTLIGHT_PASS_KIND POINTLIGHT_PASS_MULTI
 #endif
 
-#ifndef ENABLE_POINTLIGHT_GS_INSTANCING
-    #define ENABLE_POINTLIGHT_GS_INSTANCING 0
-#endif
+#define ENABLE_POINTLIGHT_VS_INSTANCING (POINTLIGHT_PASS_KIND == POINTLIGHT_PASS_SINGLE)
+#define ENABLE_POINTLIGHT_GS_INSTANCING (POINTLIGHT_PASS_KIND == POINTLIGHT_PASS_GEOMETRY)
 
 #if !ENABLE_POINTLIGHT_VS_INSTANCING && !ENABLE_POINTLIGHT_GS_INSTANCING
     #define ENABLE_POINTLIGHT_MULTI_PASS 1
@@ -33,7 +34,7 @@
 ConstantBuffer<FPerObject> PerObjectBuffer : register(b1);
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
-    #if BINDLESS_SHADOWS
+    #if ENABLE_BINDLESS
         #define MATERIAL_ARRAY_REGISTER t0
         #include "MaterialArray.hlsli"
         #include "MaterialBindless.hlsli"
@@ -56,12 +57,12 @@ struct FVSInput
 {
     float3 Position : POSITION0;
 
-#if ENABLE_PARALLAX_MAPPING
+#if HAS_VERTEX_TANGENT_BASIS
     float4 Normal  : NORMAL0;
     float4 Tangent : TANGENT0;
 #endif
 
-#if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
+#if HAS_VERTEX_TEXCOORD0
     float2 TexCoord : TEXCOORD0;
 #endif
 
@@ -238,7 +239,7 @@ float Point_PSMain(FPSPointInput Input) : SV_DepthLessEqual
         const float3   LightDir       = normalize(mul(WorldToTangent, PointLightBuffer.LightPosition - Input.WorldPosition));
 
         bool bParallaxDiscard = false;
-        #if BINDLESS_SHADOWS
+        #if ENABLE_BINDLESS
             TexCoords = ParallaxMapUV(GetHeightBindless(ParallaxMaterial), GetMaterialSamplerBindless(ParallaxMaterial), TexCoords, LightDir, TexCoordsDx, TexCoordsDy, ParallaxMaterial.ParallaxHeightScale, ParallaxMaterial.ParallaxMinLayers, ParallaxMaterial.ParallaxMaxLayers, bParallaxDiscard);
         #else
             TexCoords = ParallaxMapUV(HeightMap, MaterialSampler, TexCoords, LightDir, TexCoordsDx, TexCoordsDy, ParallaxMaterial.ParallaxHeightScale, ParallaxMaterial.ParallaxMinLayers, ParallaxMaterial.ParallaxMaxLayers, bParallaxDiscard);
@@ -253,7 +254,7 @@ float Point_PSMain(FPSPointInput Input) : SV_DepthLessEqual
     #endif
 
     #if ENABLE_ALPHA_MASK 
-        #if BINDLESS_SHADOWS
+        #if ENABLE_BINDLESS
             const FMaterial MaterialData = Materials[PerObjectBuffer.MaterialIndex];
             const float AlphaMask = GetAlbedoBindless(MaterialData).Sample(GetMaterialSamplerBindless(MaterialData), TexCoords).a;
         #else

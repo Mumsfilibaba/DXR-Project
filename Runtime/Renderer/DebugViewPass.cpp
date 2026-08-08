@@ -2,9 +2,18 @@
 #include "Core/Math/Math.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
-#include "RHI/ShaderCompiler.h"
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/ReflectionSettings.h"
+#include "Renderer/CommonShaders.h"
+
+class FDebugViewPS
+{
+    DECLARE_SHADER_TYPE(FDebugViewPS, EShaderStage::Pixel);
+
+    using FPermutation = TShaderPermutation<>;
+};
+
+IMPLEMENT_SHADER_TYPE(FDebugViewPS, "Shaders/DebugView.hlsl", "Main", EShaderModel::SM_6_2);
 
 FDebugViewPass::FDebugViewPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -29,30 +38,14 @@ FDebugViewPass::~FDebugViewPass()
 
 bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
 {
-    TArray<uint8> ShaderCode;
-
-    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    DebugVertexShader = RHI::CreateVertexShader(ShaderCode);
+    DebugVertexShader = FShaderCache::Get().GetShader<FFullscreenVS>();
     if (!DebugVertexShader)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/DebugView.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    DebugPixelShader = RHI::CreatePixelShader(ShaderCode);
+    DebugPixelShader = FShaderCache::Get().GetShader<FDebugViewPS>();
     if (!DebugPixelShader)
     {
         DEBUG_BREAK();

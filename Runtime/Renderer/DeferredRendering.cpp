@@ -1,11 +1,11 @@
 ﻿#include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "RHI/RHI.h"
-#include "RHI/ShaderCompiler.h"
 #include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
 #include "Renderer/DeferredRendering.h"
 #include "Renderer/MaterialBindless.h"
+#include "Renderer/PrePassShaders.h"
 #include "Renderer/ReflectionSettings.h"
 #include "Renderer/RenderFeatureSettings.h"
 #include "Renderer/ShadowSettings.h"
@@ -59,6 +59,111 @@ static FAutoConsoleVariableRef CVarBasePassSpecularAAMaxRoughnessGain(
     "Maximum squared-roughness gain that geometric specular anti-aliasing can add in the deferred BasePass.",
     GBasePassSpecularAAMaxRoughnessGain);
 
+class FNormalMap : SHADER_PERMUTATION_BOOL("ENABLE_NORMAL_MAPPING");
+
+struct FBasePassShaderRules
+{
+    using FPermutation = TShaderPermutation<FMaterialPermutation, FNormalMap, FBindless>;
+
+    static_assert(FPermutation::PermutationCount == 64, "BasePass permutation space grew unexpectedly");
+
+    NODISCARD static FPermutation Create(const FMaterialFeatures& Features, bool bBindless)
+    {
+        FPermutation Permutation;
+        Permutation.Set<FMaterialPermutation>(Features.CreatePermutation());
+        Permutation.Set<FNormalMap>(Features.HasNormalMap());
+        Permutation.Set<FBindless>(bBindless);
+        return RemapPermutation(Permutation);
+    }
+
+    NODISCARD static FPermutation RemapPermutation(FPermutation Permutation)
+    {
+        return RemapMaterialPermutation(Permutation);
+    }
+
+    NODISCARD static bool ShouldCompilePermutation(const FShaderPermutationDesc& Desc)
+    {
+        const FPermutation Permutation = FPermutation(Desc.PermutationID);
+        if (Permutation.Get<FBindless>() && !Desc.bSupportsBindless)
+        {
+            return false;
+        }
+
+        return RemapPermutation(Permutation) == Permutation;
+    }
+};
+
+class FBasePassVS : public FBasePassShaderRules
+{
+    DECLARE_SHADER_TYPE(FBasePassVS, EShaderStage::Vertex);
+};
+
+class FBasePassPS : public FBasePassShaderRules
+{
+    DECLARE_SHADER_TYPE(FBasePassPS, EShaderStage::Pixel);
+};
+
+IMPLEMENT_SHADER_TYPE(FBasePassVS, "Shaders/BasePass.hlsl", "VSMain", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FBasePassPS, "Shaders/BasePass.hlsl", "PSMain", EShaderModel::SM_6_2);
+
+class FBRDFIntegrationCS
+{
+    DECLARE_SHADER_TYPE(FBRDFIntegrationCS, EShaderStage::Compute);
+
+    using FPermutation = TShaderPermutation<>;
+};
+
+IMPLEMENT_SHADER_TYPE(FBRDFIntegrationCS, "Shaders/BRDFIntegationGen.hlsl", "Main", EShaderModel::SM_6_2);
+
+enum class ETiledLightDebugMode : uint8
+{
+    None    = 0,
+    Tiles   = 1,
+    Cascade = 2,
+
+    Count,
+};
+
+class FTiledLightDebug : SHADER_PERMUTATION_ENUM("TILED_LIGHT_DEBUG_MODE", ETiledLightDebugMode);
+
+class FDeferredLightPassCS
+{
+    DECLARE_SHADER_TYPE(FDeferredLightPassCS, EShaderStage::Compute);
+
+    using FPermutation = TShaderPermutation<FTiledLightDebug>;
+};
+
+IMPLEMENT_SHADER_TYPE(FDeferredLightPassCS, "Shaders/DeferredLightPass.hlsl", "Main", EShaderModel::SM_6_2);
+
+class FDepthReductionInitialCS
+{
+    DECLARE_SHADER_TYPE(FDepthReductionInitialCS, EShaderStage::Compute);
+
+    using FPermutation = TShaderPermutation<>;
+};
+
+class FDepthReductionCS
+{
+    DECLARE_SHADER_TYPE(FDepthReductionCS, EShaderStage::Compute);
+
+    using FPermutation = TShaderPermutation<>;
+};
+
+IMPLEMENT_SHADER_TYPE(FDepthReductionInitialCS, "Shaders/DepthReduction.hlsl", "ReductionMainInital", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FDepthReductionCS,        "Shaders/DepthReduction.hlsl", "ReductionMain",       EShaderModel::SM_6_2);
+
+NODISCARD static FGraphicsPipelineKey MakePrePassPSOKey(const FMaterialFeatures& Features, bool bBindless, const FVertexDeclaration& Declaration)
+{
+    const FPrePassShaderRules::FPermutation Permutation = FPrePassShaderRules::Create(Features, bBindless, false);
+    return FGraphicsPipelineKey(Permutation.GetPermutationID(), 0, Declaration.GetID());
+}
+
+NODISCARD static FGraphicsPipelineKey MakeBasePassPSOKey(const FMaterialFeatures& Features, bool bBindless, const FVertexDeclaration& Declaration)
+{
+    const FBasePassShaderRules::FPermutation Permutation = FBasePassShaderRules::Create(Features, bBindless);
+    return FGraphicsPipelineKey(Permutation.GetPermutationID(), 0, Declaration.GetID());
+}
+
 FDepthPrePass::FDepthPrePass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
     , MaterialPSOs()
@@ -74,57 +179,17 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FVertexDecla
 {
     const FMaterialFeatures Features(Material, Declaration);
 
-    const int32  MaterialFlags = static_cast<int32>(Features.Flags);
-    const bool   bBindless     = RHI::bSupportsBindless && GPrePassBindless;
-    const uint64 PSOKey        = MakeMaterialPSOKey(MaterialFlags, bBindless, Declaration.GetID());
+    const int32 MaterialFlags = static_cast<int32>(Features.Flags);
+    const bool  bBindless     = RHI::bSupportsBindless && GPrePassBindless;
+
+    const FGraphicsPipelineKey     PSOKey      = MakePrePassPSOKey(Features, bBindless, Declaration);
+    const FPrePassVS::FPermutation Permutation = FPrePassVS::FPermutation(PSOKey.PermutationID);
 
     FGraphicsPipelineStateInstance* CachedPrePassPSO = MaterialPSOs.Find(PSOKey);
     if (!CachedPrePassPSO)
     {
-        TArray<uint8>         ShaderCode;
-        TArray<FShaderDefine> ShaderDefines;
-
-        if (Features.HasHeightMap())
-        {
-            ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(1)");
-            ShaderDefines.Emplace("ENABLE_PARALLAX_CLIPPING", Features.HasParallaxClipping() ? "(1)" : "(0)");
-        }
-        else
-        {
-            ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(0)");
-        }
-
-        if (Features.HasAlphaMask())
-        {
-            ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
-        }
-        else
-        {
-            ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
-        }
-
-        if (Features.IsDoubleSided())
-        {
-            ShaderDefines.Emplace("ENABLE_DOUBLE_SIDED", "(1)");
-        }
-        else
-        {
-            ShaderDefines.Emplace("ENABLE_DOUBLE_SIDED", "(0)");
-        }
-
-        ShaderDefines.Emplace("BINDLESS_PRE_PASS", bBindless ? "(1)" : "(0)");
-
-        const EShaderModel TargetShaderModel = bBindless ? EShaderModel::SM_6_6 : EShaderModel::SM_6_2;
-
-        FShaderCompileInfo CompileInfo("VSMain", TargetShaderModel, EShaderStage::Vertex, ShaderDefines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return;
-        }
-
         FGraphicsPipelineStateInstance NewPipelineInstance;
-        NewPipelineInstance.VertexShader = RHI::CreateVertexShader(ShaderCode);
+        NewPipelineInstance.VertexShader = FShaderCache::Get().GetShader<FPrePassVS>(Permutation);
 
         if (!NewPipelineInstance.VertexShader)
         {
@@ -132,17 +197,11 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FVertexDecla
             return;
         }
 
+        // Nothing can discard without a height or alpha map, so the depth-only case needs no pixel shader.
         const bool bWantPixelShader = Features.HasHeightMap() || Features.HasAlphaMask();
         if (bWantPixelShader)
         {
-            CompileInfo = FShaderCompileInfo("PSMain", TargetShaderModel, EShaderStage::Pixel, ShaderDefines);
-            if (!FShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
-            {
-                DEBUG_BREAK();
-                return;
-            }
-
-            NewPipelineInstance.PixelShader = RHI::CreatePixelShader(ShaderCode);
+            NewPipelineInstance.PixelShader = FShaderCache::Get().GetShader<FPrePassPS>(Permutation);
             if (!NewPipelineInstance.PixelShader)
             {
                 DEBUG_BREAK();
@@ -155,34 +214,16 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FVertexDecla
         DepthStencilStateDesc.bDepthEnable      = true;
         DepthStencilStateDesc.bDepthWriteEnable = true;
 
-        NewPipelineInstance.DepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
-        if (!NewPipelineInstance.DepthStencilState)
-        {
-            DEBUG_BREAK();
-            return;
-        }
-
         FRHIRasterizerStateDesc RasterizerStateDesc;
-        if (Features.IsDoubleSided())
-        {
-            RasterizerStateDesc.CullMode = ECullMode::None;
-        }
-        else
-        {
-            RasterizerStateDesc.CullMode = ECullMode::Back;
-        }
-
-        NewPipelineInstance.RasterizerState = RHI::CreateRasterizerState(RasterizerStateDesc);
-        if (!NewPipelineInstance.RasterizerState)
-        {
-            DEBUG_BREAK();
-            return;
-        }
+        RasterizerStateDesc.CullMode = Features.IsDoubleSided() ? ECullMode::None : ECullMode::Back;
 
         FRHIBlendStateDesc BlendStateDesc;
-        NewPipelineInstance.BlendState = RHI::CreateBlendState(BlendStateDesc);
 
-        if (!NewPipelineInstance.BlendState)
+        FRHIRasterizerStateRef   RasterizerState   = RHI::CreateRasterizerState(RasterizerStateDesc);
+        FRHIBlendStateRef        BlendState        = RHI::CreateBlendState(BlendStateDesc);
+        FRHIDepthStencilStateRef DepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
+
+        if (!DepthStencilState || !RasterizerState || !BlendState)
         {
             DEBUG_BREAK();
             return;
@@ -197,9 +238,9 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FVertexDecla
 
         FRHIGraphicsPipelineStateDesc PSODesc;
         PSODesc.InputLayout                                   = NewPipelineInstance.StreamBinding->InputLayout.Get();
-        PSODesc.BlendState                                    = NewPipelineInstance.BlendState.Get();
-        PSODesc.DepthStencilState                             = NewPipelineInstance.DepthStencilState.Get();
-        PSODesc.RasterizerState                               = NewPipelineInstance.RasterizerState.Get();
+        PSODesc.BlendState                                    = BlendState.Get();
+        PSODesc.DepthStencilState                             = DepthStencilState.Get();
+        PSODesc.RasterizerState                               = RasterizerState.Get();
         PSODesc.VertexShader                                  = NewPipelineInstance.VertexShader.Get();
         PSODesc.PixelShader                                   = NewPipelineInstance.PixelShader.Get();
         PSODesc.RasterizerOutputFormats.DepthStencilFormat    = RendererTextureFormats::DepthBufferFormat;
@@ -297,11 +338,13 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
 
         const FMaterialFeatures Features(Batch.EffectiveMaterialFlags);
 
-        const uint64 PSOKey = MakeMaterialPSOKey(static_cast<int32>(Features.Flags), bBindless, Batch.Declaration.GetID());
+        const FGraphicsPipelineKey PSOKey = MakePrePassPSOKey(Features, bBindless, Batch.Declaration);
+
         FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(PSOKey);
         if (!PipelineInstance)
         {
             DEBUG_BREAK();
+            continue;
         }
 
         FRHIGraphicsPipelineState* PipelineState = PipelineInstance->PipelineState.Get();
@@ -382,80 +425,24 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FVertexD
 {
     const FMaterialFeatures Features(Material, Declaration);
 
-    const int32  MaterialFlags = static_cast<int32>(Features.Flags);
-    const bool   bBindless     = RHI::bSupportsBindless && GBasePassBindless;
-    const uint64 PSOKey        = MakeMaterialPSOKey(MaterialFlags, bBindless, Declaration.GetID());
+    const int32 MaterialFlags = static_cast<int32>(Features.Flags);
+    const bool  bBindless     = RHI::bSupportsBindless && GBasePassBindless;
+
+    const FGraphicsPipelineKey      PSOKey      = MakeBasePassPSOKey(Features, bBindless, Declaration);
+    const FBasePassVS::FPermutation Permutation = FBasePassVS::FPermutation(PSOKey.PermutationID);
 
     FGraphicsPipelineStateInstance* CachedBasePassPSO = MaterialPSOs.Find(PSOKey);
     if (!CachedBasePassPSO)
     {
-        TArray<uint8>         ShaderCode;
-        TArray<FShaderDefine> ShaderDefines;
-
-        if (Features.HasHeightMap())
-        {
-            ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(1)");
-            ShaderDefines.Emplace("ENABLE_PARALLAX_CLIPPING", Features.HasParallaxClipping() ? "(1)" : "(0)");
-        }
-        else
-        {
-            ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(0)");
-        }
-
-        if (Features.HasNormalMap())
-        {
-            ShaderDefines.Emplace("ENABLE_NORMAL_MAPPING", "(1)");
-        }
-        else
-        {
-            ShaderDefines.Emplace("ENABLE_NORMAL_MAPPING", "(0)");
-        }
-
-        if (Features.HasAlphaMask())
-        {
-            ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
-        }
-        else
-        {
-            ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
-        }
-
-        if (Features.IsDoubleSided())
-        {
-            ShaderDefines.Emplace("ENABLE_DOUBLE_SIDED", "(1)");
-        }
-        else
-        {
-            ShaderDefines.Emplace("ENABLE_DOUBLE_SIDED", "(0)");
-        }
-
-        ShaderDefines.Emplace("BINDLESS_BASE_PASS", bBindless ? "(1)" : "(0)");
-
-        const EShaderModel TargetShaderModel = bBindless ? EShaderModel::SM_6_6 : EShaderModel::SM_6_2;
-
-        FShaderCompileInfo CompileInfo("VSMain", TargetShaderModel, EShaderStage::Vertex, ShaderDefines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/BasePass.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return;
-        }
-
         FGraphicsPipelineStateInstance NewPipelineInstance;
-        NewPipelineInstance.VertexShader = RHI::CreateVertexShader(ShaderCode);
+        NewPipelineInstance.VertexShader = FShaderCache::Get().GetShader<FBasePassVS>(Permutation);
         if (!NewPipelineInstance.VertexShader)
         {
             DEBUG_BREAK();
             return;
         }
 
-        CompileInfo = FShaderCompileInfo("PSMain", TargetShaderModel, EShaderStage::Pixel, ShaderDefines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/BasePass.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return;
-        }
-
-        NewPipelineInstance.PixelShader = RHI::CreatePixelShader(ShaderCode);
+        NewPipelineInstance.PixelShader = FShaderCache::Get().GetShader<FBasePassPS>(Permutation);
         if (!NewPipelineInstance.PixelShader)
         {
             DEBUG_BREAK();
@@ -467,35 +454,17 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FVertexD
         DepthStencilStateDesc.bDepthEnable      = true;
         DepthStencilStateDesc.bDepthWriteEnable = false;
 
-        NewPipelineInstance.DepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
-        if (!NewPipelineInstance.DepthStencilState)
-        {
-            DEBUG_BREAK();
-            return;
-        }
-
         FRHIRasterizerStateDesc RasterizerStateDesc;
-        if (Features.IsDoubleSided())
-        {
-            RasterizerStateDesc.CullMode = ECullMode::None;
-        }
-        else
-        {
-            RasterizerStateDesc.CullMode = ECullMode::Back;
-        }
-
-        NewPipelineInstance.RasterizerState = RHI::CreateRasterizerState(RasterizerStateDesc);
-        if (!NewPipelineInstance.RasterizerState)
-        {
-            DEBUG_BREAK();
-            return;
-        }
+        RasterizerStateDesc.CullMode = Features.IsDoubleSided() ? ECullMode::None : ECullMode::Back;
 
         FRHIBlendStateDesc BlendStateDesc;
         BlendStateDesc.NumRenderTargets = EGBufferIndex::NumRenderTargets;
 
-        NewPipelineInstance.BlendState = RHI::CreateBlendState(BlendStateDesc);
-        if (!NewPipelineInstance.BlendState)
+        FRHIRasterizerStateRef   RasterizerState   = RHI::CreateRasterizerState(RasterizerStateDesc);
+        FRHIBlendStateRef        BlendState        = RHI::CreateBlendState(BlendStateDesc);
+        FRHIDepthStencilStateRef DepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
+
+        if (!DepthStencilState || !RasterizerState || !BlendState)
         {
             DEBUG_BREAK();
             return;
@@ -510,9 +479,9 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FVertexD
 
         FRHIGraphicsPipelineStateDesc PSODesc;
         PSODesc.InputLayout                                    = NewPipelineInstance.StreamBinding->InputLayout.Get();
-        PSODesc.BlendState                                     = NewPipelineInstance.BlendState.Get();
-        PSODesc.DepthStencilState                              = NewPipelineInstance.DepthStencilState.Get();
-        PSODesc.RasterizerState                                = NewPipelineInstance.RasterizerState.Get();
+        PSODesc.BlendState                                     = BlendState.Get();
+        PSODesc.DepthStencilState                              = DepthStencilState.Get();
+        PSODesc.RasterizerState                                = RasterizerState.Get();
         PSODesc.VertexShader                                   = NewPipelineInstance.VertexShader.Get();
         PSODesc.PixelShader                                    = NewPipelineInstance.PixelShader.Get();
         PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = RendererTextureFormats::AlbedoFormat;
@@ -656,11 +625,13 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
 
         const FMaterialFeatures Features(Batch.EffectiveMaterialFlags);
 
-        const uint64 PSOKey = MakeMaterialPSOKey(static_cast<int32>(Features.Flags), bBindless, Batch.Declaration.GetID());
+        const FGraphicsPipelineKey PSOKey = MakeBasePassPSOKey(Features, bBindless, Batch.Declaration);
+
         FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(PSOKey);
         if (!PipelineInstance)
         {
             DEBUG_BREAK();
+            continue;
         }
 
         FRHIGraphicsPipelineState* PipelineState = PipelineInstance->PipelineState.Get();
@@ -777,8 +748,6 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    TArray<uint8> ShaderCode;
-
     constexpr uint32  LUTSize   = 512;
     constexpr EFormat LUTFormat = EFormat::R16G16_Float;
 
@@ -826,14 +795,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/BRDFIntegationGen.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    FRHIComputeShaderRef BRDFShader = RHI::CreateComputeShader(ShaderCode);
+    FRHIComputeShaderRef BRDFShader = FShaderCache::Get().GetShader<FBRDFIntegrationCS>();
     if (!BRDFShader)
     {
         DEBUG_BREAK();
@@ -880,14 +842,10 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
     FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
 
     // Tiled lightning
-    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
+    FDeferredLightPassCS::FPermutation LightPassPermutation;
+    LightPassPermutation.Set<FTiledLightDebug>(ETiledLightDebugMode::None);
 
-    TiledLightShader = RHI::CreateComputeShader(ShaderCode);
+    TiledLightShader = FShaderCache::Get().GetShader<FDeferredLightPassCS>(LightPassPermutation);
     if (!TiledLightShader)
     {
         DEBUG_BREAK();
@@ -909,19 +867,9 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
     }
 
     // Tiled lightning Tile debugging
-    TArray<FShaderDefine> Defines =
-    {
-        { "DRAW_TILE_DEBUG", "(1)" }
-    };
+    LightPassPermutation.Set<FTiledLightDebug>(ETiledLightDebugMode::Tiles);
 
-    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    TiledLightShader_TileDebug = RHI::CreateComputeShader(ShaderCode);
+    TiledLightShader_TileDebug = FShaderCache::Get().GetShader<FDeferredLightPassCS>(LightPassPermutation);
     if (!TiledLightShader_TileDebug)
     {
         DEBUG_BREAK();
@@ -942,19 +890,9 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
     }
 
     // Tiled lightning Cascade debugging
-    Defines =
-    {
-        { "DRAW_CASCADE_DEBUG", "(1)" }
-    };
+    LightPassPermutation.Set<FTiledLightDebug>(ETiledLightDebugMode::Cascade);
 
-    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    TiledLightShader_CascadeDebug = RHI::CreateComputeShader(ShaderCode);
+    TiledLightShader_CascadeDebug = FShaderCache::Get().GetShader<FDeferredLightPassCS>(LightPassPermutation);
     if (!TiledLightShader_CascadeDebug)
     {
         DEBUG_BREAK();
@@ -1161,17 +1099,8 @@ FDepthReducePass::~FDepthReducePass()
 
 bool FDepthReducePass::Initialize(FFrameResources& FrameResources)
 {
-    TArray<uint8> ShaderCode;
-
     // Depth-Reduction
-    FShaderCompileInfo CompileInfo("ReductionMainInital", EShaderModel::SM_6_2, EShaderStage::Compute);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/DepthReduction.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    ReduceDepthInitalShader = RHI::CreateComputeShader(ShaderCode);
+    ReduceDepthInitalShader = FShaderCache::Get().GetShader<FDepthReductionInitialCS>();
     if (!ReduceDepthInitalShader)
     {
         DEBUG_BREAK();
@@ -1193,14 +1122,7 @@ bool FDepthReducePass::Initialize(FFrameResources& FrameResources)
     }
 
     // Depth-Reduction
-    CompileInfo = FShaderCompileInfo("ReductionMain", EShaderModel::SM_6_2, EShaderStage::Compute);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/DepthReduction.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    ReduceDepthShader = RHI::CreateComputeShader(ShaderCode);
+    ReduceDepthShader = FShaderCache::Get().GetShader<FDepthReductionCS>();
     if (!ReduceDepthShader)
     {
         DEBUG_BREAK();

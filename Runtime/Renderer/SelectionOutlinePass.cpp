@@ -1,12 +1,48 @@
-﻿#include "Renderer/SelectionOutlinePass.h"
+#include "Renderer/SelectionOutlinePass.h"
 #if EDITOR_BUILD
     #include "RHI/RHI.h"
-    #include "RHI/ShaderCompiler.h"
     #include "Core/Math/Math.h"
     #include "Core/Misc/FrameProfiler.h"
     #include "Renderer/Performance/GPUProfiler.h"
     #include "Renderer/SceneRenderer.h"
+    #include "Renderer/CommonShaders.h"
     #include "Renderer/SelectionOutlineSettings.h"
+
+class FSelectionMaskPS
+{
+    DECLARE_SHADER_TYPE(FSelectionMaskPS, EShaderStage::Pixel);
+
+    using FPermutation = TShaderPermutation<>;
+};
+
+IMPLEMENT_SHADER_TYPE(FSelectionMaskPS, "Shaders/SelectionOutline.hlsl", "SelectionMaskPS", EShaderModel::SM_6_2);
+
+class FSelectionDilateMaxPS
+{
+    DECLARE_SHADER_TYPE(FSelectionDilateMaxPS, EShaderStage::Pixel);
+
+    using FPermutation = TShaderPermutation<>;
+};
+
+IMPLEMENT_SHADER_TYPE(FSelectionDilateMaxPS, "Shaders/SelectionOutline.hlsl", "DilateMaxPS", EShaderModel::SM_6_2);
+
+class FSelectionErodeMinPS
+{
+    DECLARE_SHADER_TYPE(FSelectionErodeMinPS, EShaderStage::Pixel);
+
+    using FPermutation = TShaderPermutation<>;
+};
+
+IMPLEMENT_SHADER_TYPE(FSelectionErodeMinPS, "Shaders/SelectionOutline.hlsl", "ErodeMinPS", EShaderModel::SM_6_2);
+
+class FSelectionRingPS
+{
+    DECLARE_SHADER_TYPE(FSelectionRingPS, EShaderStage::Pixel);
+
+    using FPermutation = TShaderPermutation<>;
+};
+
+IMPLEMENT_SHADER_TYPE(FSelectionRingPS, "Shaders/SelectionOutline.hlsl", "SelectionRingPS", EShaderModel::SM_6_2);
 
 FSelectionOutlinePass::FSelectionOutlinePass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -163,15 +199,7 @@ bool FSelectionOutlinePass::CreateSelectedIDsBuffer()
 
 bool FSelectionOutlinePass::CreatePipelineStates()
 {
-    TArray<uint8> ShaderCode;
-
-    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
-    {
-        return false;
-    }
-
-    FRHIVertexShaderRef FullscreenVS = RHI::CreateVertexShader(ShaderCode);
+    FRHIVertexShaderRef FullscreenVS = FShaderCache::Get().GetShader<FFullscreenVS>();
     if (!FullscreenVS)
     {
         return false;
@@ -208,13 +236,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
 
     // Mask PSO
     {
-        CompileInfo = FShaderCompileInfo("SelectionMaskPS", EShaderModel::SM_6_2, EShaderStage::Pixel);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/SelectionOutline.hlsl", CompileInfo, ShaderCode))
-        {
-            return false;
-        }
-
-        MaskShader = RHI::CreatePixelShader(ShaderCode);
+        MaskShader = FShaderCache::Get().GetShader<FSelectionMaskPS>();
         if (!MaskShader)
         {
             return false;
@@ -243,13 +265,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
 
     // Dilate PSO
     {
-        CompileInfo = FShaderCompileInfo("DilateMaxPS", EShaderModel::SM_6_2, EShaderStage::Pixel);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/SelectionOutline.hlsl", CompileInfo, ShaderCode))
-        {
-            return false;
-        }
-
-        DilateShader = RHI::CreatePixelShader(ShaderCode);
+        DilateShader = FShaderCache::Get().GetShader<FSelectionDilateMaxPS>();
         if (!DilateShader)
         {
             return false;
@@ -278,13 +294,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
 
     // Erode PSO (min filter)
     {
-        CompileInfo = FShaderCompileInfo("ErodeMinPS", EShaderModel::SM_6_2, EShaderStage::Pixel);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/SelectionOutline.hlsl", CompileInfo, ShaderCode))
-        {
-            return false;
-        }
-
-        ErodeShader = RHI::CreatePixelShader(ShaderCode);
+        ErodeShader = FShaderCache::Get().GetShader<FSelectionErodeMinPS>();
         if (!ErodeShader)
         {
             return false;
@@ -313,13 +323,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
 
     // Resolve PSO (SelectedMask + DilatedMask -> RingMask)
     {
-        CompileInfo = FShaderCompileInfo("SelectionRingPS", EShaderModel::SM_6_2, EShaderStage::Pixel);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/SelectionOutline.hlsl", CompileInfo, ShaderCode))
-        {
-            return false;
-        }
-
-        ResolveShader = RHI::CreatePixelShader(ShaderCode);
+        ResolveShader = FShaderCache::Get().GetShader<FSelectionRingPS>();
         if (!ResolveShader)
         {
             return false;

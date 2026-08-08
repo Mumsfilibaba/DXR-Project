@@ -2,6 +2,7 @@
 #include "Core/RefCountedBase.h"
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Platform/PlatformFile.h"
+#include "Core/Platform/PlatformTime.h"
 #include "Core/Filesystem/File.h"
 #include "Core/Memory/Malloc.h"
 #include "Core/Misc/OutputDeviceLogger.h"
@@ -28,6 +29,17 @@ static TAutoConsoleVariable<bool> CVarMapMin16FloatToFloat(
     "Map the min16float type family to full-precision float on non-HLSL backends (works around DXC's SPIR-V "
     "RelaxedPrecision codegen bug). Disable to keep native min-precision types (also sets MIN16FLOAT_AVAILABLE).",
     true);
+
+static FAutoConsoleCommand CCmdDumpShaderCompileStats(
+    "RHI.DumpShaderCompileStats",
+    "Logs how many shaders the compiler has built and how long they took",
+    FConsoleCommandDelegate::CreateLambda([](StringView)
+    {
+        if (FShaderCompiler* Compiler = FShaderCompiler::TryGet())
+        {
+            Compiler->LogCompileStats();
+        }
+    }));
 
 enum class EDXCPart : uint32
 {
@@ -119,6 +131,178 @@ static LPCWSTR GetShaderModelString(EShaderModel Model)
     }
 }
 
+static void BuildFixedCompileArguments(const FShaderCompileInfo& CompileInfo, const WString& IncludeDir, TArray<LPCWSTR>& OutArgs)
+{
+    OutArgs.Emplace(L"-HV 2021"); // Use HLSL 2021
+    OutArgs.Emplace(L"-WX");      // Warnings as errors
+
+    OutArgs.Emplace(L"-I");
+    OutArgs.Emplace(*IncludeDir);
+
+    if (CVarShaderDebug.GetValue())
+    {
+        OutArgs.Emplace(L"-Zi");
+        OutArgs.Emplace(L"-Qembed_debug");
+    }
+
+    // Optimization level 3
+    if (CompileInfo.bOptimize)
+    {
+        OutArgs.Emplace(L"-O3");                  // Highest optimization level
+        OutArgs.Emplace(L"-all-resources-bound");
+        OutArgs.Emplace(L"-Gfa");                 // Avoid flow-control. DXC rejects this on SM 5.1+ unless -all-resources-bound is also passed
+    }
+}
+
+static void BuildSpirvCompileArguments(TArray<LPCWSTR>& OutArgs)
+{
+    OutArgs.Emplace(L"-spirv");
+    OutArgs.Emplace(L"-fspv-target-env=vulkan1.2");
+    OutArgs.Emplace(L"-fspv-reduce-load-size");
+    OutArgs.Emplace(L"-fvk-use-dx-layout");
+
+    // Set must match VULKAN_BINDLESS_HEAP_MARKER_SET in VulkanConstants.h.
+    OutArgs.Emplace(L"-fvk-bind-resource-heap");
+    OutArgs.Emplace(L"0");
+    OutArgs.Emplace(L"31");
+
+    OutArgs.Emplace(L"-fvk-bind-sampler-heap");
+    OutArgs.Emplace(L"1");
+    OutArgs.Emplace(L"31");
+
+    // Binding must match VULKAN_BINDLESS_COUNTER_MARKER_BINDIN. The heap has no counter descriptors, so this only exists to be rejected.
+    OutArgs.Emplace(L"-fvk-bind-counter-heap");
+    OutArgs.Emplace(L"16");
+    OutArgs.Emplace(L"31");
+}
+
+static void BuildCompileDefines(const FShaderCompileInfo& CompileInfo, TArray<WString>& OutStorage, TArray<DxcDefine>& OutDefines)
+{
+    // Add defines that identify the target shader backend
+    OutDefines.Emplace(DxcDefine{ L"SHADER_BACKEND_D3D12" , L"(1)" });
+    OutDefines.Emplace(DxcDefine{ L"SHADER_BACKEND_VULKAN", L"(2)" });
+    OutDefines.Emplace(DxcDefine{ L"SHADER_BACKEND_METAL" , L"(3)" });
+
+    if (CompileInfo.OutputLanguage == EShaderOutputLanguage::HLSL)
+    {
+        OutDefines.Add({ L"SHADER_BACKEND", L"SHADER_BACKEND_D3D12" });
+    }
+    else if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
+    {
+        OutDefines.Add({ L"SHADER_BACKEND", L"SHADER_BACKEND_METAL" });
+    }
+    else if (CompileInfo.OutputLanguage == EShaderOutputLanguage::SPIRV)
+    {
+        OutDefines.Add({ L"SHADER_BACKEND", L"SHADER_BACKEND_VULKAN" });
+    }
+    else
+    {
+        OutDefines.Add({ L"SHADER_BACKEND", L"(0)" });
+    }
+
+    const bool bMapMin16FloatToFloat = (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL) && CVarMapMin16FloatToFloat.GetValue();
+    if (bMapMin16FloatToFloat)
+    {
+        OutDefines.Add({ L"min16float",  L"float"  });
+        OutDefines.Add({ L"min16float2", L"float2" });
+        OutDefines.Add({ L"min16float3", L"float3" });
+        OutDefines.Add({ L"min16float4", L"float4" });
+        OutDefines.Add({ L"MIN16FLOAT_AVAILABLE", L"(0)" });
+    }
+    else
+    {
+        OutDefines.Add({ L"MIN16FLOAT_AVAILABLE", L"(1)" });
+    }
+
+    if (!CompileInfo.Defines.IsEmpty())
+    {
+        OutStorage.Reserve(CompileInfo.Defines.Size() * 2);
+
+        for (const FShaderDefine& Define : CompileInfo.Defines)
+        {
+            const WString& WideDefine = OutStorage.Emplace(CharToWide(Define.Define));
+            const WString& WideValue  = OutStorage.Emplace(CharToWide(Define.Value));
+
+            OutDefines.Add({ *WideDefine, *WideValue });
+        }
+    }
+}
+
+class FScopedCompileTimer
+{
+public:
+    FScopedCompileTimer(AtomicInt64& InNumCompiles, AtomicInt64& InTotalTimeNS)
+        : NumCompiles(InNumCompiles)
+        , TotalTimeNS(InTotalTimeNS)
+        , StartTime(FPlatformTime::QueryPerformanceCounter())
+    {
+    }
+
+    ~FScopedCompileTimer()
+    {
+        const uint64 Elapsed = FPlatformTime::QueryPerformanceCounter() - StartTime;
+        const double Seconds = static_cast<double>(Elapsed) / static_cast<double>(FPlatformTime::QueryPerformanceFrequency());
+
+        NumCompiles.Add(1);
+        TotalTimeNS.Add(static_cast<int64>(Seconds * 1000.0 * 1000.0 * 1000.0));
+    }
+
+private:
+    AtomicInt64& NumCompiles;
+    AtomicInt64& TotalTimeNS;
+    uint64       StartTime;
+};
+
+class FRecordingIncludeHandler final : public IDxcIncludeHandler
+{
+public:
+    FRecordingIncludeHandler(IDxcIncludeHandler* InInnerHandler, TArray<String>& InRecordedIncludes)
+        : InnerHandler(InInnerHandler)
+        , RecordedIncludes(InRecordedIncludes)
+    {
+    }
+
+    virtual HRESULT LoadSource(LPCWSTR Filename, IDxcBlob** ppIncludeSource) override final
+    {
+        const HRESULT Result = InnerHandler->LoadSource(Filename, ppIncludeSource);
+        if (SUCCEEDED(Result) && Filename)
+        {
+            const String IncludePath = WideToChar(WString(Filename));
+            if (!RecordedIncludes.Contains(IncludePath))
+            {
+                RecordedIncludes.Emplace(IncludePath);
+            }
+        }
+
+        return Result;
+    }
+
+    virtual ULONG AddRef()  override final { return 1; }
+    virtual ULONG Release() override final { return 1; }
+
+    virtual HRESULT QueryInterface(REFIID Riid, LPVOID* ppvObject) override final
+    {
+        if (!ppvObject)
+        {
+            return E_INVALIDARG;
+        }
+
+        if (Riid == __uuidof(IUnknown) || Riid == __uuidof(IDxcIncludeHandler))
+        {
+            *ppvObject = reinterpret_cast<LPVOID>(this);
+            AddRef();
+            return S_OK;
+        }
+
+        *ppvObject = nullptr;
+        return E_NOINTERFACE;
+    }
+
+private:
+    IDxcIncludeHandler* InnerHandler;
+    TArray<String>&     RecordedIncludes;
+};
+
 class FShaderBlob final : public IDxcBlob, public FRefCountedBase
 {
 public:
@@ -172,6 +356,10 @@ FShaderCompiler::FShaderCompiler(const String& InAssetPath)
     : DXCLib(nullptr)
     , DxcCreateInstanceFunc(nullptr)
     , AssetPath(InAssetPath)
+    , DXCVersionMajor(0)
+    , DXCVersionMinor(0)
+    , NumCompiles(0)
+    , TotalCompileTimeNS(0)
 {
 }
 
@@ -250,14 +438,12 @@ bool FShaderCompiler::InitializeDXC()
     TComPtr<IDxcVersionInfo> VersionInfo;
     if (SUCCEEDED(DxcCreateInstanceFunc(CLSID_DxcCompiler, IID_PPV_ARGS(&VersionInfo))))
     {
-        uint32 Major = 0;
-        uint32 Minor = 0;
-        if (SUCCEEDED(VersionInfo->GetVersion(&Major, &Minor)))
+        if (SUCCEEDED(VersionInfo->GetVersion(&DXCVersionMajor, &DXCVersionMinor)))
         {
             uint32 Flags = 0;
             VersionInfo->GetFlags(&Flags);
 
-            LOG_INFO("[FShaderCompiler]: Loaded 'dxcompiler' version %u.%u%s", Major, Minor, (Flags & DxcVersionInfoFlags_Debug) ? " (Debug)" : "");
+            LOG_INFO("[FShaderCompiler]: Loaded 'dxcompiler' version %u.%u%s", DXCVersionMajor, DXCVersionMinor, (Flags & DxcVersionInfoFlags_Debug) ? " (Debug)" : "");
         }
     }
     else
@@ -268,7 +454,7 @@ bool FShaderCompiler::InitializeDXC()
     return true;
 }
 
-bool FShaderCompiler::CompileFromFile(const String& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
+bool FShaderCompiler::CompileFromFile(const String& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode, TArray<String>* OutDependencies)
 {
     // Add asset-path to the filename
     const String FilePath = AssetPath + '/' + Filename;
@@ -293,18 +479,88 @@ bool FShaderCompiler::CompileFromFile(const String& Filename, const FShaderCompi
         }
     }
 
+    // The pre-processor only reports the files it includes, so the shader itself is added here
+    if (OutDependencies)
+    {
+        OutDependencies->Emplace(FilePath);
+    }
+
     // Compile the source
     const String Source(Text.Data(), Text.Size());
-    return Compile(Source, FilePath, CompileInfo, OutByteCode);
+    return Compile(Source, FilePath, CompileInfo, OutByteCode, OutDependencies);
 }
 
-bool FShaderCompiler::CompileFromSource(const String& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
+bool FShaderCompiler::CompileFromSource(const String& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode, TArray<String>* OutDependencies)
 {
-    return Compile(ShaderSource, "", CompileInfo, OutByteCode);
+    return Compile(ShaderSource, "", CompileInfo, OutByteCode, OutDependencies);
 }
 
-bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
+static void HashWideString(uint64& OutHash, LPCWSTR Text)
 {
+    for (LPCWSTR Character = Text; Character && *Character; ++Character)
+    {
+        HashCombine(OutHash, static_cast<uint32>(*Character));
+    }
+}
+
+uint64 FShaderCompiler::ComputeCompileHash(const String& SourceFile, const FShaderCompileInfo& CompileInfo) const
+{
+    uint64 Hash = THash<String>::GetHash(SourceFile);
+
+    HashCombine(Hash, CompileInfo.EntryPoint);
+    HashCombine(Hash, CompileInfo.ShaderModel);
+    HashCombine(Hash, CompileInfo.ShaderStage);
+    HashCombine(Hash, CompileInfo.OutputLanguage);
+    HashCombine(Hash, DXCVersionMajor);
+    HashCombine(Hash, DXCVersionMinor);
+
+    const WString WideShaderIncludeDir = CharToWide(AssetPath + "/Shaders");
+
+    TArray<LPCWSTR> CompileArgs;
+    BuildFixedCompileArguments(CompileInfo, WideShaderIncludeDir, CompileArgs);
+
+    if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
+    {
+        BuildSpirvCompileArguments(CompileArgs);
+    }
+
+    for (LPCWSTR Argument : CompileArgs)
+    {
+        HashWideString(Hash, Argument);
+    }
+
+    TArray<WString>   DefineStrings;
+    TArray<DxcDefine> DxcDefines;
+    BuildCompileDefines(CompileInfo, DefineStrings, DxcDefines);
+
+    for (const DxcDefine& Define : DxcDefines)
+    {
+        HashWideString(Hash, Define.Name);
+        HashWideString(Hash, Define.Value);
+    }
+
+    return Hash;
+}
+
+void FShaderCompiler::LogCompileStats() const
+{
+    const int64     Count = NumCompiles.Load();
+    const FTimespan Total = FTimespan(static_cast<uint64>(TotalCompileTimeNS.Load()));
+
+    if (Count <= 0)
+    {
+        LOG_INFO("[FShaderCompiler]: No shaders compiled");
+        return;
+    }
+
+    LOG_INFO("[FShaderCompiler]: Compiled %lld shaders in %.2f seconds (%.1f ms average)",
+        Count, Total.AsSeconds(), Total.AsMilliseconds() / static_cast<double>(Count));
+}
+
+bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode, TArray<String>* OutDependencies)
+{
+    FScopedCompileTimer CompileTimer(NumCompiles, TotalCompileTimeNS);
+
     STAT_ADD(STAT_Shader_CompileCount, 1);
     OutByteCode.Clear();
 
@@ -330,98 +586,26 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
         return false;
     }
 
-    TComPtr<IDxcIncludeHandler> IncludeHandler;
-    hr = Utils->CreateDefaultIncludeHandler(&IncludeHandler);
+    TComPtr<IDxcIncludeHandler> DefaultIncludeHandler;
+    hr = Utils->CreateDefaultIncludeHandler(&DefaultIncludeHandler);
     if (FAILED(hr))
     {
         LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to create IncludeHandler");
         return false;
     }
 
+    TArray<String>           DiscardedIncludes;
+    FRecordingIncludeHandler IncludeHandler(DefaultIncludeHandler.Get(), OutDependencies ? *OutDependencies : DiscardedIncludes);
+
     const WString WideShaderIncludeDir = CharToWide(AssetPath + "/Shaders");
 
-    // Add compile arguments
-    TArray<LPCWSTR> CompileArgs =
-    {
-        L"-HV 2021", // Use HLSL 2021
-        L"-WX"       // Warnings as errors
-    };
+    TArray<LPCWSTR> CompileArgs;
+    BuildFixedCompileArguments(CompileInfo, WideShaderIncludeDir, CompileArgs);
 
-    CompileArgs.Emplace(L"-I");
-    CompileArgs.Emplace(*WideShaderIncludeDir);
+    TArray<WString>   DefineStrings;
+    TArray<DxcDefine> DxcDefines;
+    BuildCompileDefines(CompileInfo, DefineStrings, DxcDefines);
 
-    if (CVarShaderDebug.GetValue())
-    {
-        CompileArgs.Emplace(L"-Zi");
-        CompileArgs.Emplace(L"-Qembed_debug");
-    }
-
-    // Optimization level 3
-    if (CompileInfo.bOptimize)
-    {
-        CompileArgs.Emplace(L"-O3"); // Highest optimization level
-        CompileArgs.Emplace(L"-all-resources-bound");
-        CompileArgs.Emplace(L"-Gfa"); // Avoid flow-control. DXC rejects this on SM 5.1+ unless -all-resources-bound is also passed
-    }
-
-    // Add defines that identify the target shader backend
-    TArray<DxcDefine> DxcDefines =
-    {
-        { L"SHADER_BACKEND_D3D12" , L"(1)" },
-        { L"SHADER_BACKEND_VULKAN", L"(2)" },
-        { L"SHADER_BACKEND_METAL" , L"(3)" },
-    };
-
-    if (CompileInfo.OutputLanguage == EShaderOutputLanguage::HLSL)
-    {
-        DxcDefines.Add({ L"SHADER_BACKEND", L"SHADER_BACKEND_D3D12" });
-    }
-    else if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
-    {
-        DxcDefines.Add({ L"SHADER_BACKEND", L"SHADER_BACKEND_METAL" });
-    }
-    else if (CompileInfo.OutputLanguage == EShaderOutputLanguage::SPIRV)
-    {
-        DxcDefines.Add({ L"SHADER_BACKEND", L"SHADER_BACKEND_VULKAN" });
-    }
-    else
-    {
-        DxcDefines.Add({ L"SHADER_BACKEND", L"(0)" });
-    }
-
-    // DXC's SPIR-V backend adds a RelaxedPrecision decoration, and its codegen can emit 
-    // that decoration twice on the same id, producing invalid SPIR-V that fails validation 
-    // with the error "decorated with RelaxedPrecision multiple times".
-
-    const bool bMapMin16FloatToFloat = (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL) && CVarMapMin16FloatToFloat.GetValue();
-    if (bMapMin16FloatToFloat)
-    {
-        DxcDefines.Add({ L"min16float",  L"float"  });
-        DxcDefines.Add({ L"min16float2", L"float2" });
-        DxcDefines.Add({ L"min16float3", L"float3" });
-        DxcDefines.Add({ L"min16float4", L"float4" });
-        DxcDefines.Add({ L"MIN16FLOAT_AVAILABLE", L"(0)" });
-    }
-    else
-    {
-        DxcDefines.Add({ L"MIN16FLOAT_AVAILABLE", L"(1)" });
-    }
-
-    // Convert defines
-    TArray<WString> DefineStrings;
-    if (!CompileInfo.Defines.IsEmpty())
-    {
-        DefineStrings.Reserve(CompileInfo.Defines.Size() * 2);
-
-        for (const FShaderDefine& Define : CompileInfo.Defines)
-        {
-            const WString& WideDefine = DefineStrings.Emplace(CharToWide(Define.Define));
-            const WString& WideValue  = DefineStrings.Emplace(CharToWide(Define.Value));
-
-            DxcDefines.Add({ *WideDefine, *WideValue });
-        }
-    }
- 
     // Log all the defines that are used for this shader-compilation
     const bool bVerboseLogging = CVarVerboseLogging.GetValue();
     if (bVerboseLogging)
@@ -493,7 +677,7 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
     SourceBuffer.Encoding = DXC_CP_ACP;
 
     TComPtr<IDxcResult> PreprocessResult;
-    hr = Compiler->Compile(&SourceBuffer, PreProcessorArguments->GetArguments(), static_cast<uint32>(PreProcessorArguments->GetCount()), IncludeHandler.Get(), IID_PPV_ARGS(&PreprocessResult));
+    hr = Compiler->Compile(&SourceBuffer, PreProcessorArguments->GetArguments(), static_cast<uint32>(PreProcessorArguments->GetCount()), &IncludeHandler, IID_PPV_ARGS(&PreprocessResult));
     if (FAILED(hr))
     {
         LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to preprocess shader");
@@ -540,24 +724,7 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
     String Source(reinterpret_cast<const char*>(PreprocessedBlob->GetBufferPointer()), static_cast<int32>(PreprocessedBlob->GetBufferSize()));
     if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
     {
-        CompileArgs.Emplace(L"-spirv");
-        CompileArgs.Emplace(L"-fspv-target-env=vulkan1.2");
-        CompileArgs.Emplace(L"-fspv-reduce-load-size");
-        CompileArgs.Emplace(L"-fvk-use-dx-layout");
-
-        // Set must match VULKAN_BINDLESS_HEAP_MARKER_SET in VulkanConstants.h.
-        CompileArgs.Emplace(L"-fvk-bind-resource-heap");
-        CompileArgs.Emplace(L"0");
-        CompileArgs.Emplace(L"31");
-
-        CompileArgs.Emplace(L"-fvk-bind-sampler-heap");
-        CompileArgs.Emplace(L"1");
-        CompileArgs.Emplace(L"31");
-
-        // Binding must match VULKAN_BINDLESS_COUNTER_MARKER_BINDIN. The heap has no counter descriptors, so this only exists to be rejected.
-        CompileArgs.Emplace(L"-fvk-bind-counter-heap");
-        CompileArgs.Emplace(L"16");
-        CompileArgs.Emplace(L"31");
+        BuildSpirvCompileArguments(CompileArgs);
     }
 
     // Build the arguments for the compiler
@@ -574,7 +741,7 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
 
     // Compile shader
     TComPtr<IDxcResult> Result;
-    hr = Compiler->Compile(&SourceBuffer, CompileArguments->GetArguments(), CompileArguments->GetCount(), IncludeHandler.Get(), IID_PPV_ARGS(&Result));
+    hr = Compiler->Compile(&SourceBuffer, CompileArguments->GetArguments(), CompileArguments->GetCount(), &IncludeHandler, IID_PPV_ARGS(&Result));
     if (FAILED(hr))
     {
         LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to Compile");
@@ -668,6 +835,16 @@ bool FShaderCompiler::Compile(const String& ShaderSource, const String& FilePath
     if (OutByteCode.IsEmpty())
     {
         LOG_WARNING("[FShaderCompiler]: Resulting bytecode is empty");
+    }
+
+    if (bVerboseLogging && OutDependencies)
+    {
+        LOG_INFO("[FShaderCompiler]: Compiled from the following files:");
+
+        for (const String& Dependency : *OutDependencies)
+        {
+            LOG_INFO("    %s", *Dependency);
+        }
     }
 
     // If verbose logging is turned off, atleast log that we successfully compiled the shader
@@ -764,6 +941,9 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
 
 bool FShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const String& Filename)
 {
+    // Permutations of one shader all dump to the same path, so concurrent compiles would otherwise interleave in the file.
+    TScopedLock Lock(DumpCS);
+
     TFileRef<IPlatformFile> Output = FPlatformFile::OpenForWrite(Filename);
     if (!Output)
     {

@@ -2,6 +2,7 @@
 #include "Core/Modules/ModuleManager.h"
 #include "RHI/RHIDevice.h"
 #include "RHI/RHICommandList.h"
+#include "RHI/RHIPipelineStateCache.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -135,117 +136,250 @@ struct RHI
 
     static FORCEINLINE FRHIComputeShader* CreateComputeShader(const TArray<uint8>& ShaderCode)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return static_cast<FRHIComputeShader*>(Cache->GetOrCreateShader(EShaderStage::Compute, ShaderCode));
+        }
+
         return Device->CreateComputeShader(ShaderCode);
     }
 
     static FORCEINLINE FRHIVertexShader* CreateVertexShader(const TArray<uint8>& ShaderCode)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return static_cast<FRHIVertexShader*>(Cache->GetOrCreateShader(EShaderStage::Vertex, ShaderCode));
+        }
+
         return Device->CreateVertexShader(ShaderCode);
     }
 
     static FORCEINLINE FRHIHullShader* CreateHullShader(const TArray<uint8>& ShaderCode)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return static_cast<FRHIHullShader*>(Cache->GetOrCreateShader(EShaderStage::Hull, ShaderCode));
+        }
+
         return Device->CreateHullShader(ShaderCode);
     }
 
     static FORCEINLINE FRHIDomainShader* CreateDomainShader(const TArray<uint8>& ShaderCode)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return static_cast<FRHIDomainShader*>(Cache->GetOrCreateShader(EShaderStage::Domain, ShaderCode));
+        }
+
         return Device->CreateDomainShader(ShaderCode);
     }
 
     static FORCEINLINE FRHIGeometryShader* CreateGeometryShader(const TArray<uint8>& ShaderCode)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return static_cast<FRHIGeometryShader*>(Cache->GetOrCreateShader(EShaderStage::Geometry, ShaderCode));
+        }
+
         return Device->CreateGeometryShader(ShaderCode);
     }
 
     static FORCEINLINE FRHIMeshShader* CreateMeshShader(const TArray<uint8>& ShaderCode)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return static_cast<FRHIMeshShader*>(Cache->GetOrCreateShader(EShaderStage::Mesh, ShaderCode));
+        }
+
         return Device->CreateMeshShader(ShaderCode);
     }
 
     static FORCEINLINE FRHIAmplificationShader* CreateAmplificationShader(const TArray<uint8>& ShaderCode)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return static_cast<FRHIAmplificationShader*>(Cache->GetOrCreateShader(EShaderStage::Amplification, ShaderCode));
+        }
+
         return Device->CreateAmplificationShader(ShaderCode);
     }
 
     static FORCEINLINE FRHIPixelShader* CreatePixelShader(const TArray<uint8>& ShaderCode)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return static_cast<FRHIPixelShader*>(Cache->GetOrCreateShader(EShaderStage::Pixel, ShaderCode));
+        }
+
         return Device->CreatePixelShader(ShaderCode);
     }
 
     static FORCEINLINE FRHIRayGenShader* CreateRayGenShader(const TArray<uint8>& ShaderCode)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return static_cast<FRHIRayGenShader*>(Cache->GetOrCreateShader(EShaderStage::RayGen, ShaderCode));
+        }
+
         return Device->CreateRayGenShader(ShaderCode);
     }
 
     static FORCEINLINE FRHIRayAnyHitShader* CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return static_cast<FRHIRayAnyHitShader*>(Cache->GetOrCreateShader(EShaderStage::RayAnyHit, ShaderCode));
+        }
+
         return Device->CreateRayAnyHitShader(ShaderCode);
     }
 
     static FORCEINLINE FRHIRayClosestHitShader* CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return static_cast<FRHIRayClosestHitShader*>(Cache->GetOrCreateShader(EShaderStage::RayClosestHit, ShaderCode));
+        }
+
         return Device->CreateRayClosestHitShader(ShaderCode);
     }
 
     static FORCEINLINE FRHIRayMissShader* CreateRayMissShader(const TArray<uint8>& ShaderCode)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return static_cast<FRHIRayMissShader*>(Cache->GetOrCreateShader(EShaderStage::RayMiss, ShaderCode));
+        }
+
         return Device->CreateRayMissShader(ShaderCode);
     }
 
     static FORCEINLINE FRHIRayIntersectionShader* CreateRayIntersectionShader(const TArray<uint8>& ShaderCode)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return static_cast<FRHIRayIntersectionShader*>(Cache->GetOrCreateShader(EShaderStage::RayIntersection, ShaderCode));
+        }
+
         return Device->CreateRayIntersectionShader(ShaderCode);
     }
 
     static FORCEINLINE FRHIRayCallableShader* CreateRayCallableShader(const TArray<uint8>& ShaderCode)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return static_cast<FRHIRayCallableShader*>(Cache->GetOrCreateShader(EShaderStage::RayCallable, ShaderCode));
+        }
+
         return Device->CreateRayCallableShader(ShaderCode);
+    }
+
+    static FORCEINLINE FRHIShader* CreateShader(EShaderStage InStage, const TArray<uint8>& ShaderCode)
+    {
+        switch (InStage)
+        {
+            case EShaderStage::Vertex:          return CreateVertexShader(ShaderCode);
+            case EShaderStage::Hull:            return CreateHullShader(ShaderCode);
+            case EShaderStage::Domain:          return CreateDomainShader(ShaderCode);
+            case EShaderStage::Geometry:        return CreateGeometryShader(ShaderCode);
+            case EShaderStage::Mesh:            return CreateMeshShader(ShaderCode);
+            case EShaderStage::Amplification:   return CreateAmplificationShader(ShaderCode);
+            case EShaderStage::Pixel:           return CreatePixelShader(ShaderCode);
+            case EShaderStage::Compute:         return CreateComputeShader(ShaderCode);
+            case EShaderStage::RayGen:          return CreateRayGenShader(ShaderCode);
+            case EShaderStage::RayAnyHit:       return CreateRayAnyHitShader(ShaderCode);
+            case EShaderStage::RayClosestHit:   return CreateRayClosestHitShader(ShaderCode);
+            case EShaderStage::RayMiss:         return CreateRayMissShader(ShaderCode);
+            case EShaderStage::RayIntersection: return CreateRayIntersectionShader(ShaderCode);
+            case EShaderStage::RayCallable:     return CreateRayCallableShader(ShaderCode);
+
+            default: return nullptr;
+        }
     }
 
     static FORCEINLINE FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return Cache->GetOrCreateDepthStencilState(InDesc);
+        }
+
         return Device->CreateDepthStencilState(InDesc);
     }
 
     static FORCEINLINE FRHIRasterizerState* CreateRasterizerState(const FRHIRasterizerStateDesc& InDesc)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return Cache->GetOrCreateRasterizerState(InDesc);
+        }
+
         return Device->CreateRasterizerState(InDesc);
     }
 
     static FORCEINLINE FRHIBlendState* CreateBlendState(const FRHIBlendStateDesc& InDesc)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return Cache->GetOrCreateBlendState(InDesc);
+        }
+
         return Device->CreateBlendState(InDesc);
     }
 
     static FORCEINLINE FRHIInputLayout* CreateInputLayout(const TArray<FRHIInputElementDesc>& InInputElements)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return Cache->GetOrCreateInputLayout(InInputElements);
+        }
+
         return Device->CreateInputLayout(InInputElements);
     }
 
     static FORCEINLINE FRHIGraphicsPipelineState* CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return Cache->GetOrCreateGraphicsPipelineState(InDesc);
+        }
+
         return Device->CreateGraphicsPipelineState(InDesc);
     }
 
     static FORCEINLINE FRHIComputePipelineState* CreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return Cache->GetOrCreateComputePipelineState(InDesc);
+        }
+
         return Device->CreateComputePipelineState(InDesc);
     }
 
     static FORCEINLINE FRHIMeshletPipelineState* CreateMeshletPipelineState(const FRHIMeshletPipelineStateDesc& InDesc)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return Cache->GetOrCreateMeshletPipelineState(InDesc);
+        }
+
         return Device->CreateMeshletPipelineState(InDesc);
     }
 
     static FORCEINLINE FRHIRayTracingPipelineState* CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc)
     {
+        if (FRHIPipelineStateCache* Cache = FRHIPipelineStateCache::TryGet())
+        {
+            return Cache->GetOrCreateRayTracingPipelineState(InDesc);
+        }
+
         return Device->CreateRayTracingPipelineState(InDesc);
     }
 
     static FORCEINLINE FRHIRayTracingPipelineState* AddToRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& AdditionsDesc)
     {
-        return Device->CreateRayTracingPipelineState(AdditionsDesc);
+        return CreateRayTracingPipelineState(AdditionsDesc);
     }
 
     static FORCEINLINE FRHIQuery* CreateQuery(EQueryType InQueryType)

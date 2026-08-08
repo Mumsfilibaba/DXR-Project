@@ -20,6 +20,8 @@
 #include "Renderer/Performance/GPUProfiler.h"
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Engine.h"
+#include "RendererCore/Shaders/ShaderBytecodeCache.h"
+#include "RendererCore/Shaders/ShaderCache.h"
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/VertexStreamCache.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
@@ -230,6 +232,16 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
         return -1;
     }
 
+    if (!FShaderCache::Initialize())
+    {
+        return -1;
+    }
+
+    // The warm lanes read through this cache, so it has to be resident before the first one starts.
+    FShaderBytecodeCache::Initialize();
+
+    FShaderCache::Get().PrewarmAsync();
+
     CoreDelegates::PreInitFinishedDelegate.Broadcast();
     return 0;
 }
@@ -263,6 +275,8 @@ int32 FEngineLoop::Init()
         FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create Renderer");
         return -1;
     }
+
+    FShaderCompiler::Get().LogCompileStats();
 
     CoreDelegates::PreApplicationLoadedDelegate.Broadcast();
 
@@ -359,6 +373,8 @@ void FEngineLoop::Release()
 
     // Release all RHI resources
     FTextureFactory::Release();
+    FShaderCache::Release();
+    FShaderBytecodeCache::Release();
     FVertexStreamCache::Release();
 
     // Wait for RHI thread and shutdown RHI Layer

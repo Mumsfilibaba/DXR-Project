@@ -305,6 +305,12 @@ bool RHI::Initialize()
 
     Device = LocalRHI;
 
+    // The cache lives and dies with the device, so no call site can observe a half-initialized cache
+    if (!FRHIPipelineStateCache::Initialize())
+    {
+        return false;
+    }
+
     // Initialize the CommandListExecutor
     if (!FRHICommandListExecutor::Initialize())
     {
@@ -318,6 +324,9 @@ bool RHI::Initialize()
 
 void RHI::Release()
 {
+    // Released before the flush below, so the objects it holds are among those the executor drains
+    FRHIPipelineStateCache::Release();
+
     // The RHI-implementation might need the executor in the destructor so we flush before we delete it
     if (FRHICommandListExecutor::IsInitialized())
     {

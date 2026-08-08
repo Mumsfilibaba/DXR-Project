@@ -5,7 +5,7 @@
 #include "RayTracingHelpers.hlsli"
 #include "RayTracingShading.hlsli"
 
-#if RAY_TRACING_BINDLESS
+#if ENABLE_BINDLESS
     #include "BindlessHelpers.hlsli"
     #include "MaterialBindless.hlsli"
 #endif
@@ -22,7 +22,7 @@ Texture2D<float2>                            IntegrationLUT : register(t7);
 SamplerState EnvironmentSampler : register(s2);
 SamplerState LUTSampler         : register(s3);
 
-#if !RAY_TRACING_BINDLESS
+#if !ENABLE_BINDLESS
     StructuredBuffer<FVertexAttributes> InAttributes    : register(t0, D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL);
     ByteAddressBuffer                   InIndices       : register(t1, D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL);
     Texture2D<float4>                   AlbedoTex       : register(t2, D3D12_SHADER_REGISTER_SPACE_RAY_TRACING_LOCAL);
@@ -37,7 +37,7 @@ void ClosestHit(inout FRayPayload PayLoad, in BuiltInTriangleIntersectionAttribu
     const FRayTracingGeometryIndices GeometryIndices = GeometryTable[InstanceID()];
     const FMaterial                  MaterialData    = Materials[GeometryIndices.MaterialIndex];
 
-#if RAY_TRACING_BINDLESS
+#if ENABLE_BINDLESS
     StructuredBuffer<FVertexAttributes> InAttributes    = GetResourceFromPackedDescriptorIndex(GeometryIndices.AttributesHandle);
     ByteAddressBuffer                   InIndices       = GetResourceFromPackedDescriptorIndex(GeometryIndices.IndicesHandle);
     Texture2D<float4>                   AlbedoTex       = GetResourceFromPackedDescriptorIndex(MaterialData.AlbedoHandle);

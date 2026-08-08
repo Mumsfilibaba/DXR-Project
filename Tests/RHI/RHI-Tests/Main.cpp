@@ -7,6 +7,7 @@
 #include "TestCommon/TestMacros.h"
 
 #include "RHIValidationHelperTests.h"
+#include "ShaderPermutationTests.h"
 #include "VertexDeclarationTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
@@ -25,6 +26,7 @@ int main(int Argc, const CHAR* Argv[])
     LOG_INFO("=== RHI Tests ===");
 
     RUN_TEST("RHIValidationHelpers", RHIValidationHelpers_Test());
+    RUN_TEST("ShaderPermutation", ShaderPermutation_Test());
     RUN_TEST("VertexDeclaration", VertexDeclaration_Test());
 
     const int32 ExitCode = TestHarness::Report();

@@ -8,15 +8,11 @@
 #include "ParallaxMapping.hlsli"
 #include "TangentSpace.hlsli"
 
-#ifndef BINDLESS_FORWARD_PASS
-    #define BINDLESS_FORWARD_PASS (0)
-#endif
-
 #ifndef ENABLE_PARALLAX_MAPPING
     #define ENABLE_PARALLAX_MAPPING (0)
 #endif
 
-#if BINDLESS_FORWARD_PASS
+#if ENABLE_BINDLESS
     #include "MaterialBindless.hlsli"
 #endif
 
@@ -68,7 +64,7 @@ Texture2D<float4>       IntegrationLUT        : register(t2);
 Texture2D<float>        DirLightShadowMaps    : register(t3);
 TextureCubeArray<float> PointLightShadowMaps  : register(t4);
 
-#if !BINDLESS_FORWARD_PASS
+#if !ENABLE_BINDLESS
     // Per-material textures: Albedo (t5), Normal (t6), Material (R=AO, G=Roughness, B=Metallic, t7), Height (t8).
     SamplerState      MaterialSampler : register(s0);
     Texture2D<float4> AlbedoTex       : register(t5);
@@ -150,7 +146,7 @@ float4 PSMain(FPSInput Input) : SV_Target0
         const float3   ViewDir        = normalize(mul(WorldToTangent, CameraBuffer.PositionWS - Input.WorldPosition));
 
         bool bParallaxDiscard = false;
-    #if BINDLESS_FORWARD_PASS
+    #if ENABLE_BINDLESS
         TexCoords = ParallaxMapUV(GetHeightBindless(MaterialData), GetMaterialSamplerBindless(MaterialData), TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, MaterialData.ParallaxHeightScale, MaterialData.ParallaxMinLayers, MaterialData.ParallaxMaxLayers, bParallaxDiscard);
     #else
         TexCoords = ParallaxMapUV(HeightMap, MaterialSampler, TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, MaterialData.ParallaxHeightScale, MaterialData.ParallaxMinLayers, MaterialData.ParallaxMaxLayers, bParallaxDiscard);
@@ -164,7 +160,7 @@ float4 PSMain(FPSInput Input) : SV_Target0
     }
 #endif
 
-#if BINDLESS_FORWARD_PASS
+#if ENABLE_BINDLESS
     const float4 AlbedoSample = GetAlbedoBindless(MaterialData).Sample(GetMaterialSamplerBindless(MaterialData), TexCoords);
 #else
     const float4 AlbedoSample = AlbedoTex.Sample(MaterialSampler, TexCoords);
@@ -179,7 +175,7 @@ float4 PSMain(FPSInput Input) : SV_Target0
     const float3 WorldPosition = Input.WorldPosition;
     const float3 V             = normalize(CameraBuffer.PositionWS - WorldPosition);
 
-#if BINDLESS_FORWARD_PASS
+#if ENABLE_BINDLESS
     float3 SampledNormal = GetNormalBindless(MaterialData).Sample(GetMaterialSamplerBindless(MaterialData), TexCoords).rgb;
 #else
     float3 SampledNormal = NormalTex.Sample(MaterialSampler, TexCoords).rgb;
@@ -190,7 +186,7 @@ float4 PSMain(FPSInput Input) : SV_Target0
     float3 N = DecodeTangentNormal(SampledNormal, SurfaceNormal, Input.Tangent.xyz, TangentSign);
 
     // Sample packed materialparam texture (R=AO, G=Roughness, B=Metallic)
-#if BINDLESS_FORWARD_PASS
+#if ENABLE_BINDLESS
     const float3 MaterialParams   = GetMaterialBindless(MaterialData).Sample(GetMaterialSamplerBindless(MaterialData), TexCoords);
 #else
     const float3 MaterialParams   = MaterialMap.Sample(MaterialSampler, TexCoords);

@@ -20,20 +20,16 @@
     #define USE_UNJITTERED_CAMERA (0)
 #endif
 
-#ifndef BINDLESS_PRE_PASS
-    #define BINDLESS_PRE_PASS (0)
-#endif
-
 ConstantBuffer<FCamera>    CameraBuffer    : register(b0);
 ConstantBuffer<FPerObject> PerObjectBuffer : register(b1);
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
-    #if ENABLE_PARALLAX_MAPPING || (BINDLESS_PRE_PASS && ENABLE_ALPHA_MASK)
+    #if ENABLE_PARALLAX_MAPPING || (ENABLE_BINDLESS && ENABLE_ALPHA_MASK)
         #define MATERIAL_ARRAY_REGISTER t2
         #include "MaterialArray.hlsli"
     #endif
 
-    #if BINDLESS_PRE_PASS
+    #if ENABLE_BINDLESS
         #include "MaterialBindless.hlsli"
     #else
         SamplerState MaterialSampler : register(s0);
@@ -55,12 +51,12 @@ struct FVSInput
 {
     float3 Position : POSITION0;
 
-#if ENABLE_PARALLAX_MAPPING
+#if HAS_VERTEX_TANGENT_BASIS
     float4 Normal  : NORMAL0;
     float4 Tangent : TANGENT0;
 #endif
 
-#if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
+#if HAS_VERTEX_TEXCOORD0
     float2 TexCoord : TEXCOORD0;
 #endif
 };
@@ -131,7 +127,7 @@ void PSMain(FPSInput Input)
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoords = Input.TexCoord;
 
-#if ENABLE_PARALLAX_MAPPING || (BINDLESS_PRE_PASS && ENABLE_ALPHA_MASK)
+#if ENABLE_PARALLAX_MAPPING || (ENABLE_BINDLESS && ENABLE_ALPHA_MASK)
     const FMaterial MaterialData = Materials[PerObjectBuffer.MaterialIndex];
 #endif
 
@@ -153,7 +149,7 @@ void PSMain(FPSInput Input)
     const float3   ViewDir        = normalize(mul(WorldToTangent, CameraBuffer.PositionWS - Input.PositionWS));
 
     bool bParallaxDiscard = false;
-#if BINDLESS_PRE_PASS
+#if ENABLE_BINDLESS
     TexCoords = ParallaxMapUV(GetHeightBindless(MaterialData), GetMaterialSamplerBindless(MaterialData), TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, MaterialData.ParallaxHeightScale, MaterialData.ParallaxMinLayers, MaterialData.ParallaxMaxLayers, bParallaxDiscard);
 #else
     TexCoords = ParallaxMapUV(HeightTex, MaterialSampler, TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, MaterialData.ParallaxHeightScale, MaterialData.ParallaxMinLayers, MaterialData.ParallaxMaxLayers, bParallaxDiscard);
@@ -167,7 +163,7 @@ void PSMain(FPSInput Input)
 #endif
 
 #if ENABLE_ALPHA_MASK
-    #if BINDLESS_PRE_PASS
+    #if ENABLE_BINDLESS
         const float AlphaMask = GetAlbedoBindless(MaterialData).Sample(GetMaterialSamplerBindless(MaterialData), TexCoords).a;
     #else
         const float AlphaMask = AlbedoAlphaTex.Sample(MaterialSampler, TexCoords).a;

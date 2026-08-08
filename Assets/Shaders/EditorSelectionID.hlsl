@@ -46,12 +46,12 @@ struct FVSInput
 {
     float3 Position : POSITION0;
 
-#if ENABLE_PARALLAX_MAPPING
+#if HAS_VERTEX_TANGENT_BASIS
     float4 Normal  : NORMAL0;
     float4 Tangent : TANGENT0;
 #endif
 
-#if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
+#if HAS_VERTEX_TEXCOORD0
     float2 TexCoord : TEXCOORD0;
 #endif
 };

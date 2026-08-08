@@ -20,7 +20,7 @@
 #include "Renderer/RayTracer.h"
 #include "Renderer/DebugRendering.h"
 #include "Renderer/DebugViewPass.h"
-#include "Renderer/TemporalAA.h"
+#include "Renderer/TemporalAntiAliasing.h"
 #include "Renderer/PostProcessing.h"
 #if EDITOR_BUILD
     #include "Renderer/SelectionOutlinePass.h"
@@ -236,7 +236,7 @@ private:
     FShadowMaskRenderPass*       ShadowMaskRenderPass;
     FScreenSpaceOcclusionPass*   ScreenSpaceOcclusionPass;
     FSkyboxRenderPass*           SkyboxRenderPass;
-    FTemporalAA*                 TemporalAA;
+    FTemporalAntiAliasing*       TemporalAntiAliasing;
 #if EDITOR_BUILD
     FSelectionOutlinePass*       SelectionOutlinePass;
     FEditorNoJitterDepthPass*    EditorNoJitterDepthPass;

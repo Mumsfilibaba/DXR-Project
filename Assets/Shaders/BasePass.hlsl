@@ -23,11 +23,7 @@
     #define ENABLE_DOUBLE_SIDED (1)
 #endif
 
-#ifndef BINDLESS_BASE_PASS
-    #define BINDLESS_BASE_PASS (0)
-#endif
-
-#if BINDLESS_BASE_PASS
+#if ENABLE_BINDLESS
     #include "MaterialBindless.hlsli"
 #endif
 
@@ -45,7 +41,7 @@ SHADER_CONSTANT_BLOCK_BEGIN
     float Padding1;
 SHADER_CONSTANT_BLOCK_END
 
-#if !BINDLESS_BASE_PASS
+#if !ENABLE_BINDLESS
     SamplerState MaterialSampler : register(s0);
 
     // Unified per-material texture layout: Albedo (RGBA, t0), Normal (t1),
@@ -63,7 +59,7 @@ SHADER_CONSTANT_BLOCK_END
 
 SamplerState GetMaterialSampler()
 {
-#if BINDLESS_BASE_PASS
+#if ENABLE_BINDLESS
     return GetMaterialSamplerBindless(Materials[PerObjectBuffer.MaterialIndex]);
 #else
     return MaterialSampler;
@@ -72,7 +68,7 @@ SamplerState GetMaterialSampler()
 
 float4 GetAlbedo(float2 TexCoord)
 {
-#if BINDLESS_BASE_PASS
+#if ENABLE_BINDLESS
     const FMaterial MaterialData = Materials[PerObjectBuffer.MaterialIndex];
     if (!IsAlbedoBindlessValid(MaterialData))
     {
@@ -88,7 +84,7 @@ float4 GetAlbedo(float2 TexCoord)
 #if ENABLE_NORMAL_MAPPING
 float3 GetNormal(float2 TexCoord)
 {
-    #if BINDLESS_BASE_PASS
+    #if ENABLE_BINDLESS
         const FMaterial MaterialData = Materials[PerObjectBuffer.MaterialIndex];
         if (!IsNormalBindlessValid(MaterialData))
         {
@@ -104,7 +100,7 @@ float3 GetNormal(float2 TexCoord)
 
 float3 GetMaterialParams(float2 TexCoord)
 {
-#if BINDLESS_BASE_PASS
+#if ENABLE_BINDLESS
     const FMaterial MaterialData = Materials[PerObjectBuffer.MaterialIndex];
     if (!IsMaterialBindlessValid(MaterialData))
     {
@@ -122,7 +118,7 @@ float2 ApplyParallax(FMaterial MaterialData, float2 TexCoords, float3 ViewDir, f
 {
     bParallaxDiscard = false;
 
-    #if BINDLESS_BASE_PASS
+    #if ENABLE_BINDLESS
         if (!IsHeightBindlessValid(MaterialData))
         {
             return TexCoords;

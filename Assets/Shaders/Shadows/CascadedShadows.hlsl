@@ -13,25 +13,24 @@
     #define ENABLE_PARALLAX_MAPPING 0
 #endif
 
-#ifndef BINDLESS_SHADOWS
-    #define BINDLESS_SHADOWS (0)
-#endif
-
 #ifndef MAX_CASCADES
     #define MAX_CASCADES 4
 #endif
 
-#ifndef ENABLE_CASCADE_VS_INSTANCING
-    #define ENABLE_CASCADE_VS_INSTANCING 0
+// Mirrors ECascadeRenderPassType.
+#define CASCADE_PASS_UNKNOWN        0
+#define CASCADE_PASS_MULTI          1
+#define CASCADE_PASS_SINGLE         2
+#define CASCADE_PASS_GEOMETRY       3
+#define CASCADE_PASS_VIEW_INSTANCED 4
+
+#ifndef CASCADE_PASS_KIND
+    #define CASCADE_PASS_KIND CASCADE_PASS_MULTI
 #endif
 
-#ifndef ENABLE_CASCADE_GS_INSTANCING
-    #define ENABLE_CASCADE_GS_INSTANCING 0
-#endif
-
-#ifndef ENABLE_CASCADE_VIEW_INSTANCING
-    #define ENABLE_CASCADE_VIEW_INSTANCING 0
-#endif
+#define ENABLE_CASCADE_VS_INSTANCING   (CASCADE_PASS_KIND == CASCADE_PASS_SINGLE)
+#define ENABLE_CASCADE_GS_INSTANCING   (CASCADE_PASS_KIND == CASCADE_PASS_GEOMETRY)
+#define ENABLE_CASCADE_VIEW_INSTANCING (CASCADE_PASS_KIND == CASCADE_PASS_VIEW_INSTANCED)
 
 #if !ENABLE_CASCADE_VS_INSTANCING && !ENABLE_CASCADE_GS_INSTANCING && !ENABLE_CASCADE_VIEW_INSTANCING
     #define ENABLE_CASCADE_MULTI_PASS 1
@@ -62,7 +61,7 @@ ConstantBuffer<FPerObject> PerObjectBuffer : register(b1);
 StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
-    #if BINDLESS_SHADOWS
+    #if ENABLE_BINDLESS
         #define MATERIAL_ARRAY_REGISTER t1
         #include "MaterialArray.hlsli"
         #include "MaterialBindless.hlsli"
@@ -89,12 +88,12 @@ struct FVSInput
 {
     float3 Position : POSITION0;
 
-#if ENABLE_PARALLAX_MAPPING
+#if HAS_VERTEX_TANGENT_BASIS
     float4 Normal  : NORMAL0;
     float4 Tangent : TANGENT0;
 #endif
 
-#if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
+#if HAS_VERTEX_TEXCOORD0
     float2 TexCoord : TEXCOORD0;
 #endif
 
@@ -258,7 +257,7 @@ void Cascade_PSMain(FPSCascadeInput Input)
         const float3   LightDir       = normalize(mul(WorldToTangent, -CascadeGenerationBuffer.LightDirection));
 
         bool bParallaxDiscard = false;
-        #if BINDLESS_SHADOWS
+        #if ENABLE_BINDLESS
             TexCoords = ParallaxMapUV(GetHeightBindless(ParallaxMaterial), GetMaterialSamplerBindless(ParallaxMaterial), TexCoords, LightDir, TexCoordsDx, TexCoordsDy, ParallaxMaterial.ParallaxHeightScale, ParallaxMaterial.ParallaxMinLayers, ParallaxMaterial.ParallaxMaxLayers, bParallaxDiscard);
         #else
             TexCoords = ParallaxMapUV(HeightMap, MaterialSampler, TexCoords, LightDir, TexCoordsDx, TexCoordsDy, ParallaxMaterial.ParallaxHeightScale, ParallaxMaterial.ParallaxMinLayers, ParallaxMaterial.ParallaxMaxLayers, bParallaxDiscard);
@@ -273,7 +272,7 @@ void Cascade_PSMain(FPSCascadeInput Input)
     #endif
 
     #if ENABLE_ALPHA_MASK
-        #if BINDLESS_SHADOWS
+        #if ENABLE_BINDLESS
             const FMaterial MaterialData = Materials[PerObjectBuffer.MaterialIndex];
             const float     AlphaMask    = GetAlbedoBindless(MaterialData).Sample(GetMaterialSamplerBindless(MaterialData), TexCoords).a;
         #else

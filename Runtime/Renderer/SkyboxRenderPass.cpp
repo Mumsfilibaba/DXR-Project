@@ -3,18 +3,36 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Renderer/Performance/GPUProfiler.h"
 #include "RHI/RHI.h"
-#include "RHI/ShaderCompiler.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/MeshFactory.h"
 #include "RendererCore/TextureFactory.h"
 #include "Renderer/SkyboxRenderPass.h"
 #include "Renderer/Scene/Scene.h"
+#include "Renderer/CommonShaders.h"
 
 static bool GClearBeforeSkyboxEnabled = false;
 static FAutoConsoleVariableRef CVarClearBeforeSkyboxEnabled(
     "Renderer.Skybox.ClearBeforeSkybox",
     "Clear the final target before rendering the Skybox (Used for debugging)",
     GClearBeforeSkyboxEnabled);
+
+class FSkyboxVS
+{
+    DECLARE_SHADER_TYPE(FSkyboxVS, EShaderStage::Vertex);
+
+    using FPermutation = TShaderPermutation<>;
+};
+
+IMPLEMENT_SHADER_TYPE(FSkyboxVS, "Shaders/Skybox.hlsl", "VSMain", EShaderModel::SM_6_2);
+
+class FSkyboxPS
+{
+    DECLARE_SHADER_TYPE(FSkyboxPS, EShaderStage::Pixel);
+
+    using FPermutation = TShaderPermutation<>;
+};
+
+IMPLEMENT_SHADER_TYPE(FSkyboxPS, "Shaders/Skybox.hlsl", "PSMain", EShaderModel::SM_6_2);
 
 FSkyboxRenderPass::FSkyboxRenderPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -114,30 +132,14 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
         return false;
     }
 
-    TArray<uint8> ShaderCode;
-
-    FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    SkyboxVertexShader = RHI::CreateVertexShader(ShaderCode);
+    SkyboxVertexShader = FShaderCache::Get().GetShader<FSkyboxVS>();
     if (!SkyboxVertexShader)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    SkyboxPixelShader = RHI::CreatePixelShader(ShaderCode);
+    SkyboxPixelShader = FShaderCache::Get().GetShader<FSkyboxPS>();
     if (!SkyboxPixelShader)
     {
         DEBUG_BREAK();

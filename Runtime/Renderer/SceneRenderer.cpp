@@ -40,18 +40,18 @@ static FAutoConsoleVariableRef CVarEnableFXAA(
     GEnableFXAA,
     EConsoleVariableFlags::Default);
 
-static bool GEnableTemporalAA = true;
-static FAutoConsoleVariableRef CVarEnableTemporalAA(
-    "Renderer.Feature.TemporalAA",
+static bool GEnableTemporalAntiAliasing = true;
+static FAutoConsoleVariableRef CVarEnableTemporalAntiAliasing(
+    "Renderer.Feature.TemporalAntiAliasing",
     "Enables Temporal Anti-Aliasing",
-    GEnableTemporalAA,
+    GEnableTemporalAntiAliasing,
     EConsoleVariableFlags::Default);
 
-static bool GTemporalAAHardwareJitter = false;
-static FAutoConsoleVariableRef CVarTemporalAAHardwareJitter(
-    "Renderer.TemporalAA.HardwareJitter",
+static bool GTemporalAntiAliasingHardwareJitter = false;
+static FAutoConsoleVariableRef CVarTemporalAntiAliasingHardwareJitter(
+    "Renderer.TemporalAntiAliasing.HardwareJitter",
     "Applies TAA sub-pixel jitter via programmable sample positions instead of a projection-matrix offset",
-    GTemporalAAHardwareJitter,
+    GTemporalAntiAliasingHardwareJitter,
     EConsoleVariableFlags::Default);
 
 static bool GEnableVariableRateShading = false;
@@ -210,7 +210,7 @@ FSceneRenderer::FSceneRenderer()
     , ShadowMaskRenderPass(nullptr)
     , ScreenSpaceOcclusionPass(nullptr)
     , SkyboxRenderPass(nullptr)
-    , TemporalAA(nullptr)
+    , TemporalAntiAliasing(nullptr)
 #if EDITOR_BUILD
     , SelectionOutlinePass(nullptr)
     , EditorNoJitterDepthPass(nullptr)
@@ -251,7 +251,7 @@ FSceneRenderer::~FSceneRenderer()
     SAFE_DELETE(ShadowMaskRenderPass);
     SAFE_DELETE(ScreenSpaceOcclusionPass);
     SAFE_DELETE(SkyboxRenderPass);
-    SAFE_DELETE(TemporalAA);
+    SAFE_DELETE(TemporalAntiAliasing);
 #if EDITOR_BUILD
     SAFE_DELETE(SelectionOutlinePass);
     SAFE_DELETE(EditorNoJitterDepthPass);
@@ -484,8 +484,8 @@ bool FSceneRenderer::InitializeRenderPasses()
         return false;
     }
 
-    TemporalAA = new FTemporalAA(this);
-    if (!TemporalAA->Initialize(Resources))
+    TemporalAntiAliasing = new FTemporalAntiAliasing(this);
+    if (!TemporalAntiAliasing->Initialize(Resources))
     {
         return false;
     }
@@ -749,12 +749,12 @@ void FSceneRenderer::RenderThread_PrepareCameraData(const FSceneRenderView& Scen
     CameraBuffer.ViewportWidth               = float(Resources.CurrentRenderWidth);
     CameraBuffer.ViewportHeight              = float(Resources.CurrentRenderHeight);
 
-    bUseHardwareJitter   = GEnableTemporalAA && GTemporalAAHardwareJitter && RHI::bSupportsProgrammableSamplePositions && IsSampleCountSupported(RHI::SupportedSamplePositionSampleCounts, RHI_SAMPLE_COUNT_1);
+    bUseHardwareJitter   = GEnableTemporalAntiAliasing && GTemporalAntiAliasingHardwareJitter && RHI::bSupportsProgrammableSamplePositions && IsSampleCountSupported(RHI::SupportedSamplePositionSampleCounts, RHI_SAMPLE_COUNT_1);
     FrameSamplePositions = FRHISamplePositionsDesc();
 
     CameraBuffer.PrevProjectionJitter = CameraBuffer.ProjectionJitter;
 
-    if (GEnableTemporalAA)
+    if (GEnableTemporalAntiAliasing)
     {
         const Vector2 CameraJitter    = HaltonState.NextSample();
         const Vector2 ClipSpaceJitter = CameraJitter / Vector2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
@@ -820,7 +820,7 @@ void FSceneRenderer::RenderThread_PrepareCameraData(const FSceneRenderView& Scen
         // Previous-frame matrices are already stored in GPU-transposed form.
         CameraBuffer.PrevViewProjection   = CameraBuffer.ViewProjection;
         CameraBuffer.PrevProjectionJitter = CameraBuffer.ProjectionJitter;
-        TemporalAA->InvalidateHistory();
+        TemporalAntiAliasing->InvalidateHistory();
         RayTracer.InvalidateReflectionHistory();
         HaltonState.SampleIndex = 0;
     }
@@ -1117,13 +1117,13 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
     // }
 
     // Temporal AA
-    if (GEnableTemporalAA)
+    if (GEnableTemporalAntiAliasing)
     {
         // Source state matches the ReadOnlyDepth transition done before the skybox pass above.
         CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Depth].Get(), ERHIResourceState::DepthRead, ERHIResourceState::NonPixelShaderResource));
         CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.SceneTarget.Get(), ERHIResourceState::RenderTarget, ERHIResourceState::UnorderedAccess));
 
-        TemporalAA->Execute(CommandList, Resources);
+        TemporalAntiAliasing->Execute(CommandList, Resources);
 
         CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Depth].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource));
         CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.SceneTarget.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::PixelShaderResource));
@@ -1827,7 +1827,7 @@ void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
             return;
         }
 
-        if (!TemporalAA->CreateResources(Resources, InWidth, InHeight))
+        if (!TemporalAntiAliasing->CreateResources(Resources, InWidth, InHeight))
         {
             DEBUG_BREAK();
             return;

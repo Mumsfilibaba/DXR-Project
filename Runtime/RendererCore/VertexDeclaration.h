@@ -32,7 +32,8 @@ ENUM_CLASS_OPERATORS(EVertexAttributeFlags);
 constexpr EVertexAttributeFlags VERTEX_ATTRIBUTES_ALL =
     EVertexAttributeFlags::Position | EVertexAttributeFlags::TangentBasis | EVertexAttributeFlags::TexCoord0 | EVertexAttributeFlags::Color;
 
-constexpr uint16 NUM_VERTEX_DECLARATIONS = UnderlyingTypeValue(VERTEX_ATTRIBUTES_ALL) + 1;
+constexpr uint16 NUM_VERTEX_ATTRIBUTE_COMBINATIONS = UnderlyingTypeValue(VERTEX_ATTRIBUTES_ALL) + 1;
+constexpr uint16 NUM_VERTEX_DECLARATIONS           = NUM_VERTEX_ATTRIBUTE_COMBINATIONS;
 
 enum class EVertexElement : uint8
 {

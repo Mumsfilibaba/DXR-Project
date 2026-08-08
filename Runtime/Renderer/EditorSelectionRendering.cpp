@@ -1,10 +1,10 @@
 ﻿#include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
-#include "RHI/ShaderCompiler.h"
 #include "Engine/Resources/Material.h"
 #include "Renderer/DeferredRendering.h"
 #include "Renderer/EditorSelectionRendering.h"
 #include "Renderer/MaterialBindless.h"
+#include "Renderer/PrePassShaders.h"
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
@@ -19,6 +19,57 @@ static FAutoConsoleVariableRef CVarEditorSelectionUseUnjitteredCamera(
     "Use unjittered camera matrices for editor selection buffers (depth/ObjectID). Disable to better match TAA-jittered shading at the cost of more outline jitter.",
     GEditorSelectionUseUnjitteredCamera,
     EConsoleVariableFlags::Default);
+
+struct FSelectionIDShaderRules
+{
+    using FPermutation = TShaderPermutation<FMaterialPermutation, FUnjitteredCamera, FRequiredAttributes>;
+
+    static_assert(FPermutation::PermutationCount == 512, "EditorSelectionID permutation space grew unexpectedly");
+
+    NODISCARD static FPermutation Create(const FMaterialFeatures& Features)
+    {
+        FPermutation Permutation;
+        Permutation.Set<FMaterialPermutation>(Features.CreatePermutation());
+        Permutation.Set<FUnjitteredCamera>(GEditorSelectionUseUnjitteredCamera);
+        return RemapPermutation(Permutation);
+    }
+
+    NODISCARD static FPermutation RemapPermutation(FPermutation Permutation)
+    {
+        return RemapDepthOnlyAttributes(RemapMaterialPermutation(Permutation));
+    }
+
+    NODISCARD static bool ShouldCompilePermutation(const FShaderPermutationDesc& Desc)
+    {
+        const FPermutation Permutation = FPermutation(Desc.PermutationID);
+        return RemapPermutation(Permutation) == Permutation;
+    }
+};
+
+class FSelectionIDVS : public FSelectionIDShaderRules
+{
+    DECLARE_SHADER_TYPE(FSelectionIDVS, EShaderStage::Vertex);
+};
+
+class FSelectionIDPS : public FSelectionIDShaderRules
+{
+    DECLARE_SHADER_TYPE(FSelectionIDPS, EShaderStage::Pixel);
+};
+
+IMPLEMENT_SHADER_TYPE(FSelectionIDVS, "Shaders/EditorSelectionID.hlsl", "VSMain", EShaderModel::SM_6_2);
+IMPLEMENT_SHADER_TYPE(FSelectionIDPS, "Shaders/EditorSelectionID.hlsl", "PSMain", EShaderModel::SM_6_2);
+
+NODISCARD static FGraphicsPipelineKey MakeNoJitterDepthPSOKey(const FMaterialFeatures& Features, bool bBindless, const FVertexDeclaration& Declaration)
+{
+    const FPrePassShaderRules::FPermutation Permutation = FPrePassShaderRules::Create(Features, bBindless, GEditorSelectionUseUnjitteredCamera);
+    return FGraphicsPipelineKey(Permutation.GetPermutationID(), 0, Declaration.GetID());
+}
+
+NODISCARD static FGraphicsPipelineKey MakeSelectionIDPSOKey(const FMaterialFeatures& Features, const FVertexDeclaration& Declaration)
+{
+    const FSelectionIDShaderRules::FPermutation Permutation = FSelectionIDShaderRules::Create(Features);
+    return FGraphicsPipelineKey(Permutation.GetPermutationID(), 0, Declaration.GetID());
+}
 
 FEditorNoJitterDepthPass::FEditorNoJitterDepthPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -35,9 +86,11 @@ void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const F
 {
     const FMaterialFeatures Features(Material, Declaration);
 
-    const int32  MaterialFlags = static_cast<int32>(Features.Flags);
-    const bool   bBindless     = RHI::bSupportsBindless && GPrePassBindless;
-    const uint64 PSOKey        = MakeMaterialPSOKey(MaterialFlags, bBindless, Declaration.GetID());
+    const int32 MaterialFlags = static_cast<int32>(Features.Flags);
+    const bool  bBindless     = RHI::bSupportsBindless && GPrePassBindless;
+
+    const FGraphicsPipelineKey     PSOKey      = MakeNoJitterDepthPSOKey(Features, bBindless, Declaration);
+    const FPrePassVS::FPermutation Permutation = FPrePassVS::FPermutation(PSOKey.PermutationID);
 
     FGraphicsPipelineStateInstance* CachedPSO = MaterialPSOs.Find(PSOKey);
     if (CachedPSO)
@@ -45,44 +98,8 @@ void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const F
         return;
     }
 
-    TArray<uint8>         ShaderCode;
-    TArray<FShaderDefine> ShaderDefines;
-
-    ShaderDefines.Emplace("USE_UNJITTERED_CAMERA", GEditorSelectionUseUnjitteredCamera ? "(1)" : "(0)");
-
-    if (Features.HasHeightMap())
-    {
-        ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(1)");
-        ShaderDefines.Emplace("ENABLE_PARALLAX_CLIPPING", Features.HasParallaxClipping() ? "(1)" : "(0)");
-    }
-    else
-    {
-        ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(0)");
-    }
-
-    if (Features.HasAlphaMask())
-    {
-        ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
-    }
-    else
-    {
-        ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
-    }
-
-    ShaderDefines.Emplace("ENABLE_DOUBLE_SIDED", Features.IsDoubleSided() ? "(1)" : "(0)");
-    ShaderDefines.Emplace("BINDLESS_PRE_PASS", bBindless ? "(1)" : "(0)");
-
-    const EShaderModel TargetShaderModel = bBindless ? EShaderModel::SM_6_6 : EShaderModel::SM_6_2;
-
-    FShaderCompileInfo CompileInfo("VSMain", TargetShaderModel, EShaderStage::Vertex, ShaderDefines);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return;
-    }
-
     FGraphicsPipelineStateInstance NewPipelineInstance;
-    NewPipelineInstance.VertexShader = RHI::CreateVertexShader(ShaderCode);
+    NewPipelineInstance.VertexShader = FShaderCache::Get().GetShader<FPrePassVS>(Permutation);
 
     if (!NewPipelineInstance.VertexShader)
     {
@@ -93,14 +110,7 @@ void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const F
     const bool bWantPixelShader = Features.HasHeightMap() || Features.HasAlphaMask();
     if (bWantPixelShader)
     {
-        CompileInfo = FShaderCompileInfo("PSMain", TargetShaderModel, EShaderStage::Pixel, ShaderDefines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return;
-        }
-
-        NewPipelineInstance.PixelShader = RHI::CreatePixelShader(ShaderCode);
+        NewPipelineInstance.PixelShader = FShaderCache::Get().GetShader<FPrePassPS>(Permutation);
         if (!NewPipelineInstance.PixelShader)
         {
             DEBUG_BREAK();
@@ -113,27 +123,16 @@ void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const F
     DepthStencilStateDesc.bDepthEnable      = true;
     DepthStencilStateDesc.bDepthWriteEnable = true;
 
-    NewPipelineInstance.DepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
-    if (!NewPipelineInstance.DepthStencilState)
-    {
-        DEBUG_BREAK();
-        return;
-    }
-
     FRHIRasterizerStateDesc RasterizerStateDesc;
     RasterizerStateDesc.CullMode = Features.IsDoubleSided() ? ECullMode::None : ECullMode::Back;
 
-    NewPipelineInstance.RasterizerState = RHI::CreateRasterizerState(RasterizerStateDesc);
-    if (!NewPipelineInstance.RasterizerState)
-    {
-        DEBUG_BREAK();
-        return;
-    }
-
     FRHIBlendStateDesc BlendStateDesc;
-    NewPipelineInstance.BlendState = RHI::CreateBlendState(BlendStateDesc);
 
-    if (!NewPipelineInstance.BlendState)
+    FRHIRasterizerStateRef   RasterizerState   = RHI::CreateRasterizerState(RasterizerStateDesc);
+    FRHIBlendStateRef        BlendState        = RHI::CreateBlendState(BlendStateDesc);
+    FRHIDepthStencilStateRef DepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
+
+    if (!DepthStencilState || !RasterizerState || !BlendState)
     {
         DEBUG_BREAK();
         return;
@@ -148,9 +147,9 @@ void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const F
 
     FRHIGraphicsPipelineStateDesc PSODesc;
     PSODesc.InputLayout                                = NewPipelineInstance.StreamBinding->InputLayout.Get();
-    PSODesc.BlendState                                 = NewPipelineInstance.BlendState.Get();
-    PSODesc.DepthStencilState                          = NewPipelineInstance.DepthStencilState.Get();
-    PSODesc.RasterizerState                            = NewPipelineInstance.RasterizerState.Get();
+    PSODesc.BlendState                                 = BlendState.Get();
+    PSODesc.DepthStencilState                          = DepthStencilState.Get();
+    PSODesc.RasterizerState                            = RasterizerState.Get();
     PSODesc.VertexShader                               = NewPipelineInstance.VertexShader.Get();
     PSODesc.PixelShader                                = NewPipelineInstance.PixelShader.Get();
     PSODesc.RasterizerOutputFormats.DepthStencilFormat = RendererTextureFormats::DepthBufferFormat;
@@ -240,11 +239,13 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
 
         const FMaterialFeatures Features(Batch.EffectiveMaterialFlags);
 
-        const uint64 PSOKey = MakeMaterialPSOKey(static_cast<int32>(Features.Flags), bBindless, Batch.Declaration.GetID());
+        const FGraphicsPipelineKey PSOKey = MakeNoJitterDepthPSOKey(Features, bBindless, Batch.Declaration);
+
         FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(PSOKey);
         if (!PipelineInstance)
         {
             DEBUG_BREAK();
+            continue;
         }
 
         FRHIGraphicsPipelineState* PipelineState = PipelineInstance->PipelineState.Get();
@@ -320,7 +321,8 @@ void FEditorSelectionIDPass::PreparePipelineState(FMaterial* Material, const FVe
 {
     const FMaterialFeatures Features(Material, Declaration);
 
-    const uint64 PSOKey = MakeMaterialPSOKey(static_cast<int32>(Features.Flags), false, Declaration.GetID());
+    const FGraphicsPipelineKey         PSOKey      = MakeSelectionIDPSOKey(Features, Declaration);
+    const FSelectionIDVS::FPermutation Permutation = FSelectionIDVS::FPermutation(PSOKey.PermutationID);
 
     FGraphicsPipelineStateInstance* CachedPSO = MaterialPSOs.Find(PSOKey);
     if (CachedPSO)
@@ -328,55 +330,15 @@ void FEditorSelectionIDPass::PreparePipelineState(FMaterial* Material, const FVe
         return;
     }
 
-    TArray<uint8>         ShaderCode;
-    TArray<FShaderDefine> ShaderDefines;
-
-    ShaderDefines.Emplace("USE_UNJITTERED_CAMERA", GEditorSelectionUseUnjitteredCamera ? "(1)" : "(0)");
-
-    if (Features.HasHeightMap())
-    {
-        ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(1)");
-        ShaderDefines.Emplace("ENABLE_PARALLAX_CLIPPING", Features.HasParallaxClipping() ? "(1)" : "(0)");
-    }
-    else
-    {
-        ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(0)");
-    }
-
-    if (Features.HasAlphaMask())
-    {
-        ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
-    }
-    else
-    {
-        ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
-    }
-
-    ShaderDefines.Emplace("ENABLE_DOUBLE_SIDED", Features.IsDoubleSided() ? "(1)" : "(0)");
-
-    FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, ShaderDefines);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/EditorSelectionID.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return;
-    }
-
     FGraphicsPipelineStateInstance NewPipelineInstance;
-    NewPipelineInstance.VertexShader = RHI::CreateVertexShader(ShaderCode);
+    NewPipelineInstance.VertexShader = FShaderCache::Get().GetShader<FSelectionIDVS>(Permutation);
     if (!NewPipelineInstance.VertexShader)
     {
         DEBUG_BREAK();
         return;
     }
 
-    CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, ShaderDefines);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/EditorSelectionID.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return;
-    }
-
-    NewPipelineInstance.PixelShader = RHI::CreatePixelShader(ShaderCode);
+    NewPipelineInstance.PixelShader = FShaderCache::Get().GetShader<FSelectionIDPS>(Permutation);
     if (!NewPipelineInstance.PixelShader)
     {
         DEBUG_BREAK();
@@ -388,27 +350,17 @@ void FEditorSelectionIDPass::PreparePipelineState(FMaterial* Material, const FVe
     DepthStencilStateDesc.bDepthEnable      = true;
     DepthStencilStateDesc.bDepthWriteEnable = false;
 
-    NewPipelineInstance.DepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
-    if (!NewPipelineInstance.DepthStencilState)
-    {
-        DEBUG_BREAK();
-        return;
-    }
-
     FRHIRasterizerStateDesc RasterizerStateDesc;
     RasterizerStateDesc.CullMode = Features.IsDoubleSided() ? ECullMode::None : ECullMode::Back;
 
-    NewPipelineInstance.RasterizerState = RHI::CreateRasterizerState(RasterizerStateDesc);
-    if (!NewPipelineInstance.RasterizerState)
-    {
-        DEBUG_BREAK();
-        return;
-    }
-
     FRHIBlendStateDesc BlendStateDesc;
     BlendStateDesc.NumRenderTargets = 1;
-    NewPipelineInstance.BlendState = RHI::CreateBlendState(BlendStateDesc);
-    if (!NewPipelineInstance.BlendState)
+
+    FRHIRasterizerStateRef   RasterizerState   = RHI::CreateRasterizerState(RasterizerStateDesc);
+    FRHIBlendStateRef        BlendState        = RHI::CreateBlendState(BlendStateDesc);
+    FRHIDepthStencilStateRef DepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
+
+    if (!DepthStencilState || !RasterizerState || !BlendState)
     {
         DEBUG_BREAK();
         return;
@@ -423,9 +375,9 @@ void FEditorSelectionIDPass::PreparePipelineState(FMaterial* Material, const FVe
 
     FRHIGraphicsPipelineStateDesc PSODesc;
     PSODesc.InputLayout                                    = NewPipelineInstance.StreamBinding->InputLayout.Get();
-    PSODesc.BlendState                                     = NewPipelineInstance.BlendState.Get();
-    PSODesc.DepthStencilState                              = NewPipelineInstance.DepthStencilState.Get();
-    PSODesc.RasterizerState                                = NewPipelineInstance.RasterizerState.Get();
+    PSODesc.BlendState                                     = BlendState.Get();
+    PSODesc.DepthStencilState                              = DepthStencilState.Get();
+    PSODesc.RasterizerState                                = RasterizerState.Get();
     PSODesc.VertexShader                                   = NewPipelineInstance.VertexShader.Get();
     PSODesc.PixelShader                                    = NewPipelineInstance.PixelShader.Get();
     PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = RendererTextureFormats::ObjectIDFormat;
@@ -518,10 +470,13 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
 
         const FMaterialFeatures Features(Batch.EffectiveMaterialFlags);
 
-        FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(MakeMaterialPSOKey(static_cast<int32>(Features.Flags), false, Batch.Declaration.GetID()));
+        const FGraphicsPipelineKey PSOKey = MakeSelectionIDPSOKey(Features, Batch.Declaration);
+
+        FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(PSOKey);
         if (!PipelineInstance)
         {
             DEBUG_BREAK();
+            continue;
         }
 
         FRHIGraphicsPipelineState* PipelineState = PipelineInstance->PipelineState.Get();

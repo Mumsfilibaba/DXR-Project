@@ -10,6 +10,24 @@
 #include "Engine/World/World.h"
 #include "Renderer/RenderPass.h"
 #include "Renderer/FrameResources.h"
+#include "Renderer/RayTracingShaders.h"
+
+struct FRayTracingVariant
+{
+    NODISCARD explicit operator bool() const
+    {
+        return Pipeline != nullptr;
+    }
+
+    void Reset()
+    {
+        Pipeline.Reset();
+        RayGenShader.Reset();
+    }
+
+    FRHIRayTracingPipelineStateRef Pipeline;
+    FRHIRayGenShaderRef            RayGenShader;
+};
 
 class FRayTracer : public FRenderPass
 {
@@ -39,22 +57,15 @@ private:
     void LoadReflectionNoiseMask();
     FRHITexture* GetReflectionNoiseMask() const;
 
-    FRHIRayTracingPipelineStateRef                     LocalPipeline;
-    FRHIRayGenShaderRef                                RayGenShader;
-    FRHIRayMissShaderRef                               RayMissShader;
-    FRHIRayClosestHitShaderRef                         RayClosestHitShader;
-    FRHIRayTracingPipelineStateRef                     BindlessPipeline;
-    FRHIRayGenShaderRef                                RayGenShaderBindless;
-    FRHIRayMissShaderRef                               RayMissShaderBindless;
-    FRHIRayClosestHitShaderRef                         RayClosestHitShaderBindless;
+    NODISCARD FRayTracingVariant CreateVariant(const FRayTracingPermutation& Permutation);
+
+    FRayTracingVariant                                 LocalVariant;
+    FRayTracingVariant                                 BindlessVariant;
+    FRayTracingVariant                                 SERVariant;
     FRHIComputeShaderRef                               InlineReflectionsShader;
     FRHIComputePipelineStateRef                        InlineReflectionsPipeline;
     FRHIComputeShaderRef                               PrimaryRayDebugShader;
     FRHIComputePipelineStateRef                        PrimaryRayDebugPipeline;
-    FRHIRayGenShaderRef                                RayGenShaderSER;
-    FRHIRayMissShaderRef                               RayMissShaderSER;
-    FRHIRayClosestHitShaderRef                         RayClosestHitShaderSER;
-    FRHIRayTracingPipelineStateRef                     SERPipeline;
     uint32                                             CurrentSERHitGroupCapacity;
     uint32                                             CurrentHitGroupCapacity;
     uint32                                             CurrentBindlessHitGroupCapacity;

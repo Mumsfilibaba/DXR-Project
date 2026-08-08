@@ -18,5 +18,5 @@ public:
 private:
     FGraphicsPipelineStateInstance* CompilePipelineState(bool bBindless, bool bEnableParallax, bool bEnableClipping, const FVertexDeclaration& Declaration);
 
-    TMap<uint64, FGraphicsPipelineStateInstance> PipelineStates;
+    TMap<FGraphicsPipelineKey, FGraphicsPipelineStateInstance> PipelineStates;
 };

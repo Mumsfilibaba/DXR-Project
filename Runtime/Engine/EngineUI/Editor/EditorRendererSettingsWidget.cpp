@@ -139,8 +139,8 @@ void FEditorRendererSettingsWidget::CaptureDefaultsIfNeeded()
     CaptureInt("Renderer.RayTracing.Reflections.Sampler");
 
     // Anti-aliasing
-    CaptureBool("Renderer.Feature.TemporalAA");
-    CaptureBool("Renderer.TemporalAA.HardwareJitter");
+    CaptureBool("Renderer.Feature.TemporalAntiAliasing");
+    CaptureBool("Renderer.TemporalAntiAliasing.HardwareJitter");
     CaptureBool("Renderer.Feature.FXAA");
     CaptureBool("Renderer.Debug.FXAADebug");
 
@@ -1240,30 +1240,30 @@ void FEditorRendererSettingsWidget::DrawTAASettings()
         return;
     }
 
-    bool bTemporalAAActive = false;
-    if (IConsoleVariable* CVarEnableTemporalAA = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.TemporalAA"))
+    bool bIsTAAEnabled = false;
+    if (IConsoleVariable* CVarEnableTemporalAntiAliasing = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.TemporalAntiAliasing"))
     {
-        bool bEnableTemporalAA  = CVarEnableTemporalAA->GetBool();
-        bool bEnableTemporalAA0 = false;
+        bool bEnableTAA  = CVarEnableTemporalAntiAliasing->GetBool();
+        bool bEnableTAA0 = false;
 
-        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.Feature.TemporalAA", bEnableTemporalAA0);
-        if (EditorWidgets::DrawCheckboxProperty("Enable TemporalAA", bEnableTemporalAA, RevertPtr))
+        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.Feature.TemporalAntiAliasing", bEnableTAA0);
+        if (EditorWidgets::DrawCheckboxProperty("Enabled", bEnableTAA, RevertPtr))
         {
-            CVarEnableTemporalAA->SetAsBool(bEnableTemporalAA, EConsoleVariableFlags::SetByCode);
+            CVarEnableTemporalAntiAliasing->SetAsBool(bEnableTAA, EConsoleVariableFlags::SetByCode);
         }
 
-        bTemporalAAActive = bEnableTemporalAA;
+        bIsTAAEnabled = bEnableTAA;
     }
 
-    if (IConsoleVariable* CVarHardwareJitter = FConsoleManager::Get().FindConsoleVariable("Renderer.TemporalAA.HardwareJitter"))
+    if (IConsoleVariable* CVarHardwareJitter = FConsoleManager::Get().FindConsoleVariable("Renderer.TemporalAntiAliasing.HardwareJitter"))
     {
         const bool bSupported = RHI::bSupportsProgrammableSamplePositions && IsSampleCountSupported(RHI::SupportedSamplePositionSampleCounts, RHI_SAMPLE_COUNT_1);
 
         bool bHardwareJitter  = CVarHardwareJitter->GetBool();
         bool bHardwareJitter0 = false;
 
-        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.TemporalAA.HardwareJitter", bHardwareJitter0);
-        if (EditorWidgets::DrawCheckboxProperty("Hardware jitter", bHardwareJitter, RevertPtr, bTemporalAAActive && bSupported))
+        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.TemporalAntiAliasing.HardwareJitter", bHardwareJitter0);
+        if (EditorWidgets::DrawCheckboxProperty("Hardware jitter", bHardwareJitter, RevertPtr, bIsTAAEnabled && bSupported))
         {
             CVarHardwareJitter->SetAsBool(bHardwareJitter, EConsoleVariableFlags::SetByCode);
         }

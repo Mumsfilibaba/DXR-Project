@@ -71,11 +71,11 @@ struct FHaltonState
     uint32       SampleIndex;
 };
 
-class FTemporalAA : public FRenderPass
+class FTemporalAntiAliasing : public FRenderPass
 {
 public:
-    FTemporalAA(FSceneRenderer* InRenderer);
-    virtual ~FTemporalAA();
+    FTemporalAntiAliasing(FSceneRenderer* InRenderer);
+    virtual ~FTemporalAntiAliasing();
 
     bool Initialize(FFrameResources& FrameResources);
     void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources);
@@ -87,8 +87,8 @@ public:
     }
 
 private:
-    FRHIComputePipelineStateRef TemporalAAPSO;
-    FRHIComputeShaderRef        TemporalAAShader;
+    FRHIComputePipelineStateRef TemporalAntiAliasingPSO;
+    FRHIComputeShaderRef        TemporalAntiAliasingShader;
 
     // Two buffers to ping-pong between
     FRHITextureRef              TAAHistoryBuffers[2];

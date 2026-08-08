@@ -4,8 +4,8 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "RHI/RHI.h"
-#include "RHI/ShaderCompiler.h"
 #include "Renderer/SceneRenderer.h"
+#include "Renderer/CommonShaders.h"
 #include "Renderer/ScreenSpaceOcclusionRendering.h"
 
 static float GSSAORadius = 0.2f;
@@ -25,6 +25,26 @@ static FAutoConsoleVariableRef CVarSSAOKernelSize(
     "Renderer.SSAO.KernelSize",
     "Specifies the number of samples for each pixel",
     GSSAOKernelSize);
+
+class FSSAOCS
+{
+    DECLARE_SHADER_TYPE(FSSAOCS, EShaderStage::Compute);
+
+    using FPermutation = TShaderPermutation<>;
+};
+
+IMPLEMENT_SHADER_TYPE(FSSAOCS, "Shaders/SSAO.hlsl", "Main", EShaderModel::SM_6_2);
+
+class FBlurHorizontal : SHADER_PERMUTATION_BOOL("HORIZONTAL_PASS");
+
+class FBlurCS
+{
+    DECLARE_SHADER_TYPE(FBlurCS, EShaderStage::Compute);
+
+    using FPermutation = TShaderPermutation<FBlurHorizontal>;
+};
+
+IMPLEMENT_SHADER_TYPE(FBlurCS, "Shaders/Blur.hlsl", "Main", EShaderModel::SM_6_2);
 
 FScreenSpaceOcclusionPass::FScreenSpaceOcclusionPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -51,16 +71,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    TArray<uint8> ShaderCode;
-
-    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/SSAO.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    SSAOShader = RHI::CreateComputeShader(ShaderCode);
+    SSAOShader = FShaderCache::Get().GetShader<FSSAOCS>();
     if (!SSAOShader)
     {
         DEBUG_BREAK();
@@ -81,19 +92,10 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         PipelineState->SetDebugName("SSAO PipelineState");
     }
 
-    TArray<FShaderDefine> Defines = 
-    {
-        { "HORIZONTAL_PASS", "(1)" }
-    };
+    FBlurCS::FPermutation BlurPermutation;
+    BlurPermutation.Set<FBlurHorizontal>(true);
 
-    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/Blur.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    BlurHorizontalShader = RHI::CreateComputeShader(ShaderCode);
+    BlurHorizontalShader = FShaderCache::Get().GetShader<FBlurCS>(BlurPermutation);
     if (!BlurHorizontalShader)
     {
         DEBUG_BREAK();
@@ -113,17 +115,9 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         BlurHorizontalPSO->SetDebugName("SSAO Horizontal Blur PSO");
     }
 
-    Defines.Clear();
-    Defines.Emplace("VERTICAL_PASS", "1");
+    BlurPermutation.Set<FBlurHorizontal>(false);
 
-    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, MakeArrayView(Defines));
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/Blur.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    BlurVerticalShader = RHI::CreateComputeShader(ShaderCode);
+    BlurVerticalShader = FShaderCache::Get().GetShader<FBlurCS>(BlurPermutation);
     if (!BlurVerticalShader)
     {
         DEBUG_BREAK();

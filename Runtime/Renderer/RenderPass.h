@@ -1,6 +1,8 @@
 #pragma once
+#include "Core/Templates/TypeHash.h"
 #include "RHI/RHIShader.h"
 #include "RHI/RHIResources.h"
+#include "RendererCore/Shaders/CommonShaderPermutations.h"
 #include "RendererCore/VertexDeclaration.h"
 #include "Engine/Resources/Material.h"
 
@@ -8,15 +10,43 @@ class FSceneRenderer;
 struct FFrameResources;
 struct FVertexStreamBinding;
 
-constexpr uint64 PSO_KEY_BINDLESS_BIT      = uint64(1) << 32;
-constexpr uint64 PSO_KEY_DECLARATION_SHIFT = 33;
+constexpr uint32 PIPELINE_FLAG_DOUBLE_SIDED   = 1u << 0;
+constexpr uint32 PIPELINE_FLAG_DEPTH_CLIPPING = 1u << 1;
 
-inline uint64 MakeMaterialPSOKey(int32 MaterialFlags, bool bBindless, uint8 DeclarationID)
+struct FGraphicsPipelineKey
 {
-    const uint64 Flags = static_cast<uint64>(static_cast<uint32>(MaterialFlags));
-    const uint64 Key   = Flags | (static_cast<uint64>(DeclarationID) << PSO_KEY_DECLARATION_SHIFT);
-    return bBindless ? (Key | PSO_KEY_BINDLESS_BIT) : Key;
-}
+    FGraphicsPipelineKey() = default;
+
+    FGraphicsPipelineKey(int32 InPermutationID, uint32 InPipelineFlags, uint8 InDeclarationID)
+        : PermutationID(InPermutationID)
+        , PipelineFlags(InPipelineFlags)
+        , DeclarationID(InDeclarationID)
+    {
+    }
+
+    bool operator==(const FGraphicsPipelineKey& Other) const
+    {
+        return PermutationID == Other.PermutationID
+            && PipelineFlags == Other.PipelineFlags
+            && DeclarationID == Other.DeclarationID;
+    }
+
+    int32  PermutationID = 0;
+    uint32 PipelineFlags = 0;
+    uint8  DeclarationID = 0;
+};
+
+template<>
+struct THash<FGraphicsPipelineKey>
+{
+    static uint64 GetHash(const FGraphicsPipelineKey& Value)
+    {
+        uint64 Result = THash<int32>::GetHash(Value.PermutationID);
+        HashCombine(Result, Value.PipelineFlags);
+        HashCombine(Result, Value.DeclarationID);
+        return Result;
+    }
+};
 
 struct FMaterialFeatures
 {
@@ -64,18 +94,17 @@ struct FMaterialFeatures
 
     EVertexAttributeFlags GetDepthOnlyAttributes() const
     {
-        EVertexAttributeFlags Attributes = EVertexAttributeFlags::Position;
-        if (HasAlphaMask() || HasHeightMap())
-        {
-            Attributes |= EVertexAttributeFlags::TexCoord0;
-        }
+        return MakeDepthOnlyAttributes(HasHeightMap(), HasAlphaMask());
+    }
 
-        if (HasHeightMap())
-        {
-            Attributes |= EVertexAttributeFlags::TangentBasis;
-        }
-
-        return Attributes;
+    NODISCARD FMaterialPermutation CreatePermutation() const
+    {
+        FMaterialPermutation Permutation;
+        Permutation.Set<FParallax>(HasHeightMap());
+        Permutation.Set<FClipping>(HasParallaxClipping());
+        Permutation.Set<FAlphaMask>(HasAlphaMask());
+        Permutation.Set<FDoubleSided>(IsDoubleSided());
+        return Permutation;
     }
 
     EMaterialFlags Flags = EMaterialFlags::None;
@@ -93,9 +122,6 @@ struct FGraphicsPipelineStateInstance
     FRHIGeometryShaderRef        GeometryShader;
     FRHIPixelShaderRef           PixelShader;
     const FVertexStreamBinding*  StreamBinding = nullptr;
-    FRHIDepthStencilStateRef     DepthStencilState;
-    FRHIBlendStateRef            BlendState;
-    FRHIRasterizerStateRef       RasterizerState;
     FRHIGraphicsPipelineStateRef PipelineState;
 };
 
