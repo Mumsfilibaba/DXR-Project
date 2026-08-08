@@ -1168,7 +1168,7 @@ public:
      */
     NODISCARD FORCEINLINE TStaticString SubString(SizeType Position, SizeType NumCharacters) const
     {
-        CHECK(Position < StringLength && (Position + NumCharacters) < StringLength);
+        CHECK(Position >= 0 && NumCharacters >= 0 && Position <= StringLength && (Position + NumCharacters) <= StringLength);
         return TStaticString(CharData + Position, NumCharacters);
     }
 

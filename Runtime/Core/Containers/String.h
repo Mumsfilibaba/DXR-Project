@@ -1351,7 +1351,7 @@ public:
      */
     NODISCARD FORCEINLINE TString SubString(SizeType Offset, SizeType Count) const
     {
-        CHECK(Offset < Length() && (Offset + Count < Length()));
+        CHECK(Offset >= 0 && Count >= 0 && Offset <= Length() && (Offset + Count) <= Length());
         return TString(CharData.Data() + Offset, Count);
     }
     

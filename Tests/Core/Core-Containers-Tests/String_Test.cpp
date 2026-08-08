@@ -145,6 +145,10 @@ bool TString_Test()
     {
         String Str = "abcdef";
         TEST_EXPECT(Str.SubString(2, 3).Equals("cde"));
+        TEST_EXPECT(Str.SubString(0, Str.Length()).Equals("abcdef"));
+        TEST_EXPECT(Str.SubString(3, Str.Length() - 3).Equals("def"));
+        TEST_EXPECT(Str.SubString(Str.Length(), 0).IsEmpty());
+        TEST_EXPECT(Str.SubString(2, 0).IsEmpty());
 
         String Left;
         String Right;

@@ -87,6 +87,27 @@ static bool ValidatePushConstantBinding(const D3D12_SHADER_INPUT_BIND_DESC& Shad
     return true;
 }
 
+// DXC mangles the names of the functions in a shader-library ('\x1?MyRayGen@@YAXXZ'),
+// while D3D12 expects the unmangled name to be used as export-name.
+static String DemangleFunctionName(const String& MangledName)
+{
+    constexpr const CHAR* ManglingPrefix = "\x1?";
+    constexpr int32       PrefixLength   = 2;
+
+    if (!MangledName.StartsWith(ManglingPrefix))
+    {
+        return MangledName;
+    }
+
+    const int32 NameEnd = MangledName.Find("@", PrefixLength);
+    if (NameEnd <= PrefixLength)
+    {
+        D3D12_WARNING("[FD3D12Shader]: Function-name '%s' is mangled but has no mangled suffix, using the name as-is", *MangledName);
+        return MangledName;
+    }
+
+    return MangledName.SubString(PrefixLength, NameEnd - PrefixLength);
+}
 
 #ifndef MAKEFOURCC
     #define MAKEFOURCC(a, b, c, d) (unsigned int)((unsigned char)(a) | ((unsigned char)(b) << 8) | ((unsigned char)(c) << 16) | ((unsigned char)(d) << 24))
@@ -937,21 +958,14 @@ bool FD3D12RayTracingShader::Initialize(const TArray<uint8>& InCode)
 		return false;
 	}
 
-	// HACK: Since the NVIDIA driver can't handle these names, we have to change the names :(
-	const String FuncIdentifier = FunctionDesc.Name;
-
-	int32 NameStart = FuncIdentifier.FindLastCharWithPredicate([](CHAR Char) -> bool
+	// The name from the reflection is mangled, and needs to be demangled before it can be used as export-name
+	if (!FunctionDesc.Name || FunctionDesc.Name[0] == '\0')
 	{
-		return (Char == '\x1') || (Char == '?');
-	});
-
-	if (NameStart != String::InvalidIndex)
-	{
-		NameStart++;
+		D3D12_ERROR("[FD3D12RayTracingShader]: Shader-library function has no name");
+		return false;
 	}
 
-	const int32 NameEnd = FuncIdentifier.Find("@");
-	Identifier = FuncIdentifier.SubString(NameStart, NameEnd - NameStart);
+	Identifier = DemangleFunctionName(FunctionDesc.Name);
 	return true;
 }
 
