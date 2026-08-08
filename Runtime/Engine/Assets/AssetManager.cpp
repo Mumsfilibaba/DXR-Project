@@ -160,7 +160,7 @@ void FAssetRegistry::UpdateRegistryFile()
     }
 }
 
-FAssetManager* FAssetManager::GAssetManager = nullptr;
+FAssetManager* FAssetManager::AssetManager = nullptr;
 
 FAssetManager::FAssetManager()
     : AssetRegistry(nullptr)
@@ -198,19 +198,19 @@ FAssetManager::~FAssetManager()
 
 bool FAssetManager::Initialize()
 {
-    if (!GAssetManager)
+    if (!AssetManager)
     {
-        GAssetManager = new FAssetManager();
-        CHECK(GAssetManager != nullptr);
+        AssetManager = new FAssetManager();
+        CHECK(AssetManager != nullptr);
         
         // Importers for textures
-        GAssetManager->RegisterTextureImporter(MakeSharedPtr<FTextureImporterDDS>());
-        GAssetManager->RegisterTextureImporter(MakeSharedPtr<FTextureImporterBase>());
+        AssetManager->RegisterTextureImporter(MakeSharedPtr<FTextureImporterDDS>());
+        AssetManager->RegisterTextureImporter(MakeSharedPtr<FTextureImporterBase>());
         
         // Importers for models
-        GAssetManager->RegisterModelImporter(MakeSharedPtr<FFBXImporter>());
-        GAssetManager->RegisterModelImporter(MakeSharedPtr<FOBJImporter>());
-        GAssetManager->RegisterModelImporter(MakeSharedPtr<FModelImporter>());
+        AssetManager->RegisterModelImporter(MakeSharedPtr<FFBXImporter>());
+        AssetManager->RegisterModelImporter(MakeSharedPtr<FOBJImporter>());
+        AssetManager->RegisterModelImporter(MakeSharedPtr<FModelImporter>());
         return true;
     }
 
@@ -219,17 +219,17 @@ bool FAssetManager::Initialize()
 
 void FAssetManager::Release()
 {
-    if (GAssetManager)
+    if (AssetManager)
     {
-        delete GAssetManager;
-        GAssetManager = nullptr;
+        delete AssetManager;
+        AssetManager = nullptr;
     }
 }
 
 FAssetManager& FAssetManager::Get()
 {
-    CHECK(GAssetManager != nullptr);
-    return *GAssetManager;
+    CHECK(AssetManager != nullptr);
+    return *AssetManager;
 }
 
 TSharedRef<FTexture> FAssetManager::LoadTexture(const String& Filename, bool bGenerateMips)

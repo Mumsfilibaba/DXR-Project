@@ -111,7 +111,7 @@ void FRHICommandList::FlushDeletedResources() noexcept
     });
 }
 
-FRHICommandListExecutor* FRHICommandListExecutor::GCommandListExecutor = nullptr;
+FRHICommandListExecutor* FRHICommandListExecutor::CommandListExecutor = nullptr;
 
 FRHICommandListExecutor::FRHICommandListExecutor(IRHICommandContext* InDefaultCommandContext)
     : DeletedResources()
@@ -133,18 +133,18 @@ bool FRHICommandListExecutor::Initialize()
         return false;
     }
 
-    GCommandListExecutor = new FRHICommandListExecutor(Context);
+    CommandListExecutor = new FRHICommandListExecutor(Context);
     return true;
 }
 
 void FRHICommandListExecutor::Release()
 {
-    if (GCommandListExecutor)
+    if (CommandListExecutor)
     {
-        GCommandListExecutor->WaitForCommands();
+        CommandListExecutor->WaitForCommands();
 
-        delete GCommandListExecutor;
-        GCommandListExecutor = nullptr;
+        delete CommandListExecutor;
+        CommandListExecutor = nullptr;
     }
 }
 

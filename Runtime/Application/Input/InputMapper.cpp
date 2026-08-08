@@ -1,7 +1,7 @@
 #include "Application/Input/InputMapper.h"
 #include "Core/Templates/Utility/UnderlyingTypeValue.h"
 
-FInputMapper FInputMapper::GInputMapper;
+FInputMapper FInputMapper::InputMapper;
 
 void FInputMapper::Initialize()
 {

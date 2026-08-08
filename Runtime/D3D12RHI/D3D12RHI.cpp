@@ -30,7 +30,7 @@ static TAutoConsoleVariable<bool> CVarEnablePix(
     "Enables loading of PIX when creating device to capture frame's programmatically",
     false);
 
-FD3D12DeviceRHI* FD3D12DeviceRHI::GD3D12DeviceRHI = nullptr;
+FD3D12DeviceRHI* FD3D12DeviceRHI::D3D12DeviceRHI = nullptr;
 
 FD3D12TextureRHI* FD3D12DeviceRHI::ResourceCast(FRHITexture* Texture)
 {
@@ -117,9 +117,9 @@ FD3D12DeviceRHI::FD3D12DeviceRHI()
     , FrameNumber(0)
     , NumOpenCommandLists(0)
 {
-    if (!GD3D12DeviceRHI)
+    if (!D3D12DeviceRHI)
     {
-        GD3D12DeviceRHI = this;
+        D3D12DeviceRHI = this;
     }
 }
 
@@ -192,9 +192,9 @@ FD3D12DeviceRHI::~FD3D12DeviceRHI()
 
     D3D12Loader::Release();
 
-    if (GD3D12DeviceRHI == this)
+    if (D3D12DeviceRHI == this)
     {
-        GD3D12DeviceRHI = nullptr;
+        D3D12DeviceRHI = nullptr;
     }
 }
 

@@ -361,6 +361,21 @@ private:
 bool GMyGlobal;
 ```
 
+* The 'G' prefix marks file-scope globals only. A singleton whose instance is a `static` member of its own class is not a global, so it drops the prefix and takes the type name without the `F` (for example `FEngine::Engine`, `FTaskGraph::TaskGraph`, `FShaderCompiler::ShaderCompiler`). Where that would only repeat a qualifier the enclosing class already supplies, keep the shorter stem instead (`FRHICommandListExecutor::CommandListExecutor`).
+```
+class FShaderCompiler
+{
+public:
+  static FShaderCompiler& Get()
+  {
+    return *ShaderCompiler;
+  }
+
+private:
+  static FShaderCompiler* ShaderCompiler;
+};
+```
+
 * Global / namespace-scope / file-scope constants — `constexpr` values defined outside any class or function body — use `UPPER_SNAKE_CASE`:
 ```
 constexpr uint64 PSO_KEY_BINDLESS_BIT = uint64(1) << 32;

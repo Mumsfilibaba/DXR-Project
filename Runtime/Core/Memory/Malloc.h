@@ -155,7 +155,7 @@ private:
     FMalloc*                           BaseMalloc;
     AtomicBool                         bTrackingEnabled;
 
-    static FMallocStackTraceTracker* GStackTraceTracker;
+    static FMallocStackTraceTracker* StackTraceTracker;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -2,7 +2,7 @@
 #include "RHI/RHI.h"
 #include "RendererCore/VertexStreamCache.h"
 
-FVertexStreamCache* FVertexStreamCache::GVertexStreamCache = nullptr;
+FVertexStreamCache* FVertexStreamCache::VertexStreamCache = nullptr;
 
 FVertexStreamCache::FVertexStreamCache()
     : Bindings()
@@ -18,16 +18,16 @@ FVertexStreamCache::~FVertexStreamCache()
 
 bool FVertexStreamCache::Initialize()
 {
-    GVertexStreamCache = new FVertexStreamCache();
+    VertexStreamCache = new FVertexStreamCache();
     return true;
 }
 
 void FVertexStreamCache::Release()
 {
-    if (GVertexStreamCache)
+    if (VertexStreamCache)
     {
-        delete GVertexStreamCache;
-        GVertexStreamCache = nullptr;
+        delete VertexStreamCache;
+        VertexStreamCache = nullptr;
     }
 }
 

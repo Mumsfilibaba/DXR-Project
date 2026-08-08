@@ -5,7 +5,7 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 IMPLEMENT_ENGINE_MODULE(FMetalModuleRHI, MetalRHI);
 
-FMetalDeviceRHI* FMetalDeviceRHI::GMetalDeviceRHI = nullptr;
+FMetalDeviceRHI* FMetalDeviceRHI::MetalDeviceRHI = nullptr;
 
 FRHIDevice* FMetalModuleRHI::CreateDevice()
 {
@@ -30,9 +30,9 @@ FMetalDeviceRHI::FMetalDeviceRHI()
     , Device(nullptr)
     , CommandContext(nullptr)
 {
-    if (!GMetalDeviceRHI)
+    if (!MetalDeviceRHI)
     {
-        GMetalDeviceRHI = this;
+        MetalDeviceRHI = this;
     }
 
     RHI::bSupportsDrawIndirect               = false;
@@ -53,9 +53,9 @@ FMetalDeviceRHI::~FMetalDeviceRHI()
     SAFE_DELETE(CommandContext);
     SAFE_DELETE(Device);
 
-    if (GMetalDeviceRHI == this)
+    if (MetalDeviceRHI == this)
     {
-        GMetalDeviceRHI = nullptr;
+        MetalDeviceRHI = nullptr;
     }
 }
 

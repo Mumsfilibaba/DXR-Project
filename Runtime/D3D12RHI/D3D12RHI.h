@@ -24,8 +24,8 @@ class D3D12RHI_API FD3D12DeviceRHI : public FRHIDevice
 public:
     static FORCEINLINE FD3D12DeviceRHI* Get()
     {
-        CHECK(GD3D12DeviceRHI != nullptr);
-        return GD3D12DeviceRHI;
+        CHECK(D3D12DeviceRHI != nullptr);
+        return D3D12DeviceRHI;
     }
 
     template<typename... ArgTypes>
@@ -177,5 +177,5 @@ private:
     FSamplerStateMap             SamplerStateMap;
     FCriticalSection             SamplerStateMapCS;
 
-    static FD3D12DeviceRHI* GD3D12DeviceRHI;
+    static FD3D12DeviceRHI* D3D12DeviceRHI;
 };

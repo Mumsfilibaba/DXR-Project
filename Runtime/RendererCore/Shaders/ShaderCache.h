@@ -66,12 +66,12 @@ public:
 
     static FORCEINLINE FShaderCache& Get()
     {
-        return *GShaderCache;
+        return *ShaderCache;
     }
 
     static FORCEINLINE FShaderCache* TryGet()
     {
-        return GShaderCache;
+        return ShaderCache;
     }
 
 public:
@@ -120,5 +120,5 @@ private:
     bool                                 bManifestDirty;
     FTaskHandle                          PrewarmTask;
 
-    static FShaderCache* GShaderCache;
+    static FShaderCache* ShaderCache;
 };

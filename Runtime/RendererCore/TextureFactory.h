@@ -25,7 +25,7 @@ public:
 
     static FORCEINLINE FTextureFactory& Get()
     {
-        return *GTextureFactory;
+        return *TextureFactory;
     }
 
 public:
@@ -85,5 +85,5 @@ private:
     FRHIComputePipelineStateRef BakeAlpha_PSO;
     FRHIComputeShaderRef        BakeAlpha_CS;
 
-    static FTextureFactory* GTextureFactory;
+    static FTextureFactory* TextureFactory;
 };

@@ -107,7 +107,7 @@ public:
 
     static FORCEINLINE FMacThreadManager& Get()
     {
-        return GMacThreadManager;
+        return MacThreadManager;
     }
 
 public:
@@ -151,5 +151,5 @@ private:
     FRunLoopSourceContext* MainThreadContext;
     FRunLoopSourceContext* AppThreadContext;
 
-    static FMacThreadManager GMacThreadManager;
+    static FMacThreadManager MacThreadManager;
 };

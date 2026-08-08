@@ -33,12 +33,12 @@ public:
 
     static FORCEINLINE FRHIPipelineStateCache& Get()
     {
-        return *GPipelineStateCache;
+        return *PipelineStateCache;
     }
 
     static FORCEINLINE FRHIPipelineStateCache* TryGet()
     {
-        return GPipelineStateCache;
+        return PipelineStateCache;
     }
 
 public:
@@ -161,5 +161,5 @@ private:
     FStats           Stats;
     FCriticalSection CacheCS;
 
-    static FRHIPipelineStateCache* GPipelineStateCache;
+    static FRHIPipelineStateCache* PipelineStateCache;
 };

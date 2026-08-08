@@ -50,13 +50,13 @@ public:
 
     static FORCEINLINE FShaderCompiler& Get()
     {
-        CHECK(GShaderCompiler != nullptr);
-        return *GShaderCompiler;
+        CHECK(ShaderCompiler != nullptr);
+        return *ShaderCompiler;
     }
 
     static FORCEINLINE FShaderCompiler* TryGet()
     {
-        return GShaderCompiler;
+        return ShaderCompiler;
     }
 
 public:
@@ -96,7 +96,7 @@ private:
     AtomicInt64           TotalCompileTimeNS;
     FCriticalSection      DumpCS;
 
-    static FShaderCompiler* GShaderCompiler;
+    static FShaderCompiler* ShaderCompiler;
 };
 
 struct FShaderCompileInfo

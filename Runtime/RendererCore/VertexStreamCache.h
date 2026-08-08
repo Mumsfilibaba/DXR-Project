@@ -21,7 +21,7 @@ public:
 
     static FORCEINLINE FVertexStreamCache& Get()
     {
-        return *GVertexStreamCache;
+        return *VertexStreamCache;
     }
 
 public:
@@ -37,5 +37,5 @@ private:
     TMap<uint32, int32>                      BindingLookup;
     FCriticalSection                         BindingsCS;
 
-    static FVertexStreamCache* GVertexStreamCache;
+    static FVertexStreamCache* VertexStreamCache;
 };

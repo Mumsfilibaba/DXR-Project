@@ -328,7 +328,7 @@ void FRunLoopSourceContext::Perform(void* Info)
     }
 }
 
-FMacThreadManager FMacThreadManager::GMacThreadManager;
+FMacThreadManager FMacThreadManager::MacThreadManager;
 
 FMacThreadManager::FMacThreadManager()
     : MainThreadContext(nullptr)
@@ -359,7 +359,7 @@ bool FMacThreadManager::SetupAppThread(id Delegate, SEL AppThreadEntry)
     [[NSProcessInfo processInfo] disableSuddenTermination];
 
     // Register the main thread's run loop context.
-    GMacThreadManager.RegisterMainThreadRunLoop();
+    MacThreadManager.RegisterMainThreadRunLoop();
 
 #if APP_THREAD_ENABLED
     // Initialize and start the AppThread with the provided delegate and selector.
@@ -387,7 +387,7 @@ void FMacThreadManager::ShutdownAppThread()
     GAppThread = nullptr;
 
     // Destroy the runloop contexts
-    GMacThreadManager.DestroyContexts();
+    MacThreadManager.DestroyContexts();
 }
 
 void FMacThreadManager::DestroyContexts()

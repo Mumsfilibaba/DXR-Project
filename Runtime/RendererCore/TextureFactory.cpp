@@ -5,7 +5,7 @@
 #include "RendererCore/TextureHelpers.h"
 #include "RendererCore/TextureResourceData.h"
 
-FTextureFactory* FTextureFactory::GTextureFactory = nullptr;
+FTextureFactory* FTextureFactory::TextureFactory = nullptr;
 
 FTextureFactory::FTextureFactory()
     : TextureCompressor()
@@ -47,8 +47,8 @@ FTextureFactory::~FTextureFactory()
 
 bool FTextureFactory::Initialize()
 {
-    GTextureFactory = new FTextureFactory();
-    if (!GTextureFactory->CreateResources())
+    TextureFactory = new FTextureFactory();
+    if (!TextureFactory->CreateResources())
     {
         return false;
     }
@@ -58,7 +58,7 @@ bool FTextureFactory::Initialize()
 
 void FTextureFactory::Release()
 {
-    SAFE_DELETE(GTextureFactory);
+    SAFE_DELETE(TextureFactory);
 }
 
 bool FTextureFactory::CreateResources()

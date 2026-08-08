@@ -350,7 +350,7 @@ private:
     SIZE_T Size;
 };
 
-FShaderCompiler* FShaderCompiler::GShaderCompiler = nullptr;
+FShaderCompiler* FShaderCompiler::ShaderCompiler = nullptr;
 
 FShaderCompiler::FShaderCompiler(const String& InAssetPath)
     : DXCLib(nullptr)
@@ -377,13 +377,13 @@ FShaderCompiler::~FShaderCompiler()
 
 bool FShaderCompiler::Initialize(const String& InAssetPath)
 {
-    CHECK(GShaderCompiler == nullptr);
+    CHECK(ShaderCompiler == nullptr);
 
-    GShaderCompiler = new FShaderCompiler(InAssetPath);
-    if (!GShaderCompiler->InitializeDXC())
+    ShaderCompiler = new FShaderCompiler(InAssetPath);
+    if (!ShaderCompiler->InitializeDXC())
     {
-        delete GShaderCompiler;
-        GShaderCompiler = nullptr;
+        delete ShaderCompiler;
+        ShaderCompiler = nullptr;
         return false;
     }
 
@@ -392,10 +392,10 @@ bool FShaderCompiler::Initialize(const String& InAssetPath)
 
 void FShaderCompiler::Destroy()
 {
-    if (GShaderCompiler)
+    if (ShaderCompiler)
     {
-        delete GShaderCompiler;
-        GShaderCompiler = nullptr;
+        delete ShaderCompiler;
+        ShaderCompiler = nullptr;
     }
 }
 

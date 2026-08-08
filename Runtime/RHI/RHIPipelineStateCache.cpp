@@ -4,7 +4,7 @@
 #include "RHI/RHI.h"
 #include "RHI/RHIPipelineStateCache.h"
 
-FRHIPipelineStateCache* FRHIPipelineStateCache::GPipelineStateCache = nullptr;
+FRHIPipelineStateCache* FRHIPipelineStateCache::PipelineStateCache = nullptr;
 
 static FAutoConsoleCommand CCmdDumpPipelineCacheStats(
     "RHI.DumpPipelineCacheStats",
@@ -443,16 +443,16 @@ FRHIPipelineStateCache::~FRHIPipelineStateCache()
 
 bool FRHIPipelineStateCache::Initialize()
 {
-    GPipelineStateCache = new FRHIPipelineStateCache();
+    PipelineStateCache = new FRHIPipelineStateCache();
     return true;
 }
 
 void FRHIPipelineStateCache::Release()
 {
-    if (GPipelineStateCache)
+    if (PipelineStateCache)
     {
-        delete GPipelineStateCache;
-        GPipelineStateCache = nullptr;
+        delete PipelineStateCache;
+        PipelineStateCache = nullptr;
     }
 }
 

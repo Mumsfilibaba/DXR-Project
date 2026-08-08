@@ -189,7 +189,7 @@ struct FEventPreProcessor
     }
 };
 
-TSharedPtr<FApplication> FApplication::GApplicationInstance = nullptr;
+TSharedPtr<FApplication> FApplication::Application = nullptr;
 
 bool FApplication::Initialize()
 {
@@ -202,17 +202,17 @@ bool FApplication::Initialize()
         return false;
     }
 
-    GApplicationInstance = MakeSharedPtr<FApplication>(PlatformApplication);
-    PlatformApplication->SetMessageHandler(GApplicationInstance);
+    Application = MakeSharedPtr<FApplication>(PlatformApplication);
+    PlatformApplication->SetMessageHandler(Application);
     return true;
 }
 
 void FApplication::Release()
 {
-    if (GApplicationInstance)
+    if (Application)
     {
-        GApplicationInstance->OverridePlatformApplication(nullptr);
-        GApplicationInstance.Reset();
+        Application->OverridePlatformApplication(nullptr);
+        Application.Reset();
     }
 }
 
@@ -1071,7 +1071,7 @@ void FApplication::OverridePlatformApplication(const TSharedPtr<FGenericApplicat
     if (InPlatformApplication)
     {
         CHECK(PlatformApplication != InPlatformApplication);
-        InPlatformApplication->SetMessageHandler(GApplicationInstance);
+        InPlatformApplication->SetMessageHandler(Application);
     }
 
     PlatformApplication = InPlatformApplication;

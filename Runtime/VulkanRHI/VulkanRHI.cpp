@@ -68,7 +68,7 @@ ERHIType FVulkanDeviceRHI::GetRHIType() const
     return ERHIType::Vulkan;
 }
 
-FVulkanDeviceRHI* FVulkanDeviceRHI::GVulkanDeviceRHI = nullptr;
+FVulkanDeviceRHI* FVulkanDeviceRHI::VulkanDeviceRHI = nullptr;
 
 FVulkanTextureRHI* FVulkanDeviceRHI::ResourceCast(FRHITexture* Texture)
 {
@@ -197,9 +197,9 @@ FVulkanDeviceRHI::FVulkanDeviceRHI()
     , CrashMarkers(nullptr)
 #endif
 {
-    if (!GVulkanDeviceRHI)
+    if (!VulkanDeviceRHI)
     {
-        GVulkanDeviceRHI = this;
+        VulkanDeviceRHI = this;
     }
 }
 
@@ -275,9 +275,9 @@ FVulkanDeviceRHI::~FVulkanDeviceRHI()
     
     Instance.Release();
 
-    if (GVulkanDeviceRHI == this)
+    if (VulkanDeviceRHI == this)
     {
-        GVulkanDeviceRHI = nullptr;
+        VulkanDeviceRHI = nullptr;
     }
 }
 

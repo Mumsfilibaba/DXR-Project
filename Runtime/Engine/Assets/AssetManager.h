@@ -76,5 +76,5 @@ private:
     TArray<TSharedRef<FTexture>>         Textures;
     FCriticalSection                     TexturesCS;
 
-    static FAssetManager* GAssetManager;
+    static FAssetManager* AssetManager;
 };

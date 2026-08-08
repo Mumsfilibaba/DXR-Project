@@ -626,12 +626,12 @@ public:
 
     static FORCEINLINE bool IsInitialized()
     {
-        return GCommandListExecutor != nullptr;
+        return CommandListExecutor != nullptr;
     }
 
     static FORCEINLINE FRHICommandListExecutor& Get()
     {
-        return *GCommandListExecutor;
+        return *CommandListExecutor;
     }
 
 public:
@@ -665,5 +665,5 @@ private:
     FCriticalSection      DeletedResourcesCS;
     IRHICommandContext*   DefaultCommandContext;
 
-    static FRHICommandListExecutor* GCommandListExecutor;
+    static FRHICommandListExecutor* CommandListExecutor;
 };

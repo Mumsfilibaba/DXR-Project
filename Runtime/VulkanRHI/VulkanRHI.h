@@ -21,8 +21,8 @@ class VULKANRHI_API FVulkanDeviceRHI : public FRHIDevice
 public:
     static FORCEINLINE FVulkanDeviceRHI* Get()
     {
-        CHECK(GVulkanDeviceRHI != nullptr);
-        return GVulkanDeviceRHI;
+        CHECK(VulkanDeviceRHI != nullptr);
+        return VulkanDeviceRHI;
     }
 
     template<typename... ArgTypes>
@@ -210,5 +210,5 @@ private:
     FVulkanCrashMarkers*          CrashMarkers;
 #endif
 
-    static FVulkanDeviceRHI* GVulkanDeviceRHI;
+    static FVulkanDeviceRHI* VulkanDeviceRHI;
 };

@@ -19,12 +19,12 @@ public:
 
     static FORCEINLINE FShaderBytecodeCache& Get()
     {
-        return *GBytecodeCache;
+        return *BytecodeCache;
     }
 
     static FORCEINLINE FShaderBytecodeCache* TryGet()
     {
-        return GBytecodeCache;
+        return BytecodeCache;
     }
 
 public:
@@ -53,5 +53,5 @@ private:
     FCriticalSection                   FileHashesCS;
     bool                               bDirty;
 
-    static FShaderBytecodeCache* GBytecodeCache;
+    static FShaderBytecodeCache* BytecodeCache;
 };

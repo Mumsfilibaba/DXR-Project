@@ -7,7 +7,7 @@ class APPLICATION_API FInputMapper
 public:
     static FInputMapper& Get()
     {
-        return GInputMapper;
+        return InputMapper;
     }
 
 public:
@@ -26,5 +26,5 @@ private:
     FKey MouseMap[EMouseButtonName::Count];
     FKey GamepadMap[EGamepadButtonName::Count];
 
-    static FInputMapper GInputMapper;
+    static FInputMapper InputMapper;
 };

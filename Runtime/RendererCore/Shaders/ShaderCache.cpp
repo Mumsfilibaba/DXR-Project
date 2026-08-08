@@ -9,7 +9,7 @@
 #include "RHI/RHIPipelineStateCache.h"
 #include "RHI/ShaderCompiler.h"
 
-FShaderCache* FShaderCache::GShaderCache = nullptr;
+FShaderCache* FShaderCache::ShaderCache = nullptr;
 
 static TAutoConsoleVariable<bool> CVarPrewarm(
     "Renderer.ShaderCache.Prewarm",
@@ -46,20 +46,20 @@ FShaderCache::~FShaderCache()
 
 bool FShaderCache::Initialize()
 {
-    GShaderCache = new FShaderCache();
+    ShaderCache = new FShaderCache();
     return true;
 }
 
 void FShaderCache::Release()
 {
-    if (GShaderCache)
+    if (ShaderCache)
     {
         // Startup never waits on the warm, but shutdown has to, or the workers outlive the cache they are filling.
-        GShaderCache->PrewarmTask.Wait();
-        GShaderCache->SaveManifest();
+        ShaderCache->PrewarmTask.Wait();
+        ShaderCache->SaveManifest();
 
-        delete GShaderCache;
-        GShaderCache = nullptr;
+        delete ShaderCache;
+        ShaderCache = nullptr;
     }
 }
 

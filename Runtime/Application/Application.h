@@ -35,7 +35,7 @@ public:
      */
     static bool FORCEINLINE IsInitialized()
     {
-        return GApplicationInstance.IsValid();
+        return Application.IsValid();
     }
 
     /**
@@ -46,8 +46,8 @@ public:
      */
     static FORCEINLINE FApplication& Get()
     {
-        CHECK(GApplicationInstance.IsValid());
-        return *GApplicationInstance;
+        CHECK(Application.IsValid());
+        return *Application;
     }
     
 public:
@@ -368,5 +368,5 @@ private:
     bool                              bIsTrackingCursor : 1;
     bool                              bIsApplicationActive : 1;
 
-    static TSharedPtr<FApplication> GApplicationInstance;
+    static TSharedPtr<FApplication> Application;
 };

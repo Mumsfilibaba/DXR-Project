@@ -28,7 +28,7 @@ class FGPUProfiler : public IGPUProfiler
 public:
     static FORCEINLINE FGPUProfiler& Get()
     {
-        return GGpuProfiler;
+        return GPUProfiler;
     }
 
 public:
@@ -93,7 +93,7 @@ private:
     int32                                 WriteIndex;
     int32                                 PipelineStatsNestingDepth;
 
-    static FGPUProfiler GGpuProfiler;
+    static FGPUProfiler GPUProfiler;
 };
 
 struct FGPUScopedTrace

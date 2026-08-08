@@ -26,8 +26,8 @@ class FMetalDeviceRHI : public FRHIDevice
 public:
     static FORCEINLINE FMetalDeviceRHI* Get()
     {
-        CHECK(GMetalDeviceRHI != nullptr);
-        return GMetalDeviceRHI;
+        CHECK(MetalDeviceRHI != nullptr);
+        return MetalDeviceRHI;
     }
 
     template<typename TRHIType>
@@ -132,7 +132,7 @@ private:
     FMetalDevice*         Device;
     FMetalCommandContext* CommandContext;
 
-    static FMetalDeviceRHI* GMetalDeviceRHI;
+    static FMetalDeviceRHI* MetalDeviceRHI;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

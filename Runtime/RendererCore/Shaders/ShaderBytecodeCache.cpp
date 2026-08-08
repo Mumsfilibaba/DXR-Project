@@ -77,7 +77,7 @@ static void WriteString(FByteOutputStream& Stream, const String& Value)
     Stream.Add(Value.Data(), static_cast<int32>(Length));
 }
 
-FShaderBytecodeCache* FShaderBytecodeCache::GBytecodeCache = nullptr;
+FShaderBytecodeCache* FShaderBytecodeCache::BytecodeCache = nullptr;
 
 FShaderBytecodeCache::FShaderBytecodeCache()
     : Entries()
@@ -94,11 +94,11 @@ FShaderBytecodeCache::~FShaderBytecodeCache()
 
 bool FShaderBytecodeCache::Initialize()
 {
-    GBytecodeCache = new FShaderBytecodeCache();
+    BytecodeCache = new FShaderBytecodeCache();
 
     if (CVarEnableBytecodeCache.GetValue())
     {
-        GBytecodeCache->Load();
+        BytecodeCache->Load();
     }
 
     return true;
@@ -106,12 +106,12 @@ bool FShaderBytecodeCache::Initialize()
 
 void FShaderBytecodeCache::Release()
 {
-    if (GBytecodeCache)
+    if (BytecodeCache)
     {
-        GBytecodeCache->Save();
+        BytecodeCache->Save();
 
-        delete GBytecodeCache;
-        GBytecodeCache = nullptr;
+        delete BytecodeCache;
+        BytecodeCache = nullptr;
     }
 }
 
