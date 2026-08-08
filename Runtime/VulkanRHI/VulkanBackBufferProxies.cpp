@@ -42,7 +42,13 @@ void FVulkanBackBufferProxyTextureRHI::SetProxyUnorderedAccessView(FVulkanBackBu
 
 FVulkanTextureRHI* FVulkanBackBufferProxyTextureRHI::GetTextureInterface() const
 {
-    return SwapChain ? SwapChain->GetCurrentBackBuffer() : nullptr;
+    if (!SwapChain)
+    {
+        return nullptr;
+    }
+
+    SwapChain->NotifyBackBufferAccessed();
+    return SwapChain->GetCurrentBackBuffer();
 }
 
 void* FVulkanBackBufferProxyTextureRHI::GetRHINativeResource() const
@@ -131,7 +137,13 @@ FVulkanBackBufferProxyRenderTargetViewRHI::~FVulkanBackBufferProxyRenderTargetVi
 
 FVulkanRenderTargetViewRHI* FVulkanBackBufferProxyRenderTargetViewRHI::GetRenderTargetViewInterface() const
 {
-    return SwapChain ? SwapChain->GetCurrentBackBufferRenderTargetView() : nullptr;
+    if (!SwapChain)
+    {
+        return nullptr;
+    }
+
+    SwapChain->NotifyBackBufferAccessed();
+    return SwapChain->GetCurrentBackBufferRenderTargetView();
 }
 
 void* FVulkanBackBufferProxyRenderTargetViewRHI::GetRHINativeHandle() const
@@ -153,7 +165,13 @@ FVulkanBackBufferProxyUnorderedAccessViewRHI::~FVulkanBackBufferProxyUnorderedAc
 
 FVulkanUnorderedAccessViewRHI* FVulkanBackBufferProxyUnorderedAccessViewRHI::GetUnorderedAccessViewInterface() const
 {
-    return SwapChain ? SwapChain->GetCurrentBackBufferUnorderedAccessView() : nullptr;
+    if (!SwapChain)
+    {
+        return nullptr;
+    }
+
+    SwapChain->NotifyBackBufferAccessed();
+    return SwapChain->GetCurrentBackBufferUnorderedAccessView();
 }
 
 void* FVulkanBackBufferProxyUnorderedAccessViewRHI::GetRHINativeHandle() const

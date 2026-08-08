@@ -438,7 +438,7 @@ VkResult FVulkanSwapChain::Present(FVulkanQueue& GraphicsQueue, FVulkanQueue* Pr
 		PresentInfo.pWaitSemaphores    = nullptr;
 	}
 
-	return vkQueuePresentKHR(QueueForPresent.GetVkQueue(), &PresentInfo);
+	return QueueForPresent.Present(PresentInfo);
 }
 
 VkResult FVulkanSwapChain::AcquireNextImage(FVulkanSemaphore* AcquireSemaphore)
@@ -476,6 +476,8 @@ FVulkanSwapChainRHI::FVulkanSwapChainRHI(FVulkanDevice* InDevice, FVulkanCommand
     , BackBuffers()
     , ImageSemaphores()
     , RenderSemaphores()
+    , PendingAcquireSemaphore(nullptr)
+    , PendingRenderSemaphore(nullptr)
     , CurrentColorSpace(EColorSpace::RGB_Full_G22_None_P709)
     , SemaphoreIndex(0)
     , BackBufferIndex(0)
@@ -724,10 +726,9 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
         }
     }
 
-    // Per-image binary semaphores must always be recreated so the post-resize AcquireNextImage
-    // populates WAIT/SIGNAL on fresh unsignaled VkSemaphores and can't collide with any
-    // pre-resize signaled state. Callers are expected to have idled the GPU and drained
-    // pending WAIT/SIGNAL entries from the queue before reaching this point.
+    PendingAcquireSemaphore.Reset();
+    PendingRenderSemaphore.Reset();
+
     const uint32 BufferCount = SwapChainResource->GetBufferCount();
     ImageSemaphores.Resize(BufferCount);
     RenderSemaphores.Resize(BufferCount);
@@ -859,6 +860,10 @@ void FVulkanSwapChainRHI::DestroySwapChain()
     // Ensure that all work is completed
     CommandContext->GetCommandQueue().WaitForCompletion();
 
+    // Nothing can claim the pair once the swapchain is gone, and the semaphores it points at die with this object.
+    PendingAcquireSemaphore.Reset();
+    PendingRenderSemaphore.Reset();
+
     // Destroy the swapchain, then the surface it was created from if that one has been retired.
     SwapChainResource.Reset();
     RetiredSurface.Reset();
@@ -869,9 +874,6 @@ void FVulkanSwapChainRHI::DestroySwapChain()
 
 bool FVulkanSwapChainRHI::Resize(uint32 InWidth, uint32 InHeight, EFormat NewFormat, EColorSpace NewColorSpace)
 {
-    // -------------------------------------------------------------------------------------------
-    // Resolve effective values - 0 / Unknown means "keep current".
-    // -------------------------------------------------------------------------------------------
     const uint32      ResolvedWidth       = (InWidth  > 0u) ? InWidth  : Desc.Width;
     const uint32      ResolvedHeight      = (InHeight > 0u) ? InHeight : Desc.Height;
     const EFormat     EffectiveFormat     = (NewFormat     == EFormat::Unknown)     ? Desc.ColorFormat   : NewFormat;
@@ -886,15 +888,11 @@ bool FVulkanSwapChainRHI::Resize(uint32 InWidth, uint32 InHeight, EFormat NewFor
         return true;
     }
 
-    // -------------------------------------------------------------------------------------------
-    // Fail-fast on an unsupported (Format, ColorSpace) combination before we touch GPU state.
-    // -------------------------------------------------------------------------------------------
     if (bFormatChanged || bColorSpaceChanged)
     {
         if (!IsFormatSupported(EffectiveFormat, EffectiveColorSpace))
         {
-            VULKAN_ERROR("FVulkanSwapChainRHI::Resize: requested (%s, %s) not supported by this swap-chain.",
-                         ToString(EffectiveFormat), ToString(EffectiveColorSpace));
+            VULKAN_ERROR("FVulkanSwapChainRHI::Resize: requested (%s, %s) not supported by this swap-chain.", ToString(EffectiveFormat), ToString(EffectiveColorSpace));
             return false;
         }
     }
@@ -902,23 +900,14 @@ bool FVulkanSwapChainRHI::Resize(uint32 InWidth, uint32 InHeight, EFormat NewFor
     CHECK(!CommandContext->IsInsideRenderPass());
     CHECK(CommandContext->IsRecording());
 
-    // Ensure that all work is completed. If this function is called from a RHICommandList we do
-    // this "manually" since the context is already started and we need to ensure that there is a
-    // valid CommandBuffer.
     CommandContext->SplitCommandBuffer(false, true);
 
-    // The end-of-Present eager AcquireNextImage queues WAIT IS[k] / SIGNAL RS[k] on the queue's
-    // pending semaphore lists. When the CB before Resize is empty those pending entries are not
-    // drained by the SplitCommandBuffer above, and would otherwise be flushed by the barrier
-    // submit inside CreateSwapChain without a matching wait. Drop them now; the GPU is idle and
-    // the referenced VkSemaphores are about to be destroyed and recreated.
-    CommandContext->GetCommandQueue().ClearPendingSemaphores();
+    PendingAcquireSemaphore.Reset();
+    PendingRenderSemaphore.Reset();
 
     VULKAN_INFO("FVulkanSwapChainRHI::Resize Width=%u Height=%u Format=%s Colorspace=%s",
         ResolvedWidth, ResolvedHeight, ToString(ConvertFormat(EffectiveFormat)), ToString(ConvertColorSpace(EffectiveColorSpace)));
 
-    // Capture the new resolved format / color space BEFORE CreateSwapChain so the create info uses
-    // them. The size is applied below from the actual VkSurfaceCapabilitiesKHR-clamped extent.
     if (bFormatChanged)
     {
         Desc.ColorFormat = EffectiveFormat;
@@ -956,7 +945,7 @@ bool FVulkanSwapChainRHI::Resize(uint32 InWidth, uint32 InHeight, EFormat NewFor
 bool FVulkanSwapChainRHI::Present(bool bVerticalSync)
 {
 	// If we don't have a drawable size, don't try to acquire/present
-    if (Desc.Width == 0 || Desc.Height == 0 || !SwapChainResource)
+    if (!CanPresent())
     {
 		return false;
     }
@@ -973,8 +962,7 @@ bool FVulkanSwapChainRHI::Present(bool bVerticalSync)
     if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR || Result == VK_ERROR_SURFACE_LOST_KHR)
     {
 		VULKAN_INFO("FVulkanSwapChainRHI::Present [Present] SwapChain is %s", 
-			(Result == VK_SUBOPTIMAL_KHR ? "Suboptimal" :
-			(Result == VK_ERROR_SURFACE_LOST_KHR ? "SurfaceLost" : "OutOfDate")));
+			(Result == VK_SUBOPTIMAL_KHR ? "Suboptimal" : (Result == VK_ERROR_SURFACE_LOST_KHR ? "SurfaceLost" : "OutOfDate")));
         bNeedsRecreation = true;
     }
 	else if (Result != VK_SUCCESS)
@@ -1008,11 +996,8 @@ bool FVulkanSwapChainRHI::Present(bool bVerticalSync)
     {
         CommandContext->SplitCommandBuffer(false, true);
 
-        // See the matching drain in FVulkanSwapChainRHI::Resize. The pending WAIT/SIGNAL entries
-        // reference the old per-image semaphores that CreateSwapChain is about to destroy and
-        // recreate; dropping them here prevents the barrier submit inside CreateSwapChain from
-        // signaling a semaphore without a matching wait.
-        CommandContext->GetCommandQueue().ClearPendingSemaphores();
+        PendingAcquireSemaphore.Reset();
+        PendingRenderSemaphore.Reset();
 
         if (!CreateSwapChain(Desc.Width, Desc.Height))
         {
@@ -1023,9 +1008,6 @@ bool FVulkanSwapChainRHI::Present(bool bVerticalSync)
 
     AdvanceSemaphoreIndex();
 
-    // Eagerly acquire the next image for the following frame so callers can query proxies
-    // (GetBackBuffer / GetBackBufferRenderTargetView) and receive valid per-image resources
-    // immediately, without requiring a deferred-acquire path.
     const VkResult AcquireResult = AcquireNextImage();
     if (AcquireResult != VK_SUCCESS && AcquireResult != VK_SUBOPTIMAL_KHR)
     {
@@ -1166,6 +1148,41 @@ bool FVulkanSwapChainRHI::IsFormatSupported(EFormat Format, EColorSpace ColorSpa
     return false;
 }
 
+void FVulkanSwapChainRHI::ClaimPendingSemaphores(FVulkanCommands& InCommands)
+{
+    ClaimPendingAcquireSemaphore(InCommands);
+
+    if (PendingRenderSemaphore && CanPresent())
+    {
+        InCommands.AddSignalSemaphore(PendingRenderSemaphore->GetVkSemaphore());
+        PendingRenderSemaphore.Reset();
+    }
+}
+
+void FVulkanSwapChainRHI::ClaimPendingAcquireSemaphore(FVulkanCommands& InCommands)
+{
+    if (PendingAcquireSemaphore)
+    {
+        InCommands.AddWaitSemaphore(PendingAcquireSemaphore->GetVkSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+        PendingAcquireSemaphore.Reset();
+    }
+}
+
+void FVulkanSwapChainRHI::NotifyBackBufferAccessed()
+{
+    if (!PendingAcquireSemaphore || !CommandContext)
+    {
+        return;
+    }
+
+    if (!CommandContext->IsRecording() || CommandContext->NeedsCommandBuffer())
+    {
+        return;
+    }
+
+    ClaimPendingAcquireSemaphore(CommandContext->GetCommands());
+}
+
 VkResult FVulkanSwapChainRHI::AcquireNextImage()
 {
 	FVulkanSemaphoreRef ImageSemaphore  = ImageSemaphores[SemaphoreIndex];
@@ -1174,6 +1191,17 @@ VkResult FVulkanSwapChainRHI::AcquireNextImage()
 #if VULKAN_LOG_SEMAPHORE_INDEX
     VULKAN_INFO("FVulkanSwapChainRHI::AcquireNextImage SemaphoreIndex=%d", SemaphoreIndex);
 #endif
+
+    if (HasPendingSemaphores())
+    {
+        const bool bKeepsRenderSemaphore = (PendingRenderSemaphore.Get() == RenderSemaphore.Get());
+
+        CommandContext->GetCommandQueue().SubmitSemaphoresOnly(PendingAcquireSemaphore ? PendingAcquireSemaphore->GetVkSemaphore() : VK_NULL_HANDLE,
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, (PendingRenderSemaphore && !bKeepsRenderSemaphore) ? PendingRenderSemaphore->GetVkSemaphore() : VK_NULL_HANDLE);
+
+        PendingAcquireSemaphore.Reset();
+        PendingRenderSemaphore.Reset();
+    }
 
 	if (FVulkanFence* Fence = ImageFences[SemaphoreIndex])
 	{
@@ -1190,8 +1218,8 @@ VkResult FVulkanSwapChainRHI::AcquireNextImage()
         return Result;
     }
 
-    CommandContext->GetCommandQueue().AddWaitSemaphore(ImageSemaphore->GetVkSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-    CommandContext->GetCommandQueue().AddSignalSemaphore(RenderSemaphore->GetVkSemaphore());
+    PendingAcquireSemaphore = ImageSemaphore;
+    PendingRenderSemaphore  = RenderSemaphore;
 
     if (FVulkanFence* Fence = CommandContext->GetSubmissionFence())
     {

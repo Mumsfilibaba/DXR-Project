@@ -38,9 +38,37 @@ static bool VulkanIsMessageSuppressed(const VkDebugUtilsMessengerCallbackDataEXT
     return false;
 }
 
+static bool VulkanIsMessageSilenced(const VkDebugUtilsMessengerCallbackDataEXT* CallbackData)
+{
+    if (!CallbackData->pMessage)
+    {
+        return false;
+    }
+
+    static const CHAR* SilencedMessageText[] =
+    {
+        "Blending is enabled for attachment with format",
+    };
+
+    for (const CHAR* SilencedText : SilencedMessageText)
+    {
+        if (CString::Strstr(CallbackData->pMessage, SilencedText) != nullptr)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugLayerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT Severity, VkDebugUtilsMessageTypeFlagsEXT Type,
     const VkDebugUtilsMessengerCallbackDataEXT* CallbackData, void* UserData)
 {
+    if (VulkanIsMessageSilenced(CallbackData))
+    {
+        return VK_FALSE;
+    }
+
     if (Severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
     {
         LOG_ERROR("[Vulkan Validation layer] %s", CallbackData->pMessage);

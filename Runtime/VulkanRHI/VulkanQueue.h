@@ -45,24 +45,17 @@ public:
     void ReleaseCommandContext(FVulkanCommandContext* InContext);
     void PruneCommandContexts(uint64 CurrentFrame);
 
-    bool ExecuteCommandBuffer(class FVulkanCommandBuffer* const* CommandBuffers, uint32 NumCommandBuffers, class FVulkanFence* Fence);
+    bool ExecuteCommands(FVulkanCommands& InCommands);
     
     void SubmitCommands(FVulkanCommands* Commands);
     void ProcessCommandQueue();
 
-    void AddWaitSemaphore(VkSemaphore Semaphore, VkPipelineStageFlags WaitStage);
-    void AddWaitTimelineSemaphore(VkSemaphore Semaphore, uint64 Value, VkPipelineStageFlags WaitStage);
-    void AddSignalSemaphore(VkSemaphore Semaphore);
-    void AddSignalTimelineSemaphore(VkSemaphore Semaphore, uint64 Value);
-    
-    bool IsSignalingSemaphore(VkSemaphore Semaphore)  const { return SignalSemaphores.Contains(Semaphore); }
-    bool IsWaitingForSemaphore(VkSemaphore Semaphore) const { return WaitSemaphores.Contains(Semaphore); }
-    
     void WaitForCompletion();
 
-    bool FlushWaitSemaphoresAndWait();
-    void ClearPendingSemaphores();
-    void RemovePendingSemaphore(VkSemaphore Semaphore);
+    VkResult Present(const VkPresentInfoKHR& PresentInfo);
+
+    bool SubmitSemaphoresOnly(VkSemaphore WaitSemaphore, VkPipelineStageFlags WaitStage, VkSemaphore SignalSemaphore);
+    void RetireDeferredObjects(TArray<FVulkanDeferredObject>&& InObjects);
 
     template<typename FunctorType>
     void ForEachLiveCommandContext(FunctorType&& Functor)
@@ -108,18 +101,15 @@ private:
     VkQueue                                   Queue;
     uint32                                    QueueFamilyIndex;
     EVulkanCommandQueueType                   QueueType;
-    TArray<VkSemaphore>                       WaitSemaphores;
-    TArray<VkPipelineStageFlags>              WaitStages;
-    TArray<uint64>                            WaitSemaphoreValues;
-    TArray<VkSemaphore>                       SignalSemaphores;
-    TArray<uint64>                            SignalSemaphoreValues;
     TVulkanRecyclePool<FVulkanCommandPool>    CommandPoolPool;
     TVulkanRecyclePool<FVulkanCommandContext> CommandContextPool;
     TArray<FVulkanCommandPool*>               DeferredCommandPools;
     FCriticalSection                          DeferredCommandPoolsCS;
+    TArray<FVulkanDeferredObject>             DeferredObjects;
+    FCriticalSection                          DeferredObjectsCS;
     TAtomicInt<uint64>                        CurrentFrame;
     FCommandsQueue                            PendingSubmissions;
-    FCriticalSection                          SubmissionCS;
+    FCriticalSection                          QueueCS;
     FCriticalSection                          ConsumerCS;
 #if !VULKAN_USE_CPU_QUERY_RESOLVE
     TArray<FVulkanQueryRange>                 PendingQueryRanges;
@@ -148,6 +138,11 @@ struct FVulkanCommands
     void ValidatePendingBarrierOrdering();
 #endif
 
+    void AddWaitSemaphore(VkSemaphore Semaphore, VkPipelineStageFlags WaitStage);
+    void AddWaitTimelineSemaphore(VkSemaphore Semaphore, uint64 Value, VkPipelineStageFlags WaitStage);
+    void AddSignalSemaphore(VkSemaphore Semaphore);
+    void AddSignalTimelineSemaphore(VkSemaphore Semaphore, uint64 Value);
+
     void AddCommandPool(FVulkanCommandPool* InCommandPool)
     {
         CommandPools.Add(InCommandPool);
@@ -158,6 +153,11 @@ struct FVulkanCommands
         CommandBuffers.Add(InCommandBuffer);
     }
 
+    bool HasPendingSemaphores() const
+    {
+        return !WaitSemaphores.IsEmpty() || !SignalSemaphores.IsEmpty();
+    }
+
     bool IsExecutionFinished() const
     {
         return Fence ? Fence->IsSignaled() : false;
@@ -165,7 +165,7 @@ struct FVulkanCommands
 
     bool IsEmpty() const
     {
-        return CommandBuffers.IsEmpty();
+        return CommandBuffers.IsEmpty() && !HasPendingSemaphores();
     }
 
     FVulkanQueue&                                     Queue;
@@ -174,6 +174,11 @@ struct FVulkanCommands
     FVulkanFence*                                     Fence;
     TArray<FVulkanCommandPool*>                       CommandPools;
     TArray<FVulkanCommandBuffer*>                     CommandBuffers;
+    TArray<VkSemaphore>                               WaitSemaphores;
+    TArray<VkPipelineStageFlags>                      WaitStages;
+    TArray<uint64>                                    WaitSemaphoreValues;
+    TArray<VkSemaphore>                               SignalSemaphores;
+    TArray<uint64>                                    SignalSemaphoreValues;
     TArray<FVulkanQueryRange>                         QueryRanges;
     TArray<FVulkanQuery>                              TimestampQueries;
     TArray<FVulkanQuery>                              OcclusionQueries;

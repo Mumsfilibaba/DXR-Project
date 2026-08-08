@@ -123,12 +123,12 @@ bool FVulkanTimelineFence::Initialize()
     return true;
 }
 
-uint64 FVulkanTimelineFence::Signal(FVulkanQueue& Queue)
+uint64 FVulkanTimelineFence::Signal(FVulkanCommands& InCommands)
 {
     ++CurrentValue;
     CHECK(LastSignaledValue.Load() != CurrentValue);
 
-    Queue.AddSignalTimelineSemaphore(TimelineSemaphore, CurrentValue);
+    InCommands.AddSignalTimelineSemaphore(TimelineSemaphore, CurrentValue);
     LastSignaledValue.Store(CurrentValue);
     return CurrentValue;
 }
@@ -364,13 +364,13 @@ void FVulkanFenceRHI::GetDebugName(String& OutDebugName) const
 #endif
 }
 
-void FVulkanFenceRHI::EnqueueSignal(FVulkanQueue& Queue)
+void FVulkanFenceRHI::EnqueueSignal(FVulkanCommands& InCommands)
 {
     if (bUsesTimeline)
     {
         TargetValue = ++NextValue;
         bHasPendingSignal.Store(true);
-        Queue.AddSignalTimelineSemaphore(TimelineSemaphore, TargetValue);
+        InCommands.AddSignalTimelineSemaphore(TimelineSemaphore, TargetValue);
     }
 }
 

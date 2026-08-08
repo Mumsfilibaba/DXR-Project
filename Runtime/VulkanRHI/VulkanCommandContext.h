@@ -217,6 +217,7 @@ public:
 
     FVulkanCommands& GetCommands()
     {
+        CHECK(Commands != nullptr);
         return *Commands;
     }
 

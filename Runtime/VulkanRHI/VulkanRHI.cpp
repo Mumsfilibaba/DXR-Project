@@ -519,8 +519,6 @@ void FVulkanDeviceRHI::BeginFrame()
     {
         Device->GetMemoryManager().DefragmentAllocations(GraphicsCommandContext, MaxDefragMoves);
     }
-
-    Device->GetFrameFence().Signal(*Device->GetGraphicsQueue());
 }
 
 void FVulkanDeviceRHI::EndFrame()
@@ -1550,32 +1548,47 @@ void FVulkanDeviceRHI::NotifyCommandBufferOpened()
 
 void FVulkanDeviceRHI::NotifyCommandBufferRetired(FVulkanCommands* Commands)
 {
-    TScopedLock Lock(DeferredObjectsCS);
+    TArray<FVulkanDeferredObject> ObjectsWithoutBatch;
 
-    CHECK(NumOpenCommandBuffers > 0);
-    NumOpenCommandBuffers--;
-
-    // -------------------------------------------------------------------------------------------
-    // A command buffer holds references to everything it recorded until it is submitted, so these
-    // objects may only be destroyed by a batch the GPU is guaranteed to reach last. That is only
-    // true of this batch once no other buffer is outstanding: while one is, destroying now would
-    // pull a resource out from under a buffer that has not even been ended yet. Leave the queue
-    // for a later retire.
-    // -------------------------------------------------------------------------------------------
-
-    if (NumOpenCommandBuffers > 0)
     {
-        return;
+        TScopedLock Lock(DeferredObjectsCS);
+
+        CHECK(NumOpenCommandBuffers > 0);
+        NumOpenCommandBuffers--;
+
+        // ---------------------------------------------------------------------------------------
+        // A command buffer holds references to everything it recorded until it is submitted, so
+        // these objects may only be destroyed by a batch the GPU is guaranteed to reach last. That
+        // is only true of this batch once no other buffer is outstanding: while one is, destroying
+        // now would pull a resource out from under a buffer that has not even been ended yet.
+        // Leave the queue for a later retire.
+        // ---------------------------------------------------------------------------------------
+
+        if (NumOpenCommandBuffers > 0)
+        {
+            return;
+        }
+
+        // ---------------------------------------------------------------------------------------
+        // A discarded buffer passes no batch, and an empty batch is never submitted, so in both
+        // cases nothing would ever run PostExecute to process the objects. Hand them to the queue
+        // instead of leaving them parked here waiting for a retire that may not come until
+        // shutdown; the queue destroys them once it has no submission left in flight.
+        // ---------------------------------------------------------------------------------------
+
+        if (Commands && !Commands->IsEmpty())
+        {
+            Commands->DeferredObjects = Move(DeferredObjects);
+        }
+        else
+        {
+            ObjectsWithoutBatch = Move(DeferredObjects);
+        }
     }
 
-    // -------------------------------------------------------------------------------------------
-    // A discarded buffer passes no batch, and an empty batch is never submitted, so in both cases
-    // nothing would ever run PostExecute to process the objects.
-    // -------------------------------------------------------------------------------------------
-    
-    if (Commands && !Commands->IsEmpty())
+    if (!ObjectsWithoutBatch.IsEmpty())
     {
-        Commands->DeferredObjects = Move(DeferredObjects);
+        Device->GetGraphicsQueue()->RetireDeferredObjects(Move(ObjectsWithoutBatch));
     }
 }
 

@@ -200,7 +200,6 @@ void FRHICommandListExecutor::ExecuteCommandList(FRHICommandList& CommandList)
     {
         FRHICommandList* NewCommandList = new FRHICommandList();
         NewCommandList->ExchangeState(CommandList);
-
         NewCommandList->SetCommandContext(DefaultCommandContext);
 
         Tasks::LaunchOnRHIThread("RHIExecuteCommandList", [NewCommandList]()
@@ -228,9 +227,29 @@ void FRHICommandListExecutor::WaitForCommands()
 
 void FRHICommandListExecutor::WaitForGPU()
 {
-    WaitForCommands();
+    if (!DefaultCommandContext)
+    {
+        WaitForCommands();
+        return;
+    }
 
-    if (DefaultCommandContext)
+    // -----------------------------------------------------------------------------------------------
+    // The default context belongs to the RHI thread for as long as it is recording, so the flush has
+    // to run there too. Draining the lane first and then flushing from the calling thread only works
+    // while the RHI thread stays idle in between, and nothing keeps it that way. The render-thread can
+    // queue another command list, whose StartContext then races the flush. Queueing the flush also
+    // makes the separate drain redundant, since the lane runs in order and every command list queued
+    // before this point has therefore already been submitted by the time the flush runs.
+    // -----------------------------------------------------------------------------------------------
+
+    if (FTaskGraph::Get().IsRHIThreadEnabled() && !Tasks::IsInRHIThread())
+    {
+        Tasks::LaunchOnRHIThread("RHIWaitForGPU", [this]()
+        {
+            DefaultCommandContext->Flush();
+        }).Wait();
+    }
+    else
     {
         DefaultCommandContext->Flush();
     }

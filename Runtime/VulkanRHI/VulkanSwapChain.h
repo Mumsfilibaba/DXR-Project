@@ -22,8 +22,6 @@ typedef TSharedRef<class FVulkanSwapChainRHI> FVulkanSwapChainRHIRef;
 
 class FVulkanCommandContext;
 
-// Resolves the VulkanRHI.DefaultBackBufferFormat CVar into the EFormat used when the swap-chain
-// is created with EFormat::Unknown. Read directly during backend init.
 EFormat GetVulkanDefaultBackBufferFormat();
 
 inline bool IsUndefinedExtent(const VkSurfaceCapabilitiesKHR& Capabilities)
@@ -109,6 +107,9 @@ public:
     bool Resize(uint32 InWidth, uint32 InHeight, EFormat NewFormat, EColorSpace NewColorSpace);
     bool Present(bool bVerticalSync);
 
+    void ClaimPendingSemaphores(FVulkanCommands& InCommands);
+    void NotifyBackBufferAccessed();
+
     FVulkanTextureRHI*             GetCurrentBackBuffer() const;
     FVulkanRenderTargetViewRHI*    GetCurrentBackBufferRenderTargetView() const;
     FVulkanUnorderedAccessViewRHI* GetCurrentBackBufferUnorderedAccessView() const;
@@ -151,18 +152,6 @@ public:
     }
 
 private:
-    VkResult AcquireNextImage();
-    bool     RecreateSurface();
-    bool     ValidateSurfaceAndSize(uint32& OutWidth, uint32& OutHeight);
-    bool     CreateSwapChain(uint32 InWidth, uint32 InHeight);
-    void     DestroySwapChain();
-
-    void AdvanceSemaphoreIndex()
-    {
-        SemaphoreIndex = (SemaphoreIndex + 1) % ImageSemaphores.Size();
-    }
-
-private:
     typedef TArray<FVulkanFence*, TInlineArrayAllocator<FVulkanFence*, NUM_BACK_BUFFERS>>             FVulkanFenceArray;
     typedef TArray<FVulkanSemaphoreRef, TInlineArrayAllocator<FVulkanSemaphoreRef, NUM_BACK_BUFFERS>> FVulkanSemaphoreArray;
 
@@ -172,6 +161,29 @@ private:
         FVulkanRenderTargetViewRHIRef    RenderTargetView;
         FVulkanUnorderedAccessViewRHIRef UnorderedAccessView;
     };
+
+    VkResult AcquireNextImage();
+
+    bool RecreateSurface();
+    bool ValidateSurfaceAndSize(uint32& OutWidth, uint32& OutHeight);
+    bool CreateSwapChain(uint32 InWidth, uint32 InHeight);
+    void DestroySwapChain();
+    void ClaimPendingAcquireSemaphore(FVulkanCommands& InCommands);
+
+    bool HasPendingSemaphores() const
+    {
+        return PendingAcquireSemaphore || PendingRenderSemaphore;
+    }
+
+    bool CanPresent() const
+    {
+        return Desc.Width > 0 && Desc.Height > 0 && SwapChainResource;
+    }
+
+    void AdvanceSemaphoreIndex()
+    {
+        SemaphoreIndex = (SemaphoreIndex + 1) % ImageSemaphores.Size();
+    }
 
     void*                                           WindowHandle;
     FVulkanCommandContext*                          CommandContext;
@@ -185,6 +197,8 @@ private:
     FVulkanFenceArray                               ImageFences;
     FVulkanSemaphoreArray                           ImageSemaphores;
     FVulkanSemaphoreArray                           RenderSemaphores;
+    FVulkanSemaphoreRef                             PendingAcquireSemaphore;
+    FVulkanSemaphoreRef                             PendingRenderSemaphore;
     EColorSpace                                     CurrentColorSpace;
     int32                                           SemaphoreIndex;
     uint32                                          BackBufferIndex;

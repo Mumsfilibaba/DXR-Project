@@ -272,6 +272,13 @@ bool FVulkanCommandContext::Initialize()
 void FVulkanCommandContext::BeginFrame()
 {
     FVulkanDeviceRHI::Get()->BeginFrame();
+
+    if (NeedsCommandBuffer())
+    {
+        ObtainCommandBuffer();
+    }
+
+    GetDevice()->GetFrameFence().Signal(GetCommands());
 }
 
 void FVulkanCommandContext::EndFrame()
@@ -380,7 +387,7 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQu
     }
 #endif
 
-    if (NumCommands == 0 && !bHasPendingState)
+    if (NumCommands == 0 && !bHasPendingState && !Commands->HasPendingSemaphores())
     {
         CommandBuffer->End();
         CommandPool->RecycleBuffer(CommandBuffer);
@@ -738,17 +745,11 @@ void FVulkanCommandContext::BeginQuery(FRHIQuery* Query)
     const EQueryType Type = VulkanQuery->GetType();
     if (Type == EQueryType::Occlusion)
     {
-        OcclusionQueryAllocator.Allocate(
-            VulkanQuery->CurrentQuery, 
-            VulkanQuery->QueryResult, 
-            EVulkanQueryType::Occlusion);
+        OcclusionQueryAllocator.Allocate(VulkanQuery->CurrentQuery, VulkanQuery->QueryResult, EVulkanQueryType::Occlusion);
     }
     else if (Type == EQueryType::PipelineStatistics)
     {
-        PipelineStatsQueryAllocator.Allocate(
-            VulkanQuery->CurrentQuery, 
-            VulkanQuery->QueryResult, 
-            EVulkanQueryType::PipelineStatistics);
+        PipelineStatsQueryAllocator.Allocate(VulkanQuery->CurrentQuery, VulkanQuery->QueryResult, EVulkanQueryType::PipelineStatistics);
     }
     else
     {
@@ -1830,7 +1831,7 @@ void FVulkanCommandContext::WriteFence(FRHIFence* Fence)
     {
         if (VulkanFence->UsesTimeline())
         {
-            VulkanFence->EnqueueSignal(GetCommandQueue());
+            VulkanFence->EnqueueSignal(GetCommands());
         }
 
         FVulkanFence* SubmittedFence = nullptr;
@@ -3419,14 +3420,15 @@ void FVulkanCommandContext::PresentSwapChain(FRHISwapChain* InSwapChain, bool bV
     // a single command pool per command context, per thread, per frame-in-flight. This helps 
     // avoid unnecessary command pool allocations or resets between multiple Present() calls
     // in the same frame.
-    //
     // The command pool will instead be explicitly retired at the end of FinishContext(), 
     // ensuring proper lifecycle management without leaks.
     // -------------------------------------------------------------------------------------------
 
+    FVulkanSwapChainRHI* VulkanSwapChain = FVulkanDeviceRHI::ResourceCast(InSwapChain);
+    VulkanSwapChain->ClaimPendingSemaphores(GetCommands());
+
     FinishCommandBuffer(false);
 
-    FVulkanSwapChainRHI* VulkanSwapChain = FVulkanDeviceRHI::ResourceCast(InSwapChain);
     VulkanSwapChain->Present(bVerticalSync);
 
     // -------------------------------------------------------------------------------------------

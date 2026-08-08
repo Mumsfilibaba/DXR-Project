@@ -9,6 +9,7 @@
 #include "VulkanRHI/VulkanLoader.h"
 
 class FVulkanQueue;
+struct FVulkanCommands;
 
 class FVulkanFence : public FVulkanDeviceChild, public FRefCountedBase
 {
@@ -45,7 +46,7 @@ public:
 
     bool Initialize();
 
-    uint64 Signal(FVulkanQueue& Queue);
+    uint64 Signal(FVulkanCommands& InCommands);
     uint64 GetCompletedValue() const;
 
     bool WaitForValue(uint64 Value, uint64 TimeoutNs = UINT64_MAX);
@@ -94,11 +95,7 @@ public:
     virtual void GetDebugName(String& OutDebugName) const override final;
 
     bool Initialize();
- 
-    // Called by the command context to enqueue a GPU signal at the next submission.
-    void EnqueueSignal(FVulkanQueue& Queue);
-    
-    // Fallback path: use the submission fence from the submission that contained the signal point.
+    void EnqueueSignal(FVulkanCommands& InCommands);
     void SetSubmissionFence(FVulkanFence* InFence);
 
     bool UsesTimeline() const
