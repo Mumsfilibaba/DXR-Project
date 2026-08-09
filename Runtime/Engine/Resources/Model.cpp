@@ -368,56 +368,41 @@ bool FModel::Initialize(const FModelData& ModelData)
         }
 
         TSharedPtr<FMaterial> Material = MakeSharedPtr<FMaterial>(MaterialInfo);
-        Material->AlbedoMap = GetRHITexture(ModelData, EMaterialTexture::Diffuse, Index);
-
-        // If a separate AlphaMask texture exists, bake it into AlbedoMap.a
-        const FTexture2DRef& AlphaMaskTex = ModelData.Materials[Index].Textures[EMaterialTexture::AlphaMask];
-        if (AlphaMaskTex)
-        {
-            FRHITextureRef AlbedoWithAlpha;
-            if (FTextureFactory::Get().BakeAlphaIntoAlbedo(Material->AlbedoMap, AlphaMaskTex->GetRHITexture(), AlbedoWithAlpha))
-            {
-                Material->AlbedoMap = AlbedoWithAlpha;
-                Material->EnableAlphaMask(true);
-                LOG_INFO("[FModel] Baked separate alpha mask into AlbedoMap.a for material '%s'", *ModelData.Materials[Index].Name);
-            }
-        }
+        Material->SetTexture(EMaterialTextureSlot::BaseColor, GetRHITexture(ModelData, EMaterialTexture::Diffuse, Index));
 
         if (ModelData.Materials[Index].Textures[EMaterialTexture::Normal])
         {
-            Material->NormalMap = ModelData.Materials[Index].Textures[EMaterialTexture::Normal]->GetRHITexture();
+            Material->SetTexture(EMaterialTextureSlot::Normal, ModelData.Materials[Index].Textures[EMaterialTexture::Normal]->GetRHITexture());
         }
 
-        const FTexture2DRef& SpecularTex  = ModelData.Materials[Index].Textures[EMaterialTexture::Specular];
-        const FTexture2DRef& RoughnessTex = ModelData.Materials[Index].Textures[EMaterialTexture::Roughness];
-        const FTexture2DRef& MetallicTex  = ModelData.Materials[Index].Textures[EMaterialTexture::Metallic];
-        const FTexture2DRef& AOTex        = ModelData.Materials[Index].Textures[EMaterialTexture::AmbientOcclusion];
-
-        if (SpecularTex)
+        FMaterialMaskSlots Masks(*Material);
+        const auto SlotForSourceTexture = [&](EMaterialTexture::Type SourceTexture, const FTexture2DRef& Texture) -> EMaterialTextureSlot::Type
         {
-            Material->MaterialMap = SpecularTex->GetRHITexture();
-        }
-        else if (RoughnessTex || MetallicTex || AOTex)
-        {
-            FRHITextureRef DefaultWhite   = FEngine::Get()->BaseTexture;
-            FRHITextureRef AOInput        = AOTex ? AOTex->GetRHITexture() : DefaultWhite;
-            FRHITextureRef RoughnessInput = RoughnessTex ? RoughnessTex->GetRHITexture() : DefaultWhite;
-            FRHITextureRef MetallicInput  = MetallicTex ? MetallicTex->GetRHITexture() : DefaultWhite;
-
-            FRHITextureRef PackedMaterial;
-            if (FTextureFactory::Get().PackMaterialParamsTexture(AOInput, RoughnessInput, MetallicInput, PackedMaterial))
+            switch (SourceTexture)
             {
-                Material->MaterialMap = PackedMaterial;
-                LOG_INFO("[FModel] Packed separate AO/Roughness/Metallic into MaterialMap for material '%s'", *ModelData.Materials[Index].Name);
+                case EMaterialTexture::Diffuse: return EMaterialTextureSlot::BaseColor;
+                case EMaterialTexture::Normal:  return Texture ? EMaterialTextureSlot::Normal : EMaterialTextureSlot::Count;
+                default:                        return Masks.Assign(Texture ? Texture->GetRHITexture() : FRHITextureRef());
             }
-            else
-            {
-                Material->MaterialMap = FEngine::Get()->BaseTexture;
-            }
-        }
-        else
+        };
+
+        for (uint32 Scalar = 0; Scalar < EMaterialScalar::Count; ++Scalar)
         {
-            Material->MaterialMap = FEngine::Get()->BaseTexture;
+            const FMaterialSourceRoute& Source = ModelData.Materials[Index].Routes[Scalar];
+            if (!Source.IsRouted())
+            {
+                Material->SetRoute(EMaterialScalar::Type(Scalar), FMaterialTextureRoute());
+                continue;
+            }
+
+            const EMaterialTextureSlot::Type Slot = SlotForSourceTexture(Source.Texture, ModelData.Materials[Index].Textures[Source.Texture]);
+            Material->SetRoute(EMaterialScalar::Type(Scalar), FMaterialTextureRoute(Slot, Source.Channel, Source.bInvert));
+        }
+
+        const FMaterialTextureRoute& OpacityRoute = Material->GetRoute(EMaterialScalar::Opacity);
+        if (OpacityRoute.IsRouted() && OpacityRoute.Slot != EMaterialTextureSlot::BaseColor)
+        {
+            Material->EnableAlphaMask(true);
         }
 
         // Block-compress uncompressed textures for reduced memory usage
@@ -462,17 +447,21 @@ bool FModel::Initialize(const FModelData& ModelData)
             }
         };
 
-        if (Material->HasAlphaMask())
+        if (Material->HasAlphaMask() && Material->GetRoute(EMaterialScalar::Opacity).Slot == EMaterialTextureSlot::BaseColor)
         {
-            TryCompressBC3(Material->AlbedoMap);
+            TryCompressBC3(Material->GetTexture(EMaterialTextureSlot::BaseColor));
         }
         else
         {
-            TryCompressBC1(Material->AlbedoMap);
+            TryCompressBC1(Material->GetTexture(EMaterialTextureSlot::BaseColor));
         }
         
-        TryCompressBC5(Material->NormalMap);
-        TryCompressBC1(Material->MaterialMap);
+        TryCompressBC5(Material->GetTexture(EMaterialTextureSlot::Normal));
+
+        for (uint32 Slot = EMaterialTextureSlot::MaskA; Slot < EMaterialTextureSlot::Count; ++Slot)
+        {
+            TryCompressBC1(Material->GetTexture(EMaterialTextureSlot::Type(Slot)));
+        }
 
         Material->Initialize();
         Material->SetName(ModelData.Materials[Index].Name);

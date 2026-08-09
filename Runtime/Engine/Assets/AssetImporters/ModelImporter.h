@@ -7,7 +7,7 @@
 #include "Engine/Assets/IModelImporter.h"
 
 #define MODEL_FORMAT_VERSION_MAJOR (0)
-#define MODEL_FORMAT_VERSION_MINOR (9)
+#define MODEL_FORMAT_VERSION_MINOR (10)
 #define MODEL_FORMAT_MAX_NAME_LENGTH (256)
 #define MODEL_FORMAT_INVALID_TEXTURE_ID (-1)
 
@@ -80,7 +80,6 @@ namespace ModelFormat
 
     struct FMaterialInfo
     {
-        // Texture-index reference a TextureHeader in the file
         int32   DiffuseTextureIdx;
         int32   NormalTextureIdx;
         int32   SpecularTextureIdx;
@@ -89,13 +88,30 @@ namespace ModelFormat
         int32   RoughnessTextureIdx;
         int32   MetallicTextureIdx;
         int32   AlphaMaskTextureIdx;
-        // Pure MaterialData
+        uint32  ScalarRoutes[EMaterialScalar::Count];
         Vector3 Diffuse;
         float   AO;
         float   Roughness;
         float   Metallic;
         int32   MaterialFlags;
     };
+
+    inline uint32 PackSourceRoute(const FMaterialSourceRoute& Route)
+    {
+        const uint32 Texture = Route.IsRouted() ? uint32(Route.Texture) : uint32(EMaterialTexture::Count);
+        return Texture | (uint32(Route.Channel) << 8) | (Route.bInvert ? (1u << 10) : 0u);
+    }
+
+    inline FMaterialSourceRoute UnpackSourceRoute(uint32 Packed)
+    {
+        const uint32 Texture = Packed & 0xFFu;
+        if (Texture >= uint32(EMaterialTexture::Count))
+        {
+            return FMaterialSourceRoute();
+        }
+
+        return FMaterialSourceRoute(EMaterialTexture::Type(Texture), ETextureChannel((Packed >> 8) & 0x3u), ((Packed >> 10) & 0x1u) != 0);
+    }
 }
 
 struct ENGINE_API FModelImporter : public IModelImporter

@@ -24,18 +24,10 @@ ConstantBuffer<FCamera>    CameraBuffer    : register(b0);
 ConstantBuffer<FPerObject> PerObjectBuffer : register(b1);
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
-    #if ENABLE_PARALLAX_MAPPING
-        #define MATERIAL_ARRAY_REGISTER t2
-        #include "MaterialArray.hlsli"
-    #endif
-
-        SamplerState MaterialSampler : register(s0);
-    #if ENABLE_ALPHA_MASK
-        Texture2D<float4> AlbedoAlphaTex : register(t0);
-    #endif
-    #if ENABLE_PARALLAX_MAPPING
-        Texture2D<float> HeightTex : register(t1);
-    #endif
+    #define MATERIAL_SAMPLE_NORMAL     (0)
+    #define MATERIAL_SRV_REGISTER_BASE 0
+    #define MATERIAL_ARRAY_REGISTER    t7
+    #include "MaterialSampling.hlsli"
 #endif
 
 // ------------------------------------------------------------------------------------------------
@@ -123,6 +115,8 @@ uint PSMain(FPSInput Input) : SV_Target0
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoords = Input.TexCoord;
 
+    const FMaterial MaterialData = Materials[PerObjectBuffer.MaterialIndex];
+
     #if ENABLE_PARALLAX_MAPPING
         float3 SurfaceNormal = Input.Normal;
         float  TangentSign   = Input.Tangent.w;
@@ -141,9 +135,7 @@ uint PSMain(FPSInput Input) : SV_Target0
         const float3   ViewDir        = normalize(mul(WorldToTangent, CameraBuffer.PositionWS - Input.PositionWS));
 
         bool bParallaxDiscard = false;
-        
-        const FMaterial MaterialData = Materials[PerObjectBuffer.MaterialIndex];
-        TexCoords = ParallaxMapUV(HeightTex, MaterialSampler, TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, MaterialData.ParallaxHeightScale, MaterialData.ParallaxMinLayers, MaterialData.ParallaxMaxLayers, bParallaxDiscard);
+        TexCoords = ApplyMaterialParallax(MaterialData, TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, bParallaxDiscard);
         #if ENABLE_PARALLAX_CLIPPING
             if (bParallaxDiscard)
             {
@@ -153,9 +145,8 @@ uint PSMain(FPSInput Input) : SV_Target0
     #endif
 
     #if ENABLE_ALPHA_MASK
-        const float AlphaMask = AlbedoAlphaTex.Sample(MaterialSampler, TexCoords).a;
         [[branch]]
-        if (AlphaMask < 0.5)
+        if (SampleMaterialOpacity(MaterialData, TexCoords) < 0.5)
         {
             discard;
         }

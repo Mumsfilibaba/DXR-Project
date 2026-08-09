@@ -5,12 +5,12 @@
     #define ENABLE_PARALLAX_CLIPPING 0
 #endif
 
-float ParallaxSampleHeight(Texture2D<float> HeightTex, SamplerState HeightSampler, float2 TexCoords, float2 TexCoordsDx, float2 TexCoordsDy)
+float ParallaxSampleHeight(Texture2D<float4> HeightTex, SamplerState HeightSampler, float2 TexCoords, float2 TexCoordsDx, float2 TexCoordsDy)
 {
-    return saturate(1.0f - HeightTex.SampleGrad(HeightSampler, TexCoords, TexCoordsDx, TexCoordsDy));
+    return saturate(1.0f - HeightTex.SampleGrad(HeightSampler, TexCoords, TexCoordsDx, TexCoordsDy).r);
 }
 
-float2 ParallaxMapUV(Texture2D<float> HeightTex, SamplerState HeightSampler, float2 TexCoords, float3 ViewDir, 
+float2 ParallaxMapUV(Texture2D<float4> HeightTex, SamplerState HeightSampler, float2 TexCoords, float3 ViewDir, 
     float2 TexCoordsDx, float2 TexCoordsDy, float HeightScale, float MinLayers, float MaxLayers, out bool bDiscard)
 {
     bDiscard = false;

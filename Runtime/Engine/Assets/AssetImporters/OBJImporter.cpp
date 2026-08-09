@@ -55,7 +55,15 @@ bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
         MaterialData.Textures[EMaterialTexture::Roughness] = LoadMaterialTexture(Mat.specular_highlight_texname);
         MaterialData.Textures[EMaterialTexture::Normal]    = LoadMaterialTexture(Mat.bump_texname);
         MaterialData.Textures[EMaterialTexture::AlphaMask] = LoadMaterialTexture(Mat.alpha_texname);
-        
+
+        MaterialData.Routes[EMaterialScalar::Roughness] = FMaterialSourceRoute(EMaterialTexture::Roughness, ETextureChannel::R);
+        MaterialData.Routes[EMaterialScalar::Metallic]  = FMaterialSourceRoute(EMaterialTexture::Metallic, ETextureChannel::R);
+
+        if (MaterialData.Textures[EMaterialTexture::AlphaMask])
+        {
+            MaterialData.Routes[EMaterialScalar::Opacity] = FMaterialSourceRoute(EMaterialTexture::AlphaMask, ETextureChannel::R);
+        }
+
         MaterialData.Diffuse       = Vector3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
         MaterialData.Metallic      = Mat.ambient[0];
         MaterialData.AmbientFactor = 1.0f;

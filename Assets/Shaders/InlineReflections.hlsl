@@ -6,8 +6,12 @@
 #include "RayTracingHelpers.hlsli"
 #include "RayTracingShading.hlsli"
 #include "BindlessHelpers.hlsli"
-#include "MaterialBindless.hlsli"
 #include "Reflections/ReflectionSampling.hlsli"
+
+#define MATERIAL_SLOT_ACCESS      MATERIAL_SLOT_ACCESS_BINDLESS
+#define MATERIAL_SLOT_NON_UNIFORM (1)
+#define MATERIAL_ARRAY_REGISTER   t8
+#include "MaterialSampling.hlsli"
 
 ConstantBuffer<FCamera>                     CameraBuffer   : register(b0);
 ConstantBuffer<FRayTracingSceneConstants>   SceneConstants : register(b1);
@@ -20,7 +24,6 @@ Texture2D<float4>                            GBufferMaterial : register(t4);
 TextureCube<float4>                          IBLDiffuse      : register(t5);
 TextureCube<float4>                          IBLSpecular     : register(t6);
 Texture2D<float2>                            IntegrationLUT  : register(t7);
-StructuredBuffer<FMaterial>                  Materials       : register(t8);
 StructuredBuffer<FRayTracingGeometryIndices> GeometryTable   : register(t9);
 TEXTURE_FORMAT_UNKNOWN RWTexture2D<float4>   OutTexture      : register(u0);
 
@@ -88,12 +91,8 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         const FRayTracingGeometryIndices GeometryIndices = GeometryTable[Query.CommittedInstanceID()];
         const FMaterial                  MaterialData    = Materials[GeometryIndices.MaterialIndex];
 
-        StructuredBuffer<FVertexAttributes> InAttributes    = GetResourceFromPackedDescriptorIndexNonUniform(GeometryIndices.AttributesHandle);
-        ByteAddressBuffer                   InIndices       = GetResourceFromPackedDescriptorIndexNonUniform(GeometryIndices.IndicesHandle);
-        Texture2D<float4>                   AlbedoTex       = GetResourceFromPackedDescriptorIndexNonUniform(MaterialData.AlbedoHandle);
-        Texture2D<float4>                   NormalTex       = GetResourceFromPackedDescriptorIndexNonUniform(MaterialData.NormalHandle);
-        Texture2D<float4>                   MaterialTex     = GetResourceFromPackedDescriptorIndexNonUniform(MaterialData.MaterialHandle);
-        SamplerState                        MaterialSampler = GetMaterialSamplerBindless(MaterialData);
+        StructuredBuffer<FVertexAttributes> InAttributes = GetResourceFromPackedDescriptorIndexNonUniform(GeometryIndices.AttributesHandle);
+        ByteAddressBuffer                   InIndices    = GetResourceFromPackedDescriptorIndexNonUniform(GeometryIndices.IndicesHandle);
 
         FHitSurface Surface = InterpolateTriangleHit(InAttributes, InIndices, Query.CommittedPrimitiveIndex(), Query.CommittedTriangleBarycentrics());
         TransformHitSurfaceToWorld(Surface, Query.CommittedObjectToWorld3x4(), Query.CommittedWorldToObject3x4());
@@ -103,9 +102,9 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         float3 Normal;
         if (HasNormalMap(MaterialData) && length(Surface.Tangent) > 1e-4f)
         {
-            const float3 SampledNormal = UnpackNormalBC5(NormalTex.SampleLevel(MaterialSampler, Surface.TexCoord, 0).rgb);
-            const float3 MappedNormal  = ApplyNormalMapAxis(SampledNormal, IsNormalMapPositiveY(MaterialData));
-            const float  TangentSign   = Surface.TangentSign * GeometryIndices.DeterminantSign;
+            const float3 NormalTexel  = SampleMaterialSlotLevel(MaterialData, MATERIAL_SLOT_NORMAL, Surface.TexCoord, 0).rgb;
+            const float3 MappedNormal = DecodeMaterialNormalTS(MaterialData, NormalTexel);
+            const float  TangentSign  = Surface.TangentSign * GeometryIndices.DeterminantSign;
             Normal = DecodeTangentNormal(MappedNormal, Surface.Normal, Surface.Tangent, TangentSign);
         }
         else
@@ -118,15 +117,19 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
             Normal = -Normal;
         }
 
-        const float  LOD         = (min(HitT, 1000.0f) / 1000.0f) * 15.0f;
-        const float3 AlbedoColor = SRGBToLinear(AlbedoTex.SampleLevel(MaterialSampler, Surface.TexCoord, LOD).rgb) * MaterialData.Albedo;
+        // Base colour takes the distance-based LOD while the scalars stay at the top mip.
+        const float  LOD       = (min(HitT, 1000.0f) / 1000.0f) * 15.0f;
+        const float3 BaseColor = SRGBToLinear(SampleMaterialSlotLevel(MaterialData, MATERIAL_SLOT_BASE_COLOR, Surface.TexCoord, LOD).rgb) * MaterialData.Albedo;
+
+        const float3 MaterialParams = float3(
+            SampleRoutedScalarLevel(MaterialData, MATERIAL_SCALAR_OCCLUSION, Surface.TexCoord, 0, MaterialData.AO),
+            SampleRoutedScalarLevel(MaterialData, MATERIAL_SCALAR_ROUGHNESS, Surface.TexCoord, 0, MaterialData.Roughness),
+            SampleRoutedScalarLevel(MaterialData, MATERIAL_SCALAR_METALLIC, Surface.TexCoord, 0, MaterialData.Metallic));
+
         const float3 HitPosition = Ray.Origin + (Ray.Direction * HitT);
-        
-        float3 MaterialParams = MaterialTex.SampleLevel(MaterialSampler, Surface.TexCoord, 0).rgb; // r=AO, g=Roughness, b=Metallic
-        MaterialParams *= float3(MaterialData.AO, MaterialData.Roughness, MaterialData.Metallic);
 
         Color = ShadeReflectionHit(SceneConstants, IBLDiffuse, IBLSpecular, IntegrationLUT, EnvironmentSampler, 
-            LUTSampler, AlbedoColor, Normal, MaterialParams, HitPosition, HitViewDir);
+            LUTSampler, BaseColor, Normal, MaterialParams, HitPosition, HitViewDir);
     }
     else
     {

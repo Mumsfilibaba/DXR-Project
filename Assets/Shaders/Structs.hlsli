@@ -101,8 +101,28 @@ struct FPerObject
 };
 
 // Mirrors ENormalMapFlags in Runtime/Engine/Resources/Material.h
-#define NORMAL_MAP_FLAG_ENABLED    (1)
-#define NORMAL_MAP_FLAG_POSITIVE_Y (2)
+#define NORMAL_MAP_FLAG_ENABLED     (1)
+#define NORMAL_MAP_FLAG_POSITIVE_Y  (2)
+#define NORMAL_MAP_FLAG_TWO_CHANNEL (4)
+
+// Mirrors EMaterialTextureSlot in Runtime/Engine/Resources/Material.h
+#define MATERIAL_SLOT_BASE_COLOR (0)
+#define MATERIAL_SLOT_NORMAL     (1)
+#define MATERIAL_SLOT_HEIGHT     (2)
+#define MATERIAL_SLOT_MASK_A     (3)
+#define MATERIAL_SLOT_MASK_B     (4)
+#define MATERIAL_SLOT_MASK_C     (5)
+#define MATERIAL_SLOT_MASK_D     (6)
+#define MATERIAL_SLOT_COUNT      (7)
+
+// Mirrors EMaterialScalar. One route byte each, in this order, inside FMaterial::ScalarRoutes.
+#define MATERIAL_SCALAR_ROUGHNESS (0)
+#define MATERIAL_SCALAR_METALLIC  (1)
+#define MATERIAL_SCALAR_OCCLUSION (2)
+#define MATERIAL_SCALAR_OPACITY   (3)
+
+// A route byte is slot in bits 0-3, channel in bits 4-5 and invert in bit 6.
+#define MATERIAL_ROUTE_SLOT_NONE (0xFu)
 
 struct FMaterial
 {
@@ -112,18 +132,16 @@ struct FMaterial
     // 16-32
     float Metallic;
     float AO;
-    uint  AlbedoHandle;
-    uint  NormalHandle;
-    // 32-48
     float ParallaxHeightScale;
     float ParallaxMinLayers;
+    // 32-48
     float ParallaxMaxLayers;
-    uint  MaterialHandle;
-    // 48-64
-    uint  HeightHandle;
-    uint  SamplerHandle;
+    uint  ScalarRoutes;
     uint  NormalMapFlags;
     uint  Padding0;
+    // 48-80
+    uint  SlotHandles[MATERIAL_SLOT_COUNT];
+    uint  SamplerHandle;
 };
 
 bool HasNormalMap(FMaterial MaterialData)
@@ -134,6 +152,31 @@ bool HasNormalMap(FMaterial MaterialData)
 bool IsNormalMapPositiveY(FMaterial MaterialData)
 {
     return (MaterialData.NormalMapFlags & NORMAL_MAP_FLAG_POSITIVE_Y) != 0;
+}
+
+bool IsNormalMapTwoChannel(FMaterial MaterialData)
+{
+    return (MaterialData.NormalMapFlags & NORMAL_MAP_FLAG_TWO_CHANNEL) != 0;
+}
+
+uint GetMaterialScalarRoute(FMaterial MaterialData, uint Scalar)
+{
+    return (MaterialData.ScalarRoutes >> (Scalar * 8)) & 0xFFu;
+}
+
+uint GetMaterialRouteSlot(uint Route)
+{
+    return Route & 0xFu;
+}
+
+uint GetMaterialRouteChannel(uint Route)
+{
+    return (Route >> 4) & 0x3u;
+}
+
+bool IsMaterialRouteInverted(uint Route)
+{
+    return ((Route >> 6) & 0x1u) != 0;
 }
 
 struct FLightProbeInfo

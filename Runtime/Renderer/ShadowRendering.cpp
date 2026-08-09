@@ -6,7 +6,6 @@
 #include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/World/Components/DirectionalLightComponent.h"
-#include "Renderer/MaterialBindless.h"
 #include "Renderer/ShadowRendering.h"
 #include "Renderer/ShadowSettings.h"
 #include "Renderer/Performance/GPUProfiler.h"
@@ -472,22 +471,12 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
                     if (bBindless)
                     {
-                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Resources.MaterialDataBufferSRV.Get(), 0);
+                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Resources.MaterialDataBufferSRV.Get(), 7);
                     }
                     else
                     {
-                        CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
-
-                        if (Features.HasAlphaMask())
-                        {
-                            CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
-                        }
-
-                        if (Features.HasHeightMap())
-                        {
-                            CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
-                            CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Resources.MaterialDataBufferSRV.Get(), 2);
-                        }
+                        BindMaterialTextures(CommandList, Instance->PixelShader.Get(), Features, *Material, 0);
+                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Resources.MaterialDataBufferSRV.Get(), 7);
                     }
                 }
 
@@ -585,21 +574,12 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
                         if (bBindless)
                         {
-                            CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Resources.MaterialDataBufferSRV.Get(), 0);
+                            CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Resources.MaterialDataBufferSRV.Get(), 7);
                         }
                         else
                         {
-                            CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
-
-                            if (Features.HasAlphaMask())
-                            {
-                                CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
-                            }
-                            if (Features.HasHeightMap())
-                            {
-                                CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
-                                CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Resources.MaterialDataBufferSRV.Get(), 2);
-                            }
+                            BindMaterialTextures(CommandList, Instance->PixelShader.Get(), Features, *Material, 0);
+                            CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Resources.MaterialDataBufferSRV.Get(), 7);
                         }
                     }
 
@@ -1121,21 +1101,12 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
             {
                 if (bBindless)
                 {
-                    CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Resources.MaterialDataBufferSRV.Get(), 1);
+                    CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Resources.MaterialDataBufferSRV.Get(), 7);
                 }
                 else
                 {
-                    CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
-
-                    if (Features.HasAlphaMask())
-                    {
-                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
-                    }
-                    if (Features.HasHeightMap())
-                    {
-                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
-                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Resources.MaterialDataBufferSRV.Get(), 2);
-                    }
+                    BindMaterialTextures(CommandList, Instance->PixelShader.Get(), Features, *Material, 0);
+                    CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Resources.MaterialDataBufferSRV.Get(), 7);
                 }
 
                 if (Features.HasHeightMap())
@@ -1227,21 +1198,12 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                 {
                     if (bBindless)
                     {
-                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Resources.MaterialDataBufferSRV.Get(), 1);
+                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Resources.MaterialDataBufferSRV.Get(), 7);
                     }
                     else
                     {
-                        CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
-
-                        if (Features.HasAlphaMask())
-                        {
-                            CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
-                        }
-                        if (Features.HasHeightMap())
-                        {
-                            CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
-                            CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Resources.MaterialDataBufferSRV.Get(), 2);
-                        }
+                        BindMaterialTextures(CommandList, Instance->PixelShader.Get(), Features, *Material, 0);
+                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Resources.MaterialDataBufferSRV.Get(), 7);
                     }
 
                     if (Features.HasHeightMap())

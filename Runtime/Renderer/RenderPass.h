@@ -1,9 +1,12 @@
 #pragma once
+#include "Core/Misc/Asserts.h"
 #include "Core/Templates/TypeHash.h"
 #include "RHI/RHIShader.h"
 #include "RHI/RHIResources.h"
+#include "RHI/RHICommandList.h"
 #include "RendererCore/Shaders/CommonShaderPermutations.h"
 #include "RendererCore/VertexDeclaration.h"
+#include "Engine/Engine.h"
 #include "Engine/Resources/Material.h"
 
 class FSceneRenderer;
@@ -109,6 +112,42 @@ struct FMaterialFeatures
 
     EMaterialFlags Flags = EMaterialFlags::None;
 };
+
+inline void BindMaterialTextures(FRHICommandList& CommandList, FRHIShader* Shader, const FMaterialFeatures& Features, const FMaterial& Material, uint32 BaseRegister)
+{
+    FRHITexture* DefaultTexture = nullptr;
+    FRHITexture* DefaultNormal  = nullptr;
+
+    if (FEngine* Engine = FEngine::Get())
+    {
+        DefaultTexture = Engine->BaseTexture.Get();
+        DefaultNormal  = Engine->BaseNormal.Get();
+    }
+
+    for (uint32 Index = 0; Index < EMaterialTextureSlot::Count; ++Index)
+    {
+        const EMaterialTextureSlot::Type Slot = EMaterialTextureSlot::Type(Index);
+
+        FRHITexture* Texture = Material.GetTexture(Slot).Get();
+        if (Slot == EMaterialTextureSlot::Normal && !Features.HasNormalMap())
+        {
+            Texture = nullptr;
+        }
+        else if (Slot == EMaterialTextureSlot::Height && !Features.HasHeightMap())
+        {
+            Texture = nullptr;
+        }
+
+        if (!Texture)
+        {
+            Texture = (Slot == EMaterialTextureSlot::Normal) ? DefaultNormal : DefaultTexture;
+        }
+
+        CommandList.SetShaderResourceView(Shader, SafeGetDefaultSRV(Texture), BaseRegister + Index);
+    }
+
+    CommandList.SetSamplerState(Shader, Material.GetMaterialSampler(), 0);
+}
 
 struct FComputePipelineStateInstance
 {

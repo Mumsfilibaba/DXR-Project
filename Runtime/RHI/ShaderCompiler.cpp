@@ -907,6 +907,31 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
         return false;
     }
 
+    spvc_compiler_options CompilerOptions = nullptr;
+    Result = spvc_compiler_create_compiler_options(CompilerMSL, &CompilerOptions);
+    if (Result != SPVC_SUCCESS)
+    {
+        LOG_ERROR("[FShaderCompiler]: Failed to create MSL compiler options");
+        DEBUG_BREAK();
+        return false;
+    }
+
+    Result = spvc_compiler_options_set_uint(CompilerOptions, SPVC_COMPILER_OPTION_MSL_VERSION, SPVC_MAKE_MSL_VERSION(2, 3, 0));
+    if (Result != SPVC_SUCCESS)
+    {
+        LOG_ERROR("[FShaderCompiler]: Failed to set the MSL version");
+        DEBUG_BREAK();
+        return false;
+    }
+
+    Result = spvc_compiler_install_compiler_options(CompilerMSL, CompilerOptions);
+    if (Result != SPVC_SUCCESS)
+    {
+        LOG_ERROR("[FShaderCompiler]: Failed to install MSL compiler options");
+        DEBUG_BREAK();
+        return false;
+    }
+
     const CHAR* MSLSource = nullptr;
     Result = spvc_compiler_compile(CompilerMSL, &MSLSource);
     if (Result != SPVC_SUCCESS)

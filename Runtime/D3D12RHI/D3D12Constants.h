@@ -35,7 +35,7 @@
 
 #define D3D12_MAX_LOCAL_ROOT_DESCRIPTORS (16)
 #define D3D12_MAX_LOCAL_RECORD_ENTRIES (4)
-#define D3D12_MAX_LOCAL_TABLE_DESCRIPTORS (8)
+#define D3D12_MAX_LOCAL_TABLE_DESCRIPTORS (16)
 
 // ------------------------------------------------------------------------------------------------
 // Space: | Usage:

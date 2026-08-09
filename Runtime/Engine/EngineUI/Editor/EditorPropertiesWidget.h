@@ -1,5 +1,6 @@
 #pragma once
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
+#include "Engine/Resources/Material.h"
 
 class FActor;
 class FEditorEngine;
@@ -24,21 +25,12 @@ public:
     }
 
 private:
-    ImTextureID GetTexturePreview(int32 Slot, const FRHITextureRef& Texture);
-
-    enum : int32
-    {
-        MaterialTextureSlot_Albedo = 0,
-        MaterialTextureSlot_Normal,
-        MaterialTextureSlot_Height,
-        MaterialTextureSlot_Material,
-        MaterialTextureSlot_Count,
-    };
+    ImTextureID GetTexturePreview(EMaterialTextureSlot::Type Slot, const FRHITextureRef& Texture);
 
     FEditorEngine*  EditorEngine;
     FDelegateHandle ImGuiDelegateHandle;
     bool            bVisible;
     const FActor*   MaterialSelectionOwner;
     int32           SelectedMaterialIndex;
-    FImGuiTexture   MaterialTexturePreviews[MaterialTextureSlot_Count];
+    FImGuiTexture   MaterialTexturePreviews[EMaterialTextureSlot::Count];
 };

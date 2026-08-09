@@ -12,10 +12,6 @@
     #define ENABLE_PARALLAX_MAPPING (0)
 #endif
 
-#if ENABLE_BINDLESS
-    #include "MaterialBindless.hlsli"
-#endif
-
 // Per Frame Buffers
 
 // TODO: Fix this
@@ -50,8 +46,9 @@ cbuffer ShadowCastingPointLightsPosRadBuffer : register(b4)
 ConstantBuffer<FDirectionalLight> DirLightBuffer  : register(b5);
 ConstantBuffer<FPerObject>        PerObjectBuffer : register(b6);
 
-#define MATERIAL_ARRAY_REGISTER t9
-#include "MaterialArray.hlsli"
+#define MATERIAL_SRV_REGISTER_BASE 5
+#define MATERIAL_ARRAY_REGISTER    t12
+#include "MaterialSampling.hlsli"
 
 SamplerState           LUTSampler        : register(s1);
 SamplerState           IrradianceSampler : register(s2);
@@ -63,18 +60,6 @@ TextureCube<float4>     SpecularIrradianceMap : register(t1);
 Texture2D<float4>       IntegrationLUT        : register(t2);
 Texture2D<float>        DirLightShadowMaps    : register(t3);
 TextureCubeArray<float> PointLightShadowMaps  : register(t4);
-
-#if !ENABLE_BINDLESS
-    // Per-material textures: Albedo (t5), Normal (t6), Material (R=AO, G=Roughness, B=Metallic, t7), Height (t8).
-    SamplerState      MaterialSampler : register(s0);
-    Texture2D<float4> AlbedoTex       : register(t5);
-    Texture2D<float4> NormalTex       : register(t6);
-    Texture2D<float3> MaterialMap     : register(t7);
-
-    #if ENABLE_PARALLAX_MAPPING
-        Texture2D<float> HeightMap : register(t8);
-    #endif
-#endif
 
 // ------------------------------------------------------------------------------------------------
 // VertexShader
@@ -146,11 +131,7 @@ float4 PSMain(FPSInput Input) : SV_Target0
         const float3   ViewDir        = normalize(mul(WorldToTangent, CameraBuffer.PositionWS - Input.WorldPosition));
 
         bool bParallaxDiscard = false;
-    #if ENABLE_BINDLESS
-        TexCoords = ParallaxMapUV(GetHeightBindless(MaterialData), GetMaterialSamplerBindless(MaterialData), TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, MaterialData.ParallaxHeightScale, MaterialData.ParallaxMinLayers, MaterialData.ParallaxMaxLayers, bParallaxDiscard);
-    #else
-        TexCoords = ParallaxMapUV(HeightMap, MaterialSampler, TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, MaterialData.ParallaxHeightScale, MaterialData.ParallaxMinLayers, MaterialData.ParallaxMaxLayers, bParallaxDiscard);
-    #endif
+        TexCoords = ApplyMaterialParallax(MaterialData, TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, bParallaxDiscard);
     #if ENABLE_PARALLAX_CLIPPING
         if (bParallaxDiscard)
         {
@@ -160,40 +141,22 @@ float4 PSMain(FPSInput Input) : SV_Target0
     }
 #endif
 
-#if ENABLE_BINDLESS
-    const float4 AlbedoSample = GetAlbedoBindless(MaterialData).Sample(GetMaterialSamplerBindless(MaterialData), TexCoords);
-#else
-    const float4 AlbedoSample = AlbedoTex.Sample(MaterialSampler, TexCoords);
-#endif
-    if (AlbedoSample.a < 0.5)
+    const FMaterialSurface Surface = SampleMaterialSurface(MaterialData, TexCoords);
+    if (Surface.Opacity < 0.5)
     {
         discard;
     }
 
-    float3 SampledAlbedo = SRGBToLinear(AlbedoSample.rgb) * MaterialData.Albedo;
+    float3 SampledAlbedo = Surface.BaseColor;
     
     const float3 WorldPosition = Input.WorldPosition;
     const float3 V             = normalize(CameraBuffer.PositionWS - WorldPosition);
 
-#if ENABLE_BINDLESS
-    float3 SampledNormal = GetNormalBindless(MaterialData).Sample(GetMaterialSamplerBindless(MaterialData), TexCoords).rgb;
-#else
-    float3 SampledNormal = NormalTex.Sample(MaterialSampler, TexCoords).rgb;
-#endif
-    SampledNormal = UnpackNormal(SampledNormal);
-    SampledNormal = ApplyNormalMapAxis(SampledNormal, IsNormalMapPositiveY(MaterialData));
+    float3 N = DecodeTangentNormal(Surface.NormalTS, SurfaceNormal, Input.Tangent.xyz, TangentSign);
 
-    float3 N = DecodeTangentNormal(SampledNormal, SurfaceNormal, Input.Tangent.xyz, TangentSign);
-
-    // Sample packed materialparam texture (R=AO, G=Roughness, B=Metallic)
-#if ENABLE_BINDLESS
-    const float3 MaterialParams   = GetMaterialBindless(MaterialData).Sample(GetMaterialSamplerBindless(MaterialData), TexCoords);
-#else
-    const float3 MaterialParams   = MaterialMap.Sample(MaterialSampler, TexCoords);
-#endif
-    const float SampledAO        = MaterialParams.r * MaterialData.AO;
-    const float SampledRoughness = MaterialParams.g * MaterialData.Roughness;
-    const float SampledMetallic  = MaterialParams.b * MaterialData.Metallic;
+    const float SampledAO        = Surface.Occlusion;
+    const float SampledRoughness = Surface.Roughness;
+    const float SampledMetallic  = Surface.Metallic;
     const float Roughness        = SampledRoughness;
     
     float3 F0 = 0.04;

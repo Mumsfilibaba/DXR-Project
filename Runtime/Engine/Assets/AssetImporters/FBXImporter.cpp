@@ -148,6 +148,17 @@ bool FFBXImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
             MaterialData.Textures[EMaterialTexture::Emissive]         = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::EMISSIVE);
             MaterialData.Textures[EMaterialTexture::AmbientOcclusion] = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::AMBIENT);
 
+            if (MaterialData.Textures[EMaterialTexture::Specular])
+            {
+                MaterialData.Routes[EMaterialScalar::Occlusion] = FMaterialSourceRoute(EMaterialTexture::Specular, ETextureChannel::R);
+                MaterialData.Routes[EMaterialScalar::Roughness] = FMaterialSourceRoute(EMaterialTexture::Specular, ETextureChannel::G);
+                MaterialData.Routes[EMaterialScalar::Metallic]  = FMaterialSourceRoute(EMaterialTexture::Specular, ETextureChannel::B);
+            }
+            else
+            {
+                MaterialData.Routes[EMaterialScalar::Occlusion] = FMaterialSourceRoute(EMaterialTexture::AmbientOcclusion, ETextureChannel::R);
+            }
+
             MaterialData.Diffuse       = Vector3(CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b);
             MaterialData.AmbientFactor = 1.0f; // CurrentMaterial->getSpecularColor().r;
             MaterialData.Roughness     = 1.0f; // CurrentMaterial->getSpecularColor().g;

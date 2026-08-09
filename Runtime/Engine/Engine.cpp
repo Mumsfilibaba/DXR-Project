@@ -263,9 +263,9 @@ bool FEngine::Init()
     MaterialDesc.Roughness        = 1.0f;
 
     BaseMaterial = MakeSharedPtr<FMaterial>(MaterialDesc);
-    BaseMaterial->AlbedoMap    = BaseTexture;
-    BaseMaterial->NormalMap    = BaseNormal;
-    BaseMaterial->MaterialMap  = BaseTexture;
+    BaseMaterial->SetTexture(EMaterialTextureSlot::BaseColor, BaseTexture);
+    BaseMaterial->SetTexture(EMaterialTextureSlot::Normal, BaseNormal);
+    BaseMaterial->SetTexture(EMaterialTextureSlot::MaskA, BaseTexture);
     BaseMaterial->Initialize();
 
     // Create a new world

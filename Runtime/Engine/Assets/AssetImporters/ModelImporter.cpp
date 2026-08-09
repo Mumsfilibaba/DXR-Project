@@ -178,7 +178,12 @@ bool FModelImporter::ImportFromFile(const StringView& InFilename, EMeshImportFla
         MaterialData.Textures[EMaterialTexture::Metallic]         = RetrieveTexture(Materials[Index].MetallicTextureIdx);
         MaterialData.Textures[EMaterialTexture::Emissive]         = RetrieveTexture(Materials[Index].EmissiveTextureIdx);
         MaterialData.Textures[EMaterialTexture::AlphaMask]        = RetrieveTexture(Materials[Index].AlphaMaskTextureIdx);
-        
+
+        for (uint32 Scalar = 0; Scalar < EMaterialScalar::Count; ++Scalar)
+        {
+            MaterialData.Routes[Scalar] = ModelFormat::UnpackSourceRoute(Materials[Index].ScalarRoutes[Scalar]);
+        }
+
         MaterialData.MaterialFlags = static_cast<EMaterialFlags>(Materials[Index].MaterialFlags);
         MaterialData.Diffuse       = Materials[Index].Diffuse;
         MaterialData.Roughness     = Materials[Index].Roughness;
@@ -361,6 +366,12 @@ bool FModelSerializer::Serialize(const String& Filename, const FModelData& Model
         Material.RoughnessTextureIdx        = CreateTextureIndex(MaterialData.Textures[EMaterialTexture::Roughness]);
         Material.MetallicTextureIdx         = CreateTextureIndex(MaterialData.Textures[EMaterialTexture::Metallic]);
         Material.AlphaMaskTextureIdx        = CreateTextureIndex(MaterialData.Textures[EMaterialTexture::AlphaMask]);
+
+        for (uint32 Scalar = 0; Scalar < EMaterialScalar::Count; ++Scalar)
+        {
+            Material.ScalarRoutes[Scalar] = ModelFormat::PackSourceRoute(MaterialData.Routes[Scalar]);
+        }
+
         Material.Diffuse                    = MaterialData.Diffuse;
         Material.AO                         = MaterialData.AmbientFactor;
         Material.Roughness                  = MaterialData.Roughness;

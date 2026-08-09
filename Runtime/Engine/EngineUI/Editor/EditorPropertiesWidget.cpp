@@ -60,7 +60,7 @@ void FEditorPropertiesWidget::Draw()
     ImGui::PopStyleVar(2);
 }
 
-ImTextureID FEditorPropertiesWidget::GetTexturePreview(int32 Slot, const FRHITextureRef& Texture)
+ImTextureID FEditorPropertiesWidget::GetTexturePreview(EMaterialTextureSlot::Type Slot, const FRHITextureRef& Texture)
 {
     FImGuiTexture& Preview = MaterialTexturePreviews[Slot];
     if (Preview.GetTexture() != Texture.Get())
@@ -383,10 +383,27 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 {
                     if (EditorWidgets::BeginPropertyTable("##MeshComponentTexturesTable", LabelColumnWidth, RevertColumnWidth))
                     {
-                        EditorWidgets::DrawTextureProperty("Albedo", GetTexturePreview(MaterialTextureSlot_Albedo, Material->AlbedoMap));
-                        EditorWidgets::DrawTextureProperty("Normal", GetTexturePreview(MaterialTextureSlot_Normal, Material->NormalMap));
-                        EditorWidgets::DrawTextureProperty("Height", GetTexturePreview(MaterialTextureSlot_Height, Material->HeightMap));
-                        EditorWidgets::DrawTextureProperty("Material", GetTexturePreview(MaterialTextureSlot_Material, Material->MaterialMap));
+                        static const CHAR* SlotNames[] =
+                        {
+                            "Base Color",
+                            "Normal",
+                            "Height",
+                            "Mask A",
+                            "Mask B",
+                            "Mask C",
+                            "Mask D"
+                        };
+
+                        static_assert(ARRAY_COUNT(SlotNames) == EMaterialTextureSlot::Count, "Every material texture slot needs a name in the Textures panel");
+
+                        for (uint32 Slot = 0; Slot < EMaterialTextureSlot::Count; ++Slot)
+                        {
+                            const FRHITextureRef& SlotTexture = Material->GetTexture(EMaterialTextureSlot::Type(Slot));
+                            if (SlotTexture)
+                            {
+                                EditorWidgets::DrawTextureProperty(SlotNames[Slot], GetTexturePreview(EMaterialTextureSlot::Type(Slot), SlotTexture));
+                            }
+                        }
 
                         EditorWidgets::EndPropertyTable();
                     }
@@ -396,17 +413,19 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 {
                     if (EditorWidgets::BeginPropertyTable("##MeshComponentMaterialFlagsTable", LabelColumnWidth, RevertColumnWidth))
                     {
+                        const bool bHasNormalTexture = Material->GetTexture(EMaterialTextureSlot::Normal).IsValid();
+
                         // Normal mapping
                         {
                             bool bEnableNormalMapping = IsMaterialFlagSet(EMaterialFlags::EnableNormalMapping);
 
-                            if (EditorWidgets::DrawCheckboxProperty("Normal Mapping", bEnableNormalMapping, nullptr, Material->NormalMap.IsValid()))
+                            if (EditorWidgets::DrawCheckboxProperty("Normal Mapping", bEnableNormalMapping, nullptr, bHasNormalTexture))
                             {
                                 Material->EnableNormalMapping(bEnableNormalMapping);
                             }
                         }
 
-                        if (IsMaterialFlagSet(EMaterialFlags::EnableNormalMapping) && Material->NormalMap.IsValid())
+                        if (IsMaterialFlagSet(EMaterialFlags::EnableNormalMapping) && bHasNormalTexture)
                         {
                             static const CHAR* const NormalMapAxisItems[] =
                             {
@@ -432,7 +451,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                         {
                             bool bEnableAlphaMask = IsMaterialFlagSet(EMaterialFlags::EnableAlpha);
 
-                            if (EditorWidgets::DrawCheckboxProperty("Alpha Mask", bEnableAlphaMask, nullptr, Material->AlbedoMap.IsValid()))
+                            if (EditorWidgets::DrawCheckboxProperty("Alpha Mask", bEnableAlphaMask, nullptr, Material->IsRouteFed(EMaterialScalar::Opacity)))
                             {
                                 Material->EnableAlphaMask(bEnableAlphaMask);
                             }
@@ -452,7 +471,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                         {
                             bool bEnableHeightMap = IsMaterialFlagSet(EMaterialFlags::EnableHeight);
 
-                            if (EditorWidgets::DrawCheckboxProperty("Height Map", bEnableHeightMap, nullptr, Material->HeightMap.IsValid()))
+                            if (EditorWidgets::DrawCheckboxProperty("Height Map", bEnableHeightMap, nullptr, Material->GetTexture(EMaterialTextureSlot::Height).IsValid()))
                             {
                                 Material->EnableHeightMap(bEnableHeightMap);
                             }

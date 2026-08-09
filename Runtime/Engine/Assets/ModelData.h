@@ -21,26 +21,50 @@ struct EMaterialTexture
     };
 };
 
+struct FMaterialSourceRoute
+{
+    FMaterialSourceRoute() = default;
+
+    FMaterialSourceRoute(EMaterialTexture::Type InTexture, ETextureChannel InChannel, bool bInInvert = false)
+        : Texture(InTexture)
+        , Channel(InChannel)
+        , bInvert(bInInvert)
+    {
+    }
+
+    bool IsRouted() const
+    {
+        return Texture < EMaterialTexture::Count;
+    }
+
+    EMaterialTexture::Type Texture = EMaterialTexture::Count;
+    ETextureChannel        Channel = ETextureChannel::R;
+    bool                   bInvert = false;
+};
+
 struct FMaterialData
 {
     FMaterialData()
         : Name()
         , Textures()
+        , Routes()
         , Diffuse()
         , AmbientFactor(1.0f)
         , Roughness(1.0f)
         , Metallic()
         , MaterialFlags(EMaterialFlags::None)
     {
+        Routes[EMaterialScalar::Opacity] = FMaterialSourceRoute(EMaterialTexture::Diffuse, ETextureChannel::A);
     }
 
-    String         Name;
-    FTexture2DRef  Textures[EMaterialTexture::Count];
-    Vector3        Diffuse;
-    float          AmbientFactor;
-    float          Roughness;
-    float          Metallic;
-    EMaterialFlags MaterialFlags;
+    String               Name;
+    FTexture2DRef        Textures[EMaterialTexture::Count];
+    FMaterialSourceRoute Routes[EMaterialScalar::Count];
+    Vector3              Diffuse;
+    float                AmbientFactor;
+    float                Roughness;
+    float                Metallic;
+    EMaterialFlags       MaterialFlags;
 };
 
 struct FModelData

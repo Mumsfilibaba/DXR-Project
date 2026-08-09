@@ -4,7 +4,6 @@
 #include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
 #include "Renderer/DeferredRendering.h"
-#include "Renderer/MaterialBindless.h"
 #include "Renderer/PrePassShaders.h"
 #include "Renderer/ReflectionSettings.h"
 #include "Renderer/RenderFeatureSettings.h"
@@ -360,29 +359,12 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
 
         if (Features.HasAlphaMask() || Features.HasHeightMap())
         {
-            if (bBindless)
+            if (!bBindless)
             {
-                CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), FrameResources.MaterialDataBufferSRV.Get(), 2);
+                BindMaterialTextures(CommandList, PipelineInstance->PixelShader.Get(), Features, *Material, 0);
             }
-            else
-            {
-                if (Features.HasHeightMap())
-                {
-                    CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), FrameResources.MaterialDataBufferSRV.Get(), 2);
-                }
 
-                CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
-
-                if (Features.HasAlphaMask())
-                {
-                    CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
-                }
-
-                if (Features.HasHeightMap())
-                {
-                    CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
-                }
-            }
+            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), FrameResources.MaterialDataBufferSRV.Get(), 7);
         }
 
         for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
@@ -659,33 +641,13 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
             CommandList.SetShaderConstants(PixelShader, &BasePassConstants, NumConstants);
         }
 
-        if (bBindless)
+        if (!bBindless)
         {
-            CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), FrameResources.CameraBuffer.Get(), 0);
-            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), FrameResources.MaterialDataBufferSRV.Get(), 4);
+            BindMaterialTextures(CommandList, PipelineInstance->PixelShader.Get(), Features, *Material, 0);
         }
-        else
-        {
-            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
 
-            if (Features.HasNormalMap())
-            {
-                CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->NormalMap->GetShaderResourceView(), 1);
-            }
-
-            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->MaterialMap->GetShaderResourceView(), 2);
-
-            if (Features.HasHeightMap())
-            {
-                CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 3);
-            }
-
-            CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), FrameResources.CameraBuffer.Get(), 0);
-
-            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), FrameResources.MaterialDataBufferSRV.Get(), 4);
-
-            CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
-        }
+        CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+        CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), FrameResources.MaterialDataBufferSRV.Get(), 7);
 
         for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
         {

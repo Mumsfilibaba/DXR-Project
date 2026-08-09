@@ -22,10 +22,7 @@ EMaterialFlags FMaterial::GetSupportedMaterialFlags(const FVertexDeclaration& De
 }
 
 FMaterial::FMaterial(const FMaterialInfo& InMaterialInfo)
-    : AlbedoMap()
-    , NormalMap()
-    , MaterialMap()
-    , HeightMap()
+    : Textures()
     , Name()
     , MaterialInfo(InMaterialInfo)
 {
@@ -49,6 +46,15 @@ void FMaterial::FillMaterialData(FMaterialHLSL& OutData) const
     OutData.ParallaxHeightScale = MaterialInfo.ParallaxHeightScale;
     OutData.ParallaxMinLayers   = MaterialInfo.ParallaxMinLayers;
     OutData.ParallaxMaxLayers   = MaterialInfo.ParallaxMaxLayers;
+
+    OutData.ScalarRoutes = 0;
+    for (uint32 Scalar = 0; Scalar < EMaterialScalar::Count; ++Scalar)
+    {
+        const FMaterialTextureRoute& Route = MaterialInfo.Routes[Scalar];
+
+        const uint32 PackedRoute = IsRouteFed(EMaterialScalar::Type(Scalar)) ? PackMaterialTextureRoute(Route) : MATERIAL_ROUTE_SLOT_NONE;
+        OutData.ScalarRoutes |= PackedRoute << (Scalar * 8);
+    }
 }
 
 void FMaterial::SetAlbedo(const FFloatColor& Albedo)

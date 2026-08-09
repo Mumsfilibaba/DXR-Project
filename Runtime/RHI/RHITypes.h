@@ -326,6 +326,26 @@ NODISCARD constexpr bool IsBlockCompressed(EFormat Format)
         && UnderlyingTypeValue(Format) <= UnderlyingTypeValue(EFormat::BC7_UNorm_SRGB);
 }
 
+NODISCARD constexpr bool IsTwoChannelFormat(EFormat Format)
+{
+    switch (Format)
+    {
+        case EFormat::BC5_Typeless:
+        case EFormat::BC5_UNorm:
+        case EFormat::BC5_SNorm:
+        case EFormat::R8G8_Typeless:
+        case EFormat::R8G8_Unorm:
+        case EFormat::R8G8_Snorm:
+        case EFormat::R16G16_Typeless:
+        case EFormat::R16G16_Float:
+        case EFormat::R16G16_Unorm:
+        case EFormat::R16G16_Snorm:
+            return true;
+        default:
+            return false;
+    }
+}
+
 NODISCARD constexpr bool IsSamplerFeedbackFormat(EFormat Format)
 {
     return Format == EFormat::SamplerFeedbackMinMipOpaque

@@ -5,7 +5,6 @@
 #include "Engine/Resources/Material.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Renderer/ForwardPass.h"
-#include "Renderer/MaterialBindless.h"
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
@@ -297,25 +296,11 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
             BindFrameResources(PShader.Get());
         }
 
-        CommandList.SetShaderResourceView(PShader.Get(), FrameResources.MaterialDataBufferSRV.Get(), 9);
+        CommandList.SetShaderResourceView(PShader.Get(), FrameResources.MaterialDataBufferSRV.Get(), 12);
 
-        if (bBindless)
+        if (!bBindless)
         {
-            // TODO: 
-        }
-        else
-        {
-            CommandList.SetShaderResourceView(PShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 5);
-            CommandList.SetShaderResourceView(PShader.Get(), Material->NormalMap->GetShaderResourceView(), 6);
-            CommandList.SetShaderResourceView(PShader.Get(), Material->MaterialMap->GetShaderResourceView(), 7);
-
-            if (bEnableParallax)
-            {
-                CommandList.SetShaderResourceView(PShader.Get(), Material->HeightMap->GetShaderResourceView(), 8);
-            }
-
-            FRHISamplerState* SamplerState = Material->GetMaterialSampler();
-            CommandList.SetSamplerState(PShader.Get(), SamplerState, 0);
+            BindMaterialTextures(CommandList, PShader.Get(), Features, *Material, 5);
         }
 
         for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)

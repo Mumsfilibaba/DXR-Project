@@ -8,43 +8,39 @@
 
 static_assert(sizeof(FRHIDescriptorHandle) == sizeof(uint32), "FRHIDescriptorHandle must be 4 bytes for the HLSL bitfield layout");
 
-inline FRHIDescriptorHandle ResolveBindlessSRV(const FMaterial& InMaterial, FRHITexture* InTexture, const char* InSlotName)
+inline FRHITexture* ResolveMaterialSlotTexture(const FMaterial& InMaterial, EMaterialTextureSlot::Type Slot)
 {
-    if (!InTexture)
+    if (FRHITexture* Texture = InMaterial.GetTexture(Slot).Get())
     {
-        return FRHIDescriptorHandle();
+        return Texture;
     }
 
-    FRHIShaderResourceView* ShaderResourceView = InTexture->GetShaderResourceView();
-    if (!ShaderResourceView)
+    if (Slot == EMaterialTextureSlot::Height)
     {
-        LOG_ERROR("[Bindless] Material '%s' %s map has no ShaderResourceView", *InMaterial.GetName(), InSlotName);
-        CHECK(false);
-        return FRHIDescriptorHandle();
+        return nullptr;
     }
 
-    const FRHIDescriptorHandle Handle = ShaderResourceView->GetBindlessHandle();
-    if (!Handle.IsValid())
+    if (FEngine* Engine = FEngine::Get())
     {
-        LOG_ERROR("[Bindless] Material '%s' %s map SRV has no valid bindless descriptor", *InMaterial.GetName(), InSlotName);
-        CHECK(false);
+        return (Slot == EMaterialTextureSlot::Normal) ? Engine->BaseNormal.Get() : Engine->BaseTexture.Get();
     }
 
-    return Handle;
+    return nullptr;
 }
 
 inline void FillMaterialHandles(const FMaterial& InMaterial, FMaterialHLSL& OutData)
 {
-    FRHIShaderResourceView* AlbedoSRV   = SafeGetDefaultSRV(InMaterial.AlbedoMap);
-    FRHIShaderResourceView* NormalSRV   = SafeGetDefaultSRV(InMaterial.NormalMap);
-    FRHIShaderResourceView* MaterialSRV = SafeGetDefaultSRV(InMaterial.MaterialMap);
+    const FRHITextureRef& NormalTexture = InMaterial.GetTexture(EMaterialTextureSlot::Normal);
 
-    const bool bHasRealNormalMap = (NormalSRV != nullptr);
-
-    OutData.NormalMapFlags = bHasRealNormalMap ? ENormalMapFlags::Enabled : ENormalMapFlags::None;
+    OutData.NormalMapFlags = NormalTexture ? ENormalMapFlags::Enabled : ENormalMapFlags::None;
     if (InMaterial.IsNormalMapPositiveY())
     {
         OutData.NormalMapFlags |= ENormalMapFlags::PositiveY;
+    }
+
+    if (NormalTexture && IsTwoChannelFormat(NormalTexture->GetDesc().Format))
+    {
+        OutData.NormalMapFlags |= ENormalMapFlags::TwoChannel;
     }
 
     if (!RHI::bSupportsBindless)
@@ -52,42 +48,23 @@ inline void FillMaterialHandles(const FMaterial& InMaterial, FMaterialHLSL& OutD
         return;
     }
 
-    if (FEngine* Engine = FEngine::Get())
+    for (uint32 Slot = 0; Slot < EMaterialTextureSlot::Count; ++Slot)
     {
-        if (!AlbedoSRV && Engine->BaseTexture)
+        FRHITexture* Texture = ResolveMaterialSlotTexture(InMaterial, EMaterialTextureSlot::Type(Slot));
+        if (!Texture)
         {
-            AlbedoSRV = Engine->BaseTexture->GetShaderResourceView();
+            continue;
         }
 
-        if (!NormalSRV && Engine->BaseNormal)
+        FRHIShaderResourceView* ShaderResourceView = Texture->GetShaderResourceView();
+        if (!ShaderResourceView)
         {
-            NormalSRV = Engine->BaseNormal->GetShaderResourceView();
+            LOG_ERROR("[Bindless] Material '%s' slot %u has no ShaderResourceView", *InMaterial.GetName(), Slot);
+            CHECK(false);
+            continue;
         }
 
-        if (!MaterialSRV && Engine->BaseTexture)
-        {
-            MaterialSRV = Engine->BaseTexture->GetShaderResourceView();
-        }
-    }
-
-    if (AlbedoSRV)
-    {
-        OutData.AlbedoHandle = AlbedoSRV->GetBindlessHandle();
-    }
-
-    if (NormalSRV)
-    {
-        OutData.NormalHandle = NormalSRV->GetBindlessHandle();
-    }
-
-    if (MaterialSRV)
-    {
-        OutData.MaterialHandle = MaterialSRV->GetBindlessHandle();
-    }
-
-    if (InMaterial.HasHeightMap() && InMaterial.HeightMap)
-    {
-        OutData.HeightHandle = ResolveBindlessSRV(InMaterial, InMaterial.HeightMap.Get(), "Height");
+        OutData.SlotHandles[Slot] = ShaderResourceView->GetBindlessHandle();
     }
 
     if (FRHISamplerState* MaterialSampler = InMaterial.GetMaterialSampler())

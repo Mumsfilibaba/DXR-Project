@@ -8,6 +8,7 @@
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/Model.h"
 #include "Engine/Resources/Texture.h"
+#include "Renderer/MaterialBindless.h"
 #include "Renderer/RayTracer.h"
 #include "Renderer/RayTracingBindless.h"
 #include "Renderer/ReflectionSettings.h"
@@ -534,28 +535,6 @@ void FRayTracer::BuildSceneAccelerationData(FRHICommandList& CommandList, FFrame
             ++LazyBLASBuildsThisFrame;
         }
 
-        FRHIShaderResourceView* AlbedoSRV   = SafeGetDefaultSRV(Material->AlbedoMap);
-        FRHIShaderResourceView* NormalSRV   = SafeGetDefaultSRV(Material->NormalMap);
-        FRHIShaderResourceView* MaterialSRV = SafeGetDefaultSRV(Material->MaterialMap);
-
-        if (FEngine* Engine = FEngine::Get())
-        {
-            if (!AlbedoSRV && Engine->BaseTexture)
-            {
-                AlbedoSRV = Engine->BaseTexture->GetShaderResourceView();
-            }
-
-            if (!NormalSRV && Engine->BaseNormal)
-            {
-                NormalSRV = Engine->BaseNormal->GetShaderResourceView();
-            }
-
-            if (!MaterialSRV && Engine->BaseTexture)
-            {
-                MaterialSRV = Engine->BaseTexture->GetShaderResourceView();
-            }
-        }
-
         const uint32 InstanceIndex = NextInstanceIndex++;
 
         FRHIShaderResourceView* AttributeBufferSRV = StaticMesh->Mesh->GetAttributeBufferSRV();
@@ -586,9 +565,12 @@ void FRayTracer::BuildSceneAccelerationData(FRHICommandList& CommandList, FFrame
                     Record.Add(FRHIHitGroupLocalShaderBinding::CreateShaderResourceView(IndexBufferSRV, 1));
                 }
 
-                Record.Add(FRHIHitGroupLocalShaderBinding::CreateShaderResourceView(AlbedoSRV, 2));
-                Record.Add(FRHIHitGroupLocalShaderBinding::CreateShaderResourceView(NormalSRV, 3));
-                Record.Add(FRHIHitGroupLocalShaderBinding::CreateShaderResourceView(MaterialSRV, 4));
+                for (uint32 Slot = 0; Slot < EMaterialTextureSlot::Count; ++Slot)
+                {
+                    FRHITexture* SlotTexture = ResolveMaterialSlotTexture(*Material, EMaterialTextureSlot::Type(Slot));
+                    Record.Add(FRHIHitGroupLocalShaderBinding::CreateShaderResourceView(SafeGetDefaultSRV(SlotTexture), RAY_TRACING_MATERIAL_SLOT_REGISTER + Slot));
+                }
+
                 Record.Add(FRHIHitGroupLocalShaderBinding::CreateSamplerState(Material->GetMaterialSampler(), 0));
             }
         }

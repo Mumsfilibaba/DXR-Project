@@ -4,7 +4,7 @@
 #include "Structs.hlsli"
 
 #ifndef MATERIAL_ARRAY_REGISTER
-    #define MATERIAL_ARRAY_REGISTER t4
+    #error "The material buffer has no register. A pass has to name one, since where it lands depends on what else the pass binds."
 #endif
 
 StructuredBuffer<FMaterial> Materials : register(MATERIAL_ARRAY_REGISTER);
