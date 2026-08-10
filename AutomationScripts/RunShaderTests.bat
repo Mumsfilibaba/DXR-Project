@@ -140,6 +140,7 @@ REM  to Assets\Shaders and match the IMPLEMENT_SHADER_TYPE declarations.
 REM
 REM  Axis tokens:
 REM    material    parallax, clipping, alpha mask and double-sided
+REM    translucency ENABLE_TRANSLUCENT and ENABLE_REFRACTION
 REM    normalmap   ENABLE_NORMAL_MAPPING
 REM    bindless    ENABLE_BINDLESS
 REM    unjitter    USE_UNJITTERED_CAMERA
@@ -152,8 +153,8 @@ REM ---------------------------------------------------------------------------
 set "ENTRIES="
 call :AddEntry "BasePassVS|BasePass.hlsl|VSMain|vs|material normalmap bindless"
 call :AddEntry "BasePassPS|BasePass.hlsl|PSMain|ps|material normalmap bindless"
-call :AddEntry "ForwardPassVS|ForwardPass.hlsl|VSMain|vs|parallaxonly bindless"
-call :AddEntry "ForwardPassPS|ForwardPass.hlsl|PSMain|ps|parallaxonly bindless"
+call :AddEntry "ForwardPassVS|ForwardPass.hlsl|VSMain|vs|material translucency bindless"
+call :AddEntry "ForwardPassPS|ForwardPass.hlsl|PSMain|ps|material translucency bindless"
 call :AddEntry "PrePassVS|PrePass.hlsl|VSMain|vs|material bindless unjitter depthattr"
 call :AddEntry "PrePassPS|PrePass.hlsl|PSMain|ps|material bindless unjitter depthattr"
 call :AddEntry "SelectionIDVS|EditorSelectionID.hlsl|VSMain|vs|material unjitter depthattr"
@@ -352,14 +353,15 @@ if not "!AXES:unjitter=!"=="!AXES!" set "UNJITTER_VALUES=0 1"
 set "NORMAL_VALUES=0"
 if not "!AXES:normalmap=!"=="!AXES!" set "NORMAL_VALUES=0 1"
 
-REM  The forward pass carries parallax and clipping but neither alpha mask nor
-REM  double-sided, so it sweeps a narrower material set than the others.
 set "ALPHA_VALUES=0"
 set "SIDED_VALUES=0"
 if not "!AXES:material=!"=="!AXES!" (
     set "ALPHA_VALUES=0 1"
     set "SIDED_VALUES=0 1"
 )
+
+set "TRANSLUCENT_VALUES=0"
+if not "!AXES:translucency=!"=="!AXES!" set "TRANSLUCENT_VALUES=0 1"
 
 for %%P in (0 1) do (
     REM  RemapMaterialPermutation clears clipping when parallax is off, so the
@@ -374,6 +376,16 @@ for %%P in (0 1) do (
     for %%L in (!BINDLESS_VALUES!) do (
     for %%U in (!UNJITTER_VALUES!) do (
     for %%K in (!PASS_KINDS!) do (
+    for %%T in (!TRANSLUCENT_VALUES!) do (
+
+        REM  Both of these mirror the way RemapMaterialPermutation clears clipping without parallax.
+        REM  Translucency forces the alpha-mask cutout off, because the two read the same opacity,
+        REM  and its absence forces refraction off. An empty set skips the combination outright.
+        set "REFRACTION_VALUES=0"
+        if "%%T"=="1" set "REFRACTION_VALUES=0 1"
+        if "%%T"=="1" if "%%A"=="1" set "REFRACTION_VALUES="
+
+        for %%R in (!REFRACTION_VALUES!) do (
 
         set "MODEL=!BASE_MODEL!"
         if "%%L"=="1" set "MODEL=6_6"
@@ -381,6 +393,11 @@ for %%P in (0 1) do (
         set "DEFINES=-D ENABLE_PARALLAX_MAPPING=(%%P) -D ENABLE_PARALLAX_CLIPPING=(%%C)"
         set "DEFINES=!DEFINES! -D ENABLE_ALPHA_MASK=(%%A) -D ENABLE_DOUBLE_SIDED=(%%S) -D ENABLE_BINDLESS=(%%L)"
         set "DESC=par=%%P clip=%%C alpha=%%A sided=%%S bindless=%%L"
+
+        if not "!AXES:translucency=!"=="!AXES!" (
+            set "DEFINES=!DEFINES! -D ENABLE_TRANSLUCENT=(%%T) -D ENABLE_REFRACTION=(%%R)"
+            set "DESC=!DESC! translucent=%%T refract=%%R"
+        )
 
         if not "!AXES:normalmap=!"=="!AXES!" (
             set "DEFINES=!DEFINES! -D ENABLE_NORMAL_MAPPING=(%%N)"
@@ -408,6 +425,8 @@ for %%P in (0 1) do (
         )
 
         call :CompileOne "!NAME!" "!SOURCE!" "!ENTRY!" "!STAGE!_!MODEL!" "!DESC!" "!DEFINES!"
+    )
+    )
     )
     )
     )

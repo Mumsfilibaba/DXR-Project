@@ -375,6 +375,39 @@ void FEditorPropertiesWidget::DrawWindowContents()
                             }
                         }
 
+                        // Opacity
+                        {
+                            float Opacity = MaterialInfo.Opacity;
+                            const float Opacity0 = 1.0f;
+
+                            if (EditorWidgets::DrawFloatProperty("Opacity", Opacity, 0.01f, 0.0f, 1.0f, "%.2f", true, &Opacity0))
+                            {
+                                Material->SetOpacity(Opacity);
+                            }
+                        }
+
+                        // Index of refraction
+                        {
+                            float IndexOfRefraction = MaterialInfo.IndexOfRefraction;
+                            const float IndexOfRefraction0 = 1.5f;
+
+                            if (EditorWidgets::DrawFloatProperty("Index of Refraction", IndexOfRefraction, 0.01f, 1.0f, 3.0f, "%.2f", true, &IndexOfRefraction0))
+                            {
+                                Material->SetIndexOfRefraction(IndexOfRefraction);
+                            }
+                        }
+
+                        // Refraction strength
+                        {
+                            float RefractionStrength = MaterialInfo.RefractionStrength;
+                            const float RefractionStrength0 = 1.0f;
+
+                            if (EditorWidgets::DrawFloatProperty("Refraction Strength", RefractionStrength, 0.01f, 0.0f, 1.0f, "%.2f", true, &RefractionStrength0))
+                            {
+                                Material->SetRefractionStrength(RefractionStrength);
+                            }
+                        }
+
                         EditorWidgets::EndPropertyTable();
                     }
                 }
@@ -451,7 +484,9 @@ void FEditorPropertiesWidget::DrawWindowContents()
                         {
                             bool bEnableAlphaMask = IsMaterialFlagSet(EMaterialFlags::EnableAlpha);
 
-                            if (EditorWidgets::DrawCheckboxProperty("Alpha Mask", bEnableAlphaMask, nullptr, Material->IsRouteFed(EMaterialScalar::Opacity)))
+                            const bool bMaskable = Material->IsRouteFed(EMaterialScalar::Opacity) && !Material->IsTranslucent();
+
+                            if (EditorWidgets::DrawCheckboxProperty("Alpha Mask", bEnableAlphaMask, nullptr, bMaskable))
                             {
                                 Material->EnableAlphaMask(bEnableAlphaMask);
                             }
@@ -494,6 +529,26 @@ void FEditorPropertiesWidget::DrawWindowContents()
                             if (EditorWidgets::DrawCheckboxProperty("Force Forward Pass", bForceForwardPass, nullptr))
                             {
                                 Material->ForceForwardPass(bForceForwardPass);
+                            }
+                        }
+
+                        // Translucent
+                        {
+                            bool bTranslucent = IsMaterialFlagSet(EMaterialFlags::Translucent);
+
+                            if (EditorWidgets::DrawCheckboxProperty("Translucent", bTranslucent, nullptr))
+                            {
+                                Material->EnableTranslucent(bTranslucent);
+                            }
+                        }
+
+                        // Refraction
+                        {
+                            bool bEnableRefraction = IsMaterialFlagSet(EMaterialFlags::EnableRefraction);
+
+                            if (EditorWidgets::DrawCheckboxProperty("Refraction", bEnableRefraction, nullptr, Material->IsTranslucent()))
+                            {
+                                Material->EnableRefraction(bEnableRefraction);
                             }
                         }
 

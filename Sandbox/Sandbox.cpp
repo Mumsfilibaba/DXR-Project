@@ -510,6 +510,20 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         StreetLightMaterial->Initialize();
         StreetLightMaterial->SetName("StreetLightMaterial");
 
+        FMaterialInfo GlassInfo;
+        GlassInfo.Albedo             = FFloatColor(0.85f, 0.88f, 0.95f, 1.0f);
+        GlassInfo.AmbientOcclusion   = 1.0f;
+        GlassInfo.Metallic           = 0.0f;
+        GlassInfo.Roughness          = 0.08f;
+        GlassInfo.Opacity            = 0.25f;
+        GlassInfo.IndexOfRefraction  = 1.5f;
+        GlassInfo.RefractionStrength = 1.0f;
+        GlassInfo.MaterialFlags      = EMaterialFlags::Translucent | EMaterialFlags::EnableRefraction;
+
+        TSharedPtr<FMaterial> StreetLightGlassMaterial = MakeSharedPtr<FMaterial>(GlassInfo);
+        StreetLightGlassMaterial->Initialize();
+        StreetLightGlassMaterial->SetName("StreetLightGlassMaterial");
+
         const int32 NumMeshes = StreetLightModel->GetNumMeshes();
         for (uint32 i = 0; i < 4; i++)
         {
@@ -525,8 +539,10 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
                     FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
                     if (NewComponent)
                     {
+                        const bool bIsGlass = Mesh->GetName().Contains("pSphere", EStringCaseType::NoCase);
+
                         NewComponent->SetMesh(Mesh);
-                        NewComponent->SetMaterial(StreetLightMaterial);
+                        NewComponent->SetMaterial(bIsGlass ? StreetLightGlassMaterial : StreetLightMaterial);
                         NewActor->AddComponent(NewComponent);
                     }
                 }

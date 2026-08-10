@@ -16,7 +16,10 @@ public:
     void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene);
 
 private:
-    FGraphicsPipelineStateInstance* CompilePipelineState(bool bBindless, bool bEnableParallax, bool bEnableClipping, const FVertexDeclaration& Declaration);
+    FGraphicsPipelineStateInstance* CompilePipelineState(const FMaterialFeatures& Features, bool bBindless, const FVertexDeclaration& Declaration);
 
     TMap<FGraphicsPipelineKey, FGraphicsPipelineStateInstance> PipelineStates;
+
+    FRHIDepthStencilViewRef CachedReadOnlyDepthDSV;
+    FRHITexture*            CachedReadOnlyDepthTarget;
 };

@@ -72,7 +72,7 @@ struct FMaterialFeatures
 
     bool HasAlphaMask() const
     {
-        return IsEnumFlagSet(Flags, EMaterialFlags::EnableAlpha);
+        return IsEnumFlagSet(Flags, EMaterialFlags::EnableAlpha) && !IsTranslucent();
     }
 
     bool HasNormalMap() const
@@ -93,6 +93,16 @@ struct FMaterialFeatures
     bool IsDoubleSided() const
     {
         return IsEnumFlagSet(Flags, EMaterialFlags::DoubleSided);
+    }
+
+    bool IsTranslucent() const
+    {
+        return IsEnumFlagSet(Flags, EMaterialFlags::Translucent);
+    }
+
+    bool HasRefraction() const
+    {
+        return IsEnumFlagSet(Flags, EMaterialFlags::EnableRefraction) && IsTranslucent();
     }
 
     EVertexAttributeFlags GetDepthOnlyAttributes() const

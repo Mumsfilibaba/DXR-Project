@@ -169,7 +169,8 @@ MARK_AS_REALLOCATABLE(FDirectionalShadowSettingsHLSL);
 class FShadowMaskRenderPass : public FRenderPass
 {
 public:
-    NODISCARD static FShadowMaskCS::FPermutation CreateCurrentPermutation();
+    NODISCARD static FShadowMaskCS::FPermutation    CreateCurrentPermutation();
+    NODISCARD static FDirectionalShadowSettingsHLSL CreateShadowSettings(const FFrameResources& Resources, uint32 FrameIndex);
 
 public:
     FShadowMaskRenderPass(FSceneRenderer* InRenderer);

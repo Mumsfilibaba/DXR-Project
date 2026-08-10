@@ -159,6 +159,7 @@ esac
 #
 #  Axis tokens:
 #    material   parallax, clipping, alpha mask and double-sided
+#    translucency ENABLE_TRANSLUCENT and ENABLE_REFRACTION
 #    normalmap  ENABLE_NORMAL_MAPPING
 #    bindless   ENABLE_BINDLESS
 #    unjitter   USE_UNJITTERED_CAMERA
@@ -171,8 +172,8 @@ esac
 ENTRIES="\
 BasePassVS|BasePass.hlsl|VSMain|vs|material normalmap bindless
 BasePassPS|BasePass.hlsl|PSMain|ps|material normalmap bindless
-ForwardPassVS|ForwardPass.hlsl|VSMain|vs|parallaxonly bindless
-ForwardPassPS|ForwardPass.hlsl|PSMain|ps|parallaxonly bindless
+ForwardPassVS|ForwardPass.hlsl|VSMain|vs|material translucency bindless
+ForwardPassPS|ForwardPass.hlsl|PSMain|ps|material translucency bindless
 PrePassVS|PrePass.hlsl|VSMain|vs|material bindless unjitter depthattr
 PrePassPS|PrePass.hlsl|PSMain|ps|material bindless unjitter depthattr
 SelectionIDVS|EditorSelectionID.hlsl|VSMain|vs|material unjitter depthattr
@@ -311,13 +312,16 @@ sweep_entry() {
         NORMAL_VALUES="0 1"
     fi
 
-    # The forward pass carries parallax and clipping but neither alpha mask nor
-    # double-sided, so it sweeps a narrower material set than the others.
     ALPHA_VALUES="0"
     SIDED_VALUES="0"
     if has_axis material "$AXES"; then
         ALPHA_VALUES="0 1"
         SIDED_VALUES="0 1"
+    fi
+
+    TRANSLUCENT_VALUES="0"
+    if has_axis translucency "$AXES"; then
+        TRANSLUCENT_VALUES="0 1"
     fi
 
     for PARALLAX in 0 1; do
@@ -335,6 +339,21 @@ sweep_entry() {
         for BINDLESS in $BINDLESS_VALUES; do
         for UNJITTER in $UNJITTER_VALUES; do
         for PASS_KIND in $PASS_KINDS; do
+        for TRANSLUCENT in $TRANSLUCENT_VALUES; do
+
+            # Both of these mirror the way RemapMaterialPermutation clears clipping without parallax.
+            # Translucency forces the alpha-mask cutout off, because the two read the same opacity,
+            # and its absence forces refraction off.
+            if [ "$TRANSLUCENT" -eq 1 ] && [ "$ALPHA" -eq 1 ]; then
+                continue
+            fi
+
+            REFRACTION_VALUES="0"
+            if [ "$TRANSLUCENT" -eq 1 ]; then
+                REFRACTION_VALUES="0 1"
+            fi
+
+        for REFRACTION in $REFRACTION_VALUES; do
 
             MODEL="$BASE_MODEL"
             if [ "$BINDLESS" -eq 1 ]; then
@@ -350,6 +369,12 @@ sweep_entry() {
             )
 
             DESC="par=$PARALLAX clip=$CLIPPING alpha=$ALPHA sided=$SIDED bindless=$BINDLESS"
+
+            if has_axis translucency "$AXES"; then
+                DEFINES+=("ENABLE_TRANSLUCENT=($TRANSLUCENT)")
+                DEFINES+=("ENABLE_REFRACTION=($REFRACTION)")
+                DESC="$DESC translucent=$TRANSLUCENT refract=$REFRACTION"
+            fi
 
             if has_axis normalmap "$AXES"; then
                 DEFINES+=("ENABLE_NORMAL_MAPPING=($NORMAL)")
@@ -383,6 +408,8 @@ sweep_entry() {
 
             compile_one "$NAME" "$SOURCE" "$ENTRY" "${STAGE}_${MODEL}" "$DESC" "${DEFINES[@]}"
 
+        done
+        done
         done
         done
         done

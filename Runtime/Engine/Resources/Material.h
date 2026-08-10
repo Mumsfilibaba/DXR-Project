@@ -18,6 +18,8 @@ enum class EMaterialFlags : int32
     NormalMapPositiveY      = FLAG(4), // The NormalMap is authored green-up (+Y, "OpenGL") rather than green-down (-Y, "DirectX")
     DoubleSided             = FLAG(5), // The Material should be rendered without culling
     ForceForwardPass        = FLAG(6), // This material should be rendered in the ForwardPass
+    Translucent             = FLAG(7), // Alpha-blended in the ForwardPass instead of written to the GBuffer
+    EnableRefraction        = FLAG(8), // Translucent surfaces sample the skybox along the refracted view vector
 };
 
 ENUM_CLASS_OPERATORS(EMaterialFlags);
@@ -115,6 +117,9 @@ struct FMaterialInfo
         , ParallaxHeightScale(0.03f)
         , ParallaxMinLayers(32.0f)
         , ParallaxMaxLayers(64.0f)
+        , Opacity(1.0f)
+        , IndexOfRefraction(1.5f)
+        , RefractionStrength(1.0f)
         , MaterialFlags(EMaterialFlags::None)
         , Routes()
     {
@@ -131,6 +136,9 @@ struct FMaterialInfo
     float                 ParallaxHeightScale;
     float                 ParallaxMinLayers;
     float                 ParallaxMaxLayers;
+    float                 Opacity;
+    float                 IndexOfRefraction;
+    float                 RefractionStrength;
     EMaterialFlags        MaterialFlags;
     FMaterialTextureRoute Routes[EMaterialScalar::Count];
 };
@@ -162,15 +170,21 @@ struct FMaterialHLSL
     float           ParallaxMaxLayers = 64.0f;
     uint32          ScalarRoutes      = 0; // Roughness | Metallic << 8 | Occlusion << 16 | Opacity << 24
     ENormalMapFlags NormalMapFlags    = ENormalMapFlags::None;
-    uint32          Padding0          = 0;
+    float           Opacity           = 1.0f;
 
     // 48-80
     FRHIDescriptorHandle SlotHandles[EMaterialTextureSlot::Count] = {};
     FRHIDescriptorHandle SamplerHandle                                    = {};
+
+    // 80-96
+    float  IndexOfRefraction  = 1.5f;
+    float  RefractionStrength = 1.0f;
+    uint32 Padding0           = 0;
+    uint32 Padding1           = 0;
 };
 
 static_assert(sizeof(FRHIDescriptorHandle) == sizeof(uint32), "FRHIDescriptorHandle must be 4 bytes for the HLSL Material layout");
-static_assert(sizeof(FMaterialHLSL) == 80, "FMaterialHLSL must match the HLSL Material layout");
+static_assert(sizeof(FMaterialHLSL) == 96, "FMaterialHLSL must match the HLSL Material layout");
 
 class ENGINE_API FMaterial
 {
@@ -189,33 +203,38 @@ public:
     void SetRoughness(float Roughness);
     void SetAmbientOcclusion(float AO);
     void SetMaterialFlags(EMaterialFlags InFlags, bool bUpdateOnly = false);
-    
+    void SetOpacity(float InOpacity);
+    void SetIndexOfRefraction(float InIndexOfRefraction);
+    void SetRefractionStrength(float InRefractionStrength);
+    void SetNormalMapPositiveY(bool bPositiveY);
+    void SetParallaxHeightScale(float InParallaxHeightScale);
+    void SetParallaxLayers(float InParallaxMinLayers, float InParallaxMaxLayers);
+
     void ForceForwardPass(bool bForceForwardRender);
-    
+
+    void EnableTranslucent(bool bTranslucent);
+    void EnableRefraction(bool bEnableRefraction);
     void EnableHeightMap(bool bEnableHeightMap);
     void EnableAlphaMask(bool bEnableAlphaMask);
     void EnableNormalMapping(bool bEnableNormalMapping);
-    void SetNormalMapPositiveY(bool bPositiveY);
     void EnableDoubleSided(bool bIsDoubleSided);
     void EnableParallaxClipping(bool bEnableParallaxClipping);
 
-    void SetParallaxHeightScale(float InParallaxHeightScale);
-    void SetParallaxLayers(float InParallaxMinLayers, float InParallaxMaxLayers);
-    
     void SetName(const String& InName);
 
-    bool HasAlphaMask()         const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::EnableAlpha) && IsRouteFed(EMaterialScalar::Opacity); }
+    bool HasAlphaMask()         const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::EnableAlpha) && IsRouteFed(EMaterialScalar::Opacity) && !IsTranslucent(); }
     bool HasHeightMap()         const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::EnableHeight) && GetTexture(EMaterialTextureSlot::Height).IsValid(); }
     bool HasNormalMap()         const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::EnableNormalMapping); }
-    bool IsNormalMapPositiveY() const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::NormalMapPositiveY); }
     bool HasParallaxClipping()  const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::EnableParallaxClipping) && HasHeightMap(); }
+    bool HasRefraction()        const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::EnableRefraction) && IsTranslucent(); }
+    
+    bool IsNormalMapPositiveY() const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::NormalMapPositiveY); }
+    bool IsDoubleSided()        const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::DoubleSided); }
+    bool IsTranslucent()        const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::Translucent); }
 
-    bool IsDoubleSided() const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::DoubleSided); }
-
-    bool ShouldRenderInForwardPass() const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::ForceForwardPass); }
-    bool ShouldRenderInPrePass()     const { return !ShouldRenderInForwardPass(); }
-
-    bool SupportsPixelDiscard() const { return HasHeightMap() || HasAlphaMask(); }
+    bool ShouldRenderInForwardPass() const { return IsEnumFlagSet(MaterialInfo.MaterialFlags, EMaterialFlags::ForceForwardPass) || IsTranslucent(); }
+    bool ShouldRenderInPrePass()     const { return !IsTranslucent(); }
+    bool SupportsPixelDiscard()      const { return HasHeightMap() || HasAlphaMask(); }
 
     void SetRoughnessRoute(const FMaterialTextureRoute& Route) { SetRoute(EMaterialScalar::Roughness, Route); }
     void SetMetallicRoute(const FMaterialTextureRoute& Route)  { SetRoute(EMaterialScalar::Metallic, Route); }

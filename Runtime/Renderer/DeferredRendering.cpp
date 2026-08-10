@@ -7,6 +7,7 @@
 #include "Renderer/PrePassShaders.h"
 #include "Renderer/ReflectionSettings.h"
 #include "Renderer/RenderFeatureSettings.h"
+#include "Renderer/ShadingSettings.h"
 #include "Renderer/ShadowSettings.h"
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/Scene/Scene.h"
@@ -40,19 +41,19 @@ static FAutoConsoleVariableRef CVarPrePassBindless(
     "When true, the depth pre-pass samples Albedo (alpha mask) and Height (parallax) via SM 6.6 ResourceDescriptorHeap[] / SamplerDescriptorHeap[] and a per-material indices buffer instead of register bindings.",
     GPrePassBindless);
 
-static float GIndirectSpecularStrength = 1.0f;
+float GIndirectSpecularStrength = 1.0f;
 static FAutoConsoleVariableRef CVarIndirectSpecularStrength(
     "Renderer.Reflections.IndirectSpecularStrength",
     "Scalar multiplier applied to the indirect specular (IBL / ray-traced reflection) contribution in the deferred light pass.",
     GIndirectSpecularStrength);
 
-static float GBasePassSpecularAAStrength = 1.0f;
+float GBasePassSpecularAAStrength = 1.0f;
 static FAutoConsoleVariableRef CVarBasePassSpecularAAStrength(
     "Renderer.BasePass.SpecularAA.Strength",
     "Strength of the geometric specular anti-aliasing roughness gain applied in the deferred BasePass.",
     GBasePassSpecularAAStrength);
 
-static float GBasePassSpecularAAMaxRoughnessGain = 0.02f;
+float GBasePassSpecularAAMaxRoughnessGain = 0.02f;
 static FAutoConsoleVariableRef CVarBasePassSpecularAAMaxRoughnessGain(
     "Renderer.BasePass.SpecularAA.MaxRoughnessGain",
     "Maximum squared-roughness gain that geometric specular anti-aliasing can add in the deferred BasePass.",

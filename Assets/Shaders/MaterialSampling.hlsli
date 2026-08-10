@@ -309,7 +309,7 @@ FMaterialSurface SampleMaterialSurface(FMaterial Material, float2 UV)
     Surface.NormalTS = DecodeMaterialNormalTS(Material, GetMaterialSlotDefault(MATERIAL_SLOT_NORMAL).rgb);
 #endif
 
-    Surface.Opacity   = SampleRoutedScalar(Material, MATERIAL_SCALAR_OPACITY, UV, 1.0);
+    Surface.Opacity   = SampleRoutedScalar(Material, MATERIAL_SCALAR_OPACITY, UV, Material.Opacity);
     Surface.Roughness = SampleRoutedScalar(Material, MATERIAL_SCALAR_ROUGHNESS, UV, Material.Roughness);
     Surface.Metallic  = SampleRoutedScalar(Material, MATERIAL_SCALAR_METALLIC, UV, Material.Metallic);
     Surface.Occlusion = SampleRoutedScalar(Material, MATERIAL_SCALAR_OCCLUSION, UV, Material.AO);
@@ -327,7 +327,7 @@ FMaterialSurface SampleMaterialSurfaceLevel(FMaterial Material, float2 UV, float
     Surface.NormalTS = DecodeMaterialNormalTS(Material, GetMaterialSlotDefault(MATERIAL_SLOT_NORMAL).rgb);
 #endif
 
-    Surface.Opacity   = SampleRoutedScalarLevel(Material, MATERIAL_SCALAR_OPACITY, UV, Lod, 1.0);
+    Surface.Opacity   = SampleRoutedScalarLevel(Material, MATERIAL_SCALAR_OPACITY, UV, Lod, Material.Opacity);
     Surface.Roughness = SampleRoutedScalarLevel(Material, MATERIAL_SCALAR_ROUGHNESS, UV, Lod, Material.Roughness);
     Surface.Metallic  = SampleRoutedScalarLevel(Material, MATERIAL_SCALAR_METALLIC, UV, Lod, Material.Metallic);
     Surface.Occlusion = SampleRoutedScalarLevel(Material, MATERIAL_SCALAR_OCCLUSION, UV, Lod, Material.AO);
@@ -336,7 +336,7 @@ FMaterialSurface SampleMaterialSurfaceLevel(FMaterial Material, float2 UV, float
 
 float SampleMaterialOpacity(FMaterial Material, float2 UV)
 {
-    return SampleRoutedScalar(Material, MATERIAL_SCALAR_OPACITY, UV, 1.0);
+    return SampleRoutedScalar(Material, MATERIAL_SCALAR_OPACITY, UV, Material.Opacity);
 }
 
 float2 ApplyMaterialParallax(FMaterial Material, float2 UV, float3 ViewDirTS, float2 Ddx, float2 Ddy, out bool bDiscard)

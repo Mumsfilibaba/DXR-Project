@@ -7,7 +7,8 @@
 
 EMaterialFlags FMaterial::GetSupportedMaterialFlags(const FVertexDeclaration& Declaration)
 {
-    EMaterialFlags Supported = EMaterialFlags::DoubleSided | EMaterialFlags::ForceForwardPass;
+    EMaterialFlags Supported = EMaterialFlags::DoubleSided | EMaterialFlags::ForceForwardPass |
+                               EMaterialFlags::Translucent | EMaterialFlags::EnableRefraction;
 
     const bool bHasTangentBasis = Declaration.HasAttributes(EVertexAttributeFlags::TangentBasis);
     const bool bHasTexCoord     = Declaration.HasAttributes(EVertexAttributeFlags::TexCoord0);
@@ -46,8 +47,11 @@ void FMaterial::FillMaterialData(FMaterialHLSL& OutData) const
     OutData.ParallaxHeightScale = MaterialInfo.ParallaxHeightScale;
     OutData.ParallaxMinLayers   = MaterialInfo.ParallaxMinLayers;
     OutData.ParallaxMaxLayers   = MaterialInfo.ParallaxMaxLayers;
+    OutData.Opacity             = MaterialInfo.Opacity;
+    OutData.IndexOfRefraction   = MaterialInfo.IndexOfRefraction;
+    OutData.RefractionStrength  = MaterialInfo.RefractionStrength;
+    OutData.ScalarRoutes        = 0;
 
-    OutData.ScalarRoutes = 0;
     for (uint32 Scalar = 0; Scalar < EMaterialScalar::Count; ++Scalar)
     {
         const FMaterialTextureRoute& Route = MaterialInfo.Routes[Scalar];
@@ -92,6 +96,31 @@ void FMaterial::SetMaterialFlags(EMaterialFlags InFlags, bool bUpdateOnly)
 void FMaterial::ForceForwardPass(bool bForceForwardRender)
 {
     SetEnumFlag(MaterialInfo.MaterialFlags, EMaterialFlags::ForceForwardPass, bForceForwardRender);
+}
+
+void FMaterial::EnableTranslucent(bool bTranslucent)
+{
+    SetEnumFlag(MaterialInfo.MaterialFlags, EMaterialFlags::Translucent, bTranslucent);
+}
+
+void FMaterial::EnableRefraction(bool bEnableRefraction)
+{
+    SetEnumFlag(MaterialInfo.MaterialFlags, EMaterialFlags::EnableRefraction, bEnableRefraction);
+}
+
+void FMaterial::SetOpacity(float InOpacity)
+{
+    MaterialInfo.Opacity = Math::Clamp(InOpacity, 0.0f, 1.0f);
+}
+
+void FMaterial::SetIndexOfRefraction(float InIndexOfRefraction)
+{
+    MaterialInfo.IndexOfRefraction = Math::Max(InIndexOfRefraction, 1.0f);
+}
+
+void FMaterial::SetRefractionStrength(float InRefractionStrength)
+{
+    MaterialInfo.RefractionStrength = Math::Clamp(InRefractionStrength, 0.0f, 1.0f);
 }
 
 void FMaterial::EnableHeightMap(bool bEnableHeightMap)

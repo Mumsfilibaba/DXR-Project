@@ -19,6 +19,13 @@ static FAutoConsoleVariableRef CVarEditorSelectionUseUnjitteredCamera(
     GEditorSelectionUseUnjitteredCamera,
     EConsoleVariableFlags::Default);
 
+static bool GEditorSelectionAllowTranslucent = true;
+static FAutoConsoleVariableRef CVarEditorSelectionAllowTranslucent(
+    "Renderer.Editor.Selection.AllowTranslucent",
+    "Let clicks and box-selects land on translucent surfaces. Disable to pick straight through them, which is easier when a large pane of glass covers what you are trying to select.",
+    GEditorSelectionAllowTranslucent,
+    EConsoleVariableFlags::Default);
+
 struct FSelectionIDShaderRules
 {
     using FPermutation = TShaderPermutation<FMaterialPermutation, FUnjitteredCamera, FRequiredAttributes>;
@@ -443,60 +450,70 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
-    for (const FMeshBatch& Batch : Scene->GetCameraView().GetMeshBatches())
+    const auto DrawBatches = [&](bool bTranslucentPhase)
     {
-        FMaterial* Material = Batch.Material;
-        CHECK(Material != nullptr);
-
-        if (!Material->ShouldRenderInPrePass())
+        for (const FMeshBatch& Batch : Scene->GetCameraView().GetMeshBatches())
         {
-            continue;
-        }
+            FMaterial* Material = Batch.Material;
+            CHECK(Material != nullptr);
 
-        const FMaterialFeatures Features(Batch.EffectiveMaterialFlags);
-
-        const FGraphicsPipelineKey PSOKey = CreateSelectionIDPSOKey(Features, Batch.Declaration);
-
-        FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(PSOKey);
-        if (!PipelineInstance)
-        {
-            DEBUG_BREAK();
-            continue;
-        }
-
-        FRHIGraphicsPipelineState* PipelineState = PipelineInstance->PipelineState.Get();
-        CHECK(PipelineState != nullptr);
-        CommandList.SetGraphicsPipelineState(PipelineState);
-
-        CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
-
-        BindMaterialTextures(CommandList, PipelineInstance->PixelShader.Get(), Features, *Material, 0);
-        CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), FrameResources.MaterialDataBufferSRV.Get(), 7);
-
-        if (Features.HasHeightMap())
-        {
-            CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), FrameResources.CameraBuffer.Get(), 0);
-        }
-
-        for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
-        {
-            FSceneStaticMesh* StaticMesh = MeshReference.StaticMesh;
-
-            StaticMesh->Mesh->SetVertexBuffers(CommandList, *PipelineInstance->StreamBinding);
-            CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
-
-            StaticMesh->PerObjectBuffer.MaterialIndex = Material->GetBufferIndex();
-            
-            CommandList.UpdateBuffer(FrameResources.PerObjectBuffer.Get(), FBufferRegion(0, sizeof(FPerObjectHLSL)), &StaticMesh->PerObjectBuffer);
-            CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.PerObjectBuffer.Get(), 1);
-
-            if (FRHIPixelShader* PixelShader = PipelineInstance->PixelShader.Get())
+            if (Material->IsTranslucent() != bTranslucentPhase)
             {
-                CommandList.SetConstantBuffer(PixelShader, FrameResources.PerObjectBuffer.Get(), 1);
+                continue;
             }
 
-            CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
+            const FMaterialFeatures Features(Batch.EffectiveMaterialFlags);
+
+            const FGraphicsPipelineKey PSOKey = CreateSelectionIDPSOKey(Features, Batch.Declaration);
+
+            FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(PSOKey);
+            if (!PipelineInstance)
+            {
+                DEBUG_BREAK();
+                continue;
+            }
+
+            FRHIGraphicsPipelineState* PipelineState = PipelineInstance->PipelineState.Get();
+            CHECK(PipelineState != nullptr);
+            CommandList.SetGraphicsPipelineState(PipelineState);
+
+            CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+
+            BindMaterialTextures(CommandList, PipelineInstance->PixelShader.Get(), Features, *Material, 0);
+            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), FrameResources.MaterialDataBufferSRV.Get(), 7);
+
+            if (Features.HasHeightMap())
+            {
+                CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+            }
+
+            for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
+            {
+                FSceneStaticMesh* StaticMesh = MeshReference.StaticMesh;
+
+                StaticMesh->Mesh->SetVertexBuffers(CommandList, *PipelineInstance->StreamBinding);
+                CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
+
+                StaticMesh->PerObjectBuffer.MaterialIndex = Material->GetBufferIndex();
+
+                CommandList.UpdateBuffer(FrameResources.PerObjectBuffer.Get(), FBufferRegion(0, sizeof(FPerObjectHLSL)), &StaticMesh->PerObjectBuffer);
+                CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.PerObjectBuffer.Get(), 1);
+
+                if (FRHIPixelShader* PixelShader = PipelineInstance->PixelShader.Get())
+                {
+                    CommandList.SetConstantBuffer(PixelShader, FrameResources.PerObjectBuffer.Get(), 1);
+                }
+
+                CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
+            }
         }
+    };
+
+    DrawBatches(false);
+
+    if (GEditorSelectionAllowTranslucent)
+    {
+        DrawBatches(true);
     }
 
     CommandList.EndRenderPass();

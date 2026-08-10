@@ -651,7 +651,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
     CascadeMatrixBufferDesc.Size   = CascadeMatrixBufferDesc.Stride * NUM_SHADOW_CASCADES;
     CascadeMatrixBufferDesc.Flags  = EBufferFlags::RWBuffer | EBufferFlags::Default;
 
-    Resources.CascadeMatrixBuffer = RHI::CreateBuffer(CascadeMatrixBufferDesc, ERHIResourceState::UnorderedAccess, nullptr);
+    Resources.CascadeMatrixBuffer = RHI::CreateBuffer(CascadeMatrixBufferDesc, ERHIResourceState::NonPixelShaderResource, nullptr);
     if (!Resources.CascadeMatrixBuffer)
     {
         DEBUG_BREAK();
@@ -683,7 +683,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
     CascadeSplitsBufferDesc.Size   = CascadeSplitsBufferDesc.Stride * NUM_SHADOW_CASCADES;
     CascadeSplitsBufferDesc.Flags  = EBufferFlags::RWBuffer | EBufferFlags::Default;
 
-    Resources.CascadeSplitsBuffer = RHI::CreateBuffer(CascadeSplitsBufferDesc, ERHIResourceState::UnorderedAccess, nullptr);
+    Resources.CascadeSplitsBuffer = RHI::CreateBuffer(CascadeSplitsBufferDesc, ERHIResourceState::NonPixelShaderResource, nullptr);
     if (!Resources.CascadeSplitsBuffer)
     {
         DEBUG_BREAK();
@@ -1325,6 +1325,20 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
     return true;
 }
 
+FDirectionalShadowSettingsHLSL FShadowMaskRenderPass::CreateShadowSettings(const FFrameResources& Resources, uint32 FrameIndex)
+{
+    FDirectionalShadowSettingsHLSL ShadowSettings;
+    Memory::Memzero(&ShadowSettings);
+
+    ShadowSettings.FilterSize    = Math::Max<float>(static_cast<float>(CVarCSMFilterSize.GetValue()), 1.0f);
+    ShadowSettings.MaxFilterSize = Math::Max<float>(static_cast<float>(CVarCSMMaxFilterSize.GetValue()), 1.0f);
+    ShadowSettings.ShadowMapSize = Resources.ShadowCascades ? Resources.ShadowCascades->GetDesc().Extent.X : 0;
+    ShadowSettings.FrameIndex    = FrameIndex;
+    ShadowSettings.NumSamples    = Math::Clamp<uint32>(CVarCSMNumPoissonDiscSamples.GetValue(), 4, 128);
+
+    return ShadowSettings;
+}
+
 void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameResources& Resources, bool bForceDebugMode)
 {
     if (Resources.DirectionalShadowMask->GetDesc().Extent.X == 0 || Resources.DirectionalShadowMask->GetDesc().Extent.Y == 0)
@@ -1338,14 +1352,7 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
     GPU_TRACE_SCOPE(CommandList, "DirectionalLight Shadow Mask");
 
-    FDirectionalShadowSettingsHLSL ShadowSettings;
-    Memory::Memzero(&ShadowSettings);
-
-    ShadowSettings.FilterSize    = Math::Max<float>(static_cast<float>(CVarCSMFilterSize.GetValue()), 1.0f);
-    ShadowSettings.MaxFilterSize = Math::Max<float>(static_cast<float>(CVarCSMMaxFilterSize.GetValue()), 1.0f);
-    ShadowSettings.ShadowMapSize = Resources.ShadowCascades->GetDesc().Extent.X;
-    ShadowSettings.FrameIndex    = GetRenderer()->GetFrameCounter().GetFrameIndex();
-    ShadowSettings.NumSamples    = Math::Clamp<uint32>(CVarCSMNumPoissonDiscSamples.GetValue(), 4, 128);
+    const FDirectionalShadowSettingsHLSL ShadowSettings = CreateShadowSettings(Resources, GetRenderer()->GetFrameCounter().GetFrameIndex());
 
     CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(ShadowSettingsBuffer.Get(), ERHIResourceState::ConstantBuffer, ERHIResourceState::CopyDest));
     CommandList.UpdateBuffer(ShadowSettingsBuffer.Get(), FBufferRegion(0, sizeof(FDirectionalShadowSettingsHLSL)), &ShadowSettings);

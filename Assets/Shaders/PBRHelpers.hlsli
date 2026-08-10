@@ -4,6 +4,7 @@
 #include "Constants.hlsli"
 #include "Helpers.hlsli"
 #include "Halton.hlsli"
+#include "FastMath.hlsli"
 
 // ImportanceSample GGX
 float3 ImportanceSampleGGX(float2 Xi, float Roughness, float3 N)
@@ -92,6 +93,18 @@ float GeometrySmithGGX1_IBL(float3 N, float3 V, float Roughness)
 float GeometrySmithGGX_IBL(float3 N, float3 L, float3 V, float Roughness)
 {
     return GeometrySmithGGX1_IBL(N, L, Roughness) * GeometrySmithGGX1_IBL(N, V, Roughness);
+}
+
+float FilterRoughnessGeometric(float Roughness, float3 PackedNormal, float Strength, float MaxRoughnessGain)
+{
+    const float  Roughness2         = Roughness * Roughness;
+    const float3 DnDu               = ddx(PackedNormal);
+    const float3 DnDv               = ddy(PackedNormal);
+    const float  Variance           = dot(DnDu, DnDu) + dot(DnDv, DnDv);
+    const float  KernelRoughness2   = min(Variance * Strength, MaxRoughnessGain);
+    const float  FilteredRoughness2 = saturate(Roughness2 + KernelRoughness2);
+
+    return min(max(FastSqrt(FilteredRoughness2), MIN_ROUGHNESS), MAX_ROUGHNESS);
 }
 
 // Radiance

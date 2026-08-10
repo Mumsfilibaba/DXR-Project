@@ -1,8 +1,10 @@
 #include "PBRHelpers.hlsli"
 #include "Helpers.hlsli"
 #include "Structs.hlsli"
+#include "Constants.hlsli"
 #include "TransformHelpers.hlsli"
 #include "ColorSpaceTransforms.hlsli"
+#include "ImageBasedLighting.hlsli"
 #include "Shadows/CascadeStructs.hlsli"
 #include "Shadows/ShadowHelpers.hlsli"
 #include "ParallaxMapping.hlsli"
@@ -12,25 +14,54 @@
     #define ENABLE_PARALLAX_MAPPING (0)
 #endif
 
-// Per Frame Buffers
+#ifndef ENABLE_ALPHA_MASK
+    #define ENABLE_ALPHA_MASK (0)
+#endif
 
-// TODO: Fix this
-//cbuffer Constants : register(b0)
-//{
-//    int NumPointLights;
-//    int NumSkyLightMips;
-//};
+#ifndef ENABLE_TRANSLUCENT
+    #define ENABLE_TRANSLUCENT (0)
+#endif
+
+#ifndef ENABLE_REFRACTION
+    #define ENABLE_REFRACTION (0)
+#endif
+
+#ifndef MAX_LIGHTS_PER_TILE
+    #define MAX_LIGHTS_PER_TILE 1024
+#endif
+
+#define BASE_OCCLUSION 0.1
+
+SHADER_CONSTANT_BLOCK_BEGIN
+    // 0-16
+    int NumPointLights;
+    int NumShadowCastingPointLights;
+    int NumSkyLightMips;
+    int NumLightProbes;
+    // 16-32
+    int   bEnablePointLightShadows;
+    float IndirectSpecularStrength;
+    float SpecularAAStrength;
+    float SpecularAAMaxRoughnessGain;
+    // 32-48
+    int   bEnableSunShadows;
+    float ShadowFilterSize;
+    float ShadowMaxFilterSize;
+    uint  ShadowMapSize;
+    // 48-64
+    uint  ShadowNumSamples;
+SHADER_CONSTANT_BLOCK_END
 
 ConstantBuffer<FCamera> CameraBuffer : register(b0);
 
 cbuffer PointLightsBuffer : register(b1)
 {
-    FPointLight PointLights[32];
+    FPointLight PointLights[MAX_LIGHTS_PER_TILE];
 }
 
 cbuffer PointLightsPosRadBuffer : register(b2)
 {
-    FPositionRadius PointLightsPosRad[32];
+    FPositionRadius PointLightsPosRad[MAX_LIGHTS_PER_TILE];
 }
 
 cbuffer ShadowCastingPointLightsBuffer : register(b3)
@@ -43,23 +74,34 @@ cbuffer ShadowCastingPointLightsPosRadBuffer : register(b4)
     FPositionRadius ShadowCastingPointLightsPosRad[8];
 }
 
-ConstantBuffer<FDirectionalLight> DirLightBuffer  : register(b5);
-ConstantBuffer<FPerObject>        PerObjectBuffer : register(b6);
+ConstantBuffer<FDirectionalLight> DirLightBuffer       : register(b5);
+ConstantBuffer<FPerObject>        PerObjectBuffer      : register(b6);
+ConstantBuffer<FLightProbeInfo>   LightProbeInfoBuffer : register(b7);
 
 #define MATERIAL_SRV_REGISTER_BASE 5
 #define MATERIAL_ARRAY_REGISTER    t12
 #include "MaterialSampling.hlsli"
 
+#define SHADOW_FILTER_FUNCTION SHADOW_FILTER_FUNCTION_POISSON_DISK
+
+#define CASCADE_SHADOW_SPLITS_REGISTER             t16
+#define CASCADE_SHADOW_CASCADES_REGISTER           t3
+#define CASCADE_SHADOW_SAMPLER_POINT_CMP_REGISTER  s4
+#define CASCADE_SHADOW_SAMPLER_LINEAR_CMP_REGISTER s5
+#define CASCADE_SHADOW_SAMPLER_POINT_REGISTER      s6
+#include "Shadows/CascadeShadowSampling.hlsli"
+
 SamplerState           LUTSampler        : register(s1);
 SamplerState           IrradianceSampler : register(s2);
 SamplerComparisonState ShadowMapSampler0 : register(s3);
-SamplerComparisonState ShadowMapSampler1 : register(s4);
 
 TextureCube<float4>     IrradianceMap         : register(t0);
 TextureCube<float4>     SpecularIrradianceMap : register(t1);
-Texture2D<float4>       IntegrationLUT        : register(t2);
-Texture2D<float>        DirLightShadowMaps    : register(t3);
+Texture2D<float2>       IntegrationLUT        : register(t2);
 TextureCubeArray<float> PointLightShadowMaps  : register(t4);
+TextureCube<float4>     SkyboxCubeMap         : register(t13);
+TextureCube<float4>     ProbeDiffuseCubeMap   : register(t14);
+TextureCube<float4>     ProbeSpecularCubeMap  : register(t15);
 
 // ------------------------------------------------------------------------------------------------
 // VertexShader
@@ -106,6 +148,7 @@ struct FPSInput
     float3 Normal        : NORMAL0;
     float4 Tangent       : TANGENT0;
     float2 TexCoord      : TEXCOORD0;
+    float4 Position      : SV_Position;
     bool   bIsFrontFace  : SV_IsFrontFace;
 };
 
@@ -142,31 +185,32 @@ float4 PSMain(FPSInput Input) : SV_Target0
 #endif
 
     const FMaterialSurface Surface = SampleMaterialSurface(MaterialData, TexCoords);
+
+#if ENABLE_ALPHA_MASK
+    [branch]
     if (Surface.Opacity < 0.5)
     {
         discard;
     }
+#endif
 
-    float3 SampledAlbedo = Surface.BaseColor;
-    
-    const float3 WorldPosition = Input.WorldPosition;
-    const float3 V             = normalize(CameraBuffer.PositionWS - WorldPosition);
+    const float3 SampledAlbedo   = Surface.BaseColor;
+    const float3 WorldPosition   = Input.WorldPosition;
+    const float3 V               = normalize(CameraBuffer.PositionWS - WorldPosition);
+    const float3 N               = DecodeTangentNormal(Surface.NormalTS, SurfaceNormal, Input.Tangent.xyz, TangentSign);
+    const float  SampledAO       = Surface.Occlusion;
+    const float  SampledMetallic = Surface.Metallic;
+    const float  Roughness       = FilterRoughnessGeometric(Surface.Roughness, PackNormal(N), Constants.SpecularAAStrength, Constants.SpecularAAMaxRoughnessGain);
+    const float  Occlusion       = saturate(BASE_OCCLUSION + SampledAO);
 
-    float3 N = DecodeTangentNormal(Surface.NormalTS, SurfaceNormal, Input.Tangent.xyz, TangentSign);
-
-    const float SampledAO        = Surface.Occlusion;
-    const float SampledRoughness = Surface.Roughness;
-    const float SampledMetallic  = Surface.Metallic;
-    const float Roughness        = SampledRoughness;
-    
     float3 F0 = 0.04;
     F0 = lerp(F0, SampledAlbedo, SampledMetallic);
 
-    float  NDotV = max(dot(N, V), 0.0);
-    float3 L0    = 0.0;
-    
+    float3 L0 = 0.0;
+
     // Pointlights
-    for (int i = 0; i < 0; i++)
+    [loop]
+    for (int i = 0; i < Constants.NumPointLights; i++)
     {
         const FPointLight     Light       = PointLights[i];
         const FPositionRadius LightPosRad = PointLightsPosRad[i];
@@ -181,14 +225,28 @@ float4 PSMain(FPSInput Input) : SV_Target0
             
         L0 += IncidentRadiance;
     }
-    
-    for (int i = 0; i < 4; i++)
+
+    // Shadow-casting pointlights
+    [loop]
+    for (int j = 0; j < Constants.NumShadowCastingPointLights; j++)
     {
-        const FShadowPointLight Light       = ShadowCastingPointLights[i];
-        const FPositionRadius   LightPosRad = ShadowCastingPointLightsPosRad[i];
-     
-        float ShadowFactor = PointLightShadowFactor(PointLightShadowMaps, float(i), ShadowMapSampler0, WorldPosition, N, Light, LightPosRad);
-        if (ShadowFactor > 0.001)
+        const FShadowPointLight Light       = ShadowCastingPointLights[j];
+        const FPositionRadius   LightPosRad = ShadowCastingPointLightsPosRad[j];
+
+        float ShadowFactor;
+
+        [branch]
+        if (Constants.bEnablePointLightShadows)
+        {
+            ShadowFactor = PointLightShadowFactor(PointLightShadowMaps, float(j), ShadowMapSampler0, WorldPosition, N, Light, LightPosRad);
+        }
+        else
+        {
+            ShadowFactor = 1.0;
+        }
+
+        [branch]
+        if (ShadowFactor > 0.0)
         {
             float3 L            = LightPosRad.Position - WorldPosition;
             float  DistanceSqrd = dot(L, L);
@@ -201,48 +259,122 @@ float4 PSMain(FPSInput Input) : SV_Target0
             L0 += IncidentRadiance * ShadowFactor;
         }
     }
-    
+
     // DirectionalLights
+    float ShadowMask = 1.0;
+
     {
         const FDirectionalLight Light = DirLightBuffer;
-        
-        // TODO: FIX Shadows in forward
-        
-        //const float ShadowFactor = DirectionalLightShadowFactor(DirLightShadowMaps, ShadowMapSampler1, WorldPosition, N, Light, 0);
-        //if (ShadowFactor > 0.001f)
+
+        [branch]
+        if (Constants.bEnableSunShadows)
         {
-            float3 L = normalize(-Light.Direction);
-            float3 H = normalize(L + V);
-            
+            FCascadeShadowContext ShadowContext;
+            ShadowContext.Light                  = Light;
+            ShadowContext.Settings.FilterSize    = Constants.ShadowFilterSize;
+            ShadowContext.Settings.MaxFilterSize = Constants.ShadowMaxFilterSize;
+            ShadowContext.Settings.ShadowMapSize = Constants.ShadowMapSize;
+            ShadowContext.Settings.NumSamples    = Constants.ShadowNumSamples;
+
+            const uint2 Pixel = uint2(Input.Position.xy);
+
+            uint RandomSeed   = InitRandom(Pixel, CameraBuffer.ViewportWidth, 0);
+            uint CascadeIndex = 0;
+
+            const float ViewPosZ = Depth_ProjToView(Input.Position.z, CameraBuffer.ProjectionInv);
+            ShadowMask = ComputeCascadeShadow(ShadowContext, WorldPosition, N, ViewPosZ, CascadeIndex, RandomSeed);
+        }
+
+        [branch]
+        if (ShadowMask > 0.0)
+        {
+            const float3 L = normalize(-Light.Direction);
+
             float3 IncidentRadiance = Light.Color;
             IncidentRadiance = DirectRadiance(F0, N, V, L, IncidentRadiance, SampledAlbedo, Roughness, SampledMetallic);
-            
-            L0 += IncidentRadiance;
+
+            L0 += IncidentRadiance * ShadowMask;
         }
     }
-    
+
+    ShadowMask = max(0.7, ShadowMask);
+
     // Image Based Lightning
     float3 FinalColor = L0;
 
     {
-        const float NDotV = max(dot(N, V), 0.0);
-        
+        const float  NDotV      = max(dot(N, V), 0.0);
+        const float3 Reflection = reflect(-V, N);
+
         float3 F  = FresnelSchlick_Roughness(F0, V, N, Roughness);
         float3 Ks = F;
-        float3 Kd = 1.0 - Ks;
+        float3 Kd = (1.0 - Ks) * (1.0 - SampledMetallic);
 
-        float3 Irradiance      = IrradianceMap.SampleLevel(IrradianceSampler, N, 0.0).rgb;
-        float3 Diffuse         = Irradiance * SampledAlbedo * Kd;
-        float3 R               = reflect(-V, N);
-        float3 PrefilteredMap  = SpecularIrradianceMap.SampleLevel(IrradianceSampler, R, Roughness * (7.0 - 1.0)).rgb;
-        float2 BRDFIntegration = IntegrationLUT.SampleLevel(LUTSampler, float2(NDotV, Roughness), 0.0).rg;
-        float3 Specular        = PrefilteredMap * (F * BRDFIntegration.x + BRDFIntegration.y);
-        float3 Ambient         = (Diffuse + Specular) * SampledAO;
+        FDiffuseEnvironmentInfo DiffuseEnvironmentInfo;
+        DiffuseEnvironmentInfo.NormalUVW = N;
+
+        FSpecularEnvironmentInfo SpecularEnvironmentInfo;
+        SpecularEnvironmentInfo.Roughness = Roughness;
+
+        float3 SpecularSample;
+        float3 DiffuseSample;
+
+        // Same probe-versus-skylight choice the deferred light pass makes
+        [branch]
+        if (Constants.NumLightProbes > 0 && IsInsideAABB(WorldPosition, LightProbeInfoBuffer.BoxMinWS, LightProbeInfoBuffer.BoxMaxWS))
+        {
+            FBoxProjectionInfo BoxProjectionInfo;
+            BoxProjectionInfo.ReflectionUVW     = normalize(Reflection);
+            BoxProjectionInfo.PositionWS        = WorldPosition;
+            BoxProjectionInfo.CubeMapPositionWS = LightProbeInfoBuffer.BoxOriginWS;
+            BoxProjectionInfo.BoxMinWS          = LightProbeInfoBuffer.BoxMinWS;
+            BoxProjectionInfo.BoxMaxWS          = LightProbeInfoBuffer.BoxMaxWS;
+            BoxProjectionInfo.BoxProjection     = LightProbeInfoBuffer.BoxProjection;
+
+            SpecularEnvironmentInfo.ReflectionUVW = BoxProjection(BoxProjectionInfo);
+
+            // The probe is a local capture, so it already contains the local lighting and is not dimmed by the sun shadow
+            SpecularSample = SpecularEnvironment(ProbeSpecularCubeMap, IrradianceSampler, SpecularEnvironmentInfo, Constants.NumSkyLightMips);
+            DiffuseSample  = DiffuseEnvironment(ProbeDiffuseCubeMap, IrradianceSampler, DiffuseEnvironmentInfo);
+        }
+        else
+        {
+            SpecularEnvironmentInfo.ReflectionUVW = Reflection;
+
+            SpecularSample = SpecularEnvironment(SpecularIrradianceMap, IrradianceSampler, SpecularEnvironmentInfo, Constants.NumSkyLightMips) * ShadowMask;
+            DiffuseSample  = DiffuseEnvironment(IrradianceMap, IrradianceSampler, DiffuseEnvironmentInfo) * ShadowMask;
+        }
+
+        const float2 BRDFIntegration = GetIntegrationConstants(IntegrationLUT, LUTSampler, NDotV, Roughness);
+        const float3 DiffuseColor    = lerp(SampledAlbedo * (1.0 - F0), float3(0.0, 0.0, 0.0), SampledMetallic);
+        const float3 Specular        = SpecularSample * (F * BRDFIntegration.x + BRDFIntegration.y) * Constants.IndirectSpecularStrength;
+        const float3 Diffuse         = DiffuseSample * DiffuseColor;
+        const float3 Ambient         = (Kd * Diffuse + Specular) * Occlusion;
 
         FinalColor = Ambient + L0;
     }
-    
+
     // Finalize
-    float FinalLuminance = Luminance(FinalColor);
-    return float4(FinalColor, FinalLuminance);
+#if ENABLE_TRANSLUCENT
+    const float Opacity = saturate(Surface.Opacity);
+
+    float3 Transmitted = 0.0;
+    float  Coverage    = Opacity;
+
+    #if ENABLE_REFRACTION
+        const float  Eta        = 1.0 / max(MaterialData.IndexOfRefraction, 1.0);
+        const float3 RefractDir = refract(-V, N, Eta);
+        const float  MipLevel   = Roughness * float(max(Constants.NumSkyLightMips - 1, 0));
+        const float3 SampleDir  = all(RefractDir == 0.0) ? reflect(-V, N) : RefractDir;
+        const float3 Sky        = SkyboxCubeMap.SampleLevel(IrradianceSampler, SampleDir, MipLevel).rgb;
+
+        const float Transmission = (1.0 - Opacity) * MaterialData.RefractionStrength;
+        Transmitted = Sky * Transmission;
+        Coverage    = Opacity + Transmission;
+    #endif
+
+    return float4(FinalColor * Opacity + Transmitted, Coverage);
+#else
+    return float4(FinalColor, Luminance(FinalColor));
+#endif
 }

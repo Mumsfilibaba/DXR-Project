@@ -2,10 +2,8 @@
 #include "Core/Core.h"
 
 // -------------------------------------------------------------------------------------------
-// Reflection Tuning
+// Surface Shading Tuning
 // -------------------------------------------------------------------------------------------
 
-extern bool  GReflectionsEnabled;
-extern float GReflectionMirrorRoughnessThreshold;
-extern float GReflectionMaxHistoryLength;
-extern float GIndirectSpecularStrength;
+extern float GBasePassSpecularAAStrength;
+extern float GBasePassSpecularAAMaxRoughnessGain;

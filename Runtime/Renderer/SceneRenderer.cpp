@@ -127,7 +127,7 @@ static FAutoConsoleVariableRef CVarPointLightShadowsEnabled(
     GPointLightShadowsEnabled,
     EConsoleVariableFlags::Default);
 
-static bool GSunShadowsEnabled = true;
+bool GSunShadowsEnabled = true;
 static FAutoConsoleVariableRef CVarSunShadowsEnabled(
     "Renderer.Feature.SunShadows",
     "Enables Rendering of SunLight/DirectionalLight ShadowMaps",
@@ -139,6 +139,13 @@ static FAutoConsoleVariableRef CVarSkyboxEnabled(
     "Renderer.Feature.Skybox",
     "Enables Rendering of the Skybox",
     GSkyboxEnabled,
+    EConsoleVariableFlags::Default);
+
+static bool GForwardPassEnabled = true;
+static FAutoConsoleVariableRef CVarForwardPassEnabled(
+    "Renderer.Feature.ForwardPass",
+    "Enables the forward pass, which draws translucent and ForceForwardPass materials over the lit scene",
+    GForwardPassEnabled,
     EConsoleVariableFlags::Default);
 
 static bool GDrawAABBs = false;
@@ -1119,10 +1126,26 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
     CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.IntegrationLUT.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource));
 
     // Forward Pass
-    // if (!Resources.ForwardVisibleCommands.IsEmpty())
-    // {
-        // ForwardPass->Execute(CommandList, Resources, Scene);
-    // }
+    if (GForwardPassEnabled)
+    {
+        const FRHITransitionBarrierDesc CascadesToPixel[] =
+        {
+            FRHITransitionBarrierDesc::CreateTexture(Resources.ShadowCascades.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource),
+            FRHITransitionBarrierDesc::CreateBuffer(Resources.CascadeSplitsBuffer.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource),
+        };
+
+        CommandList.TransitionBarrier(CascadesToPixel);
+
+        ForwardPass->Execute(CommandList, Resources, CurrentScene);
+
+        const FRHITransitionBarrierDesc CascadesToNonPixel[] =
+        {
+            FRHITransitionBarrierDesc::CreateTexture(Resources.ShadowCascades.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource),
+            FRHITransitionBarrierDesc::CreateBuffer(Resources.CascadeSplitsBuffer.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource),
+        };
+
+        CommandList.TransitionBarrier(CascadesToNonPixel);
+    }
 
     // Temporal AA
     if (GEnableTemporalAntiAliasing)

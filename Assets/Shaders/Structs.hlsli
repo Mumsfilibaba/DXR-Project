@@ -138,10 +138,15 @@ struct FMaterial
     float ParallaxMaxLayers;
     uint  ScalarRoutes;
     uint  NormalMapFlags;
-    uint  Padding0;
+    float Opacity;
     // 48-80
     uint  SlotHandles[MATERIAL_SLOT_COUNT];
     uint  SamplerHandle;
+    // 80-96
+    float IndexOfRefraction;
+    float RefractionStrength;
+    uint  Padding0;
+    uint  Padding1;
 };
 
 bool HasNormalMap(FMaterial MaterialData)

@@ -1,10 +1,15 @@
-﻿#include "Core/Misc/FrameProfiler.h"
+﻿#include "Core/Math/Math.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "RHI/RHI.h"
 #include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Renderer/ForwardPass.h"
+#include "Renderer/ReflectionSettings.h"
+#include "Renderer/RenderFeatureSettings.h"
+#include "Renderer/ShadingSettings.h"
+#include "Renderer/ShadowRendering.h"
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
@@ -19,24 +24,41 @@ static FAutoConsoleVariableRef CVarForwardPassBindless(
     "When true, the forward pass samples per-material textures (Albedo / Normal / Material / Height) and the material sampler via SM 6.6 ResourceDescriptorHeap[] / SamplerDescriptorHeap[] and a per-material indices buffer instead of register bindings. Full-frame SRVs / samplers (sky, integration LUT, shadow maps) remain non-bindless.",
     GForwardPassBindless);
 
+class FTranslucent : SHADER_PERMUTATION_BOOL("ENABLE_TRANSLUCENT");
+class FRefraction  : SHADER_PERMUTATION_BOOL("ENABLE_REFRACTION");
+
 struct FForwardPassShaderRules
 {
-    using FPermutation = TShaderPermutation<FParallax, FClipping, FBindless>;
+    using FPermutation = TShaderPermutation<FParallax, FClipping, FAlphaMask, FTranslucent, FRefraction, FBindless>;
 
-    static_assert(FPermutation::PermutationCount == 8, "ForwardPass permutation space grew unexpectedly");
+    static_assert(FPermutation::PermutationCount == 64, "ForwardPass permutation space grew unexpectedly");
 
-    NODISCARD static FPermutation Create(bool bBindless, bool bEnableParallax, bool bEnableClipping)
+    NODISCARD static FPermutation Create(const FMaterialFeatures& Features, bool bBindless)
     {
         FPermutation Permutation;
-        Permutation.Set<FParallax>(bEnableParallax);
-        Permutation.Set<FClipping>(bEnableClipping);
+        Permutation.Set<FParallax>(Features.HasHeightMap());
+        Permutation.Set<FClipping>(Features.HasParallaxClipping());
+        Permutation.Set<FAlphaMask>(Features.HasAlphaMask());
+        Permutation.Set<FTranslucent>(Features.IsTranslucent());
+        Permutation.Set<FRefraction>(Features.HasRefraction());
         Permutation.Set<FBindless>(bBindless);
         return RemapPermutation(Permutation);
     }
 
     NODISCARD static FPermutation RemapPermutation(FPermutation Permutation)
     {
-        return RemapMaterialPermutation(Permutation);
+        Permutation = RemapMaterialPermutation(Permutation);
+
+        if (!Permutation.Get<FTranslucent>())
+        {
+            Permutation.Set<FRefraction>(false);
+        }
+        else
+        {
+            Permutation.Set<FAlphaMask>(false);
+        }
+
+        return Permutation;
     }
 
     NODISCARD static bool ShouldCompilePermutation(const FShaderPermutationDesc& Desc)
@@ -69,14 +91,19 @@ class FForwardPassPS : public FForwardPassShaderRules
 IMPLEMENT_SHADER_TYPE(FForwardPassVS, "Shaders/ForwardPass.hlsl", "VSMain", EShaderModel::SM_6_2);
 IMPLEMENT_SHADER_TYPE(FForwardPassPS, "Shaders/ForwardPass.hlsl", "PSMain", EShaderModel::SM_6_2);
 
-NODISCARD static FGraphicsPipelineKey CreateForwardPassPSOKey(bool bBindless, bool bEnableParallax, bool bEnableClipping, const FVertexDeclaration& Declaration)
+NODISCARD static FGraphicsPipelineKey CreateForwardPassPSOKey(const FMaterialFeatures& Features, bool bBindless, const FVertexDeclaration& Declaration)
 {
-    const FForwardPassShaderRules::FPermutation Permutation = FForwardPassShaderRules::Create(bBindless, bEnableParallax, bEnableClipping);
-    return FGraphicsPipelineKey(Permutation.GetPermutationID(), 0, Declaration.GetID());
+    const FForwardPassShaderRules::FPermutation Permutation = FForwardPassShaderRules::Create(Features, bBindless);
+
+    const uint32 PipelineFlags = Features.IsDoubleSided() ? PIPELINE_FLAG_DOUBLE_SIDED : 0u;
+    return FGraphicsPipelineKey(Permutation.GetPermutationID(), PipelineFlags, Declaration.GetID());
 }
 
 FForwardPass::FForwardPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
+    , PipelineStates()
+    , CachedReadOnlyDepthDSV(nullptr)
+    , CachedReadOnlyDepthTarget(nullptr)
 {
 }
 
@@ -85,10 +112,10 @@ FForwardPass::~FForwardPass()
     PipelineStates.Clear();
 }
 
-FGraphicsPipelineStateInstance* FForwardPass::CompilePipelineState(bool bBindless, bool bEnableParallax, bool bEnableClipping, const FVertexDeclaration& Declaration)
+FGraphicsPipelineStateInstance* FForwardPass::CompilePipelineState(const FMaterialFeatures& Features, bool bBindless, const FVertexDeclaration& Declaration)
 {
-    const FGraphicsPipelineKey         Key         = CreateForwardPassPSOKey(bBindless, bEnableParallax, bEnableClipping, Declaration);
-    const FForwardPassVS::FPermutation Permutation = FForwardPassVS::FPermutation(Key.PermutationID);
+    const FGraphicsPipelineKey         Key         = CreateForwardPassPSOKey(Features, bBindless, Declaration);
+    const FForwardPassVS::FPermutation Permutation = FForwardPassShaderRules::Create(Features, bBindless);
 
     FGraphicsPipelineStateInstance NewInstance;
 
@@ -109,16 +136,24 @@ FGraphicsPipelineStateInstance* FForwardPass::CompilePipelineState(bool bBindles
     FRHIDepthStencilStateDesc DepthStencilStateDesc;
     DepthStencilStateDesc.DepthFunc         = EComparisonFunc::LessEqual;
     DepthStencilStateDesc.bDepthEnable      = true;
-    DepthStencilStateDesc.bDepthWriteEnable = true;
+    DepthStencilStateDesc.bDepthWriteEnable = false;
 
     FRHIRasterizerStateDesc RasterizerStateDesc;
-    RasterizerStateDesc.CullMode = ECullMode::None;
+    RasterizerStateDesc.CullMode = Features.IsDoubleSided() ? ECullMode::None : ECullMode::Back;
+
+    const bool bTranslucent = Features.IsTranslucent();
 
     FRHIBlendStateDesc BlendStateDesc;
     BlendStateDesc.NumRenderTargets = 1;
-    BlendStateDesc.RenderTargets[0].bBlendEnable = true;
-    BlendStateDesc.RenderTargets[0].SrcBlend = EBlendType::One;
-    BlendStateDesc.RenderTargets[0].DstBlend = EBlendType::Zero;
+
+    if (bTranslucent)
+    {
+        BlendStateDesc.RenderTargets[0].bBlendEnable   = true;
+        BlendStateDesc.RenderTargets[0].SrcBlend       = EBlendType::One;
+        BlendStateDesc.RenderTargets[0].DstBlend       = EBlendType::InvSrcAlpha;
+        BlendStateDesc.RenderTargets[0].BlendOp        = EBlendOp::Add;
+        BlendStateDesc.RenderTargets[0].ColorWriteMask = EColorWriteFlags::Red | EColorWriteFlags::Green | EColorWriteFlags::Blue;
+    }
 
     FRHIRasterizerStateRef   RasterizerState   = RHI::CreateRasterizerState(RasterizerStateDesc);
     FRHIBlendStateRef        BlendState        = RHI::CreateBlendState(BlendStateDesc);
@@ -156,10 +191,13 @@ FGraphicsPipelineStateInstance* FForwardPass::CompilePipelineState(bool bBindles
         return nullptr;
     }
 
-    const String DebugName = String::CreateFormatted("ForwardPass PipelineState%s%s%s [Declaration %u]",
-        bEnableParallax ? " [Parallax]" : "",
-        bEnableClipping ? " [Clipping]" : "",
-        bBindless ? " [Bindless]" : "",
+    const String DebugName = String::CreateFormatted("ForwardPass PipelineState%s%s%s%s%s%s [Declaration %u]",
+        Permutation.Get<FParallax>() ? " [Parallax]" : "",
+        Permutation.Get<FClipping>() ? " [Clipping]" : "",
+        Permutation.Get<FAlphaMask>() ? " [AlphaMask]" : "",
+        Permutation.Get<FTranslucent>() ? " [Translucent]" : "",
+        Permutation.Get<FRefraction>() ? " [Refraction]" : "",
+        Permutation.Get<FBindless>() ? " [Bindless]" : "",
         static_cast<uint32>(Declaration.GetID()));
     NewInstance.PipelineState->SetDebugName(DebugName);
 
@@ -169,28 +207,6 @@ FGraphicsPipelineStateInstance* FForwardPass::CompilePipelineState(bool bBindles
 
 bool FForwardPass::Initialize(FFrameResources& /* FrameResources */)
 {
-    struct FVariant
-    {
-        bool bEnableParallax;
-        bool bEnableClipping;
-    };
-
-    const FVertexDeclaration& Declaration = FVertexDeclaration::GetStandardStaticMesh();
-
-    const FVariant Variants[] = { { false, false }, { true, false }, { true, true } };
-    for (const FVariant& Variant : Variants)
-    {
-        if (!CompilePipelineState(false, Variant.bEnableParallax, Variant.bEnableClipping, Declaration))
-        {
-            return false;
-        }
-
-        if (RHI::bSupportsBindless && !CompilePipelineState(true, Variant.bEnableParallax, Variant.bEnableClipping, Declaration))
-        {
-            return false;
-        }
-    }
-
     return true;
 }
 
@@ -203,10 +219,29 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
 
     GPU_TRACE_SCOPE(CommandList, "Forward Pass");
 
-    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(FrameResources.ShadowCascades.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource));
-
     const float RenderWidth  = float(FrameResources.CurrentRenderWidth);
     const float RenderHeight = float(FrameResources.CurrentRenderHeight);
+
+    FRHITexture*          DepthTarget      = FrameResources.GBuffer[EGBufferIndex::Depth].Get();
+    FRHIRenderTargetView* RenderTargetView = FrameResources.SceneTarget->GetRenderTargetView();
+
+    if (CachedReadOnlyDepthTarget != DepthTarget)
+    {
+        CachedReadOnlyDepthDSV.Reset();
+        CachedReadOnlyDepthTarget = DepthTarget;
+
+        if (DepthTarget)
+        {
+            const FRHIDepthStencilViewDesc DSVDesc = FRHIDepthStencilViewDesc::CreateTexture2D(DepthTarget->GetDesc().Format, 0, EDepthStencilViewFlags::ReadOnlyDepth);
+            CachedReadOnlyDepthDSV = RHI::CreateDepthStencilView(DepthTarget, DSVDesc);
+        }
+    }
+
+    FRHIBeginRenderPassDesc RenderPassDesc;
+    RenderPassDesc.RenderTargets[0]       = FRHIRenderPassAttachment(RenderTargetView, EAttachmentLoadAction::Load);
+    RenderPassDesc.NumRenderTargets       = 1;
+    RenderPassDesc.DepthStencilAttachment = FRHIDepthStencilAttachment(CachedReadOnlyDepthDSV.Get(), EAttachmentLoadAction::Load);
+    CommandList.BeginRenderPass(RenderPassDesc);
 
     FViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
     CommandList.SetViewport(ViewportRegion);
@@ -214,26 +249,93 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
-    FRHIRenderTargetView* RenderTargetView = FrameResources.SceneTarget->GetRenderTargetView();
-    FRHIDepthStencilView* DepthStencilView = FrameResources.GBuffer[EGBufferIndex::Depth]->GetDepthStencilView();
-
-    FRHIBeginRenderPassDesc RenderPassDesc;
-    RenderPassDesc.RenderTargets[0]       = FRHIRenderPassAttachment(RenderTargetView, EAttachmentLoadAction::Load);
-    RenderPassDesc.NumRenderTargets       = 1;
-    RenderPassDesc.DepthStencilAttachment = FRHIDepthStencilAttachment(DepthStencilView, EAttachmentLoadAction::Load);
-    CommandList.BeginRenderPass(RenderPassDesc);
-
     const bool bBindless = RHI::bSupportsBindless && GForwardPassBindless && FrameResources.MaterialDataBufferSRV.IsValid();
 
-    const auto BindFrameResources = [&](FRHIPixelShader* PShader)
+    struct FForwardPassConstants
     {
+        // 0-16
+        int32 NumPointLights;
+        int32 NumShadowCastingPointLights;
+        int32 NumSkyLightMips;
+        int32 NumLightProbes;
+
+        // 16-32
+        int32 bEnablePointLightShadows;
+        float IndirectSpecularStrength;
+        float SpecularAAStrength;
+        float SpecularAAMaxRoughnessGain;
+
+        // 32-48
+        int32  bEnableSunShadows;
+        float  ShadowFilterSize;
+        float  ShadowMaxFilterSize;
+        uint32 ShadowMapSize;
+
+        // 48-64
+        uint32 ShadowNumSamples;
+    } ForwardConstants;
+
+    const FSceneDirectionalLight* DirectionalLight = Scene ? Scene->GetDirectionalLight() : nullptr;
+    const bool bEnableSunShadows = GShadowsEnabled && GSunShadowsEnabled && DirectionalLight && DirectionalLight->bCastShadows && FrameResources.ShadowCascades;
+
+    const FDirectionalShadowSettingsHLSL ShadowSettings = FShadowMaskRenderPass::CreateShadowSettings(FrameResources, GetRenderer()->GetFrameCounter().GetFrameIndex());
+
+    ForwardConstants.NumPointLights              = FrameResources.PointLightsData.Size();
+    ForwardConstants.NumShadowCastingPointLights = FrameResources.ShadowCastingPointLightsData.Size();
+    ForwardConstants.NumSkyLightMips             = 0;
+    ForwardConstants.NumLightProbes              = FrameResources.LightProbeInfos.Size();
+    ForwardConstants.bEnablePointLightShadows    = (GPointLightShadowsEnabled && GShadowsEnabled) ? 1 : 0;
+    ForwardConstants.IndirectSpecularStrength    = GIndirectSpecularStrength;
+    ForwardConstants.SpecularAAStrength          = GBasePassSpecularAAStrength;
+    ForwardConstants.SpecularAAMaxRoughnessGain  = GBasePassSpecularAAMaxRoughnessGain;
+    ForwardConstants.bEnableSunShadows           = bEnableSunShadows ? 1 : 0;
+    ForwardConstants.ShadowFilterSize            = ShadowSettings.FilterSize;
+    ForwardConstants.ShadowMaxFilterSize         = ShadowSettings.MaxFilterSize;
+    ForwardConstants.ShadowMapSize               = ShadowSettings.ShadowMapSize;
+    ForwardConstants.ShadowNumSamples            = ShadowSettings.NumSamples;
+
+    FRHIShaderResourceView* SkyboxSRV        = nullptr;
+    FRHIShaderResourceView* ProbeDiffuseSRV  = nullptr;
+    FRHIShaderResourceView* ProbeSpecularSRV = nullptr;
+
+    if (Scene)
+    {
+        if (FSceneSkyLight* SkyLight = Scene->GetSkyLight())
+        {
+            ForwardConstants.NumSkyLightMips = SkyLight->SpecularCubeMap->GetDesc().NumMipLevels;
+        }
+
+        if (FSceneSkybox* Skybox = Scene->GetSkybox())
+        {
+            SkyboxSRV = Skybox->CubeMap->GetShaderResourceView();
+        }
+
+        if (!Scene->GetLightProbes().IsEmpty())
+        {
+            // TODO: Support more than the first probe, as in the deferred light pass
+            if (FSceneLightProbe* LightProbe = Scene->GetLightProbes().First())
+            {
+                ProbeDiffuseSRV  = LightProbe->DiffuseCubeMap->GetShaderResourceView();
+                ProbeSpecularSRV = LightProbe->SpecularCubeMap->GetShaderResourceView();
+            }
+        }
+    }
+
+    const auto BindFrameResources = [&](FRHIVertexShader* VShader, FRHIPixelShader* PShader)
+    {
+        // The vertex shader projects with CameraBuffer.ViewProjection, so it needs its own binding
+        CommandList.SetConstantBuffer(VShader, FrameResources.CameraBuffer.Get(), 0);
+
+        constexpr uint32 NumConstants = sizeof(FForwardPassConstants) / sizeof(uint32);
+        CommandList.SetShaderConstants(PShader, &ForwardConstants, NumConstants);
+
         CommandList.SetConstantBuffer(PShader, FrameResources.CameraBuffer.Get(), 0);
-        // TODO: Fix point-light count in shader
-        //CmdList.SetConstantBuffer(PShader, LightSetup.PointLightsBuffer.Get(), 1);
-        //CmdList.SetConstantBuffer(PShader, LightSetup.PointLightsPosRadBuffer.Get(), 2);
+        CommandList.SetConstantBuffer(PShader, FrameResources.PointLightsBuffer.Get(), 1);
+        CommandList.SetConstantBuffer(PShader, FrameResources.PointLightsPosRadBuffer.Get(), 2);
         CommandList.SetConstantBuffer(PShader, FrameResources.ShadowCastingPointLightsBuffer.Get(), 3);
         CommandList.SetConstantBuffer(PShader, FrameResources.ShadowCastingPointLightsPosRadBuffer.Get(), 4);
         CommandList.SetConstantBuffer(PShader, FrameResources.DirectionalLightDataBuffer.Get(), 5);
+        CommandList.SetConstantBuffer(PShader, FrameResources.LightProbeBuffer.Get(), 7);
 
         if (Scene)
         {
@@ -245,14 +347,19 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
         }
 
         CommandList.SetShaderResourceView(PShader, FrameResources.IntegrationLUT->GetShaderResourceView(), 2);
-        //TODO: Fix directional-light shadows
-        //CmdList.SetShaderResourceView(PShader, LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 3);
+        CommandList.SetShaderResourceView(PShader, FrameResources.ShadowCascades->GetShaderResourceView(), 3);
         CommandList.SetShaderResourceView(PShader, FrameResources.PointLightShadowMaps->GetShaderResourceView(), 4);
+        CommandList.SetShaderResourceView(PShader, SkyboxSRV, 13);
+        CommandList.SetShaderResourceView(PShader, ProbeDiffuseSRV, 14);
+        CommandList.SetShaderResourceView(PShader, ProbeSpecularSRV, 15);
+        CommandList.SetShaderResourceView(PShader, FrameResources.CascadeSplitsBufferSRV.Get(), 16);
 
         CommandList.SetSamplerState(PShader, FrameResources.IntegrationLUTSampler.Get(), 1);
         CommandList.SetSamplerState(PShader, FrameResources.LightProbeSampler.Get(), 2);
         CommandList.SetSamplerState(PShader, FrameResources.PointLightShadowSampler.Get(), 3);
-        //CmdList.SetSamplerState(PShader, FrameResources.DirectionalLightShadowSampler.Get(), 4);
+        CommandList.SetSamplerState(PShader, FrameResources.ShadowSamplerPointCmp.Get(), 4);
+        CommandList.SetSamplerState(PShader, FrameResources.ShadowSamplerLinearCmp.Get(), 5);
+        CommandList.SetSamplerState(PShader, FrameResources.ShadowSamplerPoint.Get(), 6);
     };
 
     FGraphicsPipelineStateInstance* PipelineInstance = nullptr;
@@ -267,17 +374,13 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
             continue;
         }
 
-        const FMaterialFeatures Features(Batch.EffectiveMaterialFlags);
-
-        const bool bEnableParallax = Features.HasHeightMap();
-        const bool bEnableClipping = Features.HasParallaxClipping();
-
-        const FGraphicsPipelineKey PSOKey = CreateForwardPassPSOKey(bBindless, bEnableParallax, bEnableClipping, Batch.Declaration);
+        const FMaterialFeatures    Features(Batch.EffectiveMaterialFlags);
+        const FGraphicsPipelineKey PSOKey = CreateForwardPassPSOKey(Features, bBindless, Batch.Declaration);
 
         FGraphicsPipelineStateInstance* MaterialPipeline = PipelineStates.Find(PSOKey);
         if (!MaterialPipeline)
         {
-            MaterialPipeline = CompilePipelineState(bBindless, bEnableParallax, bEnableClipping, Batch.Declaration);
+            MaterialPipeline = CompilePipelineState(Features, bBindless, Batch.Declaration);
         }
 
         if (!MaterialPipeline)
@@ -293,7 +396,7 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
             PShader          = PipelineInstance->PixelShader;
 
             CommandList.SetGraphicsPipelineState(PipelineInstance->PipelineState.Get());
-            BindFrameResources(PShader.Get());
+            BindFrameResources(VShader.Get(), PShader.Get());
         }
 
         CommandList.SetShaderResourceView(PShader.Get(), FrameResources.MaterialDataBufferSRV.Get(), 12);
@@ -310,7 +413,8 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
             StaticMesh->Mesh->SetVertexBuffers(CommandList, *PipelineInstance->StreamBinding);
             CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
 
-            StaticMesh->PerObjectBuffer.MaterialIndex = Material->GetBufferIndex();
+            const int32 MaxMaterialIndex = Math::Max<int32>(int32(FrameResources.MaterialData.Size()) - 1, 0);
+            StaticMesh->PerObjectBuffer.MaterialIndex = uint32(Math::Clamp<int32>(Material->GetBufferIndex(), 0, MaxMaterialIndex));
             CommandList.UpdateBuffer(FrameResources.PerObjectBuffer.Get(), FBufferRegion(0, sizeof(FPerObjectHLSL)), &StaticMesh->PerObjectBuffer);
 
             CommandList.SetConstantBuffer(VShader.Get(), FrameResources.PerObjectBuffer.Get(), 6);
@@ -321,6 +425,4 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     }
 
     CommandList.EndRenderPass();
-
-    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(FrameResources.ShadowCascades.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource));
 }

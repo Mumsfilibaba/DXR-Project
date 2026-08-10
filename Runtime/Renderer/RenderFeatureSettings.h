@@ -8,3 +8,4 @@
 extern bool GRayTracingEnabled;
 extern bool GShadowsEnabled;
 extern bool GPointLightShadowsEnabled;
+extern bool GSunShadowsEnabled;

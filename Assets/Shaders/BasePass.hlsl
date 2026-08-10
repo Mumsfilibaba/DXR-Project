@@ -165,23 +165,7 @@ FPSOutput PSMain(FPSInput Input)
     const float Metallic  = Surface.Metallic;
     float       Roughness = Surface.Roughness;
 
-    // Specular anti-aliasing
-    {
-        const float Strength         = Constants.SpecularAAStrength;
-        const float MaxRoughnessGain = Constants.SpecularAAMaxRoughnessGain;
-
-        float  Roughness2         = Roughness * Roughness;
-        float3 DnDu               = ddx(Normal);
-        float3 DnDv               = ddy(Normal);
-        float  Variance           = (dot(DnDu, DnDu) + dot(DnDv, DnDv));
-        float  KernelRoughness2   = min(Variance * Strength, MaxRoughnessGain);
-        float  FilteredRoughness2 = saturate(Roughness2 + KernelRoughness2);
-        
-        Roughness = FastSqrt(FilteredRoughness2);
-    }
-
-    // Ensure we do not go above or below a certain roughness threshold
-    Roughness = min(max(Roughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
+    Roughness = FilterRoughnessGeometric(Roughness, Normal, Constants.SpecularAAStrength, Constants.SpecularAAMaxRoughnessGain);
 
     // Velocity
     float3 PositionNDC     = (Input.ClipPosition.xyz / Input.ClipPosition.w);

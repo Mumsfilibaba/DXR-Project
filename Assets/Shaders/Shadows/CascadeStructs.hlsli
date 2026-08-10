@@ -3,6 +3,15 @@
 
 #include "CoreDefines.hlsli"
 
+// Mirrors ECSMFilterFunction. Here rather than in CascadeShadowSampling.hlsli.
+#define SHADOW_FILTER_FUNCTION_GRID         0
+#define SHADOW_FILTER_FUNCTION_POISSON_DISK 1
+#define SHADOW_FILTER_FUNCTION_VOGEL_DISK   2
+
+// Mirrors ECSMFilterMode. PCSS is disabled for now, so both paths resolve to PCF.
+#define SHADOW_FILTER_MODE_PCF  0
+#define SHADOW_FILTER_MODE_PCSS 1
+
 // Necessary to pack matrices like this in order to have it work on MoltenVK
 struct FCascadeMatrices
 {
