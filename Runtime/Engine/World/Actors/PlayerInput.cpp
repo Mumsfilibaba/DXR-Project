@@ -35,7 +35,8 @@ static float GetAnalogDeadzone(EAnalogSourceName::Type Source)
 }
 
 FPlayerInput::FPlayerInput()
-    : KeyStates()
+    : MouseDelta()
+    , KeyStates()
 {
     if (FApplication::IsInitialized())
     {
@@ -127,6 +128,20 @@ void FPlayerInput::EnableInput(FInputComponent* InputComponent)
 void FPlayerInput::ClearInputStates()
 {
     KeyStates.Clear();
+    MouseDelta = IntVector2();
+}
+
+void FPlayerInput::OnHighPrecisionMouseInput(const IntVector2& Delta)
+{
+    MouseDelta.X += Delta.X;
+    MouseDelta.Y += Delta.Y;
+}
+
+IntVector2 FPlayerInput::ConsumeMouseDelta()
+{
+    const IntVector2 Result = MouseDelta;
+    MouseDelta = IntVector2();
+    return Result;
 }
 
 int32 FPlayerInput::AddActionKeyMapping(const FActionKeyMapping& ActionKeyMapping)

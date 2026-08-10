@@ -59,22 +59,25 @@ struct IImguiPlugin : public IModule
     virtual bool InitializeRHI() = 0;
     virtual void ReleaseRHI() = 0;
 
-    virtual bool UpdateFontAtlas() = 0;
-
     virtual void NewFrame(float DeltaTime) = 0;
     virtual void Tick(float DeltaTime) = 0;
     virtual void Draw(FRHICommandList& CommandList) = 0;
     virtual void DrawViewports(FRHICommandList& CommandList) = 0;
 
+    virtual bool UpdateFontAtlas() = 0;
+
     virtual FDelegateHandle AddBeginFrameDelegate(const FImGuiDelegate& Delegate) = 0;
     virtual FDelegateHandle AddDrawDelegate(const FImGuiDelegate& Delegate) = 0;
     virtual FDelegateHandle AddEndFrameDelegate(const FImGuiDelegate& Delegate) = 0;
-    virtual void RemoveBeginFrameDelegate(FDelegateHandle DelegateHandle) = 0;
-    virtual void RemoveDrawDelegate(FDelegateHandle DelegateHandle) = 0;
-    virtual void RemoveEndFrameDelegate(FDelegateHandle DelegateHandle) = 0;
+    virtual void            RemoveBeginFrameDelegate(FDelegateHandle DelegateHandle) = 0;
+    virtual void            RemoveDrawDelegate(FDelegateHandle DelegateHandle) = 0;
+    virtual void            RemoveEndFrameDelegate(FDelegateHandle DelegateHandle) = 0;
 
     virtual void SetMainViewport(const TSharedPtr<FViewportWidget>& InViewport) = 0;
 
-    virtual ImGuiIO* GetImGuiIO() const = 0;
+    virtual void SetInputPassthroughEnabled(bool bEnabled) = 0;
+    virtual bool IsInputPassthroughEnabled() const = 0;
+
+    virtual ImGuiIO*      GetImGuiIO()      const = 0;
     virtual ImGuiContext* GetImGuiContext() const = 0;
 };

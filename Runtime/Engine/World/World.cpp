@@ -1,11 +1,14 @@
 #include "Engine/World/World.h"
 #include "Engine/World/ActorFilter.h"
+#include "Engine/World/Actors/PlayerInput.h"
 #include "Engine/World/Components/CameraComponent.h"
+#include "Engine/World/Components/InputComponent.h"
 #include "Engine/World/Components/SceneComponent.h"
 
 FWorld::FWorld()
     : Scene(nullptr)
     , ActiveCamera(nullptr)
+    , RunState(EWorldRunState::Editing)
     , Actors()
 #if EDITOR_BUILD
     , ActorFilters()
@@ -66,8 +69,15 @@ FActor* FWorld::CreateActor()
     return SpawnActor<FActor>();
 }
 
-void FWorld::Start()
+void FWorld::BeginPlay()
 {
+    if (RunState != EWorldRunState::Editing)
+    {
+        return;
+    }
+
+    RunState = EWorldRunState::Playing;
+
     // Setup the input components for the PlayerControllers
     for (FPlayerController* PlayerController : PlayerControllers)
     {
@@ -84,18 +94,59 @@ void FWorld::Start()
     }
 }
 
-void FWorld::Tick(float DeltaTime)
+void FWorld::EndPlay()
 {
-    // Update all the actors
+    if (RunState == EWorldRunState::Editing)
+    {
+        return;
+    }
+
     for (FActor* Actor : Actors)
     {
-        if (Actor->IsTickable())
+        Actor->EndPlay();
+    }
+
+    for (FPlayerController* PlayerController : PlayerControllers)
+    {
+        PlayerController->GetPlayerInput()->ClearInputStates();
+
+        if (FInputComponent* PlayerInputComponent = PlayerController->GetInputComponent())
+        {
+            PlayerInputComponent->ClearBindings();
+        }
+    }
+
+    RunState = EWorldRunState::Editing;
+}
+
+void FWorld::SetPaused(bool bPaused)
+{
+    if (RunState == EWorldRunState::Editing)
+    {
+        return;
+    }
+
+    RunState = bPaused ? EWorldRunState::Paused : EWorldRunState::Playing;
+    if (bPaused)
+    {
+        for (FPlayerController* PlayerController : PlayerControllers)
+        {
+            PlayerController->GetPlayerInput()->ClearInputStates();
+        }
+    }
+}
+
+void FWorld::Tick(float DeltaTime)
+{
+    const bool bIsPlaying = (RunState == EWorldRunState::Playing);
+    for (FActor* Actor : Actors)
+    {
+        if (Actor->IsTickable() && (bIsPlaying || Actor->TicksInEditor()))
         {
             Actor->Tick(DeltaTime);
         }
     }
 
-    // Update the view-proj matrices, at this point we should have a valid view and projection matrix
     if (ActiveCamera)
     {
         ActiveCamera->UpdateViewMatrix();

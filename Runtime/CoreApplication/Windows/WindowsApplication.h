@@ -83,6 +83,8 @@ public:
     virtual FInputDevice* GetInputDevice() override final;
     virtual bool SupportsHighPrecisionMouse() const override final;
     virtual bool SetHighPrecisionMouseMode(const TSharedRef<FGenericWindow>& Window, EHighPrecisionMouseMode Mode) override final;
+    virtual bool ConfineCursorToRect(const TSharedRef<FGenericWindow>& Window, const IntVector2& Position, const IntVector2& Size) override final;
+    virtual void ReleaseCursorConfinement() override final;
     virtual FModifierKeyState GetModifierKeyState() const override final;
     virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) override final;
     virtual void SetCapture(const TSharedRef<FGenericWindow>& Window) override final;

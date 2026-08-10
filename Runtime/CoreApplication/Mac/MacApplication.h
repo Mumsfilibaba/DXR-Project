@@ -292,6 +292,8 @@ public:
     virtual FInputDevice* GetInputDevice() override final;
     virtual bool SupportsHighPrecisionMouse() const override final;
     virtual bool SetHighPrecisionMouseMode(const TSharedRef<FGenericWindow>& Window, EHighPrecisionMouseMode Mode) override final;
+    virtual bool ConfineCursorToRect(const TSharedRef<FGenericWindow>& Window, const IntVector2& Position, const IntVector2& Size) override final;
+    virtual void ReleaseCursorConfinement() override final;
     virtual FModifierKeyState GetModifierKeyState() const override final;
     virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) override final;
     virtual void SetCapture(const TSharedRef<FGenericWindow>& Window) override final;
@@ -334,6 +336,8 @@ private:
     void ProcessWindowResized(const FDeferredMacEvent& DeferredEvent);
     void ProcessWindowMoved(const FDeferredMacEvent& DeferredEvent);
 
+    void ClampCursorToConfinement();
+
     id                             LocalEventMonitor;
     id                             GlobalMouseMovedEventMonitor;
     FMacApplicationObserver*       Observer;
@@ -344,7 +348,10 @@ private:
     NSUInteger                     CurrentModifierFlags;
     EMouseButtonName::Type         LastPressedButton;
     Vector2                        HighPrecisionMouseRemainder;
+    IntVector2                     CursorConfinementPosition;
+    IntVector2                     CursorConfinementSize;
     bool                           bHighPrecisionMouseEnabled;
+    bool                           bCursorConfined;
     TSharedPtr<FMacCursor>         MacCursor;
     TSharedPtr<FGCInputDevice>     InputDevice;
     TArray<FMacScreenInfo>         ScreenCache;

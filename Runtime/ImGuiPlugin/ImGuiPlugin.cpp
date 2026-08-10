@@ -86,6 +86,7 @@ FImGuiPlugin::FImGuiPlugin()
     , MonitorInfos()
     , DrawDelegates()
     , OnMonitorConfigChangedDelegateHandle()
+    , bInputPassthroughEnabled(false)
 {
 }
 
@@ -467,7 +468,7 @@ void FImGuiPlugin::NewFrame(float DeltaTime)
     ImGuiViewport* ForegroundViewport = ForegroundWindow ? ImGui::FindViewportByPlatformHandle(ForegroundWindow.Get()) : nullptr;
 
     const bool bIsAppFocused = ForegroundWindow && (ForegroundWindow == MainWindow || PlatformWindow->IsChildWindow(PlatformForegroundWindow) || ForegroundViewport);
-    if (bIsAppFocused)
+    if (bIsAppFocused && !bInputPassthroughEnabled)
     {
     #ifndef EDITOR_BUILD
         const IntVector2 ForegroundWindowPosition = ForegroundWindow->GetPosition();

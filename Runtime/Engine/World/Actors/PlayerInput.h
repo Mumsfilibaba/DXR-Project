@@ -117,6 +117,13 @@ public:
     
     void OnAxisEvent(EAnalogSourceName::Type AxisSource, float AxisValue);
     void OnKeyEvent(FKey Key, bool bIsDown, bool bIsRepeat);
+    void OnHighPrecisionMouseInput(const IntVector2& Delta);
+
+    IntVector2 ConsumeMouseDelta();
+
+    FKeyState  GetKeyState(FKey Key) const;
+    IntVector2 GetCursorPosition() const;
+    FAxisState GetAnalogState(EAnalogSourceName::Type AnalogSource) const;
 
     bool IsKeyDown(FKey Key) const
     {
@@ -136,10 +143,6 @@ public:
         return KeyState.bIsDown && !KeyState.bPreviousState;
     }
 
-    FKeyState   GetKeyState(FKey Key) const;
-    IntVector2 GetCursorPosition() const;
-    FAxisState  GetAnalogState(EAnalogSourceName::Type AnalogSource) const;
-
     TSharedPtr<ICursor> GetCursorInterface() const 
     { 
         return CursorInterface;
@@ -149,6 +152,7 @@ private:
     void ClearEvents();
 
     TSharedPtr<ICursor>       CursorInterface;
+    IntVector2                MouseDelta;
     TArray<FKeyState>         KeyStates;
     TArray<FAxisState>        AxisStates;
     TArray<FActionKeyMapping> ActionKeyMappings;

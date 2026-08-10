@@ -41,6 +41,41 @@ public:
     virtual void Release();
 
     /**
+     * @brief Enter run-mode, starting the world and handing control of the viewport to the game
+     *
+     * @return Returns true if the world went from being authored to running
+     */
+    virtual bool StartPlay();
+
+    /**
+     * @brief Leave run-mode, stopping the world and handing the viewport back
+     */
+    virtual void StopPlay();
+
+    /**
+     * @brief Freeze or resume a running world
+     */
+    void TogglePause();
+
+    /** @brief Returns true while the world is running and advancing */
+    bool IsPlaying() const
+    {
+        return World && World->IsPlaying();
+    }
+
+    /** @brief Returns true while the world is running but frozen */
+    bool IsPaused() const
+    {
+        return World && World->IsPaused();
+    }
+
+    /** @brief Returns true while the world is being authored rather than run */
+    bool IsEditing() const
+    {
+        return !World || World->IsEditing();
+    }
+
+    /**
      * @brief Build the by-value description of this frame's scene render (main thread).
      * The base fills the target swap-chain; subclasses fill the view (output target, debug views)
      * and any marshalled editor state (selection ObjectIDs).

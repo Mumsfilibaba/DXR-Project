@@ -125,6 +125,13 @@ public:
     virtual void Start();
 
     /**
+     * @brief End actor, called when the run stops, release anything Start acquired here
+     *
+     * The actor itself outlives the run, so this has to leave it in a state a later Start can pick up again.
+     */
+    virtual void EndPlay();
+
+    /**
      * @brief Tick component, should be called once every frame
      *
      * @param DeltaTime Time since the last call to tick in seconds
@@ -417,6 +424,19 @@ public:
     }
 
     /**
+     * @brief Check if the actor keeps ticking while the world is being authored rather than run
+     *
+     * Game logic is held back in the editor, so an actor that has to keep updating outside a run, such as an
+     * editor-owned preview or visualization, opts in here.
+     *
+     * @return Returns true if the actor should tick outside a run
+     */
+    bool TicksInEditor() const
+    {
+        return bTickInEditor;
+    }
+
+    /**
      * @brief Set whether the actor is startable
      *
      * @param bInIsStartable New startable flag value
@@ -436,8 +456,18 @@ public:
         bIsTickable = bInIsTickable;
     }
 
+    /**
+     * @brief Set whether the actor ticks while the world is being authored rather than run
+     *
+     * @param bInTickInEditor New editor-tick flag value
+     */
+    void SetTickInEditor(bool bInTickInEditor)
+    {
+        bTickInEditor = bInTickInEditor;
+    }
+
 private:
-    
+
     friend class FWorld;
 
     void UnlinkFromParent();
@@ -456,6 +486,7 @@ private:
     mutable FActorTransform  CachedWorldTransform;
     mutable uint64           CachedLocalVersion;
     mutable uint64           CachedParentVersion;
-    bool                     bIsStartable : 1;
-    bool                     bIsTickable  : 1;
+    bool                     bIsStartable  : 1;
+    bool                     bIsTickable   : 1;
+    bool                     bTickInEditor : 1;
 };

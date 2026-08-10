@@ -2,6 +2,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Pair.h"
 #include "Engine/Engine.h"
+#include "Engine/World/WorldSnapshot.h"
 
 class FEditorDockspaceWidget;
 class FEditorFooterWidget;
@@ -36,6 +37,9 @@ public:
     virtual bool InitPostRenderer()    override final;
     virtual void Tick(float DeltaTime) override final;
     virtual void Release()             override final;
+
+    virtual bool StartPlay() override final;
+    virtual void StopPlay()  override final;
 
     virtual FSceneRenderPacket BuildRenderPacket() override final;
 
@@ -123,6 +127,7 @@ private:
     TSharedPtr<FEditorAboutWidget>            AboutWidget;
     FRHITextureRef                            ViewportImage;
     IntVector2                                ViewportImageSize;
+    FWorldSnapshot                            Snapshot;
     bool                                      bPendingPickAdditive;
     bool                                      bPendingRectPickAdditive;
 };

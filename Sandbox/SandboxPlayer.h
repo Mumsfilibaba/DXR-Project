@@ -1,7 +1,9 @@
 #pragma once
 #include <Engine/World/Actors/PlayerController.h>
+#include <Engine/World/FirstPersonCameraController.h>
 
 class FCameraActor;
+class FPlayerInput;
 
 class SANDBOX_API FSandboxPlayerController : public FPlayerController
 {
@@ -38,6 +40,8 @@ public:
     }
 
 private:
-    FCameraActor* CameraActor;
-    Vector3       CameraSpeed;
+    Vector3 GatherMoveAxis(const FPlayerInput* Input) const;
+
+    FCameraActor*                CameraActor;
+    FFirstPersonCameraController CameraController;
 };

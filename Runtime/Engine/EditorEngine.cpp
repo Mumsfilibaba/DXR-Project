@@ -103,6 +103,9 @@ bool FEditorEngine::InitPostRenderer()
 
 void FEditorEngine::Release()
 {
+    // Shutting down mid-run would otherwise leave the cursor hidden and confined
+    StopPlay();
+
     if (GetWorld() && ActorRemovedDelegateHandle.IsValid())
     {
         GetWorld()->GetOnActorRemovedEvent().Unbind(ActorRemovedDelegateHandle);
@@ -219,6 +222,55 @@ void FEditorEngine::Tick(float DeltaTime)
     }
 }
 
+bool FEditorEngine::StartPlay()
+{
+    if (!IsEditing())
+    {
+        return false;
+    }
+
+    Snapshot.Capture(GetWorld());
+
+    if (const TSharedPtr<FSceneViewport> Viewport = GetSceneViewport())
+    {
+        Viewport->SetPlayerInputEnabled(true);
+    }
+
+    FApplication::Get().SetFocusWidget(GetViewportWidget());
+
+    if (!FEngine::StartPlay())
+    {
+        if (const TSharedPtr<FSceneViewport> Viewport = GetSceneViewport())
+        {
+            Viewport->SetPlayerInputEnabled(false);
+        }
+
+        Snapshot.Reset();
+        return false;
+    }
+
+    ClearSelection();
+    return true;
+}
+
+void FEditorEngine::StopPlay()
+{
+    if (IsEditing())
+    {
+        return;
+    }
+
+    FEngine::StopPlay();
+
+    if (const TSharedPtr<FSceneViewport> Viewport = GetSceneViewport())
+    {
+        Viewport->SetPlayerInputEnabled(false);
+    }
+
+    Snapshot.Restore(GetWorld());
+    Snapshot.Reset();
+}
+
 FSceneRenderPacket FEditorEngine::BuildRenderPacket()
 {
     TRACE_FUNCTION_SCOPE();
@@ -257,6 +309,14 @@ FSceneRenderPacket FEditorEngine::BuildRenderPacket()
 
 FCameraComponent* FEditorEngine::GetActiveViewportCamera() const
 {
+    if (!IsEditing())
+    {
+        if (FCameraComponent* GameCamera = GetWorld() ? GetWorld()->GetActiveCamera() : nullptr)
+        {
+            return GameCamera;
+        }
+    }
+
     return ViewportWidget ? ViewportWidget->GetViewCamera() : nullptr;
 }
 

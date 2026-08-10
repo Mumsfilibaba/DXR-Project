@@ -53,6 +53,16 @@ public:
 
     virtual void SetMainViewport(const TSharedPtr<FViewportWidget>& InViewport) override final;
 
+    virtual void SetInputPassthroughEnabled(bool bEnabled) override final
+    {
+        bInputPassthroughEnabled = bEnabled;
+    }
+
+    virtual bool IsInputPassthroughEnabled() const override final
+    {
+        return bInputPassthroughEnabled;
+    }
+
     virtual ImGuiIO* GetImGuiIO() const override final
     {
         return PluginImGuiIO;
@@ -95,6 +105,7 @@ private:
     FImGuiDrawMulticastDelegate    DrawDelegates;
     FImGuiDrawMulticastDelegate    EndFrameDelegates;
     FDelegateHandle                OnMonitorConfigChangedDelegateHandle;
+    bool                           bInputPassthroughEnabled;
 };
 
 extern FImGuiPlugin* GImGuiPlugin;

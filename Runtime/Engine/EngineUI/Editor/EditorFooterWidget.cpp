@@ -1,6 +1,7 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Templates/CString.h"
 #include "Application/Application.h"
+#include "Engine/Engine.h"
 #include "Engine/EngineUI/Editor/EditorFooterWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "ImGuiPlugin/ImGuiCore.h"
@@ -143,6 +144,8 @@ void FEditorFooterWidget::Draw()
         {
             InputHandler->bConsoleToggled = bIsInputFieldActive;
         }
+
+        DrawRunStateLabel();
 
         bShowCandidatesOverlay = !Candidates.IsEmpty();
 
@@ -484,6 +487,26 @@ void FEditorFooterWidget::Draw()
     }
 
     ImGui::PopFont();
+}
+
+void FEditorFooterWidget::DrawRunStateLabel()
+{
+    if (!FEngine::IsInitialized() || FEngine::Get()->IsEditing())
+    {
+        return;
+    }
+
+    const bool  bPaused    = FEngine::Get()->IsPaused();
+    const CHAR* LabelText  = bPaused ? "PAUSED" : "PLAYING";
+    const ImU32 LabelColor = bPaused ? IM_COL32(214, 154, 32, 255) : IM_COL32(46, 168, 76, 255);
+
+    const ImVec2 LabelSize    = ImGui::CalcTextSize(LabelText);
+    const ImVec2 ContentStart = ImGui::GetWindowPos();
+    const float  ContentRight = ContentStart.x + ImGui::GetWindowContentRegionMax().x;
+
+    const ImVec2 LabelPosition = ImVec2(ContentRight - LabelSize.x, ImGui::GetItemRectMin().y + (ImGui::GetItemRectSize().y - LabelSize.y) * 0.5f);
+
+    ImGui::GetWindowDrawList()->AddText(LabelPosition, LabelColor, LabelText);
 }
 
 void FEditorFooterWidget::ApplyCandidateToBuffer(int32 CandidateIndex)

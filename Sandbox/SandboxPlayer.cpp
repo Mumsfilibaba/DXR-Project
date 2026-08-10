@@ -12,7 +12,7 @@ FOBJECT_IMPLEMENT_CLASS(FSandboxPlayerController);
 FSandboxPlayerController::FSandboxPlayerController(const FObjectInitializer& Initializer)
     : FPlayerController(Initializer)
     , CameraActor(nullptr)
-    , CameraSpeed()
+    , CameraController()
 {
     // Bind input mappings
     if (FPlayerInput* Input = GetPlayerInput())
@@ -65,109 +65,97 @@ void FSandboxPlayerController::Tick(float DeltaTime)
         return;
     }
 
-    FCameraComponent* Camera = CameraActor->GetCameraComponent();
-    const float RotationSpeed = 45.0f;
-    const float Deadzone      = 0.01f;
+    FPlayerInput* Input = GetPlayerInput();
+    CameraController.SetCamera(CameraActor->GetCameraComponent());
 
-    const FAxisState RightThumbX = GetPlayerInput()->GetAnalogState(EAnalogSourceName::RightThumbX);
-    const FAxisState RightThumbY = GetPlayerInput()->GetAnalogState(EAnalogSourceName::RightThumbY);
-    
     // Reset Camera
-    if (GetPlayerInput()->IsKeyDown(Keys::R))
+    if (Input->IsKeyDown(Keys::R))
     {
+        FCameraComponent* Camera = CameraActor->GetCameraComponent();
         Camera->SetPosition(0.0f, 10.0f, -2.0f);
         Camera->SetRotation(0.0f,  0.0f,  0.0f);
-    }
-    
-    // Camera Rotation
-    if (Math::Abs(RightThumbX.Value) > Deadzone)
-    {
-        Camera->AddRotation(0.0f, Math::DegreesToRadians(RightThumbX.Value * RotationSpeed * DeltaTime), 0.0f);
-    }
-    else if (GetPlayerInput()->IsKeyDown(Keys::Right))
-    {
-        Camera->AddRotation(0.0f, Math::DegreesToRadians(RotationSpeed * DeltaTime), 0.0f);
-    }
-    else if (GetPlayerInput()->IsKeyDown(Keys::Left))
-    {
-        Camera->AddRotation(0.0f, Math::DegreesToRadians(-RotationSpeed * DeltaTime), 0.0f);
+
+        CameraController.StopMovement();
+        CameraController.SyncFromCamera();
     }
 
-    if (Math::Abs(RightThumbY.Value) > Deadzone)
+    const FAxisState RightThumbX = Input->GetAnalogState(EAnalogSourceName::RightThumbX);
+    const FAxisState RightThumbY = Input->GetAnalogState(EAnalogSourceName::RightThumbY);
+
+    const IntVector2 MouseDelta = Input->ConsumeMouseDelta();
+
+    FFirstPersonCameraInput CameraInput;
+    CameraInput.MoveAxis  = GatherMoveAxis(Input);
+    CameraInput.LookDelta = Vector2(static_cast<float>(MouseDelta.X), static_cast<float>(MouseDelta.Y));
+    CameraInput.StickLook = Vector2(RightThumbX.Value, -RightThumbY.Value);
+    CameraInput.bBoost    = Input->IsKeyDown(Keys::LeftShift) || Input->IsKeyDown(Keys::GamepadLeftThumb);
+
+    // Arrow keys still turn the camera, at the same rate the look stick does
+    if (Input->IsKeyDown(Keys::Right))
     {
-        Camera->AddRotation(Math::DegreesToRadians(-RightThumbY.Value * RotationSpeed * DeltaTime), 0.0f, 0.0f);
+        CameraInput.StickLook.X += 1.0f;
     }
-    else if (GetPlayerInput()->IsKeyDown(Keys::Up))
+    else if (Input->IsKeyDown(Keys::Left))
     {
-        Camera->AddRotation(Math::DegreesToRadians(-RotationSpeed * DeltaTime), 0.0f, 0.0f);
-    }
-    else if (GetPlayerInput()->IsKeyDown(Keys::Down))
-    {
-        Camera->AddRotation(Math::DegreesToRadians(RotationSpeed * DeltaTime), 0.0f, 0.0f);
+        CameraInput.StickLook.X -= 1.0f;
     }
 
-    // Camera Movement
-    float Acceleration = 15.0f;
-    if (GetPlayerInput()->IsKeyDown(Keys::LeftShift) || GetPlayerInput()->IsKeyDown(Keys::GamepadLeftThumb))
+    if (Input->IsKeyDown(Keys::Up))
     {
-        Acceleration = Acceleration * 3;
+        CameraInput.StickLook.Y -= 1.0f;
+    }
+    else if (Input->IsKeyDown(Keys::Down))
+    {
+        CameraInput.StickLook.Y += 1.0f;
     }
 
-    const FAxisState LeftThumbX = GetPlayerInput()->GetAnalogState(EAnalogSourceName::LeftThumbX);
-    const FAxisState LeftThumbY = GetPlayerInput()->GetAnalogState(EAnalogSourceName::LeftThumbY);
+    CameraController.Tick(DeltaTime, CameraInput);
+}
 
-    Vector3 CameraAcceleration;
+Vector3 FSandboxPlayerController::GatherMoveAxis(const FPlayerInput* Input) const
+{
+    constexpr float Deadzone = 0.01f;
+
+    const FAxisState LeftThumbX = Input->GetAnalogState(EAnalogSourceName::LeftThumbX);
+    const FAxisState LeftThumbY = Input->GetAnalogState(EAnalogSourceName::LeftThumbY);
+
+    Vector3 MoveAxis;
     if (Math::Abs(LeftThumbY.Value) > Deadzone)
     {
-        CameraAcceleration.Z = Acceleration * LeftThumbY.Value;
+        MoveAxis.Z = LeftThumbY.Value;
     }
-    else if (GetPlayerInput()->IsKeyDown(Keys::W))
+    else if (Input->IsKeyDown(Keys::W))
     {
-        CameraAcceleration.Z = Acceleration;
+        MoveAxis.Z = 1.0f;
     }
-    else if (GetPlayerInput()->IsKeyDown(Keys::S))
+    else if (Input->IsKeyDown(Keys::S))
     {
-        CameraAcceleration.Z = -Acceleration;
+        MoveAxis.Z = -1.0f;
     }
 
     if (Math::Abs(LeftThumbX.Value) > Deadzone)
     {
-        CameraAcceleration.X = Acceleration * -LeftThumbX.Value;
+        MoveAxis.X = -LeftThumbX.Value;
     }
-    else if (GetPlayerInput()->IsKeyDown(Keys::A))
+    else if (Input->IsKeyDown(Keys::A))
     {
-        CameraAcceleration.X = Acceleration;
+        MoveAxis.X = 1.0f;
     }
-    else if (GetPlayerInput()->IsKeyDown(Keys::D))
+    else if (Input->IsKeyDown(Keys::D))
     {
-        CameraAcceleration.X = -Acceleration;
+        MoveAxis.X = -1.0f;
     }
 
-    if (GetPlayerInput()->IsKeyDown(Keys::Q))
+    if (Input->IsKeyDown(Keys::Q))
     {
-        CameraAcceleration.Y = Acceleration;
+        MoveAxis.Y = 1.0f;
     }
-    else if (GetPlayerInput()->IsKeyDown(Keys::E))
+    else if (Input->IsKeyDown(Keys::E))
     {
-        CameraAcceleration.Y = -Acceleration;
-    }
-
-    const float DampingRate   = 5.0f;
-    const float DampingFactor = Math::Exp(-DampingRate * DeltaTime);
-    CameraSpeed = CameraSpeed * DampingFactor;
-    CameraSpeed = CameraSpeed + (CameraAcceleration * DeltaTime);
-
-    constexpr float RestSpeed = 1.0e-3f;
-    if ((CameraAcceleration.GetLengthSquared() <= 0.0f) && (CameraSpeed.GetLengthSquared() <= (RestSpeed * RestSpeed)))
-    {
-        CameraSpeed = Vector3();
+        MoveAxis.Y = -1.0f;
     }
 
-    if (CameraSpeed.GetLengthSquared() > 0.0f)
-    {
-        const Vector3 Speed = CameraSpeed * DeltaTime;
-        Camera->AddLocalMovement(Speed.X, Speed.Y, Speed.Z);
-    }
+    return MoveAxis;
 }
 
 void FSandboxPlayerController::SetupInputComponent()

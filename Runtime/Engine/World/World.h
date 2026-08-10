@@ -11,6 +11,18 @@ class FActorFilter;
 class FCameraComponent;
 class FSceneComponent;
 
+enum class EWorldRunState : uint8
+{
+    /** The world is being authored, game code is held back */
+    Editing,
+
+    /** The world is running, every tickable actor advances */
+    Playing,
+
+    /** The world is running but frozen, game code keeps its state without advancing */
+    Paused,
+};
+
 class ENGINE_API FWorld
 {
 public:
@@ -64,9 +76,21 @@ public:
     }
 
     /**
-     * @brief Start game 
+     * @brief Start the game, calling Start on every startable actor and binding the player-controllers
      */
-    void Start();
+    void BeginPlay();
+
+    /**
+     * @brief End the game, calling EndPlay on every actor and dropping the input bindings made by BeginPlay
+     */
+    void EndPlay();
+
+    /**
+     * @brief Freeze or resume a running world, actors stop ticking without losing the state they built up
+     *
+     * @param bPaused True to freeze the world, false to resume it
+     */
+    void SetPaused(bool bPaused);
 
      /**
       * @brief Ticks all actors in the world, should be called once per frame
@@ -251,9 +275,42 @@ public:
         return ActiveCamera;
     }
 
+    /**
+     * @return Returns the current run-state of the world
+     */
+    EWorldRunState GetRunState() const
+    {
+        return RunState;
+    }
+
+    /**
+     * @return Returns true while the world is running and advancing
+     */
+    bool IsPlaying() const
+    {
+        return RunState == EWorldRunState::Playing;
+    }
+
+    /**
+     * @return Returns true while the world is being authored rather than run
+     */
+    bool IsEditing() const
+    {
+        return RunState == EWorldRunState::Editing;
+    }
+
+    /**
+     * @return Returns true while the world is running but frozen
+     */
+    bool IsPaused() const
+    {
+        return RunState == EWorldRunState::Paused;
+    }
+
 private:
     IScene*                    Scene;
     FCameraComponent*          ActiveCamera;
+    EWorldRunState             RunState;
     TArray<FActor*>            Actors;
 #if EDITOR_BUILD
     TArray<FActorFilter*>      ActorFilters;

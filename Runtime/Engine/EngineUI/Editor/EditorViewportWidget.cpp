@@ -92,8 +92,48 @@ void FEditorViewportWidget::Draw()
 {
     PendingCameraInput = FEditorCameraInputState();
 
+    HandlePlayShortcuts();
     DrawViewportWindow();
     UpdateCamera(ImGui::GetIO().DeltaTime);
+}
+
+void FEditorViewportWidget::HandlePlayShortcuts()
+{
+    if (!EditorEngine || ImGui::GetIO().WantTextInput)
+    {
+        return;
+    }
+
+#if PLATFORM_MACOS
+    constexpr ImGuiKeyChord PlayChord = ImGuiMod_Super | ImGuiKey_P;
+#else
+    constexpr ImGuiKeyChord PlayChord = ImGuiMod_Ctrl | ImGuiKey_P;
+#endif
+
+    if (ImGui::IsKeyChordPressed(PlayChord, ImGuiInputFlags_RouteGlobal))
+    {
+        TogglePlay();
+    }
+}
+
+void FEditorViewportWidget::TogglePlay()
+{
+    if (!EditorEngine)
+    {
+        return;
+    }
+
+    if (EditorEngine->IsEditing())
+    {
+        // Two owners of relative mouse mode would fight over it, and the editor's would win the restore on release
+        EndMouseLook();
+
+        EditorEngine->StartPlay();
+    }
+    else
+    {
+        EditorEngine->StopPlay();
+    }
 }
 
 void FEditorViewportWidget::DrawViewportWindow()
@@ -396,11 +436,23 @@ void FEditorViewportWidget::DrawViewportWindow()
                 const float  PlacementButtonWidth   = 56.0f;
                 const float  OrientationButtonWidth = 52.0f;
                 const float  CameraButtonWidth      = 118.0f;
+                const float  PlayButtonWidth        = 52.0f;
+                const float  PauseButtonWidth       = 56.0f;
                 const float  ToolbarControlGap      = 8.0f;
                 const float  LeftPadding            = 12.0f;
                 const float  ViewModeCursorX        = ContentMin.x + Math::Max(0.0f, ContentWidth - ButtonWidth - RightPadding);
                 const float  CameraCursorX          = ViewModeCursorX - ToolbarControlGap - CameraButtonWidth;
                 const float  CursorY                = ContentMin.y + 6.0f;
+
+                const float  GizmoGroupWidth = LeftPadding + TranslationButtonWidth + RotateButtonWidth + ScaleButtonWidth
+                    + ToolbarControlGap + (PlacementButtonWidth * 2.0f)
+                    + ToolbarControlGap + (OrientationButtonWidth * 2.0f);
+
+                const float  TransportWidth   = PlayButtonWidth + PauseButtonWidth;
+                const float  TransportMinX    = ContentMin.x + GizmoGroupWidth + ToolbarControlGap;
+                const float  TransportMaxX    = CameraCursorX - ToolbarControlGap - TransportWidth;
+                const float  TransportCursorX = Math::Clamp(ContentMin.x + (ContentWidth - TransportWidth) * 0.5f, TransportMinX, TransportMaxX);
+                const bool   bTransportFits   = TransportMinX <= TransportMaxX;
 
                 ImGui::SetCursorScreenPos(ImVec2(ChildPos.x + ContentMin.x + LeftPadding, ChildPos.y + CursorY));
 
@@ -489,7 +541,9 @@ void FEditorViewportWidget::DrawViewportWindow()
                     }
 
                     ImDrawList* DrawList = ImGui::GetWindowDrawList();
-                    DrawList->AddRectFilled(Min, Max, Bg, 6.0f, Corners);
+
+                    // Routed through GetColorU32 so the button fades along with its label while it is disabled
+                    DrawList->AddRectFilled(Min, Max, ImGui::GetColorU32(Bg), 6.0f, Corners);
 
                     const ImVec2 TextSize = ImGui::CalcTextSize(Label);
                     const ImVec2 TextPos  = ImVec2(Min.x + (Width - TextSize.x) * 0.5f, Min.y + (ButtonHeight - TextSize.y) * 0.5f);
@@ -538,6 +592,37 @@ void FEditorViewportWidget::DrawViewportWindow()
                 if (DrawGizmoToggle("##GizmoOrientationWorld", "World", GizmoOrientation == EditorGuizmo::EMode::World, OrientationButtonWidth, ImDrawFlags_RoundCornersRight))
                 {
                     GizmoOrientation = EditorGuizmo::EMode::World;
+                }
+
+                const bool bIsPlaying = EditorEngine && !EditorEngine->IsEditing();
+                const bool bIsPaused  = EditorEngine && EditorEngine->IsPaused();
+
+                if (bTransportFits)
+                {
+                    ImGui::SetCursorScreenPos(ImVec2(ChildPos.x + TransportCursorX, ChildPos.y + CursorY));
+
+                    if (DrawGizmoToggle("##PlayToggle", bIsPlaying ? "Stop" : "Play", bIsPlaying, PlayButtonWidth, ImDrawFlags_RoundCornersLeft) && EditorEngine)
+                    {
+                        TogglePlay();
+                    }
+
+                    ImGui::SameLine(0.0f, 0.0f);
+
+                    // There is nothing to pause until the game is running
+                    if (!bIsPlaying)
+                    {
+                        ImGui::BeginDisabled();
+                    }
+
+                    if (DrawGizmoToggle("##PauseToggle", "Pause", bIsPaused, PauseButtonWidth, ImDrawFlags_RoundCornersRight) && bIsPlaying)
+                    {
+                        EditorEngine->TogglePause();
+                    }
+
+                    if (!bIsPlaying)
+                    {
+                        ImGui::EndDisabled();
+                    }
                 }
 
                 ImGui::SetCursorScreenPos(ImVec2(ChildPos.x + CameraCursorX, ChildPos.y + CursorY));
@@ -909,6 +994,33 @@ void FEditorViewportWidget::DrawViewportWindow()
         }
 
         // ---------------------------------------------------------------------
+        // Run-mode
+        // ---------------------------------------------------------------------
+
+        const bool bPlayModeActive = EditorEngine && !EditorEngine->IsEditing();
+
+        // Esc hands the mouse back so the panels can be reached again, clicking the viewport takes it back.
+        // ImGui is asked about the key and the click here rather than the viewport handling them itself, because
+        // while passthrough is off the editor's input never reaches FSceneViewport.
+        if (bPlayModeActive)
+        {
+            if (const TSharedPtr<FSceneViewport> SceneViewport = EditorEngine->GetSceneViewport())
+            {
+                if (SceneViewport->IsMouseCaptured())
+                {
+                    if (ImGui::IsKeyPressed(ImGuiKey_Escape, false))
+                    {
+                        SceneViewport->ReleaseMouse();
+                    }
+                }
+                else if (bAnyItemClick)
+                {
+                    SceneViewport->CaptureMouse();
+                }
+            }
+        }
+
+        // ---------------------------------------------------------------------
         // Editor picking (ObjectID readback request) 
         // --------------------------------------------------------------------- 
  
@@ -942,6 +1054,7 @@ void FEditorViewportWidget::DrawViewportWindow()
             bViewportInputActive &&
             !bBlockPickForGizmo &&
             !bContextMenuOpen &&
+            !bPlayModeActive &&
             (bViewportImageHovered || bViewportImageActive || bMouseLookActive);
 
         if (bCanControlEditorCamera)
@@ -1055,6 +1168,7 @@ void FEditorViewportWidget::DrawViewportWindow()
         const bool bBlockPickForCamera =
             bMouseLookActive ||
              bContextMenuOpen ||
+             bPlayModeActive ||
              PendingCameraInput.bAltDown ||
              PendingCameraInput.bCmdDown ||
              PendingCameraInput.bMiddleMouseDown;
@@ -1242,12 +1356,18 @@ void FEditorViewportWidget::DrawViewportWindow()
         // Active border
         // ---------------------------------------------------------------------
         
-        if (bViewportInputActive)
+        if (bViewportInputActive || bPlayModeActive)
         {
             ImDrawList* DrawList = ImGui::GetWindowDrawList();
 
-            const ImU32 BorderColorU32  = IM_COL32(9, 92, 176, 255);
-            const float BorderThickness = 2.0f;
+            // A running world gets its own colour, so it is obvious at a glance that the view belongs to the game
+            ImU32 BorderColorU32 = IM_COL32(9, 92, 176, 255);
+            if (bPlayModeActive)
+            {
+                BorderColorU32 = EditorEngine->IsPaused() ? IM_COL32(214, 154, 32, 255) : IM_COL32(46, 168, 76, 255);
+            }
+
+            const float BorderThickness = bPlayModeActive ? 3.0f : 2.0f;
 
             const ImVec2 BorderMin = ImVec2(ContentPos.x + 0.5f, ContentPos.y + 0.5f);
             const ImVec2 BorderMax = ImVec2(ContentPos.x + ContentSize.x - 0.5f, ContentPos.y + ContentSize.y - 0.5f);
@@ -1334,7 +1454,14 @@ void FEditorViewportWidget::UpdateCamera(float DeltaTime)
     if (CameraController)
     {
         CameraController->UpdateProjection(CachedViewportSize);
-        CameraController->Tick(DeltaTime, PendingCameraInput, EditorEngine ? EditorEngine->GetSelectedActor() : nullptr);
+
+        // While playing the viewport belongs to the game, so the editor camera stops taking input. Feeding it an
+        // empty state rather than skipping the tick lets it damp to a stop instead of freezing mid-glide.
+        const FEditorCameraInputState CameraInput = (EditorEngine && !EditorEngine->IsEditing())
+            ? FEditorCameraInputState()
+            : PendingCameraInput;
+
+        CameraController->Tick(DeltaTime, CameraInput, EditorEngine ? EditorEngine->GetSelectedActor() : nullptr);
 
         if (CameraController->ConsumeMoveSpeedChanged())
         {

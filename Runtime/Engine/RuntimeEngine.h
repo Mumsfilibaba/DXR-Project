@@ -11,6 +11,7 @@ public:
 
     // FEngine Interface
     virtual bool Init() override final;
+    virtual bool Start() override final;
     virtual void Release() override final;
 
     virtual FSceneRenderPacket BuildRenderPacket() override final;

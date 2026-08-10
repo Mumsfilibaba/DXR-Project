@@ -315,16 +315,51 @@ bool FEngine::Init()
 
 bool FEngine::Start()
 {
-    if (World)
-    {
-        World->Start();
-    }
-    else
+    if (!World)
     {
         DEBUG_BREAK();
+        return false;
     }
 
     return true;
+}
+
+bool FEngine::StartPlay()
+{
+    if (!World || !World->IsEditing())
+    {
+        return false;
+    }
+
+    World->BeginPlay();
+
+    if (SceneViewport)
+    {
+        SceneViewport->CaptureMouse();
+    }
+
+    return true;
+}
+
+void FEngine::StopPlay()
+{
+    if (SceneViewport)
+    {
+        SceneViewport->ReleaseMouse();
+    }
+
+    if (World)
+    {
+        World->EndPlay();
+    }
+}
+
+void FEngine::TogglePause()
+{
+    if (World && !World->IsEditing())
+    {
+        World->SetPaused(!World->IsPaused());
+    }
 }
 
 void FEngine::Tick(float DeltaTime)
@@ -336,7 +371,11 @@ void FEngine::Tick(float DeltaTime)
         SceneViewport->Tick();
     }
 
-    GameModule->Tick(DeltaTime);
+    // The game module is game code, so it is held back until the world is actually running
+    if (IsPlaying())
+    {
+        GameModule->Tick(DeltaTime);
+    }
 
     if (World)
     {

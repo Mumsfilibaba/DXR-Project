@@ -95,6 +95,7 @@ FActor::FActor(const FObjectInitializer& ObjectInitializer)
     , CachedParentVersion(0)
     , bIsStartable(true)
     , bIsTickable(true)
+    , bTickInEditor(false)
 {
 }
 
@@ -120,6 +121,14 @@ void FActor::Start()
         {
             Component->Start();
         }
+    }
+}
+
+void FActor::EndPlay()
+{
+    for (FActorComponent* Component : Components)
+    {
+        Component->EndPlay();
     }
 }
 

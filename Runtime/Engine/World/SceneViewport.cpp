@@ -4,23 +4,38 @@
 #include "Engine/World/Actors/PlayerInput.h"
 #include "Engine/World/Components/CameraComponent.h"
 #include "Engine/World/SceneViewport.h"
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "RHI/RHI.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+static void SetImGuiInputPassthrough(bool bEnabled)
+{
+    if (IImguiPlugin::IsEnabled())
+    {
+        IImguiPlugin::Get().SetInputPassthroughEnabled(bEnabled);
+    }
+}
 
 FSceneViewport::FSceneViewport(const TWeakPtr<FViewportWidget>& InViewport)
     : IViewport()
     , World(nullptr)
     , Viewport(InViewport)
     , RHISwapChain(nullptr)
-    , bPlayerInputEnabled(true)
     , HighPrecisionMouseDelta()
+    , MouseRestorePosition()
+    , bPlayerInputEnabled(true)
+    , bMouseCaptured(false)
+    , bCursorWasVisible(true)
 {
 }
 
 FSceneViewport::~FSceneViewport()
 {
     CHECK(RHISwapChain == nullptr);
+
+    // Going away mid-run would otherwise leave the cursor hidden and confined
+    ReleaseMouse();
 
     Viewport = nullptr;
     World    = nullptr;
@@ -86,6 +101,94 @@ void FSceneViewport::Tick()
             Camera->UpdateProjectionMatrix(static_cast<float>(ViewportArea.Width), static_cast<float>(ViewportArea.Height));
         }
     }
+
+    if (bMouseCaptured)
+    {
+        FApplication::Get().ConfineCursorToRect(GetCaptureWindow(), GetCaptureRect());
+    }
+}
+
+bool FSceneViewport::CaptureMouse()
+{
+    const TSharedPtr<FWindowWidget> Window = GetCaptureWindow();
+    if (bMouseCaptured || !Window)
+    {
+        return false;
+    }
+
+    FApplication& Application = FApplication::Get();
+    bCursorWasVisible    = Application.IsCursorVisible();
+    MouseRestorePosition = Application.GetCursorPosition();
+
+    if (!Application.SetHighPrecisionMouseMode(Window, EHighPrecisionMouseMode::Enabled))
+    {
+        return false;
+    }
+
+    const FRectangle CaptureRect = GetCaptureRect();
+
+    Application.ShowCursor(false);
+    Application.ConfineCursorToRect(Window, CaptureRect);
+    Application.SetCursorPosition(IntVector2(CaptureRect.Position.X + (CaptureRect.Width / 2), CaptureRect.Position.Y + (CaptureRect.Height / 2)));
+
+    SetImGuiInputPassthrough(true);
+
+    bMouseCaptured = true;
+    return true;
+}
+
+void FSceneViewport::ReleaseMouse()
+{
+    if (!bMouseCaptured)
+    {
+        return;
+    }
+
+    bMouseCaptured = false;
+
+    SetImGuiInputPassthrough(false);
+
+    if (FApplication::IsInitialized())
+    {
+        FApplication& Application = FApplication::Get();
+        Application.ReleaseCursorConfinement();
+        Application.SetHighPrecisionMouseMode(GetCaptureWindow(), EHighPrecisionMouseMode::Disabled);
+        Application.SetCursorPosition(MouseRestorePosition);
+        Application.ShowCursor(bCursorWasVisible);
+    }
+}
+
+TSharedPtr<FWindowWidget> FSceneViewport::GetCaptureWindow() const
+{
+    if (!FApplication::IsInitialized() || !Viewport.IsValid())
+    {
+        return nullptr;
+    }
+
+    return FApplication::Get().FindWindowWidget(TSharedPtr<FViewportWidget>(Viewport));
+}
+
+FRectangle FSceneViewport::GetCaptureRect() const
+{
+    if (Viewport.IsValid())
+    {
+        const FRectangle& ViewportArea = Viewport->GetContentRectangle();
+        if (ViewportArea.Width > 0 && ViewportArea.Height > 0)
+        {
+            return ViewportArea;
+        }
+    }
+
+    FRectangle WindowRect;
+    if (const TSharedPtr<FWindowWidget> Window = GetCaptureWindow())
+    {
+        const IntVector2 WindowSize = Window->GetSize();
+        WindowRect.Position = Window->GetPosition();
+        WindowRect.Width    = WindowSize.X;
+        WindowRect.Height   = WindowSize.Y;
+    }
+
+    return WindowRect;
 }
 
 void FSceneViewport::SetPlayerInputEnabled(bool bEnabled)
@@ -135,6 +238,12 @@ FEventResponse FSceneViewport::OnKeyDown(const FKeyEvent& KeyEvent)
     if (!bPlayerInputEnabled)
     {
         return FEventResponse::Unhandled();
+    }
+
+    if (bMouseCaptured && KeyEvent.GetKey() == Keys::Escape)
+    {
+        ReleaseMouse();
+        return FEventResponse::Handled();
     }
 
     if (FPlayerController* PlayerController = GetFirstPlayerController())
@@ -189,6 +298,11 @@ FEventResponse FSceneViewport::OnMouseButtonDown(const FCursorEvent& CursorEvent
     if (!bPlayerInputEnabled)
     {
         return FEventResponse::Unhandled();
+    }
+
+    if (!bMouseCaptured)
+    {
+        CaptureMouse();
     }
 
     if (FPlayerController* PlayerController = GetFirstPlayerController())
@@ -264,12 +378,20 @@ FEventResponse FSceneViewport::OnMouseEntered(const FCursorEvent& CursorEvent)
 
 FEventResponse FSceneViewport::OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent)
 {
+    const IntVector2 Delta = CursorEvent.GetCursorPos();
+
     if (!bPlayerInputEnabled)
     {
-        const IntVector2 Delta = CursorEvent.GetCursorPos();
         HighPrecisionMouseDelta.X += Delta.X;
         HighPrecisionMouseDelta.Y += Delta.Y;
         
+        return FEventResponse::Handled();
+    }
+
+    if (FPlayerController* PlayerController = GetFirstPlayerController())
+    {
+        // NOTE: Just send to the first player-controller for now
+        PlayerController->GetPlayerInput()->OnHighPrecisionMouseInput(Delta);
         return FEventResponse::Handled();
     }
 
@@ -278,6 +400,8 @@ FEventResponse FSceneViewport::OnHighPrecisionMouseInput(const FCursorEvent& Cur
 
 FEventResponse FSceneViewport::OnFocusLost()
 {
+    ReleaseMouse();
+
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
         PlayerController->GetPlayerInput()->ClearInputStates();

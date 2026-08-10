@@ -152,8 +152,8 @@ FInputDevice* FWindowsApplication::GetInputDevice()
 
 bool FWindowsApplication::SupportsHighPrecisionMouse() const
 {
-    // By default, no high precision mouse is supported
-    return false;
+    // SetHighPrecisionMouseMode registers for WM_INPUT, which is what feeds OnHighPrecisionMouseInput
+    return true;
 }
 
 bool FWindowsApplication::SetHighPrecisionMouseMode(const TSharedRef<FGenericWindow>& Window, EHighPrecisionMouseMode Mode)
@@ -171,6 +171,28 @@ bool FWindowsApplication::SetHighPrecisionMouseMode(const TSharedRef<FGenericWin
     }
 
     return false;
+}
+
+bool FWindowsApplication::ConfineCursorToRect(const TSharedRef<FGenericWindow>& Window, const IntVector2& Position, const IntVector2& Size)
+{
+    TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
+    if (!WindowsWindow || !WindowsWindow->IsValid() || Size.X <= 0 || Size.Y <= 0)
+    {
+        return false;
+    }
+
+    RECT ClipRect;
+    ClipRect.left   = Position.X;
+    ClipRect.top    = Position.Y;
+    ClipRect.right  = Position.X + Size.X;
+    ClipRect.bottom = Position.Y + Size.Y;
+
+    return !!::ClipCursor(&ClipRect);
+}
+
+void FWindowsApplication::ReleaseCursorConfinement()
+{
+    ::ClipCursor(nullptr);
 }
 
 FModifierKeyState FWindowsApplication::GetModifierKeyState() const

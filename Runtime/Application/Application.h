@@ -151,6 +151,22 @@ public:
     bool SetHighPrecisionMouseMode(const TSharedPtr<FWindowWidget>& Window, EHighPrecisionMouseMode Mode);
 
     /**
+     * @brief Keeps the cursor inside a region of the screen until the confinement is released. 
+     * High-precision mode reports movement but leaves the pointer free to wander off the window,
+     * so confining it is a separate request.
+     *
+     * @param Window The window the region belongs to.
+     * @param ScreenRect The region to confine the cursor to, in absolute screen coordinates.
+     * @return True if the cursor was confined, otherwise false.
+     */
+    bool ConfineCursorToRect(const TSharedPtr<FWindowWidget>& Window, const FRectangle& ScreenRect);
+
+    /**
+     * @brief Lets the cursor leave the region set by ConfineCursorToRect.
+     */
+    void ReleaseCursorConfinement();
+
+    /**
      * @brief Retrieves the current modifier key state (e.g., whether Ctrl, Alt, or Shift are pressed).
      * 
      * @return A struct that contains the current state of modifier keys.

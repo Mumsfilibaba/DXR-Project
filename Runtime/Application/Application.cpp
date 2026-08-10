@@ -979,6 +979,22 @@ bool FApplication::SetHighPrecisionMouseMode(const TSharedPtr<FWindowWidget>& Wi
     return PlatformApplication->SetHighPrecisionMouseMode(PlatformWindow, Mode);
 }
 
+bool FApplication::ConfineCursorToRect(const TSharedPtr<FWindowWidget>& Window, const FRectangle& ScreenRect)
+{
+    TSharedRef<FGenericWindow> PlatformWindow = Window ? Window->GetPlatformWindow() : nullptr;
+    if (!PlatformWindow || ScreenRect.Width <= 0 || ScreenRect.Height <= 0)
+    {
+        return false;
+    }
+
+    return PlatformApplication->ConfineCursorToRect(PlatformWindow, ScreenRect.Position, IntVector2(ScreenRect.Width, ScreenRect.Height));
+}
+
+void FApplication::ReleaseCursorConfinement()
+{
+    PlatformApplication->ReleaseCursorConfinement();
+}
+
 FModifierKeyState FApplication::GetModifierKeyState() const
 {
     return PlatformApplication->GetModifierKeyState();

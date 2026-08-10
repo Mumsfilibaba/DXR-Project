@@ -1,3 +1,4 @@
+#include "Core/Math/Math.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Mac/MacThreadManager.h"
 #include "Core/Platform/PlatformThreadMisc.h"
@@ -255,7 +256,10 @@ FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
     , CurrentModifierFlags(0)
     , LastPressedButton(EMouseButtonName::Unknown)
     , HighPrecisionMouseRemainder()
+    , CursorConfinementPosition()
+    , CursorConfinementSize()
     , bHighPrecisionMouseEnabled(false)
+    , bCursorConfined(false)
     , MacCursor(InCursor)
     , InputDevice(FGCInputDevice::CreateGCInputDevice())
     , ScreenCache()
@@ -444,6 +448,8 @@ void FMacApplication::Tick(float)
             }
         }, NSDefaultRunLoopMode, true);
     }
+
+    ClampCursorToConfinement();
 }
 
 void FMacApplication::ProcessEvents()
@@ -512,6 +518,45 @@ bool FMacApplication::SetHighPrecisionMouseMode(const TSharedRef<FGenericWindow>
 
     bHighPrecisionMouseEnabled = bEnable;
     return true;
+}
+
+bool FMacApplication::ConfineCursorToRect(const TSharedRef<FGenericWindow>&, const IntVector2& Position, const IntVector2& Size)
+{
+    if (!MacCursor || Size.X <= 0 || Size.Y <= 0)
+    {
+        return false;
+    }
+
+    CursorConfinementPosition = Position;
+    CursorConfinementSize     = Size;
+    bCursorConfined           = true;
+
+    ClampCursorToConfinement();
+    return true;
+}
+
+void FMacApplication::ReleaseCursorConfinement()
+{
+    bCursorConfined           = false;
+    CursorConfinementPosition = IntVector2();
+    CursorConfinementSize     = IntVector2();
+}
+
+void FMacApplication::ClampCursorToConfinement()
+{
+    if (!bCursorConfined || !MacCursor)
+    {
+        return;
+    }
+
+    const IntVector2 CursorPosition = MacCursor->GetPosition();
+    const int32      ClampedX       = Math::Clamp(CursorPosition.X, CursorConfinementPosition.X, CursorConfinementPosition.X + CursorConfinementSize.X - 1);
+    const int32      ClampedY       = Math::Clamp(CursorPosition.Y, CursorConfinementPosition.Y, CursorConfinementPosition.Y + CursorConfinementSize.Y - 1);
+
+    if (ClampedX != CursorPosition.X || ClampedY != CursorPosition.Y)
+    {
+        MacCursor->SetPosition(ClampedX, ClampedY);
+    }
 }
 
 FModifierKeyState FMacApplication::GetModifierKeyState() const

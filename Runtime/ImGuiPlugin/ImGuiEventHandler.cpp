@@ -8,6 +8,11 @@
 #define IMGUI_BUTTON_THUMB1 (3)
 #define IMGUI_BUTTON_THUMB2 (4)
 
+static bool IsInputPassthroughEnabled()
+{
+    return GImGuiPlugin && GImGuiPlugin->IsInputPassthroughEnabled();
+}
+
 static ImGuiMouseButton GImGuiMouseButtons[EMouseButtonName::Count] = 
 {
     /* EMouseButtonName::Unknown */ IMGUI_BUTTON_UNKNOWN,
@@ -250,8 +255,7 @@ bool FImGuiEventHandler::ProcessKeyEvent(const FKeyEvent& KeyEvent)
         if (TranslatedKey != ImGuiKey_GraveAccent && TranslatedKey != ImGuiKey_None)
         {
             UIState.AddKeyEvent(TranslatedKey, KeyEvent.IsDown());
-
-            if (UIState.WantCaptureKeyboard)
+            if (UIState.WantCaptureKeyboard && !IsInputPassthroughEnabled())
             {
                 return true;
             }
@@ -271,15 +275,7 @@ bool FImGuiEventHandler::ProcessMouseButtonEvent(const FCursorEvent& CursorEvent
 
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.AddMouseButtonEvent(ButtonIndex, CursorEvent.IsDown());
-
-    if (UIState.WantCaptureMouse)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return UIState.WantCaptureMouse && !IsInputPassthroughEnabled();
 }
 
 bool FImGuiEventHandler::OnKeyChar(const FKeyEvent& KeyTypedEvent)

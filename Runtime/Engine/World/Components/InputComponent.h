@@ -76,6 +76,12 @@ public:
         return BindAxis(InName, NewDelegate);
     }
 
+    void ClearBindings()
+    {
+        AxisBindings.Clear();
+        ActionBindings.Clear();
+    }
+
     TArray<FAxisInputBinding>   AxisBindings;
     TArray<FActionInputBinding> ActionBindings;
 };

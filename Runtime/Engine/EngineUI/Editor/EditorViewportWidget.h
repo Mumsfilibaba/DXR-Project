@@ -94,6 +94,8 @@ private:
     void UpdateCamera(float DeltaTime);
     void EndMouseLook();
     void DrawContextMenu();
+    void HandlePlayShortcuts();
+    void TogglePlay();
 
     bool ComputeViewportPixel(const ImVec2& ImageMin, const ImVec2& ImageSize, uint32& OutPixelX, uint32& OutPixelY) const;
     bool ComputeFallbackPlacement(const Vector2& Ndc, Vector3& OutLocation) const;

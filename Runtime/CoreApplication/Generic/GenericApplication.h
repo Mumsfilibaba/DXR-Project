@@ -247,10 +247,8 @@ public:
     virtual ~FGenericApplication() = default;
 
     /**
-     * @brief Creates an interface for a generic window. 
-     * 
-     * The returned window is not fully initialized; call FGenericWindow::Initialize() to complete setup.
-     * By default, returns nullptr. Platform-specific implementations should override this to create a real window.
+     * @brief Creates an interface for a generic window. The returned window is not fully initialized.
+     * Call FGenericWindow::Initialize() to complete setup.
      * 
      * @return A shared reference to the created FGenericWindow, or nullptr if not supported.
      */
@@ -260,35 +258,27 @@ public:
      * @brief Processes platform messages and any deferred actions for the application.
      * 
      * @param Delta The time elapsed since the last tick (in seconds).
-     * By default, does nothing; platform-specific code should override for per-frame updates.
      */
     virtual void Tick(float Delta) { }
 
     /**
      * @brief Processes immediate platform events or messages that might have been received.
-     *
-     * By default, does nothing; override in derived classes to handle OS-specific event loops or message pumps.
      */
     virtual void ProcessEvents() { };
 
     /**
      * @brief Processes any deferred events that were queued for delayed handling.
-     *
-     * By default, does nothing; platform-specific code should override if relevant to your message/event model.
      */
     virtual void ProcessDeferredEvents() { }
 
     /**
      * @brief Updates the state of input devices (keyboard, mouse, gamepad, etc.).
-     * 
-     * By default, does nothing. Platform-specific implementations should override for actual device updates.
      */
     virtual void UpdateInputDevices() { }
 
     /**
      * @brief Retrieves an input device interface (e.g., gamepad or specialized input device).
      * 
-     * By default, returns nullptr. Override in platform-specific classes that manage input devices.
      * @return A pointer to the input device or nullptr if none exists.
      */
     virtual FInputDevice* GetInputDevice() { return nullptr; }
@@ -296,7 +286,6 @@ public:
     /**
      * @brief Checks if high-precision (raw) mouse events are supported by this platform.
      *
-     * By default, returns false. For Windows, this corresponds to raw input. macOS does not currently support it.
      * @return True if high-precision mouse events are supported, otherwise false.
      */
     virtual bool SupportsHighPrecisionMouse() const { return false; }
@@ -304,7 +293,6 @@ public:
     /**
      * @brief Enables or disables high-precision (relative) mouse events.
      * 
-     * By default, returns true but does nothing. Override in platform-specific classes to enable raw input or equivalent.
      * @param Window The window that should receive high-precision mouse input. Only used when enabling.
      * @param Mode Whether to enter or leave high-precision mode.
      * @return True if the mode was applied, false if not supported.
@@ -312,10 +300,25 @@ public:
     virtual bool SetHighPrecisionMouseMode(const TSharedRef<FGenericWindow>& Window, EHighPrecisionMouseMode Mode) { return true; }
 
     /**
+     * @brief Keeps the cursor inside a region of the screen until the confinement is released. 
+     * High-precision mode reports movement but leaves the pointer free to wander off the window,
+     * so a game that wants the pointer to stay put has to ask for it separately.
+     * 
+     * @param Window The window the region belongs to.
+     * @param Position Top-left corner of the region, in absolute screen coordinates.
+     * @param Size Width and height of the region, in pixels.
+     * @return True if the cursor was confined, false if not supported.
+     */
+    virtual bool ConfineCursorToRect(const TSharedRef<FGenericWindow>& Window, const IntVector2& Position, const IntVector2& Size) { return false; }
+
+    /**
+     * @brief Lets the cursor leave the region set by ConfineCursorToRect.
+     */
+    virtual void ReleaseCursorConfinement() { }
+
+    /**
      * @brief Retrieves the current state of modifier keys (Shift, Ctrl, Alt, etc.).
      * 
-     * By default, returns a default-constructed FModifierKeyState (no keys pressed).
-     * Override in platform-specific classes to provide accurate key state information.
      * @return The current modifier key state.
      */
     virtual FModifierKeyState GetModifierKeyState() const { return FModifierKeyState(); }
@@ -323,15 +326,13 @@ public:
     /**
      * @brief Sets a new active window.
      * 
-     * By default, this method does nothing; platform-specific applications should override it to implement actual behavior.
      * @param Window The window to set as active.
      */
     virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) { }
 
     /**
-     * @brief Sets the window that should have mouse capture.
+     * @brief Sets the window that should have mouse capture. This method is mainly relevant on Windows platforms.
      *
-     * This method is mainly relevant on Windows platforms. By default, does nothing; override for actual capture logic.
      * @param Window The window to capture the mouse.
      */
     virtual void SetCapture(const TSharedRef<FGenericWindow>& Window) { }
@@ -339,7 +340,6 @@ public:
     /**
      * @brief Retrieves the window currently under the mouse cursor.
      * 
-     * By default, returns nullptr. Override to return an appropriate window reference on supported platforms.
      * @return A shared reference to the window under the mouse cursor or nullptr if not supported.
      */
     virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const { return nullptr; }
@@ -347,7 +347,6 @@ public:
     /**
      * @brief Retrieves the current active (focused) window.
      * 
-     * By default, returns nullptr. Platform implementations should override to return the window with focus.
      * @return A shared reference to the active window or nullptr if none.
      */
     virtual TSharedRef<FGenericWindow> GetActiveWindow() const { return nullptr; }
@@ -355,7 +354,6 @@ public:
     /**
      * @brief Retrieves the window that currently has mouse capture.
      * 
-     * By default, returns nullptr. Override to return the actual captured window on supported platforms.
      * @return A shared reference to the captured window or nullptr if none.
      */
     virtual TSharedRef<FGenericWindow> GetCapture() const { return nullptr; }
@@ -363,16 +361,14 @@ public:
     /**
      * @brief Gathers information on monitors connected to the system.
      * 
-     * By default, does nothing. Platform-specific implementations should populate OutMonitorInfo 
-     * with details of each connected monitor (resolution, DPI, primary status, etc.).
      * @param OutMonitorInfo An array to receive the monitor information.
      */
     virtual void QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) const { }
 
     /**
-     * @brief Sets the message handler for this application.
+     * @brief Sets the message handler for this application. The message handler is responsible for
+     * processing platform messages (keyboard/mouse events).
      * 
-     * The message handler is responsible for processing platform messages (keyboard/mouse events).
      * @param InMessageHandler The message handler to use.
      */
     virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)

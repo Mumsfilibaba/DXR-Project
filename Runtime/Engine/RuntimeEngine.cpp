@@ -2,6 +2,7 @@
 #include "Engine/EngineUI/Runtime/RuntimeConsoleWidget.h"
 #include "Engine/EngineUI/Editor/EditorFrameProfilerWidget.h"
 #include "Engine/World/Components/CameraComponent.h"
+#include "ImGuiPlugin/ImGuiCore.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
 
 FRuntimeEngine::FRuntimeEngine()
@@ -39,8 +40,20 @@ bool FRuntimeEngine::Init()
     return true;
 }
 
+bool FRuntimeEngine::Start()
+{
+    if (!FEngine::Start())
+    {
+        return false;
+    }
+
+    return StartPlay();
+}
+
 void FRuntimeEngine::Release()
 {
+    StopPlay();
+
     if (IImguiPlugin::IsEnabled())
     {
         ProfilerWidget.Reset();

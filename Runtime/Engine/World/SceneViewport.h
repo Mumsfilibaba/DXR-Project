@@ -3,6 +3,8 @@
 #include "Application/Widgets/ViewportWidget.h"
 #include "Engine/World/World.h"
 
+class FWindowWidget;
+
 class ENGINE_API FSceneViewport : public IViewport
 {
 public:
@@ -26,8 +28,6 @@ public:
      * to know about the current size of the viewport. For example update the camera-projection.
      */
     void Tick();
-
-public:
 
     // IViewport Interface
     virtual FEventResponse OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent) override;
@@ -65,10 +65,17 @@ public:
         return Viewport.IsValid() ? TSharedPtr<const FViewportWidget>(Viewport) : nullptr;
     }
 
-public:
     void SetPlayerInputEnabled(bool bEnabled);
     IntVector2 ConsumeHighPrecisionMouseDelta();
-    
+
+    bool CaptureMouse();
+    void ReleaseMouse();
+
+    bool IsMouseCaptured() const
+    {
+        return bMouseCaptured;
+    }
+
     bool IsPlayerInputEnabled() const
     {
         return bPlayerInputEnabled;
@@ -90,9 +97,15 @@ public:
     }
 
 private:
+    TSharedPtr<FWindowWidget> GetCaptureWindow() const;
+    FRectangle                GetCaptureRect() const;
+
     FWorld*                   World;
     TWeakPtr<FViewportWidget> Viewport;
     FRHISwapChainRef          RHISwapChain;
-    bool                      bPlayerInputEnabled;
     IntVector2                HighPrecisionMouseDelta;
+    IntVector2                MouseRestorePosition;
+    bool                      bPlayerInputEnabled;
+    bool                      bMouseCaptured;
+    bool                      bCursorWasVisible;
 };

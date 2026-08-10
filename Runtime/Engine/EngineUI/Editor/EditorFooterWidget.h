@@ -30,6 +30,9 @@ public:
 private:
     void ApplyCandidateToBuffer(int32 CandidateIndex);
 
+    // Marks the footer while the world is running, so it is clear even when the viewport is not on screen
+    void DrawRunStateLabel();
+
     // Helper that can invalidate the candidate-list
     void InvalidateCandidates();
 
