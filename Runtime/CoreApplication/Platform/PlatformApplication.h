@@ -7,6 +7,6 @@
     #include "CoreApplication/Mac/MacApplication.h"
     typedef FMacApplication FPlatformApplication;
 #else
-    #include "CoreApplication/Generic/GenericApplication.h"
-    typedef FGenericApplication FPlatformApplication;
+    #include "CoreApplication/PlatformInterface/IPlatformApplication.h"
+    typedef IPlatformApplication FPlatformApplication;
 #endif

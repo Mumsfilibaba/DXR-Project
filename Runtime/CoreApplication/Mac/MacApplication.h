@@ -7,8 +7,8 @@
 #include "CoreApplication/Mac/MacCursor.h"
 #include "CoreApplication/Mac/MacWindow.h"
 #include "CoreApplication/Mac/GCInputDevice.h"
-#include "CoreApplication/Generic/InputCodes.h"
-#include "CoreApplication/Generic/GenericApplication.h"
+#include "CoreApplication/PlatformInterface/InputCodes.h"
+#include "CoreApplication/PlatformInterface/IPlatformApplication.h"
 #include <AppKit/AppKit.h>
 
 @class FCocoaWindow;
@@ -96,7 +96,6 @@ struct FDeferredMacEvent
         , bHasPreciseScrollingDeltas(Other.bHasPreciseScrollingDeltas)
         , bIsRepeat(Other.bIsRepeat)
     {
-        // Ownership of the retains transfers here, so the source must not release them
         Other.NotificationName = nullptr;
         Other.Event            = nullptr;
         Other.CocoaWindow      = nullptr;
@@ -166,7 +165,6 @@ struct FDeferredMacEvent
             Event            = Other.Event;
             CocoaWindow      = Other.CocoaWindow;
 
-            // Ownership of the retains transfers here, so the source must not release them
             Other.NotificationName = nullptr;
             Other.Event            = nullptr;
             Other.CocoaWindow      = nullptr;
@@ -267,10 +265,10 @@ struct FMacScreenInfo
     bool bIsPrimary;
 };
 
-class COREAPPLICATION_API FMacApplication final : public FGenericApplication
+class COREAPPLICATION_API FMacApplication final : public IPlatformApplication
 {
 public:
-    static TSharedPtr<FGenericApplication> Create();
+    static TSharedPtr<IPlatformApplication> Create();
 
     static String FindMonitorName(NSScreen* Screen);
     static uint32 MonitorDPIFromScreen(NSScreen* Screen);
@@ -283,37 +281,54 @@ public:
     FMacApplication(const TSharedPtr<FMacCursor>& InCursor);
     virtual ~FMacApplication();
 
-    // FGenericApplication Interface
-    virtual TSharedRef<FGenericWindow> CreateWindow() override final;
+    // IPlatformApplication Interface
+    virtual TSharedRef<IPlatformWindow> CreateWindow() override final;
+
     virtual void Tick(float Delta) override final;
     virtual void ProcessEvents() override final;
     virtual void ProcessDeferredEvents() override final;
+
     virtual void UpdateInputDevices() override final;
-    virtual FInputDevice* GetInputDevice() override final;
+    virtual IPlatformInputDevice* GetInputDevice() override final;
+
     virtual bool SupportsHighPrecisionMouse() const override final;
-    virtual bool SetHighPrecisionMouseMode(const TSharedRef<FGenericWindow>& Window, EHighPrecisionMouseMode Mode) override final;
-    virtual bool ConfineCursorToRect(const TSharedRef<FGenericWindow>& Window, const IntVector2& Position, const IntVector2& Size) override final;
+    virtual bool SetHighPrecisionMouseMode(const TSharedRef<IPlatformWindow>& Window, EHighPrecisionMouseMode Mode) override final;
+    virtual bool ConfineCursorToRect(const TSharedRef<IPlatformWindow>& Window, const IntVector2& Position, const IntVector2& Size) override final;
     virtual void ReleaseCursorConfinement() override final;
+
     virtual FModifierKeyState GetModifierKeyState() const override final;
-    virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) override final;
-    virtual void SetCapture(const TSharedRef<FGenericWindow>& Window) override final;
-    virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const override final;
-    virtual TSharedRef<FGenericWindow> GetActiveWindow() const override final;
-    virtual TSharedRef<FGenericWindow> GetCapture() const override final;
+
+    virtual void SetActiveWindow(const TSharedRef<IPlatformWindow>& Window) override final;
+    virtual TSharedRef<IPlatformWindow> GetActiveWindow() const override final;
+    virtual void SetCapture(const TSharedRef<IPlatformWindow>& Window) override final;
+    virtual TSharedRef<IPlatformWindow> GetCapture() const override final;
+    virtual TSharedRef<IPlatformWindow> GetWindowUnderCursor() const override final;
+
     virtual void QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) const override final;
-    virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler) override final;
+
+    virtual void SetMessageHandler(const TSharedPtr<IPlatformApplicationMessageHandler>& InMessageHandler) override final;
+
+    virtual TSharedPtr<IPlatformApplicationMessageHandler> GetMessageHandler() const override final
+    {
+        return MessageHandler;
+    }
+
+    virtual TSharedPtr<IPlatformCursor> GetCursor() const override final
+    {
+        return MacCursor;
+    }
 
     void DeferEvent(NSObject* EventObject);
     NSEvent* OnNSEvent(NSEvent* Event);
 
     FCocoaWindow* FindNSWindowUnderCursor() const;
     TSharedRef<FMacWindow> FindWindowFromNSWindow(NSWindow* Window) const;
+    void UpdateWindowUnderCursor();
 
     void OnWindowDestroyed(const TSharedRef<FMacWindow>& Window);
     void OnWindowWillResize(const TSharedRef<FMacWindow>& Window);
-
-    void UpdateWindowUnderCursor();
     void CloseWindow(const TSharedRef<FMacWindow>& Window);
+
     void RefreshScreenCache();
 
     FMacApplicationObserver* GetApplicationObserver() const
@@ -338,32 +353,33 @@ private:
 
     void ClampCursorToConfinement();
 
-    id                             LocalEventMonitor;
-    id                             GlobalMouseMovedEventMonitor;
-    FMacApplicationObserver*       Observer;
-    FCocoaWindow*                  WindowUnderCursor;
-    mutable FCriticalSection       WindowUnderCursorCS;
-    FCocoaWindow*                  CapturedWindow;
-    mutable FCriticalSection       CapturedWindowCS;
-    NSUInteger                     CurrentModifierFlags;
-    EMouseButtonName::Type         LastPressedButton;
-    Vector2                        HighPrecisionMouseRemainder;
-    IntVector2                     CursorConfinementPosition;
-    IntVector2                     CursorConfinementSize;
-    bool                           bHighPrecisionMouseEnabled;
-    bool                           bCursorConfined;
-    TSharedPtr<FMacCursor>         MacCursor;
-    TSharedPtr<FGCInputDevice>     InputDevice;
-    TArray<FMacScreenInfo>         ScreenCache;
-    mutable FCriticalSection       ScreenCacheCS;
-    TArray<TSharedRef<FMacWindow>> Windows;
-    mutable FCriticalSection       WindowsCS;
-    TArray<FCocoaWindow*>          ClosedCocoaWindows;
-    FCriticalSection               ClosedCocoaWindowsCS;
-    TArray<TSharedRef<FMacWindow>> ClosedWindows;
-    FCriticalSection               ClosedWindowsCS;
-    TArray<FDeferredMacEvent>      DeferredEvents;
-    FCriticalSection               DeferredEventsCS;
+    id                                             LocalEventMonitor;
+    id                                             GlobalMouseMovedEventMonitor;
+    FMacApplicationObserver*                       Observer;
+    FCocoaWindow*                                  WindowUnderCursor;
+    mutable FCriticalSection                       WindowUnderCursorCS;
+    FCocoaWindow*                                  CapturedWindow;
+    mutable FCriticalSection                       CapturedWindowCS;
+    NSUInteger                                     CurrentModifierFlags;
+    EMouseButtonName::Type                         LastPressedButton;
+    Vector2                                        HighPrecisionMouseRemainder;
+    IntVector2                                     CursorConfinementPosition;
+    IntVector2                                     CursorConfinementSize;
+    bool                                           bHighPrecisionMouseEnabled;
+    bool                                           bCursorConfined;
+    TSharedPtr<FMacCursor>                         MacCursor;
+    TSharedPtr<FGCInputDevice>                     InputDevice;
+    TArray<FMacScreenInfo>                         ScreenCache;
+    mutable FCriticalSection                       ScreenCacheCS;
+    TArray<TSharedRef<FMacWindow>>                 Windows;
+    mutable FCriticalSection                       WindowsCS;
+    TArray<FCocoaWindow*>                          ClosedCocoaWindows;
+    FCriticalSection                               ClosedCocoaWindowsCS;
+    TArray<TSharedRef<FMacWindow>>                 ClosedWindows;
+    FCriticalSection                               ClosedWindowsCS;
+    TArray<FDeferredMacEvent>                      DeferredEvents;
+    FCriticalSection                               DeferredEventsCS;
+    TSharedPtr<IPlatformApplicationMessageHandler> MessageHandler;
 };
 
 extern FMacApplication* GMacApplication;

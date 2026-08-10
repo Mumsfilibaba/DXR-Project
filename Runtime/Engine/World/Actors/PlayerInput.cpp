@@ -167,7 +167,7 @@ int32 FPlayerInput::AddAxisKeyMapping(const FAxisKeyMapping& AxisKeyMapping)
 
 void FPlayerInput::SetCursorPosition(const IntVector2& Position)
 {
-    if (TSharedPtr<ICursor> Cursor = GetCursorInterface())
+    if (TSharedPtr<IPlatformCursor> Cursor = GetCursorInterface())
     {
         Cursor->SetPosition(Position.X, Position.Y);
     }
@@ -224,7 +224,7 @@ void FPlayerInput::OnKeyEvent(FKey Key, bool bIsDown, bool bIsRepeat)
 
 IntVector2 FPlayerInput::GetCursorPosition() const
 {
-    if (TSharedPtr<ICursor> Cursor = GetCursorInterface())
+    if (TSharedPtr<IPlatformCursor> Cursor = GetCursorInterface())
     {
         Cursor->GetPosition();
     }

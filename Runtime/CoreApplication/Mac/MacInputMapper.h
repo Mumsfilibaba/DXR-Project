@@ -1,9 +1,9 @@
 #pragma once
 #include "Core/Containers/StaticArray.h"
-#include "CoreApplication/Generic/InputCodes.h"
-#include "CoreApplication/Generic/GenericInputMapper.h"
+#include "CoreApplication/PlatformInterface/InputCodes.h"
+#include "CoreApplication/PlatformInterface/IPlatformInputMapper.h"
 
-class COREAPPLICATION_API FMacInputMapper final : public EGenericInputMapper
+class COREAPPLICATION_API FMacInputMapper final : public IPlatformInputMapper
 {
 public:
     static void Initialize();

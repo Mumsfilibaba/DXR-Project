@@ -66,7 +66,7 @@ TSharedRef<FWindowsWindow> FWindowsWindow::Create(FWindowsApplication* InApplica
 }
 
 FWindowsWindow::FWindowsWindow(FWindowsApplication* InApplication)
-    : FGenericWindow()
+    : FRefCountedBase()
     , Application(InApplication)
     , Window(0)
     , Style()
@@ -82,30 +82,29 @@ FWindowsWindow::~FWindowsWindow()
     Destroy();
 }
 
-bool FWindowsWindow::Initialize(const FGenericWindowInitializer& InInitializer)
+bool FWindowsWindow::Initialize(const FPlatformWindowDesc& InDesc)
 {
-    const FWindowsWindowStyle NewStyle = GetWindowsWindowStyle(InInitializer.Style);
+    const FWindowsWindowStyle NewStyle = GetWindowsWindowStyle(InDesc.Style);
 
-    // Calculate real window size, since width/height describe the client area
-    RECT ClientRect = { 0, 0, static_cast<LONG>(InInitializer.Width), static_cast<LONG>(InInitializer.Height) };
+    RECT ClientRect = { 0, 0, static_cast<LONG>(InDesc.Width), static_cast<LONG>(InDesc.Height) };
 #if PLATFORM_WINDOWS_10_ANNIVERSARY
     ::AdjustWindowRectExForDpi(&ClientRect, NewStyle.Style, false, NewStyle.StyleEx, USER_DEFAULT_SCREEN_DPI);
 #else
     ::AdjustWindowRectEx(&ClientRect, NewStyle.Style, false, NewStyle.StyleEx);
 #endif
 
-    int32 PositionX  = InInitializer.Position.X;
-    int32 PositionY  = InInitializer.Position.Y;
+    int32 PositionX  = InDesc.Position.X;
+    int32 PositionY  = InDesc.Position.Y;
     int32 RealWidth  = ClientRect.right - ClientRect.left;
     int32 RealHeight = ClientRect.bottom - ClientRect.top;
 
     HWND ParentWindow = nullptr;
-    if (InInitializer.ParentWindow)
+    if (InDesc.ParentWindow)
     {
-        ParentWindow = reinterpret_cast<HWND>(InInitializer.ParentWindow->GetPlatformHandle());
+        ParentWindow = reinterpret_cast<HWND>(InDesc.ParentWindow->GetPlatformHandle());
     }
 
-    const CHAR* Title     = *InInitializer.Title;
+    const CHAR* Title     = *InDesc.Title;
     const CHAR* ClassName = FWindowsWindow::GetClassName();
 
     HINSTANCE Instance = Application->GetInstance();
@@ -118,18 +117,17 @@ bool FWindowsWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         return false;
     }
 
-    // If the window has a sys-menu, check if the close-button should be active
     if (NewStyle.Style & WS_SYSMENU)
     {
-        if ((InInitializer.Style & EWindowStyleFlags::Closable) == EWindowStyleFlags::None)
+        if ((InDesc.Style & EWindowStyleFlags::Closable) == EWindowStyleFlags::None)
         {
             ::EnableMenuItem(::GetSystemMenu(Window, FALSE), SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
         }
     }
 
-    StyleParams   = InInitializer.Style;
+    StyleParams   = InDesc.Style;
     Style         = NewStyle;
-    bAcceptsInput = InInitializer.bAcceptsInput;
+    bAcceptsInput = InDesc.bAcceptsInput;
 
     ::SetLastError(0);
     LONG_PTR Result = ::SetWindowLongPtrA(Window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
@@ -144,10 +142,19 @@ bool FWindowsWindow::Initialize(const FGenericWindowInitializer& InInitializer)
 
     ::UpdateWindow(Window);
 
-    FWindowShape NewWindowShape(InInitializer.Width, InInitializer.Height, PositionX, PositionY);
+    FWindowShape NewWindowShape(InDesc.Width, InDesc.Height, PositionX, PositionY);
     SetWindowShape(NewWindowShape, true);
 
     return true;
+}
+
+void FWindowsWindow::Destroy()
+{
+    if (IsValid())
+    {
+        ::DestroyWindow(Window);
+        Window = 0;
+    }
 }
 
 void FWindowsWindow::Show(bool bFocus)
@@ -187,22 +194,12 @@ void FWindowsWindow::Maximize()
     }
 }
 
-void FWindowsWindow::Destroy()
-{
-    if (IsValid())
-    {
-        ::DestroyWindow(Window);
-        Window = 0;
-    }
-}
-
 void FWindowsWindow::Restore()
 {
     CHECK(Window != nullptr);
 
     if (IsValid())
     {
-        // If the window is iconic, restore it
         if (::IsIconic(Window))
         {
             ::ShowWindow(Window, SW_RESTORE);
@@ -259,15 +256,25 @@ void FWindowsWindow::ToggleFullscreen()
     }
 }
 
-bool FWindowsWindow::IsActiveWindow() const
+void FWindowsWindow::SetWindowFocus()
 {
-    HWND ForegroundWindow = ::GetForegroundWindow();
-    return (ForegroundWindow == Window);
+    if (IsValid())
+    {
+        ::BringWindowToTop(Window);
+        ::SetForegroundWindow(Window);
+        ::SetFocus(Window);
+    }
 }
 
 bool FWindowsWindow::IsValid() const
 {
     return ::IsWindow(Window) == TRUE;
+}
+
+bool FWindowsWindow::IsActiveWindow() const
+{
+    HWND ForegroundWindow = ::GetForegroundWindow();
+    return (ForegroundWindow == Window);
 }
 
 bool FWindowsWindow::IsMinimized() const
@@ -288,7 +295,7 @@ bool FWindowsWindow::IsMaximized() const
     return false;
 }
 
-bool FWindowsWindow::IsChildWindow(const TSharedRef<FGenericWindow>& ChildWindow) const
+bool FWindowsWindow::IsChildWindow(const TSharedRef<IPlatformWindow>& ChildWindow) const
 {
     TSharedRef<FWindowsWindow> WindowsChild = StaticCastSharedRef<FWindowsWindow>(ChildWindow);
     if (WindowsChild)
@@ -298,16 +305,6 @@ bool FWindowsWindow::IsChildWindow(const TSharedRef<FGenericWindow>& ChildWindow
     else
     {
         return false;
-    }
-}
-
-void FWindowsWindow::SetWindowFocus()
-{
-    if (IsValid())
-    {
-        ::BringWindowToTop(Window);
-        ::SetForegroundWindow(Window);
-        ::SetFocus(Window);
     }
 }
 
@@ -334,14 +331,10 @@ void FWindowsWindow::GetTitle(String& OutTitle) const
         return;
     }
 
-    // Allocate enough space for the title plus the null terminator
     OutTitle.Resize(Size + 1);
     ::GetWindowTextA(Window, OutTitle.Data(), Size + 1);
 
-    // Ensure null termination
     OutTitle[Size] = '\0';
-
-    // Resize back to the actual string length
     OutTitle.Resize(Size);
 }
 
@@ -364,28 +357,6 @@ void FWindowsWindow::SetWindowPos(int32 x, int32 y)
     ::SetWindowPos(Window, nullptr, BorderRect.left, BorderRect.top, 0, 0, SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER);
 }
 
-void FWindowsWindow::SetWindowOpacity(float Alpha)
-{
-    if (!IsValid())
-    {
-        return;
-    }
-
-    DWORD CurrentStyle = ::GetWindowLongA(Window, GWL_EXSTYLE);
-
-    if (Alpha < 1.0f)
-    {
-        CurrentStyle |= WS_EX_LAYERED;
-        ::SetWindowLongA(Window, GWL_EXSTYLE, CurrentStyle);
-        ::SetLayeredWindowAttributes(Window, 0, static_cast<BYTE>(255.0f * Alpha), LWA_ALPHA);
-    }
-    else
-    {
-        CurrentStyle &= ~WS_EX_LAYERED;
-        ::SetWindowLongA(Window, GWL_EXSTYLE, CurrentStyle);
-    }
-}
-
 void FWindowsWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 {
     if (!IsValid())
@@ -406,11 +377,9 @@ void FWindowsWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 
     if (bIsFullscreen)
     {
-        // Enables setting the window to a larger size than the screen resolution allows
         Flags |= SWP_NOSENDCHANGING;
     }
 
-    // Calculate real window size, since width/height describe client area
     RECT ClientRect = { 0, 0, static_cast<LONG>(Shape.Width), static_cast<LONG>(Shape.Height) };
 #if PLATFORM_WINDOWS_10_ANNIVERSARY
     const uint32 WindowDPI = ::GetDpiForWindow(Window);
@@ -433,7 +402,6 @@ void FWindowsWindow::GetWindowShape(FWindowShape& OutWindowShape) const
         return;
     }
 
-    // Convert client coordinates to screen coordinates
     POINT Position = { 0, 0 };
     ::ClientToScreen(Window, &Position);
     OutWindowShape.Position.X = static_cast<int32>(Position.x);
@@ -443,6 +411,30 @@ void FWindowsWindow::GetWindowShape(FWindowShape& OutWindowShape) const
     ::GetClientRect(Window, &Rect);
     OutWindowShape.Width  = static_cast<uint32>(Rect.right - Rect.left);
     OutWindowShape.Height = static_cast<uint32>(Rect.bottom - Rect.top);
+}
+
+uint32 FWindowsWindow::GetWidth() const
+{
+    if (!IsValid())
+    {
+        return 0;
+    }
+
+    RECT Rect;
+    ::GetClientRect(Window, &Rect);
+    return static_cast<uint32>(Rect.right - Rect.left);
+}
+
+uint32 FWindowsWindow::GetHeight() const
+{
+    if (!IsValid())
+    {
+        return 0;
+    }
+
+    RECT Rect;
+    ::GetClientRect(Window, &Rect);
+    return static_cast<uint32>(Rect.bottom - Rect.top);
 }
 
 void FWindowsWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const
@@ -476,32 +468,8 @@ float FWindowsWindow::GetWindowDPIScale() const
     UINT DpiY = 96;
     ::GetDpiForMonitor(Monitor, MDT_EFFECTIVE_DPI, &DpiX, &DpiY);
 
-    CHECK(DpiX == DpiY); // Assumes uniform DPI scaling on both axes
+    CHECK(DpiX == DpiY);
     return static_cast<float>(DpiX) / 96.0f;
-}
-
-uint32 FWindowsWindow::GetWidth() const
-{
-    if (!IsValid())
-    {
-        return 0;
-    }
-
-    RECT Rect;
-    ::GetClientRect(Window, &Rect);
-    return static_cast<uint32>(Rect.right - Rect.left);
-}
-
-uint32 FWindowsWindow::GetHeight() const
-{
-    if (!IsValid())
-    {
-        return 0;
-    }
-
-    RECT Rect;
-    ::GetClientRect(Window, &Rect);
-    return static_cast<uint32>(Rect.bottom - Rect.top);
 }
 
 void FWindowsWindow::SetStyle(EWindowStyleFlags InStyle)
@@ -511,21 +479,17 @@ void FWindowsWindow::SetStyle(EWindowStyleFlags InStyle)
         return;
     }
 
-    // Grab the current shape (position & size) before we change style.
     FWindowShape CurrentShape;
     GetWindowShape(CurrentShape);
 
-    // Convert EWindowStyleFlags into WinAPI style/exstyle flags
     const FWindowsWindowStyle NewStyle = GetWindowsWindowStyle(InStyle);
     if (NewStyle != Style)
     {
         ::SetWindowLong(Window, GWL_STYLE, NewStyle.Style);
         ::SetWindowLong(Window, GWL_EXSTYLE, NewStyle.StyleEx);
 
-        // Necessary when modifying window style
         ::ShowWindow(Window, SW_SHOWNA);
 
-        // Cache the new style
         Style = NewStyle;
     }
 
@@ -534,6 +498,28 @@ void FWindowsWindow::SetStyle(EWindowStyleFlags InStyle)
     const bool bTopMost = (InStyle & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None;
     ::SetWindowPos(Window, bTopMost ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
     SetWindowShape(CurrentShape, true);
+}
+
+void FWindowsWindow::SetWindowOpacity(float Alpha)
+{
+    if (!IsValid())
+    {
+        return;
+    }
+
+    DWORD CurrentStyle = ::GetWindowLongA(Window, GWL_EXSTYLE);
+
+    if (Alpha < 1.0f)
+    {
+        CurrentStyle |= WS_EX_LAYERED;
+        ::SetWindowLongA(Window, GWL_EXSTYLE, CurrentStyle);
+        ::SetLayeredWindowAttributes(Window, 0, static_cast<BYTE>(255.0f * Alpha), LWA_ALPHA);
+    }
+    else
+    {
+        CurrentStyle &= ~WS_EX_LAYERED;
+        ::SetWindowLongA(Window, GWL_EXSTYLE, CurrentStyle);
+    }
 }
 
 void FWindowsWindow::SetPlatformHandle(void* InPlatformHandle)
@@ -546,7 +532,6 @@ void FWindowsWindow::SetPlatformHandle(void* InPlatformHandle)
         Style.Style   = ::GetWindowLong(Window, GWL_STYLE);
         Style.StyleEx = ::GetWindowLong(Window, GWL_EXSTYLE);
 
-        // Check if the window is likely in fullscreen mode
         uint32 FullscreenWidth = 0;
         uint32 FullscreenHeight = 0;
         GetFullscreenInfo(FullscreenWidth, FullscreenHeight);
@@ -554,7 +539,6 @@ void FWindowsWindow::SetPlatformHandle(void* InPlatformHandle)
         FWindowShape WindowShape;
         GetWindowShape(WindowShape);
 
-        // Masks for checking borderless style
         const LONG BorderlessStyleMask   = (~WS_BORDER | ~WS_DLGFRAME | ~WS_THICKFRAME);
         const LONG BorderlessStyleExMask = ~WS_EX_WINDOWEDGE;
 

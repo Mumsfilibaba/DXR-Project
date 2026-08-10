@@ -13,7 +13,7 @@ TSharedRef<FMacWindow> FMacWindow::Create(FMacApplication* InApplication)
 }
 
 FMacWindow::FMacWindow(FMacApplication* InApplication)
-    : FGenericWindow()
+    : FRefCountedBase()
     , Application(InApplication)
     , CocoaWindow(nullptr)
     , CocoaWindowView(nullptr)
@@ -31,7 +31,7 @@ FMacWindow::~FMacWindow()
     }, NSDefaultRunLoopMode, true);
 }
 
-bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
+bool FMacWindow::Initialize(const FPlatformWindowDesc& InDesc)
 {
     const EWindowStyleFlags DecorationMask =
         EWindowStyleFlags::Titled |
@@ -42,24 +42,24 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         
     NSWindowStyleMask WindowStyle = 0;
         
-    const bool bHasAnyDecoration = (InInitializer.Style & DecorationMask) != EWindowStyleFlags::None;
+    const bool bHasAnyDecoration = (InDesc.Style & DecorationMask) != EWindowStyleFlags::None;
     const bool bIsTransientPopup = !bHasAnyDecoration;
 
     if (bHasAnyDecoration)
     {
         WindowStyle |= NSWindowStyleMaskTitled;
 
-        if ((InInitializer.Style & EWindowStyleFlags::Closable) != EWindowStyleFlags::None)
+        if ((InDesc.Style & EWindowStyleFlags::Closable) != EWindowStyleFlags::None)
         {
             WindowStyle |= NSWindowStyleMaskClosable;
         }
 
-        if ((InInitializer.Style & EWindowStyleFlags::Resizable) != EWindowStyleFlags::None)
+        if ((InDesc.Style & EWindowStyleFlags::Resizable) != EWindowStyleFlags::None)
         {
             WindowStyle |= NSWindowStyleMaskResizable;
         }
 
-        if ((InInitializer.Style & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None)
+        if ((InDesc.Style & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None)
         {
             WindowStyle |= NSWindowStyleMaskMiniaturizable;
         }
@@ -74,10 +74,10 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
     {
         SCOPED_AUTORELEASE_POOL();
 
-        CGFloat Width     = static_cast<CGFloat>(InInitializer.Width);
-        CGFloat Height    = static_cast<CGFloat>(InInitializer.Height);
-        CGFloat PositionX = static_cast<CGFloat>(InInitializer.Position.X);
-        CGFloat PositionY = static_cast<CGFloat>(InInitializer.Position.Y);
+        CGFloat Width     = static_cast<CGFloat>(InDesc.Width);
+        CGFloat Height    = static_cast<CGFloat>(InDesc.Height);
+        CGFloat PositionX = static_cast<CGFloat>(InDesc.Position.X);
+        CGFloat PositionY = static_cast<CGFloat>(InDesc.Position.Y);
 
         const NSRect WindowRect = FMacApplication::ConvertEngineRectToCocoa(Width, Height, PositionX, PositionY);
         CocoaWindow = [[FCocoaWindow alloc] initWithContentRect:WindowRect styleMask:WindowStyle backing:NSBackingStoreBuffered defer:NO];
@@ -87,18 +87,18 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
             return;
         }
 
-        const NSWindowLevel WindowLevel = (InInitializer.Style & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None ? NSFloatingWindowLevel : NSNormalWindowLevel;
+        const NSWindowLevel WindowLevel = (InDesc.Style & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None ? NSFloatingWindowLevel : NSNormalWindowLevel;
         [CocoaWindow setLevel:WindowLevel];
 
-        bAcceptsInput = InInitializer.bAcceptsInput;
+        bAcceptsInput = InDesc.bAcceptsInput;
         [CocoaWindow setIgnoresMouseEvents:!bAcceptsInput];
 
-        if ((InInitializer.Style & EWindowStyleFlags::Titled) != EWindowStyleFlags::None)
+        if ((InDesc.Style & EWindowStyleFlags::Titled) != EWindowStyleFlags::None)
         {
-            CocoaWindow.title = InInitializer.Title.GetNSString();
+            CocoaWindow.title = InDesc.Title.GetNSString();
         }
 
-        if ((InInitializer.Style & EWindowStyleFlags::Closable) != EWindowStyleFlags::None)
+        if ((InDesc.Style & EWindowStyleFlags::Closable) != EWindowStyleFlags::None)
         {
             [[CocoaWindow standardWindowButton:NSWindowCloseButton] setEnabled:YES];
         }
@@ -107,7 +107,7 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
             [[CocoaWindow standardWindowButton:NSWindowCloseButton] setEnabled:NO];
         }
         
-        if ((InInitializer.Style & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None)
+        if ((InDesc.Style & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None)
         {
             [[CocoaWindow standardWindowButton:NSWindowMiniaturizeButton] setEnabled:YES];
         }
@@ -116,7 +116,7 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
             [[CocoaWindow standardWindowButton:NSWindowMiniaturizeButton] setEnabled:NO];
         }
         
-        if ((InInitializer.Style & EWindowStyleFlags::Maximizable) != EWindowStyleFlags::None)
+        if ((InDesc.Style & EWindowStyleFlags::Maximizable) != EWindowStyleFlags::None)
         {
             [[CocoaWindow standardWindowButton:NSWindowZoomButton] setEnabled:YES];
         }
@@ -138,7 +138,7 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
 
         CocoaWindow.collectionBehavior = Behavior;
 
-        if ((InInitializer.Style & EWindowStyleFlags::Opaque) == EWindowStyleFlags::None)
+        if ((InDesc.Style & EWindowStyleFlags::Opaque) == EWindowStyleFlags::None)
         {
             [CocoaWindow setOpaque:NO];
             [CocoaWindow setHasShadow:NO];
@@ -148,7 +148,6 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
             [CocoaWindow setHasShadow: YES];
         }
         
-        // Create Window-View
         NSColor* BackGroundColor = [NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f];
         CocoaWindowView = [[FCocoaWindowView alloc] initWithFrame:WindowRect];
         
@@ -160,18 +159,18 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         [CocoaWindow setContentView:CocoaWindowView];
         [CocoaWindow makeFirstResponder:CocoaWindowView];
 
-        if (InInitializer.ParentWindow)
+        if (InDesc.ParentWindow)
         {
-            FMacWindow* ParentMacWindow = static_cast<FMacWindow*>(InInitializer.ParentWindow);
+            FMacWindow* ParentMacWindow = static_cast<FMacWindow*>(InDesc.ParentWindow);
             if (FCocoaWindow* ParentCocoaWindow = ParentMacWindow->GetCocoaWindow())
             {
                 [ParentCocoaWindow addChildWindow:CocoaWindow ordered:NSWindowAbove];
             }
         }
 
-        if ((InInitializer.Style & EWindowStyleFlags::NoTaskBarIcon) == EWindowStyleFlags::None)
+        if ((InDesc.Style & EWindowStyleFlags::NoTaskBarIcon) == EWindowStyleFlags::None)
         {
-            [NSApp addWindowsItem:CocoaWindow title:InInitializer.Title.GetNSString() filename:NO];
+            [NSApp addWindowsItem:CocoaWindow title:InDesc.Title.GetNSString() filename:NO];
         }
 
         if ([CocoaWindow respondsToSelector:@selector(setTabbingMode:)])
@@ -179,15 +178,37 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
             [CocoaWindow setTabbingMode:NSWindowTabbingModeDisallowed];
         }
         
-        // Store the cached position and initialization params
         Position    = IntVector2(static_cast<int32>(WindowRect.origin.x), static_cast<int32>(WindowRect.origin.y));
-        StyleParams = InInitializer.Style;
+        StyleParams = InDesc.Style;
         bResult     = true;
         
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
 
     return bResult;
+}
+
+void FMacWindow::Destroy()
+{
+    if (CocoaWindow)
+    {
+        SCOPED_AUTORELEASE_POOL();
+
+        FCocoaWindow* WindowToRemove = CocoaWindow;
+        FMacThreadManager::Get().MainThreadDispatch(^
+        {
+            if (NSWindow* ParentCocoaWindow = [WindowToRemove parentWindow])
+            {
+                [ParentCocoaWindow removeChildWindow:WindowToRemove];
+            }
+
+            [NSApp removeWindowsItem:WindowToRemove];
+        }, NSDefaultRunLoopMode, true);
+
+        TSharedRef<FMacWindow> ThisWindow = MakeSharedRef<FMacWindow>(this);
+        Application->OnWindowDestroyed(ThisWindow);
+        CocoaWindow = nullptr;
+    }
 }
 
 void FMacWindow::Show(bool bFocus)
@@ -249,30 +270,6 @@ void FMacWindow::Maximize()
     }, NSDefaultRunLoopMode, true);
 }
 
-void FMacWindow::Destroy()
-{
-    if (CocoaWindow)
-    {
-        SCOPED_AUTORELEASE_POOL();
-
-        // Pairs with the addWindowsItem in Initialize, and is a no-op for a window never added
-        FCocoaWindow* WindowToRemove = CocoaWindow;
-        FMacThreadManager::Get().MainThreadDispatch(^
-        {
-            if (NSWindow* ParentCocoaWindow = [WindowToRemove parentWindow])
-            {
-                [ParentCocoaWindow removeChildWindow:WindowToRemove];
-            }
-
-            [NSApp removeWindowsItem:WindowToRemove];
-        }, NSDefaultRunLoopMode, true);
-
-        TSharedRef<FMacWindow> ThisWindow = MakeSharedRef<FMacWindow>(this);
-        Application->OnWindowDestroyed(ThisWindow);
-        CocoaWindow = nullptr;
-    }
-}
-
 void FMacWindow::Restore()
 {
     FMacThreadManager::Get().MainThreadDispatch(^
@@ -313,6 +310,26 @@ void FMacWindow::ToggleFullscreen()
     }
 }
 
+void FMacWindow::SetWindowFocus()
+{
+    FMacThreadManager::Get().MainThreadDispatch(^
+    {
+        SCOPED_AUTORELEASE_POOL();
+        
+        if (CocoaWindow)
+        {
+            [CocoaWindow makeKeyAndOrderFront:CocoaWindow];
+        }
+        
+        FPlatformApplicationMisc::PumpMessages(true);
+    }, NSDefaultRunLoopMode, true);
+}
+
+bool FMacWindow::IsValid() const
+{
+   return CocoaWindow != nullptr;
+}
+
 bool FMacWindow::IsActiveWindow() const
 {
     __block bool bIsKeyWindow = false;
@@ -328,11 +345,6 @@ bool FMacWindow::IsActiveWindow() const
     }, NSDefaultRunLoopMode, true);
 
     return bIsKeyWindow;
-}
-
-bool FMacWindow::IsValid() const
-{
-   return CocoaWindow != nullptr;
 }
 
 bool FMacWindow::IsMinimized() const
@@ -369,7 +381,7 @@ bool FMacWindow::IsMaximized() const
     return bIsMaximized;
 }
 
-bool FMacWindow::IsChildWindow(const TSharedRef<FGenericWindow>& ChildWindow) const
+bool FMacWindow::IsChildWindow(const TSharedRef<IPlatformWindow>& ChildWindow) const
 {
     TSharedRef<FMacWindow> MacChildWindow = StaticCastSharedRef<FMacWindow>(ChildWindow);
     if (!MacChildWindow || !CocoaWindow)
@@ -382,7 +394,6 @@ bool FMacWindow::IsChildWindow(const TSharedRef<FGenericWindow>& ChildWindow) co
     {
         SCOPED_AUTORELEASE_POOL();
 
-        // Walks the whole chain rather than just the direct children, to match Win32 IsChild
         for (NSWindow* Ancestor = [MacChildWindow->GetCocoaWindow() parentWindow]; Ancestor; Ancestor = [Ancestor parentWindow])
         {
             if (Ancestor == CocoaWindow)
@@ -394,21 +405,6 @@ bool FMacWindow::IsChildWindow(const TSharedRef<FGenericWindow>& ChildWindow) co
     }, NSDefaultRunLoopMode, true);
 
     return bIsChildWindow;
-}
-
-void FMacWindow::SetWindowFocus()
-{
-    FMacThreadManager::Get().MainThreadDispatch(^
-    {
-        SCOPED_AUTORELEASE_POOL();
-        
-        if (CocoaWindow)
-        {
-            [CocoaWindow makeKeyAndOrderFront:CocoaWindow];
-        }
-        
-        FPlatformApplicationMisc::PumpMessages(true);
-    }, NSDefaultRunLoopMode, true);
 }
 
 void FMacWindow::SetTitle(const String& InTitle)
@@ -459,23 +455,7 @@ void FMacWindow::SetWindowPos(int32 x, int32 y)
             const NSRect WindowFrame = [CocoaWindow frameRectForContentRect:NewContentRect];
             [CocoaWindow setFrameOrigin:WindowFrame.origin];
             
-            // Cache the position
             Position = IntVector2(static_cast<int32>(WindowFrame.origin.x), static_cast<int32>(WindowFrame.origin.y));
-        }
-        
-        FPlatformApplicationMisc::PumpMessages(true);
-    }, NSDefaultRunLoopMode, true);
-}
-
-void FMacWindow::SetWindowOpacity(float Alpha)
-{
-    FMacThreadManager::Get().MainThreadDispatch(^
-    {
-        SCOPED_AUTORELEASE_POOL();
-
-        if (CocoaWindow)
-        {
-            CocoaWindow.alphaValue = Alpha;
         }
         
         FPlatformApplicationMisc::PumpMessages(true);
@@ -506,7 +486,6 @@ void FMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
             const NSRect NewFrame = [NSWindow frameRectForContentRect:NewContentRect styleMask:[CocoaWindow styleMask]];
             [CocoaWindow setFrame: NewFrame display: YES];
             
-            // Cache the position
             Position = IntVector2(static_cast<int32>(NewFrame.origin.x), static_cast<int32>(NewFrame.origin.y));
         }
         
@@ -532,39 +511,6 @@ void FMacWindow::GetWindowShape(FWindowShape& OutWindowShape) const
     OutWindowShape.Height     = ContentRect.size.height;
     OutWindowShape.Position.X = ContentRect.origin.x;
     OutWindowShape.Position.Y = ContentRect.origin.y;
-}
-
-void FMacWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const
-{
-    __block NSRect Frame = NSMakeRect(0, 0, 0, 0);
-    FMacThreadManager::Get().MainThreadDispatch(^
-    {
-        SCOPED_AUTORELEASE_POOL();
-
-        if (CocoaWindow)
-        {
-            NSScreen* Screen = CocoaWindow ? CocoaWindow.screen : [NSScreen mainScreen];
-            Frame = Screen.frame;
-        }
-    }, NSDefaultRunLoopMode, true);
-
-    OutWidth  = Frame.size.width;
-    OutHeight = Frame.size.height;
-}
-
-float FMacWindow::GetWindowDPIScale() const
-{
-    __block CGFloat Scale = 1.0f;
-    FMacThreadManager::Get().MainThreadDispatch(^
-    {
-        SCOPED_AUTORELEASE_POOL();
-        if (CocoaWindow)
-        {
-            Scale = CocoaWindow.backingScaleFactor;
-        }
-    }, NSDefaultRunLoopMode, true);
-
-    return static_cast<float>(Scale);
 }
 
 uint32 FMacWindow::GetWidth() const
@@ -601,6 +547,39 @@ uint32 FMacWindow::GetHeight() const
     }, NSDefaultRunLoopMode, true);
 
     return uint32(Size.height);
+}
+
+void FMacWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const
+{
+    __block NSRect Frame = NSMakeRect(0, 0, 0, 0);
+    FMacThreadManager::Get().MainThreadDispatch(^
+    {
+        SCOPED_AUTORELEASE_POOL();
+
+        if (CocoaWindow)
+        {
+            NSScreen* Screen = CocoaWindow ? CocoaWindow.screen : [NSScreen mainScreen];
+            Frame = Screen.frame;
+        }
+    }, NSDefaultRunLoopMode, true);
+
+    OutWidth  = Frame.size.width;
+    OutHeight = Frame.size.height;
+}
+
+float FMacWindow::GetWindowDPIScale() const
+{
+    __block CGFloat Scale = 1.0f;
+    FMacThreadManager::Get().MainThreadDispatch(^
+    {
+        SCOPED_AUTORELEASE_POOL();
+        if (CocoaWindow)
+        {
+            Scale = CocoaWindow.backingScaleFactor;
+        }
+    }, NSDefaultRunLoopMode, true);
+
+    return static_cast<float>(Scale);
 }
 
 void FMacWindow::SetStyle(EWindowStyleFlags InStyle)
@@ -702,10 +681,24 @@ void FMacWindow::SetStyle(EWindowStyleFlags InStyle)
                 }
             }
             
-            // Set styleflags
             StyleParams = InStyle;
         }
 
+        FPlatformApplicationMisc::PumpMessages(true);
+    }, NSDefaultRunLoopMode, true);
+}
+
+void FMacWindow::SetWindowOpacity(float Alpha)
+{
+    FMacThreadManager::Get().MainThreadDispatch(^
+    {
+        SCOPED_AUTORELEASE_POOL();
+
+        if (CocoaWindow)
+        {
+            CocoaWindow.alphaValue = Alpha;
+        }
+        
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
 }
@@ -740,7 +733,6 @@ void FMacWindow::SetPlatformHandle(void* InPlatformHandle)
         {
             SCOPED_AUTORELEASE_POOL();
             
-            // Make sure that the handle sent in is of correct type
             if (FCocoaWindow* NewWindow = NSClassCast<FCocoaWindow>(reinterpret_cast<NSObject*>(InPlatformHandle)))
             {
                 if (FCocoaWindowView* NewWindowView = NSClassCast<FCocoaWindowView>(NewWindow.contentView))

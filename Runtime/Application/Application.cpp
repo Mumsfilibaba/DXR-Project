@@ -8,7 +8,7 @@
 #include "Core/Modules/ModuleManager.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
-#include "CoreApplication/Generic/InputDevice.h"
+#include "CoreApplication/PlatformInterface/IPlatformInputDevice.h"
 #include "RHI/RHICommandList.h"
 
 IMPLEMENT_ENGINE_MODULE(IModule, Application);
@@ -195,7 +195,7 @@ bool FApplication::Initialize()
 {
     FInputMapper::Get().Initialize();
 
-    TSharedPtr<FGenericApplication> PlatformApplication = FPlatformApplication::Create();
+    TSharedPtr<IPlatformApplication> PlatformApplication = FPlatformApplication::Create();
     if (!PlatformApplication)
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create FPlatformApplication");
@@ -216,7 +216,7 @@ void FApplication::Release()
     }
 }
 
-FApplication::FApplication(TSharedPtr<FGenericApplication> InPlatformApplication)
+FApplication::FApplication(TSharedPtr<IPlatformApplication> InPlatformApplication)
     : PlatformApplication(InPlatformApplication)
     , PressedKeys()
     , PressedMouseButtons()
@@ -238,196 +238,6 @@ FApplication::FApplication(TSharedPtr<FGenericApplication> InPlatformApplication
 
 FApplication::~FApplication()
 {
-}
-
-void FApplication::CreateWindow(const TSharedPtr<FWindowWidget>& InWindow)
-{
-    if (!InWindow)
-    {
-        LOG_WARNING("Trying to register a null window");
-        return;
-    }
-
-    if (Windows.Contains(InWindow))
-    {
-        LOG_WARNING("Window is already registered");
-        return;
-    }
-
-    TSharedRef<FGenericWindow> PlatformWindow = GetPlatformApplication()->CreateWindow();
-    if (!PlatformWindow)
-    {
-        return;
-    }
-
-    // Find the primary monitor
-    int32 PrimaryMonitorIndex = -1;
-    for (int32 Index = 0; Index < MonitorInfos.Size(); Index++)
-    {
-        const FMonitorInfo& MonitorInfo = MonitorInfos[Index];
-        if (MonitorInfo.bIsPrimary)
-        {
-            PrimaryMonitorIndex = Index;
-            break;
-        }
-    }
-    
-    if (PrimaryMonitorIndex < 0)
-    {
-        LOG_WARNING("No primary monitor detected");
-        return;
-    }
-    
-    FGenericWindowInitializer WindowInitializer;
-    WindowInitializer.Title         = InWindow->GetTitle();
-    WindowInitializer.Style         = InWindow->GetStyle();
-    WindowInitializer.Position      = InWindow->GetPosition();
-    WindowInitializer.bAcceptsInput = InWindow->GetAcceptsInput();
-    
-    if (TSharedPtr<FWindowWidget> ParentWindow = InWindow->GetParentWindow())
-    {
-        WindowInitializer.ParentWindow = ParentWindow->GetPlatformWindow().Get();
-    }
-
-    // Calculate the maximum position and size of the new window so that if fits in the main monitor bounds.
-    const FMonitorInfo& MonitorInfo = MonitorInfos[PrimaryMonitorIndex];
-    if (MonitorInfo.MainPosition.X > WindowInitializer.Position.X)
-    {
-        WindowInitializer.Position.X = MonitorInfo.MainPosition.X;
-    }
-    if (MonitorInfo.MainPosition.Y > WindowInitializer.Position.Y)
-    {
-        WindowInitializer.Position.Y = MonitorInfo.MainPosition.Y;
-    }
-    
-    WindowInitializer.Width  = InWindow->GetWidth();
-    WindowInitializer.Height = InWindow->GetHeight();
-    
-    const uint32 ScreenEndX = static_cast<uint32>(MonitorInfo.MainPosition.X + MonitorInfo.MainSize.X);
-    const uint32 ScreenEndY = static_cast<uint32>(MonitorInfo.MainPosition.Y + MonitorInfo.MainSize.Y);
-    const uint32 WindowEndX = WindowInitializer.Position.X + WindowInitializer.Width;
-    const uint32 WindowEndY = WindowInitializer.Position.Y + WindowInitializer.Height;
-    
-    if (WindowEndX > ScreenEndX)
-    {
-        WindowInitializer.Width = ScreenEndX - WindowInitializer.Position.X;
-    }
-    if (WindowEndY > ScreenEndY)
-    {
-        WindowInitializer.Height = ScreenEndY - WindowInitializer.Position.Y;
-    }
-
-    if (PlatformWindow->Initialize(WindowInitializer))
-    {
-        InWindow->SetPlatformWindow(PlatformWindow);        
-        Windows.Add(InWindow);
-
-        PlatformWindow->Show(InWindow->ActivateOnShow());
-    }
-}
-
-void FApplication::DestroyWindow(const TSharedPtr<FWindowWidget>& DestroyedWindow)
-{
-    if (DestroyedWindow)
-    {
-        TSharedRef<FGenericWindow> PlatformWindow = DestroyedWindow->GetPlatformWindow();
-        DestroyedWindow->OnWindowDestroyed();
-        Windows.Remove(DestroyedWindow);
-
-        if (PlatformWindow == PlatformApplication->GetCapture())
-        {
-            // Give capture back to the first window so that we'll still receive the mouse-up event.
-            TSharedPtr<FWindowWidget> NextWindow = Windows[0];
-            PlatformApplication->SetCapture(NextWindow->GetPlatformWindow());
-        }
-    }
-}
-
-void FApplication::Tick(float Delta)
-{
-    ProcessEvents();
-
-    ProcessDeferredEvents();
-
-    PlatformApplication->Tick(Delta);
-
-    UpdateInputDevices();
-
-    for (const TSharedPtr<FWindowWidget>& CurrentWindow : Windows)
-    {
-        FRectangle WindowRectangle;
-        WindowRectangle.Position = CurrentWindow->GetPosition();
-        WindowRectangle.Width    = CurrentWindow->GetSize().X;
-        WindowRectangle.Height   = CurrentWindow->GetSize().Y;
-
-        CurrentWindow->Tick(WindowRectangle);
-    }
-}
-
-void FApplication::ProcessEvents()
-{
-    PlatformApplication->ProcessEvents();
-}
-
-void FApplication::ProcessDeferredEvents()
-{
-    PlatformApplication->ProcessDeferredEvents();
-
-    if (!bIsApplicationActive || !FocusWindow.IsValid())
-    {
-        ReleaseAllPressedInput();
-    }
-}
-
-void FApplication::ReleaseAllPressedInput()
-{
-    if (!PressedKeys.IsEmpty())
-    {
-        const TSet<EKeyboardKeyName::Type> KeysToRelease = PressedKeys;
-        for (EKeyboardKeyName::Type Key : KeysToRelease)
-        {
-            OnKeyUp(Key, GetModifierKeyState());
-        }
-    }
-
-    if (!PressedMouseButtons.IsEmpty())
-    {
-        const TSet<EMouseButtonName::Type> ButtonsToRelease = PressedMouseButtons;
-        for (EMouseButtonName::Type Button : ButtonsToRelease)
-        {
-            OnMouseButtonUp(Button, GetModifierKeyState());
-        }
-    }
-}
-
-void FApplication::UpdateInputDevices()
-{
-    PlatformApplication->UpdateInputDevices();
-}
-
-void FApplication::UpdateMonitorInfo()
-{
-    if (!bIsMonitorInfoValid)
-    {
-        PlatformApplication->QueryMonitorInfo(MonitorInfos);
-        bIsMonitorInfoValid = true;
-    }
-}
-
-void FApplication::RegisterInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler)
-{
-    if (NewInputHandler)
-    {
-        InputHandlers.AddUnique(NewInputHandler);
-    }
-}
-
-void FApplication::UnregisterInputHandler(const TSharedPtr<FInputHandler>& InputHandler)
-{
-    if (InputHandler)
-    {
-        InputHandlers.Remove(InputHandler);
-    }
 }
 
 bool FApplication::OnGamepadButtonUp(EGamepadButtonName::Type Button, uint32 GamepadIndex)
@@ -636,7 +446,7 @@ bool FApplication::OnMouseMove(int32 MouseX, int32 MouseY)
     return MouseEnteredResponse.IsEventHandled() || MouseMoveResponse.IsEventHandled();
 }
 
-bool FApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& PlatformWindow, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState)
+bool FApplication::OnMouseButtonDown(const TSharedRef<IPlatformWindow>& PlatformWindow, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState)
 {
     PressedMouseButtons.Add(Button);
 
@@ -855,11 +665,11 @@ bool FApplication::OnHighPrecisionMouseInput(int32 MouseX, int32 MouseY)
     return WidgetResponse.IsEventHandled();
 }
 
-bool FApplication::OnWindowResized(const TSharedRef<FGenericWindow>& PlatformWindow, uint32 Width, uint32 Height)
+bool FApplication::OnWindowResized(const TSharedRef<IPlatformWindow>& PlatformWindow, uint32 Width, uint32 Height)
 {
     bool bResult = false;
 
-    if (TSharedPtr<FWindowWidget> Window = FindWindowFromGenericWindow(PlatformWindow))
+    if (TSharedPtr<FWindowWidget> Window = FindWindowFromPlatformWindow(PlatformWindow))
     {
         IntVector2 NewScreenSize(Width, Height);
         Window->OnWindowResize(NewScreenSize);
@@ -869,18 +679,18 @@ bool FApplication::OnWindowResized(const TSharedRef<FGenericWindow>& PlatformWin
     return bResult;
 }
 
-bool FApplication::OnWindowResizing(const TSharedRef<FGenericWindow>&)
+bool FApplication::OnWindowResizing(const TSharedRef<IPlatformWindow>&)
 {
     // We wait for the GPU here to avoid weird resizing behavior
     FRHICommandListExecutor::Get().WaitForGPU();
     return true;
 }
 
-bool FApplication::OnWindowMoved(const TSharedRef<FGenericWindow>& PlatformWindow, int32 x, int32 y)
+bool FApplication::OnWindowMoved(const TSharedRef<IPlatformWindow>& PlatformWindow, int32 x, int32 y)
 {
     bool bResult = false;
 
-    if (TSharedPtr<FWindowWidget> Window = FindWindowFromGenericWindow(PlatformWindow))
+    if (TSharedPtr<FWindowWidget> Window = FindWindowFromPlatformWindow(PlatformWindow))
     {
         IntVector2 NewScreenPosition(x, y);
         Window->OnWindowMoved(NewScreenPosition);
@@ -890,11 +700,11 @@ bool FApplication::OnWindowMoved(const TSharedRef<FGenericWindow>& PlatformWindo
     return bResult;
 }
 
-bool FApplication::OnWindowFocusLost(const TSharedRef<FGenericWindow>& PlatformWindow)
+bool FApplication::OnWindowFocusLost(const TSharedRef<IPlatformWindow>& PlatformWindow)
 {
     bool bResult = false;
 
-    if (TSharedPtr<FWindowWidget> Window = FindWindowFromGenericWindow(PlatformWindow))
+    if (TSharedPtr<FWindowWidget> Window = FindWindowFromPlatformWindow(PlatformWindow))
     {
         // A focus-lost for the outgoing window can arrive after the incoming one gained focus
         if (FocusWindow.Get() == Window.Get())
@@ -910,11 +720,11 @@ bool FApplication::OnWindowFocusLost(const TSharedRef<FGenericWindow>& PlatformW
     return bResult;
 }
 
-bool FApplication::OnWindowFocusGained(const TSharedRef<FGenericWindow>& PlatformWindow)
+bool FApplication::OnWindowFocusGained(const TSharedRef<IPlatformWindow>& PlatformWindow)
 {
     bool bResult = false;
 
-    if (TSharedPtr<FWindowWidget> Window = FindWindowFromGenericWindow(PlatformWindow))
+    if (TSharedPtr<FWindowWidget> Window = FindWindowFromPlatformWindow(PlatformWindow))
     {
         TSharedPtr<FWidget> FocusWidget = Window;
 
@@ -936,11 +746,11 @@ bool FApplication::OnWindowFocusGained(const TSharedRef<FGenericWindow>& Platfor
     return bResult;
 }
 
-bool FApplication::OnWindowClosed(const TSharedRef<FGenericWindow>& PlatformWindow)
+bool FApplication::OnWindowClosed(const TSharedRef<IPlatformWindow>& PlatformWindow)
 {
     bool bResult = false;
 
-    if (TSharedPtr<FWindowWidget> Window = FindWindowFromGenericWindow(PlatformWindow))
+    if (TSharedPtr<FWindowWidget> Window = FindWindowFromPlatformWindow(PlatformWindow))
     {
         DestroyWindow(Window);
         bResult = true;
@@ -968,9 +778,184 @@ bool FApplication::OnApplicationActivationChanged(bool bIsActive)
     return true;
 }
 
+void FApplication::CreateWindow(const TSharedPtr<FWindowWidget>& InWindow)
+{
+    if (!InWindow)
+    {
+        LOG_WARNING("Trying to register a null window");
+        return;
+    }
+
+    if (Windows.Contains(InWindow))
+    {
+        LOG_WARNING("Window is already registered");
+        return;
+    }
+
+    TSharedRef<IPlatformWindow> PlatformWindow = GetPlatformApplication()->CreateWindow();
+    if (!PlatformWindow)
+    {
+        return;
+    }
+
+    // Find the primary monitor
+    int32 PrimaryMonitorIndex = -1;
+    for (int32 Index = 0; Index < MonitorInfos.Size(); Index++)
+    {
+        const FMonitorInfo& MonitorInfo = MonitorInfos[Index];
+        if (MonitorInfo.bIsPrimary)
+        {
+            PrimaryMonitorIndex = Index;
+            break;
+        }
+    }
+    
+    if (PrimaryMonitorIndex < 0)
+    {
+        LOG_WARNING("No primary monitor detected");
+        return;
+    }
+    
+    FPlatformWindowDesc WindowDesc;
+    WindowDesc.Title         = InWindow->GetTitle();
+    WindowDesc.Style         = InWindow->GetStyle();
+    WindowDesc.Position      = InWindow->GetPosition();
+    WindowDesc.bAcceptsInput = InWindow->GetAcceptsInput();
+    
+    if (TSharedPtr<FWindowWidget> ParentWindow = InWindow->GetParentWindow())
+    {
+        WindowDesc.ParentWindow = ParentWindow->GetPlatformWindow().Get();
+    }
+
+    // Calculate the maximum position and size of the new window so that if fits in the main monitor bounds.
+    const FMonitorInfo& MonitorInfo = MonitorInfos[PrimaryMonitorIndex];
+    if (MonitorInfo.MainPosition.X > WindowDesc.Position.X)
+    {
+        WindowDesc.Position.X = MonitorInfo.MainPosition.X;
+    }
+    if (MonitorInfo.MainPosition.Y > WindowDesc.Position.Y)
+    {
+        WindowDesc.Position.Y = MonitorInfo.MainPosition.Y;
+    }
+    
+    WindowDesc.Width  = InWindow->GetWidth();
+    WindowDesc.Height = InWindow->GetHeight();
+    
+    const uint32 ScreenEndX = static_cast<uint32>(MonitorInfo.MainPosition.X + MonitorInfo.MainSize.X);
+    const uint32 ScreenEndY = static_cast<uint32>(MonitorInfo.MainPosition.Y + MonitorInfo.MainSize.Y);
+    const uint32 WindowEndX = WindowDesc.Position.X + WindowDesc.Width;
+    const uint32 WindowEndY = WindowDesc.Position.Y + WindowDesc.Height;
+    
+    if (WindowEndX > ScreenEndX)
+    {
+        WindowDesc.Width = ScreenEndX - WindowDesc.Position.X;
+    }
+    if (WindowEndY > ScreenEndY)
+    {
+        WindowDesc.Height = ScreenEndY - WindowDesc.Position.Y;
+    }
+
+    if (PlatformWindow->Initialize(WindowDesc))
+    {
+        InWindow->SetPlatformWindow(PlatformWindow);        
+        Windows.Add(InWindow);
+
+        PlatformWindow->Show(InWindow->ActivateOnShow());
+    }
+}
+
+void FApplication::DestroyWindow(const TSharedPtr<FWindowWidget>& DestroyedWindow)
+{
+    if (DestroyedWindow)
+    {
+        TSharedRef<IPlatformWindow> PlatformWindow = DestroyedWindow->GetPlatformWindow();
+        DestroyedWindow->OnWindowDestroyed();
+        Windows.Remove(DestroyedWindow);
+
+        if (PlatformWindow == PlatformApplication->GetCapture())
+        {
+            // Give capture back to the first window so that we'll still receive the mouse-up event.
+            TSharedPtr<FWindowWidget> NextWindow = Windows[0];
+            PlatformApplication->SetCapture(NextWindow->GetPlatformWindow());
+        }
+    }
+}
+
+void FApplication::Tick(float Delta)
+{
+    ProcessEvents();
+
+    ProcessDeferredEvents();
+
+    PlatformApplication->Tick(Delta);
+
+    UpdateInputDevices();
+
+    for (const TSharedPtr<FWindowWidget>& CurrentWindow : Windows)
+    {
+        FRectangle WindowRectangle;
+        WindowRectangle.Position = CurrentWindow->GetPosition();
+        WindowRectangle.Width    = CurrentWindow->GetSize().X;
+        WindowRectangle.Height   = CurrentWindow->GetSize().Y;
+
+        CurrentWindow->Tick(WindowRectangle);
+    }
+}
+
+void FApplication::ProcessEvents()
+{
+    PlatformApplication->ProcessEvents();
+}
+
+void FApplication::ProcessDeferredEvents()
+{
+    PlatformApplication->ProcessDeferredEvents();
+
+    if (!bIsApplicationActive || !FocusWindow.IsValid())
+    {
+        ReleaseAllPressedInput();
+    }
+}
+
+void FApplication::UpdateInputDevices()
+{
+    PlatformApplication->UpdateInputDevices();
+}
+
+bool FApplication::IsGamePadConnected() const
+{
+    if (IPlatformInputDevice* InputDevice = GetInputDevice())
+    {
+        return InputDevice->IsDeviceConnected();
+    }
+
+    return false;
+}
+
+void FApplication::RegisterInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler)
+{
+    if (NewInputHandler)
+    {
+        InputHandlers.AddUnique(NewInputHandler);
+    }
+}
+
+void FApplication::UnregisterInputHandler(const TSharedPtr<FInputHandler>& InputHandler)
+{
+    if (InputHandler)
+    {
+        InputHandlers.Remove(InputHandler);
+    }
+}
+
+bool FApplication::SupportsHighPrecisionMouse() const 
+{
+    return PlatformApplication->SupportsHighPrecisionMouse();
+}
+
 bool FApplication::SetHighPrecisionMouseMode(const TSharedPtr<FWindowWidget>& Window, EHighPrecisionMouseMode Mode)
 { 
-    TSharedRef<FGenericWindow> PlatformWindow = Window ? Window->GetPlatformWindow() : nullptr;
+    TSharedRef<IPlatformWindow> PlatformWindow = Window ? Window->GetPlatformWindow() : nullptr;
     if (Mode == EHighPrecisionMouseMode::Enabled && !PlatformWindow)
     {
         return false;
@@ -981,7 +966,7 @@ bool FApplication::SetHighPrecisionMouseMode(const TSharedPtr<FWindowWidget>& Wi
 
 bool FApplication::ConfineCursorToRect(const TSharedPtr<FWindowWidget>& Window, const FRectangle& ScreenRect)
 {
-    TSharedRef<FGenericWindow> PlatformWindow = Window ? Window->GetPlatformWindow() : nullptr;
+    TSharedRef<IPlatformWindow> PlatformWindow = Window ? Window->GetPlatformWindow() : nullptr;
     if (!PlatformWindow || ScreenRect.Width <= 0 || ScreenRect.Height <= 0)
     {
         return false;
@@ -1000,14 +985,9 @@ FModifierKeyState FApplication::GetModifierKeyState() const
     return PlatformApplication->GetModifierKeyState();
 }
 
-bool FApplication::SupportsHighPrecisionMouse() const 
-{
-    return PlatformApplication->SupportsHighPrecisionMouse();
-}
-
 void FApplication::SetCursorPosition(const IntVector2& Position)
 {
-    if (TSharedPtr<ICursor> Cursor = GetCursor())
+    if (TSharedPtr<IPlatformCursor> Cursor = GetCursor())
     {
         Cursor->SetPosition(Position.X, Position.Y);
     }
@@ -1015,7 +995,7 @@ void FApplication::SetCursorPosition(const IntVector2& Position)
 
 IntVector2 FApplication::GetCursorPosition() const
 {
-    if (TSharedPtr<ICursor> Cursor = GetCursor())
+    if (TSharedPtr<IPlatformCursor> Cursor = GetCursor())
     {
         return Cursor->GetPosition();
     }
@@ -1025,7 +1005,7 @@ IntVector2 FApplication::GetCursorPosition() const
 
 void FApplication::SetCursor(ECursor InCursor)
 {
-    if (TSharedPtr<ICursor> Cursor = GetCursor())
+    if (TSharedPtr<IPlatformCursor> Cursor = GetCursor())
     {
         Cursor->SetCursor(InCursor);
     }
@@ -1033,7 +1013,7 @@ void FApplication::SetCursor(ECursor InCursor)
 
 void FApplication::ShowCursor(bool bIsVisible)
 {
-    if (TSharedPtr<ICursor> Cursor = GetCursor())
+    if (TSharedPtr<IPlatformCursor> Cursor = GetCursor())
     {
         Cursor->SetVisibility(bIsVisible);
     }
@@ -1041,56 +1021,12 @@ void FApplication::ShowCursor(bool bIsVisible)
 
 bool FApplication::IsCursorVisible() const
 {
-    if (TSharedPtr<ICursor> Cursor = GetCursor())
+    if (TSharedPtr<IPlatformCursor> Cursor = GetCursor())
     {
         return Cursor->IsVisible();
     }
 
     return false;
-}
-
-bool FApplication::IsGamePadConnected() const
-{
-    if (FInputDevice* InputDevice = GetInputDevice())
-    {
-        return InputDevice->IsDeviceConnected();
-    }
-
-    return false;
-}
-
-TSharedPtr<FWindowWidget> FApplication::FindWindowFromGenericWindow(const TSharedRef<FGenericWindow>& PlatformWindow) const
-{
-    if (!PlatformWindow)
-    {
-        return nullptr;
-    }
-
-    for (TSharedPtr<FWindowWidget> CurrentWindow : Windows)
-    {
-        if (PlatformWindow == CurrentWindow->GetPlatformWindow())
-        {
-            return CurrentWindow;
-        }
-    }
-
-    return nullptr;
-}
-
-void FApplication::OverridePlatformApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication)
-{
-    if (PlatformApplication)
-    {
-        PlatformApplication->SetMessageHandler(MakeSharedPtr<FGenericApplicationMessageHandler>());
-    }
-
-    if (InPlatformApplication)
-    {
-        CHECK(PlatformApplication != InPlatformApplication);
-        InPlatformApplication->SetMessageHandler(Application);
-    }
-
-    PlatformApplication = InPlatformApplication;
 }
 
 void FApplication::SetFocusWidget(const TSharedPtr<FWidget>& FocusWidget)
@@ -1129,6 +1065,26 @@ void FApplication::SetFocusWidgets(const FWidgetPath& NewFocusPath)
     FocusPath = NewFocusPath;
 }
 
+TSharedPtr<FWidget> FApplication::GetFocusLeafWidget() const
+{
+    if (!FocusPath.IsEmpty())
+    {
+        return FocusPath[FocusPath.LastIndex()];
+    }
+
+    return nullptr;
+}
+
+TSharedPtr<FWindowWidget> FApplication::GetFocusWindow() const
+{
+    if (!FocusWindow.IsValid())
+    {
+        return nullptr;
+    }
+
+    return TSharedPtr<FWindowWidget>(FocusWindow);
+}
+
 TSharedPtr<FWindowWidget> FApplication::FindWindowWidget(const TSharedPtr<FWidget>& InWidget)
 {
     TWeakPtr<FWidget> ParentWidget = InWidget;
@@ -1150,11 +1106,29 @@ TSharedPtr<FWindowWidget> FApplication::FindWindowWidget(const TSharedPtr<FWidge
     return nullptr;
 }
 
+TSharedPtr<FWindowWidget> FApplication::FindWindowFromPlatformWindow(const TSharedRef<IPlatformWindow>& PlatformWindow) const
+{
+    if (!PlatformWindow)
+    {
+        return nullptr;
+    }
+
+    for (TSharedPtr<FWindowWidget> CurrentWindow : Windows)
+    {
+        if (PlatformWindow == CurrentWindow->GetPlatformWindow())
+        {
+            return CurrentWindow;
+        }
+    }
+
+    return nullptr;
+}
+
 TSharedPtr<FWindowWidget> FApplication::FindWindowUnderCursor() const
 {
-    if (TSharedRef<FGenericWindow> PlatformWindow = PlatformApplication->GetWindowUnderCursor())
+    if (TSharedRef<IPlatformWindow> PlatformWindow = PlatformApplication->GetWindowUnderCursor())
     {
-        return FindWindowFromGenericWindow(PlatformWindow);
+        return FindWindowFromPlatformWindow(PlatformWindow);
     }
 
     return nullptr;
@@ -1162,7 +1136,7 @@ TSharedPtr<FWindowWidget> FApplication::FindWindowUnderCursor() const
 
 void FApplication::FindWidgetsUnderCursor(FWidgetPath& OutCursorPath)
 {
-    if (TSharedPtr<ICursor> Cursor = GetCursor())
+    if (TSharedPtr<IPlatformCursor> Cursor = GetCursor())
     {
         FindWidgetsUnderCursor(Cursor->GetPosition(), OutCursorPath);
     }
@@ -1170,12 +1144,21 @@ void FApplication::FindWidgetsUnderCursor(FWidgetPath& OutCursorPath)
 
 void FApplication::FindWidgetsUnderCursor(const IntVector2& Point, FWidgetPath& OutCursorPath)
 {
-    if (TSharedRef<FGenericWindow> PlatformWindow = PlatformApplication->GetWindowUnderCursor())
+    if (TSharedRef<IPlatformWindow> PlatformWindow = PlatformApplication->GetWindowUnderCursor())
     {
-        if (TSharedPtr<FWindowWidget> CursorWindow = FindWindowFromGenericWindow(PlatformWindow))
+        if (TSharedPtr<FWindowWidget> CursorWindow = FindWindowFromPlatformWindow(PlatformWindow))
         {
             CursorWindow->FindChildrenContainingPoint(Point, OutCursorPath);
         }
+    }
+}
+
+void FApplication::UpdateMonitorInfo()
+{
+    if (!bIsMonitorInfoValid)
+    {
+        PlatformApplication->QueryMonitorInfo(MonitorInfos);
+        bIsMonitorInfoValid = true;
     }
 }
 
@@ -1189,22 +1172,39 @@ void FApplication::GetDisplayInfo(TArray<FMonitorInfo>& OutMonitorInfo)
     OutMonitorInfo = MonitorInfos;
 }
 
-TSharedPtr<FWindowWidget> FApplication::GetFocusWindow() const
+void FApplication::OverridePlatformApplication(const TSharedPtr<IPlatformApplication>& InPlatformApplication)
 {
-    if (!FocusWindow.IsValid())
+    if (PlatformApplication)
     {
-        return nullptr;
+        PlatformApplication->SetMessageHandler(MakeSharedPtr<IPlatformApplicationMessageHandler>());
     }
 
-    return TSharedPtr<FWindowWidget>(FocusWindow);
+    if (InPlatformApplication)
+    {
+        CHECK(PlatformApplication != InPlatformApplication);
+        InPlatformApplication->SetMessageHandler(Application);
+    }
+
+    PlatformApplication = InPlatformApplication;
 }
 
-TSharedPtr<FWidget> FApplication::GetFocusLeafWidget() const
+void FApplication::ReleaseAllPressedInput()
 {
-    if (!FocusPath.IsEmpty())
+    if (!PressedKeys.IsEmpty())
     {
-        return FocusPath[FocusPath.LastIndex()];
+        const TSet<EKeyboardKeyName::Type> KeysToRelease = PressedKeys;
+        for (EKeyboardKeyName::Type Key : KeysToRelease)
+        {
+            OnKeyUp(Key, GetModifierKeyState());
+        }
     }
 
-    return nullptr;
+    if (!PressedMouseButtons.IsEmpty())
+    {
+        const TSet<EMouseButtonName::Type> ButtonsToRelease = PressedMouseButtons;
+        for (EMouseButtonName::Type Button : ButtonsToRelease)
+        {
+            OnMouseButtonUp(Button, GetModifierKeyState());
+        }
+    }
 }

@@ -1,10 +1,10 @@
 #pragma once
 #include "Core/Core.h"
 #include "Core/Containers/StaticArray.h"
-#include "CoreApplication/Generic/InputCodes.h"
-#include "CoreApplication/Generic/GenericInputMapper.h"
+#include "CoreApplication/PlatformInterface/InputCodes.h"
+#include "CoreApplication/PlatformInterface/IPlatformInputMapper.h"
 
-class COREAPPLICATION_API FWindowsInputMapper final : public EGenericInputMapper
+class COREAPPLICATION_API FWindowsInputMapper final : public IPlatformInputMapper
 {
     inline static constexpr uint32 NumKeys = 512;
 

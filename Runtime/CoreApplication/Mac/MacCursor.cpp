@@ -18,9 +18,9 @@
 @end
 
 FMacCursor::FMacCursor()
-    : FGenericCursor()
-    , CurrentPosition()
+    : CurrentPosition()
     , CurrentCursor(ECursor::Arrow)
+    , bIsVisible(true)
     , bIsPositionInitialized(false)
     , bIsCursorInitialized(false)
 {

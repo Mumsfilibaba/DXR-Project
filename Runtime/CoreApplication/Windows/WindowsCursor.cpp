@@ -4,7 +4,7 @@
 #include "CoreApplication/Windows/WindowsWindow.h"
 
 FWindowsCursor::FWindowsCursor()
-    : FGenericCursor()
+    : bIsVisible(true)
 {
 }
 

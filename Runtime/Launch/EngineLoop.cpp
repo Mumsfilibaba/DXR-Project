@@ -16,7 +16,7 @@
 #include "Application/Application.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
-#include "CoreApplication/Platform/PlatformConsoleOutputDevice.h"
+#include "CoreApplication/Platform/PlatformConsoleWindow.h"
 #include "Renderer/Performance/GPUProfiler.h"
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Engine.h"
@@ -45,14 +45,14 @@ struct FDebuggerOutputDevice : public IOutputDevice
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING
 
-static TUniquePtr<FDebuggerOutputDevice>       GDebuggerOutputDevice;
-static TUniquePtr<FGenericConsoleOutputDevice> GConsoleWindow;
-static TUniquePtr<FFileOutputDevice>           GFileOutputDevice;
+static TUniquePtr<FDebuggerOutputDevice>   GDebuggerOutputDevice;
+static TUniquePtr<IPlatformConsoleWindow>  GConsoleWindow;
+static TUniquePtr<FFileOutputDevice>       GFileOutputDevice;
 
 static bool InitializeOutputDevices()
 {
     // Create the console window
-    GConsoleWindow = TUniquePtr<FGenericConsoleOutputDevice>(FPlatformConsoleOutputDevice::Create());
+    GConsoleWindow = TUniquePtr<IPlatformConsoleWindow>(FPlatformConsoleWindow::Create());
     if (GConsoleWindow)
     {
         GConsoleWindow->Show(true);

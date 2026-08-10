@@ -4,7 +4,7 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct FGenericApplicationMisc
+struct IPlatformApplicationMisc
 {
     static FORCEINLINE void MessageBox(const String& Title, const String& Message) { }
     static FORCEINLINE void PumpMessages(bool bUntilEmpty) { }

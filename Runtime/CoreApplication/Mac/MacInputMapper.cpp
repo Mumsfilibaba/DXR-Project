@@ -100,7 +100,6 @@ void FMacInputMapper::Initialize()
     KeyCodeFromScanCodeTable[0x4F] = EKeyboardKeyName::F18;
     KeyCodeFromScanCodeTable[0x50] = EKeyboardKeyName::F19;
     KeyCodeFromScanCodeTable[0x5A] = EKeyboardKeyName::F20;
-    // 0x47 is the keypad Clear key, and a Mac keyboard has no NumLock at all, so it stays unmapped
     KeyCodeFromScanCodeTable[0x29] = EKeyboardKeyName::Semicolon;
     KeyCodeFromScanCodeTable[0x2B] = EKeyboardKeyName::Comma;
     KeyCodeFromScanCodeTable[0x1B] = EKeyboardKeyName::Minus;

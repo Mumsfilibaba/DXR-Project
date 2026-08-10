@@ -1,9 +1,9 @@
 #pragma once
 #include "Core/Containers/Set.h"
 #include "Core/Delegates/Event.h"
-#include "CoreApplication/Generic/ICursor.h"
+#include "CoreApplication/PlatformInterface/IPlatformCursor.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
-#include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
+#include "CoreApplication/PlatformInterface/IPlatformApplicationMessageHandler.h"
 #include "Application/InputHandler.h"
 #include "Application/WidgetPath.h"
 #include "Application/Widgets/WindowWidget.h"
@@ -11,7 +11,7 @@
 /** @brief Event triggered when the monitor configuration changes (e.g., adding or removing displays). */
 DECLARE_EVENT(FOnMonitorConfigChangedEvent, FApplication);
 
-class APPLICATION_API FApplication : public FGenericApplicationMessageHandler , public TSharedFromThis<FApplication>
+class APPLICATION_API FApplication : public IPlatformApplicationMessageHandler , public TSharedFromThis<FApplication>
 {
 public:
 
@@ -51,30 +51,34 @@ public:
     }
     
 public:
-    FApplication(TSharedPtr<FGenericApplication> InPlatformApplication);
+    FApplication(TSharedPtr<IPlatformApplication> InPlatformApplication);
     virtual ~FApplication();
 
-    // FGenericApplicationMessageHandler Interface Overrides
+    // IPlatformApplicationMessageHandler Interface Overrides
     virtual bool OnGamepadButtonUp(EGamepadButtonName::Type Button, uint32 GamepadIndex) override final;
     virtual bool OnGamepadButtonDown(EGamepadButtonName::Type Button, uint32 GamepadIndex, bool bIsRepeat) override final;
     virtual bool OnAnalogGamepadChange(EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float AnalogValue) override final;
+
     virtual bool OnKeyUp(EKeyboardKeyName::Type KeyCode, FModifierKeyState ModifierKeyState) override final;
     virtual bool OnKeyDown(EKeyboardKeyName::Type KeyCode, bool bIsRepeat, FModifierKeyState ModifierKeyState) override final;
     virtual bool OnKeyChar(uint32 Character) override final;
+
     virtual bool OnMouseMove(int32 MouseX, int32 MouseY) override final;
-    virtual bool OnMouseButtonDown(const TSharedRef<FGenericWindow>& PlatformWindow, EMouseButtonName::Type Button, FModifierKeyState ModifierKeyState) override final;
+    virtual bool OnMouseButtonDown(const TSharedRef<IPlatformWindow>& PlatformWindow, EMouseButtonName::Type Button, FModifierKeyState ModifierKeyState) override final;
     virtual bool OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeyState ModifierKeyState) override final;
     virtual bool OnMouseButtonDoubleClick(EMouseButtonName::Type Button, FModifierKeyState ModifierKeyState) override final;
     virtual bool OnMouseScrolled(float WheelDelta, EScrollAxis ScrollAxis) override final;
     virtual bool OnMouseEntered() override final;
     virtual bool OnMouseLeft() override final;
     virtual bool OnHighPrecisionMouseInput(int32 MouseX, int32 MouseY) override final;
-    virtual bool OnWindowResized(const TSharedRef<FGenericWindow>& Window, uint32 Width, uint32 Height) override final;
-    virtual bool OnWindowResizing(const TSharedRef<FGenericWindow>& Window) override final;
-    virtual bool OnWindowMoved(const TSharedRef<FGenericWindow>& Window, int32 MouseX, int32 MouseY) override final;
-    virtual bool OnWindowFocusLost(const TSharedRef<FGenericWindow>& Window) override final;
-    virtual bool OnWindowFocusGained(const TSharedRef<FGenericWindow>& Window) override final;
-    virtual bool OnWindowClosed(const TSharedRef<FGenericWindow>& Window) override final;
+
+    virtual bool OnWindowResized(const TSharedRef<IPlatformWindow>& Window, uint32 Width, uint32 Height) override final;
+    virtual bool OnWindowResizing(const TSharedRef<IPlatformWindow>& Window) override final;
+    virtual bool OnWindowMoved(const TSharedRef<IPlatformWindow>& Window, int32 MouseX, int32 MouseY) override final;
+    virtual bool OnWindowFocusLost(const TSharedRef<IPlatformWindow>& Window) override final;
+    virtual bool OnWindowFocusGained(const TSharedRef<IPlatformWindow>& Window) override final;
+    virtual bool OnWindowClosed(const TSharedRef<IPlatformWindow>& Window) override final;
+
     virtual bool OnMonitorConfigurationChange() override final;
     virtual bool OnApplicationActivationChanged(bool bIsActive) override final;
 
@@ -120,10 +124,22 @@ public:
     void UpdateInputDevices();
 
     /**
-     * @brief Updates the cached monitor information if the platform reported a monitor setup change.
-     * This includes gathering information such as resolution, DPI, and primary monitor status.
+     * @brief Checks if a gamepad is currently connected. Internally checks if an IPlatformInputDevice 
+     * is registered and if that device reports as connected.
+     * 
+     * @return True if a gamepad is connected, otherwise false.
      */
-    void UpdateMonitorInfo();
+    bool IsGamePadConnected() const;
+
+    /**
+     * @brief Retrieves the primary input device interface (e.g., for gamepads).
+     * 
+     * @return A pointer to the current IPlatformInputDevice instance, or nullptr if none.
+     */
+    FORCEINLINE IPlatformInputDevice* GetInputDevice() const
+    {
+        return PlatformApplication->GetInputDevice();
+    }
 
     /**
      * @brief Registers a new input handler with the application. Input handlers can intercept 
@@ -139,6 +155,13 @@ public:
      * @param InputHandler The input handler to remove.
      */
     void UnregisterInputHandler(const TSharedPtr<FInputHandler>& InputHandler);
+
+    /**
+     * @brief Checks if the application supports high-precision mouse input (raw input).
+     * 
+     * @return True if high-precision mouse input is supported, otherwise false.
+     */
+    bool SupportsHighPrecisionMouse() const;
 
     /**
      * @brief Enables or disables high-precision (relative) mouse input, if the platform supports it.
@@ -172,13 +195,6 @@ public:
      * @return A struct that contains the current state of modifier keys.
      */
     FModifierKeyState GetModifierKeyState() const;
-
-    /**
-     * @brief Checks if the application supports high-precision mouse input (raw input).
-     * 
-     * @return True if high-precision mouse input is supported, otherwise false.
-     */
-    bool SupportsHighPrecisionMouse() const;
 
     /**
      * @brief Sets the global cursor position. Moves the system cursor to the specified position in screen coordinates.
@@ -216,33 +232,25 @@ public:
     bool IsCursorVisible() const;
 
     /**
-     * @brief Checks if a gamepad is currently connected. Internally checks if an FInputDevice 
-     * is registered and if that device reports as connected.
+     * @brief Checks if the application is currently tracking a mouse drag operation. This is set to true 
+     * when the left mouse button is pressed, and remains true until it is released.
      * 
-     * @return True if a gamepad is connected, otherwise false.
+     * @return True if a mouse drag operation is in progress, otherwise false.
      */
-    bool IsGamePadConnected() const;
+    FORCEINLINE bool IsTrackingCursor() const
+    {
+        return bIsTrackingCursor;
+    }
 
     /**
-     * @brief Overrides the existing platform application with a new FGenericApplication instance.
+     * @brief Retrieves the cursor interface being used by the platform application.
      * 
-     * @param InPlatformApplication The new platform application to set.
+     * @return A shared pointer to the IPlatformCursor interface, or nullptr if unsupported.
      */
-    void OverridePlatformApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication);
-
-    /**
-     * @brief Gets the window that currently has focus (for receiving keyboard input, etc.).
-     * 
-     * @return A shared pointer to the focused window, or nullptr if none.
-     */
-    TSharedPtr<FWindowWidget> GetFocusWindow() const;
-
-    /**
-     * @brief Gets the widget that currently has focus (for receiving keyboard input, etc.).
-     *
-     * @return A shared pointer to the focused widget, or nullptr if none.
-     */
-    TSharedPtr<FWidget> GetFocusLeafWidget() const;
+    FORCEINLINE TSharedPtr<IPlatformCursor> GetCursor() const
+    {
+        return PlatformApplication->GetCursor();
+    }
 
     /**
      * @brief Sets focus to the specified widget and all of its parents up to the top-level window.
@@ -260,21 +268,35 @@ public:
     void SetFocusWidgets(const FWidgetPath& NewFocusPath);
 
     /**
+     * @brief Gets the widget that currently has focus (for receiving keyboard input, etc.).
+     *
+     * @return A shared pointer to the focused widget, or nullptr if none.
+     */
+    TSharedPtr<FWidget> GetFocusLeafWidget() const;
+
+    /**
+     * @brief Gets the window that currently has focus (for receiving keyboard input, etc.).
+     * 
+     * @return A shared pointer to the focused window, or nullptr if none.
+     */
+    TSharedPtr<FWindowWidget> GetFocusWindow() const;
+
+    /**
      * @brief Finds the lowest-level window (top-level FWindowWidget) that contains the specified widget.
      * 
      * @param InWidget The widget to search for.
      * @return A shared pointer to the top-level FWindowWidget that contains the widget, or nullptr if not found.
      */
     TSharedPtr<FWindowWidget> FindWindowWidget(const TSharedPtr<FWidget>& InWidget);
-    
+
     /**
-     * @brief Finds the FWindowWidget that corresponds to a given platform window (FGenericWindow).
+     * @brief Finds the FWindowWidget that corresponds to a given platform window (IPlatformWindow).
      * 
-     * @param PlatformWindow The FGenericWindow to match against known windows.
+     * @param PlatformWindow The IPlatformWindow to match against known windows.
      * @return A shared pointer to the corresponding FWindowWidget, or nullptr if not found.
      */
-    TSharedPtr<FWindowWidget> FindWindowFromGenericWindow(const TSharedRef<FGenericWindow>& PlatformWindow) const;
-    
+    TSharedPtr<FWindowWidget> FindWindowFromPlatformWindow(const TSharedRef<IPlatformWindow>& PlatformWindow) const;
+
     /**
      * @brief Returns the window currently under the mouse cursor.
      * 
@@ -288,7 +310,7 @@ public:
      * @param OutCursorPath A widget path object that will be populated with the widgets under the cursor.
      */
     void FindWidgetsUnderCursor(FWidgetPath& OutCursorPath);
-    
+
     /**
      * @brief Populates a widget path with widgets that lie under a specific screen coordinate.
      * 
@@ -298,6 +320,12 @@ public:
     void FindWidgetsUnderCursor(const IntVector2& Point, FWidgetPath& OutCursorPath);
 
     /**
+     * @brief Updates the cached monitor information if the platform reported a monitor setup change.
+     * This includes gathering information such as resolution, DPI, and primary monitor status.
+     */
+    void UpdateMonitorInfo();
+
+    /**
      * @brief Retrieves cached monitor/display information (e.g., resolution, DPI).
      * 
      * @param OutMonitorInfo An array to receive the available monitor configurations.
@@ -305,14 +333,13 @@ public:
     void GetDisplayInfo(TArray<FMonitorInfo>& OutMonitorInfo);
 
     /**
-     * @brief Checks if the application is currently tracking a mouse drag operation. This is set to true 
-     * when the left mouse button is pressed, and remains true until it is released.
+     * @brief Accessor for the monitor configuration changed event.
      * 
-     * @return True if a mouse drag operation is in progress, otherwise false.
+     * @return A reference to the event triggered when monitors are added/removed or their configuration changes.
      */
-    FORCEINLINE bool IsTrackingCursor() const
+    FORCEINLINE FOnMonitorConfigChangedEvent& GetOnMonitorConfigChangedEvent()
     {
-        return bIsTrackingCursor;
+        return OnMonitorConfigChangedEvent;
     }
 
     /**
@@ -326,49 +353,26 @@ public:
     }
 
     /**
+     * @brief Overrides the existing platform application with a new IPlatformApplication instance.
+     * 
+     * @param InPlatformApplication The new platform application to set.
+     */
+    void OverridePlatformApplication(const TSharedPtr<IPlatformApplication>& InPlatformApplication);
+
+    /**
      * @brief Retrieves the current platform application interface.
      * 
-     * @return A shared pointer to the current FGenericApplication.
+     * @return A shared pointer to the current IPlatformApplication.
      */
-    FORCEINLINE TSharedPtr<FGenericApplication> GetPlatformApplication() const
+    FORCEINLINE TSharedPtr<IPlatformApplication> GetPlatformApplication() const
     {
         return PlatformApplication;
-    }
-
-    /**
-     * @brief Retrieves the primary input device interface (e.g., for gamepads).
-     * 
-     * @return A pointer to the current FInputDevice instance, or nullptr if none.
-     */
-    FORCEINLINE FInputDevice* GetInputDevice() const
-    {
-        return PlatformApplication->GetInputDevice();
-    }
-
-    /**
-     * @brief Retrieves the cursor interface being used by the platform application.
-     * 
-     * @return A shared pointer to the ICursor interface, or nullptr if unsupported.
-     */
-    FORCEINLINE TSharedPtr<ICursor> GetCursor() const
-    {
-        return PlatformApplication->GetCursor();
-    }
-
-    /**
-     * @brief Accessor for the monitor configuration changed event.
-     * 
-     * @return A reference to the event triggered when monitors are added/removed or their configuration changes.
-     */
-    FORCEINLINE FOnMonitorConfigChangedEvent& GetOnMonitorConfigChangedEvent()
-    {
-        return OnMonitorConfigChangedEvent;
     }
 
 private:
     void ReleaseAllPressedInput();
 
-    TSharedPtr<FGenericApplication>   PlatformApplication;
+    TSharedPtr<IPlatformApplication>  PlatformApplication;
     TSet<EKeyboardKeyName::Type>      PressedKeys;
     TSet<EMouseButtonName::Type>      PressedMouseButtons;
     TArray<FMonitorInfo>              MonitorInfos;

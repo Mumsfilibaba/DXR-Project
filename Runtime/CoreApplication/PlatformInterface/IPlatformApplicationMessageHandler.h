@@ -1,29 +1,15 @@
 #pragma once
 #include "Core/Containers/SharedRef.h"
-#include "CoreApplication/Generic/GenericApplicationMisc.h"
-#include "CoreApplication/Generic/InputCodes.h"
+#include "CoreApplication/PlatformInterface/IPlatformApplicationMisc.h"
+#include "CoreApplication/PlatformInterface/InputCodes.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class FGenericWindow;
+struct IPlatformWindow;
 
-/**
- * @struct FGenericApplicationMessageHandler
- * @brief Interface for handling various application messages and input events.
- *
- * FGenericApplicationMessageHandler serves as an abstract base class defining a set of virtual
- * methods to handle different types of input and window events. Subclasses should override
- * these methods to implement specific behaviors in response to user interactions and system events.
- *
- * The methods return a boolean indicating whether the event was handled (true) or not (false).
- * This allows for event propagation control, where unhandled events can be passed to other handlers.
- */
-struct FGenericApplicationMessageHandler
+struct IPlatformApplicationMessageHandler
 {
-    /**
-     * @brief Virtual destructor to ensure proper cleanup in derived classes.
-     */
-    virtual ~FGenericApplicationMessageHandler() = default;
+    virtual ~IPlatformApplicationMessageHandler() = default;
 
     /**
      * @brief Called when a gamepad button is released.
@@ -119,7 +105,7 @@ struct FGenericApplicationMessageHandler
      * @param ModifierKeyState The state of modifier keys at the time of the event.
      * @return true if the event was handled, false otherwise.
      */
-    virtual bool OnMouseButtonDown(const TSharedRef<FGenericWindow>& PlatformWindow, EMouseButtonName::Type Button, FModifierKeyState ModifierKeyState)
+    virtual bool OnMouseButtonDown(const TSharedRef<IPlatformWindow>& PlatformWindow, EMouseButtonName::Type Button, FModifierKeyState ModifierKeyState)
     {
         return false;
     }
@@ -200,7 +186,7 @@ struct FGenericApplicationMessageHandler
      * @param Height The new height of the window.
      * @return true if the event was handled, false otherwise.
      */
-    virtual bool OnWindowResized(const TSharedRef<FGenericWindow>& Window, uint32 Width, uint32 Height)
+    virtual bool OnWindowResized(const TSharedRef<IPlatformWindow>& Window, uint32 Width, uint32 Height)
     {
         return false;
     }
@@ -211,7 +197,7 @@ struct FGenericApplicationMessageHandler
      * @param Window The window that is being resized.
      * @return true if the event was handled, false otherwise.
      */
-    virtual bool OnWindowResizing(const TSharedRef<FGenericWindow>& Window)
+    virtual bool OnWindowResizing(const TSharedRef<IPlatformWindow>& Window)
     {
         return false;
     }
@@ -224,7 +210,7 @@ struct FGenericApplicationMessageHandler
      * @param y The new Y-coordinate of the window's position.
      * @return true if the event was handled, false otherwise.
      */
-    virtual bool OnWindowMoved(const TSharedRef<FGenericWindow>& Window, int32 x, int32 y)
+    virtual bool OnWindowMoved(const TSharedRef<IPlatformWindow>& Window, int32 x, int32 y)
     {
         return false;
     }
@@ -235,7 +221,7 @@ struct FGenericApplicationMessageHandler
      * @param Window The window that lost focus.
      * @return true if the event was handled, false otherwise.
      */
-    virtual bool OnWindowFocusLost(const TSharedRef<FGenericWindow>& Window)
+    virtual bool OnWindowFocusLost(const TSharedRef<IPlatformWindow>& Window)
     {
         return false;
     }
@@ -246,7 +232,7 @@ struct FGenericApplicationMessageHandler
      * @param Window The window that gained focus.
      * @return true if the event was handled, false otherwise.
      */
-    virtual bool OnWindowFocusGained(const TSharedRef<FGenericWindow>& Window)
+    virtual bool OnWindowFocusGained(const TSharedRef<IPlatformWindow>& Window)
     {
         return false;
     }
@@ -257,7 +243,7 @@ struct FGenericApplicationMessageHandler
      * @param Window The window that was closed.
      * @return true if the event was handled, false otherwise.
      */
-    virtual bool OnWindowClosed(const TSharedRef<FGenericWindow>& Window)
+    virtual bool OnWindowClosed(const TSharedRef<IPlatformWindow>& Window)
     {
         return false;
     }

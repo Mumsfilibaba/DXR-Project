@@ -4,7 +4,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "CoreApplication/Windows/XInputDevice.h"
-#include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
+#include "CoreApplication/PlatformInterface/IPlatformApplicationMessageHandler.h"
 
 static TAutoConsoleVariable<int32> CVarXInputButtonRepeatDelay(
     "XInput.ButtonRepeatDelay",
@@ -12,8 +12,14 @@ static TAutoConsoleVariable<int32> CVarXInputButtonRepeatDelay(
     60,
     EConsoleVariableFlags::Default);
 
+TSharedPtr<FXInputDevice> FXInputDevice::Create()
+{
+    TSharedPtr<FXInputDevice> NewInputDevice = MakeSharedPtr<FXInputDevice>();
+    return NewInputDevice;
+}
+
 FXInputDevice::FXInputDevice()
-    : FInputDevice()
+    : MessageHandler(nullptr)
     , bIsDeviceConnected(false)
 {
     Memory::Memzero(GamepadStates, sizeof(FXInputGamepadState) * XUSER_MAX_COUNT);
@@ -23,7 +29,6 @@ void FXInputDevice::UpdateDeviceState()
 {
     bool bFoundDevice = false;
 
-    // Update the state for all controllers that are already marked as connected
     for (DWORD GamepadIndex = 0; GamepadIndex < XUSER_MAX_COUNT; ++GamepadIndex)
     {
         FXInputGamepadState& CurrentState = GamepadStates[GamepadIndex];
@@ -47,7 +52,6 @@ void FXInputDevice::UpdateDeviceState()
         }
     }
 
-    // Update device connected flag
     bIsDeviceConnected = bFoundDevice;
 }
 
@@ -55,7 +59,6 @@ void FXInputDevice::UpdateConnectionState()
 {
     bool bFoundDevice = false;
 
-    // Check all 4 possible XInput controllers
     for (DWORD UserIndex = 0; UserIndex < XUSER_MAX_COUNT; ++UserIndex)
     {
         XINPUT_STATE State;
@@ -78,16 +81,16 @@ void FXInputDevice::UpdateConnectionState()
 
 void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 GamepadIndex)
 {
-    TSharedPtr<FGenericApplicationMessageHandler> CurrentMessageHandler = GetMessageHandler();
+    TSharedPtr<IPlatformApplicationMessageHandler> CurrentMessageHandler = GetMessageHandler();
     if (!CurrentMessageHandler)
     {
-        return; // If there's no valid message handler, no need to process further
+        return;
     }
 
     FXInputGamepadState& CurrentState = GamepadStates[GamepadIndex];
     const XINPUT_GAMEPAD& Gamepad = State.Gamepad;
 
-    constexpr int32 MaxButtonRepeatDelay = (1 << 7) - 1; // 127
+    constexpr int32 MaxButtonRepeatDelay = (1 << 7) - 1;
     const int32 RepeatDelay    = Math::Clamp(CVarXInputButtonRepeatDelay.GetValue(), 0, MaxButtonRepeatDelay);
     const int32 GamepadButtons = static_cast<int32>(Gamepad.wButtons);
 
@@ -96,7 +99,6 @@ void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 GamepadI
         return (GamepadButtons & ButtonMask) != 0;
     };
 
-    // Prepare a boolean array for all button states
     bool bCurrentStates[NUM_BUTTONS];
     Memory::Memzero(bCurrentStates, sizeof(bCurrentStates));
 
@@ -132,45 +134,35 @@ void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 GamepadI
         const bool bIsPressed = bCurrentStates[ButtonIndex];
         if (bIsPressed)
         {
-            // Button is down
             if (ButtonState.bState) 
             {
-                // Already down -> repeat event
                 ButtonState.RepeatCount++;
                 if (ButtonState.RepeatCount >= RepeatDelay)
                 {
                     CurrentMessageHandler->OnGamepadButtonDown(static_cast<EGamepadButtonName::Type>(ButtonIndex), GamepadIndex, true);
-
-                    // Keep repeat count pegged at RepeatDelay
                     ButtonState.RepeatCount = RepeatDelay;
                 }
             }
             else
             {
-                // Newly pressed
                 CurrentMessageHandler->OnGamepadButtonDown(static_cast<EGamepadButtonName::Type>(ButtonIndex), GamepadIndex, false );
                 ButtonState.RepeatCount = 1;
             }
         }
         else
         {
-            // Button is not pressed
             if (ButtonState.bState)
             {
-                // Transition from down to up
                 CurrentMessageHandler->OnGamepadButtonUp(static_cast<EGamepadButtonName::Type>(ButtonIndex), GamepadIndex );
                 ButtonState.RepeatCount = 0;
             }
         }
 
-        // Update state
         ButtonState.bState = bIsPressed ? 1 : 0;
     }
 
-    // Dispatch analog changes only if needed
     auto DispatchAnalogMessage = [CurrentMessageHandler](EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, int16 OldValue, int16 NewValue, float NormalizedValue, int16 DeadZone)
     {
-        // Always send an update if the value changed; some code chooses to skip if within deadzone
         bool bValueChanged    = (OldValue != NewValue);
         bool bOutsideDeadZone = (Math::Abs(NewValue) > DeadZone);
 
@@ -180,15 +172,12 @@ void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 GamepadI
         }
     };
 
-    // Helper for Normalizing a ThumbStick value
     auto NormalizeThumbStick = [](int16 ThumbValue) -> float
     {
-        // Max value is different for negative vs. positive input
         const float ThumbMaxValue = (ThumbValue < 0) ? 32768.0f : 32767.0f;
         return static_cast<float>(ThumbValue) / ThumbMaxValue;
     };
 
-    // Helper for Normalizing a Trigger value
     auto NormalizeTrigger = [](uint8 TriggerValue) -> float
     {
         constexpr float TriggerMaxValue = 255.0f;
@@ -209,7 +198,6 @@ void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 GamepadI
     DispatchAnalogMessage(EAnalogSourceName::LeftThumbX, GamepadIndex, CurrentState.LeftThumbX, Gamepad.sThumbLX, NormalizeThumbStick(Gamepad.sThumbLX), XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
     DispatchAnalogMessage(EAnalogSourceName::LeftThumbY, GamepadIndex, CurrentState.LeftThumbY, Gamepad.sThumbLY, NormalizeThumbStick(Gamepad.sThumbLY), XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
 
-    // Update stored state
     CurrentState.RightThumbX  = Gamepad.sThumbRX;
     CurrentState.RightThumbY  = Gamepad.sThumbRY;
     CurrentState.LeftThumbX   = Gamepad.sThumbLX;

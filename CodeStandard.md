@@ -198,18 +198,16 @@ Bits::ReverseBits(Value);
 | --- | --- | --- |
 | Static-only "namespace" struct/class | Drop `F`, use a plural/semantic name | `FBitHelper` -> `Bits`, `FMemory` -> `Memory`, `FCommandLine` -> `CommandLine` |
 | Class template (helpers, but still a template) | `T` prefix | `FInlineStorage` -> `TInlineStorage` |
-| Polymorphic interface / abstract base | `I` prefix | `FModuleInterface` -> `IModule` |
+| Stateless interface (polymorphic or static-only) | `I` prefix | `FModuleInterface` -> `IModule`, `EGenericInputMapper` -> `IPlatformInputMapper` |
 | `struct E { static const ... };` (constants masquerading as an enum) | Drop the prefix, treat as a namespace | `EKeys` -> `Keys` |
 | `struct E { enum Type { ... }; };` (enum-scoping idiom) | Keep `E` | `EKeyName`, `EShaderVisibility` (unchanged) |
 
 ### Interfaces
-* Interfaces do not contain any state (i.e no variables) and does not provide any function definition. All functions should be pure virtual.
+* An interface contains no state (i.e no variables). That, and not pure virtuality, is what makes a type an interface. State belongs in the implementations, so an interface that needs to expose it declares an accessor and lets each implementation hold the member.
 
 * Interfaces should use the capital letter 'I' as prefix.
 
-* Interfaces should use a virtual destructor if the interface will be deleted as the instance-type.
-
-* Prefer structs over classes. Since everything most likeley will be public anyway.
+* All functions pure virtual is the usual form, and the one to reach for by default:
 
 ```
 struct IMyInterface
@@ -219,6 +217,14 @@ struct IMyInterface
   virtual void Func() = 0;
 }
 ```
+
+* It is not the only form. Two variations are still interfaces and still take the `I` prefix:
+  * A function may keep a default body where the default is meaningful rather than a placeholder. `IPlatformApplicationMessageHandler` returns `false` from every handler, meaning "not handled, keep propagating", so an implementation only overrides the events it cares about.
+  * The functions may be `static`, which makes the interface a compile-time one: implementations hide the stubs instead of overriding them, and a typedef such as `FPlatformInputMapper` picks the implementation, so calls resolve at compile time. `IPlatformInputMapper` and `IPlatformApplicationMisc` work this way. This case takes precedence over the static-only rule in [Static-Only Classes](#static-only-classes), which drops the prefix: those types name a namespace of helpers, an interface names a contract that platforms implement.
+
+* Interfaces should use a virtual destructor if the interface will be deleted as the instance-type.
+
+* Prefer structs over classes. Since everything most likeley will be public anyway.
 
 ### Enums
 * Enums should use the capital letter 'E' as prefix
@@ -418,53 +424,51 @@ private:
 ```
 
 ### Platform Specific Code
-* Platform specific code should be kept in seperate directories with the platform name. Generic should contain platform-independent code only
+* Platform specific code should be kept in seperate directories with the platform name. `PlatformInterface` holds the interfaces the platforms implement, and `Platform` holds the headers that select between them
 ```
-Application/Platform/
-Application/Mac/
-Application/Windows/
+CoreApplication/PlatformInterface/
+CoreApplication/Platform/
+CoreApplication/Mac/
+CoreApplication/Windows/
 ```
 * Classes specific to platform should be prefixed with platform-name
 
-* Prefer static classes
+* The interface is named for the concept, prefixed with `IPlatform`, and follows the rules in [Interfaces](#interfaces): no state, and its functions either pure virtual or static
 ```
-class FGenericApplication
+struct IPlatformApplication
 {
-public:
-  static void Func()
-  {
-  }
+  virtual ~IPlatformApplication() = default;
+
+  virtual void Func() = 0;
 };
 
-class FMacApplication : public FGenericApplication
+class FMacApplication final : public IPlatformApplication
 {
 public:
-  static void Func()
-  {
-  }
+  virtual void Func() override final;
 };
 
-class FWindowsApplication : public FGenericApplication
+class FWindowsApplication final : public IPlatformApplication
 {
 public:
-  static void Func()
-  {
-  }
+  virtual void Func() override final;
 };
 ```
 
 * Platform classes should be accompanied with a Platform-header like this:
 ```
-// FPlatformApplication.h
+// PlatformApplication.h
 
 #pragma once
 #if PLATFORM_WINDOWS
-  #include "Application/Windows/WindowsApplication.h"
+  #include "CoreApplication/Windows/WindowsApplication.h"
   typedef FWindowsApplication FPlatformApplication;
 #elif PLATFORM_MACOS
-  #include "Application/Mac/MacApplication.h"
+  #include "CoreApplication/Mac/MacApplication.h"
   typedef FMacApplication FPlatformApplication;
 #else
   #error No platform defined
 #endif
 ```
+
+* The fallback branch is an `#error` when the interface cannot be instantiated, which is the case whenever its functions are pure virtual. A compile-time interface can be named there instead, since its stubs are callable, so `PlatformInputMapper.h` and `PlatformApplicationMisc.h` typedef `IPlatformInputMapper` and `IPlatformApplicationMisc` in that branch.

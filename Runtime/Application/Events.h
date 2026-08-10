@@ -2,8 +2,8 @@
 #include "Application/Input/Keys.h"
 #include "Core/Math/IntVector2.h"
 #include "Core/Containers/SharedPtr.h"
-#include "CoreApplication/Generic/InputCodes.h"
-#include "CoreApplication/Generic/GenericApplication.h"
+#include "CoreApplication/PlatformInterface/InputCodes.h"
+#include "CoreApplication/PlatformInterface/IPlatformApplication.h"
 
 class FEventResponse
 {

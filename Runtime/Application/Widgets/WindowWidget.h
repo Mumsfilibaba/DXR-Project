@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Containers/String.h"
 #include "Core/Delegates/Delegate.h"
-#include "CoreApplication/Generic/GenericWindow.h"
+#include "CoreApplication/PlatformInterface/IPlatformWindow.h"
 #include "Application/Widgets/Widget.h"
 
 /** @brief Delegate called when the window is moved. */
@@ -305,7 +305,7 @@ public:
      * Updates the cached variables based on the new platform window.
      * @param InPlatformWindow A shared reference to the new platform window.
      */
-    void SetPlatformWindow(const TSharedRef<FGenericWindow>& InPlatformWindow);
+    void SetPlatformWindow(const TSharedRef<IPlatformWindow>& InPlatformWindow);
     
     /**
      * @brief Sets focus to this window's platform window.
@@ -331,14 +331,14 @@ public:
      * 
      * @return A shared reference to the platform window.
      */
-    TSharedRef<FGenericWindow> GetPlatformWindow() { return PlatformWindow; }
+    TSharedRef<IPlatformWindow> GetPlatformWindow() { return PlatformWindow; }
 
     /**
      * @brief Gets the platform window (const version).
      * 
      * @return A shared reference to the platform window.
      */
-    TSharedRef<const FGenericWindow> GetPlatformWindow() const { return PlatformWindow; }
+    TSharedRef<const IPlatformWindow> GetPlatformWindow() const { return PlatformWindow; }
 
     /**
      * @brief Gets the window title.
@@ -391,18 +391,18 @@ public:
     }
 
 private:
-    String                     Title;
-    FOnWindowClosed            OnWindowClosedDelegate;
-    FOnWindowMoved             OnWindowMovedDelegate;
-    FOnWindowResized           OnWindowResizedDelegate;
-    FOnWindowFocusChanged      OnWindowFocusChangedDelegate;
-    IntVector2                 CachedPosition;
-    IntVector2                 CachedSize;
-    EWindowStyleFlags          StyleFlags;
-    bool                       bActivateOnShow;
-    bool                       bAcceptsInput;
-    TSharedPtr<FWidget>        Overlay;
-    TSharedPtr<FWidget>        Content;
-    TSharedRef<FGenericWindow> PlatformWindow;
-    TSharedPtr<FWindowWidget>  ParentWindowWidget;
+    String                      Title;
+    FOnWindowClosed             OnWindowClosedDelegate;
+    FOnWindowMoved              OnWindowMovedDelegate;
+    FOnWindowResized            OnWindowResizedDelegate;
+    FOnWindowFocusChanged       OnWindowFocusChangedDelegate;
+    IntVector2                  CachedPosition;
+    IntVector2                  CachedSize;
+    EWindowStyleFlags           StyleFlags;
+    bool                        bActivateOnShow;
+    bool                        bAcceptsInput;
+    TSharedPtr<FWidget>         Overlay;
+    TSharedPtr<FWidget>         Content;
+    TSharedRef<IPlatformWindow> PlatformWindow;
+    TSharedPtr<FWindowWidget>   ParentWindowWidget;
 };

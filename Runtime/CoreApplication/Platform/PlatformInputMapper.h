@@ -7,6 +7,6 @@
     #include "CoreApplication/Mac/MacInputMapper.h"
     typedef FMacInputMapper FPlatformInputMapper;
 #else
-    #include "CoreApplication/Generic/GenericInputMapper.h"
-    typedef EGenericInputMapper FPlatformInputMapper;
+    #include "CoreApplication/PlatformInterface/IPlatformInputMapper.h"
+    typedef IPlatformInputMapper FPlatformInputMapper;
 #endif

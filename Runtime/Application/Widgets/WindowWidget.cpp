@@ -1,5 +1,5 @@
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "CoreApplication/Generic/GenericWindow.h"
+#include "CoreApplication/PlatformInterface/IPlatformWindow.h"
 #include "Application/Application.h"
 #include "Application/Widgets/WindowWidget.h"
 
@@ -320,7 +320,7 @@ void FWindowWidget::SetAcceptsInput(bool bInAcceptsInput)
     }
 }
 
-void FWindowWidget::SetPlatformWindow(const TSharedRef<FGenericWindow>& InPlatformWindow)
+void FWindowWidget::SetPlatformWindow(const TSharedRef<IPlatformWindow>& InPlatformWindow)
 {
     PlatformWindow = InPlatformWindow;
     

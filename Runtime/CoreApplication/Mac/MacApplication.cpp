@@ -9,7 +9,7 @@
 #include "CoreApplication/Mac/MacCursor.h"
 #include "CoreApplication/Platform/PlatformInputMapper.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
-#include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
+#include "CoreApplication/PlatformInterface/IPlatformApplicationMessageHandler.h"
 
 #include <AppKit/AppKit.h>
 #include <IOKit/graphics/IOGraphicsLib.h>
@@ -59,12 +59,10 @@ static CGFloat NormalizeWheelDetent(CGFloat Delta)
 
 FMacApplication* GMacApplication = nullptr;
 
-TSharedPtr<FGenericApplication> FMacApplication::Create()
+TSharedPtr<IPlatformApplication> FMacApplication::Create()
 {
-    // Create the cursor interface
     TSharedPtr<FMacCursor> Cursor = MakeSharedPtr<FMacCursor>();
 
-    // Create a new MacApplication instance. The global MacApplication pointer is initialized inside of the FMacApplication constructor
     TSharedPtr<FMacApplication> NewMacApplication = MakeSharedPtr<FMacApplication>(Cursor);
     return NewMacApplication;
 }
@@ -76,7 +74,6 @@ String FMacApplication::FindMonitorName(NSScreen* Screen)
         return "Unknown Display";
     }
     
-    // If the localizedName is available (macOS 10.15 and above) then call that
     if ([Screen respondsToSelector:@selector(localizedName)])
     {
         NSString* MonitorName = [Screen valueForKey:@"localizedName"];
@@ -86,7 +83,6 @@ String FMacApplication::FindMonitorName(NSScreen* Screen)
         }
     }
 
-    // Retrieve the displayID from the NSScreen
     CGDirectDisplayID DisplayID = static_cast<CGDirectDisplayID>([[[Screen deviceDescription] objectForKey:@"NSScreenNumber"] unsignedIntValue]);
     
     io_iterator_t Iterator;
@@ -140,13 +136,8 @@ String FMacApplication::FindMonitorName(NSScreen* Screen)
     
     NSString* MonitorName = (__bridge NSString*)NameRef;
     
-    // Store the string name, since we need to release the original string (via the DisplayInfo) before we return
     String Result(MonitorName);
-    
-    // Release DisplayInfo
     CFRelease(DisplayInfo);
-
-    // Finally return the result
     return Result;
 }
 
@@ -154,31 +145,25 @@ uint32 FMacApplication::MonitorDPIFromScreen(NSScreen* Screen)
 {
     const float BackingScaleFactor = [Screen backingScaleFactor];
     
-    // Retrieve the pixel dimensions of the screen
     const NSRect Frame = [Screen frame];
     
     CGFloat PixelWidth  = CGRectGetWidth(Frame) * BackingScaleFactor;
     CGFloat PixelHeight = CGRectGetHeight(Frame) * BackingScaleFactor;
 
-    // Retrieve the physical dimensions of the screen in millimeters
     const CGDirectDisplayID DisplayID = static_cast<CGDirectDisplayID>([[[Screen deviceDescription] objectForKey:@"NSScreenNumber"] unsignedIntValue]);
     const CGSize PhysicalSize = CGDisplayScreenSize(DisplayID);
 
-    // Zero for a display that reports no EDID, fall back to the default rather than divide by it
     if (PhysicalSize.width <= 0.0 || PhysicalSize.height <= 0.0)
     {
         return 72;
     }
 
-    // Calculate the DPI
     const CGFloat InchToMillimeterFactor = 25.4;
     const CGFloat ScreenWidthDPI         = PixelWidth  / (PhysicalSize.width  / InchToMillimeterFactor);
     const CGFloat ScreenHeightDPI        = PixelHeight / (PhysicalSize.height / InchToMillimeterFactor);
 
-    // Use the average of width and height DPI values
     CGFloat ScreenDPI = (ScreenWidthDPI + ScreenHeightDPI) / 2.0;
 
-    // Round and convert to uint32
     const uint32 RoundedDPI = static_cast<uint32>(Math::RoundToInt(ScreenDPI));
     return RoundedDPI;
 }
@@ -198,14 +183,11 @@ NSPoint FMacApplication::ConvertCocoaPointToEngine(CGFloat PositionX, CGFloat Po
         return NSMakePoint(PositionX, PositionY);
     }
 
-    // Adjust the point's coordinates relative to the screen (in points)
     CGFloat RelativeX = PositionX - Screen->Frame.origin.x;
     CGFloat RelativeY = PositionY - Screen->Frame.origin.y;
 
-    // Convert the Y-coordinate from Cocoa (bottom-left origin) to engine (top-left origin)
     CGFloat ConvertedY = Screen->Frame.size.height - RelativeY;
 
-    // Create the converted point in pixels
     NSPoint ConvertedPoint = NSMakePoint(RelativeX, ConvertedY);
     return ConvertedPoint;
 }
@@ -229,7 +211,6 @@ NSPoint FMacApplication::ConvertEnginePointToCocoa(CGFloat PositionX, CGFloat Po
     CGFloat RelativeX = Screen->Frame.origin.x + PositionX;
     CGFloat RelativeY = Screen->Frame.origin.y + (Screen->Frame.size.height - PositionY);
 
-    // Create the converted point
     NSPoint CocoaPoint = NSMakePoint(RelativeX, RelativeY);
     return CocoaPoint;
 }
@@ -247,7 +228,7 @@ NSRect FMacApplication::ConvertCocoaRectToEngine(CGFloat Width, CGFloat Height, 
 }
 
 FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
-    : FGenericApplication(InCursor)
+    : MessageHandler(nullptr)
     , LocalEventMonitor(nullptr)
     , GlobalMouseMovedEventMonitor(nullptr)
     , Observer(nullptr)
@@ -261,7 +242,7 @@ FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
     , bHighPrecisionMouseEnabled(false)
     , bCursorConfined(false)
     , MacCursor(InCursor)
-    , InputDevice(FGCInputDevice::CreateGCInputDevice())
+    , InputDevice(FGCInputDevice::Create())
     , ScreenCache()
     , ScreenCacheCS()
     , Windows()
@@ -286,19 +267,15 @@ FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
 
         FPlatformInputMapper::Initialize();
 
-        // Initialize the default macOS menu
         NSMenu*     MenuBar     = [NSMenu new];
         NSMenuItem* AppMenuItem = [MenuBar addItemWithTitle:@"" action:nil keyEquivalent:@""];
 
-        // Create the application menu
         NSMenu* AppMenu = [NSMenu new];
         AppMenuItem.submenu = AppMenu;
 
-        // Add standard application menu items
         [AppMenu addItemWithTitle:@"DXR-Engine" action:@selector(orderFrontStandardAboutPanel:) keyEquivalent:@""];
         [AppMenu addItem:[NSMenuItem separatorItem]];
 
-        // Services menu item
         NSMenu* ServiceMenu = [NSMenu new];
         [AppMenu addItemWithTitle:@"Services" action:nil keyEquivalent:@""].submenu = ServiceMenu;
         [AppMenu addItem:[NSMenuItem separatorItem]];
@@ -308,7 +285,6 @@ FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
         [AppMenu addItem:[NSMenuItem separatorItem]];
         [AppMenu addItemWithTitle:@"Quit DXR-Engine" action:@selector(terminate:) keyEquivalent:@"q"];
 
-        // Create the edit menu
         NSMenuItem* EditMenuItem = [MenuBar addItemWithTitle:@"" action:nil keyEquivalent:@""];
 
         NSMenu* EditMenu = [[NSMenu alloc] initWithTitle:@"Edit"];
@@ -320,13 +296,11 @@ FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
         [EditMenu addItem:[NSMenuItem separatorItem]];
         [EditMenu addItemWithTitle:@"Select All" action:@selector(selectAll:) keyEquivalent:@"a"];
 
-        // Create the window menu
         NSMenuItem* WindowMenuItem = [MenuBar addItemWithTitle:@"" action:nil keyEquivalent:@""];
 
         NSMenu* WindowMenu = [[NSMenu alloc] initWithTitle:@"Window"];
         WindowMenuItem.submenu = WindowMenu;
 
-        // Add window menu items
         [WindowMenu addItemWithTitle:@"Minimize" action:@selector(performMiniaturize:) keyEquivalent:@"m"];
         [WindowMenu addItemWithTitle:@"Zoom" action:@selector(performZoom:) keyEquivalent:@""];
         [WindowMenu addItem:[NSMenuItem separatorItem]];
@@ -334,11 +308,9 @@ FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
         [WindowMenu addItem:[NSMenuItem separatorItem]];
         [WindowMenu addItemWithTitle:@"Enter Full Screen" action:@selector(toggleFullScreen:) keyEquivalent:@"f"].keyEquivalentModifierMask = NSEventModifierFlagControl | NSEventModifierFlagCommand;
 
-        // Set the application menu
         SEL SetAppleMenuSelector = NSSelectorFromString(@"setAppleMenu:");
         [NSApp performSelector:SetAppleMenuSelector withObject:AppMenu];
 
-        // Assign the menu bar and menus to the application
         NSApp.mainMenu     = MenuBar;
         NSApp.windowsMenu  = WindowMenu;
         NSApp.servicesMenu = ServiceMenu;
@@ -400,7 +372,7 @@ FMacApplication::~FMacApplication()
     }
 }
 
-TSharedRef<FGenericWindow> FMacApplication::CreateWindow()
+TSharedRef<IPlatformWindow> FMacApplication::CreateWindow()
 {
     TSharedRef<FMacWindow> NewWindow = FMacWindow::Create(this);
     
@@ -481,7 +453,7 @@ void FMacApplication::UpdateInputDevices()
     }
 }
 
-FInputDevice* FMacApplication::GetInputDevice()
+IPlatformInputDevice* FMacApplication::GetInputDevice()
 {
     return InputDevice.Get();
 }
@@ -491,7 +463,7 @@ bool FMacApplication::SupportsHighPrecisionMouse() const
     return true;
 }
 
-bool FMacApplication::SetHighPrecisionMouseMode(const TSharedRef<FGenericWindow>&, EHighPrecisionMouseMode Mode)
+bool FMacApplication::SetHighPrecisionMouseMode(const TSharedRef<IPlatformWindow>&, EHighPrecisionMouseMode Mode)
 {
     const bool bEnable = (Mode == EHighPrecisionMouseMode::Enabled);
     if (bEnable == bHighPrecisionMouseEnabled)
@@ -520,7 +492,7 @@ bool FMacApplication::SetHighPrecisionMouseMode(const TSharedRef<FGenericWindow>
     return true;
 }
 
-bool FMacApplication::ConfineCursorToRect(const TSharedRef<FGenericWindow>&, const IntVector2& Position, const IntVector2& Size)
+bool FMacApplication::ConfineCursorToRect(const TSharedRef<IPlatformWindow>&, const IntVector2& Position, const IntVector2& Size)
 {
     if (!MacCursor || Size.X <= 0 || Size.Y <= 0)
     {
@@ -586,7 +558,7 @@ FModifierKeyState FMacApplication::GetModifierKeyState() const
     return FModifierKeyState(ModifierFlags);
 }
 
-void FMacApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Window)
+void FMacApplication::SetActiveWindow(const TSharedRef<IPlatformWindow>& Window)
 {
     __block TSharedRef<FMacWindow> MacWindow = StaticCastSharedRef<FMacWindow>(Window);
     FMacThreadManager::Get().MainThreadDispatch(^
@@ -598,7 +570,19 @@ void FMacApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Window)
     }, NSDefaultRunLoopMode, false);
 }
 
-void FMacApplication::SetCapture(const TSharedRef<FGenericWindow>& Window)
+TSharedRef<IPlatformWindow> FMacApplication::GetActiveWindow() const
+{
+    NSWindow* KeyWindow = FMacThreadManager::Get().MainThreadDispatchAndReturn(^
+    {
+        CHECK_COCOA_MAIN_THREAD();
+        SCOPED_AUTORELEASE_POOL();
+        return [NSApp keyWindow];
+    }, NSDefaultRunLoopMode);
+    
+    return FindWindowFromNSWindow(KeyWindow);
+}
+
+void FMacApplication::SetCapture(const TSharedRef<IPlatformWindow>& Window)
 {
     FCocoaWindow* NewCapturedWindow = nullptr;
     if (TSharedRef<FMacWindow> MacWindow = StaticCastSharedRef<FMacWindow>(Window))
@@ -614,7 +598,20 @@ void FMacApplication::SetCapture(const TSharedRef<FGenericWindow>& Window)
     }
 }
 
-TSharedRef<FGenericWindow> FMacApplication::GetWindowUnderCursor() const
+TSharedRef<IPlatformWindow> FMacApplication::GetCapture() const
+{
+    FCocoaWindow* CurrentCapturedWindow = nullptr;
+    {
+        TScopedLock Lock(CapturedWindowCS);
+        CurrentCapturedWindow = [CapturedWindow retain];
+    }
+
+    TSharedRef<IPlatformWindow> Result = FindWindowFromNSWindow(CurrentCapturedWindow);
+    [CurrentCapturedWindow release];
+    return Result;
+}
+
+TSharedRef<IPlatformWindow> FMacApplication::GetWindowUnderCursor() const
 {
     FCocoaWindow* CurrentWindowUnderCursor = nullptr;
     {
@@ -622,34 +619,8 @@ TSharedRef<FGenericWindow> FMacApplication::GetWindowUnderCursor() const
         CurrentWindowUnderCursor = [WindowUnderCursor retain];
     }
 
-    TSharedRef<FGenericWindow> Result = FindWindowFromNSWindow(CurrentWindowUnderCursor);
+    TSharedRef<IPlatformWindow> Result = FindWindowFromNSWindow(CurrentWindowUnderCursor);
     [CurrentWindowUnderCursor release];
-    return Result;
-}
-
-TSharedRef<FGenericWindow> FMacApplication::GetActiveWindow() const
-{
-    NSWindow* KeyWindow = FMacThreadManager::Get().MainThreadDispatchAndReturn(^
-    {
-        CHECK_COCOA_MAIN_THREAD();
-        SCOPED_AUTORELEASE_POOL();
-        return [NSApp keyWindow];
-    }, NSDefaultRunLoopMode);
-    
-    return FindWindowFromNSWindow(KeyWindow);
-}
-
-TSharedRef<FGenericWindow> FMacApplication::GetCapture() const
-{
-    // Retained across the lookup, or the main thread can drop the last reference during it
-    FCocoaWindow* CurrentCapturedWindow = nullptr;
-    {
-        TScopedLock Lock(CapturedWindowCS);
-        CurrentCapturedWindow = [CapturedWindow retain];
-    }
-
-    TSharedRef<FGenericWindow> Result = FindWindowFromNSWindow(CurrentCapturedWindow);
-    [CurrentCapturedWindow release];
     return Result;
 }
 
@@ -674,10 +645,10 @@ void FMacApplication::QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) con
     }
 }
 
-void FMacApplication::SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
+void FMacApplication::SetMessageHandler(const TSharedPtr<IPlatformApplicationMessageHandler>& InMessageHandler)
 {
-    FGenericApplication::SetMessageHandler(InMessageHandler);
-    
+    MessageHandler = InMessageHandler;
+
     if (InputDevice)
     {
         InputDevice->SetMessageHandler(InMessageHandler);
@@ -816,7 +787,6 @@ NSEvent* FMacApplication::OnNSEvent(NSEvent* Event)
     {
         UpdateWindowUnderCursor();
 
-        // Modifier state is global rather than per-window
         if (Event.type == NSEventTypeFlagsChanged)
         {
             DeferEvent(Event);
@@ -839,8 +809,6 @@ NSEvent* FMacApplication::OnNSEvent(NSEvent* Event)
             break;
     }
 
-    // If the event is returned it is continued to be sent down the responder change,
-    // and for events that we want to stop sending we are returning nullptr.
     return ReturnEvent;
 }
 
@@ -856,7 +824,6 @@ FCocoaWindow* FMacApplication::FindNSWindowUnderCursor() const
         return nullptr;
     }
     
-    // Only return the Window if it is a CocoaWindow
     return [Window isKindOfClass:[FCocoaWindow class]] ? reinterpret_cast<FCocoaWindow*>(Window) : nullptr;
 }
 
@@ -884,6 +851,18 @@ TSharedRef<FMacWindow> FMacApplication::FindWindowFromNSWindow(NSWindow* Window)
     return nullptr;
 }
 
+void FMacApplication::UpdateWindowUnderCursor()
+{
+    FCocoaWindow* NewWindowUnderCursor = FindNSWindowUnderCursor();
+
+    TScopedLock Lock(WindowUnderCursorCS);
+    if (WindowUnderCursor != NewWindowUnderCursor)
+    {
+        [WindowUnderCursor release];
+        WindowUnderCursor = [NewWindowUnderCursor retain];
+    }
+}
+
 void FMacApplication::OnWindowDestroyed(const TSharedRef<FMacWindow>& Window)
 {
     FCocoaWindow* CocoaWindow = Window->GetCocoaWindow();
@@ -896,7 +875,6 @@ void FMacApplication::OnWindowDestroyed(const TSharedRef<FMacWindow>& Window)
         }
     }
     
-    // Remove the MacWindow
     {
         TScopedLock Lock(WindowsCS);
         Windows.Remove(Window);
@@ -906,18 +884,6 @@ void FMacApplication::OnWindowDestroyed(const TSharedRef<FMacWindow>& Window)
 void FMacApplication::OnWindowWillResize(const TSharedRef<FMacWindow>& Window)
 {
     MessageHandler->OnWindowResizing(Window);
-}
-
-void FMacApplication::UpdateWindowUnderCursor()
-{
-    FCocoaWindow* NewWindowUnderCursor = FindNSWindowUnderCursor();
-
-    TScopedLock Lock(WindowUnderCursorCS);
-    if (WindowUnderCursor != NewWindowUnderCursor)
-    {
-        [WindowUnderCursor release];
-        WindowUnderCursor = [NewWindowUnderCursor retain];
-    }
 }
 
 void FMacApplication::CloseWindow(const TSharedRef<FMacWindow>& Window)
@@ -969,7 +935,6 @@ const FMacScreenInfo* FMacApplication::FindScreenFromCocoaPoint(CGFloat Position
 
     const NSPoint Position = NSMakePoint(PositionX, PositionY);
 
-    // Find the screen that contains the point
     const FMacScreenInfo* PrimaryScreen = nullptr;
     for (const FMacScreenInfo& CurrentScreen : GMacApplication->ScreenCache)
     {
@@ -984,7 +949,6 @@ const FMacScreenInfo* FMacApplication::FindScreenFromCocoaPoint(CGFloat Position
         }
     }
 
-    // If no screen contains the point, default to the main screen
     return PrimaryScreen ? PrimaryScreen : &GMacApplication->ScreenCache.First();
 }
 
@@ -1000,7 +964,6 @@ const FMacScreenInfo* FMacApplication::FindScreenFromEnginePoint(CGFloat Positio
     const FMacScreenInfo* PrimaryScreen = nullptr;
     for (const FMacScreenInfo& CurrentScreen : GMacApplication->ScreenCache)
     {
-        // Check if the engine point falls within this screen's bounds
         const CGFloat ScreenWidth  = CurrentScreen.Frame.size.width;
         const CGFloat ScreenHeight = CurrentScreen.Frame.size.height;
         if (PositionX >= 0 && PositionX <= ScreenWidth && PositionY >= 0 && PositionY <= ScreenHeight)
@@ -1014,7 +977,7 @@ const FMacScreenInfo* FMacApplication::FindScreenFromEnginePoint(CGFloat Positio
         }
     }
 
-    // If no screen is found, default to the main screen
+    // If no screen contains the point, default to the main screen
     return PrimaryScreen ? PrimaryScreen : &GMacApplication->ScreenCache.First();
 }
 
@@ -1160,10 +1123,8 @@ void FMacApplication::ProcessMouseMoveEvent(const FDeferredMacEvent& DeferredEve
 
 void FMacApplication::ProcessMouseButtonEvent(const FDeferredMacEvent& DeferredEvent)
 {
-    // Convert the MouseButton into engine enum
     const EMouseButtonName::Type CurrentMouseButton = FPlatformInputMapper::GetButtonFromIndex(DeferredEvent.MouseButtonNumber);
 
-    // MouseDown otherwise it is a MouseUp event
     if (DeferredEvent.EventType == NSEventTypeLeftMouseDown || DeferredEvent.EventType == NSEventTypeRightMouseDown || DeferredEvent.EventType == NSEventTypeOtherMouseDown)
     {
         if (LastPressedButton == CurrentMouseButton && DeferredEvent.ClickCount == 2)
@@ -1236,10 +1197,8 @@ void FMacApplication::ProcessKeyEvent(const FDeferredMacEvent& DeferredEvent)
     const EKeyboardKeyName::Type KeyName = FPlatformInputMapper::GetKeyCodeFromScanCode(DeferredEvent.KeyCode);
     if (DeferredEvent.EventType == NSEventTypeKeyDown)
     {
-        // First notify about a key being down...
         MessageHandler->OnKeyDown(KeyName, DeferredEvent.bIsRepeat, GetModifierKeyState());
     
-        // ... then send the character
         if (DeferredEvent.Character != uint32(-1))
         {
             MessageHandler->OnKeyChar(DeferredEvent.Character);
@@ -1303,7 +1262,6 @@ void FMacApplication::ProcessModfierKey(EMacModifierKey::Type MacModifierKey, ui
         0x00010000, // CapsLock
     };
 
-    // Quick access to the keyboard names for the modifier keys
     static constexpr EKeyboardKeyName::Type KeyBoardNames[] =
     {
         EKeyboardKeyName::LeftControl,
@@ -1323,14 +1281,10 @@ void FMacApplication::ProcessModfierKey(EMacModifierKey::Type MacModifierKey, ui
 
     static_assert(ARRAY_COUNT(ModifierKeyMask) == ARRAY_COUNT(KeyBoardNames), "Modifier key tables must stay the same length");
 
-    // Ensure that the modifier key is within the allowed range
     CHECK(MacModifierKey >= EMacModifierKey::LeftControl && MacModifierKey < static_cast<int32>(ARRAY_COUNT(ModifierKeyMask)));
-    
-    // Retrieve the key-name
-    const EKeyboardKeyName::Type KeyName = KeyBoardNames[MacModifierKey];
 
-    // Retrieve the key-mask
-    const uint64 KeyFlag = ModifierKeyMask[MacModifierKey];
+    const EKeyboardKeyName::Type KeyName = KeyBoardNames[MacModifierKey];
+    const uint64                 KeyFlag = ModifierKeyMask[MacModifierKey];
 
     const bool bIsPressed     = (KeyFlag & ModifierKeyFlags)         != 0;
     const bool bIsPrevPressed = (KeyFlag & PreviousModifierKeyFlags) != 0;
@@ -1349,7 +1303,6 @@ void FMacApplication::ProcessModfierKey(EMacModifierKey::Type MacModifierKey, ui
     {
         if (bIsPrevPressed)
         {
-            // Modifier is currently NOT down, if the key was down previously, we send a key up event
             MessageHandler->OnKeyUp(KeyName, GetModifierKeyState());
         }
     }
@@ -1357,10 +1310,8 @@ void FMacApplication::ProcessModfierKey(EMacModifierKey::Type MacModifierKey, ui
 
 void FMacApplication::ProcessWindowResized(const FDeferredMacEvent& DeferredEvent)
 {
-    // Start by giving other systems a chance to prepare for a window-resize
     MessageHandler->OnWindowResizing(DeferredEvent.Window);
 
-    // DeferEvent captures the geometry for every notification that reaches this function
     CHECK(DeferredEvent.bHasContentFrame);
 
     // Convert the coordinates to the generic ones that are expected

@@ -5,7 +5,7 @@
 #include "Core/Templates/NumericLimits.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformThreadMisc.h"
-#include "CoreApplication/Mac/MacConsoleOutputDevice.h"
+#include "CoreApplication/Mac/MacConsoleWindow.h"
 #include "CoreApplication/Mac/MacApplication.h"
 #include "CoreApplication/Mac/CocoaConsoleWindow.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
@@ -43,35 +43,35 @@ static void ReleaseAndClear(ObjectType*& Object)
     Object = nullptr;
 }
 
-static EConsoleColor SeverityToColor(ELogSeverity Severity)
+static EConsoleTextColor SeverityToColor(ELogSeverity Severity)
 {
     if (Severity == ELogSeverity::Info)
     {
-        return EConsoleColor::Green;
+        return EConsoleTextColor::Green;
     }
     else if (Severity == ELogSeverity::Warning)
     {
-        return EConsoleColor::Yellow;
+        return EConsoleTextColor::Yellow;
     }
     else if (Severity == ELogSeverity::Error)
     {
-        return EConsoleColor::Red;
+        return EConsoleTextColor::Red;
     }
 
-    return EConsoleColor::White;
+    return EConsoleTextColor::White;
 }
 
-static NSColor* CreateColorForConsoleColor(EConsoleColor Color)
+static NSColor* CreateColorForConsoleColor(EConsoleTextColor Color)
 {
-    if (Color == EConsoleColor::Red)
+    if (Color == EConsoleTextColor::Red)
     {
         return [NSColor colorWithSRGBRed:0.85f green:0.0f blue:0.0f alpha:1.0f];
     }
-    else if (Color == EConsoleColor::Green)
+    else if (Color == EConsoleTextColor::Green)
     {
         return [NSColor colorWithSRGBRed:0.0f green:0.85f blue:0.0f alpha:1.0f];
     }
-    else if (Color == EConsoleColor::Yellow)
+    else if (Color == EConsoleTextColor::Yellow)
     {
         return [NSColor colorWithSRGBRed:0.85f green:0.85f blue:0.0f alpha:1.0f];
     }
@@ -79,30 +79,30 @@ static NSColor* CreateColorForConsoleColor(EConsoleColor Color)
     return [NSColor colorWithSRGBRed:0.85f green:0.85f blue:0.85f alpha:1.0f];
 }
 
-FGenericConsoleOutputDevice* FMacConsoleOutputDevice::Create()
+IPlatformConsoleWindow* FMacConsoleWindow::Create()
 {
-    return new FMacConsoleOutputDevice();
+    return new FMacConsoleWindow();
 }
 
-FMacConsoleOutputDevice::FMacConsoleOutputDevice()
+FMacConsoleWindow::FMacConsoleWindow()
     : WindowHandle(nullptr)
     , TextView(nullptr)
     , ScrollView(nullptr)
     , Font(nullptr)
     , BackGroundColor(nullptr)
     , AttributeCache(nullptr)
-    , CurrentTextColor(EConsoleColor::White)
+    , CurrentTextColor(EConsoleTextColor::White)
     , bFlushScheduled(false)
     , LineCount(0)
 {
 }
 
-FMacConsoleOutputDevice::~FMacConsoleOutputDevice()
+FMacConsoleWindow::~FMacConsoleWindow()
 {
     DestroyConsole();
 }
 
-void FMacConsoleOutputDevice::Show(bool bShow)
+void FMacConsoleWindow::Show(bool bShow)
 {
     SCOPED_LOCK(WindowCS);
 
@@ -119,17 +119,47 @@ void FMacConsoleOutputDevice::Show(bool bShow)
     }
 }
 
-void FMacConsoleOutputDevice::Log(const String& Message)
+void FMacConsoleWindow::SetTitle(const String& InTitle)
+{
+    SCOPED_AUTORELEASE_POOL();
+
+    {
+        SCOPED_LOCK(PendingCS);
+        Title = InTitle;
+    }
+
+    NSString* NewTitle = [InTitle.GetNSString() retain];
+
+    FMacThreadManager::Get().MainThreadDispatch(^
+    {
+        CHECK_COCOA_MAIN_THREAD();
+
+        if (WindowHandle)
+        {
+            WindowHandle.title = NewTitle;
+        }
+
+        [NewTitle release];
+    }, NSDefaultRunLoopMode, false);
+}
+
+void FMacConsoleWindow::SetTextColor(EConsoleTextColor Color)
+{
+    SCOPED_LOCK(PendingCS);
+    CurrentTextColor = Color;
+}
+
+void FMacConsoleWindow::Log(const String& Message)
 {
     EnqueueLine(Message, CurrentTextColor);
 }
 
-void FMacConsoleOutputDevice::Log(ELogSeverity Severity, const String& Message)
+void FMacConsoleWindow::Log(ELogSeverity Severity, const String& Message)
 {
     EnqueueLine(Message, SeverityToColor(Severity));
 }
 
-void FMacConsoleOutputDevice::Flush()
+void FMacConsoleWindow::Flush()
 {
     {
         SCOPED_LOCK(PendingCS);
@@ -155,38 +185,7 @@ void FMacConsoleOutputDevice::Flush()
     }, NSDefaultRunLoopMode, false);
 }
 
-void FMacConsoleOutputDevice::SetTitle(const String& InTitle)
-{
-    SCOPED_AUTORELEASE_POOL();
-
-    // Cached so a title set before the window exists is not lost, since CreateConsole reads it back
-    {
-        SCOPED_LOCK(PendingCS);
-        Title = InTitle;
-    }
-
-    NSString* NewTitle = [InTitle.GetNSString() retain];
-
-    FMacThreadManager::Get().MainThreadDispatch(^
-    {
-        CHECK_COCOA_MAIN_THREAD();
-
-        if (WindowHandle)
-        {
-            WindowHandle.title = NewTitle;
-        }
-
-        [NewTitle release];
-    }, NSDefaultRunLoopMode, false);
-}
-
-void FMacConsoleOutputDevice::SetTextColor(EConsoleColor Color)
-{
-    SCOPED_LOCK(PendingCS);
-    CurrentTextColor = Color;
-}
-
-void FMacConsoleOutputDevice::OnWindowDidClose()
+void FMacConsoleWindow::OnWindowDidClose()
 {
     CHECK_COCOA_MAIN_THREAD();
 
@@ -194,7 +193,6 @@ void FMacConsoleOutputDevice::OnWindowDidClose()
         SCOPED_LOCK(PendingCS);
         PendingLines.Clear();
 
-        // The window is still executing -close, so it has to outlive this call
         [NSApp removeWindowsItem:WindowHandle];
         [WindowHandle autorelease];
         WindowHandle = nullptr;
@@ -203,7 +201,7 @@ void FMacConsoleOutputDevice::OnWindowDidClose()
     DestroyResources();
 }
 
-void FMacConsoleOutputDevice::CreateConsole()
+void FMacConsoleWindow::CreateConsole()
 {
     if (WindowHandle)
     {
@@ -233,7 +231,6 @@ void FMacConsoleOutputDevice::CreateConsole()
             Font = [ConsoleFont retain];
         }
 
-        // Init the backgroundcolor
         if (!BackGroundColor)
         {
             BackGroundColor = [[NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f] retain];
@@ -250,7 +247,6 @@ void FMacConsoleOutputDevice::CreateConsole()
 
         FCocoaConsoleWindow* NewWindow = [[FCocoaConsoleWindow alloc] init:this ContentRect:ContentRect StyleMask:StyleMask Backing:NSBackingStoreBuffered Defer:NO];
 
-        // AppKit would otherwise release the window on close, on top of the release this class owns
         [NewWindow setReleasedWhenClosed:NO];
 
         NSRect ContentFrame = NewWindow.contentView.frame;
@@ -313,9 +309,8 @@ void FMacConsoleOutputDevice::CreateConsole()
     }, NSDefaultRunLoopMode, true);
 }
 
-void FMacConsoleOutputDevice::DestroyConsole()
+void FMacConsoleWindow::DestroyConsole()
 {
-    // The resources outlive a window the user closed by hand, so both have to be tested
     if (!WindowHandle && !AttributeCache)
     {
         return;
@@ -326,13 +321,11 @@ void FMacConsoleOutputDevice::DestroyConsole()
         CHECK_COCOA_MAIN_THREAD();
         SCOPED_AUTORELEASE_POOL();
 
-        // Closing routes through windowWillClose: and so through OnWindowDidClose
         if (WindowHandle)
         {
             FCocoaConsoleWindow* WindowToClose = WindowHandle;
             [WindowToClose close];
 
-            // A window that was never ordered in gets no windowWillClose:, so finish it by hand
             if (WindowHandle)
             {
                 [WindowToClose setDelegate:nil];
@@ -346,7 +339,7 @@ void FMacConsoleOutputDevice::DestroyConsole()
     }, NSDefaultRunLoopMode, true);
 }
 
-void FMacConsoleOutputDevice::DestroyResources()
+void FMacConsoleWindow::DestroyResources()
 {
     CHECK_COCOA_MAIN_THREAD();
     SCOPED_AUTORELEASE_POOL();
@@ -360,7 +353,7 @@ void FMacConsoleOutputDevice::DestroyResources()
     LineCount = 0;
 }
 
-void FMacConsoleOutputDevice::EnqueueLine(const String& Message, EConsoleColor Color)
+void FMacConsoleWindow::EnqueueLine(const String& Message, EConsoleTextColor Color)
 {
     bool bNeedsFlush = false;
     {
@@ -377,7 +370,6 @@ void FMacConsoleOutputDevice::EnqueueLine(const String& Message, EConsoleColor C
         bFlushScheduled = true;
     }
 
-    // One dispatch per run-loop turn rather than one per line
     if (bNeedsFlush)
     {
         FMacThreadManager::Get().MainThreadDispatch(^
@@ -387,7 +379,7 @@ void FMacConsoleOutputDevice::EnqueueLine(const String& Message, EConsoleColor C
     }
 }
 
-void FMacConsoleOutputDevice::MainThreadCreateAttributeCache()
+void FMacConsoleWindow::MainThreadCreateAttributeCache()
 {
     CHECK_COCOA_MAIN_THREAD();
 
@@ -400,7 +392,7 @@ void FMacConsoleOutputDevice::MainThreadCreateAttributeCache()
     for (NSUInteger Index = 0; Index < GNumConsoleColors; Index++)
     {
         NSDictionary* ColorAttributes = @{
-            NSForegroundColorAttributeName : CreateColorForConsoleColor(static_cast<EConsoleColor>(Index)),
+            NSForegroundColorAttributeName : CreateColorForConsoleColor(static_cast<EConsoleTextColor>(Index)),
             NSBackgroundColorAttributeName : BackGroundColor,
             NSFontAttributeName            : Font
         };
@@ -411,7 +403,7 @@ void FMacConsoleOutputDevice::MainThreadCreateAttributeCache()
     AttributeCache = NewCache;
 }
 
-NSDictionary* FMacConsoleOutputDevice::MainThreadAttributesForColor(EConsoleColor Color) const
+NSDictionary* FMacConsoleWindow::MainThreadAttributesForColor(EConsoleTextColor Color) const
 {
     CHECK_COCOA_MAIN_THREAD();
 
@@ -424,7 +416,7 @@ NSDictionary* FMacConsoleOutputDevice::MainThreadAttributesForColor(EConsoleColo
     return [AttributeCache objectAtIndex:Index];
 }
 
-void FMacConsoleOutputDevice::MainThreadFlushPendingLines()
+void FMacConsoleWindow::MainThreadFlushPendingLines()
 {
     CHECK_COCOA_MAIN_THREAD();
     SCOPED_AUTORELEASE_POOL();
@@ -453,7 +445,6 @@ void FMacConsoleOutputDevice::MainThreadFlushPendingLines()
         [Attributed release];
     }
 
-    // Only follow the tail when the view is already there
     NSClipView*   ClipView     = ScrollView.contentView;
     const CGFloat DocumentMaxY = NSMaxY([ScrollView.documentView bounds]);
     const bool    bWasAtBottom = (DocumentMaxY - NSMaxY(ClipView.documentVisibleRect)) <= 1.0;
@@ -470,7 +461,6 @@ void FMacConsoleOutputDevice::MainThreadFlushPendingLines()
 
     [Storage endEditing];
 
-    // Slide the selection back by whatever was trimmed off the head
     if (Selection.length > 0)
     {
         if (Selection.location >= TrimmedCharacters)
@@ -487,7 +477,6 @@ void FMacConsoleOutputDevice::MainThreadFlushPendingLines()
         [TextView setSelectedRange:Selection];
     }
 
-    // Scroll
     if (bWasAtBottom)
     {
         [TextView scrollToEndOfDocument:TextView];
@@ -496,7 +485,7 @@ void FMacConsoleOutputDevice::MainThreadFlushPendingLines()
     [Batch release];
 }
 
-NSUInteger FMacConsoleOutputDevice::MainThreadTrimToMaxLines(NSTextStorage* Storage)
+NSUInteger FMacConsoleWindow::MainThreadTrimToMaxLines(NSTextStorage* Storage)
 {
     CHECK_COCOA_MAIN_THREAD();
 

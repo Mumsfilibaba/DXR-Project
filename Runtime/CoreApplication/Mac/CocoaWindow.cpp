@@ -12,9 +12,6 @@
     self = [super initWithContentRect:ContentRect styleMask:StyleMask backing:BackingStoreType defer:Flag];
     if (self)
     {
-        // Disable window snapshot restoration to prevent macOS from automatically restoring the
-        // window's state upon relaunch. This ensures that our custom window initialization is not
-        // overridden by restored state, avoids displaying outdated or invalid content.
         [super disableSnapshotRestoration];
     }
     
@@ -27,8 +24,6 @@
     return YES;
 }
 
-// Allow the window to become the main window. The main window is the principal
-// window of an application that is the focus for user actions.
 - (BOOL)canBecomeMainWindow
 {
     return YES;
@@ -119,18 +114,6 @@
     }
 }
 
-// This method is called when the window becomes the main window of the application.
-// A window becomes the main window in response to specific user actions:
-//  - Clicking on the Window: When the user clicks on the window's title bar or content
-//    area, bringing it to the foreground.
-//  - Application Activation: When the user switches back to the application from another
-//    app (e.g., using Command+Tab or clicking the app icon in the Dock), the frontmost
-//    window becomes the main window.
-//  - Programmatic Activation: When the application programmatically makes the window
-//    the main window using `[NSWindow makeMainWindow]`.
-// The main window is the principal focus for user actions, such as menu commands and non-keyboard events.
-// In this method, we check if the application is visible and, if so, bring the window to the front.
-
 - (void)windowDidBecomeMain:(NSNotification*)Notification
 {
     @autoreleasepool
@@ -148,25 +131,11 @@
     }
 }
 
-// This method is called when the window loses its status as the main window of the application.
-// A window resigns main window status in response to specific user actions:
-//  - Activating Another Window: When the user clicks on a different window within the same application, making it the new main window.
-//  - Switching to Another Application: When the user switches focus to a different application, the current window resigns main status.
-//  - Programmatic Changes: When the application programmatically changes the main window or resigns it.
 - (void)windowDidResignMain:(NSNotification*)Notification
 {
     @autoreleasepool
     {
-        // Ensure the window remains movable by its title bar. When 'movable' is set to YES, the
-        // user can move the window by clicking and dragging its title bar. This is standard behavior
-        // for windows, allowing users to reposition them on the screen as needed.
         [self setMovable:YES];
-        
-        // Prevent the window from being moved by clicking and dragging its background (the content area).
-        // When 'movableByWindowBackground' is set to NO, the user cannot move the window by clicking and
-        // dragging anywhere within the window's content area. Disabling this behavior when the window is
-        // not the main window helps prevent accidental window movements. It ensures that interactions within
-        // the window's content (such as clicking buttons or selecting text) do not inadvertently move the window.
         [self setMovableByWindowBackground:NO];
         
         if (GMacApplication)
@@ -225,14 +194,6 @@
     return YES;
 }
 
-// Accept the first mouse event even if the view is not the key view. This method is called by
-// the system to determine whether the view should receive a mouse-down event (or other mouse
-// events) even if the window is not the key window or the view is not the first responder.
-// This allows the view to handle the mouse event immediately without requiring the window to
-// become active first. This enhances the user experience by making the application more responsive,
-// eliminating the need for the user to click twice (once to activate the window, and once to
-// perform the action).
-
 - (BOOL)acceptsFirstMouse:(NSEvent*)Event
 {
     return YES;
@@ -242,7 +203,6 @@
 {
     @autoreleasepool
     {
-        // Forward the event to the window if this is a CocoaWindow, otherwise we default to the super class (NSView) to handle it
         FCocoaWindow* CocoaWindow = [[self window] isKindOfClass:[FCocoaWindow class]] ? (FCocoaWindow*)[self window] : nil;
         if (CocoaWindow)
         {
@@ -259,7 +219,6 @@
 {
     @autoreleasepool
     {
-        // Forward the event to the window if this is a CocoaWindow, otherwise we default to the super class (NSView) to handle it
         FCocoaWindow* CocoaWindow = [[self window] isKindOfClass:[FCocoaWindow class]] ? (FCocoaWindow*)[self window] : nil;
         if (CocoaWindow)
         {
@@ -276,7 +235,6 @@
 {
     @autoreleasepool
     {
-        // Forward the event to the window if this is a CocoaWindow, otherwise we default to the super class (NSView) to handle it
         FCocoaWindow* CocoaWindow = [[self window] isKindOfClass:[FCocoaWindow class]] ? (FCocoaWindow*)[self window] : nil;
         if (CocoaWindow)
         {
@@ -293,7 +251,6 @@
 {
     @autoreleasepool
     {
-        // Forward the event to the window if this is a CocoaWindow, otherwise we default to the super class (NSView) to handle it
         FCocoaWindow* CocoaWindow = [[self window] isKindOfClass:[FCocoaWindow class]] ? (FCocoaWindow*)[self window] : nil;
         if (CocoaWindow)
         {
@@ -310,7 +267,6 @@
 {
     @autoreleasepool
     {
-        // Forward the event to the window if this is a CocoaWindow, otherwise we default to the super class (NSView) to handle it
         FCocoaWindow* CocoaWindow = [[self window] isKindOfClass:[FCocoaWindow class]] ? (FCocoaWindow*)[self window] : nil;
         if (CocoaWindow)
         {
@@ -327,7 +283,6 @@
 {
     @autoreleasepool
     {
-        // Forward the event to the window if this is a CocoaWindow, otherwise we default to the super class (NSView) to handle it
         FCocoaWindow* CocoaWindow = [[self window] isKindOfClass:[FCocoaWindow class]] ? (FCocoaWindow*)[self window] : nil;
         if (CocoaWindow)
         {

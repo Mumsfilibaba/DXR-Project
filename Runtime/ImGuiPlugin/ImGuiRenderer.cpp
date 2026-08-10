@@ -659,7 +659,7 @@ void FImGuiRenderer::OnCreateWindow(ImGuiViewport* Viewport)
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
 
-    TSharedRef<FGenericWindow> PlatformWindow = ViewportData->Window->GetPlatformWindow();
+    TSharedRef<IPlatformWindow> PlatformWindow = ViewportData->Window->GetPlatformWindow();
     CHECK(PlatformWindow != nullptr);
 
     FRHISwapChainDesc SwapChainDesc;

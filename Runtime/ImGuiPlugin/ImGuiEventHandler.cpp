@@ -290,7 +290,7 @@ bool FImGuiEventHandler::OnMouseMove(const FCursorEvent& CursorEvent)
     IntVector2 CursorPos = CursorEvent.GetCursorPos();
     
 #ifndef EDITOR_BUILD
-    if (TSharedRef<FGenericWindow> Window = FApplication::Get().GetPlatformApplication()->GetWindowUnderCursor())
+    if (TSharedRef<IPlatformWindow> Window = FApplication::Get().GetPlatformApplication()->GetWindowUnderCursor())
     {
         FWindowShape WindowShape;
         Window->GetWindowShape(WindowShape);

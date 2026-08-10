@@ -2,43 +2,46 @@
 #include "Core/Containers/Array.h"
 #include "Core/Platform/CriticalSection.h"
 #include "CoreApplication/Mac/CocoaConsoleWindow.h"
-#include "CoreApplication/Generic/GenericConsoleOutputDevice.h"
+#include "CoreApplication/PlatformInterface/IPlatformConsoleWindow.h"
 
-class COREAPPLICATION_API FMacConsoleOutputDevice final : public FGenericConsoleOutputDevice
+class COREAPPLICATION_API FMacConsoleWindow final : public IPlatformConsoleWindow
 {
 public:
-    static FGenericConsoleOutputDevice* Create();
+    static IPlatformConsoleWindow* Create();
 
 public:
-    FMacConsoleOutputDevice();
-    virtual ~FMacConsoleOutputDevice();
+    FMacConsoleWindow();
+    virtual ~FMacConsoleWindow();
 
-    // FGenericConsoleOutputDevice Interface Overrides
+    // IPlatformConsoleWindow Interface Overrides
     virtual void Show(bool bShow) override final;
     virtual bool IsVisible() const override final { return (WindowHandle != nullptr); }
+
+    virtual void SetTitle(const String& Title) override final;
+    virtual void SetTextColor(EConsoleTextColor Color) override final;
+
+    // IOutputDevice Interface Overrides
     virtual void Log(const String& Message) override final;
     virtual void Log(ELogSeverity Severity, const String& Message) override final;
     virtual void Flush() override final;
-    virtual void SetTitle(const String& Title) override final;
-    virtual void SetTextColor(EConsoleColor Color) override final;
 
     void OnWindowDidClose();
 
 private:
     struct FPendingLine
     {
-        String        Text;
-        EConsoleColor Color;
+        String            Text;
+        EConsoleTextColor Color;
     };
 
     void CreateConsole();
     void DestroyConsole();
     void DestroyResources();
 
-    void EnqueueLine(const String& Message, EConsoleColor Color);
+    void EnqueueLine(const String& Message, EConsoleTextColor Color);
 
     void MainThreadCreateAttributeCache();
-    NSDictionary* MainThreadAttributesForColor(EConsoleColor Color) const;
+    NSDictionary* MainThreadAttributesForColor(EConsoleTextColor Color) const;
 
     void MainThreadFlushPendingLines();
     NSUInteger MainThreadTrimToMaxLines(NSTextStorage* Storage);
@@ -53,7 +56,7 @@ private:
     mutable FCriticalSection PendingCS;
     String                   Title;
     TArray<FPendingLine>     PendingLines;
-    EConsoleColor            CurrentTextColor;
+    EConsoleTextColor        CurrentTextColor;
     bool                     bFlushScheduled;
     int32                    LineCount;
 };

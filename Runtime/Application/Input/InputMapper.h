@@ -1,6 +1,6 @@
 #pragma once
 #include "Application/Input/Keys.h"
-#include "CoreApplication/Generic/InputCodes.h"
+#include "CoreApplication/PlatformInterface/InputCodes.h"
 
 class APPLICATION_API FInputMapper
 {

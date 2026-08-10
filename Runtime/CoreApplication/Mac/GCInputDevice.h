@@ -4,8 +4,8 @@
 #include "Core/Containers/Array.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Threading/Atomic.h"
-#include "CoreApplication/Generic/InputCodes.h"
-#include "CoreApplication/Generic/InputDevice.h"
+#include "CoreApplication/PlatformInterface/InputCodes.h"
+#include "CoreApplication/PlatformInterface/IPlatformInputDevice.h"
 #include <GameController/GameController.h>
 
 #define NUM_MAX_GAMEPADS (4)
@@ -45,16 +45,19 @@ struct FGCGamepadState
 
 @class FGCConnectionObserver;
 
-class FGCInputDevice : public FInputDevice
+class FGCInputDevice : public IPlatformInputDevice
 {
 public:
-    static TSharedPtr<FGCInputDevice> CreateGCInputDevice();
+    static TSharedPtr<FGCInputDevice> Create();
 
 public:
     FGCInputDevice();
     virtual ~FGCInputDevice();
 
-    // FInputDevice Interface
+    void HandleControllerConnected(GCController* InController);
+    void HandleControllerDisconnected(GCController* InController);
+
+    // IPlatformInputDevice Interface
     virtual void UpdateDeviceState() override final;
 
     virtual bool IsDeviceConnected() const override final
@@ -62,12 +65,21 @@ public:
         return bIsDeviceConnected.Load();
     }
 
-    void HandleControllerConnected(GCController* InController);
-    void HandleControllerDisconnected(GCController* InController);
+    virtual void SetMessageHandler(const TSharedPtr<IPlatformApplicationMessageHandler>& InMessageHandler) override final
+    {
+        MessageHandler = InMessageHandler;
+    }
+
+    virtual TSharedPtr<IPlatformApplicationMessageHandler> GetMessageHandler() const override final
+    {
+        return MessageHandler;
+    }
 
 private:
     void ProcessInputState(GCExtendedGamepad* InGamepad, uint32 GamepadIndex);
     void ReleaseHeldButtons(uint32 GamepadIndex);
+
+    TSharedPtr<IPlatformApplicationMessageHandler> MessageHandler;
 
     FGCConnectionObserver*   Observer;
     GCController*            ConnectedGamepads[NUM_MAX_GAMEPADS];

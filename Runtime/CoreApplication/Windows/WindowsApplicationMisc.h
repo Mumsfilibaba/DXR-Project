@@ -1,8 +1,8 @@
 #pragma once
 #include "Core/Windows/Windows.h"
-#include "CoreApplication/Generic/GenericApplicationMisc.h"
+#include "CoreApplication/PlatformInterface/IPlatformApplicationMisc.h"
 
-struct COREAPPLICATION_API FWindowsApplicationMisc final : public FGenericApplicationMisc
+struct COREAPPLICATION_API FWindowsApplicationMisc final : public IPlatformApplicationMisc
 {
     static FORCEINLINE void MessageBox(const String& Title, const String& Message)
     {

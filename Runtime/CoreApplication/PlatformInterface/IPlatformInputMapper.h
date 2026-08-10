@@ -3,9 +3,8 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct EGenericInputMapper
+struct IPlatformInputMapper
 {
-    /** @brief Initialize key-tables */
     static FORCEINLINE void Initialize() { }
 
     /**

@@ -5,9 +5,8 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "CoreApplication/Mac/GCInputDevice.h"
-#include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
+#include "CoreApplication/PlatformInterface/IPlatformApplicationMessageHandler.h"
 
-// The upper bound is the number of bits available to the RepeatCount
 static TAutoConsoleVariable<int32> CVarGameControllerButtonRepeatDelay(
     "GameController.ButtonRepeatDelay",
     "Number of repeated messages that gets ignored before sending repeat events",
@@ -67,22 +66,20 @@ static constexpr float GTriggerDeadZone    = 0.12f;
 
 @end
 
-TSharedPtr<FGCInputDevice> FGCInputDevice::CreateGCInputDevice()
+TSharedPtr<FGCInputDevice> FGCInputDevice::Create()
 {
     TSharedPtr<FGCInputDevice> NewInputDevice = MakeSharedPtr<FGCInputDevice>();
     return NewInputDevice;
 }
 
 FGCInputDevice::FGCInputDevice()
-    : FInputDevice()
+    : MessageHandler(nullptr)
     , Observer(nullptr)
     , bIsDeviceConnected(false)
 {
-    // Ensure that the gamepadstates are starting at zero
     Memory::Memzero(ConnectedGamepads, sizeof(ConnectedGamepads));
     Memory::Memzero(GamepadStates, sizeof(FGCGamepadState) * NUM_MAX_GAMEPADS);
     
-    // Add an observer for new controller connections
     Observer = [[FGCConnectionObserver alloc] initWithInputDevice:this];
     [[NSNotificationCenter defaultCenter] addObserver:Observer selector:@selector(handleControllerConnect:) name:GCControllerDidConnectNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:Observer selector:@selector(handleControllerDisconnect:) name:GCControllerDidDisconnectNotification object:nil];
@@ -110,7 +107,6 @@ void FGCInputDevice::UpdateDeviceState()
         Memory::Memcpy(Snapshot, ConnectedGamepads, sizeof(Snapshot));
     }
 
-    // Update the state for all the controllers that are connected
     for (int32 Index = 0; Index < NUM_MAX_GAMEPADS; Index++)
     {
         // TODO: For now only exteneded gamepads are supported
@@ -183,18 +179,16 @@ void FGCInputDevice::HandleControllerDisconnected(GCController* InController)
 
 void FGCInputDevice::ProcessInputState(GCExtendedGamepad* InGamepad, uint32 GamepadIndex)
 {
-    TSharedPtr<FGenericApplicationMessageHandler> CurrentMessageHandler = GetMessageHandler();
+    TSharedPtr<IPlatformApplicationMessageHandler> CurrentMessageHandler = GetMessageHandler();
     if (!CurrentMessageHandler)
     {
-        return; // If there's no valid message handler, no need to process further
+        return;
     }
 
     FGCGamepadState& CurrentState = GamepadStates[GamepadIndex];
 
     const int32 RepeatDelay = CVarGameControllerButtonRepeatDelay.GetValue();
 
-
-    // Store the current states
     bool bCurrentStates[EGamepadButtonName::Count];
     Memory::Memzero(bCurrentStates, sizeof(bCurrentStates));
 
@@ -222,12 +216,10 @@ void FGCInputDevice::ProcessInputState(GCExtendedGamepad* InGamepad, uint32 Game
         FGCButtonState& ButtonState = CurrentState.Buttons[ButtonIndex];
         if (bCurrentStates[ButtonIndex])
         {
-            // If the button already is down, this is a repeat event
             if (ButtonState.bState)
             {
                 ButtonState.RepeatCount++;
 
-                // Only send repeat events after some time
                 if (ButtonState.RepeatCount >= RepeatDelay)
                 {
                     CurrentMessageHandler->OnGamepadButtonDown(static_cast<EGamepadButtonName::Type>(ButtonIndex), GamepadIndex, true);
@@ -285,7 +277,7 @@ void FGCInputDevice::ProcessInputState(GCExtendedGamepad* InGamepad, uint32 Game
 
 void FGCInputDevice::ReleaseHeldButtons(uint32 GamepadIndex)
 {
-    TSharedPtr<FGenericApplicationMessageHandler> CurrentMessageHandler = GetMessageHandler();
+    TSharedPtr<IPlatformApplicationMessageHandler> CurrentMessageHandler = GetMessageHandler();
     if (!CurrentMessageHandler)
     {
         return;

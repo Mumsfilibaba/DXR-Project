@@ -1,8 +1,8 @@
 #pragma once
 #include "Core/Math/IntVector2.h"
 #include "Core/Containers/SharedPtr.h"
-#include "CoreApplication/Generic/ICursor.h"
-#include "CoreApplication/Generic/InputCodes.h"
+#include "CoreApplication/PlatformInterface/IPlatformCursor.h"
+#include "CoreApplication/PlatformInterface/InputCodes.h"
 #include "Application/Events.h"
 #include "Application/Input/Keys.h"
 
@@ -143,7 +143,7 @@ public:
         return KeyState.bIsDown && !KeyState.bPreviousState;
     }
 
-    TSharedPtr<ICursor> GetCursorInterface() const 
+    TSharedPtr<IPlatformCursor> GetCursorInterface() const 
     { 
         return CursorInterface;
     }
@@ -151,12 +151,12 @@ public:
 private:
     void ClearEvents();
 
-    TSharedPtr<ICursor>       CursorInterface;
-    IntVector2                MouseDelta;
-    TArray<FKeyState>         KeyStates;
-    TArray<FAxisState>        AxisStates;
-    TArray<FActionKeyMapping> ActionKeyMappings;
-    TArray<FAxisMapping>      AxisMappings;
-    TArray<FAxisKeyMapping>   AxisKeyMappings;
-    TArray<FInputComponent*>  ActiveInputComponents;
+    TSharedPtr<IPlatformCursor> CursorInterface;
+    IntVector2                  MouseDelta;
+    TArray<FKeyState>           KeyStates;
+    TArray<FAxisState>          AxisStates;
+    TArray<FActionKeyMapping>   ActionKeyMappings;
+    TArray<FAxisMapping>        AxisMappings;
+    TArray<FAxisKeyMapping>     AxisKeyMappings;
+    TArray<FInputComponent*>    ActiveInputComponents;
 };

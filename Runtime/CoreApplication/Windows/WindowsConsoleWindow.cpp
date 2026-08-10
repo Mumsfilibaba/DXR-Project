@@ -1,22 +1,22 @@
 #include "Core/Threading/ScopedLock.h"
-#include "CoreApplication/Windows/WindowsConsoleOutputDevice.h"
+#include "CoreApplication/Windows/WindowsConsoleWindow.h"
 
-FGenericConsoleOutputDevice* FWindowsConsoleOutputDevice::Create()
+IPlatformConsoleWindow* FWindowsConsoleWindow::Create()
 {
-    return new FWindowsConsoleOutputDevice();
+    return new FWindowsConsoleWindow();
 }
 
-FWindowsConsoleOutputDevice::~FWindowsConsoleOutputDevice()
+FWindowsConsoleWindow::~FWindowsConsoleWindow()
 {
-    Show(false); // Hides/frees console if open
+    Show(false);
 }
 
-FWindowsConsoleOutputDevice::FWindowsConsoleOutputDevice()
+FWindowsConsoleWindow::FWindowsConsoleWindow()
     : ConsoleHandle(0)
 {
 }
 
-void FWindowsConsoleOutputDevice::Show(bool bShow)
+void FWindowsConsoleWindow::Show(bool bShow)
 {
     TScopedLock Lock(ConsoleHandleCS);
 
@@ -32,7 +32,6 @@ void FWindowsConsoleOutputDevice::Show(bool bShow)
                     // TODO: log this error
                 }
 
-                // If you want to preserve previously set Title, use:
                 if (!Title.IsEmpty())
                 {
                     SetConsoleTitleA(*Title);
@@ -58,52 +57,95 @@ void FWindowsConsoleOutputDevice::Show(bool bShow)
     }
 }
 
-void FWindowsConsoleOutputDevice::Log(const String& Message)
+void FWindowsConsoleWindow::SetTitle(const String& InTitle)
 {
     TScopedLock Lock(ConsoleHandleCS);
 
     if (ConsoleHandle)
     {
-        // Convert to an ANSI string if needed
+        ::SetConsoleTitleA(*InTitle);
+        Title = InTitle;
+    }
+    else
+    {
+        Title = InTitle;
+    }
+}
+
+void FWindowsConsoleWindow::SetTextColor(EConsoleTextColor Color)
+{
+    TScopedLock Lock(ConsoleHandleCS);
+
+    if (ConsoleHandle)
+    {
+        WORD wColor = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+        switch (Color)
+        {
+        case EConsoleTextColor::Red:
+            wColor = FOREGROUND_RED | FOREGROUND_INTENSITY;
+            break;
+
+        case EConsoleTextColor::Green:
+            wColor = FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+            break;
+
+        case EConsoleTextColor::Yellow:
+            wColor = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+            break;
+
+        case EConsoleTextColor::White:
+        default:
+            break;
+        }
+
+        ::SetConsoleTextAttribute(ConsoleHandle, wColor);
+    }
+}
+
+void FWindowsConsoleWindow::Log(const String& Message)
+{
+    TScopedLock Lock(ConsoleHandleCS);
+
+    if (ConsoleHandle)
+    {
         WriteConsoleA(ConsoleHandle, *Message, static_cast<DWORD>(Message.Length()), nullptr, nullptr);
         WriteConsoleA(ConsoleHandle, "\n", 1, nullptr, nullptr);
     }
 }
 
-void FWindowsConsoleOutputDevice::Log(ELogSeverity Severity, const String& Message)
+void FWindowsConsoleWindow::Log(ELogSeverity Severity, const String& Message)
 {
     TScopedLock Lock(ConsoleHandleCS);
 
     if (ConsoleHandle)
     {
-        EConsoleColor NewColor;
+        EConsoleTextColor NewColor;
         switch (Severity)
         {
         case ELogSeverity::Info:
-            NewColor = EConsoleColor::Green;
+            NewColor = EConsoleTextColor::Green;
             break;
         case ELogSeverity::Warning:
-            NewColor = EConsoleColor::Yellow;
+            NewColor = EConsoleTextColor::Yellow;
             break;
         case ELogSeverity::Error:
-            NewColor = EConsoleColor::Red;
+            NewColor = EConsoleTextColor::Red;
             break;
         default:
-            NewColor = EConsoleColor::White;
+            NewColor = EConsoleTextColor::White;
             break;
         }
 
         SetTextColor(NewColor);
 
-        // Convert to an ANSI string if needed
         WriteConsoleA(ConsoleHandle, *Message, static_cast<DWORD>(Message.Length()), nullptr, nullptr);
         WriteConsoleA(ConsoleHandle, "\n", 1, nullptr, nullptr);
 
-        SetTextColor(EConsoleColor::White);
+        SetTextColor(EConsoleTextColor::White);
     }
 }
 
-void FWindowsConsoleOutputDevice::Flush()
+void FWindowsConsoleWindow::Flush()
 {
     TScopedLock Lock(ConsoleHandleCS);
 
@@ -114,7 +156,6 @@ void FWindowsConsoleOutputDevice::Flush()
 
         if (::GetConsoleScreenBufferInfo(ConsoleHandle, &ConsoleScreenInfo))
         {
-            // Scroll the console window up by the entire window height
             COORD Dest = {0, static_cast<SHORT>(-ConsoleScreenInfo.dwSize.Y)};
             CHAR_INFO FillInfo = {' ', static_cast<WORD>(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)};
 
@@ -127,52 +168,5 @@ void FWindowsConsoleOutputDevice::Flush()
         {
             // TODO: Log GetConsoleScreenBufferInfo failed
         }
-    }
-}
-
-void FWindowsConsoleOutputDevice::SetTitle(const String& InTitle)
-{
-    TScopedLock Lock(ConsoleHandleCS);
-
-    if (ConsoleHandle)
-    {
-        ::SetConsoleTitleA(*InTitle);
-        Title = InTitle;
-    }
-    else
-    {
-        // Could store the title for future usage
-        Title = InTitle;
-    }
-}
-
-void FWindowsConsoleOutputDevice::SetTextColor(EConsoleColor Color)
-{
-    TScopedLock Lock(ConsoleHandleCS);
-
-    if (ConsoleHandle)
-    {
-        WORD wColor = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; // White
-        switch (Color)
-        {
-        case EConsoleColor::Red:
-            wColor = FOREGROUND_RED | FOREGROUND_INTENSITY;
-            break;
-
-        case EConsoleColor::Green:
-            wColor = FOREGROUND_GREEN | FOREGROUND_INTENSITY;
-            break;
-
-        case EConsoleColor::Yellow:
-            wColor = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
-            break;
-
-        case EConsoleColor::White:
-        default:
-            // wColor stays as white
-            break;
-        }
-
-        ::SetConsoleTextAttribute(ConsoleHandle, wColor);
     }
 }

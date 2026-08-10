@@ -454,7 +454,7 @@ bool FImGuiPlugin::UpdateFontAtlas()
 void FImGuiPlugin::NewFrame(float DeltaTime)
 {
     CHECK(MainWindow != nullptr);
-    TSharedRef<FGenericWindow> PlatformWindow = MainWindow->GetPlatformWindow();
+    TSharedRef<IPlatformWindow> PlatformWindow = MainWindow->GetPlatformWindow();
     CHECK(PlatformWindow != nullptr);
 
     PluginImGuiIO->DeltaTime               = DeltaTime;
@@ -462,8 +462,8 @@ void FImGuiPlugin::NewFrame(float DeltaTime)
     PluginImGuiIO->FontGlobalScale         = CVarImGuiUseWindowDPIScale.GetValue() ? MainWindow->GetWindowDPIScale() : 1.0f;
     PluginImGuiIO->DisplayFramebufferScale = ImVec2(PluginImGuiIO->FontGlobalScale, PluginImGuiIO->FontGlobalScale);
 
-    TSharedPtr<FWindowWidget>  ForegroundWindow = FApplication::Get().GetFocusWindow();
-    TSharedRef<FGenericWindow> PlatformForegroundWindow = ForegroundWindow ? ForegroundWindow->GetPlatformWindow() : nullptr;
+    TSharedPtr<FWindowWidget>   ForegroundWindow = FApplication::Get().GetFocusWindow();
+    TSharedRef<IPlatformWindow> PlatformForegroundWindow = ForegroundWindow ? ForegroundWindow->GetPlatformWindow() : nullptr;
 
     ImGuiViewport* ForegroundViewport = ForegroundWindow ? ImGui::FindViewportByPlatformHandle(ForegroundWindow.Get()) : nullptr;
 
@@ -755,7 +755,7 @@ void FImGuiPlugin::OnCreatePlatformWindow(ImGuiViewport* Viewport)
 
     FApplication::Get().CreateWindow(ViewportData->Window);
    
-    TSharedRef<FGenericWindow> PlatformWindow = ViewportData->Window->GetPlatformWindow();
+    TSharedRef<IPlatformWindow> PlatformWindow = ViewportData->Window->GetPlatformWindow();
     Viewport->PlatformHandle        = ViewportData->Window.Get();
     Viewport->PlatformHandleRaw     = PlatformWindow->GetPlatformHandle();
     Viewport->PlatformRequestMove   = false;
