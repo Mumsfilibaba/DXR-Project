@@ -1,19 +1,23 @@
 #include "Core/Windows/WindowsPlatformThread.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformTLS.h"
+#include "Core/Threading/ThreadManager.h"
 
-FGenericPlatformThread* FWindowsPlatformThread::Create(FRunnable* Runnable, const CHAR* InThreadName, bool bSuspended)
+IPlatformThread* FWindowsPlatformThread::Create(FRunnable* Runnable, const CHAR* InThreadName, bool bSuspended)
 {
     FWindowsPlatformThread* NewThread = new FWindowsPlatformThread(Runnable, InThreadName, bSuspended);
     return NewThread;
 }
 
 FWindowsPlatformThread::FWindowsPlatformThread(FRunnable* InRunnable, const CHAR* InThreadName, bool bSuspended)
-    : FGenericPlatformThread(InRunnable, InThreadName)
+    : Name(InThreadName)
+    , Runnable(InRunnable)
     , Thread(0)
     , hThreadID(0)
     , bIsSuspended(bSuspended)
 {
+    FThreadManager::Get().RegisterThread(this);
+
     DWORD Flags = 0;
     if (bIsSuspended)
     {
@@ -34,6 +38,8 @@ FWindowsPlatformThread::~FWindowsPlatformThread()
     {
         ::CloseHandle(Thread);
     }
+
+    FThreadManager::Get().UnregisterThread(this);
 }
 
 bool FWindowsPlatformThread::Start()
@@ -96,7 +102,7 @@ DWORD WINAPI FWindowsPlatformThread::ThreadRoutine(LPVOID ThreadParameter)
     if (CurrentThread)
     {
         // Ensure that this thread can be retrieved
-        FPlatformTLS::SetTLSValue(FGenericPlatformThread::TLSSlot, CurrentThread);
+        FPlatformTLS::SetTLSValue(IPlatformThread::TLSSlot, CurrentThread);
 
         if (!CurrentThread->Name.IsEmpty())
         {
@@ -114,7 +120,7 @@ DWORD WINAPI FWindowsPlatformThread::ThreadRoutine(LPVOID ThreadParameter)
             Runnable->Destroy();
         }
         
-        FPlatformTLS::SetTLSValue(FGenericPlatformThread::TLSSlot, nullptr);
+        FPlatformTLS::SetTLSValue(IPlatformThread::TLSSlot, nullptr);
     }
 
     return Result;

@@ -1,9 +1,9 @@
 #pragma once
-#include "Core/Generic/GenericPlatformTime.h"
+#include "Core/PlatformInterface/IPlatformTime.h"
 #include "Core/Time/Time.h"
 #include <mach/mach_time.h>
 
-struct FMacPlatformTime : public FGenericPlatformTime
+struct FMacPlatformTime : public IPlatformTime
 {
     static FORCEINLINE uint64 QueryPerformanceCounter()
     {

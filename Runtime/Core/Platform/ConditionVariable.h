@@ -7,6 +7,6 @@
     #include "Core/Mac/MacConditionVariable.h"
     typedef FMacConditionVariable FConditionVariable;
 #else
-    #include "Core/Generic/GenericConditionVariable.h"
-    typedef FGenericConditionVariable FConditionVariable;
+    #include "Core/PlatformInterface/IPlatformConditionVariable.h"
+    typedef IPlatformConditionVariable FConditionVariable;
 #endif

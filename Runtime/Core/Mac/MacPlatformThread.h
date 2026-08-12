@@ -1,12 +1,12 @@
 #pragma once
-#include "Core/Generic/GenericPlatformThread.h"
+#include "Core/PlatformInterface/IPlatformThread.h"
 #include <pthread.h>
 #include <pthread/qos.h>
 
-class FMacPlatformThread final : public FGenericPlatformThread
+class FMacPlatformThread final : public IPlatformThread
 {
 public:
-    static FGenericPlatformThread* Create(FRunnable* Runnable, const CHAR* ThreadName, bool bSuspended = true);
+    static IPlatformThread* Create(FRunnable* Runnable, const CHAR* ThreadName, bool bSuspended = true);
 
 public:
     virtual ~FMacPlatformThread();
@@ -20,11 +20,23 @@ public:
     virtual void WaitForCompletion() override final;
     virtual void* GetPlatformHandle() override final;
 
+    virtual const String& GetName() const override final
+    {
+        return Name;
+    }
+
+    virtual FRunnable* GetRunnable() const override final
+    {
+        return Runnable;
+    }
+
 private:
     static void* ThreadRoutine(void* ThreadParameter);
 
     FMacPlatformThread(FRunnable* InRunnable, const CHAR* ThreadName);
 
-    pthread_t Thread;
-    bool      bIsJoinable;
+    String     Name;
+    FRunnable* Runnable;
+    pthread_t  Thread;
+    bool       bIsJoinable;
 };

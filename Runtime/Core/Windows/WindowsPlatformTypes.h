@@ -1,6 +1,6 @@
 #pragma once
-#include "Core/Generic/GenericPlatformTypes.h"
+#include "Core/PlatformInterface/IPlatformTypes.h"
 
-struct FWindowsPlatformTypes : public FGenericPlatformTypes
+struct FWindowsPlatformTypes : public IPlatformTypes
 {
 };

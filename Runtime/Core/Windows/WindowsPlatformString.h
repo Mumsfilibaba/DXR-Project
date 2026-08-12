@@ -1,16 +1,17 @@
 #pragma once
-#include "Core/Generic/GenericPlatformString.h"
+#include "Core/PlatformInterface/IPlatformString.h"
 
-struct FWindowsPlatformString final : public FGenericPlatformString
+struct FWindowsPlatformString final : public IPlatformString
 {
-    using FGenericPlatformString::Strtoui64;
-    using FGenericPlatformString::Atoi;
-    using FGenericPlatformString::Atoi64;
-    using FGenericPlatformString::Atof;
-    using FGenericPlatformString::Atod;
+    using IPlatformString::Strtoui64;
+    using IPlatformString::Atoi;
+    using IPlatformString::Atoi64;
+    using IPlatformString::Atof;
+    using IPlatformString::Atod;
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // -------------------------------------------------------------------------------------------
     // CHAR
+    // -------------------------------------------------------------------------------------------
 
     NODISCARD static FORCEINLINE int32 Stricmp(const CHAR* String0, const CHAR* String1) noexcept
     {
@@ -32,8 +33,9 @@ struct FWindowsPlatformString final : public FGenericPlatformString
         return static_cast<uint64>(::_strtoui64(String, End, Base));
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // -------------------------------------------------------------------------------------------
     // WIDECHAR
+    // -------------------------------------------------------------------------------------------
 
     NODISCARD static FORCEINLINE int32 Stricmp(const WIDECHAR* String0, const WIDECHAR* String1) noexcept
     {

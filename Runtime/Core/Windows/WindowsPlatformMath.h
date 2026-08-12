@@ -1,11 +1,11 @@
 #pragma once
-#include "Core/Generic/GenericPlatformMath.h"
+#include "Core/PlatformInterface/IPlatformMath.h"
 
 #include <float.h>
 #include <xmmintrin.h>
 #include <emmintrin.h>
 
-struct FWindowsPlatformMath : public FGenericPlatformMath
+struct FWindowsPlatformMath : public IPlatformMath
 {
     static FORCEINLINE bool IsNaN(float Value)
     {

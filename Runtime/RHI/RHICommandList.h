@@ -93,13 +93,13 @@ public:
         return *CommandContext;
     }
 
-    FORCEINLINE void SetEvent(FGenericPlatformEvent* InEvent) noexcept
+    FORCEINLINE void SetEvent(IPlatformEvent* InEvent) noexcept
     {
         CHECK(InEvent != nullptr);
         FinishedEvent = InEvent;
     }
 
-    FORCEINLINE FGenericPlatformEvent* GetEvent() const noexcept
+    FORCEINLINE IPlatformEvent* GetEvent() const noexcept
     {
         return FinishedEvent;
     }
@@ -586,12 +586,12 @@ public:
     }
 
 private:
-    FMemoryStack           Memory;
-    FRHICommand**          CommandPointer;
-    FRHICommand*           FirstCommand;
-    IRHICommandContext*    CommandContext;
-    FGenericPlatformEvent* FinishedEvent;
-    uint32                 NumCommands;
+    FMemoryStack        Memory;
+    FRHICommand**       CommandPointer;
+    FRHICommand*        FirstCommand;
+    IRHICommandContext* CommandContext;
+    IPlatformEvent*     FinishedEvent;
+    uint32              NumCommands;
 };
 
 struct FRHIScopedEvent

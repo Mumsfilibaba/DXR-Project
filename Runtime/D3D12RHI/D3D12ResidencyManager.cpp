@@ -1,6 +1,6 @@
-#include "Core/Generic/GenericPlatformThread.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformEvent.h"
+#include "Core/Platform/PlatformThread.h"
 #include "D3D12RHI/D3D12ResidencyManager.h"
 #include "D3D12RHI/D3D12Device.h"
 #include "D3D12RHI/D3D12Resource.h"
@@ -54,21 +54,21 @@ FD3D12PagingWorker::~FD3D12PagingWorker()
 
 bool FD3D12PagingWorker::Initialize(const CHAR* InThreadName)
 {
-    WakeEvent = static_cast<FPlatformEvent*>(FPlatformEvent::Create(false));
+    WakeEvent = FPlatformEvent::Create(false);
     if (!WakeEvent)
     {
         LOG_ERROR("[FD3D12PagingWorker] Failed to create wake event");
         return false;
     }
 
-    CompletionEvent = static_cast<FPlatformEvent*>(FPlatformEvent::Create(false));
+    CompletionEvent = FPlatformEvent::Create(false);
     if (!CompletionEvent)
     {
         LOG_ERROR("[FD3D12PagingWorker] Failed to create completion event");
         return false;
     }
 
-    Thread = FGenericPlatformThread::Create(this, InThreadName);
+    Thread = FPlatformThread::Create(this, InThreadName);
     if (!Thread)
     {
         LOG_ERROR("[FD3D12PagingWorker] Failed to create thread");

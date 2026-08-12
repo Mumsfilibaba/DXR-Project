@@ -7,7 +7,7 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct FGenericPlatformString
+struct IPlatformString
 {
     static FORCEINLINE SIZE_T Mbstowcs(WIDECHAR* Dest, const CHAR* Src, uint64 Max)
     {
@@ -19,8 +19,9 @@ struct FGenericPlatformString
         return ::wcstombs(Dest, Src, Max);
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // -------------------------------------------------------------------------------------------
     // CHAR
+    // -------------------------------------------------------------------------------------------
 
     NODISCARD static FORCEINLINE CHAR ToUpper(CHAR Char)
     {
@@ -237,8 +238,9 @@ struct FGenericPlatformString
         return static_cast<double>(::atof(String));
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // -------------------------------------------------------------------------------------------
     // WIDECHAR
+    // -------------------------------------------------------------------------------------------
 
     NODISCARD static FORCEINLINE WIDECHAR ToUpper(WIDECHAR Char)
     {

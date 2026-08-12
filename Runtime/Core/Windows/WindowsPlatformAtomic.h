@@ -1,9 +1,9 @@
 #pragma once
-#include "Core/Generic/GenericPlatformAtomic.h"
+#include "Core/PlatformInterface/IPlatformAtomic.h"
 #include "Core/Windows/Windows.h"
 #include <intrin.h>
 
-struct FWindowsPlatformAtomic final : public FGenericPlatformAtomic
+struct FWindowsPlatformAtomic final : public IPlatformAtomic
 {
     // See: https://docs.microsoft.com/en-us/cpp/intrinsics/interlockedexchangeadd-intrinsic-functions?view=msvc-160
     //      https://docs.microsoft.com/en-us/windows/win32/api/winnt/nf-winnt-interlockedincrement16

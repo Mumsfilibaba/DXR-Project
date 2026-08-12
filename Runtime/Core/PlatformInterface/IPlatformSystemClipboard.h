@@ -1,14 +1,9 @@
 #pragma once
 #include "Core/Containers/String.h"
 
-/**
- * Generic system clipboard interface.
- */
-struct FGenericPlatformSystemClipboard
+struct IPlatformSystemClipboard
 {
-    /**
-     * @brief Returns true if the platform clipboard currently contains text.
-     */
+    /** @brief Returns true if the platform clipboard currently contains text. */
     static bool HasText()
     {
         return false;
@@ -36,16 +31,12 @@ struct FGenericPlatformSystemClipboard
         return false;
     }
 
-    /**
-     * @brief Clears clipboard contents (text).
-     */
+    /** @brief Clears clipboard contents (text). */
     static void Clear()
     {
     }
 
-    /**
-     * @brief Convenience helper: returns clipboard text or empty string.
-     */
+    /** @brief Convenience helper: returns clipboard text or empty string. */
     static String GetTextOrEmpty()
     {
         String Result;

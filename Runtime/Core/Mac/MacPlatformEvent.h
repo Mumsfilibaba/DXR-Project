@@ -1,8 +1,8 @@
 #pragma once
 #include "Core/Mac/Mac.h"
-#include "Core/Generic/GenericPlatformEvent.h"
+#include "Core/PlatformInterface/IPlatformEvent.h"
 
-class FMacPlatformEvent final : public FGenericPlatformEvent
+class FMacPlatformEvent final : public IPlatformEvent
 {
     enum class ETriggerType : uint8
     {
@@ -12,13 +12,18 @@ class FMacPlatformEvent final : public FGenericPlatformEvent
     };
 
 public:
-    static FGenericPlatformEvent* Create(bool bManualReset);
-    static void Recycle(FGenericPlatformEvent* InEvent);
+    static IPlatformEvent* Create(bool bManualReset);
+    static void Recycle(IPlatformEvent* InEvent);
 
 public:
     virtual void Trigger() override final;
     virtual void Wait(uint64 Milliseconds) override final;
     virtual void Reset() override final;
+
+    virtual void Wait(FTimespan Timeout) override final
+    {
+        Wait(static_cast<uint64>(Timeout.AsMilliseconds()));
+    }
 
     virtual bool IsManualReset() const override final 
     { 

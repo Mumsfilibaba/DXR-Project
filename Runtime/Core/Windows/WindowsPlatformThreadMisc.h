@@ -1,13 +1,13 @@
 #pragma once
 #include "Core/Core.h"
 #include "Core/Windows/Windows.h"
-#include "Core/Generic/GenericPlatformThreadMisc.h"
+#include "Core/PlatformInterface/IPlatformThreadMisc.h"
 
 #if PLATFORM_ARCHITECTURE_X86_64
     #include <immintrin.h>
 #endif
 
-struct CORE_API FWindowsPlatformThreadMisc final : public FGenericPlatformThreadMisc
+struct CORE_API FWindowsPlatformThreadMisc final : public IPlatformThreadMisc
 {
     static FORCEINLINE uint32 GetNumProcessors()
     {

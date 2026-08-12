@@ -7,6 +7,6 @@
     #include "Core/Mac/MacPlatformStackTrace.h"
     typedef FMacPlatformStackTrace FPlatformStackTrace;
 #else
-    #include "Core/Generic/GenericPlatformStackTrace.h"
-    typedef FGenericPlatformStackTrace FPlatformStackTrace;
+    #include "Core/PlatformInterface/IPlatformStackTrace.h"
+    typedef IPlatformStackTrace FPlatformStackTrace;
 #endif

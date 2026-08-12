@@ -1,7 +1,7 @@
 #pragma once
-#include "Core/Generic/GenericPlatformTypes.h"
+#include "Core/PlatformInterface/IPlatformTypes.h"
 
-struct FMacPlatformTypes : public FGenericPlatformTypes
+struct FMacPlatformTypes : public IPlatformTypes
 {
     typedef unsigned long SIZE_T;
 };

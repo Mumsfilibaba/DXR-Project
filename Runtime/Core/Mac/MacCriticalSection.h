@@ -1,8 +1,8 @@
 #pragma once
-#include "Core/Generic/GenericCriticalSection.h"
+#include "Core/PlatformInterface/IPlatformCriticalSection.h"
 #include <pthread.h>
 
-class FMacCriticalSection final : public FGenericCriticalSection
+class FMacCriticalSection final : public IPlatformCriticalSection
 {
 public:
     typedef pthread_mutex_t* PlatformHandle;

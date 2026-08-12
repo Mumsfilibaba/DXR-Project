@@ -1,5 +1,5 @@
 #include "Core/Filesystem/File.h"
-#include "Core/Generic/GenericPlatformFile.h"
+#include "Core/PlatformInterface/IPlatformFileSystem.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Memory/Memory.h"
 

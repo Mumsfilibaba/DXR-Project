@@ -184,7 +184,7 @@ AtomicInt32 RefCount;
 
 * Non-core gameplay/engine structs and classes still use the `F` prefix (for example `FCameraConstants`, `FViewportRegion`, `FRectangle`). The color types `FColor`/`FFloatColor`/`FFloatColor16` also keep the `F` prefix. Only the core value types listed above drop it.
 
-* The platform-abstraction / SIMD layer keeps the `F` prefix (for example `FPlatformString`, `FPlatformMath`, `FGenericPlatformVectorMath`, `FInt128`, `FFloat128`).
+* The platform-abstraction / SIMD layer keeps the `F` prefix (for example `FPlatformString`, `FPlatformMath`, `FPlatformVectorMathSSE`, `FPlatformVectorMathNEON`, `FInt128`, `FFloat128`). The interfaces those implementations satisfy are named by the [Interfaces](#interfaces) rule instead, so `IPlatformString` and `IPlatformVectorMath` take the `I` prefix while the `FPlatformX` typedefs that select between them keep the `F`.
 
 * Underlying templates keep their `T` prefix (`TString`, `TStringView`, `TStaticString`, `TCString`, `TAtomicInt`, `TAtomicEnum`); only the `F` aliases over them lose the prefix. Interfaces keep `I` and enums keep `E` as usual.
 
@@ -226,6 +226,8 @@ Bits::ReverseBits(Value);
 
 ### Interfaces
 * An interface contains no state (i.e no variables). That, and not pure virtuality, is what makes a type an interface. State belongs in the implementations, so an interface that needs to expose it declares an accessor and lets each implementation hold the member.
+
+* The rule is about per-instance state. A `static` member is allowed where it is one piece of process-wide machinery that every implementation shares rather than something each instance carries. `IPlatformThread` keeps the TLS slot that holds the running thread's pointer for this reason: there is one slot per process, every platform reads and writes the same one, and pushing it down would leave each implementation duplicating the same allocation.
 
 * Interfaces should use the capital letter 'I' as prefix.
 
@@ -448,6 +450,11 @@ private:
 ### Platform Specific Code
 * Platform specific code should be kept in seperate directories with the platform name. `PlatformInterface` holds the interfaces the platforms implement, and `Platform` holds the headers that select between them
 ```
+Core/PlatformInterface/
+Core/Platform/
+Core/Mac/
+Core/Windows/
+
 CoreApplication/PlatformInterface/
 CoreApplication/Platform/
 CoreApplication/Mac/
@@ -489,8 +496,9 @@ public:
   #include "CoreApplication/Mac/MacApplication.h"
   typedef FMacApplication FPlatformApplication;
 #else
-  #error No platform defined
+  #include "CoreApplication/PlatformInterface/IPlatformApplication.h"
+  typedef IPlatformApplication FPlatformApplication;
 #endif
 ```
 
-* The fallback branch is an `#error` when the interface cannot be instantiated, which is the case whenever its functions are pure virtual. A compile-time interface can be named there instead, since its stubs are callable, so `PlatformInputMapper.h` and `PlatformApplicationMisc.h` typedef `IPlatformInputMapper` and `IPlatformApplicationMisc` in that branch.
+* The fallback branch names the interface: include its header and typedef it, so `FPlatformX` resolves to a type in every branch. This holds for both kinds of interface. A compile-time one is usable there as it stands, since its stubs are callable, which is how `PlatformInputMapper.h` and `PlatformMisc.h` work. A pure virtual one still typedefs cleanly, because naming an abstract type is legal and only instantiating one is not, so an unported platform fails where it first tries to construct the type rather than at the include. `PlatformApplication.h` and `PlatformThread.h` are of that second kind.

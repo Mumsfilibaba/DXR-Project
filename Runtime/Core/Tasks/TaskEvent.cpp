@@ -24,8 +24,8 @@ FTaskEvent::~FTaskEvent()
 
 void FTaskEvent::Trigger()
 {
-    TArray<FGraphTask*>    LocalSubsequents;
-    FGenericPlatformEvent* LocalEvent = nullptr;
+    TArray<FGraphTask*> LocalSubsequents;
+    IPlatformEvent*     LocalEvent = nullptr;
 
     {
         SCOPED_LOCK(SubsequentsCS);
@@ -72,7 +72,7 @@ bool FTaskEvent::WaitUntilComplete(FTimespan Timeout)
         return true;
     }
 
-    FGenericPlatformEvent* LocalEvent = nullptr;
+    IPlatformEvent* LocalEvent = nullptr;
     
     {
         SCOPED_LOCK(SubsequentsCS);

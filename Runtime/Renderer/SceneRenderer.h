@@ -256,7 +256,7 @@ private:
     FDebugViewPass*              DebugViewPass;
     FRayTracer                   RayTracer;
     bool                         bRayTracingWasActive = false; // tracks the RT active->inactive edge for BLAS teardown
-    FGenericPlatformEvent*       LastFrameFinishedEvent;
+    IPlatformEvent*              LastFrameFinishedEvent;
     FRHIQueryRef                 TimestampQueries;
     FRHICommandList              CommandList;
     FRHICommandList              UICommandList;

@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Generic/GenericPlatformAtomic.h"
+#include "Core/PlatformInterface/IPlatformAtomic.h"
 
 template<EMemoryOrder Order>
 static constexpr auto GetGCCMemoryOrder()
@@ -51,7 +51,7 @@ static constexpr auto GetGCCFailureMemoryOrder()
     }
 }
 
-struct CORE_API FMacPlatformAtomic final : public FGenericPlatformAtomic
+struct CORE_API FMacPlatformAtomic final : public IPlatformAtomic
 {
     template<EMemoryOrder Order = EMemoryOrder::Default>
     static FORCEINLINE int8 Read(volatile const int8* Source) requires(IsLoadOrderingValid<Order>())

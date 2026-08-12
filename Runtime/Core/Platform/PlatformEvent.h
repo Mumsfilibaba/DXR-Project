@@ -7,6 +7,6 @@
     #include "Core/Mac/MacPlatformEvent.h"
     typedef FMacPlatformEvent FPlatformEvent;
 #else
-    #include "Core/Generic/GenericPlatformEvent.h"
-    typedef FGenericPlatformEvent FPlatformEvent;
+    #include "Core/PlatformInterface/IPlatformEvent.h"
+    typedef IPlatformEvent FPlatformEvent;
 #endif

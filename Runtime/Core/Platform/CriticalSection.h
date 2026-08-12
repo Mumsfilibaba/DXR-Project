@@ -7,6 +7,6 @@
     #include "Core/Mac/MacCriticalSection.h"
     typedef FMacCriticalSection FCriticalSection;
 #else
-    #include "Core/Generic/GenericCriticalSection.h"
-    typedef FGenericCriticalSection FCriticalSection;
+    #include "Core/PlatformInterface/IPlatformCriticalSection.h"
+    typedef IPlatformCriticalSection FCriticalSection;
 #endif

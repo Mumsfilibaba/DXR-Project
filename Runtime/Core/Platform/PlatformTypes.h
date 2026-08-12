@@ -7,6 +7,6 @@
     #include "Core/Mac/MacPlatformTypes.h"
     typedef FMacPlatformTypes FPlatformTypes;
 #else
-    #include "Core/Generic/GenericPlatformTypes.h"
-    typedef FGenericPlatformTypes FPlatformTypes;
+    #include "Core/PlatformInterface/IPlatformTypes.h"
+    typedef IPlatformTypes FPlatformTypes;
 #endif

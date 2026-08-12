@@ -4,7 +4,7 @@
 #include "Core/Containers/String.h"
 #include "Core/Filesystem/File.h"
 #include "Core/Platform/PlatformFile.h"
-#include "Core/Generic/GenericPlatformFile.h"
+#include "Core/PlatformInterface/IPlatformFileSystem.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/Spinlock.h"
 #include "RendererCore/RayTracing/AccelerationStructureCache.h"

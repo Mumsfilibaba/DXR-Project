@@ -2,8 +2,9 @@
 #include "Core/Mac/MacPlatformThreadMisc.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformTLS.h"
+#include "Core/Threading/ThreadManager.h"
 
-FGenericPlatformThread* FMacPlatformThread::Create(FRunnable* InRunnable, const CHAR* ThreadName, bool bSuspended)
+IPlatformThread* FMacPlatformThread::Create(FRunnable* InRunnable, const CHAR* ThreadName, bool bSuspended)
 {
     FMacPlatformThread* NewThread = new FMacPlatformThread(InRunnable, ThreadName);
     if (!bSuspended && !NewThread->Start())
@@ -16,10 +17,12 @@ FGenericPlatformThread* FMacPlatformThread::Create(FRunnable* InRunnable, const 
 }
 
 FMacPlatformThread::FMacPlatformThread(FRunnable* InRunnable, const CHAR* ThreadName)
-    : FGenericPlatformThread(InRunnable, ThreadName)
+    : Name(ThreadName)
+    , Runnable(InRunnable)
     , Thread()
     , bIsJoinable(false)
 { 
+    FThreadManager::Get().RegisterThread(this);
 }
 
 FMacPlatformThread::~FMacPlatformThread()
@@ -29,6 +32,8 @@ FMacPlatformThread::~FMacPlatformThread()
         ::pthread_detach(Thread);
         bIsJoinable = false;
     }
+
+    FThreadManager::Get().UnregisterThread(this);
 }
 
 bool FMacPlatformThread::Start()
@@ -93,7 +98,7 @@ void* FMacPlatformThread::ThreadRoutine(void* ThreadParameter)
     if (CurrentThread)
     {
         // Ensure that this thread can be retrieved
-        FPlatformTLS::SetTLSValue(FGenericPlatformThread::TLSSlot, CurrentThread);
+        FPlatformTLS::SetTLSValue(IPlatformThread::TLSSlot, CurrentThread);
 
         // Thread-name can only be set from the running thread
         if (!CurrentThread->Name.IsEmpty())
@@ -112,7 +117,7 @@ void* FMacPlatformThread::ThreadRoutine(void* ThreadParameter)
             Runnable->Destroy();
         }
 
-        FPlatformTLS::SetTLSValue(FGenericPlatformThread::TLSSlot, nullptr);
+        FPlatformTLS::SetTLSValue(IPlatformThread::TLSSlot, nullptr);
     }
 
     ::pthread_exit(nullptr);

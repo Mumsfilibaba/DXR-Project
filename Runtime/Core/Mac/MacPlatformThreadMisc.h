@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Mac/MacThreadManager.h"
-#include "Core/Generic/GenericPlatformThreadMisc.h"
+#include "Core/PlatformInterface/IPlatformThreadMisc.h"
 #include <unistd.h>
 #include <pthread.h>
 #include <sched.h>
@@ -8,7 +8,7 @@
 
 #define CHECK_COCOA_MAIN_THREAD() CHECK(FPlatformThreadMisc::IsMainThread())
 
-struct FMacPlatformThreadMisc final : public FGenericPlatformThreadMisc
+struct FMacPlatformThreadMisc final : public IPlatformThreadMisc
 {
     static FORCEINLINE uint32 GetNumProcessors()
     {

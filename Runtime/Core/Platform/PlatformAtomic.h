@@ -7,6 +7,6 @@
     #include "Core/Mac/MacPlatformAtomic.h"
     typedef FMacPlatformAtomic FPlatformAtomic;
 #else
-    #include "Core/Generic/GenericPlatformAtomic.h"
-    typedef FGenericPlatformAtomic FPlatformAtomic;
+    #include "Core/PlatformInterface/IPlatformAtomic.h"
+    typedef IPlatformAtomic FPlatformAtomic;
 #endif

@@ -1,9 +1,9 @@
 #pragma once
 #include "Core/Mac/Mac.h"
-#include "Core/Generic/GenericPlatformTLS.h"
+#include "Core/PlatformInterface/IPlatformTLS.h"
 #include <pthread.h>
 
-struct FMacPlatformTLS final : public FGenericPlatformTLS
+struct FMacPlatformTLS final : public IPlatformTLS
 {
     static FORCEINLINE uint32 GetCurrentThreadID()
     {

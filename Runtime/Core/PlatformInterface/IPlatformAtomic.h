@@ -4,12 +4,7 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-/**
- * @brief Returns true if Order is a valid memory ordering for an atomic load.
- *
- * Loads accept Relaxed, Acquire and SequentiallyConsistent orderings.
- * Release and AcquireRelease are not meaningful on a pure load.
- */
+/** @brief Returns true if Order is a valid memory ordering for an atomic load. */
 template<EMemoryOrder Order>
 static constexpr bool IsLoadOrderingValid()
 {
@@ -18,12 +13,7 @@ static constexpr bool IsLoadOrderingValid()
         || Order == EMemoryOrder::SequentiallyConsistent;
 }
 
-/**
- * @brief Returns true if Order is a valid memory ordering for an atomic store.
- *
- * Stores accept Relaxed, Release and SequentiallyConsistent orderings.
- * Acquire and AcquireRelease are not meaningful on a pure store.
- */
+/** @brief Returns true if Order is a valid memory ordering for an atomic store. */
 template<EMemoryOrder Order>
 static constexpr bool IsStoreOrderingValid()
 {
@@ -32,12 +22,7 @@ static constexpr bool IsStoreOrderingValid()
         || Order == EMemoryOrder::SequentiallyConsistent;
 }
 
-/**
- * @brief Returns true if Order is a valid memory ordering for a read-modify-write operation.
- *
- * Read-modify-write operations have both a read-half and a write-half, so all
- * five orderings are valid.
- */
+/** @brief Returns true if Order is a valid memory ordering for a read-modify-write operation. */
 template<EMemoryOrder Order>
 static constexpr bool IsReadModifyWriteOrderingValid()
 {
@@ -48,7 +33,7 @@ static constexpr bool IsReadModifyWriteOrderingValid()
         || Order == EMemoryOrder::SequentiallyConsistent;
 }
 
-struct FGenericPlatformAtomic
+struct IPlatformAtomic
 {
     /**
      * @brief Atomically reads a value with the supplied memory ordering

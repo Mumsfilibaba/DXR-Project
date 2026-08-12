@@ -1,11 +1,11 @@
 #pragma once
 #include "Core/Windows/Windows.h"
-#include "Core/Generic/GenericPlatformStackTrace.h"
+#include "Core/PlatformInterface/IPlatformStackTrace.h"
 
-struct CORE_API FWindowsPlatformStackTrace final : public FGenericPlatformStackTrace
+struct CORE_API FWindowsPlatformStackTrace final : public IPlatformStackTrace
 {
-    using FGenericPlatformStackTrace::GetStack;
-    using FGenericPlatformStackTrace::CaptureStackTrace;
+    using IPlatformStackTrace::GetStack;
+    using IPlatformStackTrace::CaptureStackTrace;
 
     static bool InitializeSymbols();
     static void ReleaseSymbols();

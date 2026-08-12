@@ -1,12 +1,12 @@
 #pragma once
 #include "Core/Mac/Mac.h"
-#include "Core/Generic/GenericPlatformMisc.h"
+#include "Core/PlatformInterface/IPlatformMisc.h"
 
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
 
-struct FMacPlatformMisc final : public FGenericPlatformMisc
+struct FMacPlatformMisc final : public IPlatformMisc
 {
     static FORCEINLINE void OutputDebugString(const CHAR* Message)
     {

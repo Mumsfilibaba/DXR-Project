@@ -6,7 +6,7 @@
 #include "Core/Threading/Atomic/AtomicBool.h"
 #include "Core/Time/Timespan.h"
 
-class FGenericPlatformEvent;
+struct IPlatformEvent;
 
 class CORE_API FTaskEvent
 {
@@ -38,8 +38,8 @@ public:
     }
 
 private:
-    AtomicBool             bComplete;
-    FCriticalSection       SubsequentsCS;
-    TArray<FGraphTask*>    Subsequents;
-    FGenericPlatformEvent* CompletionEvent;
+    AtomicBool          bComplete;
+    FCriticalSection    SubsequentsCS;
+    TArray<FGraphTask*> Subsequents;
+    IPlatformEvent*     CompletionEvent;
 };

@@ -46,8 +46,8 @@
     #define USE_VECTOR_MATH (0)
 
     // TODO: Add fallback when we have no SSE intrinsics
-    #include "Core/Math/VectorMath/GenericPlatformVectorMath.h"
-    typedef FGenericPlatformVectorMath FPlatformVectorMath;
+    #include "Core/Math/VectorMath/IPlatformVectorMath.h"
+    typedef IPlatformVectorMath FPlatformVectorMath;
 #endif
 
 struct FVectorMath : public FPlatformVectorMath

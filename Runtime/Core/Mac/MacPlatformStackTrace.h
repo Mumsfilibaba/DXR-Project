@@ -1,14 +1,14 @@
 #pragma once
 #include "Core/Mac/Mac.h"
-#include "Core/Generic/GenericPlatformStackTrace.h"
+#include "Core/PlatformInterface/IPlatformStackTrace.h"
 
 #include <mach-o/dyld.h>
 #include <sys/syslimits.h>
 
-struct CORE_API FMacPlatformStackTrace final : public FGenericPlatformStackTrace
+struct CORE_API FMacPlatformStackTrace final : public IPlatformStackTrace
 {
-    using FGenericPlatformStackTrace::GetStack;
-    using FGenericPlatformStackTrace::CaptureStackTrace;
+    using IPlatformStackTrace::GetStack;
+    using IPlatformStackTrace::CaptureStackTrace;
 
     static bool InitializeSymbols();
     static void ReleaseSymbols();

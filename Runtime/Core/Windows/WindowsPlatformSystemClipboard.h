@@ -1,7 +1,7 @@
 #pragma once
-#include "Core/Generic/GenericPlatformSystemClipboard.h"
+#include "Core/PlatformInterface/IPlatformSystemClipboard.h"
 
-struct CORE_API FWindowsPlatformSystemClipboard : public FGenericPlatformSystemClipboard
+struct CORE_API FWindowsPlatformSystemClipboard : public IPlatformSystemClipboard
 {
     static bool HasText();
     static bool GetText(String& OutText);

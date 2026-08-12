@@ -2,7 +2,7 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Misc/IOutputDevice.h"
-#include "Core/Generic/GenericPlatformFile.h"
+#include "Core/PlatformInterface/IPlatformFileSystem.h"
 
 class CORE_API FFileOutputDevice : public IOutputDevice
 {

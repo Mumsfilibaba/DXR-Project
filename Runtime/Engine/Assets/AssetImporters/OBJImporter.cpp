@@ -1,6 +1,6 @@
 #include "Core/Math/Math.h"
 #include "Core/Containers/Map.h"
-#include "Core/Generic/GenericPlatformFile.h"
+#include "Core/PlatformInterface/IPlatformFileSystem.h"
 #include "Core/Filesystem/File.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Engine/Assets/AssetManager.h"

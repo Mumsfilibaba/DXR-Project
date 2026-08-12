@@ -1,9 +1,9 @@
 #pragma once
 #include "Core/Windows/Windows.h"
 #include "Core/Containers/String.h"
-#include "Core/Generic/GenericPlatformMisc.h"
+#include "Core/PlatformInterface/IPlatformMisc.h"
 
-struct FWindowsPlatformMisc final : public FGenericPlatformMisc
+struct FWindowsPlatformMisc final : public IPlatformMisc
 {
     static FORCEINLINE void OutputDebugString(const CHAR* Message)
     {

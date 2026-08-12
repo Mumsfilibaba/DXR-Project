@@ -53,7 +53,7 @@ struct FFloat128
     };
 };
 
-struct FGenericPlatformVectorMath
+struct IPlatformVectorMath
 {
 private:
     static FORCEINLINE FFloat128 VECTORCALL MaskToFloat128(uint32 Mask) noexcept
@@ -170,10 +170,25 @@ public:
     // Component extract
     // ---------------------------------------------------------------------------------------------
 
-    static FORCEINLINE float VECTORCALL VectorGetX(FFloat128 Vector) noexcept { return Vector.X; }
-    static FORCEINLINE float VECTORCALL VectorGetY(FFloat128 Vector) noexcept { return Vector.Y; }
-    static FORCEINLINE float VECTORCALL VectorGetZ(FFloat128 Vector) noexcept { return Vector.Z; }
-    static FORCEINLINE float VECTORCALL VectorGetW(FFloat128 Vector) noexcept { return Vector.W; }
+    static FORCEINLINE float VECTORCALL VectorGetX(FFloat128 Vector) noexcept
+    {
+        return Vector.X;
+    }
+
+    static FORCEINLINE float VECTORCALL VectorGetY(FFloat128 Vector) noexcept
+    {
+        return Vector.Y;
+    }
+
+    static FORCEINLINE float VECTORCALL VectorGetZ(FFloat128 Vector) noexcept
+    {
+        return Vector.Z;
+    }
+
+    static FORCEINLINE float VECTORCALL VectorGetW(FFloat128 Vector) noexcept
+    {
+        return Vector.W;
+    }
 
     // ---------------------------------------------------------------------------------------------
     // Arithmetic

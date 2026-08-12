@@ -1,6 +1,6 @@
 #include "Core/Windows/WindowsPlatformEvent.h"
 
-FGenericPlatformEvent* FWindowsPlatformEvent::Create(bool bManualReset)
+IPlatformEvent* FWindowsPlatformEvent::Create(bool bManualReset)
 {
     FWindowsPlatformEvent* NewEvent = new FWindowsPlatformEvent();
     if (!NewEvent->Initialize(bManualReset))
@@ -12,7 +12,7 @@ FGenericPlatformEvent* FWindowsPlatformEvent::Create(bool bManualReset)
     return NewEvent;
 }
 
-void FWindowsPlatformEvent::Recycle(FGenericPlatformEvent* InEvent)
+void FWindowsPlatformEvent::Recycle(IPlatformEvent* InEvent)
 {
     FWindowsPlatformEvent* WindowsEvent = static_cast<FWindowsPlatformEvent*>(InEvent);
     if (WindowsEvent)

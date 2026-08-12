@@ -1,8 +1,8 @@
 #pragma once
-#include "Core/Generic/GenericConditionVariable.h"
+#include "Core/PlatformInterface/IPlatformConditionVariable.h"
 #include <pthread.h>
 
-class FMacConditionVariable final : public FGenericConditionVariable
+class FMacConditionVariable final : public IPlatformConditionVariable
 {
 public:
     typedef pthread_cond_t* PlatformHandle;

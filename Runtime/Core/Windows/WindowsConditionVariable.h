@@ -2,10 +2,10 @@
 #include "Core/Windows/WindowsCriticalSection.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Generic/GenericConditionVariable.h"
+#include "Core/PlatformInterface/IPlatformConditionVariable.h"
 #include "Core/Platform/PlatformMisc.h"
 
-class FWindowsConditionVariable final : public FGenericConditionVariable
+class FWindowsConditionVariable final : public IPlatformConditionVariable
 {
 public:
     typedef CONDITION_VARIABLE* PlatformHandle;

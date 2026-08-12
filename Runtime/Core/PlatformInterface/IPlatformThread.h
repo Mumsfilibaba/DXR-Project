@@ -7,61 +7,50 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class CORE_API FGenericPlatformThread
+struct CORE_API IPlatformThread
 {
 public:
 
-    /** @brief Creates a new thread */
-    static FGenericPlatformThread* Create(FRunnable* Runnable, const CHAR* ThreadName, bool bSuspended = true);
+    /** @brief Creates a new thread. Each platform hides this with its own */
+    static IPlatformThread* Create(FRunnable* Runnable, const CHAR* ThreadName, bool bSuspended = true)
+    {
+        return nullptr;
+    }
 
     /** @return Returns the thread-object for the current thread */
-    static FGenericPlatformThread* GetThread();
+    static IPlatformThread* GetThread();
 
 public:
 
-    /** @brief Destructor */
-    virtual ~FGenericPlatformThread();
+    virtual ~IPlatformThread() = default;
 
     /** @brief Start the thread and start executing the entrypoint */
-    virtual bool Start() { return true; }
+    virtual bool Start() = 0;
 
     /** @brief Kills the thread if the platform support the feature */
-    virtual void Kill(bool bWaitUntilCompletion) { }
+    virtual void Kill(bool bWaitUntilCompletion) = 0;
 
     /** @brief Suspends the thread if the platform support the feature */
-    virtual void Suspend() { }
+    virtual void Suspend() = 0;
 
     /** @brief Resumes the thread after being suspended if the platform support the feature */
-    virtual void Resume() { }
+    virtual void Resume() = 0;
 
     /** @brief Waits for the thread to finish */
-    virtual void WaitForCompletion() { }
+    virtual void WaitForCompletion() = 0;
 
     /** @return Returns the native platform handle */
-    virtual void* GetPlatformHandle() { return nullptr; }
+    virtual void* GetPlatformHandle() = 0;
 
     /** @return Returns the name of the thread */
-    const String& GetName() const
-    {
-        return Name;
-    }
+    virtual const String& GetName() const = 0;
 
     /** @return Returns a pointer to the interface currently running on the thread */
-    FRunnable* GetRunnable() const 
-    { 
-        return Runnable; 
-    }
+    virtual FRunnable* GetRunnable() const = 0;
 
 protected:
-    FGenericPlatformThread(FRunnable* InRunnable, const CHAR* InThreadName);
-
-    // Returns and allocates a TLS slot for the local thread pointer
     static uint32 AllocTLSSlot();
 
-    String     Name;
-    FRunnable* Runnable;
-
-    // Slot-Index for storing the current threads pointer
     static uint32 TLSSlot;
 };
 

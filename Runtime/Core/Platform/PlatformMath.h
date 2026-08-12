@@ -7,6 +7,6 @@
     #include "Core/Mac/MacPlatformMath.h"
     typedef FMacPlatformMath FPlatformMath;
 #else
-    #include "Core/Generic/GenericPlatformMath.h"
-    typedef FGenericPlatformMath FPlatformMath;
+    #include "Core/PlatformInterface/IPlatformMath.h"
+    typedef IPlatformMath FPlatformMath;
 #endif

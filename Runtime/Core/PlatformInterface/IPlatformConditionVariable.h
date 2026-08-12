@@ -4,32 +4,38 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct FGenericConditionVariable : FNonCopyable
+struct IPlatformConditionVariable : FNonCopyable
 {
     typedef void* PlatformHandle;
 
-    /**
-     * @brief Notifies a single CriticalSection
-     */
-    FORCEINLINE void NotifyOne() noexcept { }
+    /** @brief Notifies a single CriticalSection */
+    FORCEINLINE void NotifyOne() noexcept
+    {
+    }
 
-    /**
-     * @brief Notifies a all CriticalSections
-     */
-    FORCEINLINE void NotifyAll() noexcept { }
+    /** @brief Notifies a all CriticalSections */
+    FORCEINLINE void NotifyAll() noexcept
+    {
+    }
 
     /**
      * @brief Make a CriticalSections wait until notified 
      * @param Lock Lock that should wait for condition to be met
      * @return Returns true if the wait is successful
      */
-    FORCEINLINE bool Wait(TScopedLock<FCriticalSection>& Lock) noexcept { return false; }
+    FORCEINLINE bool Wait(TScopedLock<FCriticalSection>& Lock) noexcept
+    {
+        return false;
+    }
 
     /**
      * @brief Retrieve platform specific handle 
      * @return Returns a platform specific handle or nullptr if no platform handle is defined
      */
-    FORCEINLINE PlatformHandle GetPlatformHandle() { return nullptr; }
+    FORCEINLINE PlatformHandle GetPlatformHandle()
+    {
+        return nullptr;
+    }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -1,7 +1,7 @@
 #pragma once
-#include "Core/Generic/GenericPlatformMath.h"
+#include "Core/PlatformInterface/IPlatformMath.h"
 
-struct FMacPlatformMath : public FGenericPlatformMath
+struct FMacPlatformMath : public IPlatformMath
 {
     static FORCEINLINE bool IsNaN(float Value)
     {

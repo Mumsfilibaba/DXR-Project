@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Windows/Windows.h"
-#include "Core/Generic/GenericPlatformFile.h"
+#include "Core/PlatformInterface/IPlatformFileSystem.h"
 
 class CORE_API FWindowsFileHandle : public IPlatformFile
 {
@@ -55,7 +55,7 @@ private:
     TArray<FPendingWrite*> PendingWrites;
 };
 
-struct CORE_API FWindowsPlatformFile : public FGenericPlatformFile
+struct CORE_API FWindowsPlatformFile : public IPlatformFileSystem
 {
     static IPlatformFile* OpenForRead(const String& Filename);
     static IPlatformFile* OpenForWrite(const String& Filename, bool bTruncate = true);

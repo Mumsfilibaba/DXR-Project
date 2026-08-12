@@ -3,7 +3,7 @@
 #include "Core/Memory/Memory.h"
 #include <math.h>
 
-struct FGenericPlatformMath
+struct IPlatformMath
 {
     static FORCEINLINE float Sqrt(float Value)
     {
@@ -203,13 +203,13 @@ struct FGenericPlatformMath
 };
 
 template<>
-FORCEINLINE float FGenericPlatformMath::Abs<float>(float Value)
+FORCEINLINE float IPlatformMath::Abs<float>(float Value)
 {
     return ::fabsf(Value);
 }
 
 template<>
-FORCEINLINE double FGenericPlatformMath::Abs<double>(double Value)
+FORCEINLINE double IPlatformMath::Abs<double>(double Value)
 {
     return ::fabs(Value);
 }

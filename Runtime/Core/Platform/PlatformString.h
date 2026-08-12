@@ -7,6 +7,6 @@
     #include "Core/Mac/MacPlatformString.h"
     typedef FMacPlatformString FPlatformString;
 #else
-    #include "Core/Generic/GenericPlatformString.h"
-    typedef FGenericPlatformString FPlatformString;
+    #include "Core/PlatformInterface/IPlatformString.h"
+    typedef IPlatformString FPlatformString;
 #endif

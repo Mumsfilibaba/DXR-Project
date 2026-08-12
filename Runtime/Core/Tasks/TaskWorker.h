@@ -5,8 +5,8 @@
 #include "Core/Threading/Atomic/AtomicBool.h"
 #include "Core/Templates/Utility/NonCopyable.h"
 
-class FGenericPlatformThread;
-class FGenericPlatformEvent;
+struct IPlatformThread;
+struct IPlatformEvent;
 
 class CORE_API FTaskWorker : public FRunnable, private FNonCopyable
 {
@@ -49,13 +49,13 @@ public:
     }
 
 private:
-    AtomicBool              bIsIdle;
-    FTaskGraph*             Graph;
-    ENamedThread::Type      Lane;
-    int32                   WorkerIndex;
-    FGenericPlatformEvent*  WakeEvent;
-    FGenericPlatformThread* Thread;
-    AtomicBool              bIsRunning;
+    AtomicBool         bIsIdle;
+    FTaskGraph*        Graph;
+    ENamedThread::Type Lane;
+    int32              WorkerIndex;
+    IPlatformEvent*    WakeEvent;
+    IPlatformThread*   Thread;
+    AtomicBool         bIsRunning;
 
     static uint32 CurrentWorkerTLSSlot;
 };

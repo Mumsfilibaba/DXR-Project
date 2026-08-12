@@ -7,6 +7,6 @@
     #include "Core/Mac/MacPlatformMisc.h"
     typedef FMacPlatformMisc FPlatformMisc;
 #else
-    #include "Core/Generic/GenericPlatformMisc.h"
-    typedef FGenericPlatformMisc FPlatformMisc;
+    #include "Core/PlatformInterface/IPlatformMisc.h"
+    typedef IPlatformMisc FPlatformMisc;
 #endif

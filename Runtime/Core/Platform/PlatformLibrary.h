@@ -7,6 +7,6 @@
     #include "Core/Mac/MacPlatformLibrary.h"
     typedef FMacPlatformLibrary FPlatformLibrary;
 #else
-    #include "Core/Generic/GenericPlatformLibrary.h"
-    typedef FGenericPlatformLibrary FPlatformLibrary;
+    #include "Core/PlatformInterface/IPlatformLibrary.h"
+    typedef IPlatformLibrary FPlatformLibrary;
 #endif

@@ -1,6 +1,6 @@
 #include "Core/Platform/PlatformStackTrace.h"
 
-int32 FGenericPlatformStackTrace::CaptureStackTrace(uint64* StackTrace, int32 MaxDepth, int32 IgnoreCount)
+int32 IPlatformStackTrace::CaptureStackTrace(uint64* StackTrace, int32 MaxDepth, int32 IgnoreCount)
 {
     uint64 StaticStackTrace[MAX_STACK_DEPTH];
     
@@ -17,7 +17,7 @@ int32 FGenericPlatformStackTrace::CaptureStackTrace(uint64* StackTrace, int32 Ma
     return DepthResult;
 }
 
-TArray<FStackTraceEntry> FGenericPlatformStackTrace::GetStack(int32 MaxDepth, int32 IgnoreCount)
+TArray<FStackTraceEntry> IPlatformStackTrace::GetStack(int32 MaxDepth, int32 IgnoreCount)
 {
     TArray<FStackTraceEntry> Stack;
     if (!FPlatformStackTrace::InitializeSymbols())
@@ -31,7 +31,6 @@ TArray<FStackTraceEntry> FGenericPlatformStackTrace::GetStack(int32 MaxDepth, in
     uint64 StackTrace[MAX_STACK_DEPTH];
     Memory::Memzero(StackTrace);
 
-    // Ensure that static buffer does not overflow
     MaxDepth = Math::Min(MAX_STACK_DEPTH, MaxDepth + IgnoreCount);
 
     const int32 Depth = FPlatformStackTrace::CaptureStackTrace(StackTrace, MaxDepth);

@@ -1,8 +1,8 @@
 #pragma once
 #include "Core/Windows/Windows.h"
-#include "Core/Generic/GenericCriticalSection.h"
+#include "Core/PlatformInterface/IPlatformCriticalSection.h"
 
-class FWindowsCriticalSection final : public FGenericCriticalSection
+class FWindowsCriticalSection final : public IPlatformCriticalSection
 {
 public:
     typedef CRITICAL_SECTION* PlatformHandle;

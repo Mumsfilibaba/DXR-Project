@@ -7,6 +7,6 @@
     #include "Core/Mac/MacPlatformFile.h"
     typedef FMacPlatformFile FPlatformFile;
 #else
-    #include "Core/Generic/GenericFile.h"
-    typedef FGenericPlatformFile FPlatformFile;
+    #include "Core/PlatformInterface/IPlatformFileSystem.h"
+    typedef IPlatformFileSystem FPlatformFile;
 #endif

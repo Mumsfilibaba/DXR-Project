@@ -127,7 +127,7 @@ void FEditorFrameProfilerWidget::DrawCPUData(float Width)
         }
         else
         {
-            FGenericPlatformThread* Thread = FThreadManager::Get().GetThreadFromHandle(ThreadInfo.ThreadHandle);
+            IPlatformThread* Thread = FThreadManager::Get().GetThreadFromHandle(ThreadInfo.ThreadHandle);
             if (!Thread)
             {
                 continue;

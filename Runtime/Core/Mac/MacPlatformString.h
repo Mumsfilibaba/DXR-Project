@@ -1,9 +1,9 @@
 #pragma once
-#include "Core/Generic/GenericPlatformString.h"
+#include "Core/PlatformInterface/IPlatformString.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct FMacPlatformString final : public FGenericPlatformString
+struct FMacPlatformString final : public IPlatformString
 {
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     // CHAR

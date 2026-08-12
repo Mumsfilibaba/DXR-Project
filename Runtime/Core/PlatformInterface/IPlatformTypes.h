@@ -1,6 +1,6 @@
 #pragma once
 
-struct FGenericPlatformTypes
+struct IPlatformTypes
 {
     typedef signed char int8;
     typedef signed short int16;

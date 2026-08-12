@@ -130,66 +130,95 @@ private:
     T* Handle;
 };
 
-
-struct CORE_API FGenericPlatformFile
+struct CORE_API IPlatformFileSystem
 {
+    /** @brief Unimplemented: declared here, but never defined and never overridden by a platform */
     static void ObtainRelativePath(const String& Path);
 
-    static FORCEINLINE IPlatformFile* OpenForRead(const String& Filename) 
+    /**
+     * @brief Open an existing file for reading, leaving it open to other readers
+     * @param Filename Path of the file to open
+     * @return Returns a handle the caller closes, or nullptr if the file could not be opened
+     */
+    static FORCEINLINE IPlatformFile* OpenForRead(const String& Filename)
     {
         return nullptr;
     }
 
+    /**
+     * @brief Open a file for writing, creating it if it is missing and locking out other writers
+     * @param Filename Path of the file to open
+     * @param bTruncate Discard the existing contents instead of writing over them
+     * @return Returns a handle the caller closes, or nullptr if the file could not be opened
+     */
     static FORCEINLINE IPlatformFile* OpenForWrite(const String& Filename, bool bTruncate = true)
     {
         return nullptr;
     }
 
+    /**
+     * @brief Open a file for writing where each write is submitted without blocking the caller
+     * @param Filename Path of the file to open
+     * @param bTruncate Discard the existing contents instead of writing over them
+     * @return Returns a handle the caller closes, or nullptr if the file could not be opened
+     */
     static FORCEINLINE IPlatformAsyncFile* OpenForAsyncWrite(const String& Filename, bool bTruncate = true)
     {
         return nullptr;
     }
 
+    /** @return Returns the working directory of the process, or an empty string if it could not be queried */
     static FORCEINLINE String GetCurrentWorkingDirectory()
     {
         return String();
     }
 
+    /** @return Returns the full path of the running executable */
     static FORCEINLINE const CHAR* GetExecutablePath()
     {
         return "";
     }
 
+    /** @return Returns true if Path names an existing directory */
     static FORCEINLINE bool IsDirectory(const CHAR* Path)
     {
         return false;
     }
 
+    /**
+     * @brief Check that a path exists
+     * @return Returns true if Path exists, which both platforms also answer for a directory
+     */
     static FORCEINLINE bool IsFile(const CHAR* Path)
     {
         return false;
     }
 
+    /** @brief Create a directory, returning true if it was created or already existed */
     static FORCEINLINE bool CreateDirectory(const CHAR* Path)
     {
         return false;
     }
 
+    /** @brief Remove a directory, returning true if it was removed or was never there */
     static FORCEINLINE bool RemoveDirectory(const CHAR* Path)
     {
         return false;
     }
 
+    /** @brief Delete a file, returning true if it was deleted or was never there */
     static FORCEINLINE bool DeleteFile(const CHAR* Path)
     {
         return false;
     }
 
+    /** @brief Move a file, replacing ToFilename if it exists, returning true on success */
     static FORCEINLINE bool MoveFile(const CHAR* FromFilename, const CHAR* ToFilename)
     {
         return false;
     }
 
+    /** @return Returns true if Path is relative rather than absolute */
     static FORCEINLINE bool IsPathRelative(const CHAR* Path)
     {
         return false;

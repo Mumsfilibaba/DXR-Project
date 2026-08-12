@@ -1,9 +1,9 @@
 #pragma once
 #include "Core/Containers/String.h"
 #include "Core/Windows/Windows.h"
-#include "Core/Generic/GenericPlatformLibrary.h"
+#include "Core/PlatformInterface/IPlatformLibrary.h"
 
-struct FWindowsPlatformLibrary final : public FGenericPlatformLibrary
+struct FWindowsPlatformLibrary final : public IPlatformLibrary
 {
     static FORCEINLINE void* LoadDynamicLib(const CHAR* LibraryName)
     {

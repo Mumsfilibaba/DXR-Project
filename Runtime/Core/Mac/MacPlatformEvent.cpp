@@ -6,7 +6,7 @@
 #include <time.h>
 #include <Foundation/Foundation.h>
 
-FGenericPlatformEvent* FMacPlatformEvent::Create(bool bManualReset)
+IPlatformEvent* FMacPlatformEvent::Create(bool bManualReset)
 {
     FMacPlatformEvent* NewEvent = new FMacPlatformEvent();
     if (!NewEvent->Initialize(bManualReset))
@@ -18,7 +18,7 @@ FGenericPlatformEvent* FMacPlatformEvent::Create(bool bManualReset)
     return NewEvent;
 }
 
-void FMacPlatformEvent::Recycle(FGenericPlatformEvent* InEvent)
+void FMacPlatformEvent::Recycle(IPlatformEvent* InEvent)
 {
     FMacPlatformEvent* MacEvent = static_cast<FMacPlatformEvent*>(InEvent);
     if (MacEvent)

@@ -10,7 +10,8 @@ class FD3D12Device;
 class FD3D12Fence;
 class FD3D12Resource;
 class FD3D12ResidencyManager;
-class FGenericPlatformThread;
+struct IPlatformEvent;
+struct IPlatformThread;
 
 class FD3D12ResidencyHandle
 {
@@ -106,9 +107,9 @@ private:
     ID3D12Device*           Device;
     TArray<ID3D12Pageable*> PendingPageables;
     HRESULT                 LastResult;
-    FPlatformEvent*         WakeEvent;
-    FPlatformEvent*         CompletionEvent;
-    FGenericPlatformThread* Thread;
+    IPlatformEvent*         WakeEvent;
+    IPlatformEvent*         CompletionEvent;
+    IPlatformThread*        Thread;
     FCriticalSection        RequestMutex;
     bool                    bRunning;
 };

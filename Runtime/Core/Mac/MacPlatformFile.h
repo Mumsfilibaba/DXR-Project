@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Mac/Mac.h"
-#include "Core/Generic/GenericPlatformFile.h"
+#include "Core/PlatformInterface/IPlatformFileSystem.h"
 #include <sys/stat.h>
 #include <cerrno>
 #include <cstdio>
@@ -54,7 +54,7 @@ private:
     bool                   bHasWriteError;
 };
 
-struct CORE_API FMacPlatformFile final : public FGenericPlatformFile
+struct CORE_API FMacPlatformFile final : public IPlatformFileSystem
 {
     static IPlatformFile* OpenForRead(const String& Filename);
     static IPlatformFile* OpenForWrite(const String& Filename, bool bTruncate = true);

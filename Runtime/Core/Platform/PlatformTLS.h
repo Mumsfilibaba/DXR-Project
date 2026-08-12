@@ -7,6 +7,6 @@
     #include "Core/Mac/MacPlatformTLS.h"
     typedef FMacPlatformTLS FPlatformTLS;
 #else
-    #include "Core/Generic/GenericPlatformTLS.h"
-    typedef FGenericPlatformTLS FPlatformTLS;
+    #include "Core/PlatformInterface/IPlatformTLS.h"
+    typedef IPlatformTLS FPlatformTLS;
 #endif

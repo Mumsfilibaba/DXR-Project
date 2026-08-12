@@ -7,6 +7,6 @@
     #include "Core/Mac/MacPlatformTime.h"
     typedef FMacPlatformTime FPlatformTime;
 #else
-    #include "Core/Generic/GenericPlatformTime.h"
-    typedef FGenericPlatformTime FPlatformTime;
+    #include "Core/PlatformInterface/IPlatformTime.h"
+    typedef IPlatformTime FPlatformTime;
 #endif

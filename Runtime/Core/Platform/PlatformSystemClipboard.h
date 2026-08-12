@@ -7,6 +7,6 @@
     #include "Core/Mac/MacPlatformSystemClipboard.h"
     typedef FMacPlatformSystemClipboard FPlatformSystemClipboard;
 #else
-    #include "Core/Generic/GenericPlatformSystemClipboard.h"
-	typedef FGenericPlatformSystemClipboard FPlatformSystemClipboard;
+    #include "Core/PlatformInterface/IPlatformSystemClipboard.h"
+	typedef IPlatformSystemClipboard FPlatformSystemClipboard;
 #endif

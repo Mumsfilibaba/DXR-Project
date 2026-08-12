@@ -1,16 +1,21 @@
 #pragma once
 #include "Core/Windows/Windows.h"
-#include "Core/Generic/GenericPlatformEvent.h"
+#include "Core/PlatformInterface/IPlatformEvent.h"
 
-class CORE_API FWindowsPlatformEvent final : public FGenericPlatformEvent
+class CORE_API FWindowsPlatformEvent final : public IPlatformEvent
 {
 public:
-    static FGenericPlatformEvent* Create(bool bManualReset);
-    static void Recycle(FGenericPlatformEvent* InEvent);
+    static IPlatformEvent* Create(bool bManualReset);
+    static void Recycle(IPlatformEvent* InEvent);
 
     virtual void Trigger() override final;
     virtual void Wait(uint64 Milliseconds) override final;
     virtual void Reset() override final;
+
+    virtual void Wait(FTimespan Timeout) override final
+    {
+        Wait(static_cast<uint64>(Timeout.AsMilliseconds()));
+    }
 
     virtual bool IsManualReset() const override final 
     { 
