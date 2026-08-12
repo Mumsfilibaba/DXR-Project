@@ -58,6 +58,7 @@ struct CORE_API FIniSection
 {
     FIniSection();
     FIniSection(const CHAR* InName);
+    ~FIniSection();
 
     /** @brief Restores all values in the section */
     void Restore();
@@ -81,16 +82,13 @@ struct CORE_API FIniSection
 
 struct CORE_API FIniFile
 {
-    FIniFile()
-        : Filename()
-        , Sections()
-    {
-    }
+    FIniFile();
+    ~FIniFile();
 
     /** @brief Reads the file at 'InFilename' and parses it, existing values are overwritten */
     bool LoadFromFile(const String& InFilename);
 
-    /** @brief Parses ini-formatted text, note that 'InText' is modified in place while parsing */
+    /** @brief Parses ini-formatted text in place, resolves include lines, and flattens included values on dump or write-back */
     void ParseFromText(TArray<CHAR>& InText);
 
     /** @return Looks up a value from any section and returns nullptr if not found */
@@ -123,7 +121,7 @@ struct CORE_API FIniFile
      /** @brief Retrieve a boolean from the Engine config */
     bool GetBool(const CHAR* SectionName, const CHAR* Name, bool& bOutValue);
 
-	/** @brief Saves the content to the file */
+	/** @brief Saves the content to the file. Included values are written inline, not as include lines. */
 	bool WriteToFile();
 
 	/** @brief Prints the content into a string */

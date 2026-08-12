@@ -1,43 +1,44 @@
 #include "Core/Misc/Config.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/BuildInfo.h"
+#include "Core/Misc/Paths.h"
 
-FIniFile* GConfig = nullptr;
-
-FConfig* FConfig::GlobalConfig = nullptr;
+FConfig* GConfig = nullptr;
 
 FConfig::FConfig()
     : ConfigFiles()
 {
+    Memory::Memzero(LayerFiles, sizeof(LayerFiles));
 }
+
+FConfig::~FConfig() = default;
 
 bool FConfig::Initialize()
 {
-    CHECK(GlobalConfig == nullptr);
-    
-    // TODO: Only have the name of the file
-    GlobalConfig = new FConfig();
-    if (FIniFile* NewFile = GlobalConfig->LoadFile(ENGINE_LOCATION"/Engine.ini"))
-    {
-        GConfig = NewFile;
-    }
-    else
-    {
-        LOG_WARNING("Did not find 'Engine.ini'");
-    }
+    CHECK(GConfig == nullptr);
 
-    GlobalConfig->LoadConsoleVariables();
+    GConfig = new FConfig();
+
+    const String ConfigDir = Paths::GetEngineDir();
+    GConfig->AddLayer(EConfigFile::Engine, String::Printf("%s/Engine.ini", *ConfigDir));
+    GConfig->AddLayer(EConfigFile::Game, String::Printf("%s/Game.ini", *ConfigDir));
+
+#if EDITOR_BUILD
+    GConfig->AddLayer(EConfigFile::Editor, String::Printf("%s/Editor.ini", *ConfigDir));
+#endif
+
+    GConfig->AddLayer(EConfigFile::Platform, String::Printf("%s/%s.ini", *ConfigDir, BuildInfo::GetPlatformName()));
+
+    GConfig->LoadConsoleVariables();
     return true;
 }
 
 void FConfig::Release()
 {
-    if (GlobalConfig)
+    if (GConfig)
     {
-        delete GlobalConfig;
-        GlobalConfig = nullptr;
-
-        // Invalidate pointer after the config is deleted
+        delete GConfig;
         GConfig = nullptr;
     }
 }
@@ -55,12 +56,96 @@ FIniFile* FConfig::LoadFile(const String& Filename)
     return &ConfigFile;
 }
 
+FIniFile* FConfig::GetFile(EConfigFile::Type ConfigFile)
+{
+    CHECK(ConfigFile < EConfigFile::Count);
+    return LayerFiles[ConfigFile];
+}
+
+void FConfig::SetFile(EConfigFile::Type ConfigFile, FIniFile* File)
+{
+    CHECK(ConfigFile < EConfigFile::Count);
+    LayerFiles[ConfigFile] = File;
+}
+
+FIniValue* FConfig::FindValue(const CHAR* SectionName, const CHAR* Name)
+{
+    for (int32 Index = EConfigFile::Count - 1; Index >= 0; --Index)
+    {
+        if (FIniFile* File = LayerFiles[Index])
+        {
+            if (FIniValue* Value = File->FindValue(SectionName, Name))
+            {
+                return Value;
+            }
+        }
+    }
+
+    return nullptr;
+}
+
+bool FConfig::GetString(const CHAR* SectionName, const CHAR* Name, String& OutValue)
+{
+    if (FIniValue* Value = FindValue(SectionName, Name))
+    {
+        OutValue = Value->CurrentValue;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool FConfig::GetInt(const CHAR* SectionName, const CHAR* Name, int32& OutValue)
+{
+    if (FIniValue* Value = FindValue(SectionName, Name))
+    {
+        return TTypeFromString<int32>::FromString(Value->CurrentValue, OutValue);
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool FConfig::GetFloat(const CHAR* SectionName, const CHAR* Name, float& OutValue)
+{
+    if (FIniValue* Value = FindValue(SectionName, Name))
+    {
+        return TTypeFromString<float>::FromString(Value->CurrentValue, OutValue);
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool FConfig::GetBool(const CHAR* SectionName, const CHAR* Name, bool& bOutValue)
+{
+    if (FIniValue* Value = FindValue(SectionName, Name))
+    {
+        return TTypeFromString<bool>::FromString(Value->CurrentValue, bOutValue);
+    }
+    else
+    {
+        return false;
+    }
+}
+
 void FConfig::LoadConsoleVariables()
 {
     FConsoleManager& ConsoleManager = FConsoleManager::Get();
-    for (auto File : ConfigFiles)
+
+    for (int32 Index = 0; Index < EConfigFile::Count; ++Index)
     {
-        for (auto Section : File.Second.Sections)
+        FIniFile* File = LayerFiles[Index];
+        if (!File)
+        {
+            continue;
+        }
+
+        for (auto Section : File->Sections)
         {
             for (auto Value : Section.Second.Values)
             {
@@ -77,4 +162,23 @@ void FConfig::LoadConsoleVariables()
             }
         }
     }
+}
+
+FIniFile* FConfig::AddLayer(EConfigFile::Type ConfigFile, const String& Filename)
+{
+    FIniFile* File = LoadFile(Filename);
+    if (File)
+    {
+        SetFile(ConfigFile, File);
+    }
+    else if (ConfigFile == EConfigFile::Engine)
+    {
+        LOG_WARNING("Did not find '%s'", *Filename);
+    }
+    else
+    {
+        LOG_INFO("Did not find '%s'", *Filename);
+    }
+
+    return File;
 }

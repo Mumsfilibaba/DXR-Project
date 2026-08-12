@@ -108,8 +108,11 @@ bool ConsoleManagerCommandLine_Test()
         Section.Values.Add("Test.Contested", FIniValue(String("FromConfig")));
         Section.Values.Add("Test.ConfigOnly", FIniValue(String("FromConfig")));
 
-        FIniFile* PreviousConfig = GConfig;
-        GConfig = &TestConfig;
+        FConfig TestStack;
+        TestStack.SetFile(EConfigFile::Engine, &TestConfig);
+
+        FConfig* PreviousConfig = GConfig;
+        GConfig = &TestStack;
 
         {
             InitializeFromLine("-Test.Contested=FromCommandLine");
@@ -127,14 +130,43 @@ bool ConsoleManagerCommandLine_Test()
         GConfig = PreviousConfig;
     }
 
+    TEST_SECTION("The command line outranks every layer, not just the lowest one");
+    {
+        FIniFile EngineFile;
+        EngineFile.Sections.FindOrAdd("").Values.Add("Test.Layered", FIniValue(String("FromEngine")));
+
+        FIniFile EditorFile;
+        EditorFile.Sections.FindOrAdd("").Values.Add("Test.Layered", FIniValue(String("FromEditor")));
+
+        FConfig TestStack;
+        TestStack.SetFile(EConfigFile::Engine, &EngineFile);
+        TestStack.SetFile(EConfigFile::Editor, &EditorFile);
+
+        FConfig* PreviousConfig = GConfig;
+        GConfig = &TestStack;
+
+        {
+            InitializeFromLine("-Test.Layered=FromCommandLine");
+
+            TAutoConsoleVariable<String> CVarLayered("Test.Layered", "", "Default");
+            TEST_EXPECT(CVarLayered.GetValue().Equals("FromCommandLine"));
+            TEST_EXPECT_EQ(GetSetByFlag(CVarLayered.operator->()), EConsoleVariableFlags::SetByCommandLine);
+        }
+
+        GConfig = PreviousConfig;
+    }
+
     TEST_SECTION("A partial name match does not suppress the config file");
     {
         FIniFile TestConfig;
         FIniSection& Section = TestConfig.Sections.FindOrAdd("");
         Section.Values.Add("Test.Type", FIniValue(String("FromConfig")));
 
-        FIniFile* PreviousConfig = GConfig;
-        GConfig = &TestConfig;
+        FConfig TestStack;
+        TestStack.SetFile(EConfigFile::Engine, &TestConfig);
+
+        FConfig* PreviousConfig = GConfig;
+        GConfig = &TestStack;
 
         {
             // 'Test.TypeExtra' must not be mistaken for 'Test.Type'

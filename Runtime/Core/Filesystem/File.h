@@ -25,6 +25,9 @@ public:
     // Returns the Path to the file (Excluding the filename)
     static String ExtractFilepath(const String& Filepath);
 
+    // Returns the directory containing the file, or an empty string when the path has no directory component
+    static String GetDirectoryOf(const String& Filepath);
+
     // Returns the Filename with the extension (Excluding the rest of the path)
     static String ExtractFilename(const String& Filepath);
 

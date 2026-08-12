@@ -5,6 +5,219 @@
 #include "Core/Filesystem/File.h"
 #include "Core/Templates/CString.h"
 
+struct FIniParseContext
+{
+    /** Directory the file being parsed lives in, empty for text that came from nowhere */
+    String BaseDirectory;
+
+    /** The files currently open, so a file that includes itself is caught before it recurses */
+    TArray<String> IncludeStack;
+};
+
+constexpr int32 INI_MAX_INCLUDE_DEPTH = 8;
+
+static void ParseIniText(FIniFile& OutFile, TArray<CHAR>& InText, FIniParseContext& Context);
+
+static bool ReadIniFile(const String& Filename, TArray<CHAR>& OutText)
+{
+    TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(Filename);
+    if (!FileHandle)
+    {
+        return false;
+    }
+
+    return File::ReadTextFile(FileHandle.Get(), OutText);
+}
+
+// Returns the path when 'Line' is an include directive, and nullptr when it is anything else
+static CHAR* ParseIncludeDirective(CHAR* Line)
+{
+    constexpr SIZE_T DirectiveLength = 7; // 'include'
+    if (CString::Strnicmp(Line, "include", DirectiveLength) != 0)
+    {
+        return nullptr;
+    }
+
+    // The keyword has to be a word of its own, so 'includes' is still an ordinary key
+    CHAR* PathStart = Line + DirectiveLength;
+    if (*PathStart != ' ' && *PathStart != '\"')
+    {
+        return nullptr;
+    }
+
+    Parse::ParseWhiteSpace(&PathStart);
+
+    // A quoted path keeps its spaces, an unquoted one ends at the first space
+    if (*PathStart == '\"')
+    {
+        ++PathStart;
+        if (CHAR* ClosingQuote = CString::Strchr(PathStart, '\"'))
+        {
+            *ClosingQuote = '\0';
+        }
+    }
+    else if (CHAR* TrailingSpace = CString::Strchr(PathStart, ' '))
+    {
+        *TrailingSpace = '\0';
+    }
+
+    return (*PathStart != '\0') ? PathStart : nullptr;
+}
+
+static void ParseIniInclude(FIniFile& OutFile, const CHAR* IncludePath, FIniParseContext& Context)
+{
+    const String RelativePath(IncludePath);
+
+    const bool bIsAbsolute = (RelativePath.Length() > 0 && RelativePath[0] == '/')
+        || (RelativePath.Length() > 1 && RelativePath[1] == ':');
+
+    const String ResolvedPath = (bIsAbsolute || Context.BaseDirectory.IsEmpty())
+        ? RelativePath : String::Printf("%s/%s", *Context.BaseDirectory, *RelativePath);
+
+    if (Context.IncludeStack.Contains(ResolvedPath))
+    {
+        LOG_ERROR("Ini file '%s' includes itself, the include is ignored", *ResolvedPath);
+        return;
+    }
+
+    if (Context.IncludeStack.Size() >= INI_MAX_INCLUDE_DEPTH)
+    {
+        LOG_ERROR("Ini includes are nested deeper than %d files at '%s'", INI_MAX_INCLUDE_DEPTH, *ResolvedPath);
+        return;
+    }
+
+    TArray<CHAR> FileContents;
+    if (!ReadIniFile(ResolvedPath, FileContents))
+    {
+        LOG_WARNING("Failed to open included ini file '%s'", *ResolvedPath);
+        return;
+    }
+
+    // The included file resolves its own includes against its own directory
+    const String PreviousDirectory = Context.BaseDirectory;
+    Context.BaseDirectory = File::GetDirectoryOf(ResolvedPath);
+    Context.IncludeStack.Add(ResolvedPath);
+
+    ParseIniText(OutFile, FileContents, Context);
+
+    Context.IncludeStack.Pop();
+    Context.BaseDirectory = PreviousDirectory;
+}
+
+static void ParseIniText(FIniFile& OutFile, TArray<CHAR>& InText, FIniParseContext& Context)
+{
+    // Remove all carriage returns if there are any (Easier to process)
+    InText.Remove('\r');
+
+    FIniSection* CurrentSection = nullptr;
+
+    CHAR* Start = InText.Data();
+    while (Start && *Start)
+    {
+        // Skip newline chars
+        while (*Start == '\n')
+        {
+            ++Start;
+        }
+
+        CHAR* LineStart = Start;
+        Parse::ParseLine(&Start);
+
+        // End string at the end of line
+        if (*Start == '\n')
+        {
+            *(Start++) = '\0';
+        }
+
+        // Skip any spaces at the beginning of the line
+        Parse::ParseWhiteSpace(&LineStart);
+
+        // This is a section
+        if (*LineStart == '[')
+        {
+            if (CHAR* SectionEnd = CString::Strchr(++LineStart, ']'))
+            {
+                CHAR* SectionStart = LineStart;
+                *SectionEnd = '\0';
+                
+                FIniSection& Section = OutFile.Sections.FindOrAdd(SectionStart, FIniSection(SectionStart));
+                CurrentSection = &Section;
+            }
+        }
+        else if (*LineStart != ';') // Check if this is a comment line
+        {
+            if (CHAR* EqualSign = CString::Strchr(LineStart, '='))
+            {
+                *EqualSign = '\0';
+
+                CHAR* KeyEnd = EqualSign - 1;
+                while (*KeyEnd == ' ')
+                {
+                    *(KeyEnd--) = '\0';
+                }
+
+                // The parsed key
+                CHAR* Key = LineStart;
+                LineStart = EqualSign + 1;
+
+                Parse::ParseWhiteSpace(&LineStart);
+
+                // Find the end of the value, the line is already null-terminated so the
+                // value ends at the line terminator unless something closes it earlier
+                CHAR* Value = LineStart;
+
+                // Special case for string-values, these end at the closing quote and keep inner spaces
+                if (*Value == '\"')
+                {
+                    Value++;
+
+                    // An unterminated quote simply runs to the end of the line
+                    if (CHAR* ClosingQuote = CString::Strchr(Value, '\"'))
+                    {
+                        *ClosingQuote = '\0';
+                    }
+                }
+                else if (CHAR* TrailingSpace = CString::Strchr(Value, ' '))
+                {
+                    // Unquoted values end at the first space
+                    *TrailingSpace = '\0';
+                }
+
+                // If there are no section, use the global one
+                if (!CurrentSection)
+                {
+                    FIniSection& Section = OutFile.Sections.FindOrAdd("");
+                    CurrentSection = &Section;
+                }
+
+                // The parsed value
+                if (FIniValue* CurrentValue = CurrentSection->Values.Find(Key))
+                {
+                    *CurrentValue = FIniValue(Value);
+                }
+                else
+                {
+                    CurrentSection->Values.Add(Key, FIniValue(Value));
+                }
+            }
+            else if (CHAR* IncludePath = ParseIncludeDirective(LineStart))
+            {
+                // The included file parses into this same file, starting at the global section,
+                // so it can neither see nor change the section this line sits in
+                ParseIniInclude(OutFile, IncludePath, Context);
+            }
+        }
+    }
+}
+
+FIniFile::FIniFile()
+    : Filename()
+    , Sections()
+{
+}
+
+FIniFile::~FIniFile() = default;
+
 FIniSection::FIniSection()
     : Name()
     , Values()
@@ -16,6 +229,8 @@ FIniSection::FIniSection(const CHAR* InName)
     , Values()
 {
 }
+
+FIniSection::~FIniSection() = default;
 
 void FIniSection::Restore()
 {
@@ -29,9 +244,8 @@ void FIniSection::DumpToString(String& OutString)
 {
     for (auto ValuePair : Values)
     {
-        const String& Value = ValuePair.Second.CurrentValue;
-
         // Values containing spaces have to be quoted, the parser otherwise stops at the first space
+        const String& Value = ValuePair.Second.CurrentValue;
         if (Value.Contains(' '))
         {
             OutString.AppendPrintf("%s=\"%s\"\n", *ValuePair.First, *Value);
@@ -42,7 +256,6 @@ void FIniSection::DumpToString(String& OutString)
         }
     }
 }
-
 
 bool FIniFile::SetString(const CHAR* SectionName, const CHAR* Name, const String& NewValue)
 {
@@ -175,8 +388,8 @@ bool FIniFile::WriteToFile()
 
 void FIniFile::DumpToString(String& OutString)
 {
-    // The global section has no header of its own, so it has to be written before any
-    // '[Section]' line, otherwise it would be read back as part of whichever section precedes it
+    // The global section has no header of its own, so it has to be written before any '[Section]'
+    // line, otherwise it would be read back as part of whichever section precedes it.
     if (FIniSection* GlobalSection = Sections.Find(""))
     {
         GlobalSection->DumpToString(OutString);
@@ -199,122 +412,24 @@ void FIniFile::DumpToString(String& OutString)
 bool FIniFile::LoadFromFile(const String& InFilename)
 {
     TArray<CHAR> FileContents;
-
+    if (!ReadIniFile(InFilename, FileContents))
     {
-        TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(InFilename);
-        if (!FileHandle)
-        {
-            return false;
-        }
-
-        // Read the full file
-        if (!File::ReadTextFile(FileHandle.Get(), FileContents))
-        {
-            return false;
-        }
+        return false;
     }
 
     Filename = InFilename;
-    ParseFromText(FileContents);
+
+    FIniParseContext Context;
+    Context.BaseDirectory = File::GetDirectoryOf(InFilename);
+    Context.IncludeStack.Add(InFilename);
+
+    ParseIniText(*this, FileContents, Context);
     return true;
 }
 
 void FIniFile::ParseFromText(TArray<CHAR>& InText)
 {
-    // Remove all carriage returns if there are any (Easier to process)
-    InText.Remove('\r');
-
-    FIniSection* CurrentSection = nullptr;
-
-    CHAR* Start = InText.Data();
-    while (Start && *Start)
-    {
-        // Skip newline chars
-        while (*Start == '\n')
-        {
-            ++Start;
-        }
-
-        CHAR* LineStart = Start;
-        Parse::ParseLine(&Start);
-
-        // End string at the end of line
-        if (*Start == '\n')
-        {
-            *(Start++) = '\0';
-        }
-
-        // Skip any spaces at the beginning of the line
-        Parse::ParseWhiteSpace(&LineStart);
-
-        // This is a section
-        if (*LineStart == '[')
-        {
-            if (CHAR* SectionEnd = CString::Strchr(++LineStart, ']'))
-            {
-                CHAR* SectionStart = LineStart;
-                *SectionEnd = '\0';
-                
-                FIniSection& Section = Sections.FindOrAdd(SectionStart, FIniSection(SectionStart));
-                CurrentSection = &Section;
-            }
-        }
-        else if (*LineStart != ';') // Check if this is a comment line
-        {
-            if (CHAR* EqualSign = CString::Strchr(LineStart, '='))
-            {
-                *EqualSign = '\0';
-
-                CHAR* KeyEnd = EqualSign - 1;
-                while (*KeyEnd == ' ')
-                {
-                    *(KeyEnd--) = '\0';
-                }
-
-                // The parsed key
-                CHAR* Key = LineStart;
-                LineStart = EqualSign + 1;
-
-                Parse::ParseWhiteSpace(&LineStart);
-
-                // Find the end of the value, the line is already null-terminated so the
-                // value ends at the line terminator unless something closes it earlier
-                CHAR* Value = LineStart;
-
-                // Special case for string-values, these end at the closing quote and keep inner spaces
-                if (*Value == '\"')
-                {
-                    Value++;
-
-                    // An unterminated quote simply runs to the end of the line
-                    if (CHAR* ClosingQuote = CString::Strchr(Value, '\"'))
-                    {
-                        *ClosingQuote = '\0';
-                    }
-                }
-                else if (CHAR* TrailingSpace = CString::Strchr(Value, ' '))
-                {
-                    // Unquoted values end at the first space
-                    *TrailingSpace = '\0';
-                }
-
-                // If there are no section, use the global one
-                if (!CurrentSection)
-                {
-                    FIniSection& Section = Sections.FindOrAdd("");
-                    CurrentSection = &Section;
-                }
-
-                // The parsed value
-                if (FIniValue* CurrentValue = CurrentSection->Values.Find(Key))
-                {
-                    *CurrentValue = FIniValue(Value);
-                }
-                else
-                {
-                    CurrentSection->Values.Add(Key, FIniValue(Value));
-                }
-            }
-        }
-    }
+    // Text with no file behind it resolves its includes against the working directory
+    FIniParseContext Context;
+    ParseIniText(*this, InText, Context);
 }

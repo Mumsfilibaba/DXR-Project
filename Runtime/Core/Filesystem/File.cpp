@@ -92,6 +92,12 @@ String File::ExtractFilepath(const String& Filepath)
     return String(*Filepath, LastSlash);
 }
 
+String File::GetDirectoryOf(const String& Filepath)
+{
+    const int32 LastSlash = Filepath.FindLastChar('/');
+    return (LastSlash == String::InvalidIndex) ? String() : String(*Filepath, LastSlash);
+}
+
 String File::ExtractFilename(const String& Filepath)
 {
     int32 LastSlash = Filepath.FindLastChar('/');

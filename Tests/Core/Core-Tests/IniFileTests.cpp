@@ -3,6 +3,8 @@
 #include <Core/Containers/Array.h>
 #include <Core/Containers/String.h>
 #include <Core/Misc/IniFile.h>
+#include <Core/Platform/PlatformFile.h>
+#include <Core/Filesystem/File.h>
 #include <Core/Templates/CString.h>
 
 #include "TestCommon/TestMacros.h"
@@ -18,6 +20,17 @@ static FIniFile ParseIni(const CHAR* InText)
     FIniFile IniFile;
     IniFile.ParseFromText(Text);
     return IniFile;
+}
+
+static bool WriteTextFile(const String& Path, const CHAR* Text)
+{
+    TFileRef<IPlatformFile> File = FPlatformFile::OpenForWrite(Path);
+    if (!File)
+    {
+        return false;
+    }
+
+    return File::WriteTextFile(File.Get(), String(Text));
 }
 
 bool IniFile_Test()
@@ -297,6 +310,168 @@ bool IniFile_Test()
         TEST_EXPECT(Missing.Sections.IsEmpty());
 
         ::remove(TempPath.Data());
+    }
+
+    TEST_SECTION("Include directive");
+    {
+        const String ChildPath("IniFileTests.child.ini");
+        const String ParentPath("IniFileTests.parent.ini");
+
+        TEST_EXPECT(WriteTextFile(ChildPath,
+            "[Audio]\n"
+            "Volume = 0.5\n"
+            "[Renderer]\n"
+            "Height = 720\n"));
+
+        TEST_EXPECT(WriteTextFile(ParentPath,
+            "[Renderer]\n"
+            "include \"IniFileTests.child.ini\"\n"
+            "Width = 1280\n"
+            "Height = 900\n"));
+
+        FIniFile Parent;
+        TEST_EXPECT(Parent.LoadFromFile(ParentPath));
+
+        String Value;
+        TEST_EXPECT(Parent.GetString("Audio", "Volume", Value));
+        TEST_EXPECT(Value == "0.5");
+        TEST_EXPECT(Parent.GetString("Renderer", "Width", Value));
+        TEST_EXPECT(Value == "1280");
+
+        TEST_EXPECT(Parent.GetString("Renderer", "Height", Value));
+        TEST_EXPECT(Value == "900");
+
+        ::remove(ChildPath.Data());
+        ::remove(ParentPath.Data());
+    }
+
+    TEST_SECTION("Include override order");
+    {
+        const String ChildPath("IniFileTests.override.child.ini");
+        const String ParentPath("IniFileTests.override.parent.ini");
+
+        TEST_EXPECT(WriteTextFile(ChildPath,
+            "[Values]\n"
+            "Key = FromChild\n"));
+
+        TEST_EXPECT(WriteTextFile(ParentPath,
+            "[Values]\n"
+            "Key = FromParentBefore\n"
+            "include \"IniFileTests.override.child.ini\"\n"
+            "Key = FromParentAfter\n"));
+
+        FIniFile Parent;
+        TEST_EXPECT(Parent.LoadFromFile(ParentPath));
+
+        String Value;
+        TEST_EXPECT(Parent.GetString("Values", "Key", Value));
+        TEST_EXPECT(Value == "FromParentAfter");
+
+        ::remove(ChildPath.Data());
+        ::remove(ParentPath.Data());
+    }
+
+    TEST_SECTION("Included file starts in the global section");
+    {
+        const String ChildPath("IniFileTests.global.child.ini");
+        const String ParentPath("IniFileTests.global.parent.ini");
+
+        TEST_EXPECT(WriteTextFile(ChildPath,
+            "GlobalKey = FromChild\n"));
+
+        TEST_EXPECT(WriteTextFile(ParentPath,
+            "[Renderer]\n"
+            "include \"IniFileTests.global.child.ini\"\n"
+            "Width = 1280\n"));
+
+        FIniFile Parent;
+        TEST_EXPECT(Parent.LoadFromFile(ParentPath));
+
+        String Value;
+        TEST_EXPECT(Parent.GetString("", "GlobalKey", Value));
+        TEST_EXPECT(Value == "FromChild");
+        TEST_EXPECT(Parent.GetString("Renderer", "Width", Value));
+        TEST_EXPECT(Value == "1280");
+
+        ::remove(ChildPath.Data());
+        ::remove(ParentPath.Data());
+    }
+
+    TEST_SECTION("A file including itself is refused");
+    {
+        const String SelfPath("IniFileTests.self.ini");
+
+        TEST_EXPECT(WriteTextFile(SelfPath,
+            "include \"IniFileTests.self.ini\"\n"
+            "[Valid]\n"
+            "Key = 1\n"));
+
+        FIniFile Self;
+        TEST_EXPECT(Self.LoadFromFile(SelfPath));
+
+        String Value;
+        TEST_EXPECT(Self.GetString("Valid", "Key", Value));
+        TEST_EXPECT(Value == "1");
+
+        ::remove(SelfPath.Data());
+    }
+
+    TEST_SECTION("A missing include warns and parsing continues");
+    {
+        const String ParentPath("IniFileTests.missing.parent.ini");
+
+        TEST_EXPECT(WriteTextFile(ParentPath,
+            "include \"IniFileTests.missing.does-not-exist.ini\"\n"
+            "[Valid]\n"
+            "Key = 1\n"));
+
+        FIniFile Parent;
+        TEST_EXPECT(Parent.LoadFromFile(ParentPath));
+
+        String Value;
+        TEST_EXPECT(Parent.GetString("Valid", "Key", Value));
+        TEST_EXPECT(Value == "1");
+
+        ::remove(ParentPath.Data());
+    }
+
+    TEST_SECTION("Nested includes reach the deepest file");
+    {
+        const String NestedCPath("IniFileTests.c.ini");
+        const String NestedBPath("IniFileTests.b.ini");
+        const String NestedAPath("IniFileTests.a.ini");
+
+        TEST_EXPECT(WriteTextFile(NestedCPath,
+            "[Values]\n"
+            "Key = FromC\n"));
+
+        TEST_EXPECT(WriteTextFile(NestedBPath,
+            "include \"IniFileTests.c.ini\"\n"));
+
+        TEST_EXPECT(WriteTextFile(NestedAPath,
+            "include \"IniFileTests.b.ini\"\n"));
+
+        FIniFile Root;
+        TEST_EXPECT(Root.LoadFromFile(NestedAPath));
+
+        String Value;
+        TEST_EXPECT(Root.GetString("Values", "Key", Value));
+        TEST_EXPECT(Value == "FromC");
+
+        ::remove(NestedCPath.Data());
+        ::remove(NestedBPath.Data());
+        ::remove(NestedAPath.Data());
+    }
+
+    TEST_SECTION("A line with include and an equals sign is still a key");
+    {
+        FIniFile Ini = ParseIni(
+            "[Values]\n"
+            "include = 1\n");
+
+        String Value;
+        TEST_EXPECT(Ini.GetString("Values", "include", Value));
+        TEST_EXPECT(Value == "1");
     }
 
     TEST_END();

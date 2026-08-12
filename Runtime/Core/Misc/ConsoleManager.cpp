@@ -1747,7 +1747,6 @@ IConsoleObject* FConsoleManager::RegisterObject(const CHAR* InName, IConsoleObje
 
     IConsoleObject* Result = ConsoleObjects.Add(Name, Object);
 
-    // TODO: Refactor this, right now it only works with a single ConfigFile
     if (IConsoleVariable* Variable = Object->AsVariable())
     {
         if (!ApplyCommandLineOverride(InName, Variable) && GConfig)
