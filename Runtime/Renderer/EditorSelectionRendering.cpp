@@ -168,7 +168,7 @@ void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const F
     }
     else
     {
-        const String DebugName = String::CreateFormatted("Editor NoJitter Depth PSO%s %d", bBindless ? " [Bindless]" : "", MaterialFlags);
+        const String DebugName = String::Printf("Editor NoJitter Depth PSO%s %d", bBindless ? " [Bindless]" : "", MaterialFlags);
         NewPipelineInstance.PipelineState->SetDebugName(DebugName);
     }
 
@@ -384,7 +384,7 @@ void FEditorSelectionIDPass::PreparePipelineState(FMaterial* Material, const FVe
     }
     else
     {
-        const String DebugName = String::CreateFormatted("Editor SelectionID PSO %d", static_cast<int32>(Features.Flags));
+        const String DebugName = String::Printf("Editor SelectionID PSO %d", static_cast<int32>(Features.Flags));
         NewPipelineInstance.PipelineState->SetDebugName(DebugName);
     }
 

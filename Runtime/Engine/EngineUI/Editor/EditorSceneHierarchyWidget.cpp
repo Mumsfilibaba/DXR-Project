@@ -1907,7 +1907,7 @@ void FEditorSceneHierarchyWidget::ApplyPendingFilterOperations()
         String Name("New Filter");
         for (int32 Suffix = 1; World->FindActorFilter(Name, PendingCreateParent); Suffix++)
         {
-            Name = String::CreateFormatted("New Filter %d", Suffix);
+            Name = String::Printf("New Filter %d", Suffix);
         }
 
         if (PendingCreateParent)

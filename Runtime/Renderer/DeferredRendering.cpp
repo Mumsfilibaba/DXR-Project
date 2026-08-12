@@ -254,7 +254,7 @@ void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FVertexDecla
         }
         else
         {
-            const String DebugName = String::CreateFormatted("PrePass PipelineState%s %d",
+            const String DebugName = String::Printf("PrePass PipelineState%s %d",
                 bBindless ? " [Bindless]" : "",
                 MaterialFlags);
             NewPipelineInstance.PipelineState->SetDebugName(DebugName);
@@ -483,7 +483,7 @@ void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FVertexD
         }
         else
         {
-            const String DebugName = String::CreateFormatted("BasePass PipelineState%s %d",
+            const String DebugName = String::Printf("BasePass PipelineState%s %d",
                 bBindless ? " [Bindless]" : "",
                 MaterialFlags);
             NewPipelineInstance.PipelineState->SetDebugName(DebugName);

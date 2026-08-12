@@ -94,11 +94,11 @@ void FMallocLeakTracker::DumpAllocations(IOutputDevice* OutputDevice)
         SCOPED_LOCK(AllocationsCS);
 
         const uint32 NumAllocations = static_cast<uint32>(Allocations.Size());
-        OutputDevice->Log(String::CreateFormatted("Current Allocations (Num=%u):", NumAllocations));
+        OutputDevice->Log(String::Printf("Current Allocations (Num=%u):", NumAllocations));
 
         for (auto CurrentAllocation : Allocations)
         {
-            OutputDevice->Log(String::CreateFormatted(
+            OutputDevice->Log(String::Printf(
                 "    Address=0x%p Size=%llu",
                 CurrentAllocation.First,
                 CurrentAllocation.Second.Size));
@@ -222,13 +222,13 @@ void FMallocStackTraceTracker::DumpAllocations(IOutputDevice* OutputDevice)
         SCOPED_LOCK(AllocationsCS);
 
         const int32 NumAllocations = Allocations.Size();
-        OutputDevice->Log(String::CreateFormatted("Current Allocations (Num=%d):", NumAllocations));
+        OutputDevice->Log(String::Printf("Current Allocations (Num=%d):", NumAllocations));
 
         FPlatformStackTrace::InitializeSymbols();
 
         for (auto CurrentAllocation : Allocations)
         {
-            String Message = String::CreateFormatted(
+            String Message = String::Printf(
                 "    Address=0x%p Size=%llu\n"
                 "        Callstack:\n",
                 CurrentAllocation.First,
@@ -242,7 +242,7 @@ void FMallocStackTraceTracker::DumpAllocations(IOutputDevice* OutputDevice)
                 Memory::Memzero(&Entry);
 
                 FPlatformStackTrace::GetStackTraceEntryFromAddress(Current.StackTrace[Depth], Entry);
-                Message.AppendFormat("        %d | %s | %s | %s\n", Entry.Line, Entry.FunctionName, Entry.Filename, Entry.ModuleName);
+                Message.AppendPrintf("        %d | %s | %s | %s\n", Entry.Line, Entry.FunctionName, Entry.Filename, Entry.ModuleName);
             }
 
             OutputDevice->Log(Message);

@@ -197,7 +197,7 @@ static void D3D12RHIWriteDeviceRemovedDump(ID3D12Device* D3DDevice, HRESULT Reas
         }
     };
 
-    WriteLine(String::CreateFormatted("[D3D12] Device Removed (Source=%s, Reason=0x%08X)", Source ? Source : "Unknown", static_cast<uint32>(Reason)));
+    WriteLine(String::Printf("[D3D12] Device Removed (Source=%s, Reason=0x%08X)", Source ? Source : "Unknown", static_cast<uint32>(Reason)));
 
     TComPtr<ID3D12DeviceRemovedExtendedData2> DREDInterface2;
 
@@ -205,7 +205,7 @@ static void D3D12RHIWriteDeviceRemovedDump(ID3D12Device* D3DDevice, HRESULT Reas
     if (bHasDREDInterface2)
     {
         const D3D12_DRED_DEVICE_STATE State = DREDInterface2->GetDeviceState();
-        WriteLine(String::CreateFormatted("DRED DeviceState: %d", static_cast<int32>(State)));
+        WriteLine(String::Printf("DRED DeviceState: %d", static_cast<int32>(State)));
     }
 
     const D3D12_AUTO_BREADCRUMB_NODE1* CurrentNode = DREDAutoBreadcrumbsOutput.pHeadAutoBreadcrumbNode;
@@ -232,7 +232,7 @@ static void D3D12RHIWriteDeviceRemovedDump(ID3D12Device* D3DDevice, HRESULT Reas
             {
                 if (CurrentNode->pBreadcrumbContexts[c].BreadcrumbIndex == i)
                 {
-                    const String Context = String::CreateFormatted("%ls", CurrentNode->pBreadcrumbContexts[c].pContextString);
+                    const String Context = String::Printf("%ls", CurrentNode->pBreadcrumbContexts[c].pContextString);
                     Line = Line + " [" + *Context + "]";
                     break;
                 }
@@ -263,26 +263,26 @@ static void D3D12RHIWriteDeviceRemovedDump(ID3D12Device* D3DDevice, HRESULT Reas
             }
             else if (Node->ObjectNameW)
             {
-                Name = String(String::CreateFormatted("%ls", Node->ObjectNameW));
+                Name = String(String::Printf("%ls", Node->ObjectNameW));
             }
             else
             {
                 Name = "<unnamed>";
             }
 
-            WriteLine(String::CreateFormatted("    '%s' (%s)", *Name, ToString(Node->AllocationType)));
+            WriteLine(String::Printf("    '%s' (%s)", *Name, ToString(Node->AllocationType)));
             Node = Node->pNext;
         }
     };
 
-    WriteLine(String::CreateFormatted("PageFault VA: 0x%llx", static_cast<unsigned long long>(DREDPageFaultOutput.PageFaultVA)));
+    WriteLine(String::Printf("PageFault VA: 0x%llx", static_cast<unsigned long long>(DREDPageFaultOutput.PageFaultVA)));
 
     if (bHasDREDInterface2)
     {
         D3D12_DRED_PAGE_FAULT_OUTPUT2 PageFault2;
         if (SUCCEEDED(DREDInterface2->GetPageFaultAllocationOutput2(&PageFault2)))
         {
-            WriteLine(String::CreateFormatted("PageFault Flags: 0x%x", static_cast<uint32>(PageFault2.PageFaultFlags)));
+            WriteLine(String::Printf("PageFault Flags: 0x%x", static_cast<uint32>(PageFault2.PageFaultFlags)));
         }
     }
 

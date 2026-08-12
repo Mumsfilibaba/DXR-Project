@@ -54,10 +54,10 @@ public:
      * @return Returns the formatted string based on the format string
      */
     template<typename... ArgTypes>
-    NODISCARD static FORCEINLINE TString CreateFormatted(const CharType* InFormat, ArgTypes... Args)
+    NODISCARD static FORCEINLINE TString Printf(const CharType* InFormat, ArgTypes... Args)
     {
         TString NewString;
-        NewString.Format(InFormat, Forward<ArgTypes>(Args)...);
+        NewString.InlinePrintf(InFormat, Forward<ArgTypes>(Args)...);
         return NewString;
     }
 
@@ -358,7 +358,7 @@ public:
      * @param Args Arguments for the formatted string
      */
     template<typename... ArgTypes>
-    inline void Format(const CharType* InFormat, ArgTypes&&... Args)
+    inline void InlinePrintf(const CharType* InFormat, ArgTypes&&... Args)
     {
         CharType Buffer[STRING_FORMAT_BUFFER_SIZE];
         SizeType BufferSize = STRING_FORMAT_BUFFER_SIZE;
@@ -395,7 +395,7 @@ public:
      * @param Args Arguments for the formatted string
      */
     template<typename... ArgTypes>
-    inline void AppendFormat(const CharType* InFormat, ArgTypes&&... Args)
+    inline void AppendPrintf(const CharType* InFormat, ArgTypes&&... Args)
     {
         CharType Buffer[STRING_FORMAT_BUFFER_SIZE];
         SizeType BufferSize = STRING_FORMAT_BUFFER_SIZE;
@@ -1968,7 +1968,7 @@ struct TTypeToString
 {
     NODISCARD static FORCEINLINE typename TEnableIf<TIsArithmetic<T>::Value, String>::Type ToString(T Element)
     {
-        return String::CreateFormatted(TFormatSpecifier<typename TRemoveCV<T>::Type>::GetStringSpecifier(), Element);
+        return String::Printf(TFormatSpecifier<typename TRemoveCV<T>::Type>::GetStringSpecifier(), Element);
     }
 };
 
@@ -1983,7 +1983,7 @@ struct TTypeToStringWide
 {
     NODISCARD static FORCEINLINE typename TEnableIf<TIsArithmetic<T>::Value, WString>::Type ToString(T Element)
     {
-        return WString::CreateFormatted(TFormatSpecifierWide<typename TRemoveCV<T>::Type>::GetStringSpecifier(), Element);
+        return WString::Printf(TFormatSpecifierWide<typename TRemoveCV<T>::Type>::GetStringSpecifier(), Element);
     }
 };
 

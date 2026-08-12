@@ -78,7 +78,7 @@ public:
 
     NODISCARD static String ToDefineValue(Type Value)
     {
-        return String::CreateFormatted("%d", static_cast<int32>(Value));
+        return String::Printf("%d", static_cast<int32>(Value));
     }
 };
 
@@ -105,7 +105,7 @@ public:
 
     NODISCARD static String ToDefineValue(Type Value)
     {
-        return String::CreateFormatted("%d", static_cast<int32>(Value));
+        return String::Printf("%d", static_cast<int32>(Value));
     }
 };
 

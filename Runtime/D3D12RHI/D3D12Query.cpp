@@ -216,7 +216,7 @@ FD3D12QueryHeap* FD3D12QueryHeapManager::ObtainHeap()
             return nullptr;
         }
 
-        NewHeap->SetDebugName(String::CreateFormatted("QueryHeap [%d]", Index));
+        NewHeap->SetDebugName(String::Printf("QueryHeap [%d]", Index));
         return NewHeap;
     });
 }

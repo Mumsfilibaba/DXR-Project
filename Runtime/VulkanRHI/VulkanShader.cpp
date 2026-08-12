@@ -1101,7 +1101,7 @@ bool FVulkanShader::ValidateNoGoogleSpirvRequirements(const FSpirvArray& Words, 
                 {
                     if (OutErrorMessage)
                     {
-                        *OutErrorMessage = String::CreateFormatted("Found Google extension: %s", ExtName);
+                        *OutErrorMessage = String::Printf("Found Google extension: %s", ExtName);
                     }
 
                     return false;

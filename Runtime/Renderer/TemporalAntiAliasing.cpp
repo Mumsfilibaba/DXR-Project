@@ -148,7 +148,7 @@ bool FTemporalAntiAliasing::CreateResources(FFrameResources& /* FrameResources *
         TAABuffer = RHI::CreateTexture(TAABufferDesc, ERHIResourceState::NonPixelShaderResource);
         if (TAABuffer)
         {
-            TAABuffer->SetDebugName(String::CreateFormatted("TAA History-Buffer[%u]", Index++));
+            TAABuffer->SetDebugName(String::Printf("TAA History-Buffer[%u]", Index++));
         }
         else
         {

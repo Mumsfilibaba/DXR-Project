@@ -311,11 +311,11 @@ void FEditorPropertiesWidget::DrawWindowContents()
                                 TSharedPtr<FMaterial> Entry = MeshComponent->GetMaterial(Index);
                                 if (Entry && !Entry->GetName().IsEmpty())
                                 {
-                                    MaterialLabels.Emplace(String::CreateFormatted("%d: %s", Index, *Entry->GetName()));
+                                    MaterialLabels.Emplace(String::Printf("%d: %s", Index, *Entry->GetName()));
                                 }
                                 else
                                 {
-                                    MaterialLabels.Emplace(String::CreateFormatted("%d: <unnamed>", Index));
+                                    MaterialLabels.Emplace(String::Printf("%d: <unnamed>", Index));
                                 }
                             }
 

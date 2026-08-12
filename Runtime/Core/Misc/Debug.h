@@ -15,7 +15,7 @@ struct Debug
     template<typename... ArgTypes>
     static FORCEINLINE void OutputDebugFormat(const CHAR* InFormat, ArgTypes&&... Args)
     {
-        const String FormattedMessage = String::CreateFormatted(InFormat, Forward<ArgTypes>(Args)...);
+        const String FormattedMessage = String::Printf(InFormat, Forward<ArgTypes>(Args)...);
         OutputDebugString(FormattedMessage);
     }
 

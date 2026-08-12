@@ -233,7 +233,7 @@ bool CommandLine_Test()
     {
         for (const CHAR* Name : GNameCorpus)
         {
-            const String Line = String::CreateFormatted("-%s=ProbeValue", Name);
+            const String Line = String::Printf("-%s=ProbeValue", Name);
             InitializeFromLine(*Line);
 
             StringView Value;
@@ -252,8 +252,8 @@ bool CommandLine_Test()
         const CHAR* Alphabet = "abzABZ019._";
         for (const CHAR* Char = Alphabet; *Char != '\0'; ++Char)
         {
-            const String Name = String::CreateFormatted("Prefix%cSuffix", *Char);
-            const String Line = String::CreateFormatted("-%s=ProbeValue", *Name);
+            const String Name = String::Printf("Prefix%cSuffix", *Char);
+            const String Line = String::Printf("-%s=ProbeValue", *Name);
             InitializeFromLine(*Line);
 
             StringView Value;
@@ -272,7 +272,7 @@ bool CommandLine_Test()
         String LongLine;
         for (int32 Index = 0; Index < 200; ++Index)
         {
-            LongLine.AppendFormat("-Long.Option%d=Value%d ", Index, Index);
+            LongLine.AppendPrintf("-Long.Option%d=Value%d ", Index, Index);
         }
 
         TEST_EXPECT(InitializeFromLine(*LongLine));

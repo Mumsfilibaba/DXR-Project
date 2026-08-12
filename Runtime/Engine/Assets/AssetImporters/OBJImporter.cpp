@@ -72,7 +72,7 @@ bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
 
         if (Mat.name.empty())
         {
-            MaterialData.Name = String::CreateFormatted("%s_material_%d", *FilenameWithoutPath, SceneMaterialIndex);
+            MaterialData.Name = String::Printf("%s_material_%d", *FilenameWithoutPath, SceneMaterialIndex);
         }
         else
         {
@@ -176,7 +176,7 @@ bool FOBJImporter::ImportFromFile(const StringView& InFilename, EMeshImportFlags
 
         if (Shape.name.empty())
         {
-            MeshData.Name = String::CreateFormatted("%s_%d", *FilenameWithoutPath, ShapeIndex);
+            MeshData.Name = String::Printf("%s_%d", *FilenameWithoutPath, ShapeIndex);
         }
         else
         {

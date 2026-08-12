@@ -145,7 +145,7 @@ void FJsonArchive::PushElementScope(EJsonType ContainerType)
 
     ++Enclosing.ElementCursor;
 
-    PathSegments.Emplace(String::CreateFormatted("[%d]", ElementIndex));
+    PathSegments.Emplace(String::Printf("[%d]", ElementIndex));
     Scopes.Add(Move(NewScope));
 }
 
@@ -190,7 +190,7 @@ void FJsonArchive::AddError(const CHAR* Format, ...)
     }
     else
     {
-        Errors.Add(String::CreateFormatted("%s: %s", Path.Data(), Message));
+        Errors.Add(String::Printf("%s: %s", Path.Data(), Message));
     }
 }
 
@@ -212,7 +212,7 @@ void FJsonArchive::AppendErrors(const FJsonArchive& Nested)
         else
         {
             const CHAR* Separator = NestedError.StartsWith("[") ? "" : ".";
-            Errors.Add(String::CreateFormatted("%s%s%s", Path.Data(), Separator, NestedError.Data()));
+            Errors.Add(String::Printf("%s%s%s", Path.Data(), Separator, NestedError.Data()));
         }
     }
 }

@@ -317,7 +317,7 @@ bool TArray_Test()
         TArray<String> Array;
         for (int32 Index = 0; Index < 3; ++Index)
         {
-            Array.Add(String::CreateFormatted("P%d", Index));
+            Array.Add(String::Printf("P%d", Index));
         }
 
         Array.Emplace("E0");
@@ -398,7 +398,7 @@ bool TArray_Test()
         TInlineArray<String, 4> Array;
         for (int32 Index = 0; Index < 8; ++Index)
         {
-            Array.Add(String::CreateFormatted("S%d", Index));
+            Array.Add(String::Printf("S%d", Index));
         }
 
         TEST_EXPECT_EQ(Array.Size(), 8);
@@ -535,7 +535,7 @@ bool TArray_Test()
 
             for (int32 Step = 0; Step < TargetSize; ++Step)
             {
-                String Value = String::CreateFormatted("StressString-%d-padding-to-exceed-inline-buffer", Step);
+                String Value = String::Printf("StressString-%d-padding-to-exceed-inline-buffer", Step);
                 if (!Array.IsEmpty() && Random.RandBool())
                 {
                     const int32 At = static_cast<int32>(Random.RandInt(0, Array.Size() - 1));

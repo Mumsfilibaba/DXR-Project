@@ -1045,7 +1045,7 @@ void FVulkanSwapChainRHI::SetDebugName(const String& InName)
         // Name all the images
         for (int32 i = 0; i < BackBuffers.Size(); ++i)
         {
-            const String ImageName = InName + String::CreateFormatted(" BackBuffer Image[%d]", i);
+            const String ImageName = InName + String::Printf(" BackBuffer Image[%d]", i);
             BackBuffers[i].Texture->SetDebugName(ImageName);
         }
     }

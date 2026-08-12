@@ -220,14 +220,14 @@ bool TString_Test()
         TEST_EXPECT(Copy.IsEmpty());
     }
 
-    TEST_SECTION("Format / AppendFormat");
+    TEST_SECTION("InlinePrintf / AppendPrintf");
     {
         String Str;
-        Str.Format("Formatted String=%.4f", 0.004f);
+        Str.InlinePrintf("Formatted String=%.4f", 0.004f);
         TEST_EXPECT(Str.Equals("Formatted String=0.0040"));
 
         Str.Append('_');
-        Str.AppendFormat("Formatted String=%.4f", 0.0077f);
+        Str.AppendPrintf("Formatted String=%.4f", 0.0077f);
         TEST_EXPECT(Str.Equals("Formatted String=0.0040_Formatted String=0.0077"));
     }
 
@@ -323,7 +323,7 @@ bool TString_Test()
         TEST_EXPECT(TCString<WIDECHAR>::Strcmp(Str.Data(), L"Hello String!") == 0);
 
         WString Formatted;
-        Formatted.Format(L"Formatted String=%.4f", 0.004f);
+        Formatted.InlinePrintf(L"Formatted String=%.4f", 0.004f);
         TEST_EXPECT(TCString<WIDECHAR>::Strcmp(Formatted.Data(), L"Formatted String=0.0040") == 0);
 
         WString Search = L"0123MeSearch89Me89";

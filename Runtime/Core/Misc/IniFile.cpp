@@ -34,11 +34,11 @@ void FIniSection::DumpToString(String& OutString)
         // Values containing spaces have to be quoted, the parser otherwise stops at the first space
         if (Value.Contains(' '))
         {
-            OutString.AppendFormat("%s=\"%s\"\n", *ValuePair.First, *Value);
+            OutString.AppendPrintf("%s=\"%s\"\n", *ValuePair.First, *Value);
         }
         else
         {
-            OutString.AppendFormat("%s=%s\n", *ValuePair.First, *Value);
+            OutString.AppendPrintf("%s=%s\n", *ValuePair.First, *Value);
         }
     }
 }
@@ -190,7 +190,7 @@ void FIniFile::DumpToString(String& OutString)
             continue;
         }
 
-        OutString.AppendFormat("[%s]\n", *CurrentSection.First);
+        OutString.AppendPrintf("[%s]\n", *CurrentSection.First);
         CurrentSection.Second.DumpToString(OutString);
         OutString += '\n';
     }

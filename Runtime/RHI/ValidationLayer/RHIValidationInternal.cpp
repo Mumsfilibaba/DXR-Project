@@ -93,11 +93,11 @@ void RHIValidationInternal::LogCallStack(const CHAR* Filename, int32 Line)
         const FStackTraceEntry& Entry = Stack[Index];
         if (Entry.Filename[0])
         {
-            Record.AppendFormat("\n    [%2d] %s (%s:%u)", Index - FirstFrame, Entry.FunctionName, Entry.Filename, Entry.Line);
+            Record.AppendPrintf("\n    [%2d] %s (%s:%u)", Index - FirstFrame, Entry.FunctionName, Entry.Filename, Entry.Line);
         }
         else
         {
-            Record.AppendFormat("\n    [%2d] %s [%s]", Index - FirstFrame, Entry.FunctionName, Entry.ModuleName);
+            Record.AppendPrintf("\n    [%2d] %s [%s]", Index - FirstFrame, Entry.FunctionName, Entry.ModuleName);
         }
     }
 
@@ -144,10 +144,10 @@ String RHIValidationInternal::GetResourceIdentity(const FRHIResource* Resource)
     const CHAR* ResourceType = ToString(Resource->GetResourceType());
     if (DebugName.IsEmpty())
     {
-        return String::CreateFormatted("%s <unnamed> (%p)", ResourceType, reinterpret_cast<const void*>(Resource));
+        return String::Printf("%s <unnamed> (%p)", ResourceType, reinterpret_cast<const void*>(Resource));
     }
 
-    return String::CreateFormatted("%s '%s'", ResourceType, *DebugName);
+    return String::Printf("%s '%s'", ResourceType, *DebugName);
 }
 
 bool RHIValidationInternal::IsBufferValidAsCopyDestination(const FRHIBufferDesc& BufferDesc)

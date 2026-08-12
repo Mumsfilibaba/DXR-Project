@@ -237,7 +237,7 @@ FVulkanQueryPool* FVulkanQueryPoolManager::ObtainPool()
             return nullptr;
         }
 
-        NewPool->SetDebugName(String::CreateFormatted("QueryPool [%d]", Index));
+        NewPool->SetDebugName(String::Printf("QueryPool [%d]", Index));
         return NewPool;
     });
 

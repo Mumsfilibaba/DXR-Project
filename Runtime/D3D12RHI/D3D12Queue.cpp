@@ -80,7 +80,7 @@ bool FD3D12Queue::Initialize()
         }
     }
 
-    const WString WideName = CharToWide(String::CreateFormatted("CommandQueue %s", ToString(QueueType)));
+    const WString WideName = CharToWide(String::Printf("CommandQueue %s", ToString(QueueType)));
     NewCommandQueue->SetName(*WideName);
 
     D3D12_INFO("[FD3D12Device]: Created CommandQueue '%s'", ToString(QueueType));
@@ -92,7 +92,7 @@ bool FD3D12Queue::Initialize()
         return false;
     }
 
-    SubmissionFence->SetDebugName(String::CreateFormatted("SubmissionFence_%s", ToString(QueueType)));
+    SubmissionFence->SetDebugName(String::Printf("SubmissionFence_%s", ToString(QueueType)));
     return true;
 }
 
@@ -107,7 +107,7 @@ FD3D12CommandList* FD3D12Queue::ObtainCommandList(FD3D12CommandAllocator* Comman
             return nullptr;
         }
 
-        NewCommandList->SetDebugName(String::CreateFormatted("%s CommandList %d", ToString(CommandListType), Index));
+        NewCommandList->SetDebugName(String::Printf("%s CommandList %d", ToString(CommandListType), Index));
         return NewCommandList;
     });
 
@@ -137,7 +137,7 @@ FD3D12CommandAllocator* FD3D12Queue::ObtainAllocator()
             return nullptr;
         }
 
-        NewAllocator->SetDebugName(String::CreateFormatted("%s CommandAllocator %d", ToString(CommandListType), Index));
+        NewAllocator->SetDebugName(String::Printf("%s CommandAllocator %d", ToString(CommandListType), Index));
         return NewAllocator;
     });
 }

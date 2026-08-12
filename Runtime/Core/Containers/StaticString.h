@@ -33,10 +33,10 @@ public:
      * @return Returns the formatted string based on the format string
      */
     template<typename... ArgTypes>
-    NODISCARD static FORCEINLINE TStaticString CreateFormatted(const CharType* Format, ArgTypes&&... Args)
+    NODISCARD static FORCEINLINE TStaticString Printf(const CharType* Format, ArgTypes&&... Args)
     {
         TStaticString NewString;
-        NewString.Format(Format, Forward<ArgTypes>(Args)...);
+        NewString.InlinePrintf(Format, Forward<ArgTypes>(Args)...);
         return NewString;
     }
 
@@ -190,7 +190,7 @@ public:
      * @param Args Arguments filled for the formatted string
      */
     template<typename... ArgTypes>
-    FORCEINLINE void Format(const CharType* InFormat, ArgTypes&&... Args)
+    FORCEINLINE void InlinePrintf(const CharType* InFormat, ArgTypes&&... Args)
     {
         const SizeType NumWritten = CStringType::Snprintf(CharData, NUM_CHARS - 1, InFormat, Forward<ArgTypes>(Args)...);
         if (NumWritten < NUM_CHARS)
@@ -211,7 +211,7 @@ public:
      * @param Args Arguments for the formatted string
      */
     template<typename... ArgTypes>
-    FORCEINLINE void AppendFormat(const CharType* InFormat, ArgTypes&&... Args)
+    FORCEINLINE void AppendPrintf(const CharType* InFormat, ArgTypes&&... Args)
     {
         // Remaining space excluding the implicit null terminator slot.
         const SizeType RemainingCapacity = (NUM_CHARS - 1) - StringLength;

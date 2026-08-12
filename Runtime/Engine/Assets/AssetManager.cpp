@@ -142,7 +142,7 @@ void FAssetRegistry::UpdateRegistryFile()
     String FileContents;
     for (TMap<String, String>::IteratorType Iterator = RegistryMap.CreateIterator(); !Iterator.IsEnd(); Iterator++)
     {
-        FileContents.AppendFormat("%s = %s\n", *Iterator.GetKey(), *Iterator.GetValue());
+        FileContents.AppendPrintf("%s = %s\n", *Iterator.GetKey(), *Iterator.GetValue());
     }
 
     {

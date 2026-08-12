@@ -18,7 +18,7 @@ static const CHAR* GetDirtySuffix()
 static void CopyRowToClipboard(const CHAR* Label, const CHAR* ValueText)
 {
     String Text;
-    Text.AppendFormat("%s: %s", Label, ValueText ? ValueText : "");
+    Text.AppendPrintf("%s: %s", Label, ValueText ? ValueText : "");
     ImGui::SetClipboardText(*Text);
 }
 

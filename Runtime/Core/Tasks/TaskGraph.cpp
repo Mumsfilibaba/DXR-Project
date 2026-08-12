@@ -147,7 +147,7 @@ bool FTaskGraph::Startup()
     // Anonymous worker pool (AnyThread lane). Worker index == AnyThread slot index.
     for (int32 Index = 0; Index < NumAnyThreadWorkers; ++Index)
     {
-        const String ThreadName = String::CreateFormatted("TaskWorker[%d]", Index);
+        const String ThreadName = String::Printf("TaskWorker[%d]", Index);
 
         FTaskWorker* Worker = new FTaskWorker(this, ENamedThread::AnyThread, Index);
         if (!Worker->Initialize(*ThreadName))

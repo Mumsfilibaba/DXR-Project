@@ -225,7 +225,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         }
         else
         {
-            const String DebugName = String::CreateFormatted("Point ShadowMap PipelineState%s %d",
+            const String DebugName = String::Printf("Point ShadowMap PipelineState%s %d",
                 bBindless ? " [Bindless]" : "", MaterialFlags);
             NewPipelineStateInstance.PipelineState->SetDebugName(DebugName);
         }
@@ -863,7 +863,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         }
         else
         {
-            const String DebugName = String::CreateFormatted("CSM PipelineState%s %d", bBindless ? " [Bindless]" : "", MaterialFlags);
+            const String DebugName = String::Printf("CSM PipelineState%s %d", bBindless ? " [Bindless]" : "", MaterialFlags);
             NewPipelineStateInstance.PipelineState->SetDebugName(DebugName);
         }
 
@@ -905,7 +905,7 @@ bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
 
     if (Resources.ShadowCascades)
     {
-        const String DebugName = String::CreateFormatted("Shadow Map Cascades");
+        const String DebugName = String::Printf("Shadow Map Cascades");
         Resources.ShadowCascades->SetDebugName(DebugName);
     }
     else
@@ -1425,7 +1425,7 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskCS::FPermutat
     }
     else
     {
-        PipelineStateInstance.PipelineState->SetDebugName(String::CreateFormatted("ShadowMask PSO (Permutation %d)", PermutationID));
+        PipelineStateInstance.PipelineState->SetDebugName(String::Printf("ShadowMask PSO (Permutation %d)", PermutationID));
     }
 
     PipelineStates.Add(PermutationID, PipelineStateInstance);

@@ -81,12 +81,12 @@ int main(int NumArgs, const CHAR** Args)
                 CurrentArg.Split('=', Argument, ArgumentValue);
                 
                 // Format as key="value" to handle spaces within the value
-                CurrentArg = String::CreateFormatted("%s=\"%s\"", *Argument, *ArgumentValue);
+                CurrentArg = String::Printf("%s=\"%s\"", *Argument, *ArgumentValue);
             }
             else
             {
                 // Wrap the entire argument in quotes to handle spaces
-                CurrentArg = String::CreateFormatted("\"%s\"", *CurrentArg);
+                CurrentArg = String::Printf("\"%s\"", *CurrentArg);
             }
         }
         

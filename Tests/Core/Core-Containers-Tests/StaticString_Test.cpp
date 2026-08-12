@@ -50,14 +50,14 @@ bool StaticString_Suite()
         TEST_EXPECT(Str.Equals("Hello, World!"));
     }
 
-    TEST_SECTION("Format / AppendFormat / ToLower / ToUpper");
+    TEST_SECTION("InlinePrintf / AppendPrintf / ToLower / ToUpper");
     {
         StaticString<64> Str;
         
-        Str.Format("Formatted String=%.4f", 0.004f);
+        Str.InlinePrintf("Formatted String=%.4f", 0.004f);
         TEST_EXPECT(Str.Equals("Formatted String=0.0040"));
 
-        Str.AppendFormat("=%.4f", 0.0077f);
+        Str.AppendPrintf("=%.4f", 0.0077f);
         TEST_EXPECT(Str.Equals("Formatted String=0.0040=0.0077"));
 
         StaticString<64> Mixed = "MixedCase";

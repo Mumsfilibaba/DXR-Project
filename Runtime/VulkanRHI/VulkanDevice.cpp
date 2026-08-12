@@ -1040,7 +1040,7 @@ bool FVulkanDevice::FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreate
     }
     else
     {
-        const String DebugName = String::CreateFormatted("Sampler %d", SamplerMap.Size());
+        const String DebugName = String::Printf("Sampler %d", SamplerMap.Size());
         VulkanSetObjectName(GetVkDevice(), DebugName.Data(), OutSampler, VK_OBJECT_TYPE_SAMPLER);
     }
 

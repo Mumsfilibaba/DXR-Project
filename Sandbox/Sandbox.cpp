@@ -178,7 +178,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             if (NewActor)
             {
                 NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 0.6f, 40.0f + StartPositionY + (y * SphereOffset));
-                NewActor->SetName(String::CreateFormatted("Sphere[%d]", SphereIndex));
+                NewActor->SetName(String::Printf("Sphere[%d]", SphereIndex));
                 SphereIndex++;
 
                 FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
@@ -189,7 +189,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
                     NewMaterial->SetTexture(EMaterialTextureSlot::MaskA, FEngine::Get()->BaseTexture);
 
                     NewMaterial->Initialize();
-                    NewMaterial->SetName(String::CreateFormatted("Sphere Material %d", SphereIndex));
+                    NewMaterial->SetName(String::Printf("Sphere Material %d", SphereIndex));
 
                     NewComponent->SetMesh(SphereMesh);
                     NewComponent->SetMaterial(NewMaterial);
@@ -532,7 +532,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
                 if (FActor* NewActor = InWorld->CreateActor())
                 {
                     const TSharedPtr<FMesh>& Mesh = StreetLightModel->GetMesh(MeshIndex);
-                    NewActor->SetName(String::CreateFormatted("Street Light (%s) %d", *Mesh->GetName(), i));
+                    NewActor->SetName(String::Printf("Street Light (%s) %d", *Mesh->GetName(), i));
                     NewActor->GetTransform().SetUniformScale(0.25f);
                     NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - float(i) * 3.0f);
 
@@ -570,7 +570,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     {
         if (FActor* NewActor = InWorld->CreateActor())
         {
-            NewActor->SetName(String::CreateFormatted("Cylinder %d", i));
+            NewActor->SetName(String::Printf("Cylinder %d", i));
             NewActor->GetTransform().SetUniformScale(1.0f);
             NewActor->GetTransform().SetTranslation(-15.0f + float(i) * 1.75f, 2.5f, 60.0f);
 

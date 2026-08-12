@@ -695,7 +695,7 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
                 if (Folder)
                 {
                     const String FolderName = Folder->Name.IsEmpty() ? "this folder" : Folder->Name;
-                    DeleteConfirmContext.Message.Format("Are you sure you want to delete \"%s\" and its contents?", *FolderName);
+                    DeleteConfirmContext.Message.InlinePrintf("Are you sure you want to delete \"%s\" and its contents?", *FolderName);
                 }
                 else
                 {
@@ -869,7 +869,7 @@ void FEditorContentBrowserWidget::DrawContentPanel()
                 {
                     const FileInfo& Item = Folder->FolderContents[Index];
                     const String ItemName = Item.Name.IsEmpty() ? "this item" : Item.Name;
-                    DeleteConfirmContext.Message.Format("Are you sure you want to delete \"%s\"?", *ItemName);
+                    DeleteConfirmContext.Message.InlinePrintf("Are you sure you want to delete \"%s\"?", *ItemName);
                 }
                 else
                 {

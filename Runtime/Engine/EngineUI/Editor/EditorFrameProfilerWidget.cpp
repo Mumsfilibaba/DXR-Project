@@ -136,7 +136,7 @@ void FEditorFrameProfilerWidget::DrawCPUData(float Width)
             ThreadName = Thread->GetName();
             if (ThreadName.IsEmpty())
             {
-                ThreadName = String::CreateFormatted("Thread %d", ThreadIndex);
+                ThreadName = String::Printf("Thread %d", ThreadIndex);
             }
         }
 

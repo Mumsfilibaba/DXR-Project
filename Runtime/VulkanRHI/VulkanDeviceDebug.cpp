@@ -235,7 +235,7 @@ void FVulkanCrashMarkers::WriteEndMarker(FVulkanCommandBuffer& CmdBuf)
 {
     if (!CurrentRegion.IsEmpty())
     {
-        String Name = String::CreateFormatted("%s [END]", *CurrentRegion);
+        String Name = String::Printf("%s [END]", *CurrentRegion);
         WriteMarkerInternal(CmdBuf, *Name);
     }
 }
@@ -245,11 +245,11 @@ void FVulkanCrashMarkers::WriteDrawMarker(FVulkanCommandBuffer& CmdBuf, const St
     String Name;
     if (!CurrentRegion.IsEmpty())
     {
-        Name = String::CreateFormatted("%s > %s #%u", *CurrentRegion, DrawType.Data(), DrawCounter);
+        Name = String::Printf("%s > %s #%u", *CurrentRegion, DrawType.Data(), DrawCounter);
     }
     else
     {
-        Name = String::CreateFormatted("%s #%u", DrawType.Data(), DrawCounter);
+        Name = String::Printf("%s #%u", DrawType.Data(), DrawCounter);
     }
 
     DrawCounter++;

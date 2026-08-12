@@ -6,26 +6,26 @@
 #define LOG_ERROR_CRITICAL(...) \
     do \
     { \
-        FOutputDeviceLogger::Get()->Log(ELogSeverity::Error, String::CreateFormatted(__VA_ARGS__)); \
+        FOutputDeviceLogger::Get()->Log(ELogSeverity::Error, String::Printf(__VA_ARGS__)); \
         DEBUG_BREAK(); \
     } while (false)
 
 #define LOG_ERROR(...) \
     do \
     { \
-        FOutputDeviceLogger::Get()->Log(ELogSeverity::Error, String::CreateFormatted(__VA_ARGS__)); \
+        FOutputDeviceLogger::Get()->Log(ELogSeverity::Error, String::Printf(__VA_ARGS__)); \
     } while (false)
 
 #define LOG_WARNING(...) \
     do \
     { \
-        FOutputDeviceLogger::Get()->Log(ELogSeverity::Warning, String::CreateFormatted(__VA_ARGS__)); \
+        FOutputDeviceLogger::Get()->Log(ELogSeverity::Warning, String::Printf(__VA_ARGS__)); \
     } while (false)
 
 #define LOG_INFO(...) \
     do \
     { \
-        FOutputDeviceLogger::Get()->Log(ELogSeverity::Info, String::CreateFormatted(__VA_ARGS__)); \
+        FOutputDeviceLogger::Get()->Log(ELogSeverity::Info, String::Printf(__VA_ARGS__)); \
     } while (false)
 
 class CORE_API FOutputDeviceLogger : public IOutputDevice

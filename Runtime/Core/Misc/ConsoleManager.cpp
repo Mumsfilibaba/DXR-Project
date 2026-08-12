@@ -1819,7 +1819,7 @@ void FConsoleManager::DumpConsoleVariableValues(IOutputDevice& OutputDevice, con
     });
 
     OutputDevice.Log("CVar Dump");
-    OutputDevice.Log(String::CreateFormatted("Count: %d", ConsoleVariables.Size()));
+    OutputDevice.Log(String::Printf("Count: %d", ConsoleVariables.Size()));
     OutputDevice.Log("----------------------------------------");
 
     for (const TPair<String, IConsoleVariable*>& Pair : ConsoleVariables)
@@ -1830,12 +1830,12 @@ void FConsoleManager::DumpConsoleVariableValues(IOutputDevice& OutputDevice, con
 
         if (Variable->IsVariableInt())
         {
-            ValueString = String::CreateFormatted("%d", Variable->GetInt());
+            ValueString = String::Printf("%d", Variable->GetInt());
             TypeString = "int";
         }
         else if (Variable->IsVariableFloat())
         {
-            ValueString = String::CreateFormatted("%.6f", Variable->GetFloat());
+            ValueString = String::Printf("%.6f", Variable->GetFloat());
             TypeString = "float";
         }
         else if (Variable->IsVariableBool())
@@ -1852,6 +1852,6 @@ void FConsoleManager::DumpConsoleVariableValues(IOutputDevice& OutputDevice, con
         const EConsoleVariableFlags SetByFlags = Variable->GetFlags() & EConsoleVariableFlags::SetByMask;
         const CHAR* SetByString = SetByFlagToString(SetByFlags);
 
-        OutputDevice.Log(String::CreateFormatted("%s = %s [type:%s setby:%s]", *Pair.First, *ValueString, TypeString, SetByString));
+        OutputDevice.Log(String::Printf("%s = %s [type:%s setby:%s]", *Pair.First, *ValueString, TypeString, SetByString));
     }
 }

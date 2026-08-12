@@ -109,10 +109,10 @@ EAssertAction Assert::OnFailed(const CHAR* Expression, const CHAR* Filename, int
         GetReportedSites().Add(SiteKey);
     }
 
-    String Record = String::CreateFormatted("Assertion failed: %s\n    at %s(%d)", Expression, Filename, Line);
+    String Record = String::Printf("Assertion failed: %s\n    at %s(%d)", Expression, Filename, Line);
     if (Context[0])
     {
-        Record.AppendFormat("\n    %s", Context);
+        Record.AppendPrintf("\n    %s", Context);
     }
 
     // Logged before the dialog goes up so the log has the record even if the user kills the process
@@ -146,7 +146,7 @@ EAssertAction Assert::OnFailed(const CHAR* Expression, const CHAR* Filename, int
         return EAssertAction::Continue;
     }
 
-    Record.AppendFormat("\n\nAbort ends the process, Debug breaks into the debugger, Ignore continues and silences this assertion for the rest of the session.");
+    Record.AppendPrintf("\n\nAbort ends the process, Debug breaks into the debugger, Ignore continues and silences this assertion for the rest of the session.");
 
     switch (FPlatformMisc::ShowAssertDialog("Assertion Failed", *Record))
     {

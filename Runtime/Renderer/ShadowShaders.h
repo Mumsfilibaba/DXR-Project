@@ -230,7 +230,7 @@ public:
 
     NODISCARD static String ToDefineValue(Type Value)
     {
-        return String::CreateFormatted("%d", 16 << Value);
+        return String::Printf("%d", 16 << Value);
     }
 };
 

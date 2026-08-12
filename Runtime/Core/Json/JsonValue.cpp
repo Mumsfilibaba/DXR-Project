@@ -7,7 +7,7 @@ String FJsonError::ToString() const
         return Message;
     }
 
-    return String::CreateFormatted("line %d, column %d: %s", Line, Column, Message.Data());
+    return String::Printf("line %d, column %d: %s", Line, Column, Message.Data());
 }
 
 
