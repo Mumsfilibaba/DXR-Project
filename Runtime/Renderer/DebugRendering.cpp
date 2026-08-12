@@ -204,10 +204,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     FMeshData SphereMesh = MeshFactory::CreateSphere(2, 0.35f);
 
     // VertexBuffer
-    FRHIBufferDesc VertexBufferDesc;
-    VertexBufferDesc.Stride = sizeof(FSourceVertex);
-    VertexBufferDesc.Size   = SphereMesh.Vertices.SizeInBytes();
-    VertexBufferDesc.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::Default;
+    FRHIBufferDesc VertexBufferDesc = FRHIBufferDesc::CreateVertexBuffer(sizeof(FSourceVertex), SphereMesh.Vertices.Size());
 
     SphereVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::Common, SphereMesh.Vertices.Data());
 
@@ -225,10 +222,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     TArray<uint16> SphereMeshSmallIndicies = SphereMesh.GetSmallIndices();
     SphereIndexCount = SphereMeshSmallIndicies.Size();
 
-    FRHIBufferDesc IndexBufferDesc;
-    IndexBufferDesc.Stride = sizeof(uint16);
-    IndexBufferDesc.Size   = SphereMeshSmallIndicies.SizeInBytes();
-    IndexBufferDesc.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::Default;
+    FRHIBufferDesc IndexBufferDesc = FRHIBufferDesc::CreateIndexBuffer(sizeof(uint16), SphereMeshSmallIndicies.Size());
 
     SphereIndexBuffer = RHI::CreateBuffer(IndexBufferDesc, ERHIResourceState::Common, SphereMeshSmallIndicies.Data());
     if (!SphereIndexBuffer)
@@ -253,9 +247,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
         Vector3(-0.5f,  0.5f, -0.5f)
     };
 
-    VertexBufferDesc.Stride = sizeof(Vector3);
-    VertexBufferDesc.Size   = AABBVertices.SizeInBytes();
-    VertexBufferDesc.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::Default;
+    VertexBufferDesc = FRHIBufferDesc::CreateVertexBuffer(sizeof(Vector3), AABBVertices.Size());
 
     AABBVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::Common, AABBVertices.Data());
 
@@ -286,9 +278,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
         2, 7,
     };
 
-    IndexBufferDesc.Stride = sizeof(uint16);
-    IndexBufferDesc.Size   = AABBWireframeIndices.SizeInBytes();
-    IndexBufferDesc.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::Default;
+    IndexBufferDesc = FRHIBufferDesc::CreateIndexBuffer(sizeof(uint16), AABBWireframeIndices.Size());
 
     AABBIndexBuffer_Wireframe = RHI::CreateBuffer(IndexBufferDesc, ERHIResourceState::Common, AABBWireframeIndices.Data());
 
@@ -320,9 +310,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
         0, 5, 4, 0, 4, 1
     };
 
-	IndexBufferDesc.Stride = sizeof(uint16);
-	IndexBufferDesc.Size   = AABBSolidIndices.SizeInBytes();
-	IndexBufferDesc.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::Default;
+    IndexBufferDesc = FRHIBufferDesc::CreateIndexBuffer(sizeof(uint16), AABBSolidIndices.Size());
 
     AABBIndexBuffer_Solid = RHI::CreateBuffer(IndexBufferDesc, ERHIResourceState::Common, AABBSolidIndices.Data());
 

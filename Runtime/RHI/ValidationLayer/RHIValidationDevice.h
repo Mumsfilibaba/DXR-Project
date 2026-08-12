@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/Map.h"
 #include "RHI/RHIDevice.h"
+#include "RHI/ValidationLayer/RHIValidationStateTracker.h"
 
 class FRHIValidationCommandContext;
 
@@ -80,6 +81,7 @@ public:
     virtual ERHIType GetRHIType() const override final;
 
 private:
-    FRHIDevice* Device;
+    FRHIDevice*                                              Device;
+    FRHIValidationStateTracker                               StateTracker;
     TMap<IRHICommandContext*, FRHIValidationCommandContext*> RealContextToValidationContextMap;
 };

@@ -317,7 +317,10 @@ public:
     };
 
 public:
-    NODISCARD static FRHIShaderResourceViewDesc CreateBuffer(uint32 InFirstElement, uint32 InNumElements, EBufferViewType InType = EBufferViewType::Structured)
+    NODISCARD static FRHIShaderResourceViewDesc CreateBuffer(
+        uint32          InFirstElement,
+        uint32          InNumElements,
+        EBufferViewType InType = EBufferViewType::Structured)
     {
         FRHIShaderResourceViewDesc Desc;
         Desc.ViewDimension       = EViewDimension::Buffer;
@@ -339,7 +342,11 @@ public:
         return Desc;
     }
 
-    NODISCARD static FRHIShaderResourceViewDesc CreateTexture1D(EFormat InFormat, uint8 InFirstMip, uint8 InNumMips, float InMinLODClamp = 0.0f)
+    NODISCARD static FRHIShaderResourceViewDesc CreateTexture1D(
+        EFormat InFormat,
+        uint8   InFirstMip,
+        uint8   InNumMips,
+        float   InMinLODClamp = 0.0f)
     {
         FRHIShaderResourceViewDesc Desc;
         Desc.ViewDimension           = EViewDimension::Texture1D;
@@ -350,7 +357,13 @@ public:
         return Desc;
     }
 
-    NODISCARD static FRHIShaderResourceViewDesc CreateTexture1DArray(EFormat InFormat, uint8 InFirstMip, uint8 InNumMips, uint16 InFirstArraySlice, uint16 InNumSlices, float InMinLODClamp = 0.0f)
+    NODISCARD static FRHIShaderResourceViewDesc CreateTexture1DArray(
+        EFormat InFormat,
+        uint8   InFirstMip,
+        uint8   InNumMips,
+        uint16  InFirstArraySlice,
+        uint16  InNumSlices,
+        float   InMinLODClamp = 0.0f)
     {
         FRHIShaderResourceViewDesc Desc;
         Desc.ViewDimension                  = EViewDimension::Texture1DArray;
@@ -363,7 +376,12 @@ public:
         return Desc;
     }
 
-    NODISCARD static FRHIShaderResourceViewDesc CreateTexture2D(EFormat InFormat, uint8 InFirstMip, uint8 InNumMips, uint8 InPlaneSlice = 0, float InMinLODClamp = 0.0f)
+    NODISCARD static FRHIShaderResourceViewDesc CreateTexture2D(
+        EFormat InFormat,
+        uint8   InFirstMip,
+        uint8   InNumMips,
+        uint8   InPlaneSlice  = 0,
+        float   InMinLODClamp = 0.0f)
     {
         FRHIShaderResourceViewDesc Desc;
         Desc.ViewDimension           = EViewDimension::Texture2D;
@@ -375,7 +393,14 @@ public:
         return Desc;
     }
 
-    NODISCARD static FRHIShaderResourceViewDesc CreateTexture2DArray(EFormat InFormat, uint8 InFirstMip, uint8 InNumMips, uint16 InFirstArraySlice, uint16 InNumSlices, uint8 InPlaneSlice = 0, float InMinLODClamp = 0.0f)
+    NODISCARD static FRHIShaderResourceViewDesc CreateTexture2DArray(
+        EFormat InFormat,
+        uint8   InFirstMip,
+        uint8   InNumMips,
+        uint16  InFirstArraySlice,
+        uint16  InNumSlices,
+        uint8   InPlaneSlice  = 0,
+        float   InMinLODClamp = 0.0f)
     {
         FRHIShaderResourceViewDesc Desc;
         Desc.ViewDimension                  = EViewDimension::Texture2DArray;
@@ -389,7 +414,11 @@ public:
         return Desc;
     }
 
-    NODISCARD static FRHIShaderResourceViewDesc CreateTextureCube(EFormat InFormat, uint8 InFirstMip, uint8 InNumMips, float InMinLODClamp = 0.0f)
+    NODISCARD static FRHIShaderResourceViewDesc CreateTextureCube(
+        EFormat InFormat,
+        uint8   InFirstMip,
+        uint8   InNumMips,
+        float   InMinLODClamp = 0.0f)
     {
         FRHIShaderResourceViewDesc Desc;
         Desc.ViewDimension             = EViewDimension::TextureCube;
@@ -400,7 +429,13 @@ public:
         return Desc;
     }
 
-    NODISCARD static FRHIShaderResourceViewDesc CreateTextureCubeArray(EFormat InFormat, uint8 InFirstMip, uint8 InNumMips, uint16 InFirstCube, uint16 InNumCubes, float InMinLODClamp = 0.0f)
+    NODISCARD static FRHIShaderResourceViewDesc CreateTextureCubeArray(
+        EFormat InFormat,
+        uint8   InFirstMip,
+        uint8   InNumMips,
+        uint16  InFirstCube,
+        uint16  InNumCubes,
+        float   InMinLODClamp = 0.0f)
     {
         FRHIShaderResourceViewDesc Desc;
         Desc.ViewDimension                  = EViewDimension::TextureCubeArray;
@@ -413,7 +448,11 @@ public:
         return Desc;
     }
 
-    NODISCARD static FRHIShaderResourceViewDesc CreateTexture3D(EFormat InFormat, uint8 InFirstMip, uint8 InNumMips, float InMinLODClamp = 0.0f)
+    NODISCARD static FRHIShaderResourceViewDesc CreateTexture3D(
+        EFormat InFormat,
+        uint8   InFirstMip,
+        uint8   InNumMips,
+        float   InMinLODClamp = 0.0f)
     {
         FRHIShaderResourceViewDesc Desc;
         Desc.ViewDimension           = EViewDimension::Texture3D;
@@ -788,7 +827,10 @@ public:
     };
 
 public:
-    NODISCARD static FRHIUnorderedAccessViewDesc CreateBuffer(uint32 InFirstElement, uint32 InNumElements, EBufferViewType InType = EBufferViewType::Structured)
+    NODISCARD static FRHIUnorderedAccessViewDesc CreateBuffer(
+        uint32          InFirstElement,
+        uint32          InNumElements,
+        EBufferViewType InType = EBufferViewType::Structured)
     {
         FRHIUnorderedAccessViewDesc Desc;
         Desc.ViewDimension       = EViewDimension::Buffer;
@@ -819,7 +861,11 @@ public:
         return Desc;
     }
 
-    NODISCARD static FRHIUnorderedAccessViewDesc CreateTexture1DArray(EFormat InFormat, uint8 InMipLevel, uint16 InFirstArraySlice, uint16 InNumSlices)
+    NODISCARD static FRHIUnorderedAccessViewDesc CreateTexture1DArray(
+        EFormat InFormat,
+        uint8   InMipLevel,
+        uint16  InFirstArraySlice,
+        uint16  InNumSlices)
     {
         FRHIUnorderedAccessViewDesc Desc;
         Desc.ViewDimension                  = EViewDimension::Texture1DArray;
@@ -840,7 +886,12 @@ public:
         return Desc;
     }
 
-    NODISCARD static FRHIUnorderedAccessViewDesc CreateTexture2DArray(EFormat InFormat, uint8 InMipLevel, uint16 InFirstArraySlice, uint16 InNumSlices, uint8 InPlaneSlice = 0)
+    NODISCARD static FRHIUnorderedAccessViewDesc CreateTexture2DArray(
+        EFormat InFormat,
+        uint8   InMipLevel,
+        uint16  InFirstArraySlice,
+        uint16  InNumSlices,
+        uint8   InPlaneSlice = 0)
     {
         FRHIUnorderedAccessViewDesc Desc;
         Desc.ViewDimension                  = EViewDimension::Texture2DArray;
@@ -861,7 +912,11 @@ public:
         return Desc;
     }
 
-    NODISCARD static FRHIUnorderedAccessViewDesc CreateTextureCubeArray(EFormat InFormat, uint8 InMipLevel, uint16 InFirstCube, uint16 InNumCubes)
+    NODISCARD static FRHIUnorderedAccessViewDesc CreateTextureCubeArray(
+        EFormat InFormat,
+        uint8   InMipLevel,
+        uint16  InFirstCube,
+        uint16  InNumCubes)
     {
         FRHIUnorderedAccessViewDesc Desc;
         Desc.ViewDimension              = EViewDimension::TextureCubeArray;
@@ -872,7 +927,11 @@ public:
         return Desc;
     }
 
-    NODISCARD static FRHIUnorderedAccessViewDesc CreateTexture3D(EFormat InFormat, uint8 InMipLevel, uint16 InFirstWSlice, uint16 InWSize)
+    NODISCARD static FRHIUnorderedAccessViewDesc CreateTexture3D(
+        EFormat InFormat,
+        uint8   InMipLevel,
+        uint16  InFirstWSlice,
+        uint16  InWSize)
     {
         FRHIUnorderedAccessViewDesc Desc;
         Desc.ViewDimension         = EViewDimension::Texture3D;
@@ -1230,7 +1289,11 @@ public:
         return Desc;
     }
 
-    NODISCARD static FRHIRenderTargetViewDesc CreateTexture1DArray(EFormat InFormat, uint8 InMipLevel, uint16 InFirstArraySlice, uint16 InNumSlices)
+    NODISCARD static FRHIRenderTargetViewDesc CreateTexture1DArray(
+        EFormat InFormat,
+        uint8   InMipLevel,
+        uint16  InFirstArraySlice,
+        uint16  InNumSlices)
     {
         FRHIRenderTargetViewDesc Desc;
         Desc.ViewDimension                  = EViewDimension::Texture1DArray;
@@ -1251,7 +1314,12 @@ public:
         return Desc;
     }
 
-    NODISCARD static FRHIRenderTargetViewDesc CreateTexture2DArray(EFormat InFormat, uint8 InMipLevel, uint16 InFirstArraySlice, uint16 InNumSlices, uint8 InPlaneSlice = 0)
+    NODISCARD static FRHIRenderTargetViewDesc CreateTexture2DArray(
+        EFormat InFormat,
+        uint8   InMipLevel,
+        uint16  InFirstArraySlice,
+        uint16  InNumSlices,
+        uint8   InPlaneSlice = 0)
     {
         FRHIRenderTargetViewDesc Desc;
         Desc.ViewDimension                  = EViewDimension::Texture2DArray;
@@ -1272,7 +1340,11 @@ public:
         return Desc;
     }
 
-    NODISCARD static FRHIRenderTargetViewDesc CreateTextureCubeArray(EFormat InFormat, uint8 InMipLevel, uint16 InFirstCube, uint16 InNumCubes)
+    NODISCARD static FRHIRenderTargetViewDesc CreateTextureCubeArray(
+        EFormat InFormat,
+        uint8   InMipLevel,
+        uint16  InFirstCube,
+        uint16  InNumCubes)
     {
         FRHIRenderTargetViewDesc Desc;
         Desc.ViewDimension              = EViewDimension::TextureCubeArray;
@@ -1283,7 +1355,11 @@ public:
         return Desc;
     }
 
-    NODISCARD static FRHIRenderTargetViewDesc CreateTexture3D(EFormat InFormat, uint8 InMipLevel, uint16 InFirstWSlice, uint16 InWSize)
+    NODISCARD static FRHIRenderTargetViewDesc CreateTexture3D(
+        EFormat InFormat,
+        uint8   InMipLevel,
+        uint16  InFirstWSlice,
+        uint16  InWSize)
     {
         FRHIRenderTargetViewDesc Desc;
         Desc.ViewDimension         = EViewDimension::Texture3D;
@@ -1568,7 +1644,9 @@ public:
     };
 
 public:
-    NODISCARD static FRHIDepthStencilViewDesc CreateTexture1D(EFormat InFormat, uint8 InMipLevel,
+    NODISCARD static FRHIDepthStencilViewDesc CreateTexture1D(
+        EFormat                InFormat,
+        uint8                  InMipLevel,
         EDepthStencilViewFlags InFlags = EDepthStencilViewFlags::None)
     {
         FRHIDepthStencilViewDesc Desc;
@@ -1579,7 +1657,11 @@ public:
         return Desc;
     }
 
-    NODISCARD static FRHIDepthStencilViewDesc CreateTexture1DArray(EFormat InFormat, uint8 InMipLevel, uint16 InFirstArraySlice, uint16 InNumSlices,
+    NODISCARD static FRHIDepthStencilViewDesc CreateTexture1DArray(
+        EFormat                InFormat,
+        uint8                  InMipLevel,
+        uint16                 InFirstArraySlice,
+        uint16                 InNumSlices,
         EDepthStencilViewFlags InFlags = EDepthStencilViewFlags::None)
     {
         FRHIDepthStencilViewDesc Desc;
@@ -1592,7 +1674,9 @@ public:
         return Desc;
     }
 
-    NODISCARD static FRHIDepthStencilViewDesc CreateTexture2D(EFormat InFormat, uint8 InMipLevel,
+    NODISCARD static FRHIDepthStencilViewDesc CreateTexture2D(
+        EFormat                InFormat,
+        uint8                  InMipLevel,
         EDepthStencilViewFlags InFlags = EDepthStencilViewFlags::None)
     {
         FRHIDepthStencilViewDesc Desc;
@@ -1603,7 +1687,11 @@ public:
         return Desc;
     }
 
-    NODISCARD static FRHIDepthStencilViewDesc CreateTexture2DArray(EFormat InFormat, uint8 InMipLevel, uint16 InFirstArraySlice, uint16 InNumSlices,
+    NODISCARD static FRHIDepthStencilViewDesc CreateTexture2DArray(
+        EFormat                InFormat,
+        uint8                  InMipLevel,
+        uint16                 InFirstArraySlice,
+        uint16                 InNumSlices,
         EDepthStencilViewFlags InFlags = EDepthStencilViewFlags::None)
     {
         FRHIDepthStencilViewDesc Desc;
@@ -1616,7 +1704,9 @@ public:
         return Desc;
     }
 
-    NODISCARD static FRHIDepthStencilViewDesc CreateTextureCube(EFormat InFormat, uint8 InMipLevel,
+    NODISCARD static FRHIDepthStencilViewDesc CreateTextureCube(
+        EFormat                InFormat,
+        uint8                  InMipLevel,
         EDepthStencilViewFlags InFlags = EDepthStencilViewFlags::None)
     {
         FRHIDepthStencilViewDesc Desc;
@@ -1627,7 +1717,11 @@ public:
         return Desc;
     }
 
-    NODISCARD static FRHIDepthStencilViewDesc CreateTextureCubeArray(EFormat InFormat, uint8 InMipLevel, uint16 InFirstCube, uint16 InNumCubes,
+    NODISCARD static FRHIDepthStencilViewDesc CreateTextureCubeArray(
+        EFormat                InFormat,
+        uint8                  InMipLevel,
+        uint16                 InFirstCube,
+        uint16                 InNumCubes,
         EDepthStencilViewFlags InFlags = EDepthStencilViewFlags::None)
     {
         FRHIDepthStencilViewDesc Desc;
@@ -1888,12 +1982,11 @@ protected:
 
 public:
 
-    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView / VkBufferView / VkAccelerationStructureKHR. Metal: nullptr. Null: nullptr. */
+    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE. Vulkan: VkImageView / VkBufferView / VkAccelerationStructureKHR. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeHandle() const = 0;
-
     virtual FRHIDescriptorHandle GetBindlessHandle() const = 0;
 
-    /** @brief Returns the descriptor used to create this view. */
+
     NODISCARD const FRHIShaderResourceViewDesc& GetDesc() const
     {
         return Desc;
@@ -1916,12 +2009,10 @@ protected:
 
 public:
 
-    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView / VkBufferView. Metal: nullptr. Null: nullptr. */
+    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE. Vulkan: VkImageView / VkBufferView. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeHandle() const = 0;
-
     virtual FRHIDescriptorHandle GetBindlessHandle() const = 0;
 
-    /** @brief Returns the descriptor used to create this view. */
     NODISCARD const FRHIUnorderedAccessViewDesc& GetDesc() const
     {
         return Desc;
@@ -1944,10 +2035,9 @@ protected:
 
 public:
 
-    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView. Metal: nullptr. Null: nullptr. */
+    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE. Vulkan: VkImageView. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeHandle() const = 0;
 
-    /** @brief Returns the descriptor used to create this view. */
     NODISCARD const FRHIRenderTargetViewDesc& GetDesc() const
     {
         return Desc;
@@ -1970,10 +2060,9 @@ protected:
 
 public:
 
-    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView. Metal: nullptr. Null: nullptr. */
+    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE. Vulkan: VkImageView. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeHandle() const = 0;
 
-    /** @brief Returns the descriptor used to create this view. */
     NODISCARD const FRHIDepthStencilViewDesc& GetDesc() const
     {
         return Desc;
@@ -1987,8 +2076,11 @@ struct FRHIRenderPassAttachment
 {
     FRHIRenderPassAttachment() noexcept = default;
 
-    explicit FRHIRenderPassAttachment(FRHIRenderTargetView* InView, EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear,
-        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store, const FFloatColor& InClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f)) noexcept
+    explicit FRHIRenderPassAttachment(
+        FRHIRenderTargetView*  InView,
+        EAttachmentLoadAction  InLoadAction  = EAttachmentLoadAction::Clear,
+        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store,
+        const FFloatColor&     InClearValue  = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f)) noexcept
         : View(InView)
         , ClearValue(InClearValue)
         , LoadAction(InLoadAction)
@@ -2008,8 +2100,11 @@ struct FRHIDepthStencilAttachment
 {
     FRHIDepthStencilAttachment() noexcept = default;
 
-    explicit FRHIDepthStencilAttachment(FRHIDepthStencilView* InView, EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear,
-        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store, const FDepthStencilValue& InClearValue = FDepthStencilValue(1.0f, 0)) noexcept
+    explicit FRHIDepthStencilAttachment(
+        FRHIDepthStencilView*     InView,
+        EAttachmentLoadAction     InLoadAction  = EAttachmentLoadAction::Clear,
+        EAttachmentStoreAction    InStoreAction = EAttachmentStoreAction::Store,
+        const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0)) noexcept
         : View(InView)
         , ClearValue(InClearValue)
         , LoadAction(InLoadAction)
@@ -2041,8 +2136,12 @@ struct FRHIBeginRenderPassDesc
     {
     }
 
-    FRHIBeginRenderPassDesc(const FRenderTargetAttachments& InRenderTargets, uint32 InNumRenderTargets, FRHIDepthStencilAttachment InDepthStencilAttachment,
-        FRHITexture* InShadingRateTexture = nullptr, EShadingRate InStaticShadingRate = EShadingRate::VRS_1x1) noexcept
+    FRHIBeginRenderPassDesc(
+        const FRenderTargetAttachments& InRenderTargets,
+        uint32                          InNumRenderTargets,
+        FRHIDepthStencilAttachment      InDepthStencilAttachment,
+        FRHITexture*                    InShadingRateTexture = nullptr,
+        EShadingRate                    InStaticShadingRate  = EShadingRate::VRS_1x1) noexcept
         : ViewInstancingState()
         , DepthStencilAttachment(InDepthStencilAttachment)
         , RenderTargets(InRenderTargets)

@@ -1,11 +1,12 @@
 #pragma once
 #include "Core/Containers/Set.h"
 #include "RHI/IRHICommandContext.h"
+#include "RHI/ValidationLayer/RHIValidationStateTracker.h"
 
 class RHI_API FRHIValidationCommandContext : public IRHICommandContext
 {
 public:
-    FRHIValidationCommandContext(IRHICommandContext* InRealContext);
+    FRHIValidationCommandContext(IRHICommandContext* InRealContext, FRHIValidationStateTracker* InStateTracker);
     virtual ~FRHIValidationCommandContext();
 
     virtual void BeginFrame() override final;
@@ -105,11 +106,11 @@ private:
     {
         NODISCARD bool operator==(const FOpenSplitKey& Other) const noexcept = default;
 
-        const void* Resource;
-        uint32      FirstMipLevel;
-        uint32      NumMipLevels;
-        uint32      FirstArraySlice;
-        uint32      NumArraySlices;
+        const FRHIResource* Resource;
+        uint32              FirstMipLevel;
+        uint32              NumMipLevels;
+        uint32              FirstArraySlice;
+        uint32              NumArraySlices;
     };
 
     struct FOpenSplit
@@ -122,12 +123,13 @@ private:
     bool ValidateRecordingPhase(const CHAR* Caller) const;
     bool ValidateTransitionBarrierDesc(const FRHITransitionBarrierDesc& Desc);
     bool ValidateUnorderedAccessBarrierDesc(const FRHIUnorderedAccessBarrierDesc& Desc);
-    bool ValidateNoOpenSplit(const void* Resource, const CHAR* Caller) const;
+    bool ValidateNoOpenSplit(const FRHIResource* Resource, const CHAR* Caller) const;
 
     NODISCARD static FOpenSplitKey CreateSplitKey(const FRHITransitionBarrierDesc& Desc);
     NODISCARD int32 FindOpenSplit(const FOpenSplitKey& Key) const;
 
     IRHICommandContext*          CommandContext;
+    FRHIValidationStateTracker*  StateTracker;
     ECommandContextPhase         ContextPhase;
     FRHIGraphicsPipelineState*   GraphicsPipelineState;
     FRHIComputePipelineState*    ComputePipelineState;

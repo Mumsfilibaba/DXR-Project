@@ -121,32 +121,63 @@ struct IRHITextureData
 
 struct FRHITextureDesc
 {
-    NODISCARD static FRHITextureDesc CreateTexture1D(EFormat InFormat, uint32 InWidth, uint32 InNumMipLevels,
-        ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
+    NODISCARD static FRHITextureDesc CreateTexture1D(
+        EFormat                       InFormat,
+        uint32                        InWidth,
+        uint32                        InNumMipLevels,
+        ETextureUsageFlags            InUsageFlags,
+        const FClearValue&            InClearValue   = FClearValue(),
+        ERHIResourceStateTrackingMode InTrackingMode = ERHIResourceStateTrackingMode::Manual)
     {
-        return FRHITextureDesc(ETextureDimension::Texture1D, InFormat, IntVector3(InWidth, 1, 0), 1, InNumMipLevels, 1, InUsageFlags, InClearValue);
+        return FRHITextureDesc(ETextureDimension::Texture1D, InFormat, IntVector3(InWidth, 1, 0), 1, InNumMipLevels, 1, InUsageFlags, InClearValue, InTrackingMode);
     }
 
-    NODISCARD static FRHITextureDesc CreateTexture1DArray(EFormat InFormat, uint32 InWidth, uint32 InArraySlices, uint32 InNumMipLevels,
-        ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
+    NODISCARD static FRHITextureDesc CreateTexture1DArray(
+        EFormat                       InFormat,
+        uint32                        InWidth,
+        uint32                        InArraySlices,
+        uint32                        InNumMipLevels,
+        ETextureUsageFlags            InUsageFlags,
+        const FClearValue&            InClearValue   = FClearValue(),
+        ERHIResourceStateTrackingMode InTrackingMode = ERHIResourceStateTrackingMode::Manual)
     {
-        return FRHITextureDesc(ETextureDimension::Texture1DArray, InFormat, IntVector3(InWidth, 1, 0), InArraySlices, InNumMipLevels, 1, InUsageFlags, InClearValue);
+        return FRHITextureDesc(ETextureDimension::Texture1DArray, InFormat, IntVector3(InWidth, 1, 0), InArraySlices, InNumMipLevels, 1, InUsageFlags, InClearValue, InTrackingMode);
     }
 
-    NODISCARD static FRHITextureDesc CreateTexture2D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMipLevels, uint32 InNumSamples,
-        ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
+    NODISCARD static FRHITextureDesc CreateTexture2D(
+        EFormat                       InFormat,
+        uint32                        InWidth,
+        uint32                        InHeight,
+        uint32                        InNumMipLevels,
+        uint32                        InNumSamples,
+        ETextureUsageFlags            InUsageFlags,
+        const FClearValue&            InClearValue   = FClearValue(),
+        ERHIResourceStateTrackingMode InTrackingMode = ERHIResourceStateTrackingMode::Manual)
     {
-        return FRHITextureDesc(ETextureDimension::Texture2D, InFormat, IntVector3(InWidth, InHeight, 0), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
+        return FRHITextureDesc(ETextureDimension::Texture2D, InFormat, IntVector3(InWidth, InHeight, 0), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue, InTrackingMode);
     }
 
-    NODISCARD static FRHITextureDesc CreateTexture2DArray(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InArraySlices, uint32 InNumMipLevels,
-        uint32 InNumSamples, ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
+    NODISCARD static FRHITextureDesc CreateTexture2DArray(
+        EFormat                       InFormat,
+        uint32                        InWidth,
+        uint32                        InHeight,
+        uint32                        InArraySlices,
+        uint32                        InNumMipLevels,
+        uint32                        InNumSamples,
+        ETextureUsageFlags            InUsageFlags,
+        const FClearValue&            InClearValue   = FClearValue(),
+        ERHIResourceStateTrackingMode InTrackingMode = ERHIResourceStateTrackingMode::Manual)
     {
-        return FRHITextureDesc(ETextureDimension::Texture2DArray, InFormat, IntVector3(InWidth, InHeight, 0), InArraySlices, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
+        return FRHITextureDesc(ETextureDimension::Texture2DArray, InFormat, IntVector3(InWidth, InHeight, 0), InArraySlices, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue, InTrackingMode);
     }
 
-    NODISCARD static FRHITextureDesc CreateSamplerFeedbackTexture2D(EFormat InFormat, uint32 InPairedWidth, uint32 InPairedHeight,
-        uint32 InPairedMipLevels, IntVector3 InMipRegion)
+    NODISCARD static FRHITextureDesc CreateSamplerFeedbackTexture2D(
+        EFormat                       InFormat,
+        uint32                        InPairedWidth,
+        uint32                        InPairedHeight,
+        uint32                        InPairedMipLevels,
+        IntVector3                    InMipRegion,
+        ERHIResourceStateTrackingMode InTrackingMode = ERHIResourceStateTrackingMode::Manual)
     {
         const ETextureUsageFlags UsageFlags =
             ETextureUsageFlags::SamplerFeedback | 
@@ -156,15 +187,20 @@ struct FRHITextureDesc
             ETextureUsageFlags::NoDefaultRTV | 
             ETextureUsageFlags::NoDefaultDSV;
 
-        FRHITextureDesc Desc(ETextureDimension::Texture2D, InFormat, IntVector3(InPairedWidth, InPairedHeight, 0),
-            1, InPairedMipLevels, 1, UsageFlags);
-
+        FRHITextureDesc Desc(ETextureDimension::Texture2D, InFormat, IntVector3(InPairedWidth, InPairedHeight, 0), 1, InPairedMipLevels, 1, UsageFlags, FClearValue(), InTrackingMode);
         Desc.SamplerFeedbackMipRegion = InMipRegion;
+
         return Desc;
     }
 
-    NODISCARD static FRHITextureDesc CreateSamplerFeedbackTexture2DArray(EFormat InFormat, uint32 InPairedWidth, uint32 InPairedHeight,
-        uint32 InPairedArraySlices, uint32 InPairedMipLevels, IntVector3 InMipRegion)
+    NODISCARD static FRHITextureDesc CreateSamplerFeedbackTexture2DArray(
+        EFormat                       InFormat,
+        uint32                        InPairedWidth,
+        uint32                        InPairedHeight,
+        uint32                        InPairedArraySlices,
+        uint32                        InPairedMipLevels,
+        IntVector3                    InMipRegion,
+        ERHIResourceStateTrackingMode InTrackingMode = ERHIResourceStateTrackingMode::Manual)
     {
         const ETextureUsageFlags UsageFlags =
             ETextureUsageFlags::SamplerFeedback | 
@@ -174,35 +210,63 @@ struct FRHITextureDesc
             ETextureUsageFlags::NoDefaultRTV | 
             ETextureUsageFlags::NoDefaultDSV;
 
-        FRHITextureDesc Desc(ETextureDimension::Texture2DArray, InFormat, IntVector3(InPairedWidth, InPairedHeight, 0),
-            InPairedArraySlices, InPairedMipLevels, 1, UsageFlags);
-
+        FRHITextureDesc Desc(ETextureDimension::Texture2DArray, InFormat, IntVector3(InPairedWidth, InPairedHeight, 0), InPairedArraySlices, InPairedMipLevels, 1, UsageFlags, FClearValue(), InTrackingMode);
         Desc.SamplerFeedbackMipRegion = InMipRegion;
+
         return Desc;
     }
 
-    NODISCARD static FRHITextureDesc CreateTextureCube(EFormat InFormat, uint32 InExtent, uint32 InNumMipLevels, uint32 InNumSamples, 
-        ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
+    NODISCARD static FRHITextureDesc CreateTextureCube(
+        EFormat                       InFormat,
+        uint32                        InExtent,
+        uint32                        InNumMipLevels,
+        uint32                        InNumSamples,
+        ETextureUsageFlags            InUsageFlags,
+        const FClearValue&            InClearValue   = FClearValue(),
+        ERHIResourceStateTrackingMode InTrackingMode = ERHIResourceStateTrackingMode::Manual)
     {
-        return FRHITextureDesc(ETextureDimension::TextureCube, InFormat, IntVector3(InExtent, InExtent, 0), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
+        return FRHITextureDesc(ETextureDimension::TextureCube, InFormat, IntVector3(InExtent, InExtent, 0), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue, InTrackingMode);
     }
 
-    NODISCARD static FRHITextureDesc CreateTextureCubeArray(EFormat InFormat, uint32 InExtent, uint32 InArraySlices, uint32 InNumMipLevels,
-        uint32 InNumSamples, ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
+    NODISCARD static FRHITextureDesc CreateTextureCubeArray(
+        EFormat                       InFormat,
+        uint32                        InExtent,
+        uint32                        InArraySlices,
+        uint32                        InNumMipLevels,
+        uint32                        InNumSamples,
+        ETextureUsageFlags            InUsageFlags,
+        const FClearValue&            InClearValue   = FClearValue(),
+        ERHIResourceStateTrackingMode InTrackingMode = ERHIResourceStateTrackingMode::Manual)
     {
-        return FRHITextureDesc(ETextureDimension::TextureCubeArray, InFormat, IntVector3(InExtent, InExtent, 0), InArraySlices, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
+        return FRHITextureDesc(ETextureDimension::TextureCubeArray, InFormat, IntVector3(InExtent, InExtent, 0), InArraySlices, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue, InTrackingMode);
     }
 
-    NODISCARD static FRHITextureDesc CreateTexture3D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InDepth, uint32 InNumMipLevels,
-        uint32 InNumSamples, ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
+    NODISCARD static FRHITextureDesc CreateTexture3D(
+        EFormat                       InFormat,
+        uint32                        InWidth,
+        uint32                        InHeight,
+        uint32                        InDepth,
+        uint32                        InNumMipLevels,
+        uint32                        InNumSamples,
+        ETextureUsageFlags            InUsageFlags,
+        const FClearValue&            InClearValue   = FClearValue(),
+        ERHIResourceStateTrackingMode InTrackingMode = ERHIResourceStateTrackingMode::Manual)
     {
-        return FRHITextureDesc(ETextureDimension::Texture3D, InFormat, IntVector3(InWidth, InHeight, InDepth), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
+        return FRHITextureDesc(ETextureDimension::Texture3D, InFormat, IntVector3(InWidth, InHeight, InDepth), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue, InTrackingMode);
     }
 
     FRHITextureDesc() noexcept = default;
 
-    FRHITextureDesc(ETextureDimension InDimension, EFormat InFormat, IntVector3 InExtent, uint32 InNumArraySlices, uint32 InNumMipLevels,
-        uint32 InNumSamples, ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue()) noexcept
+    FRHITextureDesc(
+        ETextureDimension             InDimension, 
+        EFormat                       InFormat, 
+        IntVector3                    InExtent, 
+        uint32                        InNumArraySlices, 
+        uint32                        InNumMipLevels,
+        uint32                        InNumSamples, 
+        ETextureUsageFlags            InUsageFlags, 
+        const FClearValue&            InClearValue   = FClearValue(),
+        ERHIResourceStateTrackingMode InTrackingMode = ERHIResourceStateTrackingMode::Manual) noexcept
         : Dimension(InDimension)
         , Format(InFormat)
         , UsageFlags(InUsageFlags)
@@ -211,6 +275,7 @@ struct FRHITextureDesc
         , NumSamples(InNumSamples)
         , Extent(InExtent)
         , ClearValue(InClearValue)
+        , TrackingMode(InTrackingMode)
     {
     }
 
@@ -248,7 +313,7 @@ struct FRHITextureDesc
     uint32                        NumSamples               = 0;
     IntVector3                    Extent                   = { };
     FClearValue                   ClearValue               = { };
-    ERHIResourceStateTrackingMode TrackingMode             = ERHIResourceStateTrackingMode::Tracked;
+    ERHIResourceStateTrackingMode TrackingMode             = ERHIResourceStateTrackingMode::Manual;
     IntVector3                    SamplerFeedbackMipRegion = { };
 };
 
@@ -266,16 +331,16 @@ public:
     /** @return D3D12: ID3D12Resource*. Vulkan: VkImage. Metal: id<MTLTexture>. Null: nullptr. */
     virtual void* GetRHINativeResource() const = 0;
 
-    virtual FRHIShaderResourceView*  GetShaderResourceView()  const { return nullptr; }
-    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
-    virtual FRHIRenderTargetView*    GetRenderTargetView()    const { return nullptr; }
-    virtual FRHIDepthStencilView*    GetDepthStencilView()    const { return nullptr; }
+    virtual FRHIShaderResourceView*  GetShaderResourceView()  const = 0;
+    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const = 0;
+    virtual FRHIRenderTargetView*    GetRenderTargetView()    const = 0;
+    virtual FRHIDepthStencilView*    GetDepthStencilView()    const = 0;
 
-    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const { return FRHIDescriptorHandle(); }
-    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const { return FRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const = 0;
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const = 0;
 
-    virtual void SetDebugName(const String&) { }
-    virtual void GetDebugName(String& OutDebugName) const { OutDebugName.Clear(); }
+    virtual void SetDebugName(const String& InName) = 0;
+    virtual void GetDebugName(String& OutDebugName) const = 0;
 
     NODISCARD const FRHITextureDesc& GetDesc() const
     {

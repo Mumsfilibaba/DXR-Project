@@ -29,7 +29,10 @@ struct FRHIRayTracingHitGroupInfo
 {
     FRHIRayTracingHitGroupInfo() noexcept = default;
 
-    FRHIRayTracingHitGroupInfo(const String& InName, ERayTracingHitGroupType InType, TArrayView<FRHIRayTracingShader*> InRayTracingShaders) noexcept
+    FRHIRayTracingHitGroupInfo(
+        const String&                     InName,
+        ERayTracingHitGroupType           InType,
+        TArrayView<FRHIRayTracingShader*> InRayTracingShaders) noexcept
         : Name(InName)
         , Shaders(InRayTracingShaders)
         , Type(InType)
@@ -47,9 +50,14 @@ struct FRHIRayTracingPipelineStateDesc
 {
     FRHIRayTracingPipelineStateDesc() noexcept  = default;
 
-    FRHIRayTracingPipelineStateDesc(const TArrayView<FRHIRayGenShader*>& InRayGenShaders, const TArrayView<FRHIRayCallableShader*>& InCallableShaders,
-        const TArrayView<FRHIRayTracingHitGroupInfo>& InHitGroups, const TArrayView<FRHIRayMissShader*>& InMissShaders, uint32 InMaxAttributeSizeInBytes,
-        uint32 InMaxPayloadSizeInBytes, uint32 InMaxRecursionDepth) noexcept
+    FRHIRayTracingPipelineStateDesc(
+        const TArrayView<FRHIRayGenShader*>&          InRayGenShaders,
+        const TArrayView<FRHIRayCallableShader*>&     InCallableShaders,
+        const TArrayView<FRHIRayTracingHitGroupInfo>& InHitGroups,
+        const TArrayView<FRHIRayMissShader*>&         InMissShaders,
+        uint32                                        InMaxAttributeSizeInBytes,
+        uint32                                        InMaxPayloadSizeInBytes,
+        uint32                                        InMaxRecursionDepth) noexcept
         : MaxAttributeSizeInBytes(InMaxAttributeSizeInBytes)
         , MaxPayloadSizeInBytes(InMaxPayloadSizeInBytes)
         , MaxRecursionDepth(InMaxRecursionDepth)

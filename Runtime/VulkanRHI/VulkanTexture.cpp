@@ -152,30 +152,6 @@ FVulkanTextureRHI::~FVulkanTextureRHI()
     }
 }
 
-static ERHIResourceStateTrackingMode VulkanResolveTextureTrackingMode(const FRHITextureDesc& InDesc)
-{
-    if (InDesc.TrackingMode != ERHIResourceStateTrackingMode::Tracked)
-    {
-        return InDesc.TrackingMode;
-    }
-
-    constexpr ETextureUsageFlags StatefulMask =
-        ETextureUsageFlags::RenderTarget |
-        ETextureUsageFlags::DepthStencil |
-        ETextureUsageFlags::UnorderedAccessTexture |
-        ETextureUsageFlags::ShadingRateTexture |
-        ETextureUsageFlags::Presentable |
-        ETextureUsageFlags::CopySource |
-        ETextureUsageFlags::CopyDest;
-
-    if ((InDesc.UsageFlags & StatefulMask) == ETextureUsageFlags::None && InDesc.IsShaderResourceTexture())
-    {
-        return ERHIResourceStateTrackingMode::Static;
-    }
-
-    return ERHIResourceStateTrackingMode::Tracked;
-}
-
 bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERHIResourceState InInitialAccess, const IRHITextureData* InInitialData)
 {
     const VkSampleCountFlagBits SampleCount = ConvertSampleCount(Desc.NumSamples);
@@ -668,8 +644,6 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERHI
 
     ImageLayoutState.Initialize(Math::Max(NumSubresources, 1u));
     ImageLayoutState.SetImageLayout(InitialLayout);
-
-    Desc.TrackingMode = VulkanResolveTextureTrackingMode(Desc);
 
     if (Desc.TrackingMode == ERHIResourceStateTrackingMode::Static)
     {

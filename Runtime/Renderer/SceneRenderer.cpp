@@ -304,12 +304,9 @@ bool FSceneRenderer::Initialize()
         RenderSettings::OnDidChangeRenderResolution(Resources.CurrentRenderWidth, Resources.CurrentRenderHeight);
     }
 
-    FRHIBufferDesc ConstantBufferDesc;
-    ConstantBufferDesc.Size   = sizeof(FCameraHLSL);
-    ConstantBufferDesc.Stride = sizeof(FCameraHLSL);
-    ConstantBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
+    const FRHIBufferDesc ConstantBufferDesc = FRHIBufferDesc::CreateConstantBuffer(sizeof(FCameraHLSL));
 
-    Resources.CameraBuffer = RHI::CreateBuffer(ConstantBufferDesc, ERHIResourceState::Common, nullptr);
+    Resources.CameraBuffer = RHI::CreateBuffer(ConstantBufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
     if (!Resources.CameraBuffer)
     {
         LOG_ERROR("[Renderer]: Failed to create CameraBuffer");
@@ -320,10 +317,7 @@ bool FSceneRenderer::Initialize()
         Resources.CameraBuffer->SetDebugName("CameraBuffer");
     }
 
-    FRHIBufferDesc PerObjectConstantBufferDesc;
-    PerObjectConstantBufferDesc.Size   = sizeof(FPerObjectHLSL);
-    PerObjectConstantBufferDesc.Stride = sizeof(FPerObjectHLSL);
-    PerObjectConstantBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Transient;
+    const FRHIBufferDesc PerObjectConstantBufferDesc = FRHIBufferDesc::CreateConstantBuffer(sizeof(FPerObjectHLSL), EBufferFlags::Transient);
 
     Resources.PerObjectBuffer = RHI::CreateBuffer(PerObjectConstantBufferDesc, ERHIResourceState::Common, nullptr);
     if (!Resources.PerObjectBuffer)
@@ -693,10 +687,8 @@ void FSceneRenderer::RenderThread_PrepareResources(const FSceneRenderView& Scene
 
             if (!Resources.MaterialDataBuffer || RequiredCount > CurrentCount)
             {
-                FRHIBufferDesc MaterialBufferDesc;
-                MaterialBufferDesc.Stride = sizeof(FMaterialHLSL);
-                MaterialBufferDesc.Size   = uint64(MaterialBufferDesc.Stride) * RequiredCount;
-                MaterialBufferDesc.Flags  = EBufferFlags::ShaderResourceBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
+                const FRHIBufferDesc MaterialBufferDesc = FRHIBufferDesc::CreateStructuredBuffer(sizeof(FMaterialHLSL), RequiredCount,
+                    EBufferFlags::Default | EBufferFlags::CopyDest);
 
                 Resources.MaterialDataBuffer    = RHI::CreateBuffer(MaterialBufferDesc, ERHIResourceState::GenericRead, nullptr);
                 Resources.MaterialDataBufferSRV = nullptr;
@@ -1049,18 +1041,7 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
         }
     }
 
-    // ShadowMask and GBuffer
     CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.SceneTarget.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::UnorderedAccess));
-    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.IntegrationLUT.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource));
-
-    if (CurrentScene)
-    {
-        if (FSceneSkyLight* SkyLight = CurrentScene->GetSkyLight())
-        {
-            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SkyLight->DiffuseCubeMap.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource));
-            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SkyLight->SpecularCubeMap.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource));
-        }
-    }
 
     // In order to render the shadow-mask, we want all these features to be enabled
     const bool bEnableShadowMask = GShadowMaskEnabled;
@@ -1113,17 +1094,6 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
         SkyboxRenderPass->Execute(CommandList, Resources, CurrentScene);
     }
 
-
-    if (CurrentScene)
-    {
-        if (FSceneSkyLight* SkyLight = CurrentScene->GetSkyLight())
-        {
-            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SkyLight->DiffuseCubeMap.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource));
-            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SkyLight->SpecularCubeMap.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource));
-        }
-    }
-
-    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.IntegrationLUT.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource));
 
     // Forward Pass
     if (GForwardPassEnabled)
@@ -1392,10 +1362,9 @@ void FSceneRenderer::RenderThread_ProcessEditorObjectPickRequests(FRHICommandLis
     const uint64 DepthBaseOffset   = Math::AlignUp<uint64>(WindowsEnd, 512ull);
     const uint64 DepthRequiredSize = bCopyDepth ? (NormalRowStrideBytes * uint64(RegionHeight)) : 0ull;
 
-    FRHIBufferDesc ReadbackDesc;
-    ReadbackDesc.Flags  = EBufferFlags::ReadBack;
-    ReadbackDesc.Stride = BytesPerPixel;
-    ReadbackDesc.Size   = bCopyDepth ? (DepthBaseOffset + DepthRequiredSize) : WindowsEnd;
+    const uint64 ReadbackSize = bCopyDepth ? (DepthBaseOffset + DepthRequiredSize) : WindowsEnd;
+
+    const FRHIBufferDesc ReadbackDesc = FRHIBufferDesc::CreateReadbackBuffer(ReadbackSize, BytesPerPixel);
 
     FRHIFenceRef  Fence          = RHI::CreateFence();
     FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(ReadbackDesc, ERHIResourceState::CopyDest, nullptr);

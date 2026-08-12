@@ -65,16 +65,16 @@ protected:
 
 public:
 
-    /** @return D3D12: IDXGISwapChain*. Vulkan: VkSwapchainKHR. Metal: CAMetalLayer*. Null: nullptr. */
+    /** @return D3D12: IDXGISwapChain3*. Vulkan: VkSwapchainKHR. Metal: CAMetalLayer*. Null: nullptr. */
     virtual void* GetRHINativeHandle() const = 0;
 
-    /** @return D3D12: ID3D12Resource*. Vulkan: VkImage. Metal: id<CAMetalDrawable>. Null: nullptr. */
+    /** @return D3D12: ID3D12Resource*. Vulkan: VkImage. Metal: id<MTLTexture>. Null: nullptr. */
     virtual void* GetRHINativeBackBufferResourceFromIndex(uint32 Index) const = 0;
 
-    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView. Metal: nullptr. Null: nullptr. */
+    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE. Vulkan: VkImageView. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 Index) const = 0;
 
-    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView. Metal: nullptr. Null: nullptr. */
+    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE. Vulkan: VkImageView. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeBackBufferUnorderedAccessViewFromIndex(uint32 Index) const = 0;
 
     virtual FRHITexture* GetBackBuffer()                              const = 0;
@@ -86,11 +86,6 @@ public:
     
     virtual bool IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const = 0;
 
-    /**
-     * @brief Queries the HDR capabilities of the display this swap-chain currently presents to.
-     * @param OutInfo Receives the display info on success.
-     * @return False when the backend or the display cannot report HDR capabilities.
-     */
     virtual bool QueryDisplayHDRInfo(FRHIDisplayHDRInfo& OutInfo) const = 0;
 
     NODISCARD const FRHISwapChainDesc& GetDesc() const

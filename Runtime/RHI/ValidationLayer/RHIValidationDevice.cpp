@@ -440,7 +440,19 @@ FRHITexture* FRHIValidationDevice::CreateTexture(const FRHITextureDesc& InTextur
 		return nullptr;
 	}
 
-	return Device->CreateTexture(InTextureDesc, InInitialState, InInitialData);
+	// Reported here rather than only on the first barrier, since this is where the caller that built the desc is on the stack
+	if (InTextureDesc.TrackingMode == ERHIResourceStateTrackingMode::Unknown)
+	{
+		RHI_VALIDATION_ERROR("CreateTexture: The desc has an Unknown tracking mode. A texture has to be created Tracked, Static or Manual.");
+	}
+
+	FRHITexture* Texture = Device->CreateTexture(InTextureDesc, InInitialState, InInitialData);
+	if (Texture)
+	{
+		StateTracker.RegisterResource(Texture, InInitialState, InTextureDesc.TrackingMode);
+	}
+
+	return Texture;
 }
 
 FRHIBuffer* FRHIValidationDevice::CreateBuffer(const FRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const void* InitialData)
@@ -451,19 +463,19 @@ FRHIBuffer* FRHIValidationDevice::CreateBuffer(const FRHIBufferDesc& BufferDesc,
 
     if (BufferDesc.Size == 0)
     {
-        RHI_VALIDATION_ERROR("CreateBuffer: Buffer size must be greater than zero. (parameter 'Size' was 0 bytes)");
+        RHI_VALIDATION_ERROR("CreateBuffer: Buffer size must be greater than zero. (parameter 'Size' was 0 bytes).");
         return nullptr;
     }
 
     if (BufferDesc.Flags == EBufferFlags::None)
     {
-        RHI_VALIDATION_ERROR("CreateBuffer: Buffer flags must be specified. (parameter 'Flags' was EBufferFlags::None)");
+        RHI_VALIDATION_ERROR("CreateBuffer: Buffer flags must be specified. (parameter 'Flags' was EBufferFlags::None).");
         return nullptr;
     }
 
     if (BufferDesc.Size > RHI::MaxBufferSize)
     {
-		RHI_VALIDATION_ERROR("CreateBuffer: The buffer size (%llu bytes) exceeds device feature support. (MaxBufferSize=%llu)",
+		RHI_VALIDATION_ERROR("CreateBuffer: The buffer size (%llu bytes) exceeds device feature support. (MaxBufferSize=%llu).",
 			static_cast<uint64>(BufferDesc.Size), static_cast<uint64>(RHI::MaxBufferSize));
         return nullptr;
     }
@@ -480,7 +492,7 @@ FRHIBuffer* FRHIValidationDevice::CreateBuffer(const FRHIBufferDesc& BufferDesc,
     const int32 StorageFlagCount = (bMemoryDefault ? 1 : 0) + (bMemoryDynamic ? 1 : 0) + (bMemoryReadBack ? 1 : 0) + (bMemoryTransient ? 1 : 0);
     if (StorageFlagCount != 1)
     {
-        RHI_VALIDATION_ERROR("CreateBuffer: Exactly one memory flag must be set. The options are Default/Dynamic/ReadBack/Transient. (The flags set are Default=%s, Dynamic=%s, ReadBack=%s, Transient=%s)",
+        RHI_VALIDATION_ERROR("CreateBuffer: Exactly one memory flag must be set. The options are Default/Dynamic/ReadBack/Transient. (The flags set are Default=%s, Dynamic=%s, ReadBack=%s, Transient=%s).",
             bMemoryDefault ? "true" : "false", bMemoryDynamic ? "true" : "false", bMemoryReadBack ? "true" : "false", bMemoryTransient ? "true" : "false");
         return nullptr;
     }
@@ -561,7 +573,7 @@ FRHIBuffer* FRHIValidationDevice::CreateBuffer(const FRHIBufferDesc& BufferDesc,
 
         if (BufferDesc.Size > RHI::MaxConstantBufferSize)
         {
-            RHI_VALIDATION_ERROR("CreateBuffer: size (%llu bytes) exceeds device feature support. (MaxConstantBufferSize=%u)", static_cast<uint64>(BufferDesc.Size), RHI::MaxConstantBufferSize);
+            RHI_VALIDATION_ERROR("CreateBuffer: size (%llu bytes) exceeds device feature support. (MaxConstantBufferSize=%u).", static_cast<uint64>(BufferDesc.Size), RHI::MaxConstantBufferSize);
             return nullptr;
         }
     }
@@ -574,13 +586,13 @@ FRHIBuffer* FRHIValidationDevice::CreateBuffer(const FRHIBufferDesc& BufferDesc,
     {
         if (BufferDesc.Stride == 0)
         {
-            RHI_VALIDATION_ERROR("CreateBuffer: %s requires a non-zero Stride. (Stride=0)", bIsVertexBuffer ? "VertexBuffer" : "IndexBuffer");
+            RHI_VALIDATION_ERROR("CreateBuffer: %s requires a non-zero Stride. (Stride=0).", bIsVertexBuffer ? "VertexBuffer" : "IndexBuffer");
             return nullptr;
         }
 
         if ((BufferDesc.Size % BufferDesc.Stride) != 0ull)
         {
-            RHI_VALIDATION_ERROR("CreateBuffer: %s size must be a multiple of Stride to satisfy device feature support. (Size=%llu, Stride=%u)",
+            RHI_VALIDATION_ERROR("CreateBuffer: %s size must be a multiple of Stride to satisfy device feature support. (Size=%llu, Stride=%u).",
                 bIsVertexBuffer ? "VertexBuffer" : "IndexBuffer", static_cast<uint64>(BufferDesc.Size), BufferDesc.Stride);
             return nullptr;
         }
@@ -589,7 +601,7 @@ FRHIBuffer* FRHIValidationDevice::CreateBuffer(const FRHIBufferDesc& BufferDesc,
         {
             if (!(BufferDesc.Stride == 2u || BufferDesc.Stride == 4u))
             {
-                RHI_VALIDATION_ERROR("CreateBuffer: IndexBuffer stride must be 2 or 4 bytes (uint16 or uint32). (Stride=%u)", BufferDesc.Stride);
+                RHI_VALIDATION_ERROR("CreateBuffer: IndexBuffer stride must be 2 or 4 bytes (uint16 or uint32). (Stride=%u).", BufferDesc.Stride);
                 return nullptr;
             }
         }
@@ -609,7 +621,7 @@ FRHIBuffer* FRHIValidationDevice::CreateBuffer(const FRHIBufferDesc& BufferDesc,
     {
         if (BufferDesc.Size > RHI::MaxStorageBufferSize)
         {
-			RHI_VALIDATION_ERROR("CreateBuffer: %s size exceeds device feature support. (Size=%llu, MaxStorageBufferSize=%llu)",
+			RHI_VALIDATION_ERROR("CreateBuffer: %s size exceeds device feature support. (Size=%llu, MaxStorageBufferSize=%llu).",
 				bIsUnorderedAccessBuffer ? "UnorderedAccessBuffer" : "ShaderResourceBuffer", static_cast<uint64>(BufferDesc.Size),
 				static_cast<uint64>(RHI::MaxStorageBufferSize));
             return nullptr;
@@ -623,14 +635,14 @@ FRHIBuffer* FRHIValidationDevice::CreateBuffer(const FRHIBufferDesc& BufferDesc,
 
             if (BufferDesc.Stride < MinStride || BufferDesc.Stride > MaxStride)
             {
-                RHI_VALIDATION_ERROR("CreateBuffer: StructuredBuffer stride is outside device feature support. (Stride=%u, Allowed range: [%u, %u])", 
+                RHI_VALIDATION_ERROR("CreateBuffer: StructuredBuffer stride is outside device feature support. (Stride=%u, Allowed range: [%u, %u]).", 
                     BufferDesc.Stride, MinStride, MaxStride);
                 return nullptr;
             }
 
             if ((BufferDesc.Size % BufferDesc.Stride) != 0ull)
             {
-                RHI_VALIDATION_ERROR("CreateBuffer: StructuredBuffer size must be an integer multiple of Stride to satisfy device feature support. (Size=%llu, Stride=%u)",
+                RHI_VALIDATION_ERROR("CreateBuffer: StructuredBuffer size must be an integer multiple of Stride to satisfy device feature support. (Size=%llu, Stride=%u).",
                     static_cast<uint64>(BufferDesc.Size), BufferDesc.Stride);
                 return nullptr;
             }
@@ -640,7 +652,7 @@ FRHIBuffer* FRHIValidationDevice::CreateBuffer(const FRHIBufferDesc& BufferDesc,
             const uint64 RequiredAlignment = static_cast<uint64>(RHI::RawBufferRequiredAlignment);
             if ((BufferDesc.Size % RequiredAlignment) != 0ull)
             {
-                RHI_VALIDATION_ERROR("CreateBuffer: RWBuffer size must be aligned to satisfy device feature support. (Size=%llu, RequiredAlignment=%llu)",
+                RHI_VALIDATION_ERROR("CreateBuffer: RWBuffer size must be aligned to satisfy device feature support. (Size=%llu, RequiredAlignment=%llu).",
                     static_cast<uint64>(BufferDesc.Size), static_cast<uint64>(RequiredAlignment));
                 return nullptr;
             }
@@ -655,7 +667,19 @@ FRHIBuffer* FRHIValidationDevice::CreateBuffer(const FRHIBufferDesc& BufferDesc,
         }
     }
 
-    return Device->CreateBuffer(BufferDesc, InitialState, InitialData);
+    // Reported here rather than only on the first barrier, since this is where the caller that built the desc is on the stack
+    if (BufferDesc.TrackingMode == ERHIResourceStateTrackingMode::Unknown)
+    {
+        RHI_VALIDATION_ERROR("CreateBuffer: The desc has an Unknown tracking mode. A buffer has to be created Tracked, Static or Manual.");
+    }
+
+    FRHIBuffer* Buffer = Device->CreateBuffer(BufferDesc, InitialState, InitialData);
+    if (Buffer)
+    {
+        StateTracker.RegisterResource(Buffer, InitialState, BufferDesc.TrackingMode);
+    }
+
+    return Buffer;
 }
 
 FRHISamplerState* FRHIValidationDevice::CreateSamplerState(const FRHISamplerStateDesc& InSamplerDesc)
@@ -702,7 +726,7 @@ FRHISwapChain* FRHIValidationDevice::CreateSwapChain(const FRHISwapChainDesc& In
 {
     if (!InSwapChainDesc.WindowHandle)
     {
-        RHI_VALIDATION_ERROR("Trying to create a viewport with an invalid WindowHandle");
+        RHI_VALIDATION_ERROR("Trying to create a viewport with an invalid WindowHandle.");
         return nullptr;
     }
 
@@ -780,13 +804,13 @@ FRHIShaderResourceView* FRHIValidationDevice::CreateShaderResourceView(FRHIResou
 {
     if (!InResource)
     {
-        RHI_VALIDATION_ERROR("CreateShaderResourceView: Resource cannot be nullptr");
+        RHI_VALIDATION_ERROR("CreateShaderResourceView: Resource cannot be nullptr.");
         return nullptr;
     }
 
     if (InDesc.ViewDimension == EViewDimension::None)
     {
-        RHI_VALIDATION_ERROR("CreateShaderResourceView: ViewDimension must be set explicitly");
+        RHI_VALIDATION_ERROR("CreateShaderResourceView: ViewDimension must be set explicitly.");
         return nullptr;
     }
 
@@ -794,14 +818,15 @@ FRHIShaderResourceView* FRHIValidationDevice::CreateShaderResourceView(FRHIResou
     {
         if (InResource->GetResourceType() != ERHIResourceType::Buffer)
         {
-            RHI_VALIDATION_ERROR("CreateShaderResourceView: buffer view requires an FRHIBuffer resource (got %s)", ToString(InResource->GetResourceType()));
+            RHI_VALIDATION_ERROR("CreateShaderResourceView: buffer view requires an FRHIBuffer resource, but got %s.",
+                *GetResourceIdentity(InResource));
             return nullptr;
         }
 
         FRHIBuffer* Buffer = static_cast<FRHIBuffer*>(InResource);
         if (!Buffer->GetDesc().IsShaderResourceBuffer())
         {
-            RHI_VALIDATION_ERROR("CreateShaderResourceView: buffer must have EBufferFlags::ShaderResourceBuffer");
+            RHI_VALIDATION_ERROR("%s: CreateShaderResourceView requires EBufferFlags::ShaderResourceBuffer.", *GetResourceIdentity(Buffer));
             return nullptr;
         }
 
@@ -815,7 +840,8 @@ FRHIShaderResourceView* FRHIValidationDevice::CreateShaderResourceView(FRHIResou
     {
         if (InResource->GetResourceType() != ERHIResourceType::Texture)
         {
-            RHI_VALIDATION_ERROR("CreateShaderResourceView: texture view requires an FRHITexture resource (got %s)", ToString(InResource->GetResourceType()));
+            RHI_VALIDATION_ERROR("CreateShaderResourceView: texture view requires an FRHITexture resource, but got %s.",
+                *GetResourceIdentity(InResource));
             return nullptr;
         }
 
@@ -823,7 +849,8 @@ FRHIShaderResourceView* FRHIValidationDevice::CreateShaderResourceView(FRHIResou
         const FRHITextureDesc& TextureDesc = Texture->GetDesc();
         if (!TextureDesc.IsShaderResourceTexture())
         {
-            RHI_VALIDATION_ERROR("CreateShaderResourceView: texture must have ETextureUsageFlags::ShaderResourceTexture");
+            RHI_VALIDATION_ERROR("%s: CreateShaderResourceView requires ETextureUsageFlags::ShaderResourceTexture.",
+                *GetResourceIdentity(Texture));
             return nullptr;
         }
 
@@ -898,14 +925,14 @@ FRHIShaderResourceView* FRHIValidationDevice::CreateShaderResourceView(FRHIResou
     {
         if (InResource->GetResourceType() != ERHIResourceType::SceneAccelerationStructure)
         {
-            RHI_VALIDATION_ERROR("CreateShaderResourceView: AccelerationStructure view requires an FRHISceneAccelerationStructure resource (got %s)",
-                ToString(InResource->GetResourceType()));
+            RHI_VALIDATION_ERROR("CreateShaderResourceView: AccelerationStructure view requires an FRHISceneAccelerationStructure "
+                "resource, but got %s.", *GetResourceIdentity(InResource));
             return nullptr;
         }
     }
     else
     {
-        RHI_VALIDATION_ERROR("CreateShaderResourceView: Invalid ViewDimension");
+        RHI_VALIDATION_ERROR("CreateShaderResourceView: Invalid ViewDimension.");
         return nullptr;
     }
 
@@ -916,19 +943,19 @@ FRHIUnorderedAccessView* FRHIValidationDevice::CreateUnorderedAccessView(FRHIRes
 {
     if (!InResource)
     {
-        RHI_VALIDATION_ERROR("CreateUnorderedAccessView: Resource cannot be nullptr");
+        RHI_VALIDATION_ERROR("CreateUnorderedAccessView: Resource cannot be nullptr.");
         return nullptr;
     }
 
     if (InDesc.ViewDimension == EViewDimension::None)
     {
-        RHI_VALIDATION_ERROR("CreateUnorderedAccessView: ViewDimension must be set explicitly");
+        RHI_VALIDATION_ERROR("CreateUnorderedAccessView: ViewDimension must be set explicitly.");
         return nullptr;
     }
 
     if (InDesc.IsSamplerFeedbackUAV())
     {
-        RHI_VALIDATION_ERROR("CreateUnorderedAccessView: sampler feedback views must be created with CreateSamplerFeedbackUnorderedAccessView");
+        RHI_VALIDATION_ERROR("CreateUnorderedAccessView: sampler feedback views must be created with CreateSamplerFeedbackUnorderedAccessView.");
         return nullptr;
     }
 
@@ -936,14 +963,15 @@ FRHIUnorderedAccessView* FRHIValidationDevice::CreateUnorderedAccessView(FRHIRes
     {
         if (InResource->GetResourceType() != ERHIResourceType::Buffer)
         {
-            RHI_VALIDATION_ERROR("CreateUnorderedAccessView: buffer view requires an FRHIBuffer resource (got %s)", ToString(InResource->GetResourceType()));
+            RHI_VALIDATION_ERROR("CreateUnorderedAccessView: buffer view requires an FRHIBuffer resource, but got %s.",
+                *GetResourceIdentity(InResource));
             return nullptr;
         }
 
         FRHIBuffer* Buffer = static_cast<FRHIBuffer*>(InResource);
         if (!Buffer->GetDesc().IsUnorderedAccessBuffer())
         {
-            RHI_VALIDATION_ERROR("CreateUnorderedAccessView: buffer must have EBufferFlags::UnorderedAccessBuffer");
+            RHI_VALIDATION_ERROR("%s: CreateUnorderedAccessView requires EBufferFlags::UnorderedAccessBuffer.", *GetResourceIdentity(Buffer));
             return nullptr;
         }
 
@@ -955,7 +983,8 @@ FRHIUnorderedAccessView* FRHIValidationDevice::CreateUnorderedAccessView(FRHIRes
 
         if (InDesc.Buffer.Type == EBufferViewType::Typed && !Device->QueryUAVFormatSupport(InDesc.Buffer.Format))
         {
-            RHI_VALIDATION_ERROR("CreateUnorderedAccessView: typed buffer format '%s' does not support UAV access.", ToString(InDesc.Buffer.Format));
+            RHI_VALIDATION_ERROR("%s: CreateUnorderedAccessView typed buffer format '%s' does not support UAV access.",
+                *GetResourceIdentity(Buffer), ToString(InDesc.Buffer.Format));
             return nullptr;
         }
     }
@@ -963,7 +992,8 @@ FRHIUnorderedAccessView* FRHIValidationDevice::CreateUnorderedAccessView(FRHIRes
     {
         if (InResource->GetResourceType() != ERHIResourceType::Texture)
         {
-            RHI_VALIDATION_ERROR("CreateUnorderedAccessView: texture view requires an FRHITexture resource (got %s)", ToString(InResource->GetResourceType()));
+            RHI_VALIDATION_ERROR("CreateUnorderedAccessView: texture view requires an FRHITexture resource, but got %s.",
+                *GetResourceIdentity(InResource));
             return nullptr;
         }
 
@@ -972,7 +1002,8 @@ FRHIUnorderedAccessView* FRHIValidationDevice::CreateUnorderedAccessView(FRHIRes
         const FRHITextureDesc& TextureDesc = Texture->GetDesc();
         if (!TextureDesc.IsUnorderedAccessTexture())
         {
-            RHI_VALIDATION_ERROR("CreateUnorderedAccessView: texture must have ETextureUsageFlags::UnorderedAccessTexture");
+            RHI_VALIDATION_ERROR("%s: CreateUnorderedAccessView requires ETextureUsageFlags::UnorderedAccessTexture.",
+                *GetResourceIdentity(Texture));
             return nullptr;
         }
 
@@ -1037,7 +1068,8 @@ FRHIUnorderedAccessView* FRHIValidationDevice::CreateUnorderedAccessView(FRHIRes
 
         if (!Device->QueryUAVFormatSupport(ViewFormat))
         {
-            RHI_VALIDATION_ERROR("CreateUnorderedAccessView: texture format '%s' does not support UAV access.", ToString(ViewFormat));
+            RHI_VALIDATION_ERROR("%s: CreateUnorderedAccessView texture format '%s' does not support UAV access.",
+                *GetResourceIdentity(Texture), ToString(ViewFormat));
             return nullptr;
         }
 
@@ -1053,15 +1085,15 @@ FRHIUnorderedAccessView* FRHIValidationDevice::CreateUnorderedAccessView(FRHIRes
                 InDesc.Texture3D.FirstWSlice > uint32(MipExtent.Z) ||
                 InDesc.Texture3D.WSize > uint32(MipExtent.Z) - InDesc.Texture3D.FirstWSlice)
             {
-                RHI_VALIDATION_ERROR("CreateUnorderedAccessView: Texture3D W-slice range [First=%u, Count=%u] exceeds mip depth %u.",
-                    InDesc.Texture3D.FirstWSlice, InDesc.Texture3D.WSize, uint32(MipExtent.Z));
+                RHI_VALIDATION_ERROR("%s: CreateUnorderedAccessView Texture3D W-slice range [First=%u, Count=%u] exceeds mip depth %u.",
+                    *GetResourceIdentity(Texture), InDesc.Texture3D.FirstWSlice, InDesc.Texture3D.WSize, uint32(MipExtent.Z));
                 return nullptr;
             }
         }
     }
     else
     {
-        RHI_VALIDATION_ERROR("CreateUnorderedAccessView: Invalid ViewDimension");
+        RHI_VALIDATION_ERROR("CreateUnorderedAccessView: Invalid ViewDimension.");
         return nullptr;
     }
 
@@ -1076,9 +1108,16 @@ FRHIUnorderedAccessView* FRHIValidationDevice::CreateSamplerFeedbackUnorderedAcc
         return nullptr;
     }
 
-    if (!InFeedbackTexture || !InFeedbackTexture->GetDesc().IsSamplerFeedbackTexture())
+    if (!InFeedbackTexture)
     {
-        RHI_VALIDATION_ERROR("CreateSamplerFeedbackUnorderedAccessView: feedback texture must have ETextureUsageFlags::SamplerFeedback");
+        RHI_VALIDATION_ERROR("CreateSamplerFeedbackUnorderedAccessView: feedback texture cannot be nullptr.");
+        return nullptr;
+    }
+
+    if (!InFeedbackTexture->GetDesc().IsSamplerFeedbackTexture())
+    {
+        RHI_VALIDATION_ERROR("%s: CreateSamplerFeedbackUnorderedAccessView feedback texture must have "
+            "ETextureUsageFlags::SamplerFeedback.", *GetResourceIdentity(InFeedbackTexture));
         return nullptr;
     }
 
@@ -1091,13 +1130,16 @@ FRHIUnorderedAccessView* FRHIValidationDevice::CreateSamplerFeedbackUnorderedAcc
         if (FeedbackDesc.Extent.X != TargetedDesc.Extent.X || FeedbackDesc.Extent.Y != TargetedDesc.Extent.Y ||
             FeedbackDesc.NumMipLevels != TargetedDesc.NumMipLevels || FeedbackDesc.NumArraySlices != TargetedDesc.NumArraySlices)
         {
-            RHI_VALIDATION_ERROR("CreateSamplerFeedbackUnorderedAccessView: feedback map must match the paired texture's extent, mip count and array size");
+            RHI_VALIDATION_ERROR("CreateSamplerFeedbackUnorderedAccessView: feedback map must match the paired texture's extent, "
+                "mip count and array size. Feedback map is %s, paired texture is %s.",
+                *GetResourceIdentity(InFeedbackTexture), *GetResourceIdentity(InTargetedTexture));
             return nullptr;
         }
 
         if (TargetedDesc.IsMultisampled())
         {
-            RHI_VALIDATION_ERROR("CreateSamplerFeedbackUnorderedAccessView: the paired texture must be single-sampled");
+            RHI_VALIDATION_ERROR("%s: CreateSamplerFeedbackUnorderedAccessView paired texture must be single-sampled.",
+                *GetResourceIdentity(InTargetedTexture));
             return nullptr;
         }
     }
@@ -1109,19 +1151,19 @@ FRHIRenderTargetView* FRHIValidationDevice::CreateRenderTargetView(FRHIResource*
 {
     if (!InResource)
     {
-        RHI_VALIDATION_ERROR("CreateRenderTargetView: Resource cannot be nullptr");
+        RHI_VALIDATION_ERROR("CreateRenderTargetView: Resource cannot be nullptr.");
         return nullptr;
     }
 
     if (InResource->GetResourceType() != ERHIResourceType::Texture)
     {
-        RHI_VALIDATION_ERROR("CreateRenderTargetView: requires an FRHITexture resource (got %s)", ToString(InResource->GetResourceType()));
+        RHI_VALIDATION_ERROR("CreateRenderTargetView requires an FRHITexture resource, but got %s.", *GetResourceIdentity(InResource));
         return nullptr;
     }
 
     if (InDesc.ViewDimension == EViewDimension::None || !IsTextureViewDimension(InDesc.ViewDimension))
     {
-        RHI_VALIDATION_ERROR("CreateRenderTargetView: ViewDimension must be a valid texture dimension");
+        RHI_VALIDATION_ERROR("CreateRenderTargetView: ViewDimension must be a valid texture dimension.");
         return nullptr;
     }
 
@@ -1130,7 +1172,7 @@ FRHIRenderTargetView* FRHIValidationDevice::CreateRenderTargetView(FRHIResource*
     const FRHITextureDesc& TextureDesc = Texture->GetDesc();
     if (!TextureDesc.IsRenderTarget())
     {
-        RHI_VALIDATION_ERROR("CreateRenderTargetView: texture must have ETextureUsageFlags::RenderTarget");
+        RHI_VALIDATION_ERROR("%s: CreateRenderTargetView requires ETextureUsageFlags::RenderTarget.", *GetResourceIdentity(Texture));
         return nullptr;
     }
 
@@ -1210,8 +1252,8 @@ FRHIRenderTargetView* FRHIValidationDevice::CreateRenderTargetView(FRHIResource*
             InDesc.Texture3D.FirstWSlice > uint32(MipExtent.Z) ||
             InDesc.Texture3D.WSize > uint32(MipExtent.Z) - InDesc.Texture3D.FirstWSlice)
         {
-            RHI_VALIDATION_ERROR("CreateRenderTargetView: Texture3D W-slice range [First=%u, Count=%u] exceeds mip depth %u.",
-                InDesc.Texture3D.FirstWSlice, InDesc.Texture3D.WSize, uint32(MipExtent.Z));
+            RHI_VALIDATION_ERROR("%s: CreateRenderTargetView Texture3D W-slice range [First=%u, Count=%u] exceeds mip depth %u.",
+                *GetResourceIdentity(Texture), InDesc.Texture3D.FirstWSlice, InDesc.Texture3D.WSize, uint32(MipExtent.Z));
             return nullptr;
         }
     }
@@ -1223,19 +1265,19 @@ FRHIDepthStencilView* FRHIValidationDevice::CreateDepthStencilView(FRHIResource*
 {
     if (!InResource)
     {
-        RHI_VALIDATION_ERROR("CreateDepthStencilView: Resource cannot be nullptr");
+        RHI_VALIDATION_ERROR("CreateDepthStencilView: Resource cannot be nullptr.");
         return nullptr;
     }
 
     if (InResource->GetResourceType() != ERHIResourceType::Texture)
     {
-        RHI_VALIDATION_ERROR("CreateDepthStencilView: requires an FRHITexture resource (got %s)", ToString(InResource->GetResourceType()));
+        RHI_VALIDATION_ERROR("CreateDepthStencilView requires an FRHITexture resource, but got %s.", *GetResourceIdentity(InResource));
         return nullptr;
     }
 
     if (InDesc.ViewDimension == EViewDimension::None || InDesc.ViewDimension == EViewDimension::Texture3D || !IsTextureViewDimension(InDesc.ViewDimension))
     {
-        RHI_VALIDATION_ERROR("CreateDepthStencilView: ViewDimension must be a valid non-3D texture dimension");
+        RHI_VALIDATION_ERROR("CreateDepthStencilView: ViewDimension must be a valid non-3D texture dimension.");
         return nullptr;
     }
 
@@ -1243,7 +1285,7 @@ FRHIDepthStencilView* FRHIValidationDevice::CreateDepthStencilView(FRHIResource*
     const FRHITextureDesc& TextureDesc = Texture->GetDesc();
     if (!TextureDesc.IsDepthStencil())
     {
-        RHI_VALIDATION_ERROR("CreateDepthStencilView: texture must have ETextureUsageFlags::DepthStencil");
+        RHI_VALIDATION_ERROR("%s: CreateDepthStencilView requires ETextureUsageFlags::DepthStencil.", *GetResourceIdentity(Texture));
         return nullptr;
     }
 
@@ -1309,7 +1351,8 @@ FRHIDepthStencilView* FRHIValidationDevice::CreateDepthStencilView(FRHIResource*
 
     if (IsEnumFlagSet(InDesc.Flags, EDepthStencilViewFlags::ReadOnlyStencil) && !IsStencilFormat(TextureDesc.Format))
     {
-        RHI_VALIDATION_WARNING("CreateDepthStencilView: EDepthStencilViewFlags::ReadOnlyStencil set on a depth-only-format resource ('%s'); the stencil flag will be ignored by the backend.", ToString(TextureDesc.Format));
+        RHI_VALIDATION_WARNING("%s: CreateDepthStencilView had EDepthStencilViewFlags::ReadOnlyStencil set on a depth-only-format "
+            "resource ('%s'); the stencil flag will be ignored by the backend.", *GetResourceIdentity(Texture), ToString(TextureDesc.Format));
     }
 
     return Device->CreateDepthStencilView(InResource, InDesc);
@@ -1942,7 +1985,7 @@ IRHICommandContext* FRHIValidationDevice::ObtainCommandContext()
     }
     else
     {
-        FRHIValidationCommandContext* NewValidationContext = new FRHIValidationCommandContext(RealContext);
+        FRHIValidationCommandContext* NewValidationContext = new FRHIValidationCommandContext(RealContext, &StateTracker);
         return RealContextToValidationContextMap.Add(RealContext, NewValidationContext);
     }
 }
@@ -1951,7 +1994,7 @@ bool FRHIValidationDevice::GetQueryResult(FRHIQuery* Query, uint64& OutResult, E
 {
     if (!Query)
     {
-        RHI_VALIDATION_ERROR("Cannot retrieve Query-result from a nullptr Query");
+        RHI_VALIDATION_ERROR("Cannot retrieve Query-result from a nullptr Query.");
         return false;
     }
 
@@ -1968,13 +2011,13 @@ bool FRHIValidationDevice::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPip
 {
     if (!Query)
     {
-        RHI_VALIDATION_ERROR("Cannot retrieve PipelineStatistics-result from a nullptr Query");
+        RHI_VALIDATION_ERROR("Cannot retrieve PipelineStatistics-result from a nullptr Query.");
         return false;
     }
 
     if (Query->GetType() != EQueryType::PipelineStatistics)
     {
-        RHI_VALIDATION_ERROR("Query is not a PipelineStatistics query");
+        RHI_VALIDATION_ERROR("Query is not a PipelineStatistics query.");
         return false;
     }
 
@@ -1989,6 +2032,7 @@ void FRHIValidationDevice::EnqueueResourceDeletion(FRHIResource* Resource)
         return;
     }
 
+    StateTracker.UnregisterResource(Resource);
     Device->EnqueueResourceDeletion(Resource);
 }
 

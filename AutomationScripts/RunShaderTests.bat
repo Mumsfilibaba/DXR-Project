@@ -149,6 +149,9 @@ REM    pointkind   POINTLIGHT_PASS_KIND over multi, single and geometry
 REM    cascadekind CASCADE_PASS_KIND over multi, single, geometry and view-instanced
 REM    gsonly      restrict the pass kind to the geometry-shader variant
 REM    raytracing  skip the entry on backends that report no ray tracing support
+REM    once        compile a single permutation, with none of the material defines
+REM    cubemap     ENABLE_CUBE_MAP, for the BC6H variant that reads a cube face
+REM    encodeonly  BC7_ENCODE_ONLY, for the BC7 pass that packs blocks into a texture
 REM ---------------------------------------------------------------------------
 set "ENTRIES="
 call :AddEntry "BasePassVS|BasePass.hlsl|VSMain|vs|material normalmap bindless"
@@ -167,6 +170,23 @@ call :AddEntry "CascadeShadowGS|Shadows\CascadedShadows.hlsl|Cascade_GSMain|gs|m
 call :AddEntry "CascadeShadowPS|Shadows\CascadedShadows.hlsl|Cascade_PSMain|ps|material bindless depthattr cascadekind"
 call :AddEntry "ClosestHit|ClosestHit.hlsl|ClosestHit|lib|bindless raytracing"
 call :AddEntry "InlineReflections|InlineReflections.hlsl|Main|cs|alwaysbindless raytracing"
+call :AddEntry "BlockCompressBC1|BlockCompression\BlockCompressionBC1.hlsl|Main|cs|once"
+call :AddEntry "BlockCompressBC2|BlockCompression\BlockCompressionBC2.hlsl|Main|cs|once"
+call :AddEntry "BlockCompressBC3|BlockCompression\BlockCompressionBC3.hlsl|Main|cs|once"
+call :AddEntry "BlockCompressBC4|BlockCompression\BlockCompressionBC4.hlsl|Main|cs|once"
+call :AddEntry "BlockCompressBC5|BlockCompression\BlockCompressionBC5.hlsl|Main|cs|once"
+call :AddEntry "BlockCompressBC6H|BlockCompression\BlockCompressionBC6H.hlsl|Main|cs|once cubemap"
+call :AddEntry "BC7TryMode456|BlockCompression\BlockCompressionBC7.hlsl|TryMode456CS|cs|once"
+call :AddEntry "BC7TryMode137|BlockCompression\BlockCompressionBC7.hlsl|TryMode137CS|cs|once"
+call :AddEntry "BC7TryMode02|BlockCompression\BlockCompressionBC7.hlsl|TryMode02CS|cs|once"
+call :AddEntry "BC7EncodeBlock|BlockCompression\BlockCompressionBC7.hlsl|EncodeBlockCS|cs|once encodeonly"
+call :AddEntry "CubeMapGen|CubeMapGen.hlsl|Main|cs|once"
+call :AddEntry "GenerateMipsTex2D|GenerateMipsTex2D.hlsl|Main|cs|once"
+call :AddEntry "GenerateMipsTexCube|GenerateMipsTexCube.hlsl|Main|cs|once"
+call :AddEntry "IrradianceGen|IrradianceGen.hlsl|Main|cs|once"
+call :AddEntry "SpecularIrradianceGen|SpecularIrradianceGen.hlsl|Main|cs|once"
+call :AddEntry "PackMaterialParams|PackMaterialParams.hlsl|Main|cs|once"
+call :AddEntry "BakeAlpha|BakeAlpha.hlsl|Main|cs|once"
 
 if "%LIST_ONLY%"=="1" (
     echo Shader entries:
@@ -329,6 +349,35 @@ if not "!AXES:raytracing=!"=="!AXES!" if "%BACKEND_SUPPORTS_RAYTRACING%"=="0" go
 if not "!AXES:alwaysbindless=!"=="!AXES!" (
     if "%BACKEND_SUPPORTS_BINDLESS%"=="0" goto :eof
     call :CompileOne "%NAME%" "%SOURCE%" "%ENTRY%" "%STAGE%_6_6" "default" ""
+    goto :eof
+)
+
+REM  The compute entries answer to none of the material axes, so each one compiles once per value
+REM  of the single dimension it does name.
+if not "!AXES:once=!"=="!AXES!" (
+    set "CUBE_VALUES=none"
+    if not "!AXES:cubemap=!"=="!AXES!" set "CUBE_VALUES=0 1"
+
+    for %%V in (!CUBE_VALUES!) do (
+        set "DEFINES="
+        set "DESC=default"
+
+        REM  The cube-map variant reads a TextureCube and writes an array slice, so it is its own compile.
+        if not "%%V"=="none" (
+            set "DEFINES=-D ENABLE_CUBE_MAP=(%%V)"
+            set "DESC=cubemap=%%V"
+        )
+
+        REM  BC7 splits its mode search, which hands candidates on through a buffer, from the pass
+        REM  that packs blocks into the destination texture.
+        if not "!AXES:encodeonly=!"=="!AXES!" (
+            set "DEFINES=!DEFINES! -D BC7_ENCODE_ONLY=(1)"
+            set "DESC=encodeonly=1"
+        )
+
+        call :CompileOne "!NAME!" "!SOURCE!" "!ENTRY!" "!STAGE!_!BASE_MODEL!" "!DESC!" "!DEFINES!"
+    )
+
     goto :eof
 )
 

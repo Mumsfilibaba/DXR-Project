@@ -50,10 +50,7 @@ public:
             return;
         }
 
-        FRHIBufferDesc ReadbackDesc;
-        ReadbackDesc.Flags  = EBufferFlags::ReadBack;
-        ReadbackDesc.Size   = sizeof(uint64) * 2;
-        ReadbackDesc.Stride = sizeof(uint64);
+        const FRHIBufferDesc ReadbackDesc = FRHIBufferDesc::CreateReadbackBuffer(sizeof(uint64) * 2, sizeof(uint64));
 
         FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(ReadbackDesc, ERHIResourceState::CopyDest, nullptr);
         if (!ReadbackBuffer)
@@ -123,15 +120,10 @@ private:
             return;
         }
 
-        FRHIBufferDesc DestDesc;
-        DestDesc.Flags  = EBufferFlags::Default | EBufferFlags::UnorderedAccessBuffer | EBufferFlags::CopySource | EBufferFlags::AccelerationStructure;
-        DestDesc.Size   = Math::AlignUp<uint64>(SerializedSize, RHI::AccelerationStructureBufferAlignment);
-        DestDesc.Stride = 0;
+        const EBufferFlags DestFlags = EBufferFlags::Default | EBufferFlags::UnorderedAccessBuffer | EBufferFlags::CopySource | EBufferFlags::AccelerationStructure;
+        const FRHIBufferDesc DestDesc(DestFlags, 0, Math::AlignUp<uint64>(SerializedSize, RHI::AccelerationStructureBufferAlignment));
 
-        FRHIBufferDesc BytesReadbackDesc;
-        BytesReadbackDesc.Flags  = EBufferFlags::ReadBack;
-        BytesReadbackDesc.Size   = SerializedSize;
-        BytesReadbackDesc.Stride = 0;
+        const FRHIBufferDesc BytesReadbackDesc = FRHIBufferDesc::CreateReadbackBuffer(SerializedSize);
 
         FRHIBufferRef DestBuffer     = RHI::CreateBuffer(DestDesc, ERHIResourceState::UnorderedAccess, nullptr);
         FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(BytesReadbackDesc, ERHIResourceState::CopyDest, nullptr);

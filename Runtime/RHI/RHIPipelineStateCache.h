@@ -141,7 +141,6 @@ private:
         NODISCARD bool operator==(const FShaderKey& Other) const;
     };
 
-    /** @brief Content hash to the entries that share it, since distinct keys can collide. */
     template<typename KeyType, typename ValueType>
     using TCacheMap = TMap<uint64, TArray<TPair<KeyType, ValueType>>>;
 

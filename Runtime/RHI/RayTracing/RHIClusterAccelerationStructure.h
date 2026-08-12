@@ -95,6 +95,8 @@ protected:
     virtual ~FRHIClusterTemplate() = default;
 
 public:
+
+    /** @return Vulkan: VkBuffer. */
     virtual void* GetRHINativeResource() const = 0;
 };
 

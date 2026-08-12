@@ -111,8 +111,12 @@ struct FShaderCompileInfo
     {
     }
     
-    FShaderCompileInfo(const String& InEntryPoint, EShaderModel InShaderModel, EShaderStage InShaderStage, 
-        const TArrayView<FShaderDefine>& InDefines = TArrayView<FShaderDefine>(), EShaderOutputLanguage InOutputLanguage = FShaderCompiler::GetOutputLanguageBasedOnRHI())
+    FShaderCompileInfo(
+        const String&                    InEntryPoint,
+        EShaderModel                     InShaderModel,
+        EShaderStage                     InShaderStage,
+        const TArrayView<FShaderDefine>& InDefines        = TArrayView<FShaderDefine>(),
+        EShaderOutputLanguage            InOutputLanguage = FShaderCompiler::GetOutputLanguageBasedOnRHI())
         : ShaderModel(InShaderModel)
         , ShaderStage(InShaderStage)
         , OutputLanguage(InOutputLanguage)

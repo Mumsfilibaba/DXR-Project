@@ -85,7 +85,12 @@ struct FRHIShaderBindingTableDesc
 {
     FRHIShaderBindingTableDesc() noexcept = default;
 
-    FRHIShaderBindingTableDesc(FRHIRayTracingPipelineState* InPipeline, uint32 InNumRayGenerationShaders, uint32 InNumMissShaders, uint32 InNumCallableShaders, uint32 InNumHitGroupRecords) noexcept
+    FRHIShaderBindingTableDesc(
+        FRHIRayTracingPipelineState* InPipeline,
+        uint32                       InNumRayGenerationShaders,
+        uint32                       InNumMissShaders,
+        uint32                       InNumCallableShaders,
+        uint32                       InNumHitGroupRecords) noexcept
         : Pipeline(InPipeline)
         , NumRayGenerationShaders(InNumRayGenerationShaders)
         , NumMissShaders(InNumMissShaders)
@@ -130,7 +135,10 @@ protected:
     virtual ~FRHIShaderBindingTable() = default;
 
 public:
+
+    /** @return D3D12: ID3D12Resource*. Vulkan: VkBuffer. Null: nullptr. Metal does not implement binding tables. */
     virtual void* GetRHINativeResource() const = 0;
+
     virtual FRHIShaderBindingTableAddressInfo GetAddressInfo() const = 0;
 
     NODISCARD const FRHIShaderBindingTableDesc& GetDesc() const

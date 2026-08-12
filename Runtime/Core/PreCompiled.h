@@ -136,6 +136,7 @@
 
 #include "Core/Memory/Memory.h"
 #include "Core/Memory/Malloc.h"
+#include "Core/Memory/MemoryPagePool.h"
 #include "Core/Memory/MemoryStack.h"
 #include "Core/Memory/NewOperators.h"
 

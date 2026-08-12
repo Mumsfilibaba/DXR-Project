@@ -29,7 +29,7 @@ fi
 
 # The modules that currently have test suites. Add an entry here when a new
 # Run<Module>Tests.command is added.
-MODULES="Core RHI"
+MODULES="Core RHI RendererCore"
 
 TOTAL=0
 FAILED=0

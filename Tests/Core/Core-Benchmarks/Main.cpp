@@ -10,6 +10,7 @@
 
 #include "Array_Benchmark.h"
 #include "TaskGraph_Benchmark.h"
+#include "MemoryStack_Benchmark.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -44,6 +45,10 @@ int main(int Argc, const CHAR* Argv[])
 
 #if RUN_TASKGRAPH_BENCHMARKS
     TaskGraph_Benchmark();
+#endif
+
+#if RUN_MEMORYSTACK_BENCHMARKS
+    MemoryStack_Benchmark();
 #endif
 
     FTaskGraph::Release();

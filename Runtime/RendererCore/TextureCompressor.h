@@ -3,7 +3,6 @@
 #include "RHI/RHIResources.h"
 #include "RHI/RHIBuffer.h"
 #include "RHI/RHIResourceViews.h"
-#include "RHI/ShaderCompiler.h"
 
 class RENDERERCORE_API FTextureCompressor
 {
@@ -44,15 +43,8 @@ private:
 
     bool CompressSinglePass64(FRHICommandList& CommandList, const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture, 
         FRHIComputeShader* Shader, FRHIComputePipelineState* PSO, EFormat OutputFormat);
-
     bool CompressSinglePass128(FRHICommandList& CommandList, const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture,
         FRHIComputeShader* Shader, FRHIComputePipelineState* PSO, EFormat OutputFormat);
-
-    bool CompileAndCreateShaderPSO(const String& ShaderPath, const FRHIStaticSamplerInfo& StaticSampler,
-        FRHIComputeShaderRef& OutShader, FRHIComputePipelineStateRef& OutPSO);
-
-    bool CompileAndCreateShaderPSOEx(const String& ShaderPath, const String& EntryPoint,
-        const TArrayView<FShaderDefine>& Defines, FRHIComputeShaderRef& OutShader, FRHIComputePipelineStateRef& OutPSO);
 
     // BC1-BC5 (single-pass)
     FRHIComputeShaderRef        BC1CompressionShader;

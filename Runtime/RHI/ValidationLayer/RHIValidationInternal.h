@@ -7,24 +7,31 @@
 namespace RHIValidationInternal
 {
     bool ShouldBreakOnValidationError();
+    bool ShouldValidateResourceStates();
+    void IncrementErrorCount();
+    void LogCallStack(const CHAR* Filename, int32 Line);
 
     ERHIType SafeGetRHIType(FRHIDevice* RealRHI);
-    bool     IsBufferValidAsCopyDestination(const FRHIBufferDesc& BufferDesc);
-    bool     IsBufferValidAsCopySource(const FRHIBufferDesc& BufferDesc);
-    bool     IsDepthStencilFormat(EFormat Format);
-    bool     ValidateBufferRange(const CHAR* Caller, const FRHIBufferDesc& BufferDesc, uint64 Offset, uint64 Size);
-    bool     ValidateIndirectCountBuffer(const CHAR* Operation, FRHIBuffer* CountBuffer, uint64 CountBufferOffset);
-    bool     ValidateBufferView(const CHAR* Caller, const FRHIBufferDesc& BufferDesc, EBufferViewType ViewType, uint32 FirstElement, uint32 NumElements, EFormat Format);
-    bool     ValidateTextureMip(const CHAR* Caller, const FRHITextureDesc& TextureDesc, uint32 MipLevel, IntVector3& OutExtent);
-    bool     ValidateTextureRegion2D(const CHAR* Caller, const FRHITextureDesc& TextureDesc, uint32 MipLevel, const FTextureRegion2D& Region);
-    bool     ValidateTextureRegion3D(const CHAR* Caller, const FRHITextureDesc& TextureDesc, uint32 MipLevel, const FTextureRegion3D& Region);
-    bool     ValidateTextureSlicesAndMips(const CHAR* Caller, const FRHITextureDesc& TextureDesc, uint32 BaseLayer, uint32 LayerCount, uint32 FirstMip, uint32 NumMips, EFormat ViewFormat, EViewDimension ViewDimension);
+    String   GetResourceIdentity(const FRHIResource* Resource);
+
+    bool IsBufferValidAsCopyDestination(const FRHIBufferDesc& BufferDesc);
+    bool IsBufferValidAsCopySource(const FRHIBufferDesc& BufferDesc);
+    bool IsDepthStencilFormat(EFormat Format);
+    bool ValidateBufferRange(const CHAR* Caller, const FRHIBufferDesc& BufferDesc, uint64 Offset, uint64 Size);
+    bool ValidateIndirectCountBuffer(const CHAR* Operation, FRHIBuffer* CountBuffer, uint64 CountBufferOffset);
+    bool ValidateBufferView(const CHAR* Caller, const FRHIBufferDesc& BufferDesc, EBufferViewType ViewType, uint32 FirstElement, uint32 NumElements, EFormat Format);
+    bool ValidateTextureMip(const CHAR* Caller, const FRHITextureDesc& TextureDesc, uint32 MipLevel, IntVector3& OutExtent);
+    bool ValidateTextureRegion2D(const CHAR* Caller, const FRHITextureDesc& TextureDesc, uint32 MipLevel, const FTextureRegion2D& Region);
+    bool ValidateTextureRegion3D(const CHAR* Caller, const FRHITextureDesc& TextureDesc, uint32 MipLevel, const FTextureRegion3D& Region);
+    bool ValidateTextureSlicesAndMips(const CHAR* Caller, const FRHITextureDesc& TextureDesc, uint32 BaseLayer, uint32 LayerCount, uint32 FirstMip, uint32 NumMips, EFormat ViewFormat, EViewDimension ViewDimension);
 }
 
 #define RHI_VALIDATION_ERROR(...) \
     do \
     { \
+        RHIValidationInternal::IncrementErrorCount(); \
         LOG_ERROR("[RHI VALIDATION ERROR] " __VA_ARGS__); \
+        RHIValidationInternal::LogCallStack(__FILE__, __LINE__); \
         if (RHIValidationInternal::ShouldBreakOnValidationError()) \
         { \
             DEBUG_BREAK(); \
@@ -51,7 +58,7 @@ namespace RHIValidationInternal
         if ((ArgumentBufferOffset % RHIValidationHelpers::IndirectArgumentOffsetAlignment) != 0 ||
             !RHIValidationHelpers::IsIndirectCommandRangeValid(ArgumentBuffer->GetDesc().Size, ArgumentBufferOffset, sizeof(ParameterType), CommandCount))
         {
-            RHI_VALIDATION_ERROR("%s argument range is misaligned or outside the buffer.", Operation);
+            RHI_VALIDATION_ERROR("%s: %s argument range is misaligned or outside the buffer.", *GetResourceIdentity(ArgumentBuffer), Operation);
             return false;
         }
 

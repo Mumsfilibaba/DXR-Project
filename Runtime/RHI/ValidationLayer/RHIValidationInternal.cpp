@@ -1,4 +1,10 @@
+#include "Core/Containers/Set.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Platform/CriticalSection.h"
+#include "Core/Platform/PlatformStackTrace.h"
+#include "Core/Threading/Atomic.h"
+#include "Core/Threading/ScopedLock.h"
+#include "RHI/RHIValidation.h"
 #include "RHI/ValidationLayer/RHIValidationInternal.h"
 
 static TAutoConsoleVariable<bool> CVarEnableValidationDebugBreak(
@@ -6,14 +12,142 @@ static TAutoConsoleVariable<bool> CVarEnableValidationDebugBreak(
     "Enables debug-breaks when detecting errors in the custom RHI-validation layer",
     true);
 
+static TAutoConsoleVariable<bool> CVarEnableResourceStateValidation(
+    "RHI.EnableResourceStateValidation",
+    "Tracks the state of every resource so the validation layer can detect a missing barrier",
+    true);
+
+static TAutoConsoleVariable<bool> CVarEnableValidationCallstack(
+    "RHI.EnableValidationCallstack",
+    "Prints a callstack the first time each site in the custom RHI-validation layer reports an error",
+    true);
+
+static constexpr int32 ValidationCallStackDepth = 24;
+
+static AtomicInt32 GValidationErrorCount(0);
+
 bool RHIValidationInternal::ShouldBreakOnValidationError()
 {
     return CVarEnableValidationDebugBreak.GetValue();
 }
 
+bool RHIValidationInternal::ShouldValidateResourceStates()
+{
+    return CVarEnableResourceStateValidation.GetValue();
+}
+
+void RHIValidationInternal::IncrementErrorCount()
+{
+    GValidationErrorCount.Increment();
+}
+
+static TSet<uint64>& GetReportedCallStackSites()
+{
+    static TSet<uint64> ReportedCallStackSites;
+    return ReportedCallStackSites;
+}
+
+static FCriticalSection& GetCallStackCriticalSection()
+{
+    static FCriticalSection CallStackCriticalSection;
+    return CallStackCriticalSection;
+}
+
+void RHIValidationInternal::LogCallStack(const CHAR* Filename, int32 Line)
+{
+    if (!CVarEnableValidationCallstack.GetValue())
+    {
+        return;
+    }
+
+    {
+        // The __FILE__ literal of a site always has the same address, so the pointer identifies the file without hashing it
+        const uint64 FileKey = static_cast<uint64>(reinterpret_cast<uintptr_t>(Filename));
+        const uint64 SiteKey = (FileKey * 1099511628211ull) ^ static_cast<uint64>(Line);
+
+        TScopedLock Lock(GetCallStackCriticalSection());
+        if (GetReportedCallStackSites().Contains(SiteKey))
+        {
+            return;
+        }
+
+        GetReportedCallStackSites().Add(SiteKey);
+    }
+
+    const TArray<FStackTraceEntry> Stack = FPlatformStackTrace::GetStack(ValidationCallStackDepth, 0);
+
+    int32 FirstFrame = 0;
+    while (FirstFrame < Stack.Size() && CString::Strstr(Stack[FirstFrame].FunctionName, "RHIValidation") != nullptr)
+    {
+        FirstFrame++;
+    }
+
+    if (FirstFrame >= Stack.Size())
+    {
+        FirstFrame = 0;
+    }
+
+    String Record;
+    for (int32 Index = FirstFrame; Index < Stack.Size(); Index++)
+    {
+        const FStackTraceEntry& Entry = Stack[Index];
+        if (Entry.Filename[0])
+        {
+            Record.AppendFormat("\n    [%2d] %s (%s:%u)", Index - FirstFrame, Entry.FunctionName, Entry.Filename, Entry.Line);
+        }
+        else
+        {
+            Record.AppendFormat("\n    [%2d] %s [%s]", Index - FirstFrame, Entry.FunctionName, Entry.ModuleName);
+        }
+    }
+
+    if (!Record.IsEmpty())
+    {
+        LOG_ERROR("[RHI VALIDATION ERROR] Callstack:%s", *Record);
+    }
+
+    // The break that follows can stop the process before the file device, which writes asynchronously, has the stack
+    FOutputDeviceLogger::Get()->Flush();
+}
+
+int32 RHIValidation::GetErrorCount()
+{
+    return GValidationErrorCount.Load();
+}
+
+void RHIValidation::ResetErrorCount()
+{
+    GValidationErrorCount.Store(0);
+}
+
 ERHIType RHIValidationInternal::SafeGetRHIType(FRHIDevice* RealRHI)
 {
     return RealRHI ? RealRHI->GetRHIType() : ERHIType::Unknown;
+}
+
+String RHIValidationInternal::GetResourceIdentity(const FRHIResource* Resource)
+{
+    if (!Resource)
+    {
+        return String("<null>");
+    }
+
+    // Only textures and buffers carry a debug name, and the shared base does not declare the accessor
+    String DebugName;
+    switch (Resource->GetResourceType())
+    {
+        case ERHIResourceType::Texture: static_cast<const FRHITexture*>(Resource)->GetDebugName(DebugName); break;
+        case ERHIResourceType::Buffer:  static_cast<const FRHIBuffer*>(Resource)->GetDebugName(DebugName);  break;
+        default: break;
+    }
+
+    const CHAR* ResourceType = ToString(Resource->GetResourceType());
+    if (DebugName.IsEmpty())
+    {
+        return String::CreateFormatted("%s <unnamed> (%p)", ResourceType, reinterpret_cast<const void*>(Resource));
+    }
+
+    return String::CreateFormatted("%s '%s'", ResourceType, *DebugName);
 }
 
 bool RHIValidationInternal::IsBufferValidAsCopyDestination(const FRHIBufferDesc& BufferDesc)
@@ -53,7 +187,7 @@ bool RHIValidationInternal::ValidateIndirectCountBuffer(const CHAR* Operation, F
     if ((CountBufferOffset % RHIValidationHelpers::IndirectArgumentOffsetAlignment) != 0 ||
         !RHIValidationHelpers::IsIndirectCommandRangeValid(CountBuffer->GetDesc().Size, CountBufferOffset, sizeof(uint32), 1))
     {
-        RHI_VALIDATION_ERROR("%s count-buffer range is misaligned or outside the buffer.", Operation);
+        RHI_VALIDATION_ERROR("%s: %s count-buffer range is misaligned or outside the buffer.", *GetResourceIdentity(CountBuffer), Operation);
         return false;
     }
 

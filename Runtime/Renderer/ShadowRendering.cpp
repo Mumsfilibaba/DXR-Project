@@ -226,8 +226,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         else
         {
             const String DebugName = String::CreateFormatted("Point ShadowMap PipelineState%s %d",
-                bBindless ? " [Bindless]" : "",
-                MaterialFlags);
+                bBindless ? " [Bindless]" : "", MaterialFlags);
             NewPipelineStateInstance.PipelineState->SetDebugName(DebugName);
         }
 
@@ -244,10 +243,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
 
 bool FPointLightRenderPass::Initialize(FFrameResources& Resources)
 {
-    FRHIBufferDesc PerShadowMapBufferDesc;
-    PerShadowMapBufferDesc.Stride = sizeof(FPerShadowMapHLSL);
-    PerShadowMapBufferDesc.Size   = sizeof(FPerShadowMapHLSL);
-    PerShadowMapBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
+    const FRHIBufferDesc PerShadowMapBufferDesc = FRHIBufferDesc::CreateConstantBuffer(sizeof(FPerShadowMapHLSL));
 
     PerShadowMapBuffer = RHI::CreateBuffer(PerShadowMapBufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
     if (!PerShadowMapBuffer)
@@ -260,10 +256,7 @@ bool FPointLightRenderPass::Initialize(FFrameResources& Resources)
         PerShadowMapBuffer->SetDebugName("Per ShadowMap Buffer");
     }
 
-	FRHIBufferDesc SinglePassShadowMapBufferDesc;
-    SinglePassShadowMapBufferDesc.Stride = sizeof(FSinglePassPointLightBufferHLSL);
-    SinglePassShadowMapBufferDesc.Size   = sizeof(FSinglePassPointLightBufferHLSL);
-    SinglePassShadowMapBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
+    const FRHIBufferDesc SinglePassShadowMapBufferDesc = FRHIBufferDesc::CreateConstantBuffer(sizeof(FSinglePassPointLightBufferHLSL));
 
     SinglePassShadowMapBuffer = RHI::CreateBuffer(SinglePassShadowMapBufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
     if (!SinglePassShadowMapBuffer)
@@ -305,8 +298,8 @@ bool FPointLightRenderPass::CreateResources(FFrameResources& Resources)
     const EFormat ShadowMapFormat = Resources.PointLightShadowMaps->GetDesc().Format;
     for (uint32 LightIndex = 0; LightIndex < Resources.MaxPointLightShadows; ++LightIndex)
     {
-        const FRHIDepthStencilViewDesc PerLightDSVDesc = FRHIDepthStencilViewDesc::CreateTextureCubeArray(
-            ShadowMapFormat, 0, static_cast<uint16>(LightIndex), 1);
+        const FRHIDepthStencilViewDesc PerLightDSVDesc = FRHIDepthStencilViewDesc::CreateTextureCubeArray(ShadowMapFormat,
+            0, static_cast<uint16>(LightIndex), 1);
 
         FRHIDepthStencilViewRef PerLightDSV = RHI::CreateDepthStencilView(Resources.PointLightShadowMaps.Get(), PerLightDSVDesc);
         if (!PerLightDSV)
@@ -318,8 +311,8 @@ bool FPointLightRenderPass::CreateResources(FFrameResources& Resources)
 
         for (uint32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; ++FaceIndex)
         {
-            const FRHIDepthStencilViewDesc PerFaceDSVDesc = FRHIDepthStencilViewDesc::CreateTexture2DArray(
-                ShadowMapFormat, 0, static_cast<uint16>((LightIndex * RHI_NUM_CUBE_FACES) + FaceIndex), 1);
+            const FRHIDepthStencilViewDesc PerFaceDSVDesc = FRHIDepthStencilViewDesc::CreateTexture2DArray(ShadowMapFormat,
+                0, static_cast<uint16>((LightIndex * RHI_NUM_CUBE_FACES) + FaceIndex), 1);
 
             FRHIDepthStencilViewRef PerFaceDSV = RHI::CreateDepthStencilView(Resources.PointLightShadowMaps.Get(), PerFaceDSVDesc);
             if (!PerFaceDSV)
@@ -646,10 +639,8 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         CascadeGen->SetDebugName("CascadeGen PSO");
     }
 
-	FRHIBufferDesc CascadeMatrixBufferDesc;
-    CascadeMatrixBufferDesc.Stride = sizeof(FCascadeMatricesHLSL);
-    CascadeMatrixBufferDesc.Size   = CascadeMatrixBufferDesc.Stride * NUM_SHADOW_CASCADES;
-    CascadeMatrixBufferDesc.Flags  = EBufferFlags::RWBuffer | EBufferFlags::Default;
+    const FRHIBufferDesc CascadeMatrixBufferDesc = FRHIBufferDesc::CreateStructuredBuffer(sizeof(FCascadeMatricesHLSL), NUM_SHADOW_CASCADES,
+        EBufferFlags::Default | EBufferFlags::UnorderedAccessBuffer);
 
     Resources.CascadeMatrixBuffer = RHI::CreateBuffer(CascadeMatrixBufferDesc, ERHIResourceState::NonPixelShaderResource, nullptr);
     if (!Resources.CascadeMatrixBuffer)
@@ -678,10 +669,8 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         return false;
     }
 
-	FRHIBufferDesc CascadeSplitsBufferDesc;
-    CascadeSplitsBufferDesc.Stride = sizeof(FCascadeSplitHLSL);
-    CascadeSplitsBufferDesc.Size   = CascadeSplitsBufferDesc.Stride * NUM_SHADOW_CASCADES;
-    CascadeSplitsBufferDesc.Flags  = EBufferFlags::RWBuffer | EBufferFlags::Default;
+    const FRHIBufferDesc CascadeSplitsBufferDesc = FRHIBufferDesc::CreateStructuredBuffer(sizeof(FCascadeSplitHLSL), NUM_SHADOW_CASCADES,
+        EBufferFlags::Default | EBufferFlags::UnorderedAccessBuffer);
 
     Resources.CascadeSplitsBuffer = RHI::CreateBuffer(CascadeSplitsBufferDesc, ERHIResourceState::NonPixelShaderResource, nullptr);
     if (!Resources.CascadeSplitsBuffer)
@@ -890,10 +879,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
 
 bool FCascadedShadowsRenderPass::Initialize(FFrameResources& Resources)
 {
-	FRHIBufferDesc PerCascadeBufferDesc;
-    PerCascadeBufferDesc.Stride = sizeof(FPerCascadeHLSL);
-    PerCascadeBufferDesc.Size   = sizeof(FPerCascadeHLSL);
-    PerCascadeBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
+    const FRHIBufferDesc PerCascadeBufferDesc = FRHIBufferDesc::CreateConstantBuffer(sizeof(FPerCascadeHLSL));
 
     PerCascadeBuffer = RHI::CreateBuffer(PerCascadeBufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
     if (!PerCascadeBuffer)
@@ -1275,10 +1261,7 @@ bool FShadowMaskRenderPass::Initialize(FFrameResources& Resources)
         return false;
     }
 
-	FRHIBufferDesc SettingsBufferDesc;
-    SettingsBufferDesc.Stride = sizeof(FDirectionalShadowSettingsHLSL);
-    SettingsBufferDesc.Size   = sizeof(FDirectionalShadowSettingsHLSL);
-    SettingsBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
+    const FRHIBufferDesc SettingsBufferDesc = FRHIBufferDesc::CreateConstantBuffer(sizeof(FDirectionalShadowSettingsHLSL));
 
     ShadowSettingsBuffer = RHI::CreateBuffer(SettingsBufferDesc, ERHIResourceState::ConstantBuffer);
     if (!ShadowSettingsBuffer)

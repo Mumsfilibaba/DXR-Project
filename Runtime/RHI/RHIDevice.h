@@ -428,19 +428,19 @@ struct FRHIDevice
     /** @brief Defers destruction of an RHI resource to the deferred deletion code. */
     virtual void EnqueueResourceDeletion(FRHIResource* Resource) = 0;
 
-    /** @return D3D12: IDXGIAdapter*. Vulkan: VkPhysicalDevice. Metal: nullptr (TODO). Null: nullptr. */
+    /** @return D3D12: IDXGIAdapter*. Vulkan: VkPhysicalDevice. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeAdapter() = 0;
 
     /** @return D3D12: ID3D12Device*. Vulkan: VkDevice. Metal: id<MTLDevice>. Null: nullptr. */
     virtual void* GetRHINativeDevice() = 0;
 
-    /** @return D3D12: ID3D12CommandQueue* (direct). Vulkan: VkQueue (graphics). Metal: id<MTLCommandQueue>. Null: nullptr. */
+    /** @return D3D12: ID3D12CommandQueue*. Vulkan: VkQueue. Metal: id<MTLCommandQueue>. Null: nullptr. */
     virtual void* GetRHINativeDirectCommandQueue() = 0;
 
-    /** @return D3D12: ID3D12CommandQueue* (compute). Vulkan: nullptr (TODO). Metal: nullptr (TODO). Null: nullptr. */
+    /** @return D3D12: ID3D12CommandQueue*. Vulkan: nullptr. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeComputeCommandQueue() = 0;
 
-    /** @return D3D12: ID3D12CommandQueue* (copy). Vulkan: nullptr (TODO). Metal: nullptr (TODO). Null: nullptr. */
+    /** @return D3D12: ID3D12CommandQueue*. Vulkan: nullptr. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeCopyCommandQueue() = 0;
 
     /**

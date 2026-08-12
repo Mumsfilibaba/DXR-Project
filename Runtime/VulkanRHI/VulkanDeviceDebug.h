@@ -6,6 +6,8 @@
 #include "VulkanRHI/VulkanDeviceChild.h"
 #include "VulkanRHI/VulkanMemoryManager.h"
 
+DISABLE_UNREFERENCED_VARIABLE_WARNING
+
 class FVulkanCommandBuffer;
 class FVulkanQueue;
 
@@ -103,3 +105,5 @@ private:
 };
 
 #endif
+
+ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -5,11 +5,6 @@
 #include "D3D12RHI/D3D12RHI.h"
 #include "RHI/RHIStats.h"
 
-static bool ShouldUseDefaultState(D3D12_RESOURCE_STATES CandidateDefaultState, D3D12_RESOURCE_STATES RequestedInitialState)
-{
-    return (CandidateDefaultState != D3D12_RESOURCE_STATES(0)) && ((RequestedInitialState & ~CandidateDefaultState) == D3D12_RESOURCE_STATES(0));
-}
-
 FD3D12TextureRHI::FD3D12TextureRHI(FD3D12Device* InDevice, const FRHITextureDesc& InTextureDesc)
     : FD3D12TextureBase(InTextureDesc)
     , FD3D12ResourceBase(InDevice)
@@ -134,26 +129,16 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
         }
     }
 
-    const D3D12_RESOURCE_STATES CandidateDefaultState = DetermineDefaultTextureState(Desc.UsageFlags);
     const D3D12_RESOURCE_STATES RequestedInitialState = ConvertResourceState(InInitialAccess);
 
-    const bool bIsManual        = (ConvertResourceStateMode(Desc.TrackingMode) == ED3D12ResourceStateMode::ManualState);
-    const bool bHasDefaultState = !bIsManual && ShouldUseDefaultState(CandidateDefaultState, RequestedInitialState);
-    const D3D12_RESOURCE_STATES D3D12DefaultState = bHasDefaultState ? CandidateDefaultState : D3D12_RESOURCE_STATES(0);
+    const ED3D12ResourceStateMode ResolvedStateMode = ConvertResourceStateMode(Desc.TrackingMode);
 
-    D3D12_RESOURCE_STATES D3D12CreateState;
-    if (InInitialData != nullptr)
-    {
-        D3D12CreateState = D3D12_RESOURCE_STATE_COPY_DEST;
-    }
-    else if (bHasDefaultState)
-    {
-        D3D12CreateState = D3D12DefaultState;
-    }
-    else
-    {
-        D3D12CreateState = RequestedInitialState;
-    }
+    const bool bHasDefaultState = (ResolvedStateMode == ED3D12ResourceStateMode::SingleState);
+    const D3D12_RESOURCE_STATES D3D12DefaultState = bHasDefaultState ? RequestedInitialState : D3D12_RESOURCE_STATES(0);
+
+    const D3D12_RESOURCE_STATES D3D12CreateState = (InInitialData != nullptr)
+        ? D3D12_RESOURCE_STATE_COPY_DEST
+        : RequestedInitialState;
 
     const bool bAllocated = GetDevice()->GetTextureAllocator()->TryAllocate(
         ResourceDesc, 
@@ -165,9 +150,6 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
     {
         return false;
     }
-
-    const ED3D12ResourceStateMode ResolvedStateMode = bIsManual ? ED3D12ResourceStateMode::ManualState
-        : (bHasDefaultState ? ED3D12ResourceStateMode::SingleState : ED3D12ResourceStateMode::MultipleStates);
 
     Desc.TrackingMode = ERHIResourceStateTrackingMode::Tracked;
     GetResource()->SetResourceStateMode(ED3D12ResourceStateMode::MultipleStates);
@@ -591,13 +573,9 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
             Depth  = Math::Max(1u, Depth >> 1);
         }
 
-        const ERHIResourceState RestingAccess = (bHasDefaultState && Desc.IsShaderResourceTexture())
-            ? ERHIResourceState::ShaderResource
-            : InInitialAccess;
-
-        if (RestingAccess != ERHIResourceState::CopyDest)
+        if (InInitialAccess != ERHIResourceState::CopyDest)
         {
-            InCommandContext->TransitionBarrier(MakeArrayView({ FRHITransitionBarrierDesc::CreateTexture(this, ERHIResourceState::CopyDest, RestingAccess) }));
+            InCommandContext->TransitionBarrier(MakeArrayView({ FRHITransitionBarrierDesc::CreateTexture(this, ERHIResourceState::CopyDest, InInitialAccess) }));
         }
 
         InCommandContext->FinishContext();

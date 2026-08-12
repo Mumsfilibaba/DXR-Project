@@ -667,7 +667,7 @@ struct IRHICommandContext
 
     /**
      * @brief Returns the backend-native command-list or command-buffer handle.
-     * @return D3D12: ID3D12GraphicsCommandList*. Vulkan: VkCommandBuffer*. Metal: nullptr. Null: nullptr.
+     * @return D3D12: ID3D12GraphicsCommandList*. Vulkan: VkCommandBuffer. Metal: nullptr. Null: nullptr.
      */
     virtual void* GetRHINativeCommandList() = 0;
 };

@@ -53,10 +53,7 @@ bool FFrameResources::Initialize()
     SpecularIrradianceProbeSize = ClampTextureSize(256, 1024, CVarEnvironmentSpecularIrradianceProbeSize.GetValue());
 
     // Directional-Light
-    FRHIBufferDesc BufferDesc;
-    BufferDesc.Stride = sizeof(FDirectionalLightDataHLSL);
-    BufferDesc.Size   = sizeof(FDirectionalLightDataHLSL);
-    BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
+    FRHIBufferDesc BufferDesc = FRHIBufferDesc::CreateConstantBuffer(sizeof(FDirectionalLightDataHLSL));
 
     DirectionalLightDataBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
 
@@ -70,8 +67,7 @@ bool FFrameResources::Initialize()
         DirectionalLightDataBuffer->SetDebugName("DirectionalLightData Buffer");
     }
 
-	BufferDesc.Stride = sizeof(FCascadeGenerationInfoHLSL);
-	BufferDesc.Size   = sizeof(FCascadeGenerationInfoHLSL);
+    BufferDesc = FRHIBufferDesc::CreateConstantBuffer(sizeof(FCascadeGenerationInfoHLSL));
 
     CascadeGenerationDataBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
 
@@ -88,8 +84,7 @@ bool FFrameResources::Initialize()
     // Point-Lights
     PointLightsData.Reserve(MAX_LIGHTS_PER_TILE);
 
-	BufferDesc.Stride = PointLightsData.Stride();
-	BufferDesc.Size   = PointLightsData.CapacityInBytes();
+    BufferDesc = FRHIBufferDesc::CreateConstantBuffer(PointLightsData.CapacityInBytes());
 
     PointLightsBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
 
@@ -105,8 +100,7 @@ bool FFrameResources::Initialize()
 
     PointLightsPosRad.Reserve(MAX_LIGHTS_PER_TILE);
 
-	BufferDesc.Stride = PointLightsPosRad.Stride();
-	BufferDesc.Size   = PointLightsPosRad.CapacityInBytes();
+    BufferDesc = FRHIBufferDesc::CreateConstantBuffer(PointLightsPosRad.CapacityInBytes());
 
     PointLightsPosRadBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
     if (!PointLightsPosRadBuffer)
@@ -121,8 +115,7 @@ bool FFrameResources::Initialize()
 
     ShadowCastingPointLightsData.Reserve(NUM_SHADOW_CASTING_POINT_LIGHTS);
 
-	BufferDesc.Stride = ShadowCastingPointLightsData.Stride();
-	BufferDesc.Size   = ShadowCastingPointLightsData.CapacityInBytes();
+    BufferDesc = FRHIBufferDesc::CreateConstantBuffer(ShadowCastingPointLightsData.CapacityInBytes());
 
     ShadowCastingPointLightsBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
     if (!ShadowCastingPointLightsBuffer)
@@ -137,8 +130,7 @@ bool FFrameResources::Initialize()
 
     ShadowCastingPointLightsPosRad.Reserve(NUM_SHADOW_CASTING_POINT_LIGHTS);
 
-	BufferDesc.Stride = ShadowCastingPointLightsPosRad.Stride();
-	BufferDesc.Size   = ShadowCastingPointLightsPosRad.CapacityInBytes();
+    BufferDesc = FRHIBufferDesc::CreateConstantBuffer(ShadowCastingPointLightsPosRad.CapacityInBytes());
 
     ShadowCastingPointLightsPosRadBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
     if (!ShadowCastingPointLightsPosRadBuffer)
@@ -154,8 +146,7 @@ bool FFrameResources::Initialize()
     // Light-Probes
     LightProbeInfos.Reserve(NUM_LIGHT_PROBES);
 
-	BufferDesc.Stride = LightProbeInfos.Stride();
-	BufferDesc.Size   = LightProbeInfos.CapacityInBytes();
+    BufferDesc = FRHIBufferDesc::CreateConstantBuffer(LightProbeInfos.CapacityInBytes());
 
     LightProbeBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
     if (!LightProbeBuffer)
@@ -264,10 +255,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
     // Update GPU Buffers
     if (PointLightsData.SizeInBytes() > static_cast<int32>(PointLightsBuffer->GetDesc().Size))
     {
-        FRHIBufferDesc BufferDesc;
-		BufferDesc.Stride = PointLightsData.Stride();
-		BufferDesc.Size   = PointLightsData.CapacityInBytes();
-		BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
+        const FRHIBufferDesc BufferDesc = FRHIBufferDesc::CreateConstantBuffer(PointLightsData.CapacityInBytes());
 
         PointLightsBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
         if (!PointLightsBuffer)
@@ -278,10 +266,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
 
     if (PointLightsPosRad.SizeInBytes() > static_cast<int32>(PointLightsPosRadBuffer->GetDesc().Size))
     {
-		FRHIBufferDesc BufferDesc;
-		BufferDesc.Stride = PointLightsPosRad.Stride();
-		BufferDesc.Size   = PointLightsPosRad.CapacityInBytes();
-		BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
+        const FRHIBufferDesc BufferDesc = FRHIBufferDesc::CreateConstantBuffer(PointLightsPosRad.CapacityInBytes());
 
         PointLightsPosRadBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
         if (!PointLightsPosRadBuffer)
@@ -292,10 +277,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
 
     if (ShadowCastingPointLightsData.SizeInBytes() > static_cast<int32>(ShadowCastingPointLightsBuffer->GetDesc().Size))
     {
-		FRHIBufferDesc BufferDesc;
-		BufferDesc.Stride = ShadowCastingPointLightsData.Stride();
-		BufferDesc.Size   = ShadowCastingPointLightsData.CapacityInBytes();
-		BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
+        const FRHIBufferDesc BufferDesc = FRHIBufferDesc::CreateConstantBuffer(ShadowCastingPointLightsData.CapacityInBytes());
 
         ShadowCastingPointLightsBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
         if (!ShadowCastingPointLightsBuffer)
@@ -306,10 +288,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
 
     if (ShadowCastingPointLightsPosRad.SizeInBytes() > static_cast<int32>(ShadowCastingPointLightsPosRadBuffer->GetDesc().Size))
     {
-		FRHIBufferDesc BufferDesc;
-		BufferDesc.Stride = ShadowCastingPointLightsPosRad.Stride();
-		BufferDesc.Size   = ShadowCastingPointLightsPosRad.CapacityInBytes();
-		BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
+        const FRHIBufferDesc BufferDesc = FRHIBufferDesc::CreateConstantBuffer(ShadowCastingPointLightsPosRad.CapacityInBytes());
 
         ShadowCastingPointLightsPosRadBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
         if (!ShadowCastingPointLightsPosRadBuffer)
@@ -320,10 +299,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
 
     if (LightProbeInfos.SizeInBytes() > static_cast<int32>(LightProbeBuffer->GetDesc().Size))
     {
-        FRHIBufferDesc BufferDesc;
-        BufferDesc.Stride = LightProbeInfos.Stride();
-        BufferDesc.Size   = LightProbeInfos.CapacityInBytes();
-        BufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
+        const FRHIBufferDesc BufferDesc = FRHIBufferDesc::CreateConstantBuffer(LightProbeInfos.CapacityInBytes());
 
         LightProbeBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
         if (!LightProbeBuffer)

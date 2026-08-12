@@ -2426,7 +2426,8 @@ void FVulkanCommandContext::TransitionBarrierTexture(const FRHITransitionBarrier
     const VkImageCreateInfo&             CreateInfo = VulkanTexture->GetVkImageCreateInfo();
     const FVulkanBarrierSubresourceRange Range      = VulkanResolveSubresourceRange(CreateInfo, Subresources);
 
-    const bool bInferBeforeState = (Desc.BeforeState == Desc.AfterState);
+    // A Tracked texture never declares a before-state, so what is left is the layout the backend has tracked
+    const bool bInferBeforeState = (TrackingMode == ERHIResourceStateTrackingMode::Tracked);
 
     const VkImageLayout DeclaredLayout = Desc.IsDiscard()
         ? VK_IMAGE_LAYOUT_UNDEFINED
@@ -2541,6 +2542,10 @@ void FVulkanCommandContext::ApplyTrackingModeChange(FVulkanTextureRHI* Texture, 
     case ERHIResourceStateTrackingMode::Manual:
         GlobalState.ClearDefaultLayout();
         break;
+
+    case ERHIResourceStateTrackingMode::Unknown:
+        CHECK(false);
+        return;
     }
 
     Texture->SetResourceStateTrackingMode(Desc.NewTrackingMode);
@@ -2593,31 +2598,22 @@ void FVulkanCommandContext::TransitionBarrierBuffer(const FRHITransitionBarrierD
         return;
     }
 
-    const bool bInferBeforeState = (Desc.BeforeState == Desc.AfterState);
-
-    FVulkanBufferState& LocalState = RetrievePendingBufferState(VulkanBuffer);
+    FVulkanBufferState& LocalState  = RetrievePendingBufferState(VulkanBuffer);
     const bool          bFirstTouch = (LocalState.GetAccess() == VK_ACCESS_FLAGS_2_TO_BE_DETERMINED);
-
-    const VkAccessFlags2KHR        DeclaredAccess = bInferBeforeState ? AfterAccess : FVulkanDeviceRHI::ResourceStateToAccessFlags(Desc.BeforeState);
-    const VkPipelineStageFlags2KHR DeclaredStage  = bInferBeforeState ? AfterStage  : FVulkanDeviceRHI::ResourceStateToPipelineStageFlags(Desc.BeforeState);
 
     if (bFirstTouch)
     {
+        // The state carried in from the previous command buffer is only known at submit, so the barrier is resolved there
         FVulkanPendingBufferBarrier PendingBarrier;
         PendingBarrier.Buffer        = VulkanBuffer;
-        PendingBarrier.DesiredAccess = DeclaredAccess;
-        PendingBarrier.DesiredStage  = DeclaredStage;
+        PendingBarrier.DesiredAccess = AfterAccess;
+        PendingBarrier.DesiredStage  = AfterStage;
         PendingBufferBarriers.Add(PendingBarrier);
     }
-
-    const bool bNeedsBarrier = bFirstTouch
-        ? !bInferBeforeState
-        : (LocalState.GetAccess() != AfterAccess || LocalState.GetStage() != AfterStage);
-
-    if (bNeedsBarrier)
+    else if (LocalState.GetAccess() != AfterAccess || LocalState.GetStage() != AfterStage)
     {
-        BufferBarrier.srcAccessMask = bFirstTouch ? DeclaredAccess : LocalState.GetAccess();
-        BufferBarrier.srcStageMask  = bFirstTouch ? DeclaredStage  : LocalState.GetStage();
+        BufferBarrier.srcAccessMask = LocalState.GetAccess();
+        BufferBarrier.srcStageMask  = LocalState.GetStage();
 
         CHECK(!IsInsideRenderPass());
         BarrierBatcher.AddBufferMemoryBarrier(0, BufferBarrier);

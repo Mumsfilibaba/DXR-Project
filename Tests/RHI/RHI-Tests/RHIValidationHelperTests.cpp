@@ -66,5 +66,36 @@ bool RHIValidationHelpers_Test()
     TEST_EXPECT(BufferDesc.IsUnorderedAccessBuffer());
     TEST_EXPECT(StringView(ToString(ERHIResourceState::IndirectArgument)) == StringView("IndirectArgument"));
 
+    TEST_SECTION("Read-only state classification");
+    TEST_EXPECT(!RHIIsReadOnlyState(ERHIResourceState::Common));
+    TEST_EXPECT(!RHIIsReadOnlyState(ERHIResourceState::RenderTarget));
+    TEST_EXPECT(!RHIIsReadOnlyState(ERHIResourceState::UnorderedAccess));
+    TEST_EXPECT(!RHIIsReadOnlyState(ERHIResourceState::RayTracingAccelerationStructure));
+    TEST_EXPECT(!RHIIsReadOnlyState(ERHIResourceState::PixelShaderResource | ERHIResourceState::RenderTarget));
+    TEST_EXPECT(RHIIsReadOnlyState(ERHIResourceState::PixelShaderResource));
+    TEST_EXPECT(RHIIsReadOnlyState(ERHIResourceState::ShaderResource));
+    TEST_EXPECT(RHIIsReadOnlyState(ERHIResourceState::GenericRead));
+    TEST_EXPECT(RHIIsReadOnlyState(ERHIResourceState::PixelShaderResource | ERHIResourceState::CopySource));
+
+    TEST_SECTION("Before-state matching the tracked state");
+    TEST_EXPECT(RHIIsBeforeStateValid(ERHIResourceState::ShaderResource, ERHIResourceState::ShaderResource));
+    TEST_EXPECT(RHIIsBeforeStateValid(ERHIResourceState::RenderTarget, ERHIResourceState::RenderTarget));
+    TEST_EXPECT(RHIIsBeforeStateValid(ERHIResourceState::Common, ERHIResourceState::Common));
+
+    TEST_SECTION("Before-state under-specifying an ORed read state");
+    TEST_EXPECT(RHIIsBeforeStateValid(ERHIResourceState::ShaderResource, ERHIResourceState::PixelShaderResource));
+    TEST_EXPECT(RHIIsBeforeStateValid(ERHIResourceState::ShaderResource, ERHIResourceState::NonPixelShaderResource));
+    TEST_EXPECT(RHIIsBeforeStateValid(ERHIResourceState::PixelShaderResource | ERHIResourceState::CopySource, ERHIResourceState::CopySource));
+
+    TEST_SECTION("Before-state over-specifying an ORed read state");
+    TEST_EXPECT(!RHIIsBeforeStateValid(ERHIResourceState::PixelShaderResource, ERHIResourceState::ShaderResource));
+    TEST_EXPECT(!RHIIsBeforeStateValid(ERHIResourceState::NonPixelShaderResource, ERHIResourceState::ShaderResource));
+    TEST_EXPECT(!RHIIsBeforeStateValid(ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource | ERHIResourceState::CopySource));
+
+    TEST_SECTION("Before-state of a write state requires an exact match");
+    TEST_EXPECT(!RHIIsBeforeStateValid(ERHIResourceState::RenderTarget, ERHIResourceState::UnorderedAccess));
+    TEST_EXPECT(!RHIIsBeforeStateValid(ERHIResourceState::RenderTarget | ERHIResourceState::CopySource, ERHIResourceState::RenderTarget));
+    TEST_EXPECT(!RHIIsBeforeStateValid(ERHIResourceState::ShaderResource, ERHIResourceState::Common));
+
     TEST_END();
 }

@@ -57,6 +57,73 @@ ENUM_CLASS_OPERATORS(EBufferFlags);
 
 struct FRHIBufferDesc
 {
+    NODISCARD static constexpr FRHIBufferDesc CreateVertexBuffer(
+        uint32                        InStride,
+        uint64                        InNumElements,
+        EBufferFlags                  InFlags        = EBufferFlags::Default,
+        ERHIResourceStateTrackingMode InTrackingMode = ERHIResourceStateTrackingMode::Manual) noexcept
+    {
+        return FRHIBufferDesc(InFlags | EBufferFlags::VertexBuffer, InStride, uint64(InStride) * InNumElements, InTrackingMode);
+    }
+
+    NODISCARD static constexpr FRHIBufferDesc CreateIndexBuffer(
+        uint32                        InStride,
+        uint64                        InNumElements,
+        EBufferFlags                  InFlags        = EBufferFlags::Default,
+        ERHIResourceStateTrackingMode InTrackingMode = ERHIResourceStateTrackingMode::Manual) noexcept
+    {
+        return FRHIBufferDesc(InFlags | EBufferFlags::IndexBuffer, InStride, uint64(InStride) * InNumElements, InTrackingMode);
+    }
+
+    NODISCARD static constexpr FRHIBufferDesc CreateIndexBuffer(
+        EIndexFormat                  InFormat,
+        uint64                        InNumElements,
+        EBufferFlags                  InFlags        = EBufferFlags::Default,
+        ERHIResourceStateTrackingMode InTrackingMode = ERHIResourceStateTrackingMode::Manual) noexcept
+    {
+        return CreateIndexBuffer(GetStrideFromIndexFormat(InFormat), InNumElements, InFlags, InTrackingMode);
+    }
+
+    NODISCARD static constexpr FRHIBufferDesc CreateStructuredBuffer(
+        uint32                        InStride,
+        uint64                        InNumElements,
+        EBufferFlags                  InFlags        = EBufferFlags::Default,
+        ERHIResourceStateTrackingMode InTrackingMode = ERHIResourceStateTrackingMode::Manual) noexcept
+    {
+        return FRHIBufferDesc(InFlags | EBufferFlags::ShaderResourceBuffer, InStride, uint64(InStride) * InNumElements, InTrackingMode);
+    }
+
+    NODISCARD static constexpr FRHIBufferDesc CreateConstantBuffer(
+        uint64                        InSize,
+        EBufferFlags                  InFlags        = EBufferFlags::Default | EBufferFlags::CopyDest,
+        ERHIResourceStateTrackingMode InTrackingMode = ERHIResourceStateTrackingMode::Manual) noexcept
+    {
+        return FRHIBufferDesc(InFlags | EBufferFlags::ConstantBuffer, 0, InSize, InTrackingMode);
+    }
+
+    /** Read-back buffers are sized in bytes, since a mapped region is not always a whole number of elements */
+    NODISCARD static constexpr FRHIBufferDesc CreateReadbackBuffer(
+        uint64                        InSize,
+        uint32                        InStride       = 0,
+        ERHIResourceStateTrackingMode InTrackingMode = ERHIResourceStateTrackingMode::Manual) noexcept
+    {
+        return FRHIBufferDesc(EBufferFlags::ReadBack, InStride, InSize, InTrackingMode);
+    }
+
+    constexpr FRHIBufferDesc() noexcept = default;
+
+    constexpr FRHIBufferDesc(
+        EBufferFlags                  InFlags,
+        uint32                        InStride,
+        uint64                        InSize,
+        ERHIResourceStateTrackingMode InTrackingMode = ERHIResourceStateTrackingMode::Manual) noexcept
+        : Flags(InFlags)
+        , Stride(InStride)
+        , Size(InSize)
+        , TrackingMode(InTrackingMode)
+    {
+    }
+
     NODISCARD constexpr bool IsDefault()               const { return IsEnumFlagSet(Flags, EBufferFlags::Default); }
     NODISCARD constexpr bool IsDynamic()               const { return IsEnumFlagSet(Flags, EBufferFlags::Dynamic); }
     NODISCARD constexpr bool IsReadBack()              const { return IsEnumFlagSet(Flags, EBufferFlags::ReadBack); }
@@ -75,7 +142,7 @@ struct FRHIBufferDesc
     EBufferFlags                  Flags        = EBufferFlags::None;
     uint32                        Stride       = 0;
     uint64                        Size         = 0;
-    ERHIResourceStateTrackingMode TrackingMode = ERHIResourceStateTrackingMode::Tracked;
+    ERHIResourceStateTrackingMode TrackingMode = ERHIResourceStateTrackingMode::Manual;
 };
 
 class FRHIBuffer : public FRHIResource 

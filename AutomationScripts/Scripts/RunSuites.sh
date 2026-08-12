@@ -149,6 +149,9 @@ Core-Math-Tests-SSSE3 Core-Math-Tests-SSE4_1 Core-Math-Tests-SSE4_2"
             RHI)
                 TARGETS="RHI-Tests"
                 ;;
+            RendererCore)
+                TARGETS="RendererCore-Tests"
+                ;;
         esac
         ;;
     benchmarks)

@@ -63,6 +63,8 @@ protected:
     virtual ~FRHIOpacityMicromap() = default;
 
 public:
+
+    /** @return D3D12: ID3D12Resource*. Vulkan: VkMicromapEXT. Metal and Null do not implement opacity micromaps. */
     virtual void* GetRHINativeResource() const = 0;
 
     NODISCARD EAccelerationStructureBuildFlags GetFlags() const

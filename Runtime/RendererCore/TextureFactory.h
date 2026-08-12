@@ -37,7 +37,7 @@ public:
     // This function assumes that the 'Dest' is in 'EResourceState::Common'
     bool TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* Dest, ETextureFactoryFlags Flags);
 
-    // Generates a chain of miplevels. This function assumes that the 'Texture' is in 'EResourceState::PixelShaderResource'
+    // Generates a chain of miplevels. This function assumes that the 'Texture' is in 'EResourceState::ShaderResource'
     bool GenerateMiplevels(FRHITexture* Texture, const IRHITextureData* Mip0Data = nullptr);
     bool GenerateMiplevels(FRHICommandList& CommandList, FRHITexture* Texture, const IRHITextureData* Mip0Data = nullptr);
 

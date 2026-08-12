@@ -232,7 +232,7 @@ private:
     void TransitionBarrierTexture(const FRHITransitionBarrierDesc& Desc);
     void TransitionBarrierBuffer(const FRHITransitionBarrierDesc& Desc);
 
-    bool EmitTrackedTransition(FD3D12Resource* Resource, D3D12_RESOURCE_STATES CurrentState, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, uint32 SubresourceIndex, D3D12_RESOURCE_BARRIER_FLAGS BarrierFlags, bool bInferBeforeState);
+    bool EmitTrackedTransition(FD3D12Resource* Resource, D3D12_RESOURCE_STATES CurrentState, D3D12_RESOURCE_STATES AfterState, uint32 SubresourceIndex, D3D12_RESOURCE_BARRIER_FLAGS BarrierFlags);
     void ApplyTrackingModeChange(FD3D12TextureRHI* Texture, const FRHITransitionBarrierDesc& Desc);
 
     void EnsureDefaultState(const FD3D12Resource* Resource) const;

@@ -378,10 +378,8 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
     {
         const uint32 NewVertexCount = DrawData->TotalVtxCount + 50000;
 
-        FRHIBufferDesc VertexBufferDesc;
-        VertexBufferDesc.Stride = sizeof(ImDrawVert);
-        VertexBufferDesc.Size   = VertexBufferDesc.Stride * NewVertexCount;
-        VertexBufferDesc.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
+        const FRHIBufferDesc VertexBufferDesc = FRHIBufferDesc::CreateVertexBuffer(sizeof(ImDrawVert), NewVertexCount,
+            EBufferFlags::Default | EBufferFlags::CopyDest);
 
         TSharedRef<FRHIBuffer> NewVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::GenericRead, nullptr);
         if (NewVertexBuffer)
@@ -400,10 +398,8 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
     {
         const uint32 NewIndexCount = DrawData->TotalIdxCount + 100000;
 
-        FRHIBufferDesc IndexBufferDesc;
-        IndexBufferDesc.Stride = sizeof(ImDrawIdx);
-        IndexBufferDesc.Size   = IndexBufferDesc.Stride * NewIndexCount;
-        IndexBufferDesc.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
+        const FRHIBufferDesc IndexBufferDesc = FRHIBufferDesc::CreateIndexBuffer(sizeof(ImDrawIdx), NewIndexCount,
+            EBufferFlags::Default | EBufferFlags::CopyDest);
 
         TSharedRef<FRHIBuffer> NewIndexBuffer = RHI::CreateBuffer(IndexBufferDesc, ERHIResourceState::GenericRead, nullptr);
         if (NewIndexBuffer)
@@ -650,7 +646,11 @@ void FImGuiRenderer::PrepareTextureForShaderResourceUsage(FRHICommandList& Comma
         return;
     }
 
-    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Texture, ERHIResourceState::PixelShaderResource));
+    if (Texture->GetDesc().TrackingMode != ERHIResourceStateTrackingMode::Static)
+    {
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Texture, ERHIResourceState::PixelShaderResource));
+    }
+
     RenderedTextures.Emplace(Texture);
 }
 

@@ -2,16 +2,14 @@
 #include "Core/Core.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
+#include "Core/Memory/MemoryPagePool.h"
 #include "Core/Memory/MemoryStats.h"
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/Utility.h"
 
-// Currently each page is 64Kb
-#define MEMORY_STACK_PAGE_SIZE int32(64 * 1024)
-#define MEMORY_STACK_ZERO_MEMORY (1)
-
 class CORE_API FMemoryStack : FNonCopyable
 {
+private:
     struct FMemoryHeader
     {
         void* Data()
@@ -24,6 +22,9 @@ class CORE_API FMemoryStack : FNonCopyable
     };
 
 public:
+
+    /** @brief Usable bytes in an ordinary page, sized so that page plus header is one pool block */
+    static constexpr int32 PageSize = FMemoryPagePool::BlockSize - int32(sizeof(FMemoryHeader));
 
     FMemoryStack() = default;
 
@@ -54,7 +55,7 @@ public:
         
         uint8* AlignedAddress = reinterpret_cast<uint8*>(Math::AlignUp<UPTR_INT>(reinterpret_cast<UPTR_INT>(StackStart), Alignment));
         uint8* NewStart       = AlignedAddress + AlignedSize;
-        if (NewStart >= StackEnd)
+        if (NewStart > StackEnd)
         {
             // In case the new chunk needs to be aligned, pass the alignment as well as the size
             AllocateNewChunk(AlignedSize + Alignment);
@@ -89,7 +90,7 @@ public:
 
     bool IsEmpty() const noexcept
     {
-        return TopPage != nullptr;
+        return TopPage == nullptr;
     }
 
     FMemoryStack& operator=(FMemoryStack&& RHS) noexcept
@@ -106,10 +107,10 @@ public:
 private:
     void* AllocateNewChunk(int32 MinSize)
     {
-        const int32 HeapSize  = Math::Max(MEMORY_STACK_PAGE_SIZE, MinSize);
-        const int32 AllocSize = HeapSize + sizeof(FMemoryHeader);
+        const int32 HeapSize  = Math::Max(PageSize, MinSize);
+        const int32 AllocSize = HeapSize + static_cast<int32>(sizeof(FMemoryHeader));
         
-        FMemoryHeader* NewPage = reinterpret_cast<FMemoryHeader*>(Memory::Malloc(AllocSize));
+        FMemoryHeader* NewPage = reinterpret_cast<FMemoryHeader*>(FMemoryPagePool::Get().AcquirePage(AllocSize));
         NewPage->Size = HeapSize;
         
         if (TopPage)
@@ -136,10 +137,13 @@ private:
         while (CurrentChunk != LastPage)
         {
             FMemoryHeader* PreviousChunk = CurrentChunk;
-            STAT_SUBTRACT(STAT_Memory_StackBytes, PreviousChunk->Size + static_cast<int32>(sizeof(FMemoryHeader)));
+            const int32 ChunkSize = PreviousChunk->Size + static_cast<int32>(sizeof(FMemoryHeader));
+
+            STAT_SUBTRACT(STAT_Memory_StackBytes, ChunkSize);
             STAT_SUBTRACT(STAT_Memory_StackPageCount, 1);
+
             CurrentChunk = CurrentChunk->Next;
-            Memory::Free(PreviousChunk);
+            FMemoryPagePool::Get().ReleasePage(PreviousChunk, ChunkSize);
         }
 
         TopPage    = LastPage;

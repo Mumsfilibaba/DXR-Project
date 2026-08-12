@@ -118,12 +118,10 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRes
     ResourceDesc.SampleDesc.Count   = 1;
     ResourceDesc.SampleDesc.Quality = 0;
 
-    const bool bIsManual = (ConvertResourceStateMode(Desc.TrackingMode) == ED3D12ResourceStateMode::ManualState);
-
-    ED3D12ResourceStateMode StateMode         = bIsManual ? ED3D12ResourceStateMode::ManualState : ED3D12ResourceStateMode::MultipleStates;
+    ED3D12ResourceStateMode StateMode         = ConvertResourceStateMode(Desc.TrackingMode);
     D3D12_RESOURCE_STATES   D3D12InitialState = D3D12_RESOURCE_STATE_COMMON;
     D3D12_HEAP_TYPE         D3D12HeapType     = D3D12_HEAP_TYPE_DEFAULT;
-    D3D12_RESOURCE_STATES   D3D12DefaultState = bIsManual ? D3D12_RESOURCE_STATES(0) : DetermineDefaultBufferState(Desc.Flags);
+    D3D12_RESOURCE_STATES   D3D12DefaultState = D3D12_RESOURCE_STATES(0);
 
     if (Desc.IsReadBack())
     {
@@ -140,10 +138,10 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRes
         D3D12DefaultState = D3D12_RESOURCE_STATE_GENERIC_READ;
         StateMode         = ED3D12ResourceStateMode::SingleState;
     }
-    else if (D3D12DefaultState != D3D12_RESOURCE_STATES(0))
+    else if (StateMode == ED3D12ResourceStateMode::SingleState)
     {
-        D3D12InitialState = D3D12DefaultState;
-        StateMode         = ED3D12ResourceStateMode::SingleState;
+        D3D12InitialState = ConvertResourceState(InInitialAccess);
+        D3D12DefaultState = D3D12InitialState;
     }
 
     bool bAllocated = false;

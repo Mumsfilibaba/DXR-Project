@@ -542,13 +542,8 @@ public:
 private:
     void AllocateBackBuffers()
     {
-        const FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(
-            Desc.ColorFormat,
-            Desc.Width,
-            Desc.Height,
-            1,
-            1,
-            ETextureUsageFlags::Presentable | ETextureUsageFlags::RenderTarget);
+        const FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(Desc.ColorFormat,
+            Desc.Width, Desc.Height, 1, 1, ETextureUsageFlags::Presentable | ETextureUsageFlags::RenderTarget);
 
         for (uint32 Index = 0; Index < kNumBackBuffers; ++Index)
         {

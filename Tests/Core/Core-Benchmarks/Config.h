@@ -6,5 +6,6 @@
 //
 // NOTE: there is no build-configuration gate here. Debug timings are misleading,
 // so RunCoreBenchmarks only builds Development and Release.
-#define RUN_TARRAY_BENCHMARKS    (1)
-#define RUN_TASKGRAPH_BENCHMARKS (1)
+#define RUN_TARRAY_BENCHMARKS      (1)
+#define RUN_TASKGRAPH_BENCHMARKS   (1)
+#define RUN_MEMORYSTACK_BENCHMARKS (1)

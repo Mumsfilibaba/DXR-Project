@@ -4,6 +4,10 @@
 
 #define REF_DEVICE
 
+#ifndef BC7_ENCODE_ONLY
+	#define BC7_ENCODE_ONLY (0)
+#endif
+
 #define CHAR_LENGTH 8
 #define NCHANNELS 4
 #define BC7_UNORM 98
@@ -264,10 +268,10 @@ void EnsureAIsLarger(inout uint4 A, inout uint4 B)
 Texture2D<float4> SourceTexture : register(t0);
 StructuredBuffer<uint4> InputBuffer : register(t1);
 
-#ifndef BC7_ENCODE_ONLY
-RWStructuredBuffer<uint4> OutputBuffer : register(u0);
-#else
+#if BC7_ENCODE_ONLY
 TEXTURE_FORMAT_UNKNOWN RWTexture2D<uint4> OutputTexture : register(u0);
+#else
+RWStructuredBuffer<uint4> OutputBuffer : register(u0);
 #endif
 
 #define THREAD_GROUP_SIZE 64
@@ -291,7 +295,7 @@ struct FSharedBlockData
 
 groupshared FSharedBlockData SharedData[THREAD_GROUP_SIZE];
 
-#ifndef BC7_ENCODE_ONLY
+#if !BC7_ENCODE_ONLY
 // ------------------------------------------------------------------------------------------------
 // TryMode456CS - Mode 4, 5, 6 (1 subset per block, fix-up index always 0)
 // ------------------------------------------------------------------------------------------------
@@ -1614,7 +1618,7 @@ void EncodeBlockCS(uint GroupIndex : SV_GroupIndex, uint3 GroupID : SV_GroupID)
 			BlockPackage7(Block, Partition, ThreadBase);
 		}
 
-#ifdef BC7_ENCODE_ONLY
+#if BC7_ENCODE_ONLY
 		OutputTexture[uint2(BlockX, BlockY)] = Block;
 #else
 		OutputBuffer[BlockID] = Block;

@@ -19,8 +19,13 @@ struct FRHIGeometryAccelerationStructureDesc
 {
     constexpr FRHIGeometryAccelerationStructureDesc() noexcept = default;
 
-    constexpr FRHIGeometryAccelerationStructureDesc(FRHIBuffer* InVertexBuffer, uint32 InNumVerticies, FRHIBuffer* InIndexBuffer, uint32 InNumIndices,
-        EIndexFormat InIndexFormat, EAccelerationStructureBuildFlags InFlags) noexcept
+    constexpr FRHIGeometryAccelerationStructureDesc(
+        FRHIBuffer*                      InVertexBuffer,
+        uint32                           InNumVerticies,
+        FRHIBuffer*                      InIndexBuffer,
+        uint32                           InNumIndices,
+        EIndexFormat                     InIndexFormat,
+        EAccelerationStructureBuildFlags InFlags) noexcept
         : VertexBuffer(InVertexBuffer)
         , NumVertices(InNumVerticies)
         , IndexBuffer(InIndexBuffer)
@@ -52,7 +57,9 @@ struct FRHISceneAccelerationStructureDesc
 {
     FRHISceneAccelerationStructureDesc() noexcept = default;
 
-    FRHISceneAccelerationStructureDesc(const TArrayView<const FRHIGeometryAccelerationStructureInstance>& InInstances, EAccelerationStructureBuildFlags InFlags) noexcept
+    FRHISceneAccelerationStructureDesc(
+        const TArrayView<const FRHIGeometryAccelerationStructureInstance>& InInstances,
+        EAccelerationStructureBuildFlags                                   InFlags) noexcept
         : Instances(InInstances)
         , Flags(InFlags)
     {
@@ -85,7 +92,7 @@ protected:
 
 public:
 
-    /** @return D3D12: ID3D12Resource* (result heap). Vulkan: VkAccelerationStructureKHR. Metal/Null: nullptr. */
+    /** @return D3D12: ID3D12Resource*. Vulkan: VkAccelerationStructureKHR or VkBuffer. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeResource() const = 0;
 
     virtual void SetDebugName(const String& InName) = 0;

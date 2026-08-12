@@ -252,10 +252,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
     }
 
     {
-        FRHIBufferDesc IndicesDesc;
-        IndicesDesc.Size   = sizeof(FRayTracingSceneConstantsHLSL);
-        IndicesDesc.Stride = sizeof(FRayTracingSceneConstantsHLSL);
-        IndicesDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
+        const FRHIBufferDesc IndicesDesc = FRHIBufferDesc::CreateConstantBuffer(sizeof(FRayTracingSceneConstantsHLSL));
 
         Resources.RayTracingSceneConstantsBuffer = RHI::CreateBuffer(IndicesDesc, ERHIResourceState::ConstantBuffer, nullptr);
         if (!Resources.RayTracingSceneConstantsBuffer)
@@ -677,10 +674,8 @@ void FRayTracer::BuildSceneAccelerationData(FRHICommandList& CommandList, FFrame
         {
             GeometryTableCapacity = RequiredCount;
 
-            FRHIBufferDesc TableDesc;
-            TableDesc.Stride = sizeof(FRayTracingGeometryIndicesHLSL);
-            TableDesc.Size   = TableDesc.Stride * GeometryTableCapacity;
-            TableDesc.Flags  = EBufferFlags::ShaderResourceBuffer | EBufferFlags::Dynamic;
+            const FRHIBufferDesc TableDesc = FRHIBufferDesc::CreateStructuredBuffer(sizeof(FRayTracingGeometryIndicesHLSL), GeometryTableCapacity,
+                EBufferFlags::Dynamic);
 
             Resources.RayTracingGeometryTableBuffer = RHI::CreateBuffer(TableDesc, ERHIResourceState::GenericRead, nullptr);
             Resources.RayTracingGeometryTableSRV    = nullptr;
@@ -789,25 +784,6 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
         CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Resources.RayTracingSceneConstantsBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ConstantBuffer));
     }
 
-    if (Resources.IntegrationLUT)
-    {
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.IntegrationLUT.Get(), ERHIResourceState::NonPixelShaderResource));
-    }
-
-    if (DiffuseCube)
-    {
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(DiffuseCube, ERHIResourceState::NonPixelShaderResource));
-    }
-
-    if (SpecularCube)
-    {
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SpecularCube, ERHIResourceState::NonPixelShaderResource));
-    }
-
-    if (FSceneSkybox* Skybox = Scene->GetSkybox())
-    {
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Skybox->CubeMap.Get(), ERHIResourceState::NonPixelShaderResource));
-    }
 
     const FRHITransitionBarrierDesc GBufferToRead[] =
     {
@@ -822,10 +798,6 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
     FRHISamplerState* const LUTSampler = Resources.IntegrationLUTSampler ? Resources.IntegrationLUTSampler.Get() : Resources.GBufferSampler.Get();
 
     FRHITexture* const NoiseMask = GetReflectionNoiseMask();
-    if (NoiseMask)
-    {
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(NoiseMask, ERHIResourceState::NonPixelShaderResource));
-    }
 
     const auto BindReflectionGlobals = [&](auto* Shader)
     {

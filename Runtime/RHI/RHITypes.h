@@ -632,6 +632,30 @@ NODISCARD constexpr const CHAR* ToString(ERHIResourceState ResourceState)
     }
 }
 
+inline constexpr ERHIResourceState GRHIReadOnlyStates =
+    ERHIResourceState::ConstantBuffer         |
+    ERHIResourceState::IndexBuffer            |
+    ERHIResourceState::VertexBuffer           |
+    ERHIResourceState::DepthRead              |
+    ERHIResourceState::NonPixelShaderResource |
+    ERHIResourceState::PixelShaderResource    |
+    ERHIResourceState::CopySource             |
+    ERHIResourceState::ResolveSource          |
+    ERHIResourceState::ShadingRateSource      |
+    ERHIResourceState::GenericRead            |
+    ERHIResourceState::IndirectArgument;
+
+NODISCARD constexpr bool RHIIsReadOnlyState(ERHIResourceState State)
+{
+    return State != ERHIResourceState::Common && (State & ~GRHIReadOnlyStates) == ERHIResourceState::Common;
+}
+
+// A declared before-state may under-specify a read-only state, but never claim a bit the resource is not in
+NODISCARD constexpr bool RHIIsBeforeStateValid(ERHIResourceState CurrentState, ERHIResourceState BeforeState)
+{
+    return RHIIsReadOnlyState(BeforeState) ? ((CurrentState & BeforeState) == BeforeState) : (CurrentState == BeforeState);
+}
+
 enum class EPrimitiveTopology : uint8
 {
     Undefined              = 0,
@@ -1070,7 +1094,13 @@ struct FTextureRegion3D
 {
     constexpr FTextureRegion3D() noexcept = default;
 
-    constexpr FTextureRegion3D(uint32 InWidth, uint32 InHeight, uint32 InDepth, uint32 InPositionX = 0, uint32 InPositionY = 0, uint32 InPositionZ = 0) noexcept
+    constexpr FTextureRegion3D(
+        uint32 InWidth,
+        uint32 InHeight,
+        uint32 InDepth,
+        uint32 InPositionX = 0,
+        uint32 InPositionY = 0,
+        uint32 InPositionZ = 0) noexcept
         : Width(InWidth)
         , Height(InHeight)
         , Depth(InDepth)
@@ -1121,7 +1151,13 @@ struct FViewportRegion
 {
     constexpr FViewportRegion() noexcept = default;
 
-    constexpr FViewportRegion(float InWidth, float InHeight, float InPositionX, float InPositionY, float InMinDepth, float InMaxDepth) noexcept
+    constexpr FViewportRegion(
+        float InWidth,
+        float InHeight,
+        float InPositionX,
+        float InPositionY,
+        float InMinDepth,
+        float InMaxDepth) noexcept
         : Width(InWidth)
         , Height(InHeight)
         , PositionX(InPositionX)
@@ -1222,7 +1258,10 @@ struct FRHISceneAccelerationStructureBuildDesc
 {
     constexpr FRHISceneAccelerationStructureBuildDesc() noexcept = default;
 
-    constexpr FRHISceneAccelerationStructureBuildDesc(const FRHIGeometryAccelerationStructureInstance* Instances, uint32 NumInstances, bool bUpdate) noexcept
+    constexpr FRHISceneAccelerationStructureBuildDesc(
+        const FRHIGeometryAccelerationStructureInstance* Instances,
+        uint32                                           NumInstances,
+        bool                                             bUpdate) noexcept
         : Instances(Instances)
         , NumInstances(NumInstances)
         , bUpdate(bUpdate)
@@ -1238,7 +1277,13 @@ struct FRHIGeometryAccelerationStructureBuildDesc
 {
     constexpr FRHIGeometryAccelerationStructureBuildDesc() noexcept = default;
 
-    constexpr FRHIGeometryAccelerationStructureBuildDesc(FRHIBuffer* VertexBuffer, uint32 NumVertices, FRHIBuffer* IndexBuffer, uint32 NumIndices, EIndexFormat IndexFormat, bool bUpdate) noexcept
+    constexpr FRHIGeometryAccelerationStructureBuildDesc(
+        FRHIBuffer*  VertexBuffer,
+        uint32       NumVertices,
+        FRHIBuffer*  IndexBuffer,
+        uint32       NumIndices,
+        EIndexFormat IndexFormat,
+        bool         bUpdate) noexcept
         : VertexBuffer(VertexBuffer)
         , NumVertices(NumVertices)
         , IndexBuffer(IndexBuffer)
@@ -1248,7 +1293,11 @@ struct FRHIGeometryAccelerationStructureBuildDesc
     {
     }
 
-    constexpr FRHIGeometryAccelerationStructureBuildDesc(FRHIBuffer* AABBBuffer, uint32 NumAABBs, uint32 AABBStride, bool bUpdate) noexcept
+    constexpr FRHIGeometryAccelerationStructureBuildDesc(
+        FRHIBuffer* AABBBuffer,
+        uint32      NumAABBs,
+        uint32      AABBStride,
+        bool        bUpdate) noexcept
         : AABBBuffer(AABBBuffer)
         , NumAABBs(NumAABBs)
         , AABBStride(AABBStride)
@@ -1271,14 +1320,17 @@ struct FRHIGeometryAccelerationStructureBuildDesc
 
 enum class ERHIResourceStateTrackingMode : uint8
 {
-    /** Backend tracks state per subresource and infers BeforeState. The desc's BeforeState is only validated */
-    Tracked = 0,
+    /** No mode named. Valid on a barrier that does not change the tracking mode, never on a resource */
+    Unknown = 0,
+
+    /** Backend tracks state per subresource and fills in the before-state, so a barrier only names the after-state */
+    Tracked = 1,
 
     /** Resource never transitions. All transition requests targeting it are dropped */
-    Static = 1,
+    Static = 2,
 
     /** Backend never tracks and never implicitly transitions. The desc's BeforeState is used verbatim */
-    Manual = 2,
+    Manual = 3,
 };
 
 NODISCARD constexpr const CHAR* ToString(ERHIResourceStateTrackingMode TrackingMode)
@@ -1358,7 +1410,6 @@ struct FRHITextureSubresourceRange
 
 struct FRHITransitionBarrierDesc
 {
-public:
     struct FTextureTransition
     {
         FRHITexture*                Resource;
@@ -1371,41 +1422,52 @@ public:
         FBufferRegion Range;
     };
 
-public:
-    FRHITransitionBarrierDesc() noexcept { }
-
     NODISCARD static FRHITransitionBarrierDesc CreateTexture(FRHITexture* InTexture, ERHIResourceState InAfterState) noexcept
     {
         return CreateTextureSubresource(InTexture, InAfterState, InAfterState, FRHITextureSubresourceRange::All(), ERHIBarrierFlags::None);
     }
 
-    NODISCARD static FRHITransitionBarrierDesc CreateTexture(FRHITexture* InTexture, ERHIResourceState InBeforeState, ERHIResourceState InAfterState) noexcept
+    NODISCARD static FRHITransitionBarrierDesc CreateTexture(
+        FRHITexture*      InTexture,
+        ERHIResourceState InBeforeState,
+        ERHIResourceState InAfterState) noexcept
     {
         return CreateTextureSubresource(InTexture, InBeforeState, InAfterState, FRHITextureSubresourceRange::All(), ERHIBarrierFlags::None);
     }
 
-    NODISCARD static FRHITransitionBarrierDesc CreateTextureMip(FRHITexture* InTexture, ERHIResourceState InBeforeState, ERHIResourceState InAfterState,
-        uint32 InMipLevel, uint32 InArraySlice = RHI_ALL_ARRAY_SLICES) noexcept
+    NODISCARD static FRHITransitionBarrierDesc CreateTextureMip(
+        FRHITexture*      InTexture,
+        ERHIResourceState InBeforeState,
+        ERHIResourceState InAfterState,
+        uint32            InMipLevel,
+        uint32            InArraySlice = RHI_ALL_ARRAY_SLICES) noexcept
     {
         return CreateTextureSubresource(InTexture, InBeforeState, InAfterState, FRHITextureSubresourceRange::MakeMip(InMipLevel, InArraySlice), ERHIBarrierFlags::None);
     }
 
-    NODISCARD static FRHITransitionBarrierDesc CreateTextureSubresource(FRHITexture* InTexture, ERHIResourceState InBeforeState, ERHIResourceState InAfterState,
-        const FRHITextureSubresourceRange& InSubresources, ERHIBarrierFlags InFlags = ERHIBarrierFlags::None) noexcept
+    NODISCARD static FRHITransitionBarrierDesc CreateTextureSubresource(
+        FRHITexture*                       InTexture,
+        ERHIResourceState                  InBeforeState,
+        ERHIResourceState                  InAfterState,
+        const FRHITextureSubresourceRange& InSubresources,
+        ERHIBarrierFlags                   InFlags = ERHIBarrierFlags::None) noexcept
     {
         FRHITransitionBarrierDesc Desc;
         Desc.BeforeState          = InBeforeState;
         Desc.AfterState           = InAfterState;
         Desc.Flags                = InFlags;
         Desc.ResourceType         = ERHIBarrierResourceType::Texture;
-        Desc.NewTrackingMode      = ERHIResourceStateTrackingMode::Tracked;
+        Desc.NewTrackingMode      = ERHIResourceStateTrackingMode::Unknown;
         Desc.Texture.Resource     = InTexture;
         Desc.Texture.Subresources = InSubresources;
         return Desc;
     }
 
-    NODISCARD static FRHITransitionBarrierDesc CreateTextureModeChange(FRHITexture* InTexture, ERHIResourceState InBeforeState,
-        ERHIResourceState InAfterState, ERHIResourceStateTrackingMode InNewMode) noexcept
+    NODISCARD static FRHITransitionBarrierDesc CreateTextureModeChange(
+        FRHITexture*                  InTexture,
+        ERHIResourceState             InBeforeState,
+        ERHIResourceState             InAfterState,
+        ERHIResourceStateTrackingMode InNewMode) noexcept
     {
         FRHITransitionBarrierDesc Desc = CreateTextureSubresource(InTexture, InBeforeState, InAfterState, 
             FRHITextureSubresourceRange::All(), ERHIBarrierFlags::ChangeTrackingMode);
@@ -1418,56 +1480,83 @@ public:
         return CreateBufferRange(InBuffer, InAfterState, InAfterState, FBufferRegion::Whole(), ERHIBarrierFlags::None);
     }
 
-    NODISCARD static FRHITransitionBarrierDesc CreateBuffer(FRHIBuffer* InBuffer, ERHIResourceState InBeforeState, ERHIResourceState InAfterState) noexcept
+    NODISCARD static FRHITransitionBarrierDesc CreateBuffer(
+        FRHIBuffer*       InBuffer,
+        ERHIResourceState InBeforeState,
+        ERHIResourceState InAfterState) noexcept
     {
         return CreateBufferRange(InBuffer, InBeforeState, InAfterState, FBufferRegion::Whole(), ERHIBarrierFlags::None);
     }
 
-    NODISCARD static FRHITransitionBarrierDesc CreateBufferRange(FRHIBuffer* InBuffer, ERHIResourceState InBeforeState, ERHIResourceState InAfterState,
-        const FBufferRegion& InRange, ERHIBarrierFlags InFlags = ERHIBarrierFlags::None) noexcept
+    NODISCARD static FRHITransitionBarrierDesc CreateBufferRange(
+        FRHIBuffer*          InBuffer,
+        ERHIResourceState    InBeforeState,
+        ERHIResourceState    InAfterState,
+        const FBufferRegion& InRange,
+        ERHIBarrierFlags     InFlags = ERHIBarrierFlags::None) noexcept
     {
         FRHITransitionBarrierDesc Desc;
         Desc.BeforeState     = InBeforeState;
         Desc.AfterState      = InAfterState;
         Desc.Flags           = InFlags;
         Desc.ResourceType    = ERHIBarrierResourceType::Buffer;
-        Desc.NewTrackingMode = ERHIResourceStateTrackingMode::Tracked;
+        Desc.NewTrackingMode = ERHIResourceStateTrackingMode::Unknown;
         Desc.Buffer.Resource = InBuffer;
         Desc.Buffer.Range    = InRange;
         return Desc;
     }
 
-    NODISCARD static FRHITransitionBarrierDesc CreateTextureSplitBegin(FRHITexture* InTexture, ERHIResourceState InBeforeState, ERHIResourceState InAfterState) noexcept
+    NODISCARD static FRHITransitionBarrierDesc CreateTextureSplitBegin(
+        FRHITexture*      InTexture,
+        ERHIResourceState InBeforeState,
+        ERHIResourceState InAfterState) noexcept
     {
         return CreateTextureSubresource(InTexture, InBeforeState, InAfterState, FRHITextureSubresourceRange::All(), ERHIBarrierFlags::BeginOnly);
     }
 
-    NODISCARD static FRHITransitionBarrierDesc CreateTextureSplitEnd(FRHITexture* InTexture, ERHIResourceState InBeforeState, ERHIResourceState InAfterState) noexcept
+    NODISCARD static FRHITransitionBarrierDesc CreateTextureSplitEnd(
+        FRHITexture*      InTexture,
+        ERHIResourceState InBeforeState,
+        ERHIResourceState InAfterState) noexcept
     {
         return CreateTextureSubresource(InTexture, InBeforeState, InAfterState, FRHITextureSubresourceRange::All(), ERHIBarrierFlags::EndOnly);
     }
 
-    NODISCARD static FRHITransitionBarrierDesc CreateTextureSubresourceSplitBegin(FRHITexture* InTexture, ERHIResourceState InBeforeState, ERHIResourceState InAfterState,
+    NODISCARD static FRHITransitionBarrierDesc CreateTextureSubresourceSplitBegin(
+        FRHITexture*                       InTexture,
+        ERHIResourceState                  InBeforeState,
+        ERHIResourceState                  InAfterState,
         const FRHITextureSubresourceRange& InSubresources) noexcept
     {
         return CreateTextureSubresource(InTexture, InBeforeState, InAfterState, InSubresources, ERHIBarrierFlags::BeginOnly);
     }
 
-    NODISCARD static FRHITransitionBarrierDesc CreateTextureSubresourceSplitEnd(FRHITexture* InTexture, ERHIResourceState InBeforeState, ERHIResourceState InAfterState,
+    NODISCARD static FRHITransitionBarrierDesc CreateTextureSubresourceSplitEnd(
+        FRHITexture*                       InTexture,
+        ERHIResourceState                  InBeforeState,
+        ERHIResourceState                  InAfterState,
         const FRHITextureSubresourceRange& InSubresources) noexcept
     {
         return CreateTextureSubresource(InTexture, InBeforeState, InAfterState, InSubresources, ERHIBarrierFlags::EndOnly);
     }
 
-    NODISCARD static FRHITransitionBarrierDesc CreateBufferSplitBegin(FRHIBuffer* InBuffer, ERHIResourceState InBeforeState, ERHIResourceState InAfterState) noexcept
+    NODISCARD static FRHITransitionBarrierDesc CreateBufferSplitBegin(
+        FRHIBuffer*       InBuffer,
+        ERHIResourceState InBeforeState,
+        ERHIResourceState InAfterState) noexcept
     {
         return CreateBufferRange(InBuffer, InBeforeState, InAfterState, FBufferRegion::Whole(), ERHIBarrierFlags::BeginOnly);
     }
 
-    NODISCARD static FRHITransitionBarrierDesc CreateBufferSplitEnd(FRHIBuffer* InBuffer, ERHIResourceState InBeforeState, ERHIResourceState InAfterState) noexcept
+    NODISCARD static FRHITransitionBarrierDesc CreateBufferSplitEnd(
+        FRHIBuffer*       InBuffer,
+        ERHIResourceState InBeforeState,
+        ERHIResourceState InAfterState) noexcept
     {
         return CreateBufferRange(InBuffer, InBeforeState, InAfterState, FBufferRegion::Whole(), ERHIBarrierFlags::EndOnly);
     }
+
+    FRHITransitionBarrierDesc() noexcept { }
 
     NODISCARD constexpr bool IsTexture()            const noexcept { return ResourceType == ERHIBarrierResourceType::Texture; }
     NODISCARD constexpr bool IsBuffer()             const noexcept { return ResourceType == ERHIBarrierResourceType::Buffer; }
@@ -1513,7 +1602,9 @@ public:
         return CreateTextureSubresource(InTexture, FRHITextureSubresourceRange::All());
     }
 
-    NODISCARD static FRHIUnorderedAccessBarrierDesc CreateTextureSubresource(FRHITexture* InTexture, const FRHITextureSubresourceRange& InSubresources) noexcept
+    NODISCARD static FRHIUnorderedAccessBarrierDesc CreateTextureSubresource(
+        FRHITexture*                       InTexture,
+        const FRHITextureSubresourceRange& InSubresources) noexcept
     {
         FRHIUnorderedAccessBarrierDesc Desc;
         Desc.ResourceType         = ERHIBarrierResourceType::Texture;

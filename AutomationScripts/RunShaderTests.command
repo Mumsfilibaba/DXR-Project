@@ -168,6 +168,9 @@ esac
 #    cascadekind CASCADE_PASS_KIND over multi, single, geometry and view-instanced
 #    gsonly     restrict the pass kind to the geometry-shader variant
 #    raytracing skip the entry on backends that report no ray tracing support
+#    once       compile a single permutation, with none of the material defines
+#    cubemap    ENABLE_CUBE_MAP, for the BC6H variant that reads a cube face
+#    encodeonly BC7_ENCODE_ONLY, for the BC7 pass that packs blocks into a texture
 # ---------------------------------------------------------------------------
 ENTRIES="\
 BasePassVS|BasePass.hlsl|VSMain|vs|material normalmap bindless
@@ -185,7 +188,24 @@ CascadeShadowVS|Shadows/CascadedShadows.hlsl|Cascade_VSMain|vs|material bindless
 CascadeShadowGS|Shadows/CascadedShadows.hlsl|Cascade_GSMain|gs|material bindless depthattr cascadekind gsonly
 CascadeShadowPS|Shadows/CascadedShadows.hlsl|Cascade_PSMain|ps|material bindless depthattr cascadekind
 ClosestHit|ClosestHit.hlsl|ClosestHit|lib|bindless raytracing
-InlineReflections|InlineReflections.hlsl|Main|cs|alwaysbindless raytracing"
+InlineReflections|InlineReflections.hlsl|Main|cs|alwaysbindless raytracing
+BlockCompressBC1|BlockCompression/BlockCompressionBC1.hlsl|Main|cs|once
+BlockCompressBC2|BlockCompression/BlockCompressionBC2.hlsl|Main|cs|once
+BlockCompressBC3|BlockCompression/BlockCompressionBC3.hlsl|Main|cs|once
+BlockCompressBC4|BlockCompression/BlockCompressionBC4.hlsl|Main|cs|once
+BlockCompressBC5|BlockCompression/BlockCompressionBC5.hlsl|Main|cs|once
+BlockCompressBC6H|BlockCompression/BlockCompressionBC6H.hlsl|Main|cs|once cubemap
+BC7TryMode456|BlockCompression/BlockCompressionBC7.hlsl|TryMode456CS|cs|once
+BC7TryMode137|BlockCompression/BlockCompressionBC7.hlsl|TryMode137CS|cs|once
+BC7TryMode02|BlockCompression/BlockCompressionBC7.hlsl|TryMode02CS|cs|once
+BC7EncodeBlock|BlockCompression/BlockCompressionBC7.hlsl|EncodeBlockCS|cs|once encodeonly
+CubeMapGen|CubeMapGen.hlsl|Main|cs|once
+GenerateMipsTex2D|GenerateMipsTex2D.hlsl|Main|cs|once
+GenerateMipsTexCube|GenerateMipsTexCube.hlsl|Main|cs|once
+IrradianceGen|IrradianceGen.hlsl|Main|cs|once
+SpecularIrradianceGen|SpecularIrradianceGen.hlsl|Main|cs|once
+PackMaterialParams|PackMaterialParams.hlsl|Main|cs|once
+BakeAlpha|BakeAlpha.hlsl|Main|cs|once"
 
 has_axis() {
     case " $2 " in
@@ -278,6 +298,37 @@ sweep_entry() {
         fi
 
         compile_one "$NAME" "$SOURCE" "$ENTRY" "${STAGE}_6_6" "default"
+        return
+    fi
+
+    # The compute entries answer to none of the material axes, so each one compiles once per value
+    # of the single dimension it does name.
+    if has_axis once "$AXES"; then
+        CUBE_VALUES="none"
+        if has_axis cubemap "$AXES"; then
+            CUBE_VALUES="0 1"
+        fi
+
+        for CUBE in $CUBE_VALUES; do
+            DEFINES=()
+            DESC="default"
+
+            # The cube-map variant reads a TextureCube and writes an array slice, so it is its own compile.
+            if [ "$CUBE" != "none" ]; then
+                DEFINES+=("ENABLE_CUBE_MAP=($CUBE)")
+                DESC="cubemap=$CUBE"
+            fi
+
+            # BC7 splits its mode search, which hands candidates on through a buffer, from the pass
+            # that packs blocks into the destination texture.
+            if has_axis encodeonly "$AXES"; then
+                DEFINES+=("BC7_ENCODE_ONLY=(1)")
+                DESC="encodeonly=1"
+            fi
+
+            compile_one "$NAME" "$SOURCE" "$ENTRY" "${STAGE}_${BASE_MODEL}" "$DESC" "${DEFINES[@]}"
+        done
+
         return
     fi
 

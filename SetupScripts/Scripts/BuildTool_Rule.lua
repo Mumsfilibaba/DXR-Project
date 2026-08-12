@@ -642,6 +642,15 @@ function BuildRules(Name)
                     XcodeSettings["CLANG_X86_VECTOR_INSTRUCTIONS"] = VectorLevel
                 end
 
+                if #self.IncludeDirs > 0 then
+                    local SearchPaths = { "$(inherited)" }
+                    for _, IncludeDir in ipairs(self.IncludeDirs) do
+                        table.insert(SearchPaths, ('"%s"'):format(path.getabsolute(IncludeDir)))
+                    end
+
+                    XcodeSettings["HEADER_SEARCH_PATHS"] = table.concat(SearchPaths, " ")
+                end
+
                 xcodebuildsettings(XcodeSettings)
             filter {}
 
@@ -670,7 +679,7 @@ function BuildRules(Name)
 
             -- Include roots + grouping/output
             if ModuleInfo.Root == "Runtime" then
-                ModuleRule.AddExternalIncludeDirs({
+                ModuleRule.AddIncludeDirs({
                     GetRuntimeFolderPath()
                 })
             elseif ModuleInfo.Root == "ThirdParty" then
@@ -695,9 +704,7 @@ function BuildRules(Name)
                     ModuleRule.ProjectFilePathOverride = JoinPath("ThirdParty", RelativePath)
                 end
             else
-                -- Any other search root (Tests, for one). Expose the module's parent folder
-                -- so consumers can keep writing '#include <ModuleName/...>'.
-                ModuleRule.AddExternalIncludeDirs({
+                ModuleRule.AddIncludeDirs({
                     CreateOsPath(path.getdirectory(ModuleInfo.ScriptDir))
                 })
 

@@ -174,10 +174,8 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
 
 bool FSelectionOutlinePass::CreateSelectedIDsBuffer()
 {
-    FRHIBufferDesc BufferDesc;
-    BufferDesc.Stride = sizeof(uint32);
-    BufferDesc.Size   = uint64(BufferDesc.Stride) * MaxSelectedIDs;
-    BufferDesc.Flags  = EBufferFlags::ShaderResourceBuffer | EBufferFlags::CopyDest | EBufferFlags::Default;
+    const FRHIBufferDesc BufferDesc = FRHIBufferDesc::CreateStructuredBuffer(sizeof(uint32), MaxSelectedIDs,
+        EBufferFlags::Default | EBufferFlags::CopyDest);
 
     SelectedIDsBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::PixelShaderResource, nullptr);
     if (!SelectedIDsBuffer)

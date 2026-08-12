@@ -51,7 +51,13 @@ bool FTexture2D::CreateRHITexture(bool bGenerateMips)
     }
 
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(Format, Width, Height, NumMipsRHI, 1, TextureUsage);
-    TextureRHI = RHI::CreateTexture(TextureDesc, ERHIResourceState::PixelShaderResource, TextureData);
+
+    if (!bGenerateMips)
+    {
+        TextureDesc.TrackingMode = ERHIResourceStateTrackingMode::Static;
+    }
+
+    TextureRHI = RHI::CreateTexture(TextureDesc, ERHIResourceState::ShaderResource, TextureData);
     if (!TextureRHI)
     {
         DEBUG_BREAK();
@@ -61,7 +67,15 @@ bool FTexture2D::CreateRHITexture(bool bGenerateMips)
     if (bGenerateMips)
     {
         CHECK(!IsBlockCompressed(Format));
-        FTextureFactory::Get().GenerateMiplevels(TextureRHI.Get(), TextureData);
+
+        FRHICommandList CommandList;
+        if (FTextureFactory::Get().GenerateMiplevels(CommandList, TextureRHI.Get(), TextureData))
+        {
+            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTextureModeChange(
+                TextureRHI.Get(), ERHIResourceState::ShaderResource, ERHIResourceState::ShaderResource, ERHIResourceStateTrackingMode::Static));
+        }
+
+        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
     }
 
     return true;

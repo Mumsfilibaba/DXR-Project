@@ -110,7 +110,6 @@ public:
     /** @return D3D12: nullptr. Vulkan: nullptr. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeState() const = 0;
 
-    /** @brief Returns the descriptor used to create this state. */
     NODISCARD const FRHIDepthStencilStateDesc& GetDesc() const
     {
         return Desc;
@@ -210,7 +209,6 @@ public:
     /** @return D3D12: nullptr. Vulkan: nullptr. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeState() const = 0;
 
-    /** @brief Returns the descriptor used to create this state. */
     NODISCARD const FRHIRasterizerStateDesc& GetDesc() const
     {
         return Desc;
@@ -427,7 +425,6 @@ public:
     /** @return D3D12: nullptr. Vulkan: nullptr. Metal: nullptr. Null: nullptr. */
     virtual void* GetRHINativeState() const = 0;
 
-    /** @brief Returns the descriptor used to create this state. */
     NODISCARD const FRHIBlendStateDesc& GetDesc() const
     {
         return Desc;
@@ -515,15 +512,11 @@ protected:
 
 public:
 
-    /** 
-     * @return D3D12: ID3D12PipelineState* (graphics/compute) or ID3D12StateObject* (ray tracing). 
-     * Vulkan: VkPipeline (graphics/compute/ray tracing). 
-     * Metal: id<MTLRenderPipelineState> (graphics) or nullptr.
-     * */
+    /** @return D3D12: ID3D12PipelineState* or ID3D12StateObject*. Vulkan: VkPipeline. Metal: id<MTLRenderPipelineState> or nullptr. Null: nullptr. */
     virtual void* GetRHINativeState() const = 0;
 
-    virtual void SetDebugName(const String& InName) { }
-    virtual void GetDebugName(String& OutDebugName) const { OutDebugName.Clear(); }
+    virtual void SetDebugName(const String& InName) = 0;
+    virtual void GetDebugName(String& OutDebugName) const = 0;
 };
 
 struct FRHIGraphicsPipelineFormats

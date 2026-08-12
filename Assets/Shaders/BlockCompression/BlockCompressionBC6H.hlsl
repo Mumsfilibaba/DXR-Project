@@ -5,8 +5,12 @@
 // "loop control variable conflicts with a previous declaration in the outer scope"
 #pragma warning(disable : 3078)
 
+#ifndef ENABLE_CUBE_MAP
+	#define ENABLE_CUBE_MAP (0)
+#endif
+
 // Whether to use P2 modes (4 endpoints) for compression. Slow, but improves quality.
-#ifdef ENABLE_CUBE_MAP
+#if ENABLE_CUBE_MAP
 	#define QUALITY (0)
 #else
 	#define QUALITY (1)
@@ -28,7 +32,7 @@
 static const float HALF_MAX    = 65504.0;
 static const uint  PATTERN_NUM = 32;
 
-#ifdef ENABLE_CUBE_MAP
+#if ENABLE_CUBE_MAP
 	TextureCube<float4>                            SourceTexture : register(t0);
 	TEXTURE_FORMAT_UNKNOWN RWTexture2DArray<uint4> OutputTexture : register(u0);
 #else
@@ -782,7 +786,7 @@ void Main(uint3 GroupID : SV_GroupID, uint3 DispatchThreadID : SV_DispatchThread
 		// 12 13 14 15
 		const float2 TexCoord = BlockCoord * Constants.TextureSizeRcp * 4.0 + Constants.TextureSizeRcp;
 
-	#ifdef ENABLE_CUBE_MAP
+	#if ENABLE_CUBE_MAP
 		float3 Block0UV = TexCoordToCubeMapDir(TexCoord, DispatchThreadID.z);
 		float3 Block1UV = TexCoordToCubeMapDir(TexCoord + float2(2.0 * Constants.TextureSizeRcp.x, 0.0), DispatchThreadID.z); 
 		float3 Block2UV = TexCoordToCubeMapDir(TexCoord + float2(0.0, 2.0 * Constants.TextureSizeRcp.y), DispatchThreadID.z);
@@ -847,7 +851,7 @@ void Main(uint3 GroupID : SV_GroupID, uint3 DispatchThreadID : SV_DispatchThread
 		EncodeP2Pattern(Block, BlockMSLE, BestPattern, Texels);
 	#endif
 
-	#ifdef ENABLE_CUBE_MAP
+	#if ENABLE_CUBE_MAP
 		OutputTexture[DispatchThreadID] = Block;
 	#else
 		OutputTexture[BlockCoord] = Block;

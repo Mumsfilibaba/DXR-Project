@@ -5,6 +5,7 @@
     - [Contents](#contents)
   - [If Statements](#if-statements)
   - [Loops](#loops)
+  - [Function Signatures](#function-signatures)
   - [Templates](#templates)
   - [Classes](#classes)
   - [Structs](#structs)
@@ -60,6 +61,27 @@ do
 ```
 
 * Avoid single-line loops. This is to minimize the amount of bugs in the application.
+
+### Function Signatures
+* A signature with five or more parameters, or one that would run past roughly 140 columns, is written with one parameter per line. The types are padded into a column of their own and so are the default values, which lets the parameter list be read top to bottom:
+
+```
+NODISCARD static FRHITextureDesc CreateTexture1D(
+    EFormat                       InFormat,
+    uint32                        InWidth,
+    uint32                        InNumMipLevels,
+    ETextureUsageFlags            InUsageFlags,
+    const FClearValue&            InClearValue   = FClearValue(),
+    ERHIResourceStateTrackingMode InTrackingMode = ERHIResourceStateTrackingMode::Manual)
+{
+}
+```
+
+* The opening parenthesis ends the name line, the parameters are indented one level, and the closing parenthesis stays on the last parameter together with any trailing `noexcept` or `const`
+
+* Constructors are written the same way, and their initializer list keeps its usual indentation below the signature
+
+* Shorter signatures stay on one line. When a struct's overloads or factories fall on either side of the limit by only a few characters, wrap the whole family so they read alike.
 
 ### Templates
 * Templates should use the following style:

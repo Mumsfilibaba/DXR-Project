@@ -510,7 +510,8 @@ bool FEditorEngine::CreateViewportRenderTarget()
     }
 
     const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
-    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FEditorEngine::ViewportImageFormat, Size.X, Size.Y, 1, 1, UsageFlags);
+    const FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FEditorEngine::ViewportImageFormat,
+        Size.X, Size.Y, 1, 1, UsageFlags, FClearValue(), ERHIResourceStateTrackingMode::Tracked);
 
     FRHITextureRef NewViewportImage = RHI::CreateTexture(TextureDesc, ERHIResourceState::RenderTarget);
     if (NewViewportImage)

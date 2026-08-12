@@ -228,8 +228,7 @@ NSRect FMacApplication::ConvertCocoaRectToEngine(CGFloat Width, CGFloat Height, 
 }
 
 FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
-    : MessageHandler(nullptr)
-    , LocalEventMonitor(nullptr)
+    : LocalEventMonitor(nullptr)
     , GlobalMouseMovedEventMonitor(nullptr)
     , Observer(nullptr)
     , WindowUnderCursor(nullptr)
@@ -251,6 +250,7 @@ FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
     , ClosedWindowsCS()
     , DeferredEvents()
     , DeferredEventsCS()
+    , MessageHandler(nullptr)
 {
     if (!GMacApplication)
     {

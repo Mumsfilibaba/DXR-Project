@@ -108,18 +108,6 @@ FVulkanBufferRHI::~FVulkanBufferRHI()
     }
 }
 
-static ERHIResourceStateTrackingMode VulkanResolveBufferTrackingMode(const FRHIBufferDesc& InDesc)
-{
-    if (InDesc.TrackingMode != ERHIResourceStateTrackingMode::Tracked)
-    {
-        return InDesc.TrackingMode;
-    }
-
-    return (InDesc.IsDynamic() || InDesc.IsTransient() || InDesc.IsReadBack())
-        ? ERHIResourceStateTrackingMode::Static
-        : ERHIResourceStateTrackingMode::Tracked;
-}
-
 bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, ERHIResourceState InInitialAccess, const void* InInitialData)
 {
     FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
@@ -288,7 +276,10 @@ bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, ERHIR
         }
     }
 
-    Desc.TrackingMode = VulkanResolveBufferTrackingMode(Desc);
+    if (Desc.IsDynamic() || Desc.IsTransient() || Desc.IsReadBack())
+    {
+        Desc.TrackingMode = ERHIResourceStateTrackingMode::Static;
+    }
 
     if (Desc.TrackingMode == ERHIResourceStateTrackingMode::Static)
     {

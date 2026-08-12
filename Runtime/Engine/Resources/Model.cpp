@@ -76,10 +76,7 @@ bool FMesh::Initialize(const FMeshData& MeshData, bool bCreateRayTracingResource
         InitialIndicies = MeshData.Indices.Data();
     }
 
-	FRHIBufferDesc IndexBufferDesc;
-    IndexBufferDesc.Stride = GetStrideFromIndexFormat(IndexFormat);
-    IndexBufferDesc.Size   = IndexCount * IndexBufferDesc.Stride;
-    IndexBufferDesc.Flags  = BufferFlags | EBufferFlags::IndexBuffer;
+    const FRHIBufferDesc IndexBufferDesc = FRHIBufferDesc::CreateIndexBuffer(IndexFormat, IndexCount, BufferFlags);
 
     IndexBuffer = RHI::CreateBuffer(IndexBufferDesc, ERHIResourceState::IndexBuffer, InitialIndicies);
     if (!IndexBuffer)
@@ -156,10 +153,7 @@ bool FMesh::CreateVertexStreams(const FMeshData& MeshData)
             return false;
         }
 
-        FRHIBufferDesc StreamDesc;
-        StreamDesc.Stride = Stride;
-        StreamDesc.Size   = StreamData.SizeInBytes();
-        StreamDesc.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::Default;
+        FRHIBufferDesc StreamDesc(EBufferFlags::VertexBuffer | EBufferFlags::Default, Stride, StreamData.SizeInBytes());
 
         if (StreamIndex == EVertexStreamIndex::Attributes)
         {
