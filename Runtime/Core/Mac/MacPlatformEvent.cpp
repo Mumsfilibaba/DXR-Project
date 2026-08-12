@@ -6,7 +6,7 @@
 #include <time.h>
 #include <Foundation/Foundation.h>
 
-IPlatformEvent* FMacPlatformEvent::Create(bool bManualReset)
+IPlatformEvent* FMacPlatformEvent::CreateUnpooled(bool bManualReset)
 {
     FMacPlatformEvent* NewEvent = new FMacPlatformEvent();
     if (!NewEvent->Initialize(bManualReset))
@@ -18,13 +18,9 @@ IPlatformEvent* FMacPlatformEvent::Create(bool bManualReset)
     return NewEvent;
 }
 
-void FMacPlatformEvent::Recycle(IPlatformEvent* InEvent)
+void FMacPlatformEvent::DestroyUnpooled(IPlatformEvent* InEvent)
 {
-    FMacPlatformEvent* MacEvent = static_cast<FMacPlatformEvent*>(InEvent);
-    if (MacEvent)
-    {
-        delete MacEvent;
-    }
+    delete static_cast<FMacPlatformEvent*>(InEvent);
 }
 
 FMacPlatformEvent::FMacPlatformEvent()
@@ -42,24 +38,26 @@ FMacPlatformEvent::~FMacPlatformEvent()
     if (bInitialized)
     {
         LockMutex();
-        bManualReset = true;
+        {
+            bManualReset = true;
+        }
         UnlockMutex();
 
         Trigger();
 
         LockMutex();
-
-        bInitialized = false;
-
-        while (FPlatformAtomic::Read(&NumWaitingThreads) > 0)
         {
-            UnlockMutex();
-            FPlatformThreadMisc::Yield();
-            LockMutex();
+            bInitialized = false;
+
+            while (FPlatformAtomic::Read(&NumWaitingThreads) > 0)
+            {
+                UnlockMutex();
+                FPlatformThreadMisc::Yield();
+                LockMutex();
+            }
+
+            pthread_cond_destroy(&Condition);
         }
-
-        pthread_cond_destroy(&Condition);
-
         UnlockMutex();
         
         pthread_mutex_destroy(&Mutex);

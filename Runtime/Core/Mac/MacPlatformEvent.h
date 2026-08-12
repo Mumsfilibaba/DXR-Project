@@ -12,8 +12,8 @@ class FMacPlatformEvent final : public IPlatformEvent
     };
 
 public:
-    static IPlatformEvent* Create(bool bManualReset);
-    static void Recycle(IPlatformEvent* InEvent);
+    static IPlatformEvent* CreateUnpooled(bool bManualReset);
+    static void DestroyUnpooled(IPlatformEvent* InEvent);
 
 public:
     virtual void Trigger() override final;

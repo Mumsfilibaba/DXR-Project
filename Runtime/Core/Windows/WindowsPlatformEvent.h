@@ -5,9 +5,10 @@
 class CORE_API FWindowsPlatformEvent final : public IPlatformEvent
 {
 public:
-    static IPlatformEvent* Create(bool bManualReset);
-    static void Recycle(IPlatformEvent* InEvent);
+    static IPlatformEvent* CreateUnpooled(bool bManualReset);
+    static void DestroyUnpooled(IPlatformEvent* InEvent);
 
+public:
     virtual void Trigger() override final;
     virtual void Wait(uint64 Milliseconds) override final;
     virtual void Reset() override final;

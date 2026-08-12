@@ -1,6 +1,7 @@
 #include "Launch/EngineLoop.h"
 #include "Core/CoreGlobals.h"
 #include "Core/Memory/MemoryPagePool.h"
+#include "Core/PlatformInterface/PlatformEventPool.h"
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Threading/ThreadManager.h"
 #include "Core/Tasks/TaskGraph.h"
@@ -339,6 +340,7 @@ void FEngineLoop::Tick()
     RendererModule->KickSceneRender(::Move(Packet));
 
     FMemoryPagePool::Get().Tick();
+    FPlatformEventPool::Get().Tick();
     FFrameProfiler::Get().Tick();
 }
 
@@ -393,6 +395,7 @@ void FEngineLoop::Release()
     FModuleManager::Shutdown();
 
     FMemoryPagePool::Get().Flush();
+    FPlatformEventPool::Get().Flush();
 
     if (FPlatformMisc::IsDebuggerPresent())
     {

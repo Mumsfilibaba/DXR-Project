@@ -254,6 +254,12 @@ FSceneRenderer::~FSceneRenderer()
 {
     FRHICommandListExecutor::Get().WaitForGPU();
 
+    if (LastFrameFinishedEvent)
+    {
+        FPlatformEvent::Recycle(LastFrameFinishedEvent);
+        LastFrameFinishedEvent = nullptr;
+    }
+
     CommandList.Reset();
 
     SAFE_DELETE(DepthPrePass);

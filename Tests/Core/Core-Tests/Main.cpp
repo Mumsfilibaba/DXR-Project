@@ -19,6 +19,7 @@
 #include "BlueNoiseGeneratorTests.h"
 #include "PlatformTimeTests.h"
 #include "MemoryStackTests.h"
+#include "PlatformEventPoolTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -55,6 +56,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("BlueNoiseGenerator", BlueNoiseGenerator_Test());
     RUN_TEST("PlatformTime", PlatformTime_Test());
     RUN_TEST("MemoryStack", MemoryStack_Test());
+    RUN_TEST("PlatformEventPool", PlatformEventPool_Test());
 
     FTaskGraph::Release();
     FThreadManager::Release();

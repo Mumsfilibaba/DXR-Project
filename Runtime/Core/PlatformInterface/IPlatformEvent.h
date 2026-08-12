@@ -1,6 +1,5 @@
 #pragma once
 #include "Core/Time/Timespan.h"
-#include "Core/Containers/SharedRef.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -8,16 +7,17 @@ struct IPlatformEvent
 {
 public:
 
-    /** @brief Creates a new event. Each platform hides this with its own */
-    static IPlatformEvent* Create(bool bManualReset)
-    {
-        return nullptr;
-    }
+    /** @brief Take an event from the pool, creating one when the pool holds none of this reset mode */
+    static IPlatformEvent* Create(bool bManualReset);
 
-    /** @brief Return the event to the system for reuse if possible. Each platform hides this with its own */
-    static void Recycle(IPlatformEvent* InEvent)
-    {
-    }
+    /** @brief Return an event to the pool */
+    static void Recycle(IPlatformEvent* InEvent);
+
+    /** @brief Raw OS alloc */
+    static IPlatformEvent* CreateUnpooled(bool bManualReset);
+
+    /** @brief Raw OS free */
+    static void DestroyUnpooled(IPlatformEvent* InEvent);
 
 public:
 
