@@ -51,14 +51,15 @@ struct FSceneRenderView
         All   = Red | Green | Blue | Alpha,
     };
 
-    IScene*           Scene                = nullptr;
-    FRHITexture*      RenderTarget         = nullptr;
-    EDebugView        DebugView            = EDebugView::None;
-    EDebugView        SecondaryDebugView   = EDebugView::None;
-    EDebugViewChannel DebugViewChannelMask = EDebugViewChannel::All;
-    FCameraSnapshot   CameraSnapshot       = {};
-    bool              bHasCamera           = false;
-    bool              bCameraCut           = false;
+    IScene*           Scene                      = nullptr;
+    FRHITexture*      RenderTarget               = nullptr;
+    EDebugView        DebugView                  = EDebugView::None;
+    EDebugView        SecondaryDebugView         = EDebugView::None;
+    EDebugViewChannel DebugViewChannelMask       = EDebugViewChannel::All;
+    FCameraSnapshot   CameraSnapshot             = {};
+    bool              bHasCamera             : 1 = false;
+    bool              bCameraCut             : 1 = false;
+    bool              bEditorOverlaysEnabled : 1 = false;
 };
 
 ENUM_CLASS_OPERATORS(FSceneRenderView::EDebugViewChannel);
@@ -146,7 +147,8 @@ public:
      * with any other pending request for the same swap-chain and applied as a single RHI command 
      * at the start of the next frame.
      */
-    virtual void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth, uint32 InHeight, EFormat InFormat = EFormat::Unknown, EColorSpace InColorSpace = EColorSpace::Unknown) = 0; 
+    virtual void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth, uint32 InHeight, 
+        EFormat InFormat = EFormat::Unknown, EColorSpace InColorSpace = EColorSpace::Unknown) = 0; 
 
     /** @brief Release the Renderer from the EngineLoop */
     virtual void Release() = 0;

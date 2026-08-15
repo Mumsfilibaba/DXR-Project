@@ -904,11 +904,15 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
         if (bAnyDebugDraw && SceneRenderView.RenderTarget)
         {
         #if EDITOR_BUILD
-            FRHITexture* DebugDepthTarget      = Resources.EditorNoJitterDepth.Get();
-            const bool   bDebugDepthIsJittered = false;
+            const bool bUseEditorDepth       = SceneRenderView.bEditorOverlaysEnabled;
+            const bool bDebugDepthIsJittered = !bUseEditorDepth && PrevFrameSamplePositions.NumSamplesPerPixel > 0;
+
+            FRHITexture* DebugDepthTarget = bUseEditorDepth
+                ? Resources.EditorNoJitterDepth.Get()
+                : Resources.GBuffer[EGBufferIndex::Depth].Get();
         #else
-            FRHITexture* DebugDepthTarget      = Resources.GBuffer[EGBufferIndex::Depth].Get();
             const bool   bDebugDepthIsJittered = PrevFrameSamplePositions.NumSamplesPerPixel > 0;
+            FRHITexture* DebugDepthTarget      = Resources.GBuffer[EGBufferIndex::Depth].Get();
         #endif
 
             if (bDebugDepthIsJittered)

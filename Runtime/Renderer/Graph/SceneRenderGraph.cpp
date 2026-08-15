@@ -181,62 +181,67 @@ void FSceneRenderer::BuildAndExecuteSceneGraph(const FSceneRenderView& SceneRend
     bRayTracingWasActive = bIsRayTracingActive;
 
 #if EDITOR_BUILD
-    Context.TonemappedTarget = GraphBuilder.CreateTexture(
-        CreateGBufferDesc(RendererTextureFormats::RenderTargetFormat, RenderWidth, RenderHeight), "TonemappedTarget");
+    const bool bEditorOverlays = SceneRenderView.bEditorOverlaysEnabled;
 
-    if (FrameResourcesRef.EditorNoJitterDepth)
+    if (bEditorOverlays)
     {
-        Context.EditorNoJitterDepth = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.EditorNoJitterDepth.Get(), "EditorNoJitterDepth",
-            ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
-    }
+        Context.TonemappedTarget = GraphBuilder.CreateTexture(
+            CreateGBufferDesc(RendererTextureFormats::RenderTargetFormat, RenderWidth, RenderHeight), "TonemappedTarget");
 
-    if (FrameResourcesRef.EditorObjectID_NoJitter)
-    {
-        Context.EditorObjectID_NoJitter = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.EditorObjectID_NoJitter.Get(), "EditorObjectID",
-            ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
-    }
+        if (FrameResourcesRef.EditorNoJitterDepth)
+        {
+            Context.EditorNoJitterDepth = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.EditorNoJitterDepth.Get(), "EditorNoJitterDepth",
+                ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
+        }
 
-    // The outline chain ping-pongs between these, so the graph has to see every step of it
-    if (FRHITexture* SelectionMask = SelectionOutlinePass->GetSelectionMask())
-    {
-        Context.SelectionMask = GraphBuilder.RegisterExternalTexture(SelectionMask, "SelectionMask",
-            ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
-    }
+        if (FrameResourcesRef.EditorObjectID_NoJitter)
+        {
+            Context.EditorObjectID_NoJitter = GraphBuilder.RegisterExternalTexture(FrameResourcesRef.EditorObjectID_NoJitter.Get(), "EditorObjectID",
+                ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
+        }
 
-    if (FRHITexture* ErosionTemp = SelectionOutlinePass->GetErosionTemp())
-    {
-        Context.SelectionErosionTemp = GraphBuilder.RegisterExternalTexture(ErosionTemp, "SelectionErosionTemp",
-            ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
-    }
+        // The outline chain ping-pongs between these, so the graph has to see every step of it
+        if (FRHITexture* SelectionMask = SelectionOutlinePass->GetSelectionMask())
+        {
+            Context.SelectionMask = GraphBuilder.RegisterExternalTexture(SelectionMask, "SelectionMask",
+                ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
+        }
 
-    if (FRHITexture* ErodedMask = SelectionOutlinePass->GetErodedMask())
-    {
-        Context.SelectionErodedMask = GraphBuilder.RegisterExternalTexture(ErodedMask, "SelectionErodedMask",
-            ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
-    }
+        if (FRHITexture* ErosionTemp = SelectionOutlinePass->GetErosionTemp())
+        {
+            Context.SelectionErosionTemp = GraphBuilder.RegisterExternalTexture(ErosionTemp, "SelectionErosionTemp",
+                ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
+        }
 
-    if (FRHITexture* DilationTemp = SelectionOutlinePass->GetDilationTemp())
-    {
-        Context.SelectionDilationTemp = GraphBuilder.RegisterExternalTexture(DilationTemp, "SelectionDilationTemp",
-            ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
-    }
+        if (FRHITexture* ErodedMask = SelectionOutlinePass->GetErodedMask())
+        {
+            Context.SelectionErodedMask = GraphBuilder.RegisterExternalTexture(ErodedMask, "SelectionErodedMask",
+                ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
+        }
 
-    if (FRHITexture* DilatedMask = SelectionOutlinePass->GetDilatedMask())
-    {
-        Context.SelectionDilatedMask = GraphBuilder.RegisterExternalTexture(DilatedMask, "SelectionDilatedMask",
-            ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
-    }
+        if (FRHITexture* DilationTemp = SelectionOutlinePass->GetDilationTemp())
+        {
+            Context.SelectionDilationTemp = GraphBuilder.RegisterExternalTexture(DilationTemp, "SelectionDilationTemp",
+                ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
+        }
 
-    if (FRHITexture* RingMask = SelectionOutlinePass->GetRingMask())
-    {
-        Context.SelectionRing = GraphBuilder.RegisterExternalTexture(RingMask, "SelectionRing",
-            ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
-    }
+        if (FRHITexture* DilatedMask = SelectionOutlinePass->GetDilatedMask())
+        {
+            Context.SelectionDilatedMask = GraphBuilder.RegisterExternalTexture(DilatedMask, "SelectionDilatedMask",
+                ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
+        }
 
-    if (FRHIBuffer* SelectedIDsBuffer = SelectionOutlinePass->GetSelectedIDsBuffer())
-    {
-        Context.SelectedIDsBuffer = GraphBuilder.RegisterExternalBuffer(SelectedIDsBuffer, "SelectedIDs",
-            ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
+        if (FRHITexture* RingMask = SelectionOutlinePass->GetRingMask())
+        {
+            Context.SelectionRing = GraphBuilder.RegisterExternalTexture(RingMask, "SelectionRing",
+                ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
+        }
+
+        if (FRHIBuffer* SelectedIDsBuffer = SelectionOutlinePass->GetSelectedIDsBuffer())
+        {
+            Context.SelectedIDsBuffer = GraphBuilder.RegisterExternalBuffer(SelectedIDsBuffer, "SelectedIDs",
+                ERHIResourceState::PixelShaderResource, ERHIResourceState::PixelShaderResource);
+        }
     }
 #endif
 
@@ -479,16 +484,26 @@ void FSceneRenderer::BuildAndExecuteSceneGraph(const FSceneRenderView& SceneRend
     }
 
 #if EDITOR_BUILD
-    EditorNoJitterDepthPass->AddRenderGraphPass(GraphBuilder, Context);
-    EditorSelectionIDPass->AddRenderGraphPass(GraphBuilder, Context);
-    SelectionOutlinePass->AddRenderGraphPass(GraphBuilder, Context);
+    if (bEditorOverlays)
+    {
+        EditorNoJitterDepthPass->AddRenderGraphPass(GraphBuilder, Context);
+        EditorSelectionIDPass->AddRenderGraphPass(GraphBuilder, Context);
+        SelectionOutlinePass->AddRenderGraphPass(GraphBuilder, Context);
+    }
 #endif
 
     FXAAPass->AddRenderGraphPass(GraphBuilder, Context);
 
 #if EDITOR_BUILD
-    TonemapPass->AddRenderGraphPass(GraphBuilder, Context, nullptr, false);
-    FinalCompositePass->AddRenderGraphPass(GraphBuilder, Context);
+    if (bEditorOverlays)
+    {
+        TonemapPass->AddRenderGraphPass(GraphBuilder, Context, nullptr, false);
+        FinalCompositePass->AddRenderGraphPass(GraphBuilder, Context);
+    }
+    else
+    {
+        TonemapPass->AddRenderGraphPass(GraphBuilder, Context, SceneRenderView.RenderTarget, true);
+    }
 #else
     TonemapPass->AddRenderGraphPass(GraphBuilder, Context, SceneRenderView.RenderTarget, true);
 #endif
@@ -515,6 +530,9 @@ void FSceneRenderer::BuildAndExecuteSceneGraph(const FSceneRenderView& SceneRend
     GraphBuilder.Execute(CommandList);
 
 #if EDITOR_BUILD
-    RenderThread_ProcessEditorObjectPickRequests(CommandList, FrameResourcesRef, Scene);
+    if (bEditorOverlays)
+    {
+        RenderThread_ProcessEditorObjectPickRequests(CommandList, FrameResourcesRef, Scene);
+    }
 #endif
 }

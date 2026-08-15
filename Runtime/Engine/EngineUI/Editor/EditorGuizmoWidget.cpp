@@ -153,7 +153,7 @@ bool FEditorGuizmoWidget::DrawGuizmo()
         return false;
     }
 
-    if (!EditorEngine)
+    if (!EditorEngine || !EditorEngine->IsEditing())
     {
         return false;
     }

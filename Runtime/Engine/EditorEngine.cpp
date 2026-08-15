@@ -302,9 +302,10 @@ FSceneRenderPacket FEditorEngine::BuildRenderPacket()
     FSceneRenderPacket Packet = FEngine::BuildRenderPacket();
     Packet.View.Scene                = GetWorld()->GetSceneInterface();
     Packet.View.RenderTarget         = ViewportImage.Get();
-    Packet.View.DebugView            = ViewportWidget->GetDebugView();
-    Packet.View.SecondaryDebugView   = ViewportWidget->GetSecondaryDebugView();
-    Packet.View.DebugViewChannelMask = ViewportWidget->GetDebugViewChannelMask();
+    Packet.View.DebugView              = ViewportWidget->GetDebugView();
+    Packet.View.SecondaryDebugView     = ViewportWidget->GetSecondaryDebugView();
+    Packet.View.DebugViewChannelMask   = ViewportWidget->GetDebugViewChannelMask();
+    Packet.View.bEditorOverlaysEnabled = IsEditing();
 
     FCameraComponent* ViewCamera = GetActiveViewportCamera();
     if (ViewCamera)
@@ -318,13 +319,16 @@ FSceneRenderPacket FEditorEngine::BuildRenderPacket()
     LastViewportCamera = ViewCamera;
 
     // Resolve the editor selection to stable ObjectIDs on the main thread so the render thread never reads live editor state.
-    if (IScene* Scene = Packet.View.Scene)
+    if (IsEditing())
     {
-        Packet.SelectedObjectIDs.Reserve(SelectedActors.Size());
-
-        for (FActor* Selected : SelectedActors)
+        if (IScene* Scene = Packet.View.Scene)
         {
-            Packet.SelectedObjectIDs.Add(Scene->GetOrCreateObjectID(Selected));
+            Packet.SelectedObjectIDs.Reserve(SelectedActors.Size());
+
+            for (FActor* Selected : SelectedActors)
+            {
+                Packet.SelectedObjectIDs.Add(Scene->GetOrCreateObjectID(Selected));
+            }
         }
     }
 
@@ -346,6 +350,11 @@ FCameraComponent* FEditorEngine::GetActiveViewportCamera() const
 
 void FEditorEngine::SetSelectedActor(FActor* InActor)
 {
+    if (!IsEditing())
+    {
+        return;
+    }
+
     SelectedActors.Clear();
 
     if (InActor)
@@ -358,6 +367,11 @@ void FEditorEngine::SetSelectedActor(FActor* InActor)
 
 void FEditorEngine::SetSelectedActors(const TArray<FActor*>& InActors)
 {
+    if (!IsEditing())
+    {
+        return;
+    }
+
     SelectedActors.Clear();
     SelectedActors.Reserve(InActors.Size());
 
@@ -375,7 +389,7 @@ void FEditorEngine::SetSelectedActors(const TArray<FActor*>& InActors)
 
 void FEditorEngine::AddSelectedActor(FActor* InActor)
 {
-    if (!InActor)
+    if (!IsEditing() || !InActor)
     {
         return;
     }
@@ -389,7 +403,7 @@ void FEditorEngine::AddSelectedActor(FActor* InActor)
 
 void FEditorEngine::RemoveSelectedActor(FActor* InActor)
 {
-    if (!InActor || !SelectedActors.Remove(InActor))
+    if (!IsEditing() || !InActor || !SelectedActors.Remove(InActor))
     {
         return;
     }
@@ -402,6 +416,11 @@ void FEditorEngine::RemoveSelectedActor(FActor* InActor)
 
 void FEditorEngine::ToggleSelectedActor(FActor* InActor)
 {
+    if (!IsEditing())
+    {
+        return;
+    }
+
     if (IsActorSelected(InActor))
     {
         RemoveSelectedActor(InActor);
