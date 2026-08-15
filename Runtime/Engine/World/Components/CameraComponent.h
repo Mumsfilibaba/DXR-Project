@@ -29,6 +29,9 @@ public:
     void UpdateWorldToClipSpaceMatrices();
     void PrepareSceneViewInfo(FCameraSnapshot& OutCameraSnapshot) const;
 
+    const Vector3& GetPosition() const;
+    const Vector3& GetRotation() const;
+
     FORCEINLINE const Matrix4& GetViewMatrix() const
     {
         return View;
@@ -64,12 +67,14 @@ public:
         return ViewProjectionNoTranslation;
     }
 
-    const Vector3& GetPosition() const;
-    const Vector3& GetRotation() const;
-
     FORCEINLINE const Vector3& GetForwardVector() const
     {
         return ForwardVector;
+    }
+
+    FORCEINLINE Vector3 GetViewLocationAtDistance(float Distance) const
+    {
+        return GetPosition() + (GetForwardVector() * Distance);
     }
 
     FORCEINLINE const Vector3& GetUpVector() const

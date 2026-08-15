@@ -86,7 +86,6 @@ FImGuiPlugin::FImGuiPlugin()
     , MonitorInfos()
     , DrawDelegates()
     , OnMonitorConfigChangedDelegateHandle()
-    , bInputPassthroughEnabled(false)
 {
 }
 
@@ -468,7 +467,18 @@ void FImGuiPlugin::NewFrame(float DeltaTime)
     ImGuiViewport* ForegroundViewport = ForegroundWindow ? ImGui::FindViewportByPlatformHandle(ForegroundWindow.Get()) : nullptr;
 
     const bool bIsAppFocused = ForegroundWindow && (ForegroundWindow == MainWindow || PlatformWindow->IsChildWindow(PlatformForegroundWindow) || ForegroundViewport);
-    if (bIsAppFocused && !bInputPassthroughEnabled)
+    if (FApplication::Get().HasMouseCapture())
+    {
+        PluginImGuiIO->AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+        for (int32 ButtonIndex = 0; ButtonIndex < IM_ARRAYSIZE(PluginImGuiIO->MouseDown); ++ButtonIndex)
+        {
+            if (PluginImGuiIO->MouseDown[ButtonIndex])
+            {
+                PluginImGuiIO->AddMouseButtonEvent(ButtonIndex, false);
+            }
+        }
+    }
+    else if (bIsAppFocused)
     {
     #ifndef EDITOR_BUILD
         const IntVector2 ForegroundWindowPosition = ForegroundWindow->GetPosition();

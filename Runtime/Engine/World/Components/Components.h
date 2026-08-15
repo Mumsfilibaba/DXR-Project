@@ -3,6 +3,7 @@
 #include "Engine/World/Components/CameraComponent.h"
 #include "Engine/World/Components/DirectionalLightComponent.h"
 #include "Engine/World/Components/InputComponent.h"
+#include "Engine/World/Components/KinematicMovementComponent.h"
 #include "Engine/World/Components/LightComponent.h"
 #include "Engine/World/Components/LightProbeComponent.h"
 #include "Engine/World/Components/PointLightComponent.h"

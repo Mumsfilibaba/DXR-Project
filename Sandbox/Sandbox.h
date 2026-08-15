@@ -12,6 +12,7 @@ public:
     ~FSandbox();
 
     virtual bool Init() override;
+    virtual void Release() override;
 
     virtual void Tick(float DeltaTime) override;
 

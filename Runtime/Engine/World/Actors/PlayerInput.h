@@ -5,6 +5,9 @@
 #include "CoreApplication/PlatformInterface/InputCodes.h"
 #include "Application/Events.h"
 #include "Application/Input/Keys.h"
+#include "Engine/World/Actors/InputName.h"
+
+class FInputComponent;
 
 struct FKeyState
 {
@@ -13,6 +16,7 @@ struct FKeyState
         , bIsDown(0)
         , bPreviousState(0)
         , RepeatCount(0)
+        , bRepeatThisFrame(0)
         , TimePressed(0.0f)
     {
     }
@@ -28,6 +32,9 @@ struct FKeyState
     
     /** @brief If this state is repeated due to the user holding down the key, the repeat-count is increased */
     uint32 RepeatCount : 30;
+
+    /** @brief True when the most recent key event for this key was an OS repeat */
+    uint32 bRepeatThisFrame : 1;
 
     /** @brief Time pressed */
     float TimePressed = 0.0f;
@@ -56,47 +63,50 @@ struct FActionKeyMapping
 {
     FActionKeyMapping() = default;
 
-    FActionKeyMapping(const StringView& InName, FKey InKey)
+    FActionKeyMapping(const FInputName& InName, FKey InKey)
         : Name(InName)
         , Key(InKey)
     {
     }
 
-    String Name;
-    FKey   Key;
+    FInputName Name;
+    FKey       Key;
 };
 
 struct FAxisMapping
 {
-    FAxisMapping() = default;
-
-    FAxisMapping(const StringView& InName, EAnalogSourceName::Type InAxis)
-        : Name(InName)
-        , Axis(InAxis)
+    FAxisMapping()
+        : Scale(1.0f)
     {
     }
 
-    String                  Name;
+    FAxisMapping(const FInputName& InName, EAnalogSourceName::Type InAxis, float InScale = 1.0f)
+        : Name(InName)
+        , Axis(InAxis)
+        , Scale(InScale)
+    {
+    }
+
+    FInputName              Name;
     EAnalogSourceName::Type Axis;
+    float                   Scale;
 };
 
 struct FAxisKeyMapping
 {
     FAxisKeyMapping() = default;
 
-    FAxisKeyMapping(const StringView& InName, FKey InKey, float InScale)
+    FAxisKeyMapping(const FInputName& InName, FKey InKey, float InScale)
         : Name(InName)
         , Key(InKey)
         , Scale(InScale)
     {
     }
 
-    String Name;
-    FKey   Key;
-    float  Scale;
+    FInputName Name;
+    FKey       Key;
+    float      Scale;
 };
-
-class FInputComponent;
 
 class ENGINE_API FPlayerInput
 {
@@ -108,22 +118,29 @@ public:
     
     void EnableInput(FInputComponent* InputComponent);
     void ClearInputStates();
-    
+
+    IntVector2 ConsumeMouseDelta();
+
     int32 AddActionKeyMapping(const FActionKeyMapping& ActionKeyMapping);
     int32 AddAxisMapping(const FAxisMapping& AxisMapping);
     int32 AddAxisKeyMapping(const FAxisKeyMapping& AxisKeyMapping);
 
-    void SetCursorPosition(const IntVector2& Postion);
-    
     void OnAxisEvent(EAnalogSourceName::Type AxisSource, float AxisValue);
     void OnKeyEvent(FKey Key, bool bIsDown, bool bIsRepeat);
     void OnHighPrecisionMouseInput(const IntVector2& Delta);
 
-    IntVector2 ConsumeMouseDelta();
+    void SetCursorPosition(const IntVector2& Postion);
 
     FKeyState  GetKeyState(FKey Key) const;
     IntVector2 GetCursorPosition() const;
     FAxisState GetAnalogState(EAnalogSourceName::Type AnalogSource) const;
+    float      GetAxisValue(const CHAR* AxisName) const;
+
+    template<typename StringType>
+    FORCEINLINE float GetAxisValue(const StringType& AxisName) const requires(TIsTStringType<StringType>::Value)
+    {
+        return GetAxisValueByHash(FInputName::HashInputName(AxisName));
+    }
 
     bool IsKeyDown(FKey Key) const
     {
@@ -149,14 +166,28 @@ public:
     }
 
 private:
-    void ClearEvents();
 
-    TSharedPtr<IPlatformCursor> CursorInterface;
-    IntVector2                  MouseDelta;
-    TArray<FKeyState>           KeyStates;
-    TArray<FAxisState>          AxisStates;
-    TArray<FActionKeyMapping>   ActionKeyMappings;
-    TArray<FAxisMapping>        AxisMappings;
-    TArray<FAxisKeyMapping>     AxisKeyMappings;
-    TArray<FInputComponent*>    ActiveInputComponents;
+    struct FAxisValueCacheEntry
+    {
+        FInputName    Name;
+        TArray<int32> AxisMappingIndices;
+        TArray<int32> AxisKeyMappingIndices;
+        float         Value = 0.0f;
+    };
+
+    void  ClearEvents();
+    void  RebuildAxisCache();
+    void  UpdateAxisValues();
+    float GetAxisValueByHash(uint32 Hash) const;
+
+    TSharedPtr<IPlatformCursor>  CursorInterface;
+    IntVector2                   MouseDelta;
+    TArray<FKeyState>            KeyStates;
+    TArray<FAxisState>           AxisStates;
+    TArray<FActionKeyMapping>    ActionKeyMappings;
+    TArray<FAxisMapping>         AxisMappings;
+    TArray<FAxisKeyMapping>      AxisKeyMappings;
+    TArray<FInputComponent*>     ActiveInputComponents;
+    TArray<FAxisValueCacheEntry> AxisValueCache;
+    bool                         bAxisCacheDirty;
 };

@@ -227,6 +227,7 @@ FApplication::FApplication(TSharedPtr<IPlatformApplication> InPlatformApplicatio
     , InputHandlers()
     , OnMonitorConfigChangedEvent()
     , FocusWindow()
+    , MouseCaptor()
     , LastCursorPosition()
     , bIsMonitorInfoValid(false)
     , bIsCursorPositionValid(false)
@@ -410,11 +411,11 @@ bool FApplication::OnMouseMove(int32 MouseX, int32 MouseY)
     FWidgetPath CursorPath;
     FindWidgetsUnderCursor(CursorEvent.GetCursorPos(), CursorPath);
 
-    const bool bIsDragging = !PressedMouseButtons.IsEmpty();
+    const bool bKeepTracking = !PressedMouseButtons.IsEmpty() || HasMouseCapture();
     for (int32 Index = 0; Index < TrackedWidgets.Size();)
     {
         const TSharedPtr<FWidget>& CurrentWidget = TrackedWidgets[Index];
-        if (!CursorPath.Contains(CurrentWidget) && !bIsDragging)
+        if (!CursorPath.Contains(CurrentWidget) && !bKeepTracking)
         {
             CurrentWidget->OnMouseLeft(CursorEvent);
             TrackedWidgets.RemoveAt(Index);
@@ -437,7 +438,10 @@ bool FApplication::OnMouseMove(int32 MouseX, int32 MouseY)
             return FEventResponse::Unhandled();
         });
 
-    const FEventResponse MouseMoveResponse = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(CursorPath), CursorEvent,
+    FWidgetPath DispatchPath;
+    ResolveMouseDispatchPath(DispatchPath);
+
+    const FEventResponse MouseMoveResponse = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(DispatchPath), CursorEvent,
         [](const TSharedPtr<FWidget>& Widget, const FCursorEvent& CursorEvent)
         {
             return Widget->OnMouseMove(CursorEvent);
@@ -468,7 +472,7 @@ bool FApplication::OnMouseButtonDown(const TSharedRef<IPlatformWindow>& Platform
     }
 
     FWidgetPath CursorPath;
-    FindWidgetsUnderCursor(CursorPath);
+    ResolveMouseDispatchPath(CursorPath);
 
     const FEventResponse WidgetResponse = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(CursorPath), CursorEvent,
         [this](const TSharedPtr<FWidget>& Widget, const FCursorEvent& CursorEvent)
@@ -490,8 +494,8 @@ bool FApplication::OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeySt
 {
     PressedMouseButtons.Remove(Button);
 
-    // Remove the mouse capture if there is a capture
-    if (PressedMouseButtons.IsEmpty())
+    // Remove the mouse capture if there is a capture, unless a widget holds persistent capture
+    if (PressedMouseButtons.IsEmpty() && !HasMouseCapture())
     {
         PlatformApplication->SetCapture(nullptr);
         bIsTrackingCursor = false;
@@ -511,13 +515,13 @@ bool FApplication::OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeySt
     }
 
     FWidgetPath CursorPath;
-    FindWidgetsUnderCursor(CursorPath);
+    ResolveMouseDispatchPath(CursorPath);
 
-    const bool bIsDragging = !PressedMouseButtons.IsEmpty();
+    const bool bKeepTracking = !PressedMouseButtons.IsEmpty() || HasMouseCapture();
     for (int32 Index = 0; Index < TrackedWidgets.Size();)
     {
         const TSharedPtr<FWidget>& CurrentWidget = TrackedWidgets[Index];
-        if (!CursorPath.Contains(CurrentWidget) && !bIsDragging)
+        if (!CursorPath.Contains(CurrentWidget) && !bKeepTracking)
         {
             CurrentWidget->OnMouseLeft(CursorEvent);
             TrackedWidgets.RemoveAt(Index);
@@ -553,7 +557,7 @@ bool FApplication::OnMouseButtonDoubleClick(EMouseButtonName::Type Button, FModi
     }
 
     FWidgetPath CursorPath;
-    FindWidgetsUnderCursor(CursorPath);
+    ResolveMouseDispatchPath(CursorPath);
 
     const FEventResponse WidgetResponse = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(CursorPath), CursorEvent,
         [](const TSharedPtr<FWidget>& Widget, const FCursorEvent& CursorEvent)
@@ -581,7 +585,7 @@ bool FApplication::OnMouseScrolled(float WheelDelta, EScrollAxis ScrollAxis)
     }
 
     FWidgetPath CursorPath;
-    FindWidgetsUnderCursor(CursorPath);
+    ResolveMouseDispatchPath(CursorPath);
 
     const FEventResponse WidgetResponse = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(CursorPath), CursorEvent,
         [](const TSharedPtr<FWidget>& Widget, const FCursorEvent& CursorEvent)
@@ -623,11 +627,11 @@ bool FApplication::OnMouseLeft()
 
     FEventResponse Response = FEventResponse::Unhandled();
 
-    const bool bIsDragging = !PressedMouseButtons.IsEmpty();
+    const bool bKeepTracking = !PressedMouseButtons.IsEmpty() || HasMouseCapture();
     for (int32 Index = 0; Index < TrackedWidgets.Size();)
     {
         const TSharedPtr<FWidget>& CurrentWidget = TrackedWidgets[Index];
-        if (!CursorPath.Contains(CurrentWidget) && !bIsDragging)
+        if (!CursorPath.Contains(CurrentWidget) && !bKeepTracking)
         {
             Response = CurrentWidget->OnMouseLeft(CursorEvent);
             TrackedWidgets.RemoveAt(Index);
@@ -656,7 +660,17 @@ bool FApplication::OnHighPrecisionMouseInput(int32 MouseX, int32 MouseY)
         return true;
     }
 
-    const FEventResponse WidgetResponse = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(FocusPath), CursorEvent,
+    FWidgetPath DispatchPath;
+    if (HasMouseCapture())
+    {
+        ResolveMouseDispatchPath(DispatchPath);
+    }
+    else
+    {
+        DispatchPath = FocusPath;
+    }
+
+    const FEventResponse WidgetResponse = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(DispatchPath), CursorEvent,
         [](const TSharedPtr<FWidget>& Widget, const FCursorEvent& CursorEvent)
         {
             return Widget->OnHighPrecisionMouseInput(CursorEvent);
@@ -868,6 +882,15 @@ void FApplication::DestroyWindow(const TSharedPtr<FWindowWidget>& DestroyedWindo
 {
     if (DestroyedWindow)
     {
+        if (MouseCaptor.IsValid())
+        {
+            const TSharedPtr<FWidget> Captor = MouseCaptor.ToSharedPtr();
+            if (FindWindowWidget(Captor) == DestroyedWindow)
+            {
+                ReleaseMouseCapture();
+            }
+        }
+
         TSharedRef<IPlatformWindow> PlatformWindow = DestroyedWindow->GetPlatformWindow();
         DestroyedWindow->OnWindowDestroyed();
         Windows.Remove(DestroyedWindow);
@@ -1207,4 +1230,54 @@ void FApplication::ReleaseAllPressedInput()
             OnMouseButtonUp(Button, GetModifierKeyState());
         }
     }
+}
+
+bool FApplication::CaptureMouse(const TSharedPtr<FWidget>& Widget)
+{
+    if (!Widget)
+    {
+        return false;
+    }
+
+    const TSharedPtr<FWindowWidget> Window = FindWindowWidget(Widget);
+    if (!Window)
+    {
+        return false;
+    }
+
+    MouseCaptor = Widget;
+    PlatformApplication->SetCapture(Window->GetPlatformWindow());
+    bIsTrackingCursor = true;
+    return true;
+}
+
+void FApplication::ReleaseMouseCapture(const TSharedPtr<FWidget>& Widget)
+{
+    if (!MouseCaptor.IsValid())
+    {
+        return;
+    }
+
+    if (Widget && MouseCaptor.ToSharedPtr() != Widget)
+    {
+        return;
+    }
+
+    MouseCaptor.Reset();
+    if (PressedMouseButtons.IsEmpty())
+    {
+        PlatformApplication->SetCapture(nullptr);
+        bIsTrackingCursor = false;
+    }
+}
+
+void FApplication::ResolveMouseDispatchPath(FWidgetPath& OutPath)
+{
+    if (const TSharedPtr<FWidget> Captor = GetMouseCaptor())
+    {
+        Captor->FindParentWidgets(OutPath);
+        return;
+    }
+
+    FindWidgetsUnderCursor(OutPath);
 }

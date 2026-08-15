@@ -4,6 +4,7 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Templates/CString.h"
 #include "Application/Application.h"
+#include "CoreApplication/PlatformInterface/AnalogDeadzones.h"
 #include "RHI/RHIResources.h" 
 #include "Engine/Engine.h" 
 #include "Engine/EditorEngine.h"
@@ -1075,12 +1076,16 @@ void FEditorViewportWidget::DrawViewportWindow()
             PendingCameraInput.bFocusPressed    = ImGui::IsKeyPressed(ImGuiKey_F, false);
             PendingCameraInput.bResetPressed    = ImGui::IsKeyPressed(ImGuiKey_R, false);
 
-            const float GamepadMoveRight =
+            const float GamepadMoveRight = AnalogInput::ApplyDeadzone(
                 ImGui::GetKeyData(ImGuiKey_GamepadLStickLeft)->AnalogValue -
-                ImGui::GetKeyData(ImGuiKey_GamepadLStickRight)->AnalogValue;
-            const float GamepadMoveForward =
+                ImGui::GetKeyData(ImGuiKey_GamepadLStickRight)->AnalogValue,
+                AnalogInput::GetDeadzone(EAnalogSourceName::LeftThumbX));
+
+            const float GamepadMoveForward = AnalogInput::ApplyDeadzone(
                 ImGui::GetKeyData(ImGuiKey_GamepadLStickUp)->AnalogValue -
-                ImGui::GetKeyData(ImGuiKey_GamepadLStickDown)->AnalogValue;
+                ImGui::GetKeyData(ImGuiKey_GamepadLStickDown)->AnalogValue,
+                AnalogInput::GetDeadzone(EAnalogSourceName::LeftThumbY));
+
             const bool bKeyboardFlyActive =
                 PendingCameraInput.bRightMouseDown &&
                 !PendingCameraInput.bAltDown;
@@ -1089,9 +1094,11 @@ void FEditorViewportWidget::DrawViewportWindow()
                 (bKeyboardFlyActive && ImGui::IsKeyDown(ImGuiKey_A) ? 1.0f : 0.0f) -
                 (bKeyboardFlyActive && ImGui::IsKeyDown(ImGuiKey_D) ? 1.0f : 0.0f) +
                 GamepadMoveRight;
+
             const float MoveUp =
                 (bKeyboardFlyActive && ImGui::IsKeyDown(ImGuiKey_Q) ? 1.0f : 0.0f) -
                 (bKeyboardFlyActive && ImGui::IsKeyDown(ImGuiKey_E) ? 1.0f : 0.0f);
+
             const float MoveForward =
                 (bKeyboardFlyActive && ImGui::IsKeyDown(ImGuiKey_W) ? 1.0f : 0.0f) -
                 (bKeyboardFlyActive && ImGui::IsKeyDown(ImGuiKey_S) ? 1.0f : 0.0f) +
@@ -1101,6 +1108,7 @@ void FEditorViewportWidget::DrawViewportWindow()
                 Math::Clamp(MoveRight, -1.0f, 1.0f),
                 Math::Clamp(MoveUp, -1.0f, 1.0f),
                 Math::Clamp(MoveForward, -1.0f, 1.0f));
+
             PendingCameraInput.bFlyActive =
                 bKeyboardFlyActive ||
                 Math::Abs(GamepadMoveRight) > 0.01f ||
@@ -1109,13 +1117,18 @@ void FEditorViewportWidget::DrawViewportWindow()
             const float RotateRight =
                 (ImGui::IsKeyDown(ImGuiKey_RightArrow) ? 1.0f : 0.0f) -
                 (ImGui::IsKeyDown(ImGuiKey_LeftArrow) ? 1.0f : 0.0f) +
-                ImGui::GetKeyData(ImGuiKey_GamepadRStickRight)->AnalogValue -
-                ImGui::GetKeyData(ImGuiKey_GamepadRStickLeft)->AnalogValue;
+                AnalogInput::ApplyDeadzone(
+                    ImGui::GetKeyData(ImGuiKey_GamepadRStickRight)->AnalogValue -
+                    ImGui::GetKeyData(ImGuiKey_GamepadRStickLeft)->AnalogValue,
+                    AnalogInput::GetDeadzone(EAnalogSourceName::RightThumbX));
+
             const float RotateDown =
                 (ImGui::IsKeyDown(ImGuiKey_DownArrow) ? 1.0f : 0.0f) -
                 (ImGui::IsKeyDown(ImGuiKey_UpArrow) ? 1.0f : 0.0f) +
-                ImGui::GetKeyData(ImGuiKey_GamepadRStickDown)->AnalogValue -
-                ImGui::GetKeyData(ImGuiKey_GamepadRStickUp)->AnalogValue;
+                AnalogInput::ApplyDeadzone(
+                    ImGui::GetKeyData(ImGuiKey_GamepadRStickDown)->AnalogValue -
+                    ImGui::GetKeyData(ImGuiKey_GamepadRStickUp)->AnalogValue,
+                    AnalogInput::GetDeadzone(EAnalogSourceName::RightThumbY));
 
             PendingCameraInput.RotationAxis = Vector2(
                 Math::Clamp(RotateRight, -1.0f, 1.0f),
@@ -1622,6 +1635,16 @@ void FEditorViewportWidget::EndMouseLook()
 
     bMouseLookActive = false;
     bRawLookActive   = false;
+}
+
+void FEditorViewportWidget::ResetInputState()
+{
+    EndMouseLook();
+
+    bViewportInputActive      = false;
+    bRightMousePressedOnImage = false;
+    RightMouseDragDistance    = 0.0f;
+    PendingCameraInput        = FEditorCameraInputState();
 }
 
 bool FEditorViewportWidget::ComputeViewportPixel(const ImVec2& ImageMin, const ImVec2& ImageSize, uint32& OutPixelX, uint32& OutPixelY) const

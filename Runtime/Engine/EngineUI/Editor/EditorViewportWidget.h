@@ -24,20 +24,20 @@ public:
 
     void Draw();
 
+    void OnActorRemoved(FActor* Actor);
+    void OnContextMenuPickResult(const FEditorPickResult& Result, FActor* PickedActor);
+
+    bool ConsumeCameraCut();
+    void ResetInputState();
+
     void SetViewportWidget(const TSharedPtr<FViewportWidget>& ViewportWidget);
     void SetViewportImage(FRHITextureRef InViewportImage);
 
-    IntVector2 GetViewportSize() const;
-
-    FSceneRenderView::EDebugView GetDebugView() const;
-    FSceneRenderView::EDebugView GetSecondaryDebugView() const;
+    IntVector2                          GetViewportSize() const;
+    FSceneRenderView::EDebugView        GetDebugView() const;
+    FSceneRenderView::EDebugView        GetSecondaryDebugView() const;
     FSceneRenderView::EDebugViewChannel GetDebugViewChannelMask() const;
-    FCameraComponent* GetViewCamera() const;
-    
-    void OnActorRemoved(FActor* Actor);
-    void OnContextMenuPickResult(const FEditorPickResult& Result, FActor* PickedActor);
-    
-    bool ConsumeCameraCut();
+    FCameraComponent*                   GetViewCamera() const;
 
     ImVec2 GetViewportImageMin() const
     {

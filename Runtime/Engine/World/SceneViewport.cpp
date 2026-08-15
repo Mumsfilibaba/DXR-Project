@@ -4,18 +4,9 @@
 #include "Engine/World/Actors/PlayerInput.h"
 #include "Engine/World/Components/CameraComponent.h"
 #include "Engine/World/SceneViewport.h"
-#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "RHI/RHI.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
-
-static void SetImGuiInputPassthrough(bool bEnabled)
-{
-    if (IImguiPlugin::IsEnabled())
-    {
-        IImguiPlugin::Get().SetInputPassthroughEnabled(bEnabled);
-    }
-}
 
 FSceneViewport::FSceneViewport(const TWeakPtr<FViewportWidget>& InViewport)
     : IViewport()
@@ -110,13 +101,15 @@ void FSceneViewport::Tick()
 
 bool FSceneViewport::CaptureMouse()
 {
+    const TSharedPtr<FViewportWidget> ViewportWidget = GetViewportWidget();
     const TSharedPtr<FWindowWidget> Window = GetCaptureWindow();
-    if (bMouseCaptured || !Window)
+    if (bMouseCaptured || !ViewportWidget || !Window)
     {
         return false;
     }
 
     FApplication& Application = FApplication::Get();
+    
     bCursorWasVisible    = Application.IsCursorVisible();
     MouseRestorePosition = Application.GetCursorPosition();
 
@@ -131,7 +124,14 @@ bool FSceneViewport::CaptureMouse()
     Application.ConfineCursorToRect(Window, CaptureRect);
     Application.SetCursorPosition(IntVector2(CaptureRect.Position.X + (CaptureRect.Width / 2), CaptureRect.Position.Y + (CaptureRect.Height / 2)));
 
-    SetImGuiInputPassthrough(true);
+    if (!Application.CaptureMouse(ViewportWidget))
+    {
+        Application.ReleaseCursorConfinement();
+        Application.SetHighPrecisionMouseMode(Window, EHighPrecisionMouseMode::Disabled);
+        Application.SetCursorPosition(MouseRestorePosition);
+        Application.ShowCursor(bCursorWasVisible);
+        return false;
+    }
 
     bMouseCaptured = true;
     return true;
@@ -146,12 +146,12 @@ void FSceneViewport::ReleaseMouse()
 
     bMouseCaptured = false;
 
-    SetImGuiInputPassthrough(false);
-
     if (FApplication::IsInitialized())
     {
         FApplication& Application = FApplication::Get();
+        Application.ReleaseMouseCapture(GetViewportWidget());
         Application.ReleaseCursorConfinement();
+
         Application.SetHighPrecisionMouseMode(GetCaptureWindow(), EHighPrecisionMouseMode::Disabled);
         Application.SetCursorPosition(MouseRestorePosition);
         Application.ShowCursor(bCursorWasVisible);

@@ -8,9 +8,9 @@
 #define IMGUI_BUTTON_THUMB1 (3)
 #define IMGUI_BUTTON_THUMB2 (4)
 
-static bool IsInputPassthroughEnabled()
+static bool HasApplicationMouseCapture()
 {
-    return GImGuiPlugin && GImGuiPlugin->IsInputPassthroughEnabled();
+    return FApplication::IsInitialized() && FApplication::Get().HasMouseCapture();
 }
 
 static ImGuiMouseButton GImGuiMouseButtons[EMouseButtonName::Count] = 
@@ -170,10 +170,10 @@ static ImGuiKey GImGuiGamepadKeys[EGamepadButtonName::Count] =
     /* EGamepadButtonName::FaceDown */      ImGuiKey_GamepadFaceDown,
     /* EGamepadButtonName::FaceLeft */      ImGuiKey_GamepadFaceLeft,
     /* EGamepadButtonName::FaceRight */     ImGuiKey_GamepadFaceRight,
-    /* EGamepadButtonName::RightTrigger */  ImGuiKey_GamepadR3,
-    /* EGamepadButtonName::LeftTrigger */   ImGuiKey_GamepadL3,
-    /* EGamepadButtonName::RightShoulder */ ImGuiKey_GamepadR3,
-    /* EGamepadButtonName::LeftShoulder */  ImGuiKey_GamepadL3,
+    /* EGamepadButtonName::RightThumb */    ImGuiKey_GamepadR3,
+    /* EGamepadButtonName::LeftThumb */     ImGuiKey_GamepadL3,
+    /* EGamepadButtonName::RightShoulder */ ImGuiKey_GamepadR1,
+    /* EGamepadButtonName::LeftShoulder */  ImGuiKey_GamepadL1,
     /* EGamepadButtonName::Start */         ImGuiKey_GamepadStart,
     /* EGamepadButtonName::Back */          ImGuiKey_GamepadBack,
 };
@@ -184,34 +184,104 @@ static FORCEINLINE ImGuiKey GetImGuiGamepadButton(EGamepadButtonName::Type Butto
     return GImGuiGamepadKeys[Button];
 }
 
-static FORCEINLINE ImGuiKey GetImGuiGamepadAnalogSource(EAnalogSourceName::Type Analog, bool bIsNegative)
+static FORCEINLINE void SetImGuiStickAxis(ImGuiIO& UIState, ImGuiKey PositiveKey, ImGuiKey NegativeKey, float Value)
 {
-    switch (Analog)
+    const float Magnitude = Math::Abs(Value);
+    const bool  bActive   = Magnitude > 0.10f;
+
+    if (Value > 0.0f)
     {
-    case EAnalogSourceName::RightThumbX:  return bIsNegative ? ImGuiKey_GamepadRStickDown : ImGuiKey_GamepadRStickUp;
-    case EAnalogSourceName::RightThumbY:  return bIsNegative ? ImGuiKey_GamepadRStickLeft : ImGuiKey_GamepadRStickRight;
-    case EAnalogSourceName::LeftThumbX:   return bIsNegative ? ImGuiKey_GamepadLStickDown : ImGuiKey_GamepadLStickUp;
-    case EAnalogSourceName::LeftThumbY:   return bIsNegative ? ImGuiKey_GamepadLStickLeft : ImGuiKey_GamepadLStickRight;
-    case EAnalogSourceName::RightTrigger: return ImGuiKey_GamepadR2;
-    case EAnalogSourceName::LeftTrigger:  return ImGuiKey_GamepadL2;
-    default:                              return ImGuiKey_None;
+        UIState.AddKeyAnalogEvent(PositiveKey, bActive, Magnitude);
+        UIState.AddKeyAnalogEvent(NegativeKey, false, 0.0f);
+    }
+    else if (Value < 0.0f)
+    {
+        UIState.AddKeyAnalogEvent(NegativeKey, bActive, Magnitude);
+        UIState.AddKeyAnalogEvent(PositiveKey, false, 0.0f);
+    }
+    else
+    {
+        UIState.AddKeyAnalogEvent(PositiveKey, false, 0.0f);
+        UIState.AddKeyAnalogEvent(NegativeKey, false, 0.0f);
     }
 }
 
 bool FImGuiEventHandler::OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogEvent)
 {
-    const bool bIsNegative = AnalogEvent.GetAnalogValue() < 0.0f;
+    ImGuiIO& UIState = ImGui::GetIO();
+    const float Value = AnalogEvent.GetAnalogValue();
 
-    const ImGuiKey GamepadButton = GetImGuiGamepadAnalogSource(AnalogEvent.GetAnalogSource(), bIsNegative);
-    if (GamepadButton != ImGuiKey_None)
+    switch (AnalogEvent.GetAnalogSource())
     {
-        const float Normalized = Math::Abs<float>(AnalogEvent.GetAnalogSource());
-        
-        ImGuiIO& UIState = ImGui::GetIO();
-        UIState.AddKeyAnalogEvent(GamepadButton, Normalized > 0.10f, Normalized);
+        case EAnalogSourceName::LeftThumbX:
+        {
+            SetImGuiStickAxis(UIState, ImGuiKey_GamepadLStickRight, ImGuiKey_GamepadLStickLeft, Value);
+            break;
+        }
+
+        case EAnalogSourceName::LeftThumbY:
+        {
+            SetImGuiStickAxis(UIState, ImGuiKey_GamepadLStickUp, ImGuiKey_GamepadLStickDown, Value);
+            break;
+        }
+
+        case EAnalogSourceName::RightThumbX:
+        {
+            SetImGuiStickAxis(UIState, ImGuiKey_GamepadRStickRight, ImGuiKey_GamepadRStickLeft, Value);
+            break;
+        }
+
+        case EAnalogSourceName::RightThumbY:
+        {
+            SetImGuiStickAxis(UIState, ImGuiKey_GamepadRStickUp, ImGuiKey_GamepadRStickDown, Value);
+            break;
+        }
+
+        case EAnalogSourceName::LeftTrigger:
+        {
+            const float Magnitude = Math::Clamp(Value, 0.0f, 1.0f);
+            UIState.AddKeyAnalogEvent(ImGuiKey_GamepadL2, Magnitude > 0.10f, Magnitude);
+            break;
+        }
+
+        case EAnalogSourceName::RightTrigger:
+        {
+            const float Magnitude = Math::Clamp(Value, 0.0f, 1.0f);
+            UIState.AddKeyAnalogEvent(ImGuiKey_GamepadR2, Magnitude > 0.10f, Magnitude);
+            break;
+        }
+
+        default:
+        {
+            break;
+        }
     }
 
     return false;
+}
+
+void FImGuiEventHandler::ClearGamepadAnalogState()
+{
+    ImGuiIO& UIState = ImGui::GetIO();
+
+    const ImGuiKey StickKeys[] =
+    {
+        ImGuiKey_GamepadLStickLeft,
+        ImGuiKey_GamepadLStickRight,
+        ImGuiKey_GamepadLStickUp,
+        ImGuiKey_GamepadLStickDown,
+        ImGuiKey_GamepadRStickLeft,
+        ImGuiKey_GamepadRStickRight,
+        ImGuiKey_GamepadRStickUp,
+        ImGuiKey_GamepadRStickDown,
+        ImGuiKey_GamepadL2,
+        ImGuiKey_GamepadR2,
+    };
+
+    for (ImGuiKey Key : StickKeys)
+    {
+        UIState.AddKeyAnalogEvent(Key, false, 0.0f);
+    }
 }
 
 bool FImGuiEventHandler::OnKeyDown(const FKeyEvent& KeyEvent)
@@ -255,7 +325,7 @@ bool FImGuiEventHandler::ProcessKeyEvent(const FKeyEvent& KeyEvent)
         if (TranslatedKey != ImGuiKey_GraveAccent && TranslatedKey != ImGuiKey_None)
         {
             UIState.AddKeyEvent(TranslatedKey, KeyEvent.IsDown());
-            if (UIState.WantCaptureKeyboard && !IsInputPassthroughEnabled())
+            if (UIState.WantCaptureKeyboard && !HasApplicationMouseCapture())
             {
                 return true;
             }
@@ -267,6 +337,11 @@ bool FImGuiEventHandler::ProcessKeyEvent(const FKeyEvent& KeyEvent)
 
 bool FImGuiEventHandler::ProcessMouseButtonEvent(const FCursorEvent& CursorEvent)
 {
+    if (HasApplicationMouseCapture())
+    {
+        return false;
+    }
+
     const EMouseButtonName::Type ButtonName = FInputMapper::Get().GetMouseButtonNameFromKey(CursorEvent.GetKey());
     CHECK(ButtonName != EMouseButtonName::Unknown);
 
@@ -275,7 +350,7 @@ bool FImGuiEventHandler::ProcessMouseButtonEvent(const FCursorEvent& CursorEvent
 
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.AddMouseButtonEvent(ButtonIndex, CursorEvent.IsDown());
-    return UIState.WantCaptureMouse && !IsInputPassthroughEnabled();
+    return UIState.WantCaptureMouse;
 }
 
 bool FImGuiEventHandler::OnKeyChar(const FKeyEvent& KeyTypedEvent)
@@ -287,6 +362,11 @@ bool FImGuiEventHandler::OnKeyChar(const FKeyEvent& KeyTypedEvent)
 
 bool FImGuiEventHandler::OnMouseMove(const FCursorEvent& CursorEvent)
 {
+    if (HasApplicationMouseCapture())
+    {
+        return false;
+    }
+
     IntVector2 CursorPos = CursorEvent.GetCursorPos();
     
 #ifndef EDITOR_BUILD
@@ -322,6 +402,11 @@ bool FImGuiEventHandler::OnMouseButtonUp(const FCursorEvent& CursorEvent)
 
 bool FImGuiEventHandler::OnMouseScrolled(const FCursorEvent& CursorEvent)
 {
+    if (HasApplicationMouseCapture())
+    {
+        return false;
+    }
+
     ImGuiIO& UIState = ImGui::GetIO();
     if (CursorEvent.GetScrollAxis() == EScrollAxis::Vertical)
     {

@@ -608,6 +608,23 @@ void FScene::RemoveSkybox(FSkyboxComponent* InSkyboxComponent)
     });
 }
 
+void FScene::RebuildMaterialList()
+{
+    Materials.Clear();
+    for (FSceneStaticMesh* StaticMesh : StaticMeshes)
+    {
+        for (uint32 Index = 0; Index < StaticMesh->GetNumMaterials(); ++Index)
+        {
+            if (FMaterial* Material = StaticMesh->GetMaterial(Index).Get())
+            {
+                Materials.AddUnique(Material);
+            }
+        }
+    }
+
+    STAT_SET(STAT_Scene_MaterialCount, Materials.Size());
+}
+
 void FScene::RemoveStaticMesh(FStaticMeshComponent* InMeshComponent)
 {
     const int32 Index = StaticMeshSources.Find(InMeshComponent);
@@ -624,6 +641,7 @@ void FScene::RemoveStaticMesh(FStaticMeshComponent* InMeshComponent)
             DeferDeletion(StaticMeshes[Index]);
             StaticMeshes.RemoveAt(Index);
             STAT_ADD(STAT_Scene_StaticMeshCount, -1);
+            RebuildMaterialList();
         }
     });
 }

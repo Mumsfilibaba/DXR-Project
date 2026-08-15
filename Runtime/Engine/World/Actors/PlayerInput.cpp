@@ -1,42 +1,14 @@
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Containers/Pair.h"
+#include "CoreApplication/PlatformInterface/AnalogDeadzones.h"
 #include "Application/Application.h"
 #include "Engine/World/Actors/PlayerInput.h"
 #include "Engine/World/Components/InputComponent.h"
 
-// TODO: Control this in some better way than a hardcoded function
-static float GetAnalogDeadzone(EAnalogSourceName::Type Source)
-{
-    switch (Source)
-    {
-    case EAnalogSourceName::LeftThumbX:
-    case EAnalogSourceName::LeftThumbY:
-    {
-        constexpr float DeadZone = 7849.0f / 32767.0f;
-        return DeadZone;
-    }
-    
-    case EAnalogSourceName::RightThumbX:
-    case EAnalogSourceName::RightThumbY:
-    {
-        constexpr float DeadZone = 8689.0f / 32767.0f;
-        return DeadZone;
-    }
-
-    case EAnalogSourceName::LeftTrigger:
-    case EAnalogSourceName::RightTrigger:
-    {
-        constexpr float DeadZone = 30.0f / 255.0f;
-        return DeadZone;
-    }
-
-    default:
-        return 0.0f;
-    }
-}
-
 FPlayerInput::FPlayerInput()
     : MouseDelta()
     , KeyStates()
+    , bAxisCacheDirty(true)
 {
     if (FApplication::IsInitialized())
     {
@@ -44,10 +16,85 @@ FPlayerInput::FPlayerInput()
     }
 }
 
+void FPlayerInput::RebuildAxisCache()
+{
+    AxisValueCache.Clear();
+
+    auto FindOrAddEntry = [this](const FInputName& AxisName) -> FAxisValueCacheEntry&
+    {
+        for (FAxisValueCacheEntry& Entry : AxisValueCache)
+        {
+            if (Entry.Name == AxisName)
+            {
+                return Entry;
+            }
+        }
+
+        FAxisValueCacheEntry& NewEntry = AxisValueCache.Emplace();
+        NewEntry.Name = AxisName;
+        return NewEntry;
+    };
+
+    for (int32 Index = 0; Index < AxisMappings.Size(); ++Index)
+    {
+        FindOrAddEntry(AxisMappings[Index].Name).AxisMappingIndices.Add(Index);
+    }
+
+    for (int32 Index = 0; Index < AxisKeyMappings.Size(); ++Index)
+    {
+        FindOrAddEntry(AxisKeyMappings[Index].Name).AxisKeyMappingIndices.Add(Index);
+    }
+
+    bAxisCacheDirty = false;
+}
+
+void FPlayerInput::UpdateAxisValues()
+{
+    for (FAxisValueCacheEntry& Entry : AxisValueCache)
+    {
+        float AxisValue = 0.0f;
+
+        for (int32 MappingIndex : Entry.AxisMappingIndices)
+        {
+            const FAxisMapping& AxisMapping = AxisMappings[MappingIndex];
+            AxisValue += GetAnalogState(AxisMapping.Axis).Value * AxisMapping.Scale;
+        }
+
+        for (int32 MappingIndex : Entry.AxisKeyMappingIndices)
+        {
+            const FAxisKeyMapping& AxisKeyMapping = AxisKeyMappings[MappingIndex];
+            if (IsKeyDown(AxisKeyMapping.Key))
+            {
+                AxisValue += AxisKeyMapping.Scale;
+            }
+        }
+
+        Entry.Value = Math::Clamp(AxisValue, -1.0f, 1.0f);
+    }
+}
+
+float FPlayerInput::GetAxisValueByHash(uint32 Hash) const
+{
+    for (const FAxisValueCacheEntry& Entry : AxisValueCache)
+    {
+        if (Entry.Name.GetHash() == Hash)
+        {
+            return Entry.Value;
+        }
+    }
+
+    return 0.0f;
+}
+
+float FPlayerInput::GetAxisValue(const CHAR* AxisName) const
+{
+    return GetAxisValueByHash(FInputName(AxisName).GetHash());
+}
+
 void FPlayerInput::Tick(float DeltaTime)
 {
     TArray<FInputActionDelegate> InputActionsToCall;
- 
+
     // Update all keys
     for (int32 Index = 0; Index < KeyStates.Size();)
     {
@@ -70,21 +117,26 @@ void FPlayerInput::Tick(float DeltaTime)
             {
                 for (FInputComponent* InputComponent : ActiveInputComponents)
                 {
-                    for (const FActionInputBinding& ActionBinding : InputComponent->ActionBindings)
+                    for (const FActionInputBinding& ActionBinding : InputComponent->GetActionBindings())
                     {
                         if (ActionBinding.Name == KeyMapping.Name)
                         {
                             if (ActionBinding.ActionState == EActionState::Pressed)
                             {
-                                // NOTE: Key is down
-                                if (KeyState.bIsDown)
+                                if (KeyState.bIsDown && !KeyState.bPreviousState)
+                                {
+                                    InputActionsToCall.Add(ActionBinding.ActionDelegate);
+                                }
+                            }
+                            else if (ActionBinding.ActionState == EActionState::Repeat)
+                            {
+                                if (KeyState.bIsDown && KeyState.bRepeatThisFrame)
                                 {
                                     InputActionsToCall.Add(ActionBinding.ActionDelegate);
                                 }
                             }
                             else if (ActionBinding.ActionState == EActionState::Released)
                             {
-                                // NOTE: Key was just released
                                 if (!KeyState.bIsDown && KeyState.bPreviousState)
                                 {
                                     InputActionsToCall.Add(ActionBinding.ActionDelegate);
@@ -96,9 +148,31 @@ void FPlayerInput::Tick(float DeltaTime)
             }
         }
 
-        // Update the previous state last, otherwise we don't catch cases where we just released the buttona
-        KeyState.bPreviousState = KeyState.bIsDown;
+        KeyState.bRepeatThisFrame = 0;
+        KeyState.bPreviousState   = KeyState.bIsDown;
         Index++;
+    }
+
+    // Precompute every distinct axis value once, rebuilding the grouping only when mappings changed
+    if (bAxisCacheDirty)
+    {
+        RebuildAxisCache();
+    }
+
+    UpdateAxisValues();
+
+    for (const FAxisValueCacheEntry& AxisEntry : AxisValueCache)
+    {
+        for (FInputComponent* InputComponent : ActiveInputComponents)
+        {
+            for (const FAxisInputBinding& AxisBinding : InputComponent->GetAxisBindings())
+            {
+                if (AxisBinding.Name == AxisEntry.Name)
+                {
+                    AxisBinding.ActionDelegate.ExecuteIfBound(AxisEntry.Value);
+                }
+            }
+        }
     }
 
     // Update all axis
@@ -128,6 +202,7 @@ void FPlayerInput::EnableInput(FInputComponent* InputComponent)
 void FPlayerInput::ClearInputStates()
 {
     KeyStates.Clear();
+    AxisStates.Clear();
     MouseDelta = IntVector2();
 }
 
@@ -155,6 +230,7 @@ int32 FPlayerInput::AddAxisMapping(const FAxisMapping& AxisMapping)
 {
     const int32 MappingIndex = AxisMappings.Size();
     AxisMappings.Add(AxisMapping);
+    bAxisCacheDirty = true;
     return MappingIndex;
 }
 
@@ -162,6 +238,7 @@ int32 FPlayerInput::AddAxisKeyMapping(const FAxisKeyMapping& AxisKeyMapping)
 {
     const int32 MappingIndex = AxisKeyMappings.Size();
     AxisKeyMappings.Add(AxisKeyMapping);
+    bAxisCacheDirty = true;
     return MappingIndex;
 }
 
@@ -186,10 +263,10 @@ void FPlayerInput::OnAxisEvent(EAnalogSourceName::Type AxisSource, float AxisVal
         AxisStates.Emplace(AxisSource);
     }
 
-    const float DeadZone = GetAnalogDeadzone(AxisSource);
+    const float DeadZone = AnalogInput::GetDeadzone(AxisSource);
 
     FAxisState& AxisState = AxisStates[Index];
-    AxisState.Value = Math::Abs(AxisValue) > DeadZone ? AxisValue : 0.0f;
+    AxisState.Value = AnalogInput::ApplyDeadzone(AxisValue, DeadZone);
     AxisState.NumTicksSinceUpdate = 0;
 }
 
@@ -207,10 +284,9 @@ void FPlayerInput::OnKeyEvent(FKey Key, bool bIsDown, bool bIsRepeat)
     }
 
     FKeyState& KeyState = KeyStates[Index];
-    KeyState.bPreviousState = KeyState.bIsDown;
-    KeyState.bIsDown        = bIsDown;
-
-    // LOG_INFO("KeyState=%s Index=%d IsDown=%s", Key.ToString(), Index, bIsDown ? "true" : "false");
+    KeyState.bPreviousState   = KeyState.bIsDown;
+    KeyState.bIsDown          = bIsDown;
+    KeyState.bRepeatThisFrame = bIsRepeat ? 1 : 0;
 
     if (bIsRepeat)
     {

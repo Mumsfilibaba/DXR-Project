@@ -11,24 +11,6 @@ public:
     FSceneViewport(const TWeakPtr<FViewportWidget>& InViewport);
     ~FSceneViewport();
 
-    /**
-     * @brief Creates the RHISwapChain for this SceneViewport
-     * 
-     * @return Returns true if the creation of the RHISwapChain was successful
-     */
-    bool InitializeRHI();
-
-    /**
-     * @brief Releases the RHISwapChain
-     */
-    void ReleaseRHI();
-
-    /**
-     * @brief Updates the viewport each frame, this updates parts of the scene-view that requires
-     * to know about the current size of the viewport. For example update the camera-projection.
-     */
-    void Tick();
-
     // IViewport Interface
     virtual FEventResponse OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent) override;
     virtual FEventResponse OnKeyDown(const FKeyEvent& KeyEvent) override;
@@ -64,6 +46,19 @@ public:
     {
         return Viewport.IsValid() ? TSharedPtr<const FViewportWidget>(Viewport) : nullptr;
     }
+
+    /**
+     * @brief Creates the RHISwapChain for this SceneViewport
+     * 
+     * @return Returns true if the creation of the RHISwapChain was successful
+     */
+    bool InitializeRHI();
+
+    /** @brief Releases the RHISwapChain */
+    void ReleaseRHI();
+
+    /** @brief Update viewport-dependent scene state, such as the active camera projection. */
+    void Tick();
 
     void SetPlayerInputEnabled(bool bEnabled);
     IntVector2 ConsumeHighPrecisionMouseDelta();

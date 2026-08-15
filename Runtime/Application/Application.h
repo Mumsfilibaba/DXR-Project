@@ -184,9 +184,7 @@ public:
      */
     bool ConfineCursorToRect(const TSharedPtr<FWindowWidget>& Window, const FRectangle& ScreenRect);
 
-    /**
-     * @brief Lets the cursor leave the region set by ConfineCursorToRect.
-     */
+    /** @brief Lets the cursor leave the region set by ConfineCursorToRect. */
     void ReleaseCursorConfinement();
 
     /**
@@ -240,6 +238,42 @@ public:
     FORCEINLINE bool IsTrackingCursor() const
     {
         return bIsTrackingCursor;
+    }
+
+    /**
+     * @brief Assigns persistent mouse capture to a widget and binds platform capture to its window.
+     *
+     * @param Widget The widget that should receive mouse events while capture is held.
+     * @return True if capture was assigned, otherwise false.
+     */
+    bool CaptureMouse(const TSharedPtr<FWidget>& Widget);
+
+    /**
+     * @brief Releases persistent mouse capture previously taken by CaptureMouse.
+     *
+     * @param Widget The widget that currently owns capture. Pass nullptr to clear capture
+     *               regardless of which widget holds it. Non-null is ignored if it is not the captor.
+     */
+    void ReleaseMouseCapture(const TSharedPtr<FWidget>& Widget = nullptr);
+
+    /**
+     * @brief Checks whether a widget currently holds persistent mouse capture.
+     *
+     * @return True if MouseCaptor is valid.
+     */
+    FORCEINLINE bool HasMouseCapture() const
+    {
+        return MouseCaptor.IsValid();
+    }
+
+    /**
+     * @brief Returns the widget that currently holds persistent mouse capture.
+     *
+     * @return The capturing widget, or nullptr if none.
+     */
+    FORCEINLINE TSharedPtr<FWidget> GetMouseCaptor() const
+    {
+        return MouseCaptor.IsValid() ? TSharedPtr<FWidget>(MouseCaptor) : nullptr;
     }
 
     /**
@@ -371,6 +405,7 @@ public:
 
 private:
     void ReleaseAllPressedInput();
+    void ResolveMouseDispatchPath(FWidgetPath& OutPath);
 
     TSharedPtr<IPlatformApplication>  PlatformApplication;
     TSet<EKeyboardKeyName::Type>      PressedKeys;
@@ -382,6 +417,7 @@ private:
     TArray<TSharedPtr<FInputHandler>> InputHandlers;
     FOnMonitorConfigChangedEvent      OnMonitorConfigChangedEvent;
     TWeakPtr<FWindowWidget>           FocusWindow;
+    TWeakPtr<FWidget>                 MouseCaptor;
     IntVector2                        LastCursorPosition;
     bool                              bIsMonitorInfoValid : 1;
     bool                              bIsCursorPositionValid : 1;

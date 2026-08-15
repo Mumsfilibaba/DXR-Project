@@ -5,6 +5,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "CoreApplication/Mac/GCInputDevice.h"
+#include "CoreApplication/PlatformInterface/AnalogDeadzones.h"
 #include "CoreApplication/PlatformInterface/IPlatformApplicationMessageHandler.h"
 
 static TAutoConsoleVariable<int32> CVarGameControllerButtonRepeatDelay(
@@ -14,11 +15,6 @@ static TAutoConsoleVariable<int32> CVarGameControllerButtonRepeatDelay(
     0,
     (1 << 7) - 1,
     EConsoleVariableFlags::Default);
-
-// The XInput thresholds normalized, so a stick behaves the same on both platforms: 7849/32767, 8689/32767 and 30/255
-static constexpr float GLeftThumbDeadZone  = 0.24f;
-static constexpr float GRightThumbDeadZone = 0.27f;
-static constexpr float GTriggerDeadZone    = 0.12f;
 
 @interface FGCConnectionObserver : NSObject
 {
@@ -254,18 +250,18 @@ void FGCInputDevice::ProcessInputState(GCExtendedGamepad* InGamepad, uint32 Game
     };
 
     // Right Trigger
-    DispatchAnalogMessage(EAnalogSourceName::RightTrigger, GamepadIndex, CurrentState.RightTrigger, InGamepad.rightTrigger.value, GTriggerDeadZone);
+    DispatchAnalogMessage(EAnalogSourceName::RightTrigger, GamepadIndex, CurrentState.RightTrigger, InGamepad.rightTrigger.value, AnalogInput::GetDeadzone(EAnalogSourceName::RightTrigger));
 
     // Left Trigger
-    DispatchAnalogMessage(EAnalogSourceName::LeftTrigger, GamepadIndex, CurrentState.LeftTrigger, InGamepad.leftTrigger.value, GTriggerDeadZone);
+    DispatchAnalogMessage(EAnalogSourceName::LeftTrigger, GamepadIndex, CurrentState.LeftTrigger, InGamepad.leftTrigger.value, AnalogInput::GetDeadzone(EAnalogSourceName::LeftTrigger));
 
     // Right Thumb
-    DispatchAnalogMessage(EAnalogSourceName::RightThumbX, GamepadIndex, CurrentState.RightThumbX, InGamepad.rightThumbstick.xAxis.value, GRightThumbDeadZone);
-    DispatchAnalogMessage(EAnalogSourceName::RightThumbY, GamepadIndex, CurrentState.RightThumbY, InGamepad.rightThumbstick.yAxis.value, GRightThumbDeadZone);
+    DispatchAnalogMessage(EAnalogSourceName::RightThumbX, GamepadIndex, CurrentState.RightThumbX, InGamepad.rightThumbstick.xAxis.value, AnalogInput::GetDeadzone(EAnalogSourceName::RightThumbX));
+    DispatchAnalogMessage(EAnalogSourceName::RightThumbY, GamepadIndex, CurrentState.RightThumbY, InGamepad.rightThumbstick.yAxis.value, AnalogInput::GetDeadzone(EAnalogSourceName::RightThumbY));
 
     // Left Thumb
-    DispatchAnalogMessage(EAnalogSourceName::LeftThumbX, GamepadIndex, CurrentState.LeftThumbX, InGamepad.leftThumbstick.xAxis.value, GLeftThumbDeadZone);
-    DispatchAnalogMessage(EAnalogSourceName::LeftThumbY, GamepadIndex, CurrentState.LeftThumbY, InGamepad.leftThumbstick.yAxis.value, GLeftThumbDeadZone);
+    DispatchAnalogMessage(EAnalogSourceName::LeftThumbX, GamepadIndex, CurrentState.LeftThumbX, InGamepad.leftThumbstick.xAxis.value, AnalogInput::GetDeadzone(EAnalogSourceName::LeftThumbX));
+    DispatchAnalogMessage(EAnalogSourceName::LeftThumbY, GamepadIndex, CurrentState.LeftThumbY, InGamepad.leftThumbstick.yAxis.value, AnalogInput::GetDeadzone(EAnalogSourceName::LeftThumbY));
 
     CurrentState.RightThumbX  = InGamepad.rightThumbstick.xAxis.value;
     CurrentState.RightThumbY  = InGamepad.rightThumbstick.yAxis.value;

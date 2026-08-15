@@ -10,6 +10,7 @@ public:
     FPointLightComponent(const FObjectInitializer& ObjectInitializer);
     ~FPointLightComponent();
 
+    // FActorComponent Interface
     virtual void Tick(float DeltaTime) override;
 
     void UpdateShadowMatrices();

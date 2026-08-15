@@ -131,8 +131,6 @@ public:
     }
 
 private:
-
-    // Reads the live sources and produces a render batch.
     FRenderUpdateBatch CollectRenderUpdates();
 
     void AddLightProbe(FLightProbeComponent* InLightProbe);
@@ -148,6 +146,7 @@ private:
     void RemoveDirectionalLight(FDirectionalLightComponent* InDirectionalLight);
     void RemovePointLight(FPointLightComponent* InPointLight);
     void RemoveSkyLight(FSkyLightComponent* InSkyLight);
+    void RebuildMaterialList();
 
     FWorld*                       World;
     FSceneCamera*                 Camera;

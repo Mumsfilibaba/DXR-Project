@@ -4,6 +4,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "CoreApplication/Windows/XInputDevice.h"
+#include "CoreApplication/PlatformInterface/AnalogDeadzones.h"
 #include "CoreApplication/PlatformInterface/IPlatformApplicationMessageHandler.h"
 
 static TAutoConsoleVariable<int32> CVarXInputButtonRepeatDelay(
@@ -161,10 +162,10 @@ void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 GamepadI
         ButtonState.bState = bIsPressed ? 1 : 0;
     }
 
-    auto DispatchAnalogMessage = [CurrentMessageHandler](EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, int16 OldValue, int16 NewValue, float NormalizedValue, int16 DeadZone)
+    auto DispatchAnalogMessage = [CurrentMessageHandler](EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, int16 OldValue, int16 NewValue, float NormalizedValue)
     {
-        bool bValueChanged    = (OldValue != NewValue);
-        bool bOutsideDeadZone = (Math::Abs(NewValue) > DeadZone);
+        const bool bValueChanged    = (OldValue != NewValue);
+        const bool bOutsideDeadZone = (Math::Abs(NormalizedValue) > AnalogInput::GetDeadzone(AnalogSource));
 
         if (bValueChanged || bOutsideDeadZone)
         {
@@ -185,18 +186,18 @@ void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 GamepadI
     };
 
     // Right Trigger (analog)
-    DispatchAnalogMessage(EAnalogSourceName::RightTrigger, GamepadIndex, CurrentState.RightTrigger, Gamepad.bRightTrigger, NormalizeTrigger(Gamepad.bRightTrigger), XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
+    DispatchAnalogMessage(EAnalogSourceName::RightTrigger, GamepadIndex, CurrentState.RightTrigger, Gamepad.bRightTrigger, NormalizeTrigger(Gamepad.bRightTrigger));
 
     // Left Trigger (analog)
-    DispatchAnalogMessage(EAnalogSourceName::LeftTrigger, GamepadIndex, CurrentState.LeftTrigger, Gamepad.bLeftTrigger, NormalizeTrigger(Gamepad.bLeftTrigger), XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
+    DispatchAnalogMessage(EAnalogSourceName::LeftTrigger, GamepadIndex, CurrentState.LeftTrigger, Gamepad.bLeftTrigger, NormalizeTrigger(Gamepad.bLeftTrigger));
 
     // Right Thumb X/Y
-    DispatchAnalogMessage(EAnalogSourceName::RightThumbX, GamepadIndex, CurrentState.RightThumbX, Gamepad.sThumbRX, NormalizeThumbStick(Gamepad.sThumbRX), XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
-    DispatchAnalogMessage(EAnalogSourceName::RightThumbY, GamepadIndex, CurrentState.RightThumbY, Gamepad.sThumbRY, NormalizeThumbStick(Gamepad.sThumbRY), XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
+    DispatchAnalogMessage(EAnalogSourceName::RightThumbX, GamepadIndex, CurrentState.RightThumbX, Gamepad.sThumbRX, NormalizeThumbStick(Gamepad.sThumbRX));
+    DispatchAnalogMessage(EAnalogSourceName::RightThumbY, GamepadIndex, CurrentState.RightThumbY, Gamepad.sThumbRY, NormalizeThumbStick(Gamepad.sThumbRY));
 
     // Left Thumb X/Y
-    DispatchAnalogMessage(EAnalogSourceName::LeftThumbX, GamepadIndex, CurrentState.LeftThumbX, Gamepad.sThumbLX, NormalizeThumbStick(Gamepad.sThumbLX), XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
-    DispatchAnalogMessage(EAnalogSourceName::LeftThumbY, GamepadIndex, CurrentState.LeftThumbY, Gamepad.sThumbLY, NormalizeThumbStick(Gamepad.sThumbLY), XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+    DispatchAnalogMessage(EAnalogSourceName::LeftThumbX, GamepadIndex, CurrentState.LeftThumbX, Gamepad.sThumbLX, NormalizeThumbStick(Gamepad.sThumbLX));
+    DispatchAnalogMessage(EAnalogSourceName::LeftThumbY, GamepadIndex, CurrentState.LeftThumbY, Gamepad.sThumbLY, NormalizeThumbStick(Gamepad.sThumbLY));
 
     CurrentState.RightThumbX  = Gamepad.sThumbRX;
     CurrentState.RightThumbY  = Gamepad.sThumbRY;

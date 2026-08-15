@@ -65,6 +65,13 @@ FRHIValidationDevice::~FRHIValidationDevice()
 
     delete Device;
     Device = nullptr;
+
+    for (FRHIResource* Resource : LiveResources)
+    {
+        RHI_VALIDATION_ERROR("Resource still alive after RHI device teardown: %s", *RHIValidationInternal::GetResourceIdentity(Resource));
+    }
+
+    LiveResources.Clear();
 }
 
 void FRHIValidationDevice::BeginFrame()
@@ -452,7 +459,7 @@ FRHITexture* FRHIValidationDevice::CreateTexture(const FRHITextureDesc& InTextur
 		StateTracker.RegisterResource(Texture, InInitialState, InTextureDesc.TrackingMode);
 	}
 
-	return Texture;
+	return TrackLiveResource(Texture);
 }
 
 FRHIBuffer* FRHIValidationDevice::CreateBuffer(const FRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const void* InitialData)
@@ -679,7 +686,7 @@ FRHIBuffer* FRHIValidationDevice::CreateBuffer(const FRHIBufferDesc& BufferDesc,
         StateTracker.RegisterResource(Buffer, InitialState, BufferDesc.TrackingMode);
     }
 
-    return Buffer;
+    return TrackLiveResource(Buffer);
 }
 
 FRHISamplerState* FRHIValidationDevice::CreateSamplerState(const FRHISamplerStateDesc& InSamplerDesc)
@@ -719,7 +726,7 @@ FRHISamplerState* FRHIValidationDevice::CreateSamplerState(const FRHISamplerStat
         return nullptr;
     }
 
-    return Device->CreateSamplerState(InSamplerDesc);
+    return TrackLiveResource(Device->CreateSamplerState(InSamplerDesc));
 }
 
 FRHISwapChain* FRHIValidationDevice::CreateSwapChain(const FRHISwapChainDesc& InSwapChainDesc)
@@ -736,7 +743,7 @@ FRHISwapChain* FRHIValidationDevice::CreateSwapChain(const FRHISwapChainDesc& In
         return nullptr;
     }
 
-    return Device->CreateSwapChain(InSwapChainDesc);
+    return TrackLiveResource(Device->CreateSwapChain(InSwapChainDesc));
 }
 
 FRHISceneAccelerationStructure* FRHIValidationDevice::CreateSceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& InSceneDesc)
@@ -762,7 +769,7 @@ FRHISceneAccelerationStructure* FRHIValidationDevice::CreateSceneAccelerationStr
         }
     }
 
-    return Device->CreateSceneAccelerationStructure(InSceneDesc);
+    return TrackLiveResource(Device->CreateSceneAccelerationStructure(InSceneDesc));
 }
 
 FRHIGeometryAccelerationStructure* FRHIValidationDevice::CreateGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
@@ -797,7 +804,7 @@ FRHIGeometryAccelerationStructure* FRHIValidationDevice::CreateGeometryAccelerat
         return nullptr;
     }
 
-    return Device->CreateGeometryAccelerationStructure(InGeometryDesc);
+    return TrackLiveResource(Device->CreateGeometryAccelerationStructure(InGeometryDesc));
 }
 
 FRHIShaderResourceView* FRHIValidationDevice::CreateShaderResourceView(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc)
@@ -936,7 +943,7 @@ FRHIShaderResourceView* FRHIValidationDevice::CreateShaderResourceView(FRHIResou
         return nullptr;
     }
 
-    return Device->CreateShaderResourceView(InResource, InDesc);
+    return TrackLiveResource(Device->CreateShaderResourceView(InResource, InDesc));
 }
 
 FRHIUnorderedAccessView* FRHIValidationDevice::CreateUnorderedAccessView(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc)
@@ -1097,7 +1104,7 @@ FRHIUnorderedAccessView* FRHIValidationDevice::CreateUnorderedAccessView(FRHIRes
         return nullptr;
     }
 
-    return Device->CreateUnorderedAccessView(InResource, InDesc);
+    return TrackLiveResource(Device->CreateUnorderedAccessView(InResource, InDesc));
 }
 
 FRHIUnorderedAccessView* FRHIValidationDevice::CreateSamplerFeedbackUnorderedAccessView(FRHITexture* InFeedbackTexture, FRHITexture* InTargetedTexture)
@@ -1144,7 +1151,7 @@ FRHIUnorderedAccessView* FRHIValidationDevice::CreateSamplerFeedbackUnorderedAcc
         }
     }
 
-    return Device->CreateSamplerFeedbackUnorderedAccessView(InFeedbackTexture, InTargetedTexture);
+    return TrackLiveResource(Device->CreateSamplerFeedbackUnorderedAccessView(InFeedbackTexture, InTargetedTexture));
 }
 
 FRHIRenderTargetView* FRHIValidationDevice::CreateRenderTargetView(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc)
@@ -1258,7 +1265,7 @@ FRHIRenderTargetView* FRHIValidationDevice::CreateRenderTargetView(FRHIResource*
         }
     }
 
-    return Device->CreateRenderTargetView(InResource, InDesc);
+    return TrackLiveResource(Device->CreateRenderTargetView(InResource, InDesc));
 }
 
 FRHIDepthStencilView* FRHIValidationDevice::CreateDepthStencilView(FRHIResource* InResource, const FRHIDepthStencilViewDesc& InDesc)
@@ -1355,7 +1362,7 @@ FRHIDepthStencilView* FRHIValidationDevice::CreateDepthStencilView(FRHIResource*
             "resource ('%s'); the stencil flag will be ignored by the backend.", *GetResourceIdentity(Texture), ToString(TextureDesc.Format));
     }
 
-    return Device->CreateDepthStencilView(InResource, InDesc);
+    return TrackLiveResource(Device->CreateDepthStencilView(InResource, InDesc));
 }
 
 FRHIComputeShader* FRHIValidationDevice::CreateComputeShader(const TArray<uint8>& ShaderCode)
@@ -1366,7 +1373,7 @@ FRHIComputeShader* FRHIValidationDevice::CreateComputeShader(const TArray<uint8>
         return nullptr;
     }
 
-    return Device->CreateComputeShader(ShaderCode);
+    return TrackLiveResource(Device->CreateComputeShader(ShaderCode));
 }
 
 FRHIVertexShader* FRHIValidationDevice::CreateVertexShader(const TArray<uint8>& ShaderCode)
@@ -1377,7 +1384,7 @@ FRHIVertexShader* FRHIValidationDevice::CreateVertexShader(const TArray<uint8>& 
         return nullptr;
     }
 
-    return Device->CreateVertexShader(ShaderCode);
+    return TrackLiveResource(Device->CreateVertexShader(ShaderCode));
 }
 
 FRHIHullShader* FRHIValidationDevice::CreateHullShader(const TArray<uint8>& ShaderCode)
@@ -1394,7 +1401,7 @@ FRHIHullShader* FRHIValidationDevice::CreateHullShader(const TArray<uint8>& Shad
         return nullptr;
     }
 
-    return Device->CreateHullShader(ShaderCode);
+    return TrackLiveResource(Device->CreateHullShader(ShaderCode));
 }
 
 FRHIDomainShader* FRHIValidationDevice::CreateDomainShader(const TArray<uint8>& ShaderCode)
@@ -1411,7 +1418,7 @@ FRHIDomainShader* FRHIValidationDevice::CreateDomainShader(const TArray<uint8>& 
         return nullptr;
     }
 
-    return Device->CreateDomainShader(ShaderCode);
+    return TrackLiveResource(Device->CreateDomainShader(ShaderCode));
 }
 
 FRHIGeometryShader* FRHIValidationDevice::CreateGeometryShader(const TArray<uint8>& ShaderCode)
@@ -1428,7 +1435,7 @@ FRHIGeometryShader* FRHIValidationDevice::CreateGeometryShader(const TArray<uint
         return nullptr;
     }
 
-    return Device->CreateGeometryShader(ShaderCode);
+    return TrackLiveResource(Device->CreateGeometryShader(ShaderCode));
 }
 
 FRHIMeshShader* FRHIValidationDevice::CreateMeshShader(const TArray<uint8>& ShaderCode)
@@ -1439,7 +1446,7 @@ FRHIMeshShader* FRHIValidationDevice::CreateMeshShader(const TArray<uint8>& Shad
         return nullptr;
     }
 
-    return Device->CreateMeshShader(ShaderCode);
+    return TrackLiveResource(Device->CreateMeshShader(ShaderCode));
 }
 
 FRHIAmplificationShader* FRHIValidationDevice::CreateAmplificationShader(const TArray<uint8>& ShaderCode)
@@ -1450,7 +1457,7 @@ FRHIAmplificationShader* FRHIValidationDevice::CreateAmplificationShader(const T
         return nullptr;
     }
 
-    return Device->CreateAmplificationShader(ShaderCode);
+    return TrackLiveResource(Device->CreateAmplificationShader(ShaderCode));
 }
 
 FRHIPixelShader* FRHIValidationDevice::CreatePixelShader(const TArray<uint8>& ShaderCode)
@@ -1461,7 +1468,7 @@ FRHIPixelShader* FRHIValidationDevice::CreatePixelShader(const TArray<uint8>& Sh
         return nullptr;
     }
 
-    return Device->CreatePixelShader(ShaderCode);
+    return TrackLiveResource(Device->CreatePixelShader(ShaderCode));
 }
 
 FRHIRayGenShader* FRHIValidationDevice::CreateRayGenShader(const TArray<uint8>& ShaderCode)
@@ -1472,7 +1479,7 @@ FRHIRayGenShader* FRHIValidationDevice::CreateRayGenShader(const TArray<uint8>& 
         return nullptr;
     }
 
-    return Device->CreateRayGenShader(ShaderCode);
+    return TrackLiveResource(Device->CreateRayGenShader(ShaderCode));
 }
 
 FRHIRayAnyHitShader* FRHIValidationDevice::CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
@@ -1483,7 +1490,7 @@ FRHIRayAnyHitShader* FRHIValidationDevice::CreateRayAnyHitShader(const TArray<ui
         return nullptr;
     }
 
-    return Device->CreateRayAnyHitShader(ShaderCode);
+    return TrackLiveResource(Device->CreateRayAnyHitShader(ShaderCode));
 }
 
 FRHIRayClosestHitShader* FRHIValidationDevice::CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
@@ -1494,7 +1501,7 @@ FRHIRayClosestHitShader* FRHIValidationDevice::CreateRayClosestHitShader(const T
         return nullptr;
     }
 
-    return Device->CreateRayClosestHitShader(ShaderCode);
+    return TrackLiveResource(Device->CreateRayClosestHitShader(ShaderCode));
 }
 
 FRHIRayMissShader* FRHIValidationDevice::CreateRayMissShader(const TArray<uint8>& ShaderCode)
@@ -1505,7 +1512,7 @@ FRHIRayMissShader* FRHIValidationDevice::CreateRayMissShader(const TArray<uint8>
         return nullptr;
     }
 
-    return Device->CreateRayMissShader(ShaderCode);
+    return TrackLiveResource(Device->CreateRayMissShader(ShaderCode));
 }
 
 FRHIRayIntersectionShader* FRHIValidationDevice::CreateRayIntersectionShader(const TArray<uint8>& ShaderCode)
@@ -1516,7 +1523,7 @@ FRHIRayIntersectionShader* FRHIValidationDevice::CreateRayIntersectionShader(con
         return nullptr;
     }
 
-    return Device->CreateRayIntersectionShader(ShaderCode);
+    return TrackLiveResource(Device->CreateRayIntersectionShader(ShaderCode));
 }
 
 FRHIRayCallableShader* FRHIValidationDevice::CreateRayCallableShader(const TArray<uint8>& ShaderCode)
@@ -1527,27 +1534,27 @@ FRHIRayCallableShader* FRHIValidationDevice::CreateRayCallableShader(const TArra
         return nullptr;
     }
 
-    return Device->CreateRayCallableShader(ShaderCode);
+    return TrackLiveResource(Device->CreateRayCallableShader(ShaderCode));
 }
 
 FRHIDepthStencilState* FRHIValidationDevice::CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
 {
-    return Device->CreateDepthStencilState(InDesc);
+    return TrackLiveResource(Device->CreateDepthStencilState(InDesc));
 }
 
 FRHIRasterizerState* FRHIValidationDevice::CreateRasterizerState(const FRHIRasterizerStateDesc& InDesc)
 {
-    return Device->CreateRasterizerState(InDesc);
+    return TrackLiveResource(Device->CreateRasterizerState(InDesc));
 }
 
 FRHIBlendState* FRHIValidationDevice::CreateBlendState(const FRHIBlendStateDesc& InDesc)
 {
-    return Device->CreateBlendState(InDesc);
+    return TrackLiveResource(Device->CreateBlendState(InDesc));
 }
 
 FRHIInputLayout* FRHIValidationDevice::CreateInputLayout(const TArray<FRHIInputElementDesc>& InInputElements)
 {
-    return Device->CreateInputLayout(InInputElements);
+    return TrackLiveResource(Device->CreateInputLayout(InInputElements));
 }
 
 FRHIGraphicsPipelineState* FRHIValidationDevice::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc)
@@ -1636,7 +1643,7 @@ FRHIGraphicsPipelineState* FRHIValidationDevice::CreateGraphicsPipelineState(con
         return nullptr;
     }
 
-    return Device->CreateGraphicsPipelineState(InDesc);
+    return TrackLiveResource(Device->CreateGraphicsPipelineState(InDesc));
 }
 
 FRHIComputePipelineState* FRHIValidationDevice::CreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc)
@@ -1647,7 +1654,7 @@ FRHIComputePipelineState* FRHIValidationDevice::CreateComputePipelineState(const
         return nullptr;
     }
 
-    return Device->CreateComputePipelineState(InDesc);
+    return TrackLiveResource(Device->CreateComputePipelineState(InDesc));
 }
 
 FRHIMeshletPipelineState* FRHIValidationDevice::CreateMeshletPipelineState(const FRHIMeshletPipelineStateDesc& InDesc)
@@ -1684,7 +1691,7 @@ FRHIMeshletPipelineState* FRHIValidationDevice::CreateMeshletPipelineState(const
         return nullptr;
     }
 
-    return Device->CreateMeshletPipelineState(InDesc);
+    return TrackLiveResource(Device->CreateMeshletPipelineState(InDesc));
 }
 
 FRHIRayTracingPipelineState* FRHIValidationDevice::CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc)
@@ -1803,7 +1810,7 @@ FRHIRayTracingPipelineState* FRHIValidationDevice::CreateRayTracingPipelineState
         }
     }
 
-    return Device->CreateRayTracingPipelineState(InDesc);
+    return TrackLiveResource(Device->CreateRayTracingPipelineState(InDesc));
 }
 
 FRHIClusterAccelerationStructure* FRHIValidationDevice::CreateClusterAccelerationStructure(const FRHIClusterAccelerationStructureDesc& InDesc)
@@ -1828,7 +1835,7 @@ FRHIClusterAccelerationStructure* FRHIValidationDevice::CreateClusterAcceleratio
         return nullptr;
     }
 
-    return Device->CreateClusterAccelerationStructure(InDesc);
+    return TrackLiveResource(Device->CreateClusterAccelerationStructure(InDesc));
 }
 
 FRHIClusterTemplate* FRHIValidationDevice::CreateClusterTemplate(const FRHIClusterTemplateDesc& InDesc)
@@ -1839,7 +1846,7 @@ FRHIClusterTemplate* FRHIValidationDevice::CreateClusterTemplate(const FRHIClust
         return nullptr;
     }
 
-    return Device->CreateClusterTemplate(InDesc);
+    return TrackLiveResource(Device->CreateClusterTemplate(InDesc));
 }
 
 FRHIPartitionedSceneAccelerationStructure* FRHIValidationDevice::CreatePartitionedSceneAccelerationStructure(const FRHIRayTracingAccelerationStructurePartitionedSceneInputs& InInputs)
@@ -1857,7 +1864,7 @@ FRHIPartitionedSceneAccelerationStructure* FRHIValidationDevice::CreatePartition
         return nullptr;
     }
 
-    return Device->CreatePartitionedSceneAccelerationStructure(InInputs);
+    return TrackLiveResource(Device->CreatePartitionedSceneAccelerationStructure(InInputs));
 }
 
 FRHIOpacityMicromap* FRHIValidationDevice::CreateOpacityMicromap(const FRHIOpacityMicromapDesc& InDesc)
@@ -1868,7 +1875,7 @@ FRHIOpacityMicromap* FRHIValidationDevice::CreateOpacityMicromap(const FRHIOpaci
         return nullptr;
     }
 
-    return Device->CreateOpacityMicromap(InDesc);
+    return TrackLiveResource(Device->CreateOpacityMicromap(InDesc));
 }
 
 FRHIShaderBindingTable* FRHIValidationDevice::CreateShaderBindingTable(const FRHIShaderBindingTableDesc& InDesc)
@@ -1899,13 +1906,13 @@ FRHIShaderBindingTable* FRHIValidationDevice::CreateShaderBindingTable(const FRH
         RHI_VALIDATION_WARNING("CreateShaderBindingTable: this backend's local records may only hold buffers; texture/typed-view/sampler local records are rejected at record-update time. Bind those globally instead.");
     }
 
-    FRHIShaderBindingTable* ShaderBindingTable = Device->CreateShaderBindingTable(InDesc);
+    FRHIShaderBindingTable* ShaderBindingTable = TrackLiveResource(Device->CreateShaderBindingTable(InDesc));
     if (!ShaderBindingTable)
     {
         return nullptr;
     }
 
-    return new FRHIValidationShaderBindingTable(ShaderBindingTable);
+    return TrackLiveResource(new FRHIValidationShaderBindingTable(ShaderBindingTable));
 }
 
 void FRHIValidationDevice::GetRayTracingAccelerationStructureOperationPrebuildInfo(const FRHIRayTracingAccelerationStructureOperationInputs& InInputs, FRHIRayTracingAccelerationStructurePrebuildInfo& OutInfo)
@@ -1962,13 +1969,13 @@ FRHIQuery* FRHIValidationDevice::CreateQuery(EQueryType InQueryType)
         return nullptr;
     }
 
-    return Device->CreateQuery(InQueryType);
+    return TrackLiveResource(Device->CreateQuery(InQueryType));
 }
 
 
 FRHIFence* FRHIValidationDevice::CreateFence()
 {
-    return Device->CreateFence();
+    return TrackLiveResource(Device->CreateFence());
 }
 
 IRHICommandContext* FRHIValidationDevice::ObtainCommandContext()
@@ -2033,6 +2040,7 @@ void FRHIValidationDevice::EnqueueResourceDeletion(FRHIResource* Resource)
     }
 
     StateTracker.UnregisterResource(Resource);
+    LiveResources.Remove(Resource);
     Device->EnqueueResourceDeletion(Resource);
 }
 

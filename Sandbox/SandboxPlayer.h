@@ -3,7 +3,6 @@
 #include <Engine/World/FirstPersonCameraController.h>
 
 class FCameraActor;
-class FPlayerInput;
 
 class SANDBOX_API FSandboxPlayerController : public FPlayerController
 {
@@ -16,18 +15,10 @@ public:
     virtual void SetupInputComponent() override;
     virtual void Tick(float DeltaTime) override;
 
-    void MoveForward();
-    void MoveForwardAxis(float Value);
-    void MoveBackwards();
-    void MoveRight();
-    void MoveLeft();
-
-    void RotateUp();
-    void RotateDown();
-    void RotateRight();
-    void RotateLeft();
-
-    void Jump();
+    void Shoot();
+    void BoostPressed();
+    void BoostReleased();
+    void OnShootTriggerAxis(float Value);
 
     void SetCameraActor(FCameraActor* InCameraActor)
     {
@@ -40,8 +31,8 @@ public:
     }
 
 private:
-    Vector3 GatherMoveAxis(const FPlayerInput* Input) const;
-
     FCameraActor*                CameraActor;
     FFirstPersonCameraController CameraController;
+    bool                         bBoostHeld;
+    bool                         bWasShootTriggerDown;
 };

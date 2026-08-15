@@ -9,7 +9,6 @@ class Vector3;
 
 struct ENGINE_API EditorGuizmo
 {
-public:
     struct EOperation
     {
         enum Type : uint32
@@ -72,7 +71,6 @@ public:
         };
     };
 
-public:
     struct Style 
     { 
         Style(); 
@@ -88,8 +86,6 @@ public:
         float             CenterCircleSize;           // Size of circle at the center of the translate/scale gizmo 
         ImVec4            Colors[EColor::Count]; 
     }; 
-
-public:
 
     // Setup
     static void SetDrawlist(ImDrawList* DrawList = nullptr);

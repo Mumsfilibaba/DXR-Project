@@ -1,5 +1,6 @@
 #include "Sandbox.h"
 #include "SandboxPlayer.h"
+#include "SandboxProjectile.h"
 #include "GameComponents.h"
 #include <Core/Math/Math.h>
 #include <Core/Misc/OutputDeviceLogger.h>
@@ -117,6 +118,11 @@ bool FSandbox::Init()
 
     LOG_INFO("Finished loading game");
     return true;
+}
+
+void FSandbox::Release()
+{
+    ReleaseProjectileMeshCache();
 }
 
 void FSandbox::Tick(float)

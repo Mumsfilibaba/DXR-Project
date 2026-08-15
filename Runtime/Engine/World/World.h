@@ -26,8 +26,8 @@ enum class EWorldRunState : uint8
 class ENGINE_API FWorld
 {
 public:
-    DECLARE_EVENT(FOnActorRemovedEvent, FWorld, FActor*);
 
+    DECLARE_EVENT(FOnActorRemovedEvent, FWorld, FActor*);
 
     /**
      * @brief Default constructor
@@ -112,6 +112,13 @@ public:
      * @param InActor Actor to remove
      */
     void RemoveActor(FActor* InActor);
+
+    /**
+     * @brief Queue an actor for removal at the end of the current world tick
+     *
+     * @param InActor Actor to remove
+     */
+    void DestroyActorDeferred(FActor* InActor);
 
     /**
      * @brief Create a filter that actors can be placed in. Filters are presented in the scene-hierarchy in the 
@@ -317,5 +324,6 @@ private:
     FActorFilter*              CurrentFilter;
 #endif
     TArray<FPlayerController*> PlayerControllers;
+    TArray<FActor*>            PendingDestroyActors;
     FOnActorRemovedEvent       OnActorRemovedEvent;
 };

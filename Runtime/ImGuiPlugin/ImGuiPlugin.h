@@ -19,6 +19,8 @@ struct FImGuiEventHandler : public FInputHandler
 
     bool ProcessKeyEvent(const FKeyEvent& KeyEvent);
     bool ProcessMouseButtonEvent(const FCursorEvent& CursorEvent);
+
+    void ClearGamepadAnalogState();
 };
 
 class FImGuiPlugin : public IImguiPlugin
@@ -53,14 +55,12 @@ public:
 
     virtual void SetMainViewport(const TSharedPtr<FViewportWidget>& InViewport) override final;
 
-    virtual void SetInputPassthroughEnabled(bool bEnabled) override final
+    virtual void ClearGamepadAnalogState() override final
     {
-        bInputPassthroughEnabled = bEnabled;
-    }
-
-    virtual bool IsInputPassthroughEnabled() const override final
-    {
-        return bInputPassthroughEnabled;
+        if (EventHandler)
+        {
+            EventHandler->ClearGamepadAnalogState();
+        }
     }
 
     virtual ImGuiIO* GetImGuiIO() const override final
@@ -105,7 +105,6 @@ private:
     FImGuiDrawMulticastDelegate    DrawDelegates;
     FImGuiDrawMulticastDelegate    EndFrameDelegates;
     FDelegateHandle                OnMonitorConfigChangedDelegateHandle;
-    bool                           bInputPassthroughEnabled;
 };
 
 extern FImGuiPlugin* GImGuiPlugin;

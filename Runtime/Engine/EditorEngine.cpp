@@ -235,6 +235,16 @@ bool FEditorEngine::StartPlay()
 
     Snapshot.Capture(GetWorld());
 
+    if (IImguiPlugin::IsEnabled())
+    {
+        IImguiPlugin::Get().ClearGamepadAnalogState();
+    }
+
+    if (ViewportWidget)
+    {
+        ViewportWidget->ResetInputState();
+    }
+
     if (const TSharedPtr<FSceneViewport> Viewport = GetSceneViewport())
     {
         Viewport->SetPlayerInputEnabled(true);
@@ -269,6 +279,16 @@ void FEditorEngine::StopPlay()
     if (const TSharedPtr<FSceneViewport> Viewport = GetSceneViewport())
     {
         Viewport->SetPlayerInputEnabled(false);
+    }
+
+    if (IImguiPlugin::IsEnabled())
+    {
+        IImguiPlugin::Get().ClearGamepadAnalogState();
+    }
+
+    if (ViewportWidget)
+    {
+        ViewportWidget->ResetInputState();
     }
 
     Snapshot.Restore(GetWorld());

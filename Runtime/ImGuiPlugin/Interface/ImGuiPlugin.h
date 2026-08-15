@@ -75,8 +75,8 @@ struct IImguiPlugin : public IModule
 
     virtual void SetMainViewport(const TSharedPtr<FViewportWidget>& InViewport) = 0;
 
-    virtual void SetInputPassthroughEnabled(bool bEnabled) = 0;
-    virtual bool IsInputPassthroughEnabled() const = 0;
+    /** Clear sticky ImGui gamepad analog keys (stick poles + triggers). */
+    virtual void ClearGamepadAnalogState() = 0;
 
     virtual ImGuiIO*      GetImGuiIO()      const = 0;
     virtual ImGuiContext* GetImGuiContext() const = 0;

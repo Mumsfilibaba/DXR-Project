@@ -1,6 +1,7 @@
 #pragma once 
 #include "Core/Delegates/Delegate.h"
 #include "Core/Containers/String.h"
+#include "Engine/World/Actors/InputName.h"
 #include "Engine/World/Components/ActorComponent.h"
 
 DECLARE_DELEGATE(FInputActionDelegate);
@@ -25,14 +26,14 @@ struct FActionInputBinding
 {
     FActionInputBinding() = default;
 
-    FActionInputBinding(const StringView& InName, EActionState InActionState, const FInputActionDelegate& InActionDelegate)
+    FActionInputBinding(const FInputName& InName, EActionState InActionState, const FInputActionDelegate& InActionDelegate)
         : Name(InName)
         , ActionState(InActionState)
         , ActionDelegate(InActionDelegate)
     {
     }
 
-    String               Name;
+    FInputName           Name;
     EActionState         ActionState;
     FInputActionDelegate ActionDelegate;
 };
@@ -41,13 +42,13 @@ struct FAxisInputBinding
 {
     FAxisInputBinding() = default;
 
-    FAxisInputBinding(const StringView& InName, const FInputAxisDelegate& InActionDelegate)
+    FAxisInputBinding(const FInputName& InName, const FInputAxisDelegate& InActionDelegate)
         : Name(InName)
         , ActionDelegate(InActionDelegate)
     {
     }
 
-    String             Name;
+    FInputName         Name;
     FInputAxisDelegate ActionDelegate;
 };
 
@@ -82,6 +83,17 @@ public:
         ActionBindings.Clear();
     }
 
+    const TArray<FAxisInputBinding>& GetAxisBindings() const
+    {
+        return AxisBindings;
+    }
+
+    const TArray<FActionInputBinding>& GetActionBindings() const
+    {
+        return ActionBindings;
+    }
+
+private:
     TArray<FAxisInputBinding>   AxisBindings;
     TArray<FActionInputBinding> ActionBindings;
 };

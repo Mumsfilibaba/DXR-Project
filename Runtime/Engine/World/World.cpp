@@ -147,6 +147,13 @@ void FWorld::Tick(float DeltaTime)
         }
     }
 
+    for (FActor* Actor : PendingDestroyActors)
+    {
+        RemoveActor(Actor);
+    }
+
+    PendingDestroyActors.Clear();
+
     if (ActiveCamera)
     {
         ActiveCamera->UpdateViewMatrix();
@@ -160,10 +167,12 @@ void FWorld::AddActor(FActor* InActor)
     {
         // Set this scene to be the owner of the added actor
         CHECK(InActor->GetWorld() == nullptr);
+
         InActor->SetWorld(this);
     #if EDITOR_BUILD
         InActor->SetFilter(CurrentFilter);
     #endif
+
         Actors.Emplace(InActor);
 
         if (FPlayerController* PlayerController = Cast<FPlayerController>(InActor))
@@ -178,6 +187,19 @@ void FWorld::AddActor(FActor* InActor)
                 AddSceneComponent(SceneComponent);
             }
         }
+    }
+}
+
+void FWorld::DestroyActorDeferred(FActor* InActor)
+{
+    if (!InActor || InActor->GetWorld() != this)
+    {
+        return;
+    }
+
+    if (PendingDestroyActors.Find(InActor) == PendingDestroyActors.InvalidIndex)
+    {
+        PendingDestroyActors.Add(InActor);
     }
 }
 

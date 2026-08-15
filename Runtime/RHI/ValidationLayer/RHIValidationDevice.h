@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/Map.h"
+#include "Core/Containers/Set.h"
 #include "RHI/RHIDevice.h"
 #include "RHI/ValidationLayer/RHIValidationStateTracker.h"
 
@@ -81,7 +82,19 @@ public:
     virtual ERHIType GetRHIType() const override final;
 
 private:
+    template<typename ResourceType>
+    ResourceType* TrackLiveResource(ResourceType* Resource)
+    {
+        if (Resource)
+        {
+            LiveResources.Add(Resource);
+        }
+
+        return Resource;
+    }
+
     FRHIDevice*                                              Device;
     FRHIValidationStateTracker                               StateTracker;
+    TSet<FRHIResource*>                                      LiveResources;
     TMap<IRHICommandContext*, FRHIValidationCommandContext*> RealContextToValidationContextMap;
 };
