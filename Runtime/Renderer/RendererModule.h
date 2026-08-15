@@ -41,6 +41,11 @@ public:
 
     virtual IGPUProfiler& GetGPUProfiler() override final;
 
+#if EDITOR_BUILD
+    virtual void SetRenderGraphDebugCaptureEnabled(bool bEnabled) override final;
+    virtual bool CopyLatestRenderGraphDebugSnapshot(FRenderGraphDebugSnapshot& Out) override final;
+#endif
+
     const TArray<FScene*>& GetScenes() const
     {
         return Scenes;

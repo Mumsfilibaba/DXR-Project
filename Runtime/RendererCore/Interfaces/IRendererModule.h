@@ -7,6 +7,10 @@
 #include "RendererCore/CameraSnapshot.h"
 #include "RendererCore/Interfaces/IScene.h"
 
+#if EDITOR_BUILD
+    #include "RendererCore/Debug/RenderGraphDebug.h"
+#endif
+
 class FWorld;
 class FRHITexture;
 struct IGPUProfiler;
@@ -155,6 +159,11 @@ public:
 
     /** @brief Returns the GPU profiler interface */
     virtual IGPUProfiler& GetGPUProfiler() = 0;
+
+#if EDITOR_BUILD
+    virtual void SetRenderGraphDebugCaptureEnabled(bool bEnabled) = 0;
+    virtual bool CopyLatestRenderGraphDebugSnapshot(FRenderGraphDebugSnapshot& Out) = 0;
+#endif
 
 protected:
     static RENDERERCORE_API IRendererModule* RendererModule;

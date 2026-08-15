@@ -15,6 +15,7 @@
     #include "Renderer/Passes/Editor/EditorSelectionIDPass.h"
     #include "Renderer/Passes/Editor/FinalCompositePass.h"
     #include "Renderer/Passes/Editor/SelectionOutlinePass.h"
+    #include "RendererCore/Debug/RenderGraphDebug.h"
 #endif
 
 static FRenderGraphTextureDesc CreateGBufferDesc(EFormat Format, uint32 Width, uint32 Height)
@@ -498,6 +499,18 @@ void FSceneRenderer::BuildAndExecuteSceneGraph(const FSceneRenderView& SceneRend
     DebugViewPass->AddRenderGraphOverlayPass(GraphBuilder, Context);
 
     PrevFrameSamplePositions = bUseHardwareJitter ? FrameSamplePositions : FRHISamplePositionsDesc();
+
+#if EDITOR_BUILD
+    if (RenderGraphDebug::IsCaptureEnabled())
+    {
+        GraphBuilder.Compile();
+
+        FRenderGraphDebugSnapshot Snapshot;
+        RenderGraphDebug::CaptureSnapshot(GraphBuilder, Snapshot);
+        
+        RenderGraphDebug::Publish(::Move(Snapshot));
+    }
+#endif
 
     GraphBuilder.Execute(CommandList);
 

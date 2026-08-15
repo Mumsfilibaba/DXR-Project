@@ -96,6 +96,21 @@ public:
         bHasErrors = bInHasErrors;
     }
 
+    NODISCARD const TArray<FRenderGraphPass*>& GetPasses() const
+    {
+        return Passes;
+    }
+
+    NODISCARD const TArray<FRenderGraphTexture*>& GetTextures() const
+    {
+        return Textures;
+    }
+
+    NODISCARD const TArray<FRenderGraphBuffer*>& GetBuffers() const
+    {
+        return Buffers;
+    }
+
 private:
     friend class FRenderGraphPassBuilder;
 

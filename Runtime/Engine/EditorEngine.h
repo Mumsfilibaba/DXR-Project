@@ -15,6 +15,7 @@ class FEditorGuizmoWidget;
 class FEditorRendererSettingsWidget;
 class FEditorGPUProfilerWidget;
 class FEditorFrameProfilerWidget;
+class FEditorRenderGraphWidget;
 class FEditorRHIInfoWidget;
 class FEditorStatsWidget;
 class FEditorAboutWidget;
@@ -55,6 +56,7 @@ public:
     const TSharedPtr<FEditorRendererSettingsWidget>& GetRendererSettingsWidget() const { return RendererSettingsWidget; }
     const TSharedPtr<FEditorGPUProfilerWidget>&      GetGPUProfilerWidget()      const { return GPUProfilerWidget; }
     const TSharedPtr<FEditorFrameProfilerWidget>&    GetFrameProfilerWidget()    const { return FrameProfilerWidget; }
+    const TSharedPtr<FEditorRenderGraphWidget>&      GetRenderGraphWidget()      const { return RenderGraphWidget; }
     const TSharedPtr<FEditorRHIInfoWidget>&          GetRHIInfoWidget()          const { return RHIInfoWidget; }
     const TSharedPtr<FEditorStatsWidget>&            GetStatsWidget()            const { return StatsWidget; }
     const TSharedPtr<FEditorAboutWidget>&            GetAboutWidget()            const { return AboutWidget; }
@@ -122,6 +124,7 @@ private:
     TSharedPtr<FEditorRendererSettingsWidget> RendererSettingsWidget;
     TSharedPtr<FEditorGPUProfilerWidget>      GPUProfilerWidget;
     TSharedPtr<FEditorFrameProfilerWidget>    FrameProfilerWidget;
+    TSharedPtr<FEditorRenderGraphWidget>      RenderGraphWidget;
     TSharedPtr<FEditorRHIInfoWidget>          RHIInfoWidget;
     TSharedPtr<FEditorStatsWidget>            StatsWidget;
     TSharedPtr<FEditorAboutWidget>            AboutWidget;

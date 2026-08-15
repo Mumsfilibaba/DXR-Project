@@ -3,7 +3,9 @@
 #include "ImGuiPlugin.h"
 #include "Core/Time/ElapsedTime.h"
 #include "Core/Misc/FrameProfiler.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Containers/Array.h"
+#include "Core/Math/Math.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Application/Widgets/WindowWidget.h"
@@ -261,7 +263,7 @@ bool FImGuiRenderer::UpdateFontAtlas()
 
     // TODO: We need to uncomment below, but this requires changes to the renderer loop so keep avoiding this for now. 
     // State.Fonts->SetTexID((ImTextureID)FontAtlas.Get());
-    
+
     return true;
 }
 
@@ -326,7 +328,7 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
         FRHIRenderTargetView* BackBufferRTV = RHISwapChain->GetBackBufferRenderTargetView();
         FRHIBeginRenderPassDesc RenderPassDesc({ FRHIRenderTargetAttachment(BackBufferRTV, EAttachmentLoadAction::Load) }, 1);
         CommandList.BeginRenderPass(RenderPassDesc);
-        
+
         RenderDrawData(CommandList, DrawData);
 
         CommandList.EndRenderPass();
@@ -347,20 +349,30 @@ void FImGuiRenderer::RenderPlatformWindows(FRHICommandList& CommandList)
 
 void FImGuiRenderer::RenderViewport(FRHICommandList& CommandList, ImDrawData* DrawData, FImGuiViewport& ViewportData, bool bClear)
 {
+    if (!ViewportData.SwapChain)
+    {
+        return;
+    }
+
     FRHITexture* BackBuffer = ViewportData.SwapChain->GetBackBuffer();
+    FRHIRenderTargetView* BackBufferRTV = ViewportData.SwapChain->GetBackBufferRenderTargetView();
+    if (!BackBuffer || !BackBufferRTV)
+    {
+        return;
+    }
+
     CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::Present, ERHIResourceState::RenderTarget));
 
     PreparePipelineState(ViewportData.SwapChain->GetDesc().ColorFormat);
     PrepareDrawData(CommandList, DrawData);
     PrepareTexturesForShaderResourceUsage(CommandList, DrawData);
 
-    FRHIRenderTargetView* BackBufferRTV = ViewportData.SwapChain->GetBackBufferRenderTargetView();
     FRHIBeginRenderPassDesc RenderPassDesc({ FRHIRenderTargetAttachment(BackBufferRTV, bClear ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load) }, 1);
-    
+
     CommandList.BeginRenderPass(RenderPassDesc);
     RenderDrawData(CommandList, DrawData);
     CommandList.EndRenderPass();
-    
+
     CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::RenderTarget, ERHIResourceState::Present));
 }
 
@@ -475,8 +487,9 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
             const ImDrawCmd* DrawCommand = &DrawCmdList->CmdBuffer[CmdIndex];
             if (DrawCommand->UserCallback != nullptr)
             {
-                // (ImDrawCallback_ResetRenderState is a special callback value used by the user to request the renderer to reset render state)
-                // User callback, registered via ImDrawList::AddCallback()
+                // (ImDrawCallback_ResetRenderState is a special callback value used by the user to request
+                // the renderer to reset render state) User callback, registered via ImDrawList::AddCallback()-
+
                 if (bResetRenderState || DrawCommand->UserCallback == ImDrawCallback_ResetRenderState)
                 {
                     SetupRenderState(CommandList, DrawData, *ViewportData);
@@ -536,9 +549,16 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
                     CommandList.SetShaderResourceView(PShader.Get(), View, 0);
                 }
 
-                // Project scissor/clipping rectangles into framebuffer space
-                ImVec2 ClipMin = ImVec2((DrawCommand->ClipRect.x - ClipOffset.x), (DrawCommand->ClipRect.y - ClipOffset.y));
-                ImVec2 ClipMax = ImVec2((DrawCommand->ClipRect.z - ClipOffset.x), (DrawCommand->ClipRect.w - ClipOffset.y));
+                // Project scissor/clipping rectangles into framebuffer space (apply DPI scale)
+                const ImVec2 ClipScale = DrawData->FramebufferScale;
+
+                ImVec2 ClipMin = ImVec2(
+                    (DrawCommand->ClipRect.x - ClipOffset.x) * ClipScale.x,
+                    (DrawCommand->ClipRect.y - ClipOffset.y) * ClipScale.y);
+
+                ImVec2 ClipMax = ImVec2(
+                    (DrawCommand->ClipRect.z - ClipOffset.x) * ClipScale.x,
+                    (DrawCommand->ClipRect.w - ClipOffset.y) * ClipScale.y);
 
                 if (ClipMin.x < 0.0f)
                 {
@@ -577,16 +597,16 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
 
 void FImGuiRenderer::SetupRenderState(FRHICommandList& CommandList, ImDrawData* DrawData, FImGuiViewport& Buffers)
 {
-    int32 FramebufferWidth  = static_cast<int32>(DrawData->DisplaySize.x * DrawData->FramebufferScale.x);
-    int32 FramebufferHeight = static_cast<int32>(DrawData->DisplaySize.y * DrawData->FramebufferScale.y);
-    
-    // Setup Orthographic Projection matrix into our Constant-Buffer
-    // The visible ImGui space lies from DrawData->DisplayPos (top left)
-    // to DrawData->DisplayPos+DrawData->DisplaySize (bottom right).
-    float L = DrawData->DisplayPos.x;
-    float R = DrawData->DisplayPos.x + FramebufferWidth;
-    float T = DrawData->DisplayPos.y;
-    float B = DrawData->DisplayPos.y + FramebufferHeight;
+    // Ortho uses DisplaySize (ImGui space). FramebufferScale only affects the 
+    // viewport/scissor extents so detached DPI-scaled viewports stay aligned.
+
+    const int32 FramebufferWidth  = static_cast<int32>(DrawData->DisplaySize.x * DrawData->FramebufferScale.x);
+    const int32 FramebufferHeight = static_cast<int32>(DrawData->DisplaySize.y * DrawData->FramebufferScale.y);
+
+    const float L = DrawData->DisplayPos.x;
+    const float R = DrawData->DisplayPos.x + DrawData->DisplaySize.x;
+    const float T = DrawData->DisplayPos.y;
+    const float B = DrawData->DisplayPos.y + DrawData->DisplaySize.y;
 
     float Matrix[4][4] =
     {
@@ -604,10 +624,9 @@ void FImGuiRenderer::SetupRenderState(FRHICommandList& CommandList, ImDrawData* 
 
     const EIndexFormat IndexFormat = sizeof(ImDrawIdx) == 2 ? EIndexFormat::uint16 : EIndexFormat::uint32;
     CommandList.SetIndexBuffer(Buffers.IndexBuffer.Get(), IndexFormat);
-    CommandList.SetVertexBuffers(MakeArrayView(&Buffers.VertexBuffer, 1), 0);
-    
-    CommandList.SetBlendFactor(Vector4{ 0.0f, 0.0f, 0.0f, 0.0f });
 
+    CommandList.SetVertexBuffers(MakeArrayView(&Buffers.VertexBuffer, 1), 0);
+    CommandList.SetBlendFactor(Vector4{ 0.0f, 0.0f, 0.0f, 0.0f });
     CommandList.SetShaderConstants(PShader.Get(), &VertexConstantBuffer, 16);
 }
 
@@ -665,21 +684,27 @@ void FImGuiRenderer::OnCreateWindow(ImGuiViewport* Viewport)
     FRHISwapChainDesc SwapChainDesc;
     SwapChainDesc.WindowHandle = PlatformWindow->GetPlatformHandle();
     SwapChainDesc.ColorFormat  = EFormat::Unknown;
-    SwapChainDesc.Width        = static_cast<uint16>(Viewport->Size.x);
-    SwapChainDesc.Height       = static_cast<uint16>(Viewport->Size.y);
-        
+    SwapChainDesc.Width        = static_cast<uint16>(Math::Max(1.0f, Viewport->Size.x));
+    SwapChainDesc.Height       = static_cast<uint16>(Math::Max(1.0f, Viewport->Size.y));
+
     ViewportData->SwapChain = RHI::CreateSwapChain(SwapChainDesc);
-    if (ViewportData->SwapChain)
+    if (!ViewportData->SwapChain)
     {
-        ViewportData->Width  = SwapChainDesc.Width;
-        ViewportData->Height = SwapChainDesc.Height;
-        
-        Viewport->RendererUserData = Viewport->PlatformUserData;
+        LOG_ERROR("ImGui: failed to create swapchain for detached viewport");
+        return;
     }
+
+    const FRHISwapChainDesc& Created = ViewportData->SwapChain->GetDesc();
+    ViewportData->Width  = Created.Width;
+    ViewportData->Height = Created.Height;
+    Viewport->RendererUserData = Viewport->PlatformUserData;
 }
 
 void FImGuiRenderer::OnDestroyWindow(ImGuiViewport* Viewport)
 {
+    // ImGui calls this before Platform_DestroyWindow, which is where the pending commands are
+    // waited on before FImGuiViewport is deleted. Releasing the swapchain here would free it
+    // while a queued FRHICommandPresentSwapChain still holds a raw pointer to it.
     Viewport->RendererUserData = nullptr;
 }
 
@@ -693,18 +718,34 @@ void FImGuiRenderer::OnRenderWindow(ImGuiViewport* Viewport, void* CommandList)
     CHECK(RHICommandList != nullptr);
 
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->RendererUserData);
-    CHECK(ViewportData != nullptr);
+    if (!ViewportData || !ViewportData->SwapChain)
+    {
+        return;
+    }
 
     const ImVec2 ViewportSize = Viewport->Size;
-    if (uint16(ViewportSize.x) != ViewportData->Width || uint16(ViewportSize.y) != ViewportData->Height)
+    if (ViewportSize.x < 1.0f || ViewportSize.y < 1.0f)
     {
-        ViewportData->Width  = uint16(ViewportSize.x);
-        ViewportData->Height = uint16(ViewportSize.y);
-
-        FRHISwapChain* RHISwapChain = ViewportData->SwapChain.Get();
-        RHICommandList->ResizeSwapChain(RHISwapChain, ViewportData->Width, ViewportData->Height);
+        return;
     }
-    
+
+    const uint16 NewW = static_cast<uint16>(ViewportSize.x);
+    const uint16 NewH = static_cast<uint16>(ViewportSize.y);
+
+    if (NewW != ViewportData->Width || NewH != ViewportData->Height)
+    {
+        RHICommandList->ResizeSwapChain(ViewportData->SwapChain.Get(), NewW, NewH);
+
+        const FRHISwapChainDesc& Desc = ViewportData->SwapChain->GetDesc();
+        ViewportData->Width  = (Desc.Width  > 0) ? Desc.Width  : NewW;
+        ViewportData->Height = (Desc.Height > 0) ? Desc.Height : NewH;
+    }
+
+    if (!ViewportData->SwapChain->GetBackBuffer() || !ViewportData->SwapChain->GetBackBufferRenderTargetView())
+    {
+        return;
+    }
+
     const bool bClear = (Viewport->Flags & ImGuiViewportFlags_NoRendererClear) == 0;
     RenderViewport(*RHICommandList, Viewport->DrawData, *ViewportData, bClear);
 }
@@ -715,7 +756,10 @@ void FImGuiRenderer::OnSwapBuffers(ImGuiViewport* Viewport, void* CommandList)
     CHECK(RHICommandList != nullptr);
 
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->RendererUserData);
-    CHECK(ViewportData != nullptr);
+    if (!ViewportData || !ViewportData->SwapChain)
+    {
+        return;
+    }
 
     RHICommandList->PresentSwapChain(ViewportData->SwapChain.Get(), false);
 }

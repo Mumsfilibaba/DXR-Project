@@ -11,6 +11,7 @@
 #include "Engine/EngineUI/Editor/EditorGPUProfilerWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Engine/EngineUI/Editor/EditorFrameProfilerWidget.h"
+#include "Engine/EngineUI/Editor/EditorRenderGraphWidget.h"
 #include "Engine/EngineUI/Editor/EditorRHIInfoWidget.h"
 #include "Engine/EngineUI/Editor/EditorStatsWidget.h"
 #include "Engine/EngineUI/Editor/EditorAboutWidget.h"
@@ -39,6 +40,7 @@ FEditorEngine::FEditorEngine()
     , RendererSettingsWidget(nullptr)
     , GPUProfilerWidget(nullptr)
     , FrameProfilerWidget(nullptr)
+    , RenderGraphWidget(nullptr)
     , RHIInfoWidget(nullptr)
     , StatsWidget(nullptr)
     , AboutWidget(nullptr)
@@ -74,6 +76,7 @@ bool FEditorEngine::Init()
         RendererSettingsWidget = MakeSharedPtr<FEditorRendererSettingsWidget>();
         GPUProfilerWidget      = MakeSharedPtr<FEditorGPUProfilerWidget>();
         FrameProfilerWidget    = MakeSharedPtr<FEditorFrameProfilerWidget>();
+        RenderGraphWidget      = MakeSharedPtr<FEditorRenderGraphWidget>();
         RHIInfoWidget          = MakeSharedPtr<FEditorRHIInfoWidget>();
         StatsWidget            = MakeSharedPtr<FEditorStatsWidget>();
         AboutWidget            = MakeSharedPtr<FEditorAboutWidget>();
@@ -125,6 +128,7 @@ void FEditorEngine::Release()
         RendererSettingsWidget.Reset();
         GPUProfilerWidget.Reset();
         FrameProfilerWidget.Reset();
+        RenderGraphWidget.Reset();
         RHIInfoWidget.Reset();
         StatsWidget.Reset();
         AboutWidget.Reset();

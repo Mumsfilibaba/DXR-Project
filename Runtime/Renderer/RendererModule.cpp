@@ -7,6 +7,10 @@
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/Scene/Scene.h"
 
+#if EDITOR_BUILD
+    #include "RendererCore/Debug/RenderGraphDebug.h"
+#endif
+
 IMPLEMENT_ENGINE_MODULE(FRendererModule, Renderer);
 
 FRendererModule::FRendererModule()
@@ -249,3 +253,15 @@ IGPUProfiler& FRendererModule::GetGPUProfiler()
 {
     return FGPUProfiler::Get();
 }
+
+#if EDITOR_BUILD
+void FRendererModule::SetRenderGraphDebugCaptureEnabled(bool bEnabled)
+{
+    RenderGraphDebug::SetCaptureEnabled(bEnabled);
+}
+
+bool FRendererModule::CopyLatestRenderGraphDebugSnapshot(FRenderGraphDebugSnapshot& Out)
+{
+    return RenderGraphDebug::CopyLatest(Out);
+}
+#endif

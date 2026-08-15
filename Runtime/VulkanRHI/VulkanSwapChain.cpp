@@ -1296,10 +1296,20 @@ FVulkanTextureRHI* FVulkanSwapChainRHI::AcquireBackBuffer()
         ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
 
         CommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
-    }
 
-    GlobalState.SetImageLayout(AcquiredLayout);
-    LocalState.SetImageLayout(AcquiredLayout);
+        GlobalState.SetImageLayout(AcquiredLayout);
+        LocalState.SetImageLayout(AcquiredLayout);
+    }
+    else if (LocalState.GetImageLayout() == VK_IMAGE_LAYOUT_TO_BE_DETERMINED)
+    {
+        const VkImageLayout SeedLayout =
+            (CurrentLayout == VK_IMAGE_LAYOUT_TO_BE_DETERMINED) ? AcquiredLayout : CurrentLayout;
+        LocalState.SetImageLayout(SeedLayout);
+        if (GlobalState.GetImageLayout() == VK_IMAGE_LAYOUT_TO_BE_DETERMINED)
+        {
+            GlobalState.SetImageLayout(SeedLayout);
+        }
+    }
 
     return BackBuffer;
 }

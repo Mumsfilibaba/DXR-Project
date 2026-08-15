@@ -10,6 +10,7 @@
 #include "Engine/EngineUI/Editor/EditorRendererSettingsWidget.h"
 #include "Engine/EngineUI/Editor/EditorGPUProfilerWidget.h"
 #include "Engine/EngineUI/Editor/EditorFrameProfilerWidget.h"
+#include "Engine/EngineUI/Editor/EditorRenderGraphWidget.h"
 #include "Engine/EngineUI/Editor/EditorRHIInfoWidget.h"
 #include "Engine/EngineUI/Editor/EditorStatsWidget.h"
 #include "Engine/EngineUI/Editor/EditorAboutWidget.h"
@@ -396,6 +397,19 @@ void FEditorDockspaceWidget::DrawMenuBar()
                     else
                     {
                         EditorWidgets::MenuItem("Frame Profiler", nullptr, false, false);
+                    }
+
+                    if (FEditorRenderGraphWidget* RenderGraphWidget = EditorEngine->GetRenderGraphWidget().Get())
+                    {
+                        bool bVisible = RenderGraphWidget->IsVisible();
+                        if (EditorWidgets::MenuItem("Render Graph", nullptr, bVisible))
+                        {
+                            RenderGraphWidget->SetVisible(!bVisible);
+                        }
+                    }
+                    else
+                    {
+                        EditorWidgets::MenuItem("Render Graph", nullptr, false, false);
                     }
 
                     if (FEditorRHIInfoWidget* RHIInfoWidget = EditorEngine->GetRHIInfoWidget().Get())
