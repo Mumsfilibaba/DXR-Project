@@ -15,33 +15,30 @@
     #include "Engine/EditorEngine.h"
 #endif
 #include "Engine/Resources/Model.h"
-#include "Renderer/MaterialBindless.h"
+#include "Renderer/Shaders/MaterialBindless.h"
 #include "Renderer/SceneRenderer.h"
-#include "Renderer/EditorSelectionRendering.h"
-#include "Renderer/RenderFeatureSettings.h"
-#include "Renderer/ShadowSettings.h"
+#include "Renderer/Settings/RenderFeatureSettings.h"
+#include "Renderer/Settings/ShadowSettings.h"
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/RenderSettings.h"
 
-#define SUPPORT_VARIABLE_RATE_SHADING (0)
-
-static bool GEnableSSAO = true;
+bool GEnableSSAO = true;
 static FAutoConsoleVariableRef CVarEnableSSAO(
     "Renderer.Feature.SSAO",
     "Enables Screen-Space Ambient Occlusion",
     GEnableSSAO,
     EConsoleVariableFlags::Default);
 
-static bool GEnableFXAA = false;
+bool GEnableFXAA = false;
 static FAutoConsoleVariableRef CVarEnableFXAA(
     "Renderer.Feature.FXAA",
     "Enables FXAA for Anti-Aliasing",
     GEnableFXAA,
     EConsoleVariableFlags::Default);
 
-static bool GEnableTemporalAntiAliasing = true;
+bool GEnableTemporalAntiAliasing = true;
 static FAutoConsoleVariableRef CVarEnableTemporalAntiAliasing(
     "Renderer.Feature.TemporalAntiAliasing",
     "Enables Temporal Anti-Aliasing",
@@ -62,7 +59,7 @@ static FAutoConsoleVariableRef CVarEnableVariableRateShading(
     GEnableVariableRateShading,
     EConsoleVariableFlags::Default);
 
-static bool GPrePassEnabled = true;
+bool GPrePassEnabled = true;
 static FAutoConsoleVariableRef CVarPrePassEnabled(
     "Renderer.Feature.PrePass",
     "Enables Pre-Pass",
@@ -79,8 +76,9 @@ static FAutoConsoleVariableRef CVarEditorPickSearchRadius(
 
 static bool GEditorPickTryFlipY = false;
 static FAutoConsoleVariableRef CVarEditorPickTryFlipY(
-    "Editor.Pick.TryFlipY",
-    "Debug-only: If you suspect the pick coordinates are vertically inverted, also sample a vertically flipped Y window when the normal sample returns ObjectID=0.",
+    "Editor.Pick.TryFlip",
+    "YDebug-only: If you suspect the pick coordinates are vertically inverted, also sample a vertically flipped Y window when the normal "
+    "sample returns ObjectID=0.",
     GEditorPickTryFlipY,
     EConsoleVariableFlags::Default);
 
@@ -94,12 +92,13 @@ static FAutoConsoleVariableRef CVarEditorPickDebug(
 static int32 GEditorPickMaxRectRows = 512;
 static FAutoConsoleVariableRef CVarEditorPickMaxRectRows(
     "Editor.Pick.MaxRectRows",
-    "Caps how many rows a box-select reads back, stepping over the source rows when the box is taller. A full-viewport box at 4K would otherwise read back 33 MB.",
+    "Caps how many rows a box-select reads back, stepping over the source rows when the box is taller. A full-viewport box at 4K would "
+    "otherwise read back 33 MB.",
     GEditorPickMaxRectRows,
     EConsoleVariableFlags::Default);
 #endif
 
-static bool GBasePassEnabled = true;
+bool GBasePassEnabled = true;
 static FAutoConsoleVariableRef CVarBasePassEnabled(
     "Renderer.Feature.BasePass",
     "Enables BasePass (Disabling this disables most rendering)",
@@ -113,7 +112,7 @@ static FAutoConsoleVariableRef CVarShadowsEnabled(
     GShadowsEnabled,
     EConsoleVariableFlags::Default);
 
-static bool GShadowMaskEnabled = true;
+bool GShadowMaskEnabled = true;
 static FAutoConsoleVariableRef CVarShadowMaskEnabled(
     "Renderer.Feature.ShadowMask",
     "Enables Rendering of ShadowMask for SunShadows",
@@ -134,14 +133,14 @@ static FAutoConsoleVariableRef CVarSunShadowsEnabled(
     GSunShadowsEnabled,
     EConsoleVariableFlags::Default);
 
-static bool GSkyboxEnabled = true;
+bool GSkyboxEnabled = true;
 static FAutoConsoleVariableRef CVarSkyboxEnabled(
     "Renderer.Feature.Skybox",
     "Enables Rendering of the Skybox",
     GSkyboxEnabled,
     EConsoleVariableFlags::Default);
 
-static bool GForwardPassEnabled = true;
+bool GForwardPassEnabled = true;
 static FAutoConsoleVariableRef CVarForwardPassEnabled(
     "Renderer.Feature.ForwardPass",
     "Enables the forward pass, which draws translucent and ForceForwardPass materials over the lit scene",
@@ -186,14 +185,16 @@ static FAutoConsoleVariableRef CVarFrustumCullEnabled(
 bool GRayTracingEnabled = false;
 static FAutoConsoleVariableRef CVarRayTracingEnabled(
     "Renderer.Feature.RayTracing",
-    "Enables ray-traced reflections. Only takes effect when the hardware reports ray tracing support; otherwise the renderer falls back to image-based lighting.",
+    "Enables ray-traced reflections. Only takes effect when the hardware reports ray tracing support; otherwise the renderer falls back to "
+    "image-based lighting.",
     GRayTracingEnabled,
     EConsoleVariableFlags::Default);
 
 bool GCSMTightFrustum = true;
 static FAutoConsoleVariableRef CVarCSMTightFrustum(
     "Renderer.CSM.TightFrustum",
-    "Set to true to reduce the DepthBuffer to find the Min- and Max Depth in the DepthBuffer to be able to create a tight frustum that fits the scene",
+    "Set to true to reduce the DepthBuffer to find the Min- and Max Depth in the DepthBuffer to be able to create a tight frustum that "
+    "fits the scene",
     GCSMTightFrustum,
     EConsoleVariableFlags::Default);
 
@@ -204,12 +205,6 @@ static FAutoConsoleCommand CCmdFreezeRendering(
     {
         GFreezeRendering = !GFreezeRendering;
     }));
-
-// Hardware capability AND the user toggle must both be set.
-static FORCEINLINE bool IsRayTracingActive()
-{
-    return RHI::bSupportsRayTracing && GRayTracingEnabled;
-}
 
 FSceneRenderer::FSceneRenderer()
     : Resources()
@@ -240,13 +235,18 @@ FSceneRenderer::FSceneRenderer()
     , LightProbeRenderer(nullptr)
     , DebugRenderer(nullptr)
     , DebugViewPass(nullptr)
-    , RayTracer(this)
+    , RayTracingSceneBuilder(nullptr)
+    , RayTracingReflectionsPass(nullptr)
+    , ReflectionDenoisePass(nullptr)
+    , RayTracingPrimaryDebugPass(nullptr)
     , LastFrameFinishedEvent(nullptr)
     , TimestampQueries(nullptr)
     , CommandList()
+#if SUPPORT_VARIABLE_RATE_SHADING
     , ShadingImage(nullptr)
     , ShadingRatePipeline(nullptr)
     , ShadingRateShader(nullptr)
+#endif
 {
 }
 
@@ -287,21 +287,23 @@ FSceneRenderer::~FSceneRenderer()
     SAFE_DELETE(LightProbeRenderer);
     SAFE_DELETE(DebugRenderer);
     SAFE_DELETE(DebugViewPass);
-
-    RayTracer.Release();
+    SAFE_DELETE(RayTracingSceneBuilder);
+    SAFE_DELETE(RayTracingReflectionsPass);
+    SAFE_DELETE(ReflectionDenoisePass);
+    SAFE_DELETE(RayTracingPrimaryDebugPass);
 
     Resources.Release();
 
+#if SUPPORT_VARIABLE_RATE_SHADING
     ShadingImage.Reset();
     ShadingRatePipeline.Reset();
     ShadingRateShader.Reset();
-
+#endif
     TimestampQueries.Reset();
-
 }
 
 bool FSceneRenderer::Initialize()
-{ 
+{
     Resources.CurrentRenderWidth  = RenderSettings::GetRenderWidth();
     Resources.CurrentRenderHeight = RenderSettings::GetRenderHeight();
 
@@ -311,8 +313,8 @@ bool FSceneRenderer::Initialize()
     }
 
     const FRHIBufferDesc ConstantBufferDesc = FRHIBufferDesc::CreateConstantBuffer(sizeof(FCameraHLSL));
-
     Resources.CameraBuffer = RHI::CreateBuffer(ConstantBufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
+
     if (!Resources.CameraBuffer)
     {
         LOG_ERROR("[Renderer]: Failed to create CameraBuffer");
@@ -324,8 +326,8 @@ bool FSceneRenderer::Initialize()
     }
 
     const FRHIBufferDesc PerObjectConstantBufferDesc = FRHIBufferDesc::CreateConstantBuffer(sizeof(FPerObjectHLSL), EBufferFlags::Transient);
-
     Resources.PerObjectBuffer = RHI::CreateBuffer(PerObjectConstantBufferDesc, ERHIResourceState::Common, nullptr);
+
     if (!Resources.PerObjectBuffer)
     {
         LOG_ERROR("[Renderer]: Failed to create PerObjectBuffer");
@@ -399,10 +401,12 @@ bool FSceneRenderer::Initialize()
         }
     }
 
+#if SUPPORT_VARIABLE_RATE_SHADING
     if (!InitShadingImage())
     {
         return false;
     }
+#endif
 
     if (!Resources.Initialize())
     {
@@ -416,13 +420,44 @@ bool FSceneRenderer::Initialize()
 
     if (RHI::bSupportsRayTracing)
     {
-        if (!RayTracer.Initialize(Resources))
+        if (!RayTracingSceneBuilder->Initialize())
         {
+            return false;
+        }
+
+        if (!ReflectionDenoisePass->Initialize(Resources))
+        {
+            return false;
+        }
+
+        if (!RayTracingReflectionsPass->Initialize(Resources))
+        {
+            return false;
+        }
+
+        if (!RayTracingPrimaryDebugPass->Initialize(Resources))
+        {
+            return false;
+        }
+
+        if (!CreateRayTracingResources(Resources.CurrentRenderWidth, Resources.CurrentRenderHeight))
+        {
+            DEBUG_BREAK();
             return false;
         }
     }
 
     return true;
+}
+
+bool FSceneRenderer::CreateRayTracingResources(uint32 Width, uint32 Height)
+{
+    if (!ReflectionDenoisePass->CreateResources(Resources, Width, Height))
+    {
+        return false;
+    }
+
+    return RayTracingReflectionsPass->CreateResources(Resources, Width, Height);
 }
 
 bool FSceneRenderer::InitializeRenderPasses()
@@ -557,6 +592,11 @@ bool FSceneRenderer::InitializeRenderPasses()
         return false;
     }
 
+    RayTracingSceneBuilder     = new FRayTracingSceneBuilder(this);
+    RayTracingReflectionsPass  = new FRayTracingReflectionsPass(this);
+    ReflectionDenoisePass      = new FReflectionDenoisePass(this);
+    RayTracingPrimaryDebugPass = new FRayTracingPrimaryDebugPass(this);
+
     return true;
 }
 
@@ -639,10 +679,10 @@ void FSceneRenderer::RenderThread_PrepareResources(const FSceneRenderView& Scene
         ResizeResources(RenderSettings::GetRenderWidth(), RenderSettings::GetRenderHeight());
     }
 
-    if (RHI::bSupportsRayTracing && RayTracer.NeedsReflectionReconfigure())
+    if (RHI::bSupportsRayTracing && ReflectionDenoisePass->NeedsReconfigure(Resources))
     {
         FRHICommandListExecutor::Get().WaitForGPU();
-        RayTracer.CreateResources(Resources, Resources.CurrentRenderWidth, Resources.CurrentRenderHeight);
+        CreateRayTracingResources(Resources.CurrentRenderWidth, Resources.CurrentRenderHeight);
     }
 
     Resources.BuildLightBuffers(CommandList, Scene);
@@ -682,6 +722,7 @@ void FSceneRenderer::RenderThread_PrepareResources(const FSceneRenderView& Scene
 
             FMaterialHLSL MaterialEntry;
             Material->FillMaterialData(MaterialEntry);
+
             FillMaterialHandles(*Material, MaterialEntry);
             Resources.MaterialData.Emplace(MaterialEntry);
         }
@@ -693,8 +734,8 @@ void FSceneRenderer::RenderThread_PrepareResources(const FSceneRenderView& Scene
 
             if (!Resources.MaterialDataBuffer || RequiredCount > CurrentCount)
             {
-                const FRHIBufferDesc MaterialBufferDesc = FRHIBufferDesc::CreateStructuredBuffer(sizeof(FMaterialHLSL), RequiredCount,
-                    EBufferFlags::Default | EBufferFlags::CopyDest);
+                const FRHIBufferDesc MaterialBufferDesc = FRHIBufferDesc::CreateStructuredBuffer(sizeof(FMaterialHLSL),
+                    RequiredCount, EBufferFlags::Default | EBufferFlags::CopyDest);
 
                 Resources.MaterialDataBuffer    = RHI::CreateBuffer(MaterialBufferDesc, ERHIResourceState::GenericRead, nullptr);
                 Resources.MaterialDataBufferSRV = nullptr;
@@ -720,7 +761,7 @@ void FSceneRenderer::RenderThread_PrepareResources(const FSceneRenderView& Scene
     const EFormat OutputFormat = SceneRenderView.RenderTarget->GetDesc().Format;
 
 #if EDITOR_BUILD
-    TonemapPass->PreparePipelineStateForFormat(RendererTextureFormats::SceneTargetFormat);
+    TonemapPass->PreparePipelineStateForFormat(RendererTextureFormats::RenderTargetFormat);
     FinalCompositePass->PreparePipelineStateForFormat(OutputFormat);
 #else
     TonemapPass->PreparePipelineStateForFormat(OutputFormat);
@@ -762,7 +803,11 @@ void FSceneRenderer::RenderThread_PrepareCameraData(const FSceneRenderView& Scen
     CameraBuffer.ViewportWidth               = float(Resources.CurrentRenderWidth);
     CameraBuffer.ViewportHeight              = float(Resources.CurrentRenderHeight);
 
-    bUseHardwareJitter   = GEnableTemporalAntiAliasing && GTemporalAntiAliasingHardwareJitter && RHI::bSupportsProgrammableSamplePositions && IsSampleCountSupported(RHI::SupportedSamplePositionSampleCounts, RHI_SAMPLE_COUNT_1);
+    bUseHardwareJitter = GEnableTemporalAntiAliasing && 
+        GTemporalAntiAliasingHardwareJitter && 
+        RHI::bSupportsProgrammableSamplePositions && 
+        IsSampleCountSupported(RHI::SupportedSamplePositionSampleCounts, RHI_SAMPLE_COUNT_1);
+
     FrameSamplePositions = FRHISamplePositionsDesc();
 
     CameraBuffer.PrevProjectionJitter = CameraBuffer.ProjectionJitter;
@@ -774,13 +819,11 @@ void FSceneRenderer::RenderThread_PrepareCameraData(const FSceneRenderView& Scen
 
         if (bUseHardwareJitter)
         {
-            // The rasterizer moves the sample instead of the projection, so the matrices
-            // stay unjittered and the velocity pass has nothing to subtract back out.
             CameraBuffer.ProjectionJitter = Vector2(0.0f);
 
             // Moving the sample within the pixel shifts the image the opposite way, so this is the negated
-            // jitter. HaltonState.NextSample() returns [-1, 1], so halving lands in [-0.5, 0.5]; the upper 
-            // bound is exclusive and both backends quantize to 1/16th of a pixel, so 7/16 is the largest 
+            // jitter. HaltonState.NextSample() returns [-1, 1], so halving lands in [-0.5, 0.5]; the upper
+            // bound is exclusive and both backends quantize to 1/16th of a pixel, so 7/16 is the largest
             // usable offset.
             constexpr float MinSampleOffset = -0.5f;
             constexpr float MaxSampleOffset = 7.0f / 16.0f;
@@ -806,8 +849,6 @@ void FSceneRenderer::RenderThread_PrepareCameraData(const FSceneRenderView& Scen
             CameraBuffer.ViewProjectionInv = CameraBuffer.ViewProjection.GetInverse();
         }
 
-        // Both paths land the same offset in the image, so anything reconstructing 
-        // from screen coordinates uses this regardless of which one produced it.
         CameraBuffer.ImageJitter = ClipSpaceJitter;
     }
     else
@@ -833,12 +874,12 @@ void FSceneRenderer::RenderThread_PrepareCameraData(const FSceneRenderView& Scen
         // Previous-frame matrices are already stored in GPU-transposed form.
         CameraBuffer.PrevViewProjection   = CameraBuffer.ViewProjection;
         CameraBuffer.PrevProjectionJitter = CameraBuffer.ProjectionJitter;
+
         TemporalAntiAliasing->InvalidateHistory();
-        RayTracer.InvalidateReflectionHistory();
+        ReflectionDenoisePass->InvalidateHistory();
         HaltonState.SampleIndex = 0;
     }
 
-    // Update GPU Camera Buffer
     CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Resources.CameraBuffer.Get(), ERHIResourceState::ConstantBuffer, ERHIResourceState::CopyDest));
     CommandList.UpdateBuffer(Resources.CameraBuffer.Get(), FBufferRegion(0, sizeof(FCameraHLSL)), &CameraBuffer);
     CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Resources.CameraBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ConstantBuffer));
@@ -848,343 +889,25 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
 {
     CHECK_RENDER_THREAD();
 
-#if !EDITOR_BUILD
-    UNREFERENCED_VARIABLE(SelectedObjectIDs); // Only consumed by the editor selection-outline pass.
-#endif
-
     FScene* CurrentScene = static_cast<FScene*>(SceneRenderView.Scene);
     RenderThread_PrepareResources(SceneRenderView, CurrentScene);
 
-    if (SceneRenderView.DebugView == FSceneRenderView::EDebugView::RayTracingPrimaryID && RHI::bSupportsRayTracing)
+    BuildAndExecuteSceneGraph(SceneRenderView, CurrentScene, SelectedObjectIDs);
+
+    // Debug geometry draws after composite
     {
-        RayTracer.RenderPrimaryRayDebug(CommandList, Resources, CurrentScene);
-        DebugViewPass->Execute(CommandList, SceneRenderView, Resources, FSceneRenderView::EDebugView::RayTracingPrimaryID);
-        return;
-    }
+        const bool bAnyDebugDraw =
+            GDrawPointLights ||
+            GDrawLightProbes ||
+            GDrawAABBs;
 
-    const FRHITransitionBarrierDesc GBufferToWrite[] =
-    {
-        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Albedo].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::RenderTarget),
-        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Normal].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::RenderTarget),
-        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Material].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::RenderTarget),
-        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Velocity].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::RenderTarget),
-        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Depth].Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::DepthWrite),
-    };
-
-    // D3D12 ties a depth buffer's contents to the sample pattern that produced them.
-    const bool bRestorePrevSamplePositions = PrevFrameSamplePositions.NumSamplesPerPixel > 0;
-    if (bRestorePrevSamplePositions)
-    {
-        CommandList.SetSamplePositions(PrevFrameSamplePositions);
-    }
-
-    CommandList.TransitionBarrier(GBufferToWrite);
-
-    // Offset the raster sample so the prepass and base pass produce the TAA jitter without a matrix offset.
-    if (bUseHardwareJitter)
-    {
-        CommandList.SetSamplePositions(FrameSamplePositions);
-    }
-    else if (bRestorePrevSamplePositions)
-    {
-        CommandList.SetSamplePositions(FRHISamplePositionsDesc());
-    }
-
-    PrevFrameSamplePositions = bUseHardwareJitter ? FrameSamplePositions : FRHISamplePositionsDesc();
-
-    // PrePass
-    if (GPrePassEnabled)
-    {
-        DepthPrePass->Execute(CommandList, Resources, CurrentScene);
-    }
-    else
-    {
-        FRHIDepthStencilView* DepthStencilView = Resources.GBuffer[EGBufferIndex::Depth]->GetDepthStencilView();
-        CommandList.ClearDepthStencilView(DepthStencilView, 1.0f, 0);
-    }
-
-#if SUPPORT_VARIABLE_RATE_SHADING
-    if (ShadingImage && GEnableVariableRateShading && ShadingImage->GetDesc().Extent.X > 0 && ShadingImage->GetDesc().Extent.Y > 0)
-    {
-        RHI_EVENT_SCOPE(CommandList, "VRS Image");
-        CommandList.SetShadingRate(EShadingRate::VRS_1x1);
-
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(ShadingImage.Get(), ERHIResourceState::ShadingRateSource, ERHIResourceState::UnorderedAccess));
-
-        CommandList.SetComputePipelineState(ShadingRatePipeline.Get());
-
-        FRHIUnorderedAccessView* ShadingImageUAV = ShadingImage->GetUnorderedAccessView();
-        CommandList.SetUnorderedAccessView(ShadingRateShader.Get(), ShadingImageUAV, 0);
-
-        CommandList.Dispatch(ShadingImage->GetDesc().Extent.X, ShadingImage->GetDesc().Extent.Y, 1);
-
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(ShadingImage.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::ShadingRateSource));
-
-        CommandList.SetShadingRateImage(ShadingImage.Get());
-    }
-    else if (RHISupportsVariableRateShading())
-    {
-        CommandList.SetShadingRate(EShadingRate::VRS_1x1);
-    }
-#endif
-
-    // BasePass
-    if (GBasePassEnabled)
-    {
-        BasePass->Execute(CommandList, Resources, CurrentScene);
-    }
-
-    // Depth Reduce
-    if (GCSMTightFrustum)
-    {
-        DepthReducePass->Execute(CommandList, Resources, CurrentScene);
-    }
-
-    const FRHITransitionBarrierDesc GBufferToRead[] =
-    {
-        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Albedo].Get(), ERHIResourceState::RenderTarget, ERHIResourceState::NonPixelShaderResource),
-        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Normal].Get(), ERHIResourceState::RenderTarget, ERHIResourceState::NonPixelShaderResource),
-        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Velocity].Get(), ERHIResourceState::RenderTarget, ERHIResourceState::NonPixelShaderResource),
-        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Material].Get(), ERHIResourceState::RenderTarget, ERHIResourceState::NonPixelShaderResource),
-        FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Depth].Get(), ERHIResourceState::DepthWrite, ERHIResourceState::NonPixelShaderResource),
-        FRHITransitionBarrierDesc::CreateTexture(Resources.SSAOBuffer.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::UnorderedAccess),
-    };
-
-    CommandList.TransitionBarrier(GBufferToRead);
-
-    // The lighting and SSAO work in between is compute, and it transitions other depth resources (shadow maps)
-    // that were rendered with the default pattern, so drop back to it until the depth buffer is touched again.
-    if (bUseHardwareJitter)
-    {
-        CommandList.SetSamplePositions(FRHISamplePositionsDesc());
-    }
-
-    const bool bIsRayTracingActive = IsRayTracingActive();
-    if (bIsRayTracingActive)
-    {
-        if (!bRayTracingWasActive)
-        {
-            RayTracer.InvalidateReflectionHistory();
-        }
-
-        GPU_TRACE_SCOPE(CommandList, "Ray Tracing");
-        RayTracer.PreRender(CommandList, Resources, CurrentScene);
-    }
-    else
-    {
-        if (bRayTracingWasActive)
-        {
-            RayTracer.ReleaseRayTracingResources(CurrentScene);
-        }
-        
-        STAT_SET(STAT_RT_Active,                  0);
-        STAT_SET(STAT_RT_InstanceCount,           0);
-        STAT_SET(STAT_RT_HitGroupCount,           0);
-        STAT_SET(STAT_RT_GeometryTableRows,       0);
-        STAT_SET(STAT_RT_LazyBLASBuildsThisFrame, 0);
-        STAT_SET(STAT_RT_SkippedNullGeometry,     0);
-    }
-
-    bRayTracingWasActive = bIsRayTracingActive;
-
-    // SSAO
-    if (GEnableSSAO)
-    {
-        ScreenSpaceOcclusionPass->Execute(CommandList, Resources);
-    }
-    else
-    {
-        CommandList.ClearUnorderedAccessViewFloat(Resources.SSAOBuffer->GetUnorderedAccessView(), Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-    }
-
-    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.SSAOBuffer.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::NonPixelShaderResource));
-
-    // Check for shadow texture resolution changes at runtime
-    {
-        auto ClampAndSnapPow2 = [](int32 MinSize, int32 MaxSize, int32 Value) -> int32
-        {
-            return Math::ClosestPowerOfTwo(Math::Clamp(Value, MinSize, MaxSize));
-        };
-
-        const int32 NewCascadeSize = ClampAndSnapPow2(512, 4096, GCSMCascadeSize);
-        if (NewCascadeSize != Resources.CascadeSize)
-        {
-            Resources.CascadeSize = NewCascadeSize;
-            CascadedShadowsRenderPass->CreateResources(Resources);
-        }
-
-        const int32 NewPointLightSize = ClampAndSnapPow2(128, 1024, GPointLightShadowMapSize);
-        if (NewPointLightSize != Resources.PointLightShadowSize)
-        {
-            Resources.PointLightShadowSize = NewPointLightSize;
-            PointLightRenderPass->CreateResources(Resources);
-        }
-    }
-
-    // Render Shadows
-    FSceneDirectionalLight* DirectionalLight = CurrentScene ? CurrentScene->GetDirectionalLight() : nullptr;
-
-    const bool bEnableShadows    = GShadowsEnabled;
-    const bool bEnableSunShadows = GSunShadowsEnabled && (!DirectionalLight || DirectionalLight->bCastShadows);
-
-    if (bEnableShadows)
-    {
-        // Point Lights
-        if (GPointLightShadowsEnabled)
-        {
-            PointLightRenderPass->Execute(CommandList, Resources, CurrentScene);
-        }
-
-        // Directional Light
-        if (bEnableSunShadows)
-        {
-            if (!GFreezeRendering)
-            {
-                CascadeGenerationPass->Execute(CommandList, Resources);
-            }
-
-            CascadedShadowsRenderPass->Execute(CommandList, Resources, CurrentScene);
-        }
-    }
-
-    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.SceneTarget.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::UnorderedAccess));
-
-    // In order to render the shadow-mask, we want all these features to be enabled
-    const bool bEnableShadowMask = GShadowMaskEnabled;
-    const bool bNeedsCascadeDebug =
-        SceneRenderView.DebugView == FSceneRenderView::EDebugView::ShadowCascadeIndex ||
-        SceneRenderView.DebugView == FSceneRenderView::EDebugView::ShadowCascadeOverlay ||
-        SceneRenderView.SecondaryDebugView == FSceneRenderView::EDebugView::ShadowCascadeIndex ||
-        SceneRenderView.SecondaryDebugView == FSceneRenderView::EDebugView::ShadowCascadeOverlay;
-
-    if (bEnableShadows && bEnableShadowMask && bEnableSunShadows)
-    {
-        ShadowMaskRenderPass->Execute(CommandList, Resources, bNeedsCascadeDebug);
-    }
-    else
-    {
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.DirectionalShadowMask.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::UnorderedAccess));
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.CascadeIndexBuffer.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::UnorderedAccess));
-
-        const Vector4 MaskClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        CommandList.ClearUnorderedAccessViewFloat(Resources.DirectionalShadowMask->GetUnorderedAccessView(), MaskClearColor);
-
-        const Vector4 DebugClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        CommandList.ClearUnorderedAccessViewFloat(Resources.CascadeIndexBuffer->GetUnorderedAccessView(), DebugClearColor);
-
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.CascadeIndexBuffer.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::NonPixelShaderResource));
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.DirectionalShadowMask.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::NonPixelShaderResource));
-    }
-
-    // Main LightPass
-    TiledLightPass->Execute(CommandList, Resources, CurrentScene);
-
-    // Moved ahead of the depth transitions below so no other depth resource is transitioned while the scene
-    // depth's sample pattern is bound.
-    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.PointLightShadowMaps.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource));
-
-    // The skybox depth-tests against the jittered depth buffer, so it belongs inside the jittered window
-    // together with the transitions that carry that buffer through to the TAA resolve.
-    if (bUseHardwareJitter)
-    {
-        CommandList.SetSamplePositions(FrameSamplePositions);
-    }
-
-    // The skybox pass binds depth as a ReadOnlyDepth DSV (bDepthWriteEnable = false)
-    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Depth].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::DepthRead));
-    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.SceneTarget.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::RenderTarget));
-
-    // Skybox Pass
-    if (GSkyboxEnabled)
-    {
-        SkyboxRenderPass->Execute(CommandList, Resources, CurrentScene);
-    }
-
-
-    // Forward Pass
-    if (GForwardPassEnabled)
-    {
-        const FRHITransitionBarrierDesc CascadesToPixel[] =
-        {
-            FRHITransitionBarrierDesc::CreateTexture(Resources.ShadowCascades.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource),
-            FRHITransitionBarrierDesc::CreateBuffer(Resources.CascadeSplitsBuffer.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource),
-        };
-
-        CommandList.TransitionBarrier(CascadesToPixel);
-
-        ForwardPass->Execute(CommandList, Resources, CurrentScene);
-
-        const FRHITransitionBarrierDesc CascadesToNonPixel[] =
-        {
-            FRHITransitionBarrierDesc::CreateTexture(Resources.ShadowCascades.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource),
-            FRHITransitionBarrierDesc::CreateBuffer(Resources.CascadeSplitsBuffer.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource),
-        };
-
-        CommandList.TransitionBarrier(CascadesToNonPixel);
-    }
-
-    // Temporal AA
-    if (GEnableTemporalAntiAliasing)
-    {
-        // Source state matches the ReadOnlyDepth transition done before the skybox pass above.
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Depth].Get(), ERHIResourceState::DepthRead, ERHIResourceState::NonPixelShaderResource));
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.SceneTarget.Get(), ERHIResourceState::RenderTarget, ERHIResourceState::UnorderedAccess));
-
-        TemporalAntiAliasing->Execute(CommandList, Resources);
-
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Depth].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource));
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.SceneTarget.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::PixelShaderResource));
-    }
-    else
-    {
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.GBuffer[EGBufferIndex::Depth].Get(), ERHIResourceState::DepthRead, ERHIResourceState::PixelShaderResource));
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Resources.SceneTarget.Get(), ERHIResourceState::RenderTarget, ERHIResourceState::PixelShaderResource));
-    }
-
-    // The scene depth is done being written and transitioned, so drop back to the default pattern before the
-    // editor and UI passes. FEditorNoJitterDepthPass in particular exists to give picking a stable depth buffer.
-    if (bUseHardwareJitter)
-    {
-        CommandList.SetSamplePositions(FRHISamplePositionsDesc());
-    }
-
-#if EDITOR_BUILD
-    {
-        EditorNoJitterDepthPass->Execute(CommandList, Resources, CurrentScene); 
-        EditorSelectionIDPass->Execute(CommandList, Resources, CurrentScene); 
- 
-        RenderThread_ProcessEditorObjectPickRequests(CommandList, Resources, CurrentScene); 
- 
-        SelectionOutlinePass->Execute(CommandList, Resources, SelectedObjectIDs); 
-    } 
-#endif 
-
-    // FXAA
-    if (GEnableFXAA)
-    {
-        FXAAPass->Execute(CommandList, SceneRenderView, Resources);
-    }
-
-    // Perform ToneMapping and output to BackBuffer
-#if EDITOR_BUILD
-    TonemapPass->Execute(CommandList, Resources, Resources.TonemappedTarget.Get(), false);
-    FinalCompositePass->Execute(CommandList, SceneRenderView, Resources);
-#else
-    TonemapPass->Execute(CommandList, Resources, SceneRenderView.RenderTarget, true);
-#endif
-
-    // Debug geometry draws after composite so they render on top of the editor grid
-    {
-        const bool bAnyDebugDraw = GDrawPointLights || GDrawLightProbes || GDrawAABBs;
-        if (bAnyDebugDraw)
+        if (bAnyDebugDraw && SceneRenderView.RenderTarget)
         {
         #if EDITOR_BUILD
-            FRHITexture* DebugDepthTarget = Resources.EditorNoJitterDepth.Get();
+            FRHITexture* DebugDepthTarget      = Resources.EditorNoJitterDepth.Get();
             const bool   bDebugDepthIsJittered = false;
         #else
-            FRHITexture* DebugDepthTarget = Resources.GBuffer[EGBufferIndex::Depth].Get();
-            // Outside the editor the debug geometry shares the jittered scene depth, so its transitions and
-            // draws have to keep agreeing with the pattern that buffer was rendered with.
+            FRHITexture* DebugDepthTarget      = Resources.GBuffer[EGBufferIndex::Depth].Get();
             const bool   bDebugDepthIsJittered = PrevFrameSamplePositions.NumSamplesPerPixel > 0;
         #endif
 
@@ -1195,26 +918,27 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
 
             CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SceneRenderView.RenderTarget, ERHIResourceState::RenderTarget));
 
-            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(DebugDepthTarget, ERHIResourceState::PixelShaderResource, ERHIResourceState::DepthWrite));
-
-            if (GDrawPointLights)
+            if (DebugDepthTarget)
             {
-                DebugRenderer->RenderPointLights(CommandList, Resources, CurrentScene, SceneRenderView.RenderTarget, DebugDepthTarget);
-            }
-            
-            if (GDrawLightProbes)
-            {
-                DebugRenderer->RenderLightProbes(CommandList, Resources, CurrentScene, SceneRenderView.RenderTarget, DebugDepthTarget);
-            }
+                CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(DebugDepthTarget, ERHIResourceState::PixelShaderResource, ERHIResourceState::DepthWrite));
 
-            if (GDrawAABBs)
-            {
-                DebugRenderer->RenderObjectAABBs(CommandList, Resources, CurrentScene, SceneRenderView.RenderTarget, DebugDepthTarget);
+                if (GDrawPointLights)
+                {
+                    DebugRenderer->RenderPointLights(CommandList, Resources, CurrentScene, SceneRenderView.RenderTarget, DebugDepthTarget);
+                }
+
+                if (GDrawLightProbes)
+                {
+                    DebugRenderer->RenderLightProbes(CommandList, Resources, CurrentScene, SceneRenderView.RenderTarget, DebugDepthTarget);
+                }
+
+                if (GDrawAABBs)
+                {
+                    DebugRenderer->RenderObjectAABBs(CommandList, Resources, CurrentScene, SceneRenderView.RenderTarget, DebugDepthTarget);
+                }
+
+                CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(DebugDepthTarget, ERHIResourceState::DepthWrite, ERHIResourceState::PixelShaderResource));
             }
-
-            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(DebugDepthTarget, ERHIResourceState::DepthWrite, ERHIResourceState::PixelShaderResource));
-
-            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(SceneRenderView.RenderTarget, ERHIResourceState::PixelShaderResource));
 
             if (bDebugDepthIsJittered)
             {
@@ -1222,30 +946,9 @@ void FSceneRenderer::RenderThread_RenderSceneView(const FSceneRenderView& SceneR
             }
         }
     }
+}
 
-    if (SceneRenderView.DebugView != FSceneRenderView::EDebugView::None)
-    {
-        DebugViewPass->Execute(CommandList, SceneRenderView, Resources, SceneRenderView.DebugView);
-    }
 
-    if (SceneRenderView.SecondaryDebugView != FSceneRenderView::EDebugView::None)
-    {
-        FRHITexture* RenderTarget = SceneRenderView.RenderTarget;
-        if (RenderTarget)
-        {
-            const int32 TargetWidth   = static_cast<int32>(RenderTarget->GetDesc().Extent.X);
-            const int32 TargetHeight  = static_cast<int32>(RenderTarget->GetDesc().Extent.Y);
-            const int32 OverlayWidth  = Math::Max(TargetWidth / 2, 1);
-            const int32 OverlayHeight = Math::Max(TargetHeight / 2, 1);
-            const int32 OverlayX      = TargetWidth - OverlayWidth;
-            const int32 OverlayY      = 0;
-
-            DebugViewPass->ExecuteOverlay(CommandList, SceneRenderView, Resources, SceneRenderView.SecondaryDebugView, OverlayX, OverlayY, OverlayWidth, OverlayHeight);
-        }
-    }
-
-} 
- 
 #if EDITOR_BUILD
 void FSceneRenderer::RenderThread_ProcessEditorObjectPickRequests(FRHICommandList& InCommandList, FFrameResources& InResources, FScene* CurrentScene)
 {
@@ -1288,10 +991,9 @@ void FSceneRenderer::RenderThread_ProcessEditorObjectPickRequests(FRHICommandLis
 
     const int32 RequestedRadius = GEditorPickSearchRadius;
     const int32 SampleRadius    = Math::Clamp(RequestedRadius, 0, 64);
-    const bool  bIsRect         = Request.bIsRect;
 
-    // The flipped-Y window is a click-tolerance debug aid for point picks and means nothing for a box
-    const bool  bTryFlipY = GEditorPickTryFlipY && !bIsRect;
+    const bool bIsRect   = Request.bIsRect;
+    const bool bTryFlipY = GEditorPickTryFlipY && !bIsRect; // The flipped-Y window is a click-tolerance debug aid for point picks and means nothing for a box
 
     int32 X0 = 0;
     int32 X1 = 0;
@@ -1367,8 +1069,7 @@ void FSceneRenderer::RenderThread_ProcessEditorObjectPickRequests(FRHICommandLis
     const uint64 WindowsEnd        = bTryFlipY ? (FlippedBaseOffset + FlippedRequiredSize) : NormalRequiredSize;
     const uint64 DepthBaseOffset   = Math::AlignUp<uint64>(WindowsEnd, 512ull);
     const uint64 DepthRequiredSize = bCopyDepth ? (NormalRowStrideBytes * uint64(RegionHeight)) : 0ull;
-
-    const uint64 ReadbackSize = bCopyDepth ? (DepthBaseOffset + DepthRequiredSize) : WindowsEnd;
+    const uint64 ReadbackSize      = bCopyDepth ? (DepthBaseOffset + DepthRequiredSize) : WindowsEnd;
 
     const FRHIBufferDesc ReadbackDesc = FRHIBufferDesc::CreateReadbackBuffer(ReadbackSize, BytesPerPixel);
 
@@ -1393,7 +1094,6 @@ void FSceneRenderer::RenderThread_ProcessEditorObjectPickRequests(FRHICommandLis
     InCommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(InResources.EditorObjectID_NoJitter.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::CopySource));
 
     // Copy a rectangular neighborhood into a readback buffer.
-    // We do one copy per row to control destination row stride across backends and keep D3D12 offsets 512-byte aligned.
     for (uint32 Row = 0; Row < RegionHeight; ++Row)
     {
         const uint64 DstOffset  = NormalRowStrideBytes * uint64(Row);
@@ -1464,19 +1164,19 @@ void FSceneRenderer::RenderThread_ProcessEditorObjectPickRequests(FRHICommandLis
 #endif
 
 void FSceneRenderer::RequestEditorObjectPick(FScene* Scene, uint32 PixelX, uint32 PixelY, uint64 RequestId)
-{  
-#if EDITOR_BUILD 
-    if (Scene)  
-    { 
+{
+#if EDITOR_BUILD
+    if (Scene)
+    {
         PendingObjectPicks.Enqueue(FEditorObjectPickRequest{ Scene, PixelX, PixelY, PixelX, PixelY, false, RequestId });
-    } 
+    }
 #else
     UNREFERENCED_VARIABLE(Scene);
     UNREFERENCED_VARIABLE(PixelX);
     UNREFERENCED_VARIABLE(PixelY);
     UNREFERENCED_VARIABLE(RequestId);
 #endif
-} 
+}
 
 void FSceneRenderer::RequestEditorObjectPickRect(FScene* Scene, uint32 MinX, uint32 MinY, uint32 MaxX, uint32 MaxY)
 {
@@ -1500,14 +1200,14 @@ void FSceneRenderer::RequestEditorObjectPickRect(FScene* Scene, uint32 MinX, uin
     UNREFERENCED_VARIABLE(MaxY);
 #endif
 }
- 
+
 bool FSceneRenderer::PollEditorObjectPickResult(FScene* Scene, FEditorPickResult& OutResult)
-{ 
+{
 #if EDITOR_BUILD
-    if (!Scene) 
-    { 
-        return false; 
-    } 
+    if (!Scene)
+    {
+        return false;
+    }
 
     // InFlightObjectPicks is mutated on the render thread (ProcessEditorObjectPickRequests).
     TScopedLock Lock(ObjectPickStateCS);
@@ -1609,7 +1309,7 @@ bool FSceneRenderer::PollEditorObjectPickResult(FScene* Scene, FEditorPickResult
                             InFlight.FlippedCenterX,
                             InFlight.FlippedCenterY);
                     }
-                    
+
                     auto ChooseDepthFromWindow = [&](uint32 CenterX, uint32 CenterY, float& OutDepth) -> bool
                     {
                         auto ReadDepth = [&](uint32 X, uint32 Y) -> float
@@ -1718,14 +1418,14 @@ bool FSceneRenderer::PollEditorObjectPickResult(FScene* Scene, FEditorPickResult
             return true;
         }
     }
- 
-    return false; 
+
+    return false;
 #else
     UNREFERENCED_VARIABLE(Scene);
     OutResult = FEditorPickResult();
     return false;
 #endif
-} 
+}
 
 bool FSceneRenderer::PollEditorObjectPickRectResult(FScene* Scene, TArray<uint32>& OutObjectIDs)
 {
@@ -1762,14 +1462,13 @@ bool FSceneRenderer::PollEditorObjectPickRectResult(FScene* Scene, TArray<uint32
             {
                 const uint8* Base = reinterpret_cast<const uint8*>(Data);
 
-                // A full-viewport box is millions of pixels, so the dedup is hashed rather than a linear scan
                 TSet<uint32> SeenObjectIDs;
 
                 // Neighbouring pixels almost always belong to the same object, so a run skips the lookup entirely
                 uint32 LastObjectID = 0;
 
                 // Every distinct object with a visible pixel inside the box is selected, which is what makes a box
-                // select respect occlusion for free: an actor hidden behind geometry never wrote a pixel here
+                // select respect occlusion for free: an actor hidden behind geometry never wrote a pixel here.
                 for (uint32 Y = 0; Y < InFlight.NormalHeight; ++Y)
                 {
                     for (uint32 X = 0; X < InFlight.NormalWidth; ++X)
@@ -1936,44 +1635,10 @@ void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
 {
     if ((Resources.CurrentRenderWidth != InWidth || Resources.CurrentRenderHeight != InHeight) && InWidth > 0 && InHeight > 0)
     {
+        FRHICommandListExecutor::Get().WaitForGPU();
+
         // A recreated depth buffer starts out on the default sample pattern again.
         PrevFrameSamplePositions = FRHISamplePositionsDesc();
-
-        if (!DepthPrePass->CreateResources(Resources, InWidth, InHeight))
-        {
-            DEBUG_BREAK();
-            return;
-        }
-
-        if (!BasePass->CreateResources(Resources, InWidth, InHeight))
-        {
-            DEBUG_BREAK();
-            return;
-        }
-
-        if (!TiledLightPass->CreateResources(Resources, InWidth, InHeight))
-        {
-            DEBUG_BREAK();
-            return;
-        }
-
-        if (!DepthReducePass->CreateResources(Resources, InWidth, InHeight))
-        {
-            DEBUG_BREAK();
-            return;
-        }
-
-        if (!ScreenSpaceOcclusionPass->CreateResources(Resources, InWidth, InHeight))
-        {
-            DEBUG_BREAK();
-            return;
-        }
-
-        if (!ShadowMaskRenderPass->CreateResources(Resources, InWidth, InHeight))
-        {
-            DEBUG_BREAK();
-            return;
-        }
 
         if (!TemporalAntiAliasing->CreateResources(Resources, InWidth, InHeight))
         {
@@ -1981,7 +1646,7 @@ void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
             return;
         }
 
-#if EDITOR_BUILD
+    #if EDITOR_BUILD
         if (!EditorNoJitterDepthPass->CreateResources(Resources, InWidth, InHeight))
         {
             DEBUG_BREAK();
@@ -1993,29 +1658,23 @@ void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
             DEBUG_BREAK();
             return;
         }
-#endif
+    #endif
 
-        if (!TonemapPass->CreateResources(Resources, InWidth, InHeight))
+        if (RHI::bSupportsRayTracing && !CreateRayTracingResources(InWidth, InHeight))
         {
             DEBUG_BREAK();
             return;
         }
 
-        if (RHI::bSupportsRayTracing && !RayTracer.CreateResources(Resources, InWidth, InHeight))
-        {
-            DEBUG_BREAK();
-            return;
-        }
-
-#if EDITOR_BUILD
+    #if EDITOR_BUILD
         if (!SelectionOutlinePass->CreateResources(InWidth, InHeight))
         {
             DEBUG_BREAK();
             return;
         }
-#endif
+    #endif
 
-        // Resize ShadingImage if VRS is active (shader/pipeline are unchanged)
+    #if SUPPORT_VARIABLE_RATE_SHADING // Resize ShadingImage if VRS is active
         if (ShadingImage && RHI::ShadingRateImageTileSize > 0)
         {
             const uint32 ShadingWidth  = InWidth / RHI::ShadingRateImageTileSize;
@@ -2023,26 +1682,32 @@ void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
 
             if (ShadingWidth > 0 && ShadingHeight > 0)
             {
-                const ETextureUsageFlags UsageFlags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::ShadingRateTexture;
-                FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8_Uint, ShadingWidth, ShadingHeight, 1, 1, UsageFlags);
+                const ETextureUsageFlags UsageFlags =
+                    ETextureUsageFlags::UnorderedAccessTexture |
+                    ETextureUsageFlags::ShaderResourceTexture |
+                    ETextureUsageFlags::ShadingRateTexture;
 
+                FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8_Uint, ShadingWidth, ShadingHeight, 1, 1, UsageFlags);
                 ShadingImage = RHI::CreateTexture(TextureDesc, ERHIResourceState::ShadingRateSource);
+
                 if (ShadingImage)
                 {
                     ShadingImage->SetDebugName("Shading Rate Image");
                 }
             }
         }
+    #endif
 
-        LOG_INFO("Changed render-resolution. From: w=%d h=%d, To: w=%d h=%d", 
-            Resources.CurrentRenderWidth, Resources.CurrentRenderHeight, InWidth, InHeight);
-        
+        LOG_INFO("Changed render-resolution. From: w=%d h=%d, To: w=%d h=%d", Resources.CurrentRenderWidth, Resources.CurrentRenderHeight, InWidth, InHeight);
+
         Resources.CurrentRenderWidth  = InWidth;
         Resources.CurrentRenderHeight = InHeight;
+
         RenderSettings::OnDidChangeRenderResolution(InWidth, InHeight);
     }
 }
 
+#if SUPPORT_VARIABLE_RATE_SHADING
 bool FSceneRenderer::InitShadingImage()
 {
     if (RHI::ShadingRateTier != EShadingRateTier::Tier2 || RHI::ShadingRateImageTileSize == 0)
@@ -2053,10 +1718,14 @@ bool FSceneRenderer::InitShadingImage()
     const uint32 Width  = Resources.CurrentRenderWidth / RHI::ShadingRateImageTileSize;
     const uint32 Height = Resources.CurrentRenderHeight / RHI::ShadingRateImageTileSize;
 
-    const ETextureUsageFlags UsageFlags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::ShadingRateTexture;
-    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, UsageFlags);
+    const ETextureUsageFlags UsageFlags =
+        ETextureUsageFlags::UnorderedAccessTexture |
+        ETextureUsageFlags::ShaderResourceTexture |
+        ETextureUsageFlags::ShadingRateTexture;
 
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, UsageFlags);
     ShadingImage = RHI::CreateTexture(TextureDesc, ERHIResourceState::ShadingRateSource);
+
     if (!ShadingImage)
     {
         DEBUG_BREAK();
@@ -2095,3 +1764,4 @@ bool FSceneRenderer::InitShadingImage()
 
     return true;
 }
+#endif

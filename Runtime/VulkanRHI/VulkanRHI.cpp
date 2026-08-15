@@ -37,7 +37,7 @@ static TAutoConsoleVariable<bool> CVarVulkanUseDynamicRendering(
 static TAutoConsoleVariable<bool> CVarVulkanEnableRobustBufferAccess(
     "VulkanRHI.EnableRobustBufferAccess",
     "Enable Vulkan robustBufferAccess feature. Costs more user-data DWORDs per dynamic uniform buffer.",
-#if RELEASE_BUILD
+    #if RELEASE_BUILD
     false);
 #else
     true);
@@ -203,36 +203,38 @@ FVulkanDeviceRHI::FVulkanDeviceRHI()
     }
 }
 
-FVulkanDeviceRHI::~FVulkanDeviceRHI()
+void FVulkanDeviceRHI::FlushDeferredDeletions()
 {
-    const auto FlushDeletionQueue = [this]()
+    FVulkanDeviceRHI* DeviceRHI = Get();
+    if (!DeviceRHI)
     {
-        // NOTE: Objects could contain other objects, that now need to be flushed
+        return;
+    }
+
+    if (FRHICommandListExecutor::IsInitialized())
+    {
+        FRHICommandListExecutor::Get().FlushDeletedResources();
+    }
+
+    while (!DeviceRHI->DeferredObjects.IsEmpty())
+    {
+        TArray<FVulkanDeferredObject> Items;
+        {
+            TScopedLock Lock(DeviceRHI->DeferredObjectsCS);
+            Items = Move(DeviceRHI->DeferredObjects);
+        }
+
+        FVulkanDeferredObject::ProcessItems(DeviceRHI->Device, Items);
+
         if (FRHICommandListExecutor::IsInitialized())
         {
             FRHICommandListExecutor::Get().FlushDeletedResources();
         }
+    }
+}
 
-        // Delete all remaining resources
-        while (!DeferredObjects.IsEmpty())
-        {
-            TArray<FVulkanDeferredObject> Items;
-            {
-                TScopedLock Lock(DeferredObjectsCS);
-                Items = Move(DeferredObjects);
-            }
-
-            FVulkanDeferredObject::ProcessItems(Device, Items);
-
-            // NOTE: Objects could contain other objects, that now need to be flushed
-            if (FRHICommandListExecutor::IsInitialized())
-            {
-                FRHICommandListExecutor::Get().FlushDeletedResources();
-            }
-        }
-    };
-
-    // Flush the default context before flushing the submission queue
+FVulkanDeviceRHI::~FVulkanDeviceRHI()
+{
     if (GraphicsCommandContext)
     {
         GraphicsCommandContext->Flush();
@@ -244,8 +246,7 @@ FVulkanDeviceRHI::~FVulkanDeviceRHI()
         Device->WaitForGPU();
     }
 
-    // Flush before submitting since some objects needs the CommandContext
-    FlushDeletionQueue();
+    FlushDeferredDeletions();
 
     if (GraphicsCommandContext)
     {
@@ -253,14 +254,12 @@ FVulkanDeviceRHI::~FVulkanDeviceRHI()
         GraphicsCommandContext = nullptr;
     }
 
-    // Then delete all samplers
     {
         TScopedLock Lock(SamplerStateMapCS);
         SamplerStateMap.Clear();
     }
 
-    // Then flush any potential remaining objects
-    FlushDeletionQueue();
+    FlushDeferredDeletions();
 
 #if VULKAN_ENABLE_CRASH_MARKERS
     SAFE_DELETE(CrashMarkers);
@@ -272,7 +271,7 @@ FVulkanDeviceRHI::~FVulkanDeviceRHI()
 #if VK_EXT_debug_utils
     VulkanDestroyDebugMessenger(Instance.GetVkInstance(), DebugMessenger);
 #endif
-    
+
     Instance.Release();
 
     if (VulkanDeviceRHI == this)

@@ -286,8 +286,145 @@ bool RenderGraph_Test()
         TEST_EXPECT_EQ(RHIValidation::GetErrorCount(), 0);
     }
 
+    TEST_SECTION("A Tracked external is transitioned without a declared before-state");
+    {
+        RHIValidation::ResetErrorCount();
+
+        const ETextureUsageFlags TrackedUsage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
+
+        FRHITextureRef Tracked = RHI::CreateTexture(FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, TestExtent, TestExtent, 1, 1, TrackedUsage, FClearValue(), ERHIResourceStateTrackingMode::Tracked), ERHIResourceState::RenderTarget);
+
+        TEST_CHECK(Tracked != nullptr);
+
+        FRHICommandList     CommandList;
+        FRenderGraphBuilder GraphBuilder("TrackedExternal");
+
+        FRenderGraphTexture* Registered = GraphBuilder.RegisterExternalTexture(Tracked.Get(), "TrackedExternal", ERHIResourceState::RenderTarget, ERHIResourceState::RenderTarget);
+
+        GraphBuilder.AddPass("Read", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [Registered](FRenderGraphPassBuilder& PassBuilder)
+            {
+                PassBuilder.ReadTexture(Registered, ERHIResourceState::NonPixelShaderResource);
+            },
+            [](FRHICommandList&, const FRenderGraphPassResources&)
+            {
+            });
+
+        GraphBuilder.Execute(CommandList);
+        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+
+        TEST_EXPECT_EQ(GraphBuilder.GetStatistics().NumTransitionBarriers, 2);
+        TEST_EXPECT_EQ(RHIValidation::GetErrorCount(), 0);
+    }
+
+    TEST_SECTION("A Static external is declared but never transitioned");
+    {
+        ResetPool();
+        RHIValidation::ResetErrorCount();
+
+        const ETextureUsageFlags StaticUsage = ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::CopyDest;
+
+        FRHITextureRef Immutable = RHI::CreateTexture(FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, TestExtent, TestExtent, 1, 1, StaticUsage, FClearValue(), ERHIResourceStateTrackingMode::Static), ERHIResourceState::ShaderResource);
+
+        TEST_CHECK(Immutable != nullptr);
+
+        FRHICommandList     CommandList;
+        FRenderGraphBuilder GraphBuilder("StaticExternal");
+
+        FRenderGraphTexture* Registered = GraphBuilder.RegisterExternalTexture(Immutable.Get(), "StaticExternal", ERHIResourceState::ShaderResource, ERHIResourceState::ShaderResource);
+
+        GraphBuilder.AddPass("Read", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [Registered](FRenderGraphPassBuilder& PassBuilder)
+            {
+                PassBuilder.ReadTexture(Registered, ERHIResourceState::NonPixelShaderResource);
+            },
+            [](FRHICommandList&, const FRenderGraphPassResources&)
+            {
+            });
+
+        GraphBuilder.Execute(CommandList);
+        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+
+        TEST_EXPECT_EQ(GraphBuilder.GetStatistics().NumTransitionBarriers, 0);
+        TEST_EXPECT_EQ(RHIValidation::GetErrorCount(), 0);
+    }
+
+    TEST_SECTION("A pass that declares one resource two ways refuses to execute");
+    {
+        ResetPool();
+        RHIValidation::ResetErrorCount();
+
+        FRHICommandList     CommandList;
+        FRenderGraphBuilder GraphBuilder("ConflictingAccess");
+
+        FRenderGraphTexture* SceneColor = GraphBuilder.CreateTexture(MakeRenderTargetDesc(), "SceneColor");
+
+        bool bPassExecuted = false;
+
+        GraphBuilder.AddPass("Conflict", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [SceneColor](FRenderGraphPassBuilder& PassBuilder)
+            {
+                PassBuilder.ReadTexture(SceneColor, ERHIResourceState::NonPixelShaderResource);
+                PassBuilder.WriteTexture(SceneColor, ERHIResourceState::RenderTarget);
+            },
+            [&bPassExecuted](FRHICommandList&, const FRenderGraphPassResources&)
+            {
+                bPassExecuted = true;
+            });
+
+        GraphBuilder.Execute(CommandList);
+        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+
+        TEST_EXPECT(GraphBuilder.HasErrors());
+        TEST_EXPECT(!bPassExecuted);
+    }
+
     FRenderGraphResourcePool::Get().Flush();
     TEST_EXPECT_EQ(FRenderGraphResourcePool::Get().GetNumTextures(), 0);
+
+    TEST_END();
+}
+
+bool RenderGraphDisabledPass_Test()
+{
+    TEST_BEGIN();
+
+    TEST_SECTION("A disabled pass does not execute but still declares resources");
+
+    ResetPool();
+    RHIValidation::ResetErrorCount();
+
+    bool bEnabledPassRan  = false;
+    bool bDisabledPassRan = false;
+
+    FRHICommandList     CommandList;
+    FRenderGraphBuilder GraphBuilder("DisabledPass");
+
+    FRenderGraphTexture* Output = GraphBuilder.CreateTexture(MakeUnorderedAccessDesc(), "Output");
+
+    GraphBuilder.AddPass("Enabled", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, true, [Output](FRenderGraphPassBuilder& PassBuilder)
+        {
+            PassBuilder.WriteTexture(Output, ERHIResourceState::UnorderedAccess);
+        },
+        [&bEnabledPassRan, Output](FRHICommandList& PassCommandList, const FRenderGraphPassResources& Resources)
+        {
+            PassCommandList.ClearUnorderedAccessViewFloat(Resources.Get(Output)->GetUnorderedAccessView(), Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+            bEnabledPassRan = true;
+        });
+
+    GraphBuilder.AddPass("Disabled", ERenderGraphPassFlags::Compute, false, [Output](FRenderGraphPassBuilder& PassBuilder)
+        {
+            PassBuilder.WriteTexture(Output, ERHIResourceState::UnorderedAccess);
+        },
+        [&bDisabledPassRan](FRHICommandList&, const FRenderGraphPassResources&)
+        {
+            bDisabledPassRan = true;
+        });
+
+    GraphBuilder.Execute(CommandList);
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+
+    TEST_EXPECT(bEnabledPassRan);
+    TEST_EXPECT(!bDisabledPassRan);
+    TEST_EXPECT_EQ(GraphBuilder.GetStatistics().NumDisabledPasses, 1);
+    TEST_EXPECT_EQ(RHIValidation::GetErrorCount(), 0);
 
     TEST_END();
 }

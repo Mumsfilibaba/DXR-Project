@@ -140,10 +140,10 @@ void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
     const uint32 NumRenderTargets = BeginRenderPassDesc.NumRenderTargets;
     for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
     {
-        CachedRenderTargets[Index] = static_cast<FMetalRenderTargetViewRHI*>(BeginRenderPassDesc.RenderTargets[Index].View);
+        CachedRenderTargets[Index] = static_cast<FMetalRenderTargetViewRHI*>(BeginRenderPassDesc.RenderTargets[Index].View.Get());
     }
 
-    FMetalDepthStencilViewRHI* MetalDSV = static_cast<FMetalDepthStencilViewRHI*>(BeginRenderPassDesc.DepthStencilAttachment.View);
+    FMetalDepthStencilViewRHI* MetalDSV = static_cast<FMetalDepthStencilViewRHI*>(BeginRenderPassDesc.DepthStencilAttachment.View.Get());
     ContextState.SetRenderTargets(CachedRenderTargets, NumRenderTargets, MetalDSV);
 
     FMetalTextureRHI* DSVTexture = MetalDSV ? GetMetalTexture(static_cast<FRHITexture*>(MetalDSV->GetResource())) : nullptr;
@@ -156,7 +156,7 @@ void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
     for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
     {
         const FRHIRenderPassAttachment& Attachment = BeginRenderPassDesc.RenderTargets[Index];
-        FMetalRenderTargetViewRHI* MetalRTV = static_cast<FMetalRenderTargetViewRHI*>(Attachment.View);
+        FMetalRenderTargetViewRHI* MetalRTV = static_cast<FMetalRenderTargetViewRHI*>(Attachment.View.Get());
         METAL_ERROR_COND(MetalRTV != nullptr, "RenderTargetView cannot be nullptr");
 
         FMetalTextureRHI* RTVTexture = GetMetalTexture(static_cast<FRHITexture*>(MetalRTV->GetResource()));

@@ -263,6 +263,7 @@ void FVulkanMemoryLocation::ResetAllocator()
 
 FVulkanMemoryManager::FVulkanMemoryManager(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
+    , LeakCheck(this)
     , BufferAllocator(InDevice, static_cast<uint64>(CVarBufferAllocatorPageSize.GetValue()) * 1024ull * 1024ull, BUFFER_MIN_BLOCK, static_cast<uint64>(CVarBufferAllocatorMaxSuballocationSize.GetValue()) * 1024ull * 1024ull)
     , TextureAllocator(InDevice, static_cast<uint64>(CVarTextureAllocatorDefaultPageSize.GetValue()) * 1024ull * 1024ull)
     , UploadHeapAllocator(InDevice, static_cast<uint64>(CVarUploadHeapPageSize.GetValue()) * 1024ull, UPLOAD_ALIGNMENT, static_cast<uint64>(CVarUploadHeapSmallAllocationThreshold.GetValue()), static_cast<uint64>(CVarUploadHeapLargeAllocationThreshold.GetValue()))

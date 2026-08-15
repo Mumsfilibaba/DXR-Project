@@ -36,7 +36,7 @@ public:
 
 private:
     NODISCARD static String GetFilePath();
-    NODISCARD static String MakeAssetRelativePath(const String& Path);
+    NODISCARD static String CreateAssetRelativePath(const String& Path);
 
     FShaderBytecodeCache();
     ~FShaderBytecodeCache();

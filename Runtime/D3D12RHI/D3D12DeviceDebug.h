@@ -7,8 +7,13 @@ class FD3D12Device;
 // D3D12 Debug / Diagnostics
 // -------------------------------------------------------------------------------------------
 
-void D3D12RHIEnableDRED();
-void D3D12RHISetupDebugInterfaces(bool bEnableDebugLayer);
+struct D3D12Debug
+{
+    static void EnableDRED();
+    static void SetupDebugInterfaces(bool bEnableDebugLayer);
 
-void D3D12RHIDeviceRemovedHandler(FD3D12Device* Device, const char* Source);
-bool D3D12RHICheckDeviceRemoved(FD3D12Device* Device, HRESULT Result, const char* Source);
+    static void ReportLiveDXGIObjects();
+
+    static void DeviceRemovedHandler(FD3D12Device* Device, const char* Source);
+    static bool CheckDeviceRemoved(FD3D12Device* Device, HRESULT Result, const char* Source);
+};

@@ -2,6 +2,8 @@
 #include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/VulkanRHI.h"
 #include "VulkanRHI/VulkanCommandBuffer.h"
+#include "VulkanRHI/VulkanCommandContext.h"
+#include "VulkanRHI/VulkanCore.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
 #include "VulkanRHI/VulkanBackBufferProxies.h"
 
@@ -882,6 +884,9 @@ void FVulkanSwapChainRHI::DestroySwapChain()
     PendingAcquireSemaphore.Reset();
     PendingRenderSemaphore.Reset();
 
+    // The acquire path is the only other place these are dropped, and it will not run again
+    ImageFences.Clear();
+
     // Destroy the swapchain, then the surface it was created from if that one has been retired.
     SwapChainResource.Reset();
     RetiredSurface.Reset();
@@ -1235,19 +1240,68 @@ void FVulkanSwapChainRHI::ClaimPendingAcquireSemaphore(FVulkanCommands& InComman
     }
 }
 
-void FVulkanSwapChainRHI::NotifyBackBufferAccessed()
+FVulkanTextureRHI* FVulkanSwapChainRHI::AcquireBackBuffer()
 {
-    if (!PendingAcquireSemaphore || !CommandContext)
+    if (!CommandContext || !BackBuffers.IsValidIndex(BackBufferIndex))
     {
-        return;
+        return nullptr;
+    }
+
+    FVulkanTextureRHI* BackBuffer = BackBuffers[BackBufferIndex].Texture.Get();
+    if (!BackBuffer)
+    {
+        return nullptr;
     }
 
     if (!CommandContext->IsRecording() || CommandContext->NeedsCommandBuffer())
     {
-        return;
+        return BackBuffer;
     }
 
     ClaimPendingAcquireSemaphore(CommandContext->GetCommands());
+
+    constexpr VkImageLayout AcquiredLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    FVulkanImageLayoutState& GlobalState = BackBuffer->GetImageLayoutState();
+    FVulkanImageLayoutState& LocalState  = CommandContext->RetrievePendingImageState(BackBuffer);
+
+    VkImageLayout CurrentLayout = LocalState.GetImageLayout();
+    if (CurrentLayout == VK_IMAGE_LAYOUT_TO_BE_DETERMINED)
+    {
+        CurrentLayout = GlobalState.GetImageLayout();
+    }
+
+    if (CurrentLayout == VK_IMAGE_LAYOUT_UNDEFINED)
+    {
+        CommandContext->ConditionalSplitCommandBuffer();
+
+        const VkImageCreateInfo& CreateInfo = BackBuffer->GetVkImageCreateInfo();
+        const VkImageAspectFlags AspectMask = GetImageAspectFlagsFromFormat(CreateInfo.format);
+
+        VkImageMemoryBarrier2KHR ImageBarrier = {};
+        ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR;
+        ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
+        ImageBarrier.newLayout                       = AcquiredLayout;
+        ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+        ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+        ImageBarrier.image                           = BackBuffer->GetVkImage();
+        ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE_KHR;
+        ImageBarrier.dstAccessMask                   = VK_ACCESS_2_NONE_KHR;
+        ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT_KHR;
+        ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR;
+        ImageBarrier.subresourceRange.aspectMask     = AspectMask;
+        ImageBarrier.subresourceRange.baseMipLevel   = 0;
+        ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+        ImageBarrier.subresourceRange.baseArrayLayer = 0;
+        ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+
+        CommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
+    }
+
+    GlobalState.SetImageLayout(AcquiredLayout);
+    LocalState.SetImageLayout(AcquiredLayout);
+
+    return BackBuffer;
 }
 
 VkResult FVulkanSwapChainRHI::AcquireNextImage()
@@ -1263,20 +1317,19 @@ VkResult FVulkanSwapChainRHI::AcquireNextImage()
     {
         const bool bKeepsRenderSemaphore = (PendingRenderSemaphore.Get() == RenderSemaphore.Get());
 
-        CommandContext->GetCommandQueue().SubmitSemaphoresOnly(PendingAcquireSemaphore ? PendingAcquireSemaphore->GetVkSemaphore() : VK_NULL_HANDLE,
+        CommandContext->GetCommandQueue().SubmitSemaphoresOnly(PendingAcquireSemaphore ? PendingAcquireSemaphore->GetVkSemaphore() :
+            VK_NULL_HANDLE,
             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, (PendingRenderSemaphore && !bKeepsRenderSemaphore) ? PendingRenderSemaphore->GetVkSemaphore() : VK_NULL_HANDLE);
 
         PendingAcquireSemaphore.Reset();
         PendingRenderSemaphore.Reset();
     }
 
-	if (FVulkanFence* Fence = ImageFences[SemaphoreIndex])
-	{
+    if (ImageFences[SemaphoreIndex])
+    {
+        ImageFences[SemaphoreIndex]->Wait();
         ImageFences[SemaphoreIndex] = nullptr;
-
-        Fence->Wait();
-        Fence->Release();
-	}
+    }
 
     VkResult Result = SwapChainResource->AcquireNextImage(ImageSemaphore.Get());
     if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
@@ -1288,13 +1341,10 @@ VkResult FVulkanSwapChainRHI::AcquireNextImage()
     PendingAcquireSemaphore = ImageSemaphore;
     PendingRenderSemaphore  = RenderSemaphore;
 
-    if (FVulkanFence* Fence = CommandContext->GetSubmissionFence())
-    {
-        ImageFences[SemaphoreIndex] = Fence;
-        Fence->AddRef();
-    }
+    ImageFences[SemaphoreIndex] = CommandContext->GetSubmissionFence();
 
     // Update the BackBuffer index
     BackBufferIndex = SwapChainResource->GetBufferIndex();
+
     return Result;
 }

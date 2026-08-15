@@ -8,7 +8,7 @@
 #include "Renderer/DebugRendering.h"
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneLightProbe.h"
-#include "Renderer/CommonShaders.h"
+#include "Renderer/Shaders/CommonShaders.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
 
 template<typename ShaderType>
@@ -205,7 +205,6 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
 
     // VertexBuffer
     FRHIBufferDesc VertexBufferDesc = FRHIBufferDesc::CreateVertexBuffer(sizeof(FSourceVertex), SphereMesh.Vertices.Size());
-
     SphereVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::Common, SphereMesh.Vertices.Data());
 
     if (!SphereVertexBuffer)
@@ -223,8 +222,8 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     SphereIndexCount = SphereMeshSmallIndicies.Size();
 
     FRHIBufferDesc IndexBufferDesc = FRHIBufferDesc::CreateIndexBuffer(sizeof(uint16), SphereMeshSmallIndicies.Size());
-
     SphereIndexBuffer = RHI::CreateBuffer(IndexBufferDesc, ERHIResourceState::Common, SphereMeshSmallIndicies.Data());
+
     if (!SphereIndexBuffer)
     {
         DEBUG_BREAK();
@@ -248,7 +247,6 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     };
 
     VertexBufferDesc = FRHIBufferDesc::CreateVertexBuffer(sizeof(Vector3), AABBVertices.Size());
-
     AABBVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, ERHIResourceState::Common, AABBVertices.Data());
 
     if (!AABBVertexBuffer)
@@ -279,7 +277,6 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     };
 
     IndexBufferDesc = FRHIBufferDesc::CreateIndexBuffer(sizeof(uint16), AABBWireframeIndices.Size());
-
     AABBIndexBuffer_Wireframe = RHI::CreateBuffer(IndexBufferDesc, ERHIResourceState::Common, AABBWireframeIndices.Data());
 
     if (!AABBIndexBuffer_Wireframe)
@@ -311,7 +308,6 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     };
 
     IndexBufferDesc = FRHIBufferDesc::CreateIndexBuffer(sizeof(uint16), AABBSolidIndices.Size());
-
     AABBIndexBuffer_Solid = RHI::CreateBuffer(IndexBufferDesc, ERHIResourceState::Common, AABBSolidIndices.Data());
 
     if (!AABBIndexBuffer_Solid)

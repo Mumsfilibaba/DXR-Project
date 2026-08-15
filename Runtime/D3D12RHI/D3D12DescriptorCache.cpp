@@ -14,7 +14,8 @@ static TAutoConsoleVariable<int32> CVarSamplerDescriptorCacheSize(
 #if D3D12_ENABLE_DESCRIPTOR_TABLE_VALIDATION
 static TAutoConsoleVariable<int32> CVarValidateDescriptorTables(
     "D3D12RHI.ValidateDescriptorTables",
-    "When non-zero, logs the (stage, root-parameter, slot, register, SRV view dimension) staged into each online SRV descriptor table. Diagnostic aid for tracking stale/mismatched descriptor-table binds (e.g. a Texture2D landing in a StructuredBuffer slot).",
+    "When non-zero, logs the (stage, root-parameter, slot, register, SRV view dimension) staged into each online SRV descriptor table. "
+    "Diagnostic aid for tracking stale/mismatched descriptor-table binds (e.g. a Texture2D landing in a StructuredBuffer slot).",
     0);
 
 static const CHAR* GetSRVDimensionString(D3D12_SRV_DIMENSION Dimension)

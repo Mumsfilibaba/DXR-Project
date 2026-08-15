@@ -630,7 +630,7 @@ bool FD3D12SwapChainRHI::Present(bool bVerticalSync)
     }
 
     HRESULT Result = SwapChain->Present(SyncInterval, PresentFlags);
-    D3D12RHICheckDeviceRemoved(GetDevice(), Result, "Present");
+    D3D12Debug::CheckDeviceRemoved(GetDevice(), Result, "Present");
 
     if (SUCCEEDED(Result))
     {

@@ -254,30 +254,27 @@ void FRHIValidationCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc
 
     if (BeginRenderPassDesc.NumRenderTargets > RHI_MAX_RENDER_TARGETS)
     {
-        RHI_VALIDATION_ERROR("Trying to bind to many render-targets in a render-pass. Max is '%u' but this call is trying to bind '%u'.",
-            RHI_MAX_RENDER_TARGETS, BeginRenderPassDesc.NumRenderTargets);
+        RHI_VALIDATION_ERROR("Trying to bind to many render-targets in a render-pass. Max is '%u' but this call is trying to bind '%u'.", RHI_MAX_RENDER_TARGETS, BeginRenderPassDesc.NumRenderTargets);
         return;
     }
 
     for (uint32 Index = 0; Index < BeginRenderPassDesc.NumRenderTargets; ++Index)
     {
-        if (!BeginRenderPassDesc.RenderTargets[Index].View)
+        if (!BeginRenderPassDesc.RenderTargets[Index].View.Get())
         {
             RHI_VALIDATION_ERROR("BeginRenderPass: render-target attachment %u is nullptr.", Index);
             return;
         }
 
-        if (!StateTracker->ValidateState(BeginRenderPassDesc.RenderTargets[Index].View->GetResource(),
-            ERHIResourceState::RenderTarget, "BeginRenderPass render-target attachment"))
+        if (!StateTracker->ValidateState(BeginRenderPassDesc.RenderTargets[Index].View.Get()->GetResource(), ERHIResourceState::RenderTarget, "BeginRenderPass render-target attachment"))
         {
             return;
         }
     }
 
-    if (FRHIDepthStencilView* DepthStencilView = BeginRenderPassDesc.DepthStencilAttachment.View)
+    if (FRHIDepthStencilView* DepthStencilView = BeginRenderPassDesc.DepthStencilAttachment.View.Get())
     {
-        if (!StateTracker->ValidateState(DepthStencilView->GetResource(),
-            ERHIResourceState::DepthWrite | ERHIResourceState::DepthRead, "BeginRenderPass depth-stencil attachment"))
+        if (!StateTracker->ValidateState(DepthStencilView->GetResource(), ERHIResourceState::DepthWrite | ERHIResourceState::DepthRead, "BeginRenderPass depth-stencil attachment"))
         {
             return;
         }

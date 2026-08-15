@@ -52,15 +52,15 @@ static TAutoConsoleVariable<int32> CVarSamplerOnlineDescriptorBlockSize(
 
 static TAutoConsoleVariable<int32> CVarMinExpectedDescriptorBlocks(
     "D3D12RHI.MinExpectedDescriptorBlocks",
-    "Block count each global descriptor heap is expected to provide. Falling below this warns at "
-    "startup rather than stalling mysteriously once several contexts record at once.",
+    "Block count each global descriptor heap is expected to provide. Falling below this warns at startup rather than stalling mysteriously "
+    "once several contexts record at once.",
     16);
 
 static TAutoConsoleVariable<bool> CVarEnableBindless(
     "D3D12RHI.EnableBindless",
-    "When enabled, allocates a sub-region of the global descriptor heaps for bindless resources "
-    "and emits root signatures with HEAP_DIRECTLY_INDEXED flags for shaders that need it. "
-    "Has no effect when GD3D12SupportsBindless is false (requires SM 6.6 + Resource Binding Tier 3).",
+    "When enabled, allocates a sub-region of the global descriptor heaps for bindless resources and emits root signatures with "
+    "HEAP_DIRECTLY_INDEXED flags for shaders that need it. Has no effect when GD3D12SupportsBindless is false (requires SM 6.6 + Resource "
+    "Binding Tier 3).",
     true);
 
 static TAutoConsoleVariable<int32> CVarNumBindlessResourceDescriptors(
@@ -72,8 +72,8 @@ static TAutoConsoleVariable<int32> CVarNumBindlessResourceDescriptors(
 
 static TAutoConsoleVariable<int32> CVarNumBindlessSamplerDescriptors(
     "D3D12RHI.NumBindlessSamplerDescriptors",
-    "Number of sampler slots reserved at the start of the global sampler descriptor heap for "
-    "bindless samplers. Clamped so that at least one block remains available for legacy tables.",
+    "Number of sampler slots reserved at the start of the global sampler descriptor heap for bindless samplers. Clamped so that at least "
+    "one block remains available for legacy tables.",
     256);
 
 static TAutoConsoleVariable<int32> CVarUploadHeapSmallAllocationThreshold(
@@ -175,10 +175,10 @@ bool FD3D12Adapter::Initialize()
     }
     
     // DRED does not require the debug layer. Must happen before device creation.
-    D3D12RHIEnableDRED();
+    D3D12Debug::EnableDRED();
 
     // Debug layer, GPU-based validation, object auto-naming and DXGI InfoQueue break settings.
-    D3D12RHISetupDebugInterfaces(bEnableDebugLayer);
+    D3D12Debug::SetupDebugInterfaces(bEnableDebugLayer);
 
     if (bEnableDebugLayer)
     {
@@ -187,7 +187,7 @@ bool FD3D12Adapter::Initialize()
             if (CVarEnablePIX->GetBool())
             {
                 TComPtr<IDXGraphicsAnalysis> TempGraphicsAnalysis;
-                if (SUCCEEDED(D3D12Functions::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&TempGraphicsAnalysis))))
+                if (SUCCEEDED(D3D12::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&TempGraphicsAnalysis))))
                 {
                     GraphicsAnalysisInterface = TempGraphicsAnalysis;
                 }
@@ -206,7 +206,7 @@ bool FD3D12Adapter::Initialize()
         FactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
     }
 
-    if (FAILED(D3D12Functions::CreateDXGIFactory2(FactoryFlags, IID_PPV_ARGS(&Factory))))
+    if (FAILED(D3D12::CreateDXGIFactory2(FactoryFlags, IID_PPV_ARGS(&Factory))))
     {
         D3D12_ERROR_CRITICAL("[FD3D12Adapter]: FAILED to create factory");
         return false;
@@ -279,7 +279,7 @@ bool FD3D12Adapter::Initialize()
                     break;
                 }
 
-                Result = D3D12Functions::D3D12CreateDevice(TempAdapter.Get(), Level, __uuidof(ID3D12Device), nullptr);
+                Result = D3D12::D3D12CreateDevice(TempAdapter.Get(), Level, __uuidof(ID3D12Device), nullptr);
                 if (SUCCEEDED(Result))
                 {
                     // Here it is probably better to have something else to find the best GPU
@@ -331,7 +331,7 @@ bool FD3D12Adapter::Initialize()
                     break;
                 }
 
-                Result = D3D12Functions::D3D12CreateDevice(TempAdapter.Get(), Level, __uuidof(ID3D12Device), nullptr);
+                Result = D3D12::D3D12CreateDevice(TempAdapter.Get(), Level, __uuidof(ID3D12Device), nullptr);
                 if (SUCCEEDED(Result))
                 {
                     D3D12_INFO("[FD3D12Adapter]: Suitable Direct3D Adapter (%u): %ls", Index, Desc.Description);
@@ -1015,7 +1015,7 @@ bool FD3D12Device::Initialize()
 bool FD3D12Device::CreateDevice()
 {
     // Create Device
-    if (FAILED(D3D12Functions::D3D12CreateDevice(Adapter->GetDXGIAdapter(), MinFeatureLevel, IID_PPV_ARGS(&D3D12Device))))
+    if (FAILED(D3D12::D3D12CreateDevice(Adapter->GetDXGIAdapter(), MinFeatureLevel, IID_PPV_ARGS(&D3D12Device))))
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create device");
         return false;

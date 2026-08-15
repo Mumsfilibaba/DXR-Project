@@ -120,7 +120,7 @@ String FShaderBytecodeCache::GetFilePath()
     return Paths::GetAssetDir() + '/' + CVarBytecodeFileName.GetValue();
 }
 
-String FShaderBytecodeCache::MakeAssetRelativePath(const String& Path)
+String FShaderBytecodeCache::CreateAssetRelativePath(const String& Path)
 {
     const String AssetDir = Paths::GetAssetDir() + '/';
     if (Path.StartsWith(AssetDir))
@@ -217,7 +217,7 @@ void FShaderBytecodeCache::Add(uint64 CompileHash, const TArray<uint8>& ByteCode
     NewEntry.Dependencies.Reserve(Dependencies.Size());
     for (const String& Dependency : Dependencies)
     {
-        NewEntry.Dependencies.Emplace(MakeAssetRelativePath(Dependency));
+        NewEntry.Dependencies.Emplace(CreateAssetRelativePath(Dependency));
     }
 
     // Hashed before the lock is taken, since reading the dependencies off disk has nothing to do with the entry map.

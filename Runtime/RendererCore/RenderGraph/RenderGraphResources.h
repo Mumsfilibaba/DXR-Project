@@ -1,6 +1,8 @@
 #pragma once
+#include "Core/Containers/Array.h"
 #include "RHI/RHIBuffer.h"
 #include "RHI/RHITexture.h"
+#include "RHI/RHITypes.h"
 
 class FRenderGraphBuilder;
 class FRenderGraphPassBuilder;
@@ -113,23 +115,26 @@ struct FRenderGraphBufferDesc
     FRHIBufferDesc BufferDesc = { };
 };
 
+struct FRenderGraphSubresourceState
+{
+    ERHIResourceState State                     = ERHIResourceState::Common;
+    bool              bWrittenAsUnorderedAccess = false;
+};
+
 struct FRenderGraphResourceState
 {
-    /** Number of surviving passes that read the resource, which drives pass culling */
-    int32             NumReaders = 0;
-
-    /** Index of the first and last surviving pass to touch the resource, which bounds its lifetime. -1 when untouched */
-    int32             FirstPassIndex = -1;
-    int32             LastPassIndex  = -1;
-
-    /** State the resource is in at the point the barrier walk has reached */
-    ERHIResourceState CurrentState = ERHIResourceState::Common;
-
-    /** State the graph must leave the resource in, only meaningful for an external resource */
-    ERHIResourceState FinalState = ERHIResourceState::Common;
-
-    /** Set by an UnorderedAccess write, so a following UnorderedAccess access knows to fence */
-    bool              bWrittenAsUnorderedAccess = false;
+    int32                                NumReaders                = 0;
+    int32                                FirstPassIndex            = -1;
+    int32                                LastPassIndex             = -1;
+    ERHIResourceState                    CurrentState              = ERHIResourceState::Common;
+    ERHIResourceState                    FinalState                = ERHIResourceState::Common;
+    ERHIResourceState                    AcquiredState             = ERHIResourceState::Common;
+    bool                                 bInitialStateIsUnverified = false;
+    bool                                 bWrittenAsUnorderedAccess = false;
+    bool                                 bSubresourcesDiverged     = false;
+    uint32                               NumTrackedMipLevels       = 0;
+    uint32                               NumTrackedArraySlices     = 0;
+    TArray<FRenderGraphSubresourceState> SubresourceStates;
 };
 
 class RENDERERCORE_API FRenderGraphTexture

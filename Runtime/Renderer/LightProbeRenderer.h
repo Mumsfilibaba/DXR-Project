@@ -1,8 +1,8 @@
 #pragma once
 #include "RHI/RHIShader.h"
 #include "RHI/RHICommandList.h"
-#include "Renderer/RenderPass.h"
-#include "Renderer/FrameResources.h"
+#include "Renderer/Passes/RenderPass.h"
+#include "Renderer/Graph/FrameResources.h"
 
 class FLightProbeRenderer : public FRenderPass
 {

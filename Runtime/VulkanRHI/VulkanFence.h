@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/Array.h"
+#include "Core/Containers/SharedRef.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/RefCountedBase.h"
 #include "Core/Threading/Atomic/AtomicBool.h"
@@ -10,6 +11,8 @@
 
 class FVulkanQueue;
 struct FVulkanCommands;
+
+typedef TSharedRef<class FVulkanFence> FVulkanFenceRef;
 
 class FVulkanFence : public FVulkanDeviceChild, public FRefCountedBase
 {
@@ -96,12 +99,6 @@ public:
 
     bool Initialize();
     void EnqueueSignal(FVulkanCommands& InCommands);
-    void SetSubmissionFence(FVulkanFence* InFence);
-
-    bool UsesTimeline() const
-    {
-        return bUsesTimeline;
-    }
 
     VkSemaphore GetVkTimelineSemaphore() const
     {
@@ -114,13 +111,11 @@ public:
     }
 
 private:
-    VkSemaphore   TimelineSemaphore;
-    FVulkanFence* SubmissionFence;
-    uint64        NextValue;
-    uint64        TargetValue;
-    AtomicBool    bHasPendingSignal;
-    bool          bUsesTimeline;
+    VkSemaphore TimelineSemaphore;
+    uint64      NextValue;
+    uint64      TargetValue;
+    AtomicBool  bHasPendingSignal;
 #if VULKAN_STORE_DEBUG_NAMES
-    String        DebugName;
+    String      DebugName;
 #endif
 };

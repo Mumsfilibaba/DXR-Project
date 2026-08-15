@@ -544,7 +544,7 @@ bool FD3D12Shader::Initialize(const TArray<uint8>& InCode)
 bool FD3D12Shader::IsRootSignatureInShaderBlob(const TComPtr<IDxcBlob>& ShaderBlob)
 {
     TComPtr<IDxcContainerReflection> Reflection;
-    HRESULT Result = D3D12Functions::DxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&Reflection));
+    HRESULT Result = D3D12::DxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&Reflection));
     if (FAILED(Result))
     {
         D3D12_ERROR_CRITICAL("[FD3D12Shader]: FAILED to create IDxcContainerReflection");
@@ -573,7 +573,7 @@ bool FD3D12Shader::ReadShaderFeatureFlags(const TComPtr<IDxcBlob>& ShaderBlob, u
     OutFlags = 0;
 
     TComPtr<IDxcContainerReflection> Reflection;
-    HRESULT Result = D3D12Functions::DxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&Reflection));
+    HRESULT Result = D3D12::DxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&Reflection));
     if (FAILED(Result))
     {
         D3D12_ERROR_CRITICAL("[FD3D12Shader]: FAILED to create IDxcContainerReflection");
@@ -612,7 +612,7 @@ bool FD3D12Shader::ReadShaderFeatureFlags(const TComPtr<IDxcBlob>& ShaderBlob, u
 bool FD3D12Shader::GetReflectionInterface(const TComPtr<IDxcBlob>& ShaderBlob, REFIID iid, void** ppvObject)
 {
     TComPtr<IDxcContainerReflection> ReflectionInterface;
-    HRESULT Result = D3D12Functions::DxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&ReflectionInterface));
+    HRESULT Result = D3D12::DxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&ReflectionInterface));
     if (FAILED(Result))
     {
         D3D12_ERROR_CRITICAL("[FD3D12Shader]: FAILED to create ReflectionInterface");

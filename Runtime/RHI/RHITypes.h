@@ -1377,7 +1377,7 @@ struct FRHITextureSubresourceRange
         return FRHITextureSubresourceRange{ 0, RHI_ALL_MIP_LEVELS, 0, RHI_ALL_ARRAY_SLICES, 0, RHI_ALL_PLANE_SLICES };
     }
 
-    NODISCARD static constexpr FRHITextureSubresourceRange MakeMip(uint32 MipLevel, uint32 ArraySlice = RHI_ALL_ARRAY_SLICES) noexcept
+    NODISCARD static constexpr FRHITextureSubresourceRange CreateMip(uint32 MipLevel, uint32 ArraySlice = RHI_ALL_ARRAY_SLICES) noexcept
     {
         const bool bAllMips   = (MipLevel   == RHI_ALL_MIP_LEVELS);
         const bool bAllSlices = (ArraySlice == RHI_ALL_ARRAY_SLICES);
@@ -1442,7 +1442,7 @@ struct FRHITransitionBarrierDesc
         uint32            InMipLevel,
         uint32            InArraySlice = RHI_ALL_ARRAY_SLICES) noexcept
     {
-        return CreateTextureSubresource(InTexture, InBeforeState, InAfterState, FRHITextureSubresourceRange::MakeMip(InMipLevel, InArraySlice), ERHIBarrierFlags::None);
+        return CreateTextureSubresource(InTexture, InBeforeState, InAfterState, FRHITextureSubresourceRange::CreateMip(InMipLevel, InArraySlice), ERHIBarrierFlags::None);
     }
 
     NODISCARD static FRHITransitionBarrierDesc CreateTextureSubresource(

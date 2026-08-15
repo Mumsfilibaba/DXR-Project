@@ -1306,7 +1306,7 @@ bool FD3D12RootSignature::Initialize(const D3D12_VERSIONED_ROOT_SIGNATURE_DESC& 
 bool FD3D12RootSignature::Initialize(const void* BlobWithRootSignature, uint64 BlobLengthInBytes)
 {
     TComPtr<ID3D12VersionedRootSignatureDeserializer> Deserializer;
-    HRESULT Result = D3D12Functions::D3D12CreateVersionedRootSignatureDeserializer(BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS(&Deserializer));
+    HRESULT Result = D3D12::D3D12CreateVersionedRootSignatureDeserializer(BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS(&Deserializer));
     if (FAILED(Result))
     {
         D3D12_ERROR_CRITICAL("[FD3D12RootSignature]: FAILED to Retrieve Versioned Root Signature Desc");
@@ -1365,7 +1365,7 @@ bool FD3D12RootSignature::Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc)
 bool FD3D12RootSignature::Initialize(const void* BlobWithRootSignature, uint64 BlobLengthInBytes)
 {
     TComPtr<ID3D12RootSignatureDeserializer> Deserializer;
-    HRESULT Result = D3D12Functions::D3D12CreateRootSignatureDeserializer(BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS(&Deserializer));
+    HRESULT Result = D3D12::D3D12CreateRootSignatureDeserializer(BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS(&Deserializer));
     if (FAILED(Result))
     {
         D3D12_ERROR_CRITICAL("[FD3D12RootSignature]: FAILED to Retrieve Root Signature Desc");
@@ -1623,7 +1623,7 @@ bool FD3D12RootSignature::Serialize(const D3D12_VERSIONED_ROOT_SIGNATURE_DESC& D
 {
     TComPtr<ID3DBlob> ErrorBlob;
 
-    HRESULT Result = D3D12Functions::D3D12SerializeVersionedRootSignature(&Desc, OutBlob, &ErrorBlob);
+    HRESULT Result = D3D12::D3D12SerializeVersionedRootSignature(&Desc, OutBlob, &ErrorBlob);
     if (FAILED(Result))
     {
         D3D12_ERROR_CRITICAL("[FD3D12RootSignature]: FAILED to Serialize Versioned RootSignature. Error=%s", reinterpret_cast<const CHAR*>(ErrorBlob->GetBufferPointer()));
@@ -1637,7 +1637,7 @@ bool FD3D12RootSignature::Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DB
 {
     TComPtr<ID3DBlob> ErrorBlob;
 
-    HRESULT Result = D3D12Functions::D3D12SerializeRootSignature(&Desc, D3D_ROOT_SIGNATURE_VERSION_1, OutBlob, &ErrorBlob);
+    HRESULT Result = D3D12::D3D12SerializeRootSignature(&Desc, D3D_ROOT_SIGNATURE_VERSION_1, OutBlob, &ErrorBlob);
     if (FAILED(Result))
     {
         D3D12_ERROR_CRITICAL("[FD3D12RootSignature]: FAILED to Serialize RootSignature. Error=%s", reinterpret_cast<const CHAR*>(ErrorBlob->GetBufferPointer()));

@@ -58,7 +58,7 @@ public:
 
     bool Load(const StringView& Key, TArray<uint8>& OutBytes) override
     {
-        const String FilePath = MakeFilePath(Key);
+        const String FilePath = CreateFilePath(Key);
 
         // A cache miss is expected - skip the open attempt (and its logging) when the file is absent
         if (!FPlatformFile::IsFile(*FilePath))
@@ -87,7 +87,7 @@ public:
             return;
         }
 
-        const String FilePath = MakeFilePath(Key);
+        const String FilePath = CreateFilePath(Key);
 
         TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForWrite(FilePath);
         if (!FileHandle)
@@ -99,7 +99,7 @@ public:
     }
 
 private:
-    NODISCARD String MakeFilePath(const StringView& Key) const
+    NODISCARD String CreateFilePath(const StringView& Key) const
     {
         return Directory + '/' + String(Key) + ".rtas";
     }

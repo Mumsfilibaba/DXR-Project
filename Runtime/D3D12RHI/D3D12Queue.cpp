@@ -253,7 +253,7 @@ FD3D12FenceSyncPoint FD3D12Queue::ExecuteCommandLists(FD3D12CommandList* const* 
 #if D3D12_ENABLE_DEVICE_LOST_CHECK
     if (GetDevice()->GetD3D12Device()->GetDeviceRemovedReason() != S_OK)
     {
-        D3D12RHIDeviceRemovedHandler(GetDevice(), "ExecuteCommandLists");
+        D3D12Debug::DeviceRemovedHandler(GetDevice(), "ExecuteCommandLists");
     }
 #endif
 

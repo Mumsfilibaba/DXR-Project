@@ -30,6 +30,11 @@ void FFileOutputDevice::Log(const String& Message)
 void FFileOutputDevice::Log(ELogSeverity Severity, const String& Message)
 {
     QueueWrite(String(SeverityToString(Severity)) + Message + "\n");
+
+    if (Severity >= ELogSeverity::Warning)
+    {
+        FlushBlocking();
+    }
 }
 
 void FFileOutputDevice::Flush()

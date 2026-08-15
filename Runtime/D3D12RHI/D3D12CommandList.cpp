@@ -46,7 +46,7 @@ bool FD3D12CommandAllocator::Initialize()
 bool FD3D12CommandAllocator::Reset()
 {
     HRESULT Result = Allocator->Reset();
-    D3D12RHICheckDeviceRemoved(GetDevice(), Result, "CommandAllocator::Reset");
+    D3D12Debug::CheckDeviceRemoved(GetDevice(), Result, "CommandAllocator::Reset");
 
     return SUCCEEDED(Result);
 }
@@ -180,7 +180,7 @@ bool FD3D12CommandList::Reset(FD3D12CommandAllocator* Allocator)
     EndTimestamp   = FD3D12Query();
 
     HRESULT Result = CmdList->Reset(Allocator->GetD3D12Allocator(), nullptr);
-    D3D12RHICheckDeviceRemoved(GetDevice(), Result, "CommandList::Reset");
+    D3D12Debug::CheckDeviceRemoved(GetDevice(), Result, "CommandList::Reset");
 
     return SUCCEEDED(Result);
 }
@@ -190,7 +190,7 @@ bool FD3D12CommandList::Close()
     bIsReady = false;
 
     HRESULT Result = CmdList->Close();
-    D3D12RHICheckDeviceRemoved(GetDevice(), Result, "CommandList::Close");
+    D3D12Debug::CheckDeviceRemoved(GetDevice(), Result, "CommandList::Close");
 
     NumCommands = 0;
     return SUCCEEDED(Result);

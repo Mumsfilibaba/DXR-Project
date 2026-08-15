@@ -64,6 +64,8 @@ private:
 
 class FVulkanCommandContext : public IRHICommandContext, public FVulkanDeviceChild
 {
+    friend class FVulkanSwapChainRHI;
+
 public:
     FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQueue& InQueue);
     ~FVulkanCommandContext();
@@ -181,7 +183,7 @@ public:
     void AddAccelerationStructureMemoryBarrier();
 
     void ObtainCommandBuffer();
-    void FinishCommandBuffer(bool bFlushPool, bool bResolveQueries = true, FVulkanFence** OutFence = nullptr);
+    void FinishCommandBuffer(bool bFlushPool, bool bResolveQueries = true);
     void SplitCommandBuffer(bool bFlushPool, bool bWaitForQueue);
 
     void RetireTransientObjects();
@@ -238,9 +240,9 @@ public:
         return *CommandBuffer;
     }
 
-    FVulkanFence* GetSubmissionFence() const
+    FVulkanFenceRef GetSubmissionFence() const
     {
-        return Commands ? Commands->Fence : nullptr;
+        return MakeSharedRef<FVulkanFence>(Commands ? Commands->Fence : nullptr);
     }
 
     FVulkanTransientDescriptorAllocator* GetTransientDescriptorAllocator() const

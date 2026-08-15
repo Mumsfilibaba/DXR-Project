@@ -17,7 +17,10 @@ FVulkanFenceManager::~FVulkanFenceManager()
 
     for (FVulkanFence* Fence : Fences)
     {
-        Fence->Release();
+        if (Fence->Release() > 0)
+        {
+            VULKAN_WARNING("Fence was still referenced when the FenceManager was destroyed, its VkFence will leak");
+        }
     }
 
     Fences.Clear();

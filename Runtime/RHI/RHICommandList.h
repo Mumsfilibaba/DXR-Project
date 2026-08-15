@@ -54,6 +54,17 @@ public:
         return TArrayView<T>(reinterpret_cast<T*>(NewArray), Array.Size());
     }
 
+    template<typename RefType, typename ResourceType>
+    FORCEINLINE TArrayView<RefType> AllocateSharedRefArray(const TArrayView<ResourceType* const>& InResources) noexcept
+    {
+        RefType* Refs = reinterpret_cast<RefType*>(Allocate(InResources.Size() * sizeof(RefType), alignof(RefType)));
+        for (int32 Index = 0; Index < InResources.Size(); ++Index)
+        {
+            new (&Refs[Index]) RefType(MakeSharedRef<ResourceType>(InResources[Index]));
+        }
+        return TArrayView<RefType>(Refs, InResources.Size());
+    }
+
     FORCEINLINE void* AllocateCommand(int32 Size, int32 Alignment) noexcept
     {
         FRHICommand* NewCommand = reinterpret_cast<FRHICommand*>(Allocate(Size, Alignment));
@@ -66,7 +77,7 @@ public:
     FORCEINLINE CHAR_T* AllocateString(const CHAR_T* String) noexcept
     {
         const int32 Length = CString::Strlen(String);
-        CHAR_T* NewString = reinterpret_cast<CHAR_T*>(Allocate(sizeof(CHAR_T) * Length, alignof(CHAR_T)));
+        CHAR_T* NewString = reinterpret_cast<CHAR_T*>(Allocate(sizeof(CHAR_T) * (Length + 1), alignof(CHAR_T)));
         return CString::Strcpy(NewString, String);
     }
 
@@ -261,7 +272,8 @@ public:
 
     FORCEINLINE void SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 RegisterIndex) noexcept
     {
-        TArrayView<FRHIShaderResourceView* const> ShaderResourceViews = AllocateArray(InShaderResourceViews);
+        TArrayView<FRHIShaderResourceViewRef> ShaderResourceViews =
+            AllocateSharedRefArray<FRHIShaderResourceViewRef, FRHIShaderResourceView>(InShaderResourceViews);
         EmplaceCommand<FRHICommandSetShaderResourceViews>(Shader, ShaderResourceViews, RegisterIndex);
     }
 
@@ -272,7 +284,8 @@ public:
 
     FORCEINLINE void SetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 RegisterIndex) noexcept
     {
-        TArrayView<FRHIUnorderedAccessView* const> UnorderedAccessViews = AllocateArray(InUnorderedAccessViews);
+        TArrayView<FRHIUnorderedAccessViewRef> UnorderedAccessViews =
+            AllocateSharedRefArray<FRHIUnorderedAccessViewRef, FRHIUnorderedAccessView>(InUnorderedAccessViews);
         EmplaceCommand<FRHICommandSetUnorderedAccessViews>(Shader, UnorderedAccessViews, RegisterIndex);
     }
 
@@ -283,7 +296,8 @@ public:
 
     FORCEINLINE void SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 RegisterIndex) noexcept
     {
-        TArrayView<FRHIBuffer* const> ConstantBuffers = AllocateArray(InConstantBuffers);
+        TArrayView<FRHIBufferRef> ConstantBuffers =
+            AllocateSharedRefArray<FRHIBufferRef, FRHIBuffer>(InConstantBuffers);
         EmplaceCommand<FRHICommandSetConstantBuffers>(Shader, ConstantBuffers, RegisterIndex);
     }
 
@@ -294,7 +308,8 @@ public:
 
     FORCEINLINE void SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 RegisterIndex) noexcept
     {
-        TArrayView<FRHISamplerState* const> SamplerStates = AllocateArray(InSamplerStates);
+        TArrayView<FRHISamplerStateRef> SamplerStates =
+            AllocateSharedRefArray<FRHISamplerStateRef, FRHISamplerState>(InSamplerStates);
         EmplaceCommand<FRHICommandSetSamplerStates>(Shader, SamplerStates, RegisterIndex);
     }
 

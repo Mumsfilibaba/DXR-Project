@@ -22,7 +22,7 @@ STAT_DECLARE_EXTERN(RENDERER_API, STAT_Render_MeshBatchCount);
 STAT_DECLARE_EXTERN(RENDERER_API, STAT_Render_MeshReferenceCount);
 
 // -------------------------------------------------------------------------------------------
-// Ray Tracing Stats (per-frame, set in FRayTracer::PreRender; zeroed when RT is inactive)
+// Ray Tracing Stats (per-frame, set in FRayTracingSceneBuilder::BuildSceneAccelerationData; zeroed when RT is inactive)
 // -------------------------------------------------------------------------------------------
 
 STAT_DECLARE_EXTERN(RENDERER_API, STAT_RT_Active);

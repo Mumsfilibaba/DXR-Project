@@ -2,8 +2,8 @@
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIShader.h"
 #include "Engine/World/World.h"
-#include "Renderer/RenderPass.h"
-#include "Renderer/FrameResources.h"
+#include "Renderer/Passes/RenderPass.h"
+#include "Renderer/Graph/FrameResources.h"
 
 class FDebugRenderer : public FRenderPass
 {

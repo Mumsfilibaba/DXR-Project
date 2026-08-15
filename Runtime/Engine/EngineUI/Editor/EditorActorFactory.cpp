@@ -132,7 +132,7 @@ FActor* EditorActorFactory::SpawnPrimitive(FWorld* World, EEditorPrimitiveType T
         return nullptr;
     }
 
-    const String ActorName = MakeUniqueActorName(World, GetPrimitiveName(Type));
+    const String ActorName = CreateUniqueActorName(World, GetPrimitiveName(Type));
 
     FActor* NewActor = World->CreateActor();
     if (!NewActor)
@@ -166,7 +166,7 @@ FActor* EditorActorFactory::SpawnLight(FWorld* World, EEditorLightType Type, con
         return nullptr;
     }
 
-    const String ActorName = MakeUniqueActorName(World, GetLightName(Type));
+    const String ActorName = CreateUniqueActorName(World, GetLightName(Type));
 
     FActor* NewActor = nullptr;
     switch (Type)
@@ -221,7 +221,7 @@ FActor* EditorActorFactory::SpawnCamera(FWorld* World, const Vector3& Location)
         return nullptr;
     }
 
-    const String ActorName = MakeUniqueActorName(World, "Camera");
+    const String ActorName = CreateUniqueActorName(World, "Camera");
 
     FCameraActor* NewActor = World->SpawnActor<FCameraActor>(Location, Vector3(0.0f, 0.0f, 0.0f));
     if (NewActor)
@@ -299,7 +299,7 @@ FActor* EditorActorFactory::DrawPlaceActorMenu(FWorld* World, const Vector3& Loc
     return SpawnedActor;
 }
 
-String EditorActorFactory::MakeUniqueActorName(FWorld* World, const CHAR* BaseName)
+String EditorActorFactory::CreateUniqueActorName(FWorld* World, const CHAR* BaseName)
 {
     String Name = BaseName;
     if (!World)

@@ -22,22 +22,12 @@ void FD3D12BackBufferProxyTextureRHI::Resize(uint32 InWidth, uint32 InHeight)
 
 void FD3D12BackBufferProxyTextureRHI::SetProxyRenderTargetView(FD3D12BackBufferProxyRenderTargetViewRHI* InProxyRenderTargetView)
 {
-    if (InProxyRenderTargetView)
-    {
-        InProxyRenderTargetView->AddRef();
-    }
-
-    ProxyRenderTargetView = InProxyRenderTargetView;
+    ProxyRenderTargetView = MakeSharedRef<FD3D12BackBufferProxyRenderTargetViewRHI>(InProxyRenderTargetView);
 }
 
 void FD3D12BackBufferProxyTextureRHI::SetProxyUnorderedAccessView(FD3D12BackBufferProxyUnorderedAccessViewRHI* InProxyUnorderedAccessView)
 {
-    if (InProxyUnorderedAccessView)
-    {
-        InProxyUnorderedAccessView->AddRef();
-    }
-
-    ProxyUnorderedAccessView = InProxyUnorderedAccessView;
+    ProxyUnorderedAccessView = MakeSharedRef<FD3D12BackBufferProxyUnorderedAccessViewRHI>(InProxyUnorderedAccessView);
 }
 
 FD3D12TextureRHI* FD3D12BackBufferProxyTextureRHI::GetTextureInterface() const

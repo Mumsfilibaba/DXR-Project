@@ -729,6 +729,33 @@ public:
     }
 
 private:
+
+    // Declared first so it is destroyed last, after the sub-allocators have released every backing page.
+    struct FActiveAllocationLeakCheck
+    {
+        FVulkanMemoryManager* Owner = nullptr;
+
+        explicit FActiveAllocationLeakCheck(FVulkanMemoryManager* InOwner = nullptr)
+            : Owner(InOwner)
+        {
+        }
+
+        ~FActiveAllocationLeakCheck()
+        {
+            if (!Owner)
+            {
+                return;
+            }
+
+            const int64 NumActive = Owner->GetActiveAllocationCount();
+            if (NumActive > 0)
+            {
+                VULKAN_WARNING("MemoryManager still has %lld active allocation(s), their VkDeviceMemory will leak", NumActive);
+            }
+        }
+    };
+
+    FActiveAllocationLeakCheck LeakCheck;
     FVulkanBufferAllocator     BufferAllocator;
     FVulkanTextureAllocator    TextureAllocator;
     FVulkanUploadHeapAllocator UploadHeapAllocator;

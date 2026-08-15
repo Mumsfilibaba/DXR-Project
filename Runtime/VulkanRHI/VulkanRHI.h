@@ -31,6 +31,9 @@ public:
         Get()->DeferDeletionInternal(Forward<ArgTypes>(Args)...);
     }
 
+    // Queued objects are handed back to the Device sub-systems that own them, so this may only be called while those are still alive.
+    static void FlushDeferredDeletions();
+
     // Convert ERHIResourceState to Vulkan access flags
     static VkAccessFlags2KHR ResourceStateToAccessFlags(ERHIResourceState ResourceState);
     

@@ -212,11 +212,9 @@ FVulkanFenceRHI::FVulkanFenceRHI(FVulkanDevice* InDevice)
     : FRHIFence()
     , FVulkanDeviceChild(InDevice)
     , TimelineSemaphore(VK_NULL_HANDLE)
-    , SubmissionFence(nullptr)
     , NextValue(0)
     , TargetValue(0)
     , bHasPendingSignal(false)
-    , bUsesTimeline(false)
 #if VULKAN_STORE_DEBUG_NAMES
     , DebugName()
 #endif
@@ -225,13 +223,7 @@ FVulkanFenceRHI::FVulkanFenceRHI(FVulkanDevice* InDevice)
 
 FVulkanFenceRHI::~FVulkanFenceRHI()
 {
-    if (SubmissionFence)
-    {
-        SubmissionFence->Release();
-        SubmissionFence = nullptr;
-    }
-
-    if (bUsesTimeline && VULKAN_CHECK_HANDLE(TimelineSemaphore))
+    if (VULKAN_CHECK_HANDLE(TimelineSemaphore))
     {
         vkDestroySemaphore(GetDevice()->GetVkDevice(), TimelineSemaphore, nullptr);
         TimelineSemaphore = VK_NULL_HANDLE;
@@ -246,8 +238,6 @@ bool FVulkanFenceRHI::Initialize()
         VULKAN_ERROR_CRITICAL("Timeline semaphores are required but not supported by this device.");
         return false;
     }
-
-    bUsesTimeline = true;
 
     VkSemaphoreTypeCreateInfo TypeInfo = {};
     TypeInfo.sType         = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
@@ -278,24 +268,18 @@ bool FVulkanFenceRHI::IsSignaled() const
         return false;
     }
 
-    if (bUsesTimeline)
+    uint64 CounterValue = 0;
+    VkResult Result = vkGetSemaphoreCounterValue(GetDevice()->GetVkDevice(), TimelineSemaphore, &CounterValue);
+#if VULKAN_ENABLE_DEVICE_LOST_CHECK
+    if (Result == VK_ERROR_DEVICE_LOST)
     {
-        uint64 CounterValue = 0;
-
-        VkResult Result = vkGetSemaphoreCounterValue(GetDevice()->GetVkDevice(), TimelineSemaphore, &CounterValue);
-    #if VULKAN_ENABLE_DEVICE_LOST_CHECK
-        if (Result == VK_ERROR_DEVICE_LOST)
-        {
-            VULKAN_ERROR_CRITICAL("Device Lost");
-            return false;
-        }
-    #endif
-
-        VULKAN_ERROR_COND(Result == VK_SUCCESS, "vkGetSemaphoreCounterValue failed");
-        return CounterValue >= TargetValue;
+        VULKAN_ERROR_CRITICAL("Device Lost");
+        return false;
     }
+#endif
 
-    return SubmissionFence ? SubmissionFence->IsSignaled() : false;
+    VULKAN_ERROR_COND(Result == VK_SUCCESS, "vkGetSemaphoreCounterValue failed");
+    return CounterValue >= TargetValue;
 }
 
 bool FVulkanFenceRHI::Wait(uint64 TimeoutNs) const
@@ -311,31 +295,26 @@ bool FVulkanFenceRHI::Wait(uint64 TimeoutNs) const
         return true;
     }
 
-    if (bUsesTimeline)
+    VkSemaphoreWaitInfo WaitInfo = {};
+    WaitInfo.sType          = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
+    WaitInfo.pNext          = nullptr;
+    WaitInfo.flags          = 0;
+    WaitInfo.semaphoreCount = 1;
+    WaitInfo.pSemaphores    = &TimelineSemaphore;
+    WaitInfo.pValues        = &TargetValue;
+
+    VkResult Result = vkWaitSemaphores(GetDevice()->GetVkDevice(), &WaitInfo, TimeoutNs);
+    if (Result == VK_TIMEOUT)
     {
-        VkSemaphoreWaitInfo WaitInfo = {};
-        WaitInfo.sType          = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
-        WaitInfo.pNext          = nullptr;
-        WaitInfo.flags          = 0;
-        WaitInfo.semaphoreCount = 1;
-        WaitInfo.pSemaphores    = &TimelineSemaphore;
-        WaitInfo.pValues        = &TargetValue;
-
-        VkResult Result = vkWaitSemaphores(GetDevice()->GetVkDevice(), &WaitInfo, TimeoutNs);
-        if (Result == VK_TIMEOUT)
-        {
-            return false;
-        }
-        if (VULKAN_FAILED(Result))
-        {
-            VULKAN_ERROR_CRITICAL("vkWaitSemaphores failed");
-            return false;
-        }
-
-        return true;
+        return false;
+    }
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR_CRITICAL("vkWaitSemaphores failed");
+        return false;
     }
 
-    return SubmissionFence ? SubmissionFence->Wait(TimeoutNs) : false;
+    return true;
 }
 
 void* FVulkanFenceRHI::GetRHINativeFence() const
@@ -349,7 +328,7 @@ void FVulkanFenceRHI::SetDebugName(const String& InName)
     DebugName = InName;
 #endif
 
-    if (bUsesTimeline && VULKAN_CHECK_HANDLE(TimelineSemaphore))
+    if (VULKAN_CHECK_HANDLE(TimelineSemaphore))
     {
         VulkanSetObjectName(GetDevice()->GetVkDevice(), *InName, TimelineSemaphore, VK_OBJECT_TYPE_SEMAPHORE);
     }
@@ -366,29 +345,7 @@ void FVulkanFenceRHI::GetDebugName(String& OutDebugName) const
 
 void FVulkanFenceRHI::EnqueueSignal(FVulkanCommands& InCommands)
 {
-    if (bUsesTimeline)
-    {
-        TargetValue = ++NextValue;
-        bHasPendingSignal.Store(true);
-        InCommands.AddSignalTimelineSemaphore(TimelineSemaphore, TargetValue);
-    }
-}
-
-void FVulkanFenceRHI::SetSubmissionFence(FVulkanFence* InFence)
-{
-    CHECK(!bUsesTimeline);
-
-    if (SubmissionFence)
-    {
-        SubmissionFence->Release();
-        SubmissionFence = nullptr;
-    }
-
-    SubmissionFence = InFence;
-    if (SubmissionFence)
-    {
-        SubmissionFence->AddRef();
-    }
-    
-    bHasPendingSignal.Store(SubmissionFence != nullptr);
+    TargetValue = ++NextValue;
+    bHasPendingSignal.Store(true);
+    InCommands.AddSignalTimelineSemaphore(TimelineSemaphore, TargetValue);
 }

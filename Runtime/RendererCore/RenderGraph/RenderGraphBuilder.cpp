@@ -1,6 +1,303 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "RendererCore/RenderGraph/RenderGraphBuilder.h"
 #include "RendererCore/RenderGraph/RenderGraphResourcePool.h"
+#include "RendererCore/RenderGraph/RenderGraphViewCache.h"
+#include "RendererCore/RenderGraph/RenderGraphViewValidation.h"
+
+struct FRenderGraphSubresourceSpan
+{
+    uint32 FirstMipLevel   = 0;
+    uint32 NumMipLevels    = 1;
+    uint32 FirstArraySlice = 0;
+    uint32 NumArraySlices  = 1;
+};
+
+static bool IsAccessPlannedThroughViews(ERHIResourceState CoveredReadStates, bool bFoundMatchingWrite, ERHIResourceState State, bool bIsWrite)
+{
+    if (bIsWrite)
+    {
+        return bFoundMatchingWrite;
+    }
+
+    return (CoveredReadStates & State) == State;
+}
+
+static uint32 GetTrackedMipCount(const FRHITextureDesc& TextureDesc)
+{
+    return Math::Max<uint32>(TextureDesc.NumMipLevels, 1u);
+}
+
+static uint32 GetTrackedSliceCount(const FRHITextureDesc& TextureDesc)
+{
+    return Math::Max<uint32>(RHIDimensionArrayLayers(TextureDesc.Dimension, TextureDesc.NumArraySlices), 1u);
+}
+
+static FRenderGraphSubresourceSpan ResolveSubresourceSpan(const FRHITextureSubresourceRange& Range, uint32 NumMipLevels, uint32 NumArraySlices)
+{
+    FRenderGraphSubresourceSpan Span;
+    Span.FirstMipLevel   = Math::Min(Range.FirstMipLevel, NumMipLevels - 1);
+    Span.FirstArraySlice = Math::Min(Range.FirstArraySlice, NumArraySlices - 1);
+
+    Span.NumMipLevels = Range.NumMipLevels == RHI_ALL_MIP_LEVELS ? 
+        NumMipLevels - Span.FirstMipLevel : 
+        Math::Min(Range.NumMipLevels, NumMipLevels - Span.FirstMipLevel);
+
+    Span.NumArraySlices = Range.NumArraySlices == RHI_ALL_ARRAY_SLICES ? 
+        NumArraySlices - Span.FirstArraySlice : 
+        Math::Min(Range.NumArraySlices, NumArraySlices - Span.FirstArraySlice);
+
+    Span.NumMipLevels   = Math::Max<uint32>(Span.NumMipLevels, 1u);
+    Span.NumArraySlices = Math::Max<uint32>(Span.NumArraySlices, 1u);
+    return Span;
+}
+
+static FRHITextureSubresourceRange CreateSliceRunRange(uint32 MipLevel, uint32 FirstArraySlice, uint32 NumArraySlices)
+{
+    return FRHITextureSubresourceRange{ MipLevel, 1, FirstArraySlice, NumArraySlices, 0, RHI_ALL_PLANE_SLICES };
+}
+
+static FRenderGraphSubresourceState& GetSubresourceState(FRenderGraphResourceState& State, uint32 MipLevel, uint32 ArraySlice)
+{
+    return State.SubresourceStates[int32((MipLevel * State.NumTrackedArraySlices) + ArraySlice)];
+}
+
+static void BeginSubresourceTracking(FRenderGraphResourceState& State, uint32 NumMipLevels, uint32 NumArraySlices)
+{
+    if (State.bSubresourcesDiverged)
+    {
+        return;
+    }
+
+    FRenderGraphSubresourceState Initial;
+    Initial.State                     = State.CurrentState;
+    Initial.bWrittenAsUnorderedAccess = State.bWrittenAsUnorderedAccess;
+
+    State.NumTrackedMipLevels   = NumMipLevels;
+    State.NumTrackedArraySlices = NumArraySlices;
+
+    State.SubresourceStates.Resize(int32(NumMipLevels * NumArraySlices));
+    State.SubresourceStates.Fill(Initial);
+
+    State.bSubresourcesDiverged = true;
+}
+
+static void SetUniformTextureState(FRenderGraphResourceState& State, ERHIResourceState NewState, bool bWrittenAsUnorderedAccess)
+{
+    State.CurrentState              = NewState;
+    State.bWrittenAsUnorderedAccess = bWrittenAsUnorderedAccess;
+    State.bSubresourcesDiverged     = false;
+    State.NumTrackedMipLevels       = 0;
+    State.NumTrackedArraySlices     = 0;
+
+    State.SubresourceStates.Clear();
+}
+
+static bool TryGetUniformSubresourceState(const FRenderGraphResourceState& State, ERHIResourceState& OutState, bool& OutWrittenAsUnorderedAccess)
+{
+    if (State.SubresourceStates.IsEmpty())
+    {
+        return false;
+    }
+
+    const FRenderGraphSubresourceState& FirstSubresource = State.SubresourceStates.First();
+    for (const FRenderGraphSubresourceState& Subresource : State.SubresourceStates)
+    {
+        if (Subresource.State != FirstSubresource.State || Subresource.bWrittenAsUnorderedAccess != FirstSubresource.bWrittenAsUnorderedAccess)
+        {
+            return false;
+        }
+    }
+
+    OutState                    = FirstSubresource.State;
+    OutWrittenAsUnorderedAccess = FirstSubresource.bWrittenAsUnorderedAccess;
+    return true;
+}
+
+static FRHITransitionBarrierDesc CreateTextureTransition(FRHITexture* RHITexture, ERHIResourceState BeforeState, ERHIResourceState AccessState, const FRHITextureSubresourceRange& Range)
+{
+    const bool bIsTracked = RHITexture->GetDesc().TrackingMode == ERHIResourceStateTrackingMode::Tracked;
+    return FRHITransitionBarrierDesc::CreateTextureSubresource(RHITexture, bIsTracked ? AccessState : BeforeState, AccessState, Range);
+}
+
+static void TransitionSubresourceSpan(FRHITexture* RHITexture, FRenderGraphResourceState& State, const FRenderGraphSubresourceSpan& Span, ERHIResourceState AccessState, 
+    bool bIsWrite, bool bMustPlanBarrier, TArray<FRHITransitionBarrierDesc>& OutTransitions, TArray<FRHIUnorderedAccessBarrierDesc>& OutUnorderedAccessBarriers, FRenderGraphStatistics& Statistics)
+{
+    const uint32 LastArraySlice = Span.FirstArraySlice + Span.NumArraySlices;
+    for (uint32 MipOffset = 0; MipOffset < Span.NumMipLevels; ++MipOffset)
+    {
+        const uint32 MipLevel = Span.FirstMipLevel + MipOffset;
+
+        uint32 RunStart = Span.FirstArraySlice;
+        while (RunStart < LastArraySlice)
+        {
+            const FRenderGraphSubresourceState& RunStartState            = GetSubresourceState(State, MipLevel, RunStart);
+            const ERHIResourceState             BeforeState              = RunStartState.State;
+            const bool                          bBeforeWasUnorderedWrite = RunStartState.bWrittenAsUnorderedAccess;
+
+            uint32 RunEnd = RunStart + 1;
+            while (RunEnd < LastArraySlice)
+            {
+                const FRenderGraphSubresourceState& Next = GetSubresourceState(State, MipLevel, RunEnd);
+                if (Next.State != BeforeState || Next.bWrittenAsUnorderedAccess != bBeforeWasUnorderedWrite)
+                {
+                    break;
+                }
+
+                ++RunEnd;
+            }
+
+            const FRHITextureSubresourceRange RunRange = CreateSliceRunRange(MipLevel, RunStart, RunEnd - RunStart);
+            if (BeforeState == AccessState && !bMustPlanBarrier)
+            {
+                if (AccessState == ERHIResourceState::UnorderedAccess && bBeforeWasUnorderedWrite)
+                {
+                    OutUnorderedAccessBarriers.Emplace(FRHIUnorderedAccessBarrierDesc::CreateTextureSubresource(RHITexture, RunRange));
+                    ++Statistics.NumUnorderedAccessBarriers;
+                    ++Statistics.NumSubresourceBarriers;
+                }
+            }
+            else
+            {
+                OutTransitions.Emplace(CreateTextureTransition(RHITexture, BeforeState, AccessState, RunRange));
+                ++Statistics.NumTransitionBarriers;
+                ++Statistics.NumSubresourceBarriers;
+            }
+
+            for (uint32 ArraySlice = RunStart; ArraySlice < RunEnd; ++ArraySlice)
+            {
+                FRenderGraphSubresourceState& Subresource = GetSubresourceState(State, MipLevel, ArraySlice);
+                Subresource.State                         = AccessState;
+                Subresource.bWrittenAsUnorderedAccess     = bIsWrite && (AccessState == ERHIResourceState::UnorderedAccess);
+            }
+
+            RunStart = RunEnd;
+        }
+    }
+}
+
+static void TransitionTexture(FRHITexture* RHITexture, FRenderGraphResourceState& State, const FRHITextureSubresourceRange& Range, ERHIResourceState AccessState,
+    bool bIsWrite, TArray<FRHITransitionBarrierDesc>& OutTransitions, TArray<FRHIUnorderedAccessBarrierDesc>& OutUnorderedAccessBarriers, FRenderGraphStatistics& Statistics)
+{
+    if (!RHITexture)
+    {
+        return;
+    }
+
+    const FRHITextureDesc& TextureDesc = RHITexture->GetDesc();
+    if (TextureDesc.TrackingMode == ERHIResourceStateTrackingMode::Static)
+    {
+        return;
+    }
+
+    const uint32 NumMipLevels   = GetTrackedMipCount(TextureDesc);
+    const uint32 NumArraySlices = GetTrackedSliceCount(TextureDesc);
+
+    const bool bWrittenAsUnorderedAccess = bIsWrite && (AccessState == ERHIResourceState::UnorderedAccess);
+    if (Range.IsAllSubresources())
+    {
+        const bool bMustPlanBarrier     = State.bInitialStateIsUnverified;
+        State.bInitialStateIsUnverified = false;
+
+        ERHIResourceState BeforeState              = State.CurrentState;
+        bool              bBeforeWasUnorderedWrite = State.bWrittenAsUnorderedAccess;
+
+        if (State.bSubresourcesDiverged && !TryGetUniformSubresourceState(State, BeforeState, bBeforeWasUnorderedWrite))
+        {
+            const FRenderGraphSubresourceSpan WholeSpan{ 0, NumMipLevels, 0, NumArraySlices };
+
+            TransitionSubresourceSpan(RHITexture, State, WholeSpan, AccessState, bIsWrite, bMustPlanBarrier, OutTransitions, OutUnorderedAccessBarriers, Statistics);
+            SetUniformTextureState(State, AccessState, bWrittenAsUnorderedAccess);
+            return;
+        }
+
+        if (BeforeState == AccessState && !bMustPlanBarrier)
+        {
+            if (AccessState == ERHIResourceState::UnorderedAccess && bBeforeWasUnorderedWrite)
+            {
+                OutUnorderedAccessBarriers.Emplace(FRHIUnorderedAccessBarrierDesc::CreateTexture(RHITexture));
+                ++Statistics.NumUnorderedAccessBarriers;
+            }
+        }
+        else
+        {
+            OutTransitions.Emplace(CreateTextureTransition(RHITexture, BeforeState, AccessState, FRHITextureSubresourceRange::All()));
+            ++Statistics.NumTransitionBarriers;
+        }
+
+        SetUniformTextureState(State, AccessState, bWrittenAsUnorderedAccess);
+        return;
+    }
+
+    BeginSubresourceTracking(State, NumMipLevels, NumArraySlices);
+
+    const FRenderGraphSubresourceSpan Span = ResolveSubresourceSpan(Range, NumMipLevels, NumArraySlices);
+    TransitionSubresourceSpan(RHITexture, State, Span, AccessState, bIsWrite, State.bInitialStateIsUnverified, OutTransitions, OutUnorderedAccessBarriers, Statistics);
+
+    ERHIResourceState UniformState              = AccessState;
+    bool              bUniformWasUnorderedWrite = bWrittenAsUnorderedAccess;
+
+    if (TryGetUniformSubresourceState(State, UniformState, bUniformWasUnorderedWrite))
+    {
+        SetUniformTextureState(State, UniformState, bUniformWasUnorderedWrite);
+    }
+}
+
+static FRHIRenderTargetView* ResolveRenderTargetAttachmentView(const FRenderGraphAttachment& Attachment, FRenderGraphViewCache& ViewCache)
+{
+    if (Attachment.RenderTargetView)
+    {
+        if (FRHIRenderTargetView* RenderTargetView = ViewCache.GetOrCreate(Attachment.RenderTargetView))
+        {
+            return RenderTargetView;
+        }
+    }
+
+    if (Attachment.Texture)
+    {
+        if (FRHITexture* Texture = Attachment.Texture->GetRHITexture())
+        {
+            return Texture->GetRenderTargetView();
+        }
+    }
+
+    return nullptr;
+}
+
+static FRHIDepthStencilView* ResolveDepthStencilAttachmentView(const FRenderGraphDepthAttachment& DepthStencil, FRenderGraphViewCache& ViewCache)
+{
+    if (DepthStencil.DepthStencilView)
+    {
+        if (FRHIDepthStencilView* DepthStencilView = ViewCache.GetOrCreate(DepthStencil.DepthStencilView))
+        {
+            return DepthStencilView;
+        }
+    }
+
+    if (DepthStencil.Texture)
+    {
+        if (FRHITexture* Texture = DepthStencil.Texture->GetRHITexture())
+        {
+            return Texture->GetDepthStencilView();
+        }
+    }
+
+    return nullptr;
+}
+
+static bool HasValidRenderPassAttachments(const FRHIBeginRenderPassDesc& RenderPassDesc)
+{
+    for (uint32 Index = 0; Index < RenderPassDesc.NumRenderTargets; ++Index)
+    {
+        FRHIRenderTargetView* RenderTargetView = RenderPassDesc.RenderTargets[Index].View.Get();
+        if (RenderTargetView && RenderTargetView->GetResource())
+        {
+            return true;
+        }
+    }
+
+    FRHIDepthStencilView* DepthStencilView = RenderPassDesc.DepthStencilAttachment.View.Get();
+    return DepthStencilView && DepthStencilView->GetResource();
+}
 
 FRenderGraphBuilder::FRenderGraphBuilder(const CHAR* InName)
     : Name(InName ? InName : "RenderGraph")
@@ -8,9 +305,20 @@ FRenderGraphBuilder::FRenderGraphBuilder(const CHAR* InName)
     , Passes()
     , Textures()
     , Buffers()
+    , ShaderResourceViews()
+    , UnorderedAccessViews()
+    , RenderTargetViews()
+    , DepthStencilViews()
+    , DefaultShaderResourceViews()
+    , DefaultUnorderedAccessViews()
+    , DefaultRenderTargetViews()
+    , DefaultDepthStencilViews()
+    , DefaultBufferShaderResourceViews()
+    , DefaultBufferUnorderedAccessViews()
     , Statistics()
     , bIsCompiled(false)
     , bIsExecuted(false)
+    , bHasErrors(false)
 {
 }
 
@@ -18,9 +326,9 @@ FRenderGraphBuilder::~FRenderGraphBuilder()
 {
     for (FRenderGraphPass* Pass : Passes)
     {
-        if (Pass->Executor)
+        if (FRenderGraphPassExecutor* Executor = Pass->GetExecutor())
         {
-            Pass->Executor->~FRenderGraphPassExecutor();
+            Executor->~FRenderGraphPassExecutor();
         }
 
         Pass->~FRenderGraphPass();
@@ -45,6 +353,44 @@ FRenderGraphBuilder::~FRenderGraphBuilder()
     Textures.Clear();
     Buffers.Clear();
     Memory.Reset();
+}
+
+template<typename ViewType, typename DescType>
+ViewType* FRenderGraphBuilder::AllocateTextureView(FRenderGraphTexture* Texture, const DescType& Desc, const CHAR* InName)
+{
+    void*     ViewMemory = Memory.Allocate(sizeof(ViewType), alignof(ViewType));
+    ViewType* View       = new(ViewMemory) ViewType();
+
+    View->Parent = Texture;
+    View->Desc   = Desc;
+    View->Name   = InName ? InName : "RenderGraphView";
+    return View;
+}
+
+template<typename ViewType, typename DescType>
+ViewType* FRenderGraphBuilder::AllocateShaderAccessTextureView(FRenderGraphTexture* Texture, const DescType& Desc, const CHAR* InName)
+{
+    void*     ViewMemory = Memory.Allocate(sizeof(ViewType), alignof(ViewType));
+    ViewType* View       = new(ViewMemory) ViewType();
+
+    View->Parent.Texture = Texture;
+    View->ParentKind     = ERenderGraphParentKind::Texture;
+    View->Desc           = Desc;
+    View->Name           = InName ? InName : "RenderGraphView";
+    return View;
+}
+
+template<typename ViewType, typename DescType>
+ViewType* FRenderGraphBuilder::AllocateBufferView(FRenderGraphBuffer* Buffer, const DescType& Desc, const CHAR* InName)
+{
+    void*     ViewMemory = Memory.Allocate(sizeof(ViewType), alignof(ViewType));
+    ViewType* View       = new(ViewMemory) ViewType();
+
+    View->Parent.Buffer = Buffer;
+    View->ParentKind    = ERenderGraphParentKind::Buffer;
+    View->Desc          = Desc;
+    View->Name          = InName ? InName : "RenderGraphView";
+    return View;
 }
 
 FRenderGraphTexture* FRenderGraphBuilder::CreateTexture(const FRenderGraphTextureDesc& Desc, const CHAR* InName)
@@ -76,8 +422,9 @@ FRenderGraphTexture* FRenderGraphBuilder::RegisterExternalTexture(FRHITexture* T
     void* TextureMemory = Memory.Allocate(sizeof(FRenderGraphTexture), alignof(FRenderGraphTexture));
 
     FRenderGraphTexture* GraphTexture = new(TextureMemory) FRenderGraphTexture(FRenderGraphTextureDesc(Texture->GetDesc()), InName, Texture);
-    GraphTexture->State.CurrentState  = InitialState;
-    GraphTexture->State.FinalState    = FinalState;
+    GraphTexture->State.CurrentState              = InitialState;
+    GraphTexture->State.FinalState                = FinalState;
+    GraphTexture->State.bInitialStateIsUnverified = Texture->GetDesc().TrackingMode == ERHIResourceStateTrackingMode::Tracked;
 
     Textures.Emplace(GraphTexture);
     return GraphTexture;
@@ -101,7 +448,216 @@ FRenderGraphBuffer* FRenderGraphBuilder::RegisterExternalBuffer(FRHIBuffer* Buff
     return GraphBuffer;
 }
 
-FRenderGraphPass* FRenderGraphBuilder::AllocatePass(const CHAR* InName, ERenderGraphPassFlags InFlags)
+FRenderGraphShaderResourceView* FRenderGraphBuilder::CreateSRV(FRenderGraphTexture* Texture, const FRHIShaderResourceViewDesc& Desc, const CHAR* InName)
+{
+    if (!Texture)
+    {
+        LOG_ERROR("Graph '%s' cannot create an SRV on a null texture", Name);
+        SetHasErrors(true);
+        return nullptr;
+    }
+
+    FRenderGraphShaderResourceView* View = AllocateShaderAccessTextureView<FRenderGraphShaderResourceView>(Texture, Desc, InName);
+    ShaderResourceViews.Emplace(View);
+
+    RenderGraphViewValidation::ValidateShaderResourceView(*this, View);
+    return View;
+}
+
+FRenderGraphUnorderedAccessView* FRenderGraphBuilder::CreateUAV(FRenderGraphTexture* Texture, const FRHIUnorderedAccessViewDesc& Desc, const CHAR* InName)
+{
+    if (!Texture)
+    {
+        LOG_ERROR("Graph '%s' cannot create a UAV on a null texture", Name);
+        SetHasErrors(true);
+        return nullptr;
+    }
+
+    FRenderGraphUnorderedAccessView* View = AllocateShaderAccessTextureView<FRenderGraphUnorderedAccessView>(Texture, Desc, InName);
+    UnorderedAccessViews.Emplace(View);
+
+    RenderGraphViewValidation::ValidateUnorderedAccessView(*this, View);
+    return View;
+}
+
+FRenderGraphRenderTargetView* FRenderGraphBuilder::CreateRTV(FRenderGraphTexture* Texture, const FRHIRenderTargetViewDesc& Desc, const CHAR* InName)
+{
+    if (!Texture)
+    {
+        LOG_ERROR("Graph '%s' cannot create an RTV on a null texture", Name);
+        SetHasErrors(true);
+        return nullptr;
+    }
+
+    FRenderGraphRenderTargetView* View = AllocateTextureView<FRenderGraphRenderTargetView>(Texture, Desc, InName);
+    RenderTargetViews.Emplace(View);
+
+    RenderGraphViewValidation::ValidateRenderTargetView(*this, View);
+    return View;
+}
+
+FRenderGraphDepthStencilView* FRenderGraphBuilder::CreateDSV(FRenderGraphTexture* Texture, const FRHIDepthStencilViewDesc& Desc, const CHAR* InName)
+{
+    if (!Texture)
+    {
+        LOG_ERROR("Graph '%s' cannot create a DSV on a null texture", Name);
+        SetHasErrors(true);
+        return nullptr;
+    }
+
+    FRenderGraphDepthStencilView* View = AllocateTextureView<FRenderGraphDepthStencilView>(Texture, Desc, InName);
+    DepthStencilViews.Emplace(View);
+
+    RenderGraphViewValidation::ValidateDepthStencilView(*this, View);
+    return View;
+}
+
+FRenderGraphShaderResourceView* FRenderGraphBuilder::CreateSRV(FRenderGraphBuffer* Buffer, const FRHIShaderResourceViewDesc& Desc, const CHAR* InName)
+{
+    if (!Buffer)
+    {
+        LOG_ERROR("Graph '%s' cannot create an SRV on a null buffer", Name);
+        SetHasErrors(true);
+        return nullptr;
+    }
+
+    FRenderGraphShaderResourceView* View = AllocateBufferView<FRenderGraphShaderResourceView>(Buffer, Desc, InName);
+    ShaderResourceViews.Emplace(View);
+
+    RenderGraphViewValidation::ValidateShaderResourceView(*this, View);
+    return View;
+}
+
+FRenderGraphUnorderedAccessView* FRenderGraphBuilder::CreateUAV(FRenderGraphBuffer* Buffer, const FRHIUnorderedAccessViewDesc& Desc, const CHAR* InName)
+{
+    if (!Buffer)
+    {
+        LOG_ERROR("Graph '%s' cannot create a UAV on a null buffer", Name);
+        SetHasErrors(true);
+        return nullptr;
+    }
+
+    FRenderGraphUnorderedAccessView* View = AllocateBufferView<FRenderGraphUnorderedAccessView>(Buffer, Desc, InName);
+    UnorderedAccessViews.Emplace(View);
+
+    RenderGraphViewValidation::ValidateUnorderedAccessView(*this, View);
+    return View;
+}
+
+FRenderGraphShaderResourceView* FRenderGraphBuilder::CreateSRV(FRenderGraphTexture* Texture, const CHAR* InName)
+{
+    return CreateSRV(Texture, RenderGraphDefaultViewDescs::ShaderResourceForTexture(Texture->GetDesc().TextureDesc), InName);
+}
+
+FRenderGraphUnorderedAccessView* FRenderGraphBuilder::CreateUAV(FRenderGraphTexture* Texture, const CHAR* InName)
+{
+    return CreateUAV(Texture, RenderGraphDefaultViewDescs::UnorderedAccessForTexture(Texture->GetDesc().TextureDesc), InName);
+}
+
+FRenderGraphRenderTargetView* FRenderGraphBuilder::CreateRTV(FRenderGraphTexture* Texture, const CHAR* InName)
+{
+    return CreateRTV(Texture, RenderGraphDefaultViewDescs::RenderTargetForTexture(Texture->GetDesc().TextureDesc), InName);
+}
+
+FRenderGraphDepthStencilView* FRenderGraphBuilder::CreateDSV(FRenderGraphTexture* Texture, const CHAR* InName)
+{
+    return CreateDSV(Texture, RenderGraphDefaultViewDescs::DepthStencilForTexture(Texture->GetDesc().TextureDesc), InName);
+}
+
+FRenderGraphShaderResourceView* FRenderGraphBuilder::GetOrCreateDefaultSRV(FRenderGraphTexture* Texture)
+{
+    for (FRenderGraphShaderResourceView* View : DefaultShaderResourceViews)
+    {
+        if (View->GetParentTexture() == Texture)
+        {
+            return View;
+        }
+    }
+
+    FRenderGraphShaderResourceView* View = CreateSRV(Texture, "DefaultSRV");
+    DefaultShaderResourceViews.Emplace(View);
+    return View;
+}
+
+FRenderGraphUnorderedAccessView* FRenderGraphBuilder::GetOrCreateDefaultUAV(FRenderGraphTexture* Texture)
+{
+    for (FRenderGraphUnorderedAccessView* View : DefaultUnorderedAccessViews)
+    {
+        if (View->GetParentTexture() == Texture)
+        {
+            return View;
+        }
+    }
+
+    FRenderGraphUnorderedAccessView* View = CreateUAV(Texture, "DefaultUAV");
+    DefaultUnorderedAccessViews.Emplace(View);
+    return View;
+}
+
+FRenderGraphRenderTargetView* FRenderGraphBuilder::GetOrCreateDefaultRTV(FRenderGraphTexture* Texture)
+{
+    for (FRenderGraphRenderTargetView* View : DefaultRenderTargetViews)
+    {
+        if (View->GetParent() == Texture)
+        {
+            return View;
+        }
+    }
+
+    FRenderGraphRenderTargetView* View = CreateRTV(Texture, "DefaultRTV");
+    DefaultRenderTargetViews.Emplace(View);
+    return View;
+}
+
+FRenderGraphDepthStencilView* FRenderGraphBuilder::GetOrCreateDefaultDSV(FRenderGraphTexture* Texture, EDepthStencilViewFlags Flags)
+{
+    for (FRenderGraphDepthStencilView* View : DefaultDepthStencilViews)
+    {
+        if (View->GetParent() == Texture && View->GetDesc().Flags == Flags)
+        {
+            return View;
+        }
+    }
+
+    FRHIDepthStencilViewDesc Desc = RenderGraphDefaultViewDescs::DepthStencilForTexture(Texture->GetDesc().TextureDesc);
+    Desc.Flags = Flags;
+
+    FRenderGraphDepthStencilView* View = CreateDSV(Texture, Desc, Flags == EDepthStencilViewFlags::None ? "DefaultDSV" : "ReadOnlyDSV");
+    DefaultDepthStencilViews.Emplace(View);
+    return View;
+}
+
+FRenderGraphShaderResourceView* FRenderGraphBuilder::GetOrCreateDefaultSRV(FRenderGraphBuffer* Buffer)
+{
+    for (FRenderGraphShaderResourceView* View : DefaultBufferShaderResourceViews)
+    {
+        if (View->GetParentBuffer() == Buffer)
+        {
+            return View;
+        }
+    }
+
+    FRenderGraphShaderResourceView* View = CreateSRV(Buffer, RenderGraphDefaultViewDescs::ShaderResourceForBuffer(Buffer->GetDesc().BufferDesc), "DefaultBufferSRV");
+    DefaultBufferShaderResourceViews.Emplace(View);
+    return View;
+}
+
+FRenderGraphUnorderedAccessView* FRenderGraphBuilder::GetOrCreateDefaultUAV(FRenderGraphBuffer* Buffer)
+{
+    for (FRenderGraphUnorderedAccessView* View : DefaultBufferUnorderedAccessViews)
+    {
+        if (View->GetParentBuffer() == Buffer)
+        {
+            return View;
+        }
+    }
+
+    FRenderGraphUnorderedAccessView* View = CreateUAV(Buffer, RenderGraphDefaultViewDescs::UnorderedAccessForBuffer(Buffer->GetDesc().BufferDesc), "DefaultBufferUAV");
+    DefaultBufferUnorderedAccessViews.Emplace(View);
+    return View;
+}
+
+FRenderGraphPass* FRenderGraphBuilder::AllocatePass(const CHAR* InName, ERenderGraphPassFlags InFlags, bool bEnabled)
 {
     if (bIsCompiled)
     {
@@ -109,16 +665,109 @@ FRenderGraphPass* FRenderGraphBuilder::AllocatePass(const CHAR* InName, ERenderG
         return nullptr;
     }
 
+    if (!bEnabled)
+    {
+        ++Statistics.NumDisabledPasses;
+    }
+
     void* PassMemory = Memory.Allocate(sizeof(FRenderGraphPass), alignof(FRenderGraphPass));
 
-    FRenderGraphPass* Pass = new(PassMemory) FRenderGraphPass(InName, InFlags);
+    FRenderGraphPass* Pass = new(PassMemory) FRenderGraphPass(InName, InFlags, bEnabled);
     Passes.Emplace(Pass);
     return Pass;
 }
 
+bool FRenderGraphBuilder::IsAccessPlannedThroughView(const FRenderGraphPass& Pass, FRenderGraphTexture* Texture, ERHIResourceState State, bool bIsWrite)
+{
+    ERHIResourceState CoveredReadStates   = ERHIResourceState::Common;
+    bool              bFoundMatchingWrite = false;
+
+    for (const FRenderGraphViewAccess& Access : Pass.GetViewAccesses())
+    {
+        if (!Access.bIsTextureParent || Access.ParentTexture != Texture)
+        {
+            continue;
+        }
+
+        if (Access.bIsWrite)
+        {
+            bFoundMatchingWrite |= (Access.State == State);
+        }
+        else
+        {
+            CoveredReadStates |= Access.State;
+        }
+    }
+
+    return IsAccessPlannedThroughViews(CoveredReadStates, bFoundMatchingWrite, State, bIsWrite);
+}
+
+bool FRenderGraphBuilder::IsAccessPlannedThroughView(const FRenderGraphPass& Pass, FRenderGraphBuffer* Buffer, ERHIResourceState State, bool bIsWrite)
+{
+    ERHIResourceState CoveredReadStates   = ERHIResourceState::Common;
+    bool              bFoundMatchingWrite = false;
+
+    for (const FRenderGraphViewAccess& Access : Pass.GetViewAccesses())
+    {
+        if (Access.bIsTextureParent || Access.ParentBuffer != Buffer)
+        {
+            continue;
+        }
+
+        if (Access.bIsWrite)
+        {
+            bFoundMatchingWrite |= (Access.State == State);
+        }
+        else
+        {
+            CoveredReadStates |= Access.State;
+        }
+    }
+
+    return IsAccessPlannedThroughViews(CoveredReadStates, bFoundMatchingWrite, State, bIsWrite);
+}
+
+void FRenderGraphBuilder::PlanTextureViewBarrier(FRenderGraphPass* Pass, FRHITexture* RHITexture, FRenderGraphResourceState& State, const FRHITextureSubresourceRange& Range, ERHIResourceState AccessState, bool bIsWrite)
+{
+    TransitionTexture(RHITexture, State, Range, AccessState, bIsWrite, Pass->GetTransitions(), Pass->GetUnorderedAccessBarriers(), Statistics);
+}
+
+void FRenderGraphBuilder::PlanBufferViewBarrier(FRenderGraphPass* Pass, FRHIBuffer* RHIBuffer, FRenderGraphResourceState& State, const FBufferRegion& Range, ERHIResourceState AccessState, bool bIsWrite)
+{
+    if (!RHIBuffer)
+    {
+        return;
+    }
+
+    if (RHIBuffer->GetDesc().TrackingMode == ERHIResourceStateTrackingMode::Static)
+    {
+        return;
+    }
+
+    const bool bIsSubrange = !Range.IsWholeResource();
+    if (State.CurrentState == AccessState)
+    {
+        if (AccessState == ERHIResourceState::UnorderedAccess && State.bWrittenAsUnorderedAccess)
+        {
+            Pass->AddUnorderedAccessBarrier(FRHIUnorderedAccessBarrierDesc::CreateBufferRange(RHIBuffer, Range));
+            ++Statistics.NumUnorderedAccessBarriers;
+            Statistics.NumSubresourceBarriers += bIsSubrange ? 1 : 0;
+        }
+    }
+    else
+    {
+        Pass->AddTransition(FRHITransitionBarrierDesc::CreateBufferRange(RHIBuffer, State.CurrentState, AccessState, Range));
+        ++Statistics.NumTransitionBarriers;
+        Statistics.NumSubresourceBarriers += bIsSubrange ? 1 : 0;
+        State.CurrentState = AccessState;
+    }
+
+    State.bWrittenAsUnorderedAccess = bIsWrite && (AccessState == ERHIResourceState::UnorderedAccess);
+}
+
 bool FRenderGraphBuilder::HasLiveOutput(const FRenderGraphPass& Pass) const
 {
-    for (const FRenderGraphTextureAccess& Access : Pass.TextureAccesses)
+    for (const FRenderGraphTextureAccess& Access : Pass.GetTextureAccesses())
     {
         if (Access.bIsWrite && Access.Resource->State.NumReaders > 0)
         {
@@ -126,7 +775,7 @@ bool FRenderGraphBuilder::HasLiveOutput(const FRenderGraphPass& Pass) const
         }
     }
 
-    for (const FRenderGraphBufferAccess& Access : Pass.BufferAccesses)
+    for (const FRenderGraphBufferAccess& Access : Pass.GetBufferAccesses())
     {
         if (Access.bIsWrite && Access.Resource->State.NumReaders > 0)
         {
@@ -151,7 +800,12 @@ void FRenderGraphBuilder::CullPasses()
 
     for (FRenderGraphPass* Pass : Passes)
     {
-        for (const FRenderGraphTextureAccess& Access : Pass->TextureAccesses)
+        if (!Pass->IsEnabled() || Pass->IsCulled())
+        {
+            continue;
+        }
+
+        for (const FRenderGraphTextureAccess& Access : Pass->GetTextureAccesses())
         {
             if (!Access.bIsWrite)
             {
@@ -159,7 +813,7 @@ void FRenderGraphBuilder::CullPasses()
             }
         }
 
-        for (const FRenderGraphBufferAccess& Access : Pass->BufferAccesses)
+        for (const FRenderGraphBufferAccess& Access : Pass->GetBufferAccesses())
         {
             if (!Access.bIsWrite)
             {
@@ -175,7 +829,7 @@ void FRenderGraphBuilder::CullPasses()
 
         for (FRenderGraphPass* Pass : Passes)
         {
-            if (Pass->bIsCulled || IsEnumFlagSet(Pass->Flags, ERenderGraphPassFlags::NeverCull))
+            if (Pass->IsCulled() || !Pass->IsEnabled() || IsEnumFlagSet(Pass->GetFlags(), ERenderGraphPassFlags::NeverCull))
             {
                 continue;
             }
@@ -185,11 +839,11 @@ void FRenderGraphBuilder::CullPasses()
                 continue;
             }
 
-            Pass->bIsCulled = true;
-            bCulledAnyPass  = true;
+            Pass->SetCulled(true);
+            bCulledAnyPass = true;
             ++Statistics.NumCulledPasses;
 
-            for (const FRenderGraphTextureAccess& Access : Pass->TextureAccesses)
+            for (const FRenderGraphTextureAccess& Access : Pass->GetTextureAccesses())
             {
                 if (!Access.bIsWrite)
                 {
@@ -197,7 +851,7 @@ void FRenderGraphBuilder::CullPasses()
                 }
             }
 
-            for (const FRenderGraphBufferAccess& Access : Pass->BufferAccesses)
+            for (const FRenderGraphBufferAccess& Access : Pass->GetBufferAccesses())
             {
                 if (!Access.bIsWrite)
                 {
@@ -213,12 +867,12 @@ void FRenderGraphBuilder::ResolveLifetimes()
     for (int32 PassIndex = 0; PassIndex < Passes.Size(); ++PassIndex)
     {
         const FRenderGraphPass* Pass = Passes[PassIndex];
-        if (Pass->bIsCulled)
+        if (Pass->IsCulled() || !Pass->IsEnabled())
         {
             continue;
         }
 
-        for (const FRenderGraphTextureAccess& Access : Pass->TextureAccesses)
+        for (const FRenderGraphTextureAccess& Access : Pass->GetTextureAccesses())
         {
             FRenderGraphResourceState& State = Access.Resource->State;
             if (State.FirstPassIndex < 0)
@@ -229,7 +883,7 @@ void FRenderGraphBuilder::ResolveLifetimes()
             State.LastPassIndex = PassIndex;
         }
 
-        for (const FRenderGraphBufferAccess& Access : Pass->BufferAccesses)
+        for (const FRenderGraphBufferAccess& Access : Pass->GetBufferAccesses())
         {
             FRenderGraphResourceState& State = Access.Resource->State;
             if (State.FirstPassIndex < 0)
@@ -251,10 +905,8 @@ void FRenderGraphBuilder::AllocateResources()
     }
 
     FRenderGraphResourcePool& Pool = FRenderGraphResourcePool::Get();
-
     for (FRenderGraphTexture* Texture : Textures)
     {
-        // A resource no surviving pass touches never needs to exist
         if (Texture->IsExternal() || Texture->State.FirstPassIndex < 0)
         {
             continue;
@@ -263,6 +915,7 @@ void FRenderGraphBuilder::AllocateResources()
         Texture->Texture = Pool.AcquireTexture(Texture->Desc, Texture->Name, Texture->State.CurrentState);
         if (Texture->Texture)
         {
+            Texture->State.AcquiredState = Texture->State.CurrentState;
             ++Statistics.NumTexturesAllocated;
         }
     }
@@ -277,8 +930,28 @@ void FRenderGraphBuilder::AllocateResources()
         Buffer->Buffer = Pool.AcquireBuffer(Buffer->Desc, Buffer->Name, Buffer->State.CurrentState);
         if (Buffer->Buffer)
         {
+            Buffer->State.AcquiredState = Buffer->State.CurrentState;
             ++Statistics.NumBuffersAllocated;
         }
+    }
+}
+
+void FRenderGraphBuilder::ValidateGraph()
+{
+    for (FRenderGraphPass* Pass : Passes)
+    {
+        if (Pass->IsCulled() || !Pass->IsEnabled())
+        {
+            continue;
+        }
+
+        if (Pass->HasConflictingAccesses())
+        {
+            LOG_ERROR("Graph '%s' cannot compile because pass '%s' declared conflicting accesses", Name, Pass->GetName());
+            SetHasErrors(true);
+        }
+
+        RenderGraphViewValidation::ValidatePassViewAccesses(*this, *Pass);
     }
 }
 
@@ -286,65 +959,41 @@ void FRenderGraphBuilder::PlanBarriers()
 {
     for (FRenderGraphPass* Pass : Passes)
     {
-        if (Pass->bIsCulled)
+        if (Pass->IsCulled() || !Pass->IsEnabled())
         {
             continue;
         }
 
-        for (const FRenderGraphTextureAccess& Access : Pass->TextureAccesses)
+        for (const FRenderGraphViewAccess& Access : Pass->GetViewAccesses())
         {
-            FRenderGraphTexture*       Texture = Access.Resource;
-            FRenderGraphResourceState& State   = Texture->State;
-
-            if (!Texture->GetRHITexture())
+            if (Access.bIsTextureParent)
             {
-                continue;
-            }
-
-            if (State.CurrentState == Access.State)
-            {
-                if (Access.State == ERHIResourceState::UnorderedAccess && State.bWrittenAsUnorderedAccess)
-                {
-                    Pass->UnorderedAccessBarriers.Emplace(FRHIUnorderedAccessBarrierDesc::CreateTexture(Texture->GetRHITexture()));
-                    ++Statistics.NumUnorderedAccessBarriers;
-                }
+                PlanTextureViewBarrier(Pass, Access.ParentTexture->GetRHITexture(), Access.ParentTexture->State, Access.SubresourceRange, Access.State, Access.bIsWrite);
             }
             else
             {
-                Pass->Transitions.Emplace(FRHITransitionBarrierDesc::CreateTexture(Texture->GetRHITexture(), State.CurrentState, Access.State));
-                ++Statistics.NumTransitionBarriers;
-                State.CurrentState = Access.State;
+                PlanBufferViewBarrier(Pass, Access.ParentBuffer->GetRHIBuffer(), Access.ParentBuffer->State, Access.BufferRange, Access.State, Access.bIsWrite);
             }
-
-            State.bWrittenAsUnorderedAccess = Access.bIsWrite && (Access.State == ERHIResourceState::UnorderedAccess);
         }
 
-        for (const FRenderGraphBufferAccess& Access : Pass->BufferAccesses)
+        for (const FRenderGraphTextureAccess& Access : Pass->GetTextureAccesses())
         {
-            FRenderGraphBuffer*        Buffer = Access.Resource;
-            FRenderGraphResourceState& State  = Buffer->State;
-
-            if (!Buffer->GetRHIBuffer())
+            if (IsAccessPlannedThroughView(*Pass, Access.Resource, Access.State, Access.bIsWrite))
             {
                 continue;
             }
 
-            if (State.CurrentState == Access.State)
+            PlanTextureViewBarrier(Pass, Access.Resource->GetRHITexture(), Access.Resource->State, FRHITextureSubresourceRange::All(), Access.State, Access.bIsWrite);
+        }
+
+        for (const FRenderGraphBufferAccess& Access : Pass->GetBufferAccesses())
+        {
+            if (IsAccessPlannedThroughView(*Pass, Access.Resource, Access.State, Access.bIsWrite))
             {
-                if (Access.State == ERHIResourceState::UnorderedAccess && State.bWrittenAsUnorderedAccess)
-                {
-                    Pass->UnorderedAccessBarriers.Emplace(FRHIUnorderedAccessBarrierDesc::CreateBuffer(Buffer->GetRHIBuffer()));
-                    ++Statistics.NumUnorderedAccessBarriers;
-                }
-            }
-            else
-            {
-                Pass->Transitions.Emplace(FRHITransitionBarrierDesc::CreateBuffer(Buffer->GetRHIBuffer(), State.CurrentState, Access.State));
-                ++Statistics.NumTransitionBarriers;
-                State.CurrentState = Access.State;
+                continue;
             }
 
-            State.bWrittenAsUnorderedAccess = Access.bIsWrite && (Access.State == ERHIResourceState::UnorderedAccess);
+            PlanBufferViewBarrier(Pass, Access.Resource->GetRHIBuffer(), Access.Resource->State, FBufferRegion::Whole(), Access.State, Access.bIsWrite);
         }
     }
 }
@@ -357,56 +1006,73 @@ void FRenderGraphBuilder::Compile()
     }
 
     bIsCompiled = true;
-
     Statistics.NumPasses = Passes.Size();
 
     CullPasses();
     ResolveLifetimes();
+    ValidateGraph();
     AllocateResources();
     PlanBarriers();
 }
 
-FRHIBeginRenderPassDesc FRenderGraphBuilder::BuildBeginRenderPassDesc(const FRenderGraphPass& Pass) const
+FRHIBeginRenderPassDesc FRenderGraphBuilder::BuildBeginRenderPassDesc(const FRenderGraphPass& Pass, FRenderGraphViewCache& ViewCache) const
 {
     FRHIBeginRenderPassDesc::FRenderTargetAttachments RenderTargets;
 
-    for (uint32 Index = 0; Index < Pass.NumRenderTargets; ++Index)
+    uint32 NumRenderTargets = 0;
+    for (uint32 Index = 0; Index < Pass.GetNumRenderTargets(); ++Index)
     {
-        const FRenderGraphAttachment& Attachment = Pass.RenderTargets[Index];
-        if (!Attachment.Texture || !Attachment.Texture->GetRHITexture())
+        const FRenderGraphAttachment& Attachment = Pass.GetRenderTargets()[Index];
+        FRHIRenderTargetView* RenderTargetView = ResolveRenderTargetAttachmentView(Attachment, ViewCache);
+        if (!RenderTargetView)
         {
-            continue;
+            LOG_ERROR("Graph '%s' pass '%s' failed to resolve render-target attachment %u ('%s')", Name, Pass.GetName(), Index, Attachment.Texture ? Attachment.Texture->GetName() : "null");
+            return FRHIBeginRenderPassDesc();
         }
 
-        RenderTargets[Index] = FRHIRenderPassAttachment(Attachment.Texture->GetRHITexture()->GetRenderTargetView(),
-            Attachment.LoadAction, Attachment.StoreAction, Attachment.ClearValue);
+        RenderTargets[Index] = FRHIRenderPassAttachment(RenderTargetView, Attachment.LoadAction, Attachment.StoreAction, Attachment.ClearValue);
+        NumRenderTargets     = Math::Max(NumRenderTargets, Index + 1);
     }
 
     FRHIDepthStencilAttachment DepthStencilAttachment;
-    if (Pass.DepthStencil.Texture && Pass.DepthStencil.Texture->GetRHITexture())
+    const FRenderGraphDepthAttachment& DepthStencil = Pass.GetDepthStencil();
+    if (FRHIDepthStencilView* DepthStencilView = ResolveDepthStencilAttachmentView(DepthStencil, ViewCache))
     {
-        DepthStencilAttachment = FRHIDepthStencilAttachment(Pass.DepthStencil.Texture->GetRHITexture()->GetDepthStencilView(),
-            Pass.DepthStencil.LoadAction, Pass.DepthStencil.StoreAction, Pass.DepthStencil.DepthStencilClearValue);
+        DepthStencilAttachment = FRHIDepthStencilAttachment( DepthStencilView, DepthStencil.LoadAction, DepthStencil.StoreAction, DepthStencil.DepthStencilClearValue);
+    }
+    else if (DepthStencil.DepthStencilView || DepthStencil.Texture)
+    {
+        LOG_ERROR("Graph '%s' pass '%s' failed to resolve depth-stencil attachment ('%s')", Name, Pass.GetName(), DepthStencil.Texture ? DepthStencil.Texture->GetName() : "null");
     }
 
-    return FRHIBeginRenderPassDesc(RenderTargets, Pass.NumRenderTargets, DepthStencilAttachment);
+    return FRHIBeginRenderPassDesc(RenderTargets, NumRenderTargets, DepthStencilAttachment);
 }
 
 void FRenderGraphBuilder::EmitEpilogueBarriers(FRHICommandList& CommandList)
 {
-    TArray<FRHITransitionBarrierDesc> Transitions;
+    TArray<FRHITransitionBarrierDesc>      Transitions;
+    TArray<FRHIUnorderedAccessBarrierDesc> UnorderedAccessBarriers;
 
     for (FRenderGraphTexture* Texture : Textures)
     {
-        if (!Texture->IsExternal() || Texture->State.CurrentState == Texture->State.FinalState)
+        FRenderGraphResourceState& State       = Texture->State;
+        ERHIResourceState          TargetState = State.CurrentState;
+
+        if (Texture->IsExternal())
+        {
+            TargetState = State.FinalState;
+        }
+        else if (State.bSubresourcesDiverged)
+        {
+            TargetState = State.SubresourceStates.First().State;
+        }
+
+        if (!State.bSubresourcesDiverged && State.CurrentState == TargetState)
         {
             continue;
         }
 
-        Transitions.Emplace(FRHITransitionBarrierDesc::CreateTexture(Texture->GetRHITexture(),
-            Texture->State.CurrentState, Texture->State.FinalState));
-
-        Texture->State.CurrentState = Texture->State.FinalState;
+        TransitionTexture(Texture->GetRHITexture(), State, FRHITextureSubresourceRange::All(), TargetState, false, Transitions, UnorderedAccessBarriers, Statistics);
     }
 
     for (FRenderGraphBuffer* Buffer : Buffers)
@@ -416,16 +1082,25 @@ void FRenderGraphBuilder::EmitEpilogueBarriers(FRHICommandList& CommandList)
             continue;
         }
 
-        Transitions.Emplace(FRHITransitionBarrierDesc::CreateBuffer(Buffer->GetRHIBuffer(),
-            Buffer->State.CurrentState, Buffer->State.FinalState));
+        if (Buffer->GetRHIBuffer()->GetDesc().TrackingMode == ERHIResourceStateTrackingMode::Static)
+        {
+            continue;
+        }
+
+        Transitions.Emplace(FRHITransitionBarrierDesc::CreateBuffer(Buffer->GetRHIBuffer(), Buffer->State.CurrentState, Buffer->State.FinalState));
 
         Buffer->State.CurrentState = Buffer->State.FinalState;
+        ++Statistics.NumTransitionBarriers;
     }
 
     if (!Transitions.IsEmpty())
     {
         CommandList.TransitionBarrier(MakeArrayView(Transitions));
-        Statistics.NumTransitionBarriers += Transitions.Size();
+    }
+
+    if (!UnorderedAccessBarriers.IsEmpty())
+    {
+        CommandList.UnorderedAccessBarrier(MakeArrayView(UnorderedAccessBarriers));
     }
 }
 
@@ -441,7 +1116,7 @@ void FRenderGraphBuilder::ReleasePooledResources()
     {
         if (!Texture->IsExternal())
         {
-            Pool.ReleaseTexture(Texture->Texture, Texture->State.CurrentState);
+            Pool.ReleaseTexture(Texture->Texture, bIsExecuted ? Texture->State.CurrentState : Texture->State.AcquiredState);
         }
     }
 
@@ -449,7 +1124,7 @@ void FRenderGraphBuilder::ReleasePooledResources()
     {
         if (!Buffer->IsExternal())
         {
-            Pool.ReleaseBuffer(Buffer->Buffer, Buffer->State.CurrentState);
+            Pool.ReleaseBuffer(Buffer->Buffer, bIsExecuted ? Buffer->State.CurrentState : Buffer->State.AcquiredState);
         }
     }
 }
@@ -461,6 +1136,12 @@ void FRenderGraphBuilder::Execute(FRHICommandList& CommandList)
         Compile();
     }
 
+    if (bHasErrors)
+    {
+        LOG_ERROR("Graph '%s' cannot execute because compilation reported errors", Name);
+        return;
+    }
+
     if (bIsExecuted)
     {
         LOG_ERROR("Graph '%s' has already been executed. Build a new graph rather than replaying this one", Name);
@@ -469,46 +1150,61 @@ void FRenderGraphBuilder::Execute(FRHICommandList& CommandList)
 
     bIsExecuted = true;
 
+    FRenderGraphViewCache ViewCache;
+
     RHI_EVENT_SCOPE(CommandList, Name);
 
     for (FRenderGraphPass* Pass : Passes)
     {
-        if (Pass->bIsCulled)
+        if (Pass->IsCulled() || !Pass->IsEnabled())
         {
             continue;
         }
 
-        RHI_EVENT_SCOPE(CommandList, Pass->Name);
+        RHI_EVENT_SCOPE(CommandList, Pass->GetName());
 
-        if (!Pass->Transitions.IsEmpty())
+        if (!Pass->GetTransitions().IsEmpty())
         {
-            CommandList.TransitionBarrier(MakeArrayView(Pass->Transitions));
+            CommandList.TransitionBarrier(MakeArrayView(Pass->GetTransitions()));
         }
 
-        if (!Pass->UnorderedAccessBarriers.IsEmpty())
+        if (!Pass->GetUnorderedAccessBarriers().IsEmpty())
         {
-            CommandList.UnorderedAccessBarrier(MakeArrayView(Pass->UnorderedAccessBarriers));
+            CommandList.UnorderedAccessBarrier(MakeArrayView(Pass->GetUnorderedAccessBarriers()));
         }
 
-        const bool bIsRaster = Pass->IsRaster();
-        if (bIsRaster)
+        FRHIBeginRenderPassDesc RenderPassDesc;
+
+        const bool bIsRaster      = Pass->IsRaster();
+        const bool bHasRenderPass = bIsRaster && (RenderPassDesc = BuildBeginRenderPassDesc(*Pass, ViewCache), HasValidRenderPassAttachments(RenderPassDesc));
+
+        if (bIsRaster && !bHasRenderPass)
         {
-            CommandList.BeginRenderPass(BuildBeginRenderPassDesc(*Pass));
+            LOG_ERROR("Graph '%s' pass '%s' is flagged Raster but has no resolvable attachments; skipping render pass", Name, Pass->GetName());
         }
 
-        if (Pass->Executor)
+        if (bHasRenderPass)
         {
-            FRenderGraphPassResources Resources(*Pass);
-            Pass->Executor->Execute(CommandList, Resources);
+            CommandList.BeginRenderPass(RenderPassDesc);
         }
 
-        if (bIsRaster)
+        if (FRenderGraphPassExecutor* Executor = Pass->GetExecutor())
+        {
+            FRenderGraphPassResources Resources = FRenderGraphPassResources::Create(*Pass, ViewCache);
+            Executor->Execute(CommandList, Resources);
+        }
+
+        if (bHasRenderPass)
         {
             CommandList.EndRenderPass();
         }
     }
 
+    Statistics.NumViewsCreated   = ViewCache.GetNumViewsCreated();
+    Statistics.NumViewsCacheHits = ViewCache.GetNumViewsCacheHits();
+
     EmitEpilogueBarriers(CommandList);
+
     ReleasePooledResources();
 
     if (FRenderGraphResourcePool::IsInitialized())

@@ -2145,7 +2145,7 @@ bool EditorWidgets::MenuItem(const CHAR* Label, const CHAR* Shortcut, bool bSele
     if (bDrawBorder && bHovered)
     {
         const ImVec4 HoveredColor = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
-        const ImU32  BorderColor  = EditorHelpers::MakeBrighterColorU32(HoveredColor, 0.20f);
+        const ImU32  BorderColor  = EditorHelpers::CreateBrighterColorU32(HoveredColor, 0.20f);
         DrawList->AddRect(RectMin, RectMax, BorderColor, 0.0f, ImDrawFlags_None, 1.0f);
     }
 

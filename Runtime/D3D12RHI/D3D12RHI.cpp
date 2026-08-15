@@ -17,6 +17,7 @@
 #include "D3D12RHI/D3D12SwapChain.h"
 #include "D3D12RHI/D3D12Query.h"
 #include "D3D12RHI/D3D12Loader.h"
+#include "D3D12RHI/D3D12DeviceDebug.h"
 #include "D3D12RHI/D3D12ResidencyManager.h"
 #include "D3D12RHI/D3D12Stats.h"
 #include "D3D12RHI/RayTracing/D3D12RayTracing.h"
@@ -168,7 +169,6 @@ FD3D12DeviceRHI::~FD3D12DeviceRHI()
         Device->FinalizePendingDefragMoves();
     }
 
-    // Flush any objects that might need the context
     FlushDeferredDeletions();
 
     if (DirectCommandContext)
@@ -177,20 +177,23 @@ FD3D12DeviceRHI::~FD3D12DeviceRHI()
         DirectCommandContext = nullptr;
     }
 
-    // Delete all samplers
     {
         TScopedLock Lock(SamplerStateMapCS);
         SamplerStateMap.Clear();
     }
 
-    // Finally, delete all remaining resources
     FlushDeferredDeletions();
 
-    // Destroy the device and adapter
+    const bool bDebugLayerEnabled = Adapter ? Adapter->IsDebugLayerEnabled() : false;
     SAFE_DELETE(Device);
     SAFE_DELETE(Adapter);
 
-    D3D12Loader::Release();
+    if (bDebugLayerEnabled)
+    {
+        D3D12Debug::ReportLiveDXGIObjects();
+    }
+
+    D3D12::Release();
 
     if (D3D12DeviceRHI == this)
     {
@@ -203,7 +206,7 @@ bool FD3D12DeviceRHI::Initialize()
     const bool bEnablePIX = CVarEnablePix.GetValue();
 
     // Load Library and Function-Pointers etc.
-    const bool bResult = D3D12Loader::Initialize(bEnablePIX);
+    const bool bResult = D3D12::Initialize(bEnablePIX);
     if (!bResult)
     {
         return false;

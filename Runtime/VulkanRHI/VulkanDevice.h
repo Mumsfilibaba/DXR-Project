@@ -80,46 +80,85 @@ struct FVulkanQueueFamilyIndices
 struct FVulkanDefaultResources
 {
 	FVulkanDefaultResources()
-		: NullBuffer(VK_NULL_HANDLE)
-		, NullBufferView(VK_NULL_HANDLE)
-		, NullBufferLocation(nullptr)
-		, NullImage(VK_NULL_HANDLE)
-		, NullImageViews()
-		, NullImageLocation(nullptr)
+		: NullReadBuffer(VK_NULL_HANDLE)
+		, NullReadBufferView(VK_NULL_HANDLE)
+		, NullReadBufferLocation(nullptr)
+		, NullWriteBuffer(VK_NULL_HANDLE)
+		, NullWriteBufferView(VK_NULL_HANDLE)
+		, NullWriteBufferLocation(nullptr)
+		, NullReadImage(VK_NULL_HANDLE)
+		, NullReadImageViews()
+		, NullReadImageLocation(nullptr)
+		, NullWriteImage(VK_NULL_HANDLE)
+		, NullWriteImageViews()
+		, NullWriteImageLocation(nullptr)
 		, NullSampler(VK_NULL_HANDLE)
 	{
 	}
 
 	~FVulkanDefaultResources()
 	{
-		CHECK(NullBuffer == VK_NULL_HANDLE);
-		CHECK(NullBufferView == VK_NULL_HANDLE);
-		CHECK(NullImage == VK_NULL_HANDLE);
+		CHECK(NullReadBuffer == VK_NULL_HANDLE);
+		CHECK(NullReadBufferView == VK_NULL_HANDLE);
+		CHECK(NullWriteBuffer == VK_NULL_HANDLE);
+		CHECK(NullWriteBufferView == VK_NULL_HANDLE);
+		CHECK(NullReadImage == VK_NULL_HANDLE);
+		CHECK(NullWriteImage == VK_NULL_HANDLE);
 		CHECK(NullSampler == VK_NULL_HANDLE);
 
-		for (VkImageView NullImageView : NullImageViews)
+		for (VkImageView NullImageView : NullReadImageViews)
+		{
+			CHECK(NullImageView == VK_NULL_HANDLE);
+		}
+
+		for (VkImageView NullImageView : NullWriteImageViews)
 		{
 			CHECK(NullImageView == VK_NULL_HANDLE);
 		}
 	}
 
 	bool Initialize(FVulkanDevice& Device);
-	bool InitializeNullBuffer(FVulkanDevice& Device);
-	bool InitializeNullBufferAndImage(FVulkanDevice& Device);
 	void Release(FVulkanDevice& Device);
 
-	VkImageView GetNullImageView(EVulkanNullImageViewType ViewType) const
+	VkImageView GetNullReadImageView(EVulkanNullImageViewType ViewType) const
 	{
 		CHECK(ViewType < EVulkanNullImageViewType::Count);
-		return NullImageViews[static_cast<uint32>(ViewType)];
+		return NullReadImageViews[static_cast<uint32>(ViewType)];
 	}
 
-	VkBuffer              NullBuffer;
-	VkBufferView          NullBufferView;
-	FVulkanMemoryLocation NullBufferLocation;
-	VkImage               NullImage;
-	VkImageView           NullImageViews[static_cast<uint32>(EVulkanNullImageViewType::Count)];
-	FVulkanMemoryLocation NullImageLocation;
+	VkImageView GetNullWriteImageView(EVulkanNullImageViewType ViewType) const
+	{
+		CHECK(ViewType < EVulkanNullImageViewType::Count);
+		return NullWriteImageViews[static_cast<uint32>(ViewType)];
+	}
+
+	bool IsNullBuffer(VkBuffer Buffer) const
+	{
+		return Buffer == NullReadBuffer || Buffer == NullWriteBuffer;
+	}
+
+	bool IsNullReadImageView(VkImageView View, EVulkanNullImageViewType ViewType) const
+	{
+		return View == GetNullReadImageView(ViewType);
+	}
+
+	bool IsNullWriteImageView(VkImageView View, EVulkanNullImageViewType ViewType) const
+	{
+		return View == GetNullWriteImageView(ViewType);
+	}
+
+	VkBuffer              NullReadBuffer;
+	VkBufferView          NullReadBufferView;
+	FVulkanMemoryLocation NullReadBufferLocation;
+	VkBuffer              NullWriteBuffer;
+	VkBufferView          NullWriteBufferView;
+	FVulkanMemoryLocation NullWriteBufferLocation;
+	VkImage               NullReadImage;
+	VkImageView           NullReadImageViews[static_cast<uint32>(EVulkanNullImageViewType::Count)];
+	FVulkanMemoryLocation NullReadImageLocation;
+	VkImage               NullWriteImage;
+	VkImageView           NullWriteImageViews[static_cast<uint32>(EVulkanNullImageViewType::Count)];
+	FVulkanMemoryLocation NullWriteImageLocation;
 	VkSampler             NullSampler;
 };
 

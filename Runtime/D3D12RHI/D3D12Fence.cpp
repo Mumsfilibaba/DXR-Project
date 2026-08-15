@@ -52,7 +52,7 @@ uint64 FD3D12Fence::Signal(ID3D12CommandQueue* Queue)
     HRESULT hResult = Queue->Signal(Fence.Get(), CurrentValue);
     if (FAILED(hResult))
     {
-        D3D12RHICheckDeviceRemoved(GetDevice(), hResult, "Fence::Signal");
+        D3D12Debug::CheckDeviceRemoved(GetDevice(), hResult, "Fence::Signal");
         D3D12_ERROR_CRITICAL("[FD3D12Fence]: Failed to signal Fence on the GPU");
     }
 
@@ -108,7 +108,7 @@ uint64 FD3D12Fence::GetCompletedValue() const
 #if D3D12_ENABLE_DEVICE_LOST_CHECK
     if (LastCompletedValue == UINT64_MAX)
     {
-        D3D12RHIDeviceRemovedHandler(GetDevice(), "Fence");
+        D3D12Debug::DeviceRemovedHandler(GetDevice(), "Fence");
     }
 #endif
 

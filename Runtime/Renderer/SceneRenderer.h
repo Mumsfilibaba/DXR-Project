@@ -11,29 +11,40 @@
 #include "Engine/Resources/Material.h"
 #include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
-#include "Renderer/DeferredRendering.h"
-#include "Renderer/ShadowRendering.h"
-#include "Renderer/ScreenSpaceOcclusionRendering.h"
+#include "Renderer/Passes/DepthPrePass.h"
+#include "Renderer/Passes/DeferredBasePass.h"
+#include "Renderer/Passes/TiledLightPass.h"
+#include "Renderer/Passes/DepthReducePass.h"
+#include "Renderer/Passes/PointLightRenderPass.h"
+#include "Renderer/Passes/CascadeGenerationPass.h"
+#include "Renderer/Passes/CascadedShadowsRenderPass.h"
+#include "Renderer/Passes/ShadowMaskRenderPass.h"
+#include "Renderer/Passes/ScreenSpaceOcclusionRendering.h"
 #include "Renderer/LightProbeRenderer.h"
-#include "Renderer/SkyboxRenderPass.h"
-#include "Renderer/ForwardPass.h"
-#include "Renderer/RayTracer.h"
+#include "Renderer/Passes/SkyboxRenderPass.h"
+#include "Renderer/Passes/ForwardPass.h"
+#include "Renderer/Passes/RayTracing/RayTracingSceneBuilder.h"
+#include "Renderer/Passes/RayTracing/RayTracingReflectionsPass.h"
+#include "Renderer/Passes/RayTracing/ReflectionDenoisePass.h"
+#include "Renderer/Passes/RayTracing/RayTracingPrimaryDebugPass.h"
 #include "Renderer/DebugRendering.h"
-#include "Renderer/DebugViewPass.h"
-#include "Renderer/TemporalAntiAliasing.h"
-#include "Renderer/PostProcessing.h"
+#include "Renderer/Passes/DebugViewPass.h"
+#include "Renderer/Passes/TemporalAntiAliasing.h"
+#include "Renderer/Passes/TonemapPass.h"
+#include "Renderer/Passes/FXAAPass.h"
 #if EDITOR_BUILD
-    #include "Renderer/SelectionOutlinePass.h"
+    #include "Renderer/Passes/Editor/FinalCompositePass.h"
+    #include "Renderer/Passes/Editor/SelectionOutlinePass.h"
+    #include "Renderer/Passes/Editor/EditorNoJitterDepthPass.h"
+    #include "Renderer/Passes/Editor/EditorSelectionIDPass.h"
 #endif
 #include "Renderer/Scene/Scene.h"
 
+// Variable rate shading is scaffolding: the shading rate image is built but nothing binds it yet
+#define SUPPORT_VARIABLE_RATE_SHADING (0)
+
 class FViewportWidget;
 class FSceneRenderer;
-
-#if EDITOR_BUILD
-class FEditorNoJitterDepthPass;
-class FEditorSelectionIDPass;
-#endif
 
 struct FCameraHLSL
 {
@@ -206,29 +217,29 @@ public:
     }
 
 private: 
-    bool InitShadingImage(); 
+#if SUPPORT_VARIABLE_RATE_SHADING
+    bool InitShadingImage();
+#endif
+
+    bool CreateRayTracingResources(uint32 Width, uint32 Height);
+
     void RenderThread_PrepareCameraData(const FSceneRenderView& SceneRenderView, FScene* Scene);
-
-    // Opens the scene command list for the frame before scene passes are recorded.
     void RenderThread_BeginSceneCommandList(const FSceneRenderPacket& Packet);
-
-    // Records all scene passes for the view into the scene command list.
     void RenderThread_RenderSceneView(const FSceneRenderView& SceneRenderView, const TArray<uint32>& SelectedObjectIDs);
-
 #if EDITOR_BUILD
     void RenderThread_ProcessEditorObjectPickRequests(FRHICommandList& InCommandList, FFrameResources& InResources, FScene* CurrentScene);
 #endif
+
+    void BuildAndExecuteSceneGraph(const FSceneRenderView& SceneRenderView, FScene* Scene, const TArray<uint32>& SelectedObjectIDs);
  
     // RenderPasses and Resources 
     FFrameResources              Resources; 
     FFrameCounterState           FrameCounter;
     FCameraHLSL                  CameraBuffer;
     FHaltonState                 HaltonState;
-
     FRHISamplePositionsDesc      FrameSamplePositions;
     FRHISamplePositionsDesc      PrevFrameSamplePositions;
     bool                         bUseHardwareJitter = false;
-
     FDepthPrePass*               DepthPrePass;
     FDeferredBasePass*           BasePass;
     FDepthReducePass*            DepthReducePass;
@@ -254,15 +265,20 @@ private:
     FLightProbeRenderer*         LightProbeRenderer;
     FDebugRenderer*              DebugRenderer;
     FDebugViewPass*              DebugViewPass;
-    FRayTracer                   RayTracer;
+    FRayTracingSceneBuilder*     RayTracingSceneBuilder;
+    FRayTracingReflectionsPass*  RayTracingReflectionsPass;
+    FReflectionDenoisePass*      ReflectionDenoisePass;
+    FRayTracingPrimaryDebugPass* RayTracingPrimaryDebugPass;
     bool                         bRayTracingWasActive = false; // tracks the RT active->inactive edge for BLAS teardown
     IPlatformEvent*              LastFrameFinishedEvent;
     FRHIQueryRef                 TimestampQueries;
     FRHICommandList              CommandList;
     FRHICommandList              UICommandList;
+#if SUPPORT_VARIABLE_RATE_SHADING
     FRHITextureRef               ShadingImage;
     FRHIComputePipelineStateRef  ShadingRatePipeline;
     FRHIComputeShaderRef         ShadingRateShader;
+#endif
     TArray<FSwapChainResizeInfo> SwapChainsToResize;
     FCriticalSection             SwapChainsToResizeCS;
 

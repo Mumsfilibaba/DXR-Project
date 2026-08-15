@@ -12,7 +12,7 @@
 #include <Engine/World/Components/Components.h>
 #include <RendererCore/TextureFactory.h>
 #include <RendererCore/TextureHelpers.h>
-#include <Renderer/FrameResources.h>
+#include <Renderer/Graph/FrameResources.h>
 #include <Application/Application.h>
 
 // TODO: Custom random

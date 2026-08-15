@@ -110,7 +110,7 @@ public:
     bool SetHDRMetadata(const FRHIHDRMetadata& Metadata);
 
     void ClaimPendingSemaphores(FVulkanCommands& InCommands);
-    void NotifyBackBufferAccessed();
+    FVulkanTextureRHI* AcquireBackBuffer();
 
     FVulkanTextureRHI*             GetCurrentBackBuffer() const;
     FVulkanRenderTargetViewRHI*    GetCurrentBackBufferRenderTargetView() const;
@@ -154,7 +154,7 @@ public:
     }
 
 private:
-    typedef TArray<FVulkanFence*, TInlineArrayAllocator<FVulkanFence*, NUM_BACK_BUFFERS>>             FVulkanFenceArray;
+    typedef TArray<FVulkanFenceRef, TInlineArrayAllocator<FVulkanFenceRef, NUM_BACK_BUFFERS>>         FVulkanFenceArray;
     typedef TArray<FVulkanSemaphoreRef, TInlineArrayAllocator<FVulkanSemaphoreRef, NUM_BACK_BUFFERS>> FVulkanSemaphoreArray;
 
     struct FBackBufferData

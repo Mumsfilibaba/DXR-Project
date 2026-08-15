@@ -154,7 +154,7 @@ static const CHAR* GetDeviceRemovedDumpFilePath()
 
 static VOID CALLBACK OnDeviceRemovedEvent(PVOID Context, BOOLEAN /*bTimerOrWaitFired*/)
 {
-    D3D12RHIDeviceRemovedHandler(reinterpret_cast<FD3D12Device*>(Context), "RemovedEvent");
+    D3D12Debug::DeviceRemovedHandler(reinterpret_cast<FD3D12Device*>(Context), "RemovedEvent");
 }
 
 // Writes the DRED breadcrumbs and page-fault data for a removed device. Only produces anything
@@ -290,7 +290,7 @@ static void D3D12RHIWriteDeviceRemovedDump(ID3D12Device* D3DDevice, HRESULT Reas
     WriteAllocationNodes(DREDPageFaultOutput.pHeadRecentFreedAllocationNode, "RecentFreedAllocations");
 }
 
-void D3D12RHIDeviceRemovedHandler(FD3D12Device* Device, const char* Source)
+void D3D12Debug::DeviceRemovedHandler(FD3D12Device* Device, const char* Source)
 {
     CHECK(Device != nullptr);
 
@@ -310,8 +310,8 @@ void D3D12RHIDeviceRemovedHandler(FD3D12Device* Device, const char* Source)
 
     D3D12_ERROR("[D3D12] Device Removed (Source=%s, Reason=0x%08X)", Source ? Source : "Unknown", static_cast<uint32>(Reason));
 
-    // Signal other systems that the device is removed. This runs before the dump below, which is
-    // long enough that process teardown can cut it short.
+    // Signal other systems that the device is removed. This runs before the dump
+    // below, which is long enough that process teardown can cut it short.
     CoreDelegates::DeviceRemovedDelegate.Broadcast();
 
     D3D12RHIWriteDeviceRemovedDump(D3DDevice, Reason, Source);
@@ -319,7 +319,7 @@ void D3D12RHIDeviceRemovedHandler(FD3D12Device* Device, const char* Source)
     FPlatformApplicationMisc::MessageBox("Error", " [D3D12] Device Removed");
 }
 
-bool D3D12RHICheckDeviceRemoved(FD3D12Device* Device, HRESULT Result, const char* Source)
+bool D3D12Debug::CheckDeviceRemoved(FD3D12Device* Device, HRESULT Result, const char* Source)
 {
     if (SUCCEEDED(Result))
     {
@@ -331,7 +331,7 @@ bool D3D12RHICheckDeviceRemoved(FD3D12Device* Device, HRESULT Result, const char
         return false;
     }
 
-    D3D12RHIDeviceRemovedHandler(Device, Source);
+    D3D12Debug::DeviceRemovedHandler(Device, Source);
     return true;
 }
 
@@ -461,7 +461,7 @@ void FD3D12Device::UnregisterDebugMessageCallback()
 // Debug layer / GPU validation / DRED arming
 // -------------------------------------------------------------------------------------------
 
-void D3D12RHIEnableDRED()
+void D3D12Debug::EnableDRED()
 {
 #if D3D12_ENABLE_CRASH_MARKERS
     if (!CVarEnableDRED.GetValue())
@@ -470,7 +470,7 @@ void D3D12RHIEnableDRED()
     }
 
     TComPtr<ID3D12DeviceRemovedExtendedDataSettings1> DREDSettings;
-    if (SUCCEEDED(D3D12Functions::D3D12GetDebugInterface(IID_PPV_ARGS(&DREDSettings))))
+    if (SUCCEEDED(D3D12::D3D12GetDebugInterface(IID_PPV_ARGS(&DREDSettings))))
     {
         DREDSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
         DREDSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
@@ -485,7 +485,7 @@ void D3D12RHIEnableDRED()
 #endif
 }
 
-void D3D12RHISetupDebugInterfaces(bool bEnableDebugLayer)
+void D3D12Debug::SetupDebugInterfaces(bool bEnableDebugLayer)
 {
     if (!bEnableDebugLayer)
     {
@@ -493,7 +493,7 @@ void D3D12RHISetupDebugInterfaces(bool bEnableDebugLayer)
     }
 
     TComPtr<ID3D12Debug> DebugInterface;
-    if (FAILED(D3D12Functions::D3D12GetDebugInterface(IID_PPV_ARGS(&DebugInterface))))
+    if (FAILED(D3D12::D3D12GetDebugInterface(IID_PPV_ARGS(&DebugInterface))))
     {
         D3D12_ERROR("[FD3D12Adapter]: FAILED to enable DebugLayer");
         return;
@@ -531,7 +531,7 @@ void D3D12RHISetupDebugInterfaces(bool bEnableDebugLayer)
 #endif
 
     TComPtr<IDXGIInfoQueue> InfoQueue;
-    if (SUCCEEDED(D3D12Functions::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&InfoQueue))))
+    if (SUCCEEDED(D3D12::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&InfoQueue))))
     {
         bool bBreakOnError = true;
         if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("D3D12RHI.BreakOnError"))
@@ -553,5 +553,30 @@ void D3D12RHISetupDebugInterfaces(bool bEnableDebugLayer)
     else
     {
         D3D12_ERROR("[FD3D12Adapter]: FAILED to retrieve InfoQueue");
+    }
+}
+
+void D3D12Debug::ReportLiveDXGIObjects()
+{
+    if (!D3D12::DXGIGetDebugInterface1)
+    {
+        return;
+    }
+
+    TComPtr<IDXGIDebug1> DXGIDebug;
+    if (SUCCEEDED(D3D12::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&DXGIDebug))))
+    {
+        TComPtr<IDXGIInfoQueue> InfoQueue;
+        if (SUCCEEDED(D3D12::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&InfoQueue))))
+        {
+            InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_WARNING, false);
+            InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, false);
+        }
+
+        DXGIDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
+    }
+    else
+    {
+        D3D12_WARNING("[FD3D12DeviceRHI]: FAILED to retrieve IDXGIDebug1, live DXGI objects will not be reported");
     }
 }

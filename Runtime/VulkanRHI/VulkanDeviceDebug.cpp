@@ -22,14 +22,15 @@ static bool VulkanIsMessageSuppressed(const VkDebugUtilsMessengerCallbackDataEXT
         return false;
     }
 
+    // Nothing is suppressed at the moment. The null entry keeps the list valid where a zero-length array is not
     static const CHAR* SuppressedMessageIds[] =
     {
-        "VUID-vkDestroyDevice-device-05137",
+        nullptr,
     };
 
     for (const CHAR* SuppressedId : SuppressedMessageIds)
     {
-        if (CString::Strcmp(CallbackData->pMessageIdName, SuppressedId) == 0)
+        if (SuppressedId && CString::Strcmp(CallbackData->pMessageIdName, SuppressedId) == 0)
         {
             return true;
         }

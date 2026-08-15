@@ -2,7 +2,9 @@
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/Debug.h"
+#include "Core/Containers/Array.h"
 #include "Core/Containers/ArrayView.h"
+#include "Core/Containers/SharedRef.h"
 #include "RHI/RHITypes.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHIRayTracing.h"
@@ -127,76 +129,96 @@ DECLARE_RHICOMMAND(FRHICommandQueryTimestamp)
 
 DECLARE_RHICOMMAND(FRHICommandClearRenderTargetView)
 {
-    FORCEINLINE FRHICommandClearRenderTargetView(FRHIRenderTargetView* InRenderTargetView, const Vector4& InClearColor)
-        : RenderTargetView(InRenderTargetView)
+    FORCEINLINE FRHICommandClearRenderTargetView(FRHIRenderTargetViewRef InRenderTargetView, const Vector4& InClearColor)
+        : RenderTargetView(Move(InRenderTargetView))
         , ClearColor(InClearColor)
     {
-        CHECK(InRenderTargetView != nullptr);
+        CHECK(RenderTargetView.Get() != nullptr);
+    }
+
+    FORCEINLINE FRHICommandClearRenderTargetView(FRHIRenderTargetView* InRenderTargetView, const Vector4& InClearColor)
+        : FRHICommandClearRenderTargetView(MakeSharedRef<FRHIRenderTargetView>(InRenderTargetView), InClearColor)
+    {
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.ClearRenderTargetView(RenderTargetView, ClearColor);
+        CommandContext.ClearRenderTargetView(RenderTargetView.Get(), ClearColor);
     }
 
-    FRHIRenderTargetView* RenderTargetView;
-    Vector4               ClearColor;
+    FRHIRenderTargetViewRef RenderTargetView;
+    Vector4                 ClearColor;
 };
 
 DECLARE_RHICOMMAND(FRHICommandClearDepthStencilView)
 {
-    FORCEINLINE FRHICommandClearDepthStencilView(FRHIDepthStencilView* InDepthStencilView, const float InDepth, const uint8 InStencil)
-        : DepthStencilView(InDepthStencilView)
+    FORCEINLINE FRHICommandClearDepthStencilView(FRHIDepthStencilViewRef InDepthStencilView, const float InDepth, const uint8 InStencil)
+        : DepthStencilView(Move(InDepthStencilView))
         , Depth(InDepth)
         , Stencil(InStencil)
     {
-        CHECK(InDepthStencilView != nullptr);
+        CHECK(DepthStencilView.Get() != nullptr);
+    }
+
+    FORCEINLINE FRHICommandClearDepthStencilView(FRHIDepthStencilView* InDepthStencilView, const float InDepth, const uint8 InStencil)
+        : FRHICommandClearDepthStencilView(MakeSharedRef<FRHIDepthStencilView>(InDepthStencilView), InDepth, InStencil)
+    {
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.ClearDepthStencilView(DepthStencilView, Depth, Stencil);
+        CommandContext.ClearDepthStencilView(DepthStencilView.Get(), Depth, Stencil);
     }
 
-    FRHIDepthStencilView* DepthStencilView;
-    const float           Depth;
-    const uint8           Stencil;
+    FRHIDepthStencilViewRef DepthStencilView;
+    const float             Depth;
+    const uint8             Stencil;
 };
 
 DECLARE_RHICOMMAND(FRHICommandClearUnorderedAccessViewFloat)
 {
-    FORCEINLINE FRHICommandClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* InUnorderedAccessView, const Vector4& InClearColor)
-        : UnorderedAccessView(InUnorderedAccessView)
+    FORCEINLINE FRHICommandClearUnorderedAccessViewFloat(FRHIUnorderedAccessViewRef InUnorderedAccessView, const Vector4& InClearColor)
+        : UnorderedAccessView(Move(InUnorderedAccessView))
         , ClearColor(InClearColor)
     {
-        CHECK(InUnorderedAccessView != nullptr);
+        CHECK(UnorderedAccessView.Get() != nullptr);
+    }
+
+    FORCEINLINE FRHICommandClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* InUnorderedAccessView, const Vector4& InClearColor)
+        : FRHICommandClearUnorderedAccessViewFloat(MakeSharedRef<FRHIUnorderedAccessView>(InUnorderedAccessView), InClearColor)
+    {
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.ClearUnorderedAccessViewFloat(UnorderedAccessView, ClearColor);
+        CommandContext.ClearUnorderedAccessViewFloat(UnorderedAccessView.Get(), ClearColor);
     }
 
-    FRHIUnorderedAccessView* UnorderedAccessView;
-    Vector4                  ClearColor;
+    FRHIUnorderedAccessViewRef UnorderedAccessView;
+    Vector4                    ClearColor;
 };
 
 DECLARE_RHICOMMAND(FRHICommandClearUnorderedAccessViewUint)
 {
-    FORCEINLINE FRHICommandClearUnorderedAccessViewUint(FRHIUnorderedAccessView* InUnorderedAccessView, const uint32 InValues[4])
-        : UnorderedAccessView(InUnorderedAccessView)
+    FORCEINLINE FRHICommandClearUnorderedAccessViewUint(FRHIUnorderedAccessViewRef InUnorderedAccessView, const uint32 InValues[4])
+        : UnorderedAccessView(Move(InUnorderedAccessView))
     {
-        CHECK(InUnorderedAccessView != nullptr);
+        CHECK(UnorderedAccessView.Get() != nullptr);
         Memory::Memcpy(Values, InValues, sizeof(Values));
+    }
+
+    FORCEINLINE FRHICommandClearUnorderedAccessViewUint(FRHIUnorderedAccessView* InUnorderedAccessView, const uint32 InValues[4])
+        : FRHICommandClearUnorderedAccessViewUint(MakeSharedRef<FRHIUnorderedAccessView>(InUnorderedAccessView), InValues)
+    {
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.ClearUnorderedAccessViewUint(UnorderedAccessView, Values);
+        CommandContext.ClearUnorderedAccessViewUint(UnorderedAccessView.Get(), Values);
     }
 
-    FRHIUnorderedAccessView* UnorderedAccessView;
-    uint32                   Values[4];
+    FRHIUnorderedAccessViewRef UnorderedAccessView;
+    uint32                     Values[4];
 };
 
 DECLARE_RHICOMMAND(FRHICommandBeginRenderPass)
@@ -464,85 +486,123 @@ DECLARE_RHICOMMAND(FRHICommandSetShaderConstants)
 
 DECLARE_RHICOMMAND(FRHICommandSetShaderResourceView)
 {
-    FORCEINLINE FRHICommandSetShaderResourceView(FRHIShader* InShader, FRHIShaderResourceView* InShaderResourceView, uint32 InRegisterIndex)
+    FORCEINLINE FRHICommandSetShaderResourceView(FRHIShader* InShader, FRHIShaderResourceViewRef InShaderResourceView, uint32 InRegisterIndex)
         : Shader(InShader)
-        , ShaderResourceView(InShaderResourceView)
+        , ShaderResourceView(Move(InShaderResourceView))
         , RegisterIndex(InRegisterIndex)
+    {
+    }
+
+    FORCEINLINE FRHICommandSetShaderResourceView(FRHIShader* InShader, FRHIShaderResourceView* InShaderResourceView, uint32 InRegisterIndex)
+        : FRHICommandSetShaderResourceView(InShader, MakeSharedRef<FRHIShaderResourceView>(InShaderResourceView), InRegisterIndex)
     {
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetShaderResourceView(Shader, ShaderResourceView, RegisterIndex);
+        CommandContext.SetShaderResourceView(Shader, ShaderResourceView.Get(), RegisterIndex);
     }
 
-    FRHIShader*             Shader;
-    FRHIShaderResourceView* ShaderResourceView;
-    uint32                  RegisterIndex;
+    FRHIShader*              Shader;
+    FRHIShaderResourceViewRef ShaderResourceView;
+    uint32                    RegisterIndex;
 };
 
 DECLARE_RHICOMMAND(FRHICommandSetShaderResourceViews)
 {
-    FORCEINLINE FRHICommandSetShaderResourceViews(FRHIShader* InShader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 InStartRegisterIndex)
+    FORCEINLINE FRHICommandSetShaderResourceViews(FRHIShader* InShader, const TArrayView<FRHIShaderResourceViewRef> InShaderResourceViews, uint32 InStartRegisterIndex)
         : Shader(InShader)
         , ShaderResourceViews(InShaderResourceViews)
         , StartRegisterIndex(InStartRegisterIndex)
     {
     }
 
-    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    FORCEINLINE ~FRHICommandSetShaderResourceViews()
     {
-        CommandContext.SetShaderResourceViews(Shader, ShaderResourceViews, StartRegisterIndex);
+        for (FRHIShaderResourceViewRef& View : ShaderResourceViews)
+        {
+            View.~FRHIShaderResourceViewRef();
+        }
     }
 
-    FRHIShader*                               Shader;
-    TArrayView<FRHIShaderResourceView* const> ShaderResourceViews;
-    uint32                                    StartRegisterIndex;
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        TArray<FRHIShaderResourceView*> RawViews;
+        RawViews.Reserve(ShaderResourceViews.Size());
+        for (const FRHIShaderResourceViewRef& View : ShaderResourceViews)
+        {
+            RawViews.Add(View.Get());
+        }
+        CommandContext.SetShaderResourceViews(Shader, RawViews, StartRegisterIndex);
+    }
+
+    FRHIShader*                           Shader;
+    TArrayView<FRHIShaderResourceViewRef> ShaderResourceViews;
+    uint32                                StartRegisterIndex;
 };
 
 DECLARE_RHICOMMAND(FRHICommandSetUnorderedAccessView)
 {
-    FORCEINLINE FRHICommandSetUnorderedAccessView(FRHIShader* InShader, FRHIUnorderedAccessView* InUnorderedAccessView, uint32 InRegisterIndex)
+    FORCEINLINE FRHICommandSetUnorderedAccessView(FRHIShader* InShader, FRHIUnorderedAccessViewRef InUnorderedAccessView, uint32 InRegisterIndex)
         : Shader(InShader)
-        , UnorderedAccessView(InUnorderedAccessView)
+        , UnorderedAccessView(Move(InUnorderedAccessView))
         , RegisterIndex(InRegisterIndex)
+    {
+    }
+
+    FORCEINLINE FRHICommandSetUnorderedAccessView(FRHIShader* InShader, FRHIUnorderedAccessView* InUnorderedAccessView, uint32 InRegisterIndex)
+        : FRHICommandSetUnorderedAccessView(InShader, MakeSharedRef<FRHIUnorderedAccessView>(InUnorderedAccessView), InRegisterIndex)
     {
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetUnorderedAccessView(Shader, UnorderedAccessView, RegisterIndex);
+        CommandContext.SetUnorderedAccessView(Shader, UnorderedAccessView.Get(), RegisterIndex);
     }
 
-    FRHIShader*              Shader;
-    FRHIUnorderedAccessView* UnorderedAccessView;
-    uint32                   RegisterIndex;
+    FRHIShader*                Shader;
+    FRHIUnorderedAccessViewRef UnorderedAccessView;
+    uint32                     RegisterIndex;
 };
 
 DECLARE_RHICOMMAND(FRHICommandSetUnorderedAccessViews)
 {
-    FORCEINLINE FRHICommandSetUnorderedAccessViews(FRHIShader* InShader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 InStartRegisterIndex)
+    FORCEINLINE FRHICommandSetUnorderedAccessViews(FRHIShader* InShader, const TArrayView<FRHIUnorderedAccessViewRef> InUnorderedAccessViews, uint32 InStartRegisterIndex)
         : Shader(InShader)
         , UnorderedAccessViews(InUnorderedAccessViews)
         , StartRegisterIndex(InStartRegisterIndex)
     {
     }
 
-    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    FORCEINLINE ~FRHICommandSetUnorderedAccessViews()
     {
-        CommandContext.SetUnorderedAccessViews(Shader, UnorderedAccessViews, StartRegisterIndex);
+        for (FRHIUnorderedAccessViewRef& View : UnorderedAccessViews)
+        {
+            View.~FRHIUnorderedAccessViewRef();
+        }
     }
 
-    FRHIShader*                                Shader;
-    TArrayView<FRHIUnorderedAccessView* const> UnorderedAccessViews;
-    uint32                                     StartRegisterIndex;
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        TArray<FRHIUnorderedAccessView*> RawViews;
+        RawViews.Reserve(UnorderedAccessViews.Size());
+        for (const FRHIUnorderedAccessViewRef& View : UnorderedAccessViews)
+        {
+            RawViews.Add(View.Get());
+        }
+        CommandContext.SetUnorderedAccessViews(Shader, RawViews, StartRegisterIndex);
+    }
+
+    FRHIShader*                            Shader;
+    TArrayView<FRHIUnorderedAccessViewRef> UnorderedAccessViews;
+    uint32                                 StartRegisterIndex;
 };
 
 DECLARE_RHICOMMAND(FRHICommandSetConstantBuffer)
 {
-    FORCEINLINE FRHICommandSetConstantBuffer(FRHIShader* InShader, FRHIBuffer* InConstantBuffer, uint32 InRegisterIndex)
+    FORCEINLINE FRHICommandSetConstantBuffer(FRHIShader* InShader, FRHIBufferRef InConstantBuffer, uint32 InRegisterIndex)
         : Shader(InShader)
-        , ConstantBuffer(InConstantBuffer)
+        , ConstantBuffer(Move(InConstantBuffer))
         , RegisterIndex(InRegisterIndex)
     {
         if (ConstantBuffer)
@@ -551,24 +611,29 @@ DECLARE_RHICOMMAND(FRHICommandSetConstantBuffer)
         }
     }
 
-    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    FORCEINLINE FRHICommandSetConstantBuffer(FRHIShader* InShader, FRHIBuffer* InConstantBuffer, uint32 InRegisterIndex)
+        : FRHICommandSetConstantBuffer(InShader, MakeSharedRef<FRHIBuffer>(InConstantBuffer), InRegisterIndex)
     {
-        CommandContext.SetConstantBuffer(Shader, ConstantBuffer, RegisterIndex);
     }
 
-    FRHIShader* Shader;
-    FRHIBuffer* ConstantBuffer;
-    uint32      RegisterIndex;
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.SetConstantBuffer(Shader, ConstantBuffer.Get(), RegisterIndex);
+    }
+
+    FRHIShader*   Shader;
+    FRHIBufferRef ConstantBuffer;
+    uint32        RegisterIndex;
 };
 
 DECLARE_RHICOMMAND(FRHICommandSetConstantBuffers)
 {
-    FORCEINLINE FRHICommandSetConstantBuffers(FRHIShader* InShader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 InStartRegisterIndex)
+    FORCEINLINE FRHICommandSetConstantBuffers(FRHIShader* InShader, const TArrayView<FRHIBufferRef> InConstantBuffers, uint32 InStartRegisterIndex)
         : Shader(InShader)
         , ConstantBuffers(InConstantBuffers)
         , StartRegisterIndex(InStartRegisterIndex)
-    { 
-        for (FRHIBuffer* const Buffer : ConstantBuffers)
+    {
+        for (const FRHIBufferRef& Buffer : ConstantBuffers)
         {
             if (Buffer)
             {
@@ -577,52 +642,85 @@ DECLARE_RHICOMMAND(FRHICommandSetConstantBuffers)
         }
     }
 
-    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    FORCEINLINE ~FRHICommandSetConstantBuffers()
     {
-        CommandContext.SetConstantBuffers(Shader, ConstantBuffers, StartRegisterIndex);
+        for (FRHIBufferRef& Buffer : ConstantBuffers)
+        {
+            Buffer.~FRHIBufferRef();
+        }
     }
 
-    FRHIShader*                   Shader;
-    TArrayView<FRHIBuffer* const> ConstantBuffers;
-    uint32                        StartRegisterIndex;
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        TArray<FRHIBuffer*> RawBuffers;
+        RawBuffers.Reserve(ConstantBuffers.Size());
+        for (const FRHIBufferRef& Buffer : ConstantBuffers)
+        {
+            RawBuffers.Add(Buffer.Get());
+        }
+        CommandContext.SetConstantBuffers(Shader, RawBuffers, StartRegisterIndex);
+    }
+
+    FRHIShader*               Shader;
+    TArrayView<FRHIBufferRef> ConstantBuffers;
+    uint32                    StartRegisterIndex;
 };
 
 DECLARE_RHICOMMAND(FRHICommandSetSamplerState)
 {
-    FORCEINLINE FRHICommandSetSamplerState(FRHIShader* InShader, FRHISamplerState* InSamplerState, uint32 InRegisterIndex)
+    FORCEINLINE FRHICommandSetSamplerState(FRHIShader* InShader, FRHISamplerStateRef InSamplerState, uint32 InRegisterIndex)
         : Shader(InShader)
-        , SamplerState(InSamplerState)
+        , SamplerState(Move(InSamplerState))
         , RegisterIndex(InRegisterIndex)
+    {
+    }
+
+    FORCEINLINE FRHICommandSetSamplerState(FRHIShader* InShader, FRHISamplerState* InSamplerState, uint32 InRegisterIndex)
+        : FRHICommandSetSamplerState(InShader, MakeSharedRef<FRHISamplerState>(InSamplerState), InRegisterIndex)
     {
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetSamplerState(Shader, SamplerState, RegisterIndex);
+        CommandContext.SetSamplerState(Shader, SamplerState.Get(), RegisterIndex);
     }
 
-    FRHIShader*       Shader;
-    FRHISamplerState* SamplerState;
-    uint32            RegisterIndex;
+    FRHIShader*         Shader;
+    FRHISamplerStateRef SamplerState;
+    uint32              RegisterIndex;
 };
 
 DECLARE_RHICOMMAND(FRHICommandSetSamplerStates)
 {
-    FORCEINLINE FRHICommandSetSamplerStates(FRHIShader* InShader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 InStartRegisterIndex)
+    FORCEINLINE FRHICommandSetSamplerStates(FRHIShader* InShader, const TArrayView<FRHISamplerStateRef> InSamplerStates, uint32 InStartRegisterIndex)
         : Shader(InShader)
         , SamplerStates(InSamplerStates)
         , StartRegisterIndex(InStartRegisterIndex)
     {
     }
 
-    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    FORCEINLINE ~FRHICommandSetSamplerStates()
     {
-        CommandContext.SetSamplerStates(Shader, SamplerStates, StartRegisterIndex);
+        for (FRHISamplerStateRef& SamplerState : SamplerStates)
+        {
+            SamplerState.~FRHISamplerStateRef();
+        }
     }
 
-    FRHIShader*                         Shader;
-    TArrayView<FRHISamplerState* const> SamplerStates;
-    uint32                              StartRegisterIndex;
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        TArray<FRHISamplerState*> RawSamplerStates;
+        RawSamplerStates.Reserve(SamplerStates.Size());
+        for (const FRHISamplerStateRef& SamplerState : SamplerStates)
+        {
+            RawSamplerStates.Add(SamplerState.Get());
+        }
+        CommandContext.SetSamplerStates(Shader, RawSamplerStates, StartRegisterIndex);
+    }
+
+    FRHIShader*                     Shader;
+    TArrayView<FRHISamplerStateRef> SamplerStates;
+    uint32                          StartRegisterIndex;
 };
 
 DECLARE_RHICOMMAND(FRHICommandUpdateBuffer)

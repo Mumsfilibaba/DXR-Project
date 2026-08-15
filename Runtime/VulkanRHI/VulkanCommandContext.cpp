@@ -28,7 +28,8 @@ static TAutoConsoleVariable<bool> CVarTimestampTopOfPipe(
 #if VULKAN_ENABLE_CRASH_MARKERS
 static TAutoConsoleVariable<int32> CVarVulkanCrashMarkerLevel(
     "VulkanRHI.CrashMarkerLevel",
-    "GPU crash marker tracking level. 0=off, 1=markers only, 2=per draw/dispatch. Requires VK_AMD_buffer_marker or VK_NV_device_diagnostic_checkpoints.",
+    "GPU crash marker tracking level. 0=off, 1=markers only, 2=per draw/dispatch. Requires VK_AMD_buffer_marker or "
+    "VK_NV_device_diagnostic_checkpoints.",
     1);
 
 static int32 GetCrashMarkerLevel()
@@ -363,7 +364,7 @@ FVulkanBufferState& FVulkanCommandContext::RetrievePendingBufferState(FVulkanBuf
     return LocalState;
 }
 
-void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQueries, FVulkanFence** OutFence)
+void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQueries)
 {
     CHECK(CommandBuffer != nullptr);
 
@@ -401,12 +402,6 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQu
 
         delete Commands;
         Commands = nullptr;
-
-        if (OutFence)
-        {
-            *OutFence = nullptr;
-        }
-        
         return;
     }
 
@@ -513,11 +508,6 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQu
     }
 
     Commands->PendingQueries = Move(PendingQueries);
-
-    if (OutFence)
-    {
-        *OutFence = Commands->Fence;
-    }
 
     FVulkanDeviceRHI::Get()->NotifyCommandBufferRetired(Commands);
     Commands->Queue.SubmitCommands(Commands);
@@ -1829,19 +1819,8 @@ void FVulkanCommandContext::WriteFence(FRHIFence* Fence)
 
     if (CommandBuffer && CommandBuffer->GetNumCommands() > 0)
     {
-        if (VulkanFence->UsesTimeline())
-        {
-            VulkanFence->EnqueueSignal(GetCommands());
-        }
-
-        FVulkanFence* SubmittedFence = nullptr;
-        FinishCommandBuffer(true, true, &SubmittedFence);
-
-        if (!VulkanFence->UsesTimeline())
-        {
-            VulkanFence->SetSubmissionFence(SubmittedFence);
-        }
-
+        VulkanFence->EnqueueSignal(GetCommands());
+        FinishCommandBuffer(true, true);
         ObtainCommandBuffer();
     }
 }
@@ -2449,7 +2428,22 @@ void FVulkanCommandContext::TransitionBarrierTexture(const FRHITransitionBarrier
 
     if (TrackingMode == ERHIResourceStateTrackingMode::Manual)
     {
-        ImageBarrier.oldLayout                       = DeclaredLayout;
+        VkImageLayout OldLayout = DeclaredLayout;
+        {
+            FVulkanImageLayoutState& ManualLocalState = RetrievePendingImageState(VulkanTexture);
+            VkImageLayout TrackedLayout = ManualLocalState.GetImageLayout();
+            if (TrackedLayout == VK_IMAGE_LAYOUT_TO_BE_DETERMINED)
+            {
+                TrackedLayout = VulkanTexture->GetImageLayoutState().GetImageLayout();
+            }
+
+            if (TrackedLayout == VK_IMAGE_LAYOUT_UNDEFINED)
+            {
+                OldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            }
+        }
+
+        ImageBarrier.oldLayout                       = OldLayout;
         ImageBarrier.subresourceRange.baseMipLevel   = Range.BaseMip;
         ImageBarrier.subresourceRange.levelCount     = Range.MipCount;
         ImageBarrier.subresourceRange.baseArrayLayer = Range.BaseLayer;
@@ -2457,6 +2451,11 @@ void FVulkanCommandContext::TransitionBarrierTexture(const FRHITransitionBarrier
 
         CHECK(!IsInsideRenderPass());
         BarrierBatcher.AddImageMemoryBarrier(0, ImageBarrier);
+
+        FVulkanImageLayoutState& GlobalState = VulkanTexture->GetImageLayoutState();
+        FVulkanImageLayoutState& LocalState  = RetrievePendingImageState(VulkanTexture);
+        GlobalState.SetImageLayout(NewLayout);
+        LocalState.SetImageLayout(NewLayout);
 
         ApplyTrackingModeChange(VulkanTexture, Desc);
         return;
@@ -3484,14 +3483,14 @@ void FVulkanCommandContext::Flush()
 
 void FVulkanCommandContext::PushEvent(const StringView& Name)
 {
-    EventStack.Emplace(Name.Data());
+    const String& EventName = EventStack.Emplace(Name);
 
 #if VK_EXT_debug_utils
     if (GVulkanSupportsDebugUtils)
     {
         VkDebugUtilsLabelEXT DebugUtilsLabel = {};
         DebugUtilsLabel.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
-        DebugUtilsLabel.pLabelName = Name.Data();
+        DebugUtilsLabel.pLabelName = *EventName;
         DebugUtilsLabel.color[0]   = 0.0f;
         DebugUtilsLabel.color[1]   = 0.0f;
         DebugUtilsLabel.color[2]   = 0.0f;

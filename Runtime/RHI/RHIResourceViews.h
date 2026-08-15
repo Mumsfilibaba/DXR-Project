@@ -1,8 +1,10 @@
 #pragma once
+#include "Core/Containers/SharedRef.h"
 #include "Core/Containers/StaticArray.h"
 #include "RHI/RHIResource.h"
 #include "RHI/RHIPipelineState.h"
 #include "RHI/RHITexture.h"
+#include "RHI/RHITypes.h"
 
 enum class EBufferViewType : uint8
 {
@@ -2077,23 +2079,38 @@ struct FRHIRenderPassAttachment
     FRHIRenderPassAttachment() noexcept = default;
 
     explicit FRHIRenderPassAttachment(
-        FRHIRenderTargetView*  InView,
-        EAttachmentLoadAction  InLoadAction  = EAttachmentLoadAction::Clear,
-        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store,
-        const FFloatColor&     InClearValue  = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f)) noexcept
-        : View(InView)
+        FRHIRenderTargetViewRef InView,
+        EAttachmentLoadAction   InLoadAction  = EAttachmentLoadAction::Clear,
+        EAttachmentStoreAction  InStoreAction = EAttachmentStoreAction::Store,
+        const FFloatColor&      InClearValue  = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f)) noexcept
+        : View(Move(InView))
         , ClearValue(InClearValue)
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
     {
     }
 
-    bool operator==(const FRHIRenderPassAttachment& Other) const noexcept = default;
+    explicit FRHIRenderPassAttachment(
+        FRHIRenderTargetView*  InView,
+        EAttachmentLoadAction  InLoadAction  = EAttachmentLoadAction::Clear,
+        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store,
+        const FFloatColor&     InClearValue  = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f)) noexcept
+        : FRHIRenderPassAttachment(MakeSharedRef<FRHIRenderTargetView>(InView), InLoadAction, InStoreAction, InClearValue)
+    {
+    }
 
-    FRHIRenderTargetView*  View        = nullptr;
-    FFloatColor            ClearValue  = { };
-    EAttachmentLoadAction  LoadAction  = EAttachmentLoadAction::DontCare;
-    EAttachmentStoreAction StoreAction = EAttachmentStoreAction::DontCare;
+    bool operator==(const FRHIRenderPassAttachment& Other) const noexcept
+    {
+        return View.Get() == Other.View.Get()
+            && ClearValue == Other.ClearValue
+            && LoadAction == Other.LoadAction
+            && StoreAction == Other.StoreAction;
+    }
+
+    FRHIRenderTargetViewRef View;
+    FFloatColor             ClearValue  = { };
+    EAttachmentLoadAction   LoadAction  = EAttachmentLoadAction::DontCare;
+    EAttachmentStoreAction  StoreAction = EAttachmentStoreAction::DontCare;
 };
 
 struct FRHIDepthStencilAttachment
@@ -2101,23 +2118,38 @@ struct FRHIDepthStencilAttachment
     FRHIDepthStencilAttachment() noexcept = default;
 
     explicit FRHIDepthStencilAttachment(
-        FRHIDepthStencilView*     InView,
-        EAttachmentLoadAction     InLoadAction  = EAttachmentLoadAction::Clear,
-        EAttachmentStoreAction    InStoreAction = EAttachmentStoreAction::Store,
-        const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0)) noexcept
-        : View(InView)
+        FRHIDepthStencilViewRef InView,
+        EAttachmentLoadAction   InLoadAction  = EAttachmentLoadAction::Clear,
+        EAttachmentStoreAction  InStoreAction = EAttachmentStoreAction::Store,
+        const FDepthStencilValue& InClearValue = FDepthStencilValue(1.0f, 0)) noexcept
+        : View(Move(InView))
         , ClearValue(InClearValue)
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
     {
     }
 
-    bool operator==(const FRHIDepthStencilAttachment& Other) const noexcept = default;
+    explicit FRHIDepthStencilAttachment(
+        FRHIDepthStencilView*  InView,
+        EAttachmentLoadAction  InLoadAction  = EAttachmentLoadAction::Clear,
+        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store,
+        const FDepthStencilValue& InClearValue = FDepthStencilValue(1.0f, 0)) noexcept
+        : FRHIDepthStencilAttachment(MakeSharedRef<FRHIDepthStencilView>(InView), InLoadAction, InStoreAction, InClearValue)
+    {
+    }
 
-    FRHIDepthStencilView*  View        = nullptr;
-    FDepthStencilValue     ClearValue  = { };
-    EAttachmentLoadAction  LoadAction  = EAttachmentLoadAction::DontCare;
-    EAttachmentStoreAction StoreAction = EAttachmentStoreAction::DontCare;
+    bool operator==(const FRHIDepthStencilAttachment& Other) const noexcept
+    {
+        return View.Get() == Other.View.Get()
+            && ClearValue == Other.ClearValue
+            && LoadAction == Other.LoadAction
+            && StoreAction == Other.StoreAction;
+    }
+
+    FRHIDepthStencilViewRef View;
+    FDepthStencilValue      ClearValue  = { };
+    EAttachmentLoadAction   LoadAction  = EAttachmentLoadAction::DontCare;
+    EAttachmentStoreAction  StoreAction = EAttachmentStoreAction::DontCare;
 };
 
 struct FRHIBeginRenderPassDesc

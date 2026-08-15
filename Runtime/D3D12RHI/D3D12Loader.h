@@ -12,21 +12,11 @@ typedef HRESULT(WINAPI* PFN_DXGI_GET_DEBUG_INTERFACE_1)(UINT Flags, REFIID riid,
 typedef HRESULT(WINAPI* PFN_PIXBeginEventOnCommandList)(ID3D12GraphicsCommandList* commandList, UINT64 color, _In_ PCSTR formatString);
 typedef HRESULT(WINAPI* PFN_PIXEndEventOnCommandList)(ID3D12GraphicsCommandList* commandList);
 
-struct D3D12Loader
+struct D3D12
 {
-public:
     static bool Initialize(bool bEnablePIX);
     static void Release();
 
-private:
-    static void* DXGILibrary;
-    static void* D3D12Library;
-    static void* PIXLibrary;
-    static void* DXCLibrary;
-};
-
-struct D3D12Functions
-{
     static PFN_CREATE_DXGI_FACTORY_2                              CreateDXGIFactory2;
     static PFN_DXGI_GET_DEBUG_INTERFACE_1                         DXGIGetDebugInterface1;
     static PFN_D3D12_CREATE_DEVICE                                D3D12CreateDevice;
@@ -38,4 +28,10 @@ struct D3D12Functions
     static PFN_PIXBeginEventOnCommandList                         PIXBeginEventOnCommandList;
     static PFN_PIXEndEventOnCommandList                           PIXEndEventOnCommandList;
     static DxcCreateInstanceProc                                  DxcCreateInstance;
+
+private:
+    static void* DXGILibrary;
+    static void* D3D12Library;
+    static void* PIXLibrary;
+    static void* DXCLibrary;
 };

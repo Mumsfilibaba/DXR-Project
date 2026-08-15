@@ -2,7 +2,7 @@
 #include "RendererCore/TextureFactory.h"
 #include "Renderer/Scene/SceneLightProbe.h"
 #include "Renderer/Scene/SceneProxyData.h"
-#include "Renderer/FrameResources.h"
+#include "Renderer/Graph/FrameResources.h"
 
 FSceneLightProbe::FSceneLightProbe(FScene* InScene, const FRHITextureRef& InSourceCubeMap)
     : FSceneObject(InScene)
@@ -38,17 +38,18 @@ void FSceneLightProbe::RenderThread_FilterStaticCubeMaps()
         return;
     }
 
-    // Format for filtering before compressing the static cube-map
-    constexpr EFormat TempCubeMapFormat = EFormat::R16G16B16A16_Float;
+    constexpr EFormat TempCubeMapFormat   = EFormat::R16G16B16A16_Float;
+    constexpr uint32  SpecularCubeMapSize = 512;
 
-    // Create specular cube-map
-    constexpr uint32 SpecularCubeMapSize = 512;
     const uint32 SpecularIrradianceMiplevels = Math::Max<uint32>(static_cast<uint32>(Math::Log2(static_cast<float>(SpecularCubeMapSize))), 1);
 
-    const ETextureUsageFlags TextureFlags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
-    FRHITextureDesc SpecularCubeMapDesc = FRHITextureDesc::CreateTextureCube(TempCubeMapFormat, SpecularCubeMapSize, SpecularIrradianceMiplevels, 1, TextureFlags);
+    const ETextureUsageFlags TextureFlags =
+        ETextureUsageFlags::UnorderedAccessTexture |
+        ETextureUsageFlags::ShaderResourceTexture;
 
-    FRHITextureRef TempSpecularCubeMap = RHI::CreateTexture(SpecularCubeMapDesc, ERHIResourceState::ShaderResource);
+    FRHITextureDesc SpecularCubeMapDesc = FRHITextureDesc::CreateTextureCube(TempCubeMapFormat, SpecularCubeMapSize, SpecularIrradianceMiplevels, 1, TextureFlags);
+    FRHITextureRef  TempSpecularCubeMap = RHI::CreateTexture(SpecularCubeMapDesc, ERHIResourceState::ShaderResource);
+
     if (!TempSpecularCubeMap)
     {
         DEBUG_BREAK();
@@ -59,11 +60,10 @@ void FSceneLightProbe::RenderThread_FilterStaticCubeMaps()
         TempSpecularCubeMap->SetDebugName("Temp Specular CubeMap");
     }
 
-    // Create diffuse cube-map
     const uint32 DiffuseCubeMapSize = 32;
     FRHITextureDesc DiffuseCubeMapDesc = FRHITextureDesc::CreateTextureCube(TempCubeMapFormat, DiffuseCubeMapSize, 1, 1, TextureFlags);
+    FRHITextureRef  TempDiffuseCubeMap = RHI::CreateTexture(DiffuseCubeMapDesc, ERHIResourceState::ShaderResource);
 
-    FRHITextureRef TempDiffuseCubeMap = RHI::CreateTexture(DiffuseCubeMapDesc, ERHIResourceState::ShaderResource);
     if (!TempDiffuseCubeMap)
     {
         DEBUG_BREAK();
@@ -76,13 +76,7 @@ void FSceneLightProbe::RenderThread_FilterStaticCubeMaps()
 
     FRHICommandList CommandList;
 
-    // Filter specular cube-map
-
-    // When calculating NumMips we skip 3 miplevels since those are too small for the 
-    // compressed texture since they are smaller than the compressed block-size.
     constexpr uint32 NumMipsSkipped = 3;
-
-    // Calculate the amount of compressed miplevels
     const int32 NumSpecularMipLevels = Math::Max<int32>(static_cast<int32>(SpecularIrradianceMiplevels) - NumMipsSkipped, 1);
 
     bool bResult = FTextureFactory::Get().FilterSpecularCubeMap(CommandList, SourceCubeMap.Get(), TempSpecularCubeMap.Get(), NumSpecularMipLevels);
@@ -92,7 +86,6 @@ void FSceneLightProbe::RenderThread_FilterStaticCubeMaps()
         return;
     }
 
-    // Filter diffuse cube-map
     bResult = FTextureFactory::Get().FilterDiffuseCubeMap(CommandList, SourceCubeMap.Get(), TempDiffuseCubeMap.Get());
     if (!bResult)
     {
@@ -100,7 +93,6 @@ void FSceneLightProbe::RenderThread_FilterStaticCubeMaps()
         return;
     }
 
-    // Compress the cube-maps
     FTextureCompressor& TextureCompressor = FTextureFactory::Get().GetTextureCompressor();
     TextureCompressor.CompressCubeMapBC6(CommandList, TempSpecularCubeMap, SpecularCubeMap);
 

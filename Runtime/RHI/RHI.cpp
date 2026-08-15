@@ -7,7 +7,7 @@
 IMPLEMENT_ENGINE_MODULE(FRHIModule, RHI);
 
 static TAutoConsoleVariable<bool> CVarEnableDebugLayer(
-    "RHI.EnableDebugLayer", 
+    "RHI.EnableDebugLayer",
     "Enables the DebugLayer for the RHI",
     false);
 

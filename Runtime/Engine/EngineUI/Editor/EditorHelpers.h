@@ -139,7 +139,7 @@ struct ENGINE_API EditorStyleVars
 
 struct ENGINE_API EditorHelpers
 {
-    static FORCEINLINE ImU32 MakeBrighterColorU32(const ImVec4& HoveredColor, float BrightenAmount = 0.20f)
+    static FORCEINLINE ImU32 CreateBrighterColorU32(const ImVec4& HoveredColor, float BrightenAmount = 0.20f)
     {
         ImVec4 BrighterColor = HoveredColor;
         BrighterColor.x = (BrighterColor.x + BrightenAmount > 1.0f) ? 1.0f : (BrighterColor.x + BrightenAmount);

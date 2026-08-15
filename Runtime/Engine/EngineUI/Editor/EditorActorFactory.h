@@ -90,7 +90,7 @@ struct ENGINE_API EditorActorFactory
      * @param BaseName Name to use as-is when it is free, and as the stem of "BaseName (N)" when it is not
      * @return Returns the unique name
      */
-    static String MakeUniqueActorName(FWorld* World, const CHAR* BaseName);
+    static String CreateUniqueActorName(FWorld* World, const CHAR* BaseName);
 
     /** @brief Drop the cached primitive meshes, which must happen before the RHI is torn down. */
     static void ReleaseCachedMeshes();

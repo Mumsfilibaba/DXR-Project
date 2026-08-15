@@ -13,7 +13,7 @@ static FORCEINLINE uint64 VulkanAlignUp(uint64 Value, uint64 Alignment)
 FVulkanShaderBindingTable::FVulkanShaderBindingTable(FVulkanDevice* InDevice, const FRHIShaderBindingTableDesc& InDesc)
     : FRHIShaderBindingTable(InDesc)
     , FVulkanDeviceChild(InDevice)
-    , Pipeline(FVulkanDeviceRHI::ResourceCast(InDesc.Pipeline))
+    , Pipeline(MakeSharedRef<FVulkanRayTracingPipelineStateRHI>(FVulkanDeviceRHI::ResourceCast(InDesc.Pipeline)))
     , NumRayGen(Math::Max<uint32>(InDesc.NumRayGenerationShaders, 1u))
     , NumMiss(InDesc.NumMissShaders)
     , NumCallable(InDesc.NumCallableShaders)
@@ -27,11 +27,6 @@ FVulkanShaderBindingTable::FVulkanShaderBindingTable(FVulkanDevice* InDevice, co
     , CpuShadow()
     , TableLocation(InDevice)
 {
-    if (Pipeline)
-    {
-        Pipeline->AddRef();
-    }
-
     HandleSize = Pipeline ? Pipeline->GetShaderGroupHandleSize() : 0;
 
     const uint32 HandleAlignment = Pipeline ? Pipeline->GetShaderGroupHandleAlignment() : 1;

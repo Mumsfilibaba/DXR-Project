@@ -22,22 +22,12 @@ void FVulkanBackBufferProxyTextureRHI::Resize(uint32 InWidth, uint32 InHeight)
 
 void FVulkanBackBufferProxyTextureRHI::SetProxyRenderTargetView(FVulkanBackBufferProxyRenderTargetViewRHI* InProxyRenderTargetView)
 {
-    if (InProxyRenderTargetView)
-    {
-        InProxyRenderTargetView->AddRef();
-    }
-
-    ProxyRenderTargetView = InProxyRenderTargetView;
+    ProxyRenderTargetView = MakeSharedRef<FVulkanBackBufferProxyRenderTargetViewRHI>(InProxyRenderTargetView);
 }
 
 void FVulkanBackBufferProxyTextureRHI::SetProxyUnorderedAccessView(FVulkanBackBufferProxyUnorderedAccessViewRHI* InProxyUnorderedAccessView)
 {
-    if (InProxyUnorderedAccessView)
-    {
-        InProxyUnorderedAccessView->AddRef();
-    }
-
-    ProxyUnorderedAccessView = InProxyUnorderedAccessView;
+    ProxyUnorderedAccessView = MakeSharedRef<FVulkanBackBufferProxyUnorderedAccessViewRHI>(InProxyUnorderedAccessView);
 }
 
 FVulkanTextureRHI* FVulkanBackBufferProxyTextureRHI::GetTextureInterface() const
@@ -47,8 +37,7 @@ FVulkanTextureRHI* FVulkanBackBufferProxyTextureRHI::GetTextureInterface() const
         return nullptr;
     }
 
-    SwapChain->NotifyBackBufferAccessed();
-    return SwapChain->GetCurrentBackBuffer();
+    return SwapChain->AcquireBackBuffer();
 }
 
 void* FVulkanBackBufferProxyTextureRHI::GetRHINativeResource() const
@@ -142,7 +131,7 @@ FVulkanRenderTargetViewRHI* FVulkanBackBufferProxyRenderTargetViewRHI::GetRender
         return nullptr;
     }
 
-    SwapChain->NotifyBackBufferAccessed();
+    SwapChain->AcquireBackBuffer();
     return SwapChain->GetCurrentBackBufferRenderTargetView();
 }
 
@@ -170,7 +159,7 @@ FVulkanUnorderedAccessViewRHI* FVulkanBackBufferProxyUnorderedAccessViewRHI::Get
         return nullptr;
     }
 
-    SwapChain->NotifyBackBufferAccessed();
+    SwapChain->AcquireBackBuffer();
     return SwapChain->GetCurrentBackBufferUnorderedAccessView();
 }
 

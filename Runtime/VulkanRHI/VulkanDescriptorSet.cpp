@@ -40,9 +40,9 @@ static TAutoConsoleVariable<bool> CVarVulkanForceSplitBindlessHeap(
 
 static TAutoConsoleVariable<int32> CVarVulkanNumBindlessResourceDescriptors(
     "VulkanRHI.NumBindlessResourceDescriptors",
-    "Number of slots reserved in the global bindless resource descriptor set (sampled images / storage "
-    "images / uniform buffers / storage buffers, aliased into one binding via VK_EXT_mutable_descriptor_type "
-    "or spread over one binding per type). Default mirrors D3D12 to keep the cross-RHI budget aligned.",
+    "Number of slots reserved in the global bindless resource descriptor set (sampled images / storage images / uniform buffers / storage "
+    "buffers, aliased into one binding via VK_EXT_mutable_descriptor_type or spread over one binding per type). Default mirrors D3D12 to "
+    "keep the cross-RHI budget aligned.",
     100000);
 
 static TAutoConsoleVariable<int32> CVarVulkanNumBindlessSamplerDescriptors(
@@ -204,24 +204,44 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
             {
                 case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
                 case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
+                {
+                    WriteDescriptorSet.pBufferInfo = &DSWrites.DescriptorBufferInfos[CurrentBufferInfo++];
+
+                    VkDescriptorBufferInfo* BufferDesc = const_cast<VkDescriptorBufferInfo*>(WriteDescriptorSet.pBufferInfo);
+                    BufferDesc->buffer = DefaultResources.NullReadBuffer;
+                    BufferDesc->offset = 0;
+                    BufferDesc->range  = VK_WHOLE_SIZE;
+                    break;
+                }
+
                 case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
                 {
                     WriteDescriptorSet.pBufferInfo = &DSWrites.DescriptorBufferInfos[CurrentBufferInfo++];
-                    
+
                     VkDescriptorBufferInfo* BufferDesc = const_cast<VkDescriptorBufferInfo*>(WriteDescriptorSet.pBufferInfo);
-                    BufferDesc->buffer = DefaultResources.NullBuffer;
+                    BufferDesc->buffer = DefaultResources.NullWriteBuffer;
                     BufferDesc->offset = 0;
                     BufferDesc->range  = VK_WHOLE_SIZE;
                     break;
                 }
 
                 case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+                {
+                    WriteDescriptorSet.pImageInfo = &DSWrites.DescriptorImageInfos[CurrentImageInfo++];
+
+                    VkDescriptorImageInfo* ImageInfo = const_cast<VkDescriptorImageInfo*>(WriteDescriptorSet.pImageInfo);
+                    ImageInfo->imageView   = DefaultResources.GetNullReadImageView(DSWrites.NullViewTypes[Index]);
+                    ImageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                    ImageInfo->sampler     = VK_NULL_HANDLE;
+                    break;
+                }
+
                 case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
                 {
                     WriteDescriptorSet.pImageInfo = &DSWrites.DescriptorImageInfos[CurrentImageInfo++];
-                    
+
                     VkDescriptorImageInfo* ImageInfo = const_cast<VkDescriptorImageInfo*>(WriteDescriptorSet.pImageInfo);
-                    ImageInfo->imageView   = DefaultResources.GetNullImageView(DSWrites.NullViewTypes[Index]);
+                    ImageInfo->imageView   = DefaultResources.GetNullWriteImageView(DSWrites.NullViewTypes[Index]);
                     ImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
                     ImageInfo->sampler     = VK_NULL_HANDLE;
                     break;
@@ -239,12 +259,20 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
                 }
 
                 case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
+                {
+                    WriteDescriptorSet.pTexelBufferView = &DSWrites.DescriptorTexelBufferViews[CurrentTexelBufferView++];
+
+                    VkBufferView* BufferView = const_cast<VkBufferView*>(WriteDescriptorSet.pTexelBufferView);
+                    *BufferView = DefaultResources.NullReadBufferView;
+                    break;
+                }
+
                 case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
                 {
                     WriteDescriptorSet.pTexelBufferView = &DSWrites.DescriptorTexelBufferViews[CurrentTexelBufferView++];
 
                     VkBufferView* BufferView = const_cast<VkBufferView*>(WriteDescriptorSet.pTexelBufferView);
-                    *BufferView = DefaultResources.NullBufferView;
+                    *BufferView = DefaultResources.NullWriteBufferView;
                     break;
                 }
 
@@ -602,10 +630,9 @@ void FVulkanDescriptorState::UpdateDescriptorSets(FVulkanTransientDescriptorAllo
 
             if (WriteInfo.pBufferInfo)
             {
-                if (WriteInfo.pBufferInfo->buffer == DefaultResources.NullBuffer)
+                if (DefaultResources.IsNullBuffer(WriteInfo.pBufferInfo->buffer))
                 {
-                    VULKAN_WARNING("Null buffer descriptor '%s' (register b%u) at set=%d binding=%u (%s)",
-                        BindingName, OriginalBinding, Index, WriteInfo.dstBinding, GetDescriptorTypeName(WriteInfo.descriptorType));
+                    VULKAN_WARNING("Null buffer descriptor '%s' (register b%u) at set=%d binding=%u (%s)", BindingName, OriginalBinding, Index, WriteInfo.dstBinding, GetDescriptorTypeName(WriteInfo.descriptorType));
                 #if VULKAN_BREAK_ON_NULL_DESCRIPTORS
                     DEBUG_BREAK();
                 #endif
@@ -615,12 +642,16 @@ void FVulkanDescriptorState::UpdateDescriptorSets(FVulkanTransientDescriptorAllo
             {
                 if (WriteInfo.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE || WriteInfo.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
                 {
-                    if (WriteInfo.pImageInfo->imageView == DefaultResources.GetNullImageView(DSWrites.NullViewTypes[BindIdx]))
+                    const EVulkanNullImageViewType NullViewType = DSWrites.NullViewTypes[BindIdx];
+                    const bool bIsNullImageView = (WriteInfo.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE)
+                        ? DefaultResources.IsNullReadImageView(WriteInfo.pImageInfo->imageView, NullViewType)
+                        : DefaultResources.IsNullWriteImageView(WriteInfo.pImageInfo->imageView, NullViewType);
+
+                    if (bIsNullImageView)
                     {
-                        VULKAN_WARNING("Null image view descriptor '%s' (register t%u) at set=%d binding=%u (%s)",
-                            BindingName, OriginalBinding, Index, WriteInfo.dstBinding, GetDescriptorTypeName(WriteInfo.descriptorType));
+                        VULKAN_WARNING("Null image view descriptor '%s' (register t%u) at set=%d binding=%u (%s)", BindingName, OriginalBinding, Index, WriteInfo.dstBinding, GetDescriptorTypeName(WriteInfo.descriptorType));
                     #if VULKAN_BREAK_ON_NULL_DESCRIPTORS
-                        DEBUG_BREAK();
+                    DEBUG_BREAK();
                     #endif
                     }
                 }
@@ -746,19 +777,19 @@ void FVulkanDescriptorState::ResetDescriptorBinding(uint32 DescriptorSetIndex, u
     {
         case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
         {
-            DSBuilder.WriteStorageBuffer(BindingIndex, DefaultResources.NullBuffer, 0, VK_WHOLE_SIZE);
+            DSBuilder.WriteStorageBuffer(BindingIndex, DefaultResources.NullWriteBuffer, 0, VK_WHOLE_SIZE);
             break;
         }
 
         case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
         {
-            DSBuilder.WriteUniformBuffer(BindingIndex, DefaultResources.NullBuffer, 0, VK_WHOLE_SIZE);
+            DSBuilder.WriteUniformBuffer(BindingIndex, DefaultResources.NullReadBuffer, 0, VK_WHOLE_SIZE);
             break;
         }
 
         case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
         {
-            DSBuilder.WriteDynamicUniformBuffer(BindingIndex, DefaultResources.NullBuffer, VK_WHOLE_SIZE);
+            DSBuilder.WriteDynamicUniformBuffer(BindingIndex, DefaultResources.NullReadBuffer, VK_WHOLE_SIZE);
 
             const int32 DynamicIndex = BindingToDynamicIndex[DescriptorSetIndex][BindingIndex];
             if (DynamicIndex >= 0)
@@ -775,14 +806,14 @@ void FVulkanDescriptorState::ResetDescriptorBinding(uint32 DescriptorSetIndex, u
 
         case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
         {
-            const VkImageView NullView = DefaultResources.GetNullImageView(DSWrites.NullViewTypes[BindingIndex]);
+            const VkImageView NullView = DefaultResources.GetNullWriteImageView(DSWrites.NullViewTypes[BindingIndex]);
             DSBuilder.WriteStorageImage(BindingIndex, NullView, VK_IMAGE_LAYOUT_GENERAL);
             break;
         }
 
         case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
         {
-            const VkImageView NullView = DefaultResources.GetNullImageView(DSWrites.NullViewTypes[BindingIndex]);
+            const VkImageView NullView = DefaultResources.GetNullReadImageView(DSWrites.NullViewTypes[BindingIndex]);
             DSBuilder.WriteSampledImage(BindingIndex, NullView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
             break;
         }
@@ -795,13 +826,13 @@ void FVulkanDescriptorState::ResetDescriptorBinding(uint32 DescriptorSetIndex, u
 
         case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
         {
-            DSBuilder.WriteUniformTexelBuffer(BindingIndex, DefaultResources.NullBufferView);
+            DSBuilder.WriteUniformTexelBuffer(BindingIndex, DefaultResources.NullReadBufferView);
             break;
         }
 
         case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
         {
-            DSBuilder.WriteStorageTexelBuffer(BindingIndex, DefaultResources.NullBufferView);
+            DSBuilder.WriteStorageTexelBuffer(BindingIndex, DefaultResources.NullWriteBufferView);
             break;
         }
 

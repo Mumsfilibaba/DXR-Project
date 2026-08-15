@@ -1053,7 +1053,7 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
     {
         const FRHIRenderPassAttachment& CurrentAttachment = BeginRenderPassDesc.RenderTargets[Index];
 
-        RenderTargetViews[Index] = FD3D12DeviceRHI::ResourceCast(CurrentAttachment.View);
+        RenderTargetViews[Index] = FD3D12DeviceRHI::ResourceCast(CurrentAttachment.View.Get());
         if (RenderTargetViews[Index] && CurrentAttachment.LoadAction == EAttachmentLoadAction::Clear)
         {
             TransitionResourceState(RenderTargetViews[Index]);
@@ -1061,7 +1061,7 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
     }
 
     const FRHIDepthStencilAttachment& CurrentDSAttachment = BeginRenderPassDesc.DepthStencilAttachment;
-    DepthStencilView = FD3D12DeviceRHI::ResourceCast(CurrentDSAttachment.View);
+    DepthStencilView = FD3D12DeviceRHI::ResourceCast(CurrentDSAttachment.View.Get());
 
     const bool bClearDepthStencil = DepthStencilView && CurrentDSAttachment.LoadAction == EAttachmentLoadAction::Clear;
     if (bClearDepthStencil)
@@ -3563,10 +3563,10 @@ void FD3D12CommandContext::PushEvent(const StringView& Name)
     EventStack.Emplace(Name.Data());
 
 #if D3D12_ENABLE_PIX_MARKERS
-    if (D3D12Functions::PIXBeginEventOnCommandList)
+    if (D3D12::PIXBeginEventOnCommandList)
     {
         ID3D12GraphicsCommandList* GraphicsCommandList = static_cast<ID3D12GraphicsCommandList*>(CommandList->GetCommandList());
-        D3D12Functions::PIXBeginEventOnCommandList(GraphicsCommandList, PIX_COLOR(255, 255, 255), *Name);
+        D3D12::PIXBeginEventOnCommandList(GraphicsCommandList, PIX_COLOR(255, 255, 255), *Name);
     }
 #endif
 }
@@ -3579,10 +3579,10 @@ void FD3D12CommandContext::PopEvent()
     }
 
 #if D3D12_ENABLE_PIX_MARKERS
-    if (D3D12Functions::PIXEndEventOnCommandList)
+    if (D3D12::PIXEndEventOnCommandList)
     {
         ID3D12GraphicsCommandList* GraphicsCommandList = static_cast<ID3D12GraphicsCommandList*>(CommandList->GetCommandList());
-        D3D12Functions::PIXEndEventOnCommandList(GraphicsCommandList);
+        D3D12::PIXEndEventOnCommandList(GraphicsCommandList);
     }
 #endif
 }
@@ -3590,13 +3590,13 @@ void FD3D12CommandContext::PopEvent()
 void FD3D12CommandContext::CloseEventStack()
 {
 #if D3D12_ENABLE_PIX_MARKERS
-    if (D3D12Functions::PIXEndEventOnCommandList)
+    if (D3D12::PIXEndEventOnCommandList)
     {
         ID3D12GraphicsCommandList* GraphicsCommandList = static_cast<ID3D12GraphicsCommandList*>(CommandList->GetCommandList());
 
         for (int32 i = EventStack.Size() - 1; i >= 0; --i)
         {
-            D3D12Functions::PIXEndEventOnCommandList(GraphicsCommandList);
+            D3D12::PIXEndEventOnCommandList(GraphicsCommandList);
         }
     }
 #endif
@@ -3605,13 +3605,13 @@ void FD3D12CommandContext::CloseEventStack()
 void FD3D12CommandContext::ReopenEventStack()
 {
 #if D3D12_ENABLE_PIX_MARKERS
-    if (D3D12Functions::PIXBeginEventOnCommandList)
+    if (D3D12::PIXBeginEventOnCommandList)
     {
         ID3D12GraphicsCommandList* GraphicsCommandList = static_cast<ID3D12GraphicsCommandList*>(CommandList->GetCommandList());
 
         for (int32 i = 0; i < EventStack.Size(); ++i)
         {
-            D3D12Functions::PIXBeginEventOnCommandList(GraphicsCommandList, PIX_COLOR(255, 255, 255), *EventStack[i]);
+            D3D12::PIXBeginEventOnCommandList(GraphicsCommandList, PIX_COLOR(255, 255, 255), *EventStack[i]);
         }
     }
 #endif

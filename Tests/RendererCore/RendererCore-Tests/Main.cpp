@@ -93,7 +93,15 @@ int main(int Argc, const CHAR* Argv[])
 
     RUN_TEST("RenderGraphValidationSelfCheck", RenderGraphValidationSelfCheck_Test());
     RUN_TEST("RenderGraph", RenderGraph_Test());
+    RUN_TEST("RenderGraphDisabledPass", RenderGraphDisabledPass_Test());
     RUN_TEST("RenderGraphFrame", RenderGraphFrame_Test());
+    RUN_TEST("RenderGraphViewSlice", RenderGraphViewSlice_Test());
+    RUN_TEST("RenderGraphViewUndeclared", RenderGraphViewUndeclared_Test());
+    RUN_TEST("RenderGraphViewBufferRange", RenderGraphViewBufferRange_Test());
+    RUN_TEST("RenderGraphViewValidation", RenderGraphViewValidation_Test());
+    RUN_TEST("RenderGraphViewTypelessFormat", RenderGraphViewTypelessFormat_Test());
+    RUN_TEST("RenderGraphViewHybridUsage", RenderGraphViewHybridUsage_Test());
+    RUN_TEST("RenderGraphSubresourceRejoin", RenderGraphSubresourceRejoin_Test());
 
     FRenderGraphResourcePool::Release();
     RHI::Release();
