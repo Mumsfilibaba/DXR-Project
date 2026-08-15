@@ -69,7 +69,7 @@ bool RenderGraphValidationSelfCheck_Test()
     RHIValidation::ResetErrorCount();
 
     FRHIBeginRenderPassDesc::FRenderTargetAttachments Attachments;
-    Attachments[0] = FRHIRenderPassAttachment(Texture->GetRenderTargetView(), EAttachmentLoadAction::Load, EAttachmentStoreAction::Store);
+    Attachments[0] = FRHIRenderTargetAttachment(Texture->GetRenderTargetView(), EAttachmentLoadAction::Load, EAttachmentStoreAction::Store);
 
     FRHICommandList CommandList;
     CommandList.BeginRenderPass(FRHIBeginRenderPassDesc(Attachments, 1));

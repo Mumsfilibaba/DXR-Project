@@ -665,7 +665,7 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
 
     for (uint32 Index = 0; Index < RenderPassDesc.NumRenderTargets; Index++)
     {
-        const FRHIRenderPassAttachment& Attachment = RenderPassDesc.RenderTargets[Index];
+        const FRHIRenderTargetAttachment& Attachment = RenderPassDesc.RenderTargets[Index];
         FVulkanRenderTargetViewRHI* VulkanRenderTargetView = FVulkanDeviceRHI::ResourceCast(Attachment.View.Get());
         if (!VulkanRenderTargetView)
         {
@@ -782,7 +782,7 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
         VkRenderingAttachmentInfoKHR ColorAttachments[RHI_MAX_RENDER_TARGETS] = {};
         for (uint32 i = 0; i < RenderTargetState.NumRenderTargets; i++)
         {
-            const FRHIRenderPassAttachment& ColorAttachment = RenderPassDesc.RenderTargets[i];
+            const FRHIRenderTargetAttachment& ColorAttachment = RenderPassDesc.RenderTargets[i];
             ColorAttachments[i].sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
             ColorAttachments[i].imageView   = RenderTargetState.RenderTargetViews[i] ? RenderTargetState.RenderTargetViews[i]->GetImageViewInfo().ImageView : VK_NULL_HANDLE;
             ColorAttachments[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;

@@ -231,7 +231,7 @@ void FDebugViewPass::RecordInternal(FRHICommandList& CommandList, const FSceneRe
 
     FRHIBeginRenderPassDesc RenderPassDesc;
     RenderPassDesc.NumRenderTargets = 1;
-    RenderPassDesc.RenderTargets[0] = FRHIRenderPassAttachment(RenderTargetView, 
+    RenderPassDesc.RenderTargets[0] = FRHIRenderTargetAttachment(RenderTargetView, 
         bClearTarget ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load,
         EAttachmentStoreAction::Store, FFloatColor(0.0f, 0.0f, 0.0f, 1.0f));
 

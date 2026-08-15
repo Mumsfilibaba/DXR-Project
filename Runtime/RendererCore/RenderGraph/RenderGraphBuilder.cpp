@@ -1030,7 +1030,7 @@ FRHIBeginRenderPassDesc FRenderGraphBuilder::BuildBeginRenderPassDesc(const FRen
             return FRHIBeginRenderPassDesc();
         }
 
-        RenderTargets[Index] = FRHIRenderPassAttachment(RenderTargetView, Attachment.LoadAction, Attachment.StoreAction, Attachment.ClearValue);
+        RenderTargets[Index] = FRHIRenderTargetAttachment(RenderTargetView, Attachment.LoadAction, Attachment.StoreAction, Attachment.ClearValue);
         NumRenderTargets     = Math::Max(NumRenderTargets, Index + 1);
     }
 

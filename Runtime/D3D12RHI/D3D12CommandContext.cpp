@@ -1051,7 +1051,7 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
 
     for (uint32 Index = 0; Index < BeginRenderPassDesc.NumRenderTargets; ++Index)
     {
-        const FRHIRenderPassAttachment& CurrentAttachment = BeginRenderPassDesc.RenderTargets[Index];
+        const FRHIRenderTargetAttachment& CurrentAttachment = BeginRenderPassDesc.RenderTargets[Index];
 
         RenderTargetViews[Index] = FD3D12DeviceRHI::ResourceCast(CurrentAttachment.View.Get());
         if (RenderTargetViews[Index] && CurrentAttachment.LoadAction == EAttachmentLoadAction::Clear)
@@ -1074,7 +1074,7 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
 
     for (uint32 Index = 0; Index < BeginRenderPassDesc.NumRenderTargets; ++Index)
     {
-        const FRHIRenderPassAttachment& CurrentAttachment = BeginRenderPassDesc.RenderTargets[Index];
+        const FRHIRenderTargetAttachment& CurrentAttachment = BeginRenderPassDesc.RenderTargets[Index];
         if (RenderTargetViews[Index] && CurrentAttachment.LoadAction == EAttachmentLoadAction::Clear)
         {
             GetCommandList()->ClearRenderTargetView(

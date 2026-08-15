@@ -2074,11 +2074,11 @@ protected:
     FRHIDepthStencilViewDesc Desc;
 };
 
-struct FRHIRenderPassAttachment
+struct FRHIRenderTargetAttachment
 {
-    FRHIRenderPassAttachment() noexcept = default;
+    FRHIRenderTargetAttachment() noexcept = default;
 
-    explicit FRHIRenderPassAttachment(
+    explicit FRHIRenderTargetAttachment(
         FRHIRenderTargetViewRef InView,
         EAttachmentLoadAction   InLoadAction  = EAttachmentLoadAction::Clear,
         EAttachmentStoreAction  InStoreAction = EAttachmentStoreAction::Store,
@@ -2090,16 +2090,16 @@ struct FRHIRenderPassAttachment
     {
     }
 
-    explicit FRHIRenderPassAttachment(
+    explicit FRHIRenderTargetAttachment(
         FRHIRenderTargetView*  InView,
         EAttachmentLoadAction  InLoadAction  = EAttachmentLoadAction::Clear,
         EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store,
         const FFloatColor&     InClearValue  = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f)) noexcept
-        : FRHIRenderPassAttachment(MakeSharedRef<FRHIRenderTargetView>(InView), InLoadAction, InStoreAction, InClearValue)
+        : FRHIRenderTargetAttachment(MakeSharedRef<FRHIRenderTargetView>(InView), InLoadAction, InStoreAction, InClearValue)
     {
     }
 
-    bool operator==(const FRHIRenderPassAttachment& Other) const noexcept
+    bool operator==(const FRHIRenderTargetAttachment& Other) const noexcept
     {
         return View.Get() == Other.View.Get()
             && ClearValue == Other.ClearValue
@@ -2154,7 +2154,7 @@ struct FRHIDepthStencilAttachment
 
 struct FRHIBeginRenderPassDesc
 {
-    typedef TStaticArray<FRHIRenderPassAttachment, RHI_MAX_RENDER_TARGETS> FRenderTargetAttachments;
+    typedef TStaticArray<FRHIRenderTargetAttachment, RHI_MAX_RENDER_TARGETS> FRenderTargetAttachments;
 
     FRHIBeginRenderPassDesc() noexcept = default;
 

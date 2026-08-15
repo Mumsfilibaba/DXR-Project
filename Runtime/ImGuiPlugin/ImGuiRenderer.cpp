@@ -324,7 +324,7 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
         PrepareTexturesForShaderResourceUsage(CommandList, DrawData);
 
         FRHIRenderTargetView* BackBufferRTV = RHISwapChain->GetBackBufferRenderTargetView();
-        FRHIBeginRenderPassDesc RenderPassDesc({ FRHIRenderPassAttachment(BackBufferRTV, EAttachmentLoadAction::Load) }, 1);
+        FRHIBeginRenderPassDesc RenderPassDesc({ FRHIRenderTargetAttachment(BackBufferRTV, EAttachmentLoadAction::Load) }, 1);
         CommandList.BeginRenderPass(RenderPassDesc);
         
         RenderDrawData(CommandList, DrawData);
@@ -355,7 +355,7 @@ void FImGuiRenderer::RenderViewport(FRHICommandList& CommandList, ImDrawData* Dr
     PrepareTexturesForShaderResourceUsage(CommandList, DrawData);
 
     FRHIRenderTargetView* BackBufferRTV = ViewportData.SwapChain->GetBackBufferRenderTargetView();
-    FRHIBeginRenderPassDesc RenderPassDesc({ FRHIRenderPassAttachment(BackBufferRTV, bClear ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load) }, 1);
+    FRHIBeginRenderPassDesc RenderPassDesc({ FRHIRenderTargetAttachment(BackBufferRTV, bClear ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load) }, 1);
     
     CommandList.BeginRenderPass(RenderPassDesc);
     RenderDrawData(CommandList, DrawData);

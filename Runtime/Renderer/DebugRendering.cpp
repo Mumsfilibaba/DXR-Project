@@ -728,7 +728,7 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
     FRHIDepthStencilView* DepthStencilView = DepthTex->GetDepthStencilView();
 
     FRHIBeginRenderPassDesc RenderPassDesc;
-    RenderPassDesc.RenderTargets[0]       = FRHIRenderPassAttachment(RenderTargetView, EAttachmentLoadAction::Load);
+    RenderPassDesc.RenderTargets[0]       = FRHIRenderTargetAttachment(RenderTargetView, EAttachmentLoadAction::Load);
     RenderPassDesc.NumRenderTargets       = 1;
     RenderPassDesc.DepthStencilAttachment = FRHIDepthStencilAttachment(DepthStencilView, EAttachmentLoadAction::Load);
 
@@ -776,7 +776,7 @@ void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResou
     FRHIDepthStencilView* DepthStencilView = DepthTex->GetDepthStencilView();
 
     FRHIBeginRenderPassDesc RenderPassDesc;
-    RenderPassDesc.RenderTargets[0]       = FRHIRenderPassAttachment(RenderTargetView, EAttachmentLoadAction::Load);
+    RenderPassDesc.RenderTargets[0]       = FRHIRenderTargetAttachment(RenderTargetView, EAttachmentLoadAction::Load);
     RenderPassDesc.NumRenderTargets       = 1;
     RenderPassDesc.DepthStencilAttachment = FRHIDepthStencilAttachment(DepthStencilView, EAttachmentLoadAction::Load);
 
@@ -821,7 +821,7 @@ void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResou
     FRHIDepthStencilView* DepthStencilView = DepthTex->GetDepthStencilView();
 
     FRHIBeginRenderPassDesc RenderPassDesc;
-    RenderPassDesc.RenderTargets[0]       = FRHIRenderPassAttachment(RenderTargetView, EAttachmentLoadAction::Load);
+    RenderPassDesc.RenderTargets[0]       = FRHIRenderTargetAttachment(RenderTargetView, EAttachmentLoadAction::Load);
     RenderPassDesc.NumRenderTargets       = 1;
     RenderPassDesc.DepthStencilAttachment = FRHIDepthStencilAttachment(DepthStencilView, EAttachmentLoadAction::Load);
 

@@ -155,7 +155,7 @@ void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
     
     for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
     {
-        const FRHIRenderPassAttachment& Attachment = BeginRenderPassDesc.RenderTargets[Index];
+        const FRHIRenderTargetAttachment& Attachment = BeginRenderPassDesc.RenderTargets[Index];
         FMetalRenderTargetViewRHI* MetalRTV = static_cast<FMetalRenderTargetViewRHI*>(Attachment.View.Get());
         METAL_ERROR_COND(MetalRTV != nullptr, "RenderTargetView cannot be nullptr");
 
