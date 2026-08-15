@@ -82,8 +82,12 @@ struct ENGINE_API EditorGuizmo
         float             ScaleLineThickness;         // Thickness of lines for scale gizmo 
         float             ScaleLineCircleSize;        // Size of circle at the end of lines for scale gizmo 
         EScaleHandleShape ScaleHandleShape;           // Shape of axis handles for scale gizmo
-        float             HatchedAxisLineThickness;   // Thickness of hatched axis lines 
+        float             HatchedAxisLineThickness;   // Thickness of hatched axis lines (0 disables)
         float             CenterCircleSize;           // Size of circle at the center of the translate/scale gizmo 
+        float             GizmoSizeClipSpace;         // On-screen size of the gizmo in clip space
+        float             PlaneQuadMin;               // Inner UV of translate/scale plane handles
+        float             PlaneQuadMax;               // Outer UV of translate/scale plane handles
+        float             PlaneHandleHitPadding;      // Extra screen-space hit area around plane handles
         ImVec4            Colors[EColor::Count]; 
     }; 
 

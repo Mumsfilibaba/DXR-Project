@@ -80,6 +80,11 @@ void FEditorGuizmoWidget::UpdateShortcuts(bool bViewportHovered)
         return;
     }
 
+    if (!EditorEngine || !EditorEngine->IsEditing())
+    {
+        return;
+    }
+
     const ImGuiIO& IO = ImGui::GetIO();
     if (IO.WantTextInput)
     {
@@ -92,17 +97,39 @@ void FEditorGuizmoWidget::UpdateShortcuts(bool bViewportHovered)
         return;
     }
 
-    if (ImGui::IsKeyPressed(ImGuiKey_1))
+    const bool bFlyActive = ImGui::IsMouseDown(ImGuiMouseButton_Right) && !IO.KeyAlt;
+    if (bFlyActive)
+    {
+        return;
+    }
+
+    if (ImGui::IsKeyPressed(ImGuiKey_W) || ImGui::IsKeyPressed(ImGuiKey_1))
     {
         Viewport->SetGizmoOperation(EditorGuizmo::EOperation::Translate);
     }
-    else if (ImGui::IsKeyPressed(ImGuiKey_2))
+    else if (ImGui::IsKeyPressed(ImGuiKey_E) || ImGui::IsKeyPressed(ImGuiKey_2))
     {
         Viewport->SetGizmoOperation(EditorGuizmo::EOperation::Rotate);
     }
-    else if (ImGui::IsKeyPressed(ImGuiKey_3))
+    else if (ImGui::IsKeyPressed(ImGuiKey_R) || ImGui::IsKeyPressed(ImGuiKey_3))
     {
         Viewport->SetGizmoOperation(EditorGuizmo::EOperation::Scale);
+    }
+    else if (ImGui::IsKeyPressed(ImGuiKey_Space))
+    {
+        const EditorGuizmo::EOperation::Type CurrentOperation = Viewport->GetGizmoOperation();
+        if (CurrentOperation == EditorGuizmo::EOperation::Translate)
+        {
+            Viewport->SetGizmoOperation(EditorGuizmo::EOperation::Rotate);
+        }
+        else if (CurrentOperation == EditorGuizmo::EOperation::Rotate)
+        {
+            Viewport->SetGizmoOperation(EditorGuizmo::EOperation::Scale);
+        }
+        else
+        {
+            Viewport->SetGizmoOperation(EditorGuizmo::EOperation::Translate);
+        }
     }
     else if (ImGui::IsKeyPressed(ImGuiKey_4))
     {

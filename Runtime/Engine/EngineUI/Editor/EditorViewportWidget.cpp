@@ -1074,7 +1074,6 @@ void FEditorViewportWidget::DrawViewportWindow()
         #endif
             PendingCameraInput.bBoost           = IO.KeyShift || ImGui::IsKeyDown(ImGuiKey_GamepadL3);
             PendingCameraInput.bFocusPressed    = ImGui::IsKeyPressed(ImGuiKey_F, false);
-            PendingCameraInput.bResetPressed    = ImGui::IsKeyPressed(ImGuiKey_R, false);
 
             const float GamepadMoveRight = AnalogInput::ApplyDeadzone(
                 ImGui::GetKeyData(ImGuiKey_GamepadLStickLeft)->AnalogValue -
@@ -1089,6 +1088,9 @@ void FEditorViewportWidget::DrawViewportWindow()
             const bool bKeyboardFlyActive =
                 PendingCameraInput.bRightMouseDown &&
                 !PendingCameraInput.bAltDown;
+
+            PendingCameraInput.bResetPressed =
+                bKeyboardFlyActive && ImGui::IsKeyPressed(ImGuiKey_R, false);
 
             const float MoveRight =
                 (bKeyboardFlyActive && ImGui::IsKeyDown(ImGuiKey_A) ? 1.0f : 0.0f) -

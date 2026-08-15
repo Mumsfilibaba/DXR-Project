@@ -9,6 +9,7 @@
 #include "Core/Memory/Memory.h"
 #include "Core/Containers/Array.h"
 #include "Engine/EngineUI/Editor/EditorGuizmo.h"
+#include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "ImGuiPlugin/ImGuiCore.h"
 
 struct EMoveType
@@ -30,6 +31,9 @@ struct EMoveType
         ScaleX,
         ScaleY,
         ScaleZ,
+        ScaleYZ,
+        ScaleZX,
+        ScaleXY,
         ScaleXYZ
     };
 };
@@ -112,7 +116,6 @@ struct Context
     float                          XMax               = 0.0f;
     float                          YMax               = 0.0f;
     float                          DisplayRatio       = 1.0f;
-    float                          GizmoSizeClipSpace = 0.1f;
     ImGuiID                        EditingID          = static_cast<ImGuiID>(-1);
     EditorGuizmo::EOperation::Type Operation          = static_cast<EditorGuizmo::EOperation::Type>(-1);
     EditorGuizmo::EMode            Mode;
@@ -141,12 +144,19 @@ struct Context
 const float ScreenRotateSize      = 0.06f;
 const float RotationDisplayFactor = 1.2f; // Scale a bit so translate axis do not touch when in universal
 
-// Matches EMoveType::MoveYZ/ZX/XY order
+// Matches EMoveType::MoveYZ/ZX/XY and ScaleYZ/ZX/XY order
 static const EditorGuizmo::EOperation::Type TRANSLATE_PLANS[3] =
 {
     static_cast<EditorGuizmo::EOperation::Type>(EditorGuizmo::EOperation::TranslateY | EditorGuizmo::EOperation::TranslateZ),
     static_cast<EditorGuizmo::EOperation::Type>(EditorGuizmo::EOperation::TranslateX | EditorGuizmo::EOperation::TranslateZ),
     static_cast<EditorGuizmo::EOperation::Type>(EditorGuizmo::EOperation::TranslateX | EditorGuizmo::EOperation::TranslateY)
+};
+
+static const EditorGuizmo::EOperation::Type SCALE_PLANS[3] =
+{
+    static_cast<EditorGuizmo::EOperation::Type>(EditorGuizmo::EOperation::ScaleY | EditorGuizmo::EOperation::ScaleZ),
+    static_cast<EditorGuizmo::EOperation::Type>(EditorGuizmo::EOperation::ScaleX | EditorGuizmo::EOperation::ScaleZ),
+    static_cast<EditorGuizmo::EOperation::Type>(EditorGuizmo::EOperation::ScaleX | EditorGuizmo::EOperation::ScaleY)
 };
 
 static Context GuizmoContext;
@@ -167,7 +177,9 @@ static const char* TranslationInfoMask[] =
 
 static const char* ScaleInfoMask[] = 
 { 
-    "X : %5.2f", "Y : %5.2f", "Z : %5.2f", "XYZ : %5.2f"
+    "X : %5.2f", "Y : %5.2f", "Z : %5.2f",
+    "Y : %5.2f Z : %5.2f", "X : %5.2f Z : %5.2f", "X : %5.2f Y : %5.2f",
+    "XYZ : %5.2f"
 };
 
 static const char* RotationInfoMask[] =
@@ -178,19 +190,20 @@ static const char* RotationInfoMask[] =
 
 static const int32 TranslationInfoIndex[] = { 0,0,0, 1,0,0, 2,0,0, 1,2,0, 0,2,0, 0,1,0, 0,1,2 };
 
-static const float QuadMin   = 0.5f;
-static const float QuadMax   = 0.8f;
-static const float QuadUV[8] =
+static void GetPlaneQuadUV(float OutUV[8])
 {
-    QuadMin,
-    QuadMin,
-    QuadMin,
-    QuadMax,
-    QuadMax,
-    QuadMax,
-    QuadMax,
-    QuadMin
-};
+    const float QuadMin = GuizmoContext.Style.PlaneQuadMin;
+    const float QuadMax = GuizmoContext.Style.PlaneQuadMax;
+
+    OutUV[0] = QuadMin;
+    OutUV[1] = QuadMin;
+    OutUV[2] = QuadMin;
+    OutUV[3] = QuadMax;
+    OutUV[4] = QuadMax;
+    OutUV[5] = QuadMax;
+    OutUV[6] = QuadMax;
+    OutUV[7] = QuadMin;
+}
 
 static const int32 HalfCircleSegmentCount = 64;
 static const float SnapTension            = 0.5f;
@@ -265,6 +278,99 @@ static ImVec2 WorldToPos(const Vector4& WorldPos, const Matrix4& Matrix,
     return ImVec2(Trans.X, Trans.Y);
 }
 
+static float Cross2D(const ImVec2& A, const ImVec2& B, const ImVec2& C)
+{
+    return (B.x - A.x) * (C.y - A.y) - (B.y - A.y) * (C.x - A.x);
+}
+
+static bool IsDegenerateQuad(const ImVec2 Points[4])
+{
+    const float DoubleArea =
+        Cross2D(Points[0], Points[1], Points[2]) +
+        Cross2D(Points[0], Points[2], Points[3]);
+    return Math::Abs(DoubleArea) <= 2.0f;
+}
+
+static bool ComputePlaneQuadScreen(
+    const Vector4& DirPlaneX,
+    const Vector4& DirPlaneY,
+    const Matrix4& MVP,
+    ImVec2 OutPoints[4])
+{
+    float QuadUV[8];
+    GetPlaneQuadUV(QuadUV);
+
+    for (int32 CornerIndex = 0; CornerIndex < 4; CornerIndex++)
+    {
+        const Vector4 Corner =
+            (DirPlaneX * QuadUV[CornerIndex * 2] +
+             DirPlaneY * QuadUV[CornerIndex * 2 + 1]) *
+            GuizmoContext.ScreenFactor;
+
+        OutPoints[CornerIndex] = WorldToPos(Corner, MVP);
+    }
+
+    return !IsDegenerateQuad(OutPoints);
+}
+
+static bool IsPointInsideConvexQuad(const ImVec2& Point, const ImVec2 Quad[4])
+{
+    bool bHasPositive = false;
+    bool bHasNegative = false;
+
+    for (int32 EdgeIndex = 0; EdgeIndex < 4; EdgeIndex++)
+    {
+        const float Cross = Cross2D(Quad[EdgeIndex], Quad[(EdgeIndex + 1) % 4], Point);
+        bHasPositive |= Cross > 0.0f;
+        bHasNegative |= Cross < 0.0f;
+    }
+
+    return !(bHasPositive && bHasNegative);
+}
+
+static float DistanceToSegmentSquared(const ImVec2& Point, const ImVec2& Start, const ImVec2& End)
+{
+    const float SegmentX       = End.x - Start.x;
+    const float SegmentY       = End.y - Start.y;
+    const float SegmentLength2 = SegmentX * SegmentX + SegmentY * SegmentY;
+
+    if (SegmentLength2 <= Math::Constants::Epsilon)
+    {
+        const float DeltaX = Point.x - Start.x;
+        const float DeltaY = Point.y - Start.y;
+        return DeltaX * DeltaX + DeltaY * DeltaY;
+    }
+
+    const float Projection = Math::Clamp(
+        ((Point.x - Start.x) * SegmentX + (Point.y - Start.y) * SegmentY) / SegmentLength2,
+        0.0f,
+        1.0f);
+    const float ClosestX = Start.x + SegmentX * Projection;
+    const float ClosestY = Start.y + SegmentY * Projection;
+    const float DeltaX   = Point.x - ClosestX;
+    const float DeltaY   = Point.y - ClosestY;
+    return DeltaX * DeltaX + DeltaY * DeltaY;
+}
+
+static bool IsPointOverPlaneQuad(const ImVec2& Point, const ImVec2 Quad[4], float HitPadding)
+{
+    if (IsPointInsideConvexQuad(Point, Quad))
+    {
+        return true;
+    }
+
+    const float HitPaddingSquared = HitPadding * HitPadding;
+    for (int32 EdgeIndex = 0; EdgeIndex < 4; EdgeIndex++)
+    {
+        if (DistanceToSegmentSquared(Point, Quad[EdgeIndex], Quad[(EdgeIndex + 1) % 4]) <= HitPaddingSquared)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 static void ComputeCameraRay(Vector4& RayOrigin, Vector4& RayDir,
     ImVec2 Position = ImVec2(GuizmoContext.X, GuizmoContext.Y),
     ImVec2 Size = ImVec2(GuizmoContext.Width, GuizmoContext.Height))
@@ -273,8 +379,14 @@ static void ComputeCameraRay(Vector4& RayOrigin, Vector4& RayDir,
 
     Matrix4 MViewProjInverse = (GuizmoContext.ViewMat * GuizmoContext.ProjectionMat).GetInverse();
 
-    const float MouseX = ((State.MousePos.x - Position.x) / Size.x) * 2.0f - 1.0f;
-    const float MouseY = (1.0f - ((State.MousePos.y - Position.y) / Size.y)) * 2.0f - 1.0f;
+    const float SafeW = (Math::Abs(Size.x) > Math::Constants::Epsilon) ? Size.x : 1.0f;
+    const float SafeH = (Math::Abs(Size.y) > Math::Constants::Epsilon) ? Size.y : 1.0f;
+
+    const float U = Math::Clamp((State.MousePos.x - Position.x) / SafeW, 0.0f, 1.0f);
+    const float V = Math::Clamp((State.MousePos.y - Position.y) / SafeH, 0.0f, 1.0f);
+
+    const float MouseX = U * 2.0f - 1.0f;
+    const float MouseY = (1.0f - V) * 2.0f - 1.0f;
     const float ZNear  = GuizmoContext.bReversed ? (1.0f - Math::Constants::Epsilon) : 0.0f;
     const float ZFar   = GuizmoContext.bReversed ? 0.0f : (1.0f - Math::Constants::Epsilon);
 
@@ -374,43 +486,20 @@ static bool IsInContextRect(ImVec2 Point)
         && (Point.y >= GuizmoContext.Y && Point.y <= GuizmoContext.YMax);
 }
 
-static bool IsHoveringWindow()
+static bool IsMouseOverGizmoRect()
 {
-    ImGuiContext& Context = *ImGui::GetCurrentContext();
-
-    if (GuizmoContext.DrawList == nullptr || GuizmoContext.DrawList->_OwnerName == nullptr)
+    // Use SetRect (scene image bounds), not ImGui HoveredWindow — dock splitters
+    // otherwise steal hover when the gizmo sits near the viewport edge.
+    if (ImGui::GetTopMostPopupModal() != nullptr)
     {
         return false;
     }
 
-    ImGuiWindow* Window = ImGui::FindWindowByName(GuizmoContext.DrawList->_OwnerName);
-    if (Window == nullptr)
-    {
-        return false;
-    }
-
-    if (Context.HoveredWindow == Window) // Mouse hovering Drawlist window
-    {
-        return true;
-    }
-
-    if (GuizmoContext.AlternativeWindow != nullptr && Context.HoveredWindow == GuizmoContext.AlternativeWindow)
-    {
-        return true;
-    }
-
-    if (Context.HoveredWindow != nullptr) // Any other window is hovered
-    {
-        return false;
-    }
-
-    // Hovering Drawlist window rect, no other window hovered (for _NoInputs windows)
-    if (ImGui::IsMouseHoveringRect(Window->InnerRect.Min, Window->InnerRect.Max, false))
-    {
-        return true;
-    }
-
-    return false;
+    const ImGuiIO& State = ImGui::GetIO();
+    return State.MousePos.x >= GuizmoContext.X &&
+           State.MousePos.x <= GuizmoContext.XMax &&
+           State.MousePos.y >= GuizmoContext.Y &&
+           State.MousePos.y <= GuizmoContext.YMax;
 }
 
 static void ComputeContext(const float* View, const float* Projection, float* Matrix, EditorGuizmo::EMode Mode)
@@ -418,7 +507,7 @@ static void ComputeContext(const float* View, const float* Projection, float* Ma
     GuizmoContext.Mode          = Mode;
     GuizmoContext.ViewMat       = LoadMatrix(View);
     GuizmoContext.ProjectionMat = LoadMatrix(Projection);
-    GuizmoContext.bMouseOver    = IsHoveringWindow();
+    GuizmoContext.bMouseOver    = IsMouseOverGizmoRect();
     GuizmoContext.ModelSource   = LoadMatrix(Matrix);
     GuizmoContext.ModelLocal    = GuizmoContext.ModelSource;
     GuizmoContext.ModelLocal.OrthoNormalize();
@@ -460,7 +549,7 @@ static void ComputeContext(const float* View, const float* Projection, float* Ma
     RightViewInverse = GuizmoContext.ModelInverse.Transform(Vector4(RightViewInverse.X, RightViewInverse.Y, RightViewInverse.Z, 0.0f));
 
     const float RightLength    = GetSegmentLengthClipSpace(Vector4(0.0f, 0.0f, 0.0f, 0.0f), RightViewInverse);
-    GuizmoContext.ScreenFactor = (Math::Abs(RightLength) > Math::Constants::Epsilon) ? (GuizmoContext.GizmoSizeClipSpace / RightLength) : 0.0f;
+    GuizmoContext.ScreenFactor = (Math::Abs(RightLength) > Math::Constants::Epsilon) ? (GuizmoContext.Style.GizmoSizeClipSpace / RightLength) : 0.0f;
 
     ImVec2 CenterSSpace              = WorldToPos(Vector4(0.0f, 0.0f, 0.0f, 0.0f), GuizmoContext.MVP);
     GuizmoContext.ScreenSquareCenter = CenterSSpace;
@@ -512,6 +601,7 @@ static void ComputeColors(ImU32* Colors, int32 Type, EditorGuizmo::EOperation::T
                 for (int32 AxisIndex = 0; AxisIndex < 3; AxisIndex++)
                 {
                     Colors[AxisIndex + 1] = (Type == static_cast<int32>(EMoveType::ScaleX + AxisIndex)) ? SelectionColor : GetColorU32(EditorGuizmo::EColor::DirectionX + AxisIndex);
+                    Colors[AxisIndex + 4] = (Type == static_cast<int32>(EMoveType::ScaleYZ + AxisIndex)) ? SelectionColor : GetColorU32(EditorGuizmo::EColor::PlaneX + AxisIndex);
                 }
 
                 break;
@@ -853,7 +943,7 @@ static void DrawScaleGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
 { 
     ImDrawList* DrawList = GuizmoContext.DrawList; 
  
-        if (!Intersects(Op, EditorGuizmo::EOperation::Scale))
+    if (!Intersects(Op, EditorGuizmo::EOperation::Scale))
     {
         return;
     }
@@ -919,6 +1009,40 @@ static void DrawScaleGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
         }
     }
 
+    for (int32 AxisIndex = 0; AxisIndex < 3; AxisIndex++)
+    {
+        const bool bUsingPlane = (GuizmoContext.bUsing && Type == EMoveType::ScaleYZ + AxisIndex);
+        if (GuizmoContext.bUsing && !bUsingPlane)
+        {
+            continue;
+        }
+
+        if (!Contains(Op, SCALE_PLANS[AxisIndex]))
+        {
+            continue;
+        }
+
+        Vector4 DirPlaneX;
+        Vector4 DirPlaneY;
+        Vector4 DirAxis;
+
+        bool bBelowAxisLimit;
+        bool bBelowPlaneLimit;
+        ComputeTripodAxisAndVisibility(AxisIndex, DirAxis, DirPlaneX, DirPlaneY, bBelowAxisLimit, bBelowPlaneLimit, true);
+
+        if (!bBelowPlaneLimit)
+        {
+            continue;
+        }
+
+        ImVec2 PlaneQuad[4];
+        if (ComputePlaneQuadScreen(DirPlaneX, DirPlaneY, GuizmoContext.MVP, PlaneQuad))
+        {
+            DrawList->AddConvexPolyFilled(PlaneQuad, 4, Colors[AxisIndex + 4]);
+            DrawList->AddPolyline(PlaneQuad, 4, GetColorU32(EditorGuizmo::EColor::DirectionX + AxisIndex), true, 1.0f);
+        }
+    }
+
     // Draw screen circle
     DrawList->AddCircleFilled(GuizmoContext.ScreenSquareCenter, GuizmoContext.Style.CenterCircleSize, Colors[0], 32);
 
@@ -927,9 +1051,11 @@ static void DrawScaleGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
         Vector4 ModelPosition = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
 
         char TempString[512];
-        int32 ComponentInfoIndex = (Type - EMoveType::ScaleX) * 3;
+        const int32 ComponentInfoIndex = (Type - EMoveType::ScaleX) * 3;
         ImFormatString(TempString, sizeof(TempString), ScaleInfoMask[Type - EMoveType::ScaleX],
-            ScaleDisplay[TranslationInfoIndex[ComponentInfoIndex]]);
+            ScaleDisplay[TranslationInfoIndex[ComponentInfoIndex]],
+            ScaleDisplay[TranslationInfoIndex[ComponentInfoIndex + 1]],
+            ScaleDisplay[TranslationInfoIndex[ComponentInfoIndex + 2]]);
 
         ImVec2 DestinationPosOnScreen = WorldToPos(ModelPosition, GuizmoContext.ViewProjection);
         DrawList->AddText(ImVec2(DestinationPosOnScreen.x + 15, DestinationPosOnScreen.y + 15), GetColorU32(EditorGuizmo::EColor::TextShadow), TempString);
@@ -995,9 +1121,11 @@ static void DrawScaleUniveralGizmo(EditorGuizmo::EOperation::Type Op, int32 Type
         Vector4 ModelPosition = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
 
         char TempString[512];
-        int32 ComponentInfoIndex = (Type - EMoveType::ScaleX) * 3;
+        const int32 ComponentInfoIndex = (Type - EMoveType::ScaleX) * 3;
         ImFormatString(TempString, sizeof(TempString), ScaleInfoMask[Type - EMoveType::ScaleX],
-            ScaleDisplay[TranslationInfoIndex[ComponentInfoIndex]]);
+            ScaleDisplay[TranslationInfoIndex[ComponentInfoIndex]],
+            ScaleDisplay[TranslationInfoIndex[ComponentInfoIndex + 1]],
+            ScaleDisplay[TranslationInfoIndex[ComponentInfoIndex + 2]]);
 
         ImVec2 DestinationPosOnScreen = WorldToPos(ModelPosition, GuizmoContext.ViewProjection);
         DrawList->AddText(ImVec2(DestinationPosOnScreen.x + 15, DestinationPosOnScreen.y + 15), GetColorU32(EditorGuizmo::EColor::TextShadow), TempString);
@@ -1073,19 +1201,20 @@ static void DrawTranslationGizmo(EditorGuizmo::EOperation::Type Op, int32 Type)
             if (bBelowPlaneLimit && Contains(Op, TRANSLATE_PLANS[AxisIndex]))
             {
                 ImVec2 ScreenQuadPts[4];
-                for (int32 QuadCornerIndex = 0; QuadCornerIndex < 4; ++QuadCornerIndex)
+                if (ComputePlaneQuadScreen(DirPlaneX, DirPlaneY, GuizmoContext.MVP, ScreenQuadPts))
                 {
-                    Vector4 CornerWorldPos = (DirPlaneX * QuadUV[QuadCornerIndex * 2] + DirPlaneY * QuadUV[QuadCornerIndex * 2 + 1]) * GuizmoContext.ScreenFactor;
-                    ScreenQuadPts[QuadCornerIndex] = WorldToPos(CornerWorldPos, GuizmoContext.MVP);
+                    DrawList->AddPolyline(ScreenQuadPts, 4, GetColorU32(EditorGuizmo::EColor::DirectionX + AxisIndex), true, 1.0f);
+                    DrawList->AddConvexPolyFilled(ScreenQuadPts, 4, Colors[AxisIndex + 4]);
                 }
-
-                DrawList->AddPolyline(ScreenQuadPts, 4, GetColorU32(EditorGuizmo::EColor::DirectionX + AxisIndex), true, 1.0f);
-                DrawList->AddConvexPolyFilled(ScreenQuadPts, 4, Colors[AxisIndex + 4]);
             }
         }
     }
 
-    DrawList->AddCircleFilled(GuizmoContext.ScreenSquareCenter, GuizmoContext.Style.CenterCircleSize, Colors[0], 32);
+    const float CenterHalfSize = GuizmoContext.Style.CenterCircleSize;
+    DrawList->AddRectFilled(
+        ImVec2(GuizmoContext.ScreenSquareCenter.x - CenterHalfSize, GuizmoContext.ScreenSquareCenter.y - CenterHalfSize),
+        ImVec2(GuizmoContext.ScreenSquareCenter.x + CenterHalfSize, GuizmoContext.ScreenSquareCenter.y + CenterHalfSize),
+        Colors[0]);
 
     if (GuizmoContext.bUsing && (GuizmoContext.GetCurrentID() == GuizmoContext.EditingID) && IsTranslateType(Type))
     {
@@ -1478,7 +1607,7 @@ static int32 GetScaleType(EditorGuizmo::EOperation::Type Op)
             continue;
         }
 
-        bool bIsAxisMasked = ((1 << AxisIndex) & GuizmoContext.AxisMask) != 0;
+        const bool bIsAxisMasked = ((1 << AxisIndex) & GuizmoContext.AxisMask) != 0;
 
         Vector4 DirPlaneX;
         Vector4 DirPlaneY;
@@ -1488,42 +1617,60 @@ static int32 GetScaleType(EditorGuizmo::EOperation::Type Op)
         bool bBelowPlaneLimit;
         ComputeTripodAxisAndVisibility(AxisIndex, DirAxis, DirPlaneX, DirPlaneY, bBelowAxisLimit, bBelowPlaneLimit, true);
 
-        DirAxis   = GuizmoContext.ModelLocal.Transform(Vector4(DirAxis.X, DirAxis.Y, DirAxis.Z, 0.0f));
-        DirPlaneX = GuizmoContext.ModelLocal.Transform(Vector4(DirPlaneX.X, DirPlaneX.Y, DirPlaneX.Z, 0.0f));
-        DirPlaneY = GuizmoContext.ModelLocal.Transform(Vector4(DirPlaneY.X, DirPlaneY.Y, DirPlaneY.Z, 0.0f));
+        DirAxis = GuizmoContext.ModelLocal.Transform(Vector4(DirAxis.X, DirAxis.Y, DirAxis.Z, 0.0f));
 
         Vector4 ModelLocalPosition = Vector4(GuizmoContext.ModelLocal.GetTranslation(), 1.0f);
-
-        const float Length = Plane::FromPointAndNormal(
-            Vector3(ModelLocalPosition.X, ModelLocalPosition.Y, ModelLocalPosition.Z), 
-            Vector3(DirAxis.X, DirAxis.Y, DirAxis.Z)).IntersectRay(
-                Vector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z), 
-                Vector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
-
-        if (Length < 0.0f)
-        {
-            continue;
-        }
 
         const float StartOffset = Contains(Op, static_cast<EditorGuizmo::EOperation::Type>(EditorGuizmo::EOperation::TranslateX << AxisIndex)) ? 1.0f : 0.1f;
         const float EndOffset   = Contains(Op, static_cast<EditorGuizmo::EOperation::Type>(EditorGuizmo::EOperation::TranslateX << AxisIndex)) ? 1.4f : 1.0f;
 
-        Vector4      PositionOnPlane       = GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length;
-        const ImVec2 PositionOnPlaneScreen = WorldToPos(PositionOnPlane, GuizmoContext.ViewProjection);
-        const ImVec2 AxisStartOnScreen     = WorldToPos(ModelLocalPosition + DirAxis * GuizmoContext.ScreenFactor * StartOffset, GuizmoContext.ViewProjection);
-        const ImVec2 AxisEndOnScreen       = WorldToPos(ModelLocalPosition + DirAxis * GuizmoContext.ScreenFactor * EndOffset, GuizmoContext.ViewProjection);
+        const ImVec2 AxisStartOnScreen = WorldToPos(
+            ModelLocalPosition + DirAxis * GuizmoContext.ScreenFactor * StartOffset,
+            GuizmoContext.ViewProjection);
+        const ImVec2 AxisEndOnScreen = WorldToPos(
+            ModelLocalPosition + DirAxis * GuizmoContext.ScreenFactor * EndOffset,
+            GuizmoContext.ViewProjection);
 
+        const Vector4 ScreenCoord = Vector4(State.MousePos.x, State.MousePos.y, 0.0f, 0.0f);
         Vector4 ClosestPointOnAxis = PointOnSegment(
-            Vector4(PositionOnPlaneScreen.x, PositionOnPlaneScreen.y, 0.0f, 0.0f), 
-            Vector4(AxisStartOnScreen.x, AxisStartOnScreen.y, 0.0f, 0.0f), 
+            ScreenCoord,
+            Vector4(AxisStartOnScreen.x, AxisStartOnScreen.y, 0.0f, 0.0f),
             Vector4(AxisEndOnScreen.x, AxisEndOnScreen.y, 0.0f, 0.0f));
 
-        if ((ClosestPointOnAxis - Vector4(PositionOnPlaneScreen.x, PositionOnPlaneScreen.y, 0.0f, 0.0f)).GetLength() < 12.0f) // Pixel size
+        if ((ClosestPointOnAxis - ScreenCoord).GetLength() < 12.0f) // Pixel size
         {
             if (!bIsAxisMasked)
             {
                 Type = EMoveType::ScaleX + AxisIndex;
             }
+        }
+    }
+
+    for (int32 AxisIndex = 0; AxisIndex < 3 && Type == EMoveType::None; AxisIndex++)
+    {
+        if (!Contains(Op, SCALE_PLANS[AxisIndex]))
+        {
+            continue;
+        }
+
+        Vector4 DirPlaneX;
+        Vector4 DirPlaneY;
+        Vector4 DirAxis;
+
+        bool bBelowAxisLimit;
+        bool bBelowPlaneLimit;
+        ComputeTripodAxisAndVisibility(AxisIndex, DirAxis, DirPlaneX, DirPlaneY, bBelowAxisLimit, bBelowPlaneLimit, true);
+
+        if (!bBelowPlaneLimit)
+        {
+            continue;
+        }
+
+        ImVec2 PlaneQuad[4];
+        if (ComputePlaneQuadScreen(DirPlaneX, DirPlaneY, GuizmoContext.MVP, PlaneQuad) &&
+            IsPointOverPlaneQuad(State.MousePos, PlaneQuad, GuizmoContext.Style.PlaneHandleHitPadding))
+        {
+            Type = EMoveType::ScaleYZ + AxisIndex;
         }
     }
 
@@ -1694,24 +1841,18 @@ static int32 GetMoveType(EditorGuizmo::EOperation::Type Op, Vector4* GizmoHitPro
         bool bBelowPlaneLimit;
         ComputeTripodAxisAndVisibility(AxisIndex, DirAxis, DirPlaneX, DirPlaneY, bBelowAxisLimit, bBelowPlaneLimit);
 
+        ImVec2 PlaneQuad[4];
+        const bool bPlaneHovered =
+            bBelowPlaneLimit &&
+            Contains(Op, TRANSLATE_PLANS[AxisIndex]) &&
+            ComputePlaneQuadScreen(DirPlaneX, DirPlaneY, GuizmoContext.MVP, PlaneQuad) &&
+            IsPointOverPlaneQuad(State.MousePos, PlaneQuad, GuizmoContext.Style.PlaneHandleHitPadding);
+
         DirAxis   = GuizmoContext.Model.Transform(Vector4(DirAxis.X, DirAxis.Y, DirAxis.Z, 0.0f));
         DirPlaneX = GuizmoContext.Model.Transform(Vector4(DirPlaneX.X, DirPlaneX.Y, DirPlaneX.Z, 0.0f));
         DirPlaneY = GuizmoContext.Model.Transform(Vector4(DirPlaneY.X, DirPlaneY.Y, DirPlaneY.Z, 0.0f));
 
         Vector4 ModelPosition = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
-
-        const float Length = Plane::FromPointAndNormal(
-            Vector3(ModelPosition.X, ModelPosition.Y, ModelPosition.Z),
-            Vector3(DirAxis.X, DirAxis.Y, DirAxis.Z)).IntersectRay(
-                Vector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z),
-                Vector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
-
-        if (Length < 0.0f)
-        {
-            continue;
-        }
-
-        Vector4 PositionOnPlane = GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length;
 
         const ImVec2 AxisStartOnScreen = WorldToPos(
             ModelPosition + DirAxis * GuizmoContext.ScreenFactor * 0.1f,
@@ -1735,13 +1876,7 @@ static int32 GetMoveType(EditorGuizmo::EOperation::Type Op, Vector4* GizmoHitPro
             Type = EMoveType::MoveX + AxisIndex;
         }
 
-        Vector4 ModelPosition2 = Vector4(GuizmoContext.Model.GetTranslation(), 1.0f);
-
-        const float PlaneCoordX = DirPlaneX.DotProduct((PositionOnPlane - ModelPosition2) * (1.0f / GuizmoContext.ScreenFactor));
-        const float PlaneCoordY = DirPlaneY.DotProduct((PositionOnPlane - ModelPosition2) * (1.0f / GuizmoContext.ScreenFactor));
-
-        if (bBelowPlaneLimit && PlaneCoordX >= QuadUV[0] && PlaneCoordX <= QuadUV[4] && PlaneCoordY >= QuadUV[1] && 
-            PlaneCoordY <= QuadUV[3] && Contains(Op, TRANSLATE_PLANS[AxisIndex]))
+        if (bPlaneHovered)
         {
             if ((!bIsAxisMasked || bIsMultipleAxesMasked) && !bIsNoAxesMasked)
             {
@@ -1753,7 +1888,19 @@ static int32 GetMoveType(EditorGuizmo::EOperation::Type Op, Vector4* GizmoHitPro
 
         if (GizmoHitProportion)
         {
-            *GizmoHitProportion = Vector4(PlaneCoordX, PlaneCoordY, 0.0f, 0.0f);
+            const float Length = Plane::FromPointAndNormal(
+                Vector3(ModelPosition.X, ModelPosition.Y, ModelPosition.Z),
+                Vector3(DirAxis.X, DirAxis.Y, DirAxis.Z)).IntersectRay(
+                    Vector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z),
+                    Vector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
+
+            if (Length >= 0.0f)
+            {
+                const Vector4 PositionOnPlane = GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length;
+                const float PlaneCoordX = DirPlaneX.DotProduct((PositionOnPlane - ModelPosition) * (1.0f / GuizmoContext.ScreenFactor));
+                const float PlaneCoordY = DirPlaneY.DotProduct((PositionOnPlane - ModelPosition) * (1.0f / GuizmoContext.ScreenFactor));
+                *GizmoHitProportion = Vector4(PlaneCoordX, PlaneCoordY, 0.0f, 0.0f);
+            }
         }
     }
 
@@ -1938,22 +2085,29 @@ static bool HandleScale(float* Matrix, float* DeltaMatrix, EditorGuizmo::EOperat
             Vector4 ModelLocalUp    = Vector4(GuizmoContext.ModelLocal.M[1][0], GuizmoContext.ModelLocal.M[1][1], GuizmoContext.ModelLocal.M[1][2], 0.0f);
             Vector4 ModelLocalDir   = Vector4(GuizmoContext.ModelLocal.M[2][0], GuizmoContext.ModelLocal.M[2][1], GuizmoContext.ModelLocal.M[2][2], 0.0f);
             Vector4 ModelLocalRight = Vector4(GuizmoContext.ModelLocal.M[0][0], GuizmoContext.ModelLocal.M[0][1], GuizmoContext.ModelLocal.M[0][2], 0.0f);
-                
+
+            // Indexed by Type - ScaleX for ScaleX..ScaleXYZ (matches translate MoveX..MoveScreen layout)
             const Vector4 MovePlanNormal[] =
             {
-                ModelLocalUp, 
-                ModelLocalDir, 
-                ModelLocalRight, 
-                ModelLocalDir, 
-                ModelLocalUp, 
+                ModelLocalUp,
+                ModelLocalDir,
                 ModelLocalRight,
+                ModelLocalRight,
+                ModelLocalUp,
+                ModelLocalDir,
                 -GuizmoContext.CameraDir
             };
+
+            Vector4 PlanNormal = -GuizmoContext.CameraDir;
+            if (Type >= EMoveType::ScaleX && Type <= EMoveType::ScaleXY)
+            {
+                PlanNormal = MovePlanNormal[Type - EMoveType::ScaleX];
+            }
             
             Vector4 ModelLocalPosition = Vector4(GuizmoContext.ModelLocal.GetTranslation(), 1.0f);
             GuizmoContext.TranslationPlan = Plane::FromPointAndNormal(
                 Vector3(ModelLocalPosition.X, ModelLocalPosition.Y, ModelLocalPosition.Z), 
-                Vector3(MovePlanNormal[Type - EMoveType::ScaleX].X, MovePlanNormal[Type - EMoveType::ScaleX].Y, MovePlanNormal[Type - EMoveType::ScaleX].Z));
+                Vector3(PlanNormal.X, PlanNormal.Y, PlanNormal.Z));
 
             const float Length = GuizmoContext.TranslationPlan.IntersectRay(
                 Vector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z), 
@@ -2014,6 +2168,22 @@ static bool HandleScale(float* Matrix, float* DeltaMatrix, EditorGuizmo::EOperat
 
                 const float Ratio = AxisValue.DotProduct(BaseVector + Delta) / AxisValue.DotProduct(BaseVector);
                 GuizmoContext.Scale[AxisIndex] = Math::Max(Ratio, 0.001f);
+            }
+            else if (GuizmoContext.CurrentOperation >= EMoveType::ScaleYZ && GuizmoContext.CurrentOperation <= EMoveType::ScaleXY)
+            {
+                const int32 PlaneIndex = GuizmoContext.CurrentOperation - EMoveType::ScaleYZ;
+                const int32 AxisA      = (PlaneIndex + 1) % 3;
+                const int32 AxisB      = (PlaneIndex + 2) % 3;
+
+                const Vector4 ModelLocalPositionScale = Vector4(GuizmoContext.ModelLocal.GetTranslation(), 1.0f);
+                const Vector4 BaseVector              = GuizmoContext.TranslationPlanOrigin - ModelLocalPositionScale;
+                const float   BaseLength              = BaseVector.GetLength();
+                const float   NewLength               = (NewOrigin - ModelLocalPositionScale).GetLength();
+                const float   Ratio                   = (BaseLength > Math::Constants::Epsilon) ? (NewLength / BaseLength) : 1.0f;
+                const float   ClampedRatio            = Math::Max(Ratio, 0.001f);
+
+                GuizmoContext.Scale[AxisA] = ClampedRatio;
+                GuizmoContext.Scale[AxisB] = ClampedRatio;
             }
             else
             {
@@ -2249,32 +2419,35 @@ static void ComputeFrustumPlanes(Plane* Frustum, const float* Clip)
 }
 
 // Constructors and remaining EditorGuizmo functions
-EditorGuizmo::Style::Style() 
-{ 
-    // Default values 
-    TranslationLineThickness   = 3.0f; 
-    TranslationLineArrowSize   = 6.0f; 
-    RotationLineThickness      = 2.0f; 
-    RotationOuterLineThickness = 3.0f; 
-    ScaleLineThickness         = 3.0f; 
-    ScaleLineCircleSize        = 6.0f; 
+EditorGuizmo::Style::Style()
+{
+    TranslationLineThickness   = 4.0f;
+    TranslationLineArrowSize   = 8.0f;
+    RotationLineThickness      = 2.0f;
+    RotationOuterLineThickness = 3.0f;
+    ScaleLineThickness         = 3.0f;
+    ScaleLineCircleSize        = 7.0f;
     ScaleHandleShape           = EditorGuizmo::EScaleHandleShape::Square;
-    HatchedAxisLineThickness   = 6.0f; 
-    CenterCircleSize           = 6.0f; 
+    HatchedAxisLineThickness   = 0.0f;
+    CenterCircleSize           = 6.0f;
+    GizmoSizeClipSpace         = 0.12f;
+    // The axis lines run from 0.1 to 1.0 of the screen factor, so centering the quad on 0.55 puts it level with the middle of the axis
+    PlaneQuadMin               = 0.45f;
+    PlaneQuadMax               = 0.65f;
+    PlaneHandleHitPadding      = 6.0f;
 
-    // Initialize default colors
-    Colors[EditorGuizmo::EColor::DirectionX]          = ImVec4(0.666f, 0.000f, 0.000f, 1.000f);
-    Colors[EditorGuizmo::EColor::DirectionY]          = ImVec4(0.000f, 0.666f, 0.000f, 1.000f);
-    Colors[EditorGuizmo::EColor::DirectionZ]          = ImVec4(0.000f, 0.000f, 0.666f, 1.000f);
-    Colors[EditorGuizmo::EColor::PlaneX]              = ImVec4(0.666f, 0.000f, 0.000f, 0.380f);
-    Colors[EditorGuizmo::EColor::PlaneY]              = ImVec4(0.000f, 0.666f, 0.000f, 0.380f);
-    Colors[EditorGuizmo::EColor::PlaneZ]              = ImVec4(0.000f, 0.000f, 0.666f, 0.380f);
-    Colors[EditorGuizmo::EColor::Selection]           = ImVec4(1.000f, 0.500f, 0.062f, 0.541f);
+    Colors[EditorGuizmo::EColor::DirectionX]          = EditorAxisColors::X;
+    Colors[EditorGuizmo::EColor::DirectionY]          = EditorAxisColors::Y;
+    Colors[EditorGuizmo::EColor::DirectionZ]          = EditorAxisColors::Z;
+    Colors[EditorGuizmo::EColor::PlaneX]              = ImVec4(EditorAxisColors::X.x, EditorAxisColors::X.y, EditorAxisColors::X.z, EditorAxisColors::PlaneAlpha);
+    Colors[EditorGuizmo::EColor::PlaneY]              = ImVec4(EditorAxisColors::Y.x, EditorAxisColors::Y.y, EditorAxisColors::Y.z, EditorAxisColors::PlaneAlpha);
+    Colors[EditorGuizmo::EColor::PlaneZ]              = ImVec4(EditorAxisColors::Z.x, EditorAxisColors::Z.y, EditorAxisColors::Z.z, EditorAxisColors::PlaneAlpha);
+    Colors[EditorGuizmo::EColor::Selection]           = EditorAxisColors::Selection;
     Colors[EditorGuizmo::EColor::Inactive]            = ImVec4(0.600f, 0.600f, 0.600f, 0.600f);
     Colors[EditorGuizmo::EColor::TranslationLine]     = ImVec4(0.666f, 0.666f, 0.666f, 0.666f);
     Colors[EditorGuizmo::EColor::ScaleLine]           = ImVec4(0.250f, 0.250f, 0.250f, 1.000f);
-    Colors[EditorGuizmo::EColor::RotationUsingBorder] = ImVec4(1.000f, 0.500f, 0.062f, 1.000f);
-    Colors[EditorGuizmo::EColor::RotationUsingFill]   = ImVec4(1.000f, 0.500f, 0.062f, 0.500f);
+    Colors[EditorGuizmo::EColor::RotationUsingBorder] = EditorAxisColors::Selection;
+    Colors[EditorGuizmo::EColor::RotationUsingFill]   = ImVec4(1.0f, 1.0f, 0.0f, 0.50f);
     Colors[EditorGuizmo::EColor::HatchedAxisLines]    = ImVec4(0.000f, 0.000f, 0.000f, 0.500f);
     Colors[EditorGuizmo::EColor::Text]                = ImVec4(1.000f, 1.000f, 1.000f, 1.000f);
     Colors[EditorGuizmo::EColor::TextShadow]          = ImVec4(0.000f, 0.000f, 0.000f, 1.000f);
@@ -3145,7 +3318,7 @@ bool EditorGuizmo::IsOver(Vector3& Position, float PixelRadius)
 
 void EditorGuizmo::SetGizmoSizeClipSpace(float Value)
 {
-    GuizmoContext.GizmoSizeClipSpace = Value;
+    GuizmoContext.Style.GizmoSizeClipSpace = Value;
 }
 
 void EditorGuizmo::AllowAxisFlip(bool bAllow)

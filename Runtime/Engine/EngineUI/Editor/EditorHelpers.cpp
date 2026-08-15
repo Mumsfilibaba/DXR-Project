@@ -626,9 +626,9 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, Vector3& OutValue, floa
         return bAxisValueChanged;
     };
 
-    const ImU32 XAxisColor = IM_COL32(204, 26, 38, 255);
-    const ImU32 YAxisColor = IM_COL32(51, 179, 51, 255);
-    const ImU32 ZAxisColor = IM_COL32(26, 64, 204, 255);
+    const ImU32 XAxisColor = ImGui::ColorConvertFloat4ToU32(EditorAxisColors::X);
+    const ImU32 YAxisColor = ImGui::ColorConvertFloat4ToU32(EditorAxisColors::Y);
+    const ImU32 ZAxisColor = ImGui::ColorConvertFloat4ToU32(EditorAxisColors::Z);
 
     bXChanged = DrawAxisField("##X", OutValue.X, XAxisColor, AxisFieldWidth, false);
     bYChanged = DrawAxisField("##Y", OutValue.Y, YAxisColor, AxisFieldWidth, true);
