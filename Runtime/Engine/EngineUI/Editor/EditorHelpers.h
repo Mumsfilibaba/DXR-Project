@@ -35,6 +35,13 @@ inline constexpr float MenuRadioLabelIndentX = 42.0f;
 inline constexpr float MenuDefaultMinWidth   = 180.0f;
 inline constexpr float MenuSubMenuOverlapX   = 2.0f;
 
+inline constexpr float EditorDefaultWindowWidthFraction  = 0.60f;
+inline constexpr float EditorDefaultWindowHeightFraction = 0.50f;
+inline constexpr float EditorDefaultWindowMinWidth       = 480.0f;
+inline constexpr float EditorDefaultWindowMaxWidth       = 1152.0f;
+inline constexpr float EditorDefaultWindowMinHeight      = 360.0f;
+inline constexpr float EditorDefaultWindowMaxHeight      = 960.0f;
+
 struct FSubMenuState
 {
     FPopupAnchor Anchor;
@@ -275,6 +282,8 @@ struct ENGINE_API EditorWidgets
     // Editor window
     // -----------------------------------------------------------------------------------------
 
+    static ImVec2 GetDefaultEditorWindowSize();
+    static ImVec2 ScaleEditorWindowSize(const ImVec2& LogicalSize);
     static bool BeginEditorWindow(const CHAR* Title, bool* pbVisible, ImGuiWindowFlags ExtraFlags = 0);
     static void EndEditorWindow();
 

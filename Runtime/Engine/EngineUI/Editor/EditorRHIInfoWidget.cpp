@@ -34,11 +34,6 @@ void FEditorRHIInfoWidget::Draw()
         return;
     }
 
-    const ImVec2 FrameBufferScale = ImGuiExtensions::GetDisplayFramebufferScale();
-    const float  Scale            = FrameBufferScale.x;
-
-    ImGui::SetNextWindowSize(ImVec2(420.0f * Scale, 500.0f * Scale), ImGuiCond_FirstUseEver);
-
     if (EditorWidgets::BeginEditorWindow("RHI Info", &bVisible))
     {
         DrawAdapterInfo();

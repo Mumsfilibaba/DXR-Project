@@ -3,7 +3,6 @@
 #include "Core/Misc/BuildInfo.h"
 #include "RHI/RHI.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
-#include "ImGuiPlugin/ImGuiExtensions.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Engine/EngineUI/Editor/EditorAboutWidget.h"
 
@@ -58,10 +57,7 @@ void FEditorAboutWidget::Draw()
         return;
     }
 
-    const ImVec2 FrameBufferScale = ImGuiExtensions::GetDisplayFramebufferScale();
-    const float  Scale            = FrameBufferScale.x;
-
-    ImGui::SetNextWindowSize(ImVec2(520.0f * Scale, 540.0f * Scale), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(EditorWidgets::ScaleEditorWindowSize(ImVec2(520.0f, 540.0f)), ImGuiCond_FirstUseEver);
 
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, EditorStyleVars::PropertiesItemSpacing);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, EditorStyleVars::PropertiesWindowPadding);

@@ -41,11 +41,6 @@ void FEditorStatsWidget::Draw()
         return;
     }
 
-    const ImVec2 FrameBufferScale = ImGuiExtensions::GetDisplayFramebufferScale();
-    const float  Scale            = FrameBufferScale.x;
-
-    ImGui::SetNextWindowSize(ImVec2(380.0f * Scale, 450.0f * Scale), ImGuiCond_FirstUseEver);
-
     if (EditorWidgets::BeginEditorWindow("Engine Stats", &bVisible))
     {
         const FStatRegistry& Registry = FStatRegistry::Get();

@@ -4,6 +4,7 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Templates/CString.h"
 #include "Engine/Assets/AssetManager.h"
+#include "ImGuiPlugin/ImGuiExtensions.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include <imgui_internal.h>
 
@@ -1570,6 +1571,26 @@ void EditorHelpers::FormatBytes(int64 Bytes, char* OutBuffer, int32 BufferSize)
     }
 }
 
+ImVec2 EditorWidgets::GetDefaultEditorWindowSize()
+{
+    const ImVec2 ViewportSize = ImGuiExtensions::GetMainViewportSize();
+
+    const float Width  = Math::Clamp(ViewportSize.x * EditorDefaultWindowWidthFraction,
+        EditorDefaultWindowMinWidth, EditorDefaultWindowMaxWidth);
+
+    const float Height = Math::Clamp(ViewportSize.y * EditorDefaultWindowHeightFraction,
+        EditorDefaultWindowMinHeight, EditorDefaultWindowMaxHeight);
+
+    return ImVec2(Width, Height);
+}
+
+ImVec2 EditorWidgets::ScaleEditorWindowSize(const ImVec2& LogicalSize)
+{
+    const ImVec2 FrameBufferScale = ImGuiExtensions::GetDisplayFramebufferScale();
+    const float  Scale            = FrameBufferScale.x;
+    return ImVec2(LogicalSize.x * Scale, LogicalSize.y * Scale);
+}
+
 bool EditorWidgets::BeginEditorWindow(const CHAR* Title, bool* pbVisible, ImGuiWindowFlags ExtraFlags)
 {
     GEditorWindowBegun               = false;
@@ -1578,6 +1599,16 @@ bool EditorWidgets::BeginEditorWindow(const CHAR* Title, bool* pbVisible, ImGuiW
     GEditorWindowOuterPaddingPushed  = false;
     GEditorWindowContentStylePushed  = false;
     GEditorWindowNestedChildBgPushed = false;
+
+    const ImGuiCond SizeCondition = (ExtraFlags & ImGuiWindowFlags_NoSavedSettings)
+        ? ImGuiCond_Appearing
+        : ImGuiCond_FirstUseEver;
+
+    ImGuiContext& g = *GImGui;
+    if (!(g.NextWindowData.Flags & ImGuiNextWindowDataFlags_HasSize))
+    {
+        ImGui::SetNextWindowSize(GetDefaultEditorWindowSize(), SizeCondition);
+    }
 
     const ImGuiStyle& Style = ImGui::GetStyle();
 
