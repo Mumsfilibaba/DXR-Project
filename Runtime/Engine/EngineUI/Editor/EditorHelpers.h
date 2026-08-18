@@ -151,6 +151,8 @@ struct ENGINE_API EditorStyleVars
     static ImVec2 PropertiesCollapsingHeaderItemSpacing;
     static ImVec2 PropertiesCollapsingFramePadding;
     static float  PropertiesCollapsingFrameRounding;
+
+    static float CheckboxSizeScale;
 };
 
 // -----------------------------------------------------------------------------------------
@@ -187,6 +189,7 @@ struct ENGINE_API EditorWidgets
     static bool DrawFloat3Control(const CHAR* Label, Vector3& OutValue, float Speed, const Vector3* InRevertValue, EVector3ControlType InType);
     static bool DrawFloatProperty(const CHAR* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const CHAR* Format, bool bUseSlider, const float* InRevertValue, bool bEnabled = true);
     static bool DrawIntProperty(const CHAR* Label, int32& InOutValue, float Speed, int32 MinValue, int32 MaxValue, const CHAR* Format, bool bUseSlider, const int32* InRevertValue, bool bEnabled = true);
+    static bool DrawCheckbox(const CHAR* Label, bool& InOutValue, bool bEnabled = true);
     static bool DrawCheckboxProperty(const CHAR* Label, bool& InOutValue, const bool* InRevertValue, bool bEnabled = true);
     static bool DrawComboProperty(const CHAR* Label, int32& InOutValue, const CHAR* const* Items, int32 ItemCount, const int32* InRevertValue, bool bEnabled = true);
     static bool DrawTextProperty(const CHAR* Label, const CHAR* ValueText);

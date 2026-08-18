@@ -1,4 +1,5 @@
 #include "Engine/EngineUI/Editor/EditorRenderGraphWidget.h"
+#include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Engine/EngineUI/Editor/EditorNodeGraph.h"
 #include "Core/Math/Math.h"
 #include "ImGuiPlugin/ImGuiCore.h"
@@ -395,7 +396,7 @@ void FEditorRenderGraphWidget::DrawWindow()
         Snapshot.Statistics.NumPasses, Snapshot.Statistics.NumCulledPasses, Snapshot.Statistics.NumDisabledPasses,
         Snapshot.Statistics.NumTexturesAllocated, Snapshot.Statistics.NumBuffersAllocated);
 
-    ImGui::Checkbox("Show culled/disabled", &bShowCulled);
+    EditorWidgets::DrawCheckbox("Show culled/disabled", bShowCulled);
     ImGui::SameLine();
 
     if (ImGui::Button("Auto Layout"))

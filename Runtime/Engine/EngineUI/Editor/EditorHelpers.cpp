@@ -22,6 +22,7 @@ ImVec2 EditorStyleVars::PropertiesWindowPadding               = ImVec2(8.0f, 8.0
 ImVec2 EditorStyleVars::PropertiesCollapsingHeaderItemSpacing = ImVec2(8.0f, 2.0f);
 ImVec2 EditorStyleVars::PropertiesCollapsingFramePadding      = ImVec2(10.0f, 8.0f);
 float  EditorStyleVars::PropertiesCollapsingFrameRounding     = 2.0f;
+float  EditorStyleVars::CheckboxSizeScale                     = 0.8f;
 
 static constexpr float EditorWindowBorderInset = 5.0f;
 
@@ -110,7 +111,7 @@ static bool BeginFullRowHoverCatcher(float RowHeight)
     return bHovered;
 }
 
-static void DrawInputBorderLastItem(float Rounding = -1.0f, float Thickness = 2.0f)
+static void DrawInputBorderRect(const ImVec2& Min, const ImVec2& Max, bool bActive, bool bHovered, float Rounding = -1.0f, float Thickness = 2.0f)
 {
     ImGuiWindow* Window = ImGui::GetCurrentWindow();
     if (!Window || Window->SkipItems)
@@ -124,18 +125,20 @@ static void DrawInputBorderLastItem(float Rounding = -1.0f, float Thickness = 2.
         Rounding = Style.FrameRounding;
     }
 
-    const bool bActive  = ImGui::IsItemActive();
-    const bool bHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
-
     const ImU32 ColorIdle   = IM_COL32(54, 54, 54, 255);
     const ImU32 ColorHover  = IM_COL32(84, 84, 84, 255);
     const ImU32 ColorActive = IM_COL32(0, 112, 224, 255);
     const ImU32 Color       = bActive ? ColorActive : (bHovered ? ColorHover : ColorIdle);
 
-    ImVec2 Min = ImGui::GetItemRectMin();
-    ImVec2 Max = ImGui::GetItemRectMax();
-
     Window->DrawList->AddRect(Min, Max, Color, Rounding, ImDrawFlags_None, Thickness);
+}
+
+static void DrawInputBorderLastItem(float Rounding = -1.0f, float Thickness = 2.0f)
+{
+    const bool bActive  = ImGui::IsItemActive();
+    const bool bHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+
+    DrawInputBorderRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), bActive, bHovered, Rounding, Thickness);
 }
 
 static void DrawAxisLineForLastItem(ImU32 InColor)
@@ -1180,6 +1183,96 @@ bool EditorWidgets::DrawComboProperty(const CHAR* Label, int32& InOutValue, cons
     return bEnabled && bResult;
 }
 
+bool EditorWidgets::DrawCheckbox(const CHAR* Label, bool& InOutValue, bool bEnabled)
+{
+    if (!bEnabled)
+    {
+        ImGui::BeginDisabled();
+    }
+
+    ImGuiWindow* Window = ImGui::GetCurrentWindow();
+    if (!Window || Window->SkipItems)
+    {
+        if (!bEnabled)
+        {
+            ImGui::EndDisabled();
+        }
+
+        return false;
+    }
+
+    ImGuiContext&     Context          = *GImGui;
+    const ImGuiStyle& Style            = Context.Style;
+    const ImGuiID     Id               = Window->GetID(Label);
+    const float       FrameHeight      = ImGui::GetFrameHeight();
+    const float       CheckboxSize     = FrameHeight * EditorStyleVars::CheckboxSizeScale;
+    const float       OffsetY          = (FrameHeight - CheckboxSize) * 0.5f;
+    const bool        bHasVisibleLabel = Label && !(Label[0] == '#' && Label[1] == '#');
+    const ImVec2      LabelSize        = bHasVisibleLabel ? ImGui::CalcTextSize(Label, nullptr, true) : ImVec2(0.0f, 0.0f);
+    const ImVec2      Pos              = Window->DC.CursorPos;
+    const float       TotalWidth       = CheckboxSize + (bHasVisibleLabel ? Style.ItemInnerSpacing.x + LabelSize.x : 0.0f);
+    const ImRect      TotalBB          = ImRect(Pos, Pos + ImVec2(TotalWidth, FrameHeight));
+
+    ImGui::ItemSize(TotalBB, Style.FramePadding.y);
+    if (!ImGui::ItemAdd(TotalBB, Id))
+    {
+        if (!bEnabled)
+        {
+            ImGui::EndDisabled();
+        }
+
+        return false;
+    }
+
+    bool bHovered = false;
+    bool bHeld    = false;
+
+    const bool bPressed = ImGui::ButtonBehavior(TotalBB, Id, &bHovered, &bHeld);
+
+    bool bChanged = false;
+    if (bPressed && bEnabled)
+    {
+        InOutValue = !InOutValue;
+        bChanged   = true;
+
+        ImGui::MarkItemEdited(Id);
+    }
+
+    const ImVec2 CheckMin = ImVec2(Pos.x, Pos.y + OffsetY);
+    const ImVec2 CheckMax = CheckMin + ImVec2(CheckboxSize, CheckboxSize);
+    const ImRect CheckBB  = ImRect(CheckMin, CheckMax);
+
+    static const ImVec4 CheckboxBackgroundColor = ImVec4(15.0f / 255.0f, 15.0f / 255.0f, 15.0f / 255.0f, 1.0f);
+    static const ImVec4 CheckboxCheckMarkColor  = ImVec4(0.65f, 0.65f, 0.65f, 1.0f);
+
+    const ImU32 FrameBg  = ImGui::GetColorU32(CheckboxBackgroundColor);
+    const ImU32 CheckCol = ImGui::GetColorU32(CheckboxCheckMarkColor);
+
+    ImGui::RenderNavHighlight(TotalBB, Id);
+    ImGui::RenderFrame(CheckBB.Min, CheckBB.Max, FrameBg, true, Style.FrameRounding);
+
+    if (InOutValue)
+    {
+        const float Pad = Math::Max(1.0f, IM_TRUNC(CheckboxSize / 6.0f));
+        EditorWidgets::DrawCheckMark(Window->DrawList, CheckBB.Min + ImVec2(Pad, Pad), CheckCol, CheckboxSize - Pad * 2.0f);
+    }
+
+    DrawInputBorderRect(CheckBB.Min, CheckBB.Max, bHeld && bHovered, bHovered, Style.FrameRounding);
+
+    if (bHasVisibleLabel)
+    {
+        const ImVec2 LabelPos = ImVec2(CheckBB.Max.x + Style.ItemInnerSpacing.x, Pos.y + Style.FramePadding.y);
+        ImGui::RenderText(LabelPos, Label);
+    }
+
+    if (!bEnabled)
+    {
+        ImGui::EndDisabled();
+    }
+
+    return bEnabled && bChanged;
+}
+
 bool EditorWidgets::DrawCheckboxProperty(const CHAR* Label, bool& InOutValue, const bool* InRevertValue, bool bEnabled)
 {
     ImGuiTable* Table = ImGui::GetCurrentTable();
@@ -1206,23 +1299,10 @@ bool EditorWidgets::DrawCheckboxProperty(const CHAR* Label, bool& InOutValue, co
     ImGui::TableSetColumnIndex(1);
     ImGui::PushID(Label);
 
-    if (!bEnabled)
-    {
-        ImGui::BeginDisabled();
-    }
-
-    bResult = ImGui::Checkbox("##Value", &InOutValue);
-    
-    ImGuiStyle& Style = ImGui::GetStyle();
-    DrawInputBorderLastItem(Style.FrameRounding);
+    bResult = EditorWidgets::DrawCheckbox("##Value", InOutValue, bEnabled);
 
     bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
     bRowHovered |= ImGui::IsItemActive();
-
-    if (!bEnabled)
-    {
-        ImGui::EndDisabled();
-    }
 
     ImGui::PopID();
 
