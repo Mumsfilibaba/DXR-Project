@@ -202,8 +202,12 @@ void FEditorDockspaceWidget::Draw()
     ImGui::PopStyleVar(3);
 
     DrawMenuBar();
+
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     DrawDockSpace();
     DrawFooter();
+    ImGui::PopStyleVar(2);
 
     ImGui::End();
 }
@@ -508,8 +512,9 @@ void FEditorDockspaceWidget::DrawDockSpace()
         }
     }
 
+    const float SeparatorSize   = ImGui::GetStyle().DockingSeparatorSize;
     const float AvailableHeight = ImGui::GetContentRegionAvail().y;
-    const float DockspaceHeight = AvailableHeight - FooterHeight;
+    const float DockspaceHeight = AvailableHeight - FooterHeight - SeparatorSize;
 
     ImGui::BeginChild("##DockspaceArea", ImVec2(0, DockspaceHeight), ChildWindowFlags, WindowFlags);
 
@@ -521,6 +526,14 @@ void FEditorDockspaceWidget::DrawDockSpace()
     ImGui::DockSpace(DockspaceId, ImVec2(0, 0), DockFlags);
 
     ImGui::EndChild();
+
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetStyle().Colors[ImGuiCol_Separator]);
+
+    ImGui::BeginChild("##DockFooterSeparator", ImVec2(0.0f, SeparatorSize), ImGuiChildFlags_None, 
+        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoInputs);
+    ImGui::EndChild();
+
+    ImGui::PopStyleColor();
 
     // Build default layout once
     ImGuiDockNode* DockNode = ImGui::DockBuilderGetNode(DockspaceId);

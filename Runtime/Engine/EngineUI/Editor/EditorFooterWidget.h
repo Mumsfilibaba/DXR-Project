@@ -22,9 +22,12 @@ public:
 
     void Draw();
 
+    static constexpr float ConsoleHeight      = 40.0f;
+    static constexpr float ConsoleLeftPadding = 16.0f;
+
     float GetHeight() const
     {
-        return 40.0f;
+        return ConsoleHeight;
     }
 
 private:
@@ -49,6 +52,7 @@ private:
     int32                                  HistoryIndex;
     int32                                  LastCursorPosition;
     int32                                  PendingCursorPosition;
+    float                                  CachedConsoleInputHeight;
     bool                                   bCandidateSelectionChanged : 1;
     bool                                   bRequestCursorPosition : 1;
     bool                                   bRequestInputFocus : 1;

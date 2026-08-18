@@ -14,6 +14,7 @@ FEditorFooterWidget::FEditorFooterWidget(const TSharedPtr<IOutputDevice>& InOutp
     , HistoryIndex(InvalidIndex)
     , LastCursorPosition(0)
     , PendingCursorPosition(0)
+    , CachedConsoleInputHeight(0.0f)
     , bCandidateSelectionChanged(false)
     , bRequestCursorPosition(false)
     , bRequestInputFocus(false)
@@ -43,7 +44,8 @@ void FEditorFooterWidget::Draw()
     const ImVec2 FrameBufferScale = ImGuiExtensions::GetDisplayFramebufferScale();
 
     ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(36, 36, 36, 255));
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(6.0f, 6.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
 
     const ImGuiWindowFlags ConsoleWindowFlags =
         ImGuiWindowFlags_NoMove |
@@ -75,9 +77,21 @@ void FEditorFooterWidget::Draw()
             return reinterpret_cast<FEditorFooterWidget*>(Data->UserData)->InputTextCallback(Data);
         };
 
-        ImGui::SameLine();
+        const ImVec2 BasePadding = EditorStyleVars::InputFieldFramePadding;
 
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, BasePadding);
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+
+        const float FrameHeight     = ImGui::GetFrameHeight();
         const float InputFieldWidth = 512.0f;
+        const float InputHeight     = CachedConsoleInputHeight > 0.0f ? CachedConsoleInputHeight : FrameHeight;
+
+        const ImGuiWindow* ConsoleWindow = ImGui::GetCurrentWindow();
+        const float        CenterY       = (ConsoleWindow->InnerRect.Min.y + ConsoleWindow->InnerRect.Max.y) * 0.5f;
+        const float        ItemTopY      = CenterY - InputHeight * 0.5f;
+
+        ImGui::SetCursorScreenPos(ImVec2(ConsoleWindow->InnerRect.Min.x + ConsoleLeftPadding, ItemTopY));
         ImGui::SetNextItemWidth(InputFieldWidth);
 
         const bool bWantsInputFocus = bRequestInputFocus;
@@ -87,8 +101,7 @@ void FEditorFooterWidget::Draw()
             bRequestInputFocus = false;
         }
 
-        const ImVec2 BasePadding   = EditorStyleVars::InputFieldFramePadding;
-        const float  InputRounding = 4.0f;
+        const float InputRounding = 4.0f;
 
         const ImU32  BgColor            = IM_COL32(15, 15, 15, 255);
         const ImU32  BorderColorNormal  = IM_COL32(51, 51, 51, 255);
@@ -99,8 +112,7 @@ void FEditorFooterWidget::Draw()
         const ImVec4 InputTextColor     = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 
         const ImVec2 InputStart = ImGui::GetCursorScreenPos();
-        const float  InputHeight = ImGui::GetFontSize() + BasePadding.y * 2.0f;
-        const ImVec2 InputEnd    = ImVec2(InputStart.x + InputFieldWidth, InputStart.y + InputHeight);
+        const ImVec2 InputEnd   = ImVec2(InputStart.x + InputFieldWidth, InputStart.y + InputHeight);
 
         const ImGuiID ConsoleInputId  = ImGui::GetID("##ConsoleInput");
         const bool    bInputWasActive = ImGui::GetActiveID() == ConsoleInputId;
@@ -110,10 +122,6 @@ void FEditorFooterWidget::Draw()
 
         ImDrawList* DrawList = ImGui::GetWindowDrawList();
         DrawList->AddRectFilled(InputStart, InputEnd, BgColor, InputRounding);
-
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, BasePadding);
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
 
         ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0, 0, 0, 0));
         ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0, 0, 0, 0));
@@ -129,6 +137,7 @@ void FEditorFooterWidget::Draw()
 
         InputRectMin = ImGui::GetItemRectMin();
         InputRectMax = ImGui::GetItemRectMax();
+        CachedConsoleInputHeight = InputRectMax.y - InputRectMin.y;
         
         bIsInputFieldActive = ImGui::IsItemActive();
 
@@ -175,7 +184,7 @@ void FEditorFooterWidget::Draw()
 
     ImGui::EndChild();
 
-    ImGui::PopStyleVar(); // WindowPadding
+    ImGui::PopStyleVar(2);  // ItemSpacing + WindowPadding
     ImGui::PopStyleColor(); // ChildBg
 
     // -------------------------------------------------------------------------------------------
