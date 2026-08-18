@@ -46,7 +46,7 @@ void FEditorStatsWidget::Draw()
 
     ImGui::SetNextWindowSize(ImVec2(380.0f * Scale, 450.0f * Scale), ImGuiCond_FirstUseEver);
 
-    if (ImGui::Begin("Engine Stats", &bVisible))
+    if (EditorWidgets::BeginEditorWindow("Engine Stats", &bVisible))
     {
         const FStatRegistry& Registry = FStatRegistry::Get();
         TArray<const CHAR*> Groups;
@@ -96,5 +96,5 @@ void FEditorStatsWidget::Draw()
         }
     }
 
-    ImGui::End();
+    EditorWidgets::EndEditorWindow();
 }

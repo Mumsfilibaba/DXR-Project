@@ -51,12 +51,12 @@ void FEditorRendererSettingsWidget::Draw()
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, EditorStyleVars::PropertiesItemSpacing);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, EditorStyleVars::PropertiesWindowPadding);
 
-    if (ImGui::Begin("Renderer Settings", &bVisible))
+    if (EditorWidgets::BeginEditorWindow("Renderer Settings", &bVisible))
     {
         DrawWindow();
     }
 
-    ImGui::End();
+    EditorWidgets::EndEditorWindow();
 
     ImGui::PopStyleVar(2);
 }

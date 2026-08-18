@@ -50,12 +50,12 @@ void FEditorPropertiesWidget::Draw()
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, EditorStyleVars::PropertiesItemSpacing);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, EditorStyleVars::PropertiesWindowPadding);
 
-    if (ImGui::Begin("Properties", &bVisible))
+    if (EditorWidgets::BeginEditorWindow("Properties", &bVisible))
     {
         DrawWindowContents();
     }
     
-    ImGui::End();
+    EditorWidgets::EndEditorWindow();
 
     ImGui::PopStyleVar(2);
 }

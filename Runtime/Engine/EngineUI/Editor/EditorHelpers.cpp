@@ -22,6 +22,44 @@ ImVec2 EditorStyleVars::PropertiesCollapsingHeaderItemSpacing = ImVec2(8.0f, 2.0
 ImVec2 EditorStyleVars::PropertiesCollapsingFramePadding      = ImVec2(10.0f, 8.0f);
 float  EditorStyleVars::PropertiesCollapsingFrameRounding     = 2.0f;
 
+static constexpr float EditorWindowBorderInset = 5.0f;
+
+static bool GEditorWindowBegun               = false;
+static bool GEditorWindowOpen                = false;
+static bool GEditorWindowChildBegun          = false;
+static bool GEditorWindowOuterPaddingPushed  = false;
+static bool GEditorWindowContentStylePushed  = false;
+static bool GEditorWindowNestedChildBgPushed = false;
+
+static bool IsWindowFloating(const ImGuiWindow* Window)
+{
+    return Window != nullptr && Window->DockId == 0;
+}
+
+static void DrawFrameBand(ImDrawList* DrawList, const ImVec2& Min, const ImVec2& Max, float Inset, float Thickness, ImU32 Color)
+{
+    const float X0 = Min.x + Inset;
+    const float Y0 = Min.y + Inset;
+    const float X1 = Max.x - Inset;
+    const float Y1 = Max.y - Inset;
+
+    DrawList->AddRectFilled(ImVec2(X0, Y0), ImVec2(X1, Y0 + Thickness), Color);
+    DrawList->AddRectFilled(ImVec2(X0, Y1 - Thickness), ImVec2(X1, Y1), Color);
+    DrawList->AddRectFilled(ImVec2(X0, Y0), ImVec2(X0 + Thickness, Y1), Color);
+    DrawList->AddRectFilled(ImVec2(X1 - Thickness, Y0), ImVec2(X1, Y1), Color);
+}
+
+static void DrawFloatingWindowBorder(ImDrawList* DrawList, const ImVec2& Min, const ImVec2& Max)
+{
+    constexpr ImU32 OuterColor  = IM_COL32(21, 21, 21, 255);
+    constexpr ImU32 MiddleColor = IM_COL32(45, 45, 45, 255);
+    constexpr ImU32 InnerColor  = IM_COL32(21, 21, 21, 255);
+
+    DrawFrameBand(DrawList, Min, Max, 0.0f, 2.0f, OuterColor);
+    DrawFrameBand(DrawList, Min, Max, 2.0f, 1.0f, MiddleColor);
+    DrawFrameBand(DrawList, Min, Max, 3.0f, 2.0f, InnerColor);
+}
+
 static void ApplyHoveredRowBg(bool bRowHovered)
 {
     if (!bRowHovered)
@@ -1529,6 +1567,115 @@ void EditorHelpers::FormatBytes(int64 Bytes, char* OutBuffer, int32 BufferSize)
     else
     {
         snprintf(OutBuffer, BufferSize, "%lld B", static_cast<long long>(Bytes));
+    }
+}
+
+bool EditorWidgets::BeginEditorWindow(const CHAR* Title, bool* pbVisible, ImGuiWindowFlags ExtraFlags)
+{
+    GEditorWindowBegun               = false;
+    GEditorWindowOpen                = false;
+    GEditorWindowChildBegun          = false;
+    GEditorWindowOuterPaddingPushed  = false;
+    GEditorWindowContentStylePushed  = false;
+    GEditorWindowNestedChildBgPushed = false;
+
+    const ImGuiStyle& Style = ImGui::GetStyle();
+
+    const ImVec2 ContentPadding = Style.WindowPadding;
+    const ImVec4 ContentBg      = Style.Colors[ImGuiCol_WindowBg];
+    const ImVec4 NestedChildBg  = Style.Colors[ImGuiCol_ChildBg];
+
+    ImGuiWindow* ExistingWindow = ImGui::FindWindowByName(Title);
+    const bool bFloating        = IsWindowFloating(ExistingWindow);
+
+    const ImVec2 OuterPadding = bFloating
+        ? ImVec2(EditorWindowBorderInset, EditorWindowBorderInset)
+        : ImVec2(0.0f, 0.0f);
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, OuterPadding);
+    GEditorWindowOuterPaddingPushed = true;
+
+    const ImGuiWindowFlags OuterFlags =
+        ExtraFlags |
+        ImGuiWindowFlags_NoCollapse |
+        ImGuiWindowFlags_NoScrollbar |
+        ImGuiWindowFlags_NoScrollWithMouse;
+
+    GEditorWindowOpen  = ImGui::Begin(Title, pbVisible, OuterFlags);
+    GEditorWindowBegun = true;
+    if (!GEditorWindowOpen)
+    {
+        return false;
+    }
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ContentPadding);
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, ContentBg);
+    GEditorWindowContentStylePushed = true;
+
+    const ImGuiWindowFlags ScrollFlags =
+        ExtraFlags & (ImGuiWindowFlags_NoScrollbar |
+                      ImGuiWindowFlags_NoScrollWithMouse |
+                      ImGuiWindowFlags_AlwaysVerticalScrollbar |
+                      ImGuiWindowFlags_AlwaysHorizontalScrollbar);
+
+    // A borderless child drops its padding unless it is asked to keep it.
+    const bool bChildOpen = ImGui::BeginChild("##EditorContent", ImVec2(0.0f, 0.0f), ImGuiChildFlags_AlwaysUseWindowPadding, ScrollFlags);
+    GEditorWindowChildBegun = true;
+
+    // Only the content child takes the panel background; children the panel creates keep the one they had.
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, NestedChildBg);
+    GEditorWindowNestedChildBgPushed = true;
+
+    return bChildOpen;
+}
+
+void EditorWidgets::EndEditorWindow()
+{
+    if (GEditorWindowNestedChildBgPushed)
+    {
+        ImGui::PopStyleColor();
+        GEditorWindowNestedChildBgPushed = false;
+    }
+
+    if (GEditorWindowChildBegun)
+    {
+        ImGui::EndChild();
+        GEditorWindowChildBegun = false;
+    }
+
+    if (GEditorWindowContentStylePushed)
+    {
+        ImGui::PopStyleColor();
+        ImGui::PopStyleVar();
+        GEditorWindowContentStylePushed = false;
+    }
+
+    if (GEditorWindowOpen)
+    {
+        ImGuiWindow* OuterWindow = ImGui::GetCurrentWindow();
+        if (IsWindowFloating(OuterWindow))
+        {
+            const ImRect OuterRect(OuterWindow->Pos, OuterWindow->Pos + OuterWindow->Size);
+            ImDrawList* DrawList = OuterWindow->DrawList;
+
+            DrawList->PushClipRect(OuterRect.Min, OuterRect.Max, false);
+            DrawFloatingWindowBorder(DrawList, OuterRect.Min, OuterRect.Max);
+            DrawList->PopClipRect();
+        }
+
+        GEditorWindowOpen = false;
+    }
+
+    if (GEditorWindowBegun)
+    {
+        ImGui::End();
+        GEditorWindowBegun = false;
+    }
+
+    if (GEditorWindowOuterPaddingPushed)
+    {
+        ImGui::PopStyleVar();
+        GEditorWindowOuterPaddingPushed = false;
     }
 }
 

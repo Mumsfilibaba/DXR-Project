@@ -282,22 +282,17 @@ void FEditorContentBrowserWidget::Draw()
     ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 0.0f);
 
     ImGui::PushStyleColor(ImGuiCol_WindowBg, IM_COL32(36, 36, 36, 255));
-    ImGui::PushStyleColor(ImGuiCol_ResizeGrip, IM_COL32(110, 110, 110, 120));
-    ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, IM_COL32(160, 160, 160, 200));
-    ImGui::PushStyleColor(ImGuiCol_ResizeGripActive,  IM_COL32(200, 200, 200, 255));
 
-    const ImGuiWindowFlags WindowFlags = 
-        ImGuiWindowFlags_NoCollapse |
-        ImGuiWindowFlags_NoFocusOnAppearing;
+    const ImGuiWindowFlags WindowFlags = ImGuiWindowFlags_NoFocusOnAppearing;
 
-    if (ImGui::Begin("Content Browser", &bVisible, WindowFlags))
+    if (EditorWidgets::BeginEditorWindow("Content Browser", &bVisible, WindowFlags))
     {
         DrawLayoutTable();
     }
 
-    ImGui::End();
+    EditorWidgets::EndEditorWindow();
 
-    ImGui::PopStyleColor(4);
+    ImGui::PopStyleColor(1);
     ImGui::PopStyleVar(3);
 
     EditorWidgets::DrawErrorWindow(FailedMoveErrorContext);
@@ -328,12 +323,8 @@ void FEditorContentBrowserWidget::DrawLayoutTable()
     const ImU32 SplitterColor      = IM_COL32(21, 21, 21, 255);
     const ImU32 SplitterHoverColor = IM_COL32(56, 56, 56, 255);
 
-    const float OuterBorder = PanelBorder;
-
-    DrawList->AddRect(RootMin, RootMax, BorderColor, 0.0f, ImDrawFlags_None, OuterBorder);
-
-    const ImVec2 InnerMin  = ImVec2(RootMin.x + OuterBorder, RootMin.y + OuterBorder);
-    const ImVec2 InnerMax  = ImVec2(RootMax.x - OuterBorder, RootMax.y - OuterBorder);
+    const ImVec2 InnerMin  = RootMin;
+    const ImVec2 InnerMax  = RootMax;
     const ImVec2 InnerSize = ImVec2(Math::Max(1.0f, InnerMax.x - InnerMin.x), Math::Max(1.0f, InnerMax.y - InnerMin.y));
 
     const float MinFolderWidth = 200.0f;

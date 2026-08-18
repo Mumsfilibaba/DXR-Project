@@ -95,9 +95,9 @@ bool FEditorDockspaceWidget::InitializeEditorStyle()
     Style.Colors[ImGuiCol_SeparatorHovered]  = SplitterHovered;
     Style.Colors[ImGuiCol_SeparatorActive]   = SplitterActive;
     Style.Colors[ImGuiCol_Separator]         = SplitterIdle;
-    Style.Colors[ImGuiCol_ResizeGripHovered] = SplitterHovered;
-    Style.Colors[ImGuiCol_ResizeGripActive]  = SplitterActive;
-    Style.Colors[ImGuiCol_ResizeGrip]        = SplitterIdle;
+    Style.Colors[ImGuiCol_ResizeGrip]        = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+    Style.Colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+    Style.Colors[ImGuiCol_ResizeGripActive]  = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
 
     // ------------------------------------------------------------
     // Docking Tabs

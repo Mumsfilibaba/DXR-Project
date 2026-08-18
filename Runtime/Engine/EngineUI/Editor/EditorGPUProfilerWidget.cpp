@@ -279,9 +279,9 @@ void FEditorGPUProfilerWidget::DrawWindow()
 {
     IGPUProfiler* Profiler = GetGPUProfiler();
 
-    const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoFocusOnAppearing;
+    const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoFocusOnAppearing;
 
-    if (ImGui::Begin("GPU Profiler", &bVisible, Flags))
+    if (EditorWidgets::BeginEditorWindow("GPU Profiler", &bVisible, Flags))
     {
         if (Profiler)
         {
@@ -327,5 +327,5 @@ void FEditorGPUProfilerWidget::DrawWindow()
         }
     }
 
-    ImGui::End();
+    EditorWidgets::EndEditorWindow();
 }

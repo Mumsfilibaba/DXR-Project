@@ -180,12 +180,12 @@ void FEditorSceneHierarchyWidget::Draw()
         ImGuiWindowFlags_NoScrollbar |
         ImGuiWindowFlags_NoScrollWithMouse;
 
-    if (ImGui::Begin("Scene Hierarchy", &bVisible, Flags))
+    if (EditorWidgets::BeginEditorWindow("Scene Hierarchy", &bVisible, Flags))
     {
         DrawSceneInfo();
     }
 
-    ImGui::End();
+    EditorWidgets::EndEditorWindow();
 
     ImGui::PopStyleColor();
     ImGui::PopStyleVar(2);
@@ -327,7 +327,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
     ImGui::SetCursorPosX(0.0f);
 
     const float TableHeight = ImGui::GetContentRegionAvail().y;
-    const float FullWidth   = ImGui::GetContentRegionAvail().x + Style.WindowPadding.x;
+    const float FullWidth   = Math::Max(1.0f, ImGui::GetContentRegionAvail().x + Style.WindowPadding.x);
 
     const ImVec2 TableSize    = ImVec2(FullWidth, TableHeight);
     const ImVec2 TableRectMin = ImGui::GetCursorScreenPos();

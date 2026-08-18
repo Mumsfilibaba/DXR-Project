@@ -272,6 +272,13 @@ struct ENGINE_API EditorWidgets
     static bool DrawButtonCenteredOnLine(const CHAR* Label, float Alignment = 0.5f);
 
     // -----------------------------------------------------------------------------------------
+    // Editor window
+    // -----------------------------------------------------------------------------------------
+
+    static bool BeginEditorWindow(const CHAR* Title, bool* pbVisible, ImGuiWindowFlags ExtraFlags = 0);
+    static void EndEditorWindow();
+
+    // -----------------------------------------------------------------------------------------
     // Error handling
     // -----------------------------------------------------------------------------------------
 

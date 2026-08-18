@@ -66,7 +66,7 @@ void FEditorAboutWidget::Draw()
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, EditorStyleVars::PropertiesItemSpacing);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, EditorStyleVars::PropertiesWindowPadding);
 
-    if (ImGui::Begin("About", &bVisible, ImGuiWindowFlags_NoCollapse))
+    if (EditorWidgets::BeginEditorWindow("About", &bVisible))
     {
         // The popup opens on release, so retarget then. A release that lands outside any row clears the previous target.
         if (ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows) && ImGui::IsMouseReleased(ImGuiMouseButton_Right))
@@ -83,7 +83,7 @@ void FEditorAboutWidget::Draw()
         DrawContextMenu();
     }
 
-    ImGui::End();
+    EditorWidgets::EndEditorWindow();
 
     ImGui::PopStyleVar(2);
 }

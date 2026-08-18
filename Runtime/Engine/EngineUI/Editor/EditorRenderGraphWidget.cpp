@@ -361,10 +361,10 @@ void FEditorRenderGraphWidget::EnsureNodeLayout(bool bForce)
 
 void FEditorRenderGraphWidget::DrawWindow()
 {
-    const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoFocusOnAppearing;
-    if (!ImGui::Begin("Render Graph", &bVisible, Flags))
+    const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoFocusOnAppearing;
+    if (!EditorWidgets::BeginEditorWindow("Render Graph", &bVisible, Flags))
     {
-        ImGui::End();
+        EditorWidgets::EndEditorWindow();
         if (!bVisible)
         {
             SyncCaptureEnabled();
@@ -376,7 +376,7 @@ void FEditorRenderGraphWidget::DrawWindow()
     if (!bVisible)
     {
         SyncCaptureEnabled();
-        ImGui::End();
+        EditorWidgets::EndEditorWindow();
         return;
     }
 
@@ -522,5 +522,5 @@ void FEditorRenderGraphWidget::DrawWindow()
 
     DrawCanvasLegend();
     EditorNodeGraph::EndCanvas();
-    ImGui::End();
+    EditorWidgets::EndEditorWindow();
 }

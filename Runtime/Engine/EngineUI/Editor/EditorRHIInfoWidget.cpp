@@ -39,7 +39,7 @@ void FEditorRHIInfoWidget::Draw()
 
     ImGui::SetNextWindowSize(ImVec2(420.0f * Scale, 500.0f * Scale), ImGuiCond_FirstUseEver);
 
-    if (ImGui::Begin("RHI Info", &bVisible))
+    if (EditorWidgets::BeginEditorWindow("RHI Info", &bVisible))
     {
         DrawAdapterInfo();
         DrawBudgetSection();
@@ -48,7 +48,7 @@ void FEditorRHIInfoWidget::Draw()
         DrawAllocatorDetails();
     }
 
-    ImGui::End();
+    EditorWidgets::EndEditorWindow();
 }
 
 void FEditorRHIInfoWidget::DrawAdapterInfo()

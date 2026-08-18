@@ -199,9 +199,9 @@ void FEditorFrameProfilerWidget::DrawWindow()
     ImGui::SetNextWindowPos(ImVec2(Position.x + (Size.x * 0.5f), Position.y + (Size.y * 0.175f)), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
 
-    const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoSavedSettings;
+    const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoSavedSettings;
 
-    if (ImGui::Begin("Frame Profiler", &bVisible, Flags))
+    if (EditorWidgets::BeginEditorWindow("Frame Profiler", &bVisible, Flags))
     {
         if (ImGui::Button("Start Profile"))
         {
@@ -227,5 +227,5 @@ void FEditorFrameProfilerWidget::DrawWindow()
         ImGui::Separator();
     }
 
-    ImGui::End();
+    EditorWidgets::EndEditorWindow();
 }

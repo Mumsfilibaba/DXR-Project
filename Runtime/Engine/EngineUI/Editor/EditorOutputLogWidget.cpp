@@ -77,8 +77,7 @@ void FEditorOutputLogWidget::Draw()
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(Style.ItemSpacing.x, 0.0f));
 
-    const ImGuiWindowFlags OutputLogFlags = ImGuiWindowFlags_NoCollapse;
-    if (ImGui::Begin("Output Log", &bVisible, OutputLogFlags))
+    if (EditorWidgets::BeginEditorWindow("Output Log", &bVisible))
     {
         const float OuterPadX        = 4.0f;
         const float OuterPadTop      = 10.0f;
@@ -177,7 +176,7 @@ void FEditorOutputLogWidget::Draw()
         ImGui::PopStyleVar(2);
     }
 
-    ImGui::End();
+    EditorWidgets::EndEditorWindow();
 
     ImGui::PopStyleVar(2);
 }

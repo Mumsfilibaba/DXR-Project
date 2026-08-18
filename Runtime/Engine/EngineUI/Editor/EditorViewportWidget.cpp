@@ -160,7 +160,7 @@ void FEditorViewportWidget::DrawViewportWindow()
         ImGuiWindowFlags_NoScrollbar |
         ImGuiWindowFlags_NoScrollWithMouse;
 
-    if (ImGui::Begin("Viewport", &bVisible, ViewportFlags))
+    if (EditorWidgets::BeginEditorWindow("Viewport", &bVisible, ViewportFlags))
     {
         const bool bAnyMouseClick =
             ImGui::IsMouseClicked(ImGuiMouseButton_Left) ||
@@ -1459,7 +1459,7 @@ void FEditorViewportWidget::DrawViewportWindow()
         }
     }
 
-    ImGui::End();
+    EditorWidgets::EndEditorWindow();
 
     ImGui::PopStyleVar(); // WindowPadding
 }
