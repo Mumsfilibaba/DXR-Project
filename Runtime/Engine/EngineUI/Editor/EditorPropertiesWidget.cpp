@@ -255,9 +255,10 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 {
                     EditorWidgets::PropertyRowLabel("Parent");
 
+                    EditorWidgets::PropertyTableBeginValueCell();
+
                     const String& ParentName = ParentActor->GetName();
 
-                    ImGui::AlignTextToFramePadding();
                     ImGui::TextUnformatted(ParentName.IsEmpty() ? "Actor" : *ParentName);
                     ImGui::SameLine();
 

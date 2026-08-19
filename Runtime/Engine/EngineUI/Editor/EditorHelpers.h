@@ -21,6 +21,12 @@ enum class EVector3ControlType : uint8
     Scale,
 };
 
+enum class EPropertyTableVerticalAlign : uint8
+{
+    Top,
+    Center,
+};
+
 struct FPopupAnchor
 {
     ImVec2 Min = ImVec2(0.0f, 0.0f);
@@ -153,6 +159,23 @@ struct ENGINE_API EditorStyleVars
     static float  PropertiesCollapsingFrameRounding;
 
     static float CheckboxSizeScale;
+
+    static float PropertyTableLabelIndentX;
+    static float PropertyTableCellPaddingX;
+};
+
+struct FPropertyTableStyle
+{
+    FPropertyTableStyle()
+        : LabelIndentX(EditorStyleVars::PropertyTableLabelIndentX)
+        , CellPaddingX(EditorStyleVars::PropertyTableCellPaddingX)
+        , VerticalAlign(EPropertyTableVerticalAlign::Center)
+    {
+    }
+
+    float                       LabelIndentX;
+    float                       CellPaddingX;
+    EPropertyTableVerticalAlign VerticalAlign;
 };
 
 // -----------------------------------------------------------------------------------------
@@ -255,9 +278,10 @@ struct ENGINE_API EditorWidgets
     // Property Table
     // -----------------------------------------------------------------------------------------
 
-    static bool BeginPropertyTable(const CHAR* TableId, float LabelColumnWidth = 200.0f, float RevertColumnWidth = 20.0f);
+    static bool BeginPropertyTable(const CHAR* TableId, float LabelColumnWidth = 200.0f, float RevertColumnWidth = 20.0f, const FPropertyTableStyle& Style = FPropertyTableStyle());
     static void EndPropertyTable();
     static void PropertyRowLabel(const CHAR* Label);
+    static void PropertyTableBeginValueCell(float ContentHeight = -1.0f);
     static void PropertySeparatorRow(float PaddingY = 4.0f);
 
     // -----------------------------------------------------------------------------------------

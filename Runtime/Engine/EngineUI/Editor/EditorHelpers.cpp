@@ -23,6 +23,8 @@ ImVec2 EditorStyleVars::PropertiesCollapsingHeaderItemSpacing = ImVec2(8.0f, 2.0
 ImVec2 EditorStyleVars::PropertiesCollapsingFramePadding      = ImVec2(10.0f, 8.0f);
 float  EditorStyleVars::PropertiesCollapsingFrameRounding     = 2.0f;
 float  EditorStyleVars::CheckboxSizeScale                     = 0.8f;
+float  EditorStyleVars::PropertyTableLabelIndentX             = 6.0f;
+float  EditorStyleVars::PropertyTableCellPaddingX             = 16.0f;
 
 static constexpr float EditorWindowBorderInset = 5.0f;
 
@@ -164,6 +166,94 @@ static void DrawAxisLineForLastItem(ImU32 InColor)
 }
 
 static constexpr float FixedRevertButtonSize = 20.0f;
+
+struct FPropertyTableState
+{
+    FPropertyTableStyle Style;
+    float               CurrentRowHeight = 0.0f;
+    bool                bActive          = false;
+};
+
+static FPropertyTableState GPropertyTableState;
+
+static float ResolvePropertyTableContentHeight(float ContentHeight)
+{
+    if (ContentHeight < 0.0f)
+    {
+        return ImGui::GetFrameHeight();
+    }
+
+    return ContentHeight;
+}
+
+static float GetPropertyTableRowHeight(float ContentHeight)
+{
+    const float ResolvedHeight = ResolvePropertyTableContentHeight(ContentHeight);
+
+    if (GPropertyTableState.Style.VerticalAlign == EPropertyTableVerticalAlign::Center)
+    {
+        return Math::Max(ResolvedHeight, ImGui::GetFrameHeight());
+    }
+
+    return ResolvedHeight;
+}
+
+static void BeginPropertyTableRow(float ContentHeight)
+{
+    const float RowHeight = GetPropertyTableRowHeight(ContentHeight);
+    GPropertyTableState.CurrentRowHeight = RowHeight;
+
+    if (GPropertyTableState.Style.VerticalAlign == EPropertyTableVerticalAlign::Center)
+    {
+        ImGui::TableNextRow(ImGuiTableRowFlags_None, RowHeight);
+    }
+    else
+    {
+        ImGui::TableNextRow();
+    }
+}
+
+static void ApplyPropertyTableVerticalCenter(float ContentHeight)
+{
+    if (GPropertyTableState.Style.VerticalAlign != EPropertyTableVerticalAlign::Center)
+    {
+        return;
+    }
+
+    const float ResolvedHeight = ResolvePropertyTableContentHeight(ContentHeight);
+    const float PadY           = Math::Max((GPropertyTableState.CurrentRowHeight - ResolvedHeight) * 0.5f, 0.0f);
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + PadY);
+}
+
+static void BeginPropertyTableLabelCell(float ContentHeight)
+{
+    ImGui::TableSetColumnIndex(0);
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + GPropertyTableState.Style.LabelIndentX);
+    ApplyPropertyTableVerticalCenter(ContentHeight);
+}
+
+static float GetPropertyTableValueWidth()
+{
+    return Math::Max(1.0f, ImGui::GetContentRegionAvail().x - GPropertyTableState.Style.CellPaddingX);
+}
+
+static void SetPropertyTableValueItemWidth()
+{
+    ImGui::SetNextItemWidth(GetPropertyTableValueWidth());
+}
+
+static void BeginPropertyTableValueCell(float ContentHeight)
+{
+    ImGui::TableSetColumnIndex(1);
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + GPropertyTableState.Style.CellPaddingX);
+    ApplyPropertyTableVerticalCenter(ContentHeight);
+}
+
+static void BeginPropertyTableRevertCell()
+{
+    ImGui::TableSetColumnIndex(2);
+    ApplyPropertyTableVerticalCenter(FixedRevertButtonSize);
+}
 
 static bool ResetIconButton(float InSize = 0.0f)
 {
@@ -442,10 +532,10 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, Vector3& OutValue, floa
     const float FrameHeight = ImGui::GetFontSize() + Style.FramePadding.y * 2.0f;
     const float RowHeight   = FrameHeight;
 
-    ImGui::TableNextRow(0, RowHeight);
+    BeginPropertyTableRow(RowHeight);
     
     bool bAnyValueChanged = false;
-    bool bRowHovered      = BeginFullRowHoverCatcher(RowHeight);
+    bool bRowHovered      = BeginFullRowHoverCatcher(GPropertyTableState.CurrentRowHeight);
 
     const bool bIsRotationDegrees = (InType == EVector3ControlType::RotationDegrees);
     const bool bIsScaleControl    = (InType == EVector3ControlType::Scale);
@@ -491,12 +581,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, Vector3& OutValue, floa
         return OutFormat.Data();
     };
 
-    ImGui::TableSetColumnIndex(0);
-
-    const float LabelIndent = 24.0f;
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndent);
-
-    ImGui::AlignTextToFramePadding();
+    BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
     ImGui::Text("%s", Label);
 
     bool bUniformScaleEnabled = false;
@@ -518,7 +603,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, Vector3& OutValue, floa
 
         {
             const ImVec2 CursorScreen = ImGui::GetCursorScreenPos();
-            const float  CenteredY    = CursorScreen.y + (RowHeight - IconButtonSizePx) * 0.5f;
+            const float  CenteredY    = CursorScreen.y + (GPropertyTableState.CurrentRowHeight - IconButtonSizePx) * 0.5f;
             ImGui::SetCursorScreenPos(ImVec2(CursorScreen.x, CenteredY));
         }
 
@@ -571,10 +656,10 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, Vector3& OutValue, floa
         ImGui::PopID();
     }
 
-    ImGui::TableSetColumnIndex(1);
+    BeginPropertyTableValueCell(FrameHeight);
     ImGui::PushID(Label);
 
-    const float AvailableWidth = ImGui::GetContentRegionAvail().x;
+    const float AvailableWidth = GetPropertyTableValueWidth();
     const float TotalAxisGaps  = 2.0f * AxisGap;
 
     float AxisFieldWidth = (AvailableWidth - TotalAxisGaps) / 3.0f;
@@ -711,11 +796,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, Vector3& OutValue, floa
 
     ImGui::PopID();
 
-    ImGui::TableSetColumnIndex(2);
-    {
-        const float PadY = Math::Max((ImGui::GetFrameHeight() - FixedRevertButtonSize) * 0.5f, 0.0f);
-        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + PadY);
-    }
+    BeginPropertyTableRevertCell();
 
     const bool bHasRevertValue         = InRevertValue != nullptr;
     const bool bShouldShowRevertButton = bHasRevertValue && (OutValue != *InRevertValue);
@@ -748,21 +829,16 @@ bool EditorWidgets::DrawFloatProperty(const CHAR* Label, float& InOutValue, floa
         return false;
     }
 
-    const float RowHeight = ImGui::GetFrameHeight();
-    ImGui::TableNextRow();
+    const float ContentHeight = ImGui::GetFrameHeight();
+    BeginPropertyTableRow(ContentHeight);
 
     bool bResult     = false;
-    bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
+    bool bRowHovered = BeginFullRowHoverCatcher(GPropertyTableState.CurrentRowHeight);
 
-    ImGui::TableSetColumnIndex(0);
-    
-    const float LabelIndent = 24.0f;
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndent);
-
-    ImGui::AlignTextToFramePadding();
+    BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
     ImGui::TextUnformatted(Label);
 
-    ImGui::TableSetColumnIndex(1);
+    BeginPropertyTableValueCell(ContentHeight);
     ImGui::PushID(Label);
 
     if (!bEnabled)
@@ -770,7 +846,7 @@ bool EditorWidgets::DrawFloatProperty(const CHAR* Label, float& InOutValue, floa
         ImGui::BeginDisabled();
     }
 
-    ImGui::SetNextItemWidth(-FLT_MIN);
+    SetPropertyTableValueItemWidth();
     if (bUseSlider)
     {
         bResult = ImGui::SliderFloat("##Value", &InOutValue, MinValue, MaxValue, Format);
@@ -793,12 +869,7 @@ bool EditorWidgets::DrawFloatProperty(const CHAR* Label, float& InOutValue, floa
 
     ImGui::PopID();
 
-    // Revert
-    ImGui::TableSetColumnIndex(2);
-    {
-        const float PadY = Math::Max((ImGui::GetFrameHeight() - FixedRevertButtonSize) * 0.5f, 0.0f);
-        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + PadY);
-    }
+    BeginPropertyTableRevertCell();
 
     const bool bCanRevert = bEnabled && (InRevertValue != nullptr) && (InOutValue != *InRevertValue);
     if (bCanRevert)
@@ -828,21 +899,16 @@ bool EditorWidgets::DrawIntProperty(const CHAR* Label, int32& InOutValue, float 
         return false;
     }
 
-    const float RowHeight = ImGui::GetFrameHeight();
-    ImGui::TableNextRow();
+    const float ContentHeight = ImGui::GetFrameHeight();
+    BeginPropertyTableRow(ContentHeight);
 
     bool bResult     = false;
-    bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
+    bool bRowHovered = BeginFullRowHoverCatcher(GPropertyTableState.CurrentRowHeight);
 
-    ImGui::TableSetColumnIndex(0);
-
-    const float LabelIndent = 24.0f;
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndent);
-
-    ImGui::AlignTextToFramePadding();
+    BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
     ImGui::TextUnformatted(Label);
 
-    ImGui::TableSetColumnIndex(1);
+    BeginPropertyTableValueCell(ContentHeight);
     ImGui::PushID(Label);
 
     if (!bEnabled)
@@ -850,7 +916,7 @@ bool EditorWidgets::DrawIntProperty(const CHAR* Label, int32& InOutValue, float 
         ImGui::BeginDisabled();
     }
 
-    ImGui::SetNextItemWidth(-FLT_MIN);
+    SetPropertyTableValueItemWidth();
     if (bUseSlider)
     {
         bResult = ImGui::SliderInt("##Value", &InOutValue, MinValue, MaxValue, Format);
@@ -873,11 +939,7 @@ bool EditorWidgets::DrawIntProperty(const CHAR* Label, int32& InOutValue, float 
 
     ImGui::PopID();
 
-    ImGui::TableSetColumnIndex(2);
-    {
-        const float PadY = Math::Max((ImGui::GetFrameHeight() - FixedRevertButtonSize) * 0.5f, 0.0f);
-        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + PadY);
-    }
+    BeginPropertyTableRevertCell();
 
     const bool bCanRevert = bEnabled && (InRevertValue != nullptr) && (InOutValue != *InRevertValue);
     if (bCanRevert)
@@ -907,21 +969,16 @@ bool EditorWidgets::DrawComboProperty(const CHAR* Label, int32& InOutValue, cons
         return false;
     }
 
-    const float RowHeight = ImGui::GetFrameHeight();
-    ImGui::TableNextRow();
+    const float ContentHeight = ImGui::GetFrameHeight();
+    BeginPropertyTableRow(ContentHeight);
 
     bool bResult     = false;
-    bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
+    bool bRowHovered = BeginFullRowHoverCatcher(GPropertyTableState.CurrentRowHeight);
 
-    ImGui::TableSetColumnIndex(0);
-
-    const float LabelIndent = 24.0f;
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndent);
-
-    ImGui::AlignTextToFramePadding();
+    BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
     ImGui::TextUnformatted(Label);
 
-    ImGui::TableSetColumnIndex(1);
+    BeginPropertyTableValueCell(ContentHeight);
     ImGui::PushID(Label);
 
     if (!bEnabled)
@@ -945,7 +1002,7 @@ bool EditorWidgets::DrawComboProperty(const CHAR* Label, int32& InOutValue, cons
     const int32  ClampedIndex = Math::Clamp<int32>(InOutValue, 0, Math::Max(0, ItemCount - 1));
     const CHAR*  PreviewText  = (Items && ItemCount > 0) ? Items[ClampedIndex] : "";
     const float  FrameHeight  = ImGui::GetFrameHeight();
-    const ImVec2 FieldSize    = ImVec2(ImGui::GetContentRegionAvail().x, FrameHeight);
+    const ImVec2 FieldSize    = ImVec2(GetPropertyTableValueWidth(), FrameHeight);
 
     const bool bPressed      = ImGui::InvisibleButton("##Value", FieldSize);
     const bool bFieldHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
@@ -1157,11 +1214,7 @@ bool EditorWidgets::DrawComboProperty(const CHAR* Label, int32& InOutValue, cons
 
     ImGui::PopID();
 
-    ImGui::TableSetColumnIndex(2);
-    {
-        const float PadY = Math::Max((ImGui::GetFrameHeight() - FixedRevertButtonSize) * 0.5f, 0.0f);
-        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + PadY);
-    }
+    BeginPropertyTableRevertCell();
 
     const bool bCanRevert = bEnabled && (InRevertValue != nullptr) && (InOutValue != *InRevertValue);
     if (bCanRevert)
@@ -1281,22 +1334,17 @@ bool EditorWidgets::DrawCheckboxProperty(const CHAR* Label, bool& InOutValue, co
         return false;
     }
 
-    const float RowHeight = ImGui::GetFrameHeight();
+    const float ContentHeight = ImGui::GetFrameHeight();
 
-    ImGui::TableNextRow();
+    BeginPropertyTableRow(ContentHeight);
 
     bool bResult     = false;
-    bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
+    bool bRowHovered = BeginFullRowHoverCatcher(GPropertyTableState.CurrentRowHeight);
 
-    ImGui::TableSetColumnIndex(0);
-
-    const float LabelIndent = 24.0f;
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndent);
-
-    ImGui::AlignTextToFramePadding();
+    BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
     ImGui::TextUnformatted(Label);
 
-    ImGui::TableSetColumnIndex(1);
+    BeginPropertyTableValueCell(ContentHeight);
     ImGui::PushID(Label);
 
     bResult = EditorWidgets::DrawCheckbox("##Value", InOutValue, bEnabled);
@@ -1306,11 +1354,7 @@ bool EditorWidgets::DrawCheckboxProperty(const CHAR* Label, bool& InOutValue, co
 
     ImGui::PopID();
 
-    ImGui::TableSetColumnIndex(2);
-    {
-        const float PadY = Math::Max((ImGui::GetFrameHeight() - FixedRevertButtonSize) * 0.5f, 0.0f);
-        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + PadY);
-    }
+    BeginPropertyTableRevertCell();
 
     const bool bCanRevert = bEnabled && (InRevertValue != nullptr) && (InOutValue != *InRevertValue);
     if (bCanRevert)
@@ -1341,23 +1385,15 @@ bool EditorWidgets::DrawTextProperty(const CHAR* Label, const CHAR* ValueText)
         return false;
     }
 
-    const float RowHeight = ImGui::GetFrameHeight();
-    ImGui::TableNextRow();
+    const float ContentHeight = ImGui::GetTextLineHeight();
+    BeginPropertyTableRow(ContentHeight);
 
-    bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
+    bool bRowHovered = BeginFullRowHoverCatcher(GPropertyTableState.CurrentRowHeight);
 
-    ImGui::TableSetColumnIndex(0);
+    BeginPropertyTableLabelCell(ContentHeight);
+    ImGui::TextUnformatted(Label);
 
-    {
-        const float LabelIndent = 24.0f;
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndent);
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted(Label);
-    }
-
-    ImGui::TableSetColumnIndex(1);
-
-    ImGui::AlignTextToFramePadding();
+    BeginPropertyTableValueCell(ImGui::GetTextLineHeight());
     ImGui::TextUnformatted(ValueText ? ValueText : "");
     bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
@@ -1375,24 +1411,17 @@ void EditorWidgets::DrawTextureProperty(const CHAR* Label, ImTextureID Texture, 
         return;
     }
 
-    const float RowHeight = Math::Max(PreviewSize, ImGui::GetFrameHeight());
-    ImGui::TableNextRow();
+    BeginPropertyTableRow(PreviewSize);
 
-    bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
+    bool bRowHovered = BeginFullRowHoverCatcher(GPropertyTableState.CurrentRowHeight);
 
-    ImGui::TableSetColumnIndex(0);
-
-    {
-        const float LabelIndent = 24.0f;
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndent);
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted(Label);
-    }
-
-    ImGui::TableSetColumnIndex(1);
+    BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
+    ImGui::TextUnformatted(Label);
 
     if (Texture)
     {
+        BeginPropertyTableValueCell(PreviewSize);
+
         ImGui::Image(Texture, ImVec2(PreviewSize, PreviewSize));
 
         ImGuiStyle& Style = ImGui::GetStyle();
@@ -1410,7 +1439,7 @@ void EditorWidgets::DrawTextureProperty(const CHAR* Label, ImTextureID Texture, 
     }
     else
     {
-        ImGui::AlignTextToFramePadding();
+        BeginPropertyTableValueCell(ImGui::GetFrameHeight());
         ImGui::TextDisabled("None");
         bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
     }
@@ -1429,23 +1458,18 @@ void EditorWidgets::DrawReadOnlyFloat3Property(const CHAR* Label, const Vector3&
         return;
     }
 
-    const float RowHeight = ImGui::GetFrameHeight();
-    ImGui::TableNextRow();
+    const float ContentHeight = ImGui::GetFrameHeight();
+    BeginPropertyTableRow(ContentHeight);
 
-    bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
+    bool bRowHovered = BeginFullRowHoverCatcher(GPropertyTableState.CurrentRowHeight);
 
-    ImGui::TableSetColumnIndex(0);
-    {
-        const float LabelIndent = 24.0f;
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndent);
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted(Label);
-    }
+    BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
+    ImGui::TextUnformatted(Label);
 
-    ImGui::TableSetColumnIndex(1);
+    BeginPropertyTableValueCell(ContentHeight);
 
     TStaticArray<float, 3> Temp = { Value.X, Value.Y, Value.Z };
-    ImGui::SetNextItemWidth(-FLT_MIN);
+    SetPropertyTableValueItemWidth();
     ImGui::InputFloat3("##Value", Temp.Data(), "%.3f", ImGuiInputTextFlags_ReadOnly);
 
     ImGuiStyle& Style = ImGui::GetStyle();
@@ -1466,22 +1490,16 @@ bool EditorWidgets::DrawColor3Property(const CHAR* Label, float* InOutColor, con
         return false;
     }
 
-    const float RowHeight = ImGui::GetFrameHeight();
-    ImGui::TableNextRow(0, RowHeight);
+    const float ContentHeight = ImGui::GetFrameHeight();
+    BeginPropertyTableRow(ContentHeight);
 
     bool bResult     = false;
-    bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
+    bool bRowHovered = BeginFullRowHoverCatcher(GPropertyTableState.CurrentRowHeight);
 
-    ImGui::TableSetColumnIndex(0);
-    {
-        const float LabelIndent = 24.0f;
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndent);
+    BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
+    ImGui::TextUnformatted(Label);
 
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted(Label);
-    }
-
-    ImGui::TableSetColumnIndex(1);
+    BeginPropertyTableValueCell(ContentHeight);
     ImGui::PushID(Label);
 
     if (!bEnabled)
@@ -1493,7 +1511,7 @@ bool EditorWidgets::DrawColor3Property(const CHAR* Label, float* InOutColor, con
     const float Gap         = 4.0f;
     const float FrameHeight = ImGui::GetFrameHeight();
 
-    const float Avail       = ImGui::GetContentRegionAvail().x;
+    const float Avail       = GetPropertyTableValueWidth();
     const float ButtonWidth = FrameHeight;
     const float TotalGaps   = 3.0f * Gap;
 
@@ -1552,11 +1570,7 @@ bool EditorWidgets::DrawColor3Property(const CHAR* Label, float* InOutColor, con
 
     ImGui::PopID();
 
-    ImGui::TableSetColumnIndex(2);
-    {
-        const float PadY = Math::Max((ImGui::GetFrameHeight() - FixedRevertButtonSize) * 0.5f, 0.0f);
-        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + PadY);
-    }
+    BeginPropertyTableRevertCell();
 
     const bool bCanRevert = (InRevertColor != nullptr);
     if (!bCanRevert || !bEnabled)
@@ -3038,7 +3052,7 @@ void EditorWidgets::EndPopupContext()
     ImGui::EndPopup();
 }
 
-bool EditorWidgets::BeginPropertyTable(const CHAR* TableId, float LabelColumnWidth, float RevertColumnWidth)
+bool EditorWidgets::BeginPropertyTable(const CHAR* TableId, float LabelColumnWidth, float RevertColumnWidth, const FPropertyTableStyle& Style)
 {
     // -----------------------------------------------------------------------------------------
     // Colors
@@ -3096,6 +3110,10 @@ bool EditorWidgets::BeginPropertyTable(const CHAR* TableId, float LabelColumnWid
         return false;
     }
 
+    GPropertyTableState.Style            = Style;
+    GPropertyTableState.CurrentRowHeight = 0.0f;
+    GPropertyTableState.bActive          = true;
+
     ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_WidthFixed, LabelColumnWidth);
     ImGui::TableSetupColumn("##Value", ImGuiTableColumnFlags_WidthStretch);
     ImGui::TableSetupColumn("##Revert", ImGuiTableColumnFlags_WidthFixed, RevertColumnWidth);
@@ -3104,6 +3122,8 @@ bool EditorWidgets::BeginPropertyTable(const CHAR* TableId, float LabelColumnWid
 
 void EditorWidgets::EndPropertyTable()
 {
+    GPropertyTableState.bActive = false;
+
     ImGui::EndTable();
 
     ImGuiStorage* Storage = ImGui::GetStateStorage();
@@ -3139,14 +3159,16 @@ void EditorWidgets::EndPropertyTable()
 
 void EditorWidgets::PropertyRowLabel(const CHAR* Label)
 {
-    ImGui::TableNextRow();
-    ImGui::TableSetColumnIndex(0);
+    const float ContentHeight = ImGui::GetTextLineHeight();
+    BeginPropertyTableRow(ContentHeight);
 
-    ImGui::AlignTextToFramePadding();
+    BeginPropertyTableLabelCell(ContentHeight);
     ImGui::TextUnformatted(Label);
+}
 
-    ImGui::TableSetColumnIndex(1);
-    ImGui::SetNextItemWidth(-FLT_MIN); // Fill available width
+void EditorWidgets::PropertyTableBeginValueCell(float ContentHeight)
+{
+    BeginPropertyTableValueCell(ContentHeight);
 }
 
 void EditorWidgets::PropertySeparatorRow(float PaddingY)
