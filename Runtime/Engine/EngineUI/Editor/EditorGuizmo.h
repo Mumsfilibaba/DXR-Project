@@ -93,7 +93,7 @@ struct ENGINE_API EditorGuizmo
 
     // Setup
     static void SetDrawlist(ImDrawList* DrawList = nullptr);
-    static void BeginFrame();
+    static void BeginFrame(ImDrawList* DrawList = nullptr);
     static void SetImGuiContext(ImGuiContext* Context);
     static void SetAlternativeWindow(ImGuiWindow* Window);
     static void SetRect(float X, float Y, float Width, float Height);

@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/Array.h"
+#include "Core/Containers/Set.h"
 #include "Core/Math/Vector3.h"
 #include "Core/Math/Matrix4.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
@@ -27,6 +28,14 @@ public:
     }
 
 private:
+    enum class EOperationOverride
+    {
+        None,
+        Translate,
+        Rotate,
+        TranslateInsteadOfScale,
+    };
+
     Vector3 GetActorGizmoPoint(FActor* Actor, bool bUseBoundsCenter) const;
     
     bool DrawGuizmo();
@@ -35,12 +44,17 @@ private:
     void UpdateShortcuts(bool bViewportHovered);
     void CaptureMultiDragState(const TArray<FActor*>& Actors, EditorGuizmo::EMode Orientation, bool bUseBoundsCenter);
 
-    FEditorEngine*  EditorEngine;
-    FDelegateHandle ImGuiEndFrameDelegateHandle;
-    Matrix4         GizmoMatrix;
-    Matrix4         GizmoStartMatrix;
-    TArray<FActor*> DragActors;
-    TArray<Matrix4> DragStartTransforms;
-    bool            bVisible;
+    EditorGuizmo::EOperation::Type ResolveOperation(FActor* Actor, EditorGuizmo::EOperation::Type Operation);
+
+    FEditorEngine*     EditorEngine;
+    FDelegateHandle    ImGuiEndFrameDelegateHandle;
+    Matrix4            GizmoMatrix;
+    Matrix4            GizmoStartMatrix;
+    TArray<FActor*>    DragActors;
+    TArray<Matrix4>    DragStartTransforms;
+    TSet<FActor*>      SelectionLookup;
+    FActor*            OperationOverrideActor;
+    EOperationOverride OperationOverride;
+    bool               bVisible;
 };
 

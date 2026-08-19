@@ -1,3 +1,4 @@
+#include "Core/Misc/FrameProfiler.h"
 #include "Engine/EditorEngine.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Engine/EngineUI/Editor/EditorDockspaceWidget.h"
@@ -169,6 +170,8 @@ void FEditorDockspaceWidget::BuildDockingLayout(FLayoutIds& Ids)
 
 void FEditorDockspaceWidget::Draw()
 {
+    TRACE_SCOPE("Dockspace");
+
     ImGuiViewport* MainViewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(MainViewport->WorkPos);
     ImGui::SetNextWindowSize(MainViewport->WorkSize);

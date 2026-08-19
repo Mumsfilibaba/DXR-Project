@@ -1,5 +1,6 @@
 #include "Core/Containers/StaticString.h"
 #include "Core/Templates/CString.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Stats/Stats.h"
 #include "RHI/RHI.h"
 #include "RHI/RHIStats.h"
@@ -33,6 +34,8 @@ void FEditorRHIInfoWidget::Draw()
     {
         return;
     }
+
+    TRACE_SCOPE("RHI Info");
 
     if (EditorWidgets::BeginEditorWindow("RHI Info", &bVisible))
     {

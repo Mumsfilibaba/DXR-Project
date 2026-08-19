@@ -1,3 +1,4 @@
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Templates/CString.h"
 #include "Application/Application.h"
@@ -41,6 +42,8 @@ FEditorFooterWidget::~FEditorFooterWidget()
 
 void FEditorFooterWidget::Draw()
 {
+    TRACE_SCOPE("Footer");
+
     const ImVec2 FrameBufferScale = ImGuiExtensions::GetDisplayFramebufferScale();
 
     ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(36, 36, 36, 255));

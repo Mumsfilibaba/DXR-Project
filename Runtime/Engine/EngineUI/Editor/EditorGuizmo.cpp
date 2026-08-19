@@ -2458,8 +2458,16 @@ void EditorGuizmo::SetDrawlist(ImDrawList* DrawList)
     GuizmoContext.DrawList = DrawList ? DrawList : ImGui::GetWindowDrawList();
 }
 
-void EditorGuizmo::BeginFrame()
+void EditorGuizmo::BeginFrame(ImDrawList* DrawList)
 {
+    GuizmoContext.bOverGizmoHotspot = false;
+
+    if (DrawList)
+    {
+        GuizmoContext.DrawList = DrawList;
+        return;
+    }
+
     const ImGuiWindowFlags Flags =
         ImGuiWindowFlags_NoTitleBar | 
         ImGuiWindowFlags_NoResize | 
@@ -2490,9 +2498,8 @@ void EditorGuizmo::BeginFrame()
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 
     ImGui::Begin("gizmo", nullptr, Flags);
-    
-    GuizmoContext.DrawList          = ImGui::GetWindowDrawList();
-    GuizmoContext.bOverGizmoHotspot = false;
+
+    GuizmoContext.DrawList = ImGui::GetWindowDrawList();
 
     ImGui::End();
 

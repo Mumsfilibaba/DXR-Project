@@ -600,7 +600,11 @@ void FImGuiPlugin::Tick(float DeltaTime)
 
         // End frame
         EndFrameDelegates.Broadcast();
-        ImGui::EndFrame();
+
+        {
+            TRACE_SCOPE("ImGui End Frame");
+            ImGui::EndFrame();
+        }
     }
 }
 

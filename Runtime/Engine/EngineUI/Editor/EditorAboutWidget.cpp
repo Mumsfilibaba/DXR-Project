@@ -1,6 +1,7 @@
 #include "Core/Containers/StaticArray.h"
 #include "Core/Templates/CString.h"
 #include "Core/Misc/BuildInfo.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
@@ -56,6 +57,8 @@ void FEditorAboutWidget::Draw()
     {
         return;
     }
+
+    TRACE_SCOPE("About");
 
     ImGui::SetNextWindowSize(EditorWidgets::ScaleEditorWindowSize(ImVec2(520.0f, 540.0f)), ImGuiCond_FirstUseEver);
 

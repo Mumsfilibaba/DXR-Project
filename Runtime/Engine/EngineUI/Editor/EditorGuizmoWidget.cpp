@@ -1,3 +1,4 @@
+#include "Core/Misc/FrameProfiler.h"
 #include "Engine/EditorEngine.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Components/CameraComponent.h"
@@ -12,6 +13,7 @@
 static void CompensateGizmoPivot(const FActorTransform& OldTransform, const Vector3& GizmoPosition, FActorTransform& InOutTransform)
 {
     const Vector3 OldScale = OldTransform.GetScale();
+
     if (Math::Abs(OldScale.X) < Math::Constants::Epsilon || 
         Math::Abs(OldScale.Y) < Math::Constants::Epsilon || 
         Math::Abs(OldScale.Z) < Math::Constants::Epsilon)
@@ -29,11 +31,11 @@ static void CompensateGizmoPivot(const FActorTransform& OldTransform, const Vect
     InOutTransform.SetTranslation(GizmoPosition - Vector3(PivotOffsetWorld.X, PivotOffsetWorld.Y, PivotOffsetWorld.Z));
 }
 
-static bool HasSelectedAncestor(const FEditorEngine* EditorEngine, FActor* Actor)
+static bool HasSelectedAncestor(const TSet<FActor*>& Selection, FActor* Actor)
 {
     for (FActor* Parent = Actor->GetParentActor(); Parent; Parent = Parent->GetParentActor())
     {
-        if (EditorEngine->IsActorSelected(Parent))
+        if (Selection.Contains(Parent))
         {
             return true;
         }
@@ -49,6 +51,9 @@ FEditorGuizmoWidget::FEditorGuizmoWidget(FEditorEngine* InEditorEngine)
     , GizmoStartMatrix()
     , DragActors()
     , DragStartTransforms()
+    , SelectionLookup()
+    , OperationOverrideActor(nullptr)
+    , OperationOverride(EOperationOverride::None)
     , bVisible(true)
 {
     GizmoMatrix.SetIdentity();
@@ -153,6 +158,8 @@ bool FEditorGuizmoWidget::DrawGuizmo()
         return false;
     }
 
+    TRACE_SCOPE("Gizmo");
+
     if (!EditorEngine || !EditorEngine->IsEditing())
     {
         return false;
@@ -181,7 +188,6 @@ bool FEditorGuizmoWidget::DrawGuizmo()
         return false;
     }
 
-    // The scene image, not the window content region, since the latter starts at the top of the toolbar
     const ImVec2 ViewportMin  = Viewport->GetViewportImageMin();
     const ImVec2 ViewportSize = Viewport->GetViewportImageSize();
     const ImVec2 ViewportMax  = ImVec2(ViewportMin.x + ViewportSize.x, ViewportMin.y + ViewportSize.y);
@@ -198,8 +204,8 @@ bool FEditorGuizmoWidget::DrawGuizmo()
     }
 
     EditorGuizmo::SetAlternativeWindow(ViewportWindow);
-    EditorGuizmo::BeginFrame();
-    EditorGuizmo::SetDrawlist(ImageDrawList);
+
+    EditorGuizmo::BeginFrame(ImageDrawList);
 
     const ImVec2 MousePos = ImGui::GetIO().MousePos;
 
@@ -256,27 +262,49 @@ Vector3 FEditorGuizmoWidget::GetActorGizmoPoint(FActor* Actor, bool bUseBoundsCe
     return ActorModel.GetTranslation();
 }
 
+EditorGuizmo::EOperation::Type FEditorGuizmoWidget::ResolveOperation(FActor* Actor, EditorGuizmo::EOperation::Type Operation)
+{
+    if (Actor != OperationOverrideActor)
+    {
+        OperationOverrideActor = Actor;
+        OperationOverride      = EOperationOverride::None;
+
+        if (Actor->HasComponentOfType<FPointLightComponent>() || Actor->HasComponentOfType<FLightProbeComponent>())
+        {
+            OperationOverride = EOperationOverride::Translate;
+        }
+        else if (Actor->HasComponentOfType<FDirectionalLightComponent>())
+        {
+            OperationOverride = EOperationOverride::Rotate;
+        }
+        else if (Actor->HasComponentOfType<FCameraComponent>())
+        {
+            OperationOverride = EOperationOverride::TranslateInsteadOfScale;
+        }
+    }
+
+    switch (OperationOverride)
+    {
+        case EOperationOverride::Translate:
+            return EditorGuizmo::EOperation::Translate;
+
+        case EOperationOverride::Rotate:
+            return EditorGuizmo::EOperation::Rotate;
+
+        case EOperationOverride::TranslateInsteadOfScale:
+            return (Operation == EditorGuizmo::EOperation::Scale) ? EditorGuizmo::EOperation::Translate : Operation;
+
+        default:
+            return Operation;
+    }
+}
+
 void FEditorGuizmoWidget::DrawSingleActor(FActor* Actor, const Matrix4& View, const Matrix4& Projection, EditorGuizmo::EOperation::Type Operation, EditorGuizmo::EMode Orientation, bool bUseBoundsCenter)
 {
-    EditorGuizmo::EOperation::Type EffectiveOperation = Operation;
-
-    if (Actor->HasComponentOfType<FPointLightComponent>() || Actor->HasComponentOfType<FLightProbeComponent>())
-    {
-        EffectiveOperation = EditorGuizmo::EOperation::Translate;
-    }
-    else if (Actor->HasComponentOfType<FDirectionalLightComponent>())
-    {
-        EffectiveOperation = EditorGuizmo::EOperation::Rotate;
-    }
-    else if (Actor->HasComponentOfType<FCameraComponent>() && EffectiveOperation == EditorGuizmo::EOperation::Scale)
-    {
-        EffectiveOperation = EditorGuizmo::EOperation::Translate;
-    }
+    const EditorGuizmo::EOperation::Type EffectiveOperation = ResolveOperation(Actor, Operation);
 
     const FActorTransform& ActorWorldTransform = Actor->GetWorldTransform();
-
-    // Without bounds this is the actor's own pivot, which makes the translation delta below reduce to the gizmo position
-    const Vector3 InitialGizmoPosition = GetActorGizmoPoint(Actor, bUseBoundsCenter);
+    const Vector3         InitialGizmoPosition = GetActorGizmoPoint(Actor, bUseBoundsCenter);
 
     Matrix4 Model = ActorWorldTransform.GetTransformMatrix();
     Model.SetTranslation(InitialGizmoPosition);
@@ -290,8 +318,6 @@ void FEditorGuizmoWidget::DrawSingleActor(FActor* Actor, const Matrix4& View, co
 
         EditorGuizmo::DecomposeMatrixToComponents(Model, Translation, RotationDegrees, Scale);
 
-        // The gizmo always manipulates the actor in world-space, only the component being manipulated is 
-        // taken from the gizmo, the remaining ones are carried over from the current world-space transform.
         FActorTransform NewWorldTransform;
         NewWorldTransform.SetTranslation(ActorWorldTransform.GetTranslation());
         NewWorldTransform.SetRotation(ActorWorldTransform.GetRotation());
@@ -309,8 +335,6 @@ void FEditorGuizmoWidget::DrawSingleActor(FActor* Actor, const Matrix4& View, co
             const Vector3 RotationRadians = Vector3::DegreesToRadians(RotationDegrees);
             if (FCameraComponent* CameraComponent = Actor->GetComponentOfType<FCameraComponent>())
             {
-                // The camera clamps and derives its direction vectors from the relative rotation, 
-                // so feed it that instead of overwriting the whole transform.
                 NewWorldTransform.SetRotation(RotationRadians);
                 CameraComponent->SetRotation(Actor->ConvertWorldToRelativeTransform(NewWorldTransform).GetRotation());
             }
@@ -381,6 +405,16 @@ void FEditorGuizmoWidget::CaptureMultiDragState(const TArray<FActor*>& Actors, E
     DragActors.Reserve(Actors.Size());
     DragStartTransforms.Reserve(Actors.Size());
 
+    SelectionLookup.Clear();
+
+    for (FActor* Actor : Actors)
+    {
+        if (Actor)
+        {
+            SelectionLookup.Add(Actor);
+        }
+    }
+
     Vector3 Center     = Vector3(0.0f, 0.0f, 0.0f);
     int32   PointCount = 0;
 
@@ -394,8 +428,7 @@ void FEditorGuizmoWidget::CaptureMultiDragState(const TArray<FActor*>& Actors, E
         Center = Center + GetActorGizmoPoint(Actor, bUseBoundsCenter);
         PointCount++;
 
-        // An actor already moves with its parent, so transforming both would move the child twice
-        if (!HasSelectedAncestor(EditorEngine, Actor))
+        if (!HasSelectedAncestor(SelectionLookup, Actor))
         {
             DragActors.Add(Actor);
             DragStartTransforms.Add(Actor->GetWorldTransform().GetTransformMatrix());
@@ -416,7 +449,6 @@ void FEditorGuizmoWidget::CaptureMultiDragState(const TArray<FActor*>& Actors, E
         }
     }
 
-    // Kept at unit scale, a scaled basis would leak the primary actor's scale into the delta every actor receives
     EditorGuizmo::RecomposeMatrixFromComponents(Center, RotationDegrees, Vector3(1.0f, 1.0f, 1.0f), GizmoMatrix);
     GizmoStartMatrix = GizmoMatrix;
 }

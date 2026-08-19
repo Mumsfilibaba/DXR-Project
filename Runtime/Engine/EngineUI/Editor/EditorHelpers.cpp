@@ -5,11 +5,14 @@
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Templates/CString.h"
 #include "Engine/Assets/AssetManager.h"
+#include "Engine/Assets/AssetImporters/TextureImporterBase.h"
+#include "Engine/Resources/Texture.h"
+#include "RendererCore/TextureFactory.h"
+#include "RendererCore/TextureResourceData.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include <imgui_internal.h>
 
-// Overwritten from FWindowTitleBarMetrics::Height once the platform window exists.
 float  EditorStyleVars::MainMenuBarHeight                     = 28.0f;
 ImVec2 EditorStyleVars::InputFieldFramePadding                = ImVec2(12.0f, 6.0f);
 float  EditorStyleVars::InputFieldBorderThickness             = 2.0f;
@@ -98,7 +101,7 @@ static void ApplyHoveredRowBg(bool bRowHovered)
     }
 }
 
-static bool BeginFullRowHoverCatcher(float RowHeight)
+static bool IsRowHovered(float RowHeight)
 {
     ImGuiTable* Table = ImGui::GetCurrentTable();
     if (!Table)
@@ -109,19 +112,12 @@ static bool BeginFullRowHoverCatcher(float RowHeight)
     ImGui::TableSetColumnIndex(0);
 
     const ImVec2 Cursor = ImGui::GetCursorScreenPos();
+    const ImVec2 RowMin = ImVec2(Table->WorkRect.Min.x, Cursor.y);
+    const ImVec2 RowMax = ImVec2(Table->WorkRect.Max.x, Cursor.y + RowHeight);
 
-    const ImGuiSelectableFlags HoverFlags =
-        ImGuiSelectableFlags_SpanAllColumns |
-        ImGuiSelectableFlags_AllowOverlap |
-        ImGuiSelectableFlags_Disabled;
+    constexpr ImGuiHoveredFlags HoverFlags = ImGuiHoveredFlags_ChildWindows | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem;
 
-    ImGui::Selectable("##RowHover", false, HoverFlags, ImVec2(0.0f, RowHeight));
-
-    const bool bHovered = ImGui::IsItemHovered(
-        ImGuiHoveredFlags_AllowWhenDisabled | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
-
-    ImGui::SetCursorScreenPos(Cursor);
-    return bHovered;
+    return ImGui::IsWindowHovered(HoverFlags) && ImGui::IsMouseHoveringRect(RowMin, RowMax);
 }
 
 static void DrawInputBorderRect(const ImVec2& Min, const ImVec2& Max, bool bActive, bool bHovered, float Rounding = -1.0f, float Thickness = 2.0f)
@@ -182,6 +178,8 @@ struct FPropertyTableState
 {
     FPropertyTableStyle Style;
     float               CurrentRowHeight = 0.0f;
+    ImVec2              BorderMin        = ImVec2(0.0f, 0.0f);
+    float               BorderWidth      = 0.0f;
     bool                bActive          = false;
 };
 
@@ -233,6 +231,7 @@ static void ApplyPropertyTableVerticalCenter(float ContentHeight)
 
     const float ResolvedHeight = ResolvePropertyTableContentHeight(ContentHeight);
     const float PadY           = Math::Max((GPropertyTableState.CurrentRowHeight - ResolvedHeight) * 0.5f, 0.0f);
+
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + PadY);
 }
 
@@ -240,6 +239,7 @@ static void BeginPropertyTableLabelCell(float ContentHeight)
 {
     ImGui::TableSetColumnIndex(0);
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + GPropertyTableState.Style.LabelIndentX);
+
     ApplyPropertyTableVerticalCenter(ContentHeight);
 }
 
@@ -257,6 +257,7 @@ static void BeginPropertyTableValueCell(float ContentHeight)
 {
     ImGui::TableSetColumnIndex(1);
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + GPropertyTableState.Style.CellPaddingX);
+
     ApplyPropertyTableVerticalCenter(ContentHeight);
 }
 
@@ -309,7 +310,7 @@ static bool ResetIconButton(float InSize = 0.0f)
         const int32 Alpha255 = static_cast<int32>(Alpha01 * 255.0f);
 
         const ImU32 IconTintColor = IM_COL32(IconTintValue, IconTintValue, IconTintValue, Alpha255);
-        WindowDrawList->AddImage(EditorIcons::UndoIcon, IconRectMin, IconRectMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), IconTintColor);
+        EditorWidgets::DrawIcon(WindowDrawList, EditorIcons::UndoIcon, IconRectMin, IconRectMax, IconTintColor);
     }
     else
     {
@@ -398,6 +399,7 @@ static FORCEINLINE bool SelectionIntersectsLine(const FRichTextSelectionPoint& S
     {
         OutColStart = ClampInt32(SelA.Column, 0, LineCharCount);
         OutColEnd   = ClampInt32(SelB.Column, 0, LineCharCount);
+
         return OutColEnd > OutColStart;
     }
 
@@ -405,6 +407,7 @@ static FORCEINLINE bool SelectionIntersectsLine(const FRichTextSelectionPoint& S
     {
         OutColStart = ClampInt32(SelA.Column, 0, LineCharCount);
         OutColEnd   = LineCharCount;
+
         return OutColEnd > OutColStart;
     }
 
@@ -412,11 +415,13 @@ static FORCEINLINE bool SelectionIntersectsLine(const FRichTextSelectionPoint& S
     {
         OutColStart = 0;
         OutColEnd   = ClampInt32(SelB.Column, 0, LineCharCount);
+
         return OutColEnd > OutColStart;
     }
 
     OutColStart = 0;
     OutColEnd   = LineCharCount;
+
     return LineCharCount > 0;
 }
 
@@ -432,7 +437,7 @@ static String BuildLineText(const FRichTextViewContext& Ctx, int32 LineIndex)
     const FRichTextLine& Line = Ctx.Lines[LineIndex];
     for (int32 s = 0; s < Line.Spans.Size(); ++s)
     {
-        Result += Line.Spans[s].Text;
+        Result.Append(Ctx.GetSpanText(Line.Spans[s]), Line.Spans[s].TextLength);
     }
 
     return Result;
@@ -488,6 +493,7 @@ static String BuildSelectedText(const FRichTextViewContext& Ctx)
             }
 
             Result += Sub;
+
             if (L != LineMax)
             {
                 Result += "\n";
@@ -507,13 +513,23 @@ static String BuildAllText(const FRichTextViewContext& Ctx)
         const FRichTextLine& Line = Ctx.Lines[L];
         for (int32 s = 0; s < Line.Spans.Size(); ++s)
         {
-            Result += Line.Spans[s].Text;
+            Result.Append(Ctx.GetSpanText(Line.Spans[s]), Line.Spans[s].TextLength);
         }
 
         Result += "\n";
     }
 
     return Result;
+}
+
+static int32 AppendToTextArena(FRichTextViewContext& Ctx, const CHAR* Text, int32 Length)
+{
+    const int32 Offset = Ctx.TextArena.Size();
+
+    Ctx.TextArena.Append(Text, Length);
+    Ctx.TextArena.Emplace('\0');
+
+    return Offset;
 }
 
 static FORCEINLINE float MeasureRichTextWidth(const CHAR* Text)
@@ -608,6 +624,398 @@ static void FindWordBounds(const CHAR* Text, int32 TextLength, int32 Column, int
     OutEnd   = End;
 }
 
+static ImU32 GetButtonBackground(bool bSelected, bool bHovered, bool bHeld)
+{
+    if (bHovered || bHeld)
+    {
+        return bSelected ? EditorStyleVars::ButtonBgSelectedHovered : EditorStyleVars::ButtonBgHovered;
+    }
+
+    return bSelected ? EditorStyleVars::ButtonBgSelected : EditorStyleVars::ButtonBgIdle;
+}
+
+static float GetButtonHeight()
+{
+    return ImGui::GetFontSize() + EditorStyleVars::ButtonFramePaddingY * 2.0f;
+}
+
+static constexpr float MenuRowPaddingY = 4.0f;
+static constexpr float MenuRowIndentX  = 20.0f;
+
+enum class EMenuFloatWidget : uint8
+{
+    Slider = 0,
+    Drag   = 1,
+};
+
+static bool MenuFloatRow(EMenuFloatWidget WidgetType, const CHAR* Label, float& InOutValue, float Speed, 
+    float MinValue, float MaxValue, const CHAR* Format, float ValueWidth, bool bEnabled)
+{
+    ImGuiWindow* Window = ImGui::GetCurrentWindow();
+    if (!Window || Window->SkipItems)
+    {
+        return false;
+    }
+
+    constexpr float MenuIndentX = 20.0f;
+    constexpr float PaddingY    = 4.0f;
+
+    const float RowWidth  = ImGui::GetContentRegionAvail().x;
+    const float RowHeight = Math::Max(ImGui::GetFontSize() + PaddingY * 2.0f, ImGui::GetFrameHeight());
+
+    ImGui::PushID(Label);
+
+    const ImVec2 RectMin = ImGui::GetCursorScreenPos();
+    ImGui::Dummy(ImVec2(RowWidth, RowHeight));
+    const ImVec2 RectMax = ImVec2(RectMin.x + RowWidth, RectMin.y + RowHeight);
+
+    ImDrawList* DrawList = ImGui::GetWindowDrawList();
+    DrawList->AddRectFilled(RectMin, RectMax, ImGui::GetColorU32(ImGuiCol_Header), 0.0f);
+
+    const ImVec2 LabelSize = ImGui::CalcTextSize(Label);
+    const float  LabelY    = RectMin.y + (RowHeight - LabelSize.y) * 0.5f + 0.5f;
+
+    const float FieldWidth = Math::Min(ValueWidth, Math::Max(RowWidth - MenuIndentX * 2.0f, 1.0f));
+    const float FieldX     = RectMax.x - MenuIndentX - FieldWidth;
+    const float FieldY     = RectMin.y + (RowHeight - ImGui::GetFrameHeight()) * 0.5f;
+
+    DrawList->PushClipRect(ImVec2(RectMin.x + MenuIndentX, RectMin.y), ImVec2(Math::Max(FieldX - 8.0f, RectMin.x + MenuIndentX + 1.0f), RectMax.y), true);
+    DrawList->AddText(ImVec2(RectMin.x + MenuIndentX, LabelY), ImGui::GetColorU32(bEnabled ? ImGuiCol_Text : ImGuiCol_TextDisabled), Label);
+    DrawList->PopClipRect();
+
+    ImGui::SetCursorScreenPos(ImVec2(FieldX, FieldY));
+    ImGui::SetNextItemWidth(FieldWidth);
+
+    if (!bEnabled)
+    {
+        ImGui::BeginDisabled();
+    }
+
+    bool bChanged = false;
+    if (WidgetType == EMenuFloatWidget::Slider)
+    {
+        bChanged = ImGui::SliderFloat("##Value", &InOutValue, MinValue, MaxValue, Format);
+    }
+    else
+    {
+        bChanged = ImGui::DragFloat("##Value", &InOutValue, Speed, MinValue, MaxValue, Format);
+    }
+
+    DrawInputBorderLastItem(ImGui::GetStyle().FrameRounding);
+
+    if (!bEnabled)
+    {
+        ImGui::EndDisabled();
+    }
+
+    ImGui::SetCursorScreenPos(ImVec2(RectMin.x, RectMax.y));
+    ImGui::PopID();
+
+    return bEnabled && bChanged;
+}
+
+static constexpr float MenuPopupPadY     = 10.0f;
+static constexpr float MenuFinalMinWidth = MenuDefaultMinWidth + (MenuContentIndentX * 2.0f);
+
+static void PushMenuChromeStyle()
+{
+    // -----------------------------------------------------------------------------------------
+    // Styling Vars
+    // -----------------------------------------------------------------------------------------
+
+    const ImVec4 PopupBg       = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
+    const ImVec4 PopupBorder   = ImVec4(63.0f / 255.0f, 63.0f / 255.0f, 63.0f / 255.0f, 1.0f);
+    const ImVec4 TextColor     = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+    const ImVec4 ShortcutColor = ImVec4(175.0f / 255.0f, 175.0f / 255.0f, 175.0f / 255.0f, 1.0f);
+    const ImVec4 HoverBlue     = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
+
+    // -----------------------------------------------------------------------------------------
+    // Style vars
+    // -----------------------------------------------------------------------------------------
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 1.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, MenuPopupPadY));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
+
+    // -----------------------------------------------------------------------------------------
+    // Style colors
+    // -----------------------------------------------------------------------------------------
+
+    ImGui::PushStyleColor(ImGuiCol_PopupBg, PopupBg);
+    ImGui::PushStyleColor(ImGuiCol_Border, PopupBorder);
+    ImGui::PushStyleColor(ImGuiCol_Text, TextColor);
+    ImGui::PushStyleColor(ImGuiCol_TextDisabled, ShortcutColor);
+    ImGui::PushStyleColor(ImGuiCol_Header, PopupBg);
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, HoverBlue);
+    ImGui::PushStyleColor(ImGuiCol_HeaderActive, HoverBlue);
+
+    // -----------------------------------------------------------------------------------------
+    // Font
+    // -----------------------------------------------------------------------------------------
+
+    ImFont* Font = EditorFonts::SegoeUI_18 ? EditorFonts::SegoeUI_18 : EditorFonts::DefaultFont;
+    CHECK(Font != nullptr);
+
+    ImGui::PushFont(Font);
+}
+
+static void PopMenuChromeStyle()
+{
+    ImGui::PopFont();
+    ImGui::PopStyleColor(7); // PopupBg, Border, Text, TextDisabled, Header, HeaderHovered, HeaderActive
+    ImGui::PopStyleVar(5);   // WindowBorderSize, PopupBorderSize, PopupRounding, WindowPadding, ItemSpacing
+}
+
+static void DrawMenuFrame()
+{
+    const ImVec2 WinPos  = ImGui::GetWindowPos();
+    const ImVec2 WinSize = ImGui::GetWindowSize();
+    const ImVec2 Min     = ImVec2(WinPos.x + 1.0f, WinPos.y + 1.0f);
+    const ImVec2 Max     = ImVec2(WinPos.x + WinSize.x - 1.0f, WinPos.y + WinSize.y - 1.0f);
+
+    ImDrawList* DrawList = ImGui::GetWindowDrawList();
+    DrawList->AddRect(Min, Max, IM_COL32(50, 50, 50, 255), 0.0f, ImDrawFlags_None, 1.0f);
+}
+
+static void PushContextMenuExtras()
+{
+    const ImVec4 ContextMenuPopupBg = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
+
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, ContextMenuPopupBg);
+    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ContextMenuPopupBg);
+    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ContextMenuPopupBg);
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, ContextMenuPopupBg);
+}
+
+static void PopContextMenuExtras()
+{
+    ImGui::PopStyleColor(4); // FrameBg, FrameBgHovered, FrameBgActive, ChildBg
+    ImGui::PopStyleVar(1);   // FramePadding
+}
+
+static void PushContextMenuStyle()
+{
+    PushMenuChromeStyle();
+    PushContextMenuExtras();
+}
+
+static void PopContextMenuStyle()
+{
+    PopContextMenuExtras();
+    PopMenuChromeStyle();
+}
+
+static void DrawContextMenuFrame()
+{
+    ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
+
+    DrawMenuFrame();
+}
+
+static constexpr float SubMenuArrowSize = 12.0f;
+
+static void DrawSubMenuArrow(ImDrawList* DrawList, const ImVec2& RectMin, const ImVec2& RectMax, float RowHeight, float LabelY)
+{
+    const float  ArrowY   = RectMin.y + (RowHeight - SubMenuArrowSize) * 0.5f;
+    const float  ArrowX   = RectMax.x - MenuContentIndentX - SubMenuArrowSize;
+    const ImVec2 ArrowMin = ImVec2(ArrowX, ArrowY);
+    const ImVec2 ArrowMax = ImVec2(ArrowX + SubMenuArrowSize, ArrowY + SubMenuArrowSize);
+
+    if (EditorIcons::RightArrowIcon)
+    {
+        EditorWidgets::DrawIcon(DrawList, EditorIcons::RightArrowIcon, ArrowMin, ArrowMax, ImGui::GetColorU32(ImGuiCol_Text));
+    }
+    else
+    {
+        DrawList->AddText(ImVec2(ArrowX, LabelY), ImGui::GetColorU32(ImGuiCol_Text), ">");
+    }
+}
+
+struct FSubMenuFrame
+{
+    bool bChildOpen = false;
+};
+
+static TArray<FSubMenuFrame> GSubMenuStack;
+
+static constexpr int32 IconAtlasWidth   = 1024;
+static constexpr int32 IconAtlasPadding = 2;
+
+struct FEditorIconImage
+{
+    TArray<uint8> Pixels;
+    int32         Width  = 0;
+    int32         Height = 0;
+    int32         X      = 0;
+    int32         Y      = 0;
+    bool          bValid = false;
+};
+
+struct FEditorIconRequest
+{
+    const CHAR*  RelativePath;
+    FEditorIcon* Icon;
+};
+
+struct FEditorIconAtlas
+{
+    FRHITextureRef            Texture      = nullptr;
+    TUniquePtr<FImGuiTexture> ImGuiTexture = nullptr;
+};
+
+static FEditorIconAtlas GIconAtlas;
+
+static const FEditorIconRequest GIconRequests[] =
+{
+    { "Editor/Icons/Undo.png",               &EditorIcons::UndoIcon             },
+    { "Editor/Icons/Search.png",             &EditorIcons::SearchIcon           },
+    { "Editor/Icons/Locked.png",             &EditorIcons::LockedIcon           },
+    { "Editor/Icons/Unlocked.png",           &EditorIcons::UnlockedIcon         },
+    { "Editor/Icons/Folder.png",             &EditorIcons::FolderIcon           },
+    { "Editor/Icons/FolderSmall.png",        &EditorIcons::FolderSmallIcon      },
+    { "Editor/Icons/FolderSmall2.png",       &EditorIcons::FolderSmall2Icon     },
+    { "Editor/Icons/FolderOpenSmall.png",    &EditorIcons::FolderOpenSmallIcon  },
+    { "Editor/Icons/Document.png",           &EditorIcons::DocumentIcon         },
+    { "Editor/Icons/DocumentSmall.png",      &EditorIcons::DocumentSmallIcon    },
+    { "Editor/Icons/Checkmark.png",          &EditorIcons::CheckmarkIcon        },
+    { "Editor/Icons/Forbidden.png",          &EditorIcons::ForbiddenIcon        },
+    { "Editor/Icons/CircledCheckmark.png",   &EditorIcons::CircledCheckmarkIcon },
+    { "Editor/Icons/Next.png",               &EditorIcons::NextIcon             },
+    { "Editor/Icons/Previous.png",           &EditorIcons::PreviousIcon         },
+    { "Editor/Icons/Close.png",              &EditorIcons::CloseIcon            },
+    { "Editor/Icons/Filter.png",             &EditorIcons::FilterIcon           },
+    { "Editor/Icons/RightArrow.png",         &EditorIcons::RightArrowIcon       },
+    { "Editor/Icons/DownArrow.png",          &EditorIcons::DownArrowIcon        },
+    { "Editor/Icons/CollapseArrowDown.png",  &EditorIcons::CollapseArrowDown    },
+    { "Editor/Icons/CollapseArrowRight.png", &EditorIcons::CollapseArrowRight   },
+};
+
+static bool LoadEditorIconImage(const CHAR* InRelativePath, FEditorIconImage& OutImage)
+{
+    String FullPath = Paths::GetAssetDir();
+    if (!FullPath.EndsWith("/"))
+    {
+        FullPath += "/";
+    }
+
+    FullPath += InRelativePath;
+
+    FTextureImporterBase Importer;
+
+    const StringView FullPathView(FullPath);
+
+    TSharedRef<FTexture> Texture   = Importer.ImportFromFile(FullPathView);
+    FTexture2D*          Texture2D = Texture ? Texture->GetTexture2D() : nullptr;
+
+    if (!Texture2D)
+    {
+        LOG_ERROR("[EditorIcons]: Failed to load icon '%s'", *FullPath);
+        return false;
+    }
+
+    const EFormat Format = Texture2D->GetFormat();
+    if (Format != EFormat::R8G8B8A8_Unorm)
+    {
+        LOG_ERROR("[EditorIcons]: Icon '%s' is '%s', and the atlas only takes 'R8G8B8A8_Unorm'", *FullPath, ToString(Format));
+        return false;
+    }
+
+    const FTextureResourceData* IconData     = Texture2D->GetTextureResourceData();
+    const uint8*                SourcePixels = IconData ? reinterpret_cast<const uint8*>(IconData->GetMipData(0)) : nullptr;
+
+    if (!SourcePixels)
+    {
+        LOG_ERROR("[EditorIcons]: Icon '%s' has no pixel data", *FullPath);
+        return false;
+    }
+
+    const int32 Width    = static_cast<int32>(Texture2D->GetWidth());
+    const int32 Height   = static_cast<int32>(Texture2D->GetHeight());
+    const int64 RowBytes = static_cast<int64>(Width) * 4;
+    const int64 RowPitch = IconData->GetMipRowPitch(0);
+
+    OutImage.Width  = Width;
+    OutImage.Height = Height;
+    OutImage.Pixels.ResizeUninitialized(static_cast<int32>(RowBytes * Height));
+
+    for (int32 Y = 0; Y < Height; ++Y)
+    {
+        Memory::Memcpy(OutImage.Pixels.Data() + Y * RowBytes, SourcePixels + Y * RowPitch, RowBytes);
+    }
+
+    OutImage.bValid = true;
+    return true;
+}
+
+static ImFont* LoadEditorFont(const CHAR* InRelativePath, float SizePixels, const ImFontConfig* FontCfgTemplate = nullptr, const ImWchar* GlyphRanges = nullptr)
+{
+    String FullPath = Paths::GetAssetDir();
+    if (!FullPath.EndsWith("/"))
+    {
+        FullPath += "/";
+    }
+
+    FullPath += InRelativePath;
+
+    ImGuiIO& State = ImGui::GetIO();
+    return State.Fonts->AddFontFromFileTTF(*FullPath, SizePixels, FontCfgTemplate, GlyphRanges);
+}
+
+#if PLATFORM_WINDOWS
+
+// The size WinUI's own caption button style renders the glyphs at.
+static constexpr float SystemIconSizePixels = 10.0f;
+
+// Loads the four caption code points out of the system icon font as a font of their own, so the 
+// window buttons are drawn with the very glyphs the OS would have used rather than an imitation 
+// of them. E921 ChromeMinimize, E922 ChromeMaximize, E923 ChromeRestore and E8BB ChromeClose.
+
+static ImFont* LoadSystemIconFont()
+{
+    // Segoe Fluent Icons ships with Windows 11, and Segoe MDL2 assets carries the same code points on Windows 10.
+    const CHAR* IconFontPaths[] =
+    {
+        "C:\\Windows\\Fonts\\SegoeIcons.ttf",
+        "C:\\Windows\\Fonts\\segmdl2.ttf",
+    };
+
+    // Kept alive past the call because the atlas only reads the ranges when it is built.
+    static const ImWchar CaptionGlyphRanges[] = 
+    { 
+        0xE8BB, 
+        0xE8BB, 
+        0xE921, 
+        0xE923, 
+        0
+    };
+
+    ImFontConfig FontConfig;
+    FontConfig.PixelSnapH = true;
+
+    ImGuiIO& State = ImGui::GetIO();
+    for (const CHAR* IconFontPath : IconFontPaths)
+    {
+        if (!FPlatformFile::IsFile(IconFontPath))
+        {
+            continue;
+        }
+
+        if (ImFont* IconFont = State.Fonts->AddFontFromFileTTF(IconFontPath, SystemIconSizePixels, &FontConfig, CaptionGlyphRanges))
+        {
+            return IconFont;
+        }
+    }
+
+    LOG_WARNING("[EditorFonts]: No system icon font found, so the title bar buttons fall back to drawn shapes");
+    return nullptr;
+}
+
+#endif
+
 bool EditorWidgets::DrawFloat3Control(const CHAR* Label, Vector3& OutValue, float Speed, const Vector3* InRevertValue, EVector3ControlType InType)
 {
     ImGuiTable* CurrentTable = ImGui::GetCurrentTable();
@@ -623,9 +1031,9 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, Vector3& OutValue, floa
     const float RowHeight   = FrameHeight;
 
     BeginPropertyTableRow(RowHeight);
-    
+
     bool bAnyValueChanged = false;
-    bool bRowHovered      = BeginFullRowHoverCatcher(GPropertyTableState.CurrentRowHeight);
+    bool bRowHovered      = IsRowHovered(GPropertyTableState.CurrentRowHeight);
 
     const bool bIsRotationDegrees = (InType == EVector3ControlType::RotationDegrees);
     const bool bIsScaleControl    = (InType == EVector3ControlType::Scale);
@@ -713,10 +1121,10 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, Vector3& OutValue, floa
             const int32 Alpha255 = static_cast<int32>(Alpha01 * 255.0f);
             const ImU32 Tint     = IM_COL32(255, 255, 255, Alpha255);
 
-            ImTextureID Icon = bUniformScaleEnabled ? EditorIcons::LockedIcon : EditorIcons::UnlockedIcon;
+            const FEditorIcon& Icon = bUniformScaleEnabled ? EditorIcons::LockedIcon : EditorIcons::UnlockedIcon;
             if (Icon)
             {
-                DrawList->AddImage(Icon, IconMin, IconMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), Tint);
+                EditorWidgets::DrawIcon(DrawList, Icon, IconMin, IconMax, Tint);
             }
             else
             {
@@ -923,7 +1331,7 @@ bool EditorWidgets::DrawFloatProperty(const CHAR* Label, float& InOutValue, floa
     BeginPropertyTableRow(ContentHeight);
 
     bool bResult     = false;
-    bool bRowHovered = BeginFullRowHoverCatcher(GPropertyTableState.CurrentRowHeight);
+    bool bRowHovered = IsRowHovered(GPropertyTableState.CurrentRowHeight);
 
     BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
     ImGui::TextUnformatted(Label);
@@ -993,7 +1401,7 @@ bool EditorWidgets::DrawIntProperty(const CHAR* Label, int32& InOutValue, float 
     BeginPropertyTableRow(ContentHeight);
 
     bool bResult     = false;
-    bool bRowHovered = BeginFullRowHoverCatcher(GPropertyTableState.CurrentRowHeight);
+    bool bRowHovered = IsRowHovered(GPropertyTableState.CurrentRowHeight);
 
     BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
     ImGui::TextUnformatted(Label);
@@ -1063,7 +1471,7 @@ bool EditorWidgets::DrawComboProperty(const CHAR* Label, int32& InOutValue, cons
     BeginPropertyTableRow(ContentHeight);
 
     bool bResult     = false;
-    bool bRowHovered = BeginFullRowHoverCatcher(GPropertyTableState.CurrentRowHeight);
+    bool bRowHovered = IsRowHovered(GPropertyTableState.CurrentRowHeight);
 
     BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
     ImGui::TextUnformatted(Label);
@@ -1141,75 +1549,79 @@ bool EditorWidgets::DrawComboProperty(const CHAR* Label, int32& InOutValue, cons
     }
 
     constexpr float PopupTextPadX = 6.0f;
-    float PopupWidth = FieldSize.x;
-    if (Items && ItemCount > 0)
+
+    if (ImGui::IsPopupOpen("##ComboPopup"))
     {
-        float MaxItemTextWidth = 0.0f;
-        for (int32 ItemIndex = 0; ItemIndex < ItemCount; ++ItemIndex)
+        float PopupWidth = FieldSize.x;
+        if (Items && ItemCount > 0)
         {
-            const ImVec2 TextSize = ImGui::CalcTextSize(Items[ItemIndex] ? Items[ItemIndex] : "");
-            MaxItemTextWidth = Math::Max(MaxItemTextWidth, TextSize.x);
+            float MaxItemTextWidth = 0.0f;
+            for (int32 ItemIndex = 0; ItemIndex < ItemCount; ++ItemIndex)
+            {
+                const ImVec2 TextSize = ImGui::CalcTextSize(Items[ItemIndex] ? Items[ItemIndex] : "");
+                MaxItemTextWidth = Math::Max(MaxItemTextWidth, TextSize.x);
+            }
+
+            PopupWidth = Math::Max(PopupWidth, MaxItemTextWidth + PopupTextPadX * 2.0f);
         }
 
-        PopupWidth = Math::Max(PopupWidth, MaxItemTextWidth + PopupTextPadX * 2.0f);
-    }
+        float  PopupX       = FieldMin.x;
+        ImVec2 WorkMin      = ImVec2(0.0f, 0.0f);
+        ImVec2 WorkMax      = ImVec2(0.0f, 0.0f);
+        bool   bHasWorkRect = false;
 
-    float  PopupX       = FieldMin.x;
-    ImVec2 WorkMin      = ImVec2(0.0f, 0.0f);
-    ImVec2 WorkMax      = ImVec2(0.0f, 0.0f);
-    bool   bHasWorkRect = false;
-
-    ImGuiPlatformIO& PlatformIO = ImGui::GetPlatformIO();
-    if (PlatformIO.Monitors.Size > 0)
-    {
-        const ImVec2 FieldCenter = ImVec2((FieldMin.x + FieldMax.x) * 0.5f, (FieldMin.y + FieldMax.y) * 0.5f);
-        
-        int32 MonitorIndex = 0;
-        for (int32 i = 0; i < PlatformIO.Monitors.Size; ++i)
+        ImGuiPlatformIO& PlatformIO = ImGui::GetPlatformIO();
+        if (PlatformIO.Monitors.Size > 0)
         {
-            const ImGuiPlatformMonitor& Monitor = PlatformIO.Monitors[i];
+            const ImVec2 FieldCenter = ImVec2((FieldMin.x + FieldMax.x) * 0.5f, (FieldMin.y + FieldMax.y) * 0.5f);
 
-            const ImVec2 Min = Monitor.WorkPos;
-            const ImVec2 Max = ImVec2(Monitor.WorkPos.x + Monitor.WorkSize.x, Monitor.WorkPos.y + Monitor.WorkSize.y);
-            
-            if (FieldCenter.x >= Min.x && FieldCenter.x <= Max.x && FieldCenter.y >= Min.y && FieldCenter.y <= Max.y)
+            int32 MonitorIndex = 0;
+            for (int32 i = 0; i < PlatformIO.Monitors.Size; ++i)
             {
-                MonitorIndex = i;
-                break;
+                const ImGuiPlatformMonitor& Monitor = PlatformIO.Monitors[i];
+
+                const ImVec2 Min = Monitor.WorkPos;
+                const ImVec2 Max = ImVec2(Monitor.WorkPos.x + Monitor.WorkSize.x, Monitor.WorkPos.y + Monitor.WorkSize.y);
+
+                if (FieldCenter.x >= Min.x && FieldCenter.x <= Max.x && FieldCenter.y >= Min.y && FieldCenter.y <= Max.y)
+                {
+                    MonitorIndex = i;
+                    break;
+                }
+            }
+
+            const ImGuiPlatformMonitor& Monitor = PlatformIO.Monitors[MonitorIndex];
+            WorkMin      = Monitor.WorkPos;
+            WorkMax      = ImVec2(Monitor.WorkPos.x + Monitor.WorkSize.x, Monitor.WorkPos.y + Monitor.WorkSize.y);
+            bHasWorkRect = (Monitor.WorkSize.x > 0.0f && Monitor.WorkSize.y > 0.0f);
+        }
+
+        if (!bHasWorkRect)
+        {
+            if (ImGuiViewport* Viewport = ImGui::GetWindowViewport())
+            {
+                WorkMin      = Viewport->WorkPos;
+                WorkMax      = ImVec2(Viewport->WorkPos.x + Viewport->WorkSize.x, Viewport->WorkPos.y + Viewport->WorkSize.y);
+                bHasWorkRect = (Viewport->WorkSize.x > 0.0f && Viewport->WorkSize.y > 0.0f);
             }
         }
 
-        const ImGuiPlatformMonitor& Monitor = PlatformIO.Monitors[MonitorIndex];
-        WorkMin      = Monitor.WorkPos;
-        WorkMax      = ImVec2(Monitor.WorkPos.x + Monitor.WorkSize.x, Monitor.WorkPos.y + Monitor.WorkSize.y);
-        bHasWorkRect = (Monitor.WorkSize.x > 0.0f && Monitor.WorkSize.y > 0.0f);
-    }
-
-    if (!bHasWorkRect)
-    {
-        if (ImGuiViewport* Viewport = ImGui::GetWindowViewport())
+        if (bHasWorkRect)
         {
-            WorkMin      = Viewport->WorkPos;
-            WorkMax      = ImVec2(Viewport->WorkPos.x + Viewport->WorkSize.x, Viewport->WorkPos.y + Viewport->WorkSize.y);
-            bHasWorkRect = (Viewport->WorkSize.x > 0.0f && Viewport->WorkSize.y > 0.0f);
-        }
-    }
+            const float MaxWidth = Math::Max(1.0f, WorkMax.x - WorkMin.x);
+            PopupWidth = Math::Min(PopupWidth, MaxWidth);
 
-    if (bHasWorkRect)
-    {
-        const float MaxWidth = Math::Max(1.0f, WorkMax.x - WorkMin.x);
-        PopupWidth = Math::Min(PopupWidth, MaxWidth);
+            if ((PopupX + PopupWidth) > WorkMax.x)
+            {
+                PopupX = FieldMax.x - PopupWidth;
+            }
 
-        if ((PopupX + PopupWidth) > WorkMax.x)
-        {
-            PopupX = FieldMax.x - PopupWidth;
+            PopupX = Math::Clamp(PopupX, WorkMin.x, WorkMax.x - PopupWidth);
         }
 
-        PopupX = Math::Clamp(PopupX, WorkMin.x, WorkMax.x - PopupWidth);
+        ImGui::SetNextWindowPos(ImVec2(PopupX, FieldMax.y));
+        ImGui::SetNextWindowSize(ImVec2(PopupWidth, 0.0f));
     }
-
-    ImGui::SetNextWindowPos(ImVec2(PopupX, FieldMax.y));
-    ImGui::SetNextWindowSize(ImVec2(PopupWidth, 0.0f));
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
@@ -1429,7 +1841,7 @@ bool EditorWidgets::DrawCheckboxProperty(const CHAR* Label, bool& InOutValue, co
     BeginPropertyTableRow(ContentHeight);
 
     bool bResult     = false;
-    bool bRowHovered = BeginFullRowHoverCatcher(GPropertyTableState.CurrentRowHeight);
+    bool bRowHovered = IsRowHovered(GPropertyTableState.CurrentRowHeight);
 
     BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
     ImGui::TextUnformatted(Label);
@@ -1478,7 +1890,7 @@ bool EditorWidgets::DrawTextProperty(const CHAR* Label, const CHAR* ValueText)
     const float ContentHeight = ImGui::GetTextLineHeight();
     BeginPropertyTableRow(ContentHeight);
 
-    bool bRowHovered = BeginFullRowHoverCatcher(GPropertyTableState.CurrentRowHeight);
+    bool bRowHovered = IsRowHovered(GPropertyTableState.CurrentRowHeight);
 
     BeginPropertyTableLabelCell(ContentHeight);
     ImGui::TextUnformatted(Label);
@@ -1503,7 +1915,7 @@ void EditorWidgets::DrawTextureProperty(const CHAR* Label, ImTextureID Texture, 
 
     BeginPropertyTableRow(PreviewSize);
 
-    bool bRowHovered = BeginFullRowHoverCatcher(GPropertyTableState.CurrentRowHeight);
+    bool bRowHovered = IsRowHovered(GPropertyTableState.CurrentRowHeight);
 
     BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
     ImGui::TextUnformatted(Label);
@@ -1551,7 +1963,7 @@ void EditorWidgets::DrawReadOnlyFloat3Property(const CHAR* Label, const Vector3&
     const float ContentHeight = ImGui::GetFrameHeight();
     BeginPropertyTableRow(ContentHeight);
 
-    bool bRowHovered = BeginFullRowHoverCatcher(GPropertyTableState.CurrentRowHeight);
+    bool bRowHovered = IsRowHovered(GPropertyTableState.CurrentRowHeight);
 
     BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
     ImGui::TextUnformatted(Label);
@@ -1584,7 +1996,7 @@ bool EditorWidgets::DrawColor3Property(const CHAR* Label, float* InOutColor, con
     BeginPropertyTableRow(ContentHeight);
 
     bool bResult     = false;
-    bool bRowHovered = BeginFullRowHoverCatcher(GPropertyTableState.CurrentRowHeight);
+    bool bRowHovered = IsRowHovered(GPropertyTableState.CurrentRowHeight);
 
     BeginPropertyTableLabelCell(ImGui::GetTextLineHeight());
     ImGui::TextUnformatted(Label);
@@ -2081,21 +2493,6 @@ bool EditorWidgets::DrawConfirmDialog(FConfirmDialogContext& InOutContext)
     return bConfirmed;
 }
 
-static ImU32 GetButtonBackground(bool bSelected, bool bHovered, bool bHeld)
-{
-    if (bHovered || bHeld)
-    {
-        return bSelected ? EditorStyleVars::ButtonBgSelectedHovered : EditorStyleVars::ButtonBgHovered;
-    }
-
-    return bSelected ? EditorStyleVars::ButtonBgSelected : EditorStyleVars::ButtonBgIdle;
-}
-
-static float GetButtonHeight()
-{
-    return ImGui::GetFontSize() + EditorStyleVars::ButtonFramePaddingY * 2.0f;
-}
-
 ImVec2 EditorWidgets::GetButtonSize(const CHAR* Label, const ImVec2& Size)
 {
     ImVec2 Result = Size;
@@ -2180,7 +2577,6 @@ bool EditorWidgets::DrawDropdownButton(const CHAR* InId, const CHAR* Label, cons
 
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
 
-    // An open popup reads as hovered, since the button stays lit for as long as its menu is up
     const ImU32 Background = (bPopupOpen || bHovered || bHeld) ? EditorStyleVars::ButtonBgHovered : EditorStyleVars::ButtonBgIdle;
     DrawList->AddRectFilled(Min, Max, ImGui::GetColorU32(Background), EditorStyleVars::ButtonRounding);
 
@@ -2201,7 +2597,7 @@ bool EditorWidgets::DrawDropdownButton(const CHAR* InId, const CHAR* Label, cons
         const ImVec2 ArrowMin = ImVec2(ArrowX, ArrowY);
         const ImVec2 ArrowMax = ImVec2(ArrowX + ArrowSize, ArrowY + ArrowSize);
 
-        DrawList->AddImage(EditorIcons::DownArrowIcon, ArrowMin, ArrowMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ContentColor);
+        EditorWidgets::DrawIcon(DrawList, EditorIcons::DownArrowIcon, ArrowMin, ArrowMax, ContentColor);
     }
 
     OutAnchor.Min = Min;
@@ -2332,7 +2728,7 @@ bool EditorWidgets::DrawSearchField(const CHAR* InId, const CHAR* InHint, CHAR* 
         }
 
         const ImU32 Tint = bIconHovered ? IconActive : IconInactive;
-        DrawList->AddImage(EditorIcons::CloseIcon, IconMin, IconMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), Tint);
+        EditorWidgets::DrawIcon(DrawList, EditorIcons::CloseIcon, IconMin, IconMax, Tint);
 
         if (bIconPressed)
         {
@@ -2355,7 +2751,7 @@ bool EditorWidgets::DrawSearchField(const CHAR* InId, const CHAR* InHint, CHAR* 
     {
         const bool bActive = ImGui::GetActiveID() == InputId;
         const ImU32 Tint = bActive ? IconActive : IconInactive;
-        DrawList->AddImage(EditorIcons::SearchIcon, IconMin, IconMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), Tint);
+        EditorWidgets::DrawIcon(DrawList, EditorIcons::SearchIcon, IconMin, IconMax, Tint);
     }
 
     // -------------------------------------------------------------------------------------
@@ -2556,9 +2952,6 @@ void EditorWidgets::MenuLabeledSeparator(const CHAR* Label, float Thickness, flo
     }
 }
 
-static constexpr float MenuRowPaddingY = 4.0f;
-static constexpr float MenuRowIndentX  = 20.0f;
-
 bool EditorWidgets::MenuItem(const CHAR* Label, const CHAR* Shortcut, bool bSelected, bool bEnabled, bool bDrawBorder)
 {
     const float PaddingX    = 8.0f;
@@ -2698,7 +3091,7 @@ bool EditorWidgets::MenuItem(const CHAR* Label, const CHAR* Shortcut, bool bSele
             const ImVec2 IconMax = ImVec2(CheckPos.x + CheckSize, CheckPos.y + CheckSize);
 
             const ImU32 Tint = ImGui::GetColorU32(ImGuiCol_Text);
-            DrawList->AddImage(EditorIcons::CheckmarkIcon, IconMin, IconMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), Tint);
+            EditorWidgets::DrawIcon(DrawList, EditorIcons::CheckmarkIcon, IconMin, IconMax, Tint);
         }
         else
         {
@@ -2732,90 +3125,6 @@ bool EditorWidgets::MenuItem(const CHAR* Label, const CHAR* Shortcut, bool bSele
 
     ImGui::PopID();
     return bEnabled && bPressed;
-}
-
-namespace
-{
-    enum class EMenuFloatWidget : uint8
-    {
-        Slider = 0,
-        Drag   = 1,
-    };
-}
-
-static bool MenuFloatRow(
-    EMenuFloatWidget WidgetType,
-    const CHAR*      Label,
-    float&           InOutValue,
-    float            Speed,
-    float            MinValue,
-    float            MaxValue,
-    const CHAR*      Format,
-    float            ValueWidth,
-    bool             bEnabled)
-{
-    ImGuiWindow* Window = ImGui::GetCurrentWindow();
-    if (!Window || Window->SkipItems)
-    {
-        return false;
-    }
-
-    constexpr float MenuIndentX = 20.0f;
-    constexpr float PaddingY    = 4.0f;
-
-    const float RowWidth  = ImGui::GetContentRegionAvail().x;
-    const float RowHeight = Math::Max(ImGui::GetFontSize() + PaddingY * 2.0f, ImGui::GetFrameHeight());
-
-    ImGui::PushID(Label);
-
-    const ImVec2 RectMin = ImGui::GetCursorScreenPos();
-    ImGui::Dummy(ImVec2(RowWidth, RowHeight));
-    const ImVec2 RectMax = ImVec2(RectMin.x + RowWidth, RectMin.y + RowHeight);
-
-    ImDrawList* DrawList = ImGui::GetWindowDrawList();
-    DrawList->AddRectFilled(RectMin, RectMax, ImGui::GetColorU32(ImGuiCol_Header), 0.0f);
-
-    const ImVec2 LabelSize = ImGui::CalcTextSize(Label);
-    const float  LabelY    = RectMin.y + (RowHeight - LabelSize.y) * 0.5f + 0.5f;
-
-    const float FieldWidth = Math::Min(ValueWidth, Math::Max(RowWidth - MenuIndentX * 2.0f, 1.0f));
-    const float FieldX     = RectMax.x - MenuIndentX - FieldWidth;
-    const float FieldY     = RectMin.y + (RowHeight - ImGui::GetFrameHeight()) * 0.5f;
-
-    DrawList->PushClipRect(ImVec2(RectMin.x + MenuIndentX, RectMin.y), ImVec2(Math::Max(FieldX - 8.0f, RectMin.x + MenuIndentX + 1.0f), RectMax.y), true);
-    DrawList->AddText(ImVec2(RectMin.x + MenuIndentX, LabelY), ImGui::GetColorU32(bEnabled ? ImGuiCol_Text : ImGuiCol_TextDisabled), Label);
-    DrawList->PopClipRect();
-
-    ImGui::SetCursorScreenPos(ImVec2(FieldX, FieldY));
-    ImGui::SetNextItemWidth(FieldWidth);
-
-    if (!bEnabled)
-    {
-        ImGui::BeginDisabled();
-    }
-
-    bool bChanged = false;
-    if (WidgetType == EMenuFloatWidget::Slider)
-    {
-        bChanged = ImGui::SliderFloat("##Value", &InOutValue, MinValue, MaxValue, Format);
-    }
-    else
-    {
-        bChanged = ImGui::DragFloat("##Value", &InOutValue, Speed, MinValue, MaxValue, Format);
-    }
-
-    DrawInputBorderLastItem(ImGui::GetStyle().FrameRounding);
-
-    if (!bEnabled)
-    {
-        ImGui::EndDisabled();
-    }
-
-    // The field was placed by hand, so put the cursor back on the row the Dummy reserved.
-    ImGui::SetCursorScreenPos(ImVec2(RectMin.x, RectMax.y));
-    ImGui::PopID();
-
-    return bEnabled && bChanged;
 }
 
 bool EditorWidgets::MenuSliderFloat(const CHAR* Label, float& InOutValue, float MinValue, float MaxValue, const CHAR* Format, float ValueWidth, bool bEnabled)
@@ -2876,77 +3185,14 @@ void EditorWidgets::MenuButton(const CHAR* Label, const CHAR* PopupId, bool bAny
     }
 }
 
-static constexpr float MenuPopupPadY     = 10.0f;
-static constexpr float MenuFinalMinWidth = MenuDefaultMinWidth + (MenuContentIndentX * 2.0f);
-
-static void PushMenuChromeStyle()
-{
-    // -----------------------------------------------------------------------------------------
-    // Styling Vars
-    // -----------------------------------------------------------------------------------------
-
-    const ImVec4 PopupBg       = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
-    const ImVec4 PopupBorder   = ImVec4(63.0f / 255.0f, 63.0f / 255.0f, 63.0f / 255.0f, 1.0f);
-    const ImVec4 TextColor     = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-    const ImVec4 ShortcutColor = ImVec4(175.0f / 255.0f, 175.0f / 255.0f, 175.0f / 255.0f, 1.0f);
-    const ImVec4 HoverBlue     = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
-
-    // -----------------------------------------------------------------------------------------
-    // Style vars
-    // -----------------------------------------------------------------------------------------
-
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 1.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, MenuPopupPadY));
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
-
-    // -----------------------------------------------------------------------------------------
-    // Style colors
-    // -----------------------------------------------------------------------------------------
-
-    ImGui::PushStyleColor(ImGuiCol_PopupBg, PopupBg);
-    ImGui::PushStyleColor(ImGuiCol_Border, PopupBorder);
-    ImGui::PushStyleColor(ImGuiCol_Text, TextColor);
-    ImGui::PushStyleColor(ImGuiCol_TextDisabled, ShortcutColor);
-    ImGui::PushStyleColor(ImGuiCol_Header, PopupBg);
-    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, HoverBlue);
-    ImGui::PushStyleColor(ImGuiCol_HeaderActive, HoverBlue);
-
-    // -----------------------------------------------------------------------------------------
-    // Font
-    // -----------------------------------------------------------------------------------------
-
-    ImFont* Font = EditorFonts::SegoeUI_18 ? EditorFonts::SegoeUI_18 : EditorFonts::DefaultFont;
-    CHECK(Font != nullptr);
-
-    ImGui::PushFont(Font);
-}
-
-static void PopMenuChromeStyle()
-{
-    ImGui::PopFont();
-    ImGui::PopStyleColor(7); // PopupBg, Border, Text, TextDisabled, Header, HeaderHovered, HeaderActive
-    ImGui::PopStyleVar(5);   // WindowBorderSize, PopupBorderSize, PopupRounding, WindowPadding, ItemSpacing
-}
-
-static void DrawMenuFrame()
-{
-    const ImVec2 WinPos  = ImGui::GetWindowPos();
-    const ImVec2 WinSize = ImGui::GetWindowSize();
-    const ImVec2 Min     = ImVec2(WinPos.x + 1.0f, WinPos.y + 1.0f);
-    const ImVec2 Max     = ImVec2(WinPos.x + WinSize.x - 1.0f, WinPos.y + WinSize.y - 1.0f);
-
-    ImDrawList* DrawList = ImGui::GetWindowDrawList();
-    DrawList->AddRect(Min, Max, IM_COL32(50, 50, 50, 255), 0.0f, ImDrawFlags_None, 1.0f);
-}
-
 bool EditorWidgets::BeginMenuPopup(const CHAR* PopupId, const FPopupAnchor& Anchor, float MinWidth)
 {
-    if (Anchor.bRequestPosition || ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None))
+    if (!Anchor.bRequestPosition && !ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None))
     {
-        ImGui::SetNextWindowPos(ImVec2(Anchor.Min.x, Anchor.Max.y), ImGuiCond_Always);
+        return false;
     }
+
+    ImGui::SetNextWindowPos(ImVec2(Anchor.Min.x, Anchor.Max.y), ImGuiCond_Always);
 
     PushMenuChromeStyle();
 
@@ -2970,44 +3216,6 @@ void EditorWidgets::EndMenuPopup()
 {
     PopMenuChromeStyle();
     ImGui::EndPopup();
-}
-
-static void PushContextMenuExtras()
-{
-    const ImVec4 ContextMenuPopupBg = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
-
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
-
-    ImGui::PushStyleColor(ImGuiCol_FrameBg, ContextMenuPopupBg);
-    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ContextMenuPopupBg);
-    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ContextMenuPopupBg);
-    ImGui::PushStyleColor(ImGuiCol_ChildBg, ContextMenuPopupBg);
-}
-
-static void PopContextMenuExtras()
-{
-    ImGui::PopStyleColor(4); // FrameBg, FrameBgHovered, FrameBgActive, ChildBg
-    ImGui::PopStyleVar(1);   // FramePadding
-}
-
-static void PushContextMenuStyle()
-{
-    PushMenuChromeStyle();
-    PushContextMenuExtras();
-}
-
-static void PopContextMenuStyle()
-{
-    PopContextMenuExtras();
-    PopMenuChromeStyle();
-}
-
-static void DrawContextMenuFrame()
-{
-    // The viewport keeps its own cursor set, so a menu drawn over it has to claim the arrow back.
-    ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
-
-    DrawMenuFrame();
 }
 
 bool EditorWidgets::BeginPopupContextWindow(const CHAR* PopupId, ImGuiPopupFlags Flags)
@@ -3050,12 +3258,15 @@ bool EditorWidgets::BeginPopupContextItem(const CHAR* PopupId)
 
 bool EditorWidgets::BeginPopupContext(const CHAR* PopupId)
 {
+    if (!ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None))
+    {
+        return false;
+    }
+
     PushContextMenuStyle();
 
     ImGui::SetNextWindowSizeConstraints(ImVec2(MenuFinalMinWidth, 0.0f), ImVec2(FLT_MAX, FLT_MAX));
 
-    // Unlike BeginPopupContextItem this does not do its own mouse-release detection, so the caller decides when the
-    // popup opens. Callers that treat a drag differently from a click need that.
     const bool bOpen = ImGui::BeginPopup(PopupId);
     if (bOpen)
     {
@@ -3067,25 +3278,6 @@ bool EditorWidgets::BeginPopupContext(const CHAR* PopupId)
     }
 
     return bOpen;
-}
-
-static constexpr float SubMenuArrowSize = 12.0f;
-
-static void DrawSubMenuArrow(ImDrawList* DrawList, const ImVec2& RectMin, const ImVec2& RectMax, float RowHeight, float LabelY)
-{
-    const float  ArrowY   = RectMin.y + (RowHeight - SubMenuArrowSize) * 0.5f;
-    const float  ArrowX   = RectMax.x - MenuContentIndentX - SubMenuArrowSize;
-    const ImVec2 ArrowMin = ImVec2(ArrowX, ArrowY);
-    const ImVec2 ArrowMax = ImVec2(ArrowX + SubMenuArrowSize, ArrowY + SubMenuArrowSize);
-
-    if (EditorIcons::RightArrowIcon)
-    {
-        DrawList->AddImage(EditorIcons::RightArrowIcon, ArrowMin, ArrowMax, ImVec2(0, 0), ImVec2(1, 1), ImGui::GetColorU32(ImGuiCol_Text));
-    }
-    else
-    {
-        DrawList->AddText(ImVec2(ArrowX, LabelY), ImGui::GetColorU32(ImGuiCol_Text), ">");
-    }
 }
 
 bool EditorWidgets::MenuSubMenuRow(const CHAR* Label, FPopupAnchor& OutAnchor, bool& bOutHovered, bool bForceActive, float LabelIndentX)
@@ -3160,13 +3352,6 @@ void EditorWidgets::MenuSubMenuOverlay(const CHAR* Label, const FPopupAnchor& An
 
     DrawSubMenuArrow(DrawList, Anchor.Min, Anchor.Max, RowHeight, LabelY);
 }
-
-struct FSubMenuFrame
-{
-    bool bChildOpen = false;
-};
-
-static TArray<FSubMenuFrame> GSubMenuStack;
 
 bool EditorWidgets::BeginSubMenu(FSubMenuState& InOutState, const CHAR* PopupId, const CHAR* Label, bool bEnabled)
 {
@@ -3289,12 +3474,8 @@ bool EditorWidgets::BeginPropertyTable(const CHAR* TableId, float LabelColumnWid
     const float TableWidth = HeaderMax.x - HeaderMin.x;
     const ImVec2 OuterSize = ImVec2(TableWidth, 0.0f);
 
-    ImGuiStorage* Storage = ImGui::GetStateStorage();
-
-    const ImVec2 BorderMin = ImGui::GetCursorScreenPos();
-    Storage->SetFloat(ImGui::GetID("##LastPropTableX"), BorderMin.x);
-    Storage->SetFloat(ImGui::GetID("##LastPropTableY"), BorderMin.y);
-    Storage->SetFloat(ImGui::GetID("##LastPropTableW"), TableWidth);
+    GPropertyTableState.BorderMin   = ImGui::GetCursorScreenPos();
+    GPropertyTableState.BorderWidth = TableWidth;
 
     if (!ImGui::BeginTable(TableId, 3, Flags, OuterSize))
     {
@@ -3319,11 +3500,9 @@ void EditorWidgets::EndPropertyTable()
 
     ImGui::EndTable();
 
-    ImGuiStorage* Storage = ImGui::GetStateStorage();
-    
-    const float X0 = Storage->GetFloat(ImGui::GetID("##LastPropTableX"), 0.0f);
-    const float Y0 = Storage->GetFloat(ImGui::GetID("##LastPropTableY"), 0.0f);
-    const float TableWidth = Storage->GetFloat(ImGui::GetID("##LastPropTableW"), 0.0f);
+    const float X0         = GPropertyTableState.BorderMin.x;
+    const float Y0         = GPropertyTableState.BorderMin.y;
+    const float TableWidth = GPropertyTableState.BorderWidth;
 
     if (TableWidth > 0.0f)
     {
@@ -3386,7 +3565,7 @@ void EditorWidgets::PropertySeparatorRow(float PaddingY)
 
 bool EditorWidgets::BeginRichTextView(const CHAR* InId, const ImVec2& InSize, FRichTextViewContext& InOutContext, ImGuiWindowFlags InFlags, bool bWithContextMenu)
 {
-    InOutContext.ClearForNewFrame();
+    InOutContext.bActive = false;
 
     const ImGuiWindowFlags Flags = InFlags | ImGuiWindowFlags_HorizontalScrollbar;
 
@@ -3403,24 +3582,42 @@ bool EditorWidgets::BeginRichTextView(const CHAR* InId, const ImVec2& InSize, FR
     InOutContext.CharWidth    = MeasureRichTextWidth("A");
     InOutContext.ContentStart = ImGui::GetCursorScreenPos();
 
+    if (InOutContext.MeasuredFont != ImGui::GetFont() || InOutContext.MeasuredFontSize != ImGui::GetFontSize())
+    {
+        for (FRichTextLine& Line : InOutContext.Lines)
+        {
+            for (FRichTextSpan& Span : Line.Spans)
+            {
+                Span.Width = MeasureRichTextWidth(InOutContext.GetSpanText(Span));
+            }
+        }
+
+        InOutContext.MeasuredFont     = ImGui::GetFont();
+        InOutContext.MeasuredFontSize = ImGui::GetFontSize();
+    }
+
     if (bWithContextMenu && EditorWidgets::BeginPopupContextWindow("##RichTextViewContext", ImGuiPopupFlags_MouseButtonRight))
     {
         EditorWidgets::MenuLabeledSeparator("Log");
+
         const String Selected = BuildSelectedText(InOutContext);
         if (EditorWidgets::MenuItem("Copy Selection", nullptr, false, InOutContext.bHasSelection && !Selected.IsEmpty()))
         {
             ImGui::SetClipboardText(*Selected);
         }
+
         if (EditorWidgets::MenuItem("Copy All"))
         {
             const String All = BuildAllText(InOutContext);
             ImGui::SetClipboardText(*All);
         }
+
         if (EditorWidgets::MenuItem("Clear Selection", nullptr, false, InOutContext.bHasSelection))
         {
             InOutContext.bHasSelection = false;
             InOutContext.bSelecting = false;
         }
+
         EditorWidgets::EndPopupContext();
     }
 
@@ -3435,10 +3632,12 @@ void EditorWidgets::RichTextSelectAll(FRichTextViewContext& InOutContext)
         InOutContext.bSelecting    = false;
         return;
     }
+
     const int32 LastLineIndex = InOutContext.Lines.Size() - 1;
     const int32 LastCol       = InOutContext.Lines[LastLineIndex].TotalChars;
-    InOutContext.bHasSelection = true;
-    InOutContext.bSelecting    = false;
+
+    InOutContext.bHasSelection   = true;
+    InOutContext.bSelecting      = false;
     InOutContext.SelStart.Line   = 0;
     InOutContext.SelStart.Column = 0;
     InOutContext.SelEnd.Line     = LastLineIndex;
@@ -3469,41 +3668,53 @@ void EditorWidgets::RichTextNewLine(FRichTextViewContext& InOutContext)
 
 void EditorWidgets::RichTextAddText(FRichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor)
 {
-    if (!InOutContext.bActive || InOutContext.Lines.IsEmpty() || !InText)
+    RichTextAddText(InOutContext, InText, InText ? static_cast<int32>(CString::Strlen(InText)) : 0, InTextColor);
+}
+
+void EditorWidgets::RichTextAddText(FRichTextViewContext& InOutContext, const CHAR* InText, int32 InLength, ImU32 InTextColor)
+{
+    if (!InOutContext.bActive || InOutContext.Lines.IsEmpty() || !InText || InLength <= 0)
     {
         return;
     }
 
     FRichTextLine& Line = InOutContext.Lines[InOutContext.Lines.Size() - 1];
 
-    FRichTextSpan Span;
-    Span.Text           = InText;
+    FRichTextSpan& Span = Line.Spans.Emplace();
+    Span.TextOffset     = AppendToTextArena(InOutContext, InText, InLength);
+    Span.TextLength     = InLength;
+    Span.Width          = MeasureRichTextWidth(InOutContext.GetSpanText(Span));
     Span.TextColor      = InTextColor;
     Span.bHasBackground = false;
 
-    Line.TotalChars += static_cast<int32>(CString::Strlen(InText));
-    Line.Spans.Add(Span);
+    Line.TotalChars += InLength;
 
     InOutContext.MaxLineChars = Math::Max(InOutContext.MaxLineChars, Line.TotalChars);
 }
 
 void EditorWidgets::RichTextAddTextBg(FRichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor, ImU32 InBackgroundColor)
 {
-    if (!InOutContext.bActive || InOutContext.Lines.IsEmpty() || !InText)
+    RichTextAddTextBg(InOutContext, InText, InText ? static_cast<int32>(CString::Strlen(InText)) : 0, InTextColor, InBackgroundColor);
+}
+
+void EditorWidgets::RichTextAddTextBg(FRichTextViewContext& InOutContext, const CHAR* InText, int32 InLength, ImU32 InTextColor, ImU32 InBackgroundColor)
+{
+    if (!InOutContext.bActive || InOutContext.Lines.IsEmpty() || !InText || InLength <= 0)
     {
         return;
     }
 
     FRichTextLine& Line = InOutContext.Lines[InOutContext.Lines.Size() - 1];
 
-    FRichTextSpan Span;
-    Span.Text            = InText;
+    FRichTextSpan& Span = Line.Spans.Emplace();
+    Span.TextOffset      = AppendToTextArena(InOutContext, InText, InLength);
+    Span.TextLength      = InLength;
+    Span.Width           = MeasureRichTextWidth(InOutContext.GetSpanText(Span));
     Span.TextColor       = InTextColor;
     Span.bHasBackground  = true;
     Span.BackgroundColor = InBackgroundColor;
 
-    Line.TotalChars += static_cast<int32>(CString::Strlen(InText));
-    Line.Spans.Add(Span);
+    Line.TotalChars += InLength;
 
     InOutContext.MaxLineChars = Math::Max(InOutContext.MaxLineChars, Line.TotalChars);
 }
@@ -3523,8 +3734,7 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
 
     const float FullLineHeight = InOutContext.LineHeight;
     const float TotalHeight    = InOutContext.Padding.y + static_cast<float>(InOutContext.Lines.Size()) * FullLineHeight + InOutContext.Padding.y;
-
-    const float TotalWidth = InOutContext.Padding.x + static_cast<float>(InOutContext.MaxLineChars) * InOutContext.CharWidth + InOutContext.Padding.x;
+    const float TotalWidth     = InOutContext.Padding.x + static_cast<float>(InOutContext.MaxLineChars) * InOutContext.CharWidth + InOutContext.Padding.x;
 
     {
         const ImVec2 SavedCursorPos = ImGui::GetCursorPos();
@@ -3648,12 +3858,12 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
         {
             const float TopY              = CurrentWindow->InnerRect.Min.y;
             const float BottomY           = CurrentWindow->InnerRect.Max.y;
-            const float EdgeInside      = 10.0f;
-            const float RampDistance    = 100.0f;
+            const float EdgeInside        = 10.0f;
+            const float RampDistance      = 100.0f;
             const float BaseSpeedPxPerSec = 20.0f;
             const float MaxSpeedPxPerSec  = 2000.0f;
 
-            float ScrollDir         = 0.0f;
+            float ScrollDir       = 0.0f;
             float DistPastTrigger = 0.0f;
 
             if (State.MousePos.y <= TopY + EdgeInside)
@@ -3759,9 +3969,8 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
     const ImU32 SelectionBg = ImGui::GetColorU32(ImGuiCol_TextSelectedBg);
 
     const ImRect& InnerClip = CurrentWindow->InnerClipRect;
-
-    const ImVec2 ClipMin = ImVec2(InnerClip.Min.x + InOutContext.Padding.x, InnerClip.Min.y + InOutContext.Padding.y);
-    const ImVec2 ClipMax = ImVec2(
+    const ImVec2  ClipMin   = ImVec2(InnerClip.Min.x + InOutContext.Padding.x, InnerClip.Min.y + InOutContext.Padding.y);
+    const ImVec2  ClipMax   = ImVec2(
         Math::Max(ClipMin.x, InnerClip.Max.x - InOutContext.Padding.x),
         Math::Max(ClipMin.y, InnerClip.Max.y - InOutContext.Padding.y));
 
@@ -3803,19 +4012,20 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
             {
                 const FRichTextSpan& Span = Line.Spans[s];
 
-                const CHAR* Text = *Span.Text;
+                const CHAR* Text = InOutContext.GetSpanText(Span);
                 if (!Text || Text[0] == 0)
                 {
                     continue;
                 }
 
-                const float SpanWidth = MeasureRichTextWidth(Text);
+                const float SpanWidth = Span.Width;
                 if (Span.bHasBackground)
                 {
                     const float HighlightPadY    = 2.0f;
                     const float HighlightMarginY = 2.0f;
                     const float HighlightTopY    = LineMin.y + HighlightPadY - HighlightMarginY;
                     const float HighlightBotY    = LineMax.y - HighlightPadY + HighlightMarginY;
+
                     DrawList->AddRectFilled(ImVec2(CursorX, HighlightTopY), ImVec2(CursorX + SpanWidth, HighlightBotY), Span.BackgroundColor, 0.0f);
                 }
 
@@ -3872,181 +4082,160 @@ void EditorWidgets::DrawCheckMark(ImDrawList* DrawList, ImVec2 Position, ImU32 C
     DrawList->AddLine(PointB, PointC, Color, Thickness);
 }
 
-struct EditorIcon
+void EditorWidgets::DrawIcon(ImDrawList* DrawList, const FEditorIcon& Icon, const ImVec2& Min, const ImVec2& Max, ImU32 Tint)
 {
-    void Reset()
+    if (DrawList && Icon.IsValid())
     {
-        Texture      = nullptr;
-        ImGuiTexture = nullptr;
+        DrawList->AddImage(Icon.Texture, Min, Max, Icon.UVMin, Icon.UVMax, Tint);
     }
-
-    FTextureRef               Texture      = nullptr;
-    TUniquePtr<FImGuiTexture> ImGuiTexture = nullptr;
-};
-
-struct EditorIconsInternal
-{
-    inline static EditorIcon UndoIcon             = EditorIcon();
-    inline static EditorIcon SearchIcon           = EditorIcon();
-    inline static EditorIcon LockedIcon           = EditorIcon();
-    inline static EditorIcon UnlockedIcon         = EditorIcon();
-    inline static EditorIcon FolderIcon           = EditorIcon();
-    inline static EditorIcon FolderSmallIcon      = EditorIcon();
-    inline static EditorIcon FolderSmall2Icon     = EditorIcon();
-    inline static EditorIcon FolderOpenSmallIcon  = EditorIcon();
-    inline static EditorIcon DocumentIcon         = EditorIcon();
-    inline static EditorIcon DocumentSmallIcon    = EditorIcon();
-    inline static EditorIcon CheckmarkIcon        = EditorIcon();
-    inline static EditorIcon ForbiddenIcon        = EditorIcon();
-    inline static EditorIcon CircledCheckmarkIcon = EditorIcon();
-    inline static EditorIcon NextIcon             = EditorIcon();
-    inline static EditorIcon PreviousIcon         = EditorIcon();
-    inline static EditorIcon CloseIcon            = EditorIcon();
-    inline static EditorIcon FilterIcon           = EditorIcon();
-    inline static EditorIcon RightArrowIcon       = EditorIcon();
-    inline static EditorIcon DownArrowIcon        = EditorIcon();
-    inline static EditorIcon CollapseArrowDown    = EditorIcon();
-    inline static EditorIcon CollapseArrowRight   = EditorIcon();
-};
-
-ImTextureID EditorIcons::UndoIcon             = nullptr;
-ImTextureID EditorIcons::SearchIcon           = nullptr;
-ImTextureID EditorIcons::LockedIcon           = nullptr;
-ImTextureID EditorIcons::UnlockedIcon         = nullptr;
-ImTextureID EditorIcons::FolderIcon           = nullptr;
-ImTextureID EditorIcons::FolderSmallIcon      = nullptr;
-ImTextureID EditorIcons::FolderSmall2Icon     = nullptr;
-ImTextureID EditorIcons::FolderOpenSmallIcon  = nullptr;
-ImTextureID EditorIcons::DocumentIcon         = nullptr;
-ImTextureID EditorIcons::DocumentSmallIcon    = nullptr;
-ImTextureID EditorIcons::CheckmarkIcon        = nullptr;
-ImTextureID EditorIcons::ForbiddenIcon        = nullptr;
-ImTextureID EditorIcons::CircledCheckmarkIcon = nullptr;
-ImTextureID EditorIcons::NextIcon             = nullptr;
-ImTextureID EditorIcons::PreviousIcon         = nullptr;
-ImTextureID EditorIcons::CloseIcon            = nullptr;
-ImTextureID EditorIcons::FilterIcon           = nullptr;
-ImTextureID EditorIcons::RightArrowIcon       = nullptr;
-ImTextureID EditorIcons::DownArrowIcon        = nullptr;
-ImTextureID EditorIcons::CollapseArrowDown    = nullptr;
-ImTextureID EditorIcons::CollapseArrowRight   = nullptr;
-
-static bool LoadEditorIcon(const CHAR* InRelativePath, ImTextureID& OutIconID, EditorIcon& OutIcon, bool bEnableBlending = true, bool bEnableLinearSampler = true)
-{
-    OutIcon.Reset();
-    OutIconID = nullptr;
-
-    String FullPath = Paths::GetAssetDir();
-    if (!FullPath.EndsWith("/"))
-    {
-        FullPath += "/";
-    }
-
-    FullPath += InRelativePath;
-
-    FTextureRef Texture = FAssetManager::Get().LoadTexture(FullPath, false);
-    if (!Texture)
-    {
-        LOG_ERROR("[EditorIcons]: Failed to load icon texture '%s'", *FullPath);
-        return false;
-    }
-
-    OutIcon.Texture = Texture;
-
-    FTexture2D* Texture2D = Texture->GetTexture2D();
-    if (!Texture2D)
-    {
-        LOG_ERROR("[EditorIcons]: Icon '%s' is not a 2D texture.", *FullPath);
-        return false;
-    }
-
-    FRHITextureRef TextureRHI = Texture2D->GetRHITexture();
-    if (!TextureRHI)
-    {
-        LOG_ERROR("[EditorIcons]: Icon '%s' has no RHI texture.", *FullPath);
-        return false;
-    }
-
-    OutIcon.ImGuiTexture = MakeUniquePtr<FImGuiTexture>(TextureRHI);
-    if (!OutIcon.ImGuiTexture)
-    {
-        LOG_ERROR("[EditorIcons]: Failed to create ImGui texture wrapper for '%s'.", *FullPath);
-        return false;
-    }
-    else
-    {
-        OutIcon.ImGuiTexture->bEnableBlending      = bEnableBlending;
-        OutIcon.ImGuiTexture->bEnableLinearSampler = bEnableLinearSampler;
-
-        OutIconID = reinterpret_cast<ImTextureID>(OutIcon.ImGuiTexture.Get());
-    }
-
-    return true;
 }
 
-static void UnloadEditorIcon(ImTextureID& OutIconID, EditorIcon& OutIcon)
-{
-    if (OutIcon.Texture)
-    {
-        FAssetManager::Get().UnloadTexture(OutIcon.Texture);
-    }
-
-    OutIcon.Reset();
-    OutIconID = nullptr;
-}
+FEditorIcon EditorIcons::UndoIcon             = FEditorIcon();
+FEditorIcon EditorIcons::SearchIcon           = FEditorIcon();
+FEditorIcon EditorIcons::LockedIcon           = FEditorIcon();
+FEditorIcon EditorIcons::UnlockedIcon         = FEditorIcon();
+FEditorIcon EditorIcons::FolderIcon           = FEditorIcon();
+FEditorIcon EditorIcons::FolderSmallIcon      = FEditorIcon();
+FEditorIcon EditorIcons::FolderSmall2Icon     = FEditorIcon();
+FEditorIcon EditorIcons::FolderOpenSmallIcon  = FEditorIcon();
+FEditorIcon EditorIcons::DocumentIcon         = FEditorIcon();
+FEditorIcon EditorIcons::DocumentSmallIcon    = FEditorIcon();
+FEditorIcon EditorIcons::CheckmarkIcon        = FEditorIcon();
+FEditorIcon EditorIcons::ForbiddenIcon        = FEditorIcon();
+FEditorIcon EditorIcons::CircledCheckmarkIcon = FEditorIcon();
+FEditorIcon EditorIcons::NextIcon             = FEditorIcon();
+FEditorIcon EditorIcons::PreviousIcon         = FEditorIcon();
+FEditorIcon EditorIcons::CloseIcon            = FEditorIcon();
+FEditorIcon EditorIcons::FilterIcon           = FEditorIcon();
+FEditorIcon EditorIcons::RightArrowIcon       = FEditorIcon();
+FEditorIcon EditorIcons::DownArrowIcon        = FEditorIcon();
+FEditorIcon EditorIcons::CollapseArrowDown    = FEditorIcon();
+FEditorIcon EditorIcons::CollapseArrowRight   = FEditorIcon();
 
 bool EditorIcons::Initialize()
 {
+    Release();
+
+    constexpr int32 IconCount = static_cast<int32>(ARRAY_COUNT(GIconRequests));
+
+    TArray<FEditorIconImage> Images;
+    Images.Resize(IconCount);
+
     bool bResult = true;
 
-    bResult &= LoadEditorIcon("Editor/Icons/Undo.png", UndoIcon, EditorIconsInternal::UndoIcon);
-    bResult &= LoadEditorIcon("Editor/Icons/Search.png", SearchIcon, EditorIconsInternal::SearchIcon);
-    bResult &= LoadEditorIcon("Editor/Icons/Locked.png", LockedIcon, EditorIconsInternal::LockedIcon);
-    bResult &= LoadEditorIcon("Editor/Icons/Unlocked.png", UnlockedIcon, EditorIconsInternal::UnlockedIcon);
-    bResult &= LoadEditorIcon("Editor/Icons/Folder.png", FolderIcon, EditorIconsInternal::FolderIcon);
-    bResult &= LoadEditorIcon("Editor/Icons/FolderSmall.png", FolderSmallIcon, EditorIconsInternal::FolderSmallIcon);
-    bResult &= LoadEditorIcon("Editor/Icons/FolderSmall2.png", FolderSmall2Icon, EditorIconsInternal::FolderSmall2Icon);
-    bResult &= LoadEditorIcon("Editor/Icons/FolderOpenSmall.png", FolderOpenSmallIcon, EditorIconsInternal::FolderOpenSmallIcon);
-    bResult &= LoadEditorIcon("Editor/Icons/Document.png", DocumentIcon, EditorIconsInternal::DocumentIcon);
-    bResult &= LoadEditorIcon("Editor/Icons/DocumentSmall.png", DocumentSmallIcon, EditorIconsInternal::DocumentSmallIcon);
-    bResult &= LoadEditorIcon("Editor/Icons/Checkmark.png", CheckmarkIcon, EditorIconsInternal::CheckmarkIcon);
-    bResult &= LoadEditorIcon("Editor/Icons/Forbidden.png", ForbiddenIcon, EditorIconsInternal::ForbiddenIcon);
-    bResult &= LoadEditorIcon("Editor/Icons/CircledCheckmark.png", CircledCheckmarkIcon, EditorIconsInternal::CircledCheckmarkIcon);
-    bResult &= LoadEditorIcon("Editor/Icons/Next.png", NextIcon, EditorIconsInternal::NextIcon);
-    bResult &= LoadEditorIcon("Editor/Icons/Previous.png", PreviousIcon, EditorIconsInternal::PreviousIcon);
-    bResult &= LoadEditorIcon("Editor/Icons/Close.png", CloseIcon, EditorIconsInternal::CloseIcon);
-    bResult &= LoadEditorIcon("Editor/Icons/Filter.png", FilterIcon, EditorIconsInternal::FilterIcon);
-    bResult &= LoadEditorIcon("Editor/Icons/RightArrow.png", RightArrowIcon, EditorIconsInternal::RightArrowIcon);
-    bResult &= LoadEditorIcon("Editor/Icons/DownArrow.png", DownArrowIcon, EditorIconsInternal::DownArrowIcon);
-    bResult &= LoadEditorIcon("Editor/Icons/CollapseArrowDown.png", CollapseArrowDown, EditorIconsInternal::CollapseArrowDown);
-    bResult &= LoadEditorIcon("Editor/Icons/CollapseArrowRight.png", CollapseArrowRight, EditorIconsInternal::CollapseArrowRight);
+    int32 ShelfX      = 0;
+    int32 ShelfY      = 0;
+    int32 ShelfHeight = 0;
+    int32 AtlasHeight = 0;
+
+    for (int32 Index = 0; Index < IconCount; ++Index)
+    {
+        FEditorIconImage& Image = Images[Index];
+        if (!LoadEditorIconImage(GIconRequests[Index].RelativePath, Image))
+        {
+            bResult = false;
+            continue;
+        }
+
+        if (Image.Width > IconAtlasWidth)
+        {
+            LOG_ERROR("[EditorIcons]: Icon '%s' is %d wide, the atlas is only %d", GIconRequests[Index].RelativePath, Image.Width, IconAtlasWidth);
+
+            Image.bValid = false;
+            bResult      = false;
+            continue;
+        }
+
+        if (ShelfX + Image.Width > IconAtlasWidth)
+        {
+            ShelfY     += ShelfHeight;
+            ShelfX      = 0;
+            ShelfHeight = 0;
+        }
+
+        Image.X = ShelfX;
+        Image.Y = ShelfY;
+
+        ShelfX      += Image.Width + IconAtlasPadding;
+        ShelfHeight  = Math::Max(ShelfHeight, Image.Height + IconAtlasPadding);
+        AtlasHeight  = Math::Max(AtlasHeight, ShelfY + Image.Height);
+    }
+
+    if (AtlasHeight <= 0)
+    {
+        LOG_ERROR("[EditorIcons]: No icon could be loaded, leaving the atlas empty");
+        return false;
+    }
+
+    TArray<uint8> AtlasPixels;
+    AtlasPixels.ResizeUninitialized(IconAtlasWidth * AtlasHeight * 4);
+    Memory::Memzero(AtlasPixels.Data(), static_cast<uint64>(AtlasPixels.Size()));
+
+    for (const FEditorIconImage& Image : Images)
+    {
+        if (!Image.bValid)
+        {
+            continue;
+        }
+
+        const int64 RowBytes = static_cast<int64>(Image.Width) * 4;
+        for (int32 Y = 0; Y < Image.Height; ++Y)
+        {
+            uint8* Destination = AtlasPixels.Data() + ((static_cast<int64>(Image.Y + Y) * IconAtlasWidth) + Image.X) * 4;
+            Memory::Memcpy(Destination, Image.Pixels.Data() + static_cast<int64>(Y) * RowBytes, RowBytes);
+        }
+    }
+
+    GIconAtlas.Texture = FTextureFactory::Get().LoadFromMemory(AtlasPixels.Data(), IconAtlasWidth, AtlasHeight, ETextureFactoryFlags::None, EFormat::R8G8B8A8_Unorm);
+    if (!GIconAtlas.Texture)
+    {
+        LOG_ERROR("[EditorIcons]: Failed to create the icon atlas texture");
+        return false;
+    }
+
+    GIconAtlas.Texture->SetDebugName("Editor IconAtlas");
+
+    GIconAtlas.ImGuiTexture = MakeUniquePtr<FImGuiTexture>(GIconAtlas.Texture);
+    if (!GIconAtlas.ImGuiTexture)
+    {
+        LOG_ERROR("[EditorIcons]: Failed to create the ImGui texture wrapper for the icon atlas");
+        return false;
+    }
+
+    GIconAtlas.ImGuiTexture->bEnableBlending      = true;
+    GIconAtlas.ImGuiTexture->bEnableLinearSampler = true;
+
+    const ImTextureID AtlasID      = reinterpret_cast<ImTextureID>(GIconAtlas.ImGuiTexture.Get());
+    const float       AtlasWidthF  = static_cast<float>(IconAtlasWidth);
+    const float       AtlasHeightF = static_cast<float>(AtlasHeight);
+
+    for (int32 Index = 0; Index < IconCount; ++Index)
+    {
+        const FEditorIconImage& Image = Images[Index];
+        if (!Image.bValid)
+        {
+            continue;
+        }
+
+        FEditorIcon& Icon = *GIconRequests[Index].Icon;
+
+        Icon.Texture = AtlasID;
+        Icon.UVMin   = ImVec2(static_cast<float>(Image.X) / AtlasWidthF, static_cast<float>(Image.Y) / AtlasHeightF);
+        Icon.UVMax   = ImVec2(static_cast<float>(Image.X + Image.Width) / AtlasWidthF, static_cast<float>(Image.Y + Image.Height) / AtlasHeightF);
+    }
 
     return bResult;
 }
 
 void EditorIcons::Release()
 {
-    UnloadEditorIcon(UndoIcon, EditorIconsInternal::UndoIcon);
-    UnloadEditorIcon(SearchIcon, EditorIconsInternal::SearchIcon);
-    UnloadEditorIcon(LockedIcon, EditorIconsInternal::LockedIcon);
-    UnloadEditorIcon(UnlockedIcon, EditorIconsInternal::UnlockedIcon);
-    UnloadEditorIcon(FolderIcon, EditorIconsInternal::FolderIcon);
-    UnloadEditorIcon(FolderSmallIcon, EditorIconsInternal::FolderSmallIcon);
-    UnloadEditorIcon(FolderSmall2Icon, EditorIconsInternal::FolderSmall2Icon);
-    UnloadEditorIcon(FolderOpenSmallIcon, EditorIconsInternal::FolderOpenSmallIcon);
-    UnloadEditorIcon(DocumentIcon, EditorIconsInternal::DocumentIcon);
-    UnloadEditorIcon(DocumentSmallIcon, EditorIconsInternal::DocumentSmallIcon);
-    UnloadEditorIcon(CheckmarkIcon, EditorIconsInternal::CheckmarkIcon);
-    UnloadEditorIcon(ForbiddenIcon, EditorIconsInternal::ForbiddenIcon);
-    UnloadEditorIcon(CircledCheckmarkIcon, EditorIconsInternal::CircledCheckmarkIcon);
-    UnloadEditorIcon(NextIcon, EditorIconsInternal::NextIcon);
-    UnloadEditorIcon(PreviousIcon, EditorIconsInternal::PreviousIcon);
-    UnloadEditorIcon(CloseIcon, EditorIconsInternal::CloseIcon);
-    UnloadEditorIcon(FilterIcon, EditorIconsInternal::FilterIcon);
-    UnloadEditorIcon(RightArrowIcon, EditorIconsInternal::RightArrowIcon);
-    UnloadEditorIcon(DownArrowIcon, EditorIconsInternal::DownArrowIcon);
-    UnloadEditorIcon(CollapseArrowDown, EditorIconsInternal::CollapseArrowDown);
-    UnloadEditorIcon(CollapseArrowRight, EditorIconsInternal::CollapseArrowRight);
+    for (const FEditorIconRequest& Request : GIconRequests)
+    {
+        *Request.Icon = FEditorIcon();
+    }
+
+    GIconAtlas.ImGuiTexture.Reset();
+    GIconAtlas.Texture.Reset();
 }
 
 ImFont* EditorFonts::DefaultFont = nullptr;
@@ -4054,71 +4243,6 @@ ImFont* EditorFonts::SystemIcons = nullptr;
 ImFont* EditorFonts::SegoeUI_18  = nullptr;
 ImFont* EditorFonts::SegoeUI_22  = nullptr;
 ImFont* EditorFonts::Consola_16  = nullptr;
-
-static ImFont* LoadEditorFont(const CHAR* InRelativePath, float SizePixels, const ImFontConfig* FontCfgTemplate = nullptr, const ImWchar* GlyphRanges = nullptr)
-{
-    String FullPath = Paths::GetAssetDir();
-    if (!FullPath.EndsWith("/"))
-    {
-        FullPath += "/";
-    }
-
-    FullPath += InRelativePath;
-
-    ImGuiIO& State = ImGui::GetIO();
-    return State.Fonts->AddFontFromFileTTF(*FullPath, SizePixels, FontCfgTemplate, GlyphRanges);
-}
-
-#if PLATFORM_WINDOWS
-
-// The size WinUI's own caption button style renders the glyphs at.
-static constexpr float SystemIconSizePixels = 10.0f;
-
-// Loads the four caption code points out of the system icon font as a font of their own, so the 
-// window buttons are drawn with the very glyphs the OS would have used rather than an imitation 
-// of them. E921 ChromeMinimize, E922 ChromeMaximize, E923 ChromeRestore and E8BB ChromeClose.
-
-static ImFont* LoadSystemIconFont()
-{
-    // Segoe Fluent Icons ships with Windows 11, and Segoe MDL2 assets carries the same code points on Windows 10.
-    const CHAR* IconFontPaths[] =
-    {
-        "C:\\Windows\\Fonts\\SegoeIcons.ttf",
-        "C:\\Windows\\Fonts\\segmdl2.ttf",
-    };
-
-    // Kept alive past the call because the atlas only reads the ranges when it is built.
-    static const ImWchar CaptionGlyphRanges[] = 
-    { 
-        0xE8BB, 
-        0xE8BB, 
-        0xE921, 
-        0xE923, 
-        0
-    };
-
-    ImFontConfig FontConfig;
-    FontConfig.PixelSnapH = true;
-
-    ImGuiIO& State = ImGui::GetIO();
-    for (const CHAR* IconFontPath : IconFontPaths)
-    {
-        if (!FPlatformFile::IsFile(IconFontPath))
-        {
-            continue;
-        }
-
-        if (ImFont* IconFont = State.Fonts->AddFontFromFileTTF(IconFontPath, SystemIconSizePixels, &FontConfig, CaptionGlyphRanges))
-        {
-            return IconFont;
-        }
-    }
-
-    LOG_WARNING("[EditorFonts]: No system icon font found, so the title bar buttons fall back to drawn shapes");
-    return nullptr;
-}
-
-#endif
 
 bool EditorFonts::Initialize()
 {

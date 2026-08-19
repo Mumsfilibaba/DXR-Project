@@ -1,3 +1,4 @@
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Engine/EditorEngine.h"
 #include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
@@ -34,6 +35,12 @@ static const CHAR* GetActorTypeLabel(FActor* Actor)
     return Actor ? Actor->GetTypeLabel() : "Actor";
 }
 
+static float GetHierarchyRowHeight()
+{
+    constexpr float DefaultRowHeight = 30.0f;
+    return Math::Max(DefaultRowHeight, ImGui::GetFontSize());
+}
+
 static bool DoesActorMatchQuery(FActor* Actor, const CHAR* Query)
 {
     const String& Name = Actor->GetName();
@@ -43,24 +50,6 @@ static bool DoesActorMatchQuery(FActor* Actor, const CHAR* Query)
     }
 
     return CString::Stristr(GetActorTypeLabel(Actor), Query) != nullptr;
-}
-
-static bool DoesActorOrDescendantMatchQuery(FActor* Actor, const CHAR* Query)
-{
-    if (DoesActorMatchQuery(Actor, Query))
-    {
-        return true;
-    }
-
-    for (FActor* Child : Actor->GetChildActors())
-    {
-        if (Child && DoesActorOrDescendantMatchQuery(Child, Query))
-        {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 static bool CanAttachActorTo(FActor* DraggedActor, FActor* TargetActor)
@@ -130,10 +119,16 @@ FEditorSceneHierarchyWidget::FEditorSceneHierarchyWidget(FEditorEngine* InEditor
     , PendingReparentParent(nullptr)
     , PendingAttachChildren()
     , PendingAssignActors()
-    , CollapsedActors()
     , VisibleActorOrder()
-    , CollapsedFilters()
+    , RootLevelActors()
+    , VisibleRows()
     , FilterContents()
+    , CollapsedActors()
+    , CollapsedFilters()
+    , LiveActors()
+    , MatchingActors()
+    , FilterIndices()
+    , CachedQuery()
     , bVisible(true)
     , bRequestRenameFocus(false)
     , bSelectionActiveInTable(false)
@@ -154,6 +149,7 @@ FEditorSceneHierarchyWidget::FEditorSceneHierarchyWidget(FEditorEngine* InEditor
     ActorSearchFilterBuffer.Fill(0);
     RenameBuffer.Fill(0);
     RenameBufferOriginal.Fill(0);
+    CachedQuery.Fill(0);
 }
 
 FEditorSceneHierarchyWidget::~FEditorSceneHierarchyWidget()
@@ -170,6 +166,8 @@ void FEditorSceneHierarchyWidget::Draw()
     {
         return;
     }
+
+    TRACE_SCOPE("Scene Hierarchy");
 
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, EditorStyleVars::SceneHierarchyItemSpacing);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, EditorStyleVars::SceneHierarchyWindowPadding);
@@ -214,36 +212,46 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
     bDragHoveringSourceRow = false;
 
-    // Rebuilt as the rows are drawn, so that a range-select can be resolved against the exact visual order
-    VisibleActorOrder.Clear();
-
     const TArray<FActor*>& Actors = World->GetActors();
 
-    // Drop the collapsed state of actors that have been removed from the world, their addresses could otherwise be
-    // reused by a later actor that would then show up collapsed
-    if (!CollapsedActors.IsEmpty())
+    LiveActors.Clear();
+    LiveActors.Reserve(Actors.Size());
+
+    for (FActor* Actor : Actors)
     {
-        CollapsedActors.RemoveAllSwap([&Actors](FActor* CollapsedActor)
-        {
-            return !Actors.Contains(CollapsedActor);
-        });
+        LiveActors.Add(Actor);
     }
 
-    // Same reasoning, an actor destroyed since the last frame must not be left dangling in the widget's own state
-    if (RenamingActor && !Actors.Contains(RenamingActor))
+    if (!CollapsedActors.IsEmpty())
+    {
+        TArray<FActor*> StaleActors;
+
+        for (FActor* CollapsedActor : CollapsedActors)
+        {
+            if (!LiveActors.Contains(CollapsedActor))
+            {
+                StaleActors.Emplace(CollapsedActor);
+            }
+        }
+
+        for (FActor* StaleActor : StaleActors)
+        {
+            CollapsedActors.Remove(StaleActor);
+        }
+    }
+
+    if (RenamingActor && !LiveActors.Contains(RenamingActor))
     {
         RenamingActor       = nullptr;
         bRequestRenameFocus = false;
     }
 
-    if (SelectionAnchor && !Actors.Contains(SelectionAnchor))
+    if (SelectionAnchor && !LiveActors.Contains(SelectionAnchor))
     {
         SelectionAnchor = nullptr;
     }
 
     const TArrayView<FActorFilter* const> Filters = World->GetActorFilters();
-
-    // A filter destroyed since the last frame must not be left dangling in the selection or rename state
     if (SelectedFilter && !Filters.Contains(SelectedFilter))
     {
         SelectedFilter = nullptr;
@@ -255,34 +263,27 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
         bRequestRenameFocus = false;
     }
 
-    // Same reasoning as the CollapsedActors scrub above, a destroyed filter's address could be reused
     if (!CollapsedFilters.IsEmpty())
     {
-        CollapsedFilters.RemoveAllSwap([&Filters](FActorFilter* CollapsedFilter)
+        TArray<FActorFilter*> StaleFilters;
+
+        for (FActorFilter* CollapsedFilter : CollapsedFilters)
         {
-            return !Filters.Contains(CollapsedFilter);
-        });
-    }
-
-    RebuildFilterContents();
-
-    TArray<FActor*> RootLevelActors;
-
-    // Only root-actors are placed in a filter, every other actor is nested underneath its parent
-    for (FActor* Actor : Actors)
-    {
-        if (!Actor || Actor->GetParentActor() || !PassesSearchFilter(Actor))
-        {
-            continue;
+            if (!Filters.Contains(CollapsedFilter))
+            {
+                StaleFilters.Emplace(CollapsedFilter);
+            }
         }
 
-        if (Actor->GetFilter() && Filters.Contains(Actor->GetFilter()))
+        for (FActorFilter* StaleFilter : StaleFilters)
         {
-            continue;
+            CollapsedFilters.Remove(StaleFilter);
         }
-
-        RootLevelActors.Emplace(Actor);
     }
+
+    RebuildSearchMatches(Actors);
+    RebuildFilterBuckets();
+    RebuildVisibleRows();
 
     // -----------------------------------------------------------------------------------------
     // Search Field
@@ -431,19 +432,37 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
     // Build tree
     // -----------------------------------------------------------------------------------------
 
-    // Only root filters are walked here, DrawFilterSubtree recurses into the rest
-    for (FActorFilter* Filter : Filters)
+    ImGuiListClipper Clipper;
+    Clipper.Begin(VisibleRows.Size(), GetHierarchyRowHeight());
+
+    if (RenamingActor || RenamingFilter)
     {
-        if (Filter && !Filter->GetParentFilter())
+        for (int32 Index = 0; Index < VisibleRows.Size(); ++Index)
         {
-            DrawFilterSubtree(Filter, 0.0f);
+            const FHierarchyRow& Row = VisibleRows[Index];
+            if ((RenamingActor && Row.Actor == RenamingActor) || (RenamingFilter && Row.Filter == RenamingFilter))
+            {
+                Clipper.IncludeItemByIndex(Index);
+                break;
+            }
         }
     }
 
-    // Actors that were never placed in a filter sit at the root, a project that creates no filters gets a flat list
-    for (FActor* Actor : RootLevelActors)
+    while (Clipper.Step())
     {
-        DrawActorRow(Actor, 0.0f);
+        for (int32 Index = Clipper.DisplayStart; Index < Clipper.DisplayEnd; ++Index)
+        {
+            const FHierarchyRow& Row = VisibleRows[Index];
+
+            if (Row.Filter)
+            {
+                DrawFilterRow(Row.Filter, Row.Indent);
+            }
+            else
+            {
+                DrawActorRow(Row.Actor, Row.Indent);
+            }
+        }
     }
 
     ImGui::PopStyleVar(2); // CellPadding + ItemSpacing
@@ -453,10 +472,8 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
     ImGui::PopStyleColor(4);
 
-    // VisibleActorOrder is complete now that every row has been drawn, so a shift-click can be turned into a span
     ApplyPendingRangeSelection();
 
-    // Dropping an actor on the empty area below the rows returns it to the root, for both parenting and filtering
     if (ImGui::BeginDragDropTargetCustom(ImRect(TableRectMin, TableRectMax), ImGui::GetID("##SceneOutlinerDetachTarget")))
     {
         const ImGuiDragDropFlags DragDropFlags =
@@ -506,7 +523,6 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
         bool bRequestClosePopup = false;
 
-        // Spawned at the origin, since a hierarchy row has no cursor ray to place against.
         {
             FSubMenuState AddActorSubMenu;
             if (EditorWidgets::BeginSubMenu(AddActorSubMenu, "##SceneHierarchyAddActorMenu", "Add Actor"))
@@ -530,7 +546,6 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
         EditorWidgets::MenuLabeledSeparator("Common");
 
         {
-            // Deleting a whole multi-selection is destructive, so the count goes in the label rather than staying implicit
             TStaticArray<CHAR, 64> DeleteLabel;
             if (SelectedActorCount > 1)
             {
@@ -554,7 +569,6 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
             }
         }
 
-        // Renaming targets exactly one row, so a multi-selection has to be narrowed down first
         if (EditorWidgets::MenuItem("Rename", "F2", false, bSingleActor || (!bHasActorSelected && bHasFilterSelected)))
         {
             if (PrimaryActorForMenu)
@@ -583,7 +597,6 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
         {
             FActorFilter* MovedFilter = bHasActorSelected ? nullptr : SelectedFilter;
 
-            // With several actors selected the tick only shows when they all already share the destination
             const bool bAllAtRoot = bHasActorSelected
                 ? !SelectedActorsForMenu.ContainsWithPredicate([](FActor* Actor) { return Actor && Actor->GetFilter() != nullptr; })
                 : (SelectedFilter->GetParentFilter() == nullptr);
@@ -621,7 +634,6 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
             EditorWidgets::EndSubMenu(MoveToFilterSubMenu);
         }
 
-        // Enabled as soon as any one of the selected actors is nested, and detaches every one that is
         const bool bHasParent = SelectedActorsForMenu.ContainsWithPredicate([](FActor* Actor)
         {
             return Actor && Actor->GetParentActor() != nullptr;
@@ -681,9 +693,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
             {
                 const ImGuiIO& IO = ImGui::GetIO();
 
-                // Missing a row while building a multi-selection must not throw the whole selection away
                 const bool bModifyingSelection = IO.KeyCtrl || IO.KeyShift;
-
                 if (!ImGui::IsAnyItemHovered() && !bModifyingSelection)
                 {
                     EditorEngine->ClearSelection();
@@ -700,7 +710,6 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
         }
     }
 
-    // The shortcuts the context menu advertises, actor rows handle their own F2 inline
     if (bSelectionActiveInTable && !RenamingFilter && !RenamingActor)
     {
         const ImGuiIO& IO = ImGui::GetIO();
@@ -714,7 +723,6 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
             }
             else if (ImGui::IsKeyPressed(ImGuiKey_Delete))
             {
-                // An actor and a filter are never selected at the same time, so at most one of these applies
                 const TArray<FActor*>& SelectedForDelete = EditorEngine->GetSelectedActors();
                 if (!SelectedForDelete.IsEmpty())
                 {
@@ -739,15 +747,8 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
         return;
     }
 
-    constexpr float DefaultRowHeight = 30.0f;
-
-    // Recorded in draw order so that a shift-click can resolve its span against the exact rows the user sees
-    VisibleActorOrder.Add(Actor);
-
-    const CHAR* Type      = GetActorTypeLabel(Actor);
-    const bool  bSelected = EditorEngine->IsActorSelected(Actor);
-
-    // Renaming is a single-actor operation, so it only stays available while this row is the entire selection
+    const CHAR* Type           = GetActorTypeLabel(Actor);
+    const bool  bSelected      = EditorEngine->IsActorSelected(Actor);
     const bool  bSoleSelection = bSelected && EditorEngine->GetSelectedActors().Size() == 1;
 
     const auto BeginActorRename = [this](FActor* InActor)
@@ -819,7 +820,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
     // Column 0: Empty
     // -------------------------------------------------------------------------------------------
 
-    const float RowHeight = Math::Max(DefaultRowHeight, ImGui::GetFontSize());
+    const float RowHeight = GetHierarchyRowHeight();
     ImGui::TableNextRow(ImGuiTableRowFlags_None, RowHeight);
     ImGui::TableSetColumnIndex(0);
 
@@ -878,7 +879,6 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
 
             if (bCanAttach && Payload->IsDelivery())
             {
-                // Dragging one row of a multi-selection brings the rest along, minus any that cannot take this parent
                 TArray<FActor*> AttachActors = GetActorsForOperation(DraggedActor);
                 AttachActors.RemoveAllSwap([Actor](FActor* Candidate)
                 {
@@ -893,8 +893,6 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
     }
     else if (ImGui::IsDragDropActive() && GetDraggedActor(ImGui::GetDragDropPayload()) == Actor)
     {
-        // The row of the dragged actor never becomes a drop-target, remember it so that releasing the drag on top
-        // of it is treated as a cancelled drag instead of a detach
         bDragHoveringSourceRow |= ImGui::IsMouseHoveringRect(RowMin, RowMax);
     }
 
@@ -906,7 +904,6 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
         const String& DraggedName = Actor->GetName();
         ImGui::TextUnformatted(DraggedName.IsEmpty() ? "Actor" : *DraggedName);
 
-        // Dragging one row of a multi-selection carries the rest along, so the preview has to say so
         const int32 OtherSelectedCount = bSelected ? (EditorEngine->GetSelectedActors().Size() - 1) : 0;
         if (OtherSelectedCount > 0)
         {
@@ -949,18 +946,14 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
     // Expand arrow, only actors that have children can be expanded
     // -------------------------------------------------------------------------------------------
 
-    const bool bHasChildren = !Actor->GetChildActors().IsEmpty();
-
-    // While searching, the whole hierarchy is shown expanded so that matching descendants are always reachable
-    const bool bForceExpanded = ActorSearchFilterBuffer[0] != '\0';
+    const bool bHasChildren   = !Actor->GetChildActors().IsEmpty();
+    const bool bForceExpanded = CachedQuery[0] != '\0';
 
     if (bRowPressed)
     {
         bSelectionActiveInTable = true;
 
         const ImGuiIO& ClickIO = ImGui::GetIO();
-
-        // An actor and a filter are never selected at the same time, so any row click drops the filter selection
         const auto TakeSelectionFromFilter = [this, &bIsRenamingThis, &CancelActorRename]()
         {
             CancelActorRename();
@@ -976,7 +969,6 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
         }
         else if (ClickIO.KeyShift && SelectionAnchor)
         {
-            // The visible order is only complete once every row is drawn, so the span is resolved after the table closes
             RequestRangeSelection(Actor, ClickIO.KeyCtrl);
             TakeSelectionFromFilter();
         }
@@ -989,7 +981,6 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
         }
         else if (!bSoleSelection)
         {
-            // Clicking a row that is part of a wider selection narrows down to it rather than starting a rename
             EditorEngine->SetSelectedActor(Actor);
             SelectionAnchor = Actor;
 
@@ -1015,10 +1006,10 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
 
         ImDrawList* DrawList = ImGui::GetWindowDrawList();
 
-        ImTextureID ArrowIcon = bExpanded ? EditorIcons::CollapseArrowDown : EditorIcons::CollapseArrowRight;
+        const FEditorIcon& ArrowIcon = bExpanded ? EditorIcons::CollapseArrowDown : EditorIcons::CollapseArrowRight;
         if (ArrowIcon)
         {
-            DrawList->AddImage(ArrowIcon, IconPos, ImVec2(IconPos.x + IconSize, IconPos.y + IconSize), ImVec2(0, 0), ImVec2(1, 1), IconTint);
+            EditorWidgets::DrawIcon(DrawList, ArrowIcon, IconPos, ImVec2(IconPos.x + IconSize, IconPos.y + IconSize), IconTint);
         }
         else
         {
@@ -1094,9 +1085,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
     {
         ImGui::PushStyleColor(ImGuiCol_Text, ActorNameTextColor);
 
-        TStaticArray<CHAR, 256> SearchBuf{};
-        
-        const CHAR* SearchText  = EditorHelpers::GetTrimmedQuery(ActorSearchFilterBuffer.Data(), SearchBuf.Data(), static_cast<int32>(SearchBuf.Size()));
+        const CHAR* SearchText  = CachedQuery.Data();
         const ImU32 BaseTextU32 = ImGui::GetColorU32(ImGuiCol_Text);
 
         const String& Name = Actor->GetName();
@@ -1120,21 +1109,46 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, float Indent)
     ImGui::PopStyleColor();
 
     ImGui::PopID();
-
-    // Children are drawn outside of this row's ID scope, so that their ids do not change when they are re-parented
-    if (bExpanded)
-    {
-        DrawChildActorRows(Actor, Indent + ImGui::GetStyle().IndentSpacing);
-    }
 }
 
-void FEditorSceneHierarchyWidget::DrawChildActorRows(FActor* Actor, float Indent)
+void FEditorSceneHierarchyWidget::RebuildSearchMatches(const TArray<FActor*>& Actors)
 {
-    for (FActor* Child : Actor->GetChildActors())
+    TStaticArray<CHAR, 256> QueryBuffer{};
+
+    const CHAR* Query = EditorHelpers::GetTrimmedQuery(ActorSearchFilterBuffer.Data(), QueryBuffer.Data(), static_cast<int32>(QueryBuffer.Size()));
+    if (Query)
     {
-        if (Child && PassesSearchFilter(Child))
+        CString::Strncpy(CachedQuery.Data(), Query, CachedQuery.Size());
+        CachedQuery[CachedQuery.Size() - 1] = '\0';
+    }
+    else
+    {
+        CachedQuery[0] = '\0';
+    }
+
+    MatchingActors.Clear();
+
+    if (CachedQuery[0] == '\0')
+    {
+        return;
+    }
+
+    for (FActor* Actor : Actors)
+    {
+        if (!Actor || !DoesActorMatchQuery(Actor, CachedQuery.Data()))
         {
-            DrawActorRow(Child, Indent);
+            continue;
+        }
+
+        for (FActor* Ancestor = Actor; Ancestor; Ancestor = Ancestor->GetParentActor())
+        {
+            bool bAlreadyPresent = false;
+            MatchingActors.Add(Ancestor, &bAlreadyPresent);
+
+            if (bAlreadyPresent)
+            {
+                break;
+            }
         }
     }
 }
@@ -1146,15 +1160,7 @@ bool FEditorSceneHierarchyWidget::PassesSearchFilter(FActor* Actor) const
         return false;
     }
 
-    TStaticArray<CHAR, 256> QueryBuffer{};
-
-    const CHAR* Query = EditorHelpers::GetTrimmedQuery(ActorSearchFilterBuffer.Data(), QueryBuffer.Data(), static_cast<int32>(QueryBuffer.Size()));
-    if (!Query || Query[0] == '\0')
-    {
-        return true;
-    }
-
-    return DoesActorOrDescendantMatchQuery(Actor, Query);
+    return CachedQuery[0] == '\0' || MatchingActors.Contains(Actor);
 }
 
 bool FEditorSceneHierarchyWidget::IsActorExpanded(FActor* Actor) const
@@ -1168,9 +1174,9 @@ void FEditorSceneHierarchyWidget::SetActorExpanded(FActor* Actor, bool bExpanded
     {
         CollapsedActors.Remove(Actor);
     }
-    else if (!CollapsedActors.Contains(Actor))
+    else
     {
-        CollapsedActors.Emplace(Actor);
+        CollapsedActors.Add(Actor);
     }
 }
 
@@ -1185,14 +1191,17 @@ void FEditorSceneHierarchyWidget::SetFilterExpanded(FActorFilter* Filter, bool b
     {
         CollapsedFilters.Remove(Filter);
     }
-    else if (!CollapsedFilters.Contains(Filter))
+    else
     {
-        CollapsedFilters.Emplace(Filter);
+        CollapsedFilters.Add(Filter);
     }
 }
 
-void FEditorSceneHierarchyWidget::RebuildFilterContents()
+void FEditorSceneHierarchyWidget::RebuildFilterBuckets()
 {
+    RootLevelActors.Clear();
+    FilterIndices.Clear();
+
     FWorld* World = EditorEngine ? EditorEngine->GetWorld() : nullptr;
     if (!World)
     {
@@ -1202,10 +1211,21 @@ void FEditorSceneHierarchyWidget::RebuildFilterContents()
 
     const TArrayView<FActorFilter* const> Filters = World->GetActorFilters();
 
-    FilterContents.Clear();
+    for (int32 Index = 0; Index < Filters.Size(); ++Index)
+    {
+        if (Filters[Index])
+        {
+            FilterIndices.Add(Filters[Index], Index);
+        }
+    }
+
     FilterContents.Resize(Filters.Size());
 
-    // Only root-actors are bucketed, every other actor is drawn nested underneath its parent actor instead
+    for (TArray<FActor*>& Bucket : FilterContents)
+    {
+        Bucket.Clear();
+    }
+
     for (FActor* Actor : World->GetActors())
     {
         if (!Actor || Actor->GetParentActor() || !PassesSearchFilter(Actor))
@@ -1213,37 +1233,27 @@ void FEditorSceneHierarchyWidget::RebuildFilterContents()
             continue;
         }
 
-        FActorFilter* ActorFilter = Actor->GetFilter();
-        if (!ActorFilter)
+        const int32* FilterIndex = Actor->GetFilter() ? FilterIndices.Find(Actor->GetFilter()) : nullptr;
+        if (FilterIndex)
         {
-            continue;
+            FilterContents[*FilterIndex].Emplace(Actor);
         }
-
-        const int32 FilterIndex = Filters.Find(ActorFilter);
-        if (FilterIndex != Filters.InvalidIndex)
+        else
         {
-            FilterContents[FilterIndex].Emplace(Actor);
+            RootLevelActors.Emplace(Actor);
         }
     }
 }
 
 const TArray<FActor*>* FEditorSceneHierarchyWidget::GetFilterContents(FActorFilter* Filter) const
 {
-    FWorld* World = EditorEngine ? EditorEngine->GetWorld() : nullptr;
-    if (!World)
+    const int32* FilterIndex = FilterIndices.Find(Filter);
+    if (!FilterIndex || *FilterIndex >= FilterContents.Size())
     {
         return nullptr;
     }
 
-    const TArrayView<FActorFilter* const> Filters = World->GetActorFilters();
-
-    const int32 FilterIndex = Filters.Find(Filter);
-    if (FilterIndex == Filters.InvalidIndex || FilterIndex >= FilterContents.Size())
-    {
-        return nullptr;
-    }
-
-    return &FilterContents[FilterIndex];
+    return &FilterContents[*FilterIndex];
 }
 
 bool FEditorSceneHierarchyWidget::FilterSubtreeHasActors(FActorFilter* Filter) const
@@ -1277,16 +1287,11 @@ void FEditorSceneHierarchyWidget::DrawMoveToFilterMenu(FActorFilter* Filter, con
         return;
     }
 
-    // MenuItem and BeginSubMenu push the label as their ID, so two filters sharing a name would otherwise collide
     ImGui::PushID(Filter);
 
     const bool bMovingActors = !TargetActors.IsEmpty();
-
-    // A filter cannot be moved into itself or into its own subtree, an actor can go anywhere
-    const bool bEnabled = bMovingActors || CanReparentFilter(TargetFilter, Filter);
-
-    // With several actors selected the tick only shows when every one of them is already in this filter
-    const bool bIsMember = bMovingActors
+    const bool bEnabled      = bMovingActors || CanReparentFilter(TargetFilter, Filter);
+    const bool bIsMember     = bMovingActors
         ? !TargetActors.ContainsWithPredicate([Filter](FActor* Actor) { return !Actor || Actor->GetFilter() != Filter; })
         : (TargetFilter && TargetFilter->GetParentFilter() == Filter);
 
@@ -1315,7 +1320,6 @@ void FEditorSceneHierarchyWidget::DrawMoveToFilterMenu(FActorFilter* Filter, con
         FSubMenuState ChildrenSubMenu;
         if (EditorWidgets::BeginSubMenu(ChildrenSubMenu, "##MoveToFilterChildren", *Filter->GetName()))
         {
-            // A filter with children is a destination as well as a branch, so it needs an entry of its own
             if (EditorWidgets::MenuItem("Move Here", nullptr, bIsMember, bEnabled))
             {
                 MoveHere();
@@ -1335,12 +1339,10 @@ void FEditorSceneHierarchyWidget::DrawMoveToFilterMenu(FActorFilter* Filter, con
     ImGui::PopID();
 }
 
-bool FEditorSceneHierarchyWidget::DrawFilterRow(FActorFilter* Filter, float Indent)
+void FEditorSceneHierarchyWidget::DrawFilterRow(FActorFilter* Filter, float Indent)
 {
-    constexpr float DefaultRowHeight = 30.0f;
+    const float DefaultRowHeight = GetHierarchyRowHeight();
 
-    // Keyed on the filter itself rather than its name, so state survives a rename and two filters that happen to
-    // share a name cannot collide
     ImGui::PushID(Filter);
 
     bool bOpen = IsFilterExpanded(Filter);
@@ -1352,7 +1354,6 @@ bool FEditorSceneHierarchyWidget::DrawFilterRow(FActorFilter* Filter, float Inde
 
     const auto CommitFilterRename = [this, Filter]()
     {
-        // An empty name is rejected so that a filter can never become unlabelled
         const String NewName(RenameBuffer.Data());
         if (!NewName.IsEmpty())
         {
@@ -1369,7 +1370,6 @@ bool FEditorSceneHierarchyWidget::DrawFilterRow(FActorFilter* Filter, float Inde
         bIsRenamingThis = false;
     }
 
-    // Read after the commit above, which can replace the string this points into
     const CHAR* Label = *Filter->GetName();
 
     ImGuiStyle& Style = ImGui::GetStyle();
@@ -1402,9 +1402,9 @@ bool FEditorSceneHierarchyWidget::DrawFilterRow(FActorFilter* Filter, float Inde
     const ImVec2 RowMin = ImGui::GetItemRectMin();
     const ImVec2 RowMax = ImGui::GetItemRectMax();
 
-    // -------------------------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------------------------------
     // A filter row takes both payloads, an actor is placed in the filter and a filter is nested inside it
-    // -------------------------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------------------------------
 
     if (ImGui::BeginDragDropTarget())
     {
@@ -1441,8 +1441,6 @@ bool FEditorSceneHierarchyWidget::DrawFilterRow(FActorFilter* Filter, float Inde
     }
     else if (ImGui::IsDragDropActive() && GetDraggedFilter(ImGui::GetDragDropPayload()) == Filter)
     {
-        // The row of the dragged filter never becomes a drop-target, remember it so that releasing the drag on top
-        // of it is treated as a cancelled drag instead of a move to the root
         bDragHoveringSourceRow |= ImGui::IsMouseHoveringRect(RowMin, RowMax);
     }
 
@@ -1466,17 +1464,16 @@ bool FEditorSceneHierarchyWidget::DrawFilterRow(FActorFilter* Filter, float Inde
 
     ImGui::TableSetColumnIndex(1);
 
-    const ImVec2 ColPos  = ImGui::GetCursorScreenPos();
-    const float  ColMaxX = ColPos.x + ImGui::GetContentRegionAvail().x;
-    const ImVec2 IconPos = ImVec2(ColPos.x + Indent, RowMin.y + (DefaultRowHeight - IconSz) * 0.5f);
-    const ImU32  Tint    = IM_COL32(101, 101, 101, 255);
+    const ImVec2 ColPos   = ImGui::GetCursorScreenPos();
+    const float  ColMaxX  = ColPos.x + ImGui::GetContentRegionAvail().x;
+    const ImVec2 IconPos  = ImVec2(ColPos.x + Indent, RowMin.y + (DefaultRowHeight - IconSz) * 0.5f);
+    const ImU32  Tint     = IM_COL32(101, 101, 101, 255);
+    ImDrawList*  DrawList = ImGui::GetWindowDrawList();
 
-    ImDrawList* DrawList = ImGui::GetWindowDrawList();
-
-    ImTextureID ArrowIcon = bOpen ? EditorIcons::CollapseArrowDown : EditorIcons::CollapseArrowRight;
+    const FEditorIcon& ArrowIcon = bOpen ? EditorIcons::CollapseArrowDown : EditorIcons::CollapseArrowRight;
     if (ArrowIcon)
     {
-        DrawList->AddImage(ArrowIcon, IconPos, ImVec2(IconPos.x + IconSz, IconPos.y + IconSz), ImVec2(0, 0), ImVec2(1, 1), Tint);
+        EditorWidgets::DrawIcon(DrawList, ArrowIcon, IconPos, ImVec2(IconPos.x + IconSz, IconPos.y + IconSz), Tint);
     }
     else
     {
@@ -1485,17 +1482,16 @@ bool FEditorSceneHierarchyWidget::DrawFilterRow(FActorFilter* Filter, float Inde
 
     float X = IconPos.x + IconSz + 6.0f;
 
-    ImTextureID FolderIcon = bOpen ? EditorIcons::FolderOpenSmallIcon : EditorIcons::FolderSmallIcon;
+    const FEditorIcon& FolderIcon = bOpen ? EditorIcons::FolderOpenSmallIcon : EditorIcons::FolderSmallIcon;
     if (FolderIcon)
     {
         const float FolderSz = 16.0f;
         const float FolderY  = RowMin.y + (DefaultRowHeight - FolderSz) * 0.5f;
-        DrawList->AddImage(FolderIcon, ImVec2(X, FolderY), ImVec2(X + FolderSz, FolderY + FolderSz));
+    
+        EditorWidgets::DrawIcon(DrawList, FolderIcon, ImVec2(X, FolderY), ImVec2(X + FolderSz, FolderY + FolderSz));
         X += FolderSz + 6.0f;
     }
 
-    // Hit regions match DrawActorRow: the arrow column toggles, the label column selects, and clicking the label
-    // of an already-selected row starts a rename
     const float  LabelStartX = X;
     const ImVec2 MousePos    = ImGui::GetIO().MousePos;
     const bool   bInArrowCol = (MousePos.x >= IconPos.x && MousePos.x < LabelStartX);
@@ -1596,9 +1592,7 @@ bool FEditorSceneHierarchyWidget::DrawFilterRow(FActorFilter* Filter, float Inde
         ImGui::PushStyleColor(ImGuiCol_Text, RowNameTextColor);
 
         {
-            TStaticArray<CHAR, 256> SearchBuf{};
-
-            const CHAR* SearchText  = EditorHelpers::GetTrimmedQuery(ActorSearchFilterBuffer.Data(), SearchBuf.Data(), static_cast<int32>(SearchBuf.Size()));
+            const CHAR* SearchText  = CachedQuery.Data();
             const ImU32 BaseTextU32 = ImGui::GetColorU32(ImGuiCol_Text);
 
             EditorWidgets::DrawTextWithSearchHighlight(DrawList, ImVec2(X, TextY), Label, SearchText, BaseTextU32, 1.0f, 1.0f, &RowMin, &RowMax);
@@ -1619,23 +1613,51 @@ bool FEditorSceneHierarchyWidget::DrawFilterRow(FActorFilter* Filter, float Inde
     ImGui::PopStyleColor();
 
     ImGui::PopID();
-    return bOpen;
 }
 
-void FEditorSceneHierarchyWidget::DrawFilterSubtree(FActorFilter* Filter, float Indent)
+void FEditorSceneHierarchyWidget::RebuildVisibleRows()
+{
+    VisibleRows.Clear();
+    VisibleActorOrder.Clear();
+
+    FWorld* World = EditorEngine ? EditorEngine->GetWorld() : nullptr;
+    if (!World)
+    {
+        return;
+    }
+
+    for (FActorFilter* Filter : World->GetActorFilters())
+    {
+        if (Filter && !Filter->GetParentFilter())
+        {
+            AppendFilterRows(Filter, 0.0f);
+        }
+    }
+
+    for (FActor* Actor : RootLevelActors)
+    {
+        AppendActorRows(Actor, 0.0f);
+    }
+}
+
+void FEditorSceneHierarchyWidget::AppendFilterRows(FActorFilter* Filter, float Indent)
 {
     if (!Filter)
     {
         return;
     }
 
-    const bool bIsSearching = ActorSearchFilterBuffer[0] != '\0';
+    const bool bIsSearching = CachedQuery[0] != '\0';
     if (bIsSearching && !FilterSubtreeHasActors(Filter))
     {
         return;
     }
 
-    if (!DrawFilterRow(Filter, Indent))
+    FHierarchyRow& Row = VisibleRows.Emplace();
+    Row.Filter = Filter;
+    Row.Indent = Indent;
+
+    if (!IsFilterExpanded(Filter))
     {
         return;
     }
@@ -1644,14 +1666,43 @@ void FEditorSceneHierarchyWidget::DrawFilterSubtree(FActorFilter* Filter, float 
 
     for (FActorFilter* Child : Filter->GetChildFilters())
     {
-        DrawFilterSubtree(Child, ChildIndent);
+        AppendFilterRows(Child, ChildIndent);
     }
 
     if (const TArray<FActor*>* Contents = GetFilterContents(Filter))
     {
         for (FActor* Actor : *Contents)
         {
-            DrawActorRow(Actor, ChildIndent);
+            AppendActorRows(Actor, ChildIndent);
+        }
+    }
+}
+
+void FEditorSceneHierarchyWidget::AppendActorRows(FActor* Actor, float Indent)
+{
+    if (!Actor)
+    {
+        return;
+    }
+
+    FHierarchyRow& Row = VisibleRows.Emplace();
+    Row.Actor  = Actor;
+    Row.Indent = Indent;
+
+    VisibleActorOrder.Add(Actor);
+
+    const bool bForceExpanded = CachedQuery[0] != '\0';
+    if (Actor->GetChildActors().IsEmpty() || !(bForceExpanded || IsActorExpanded(Actor)))
+    {
+        return;
+    }
+
+    const float ChildIndent = Indent + ImGui::GetStyle().IndentSpacing;
+    for (FActor* Child : Actor->GetChildActors())
+    {
+        if (Child && PassesSearchFilter(Child))
+        {
+            AppendActorRows(Child, ChildIndent);
         }
     }
 }
@@ -1692,10 +1743,8 @@ void FEditorSceneHierarchyWidget::ApplyPendingAttachment()
 
         if (PendingAttachParent)
         {
-            // A multi-selection can hold an ancestor of the new parent, and AttachToActor rejects those on its own
             if (ChildActor->AttachToActor(PendingAttachParent, EAttachmentRule::KeepWorld))
             {
-                // Make sure the newly attached actor is not hidden inside a collapsed parent
                 SetActorExpanded(PendingAttachParent, true);
             }
         }
@@ -1782,7 +1831,6 @@ void FEditorSceneHierarchyWidget::ApplyPendingRangeSelection()
     const int32 AnchorIndex = VisibleActorOrder.Find(SelectionAnchor);
     const int32 TargetIndex = VisibleActorOrder.Find(Target);
 
-    // A collapsed subtree can hide the anchor, and with no span to walk the click falls back to a plain select
     if (AnchorIndex == TArray<FActor*>::InvalidIndex || TargetIndex == TArray<FActor*>::InvalidIndex)
     {
         EditorEngine->SetSelectedActor(Target);
@@ -1806,7 +1854,6 @@ void FEditorSceneHierarchyWidget::ApplyPendingRangeSelection()
         Range.Add(VisibleActorOrder[Index]);
     }
 
-    // SetSelectedActors makes the last entry the primary, so the clicked row is moved to the back to become it
     Range.Remove(Target);
     Range.Add(Target);
 
@@ -1816,8 +1863,6 @@ void FEditorSceneHierarchyWidget::ApplyPendingRangeSelection()
 TArray<FActor*> FEditorSceneHierarchyWidget::GetActorsForOperation(FActor* Actor) const
 {
     TArray<FActor*> Result;
-
-    // Acting on a row inside the selection acts on the whole selection, acting on one outside it does not
     if (EditorEngine && EditorEngine->IsActorSelected(Actor))
     {
         Result = EditorEngine->GetSelectedActors();
@@ -1863,6 +1908,7 @@ void FEditorSceneHierarchyWidget::ApplyPendingFilterOperations()
         }
 
         PendingAssignActors.Clear();
+
         PendingAssignFilter  = nullptr;
         bPendingFilterAssign = false;
     }
@@ -1873,7 +1919,6 @@ void FEditorSceneHierarchyWidget::ApplyPendingFilterOperations()
         {
             World->SetActorFilterParent(PendingReparentFilter, PendingReparentParent);
 
-            // Make sure the moved filter is not hidden inside a collapsed destination
             if (PendingReparentParent)
             {
                 SetFilterExpanded(PendingReparentParent, true);

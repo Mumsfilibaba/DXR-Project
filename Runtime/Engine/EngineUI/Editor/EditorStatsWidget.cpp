@@ -1,3 +1,4 @@
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Stats/Stats.h"
 #include "Core/Templates/CString.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
@@ -40,6 +41,8 @@ void FEditorStatsWidget::Draw()
     {
         return;
     }
+
+    TRACE_SCOPE("Engine Stats");
 
     if (EditorWidgets::BeginEditorWindow("Engine Stats", &bVisible))
     {

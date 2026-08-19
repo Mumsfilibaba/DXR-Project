@@ -139,4 +139,7 @@ private:
     EGizmoPlacement                     GizmoPlacement;
     EditorGuizmo::EMode                 GizmoOrientation;
     EditorGuizmo::EOperation::Type      GizmoOperation;
+    float                               CachedMaxDebugLabelWidth;
+    ImFont*                             CachedDebugLabelFont;
+    float                               CachedDebugLabelFontSize;
 };

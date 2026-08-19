@@ -65,6 +65,9 @@ FEditorViewportWidget::FEditorViewportWidget(FEditorEngine* InEditorEngine)
     , GizmoPlacement(EGizmoPlacement::Center)
     , GizmoOrientation(EditorGuizmo::EMode::World)
     , GizmoOperation(EditorGuizmo::EOperation::Translate)
+    , CachedMaxDebugLabelWidth(0.0f)
+    , CachedDebugLabelFont(nullptr)
+    , CachedDebugLabelFontSize(0.0f)
 {
     CHECK(EditorEngine != nullptr);
 
@@ -92,6 +95,8 @@ FEditorViewportWidget::~FEditorViewportWidget()
 
 void FEditorViewportWidget::Draw()
 {
+    TRACE_SCOPE("Viewport");
+
     PendingCameraInput = FEditorCameraInputState();
 
     HandlePlayShortcuts();
@@ -355,19 +360,30 @@ void FEditorViewportWidget::DrawViewportWindow()
                 const float MaxButtonWidth = 128.0f;
                 const float RightPadding   = 12.0f;
 
-                float MaxLabelWidth = 0.0f;
-                for (const FDebugItem& Item : BaseViewItems)
+                if (CachedDebugLabelFont != ImGui::GetFont() || CachedDebugLabelFontSize != ImGui::GetFontSize())
                 {
-                    MaxLabelWidth = Math::Max(MaxLabelWidth, ImGui::CalcTextSize(Item.Label).x);
+                    CachedMaxDebugLabelWidth = 0.0f;
+
+                    for (const FDebugItem& Item : BaseViewItems)
+                    {
+                        CachedMaxDebugLabelWidth = Math::Max(CachedMaxDebugLabelWidth, ImGui::CalcTextSize(Item.Label).x);
+                    }
+
+                    for (const FDebugItem& Item : ShadowDebugItems)
+                    {
+                        CachedMaxDebugLabelWidth = Math::Max(CachedMaxDebugLabelWidth, ImGui::CalcTextSize(Item.Label).x);
+                    }
+
+                    for (const FDebugItem& Item : RayTracingDebugItems)
+                    {
+                        CachedMaxDebugLabelWidth = Math::Max(CachedMaxDebugLabelWidth, ImGui::CalcTextSize(Item.Label).x);
+                    }
+
+                    CachedDebugLabelFont     = ImGui::GetFont();
+                    CachedDebugLabelFontSize = ImGui::GetFontSize();
                 }
-                for (const FDebugItem& Item : ShadowDebugItems)
-                {
-                    MaxLabelWidth = Math::Max(MaxLabelWidth, ImGui::CalcTextSize(Item.Label).x);
-                }
-                for (const FDebugItem& Item : RayTracingDebugItems)
-                {
-                    MaxLabelWidth = Math::Max(MaxLabelWidth, ImGui::CalcTextSize(Item.Label).x);
-                }
+
+                const float MaxLabelWidth = CachedMaxDebugLabelWidth;
 
                 const float PaddingX           = EditorStyleVars::ButtonPaddingX;
                 const float DesiredButtonWidth = MaxLabelWidth + TextArrowGap + ArrowIconSize + PaddingX * 2.0f;
@@ -393,22 +409,12 @@ void FEditorViewportWidget::DrawViewportWindow()
                     const float EllipsisW = ImGui::CalcTextSize(Ellipsis).x;
                     const float Budget    = Math::Max(0.0f, MaxWidth - EllipsisW);
 
-                    int32 Count = 0;
-                    float Width = 0.0f;
+                    const CHAR* LabelEnd  = InLabel + CString::Strlen(InLabel);
+                    const CHAR* Remaining = nullptr;
 
-                    while (InLabel[Count] != '\0')
-                    {
-                        CHAR Ch[2] = { InLabel[Count], '\0' };
+                    ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), Budget, 0.0f, InLabel, LabelEnd, &Remaining);
 
-                        const float ChW = ImGui::CalcTextSize(Ch).x;
-                        if (Width + ChW > Budget)
-                        {
-                            break;
-                        }
-
-                        Width += ChW;
-                        ++Count;
-                    }
+                    const int32 Count = Remaining ? static_cast<int32>(Remaining - InLabel) : 0;
 
                     if (Count <= 0)
                     {

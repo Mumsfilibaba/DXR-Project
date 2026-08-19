@@ -9,6 +9,7 @@
 #include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Core/Containers/StaticArray.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "ImGuiPlugin/ImGuiCore.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
@@ -19,6 +20,8 @@ FEditorPropertiesWidget::FEditorPropertiesWidget(FEditorEngine* InEditorEngine)
     , bVisible(true)
     , MaterialSelectionOwner(nullptr)
     , SelectedMaterialIndex(0)
+    , MaterialLabelOwner(nullptr)
+    , MaterialLabelCount(0)
 {
     if (IImguiPlugin::IsEnabled())
     {
@@ -41,6 +44,8 @@ void FEditorPropertiesWidget::Draw()
     {
         return;
     }
+
+    TRACE_SCOPE("Properties");
 
     if (!EditorEngine)
     {
@@ -66,11 +71,49 @@ ImTextureID FEditorPropertiesWidget::GetTexturePreview(EMaterialTextureSlot::Typ
     if (Preview.GetTexture() != Texture.Get())
     {
         Preview = FImGuiTexture(Texture);
+
         Preview.bEnableBlending      = false;
         Preview.bEnableLinearSampler = true;
     }
 
     return Preview.ShaderResourceView ? reinterpret_cast<ImTextureID>(&Preview) : nullptr;
+}
+
+const TArray<const CHAR*>& FEditorPropertiesWidget::GetMaterialLabels(const FStaticMeshComponent* MeshComponent, int32 NumMaterials)
+{
+    if (MaterialLabelOwner == MeshComponent && MaterialLabelCount == NumMaterials)
+    {
+        return MaterialLabelText;
+    }
+
+    MaterialLabelOwner = MeshComponent;
+    MaterialLabelCount = NumMaterials;
+
+    MaterialLabels.Clear();
+    MaterialLabels.Reserve(NumMaterials);
+
+    for (int32 Index = 0; Index < NumMaterials; Index++)
+    {
+        TSharedPtr<FMaterial> Entry = MeshComponent->GetMaterial(Index);
+        if (Entry && !Entry->GetName().IsEmpty())
+        {
+            MaterialLabels.Emplace(String::Printf("%d: %s", Index, *Entry->GetName()));
+        }
+        else
+        {
+            MaterialLabels.Emplace(String::Printf("%d: <unnamed>", Index));
+        }
+    }
+
+    MaterialLabelText.Clear();
+    MaterialLabelText.Reserve(NumMaterials);
+
+    for (const String& Label : MaterialLabels)
+    {
+        MaterialLabelText.Add(*Label);
+    }
+
+    return MaterialLabelText;
 }
 
 void FEditorPropertiesWidget::DrawWindowContents()
@@ -130,11 +173,8 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 const ImVec2 IconMin = ImVec2(HeaderMin.x + Style.FramePadding.x, IconY);
                 const ImVec2 IconMax = ImVec2(IconMin.x + IconSize, IconMin.y + IconSize);
 
-                ImTextureID ArrowIcon = bResult ? EditorIcons::CollapseArrowDown : EditorIcons::CollapseArrowRight;
-                if (ArrowIcon)
-                {
-                    Window->DrawList->AddImage(ArrowIcon, IconMin, IconMax, ImVec2(0, 0), ImVec2(1, 1), Tint);
-                }
+                const FEditorIcon& ArrowIcon = bResult ? EditorIcons::CollapseArrowDown : EditorIcons::CollapseArrowRight;
+                EditorWidgets::DrawIcon(Window->DrawList, ArrowIcon, IconMin, IconMax, Tint);
             }
         }
 
@@ -189,7 +229,6 @@ void FEditorPropertiesWidget::DrawWindowContents()
         const bool bHasMeshComponent       = MeshComponent != nullptr;
         const bool bHasComponentProperties = bHasMeshComponent || SelectedLight || SelectedCamera || SelectedLightProbe;
 
-        // An attached actor is placed relative to its parent, so the transform fields no longer edit world-space
         FActor*    ParentActor = SelectedActor->GetParentActor();
         const bool bIsAttached = ParentActor != nullptr;
 
@@ -259,12 +298,10 @@ void FEditorPropertiesWidget::DrawWindowContents()
 
                     const String& ParentName = ParentActor->GetName();
 
-                    // The name shares its line with the button, so it has to be lifted onto the button's center line
                     ImGui::AlignTextToFramePadding();
                     ImGui::TextUnformatted(ParentName.IsEmpty() ? "Actor" : *ParentName);
                     ImGui::SameLine();
 
-                    // The row centers its label against a frame-height cell, so the button has to match that height
                     if (EditorWidgets::DrawButton("Detach", ImVec2(0.0f, ImGui::GetFrameHeight())))
                     {
                         SelectedActor->DetachFromParent(EAttachmentRule::KeepWorld);
@@ -300,36 +337,13 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 };
 
                 const bool bHasHeightMap = Material->HasHeightMap();
-
                 if (DrawCollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen, true))
                 {
                     if (EditorWidgets::BeginPropertyTable("##MeshComponentMaterialTable", LabelColumnWidth, RevertColumnWidth))
                     {
                         if (NumMaterials > 1)
                         {
-                            TArray<String> MaterialLabels;
-                            MaterialLabels.Reserve(NumMaterials);
-
-                            for (int32 Index = 0; Index < NumMaterials; Index++)
-                            {
-                                TSharedPtr<FMaterial> Entry = MeshComponent->GetMaterial(Index);
-                                if (Entry && !Entry->GetName().IsEmpty())
-                                {
-                                    MaterialLabels.Emplace(String::Printf("%d: %s", Index, *Entry->GetName()));
-                                }
-                                else
-                                {
-                                    MaterialLabels.Emplace(String::Printf("%d: <unnamed>", Index));
-                                }
-                            }
-
-                            TArray<const CHAR*> MaterialLabelText;
-                            MaterialLabelText.Reserve(NumMaterials);
-
-                            for (const String& Label : MaterialLabels)
-                            {
-                                MaterialLabelText.Add(*Label);
-                            }
+                            const TArray<const CHAR*>& MaterialLabelText = GetMaterialLabels(MeshComponent, NumMaterials);
 
                             const int32 SelectedMaterialIndex0 = 0;
                             EditorWidgets::DrawComboProperty("Material", SelectedMaterialIndex, MaterialLabelText.Data(), MaterialLabelText.Size(), &SelectedMaterialIndex0);

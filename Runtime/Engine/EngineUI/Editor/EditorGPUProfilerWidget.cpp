@@ -1,3 +1,4 @@
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Time/Time.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
@@ -36,6 +37,8 @@ void FEditorGPUProfilerWidget::Draw()
     {
         return;
     }
+
+    TRACE_SCOPE("GPU Profiler");
 
     DrawWindow();
 }

@@ -1,5 +1,7 @@
 #pragma once
 #include "Core/Containers/Array.h"
+#include "Core/Containers/Map.h"
+#include "Core/Containers/Set.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
 class FEditorEngine;
@@ -26,17 +28,26 @@ public:
     }
 
 private:
-    void DrawActorRow(FActor* Actor, float Indent);
-    void DrawChildActorRows(FActor* Actor, float Indent);
+    struct FHierarchyRow
+    {
+        FActor*       Actor  = nullptr;
+        FActorFilter* Filter = nullptr;
+        float         Indent = 0.0f;
+    };
 
-    bool DrawFilterRow(FActorFilter* Filter, float Indent);
-    void DrawFilterSubtree(FActorFilter* Filter, float Indent);
+    void RebuildVisibleRows();
+    void AppendFilterRows(FActorFilter* Filter, float Indent);
+    void AppendActorRows(FActor* Actor, float Indent);
+
+    void DrawActorRow(FActor* Actor, float Indent);
+    void DrawFilterRow(FActorFilter* Filter, float Indent);
     void DrawMoveToFilterMenu(FActorFilter* Filter, const TArray<FActor*>& TargetActors, FActorFilter* TargetFilter);
 
-    void RebuildFilterContents();
+    void RebuildFilterBuckets();
     const TArray<FActor*>* GetFilterContents(FActorFilter* Filter) const;
     bool FilterSubtreeHasActors(FActorFilter* Filter) const;
 
+    void RebuildSearchMatches(const TArray<FActor*>& Actors);
     bool PassesSearchFilter(FActor* Actor) const;
 
     bool IsActorExpanded(FActor* Actor) const;
@@ -60,36 +71,42 @@ private:
 
     TArray<FActor*> GetActorsForOperation(FActor* Actor) const;
 
-    FEditorEngine*          EditorEngine;
-    FActor*                 RenamingActor;
-    FActor*                 PendingAttachParent;
-    FActor*                 SelectionAnchor;
-    FActor*                 PendingRangeTarget;
-    FActorFilter*           SelectedFilter;
-    FActorFilter*           RenamingFilter;
-    FActorFilter*           PendingDestroyFilter;
-    FActorFilter*           PendingAssignFilter;
-    FActorFilter*           PendingCreateParent;
-    FActorFilter*           PendingReparentFilter;
-    FActorFilter*           PendingReparentParent;
-    FDelegateHandle         ImGuiDelegateHandle;
-    TArray<FActor*>         PendingAttachChildren;
-    TArray<FActor*>         PendingAssignActors;
-    TArray<FActor*>         CollapsedActors;
-    TArray<FActor*>         VisibleActorOrder;
-    TArray<FActorFilter*>   CollapsedFilters;
-    TArray<TArray<FActor*>> FilterContents;
-    TStaticArray<CHAR, 256> ActorSearchFilterBuffer;
-    TStaticArray<CHAR, 256> RenameBuffer;
-    TStaticArray<CHAR, 256> RenameBufferOriginal;
-    bool                    bVisible;
-    bool                    bRequestRenameFocus;
-    bool                    bSelectionActiveInTable;
-    bool                    bPendingAttachment;
-    bool                    bPendingFilterCreate;
-    bool                    bPendingFilterAssign;
-    bool                    bPendingFilterReparent;
-    bool                    bPendingRangeSelect;
-    bool                    bPendingRangeAdditive;
-    bool                    bDragHoveringSourceRow;
+    FEditorEngine*             EditorEngine;
+    FActor*                    RenamingActor;
+    FActor*                    PendingAttachParent;
+    FActor*                    SelectionAnchor;
+    FActor*                    PendingRangeTarget;
+    FActorFilter*              SelectedFilter;
+    FActorFilter*              RenamingFilter;
+    FActorFilter*              PendingDestroyFilter;
+    FActorFilter*              PendingAssignFilter;
+    FActorFilter*              PendingCreateParent;
+    FActorFilter*              PendingReparentFilter;
+    FActorFilter*              PendingReparentParent;
+    FDelegateHandle            ImGuiDelegateHandle;
+    TArray<FActor*>            PendingAttachChildren;
+    TArray<FActor*>            PendingAssignActors;
+    TArray<FActor*>            VisibleActorOrder;
+    TArray<FActor*>            RootLevelActors;
+    TArray<FHierarchyRow>      VisibleRows;
+    TArray<TArray<FActor*>>    FilterContents;
+    TSet<FActor*>              CollapsedActors;
+    TSet<FActorFilter*>        CollapsedFilters;
+    TSet<FActor*>              LiveActors;
+    TSet<FActor*>              MatchingActors;
+    TMap<FActorFilter*, int32> FilterIndices;
+    TStaticArray<CHAR, 256>    CachedQuery;
+    TStaticArray<CHAR, 256>    ActorSearchFilterBuffer;
+    TStaticArray<CHAR, 256>    RenameBuffer;
+    TStaticArray<CHAR, 256>    RenameBufferOriginal;
+    bool                       bVisible;
+    bool                       bRequestRenameFocus     : 1;
+    bool                       bSelectionActiveInTable : 1;
+    bool                       bPendingAttachment      : 1;
+    bool                       bPendingFilterCreate    : 1;
+    bool                       bPendingFilterAssign    : 1;
+    bool                       bPendingFilterReparent  : 1;
+    bool                       bPendingRangeSelect     : 1;
+    bool                       bPendingRangeAdditive   : 1;
+    bool                       bDragHoveringSourceRow  : 1;
 };

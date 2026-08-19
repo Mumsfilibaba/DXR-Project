@@ -658,7 +658,6 @@ void FSceneRenderer::RenderThread_RenderSceneFrame(const FSceneRenderPacket& Pac
 
     RenderThread_RenderSceneView(Packet.View, Packet.SelectedObjectIDs);
 
-    FGPUProfiler::Get().EndGPUFrame(CommandList);
     CommandList.PopEvent();
 
     FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
@@ -1532,6 +1531,8 @@ void FSceneRenderer::RecordUI()
     {
         TRACE_SCOPE("Record UI");
 
+        GPU_TRACE_SCOPE(UICommandList, "UI Render");
+
     #if SUPPORT_VARIABLE_RATE_SHADING
         if (RHISupportsVariableRateShading())
         {
@@ -1555,11 +1556,15 @@ void FSceneRenderer::SubmitUIAndPresent(const FSceneRenderPacket& Packet)
         RHI_EVENT_SCOPE(UICommandList, "UI Viewports");
         TRACE_SCOPE("Render UI Viewports");
 
+        GPU_TRACE_SCOPE(UICommandList, "UI Viewports");
+
         if (IImguiPlugin::IsEnabled())
         {
             IImguiPlugin::Get().DrawViewports(UICommandList);
         }
     }
+
+    FGPUProfiler::Get().EndGPUFrame(UICommandList);
 
     if (Packet.SwapChain)
     {

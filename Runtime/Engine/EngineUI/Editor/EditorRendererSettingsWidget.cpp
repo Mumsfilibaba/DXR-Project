@@ -4,6 +4,7 @@
 #include "Core/Containers/StaticArray.h"
 #include "Core/Math/Math.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Templates/CString.h"
 #include "RHI/RHI.h"
 #include "ImGuiPlugin/ImGuiCore.h"
@@ -25,6 +26,12 @@ static const ValueType* TryGetDefaultPtr(const TMap<String, ValueType>& Defaults
 
 FEditorRendererSettingsWidget::FEditorRendererSettingsWidget()
     : ImGuiDelegateHandle()
+    , BoolDefaults()
+    , IntDefaults()
+    , FloatDefaults()
+    , CVarCache()
+    , bVisible(true)
+    , bDefaultsCaptured(false)
 {
     if (IImguiPlugin::IsEnabled())
     {
@@ -48,6 +55,8 @@ void FEditorRendererSettingsWidget::Draw()
         return;
     }
 
+    TRACE_SCOPE("Renderer Settings");
+
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, EditorStyleVars::PropertiesItemSpacing);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, EditorStyleVars::PropertiesWindowPadding);
 
@@ -59,6 +68,22 @@ void FEditorRendererSettingsWidget::Draw()
     EditorWidgets::EndEditorWindow();
 
     ImGui::PopStyleVar(2);
+}
+
+IConsoleVariable* FEditorRendererSettingsWidget::GetCachedConsoleVariable(const CHAR* InName)
+{
+    if (IConsoleVariable** Cached = CVarCache.Find(InName))
+    {
+        return *Cached;
+    }
+
+    IConsoleVariable* Variable = FConsoleManager::Get().FindConsoleVariable(InName);
+    if (Variable)
+    {
+        CVarCache.Add(InName, Variable);
+    }
+
+    return Variable;
 }
 
 void FEditorRendererSettingsWidget::CaptureDefaultsIfNeeded()
@@ -236,11 +261,8 @@ void FEditorRendererSettingsWidget::DrawWindow()
                 const ImVec2 IconMin = ImVec2(HeaderMin.x + Style.FramePadding.x, IconY);
                 const ImVec2 IconMax = ImVec2(IconMin.x + IconSize, IconMin.y + IconSize);
 
-                ImTextureID ArrowIcon = bResult ? EditorIcons::CollapseArrowDown : EditorIcons::CollapseArrowRight;
-                if (ArrowIcon)
-                {
-                    Window->DrawList->AddImage(ArrowIcon, IconMin, IconMax, ImVec2(0, 0), ImVec2(1, 1), Tint);
-                }
+                const FEditorIcon& ArrowIcon = bResult ? EditorIcons::CollapseArrowDown : EditorIcons::CollapseArrowRight;
+                EditorWidgets::DrawIcon(Window->DrawList, ArrowIcon, IconMin, IconMax, Tint);
             }
         }
 
@@ -361,7 +383,7 @@ void FEditorRendererSettingsWidget::DrawDeferredRenderingSettings()
         return;
     }
 
-    if (IConsoleVariable* CVarDrawTiledLightning = FConsoleManager::Get().FindConsoleVariable("Renderer.Debug.DrawTiledLightning"))
+    if (IConsoleVariable* CVarDrawTiledLightning = GetCachedConsoleVariable("Renderer.Debug.DrawTiledLightning"))
     {
         bool bValue  = CVarDrawTiledLightning->GetBool();
         bool bValue0 = false;
@@ -373,7 +395,7 @@ void FEditorRendererSettingsWidget::DrawDeferredRenderingSettings()
         }
     }
 
-    if (IConsoleVariable* CVarClearAllTargets = FConsoleManager::Get().FindConsoleVariable("Renderer.BasePass.ClearAllTargets"))
+    if (IConsoleVariable* CVarClearAllTargets = GetCachedConsoleVariable("Renderer.BasePass.ClearAllTargets"))
     {
         bool bValue  = CVarClearAllTargets->GetBool();
         bool bValue0 = false;
@@ -385,7 +407,7 @@ void FEditorRendererSettingsWidget::DrawDeferredRenderingSettings()
         }
     }
 
-    if (IConsoleVariable* CVarEnablePrePass = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.PrePass"))
+    if (IConsoleVariable* CVarEnablePrePass = GetCachedConsoleVariable("Renderer.Feature.PrePass"))
     {
         bool bValue  = CVarEnablePrePass->GetBool();
         bool bValue0 = false;
@@ -397,7 +419,7 @@ void FEditorRendererSettingsWidget::DrawDeferredRenderingSettings()
         }
     }
 
-    if (IConsoleVariable* CVarEnableBasePass = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.BasePass"))
+    if (IConsoleVariable* CVarEnableBasePass = GetCachedConsoleVariable("Renderer.Feature.BasePass"))
     {
         bool bValue  = CVarEnableBasePass->GetBool();
         bool bValue0 = false;
@@ -419,7 +441,7 @@ void FEditorRendererSettingsWidget::DrawShadowSettings()
         return;
     }
 
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.Shadows"))
+    if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.Feature.Shadows"))
     {
         bool bValue  = CVar->GetBool();
         bool bValue0 = false;
@@ -441,7 +463,7 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
         return;
     }
 
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.SunShadows"))
+    if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.Feature.SunShadows"))
     {
         bool bValue  = CVar->GetBool();
         bool bValue0 = false;
@@ -453,7 +475,7 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
         }
     }
 
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.ShadowMask"))
+    if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.Feature.ShadowMask"))
     {
         bool bValue  = CVar->GetBool();
         bool bValue0 = false;
@@ -465,7 +487,7 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
         }
     }
 
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.TightFrustum"))
+    if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.CSM.TightFrustum"))
     {
         bool bValue  = CVar->GetBool();
         bool bValue0 = false;
@@ -477,10 +499,11 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
         }
     }
 
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.CascadeSize"))
+    if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.CSM.CascadeSize"))
     {
-        static const CHAR* CascadeResItems[] = { "512", "1024", "2048", "4096" };
+        static const CHAR* CascadeResItems[]  = { "512", "1024", "2048", "4096" };
         static const int32 CascadeResValues[] = { 512, 1024, 2048, 4096 };
+
         static constexpr int32 CascadeResCount = 4;
 
         const int32 RawValue = CVar->GetInt();
@@ -516,7 +539,7 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
         }
     }
 
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.StableCascades"))
+    if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.CSM.StableCascades"))
     {
         bool bValue  = CVar->GetBool();
         bool bValue0 = false;
@@ -528,7 +551,7 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
         }
     }
 
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.EnableSinglePassRendering"))
+    if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.CSM.EnableSinglePassRendering"))
     {
         bool bValue  = CVar->GetBool();
         bool bValue0 = false;
@@ -540,7 +563,7 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
         }
     }
 
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.EnableGeometryShaderInstancing"))
+    if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.CSM.EnableGeometryShaderInstancing"))
     {
         bool bValue  = CVar->GetBool();
         bool bValue0 = false;
@@ -552,7 +575,7 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
         }
     }
 
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.EnableViewInstancing"))
+    if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.CSM.EnableViewInstancing"))
     {
         bool bValue  = CVar->GetBool();
         bool bValue0 = false;
@@ -564,7 +587,7 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
         }
     }
 
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.EnableDepthClipping"))
+    if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.CSM.EnableDepthClipping"))
     {
         bool bValue  = CVar->GetBool();
         bool bValue0 = false;
@@ -576,7 +599,7 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
         }
     }
 
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.BlendCascades"))
+    if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.CSM.BlendCascades"))
     {
         bool bValue  = CVar->GetBool();
         bool bValue0 = false;
@@ -588,7 +611,7 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
         }
     }
 
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.SelectCascadeFromProjection"))
+    if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.CSM.SelectCascadeFromProjection"))
     {
         bool bValue  = CVar->GetBool();
         bool bValue0 = false;
@@ -600,7 +623,7 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
         }
     }
 
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.FilterMode"))
+    if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.CSM.FilterMode"))
     {
         static const CHAR* const FilterModeItems[] = { "PCF", "PCSS" };
         constexpr int32 FilterModeCount = static_cast<int32>(ARRAY_COUNT(FilterModeItems));
@@ -616,7 +639,7 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
     }
 
     int32 CurrentFilterFunction = 0;
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.FilterFunction"))
+    if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.CSM.FilterFunction"))
     {
         static const CHAR* const FilterFuncItems[] = { "Grid", "Poisson Disk", "Vogel Disk" };
         constexpr int32 FilterFuncCount = static_cast<int32>(ARRAY_COUNT(FilterFuncItems));
@@ -633,7 +656,7 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
 
             if (Value == 0)
             {
-                if (IConsoleVariable* FilterSizeCVar = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.FilterSize"))
+                if (IConsoleVariable* FilterSizeCVar = GetCachedConsoleVariable("Renderer.CSM.FilterSize"))
                 {
                     FilterSizeCVar->SetAsInt(9, EConsoleVariableFlags::SetByCode);
                 }
@@ -643,7 +666,7 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
 
     const bool bIsGridFunction = (CurrentFilterFunction == 0);
 
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.FilterSize"))
+    if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.CSM.FilterSize"))
     {
         int32 Value  = Math::Clamp<int32>(CVar->GetInt(), 1, 2048);
         int32 Value0 = 0;
@@ -656,7 +679,7 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
         }
     }
 
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.MaxFilterSize"))
+    if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.CSM.MaxFilterSize"))
     {
         int32 Value  = Math::Clamp<int32>(CVar->GetInt(), 1, 2048);
         int32 Value0 = 0;
@@ -672,7 +695,7 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
 
     if (!bIsGridFunction)
     {
-        if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.NumPoissonDiscSamples"))
+        if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.CSM.NumPoissonDiscSamples"))
         {
             if (bIsVogelFunction)
             {
@@ -726,7 +749,7 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
         }
     }
 
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.RotateSamples"))
+    if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.CSM.RotateSamples"))
     {
         bool bValue  = CVar->GetBool();
         bool bValue0 = false;
@@ -748,7 +771,7 @@ void FEditorRendererSettingsWidget::DrawPointLightShadowSettings()
         return;
     }
 
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.PointLightShadows"))
+    if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.Feature.PointLightShadows"))
     {
         bool bValue  = CVar->GetBool();
         bool bValue0 = false;
@@ -760,10 +783,11 @@ void FEditorRendererSettingsWidget::DrawPointLightShadowSettings()
         }
     }
 
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.Shadows.PointLightShadowMapSize"))
+    if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.Shadows.PointLightShadowMapSize"))
     {
-        static const CHAR* PointResItems[] = { "128", "256", "512", "1024" };
+        static const CHAR* PointResItems[]  = { "128", "256", "512", "1024" };
         static const int32 PointResValues[] = { 128, 256, 512, 1024 };
+
         static constexpr int32 PointResCount = 4;
 
         const int32 RawValue = CVar->GetInt();
@@ -799,7 +823,7 @@ void FEditorRendererSettingsWidget::DrawPointLightShadowSettings()
         }
     }
 
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.PointLights.EnableSinglePassRendering"))
+    if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.PointLights.EnableSinglePassRendering"))
     {
         bool bValue  = CVar->GetBool();
         bool bValue0 = false;
@@ -811,7 +835,7 @@ void FEditorRendererSettingsWidget::DrawPointLightShadowSettings()
         }
     }
 
-    if (IConsoleVariable* CVar = FConsoleManager::Get().FindConsoleVariable("Renderer.PointLights.EnableGeometryShaderInstancing"))
+    if (IConsoleVariable* CVar = GetCachedConsoleVariable("Renderer.PointLights.EnableGeometryShaderInstancing"))
     {
         bool bValue  = CVar->GetBool();
         bool bValue0 = false;
@@ -833,7 +857,7 @@ void FEditorRendererSettingsWidget::DrawSkyboxSettings()
         return;
     }
 
-    if (IConsoleVariable* CVarEnableSkybox = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.Skybox"))
+    if (IConsoleVariable* CVarEnableSkybox = GetCachedConsoleVariable("Renderer.Feature.Skybox"))
     {
         bool bEnableSkybox  = CVarEnableSkybox->GetBool();
         bool bEnableSkybox0 = false;
@@ -845,7 +869,7 @@ void FEditorRendererSettingsWidget::DrawSkyboxSettings()
         }
     }
 
-    if (IConsoleVariable* CVarEnableClearBeforeSkybox = FConsoleManager::Get().FindConsoleVariable("Renderer.Skybox.ClearBeforeSkybox"))
+    if (IConsoleVariable* CVarEnableClearBeforeSkybox = GetCachedConsoleVariable("Renderer.Skybox.ClearBeforeSkybox"))
     {
         bool bEnableClearBeforeSkybox  = CVarEnableClearBeforeSkybox->GetBool();
         bool bEnableClearBeforeSkybox0 = false;
@@ -867,7 +891,7 @@ void FEditorRendererSettingsWidget::DrawSSAOSettings()
         return;
     }
 
-    if (IConsoleVariable* CVarEnableSSAO = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.SSAO"))
+    if (IConsoleVariable* CVarEnableSSAO = GetCachedConsoleVariable("Renderer.Feature.SSAO"))
     {
         bool bEnableSSAO  = CVarEnableSSAO->GetBool();
         bool bEnableSSAO0 = false;
@@ -879,7 +903,7 @@ void FEditorRendererSettingsWidget::DrawSSAOSettings()
         }
     }
 
-    if (IConsoleVariable* CVarKernelSize = FConsoleManager::Get().FindConsoleVariable("Renderer.SSAO.KernelSize"))
+    if (IConsoleVariable* CVarKernelSize = GetCachedConsoleVariable("Renderer.SSAO.KernelSize"))
     {
         int32 KernelSize  = Math::Clamp<int32>(CVarKernelSize->GetInt(), 1, 128);
         int32 KernelSize0 = 0;
@@ -891,7 +915,7 @@ void FEditorRendererSettingsWidget::DrawSSAOSettings()
         }
     }
 
-    if (IConsoleVariable* CVarRadius = FConsoleManager::Get().FindConsoleVariable("Renderer.SSAO.Radius"))
+    if (IConsoleVariable* CVarRadius = GetCachedConsoleVariable("Renderer.SSAO.Radius"))
     {
         float Radius  = Math::Clamp<float>(CVarRadius->GetFloat(), 0.01f, 1.0f);
         float Radius0 = 0.0f;
@@ -903,7 +927,7 @@ void FEditorRendererSettingsWidget::DrawSSAOSettings()
         }
     }
 
-    if (IConsoleVariable* CVarBias = FConsoleManager::Get().FindConsoleVariable("Renderer.SSAO.Bias"))
+    if (IConsoleVariable* CVarBias = GetCachedConsoleVariable("Renderer.SSAO.Bias"))
     {
         float Bias  = Math::Clamp<float>(CVarBias->GetFloat(), 0.01f, 1.0f);
         float Bias0 = 0.0f;
@@ -927,7 +951,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingSettings()
 
     EditorWidgets::DrawTextProperty("Hardware support", RHI::bSupportsRayTracing ? "Supported" : "Unsupported");
 
-    if (IConsoleVariable* CVarEnableRayTracing = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.RayTracing"))
+    if (IConsoleVariable* CVarEnableRayTracing = GetCachedConsoleVariable("Renderer.Feature.RayTracing"))
     {
         bool bEnableRayTracing  = CVarEnableRayTracing->GetBool();
         bool bEnableRayTracing0 = false;
@@ -939,7 +963,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingSettings()
         }
     }
 
-    if (IConsoleVariable* CVarLocalShaderBindings = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.EnableLocalShaderBindings"))
+    if (IConsoleVariable* CVarLocalShaderBindings = GetCachedConsoleVariable("Renderer.RayTracing.EnableLocalShaderBindings"))
     {
         bool bLocalShaderBindings  = CVarLocalShaderBindings->GetBool();
         bool bLocalShaderBindings0 = false;
@@ -952,7 +976,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingSettings()
     }
 
     bool bInlineReflections = false;
-    if (IConsoleVariable* CVarInlineReflections = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.InlineReflections"))
+    if (IConsoleVariable* CVarInlineReflections = GetCachedConsoleVariable("Renderer.RayTracing.InlineReflections"))
     {
         bInlineReflections = CVarInlineReflections->GetBool();
 
@@ -965,7 +989,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingSettings()
         }
     }
 
-    if (IConsoleVariable* CVarSER = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.SER"))
+    if (IConsoleVariable* CVarSER = GetCachedConsoleVariable("Renderer.RayTracing.SER"))
     {
         bool bSER  = CVarSER->GetBool();
         bool bSER0 = false;
@@ -979,7 +1003,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingSettings()
         }
     }
 
-    if (IConsoleVariable* CVarCompaction = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Compaction"))
+    if (IConsoleVariable* CVarCompaction = GetCachedConsoleVariable("Renderer.RayTracing.Compaction"))
     {
         bool bCompaction  = CVarCompaction->GetBool();
         bool bCompaction0 = false;
@@ -991,7 +1015,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingSettings()
         }
     }
 
-    if (IConsoleVariable* CVarASCache = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.ASCache"))
+    if (IConsoleVariable* CVarASCache = GetCachedConsoleVariable("Renderer.RayTracing.ASCache"))
     {
         bool bASCache  = CVarASCache->GetBool();
         bool bASCache0 = false;
@@ -1014,13 +1038,13 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
     }
 
     bool bRayTracingActive = false;
-    if (IConsoleVariable* CVarEnableRayTracing = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.RayTracing"))
+    if (IConsoleVariable* CVarEnableRayTracing = GetCachedConsoleVariable("Renderer.Feature.RayTracing"))
     {
         bRayTracingActive = CVarEnableRayTracing->GetBool() && RHI::bSupportsRayTracing;
     }
 
     bool bReflectionsEnabled = false;
-    if (IConsoleVariable* CVarEnableReflections = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.Enable"))
+    if (IConsoleVariable* CVarEnableReflections = GetCachedConsoleVariable("Renderer.RayTracing.Reflections.Enable"))
     {
         bReflectionsEnabled = CVarEnableReflections->GetBool();
 
@@ -1035,7 +1059,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
 
     const bool bReflectionsActive = bRayTracingActive && bReflectionsEnabled;
 
-    if (IConsoleVariable* CVarIndirectSpecularStrength = FConsoleManager::Get().FindConsoleVariable("Renderer.Reflections.IndirectSpecularStrength"))
+    if (IConsoleVariable* CVarIndirectSpecularStrength = GetCachedConsoleVariable("Renderer.Reflections.IndirectSpecularStrength"))
     {
         float IndirectSpecularStrength  = Math::Clamp<float>(CVarIndirectSpecularStrength->GetFloat(), 0.0f, 4.0f);
         float IndirectSpecularStrength0 = 0.0f;
@@ -1047,7 +1071,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
         }
     }
 
-    if (IConsoleVariable* CVarHalfRes = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.HalfRes"))
+    if (IConsoleVariable* CVarHalfRes = GetCachedConsoleVariable("Renderer.RayTracing.Reflections.HalfRes"))
     {
         bool bHalfRes  = CVarHalfRes->GetBool();
         bool bHalfRes0 = false;
@@ -1059,7 +1083,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
         }
     }
 
-    if (IConsoleVariable* CVarMaxRayDistance = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.MaxRayDistance"))
+    if (IConsoleVariable* CVarMaxRayDistance = GetCachedConsoleVariable("Renderer.RayTracing.Reflections.MaxRayDistance"))
     {
         float MaxRayDistance  = Math::Clamp<float>(CVarMaxRayDistance->GetFloat(), 1.0f, 100000.0f);
         float MaxRayDistance0 = 0.0f;
@@ -1071,7 +1095,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
         }
     }
 
-    if (IConsoleVariable* CVarMirrorRoughnessThreshold = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.MirrorRoughnessThreshold"))
+    if (IConsoleVariable* CVarMirrorRoughnessThreshold = GetCachedConsoleVariable("Renderer.RayTracing.Reflections.MirrorRoughnessThreshold"))
     {
         float MirrorRoughnessThreshold  = Math::Clamp<float>(CVarMirrorRoughnessThreshold->GetFloat(), 0.0f, 1.0f);
         float MirrorRoughnessThreshold0 = 0.0f;
@@ -1083,7 +1107,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
         }
     }
 
-    if (IConsoleVariable* CVarRayBias = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.RayBias"))
+    if (IConsoleVariable* CVarRayBias = GetCachedConsoleVariable("Renderer.RayTracing.Reflections.RayBias"))
     {
         float RayBias  = Math::Clamp<float>(CVarRayBias->GetFloat(), 0.0f, 1.0f);
         float RayBias0 = 0.0f;
@@ -1095,7 +1119,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
         }
     }
 
-    if (IConsoleVariable* CVarSampler = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.Sampler"))
+    if (IConsoleVariable* CVarSampler = GetCachedConsoleVariable("Renderer.RayTracing.Reflections.Sampler"))
     {
         // Order matches REFLECTION_SAMPLER_* in Shaders/Reflections/ReflectionSampling.hlsli.
         static const CHAR* const Items[] =
@@ -1116,7 +1140,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
     }
 
     bool bDenoise = false;
-    if (IConsoleVariable* CVarDenoise = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.Denoise"))
+    if (IConsoleVariable* CVarDenoise = GetCachedConsoleVariable("Renderer.RayTracing.Reflections.Denoise"))
     {
         bDenoise = CVarDenoise->GetBool();
 
@@ -1131,7 +1155,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
 
     const bool bDenoiserActive = bReflectionsActive && bDenoise;
 
-    if (IConsoleVariable* CVarTemporalAlpha = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.TemporalAlpha"))
+    if (IConsoleVariable* CVarTemporalAlpha = GetCachedConsoleVariable("Renderer.RayTracing.Reflections.TemporalAlpha"))
     {
         float TemporalAlpha  = Math::Clamp<float>(CVarTemporalAlpha->GetFloat(), 0.01f, 1.0f);
         float TemporalAlpha0 = 0.0f;
@@ -1143,7 +1167,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
         }
     }
 
-    if (IConsoleVariable* CVarMaxRadiance = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.MaxRadiance"))
+    if (IConsoleVariable* CVarMaxRadiance = GetCachedConsoleVariable("Renderer.RayTracing.Reflections.MaxRadiance"))
     {
         float MaxRadiance  = Math::Clamp<float>(CVarMaxRadiance->GetFloat(), 0.0f, 100.0f);
         float MaxRadiance0 = 0.0f;
@@ -1155,7 +1179,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
         }
     }
 
-    if (IConsoleVariable* CVarHistoryClampGamma = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.HistoryClampGamma"))
+    if (IConsoleVariable* CVarHistoryClampGamma = GetCachedConsoleVariable("Renderer.RayTracing.Reflections.HistoryClampGamma"))
     {
         float HistoryClampGamma  = Math::Clamp<float>(CVarHistoryClampGamma->GetFloat(), 0.0f, 10.0f);
         float HistoryClampGamma0 = 0.0f;
@@ -1167,7 +1191,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
         }
     }
 
-    if (IConsoleVariable* CVarMaxHistoryLength = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.MaxHistoryLength"))
+    if (IConsoleVariable* CVarMaxHistoryLength = GetCachedConsoleVariable("Renderer.RayTracing.Reflections.MaxHistoryLength"))
     {
         float MaxHistoryLength  = Math::Clamp<float>(CVarMaxHistoryLength->GetFloat(), 1.0f, 128.0f);
         float MaxHistoryLength0 = 0.0f;
@@ -1179,7 +1203,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
         }
     }
 
-    if (IConsoleVariable* CVarNeighborhoodRadius = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.NeighborhoodRadius"))
+    if (IConsoleVariable* CVarNeighborhoodRadius = GetCachedConsoleVariable("Renderer.RayTracing.Reflections.NeighborhoodRadius"))
     {
         int32 NeighborhoodRadius  = Math::Clamp<int32>(CVarNeighborhoodRadius->GetInt(), 0, 8);
         int32 NeighborhoodRadius0 = 0;
@@ -1191,7 +1215,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
         }
     }
 
-    if (IConsoleVariable* CVarCameraMotionMaxHistory = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.CameraMotionMaxHistory"))
+    if (IConsoleVariable* CVarCameraMotionMaxHistory = GetCachedConsoleVariable("Renderer.RayTracing.Reflections.CameraMotionMaxHistory"))
     {
         float CameraMotionMaxHistory  = Math::Clamp<float>(CVarCameraMotionMaxHistory->GetFloat(), 0.0f, 64.0f);
         float CameraMotionMaxHistory0 = 0.0f;
@@ -1204,7 +1228,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
     }
 
     int32 AtrousIterations = 0;
-    if (IConsoleVariable* CVarAtrousIterations = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.AtrousIterations"))
+    if (IConsoleVariable* CVarAtrousIterations = GetCachedConsoleVariable("Renderer.RayTracing.Reflections.AtrousIterations"))
     {
         AtrousIterations = Math::Clamp<int32>(CVarAtrousIterations->GetInt(), 0, 8);
 
@@ -1217,7 +1241,7 @@ void FEditorRendererSettingsWidget::DrawRayTracingReflectionsSettings()
         }
     }
 
-    if (IConsoleVariable* CVarAtrousPhiColor = FConsoleManager::Get().FindConsoleVariable("Renderer.RayTracing.Reflections.AtrousPhiColor"))
+    if (IConsoleVariable* CVarAtrousPhiColor = GetCachedConsoleVariable("Renderer.RayTracing.Reflections.AtrousPhiColor"))
     {
         float AtrousPhiColor  = Math::Clamp<float>(CVarAtrousPhiColor->GetFloat(), 0.1f, 32.0f);
         float AtrousPhiColor0 = 0.0f;
@@ -1241,7 +1265,7 @@ void FEditorRendererSettingsWidget::DrawTAASettings()
     }
 
     bool bIsTAAEnabled = false;
-    if (IConsoleVariable* CVarEnableTemporalAntiAliasing = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.TemporalAntiAliasing"))
+    if (IConsoleVariable* CVarEnableTemporalAntiAliasing = GetCachedConsoleVariable("Renderer.Feature.TemporalAntiAliasing"))
     {
         bool bEnableTAA  = CVarEnableTemporalAntiAliasing->GetBool();
         bool bEnableTAA0 = false;
@@ -1255,7 +1279,7 @@ void FEditorRendererSettingsWidget::DrawTAASettings()
         bIsTAAEnabled = bEnableTAA;
     }
 
-    if (IConsoleVariable* CVarHardwareJitter = FConsoleManager::Get().FindConsoleVariable("Renderer.TemporalAntiAliasing.HardwareJitter"))
+    if (IConsoleVariable* CVarHardwareJitter = GetCachedConsoleVariable("Renderer.TemporalAntiAliasing.HardwareJitter"))
     {
         const bool bSupported = RHI::bSupportsProgrammableSamplePositions && IsSampleCountSupported(RHI::SupportedSamplePositionSampleCounts, RHI_SAMPLE_COUNT_1);
 
@@ -1279,7 +1303,7 @@ void FEditorRendererSettingsWidget::DrawFXAASettings()
         return;
     }
 
-    if (IConsoleVariable* CVarEnableFXAA = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.FXAA"))
+    if (IConsoleVariable* CVarEnableFXAA = GetCachedConsoleVariable("Renderer.Feature.FXAA"))
     {
         bool bEnableFXAA  = CVarEnableFXAA->GetBool();
         bool bEnableFXAA0 = false;
@@ -1291,7 +1315,7 @@ void FEditorRendererSettingsWidget::DrawFXAASettings()
         }
     }
 
-    if (IConsoleVariable* CVarEnableFXAADebug = FConsoleManager::Get().FindConsoleVariable("Renderer.Debug.FXAADebug"))
+    if (IConsoleVariable* CVarEnableFXAADebug = GetCachedConsoleVariable("Renderer.Debug.FXAADebug"))
     {
         bool bEnableFXAADebug  = CVarEnableFXAADebug->GetBool();
         bool bEnableFXAADebug0 = false;
@@ -1313,7 +1337,7 @@ void FEditorRendererSettingsWidget::DrawDisplaySettings()
         return;
     }
 
-    if (IConsoleVariable* CVarEnableVSync = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.VerticalSync"))
+    if (IConsoleVariable* CVarEnableVSync = GetCachedConsoleVariable("Renderer.Feature.VerticalSync"))
     {
         bool bEnableVSync  = CVarEnableVSync->GetBool();
         bool bEnableVSync0 = false;
@@ -1335,7 +1359,7 @@ void FEditorRendererSettingsWidget::DrawCullingSettings()
         return;
     }
 
-    if (IConsoleVariable* CVarEnableFrustumCulling = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.FrustumCulling"))
+    if (IConsoleVariable* CVarEnableFrustumCulling = GetCachedConsoleVariable("Renderer.Feature.FrustumCulling"))
     {
         bool bEnableFrustumCulling  = CVarEnableFrustumCulling->GetBool();
         bool bEnableFrustumCulling0 = false;
@@ -1357,7 +1381,7 @@ void FEditorRendererSettingsWidget::DrawDebugSettings()
         return;
     }
 
-    if (IConsoleVariable* CVarEnableDebugDrawAABBs = FConsoleManager::Get().FindConsoleVariable("Renderer.Debug.DrawAABBs"))
+    if (IConsoleVariable* CVarEnableDebugDrawAABBs = GetCachedConsoleVariable("Renderer.Debug.DrawAABBs"))
     {
         bool bEnableDebugDrawAABBs  = CVarEnableDebugDrawAABBs->GetBool();
         bool bEnableDebugDrawAABBs0 = false;
@@ -1369,7 +1393,7 @@ void FEditorRendererSettingsWidget::DrawDebugSettings()
         }
     }
 
-    if (IConsoleVariable* CVarEnableDebugDrawPointLights = FConsoleManager::Get().FindConsoleVariable("Renderer.Debug.DrawPointLights"))
+    if (IConsoleVariable* CVarEnableDebugDrawPointLights = GetCachedConsoleVariable("Renderer.Debug.DrawPointLights"))
     {
         bool bEnableDebugDrawPointLights  = CVarEnableDebugDrawPointLights->GetBool();
         bool bEnableDebugDrawPointLights0 = false;
@@ -1381,7 +1405,7 @@ void FEditorRendererSettingsWidget::DrawDebugSettings()
         }
     }
 
-    if (IConsoleVariable* CVarEnableDebugDrawLightProbes = FConsoleManager::Get().FindConsoleVariable("Renderer.Debug.LightProbes"))
+    if (IConsoleVariable* CVarEnableDebugDrawLightProbes = GetCachedConsoleVariable("Renderer.Debug.LightProbes"))
     {
         bool bEnableDebugDrawLightProbes  = CVarEnableDebugDrawLightProbes->GetBool();
         bool bEnableDebugDrawLightProbes0 = false;
@@ -1406,7 +1430,7 @@ void FEditorRendererSettingsWidget::DrawTonemappingSettings()
     bool  bHasTonemappingFunction = false;
     int32 TonemappingFunction     = 0;
 
-    if (IConsoleVariable* CVarTonemappingFunction = FConsoleManager::Get().FindConsoleVariable("Renderer.Tonemapping.Function"))
+    if (IConsoleVariable* CVarTonemappingFunction = GetCachedConsoleVariable("Renderer.Tonemapping.Function"))
     {
         static const CHAR* const Items[] =
         {
@@ -1427,7 +1451,7 @@ void FEditorRendererSettingsWidget::DrawTonemappingSettings()
         }
     }
 
-    if (IConsoleVariable* CVarTonemappingEV100 = FConsoleManager::Get().FindConsoleVariable("Renderer.Tonemapping.EV100"))
+    if (IConsoleVariable* CVarTonemappingEV100 = GetCachedConsoleVariable("Renderer.Tonemapping.EV100"))
     {
         float ExposureEV100  = Math::Clamp<float>(CVarTonemappingEV100->GetFloat(), -10.0f, 20.0f);
         float ExposureEV1000 = 0.0f;
@@ -1442,7 +1466,7 @@ void FEditorRendererSettingsWidget::DrawTonemappingSettings()
     const bool bIsReinhard = bHasTonemappingFunction && (TonemappingFunction == 2);
     if (bIsReinhard)
     {
-        if (IConsoleVariable* CVarTonemappingReinhardIntensity = FConsoleManager::Get().FindConsoleVariable("Renderer.Tonemapping.ReinhardIntensity"))
+        if (IConsoleVariable* CVarTonemappingReinhardIntensity = GetCachedConsoleVariable("Renderer.Tonemapping.ReinhardIntensity"))
         {
             float ReinhardIntensity  = Math::Clamp<float>(CVarTonemappingReinhardIntensity->GetFloat(), 0.1f, 10.0f);
             float ReinhardIntensity0 = 0.0f;

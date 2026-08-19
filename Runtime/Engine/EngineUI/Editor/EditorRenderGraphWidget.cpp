@@ -2,6 +2,7 @@
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Engine/EngineUI/Editor/EditorNodeGraph.h"
 #include "Core/Math/Math.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "ImGuiPlugin/ImGuiCore.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
 
@@ -141,6 +142,8 @@ void FEditorRenderGraphWidget::Draw()
     {
         return;
     }
+
+    TRACE_SCOPE("Render Graph");
 
     DrawWindow();
 }

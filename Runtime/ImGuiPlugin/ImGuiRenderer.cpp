@@ -1,6 +1,7 @@
 #include "ImGuiRenderer.h"
 #include "ImGuiExtensions.h"
 #include "ImGuiPlugin.h"
+#include "ImGuiPluginStats.h"
 #include "Core/Time/ElapsedTime.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/OutputDeviceLogger.h"
@@ -308,6 +309,14 @@ void FImGuiRenderer::PreparePipelineState(EFormat OutputFormat)
 
 void FImGuiRenderer::Render(FRHICommandList& CommandList)
 {
+    STAT_SET(STAT_ImGui_Viewports, 0);
+    STAT_SET(STAT_ImGui_DrawLists, 0);
+    STAT_SET(STAT_ImGui_DrawCalls, 0);
+    STAT_SET(STAT_ImGui_Vertices, 0);
+    STAT_SET(STAT_ImGui_Triangles, 0);
+    STAT_SET(STAT_ImGui_UploadedGeometry, 0);
+    STAT_SET(STAT_ImGui_GeometryBuffers, 0);
+
     if (ImGuiViewport* MainViewport = ImGui::GetMainViewport())
     {
         FImGuiViewport* MainViewportData = reinterpret_cast<FImGuiViewport*>(MainViewport->RendererUserData);
@@ -316,11 +325,16 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
         FRHISwapChainRef RHISwapChain = MainViewportData->SwapChain;
         CHECK(RHISwapChain != nullptr);
 
+        STAT_ADD(STAT_ImGui_Viewports, 1);
+
         PreparePipelineState(RHISwapChain->GetDesc().ColorFormat);
 
         // Render
-        ImGui::Render();
-        
+        {
+            TRACE_SCOPE("ImGui Generate DrawData");
+            ImGui::Render();
+        }
+
         ImDrawData* DrawData = ImGui::GetDrawData();
         PrepareDrawData(CommandList, DrawData);
         PrepareTexturesForShaderResourceUsage(CommandList, DrawData);
@@ -340,7 +354,11 @@ void FImGuiRenderer::RenderPlatformWindows(FRHICommandList& CommandList)
     ImGuiIO& IOState = ImGui::GetIO();
     if (IOState.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
-        ImGui::UpdatePlatformWindows();
+        {
+            TRACE_SCOPE("ImGui Update Platform Windows");
+            ImGui::UpdatePlatformWindows();
+        }
+
         ImGui::RenderPlatformWindowsDefault(nullptr, reinterpret_cast<void*>(&CommandList));
     }
 
@@ -360,6 +378,10 @@ void FImGuiRenderer::RenderViewport(FRHICommandList& CommandList, ImDrawData* Dr
     {
         return;
     }
+
+    TRACE_SCOPE("ImGui Render Viewport");
+
+    STAT_ADD(STAT_ImGui_Viewports, 1);
 
     CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::Present, ERHIResourceState::RenderTarget));
 
@@ -382,6 +404,8 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
     {
         return;
     }
+
+    TRACE_SCOPE("ImGui Upload Geometry");
 
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(DrawData->OwnerViewport->RendererUserData);
     CHECK(ViewportData != nullptr);
@@ -426,6 +450,9 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
         }
     }
 
+    STAT_ADD(STAT_ImGui_GeometryBuffers, (ViewportData->VertexCount * sizeof(ImDrawVert)) + (ViewportData->IndexCount * sizeof(ImDrawIdx)));
+    STAT_ADD(STAT_ImGui_UploadedGeometry, (DrawData->TotalVtxCount * sizeof(ImDrawVert)) + (DrawData->TotalIdxCount * sizeof(ImDrawIdx)));
+
     const FRHITransitionBarrierDesc ToCopyDest[] =
     {
         FRHITransitionBarrierDesc::CreateBuffer(ViewportData->VertexBuffer.Get(), ERHIResourceState::GenericRead, ERHIResourceState::CopyDest),
@@ -466,8 +493,14 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
         return;
     }
 
+    TRACE_SCOPE("ImGui Record DrawCommands");
+
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(DrawData->OwnerViewport->RendererUserData);
     CHECK(ViewportData != nullptr);
+
+    STAT_ADD(STAT_ImGui_DrawLists, DrawData->CmdListsCount);
+    STAT_ADD(STAT_ImGui_Vertices, DrawData->TotalVtxCount);
+    STAT_ADD(STAT_ImGui_Triangles, DrawData->TotalIdxCount / 3);
 
     SetupRenderState(CommandList, DrawData, *ViewportData);
 
@@ -587,6 +620,8 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
                 CommandList.SetScissorRect(ScissorRegion);
 
                 CommandList.DrawIndexedInstanced(DrawCommand->ElemCount, 1, DrawCommand->IdxOffset + GlobalIndexOffset, DrawCommand->VtxOffset + GlobalVertexOffset, 0);
+
+                STAT_ADD(STAT_ImGui_DrawCalls, 1);
             }
         }
 
@@ -632,6 +667,8 @@ void FImGuiRenderer::SetupRenderState(FRHICommandList& CommandList, ImDrawData* 
 
 void FImGuiRenderer::PrepareTexturesForShaderResourceUsage(FRHICommandList& CommandList, ImDrawData* DrawData)
 {
+    TRACE_SCOPE("ImGui Texture Transitions");
+
 	for (int32 i = 0; i < DrawData->CmdListsCount; ++i)
 	{
 		const ImDrawList* DrawCmdList = DrawData->CmdLists[i];
@@ -645,6 +682,8 @@ void FImGuiRenderer::PrepareTexturesForShaderResourceUsage(FRHICommandList& Comm
 			}
 		}
 	}
+
+    STAT_SET(STAT_ImGui_UniqueTextures, RenderedTextures.Size());
 }
 
 void FImGuiRenderer::PrepareTextureForShaderResourceUsage(FRHICommandList& CommandList, const FImGuiTexture* InTexture)

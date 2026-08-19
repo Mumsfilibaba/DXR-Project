@@ -60,10 +60,12 @@ struct FSubMenuState
 
 struct FRichTextSpan
 {
-    String Text;
-    ImU32  TextColor       = IM_COL32(255, 255, 255, 255);
-    ImU32  BackgroundColor = 0;
-    bool   bHasBackground  = false;
+    int32 TextOffset      = 0;
+    int32 TextLength      = 0;
+    float Width           = 0.0f;
+    ImU32 TextColor       = IM_COL32(255, 255, 255, 255);
+    ImU32 BackgroundColor = 0;
+    bool  bHasBackground  = false;
 };
 
 struct FRichTextLine
@@ -80,17 +82,27 @@ struct FRichTextSelectionPoint
 
 struct FRichTextViewContext
 {
-    void ClearForNewFrame()
+    void Clear()
     {
         Lines.Clear();
+        TextArena.Clear();
 
-        MaxLineChars = 0;
-        bActive      = false;
+        MaxLineChars  = 0;
+        bHasSelection = false;
+        bSelecting    = false;
+    }
+
+    const CHAR* GetSpanText(const FRichTextSpan& InSpan) const
+    {
+        return TextArena.Data() + InSpan.TextOffset;
     }
 
     TArray<FRichTextLine>   Lines;
+    TArray<CHAR>            TextArena;
     FRichTextSelectionPoint SelStart;
     FRichTextSelectionPoint SelEnd;
+    ImFont*                 MeasuredFont        = nullptr;
+    float                   MeasuredFontSize    = 0.0f;
     ImGuiID                 ViewId              = 0;
     ImVec2                  Padding             = ImVec2(12.0f, 8.0f);
     ImVec2                  ContentStart        = ImVec2(0, 0);
@@ -301,7 +313,9 @@ struct ENGINE_API EditorWidgets
     static void RichTextSelectAll(FRichTextViewContext& InOutContext);
     static void RichTextNewLine(FRichTextViewContext& InOutContext);
     static void RichTextAddText(FRichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor);
+    static void RichTextAddText(FRichTextViewContext& InOutContext, const CHAR* InText, int32 InLength, ImU32 InTextColor);
     static void RichTextAddTextBg(FRichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor, ImU32 InBackgroundColor);
+    static void RichTextAddTextBg(FRichTextViewContext& InOutContext, const CHAR* InText, int32 InLength, ImU32 InTextColor, ImU32 InBackgroundColor);
     static void EndRichTextView(FRichTextViewContext& InOutContext);
 
     static String GetSelectedRichText(const FRichTextViewContext& InContext);
@@ -344,35 +358,54 @@ struct ENGINE_API EditorWidgets
     // -----------------------------------------------------------------------------------------
 
     static void DrawCheckMark(ImDrawList* DrawList, ImVec2 Position, ImU32 Color, float CheckMarkSize);
+
+    static void DrawIcon(ImDrawList* DrawList, const struct FEditorIcon& Icon, const ImVec2& Min, const ImVec2& Max, ImU32 Tint = IM_COL32_WHITE);
 };
 
 // -----------------------------------------------------------------------------------------
 // Icons
 // -----------------------------------------------------------------------------------------
 
+struct FEditorIcon
+{
+    NODISCARD bool IsValid() const
+    {
+        return Texture != nullptr;
+    }
+
+    explicit operator bool() const
+    {
+        return IsValid();
+    }
+
+    ImTextureID Texture = nullptr;
+    ImVec2      UVMin   = ImVec2(0.0f, 0.0f);
+    ImVec2      UVMax   = ImVec2(1.0f, 1.0f);
+};
+
 struct ENGINE_API EditorIcons
 {
-    static ImTextureID UndoIcon;
-    static ImTextureID SearchIcon;
-    static ImTextureID LockedIcon;
-    static ImTextureID UnlockedIcon;
-    static ImTextureID FolderIcon;
-    static ImTextureID FolderSmallIcon;
-    static ImTextureID FolderSmall2Icon;
-    static ImTextureID FolderOpenSmallIcon;
-    static ImTextureID DocumentIcon;
-    static ImTextureID DocumentSmallIcon;
-    static ImTextureID CheckmarkIcon;
-    static ImTextureID ForbiddenIcon;
-    static ImTextureID CircledCheckmarkIcon;
-    static ImTextureID NextIcon;
-    static ImTextureID PreviousIcon;
-    static ImTextureID CloseIcon;
-    static ImTextureID FilterIcon;
-    static ImTextureID RightArrowIcon;
-    static ImTextureID DownArrowIcon;
-    static ImTextureID CollapseArrowDown;
-    static ImTextureID CollapseArrowRight;
+    static FEditorIcon UndoIcon;
+    static FEditorIcon SearchIcon;
+    static FEditorIcon LockedIcon;
+    static FEditorIcon UnlockedIcon;
+    static FEditorIcon FolderIcon;
+    static FEditorIcon FolderSmallIcon;
+    static FEditorIcon FolderSmall2Icon;
+    static FEditorIcon FolderOpenSmallIcon;
+    static FEditorIcon DocumentIcon;
+    static FEditorIcon DocumentSmallIcon;
+    static FEditorIcon CheckmarkIcon;
+    static FEditorIcon ForbiddenIcon;
+    static FEditorIcon CircledCheckmarkIcon;
+    static FEditorIcon NextIcon;
+    static FEditorIcon PreviousIcon;
+    static FEditorIcon CloseIcon;
+    static FEditorIcon FilterIcon;
+    static FEditorIcon RightArrowIcon;
+    static FEditorIcon DownArrowIcon;
+    static FEditorIcon CollapseArrowDown;
+    static FEditorIcon CollapseArrowRight;
 
     static bool Initialize();
     static void Release();

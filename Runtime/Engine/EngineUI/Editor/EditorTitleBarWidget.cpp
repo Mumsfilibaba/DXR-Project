@@ -1,4 +1,5 @@
 #include "Core/CoreGlobals.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Engine/EditorEngine.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Engine/EngineUI/Editor/EditorTitleBarWidget.h"
@@ -189,6 +190,8 @@ FEditorTitleBarWidget::~FEditorTitleBarWidget()
 
 void FEditorTitleBarWidget::Draw()
 {
+    TRACE_SCOPE("Title Bar");
+
     TSharedPtr<FWindowWidget> Window = EditorEngine ? EditorEngine->GetEngineWindow() : nullptr;
 
     const FWindowTitleBarMetrics Metrics         = QueryTitleBarMetrics(Window);

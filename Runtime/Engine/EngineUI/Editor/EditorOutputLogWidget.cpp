@@ -1,8 +1,17 @@
 #include "Core/Templates/CString.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Engine/EngineUI/Editor/EditorOutputLogWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "ImGuiPlugin/ImGuiCore.h"
+
+static constexpr int32 MaxLogMessages = 5000;
+static constexpr int32 LogTrimBlock   = 512;
+
+static constexpr ImU32 LogWarningTextColor   = IM_COL32(255, 255, 0, 255);
+static constexpr ImU32 LogErrorTextColor     = IM_COL32(255, 0, 0, 255);
+static constexpr ImU32 LogHighlightTextColor = IM_COL32(192, 192, 192, 255);
+static constexpr ImU32 LogHighlightBgColor   = IM_COL32(13, 59, 105, 255);
 
 FEditorOutputLogWidget::FEditorOutputLogWidget()
     : IOutputDevice()
@@ -11,12 +20,20 @@ FEditorOutputLogWidget::FEditorOutputLogWidget()
     , MessagesCS()
     , RichTextCtx()
     , ImGuiDelegateHandle()
-    , bVisible(true)
+    , TotalMessagesAdded(0)
+    , TotalMessagesRemoved(0)
+    , BuiltSearchFilter()
+    , BuiltMessagesAdded(0)
+    , BuiltMessagesRemoved(0)
+    , bBuiltFilterInfo(true)
+    , bBuiltFilterWarning(true)
+    , bBuiltFilterError(true)
     , bAutoScroll(true)
     , bFocusSearchField(false)
     , bFilterInfo(true)
     , bFilterWarning(true)
     , bFilterError(true)
+    , bVisible(true)
 {
     if (FOutputDeviceLogger* Logger = FOutputDeviceLogger::Get())
     {
@@ -29,6 +46,9 @@ FEditorOutputLogWidget::FEditorOutputLogWidget()
     }
 
     SearchFilterBuffer.Fill(0);
+    BuiltSearchFilter.Fill(0);
+
+    Messages.Reserve(MaxLogMessages + 1);
 
     RichTextCtx.Padding     = ImVec2(12.0f, 8.0f);
     RichTextCtx.bAutoScroll = bAutoScroll;
@@ -56,13 +76,15 @@ void FEditorOutputLogWidget::Log(ELogSeverity Severity, const String& Message)
 {
     SCOPED_LOCK(MessagesCS);
 
-    constexpr int32 MaxMessages = 5000;
     Messages.Emplace(FLogMessage{ Message, Severity });
+    ++TotalMessagesAdded;
 
-    if (Messages.Size() > MaxMessages)
+    if (Messages.Size() > MaxLogMessages)
     {
-        const int32 Overflow = Messages.Size() - MaxMessages;
+        const int32 Overflow = Messages.Size() - (MaxLogMessages - LogTrimBlock);
         Messages.RemoveAt(0, Overflow);
+
+        TotalMessagesRemoved += static_cast<uint64>(Overflow);
     }
 }
 
@@ -72,6 +94,8 @@ void FEditorOutputLogWidget::Draw()
     {
         return;
     }
+
+    TRACE_SCOPE("Output Log");
 
     ImGuiStyle& Style = ImGui::GetStyle();
 
@@ -262,10 +286,7 @@ void FEditorOutputLogWidget::DrawFilterBar()
         const ImVec2 LeftIconMin = ImVec2(Min.x + Style.FramePadding.x, LeftIconY);
         const ImVec2 LeftIconMax = ImVec2(LeftIconMin.x + IconSize, LeftIconMin.y + IconSize);
 
-        if (EditorIcons::FilterIcon)
-        {
-            DrawList->AddImage(EditorIcons::FilterIcon, LeftIconMin, LeftIconMax, ImVec2(0, 0), ImVec2(1, 1), White);
-        }
+        EditorWidgets::DrawIcon(DrawList, EditorIcons::FilterIcon, LeftIconMin, LeftIconMax, White);
 
         const float TextX = LeftIconMax.x + IconTextGap;
         const float TextY = Min.y + (ButtonHeight - TextSize.y) * 0.5f;
@@ -277,10 +298,7 @@ void FEditorOutputLogWidget::DrawFilterBar()
         const ImVec2 RightIconMin = ImVec2(RightIconX, RightIconY);
         const ImVec2 RightIconMax = ImVec2(RightIconMin.x + ArrowIconSize, RightIconMin.y + ArrowIconSize);
 
-        if (EditorIcons::DownArrowIcon)
-        {
-            DrawList->AddImage(EditorIcons::DownArrowIcon, RightIconMin, RightIconMax, ImVec2(0, 0), ImVec2(1, 1), White);
-        }
+        EditorWidgets::DrawIcon(DrawList, EditorIcons::DownArrowIcon, RightIconMin, RightIconMax, White);
 
         ImGui::PopFont();
         return bPressed;
@@ -338,135 +356,133 @@ void FEditorOutputLogWidget::DrawFilterBar()
     ImGui::PopStyleVar(3);   // WindowPadding, PopupBorderSize, PopupRounding
 }
 
-void FEditorOutputLogWidget::DrawLogListRichText()
+bool FEditorOutputLogWidget::IsSeverityVisible(ELogSeverity Severity) const
 {
-    TArray<FLogMessage> LocalMessages;
+    if (Severity == ELogSeverity::Info)
     {
-        SCOPED_LOCK(MessagesCS);
-        LocalMessages = Messages;
+        return bFilterInfo;
+    }
+    else if (Severity == ELogSeverity::Warning)
+    {
+        return bFilterWarning;
+    }
+    else if (Severity == ELogSeverity::Error)
+    {
+        return bFilterError;
     }
 
-    const auto IsSeverityMatching = [this](ELogSeverity Severity)
+    return true;
+}
+
+ImU32 FEditorOutputLogWidget::GetSeverityColor(ELogSeverity Severity) const
+{
+    if (Severity == ELogSeverity::Warning)
     {
-        if (Severity == ELogSeverity::Info)
-        {
-            return bFilterInfo;
-        }
-        else if (Severity == ELogSeverity::Warning)
-        {
-            return bFilterWarning;
-        }
-        else if (Severity == ELogSeverity::Error)
-        {
-            return bFilterError;
-        }
+        return LogWarningTextColor;
+    }
+    else if (Severity == ELogSeverity::Error)
+    {
+        return LogErrorTextColor;
+    }
 
-        return true;
-    };
+    return ImGui::GetColorU32(ImGuiCol_Text);
+}
 
-    const bool  bHasSearch = (SearchFilterBuffer[0] != 0);
-    const CHAR* Search     = SearchFilterBuffer.Data();
+void FEditorOutputLogWidget::AppendMessageLine(const FLogMessage& Message)
+{
+    if (!IsSeverityVisible(Message.Severity))
+    {
+        return;
+    }
 
+    const CHAR* Line = *Message.Message;
+    if (!Line)
+    {
+        return;
+    }
+
+    const CHAR* Search = SearchFilterBuffer.Data();
+    const CHAR* Match  = (Search[0] != 0) ? CString::Stristr(Line, Search) : nullptr;
+
+    if (Search[0] != 0 && !Match)
+    {
+        return;
+    }
+
+    EditorWidgets::RichTextNewLine(RichTextCtx);
+
+    const ImU32 LineColor = GetSeverityColor(Message.Severity);
+    if (!Match)
+    {
+        EditorWidgets::RichTextAddText(RichTextCtx, Line, LineColor);
+        return;
+    }
+
+    const int32 MatchLength = static_cast<int32>(CString::Strlen(Search));
+
+    if (Match > Line)
+    {
+        EditorWidgets::RichTextAddText(RichTextCtx, Line, static_cast<int32>(Match - Line), LineColor);
+    }
+
+    EditorWidgets::RichTextAddTextBg(RichTextCtx, Match, MatchLength, LogHighlightTextColor, LogHighlightBgColor);
+
+    if (Match[MatchLength] != 0)
+    {
+        EditorWidgets::RichTextAddText(RichTextCtx, Match + MatchLength, LineColor);
+    }
+}
+
+void FEditorOutputLogWidget::RebuildRichTextIfDirty()
+{
+    SCOPED_LOCK(MessagesCS);
+
+    const bool bFilterChanged =
+        bBuiltFilterInfo    != bFilterInfo    ||
+        bBuiltFilterWarning != bFilterWarning ||
+        bBuiltFilterError   != bFilterError   ||
+        CString::Strcmp(BuiltSearchFilter.Data(), SearchFilterBuffer.Data()) != 0;
+
+    const bool bRebuildAll = bFilterChanged || (BuiltMessagesRemoved != TotalMessagesRemoved);
+
+    int32 FirstMessage = 0;
+    if (bRebuildAll)
+    {
+        RichTextCtx.Clear();
+    }
+    else
+    {
+        FirstMessage = static_cast<int32>(BuiltMessagesAdded - TotalMessagesRemoved);
+        if (FirstMessage >= Messages.Size())
+        {
+            return;
+        }
+    }
+
+    for (int32 Index = FirstMessage; Index < Messages.Size(); ++Index)
+    {
+        AppendMessageLine(Messages[Index]);
+    }
+
+    BuiltMessagesAdded   = TotalMessagesAdded;
+    BuiltMessagesRemoved = TotalMessagesRemoved;
+    bBuiltFilterInfo     = bFilterInfo;
+    bBuiltFilterWarning  = bFilterWarning;
+    bBuiltFilterError    = bFilterError;
+
+    CString::Strncpy(BuiltSearchFilter.Data(), SearchFilterBuffer.Data(), BuiltSearchFilter.Size());
+}
+
+void FEditorOutputLogWidget::DrawLogListRichText()
+{
     RichTextCtx.bAutoScroll = bAutoScroll;
-
-    const ImU32 DefaultTextU32   = ImGui::GetColorU32(ImGuiCol_Text);
-    const ImU32 WarningTextU32   = IM_COL32(255, 255, 0, 255);
-    const ImU32 ErrorTextU32     = IM_COL32(255, 0, 0, 255);
-    const ImU32 HighlightBgU32   = IM_COL32(13, 59, 105, 255);
-    const ImU32 HighlightTextU32 = IM_COL32(192, 192, 192, 255);
 
     ImGui::PushFont(EditorFonts::Consola_16);
     ImGui::PushStyleColor(ImGuiCol_TextSelectedBg, ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f));
 
     if (EditorWidgets::BeginRichTextView("##OutputLogRichText", ImVec2(-1.0f, -1.0f), RichTextCtx, 0, false))
     {
-        for (int32 i = 0; i < LocalMessages.Size(); ++i)
-        {
-            const FLogMessage& Msg = LocalMessages[i];
-
-            if (!IsSeverityMatching(Msg.Severity))
-            {
-                continue;
-            }
-
-            const CHAR* Line = *Msg.Message;
-            if (!Line)
-            {
-                continue;
-            }
-
-            if (bHasSearch && !CString::Stristr(Line, Search))
-            {
-                continue;
-            }
-
-            ImU32 LineColor = DefaultTextU32;
-            if (Msg.Severity == ELogSeverity::Warning)
-            {
-                LineColor = WarningTextU32;
-            }
-            else if (Msg.Severity == ELogSeverity::Error)
-            {
-                LineColor = ErrorTextU32;
-            }
-
-            EditorWidgets::RichTextNewLine(RichTextCtx);
-
-            if (bHasSearch)
-            {
-                const int32 MatchStart = StringView(Line).Find(Search, EStringCaseType::NoCase);
-                const int32 MatchLen   = static_cast<int32>(CString::Strlen(Search));
-
-                if (MatchStart >= 0 && MatchLen > 0)
-                {
-                    if (MatchStart > 0)
-                    {
-                        String Prefix;
-                        Prefix.Reserve(MatchStart + 1);
-
-                        for (int32 c = 0; c < MatchStart; ++c)
-                        {
-                            Prefix += Line[c];
-                        }
-
-                        EditorWidgets::RichTextAddText(RichTextCtx, *Prefix, LineColor);
-                    }
-
-                    String Match;
-                    Match.Reserve(MatchLen + 1);
-
-                    for (int32 c = 0; c < MatchLen; ++c)
-                    {
-                        Match += Line[MatchStart + c];
-                    }
-
-                    EditorWidgets::RichTextAddTextBg(RichTextCtx, *Match, HighlightTextU32, HighlightBgU32);
-
-                    const int32 LineLen     = static_cast<int32>(CString::Strlen(Line));
-                    const int32 SuffixStart = MatchStart + MatchLen;
-
-                    if (SuffixStart < LineLen)
-                    {
-                        String Suffix;
-                        Suffix.Reserve(LineLen - SuffixStart + 1);
-                        for (int32 c = SuffixStart; c < LineLen; ++c)
-                        {
-                            Suffix += Line[c];
-                        }
-
-                        EditorWidgets::RichTextAddText(RichTextCtx, *Suffix, LineColor);
-                    }
-                }
-                else
-                {
-                    EditorWidgets::RichTextAddText(RichTextCtx, Line, LineColor);
-                }
-            }
-            else
-            {
-                EditorWidgets::RichTextAddText(RichTextCtx, Line, LineColor);
-            }
-        }
+        RebuildRichTextIfDirty();
 
         if (EditorWidgets::BeginPopupContextWindow("OutputLogContextMenu"))
         {
@@ -503,6 +519,8 @@ void FEditorOutputLogWidget::DrawLogListRichText()
             if (EditorWidgets::MenuItem("Clear log", nullptr, false, true))
             {
                 SCOPED_LOCK(MessagesCS);
+
+                TotalMessagesRemoved += static_cast<uint64>(Messages.Size());
                 Messages.Clear();
             }
             

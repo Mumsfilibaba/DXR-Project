@@ -29,6 +29,7 @@ void FEditorFrameProfilerWidget::Draw()
 {
     if (bVisible)
     {
+        TRACE_SCOPE("Frame Profiler");
         DrawWindow();
     }
 }

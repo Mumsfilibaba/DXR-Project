@@ -1,9 +1,10 @@
 #pragma once
-#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
-
 #include "Core/CoreDefines.h"
 #include "Core/Containers/Map.h"
 #include "Core/Containers/String.h"
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
+
+struct IConsoleVariable;
 
 class FEditorRendererSettingsWidget
 {
@@ -28,6 +29,8 @@ private:
 
     void CaptureDefaultsIfNeeded();
 
+    IConsoleVariable* GetCachedConsoleVariable(const CHAR* InName);
+
     void DrawDeferredRenderingSettings();
     void DrawShadowSettings();
     void DrawCascadedShadowSettings();
@@ -43,10 +46,11 @@ private:
     void DrawDebugSettings();
     void DrawTonemappingSettings();
 
-    FDelegateHandle     ImGuiDelegateHandle;
-    TMap<String, bool>  BoolDefaults;
-    TMap<String, int32> IntDefaults;
-    TMap<String, float> FloatDefaults;
-    bool                bVisible          = true;
-    bool                bDefaultsCaptured = false;
+    FDelegateHandle                      ImGuiDelegateHandle;
+    TMap<String, bool>                   BoolDefaults;
+    TMap<String, int32>                  IntDefaults;
+    TMap<String, float>                  FloatDefaults;
+    TMap<const CHAR*, IConsoleVariable*> CVarCache;
+    bool                                 bVisible;
+    bool                                 bDefaultsCaptured;
 };

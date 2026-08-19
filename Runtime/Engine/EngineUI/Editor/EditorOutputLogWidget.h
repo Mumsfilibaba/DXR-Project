@@ -37,18 +37,30 @@ public:
     }
 
 private:
-    void DrawFilterBar();
-    void DrawLogListRichText();
+    void  DrawFilterBar();
+    void  DrawLogListRichText();
+    void  RebuildRichTextIfDirty();
+    void  AppendMessageLine(const FLogMessage& Message);
+    bool  IsSeverityVisible(ELogSeverity Severity) const;
+    ImU32 GetSeverityColor(ELogSeverity Severity) const;
 
     TStaticArray<CHAR, 256> SearchFilterBuffer;
     TArray<FLogMessage>     Messages;
     FCriticalSection        MessagesCS;
     FRichTextViewContext    RichTextCtx;
     FDelegateHandle         ImGuiDelegateHandle;
+    uint64                  TotalMessagesAdded;
+    uint64                  TotalMessagesRemoved;
+    TStaticArray<CHAR, 256> BuiltSearchFilter;
+    uint64                  BuiltMessagesAdded;
+    uint64                  BuiltMessagesRemoved;
+    bool                    bBuiltFilterInfo    : 1;
+    bool                    bBuiltFilterWarning : 1;
+    bool                    bBuiltFilterError   : 1;
+    bool                    bAutoScroll         : 1;
+    bool                    bFocusSearchField   : 1;
+    bool                    bFilterInfo         : 1;
+    bool                    bFilterWarning      : 1;
+    bool                    bFilterError        : 1;
     bool                    bVisible;
-    bool                    bAutoScroll;
-    bool                    bFocusSearchField;
-    bool                    bFilterInfo;
-    bool                    bFilterWarning;
-    bool                    bFilterError;
 };
