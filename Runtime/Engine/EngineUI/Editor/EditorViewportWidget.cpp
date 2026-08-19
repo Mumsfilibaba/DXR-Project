@@ -37,6 +37,7 @@ FEditorViewportWidget::FEditorViewportWidget(FEditorEngine* InEditorEngine)
     , CachedViewportSize(0, 0)
     , CachedImageMin(0.0f, 0.0f)
     , CachedImageSize(0.0f, 0.0f)
+    , CachedImageDrawList(nullptr)
     , ViewportImage()
     , ImGuiDelegateHandle()
     , bVisible(true)
@@ -139,6 +140,8 @@ void FEditorViewportWidget::TogglePlay()
 
 void FEditorViewportWidget::DrawViewportWindow()
 {
+    CachedImageDrawList = nullptr;
+
     if (!bVisible)
     {
         EndMouseLook();
@@ -851,8 +854,9 @@ void FEditorViewportWidget::DrawViewportWindow()
         const ImVec2 ImageMin  = ImGui::GetItemRectMin();
         const ImVec2 ImageSize = ImGui::GetItemRectSize();
 
-        CachedImageMin  = ImageMin;
-        CachedImageSize = ImageSize;
+        CachedImageMin      = ImageMin;
+        CachedImageSize     = ImageSize;
+        CachedImageDrawList = ImGui::GetWindowDrawList();
 
         // ---------------------------------------------------------------------
         // Viewport activation

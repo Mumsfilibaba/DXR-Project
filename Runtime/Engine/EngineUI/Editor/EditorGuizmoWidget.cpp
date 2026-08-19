@@ -191,9 +191,15 @@ bool FEditorGuizmoWidget::DrawGuizmo()
         return false;
     }
 
+    ImDrawList* ImageDrawList = Viewport->GetViewportImageDrawList();
+    if (!ImageDrawList)
+    {
+        return false;
+    }
+
     EditorGuizmo::SetAlternativeWindow(ViewportWindow);
     EditorGuizmo::BeginFrame();
-    EditorGuizmo::SetDrawlist(ViewportWindow->DrawList);
+    EditorGuizmo::SetDrawlist(ImageDrawList);
 
     const ImVec2 MousePos = ImGui::GetIO().MousePos;
 

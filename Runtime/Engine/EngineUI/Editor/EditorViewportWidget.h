@@ -49,6 +49,11 @@ public:
         return CachedImageSize;
     }
 
+    ImDrawList* GetViewportImageDrawList() const
+    {
+        return CachedImageDrawList;
+    }
+
     EGizmoPlacement GetGizmoPlacement() const
     {
         return GizmoPlacement;
@@ -106,6 +111,7 @@ private:
     IntVector2                          CachedViewportSize;
     ImVec2                              CachedImageMin;
     ImVec2                              CachedImageSize;
+    ImDrawList*                         CachedImageDrawList;
     FImGuiTexture                       ViewportImage;
     FDelegateHandle                     ImGuiDelegateHandle;
     bool                                bVisible;
