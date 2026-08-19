@@ -399,14 +399,14 @@ void FEditorRenderGraphWidget::DrawWindow()
     EditorWidgets::DrawCheckbox("Show culled/disabled", bShowCulled);
     ImGui::SameLine();
 
-    if (ImGui::Button("Auto Layout"))
+    if (EditorWidgets::DrawButton("Auto Layout"))
     {
         bForceAutoLayout = true;
         bNeedsFitView    = true;
     }
 
     ImGui::SameLine();
-    if (ImGui::Button("Reset View"))
+    if (EditorWidgets::DrawButton("Reset View"))
     {
         bNeedsFitView = true;
     }

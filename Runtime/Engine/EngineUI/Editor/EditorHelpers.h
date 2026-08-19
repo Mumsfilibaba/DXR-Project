@@ -162,6 +162,16 @@ struct ENGINE_API EditorStyleVars
 
     static float PropertyTableLabelIndentX;
     static float PropertyTableCellPaddingX;
+
+    static float ButtonRounding;
+    static float ButtonPaddingX;
+    static float ButtonFramePaddingY;
+    static float ButtonContentGap;
+    static float ButtonArrowSize;
+    static ImU32 ButtonBgIdle;
+    static ImU32 ButtonBgHovered;
+    static ImU32 ButtonBgSelected;
+    static ImU32 ButtonBgSelectedHovered;
 };
 
 struct FPropertyTableStyle
@@ -302,6 +312,10 @@ struct ENGINE_API EditorWidgets
     // Buttons
     // -----------------------------------------------------------------------------------------
 
+    static ImVec2 GetButtonSize(const CHAR* Label, const ImVec2& Size);
+
+    static bool DrawButton(const CHAR* Label, const ImVec2& Size = ImVec2(0.0f, 0.0f), bool bSelected = false, ImDrawFlags Corners = ImDrawFlags_RoundCornersAll);
+    static bool DrawDropdownButton(const CHAR* InId, const CHAR* Label, const ImVec2& Size, bool bPopupOpen, FPopupAnchor& OutAnchor, bool& bOutHovered);
     static bool DrawDialogButton(const CHAR* Label, const ImVec2& Size);
     static bool DrawButtonCenteredOnLine(const CHAR* Label, float Alignment = 0.5f);
 

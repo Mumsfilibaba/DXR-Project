@@ -259,10 +259,13 @@ void FEditorPropertiesWidget::DrawWindowContents()
 
                     const String& ParentName = ParentActor->GetName();
 
+                    // The name shares its line with the button, so it has to be lifted onto the button's center line
+                    ImGui::AlignTextToFramePadding();
                     ImGui::TextUnformatted(ParentName.IsEmpty() ? "Actor" : *ParentName);
                     ImGui::SameLine();
 
-                    if (ImGui::SmallButton("Detach"))
+                    // The row centers its label against a frame-height cell, so the button has to match that height
+                    if (EditorWidgets::DrawButton("Detach", ImVec2(0.0f, ImGui::GetFrameHeight())))
                     {
                         SelectedActor->DetachFromParent(EAttachmentRule::KeepWorld);
                     }

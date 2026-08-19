@@ -199,21 +199,21 @@ void FEditorFrameProfilerWidget::DrawWindow()
 
     if (EditorWidgets::BeginEditorWindow("Frame Profiler", &bVisible, Flags))
     {
-        if (ImGui::Button("Start Profile"))
+        if (EditorWidgets::DrawButton("Start Profile"))
         {
             FFrameProfiler::Get().Enable();
         }
 
         ImGui::SameLine();
 
-        if (ImGui::Button("Stop Profile"))
+        if (EditorWidgets::DrawButton("Stop Profile"))
         {
             FFrameProfiler::Get().Disable();
         }
 
         ImGui::SameLine();
 
-        if (ImGui::Button("Reset"))
+        if (EditorWidgets::DrawButton("Reset"))
         {
             FFrameProfiler::Get().Reset();
         }

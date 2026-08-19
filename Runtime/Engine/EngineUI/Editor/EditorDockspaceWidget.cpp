@@ -73,9 +73,10 @@ bool FEditorDockspaceWidget::InitializeEditorStyle()
     Style.Colors[ImGuiCol_FrameBg]        = ImVec4(0.13f, 0.13f, 0.14f, 1.0f);
     Style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.18f, 0.18f, 0.20f, 1.0f);
     Style.Colors[ImGuiCol_FrameBgActive]  = ImVec4(0.20f, 0.20f, 0.23f, 1.0f);
-    Style.Colors[ImGuiCol_Button]         = ImVec4(0.15f, 0.15f, 0.17f, 1.0f);
-    Style.Colors[ImGuiCol_ButtonHovered]  = ImVec4(0.23f, 0.23f, 0.26f, 1.0f);
-    Style.Colors[ImGuiCol_ButtonActive]   = ImVec4(0.28f, 0.28f, 0.32f, 1.0f);
+    // Any stock ImGui button falls back on the same palette the editor's own buttons draw with
+    Style.Colors[ImGuiCol_Button]         = ImGui::ColorConvertU32ToFloat4(EditorStyleVars::ButtonBgIdle);
+    Style.Colors[ImGuiCol_ButtonHovered]  = ImGui::ColorConvertU32ToFloat4(EditorStyleVars::ButtonBgHovered);
+    Style.Colors[ImGuiCol_ButtonActive]   = ImGui::ColorConvertU32ToFloat4(EditorStyleVars::ButtonBgHovered);
     Style.Colors[ImGuiCol_Header]         = ImVec4(0.18f, 0.18f, 0.20f, 1.0f);
     Style.Colors[ImGuiCol_HeaderHovered]  = ImVec4(0.22f, 0.22f, 0.25f, 1.0f);
     Style.Colors[ImGuiCol_HeaderActive]   = ImVec4(0.26f, 0.26f, 0.30f, 1.0f);
@@ -225,8 +226,8 @@ void FEditorDockspaceWidget::DrawMenuBar()
     const ImGuiStyle& Style = ImGui::GetStyle();
 
     const ImVec4 ToolbarBg    = Style.Colors[ImGuiCol_MenuBarBg];
-    const ImVec4 HoveredColor = ImVec4(87.0f / 255.0f, 87.0f / 255.0f, 87.0f / 255.0f, 1.0f);
-    const ImVec4 PressedColor = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
+    const ImU32  HoveredColor = EditorStyleVars::ButtonBgHovered;
+    const ImU32  PressedColor = EditorStyleVars::ButtonBgSelected;
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));

@@ -182,14 +182,14 @@ void FEditorGPUProfilerWidget::DrawPipelineStatistics()
     const bool bStatsEnabled = Profiler->IsPipelineStatisticsEnabled();
     if (bStatsEnabled)
     {
-        if (ImGui::Button("Stop Statistics"))
+        if (EditorWidgets::DrawButton("Stop Statistics"))
         {
             Profiler->DisablePipelineStatistics();
         }
     }
     else
     {
-        if (ImGui::Button("Start Statistics"))
+        if (EditorWidgets::DrawButton("Start Statistics"))
         {
             Profiler->EnablePipelineStatistics();
         }
@@ -197,7 +197,7 @@ void FEditorGPUProfilerWidget::DrawPipelineStatistics()
 
     ImGui::SameLine();
 
-    if (ImGui::Button("Reset Statistics"))
+    if (EditorWidgets::DrawButton("Reset Statistics"))
     {
         Profiler->Reset();
     }
@@ -285,21 +285,21 @@ void FEditorGPUProfilerWidget::DrawWindow()
     {
         if (Profiler)
         {
-            if (ImGui::Button("Start Profile"))
+            if (EditorWidgets::DrawButton("Start Profile"))
             {
                 Profiler->Enable();
             }
 
             ImGui::SameLine();
 
-            if (ImGui::Button("Stop Profile"))
+            if (EditorWidgets::DrawButton("Stop Profile"))
             {
                 Profiler->Disable();
             }
 
             ImGui::SameLine();
 
-            if (ImGui::Button("Reset"))
+            if (EditorWidgets::DrawButton("Reset"))
             {
                 Profiler->Reset();
             }

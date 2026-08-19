@@ -25,6 +25,15 @@ float  EditorStyleVars::PropertiesCollapsingFrameRounding     = 2.0f;
 float  EditorStyleVars::CheckboxSizeScale                     = 0.8f;
 float  EditorStyleVars::PropertyTableLabelIndentX             = 6.0f;
 float  EditorStyleVars::PropertyTableCellPaddingX             = 16.0f;
+float  EditorStyleVars::ButtonRounding                        = 6.0f;
+float  EditorStyleVars::ButtonPaddingX                        = 12.0f;
+float  EditorStyleVars::ButtonFramePaddingY                   = 4.0f;
+float  EditorStyleVars::ButtonContentGap                      = 6.0f;
+float  EditorStyleVars::ButtonArrowSize                       = 14.0f;
+ImU32  EditorStyleVars::ButtonBgIdle                          = IM_COL32(56, 56, 56, 255);
+ImU32  EditorStyleVars::ButtonBgHovered                       = IM_COL32(87, 87, 87, 255);
+ImU32  EditorStyleVars::ButtonBgSelected                      = IM_COL32(9, 92, 176, 255);
+ImU32  EditorStyleVars::ButtonBgSelectedHovered               = IM_COL32(15, 110, 205, 255);
 
 static constexpr float EditorWindowBorderInset = 5.0f;
 
@@ -1991,39 +2000,142 @@ bool EditorWidgets::DrawConfirmDialog(ConfirmDialogContext& InOutContext)
     return bConfirmed;
 }
 
-bool EditorWidgets::DrawDialogButton(const CHAR* Label, const ImVec2& Size)
+static ImU32 GetButtonBackground(bool bSelected, bool bHovered, bool bHeld)
 {
-    ImGui::PushID(Label);
+    if (bHovered || bHeld)
+    {
+        return bSelected ? EditorStyleVars::ButtonBgSelectedHovered : EditorStyleVars::ButtonBgHovered;
+    }
 
-    const bool bPressed = ImGui::InvisibleButton("##DialogButton", Size);
+    return bSelected ? EditorStyleVars::ButtonBgSelected : EditorStyleVars::ButtonBgIdle;
+}
+
+static float GetButtonHeight()
+{
+    return ImGui::GetFontSize() + EditorStyleVars::ButtonFramePaddingY * 2.0f;
+}
+
+ImVec2 EditorWidgets::GetButtonSize(const CHAR* Label, const ImVec2& Size)
+{
+    ImVec2 Result = Size;
+
+    if (Result.x <= 0.0f)
+    {
+        const float LabelWidth = Label ? ImGui::CalcTextSize(Label, nullptr, true).x : 0.0f;
+        Result.x = LabelWidth + EditorStyleVars::ButtonPaddingX * 2.0f;
+    }
+
+    if (Result.y <= 0.0f)
+    {
+        Result.y = GetButtonHeight();
+    }
+
+    return Result;
+}
+
+bool EditorWidgets::DrawButton(const CHAR* Label, const ImVec2& Size, bool bSelected, ImDrawFlags Corners)
+{
+    if (!Label)
+    {
+        return false;
+    }
+
+    const ImVec2 ButtonSize = GetButtonSize(Label, Size);
+
+    const bool bPressed = ImGui::InvisibleButton(Label, ButtonSize);
     const bool bHovered = ImGui::IsItemHovered();
     const bool bHeld    = ImGui::IsItemActive();
 
     const ImVec2 Min = ImGui::GetItemRectMin();
     const ImVec2 Max = ImGui::GetItemRectMax();
 
-    const ImU32 BgIdle    = IM_COL32(56, 56, 56, 255);
-    const ImU32 BgHover   = IM_COL32(87, 87, 87, 255);
-    const ImU32 BgHeld    = IM_COL32(47, 47, 47, 255);
-    const ImU32 BgColor   = bHeld ? BgHeld : (bHovered ? BgHover : BgIdle);
-    const ImU32 TextColor = IM_COL32(255, 255, 255, 255);
+    ImDrawList* DrawList = ImGui::GetWindowDrawList();
 
-    const float Rounding        = 4.0f;
-    const float BorderThickness = 1.5f;
+    // Routed through GetColorU32 so the button fades along with its label while it is disabled
+    const ImU32 Background = GetButtonBackground(bSelected, bHovered, bHeld);
+    DrawList->AddRectFilled(Min, Max, ImGui::GetColorU32(Background), EditorStyleVars::ButtonRounding, Corners);
+
+    const CHAR*  LabelEnd = ImGui::FindRenderedTextEnd(Label);
+    const ImVec2 TextSize = ImGui::CalcTextSize(Label, LabelEnd);
+    const ImVec2 TextPos  = ImVec2(Min.x + (ButtonSize.x - TextSize.x) * 0.5f, Min.y + (ButtonSize.y - TextSize.y) * 0.5f);
+
+    DrawList->AddText(TextPos, ImGui::GetColorU32(ImGuiCol_Text), Label, LabelEnd);
+
+    return bPressed;
+}
+
+bool EditorWidgets::DrawDropdownButton(const CHAR* InId, const CHAR* Label, const ImVec2& Size, bool bPopupOpen, FPopupAnchor& OutAnchor, bool& bOutHovered)
+{
+    OutAnchor.bRequestPosition = false;
+    bOutHovered                = false;
+
+    if (!InId)
+    {
+        return false;
+    }
+
+    const float  ContentGap = EditorStyleVars::ButtonContentGap;
+    const float  ArrowSize  = EditorStyleVars::ButtonArrowSize;
+    const CHAR*  LabelEnd   = Label ? ImGui::FindRenderedTextEnd(Label) : nullptr;
+    const ImVec2 TextSize   = Label ? ImGui::CalcTextSize(Label, LabelEnd) : ImVec2(0.0f, 0.0f);
+
+    ImVec2 ButtonSize = Size;
+    if (ButtonSize.x <= 0.0f)
+    {
+        ButtonSize.x = EditorStyleVars::ButtonPaddingX * 2.0f + TextSize.x + ContentGap + ArrowSize;
+    }
+
+    if (ButtonSize.y <= 0.0f)
+    {
+        ButtonSize.y = GetButtonHeight();
+    }
+
+    const bool bPressed = ImGui::InvisibleButton(InId, ButtonSize);
+    const bool bHovered = ImGui::IsItemHovered();
+    const bool bHeld    = ImGui::IsItemActive();
+
+    const ImVec2 Min = ImGui::GetItemRectMin();
+    const ImVec2 Max = ImGui::GetItemRectMax();
 
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
-    DrawList->AddRectFilled(Min, Max, BgColor, Rounding);
-    DrawList->AddRect(Min, Max, IM_COL32(15, 15, 15, 255), Rounding, ImDrawFlags_None, BorderThickness);
 
+    // An open popup reads as hovered, since the button stays lit for as long as its menu is up
+    const ImU32 Background = (bPopupOpen || bHovered || bHeld) ? EditorStyleVars::ButtonBgHovered : EditorStyleVars::ButtonBgIdle;
+    DrawList->AddRectFilled(Min, Max, ImGui::GetColorU32(Background), EditorStyleVars::ButtonRounding);
+
+    const ImU32 ContentColor = ImGui::GetColorU32(ImGuiCol_Text);
+
+    if (Label)
+    {
+        const float TextX = Min.x + EditorStyleVars::ButtonPaddingX;
+        const float TextY = Min.y + (ButtonSize.y - TextSize.y) * 0.5f;
+
+        DrawList->AddText(ImVec2(TextX, TextY), ContentColor, Label, LabelEnd);
+    }
+
+    if (EditorIcons::DownArrowIcon)
+    {
+        const float  ArrowX   = Max.x - EditorStyleVars::ButtonPaddingX - ArrowSize;
+        const float  ArrowY   = Min.y + (ButtonSize.y - ArrowSize) * 0.5f;
+        const ImVec2 ArrowMin = ImVec2(ArrowX, ArrowY);
+        const ImVec2 ArrowMax = ImVec2(ArrowX + ArrowSize, ArrowY + ArrowSize);
+
+        DrawList->AddImage(EditorIcons::DownArrowIcon, ArrowMin, ArrowMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ContentColor);
+    }
+
+    OutAnchor.Min = Min;
+    OutAnchor.Max = Max;
+    bOutHovered   = bHovered;
+
+    return bPressed;
+}
+
+bool EditorWidgets::DrawDialogButton(const CHAR* Label, const ImVec2& Size)
+{
     ImGui::PushFont(EditorFonts::SegoeUI_22);
-
-    const ImVec2 TextSize = ImGui::CalcTextSize(Label);
-    const ImVec2 TextPos  = ImVec2(Min.x + (Size.x - TextSize.x) * 0.5f, Min.y + (Size.y - TextSize.y) * 0.5f);
-    DrawList->AddText(TextPos, TextColor, Label);
-
+    const bool bPressed = DrawButton(Label, Size);
     ImGui::PopFont();
 
-    ImGui::PopID();
     return bPressed;
 }
 
@@ -2642,13 +2754,13 @@ void EditorWidgets::MenuButton(const CHAR* Label, const CHAR* PopupId, bool bAny
 
     if (bThisPopupOpen)
     {
-        const ImVec4 PressedBlue = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
+        const ImU32 PressedBlue = EditorStyleVars::ButtonBgSelected;
         ImGui::PushStyleColor(ImGuiCol_Button, PressedBlue);
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, PressedBlue);
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, PressedBlue);
     }
 
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12.0f, 0.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(EditorStyleVars::ButtonPaddingX, 0.0f));
     const bool bPressed = ImGui::Button(Label, ImVec2(0.0f, ButtonHeight));
     ImGui::PopStyleVar();
 
@@ -3616,17 +3728,15 @@ void EditorWidgets::EndRichTextView(RichTextViewContext& InOutContext)
 
 bool EditorWidgets::DrawButtonCenteredOnLine(const CHAR* Label, float Alignment)
 {
-    ImGuiStyle& Style = ImGui::GetStyle();
-
-    const float Size   = ImGui::CalcTextSize(Label).x + Style.FramePadding.x * 2.0f;
-    const float Offset = (ImGui::GetContentRegionAvail().x - Size) * Alignment;
+    const ImVec2 ButtonSize = GetButtonSize(Label, ImVec2(0.0f, 0.0f));
+    const float  Offset     = (ImGui::GetContentRegionAvail().x - ButtonSize.x) * Alignment;
 
     if (Offset > 0.0f)
     {
         ImGui::SetCursorPosX(ImGui::GetCursorPosX() + Offset);
     }
 
-    return ImGui::Button(Label);
+    return DrawButton(Label, ButtonSize);
 }
 
 void EditorWidgets::DrawCheckMark(ImDrawList* DrawList, ImVec2 Position, ImU32 Color, float CheckMarkSize)

@@ -347,8 +347,8 @@ void FEditorViewportWidget::DrawViewportWindow()
                 const CHAR* CurrentLabel = FindDebugLabel(DebugView);
                 TStaticArray<CHAR, 128> MenuLabel{};
 
-                const float ArrowIconSize  = 14.0f;
-                const float TextArrowGap   = 6.0f;
+                const float ArrowIconSize  = EditorStyleVars::ButtonArrowSize;
+                const float TextArrowGap   = EditorStyleVars::ButtonContentGap;
                 const float MaxButtonWidth = 128.0f;
                 const float RightPadding   = 12.0f;
 
@@ -366,7 +366,7 @@ void FEditorViewportWidget::DrawViewportWindow()
                     MaxLabelWidth = Math::Max(MaxLabelWidth, ImGui::CalcTextSize(Item.Label).x);
                 }
 
-                const float PaddingX           = ImGui::GetStyle().FramePadding.x;
+                const float PaddingX           = EditorStyleVars::ButtonPaddingX;
                 const float DesiredButtonWidth = MaxLabelWidth + TextArrowGap + ArrowIconSize + PaddingX * 2.0f;
                 const float ButtonWidth        = Math::Min(DesiredButtonWidth, MaxButtonWidth);
                 const float MaxTextWidth       = Math::Max(0.0f, ButtonWidth - (PaddingX * 2.0f + TextArrowGap + ArrowIconSize));
@@ -472,125 +472,43 @@ void FEditorViewportWidget::DrawViewportWindow()
 
                 FPopupAnchor CameraMenuAnchor;
                 FPopupAnchor ViewMenuAnchor;
-                const auto DrawToolbarMenuButton = [&](const CHAR* Id, const CHAR* Label, float Width, bool bPopupOpen, FPopupAnchor& OutAnchor, bool& bOutHovered) -> bool
-                {
-                    const float ButtonHeightLocal = ButtonHeight;
-
-                    const ImVec2 ButtonSize = ImVec2(Width, ButtonHeight);
-
-                    const bool bPressed = ImGui::InvisibleButton(Id, ButtonSize);
-                    const bool bHovered = ImGui::IsItemHovered();
-                    const bool bHeld    = ImGui::IsItemActive();
-
-                    const ImVec2 Min = ImGui::GetItemRectMin();
-                    const ImVec2 Max = ImGui::GetItemRectMax();
-
-                    const ImU32 BgIdle  = IM_COL32(56, 56, 56, 255);
-                    const ImU32 BgHover = IM_COL32(87, 87, 87, 255);
-
-                    ImU32 Bg = BgIdle;
-                    if (bPopupOpen || bHeld || bHovered)
-                    {
-                        Bg = BgHover;
-                    }
-
-                    ImDrawList* DrawList = ImGui::GetWindowDrawList();
-                    DrawList->AddRectFilled(Min, Max, Bg, 6.0f);
-
-                    const ImVec2 ButtonLabelSize = ImGui::CalcTextSize(Label);
-                    const float TextY = Min.y + (ButtonHeightLocal - ButtonLabelSize.y) * 0.5f;
-                    const float TextX = Min.x + ImGui::GetStyle().FramePadding.x;
-
-                    DrawList->AddText(ImVec2(TextX, TextY), ImGui::GetColorU32(ImGuiCol_Text), Label);
-
-                    const float  ArrowX   = Max.x - ImGui::GetStyle().FramePadding.x - ArrowIconSize;
-                    const float  ArrowY   = Min.y + (ButtonHeightLocal - ArrowIconSize) * 0.5f;
-                    const ImVec2 ArrowMin = ImVec2(ArrowX, ArrowY);
-                    const ImVec2 ArrowMax = ImVec2(ArrowX + ArrowIconSize, ArrowY + ArrowIconSize);
-
-                    if (EditorIcons::DownArrowIcon)
-                    {
-                        DrawList->AddImage(EditorIcons::DownArrowIcon, ArrowMin, ArrowMax, ImVec2(0, 0), ImVec2(1, 1), ImGui::GetColorU32(ImGuiCol_Text));
-                    }
-
-                    OutAnchor.Min              = Min;
-                    OutAnchor.Max              = Max;
-                    OutAnchor.bRequestPosition = false;
-                    bOutHovered                = bHovered;
-
-                    return bPressed;
-                };
-
-                const auto DrawGizmoToggle = [&](const CHAR* Id, const CHAR* Label, bool bSelected, float Width, ImDrawFlags Corners) -> bool
-                {
-                    const bool bPressed = ImGui::InvisibleButton(Id, ImVec2(Width, ButtonHeight));
-                    const bool bHovered = ImGui::IsItemHovered();
-                    const bool bHeld    = ImGui::IsItemActive();
-
-                    const ImVec2 Min = ImGui::GetItemRectMin();
-                    const ImVec2 Max = ImGui::GetItemRectMax();
-
-                    const ImU32 BgIdle          = IM_COL32(56, 56, 56, 255);
-                    const ImU32 BgHover         = IM_COL32(87, 87, 87, 255);
-                    const ImU32 BgSelected      = IM_COL32(9, 92, 176, 255);
-                    const ImU32 BgSelectedHover = IM_COL32(15, 110, 205, 255);
-
-                    ImU32 Bg = bSelected ? BgSelected : BgIdle;
-                    if (bHovered || bHeld)
-                    {
-                        Bg = bSelected ? BgSelectedHover : BgHover;
-                    }
-
-                    ImDrawList* DrawList = ImGui::GetWindowDrawList();
-
-                    // Routed through GetColorU32 so the button fades along with its label while it is disabled
-                    DrawList->AddRectFilled(Min, Max, ImGui::GetColorU32(Bg), 6.0f, Corners);
-
-                    const ImVec2 TextSize = ImGui::CalcTextSize(Label);
-                    const ImVec2 TextPos  = ImVec2(Min.x + (Width - TextSize.x) * 0.5f, Min.y + (ButtonHeight - TextSize.y) * 0.5f);
-
-                    DrawList->AddText(TextPos, ImGui::GetColorU32(ImGuiCol_Text), Label);
-
-                    return bPressed;
-                };
-
-                if (DrawGizmoToggle("##GizmoOperationTranslation", "Translation", GizmoOperation == EditorGuizmo::EOperation::Translate, TranslationButtonWidth, ImDrawFlags_RoundCornersLeft))
+                if (EditorWidgets::DrawButton("Translation##GizmoOperationTranslation", ImVec2(TranslationButtonWidth, ButtonHeight), GizmoOperation == EditorGuizmo::EOperation::Translate, ImDrawFlags_RoundCornersLeft))
                 {
                     GizmoOperation = EditorGuizmo::EOperation::Translate;
                 }
 
                 ImGui::SameLine(0.0f, 0.0f);
-                if (DrawGizmoToggle("##GizmoOperationRotate", "Rotate", GizmoOperation == EditorGuizmo::EOperation::Rotate, RotateButtonWidth, ImDrawFlags_RoundCornersNone))
+                if (EditorWidgets::DrawButton("Rotate##GizmoOperationRotate", ImVec2(RotateButtonWidth, ButtonHeight), GizmoOperation == EditorGuizmo::EOperation::Rotate, ImDrawFlags_RoundCornersNone))
                 {
                     GizmoOperation = EditorGuizmo::EOperation::Rotate;
                 }
 
                 ImGui::SameLine(0.0f, 0.0f);
-                if (DrawGizmoToggle("##GizmoOperationScale", "Scale", GizmoOperation == EditorGuizmo::EOperation::Scale, ScaleButtonWidth, ImDrawFlags_RoundCornersRight))
+                if (EditorWidgets::DrawButton("Scale##GizmoOperationScale", ImVec2(ScaleButtonWidth, ButtonHeight), GizmoOperation == EditorGuizmo::EOperation::Scale, ImDrawFlags_RoundCornersRight))
                 {
                     GizmoOperation = EditorGuizmo::EOperation::Scale;
                 }
 
                 ImGui::SameLine(0.0f, ToolbarControlGap);
-                if (DrawGizmoToggle("##GizmoPlacementCenter", "Center", GizmoPlacement == EGizmoPlacement::Center, PlacementButtonWidth, ImDrawFlags_RoundCornersLeft))
+                if (EditorWidgets::DrawButton("Center##GizmoPlacementCenter", ImVec2(PlacementButtonWidth, ButtonHeight), GizmoPlacement == EGizmoPlacement::Center, ImDrawFlags_RoundCornersLeft))
                 {
                     GizmoPlacement = EGizmoPlacement::Center;
                 }
 
                 ImGui::SameLine(0.0f, 0.0f);
-                if (DrawGizmoToggle("##GizmoPlacementPivot", "Pivot", GizmoPlacement == EGizmoPlacement::Pivot, PlacementButtonWidth, ImDrawFlags_RoundCornersRight))
+                if (EditorWidgets::DrawButton("Pivot##GizmoPlacementPivot", ImVec2(PlacementButtonWidth, ButtonHeight), GizmoPlacement == EGizmoPlacement::Pivot, ImDrawFlags_RoundCornersRight))
                 {
                     GizmoPlacement = EGizmoPlacement::Pivot;
                 }
 
                 ImGui::SameLine(0.0f, ToolbarControlGap);
-                if (DrawGizmoToggle("##GizmoOrientationLocal", "Local", GizmoOrientation == EditorGuizmo::EMode::Local, OrientationButtonWidth, ImDrawFlags_RoundCornersLeft))
+                if (EditorWidgets::DrawButton("Local##GizmoOrientationLocal", ImVec2(OrientationButtonWidth, ButtonHeight), GizmoOrientation == EditorGuizmo::EMode::Local, ImDrawFlags_RoundCornersLeft))
                 {
                     GizmoOrientation = EditorGuizmo::EMode::Local;
                 }
 
                 ImGui::SameLine(0.0f, 0.0f);
-                if (DrawGizmoToggle("##GizmoOrientationWorld", "World", GizmoOrientation == EditorGuizmo::EMode::World, OrientationButtonWidth, ImDrawFlags_RoundCornersRight))
+                if (EditorWidgets::DrawButton("World##GizmoOrientationWorld", ImVec2(OrientationButtonWidth, ButtonHeight), GizmoOrientation == EditorGuizmo::EMode::World, ImDrawFlags_RoundCornersRight))
                 {
                     GizmoOrientation = EditorGuizmo::EMode::World;
                 }
@@ -602,7 +520,9 @@ void FEditorViewportWidget::DrawViewportWindow()
                 {
                     ImGui::SetCursorScreenPos(ImVec2(ChildPos.x + TransportCursorX, ChildPos.y + CursorY));
 
-                    if (DrawGizmoToggle("##PlayToggle", bIsPlaying ? "Stop" : "Play", bIsPlaying, PlayButtonWidth, ImDrawFlags_RoundCornersLeft) && EditorEngine)
+                    // A triple hash keeps the identifier stable while the label flips between Play and Stop
+                    const CHAR* PlayLabel = bIsPlaying ? "Stop###PlayToggle" : "Play###PlayToggle";
+                    if (EditorWidgets::DrawButton(PlayLabel, ImVec2(PlayButtonWidth, ButtonHeight), bIsPlaying, ImDrawFlags_RoundCornersLeft) && EditorEngine)
                     {
                         TogglePlay();
                     }
@@ -615,7 +535,7 @@ void FEditorViewportWidget::DrawViewportWindow()
                         ImGui::BeginDisabled();
                     }
 
-                    if (DrawGizmoToggle("##PauseToggle", "Pause", bIsPaused, PauseButtonWidth, ImDrawFlags_RoundCornersRight) && bIsPlaying)
+                    if (EditorWidgets::DrawButton("Pause##PauseToggle", ImVec2(PauseButtonWidth, ButtonHeight), bIsPaused, ImDrawFlags_RoundCornersRight) && bIsPlaying)
                     {
                         EditorEngine->TogglePause();
                     }
@@ -629,10 +549,10 @@ void FEditorViewportWidget::DrawViewportWindow()
                 ImGui::SetCursorScreenPos(ImVec2(ChildPos.x + CameraCursorX, ChildPos.y + CursorY));
 
                 bool bCameraHovered = false;
-                const bool bCameraPressed = DrawToolbarMenuButton(
+                const bool bCameraPressed = EditorWidgets::DrawDropdownButton(
                     "##ViewportCameraButton",
                     "Camera",
-                    CameraButtonWidth,
+                    ImVec2(CameraButtonWidth, ButtonHeight),
                     bCameraPopupOpen,
                     CameraMenuAnchor,
                     bCameraHovered);
@@ -741,10 +661,10 @@ void FEditorViewportWidget::DrawViewportWindow()
 
                 bool bViewHovered = false;
 
-                const bool bViewPressed = DrawToolbarMenuButton(
+                const bool bViewPressed = EditorWidgets::DrawDropdownButton(
                     "##ViewportViewModeButton",
                     MenuLabelText,
-                    ButtonWidth,
+                    ImVec2(ButtonWidth, ButtonHeight),
                     bViewPopupOpen,
                     ViewMenuAnchor,
                     bViewHovered);
@@ -872,39 +792,10 @@ void FEditorViewportWidget::DrawViewportWindow()
                         const float ChannelButtonWidth = Math::Max(Math::Floor(ChannelRowWidth * 0.25f), 1.0f);
                         const float ChannelHeight      = ImGui::GetFrameHeight();
 
-                        const auto DrawChannelToggle = [&](const CHAR* Id, const CHAR* Label, FSceneRenderView::EDebugViewChannel Channel, ImDrawFlags Corners)
+                        const auto DrawChannelToggle = [&](const CHAR* Label, FSceneRenderView::EDebugViewChannel Channel, ImDrawFlags Corners)
                         {
                             const bool bSelected = IsEnumFlagSet(DebugViewChannelMask, Channel);
-
-                            const bool bPressed = ImGui::InvisibleButton(Id, ImVec2(ChannelButtonWidth, ChannelHeight));
-                            const bool bHovered = ImGui::IsItemHovered();
-                            const bool bHeld    = ImGui::IsItemActive();
-
-                            const ImVec2 Min = ImGui::GetItemRectMin();
-                            const ImVec2 Max = ImGui::GetItemRectMax();
-
-                            const ImU32 BgIdle          = IM_COL32(56, 56, 56, 255);
-                            const ImU32 BgHover         = IM_COL32(87, 87, 87, 255);
-                            const ImU32 BgSelected      = IM_COL32(9, 92, 176, 255);
-                            const ImU32 BgSelectedHover = IM_COL32(15, 110, 205, 255);
-
-                            ImU32 Bg = bSelected ? BgSelected : BgIdle;
-                            if (bHovered || bHeld)
-                            {
-                                Bg = bSelected ? BgSelectedHover : BgHover;
-                            }
-
-                            ImDrawList* DrawList = ImGui::GetWindowDrawList();
-
-                            // Routed through GetColorU32 so the row fades with the rest of the menu while it is disabled
-                            DrawList->AddRectFilled(Min, Max, ImGui::GetColorU32(Bg), 6.0f, Corners);
-
-                            const ImVec2 TextSize = ImGui::CalcTextSize(Label);
-                            const ImVec2 TextPos  = ImVec2(Min.x + (ChannelButtonWidth - TextSize.x) * 0.5f, Min.y + (ChannelHeight - TextSize.y) * 0.5f);
-
-                            DrawList->AddText(TextPos, ImGui::GetColorU32(ImGuiCol_Text), Label);
-
-                            if (bPressed)
+                            if (EditorWidgets::DrawButton(Label, ImVec2(ChannelButtonWidth, ChannelHeight), bSelected, Corners))
                             {
                                 DebugViewChannelMask ^= Channel;
                             }
@@ -912,16 +803,16 @@ void FEditorViewportWidget::DrawViewportWindow()
 
                         ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ChannelIndentX);
 
-                        DrawChannelToggle("##DebugViewChannelR", "R", FSceneRenderView::EDebugViewChannel::Red, ImDrawFlags_RoundCornersLeft);
+                        DrawChannelToggle("R##DebugViewChannelR", FSceneRenderView::EDebugViewChannel::Red, ImDrawFlags_RoundCornersLeft);
 
                         ImGui::SameLine(0.0f, 0.0f);
-                        DrawChannelToggle("##DebugViewChannelG", "G", FSceneRenderView::EDebugViewChannel::Green, ImDrawFlags_RoundCornersNone);
+                        DrawChannelToggle("G##DebugViewChannelG", FSceneRenderView::EDebugViewChannel::Green, ImDrawFlags_RoundCornersNone);
 
                         ImGui::SameLine(0.0f, 0.0f);
-                        DrawChannelToggle("##DebugViewChannelB", "B", FSceneRenderView::EDebugViewChannel::Blue, ImDrawFlags_RoundCornersNone);
+                        DrawChannelToggle("B##DebugViewChannelB", FSceneRenderView::EDebugViewChannel::Blue, ImDrawFlags_RoundCornersNone);
 
                         ImGui::SameLine(0.0f, 0.0f);
-                        DrawChannelToggle("##DebugViewChannelA", "A", FSceneRenderView::EDebugViewChannel::Alpha, ImDrawFlags_RoundCornersRight);
+                        DrawChannelToggle("A##DebugViewChannelA", FSceneRenderView::EDebugViewChannel::Alpha, ImDrawFlags_RoundCornersRight);
 
                         if (!bChannelsEnabled)
                         {
