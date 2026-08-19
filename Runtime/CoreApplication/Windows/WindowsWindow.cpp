@@ -1,8 +1,15 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformMisc.h"
+#include "Core/Threading/ScopedLock.h"
 #include "CoreApplication/Windows/WindowsWindow.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
+#include <dwmapi.h>
+
+// The size a single caption button occupies at 100% scaling, from Microsoft's title bar design guidance.
+// Only reached when DWM cannot answer, which it cannot before the window is first shown.
+constexpr float CAPTION_BUTTON_WIDTH_DIPS  = 46.0f;
+constexpr float CAPTION_BUTTON_HEIGHT_DIPS = 32.0f;
 
 static FWindowsWindowStyle GetWindowsWindowStyle(EWindowStyleFlags Style)
 {
@@ -47,6 +54,11 @@ static FWindowsWindowStyle GetWindowsWindowStyle(EWindowStyleFlags Style)
         if ((Style & EWindowStyleFlags::Resizable) != EWindowStyleFlags::None)
         {
 			NewStyle |= WS_THICKFRAME;
+        }
+
+        if ((Style & EWindowStyleFlags::CustomTitleBar) != EWindowStyleFlags::None)
+        {
+			NewStyle |= WS_CAPTION;
         }
 	}
 
@@ -130,14 +142,21 @@ bool FWindowsWindow::Initialize(const FPlatformWindowDesc& InDesc)
     bAcceptsInput = InDesc.bAcceptsInput;
 
     ::SetLastError(0);
-    LONG_PTR Result = ::SetWindowLongPtrA(Window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
-    DWORD LastError = ::GetLastError();
+
+    LONG_PTR Result    = ::SetWindowLongPtrA(Window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+    DWORD    LastError = ::GetLastError();
+
     if (Result == 0 && LastError != 0)
     {
         LOG_ERROR("[FWindowsWindow]: FAILED to setup window-data. Error: %lu\n", LastError);
         ::DestroyWindow(Window);
         Window = nullptr;
         return false;
+    }
+
+    if ((InDesc.Style & EWindowStyleFlags::CustomTitleBar) != EWindowStyleFlags::None)
+    {
+        ::SetWindowPos(Window, nullptr, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
     }
 
     ::UpdateWindow(Window);
@@ -500,6 +519,74 @@ void FWindowsWindow::SetStyle(EWindowStyleFlags InStyle)
     SetWindowShape(CurrentShape, true);
 }
 
+FWindowTitleBarMetrics FWindowsWindow::GetTitleBarMetrics() const
+{
+    FWindowTitleBarMetrics Metrics;
+    if (!IsValid() || (StyleParams & EWindowStyleFlags::CustomTitleBar) == EWindowStyleFlags::None)
+    {
+        return Metrics;
+    }
+
+    // Asking DWM for the footprint it would have used puts our buttons on exactly the native geometry at any
+    // DPI. The window keeps WS_CAPTION and the box styles, so it still answers despite the suppressed frame.
+
+    RECT ButtonBounds = { 0, 0, 0, 0 };
+    if (SUCCEEDED(::DwmGetWindowAttribute(Window, DWMWA_CAPTION_BUTTON_BOUNDS, &ButtonBounds, sizeof(ButtonBounds))))
+    {
+        const float BoundsWidth  = static_cast<float>(ButtonBounds.right - ButtonBounds.left);
+        const float BoundsHeight = static_cast<float>(ButtonBounds.bottom - ButtonBounds.top);
+
+        if (BoundsWidth > 0.0f && BoundsHeight > 0.0f)
+        {
+            Metrics.Height             = BoundsHeight;
+            Metrics.TrailingInset      = BoundsWidth;
+            Metrics.CaptionButtonWidth = BoundsWidth / 3.0f;
+            return Metrics;
+        }
+    }
+
+    // DWM reports a degenerate rectangle until the window has been shown once, so the documented sizes stand in.
+    const float DPIScale = GetWindowDPIScale();
+
+    Metrics.Height             = CAPTION_BUTTON_HEIGHT_DIPS * DPIScale;
+    Metrics.CaptionButtonWidth = CAPTION_BUTTON_WIDTH_DIPS * DPIScale;
+    Metrics.TrailingInset      = Metrics.CaptionButtonWidth * 3.0f;
+
+    return Metrics;
+}
+
+void FWindowsWindow::SetTitleBarRegions(const FWindowTitleBarRegions& InRegions)
+{
+    SCOPED_LOCK(TitleBarRegionsCS);
+    TitleBarRegions = InRegions;
+}
+
+bool FWindowsWindow::HitTestTitleBar(const IntVector2& ClientPoint) const
+{
+    SCOPED_LOCK(TitleBarRegionsCS);
+
+    if (!TitleBarRegions.CaptionRect.Contains(ClientPoint))
+    {
+        return false;
+    }
+
+    for (const FWindowRect& InteractiveRect : TitleBarRegions.InteractiveRects)
+    {
+        if (InteractiveRect.Contains(ClientPoint))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool FWindowsWindow::HitTestMaximizeButton(const IntVector2& ClientPoint) const
+{
+    SCOPED_LOCK(TitleBarRegionsCS);
+    return TitleBarRegions.MaximizeButtonRect.Contains(ClientPoint);
+}
+
 void FWindowsWindow::SetWindowOpacity(float Alpha)
 {
     if (!IsValid())
@@ -512,6 +599,7 @@ void FWindowsWindow::SetWindowOpacity(float Alpha)
     if (Alpha < 1.0f)
     {
         CurrentStyle |= WS_EX_LAYERED;
+
         ::SetWindowLongA(Window, GWL_EXSTYLE, CurrentStyle);
         ::SetLayeredWindowAttributes(Window, 0, static_cast<BYTE>(255.0f * Alpha), LWA_ALPHA);
     }

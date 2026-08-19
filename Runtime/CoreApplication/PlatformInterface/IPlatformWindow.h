@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/IRefCounted.h"
 #include "Core/Math/IntVector2.h"
+#include "Core/Containers/Array.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Templates/TypeTraits.h"
@@ -35,6 +36,9 @@ enum class EWindowStyleFlags : uint16
 
     /** @brief Window is opaque (non-transparent). */
     Opaque = FLAG(8),
+
+    /** @brief The application draws the title bar, and the client area extends over the caption. */
+    CustomTitleBar = FLAG(9),
 
     /** @brief A default combination of style flags for most standard windows. */
     Default = Titled | Maximizable | Minimizable | Resizable | Closable | Opaque
@@ -83,6 +87,82 @@ struct FWindowShape
 
     /** @brief The (x, y) position of the window. */
     IntVector2 Position;
+};
+
+struct FWindowRect
+{
+    FWindowRect()
+        : Left(0)
+        , Top(0)
+        , Right(0)
+        , Bottom(0)
+    {
+    }
+
+    FWindowRect(int32 InLeft, int32 InTop, int32 InRight, int32 InBottom)
+        : Left(InLeft)
+        , Top(InTop)
+        , Right(InRight)
+        , Bottom(InBottom)
+    {
+    }
+
+    bool Contains(const IntVector2& Point) const
+    {
+        return Point.X >= Left && Point.X < Right && Point.Y >= Top && Point.Y < Bottom;
+    }
+
+    bool IsEmpty() const
+    {
+        return Right <= Left || Bottom <= Top;
+    }
+
+    /** @brief The left edge, in client space. */
+    int32 Left;
+
+    /** @brief The top edge, in client space. */
+    int32 Top;
+
+    /** @brief One past the right edge, in client space. */
+    int32 Right;
+
+    /** @brief One past the bottom edge, in client space. */
+    int32 Bottom;
+};
+
+struct FWindowTitleBarMetrics
+{
+    FWindowTitleBarMetrics()
+        : Height(0.0f)
+        , LeadingInset(0.0f)
+        , TrailingInset(0.0f)
+        , CaptionButtonWidth(0.0f)
+    {
+    }
+
+    /** @brief The height the platform's own chrome occupies. Content shorter than this will not line up with any OS-drawn buttons. */
+    float Height;
+
+    /** @brief Space at the leading edge reserved for OS-drawn buttons, which is the traffic lights on macOS and nothing on Windows. */
+    float LeadingInset;
+
+    /** @brief Space at the trailing edge the platform would have given its caption buttons. Zero when the platform draws them itself. */
+    float TrailingInset;
+
+    /** @brief The width of a single caption button at the window's current DPI. Zero when the platform draws them itself. */
+    float CaptionButtonWidth;
+};
+
+struct FWindowTitleBarRegions
+{
+    /** @brief The draggable strip, in client space. An empty rectangle disables all custom title bar hit-testing. */
+    FWindowRect CaptionRect;
+
+    /** @brief Sub-rectangles of CaptionRect that stay clickable rather than dragging the window. */
+    TArray<FWindowRect> InteractiveRects;
+
+    /** @brief The application's maximize button, so Windows can offer Snap Layouts over it. Unused on macOS. */
+    FWindowRect MaximizeButtonRect;
 };
 
 struct FPlatformWindowDesc
@@ -272,6 +352,23 @@ struct IPlatformWindow : public IRefCounted
      * @return The EWindowStyleFlags that define this window's style.
      */
     virtual EWindowStyleFlags GetStyle() const = 0;
+
+    /**
+     * @brief Measures what the platform contributes to a custom title bar.
+     *
+     * The values depend on the window's DPI and style, so they must be re-queried after a move, a resize or a style change.
+     * @return The metrics for this window. All zero unless the window was created with EWindowStyleFlags::CustomTitleBar.
+     */
+    virtual FWindowTitleBarMetrics GetTitleBarMetrics() const = 0;
+
+    /**
+     * @brief Publishes the regions of the client area that behave like a title bar.
+     *
+     * The platform answers OS hit-tests from the most recently published set, so this is expected to be called every frame.
+     * Safe to call from any thread.
+     * @param InRegions The regions, in client space, with the origin at the top-left.
+     */
+    virtual void SetTitleBarRegions(const FWindowTitleBarRegions& InRegions) = 0;
 
     /**
      * @brief Sets the overall window opacity.

@@ -5,6 +5,27 @@
 #include "CoreApplication/Mac/MacApplication.h"
 #include "CoreApplication/Mac/MacWindow.h"
 
+static void PerformTitleBarDoubleClickAction(FCocoaWindow* CocoaWindow)
+{
+    NSUserDefaults* Defaults = [NSUserDefaults standardUserDefaults];
+
+    NSString* Action = [Defaults stringForKey:@"AppleActionOnDoubleClick"];
+    if (!Action)
+    {
+        // The key that predates the string form, and still the only one set on some systems.
+        Action = [Defaults boolForKey:@"AppleMiniaturizeOnDoubleClick"] ? @"Minimize" : @"Maximize";
+    }
+
+    if ([Action isEqualToString:@"Minimize"])
+    {
+        [CocoaWindow miniaturize:CocoaWindow];
+    }
+    else if (![Action isEqualToString:@"None"])
+    {
+        [CocoaWindow zoom:CocoaWindow];
+    }
+}
+
 @implementation FCocoaWindow
 
 - (instancetype)initWithContentRect:(NSRect)ContentRect styleMask:(NSWindowStyleMask)StyleMask backing:(NSBackingStoreType)BackingStoreType defer:(BOOL)Flag
@@ -206,6 +227,24 @@
         FCocoaWindow* CocoaWindow = [[self window] isKindOfClass:[FCocoaWindow class]] ? (FCocoaWindow*)[self window] : nil;
         if (CocoaWindow)
         {
+            if (GMacApplication)
+            {
+                TSharedRef<FMacWindow> Window = GMacApplication->FindWindowFromNSWindow(CocoaWindow);
+                if (Window && Window->HitTestTitleBar(Event.locationInWindow))
+                {
+                    if (Event.clickCount >= 2)
+                    {
+                        PerformTitleBarDoubleClickAction(CocoaWindow);
+                    }
+                    else
+                    {
+                        [CocoaWindow performWindowDragWithEvent:Event];
+                    }
+
+                    return;
+                }
+            }
+
             [CocoaWindow mouseDown:Event];
         }
         else

@@ -2,9 +2,50 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Mac/MacThreadManager.h"
+#include "Core/Threading/ScopedLock.h"
 #include "CoreApplication/Mac/MacWindow.h"
 #include "CoreApplication/Mac/CocoaWindow.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
+
+static NSWindowStyleMask GetCocoaWindowStyle(EWindowStyleFlags InStyle)
+{
+    const EWindowStyleFlags DecorationMask =
+        EWindowStyleFlags::Titled |
+        EWindowStyleFlags::Closable |
+        EWindowStyleFlags::Resizable |
+        EWindowStyleFlags::Minimizable |
+        EWindowStyleFlags::Maximizable;
+
+    if ((InStyle & DecorationMask) == EWindowStyleFlags::None)
+    {
+        return NSWindowStyleMaskBorderless;
+    }
+
+    NSWindowStyleMask WindowStyle = NSWindowStyleMaskTitled;
+
+    if ((InStyle & EWindowStyleFlags::Closable) != EWindowStyleFlags::None)
+    {
+        WindowStyle |= NSWindowStyleMaskClosable;
+    }
+
+    if ((InStyle & EWindowStyleFlags::Resizable) != EWindowStyleFlags::None)
+    {
+        WindowStyle |= NSWindowStyleMaskResizable;
+    }
+
+    if ((InStyle & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None)
+    {
+        WindowStyle |= NSWindowStyleMaskMiniaturizable;
+    }
+
+    // The content view spans the whole frame so the application can draw over the caption.
+    if ((InStyle & EWindowStyleFlags::CustomTitleBar) != EWindowStyleFlags::None)
+    {
+        WindowStyle |= NSWindowStyleMaskFullSizeContentView;
+    }
+
+    return WindowStyle;
+}
 
 TSharedRef<FMacWindow> FMacWindow::Create(FMacApplication* InApplication)
 {
@@ -33,42 +74,9 @@ FMacWindow::~FMacWindow()
 
 bool FMacWindow::Initialize(const FPlatformWindowDesc& InDesc)
 {
-    const EWindowStyleFlags DecorationMask =
-        EWindowStyleFlags::Titled |
-        EWindowStyleFlags::Closable |
-        EWindowStyleFlags::Resizable |
-        EWindowStyleFlags::Minimizable |
-        EWindowStyleFlags::Maximizable;
-        
-    NSWindowStyleMask WindowStyle = 0;
-        
-    const bool bHasAnyDecoration = (InDesc.Style & DecorationMask) != EWindowStyleFlags::None;
-    const bool bIsTransientPopup = !bHasAnyDecoration;
+    const NSWindowStyleMask WindowStyle = GetCocoaWindowStyle(InDesc.Style);
+    const bool bIsTransientPopup = WindowStyle == NSWindowStyleMaskBorderless;
 
-    if (bHasAnyDecoration)
-    {
-        WindowStyle |= NSWindowStyleMaskTitled;
-
-        if ((InDesc.Style & EWindowStyleFlags::Closable) != EWindowStyleFlags::None)
-        {
-            WindowStyle |= NSWindowStyleMaskClosable;
-        }
-
-        if ((InDesc.Style & EWindowStyleFlags::Resizable) != EWindowStyleFlags::None)
-        {
-            WindowStyle |= NSWindowStyleMaskResizable;
-        }
-
-        if ((InDesc.Style & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None)
-        {
-            WindowStyle |= NSWindowStyleMaskMiniaturizable;
-        }
-    }
-    else
-    {
-        WindowStyle = NSWindowStyleMaskBorderless;
-    }
-    
     __block bool bResult = false;
     FMacThreadManager::Get().MainThreadDispatch(^
     {
@@ -96,6 +104,13 @@ bool FMacWindow::Initialize(const FPlatformWindowDesc& InDesc)
         if ((InDesc.Style & EWindowStyleFlags::Titled) != EWindowStyleFlags::None)
         {
             CocoaWindow.title = InDesc.Title.GetNSString();
+        }
+
+        // AppKit keeps compositing the traffic lights above the content view, so they survive this untouched.
+        if ((InDesc.Style & EWindowStyleFlags::CustomTitleBar) != EWindowStyleFlags::None)
+        {
+            [CocoaWindow setTitlebarAppearsTransparent:YES];
+            [CocoaWindow setTitleVisibility:NSWindowTitleHidden];
         }
 
         if ((InDesc.Style & EWindowStyleFlags::Closable) != EWindowStyleFlags::None)
@@ -584,29 +599,8 @@ float FMacWindow::GetWindowDPIScale() const
 
 void FMacWindow::SetStyle(EWindowStyleFlags InStyle)
 {
-    NSWindowStyleMask WindowStyle = 0;
-    if (InStyle != EWindowStyleFlags::None)
-    {
-        WindowStyle |= NSWindowStyleMaskTitled;
+    const NSWindowStyleMask WindowStyle = GetCocoaWindowStyle(InStyle);
 
-        if ((InStyle & EWindowStyleFlags::Closable) != EWindowStyleFlags::None)
-        {
-            WindowStyle |= NSWindowStyleMaskClosable;
-        }
-        if ((InStyle & EWindowStyleFlags::Resizable) != EWindowStyleFlags::None)
-        {
-            WindowStyle |= NSWindowStyleMaskResizable;
-        }
-        if ((InStyle & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None)
-        {
-            WindowStyle |= NSWindowStyleMaskMiniaturizable;
-        }
-    }
-    else
-    {
-        WindowStyle = NSWindowStyleMaskBorderless;
-    }
-    
     FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
@@ -615,6 +609,10 @@ void FMacWindow::SetStyle(EWindowStyleFlags InStyle)
         {
             const NSWindowLevel WindowLevel = (InStyle & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None ? NSFloatingWindowLevel : NSNormalWindowLevel;
             [CocoaWindow setLevel:WindowLevel];
+
+            const bool bCustomTitleBar = (InStyle & EWindowStyleFlags::CustomTitleBar) != EWindowStyleFlags::None;
+            [CocoaWindow setTitlebarAppearsTransparent:bCustomTitleBar];
+            [CocoaWindow setTitleVisibility:bCustomTitleBar ? NSWindowTitleHidden : NSWindowTitleVisible];
             
             if ((InStyle & EWindowStyleFlags::Closable) != EWindowStyleFlags::None)
             {
@@ -686,6 +684,79 @@ void FMacWindow::SetStyle(EWindowStyleFlags InStyle)
 
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
+}
+
+FWindowTitleBarMetrics FMacWindow::GetTitleBarMetrics() const
+{
+    if ((StyleParams & EWindowStyleFlags::CustomTitleBar) == EWindowStyleFlags::None)
+    {
+        return FWindowTitleBarMetrics();
+    }
+
+    __block FWindowTitleBarMetrics Metrics;
+    FMacThreadManager::Get().MainThreadDispatch(^
+    {
+        SCOPED_AUTORELEASE_POOL();
+
+        if (!CocoaWindow)
+        {
+            return;
+        }
+
+        if ((CocoaWindow.styleMask & NSWindowStyleMaskFullScreen) != 0)
+        {
+            return;
+        }
+
+        NSButton* CloseButton = [CocoaWindow standardWindowButton:NSWindowCloseButton];
+        NSButton* ZoomButton  = [CocoaWindow standardWindowButton:NSWindowZoomButton];
+
+        if (!CloseButton || !ZoomButton || CloseButton.isHidden)
+        {
+            return;
+        }
+
+        const NSRect ContentLayoutRect = [CocoaWindow contentLayoutRect];
+        Metrics.Height       = static_cast<float>(CocoaWindow.frame.size.height - ContentLayoutRect.size.height);
+        Metrics.LeadingInset = static_cast<float>(NSMaxX(ZoomButton.frame) + NSMinX(CloseButton.frame));
+
+    }, NSDefaultRunLoopMode, true);
+
+    return Metrics;
+}
+
+void FMacWindow::SetTitleBarRegions(const FWindowTitleBarRegions& InRegions)
+{
+    SCOPED_LOCK(TitleBarRegionsCS);
+    TitleBarRegions = InRegions;
+}
+
+bool FMacWindow::HitTestTitleBar(NSPoint LocationInWindow) const
+{
+    if (!CocoaWindow || (StyleParams & EWindowStyleFlags::CustomTitleBar) == EWindowStyleFlags::None)
+    {
+        return false;
+    }
+
+    const NSRect     ContentRect = [CocoaWindow contentRectForFrameRect:CocoaWindow.frame];
+    const IntVector2 ClientPoint = IntVector2(static_cast<int32>(LocationInWindow.x), static_cast<int32>(ContentRect.size.height - LocationInWindow.y));
+
+    SCOPED_LOCK(TitleBarRegionsCS);
+
+    if (!TitleBarRegions.CaptionRect.Contains(ClientPoint))
+    {
+        return false;
+    }
+
+    for (const FWindowRect& InteractiveRect : TitleBarRegions.InteractiveRects)
+    {
+        if (InteractiveRect.Contains(ClientPoint))
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 void FMacWindow::SetWindowOpacity(float Alpha)

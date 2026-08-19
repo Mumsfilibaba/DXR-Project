@@ -8,6 +8,11 @@ struct COREAPPLICATION_API FMacApplicationMisc final : public IPlatformApplicati
 {
     static void MessageBox(const String& Title, const String& Message);
     static void PumpMessages(bool bUntilEmpty);
+
+    static FORCEINLINE bool DoesPlatformDrawCustomTitleBarCaptionButtons()
+    {
+        return true;
+    }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

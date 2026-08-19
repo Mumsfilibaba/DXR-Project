@@ -15,5 +15,5 @@ if IsPlatformMac() then
         "GameController",
     })
 elseif IsPlatformWindows() then
-    CoreApplicationModule.AddLinkLibraries({ "Shcore.lib" })
+    CoreApplicationModule.AddLinkLibraries({ "Shcore.lib", "Dwmapi.lib" })
 end

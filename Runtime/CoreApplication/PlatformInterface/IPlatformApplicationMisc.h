@@ -22,6 +22,15 @@ struct IPlatformApplicationMisc
     static FORCEINLINE void PumpMessages(bool bUntilEmpty)
     {
     }
+
+    /**
+     * @brief Whether the OS keeps drawing the close, minimize and maximize buttons over a custom title bar
+     * @return True when the platform draws them itself, so the application must not draw its own
+     */
+    static FORCEINLINE bool DoesPlatformDrawCustomTitleBarCaptionButtons()
+    {
+        return false;
+    }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

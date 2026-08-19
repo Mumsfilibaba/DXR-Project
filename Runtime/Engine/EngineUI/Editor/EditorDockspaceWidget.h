@@ -1,7 +1,9 @@
 #pragma once
+#include "Core/Containers/UniquePtr.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
 class FEditorEngine;
+class FEditorTitleBarWidget;
 
 struct FLayoutIds
 {
@@ -25,13 +27,14 @@ public:
     void BuildDockingLayout(FLayoutIds& Ids);
 
     void Draw();
-    void DrawMenuBar();
+    void DrawTitleBar();
     void DrawDockSpace();
     void DrawFooter();
 
 private:
-    FEditorEngine*  EditorEngine;
-    FDelegateHandle ImGuiDelegateHandle;
-    FLayoutIds      LayoutIds;
-    bool            bResetLayout;
+    FEditorEngine*                       EditorEngine;
+    FDelegateHandle                      ImGuiDelegateHandle;
+    FLayoutIds                           LayoutIds;
+    bool                                 bResetLayout;
+    TUniquePtr<FEditorTitleBarWidget>    TitleBarWidget;
 };

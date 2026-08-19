@@ -22,6 +22,51 @@ static TAutoConsoleVariable<bool> CVarEnableDeferredMessages(
 
 COREAPPLICATION_API FWindowsApplication* GWindowsApplication = nullptr;
 
+static int32 GetResizeBorderThickness(HWND WindowHandle)
+{
+#if PLATFORM_WINDOWS_10_ANNIVERSARY
+    const UINT WindowDPI = ::GetDpiForWindow(WindowHandle);
+    return ::GetSystemMetricsForDpi(SM_CXSIZEFRAME, WindowDPI) + ::GetSystemMetricsForDpi(SM_CXPADDEDBORDER, WindowDPI);
+#else
+    return ::GetSystemMetrics(SM_CXSIZEFRAME) + ::GetSystemMetrics(SM_CXPADDEDBORDER);
+#endif
+}
+
+static LRESULT HitTestResizeBorder(HWND WindowHandle, const IntVector2& ClientPoint)
+{
+    RECT ClientRect = { 0, 0, 0, 0 };
+    ::GetClientRect(WindowHandle, &ClientRect);
+
+    const int32 BorderThickness = GetResizeBorderThickness(WindowHandle);
+
+    const bool bLeft   = ClientPoint.X < BorderThickness;
+    const bool bRight  = ClientPoint.X >= ClientRect.right - BorderThickness;
+    const bool bTop    = ClientPoint.Y < BorderThickness;
+    const bool bBottom = ClientPoint.Y >= ClientRect.bottom - BorderThickness;
+
+    if (bTop)
+    {
+        return bLeft ? HTTOPLEFT : (bRight ? HTTOPRIGHT : HTTOP);
+    }
+
+    if (bBottom)
+    {
+        return bLeft ? HTBOTTOMLEFT : (bRight ? HTBOTTOMRIGHT : HTBOTTOM);
+    }
+
+    if (bLeft)
+    {
+        return HTLEFT;
+    }
+
+    if (bRight)
+    {
+        return HTRIGHT;
+    }
+
+    return HTNOWHERE;
+}
+
 TSharedPtr<IPlatformApplication> FWindowsApplication::Create()
 {
     HINSTANCE AppInstanceHandle = static_cast<HINSTANCE>(::GetModuleHandleA(0));
@@ -559,9 +604,71 @@ LRESULT FWindowsApplication::ProcessMessage(HWND WindowHandle, UINT Message, WPA
                 {
                     return HTTRANSPARENT;
                 }
+
+                if ((MsgWindow->GetStyle() & EWindowStyleFlags::CustomTitleBar) != EWindowStyleFlags::None)
+                {
+                    POINT ScreenPoint = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+                    ::ScreenToClient(WindowHandle, &ScreenPoint);
+
+                    const IntVector2 ClientPoint(ScreenPoint.x, ScreenPoint.y);
+
+                    // A maximized window has no borders to grab, and one that was never resizable has none either.
+                    const bool bIsResizable = (MsgWindow->GetStyle() & EWindowStyleFlags::Resizable) != EWindowStyleFlags::None;
+
+                    if (bIsResizable && !::IsZoomed(WindowHandle))
+                    {
+                        const LRESULT BorderResult = HitTestResizeBorder(WindowHandle, ClientPoint);
+                        if (BorderResult != HTNOWHERE)
+                        {
+                            return BorderResult;
+                        }
+                    }
+
+                    // Reporting HTMAXBUTTON is the entire requirement for the Windows 11 Snap Layouts flyout.
+                    if (MsgWindow->HitTestMaximizeButton(ClientPoint))
+                    {
+                        return HTMAXBUTTON;
+                    }
+
+                    if (MsgWindow->HitTestTitleBar(ClientPoint))
+                    {
+                        return HTCAPTION;
+                    }
+
+                    // Answered here rather than by DefWindowProc, which would still call the strip a caption
+                    // and swallow the clicks meant for the menu buttons drawn in it.
+                    return HTCLIENT;
+                }
             }
 
             break;
+        }
+
+        case WM_NCCALCSIZE:
+        {
+            const LONG_PTR UserData = ::GetWindowLongPtrA(WindowHandle, GWLP_USERDATA);
+            const FWindowsWindow* MsgWindow = reinterpret_cast<const FWindowsWindow*>(UserData);
+            if (wParam != TRUE || !MsgWindow || (MsgWindow->GetStyle() & EWindowStyleFlags::CustomTitleBar) == EWindowStyleFlags::None)
+            {
+                break;
+            }
+
+            // Leaving the proposed rectangle alone is what hands the caption area to the client. When maximized
+            // the window manager still positions us as if the frame existed, so without this inset the client
+            // spills past every screen edge by the frame thickness.
+
+            if (::IsZoomed(WindowHandle))
+            {
+                NCCALCSIZE_PARAMS* Params = reinterpret_cast<NCCALCSIZE_PARAMS*>(lParam);
+                const int32 BorderThickness = GetResizeBorderThickness(WindowHandle);
+
+                Params->rgrc[0].left   += BorderThickness;
+                Params->rgrc[0].top    += BorderThickness;
+                Params->rgrc[0].right  -= BorderThickness;
+                Params->rgrc[0].bottom -= BorderThickness;
+            }
+
+            return 0;
         }
 
         case WM_SIZING:

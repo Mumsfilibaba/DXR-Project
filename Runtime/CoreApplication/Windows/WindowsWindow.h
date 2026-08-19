@@ -2,6 +2,7 @@
 #include "Core/Windows/Windows.h"
 #include "Core/RefCountedBase.h"
 #include "Core/Containers/SharedRef.h"
+#include "Core/Platform/CriticalSection.h"
 #include "CoreApplication/PlatformInterface/IPlatformWindow.h"
 
 class FWindowsApplication;
@@ -101,6 +102,9 @@ public:
         return StyleParams;
     }
 
+    virtual FWindowTitleBarMetrics GetTitleBarMetrics() const override final;
+    virtual void SetTitleBarRegions(const FWindowTitleBarRegions& InRegions) override final;
+
     virtual void SetWindowOpacity(float Alpha) override final;
 
     virtual void SetAcceptsInput(bool bInAcceptsInput) override final
@@ -120,6 +124,9 @@ public:
         return reinterpret_cast<void*>(Window);
     }
 
+    bool HitTestTitleBar(const IntVector2& ClientPoint) const;
+    bool HitTestMaximizeButton(const IntVector2& ClientPoint) const;
+
     FORCEINLINE HWND GetWindowHandle() const 
     { 
         return Window;
@@ -133,11 +140,13 @@ public:
 private:
     FWindowsWindow(FWindowsApplication* InApplication);
 
-    FWindowsApplication* Application;
-    HWND                 Window;
-    FWindowsWindowStyle  Style;
-    EWindowStyleFlags    StyleParams;
-    bool                 bIsFullscreen;
-    bool                 bAcceptsInput;
-    WINDOWPLACEMENT      StoredPlacement;
+    FWindowsApplication*     Application;
+    HWND                     Window;
+    FWindowsWindowStyle      Style;
+    EWindowStyleFlags        StyleParams;
+    bool                     bIsFullscreen;
+    bool                     bAcceptsInput;
+    WINDOWPLACEMENT          StoredPlacement;
+    FWindowTitleBarRegions   TitleBarRegions;
+    mutable FCriticalSection TitleBarRegionsCS;
 };

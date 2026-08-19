@@ -285,6 +285,24 @@ float FWindowWidget::GetWindowDPIScale() const
     return 1.0f;
 }
 
+FWindowTitleBarMetrics FWindowWidget::GetTitleBarMetrics() const
+{
+    if (PlatformWindow)
+    {
+        return PlatformWindow->GetTitleBarMetrics();
+    }
+
+    return FWindowTitleBarMetrics();
+}
+
+void FWindowWidget::SetTitleBarRegions(const FWindowTitleBarRegions& InRegions)
+{
+    if (PlatformWindow)
+    {
+        PlatformWindow->SetTitleBarRegions(InRegions);
+    }
+}
+
 void FWindowWidget::SetTitle(const String& InTitle)
 {
     Title = InTitle;

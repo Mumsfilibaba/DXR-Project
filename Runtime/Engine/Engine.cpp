@@ -115,7 +115,11 @@ bool FEngine::CreateEngineWindow()
     WindowInitializer.Size.X     = CVarViewportWidth.GetValue();
     WindowInitializer.Size.Y     = CVarViewportHeight.GetValue();
     WindowInitializer.StyleFlags = EWindowStyleFlags::Default;
-    
+
+#if EDITOR_BUILD
+    WindowInitializer.StyleFlags |= EWindowStyleFlags::CustomTitleBar;
+#endif
+
     EngineWindow = CreateWidget<FWindowWidget>(WindowInitializer);
 
     FApplication::Get().CreateWindow(EngineWindow);

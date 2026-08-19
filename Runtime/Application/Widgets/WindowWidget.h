@@ -284,6 +284,23 @@ public:
     float GetWindowDPIScale() const;
 
     /**
+     * @brief Measures what the platform contributes to a custom title bar.
+     *
+     * The values follow the window's DPI and style, so they are re-queried rather than cached.
+     * @return The metrics for this window, all zero when it has no custom title bar.
+     */
+    FWindowTitleBarMetrics GetTitleBarMetrics() const;
+
+    /**
+     * @brief Publishes the regions of the window that behave like a title bar.
+     *
+     * The platform answers OS hit-tests from the most recently published set, so this is called every frame
+     * by whichever widget draws the title bar.
+     * @param InRegions The regions, in window-relative coordinates, with the origin at the top-left.
+     */
+    void SetTitleBarRegions(const FWindowTitleBarRegions& InRegions);
+
+    /**
      * @brief Sets the window title.
      * 
      * Updates the cached title and sets the platform window's text if there is a valid platform window.

@@ -1,6 +1,8 @@
 #pragma once
+#include "Core/Mac/Mac.h"
 #include "Core/RefCountedBase.h"
 #include "Core/Containers/SharedRef.h"
+#include "Core/Platform/CriticalSection.h"
 #include "CoreApplication/PlatformInterface/IPlatformWindow.h"
 
 @class FCocoaWindow;
@@ -68,6 +70,9 @@ public:
         return StyleParams;
     }
 
+    virtual FWindowTitleBarMetrics GetTitleBarMetrics() const override final;
+    virtual void SetTitleBarRegions(const FWindowTitleBarRegions& InRegions) override final;
+
     virtual void SetWindowOpacity(float Alpha) override final;
 
     virtual void SetAcceptsInput(bool bInAcceptsInput) override final;
@@ -83,8 +88,9 @@ public:
     {
         return reinterpret_cast<void*>(CocoaWindow);
     }
-    
-public:
+
+    bool HitTestTitleBar(NSPoint LocationInWindow) const;
+
     FORCEINLINE FCocoaWindow* GetCocoaWindow() const
     {
         return CocoaWindow;
@@ -108,10 +114,12 @@ public:
 private:
     FMacWindow(FMacApplication* InApplication);
 
-    FMacApplication*  Application;
-    FCocoaWindow*     CocoaWindow;
-    FCocoaWindowView* CocoaWindowView;
-    IntVector2        Position;
-    EWindowStyleFlags StyleParams;
-    bool              bAcceptsInput;
+    FMacApplication*         Application;
+    FCocoaWindow*            CocoaWindow;
+    FCocoaWindowView*        CocoaWindowView;
+    IntVector2               Position;
+    EWindowStyleFlags        StyleParams;
+    bool                     bAcceptsInput;
+    FWindowTitleBarRegions   TitleBarRegions;
+    mutable FCriticalSection TitleBarRegionsCS;
 };

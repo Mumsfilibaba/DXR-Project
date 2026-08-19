@@ -2,12 +2,14 @@
 #include "Core/Containers/StaticArray.h"
 #include "Core/Misc/Paths.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Platform/PlatformFile.h"
 #include "Core/Templates/CString.h"
 #include "Engine/Assets/AssetManager.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include <imgui_internal.h>
 
+// Overwritten from FWindowTitleBarMetrics::Height once the platform window exists.
 float  EditorStyleVars::MainMenuBarHeight                     = 28.0f;
 ImVec2 EditorStyleVars::InputFieldFramePadding                = ImVec2(12.0f, 6.0f);
 float  EditorStyleVars::InputFieldBorderThickness             = 2.0f;
@@ -4048,6 +4050,7 @@ void EditorIcons::Release()
 }
 
 ImFont* EditorFonts::DefaultFont = nullptr;
+ImFont* EditorFonts::SystemIcons = nullptr;
 ImFont* EditorFonts::SegoeUI_18  = nullptr;
 ImFont* EditorFonts::SegoeUI_22  = nullptr;
 ImFont* EditorFonts::Consola_16  = nullptr;
@@ -4066,6 +4069,57 @@ static ImFont* LoadEditorFont(const CHAR* InRelativePath, float SizePixels, cons
     return State.Fonts->AddFontFromFileTTF(*FullPath, SizePixels, FontCfgTemplate, GlyphRanges);
 }
 
+#if PLATFORM_WINDOWS
+
+// The size WinUI's own caption button style renders the glyphs at.
+static constexpr float SystemIconSizePixels = 10.0f;
+
+// Loads the four caption code points out of the system icon font as a font of their own, so the 
+// window buttons are drawn with the very glyphs the OS would have used rather than an imitation 
+// of them. E921 ChromeMinimize, E922 ChromeMaximize, E923 ChromeRestore and E8BB ChromeClose.
+
+static ImFont* LoadSystemIconFont()
+{
+    // Segoe Fluent Icons ships with Windows 11, and Segoe MDL2 assets carries the same code points on Windows 10.
+    const CHAR* IconFontPaths[] =
+    {
+        "C:\\Windows\\Fonts\\SegoeIcons.ttf",
+        "C:\\Windows\\Fonts\\segmdl2.ttf",
+    };
+
+    // Kept alive past the call because the atlas only reads the ranges when it is built.
+    static const ImWchar CaptionGlyphRanges[] = 
+    { 
+        0xE8BB, 
+        0xE8BB, 
+        0xE921, 
+        0xE923, 
+        0
+    };
+
+    ImFontConfig FontConfig;
+    FontConfig.PixelSnapH = true;
+
+    ImGuiIO& State = ImGui::GetIO();
+    for (const CHAR* IconFontPath : IconFontPaths)
+    {
+        if (!FPlatformFile::IsFile(IconFontPath))
+        {
+            continue;
+        }
+
+        if (ImFont* IconFont = State.Fonts->AddFontFromFileTTF(IconFontPath, SystemIconSizePixels, &FontConfig, CaptionGlyphRanges))
+        {
+            return IconFont;
+        }
+    }
+
+    LOG_WARNING("[EditorFonts]: No system icon font found, so the title bar buttons fall back to drawn shapes");
+    return nullptr;
+}
+
+#endif
+
 bool EditorFonts::Initialize()
 {
     if (!IImguiPlugin::IsEnabled())
@@ -4083,6 +4137,10 @@ bool EditorFonts::Initialize()
     SegoeUI_18 = LoadEditorFont("Editor/Fonts/segoeui.ttf", 18.0f);
     SegoeUI_22 = LoadEditorFont("Editor/Fonts/segoeui.ttf", 22.0f);
     Consola_16 = LoadEditorFont("Editor/Fonts/consola.ttf", 16.0f);
+
+#if PLATFORM_WINDOWS
+    SystemIcons = LoadSystemIconFont();
+#endif
 
     IImguiPlugin& ImGuiPlugin = IImguiPlugin::Get();
     if (!ImGuiPlugin.UpdateFontAtlas())
@@ -4104,4 +4162,5 @@ void EditorFonts::Release()
     SegoeUI_18  = nullptr;
     SegoeUI_22  = nullptr;
     Consola_16  = nullptr;
+    SystemIcons = nullptr;
 }

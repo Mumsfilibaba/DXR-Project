@@ -795,6 +795,15 @@ NSEvent* FMacApplication::OnNSEvent(NSEvent* Event)
         return Event;
     }
 
+    if (Event.type == NSEventTypeLeftMouseDown)
+    {
+        TSharedRef<FMacWindow> MacWindow = FindWindowFromNSWindow(EventWindow);
+        if (MacWindow && MacWindow->HitTestTitleBar(Event.locationInWindow))
+        {
+            return Event;
+        }
+    }
+
     NSEvent* ReturnEvent = Event;
     DeferEvent(Event);
 

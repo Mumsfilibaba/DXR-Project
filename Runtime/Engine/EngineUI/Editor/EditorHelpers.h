@@ -29,8 +29,8 @@ enum class EPropertyTableVerticalAlign : uint8
 
 struct FPopupAnchor
 {
-    ImVec2 Min = ImVec2(0.0f, 0.0f);
-    ImVec2 Max = ImVec2(0.0f, 0.0f);
+    ImVec2 Min              = ImVec2(0.0f, 0.0f);
+    ImVec2 Max              = ImVec2(0.0f, 0.0f);
     bool   bRequestPosition = false;
 };
 
@@ -51,7 +51,6 @@ inline constexpr float EditorDefaultWindowMaxHeight      = 960.0f;
 struct FSubMenuState
 {
     FPopupAnchor Anchor;
-
     const CHAR*  Label        = nullptr;
     const CHAR*  PopupId      = nullptr;
     float        LabelIndentX = MenuLabelIndentX;
@@ -62,16 +61,15 @@ struct FSubMenuState
 struct FRichTextSpan
 {
     String Text;
-
-    ImU32 TextColor       = IM_COL32(255, 255, 255, 255);
-    ImU32 BackgroundColor = 0;
-    bool  bHasBackground  = false;
+    ImU32  TextColor       = IM_COL32(255, 255, 255, 255);
+    ImU32  BackgroundColor = 0;
+    bool   bHasBackground  = false;
 };
 
 struct FRichTextLine
 {
     TArray<FRichTextSpan> Spans;
-    int32 TotalChars = 0;
+    int32                 TotalChars = 0;
 };
 
 struct FRichTextSelectionPoint
@@ -85,6 +83,7 @@ struct FRichTextViewContext
     void ClearForNewFrame()
     {
         Lines.Clear();
+
         MaxLineChars = 0;
         bActive      = false;
     }
@@ -92,19 +91,18 @@ struct FRichTextViewContext
     TArray<FRichTextLine>   Lines;
     FRichTextSelectionPoint SelStart;
     FRichTextSelectionPoint SelEnd;
-
-    ImGuiID ViewId              = 0;
-    ImVec2  Padding             = ImVec2(12.0f, 8.0f);
-    ImVec2  ContentStart        = ImVec2(0, 0);
-    float   LineHeight          = 0.0f;
-    float   CharWidth           = 0.0f;
-    int32   MaxLineChars        = 0;
-    bool    bAutoScroll         = true;
-    bool    bScrollToBottom     = false;
-    bool    bIsScrolledToBottom = true;
-    bool    bSelecting          = false;
-    bool    bHasSelection       = false;
-    bool    bActive             = false;
+    ImGuiID                 ViewId              = 0;
+    ImVec2                  Padding             = ImVec2(12.0f, 8.0f);
+    ImVec2                  ContentStart        = ImVec2(0, 0);
+    float                   LineHeight          = 0.0f;
+    float                   CharWidth           = 0.0f;
+    int32                   MaxLineChars        = 0;
+    bool                    bAutoScroll         = true;
+    bool                    bScrollToBottom     = false;
+    bool                    bIsScrolledToBottom = true;
+    bool                    bSelecting          = false;
+    bool                    bHasSelection       = false;
+    bool                    bActive             = false;
 };
 
 struct FErrorWindowContext
@@ -119,8 +117,7 @@ struct FConfirmDialogContext
 {
     String Title;
     String Message;
-
-    bool bVisible = false;
+    bool   bVisible = false;
 };
 
 // -----------------------------------------------------------------------------------------
@@ -388,6 +385,7 @@ struct ENGINE_API EditorIcons
 struct ENGINE_API EditorFonts
 {
     static ImFont* DefaultFont;
+    static ImFont* SystemIcons;
     static ImFont* SegoeUI_18;
     static ImFont* SegoeUI_22;
     static ImFont* Consola_16;
