@@ -174,7 +174,7 @@ private:
     //          [0, 2]     -> RootFolders[0].FolderContents[2]
     //          [0, 2, 1]  -> RootFolders[0].FolderContents[2].FolderContents[1]
     TArray<int32>              SelectedFolderPath;
-    ErrorWindowContext         FailedMoveErrorContext;
+    FErrorWindowContext        FailedMoveErrorContext;
 
     bool                       bClipboardValid;
     bool                       bClipboardFromContentPanel;
@@ -182,7 +182,7 @@ private:
     TArray<int32>              ClipboardContentIndices;
     TArray<TArray<int32>>      ClipboardFolderPaths;
 
-    ConfirmDialogContext       DeleteConfirmContext;
+    FConfirmDialogContext      DeleteConfirmContext;
     bool                       bPendingDeleteContent;
     bool                       bPendingDeleteFolder;
 

@@ -59,7 +59,7 @@ struct FSubMenuState
     bool         bRowHovered  = false;
 };
 
-struct RichTextSpan
+struct FRichTextSpan
 {
     String Text;
 
@@ -68,35 +68,37 @@ struct RichTextSpan
     bool  bHasBackground  = false;
 };
 
-struct RichTextLine
+struct FRichTextLine
 {
-    TArray<RichTextSpan> Spans;
+    TArray<FRichTextSpan> Spans;
     int32 TotalChars = 0;
 };
 
-struct RichTextSelectionPoint
+struct FRichTextSelectionPoint
 {
     int32 Line   = 0;
     int32 Column = 0;
 };
 
-struct RichTextViewContext
+struct FRichTextViewContext
 {
     void ClearForNewFrame()
     {
         Lines.Clear();
-        bActive = false;
+        MaxLineChars = 0;
+        bActive      = false;
     }
 
-    TArray<RichTextLine>   Lines;
-    RichTextSelectionPoint SelStart;
-    RichTextSelectionPoint SelEnd;
+    TArray<FRichTextLine>   Lines;
+    FRichTextSelectionPoint SelStart;
+    FRichTextSelectionPoint SelEnd;
 
     ImGuiID ViewId              = 0;
-    ImVec2  Padding             = ImVec2(8.0f, 4.0f);
+    ImVec2  Padding             = ImVec2(12.0f, 8.0f);
     ImVec2  ContentStart        = ImVec2(0, 0);
     float   LineHeight          = 0.0f;
     float   CharWidth           = 0.0f;
+    int32   MaxLineChars        = 0;
     bool    bAutoScroll         = true;
     bool    bScrollToBottom     = false;
     bool    bIsScrolledToBottom = true;
@@ -105,7 +107,7 @@ struct RichTextViewContext
     bool    bActive             = false;
 };
 
-struct ErrorWindowContext
+struct FErrorWindowContext
 {
     TArray<String> Entries;
     String         Title;
@@ -113,7 +115,7 @@ struct ErrorWindowContext
     bool           bVisible = false;
 };
 
-struct ConfirmDialogContext
+struct FConfirmDialogContext
 {
     String Title;
     String Message;
@@ -298,15 +300,15 @@ struct ENGINE_API EditorWidgets
     // Rich Text View
     // -----------------------------------------------------------------------------------------
 
-    static bool BeginRichTextView(const CHAR* InId, const ImVec2& InSize, RichTextViewContext& InOutContext, ImGuiWindowFlags InFlags = 0, bool bWithContextMenu = true);
-    static void RichTextSelectAll(RichTextViewContext& InOutContext);
-    static void RichTextNewLine(RichTextViewContext& InOutContext);
-    static void RichTextAddText(RichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor);
-    static void RichTextAddTextBg(RichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor, ImU32 InBackgroundColor);
-    static void EndRichTextView(RichTextViewContext& InOutContext);
+    static bool BeginRichTextView(const CHAR* InId, const ImVec2& InSize, FRichTextViewContext& InOutContext, ImGuiWindowFlags InFlags = 0, bool bWithContextMenu = true);
+    static void RichTextSelectAll(FRichTextViewContext& InOutContext);
+    static void RichTextNewLine(FRichTextViewContext& InOutContext);
+    static void RichTextAddText(FRichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor);
+    static void RichTextAddTextBg(FRichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor, ImU32 InBackgroundColor);
+    static void EndRichTextView(FRichTextViewContext& InOutContext);
 
-    static String GetSelectedRichText(const RichTextViewContext& InContext);
-    static String GetAllRichText(const RichTextViewContext& InContext);
+    static String GetSelectedRichText(const FRichTextViewContext& InContext);
+    static String GetAllRichText(const FRichTextViewContext& InContext);
 
     // -----------------------------------------------------------------------------------------
     // Buttons
@@ -332,13 +334,13 @@ struct ENGINE_API EditorWidgets
     // Error handling
     // -----------------------------------------------------------------------------------------
 
-    static void DrawErrorWindow(ErrorWindowContext& InOutContext);
+    static void DrawErrorWindow(FErrorWindowContext& InOutContext);
 
     // -----------------------------------------------------------------------------------------
     // Confirmation dialog
     // -----------------------------------------------------------------------------------------
 
-    static bool DrawConfirmDialog(ConfirmDialogContext& InOutContext);
+    static bool DrawConfirmDialog(FConfirmDialogContext& InOutContext);
 
     // -----------------------------------------------------------------------------------------
     // Other

@@ -13,6 +13,7 @@ FEditorOutputLogWidget::FEditorOutputLogWidget()
     , ImGuiDelegateHandle()
     , bVisible(true)
     , bAutoScroll(true)
+    , bFocusSearchField(false)
     , bFilterInfo(true)
     , bFilterWarning(true)
     , bFilterError(true)
@@ -29,7 +30,7 @@ FEditorOutputLogWidget::FEditorOutputLogWidget()
 
     SearchFilterBuffer.Fill(0);
 
-    RichTextCtx.Padding     = ImVec2(8.0f, 4.0f);
+    RichTextCtx.Padding     = ImVec2(12.0f, 8.0f);
     RichTextCtx.bAutoScroll = bAutoScroll;
 }
 
@@ -79,6 +80,12 @@ void FEditorOutputLogWidget::Draw()
 
     if (EditorWidgets::BeginEditorWindow("Output Log", &bVisible))
     {
+        // ImGuiMod_Ctrl resolves to Cmd on macOS, and the default focused routing keeps this off the other panels
+        if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_F))
+        {
+            bFocusSearchField = true;
+        }
+
         const float OuterPadX        = 4.0f;
         const float OuterPadTop      = 10.0f;
         const float OuterPadBottom   = 4.0f;
@@ -195,6 +202,13 @@ void FEditorOutputLogWidget::DrawFilterBar()
     const float MaxSearchWidth = AvailableX * 0.25f;
 
     float SearchWidth = MaxSearchWidth;
+
+    if (bFocusSearchField)
+    {
+        ImGui::SetKeyboardFocusHere();
+        bFocusSearchField = false;
+    }
+
     EditorWidgets::DrawSearchField("##LogSearch", "Search Log", SearchFilterBuffer.Data(), SearchFilterBuffer.Size(), SearchWidth, true);
 
     float SearchBarHeight = ImGui::GetItemRectSize().y;
@@ -479,6 +493,11 @@ void FEditorOutputLogWidget::DrawLogListRichText()
                 {
                     ImGui::SetClipboardText(*All);
                 }
+            }
+
+            if (EditorWidgets::MenuItem("Find", EDITOR_SHORTCUT_MOD "+F", false, true))
+            {
+                bFocusSearchField = true;
             }
 
             if (EditorWidgets::MenuItem("Clear log", nullptr, false, true))

@@ -372,17 +372,17 @@ static FORCEINLINE int32 ClampInt32(int32 V, int32 MinV, int32 MaxV)
     return (V < MinV) ? MinV : (V > MaxV ? MaxV : V);
 }
 
-static FORCEINLINE void NormalizeSelection(RichTextSelectionPoint& A, RichTextSelectionPoint& B)
+static FORCEINLINE void NormalizeSelection(FRichTextSelectionPoint& A, FRichTextSelectionPoint& B)
 {
     if (A.Line > B.Line || (A.Line == B.Line && A.Column > B.Column))
     {
-        RichTextSelectionPoint Temp = A;
+        FRichTextSelectionPoint Temp = A;
         A = B;
         B = Temp;
     }
 }
 
-static FORCEINLINE bool SelectionIntersectsLine(const RichTextSelectionPoint& SelA, const RichTextSelectionPoint& SelB, int32 LineIndex, int32& OutColStart, int32& OutColEnd, int32 LineCharCount)
+static FORCEINLINE bool SelectionIntersectsLine(const FRichTextSelectionPoint& SelA, const FRichTextSelectionPoint& SelB, int32 LineIndex, int32& OutColStart, int32& OutColEnd, int32 LineCharCount)
 {
     OutColStart = 0;
     OutColEnd   = 0;
@@ -418,15 +418,33 @@ static FORCEINLINE bool SelectionIntersectsLine(const RichTextSelectionPoint& Se
     return LineCharCount > 0;
 }
 
-static String BuildSelectedText(const RichTextViewContext& Ctx)
+static String BuildLineText(const FRichTextViewContext& Ctx, int32 LineIndex)
+{
+    String Result;
+
+    if (!Ctx.Lines.IsValidIndex(LineIndex))
+    {
+        return Result;
+    }
+
+    const FRichTextLine& Line = Ctx.Lines[LineIndex];
+    for (int32 s = 0; s < Line.Spans.Size(); ++s)
+    {
+        Result += Line.Spans[s].Text;
+    }
+
+    return Result;
+}
+
+static String BuildSelectedText(const FRichTextViewContext& Ctx)
 {
     if (!Ctx.bHasSelection || Ctx.Lines.IsEmpty())
     {
         return String();
     }
 
-    RichTextSelectionPoint A = Ctx.SelStart;
-    RichTextSelectionPoint B = Ctx.SelEnd;
+    FRichTextSelectionPoint A = Ctx.SelStart;
+    FRichTextSelectionPoint B = Ctx.SelEnd;
     NormalizeSelection(A, B);
 
     String Result;
@@ -436,22 +454,15 @@ static String BuildSelectedText(const RichTextViewContext& Ctx)
 
     for (int32 L = LineMin; L <= LineMax; ++L)
     {
-        const RichTextLine& Line = Ctx.Lines[L];
-
-        String FullLine;
-        for (int32 s = 0; s < Line.Spans.Size(); ++s)
-        {
-            FullLine += Line.Spans[s].Text;
-        }
-
-        const CHAR* Full = *FullLine;
-        const int32 FullLen = static_cast<int32>(CString::Strlen(Full));
+        const String FullLine = BuildLineText(Ctx, L);
+        const CHAR*  Full     = *FullLine;
+        const int32  FullLen  = static_cast<int32>(CString::Strlen(Full));
 
         int32 SelColStart = 0;
         int32 SelColEnd   = 0;
 
-        RichTextSelectionPoint NA = A;
-        RichTextSelectionPoint NB = B;
+        FRichTextSelectionPoint NA = A;
+        FRichTextSelectionPoint NB = B;
 
         if (!SelectionIntersectsLine(NA, NB, L, SelColStart, SelColEnd, FullLen))
         {
@@ -485,13 +496,13 @@ static String BuildSelectedText(const RichTextViewContext& Ctx)
     return Result;
 }
 
-static String BuildAllText(const RichTextViewContext& Ctx)
+static String BuildAllText(const FRichTextViewContext& Ctx)
 {
     String Result;
 
     for (int32 L = 0; L < Ctx.Lines.Size(); ++L)
     {
-        const RichTextLine& Line = Ctx.Lines[L];
+        const FRichTextLine& Line = Ctx.Lines[L];
         for (int32 s = 0; s < Line.Spans.Size(); ++s)
         {
             Result += Line.Spans[s].Text;
@@ -503,9 +514,20 @@ static String BuildAllText(const RichTextViewContext& Ctx)
     return Result;
 }
 
-static RichTextSelectionPoint GetMouseSelectionPoint(const RichTextViewContext& Ctx, const ImVec2& MousePos)
+static FORCEINLINE float MeasureRichTextWidth(const CHAR* Text)
 {
-    RichTextSelectionPoint P{};
+    const ImFont* Font = ImGui::GetFont();
+    if (!Font || !Text)
+    {
+        return 0.0f;
+    }
+
+    return Font->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, 0.0f, Text).x;
+}
+
+static FRichTextSelectionPoint GetMouseSelectionPoint(const FRichTextViewContext& Ctx, const ImVec2& MousePos)
+{
+    FRichTextSelectionPoint P{};
     P.Line   = 0;
     P.Column = 0;
 
@@ -525,6 +547,63 @@ static RichTextSelectionPoint GetMouseSelectionPoint(const RichTextViewContext& 
 
     P.Column = ClampInt32(Col, 0, LineChars);
     return P;
+}
+
+enum class ERichTextCharClass
+{
+    Word,
+    Whitespace,
+    Symbol,
+};
+
+static FORCEINLINE ERichTextCharClass GetRichTextCharClass(CHAR Char)
+{
+    const uint8 Byte = static_cast<uint8>(Char);
+
+    if (Byte == ' ' || Byte == '\t')
+    {
+        return ERichTextCharClass::Whitespace;
+    }
+
+    const bool bIsWordChar =
+        (Byte >= 'a' && Byte <= 'z') ||
+        (Byte >= 'A' && Byte <= 'Z') ||
+        (Byte >= '0' && Byte <= '9') ||
+        (Byte == '_') ||
+        (Byte >= 0x80);
+
+    return bIsWordChar ? ERichTextCharClass::Word : ERichTextCharClass::Symbol;
+}
+
+static void FindWordBounds(const CHAR* Text, int32 TextLength, int32 Column, int32& OutStart, int32& OutEnd)
+{
+    OutStart = 0;
+    OutEnd   = 0;
+
+    if (!Text || TextLength <= 0)
+    {
+        return;
+    }
+
+    // Clicking past the last character picks the run that ends the line
+    const int32 Index = ClampInt32(Column, 0, TextLength - 1);
+
+    const ERichTextCharClass CharClass = GetRichTextCharClass(Text[Index]);
+
+    int32 Start = Index;
+    while (Start > 0 && GetRichTextCharClass(Text[Start - 1]) == CharClass)
+    {
+        --Start;
+    }
+
+    int32 End = Index + 1;
+    while (End < TextLength && GetRichTextCharClass(Text[End]) == CharClass)
+    {
+        ++End;
+    }
+
+    OutStart = Start;
+    OutEnd   = End;
 }
 
 bool EditorWidgets::DrawFloat3Control(const CHAR* Label, Vector3& OutValue, float Speed, const Vector3* InRevertValue, EVector3ControlType InType)
@@ -1813,7 +1892,7 @@ void EditorWidgets::EndEditorWindow()
     }
 }
 
-void EditorWidgets::DrawErrorWindow(ErrorWindowContext& InOutContext)
+void EditorWidgets::DrawErrorWindow(FErrorWindowContext& InOutContext)
 {
     if (!InOutContext.bVisible)
     {
@@ -1914,7 +1993,7 @@ void EditorWidgets::DrawErrorWindow(ErrorWindowContext& InOutContext)
     }
 }
 
-bool EditorWidgets::DrawConfirmDialog(ConfirmDialogContext& InOutContext)
+bool EditorWidgets::DrawConfirmDialog(FConfirmDialogContext& InOutContext)
 {
     if (!InOutContext.bVisible)
     {
@@ -3303,7 +3382,7 @@ void EditorWidgets::PropertySeparatorRow(float PaddingY)
     }
 }
 
-bool EditorWidgets::BeginRichTextView(const CHAR* InId, const ImVec2& InSize, RichTextViewContext& InOutContext, ImGuiWindowFlags InFlags, bool bWithContextMenu)
+bool EditorWidgets::BeginRichTextView(const CHAR* InId, const ImVec2& InSize, FRichTextViewContext& InOutContext, ImGuiWindowFlags InFlags, bool bWithContextMenu)
 {
     InOutContext.ClearForNewFrame();
 
@@ -3319,7 +3398,7 @@ bool EditorWidgets::BeginRichTextView(const CHAR* InId, const ImVec2& InSize, Ri
 
     InOutContext.bActive      = true;
     InOutContext.LineHeight   = ImGui::GetTextLineHeight();
-    InOutContext.CharWidth    = ImGui::CalcTextSize("A").x;
+    InOutContext.CharWidth    = MeasureRichTextWidth("A");
     InOutContext.ContentStart = ImGui::GetCursorScreenPos();
 
     if (bWithContextMenu && EditorWidgets::BeginPopupContextWindow("##RichTextViewContext", ImGuiPopupFlags_MouseButtonRight))
@@ -3346,7 +3425,7 @@ bool EditorWidgets::BeginRichTextView(const CHAR* InId, const ImVec2& InSize, Ri
     return true;
 }
 
-void EditorWidgets::RichTextSelectAll(RichTextViewContext& InOutContext)
+void EditorWidgets::RichTextSelectAll(FRichTextViewContext& InOutContext)
 {
     if (InOutContext.Lines.IsEmpty())
     {
@@ -3364,56 +3443,58 @@ void EditorWidgets::RichTextSelectAll(RichTextViewContext& InOutContext)
     InOutContext.SelEnd.Column   = LastCol;
 }
 
-String EditorWidgets::GetSelectedRichText(const RichTextViewContext& InContext)
+String EditorWidgets::GetSelectedRichText(const FRichTextViewContext& InContext)
 {
     return BuildSelectedText(InContext);
 }
 
-String EditorWidgets::GetAllRichText(const RichTextViewContext& InContext)
+String EditorWidgets::GetAllRichText(const FRichTextViewContext& InContext)
 {
     return BuildAllText(InContext);
 }
 
-void EditorWidgets::RichTextNewLine(RichTextViewContext& InOutContext)
+void EditorWidgets::RichTextNewLine(FRichTextViewContext& InOutContext)
 {
     if (!InOutContext.bActive)
     {
         return;
     }
 
-    RichTextLine Line;
+    FRichTextLine Line;
     Line.TotalChars = 0;
     InOutContext.Lines.Add(Line);
 }
 
-void EditorWidgets::RichTextAddText(RichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor)
+void EditorWidgets::RichTextAddText(FRichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor)
 {
     if (!InOutContext.bActive || InOutContext.Lines.IsEmpty() || !InText)
     {
         return;
     }
 
-    RichTextLine& Line = InOutContext.Lines[InOutContext.Lines.Size() - 1];
+    FRichTextLine& Line = InOutContext.Lines[InOutContext.Lines.Size() - 1];
 
-    RichTextSpan Span;
+    FRichTextSpan Span;
     Span.Text           = InText;
     Span.TextColor      = InTextColor;
     Span.bHasBackground = false;
 
     Line.TotalChars += static_cast<int32>(CString::Strlen(InText));
     Line.Spans.Add(Span);
+
+    InOutContext.MaxLineChars = Math::Max(InOutContext.MaxLineChars, Line.TotalChars);
 }
 
-void EditorWidgets::RichTextAddTextBg(RichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor, ImU32 InBackgroundColor)
+void EditorWidgets::RichTextAddTextBg(FRichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor, ImU32 InBackgroundColor)
 {
     if (!InOutContext.bActive || InOutContext.Lines.IsEmpty() || !InText)
     {
         return;
     }
 
-    RichTextLine& Line = InOutContext.Lines[InOutContext.Lines.Size() - 1];
+    FRichTextLine& Line = InOutContext.Lines[InOutContext.Lines.Size() - 1];
 
-    RichTextSpan Span;
+    FRichTextSpan Span;
     Span.Text            = InText;
     Span.TextColor       = InTextColor;
     Span.bHasBackground  = true;
@@ -3421,9 +3502,11 @@ void EditorWidgets::RichTextAddTextBg(RichTextViewContext& InOutContext, const C
 
     Line.TotalChars += static_cast<int32>(CString::Strlen(InText));
     Line.Spans.Add(Span);
+
+    InOutContext.MaxLineChars = Math::Max(InOutContext.MaxLineChars, Line.TotalChars);
 }
 
-void EditorWidgets::EndRichTextView(RichTextViewContext& InOutContext)
+void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
 {
     if (!InOutContext.bActive)
     {
@@ -3439,9 +3522,11 @@ void EditorWidgets::EndRichTextView(RichTextViewContext& InOutContext)
     const float FullLineHeight = InOutContext.LineHeight;
     const float TotalHeight    = InOutContext.Padding.y + static_cast<float>(InOutContext.Lines.Size()) * FullLineHeight + InOutContext.Padding.y;
 
+    const float TotalWidth = InOutContext.Padding.x + static_cast<float>(InOutContext.MaxLineChars) * InOutContext.CharWidth + InOutContext.Padding.x;
+
     {
         const ImVec2 SavedCursorPos = ImGui::GetCursorPos();
-        ImGui::Dummy(ImVec2(0.0f, TotalHeight));
+        ImGui::Dummy(ImVec2(TotalWidth, TotalHeight));
         ImGui::SetCursorPos(SavedCursorPos);
     }
 
@@ -3456,6 +3541,9 @@ void EditorWidgets::EndRichTextView(RichTextViewContext& InOutContext)
     // -----------------------------------------------------------------------------------------
 
     const bool bHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows | ImGuiHoveredFlags_NoPopupHierarchy);
+
+    bool bHoveredContent = false;
+
     if (bHovered)
     {
         const ImGuiStyle& Style = ImGui::GetStyle();
@@ -3470,7 +3558,9 @@ void EditorWidgets::EndRichTextView(RichTextViewContext& InOutContext)
         const float MaxX = WinPos.x + WinSize.x - (bHasVScroll ? Style.ScrollbarSize : 0.0f);
         const float MaxY = WinPos.y + WinSize.y - (bHasHScroll ? Style.ScrollbarSize : 0.0f);
 
-        if (Mouse.x < MaxX && Mouse.y < MaxY)
+        bHoveredContent = (Mouse.x < MaxX) && (Mouse.y < MaxY);
+
+        if (bHoveredContent)
         {
             ImGui::SetMouseCursor(ImGuiMouseCursor_TextInput);
         }
@@ -3486,43 +3576,63 @@ void EditorWidgets::EndRichTextView(RichTextViewContext& InOutContext)
         MarkKeyboardCaptureActive();
     }
 
-    if (bHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    if (bHoveredContent && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
     {
-        InOutContext.bSelecting    = true;
-        InOutContext.bHasSelection = true;
+        const FRichTextSelectionPoint Point = GetMouseSelectionPoint(InOutContext, State.MousePos);
+        const int32                   Count = ImGui::GetMouseClickedCount(ImGuiMouseButton_Left);
 
-        InOutContext.SelStart = GetMouseSelectionPoint(InOutContext, State.MousePos);
-        InOutContext.SelEnd   = InOutContext.SelStart;
+        if (Count >= 3)
+        {
+            InOutContext.SelStart.Line   = Point.Line;
+            InOutContext.SelStart.Column = 0;
+            InOutContext.SelEnd.Line     = Point.Line;
+            InOutContext.SelEnd.Column   = InOutContext.Lines.IsValidIndex(Point.Line) ? InOutContext.Lines[Point.Line].TotalChars : 0;
+
+            InOutContext.bHasSelection = true;
+
+            InOutContext.bSelecting = false;
+        }
+        else if (Count == 2)
+        {
+            const String LineText = BuildLineText(InOutContext, Point.Line);
+
+            int32 WordStart = 0;
+            int32 WordEnd   = 0;
+            FindWordBounds(*LineText, static_cast<int32>(CString::Strlen(*LineText)), Point.Column, WordStart, WordEnd);
+
+            InOutContext.SelStart.Line   = Point.Line;
+            InOutContext.SelStart.Column = WordStart;
+            InOutContext.SelEnd.Line     = Point.Line;
+            InOutContext.SelEnd.Column   = WordEnd;
+
+            InOutContext.bHasSelection = WordEnd > WordStart;
+            InOutContext.bSelecting    = false;
+        }
+        else if (State.KeyShift && InOutContext.bHasSelection)
+        {
+            InOutContext.SelEnd     = Point;
+            InOutContext.bSelecting = true;
+        }
+        else
+        {
+            InOutContext.SelStart = Point;
+            InOutContext.SelEnd   = Point;
+
+            InOutContext.bHasSelection = true;
+            InOutContext.bSelecting    = true;
+        }
 
         MarkKeyboardCaptureActive();
     }
 
     // -----------------------------------------------------------------------------------------
-    // Select all (Ctrl + A)
+    // Select all (Ctrl/Cmd + A)
     // -----------------------------------------------------------------------------------------
 
-    if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && State.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_A, false))
+    if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_A))
     {
         ImGui::SetNextFrameWantCaptureKeyboard(true);
-
-        if (!InOutContext.Lines.IsEmpty())
-        {
-            const int32 LastLineIndex = InOutContext.Lines.Size() - 1;
-            const int32 LastCol       = InOutContext.Lines[LastLineIndex].TotalChars;
-
-            InOutContext.bHasSelection = true;
-            InOutContext.bSelecting    = false;
-
-            InOutContext.SelStart.Line   = 0;
-            InOutContext.SelStart.Column = 0;
-            InOutContext.SelEnd.Line     = LastLineIndex;
-            InOutContext.SelEnd.Column   = LastCol;
-        }
-        else
-        {
-            InOutContext.bHasSelection = false;
-            InOutContext.bSelecting    = false;
-        }
+        EditorWidgets::RichTextSelectAll(InOutContext);
     }
 
     // -----------------------------------------------------------------------------------------
@@ -3604,10 +3714,10 @@ void EditorWidgets::EndRichTextView(RichTextViewContext& InOutContext)
     }
 
     // -----------------------------------------------------------------------------------------
-    // Copy (Ctrl + C)
+    // Copy (Ctrl/Cmd + C)
     // -----------------------------------------------------------------------------------------
 
-    if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && State.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C, false))
+    if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_C))
     {
         ImGui::SetNextFrameWantCaptureKeyboard(true);
 
@@ -3619,17 +3729,13 @@ void EditorWidgets::EndRichTextView(RichTextViewContext& InOutContext)
                 ImGui::SetClipboardText(*Selected);
             }
         }
-        else
+        else if (bHoveredContent)
         {
-            const RichTextSelectionPoint P = GetMouseSelectionPoint(InOutContext, State.MousePos);
-            if (InOutContext.Lines.IsValidIndex(P.Line))
-            {
-                String LineText;
-                for (int32 s = 0; s < InOutContext.Lines[P.Line].Spans.Size(); ++s)
-                {
-                    LineText += InOutContext.Lines[P.Line].Spans[s].Text;
-                }
+            const FRichTextSelectionPoint Point    = GetMouseSelectionPoint(InOutContext, State.MousePos);
+            const String                  LineText = BuildLineText(InOutContext, Point.Line);
 
+            if (!LineText.IsEmpty())
+            {
                 ImGui::SetClipboardText(*LineText);
             }
         }
@@ -3639,14 +3745,25 @@ void EditorWidgets::EndRichTextView(RichTextViewContext& InOutContext)
     // Draw
     // -----------------------------------------------------------------------------------------
 
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + InOutContext.Padding.y);
+
     ImGuiListClipper Clipper;
     Clipper.Begin(InOutContext.Lines.Size(), FullLineHeight);
 
-    RichTextSelectionPoint SelA = InOutContext.SelStart;
-    RichTextSelectionPoint SelB = InOutContext.SelEnd;
+    FRichTextSelectionPoint SelA = InOutContext.SelStart;
+    FRichTextSelectionPoint SelB = InOutContext.SelEnd;
     NormalizeSelection(SelA, SelB);
 
     const ImU32 SelectionBg = ImGui::GetColorU32(ImGuiCol_TextSelectedBg);
+
+    const ImRect& InnerClip = CurrentWindow->InnerClipRect;
+
+    const ImVec2 ClipMin = ImVec2(InnerClip.Min.x + InOutContext.Padding.x, InnerClip.Min.y + InOutContext.Padding.y);
+    const ImVec2 ClipMax = ImVec2(
+        Math::Max(ClipMin.x, InnerClip.Max.x - InOutContext.Padding.x),
+        Math::Max(ClipMin.y, InnerClip.Max.y - InOutContext.Padding.y));
+
+    DrawList->PushClipRect(ClipMin, ClipMax, true);
 
     while (Clipper.Step())
     {
@@ -3657,7 +3774,7 @@ void EditorWidgets::EndRichTextView(RichTextViewContext& InOutContext)
                 continue;
             }
 
-            const RichTextLine& Line = InOutContext.Lines[LineIndex];
+            const FRichTextLine& Line = InOutContext.Lines[LineIndex];
 
             const float Y = InOutContext.ContentStart.y + InOutContext.Padding.y + LineIndex * FullLineHeight;
             const float X = InOutContext.ContentStart.x + InOutContext.Padding.x;
@@ -3682,7 +3799,7 @@ void EditorWidgets::EndRichTextView(RichTextViewContext& InOutContext)
             float CursorX = X;
             for (int32 s = 0; s < Line.Spans.Size(); ++s)
             {
-                const RichTextSpan& Span = Line.Spans[s];
+                const FRichTextSpan& Span = Line.Spans[s];
 
                 const CHAR* Text = *Span.Text;
                 if (!Text || Text[0] == 0)
@@ -3690,7 +3807,7 @@ void EditorWidgets::EndRichTextView(RichTextViewContext& InOutContext)
                     continue;
                 }
 
-                const float SpanWidth = ImGui::CalcTextSize(Text).x;
+                const float SpanWidth = MeasureRichTextWidth(Text);
                 if (Span.bHasBackground)
                 {
                     const float HighlightPadY    = 2.0f;
@@ -3705,6 +3822,8 @@ void EditorWidgets::EndRichTextView(RichTextViewContext& InOutContext)
             }
         }
     }
+
+    DrawList->PopClipRect();
 
     // -----------------------------------------------------------------------------------------
     // Scroll to bottom

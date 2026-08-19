@@ -43,10 +43,11 @@ private:
     TStaticArray<CHAR, 256> SearchFilterBuffer;
     TArray<FLogMessage>     Messages;
     FCriticalSection        MessagesCS;
-    RichTextViewContext     RichTextCtx;
+    FRichTextViewContext    RichTextCtx;
     FDelegateHandle         ImGuiDelegateHandle;
     bool                    bVisible;
     bool                    bAutoScroll;
+    bool                    bFocusSearchField;
     bool                    bFilterInfo;
     bool                    bFilterWarning;
     bool                    bFilterError;
