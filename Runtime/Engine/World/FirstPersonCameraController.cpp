@@ -20,6 +20,17 @@ static TAutoConsoleVariable<bool> CVarInvertLookY(
 constexpr float MOVEMENT_DAMPING_RATE = 5.0f;
 constexpr float MOVEMENT_REST_SPEED   = 1.0e-3f;
 
+static float WrapDegrees180(float Degrees)
+{
+    Degrees = Math::FMod(Degrees + 180.0f, 360.0f);
+    if (Degrees < 0.0f)
+    {
+        Degrees += 360.0f;
+    }
+
+    return Degrees - 180.0f;
+}
+
 FFirstPersonCameraController::FFirstPersonCameraController()
     : Camera(nullptr)
     , Velocity()
@@ -35,13 +46,18 @@ FFirstPersonCameraController::~FFirstPersonCameraController() = default;
 
 void FFirstPersonCameraController::SetCamera(FCameraComponent* InCamera)
 {
-    if (Camera == InCamera)
+    if (Camera != InCamera)
     {
-        return;
+        Camera   = InCamera;
+        Velocity = Vector3();
     }
 
-    Camera   = InCamera;
-    Velocity = Vector3();
+    if (!Camera)
+    {
+        Pitch = 0.0f;
+        Yaw   = 0.0f;
+        return;
+    }
 
     SyncFromCamera();
 }
@@ -88,7 +104,7 @@ void FFirstPersonCameraController::ApplyLook(float DeltaTime, const FFirstPerson
     Pitch += Input.StickLook.Y * StickLookSpeed * DeltaTime * LookSign;
 
     Pitch = Math::Clamp(Pitch, -MaxPitchDegrees, MaxPitchDegrees);
-    Yaw   = Math::FMod(Yaw, 360.0f);
+    Yaw   = WrapDegrees180(Yaw);
 
     Camera->SetRotation(Math::DegreesToRadians(Pitch), Math::DegreesToRadians(Yaw), 0.0f);
 }

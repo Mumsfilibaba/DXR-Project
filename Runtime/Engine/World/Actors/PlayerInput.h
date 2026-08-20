@@ -118,6 +118,7 @@ public:
     
     void EnableInput(FInputComponent* InputComponent);
     void ClearInputStates();
+    void ClearMouseDelta();
 
     IntVector2 ConsumeMouseDelta();
 

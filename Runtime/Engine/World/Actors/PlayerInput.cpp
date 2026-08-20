@@ -206,6 +206,11 @@ void FPlayerInput::ClearInputStates()
     MouseDelta = IntVector2();
 }
 
+void FPlayerInput::ClearMouseDelta()
+{
+    MouseDelta = IntVector2();
+}
+
 void FPlayerInput::OnHighPrecisionMouseInput(const IntVector2& Delta)
 {
     MouseDelta.X += Delta.X;

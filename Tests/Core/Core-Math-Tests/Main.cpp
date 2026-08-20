@@ -19,6 +19,8 @@ bool TestQuaternion();
 
 bool TestFormatStructs();
 
+bool TestCameraBasis();
+
 int main()
 {
     TestHarness::Initialize("TestResults_Core.log");
@@ -41,6 +43,8 @@ int main()
     RUN_TEST("Quaternion", TestQuaternion());
 
     RUN_TEST("FormatStructs", TestFormatStructs());
+
+    RUN_TEST("CameraBasis", TestCameraBasis());
 
     const int32 ExitCode = TestHarness::Report();
     TestHarness::Shutdown();

@@ -95,13 +95,28 @@ void FCameraComponent::UpdateDirectionVectors()
     CHECK(GetActorOwner() != nullptr);
 
     const Vector3& Rotation = GetActorOwner()->GetWorldTransform().GetRotation();
-    
-    const Matrix4 RotationMatrix = Matrix4::RotationRollPitchYaw(Rotation);
-    ForwardVector = RotationMatrix.TransformNormal(Vector3::Forward);
+    const float Pitch = Rotation.X;
+    const float Yaw   = Rotation.Y;
+
+    const float CosP = Math::Cos(Pitch);
+    const float SinP = Math::Sin(Pitch);
+    const float CosY = Math::Cos(Yaw);
+    const float SinY = Math::Sin(Yaw);
+
+    ForwardVector = Vector3(CosP * SinY, -SinP, CosP * CosY);
     ForwardVector.Normalize();
 
     RightVector = ForwardVector.CrossProduct(Vector3::Up);
-    RightVector.Normalize();
+    const float RightLengthSquared = RightVector.GetLengthSquared();
+    if (RightLengthSquared > 1.0e-6f)
+    {
+        RightVector /= Math::Sqrt(RightLengthSquared);
+    }
+    else
+    {
+        RightVector = Vector3(-CosY, 0.0f, SinY);
+        RightVector.Normalize();
+    }
 
     UpVector = RightVector.CrossProduct(ForwardVector);
     UpVector.Normalize();

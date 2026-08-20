@@ -652,7 +652,7 @@ void FEditorViewportWidget::DrawViewportWindow()
                         EditorWidgets::MenuItem("Look", "RMB Drag", false, false);
                         EditorWidgets::MenuItem("Fly", "RMB + WASDQE", false, false);
                         EditorWidgets::MenuItem("Boost", "Shift", false, false);
-                        EditorWidgets::MenuItem("Zoom", "Wheel", false, false);
+                        EditorWidgets::MenuItem("Zoom", "Shift + Wheel", false, false);
                         EditorWidgets::MenuItem("Fly Speed", "Alt + Wheel", false, false);
                         EditorWidgets::MenuItem("Orbit", "Alt + LMB", false, false);
                         EditorWidgets::MenuItem("Dolly", "Alt + RMB", false, false);

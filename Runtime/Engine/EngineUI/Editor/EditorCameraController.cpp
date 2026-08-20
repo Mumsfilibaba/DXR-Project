@@ -361,7 +361,7 @@ void FEditorCameraController::HandleMouse(float DeltaTime, const FEditorCameraIn
                 bMoveSpeedChangedPending = true;
             }
         }
-        else if (!Input.bRightMouseDown)
+        else if (Input.bBoost && !Input.bRightMouseDown)
         {
             ZoomForward(Input.WheelDelta);
         }

@@ -103,4 +103,5 @@ private:
     bool                      bPlayerInputEnabled;
     bool                      bMouseCaptured;
     bool                      bCursorWasVisible;
+    bool                      bDiscardCaptureWarpDelta;
 };

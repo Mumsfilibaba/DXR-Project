@@ -18,6 +18,7 @@ FSceneViewport::FSceneViewport(const TWeakPtr<FViewportWidget>& InViewport)
     , bPlayerInputEnabled(true)
     , bMouseCaptured(false)
     , bCursorWasVisible(true)
+    , bDiscardCaptureWarpDelta(false)
 {
 }
 
@@ -133,7 +134,14 @@ bool FSceneViewport::CaptureMouse()
         return false;
     }
 
-    bMouseCaptured = true;
+    bMouseCaptured           = true;
+    bDiscardCaptureWarpDelta = true;
+
+    if (FPlayerController* PlayerController = GetFirstPlayerController())
+    {
+        PlayerController->GetPlayerInput()->ClearMouseDelta();
+    }
+
     return true;
 }
 
@@ -144,7 +152,8 @@ void FSceneViewport::ReleaseMouse()
         return;
     }
 
-    bMouseCaptured = false;
+    bMouseCaptured           = false;
+    bDiscardCaptureWarpDelta = false;
 
     if (FApplication::IsInitialized())
     {
@@ -201,9 +210,13 @@ void FSceneViewport::SetPlayerInputEnabled(bool bEnabled)
     bPlayerInputEnabled     = bEnabled;
     HighPrecisionMouseDelta = IntVector2();
 
-    if (!bPlayerInputEnabled)
+    if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
-        if (FPlayerController* PlayerController = GetFirstPlayerController())
+        if (bPlayerInputEnabled)
+        {
+            PlayerController->GetPlayerInput()->ClearMouseDelta();
+        }
+        else
         {
             PlayerController->GetPlayerInput()->ClearInputStates();
         }
@@ -379,6 +392,18 @@ FEventResponse FSceneViewport::OnMouseEntered(const FCursorEvent& CursorEvent)
 FEventResponse FSceneViewport::OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent)
 {
     const IntVector2 Delta = CursorEvent.GetCursorPos();
+
+    if (bPlayerInputEnabled && bDiscardCaptureWarpDelta)
+    {
+        constexpr int32 CaptureWarpDeltaThreshold = 64;
+        if (Math::Abs(Delta.X) > CaptureWarpDeltaThreshold || Math::Abs(Delta.Y) > CaptureWarpDeltaThreshold)
+        {
+            bDiscardCaptureWarpDelta = false;
+            return FEventResponse::Handled();
+        }
+
+        bDiscardCaptureWarpDelta = false;
+    }
 
     if (!bPlayerInputEnabled)
     {
