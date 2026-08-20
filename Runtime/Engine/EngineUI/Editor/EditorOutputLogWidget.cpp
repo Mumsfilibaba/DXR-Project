@@ -313,10 +313,11 @@ void FEditorOutputLogWidget::DrawFilterBar()
     // Popup menu
     // -------------------------------------------------------------------------------------------
 
-    const ImVec2 ButtonMin = ImGui::GetItemRectMin();
-    const ImVec2 ButtonMax = ImGui::GetItemRectMax();
+    FPopupAnchor FilterAnchor;
+    FilterAnchor.Min = ImGui::GetItemRectMin();
+    FilterAnchor.Max = ImGui::GetItemRectMax();
 
-    ImGui::SetNextWindowPos(ImVec2(ButtonMin.x, ButtonMax.y), ImGuiCond_Always);
+    EditorWidgets::SetNextBeginPopupPos("LogFilterMenu", FilterAnchor, EPopupPlacement::BelowAnchor);
     ImGui::SetNextWindowSize(ImVec2(180.0f, 0.0f), ImGuiCond_Appearing);
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));

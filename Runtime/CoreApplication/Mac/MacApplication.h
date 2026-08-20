@@ -338,7 +338,10 @@ public:
 
 private:
     static const FMacScreenInfo* FindScreenFromCocoaPoint(CGFloat PositionX, CGFloat PositionY);
-    static const FMacScreenInfo* FindScreenFromEnginePoint(CGFloat PositionX, CGFloat PositionY);
+    static const FMacScreenInfo* GetPrimaryScreenUnlocked();
+
+    static NSPoint CocoaToEngineUnlocked(CGFloat PositionX, CGFloat PositionY);
+    static NSPoint EngineToCocoaUnlocked(CGFloat PositionX, CGFloat PositionY);
 
     void ProcessDeferredEvent(const FDeferredMacEvent& DeferredEvent);
     void ProcessMouseMoveEvent(const FDeferredMacEvent& DeferredEvent);

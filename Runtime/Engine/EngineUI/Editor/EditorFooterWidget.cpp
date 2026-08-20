@@ -277,11 +277,18 @@ void FEditorFooterWidget::Draw()
             MaxNameWidth = Math::Max(MaxNameWidth, ImGui::CalcTextSize(*Candidate.Second).x);
         });
 
-        const float  ReservedScrollbarWidth = Style.ScrollbarSize;
-        const float  ExtraRightPadding      = 6.0f * Scale;
-        const float  TotalWidth             = MaxNameWidth + (WindowPadding.x * 2.0f) + ReservedScrollbarWidth + ExtraRightPadding;
-        const ImVec2 WindowSize             = ImVec2(TotalWidth, TotalHeight);
-        const ImVec2 WindowPosition         = ImVec2(InputRectMin.x, InputRectMin.y - PanelOffsetY);
+        const float ReservedScrollbarWidth = Style.ScrollbarSize;
+        const float ExtraRightPadding      = 6.0f * Scale;
+        const float TotalWidth             = MaxNameWidth + (WindowPadding.x * 2.0f) + ReservedScrollbarWidth + ExtraRightPadding;
+
+        const ImRect MonitorRect     = EditorWidgets::GetPopupExtentRect(InputRectMin);
+        const float  AvailableHeight = Math::Max(RowHeight, InputRectMin.y - PanelOffsetY - MonitorRect.Min.y);
+        const ImVec2 WindowSize      = ImVec2(TotalWidth, Math::Min(TotalHeight, AvailableHeight));
+        const ImVec2 WindowPosition  = ImVec2(InputRectMin.x, InputRectMin.y - PanelOffsetY - WindowSize.y);
+
+        FPopupAnchor OverlayAnchor;
+        OverlayAnchor.Min = WindowPosition;
+        OverlayAnchor.Max = WindowPosition;
 
         ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
         ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
@@ -303,7 +310,7 @@ void FEditorFooterWidget::Draw()
         ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 999.0f);
 
         ImGui::SetNextWindowSize(WindowSize, ImGuiCond_Always);
-        ImGui::SetNextWindowPos(WindowPosition, ImGuiCond_Always, ImVec2(0.0f, 1.0f));
+        EditorWidgets::SetNextPopupPos("ConsoleCandidates", OverlayAnchor, EPopupPlacement::ClampOnly, WindowSize);
 
         const ImGuiWindowFlags OverlayFlags =
             ImGuiWindowFlags_NoMove |
@@ -338,11 +345,26 @@ void FEditorFooterWidget::Draw()
 
                 const float TooltipOffsetX  = (10.0f * Scale) + (bHasVerticalScrollbar ? Style.ScrollbarSize : 0.0f);
                 const float TooltipMaxWidth = 420.0f * Scale;
+                const CHAR* TooltipId       = "##ConsoleCandidateTooltip";
 
-                ImGui::SetNextWindowPos(ImVec2(InItemRect.Max.x + TooltipOffsetX, InItemRect.Min.y), ImGuiCond_Always);
+                FPopupAnchor TooltipAnchor;
+                TooltipAnchor.Min = ImVec2(InItemRect.Min.x - TooltipOffsetX, InItemRect.Min.y);
+                TooltipAnchor.Max = ImVec2(InItemRect.Max.x + TooltipOffsetX, InItemRect.Max.y);
+
                 ImGui::SetNextWindowSizeConstraints(ImVec2(0.0f, 0.0f), ImVec2(TooltipMaxWidth, FLT_MAX));
+                EditorWidgets::SetNextPopupPos(TooltipId, TooltipAnchor, EPopupPlacement::RightOfAnchor);
 
-                ImGui::BeginTooltip();
+                constexpr ImGuiWindowFlags TooltipFlags =
+                    ImGuiWindowFlags_Tooltip |
+                    ImGuiWindowFlags_NoInputs |
+                    ImGuiWindowFlags_NoDecoration |
+                    ImGuiWindowFlags_NoMove |
+                    ImGuiWindowFlags_AlwaysAutoResize |
+                    ImGuiWindowFlags_NoSavedSettings |
+                    ImGuiWindowFlags_NoFocusOnAppearing |
+                    ImGuiWindowFlags_NoDocking;
+
+                ImGui::Begin(TooltipId, nullptr, TooltipFlags);
 
                 ImGui::PushStyleColor(ImGuiCol_Text, TooltipTextWhite);
                 ImGui::TextUnformatted(*Candidate.Second);
@@ -399,7 +421,7 @@ void FEditorFooterWidget::Draw()
 
                 ImGui::PopStyleColor();
 
-                ImGui::EndTooltip();
+                ImGui::End();
 
                 ImGui::PopStyleColor(3);
                 ImGui::PopStyleVar(4);

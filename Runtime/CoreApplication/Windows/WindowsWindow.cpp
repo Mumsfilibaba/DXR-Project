@@ -383,22 +383,6 @@ void FWindowsWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
         return;
     }
 
-    int32 PositionX = Shape.Position.X;
-    int32 PositionY = Shape.Position.Y;
-
-    uint32 Flags = SWP_NOZORDER | SWP_NOACTIVATE;
-    if (!bMove)
-    {
-        PositionX = 0;
-        PositionY = 0;
-        Flags |= SWP_NOMOVE;
-    }
-
-    if (bIsFullscreen)
-    {
-        Flags |= SWP_NOSENDCHANGING;
-    }
-
     RECT ClientRect = { 0, 0, static_cast<LONG>(Shape.Width), static_cast<LONG>(Shape.Height) };
 #if PLATFORM_WINDOWS_10_ANNIVERSARY
     const uint32 WindowDPI = ::GetDpiForWindow(Window);
@@ -407,8 +391,27 @@ void FWindowsWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
     ::AdjustWindowRectEx(&ClientRect, Style.Style, false, Style.StyleEx);
 #endif
 
-    int32 RealWidth  = ClientRect.right  - ClientRect.left;
-    int32 RealHeight = ClientRect.bottom - ClientRect.top;
+    int32  PositionX = 0;
+    int32  PositionY = 0;
+    uint32 Flags     = SWP_NOZORDER | SWP_NOACTIVATE;
+
+    if (bMove)
+    {
+        PositionX = Shape.Position.X + ClientRect.left;
+        PositionY = Shape.Position.Y + ClientRect.top;
+    }
+    else
+    {
+        Flags |= SWP_NOMOVE;
+    }
+
+    if (bIsFullscreen)
+    {
+        Flags |= SWP_NOSENDCHANGING;
+    }
+
+    const int32 RealWidth  = ClientRect.right  - ClientRect.left;
+    const int32 RealHeight = ClientRect.bottom - ClientRect.top;
 
     ::SetWindowPos(Window, nullptr, PositionX, PositionY, RealWidth, RealHeight, Flags);
 }

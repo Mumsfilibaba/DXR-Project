@@ -3,6 +3,7 @@
 #include "Application/Input/Keys.h"
 #include "Application/Input/InputMapper.h"
 #include "Application/Widgets/Widget.h"
+#include "Core/Math/Math.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Modules/ModuleManager.h"
@@ -188,6 +189,24 @@ struct FEventPreProcessor
         return Response;
     }
 };
+
+static bool IsWindowReachable(const TArray<FMonitorInfo>& Monitors, const IntVector2& Position, const IntVector2& Size)
+{
+    constexpr int32 MinVisible = 32;
+
+    for (const FMonitorInfo& Monitor : Monitors)
+    {
+        const int32 OverlapX = Math::Min(Position.X + Size.X, Monitor.MainPosition.X + Monitor.MainSize.X) - Math::Max(Position.X, Monitor.MainPosition.X);
+        const int32 OverlapY = Math::Min(Position.Y + Size.Y, Monitor.MainPosition.Y + Monitor.MainSize.Y) - Math::Max(Position.Y, Monitor.MainPosition.Y);
+
+        if (OverlapX >= MinVisible && OverlapY >= MinVisible)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 TSharedPtr<FApplication> FApplication::Application = nullptr;
 
@@ -841,37 +860,24 @@ void FApplication::CreateWindow(const TSharedPtr<FWindowWidget>& InWindow)
         WindowDesc.ParentWindow = ParentWindow->GetPlatformWindow().Get();
     }
 
-    // Calculate the maximum position and size of the new window so that if fits in the main monitor bounds.
-    const FMonitorInfo& MonitorInfo = MonitorInfos[PrimaryMonitorIndex];
-    if (MonitorInfo.MainPosition.X > WindowDesc.Position.X)
-    {
-        WindowDesc.Position.X = MonitorInfo.MainPosition.X;
-    }
-    if (MonitorInfo.MainPosition.Y > WindowDesc.Position.Y)
-    {
-        WindowDesc.Position.Y = MonitorInfo.MainPosition.Y;
-    }
-    
     WindowDesc.Width  = InWindow->GetWidth();
     WindowDesc.Height = InWindow->GetHeight();
-    
-    const uint32 ScreenEndX = static_cast<uint32>(MonitorInfo.MainPosition.X + MonitorInfo.MainSize.X);
-    const uint32 ScreenEndY = static_cast<uint32>(MonitorInfo.MainPosition.Y + MonitorInfo.MainSize.Y);
-    const uint32 WindowEndX = WindowDesc.Position.X + WindowDesc.Width;
-    const uint32 WindowEndY = WindowDesc.Position.Y + WindowDesc.Height;
-    
-    if (WindowEndX > ScreenEndX)
+
+    const IntVector2 WindowSize(static_cast<int32>(WindowDesc.Width), static_cast<int32>(WindowDesc.Height));
+    if (!IsWindowReachable(MonitorInfos, WindowDesc.Position, WindowSize))
     {
-        WindowDesc.Width = ScreenEndX - WindowDesc.Position.X;
-    }
-    if (WindowEndY > ScreenEndY)
-    {
-        WindowDesc.Height = ScreenEndY - WindowDesc.Position.Y;
+        const FMonitorInfo& MonitorInfo = MonitorInfos[PrimaryMonitorIndex];
+
+        const int32 MaxX = MonitorInfo.WorkPosition.X + MonitorInfo.WorkSize.X - WindowSize.X;
+        const int32 MaxY = MonitorInfo.WorkPosition.Y + MonitorInfo.WorkSize.Y - WindowSize.Y;
+
+        WindowDesc.Position.X = Math::Clamp(WindowDesc.Position.X, MonitorInfo.WorkPosition.X, Math::Max(MonitorInfo.WorkPosition.X, MaxX));
+        WindowDesc.Position.Y = Math::Clamp(WindowDesc.Position.Y, MonitorInfo.WorkPosition.Y, Math::Max(MonitorInfo.WorkPosition.Y, MaxY));
     }
 
     if (PlatformWindow->Initialize(WindowDesc))
     {
-        InWindow->SetPlatformWindow(PlatformWindow);        
+        InWindow->SetPlatformWindow(PlatformWindow);
         Windows.Add(InWindow);
 
         PlatformWindow->Show(InWindow->ActivateOnShow());

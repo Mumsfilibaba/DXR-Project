@@ -681,6 +681,15 @@ LRESULT FWindowsApplication::ProcessMessage(HWND WindowHandle, UINT Message, WPA
             break;
         }
 
+        case WM_DPICHANGED:
+        {
+            const RECT* SuggestedRect = reinterpret_cast<const RECT*>(lParam);
+            ::SetWindowPos(WindowHandle, nullptr, SuggestedRect->left, SuggestedRect->top, SuggestedRect->right - SuggestedRect->left,
+                SuggestedRect->bottom - SuggestedRect->top, SWP_NOZORDER | SWP_NOACTIVATE);
+
+            return 0;
+        }
+
         case WM_DESTROY:
         case WM_CLOSE:
         case WM_MOVE:
@@ -713,6 +722,7 @@ LRESULT FWindowsApplication::ProcessMessage(HWND WindowHandle, UINT Message, WPA
         case WM_MOUSEHWHEEL:
         case WM_DEVICECHANGE:
         case WM_DISPLAYCHANGE:
+        case WM_SETTINGCHANGE:
         {
             FWindowsDeferredMessage DeferredMsg;
             DeferredMsg.Window       = GetWindowsWindowFromHWND(WindowHandle);
@@ -882,6 +892,16 @@ void FWindowsApplication::ProcessDeferredMessage(const FWindowsDeferredMessage& 
         case WM_DISPLAYCHANGE:
         {
             MessageHandler->OnMonitorConfigurationChange();
+            break;
+        }
+
+        case WM_SETTINGCHANGE:
+        {
+            if (static_cast<UINT>(Message.wParam) == SPI_SETWORKAREA)
+            {
+                MessageHandler->OnMonitorConfigurationChange();
+            }
+
             break;
         }
 

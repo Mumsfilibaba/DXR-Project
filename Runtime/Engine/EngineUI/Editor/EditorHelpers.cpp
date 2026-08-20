@@ -13,34 +13,54 @@
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include <imgui_internal.h>
 
-float  EditorStyleVars::MainMenuBarHeight                     = 28.0f;
-ImVec2 EditorStyleVars::InputFieldFramePadding                = ImVec2(12.0f, 6.0f);
-float  EditorStyleVars::InputFieldBorderThickness             = 2.0f;
-float  EditorStyleVars::InputFieldBorderRounding              = 16.0f;
-ImU32  EditorStyleVars::InputFieldBorderColor                 = IM_COL32(100, 136, 234, 255);
-ImVec4 EditorStyleVars::InputFieldSelectionColor              = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
-ImVec2 EditorStyleVars::SceneHierarchyItemSpacing             = ImVec2(8.0f, 8.0f);
-ImVec2 EditorStyleVars::SceneHierarchyWindowPadding           = ImVec2(8.0f, 8.0f);
-float  EditorStyleVars::SceneHierarchyTableRowHeight          = 32.0f;
-ImVec2 EditorStyleVars::PropertiesItemSpacing                 = ImVec2(8.0f, 8.0f);
-ImVec2 EditorStyleVars::PropertiesWindowPadding               = ImVec2(8.0f, 8.0f);
-ImVec2 EditorStyleVars::PropertiesCollapsingHeaderItemSpacing = ImVec2(8.0f, 2.0f);
-ImVec2 EditorStyleVars::PropertiesCollapsingFramePadding      = ImVec2(10.0f, 8.0f);
-float  EditorStyleVars::PropertiesCollapsingFrameRounding     = 2.0f;
-float  EditorStyleVars::CheckboxSizeScale                     = 0.8f;
-float  EditorStyleVars::PropertyTableLabelIndentX             = 6.0f;
-float  EditorStyleVars::PropertyTableCellPaddingX             = 16.0f;
-float  EditorStyleVars::ButtonRounding                        = 6.0f;
-float  EditorStyleVars::ButtonPaddingX                        = 12.0f;
-float  EditorStyleVars::ButtonFramePaddingY                   = 4.0f;
-float  EditorStyleVars::ButtonContentGap                      = 6.0f;
-float  EditorStyleVars::ButtonArrowSize                       = 14.0f;
-ImU32  EditorStyleVars::ButtonBgIdle                          = IM_COL32(56, 56, 56, 255);
-ImU32  EditorStyleVars::ButtonBgHovered                       = IM_COL32(87, 87, 87, 255);
-ImU32  EditorStyleVars::ButtonBgSelected                      = IM_COL32(9, 92, 176, 255);
-ImU32  EditorStyleVars::ButtonBgSelectedHovered               = IM_COL32(15, 110, 205, 255);
+enum class ERichTextCharClass
+{
+    Word,
+    Whitespace,
+    Symbol,
+};
 
-static constexpr float EditorWindowBorderInset = 5.0f;
+enum class EMenuFloatWidget : uint8
+{
+    Slider = 0,
+    Drag   = 1,
+};
+
+struct FPropertyTableState
+{
+    FPropertyTableStyle Style;
+    float               CurrentRowHeight = 0.0f;
+    ImVec2              BorderMin        = ImVec2(0.0f, 0.0f);
+    float               BorderWidth      = 0.0f;
+    bool                bActive          = false;
+};
+
+struct FSubMenuFrame
+{
+    bool bChildOpen = false;
+};
+
+struct FEditorIconImage
+{
+    TArray<uint8> Pixels;
+    int32         Width  = 0;
+    int32         Height = 0;
+    int32         X      = 0;
+    int32         Y      = 0;
+    bool          bValid = false;
+};
+
+struct FEditorIconRequest
+{
+    const CHAR*  RelativePath;
+    FEditorIcon* Icon;
+};
+
+struct FEditorIconAtlas
+{
+    FRHITextureRef            Texture      = nullptr;
+    TUniquePtr<FImGuiTexture> ImGuiTexture = nullptr;
+};
 
 static bool GEditorWindowBegun               = false;
 static bool GEditorWindowOpen                = false;
@@ -48,6 +68,57 @@ static bool GEditorWindowChildBegun          = false;
 static bool GEditorWindowOuterPaddingPushed  = false;
 static bool GEditorWindowContentStylePushed  = false;
 static bool GEditorWindowNestedChildBgPushed = false;
+
+static FPropertyTableState GPropertyTableState;
+
+static TArray<FSubMenuFrame> GSubMenuStack;
+
+static FEditorIconAtlas GIconAtlas;
+
+static ImGuiStorage GPopupLastDirections;
+static ImGuiStorage GPopupLastPlacedFrame;
+
+static const FEditorIconRequest GIconRequests[] =
+{
+    { "Editor/Icons/Undo.png",               &EditorIcons::UndoIcon             },
+    { "Editor/Icons/Search.png",             &EditorIcons::SearchIcon           },
+    { "Editor/Icons/Locked.png",             &EditorIcons::LockedIcon           },
+    { "Editor/Icons/Unlocked.png",           &EditorIcons::UnlockedIcon         },
+    { "Editor/Icons/Folder.png",             &EditorIcons::FolderIcon           },
+    { "Editor/Icons/FolderSmall.png",        &EditorIcons::FolderSmallIcon      },
+    { "Editor/Icons/FolderSmall2.png",       &EditorIcons::FolderSmall2Icon     },
+    { "Editor/Icons/FolderOpenSmall.png",    &EditorIcons::FolderOpenSmallIcon  },
+    { "Editor/Icons/Document.png",           &EditorIcons::DocumentIcon         },
+    { "Editor/Icons/DocumentSmall.png",      &EditorIcons::DocumentSmallIcon    },
+    { "Editor/Icons/Checkmark.png",          &EditorIcons::CheckmarkIcon        },
+    { "Editor/Icons/Forbidden.png",          &EditorIcons::ForbiddenIcon        },
+    { "Editor/Icons/CircledCheckmark.png",   &EditorIcons::CircledCheckmarkIcon },
+    { "Editor/Icons/Next.png",               &EditorIcons::NextIcon             },
+    { "Editor/Icons/Previous.png",           &EditorIcons::PreviousIcon         },
+    { "Editor/Icons/Close.png",              &EditorIcons::CloseIcon            },
+    { "Editor/Icons/Filter.png",             &EditorIcons::FilterIcon           },
+    { "Editor/Icons/RightArrow.png",         &EditorIcons::RightArrowIcon       },
+    { "Editor/Icons/DownArrow.png",          &EditorIcons::DownArrowIcon        },
+    { "Editor/Icons/CollapseArrowDown.png",  &EditorIcons::CollapseArrowDown    },
+    { "Editor/Icons/CollapseArrowRight.png", &EditorIcons::CollapseArrowRight   },
+};
+
+static constexpr float EditorWindowBorderInset = 5.0f;
+static constexpr float FixedRevertButtonSize   = 20.0f;
+static constexpr float SubMenuArrowSize        = 12.0f;
+
+static constexpr float MenuRowPaddingY   = 4.0f;
+static constexpr float MenuRowIndentX    = 20.0f;
+static constexpr float MenuPopupPadY     = 10.0f;
+static constexpr float MenuFinalMinWidth = MenuDefaultMinWidth + (MenuContentIndentX * 2.0f);
+
+static constexpr int32 IconAtlasWidth   = 1024;
+static constexpr int32 IconAtlasPadding = 2;
+
+#if PLATFORM_WINDOWS
+// The size WinUI's own caption button style renders the glyphs at.
+static constexpr float SystemIconSizePixels = 10.0f;
+#endif
 
 static bool IsWindowFloating(const ImGuiWindow* Window)
 {
@@ -171,19 +242,6 @@ static void DrawAxisLineForLastItem(ImU32 InColor)
 
     Window->DrawList->AddRectFilled(LineMin, LineMax, InColor, 1.0f);
 }
-
-static constexpr float FixedRevertButtonSize = 20.0f;
-
-struct FPropertyTableState
-{
-    FPropertyTableStyle Style;
-    float               CurrentRowHeight = 0.0f;
-    ImVec2              BorderMin        = ImVec2(0.0f, 0.0f);
-    float               BorderWidth      = 0.0f;
-    bool                bActive          = false;
-};
-
-static FPropertyTableState GPropertyTableState;
 
 static float ResolvePropertyTableContentHeight(float ContentHeight)
 {
@@ -567,13 +625,6 @@ static FRichTextSelectionPoint GetMouseSelectionPoint(const FRichTextViewContext
     return P;
 }
 
-enum class ERichTextCharClass
-{
-    Word,
-    Whitespace,
-    Symbol,
-};
-
 static FORCEINLINE ERichTextCharClass GetRichTextCharClass(CHAR Char)
 {
     const uint8 Byte = static_cast<uint8>(Char);
@@ -638,15 +689,6 @@ static float GetButtonHeight()
 {
     return ImGui::GetFontSize() + EditorStyleVars::ButtonFramePaddingY * 2.0f;
 }
-
-static constexpr float MenuRowPaddingY = 4.0f;
-static constexpr float MenuRowIndentX  = 20.0f;
-
-enum class EMenuFloatWidget : uint8
-{
-    Slider = 0,
-    Drag   = 1,
-};
 
 static bool MenuFloatRow(EMenuFloatWidget WidgetType, const CHAR* Label, float& InOutValue, float Speed, 
     float MinValue, float MaxValue, const CHAR* Format, float ValueWidth, bool bEnabled)
@@ -713,9 +755,6 @@ static bool MenuFloatRow(EMenuFloatWidget WidgetType, const CHAR* Label, float& 
 
     return bEnabled && bChanged;
 }
-
-static constexpr float MenuPopupPadY     = 10.0f;
-static constexpr float MenuFinalMinWidth = MenuDefaultMinWidth + (MenuContentIndentX * 2.0f);
 
 static void PushMenuChromeStyle()
 {
@@ -816,8 +855,6 @@ static void DrawContextMenuFrame()
     DrawMenuFrame();
 }
 
-static constexpr float SubMenuArrowSize = 12.0f;
-
 static void DrawSubMenuArrow(ImDrawList* DrawList, const ImVec2& RectMin, const ImVec2& RectMax, float RowHeight, float LabelY)
 {
     const float  ArrowY   = RectMin.y + (RowHeight - SubMenuArrowSize) * 0.5f;
@@ -834,65 +871,6 @@ static void DrawSubMenuArrow(ImDrawList* DrawList, const ImVec2& RectMin, const 
         DrawList->AddText(ImVec2(ArrowX, LabelY), ImGui::GetColorU32(ImGuiCol_Text), ">");
     }
 }
-
-struct FSubMenuFrame
-{
-    bool bChildOpen = false;
-};
-
-static TArray<FSubMenuFrame> GSubMenuStack;
-
-static constexpr int32 IconAtlasWidth   = 1024;
-static constexpr int32 IconAtlasPadding = 2;
-
-struct FEditorIconImage
-{
-    TArray<uint8> Pixels;
-    int32         Width  = 0;
-    int32         Height = 0;
-    int32         X      = 0;
-    int32         Y      = 0;
-    bool          bValid = false;
-};
-
-struct FEditorIconRequest
-{
-    const CHAR*  RelativePath;
-    FEditorIcon* Icon;
-};
-
-struct FEditorIconAtlas
-{
-    FRHITextureRef            Texture      = nullptr;
-    TUniquePtr<FImGuiTexture> ImGuiTexture = nullptr;
-};
-
-static FEditorIconAtlas GIconAtlas;
-
-static const FEditorIconRequest GIconRequests[] =
-{
-    { "Editor/Icons/Undo.png",               &EditorIcons::UndoIcon             },
-    { "Editor/Icons/Search.png",             &EditorIcons::SearchIcon           },
-    { "Editor/Icons/Locked.png",             &EditorIcons::LockedIcon           },
-    { "Editor/Icons/Unlocked.png",           &EditorIcons::UnlockedIcon         },
-    { "Editor/Icons/Folder.png",             &EditorIcons::FolderIcon           },
-    { "Editor/Icons/FolderSmall.png",        &EditorIcons::FolderSmallIcon      },
-    { "Editor/Icons/FolderSmall2.png",       &EditorIcons::FolderSmall2Icon     },
-    { "Editor/Icons/FolderOpenSmall.png",    &EditorIcons::FolderOpenSmallIcon  },
-    { "Editor/Icons/Document.png",           &EditorIcons::DocumentIcon         },
-    { "Editor/Icons/DocumentSmall.png",      &EditorIcons::DocumentSmallIcon    },
-    { "Editor/Icons/Checkmark.png",          &EditorIcons::CheckmarkIcon        },
-    { "Editor/Icons/Forbidden.png",          &EditorIcons::ForbiddenIcon        },
-    { "Editor/Icons/CircledCheckmark.png",   &EditorIcons::CircledCheckmarkIcon },
-    { "Editor/Icons/Next.png",               &EditorIcons::NextIcon             },
-    { "Editor/Icons/Previous.png",           &EditorIcons::PreviousIcon         },
-    { "Editor/Icons/Close.png",              &EditorIcons::CloseIcon            },
-    { "Editor/Icons/Filter.png",             &EditorIcons::FilterIcon           },
-    { "Editor/Icons/RightArrow.png",         &EditorIcons::RightArrowIcon       },
-    { "Editor/Icons/DownArrow.png",          &EditorIcons::DownArrowIcon        },
-    { "Editor/Icons/CollapseArrowDown.png",  &EditorIcons::CollapseArrowDown    },
-    { "Editor/Icons/CollapseArrowRight.png", &EditorIcons::CollapseArrowRight   },
-};
 
 static bool LoadEditorIconImage(const CHAR* InRelativePath, FEditorIconImage& OutImage)
 {
@@ -967,9 +945,6 @@ static ImFont* LoadEditorFont(const CHAR* InRelativePath, float SizePixels, cons
 
 #if PLATFORM_WINDOWS
 
-// The size WinUI's own caption button style renders the glyphs at.
-static constexpr float SystemIconSizePixels = 10.0f;
-
 // Loads the four caption code points out of the system icon font as a font of their own, so the 
 // window buttons are drawn with the very glyphs the OS would have used rather than an imitation 
 // of them. E921 ChromeMinimize, E922 ChromeMaximize, E923 ChromeRestore and E8BB ChromeClose.
@@ -1015,6 +990,33 @@ static ImFont* LoadSystemIconFont()
 }
 
 #endif
+
+float  EditorStyleVars::MainMenuBarHeight                     = 28.0f;
+ImVec2 EditorStyleVars::InputFieldFramePadding                = ImVec2(12.0f, 6.0f);
+float  EditorStyleVars::InputFieldBorderThickness             = 2.0f;
+float  EditorStyleVars::InputFieldBorderRounding              = 16.0f;
+ImU32  EditorStyleVars::InputFieldBorderColor                 = IM_COL32(100, 136, 234, 255);
+ImVec4 EditorStyleVars::InputFieldSelectionColor              = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
+ImVec2 EditorStyleVars::SceneHierarchyItemSpacing             = ImVec2(8.0f, 8.0f);
+ImVec2 EditorStyleVars::SceneHierarchyWindowPadding           = ImVec2(8.0f, 8.0f);
+float  EditorStyleVars::SceneHierarchyTableRowHeight          = 32.0f;
+ImVec2 EditorStyleVars::PropertiesItemSpacing                 = ImVec2(8.0f, 8.0f);
+ImVec2 EditorStyleVars::PropertiesWindowPadding               = ImVec2(8.0f, 8.0f);
+ImVec2 EditorStyleVars::PropertiesCollapsingHeaderItemSpacing = ImVec2(8.0f, 2.0f);
+ImVec2 EditorStyleVars::PropertiesCollapsingFramePadding      = ImVec2(10.0f, 8.0f);
+float  EditorStyleVars::PropertiesCollapsingFrameRounding     = 2.0f;
+float  EditorStyleVars::CheckboxSizeScale                     = 0.8f;
+float  EditorStyleVars::PropertyTableLabelIndentX             = 6.0f;
+float  EditorStyleVars::PropertyTableCellPaddingX             = 16.0f;
+float  EditorStyleVars::ButtonRounding                        = 6.0f;
+float  EditorStyleVars::ButtonPaddingX                        = 12.0f;
+float  EditorStyleVars::ButtonFramePaddingY                   = 4.0f;
+float  EditorStyleVars::ButtonContentGap                      = 6.0f;
+float  EditorStyleVars::ButtonArrowSize                       = 14.0f;
+ImU32  EditorStyleVars::ButtonBgIdle                          = IM_COL32(56, 56, 56, 255);
+ImU32  EditorStyleVars::ButtonBgHovered                       = IM_COL32(87, 87, 87, 255);
+ImU32  EditorStyleVars::ButtonBgSelected                      = IM_COL32(9, 92, 176, 255);
+ImU32  EditorStyleVars::ButtonBgSelectedHovered               = IM_COL32(15, 110, 205, 255);
 
 bool EditorWidgets::DrawFloat3Control(const CHAR* Label, Vector3& OutValue, float Speed, const Vector3* InRevertValue, EVector3ControlType InType)
 {
@@ -1565,62 +1567,15 @@ bool EditorWidgets::DrawComboProperty(const CHAR* Label, int32& InOutValue, cons
             PopupWidth = Math::Max(PopupWidth, MaxItemTextWidth + PopupTextPadX * 2.0f);
         }
 
-        float  PopupX       = FieldMin.x;
-        ImVec2 WorkMin      = ImVec2(0.0f, 0.0f);
-        ImVec2 WorkMax      = ImVec2(0.0f, 0.0f);
-        bool   bHasWorkRect = false;
+        const ImRect Outer = GetPopupExtentRect(ImVec2(FieldMin.x, FieldMax.y));
+        PopupWidth = Math::Min(PopupWidth, Math::Max(1.0f, Outer.GetWidth()));
 
-        ImGuiPlatformIO& PlatformIO = ImGui::GetPlatformIO();
-        if (PlatformIO.Monitors.Size > 0)
-        {
-            const ImVec2 FieldCenter = ImVec2((FieldMin.x + FieldMax.x) * 0.5f, (FieldMin.y + FieldMax.y) * 0.5f);
+        FPopupAnchor ComboAnchor;
+        ComboAnchor.Min = FieldMin;
+        ComboAnchor.Max = FieldMax;
 
-            int32 MonitorIndex = 0;
-            for (int32 i = 0; i < PlatformIO.Monitors.Size; ++i)
-            {
-                const ImGuiPlatformMonitor& Monitor = PlatformIO.Monitors[i];
-
-                const ImVec2 Min = Monitor.WorkPos;
-                const ImVec2 Max = ImVec2(Monitor.WorkPos.x + Monitor.WorkSize.x, Monitor.WorkPos.y + Monitor.WorkSize.y);
-
-                if (FieldCenter.x >= Min.x && FieldCenter.x <= Max.x && FieldCenter.y >= Min.y && FieldCenter.y <= Max.y)
-                {
-                    MonitorIndex = i;
-                    break;
-                }
-            }
-
-            const ImGuiPlatformMonitor& Monitor = PlatformIO.Monitors[MonitorIndex];
-            WorkMin      = Monitor.WorkPos;
-            WorkMax      = ImVec2(Monitor.WorkPos.x + Monitor.WorkSize.x, Monitor.WorkPos.y + Monitor.WorkSize.y);
-            bHasWorkRect = (Monitor.WorkSize.x > 0.0f && Monitor.WorkSize.y > 0.0f);
-        }
-
-        if (!bHasWorkRect)
-        {
-            if (ImGuiViewport* Viewport = ImGui::GetWindowViewport())
-            {
-                WorkMin      = Viewport->WorkPos;
-                WorkMax      = ImVec2(Viewport->WorkPos.x + Viewport->WorkSize.x, Viewport->WorkPos.y + Viewport->WorkSize.y);
-                bHasWorkRect = (Viewport->WorkSize.x > 0.0f && Viewport->WorkSize.y > 0.0f);
-            }
-        }
-
-        if (bHasWorkRect)
-        {
-            const float MaxWidth = Math::Max(1.0f, WorkMax.x - WorkMin.x);
-            PopupWidth = Math::Min(PopupWidth, MaxWidth);
-
-            if ((PopupX + PopupWidth) > WorkMax.x)
-            {
-                PopupX = FieldMax.x - PopupWidth;
-            }
-
-            PopupX = Math::Clamp(PopupX, WorkMin.x, WorkMax.x - PopupWidth);
-        }
-
-        ImGui::SetNextWindowPos(ImVec2(PopupX, FieldMax.y));
         ImGui::SetNextWindowSize(ImVec2(PopupWidth, 0.0f));
+        SetNextBeginPopupPos("##ComboPopup", ComboAnchor, EPopupPlacement::BelowAnchor, ImVec2(PopupWidth, 0.0f));
     }
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
@@ -3185,14 +3140,127 @@ void EditorWidgets::MenuButton(const CHAR* Label, const CHAR* PopupId, bool bAny
     }
 }
 
-bool EditorWidgets::BeginMenuPopup(const CHAR* PopupId, const FPopupAnchor& Anchor, float MinWidth)
+ImRect EditorWidgets::GetPopupExtentRect(const ImVec2& RefPos)
+{
+    ImGuiPlatformIO& PlatformIO = ImGui::GetPlatformIO();
+    for (int32 Index = 0; Index < PlatformIO.Monitors.Size; ++Index)
+    {
+        const ImGuiPlatformMonitor& Monitor = PlatformIO.Monitors[Index];
+
+        const ImRect MonitorRect(Monitor.WorkPos, Monitor.WorkPos + Monitor.WorkSize);
+        if (MonitorRect.Contains(RefPos))
+        {
+            return MonitorRect;
+        }
+    }
+
+    ImGuiContext*        Context       = ImGui::GetCurrentContext();
+    ImGuiWindow*         CurrentWindow = Context ? Context->CurrentWindow : nullptr;
+    const ImGuiViewport* Viewport      = CurrentWindow ? CurrentWindow->Viewport : ImGui::GetMainViewport();
+
+    if (Viewport)
+    {
+        return ImRect(Viewport->WorkPos, Viewport->WorkPos + Viewport->WorkSize);
+    }
+
+    return ImRect(ImVec2(0.0f, 0.0f), ImGui::GetIO().DisplaySize);
+}
+
+bool EditorWidgets::SetNextPopupPos(const CHAR* WindowId, const FPopupAnchor& Anchor, EPopupPlacement Placement, const ImVec2& FixedSize)
+{
+    ImVec2 Size = FixedSize;
+    if (Size.x <= 0.0f || Size.y <= 0.0f)
+    {
+        ImGuiWindow* Window = ImGui::FindWindowByName(WindowId);
+        if (!Window)
+        {
+            return false;
+        }
+
+        ImVec2 Measured = ImGui::CalcWindowNextAutoFitSize(Window);
+        if (Measured.x <= 0.0f || Measured.y <= 0.0f)
+        {
+            Measured = Window->SizeFull;
+        }
+
+        Size.x = (Size.x > 0.0f) ? Size.x : Measured.x;
+        Size.y = (Size.y > 0.0f) ? Size.y : Measured.y;
+
+        if (Size.x <= 0.0f || Size.y <= 0.0f)
+        {
+            return false;
+        }
+    }
+
+    ImVec2 RefPos;
+    ImRect Avoid;
+    switch (Placement)
+    {
+    case EPopupPlacement::BelowAnchor:
+        RefPos = ImVec2(Anchor.Min.x, Anchor.Max.y);
+        Avoid  = ImRect(Anchor.Min, Anchor.Max);
+        break;
+
+    case EPopupPlacement::RightOfAnchor:
+        RefPos = Anchor.Min;
+        Avoid  = ImRect(Anchor.Min.x, -FLT_MAX, Anchor.Max.x, FLT_MAX);
+        break;
+
+    default:
+        RefPos = Anchor.Min;
+        Avoid  = ImRect(Anchor.Min, Anchor.Max);
+        break;
+    }
+
+    const ImRect  Outer        = GetPopupExtentRect(RefPos);
+    const ImGuiID StateId      = ImHashStr(WindowId);
+    const int32   CurrentFrame = ImGui::GetFrameCount();
+    const int32   LastFrame    = GPopupLastPlacedFrame.GetInt(StateId, -1);
+
+    GPopupLastPlacedFrame.SetInt(StateId, CurrentFrame);
+
+    ImGuiDir* LastDir = GPopupLastDirections.GetIntRef(StateId, ImGuiDir_None);
+    if (LastFrame < CurrentFrame - 1)
+    {
+        *LastDir = ImGuiDir_None;
+    }
+
+    ImVec2 Position;
+    switch (Placement)
+    {
+    case EPopupPlacement::BelowAnchor:
+        Position = ImGui::FindBestWindowPosForPopupEx(RefPos, Size, LastDir, Outer, Avoid, ImGuiPopupPositionPolicy_ComboBox);
+        break;
+
+    case EPopupPlacement::RightOfAnchor:
+        Position = ImGui::FindBestWindowPosForPopupEx(RefPos, Size, LastDir, Outer, Avoid, ImGuiPopupPositionPolicy_Default);
+        break;
+
+    default:
+        Position = ImClamp(RefPos, Outer.Min, ImMax(Outer.Min, Outer.Max - Size));
+        break;
+    }
+
+    ImGui::SetNextWindowPos(Position, ImGuiCond_Always);
+    return true;
+}
+
+bool EditorWidgets::SetNextBeginPopupPos(const CHAR* PopupId, const FPopupAnchor& Anchor, EPopupPlacement Placement, const ImVec2& FixedSize)
+{
+    TStaticArray<CHAR, 24> WindowName;
+    CString::Snprintf(WindowName.Data(), static_cast<int32>(WindowName.Size()), "##Popup_%08x", ImGui::GetID(PopupId));
+
+    return SetNextPopupPos(WindowName.Data(), Anchor, Placement, FixedSize);
+}
+
+bool EditorWidgets::BeginMenuPopup(const CHAR* PopupId, const FPopupAnchor& Anchor, float MinWidth, EPopupPlacement Placement)
 {
     if (!Anchor.bRequestPosition && !ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None))
     {
         return false;
     }
 
-    ImGui::SetNextWindowPos(ImVec2(Anchor.Min.x, Anchor.Max.y), ImGuiCond_Always);
+    SetNextBeginPopupPos(PopupId, Anchor, Placement);
 
     PushMenuChromeStyle();
 
@@ -3379,14 +3447,18 @@ bool EditorWidgets::BeginSubMenu(FSubMenuState& InOutState, const CHAR* PopupId,
         InOutState.Anchor.bRequestPosition = true;
     }
 
-    const ImVec2 FlyoutPos = ImVec2(InOutState.Anchor.Max.x - MenuSubMenuOverlapX, InOutState.Anchor.Min.y);
+    const ImGuiWindow* ParentWindow = ImGui::GetCurrentWindow();
+    const float        ScrollbarX   = ParentWindow ? ParentWindow->ScrollbarSizes.x : 0.0f;
+
+    const ImVec2 ParentMin = ImGui::GetWindowPos();
+    const ImVec2 ParentMax = ParentMin + ImGui::GetWindowSize();
 
     FPopupAnchor FlyoutAnchor;
-    FlyoutAnchor.Min              = FlyoutPos;
-    FlyoutAnchor.Max              = FlyoutPos;
+    FlyoutAnchor.Min              = ImVec2(ParentMin.x + MenuSubMenuOverlapX, InOutState.Anchor.Min.y);
+    FlyoutAnchor.Max              = ImVec2(ParentMax.x - MenuSubMenuOverlapX - ScrollbarX, InOutState.Anchor.Min.y);
     FlyoutAnchor.bRequestPosition = InOutState.Anchor.bRequestPosition;
 
-    const bool bOpen = BeginMenuPopup(PopupId, FlyoutAnchor, InOutState.MinWidth);
+    const bool bOpen = BeginMenuPopup(PopupId, FlyoutAnchor, InOutState.MinWidth, EPopupPlacement::RightOfAnchor);
     if (bOpen)
     {
         ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);

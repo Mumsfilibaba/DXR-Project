@@ -97,10 +97,7 @@ void FMacCursor::SetCursor(ECursor Cursor)
 
 void FMacCursor::SetPosition(int32 x, int32 y)
 {
-    const NSPoint CocoaPosition   = FMacApplication::ConvertEnginePointToCocoa(static_cast<CGFloat>(x), static_cast<CGFloat>(y));
-    const CGRect  MainDisplayRect = CGDisplayBounds(CGMainDisplayID());
-
-    CGWarpMouseCursorPosition(CGPointMake(CocoaPosition.x, MainDisplayRect.size.height - CocoaPosition.y));
+    CGWarpMouseCursorPosition(CGPointMake(static_cast<CGFloat>(x), static_cast<CGFloat>(y)));
 
     UpdateCursorPosition(IntVector2(x, y));
 }

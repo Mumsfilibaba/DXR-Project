@@ -131,6 +131,23 @@ static void SplitNameAndExtension(const CHAR* InName, TStaticArray<CHAR, 256>& O
     OutExtension[ExtCopyLen] = 0;
 }
 
+static String AppendNameToPath(const String& BasePath, const String& Name)
+{
+    if (Name.IsEmpty())
+    {
+        return BasePath;
+    }
+
+    String Result = BasePath;
+    if (!Result.IsEmpty())
+    {
+        Result += "/";
+    }
+
+    Result += Name;
+    return Result;
+}
+
 FEditorContentBrowserWidget::FEditorContentBrowserWidget()
     : ImGuiDelegateHandle()
     , LastSelectedItemIndex(-1)
@@ -251,23 +268,6 @@ FEditorContentBrowserWidget::~FEditorContentBrowserWidget()
     {
         IImguiPlugin::Get().RemoveDrawDelegate(ImGuiDelegateHandle);
     }
-}
-
-static String AppendNameToPath(const String& BasePath, const String& Name)
-{
-    if (Name.IsEmpty())
-    {
-        return BasePath;
-    }
-
-    String Result = BasePath;
-    if (!Result.IsEmpty())
-    {
-        Result += "/";
-    }
-
-    Result += Name;
-    return Result;
 }
 
 void FEditorContentBrowserWidget::Draw()
@@ -1592,7 +1592,12 @@ void FEditorContentBrowserWidget::DrawContentGrid()
         ImVec2 PreviewPos = ImGui::GetMousePos();
         PreviewPos.x += 16.0f;
         PreviewPos.y += 16.0f;
-        ImGui::SetNextWindowPos(PreviewPos, ImGuiCond_Always);
+
+        FPopupAnchor PreviewAnchor;
+        PreviewAnchor.Min = PreviewPos;
+        PreviewAnchor.Max = PreviewPos;
+
+        EditorWidgets::SetNextPopupPos("##CB_DragPreview", PreviewAnchor, EPopupPlacement::ClampOnly);
 
         const ImGuiWindowFlags PreviewFlags =
             ImGuiWindowFlags_NoDecoration |

@@ -27,6 +27,18 @@ enum class EPropertyTableVerticalAlign : uint8
     Center,
 };
 
+enum class EPopupPlacement : uint8
+{
+    // Below the anchor, flipping above and/or right-aligning when there is no room
+    BelowAnchor,
+
+    // Right of the anchor, flipping to its left when there is no room
+    RightOfAnchor,
+
+    // Keep the requested position, only nudge it back inside the monitor
+    ClampOnly,
+};
+
 struct FPopupAnchor
 {
     ImVec2 Min              = ImVec2(0.0f, 0.0f);
@@ -274,7 +286,12 @@ struct ENGINE_API EditorWidgets
     // Popup
     // -----------------------------------------------------------------------------------------
 
-    static bool BeginMenuPopup(const CHAR* PopupId, const FPopupAnchor& Anchor, float MinWidth = 180.0f);
+    static ImRect GetPopupExtentRect(const ImVec2& RefPos);
+
+    static bool SetNextPopupPos(const CHAR* WindowId, const FPopupAnchor& Anchor, EPopupPlacement Placement, const ImVec2& FixedSize = ImVec2(0.0f, 0.0f));
+    static bool SetNextBeginPopupPos(const CHAR* PopupId, const FPopupAnchor& Anchor, EPopupPlacement Placement, const ImVec2& FixedSize = ImVec2(0.0f, 0.0f));
+
+    static bool BeginMenuPopup(const CHAR* PopupId, const FPopupAnchor& Anchor, float MinWidth = 180.0f, EPopupPlacement Placement = EPopupPlacement::BelowAnchor);
     static bool BeginPopupContextWindow(const CHAR* PopupId, ImGuiPopupFlags Flags = ImGuiPopupFlags_MouseButtonRight);
     static bool BeginPopupContextItem(const CHAR* PopupId);
     static bool BeginPopupContext(const CHAR* PopupId);

@@ -168,6 +168,48 @@ uint32 FMacApplication::MonitorDPIFromScreen(NSScreen* Screen)
     return RoundedDPI;
 }
 
+const FMacScreenInfo* FMacApplication::GetPrimaryScreenUnlocked()
+{
+    if (!GMacApplication || GMacApplication->ScreenCache.IsEmpty())
+    {
+        return nullptr;
+    }
+
+    for (const FMacScreenInfo& CurrentScreen : GMacApplication->ScreenCache)
+    {
+        if (CurrentScreen.bIsPrimary)
+        {
+            return &CurrentScreen;
+        }
+    }
+
+    return &GMacApplication->ScreenCache.First();
+}
+
+NSPoint FMacApplication::CocoaToEngineUnlocked(CGFloat PositionX, CGFloat PositionY)
+{
+    const FMacScreenInfo* Primary = GetPrimaryScreenUnlocked();
+    if (!Primary)
+    {
+        return NSMakePoint(PositionX, PositionY);
+    }
+
+    const CGFloat PrimaryTop = Primary->Frame.origin.y + Primary->Frame.size.height;
+    return NSMakePoint(PositionX - Primary->Frame.origin.x, PrimaryTop - PositionY);
+}
+
+NSPoint FMacApplication::EngineToCocoaUnlocked(CGFloat PositionX, CGFloat PositionY)
+{
+    const FMacScreenInfo* Primary = GetPrimaryScreenUnlocked();
+    if (!Primary)
+    {
+        return NSMakePoint(PositionX, PositionY);
+    }
+
+    const CGFloat PrimaryTop = Primary->Frame.origin.y + Primary->Frame.size.height;
+    return NSMakePoint(Primary->Frame.origin.x + PositionX, PrimaryTop - PositionY);
+}
+
 NSPoint FMacApplication::ConvertCocoaPointToEngine(CGFloat PositionX, CGFloat PositionY)
 {
     if (!GMacApplication)
@@ -176,20 +218,7 @@ NSPoint FMacApplication::ConvertCocoaPointToEngine(CGFloat PositionX, CGFloat Po
     }
 
     TScopedLock Lock(GMacApplication->ScreenCacheCS);
-
-    const FMacScreenInfo* Screen = FindScreenFromCocoaPoint(PositionX, PositionY);
-    if (!Screen)
-    {
-        return NSMakePoint(PositionX, PositionY);
-    }
-
-    CGFloat RelativeX = PositionX - Screen->Frame.origin.x;
-    CGFloat RelativeY = PositionY - Screen->Frame.origin.y;
-
-    CGFloat ConvertedY = Screen->Frame.size.height - RelativeY;
-
-    NSPoint ConvertedPoint = NSMakePoint(RelativeX, ConvertedY);
-    return ConvertedPoint;
+    return CocoaToEngineUnlocked(PositionX, PositionY);
 }
 
 NSPoint FMacApplication::ConvertEnginePointToCocoa(CGFloat PositionX, CGFloat PositionY)
@@ -200,19 +229,7 @@ NSPoint FMacApplication::ConvertEnginePointToCocoa(CGFloat PositionX, CGFloat Po
     }
 
     TScopedLock Lock(GMacApplication->ScreenCacheCS);
-
-    const FMacScreenInfo* Screen = FindScreenFromEnginePoint(PositionX, PositionY);
-    if (!Screen)
-    {
-        return NSMakePoint(PositionX, PositionY);
-    }
-
-    // Convert the engine point to Cocoa's coordinate system
-    CGFloat RelativeX = Screen->Frame.origin.x + PositionX;
-    CGFloat RelativeY = Screen->Frame.origin.y + (Screen->Frame.size.height - PositionY);
-
-    NSPoint CocoaPoint = NSMakePoint(RelativeX, RelativeY);
-    return CocoaPoint;
+    return EngineToCocoaUnlocked(PositionX, PositionY);
 }
 
 NSRect FMacApplication::ConvertEngineRectToCocoa(CGFloat Width, CGFloat Height, CGFloat PositionX, CGFloat PositionY)
@@ -633,11 +650,14 @@ void FMacApplication::QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) con
     int32 Index = 0;
     for (const FMacScreenInfo& Screen : ScreenCache)
     {
+        const NSPoint MainTopLeft = CocoaToEngineUnlocked(Screen.Frame.origin.x, Screen.Frame.origin.y + Screen.Frame.size.height);
+        const NSPoint WorkTopLeft = CocoaToEngineUnlocked(Screen.VisibleFrame.origin.x, Screen.VisibleFrame.origin.y + Screen.VisibleFrame.size.height);
+
         FMonitorInfo& MonitorInfo = OutMonitorInfo[Index++];
         MonitorInfo.DeviceName     = Screen.DeviceName;
-        MonitorInfo.MainPosition   = IntVector2(Screen.Frame.origin.x, Screen.Frame.origin.y);
+        MonitorInfo.MainPosition   = IntVector2(MainTopLeft.x, MainTopLeft.y);
         MonitorInfo.MainSize       = IntVector2(Screen.Frame.size.width, Screen.Frame.size.height);
-        MonitorInfo.WorkPosition   = IntVector2(Screen.VisibleFrame.origin.x, Screen.VisibleFrame.origin.y);
+        MonitorInfo.WorkPosition   = IntVector2(WorkTopLeft.x, WorkTopLeft.y);
         MonitorInfo.WorkSize       = IntVector2(Screen.VisibleFrame.size.width, Screen.VisibleFrame.size.height);
         MonitorInfo.bIsPrimary     = Screen.bIsPrimary;
         MonitorInfo.DisplayDPI     = Screen.DisplayDPI;
@@ -913,7 +933,7 @@ void FMacApplication::RefreshScreenCache()
 
     TArray<FMacScreenInfo> NewScreenCache;
 
-    NSScreen* MainScreen = [NSScreen mainScreen];
+    NSScreen* PrimaryScreen = [NSScreen screens].firstObject;
     for (NSScreen* Screen in [NSScreen screens])
     {
         FMacScreenInfo& ScreenInfo    = NewScreenCache.Emplace();
@@ -922,7 +942,7 @@ void FMacApplication::RefreshScreenCache()
         ScreenInfo.BackingScaleFactor = [Screen backingScaleFactor];
         ScreenInfo.DisplayDPI         = MonitorDPIFromScreen(Screen);
         ScreenInfo.DeviceName         = FindMonitorName(Screen);
-        ScreenInfo.bIsPrimary         = (Screen == MainScreen);
+        ScreenInfo.bIsPrimary         = (Screen == PrimaryScreen);
     }
 
     const int32 NumScreens = NewScreenCache.Size();
@@ -958,35 +978,6 @@ const FMacScreenInfo* FMacApplication::FindScreenFromCocoaPoint(CGFloat Position
         }
     }
 
-    return PrimaryScreen ? PrimaryScreen : &GMacApplication->ScreenCache.First();
-}
-
-const FMacScreenInfo* FMacApplication::FindScreenFromEnginePoint(CGFloat PositionX, CGFloat PositionY)
-{
-    if (!GMacApplication || GMacApplication->ScreenCache.IsEmpty())
-    {
-        return nullptr;
-    }
-
-    // Since EngineX and EngineY are relative to the screen's top-left corner, we need to find the
-    // screen that matches these coordinates.
-    const FMacScreenInfo* PrimaryScreen = nullptr;
-    for (const FMacScreenInfo& CurrentScreen : GMacApplication->ScreenCache)
-    {
-        const CGFloat ScreenWidth  = CurrentScreen.Frame.size.width;
-        const CGFloat ScreenHeight = CurrentScreen.Frame.size.height;
-        if (PositionX >= 0 && PositionX <= ScreenWidth && PositionY >= 0 && PositionY <= ScreenHeight)
-        {
-            return &CurrentScreen;
-        }
-
-        if (CurrentScreen.bIsPrimary)
-        {
-            PrimaryScreen = &CurrentScreen;
-        }
-    }
-
-    // If no screen contains the point, default to the main screen
     return PrimaryScreen ? PrimaryScreen : &GMacApplication->ScreenCache.First();
 }
 
