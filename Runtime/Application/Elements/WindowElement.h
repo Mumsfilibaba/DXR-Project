@@ -2,7 +2,7 @@
 #include "Core/Containers/String.h"
 #include "Core/Delegates/Delegate.h"
 #include "CoreApplication/PlatformInterface/IPlatformWindow.h"
-#include "Application/Widgets/Widget.h"
+#include "Application/Elements/VisualElement.h"
 
 /** @brief Delegate called when the window is moved. */
 DECLARE_DELEGATE(FOnWindowMoved, const IntVector2&);
@@ -16,20 +16,13 @@ DECLARE_DELEGATE(FOnWindowClosed);
 /** @brief Delegate called when the window focus state changes. */
 DECLARE_DELEGATE(FOnWindowFocusChanged);
 
-class APPLICATION_API FWindowWidget : public FWidget
+class APPLICATION_API FWindowElement final : public FVisualElement
 {
 public:
 
-    /**
-     * @brief Initialization parameters for an FWindowWidget.
-     */
-
     struct FInitializer
     {
-        /**
-         * @brief Default constructor initializes default window parameters.
-         */
-
+        /** @brief Default constructor initializes default window parameters. */
         FInitializer()
             : Title()
             , ParentWindow(nullptr)
@@ -45,7 +38,7 @@ public:
         String Title;     
         
         /** @brief Optional parent/owner window (used for owned popup/tool windows). */
-        TSharedPtr<FWindowWidget> ParentWindow;
+        TSharedPtr<FWindowElement> ParentWindow;
 
         /** @brief The size of the window (width, height). */
         IntVector2 Size;      
@@ -64,14 +57,17 @@ public:
     };
 
 public:
-    
-    FWindowWidget();
-    virtual ~FWindowWidget();
+    static TSharedPtr<FWindowElement> Create(const FInitializer& Initializer);
 
-    // FWidget Interface
+public:
+    
+    FWindowElement();
+    virtual ~FWindowElement();
+
+    // FVisualElement Interface
     virtual void Tick(const FRectangle& AssignedBounds) override final;
     virtual bool IsWindow() const override final;
-    virtual void FindChildrenContainingPoint(const IntVector2& Point, FWidgetPath& OutParentWidgets) override final;
+    virtual void FindChildrenContainingPoint(const IntVector2& Point, FElementPath& OutParentElements) override final;
 
     /**
      * @brief Initializes the window with the specified parameters.
@@ -198,33 +194,33 @@ public:
     uint32 GetHeight() const;
 
     /**
-     * @brief Gets the current overlay widget.
+     * @brief Gets the current overlay element.
      * 
-     * @return A shared pointer to the overlay widget.
+     * @return A shared pointer to the overlay element.
      */
-    TSharedPtr<FWidget> GetOverlay() const;
+    TSharedPtr<FVisualElement> GetOverlay() const;
     
     /**
-     * @brief Gets the current content widget.
+     * @brief Gets the current content element.
      * 
-     * @return A shared pointer to the content widget.
+     * @return A shared pointer to the content element.
      */
-    TSharedPtr<FWidget> GetContent() const;
+    TSharedPtr<FVisualElement> GetContent() const;
 
     /**
-     * @brief Sets the overlay widget.
+     * @brief Sets the overlay element.
      * 
-     * This widget will receive events before the content widget, allowing the overlay to respond to events first.
-     * @param InOverlay The overlay widget to set.
+     * This element will receive events before the content element, allowing the overlay to respond to events first.
+     * @param InOverlay The overlay element to set.
      */
-    void SetOverlay(const TSharedPtr<FWidget>& InOverlay);
+    void SetOverlay(const TSharedPtr<FVisualElement>& InOverlay);
     
     /**
-     * @brief Sets the content widget.
+     * @brief Sets the content element.
      * 
-     * @param InContent The content widget to set.
+     * @param InContent The content element to set.
      */
-    void SetContent(const TSharedPtr<FWidget>& InContent);
+    void SetContent(const TSharedPtr<FVisualElement>& InContent);
 
     /**
      * @brief Shows the window, optionally setting focus to it.
@@ -295,7 +291,7 @@ public:
      * @brief Publishes the regions of the window that behave like a title bar.
      *
      * The platform answers OS hit-tests from the most recently published set, so this is called every frame
-     * by whichever widget draws the title bar.
+     * by whichever element draws the title bar.
      * @param InRegions The regions, in window-relative coordinates, with the origin at the top-left.
      */
     void SetTitleBarRegions(const FWindowTitleBarRegions& InRegions);
@@ -324,9 +320,7 @@ public:
      */
     void SetPlatformWindow(const TSharedRef<IPlatformWindow>& InPlatformWindow);
     
-    /**
-     * @brief Sets focus to this window's platform window.
-     */
+    /** @brief Sets focus to this window's platform window. */
     void SetFocus();
     
     /**
@@ -380,11 +374,11 @@ public:
     /**
      * @brief Retrieves the parent/owner window of this window, if any.
      * 
-     * @return The parent window widget, or nullptr if there is no parent.
+     * @return The parent window element, or nullptr if there is no parent.
      */
-    TSharedPtr<FWindowWidget> GetParentWindow() const
+    TSharedPtr<FWindowElement> GetParentWindow() const
     {
-        return ParentWindowWidget;
+        return ParentWindowElement;
     }
 
     /**
@@ -418,8 +412,8 @@ private:
     EWindowStyleFlags           StyleFlags;
     bool                        bActivateOnShow;
     bool                        bAcceptsInput;
-    TSharedPtr<FWidget>         Overlay;
-    TSharedPtr<FWidget>         Content;
+    TSharedPtr<FVisualElement>  Overlay;
+    TSharedPtr<FVisualElement>  Content;
     TSharedRef<IPlatformWindow> PlatformWindow;
-    TSharedPtr<FWindowWidget>   ParentWindowWidget;
+    TSharedPtr<FWindowElement>  ParentWindowElement;
 };

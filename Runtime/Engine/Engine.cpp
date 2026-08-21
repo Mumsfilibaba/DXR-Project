@@ -5,8 +5,8 @@
 #include "Core/Math/Math.h"
 #include "Core/Misc/Paths.h"
 #include "Application/Application.h"
-#include "Application/Widgets/WindowWidget.h"
-#include "Application/Widgets/ViewportWidget.h"
+#include "Application/Elements/WindowElement.h"
+#include "Application/Elements/ViewportElement.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #if EDITOR_BUILD
     #include "Engine/EditorEngine.h"
@@ -98,7 +98,7 @@ FEngine::FEngine()
     : World(nullptr)
     , GameModule(nullptr)
     , EngineWindow(nullptr)
-    , EngineViewportWidget(nullptr)
+    , EngineViewportElement(nullptr)
     , SceneViewport(nullptr)
 {
 }
@@ -110,7 +110,7 @@ FEngine::~FEngine()
 
 bool FEngine::CreateEngineWindow()
 {
-    FWindowWidget::FInitializer WindowInitializer;
+    FWindowElement::FInitializer WindowInitializer;
     WindowInitializer.Title      = "Sandbox";
     WindowInitializer.Size.X     = CVarViewportWidth.GetValue();
     WindowInitializer.Size.Y     = CVarViewportHeight.GetValue();
@@ -120,7 +120,7 @@ bool FEngine::CreateEngineWindow()
     WindowInitializer.StyleFlags |= EWindowStyleFlags::CustomTitleBar;
 #endif
 
-    EngineWindow = CreateWidget<FWindowWidget>(WindowInitializer);
+    EngineWindow = FWindowElement::Create(WindowInitializer);
 
     FApplication::Get().CreateWindow(EngineWindow);
     return true;
@@ -134,28 +134,28 @@ bool FEngine::CreateEngineViewport()
         return false;
     }
 
-    FViewportWidget::FInitializer ViewportInitializer;
+    FViewportElement::FInitializer ViewportInitializer;
     ViewportInitializer.ViewportInterface = nullptr;
 
-    EngineViewportWidget = CreateWidget<FViewportWidget>(ViewportInitializer);
-    EngineViewportWidget->SetParentWidget(EngineWindow->AsWeakPtr());
+    EngineViewportElement = FViewportElement::Create(ViewportInitializer);
+    EngineViewportElement->SetParentElement(EngineWindow->AsWeakPtr());
 
     EngineWindow->SetOnWindowMoved(FOnWindowMoved::CreateRaw(this, &FEngine::OnEngineWindowMoved));
     EngineWindow->SetOnWindowClosed(FOnWindowClosed::CreateRaw(this, &FEngine::OnEngineWindowClosed));
     EngineWindow->SetOnWindowResized(FOnWindowResized::CreateRaw(this, &FEngine::OnEngineWindowResized));
-    EngineWindow->SetContent(EngineViewportWidget);
+    EngineWindow->SetContent(EngineViewportElement);
     return true;
 }
 
 bool FEngine::CreateSceneViewport()
 {
-    if (!EngineViewportWidget)
+    if (!EngineViewportElement)
     {
         return false;
     }
 
     // Create a SceneViewport
-    SceneViewport = MakeSharedPtr<FSceneViewport>(EngineViewportWidget);
+    SceneViewport = MakeSharedPtr<FSceneViewport>(EngineViewportElement);
     if (!SceneViewport->InitializeRHI())
     {
         return false;
@@ -165,7 +165,7 @@ bool FEngine::CreateSceneViewport()
         SceneViewport->SetWorld(World);
     }
 
-    EngineViewportWidget->SetViewportInterface(SceneViewport);
+    EngineViewportElement->SetViewportInterface(SceneViewport);
 
     // Communicate the render resolution to the renderer
     FRHISwapChainRef SwapChain = SceneViewport->GetRHISwapChain();
@@ -311,7 +311,7 @@ bool FEngine::Init()
 
     if (IImguiPlugin::IsEnabled())
     {
-        IImguiPlugin::Get().SetMainViewport(EngineViewportWidget);
+        IImguiPlugin::Get().SetMainViewport(EngineViewportElement);
     }
 
     return true;
@@ -450,6 +450,6 @@ void FEngine::Release()
     SceneViewport->ReleaseRHI();
 
     // Reset widgets
-    EngineViewportWidget.Reset();
+    EngineViewportElement.Reset();
     EngineWindow.Reset();
 }

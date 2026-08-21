@@ -28,6 +28,7 @@ REM  The modules that currently have test suites. Add a line here when a new
 REM  Run<Module>Tests.bat is added.
 call :RunModule Core
 call :RunModule RHI
+call :RunModule Application
 
 echo.
 echo ============================================================

@@ -9,7 +9,7 @@
 #include "Core/Math/Math.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
-#include "Application/Widgets/WindowWidget.h"
+#include "Application/Elements/WindowElement.h"
 #include "RHI/RHI.h"
 #include "RHI/RHIResources.h"
 #include "RHI/ShaderCompiler.h"

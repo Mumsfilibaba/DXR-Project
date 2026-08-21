@@ -1,0 +1,201 @@
+#include "DrawTests.h"
+
+#include "TestCommon/TestHarness.h"
+#include "TestCommon/TestMacros.h"
+
+#include <Application/Console/ConsoleLogBuffer.h>
+#include <Application/Draw/DrawCommandList.h>
+#include <Application/Text/FixedWidthFontFace.h>
+#include <Application/Elements/BorderElement.h>
+#include <Application/Elements/BoxElements.h>
+#include <Application/Elements/ScrollBoxElement.h>
+#include <Application/Elements/TextBlockElement.h>
+
+static TSharedPtr<IFontFace> CreateTestFont()
+{
+    return MakeSharedPtr<FFixedWidthFontFace>(8, 16);
+}
+
+static TSharedPtr<FTextBlockElement> CreateTextBlock(const CHAR* Text, const TSharedPtr<IFontFace>& Font)
+{
+    FTextBlockElement::FInitializer Initializer;
+    Initializer.Text = Text;
+    Initializer.Font = Font;
+    return FTextBlockElement::Create(Initializer);
+}
+
+bool DrawCommandList_Test()
+{
+    TEST_BEGIN();
+
+    TSharedPtr<IFontFace> Font = CreateTestFont();
+
+    FDrawCommandList CommandList;
+
+    TEST_SECTION("A fresh list is empty and balanced");
+    TEST_EXPECT(CommandList.IsEmpty());
+    TEST_EXPECT_EQ(CommandList.Size(), 0);
+    TEST_EXPECT(CommandList.IsClipStackBalanced());
+
+    TEST_SECTION("Commands come back in emission order with their layers");
+    CommandList.AddBox(0, FRectangle(IntVector2(0, 0), 100, 50), FFloatColor::White);
+    CommandList.AddText(1, FRectangle(IntVector2(4, 4), 90, 16), String("Hello"), Font.Get(), FFloatColor::White);
+    CommandList.AddLine(2, FRectangle(IntVector2(4, 4), 1, 16), FFloatColor::White);
+
+    TEST_EXPECT_EQ(CommandList.Size(), 3);
+    TEST_EXPECT(!CommandList.IsEmpty());
+    TEST_EXPECT(CommandList[0].Type == EDrawCommandType::Box);
+    TEST_EXPECT(CommandList[1].Type == EDrawCommandType::Text);
+    TEST_EXPECT(CommandList[2].Type == EDrawCommandType::Line);
+    TEST_EXPECT_EQ(CommandList[0].LayerId, 0);
+    TEST_EXPECT_EQ(CommandList[1].LayerId, 1);
+    TEST_EXPECT_EQ(CommandList[2].LayerId, 2);
+
+    TEST_SECTION("A text command keeps its string and face");
+    TEST_EXPECT(CommandList[1].Text.Equals("Hello"));
+    TEST_EXPECT(CommandList[1].Font == Font.Get());
+
+    TEST_SECTION("Counting by type only counts that type");
+    TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::Box), 1);
+    TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::Text), 1);
+    TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::ClipPush), 0);
+
+    TEST_SECTION("Text lookup finds a match and reports a miss");
+    TEST_EXPECT_EQ(CommandList.FindTextCommand("Hello"), 1);
+    TEST_EXPECT_EQ(CommandList.FindTextCommand("Missing"), FDrawCommandList::InvalidIndex);
+
+    TEST_SECTION("Reset empties the list and the clip state");
+    CommandList.PushClip(0, FRectangle(IntVector2(0, 0), 10, 10));
+    CommandList.Reset();
+
+    TEST_EXPECT(CommandList.IsEmpty());
+    TEST_EXPECT(CommandList.IsClipStackBalanced());
+
+    TEST_END();
+}
+
+bool DrawClipNesting_Test()
+{
+    TEST_BEGIN();
+
+    FDrawCommandList CommandList;
+
+    TEST_SECTION("A nested region is intersected with the enclosing one");
+    CommandList.PushClip(0, FRectangle(IntVector2(0, 0), 100, 100));
+    TEST_EXPECT(CommandList.GetCurrentClipRectangle() == FRectangle(IntVector2(0, 0), 100, 100));
+
+    CommandList.PushClip(1, FRectangle(IntVector2(50, 50), 100, 100));
+
+    const FRectangle Nested = CommandList.GetCurrentClipRectangle();
+    TEST_EXPECT_EQ(Nested.Position.X, 50);
+    TEST_EXPECT_EQ(Nested.Position.Y, 50);
+    TEST_EXPECT_EQ(Nested.Width, 50);
+    TEST_EXPECT_EQ(Nested.Height, 50);
+
+    TEST_SECTION("The recorded push carries the intersected region");
+    TEST_EXPECT(CommandList[1].Bounds == Nested);
+
+    TEST_SECTION("Popping restores the enclosing region");
+    CommandList.PopClip(1);
+    TEST_EXPECT(CommandList.GetCurrentClipRectangle() == FRectangle(IntVector2(0, 0), 100, 100));
+
+    TEST_SECTION("An unclosed push leaves the list unbalanced");
+    TEST_EXPECT(!CommandList.IsClipStackBalanced());
+
+    CommandList.PopClip(0);
+    TEST_EXPECT(CommandList.IsClipStackBalanced());
+    TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::ClipPush), 2);
+    TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::ClipPop), 2);
+
+    TEST_SECTION("An extra pop leaves the list unbalanced too");
+    CommandList.PopClip(0);
+    TEST_EXPECT(!CommandList.IsClipStackBalanced());
+
+    TEST_SECTION("A scroll box wraps its child in exactly one push and one pop");
+    TSharedPtr<IFontFace> Font = CreateTestFont();
+
+    TSharedPtr<FVerticalBoxElement> Content = FVerticalBoxElement::Create();
+    for (int32 Index = 0; Index < 10; ++Index)
+    {
+        Content->AddSlot(CreateTextBlock("Line", Font));
+    }
+
+    TSharedPtr<FScrollBoxElement> ScrollBox = FScrollBoxElement::Create();
+    ScrollBox->SetContent(Content);
+    ScrollBox->PrepareDesiredSize();
+    ScrollBox->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+
+    FDrawCommandList ScrollCommandList;
+    ScrollBox->OnDraw(FDrawGeometry(ScrollBox->GetContentRectangle(), 1.0f), ScrollCommandList, 0);
+
+    TEST_EXPECT_EQ(ScrollCommandList.CountCommandsOfType(EDrawCommandType::ClipPush), 1);
+    TEST_EXPECT_EQ(ScrollCommandList.CountCommandsOfType(EDrawCommandType::ClipPop), 1);
+    TEST_EXPECT(ScrollCommandList.IsClipStackBalanced());
+    TEST_EXPECT_EQ(ScrollCommandList.CountCommandsOfType(EDrawCommandType::Text), 10);
+
+    TEST_END();
+}
+
+bool BorderDraw_Test()
+{
+    TEST_BEGIN();
+
+    TSharedPtr<IFontFace> Font = CreateTestFont();
+
+    TEST_SECTION("An opaque background emits one box beneath the child");
+    FBorderElement::FInitializer Initializer;
+    Initializer.BackgroundColor = FFloatColor(0.1f, 0.2f, 0.3f, 1.0f);
+    Initializer.Padding         = FMargin(10, 5);
+    Initializer.Content         = CreateTextBlock("Border", Font);
+
+    TSharedPtr<FBorderElement> Border = FBorderElement::Create(Initializer);
+    Border->PrepareDesiredSize();
+    Border->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+
+    FDrawCommandList CommandList;
+    const int32      MaxLayerId = Border->OnDraw(FDrawGeometry(Border->GetContentRectangle(), 1.0f), CommandList, 0);
+
+    TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::Box), 1);
+    TEST_EXPECT(CommandList[0].Type == EDrawCommandType::Box);
+    TEST_EXPECT_EQ(CommandList[0].LayerId, 0);
+    TEST_EXPECT_EQ(CommandList.FindTextCommand("Border"), 1);
+    TEST_EXPECT(MaxLayerId > 0);
+
+    TEST_SECTION("The desired size is the child plus the padding");
+    TEST_EXPECT_EQ(Border->GetCachedDesiredSize().X, (6 * 8) + 20);
+    TEST_EXPECT_EQ(Border->GetCachedDesiredSize().Y, 16 + 10);
+
+    TEST_SECTION("A zero-alpha background emits no box at all");
+    FBorderElement::FInitializer TransparentInitializer;
+    TransparentInitializer.BackgroundColor = FFloatColor(0.1f, 0.2f, 0.3f, 0.0f);
+    TransparentInitializer.Content         = CreateTextBlock("Border", Font);
+
+    TSharedPtr<FBorderElement> Transparent = FBorderElement::Create(TransparentInitializer);
+    Transparent->PrepareDesiredSize();
+    Transparent->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+
+    FDrawCommandList TransparentCommandList;
+    Transparent->OnDraw(FDrawGeometry(Transparent->GetContentRectangle(), 1.0f), TransparentCommandList, 0);
+
+    TEST_EXPECT_EQ(TransparentCommandList.CountCommandsOfType(EDrawCommandType::Box), 0);
+    TEST_EXPECT_EQ(TransparentCommandList.CountCommandsOfType(EDrawCommandType::Text), 1);
+
+    TEST_END();
+}
+
+bool LogSeverityColors_Test()
+{
+    TEST_BEGIN();
+
+    TEST_SECTION("Info is white, warning yellow and error red");
+    const FFloatColor InfoColor = FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Info);
+    TEST_EXPECT(InfoColor.R == 1.0f && InfoColor.G == 1.0f && InfoColor.B == 1.0f && InfoColor.A == 1.0f);
+
+    const FFloatColor WarningColor = FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Warning);
+    TEST_EXPECT(WarningColor.R == 1.0f && WarningColor.G == 1.0f && WarningColor.B == 0.0f && WarningColor.A == 1.0f);
+
+    const FFloatColor ErrorColor = FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Error);
+    TEST_EXPECT(ErrorColor.R == 1.0f && ErrorColor.G == 0.0f && ErrorColor.B == 0.0f && ErrorColor.A == 1.0f);
+
+    TEST_END();
+}

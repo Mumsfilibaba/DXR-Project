@@ -91,15 +91,15 @@ public:
     }
 
     /** @brief Returns the engine window */
-    TSharedPtr<FWindowWidget> GetEngineWindow() const
+    TSharedPtr<FWindowElement> GetEngineWindow() const
     {
         return EngineWindow;
     }
 
     /** @brief Returns the engine window */
-    TSharedPtr<FViewportWidget> GetViewportWidget() const
+    TSharedPtr<FViewportElement> GetViewportElement() const
     {
-        return EngineViewportWidget;
+        return EngineViewportElement;
     }
 
     /** @brief Returns the SceneViewport */
@@ -131,8 +131,8 @@ private:
 
     FWorld*                             World;
     FGameModule*                        GameModule;
-    TSharedPtr<FWindowWidget>           EngineWindow;
-    TSharedPtr<FViewportWidget>         EngineViewportWidget;
+    TSharedPtr<FWindowElement>          EngineWindow;
+    TSharedPtr<FViewportElement>        EngineViewportElement;
     TSharedPtr<FSceneViewport>          SceneViewport;
 #if ENGINE_DEBUG_INPUT
     TSharedPtr<FInputDebugInputHandler> InputDebugInputHandler;

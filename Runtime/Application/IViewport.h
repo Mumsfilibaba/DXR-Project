@@ -4,13 +4,11 @@
 #include "Core/Containers/SharedRef.h"
 #include "RHI/RHISwapChain.h"
 
-class FViewportWidget;
+class FViewportElement;
 
 struct IViewport
 {
-    /**
-     * @brief Virtual destructor for the IViewport interface.
-     */
+    /** @brief Virtual destructor for the IViewport interface. */
     virtual ~IViewport() = default;
 
     /**
@@ -49,7 +47,7 @@ struct IViewport
     virtual FEventResponse OnKeyChar(const FKeyEvent& KeyEvent) = 0;
 
     /**
-     * @brief Handles mouse movement events. Triggered whenever the mouse moves over the widget containing this viewport instance.
+     * @brief Handles mouse movement events. Triggered whenever the mouse moves over the element containing this viewport instance.
      * 
      * @param CursorEvent The cursor event data.
      * @return An event response indicating how the event was handled.
@@ -57,7 +55,7 @@ struct IViewport
     virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent) = 0;
 
     /**
-     * @brief Handles mouse button down events. Triggered when a mouse button is pressed while the cursor is over the widget containing
+     * @brief Handles mouse button down events. Triggered when a mouse button is pressed while the cursor is over the element containing
      * this viewport instance.
      * 
      * @param CursorEvent The cursor event data.
@@ -66,7 +64,7 @@ struct IViewport
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) = 0;
 
     /**
-     * @brief Handles mouse button up events. Triggered when a mouse button is released while the cursor is over the widget containing
+     * @brief Handles mouse button up events. Triggered when a mouse button is released while the cursor is over the element containing
      * this viewport instance.
      * 
      * @param CursorEvent The cursor event data.
@@ -76,7 +74,7 @@ struct IViewport
 
     /**
      * @brief Handles mouse scroll events. Triggered when the mouse wheel is scrolled (horizontally or vertically) while the cursor is
-     * over the widget containing this viewport instance.
+     * over the element containing this viewport instance.
      * 
      * @param CursorEvent The cursor event data.
      * @return An event response indicating how the event was handled.
@@ -86,7 +84,7 @@ struct IViewport
     /**
      * @brief Handles mouse double-click events.
      * 
-     * Triggered when a mouse button is double-clicked while the cursor is over the widget containing
+     * Triggered when a mouse button is double-clicked while the cursor is over the element containing
      * this viewport instance.
      * 
      * @param CursorEvent The cursor event data.
@@ -95,7 +93,7 @@ struct IViewport
     virtual FEventResponse OnMouseDoubleClick(const FCursorEvent& CursorEvent) = 0;
 
     /**
-     * @brief Handles mouse leave events. Triggered when the mouse leaves the widget containing this viewport instance.
+     * @brief Handles mouse leave events. Triggered when the mouse leaves the element containing this viewport instance.
      * 
      * @param CursorEvent The cursor event data.
      * @return An event response indicating how the event was handled.
@@ -103,7 +101,7 @@ struct IViewport
     virtual FEventResponse OnMouseLeft(const FCursorEvent& CursorEvent) = 0;
 
     /**
-     * @brief Handles mouse enter events. Triggered when the mouse enters the widget containing this viewport instance.
+     * @brief Handles mouse enter events. Triggered when the mouse enters the element containing this viewport instance.
      * 
      * @param CursorEvent The cursor event data.
      * @return An event response indicating how the event was handled.
@@ -111,7 +109,7 @@ struct IViewport
     virtual FEventResponse OnMouseEntered(const FCursorEvent& CursorEvent) = 0;
 
     /**
-     * @brief Handles high-precision mouse input events. Triggered when the mouse moves with high precision over the widget containing this viewport instance.
+     * @brief Handles high-precision mouse input events. Triggered when the mouse moves with high precision over the element containing this viewport instance.
      * 
      * @param CursorEvent The cursor event data.
      * @return An event response indicating how the event was handled.
@@ -119,14 +117,14 @@ struct IViewport
     virtual FEventResponse OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent) = 0;
 
     /**
-     * @brief Handles focus lost events. Triggered when the widget containing this viewport instance loses input focus.
+     * @brief Handles focus lost events. Triggered when the element containing this viewport instance loses input focus.
      * 
      * @return An event response indicating how the event was handled.
      */
     virtual FEventResponse OnFocusLost() = 0;
 
     /**
-     * @brief Handles focus gained events. Triggered when the widget containing this viewport instance gains input focus.
+     * @brief Handles focus gained events. Triggered when the element containing this viewport instance gains input focus.
      * 
      * @return An event response indicating how the event was handled.
      */
@@ -140,23 +138,23 @@ struct IViewport
     virtual FRHISwapChainRef GetRHISwapChain() const = 0;
 
     /**
-     * @brief Sets the viewport widget associated with this instance.
+     * @brief Sets the viewport element associated with this instance.
      * 
-     * @param InViewport A shared pointer to the viewport widget to associate.
+     * @param InViewport A shared pointer to the viewport element to associate.
      */
-    virtual void SetViewportWidget(const TSharedPtr<FViewportWidget>& InViewport) = 0;
+    virtual void SetViewportElement(const TSharedPtr<FViewportElement>& InViewport) = 0;
 
     /**
-     * @brief Gets the viewport widget associated with this instance.
+     * @brief Gets the viewport element associated with this instance.
      * 
-     * @return A shared pointer to the viewport widget.
+     * @return A shared pointer to the viewport element.
      */
-    virtual TSharedPtr<FViewportWidget> GetViewportWidget() = 0;
+    virtual TSharedPtr<FViewportElement> GetViewportElement() = 0;
 
     /**
-     * @brief Gets the viewport widget associated with this instance (const version).
+     * @brief Gets the viewport element associated with this instance (const version).
      * 
-     * @return A shared pointer to the viewport widget.
+     * @return A shared pointer to the viewport element.
      */
-    virtual TSharedPtr<const FViewportWidget> GetViewportWidget() const = 0;
+    virtual TSharedPtr<const FViewportElement> GetViewportElement() const = 0;
 };

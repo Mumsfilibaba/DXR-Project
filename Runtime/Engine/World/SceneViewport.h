@@ -1,14 +1,14 @@
 #pragma once
 #include "Application/IViewport.h"
-#include "Application/Widgets/ViewportWidget.h"
+#include "Application/Elements/ViewportElement.h"
 #include "Engine/World/World.h"
 
-class FWindowWidget;
+class FWindowElement;
 
 class ENGINE_API FSceneViewport : public IViewport
 {
 public:
-    FSceneViewport(const TWeakPtr<FViewportWidget>& InViewport);
+    FSceneViewport(const TWeakPtr<FViewportElement>& InViewport);
     ~FSceneViewport();
 
     // IViewport Interface
@@ -32,19 +32,19 @@ public:
         return RHISwapChain;
     }
 
-    virtual void SetViewportWidget(const TSharedPtr<FViewportWidget>& InViewport) override
+    virtual void SetViewportElement(const TSharedPtr<FViewportElement>& InViewport) override
     {
         Viewport = InViewport;
     }
 
-    virtual TSharedPtr<FViewportWidget> GetViewportWidget() override
+    virtual TSharedPtr<FViewportElement> GetViewportElement() override
     {
         return Viewport.IsValid() ? Viewport.ToSharedPtr() : nullptr;
     }
 
-    virtual TSharedPtr<const FViewportWidget> GetViewportWidget() const override
+    virtual TSharedPtr<const FViewportElement> GetViewportElement() const override
     {
-        return Viewport.IsValid() ? TSharedPtr<const FViewportWidget>(Viewport) : nullptr;
+        return Viewport.IsValid() ? TSharedPtr<const FViewportElement>(Viewport) : nullptr;
     }
 
     /**
@@ -92,16 +92,16 @@ public:
     }
 
 private:
-    TSharedPtr<FWindowWidget> GetCaptureWindow() const;
-    FRectangle                GetCaptureRect() const;
+    TSharedPtr<FWindowElement> GetCaptureWindow() const;
+    FRectangle                 GetCaptureRect() const;
 
-    FWorld*                   World;
-    TWeakPtr<FViewportWidget> Viewport;
-    FRHISwapChainRef          RHISwapChain;
-    IntVector2                HighPrecisionMouseDelta;
-    IntVector2                MouseRestorePosition;
-    bool                      bPlayerInputEnabled;
-    bool                      bMouseCaptured;
-    bool                      bCursorWasVisible;
-    bool                      bDiscardCaptureWarpDelta;
+    FWorld*                    World;
+    TWeakPtr<FViewportElement> Viewport;
+    FRHISwapChainRef           RHISwapChain;
+    IntVector2                 HighPrecisionMouseDelta;
+    IntVector2                 MouseRestorePosition;
+    bool                       bPlayerInputEnabled;
+    bool                       bMouseCaptured;
+    bool                       bCursorWasVisible;
+    bool                       bDiscardCaptureWarpDelta;
 };

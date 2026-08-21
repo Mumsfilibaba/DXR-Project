@@ -3,7 +3,7 @@
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
 class FEditorEngine;
-class FWindowWidget;
+class FWindowElement;
 
 class FEditorTitleBarWidget final
 {
@@ -18,7 +18,7 @@ public:
 
 private:
     void DrawMenuButtons();
-    void DrawCaptionButtons(const FWindowTitleBarMetrics& Metrics, const TSharedPtr<FWindowWidget>& Window);
+    void DrawCaptionButtons(const FWindowTitleBarMetrics& Metrics, const TSharedPtr<FWindowElement>& Window);
     void AddInteractiveRect(const ImVec2& Min, const ImVec2& Max);
 
     FEditorEngine*         EditorEngine;

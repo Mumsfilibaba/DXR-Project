@@ -91,6 +91,8 @@ if /i "%MODE%"=="tests" (
     set "LOG=%ROOT%TestResults_%MODULE%.log"
     if /i "%MODULE%"=="Core" set "TARGETS=Core-Tests Core-Containers-Tests Core-Templates-Tests Core-Math-Tests-Scalar Core-Math-Tests-SSE Core-Math-Tests-SSE2 Core-Math-Tests-SSE3 Core-Math-Tests-SSSE3 Core-Math-Tests-SSE4_1 Core-Math-Tests-SSE4_2"
     if /i "%MODULE%"=="RHI" set "TARGETS=RHI-Tests"
+    if /i "%MODULE%"=="RendererCore" set "TARGETS=RendererCore-Tests"
+    if /i "%MODULE%"=="Application" set "TARGETS=Application-Tests"
 ) else if /i "%MODE%"=="benchmarks" (
     set "KIND=benchmark"
     set "CONFIGS=Development Release"

@@ -43,7 +43,7 @@
 // Variable rate shading is scaffolding: the shading rate image is built but nothing binds it yet
 #define SUPPORT_VARIABLE_RATE_SHADING (0)
 
-class FViewportWidget;
+class FViewportElement;
 class FSceneRenderer;
 
 struct FCameraHLSL

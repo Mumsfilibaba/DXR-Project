@@ -53,7 +53,7 @@ public:
     virtual void RemoveDrawDelegate(FDelegateHandle DelegateHandle) override final;
     virtual void RemoveEndFrameDelegate(FDelegateHandle DelegateHandle) override final;
 
-    virtual void SetMainViewport(const TSharedPtr<FViewportWidget>& InViewport) override final;
+    virtual void SetMainViewport(const TSharedPtr<FViewportElement>& InViewport) override final;
 
     virtual void ClearGamepadAnalogState() override final
     {
@@ -97,8 +97,8 @@ private:
     ImGuiContext*                  PluginImGuiContext;
     TSharedPtr<FImGuiRenderer>     Renderer;
     TSharedPtr<FImGuiEventHandler> EventHandler;
-    TSharedPtr<FWindowWidget>      MainWindow;
-    TSharedPtr<FViewportWidget>    MainViewport;
+    TSharedPtr<FWindowElement>     MainWindow;
+    TSharedPtr<FViewportElement>   MainViewport;
     TArray<FMonitorInfo>           MonitorInfos;
     String                         ClipboardText;
     FImGuiDrawMulticastDelegate    BeginFrameDelegates;

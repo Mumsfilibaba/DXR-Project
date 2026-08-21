@@ -1,6 +1,6 @@
 #pragma once
 #include "Application/IViewport.h"
-#include "Application/Widgets/Widget.h"
+#include "Application/Elements/VisualElement.h"
 
 enum class EViewportPositionSpace
 {
@@ -8,7 +8,7 @@ enum class EViewportPositionSpace
     Screen,
 };
 
-class APPLICATION_API FViewportWidget : public FWidget
+class APPLICATION_API FViewportElement final : public FVisualElement
 {
 public:
     struct FInitializer
@@ -17,12 +17,15 @@ public:
     };
 
 public:
-    FViewportWidget();
-    virtual ~FViewportWidget();
+    static TSharedPtr<FViewportElement> Create(const FInitializer& Initializer);
+
+public:
+    FViewportElement();
+    virtual ~FViewportElement();
 
     void Initialize(const FInitializer& Initializer);
 
-    // FWidget Interface
+    // FVisualElement Interface
     virtual void Tick(const FRectangle& AssignedBounds) override final;
 
     virtual FEventResponse OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent) override final;
@@ -56,14 +59,14 @@ public:
     }
 
      /**
-     * @brief Sets the relative viewport size. This size will be clamped to the parent widget's size during Tick.
+     * @brief Sets the relative viewport size. This size will be clamped to the parent element's size during Tick.
      * 
      * @param InSize The new size.
      */
     void SetSize(const IntVector2& InSize) { Size = InSize; }
     
     /**
-     * @brief Sets the relative viewport position. This size will be clamped to the parent widget's size during Tick.
+     * @brief Sets the relative viewport position. This size will be clamped to the parent element's size during Tick.
      * 
      * @param InPosition The new position.
      */

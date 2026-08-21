@@ -1,7 +1,7 @@
 #pragma once
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "RHI/RHIResources.h"
-#include "Application/Widgets/ViewportWidget.h"
+#include "Application/Elements/ViewportElement.h"
 #include "Engine/EngineUI/Editor/EditorGuizmo.h"
 #include "Engine/EngineUI/Editor/EditorCameraController.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
@@ -30,7 +30,7 @@ public:
     bool ConsumeCameraCut();
     void ResetInputState();
 
-    void SetViewportWidget(const TSharedPtr<FViewportWidget>& ViewportWidget);
+    void SetViewportElement(const TSharedPtr<FViewportElement>& ViewportElement);
     void SetViewportImage(FRHITextureRef InViewportImage);
 
     IntVector2                          GetViewportSize() const;
@@ -107,7 +107,7 @@ private:
 
     FEditorEngine*                      EditorEngine;
     TUniquePtr<FEditorCameraController> CameraController;
-    TSharedPtr<FViewportWidget>         ViewportWidget;
+    TSharedPtr<FViewportElement>        ViewportElement;
     IntVector2                          CachedViewportSize;
     ImVec2                              CachedImageMin;
     ImVec2                              CachedImageSize;

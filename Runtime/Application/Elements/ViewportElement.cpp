@@ -1,51 +1,62 @@
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "Application/Widgets/ViewportWidget.h"
-#include "Application/Widgets/WindowWidget.h"
+#include "Application/Elements/ViewportElement.h"
+#include "Application/Elements/WindowElement.h"
 
-FViewportWidget::FViewportWidget()
-    : FWidget()
+TSharedPtr<FViewportElement> FViewportElement::Create(const FInitializer& Initializer)
+{
+    TSharedPtr<FViewportElement> NewElement = MakeSharedPtr<FViewportElement>();
+    if (NewElement)
+    {
+        NewElement->Initialize(Initializer);
+    }
+
+    return NewElement;
+}
+
+FViewportElement::FViewportElement()
+    : FVisualElement()
     , ViewportInterface(nullptr)
     , Position()
     , Size()
 {
 }
 
-FViewportWidget::~FViewportWidget()
+FViewportElement::~FViewportElement()
 {
 }
 
-void FViewportWidget::Initialize(const FInitializer& Initializer)
+void FViewportElement::Initialize(const FInitializer& Initializer)
 {
     ViewportInterface = Initializer.ViewportInterface;
 }
 
-void FViewportWidget::SetPosition(const IntVector2& InPosition, EViewportPositionSpace InSpace)
+void FViewportElement::SetPosition(const IntVector2& InPosition, EViewportPositionSpace InSpace)
 {
     Position = InPosition;
 
     if (InSpace == EViewportPositionSpace::Screen)
     {
-        TWeakPtr<FWidget> LocalParentWidget = GetParentWidget();
-        CHECK(LocalParentWidget != nullptr);
+        TWeakPtr<FVisualElement> LocalParentElement = GetParentElement();
+        CHECK(LocalParentElement != nullptr);
 
-        while (LocalParentWidget)
+        while (LocalParentElement)
         {
-            if (LocalParentWidget->IsWindow())
+            if (LocalParentElement->IsWindow())
             {
-                TSharedPtr<FWindowWidget> WindowWidget = StaticCastSharedPtr<FWindowWidget>(LocalParentWidget.ToSharedPtr());
+                TSharedPtr<FWindowElement> WindowElement = StaticCastSharedPtr<FWindowElement>(LocalParentElement.ToSharedPtr());
 
-                const IntVector2 WindowPos = WindowWidget->GetPosition();
+                const IntVector2 WindowPos = WindowElement->GetPosition();
                 Position.X -= WindowPos.X;
                 Position.Y -= WindowPos.Y;
                 break;
             }
 
-            LocalParentWidget = LocalParentWidget->GetParentWidget();
+            LocalParentElement = LocalParentElement->GetParentElement();
         }
     }
 }
 
-void FViewportWidget::Tick(const FRectangle& AssignedBounds)
+void FViewportElement::Tick(const FRectangle& AssignedBounds)
 {
     if (Size.X != 0 && Size.Y != 0)
     {
@@ -83,72 +94,72 @@ void FViewportWidget::Tick(const FRectangle& AssignedBounds)
     }
 }
 
-FEventResponse FViewportWidget::OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent)
+FEventResponse FViewportElement::OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent)
 {
     return ViewportInterface ? ViewportInterface->OnAnalogGamepadChange(AnalogGamepadEvent) : FEventResponse::Unhandled();
 }
 
-FEventResponse FViewportWidget::OnKeyDown(const FKeyEvent& KeyEvent)
+FEventResponse FViewportElement::OnKeyDown(const FKeyEvent& KeyEvent)
 {
     return ViewportInterface ? ViewportInterface->OnKeyDown(KeyEvent) : FEventResponse::Unhandled();
 }
 
-FEventResponse FViewportWidget::OnKeyUp(const FKeyEvent& KeyEvent)
+FEventResponse FViewportElement::OnKeyUp(const FKeyEvent& KeyEvent)
 {
     return ViewportInterface ? ViewportInterface->OnKeyUp(KeyEvent) : FEventResponse::Unhandled();
 }
 
-FEventResponse FViewportWidget::OnKeyChar(const FKeyEvent& KeyEvent)
+FEventResponse FViewportElement::OnKeyChar(const FKeyEvent& KeyEvent)
 {
     return ViewportInterface ? ViewportInterface->OnKeyChar(KeyEvent) : FEventResponse::Unhandled();
 }
 
-FEventResponse FViewportWidget::OnMouseMove(const FCursorEvent& CursorEvent)
+FEventResponse FViewportElement::OnMouseMove(const FCursorEvent& CursorEvent)
 {
     return ViewportInterface ? ViewportInterface->OnMouseMove(CursorEvent) : FEventResponse::Unhandled();
 }
 
-FEventResponse FViewportWidget::OnMouseButtonDown(const FCursorEvent& CursorEvent)
+FEventResponse FViewportElement::OnMouseButtonDown(const FCursorEvent& CursorEvent)
 {
     return ViewportInterface ? ViewportInterface->OnMouseButtonDown(CursorEvent) : FEventResponse::Unhandled();
 }
 
-FEventResponse FViewportWidget::OnMouseButtonUp(const FCursorEvent& CursorEvent)
+FEventResponse FViewportElement::OnMouseButtonUp(const FCursorEvent& CursorEvent)
 {
     return ViewportInterface ? ViewportInterface->OnMouseButtonUp(CursorEvent) : FEventResponse::Unhandled();
 }
 
-FEventResponse FViewportWidget::OnMouseScroll(const FCursorEvent& CursorEvent)
+FEventResponse FViewportElement::OnMouseScroll(const FCursorEvent& CursorEvent)
 {
     return ViewportInterface ? ViewportInterface->OnMouseScroll(CursorEvent) : FEventResponse::Unhandled();
 }
 
-FEventResponse FViewportWidget::OnMouseDoubleClick(const FCursorEvent& CursorEvent)
+FEventResponse FViewportElement::OnMouseDoubleClick(const FCursorEvent& CursorEvent)
 {
     return ViewportInterface ? ViewportInterface->OnMouseDoubleClick(CursorEvent) : FEventResponse::Unhandled();
 }
 
-FEventResponse FViewportWidget::OnMouseLeft(const FCursorEvent& CursorEvent)
+FEventResponse FViewportElement::OnMouseLeft(const FCursorEvent& CursorEvent)
 {
     return ViewportInterface ? ViewportInterface->OnMouseLeft(CursorEvent) : FEventResponse::Unhandled();
 }
 
-FEventResponse FViewportWidget::OnMouseEntered(const FCursorEvent& CursorEvent)
+FEventResponse FViewportElement::OnMouseEntered(const FCursorEvent& CursorEvent)
 {
     return ViewportInterface ? ViewportInterface->OnMouseEntered(CursorEvent) : FEventResponse::Unhandled();
 }
 
-FEventResponse FViewportWidget::OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent)
+FEventResponse FViewportElement::OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent)
 {
     return ViewportInterface ? ViewportInterface->OnHighPrecisionMouseInput(CursorEvent) : FEventResponse::Unhandled();
 }
 
-FEventResponse FViewportWidget::OnFocusLost()
+FEventResponse FViewportElement::OnFocusLost()
 {
     return ViewportInterface ? ViewportInterface->OnFocusLost() : FEventResponse::Unhandled();
 }
 
-FEventResponse FViewportWidget::OnFocusGained()
+FEventResponse FViewportElement::OnFocusGained()
 {
     return ViewportInterface ? ViewportInterface->OnFocusGained() : FEventResponse::Unhandled();
 }

@@ -5,8 +5,8 @@
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/PlatformInterface/IPlatformApplicationMessageHandler.h"
 #include "Application/InputHandler.h"
-#include "Application/WidgetPath.h"
-#include "Application/Widgets/WindowWidget.h"
+#include "Application/ElementPath.h"
+#include "Application/Elements/WindowElement.h"
 
 /** @brief Event triggered when the monitor configuration changes (e.g., adding or removing displays). */
 DECLARE_EVENT(FOnMonitorConfigChangedEvent, FApplication);
@@ -87,16 +87,16 @@ public:
      * After creation, the window will be managed and ticked each frame. The platform-specific 
      * window representation will also be shown.
      * 
-     * @param InWindow The FWindowWidget object describing the new window.
+     * @param InWindow The FWindowElement object describing the new window.
      */
-    void CreateWindow(const TSharedPtr<FWindowWidget>& InWindow);
+    void CreateWindow(const TSharedPtr<FWindowElement>& InWindow);
 
     /**
      * @brief Destroys a managed window and its underlying platform window.
      * 
-     * @param InWindow The FWindowWidget to destroy.
+     * @param InWindow The FWindowElement to destroy.
      */
-    void DestroyWindow(const TSharedPtr<FWindowWidget>& InWindow);
+    void DestroyWindow(const TSharedPtr<FWindowElement>& InWindow);
 
     /**
      * @brief Updates all windows, processes queued messages, and updates input devices.
@@ -171,7 +171,7 @@ public:
      * @param Mode Whether to enter or leave high-precision mode.
      * @return True if the mode was applied, otherwise false.
      */
-    bool SetHighPrecisionMouseMode(const TSharedPtr<FWindowWidget>& Window, EHighPrecisionMouseMode Mode);
+    bool SetHighPrecisionMouseMode(const TSharedPtr<FWindowElement>& Window, EHighPrecisionMouseMode Mode);
 
     /**
      * @brief Keeps the cursor inside a region of the screen until the confinement is released. 
@@ -182,7 +182,7 @@ public:
      * @param ScreenRect The region to confine the cursor to, in absolute screen coordinates.
      * @return True if the cursor was confined, otherwise false.
      */
-    bool ConfineCursorToRect(const TSharedPtr<FWindowWidget>& Window, const FRectangle& ScreenRect);
+    bool ConfineCursorToRect(const TSharedPtr<FWindowElement>& Window, const FRectangle& ScreenRect);
 
     /** @brief Lets the cursor leave the region set by ConfineCursorToRect. */
     void ReleaseCursorConfinement();
@@ -241,23 +241,23 @@ public:
     }
 
     /**
-     * @brief Assigns persistent mouse capture to a widget and binds platform capture to its window.
+     * @brief Assigns persistent mouse capture to an element and binds platform capture to its window.
      *
-     * @param Widget The widget that should receive mouse events while capture is held.
+     * @param Element The element that should receive mouse events while capture is held.
      * @return True if capture was assigned, otherwise false.
      */
-    bool CaptureMouse(const TSharedPtr<FWidget>& Widget);
+    bool CaptureMouse(const TSharedPtr<FVisualElement>& Element);
 
     /**
      * @brief Releases persistent mouse capture previously taken by CaptureMouse.
      *
-     * @param Widget The widget that currently owns capture. Pass nullptr to clear capture
-     *               regardless of which widget holds it. Non-null is ignored if it is not the captor.
+     * @param Element The element that currently owns capture. Pass nullptr to clear capture
+     *               regardless of which element holds it. Non-null is ignored if it is not the captor.
      */
-    void ReleaseMouseCapture(const TSharedPtr<FWidget>& Widget = nullptr);
+    void ReleaseMouseCapture(const TSharedPtr<FVisualElement>& Element = nullptr);
 
     /**
-     * @brief Checks whether a widget currently holds persistent mouse capture.
+     * @brief Checks whether an element currently holds persistent mouse capture.
      *
      * @return True if MouseCaptor is valid.
      */
@@ -267,13 +267,13 @@ public:
     }
 
     /**
-     * @brief Returns the widget that currently holds persistent mouse capture.
+     * @brief Returns the element that currently holds persistent mouse capture.
      *
-     * @return The capturing widget, or nullptr if none.
+     * @return The capturing element, or nullptr if none.
      */
-    FORCEINLINE TSharedPtr<FWidget> GetMouseCaptor() const
+    FORCEINLINE TSharedPtr<FVisualElement> GetMouseCaptor() const
     {
-        return MouseCaptor.IsValid() ? TSharedPtr<FWidget>(MouseCaptor) : nullptr;
+        return MouseCaptor.IsValid() ? TSharedPtr<FVisualElement>(MouseCaptor) : nullptr;
     }
 
     /**
@@ -287,71 +287,71 @@ public:
     }
 
     /**
-     * @brief Sets focus to the specified widget and all of its parents up to the top-level window.
+     * @brief Sets focus to the specified element and all of its parents up to the top-level window.
      * 
-     * @param FocusWidget The widget that should receive focus.
+     * @param FocusElement The element that should receive focus.
      */
-    void SetFocusWidget(const TSharedPtr<FWidget>& FocusWidget);
+    void SetFocusElement(const TSharedPtr<FVisualElement>& FocusElement);
 
     /**
-     * @brief Sets a new widget path as the focus hierarchy. This path typically contains the target 
-     * widget and all parent widgets along the path to a window.
+     * @brief Sets a new element path as the focus hierarchy. This path typically contains the target 
+     * element and all parent elements along the path to a window.
      * 
-     * @param NewFocusPath The widget path to set focus to.
+     * @param NewFocusPath The element path to set focus to.
      */
-    void SetFocusWidgets(const FWidgetPath& NewFocusPath);
+    void SetFocusElements(const FElementPath& NewFocusPath);
 
     /**
-     * @brief Gets the widget that currently has focus (for receiving keyboard input, etc.).
+     * @brief Gets the element that currently has focus (for receiving keyboard input, etc.).
      *
-     * @return A shared pointer to the focused widget, or nullptr if none.
+     * @return A shared pointer to the focused element, or nullptr if none.
      */
-    TSharedPtr<FWidget> GetFocusLeafWidget() const;
+    TSharedPtr<FVisualElement> GetFocusElementLeaf() const;
 
     /**
      * @brief Gets the window that currently has focus (for receiving keyboard input, etc.).
      * 
      * @return A shared pointer to the focused window, or nullptr if none.
      */
-    TSharedPtr<FWindowWidget> GetFocusWindow() const;
+    TSharedPtr<FWindowElement> GetFocusWindow() const;
 
     /**
-     * @brief Finds the lowest-level window (top-level FWindowWidget) that contains the specified widget.
+     * @brief Finds the lowest-level window (top-level FWindowElement) that contains the specified element.
      * 
-     * @param InWidget The widget to search for.
-     * @return A shared pointer to the top-level FWindowWidget that contains the widget, or nullptr if not found.
+     * @param InElement The element to search for.
+     * @return A shared pointer to the top-level FWindowElement that contains the element, or nullptr if not found.
      */
-    TSharedPtr<FWindowWidget> FindWindowWidget(const TSharedPtr<FWidget>& InWidget);
+    TSharedPtr<FWindowElement> FindWindow(const TSharedPtr<FVisualElement>& InElement);
 
     /**
-     * @brief Finds the FWindowWidget that corresponds to a given platform window (IPlatformWindow).
+     * @brief Finds the FWindowElement that corresponds to a given platform window (IPlatformWindow).
      * 
      * @param PlatformWindow The IPlatformWindow to match against known windows.
-     * @return A shared pointer to the corresponding FWindowWidget, or nullptr if not found.
+     * @return A shared pointer to the corresponding FWindowElement, or nullptr if not found.
      */
-    TSharedPtr<FWindowWidget> FindWindowFromPlatformWindow(const TSharedRef<IPlatformWindow>& PlatformWindow) const;
+    TSharedPtr<FWindowElement> FindWindowFromPlatformWindow(const TSharedRef<IPlatformWindow>& PlatformWindow) const;
 
     /**
      * @brief Returns the window currently under the mouse cursor.
      * 
-     * @return A shared pointer to the FWindowWidget under the cursor, or nullptr if none.
+     * @return A shared pointer to the FWindowElement under the cursor, or nullptr if none.
      */
-    TSharedPtr<FWindowWidget> FindWindowUnderCursor() const;
+    TSharedPtr<FWindowElement> FindWindowUnderCursor() const;
 
     /**
-     * @brief Retrieves a path of widgets currently under the mouse cursor.
+     * @brief Retrieves a path of elements currently under the mouse cursor.
      * 
-     * @param OutCursorPath A widget path object that will be populated with the widgets under the cursor.
+     * @param OutCursorPath A element path object that will be populated with the elements under the cursor.
      */
-    void FindWidgetsUnderCursor(FWidgetPath& OutCursorPath);
+    void FindElementsUnderCursor(FElementPath& OutCursorPath);
 
     /**
-     * @brief Populates a widget path with widgets that lie under a specific screen coordinate.
+     * @brief Populates an element path with elements that lie under a specific screen coordinate.
      * 
      * @param Point A 2D screen coordinate (X, Y).
-     * @param OutCursorPath A widget path object to populate.
+     * @param OutCursorPath A element path object to populate.
      */
-    void FindWidgetsUnderCursor(const IntVector2& Point, FWidgetPath& OutCursorPath);
+    void FindElementsUnderCursor(const IntVector2& Point, FElementPath& OutCursorPath);
 
     /**
      * @brief Updates the cached monitor information if the platform reported a monitor setup change.
@@ -405,24 +405,24 @@ public:
 
 private:
     void ReleaseAllPressedInput();
-    void ResolveMouseDispatchPath(FWidgetPath& OutPath);
+    void ResolveMouseDispatchPath(FElementPath& OutPath);
 
-    TSharedPtr<IPlatformApplication>  PlatformApplication;
-    TSet<EKeyboardKeyName::Type>      PressedKeys;
-    TSet<EMouseButtonName::Type>      PressedMouseButtons;
-    TArray<FMonitorInfo>              MonitorInfos;
-    FWidgetPath                       FocusPath;
-    FWidgetPath                       TrackedWidgets;
-    TArray<TSharedPtr<FWindowWidget>> Windows;
-    TArray<TSharedPtr<FInputHandler>> InputHandlers;
-    FOnMonitorConfigChangedEvent      OnMonitorConfigChangedEvent;
-    TWeakPtr<FWindowWidget>           FocusWindow;
-    TWeakPtr<FWidget>                 MouseCaptor;
-    IntVector2                        LastCursorPosition;
-    bool                              bIsMonitorInfoValid : 1;
-    bool                              bIsCursorPositionValid : 1;
-    bool                              bIsTrackingCursor : 1;
-    bool                              bIsApplicationActive : 1;
+    TSharedPtr<IPlatformApplication>   PlatformApplication;
+    TSet<EKeyboardKeyName::Type>       PressedKeys;
+    TSet<EMouseButtonName::Type>       PressedMouseButtons;
+    TArray<FMonitorInfo>               MonitorInfos;
+    FElementPath                       FocusPath;
+    FElementPath                       TrackedElements;
+    TArray<TSharedPtr<FWindowElement>> Windows;
+    TArray<TSharedPtr<FInputHandler>>  InputHandlers;
+    FOnMonitorConfigChangedEvent       OnMonitorConfigChangedEvent;
+    TWeakPtr<FWindowElement>           FocusWindow;
+    TWeakPtr<FVisualElement>           MouseCaptor;
+    IntVector2                         LastCursorPosition;
+    bool                               bIsMonitorInfoValid : 1;
+    bool                               bIsCursorPositionValid : 1;
+    bool                               bIsTrackingCursor : 1;
+    bool                               bIsApplicationActive : 1;
 
     static TSharedPtr<FApplication> Application;
 };

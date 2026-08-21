@@ -82,7 +82,7 @@ bool FEditorEngine::Init()
         AboutWidget            = MakeSharedPtr<FEditorAboutWidget>();
 
         ViewportWidget = MakeSharedPtr<FEditorViewportWidget>(this);
-        ViewportWidget->SetViewportWidget(GetViewportWidget());
+        ViewportWidget->SetViewportElement(GetViewportElement());
     }
 
     if (!CreateViewportRenderTarget())
@@ -250,7 +250,7 @@ bool FEditorEngine::StartPlay()
         Viewport->SetPlayerInputEnabled(true);
     }
 
-    FApplication::Get().SetFocusWidget(GetViewportWidget());
+    FApplication::Get().SetFocusElement(GetViewportElement());
 
     if (!FEngine::StartPlay())
     {

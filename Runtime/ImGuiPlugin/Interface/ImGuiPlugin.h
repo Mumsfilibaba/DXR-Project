@@ -7,7 +7,7 @@
 struct ImGuiIO;
 struct ImGuiContext;
 class FRHICommandList;
-class FViewportWidget;
+class FViewportElement;
 
 DECLARE_MULTICAST_DELEGATE(FImGuiDrawMulticastDelegate);
 typedef FImGuiDrawMulticastDelegate::FDelegate FImGuiDelegate;
@@ -73,7 +73,7 @@ struct IImguiPlugin : public IModule
     virtual void            RemoveDrawDelegate(FDelegateHandle DelegateHandle) = 0;
     virtual void            RemoveEndFrameDelegate(FDelegateHandle DelegateHandle) = 0;
 
-    virtual void SetMainViewport(const TSharedPtr<FViewportWidget>& InViewport) = 0;
+    virtual void SetMainViewport(const TSharedPtr<FViewportElement>& InViewport) = 0;
 
     /** Clear sticky ImGui gamepad analog keys (stick poles + triggers). */
     virtual void ClearGamepadAnalogState() = 0;

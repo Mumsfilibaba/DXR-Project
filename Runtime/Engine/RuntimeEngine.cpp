@@ -31,10 +31,10 @@ bool FRuntimeEngine::Init()
     }
 
     // Make sure we have focus on the engine viewport
-    if (TSharedPtr<FViewportWidget> Viewport =  FEngine::GetViewportWidget())
+    if (TSharedPtr<FViewportElement> Viewport =  FEngine::GetViewportElement())
     {
-        Viewport->SetActivationPolicy(EWidgetActivationPolicy::AutoFocusOnWindowActivate);
-        FApplication::Get().SetFocusWidget(FEngine::GetViewportWidget());
+        Viewport->SetActivationPolicy(EElementActivationPolicy::AutoFocusOnWindowActivate);
+        FApplication::Get().SetFocusElement(FEngine::GetViewportElement());
     }
 
     return true;

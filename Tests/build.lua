@@ -38,6 +38,7 @@ end
 
 AddTarget("RHI-Tests")
 AddTarget("RendererCore-Tests")
+AddTarget("Application-Tests")
 
 -- Generate the workspace
 GenerateWorkspace()

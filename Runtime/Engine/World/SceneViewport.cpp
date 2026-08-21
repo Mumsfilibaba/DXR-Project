@@ -1,6 +1,6 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Application/Application.h"
-#include "Application/Widgets/ViewportWidget.h"
+#include "Application/Elements/ViewportElement.h"
 #include "Engine/World/Actors/PlayerInput.h"
 #include "Engine/World/Components/CameraComponent.h"
 #include "Engine/World/SceneViewport.h"
@@ -8,7 +8,7 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-FSceneViewport::FSceneViewport(const TWeakPtr<FViewportWidget>& InViewport)
+FSceneViewport::FSceneViewport(const TWeakPtr<FViewportElement>& InViewport)
     : IViewport()
     , World(nullptr)
     , Viewport(InViewport)
@@ -35,7 +35,7 @@ FSceneViewport::~FSceneViewport()
 
 bool FSceneViewport::InitializeRHI()
 {
-    TSharedPtr<FViewportWidget> ViewportWidget;
+    TSharedPtr<FViewportElement> ViewportElement;
     if (Viewport.IsExpired())
     {
         LOG_INFO("No valid viewport");
@@ -43,20 +43,20 @@ bool FSceneViewport::InitializeRHI()
     }
     else
     {
-        ViewportWidget = Viewport.ToSharedPtr();
+        ViewportElement = Viewport.ToSharedPtr();
     }
 
-    TSharedPtr<FWindowWidget> WindowWidget = FApplication::Get().FindWindowWidget(ViewportWidget);
-    if (!WindowWidget)
+    TSharedPtr<FWindowElement> WindowElement = FApplication::Get().FindWindow(ViewportElement);
+    if (!WindowElement)
     {
         return false;
     }
 
-    const IntVector2 WindowSize = WindowWidget->GetSize();
+    const IntVector2 WindowSize = WindowElement->GetSize();
     FRHISwapChainDesc SwapChainDesc;
     SwapChainDesc.Width        = static_cast<uint16>(WindowSize.X);
     SwapChainDesc.Height       = static_cast<uint16>(WindowSize.Y);
-    SwapChainDesc.WindowHandle = WindowWidget->GetPlatformWindow()->GetPlatformHandle();
+    SwapChainDesc.WindowHandle = WindowElement->GetPlatformWindow()->GetPlatformHandle();
     SwapChainDesc.ColorFormat  = EFormat::Unknown;
     SwapChainDesc.ColorSpace   = EColorSpace::Unknown;
     SwapChainDesc.Usage        = ESwapChainUsageFlags::RenderTarget;
@@ -102,15 +102,16 @@ void FSceneViewport::Tick()
 
 bool FSceneViewport::CaptureMouse()
 {
-    const TSharedPtr<FViewportWidget> ViewportWidget = GetViewportWidget();
-    const TSharedPtr<FWindowWidget> Window = GetCaptureWindow();
-    if (bMouseCaptured || !ViewportWidget || !Window)
+    const TSharedPtr<FWindowElement>   Window          = GetCaptureWindow();
+    const TSharedPtr<FViewportElement> ViewportElement = GetViewportElement();
+
+    if (bMouseCaptured || !ViewportElement || !Window)
     {
         return false;
     }
 
     FApplication& Application = FApplication::Get();
-    
+
     bCursorWasVisible    = Application.IsCursorVisible();
     MouseRestorePosition = Application.GetCursorPosition();
 
@@ -125,7 +126,7 @@ bool FSceneViewport::CaptureMouse()
     Application.ConfineCursorToRect(Window, CaptureRect);
     Application.SetCursorPosition(IntVector2(CaptureRect.Position.X + (CaptureRect.Width / 2), CaptureRect.Position.Y + (CaptureRect.Height / 2)));
 
-    if (!Application.CaptureMouse(ViewportWidget))
+    if (!Application.CaptureMouse(ViewportElement))
     {
         Application.ReleaseCursorConfinement();
         Application.SetHighPrecisionMouseMode(Window, EHighPrecisionMouseMode::Disabled);
@@ -158,7 +159,7 @@ void FSceneViewport::ReleaseMouse()
     if (FApplication::IsInitialized())
     {
         FApplication& Application = FApplication::Get();
-        Application.ReleaseMouseCapture(GetViewportWidget());
+        Application.ReleaseMouseCapture(GetViewportElement());
         Application.ReleaseCursorConfinement();
 
         Application.SetHighPrecisionMouseMode(GetCaptureWindow(), EHighPrecisionMouseMode::Disabled);
@@ -167,14 +168,14 @@ void FSceneViewport::ReleaseMouse()
     }
 }
 
-TSharedPtr<FWindowWidget> FSceneViewport::GetCaptureWindow() const
+TSharedPtr<FWindowElement> FSceneViewport::GetCaptureWindow() const
 {
     if (!FApplication::IsInitialized() || !Viewport.IsValid())
     {
         return nullptr;
     }
 
-    return FApplication::Get().FindWindowWidget(TSharedPtr<FViewportWidget>(Viewport));
+    return FApplication::Get().FindWindow(TSharedPtr<FViewportElement>(Viewport));
 }
 
 FRectangle FSceneViewport::GetCaptureRect() const
@@ -189,7 +190,7 @@ FRectangle FSceneViewport::GetCaptureRect() const
     }
 
     FRectangle WindowRect;
-    if (const TSharedPtr<FWindowWidget> Window = GetCaptureWindow())
+    if (const TSharedPtr<FWindowElement> Window = GetCaptureWindow())
     {
         const IntVector2 WindowSize = Window->GetSize();
         WindowRect.Position = Window->GetPosition();
