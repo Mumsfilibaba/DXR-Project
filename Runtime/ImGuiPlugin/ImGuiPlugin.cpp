@@ -533,11 +533,13 @@ void FImGuiPlugin::NewFrame(float DeltaTime)
     if (!bNoMouseCursorChange)
     {
         ImGuiMouseCursor ImguiCursor = ImGui::GetMouseCursor();
+
+        const bool bIsImGuiPointedAt = PluginImGuiIO->WantCaptureMouse || ImguiCursor != ImGuiMouseCursor_Arrow;
         if (ImguiCursor == ImGuiMouseCursor_None || PluginImGuiIO->MouseDrawCursor)
         {
             FApplication::Get().SetCursor(ECursor::None);
         }
-        else
+        else if (bIsImGuiPointedAt)
         {
             ECursor Cursor = ECursor::Arrow;
             switch (ImguiCursor)

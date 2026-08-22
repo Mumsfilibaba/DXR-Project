@@ -50,6 +50,7 @@ struct FDrawCommand
         , Text()
         , Font(nullptr)
         , LayerId(0)
+        , CornerRadius(0.0f)
     {
     }
 
@@ -59,4 +60,5 @@ struct FDrawCommand
     String           Text;
     const IFontFace* Font;
     int32            LayerId;
+    float            CornerRadius;
 };

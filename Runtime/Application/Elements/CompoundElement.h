@@ -12,7 +12,7 @@ public:
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
     virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
-    virtual void FindChildrenContainingPoint(const IntVector2& ScreenCursorPosition, FElementPath& OutChildElements) override;
+    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override;
 
     /**
      * @brief Sets the single child of this element and makes it the child's parent.

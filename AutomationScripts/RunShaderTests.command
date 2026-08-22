@@ -205,7 +205,9 @@ GenerateMipsTexCube|GenerateMipsTexCube.hlsl|Main|cs|once
 IrradianceGen|IrradianceGen.hlsl|Main|cs|once
 SpecularIrradianceGen|SpecularIrradianceGen.hlsl|Main|cs|once
 PackMaterialParams|PackMaterialParams.hlsl|Main|cs|once
-BakeAlpha|BakeAlpha.hlsl|Main|cs|once"
+BakeAlpha|BakeAlpha.hlsl|Main|cs|once
+UserInterfaceVS|UserInterface.hlsl|VSMain|vs|once
+UserInterfacePS|UserInterface.hlsl|PSMain|ps|once"
 
 has_axis() {
     case " $2 " in

@@ -249,6 +249,19 @@ void FSceneRenderer::BuildAndExecuteSceneGraph(const FSceneRenderView& SceneRend
     {
         Context.BackBuffer = GraphBuilder.RegisterExternalTexture(SceneRenderView.RenderTarget, "BackBuffer",
             ERHIResourceState::RenderTarget, ERHIResourceState::RenderTarget);
+
+        if (SceneRenderView.RenderTarget->GetDesc().IsPresentable())
+        {
+            if (FRHIRenderTargetView* RenderTargetView = SceneRenderView.RenderTarget->GetRenderTargetView())
+            {
+                Context.BackBufferRenderTargetView = GraphBuilder.RegisterExternalRTV(Context.BackBuffer, RenderTargetView, "BackBufferRTV");
+            }
+
+            if (FRHIUnorderedAccessView* UnorderedAccessView = SceneRenderView.RenderTarget->GetUnorderedAccessView())
+            {
+                Context.BackBufferUnorderedAccessView = GraphBuilder.RegisterExternalUAV(Context.BackBuffer, UnorderedAccessView, "BackBufferUAV");
+            }
+        }
     }
 
     Context.CameraBuffer = GraphBuilder.RegisterExternalBuffer(FrameResourcesRef.CameraBuffer.Get(), "Camera",

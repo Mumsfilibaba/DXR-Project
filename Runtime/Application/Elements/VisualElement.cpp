@@ -27,6 +27,21 @@ bool FVisualElement::IsWindow() const
     return false;
 }
 
+bool FVisualElement::CapturesAllInput() const
+{
+    return false;
+}
+
+bool FVisualElement::SupportsKeyboardFocus() const
+{
+    return false;
+}
+
+TSharedPtr<FVisualElement> FVisualElement::GetFocusTarget()
+{
+    return AsSharedPtr();
+}
+
 FEventResponse FVisualElement::OnAnalogGamepadChange(const FAnalogGamepadEvent&)
 {
     return FEventResponse::Unhandled();
@@ -87,6 +102,11 @@ FEventResponse FVisualElement::OnHighPrecisionMouseInput(const FCursorEvent&)
     return FEventResponse::Unhandled();
 }
 
+bool FVisualElement::GetCursor(ECursor&) const
+{
+    return false;
+}
+
 FEventResponse FVisualElement::OnFocusLost()
 {
     return FEventResponse::Unhandled();
@@ -142,9 +162,9 @@ void FVisualElement::FindParentElements(FElementPath& OutRootPath)
     OutRootPath.Add(Visibility, AsSharedPtr());
 }
 
-void FVisualElement::FindChildrenContainingPoint(const IntVector2& ScreenCursorPosition, FElementPath& OutChildElements)
+void FVisualElement::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
 {
-    if (ContentRectangle.EncapsulatesPoint(ScreenCursorPosition))
+    if (ContentRectangle.EncapsulatesPoint(ClientPosition))
     {
         OutChildElements.Add(Visibility, AsSharedPtr());
     }

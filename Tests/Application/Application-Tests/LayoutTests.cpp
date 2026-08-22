@@ -3,11 +3,13 @@
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
 
+#include <Application/Application.h>
 #include <Application/Layout/LayoutTypes.h>
 #include <Application/Text/FixedWidthFontFace.h>
 #include <Application/Elements/BoxElements.h>
 #include <Application/Elements/ScrollBoxElement.h>
 #include <Application/Elements/TextBlockElement.h>
+#include <Application/Elements/WindowElement.h>
 
 static TSharedPtr<IFontFace> CreateTestFont()
 {
@@ -409,6 +411,104 @@ bool ScrollBoxClamping_Test()
 
     TEST_EXPECT_EQ(ShortScrollBox->GetMaxScrollOffset(), 0);
     TEST_EXPECT(ShortScrollBox->IsScrolledToEnd());
+
+    TEST_END();
+}
+
+bool WindowLayoutOrigin_Test()
+{
+    TEST_BEGIN();
+
+    TSharedPtr<IFontFace> Font = CreateTestFont();
+
+    FWindowElement::FInitializer Initializer;
+    Initializer.Title    = "Layout Origin";
+    Initializer.Size     = IntVector2(1280, 720);
+    Initializer.Position = IntVector2(340, 180);
+
+    TSharedPtr<FWindowElement> Window = FWindowElement::Create(Initializer);
+
+    TSharedPtr<FTextBlockElement>   ContentRow = CreateTextBlock("Content", Font);
+    TSharedPtr<FVerticalBoxElement> Content    = FVerticalBoxElement::Create();
+    Content->AddSlot(ContentRow);
+
+    TSharedPtr<FTextBlockElement>   OverlayRow = CreateTextBlock("Overlay", Font);
+    TSharedPtr<FVerticalBoxElement> Overlay    = FVerticalBoxElement::Create();
+    Overlay->AddSlot(OverlayRow);
+
+    Window->SetContent(Content);
+    Window->SetOverlay(Overlay);
+
+    FApplication::LayoutWindow(Window);
+
+    TEST_SECTION("The window is laid out from the client origin, not from its place on the desktop");
+    TEST_EXPECT_EQ(Window->GetPosition().X, 340);
+    TEST_EXPECT_EQ(Window->GetPosition().Y, 180);
+    TEST_EXPECT_EQ(Window->GetContentRectangle().Position.X, 0);
+    TEST_EXPECT_EQ(Window->GetContentRectangle().Position.Y, 0);
+    TEST_EXPECT_EQ(Window->GetContentRectangle().Width, 1280);
+    TEST_EXPECT_EQ(Window->GetContentRectangle().Height, 720);
+
+    TEST_SECTION("Both subtrees start at the same origin, which is what the renderer projects from");
+    TEST_EXPECT_EQ(Content->GetContentRectangle().Position.X, 0);
+    TEST_EXPECT_EQ(Content->GetContentRectangle().Position.Y, 0);
+    TEST_EXPECT_EQ(Overlay->GetContentRectangle().Position.X, 0);
+    TEST_EXPECT_EQ(Overlay->GetContentRectangle().Position.Y, 0);
+    TEST_EXPECT_EQ(OverlayRow->GetContentRectangle().Position.Y, 0);
+
+    TEST_SECTION("Moving the window leaves the layout where it was");
+    Window->OnWindowMoved(IntVector2(900, 40));
+    FApplication::LayoutWindow(Window);
+
+    TEST_EXPECT_EQ(Window->GetPosition().X, 900);
+    TEST_EXPECT_EQ(Window->GetContentRectangle().Position.X, 0);
+    TEST_EXPECT_EQ(Window->GetContentRectangle().Position.Y, 0);
+    TEST_EXPECT_EQ(OverlayRow->GetContentRectangle().Position.Y, 0);
+
+    TEST_END();
+}
+
+bool WindowOverlayMeasure_Test()
+{
+    TEST_BEGIN();
+
+    TSharedPtr<IFontFace> Font = CreateTestFont();
+
+    FWindowElement::FInitializer Initializer;
+    Initializer.Title = "Overlay Measure";
+    Initializer.Size  = IntVector2(1280, 720);
+
+    TSharedPtr<FWindowElement> Window = FWindowElement::Create(Initializer);
+    TSharedPtr<FTextBlockElement> LogRow   = CreateTextBlock("Log", Font);
+    TSharedPtr<FTextBlockElement> InputRow = CreateTextBlock("Input", Font);
+
+    TSharedPtr<FVerticalBoxElement> Overlay = FVerticalBoxElement::Create();
+    Overlay->AddSlot(LogRow).SetFillCoefficient(1.0f);
+    Overlay->AddSlot(InputRow);
+
+    Window->SetOverlay(Overlay);
+
+    TEST_SECTION("The window reports both subtrees as children, so the measure pass reaches them");
+    TArray<TSharedPtr<FVisualElement>> Children;
+    Window->GetChildren(Children);
+    TEST_EXPECT_EQ(Children.Size(), 1);
+
+    Window->SetContent(FVerticalBoxElement::Create());
+    Children.Clear();
+    Window->GetChildren(Children);
+    TEST_EXPECT_EQ(Children.Size(), 2);
+
+    FApplication::LayoutWindow(Window);
+
+    TEST_SECTION("An element in the overlay is measured rather than left at zero");
+    TEST_EXPECT_EQ(InputRow->GetCachedDesiredSize().Y, 16);
+    TEST_EXPECT_EQ(InputRow->GetCachedDesiredSize().X, 5 * 8);
+    TEST_EXPECT_EQ(Overlay->GetCachedDesiredSize().Y, 32);
+
+    TEST_SECTION("The auto slot is arranged at the height it asked for, above the bottom edge");
+    TEST_EXPECT_EQ(InputRow->GetContentRectangle().Height, 16);
+    TEST_EXPECT_EQ(InputRow->GetContentRectangle().Position.Y, 720 - 16);
+    TEST_EXPECT_EQ(LogRow->GetContentRectangle().Height, 720 - 16);
 
     TEST_END();
 }

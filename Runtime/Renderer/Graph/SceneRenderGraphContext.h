@@ -74,6 +74,8 @@ struct FSceneRenderGraphContext
     FRenderGraphBuffer*                   SkyboxVertexBuffer                     = nullptr;
     FRenderGraphBuffer*                   SkyboxIndexBuffer                      = nullptr;
     FRenderGraphRenderTargetView*         SceneTargetRenderTargetView            = nullptr;
+    FRenderGraphRenderTargetView*         BackBufferRenderTargetView             = nullptr;
+    FRenderGraphUnorderedAccessView*      BackBufferUnorderedAccessView          = nullptr;
     FRenderGraphDepthStencilView*         GBufferDepthReadOnlyDSV                = nullptr;
     FRenderGraphDepthStencilView*         ShadowCascadeDSVs[NUM_SHADOW_CASCADES] = {};
     FRenderGraphDepthStencilView*         ShadowCascadesCombinedDSV              = nullptr;

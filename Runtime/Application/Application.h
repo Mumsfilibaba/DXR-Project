@@ -4,6 +4,7 @@
 #include "CoreApplication/PlatformInterface/IPlatformCursor.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/PlatformInterface/IPlatformApplicationMessageHandler.h"
+#include "Application/IApplicationRenderer.h"
 #include "Application/InputHandler.h"
 #include "Application/ElementPath.h"
 #include "Application/Elements/WindowElement.h"
@@ -22,10 +23,7 @@ public:
      */
     static bool Initialize();
 
-    /**
-     * @brief Releases the singleton FApplication and PlatformApplication instances.
-     * Cleans up resources, windows, and any other data allocated in Initialize().
-     */
+    /** @brief Releases the singleton FApplication and everything Initialize allocated behind it. */
     static void Release();
 
     /**
@@ -39,9 +37,8 @@ public:
     }
 
     /**
-     * @brief Retrieves a reference to the FApplication singleton. This function also checks that 
-     * the instance is valid before returning a reference.
-     * 
+     * @brief Retrieves a reference to the FApplication singleton.
+     *
      * @return A reference to the FApplication instance.
      */
     static FORCEINLINE FApplication& Get()
@@ -49,7 +46,29 @@ public:
         CHECK(Application.IsValid());
         return *Application;
     }
-    
+
+    /**
+     * @brief Measures and arranges the element tree of a window, from the origin of its client area.
+     *
+     * The layout is client-relative because that is the space the renderer projects from. The screen
+     * position of the window stays with the platform, and the cursor is brought into this space before
+     * it is tested against an element.
+     *
+     * @param InWindow The window to lay out.
+     */
+    static void LayoutWindow(const TSharedPtr<FWindowElement>& InWindow);
+
+    /**
+     * @brief The shape the leaf-most element on a path asks for.
+     *
+     * Leaf-most, so a field inside a panel wins over the panel. Static and pure, so the resolution can
+     * be checked without a platform application behind it.
+     *
+     * @param Path The path under the cursor, ordered from the window down to the leaf.
+     * @return The shape to apply, which is the arrow when nothing on the path has an opinion.
+     */
+    NODISCARD static ECursor ResolveCursor(const FElementPath& Path);
+
 public:
     FApplication(TSharedPtr<IPlatformApplication> InPlatformApplication);
     virtual ~FApplication();
@@ -83,10 +102,8 @@ public:
     virtual bool OnApplicationActivationChanged(bool bIsActive) override final;
 
     /**
-     * @brief Adds a new window to the application and creates its underlying platform window. 
-     * After creation, the window will be managed and ticked each frame. The platform-specific 
-     * window representation will also be shown.
-     * 
+     * @brief Adds a new window, creates and shows its platform window, and starts ticking it every frame.
+     *
      * @param InWindow The FWindowElement object describing the new window.
      */
     void CreateWindow(const TSharedPtr<FWindowElement>& InWindow);
@@ -106,27 +123,38 @@ public:
     void Tick(float Delta);
 
     /**
-     * @brief Processes OS-level or platform-level events.
-     * This method typically drives the platform message pump, distributing events to the rest of the system.
+     * @brief Records every visible window into the renderer, using the layout produced by the last Tick.
+     *
+     * Does nothing when no renderer is registered, which is how the headless tests and any run without
+     * an RHI device behave.
      */
+    void DrawWindows();
+
+    /**
+     * @brief Sets the renderer the windows record into.
+     *
+     * @param InRenderer The renderer, or null to stop drawing.
+     */
+    void SetRenderer(const TSharedPtr<IApplicationRenderer>& InRenderer);
+
+    /** @brief The renderer the windows record into, or null when none is registered. */
+    NODISCARD FORCEINLINE TSharedPtr<IApplicationRenderer> GetRenderer() const
+    {
+        return Renderer;
+    }
+
+    /** @brief Drives the platform message pump, distributing events to the rest of the system. */
     void ProcessEvents();
 
-    /**
-     * @brief Processes events that have been deferred for later handling.
-     * Some events may be batched or scheduled to run after other operations (e.g., to avoid reentrancy issues).
-     */
+    /** @brief Processes the events the platform batched or deferred to keep them out of a reentrant path. */
     void ProcessDeferredEvents();
 
-    /**
-     * @brief Updates input devices not handled via standard platform events.
-     * This could include specialized controllers or future plugin-based devices. 
-     */
+    /** @brief Updates the input devices that do not report through the platform event queue. */
     void UpdateInputDevices();
 
     /**
-     * @brief Checks if a gamepad is currently connected. Internally checks if an IPlatformInputDevice 
-     * is registered and if that device reports as connected.
-     * 
+     * @brief Checks if a gamepad is currently connected.
+     *
      * @return True if a gamepad is connected, otherwise false.
      */
     bool IsGamePadConnected() const;
@@ -142,9 +170,8 @@ public:
     }
 
     /**
-     * @brief Registers a new input handler with the application. Input handlers can intercept 
-     * and process input events before they reach the default logic.
-     * 
+     * @brief Registers an input handler, which is offered every event before the elements are.
+     *
      * @param InputHandler The input handler to register.
      */
     void RegisterInputHandler(const TSharedPtr<FInputHandler>& InputHandler);
@@ -166,7 +193,7 @@ public:
     /**
      * @brief Enables or disables high-precision (relative) mouse input, if the platform supports it.
      * On Windows this leverages raw input events, on macOS it detaches the cursor from the pointer.
-     * 
+     *
      * @param Window The window that should receive raw input. Only used when enabling.
      * @param Mode Whether to enter or leave high-precision mode.
      * @return True if the mode was applied, otherwise false.
@@ -174,9 +201,9 @@ public:
     bool SetHighPrecisionMouseMode(const TSharedPtr<FWindowElement>& Window, EHighPrecisionMouseMode Mode);
 
     /**
-     * @brief Keeps the cursor inside a region of the screen until the confinement is released. 
-     * High-precision mode reports movement but leaves the pointer free to wander off the window,
-     * so confining it is a separate request.
+     * @brief Keeps the cursor inside a region of the screen until the confinement is released.
+     * High-precision mode reports movement but leaves the pointer free to wander off the window, so
+     * confining it is a separate request.
      *
      * @param Window The window the region belongs to.
      * @param ScreenRect The region to confine the cursor to, in absolute screen coordinates.
@@ -230,9 +257,9 @@ public:
     bool IsCursorVisible() const;
 
     /**
-     * @brief Checks if the application is currently tracking a mouse drag operation. This is set to true 
-     * when the left mouse button is pressed, and remains true until it is released.
-     * 
+     * @brief Checks if the application is currently tracking a mouse drag, which lasts from the first
+     * button press until the last release, or for as long as an element holds the capture.
+     *
      * @return True if a mouse drag operation is in progress, otherwise false.
      */
     FORCEINLINE bool IsTrackingCursor() const
@@ -294,12 +321,22 @@ public:
     void SetFocusElement(const TSharedPtr<FVisualElement>& FocusElement);
 
     /**
-     * @brief Sets a new element path as the focus hierarchy. This path typically contains the target 
-     * element and all parent elements along the path to a window.
-     * 
+     * @brief Sets a new element path as the focus hierarchy, which runs from a window down to the
+     * element that reads the keyboard.
+     *
      * @param NewFocusPath The element path to set focus to.
      */
     void SetFocusElements(const FElementPath& NewFocusPath);
+
+    /**
+     * @brief Hands the keyboard to the deepest element on a cursor path that wants it, if any.
+     *
+     * Focus stays where it is when the path resolves to an ancestor of whatever is focused, so clicking
+     * the chrome around a focused field does not take the keyboard away from it.
+     *
+     * @param CursorPath The path under the cursor, ordered from the window down to the element hit.
+     */
+    void SetFocusFromCursorPath(const FElementPath& CursorPath);
 
     /**
      * @brief Gets the element that currently has focus (for receiving keyboard input, etc.).
@@ -346,17 +383,14 @@ public:
     void FindElementsUnderCursor(FElementPath& OutCursorPath);
 
     /**
-     * @brief Populates an element path with elements that lie under a specific screen coordinate.
+     * @brief Populates an element path with elements that lie under a screen coordinate.
      * 
-     * @param Point A 2D screen coordinate (X, Y).
+     * @param ScreenPosition The coordinate in screen space, converted to client space per window.
      * @param OutCursorPath A element path object to populate.
      */
-    void FindElementsUnderCursor(const IntVector2& Point, FElementPath& OutCursorPath);
+    void FindElementsUnderCursor(const IntVector2& ScreenPosition, FElementPath& OutCursorPath);
 
-    /**
-     * @brief Updates the cached monitor information if the platform reported a monitor setup change.
-     * This includes gathering information such as resolution, DPI, and primary monitor status.
-     */
+    /** @brief Re-reads the resolution, DPI and primary flag of every monitor after a setup change. */
     void UpdateMonitorInfo();
 
     /**
@@ -388,7 +422,7 @@ public:
 
     /**
      * @brief Overrides the existing platform application with a new IPlatformApplication instance.
-     * 
+     *
      * @param InPlatformApplication The new platform application to set.
      */
     void OverridePlatformApplication(const TSharedPtr<IPlatformApplication>& InPlatformApplication);
@@ -406,6 +440,8 @@ public:
 private:
     void ReleaseAllPressedInput();
     void ResolveMouseDispatchPath(FElementPath& OutPath);
+    void UpdateCursor();
+    IntVector2 GetClientOrigin();
 
     TSharedPtr<IPlatformApplication>   PlatformApplication;
     TSet<EKeyboardKeyName::Type>       PressedKeys;
@@ -414,6 +450,7 @@ private:
     FElementPath                       FocusPath;
     FElementPath                       TrackedElements;
     TArray<TSharedPtr<FWindowElement>> Windows;
+    TSharedPtr<IApplicationRenderer>   Renderer;
     TArray<TSharedPtr<FInputHandler>>  InputHandlers;
     FOnMonitorConfigChangedEvent       OnMonitorConfigChangedEvent;
     TWeakPtr<FWindowElement>           FocusWindow;

@@ -18,6 +18,7 @@ public:
 
 private:
     FCameraComponent*                            LastRenderCamera;
+    TSharedPtr<class FOverlayConsole>            OverlayConsole;
     TSharedPtr<class FRuntimeConsoleWidget>      ConsoleWidget;
     TSharedPtr<class FEditorFrameProfilerWidget> ProfilerWidget;
 };

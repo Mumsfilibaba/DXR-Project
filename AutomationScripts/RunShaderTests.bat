@@ -187,6 +187,8 @@ call :AddEntry "IrradianceGen|IrradianceGen.hlsl|Main|cs|once"
 call :AddEntry "SpecularIrradianceGen|SpecularIrradianceGen.hlsl|Main|cs|once"
 call :AddEntry "PackMaterialParams|PackMaterialParams.hlsl|Main|cs|once"
 call :AddEntry "BakeAlpha|BakeAlpha.hlsl|Main|cs|once"
+call :AddEntry "UserInterfaceVS|UserInterface.hlsl|VSMain|vs|once"
+call :AddEntry "UserInterfacePS|UserInterface.hlsl|PSMain|ps|once"
 
 if "%LIST_ONLY%"=="1" (
     echo Shader entries:

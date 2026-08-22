@@ -9,6 +9,11 @@ FFixedWidthFontFace::FFixedWidthFontFace(int32 InCharacterAdvance, int32 InLineH
 
 FFixedWidthFontFace::~FFixedWidthFontFace() = default;
 
+const FFontAtlas* FFixedWidthFontFace::GetAtlas() const
+{
+    return nullptr;
+}
+
 int32 FFixedWidthFontFace::GetLineHeight() const
 {
     return LineHeight;
@@ -23,6 +28,11 @@ int32 FFixedWidthFontFace::GetAscent() const
 int32 FFixedWidthFontFace::GetDescent() const
 {
     return LineHeight - GetAscent();
+}
+
+int32 FFixedWidthFontFace::GetCapHeight() const
+{
+    return GetAscent();
 }
 
 int32 FFixedWidthFontFace::GetCharacterAdvance(CHAR /*Character*/) const

@@ -367,22 +367,10 @@ bool FImGuiEventHandler::OnMouseMove(const FCursorEvent& CursorEvent)
         return false;
     }
 
-    IntVector2 CursorPos = CursorEvent.GetCursorPos();
-    
 #ifndef EDITOR_BUILD
-    if (TSharedRef<IPlatformWindow> Window = FApplication::Get().GetPlatformApplication()->GetWindowUnderCursor())
-    {
-        FWindowShape WindowShape;
-        Window->GetWindowShape(WindowShape);
-
-        CursorPos.X = CursorPos.X - WindowShape.Position.X;
-        CursorPos.Y = CursorPos.Y - WindowShape.Position.Y;
-    }
-    else
-    {
-        CursorPos.X = -TNumericLimits<int32>::Max();
-        CursorPos.Y = -TNumericLimits<int32>::Max();
-    }
+    const IntVector2 CursorPos = CursorEvent.GetClientPosition();
+#else
+    const IntVector2 CursorPos = CursorEvent.GetScreenPosition();
 #endif
 
     ImGuiIO& UIState = ImGui::GetIO();

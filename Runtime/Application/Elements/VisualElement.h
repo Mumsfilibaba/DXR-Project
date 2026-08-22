@@ -3,6 +3,7 @@
 #include "Core/Containers/SharedPtr.h"
 #include "Application/Events.h"
 #include "Application/Layout/LayoutTypes.h"
+#include "CoreApplication/PlatformInterface/IPlatformCursor.h"
 
 class FElementPath;
 class FDrawCommandList;
@@ -34,20 +35,28 @@ public:
     FVisualElement();
     virtual ~FVisualElement();
 
-    /**
-     * @brief Updates the element.
-     * 
-     * Stores the assigned bounds as the content rectangle and then arranges the children inside it.
-     */
+    /** @brief Stores the assigned bounds as the content rectangle and then arranges the children inside it. */
     virtual void Tick(const FRectangle& AssignedBounds);
 
     /**
      * @brief Checks if the element is a window.
-     * 
-     * This method returns true only if the element is an FWindowElement, and false for all other element types.
+     *
      * @return True if the element is an FWindowElement; false otherwise.
      */
     virtual bool IsWindow() const;
+
+    /**
+     * @brief Whether this element takes every mouse event in its window while it is up.
+     *
+     * @return True while the element is modal over its window.
+     */
+    virtual bool CapturesAllInput() const;
+
+    /** @brief Whether a click on this element should hand it the keyboard. The default is false. */
+    virtual bool SupportsKeyboardFocus() const;
+
+    /** @brief The element that takes the keyboard when this one is focused, which is itself unless overridden. */
+    virtual TSharedPtr<FVisualElement> GetFocusTarget();
 
     /**
      * @brief Handles analog gamepad input changes.
@@ -146,6 +155,14 @@ public:
     virtual FEventResponse OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent);
 
     /**
+     * @brief The shape the cursor takes over this element.
+     *
+     * @param OutCursor Receives the shape when the element has an opinion.
+     * @return True when the element has an opinion, false to leave the shape to its children.
+     */
+    virtual bool GetCursor(ECursor& OutCursor) const;
+
+    /**
      * @brief Handles focus lost events.
      * 
      * @return An event response indicating how the event was handled.
@@ -162,18 +179,12 @@ public:
     /**
      * @brief Computes the size this element wants, ignoring the space it will actually be given.
      *
-     * Called bottom up by PrepareDesiredSize, so a container may read GetCachedDesiredSize on its
-     * children. The default is a zero size, which leaves an element that does not take part in
-     * layout unaffected.
-     *
-     * @return The desired size in pixels.
+     * @return The desired size in pixels, which is zero for an element that takes no part in layout.
      */
     virtual IntVector2 ComputeDesiredSize() const;
 
     /**
      * @brief Arranges the children inside the rectangle this element was given.
-     *
-     * Called by Tick once the content rectangle is stored. A leaf element needs no override.
      *
      * @param AllottedBounds The rectangle this element was given.
      */
@@ -198,28 +209,22 @@ public:
 
     /**
      * @brief Adds all parent elements to an element path.
-     * 
-     * This function adds the parent elements starting from the first parent (should be an FWindowElement) up to the child element.
-     * The element calling this function will be at the last position in the element path.
-     * 
-     * @param OutParentElements The element path to populate with parent elements.
+     *
+     * @param OutParentElements The path to populate, from the window down to this element, which ends up last.
      */
     virtual void FindParentElements(FElementPath& OutParentElements);
-    
-    /**
-     * @brief Adds all child elements under a specified point to the element path.
-     * 
-     * This function adds all child elements of this element that are under the specified position.
-     * 
-     * @param ScreenCursorPosition The screen position to check.
-     * @param OutChildElements The element path to populate with child elements.
-     */
-    virtual void FindChildrenContainingPoint(const IntVector2& ScreenCursorPosition, FElementPath& OutChildElements);
 
     /**
-     * @brief Recomputes and caches the desired size of this element and every descendant.
+     * @brief Adds all child elements under a specified point to the element path.
      *
-     * Run this before Tick, because a container sizes its slots from the cached child sizes.
+     * @param ClientPosition The position to check, in the client space the elements were arranged in.
+     * @param OutChildElements The element path to populate with child elements.
+     */
+    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements);
+
+    /**
+     * @brief Recomputes and caches the desired size of this element and every descendant. Run this before
+     * Tick, because a container sizes its slots from the cached child sizes.
      *
      * @return The desired size of this element.
      */
@@ -299,7 +304,6 @@ public:
     /**
      * @brief Gets the element activation policy.
      *
-     * This controls whether the element should automatically receive focus when its owning window becomes active.
      * @return The current activation policy.
      */
     EElementActivationPolicy GetActivationPolicy() const
@@ -310,7 +314,6 @@ public:
     /**
      * @brief Sets the element activation policy.
      *
-     * This controls whether the element should automatically receive focus when its owning window becomes active.
      * @param InActivationPolicy The new activation policy.
      */
     void SetActivationPolicy(EElementActivationPolicy InActivationPolicy)

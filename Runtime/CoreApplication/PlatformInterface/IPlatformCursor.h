@@ -28,6 +28,9 @@ struct IPlatformCursor
      */
     virtual void SetCursor(ECursor Cursor) = 0;
 
+    /** @brief The shape last asked for, which WM_SETCURSOR reapplies after Windows has reset it. */
+    NODISCARD virtual ECursor GetCursor() const = 0;
+
     /** 
      * @brief Sets the position of the cursor.
      * 

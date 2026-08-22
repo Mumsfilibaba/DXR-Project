@@ -454,7 +454,7 @@ bool FWindowsApplication::RegisterWindowClass()
     WindowClass.hIcon         = Icon;
     WindowClass.lpszClassName = FWindowsWindow::GetClassName();
     WindowClass.hbrBackground = static_cast<HBRUSH>(::GetStockObject(BLACK_BRUSH));
-    WindowClass.hCursor       = ::LoadCursor(nullptr, IDC_ARROW);
+    WindowClass.hCursor       = nullptr;
     WindowClass.lpfnWndProc   = &FWindowsApplication::WindowProc;
 
     ATOM ClassAtom = ::RegisterClassA(&WindowClass);
@@ -644,18 +644,34 @@ LRESULT FWindowsApplication::ProcessMessage(HWND WindowHandle, UINT Message, WPA
             break;
         }
 
-        case WM_NCCALCSIZE:
+        case WM_SETCURSOR:
         {
-            const LONG_PTR UserData = ::GetWindowLongPtrA(WindowHandle, GWLP_USERDATA);
-            const FWindowsWindow* MsgWindow = reinterpret_cast<const FWindowsWindow*>(UserData);
-            if (wParam != TRUE || !MsgWindow || (MsgWindow->GetStyle() & EWindowStyleFlags::CustomTitleBar) == EWindowStyleFlags::None)
+            if (LOWORD(lParam) != HTCLIENT)
             {
                 break;
             }
 
-            // Leaving the proposed rectangle alone is what hands the caption area to the client. When maximized
-            // the window manager still positions us as if the frame existed, so without this inset the client
-            // spills past every screen edge by the frame thickness.
+            if (TSharedPtr<IPlatformCursor> PlatformCursor = GetCursor())
+            {
+                PlatformCursor->SetCursor(PlatformCursor->GetCursor());
+            }
+            else
+            {
+                ::SetCursor(::LoadCursor(nullptr, IDC_ARROW));
+            }
+
+            return TRUE;
+        }
+
+        case WM_NCCALCSIZE:
+        {
+            const LONG_PTR        UserData  = ::GetWindowLongPtrA(WindowHandle, GWLP_USERDATA);
+            const FWindowsWindow* MsgWindow = reinterpret_cast<const FWindowsWindow*>(UserData);
+
+            if (wParam != TRUE || !MsgWindow || (MsgWindow->GetStyle() & EWindowStyleFlags::CustomTitleBar) == EWindowStyleFlags::None)
+            {
+                break;
+            }
 
             if (::IsZoomed(WindowHandle))
             {

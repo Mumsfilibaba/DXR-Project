@@ -67,7 +67,10 @@ public:
     // FVisualElement Interface
     virtual void Tick(const FRectangle& AssignedBounds) override final;
     virtual bool IsWindow() const override final;
-    virtual void FindChildrenContainingPoint(const IntVector2& Point, FElementPath& OutParentElements) override final;
+    virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override final;
+    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override final;
+    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutParentElements) override final;
+    virtual bool SupportsKeyboardFocus() const override final;
 
     /**
      * @brief Initializes the window with the specified parameters.
@@ -104,19 +107,13 @@ public:
      */
     void SetOnWindowFocusChanged(const FOnWindowFocusChanged& InOnWindowFocusChanged);
 
-    /**
-     * @brief Called when the platform window is destroyed.
-     * 
-     * This function is called from the FApplication when the platform window is destroyed.
-     */
+    /** @brief Called by FApplication when the platform window is destroyed. */
     void OnWindowDestroyed();
 
     /**
-     * @brief Called when the window activation state changes.
-     * 
-     * This function is called from the FApplication when the platform window's activation state changes.
-     * This means that the user switches windows, changing focus, or the entire application loses focus.
-     * The behavior may vary depending on the platform, but generally, the function is called when the window loses or gains focus.
+     * @brief Called by FApplication when the window is switched to or away from, which the platforms
+     * agree on for a window gaining or losing focus and disagree on in the corners around it.
+     *
      * @param bIsActive True if the window is now active; false if it is inactive.
      */
     void OnWindowFocusChanged(bool bIsActive);
@@ -136,17 +133,15 @@ public:
     void OnWindowMoved(const IntVector2& InPosition);
 
     /**
-     * @brief Resizes the window to a new size.
-     * 
-     * This function also sets the platform window's size and updates the cached size.
+     * @brief Resizes the window, and the platform window with it.
+     *
      * @param InSize The new size for the window.
      */
     void Resize(const IntVector2& InSize);
 
     /**
-     * @brief Moves the window to a new position.
-     * 
-     * This function also sets the platform window's position and updates the cached position.
+     * @brief Moves the window, and the platform window with it.
+     *
      * @param InPosition The new position for the window.
      */
     void MoveTo(const IntVector2& InPosition);
@@ -208,9 +203,8 @@ public:
     TSharedPtr<FVisualElement> GetContent() const;
 
     /**
-     * @brief Sets the overlay element.
-     * 
-     * This element will receive events before the content element, allowing the overlay to respond to events first.
+     * @brief Sets the overlay element, which is offered every event before the content is.
+     *
      * @param InOverlay The overlay element to set.
      */
     void SetOverlay(const TSharedPtr<FVisualElement>& InOverlay);
@@ -224,31 +218,18 @@ public:
 
     /**
      * @brief Shows the window, optionally setting focus to it.
-     * 
-     * This only occurs if there is a valid platform window.
+     *
      * @param bFocus If true, sets focus to this window when displaying it.
      */
     void Show(bool bFocus = true);
     
-    /**
-     * @brief Minimizes the window.
-     * 
-     * This only occurs if there is a valid platform window.
-     */
+    /** @brief Minimizes the window. */
     void Minimize();
     
-    /**
-     * @brief Maximizes the window.
-     * 
-     * This only occurs if there is a valid platform window.
-     */
+    /** @brief Maximizes the window. */
     void Maximize();
     
-    /**
-     * @brief Restores the window to its previous state.
-     * 
-     * Restores the window's position and size if it has been minimized or maximized.
-     */
+    /** @brief Restores the position and size a minimized or maximized window had before. */
     void Restore();
 
     /**
@@ -280,42 +261,39 @@ public:
     float GetWindowDPIScale() const;
 
     /**
-     * @brief Measures what the platform contributes to a custom title bar.
+     * @brief Measures what the platform contributes to a custom title bar. The values follow the window's
+     * DPI and style, so they are re-queried rather than cached.
      *
-     * The values follow the window's DPI and style, so they are re-queried rather than cached.
      * @return The metrics for this window, all zero when it has no custom title bar.
      */
     FWindowTitleBarMetrics GetTitleBarMetrics() const;
 
     /**
-     * @brief Publishes the regions of the window that behave like a title bar.
+     * @brief Publishes the regions of the window that behave like a title bar. The platform answers OS
+     * hit-tests from the most recently published set, so this is called every frame by whichever element
+     * draws the title bar.
      *
-     * The platform answers OS hit-tests from the most recently published set, so this is called every frame
-     * by whichever element draws the title bar.
      * @param InRegions The regions, in window-relative coordinates, with the origin at the top-left.
      */
     void SetTitleBarRegions(const FWindowTitleBarRegions& InRegions);
 
     /**
-     * @brief Sets the window title.
-     * 
-     * Updates the cached title and sets the platform window's text if there is a valid platform window.
+     * @brief Sets the window title, and the platform window's text with it.
+     *
      * @param InTitle The new title for the window.
      */
     void SetTitle(const String& InTitle);
     
     /**
-     * @brief Sets the window style flags.
-     * 
-     * Updates the cached style flags and sets the platform window's style if there is a valid platform window.
+     * @brief Sets the window style flags, and the platform window's style with them.
+     *
      * @param InStyleFlags The new style flags.
      */
     void SetStyle(EWindowStyleFlags InStyleFlags);
     
     /**
-     * @brief Sets the platform window.
-     * 
-     * Updates the cached variables based on the new platform window.
+     * @brief Sets the platform window, re-reading the cached shape and title from it.
+     *
      * @param InPlatformWindow A shared reference to the new platform window.
      */
     void SetPlatformWindow(const TSharedRef<IPlatformWindow>& InPlatformWindow);

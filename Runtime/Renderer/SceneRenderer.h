@@ -5,6 +5,7 @@
 #include "Core/Containers/Queue.h"
 #include "Application/Events.h"
 #include "Application/InputHandler.h"
+#include "ApplicationRenderer/ApplicationRenderer.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/World.h"
 #include "Engine/Resources/Model.h"
@@ -162,6 +163,9 @@ public:
     // Records ImGui draw data into the UI command list.
     void RecordUI();
 
+    // Records the Application element library on top of the ImGui pass.
+    void RecordApplicationUI();
+
     // Dispatches the UI command list plus present for the frame described by Packet.
     void SubmitUIAndPresent(const FSceneRenderPacket& Packet);
 
@@ -233,54 +237,55 @@ private:
     void BuildAndExecuteSceneGraph(const FSceneRenderView& SceneRenderView, FScene* Scene, const TArray<uint32>& SelectedObjectIDs);
  
     // RenderPasses and Resources 
-    FFrameResources              Resources; 
-    FFrameCounterState           FrameCounter;
-    FCameraHLSL                  CameraBuffer;
-    FHaltonState                 HaltonState;
-    FRHISamplePositionsDesc      FrameSamplePositions;
-    FRHISamplePositionsDesc      PrevFrameSamplePositions;
-    bool                         bUseHardwareJitter = false;
-    FDepthPrePass*               DepthPrePass;
-    FDeferredBasePass*           BasePass;
-    FDepthReducePass*            DepthReducePass;
-    FTiledLightPass*             TiledLightPass;
-    FPointLightRenderPass*       PointLightRenderPass;
-    FCascadeGenerationPass*      CascadeGenerationPass;
-    FCascadedShadowsRenderPass*  CascadedShadowsRenderPass;
-    FShadowMaskRenderPass*       ShadowMaskRenderPass;
-    FScreenSpaceOcclusionPass*   ScreenSpaceOcclusionPass;
-    FSkyboxRenderPass*           SkyboxRenderPass;
-    FTemporalAntiAliasing*       TemporalAntiAliasing;
+    FFrameResources                  Resources; 
+    FFrameCounterState               FrameCounter;
+    FCameraHLSL                      CameraBuffer;
+    FHaltonState                     HaltonState;
+    FRHISamplePositionsDesc          FrameSamplePositions;
+    FRHISamplePositionsDesc          PrevFrameSamplePositions;
+    bool                             bUseHardwareJitter = false;
+    FDepthPrePass*                   DepthPrePass;
+    FDeferredBasePass*               BasePass;
+    FDepthReducePass*                DepthReducePass;
+    FTiledLightPass*                 TiledLightPass;
+    FPointLightRenderPass*           PointLightRenderPass;
+    FCascadeGenerationPass*          CascadeGenerationPass;
+    FCascadedShadowsRenderPass*      CascadedShadowsRenderPass;
+    FShadowMaskRenderPass*           ShadowMaskRenderPass;
+    FScreenSpaceOcclusionPass*       ScreenSpaceOcclusionPass;
+    FSkyboxRenderPass*               SkyboxRenderPass;
+    FTemporalAntiAliasing*           TemporalAntiAliasing;
 #if EDITOR_BUILD
-    FSelectionOutlinePass*       SelectionOutlinePass;
-    FEditorNoJitterDepthPass*    EditorNoJitterDepthPass;
-    FEditorSelectionIDPass*      EditorSelectionIDPass;
+    FSelectionOutlinePass*           SelectionOutlinePass;
+    FEditorNoJitterDepthPass*        EditorNoJitterDepthPass;
+    FEditorSelectionIDPass*          EditorSelectionIDPass;
 #endif
-    FForwardPass*                ForwardPass;
-    FFXAAPass*                   FXAAPass;
-    FTonemapPass*                TonemapPass;
+    FForwardPass*                    ForwardPass;
+    FFXAAPass*                       FXAAPass;
+    FTonemapPass*                    TonemapPass;
 #if EDITOR_BUILD
-    FFinalCompositePass*         FinalCompositePass;
+    FFinalCompositePass*             FinalCompositePass;
 #endif
-    FLightProbeRenderer*         LightProbeRenderer;
-    FDebugRenderer*              DebugRenderer;
-    FDebugViewPass*              DebugViewPass;
-    FRayTracingSceneBuilder*     RayTracingSceneBuilder;
-    FRayTracingReflectionsPass*  RayTracingReflectionsPass;
-    FReflectionDenoisePass*      ReflectionDenoisePass;
-    FRayTracingPrimaryDebugPass* RayTracingPrimaryDebugPass;
-    bool                         bRayTracingWasActive = false; // tracks the RT active->inactive edge for BLAS teardown
-    IPlatformEvent*              LastFrameFinishedEvent;
-    FRHIQueryRef                 TimestampQueries;
-    FRHICommandList              CommandList;
-    FRHICommandList              UICommandList;
+    FLightProbeRenderer*             LightProbeRenderer;
+    FDebugRenderer*                  DebugRenderer;
+    FDebugViewPass*                  DebugViewPass;
+    FRayTracingSceneBuilder*         RayTracingSceneBuilder;
+    FRayTracingReflectionsPass*      RayTracingReflectionsPass;
+    FReflectionDenoisePass*          ReflectionDenoisePass;
+    FRayTracingPrimaryDebugPass*     RayTracingPrimaryDebugPass;
+    bool                             bRayTracingWasActive = false; // tracks the RT active->inactive edge for BLAS teardown
+    IPlatformEvent*                  LastFrameFinishedEvent;
+    TSharedPtr<FApplicationRenderer> ApplicationRenderer;
+    FRHIQueryRef                     TimestampQueries;
+    FRHICommandList                  CommandList;
+    FRHICommandList                  UICommandList;
 #if SUPPORT_VARIABLE_RATE_SHADING
-    FRHITextureRef               ShadingImage;
-    FRHIComputePipelineStateRef  ShadingRatePipeline;
-    FRHIComputeShaderRef         ShadingRateShader;
+    FRHITextureRef                   ShadingImage;
+    FRHIComputePipelineStateRef      ShadingRatePipeline;
+    FRHIComputeShaderRef             ShadingRateShader;
 #endif
-    TArray<FSwapChainResizeInfo> SwapChainsToResize;
-    FCriticalSection             SwapChainsToResizeCS;
+    TArray<FSwapChainResizeInfo>     SwapChainsToResize;
+    FCriticalSection                 SwapChainsToResizeCS;
 
 #if EDITOR_BUILD
     struct FEditorObjectPickRequest

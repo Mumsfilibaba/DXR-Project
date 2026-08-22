@@ -11,6 +11,11 @@ public:
     // IPlatformCursor Interface
     virtual void SetCursor(ECursor Cursor) override final;
 
+    virtual ECursor GetCursor() const override final
+    {
+        return CurrentCursor;
+    }
+
     virtual void SetPosition(int32 x, int32 y) override final;
     virtual IntVector2 GetPosition() const override final;
 
@@ -22,5 +27,6 @@ public:
     }
 
 private:
-    bool bIsVisible;
+    ECursor CurrentCursor;
+    bool    bIsVisible;
 };

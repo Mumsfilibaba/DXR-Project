@@ -31,6 +31,12 @@ static TAutoConsoleVariable<bool> CVarEnablePix(
     "Enables loading of PIX when creating device to capture frame's programmatically",
     false);
 
+static bool IsBackBuffer(FRHIResource* InResource)
+{
+    return InResource && InResource->GetResourceType() == ERHIResourceType::Texture && 
+        static_cast<FRHITexture*>(InResource)->GetDesc().IsPresentable();
+}
+
 FD3D12DeviceRHI* FD3D12DeviceRHI::D3D12DeviceRHI = nullptr;
 
 FD3D12TextureRHI* FD3D12DeviceRHI::ResourceCast(FRHITexture* Texture)
@@ -507,6 +513,12 @@ FRHIShaderResourceView* FD3D12DeviceRHI::CreateShaderResourceView(FRHIResource* 
         return nullptr;
     }
 
+    if (IsBackBuffer(InResource))
+    {
+        D3D12_ERROR("CreateShaderResourceView: cannot create a view from the back-buffer.");
+        return nullptr;
+    }
+
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc = {};
     Desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
@@ -745,6 +757,12 @@ FRHIUnorderedAccessView* FD3D12DeviceRHI::CreateUnorderedAccessView(FRHIResource
         return nullptr;
     }
 
+    if (IsBackBuffer(InResource))
+    {
+        D3D12_ERROR("CreateUnorderedAccessView: cannot create a view from the back-buffer.");
+        return nullptr;
+    }
+
     FRHIResource*        Resource      = nullptr;
     FD3D12Resource*      D3D12Resource = nullptr;
     FD3D12ResourceBase*  ViewOwner     = nullptr;
@@ -979,6 +997,12 @@ FRHIRenderTargetView* FD3D12DeviceRHI::CreateRenderTargetView(FRHIResource* InRe
         return nullptr;
     }
 
+    if (IsBackBuffer(InResource))
+    {
+        D3D12_ERROR("CreateRenderTargetView: cannot create a view from the back-buffer.");
+        return nullptr;
+    }
+
     D3D12_ERROR_COND(InResource->GetResourceType() == ERHIResourceType::Texture,
         "CreateRenderTargetView: requires an FRHITexture resource");
 
@@ -1157,6 +1181,12 @@ FRHIDepthStencilView* FD3D12DeviceRHI::CreateDepthStencilView(FRHIResource* InRe
     if (!InResource)
     {
         D3D12_WARNING("Cannot create DepthStencilView without a valid resource");
+        return nullptr;
+    }
+
+    if (IsBackBuffer(InResource))
+    {
+        D3D12_ERROR("CreateDepthStencilView: cannot create a view from the back-buffer.");
         return nullptr;
     }
 

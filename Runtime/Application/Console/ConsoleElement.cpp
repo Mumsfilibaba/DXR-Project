@@ -6,6 +6,118 @@
 /** @brief The space between the columns of a candidate row, in pixels. */
 static constexpr int32 GCandidateColumnSpacing = 10;
 
+/** @brief The least the name column is given, before the spacing, so short names still separate. */
+static constexpr int32 GCandidateNameMinWidth = 30;
+
+/** @brief The least the value column is given, before the spacing. */
+static constexpr int32 GCandidateValueMinWidth = 20;
+
+/** @brief The inset of the console content from either edge, in pixels, carried by the rows themselves. */
+static constexpr int32 GConsoleHorizontalPadding = 10;
+
+/** @brief How far the input field is rounded at its corners. */
+static constexpr float GInputCornerRadius = 8.0f;
+
+/** @brief The space above and below the input field, matching the dummies around the ImGui one. */
+static constexpr int32 GInputVerticalPadding = 6;
+
+/** @brief The space between the glyphs and the edge of the input field, the way ImGui frames a field. */
+static constexpr int32 GInputFramePadding = 4;
+
+/** @brief The same for a candidate row, which the ImGui console gave a 20 pixel selectable. */
+static constexpr int32 GCandidateRowPadding = 2;
+
+/** @brief What a row and the field fall back to without a face, so scrolling does not put every row at the top. */
+static constexpr int32 GFallbackBoxHeight = 20;
+
+struct FConsoleCandidateText
+{
+    String Name;
+    String Value;
+    String Type;
+    String SetBy;
+    String Help;
+};
+
+static int32 MeasureTextWidth(const TSharedPtr<IFontFace>& Font, const String& Text)
+{
+    return Font ? Font->MeasureWidth(StringView(Text.Data(), Text.Length())) : 0;
+}
+
+static FConsoleCandidateText GetCandidateText(const TPair<IConsoleObject*, String>& Candidate)
+{
+    FConsoleCandidateText RowText;
+    RowText.Name = Candidate.Second;
+
+    const CHAR* TypeText = "";
+
+    if (IConsoleVariable* ConsoleVariable = Candidate.First->AsVariable())
+    {
+        RowText.Value = ConsoleVariable->GetString();
+
+        if (ConsoleVariable->IsVariableBool())
+        {
+            TypeText = "Bool";
+        }
+        else if (ConsoleVariable->IsVariableInt())
+        {
+            TypeText = "Int";
+        }
+        else if (ConsoleVariable->IsVariableFloat())
+        {
+            TypeText = "Float";
+        }
+        else if (ConsoleVariable->IsVariableString())
+        {
+            TypeText = "String";
+        }
+
+        const EConsoleVariableFlags VariableFlags = ConsoleVariable->GetFlags() & EConsoleVariableFlags::SetByMask;
+        RowText.SetBy = String::Printf("[%s]", SetByFlagToString(VariableFlags));
+    }
+    else if (Candidate.First->AsCommand())
+    {
+        TypeText = "Command";
+    }
+
+    RowText.Type = String::Printf("[%s]", TypeText);
+    RowText.Help = String::Printf("[Help: %s]", Candidate.First->GetHelpString());
+    return RowText;
+}
+
+static int32 GetTypeColumnWidth(const TSharedPtr<IFontFace>& Font)
+{
+    static const CHAR* TypeTexts[] = { "[Bool]", "[Int]", "[Float]", "[String]", "[Command]" };
+
+    int32 Width = 0;
+    for (const CHAR* TypeText : TypeTexts)
+    {
+        Width = Math::Max(Width, MeasureTextWidth(Font, String(TypeText)));
+    }
+
+    return Width;
+}
+
+static int32 GetSetByColumnWidth(const TSharedPtr<IFontFace>& Font)
+{
+    static const EConsoleVariableFlags SetByFlags[] =
+    {
+        EConsoleVariableFlags::SetByConstructor,
+        EConsoleVariableFlags::SetByConfigFile,
+        EConsoleVariableFlags::SetByCommandLine,
+        EConsoleVariableFlags::SetByConsole,
+        EConsoleVariableFlags::SetByCode,
+    };
+
+    int32 Width = 0;
+    for (EConsoleVariableFlags SetByFlag : SetByFlags)
+    {
+        Width = Math::Max(Width, MeasureTextWidth(Font, String::Printf("[%s]", SetByFlagToString(SetByFlag))));
+    }
+
+    return Width;
+}
+
 TSharedPtr<FConsoleElement> FConsoleElement::Create(const FInitializer& Initializer)
 {
     TSharedPtr<FConsoleElement> NewElement = MakeSharedPtr<FConsoleElement>();
@@ -63,6 +175,7 @@ void FConsoleElement::Initialize(const FInitializer& Initializer)
     FEditableTextElement::FInitializer InputInitializer;
     InputInitializer.Font     = Font;
     InputInitializer.HintText = "Console Input";
+    InputInitializer.Padding  = FMargin(4, 0);
 
     InputElement = FEditableTextElement::Create(InputInitializer);
     InputElement->GetOnTextChanged().BindRaw(this, &FConsoleElement::HandleTextChanged);
@@ -70,18 +183,23 @@ void FConsoleElement::Initialize(const FInitializer& Initializer)
 
     FBorderElement::FInitializer InputBackgroundInitializer;
     InputBackgroundInitializer.BackgroundColor = Initializer.InputBackgroundColor;
-    InputBackgroundInitializer.Padding         = FMargin(10, 6);
+    InputBackgroundInitializer.Padding         = FMargin(10, 0);
+    InputBackgroundInitializer.MinHeight       = GetInputFieldHeight();
+    InputBackgroundInitializer.CornerRadius    = GInputCornerRadius;
     InputBackgroundInitializer.Content         = InputElement;
+
+    InputBackgroundInitializer.SetCursor(ECursor::TextInput);
 
     InputBackground = FBorderElement::Create(InputBackgroundInitializer);
 
     RootBox = FVerticalBoxElement::Create();
     RootBox->AddSlot(ScrollBox).SetFillCoefficient(1.0f);
-    RootBox->AddSlot(InputBackground).SetVerticalAlignment(EVerticalAlignment::Bottom);
+    RootBox->AddSlot(InputBackground)
+        .SetVerticalAlignment(EVerticalAlignment::Bottom)
+        .SetPadding(FMargin(GConsoleHorizontalPadding, GInputVerticalPadding));
 
     FBorderElement::FInitializer BackgroundInitializer;
     BackgroundInitializer.BackgroundColor = Initializer.BackgroundColor;
-    BackgroundInitializer.Padding         = FMargin(10, 0);
     BackgroundInitializer.Content         = RootBox;
 
     Background = FBorderElement::Create(BackgroundInitializer);
@@ -139,10 +257,19 @@ int32 FConsoleElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComman
     return FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId);
 }
 
+bool FConsoleElement::CapturesAllInput() const
+{
+    return bIsOpen;
+}
+
+TSharedPtr<FVisualElement> FConsoleElement::GetFocusTarget()
+{
+    return bIsOpen && InputElement ? InputElement : FCompoundElement::GetFocusTarget();
+}
+
 FEventResponse FConsoleElement::OnKeyDown(const FKeyEvent& KeyEvent)
 {
-    // The input line intercepts the toggle key while it has focus, so this only catches the key that
-    // opens a closed console
+
     if (KeyEvent.IsDown() && IsToggleKey(KeyEvent.GetKey()))
     {
         if (!KeyEvent.IsRepeat())
@@ -188,15 +315,18 @@ void FConsoleElement::RebuildScrollContent()
         const TArray<TPair<IConsoleObject*, String>>& Candidates    = CommandLine.GetCandidates();
         const int32                                   SelectedIndex = CommandLine.GetSelectedCandidateIndex();
 
+        // Measured once for the whole list, so every row starts its columns in the same place
+        const FConsoleCandidateColumns Columns = ComputeCandidateColumns();
+
         for (int32 Index = 0; Index < Candidates.Size(); ++Index)
         {
-            AddCandidateRow(Candidates[Index], Index == SelectedIndex);
+            AddCandidateRow(Candidates[Index], Index == SelectedIndex, Columns);
         }
 
-        // Replaces the old SetScrollHereY call that was guarded by bCandidateSelectionChanged
-        if (CommandLine.ConsumeSelectionChanged() && SelectedIndex >= 0 && Font)
+        // Only on a change, so scrolling the list by hand is not undone on the next rebuild
+        if (CommandLine.ConsumeSelectionChanged() && SelectedIndex >= 0)
         {
-            const int32 RowHeight = Font->GetLineHeight();
+            const int32 RowHeight = GetCandidateRowHeight();
 
             FRectangle RowBounds;
             RowBounds.Position.Y = SelectedIndex * RowHeight;
@@ -219,8 +349,10 @@ void FConsoleElement::RebuildScrollContent()
 void FConsoleElement::SyncInputFromCommandLine()
 {
     bIsSyncingInput = true;
+
     InputElement->SetTextSilently(CommandLine.GetText());
     InputElement->SetTextCursorPosition(CommandLine.GetTextCursorPosition());
+
     bIsSyncingInput = false;
 }
 
@@ -242,6 +374,7 @@ EKeyInterceptResult FConsoleElement::HandleInputKeyDown(const FKeyEvent& KeyEven
     {
         CommandLine.MoveSelectionUp();
         SyncInputFromCommandLine();
+
         bIsScrollContentDirty = true;
         return EKeyInterceptResult::Handled;
     }
@@ -250,6 +383,7 @@ EKeyInterceptResult FConsoleElement::HandleInputKeyDown(const FKeyEvent& KeyEven
     {
         CommandLine.MoveSelectionDown();
         SyncInputFromCommandLine();
+
         bIsScrollContentDirty = true;
         return EKeyInterceptResult::Handled;
     }
@@ -259,6 +393,7 @@ EKeyInterceptResult FConsoleElement::HandleInputKeyDown(const FKeyEvent& KeyEven
         if (CommandLine.AcceptCompletion())
         {
             SyncInputFromCommandLine();
+
             bIsScrollContentDirty = true;
             bIsScrollToEndPending = true;
         }
@@ -270,6 +405,7 @@ EKeyInterceptResult FConsoleElement::HandleInputKeyDown(const FKeyEvent& KeyEven
     {
         const EConsoleSubmitResult Result = CommandLine.Submit(LogBuffer);
         SyncInputFromCommandLine();
+
         bIsScrollContentDirty = true;
 
         if (Result == EConsoleSubmitResult::ExecutedCommand)
@@ -310,85 +446,72 @@ void FConsoleElement::AddLogLineElement(const FConsoleLogLine& Line)
     TextInitializer.Font            = Font;
     TextInitializer.ColorAndOpacity = FConsoleLogBuffer::GetSeverityColor(Line.Severity);
 
-    ScrollContent->AddSlot(FTextBlockElement::Create(TextInitializer)).SetHorizontalAlignment(EHorizontalAlignment::Left);
+    ScrollContent->AddSlot(FTextBlockElement::Create(TextInitializer))
+        .SetHorizontalAlignment(EHorizontalAlignment::Left)
+        .SetPadding(FMargin(GConsoleHorizontalPadding, 0));
 }
 
-void FConsoleElement::AddCandidateRow(const TPair<IConsoleObject*, String>& Candidate, bool bIsSelected)
+int32 FConsoleElement::GetCandidateRowHeight() const
 {
-    String      ValueText;
-    String      SetByText;
-    const CHAR* TypeText = "";
+    return Font ? Font->GetTextBandHeight() + (GCandidateRowPadding * 2) : GFallbackBoxHeight;
+}
 
-    if (IConsoleVariable* ConsoleVariable = Candidate.First->AsVariable())
+int32 FConsoleElement::GetInputFieldHeight() const
+{
+    return Font ? Font->GetTextBandHeight() + (GInputFramePadding * 2) : GFallbackBoxHeight;
+}
+
+FConsoleCandidateColumns FConsoleElement::ComputeCandidateColumns() const
+{
+    FConsoleCandidateColumns Columns;
+    Columns.NameWidth  = GCandidateNameMinWidth;
+    Columns.ValueWidth = GCandidateValueMinWidth;
+
+    for (const TPair<IConsoleObject*, String>& Candidate : CommandLine.GetCandidates())
     {
-        ValueText = ConsoleVariable->GetString();
-
-        if (ConsoleVariable->IsVariableBool())
-        {
-            TypeText = "Bool";
-        }
-        else if (ConsoleVariable->IsVariableInt())
-        {
-            TypeText = "Int";
-        }
-        else if (ConsoleVariable->IsVariableFloat())
-        {
-            TypeText = "Float";
-        }
-        else if (ConsoleVariable->IsVariableString())
-        {
-            TypeText = "String";
-        }
-
-        const EConsoleVariableFlags VariableFlags = ConsoleVariable->GetFlags() & EConsoleVariableFlags::SetByMask;
-        SetByText = String::Printf("[%s]", SetByFlagToString(VariableFlags));
-    }
-    else if (Candidate.First->AsCommand())
-    {
-        TypeText = "Command";
+        const FConsoleCandidateText RowText = GetCandidateText(Candidate);
+        Columns.NameWidth  = Math::Max(Columns.NameWidth, MeasureTextWidth(Font, RowText.Name));
+        Columns.ValueWidth = Math::Max(Columns.ValueWidth, MeasureTextWidth(Font, RowText.Value));
     }
 
-    const FFloatColor RowColor = bIsSelected ? FFloatColor::White : CandidateDetailColor;
+    Columns.TypeWidth  = GetTypeColumnWidth(Font);
+    Columns.SetByWidth = GetSetByColumnWidth(Font);
 
-    FTextBlockElement::FInitializer NameInitializer;
-    NameInitializer.Text            = Candidate.Second;
-    NameInitializer.Font            = Font;
-    NameInitializer.ColorAndOpacity = RowColor;
+    Columns.NameWidth  += GCandidateColumnSpacing;
+    Columns.ValueWidth += GCandidateColumnSpacing;
+    Columns.TypeWidth  += GCandidateColumnSpacing;
+    Columns.SetByWidth += GCandidateColumnSpacing;
 
-    FTextBlockElement::FInitializer ValueInitializer;
-    ValueInitializer.Text            = ValueText;
-    ValueInitializer.Font            = Font;
-    ValueInitializer.ColorAndOpacity = CandidateDetailColor;
-    ValueInitializer.Margin          = FMargin(GCandidateColumnSpacing, 0, 0, 0);
+    return Columns;
+}
 
-    FTextBlockElement::FInitializer TypeInitializer;
-    TypeInitializer.Text            = String::Printf("[%s]", TypeText);
-    TypeInitializer.Font            = Font;
-    TypeInitializer.ColorAndOpacity = CandidateDetailColor;
-    TypeInitializer.Margin          = FMargin(GCandidateColumnSpacing, 0, 0, 0);
+void FConsoleElement::AddCandidateRow(const TPair<IConsoleObject*, String>& Candidate, bool bIsSelected, const FConsoleCandidateColumns& Columns)
+{
+    const FConsoleCandidateText RowText  = GetCandidateText(Candidate);
+    const FFloatColor           RowColor = bIsSelected ? FFloatColor::White : CandidateDetailColor;
 
-    FTextBlockElement::FInitializer HelpInitializer;
-    HelpInitializer.Text            = String::Printf("%s[Help: %s]", *SetByText, Candidate.First->GetHelpString());
-    HelpInitializer.Font            = Font;
-    HelpInitializer.ColorAndOpacity = CandidateDetailColor;
-    HelpInitializer.Margin          = FMargin(GCandidateColumnSpacing, 0, 0, 0);
+    const auto MakeCell = [this](const String& CellText, const FFloatColor& CellColor, int32 ColumnWidth)
+    {
+        FTextBlockElement::FInitializer CellInitializer;
+        CellInitializer.Text            = CellText;
+        CellInitializer.Font            = Font;
+        CellInitializer.ColorAndOpacity = CellColor;
+        CellInitializer.Margin          = FMargin(0, 0, Math::Max(0, ColumnWidth - MeasureTextWidth(Font, CellText)), 0);
+        return FTextBlockElement::Create(CellInitializer);
+    };
 
     TSharedPtr<FHorizontalBoxElement> Row = FHorizontalBoxElement::Create();
-    Row->AddSlot(FTextBlockElement::Create(NameInitializer));
-    Row->AddSlot(FTextBlockElement::Create(ValueInitializer));
-    Row->AddSlot(FTextBlockElement::Create(TypeInitializer));
-    Row->AddSlot(FTextBlockElement::Create(HelpInitializer));
+    Row->AddSlot(MakeCell(RowText.Name, RowColor, Columns.NameWidth));
+    Row->AddSlot(MakeCell(RowText.Value, CandidateDetailColor, Columns.ValueWidth));
+    Row->AddSlot(MakeCell(RowText.Type, CandidateDetailColor, Columns.TypeWidth));
+    Row->AddSlot(MakeCell(RowText.SetBy, CandidateDetailColor, Columns.SetByWidth));
+    Row->AddSlot(MakeCell(RowText.Help, CandidateDetailColor, 0));
 
-    if (bIsSelected)
-    {
-        // The fill behind the selected row stands in for the ImGui Selectable header color
-        FBorderElement::FInitializer SelectionInitializer;
-        SelectionInitializer.BackgroundColor = SelectedCandidateColor;
-        SelectionInitializer.Content         = Row;
+    FBorderElement::FInitializer SelectionInitializer;
+    SelectionInitializer.BackgroundColor = bIsSelected ? SelectedCandidateColor : FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
+    SelectionInitializer.Padding         = FMargin(GConsoleHorizontalPadding, 0);
+    SelectionInitializer.MinHeight       = GetCandidateRowHeight();
+    SelectionInitializer.Content         = Row;
 
-        ScrollContent->AddSlot(FBorderElement::Create(SelectionInitializer));
-        return;
-    }
-
-    ScrollContent->AddSlot(Row);
+    ScrollContent->AddSlot(FBorderElement::Create(SelectionInitializer));
 }

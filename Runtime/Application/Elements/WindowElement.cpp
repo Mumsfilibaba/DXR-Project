@@ -1,6 +1,7 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "CoreApplication/PlatformInterface/IPlatformWindow.h"
 #include "Application/Application.h"
+#include "Application/Draw/DrawCommandList.h"
 #include "Application/Elements/WindowElement.h"
 
 TSharedPtr<FWindowElement> FWindowElement::Create(const FInitializer& Initializer)
@@ -70,24 +71,63 @@ bool FWindowElement::IsWindow() const
     return true;
 }
 
-void FWindowElement::FindChildrenContainingPoint(const IntVector2& Point, FElementPath& OutParentElements)
+bool FWindowElement::SupportsKeyboardFocus() const
+{
+    return true;
+}
+
+int32 FWindowElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
+{
+    int32 MaxLayerId = LayerId;
+
+    if (Content && Content->IsVisible())
+    {
+        const FDrawGeometry ContentGeometry(Content->GetContentRectangle(), AllottedGeometry.Scale);
+        MaxLayerId = Content->OnDraw(ContentGeometry, OutCommandList, LayerId + 1);
+    }
+
+    if (Overlay && Overlay->IsVisible())
+    {
+        const FDrawGeometry OverlayGeometry(Overlay->GetContentRectangle(), AllottedGeometry.Scale);
+        MaxLayerId = Overlay->OnDraw(OverlayGeometry, OutCommandList, MaxLayerId + 1);
+    }
+
+    return MaxLayerId;
+}
+
+void FWindowElement::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+{
+    if (Content)
+    {
+        OutChildren.Add(Content);
+    }
+
+    if (Overlay)
+    {
+        OutChildren.Add(Overlay);
+    }
+}
+
+void FWindowElement::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutParentElements)
 {
     FRectangle WindowBounds = GetContentRectangle();
-    if (WindowBounds.EncapsulatesPoint(Point))
+    if (WindowBounds.EncapsulatesPoint(ClientPosition))
     {
         const EVisibility CurrentVisibility = GetVisibility();
         if (OutParentElements.AcceptVisbility(CurrentVisibility))
         {
             OutParentElements.Add(CurrentVisibility, AsSharedPtr());
 
-            if (Content)
+            const bool bIsOverlayModal = Overlay && Overlay->IsVisible() && Overlay->CapturesAllInput();
+
+            if (Content && !bIsOverlayModal)
             {
-                Content->FindChildrenContainingPoint(Point, OutParentElements);
+                Content->FindChildrenContainingPoint(ClientPosition, OutParentElements);
             }
 
             if (Overlay)
             {
-                Overlay->FindChildrenContainingPoint(Point, OutParentElements);
+                Overlay->FindChildrenContainingPoint(ClientPosition, OutParentElements);
             }
         }
     }
@@ -222,11 +262,19 @@ TSharedPtr<FVisualElement> FWindowElement::GetContent() const
 void FWindowElement::SetOverlay(const TSharedPtr<FVisualElement>& InOverlay)
 {
     Overlay = InOverlay;
+    if (Overlay)
+    {
+        Overlay->SetParentElement(AsWeakPtr());
+    }
 }
 
 void FWindowElement::SetContent(const TSharedPtr<FVisualElement>& InContent)
 {
     Content = InContent;
+    if (Content)
+    {
+        Content->SetParentElement(AsWeakPtr());
+    }
 }
 
 void FWindowElement::Show(bool bFocus)

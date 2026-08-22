@@ -1198,8 +1198,9 @@ void FMacApplication::ProcessKeyEvent(const FDeferredMacEvent& DeferredEvent)
     if (DeferredEvent.EventType == NSEventTypeKeyDown)
     {
         MessageHandler->OnKeyDown(KeyName, DeferredEvent.bIsRepeat, GetModifierKeyState());
-    
-        if (DeferredEvent.Character != uint32(-1))
+
+        const bool bIsCommandDown = (CurrentModifierFlags & NSEventModifierFlagCommand) != 0;
+        if (DeferredEvent.Character != uint32(-1) && !bIsCommandDown)
         {
             MessageHandler->OnKeyChar(DeferredEvent.Character);
         }

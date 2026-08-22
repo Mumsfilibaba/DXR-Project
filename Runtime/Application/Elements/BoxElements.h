@@ -85,7 +85,7 @@ public:
     // FVisualElement Interface
     virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
-    virtual void FindChildrenContainingPoint(const IntVector2& ScreenCursorPosition, FElementPath& OutChildElements) override;
+    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override;
 
     /**
      * @brief Appends a slot for the element and returns it so the caller can set padding and fill.

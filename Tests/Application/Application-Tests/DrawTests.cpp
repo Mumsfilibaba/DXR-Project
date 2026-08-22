@@ -187,15 +187,101 @@ bool LogSeverityColors_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Info is white, warning yellow and error red");
-    const FFloatColor InfoColor = FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Info);
-    TEST_EXPECT(InfoColor.R == 1.0f && InfoColor.G == 1.0f && InfoColor.B == 1.0f && InfoColor.A == 1.0f);
-
+    const FFloatColor InfoColor    = FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Info);
     const FFloatColor WarningColor = FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Warning);
-    TEST_EXPECT(WarningColor.R == 1.0f && WarningColor.G == 1.0f && WarningColor.B == 0.0f && WarningColor.A == 1.0f);
+    const FFloatColor ErrorColor   = FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Error);
 
-    const FFloatColor ErrorColor = FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Error);
-    TEST_EXPECT(ErrorColor.R == 1.0f && ErrorColor.G == 0.0f && ErrorColor.B == 0.0f && ErrorColor.A == 1.0f);
+    TEST_SECTION("Info is white and every severity is opaque");
+    TEST_EXPECT(InfoColor.R == 1.0f && InfoColor.G == 1.0f && InfoColor.B == 1.0f);
+    TEST_EXPECT(InfoColor.A == 1.0f && WarningColor.A == 1.0f && ErrorColor.A == 1.0f);
+
+    TEST_SECTION("Warning and error are the saturated primaries the ImGui console used");
+    TEST_EXPECT(WarningColor.R == 1.0f && WarningColor.G == 1.0f && WarningColor.B == 0.0f);
+    TEST_EXPECT(ErrorColor.R == 1.0f && ErrorColor.G == 0.0f && ErrorColor.B == 0.0f);
+
+    TEST_END();
+}
+
+bool BoxLayerSequencing_Test()
+{
+    TEST_BEGIN();
+
+    TSharedPtr<IFontFace> Font = CreateTestFont();
+
+    TSharedPtr<FVerticalBoxElement> ScrollContent = FVerticalBoxElement::Create();
+    for (int32 Index = 0; Index < 4; ++Index)
+    {
+        ScrollContent->AddSlot(CreateTextBlock("Log", Font));
+    }
+
+    TSharedPtr<FScrollBoxElement> ScrollBox = FScrollBoxElement::Create();
+    ScrollBox->SetContent(ScrollContent);
+
+    FBorderElement::FInitializer InputInitializer;
+    InputInitializer.BackgroundColor = FFloatColor(0.1f, 0.1f, 0.1f, 1.0f);
+    InputInitializer.Content         = CreateTextBlock("Input", Font);
+
+    TSharedPtr<FVerticalBoxElement> RootBox = FVerticalBoxElement::Create();
+    RootBox->AddSlot(ScrollBox).SetFillCoefficient(1.0f);
+    RootBox->AddSlot(FBorderElement::Create(InputInitializer)).SetVerticalAlignment(EVerticalAlignment::Bottom);
+
+    RootBox->PrepareDesiredSize();
+    RootBox->Tick(FRectangle(IntVector2(0, 0), 200, 100));
+
+    FDrawCommandList CommandList;
+    RootBox->OnDraw(FDrawGeometry(RootBox->GetContentRectangle(), 1.0f), CommandList, 0);
+
+    int32 ClipPushLayerId = -1;
+    int32 ClipPopLayerId  = -1;
+    int32 BoxLayerId      = -1;
+
+    for (const FDrawCommand& Command : CommandList.GetCommands())
+    {
+        switch (Command.Type)
+        {
+            case EDrawCommandType::ClipPush:
+            {
+                ClipPushLayerId = Command.LayerId;
+                break;
+            }
+            case EDrawCommandType::ClipPop:
+            {
+                ClipPopLayerId = Command.LayerId;
+                break;
+            }
+            case EDrawCommandType::Box:
+            {
+                BoxLayerId = Command.LayerId;
+                break;
+            }
+            default:
+            {
+                break;
+            }
+        }
+    }
+
+    const int32 LogIndex   = CommandList.FindTextCommand("Log");
+    const int32 InputIndex = CommandList.FindTextCommand("Input");
+
+    TEST_SECTION("Both slots drew, inside one balanced region");
+    TEST_EXPECT(CommandList.IsClipStackBalanced());
+    TEST_EXPECT(LogIndex != FDrawCommandList::InvalidIndex);
+    TEST_EXPECT(InputIndex != FDrawCommandList::InvalidIndex);
+    TEST_EXPECT(ClipPushLayerId >= 0 && ClipPopLayerId >= 0 && BoxLayerId >= 0);
+
+    if (LogIndex == FDrawCommandList::InvalidIndex || InputIndex == FDrawCommandList::InvalidIndex)
+    {
+        TEST_END();
+    }
+
+    TEST_SECTION("The scrolled lines fall inside the region, which is what clips them");
+    TEST_EXPECT(CommandList[LogIndex].LayerId >= ClipPushLayerId);
+    TEST_EXPECT(CommandList[LogIndex].LayerId <= ClipPopLayerId);
+
+    TEST_SECTION("The row after it starts above the region, so the layer sort leaves it unclipped");
+    TEST_EXPECT(BoxLayerId > ClipPopLayerId);
+    TEST_EXPECT(CommandList[InputIndex].LayerId > ClipPopLayerId);
 
     TEST_END();
 }

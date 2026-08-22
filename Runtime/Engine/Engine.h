@@ -8,12 +8,6 @@
 #include "Engine/World/World.h"
 #include "Engine/World/SceneViewport.h"
 
-#define ENGINE_DEBUG_INPUT 0
-
-#if ENGINE_DEBUG_INPUT
-struct FInputDebugInputHandler;
-#endif
-
 class ENGINE_API FEngine
 {
 public:
@@ -129,14 +123,11 @@ private:
     void OnEngineWindowMoved(const IntVector2& NewScreenPosition);
     void OnEngineWindowResized(const IntVector2& NewScreenSize);
 
-    FWorld*                             World;
-    FGameModule*                        GameModule;
-    TSharedPtr<FWindowElement>          EngineWindow;
-    TSharedPtr<FViewportElement>        EngineViewportElement;
-    TSharedPtr<FSceneViewport>          SceneViewport;
-#if ENGINE_DEBUG_INPUT
-    TSharedPtr<FInputDebugInputHandler> InputDebugInputHandler;
-#endif
+    FWorld*                      World;
+    FGameModule*                 GameModule;
+    TSharedPtr<FWindowElement>   EngineWindow;
+    TSharedPtr<FViewportElement> EngineViewportElement;
+    TSharedPtr<FSceneViewport>   SceneViewport;
 
     static FEngine* Engine;
 };

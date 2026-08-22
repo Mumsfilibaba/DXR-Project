@@ -42,6 +42,7 @@ public:
     virtual FEventResponse OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent) override final;
     virtual FEventResponse OnFocusLost() override final;
     virtual FEventResponse OnFocusGained() override final;
+    virtual bool SupportsKeyboardFocus() const override final;
 
     void SetViewportInterface(const TSharedPtr<IViewport>& InViewportInterface)
     {

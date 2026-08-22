@@ -8,6 +8,22 @@
 #include "Application/Elements/EditableTextElement.h"
 #include "Application/Elements/ScrollBoxElement.h"
 
+struct FConsoleCandidateColumns
+{
+    FConsoleCandidateColumns()
+        : NameWidth(0)
+        , ValueWidth(0)
+        , TypeWidth(0)
+        , SetByWidth(0)
+    {
+    }
+
+    int32 NameWidth;
+    int32 ValueWidth;
+    int32 TypeWidth;
+    int32 SetByWidth;
+};
+
 class APPLICATION_API FConsoleElement final : public FCompoundElement
 {
 public:
@@ -16,9 +32,9 @@ public:
         FInitializer()
             : Font(nullptr)
             , TextAreaHeight(384)
-            , BackgroundColor(0.06f, 0.06f, 0.06f, 0.8f)
-            , InputBackgroundColor(0.1f, 0.1f, 0.1f, 0.8f)
-            , SelectedCandidateColor(0.6f, 0.6f, 0.6f, 1.0f)
+            , BackgroundColor(0.1f, 0.1f, 0.1f, 0.85f)
+            , InputBackgroundColor(0.04f, 0.04f, 0.04f, 0.85f)
+            , SelectedCandidateColor(0.3f, 0.3f, 0.3f, 1.0f)
             , CandidateDetailColor(0.85f, 0.85f, 0.85f, 1.0f)
             , MaxLogLines(FConsoleLogBuffer::DefaultMaxLines)
             , bRegisterWithLogger(true)
@@ -61,6 +77,8 @@ public:
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnKeyDown(const FKeyEvent& KeyEvent) override;
+    virtual bool CapturesAllInput() const override;
+    virtual TSharedPtr<FVisualElement> GetFocusTarget() override;
 
     /** @brief Opens the console when it is closed, and closes it when it is open. */
     void Toggle();
@@ -116,7 +134,11 @@ private:
     void HandleTextChanged(const String& NewText);
 
     void AddLogLineElement(const FConsoleLogLine& Line);
-    void AddCandidateRow(const TPair<IConsoleObject*, String>& Candidate, bool bIsSelected);
+    void AddCandidateRow(const TPair<IConsoleObject*, String>& Candidate, bool bIsSelected, const FConsoleCandidateColumns& Columns);
+
+    NODISCARD int32 GetCandidateRowHeight() const;
+    NODISCARD int32 GetInputFieldHeight() const;
+    NODISCARD FConsoleCandidateColumns ComputeCandidateColumns() const;
 
     FConsoleLogBuffer                LogBuffer;
     FConsoleCommandLine              CommandLine;

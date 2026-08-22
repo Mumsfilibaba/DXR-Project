@@ -10,13 +10,14 @@ FDrawCommandList::FDrawCommandList()
 
 FDrawCommandList::~FDrawCommandList() = default;
 
-void FDrawCommandList::AddBox(int32 LayerId, const FRectangle& Bounds, const FFloatColor& Tint)
+void FDrawCommandList::AddBox(int32 LayerId, const FRectangle& Bounds, const FFloatColor& Tint, float CornerRadius)
 {
     FDrawCommand& Command = Commands.Emplace();
-    Command.Type    = EDrawCommandType::Box;
-    Command.Bounds  = Bounds;
-    Command.Tint    = Tint;
-    Command.LayerId = LayerId;
+    Command.Type         = EDrawCommandType::Box;
+    Command.Bounds       = Bounds;
+    Command.Tint         = Tint;
+    Command.LayerId      = LayerId;
+    Command.CornerRadius = CornerRadius;
 }
 
 void FDrawCommandList::AddText(int32 LayerId, const FRectangle& Bounds, const String& InText, const IFontFace* Font, const FFloatColor& Tint)

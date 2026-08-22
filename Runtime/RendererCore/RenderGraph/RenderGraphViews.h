@@ -11,7 +11,7 @@ enum class ERenderGraphParentKind : uint8
 
 class FRenderGraphBuilder;
 
-template<typename DescType>
+template<typename DescType, typename RHIViewType>
 class TRenderGraphTextureView
 {
 public:
@@ -30,15 +30,30 @@ public:
         return Name;
     }
 
+    /**
+     * @return The view registered with the graph, or nullptr when the graph is to create its own.
+     * A registered view stays owned by whoever handed it over, so the graph only borrows it.
+     */
+    NODISCARD RHIViewType* GetExternalView() const
+    {
+        return ExternalView;
+    }
+
+    NODISCARD bool IsExternal() const
+    {
+        return ExternalView != nullptr;
+    }
+
 private:
     friend class FRenderGraphBuilder;
 
-    FRenderGraphTexture* Parent = nullptr;
-    const CHAR*          Name   = nullptr;
+    FRenderGraphTexture* Parent       = nullptr;
+    const CHAR*          Name         = nullptr;
+    RHIViewType*         ExternalView = nullptr;
     DescType             Desc;
 };
 
-template<typename DescType>
+template<typename DescType, typename RHIViewType>
 class TRenderGraphShaderAccessView
 {
 public:
@@ -67,6 +82,20 @@ public:
         return Name;
     }
 
+    /**
+     * @return The view registered with the graph, or nullptr when the graph is to create its own.
+     * A registered view stays owned by whoever handed it over, so the graph only borrows it.
+     */
+    NODISCARD RHIViewType* GetExternalView() const
+    {
+        return ExternalView;
+    }
+
+    NODISCARD bool IsExternal() const
+    {
+        return ExternalView != nullptr;
+    }
+
 private:
     friend class FRenderGraphBuilder;
 
@@ -76,15 +105,16 @@ private:
         FRenderGraphBuffer*  Buffer;
     } Parent;
 
-    ERenderGraphParentKind ParentKind = ERenderGraphParentKind::Texture;
-    const CHAR*            Name       = nullptr;
+    ERenderGraphParentKind ParentKind   = ERenderGraphParentKind::Texture;
+    const CHAR*            Name         = nullptr;
+    RHIViewType*           ExternalView = nullptr;
     DescType               Desc;
 };
 
-using FRenderGraphShaderResourceView  = TRenderGraphShaderAccessView<FRHIShaderResourceViewDesc>;
-using FRenderGraphUnorderedAccessView = TRenderGraphShaderAccessView<FRHIUnorderedAccessViewDesc>;
-using FRenderGraphRenderTargetView    = TRenderGraphTextureView<FRHIRenderTargetViewDesc>;
-using FRenderGraphDepthStencilView    = TRenderGraphTextureView<FRHIDepthStencilViewDesc>;
+using FRenderGraphShaderResourceView  = TRenderGraphShaderAccessView<FRHIShaderResourceViewDesc, FRHIShaderResourceView>;
+using FRenderGraphUnorderedAccessView = TRenderGraphShaderAccessView<FRHIUnorderedAccessViewDesc, FRHIUnorderedAccessView>;
+using FRenderGraphRenderTargetView    = TRenderGraphTextureView<FRHIRenderTargetViewDesc, FRHIRenderTargetView>;
+using FRenderGraphDepthStencilView    = TRenderGraphTextureView<FRHIDepthStencilViewDesc, FRHIDepthStencilView>;
 
 enum class ERenderGraphViewAccessType : uint8
 {

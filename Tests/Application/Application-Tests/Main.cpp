@@ -5,11 +5,14 @@
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
 
+#include "ApplicationRendererTests.h"
 #include "ConsoleCommandLineTests.h"
 #include "ConsoleElementTests.h"
 #include "EditableTextTests.h"
+#include "FontTests.h"
 #include "LayoutTests.h"
 #include "DrawTests.h"
+#include "UIDrawDataTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -35,15 +38,37 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("BoxSlotAlignment", BoxSlotAlignment_Test());
     RUN_TEST("ScrollBoxClamping", ScrollBoxClamping_Test());
     RUN_TEST("ScrollBoxScrollIntoView", ScrollBoxScrollIntoView_Test());
+    RUN_TEST("WindowLayoutOrigin", WindowLayoutOrigin_Test());
+    RUN_TEST("WindowOverlayMeasure", WindowOverlayMeasure_Test());
 
     RUN_TEST("DrawCommandList", DrawCommandList_Test());
     RUN_TEST("DrawClipNesting", DrawClipNesting_Test());
     RUN_TEST("BorderDraw", BorderDraw_Test());
+    RUN_TEST("BoxLayerSequencing", BoxLayerSequencing_Test());
     RUN_TEST("LogSeverityColors", LogSeverityColors_Test());
+
+    RUN_TEST("FontAtlasPacking", FontAtlasPacking_Test());
+    RUN_TEST("FontGlyphLookup", FontGlyphLookup_Test());
+    RUN_TEST("FontMeasurement", FontMeasurement_Test());
+
+    RUN_TEST("UIDrawDataLayerOrder", UIDrawDataLayerOrder_Test());
+    RUN_TEST("UIDrawDataBatching", UIDrawDataBatching_Test());
+    RUN_TEST("UIDrawDataRoundedBox", UIDrawDataRoundedBox_Test());
+    RUN_TEST("UIDrawDataText", UIDrawDataText_Test());
+    RUN_TEST("UIDrawDataClipCulling", UIDrawDataClipCulling_Test());
+
+    RUN_TEST("ApplicationRendererWindowPass", ApplicationRendererWindowPass_Test());
+    RUN_TEST("ApplicationRendererWindowLifetime", ApplicationRendererWindowLifetime_Test());
 
     RUN_TEST("EditableTextEditing", EditableTextEditing_Test());
     RUN_TEST("EditableTextCursor", EditableTextCursor_Test());
     RUN_TEST("EditableTextKeyInterceptor", EditableTextKeyInterceptor_Test());
+    RUN_TEST("EditableTextSelection", EditableTextSelection_Test());
+    RUN_TEST("EditableTextMouseSelection", EditableTextMouseSelection_Test());
+    RUN_TEST("EditableTextWordNavigation", EditableTextWordNavigation_Test());
+    RUN_TEST("EditableTextCommandChord", EditableTextCommandChord_Test());
+    RUN_TEST("EditableTextCaretBlink", EditableTextCaretBlink_Test());
+    RUN_TEST("EditableTextBandAlignment", EditableTextBandAlignment_Test());
     RUN_TEST("EditableTextDraw", EditableTextDraw_Test());
 
     RUN_TEST("ConsoleWordRange", ConsoleWordRange_Test());
@@ -58,6 +83,14 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("ConsoleElementLayout", ConsoleElementLayout_Test());
     RUN_TEST("ConsoleElementLogDraw", ConsoleElementLogDraw_Test());
     RUN_TEST("ConsoleElementCandidateDraw", ConsoleElementCandidateDraw_Test());
+    RUN_TEST("ConsoleElementCandidateHighlight", ConsoleElementCandidateHighlight_Test());
+    RUN_TEST("ConsoleElementCandidateColumns", ConsoleElementCandidateColumns_Test());
+    RUN_TEST("ConsoleElementInputChrome", ConsoleElementInputChrome_Test());
+    RUN_TEST("ConsoleElementCursorShape", ConsoleElementCursorShape_Test());
+    RUN_TEST("ConsoleElementInputFieldSurvives", ConsoleElementInputFieldSurvives_Test());
+    RUN_TEST("ConsoleElementModalInput", ConsoleElementModalInput_Test());
+    RUN_TEST("ConsoleElementClickFocus", ConsoleElementClickFocus_Test());
+    RUN_TEST("ConsoleElementInWindow", ConsoleElementInWindow_Test());
     RUN_TEST("ConsoleElementTypeAndExecute", ConsoleElementTypeAndExecute_Test());
 
     const int32 ExitCode = TestHarness::Report();

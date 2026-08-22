@@ -20,10 +20,8 @@ public:
     virtual FEventResponse OnMouseScroll(const FCursorEvent& CursorEvent) override;
 
     /**
-     * @brief Requests that the bottom of the content sit flush with the bottom of the view.
-     *
-     * Deferred to the next arrange, because the content height is only known once the children have
-     * had their desired sizes computed.
+     * @brief Requests that the bottom of the content sit flush with the bottom of the view. Deferred to
+     * the next arrange, because the content height is only known once the children have been measured.
      */
     void ScrollToEnd();
 

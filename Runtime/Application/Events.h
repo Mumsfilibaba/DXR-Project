@@ -18,6 +18,7 @@ public:
         return FEventResponse(false);
     }
 
+public:
     bool IsEventHandled() const
     {
         return bIsHandled;
@@ -87,7 +88,8 @@ public:
     FCursorEvent()
         : FInputEvent()
         , Key(Keys::Unknown)
-        , CursorPosition()
+        , ScreenPosition()
+        , ClientOrigin()
         , ScrollDelta(0.0f)
         , ScrollAxis(EScrollAxis::Vertical)
         , bIsDown(false)
@@ -97,17 +99,19 @@ public:
     FCursorEvent(EInputEventType InEventType, const FModifierKeyState& InModifierKeys)
         : FInputEvent(InEventType, InModifierKeys)
         , Key(Keys::Unknown)
-        , CursorPosition()
+        , ScreenPosition()
+        , ClientOrigin()
         , ScrollDelta(0.0f)
         , ScrollAxis(EScrollAxis::Vertical)
         , bIsDown(false)
     {
     }
 
-    FCursorEvent(EInputEventType InEventType, const IntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys)
+    FCursorEvent(EInputEventType InEventType, const IntVector2& InScreenPosition, const IntVector2& InClientOrigin, const FModifierKeyState& InModifierKeys)
         : FInputEvent(InEventType, InModifierKeys)
         , Key(Keys::Unknown)
-        , CursorPosition(InCursorPosition)
+        , ScreenPosition(InScreenPosition)
+        , ClientOrigin(InClientOrigin)
         , ScrollDelta(0.0f)
         , ScrollAxis(EScrollAxis::Vertical)
         , bIsDown(false)
@@ -117,7 +121,8 @@ public:
     FCursorEvent(EInputEventType InEventType, FKey InKey, const FModifierKeyState& InModifierKeys)
         : FInputEvent(InEventType, InModifierKeys)
         , Key(InKey)
-        , CursorPosition()
+        , ScreenPosition()
+        , ClientOrigin()
         , ScrollDelta(0.0f)
         , ScrollAxis(EScrollAxis::Vertical)
         , bIsDown(false)
@@ -128,7 +133,20 @@ public:
     FCursorEvent(EInputEventType InEventType, FKey InKey, const FModifierKeyState& InModifierKeys, bool bInIsDown)
         : FInputEvent(InEventType, InModifierKeys)
         , Key(InKey)
-        , CursorPosition()
+        , ScreenPosition()
+        , ClientOrigin()
+        , ScrollDelta(0.0f)
+        , ScrollAxis(EScrollAxis::Vertical)
+        , bIsDown(bInIsDown)
+    {
+        CHECK(InKey.IsMouseButton());
+    }
+
+    FCursorEvent(EInputEventType InEventType, FKey InKey, const IntVector2& InScreenPosition, const IntVector2& InClientOrigin, const FModifierKeyState& InModifierKeys, bool bInIsDown)
+        : FInputEvent(InEventType, InModifierKeys)
+        , Key(InKey)
+        , ScreenPosition(InScreenPosition)
+        , ClientOrigin(InClientOrigin)
         , ScrollDelta(0.0f)
         , ScrollAxis(EScrollAxis::Vertical)
         , bIsDown(bInIsDown)
@@ -139,7 +157,8 @@ public:
     FCursorEvent(EInputEventType InEventType, const FModifierKeyState& InModifierKeys, float InScrollDelta, EScrollAxis InScrollAxis)
         : FInputEvent(InEventType, InModifierKeys)
         , Key(Keys::Unknown)
-        , CursorPosition()
+        , ScreenPosition()
+        , ClientOrigin()
         , ScrollDelta(InScrollDelta)
         , ScrollAxis(InScrollAxis)
         , bIsDown(false)
@@ -151,9 +170,23 @@ public:
         return Key;
     }
 
-    const IntVector2& GetCursorPos() const
+    /** @brief The position in screen space, which is the space the platform delivers the event in. */
+    NODISCARD const IntVector2& GetScreenPosition() const
     {
-        return CursorPosition;
+        return ScreenPosition;
+    }
+
+    /** @brief The position in the space the elements were arranged in, which is the client area of the window under the cursor. */
+    NODISCARD IntVector2 GetClientPosition() const
+    {
+        return ScreenPosition - ClientOrigin;
+    }
+
+    /** @brief The raw delta a high-precision event carries, which is a movement rather than a position. */
+    NODISCARD const IntVector2& GetHighPrecisionDelta() const
+    {
+        CHECK(GetEventType() == EInputEventType::HighPrecisionMouse);
+        return ScreenPosition;
     }
 
     EScrollAxis GetScrollAxis() const
@@ -173,7 +206,8 @@ public:
 
 private:
     FKey        Key;
-    IntVector2  CursorPosition;
+    IntVector2  ScreenPosition;
+    IntVector2  ClientOrigin;
     float       ScrollDelta;
     EScrollAxis ScrollAxis;
     bool        bIsDown : 1;

@@ -81,11 +81,8 @@ public:
     NODISCARD FConsoleWordRange FindWordRangeAtTextCursor() const;
 
     /**
-     * @brief Recomputes the candidate list from the word at the text cursor.
-     *
-     * The candidates are always dropped first and then refilled from FConsoleManager, and finding
-     * any of them resets the history walk, so erasing the line and pressing up starts from the end
-     * of the history again.
+     * @brief Recomputes the candidate list from the word at the text cursor. Finding any candidate
+     * resets the history walk, so erasing the line and pressing up starts from the end of it again.
      */
     void RefreshCandidates();
 
@@ -127,10 +124,9 @@ public:
     void MoveSelectionDown();
 
     /**
-     * @brief Tab. Replaces the word at the text cursor with the selected candidate.
+     * @brief Tab. Replaces the word at the text cursor with the selected candidate. A selection is
+     * required, so tab does nothing until an arrow key has picked a candidate.
      *
-     * A selection is required, so tab does nothing until an arrow key has picked a candidate. This
-     * matches the old behavior.
      * @return True when the text changed.
      */
     bool AcceptCompletion();

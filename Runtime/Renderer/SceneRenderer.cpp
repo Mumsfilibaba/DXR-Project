@@ -9,6 +9,7 @@
 #include "Core/Tasks/Tasks.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
+#include "Application/Application.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "Engine/Engine.h"
 #if EDITOR_BUILD
@@ -240,6 +241,7 @@ FSceneRenderer::FSceneRenderer()
     , ReflectionDenoisePass(nullptr)
     , RayTracingPrimaryDebugPass(nullptr)
     , LastFrameFinishedEvent(nullptr)
+    , ApplicationRenderer(nullptr)
     , TimestampQueries(nullptr)
     , CommandList()
 #if SUPPORT_VARIABLE_RATE_SHADING
@@ -261,6 +263,17 @@ FSceneRenderer::~FSceneRenderer()
     }
 
     CommandList.Reset();
+
+    if (FApplication::IsInitialized())
+    {
+        FApplication::Get().SetRenderer(nullptr);
+    }
+
+    if (ApplicationRenderer)
+    {
+        ApplicationRenderer->ReleaseRHI();
+        ApplicationRenderer.Reset();
+    }
 
     SAFE_DELETE(DepthPrePass);
     SAFE_DELETE(BasePass);
@@ -447,6 +460,13 @@ bool FSceneRenderer::Initialize()
         }
     }
 
+    ApplicationRenderer = MakeSharedPtr<FApplicationRenderer>();
+    if (!ApplicationRenderer->InitializeRHI())
+    {
+        return false;
+    }
+
+    FApplication::Get().SetRenderer(ApplicationRenderer);
     return true;
 }
 
@@ -1545,7 +1565,27 @@ void FSceneRenderer::RecordUI()
         {
             IImguiPlugin::Get().Draw(UICommandList);
         }
+
+        RecordApplicationUI();
     }
+}
+
+void FSceneRenderer::RecordApplicationUI()
+{
+    if (!ApplicationRenderer)
+    {
+        return;
+    }
+
+    TSharedPtr<FSceneViewport> SceneViewport = FEngine::Get() ? FEngine::Get()->GetSceneViewport() : nullptr;
+    if (!SceneViewport)
+    {
+        return;
+    }
+
+    FApplication::Get().DrawWindows();
+
+    ApplicationRenderer->Render(UICommandList, SceneViewport->GetRHISwapChain().Get());
 }
 
 void FSceneRenderer::SubmitUIAndPresent(const FSceneRenderPacket& Packet)

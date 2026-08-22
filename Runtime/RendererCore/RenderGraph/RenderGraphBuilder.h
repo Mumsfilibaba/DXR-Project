@@ -29,6 +29,11 @@ public:
     NODISCARD FRenderGraphBuffer*              RegisterExternalBuffer(FRHIBuffer* Buffer, const CHAR* Name, ERHIResourceState InitialState, ERHIResourceState FinalState);
     NODISCARD FRenderGraphTexture*             RegisterExternalTexture(FRHITexture* Texture, const CHAR* Name, ERHIResourceState InitialState, ERHIResourceState FinalState);
 
+    NODISCARD FRenderGraphShaderResourceView*  RegisterExternalSRV(FRenderGraphTexture* Texture, FRHIShaderResourceView* View, const CHAR* Name);
+    NODISCARD FRenderGraphUnorderedAccessView* RegisterExternalUAV(FRenderGraphTexture* Texture, FRHIUnorderedAccessView* View, const CHAR* Name);
+    NODISCARD FRenderGraphRenderTargetView*    RegisterExternalRTV(FRenderGraphTexture* Texture, FRHIRenderTargetView* View, const CHAR* Name);
+    NODISCARD FRenderGraphDepthStencilView*    RegisterExternalDSV(FRenderGraphTexture* Texture, FRHIDepthStencilView* View, const CHAR* Name);
+
     NODISCARD FRenderGraphShaderResourceView*  CreateSRV(FRenderGraphTexture* Texture, const FRHIShaderResourceViewDesc& Desc, const CHAR* Name);
     NODISCARD FRenderGraphUnorderedAccessView* CreateUAV(FRenderGraphTexture* Texture, const FRHIUnorderedAccessViewDesc& Desc, const CHAR* Name);
     NODISCARD FRenderGraphRenderTargetView*    CreateRTV(FRenderGraphTexture* Texture, const FRHIRenderTargetViewDesc& Desc, const CHAR* Name);
@@ -112,13 +117,16 @@ public:
     }
 
 private:
+
     friend class FRenderGraphPassBuilder;
 
     NODISCARD static bool IsAccessPlannedThroughView(const FRenderGraphPass& Pass, FRenderGraphTexture* Texture, ERHIResourceState State, bool bIsWrite);
-
     NODISCARD static bool IsAccessPlannedThroughView(const FRenderGraphPass& Pass, FRenderGraphBuffer* Buffer, ERHIResourceState State, bool bIsWrite);
 
     NODISCARD FRenderGraphPass* AllocatePass(const CHAR* InName, ERenderGraphPassFlags InFlags, bool bEnabled = true);
+
+    NODISCARD bool ValidateExternalViewRegistration(FRenderGraphTexture* Texture, const void* View, const CHAR* ViewKind, const CHAR* Name);
+    NODISCARD bool ValidateViewCreation(FRenderGraphTexture* Texture, const CHAR* ViewKind, const CHAR* Name);
 
     void CullPasses();
     void ResolveLifetimes();

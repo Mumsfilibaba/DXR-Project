@@ -20,9 +20,6 @@
 #include "RendererCore/RenderSettings.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
-#if ENGINE_DEBUG_INPUT
-    #include "Engine/Debug/InputDebugInputHandler.h"
-#endif
 
 static FAutoConsoleCommand CCmdExit(
     "Engine.Exit",
@@ -138,7 +135,6 @@ bool FEngine::CreateEngineViewport()
     ViewportInitializer.ViewportInterface = nullptr;
 
     EngineViewportElement = FViewportElement::Create(ViewportInitializer);
-    EngineViewportElement->SetParentElement(EngineWindow->AsWeakPtr());
 
     EngineWindow->SetOnWindowMoved(FOnWindowMoved::CreateRaw(this, &FEngine::OnEngineWindowMoved));
     EngineWindow->SetOnWindowClosed(FOnWindowClosed::CreateRaw(this, &FEngine::OnEngineWindowClosed));
@@ -209,14 +205,6 @@ bool FEngine::Init()
     {
         return false;
     }
-
-#if ENGINE_DEBUG_INPUT
-    InputDebugInputHandler = MakeSharedPtr<FInputDebugInputHandler>();
-    if (FApplication::IsInitialized() && InputDebugInputHandler)
-    {
-        FApplication::Get().RegisterInputHandler(InputDebugInputHandler);
-    }
-#endif
 
     // Create standard textures
     uint8 Pixels[4] = { 255, 255, 255, 255 };
@@ -409,14 +397,6 @@ void FEngine::Release()
     {
         IImguiPlugin::Get().SetMainViewport(nullptr);
     }
-
-#if ENGINE_DEBUG_INPUT
-    if (FApplication::IsInitialized() && InputDebugInputHandler)
-    {
-        FApplication::Get().UnregisterInputHandler(InputDebugInputHandler);
-        InputDebugInputHandler.Reset();
-    }
-#endif
 
     // Destroy the World
     if (World)

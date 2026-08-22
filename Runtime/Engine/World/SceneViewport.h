@@ -47,14 +47,7 @@ public:
         return Viewport.IsValid() ? TSharedPtr<const FViewportElement>(Viewport) : nullptr;
     }
 
-    /**
-     * @brief Creates the RHISwapChain for this SceneViewport
-     * 
-     * @return Returns true if the creation of the RHISwapChain was successful
-     */
     bool InitializeRHI();
-
-    /** @brief Releases the RHISwapChain */
     void ReleaseRHI();
 
     /** @brief Update viewport-dependent scene state, such as the active camera projection. */

@@ -14,11 +14,12 @@ public:
     /**
      * @brief Appends a filled rectangle.
      *
-     * @param LayerId The layer to draw on.
-     * @param Bounds  The rectangle to fill.
-     * @param Tint    The fill color.
+     * @param LayerId      The layer to draw on.
+     * @param Bounds       The rectangle to fill.
+     * @param Tint         The fill color.
+     * @param CornerRadius How far each corner is rounded, in pixels, clamped to half the shorter side.
      */
-    void AddBox(int32 LayerId, const FRectangle& Bounds, const FFloatColor& Tint);
+    void AddBox(int32 LayerId, const FRectangle& Bounds, const FFloatColor& Tint, float CornerRadius = 0.0f);
 
     /**
      * @brief Appends a run of text on one line.

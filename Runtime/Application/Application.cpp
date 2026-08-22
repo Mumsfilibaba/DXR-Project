@@ -1,7 +1,9 @@
 #include "Application/Application.h"
 #include "Application/InputHandler.h"
+#include "Application/InputLogger.h"
 #include "Application/Input/Keys.h"
 #include "Application/Input/InputMapper.h"
+#include "Application/Draw/DrawCommandList.h"
 #include "Application/Elements/VisualElement.h"
 #include "Core/Math/Math.h"
 #include "Core/Misc/OutputDeviceLogger.h"
@@ -223,6 +225,14 @@ bool FApplication::Initialize()
 
     Application = MakeSharedPtr<FApplication>(PlatformApplication);
     PlatformApplication->SetMessageHandler(Application);
+
+#if APPLICATION_ENABLE_INPUT_LOGGING
+    if (FInputLogger::IsEnabled())
+    {
+        Application->RegisterInputHandler(MakeSharedPtr<FInputLogger>());
+    }
+#endif
+
     return true;
 }
 
@@ -243,6 +253,7 @@ FApplication::FApplication(TSharedPtr<IPlatformApplication> InPlatformApplicatio
     , FocusPath()
     , TrackedElements()
     , Windows()
+    , Renderer()
     , InputHandlers()
     , OnMonitorConfigChangedEvent()
     , FocusWindow()
@@ -414,7 +425,7 @@ bool FApplication::OnMouseMove(int32 MouseX, int32 MouseY)
     bIsCursorPositionValid = true;
     LastCursorPosition     = CursorPosition;
 
-    const FCursorEvent CursorEvent(EInputEventType::MouseMoved, CursorPosition, PlatformApplication->GetModifierKeyState());
+    const FCursorEvent CursorEvent(EInputEventType::MouseMoved, CursorPosition, GetClientOrigin(), PlatformApplication->GetModifierKeyState());
 
     const FEventResponse PreProcessResponse = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
@@ -428,7 +439,7 @@ bool FApplication::OnMouseMove(int32 MouseX, int32 MouseY)
     }
 
     FElementPath CursorPath;
-    FindElementsUnderCursor(CursorEvent.GetCursorPos(), CursorPath);
+    FindElementsUnderCursor(CursorEvent.GetScreenPosition(), CursorPath);
 
     const bool bKeepTracking = !PressedMouseButtons.IsEmpty() || HasMouseCapture();
     for (int32 Index = 0; Index < TrackedElements.Size();)
@@ -466,6 +477,7 @@ bool FApplication::OnMouseMove(int32 MouseX, int32 MouseY)
             return Element->OnMouseMove(CursorEvent);
         });
 
+    UpdateCursor();
     return MouseEnteredResponse.IsEventHandled() || MouseMoveResponse.IsEventHandled();
 }
 
@@ -477,7 +489,7 @@ bool FApplication::OnMouseButtonDown(const TSharedRef<IPlatformWindow>& Platform
     PlatformApplication->SetCapture(PlatformWindow);
     bIsTrackingCursor = true;
 
-    const FCursorEvent CursorEvent(EInputEventType::MouseButtonDown, FInputMapper::Get().GetMouseKey(Button), ModierKeyState, true);
+    const FCursorEvent CursorEvent(EInputEventType::MouseButtonDown, FInputMapper::Get().GetMouseKey(Button), GetCursorPosition(), GetClientOrigin(), ModierKeyState, true);
 
     const FEventResponse PreProcessResponse = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
@@ -505,7 +517,9 @@ bool FApplication::OnMouseButtonDown(const TSharedRef<IPlatformWindow>& Platform
             return Response;
         });
 
-    SetFocusElements(CursorPath);
+    SetFocusFromCursorPath(CursorPath);
+
+    UpdateCursor();
     return ElementResponse.IsEventHandled();
 }
 
@@ -520,7 +534,7 @@ bool FApplication::OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeySt
         bIsTrackingCursor = false;
     }
 
-    const FCursorEvent CursorEvent(EInputEventType::MouseButtonUp, FInputMapper::Get().GetMouseKey(Button), ModiferKeyState, false);
+    const FCursorEvent CursorEvent(EInputEventType::MouseButtonUp, FInputMapper::Get().GetMouseKey(Button), GetCursorPosition(), GetClientOrigin(), ModiferKeyState, false);
 
     const FEventResponse PreProcessResponse = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
@@ -557,12 +571,13 @@ bool FApplication::OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeySt
             return Element->OnMouseButtonUp(CursorEvent);
         });
 
+    UpdateCursor();
     return ElementResponse.IsEventHandled();
 }
 
 bool FApplication::OnMouseButtonDoubleClick(EMouseButtonName::Type Button, FModifierKeyState ModierKeyState)
 {
-    const FCursorEvent CursorEvent(EInputEventType::MouseButtonDoubleClick, FInputMapper::Get().GetMouseKey(Button), ModierKeyState, true);
+    const FCursorEvent CursorEvent(EInputEventType::MouseButtonDoubleClick, FInputMapper::Get().GetMouseKey(Button), GetCursorPosition(), GetClientOrigin(), ModierKeyState, true);
 
     const FEventResponse PreProcessResponse = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
@@ -584,7 +599,7 @@ bool FApplication::OnMouseButtonDoubleClick(EMouseButtonName::Type Button, FModi
             return Element->OnMouseDoubleClick(CursorEvent);
         });
 
-    SetFocusElements(CursorPath);
+    SetFocusFromCursorPath(CursorPath);
     return ElementResponse.IsEventHandled();
 }
 
@@ -666,7 +681,7 @@ bool FApplication::OnMouseLeft()
 
 bool FApplication::OnHighPrecisionMouseInput(int32 MouseX, int32 MouseY)
 {
-    const FCursorEvent CursorEvent(EInputEventType::HighPrecisionMouse, IntVector2(MouseX, MouseY), PlatformApplication->GetModifierKeyState());
+    const FCursorEvent CursorEvent(EInputEventType::HighPrecisionMouse, IntVector2(MouseX, MouseY), GetClientOrigin(), PlatformApplication->GetModifierKeyState());
 
     const FEventResponse PreProcessResponse = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
@@ -761,7 +776,12 @@ bool FApplication::OnWindowFocusGained(const TSharedRef<IPlatformWindow>& Platfo
     {
         TSharedPtr<FVisualElement> FocusElement = Window;
 
-        if (TSharedPtr<FVisualElement> ContentElement = Window->GetContent())
+        TSharedPtr<FVisualElement> Overlay = Window->GetOverlay();
+        if (Overlay && Overlay->IsVisible() && Overlay->CapturesAllInput())
+        {
+            FocusElement = Overlay->GetFocusTarget();
+        }
+        else if (TSharedPtr<FVisualElement> ContentElement = Window->GetContent())
         {
             if (ContentElement->GetActivationPolicy() == EElementActivationPolicy::AutoFocusOnWindowActivate)
             {
@@ -897,6 +917,11 @@ void FApplication::DestroyWindow(const TSharedPtr<FWindowElement>& DestroyedWind
             }
         }
 
+        if (Renderer)
+        {
+            Renderer->OnWindowDestroyed(DestroyedWindow);
+        }
+
         TSharedRef<IPlatformWindow> PlatformWindow = DestroyedWindow->GetPlatformWindow();
         DestroyedWindow->OnWindowDestroyed();
         Windows.Remove(DestroyedWindow);
@@ -922,13 +947,78 @@ void FApplication::Tick(float Delta)
 
     for (const TSharedPtr<FWindowElement>& CurrentWindow : Windows)
     {
-        FRectangle WindowRectangle;
-        WindowRectangle.Position = CurrentWindow->GetPosition();
-        WindowRectangle.Width    = CurrentWindow->GetSize().X;
-        WindowRectangle.Height   = CurrentWindow->GetSize().Y;
-
-        CurrentWindow->Tick(WindowRectangle);
+        LayoutWindow(CurrentWindow);
     }
+}
+
+ECursor FApplication::ResolveCursor(const FElementPath& Path)
+{
+    for (int32 Index = Path.LastIndex(); Index >= 0; --Index)
+    {
+        const TSharedPtr<FVisualElement>& Element = Path[Index];
+
+        ECursor ElementCursor = ECursor::Arrow;
+        if (Element && Element->GetCursor(ElementCursor))
+        {
+            return ElementCursor;
+        }
+    }
+
+    return ECursor::Arrow;
+}
+
+void FApplication::UpdateCursor()
+{
+    FElementPath CursorPath;
+    ResolveMouseDispatchPath(CursorPath);
+
+    SetCursor(ResolveCursor(CursorPath));
+}
+
+void FApplication::LayoutWindow(const TSharedPtr<FWindowElement>& InWindow)
+{
+    if (!InWindow)
+    {
+        return;
+    }
+
+    FRectangle WindowRectangle;
+    WindowRectangle.Position = IntVector2(0, 0);
+    WindowRectangle.Width    = InWindow->GetSize().X;
+    WindowRectangle.Height   = InWindow->GetSize().Y;
+
+    // A container sizes its slots from the cached child sizes, so the tree is measured before it is arranged
+    InWindow->PrepareDesiredSize();
+    InWindow->Tick(WindowRectangle);
+}
+
+void FApplication::DrawWindows()
+{
+    if (!Renderer)
+    {
+        return;
+    }
+
+    for (const TSharedPtr<FWindowElement>& CurrentWindow : Windows)
+    {
+        if (!CurrentWindow->IsVisible())
+        {
+            continue;
+        }
+
+        if (FDrawCommandList* CommandList = Renderer->BeginWindow(CurrentWindow))
+        {
+            const FDrawGeometry WindowGeometry(CurrentWindow->GetContentRectangle(), CurrentWindow->GetWindowDPIScale());
+            CurrentWindow->OnDraw(WindowGeometry, *CommandList, 0);
+
+            Renderer->EndWindow(CurrentWindow);
+        }
+    }
+}
+
+void FApplication::SetRenderer(const TSharedPtr<IApplicationRenderer>& InRenderer)
+{
+    Renderer = InRenderer;
 }
 
 void FApplication::ProcessEvents()
@@ -1029,7 +1119,7 @@ IntVector2 FApplication::GetCursorPosition() const
         return Cursor->GetPosition();
     }
 
-    return IntVector2();
+    return LastCursorPosition;
 }
 
 void FApplication::SetCursor(ECursor InCursor)
@@ -1092,6 +1182,26 @@ void FApplication::SetFocusElements(const FElementPath& NewFocusPath)
     }
 
     FocusPath = NewFocusPath;
+}
+
+void FApplication::SetFocusFromCursorPath(const FElementPath& CursorPath)
+{
+    // Leaf-first, so a field inside a panel takes the keyboard rather than the panel
+    for (int32 Index = CursorPath.LastIndex(); Index >= 0; --Index)
+    {
+        const TSharedPtr<FVisualElement>& Element = CursorPath[Index];
+        if (!Element || !Element->SupportsKeyboardFocus())
+        {
+            continue;
+        }
+
+        if (!FocusPath.Contains(Element))
+        {
+            SetFocusElement(Element->GetFocusTarget());
+        }
+
+        return;
+    }
 }
 
 TSharedPtr<FVisualElement> FApplication::GetFocusElementLeaf() const
@@ -1171,15 +1281,28 @@ void FApplication::FindElementsUnderCursor(FElementPath& OutCursorPath)
     }
 }
 
-void FApplication::FindElementsUnderCursor(const IntVector2& Point, FElementPath& OutCursorPath)
+void FApplication::FindElementsUnderCursor(const IntVector2& ScreenPosition, FElementPath& OutCursorPath)
 {
     if (TSharedRef<IPlatformWindow> PlatformWindow = PlatformApplication->GetWindowUnderCursor())
     {
         if (TSharedPtr<FWindowElement> CursorWindow = FindWindowFromPlatformWindow(PlatformWindow))
         {
-            CursorWindow->FindChildrenContainingPoint(Point, OutCursorPath);
+            CursorWindow->FindChildrenContainingPoint(ScreenPosition - CursorWindow->GetPosition(), OutCursorPath);
         }
     }
+}
+
+IntVector2 FApplication::GetClientOrigin()
+{
+    if (TSharedRef<IPlatformWindow> PlatformWindow = PlatformApplication->GetWindowUnderCursor())
+    {
+        if (TSharedPtr<FWindowElement> CursorWindow = FindWindowFromPlatformWindow(PlatformWindow))
+        {
+            return CursorWindow->GetPosition();
+        }
+    }
+
+    return IntVector2(0, 0);
 }
 
 void FApplication::UpdateMonitorInfo()

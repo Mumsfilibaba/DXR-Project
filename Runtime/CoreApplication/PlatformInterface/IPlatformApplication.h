@@ -40,36 +40,50 @@ public:
     {
     }
 
-    bool IsCtrlDown() const
+    NODISCARD bool IsCtrlDown() const
     {
         return (Flags & EModifierFlag::Ctrl) != EModifierFlag::None;
     }
 
-    bool IsAltDown() const
+    NODISCARD bool IsAltDown() const
     {
         return (Flags & EModifierFlag::Alt) != EModifierFlag::None;
     }
 
-    bool IsShiftDown() const
+    NODISCARD bool IsShiftDown() const
     {
         return (Flags & EModifierFlag::Shift) != EModifierFlag::None;
     }
 
-    bool IsCapsLockDown() const
+    NODISCARD bool IsCapsLockDown() const
     {
         return (Flags & EModifierFlag::CapsLock) != EModifierFlag::None;
     }
 
-    bool IsSuperDown() const
+    NODISCARD bool IsSuperDown() const
     {
         return (Flags & EModifierFlag::Super) != EModifierFlag::None;
     }
 
-    bool IsNumPadDown() const
+    NODISCARD bool IsNumPadDown() const
     {
         return (Flags & EModifierFlag::NumLock) != EModifierFlag::None;
     }
-    
+
+    NODISCARD bool IsCommandDown() const
+    {
+    #if PLATFORM_MACOS
+        return IsSuperDown();
+    #else
+        return IsCtrlDown() && !IsAltDown();
+    #endif
+    }
+
+    NODISCARD bool IsShortcutChordDown() const
+    {
+        return IsSuperDown() || (IsCtrlDown() && !IsAltDown());
+    }
+
 private:
     EModifierFlag Flags;
 };

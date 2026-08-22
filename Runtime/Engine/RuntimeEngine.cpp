@@ -1,13 +1,22 @@
 #include "Engine/RuntimeEngine.h"
+#include "Engine/EngineUI/Runtime/OverlayConsole.h"
 #include "Engine/EngineUI/Runtime/RuntimeConsoleWidget.h"
 #include "Engine/EngineUI/Editor/EditorFrameProfilerWidget.h"
 #include "Engine/World/Components/CameraComponent.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "ImGuiPlugin/ImGuiCore.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
+
+static TAutoConsoleVariable<bool> CVarUseOverlayConsole(
+    "Engine.UseOverlayConsole",
+    "True draws the console with the Application element library, false falls back to the ImGui console",
+    true,
+    EConsoleVariableFlags::Default);
 
 FRuntimeEngine::FRuntimeEngine()
     : FEngine()
     , LastRenderCamera(nullptr)
+    , OverlayConsole(nullptr)
     , ConsoleWidget(nullptr)
     , ProfilerWidget(nullptr)
 {
@@ -24,10 +33,21 @@ bool FRuntimeEngine::Init()
         return false;
     }
 
+    const bool bUseOverlayConsole = CVarUseOverlayConsole.GetValue();
+    if (bUseOverlayConsole)
+    {
+        OverlayConsole = MakeSharedPtr<FOverlayConsole>();
+        OverlayConsole->Initialize();
+    }
+
     if (IImguiPlugin::IsEnabled())
     {
         ProfilerWidget = MakeSharedPtr<FEditorFrameProfilerWidget>();
-        ConsoleWidget  = MakeSharedPtr<FRuntimeConsoleWidget>();
+
+        if (!bUseOverlayConsole)
+        {
+            ConsoleWidget = MakeSharedPtr<FRuntimeConsoleWidget>();
+        }
     }
 
     // Make sure we have focus on the engine viewport
@@ -53,6 +73,12 @@ bool FRuntimeEngine::Start()
 void FRuntimeEngine::Release()
 {
     StopPlay();
+
+    if (OverlayConsole)
+    {
+        OverlayConsole->Release();
+        OverlayConsole.Reset();
+    }
 
     if (IImguiPlugin::IsEnabled())
     {

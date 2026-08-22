@@ -2,6 +2,17 @@
 #include "RHI/RHI.h"
 #include "RendererCore/RenderGraph/RenderGraphViewCache.h"
 
+template<typename ViewType>
+static ViewType* BorrowExternalView(ViewType* View)
+{
+    if (View)
+    {
+        View->AddRef();
+    }
+
+    return View;
+}
+
 FRenderGraphViewCache::FRenderGraphViewCache()
     : NumViewsCreated(0)
     , NumViewsCacheHits(0)
@@ -69,6 +80,11 @@ FRHIShaderResourceView* FRenderGraphViewCache::CreateShaderResourceView(FRenderG
         return nullptr;
     }
 
+    if (View->IsExternal())
+    {
+        return BorrowExternalView(View->GetExternalView());
+    }
+
     if (View->GetParentKind() == ERenderGraphParentKind::Texture)
     {
         FRenderGraphTexture* Parent = View->GetParentTexture();
@@ -94,6 +110,11 @@ FRHIUnorderedAccessView* FRenderGraphViewCache::CreateUnorderedAccessView(FRende
     if (!View)
     {
         return nullptr;
+    }
+
+    if (View->IsExternal())
+    {
+        return BorrowExternalView(View->GetExternalView());
     }
 
     if (View->GetParentKind() == ERenderGraphParentKind::Texture)
@@ -123,6 +144,11 @@ FRHIRenderTargetView* FRenderGraphViewCache::CreateRenderTargetView(FRenderGraph
         return nullptr;
     }
 
+    if (View->IsExternal())
+    {
+        return BorrowExternalView(View->GetExternalView());
+    }
+
     FRenderGraphTexture* Parent = View->GetParent();
     if (!Parent || !Parent->GetRHITexture())
     {
@@ -137,6 +163,11 @@ FRHIDepthStencilView* FRenderGraphViewCache::CreateDepthStencilView(FRenderGraph
     if (!View)
     {
         return nullptr;
+    }
+
+    if (View->IsExternal())
+    {
+        return BorrowExternalView(View->GetExternalView());
     }
 
     FRenderGraphTexture* Parent = View->GetParent();

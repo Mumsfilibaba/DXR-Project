@@ -31,7 +31,9 @@ public:
             , ForegroundColor(FFloatColor::White)
             , HintColor(0.5f, 0.5f, 0.5f, 1.0f)
             , TextCursorColor(FFloatColor::White)
+            , SelectionColor(0.26f, 0.59f, 0.98f, 0.35f)
             , Padding(4, 2, 4, 2)
+            , TextCursorBlinkPeriod(1.2f)
         {
         }
 
@@ -41,11 +43,23 @@ public:
         FFloatColor           ForegroundColor;
         FFloatColor           HintColor;
         FFloatColor           TextCursorColor;
+        FFloatColor           SelectionColor;
         FMargin               Padding;
+        float                 TextCursorBlinkPeriod;
     };
 
 public:
     static TSharedPtr<FEditableTextElement> Create(const FInitializer& Initializer);
+
+    /**
+     * @brief Whether the character separates two words. The same set the console completes words with,
+     * so a caret word and a Tab-completion word are the same thing and a name like
+     * VulkanRHI.EnableBindless stays one of them.
+     *
+     * @param Character The character to test.
+     * @return True when the character separates words.
+     */
+    NODISCARD static bool IsWordSeparator(CHAR Character);
 
 public:
     FEditableTextElement();
@@ -64,8 +78,12 @@ public:
     virtual FEventResponse OnKeyChar(const FKeyEvent& KeyEvent) override;
     virtual FEventResponse OnKeyDown(const FKeyEvent& KeyEvent) override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnFocusGained() override;
     virtual FEventResponse OnFocusLost() override;
+    virtual bool GetCursor(ECursor& OutCursor) const override;
+    virtual bool SupportsKeyboardFocus() const override;
 
     /** @brief Replaces the text, clamps the text cursor and fires OnTextChanged. */
     void SetText(const String& InText);
@@ -124,22 +142,73 @@ public:
         return TextCursorPosition;
     }
 
-    /** @brief Moves the text cursor one character left, stopping at the start. */
-    void MoveTextCursorLeft();
+    /**
+     * @brief Moves the text cursor one character left, stopping at the start.
+     *
+     * @param bExtendSelection Keeps the selection anchor where it is, so the selection grows or shrinks.
+     * Otherwise the selection collapses onto the text cursor.
+     */
+    void MoveTextCursorLeft(bool bExtendSelection = false);
 
     /** @brief Moves the text cursor one character right, stopping at the end. */
-    void MoveTextCursorRight();
+    void MoveTextCursorRight(bool bExtendSelection = false);
 
     /** @brief Moves the text cursor in front of the first character. */
-    void MoveTextCursorToStart();
+    void MoveTextCursorToStart(bool bExtendSelection = false);
 
     /** @brief Moves the text cursor past the last character. */
-    void MoveTextCursorToEnd();
+    void MoveTextCursorToEnd(bool bExtendSelection = false);
 
-    /** @brief Puts the whole text on the system clipboard. */
+    /** @brief Moves the text cursor to the start of the word to its left, stopping at the start. */
+    void MoveTextCursorWordLeft(bool bExtendSelection = false);
+
+    /** @brief Moves the text cursor to the end of the word to its right, stopping at the end. */
+    void MoveTextCursorWordRight(bool bExtendSelection = false);
+
+    /**
+     * @brief The start of the word to the left of a position.
+     *
+     * @param From The position to search back from.
+     * @return The index the word starts at, or zero.
+     */
+    NODISCARD int32 FindWordBoundaryLeft(int32 From) const;
+
+    /**
+     * @brief The end of the word to the right of a position.
+     *
+     * @param From The position to search forward from.
+     * @return The index one past the end of the word, or the length of the text.
+     */
+    NODISCARD int32 FindWordBoundaryRight(int32 From) const;
+
+    /** @brief True when the anchor and the text cursor sit apart, so a range is selected. */
+    NODISCARD bool HasSelection() const;
+
+    /** @brief The first selected index, which equals the text cursor when nothing is selected. */
+    NODISCARD int32 GetSelectionStart() const;
+
+    /** @brief One past the last selected index. */
+    NODISCARD int32 GetSelectionEnd() const;
+
+    /** @brief The selected text, or an empty string when nothing is selected. */
+    NODISCARD String GetSelectedText() const;
+
+    /** @brief Selects the whole text and leaves the text cursor at the end. */
+    void SelectAll();
+
+    /** @brief Drops the selection, leaving the text cursor where it is. */
+    void ClearSelection();
+
+    /** @return True when a selected range was removed. */
+    bool DeleteSelection();
+
+    /** @brief Puts the selection on the system clipboard, or the whole text when nothing is selected. */
     void CopyToClipboard() const;
 
-    /** @brief Inserts the system clipboard text at the text cursor. */
+    /** @brief Copies as CopyToClipboard does, then removes the selection. */
+    void CutToClipboard();
+
+    /** @brief Replaces the selection with the system clipboard text, or inserts it at the text cursor. */
     void PasteFromClipboard();
 
     /**
@@ -173,8 +242,34 @@ public:
         return bHasKeyboardFocus;
     }
 
+    /**
+     * @brief Whether the text cursor is on that far into a blink. Pure, so the phase can be checked
+     * without a clock. The cursor is drawn for the first two thirds of every period, which is the on
+     * and off time ImGui blinks a caret with.
+     *
+     * @param ElapsedSeconds The time since the phase was last reset.
+     * @return True when the cursor is drawn.
+     */
+    NODISCARD bool IsTextCursorVisibleAt(double ElapsedSeconds) const;
+
+    /** @brief How long one blink lasts, in seconds. Zero leaves the text cursor solid. */
+    NODISCARD FORCEINLINE float GetTextCursorBlinkPeriod() const
+    {
+        return TextCursorBlinkPeriod;
+    }
+
 private:
     void NotifyTextChanged();
+
+    NODISCARD int32 GetTextBandHeight() const;
+    NODISCARD int32 GetTextBandTop(const FRectangle& TextBounds) const;
+
+    void MoveTextCursor(int32 NewTextCursorPosition, bool bExtendSelection);
+
+    NODISCARD int32 FindTextCursorPositionAt(const IntVector2& ClientPosition) const;
+    void ResetTextCursorBlink();
+
+    NODISCARD double GetSecondsSinceTextCursorBlinkReset() const;
 
     String                         Text;
     String                         HintText;
@@ -182,10 +277,15 @@ private:
     FFloatColor                    ForegroundColor;
     FFloatColor                    HintColor;
     FFloatColor                    TextCursorColor;
+    FFloatColor                    SelectionColor;
     FMargin                        Padding;
     FOnTextChangedDelegate         OnTextChanged;
     FOnTextCommittedDelegate       OnTextCommitted;
     FOnEditableTextKeyDownDelegate OnKeyDownInterceptor;
+    float                          TextCursorBlinkPeriod;
+    uint64                         TextCursorBlinkResetCounter;
     int32                          TextCursorPosition;
+    int32                          SelectionAnchor;
     bool                           bHasKeyboardFocus : 1;
+    bool                           bIsSelectingWithMouse : 1;
 };

@@ -33,21 +33,21 @@ int32 FBoxElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLis
         }
 
         const FDrawGeometry ChildGeometry(Slot.Element->GetContentRectangle(), AllottedGeometry.Scale);
-        MaxLayerId = Math::Max(MaxLayerId, Slot.Element->OnDraw(ChildGeometry, OutCommandList, LayerId + 1));
+        MaxLayerId = Slot.Element->OnDraw(ChildGeometry, OutCommandList, MaxLayerId + 1);
     }
 
     return MaxLayerId;
 }
 
-void FBoxElement::FindChildrenContainingPoint(const IntVector2& ScreenCursorPosition, FElementPath& OutChildElements)
+void FBoxElement::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
 {
-    FVisualElement::FindChildrenContainingPoint(ScreenCursorPosition, OutChildElements);
+    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
 
     for (const FBoxSlot& Slot : Slots)
     {
         if (Slot.Element)
         {
-            Slot.Element->FindChildrenContainingPoint(ScreenCursorPosition, OutChildElements);
+            Slot.Element->FindChildrenContainingPoint(ClientPosition, OutChildElements);
         }
     }
 }

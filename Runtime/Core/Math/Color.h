@@ -32,12 +32,12 @@ public:
     }
 
     /**
-     * @brief Packs the RGBA channels into a 32-bit unsigned integer.
-     * @return A 32-bit unsigned integer representing the packed color.
+     * @brief Packs the channels into a 32-bit unsigned integer, in memory order.
+     * @return The channels as R, G, B, A from the lowest byte up, which is what EFormat::R8G8B8A8_Unorm reads.
      */
     FORCEINLINE uint32 ToPackedRGBA() const
     {
-        return (static_cast<uint32>(R) << 24) | (static_cast<uint32>(G) << 16) | (static_cast<uint32>(B) << 8) | static_cast<uint32>(A);
+        return PackedRGBA;
     }
 
     /**

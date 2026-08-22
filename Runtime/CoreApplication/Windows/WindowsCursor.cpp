@@ -3,64 +3,62 @@
 #include "CoreApplication/Windows/WindowsCursor.h"
 #include "CoreApplication/Windows/WindowsWindow.h"
 
+static LPSTR ResolveCursorName(ECursor Cursor)
+{
+    switch (Cursor)
+    {
+    case ECursor::TextInput:
+        return IDC_IBEAM;
+
+    case ECursor::ResizeAll:
+        return IDC_SIZEALL;
+
+    case ECursor::ResizeEW:
+        return IDC_SIZEWE;
+
+    case ECursor::ResizeNS:
+        return IDC_SIZENS;
+
+    case ECursor::ResizeNESW:
+        return IDC_SIZENESW;
+
+    case ECursor::ResizeNWSE:
+        return IDC_SIZENWSE;
+
+    case ECursor::Hand:
+        return IDC_HAND;
+
+    case ECursor::NotAllowed:
+        return IDC_NO;
+
+    default:
+        return IDC_ARROW;
+    }
+}
+
 FWindowsCursor::FWindowsCursor()
-    : bIsVisible(true)
+    : CurrentCursor(ECursor::Arrow)
+    , bIsVisible(true)
 {
 }
 
 void FWindowsCursor::SetCursor(ECursor Cursor)
 {
-    LPSTR CursorName = NULL;
-    switch (Cursor)
+    CurrentCursor = Cursor;
+
+    if (Cursor == ECursor::None)
     {
-    case ECursor::Arrow:
-        CursorName = IDC_ARROW;
-        break;
-
-    case ECursor::TextInput:
-        CursorName = IDC_IBEAM;
-        break;
-
-    case ECursor::ResizeAll:
-        CursorName = IDC_SIZEALL;
-        break;
-
-    case ECursor::ResizeEW:
-        CursorName = IDC_SIZEWE;
-        break;
-
-    case ECursor::ResizeNS:
-        CursorName = IDC_SIZENS;
-        break;
-
-    case ECursor::ResizeNESW:
-        CursorName = IDC_SIZENESW;
-        break;
-
-    case ECursor::ResizeNWSE:
-        CursorName = IDC_SIZENWSE;
-        break;
-
-    case ECursor::Hand:
-        CursorName = IDC_HAND;
-        break;
-
-    case ECursor::NotAllowed:
-        CursorName = IDC_NO;
-        break;
-
-    default:
-        CursorName = NULL;
-        break;
+        ::SetCursor(nullptr);
+        return;
     }
 
-    HCURSOR CursorHandle = LoadCursor(NULL, CursorName);
-    if (CursorHandle)
+    HCURSOR CursorHandle = ::LoadCursor(nullptr, ResolveCursorName(Cursor));
+    if (!CursorHandle)
     {
-        ::SetCursor(CursorHandle);
+        CursorHandle = ::LoadCursor(nullptr, IDC_ARROW);
     }
 
-    // TODO: Log error
+    ::SetCursor(CursorHandle);
 }
 
 void FWindowsCursor::SetPosition(int32 x, int32 y)

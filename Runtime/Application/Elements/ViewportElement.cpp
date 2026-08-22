@@ -163,3 +163,8 @@ FEventResponse FViewportElement::OnFocusGained()
 {
     return ViewportInterface ? ViewportInterface->OnFocusGained() : FEventResponse::Unhandled();
 }
+
+bool FViewportElement::SupportsKeyboardFocus() const
+{
+    return true;
+}

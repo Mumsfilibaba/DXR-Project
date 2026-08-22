@@ -8,9 +8,11 @@ public:
     virtual ~FFixedWidthFontFace();
 
     // IFontFace Interface
+    virtual const FFontAtlas* GetAtlas() const override final;
     virtual int32 GetLineHeight() const override final;
     virtual int32 GetAscent() const override final;
     virtual int32 GetDescent() const override final;
+    virtual int32 GetCapHeight() const override final;
     virtual int32 GetCharacterAdvance(CHAR Character) const override final;
     virtual int32 MeasureWidth(const StringView& Text) const override final;
     virtual int32 FindCharacterIndexAtOffset(const StringView& Text, int32 OffsetX) const override final;

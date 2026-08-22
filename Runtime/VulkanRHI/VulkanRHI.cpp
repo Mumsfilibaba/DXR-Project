@@ -50,6 +50,11 @@ static TAutoConsoleVariable<bool> CVarVulkanEnableCrashMarkers(
     true);
 #endif
 
+static bool IsBackBuffer(FRHIResource* InResource)
+{
+    return InResource && InResource->GetResourceType() == ERHIResourceType::Texture && static_cast<FRHITexture*>(InResource)->GetDesc().IsPresentable();
+}
+
 FRHIDevice* FVulkanModuleRHI::CreateDevice()
 {
     TUniquePtr<FVulkanDeviceRHI> NewRHI = MakeUniquePtr<FVulkanDeviceRHI>();
@@ -901,6 +906,12 @@ FRHIShaderResourceView* FVulkanDeviceRHI::CreateShaderResourceView(FRHIResource*
         return nullptr;
     }
 
+    if (IsBackBuffer(InResource))
+    {
+        VULKAN_ERROR_CRITICAL("CreateShaderResourceView: cannot create a view from the back-buffer.");
+        return nullptr;
+    }
+
     if (InDesc.IsBufferSRV())
     {
         VULKAN_ERROR_COND(InResource->GetResourceType() == ERHIResourceType::Buffer,
@@ -938,6 +949,12 @@ FRHIUnorderedAccessView* FVulkanDeviceRHI::CreateUnorderedAccessView(FRHIResourc
     if (!InResource)
     {
         VULKAN_ERROR_CRITICAL("CreateUnorderedAccessView: Resource cannot be nullptr");
+        return nullptr;
+    }
+
+    if (IsBackBuffer(InResource))
+    {
+        VULKAN_ERROR_CRITICAL("CreateUnorderedAccessView: cannot create a view from the back-buffer.");
         return nullptr;
     }
 
@@ -982,6 +999,12 @@ FRHIRenderTargetView* FVulkanDeviceRHI::CreateRenderTargetView(FRHIResource* InR
         return nullptr;
     }
 
+    if (IsBackBuffer(InResource))
+    {
+        VULKAN_ERROR_CRITICAL("CreateRenderTargetView: cannot create a view from the back-buffer.");
+        return nullptr;
+    }
+
     VULKAN_ERROR_COND(InResource->GetResourceType() == ERHIResourceType::Texture,
         "CreateRenderTargetView: requires an FRHITexture resource");
     CHECK(IsViewDimensionCompatible(static_cast<FRHITexture*>(InResource)->GetDesc().Dimension, InDesc.ViewDimension));
@@ -1000,6 +1023,12 @@ FRHIDepthStencilView* FVulkanDeviceRHI::CreateDepthStencilView(FRHIResource* InR
     if (!InResource)
     {
         VULKAN_ERROR_CRITICAL("CreateDepthStencilView: Resource cannot be nullptr");
+        return nullptr;
+    }
+
+    if (IsBackBuffer(InResource))
+    {
+        VULKAN_ERROR_CRITICAL("CreateDepthStencilView: cannot create a view from the back-buffer.");
         return nullptr;
     }
 

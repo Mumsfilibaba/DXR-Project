@@ -1,7 +1,9 @@
 #pragma once
 #include "Application/Application.h"
 #include "Application/Events.h"
+#include "Application/IApplicationRenderer.h"
 #include "Application/InputHandler.h"
+#include "Application/InputLogger.h"
 #include "Application/IViewport.h"
 #include "Application/ElementPath.h"
 
@@ -17,6 +19,7 @@
 
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Draw/DrawTypes.h"
+#include "Application/Draw/UIDrawData.h"
 
 #include "Application/Elements/BorderElement.h"
 #include "Application/Elements/BoxElements.h"
@@ -29,4 +32,6 @@
 #include "Application/Elements/WindowElement.h"
 
 #include "Application/Text/FixedWidthFontFace.h"
+#include "Application/Text/FontAtlas.h"
 #include "Application/Text/IFontFace.h"
+#include "Application/Text/TrueTypeFontFace.h"

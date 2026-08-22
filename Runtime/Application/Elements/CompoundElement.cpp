@@ -51,13 +51,13 @@ int32 FCompoundElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComma
     return Content->OnDraw(ContentGeometry, OutCommandList, LayerId + 1);
 }
 
-void FCompoundElement::FindChildrenContainingPoint(const IntVector2& ScreenCursorPosition, FElementPath& OutChildElements)
+void FCompoundElement::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
 {
-    FVisualElement::FindChildrenContainingPoint(ScreenCursorPosition, OutChildElements);
+    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
 
     if (Content)
     {
-        Content->FindChildrenContainingPoint(ScreenCursorPosition, OutChildElements);
+        Content->FindChildrenContainingPoint(ClientPosition, OutChildElements);
     }
 }
 

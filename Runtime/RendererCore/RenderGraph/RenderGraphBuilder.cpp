@@ -448,12 +448,113 @@ FRenderGraphBuffer* FRenderGraphBuilder::RegisterExternalBuffer(FRHIBuffer* Buff
     return GraphBuffer;
 }
 
-FRenderGraphShaderResourceView* FRenderGraphBuilder::CreateSRV(FRenderGraphTexture* Texture, const FRHIShaderResourceViewDesc& Desc, const CHAR* InName)
+bool FRenderGraphBuilder::ValidateExternalViewRegistration(FRenderGraphTexture* Texture, const void* View, const CHAR* ViewKind, const CHAR* InName)
 {
     if (!Texture)
     {
-        LOG_ERROR("Graph '%s' cannot create an SRV on a null texture", Name);
+        LOG_ERROR("Graph '%s' cannot register the external %s '%s' without a texture to hang it on", Name, ViewKind, InName ? InName : "Unnamed");
         SetHasErrors(true);
+        return false;
+    }
+
+    if (!View)
+    {
+        LOG_ERROR("Graph '%s' cannot register a null external %s as '%s'", Name, ViewKind, InName ? InName : "Unnamed");
+        SetHasErrors(true);
+        return false;
+    }
+
+    return true;
+}
+
+bool FRenderGraphBuilder::ValidateViewCreation(FRenderGraphTexture* Texture, const CHAR* ViewKind, const CHAR* InName)
+{
+    if (!Texture)
+    {
+        LOG_ERROR("Graph '%s' cannot create %s '%s' on a null texture", Name, ViewKind, InName ? InName : "Unnamed");
+        SetHasErrors(true);
+        return false;
+    }
+
+    if (Texture->GetDesc().TextureDesc.IsPresentable())
+    {
+        LOG_ERROR("Graph '%s' cannot create %s '%s' on back-buffer '%s'. Hand its own view to RegisterExternal%s instead",
+            Name, ViewKind, InName ? InName : "Unnamed", Texture->GetName(), ViewKind);
+        SetHasErrors(true);
+        return false;
+    }
+
+    return true;
+}
+
+FRenderGraphShaderResourceView* FRenderGraphBuilder::RegisterExternalSRV(FRenderGraphTexture* Texture, FRHIShaderResourceView* ShaderResourceView, const CHAR* InName)
+{
+    if (!ValidateExternalViewRegistration(Texture, ShaderResourceView, "SRV", InName))
+    {
+        return nullptr;
+    }
+
+    FRenderGraphShaderResourceView* View = AllocateShaderAccessTextureView<FRenderGraphShaderResourceView>(Texture, ShaderResourceView->GetDesc(), InName);
+    View->ExternalView = ShaderResourceView;
+    ShaderResourceViews.Emplace(View);
+    DefaultShaderResourceViews.Emplace(View);
+
+    RenderGraphViewValidation::ValidateShaderResourceView(*this, View);
+    return View;
+}
+
+FRenderGraphUnorderedAccessView* FRenderGraphBuilder::RegisterExternalUAV(FRenderGraphTexture* Texture, FRHIUnorderedAccessView* UnorderedAccessView, const CHAR* InName)
+{
+    if (!ValidateExternalViewRegistration(Texture, UnorderedAccessView, "UAV", InName))
+    {
+        return nullptr;
+    }
+
+    FRenderGraphUnorderedAccessView* View = AllocateShaderAccessTextureView<FRenderGraphUnorderedAccessView>(Texture, UnorderedAccessView->GetDesc(), InName);
+    View->ExternalView = UnorderedAccessView;
+    UnorderedAccessViews.Emplace(View);
+    DefaultUnorderedAccessViews.Emplace(View);
+
+    RenderGraphViewValidation::ValidateUnorderedAccessView(*this, View);
+    return View;
+}
+
+FRenderGraphRenderTargetView* FRenderGraphBuilder::RegisterExternalRTV(FRenderGraphTexture* Texture, FRHIRenderTargetView* RenderTargetView, const CHAR* InName)
+{
+    if (!ValidateExternalViewRegistration(Texture, RenderTargetView, "RTV", InName))
+    {
+        return nullptr;
+    }
+
+    FRenderGraphRenderTargetView* View = AllocateTextureView<FRenderGraphRenderTargetView>(Texture, RenderTargetView->GetDesc(), InName);
+    View->ExternalView = RenderTargetView;
+    RenderTargetViews.Emplace(View);
+    DefaultRenderTargetViews.Emplace(View);
+
+    RenderGraphViewValidation::ValidateRenderTargetView(*this, View);
+    return View;
+}
+
+FRenderGraphDepthStencilView* FRenderGraphBuilder::RegisterExternalDSV(FRenderGraphTexture* Texture, FRHIDepthStencilView* DepthStencilView, const CHAR* InName)
+{
+    if (!ValidateExternalViewRegistration(Texture, DepthStencilView, "DSV", InName))
+    {
+        return nullptr;
+    }
+
+    FRenderGraphDepthStencilView* View = AllocateTextureView<FRenderGraphDepthStencilView>(Texture, DepthStencilView->GetDesc(), InName);
+    View->ExternalView = DepthStencilView;
+    DepthStencilViews.Emplace(View);
+    DefaultDepthStencilViews.Emplace(View);
+
+    RenderGraphViewValidation::ValidateDepthStencilView(*this, View);
+    return View;
+}
+
+FRenderGraphShaderResourceView* FRenderGraphBuilder::CreateSRV(FRenderGraphTexture* Texture, const FRHIShaderResourceViewDesc& Desc, const CHAR* InName)
+{
+    if (!ValidateViewCreation(Texture, "SRV", InName))
+    {
         return nullptr;
     }
 
@@ -466,10 +567,8 @@ FRenderGraphShaderResourceView* FRenderGraphBuilder::CreateSRV(FRenderGraphTextu
 
 FRenderGraphUnorderedAccessView* FRenderGraphBuilder::CreateUAV(FRenderGraphTexture* Texture, const FRHIUnorderedAccessViewDesc& Desc, const CHAR* InName)
 {
-    if (!Texture)
+    if (!ValidateViewCreation(Texture, "UAV", InName))
     {
-        LOG_ERROR("Graph '%s' cannot create a UAV on a null texture", Name);
-        SetHasErrors(true);
         return nullptr;
     }
 
@@ -482,10 +581,8 @@ FRenderGraphUnorderedAccessView* FRenderGraphBuilder::CreateUAV(FRenderGraphText
 
 FRenderGraphRenderTargetView* FRenderGraphBuilder::CreateRTV(FRenderGraphTexture* Texture, const FRHIRenderTargetViewDesc& Desc, const CHAR* InName)
 {
-    if (!Texture)
+    if (!ValidateViewCreation(Texture, "RTV", InName))
     {
-        LOG_ERROR("Graph '%s' cannot create an RTV on a null texture", Name);
-        SetHasErrors(true);
         return nullptr;
     }
 
@@ -498,10 +595,8 @@ FRenderGraphRenderTargetView* FRenderGraphBuilder::CreateRTV(FRenderGraphTexture
 
 FRenderGraphDepthStencilView* FRenderGraphBuilder::CreateDSV(FRenderGraphTexture* Texture, const FRHIDepthStencilViewDesc& Desc, const CHAR* InName)
 {
-    if (!Texture)
+    if (!ValidateViewCreation(Texture, "DSV", InName))
     {
-        LOG_ERROR("Graph '%s' cannot create a DSV on a null texture", Name);
-        SetHasErrors(true);
         return nullptr;
     }
 

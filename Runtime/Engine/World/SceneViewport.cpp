@@ -180,17 +180,25 @@ TSharedPtr<FWindowElement> FSceneViewport::GetCaptureWindow() const
 
 FRectangle FSceneViewport::GetCaptureRect() const
 {
+    const TSharedPtr<FWindowElement> Window = GetCaptureWindow();
+
     if (Viewport.IsValid())
     {
         const FRectangle& ViewportArea = Viewport->GetContentRectangle();
         if (ViewportArea.Width > 0 && ViewportArea.Height > 0)
         {
-            return ViewportArea;
+            FRectangle ScreenRect = ViewportArea;
+            if (Window)
+            {
+                ScreenRect.Position += Window->GetPosition();
+            }
+
+            return ScreenRect;
         }
     }
 
     FRectangle WindowRect;
-    if (const TSharedPtr<FWindowElement> Window = GetCaptureWindow())
+    if (Window)
     {
         const IntVector2 WindowSize = Window->GetSize();
         WindowRect.Position = Window->GetPosition();
@@ -392,7 +400,7 @@ FEventResponse FSceneViewport::OnMouseEntered(const FCursorEvent& CursorEvent)
 
 FEventResponse FSceneViewport::OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent)
 {
-    const IntVector2 Delta = CursorEvent.GetCursorPos();
+    const IntVector2 Delta = CursorEvent.GetHighPrecisionDelta();
 
     if (bPlayerInputEnabled && bDiscardCaptureWarpDelta)
     {
