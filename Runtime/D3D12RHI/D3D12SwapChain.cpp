@@ -616,6 +616,14 @@ bool FD3D12SwapChainRHI::QueryDisplayHDRInfo(FRHIDisplayHDRInfo& OutInfo) const
 #endif
 }
 
+void FD3D12SwapChainRHI::AcquireNextBackBuffer()
+{
+    if (SwapChain)
+    {
+        BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
+    }
+}
+
 bool FD3D12SwapChainRHI::Present(bool bVerticalSync)
 {
     TRACE_FUNCTION_SCOPE();
@@ -634,8 +642,6 @@ bool FD3D12SwapChainRHI::Present(bool bVerticalSync)
 
     if (SUCCEEDED(Result))
     {
-        BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
-
         if (Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
         {
             const DWORD WaitResult = WaitForSingleObjectEx(SwapChainWaitableObject, INFINITE, TRUE);

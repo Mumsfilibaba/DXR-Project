@@ -130,6 +130,7 @@ struct FRenderGraphResourceState
     ERHIResourceState                    FinalState                = ERHIResourceState::Common;
     ERHIResourceState                    AcquiredState             = ERHIResourceState::Common;
     bool                                 bInitialStateIsUnverified = false;
+    bool                                 bContentsUndefined        = false;
     bool                                 bWrittenAsUnorderedAccess = false;
     bool                                 bSubresourcesDiverged     = false;
     uint32                               NumTrackedMipLevels       = 0;

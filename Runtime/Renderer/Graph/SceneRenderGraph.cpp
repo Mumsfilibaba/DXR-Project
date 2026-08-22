@@ -247,8 +247,12 @@ void FSceneRenderer::BuildAndExecuteSceneGraph(const FSceneRenderView& SceneRend
 
     if (SceneRenderView.RenderTarget)
     {
+        const ERHIResourceState BackBufferInitialState = SceneRenderView.RenderTarget->GetDesc().IsPresentable()
+            ? ERHIResourceState::Undefined
+            : ERHIResourceState::RenderTarget;
+
         Context.BackBuffer = GraphBuilder.RegisterExternalTexture(SceneRenderView.RenderTarget, "BackBuffer",
-            ERHIResourceState::RenderTarget, ERHIResourceState::RenderTarget);
+            BackBufferInitialState, ERHIResourceState::RenderTarget);
 
         if (SceneRenderView.RenderTarget->GetDesc().IsPresentable())
         {

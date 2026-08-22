@@ -1629,6 +1629,22 @@ DECLARE_RHICOMMAND(FRHICommandDebugBreak)
     }
 };
 
+DECLARE_RHICOMMAND(FRHICommandAcquireNextBackBuffer)
+{
+    FORCEINLINE FRHICommandAcquireNextBackBuffer(FRHISwapChain* InSwapChain)
+        : SwapChain(InSwapChain)
+    {
+        CHECK(InSwapChain != nullptr);
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.AcquireNextBackBuffer(SwapChain);
+    }
+
+    FRHISwapChain* SwapChain;
+};
+
 DECLARE_RHICOMMAND(FRHICommandPresentSwapChain)
 {
     FORCEINLINE FRHICommandPresentSwapChain(FRHISwapChain* InSwapChain, bool bInVerticalSync)

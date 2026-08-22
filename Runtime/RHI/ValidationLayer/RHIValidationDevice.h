@@ -5,6 +5,7 @@
 #include "RHI/ValidationLayer/RHIValidationStateTracker.h"
 
 class FRHIValidationCommandContext;
+class FRHIValidationSwapChain;
 
 class RHI_API FRHIValidationDevice : public FRHIDevice
 {
@@ -81,7 +82,11 @@ public:
 
     virtual ERHIType GetRHIType() const override final;
 
+    NODISCARD FRHIValidationSwapChain* FindSwapChainForBackBuffer(const FRHIResource* Texture) const;
+    NODISCARD FRHIValidationSwapChain* FindValidationSwapChain(const FRHIResource* Resource) const;
+
 private:
+
     template<typename ResourceType>
     ResourceType* TrackLiveResource(ResourceType* Resource)
     {
@@ -97,4 +102,5 @@ private:
     FRHIValidationStateTracker                               StateTracker;
     TSet<FRHIResource*>                                      LiveResources;
     TMap<IRHICommandContext*, FRHIValidationCommandContext*> RealContextToValidationContextMap;
+    TMap<const FRHIResource*, FRHIValidationSwapChain*>      BackBufferToSwapChain;
 };

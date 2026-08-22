@@ -597,6 +597,8 @@ enum class ERHIResourceState : uint32
     GenericRead                     = FLAG(16),
     StreamOutput                    = FLAG(17),
     IndirectArgument                = FLAG(18),
+    /** @brief Contents are unspecified. Only valid as a barrier's before-state, and the transition discards the contents */
+    Undefined                       = FLAG(19),
     ShaderResource                  = NonPixelShaderResource | PixelShaderResource,
 };
 
@@ -626,6 +628,7 @@ NODISCARD constexpr const CHAR* ToString(ERHIResourceState ResourceState)
     case ERHIResourceState::GenericRead:                     return "GenericRead";
     case ERHIResourceState::StreamOutput:                    return "StreamOutput";
     case ERHIResourceState::IndirectArgument:                return "IndirectArgument";
+    case ERHIResourceState::Undefined:                       return "Undefined";
     case ERHIResourceState::ShaderResource:                  return "ShaderResource";
     
     default: return "Unknown";

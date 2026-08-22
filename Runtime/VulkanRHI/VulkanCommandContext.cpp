@@ -3408,6 +3408,18 @@ void FVulkanCommandContext::DispatchMeshIndirectCount(FRHIBuffer* ArgumentBuffer
 #endif
 }
 
+void FVulkanCommandContext::AcquireNextBackBuffer(FRHISwapChain* InSwapChain)
+{
+    FVulkanSwapChainRHI* VulkanSwapChain = FVulkanDeviceRHI::ResourceCast(InSwapChain);
+
+    const bool     bHasCommands = IsRecording() && !NeedsCommandBuffer();
+    const VkResult Result       = VulkanSwapChain->AcquireNextBackBuffer(bHasCommands ? &GetCommands() : nullptr);
+    if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
+    {
+        VULKAN_WARNING("FVulkanCommandContext::AcquireNextBackBuffer failed (%s)", ToString(Result));
+    }
+}
+
 void FVulkanCommandContext::PresentSwapChain(FRHISwapChain* InSwapChain, bool bVerticalSync)
 {
     // -------------------------------------------------------------------------------------------

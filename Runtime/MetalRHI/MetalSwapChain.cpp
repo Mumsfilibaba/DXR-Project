@@ -213,21 +213,26 @@ bool FMetalSwapChainRHI::Present(bool bVerticalSync)
     return true;
 }
 
-id<CAMetalDrawable> FMetalSwapChainRHI::GetDrawable()
+void FMetalSwapChainRHI::AcquireNextBackBuffer()
 {
     SCOPED_AUTORELEASE_POOL();
     
-    if (!Drawable)
+    if (Drawable)
     {
-        CAMetalLayer* MetalLayer = GetMetalLayer();
-        Drawable = [MetalLayer nextDrawable];
-    
-        if (Drawable)
-        {
-            [Drawable retain];
-        }
+        return;
     }
     
+    CAMetalLayer* MetalLayer = GetMetalLayer();
+    Drawable = [MetalLayer nextDrawable];
+    
+    if (Drawable)
+    {
+        [Drawable retain];
+    }
+}
+
+id<CAMetalDrawable> FMetalSwapChainRHI::GetDrawable()
+{
     return Drawable;
 }
 

@@ -658,8 +658,14 @@ void FSceneRenderer::RenderThread_BeginSceneCommandList(const FSceneRenderPacket
     {
         TRACE_SCOPE("Prepare SwapChain");
 
+        CommandList.AcquireNextBackBuffer(Packet.SwapChain.Get());
+
         FRHITexture* BackBuffer = Packet.SwapChain->GetBackBuffer();
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::Present, ERHIResourceState::RenderTarget));
+        if (Packet.View.RenderTarget != BackBuffer)
+        {
+            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::Undefined, ERHIResourceState::RenderTarget));
+            CommandList.ClearRenderTargetView(Packet.SwapChain->GetBackBufferRenderTargetView(), Vector4());
+        }
     }
 }
 

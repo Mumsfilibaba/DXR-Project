@@ -588,15 +588,6 @@ bool FVulkanSwapChainRHI::Initialize()
         return false;
     }
 
-    const VkResult AcquireResult = AcquireNextImage();
-    if (AcquireResult != VK_SUCCESS && AcquireResult != VK_SUBOPTIMAL_KHR)
-    {
-        VULKAN_ERROR("FVulkanSwapChainRHI::Initialize initial AcquireNextImage failed (%s)", ToString(AcquireResult));
-        CommandContext->FinishContext();
-        CommandContext->Flush();
-        return false;
-    }
-
     CommandContext->FinishContext();
     CommandContext->Flush();
 
@@ -948,18 +939,9 @@ bool FVulkanSwapChainRHI::Resize(uint32 InWidth, uint32 InHeight, EFormat NewFor
         return false;
     }
 
-    // CreateSwapChain may have clamped the extent to the surface capabilities; reflect that.
     if (BackBufferProxy)
     {
         BackBufferProxy->Resize(Desc.Width, Desc.Height);
-    }
-
-    // Eagerly acquire the first image after a resize so the proxy stays resolved.
-    const VkResult AcquireResult = AcquireNextImage();
-    if (AcquireResult != VK_SUCCESS && AcquireResult != VK_SUBOPTIMAL_KHR)
-    {
-        VULKAN_WARNING("FVulkanSwapChainRHI::Resize AcquireNextImage after resize failed (%s)", ToString(AcquireResult));
-        return false;
     }
 
     return true;
@@ -994,7 +976,6 @@ bool FVulkanSwapChainRHI::Present(bool bVerticalSync)
 		return false;
 	}
 
-    // Detect runtime settings changes that require swapchain recreation
     if (bVerticalSync != bActiveVSync)
     {
         VULKAN_INFO("FVulkanSwapChainRHI::Present VSync changed (%s -> %s)", bActiveVSync ? "on" : "off", bVerticalSync ? "on" : "off");
@@ -1030,13 +1011,6 @@ bool FVulkanSwapChainRHI::Present(bool bVerticalSync)
     }
 
     AdvanceSemaphoreIndex();
-
-    const VkResult AcquireResult = AcquireNextImage();
-    if (AcquireResult != VK_SUCCESS && AcquireResult != VK_SUBOPTIMAL_KHR)
-    {
-        VULKAN_WARNING("FVulkanSwapChainRHI::Present AcquireNextImage for next frame failed (%s)", ToString(AcquireResult));
-    }
-
     return true;
 }
 
@@ -1240,7 +1214,23 @@ void FVulkanSwapChainRHI::ClaimPendingAcquireSemaphore(FVulkanCommands& InComman
     }
 }
 
-FVulkanTextureRHI* FVulkanSwapChainRHI::AcquireBackBuffer()
+VkResult FVulkanSwapChainRHI::AcquireNextBackBuffer(FVulkanCommands* InCommands)
+{
+    const VkResult Result = AcquireNextImage();
+    if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
+    {
+        return Result;
+    }
+
+    if (InCommands)
+    {
+        ClaimPendingAcquireSemaphore(*InCommands);
+    }
+
+    return Result;
+}
+
+FVulkanTextureRHI* FVulkanSwapChainRHI::ResolveBackBuffer()
 {
     if (!CommandContext || !BackBuffers.IsValidIndex(BackBufferIndex))
     {
@@ -1260,52 +1250,17 @@ FVulkanTextureRHI* FVulkanSwapChainRHI::AcquireBackBuffer()
 
     ClaimPendingAcquireSemaphore(CommandContext->GetCommands());
 
-    constexpr VkImageLayout AcquiredLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
     FVulkanImageLayoutState& GlobalState = BackBuffer->GetImageLayoutState();
     FVulkanImageLayoutState& LocalState  = CommandContext->RetrievePendingImageState(BackBuffer);
 
-    VkImageLayout CurrentLayout = LocalState.GetImageLayout();
-    if (CurrentLayout == VK_IMAGE_LAYOUT_TO_BE_DETERMINED)
+    if (LocalState.GetImageLayout() == VK_IMAGE_LAYOUT_TO_BE_DETERMINED)
     {
-        CurrentLayout = GlobalState.GetImageLayout();
-    }
+        const VkImageLayout GlobalLayout = GlobalState.GetImageLayout();
+        const VkImageLayout SeedLayout   =
+            (GlobalLayout == VK_IMAGE_LAYOUT_TO_BE_DETERMINED) ? VK_IMAGE_LAYOUT_UNDEFINED : GlobalLayout;
 
-    if (CurrentLayout == VK_IMAGE_LAYOUT_UNDEFINED)
-    {
-        CommandContext->ConditionalSplitCommandBuffer();
-
-        const VkImageCreateInfo& CreateInfo = BackBuffer->GetVkImageCreateInfo();
-        const VkImageAspectFlags AspectMask = GetImageAspectFlagsFromFormat(CreateInfo.format);
-
-        VkImageMemoryBarrier2KHR ImageBarrier = {};
-        ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR;
-        ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
-        ImageBarrier.newLayout                       = AcquiredLayout;
-        ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-        ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-        ImageBarrier.image                           = BackBuffer->GetVkImage();
-        ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE_KHR;
-        ImageBarrier.dstAccessMask                   = VK_ACCESS_2_NONE_KHR;
-        ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT_KHR;
-        ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR;
-        ImageBarrier.subresourceRange.aspectMask     = AspectMask;
-        ImageBarrier.subresourceRange.baseMipLevel   = 0;
-        ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
-        ImageBarrier.subresourceRange.baseArrayLayer = 0;
-        ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
-
-        CommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
-
-        GlobalState.SetImageLayout(AcquiredLayout);
-        LocalState.SetImageLayout(AcquiredLayout);
-    }
-    else if (LocalState.GetImageLayout() == VK_IMAGE_LAYOUT_TO_BE_DETERMINED)
-    {
-        const VkImageLayout SeedLayout =
-            (CurrentLayout == VK_IMAGE_LAYOUT_TO_BE_DETERMINED) ? AcquiredLayout : CurrentLayout;
         LocalState.SetImageLayout(SeedLayout);
-        if (GlobalState.GetImageLayout() == VK_IMAGE_LAYOUT_TO_BE_DETERMINED)
+        if (GlobalLayout == VK_IMAGE_LAYOUT_TO_BE_DETERMINED)
         {
             GlobalState.SetImageLayout(SeedLayout);
         }

@@ -335,6 +335,12 @@ public:
         OutDebugName = DebugName;
     }
 
+    void Resize(uint32 InWidth, uint32 InHeight)
+    {
+        Desc.Extent.X = int32(InWidth);
+        Desc.Extent.Y = int32(InHeight);
+    }
+
 private:
     TSharedRef<FNullShaderResourceViewRHI>  ShaderResourceView;
     TSharedRef<FNullUnorderedAccessViewRHI> UnorderedAccessView;
@@ -471,7 +477,7 @@ public:
 
     virtual FRHITexture* GetBackBuffer() const override final
     {
-        return BackBuffers[BackBufferIndex].Get();
+        return BackBufferProxy.Get();
     }
 
     virtual FRHITexture* GetBackBufferResourceFromIndex(uint32 Index) const override final
@@ -486,14 +492,12 @@ public:
 
     virtual FRHIRenderTargetView* GetBackBufferRenderTargetView() const override final
     {
-        FNullTextureRHI* Texture = BackBuffers[BackBufferIndex].Get();
-        return Texture ? Texture->GetRenderTargetView() : nullptr;
+        return BackBufferProxy ? BackBufferProxy->GetRenderTargetView() : nullptr;
     }
 
     virtual FRHIUnorderedAccessView* GetBackBufferUnorderedAccessView() const override final
     {
-        FNullTextureRHI* Texture = BackBuffers[BackBufferIndex].Get();
-        return Texture ? Texture->GetUnorderedAccessView() : nullptr;
+        return BackBufferProxy ? BackBufferProxy->GetUnorderedAccessView() : nullptr;
     }
 
     virtual bool IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const override final
@@ -518,9 +522,14 @@ public:
         return BackBufferIndex;
     }
 
-    bool Present(bool /*bVerticalSync*/)
+    void AcquireNextBackBuffer()
     {
         BackBufferIndex = (BackBufferIndex + 1u) % kNumBackBuffers;
+    }
+
+    bool Present(bool /*bVerticalSync*/)
+    {
+        // The index only moves in AcquireNextBackBuffer
         return true;
     }
 
@@ -545,12 +554,22 @@ private:
         const FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(Desc.ColorFormat,
             Desc.Width, Desc.Height, 1, 1, ETextureUsageFlags::Presentable | ETextureUsageFlags::RenderTarget);
 
+        if (BackBufferProxy)
+        {
+            BackBufferProxy->Resize(Desc.Width, Desc.Height);
+        }
+        else
+        {
+            BackBufferProxy = new FNullTextureRHI(BackBufferDesc);
+        }
+
         for (uint32 Index = 0; Index < kNumBackBuffers; ++Index)
         {
             BackBuffers[Index] = new FNullTextureRHI(BackBufferDesc);
         }
     }
 
+    TSharedRef<FNullTextureRHI> BackBufferProxy;
     TSharedRef<FNullTextureRHI> BackBuffers[kNumBackBuffers];
     uint32                      BackBufferIndex;
 };

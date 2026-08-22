@@ -3,10 +3,13 @@
 #include "RHI/IRHICommandContext.h"
 #include "RHI/ValidationLayer/RHIValidationStateTracker.h"
 
+class FRHIValidationDevice;
+class FRHIValidationSwapChain;
+
 class RHI_API FRHIValidationCommandContext : public IRHICommandContext
 {
 public:
-    FRHIValidationCommandContext(IRHICommandContext* InRealContext, FRHIValidationStateTracker* InStateTracker);
+    FRHIValidationCommandContext(IRHICommandContext* InRealContext, FRHIValidationStateTracker* InStateTracker, FRHIValidationDevice* InDevice);
     virtual ~FRHIValidationCommandContext();
 
     virtual void BeginFrame() override final;
@@ -88,6 +91,7 @@ public:
     virtual void DispatchIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset) override final;
     virtual void DispatchMeshIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount) override final;
     virtual void DispatchMeshIndirectCount(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, FRHIBuffer* CountBuffer, uint64 CountBufferOffset, uint32 MaxCommandCount) override final;
+    virtual void AcquireNextBackBuffer(FRHISwapChain* SwapChain) override final;
     virtual void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) override final;
     virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace) override final;
     virtual void SetSwapChainHDRMetadata(FRHISwapChain* SwapChain, const FRHIHDRMetadata& Metadata) override final;
@@ -120,16 +124,23 @@ private:
         ERHIResourceState AfterState;
     };
 
+    NODISCARD static FOpenSplitKey CreateSplitKey(const FRHITransitionBarrierDesc& Desc);
+
     bool ValidateRecordingPhase(const CHAR* Caller) const;
     bool ValidateTransitionBarrierDesc(const FRHITransitionBarrierDesc& Desc);
     bool ValidateUnorderedAccessBarrierDesc(const FRHIUnorderedAccessBarrierDesc& Desc);
     bool ValidateNoOpenSplit(const FRHIResource* Resource, const CHAR* Caller) const;
+    bool ValidateBackBufferRead(const FRHIResource* Resource, const CHAR* Caller);
+    bool ValidateBackBufferWrite(const FRHIResource* Resource, const CHAR* Caller);
+    bool ValidateBackBufferViewRead(const FRHIResourceView* View, const CHAR* Caller);
+    bool ValidateBackBufferViewWrite(const FRHIResourceView* View, const CHAR* Caller);
 
-    NODISCARD static FOpenSplitKey CreateSplitKey(const FRHITransitionBarrierDesc& Desc);
+    NODISCARD FRHIValidationSwapChain* FindSwapChain(const FRHIResource* Resource) const;
     NODISCARD int32 FindOpenSplit(const FOpenSplitKey& Key) const;
 
     IRHICommandContext*          CommandContext;
     FRHIValidationStateTracker*  StateTracker;
+    FRHIValidationDevice*        Device;
     ECommandContextPhase         ContextPhase;
     FRHIGraphicsPipelineState*   GraphicsPipelineState;
     FRHIComputePipelineState*    ComputePipelineState;

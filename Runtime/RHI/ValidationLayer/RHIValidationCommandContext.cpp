@@ -1,13 +1,16 @@
 #include "RHI/ValidationLayer/RHIValidationCommandContext.h"
+#include "RHI/ValidationLayer/RHIValidationDevice.h"
 #include "RHI/ValidationLayer/RHIValidationInternal.h"
 #include "RHI/ValidationLayer/RHIValidationShaderBindingTable.h"
+#include "RHI/ValidationLayer/RHIValidationSwapChain.h"
 
 using namespace RHIValidationInternal;
 
-FRHIValidationCommandContext::FRHIValidationCommandContext(IRHICommandContext* InRealContext, FRHIValidationStateTracker* InStateTracker)
+FRHIValidationCommandContext::FRHIValidationCommandContext(IRHICommandContext* InRealContext, FRHIValidationStateTracker* InStateTracker, FRHIValidationDevice* InDevice)
     : IRHICommandContext()
     , CommandContext(InRealContext)
     , StateTracker(InStateTracker)
+    , Device(InDevice)
     , ContextPhase(ECommandContextPhase::Finished)
     , GraphicsPipelineState(nullptr)
     , ComputePipelineState(nullptr)
@@ -30,6 +33,75 @@ bool FRHIValidationCommandContext::ValidateRecordingPhase(const CHAR* Caller) co
     }
 
     return true;
+}
+
+FRHIValidationSwapChain* FRHIValidationCommandContext::FindSwapChain(const FRHIResource* Resource) const
+{
+    if (!Device || !Resource || Resource->GetResourceType() != ERHIResourceType::Texture)
+    {
+        return nullptr;
+    }
+
+    if (!static_cast<const FRHITexture*>(Resource)->GetDesc().IsPresentable())
+    {
+        return nullptr;
+    }
+
+    return Device->FindSwapChainForBackBuffer(Resource);
+}
+
+bool FRHIValidationCommandContext::ValidateBackBufferRead(const FRHIResource* Resource, const CHAR* Caller)
+{
+    FRHIValidationSwapChain* SwapChain = FindSwapChain(Resource);
+    if (!SwapChain)
+    {
+        return true;
+    }
+
+    if (!SwapChain->IsAcquired())
+    {
+        RHI_VALIDATION_ERROR("%s: %s reads a back-buffer that is not acquired. Record AcquireNextBackBuffer first.",
+            *GetResourceIdentity(Resource), Caller);
+        return false;
+    }
+
+    if (SwapChain->AreContentsUndefined())
+    {
+        RHI_VALIDATION_ERROR("%s: %s reads a back-buffer whose contents are unspecified. Nothing has written it since it "
+            "was acquired, so it has to be overwritten in full before it can be read.", *GetResourceIdentity(Resource), Caller);
+        return false;
+    }
+
+    return true;
+}
+
+bool FRHIValidationCommandContext::ValidateBackBufferWrite(const FRHIResource* Resource, const CHAR* Caller)
+{
+    FRHIValidationSwapChain* SwapChain = FindSwapChain(Resource);
+    if (!SwapChain)
+    {
+        return true;
+    }
+
+    if (!SwapChain->IsAcquired())
+    {
+        RHI_VALIDATION_ERROR("%s: %s writes a back-buffer that is not acquired. Record AcquireNextBackBuffer first.",
+            *GetResourceIdentity(Resource), Caller);
+        return false;
+    }
+
+    SwapChain->OnBackBufferWritten();
+    return true;
+}
+
+bool FRHIValidationCommandContext::ValidateBackBufferViewRead(const FRHIResourceView* View, const CHAR* Caller)
+{
+    return !View || ValidateBackBufferRead(View->GetResource(), Caller);
+}
+
+bool FRHIValidationCommandContext::ValidateBackBufferViewWrite(const FRHIResourceView* View, const CHAR* Caller)
+{
+    return !View || ValidateBackBufferWrite(View->GetResource(), Caller);
 }
 
 void FRHIValidationCommandContext::BeginFrame()
@@ -188,6 +260,11 @@ void FRHIValidationCommandContext::ClearRenderTargetView(FRHIRenderTargetView* R
         return;
     }
 
+    if (!ValidateBackBufferViewWrite(RenderTargetView, "ClearRenderTargetView"))
+    {
+        return;
+    }
+
     CommandContext->ClearRenderTargetView(RenderTargetView, ClearColor);
 }
 
@@ -220,6 +297,11 @@ void FRHIValidationCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAc
         return;
     }
 
+    if (!ValidateBackBufferViewWrite(UnorderedAccessView, "ClearUnorderedAccessViewFloat"))
+    {
+        return;
+    }
+
     CommandContext->ClearUnorderedAccessViewFloat(UnorderedAccessView, ClearColor);
 }
 
@@ -232,6 +314,11 @@ void FRHIValidationCommandContext::ClearUnorderedAccessViewUint(FRHIUnorderedAcc
     }
 
     if (!StateTracker->ValidateState(UnorderedAccessView->GetResource(), ERHIResourceState::UnorderedAccess, "ClearUnorderedAccessViewUint"))
+    {
+        return;
+    }
+
+    if (!ValidateBackBufferViewWrite(UnorderedAccessView, "ClearUnorderedAccessViewUint"))
     {
         return;
     }
@@ -260,13 +347,23 @@ void FRHIValidationCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc
 
     for (uint32 Index = 0; Index < BeginRenderPassDesc.NumRenderTargets; ++Index)
     {
-        if (!BeginRenderPassDesc.RenderTargets[Index].View.Get())
+        const FRHIRenderTargetAttachment& Attachment = BeginRenderPassDesc.RenderTargets[Index];
+        if (!Attachment.View.Get())
         {
             RHI_VALIDATION_ERROR("BeginRenderPass: render-target attachment %u is nullptr.", Index);
             return;
         }
 
-        if (!StateTracker->ValidateState(BeginRenderPassDesc.RenderTargets[Index].View.Get()->GetResource(), ERHIResourceState::RenderTarget, "BeginRenderPass render-target attachment"))
+        if (!StateTracker->ValidateState(Attachment.View.Get()->GetResource(), ERHIResourceState::RenderTarget, "BeginRenderPass render-target attachment"))
+        {
+            return;
+        }
+
+        const bool bValidAttachment = (Attachment.LoadAction == EAttachmentLoadAction::Load)
+            ? ValidateBackBufferViewRead(Attachment.View.Get(), "BeginRenderPass render-target attachment with EAttachmentLoadAction::Load")
+            : ValidateBackBufferViewWrite(Attachment.View.Get(), "BeginRenderPass render-target attachment");
+
+        if (!bValidAttachment)
         {
             return;
         }
@@ -581,6 +678,11 @@ void FRHIValidationCommandContext::SetShaderResourceView(FRHIShader* Shader, FRH
         return;
     }
 
+    if (!ValidateBackBufferViewRead(ShaderResourceView, "SetShaderResourceView"))
+    {
+        return;
+    }
+
     CommandContext->SetShaderResourceView(Shader, ShaderResourceView, RegisterIndex);
 }
 
@@ -590,6 +692,14 @@ void FRHIValidationCommandContext::SetShaderResourceViews(FRHIShader* Shader, co
     {
         RHI_VALIDATION_ERROR("Invalid to call SetShaderResourceViews when Shader is nullptr.");
         return;
+    }
+
+    for (FRHIShaderResourceView* ShaderResourceView : InShaderResourceViews)
+    {
+        if (!ValidateBackBufferViewRead(ShaderResourceView, "SetShaderResourceViews"))
+        {
+            return;
+        }
     }
 
     CommandContext->SetShaderResourceViews(Shader, InShaderResourceViews, RegisterIndex);
@@ -603,6 +713,11 @@ void FRHIValidationCommandContext::SetUnorderedAccessView(FRHIShader* Shader, FR
         return;
     }
 
+    if (!ValidateBackBufferViewWrite(UnorderedAccessView, "SetUnorderedAccessView"))
+    {
+        return;
+    }
+
     CommandContext->SetUnorderedAccessView(Shader, UnorderedAccessView, RegisterIndex);
 }
 
@@ -612,6 +727,14 @@ void FRHIValidationCommandContext::SetUnorderedAccessViews(FRHIShader* Shader, c
     {
         RHI_VALIDATION_ERROR("Invalid to call SetUnorderedAccessViews when Shader is nullptr.");
         return;
+    }
+
+    for (FRHIUnorderedAccessView* UnorderedAccessView : InUnorderedAccessViews)
+    {
+        if (!ValidateBackBufferViewWrite(UnorderedAccessView, "SetUnorderedAccessViews"))
+        {
+            return;
+        }
     }
 
     CommandContext->SetUnorderedAccessViews(Shader, InUnorderedAccessViews, RegisterIndex);
@@ -844,6 +967,12 @@ void FRHIValidationCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture*
         return;
     }
 
+    if (!ValidateBackBufferRead(Src, "ResolveTexture source") ||
+        !ValidateBackBufferWrite(Dst, "ResolveTexture destination"))
+    {
+        return;
+    }
+
     CommandContext->ResolveTexture(Dst, Src);
 }
 
@@ -1063,6 +1192,12 @@ void FRHIValidationCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Sr
         return;
     }
 
+    if (!ValidateBackBufferRead(Src, "CopyTexture source") ||
+        !ValidateBackBufferWrite(Dst, "CopyTexture destination"))
+    {
+        return;
+    }
+
     CommandContext->CopyTexture(Dst, Src);
 }
 
@@ -1111,6 +1246,13 @@ void FRHIValidationCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITextu
 
     if (!StateTracker->ValidateState(Dst, ERHIResourceState::CopyDest, "CopyTextureRegion destination") ||
         !StateTracker->ValidateState(Src, ERHIResourceState::CopySource, "CopyTextureRegion source"))
+    {
+        return;
+    }
+
+    // A region copy leaves the rest of the destination alone, so it does not count as writing the whole
+    // back-buffer, only as reading the source
+    if (!ValidateBackBufferRead(Src, "CopyTextureRegion source"))
     {
         return;
     }
@@ -1213,6 +1355,11 @@ void FRHIValidationCommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, ui
         return;
     }
 
+    if (!ValidateBackBufferRead(Src, "CopyTextureRegionToBuffer source"))
+    {
+        return;
+    }
+
     if (!ValidateTextureRegion2D("CopyTextureRegionToBuffer", Src->GetDesc(), SrcMipLevel, SrcRegion) ||
         DstOffset >= Dst->GetDesc().Size)
     {
@@ -1261,6 +1408,11 @@ void FRHIValidationCommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Ds
 
     if (!StateTracker->ValidateState(Dst, ERHIResourceState::CopyDest, "CopyTextureSubresourceToBuffer destination") ||
         !StateTracker->ValidateState(Src, ERHIResourceState::CopySource, "CopyTextureSubresourceToBuffer source"))
+    {
+        return;
+    }
+
+    if (!ValidateBackBufferRead(Src, "CopyTextureSubresourceToBuffer source"))
     {
         return;
     }
@@ -1936,6 +2088,13 @@ bool FRHIValidationCommandContext::ValidateTransitionBarrierDesc(const FRHITrans
         return false;
     }
 
+    if (IsEnumFlagSet(Desc.AfterState, ERHIResourceState::Undefined))
+    {
+        RHI_VALIDATION_ERROR("A transition barrier cannot declare Undefined as its after-state. Undefined only describes "
+            "contents that are already unspecified, so it is a before-state.");
+        return false;
+    }
+
     ERHIResourceStateTrackingMode TrackingMode = ERHIResourceStateTrackingMode::Unknown;
     const FRHIResource*           Resource     = nullptr;
 
@@ -1968,6 +2127,13 @@ bool FRHIValidationCommandContext::ValidateTransitionBarrierDesc(const FRHITrans
         {
             RHI_VALIDATION_ERROR("%s: Transitioning a texture to/from CopySource requires ETextureUsageFlags::CopySource.",
                 *GetResourceIdentity(Texture));
+            return false;
+        }
+
+        if (FRHIValidationSwapChain* SwapChain = FindSwapChain(Texture); SwapChain && !SwapChain->IsAcquired())
+        {
+            RHI_VALIDATION_ERROR("%s: TransitionBarrier names a back-buffer that is not acquired. Record "
+                "AcquireNextBackBuffer before transitioning it.", *GetResourceIdentity(Texture));
             return false;
         }
 
@@ -2541,6 +2707,26 @@ void FRHIValidationCommandContext::DispatchMeshIndirectCount(FRHIBuffer* Argumen
     }
 }
 
+void FRHIValidationCommandContext::AcquireNextBackBuffer(FRHISwapChain* SwapChain)
+{
+    if (!SwapChain)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call AcquireNextBackBuffer when SwapChain is nullptr.");
+        return;
+    }
+
+    FRHIValidationSwapChain* ValidationSwapChain = static_cast<FRHIValidationSwapChain*>(SwapChain);
+    if (ValidationSwapChain->IsAcquired())
+    {
+        RHI_VALIDATION_ERROR("AcquireNextBackBuffer: the back-buffer is already acquired. Present it before acquiring "
+            "again, since a second acquire takes another image without handing the first one back.");
+        return;
+    }
+
+    CommandContext->AcquireNextBackBuffer(ValidationSwapChain->GetRHI());
+    ValidationSwapChain->OnAcquired();
+}
+
 void FRHIValidationCommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync)
 {
     if (!SwapChain)
@@ -2549,12 +2735,28 @@ void FRHIValidationCommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bo
         return;
     }
 
-    if (!StateTracker->ValidateState(SwapChain->GetBackBuffer(), ERHIResourceState::Present, "PresentSwapChain back-buffer"))
+    FRHIValidationSwapChain* ValidationSwapChain = static_cast<FRHIValidationSwapChain*>(SwapChain);
+    if (!ValidationSwapChain->IsAcquired())
+    {
+        RHI_VALIDATION_ERROR("PresentSwapChain: the back-buffer was never acquired. Record AcquireNextBackBuffer before "
+            "rendering the frame.");
+        return;
+    }
+
+    if (ValidationSwapChain->AreContentsUndefined())
+    {
+        RHI_VALIDATION_ERROR("PresentSwapChain: nothing wrote the back-buffer since it was acquired, so its contents are "
+            "whatever the presentation engine handed back.");
+        return;
+    }
+
+    if (!StateTracker->ValidateState(ValidationSwapChain->GetBackBuffer(), ERHIResourceState::Present, "PresentSwapChain back-buffer"))
     {
         return;
     }
 
-    CommandContext->PresentSwapChain(SwapChain, bVerticalSync);
+    CommandContext->PresentSwapChain(ValidationSwapChain->GetRHI(), bVerticalSync);
+    ValidationSwapChain->OnPresented();
 }
 
 void FRHIValidationCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace)
@@ -2565,7 +2767,9 @@ void FRHIValidationCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uin
         return;
     }
 
-    CommandContext->ResizeSwapChain(SwapChain, Width, Height, Format, ColorSpace);
+    FRHIValidationSwapChain* ValidationSwapChain = static_cast<FRHIValidationSwapChain*>(SwapChain);
+    CommandContext->ResizeSwapChain(ValidationSwapChain->GetRHI(), Width, Height, Format, ColorSpace);
+    ValidationSwapChain->OnResized();
 }
 
 void FRHIValidationCommandContext::SetSwapChainHDRMetadata(FRHISwapChain* SwapChain, const FRHIHDRMetadata& Metadata)
@@ -2607,7 +2811,9 @@ void FRHIValidationCommandContext::SetSwapChainHDRMetadata(FRHISwapChain* SwapCh
         }
     }
 
-    CommandContext->SetSwapChainHDRMetadata(SwapChain, Metadata);
+    FRHIValidationSwapChain* ValidationSwapChain = static_cast<FRHIValidationSwapChain*>(SwapChain);
+    CommandContext->SetSwapChainHDRMetadata(ValidationSwapChain->GetRHI(), Metadata);
+    ValidationSwapChain->SyncDesc();
 }
 
 void FRHIValidationCommandContext::ClearState()

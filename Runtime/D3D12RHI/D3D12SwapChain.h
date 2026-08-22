@@ -41,6 +41,7 @@ public:
     bool Resize(FD3D12CommandContext* InCommandContext, uint32 Width, uint32 Height, EFormat NewFormat, EColorSpace NewColorSpace);
     bool Present(bool bVerticalSync);
     bool SetHDRMetadata(const FRHIHDRMetadata& Metadata);
+    void AcquireNextBackBuffer();
 
     FD3D12TextureRHI* GetCurrentBackBuffer() const
     {

@@ -621,6 +621,16 @@ struct IRHICommandContext
     virtual void DeserializeAccelerationStructure(FRHIRayTracingAccelerationStructure* Destination, FRHIBuffer* SourceBuffer, uint64 SourceOffset) = 0;
 
     /**
+     * @brief Acquires the next back-buffer of the swap-chain for rendering. Without this call
+     * GetBackBuffer() keeps resolving to the previously acquired image. The acquired back-buffer's
+     * contents are unspecified and its state becomes ERHIResourceState::Undefined, so the first
+     * access has to overwrite it in full. Closed by PresentSwapChain.
+     *
+     * @param SwapChain The swap-chain to acquire from.
+     */
+    virtual void AcquireNextBackBuffer(FRHISwapChain* SwapChain) = 0;
+
+    /**
      * @brief Presents the swap-chain, swapping the back buffer to the screen.
      * @param SwapChain The swap-chain to present.
      * @param bVerticalSync Whether to use vertical synchronization.

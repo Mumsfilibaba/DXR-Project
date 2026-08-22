@@ -110,7 +110,10 @@ public:
     bool SetHDRMetadata(const FRHIHDRMetadata& Metadata);
 
     void ClaimPendingSemaphores(FVulkanCommands& InCommands);
-    FVulkanTextureRHI* AcquireBackBuffer();
+
+    VkResult AcquireNextBackBuffer(FVulkanCommands* InCommands);
+
+    FVulkanTextureRHI* ResolveBackBuffer();
 
     FVulkanTextureRHI*             GetCurrentBackBuffer() const;
     FVulkanRenderTargetViewRHI*    GetCurrentBackBufferRenderTargetView() const;

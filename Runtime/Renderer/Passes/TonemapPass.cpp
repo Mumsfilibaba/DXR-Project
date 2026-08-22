@@ -200,7 +200,7 @@ void FTonemapPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, const F
         [&Context, OutputGraphTexture](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(Context.SceneTarget, ERHIResourceState::PixelShaderResource);
-            PassBuilder.SetRenderTarget(0, OutputGraphTexture, EAttachmentLoadAction::Load);
+            PassBuilder.SetRenderTarget(0, OutputGraphTexture, EAttachmentLoadAction::DontCare);
         },
         [this, Context, OutputTarget, bOutputSRGB, OutputGraphTexture](FRHICommandList& PassCommandList, const FRenderGraphPassResources& PassResources)
         {

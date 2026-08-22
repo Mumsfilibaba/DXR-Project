@@ -569,6 +569,11 @@ public:
         STAT_ADD(STAT_RHI_DispatchCalls, 1);
     }
 
+    FORCEINLINE void AcquireNextBackBuffer(FRHISwapChain* SwapChain) noexcept
+    {
+        EmplaceCommand<FRHICommandAcquireNextBackBuffer>(SwapChain);
+    }
+
     FORCEINLINE void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) noexcept
     {
         EmplaceCommand<FRHICommandPresentSwapChain>(SwapChain, bVerticalSync);

@@ -19,6 +19,7 @@ struct FImGuiViewport
         , IndexCount(0)
         , Width(0)
         , Height(0)
+        , bHasAcquiredBackBuffer(false)
     {
     }
 
@@ -30,6 +31,7 @@ struct FImGuiViewport
     int32               IndexCount;
     uint16              Width;
     uint16              Height;
+    bool                bHasAcquiredBackBuffer;
 };
 
 class FImGuiRenderer

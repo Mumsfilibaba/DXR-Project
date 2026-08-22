@@ -582,6 +582,12 @@ void FMetalCommandContext::DispatchMesh(uint32 ThreadGroupCountX, uint32 ThreadG
     UNREFERENCED_VARIABLE(ThreadGroupCountZ);
 }
 
+void FMetalCommandContext::AcquireNextBackBuffer(FRHISwapChain* SwapChain)
+{
+    FMetalSwapChainRHI* MetalSwapChain = static_cast<FMetalSwapChainRHI*>(SwapChain);
+    MetalSwapChain->AcquireNextBackBuffer();
+}
+
 void FMetalCommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync)
 {
     FMetalSwapChainRHI* MetalSwapChain = static_cast<FMetalSwapChainRHI*>(SwapChain);

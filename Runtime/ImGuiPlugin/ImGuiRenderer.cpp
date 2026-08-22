@@ -383,13 +383,16 @@ void FImGuiRenderer::RenderViewport(FRHICommandList& CommandList, ImDrawData* Dr
 
     STAT_ADD(STAT_ImGui_Viewports, 1);
 
-    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::Present, ERHIResourceState::RenderTarget));
+    CommandList.AcquireNextBackBuffer(ViewportData.SwapChain.Get());
+    ViewportData.bHasAcquiredBackBuffer = true;
+
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::Undefined, ERHIResourceState::RenderTarget));
 
     PreparePipelineState(ViewportData.SwapChain->GetDesc().ColorFormat);
     PrepareDrawData(CommandList, DrawData);
     PrepareTexturesForShaderResourceUsage(CommandList, DrawData);
 
-    FRHIBeginRenderPassDesc RenderPassDesc({ FRHIRenderTargetAttachment(BackBufferRTV, bClear ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load) }, 1);
+    FRHIBeginRenderPassDesc RenderPassDesc({ FRHIRenderTargetAttachment(BackBufferRTV, bClear ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::DontCare) }, 1);
 
     CommandList.BeginRenderPass(RenderPassDesc);
     RenderDrawData(CommandList, DrawData);
@@ -800,5 +803,11 @@ void FImGuiRenderer::OnSwapBuffers(ImGuiViewport* Viewport, void* CommandList)
         return;
     }
 
+    if (!ViewportData->bHasAcquiredBackBuffer)
+    {
+        return;
+    }
+
     RHICommandList->PresentSwapChain(ViewportData->SwapChain.Get(), false);
+    ViewportData->bHasAcquiredBackBuffer = false;
 }

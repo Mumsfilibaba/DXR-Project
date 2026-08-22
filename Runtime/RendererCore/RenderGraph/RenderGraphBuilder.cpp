@@ -299,6 +299,26 @@ static bool HasValidRenderPassAttachments(const FRHIBeginRenderPassDesc& RenderP
     return DepthStencilView && DepthStencilView->GetResource();
 }
 
+static EAttachmentLoadAction FindAttachmentLoadAction(const FRenderGraphPass& Pass, const FRenderGraphTexture* Texture)
+{
+    const uint32 NumRenderTargets = Pass.GetNumRenderTargets();
+    for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
+    {
+        const FRenderGraphAttachment& Attachment = Pass.GetRenderTargets()[Index];
+        if (Attachment.Texture == Texture)
+        {
+            return Attachment.LoadAction;
+        }
+    }
+
+    if (Pass.GetDepthStencil().Texture == Texture)
+    {
+        return Pass.GetDepthStencil().LoadAction;
+    }
+
+    return EAttachmentLoadAction::DontCare;
+}
+
 FRenderGraphBuilder::FRenderGraphBuilder(const CHAR* InName)
     : Name(InName ? InName : "RenderGraph")
     , Memory()
@@ -419,12 +439,22 @@ FRenderGraphTexture* FRenderGraphBuilder::RegisterExternalTexture(FRHITexture* T
         return nullptr;
     }
 
+    if (FinalState == ERHIResourceState::Undefined)
+    {
+        LOG_ERROR("Graph '%s' cannot register external texture '%s' with a final state of Undefined. The epilogue would "
+            "emit it as an after-state, which no backend accepts", Name, InName ? InName : "Unnamed");
+
+        SetHasErrors(true);
+        return nullptr;
+    }
+
     void* TextureMemory = Memory.Allocate(sizeof(FRenderGraphTexture), alignof(FRenderGraphTexture));
 
     FRenderGraphTexture* GraphTexture = new(TextureMemory) FRenderGraphTexture(FRenderGraphTextureDesc(Texture->GetDesc()), InName, Texture);
     GraphTexture->State.CurrentState              = InitialState;
     GraphTexture->State.FinalState                = FinalState;
     GraphTexture->State.bInitialStateIsUnverified = Texture->GetDesc().TrackingMode == ERHIResourceStateTrackingMode::Tracked;
+    GraphTexture->State.bContentsUndefined        = InitialState == ERHIResourceState::Undefined;
 
     Textures.Emplace(GraphTexture);
     return GraphTexture;
@@ -1031,6 +1061,23 @@ void FRenderGraphBuilder::AllocateResources()
     }
 }
 
+void FRenderGraphBuilder::ValidateUndefinedContents(const FRenderGraphPass& Pass, FRenderGraphTexture* Texture, bool bIsRead)
+{
+    if (!Texture || !Texture->State.bContentsUndefined)
+    {
+        return;
+    }
+
+    if (bIsRead)
+    {
+        LOG_ERROR("Graph '%s' has pass '%s' reading texture '%s' before anything wrote it. It was registered with an "
+            "initial state of Undefined, so the first access has to overwrite it in full", Name, Pass.GetName(), Texture->GetName());
+        SetHasErrors(true);
+    }
+
+    Texture->State.bContentsUndefined = false;
+}
+
 void FRenderGraphBuilder::ValidateGraph()
 {
     for (FRenderGraphPass* Pass : Passes)
@@ -1047,6 +1094,26 @@ void FRenderGraphBuilder::ValidateGraph()
         }
 
         RenderGraphViewValidation::ValidatePassViewAccesses(*this, *Pass);
+
+        for (const FRenderGraphViewAccess& Access : Pass->GetViewAccesses())
+        {
+            if (!Access.bIsTextureParent)
+            {
+                continue;
+            }
+
+            const bool bIsAttachment = Access.Type == ERenderGraphViewAccessType::RenderTarget ||
+                Access.Type == ERenderGraphViewAccessType::DepthStencil;
+            const bool bLoadsContents = bIsAttachment &&
+                FindAttachmentLoadAction(*Pass, Access.ParentTexture) == EAttachmentLoadAction::Load;
+
+            ValidateUndefinedContents(*Pass, Access.ParentTexture, !Access.bIsWrite || bLoadsContents);
+        }
+
+        for (const FRenderGraphTextureAccess& Access : Pass->GetTextureAccesses())
+        {
+            ValidateUndefinedContents(*Pass, Access.Resource, !Access.bIsWrite);
+        }
     }
 }
 

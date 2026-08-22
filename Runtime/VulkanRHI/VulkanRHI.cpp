@@ -1887,6 +1887,7 @@ VkImageLayout FVulkanDeviceRHI::ResourceStateToImageLayout(ERHIResourceState Res
         case ERHIResourceState::UnorderedAccess:        return VK_IMAGE_LAYOUT_GENERAL;
         case ERHIResourceState::ConstantBuffer:         return VK_IMAGE_LAYOUT_UNDEFINED;
         case ERHIResourceState::GenericRead:            return VK_IMAGE_LAYOUT_UNDEFINED;
+        case ERHIResourceState::Undefined:              return VK_IMAGE_LAYOUT_UNDEFINED;
         default:                                        return VK_IMAGE_LAYOUT_UNDEFINED;
     }
 }

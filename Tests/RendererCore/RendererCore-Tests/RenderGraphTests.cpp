@@ -33,6 +33,13 @@ static void ResetPool()
     FRenderGraphResourcePool::Get().Flush();
 }
 
+static FRHISwapChainRef CreateTestSwapChain()
+{
+    // NullRHI never looks at the handle, but the validation layer refuses a null one
+    static int32 WindowHandlePlaceholder = 0;
+    return RHI::CreateSwapChain(FRHISwapChainDesc(&WindowHandlePlaceholder, EFormat::B8G8R8A8_Unorm, TestExtent, TestExtent));
+}
+
 static FRHITexture* RunGraphAndReturnTexture()
 {
     FRHICommandList     CommandList;
@@ -606,6 +613,180 @@ bool RenderGraphFrame_Test()
     }
 
     TEST_EXPECT_EQ(RHIValidation::GetErrorCount(), 0);
+
+    TEST_END();
+}
+
+bool RenderGraphUndefinedExternal_Test()
+{
+    TEST_BEGIN();
+
+    TEST_SECTION("A freshly acquired back-buffer is transitioned out of Undefined by its first pass");
+    {
+        ResetPool();
+        RHIValidation::ResetErrorCount();
+
+        FRHISwapChainRef SwapChain = CreateTestSwapChain();
+        TEST_CHECK(SwapChain != nullptr);
+
+        FRHICommandList CommandList;
+        CommandList.AcquireNextBackBuffer(SwapChain.Get());
+
+        FRHITexture* BackBufferTexture = SwapChain->GetBackBuffer();
+        TEST_CHECK(BackBufferTexture != nullptr);
+
+        {
+            FRenderGraphBuilder GraphBuilder("AcquiredBackBuffer");
+
+            FRenderGraphTexture* BackBuffer = GraphBuilder.RegisterExternalTexture(BackBufferTexture, "BackBuffer",
+                ERHIResourceState::Undefined, ERHIResourceState::Present);
+
+            TEST_CHECK(BackBuffer != nullptr);
+
+            FRenderGraphRenderTargetView* BackBufferView = GraphBuilder.RegisterExternalRTV(BackBuffer,
+                SwapChain->GetBackBufferRenderTargetView(), "BackBufferRTV");
+
+            TEST_CHECK(BackBufferView != nullptr);
+
+            GraphBuilder.AddPass("Tonemap", ERenderGraphPassFlags::Raster,
+                [BackBufferView](FRenderGraphPassBuilder& PassBuilder)
+                {
+                    PassBuilder.SetRenderTarget(0, BackBufferView, EAttachmentLoadAction::DontCare);
+                },
+                [](FRHICommandList&, const FRenderGraphPassResources&)
+                {
+                });
+
+            GraphBuilder.Execute(CommandList);
+
+            TEST_EXPECT(!GraphBuilder.HasErrors());
+
+            // One barrier into the pass and one in the epilogue, which is what makes the frame presentable
+            TEST_EXPECT_EQ(GraphBuilder.GetStatistics().NumTransitionBarriers, 2);
+
+            TEST_CHECK_EQ(GraphBuilder.GetPasses().Size(), 1);
+
+            const TArray<FRHITransitionBarrierDesc>& Transitions = GraphBuilder.GetPasses()[0]->GetTransitions();
+            TEST_CHECK_EQ(Transitions.Size(), 1);
+            TEST_EXPECT(Transitions[0].BeforeState == ERHIResourceState::Undefined);
+            TEST_EXPECT(Transitions[0].AfterState == ERHIResourceState::RenderTarget);
+        }
+
+        CommandList.PresentSwapChain(SwapChain.Get(), false);
+        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+
+        TEST_EXPECT_EQ(RHIValidation::GetErrorCount(), 0);
+    }
+
+    TEST_SECTION("A first access that loads unspecified contents is refused");
+    {
+        ResetPool();
+        RHIValidation::ResetErrorCount();
+
+        FRHISwapChainRef SwapChain = CreateTestSwapChain();
+        TEST_CHECK(SwapChain != nullptr);
+
+        FRHICommandList     CommandList;
+        FRenderGraphBuilder GraphBuilder("LoadsUndefined");
+
+        FRenderGraphTexture* BackBuffer = GraphBuilder.RegisterExternalTexture(SwapChain->GetBackBuffer(), "BackBuffer",
+            ERHIResourceState::Undefined, ERHIResourceState::Present);
+
+        TEST_CHECK(BackBuffer != nullptr);
+
+        FRenderGraphRenderTargetView* BackBufferView = GraphBuilder.RegisterExternalRTV(BackBuffer,
+            SwapChain->GetBackBufferRenderTargetView(), "BackBufferRTV");
+
+        TEST_CHECK(BackBufferView != nullptr);
+
+        GraphBuilder.AddPass("LoadsBackBuffer", ERenderGraphPassFlags::Raster,
+            [BackBufferView](FRenderGraphPassBuilder& PassBuilder)
+            {
+                PassBuilder.SetRenderTarget(0, BackBufferView, EAttachmentLoadAction::Load);
+            },
+            [](FRHICommandList&, const FRenderGraphPassResources&)
+            {
+            });
+
+        GraphBuilder.Execute(CommandList);
+        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+
+        TEST_EXPECT(GraphBuilder.HasErrors());
+
+        // The graph refuses to execute, so nothing reaches the RHI to complain about
+        TEST_EXPECT_EQ(RHIValidation::GetErrorCount(), 0);
+    }
+
+    TEST_SECTION("A pass that overwrites first leaves a later one free to load");
+    {
+        ResetPool();
+        RHIValidation::ResetErrorCount();
+
+        FRHISwapChainRef SwapChain = CreateTestSwapChain();
+        TEST_CHECK(SwapChain != nullptr);
+
+        FRHICommandList CommandList;
+        CommandList.AcquireNextBackBuffer(SwapChain.Get());
+
+        {
+            FRenderGraphBuilder GraphBuilder("OverwriteThenLoad");
+
+            FRenderGraphTexture* BackBuffer = GraphBuilder.RegisterExternalTexture(SwapChain->GetBackBuffer(), "BackBuffer",
+                ERHIResourceState::Undefined, ERHIResourceState::Present);
+
+            TEST_CHECK(BackBuffer != nullptr);
+
+            FRenderGraphRenderTargetView* BackBufferView = GraphBuilder.RegisterExternalRTV(BackBuffer,
+                SwapChain->GetBackBufferRenderTargetView(), "BackBufferRTV");
+
+            TEST_CHECK(BackBufferView != nullptr);
+
+            GraphBuilder.AddPass("Tonemap", ERenderGraphPassFlags::Raster,
+                [BackBufferView](FRenderGraphPassBuilder& PassBuilder)
+                {
+                    PassBuilder.SetRenderTarget(0, BackBufferView, EAttachmentLoadAction::DontCare);
+                },
+                [](FRHICommandList&, const FRenderGraphPassResources&)
+                {
+                });
+
+            GraphBuilder.AddPass("UserInterface", ERenderGraphPassFlags::Raster,
+                [BackBufferView](FRenderGraphPassBuilder& PassBuilder)
+                {
+                    PassBuilder.SetRenderTarget(0, BackBufferView, EAttachmentLoadAction::Load);
+                },
+                [](FRHICommandList&, const FRenderGraphPassResources&)
+                {
+                });
+
+            GraphBuilder.Execute(CommandList);
+
+            TEST_EXPECT(!GraphBuilder.HasErrors());
+        }
+
+        CommandList.PresentSwapChain(SwapChain.Get(), false);
+        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+
+        TEST_EXPECT_EQ(RHIValidation::GetErrorCount(), 0);
+    }
+
+    TEST_SECTION("Undefined is refused as a final state");
+    {
+        ResetPool();
+        RHIValidation::ResetErrorCount();
+
+        FRHISwapChainRef SwapChain = CreateTestSwapChain();
+        TEST_CHECK(SwapChain != nullptr);
+
+        FRenderGraphBuilder GraphBuilder("UndefinedFinalState");
+
+        FRenderGraphTexture* BackBuffer = GraphBuilder.RegisterExternalTexture(SwapChain->GetBackBuffer(), "BackBuffer",
+            ERHIResourceState::Undefined, ERHIResourceState::Undefined);
+
+        TEST_EXPECT(BackBuffer == nullptr);
+        TEST_EXPECT(GraphBuilder.HasErrors());
+        TEST_EXPECT_EQ(RHIValidation::GetErrorCount(), 0);
+    }
 
     TEST_END();
 }

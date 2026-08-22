@@ -3488,6 +3488,12 @@ void FD3D12CommandContext::DeserializeAccelerationStructure(FRHIRayTracingAccele
 #endif
 }
 
+void FD3D12CommandContext::AcquireNextBackBuffer(FRHISwapChain* SwapChain)
+{
+    FD3D12SwapChainRHI* D3D12SwapChain = FD3D12DeviceRHI::ResourceCast(SwapChain);
+    D3D12SwapChain->AcquireNextBackBuffer();
+}
+
 void FD3D12CommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync)
 {
     // -------------------------------------------------------------------------------------------

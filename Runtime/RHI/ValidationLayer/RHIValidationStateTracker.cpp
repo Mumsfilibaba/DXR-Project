@@ -17,6 +17,22 @@ void FRHIValidationStateTracker::RegisterResource(const FRHIResource* Resource, 
     State.bSubresourcesDiverged = false;
 }
 
+void FRHIValidationStateTracker::SetResourceState(const FRHIResource* Resource, ERHIResourceState NewState)
+{
+    if (!Resource)
+    {
+        return;
+    }
+
+    TScopedLock Lock(ResourceStatesCS);
+
+    if (FResourceState* State = ResourceStates.Find(Resource))
+    {
+        State->CurrentState          = NewState;
+        State->bSubresourcesDiverged = false;
+    }
+}
+
 void FRHIValidationStateTracker::UnregisterResource(const FRHIResource* Resource)
 {
     if (!Resource)

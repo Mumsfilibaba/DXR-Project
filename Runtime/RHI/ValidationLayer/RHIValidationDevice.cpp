@@ -3,6 +3,7 @@
 #include "RHI/ValidationLayer/RHIValidationCommandContext.h"
 #include "RHI/ValidationLayer/RHIValidationInternal.h"
 #include "RHI/ValidationLayer/RHIValidationShaderBindingTable.h"
+#include "RHI/ValidationLayer/RHIValidationSwapChain.h"
 
 using namespace RHIValidationInternal;
 
@@ -743,7 +744,20 @@ FRHISwapChain* FRHIValidationDevice::CreateSwapChain(const FRHISwapChainDesc& In
         return nullptr;
     }
 
-    return TrackLiveResource(Device->CreateSwapChain(InSwapChainDesc));
+    FRHISwapChain* SwapChain = TrackLiveResource(Device->CreateSwapChain(InSwapChainDesc));
+    if (!SwapChain)
+    {
+        return nullptr;
+    }
+
+    FRHIValidationSwapChain* ValidationSwapChain = TrackLiveResource(new FRHIValidationSwapChain(SwapChain, &StateTracker));
+    if (FRHITexture* BackBuffer = ValidationSwapChain->GetBackBuffer())
+    {
+        StateTracker.RegisterResource(BackBuffer, ERHIResourceState::Undefined, BackBuffer->GetDesc().TrackingMode);
+        BackBufferToSwapChain.Add(BackBuffer, ValidationSwapChain);
+    }
+
+    return ValidationSwapChain;
 }
 
 FRHISceneAccelerationStructure* FRHIValidationDevice::CreateSceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& InSceneDesc)
@@ -1992,7 +2006,7 @@ IRHICommandContext* FRHIValidationDevice::ObtainCommandContext()
     }
     else
     {
-        FRHIValidationCommandContext* NewValidationContext = new FRHIValidationCommandContext(RealContext, &StateTracker);
+        FRHIValidationCommandContext* NewValidationContext = new FRHIValidationCommandContext(RealContext, &StateTracker, this);
         return RealContextToValidationContextMap.Add(RealContext, NewValidationContext);
     }
 }
@@ -2041,7 +2055,44 @@ void FRHIValidationDevice::EnqueueResourceDeletion(FRHIResource* Resource)
 
     StateTracker.UnregisterResource(Resource);
     LiveResources.Remove(Resource);
+
+    if (FRHIValidationSwapChain* ValidationSwapChain = FindValidationSwapChain(Resource))
+    {
+        if (FRHITexture* BackBuffer = ValidationSwapChain->GetBackBuffer())
+        {
+            StateTracker.UnregisterResource(BackBuffer);
+            (void)BackBufferToSwapChain.RemoveKey(BackBuffer);
+        }
+
+        delete ValidationSwapChain;
+        return;
+    }
+
     Device->EnqueueResourceDeletion(Resource);
+}
+
+FRHIValidationSwapChain* FRHIValidationDevice::FindSwapChainForBackBuffer(const FRHIResource* Texture) const
+{
+    if (!Texture)
+    {
+        return nullptr;
+    }
+
+    FRHIValidationSwapChain* const* Found = BackBufferToSwapChain.Find(Texture);
+    return Found ? *Found : nullptr;
+}
+
+FRHIValidationSwapChain* FRHIValidationDevice::FindValidationSwapChain(const FRHIResource* Resource) const
+{
+    if (!Resource || Resource->GetResourceType() != ERHIResourceType::SwapChain)
+    {
+        return nullptr;
+    }
+
+    const FRHISwapChain* SwapChain = static_cast<const FRHISwapChain*>(Resource);
+
+    FRHIValidationSwapChain* Owner = FindSwapChainForBackBuffer(SwapChain->GetBackBuffer());
+    return (Owner == Resource) ? Owner : nullptr;
 }
 
 void* FRHIValidationDevice::GetRHINativeAdapter()
@@ -2088,4 +2139,3 @@ String FRHIValidationDevice::GetAdapterName() const
 {
     return Device->GetAdapterName();
 }
-

@@ -37,7 +37,7 @@ FVulkanTextureRHI* FVulkanBackBufferProxyTextureRHI::GetTextureInterface() const
         return nullptr;
     }
 
-    return SwapChain->AcquireBackBuffer();
+    return SwapChain->ResolveBackBuffer();
 }
 
 void* FVulkanBackBufferProxyTextureRHI::GetRHINativeResource() const
@@ -131,7 +131,7 @@ FVulkanRenderTargetViewRHI* FVulkanBackBufferProxyRenderTargetViewRHI::GetRender
         return nullptr;
     }
 
-    SwapChain->AcquireBackBuffer();
+    SwapChain->ResolveBackBuffer();
     return SwapChain->GetCurrentBackBufferRenderTargetView();
 }
 
@@ -159,7 +159,7 @@ FVulkanUnorderedAccessViewRHI* FVulkanBackBufferProxyUnorderedAccessViewRHI::Get
         return nullptr;
     }
 
-    SwapChain->AcquireBackBuffer();
+    SwapChain->ResolveBackBuffer();
     return SwapChain->GetCurrentBackBufferUnorderedAccessView();
 }
 

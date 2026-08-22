@@ -131,14 +131,18 @@ private:
     void CullPasses();
     void ResolveLifetimes();
     void AllocateResources();
+
     void ValidateGraph();
+    void ValidateUndefinedContents(const FRenderGraphPass& Pass, FRenderGraphTexture* Texture, bool bIsRead);
+
     void PlanBarriers();
     void EmitEpilogueBarriers(FRHICommandList& CommandList);
     void ReleasePooledResources();
 
-    void PlanTextureViewBarrier(FRenderGraphPass* Pass, FRHITexture* RHITexture, FRenderGraphResourceState& State, const FRHITextureSubresourceRange& Range, ERHIResourceState AccessState, bool bIsWrite);
-
-    void PlanBufferViewBarrier(FRenderGraphPass* Pass, FRHIBuffer* RHIBuffer, FRenderGraphResourceState& State, const FBufferRegion& Range, ERHIResourceState AccessState, bool bIsWrite);
+    void PlanTextureViewBarrier(FRenderGraphPass* Pass, FRHITexture* RHITexture, FRenderGraphResourceState& State, 
+        const FRHITextureSubresourceRange& Range, ERHIResourceState AccessState, bool bIsWrite);
+    void PlanBufferViewBarrier(FRenderGraphPass* Pass, FRHIBuffer* RHIBuffer, FRenderGraphResourceState& State, 
+        const FBufferRegion& Range, ERHIResourceState AccessState, bool bIsWrite);
 
     NODISCARD bool HasLiveOutput(const FRenderGraphPass& Pass) const;
     NODISCARD FRHIBeginRenderPassDesc BuildBeginRenderPassDesc(const FRenderGraphPass& Pass, FRenderGraphViewCache& ViewCache) const;

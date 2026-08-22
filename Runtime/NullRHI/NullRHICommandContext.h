@@ -89,6 +89,14 @@ struct FNullRHICommandContext final : public IRHICommandContext
     virtual void SerializeAccelerationStructure(FRHIRayTracingAccelerationStructure* Source, FRHIBuffer* DstBuffer, uint64 DstOffset) override final { }
     virtual void DeserializeAccelerationStructure(FRHIRayTracingAccelerationStructure* Destination, FRHIBuffer* SourceBuffer, uint64 SourceOffset) override final { }
 
+    virtual void AcquireNextBackBuffer(FRHISwapChain* SwapChain) override final
+    {
+        if (FNullSwapChainRHI* NullSwapChain = static_cast<FNullSwapChainRHI*>(SwapChain))
+        {
+            NullSwapChain->AcquireNextBackBuffer();
+        }
+    }
+
     virtual void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) override final
     {
         if (FNullSwapChainRHI* NullSwapChain = static_cast<FNullSwapChainRHI*>(SwapChain))

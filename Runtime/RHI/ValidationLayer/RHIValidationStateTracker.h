@@ -13,6 +13,9 @@ public:
 
     void RegisterResource(const FRHIResource* Resource, ERHIResourceState InitialState, ERHIResourceStateTrackingMode TrackingMode);
     void UnregisterResource(const FRHIResource* Resource);
+
+    void SetResourceState(const FRHIResource* Resource, ERHIResourceState NewState);
+
     bool ApplyTransition(const FRHITransitionBarrierDesc& Desc);
     bool ValidateState(const FRHIResource* Resource, ERHIResourceState AcceptedStates, const CHAR* Caller) const;
 

@@ -11,6 +11,7 @@
 #include "TestCommon/TestMacros.h"
 
 #include "RenderGraphTests.h"
+#include "SwapChainAcquireTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -95,6 +96,8 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("RenderGraph", RenderGraph_Test());
     RUN_TEST("RenderGraphDisabledPass", RenderGraphDisabledPass_Test());
     RUN_TEST("RenderGraphFrame", RenderGraphFrame_Test());
+    RUN_TEST("RenderGraphUndefinedExternal", RenderGraphUndefinedExternal_Test());
+    RUN_TEST("SwapChainAcquire", SwapChainAcquire_Test());
     RUN_TEST("RenderGraphViewSlice", RenderGraphViewSlice_Test());
     RUN_TEST("RenderGraphViewUndeclared", RenderGraphViewUndeclared_Test());
     RUN_TEST("RenderGraphViewBufferRange", RenderGraphViewBufferRange_Test());
