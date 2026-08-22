@@ -5,7 +5,7 @@
 #include <imgui.h>
 
 struct ImDrawData;
-class FWindowElement;
+class FWindow;
 class FRHICommandList;
 
 struct FImGuiViewport
@@ -22,14 +22,14 @@ struct FImGuiViewport
     {
     }
 
-    FRHISwapChainRef           SwapChain;
-    TSharedPtr<FWindowElement> Window;
-    FRHIBufferRef              VertexBuffer;
-    FRHIBufferRef              IndexBuffer;
-    int32                      VertexCount;
-    int32                      IndexCount;
-    uint16                     Width;
-    uint16                     Height;
+    FRHISwapChainRef    SwapChain;
+    TSharedPtr<FWindow> Window;
+    FRHIBufferRef       VertexBuffer;
+    FRHIBufferRef       IndexBuffer;
+    int32               VertexCount;
+    int32               IndexCount;
+    uint16              Width;
+    uint16              Height;
 };
 
 class FImGuiRenderer

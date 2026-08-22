@@ -6,22 +6,22 @@
 #include <Application/Application.h>
 #include <Application/Layout/LayoutTypes.h>
 #include <Application/Text/FixedWidthFontFace.h>
-#include <Application/Elements/BoxElements.h>
-#include <Application/Elements/ScrollBoxElement.h>
-#include <Application/Elements/TextBlockElement.h>
-#include <Application/Elements/WindowElement.h>
+#include <Application/Elements/Box.h>
+#include <Application/Elements/ScrollBox.h>
+#include <Application/Elements/TextBlock.h>
+#include <Application/Elements/Window.h>
 
 static TSharedPtr<IFontFace> CreateTestFont()
 {
     return MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 }
 
-static TSharedPtr<FTextBlockElement> CreateTextBlock(const CHAR* Text, const TSharedPtr<IFontFace>& Font)
+static TSharedPtr<FTextBlock> CreateTextBlock(const CHAR* Text, const TSharedPtr<IFontFace>& Font)
 {
-    FTextBlockElement::FInitializer Initializer;
-    Initializer.Text = Text;
-    Initializer.Font = Font;
-    return FTextBlockElement::Create(Initializer);
+    FTextBlock::FDesc Desc;
+    Desc.Text = Text;
+    Desc.Font = Font;
+    return FTextBlock::Create(Desc);
 }
 
 bool Margin_Test()
@@ -140,12 +140,12 @@ bool TextBlockDesiredSize_Test()
     TSharedPtr<IFontFace> Font = CreateTestFont();
 
     TEST_SECTION("The desired size is the measured text plus the margin");
-    FTextBlockElement::FInitializer Initializer;
-    Initializer.Text   = "Hello";
-    Initializer.Font   = Font;
-    Initializer.Margin = FMargin(2, 3);
+    FTextBlock::FDesc Desc;
+    Desc.Text   = "Hello";
+    Desc.Font   = Font;
+    Desc.Margin = FMargin(2, 3);
 
-    TSharedPtr<FTextBlockElement> TextBlock = FTextBlockElement::Create(Initializer);
+    TSharedPtr<FTextBlock> TextBlock = FTextBlock::Create(Desc);
 
     const IntVector2 DesiredSize = TextBlock->PrepareDesiredSize();
     TEST_EXPECT_EQ(DesiredSize.X, (5 * 8) + 4);
@@ -153,11 +153,11 @@ bool TextBlockDesiredSize_Test()
     TEST_EXPECT(TextBlock->GetCachedDesiredSize() == DesiredSize);
 
     TEST_SECTION("A block with no face asks only for its margin");
-    FTextBlockElement::FInitializer FontlessInitializer;
-    FontlessInitializer.Text   = "Hello";
-    FontlessInitializer.Margin = FMargin(2);
+    FTextBlock::FDesc FontlessDesc;
+    FontlessDesc.Text   = "Hello";
+    FontlessDesc.Margin = FMargin(2);
 
-    TSharedPtr<FTextBlockElement> Fontless = FTextBlockElement::Create(FontlessInitializer);
+    TSharedPtr<FTextBlock> Fontless = FTextBlock::Create(FontlessDesc);
 
     const IntVector2 FontlessSize = Fontless->PrepareDesiredSize();
     TEST_EXPECT_EQ(FontlessSize.X, 4);
@@ -172,10 +172,10 @@ bool VerticalBoxLayout_Test()
 
     TSharedPtr<IFontFace> Font = CreateTestFont();
 
-    TSharedPtr<FTextBlockElement> First  = CreateTextBlock("AAAA", Font);
-    TSharedPtr<FTextBlockElement> Second = CreateTextBlock("BB", Font);
+    TSharedPtr<FTextBlock> First  = CreateTextBlock("AAAA", Font);
+    TSharedPtr<FTextBlock> Second = CreateTextBlock("BB", Font);
 
-    TSharedPtr<FVerticalBoxElement> Box = FVerticalBoxElement::Create();
+    TSharedPtr<FVerticalBox> Box = FVerticalBox::Create();
     Box->AddSlot(First);
     Box->AddSlot(Second);
 
@@ -192,10 +192,10 @@ bool VerticalBoxLayout_Test()
     TEST_EXPECT_EQ(Second->GetContentRectangle().Height, 16);
 
     TEST_SECTION("Two fill slots split the leftover height");
-    TSharedPtr<FTextBlockElement> FillFirst  = CreateTextBlock("A", Font);
-    TSharedPtr<FTextBlockElement> FillSecond = CreateTextBlock("B", Font);
+    TSharedPtr<FTextBlock> FillFirst  = CreateTextBlock("A", Font);
+    TSharedPtr<FTextBlock> FillSecond = CreateTextBlock("B", Font);
 
-    TSharedPtr<FVerticalBoxElement> FillBox = FVerticalBoxElement::Create();
+    TSharedPtr<FVerticalBox> FillBox = FVerticalBox::Create();
     FillBox->AddSlot(FillFirst).SetFillCoefficient(1.0f);
     FillBox->AddSlot(FillSecond).SetFillCoefficient(1.0f);
 
@@ -207,10 +207,10 @@ bool VerticalBoxLayout_Test()
     TEST_EXPECT_EQ(FillSecond->GetContentRectangle().Position.Y, 50);
 
     TEST_SECTION("The last fill slot absorbs the rounding remainder");
-    TSharedPtr<FTextBlockElement> OddFirst  = CreateTextBlock("A", Font);
-    TSharedPtr<FTextBlockElement> OddSecond = CreateTextBlock("B", Font);
+    TSharedPtr<FTextBlock> OddFirst  = CreateTextBlock("A", Font);
+    TSharedPtr<FTextBlock> OddSecond = CreateTextBlock("B", Font);
 
-    TSharedPtr<FVerticalBoxElement> OddBox = FVerticalBoxElement::Create();
+    TSharedPtr<FVerticalBox> OddBox = FVerticalBox::Create();
     OddBox->AddSlot(OddFirst).SetFillCoefficient(1.0f);
     OddBox->AddSlot(OddSecond).SetFillCoefficient(1.0f);
 
@@ -223,10 +223,10 @@ bool VerticalBoxLayout_Test()
     TEST_EXPECT_EQ(OddSecond->GetContentRectangle().Height, 51);
 
     TEST_SECTION("A fill slot only gets what an auto slot leaves behind");
-    TSharedPtr<FTextBlockElement> AutoChild = CreateTextBlock("A", Font);
-    TSharedPtr<FTextBlockElement> FillChild = CreateTextBlock("B", Font);
+    TSharedPtr<FTextBlock> AutoChild = CreateTextBlock("A", Font);
+    TSharedPtr<FTextBlock> FillChild = CreateTextBlock("B", Font);
 
-    TSharedPtr<FVerticalBoxElement> MixedBox = FVerticalBoxElement::Create();
+    TSharedPtr<FVerticalBox> MixedBox = FVerticalBox::Create();
     MixedBox->AddSlot(FillChild).SetFillCoefficient(1.0f);
     MixedBox->AddSlot(AutoChild);
 
@@ -246,10 +246,10 @@ bool HorizontalBoxLayout_Test()
 
     TSharedPtr<IFontFace> Font = CreateTestFont();
 
-    TSharedPtr<FTextBlockElement> First  = CreateTextBlock("AAAA", Font);
-    TSharedPtr<FTextBlockElement> Second = CreateTextBlock("BB", Font);
+    TSharedPtr<FTextBlock> First  = CreateTextBlock("AAAA", Font);
+    TSharedPtr<FTextBlock> Second = CreateTextBlock("BB", Font);
 
-    TSharedPtr<FHorizontalBoxElement> Box = FHorizontalBoxElement::Create();
+    TSharedPtr<FHorizontalBox> Box = FHorizontalBox::Create();
     Box->AddSlot(First);
     Box->AddSlot(Second);
 
@@ -266,10 +266,10 @@ bool HorizontalBoxLayout_Test()
     TEST_EXPECT_EQ(Second->GetContentRectangle().Width, 16);
 
     TEST_SECTION("Two fill slots split the leftover width");
-    TSharedPtr<FTextBlockElement> FillFirst  = CreateTextBlock("A", Font);
-    TSharedPtr<FTextBlockElement> FillSecond = CreateTextBlock("B", Font);
+    TSharedPtr<FTextBlock> FillFirst  = CreateTextBlock("A", Font);
+    TSharedPtr<FTextBlock> FillSecond = CreateTextBlock("B", Font);
 
-    TSharedPtr<FHorizontalBoxElement> FillBox = FHorizontalBoxElement::Create();
+    TSharedPtr<FHorizontalBox> FillBox = FHorizontalBox::Create();
     FillBox->AddSlot(FillFirst).SetFillCoefficient(1.0f);
     FillBox->AddSlot(FillSecond).SetFillCoefficient(3.0f);
 
@@ -290,11 +290,11 @@ bool BoxSlotAlignment_Test()
 
     // Every child measures 32x16, so a 200x100 slot leaves plenty of room to align inside
     TEST_SECTION("Left, center and right place a narrow child horizontally");
-    TSharedPtr<FTextBlockElement> Left   = CreateTextBlock("AAAA", Font);
-    TSharedPtr<FTextBlockElement> Center = CreateTextBlock("AAAA", Font);
-    TSharedPtr<FTextBlockElement> Right  = CreateTextBlock("AAAA", Font);
+    TSharedPtr<FTextBlock> Left   = CreateTextBlock("AAAA", Font);
+    TSharedPtr<FTextBlock> Center = CreateTextBlock("AAAA", Font);
+    TSharedPtr<FTextBlock> Right  = CreateTextBlock("AAAA", Font);
 
-    TSharedPtr<FVerticalBoxElement> Box = FVerticalBoxElement::Create();
+    TSharedPtr<FVerticalBox> Box = FVerticalBox::Create();
     Box->AddSlot(Left).SetHorizontalAlignment(EHorizontalAlignment::Left);
     Box->AddSlot(Center).SetHorizontalAlignment(EHorizontalAlignment::Center);
     Box->AddSlot(Right).SetHorizontalAlignment(EHorizontalAlignment::Right);
@@ -308,9 +308,9 @@ bool BoxSlotAlignment_Test()
     TEST_EXPECT_EQ(Right->GetContentRectangle().Position.X, 200 - 32);
 
     TEST_SECTION("Fill gives the child the whole slot");
-    TSharedPtr<FTextBlockElement> Filled = CreateTextBlock("AAAA", Font);
+    TSharedPtr<FTextBlock> Filled = CreateTextBlock("AAAA", Font);
 
-    TSharedPtr<FVerticalBoxElement> FillBox = FVerticalBoxElement::Create();
+    TSharedPtr<FVerticalBox> FillBox = FVerticalBox::Create();
     FillBox->AddSlot(Filled).SetFillCoefficient(1.0f);
 
     FillBox->PrepareDesiredSize();
@@ -320,11 +320,11 @@ bool BoxSlotAlignment_Test()
     TEST_EXPECT_EQ(Filled->GetContentRectangle().Height, 100);
 
     TEST_SECTION("Top, center and bottom place a short child vertically");
-    TSharedPtr<FTextBlockElement> Top    = CreateTextBlock("A", Font);
-    TSharedPtr<FTextBlockElement> Middle = CreateTextBlock("A", Font);
-    TSharedPtr<FTextBlockElement> Bottom = CreateTextBlock("A", Font);
+    TSharedPtr<FTextBlock> Top    = CreateTextBlock("A", Font);
+    TSharedPtr<FTextBlock> Middle = CreateTextBlock("A", Font);
+    TSharedPtr<FTextBlock> Bottom = CreateTextBlock("A", Font);
 
-    TSharedPtr<FHorizontalBoxElement> VerticalBox = FHorizontalBoxElement::Create();
+    TSharedPtr<FHorizontalBox> VerticalBox = FHorizontalBox::Create();
     VerticalBox->AddSlot(Top).SetVerticalAlignment(EVerticalAlignment::Top);
     VerticalBox->AddSlot(Middle).SetVerticalAlignment(EVerticalAlignment::Center);
     VerticalBox->AddSlot(Bottom).SetVerticalAlignment(EVerticalAlignment::Bottom);
@@ -337,9 +337,9 @@ bool BoxSlotAlignment_Test()
     TEST_EXPECT_EQ(Bottom->GetContentRectangle().Position.Y, 100 - 16);
 
     TEST_SECTION("Padding shrinks the space the child is aligned in");
-    TSharedPtr<FTextBlockElement> Padded = CreateTextBlock("AAAA", Font);
+    TSharedPtr<FTextBlock> Padded = CreateTextBlock("AAAA", Font);
 
-    TSharedPtr<FVerticalBoxElement> PaddedBox = FVerticalBoxElement::Create();
+    TSharedPtr<FVerticalBox> PaddedBox = FVerticalBox::Create();
     PaddedBox->AddSlot(Padded).SetPadding(FMargin(10, 5)).SetHorizontalAlignment(EHorizontalAlignment::Left);
 
     PaddedBox->PrepareDesiredSize();
@@ -358,13 +358,13 @@ bool ScrollBoxClamping_Test()
     TSharedPtr<IFontFace> Font = CreateTestFont();
 
     // Ten lines of sixteen pixels each, shown through a hundred-pixel view
-    TSharedPtr<FVerticalBoxElement> Content = FVerticalBoxElement::Create();
+    TSharedPtr<FVerticalBox> Content = FVerticalBox::Create();
     for (int32 Index = 0; Index < 10; ++Index)
     {
         Content->AddSlot(CreateTextBlock("Line", Font));
     }
 
-    TSharedPtr<FScrollBoxElement> ScrollBox = FScrollBoxElement::Create();
+    TSharedPtr<FScrollBox> ScrollBox = FScrollBox::Create();
     ScrollBox->SetContent(Content);
 
     ScrollBox->PrepareDesiredSize();
@@ -400,10 +400,10 @@ bool ScrollBoxClamping_Test()
     TEST_EXPECT_EQ(ScrollBox->GetScrollOffset(), 60);
 
     TEST_SECTION("Content that fits leaves nothing to scroll");
-    TSharedPtr<FVerticalBoxElement> ShortContent = FVerticalBoxElement::Create();
+    TSharedPtr<FVerticalBox> ShortContent = FVerticalBox::Create();
     ShortContent->AddSlot(CreateTextBlock("Line", Font));
 
-    TSharedPtr<FScrollBoxElement> ShortScrollBox = FScrollBoxElement::Create();
+    TSharedPtr<FScrollBox> ShortScrollBox = FScrollBox::Create();
     ShortScrollBox->SetContent(ShortContent);
 
     ShortScrollBox->PrepareDesiredSize();
@@ -421,19 +421,19 @@ bool WindowLayoutOrigin_Test()
 
     TSharedPtr<IFontFace> Font = CreateTestFont();
 
-    FWindowElement::FInitializer Initializer;
-    Initializer.Title    = "Layout Origin";
-    Initializer.Size     = IntVector2(1280, 720);
-    Initializer.Position = IntVector2(340, 180);
+    FWindow::FDesc Desc;
+    Desc.Title    = "Layout Origin";
+    Desc.Size     = IntVector2(1280, 720);
+    Desc.Position = IntVector2(340, 180);
 
-    TSharedPtr<FWindowElement> Window = FWindowElement::Create(Initializer);
+    TSharedPtr<FWindow> Window = FWindow::Create(Desc);
 
-    TSharedPtr<FTextBlockElement>   ContentRow = CreateTextBlock("Content", Font);
-    TSharedPtr<FVerticalBoxElement> Content    = FVerticalBoxElement::Create();
+    TSharedPtr<FTextBlock>   ContentRow = CreateTextBlock("Content", Font);
+    TSharedPtr<FVerticalBox> Content    = FVerticalBox::Create();
     Content->AddSlot(ContentRow);
 
-    TSharedPtr<FTextBlockElement>   OverlayRow = CreateTextBlock("Overlay", Font);
-    TSharedPtr<FVerticalBoxElement> Overlay    = FVerticalBoxElement::Create();
+    TSharedPtr<FTextBlock>   OverlayRow = CreateTextBlock("Overlay", Font);
+    TSharedPtr<FVerticalBox> Overlay    = FVerticalBox::Create();
     Overlay->AddSlot(OverlayRow);
 
     Window->SetContent(Content);
@@ -474,15 +474,15 @@ bool WindowOverlayMeasure_Test()
 
     TSharedPtr<IFontFace> Font = CreateTestFont();
 
-    FWindowElement::FInitializer Initializer;
-    Initializer.Title = "Overlay Measure";
-    Initializer.Size  = IntVector2(1280, 720);
+    FWindow::FDesc Desc;
+    Desc.Title = "Overlay Measure";
+    Desc.Size  = IntVector2(1280, 720);
 
-    TSharedPtr<FWindowElement> Window = FWindowElement::Create(Initializer);
-    TSharedPtr<FTextBlockElement> LogRow   = CreateTextBlock("Log", Font);
-    TSharedPtr<FTextBlockElement> InputRow = CreateTextBlock("Input", Font);
+    TSharedPtr<FWindow> Window = FWindow::Create(Desc);
+    TSharedPtr<FTextBlock> LogRow   = CreateTextBlock("Log", Font);
+    TSharedPtr<FTextBlock> InputRow = CreateTextBlock("Input", Font);
 
-    TSharedPtr<FVerticalBoxElement> Overlay = FVerticalBoxElement::Create();
+    TSharedPtr<FVerticalBox> Overlay = FVerticalBox::Create();
     Overlay->AddSlot(LogRow).SetFillCoefficient(1.0f);
     Overlay->AddSlot(InputRow);
 
@@ -493,7 +493,7 @@ bool WindowOverlayMeasure_Test()
     Window->GetChildren(Children);
     TEST_EXPECT_EQ(Children.Size(), 1);
 
-    Window->SetContent(FVerticalBoxElement::Create());
+    Window->SetContent(FVerticalBox::Create());
     Children.Clear();
     Window->GetChildren(Children);
     TEST_EXPECT_EQ(Children.Size(), 2);
@@ -519,13 +519,13 @@ bool ScrollBoxScrollIntoView_Test()
 
     TSharedPtr<IFontFace> Font = CreateTestFont();
 
-    TSharedPtr<FVerticalBoxElement> Content = FVerticalBoxElement::Create();
+    TSharedPtr<FVerticalBox> Content = FVerticalBox::Create();
     for (int32 Index = 0; Index < 10; ++Index)
     {
         Content->AddSlot(CreateTextBlock("Line", Font));
     }
 
-    TSharedPtr<FScrollBoxElement> ScrollBox = FScrollBoxElement::Create();
+    TSharedPtr<FScrollBox> ScrollBox = FScrollBox::Create();
     ScrollBox->SetContent(Content);
 
     ScrollBox->PrepareDesiredSize();

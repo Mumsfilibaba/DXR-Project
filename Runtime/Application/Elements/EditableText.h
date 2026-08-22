@@ -19,12 +19,12 @@ enum class EKeyInterceptResult : uint8
 
 DECLARE_RETURN_DELEGATE(FOnEditableTextKeyDownDelegate, EKeyInterceptResult, const FKeyEvent& /*KeyEvent*/);
 
-class APPLICATION_API FEditableTextElement final : public FVisualElement
+class APPLICATION_API FEditableText final : public FVisualElement
 {
 public:
-    struct FInitializer
+    struct FDesc
     {
-        FInitializer()
+        FDesc()
             : Text()
             , HintText()
             , Font(nullptr)
@@ -49,7 +49,7 @@ public:
     };
 
 public:
-    static TSharedPtr<FEditableTextElement> Create(const FInitializer& Initializer);
+    static TSharedPtr<FEditableText> Create(const FDesc& Desc);
 
     /**
      * @brief Whether the character separates two words. The same set the console completes words with,
@@ -62,15 +62,15 @@ public:
     NODISCARD static bool IsWordSeparator(CHAR Character);
 
 public:
-    FEditableTextElement();
-    virtual ~FEditableTextElement();
+    FEditableText();
+    virtual ~FEditableText();
 
     /**
      * @brief Initializes the editable text with the specified parameters.
      *
-     * @param Initializer Initialization parameters.
+     * @param Desc Initialization parameters.
      */
-    void Initialize(const FInitializer& Initializer);
+    void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;

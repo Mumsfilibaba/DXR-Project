@@ -5,7 +5,7 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Modules/ModuleManager.h"
 #include "Application/Draw/DrawCommandList.h"
-#include "Application/Elements/WindowElement.h"
+#include "Application/Elements/Window.h"
 #include "Application/Text/FontAtlas.h"
 #include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
@@ -34,7 +34,7 @@ static String DescribeRectangle(const FRectangle& Rectangle)
     return String::Printf("(%d, %d, %d x %d)", Rectangle.Position.X, Rectangle.Position.Y, Rectangle.Width, Rectangle.Height);
 }
 
-static void DumpWindowDrawData(const FWindowElement& Window, const FDrawCommandList& Commands, const FUIDrawData& DrawData)
+static void DumpWindowDrawData(const FWindow& Window, const FDrawCommandList& Commands, const FUIDrawData& DrawData)
 {
     LOG_INFO("[FApplicationRenderer]: Draw data for '%s': %d commands (%d box, %d text, %d line, %d clip push, %d clip pop), %d vertices, %d indices, %d batches",
         *Window.GetTitle(),
@@ -212,7 +212,7 @@ void FApplicationRenderer::ReleaseRHI()
     PipelineStateFormat   = EFormat::Unknown;
 }
 
-FDrawCommandList* FApplicationRenderer::BeginWindow(const TSharedPtr<FWindowElement>& InWindow)
+FDrawCommandList* FApplicationRenderer::BeginWindow(const TSharedPtr<FWindow>& InWindow)
 {
     if (!InWindow)
     {
@@ -230,7 +230,7 @@ FDrawCommandList* FApplicationRenderer::BeginWindow(const TSharedPtr<FWindowElem
     return &WindowState->Commands;
 }
 
-void FApplicationRenderer::EndWindow(const TSharedPtr<FWindowElement>& InWindow)
+void FApplicationRenderer::EndWindow(const TSharedPtr<FWindow>& InWindow)
 {
     if (!InWindow)
     {
@@ -255,7 +255,7 @@ void FApplicationRenderer::EndWindow(const TSharedPtr<FWindowElement>& InWindow)
     }
 }
 
-void FApplicationRenderer::OnWindowDestroyed(const TSharedPtr<FWindowElement>& InWindow)
+void FApplicationRenderer::OnWindowDestroyed(const TSharedPtr<FWindow>& InWindow)
 {
     if (!InWindow)
     {
@@ -272,7 +272,7 @@ void FApplicationRenderer::OnWindowDestroyed(const TSharedPtr<FWindowElement>& I
     }
 }
 
-FWindowDrawState* FApplicationRenderer::FindOrAddWindowState(const TSharedPtr<FWindowElement>& InWindow)
+FWindowDrawState* FApplicationRenderer::FindOrAddWindowState(const TSharedPtr<FWindow>& InWindow)
 {
     for (int32 Index = WindowStates.Size() - 1; Index >= 0; --Index)
     {
@@ -480,8 +480,8 @@ void FApplicationRenderer::Render(FRHICommandList& CommandList, FRHISwapChain* S
 
 void FApplicationRenderer::RenderWindow(FRHICommandList& CommandList, const FWindowDrawState& WindowState)
 {
-    TWeakPtr<FWindowElement>   WeakWindow = WindowState.Window;
-    TSharedPtr<FWindowElement> Window     = WeakWindow.ToSharedPtr();
+    TWeakPtr<FWindow>   WeakWindow = WindowState.Window;
+    TSharedPtr<FWindow> Window     = WeakWindow.ToSharedPtr();
     if (!Window)
     {
         return;

@@ -9,7 +9,7 @@
 
 #include "Application/Console/ConsoleCommandLine.h"
 #include "Application/Console/ConsoleLogBuffer.h"
-#include "Application/Console/ConsoleElement.h"
+#include "Application/Console/Console.h"
 
 #include "Application/Input/KeyNames.h"
 #include "Application/Input/Keys.h"
@@ -21,15 +21,15 @@
 #include "Application/Draw/DrawTypes.h"
 #include "Application/Draw/UIDrawData.h"
 
-#include "Application/Elements/BorderElement.h"
-#include "Application/Elements/BoxElements.h"
+#include "Application/Elements/Border.h"
+#include "Application/Elements/Box.h"
 #include "Application/Elements/CompoundElement.h"
-#include "Application/Elements/EditableTextElement.h"
-#include "Application/Elements/ScrollBoxElement.h"
-#include "Application/Elements/TextBlockElement.h"
-#include "Application/Elements/ViewportElement.h"
+#include "Application/Elements/EditableText.h"
+#include "Application/Elements/ScrollBox.h"
+#include "Application/Elements/TextBlock.h"
+#include "Application/Elements/Viewport.h"
 #include "Application/Elements/VisualElement.h"
-#include "Application/Elements/WindowElement.h"
+#include "Application/Elements/Window.h"
 
 #include "Application/Text/FixedWidthFontFace.h"
 #include "Application/Text/FontAtlas.h"

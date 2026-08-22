@@ -2,11 +2,11 @@
 #include "Application/Console/ConsoleCommandLine.h"
 #include "Application/Console/ConsoleLogBuffer.h"
 #include "Application/Text/IFontFace.h"
-#include "Application/Elements/BorderElement.h"
-#include "Application/Elements/BoxElements.h"
+#include "Application/Elements/Border.h"
+#include "Application/Elements/Box.h"
 #include "Application/Elements/CompoundElement.h"
-#include "Application/Elements/EditableTextElement.h"
-#include "Application/Elements/ScrollBoxElement.h"
+#include "Application/Elements/EditableText.h"
+#include "Application/Elements/ScrollBox.h"
 
 struct FConsoleCandidateColumns
 {
@@ -24,12 +24,12 @@ struct FConsoleCandidateColumns
     int32 SetByWidth;
 };
 
-class APPLICATION_API FConsoleElement final : public FCompoundElement
+class APPLICATION_API FConsole final : public FCompoundElement
 {
 public:
-    struct FInitializer
+    struct FDesc
     {
-        FInitializer()
+        FDesc()
             : Font(nullptr)
             , TextAreaHeight(384)
             , BackgroundColor(0.1f, 0.1f, 0.1f, 0.85f)
@@ -52,7 +52,7 @@ public:
     };
 
 public:
-    static TSharedPtr<FConsoleElement> Create(const FInitializer& Initializer);
+    static TSharedPtr<FConsole> Create(const FDesc& Desc);
 
     /**
      * @brief Checks whether the key toggles the console, the grave accent or World1 as before.
@@ -63,15 +63,15 @@ public:
     NODISCARD static bool IsToggleKey(FKey Key);
 
 public:
-    FConsoleElement();
-    virtual ~FConsoleElement();
+    FConsole();
+    virtual ~FConsole();
 
     /**
      * @brief Initializes the console with the specified parameters.
      *
-     * @param Initializer Initialization parameters.
+     * @param Desc Initialization parameters.
      */
-    void Initialize(const FInitializer& Initializer);
+    void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
@@ -109,19 +109,19 @@ public:
     }
 
     /** @brief The element that edits the command line. */
-    NODISCARD FORCEINLINE const TSharedPtr<FEditableTextElement>& GetInputElement() const
+    NODISCARD FORCEINLINE const TSharedPtr<FEditableText>& GetInput() const
     {
-        return InputElement;
+        return Input;
     }
 
     /** @brief The scroll box holding either the candidates or the log. */
-    NODISCARD FORCEINLINE const TSharedPtr<FScrollBoxElement>& GetScrollBox() const
+    NODISCARD FORCEINLINE const TSharedPtr<FScrollBox>& GetScrollBox() const
     {
         return ScrollBox;
     }
 
     /** @brief The box the candidate rows and log lines are placed in. */
-    NODISCARD FORCEINLINE const TSharedPtr<FVerticalBoxElement>& GetScrollContent() const
+    NODISCARD FORCEINLINE const TSharedPtr<FVerticalBox>& GetScrollContent() const
     {
         return ScrollContent;
     }
@@ -133,28 +133,28 @@ private:
     EKeyInterceptResult HandleInputKeyDown(const FKeyEvent& KeyEvent);
     void HandleTextChanged(const String& NewText);
 
-    void AddLogLineElement(const FConsoleLogLine& Line);
+    void AddLogLine(const FConsoleLogLine& Line);
     void AddCandidateRow(const TPair<IConsoleObject*, String>& Candidate, bool bIsSelected, const FConsoleCandidateColumns& Columns);
 
     NODISCARD int32 GetCandidateRowHeight() const;
     NODISCARD int32 GetInputFieldHeight() const;
     NODISCARD FConsoleCandidateColumns ComputeCandidateColumns() const;
 
-    FConsoleLogBuffer                LogBuffer;
-    FConsoleCommandLine              CommandLine;
-    TSharedPtr<IFontFace>            Font;
-    TSharedPtr<FBorderElement>       Background;
-    TSharedPtr<FVerticalBoxElement>  RootBox;
-    TSharedPtr<FScrollBoxElement>    ScrollBox;
-    TSharedPtr<FVerticalBoxElement>  ScrollContent;
-    TSharedPtr<FBorderElement>       InputBackground;
-    TSharedPtr<FEditableTextElement> InputElement;
-    FFloatColor                      SelectedCandidateColor;
-    FFloatColor                      CandidateDetailColor;
-    uint64                           LastLogRevision;
-    int32                            TextAreaHeight;
-    bool                             bIsOpen : 1;
-    bool                             bIsScrollContentDirty : 1;
-    bool                             bIsScrollToEndPending : 1;
-    bool                             bIsSyncingInput : 1;
+    FConsoleLogBuffer         LogBuffer;
+    FConsoleCommandLine       CommandLine;
+    TSharedPtr<IFontFace>     Font;
+    TSharedPtr<FBorder>       Background;
+    TSharedPtr<FVerticalBox>  RootBox;
+    TSharedPtr<FScrollBox>    ScrollBox;
+    TSharedPtr<FVerticalBox>  ScrollContent;
+    TSharedPtr<FBorder>       InputBackground;
+    TSharedPtr<FEditableText> Input;
+    FFloatColor               SelectedCandidateColor;
+    FFloatColor               CandidateDetailColor;
+    uint64                    LastLogRevision;
+    int32                     TextAreaHeight;
+    bool                      bIsOpen : 1;
+    bool                      bIsScrollContentDirty : 1;
+    bool                      bIsScrollToEndPending : 1;
+    bool                      bIsSyncingInput : 1;
 };

@@ -1,6 +1,6 @@
 #pragma once
 #include "Application/InputHandler.h"
-#include "Application/Console/ConsoleElement.h"
+#include "Application/Console/Console.h"
 
 enum class EConsoleKeyConsumption : uint8
 {
@@ -53,7 +53,7 @@ private:
     {
         if (KeyConsumption == EConsoleKeyConsumption::ToggleKeyOnly)
         {
-            return FConsoleElement::IsToggleKey(KeyEvent.GetKey());
+            return FConsole::IsToggleKey(KeyEvent.GetKey());
         }
 
         return bConsoleToggled;

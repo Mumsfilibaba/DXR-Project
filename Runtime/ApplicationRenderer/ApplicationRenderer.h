@@ -7,7 +7,7 @@
 
 class FRHICommandList;
 class FFontAtlas;
-class FWindowElement;
+class FWindow;
 
 struct FWindowDrawState
 {
@@ -22,7 +22,7 @@ struct FWindowDrawState
     {
     }
 
-    TWeakPtr<FWindowElement> Window;
+    TWeakPtr<FWindow> Window;
     FDrawCommandList         Commands;
     FUIDrawData              DrawData;
     FRHIBufferRef            VertexBuffer;
@@ -38,9 +38,9 @@ public:
     virtual ~FApplicationRenderer();
     
     // IApplicationRenderer Interface
-    virtual FDrawCommandList* BeginWindow(const TSharedPtr<FWindowElement>& InWindow) override final;
-    virtual void EndWindow(const TSharedPtr<FWindowElement>& InWindow) override final;
-    virtual void OnWindowDestroyed(const TSharedPtr<FWindowElement>& InWindow) override final;
+    virtual FDrawCommandList* BeginWindow(const TSharedPtr<FWindow>& InWindow) override final;
+    virtual void EndWindow(const TSharedPtr<FWindow>& InWindow) override final;
+    virtual void OnWindowDestroyed(const TSharedPtr<FWindow>& InWindow) override final;
 
     /**
     * @brief Compiles the shaders and creates the state objects and the white texel the renderer draws with.
@@ -61,7 +61,7 @@ public:
     void Render(FRHICommandList& CommandList, FRHISwapChain* SwapChain);
 
 private:
-    FWindowDrawState*       FindOrAddWindowState(const TSharedPtr<FWindowElement>& InWindow);
+    FWindowDrawState*       FindOrAddWindowState(const TSharedPtr<FWindow>& InWindow);
     bool                    PreparePipelineState(EFormat OutputFormat);
     bool                    PrepareGeometry(FRHICommandList& CommandList, FWindowDrawState& WindowState);
     FRHIShaderResourceView* PrepareAtlasTexture(FRHICommandList& CommandList, const FFontAtlas* Atlas);

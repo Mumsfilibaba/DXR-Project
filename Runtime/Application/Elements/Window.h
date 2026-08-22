@@ -16,14 +16,14 @@ DECLARE_DELEGATE(FOnWindowClosed);
 /** @brief Delegate called when the window focus state changes. */
 DECLARE_DELEGATE(FOnWindowFocusChanged);
 
-class APPLICATION_API FWindowElement final : public FVisualElement
+class APPLICATION_API FWindow final : public FVisualElement
 {
 public:
 
-    struct FInitializer
+    struct FDesc
     {
         /** @brief Default constructor initializes default window parameters. */
-        FInitializer()
+        FDesc()
             : Title()
             , ParentWindow(nullptr)
             , Size()
@@ -38,7 +38,7 @@ public:
         String Title;     
         
         /** @brief Optional parent/owner window (used for owned popup/tool windows). */
-        TSharedPtr<FWindowElement> ParentWindow;
+        TSharedPtr<FWindow> ParentWindow;
 
         /** @brief The size of the window (width, height). */
         IntVector2 Size;      
@@ -57,12 +57,12 @@ public:
     };
 
 public:
-    static TSharedPtr<FWindowElement> Create(const FInitializer& Initializer);
+    static TSharedPtr<FWindow> Create(const FDesc& Desc);
 
 public:
     
-    FWindowElement();
-    virtual ~FWindowElement();
+    FWindow();
+    virtual ~FWindow();
 
     // FVisualElement Interface
     virtual void Tick(const FRectangle& AssignedBounds) override final;
@@ -75,9 +75,9 @@ public:
     /**
      * @brief Initializes the window with the specified parameters.
      * 
-     * @param Initializer Initialization parameters.
+     * @param Desc Initialization parameters.
      */
-    void Initialize(const FInitializer& Initializer);
+    void Initialize(const FDesc& Desc);
 
     /**
      * @brief Sets a delegate to be called when the window is closed.
@@ -354,9 +354,9 @@ public:
      * 
      * @return The parent window element, or nullptr if there is no parent.
      */
-    TSharedPtr<FWindowElement> GetParentWindow() const
+    TSharedPtr<FWindow> GetParentWindow() const
     {
-        return ParentWindowElement;
+        return ParentWindow;
     }
 
     /**
@@ -393,5 +393,5 @@ private:
     TSharedPtr<FVisualElement>  Overlay;
     TSharedPtr<FVisualElement>  Content;
     TSharedRef<IPlatformWindow> PlatformWindow;
-    TSharedPtr<FWindowElement>  ParentWindowElement;
+    TSharedPtr<FWindow>         ParentWindow;
 };

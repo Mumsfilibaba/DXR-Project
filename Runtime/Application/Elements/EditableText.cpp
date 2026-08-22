@@ -1,4 +1,4 @@
-#include "Application/Elements/EditableTextElement.h"
+#include "Application/Elements/EditableText.h"
 #include "Application/Application.h"
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Input/Keys.h"
@@ -9,18 +9,18 @@
 /** @brief The share of a blink the text cursor is drawn for, which is ImGui's 0.8s out of 1.2s. */
 static constexpr double GTextCursorVisibleFraction = 2.0 / 3.0;
 
-TSharedPtr<FEditableTextElement> FEditableTextElement::Create(const FInitializer& Initializer)
+TSharedPtr<FEditableText> FEditableText::Create(const FDesc& Desc)
 {
-    TSharedPtr<FEditableTextElement> NewElement = MakeSharedPtr<FEditableTextElement>();
-    if (NewElement)
+    TSharedPtr<FEditableText> NewInstance = MakeSharedPtr<FEditableText>();
+    if (NewInstance)
     {
-        NewElement->Initialize(Initializer);
+        NewInstance->Initialize(Desc);
     }
 
-    return NewElement;
+    return NewInstance;
 }
 
-FEditableTextElement::FEditableTextElement()
+FEditableText::FEditableText()
     : FVisualElement()
     , Text()
     , HintText()
@@ -42,19 +42,19 @@ FEditableTextElement::FEditableTextElement()
 {
 }
 
-FEditableTextElement::~FEditableTextElement() = default;
+FEditableText::~FEditableText() = default;
 
-void FEditableTextElement::Initialize(const FInitializer& Initializer)
+void FEditableText::Initialize(const FDesc& Desc)
 {
-    Text                  = Initializer.Text;
-    HintText              = Initializer.HintText;
-    Font                  = Initializer.Font;
-    ForegroundColor       = Initializer.ForegroundColor;
-    HintColor             = Initializer.HintColor;
-    TextCursorColor       = Initializer.TextCursorColor;
-    SelectionColor        = Initializer.SelectionColor;
-    Padding               = Initializer.Padding;
-    TextCursorBlinkPeriod = Math::Max(0.0f, Initializer.TextCursorBlinkPeriod);
+    Text                  = Desc.Text;
+    HintText              = Desc.HintText;
+    Font                  = Desc.Font;
+    ForegroundColor       = Desc.ForegroundColor;
+    HintColor             = Desc.HintColor;
+    TextCursorColor       = Desc.TextCursorColor;
+    SelectionColor        = Desc.SelectionColor;
+    Padding               = Desc.Padding;
+    TextCursorBlinkPeriod = Math::Max(0.0f, Desc.TextCursorBlinkPeriod);
     TextCursorPosition    = Text.Length();
     SelectionAnchor       = TextCursorPosition;
 
@@ -64,7 +64,7 @@ void FEditableTextElement::Initialize(const FInitializer& Initializer)
     SetActivationPolicy(EElementActivationPolicy::AutoFocusOnWindowActivate);
 }
 
-IntVector2 FEditableTextElement::ComputeDesiredSize() const
+IntVector2 FEditableText::ComputeDesiredSize() const
 {
     if (!Font)
     {
@@ -78,17 +78,17 @@ IntVector2 FEditableTextElement::ComputeDesiredSize() const
     return IntVector2(Math::Max(TextWidth, HintWidth) + Padding.GetTotalHorizontal(), GetTextBandHeight() + Padding.GetTotalVertical());
 }
 
-int32 FEditableTextElement::GetTextBandHeight() const
+int32 FEditableText::GetTextBandHeight() const
 {
     return Font ? Font->GetTextBandHeight() : 0;
 }
 
-int32 FEditableTextElement::GetTextBandTop(const FRectangle& TextBounds) const
+int32 FEditableText::GetTextBandTop(const FRectangle& TextBounds) const
 {
     return Font ? TextBounds.Position.Y + Font->GetTextBandOffset(TextBounds.Height) : TextBounds.Position.Y;
 }
 
-int32 FEditableTextElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
+int32 FEditableText::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
     const FRectangle TextBounds = AllottedGeometry.Bounds.Deflate(Padding);
 
@@ -141,7 +141,7 @@ int32 FEditableTextElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawC
     return LayerId;
 }
 
-bool FEditableTextElement::IsTextCursorVisibleAt(double ElapsedSeconds) const
+bool FEditableText::IsTextCursorVisibleAt(double ElapsedSeconds) const
 {
     if (TextCursorBlinkPeriod <= 0.0f || ElapsedSeconds <= 0.0)
     {
@@ -152,12 +152,12 @@ bool FEditableTextElement::IsTextCursorVisibleAt(double ElapsedSeconds) const
     return Math::FMod(ElapsedSeconds, BlinkPeriod) < (BlinkPeriod * GTextCursorVisibleFraction);
 }
 
-void FEditableTextElement::ResetTextCursorBlink()
+void FEditableText::ResetTextCursorBlink()
 {
     TextCursorBlinkResetCounter = FPlatformTime::QueryPerformanceCounter();
 }
 
-double FEditableTextElement::GetSecondsSinceTextCursorBlinkReset() const
+double FEditableText::GetSecondsSinceTextCursorBlinkReset() const
 {
     const uint64 Frequency = FPlatformTime::QueryPerformanceFrequency();
     if (Frequency == 0)
@@ -169,7 +169,7 @@ double FEditableTextElement::GetSecondsSinceTextCursorBlinkReset() const
     return static_cast<double>(Now - TextCursorBlinkResetCounter) / static_cast<double>(Frequency);
 }
 
-FEventResponse FEditableTextElement::OnKeyChar(const FKeyEvent& KeyEvent)
+FEventResponse FEditableText::OnKeyChar(const FKeyEvent& KeyEvent)
 {
     const CHAR Character = KeyEvent.GetAnsiChar();
 
@@ -188,7 +188,7 @@ FEventResponse FEditableTextElement::OnKeyChar(const FKeyEvent& KeyEvent)
     return FEventResponse::Handled();
 }
 
-FEventResponse FEditableTextElement::OnKeyDown(const FKeyEvent& KeyEvent)
+FEventResponse FEditableText::OnKeyDown(const FKeyEvent& KeyEvent)
 {
     if (!KeyEvent.IsDown())
     {
@@ -355,7 +355,7 @@ FEventResponse FEditableTextElement::OnKeyDown(const FKeyEvent& KeyEvent)
     return FEventResponse::Unhandled();
 }
 
-FEventResponse FEditableTextElement::OnMouseButtonDown(const FCursorEvent& CursorEvent)
+FEventResponse FEditableText::OnMouseButtonDown(const FCursorEvent& CursorEvent)
 {
     if (CursorEvent.GetKey() != Keys::MouseButtonLeft || !Font)
     {
@@ -379,7 +379,7 @@ FEventResponse FEditableTextElement::OnMouseButtonDown(const FCursorEvent& Curso
     return FEventResponse::Handled();
 }
 
-FEventResponse FEditableTextElement::OnMouseButtonUp(const FCursorEvent& CursorEvent)
+FEventResponse FEditableText::OnMouseButtonUp(const FCursorEvent& CursorEvent)
 {
     if (CursorEvent.GetKey() != Keys::MouseButtonLeft || !bIsSelectingWithMouse)
     {
@@ -396,7 +396,7 @@ FEventResponse FEditableTextElement::OnMouseButtonUp(const FCursorEvent& CursorE
     return FEventResponse::Handled();
 }
 
-FEventResponse FEditableTextElement::OnMouseMove(const FCursorEvent& CursorEvent)
+FEventResponse FEditableText::OnMouseMove(const FCursorEvent& CursorEvent)
 {
     if (!bIsSelectingWithMouse || !Font)
     {
@@ -407,7 +407,7 @@ FEventResponse FEditableTextElement::OnMouseMove(const FCursorEvent& CursorEvent
     return FEventResponse::Handled();
 }
 
-FEventResponse FEditableTextElement::OnFocusGained()
+FEventResponse FEditableText::OnFocusGained()
 {
     bHasKeyboardFocus = true;
 
@@ -415,7 +415,7 @@ FEventResponse FEditableTextElement::OnFocusGained()
     return FEventResponse::Handled();
 }
 
-FEventResponse FEditableTextElement::OnFocusLost()
+FEventResponse FEditableText::OnFocusLost()
 {
     bHasKeyboardFocus     = false;
     bIsSelectingWithMouse = false;
@@ -424,18 +424,18 @@ FEventResponse FEditableTextElement::OnFocusLost()
     return FEventResponse::Handled();
 }
 
-bool FEditableTextElement::GetCursor(ECursor& OutCursor) const
+bool FEditableText::GetCursor(ECursor& OutCursor) const
 {
     OutCursor = ECursor::TextInput;
     return true;
 }
 
-bool FEditableTextElement::SupportsKeyboardFocus() const
+bool FEditableText::SupportsKeyboardFocus() const
 {
     return true;
 }
 
-void FEditableTextElement::SetText(const String& InText)
+void FEditableText::SetText(const String& InText)
 {
     Text               = InText;
     TextCursorPosition = Math::Clamp(TextCursorPosition, 0, Text.Length());
@@ -444,7 +444,7 @@ void FEditableTextElement::SetText(const String& InText)
     NotifyTextChanged();
 }
 
-void FEditableTextElement::SetTextSilently(const String& InText)
+void FEditableText::SetTextSilently(const String& InText)
 {
     Text               = InText;
     TextCursorPosition = Text.Length();
@@ -453,7 +453,7 @@ void FEditableTextElement::SetTextSilently(const String& InText)
     ResetTextCursorBlink();
 }
 
-void FEditableTextElement::ClearText()
+void FEditableText::ClearText()
 {
     Text.Clear();
     
@@ -463,7 +463,7 @@ void FEditableTextElement::ClearText()
     NotifyTextChanged();
 }
 
-void FEditableTextElement::InsertCharacter(CHAR Character)
+void FEditableText::InsertCharacter(CHAR Character)
 {
     if (HasSelection())
     {
@@ -479,7 +479,7 @@ void FEditableTextElement::InsertCharacter(CHAR Character)
     NotifyTextChanged();
 }
 
-void FEditableTextElement::InsertText(const StringView& InText)
+void FEditableText::InsertText(const StringView& InText)
 {
     if (InText.IsEmpty())
     {
@@ -500,7 +500,7 @@ void FEditableTextElement::InsertText(const StringView& InText)
     NotifyTextChanged();
 }
 
-void FEditableTextElement::ReplaceRange(int32 Position, int32 Count, const StringView& InText)
+void FEditableText::ReplaceRange(int32 Position, int32 Count, const StringView& InText)
 {
     const int32 ClampedPosition = Math::Clamp(Position, 0, Text.Length());
     const int32 ClampedCount    = Math::Clamp(Count, 0, Text.Length() - ClampedPosition);
@@ -521,7 +521,7 @@ void FEditableTextElement::ReplaceRange(int32 Position, int32 Count, const Strin
     NotifyTextChanged();
 }
 
-bool FEditableTextElement::DeleteBackward()
+bool FEditableText::DeleteBackward()
 {
     if (TextCursorPosition <= 0)
     {
@@ -536,7 +536,7 @@ bool FEditableTextElement::DeleteBackward()
     return true;
 }
 
-bool FEditableTextElement::DeleteForward()
+bool FEditableText::DeleteForward()
 {
     if (TextCursorPosition >= Text.Length())
     {
@@ -550,47 +550,47 @@ bool FEditableTextElement::DeleteForward()
     return true;
 }
 
-void FEditableTextElement::SetTextCursorPosition(int32 InTextCursorPosition)
+void FEditableText::SetTextCursorPosition(int32 InTextCursorPosition)
 {
     MoveTextCursor(InTextCursorPosition, false);
 }
 
-void FEditableTextElement::MoveTextCursorLeft(bool bExtendSelection)
+void FEditableText::MoveTextCursorLeft(bool bExtendSelection)
 {
     MoveTextCursor(TextCursorPosition - 1, bExtendSelection);
 }
 
-void FEditableTextElement::MoveTextCursorRight(bool bExtendSelection)
+void FEditableText::MoveTextCursorRight(bool bExtendSelection)
 {
     MoveTextCursor(TextCursorPosition + 1, bExtendSelection);
 }
 
-void FEditableTextElement::MoveTextCursorToStart(bool bExtendSelection)
+void FEditableText::MoveTextCursorToStart(bool bExtendSelection)
 {
     MoveTextCursor(0, bExtendSelection);
 }
 
-void FEditableTextElement::MoveTextCursorToEnd(bool bExtendSelection)
+void FEditableText::MoveTextCursorToEnd(bool bExtendSelection)
 {
     MoveTextCursor(Text.Length(), bExtendSelection);
 }
 
-void FEditableTextElement::MoveTextCursorWordLeft(bool bExtendSelection)
+void FEditableText::MoveTextCursorWordLeft(bool bExtendSelection)
 {
     MoveTextCursor(FindWordBoundaryLeft(TextCursorPosition), bExtendSelection);
 }
 
-void FEditableTextElement::MoveTextCursorWordRight(bool bExtendSelection)
+void FEditableText::MoveTextCursorWordRight(bool bExtendSelection)
 {
     MoveTextCursor(FindWordBoundaryRight(TextCursorPosition), bExtendSelection);
 }
 
-bool FEditableTextElement::IsWordSeparator(CHAR Character)
+bool FEditableText::IsWordSeparator(CHAR Character)
 {
     return Character == ' ' || Character == '\t' || Character == ',' || Character == ';';
 }
 
-int32 FEditableTextElement::FindWordBoundaryLeft(int32 From) const
+int32 FEditableText::FindWordBoundaryLeft(int32 From) const
 {
     int32 Position = Math::Clamp(From, 0, Text.Length());
 
@@ -607,7 +607,7 @@ int32 FEditableTextElement::FindWordBoundaryLeft(int32 From) const
     return Position;
 }
 
-int32 FEditableTextElement::FindWordBoundaryRight(int32 From) const
+int32 FEditableText::FindWordBoundaryRight(int32 From) const
 {
     const int32 Length   = Text.Length();
     int32       Position = Math::Clamp(From, 0, Length);
@@ -625,22 +625,22 @@ int32 FEditableTextElement::FindWordBoundaryRight(int32 From) const
     return Position;
 }
 
-bool FEditableTextElement::HasSelection() const
+bool FEditableText::HasSelection() const
 {
     return SelectionAnchor != TextCursorPosition;
 }
 
-int32 FEditableTextElement::GetSelectionStart() const
+int32 FEditableText::GetSelectionStart() const
 {
     return Math::Min(SelectionAnchor, TextCursorPosition);
 }
 
-int32 FEditableTextElement::GetSelectionEnd() const
+int32 FEditableText::GetSelectionEnd() const
 {
     return Math::Max(SelectionAnchor, TextCursorPosition);
 }
 
-String FEditableTextElement::GetSelectedText() const
+String FEditableText::GetSelectedText() const
 {
     if (!HasSelection())
     {
@@ -650,7 +650,7 @@ String FEditableTextElement::GetSelectedText() const
     return String(Text.Data() + GetSelectionStart(), GetSelectionEnd() - GetSelectionStart());
 }
 
-void FEditableTextElement::SelectAll()
+void FEditableText::SelectAll()
 {
     SelectionAnchor    = 0;
     TextCursorPosition = Text.Length();
@@ -658,12 +658,12 @@ void FEditableTextElement::SelectAll()
     ResetTextCursorBlink();
 }
 
-void FEditableTextElement::ClearSelection()
+void FEditableText::ClearSelection()
 {
     SelectionAnchor = TextCursorPosition;
 }
 
-bool FEditableTextElement::DeleteSelection()
+bool FEditableText::DeleteSelection()
 {
     if (!HasSelection())
     {
@@ -675,18 +675,18 @@ bool FEditableTextElement::DeleteSelection()
     return true;
 }
 
-void FEditableTextElement::CopyToClipboard() const
+void FEditableText::CopyToClipboard() const
 {
     FPlatformSystemClipboard::SetText(HasSelection() ? GetSelectedText() : Text);
 }
 
-void FEditableTextElement::CutToClipboard()
+void FEditableText::CutToClipboard()
 {
     CopyToClipboard();
     DeleteSelection();
 }
 
-void FEditableTextElement::PasteFromClipboard()
+void FEditableText::PasteFromClipboard()
 {
     String ClipboardText;
     FPlatformSystemClipboard::GetText(ClipboardText);
@@ -697,18 +697,18 @@ void FEditableTextElement::PasteFromClipboard()
     }
 }
 
-void FEditableTextElement::SetFont(const TSharedPtr<IFontFace>& InFont)
+void FEditableText::SetFont(const TSharedPtr<IFontFace>& InFont)
 {
     Font = InFont;
 }
 
-void FEditableTextElement::NotifyTextChanged()
+void FEditableText::NotifyTextChanged()
 {
     ResetTextCursorBlink();
     OnTextChanged.ExecuteIfBound(Text);
 }
 
-void FEditableTextElement::MoveTextCursor(int32 NewTextCursorPosition, bool bExtendSelection)
+void FEditableText::MoveTextCursor(int32 NewTextCursorPosition, bool bExtendSelection)
 {
     TextCursorPosition = Math::Clamp(NewTextCursorPosition, 0, Text.Length());
 
@@ -720,7 +720,7 @@ void FEditableTextElement::MoveTextCursor(int32 NewTextCursorPosition, bool bExt
     ResetTextCursorBlink();
 }
 
-int32 FEditableTextElement::FindTextCursorPositionAt(const IntVector2& ClientPosition) const
+int32 FEditableText::FindTextCursorPositionAt(const IntVector2& ClientPosition) const
 {
     const FRectangle TextBounds = GetContentRectangle().Deflate(Padding);
     const int32      OffsetX    = ClientPosition.X - TextBounds.Position.X;

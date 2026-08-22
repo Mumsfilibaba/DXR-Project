@@ -2,12 +2,12 @@
 #include "Core/Math/Color.h"
 #include "Application/Elements/CompoundElement.h"
 
-class APPLICATION_API FBorderElement final : public FCompoundElement
+class APPLICATION_API FBorder final : public FCompoundElement
 {
 public:
-    struct FInitializer
+    struct FDesc
     {
-        FInitializer()
+        FDesc()
             : BackgroundColor(0.0f, 0.0f, 0.0f, 0.0f)
             , Padding()
             , CornerRadius(0.0f)
@@ -22,9 +22,9 @@ public:
          * @brief Gives the border an opinion on the cursor shape, which its padding ring carries too.
          *
          * @param InCursor The shape to show over the border.
-         * @return This initializer, so the setters can be chained.
+         * @return This desc, so the setters can be chained.
          */
-        FORCEINLINE FInitializer& SetCursor(ECursor InCursor)
+        FORCEINLINE FDesc& SetCursor(ECursor InCursor)
         {
             Cursor     = InCursor;
             bHasCursor = true;
@@ -41,18 +41,18 @@ public:
     };
 
 public:
-    static TSharedPtr<FBorderElement> Create(const FInitializer& Initializer);
+    static TSharedPtr<FBorder> Create(const FDesc& Desc);
 
 public:
-    FBorderElement();
-    virtual ~FBorderElement();
+    FBorder();
+    virtual ~FBorder();
 
     /**
      * @brief Initializes the border with the specified parameters.
      *
-     * @param Initializer Initialization parameters.
+     * @param Desc Initialization parameters.
      */
-    void Initialize(const FInitializer& Initializer);
+    void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;

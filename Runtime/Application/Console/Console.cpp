@@ -1,5 +1,5 @@
-#include "Application/Console/ConsoleElement.h"
-#include "Application/Elements/TextBlockElement.h"
+#include "Application/Console/Console.h"
+#include "Application/Elements/TextBlock.h"
 #include "Application/Input/Keys.h"
 #include "Core/Math/Math.h"
 
@@ -118,23 +118,23 @@ static int32 GetSetByColumnWidth(const TSharedPtr<IFontFace>& Font)
     return Width;
 }
 
-TSharedPtr<FConsoleElement> FConsoleElement::Create(const FInitializer& Initializer)
+TSharedPtr<FConsole> FConsole::Create(const FDesc& Desc)
 {
-    TSharedPtr<FConsoleElement> NewElement = MakeSharedPtr<FConsoleElement>();
-    if (NewElement)
+    TSharedPtr<FConsole> NewInstance = MakeSharedPtr<FConsole>();
+    if (NewInstance)
     {
-        NewElement->Initialize(Initializer);
+        NewInstance->Initialize(Desc);
     }
 
-    return NewElement;
+    return NewInstance;
 }
 
-bool FConsoleElement::IsToggleKey(FKey Key)
+bool FConsole::IsToggleKey(FKey Key)
 {
     return Key == Keys::GraveAccent || Key == Keys::World1;
 }
 
-FConsoleElement::FConsoleElement()
+FConsole::FConsole()
     : FCompoundElement()
     , LogBuffer()
     , CommandLine()
@@ -144,7 +144,7 @@ FConsoleElement::FConsoleElement()
     , ScrollBox(nullptr)
     , ScrollContent(nullptr)
     , InputBackground(nullptr)
-    , InputElement(nullptr)
+    , Input(nullptr)
     , SelectedCandidateColor(0.6f, 0.6f, 0.6f, 1.0f)
     , CandidateDetailColor(0.85f, 0.85f, 0.85f, 1.0f)
     , LastLogRevision(0)
@@ -156,58 +156,58 @@ FConsoleElement::FConsoleElement()
 {
 }
 
-FConsoleElement::~FConsoleElement() = default;
+FConsole::~FConsole() = default;
 
-void FConsoleElement::Initialize(const FInitializer& Initializer)
+void FConsole::Initialize(const FDesc& Desc)
 {
-    Font                   = Initializer.Font;
-    TextAreaHeight         = Initializer.TextAreaHeight;
-    SelectedCandidateColor = Initializer.SelectedCandidateColor;
-    CandidateDetailColor   = Initializer.CandidateDetailColor;
+    Font                   = Desc.Font;
+    TextAreaHeight         = Desc.TextAreaHeight;
+    SelectedCandidateColor = Desc.SelectedCandidateColor;
+    CandidateDetailColor   = Desc.CandidateDetailColor;
 
-    LogBuffer.SetMaxLines(Initializer.MaxLogLines);
+    LogBuffer.SetMaxLines(Desc.MaxLogLines);
 
-    ScrollContent = FVerticalBoxElement::Create();
+    ScrollContent = FVerticalBox::Create();
 
-    ScrollBox = FScrollBoxElement::Create();
+    ScrollBox = FScrollBox::Create();
     ScrollBox->SetContent(ScrollContent);
 
-    FEditableTextElement::FInitializer InputInitializer;
-    InputInitializer.Font     = Font;
-    InputInitializer.HintText = "Console Input";
-    InputInitializer.Padding  = FMargin(4, 0);
+    FEditableText::FDesc InputDesc;
+    InputDesc.Font     = Font;
+    InputDesc.HintText = "Console Input";
+    InputDesc.Padding  = FMargin(4, 0);
 
-    InputElement = FEditableTextElement::Create(InputInitializer);
-    InputElement->GetOnTextChanged().BindRaw(this, &FConsoleElement::HandleTextChanged);
-    InputElement->GetOnKeyDownInterceptor().BindRaw(this, &FConsoleElement::HandleInputKeyDown);
+    Input = FEditableText::Create(InputDesc);
+    Input->GetOnTextChanged().BindRaw(this, &FConsole::HandleTextChanged);
+    Input->GetOnKeyDownInterceptor().BindRaw(this, &FConsole::HandleInputKeyDown);
 
-    FBorderElement::FInitializer InputBackgroundInitializer;
-    InputBackgroundInitializer.BackgroundColor = Initializer.InputBackgroundColor;
-    InputBackgroundInitializer.Padding         = FMargin(10, 0);
-    InputBackgroundInitializer.MinHeight       = GetInputFieldHeight();
-    InputBackgroundInitializer.CornerRadius    = GInputCornerRadius;
-    InputBackgroundInitializer.Content         = InputElement;
+    FBorder::FDesc InputBackgroundDesc;
+    InputBackgroundDesc.BackgroundColor = Desc.InputBackgroundColor;
+    InputBackgroundDesc.Padding         = FMargin(10, 0);
+    InputBackgroundDesc.MinHeight       = GetInputFieldHeight();
+    InputBackgroundDesc.CornerRadius    = GInputCornerRadius;
+    InputBackgroundDesc.Content         = Input;
 
-    InputBackgroundInitializer.SetCursor(ECursor::TextInput);
+    InputBackgroundDesc.SetCursor(ECursor::TextInput);
 
-    InputBackground = FBorderElement::Create(InputBackgroundInitializer);
+    InputBackground = FBorder::Create(InputBackgroundDesc);
 
-    RootBox = FVerticalBoxElement::Create();
+    RootBox = FVerticalBox::Create();
     RootBox->AddSlot(ScrollBox).SetFillCoefficient(1.0f);
     RootBox->AddSlot(InputBackground)
         .SetVerticalAlignment(EVerticalAlignment::Bottom)
         .SetPadding(FMargin(GConsoleHorizontalPadding, GInputVerticalPadding));
 
-    FBorderElement::FInitializer BackgroundInitializer;
-    BackgroundInitializer.BackgroundColor = Initializer.BackgroundColor;
-    BackgroundInitializer.Content         = RootBox;
+    FBorder::FDesc BackgroundDesc;
+    BackgroundDesc.BackgroundColor = Desc.BackgroundColor;
+    BackgroundDesc.Content         = RootBox;
 
-    Background = FBorderElement::Create(BackgroundInitializer);
+    Background = FBorder::Create(BackgroundDesc);
 
     SetContent(Background);
     SetVisibility(EVisibility::Hidden);
 
-    if (Initializer.bRegisterWithLogger)
+    if (Desc.bRegisterWithLogger)
     {
         LogBuffer.RegisterWithLogger();
     }
@@ -215,7 +215,7 @@ void FConsoleElement::Initialize(const FInitializer& Initializer)
     bIsScrollContentDirty = true;
 }
 
-void FConsoleElement::OnArrange(const FRectangle& AllottedBounds)
+void FConsole::OnArrange(const FRectangle& AllottedBounds)
 {
     if (LastLogRevision != LogBuffer.GetRevision())
     {
@@ -247,7 +247,7 @@ void FConsoleElement::OnArrange(const FRectangle& AllottedBounds)
     FCompoundElement::OnArrange(ConsoleBounds);
 }
 
-int32 FConsoleElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
+int32 FConsole::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
     if (!bIsOpen)
     {
@@ -257,17 +257,17 @@ int32 FConsoleElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComman
     return FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId);
 }
 
-bool FConsoleElement::CapturesAllInput() const
+bool FConsole::CapturesAllInput() const
 {
     return bIsOpen;
 }
 
-TSharedPtr<FVisualElement> FConsoleElement::GetFocusTarget()
+TSharedPtr<FVisualElement> FConsole::GetFocusTarget()
 {
-    return bIsOpen && InputElement ? InputElement : FCompoundElement::GetFocusTarget();
+    return bIsOpen && Input ? Input : FCompoundElement::GetFocusTarget();
 }
 
-FEventResponse FConsoleElement::OnKeyDown(const FKeyEvent& KeyEvent)
+FEventResponse FConsole::OnKeyDown(const FKeyEvent& KeyEvent)
 {
 
     if (KeyEvent.IsDown() && IsToggleKey(KeyEvent.GetKey()))
@@ -283,12 +283,12 @@ FEventResponse FConsoleElement::OnKeyDown(const FKeyEvent& KeyEvent)
     return FCompoundElement::OnKeyDown(KeyEvent);
 }
 
-void FConsoleElement::Toggle()
+void FConsole::Toggle()
 {
     SetIsOpen(!bIsOpen);
 }
 
-void FConsoleElement::SetIsOpen(bool bInIsOpen)
+void FConsole::SetIsOpen(bool bInIsOpen)
 {
     if (bIsOpen == bInIsOpen)
     {
@@ -306,7 +306,7 @@ void FConsoleElement::SetIsOpen(bool bInIsOpen)
     bIsScrollToEndPending = true;
 }
 
-void FConsoleElement::RebuildScrollContent()
+void FConsole::RebuildScrollContent()
 {
     ScrollContent->ClearSlots();
 
@@ -342,21 +342,21 @@ void FConsoleElement::RebuildScrollContent()
 
     for (const FConsoleLogLine& Line : Lines)
     {
-        AddLogLineElement(Line);
+        AddLogLine(Line);
     }
 }
 
-void FConsoleElement::SyncInputFromCommandLine()
+void FConsole::SyncInputFromCommandLine()
 {
     bIsSyncingInput = true;
 
-    InputElement->SetTextSilently(CommandLine.GetText());
-    InputElement->SetTextCursorPosition(CommandLine.GetTextCursorPosition());
+    Input->SetTextSilently(CommandLine.GetText());
+    Input->SetTextCursorPosition(CommandLine.GetTextCursorPosition());
 
     bIsSyncingInput = false;
 }
 
-EKeyInterceptResult FConsoleElement::HandleInputKeyDown(const FKeyEvent& KeyEvent)
+EKeyInterceptResult FConsole::HandleInputKeyDown(const FKeyEvent& KeyEvent)
 {
     const FKey Key = KeyEvent.GetKey();
 
@@ -419,7 +419,7 @@ EKeyInterceptResult FConsoleElement::HandleInputKeyDown(const FKeyEvent& KeyEven
     return EKeyInterceptResult::NotHandled;
 }
 
-void FConsoleElement::HandleTextChanged(const String& NewText)
+void FConsole::HandleTextChanged(const String& NewText)
 {
     if (bIsSyncingInput)
     {
@@ -427,7 +427,7 @@ void FConsoleElement::HandleTextChanged(const String& NewText)
     }
 
     CommandLine.SetText(NewText);
-    CommandLine.SetTextCursorPosition(InputElement->GetTextCursorPosition());
+    CommandLine.SetTextCursorPosition(Input->GetTextCursorPosition());
     CommandLine.RefreshCandidates();
 
     bIsScrollContentDirty = true;
@@ -439,29 +439,29 @@ void FConsoleElement::HandleTextChanged(const String& NewText)
     }
 }
 
-void FConsoleElement::AddLogLineElement(const FConsoleLogLine& Line)
+void FConsole::AddLogLine(const FConsoleLogLine& Line)
 {
-    FTextBlockElement::FInitializer TextInitializer;
-    TextInitializer.Text            = Line.Message;
-    TextInitializer.Font            = Font;
-    TextInitializer.ColorAndOpacity = FConsoleLogBuffer::GetSeverityColor(Line.Severity);
+    FTextBlock::FDesc TextDesc;
+    TextDesc.Text            = Line.Message;
+    TextDesc.Font            = Font;
+    TextDesc.ColorAndOpacity = FConsoleLogBuffer::GetSeverityColor(Line.Severity);
 
-    ScrollContent->AddSlot(FTextBlockElement::Create(TextInitializer))
+    ScrollContent->AddSlot(FTextBlock::Create(TextDesc))
         .SetHorizontalAlignment(EHorizontalAlignment::Left)
         .SetPadding(FMargin(GConsoleHorizontalPadding, 0));
 }
 
-int32 FConsoleElement::GetCandidateRowHeight() const
+int32 FConsole::GetCandidateRowHeight() const
 {
     return Font ? Font->GetTextBandHeight() + (GCandidateRowPadding * 2) : GFallbackBoxHeight;
 }
 
-int32 FConsoleElement::GetInputFieldHeight() const
+int32 FConsole::GetInputFieldHeight() const
 {
     return Font ? Font->GetTextBandHeight() + (GInputFramePadding * 2) : GFallbackBoxHeight;
 }
 
-FConsoleCandidateColumns FConsoleElement::ComputeCandidateColumns() const
+FConsoleCandidateColumns FConsole::ComputeCandidateColumns() const
 {
     FConsoleCandidateColumns Columns;
     Columns.NameWidth  = GCandidateNameMinWidth;
@@ -485,33 +485,33 @@ FConsoleCandidateColumns FConsoleElement::ComputeCandidateColumns() const
     return Columns;
 }
 
-void FConsoleElement::AddCandidateRow(const TPair<IConsoleObject*, String>& Candidate, bool bIsSelected, const FConsoleCandidateColumns& Columns)
+void FConsole::AddCandidateRow(const TPair<IConsoleObject*, String>& Candidate, bool bIsSelected, const FConsoleCandidateColumns& Columns)
 {
     const FConsoleCandidateText RowText  = GetCandidateText(Candidate);
     const FFloatColor           RowColor = bIsSelected ? FFloatColor::White : CandidateDetailColor;
 
     const auto MakeCell = [this](const String& CellText, const FFloatColor& CellColor, int32 ColumnWidth)
     {
-        FTextBlockElement::FInitializer CellInitializer;
-        CellInitializer.Text            = CellText;
-        CellInitializer.Font            = Font;
-        CellInitializer.ColorAndOpacity = CellColor;
-        CellInitializer.Margin          = FMargin(0, 0, Math::Max(0, ColumnWidth - MeasureTextWidth(Font, CellText)), 0);
-        return FTextBlockElement::Create(CellInitializer);
+        FTextBlock::FDesc CellDesc;
+        CellDesc.Text            = CellText;
+        CellDesc.Font            = Font;
+        CellDesc.ColorAndOpacity = CellColor;
+        CellDesc.Margin          = FMargin(0, 0, Math::Max(0, ColumnWidth - MeasureTextWidth(Font, CellText)), 0);
+        return FTextBlock::Create(CellDesc);
     };
 
-    TSharedPtr<FHorizontalBoxElement> Row = FHorizontalBoxElement::Create();
+    TSharedPtr<FHorizontalBox> Row = FHorizontalBox::Create();
     Row->AddSlot(MakeCell(RowText.Name, RowColor, Columns.NameWidth));
     Row->AddSlot(MakeCell(RowText.Value, CandidateDetailColor, Columns.ValueWidth));
     Row->AddSlot(MakeCell(RowText.Type, CandidateDetailColor, Columns.TypeWidth));
     Row->AddSlot(MakeCell(RowText.SetBy, CandidateDetailColor, Columns.SetByWidth));
     Row->AddSlot(MakeCell(RowText.Help, CandidateDetailColor, 0));
 
-    FBorderElement::FInitializer SelectionInitializer;
-    SelectionInitializer.BackgroundColor = bIsSelected ? SelectedCandidateColor : FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
-    SelectionInitializer.Padding         = FMargin(GConsoleHorizontalPadding, 0);
-    SelectionInitializer.MinHeight       = GetCandidateRowHeight();
-    SelectionInitializer.Content         = Row;
+    FBorder::FDesc SelectionDesc;
+    SelectionDesc.BackgroundColor = bIsSelected ? SelectedCandidateColor : FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
+    SelectionDesc.Padding         = FMargin(GConsoleHorizontalPadding, 0);
+    SelectionDesc.MinHeight       = GetCandidateRowHeight();
+    SelectionDesc.Content         = Row;
 
-    ScrollContent->AddSlot(FBorderElement::Create(SelectionInitializer));
+    ScrollContent->AddSlot(FBorder::Create(SelectionDesc));
 }

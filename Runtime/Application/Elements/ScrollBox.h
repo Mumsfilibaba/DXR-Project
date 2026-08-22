@@ -1,17 +1,17 @@
 #pragma once
 #include "Application/Elements/CompoundElement.h"
 
-class APPLICATION_API FScrollBoxElement final : public FCompoundElement
+class APPLICATION_API FScrollBox final : public FCompoundElement
 {
 public:
     static constexpr int32 DefaultScrollAmountPerWheelStep = 48;
 
 public:
-    static TSharedPtr<FScrollBoxElement> Create();
+    static TSharedPtr<FScrollBox> Create();
 
 public:
-    FScrollBoxElement();
-    virtual ~FScrollBoxElement();
+    FScrollBox();
+    virtual ~FScrollBox();
 
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;

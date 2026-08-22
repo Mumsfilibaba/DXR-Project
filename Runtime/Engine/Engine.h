@@ -85,15 +85,15 @@ public:
     }
 
     /** @brief Returns the engine window */
-    TSharedPtr<FWindowElement> GetEngineWindow() const
+    TSharedPtr<FWindow> GetEngineWindow() const
     {
         return EngineWindow;
     }
 
     /** @brief Returns the engine window */
-    TSharedPtr<FViewportElement> GetViewportElement() const
+    TSharedPtr<FViewport> GetViewport() const
     {
-        return EngineViewportElement;
+        return EngineViewport;
     }
 
     /** @brief Returns the SceneViewport */
@@ -123,11 +123,11 @@ private:
     void OnEngineWindowMoved(const IntVector2& NewScreenPosition);
     void OnEngineWindowResized(const IntVector2& NewScreenSize);
 
-    FWorld*                      World;
-    FGameModule*                 GameModule;
-    TSharedPtr<FWindowElement>   EngineWindow;
-    TSharedPtr<FViewportElement> EngineViewportElement;
-    TSharedPtr<FSceneViewport>   SceneViewport;
+    FWorld*                    World;
+    FGameModule*               GameModule;
+    TSharedPtr<FWindow>        EngineWindow;
+    TSharedPtr<FViewport>      EngineViewport;
+    TSharedPtr<FSceneViewport> SceneViewport;
 
     static FEngine* Engine;
 };

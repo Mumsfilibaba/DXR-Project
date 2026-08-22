@@ -7,8 +7,8 @@
 #include <Application/Application.h>
 #include <Application/IApplicationRenderer.h>
 #include <Application/Draw/DrawCommandList.h>
-#include <Application/Elements/BorderElement.h>
-#include <Application/Elements/WindowElement.h>
+#include <Application/Elements/Border.h>
+#include <Application/Elements/Window.h>
 
 class FStubApplicationRenderer final : public IApplicationRenderer
 {
@@ -27,7 +27,7 @@ public:
     }
 
     // IApplicationRenderer Interface Overrides
-    virtual FDrawCommandList* BeginWindow(const TSharedPtr<FWindowElement>& InWindow) override final
+    virtual FDrawCommandList* BeginWindow(const TSharedPtr<FWindow>& InWindow) override final
     {
         ++BeginCount;
         LastBeginWindow = InWindow.Get();
@@ -41,13 +41,13 @@ public:
         return &Commands;
     }
 
-    virtual void EndWindow(const TSharedPtr<FWindowElement>&) override final
+    virtual void EndWindow(const TSharedPtr<FWindow>&) override final
     {
         ++EndCount;
         LastCommandCount = Commands.Size();
     }
 
-    virtual void OnWindowDestroyed(const TSharedPtr<FWindowElement>& InWindow) override final
+    virtual void OnWindowDestroyed(const TSharedPtr<FWindow>& InWindow) override final
     {
         ++DestroyedCount;
 
@@ -60,8 +60,8 @@ public:
     int32            EndCount;
     int32            DestroyedCount;
     int32            LastCommandCount;
-    FWindowElement*  LastBeginWindow;
-    FWindowElement*  LastDestroyedWindow;
+    FWindow*  LastBeginWindow;
+    FWindow*  LastDestroyedWindow;
     bool             bRefuseWindows;
     bool             bWindowWasStillAlive;
 };
@@ -76,12 +76,12 @@ bool ApplicationRendererWindowPass_Test()
     Application->SetRenderer(Renderer);
     TEST_EXPECT(Application->GetRenderer() == Renderer);
 
-    TSharedPtr<FWindowElement> Window = CreateStubWindow(Application, IntVector2(800, 600));
+    TSharedPtr<FWindow> Window = CreateStubWindow(Application, IntVector2(800, 600));
     TEST_EXPECT(Window->GetPlatformWindow() != nullptr);
 
-    FBorderElement::FInitializer BorderInitializer;
-    BorderInitializer.BackgroundColor = FFloatColor(0.1f, 0.1f, 0.1f, 1.0f);
-    Window->SetContent(FBorderElement::Create(BorderInitializer));
+    FBorder::FDesc BorderDesc;
+    BorderDesc.BackgroundColor = FFloatColor(0.1f, 0.1f, 0.1f, 1.0f);
+    Window->SetContent(FBorder::Create(BorderDesc));
 
     Application->Tick(0.0f);
 
@@ -97,10 +97,10 @@ bool ApplicationRendererWindowPass_Test()
     TEST_EXPECT_EQ(Renderer->Commands.CountCommandsOfType(EDrawCommandType::Box), 1);
 
     TEST_SECTION("The overlay is painted above the content");
-    FBorderElement::FInitializer OverlayInitializer;
-    OverlayInitializer.BackgroundColor = FFloatColor(0.5f, 0.0f, 0.0f, 1.0f);
+    FBorder::FDesc OverlayDesc;
+    OverlayDesc.BackgroundColor = FFloatColor(0.5f, 0.0f, 0.0f, 1.0f);
 
-    Window->SetOverlay(FBorderElement::Create(OverlayInitializer));
+    Window->SetOverlay(FBorder::Create(OverlayDesc));
     Application->Tick(0.0f);
     Application->DrawWindows();
 
@@ -146,8 +146,8 @@ bool ApplicationRendererWindowLifetime_Test()
 
     Application->SetRenderer(Renderer);
 
-    TSharedPtr<FWindowElement> First  = CreateStubWindow(Application, IntVector2(400, 300));
-    TSharedPtr<FWindowElement> Second = CreateStubWindow(Application, IntVector2(400, 300));
+    TSharedPtr<FWindow> First  = CreateStubWindow(Application, IntVector2(400, 300));
+    TSharedPtr<FWindow> Second = CreateStubWindow(Application, IntVector2(400, 300));
 
     Application->Tick(0.0f);
 

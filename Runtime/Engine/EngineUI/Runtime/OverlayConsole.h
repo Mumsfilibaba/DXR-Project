@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Containers/SharedPtr.h"
-#include "Application/Console/ConsoleElement.h"
+#include "Application/Console/Console.h"
 #include "Engine/EngineUI/BaseConsoleWidget.h"
 
 class FOverlayConsole
@@ -22,7 +22,7 @@ public:
 private:
     void HandleKeyEvent(const FKeyEvent& KeyEvent);
 
-    TSharedPtr<FConsoleElement>      ConsoleElement;
+    TSharedPtr<FConsole>             Console;
     TSharedPtr<IFontFace>            Font;
     TSharedPtr<FConsoleInputHandler> InputHandler;
 };

@@ -8,22 +8,22 @@ enum class EViewportPositionSpace
     Screen,
 };
 
-class APPLICATION_API FViewportElement final : public FVisualElement
+class APPLICATION_API FViewport final : public FVisualElement
 {
 public:
-    struct FInitializer
+    struct FDesc
     {
         TSharedPtr<IViewport> ViewportInterface;
     };
 
 public:
-    static TSharedPtr<FViewportElement> Create(const FInitializer& Initializer);
+    static TSharedPtr<FViewport> Create(const FDesc& Desc);
 
 public:
-    FViewportElement();
-    virtual ~FViewportElement();
+    FViewport();
+    virtual ~FViewport();
 
-    void Initialize(const FInitializer& Initializer);
+    void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
     virtual void Tick(const FRectangle& AssignedBounds) override final;

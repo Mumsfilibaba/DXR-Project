@@ -7,7 +7,7 @@
 
 #include "ApplicationRendererTests.h"
 #include "ConsoleCommandLineTests.h"
-#include "ConsoleElementTests.h"
+#include "ConsoleTests.h"
 #include "EditableTextTests.h"
 #include "FontTests.h"
 #include "LayoutTests.h"
@@ -79,19 +79,19 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("ConsoleSubmit", ConsoleSubmit_Test());
     RUN_TEST("ConsoleLogBufferRing", ConsoleLogBufferRing_Test());
 
-    RUN_TEST("ConsoleElementToggle", ConsoleElementToggle_Test());
-    RUN_TEST("ConsoleElementLayout", ConsoleElementLayout_Test());
-    RUN_TEST("ConsoleElementLogDraw", ConsoleElementLogDraw_Test());
-    RUN_TEST("ConsoleElementCandidateDraw", ConsoleElementCandidateDraw_Test());
-    RUN_TEST("ConsoleElementCandidateHighlight", ConsoleElementCandidateHighlight_Test());
-    RUN_TEST("ConsoleElementCandidateColumns", ConsoleElementCandidateColumns_Test());
-    RUN_TEST("ConsoleElementInputChrome", ConsoleElementInputChrome_Test());
-    RUN_TEST("ConsoleElementCursorShape", ConsoleElementCursorShape_Test());
-    RUN_TEST("ConsoleElementInputFieldSurvives", ConsoleElementInputFieldSurvives_Test());
-    RUN_TEST("ConsoleElementModalInput", ConsoleElementModalInput_Test());
-    RUN_TEST("ConsoleElementClickFocus", ConsoleElementClickFocus_Test());
-    RUN_TEST("ConsoleElementInWindow", ConsoleElementInWindow_Test());
-    RUN_TEST("ConsoleElementTypeAndExecute", ConsoleElementTypeAndExecute_Test());
+    RUN_TEST("ConsoleToggle", ConsoleToggle_Test());
+    RUN_TEST("ConsoleLayout", ConsoleLayout_Test());
+    RUN_TEST("ConsoleLogDraw", ConsoleLogDraw_Test());
+    RUN_TEST("ConsoleCandidateDraw", ConsoleCandidateDraw_Test());
+    RUN_TEST("ConsoleCandidateHighlight", ConsoleCandidateHighlight_Test());
+    RUN_TEST("ConsoleCandidateColumns", ConsoleCandidateColumns_Test());
+    RUN_TEST("ConsoleInputChrome", ConsoleInputChrome_Test());
+    RUN_TEST("ConsoleCursorShape", ConsoleCursorShape_Test());
+    RUN_TEST("ConsoleInputFieldSurvives", ConsoleInputFieldSurvives_Test());
+    RUN_TEST("ConsoleModalInput", ConsoleModalInput_Test());
+    RUN_TEST("ConsoleClickFocus", ConsoleClickFocus_Test());
+    RUN_TEST("ConsoleInWindow", ConsoleInWindow_Test());
+    RUN_TEST("ConsoleTypeAndExecute", ConsoleTypeAndExecute_Test());
 
     const int32 ExitCode = TestHarness::Report();
     TestHarness::Shutdown();

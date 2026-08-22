@@ -1,4 +1,4 @@
-#include "ConsoleElementTests.h"
+#include "ConsoleTests.h"
 #include "ConsoleTestVariables.h"
 #include "StubPlatformApplication.h"
 
@@ -7,11 +7,11 @@
 
 #include <Core/Misc/Paths.h>
 #include <Application/Application.h>
-#include <Application/Console/ConsoleElement.h>
+#include <Application/Console/Console.h>
 #include <Application/Draw/DrawCommandList.h>
 #include <Application/Draw/UIDrawData.h>
-#include <Application/Elements/BorderElement.h>
-#include <Application/Elements/WindowElement.h>
+#include <Application/Elements/Border.h>
+#include <Application/Elements/Window.h>
 #include <Application/Input/Keys.h>
 #include <Application/Text/FixedWidthFontFace.h>
 #include <Application/Text/TrueTypeFontFace.h>
@@ -38,24 +38,24 @@ static FKeyEvent CreateCharEvent(CHAR Character)
     return FKeyEvent(EInputEventType::KeyChar, Keys::Unknown, FModifierKeyState(), static_cast<uint32>(Character), false, true);
 }
 
-static TSharedPtr<FConsoleElement> CreateConsole()
+static TSharedPtr<FConsole> CreateConsole()
 {
-    FConsoleElement::FInitializer Initializer;
-    Initializer.Font                = MakeSharedPtr<FFixedWidthFontFace>(8, 16);
-    Initializer.bRegisterWithLogger = false;
-    return FConsoleElement::Create(Initializer);
+    FConsole::FDesc Desc;
+    Desc.Font                = MakeSharedPtr<FFixedWidthFontFace>(8, 16);
+    Desc.bRegisterWithLogger = false;
+    return FConsole::Create(Desc);
 }
 
-static void TypeText(const TSharedPtr<FConsoleElement>& Console, const CHAR* Text)
+static void TypeText(const TSharedPtr<FConsole>& Console, const CHAR* Text)
 {
-    TSharedPtr<FEditableTextElement> Input = Console->GetInputElement();
+    TSharedPtr<FEditableText> Input = Console->GetInput();
     for (int32 Index = 0; Text[Index] != 0; ++Index)
     {
         Input->OnKeyChar(CreateCharEvent(Text[Index]));
     }
 }
 
-static void LayOutAndDraw(const TSharedPtr<FConsoleElement>& Console, FDrawCommandList& OutCommandList)
+static void LayOutAndDraw(const TSharedPtr<FConsole>& Console, FDrawCommandList& OutCommandList)
 {
     Console->PrepareDesiredSize();
     Console->Tick(FRectangle(IntVector2(0, 0), 1280, 720));
@@ -138,19 +138,19 @@ static int32 FindBatchDrawingVertex(const FUIDrawData& DrawData, int32 VertexInd
     return -1;
 }
 
-bool ConsoleElementToggle_Test()
+bool ConsoleToggle_Test()
 {
     TEST_BEGIN();
 
-    TSharedPtr<FConsoleElement> Console = CreateConsole();
+    TSharedPtr<FConsole> Console = CreateConsole();
 
     TEST_SECTION("A new console starts closed");
     TEST_EXPECT(!Console->IsOpen());
 
     TEST_SECTION("The grave accent and World1 both toggle");
-    TEST_EXPECT(FConsoleElement::IsToggleKey(Keys::GraveAccent));
-    TEST_EXPECT(FConsoleElement::IsToggleKey(Keys::World1));
-    TEST_EXPECT(!FConsoleElement::IsToggleKey(Keys::A));
+    TEST_EXPECT(FConsole::IsToggleKey(Keys::GraveAccent));
+    TEST_EXPECT(FConsole::IsToggleKey(Keys::World1));
+    TEST_EXPECT(!FConsole::IsToggleKey(Keys::A));
 
     TEST_SECTION("The toggle key opens a closed console");
     TEST_EXPECT(Console->OnKeyDown(CreateKeyDownEvent(Keys::GraveAccent)).IsEventHandled());
@@ -158,7 +158,7 @@ bool ConsoleElementToggle_Test()
     TEST_EXPECT(Console->GetVisibility() == EVisibility::Visible);
 
     TEST_SECTION("The input line intercepts the toggle key and closes it again");
-    TEST_EXPECT(Console->GetInputElement()->OnKeyDown(CreateKeyDownEvent(Keys::GraveAccent)).IsEventHandled());
+    TEST_EXPECT(Console->GetInput()->OnKeyDown(CreateKeyDownEvent(Keys::GraveAccent)).IsEventHandled());
     TEST_EXPECT(!Console->IsOpen());
     TEST_EXPECT(Console->GetVisibility() == EVisibility::Hidden);
 
@@ -183,11 +183,11 @@ bool ConsoleElementToggle_Test()
     TEST_END();
 }
 
-bool ConsoleElementLayout_Test()
+bool ConsoleLayout_Test()
 {
     TEST_BEGIN();
 
-    TSharedPtr<FConsoleElement> Console = CreateConsole();
+    TSharedPtr<FConsole> Console = CreateConsole();
     Console->SetIsOpen(true);
 
     Console->GetLogBuffer().Log(ELogSeverity::Info, "A line of log");
@@ -200,7 +200,7 @@ bool ConsoleElementLayout_Test()
     TEST_EXPECT_EQ(Console->GetContentRectangle().Height, 384);
 
     TEST_SECTION("The input line sits at the bottom of the console");
-    const FRectangle InputBounds = Console->GetInputElement()->GetContentRectangle();
+    const FRectangle InputBounds = Console->GetInput()->GetContentRectangle();
     TEST_EXPECT(InputBounds.GetBottom() <= Console->GetContentRectangle().GetBottom());
     TEST_EXPECT(InputBounds.Position.Y > Console->GetScrollBox()->GetContentRectangle().Position.Y);
 
@@ -210,7 +210,7 @@ bool ConsoleElementLayout_Test()
     TEST_EXPECT(ScrollBounds.Height > 0);
 
     TEST_SECTION("A console shorter than the text area is clamped to what it was given");
-    TSharedPtr<FConsoleElement> SmallConsole = CreateConsole();
+    TSharedPtr<FConsole> SmallConsole = CreateConsole();
     SmallConsole->SetIsOpen(true);
     SmallConsole->PrepareDesiredSize();
     SmallConsole->Tick(FRectangle(IntVector2(0, 0), 640, 200));
@@ -220,11 +220,11 @@ bool ConsoleElementLayout_Test()
     TEST_END();
 }
 
-bool ConsoleElementLogDraw_Test()
+bool ConsoleLogDraw_Test()
 {
     TEST_BEGIN();
 
-    TSharedPtr<FConsoleElement> Console = CreateConsole();
+    TSharedPtr<FConsole> Console = CreateConsole();
     Console->SetIsOpen(true);
 
     Console->GetLogBuffer().Log(ELogSeverity::Info, "Info line");
@@ -266,7 +266,7 @@ bool ConsoleElementLogDraw_Test()
     TEST_EXPECT(CommandList.IsEmpty());
 
     TEST_SECTION("The newest line is in view once the log overflows");
-    TSharedPtr<FConsoleElement> LongConsole = CreateConsole();
+    TSharedPtr<FConsole> LongConsole = CreateConsole();
     LongConsole->SetIsOpen(true);
 
     for (int32 Index = 0; Index < 200; ++Index)
@@ -285,13 +285,13 @@ bool ConsoleElementLogDraw_Test()
     TEST_END();
 }
 
-bool ConsoleElementCandidateDraw_Test()
+bool ConsoleCandidateDraw_Test()
 {
     TEST_BEGIN();
 
     RegisterConsoleTestVariables();
 
-    TSharedPtr<FConsoleElement> Console = CreateConsole();
+    TSharedPtr<FConsole> Console = CreateConsole();
     Console->SetIsOpen(true);
 
     Console->GetLogBuffer().Log(ELogSeverity::Info, "A line of log");
@@ -319,7 +319,7 @@ bool ConsoleElementCandidateDraw_Test()
     TEST_SECTION("No row is filled in until a selection is made");
     const int32 NumBoxesWithoutSelection = CommandList.CountCommandsOfType(EDrawCommandType::Box);
 
-    TSharedPtr<FEditableTextElement> Input = Console->GetInputElement();
+    TSharedPtr<FEditableText> Input = Console->GetInput();
     Input->OnKeyDown(CreateKeyDownEvent(Keys::Up));
 
     TEST_EXPECT(Console->GetCommandLine().GetSelectedCandidateIndex() != FConsoleCommandLine::InvalidIndex);
@@ -346,24 +346,24 @@ bool ConsoleElementCandidateDraw_Test()
     TEST_END();
 }
 
-bool ConsoleElementCandidateHighlight_Test()
+bool ConsoleCandidateHighlight_Test()
 {
     TEST_BEGIN();
 
     RegisterConsoleTestVariables();
 
-    TSharedPtr<FConsoleElement> Console = CreateConsole();
+    TSharedPtr<FConsole> Console = CreateConsole();
     Console->SetIsOpen(true);
 
     TypeText(Console, "Test.Console.");
-    Console->GetInputElement()->OnKeyDown(CreateKeyDownEvent(Keys::Up));
+    Console->GetInput()->OnKeyDown(CreateKeyDownEvent(Keys::Up));
 
     TEST_EXPECT(Console->GetCommandLine().GetSelectedCandidateIndex() != FConsoleCommandLine::InvalidIndex);
 
     FDrawCommandList CommandList;
     LayOutAndDraw(Console, CommandList);
 
-    const FFloatColor HighlightColor = FConsoleElement::FInitializer().SelectedCandidateColor;
+    const FFloatColor HighlightColor = FConsole::FDesc().SelectedCandidateColor;
 
     int32 HighlightIndex = FDrawCommandList::InvalidIndex;
     int32 NumHighlights  = 0;
@@ -402,7 +402,7 @@ bool ConsoleElementCandidateHighlight_Test()
     }
 
     TEST_SECTION("A log line lines up with a candidate row");
-    Console->GetInputElement()->ClearText();
+    Console->GetInput()->ClearText();
     Console->GetLogBuffer().Log(ELogSeverity::Info, "A line of log");
 
     LayOutAndDraw(Console, CommandList);
@@ -416,10 +416,10 @@ bool ConsoleElementCandidateHighlight_Test()
     }
 
     TEST_SECTION("The input field keeps the inset too, and is rounded");
-    const FRectangle InputBounds = Console->GetInputElement()->GetContentRectangle();
+    const FRectangle InputBounds = Console->GetInput()->GetContentRectangle();
     TEST_EXPECT(InputBounds.Position.X >= ConsoleBounds.Position.X + GExpectedRowInset);
 
-    const FFloatColor InputColor = FConsoleElement::FInitializer().InputBackgroundColor;
+    const FFloatColor InputColor = FConsole::FDesc().InputBackgroundColor;
 
     int32 InputFillIndex = FDrawCommandList::InvalidIndex;
     for (int32 Index = 0; Index < CommandList.Size(); ++Index)
@@ -440,23 +440,23 @@ bool ConsoleElementCandidateHighlight_Test()
     }
 
     TEST_SECTION("The console background is lighter than the field sunk into it");
-    const FConsoleElement::FInitializer DefaultInitializer;
-    TEST_EXPECT(DefaultInitializer.BackgroundColor.R > DefaultInitializer.InputBackgroundColor.R);
+    const FConsole::FDesc DefaultDesc;
+    TEST_EXPECT(DefaultDesc.BackgroundColor.R > DefaultDesc.InputBackgroundColor.R);
 
     TEST_END();
 }
 
-bool ConsoleElementCandidateColumns_Test()
+bool ConsoleCandidateColumns_Test()
 {
     TEST_BEGIN();
 
     RegisterConsoleTestVariables();
 
-    TSharedPtr<FConsoleElement> Console = CreateConsole();
+    TSharedPtr<FConsole> Console = CreateConsole();
     Console->SetIsOpen(true);
 
     TypeText(Console, "Test.Console.");
-    Console->GetInputElement()->OnKeyDown(CreateKeyDownEvent(Keys::Up));
+    Console->GetInput()->OnKeyDown(CreateKeyDownEvent(Keys::Up));
 
     FDrawCommandList CommandList;
     LayOutAndDraw(Console, CommandList);
@@ -517,7 +517,7 @@ bool ConsoleElementCandidateColumns_Test()
     TEST_EXPECT(CommandList.FindTextCommand("[Help: An int variable for the console tests]") != FDrawCommandList::InvalidIndex);
 
     TEST_SECTION("A row is as tall as the selectable the ImGui console used, so its text can centre");
-    const int32 HighlightIndex = FindBoxCommand(CommandList, FConsoleElement::FInitializer().SelectedCandidateColor);
+    const int32 HighlightIndex = FindBoxCommand(CommandList, FConsole::FDesc().SelectedCandidateColor);
     TEST_EXPECT(HighlightIndex != FDrawCommandList::InvalidIndex);
 
     if (HighlightIndex == FDrawCommandList::InvalidIndex)
@@ -551,19 +551,19 @@ bool ConsoleElementCandidateColumns_Test()
     TEST_END();
 }
 
-bool ConsoleElementInputChrome_Test()
+bool ConsoleInputChrome_Test()
 {
     TEST_BEGIN();
 
-    TSharedPtr<FConsoleElement> Console = CreateConsole();
+    TSharedPtr<FConsole> Console = CreateConsole();
     Console->SetIsOpen(true);
     Console->GetLogBuffer().Log(ELogSeverity::Info, "A line of log");
-    Console->GetInputElement()->OnFocusGained();
+    Console->GetInput()->OnFocusGained();
 
     FDrawCommandList CommandList;
     LayOutAndDraw(Console, CommandList);
 
-    const int32 InputBoxIndex = FindBoxCommand(CommandList, FConsoleElement::FInitializer().InputBackgroundColor);
+    const int32 InputBoxIndex = FindBoxCommand(CommandList, FConsole::FDesc().InputBackgroundColor);
     TEST_EXPECT(InputBoxIndex != FDrawCommandList::InvalidIndex);
 
     if (InputBoxIndex == FDrawCommandList::InvalidIndex)
@@ -617,11 +617,11 @@ bool ConsoleElementInputChrome_Test()
     TEST_END();
 }
 
-bool ConsoleElementCursorShape_Test()
+bool ConsoleCursorShape_Test()
 {
     TEST_BEGIN();
 
-    TSharedPtr<FConsoleElement> Console = CreateConsole();
+    TSharedPtr<FConsole> Console = CreateConsole();
     Console->SetIsOpen(true);
     Console->PrepareDesiredSize();
     Console->Tick(FRectangle(IntVector2(0, 0), 1280, 720));
@@ -629,7 +629,7 @@ bool ConsoleElementCursorShape_Test()
     TEST_SECTION("An element has no opinion on the shape unless it says so");
     ECursor ElementCursor = ECursor::None;
     TEST_EXPECT(!Console->GetCursor(ElementCursor));
-    TEST_EXPECT(Console->GetInputElement()->GetCursor(ElementCursor));
+    TEST_EXPECT(Console->GetInput()->GetCursor(ElementCursor));
     TEST_EXPECT(ElementCursor == ECursor::TextInput);
 
     TEST_SECTION("A path with nothing to say leaves the arrow alone");
@@ -643,18 +643,18 @@ bool ConsoleElementCursorShape_Test()
     TEST_SECTION("A path ending in the input field asks for the I-beam");
     FElementPath FieldPath;
     FieldPath.Add(EVisibility::Visible, Console);
-    FieldPath.Add(EVisibility::Visible, Console->GetInputElement());
+    FieldPath.Add(EVisibility::Visible, Console->GetInput());
     TEST_EXPECT(FApplication::ResolveCursor(FieldPath) == ECursor::TextInput);
 
     TEST_SECTION("So does the padding ring around it, which has no element of its own");
-    const FRectangle TextBounds = Console->GetInputElement()->GetContentRectangle();
+    const FRectangle TextBounds = Console->GetInput()->GetContentRectangle();
     const IntVector2 RingPoint(TextBounds.Position.X - 5, TextBounds.Position.Y + 2);
 
     FElementPath RingPath;
     Console->FindChildrenContainingPoint(RingPoint, RingPath);
 
     TEST_EXPECT(!RingPath.IsEmpty());
-    TEST_EXPECT(!RingPath.Contains(Console->GetInputElement()));
+    TEST_EXPECT(!RingPath.Contains(Console->GetInput()));
     TEST_EXPECT(FApplication::ResolveCursor(RingPath) == ECursor::TextInput);
 
     TEST_SECTION("The area above it leaves the arrow, since nothing on that path edits text");
@@ -665,25 +665,25 @@ bool ConsoleElementCursorShape_Test()
     TEST_EXPECT(FApplication::ResolveCursor(LogPath) == ECursor::Arrow);
 
     TEST_SECTION("The leaf has the last word, so a field inside a panel still wins");
-    FBorderElement::FInitializer PanelInitializer;
-    PanelInitializer.SetCursor(ECursor::Hand);
+    FBorder::FDesc PanelDesc;
+    PanelDesc.SetCursor(ECursor::Hand);
 
-    TSharedPtr<FBorderElement> Panel = FBorderElement::Create(PanelInitializer);
+    TSharedPtr<FBorder> Panel = FBorder::Create(PanelDesc);
 
     FElementPath LeafPath;
     LeafPath.Add(EVisibility::Visible, Panel);
-    LeafPath.Add(EVisibility::Visible, Console->GetInputElement());
+    LeafPath.Add(EVisibility::Visible, Console->GetInput());
     TEST_EXPECT(FApplication::ResolveCursor(LeafPath) == ECursor::TextInput);
 
     FElementPath RootPath;
-    RootPath.Add(EVisibility::Visible, Console->GetInputElement());
+    RootPath.Add(EVisibility::Visible, Console->GetInput());
     RootPath.Add(EVisibility::Visible, Panel);
     TEST_EXPECT(FApplication::ResolveCursor(RootPath) == ECursor::Hand);
 
     TEST_END();
 }
 
-bool ConsoleElementInputFieldSurvives_Test()
+bool ConsoleInputFieldSurvives_Test()
 {
     TEST_BEGIN();
 
@@ -697,13 +697,13 @@ bool ConsoleElementInputFieldSurvives_Test()
         TEST_END();
     }
 
-    FConsoleElement::FInitializer Initializer;
-    Initializer.Font                = Font;
-    Initializer.bRegisterWithLogger = false;
+    FConsole::FDesc Desc;
+    Desc.Font                = Font;
+    Desc.bRegisterWithLogger = false;
 
-    TSharedPtr<FConsoleElement> Console = FConsoleElement::Create(Initializer);
+    TSharedPtr<FConsole> Console = FConsole::Create(Desc);
     Console->SetIsOpen(true);
-    Console->GetInputElement()->OnFocusGained();
+    Console->GetInput()->OnFocusGained();
 
     for (int32 Index = 0; Index < FConsoleLogBuffer::DefaultMaxLines; ++Index)
     {
@@ -718,7 +718,7 @@ bool ConsoleElementInputFieldSurvives_Test()
     FDrawCommandList CommandList;
     LayOutAndDraw(Console, CommandList);
 
-    const FFloatColor InputColor    = Initializer.InputBackgroundColor;
+    const FFloatColor InputColor    = Desc.InputBackgroundColor;
     const int32       InputBoxIndex = FindBoxCommand(CommandList, InputColor);
 
     TEST_SECTION("The field is still drawn, at the rectangle it was arranged into");
@@ -730,7 +730,7 @@ bool ConsoleElementInputFieldSurvives_Test()
     }
 
     const FRectangle InputBoxBounds = CommandList[InputBoxIndex].Bounds;
-    const FRectangle TextBounds     = Console->GetInputElement()->GetContentRectangle();
+    const FRectangle TextBounds     = Console->GetInput()->GetContentRectangle();
 
     TEST_EXPECT(!InputBoxBounds.IsEmpty());
     TEST_EXPECT(InputBoxBounds.Intersect(TextBounds) == TextBounds);
@@ -798,21 +798,21 @@ bool ConsoleElementInputFieldSurvives_Test()
     TEST_END();
 }
 
-bool ConsoleElementModalInput_Test()
+bool ConsoleModalInput_Test()
 {
     TEST_BEGIN();
 
-    FWindowElement::FInitializer WindowInitializer;
-    WindowInitializer.Title = "Console Host";
-    WindowInitializer.Size  = IntVector2(1280, 720);
+    FWindow::FDesc WindowDesc;
+    WindowDesc.Title = "Console Host";
+    WindowDesc.Size  = IntVector2(1280, 720);
 
-    TSharedPtr<FWindowElement> Window = FWindowElement::Create(WindowInitializer);
+    TSharedPtr<FWindow> Window = FWindow::Create(WindowDesc);
 
-    FBorderElement::FInitializer ContentInitializer;
-    ContentInitializer.BackgroundColor = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+    FBorder::FDesc ContentDesc;
+    ContentDesc.BackgroundColor = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-    TSharedPtr<FBorderElement>  Content = FBorderElement::Create(ContentInitializer);
-    TSharedPtr<FConsoleElement> Console = CreateConsole();
+    TSharedPtr<FBorder>  Content = FBorder::Create(ContentDesc);
+    TSharedPtr<FConsole> Console = CreateConsole();
 
     Window->SetContent(Content);
     Window->SetOverlay(Console);
@@ -856,23 +856,23 @@ bool ConsoleElementModalInput_Test()
     TEST_END();
 }
 
-bool ConsoleElementClickFocus_Test()
+bool ConsoleClickFocus_Test()
 {
     TEST_BEGIN();
 
     TSharedPtr<FApplication> Application = CreateStubApplication();
 
-    FWindowElement::FInitializer WindowInitializer;
-    WindowInitializer.Title = "Console Host";
-    WindowInitializer.Size  = IntVector2(1280, 720);
+    FWindow::FDesc WindowDesc;
+    WindowDesc.Title = "Console Host";
+    WindowDesc.Size  = IntVector2(1280, 720);
 
-    TSharedPtr<FWindowElement> Window = FWindowElement::Create(WindowInitializer);
+    TSharedPtr<FWindow> Window = FWindow::Create(WindowDesc);
 
-    FBorderElement::FInitializer ContentInitializer;
-    ContentInitializer.BackgroundColor = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+    FBorder::FDesc ContentDesc;
+    ContentDesc.BackgroundColor = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-    TSharedPtr<FBorderElement>  Content = FBorderElement::Create(ContentInitializer);
-    TSharedPtr<FConsoleElement> Console = CreateConsole();
+    TSharedPtr<FBorder>  Content = FBorder::Create(ContentDesc);
+    TSharedPtr<FConsole> Console = CreateConsole();
 
     Window->SetContent(Content);
     Window->SetOverlay(Console);
@@ -880,7 +880,7 @@ bool ConsoleElementClickFocus_Test()
     Console->SetIsOpen(true);
     FApplication::LayoutWindow(Window);
 
-    TSharedPtr<FEditableTextElement> Input = Console->GetInputElement();
+    TSharedPtr<FEditableText> Input = Console->GetInput();
 
     TEST_SECTION("Opening the console hands the keyboard to the input line rather than to the shell around it");
     Application->SetFocusElement(Console->GetFocusTarget());
@@ -907,7 +907,7 @@ bool ConsoleElementClickFocus_Test()
 
     TEST_SECTION("A path with nothing focusable on it never takes the keyboard from something that has it");
     FElementPath BorderPath;
-    BorderPath.Add(EVisibility::Visible, FBorderElement::Create(ContentInitializer));
+    BorderPath.Add(EVisibility::Visible, FBorder::Create(ContentDesc));
 
     Application->SetFocusFromCursorPath(BorderPath);
     TEST_EXPECT(Input->HasKeyboardFocus());
@@ -922,10 +922,10 @@ bool ConsoleElementClickFocus_Test()
     TEST_EXPECT(Input->HasKeyboardFocus());
 
     TEST_SECTION("Another field does take it, so the rule is not simply refusing to move focus");
-    FEditableTextElement::FInitializer FieldInitializer;
-    FieldInitializer.Font = MakeSharedPtr<FFixedWidthFontFace>(8, 16);
+    FEditableText::FDesc FieldDesc;
+    FieldDesc.Font = MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 
-    TSharedPtr<FEditableTextElement> OtherField = FEditableTextElement::Create(FieldInitializer);
+    TSharedPtr<FEditableText> OtherField = FEditableText::Create(FieldDesc);
 
     FElementPath OtherFieldPath;
     OtherFieldPath.Add(EVisibility::Visible, Window);
@@ -939,25 +939,25 @@ bool ConsoleElementClickFocus_Test()
     TEST_END();
 }
 
-bool ConsoleElementInWindow_Test()
+bool ConsoleInWindow_Test()
 {
     TEST_BEGIN();
 
     RegisterConsoleTestVariables();
 
-    FWindowElement::FInitializer WindowInitializer;
-    WindowInitializer.Title    = "Console Host";
-    WindowInitializer.Size     = IntVector2(1280, 720);
-    WindowInitializer.Position = IntVector2(220, 140);
+    FWindow::FDesc WindowDesc;
+    WindowDesc.Title    = "Console Host";
+    WindowDesc.Size     = IntVector2(1280, 720);
+    WindowDesc.Position = IntVector2(220, 140);
 
-    TSharedPtr<FWindowElement>  Window  = FWindowElement::Create(WindowInitializer);
-    TSharedPtr<FConsoleElement> Console = CreateConsole();
+    TSharedPtr<FWindow>  Window  = FWindow::Create(WindowDesc);
+    TSharedPtr<FConsole> Console = CreateConsole();
 
     Window->SetOverlay(Console);
     Console->SetIsOpen(true);
     Console->GetLogBuffer().Log(ELogSeverity::Info, "A line of log");
 
-    TSharedPtr<FEditableTextElement> Input = Console->GetInputElement();
+    TSharedPtr<FEditableText> Input = Console->GetInput();
     Input->OnFocusGained();
 
     FApplication::LayoutWindow(Window);
@@ -1012,16 +1012,16 @@ bool ConsoleElementInWindow_Test()
     TEST_END();
 }
 
-bool ConsoleElementTypeAndExecute_Test()
+bool ConsoleTypeAndExecute_Test()
 {
     TEST_BEGIN();
 
     RegisterConsoleTestVariables();
 
-    TSharedPtr<FConsoleElement> Console = CreateConsole();
+    TSharedPtr<FConsole> Console = CreateConsole();
     Console->SetIsOpen(true);
 
-    TSharedPtr<FEditableTextElement> Input = Console->GetInputElement();
+    TSharedPtr<FEditableText> Input = Console->GetInput();
     Input->OnFocusGained();
 
     TEST_SECTION("Typing a prefix finds candidates");
@@ -1038,7 +1038,7 @@ bool ConsoleElementTypeAndExecute_Test()
     TEST_EXPECT(!Lines.IsEmpty());
     TEST_EXPECT(Lines[0].Message.Equals("Test.Console.Int"));
     TEST_EXPECT(Console->GetCommandLine().GetText().IsEmpty());
-    TEST_EXPECT(Console->GetInputElement()->GetText().IsEmpty());
+    TEST_EXPECT(Console->GetInput()->GetText().IsEmpty());
 
     TEST_SECTION("The tree lays out and draws without a device");
     Console->PrepareDesiredSize();
@@ -1057,7 +1057,7 @@ bool ConsoleElementTypeAndExecute_Test()
     const TArray<String>& History = FConsoleManager::Get().GetHistory();
     TEST_EXPECT(!History.IsEmpty());
     TEST_EXPECT(Console->GetCommandLine().GetText().Equals(History.Last()));
-    TEST_EXPECT(Console->GetInputElement()->GetText().Equals(History.Last()));
+    TEST_EXPECT(Console->GetInput()->GetText().Equals(History.Last()));
 
     TEST_END();
 }

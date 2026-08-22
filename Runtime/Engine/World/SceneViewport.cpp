@@ -1,6 +1,6 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Application/Application.h"
-#include "Application/Elements/ViewportElement.h"
+#include "Application/Elements/Viewport.h"
 #include "Engine/World/Actors/PlayerInput.h"
 #include "Engine/World/Components/CameraComponent.h"
 #include "Engine/World/SceneViewport.h"
@@ -8,7 +8,7 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-FSceneViewport::FSceneViewport(const TWeakPtr<FViewportElement>& InViewport)
+FSceneViewport::FSceneViewport(const TWeakPtr<FViewport>& InViewport)
     : IViewport()
     , World(nullptr)
     , Viewport(InViewport)
@@ -35,7 +35,7 @@ FSceneViewport::~FSceneViewport()
 
 bool FSceneViewport::InitializeRHI()
 {
-    TSharedPtr<FViewportElement> ViewportElement;
+    TSharedPtr<FViewport> Host;
     if (Viewport.IsExpired())
     {
         LOG_INFO("No valid viewport");
@@ -43,20 +43,20 @@ bool FSceneViewport::InitializeRHI()
     }
     else
     {
-        ViewportElement = Viewport.ToSharedPtr();
+        Host = Viewport.ToSharedPtr();
     }
 
-    TSharedPtr<FWindowElement> WindowElement = FApplication::Get().FindWindow(ViewportElement);
-    if (!WindowElement)
+    TSharedPtr<FWindow> Window = FApplication::Get().FindWindow(Host);
+    if (!Window)
     {
         return false;
     }
 
-    const IntVector2 WindowSize = WindowElement->GetSize();
+    const IntVector2 WindowSize = Window->GetSize();
     FRHISwapChainDesc SwapChainDesc;
     SwapChainDesc.Width        = static_cast<uint16>(WindowSize.X);
     SwapChainDesc.Height       = static_cast<uint16>(WindowSize.Y);
-    SwapChainDesc.WindowHandle = WindowElement->GetPlatformWindow()->GetPlatformHandle();
+    SwapChainDesc.WindowHandle = Window->GetPlatformWindow()->GetPlatformHandle();
     SwapChainDesc.ColorFormat  = EFormat::Unknown;
     SwapChainDesc.ColorSpace   = EColorSpace::Unknown;
     SwapChainDesc.Usage        = ESwapChainUsageFlags::RenderTarget;
@@ -102,10 +102,10 @@ void FSceneViewport::Tick()
 
 bool FSceneViewport::CaptureMouse()
 {
-    const TSharedPtr<FWindowElement>   Window          = GetCaptureWindow();
-    const TSharedPtr<FViewportElement> ViewportElement = GetViewportElement();
+    const TSharedPtr<FWindow>   Window = GetCaptureWindow();
+    const TSharedPtr<FViewport> Host   = GetHostViewport();
 
-    if (bMouseCaptured || !ViewportElement || !Window)
+    if (bMouseCaptured || !Host || !Window)
     {
         return false;
     }
@@ -126,7 +126,7 @@ bool FSceneViewport::CaptureMouse()
     Application.ConfineCursorToRect(Window, CaptureRect);
     Application.SetCursorPosition(IntVector2(CaptureRect.Position.X + (CaptureRect.Width / 2), CaptureRect.Position.Y + (CaptureRect.Height / 2)));
 
-    if (!Application.CaptureMouse(ViewportElement))
+    if (!Application.CaptureMouse(Host))
     {
         Application.ReleaseCursorConfinement();
         Application.SetHighPrecisionMouseMode(Window, EHighPrecisionMouseMode::Disabled);
@@ -159,7 +159,7 @@ void FSceneViewport::ReleaseMouse()
     if (FApplication::IsInitialized())
     {
         FApplication& Application = FApplication::Get();
-        Application.ReleaseMouseCapture(GetViewportElement());
+        Application.ReleaseMouseCapture(GetHostViewport());
         Application.ReleaseCursorConfinement();
 
         Application.SetHighPrecisionMouseMode(GetCaptureWindow(), EHighPrecisionMouseMode::Disabled);
@@ -168,19 +168,19 @@ void FSceneViewport::ReleaseMouse()
     }
 }
 
-TSharedPtr<FWindowElement> FSceneViewport::GetCaptureWindow() const
+TSharedPtr<FWindow> FSceneViewport::GetCaptureWindow() const
 {
     if (!FApplication::IsInitialized() || !Viewport.IsValid())
     {
         return nullptr;
     }
 
-    return FApplication::Get().FindWindow(TSharedPtr<FViewportElement>(Viewport));
+    return FApplication::Get().FindWindow(TSharedPtr<FViewport>(Viewport));
 }
 
 FRectangle FSceneViewport::GetCaptureRect() const
 {
-    const TSharedPtr<FWindowElement> Window = GetCaptureWindow();
+    const TSharedPtr<FWindow> Window = GetCaptureWindow();
 
     if (Viewport.IsValid())
     {

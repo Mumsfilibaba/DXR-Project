@@ -717,7 +717,7 @@ bool FApplication::OnWindowResized(const TSharedRef<IPlatformWindow>& PlatformWi
 {
     bool bResult = false;
 
-    if (TSharedPtr<FWindowElement> Window = FindWindowFromPlatformWindow(PlatformWindow))
+    if (TSharedPtr<FWindow> Window = FindWindowFromPlatformWindow(PlatformWindow))
     {
         IntVector2 NewScreenSize(Width, Height);
         Window->OnWindowResize(NewScreenSize);
@@ -738,7 +738,7 @@ bool FApplication::OnWindowMoved(const TSharedRef<IPlatformWindow>& PlatformWind
 {
     bool bResult = false;
 
-    if (TSharedPtr<FWindowElement> Window = FindWindowFromPlatformWindow(PlatformWindow))
+    if (TSharedPtr<FWindow> Window = FindWindowFromPlatformWindow(PlatformWindow))
     {
         IntVector2 NewScreenPosition(x, y);
         Window->OnWindowMoved(NewScreenPosition);
@@ -752,7 +752,7 @@ bool FApplication::OnWindowFocusLost(const TSharedRef<IPlatformWindow>& Platform
 {
     bool bResult = false;
 
-    if (TSharedPtr<FWindowElement> Window = FindWindowFromPlatformWindow(PlatformWindow))
+    if (TSharedPtr<FWindow> Window = FindWindowFromPlatformWindow(PlatformWindow))
     {
         // A focus-lost for the outgoing window can arrive after the incoming one gained focus
         if (FocusWindow.Get() == Window.Get())
@@ -772,7 +772,7 @@ bool FApplication::OnWindowFocusGained(const TSharedRef<IPlatformWindow>& Platfo
 {
     bool bResult = false;
 
-    if (TSharedPtr<FWindowElement> Window = FindWindowFromPlatformWindow(PlatformWindow))
+    if (TSharedPtr<FWindow> Window = FindWindowFromPlatformWindow(PlatformWindow))
     {
         TSharedPtr<FVisualElement> FocusElement = Window;
 
@@ -803,7 +803,7 @@ bool FApplication::OnWindowClosed(const TSharedRef<IPlatformWindow>& PlatformWin
 {
     bool bResult = false;
 
-    if (TSharedPtr<FWindowElement> Window = FindWindowFromPlatformWindow(PlatformWindow))
+    if (TSharedPtr<FWindow> Window = FindWindowFromPlatformWindow(PlatformWindow))
     {
         DestroyWindow(Window);
         bResult = true;
@@ -831,7 +831,7 @@ bool FApplication::OnApplicationActivationChanged(bool bIsActive)
     return true;
 }
 
-void FApplication::CreateWindow(const TSharedPtr<FWindowElement>& InWindow)
+void FApplication::CreateWindow(const TSharedPtr<FWindow>& InWindow)
 {
     if (!InWindow)
     {
@@ -875,7 +875,7 @@ void FApplication::CreateWindow(const TSharedPtr<FWindowElement>& InWindow)
     WindowDesc.Position      = InWindow->GetPosition();
     WindowDesc.bAcceptsInput = InWindow->GetAcceptsInput();
     
-    if (TSharedPtr<FWindowElement> ParentWindow = InWindow->GetParentWindow())
+    if (TSharedPtr<FWindow> ParentWindow = InWindow->GetParentWindow())
     {
         WindowDesc.ParentWindow = ParentWindow->GetPlatformWindow().Get();
     }
@@ -904,7 +904,7 @@ void FApplication::CreateWindow(const TSharedPtr<FWindowElement>& InWindow)
     }
 }
 
-void FApplication::DestroyWindow(const TSharedPtr<FWindowElement>& DestroyedWindow)
+void FApplication::DestroyWindow(const TSharedPtr<FWindow>& DestroyedWindow)
 {
     if (DestroyedWindow)
     {
@@ -929,7 +929,7 @@ void FApplication::DestroyWindow(const TSharedPtr<FWindowElement>& DestroyedWind
         if (PlatformWindow == PlatformApplication->GetCapture())
         {
             // Give capture back to the first window so that we'll still receive the mouse-up event.
-            TSharedPtr<FWindowElement> NextWindow = Windows[0];
+            TSharedPtr<FWindow> NextWindow = Windows[0];
             PlatformApplication->SetCapture(NextWindow->GetPlatformWindow());
         }
     }
@@ -945,7 +945,7 @@ void FApplication::Tick(float Delta)
 
     UpdateInputDevices();
 
-    for (const TSharedPtr<FWindowElement>& CurrentWindow : Windows)
+    for (const TSharedPtr<FWindow>& CurrentWindow : Windows)
     {
         LayoutWindow(CurrentWindow);
     }
@@ -975,7 +975,7 @@ void FApplication::UpdateCursor()
     SetCursor(ResolveCursor(CursorPath));
 }
 
-void FApplication::LayoutWindow(const TSharedPtr<FWindowElement>& InWindow)
+void FApplication::LayoutWindow(const TSharedPtr<FWindow>& InWindow)
 {
     if (!InWindow)
     {
@@ -999,7 +999,7 @@ void FApplication::DrawWindows()
         return;
     }
 
-    for (const TSharedPtr<FWindowElement>& CurrentWindow : Windows)
+    for (const TSharedPtr<FWindow>& CurrentWindow : Windows)
     {
         if (!CurrentWindow->IsVisible())
         {
@@ -1072,7 +1072,7 @@ bool FApplication::SupportsHighPrecisionMouse() const
     return PlatformApplication->SupportsHighPrecisionMouse();
 }
 
-bool FApplication::SetHighPrecisionMouseMode(const TSharedPtr<FWindowElement>& Window, EHighPrecisionMouseMode Mode)
+bool FApplication::SetHighPrecisionMouseMode(const TSharedPtr<FWindow>& Window, EHighPrecisionMouseMode Mode)
 { 
     TSharedRef<IPlatformWindow> PlatformWindow = Window ? Window->GetPlatformWindow() : nullptr;
     if (Mode == EHighPrecisionMouseMode::Enabled && !PlatformWindow)
@@ -1083,7 +1083,7 @@ bool FApplication::SetHighPrecisionMouseMode(const TSharedPtr<FWindowElement>& W
     return PlatformApplication->SetHighPrecisionMouseMode(PlatformWindow, Mode);
 }
 
-bool FApplication::ConfineCursorToRect(const TSharedPtr<FWindowElement>& Window, const FRectangle& ScreenRect)
+bool FApplication::ConfineCursorToRect(const TSharedPtr<FWindow>& Window, const FRectangle& ScreenRect)
 {
     TSharedRef<IPlatformWindow> PlatformWindow = Window ? Window->GetPlatformWindow() : nullptr;
     if (!PlatformWindow || ScreenRect.Width <= 0 || ScreenRect.Height <= 0)
@@ -1214,17 +1214,17 @@ TSharedPtr<FVisualElement> FApplication::GetFocusElementLeaf() const
     return nullptr;
 }
 
-TSharedPtr<FWindowElement> FApplication::GetFocusWindow() const
+TSharedPtr<FWindow> FApplication::GetFocusWindow() const
 {
     if (!FocusWindow.IsValid())
     {
         return nullptr;
     }
 
-    return TSharedPtr<FWindowElement>(FocusWindow);
+    return TSharedPtr<FWindow>(FocusWindow);
 }
 
-TSharedPtr<FWindowElement> FApplication::FindWindow(const TSharedPtr<FVisualElement>& InElement)
+TSharedPtr<FWindow> FApplication::FindWindow(const TSharedPtr<FVisualElement>& InElement)
 {
     TWeakPtr<FVisualElement> ParentElement = InElement;
     while (ParentElement)
@@ -1239,20 +1239,20 @@ TSharedPtr<FWindowElement> FApplication::FindWindow(const TSharedPtr<FVisualElem
 
     if (!ParentElement.IsExpired())
     {
-        return StaticCastSharedPtr<FWindowElement>(ParentElement.ToSharedPtr());
+        return StaticCastSharedPtr<FWindow>(ParentElement.ToSharedPtr());
     }
 
     return nullptr;
 }
 
-TSharedPtr<FWindowElement> FApplication::FindWindowFromPlatformWindow(const TSharedRef<IPlatformWindow>& PlatformWindow) const
+TSharedPtr<FWindow> FApplication::FindWindowFromPlatformWindow(const TSharedRef<IPlatformWindow>& PlatformWindow) const
 {
     if (!PlatformWindow)
     {
         return nullptr;
     }
 
-    for (TSharedPtr<FWindowElement> CurrentWindow : Windows)
+    for (TSharedPtr<FWindow> CurrentWindow : Windows)
     {
         if (PlatformWindow == CurrentWindow->GetPlatformWindow())
         {
@@ -1263,7 +1263,7 @@ TSharedPtr<FWindowElement> FApplication::FindWindowFromPlatformWindow(const TSha
     return nullptr;
 }
 
-TSharedPtr<FWindowElement> FApplication::FindWindowUnderCursor() const
+TSharedPtr<FWindow> FApplication::FindWindowUnderCursor() const
 {
     if (TSharedRef<IPlatformWindow> PlatformWindow = PlatformApplication->GetWindowUnderCursor())
     {
@@ -1285,7 +1285,7 @@ void FApplication::FindElementsUnderCursor(const IntVector2& ScreenPosition, FEl
 {
     if (TSharedRef<IPlatformWindow> PlatformWindow = PlatformApplication->GetWindowUnderCursor())
     {
-        if (TSharedPtr<FWindowElement> CursorWindow = FindWindowFromPlatformWindow(PlatformWindow))
+        if (TSharedPtr<FWindow> CursorWindow = FindWindowFromPlatformWindow(PlatformWindow))
         {
             CursorWindow->FindChildrenContainingPoint(ScreenPosition - CursorWindow->GetPosition(), OutCursorPath);
         }
@@ -1296,7 +1296,7 @@ IntVector2 FApplication::GetClientOrigin()
 {
     if (TSharedRef<IPlatformWindow> PlatformWindow = PlatformApplication->GetWindowUnderCursor())
     {
-        if (TSharedPtr<FWindowElement> CursorWindow = FindWindowFromPlatformWindow(PlatformWindow))
+        if (TSharedPtr<FWindow> CursorWindow = FindWindowFromPlatformWindow(PlatformWindow))
         {
             return CursorWindow->GetPosition();
         }
@@ -1368,7 +1368,7 @@ bool FApplication::CaptureMouse(const TSharedPtr<FVisualElement>& Element)
         return false;
     }
 
-    const TSharedPtr<FWindowElement> Window = FindWindow(Element);
+    const TSharedPtr<FWindow> Window = FindWindow(Element);
     if (!Window)
     {
         return false;

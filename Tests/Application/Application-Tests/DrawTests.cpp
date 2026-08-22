@@ -6,22 +6,22 @@
 #include <Application/Console/ConsoleLogBuffer.h>
 #include <Application/Draw/DrawCommandList.h>
 #include <Application/Text/FixedWidthFontFace.h>
-#include <Application/Elements/BorderElement.h>
-#include <Application/Elements/BoxElements.h>
-#include <Application/Elements/ScrollBoxElement.h>
-#include <Application/Elements/TextBlockElement.h>
+#include <Application/Elements/Border.h>
+#include <Application/Elements/Box.h>
+#include <Application/Elements/ScrollBox.h>
+#include <Application/Elements/TextBlock.h>
 
 static TSharedPtr<IFontFace> CreateTestFont()
 {
     return MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 }
 
-static TSharedPtr<FTextBlockElement> CreateTextBlock(const CHAR* Text, const TSharedPtr<IFontFace>& Font)
+static TSharedPtr<FTextBlock> CreateTextBlock(const CHAR* Text, const TSharedPtr<IFontFace>& Font)
 {
-    FTextBlockElement::FInitializer Initializer;
-    Initializer.Text = Text;
-    Initializer.Font = Font;
-    return FTextBlockElement::Create(Initializer);
+    FTextBlock::FDesc Desc;
+    Desc.Text = Text;
+    Desc.Font = Font;
+    return FTextBlock::Create(Desc);
 }
 
 bool DrawCommandList_Test()
@@ -114,13 +114,13 @@ bool DrawClipNesting_Test()
     TEST_SECTION("A scroll box wraps its child in exactly one push and one pop");
     TSharedPtr<IFontFace> Font = CreateTestFont();
 
-    TSharedPtr<FVerticalBoxElement> Content = FVerticalBoxElement::Create();
+    TSharedPtr<FVerticalBox> Content = FVerticalBox::Create();
     for (int32 Index = 0; Index < 10; ++Index)
     {
         Content->AddSlot(CreateTextBlock("Line", Font));
     }
 
-    TSharedPtr<FScrollBoxElement> ScrollBox = FScrollBoxElement::Create();
+    TSharedPtr<FScrollBox> ScrollBox = FScrollBox::Create();
     ScrollBox->SetContent(Content);
     ScrollBox->PrepareDesiredSize();
     ScrollBox->Tick(FRectangle(IntVector2(0, 0), 200, 100));
@@ -143,12 +143,12 @@ bool BorderDraw_Test()
     TSharedPtr<IFontFace> Font = CreateTestFont();
 
     TEST_SECTION("An opaque background emits one box beneath the child");
-    FBorderElement::FInitializer Initializer;
-    Initializer.BackgroundColor = FFloatColor(0.1f, 0.2f, 0.3f, 1.0f);
-    Initializer.Padding         = FMargin(10, 5);
-    Initializer.Content         = CreateTextBlock("Border", Font);
+    FBorder::FDesc Desc;
+    Desc.BackgroundColor = FFloatColor(0.1f, 0.2f, 0.3f, 1.0f);
+    Desc.Padding         = FMargin(10, 5);
+    Desc.Content         = CreateTextBlock("Border", Font);
 
-    TSharedPtr<FBorderElement> Border = FBorderElement::Create(Initializer);
+    TSharedPtr<FBorder> Border = FBorder::Create(Desc);
     Border->PrepareDesiredSize();
     Border->Tick(FRectangle(IntVector2(0, 0), 200, 100));
 
@@ -166,11 +166,11 @@ bool BorderDraw_Test()
     TEST_EXPECT_EQ(Border->GetCachedDesiredSize().Y, 16 + 10);
 
     TEST_SECTION("A zero-alpha background emits no box at all");
-    FBorderElement::FInitializer TransparentInitializer;
-    TransparentInitializer.BackgroundColor = FFloatColor(0.1f, 0.2f, 0.3f, 0.0f);
-    TransparentInitializer.Content         = CreateTextBlock("Border", Font);
+    FBorder::FDesc TransparentDesc;
+    TransparentDesc.BackgroundColor = FFloatColor(0.1f, 0.2f, 0.3f, 0.0f);
+    TransparentDesc.Content         = CreateTextBlock("Border", Font);
 
-    TSharedPtr<FBorderElement> Transparent = FBorderElement::Create(TransparentInitializer);
+    TSharedPtr<FBorder> Transparent = FBorder::Create(TransparentDesc);
     Transparent->PrepareDesiredSize();
     Transparent->Tick(FRectangle(IntVector2(0, 0), 200, 100));
 
@@ -208,22 +208,22 @@ bool BoxLayerSequencing_Test()
 
     TSharedPtr<IFontFace> Font = CreateTestFont();
 
-    TSharedPtr<FVerticalBoxElement> ScrollContent = FVerticalBoxElement::Create();
+    TSharedPtr<FVerticalBox> ScrollContent = FVerticalBox::Create();
     for (int32 Index = 0; Index < 4; ++Index)
     {
         ScrollContent->AddSlot(CreateTextBlock("Log", Font));
     }
 
-    TSharedPtr<FScrollBoxElement> ScrollBox = FScrollBoxElement::Create();
+    TSharedPtr<FScrollBox> ScrollBox = FScrollBox::Create();
     ScrollBox->SetContent(ScrollContent);
 
-    FBorderElement::FInitializer InputInitializer;
-    InputInitializer.BackgroundColor = FFloatColor(0.1f, 0.1f, 0.1f, 1.0f);
-    InputInitializer.Content         = CreateTextBlock("Input", Font);
+    FBorder::FDesc InputDesc;
+    InputDesc.BackgroundColor = FFloatColor(0.1f, 0.1f, 0.1f, 1.0f);
+    InputDesc.Content         = CreateTextBlock("Input", Font);
 
-    TSharedPtr<FVerticalBoxElement> RootBox = FVerticalBoxElement::Create();
+    TSharedPtr<FVerticalBox> RootBox = FVerticalBox::Create();
     RootBox->AddSlot(ScrollBox).SetFillCoefficient(1.0f);
-    RootBox->AddSlot(FBorderElement::Create(InputInitializer)).SetVerticalAlignment(EVerticalAlignment::Bottom);
+    RootBox->AddSlot(FBorder::Create(InputDesc)).SetVerticalAlignment(EVerticalAlignment::Bottom);
 
     RootBox->PrepareDesiredSize();
     RootBox->Tick(FRectangle(IntVector2(0, 0), 200, 100));

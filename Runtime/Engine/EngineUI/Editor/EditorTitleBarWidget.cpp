@@ -15,7 +15,7 @@
 #include "Engine/EngineUI/Editor/EditorRHIInfoWidget.h"
 #include "Engine/EngineUI/Editor/EditorStatsWidget.h"
 #include "Engine/EngineUI/Editor/EditorAboutWidget.h"
-#include "Application/Elements/WindowElement.h"
+#include "Application/Elements/Window.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 enum class ECaptionButton : uint8
@@ -155,7 +155,7 @@ static bool DrawCaptionButton(const CHAR* Id, ECaptionButton Button, const ImVec
 // The OS decides how tall its own chrome is, and the traffic lights on macOS will not re-centre themselves in a
 // taller strip, so the strip is sized to the measurement rather than the other way around. A window without a
 // custom title bar, and a macOS window in fullscreen, both report zero and leave the fallback height in place.
-static FWindowTitleBarMetrics QueryTitleBarMetrics(const TSharedPtr<FWindowElement>& Window)
+static FWindowTitleBarMetrics QueryTitleBarMetrics(const TSharedPtr<FWindow>& Window)
 {
     FWindowTitleBarMetrics Metrics;
     if (Window && (Window->GetStyle() & EWindowStyleFlags::CustomTitleBar) != EWindowStyleFlags::None)
@@ -192,7 +192,7 @@ void FEditorTitleBarWidget::Draw()
 {
     TRACE_SCOPE("Title Bar");
 
-    TSharedPtr<FWindowElement> Window = EditorEngine ? EditorEngine->GetEngineWindow() : nullptr;
+    TSharedPtr<FWindow> Window = EditorEngine ? EditorEngine->GetEngineWindow() : nullptr;
 
     const FWindowTitleBarMetrics Metrics         = QueryTitleBarMetrics(Window);
     const bool                   bCustomTitleBar = Window && (Window->GetStyle() & EWindowStyleFlags::CustomTitleBar) != EWindowStyleFlags::None;
@@ -275,7 +275,7 @@ void FEditorTitleBarWidget::AddInteractiveRect(const ImVec2& Min, const ImVec2& 
         static_cast<int32>(Max.y - ClientOrigin.y));
 }
 
-void FEditorTitleBarWidget::DrawCaptionButtons(const FWindowTitleBarMetrics& Metrics, const TSharedPtr<FWindowElement>& Window)
+void FEditorTitleBarWidget::DrawCaptionButtons(const FWindowTitleBarMetrics& Metrics, const TSharedPtr<FWindow>& Window)
 {
     if (Metrics.CaptionButtonWidth <= 0.0f)
     {

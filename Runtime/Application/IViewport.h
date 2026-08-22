@@ -4,7 +4,7 @@
 #include "Core/Containers/SharedRef.h"
 #include "RHI/RHISwapChain.h"
 
-class FViewportElement;
+class FViewport;
 
 struct IViewport
 {
@@ -142,19 +142,19 @@ struct IViewport
      * 
      * @param InViewport A shared pointer to the viewport element to associate.
      */
-    virtual void SetViewportElement(const TSharedPtr<FViewportElement>& InViewport) = 0;
+    virtual void SetHostViewport(const TSharedPtr<FViewport>& InViewport) = 0;
 
     /**
      * @brief Gets the viewport element associated with this instance.
      * 
      * @return A shared pointer to the viewport element.
      */
-    virtual TSharedPtr<FViewportElement> GetViewportElement() = 0;
+    virtual TSharedPtr<FViewport> GetHostViewport() = 0;
 
     /**
      * @brief Gets the viewport element associated with this instance (const version).
      * 
      * @return A shared pointer to the viewport element.
      */
-    virtual TSharedPtr<const FViewportElement> GetViewportElement() const = 0;
+    virtual TSharedPtr<const FViewport> GetHostViewport() const = 0;
 };

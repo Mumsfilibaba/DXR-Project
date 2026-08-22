@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Containers/SharedPtr.h"
 
-class FWindowElement;
+class FWindow;
 class FDrawCommandList;
 
 struct IApplicationRenderer
@@ -17,19 +17,19 @@ struct IApplicationRenderer
      * @param InWindow The window about to be drawn.
      * @return The list to record into, or null when the renderer does not draw this window.
      */
-    virtual FDrawCommandList* BeginWindow(const TSharedPtr<FWindowElement>& InWindow) = 0;
+    virtual FDrawCommandList* BeginWindow(const TSharedPtr<FWindow>& InWindow) = 0;
 
     /**
      * @brief Closes the list opened by the matching BeginWindow.
      *
      * @param InWindow The window that finished recording.
      */
-    virtual void EndWindow(const TSharedPtr<FWindowElement>& InWindow) = 0;
+    virtual void EndWindow(const TSharedPtr<FWindow>& InWindow) = 0;
 
     /**
      * @brief Releases whatever the renderer holds for a window that is going away.
      *
      * @param InWindow The window being destroyed.
      */
-    virtual void OnWindowDestroyed(const TSharedPtr<FWindowElement>& InWindow) = 0;
+    virtual void OnWindowDestroyed(const TSharedPtr<FWindow>& InWindow) = 0;
 };

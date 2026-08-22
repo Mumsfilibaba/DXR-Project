@@ -7,7 +7,7 @@
 #include "Application/IApplicationRenderer.h"
 #include "Application/InputHandler.h"
 #include "Application/ElementPath.h"
-#include "Application/Elements/WindowElement.h"
+#include "Application/Elements/Window.h"
 
 /** @brief Event triggered when the monitor configuration changes (e.g., adding or removing displays). */
 DECLARE_EVENT(FOnMonitorConfigChangedEvent, FApplication);
@@ -56,7 +56,7 @@ public:
      *
      * @param InWindow The window to lay out.
      */
-    static void LayoutWindow(const TSharedPtr<FWindowElement>& InWindow);
+    static void LayoutWindow(const TSharedPtr<FWindow>& InWindow);
 
     /**
      * @brief The shape the leaf-most element on a path asks for.
@@ -104,16 +104,16 @@ public:
     /**
      * @brief Adds a new window, creates and shows its platform window, and starts ticking it every frame.
      *
-     * @param InWindow The FWindowElement object describing the new window.
+     * @param InWindow The FWindow object describing the new window.
      */
-    void CreateWindow(const TSharedPtr<FWindowElement>& InWindow);
+    void CreateWindow(const TSharedPtr<FWindow>& InWindow);
 
     /**
      * @brief Destroys a managed window and its underlying platform window.
      * 
-     * @param InWindow The FWindowElement to destroy.
+     * @param InWindow The FWindow to destroy.
      */
-    void DestroyWindow(const TSharedPtr<FWindowElement>& InWindow);
+    void DestroyWindow(const TSharedPtr<FWindow>& InWindow);
 
     /**
      * @brief Updates all windows, processes queued messages, and updates input devices.
@@ -198,7 +198,7 @@ public:
      * @param Mode Whether to enter or leave high-precision mode.
      * @return True if the mode was applied, otherwise false.
      */
-    bool SetHighPrecisionMouseMode(const TSharedPtr<FWindowElement>& Window, EHighPrecisionMouseMode Mode);
+    bool SetHighPrecisionMouseMode(const TSharedPtr<FWindow>& Window, EHighPrecisionMouseMode Mode);
 
     /**
      * @brief Keeps the cursor inside a region of the screen until the confinement is released.
@@ -209,7 +209,7 @@ public:
      * @param ScreenRect The region to confine the cursor to, in absolute screen coordinates.
      * @return True if the cursor was confined, otherwise false.
      */
-    bool ConfineCursorToRect(const TSharedPtr<FWindowElement>& Window, const FRectangle& ScreenRect);
+    bool ConfineCursorToRect(const TSharedPtr<FWindow>& Window, const FRectangle& ScreenRect);
 
     /** @brief Lets the cursor leave the region set by ConfineCursorToRect. */
     void ReleaseCursorConfinement();
@@ -350,30 +350,30 @@ public:
      * 
      * @return A shared pointer to the focused window, or nullptr if none.
      */
-    TSharedPtr<FWindowElement> GetFocusWindow() const;
+    TSharedPtr<FWindow> GetFocusWindow() const;
 
     /**
-     * @brief Finds the lowest-level window (top-level FWindowElement) that contains the specified element.
+     * @brief Finds the lowest-level window (top-level FWindow) that contains the specified element.
      * 
      * @param InElement The element to search for.
-     * @return A shared pointer to the top-level FWindowElement that contains the element, or nullptr if not found.
+     * @return A shared pointer to the top-level FWindow that contains the element, or nullptr if not found.
      */
-    TSharedPtr<FWindowElement> FindWindow(const TSharedPtr<FVisualElement>& InElement);
+    TSharedPtr<FWindow> FindWindow(const TSharedPtr<FVisualElement>& InElement);
 
     /**
-     * @brief Finds the FWindowElement that corresponds to a given platform window (IPlatformWindow).
+     * @brief Finds the FWindow that corresponds to a given platform window (IPlatformWindow).
      * 
      * @param PlatformWindow The IPlatformWindow to match against known windows.
-     * @return A shared pointer to the corresponding FWindowElement, or nullptr if not found.
+     * @return A shared pointer to the corresponding FWindow, or nullptr if not found.
      */
-    TSharedPtr<FWindowElement> FindWindowFromPlatformWindow(const TSharedRef<IPlatformWindow>& PlatformWindow) const;
+    TSharedPtr<FWindow> FindWindowFromPlatformWindow(const TSharedRef<IPlatformWindow>& PlatformWindow) const;
 
     /**
      * @brief Returns the window currently under the mouse cursor.
      * 
-     * @return A shared pointer to the FWindowElement under the cursor, or nullptr if none.
+     * @return A shared pointer to the FWindow under the cursor, or nullptr if none.
      */
-    TSharedPtr<FWindowElement> FindWindowUnderCursor() const;
+    TSharedPtr<FWindow> FindWindowUnderCursor() const;
 
     /**
      * @brief Retrieves a path of elements currently under the mouse cursor.
@@ -449,11 +449,11 @@ private:
     TArray<FMonitorInfo>               MonitorInfos;
     FElementPath                       FocusPath;
     FElementPath                       TrackedElements;
-    TArray<TSharedPtr<FWindowElement>> Windows;
+    TArray<TSharedPtr<FWindow>>        Windows;
     TSharedPtr<IApplicationRenderer>   Renderer;
     TArray<TSharedPtr<FInputHandler>>  InputHandlers;
     FOnMonitorConfigChangedEvent       OnMonitorConfigChangedEvent;
-    TWeakPtr<FWindowElement>           FocusWindow;
+    TWeakPtr<FWindow>                  FocusWindow;
     TWeakPtr<FVisualElement>           MouseCaptor;
     IntVector2                         LastCursorPosition;
     bool                               bIsMonitorInfoValid : 1;

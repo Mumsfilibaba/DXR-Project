@@ -8,7 +8,7 @@
 static constexpr int32 GConsoleFontPixelHeight = 16;
 
 FOverlayConsole::FOverlayConsole()
-    : ConsoleElement(nullptr)
+    : Console(nullptr)
     , Font(nullptr)
     , InputHandler(nullptr)
 {
@@ -26,7 +26,7 @@ bool FOverlayConsole::Initialize()
         return false;
     }
 
-    TSharedPtr<FWindowElement> EngineWindow = FEngine::Get()->GetEngineWindow();
+    TSharedPtr<FWindow> EngineWindow = FEngine::Get()->GetEngineWindow();
     if (!EngineWindow)
     {
         LOG_ERROR("[FOverlayConsole]: There is no engine window to attach the console to");
@@ -39,16 +39,16 @@ bool FOverlayConsole::Initialize()
         return false;
     }
 
-    FConsoleElement::FInitializer Initializer;
-    Initializer.Font = Font;
+    FConsole::FDesc Desc;
+    Desc.Font = Font;
 
-    ConsoleElement = FConsoleElement::Create(Initializer);
-    if (!ConsoleElement)
+    Console = FConsole::Create(Desc);
+    if (!Console)
     {
         return false;
     }
 
-    EngineWindow->SetOverlay(ConsoleElement);
+    EngineWindow->SetOverlay(Console);
 
     InputHandler = MakeSharedPtr<FConsoleInputHandler>();
     InputHandler->KeyConsumption = EConsoleKeyConsumption::ToggleKeyOnly;
@@ -65,11 +65,11 @@ void FOverlayConsole::Release()
         FApplication::Get().UnregisterInputHandler(InputHandler);
     }
 
-    if (ConsoleElement && FEngine::Get())
+    if (Console && FEngine::Get())
     {
-        if (TSharedPtr<FWindowElement> EngineWindow = FEngine::Get()->GetEngineWindow())
+        if (TSharedPtr<FWindow> EngineWindow = FEngine::Get()->GetEngineWindow())
         {
-            if (EngineWindow->GetOverlay() == ConsoleElement)
+            if (EngineWindow->GetOverlay() == Console)
             {
                 EngineWindow->SetOverlay(nullptr);
             }
@@ -77,31 +77,31 @@ void FOverlayConsole::Release()
     }
 
     InputHandler.Reset();
-    ConsoleElement.Reset();
+    Console.Reset();
     Font.Reset();
 }
 
 void FOverlayConsole::HandleKeyEvent(const FKeyEvent& KeyEvent)
 {
-    if (!ConsoleElement || !KeyEvent.IsDown() || KeyEvent.IsRepeat())
+    if (!Console || !KeyEvent.IsDown() || KeyEvent.IsRepeat())
     {
         return;
     }
 
-    if (!FConsoleElement::IsToggleKey(KeyEvent.GetKey()))
+    if (!FConsole::IsToggleKey(KeyEvent.GetKey()))
     {
         return;
     }
 
-    ConsoleElement->Toggle();
+    Console->Toggle();
 
-    const bool bIsOpen = ConsoleElement->IsOpen();
+    const bool bIsOpen = Console->IsOpen();
     if (bIsOpen)
     {
-        FApplication::Get().SetFocusElement(ConsoleElement->GetInputElement());
+        FApplication::Get().SetFocusElement(Console->GetInput());
     }
     else if (FEngine::Get())
     {
-        FApplication::Get().SetFocusElement(FEngine::Get()->GetViewportElement());
+        FApplication::Get().SetFocusElement(FEngine::Get()->GetViewport());
     }
 }

@@ -41,7 +41,7 @@ public:
     /**
      * @brief Checks if the element is a window.
      *
-     * @return True if the element is an FWindowElement; false otherwise.
+     * @return True if the element is an FWindow, false otherwise.
      */
     virtual bool IsWindow() const;
 

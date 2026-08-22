@@ -76,11 +76,11 @@ struct FBoxSlot
     EVerticalAlignment         VerticalAlignment;
 };
 
-class APPLICATION_API FBoxElement : public FVisualElement
+class APPLICATION_API FBox : public FVisualElement
 {
 public:
-    FBoxElement();
-    virtual ~FBoxElement();
+    FBox();
+    virtual ~FBox();
 
     // FVisualElement Interface
     virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
@@ -117,28 +117,28 @@ protected:
     TArray<FBoxSlot> Slots;
 };
 
-class APPLICATION_API FVerticalBoxElement final : public FBoxElement
+class APPLICATION_API FVerticalBox final : public FBox
 {
 public:
-    static TSharedPtr<FVerticalBoxElement> Create();
+    static TSharedPtr<FVerticalBox> Create();
 
 public:
-    FVerticalBoxElement();
-    virtual ~FVerticalBoxElement();
+    FVerticalBox();
+    virtual ~FVerticalBox();
 
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
 };
 
-class APPLICATION_API FHorizontalBoxElement final : public FBoxElement
+class APPLICATION_API FHorizontalBox final : public FBox
 {
 public:
-    static TSharedPtr<FHorizontalBoxElement> Create();
+    static TSharedPtr<FHorizontalBox> Create();
 
 public:
-    FHorizontalBoxElement();
-    virtual ~FHorizontalBoxElement();
+    FHorizontalBox();
+    virtual ~FHorizontalBox();
 
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;

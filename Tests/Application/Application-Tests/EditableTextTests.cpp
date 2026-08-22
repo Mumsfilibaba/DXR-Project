@@ -9,7 +9,7 @@
 #include <Application/Input/Keys.h>
 #include <Application/Text/FixedWidthFontFace.h>
 #include <Application/Text/TrueTypeFontFace.h>
-#include <Application/Elements/EditableTextElement.h>
+#include <Application/Elements/EditableText.h>
 
 #if PLATFORM_MACOS
 /** @brief The modifier a shortcut is spelled with here, which is the one FModifierKeyState calls the command. */
@@ -54,17 +54,17 @@ static FCursorEvent CreateMouseMoveEvent(const IntVector2& ClientPosition)
     return FCursorEvent(EInputEventType::MouseMoved, ClientPosition, IntVector2(0, 0), FModifierKeyState());
 }
 
-static TSharedPtr<FEditableTextElement> CreateEditableText(const CHAR* Text, const TSharedPtr<IFontFace>& Font)
+static TSharedPtr<FEditableText> CreateEditableText(const CHAR* Text, const TSharedPtr<IFontFace>& Font)
 {
-    FEditableTextElement::FInitializer Initializer;
-    Initializer.Text     = Text;
-    Initializer.HintText = "Hint";
-    Initializer.Font     = Font;
-    Initializer.Padding  = FMargin(0);
+    FEditableText::FDesc Desc;
+    Desc.Text     = Text;
+    Desc.HintText = "Hint";
+    Desc.Font     = Font;
+    Desc.Padding  = FMargin(0);
 
-    Initializer.TextCursorBlinkPeriod = 0.0f;
+    Desc.TextCursorBlinkPeriod = 0.0f;
 
-    return FEditableTextElement::Create(Initializer);
+    return FEditableText::Create(Desc);
 }
 
 bool EditableTextEditing_Test()
@@ -74,7 +74,7 @@ bool EditableTextEditing_Test()
     TSharedPtr<IFontFace> Font = MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 
     TEST_SECTION("A new element starts with the text cursor past the initial text");
-    TSharedPtr<FEditableTextElement> Editable = CreateEditableText("Ab", Font);
+    TSharedPtr<FEditableText> Editable = CreateEditableText("Ab", Font);
     TEST_EXPECT(Editable->GetText().Equals("Ab"));
     TEST_EXPECT_EQ(Editable->GetTextCursorPosition(), 2);
 
@@ -122,7 +122,7 @@ bool EditableTextEditing_Test()
     TEST_SECTION("A change fires the delegate, and a silent set does not");
     int32 NumChanges = 0;
 
-    TSharedPtr<FEditableTextElement> Watched = CreateEditableText("", Font);
+    TSharedPtr<FEditableText> Watched = CreateEditableText("", Font);
     Watched->GetOnTextChanged().BindLambda([&NumChanges](const String&)
     {
         NumChanges++;
@@ -144,7 +144,7 @@ bool EditableTextCursor_Test()
 
     TSharedPtr<IFontFace> Font = MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 
-    TSharedPtr<FEditableTextElement> Editable = CreateEditableText("Hello", Font);
+    TSharedPtr<FEditableText> Editable = CreateEditableText("Hello", Font);
 
     TEST_SECTION("The text cursor clamps into the text");
     Editable->SetTextCursorPosition(-10);
@@ -178,7 +178,7 @@ bool EditableTextCursor_Test()
     TEST_EXPECT_EQ(Editable->GetTextCursorPosition(), 0);
 
     TEST_SECTION("Printable characters are accepted and control characters are not");
-    TSharedPtr<FEditableTextElement> Typed = CreateEditableText("", Font);
+    TSharedPtr<FEditableText> Typed = CreateEditableText("", Font);
 
     TEST_EXPECT(Typed->OnKeyChar(CreateCharEvent('A')).IsEventHandled());
     TEST_EXPECT(Typed->GetText().Equals("A"));
@@ -193,7 +193,7 @@ bool EditableTextCursor_Test()
     TEST_EXPECT(Typed->GetText().IsEmpty());
 
     TEST_SECTION("The desired size never collapses below the hint");
-    TSharedPtr<FEditableTextElement> Empty = CreateEditableText("", Font);
+    TSharedPtr<FEditableText> Empty = CreateEditableText("", Font);
 
     const IntVector2 DesiredSize = Empty->PrepareDesiredSize();
     TEST_EXPECT_EQ(DesiredSize.X, 4 * 8);
@@ -208,7 +208,7 @@ bool EditableTextKeyInterceptor_Test()
 
     TSharedPtr<IFontFace> Font = MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 
-    TSharedPtr<FEditableTextElement> Editable = CreateEditableText("Hello", Font);
+    TSharedPtr<FEditableText> Editable = CreateEditableText("Hello", Font);
     Editable->SetTextCursorPosition(5);
 
     int32 NumIntercepted = 0;
@@ -256,7 +256,7 @@ bool EditableTextSelection_Test()
 
     TSharedPtr<IFontFace> Font = MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 
-    TSharedPtr<FEditableTextElement> Editable = CreateEditableText("Hello", Font);
+    TSharedPtr<FEditableText> Editable = CreateEditableText("Hello", Font);
 
     TEST_SECTION("Nothing is selected to begin with");
     TEST_EXPECT(!Editable->HasSelection());
@@ -303,7 +303,7 @@ bool EditableTextSelection_Test()
     TEST_EXPECT_EQ(Editable->GetTextCursorPosition(), 1);
 
     TEST_SECTION("Backspace removes a selection instead of the character in front of it");
-    TSharedPtr<FEditableTextElement> Deleted = CreateEditableText("Hello", Font);
+    TSharedPtr<FEditableText> Deleted = CreateEditableText("Hello", Font);
     Deleted->SetTextCursorPosition(1);
     Deleted->OnKeyDown(CreateKeyDownEvent(Keys::Right, EModifierFlag::Shift));
     Deleted->OnKeyDown(CreateKeyDownEvent(Keys::Right, EModifierFlag::Shift));
@@ -319,13 +319,13 @@ bool EditableTextSelection_Test()
     TEST_EXPECT(Deleted->GetText().IsEmpty());
 
     TEST_SECTION("Moving the text cursor without a modifier never leaves a range behind");
-    TSharedPtr<FEditableTextElement> Moved = CreateEditableText("Hello", Font);
+    TSharedPtr<FEditableText> Moved = CreateEditableText("Hello", Font);
     Moved->SelectAll();
     Moved->MoveTextCursorToStart();
     TEST_EXPECT(!Moved->HasSelection());
 
     TEST_SECTION("A selection is drawn as a fill behind the text, spanning the selected characters");
-    TSharedPtr<FEditableTextElement> Drawn = CreateEditableText("Hello", Font);
+    TSharedPtr<FEditableText> Drawn = CreateEditableText("Hello", Font);
     Drawn->PrepareDesiredSize();
     Drawn->Tick(FRectangle(IntVector2(0, 0), 200, 16));
 
@@ -364,7 +364,7 @@ bool EditableTextMouseSelection_Test()
 
     TSharedPtr<IFontFace> Font = MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 
-    TSharedPtr<FEditableTextElement> Editable = CreateEditableText("Hello", Font);
+    TSharedPtr<FEditableText> Editable = CreateEditableText("Hello", Font);
     Editable->PrepareDesiredSize();
     Editable->Tick(FRectangle(IntVector2(20, 10), 200, 16));
 
@@ -405,7 +405,7 @@ bool EditableTextWordNavigation_Test()
     TEST_BEGIN();
 
     TSharedPtr<IFontFace> Font = MakeSharedPtr<FFixedWidthFontFace>(8, 16);
-    TSharedPtr<FEditableTextElement> Editable = CreateEditableText("RHI.Type Metal", Font);
+    TSharedPtr<FEditableText> Editable = CreateEditableText("RHI.Type Metal", Font);
 
     TEST_SECTION("A word ends at a space rather than at a dot");
     TEST_EXPECT_EQ(Editable->FindWordBoundaryLeft(14), 9);
@@ -486,7 +486,7 @@ bool EditableTextWordNavigation_Test()
     TEST_EXPECT(Editable->GetSelectedText().Equals("Metal"));
 
     TEST_SECTION("Backspace and delete take a whole word under the same modifiers");
-    TSharedPtr<FEditableTextElement> Deleted = CreateEditableText("RHI.Type Metal", Font);
+    TSharedPtr<FEditableText> Deleted = CreateEditableText("RHI.Type Metal", Font);
     Deleted->OnKeyDown(CreateKeyDownEvent(Keys::Backspace, EModifierFlag::Alt));
     TEST_EXPECT(Deleted->GetText().Equals("RHI.Type "));
 
@@ -495,7 +495,7 @@ bool EditableTextWordNavigation_Test()
     TEST_EXPECT(Deleted->GetText().Equals(" "));
 
     TEST_SECTION("The arrows are still resolved when the chord is one nothing else claims");
-    TSharedPtr<FEditableTextElement> Unclaimed = CreateEditableText("Hello", Font);
+    TSharedPtr<FEditableText> Unclaimed = CreateEditableText("Hello", Font);
     Unclaimed->MoveTextCursorToEnd();
 
     TEST_EXPECT(Unclaimed->OnKeyDown(CreateKeyDownEvent(Keys::Left, EModifierFlag::Ctrl)).IsEventHandled());
@@ -514,7 +514,7 @@ bool EditableTextCommandChord_Test()
 
     TSharedPtr<IFontFace> Font = MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 
-    TSharedPtr<FEditableTextElement> Editable = CreateEditableText("Hello", Font);
+    TSharedPtr<FEditableText> Editable = CreateEditableText("Hello", Font);
 
     TEST_SECTION("A character that arrives under a command chord is not typed");
     TEST_EXPECT(!Editable->OnKeyChar(CreateCharEvent('a', EModifierFlag::Super)).IsEventHandled());
@@ -530,7 +530,7 @@ bool EditableTextCommandChord_Test()
     TEST_EXPECT(Editable->GetText().Equals("Hello@A"));
 
     TEST_SECTION("Select all survives the character macOS sends after the chord");
-    TSharedPtr<FEditableTextElement> Selected = CreateEditableText("Hello", Font);
+    TSharedPtr<FEditableText> Selected = CreateEditableText("Hello", Font);
 
     Selected->OnKeyDown(CreateKeyDownEvent(Keys::A, GCommandModifier));
     Selected->OnKeyChar(CreateCharEvent('a', GCommandModifier));
@@ -539,7 +539,7 @@ bool EditableTextCommandChord_Test()
     TEST_EXPECT(Selected->GetSelectedText().Equals("Hello"));
 
     TEST_SECTION("And the control character Windows sends in its place");
-    TSharedPtr<FEditableTextElement> Control = CreateEditableText("Hello", Font);
+    TSharedPtr<FEditableText> Control = CreateEditableText("Hello", Font);
 
     Control->OnKeyDown(CreateKeyDownEvent(Keys::A, GCommandModifier));
     Control->OnKeyChar(CreateCharEvent(static_cast<CHAR>(0x01), GCommandModifier));
@@ -548,7 +548,7 @@ bool EditableTextCommandChord_Test()
     TEST_EXPECT(Control->GetSelectedText().Equals("Hello"));
 
     TEST_SECTION("AltGr composes a character even on the keys a chord is spelled with");
-    TSharedPtr<FEditableTextElement> Composed = CreateEditableText("Hello", Font);
+    TSharedPtr<FEditableText> Composed = CreateEditableText("Hello", Font);
     Composed->SelectAll();
 
     TEST_EXPECT(!Composed->OnKeyDown(CreateKeyDownEvent(Keys::X, EModifierFlag::Ctrl | EModifierFlag::Alt)).IsEventHandled());
@@ -558,7 +558,7 @@ bool EditableTextCommandChord_Test()
     TEST_EXPECT(Composed->GetText().Equals("z"));
 
     TEST_SECTION("While the chord itself still takes the text away");
-    TSharedPtr<FEditableTextElement> Cut = CreateEditableText("Hello", Font);
+    TSharedPtr<FEditableText> Cut = CreateEditableText("Hello", Font);
     Cut->SelectAll();
 
     TEST_EXPECT(Cut->OnKeyDown(CreateKeyDownEvent(Keys::X, GCommandModifier)).IsEventHandled());
@@ -573,12 +573,12 @@ bool EditableTextCaretBlink_Test()
 
     TSharedPtr<IFontFace> Font = MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 
-    FEditableTextElement::FInitializer Initializer;
-    Initializer.Text    = "Hello";
-    Initializer.Font    = Font;
-    Initializer.Padding = FMargin(0);
+    FEditableText::FDesc Desc;
+    Desc.Text    = "Hello";
+    Desc.Font    = Font;
+    Desc.Padding = FMargin(0);
 
-    TSharedPtr<FEditableTextElement> Editable = FEditableTextElement::Create(Initializer);
+    TSharedPtr<FEditableText> Editable = FEditableText::Create(Desc);
 
     TEST_SECTION("The default period is the rate ImGui blinks a caret at");
     TEST_EXPECT(Editable->GetTextCursorBlinkPeriod() > 1.19 && Editable->GetTextCursorBlinkPeriod() < 1.21);
@@ -596,7 +596,7 @@ bool EditableTextCaretBlink_Test()
     TEST_EXPECT(Editable->IsTextCursorVisibleAt(12.1));
 
     TEST_SECTION("A period of zero leaves the cursor solid");
-    TSharedPtr<FEditableTextElement> Solid = CreateEditableText("Hello", Font);
+    TSharedPtr<FEditableText> Solid = CreateEditableText("Hello", Font);
 
     TEST_EXPECT(Solid->IsTextCursorVisibleAt(0.0));
     TEST_EXPECT(Solid->IsTextCursorVisibleAt(0.9));
@@ -614,13 +614,13 @@ bool EditableTextCaretBlink_Test()
     TEST_SECTION("The layer is claimed for as long as the element has focus, whatever the phase");
 
     // A period short enough that the draws below land all over it, so the layer is checked on and off
-    FEditableTextElement::FInitializer BlinkingInitializer;
-    BlinkingInitializer.Text                  = "Hello";
-    BlinkingInitializer.Font                  = Font;
-    BlinkingInitializer.Padding               = FMargin(0);
-    BlinkingInitializer.TextCursorBlinkPeriod = 0.000001f;
+    FEditableText::FDesc BlinkingDesc;
+    BlinkingDesc.Text                  = "Hello";
+    BlinkingDesc.Font                  = Font;
+    BlinkingDesc.Padding               = FMargin(0);
+    BlinkingDesc.TextCursorBlinkPeriod = 0.000001f;
 
-    TSharedPtr<FEditableTextElement> Blinking = FEditableTextElement::Create(BlinkingInitializer);
+    TSharedPtr<FEditableText> Blinking = FEditableText::Create(BlinkingDesc);
     Blinking->PrepareDesiredSize();
     Blinking->Tick(FRectangle(IntVector2(0, 0), 200, 16));
     Blinking->OnFocusGained();
@@ -655,7 +655,7 @@ bool EditableTextBandAlignment_Test()
     TEST_SECTION("The band the glyphs occupy is shorter than the line the face asks for");
     TEST_EXPECT(Font->GetTextBandHeight() < Font->GetLineHeight());
 
-    TSharedPtr<FEditableTextElement> Editable = CreateEditableText("lg", Font);
+    TSharedPtr<FEditableText> Editable = CreateEditableText("lg", Font);
     Editable->OnFocusGained();
 
     const int32 BoxHeight = Font->GetTextBandHeight() + 8;
@@ -747,7 +747,7 @@ bool EditableTextDraw_Test()
 
     TSharedPtr<IFontFace> Font = MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 
-    TSharedPtr<FEditableTextElement> Editable = CreateEditableText("Hello", Font);
+    TSharedPtr<FEditableText> Editable = CreateEditableText("Hello", Font);
     Editable->PrepareDesiredSize();
     Editable->Tick(FRectangle(IntVector2(0, 0), 200, 16));
 
@@ -781,7 +781,7 @@ bool EditableTextDraw_Test()
     TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::Line), 0);
 
     TEST_SECTION("An empty element draws the hint instead of the text");
-    TSharedPtr<FEditableTextElement> Empty = CreateEditableText("", Font);
+    TSharedPtr<FEditableText> Empty = CreateEditableText("", Font);
     Empty->PrepareDesiredSize();
     Empty->Tick(FRectangle(IntVector2(0, 0), 200, 16));
 

@@ -34,6 +34,7 @@ constexpr const CHAR* VIEWPORT_CONTEXT_MENU_ID = "ViewportContextMenu";
 FEditorViewportWidget::FEditorViewportWidget(FEditorEngine* InEditorEngine)
     : EditorEngine(InEditorEngine)
     , CameraController(MakeUniquePtr<FEditorCameraController>())
+    , HostViewport()
     , CachedViewportSize(0, 0)
     , CachedImageMin(0.0f, 0.0f)
     , CachedImageSize(0.0f, 0.0f)
@@ -153,9 +154,9 @@ void FEditorViewportWidget::DrawViewportWindow()
         return;
     }
 
-    if (FApplication::IsInitialized() && ViewportElement)
+    if (FApplication::IsInitialized() && HostViewport)
     {
-        bViewportInputActive = FApplication::Get().GetFocusElementLeaf() == ViewportElement;
+        bViewportInputActive = FApplication::Get().GetFocusElementLeaf() == HostViewport;
     }
     else
     {
@@ -848,12 +849,12 @@ void FEditorViewportWidget::DrawViewportWindow()
 
         // Update the relative viewport position
         const ImVec2 ContentPos = ImGui::GetCursorScreenPos();
-        ViewportElement->SetPosition(IntVector2(static_cast<int32>(ContentPos.x), static_cast<int32>(ContentPos.y)), EViewportPositionSpace::Screen);
+        HostViewport->SetPosition(IntVector2(static_cast<int32>(ContentPos.x), static_cast<int32>(ContentPos.y)), EViewportPositionSpace::Screen);
 
         // Update the viewport image that we will render to
         const ImVec2 ContentSize = ImGui::GetContentRegionAvail();
         CachedViewportSize = IntVector2(static_cast<int32>(ContentSize.x), static_cast<int32>(ContentSize.y));
-        ViewportElement->SetSize(CachedViewportSize);
+        HostViewport->SetSize(CachedViewportSize);
 
         // Draw the viewport texture
         ImGui::Image(&ViewportImage, ContentSize);
@@ -889,9 +890,9 @@ void FEditorViewportWidget::DrawViewportWindow()
         {
             bViewportInputActive = true;
 
-            if (ViewportElement && FApplication::IsInitialized())
+            if (HostViewport && FApplication::IsInitialized())
             {
-                FApplication::Get().SetFocusElement(ViewportElement);
+                FApplication::Get().SetFocusElement(HostViewport);
             }
         }
 
@@ -1578,9 +1579,9 @@ bool FEditorViewportWidget::ComputeViewportPixel(const ImVec2& ImageMin, const I
     return true;
 }
 
-void FEditorViewportWidget::SetViewportElement(const TSharedPtr<FViewportElement>& InViewportElement)
+void FEditorViewportWidget::SetViewport(const TSharedPtr<FViewport>& InViewport)
 {
-    ViewportElement = InViewportElement;
+    HostViewport = InViewport;
 }
 
 void FEditorViewportWidget::SetViewportImage(FRHITextureRef InViewportImage)

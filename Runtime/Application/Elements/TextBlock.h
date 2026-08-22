@@ -4,12 +4,12 @@
 #include "Application/Text/IFontFace.h"
 #include "Application/Elements/VisualElement.h"
 
-class APPLICATION_API FTextBlockElement final : public FVisualElement
+class APPLICATION_API FTextBlock final : public FVisualElement
 {
 public:
-    struct FInitializer
+    struct FDesc
     {
-        FInitializer()
+        FDesc()
             : Text()
             , Font(nullptr)
             , ColorAndOpacity(FFloatColor::White)
@@ -24,18 +24,18 @@ public:
     };
 
 public:
-    static TSharedPtr<FTextBlockElement> Create(const FInitializer& Initializer);
+    static TSharedPtr<FTextBlock> Create(const FDesc& Desc);
 
 public:
-    FTextBlockElement();
-    virtual ~FTextBlockElement();
+    FTextBlock();
+    virtual ~FTextBlock();
 
     /**
      * @brief Initializes the text block with the specified parameters.
      *
-     * @param Initializer Initialization parameters.
+     * @param Desc Initialization parameters.
      */
-    void Initialize(const FInitializer& Initializer);
+    void Initialize(const FDesc& Desc);
 
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;

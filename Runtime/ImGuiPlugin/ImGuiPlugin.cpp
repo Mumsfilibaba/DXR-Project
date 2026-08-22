@@ -4,7 +4,7 @@
 #include "Core/Platform/PlatformSystemClipboard.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Application/Application.h"
-#include "Application/Elements/ViewportElement.h"
+#include "Application/Elements/Viewport.h"
 #include "RHI/RHICommandList.h"
 #include "ImGuiPlugin/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
@@ -461,7 +461,7 @@ void FImGuiPlugin::NewFrame(float DeltaTime)
     PluginImGuiIO->FontGlobalScale         = CVarImGuiUseWindowDPIScale.GetValue() ? MainWindow->GetWindowDPIScale() : 1.0f;
     PluginImGuiIO->DisplayFramebufferScale = ImVec2(PluginImGuiIO->FontGlobalScale, PluginImGuiIO->FontGlobalScale);
 
-    TSharedPtr<FWindowElement>  ForegroundWindow = FApplication::Get().GetFocusWindow();
+    TSharedPtr<FWindow>  ForegroundWindow = FApplication::Get().GetFocusWindow();
     TSharedRef<IPlatformWindow> PlatformForegroundWindow = ForegroundWindow ? ForegroundWindow->GetPlatformWindow() : nullptr;
 
     ImGuiViewport* ForegroundViewport = ForegroundWindow ? ImGui::FindViewportByPlatformHandle(ForegroundWindow.Get()) : nullptr;
@@ -511,14 +511,14 @@ void FImGuiPlugin::NewFrame(float DeltaTime)
     ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
     for (ImGuiViewport* PlatformViewport : PlatformState.Viewports)
     {
-        if (FWindowElement* ViewportWindow = reinterpret_cast<FWindowElement*>(PlatformViewport->PlatformHandle))
+        if (FWindow* ViewportWindow = reinterpret_cast<FWindow*>(PlatformViewport->PlatformHandle))
         {
             ViewportWindow->SetAcceptsInput((PlatformViewport->Flags & ImGuiViewportFlags_NoInputs) == 0);
         }
     }
 
     ImGuiID MouseViewportID = 0;
-    if (TSharedPtr<FWindowElement> WindowUnderCursor = FApplication::Get().FindWindowUnderCursor())
+    if (TSharedPtr<FWindow> WindowUnderCursor = FApplication::Get().FindWindowUnderCursor())
     {
         if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(WindowUnderCursor.Get()))
         {
@@ -656,7 +656,7 @@ void FImGuiPlugin::RemoveEndFrameDelegate(FDelegateHandle DelegateHandle)
     EndFrameDelegates.Unbind(DelegateHandle);
 }
 
-void FImGuiPlugin::SetMainViewport(const TSharedPtr<FViewportElement>& InViewport)
+void FImGuiPlugin::SetMainViewport(const TSharedPtr<FViewport>& InViewport)
 {
     if (MainViewport == InViewport)
     {
@@ -745,7 +745,7 @@ void FImGuiPlugin::OnCreatePlatformWindow(ImGuiViewport* Viewport)
     FImGuiViewport* ViewportData = new FImGuiViewport();
     Viewport->PlatformUserData = ViewportData;
 
-    TSharedPtr<FWindowElement> ParentWindow;
+    TSharedPtr<FWindow> ParentWindow;
     if (Viewport->ParentViewportId != 0)
     {
         if (ImGuiViewport* ParentViewport = ImGui::FindViewportByID(Viewport->ParentViewportId))
@@ -757,16 +757,16 @@ void FImGuiPlugin::OnCreatePlatformWindow(ImGuiViewport* Viewport)
 
     const EWindowStyleFlags WindowStyle = GetWindowStyleFromImGuiViewportFlags(Viewport->Flags);
 
-    FWindowElement::FInitializer WindowInitializer;
-    WindowInitializer.Title           = GetImGuiViewportPlatformTitle(Viewport);
-    WindowInitializer.Size            = IntVector2(static_cast<int32>(Viewport->Size.x), static_cast<int32>(Viewport->Size.y));
-    WindowInitializer.Position        = IntVector2(static_cast<int32>(Viewport->Pos.x), static_cast<int32>(Viewport->Pos.y));
-    WindowInitializer.StyleFlags      = WindowStyle;
-    WindowInitializer.ParentWindow    = ParentWindow;
-    WindowInitializer.bActivateOnShow = !(Viewport->Flags & ImGuiViewportFlags_NoFocusOnAppearing);
-    WindowInitializer.bAcceptsInput   = !(Viewport->Flags & ImGuiViewportFlags_NoInputs);
+    FWindow::FDesc WindowDesc;
+    WindowDesc.Title           = GetImGuiViewportPlatformTitle(Viewport);
+    WindowDesc.Size            = IntVector2(static_cast<int32>(Viewport->Size.x), static_cast<int32>(Viewport->Size.y));
+    WindowDesc.Position        = IntVector2(static_cast<int32>(Viewport->Pos.x), static_cast<int32>(Viewport->Pos.y));
+    WindowDesc.StyleFlags      = WindowStyle;
+    WindowDesc.ParentWindow    = ParentWindow;
+    WindowDesc.bActivateOnShow = !(Viewport->Flags & ImGuiViewportFlags_NoFocusOnAppearing);
+    WindowDesc.bAcceptsInput   = !(Viewport->Flags & ImGuiViewportFlags_NoInputs);
 
-    ViewportData->Window = FWindowElement::Create(WindowInitializer);
+    ViewportData->Window = FWindow::Create(WindowDesc);
     CHECK(ViewportData->Window != nullptr);
 
     FApplication::Get().CreateWindow(ViewportData->Window);

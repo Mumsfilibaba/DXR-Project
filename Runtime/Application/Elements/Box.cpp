@@ -1,17 +1,17 @@
-#include "Application/Elements/BoxElements.h"
+#include "Application/Elements/Box.h"
 #include "Application/ElementPath.h"
 #include "Application/Draw/DrawCommandList.h"
 #include "Core/Math/Math.h"
 
-FBoxElement::FBoxElement()
+FBox::FBox()
     : FVisualElement()
     , Slots()
 {
 }
 
-FBoxElement::~FBoxElement() = default;
+FBox::~FBox() = default;
 
-void FBoxElement::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+void FBox::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
 {
     for (const FBoxSlot& Slot : Slots)
     {
@@ -22,7 +22,7 @@ void FBoxElement::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) c
     }
 }
 
-int32 FBoxElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
+int32 FBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
     int32 MaxLayerId = LayerId;
     for (const FBoxSlot& Slot : Slots)
@@ -39,7 +39,7 @@ int32 FBoxElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLis
     return MaxLayerId;
 }
 
-void FBoxElement::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
+void FBox::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
 {
     FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
 
@@ -52,7 +52,7 @@ void FBoxElement::FindChildrenContainingPoint(const IntVector2& ClientPosition, 
     }
 }
 
-FBoxSlot& FBoxElement::AddSlot(const TSharedPtr<FVisualElement>& InElement)
+FBoxSlot& FBox::AddSlot(const TSharedPtr<FVisualElement>& InElement)
 {
     FBoxSlot& Slot = Slots.Emplace();
     Slot.Element   = InElement;
@@ -65,12 +65,12 @@ FBoxSlot& FBoxElement::AddSlot(const TSharedPtr<FVisualElement>& InElement)
     return Slot;
 }
 
-void FBoxElement::ClearSlots()
+void FBox::ClearSlots()
 {
     Slots.Clear();
 }
 
-FRectangle FBoxElement::ArrangeInSlot(const FRectangle& SlotBounds, const IntVector2& ChildDesiredSize, const FBoxSlot& Slot)
+FRectangle FBox::ArrangeInSlot(const FRectangle& SlotBounds, const IntVector2& ChildDesiredSize, const FBoxSlot& Slot)
 {
     const FRectangle Available = SlotBounds.Deflate(Slot.Padding);
 
@@ -129,7 +129,7 @@ FRectangle FBoxElement::ArrangeInSlot(const FRectangle& SlotBounds, const IntVec
     return Result;
 }
 
-int32 FBoxElement::CountFillSlots() const
+int32 FBox::CountFillSlots() const
 {
     int32 Count = 0;
     for (const FBoxSlot& Slot : Slots)
@@ -143,19 +143,19 @@ int32 FBoxElement::CountFillSlots() const
     return Count;
 }
 
-TSharedPtr<FVerticalBoxElement> FVerticalBoxElement::Create()
+TSharedPtr<FVerticalBox> FVerticalBox::Create()
 {
-    return MakeSharedPtr<FVerticalBoxElement>();
+    return MakeSharedPtr<FVerticalBox>();
 }
 
-FVerticalBoxElement::FVerticalBoxElement()
-    : FBoxElement()
+FVerticalBox::FVerticalBox()
+    : FBox()
 {
 }
 
-FVerticalBoxElement::~FVerticalBoxElement() = default;
+FVerticalBox::~FVerticalBox() = default;
 
-IntVector2 FVerticalBoxElement::ComputeDesiredSize() const
+IntVector2 FVerticalBox::ComputeDesiredSize() const
 {
     IntVector2 DesiredSize(0, 0);
     for (const FBoxSlot& Slot : Slots)
@@ -173,7 +173,7 @@ IntVector2 FVerticalBoxElement::ComputeDesiredSize() const
     return DesiredSize;
 }
 
-void FVerticalBoxElement::OnArrange(const FRectangle& AllottedBounds)
+void FVerticalBox::OnArrange(const FRectangle& AllottedBounds)
 {
     int32 AutoHeightTotal      = 0;
     float FillCoefficientTotal = 0.0f;
@@ -243,19 +243,19 @@ void FVerticalBoxElement::OnArrange(const FRectangle& AllottedBounds)
     }
 }
 
-TSharedPtr<FHorizontalBoxElement> FHorizontalBoxElement::Create()
+TSharedPtr<FHorizontalBox> FHorizontalBox::Create()
 {
-    return MakeSharedPtr<FHorizontalBoxElement>();
+    return MakeSharedPtr<FHorizontalBox>();
 }
 
-FHorizontalBoxElement::FHorizontalBoxElement()
-    : FBoxElement()
+FHorizontalBox::FHorizontalBox()
+    : FBox()
 {
 }
 
-FHorizontalBoxElement::~FHorizontalBoxElement() = default;
+FHorizontalBox::~FHorizontalBox() = default;
 
-IntVector2 FHorizontalBoxElement::ComputeDesiredSize() const
+IntVector2 FHorizontalBox::ComputeDesiredSize() const
 {
     IntVector2 DesiredSize(0, 0);
     for (const FBoxSlot& Slot : Slots)
@@ -273,7 +273,7 @@ IntVector2 FHorizontalBoxElement::ComputeDesiredSize() const
     return DesiredSize;
 }
 
-void FHorizontalBoxElement::OnArrange(const FRectangle& AllottedBounds)
+void FHorizontalBox::OnArrange(const FRectangle& AllottedBounds)
 {
     int32 AutoWidthTotal       = 0;
     float FillCoefficientTotal = 0.0f;

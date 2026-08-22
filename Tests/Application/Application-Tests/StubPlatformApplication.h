@@ -3,7 +3,7 @@
 #include <CoreApplication/PlatformInterface/IPlatformApplication.h>
 #include <CoreApplication/PlatformInterface/IPlatformApplicationMessageHandler.h>
 #include <Application/Application.h>
-#include <Application/Elements/WindowElement.h>
+#include <Application/Elements/Window.h>
 
 class FStubPlatformWindow final : public IPlatformWindow, public FRefCountedBase
 {
@@ -159,13 +159,13 @@ inline TSharedPtr<FApplication> CreateStubApplication()
     return NewApplication;
 }
 
-inline TSharedPtr<FWindowElement> CreateStubWindow(const TSharedPtr<FApplication>& Application, const IntVector2& Size)
+inline TSharedPtr<FWindow> CreateStubWindow(const TSharedPtr<FApplication>& Application, const IntVector2& Size)
 {
-    FWindowElement::FInitializer Initializer;
-    Initializer.Title = "Stub";
-    Initializer.Size  = Size;
+    FWindow::FDesc Desc;
+    Desc.Title = "Stub";
+    Desc.Size  = Size;
 
-    TSharedPtr<FWindowElement> Window = FWindowElement::Create(Initializer);
+    TSharedPtr<FWindow> Window = FWindow::Create(Desc);
     Application->CreateWindow(Window);
     return Window;
 }

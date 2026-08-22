@@ -1,13 +1,13 @@
-#include "Application/Elements/ScrollBoxElement.h"
+#include "Application/Elements/ScrollBox.h"
 #include "Application/Draw/DrawCommandList.h"
 #include "Core/Math/Math.h"
 
-TSharedPtr<FScrollBoxElement> FScrollBoxElement::Create()
+TSharedPtr<FScrollBox> FScrollBox::Create()
 {
-    return MakeSharedPtr<FScrollBoxElement>();
+    return MakeSharedPtr<FScrollBox>();
 }
 
-FScrollBoxElement::FScrollBoxElement()
+FScrollBox::FScrollBox()
     : FCompoundElement()
     , ScrollOffset(0)
     , ScrollAmountPerWheelStep(DefaultScrollAmountPerWheelStep)
@@ -17,9 +17,9 @@ FScrollBoxElement::FScrollBoxElement()
 {
 }
 
-FScrollBoxElement::~FScrollBoxElement() = default;
+FScrollBox::~FScrollBox() = default;
 
-IntVector2 FScrollBoxElement::ComputeDesiredSize() const
+IntVector2 FScrollBox::ComputeDesiredSize() const
 {
     // A scroll box takes whatever it is given vertically, so it asks only for its own padding
     IntVector2 DesiredSize(Padding.GetTotalHorizontal(), Padding.GetTotalVertical());
@@ -31,7 +31,7 @@ IntVector2 FScrollBoxElement::ComputeDesiredSize() const
     return DesiredSize;
 }
 
-void FScrollBoxElement::OnArrange(const FRectangle& AllottedBounds)
+void FScrollBox::OnArrange(const FRectangle& AllottedBounds)
 {
     const FRectangle ViewBounds = AllottedBounds.Deflate(Padding);
 
@@ -55,7 +55,7 @@ void FScrollBoxElement::OnArrange(const FRectangle& AllottedBounds)
     }
 }
 
-int32 FScrollBoxElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
+int32 FScrollBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
     OutCommandList.PushClip(LayerId, AllottedGeometry.Bounds.Deflate(Padding));
     const int32 MaxLayerId = FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId);
@@ -63,7 +63,7 @@ int32 FScrollBoxElement::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComm
     return MaxLayerId;
 }
 
-FEventResponse FScrollBoxElement::OnMouseScroll(const FCursorEvent& CursorEvent)
+FEventResponse FScrollBox::OnMouseScroll(const FCursorEvent& CursorEvent)
 {
     if (CursorEvent.GetScrollAxis() != EScrollAxis::Vertical)
     {
@@ -81,12 +81,12 @@ FEventResponse FScrollBoxElement::OnMouseScroll(const FCursorEvent& CursorEvent)
     return FEventResponse::Handled();
 }
 
-void FScrollBoxElement::ScrollToEnd()
+void FScrollBox::ScrollToEnd()
 {
     bIsScrollToEndPending = true;
 }
 
-void FScrollBoxElement::ScrollIntoView(const FRectangle& ContentRelativeBounds)
+void FScrollBox::ScrollIntoView(const FRectangle& ContentRelativeBounds)
 {
     if (ContentRelativeBounds.Position.Y < ScrollOffset)
     {
@@ -100,22 +100,22 @@ void FScrollBoxElement::ScrollIntoView(const FRectangle& ContentRelativeBounds)
     ScrollOffset = Math::Clamp(ScrollOffset, 0, GetMaxScrollOffset());
 }
 
-void FScrollBoxElement::SetScrollOffset(int32 InScrollOffset)
+void FScrollBox::SetScrollOffset(int32 InScrollOffset)
 {
     ScrollOffset = Math::Clamp(InScrollOffset, 0, GetMaxScrollOffset());
 }
 
-int32 FScrollBoxElement::GetMaxScrollOffset() const
+int32 FScrollBox::GetMaxScrollOffset() const
 {
     return Math::Max(0, ContentHeight - ViewHeight);
 }
 
-bool FScrollBoxElement::IsScrolledToEnd() const
+bool FScrollBox::IsScrolledToEnd() const
 {
     return ScrollOffset >= GetMaxScrollOffset();
 }
 
-void FScrollBoxElement::SetScrollAmountPerWheelStep(int32 InAmount)
+void FScrollBox::SetScrollAmountPerWheelStep(int32 InAmount)
 {
     ScrollAmountPerWheelStep = Math::Max(1, InAmount);
 }
