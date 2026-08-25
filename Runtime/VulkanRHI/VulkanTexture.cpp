@@ -74,7 +74,7 @@ uint64 VkCalculateTextureUploadSize(VkFormat Format, uint32 Width, uint32 Height
 }
 
 FVulkanTextureRHI::FVulkanTextureRHI(FVulkanDevice* InDevice, const FRHITextureDesc& InTextureDesc)
-    : FVulkanTextureBase(InTextureDesc)
+    : FRHITexture(InTextureDesc)
     , FVulkanResource(InDevice)
     , Image(VK_NULL_HANDLE)
     , CreateInfo{}
@@ -88,14 +88,19 @@ FVulkanTextureRHI::FVulkanTextureRHI(FVulkanDevice* InDevice, const FRHITextureD
 {
 }
 
-FVulkanTextureRHI* FVulkanTextureRHI::GetTextureInterface() const
-{
-    return const_cast<FVulkanTextureRHI*>(this);
-}
-
 void* FVulkanTextureRHI::GetRHINativeResource() const
 {
     return reinterpret_cast<void*>(GetVkImage());
+}
+
+FRHIDescriptorHandle FVulkanTextureRHI::GetBindlessSRVHandle() const
+{
+    return ShaderResourceView ? ShaderResourceView->GetBindlessHandle() : FRHIDescriptorHandle();
+}
+
+FRHIDescriptorHandle FVulkanTextureRHI::GetBindlessUAVHandle() const
+{
+    return UnorderedAccessView ? UnorderedAccessView->GetBindlessHandle() : FRHIDescriptorHandle();
 }
 
 FRHIShaderResourceView* FVulkanTextureRHI::GetShaderResourceView() const
@@ -116,16 +121,6 @@ FRHIRenderTargetView* FVulkanTextureRHI::GetRenderTargetView() const
 FRHIDepthStencilView* FVulkanTextureRHI::GetDepthStencilView() const
 {
     return DepthStencilView.Get();
-}
-
-FRHIDescriptorHandle FVulkanTextureRHI::GetBindlessUAVHandle() const
-{
-    return UnorderedAccessView ? UnorderedAccessView->GetBindlessHandle() : FRHIDescriptorHandle();
-}
-
-FRHIDescriptorHandle FVulkanTextureRHI::GetBindlessSRVHandle() const
-{
-    return ShaderResourceView ? ShaderResourceView->GetBindlessHandle() : FRHIDescriptorHandle();
 }
 
 FVulkanTextureRHI::~FVulkanTextureRHI()
@@ -676,6 +671,79 @@ void FVulkanTextureRHI::SetVkImage(VkImage InImage, VkImageLayout InLayout)
         VulkanSetObjectName(GetDevice()->GetVkDevice(), *DebugName, Image, VK_OBJECT_TYPE_IMAGE);
     }
 #endif
+}
+
+void FVulkanTextureRHI::SetSwapChainImage(VkImage InImage, EFormat InFormat, uint32 InWidth, uint32 InHeight)
+{
+    Desc.Format   = InFormat;
+    Desc.Extent.X = static_cast<int32>(InWidth);
+    Desc.Extent.Y = static_cast<int32>(InHeight);
+
+    CreateInfo.format      = ConvertFormat(Desc.Format);
+    CreateInfo.mipLevels   = Desc.NumMipLevels;
+    CreateInfo.arrayLayers = Desc.NumArraySlices;
+    CreateInfo.extent      = { InWidth, InHeight, 1 };
+
+    SetVkImage(InImage, VK_IMAGE_LAYOUT_UNDEFINED);
+}
+
+bool FVulkanTextureRHI::InitializeSwapChainTexture()
+{
+    const VkFormat BackBufferFormat = ConvertFormat(Desc.Format);
+
+    VkImageSubresourceRange SubresourceRange = {};
+    SubresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(BackBufferFormat);
+    SubresourceRange.baseArrayLayer = 0;
+    SubresourceRange.layerCount     = 1;
+    SubresourceRange.baseMipLevel   = 0;
+    SubresourceRange.levelCount     = 1;
+
+    if (Desc.IsRenderTarget())
+    {
+        if (!RenderTargetView)
+        {
+            const FRHIRenderTargetViewDesc RenderTargetViewDesc = FRHIRenderTargetViewDesc::CreateTexture2D(Desc.Format, 0);
+
+            FVulkanRenderTargetViewRHIRef NewView = new FVulkanRenderTargetViewRHI(GetDevice(), this, RenderTargetViewDesc);
+            NewView->RegisterToResource(this);
+
+            RenderTargetView = NewView;
+        }
+
+        RenderTargetView->InitializeExternal(BackBufferFormat, VK_IMAGE_VIEW_TYPE_2D, SubresourceRange);
+    }
+
+    if (Desc.IsUnorderedAccessTexture())
+    {
+        if (!UnorderedAccessView)
+        {
+            const FRHIUnorderedAccessViewDesc UnorderedAccessViewDesc = FRHIUnorderedAccessViewDesc::CreateTexture2D(Desc.Format, 0);
+
+            FVulkanUnorderedAccessViewRHIRef NewView = new FVulkanUnorderedAccessViewRHI(GetDevice(), this, UnorderedAccessViewDesc);
+            NewView->RegisterToResource(this);
+
+            UnorderedAccessView = NewView;
+        }
+
+        UnorderedAccessView->InitializeExternal(BackBufferFormat, VK_IMAGE_VIEW_TYPE_2D, SubresourceRange);
+    }
+
+    if (Desc.IsShaderResourceTexture())
+    {
+        if (!ShaderResourceView)
+        {
+            const FRHIShaderResourceViewDesc ShaderResourceViewDesc = FRHIShaderResourceViewDesc::CreateTexture2D(Desc.Format, 0, 1);
+
+            FVulkanShaderResourceViewRHIRef NewView = new FVulkanShaderResourceViewRHI(GetDevice(), this, ShaderResourceViewDesc);
+            NewView->RegisterToResource(this);
+
+            ShaderResourceView = NewView;
+        }
+
+        ShaderResourceView->InitializeExternal(BackBufferFormat, VK_IMAGE_VIEW_TYPE_2D, SubresourceRange);
+    }
+
+    return true;
 }
 
 void FVulkanTextureRHI::SetDebugName(const String& InName)

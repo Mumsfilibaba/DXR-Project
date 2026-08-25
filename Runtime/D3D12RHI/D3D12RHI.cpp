@@ -39,66 +39,6 @@ static bool IsBackBuffer(FRHIResource* InResource)
 
 FD3D12DeviceRHI* FD3D12DeviceRHI::D3D12DeviceRHI = nullptr;
 
-FD3D12TextureRHI* FD3D12DeviceRHI::ResourceCast(FRHITexture* Texture)
-{
-    if (Texture)
-    {
-        return static_cast<FD3D12TextureBase*>(Texture)->GetTextureInterface();
-    }
-
-    return nullptr;
-}
-
-FD3D12RenderTargetViewRHI* FD3D12DeviceRHI::ResourceCast(FRHIRenderTargetView* RenderTargetView)
-{
-    if (RenderTargetView)
-    {
-        return static_cast<FD3D12RenderTargetViewBase*>(RenderTargetView)->GetRenderTargetViewInterface();
-    }
-
-    return nullptr;
-}
-
-FD3D12UnorderedAccessViewRHI* FD3D12DeviceRHI::ResourceCast(FRHIUnorderedAccessView* UnorderedAccessView)
-{
-    if (UnorderedAccessView)
-    {
-        return static_cast<FD3D12UnorderedAccessViewBase*>(UnorderedAccessView)->GetUnorderedAccessViewInterface();
-    }
-
-    return nullptr;
-}
-
-const FD3D12TextureRHI* FD3D12DeviceRHI::ResourceCast(const FRHITexture* Texture)
-{
-    if (Texture)
-    {
-        return static_cast<const FD3D12TextureBase*>(Texture)->GetTextureInterface();
-    }
-
-    return nullptr;
-}
-
-const FD3D12RenderTargetViewRHI* FD3D12DeviceRHI::ResourceCast(const FRHIRenderTargetView* RenderTargetView)
-{
-    if (RenderTargetView)
-    {
-        return static_cast<const FD3D12RenderTargetViewBase*>(RenderTargetView)->GetRenderTargetViewInterface();
-    }
-
-    return nullptr;
-}
-
-const FD3D12UnorderedAccessViewRHI* FD3D12DeviceRHI::ResourceCast(const FRHIUnorderedAccessView* UnorderedAccessView)
-{
-    if (UnorderedAccessView)
-    {
-        return static_cast<const FD3D12UnorderedAccessViewBase*>(UnorderedAccessView)->GetUnorderedAccessViewInterface();
-    }
-
-    return nullptr;
-}
-
 FRHIDevice* FD3D12ModuleRHI::CreateDevice()
 {
     TUniquePtr<FD3D12DeviceRHI> NewRHI = MakeUniquePtr<FD3D12DeviceRHI>();

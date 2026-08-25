@@ -5,7 +5,6 @@
 #include "VulkanRHI/VulkanCommandContext.h"
 #include "VulkanRHI/VulkanCore.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
-#include "VulkanRHI/VulkanBackBufferProxies.h"
 
 static TAutoConsoleVariable<int32> CVarBackbufferCount(
     "VulkanRHI.SwapChain.BackBufferCount",
@@ -38,6 +37,19 @@ static TAutoConsoleVariable<int32> CVarVulkanDefaultBackBufferColorSpace(
     "2=RGB_Full_G2084_None_P2020 / HDR10, "
     "3=RGB_Full_G22_None_P2020.",
     0);
+
+static void DestroyBackBufferImageView(FVulkanDevice* Device, VkImageView& ImageView)
+{
+    if (VULKAN_CHECK_HANDLE(ImageView))
+    {
+    #if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
+        Device->GetRenderPassCache().OnReleaseImageView(ImageView);
+    #endif
+
+        vkDestroyImageView(Device->GetVkDevice(), ImageView, nullptr);
+        ImageView = VK_NULL_HANDLE;
+    }
+}
 
 EFormat GetVulkanDefaultBackBufferFormat()
 {
@@ -472,10 +484,8 @@ FVulkanSwapChainRHI::FVulkanSwapChainRHI(FVulkanDevice* InDevice, FVulkanCommand
     , CommandContext(InCommandContext)
     , Surface(nullptr)
     , SwapChainResource(nullptr)
-    , BackBufferProxy(nullptr)
-    , BackBufferProxyRenderTargetView(nullptr)
-    , BackBufferProxyUnorderedAccessView(nullptr)
-    , BackBuffers()
+    , BackBuffer(nullptr)
+    , BackBufferImages()
     , ImageSemaphores()
     , RenderSemaphores()
     , PendingAcquireSemaphore(nullptr)
@@ -491,21 +501,6 @@ FVulkanSwapChainRHI::FVulkanSwapChainRHI(FVulkanDevice* InDevice, FVulkanCommand
 FVulkanSwapChainRHI::~FVulkanSwapChainRHI()
 {
     DestroySwapChain();
-
-    if (BackBufferProxy)
-    {
-        BackBufferProxy->SetSwapChain(nullptr);
-    }
-
-    if (BackBufferProxyRenderTargetView)
-    {
-        BackBufferProxyRenderTargetView->SetSwapChain(nullptr);
-    }
-
-    if (BackBufferProxyUnorderedAccessView)
-    {
-        BackBufferProxyUnorderedAccessView->SetSwapChain(nullptr);
-    }
 }
 
 bool FVulkanSwapChainRHI::Initialize()
@@ -547,38 +542,11 @@ bool FVulkanSwapChainRHI::Initialize()
         return false;
     }
 
-    // Create the proxy texture/RTV up-front so that higher-level code always gets a stable handle.
-    ETextureUsageFlags BackBufferUsageFlags = ETextureUsageFlags::Presentable;
-    if (Desc.IsRenderTarget())
+    if (!CreateBackBuffer())
     {
-        BackBufferUsageFlags |= ETextureUsageFlags::RenderTarget;
-    }
-    if (Desc.IsUnorderedAccess())
-    {
-        BackBufferUsageFlags |= ETextureUsageFlags::UnorderedAccessTexture;
-    }
-
-    const FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(Desc.ColorFormat, Desc.Width, Desc.Height, 1, 1, BackBufferUsageFlags);
-    BackBufferProxy = new FVulkanBackBufferProxyTextureRHI(this, BackBufferDesc);
-
-    if (!BackBufferProxy)
-    {
-        VULKAN_ERROR_CRITICAL("Failed to create BackBuffer proxy texture");
         return false;
     }
 
-    if (Desc.IsRenderTarget())
-    {
-        BackBufferProxyRenderTargetView = new FVulkanBackBufferProxyRenderTargetViewRHI(this, BackBufferProxy.Get());
-        BackBufferProxy->SetProxyRenderTargetView(BackBufferProxyRenderTargetView.Get());
-    }
-
-    if (Desc.IsUnorderedAccess())
-    {
-        BackBufferProxyUnorderedAccessView = new FVulkanBackBufferProxyUnorderedAccessViewRHI(this, BackBufferProxy.Get());
-        BackBufferProxy->SetProxyUnorderedAccessView(BackBufferProxyUnorderedAccessView.Get());
-    }
-    
     CommandContext->StartContext();
 
     if (!CreateSwapChain(Desc.Width, Desc.Height))
@@ -607,6 +575,184 @@ bool FVulkanSwapChainRHI::Initialize()
     }
 
     return true;
+}
+
+bool FVulkanSwapChainRHI::CreateBackBuffer()
+{
+    ETextureUsageFlags BackBufferUsageFlags = ETextureUsageFlags::Presentable;
+
+    if (Desc.IsRenderTarget())
+    {
+        BackBufferUsageFlags |= ETextureUsageFlags::RenderTarget;
+    }
+
+    if (Desc.IsUnorderedAccess())
+    {
+        BackBufferUsageFlags |= ETextureUsageFlags::UnorderedAccessTexture;
+    }
+
+    if (Desc.IsShaderResource())
+    {
+        BackBufferUsageFlags |= ETextureUsageFlags::ShaderResourceTexture;
+    }
+
+    const FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(Desc.ColorFormat, Desc.Width, Desc.Height, 1, 1, BackBufferUsageFlags);
+    BackBuffer = new FVulkanTextureRHI(GetDevice(), BackBufferDesc);
+
+    if (!BackBuffer)
+    {
+        VULKAN_ERROR_CRITICAL("Failed to create the BackBuffer texture");
+        return false;
+    }
+
+    return true;
+}
+
+VkImageView FVulkanSwapChainRHI::CreateBackBufferImageView(VkImage InImage) const
+{
+    const VkFormat BackBufferFormat = ConvertFormat(Desc.ColorFormat);
+
+    VkImageViewCreateInfo ImageViewCreateInfo = {};
+    ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    ImageViewCreateInfo.image                           = InImage;
+    ImageViewCreateInfo.format                          = BackBufferFormat;
+    ImageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+    ImageViewCreateInfo.components.r                    = VK_COMPONENT_SWIZZLE_R;
+    ImageViewCreateInfo.components.g                    = VK_COMPONENT_SWIZZLE_G;
+    ImageViewCreateInfo.components.b                    = VK_COMPONENT_SWIZZLE_B;
+    ImageViewCreateInfo.components.a                    = VK_COMPONENT_SWIZZLE_A;
+    ImageViewCreateInfo.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(BackBufferFormat);
+    ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+    ImageViewCreateInfo.subresourceRange.layerCount     = 1;
+    ImageViewCreateInfo.subresourceRange.baseMipLevel   = 0;
+    ImageViewCreateInfo.subresourceRange.levelCount     = 1;
+
+    VkImageView ImageView = VK_NULL_HANDLE;
+
+    const VkResult Result = vkCreateImageView(GetDevice()->GetVkDevice(), &ImageViewCreateInfo, nullptr, &ImageView);
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR_CRITICAL("vkCreateImageView failed for a BackBuffer image");
+        return VK_NULL_HANDLE;
+    }
+
+    return ImageView;
+}
+
+void FVulkanSwapChainRHI::DestroyBackBufferImageViews()
+{
+    for (FBackBufferImage& BackBufferImage : BackBufferImages)
+    {
+        DestroyBackBufferImageView(GetDevice(), BackBufferImage.ImageView);
+    }
+
+    BackBufferImages.Clear();
+}
+
+bool FVulkanSwapChainRHI::CreateBackBufferImages()
+{
+    TArray<VkImage> SwapChainImages(SwapChainResource->GetBufferCount());
+    if (!SwapChainResource->GetSwapChainImages(SwapChainImages.Data()))
+    {
+        VULKAN_ERROR_CRITICAL("Failed to retrieve the SwapChain images");
+        return false;
+    }
+
+    DestroyBackBufferImageViews();
+    BackBufferImages.Resize(SwapChainImages.Size());
+
+    for (int32 Index = 0; Index < SwapChainImages.Size(); ++Index)
+    {
+        FBackBufferImage& BackBufferImage = BackBufferImages[Index];
+        BackBufferImage.Image     = SwapChainImages[Index];
+        BackBufferImage.ImageView = CreateBackBufferImageView(BackBufferImage.Image);
+
+        if (!VULKAN_CHECK_HANDLE(BackBufferImage.ImageView))
+        {
+            return false;
+        }
+    }
+
+    const VkExtent2D SwapChainExtent = SwapChainResource->GetExtent();
+    BackBuffer->SetSwapChainImage(BackBufferImages[0].Image, Desc.ColorFormat, SwapChainExtent.width, SwapChainExtent.height);
+
+    if (!BackBuffer->InitializeSwapChainTexture())
+    {
+        return false;
+    }
+
+    SwapResources(0);
+    return true;
+}
+
+void FVulkanSwapChainRHI::ReleaseBackBufferImages()
+{
+    if (BackBufferImages.IsEmpty())
+    {
+        return;
+    }
+
+    // A barrier names its image only when the batch reaches a command buffer, and it reads that image
+    // back out of the texture at that point. Anything still holding one of these handles once the
+    // swapchain is gone therefore records a barrier against an image that no longer exists.
+    CommandContext->GetCommandQueue().WaitForCompletion();
+
+    ReleaseResources();
+    DestroyBackBufferImageViews();
+}
+
+void FVulkanSwapChainRHI::SwapResources(uint32 Index)
+{
+    if (!BackBufferImages.IsValidIndex(static_cast<int32>(Index)) || !BackBuffer)
+    {
+        return;
+    }
+
+    const FBackBufferImage& BackBufferImage = BackBufferImages[Index];
+
+    BackBuffer->UpdateImage(BackBufferImage.Image);
+    BackBuffer->GetImageLayoutState().SetImageLayout(VK_IMAGE_LAYOUT_TO_BE_DETERMINED);
+
+    if (FVulkanRenderTargetViewRHI* View = BackBuffer->RenderTargetView.Get())
+    {
+        View->UpdateImageView(BackBufferImage.Image, BackBufferImage.ImageView);
+    }
+
+    if (FVulkanUnorderedAccessViewRHI* View = BackBuffer->UnorderedAccessView.Get())
+    {
+        View->UpdateImageView(BackBufferImage.Image, BackBufferImage.ImageView);
+    }
+
+    if (FVulkanShaderResourceViewRHI* View = BackBuffer->ShaderResourceView.Get())
+    {
+        View->UpdateImageView(BackBufferImage.Image, BackBufferImage.ImageView);
+    }
+}
+
+void FVulkanSwapChainRHI::ReleaseResources()
+{
+    if (!BackBuffer)
+    {
+        return;
+    }
+
+    BackBuffer->UpdateImage(VK_NULL_HANDLE);
+    BackBuffer->GetImageLayoutState().SetImageLayout(VK_IMAGE_LAYOUT_TO_BE_DETERMINED);
+
+    if (FVulkanRenderTargetViewRHI* View = BackBuffer->RenderTargetView.Get())
+    {
+        View->UpdateImageView(VK_NULL_HANDLE, VK_NULL_HANDLE);
+    }
+
+    if (FVulkanUnorderedAccessViewRHI* View = BackBuffer->UnorderedAccessView.Get())
+    {
+        View->UpdateImageView(VK_NULL_HANDLE, VK_NULL_HANDLE);
+    }
+
+    if (FVulkanShaderResourceViewRHI* View = BackBuffer->ShaderResourceView.Get())
+    {
+        View->UpdateImageView(VK_NULL_HANDLE, VK_NULL_HANDLE);
+    }
 }
 
 bool FVulkanSwapChainRHI::RecreateSurface()
@@ -708,11 +854,11 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
         VULKAN_ERROR_CRITICAL("Failed to create SwapChain");
 		return false;
 	}
-	else
-	{
-		SwapChainResource = NewSwapChainResource;
-		RetiredSurface.Reset();
-	}
+
+	ReleaseBackBufferImages();
+
+	SwapChainResource = NewSwapChainResource;
+	RetiredSurface.Reset();
 
 	bActiveVSync          = SwapChainCreateInfo.bVerticalSync;
 	ActiveBackBufferCount = SwapChainCreateInfo.BufferCount;
@@ -727,11 +873,6 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
         // Update the size of the viewport to the actual swapchain size
         Desc.Width  = static_cast<uint16>(SwapChainExtent.width);
         Desc.Height = static_cast<uint16>(SwapChainExtent.height);
-
-        if (BackBufferProxy)
-        {
-            BackBufferProxy->Resize(Desc.Width, Desc.Height);
-        }
     }
 
     PendingAcquireSemaphore.Reset();
@@ -766,88 +907,20 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
         }
     }
 
-    // Per-image texture wrappers must be recreated on every (re)create so their Desc.Extent and
-    // CreateInfo.extent reflect the current swap-chain extent. Reusing the wrappers and only
-    // swapping the VkImage via SetVkImage would leave GetWidth/GetHeight reporting the previous
-    // extent, which propagates into BeginRenderPass's renderArea and trips Vulkan validation.
     ImageFences.Resize(BufferCount);
-    BackBuffers.Resize(BufferCount);
-
-    ETextureUsageFlags UsageFlags = ETextureUsageFlags::Presentable;
-    if (Desc.IsRenderTarget())
-    {
-        UsageFlags |= ETextureUsageFlags::RenderTarget;
-    }
-    if (Desc.IsUnorderedAccess())
-    {
-        UsageFlags |= ETextureUsageFlags::UnorderedAccessTexture;
-    }
-    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(Desc.ColorFormat, SwapChainExtent.width, SwapChainExtent.height, 1, 1, UsageFlags);
 
     for (uint32 i = 0; i < BufferCount; ++i)
     {
-        if (FVulkanTextureRHIRef NewTexture = new FVulkanTextureRHI(GetDevice(), BackBufferDesc))
-        {
-            BackBuffers[i].Texture = NewTexture;
-        }
-        else
-        {
-            return false;
-        }
-
         ImageFences[i] = nullptr;
     }
-
-    // Retrieve the images
-    TArray<VkImage> SwapChainImages(SwapChainResource->GetBufferCount());
-    SwapChainResource->GetSwapChainImages(SwapChainImages.Data());
 
     // Ensure we are recording
     CHECK(CommandContext->IsRecording());
     CHECK(!CommandContext->NeedsCommandBuffer());
 
-    for (FBackBufferData& Data : BackBuffers)
+    if (!CreateBackBufferImages())
     {
-        Data.RenderTargetView    = nullptr;
-        Data.UnorderedAccessView = nullptr;
-    }
-
-    int32 Index = 0;
-    for (VkImage Image : SwapChainImages)
-    {
-        BackBuffers[Index].Texture->SetVkImage(Image, VK_IMAGE_LAYOUT_UNDEFINED);
-
-        FVulkanTextureRHI* BackBufferTexture = BackBuffers[Index].Texture.Get();
-
-        if (Desc.IsRenderTarget())
-        {
-            const FRHIRenderTargetViewDesc RTVDesc = FRHIRenderTargetViewDesc::CreateTexture2D(Desc.ColorFormat, 0);
-
-            FVulkanRenderTargetViewRHIRef NewRTV = new FVulkanRenderTargetViewRHI(GetDevice(), BackBufferTexture, RTVDesc);
-            if (!NewRTV->Initialize(BackBufferTexture, RTVDesc))
-            {
-                VULKAN_ERROR_CRITICAL("FVulkanSwapChainRHI: Failed to create back-buffer RTV for index %d", Index);
-                return false;
-            }
-
-            BackBuffers[Index].RenderTargetView = NewRTV;
-        }
-
-        if (Desc.IsUnorderedAccess())
-        {
-            const FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateTexture2D(Desc.ColorFormat, 0);
-
-            FVulkanUnorderedAccessViewRHIRef NewUAV = new FVulkanUnorderedAccessViewRHI(GetDevice(), BackBufferTexture, UAVDesc);
-            if (!NewUAV->Initialize(BackBufferTexture, UAVDesc))
-            {
-                VULKAN_ERROR_CRITICAL("FVulkanSwapChainRHI: Failed to create back-buffer UAV for index %d", Index);
-                return false;
-            }
-
-            BackBuffers[Index].UnorderedAccessView = NewUAV;
-        }
-
-        ++Index;
+        return false;
     }
 
     CommandContext->SplitCommandBuffer(false, false);
@@ -856,7 +929,7 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
 	SemaphoreIndex  = 0;
 	BackBufferIndex = 0;
 
-    // VK_EXT_hdr_metadata is per-VkSwapchainKHR and does not carry over from the retired one.
+    // VK_EXT_hdr_metadata is per VkSwapchainKHR and does not carry over from the retired one.
     ApplyHDRMetadata();
     return true;
 }
@@ -877,6 +950,9 @@ void FVulkanSwapChainRHI::DestroySwapChain()
 
     // The acquire path is the only other place these are dropped, and it will not run again
     ImageFences.Clear();
+
+    // The images belong to the presentation engine, but the views over them are ours.
+    ReleaseBackBufferImages();
 
     // Destroy the swapchain, then the surface it was created from if that one has been retired.
     SwapChainResource.Reset();
@@ -937,11 +1013,6 @@ bool FVulkanSwapChainRHI::Resize(uint32 InWidth, uint32 InHeight, EFormat NewFor
     {
         VULKAN_WARNING("FVulkanSwapChainRHI::Resize FAILED");
         return false;
-    }
-
-    if (BackBufferProxy)
-    {
-        BackBufferProxy->Resize(Desc.Width, Desc.Height);
     }
 
     return true;
@@ -1016,53 +1087,19 @@ bool FVulkanSwapChainRHI::Present(bool bVerticalSync)
 
 void FVulkanSwapChainRHI::SetDebugName(const String& InName)
 {
-    // Name the swapchain object
     if (SwapChainResource)
     {
         VulkanSetObjectName(GetDevice()->GetVkDevice(), *InName, SwapChainResource->GetVkSwapChain(), VK_OBJECT_TYPE_SWAPCHAIN_KHR);
 
-        // Name all the images
-        for (int32 i = 0; i < BackBuffers.Size(); ++i)
+        for (int32 Index = 0; Index < BackBufferImages.Size(); ++Index)
         {
-            const String ImageName = InName + String::Printf(" BackBuffer Image[%d]", i);
-            BackBuffers[i].Texture->SetDebugName(ImageName);
+            const String ImageName = InName + String::Printf(" BackBuffer Image[%d]", Index);
+            VulkanSetObjectName(GetDevice()->GetVkDevice(), *ImageName, BackBufferImages[Index].Image, VK_OBJECT_TYPE_IMAGE);
+
+            const String ImageViewName = InName + String::Printf(" BackBuffer ImageView[%d]", Index);
+            VulkanSetObjectName(GetDevice()->GetVkDevice(), *ImageViewName, BackBufferImages[Index].ImageView, VK_OBJECT_TYPE_IMAGE_VIEW);
         }
     }
-}
-
-FVulkanTextureRHI* FVulkanSwapChainRHI::GetCurrentBackBuffer() const
-{
-    if (!SwapChainResource || Desc.Width == 0 || Desc.Height == 0)
-    {
-        return nullptr;
-    }
-
-    if (!BackBuffers.IsValidIndex(static_cast<int32>(BackBufferIndex)))
-    {
-        return nullptr;
-    }
-
-    return BackBuffers[BackBufferIndex].Texture.Get();
-}
-
-FVulkanRenderTargetViewRHI* FVulkanSwapChainRHI::GetCurrentBackBufferRenderTargetView() const
-{
-    if (!BackBuffers.IsValidIndex(static_cast<int32>(BackBufferIndex)))
-    {
-        return nullptr;
-    }
-
-    return BackBuffers[BackBufferIndex].RenderTargetView.Get();
-}
-
-FVulkanUnorderedAccessViewRHI* FVulkanSwapChainRHI::GetCurrentBackBufferUnorderedAccessView() const
-{
-    if (!BackBuffers.IsValidIndex(static_cast<int32>(BackBufferIndex)))
-    {
-        return nullptr;
-    }
-    
-    return BackBuffers[BackBufferIndex].UnorderedAccessView.Get();
 }
 
 void* FVulkanSwapChainRHI::GetRHINativeHandle() const
@@ -1070,47 +1107,53 @@ void* FVulkanSwapChainRHI::GetRHINativeHandle() const
     return reinterpret_cast<void*>(SwapChainResource->GetVkSwapChain());
 }
 
-void* FVulkanSwapChainRHI::GetRHINativeBackBufferResourceFromIndex(uint32 Index) const
+void* FVulkanSwapChainRHI::GetRHINativeResourceFromIndex(uint32 Index) const
 {
-    FVulkanTextureRHI* Texture = GetBackBufferAtIndex(Index);
-    return Texture ? Texture->GetRHINativeResource() : nullptr;
+    const int32 ImageIndex = static_cast<int32>(Index);
+    return BackBufferImages.IsValidIndex(ImageIndex) ? reinterpret_cast<void*>(BackBufferImages[ImageIndex].Image) : nullptr;
 }
 
-void* FVulkanSwapChainRHI::GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 Index) const
+void* FVulkanSwapChainRHI::GetRHINativeRenderTargetViewFromIndex(uint32 Index) const
 {
-    FVulkanRenderTargetViewRHI* View = GetBackBufferRenderTargetViewAtIndex(Index);
-    return View ? View->GetRHINativeHandle() : nullptr;
+    const int32 ImageIndex = static_cast<int32>(Index);
+    return BackBufferImages.IsValidIndex(ImageIndex) ? reinterpret_cast<void*>(BackBufferImages[ImageIndex].ImageView) : nullptr;
 }
 
-void* FVulkanSwapChainRHI::GetRHINativeBackBufferUnorderedAccessViewFromIndex(uint32 Index) const
+void* FVulkanSwapChainRHI::GetRHINativeUnorderedAccessViewFromIndex(uint32 Index) const
 {
-    FVulkanUnorderedAccessViewRHI* View = GetBackBufferUnorderedAccessViewAtIndex(Index);
-    return View ? View->GetRHINativeHandle() : nullptr;
+    const int32 ImageIndex = static_cast<int32>(Index);
+    return BackBufferImages.IsValidIndex(ImageIndex) ? reinterpret_cast<void*>(BackBufferImages[ImageIndex].ImageView) : nullptr;
+}
+
+void* FVulkanSwapChainRHI::GetRHINativeShaderResourceViewFromIndex(uint32 Index) const
+{
+    const int32 ImageIndex = static_cast<int32>(Index);
+    return BackBufferImages.IsValidIndex(ImageIndex) ? reinterpret_cast<void*>(BackBufferImages[ImageIndex].ImageView) : nullptr;
 }
 
 FRHITexture* FVulkanSwapChainRHI::GetBackBuffer() const
 {
-    return BackBufferProxy.Get();
+    return BackBuffer.Get();
 }
 
-FRHITexture* FVulkanSwapChainRHI::GetBackBufferResourceFromIndex(uint32 Index) const
+FRHIRenderTargetView* FVulkanSwapChainRHI::GetRenderTargetView() const
 {
-    return GetBackBufferAtIndex(Index);
+    return BackBuffer ? BackBuffer->GetRenderTargetView() : nullptr;
 }
 
-uint32 FVulkanSwapChainRHI::GetNumBackBufferResources() const
+FRHIUnorderedAccessView* FVulkanSwapChainRHI::GetUnorderedAccessView() const
+{
+    return BackBuffer ? BackBuffer->GetUnorderedAccessView() : nullptr;
+}
+
+FRHIShaderResourceView* FVulkanSwapChainRHI::GetShaderResourceView() const
+{
+    return BackBuffer ? BackBuffer->GetShaderResourceView() : nullptr;
+}
+
+uint32 FVulkanSwapChainRHI::GetNumResources() const
 {
     return GetNumBackBuffers();
-}
-
-FRHIRenderTargetView* FVulkanSwapChainRHI::GetBackBufferRenderTargetView() const
-{
-    return BackBufferProxyRenderTargetView.Get();
-}
-
-FRHIUnorderedAccessView* FVulkanSwapChainRHI::GetBackBufferUnorderedAccessView() const
-{
-    return BackBufferProxyUnorderedAccessView.Get();
 }
 
 bool FVulkanSwapChainRHI::IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const
@@ -1222,51 +1265,14 @@ VkResult FVulkanSwapChainRHI::AcquireNextBackBuffer(FVulkanCommands* InCommands)
         return Result;
     }
 
+    SwapResources(BackBufferIndex);
+
     if (InCommands)
     {
         ClaimPendingAcquireSemaphore(*InCommands);
     }
 
     return Result;
-}
-
-FVulkanTextureRHI* FVulkanSwapChainRHI::ResolveBackBuffer()
-{
-    if (!CommandContext || !BackBuffers.IsValidIndex(BackBufferIndex))
-    {
-        return nullptr;
-    }
-
-    FVulkanTextureRHI* BackBuffer = BackBuffers[BackBufferIndex].Texture.Get();
-    if (!BackBuffer)
-    {
-        return nullptr;
-    }
-
-    if (!CommandContext->IsRecording() || CommandContext->NeedsCommandBuffer())
-    {
-        return BackBuffer;
-    }
-
-    ClaimPendingAcquireSemaphore(CommandContext->GetCommands());
-
-    FVulkanImageLayoutState& GlobalState = BackBuffer->GetImageLayoutState();
-    FVulkanImageLayoutState& LocalState  = CommandContext->RetrievePendingImageState(BackBuffer);
-
-    if (LocalState.GetImageLayout() == VK_IMAGE_LAYOUT_TO_BE_DETERMINED)
-    {
-        const VkImageLayout GlobalLayout = GlobalState.GetImageLayout();
-        const VkImageLayout SeedLayout   =
-            (GlobalLayout == VK_IMAGE_LAYOUT_TO_BE_DETERMINED) ? VK_IMAGE_LAYOUT_UNDEFINED : GlobalLayout;
-
-        LocalState.SetImageLayout(SeedLayout);
-        if (GlobalLayout == VK_IMAGE_LAYOUT_TO_BE_DETERMINED)
-        {
-            GlobalState.SetImageLayout(SeedLayout);
-        }
-    }
-
-    return BackBuffer;
 }
 
 VkResult FVulkanSwapChainRHI::AcquireNextImage()

@@ -339,7 +339,7 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
         PrepareDrawData(CommandList, DrawData);
         PrepareTexturesForShaderResourceUsage(CommandList, DrawData);
 
-        FRHIRenderTargetView* BackBufferRTV = RHISwapChain->GetBackBufferRenderTargetView();
+        FRHIRenderTargetView* BackBufferRTV = RHISwapChain->GetRenderTargetView();
         FRHIBeginRenderPassDesc RenderPassDesc({ FRHIRenderTargetAttachment(BackBufferRTV, EAttachmentLoadAction::Load) }, 1);
         CommandList.BeginRenderPass(RenderPassDesc);
 
@@ -373,7 +373,7 @@ void FImGuiRenderer::RenderViewport(FRHICommandList& CommandList, ImDrawData* Dr
     }
 
     FRHITexture* BackBuffer = ViewportData.SwapChain->GetBackBuffer();
-    FRHIRenderTargetView* BackBufferRTV = ViewportData.SwapChain->GetBackBufferRenderTargetView();
+    FRHIRenderTargetView* BackBufferRTV = ViewportData.SwapChain->GetRenderTargetView();
     if (!BackBuffer || !BackBufferRTV)
     {
         return;
@@ -783,7 +783,7 @@ void FImGuiRenderer::OnRenderWindow(ImGuiViewport* Viewport, void* CommandList)
         ViewportData->Height = (Desc.Height > 0) ? Desc.Height : NewH;
     }
 
-    if (!ViewportData->SwapChain->GetBackBuffer() || !ViewportData->SwapChain->GetBackBufferRenderTargetView())
+    if (!ViewportData->SwapChain->GetBackBuffer() || !ViewportData->SwapChain->GetRenderTargetView())
     {
         return;
     }

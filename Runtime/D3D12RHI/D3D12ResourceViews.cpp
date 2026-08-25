@@ -41,13 +41,18 @@ FD3D12View::FD3D12View(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOf
     , OwnerResource(nullptr)
     , DescriptorVersion(0)
     , BindlessHandle()
+    , DescriptorOwnership(ED3D12DescriptorOwnership::Owned)
 {
 }
 
 FD3D12View::~FD3D12View()
 {
     UnregisterFromResource();
-    InvalidateAndFreeHandle();
+
+    if (DescriptorOwnership == ED3D12DescriptorOwnership::Owned)
+    {
+        InvalidateAndFreeHandle();
+    }
 
     if (BindlessHandle.IsValid())
     {
@@ -149,6 +154,31 @@ FRHIDescriptorHandle FD3D12View::EnsureBindlessHandle(EDescriptorType InType) co
     }
 
     return BindlessHandle;
+}
+
+void FD3D12View::InitializeExternal()
+{
+    DescriptorOwnership = ED3D12DescriptorOwnership::External;
+}
+
+void FD3D12View::UpdateDescriptor(FD3D12Resource* InResource, FD3D12OfflineDescriptor InDescriptor)
+{
+    CHECK(DescriptorOwnership == ED3D12DescriptorOwnership::External);
+
+    ViewResource = MakeSharedRef<FD3D12Resource>(InResource);
+    Descriptor   = InDescriptor;
+
+    IncrementDescriptorVersion();
+}
+
+void FD3D12View::ReleaseDescriptor()
+{
+    CHECK(DescriptorOwnership == ED3D12DescriptorOwnership::External);
+
+    ViewResource = nullptr;
+    Descriptor   = {};
+
+    IncrementDescriptorVersion();
 }
 
 void FD3D12View::IncrementDescriptorVersion()
@@ -292,8 +322,14 @@ bool FD3D12ShaderResourceViewRHI::UpdateView(FD3D12Resource* InResource, const D
     return true;
 }
 
+void FD3D12ShaderResourceViewRHI::InitializeExternal(const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
+{
+    D3D12Desc = InDesc;
+    FD3D12View::InitializeExternal();
+}
+
 FD3D12UnorderedAccessViewRHI::FD3D12UnorderedAccessViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InRHIDesc)
-    : FD3D12UnorderedAccessViewBase(InResource, InRHIDesc)
+    : FRHIUnorderedAccessView(InResource, InRHIDesc)
     , FD3D12View(InDevice, InOfflineHeap)
     , CounterResource(nullptr)
     , TargetedResource(nullptr)
@@ -311,11 +347,6 @@ void* FD3D12UnorderedAccessViewRHI::GetRHINativeHandle() const
 FRHIDescriptorHandle FD3D12UnorderedAccessViewRHI::GetBindlessHandle() const
 {
     return EnsureBindlessHandle(EDescriptorType::UnorderedAccess);
-}
-
-FD3D12UnorderedAccessViewRHI* FD3D12UnorderedAccessViewRHI::GetUnorderedAccessViewInterface() const
-{
-    return const_cast<FD3D12UnorderedAccessViewRHI*>(this);
 }
 
 void FD3D12UnorderedAccessViewRHI::OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
@@ -399,6 +430,12 @@ bool FD3D12UnorderedAccessViewRHI::UpdateView(FD3D12Resource* InCounterResource,
     return true;
 }
 
+void FD3D12UnorderedAccessViewRHI::InitializeExternal(const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
+{
+    D3D12Desc = InDesc;
+    FD3D12View::InitializeExternal();
+}
+
 #if D3D12_USE_SAMPLER_FEEDBACK
 bool FD3D12UnorderedAccessViewRHI::InitializeSamplerFeedback(FD3D12Resource* InTargetedResource, FD3D12Resource* InFeedbackResource)
 {
@@ -444,7 +481,7 @@ bool FD3D12UnorderedAccessViewRHI::UpdateSamplerFeedbackView(FD3D12Resource* InT
 #endif
 
 FD3D12RenderTargetViewRHI::FD3D12RenderTargetViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource, const FRHIRenderTargetViewDesc& InRHIDesc)
-    : FD3D12RenderTargetViewBase(InResource, InRHIDesc)
+    : FRHIRenderTargetView(InResource, InRHIDesc)
     , FD3D12View(InDevice, InOfflineHeap)
     , D3D12Desc()
 {
@@ -454,11 +491,6 @@ FD3D12RenderTargetViewRHI::FD3D12RenderTargetViewRHI(FD3D12Device* InDevice, FD3
 void* FD3D12RenderTargetViewRHI::GetRHINativeHandle() const
 {
     return reinterpret_cast<void*>(static_cast<UPTR_INT>(GetOfflineHandle().ptr));
-}
-
-FD3D12RenderTargetViewRHI* FD3D12RenderTargetViewRHI::GetRenderTargetViewInterface() const
-{
-    return const_cast<FD3D12RenderTargetViewRHI*>(this);
 }
 
 void FD3D12RenderTargetViewRHI::OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
@@ -503,6 +535,12 @@ bool FD3D12RenderTargetViewRHI::UpdateView(FD3D12Resource* InResource, const D3D
 
     IncrementDescriptorVersion();
     return true;
+}
+
+void FD3D12RenderTargetViewRHI::InitializeExternal(const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
+{
+    D3D12Desc = InDesc;
+    FD3D12View::InitializeExternal();
 }
 
 FD3D12DepthStencilViewRHI::FD3D12DepthStencilViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource, const FRHIDepthStencilViewDesc& InRHIDesc)
@@ -562,4 +600,12 @@ bool FD3D12DepthStencilViewRHI::UpdateView(FD3D12Resource* InResource, const D3D
 
     IncrementDescriptorVersion();
     return true;
+}
+
+void FD3D12DepthStencilViewRHI::InitializeExternal(const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
+{
+    D3D12Desc   = InDesc;
+    bHasStencil = IsStencilFormat(InDesc.Format);
+
+    FD3D12View::InitializeExternal();
 }

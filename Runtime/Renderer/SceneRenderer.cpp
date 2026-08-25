@@ -664,7 +664,7 @@ void FSceneRenderer::RenderThread_BeginSceneCommandList(const FSceneRenderPacket
         if (Packet.View.RenderTarget != BackBuffer)
         {
             CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::Undefined, ERHIResourceState::RenderTarget));
-            CommandList.ClearRenderTargetView(Packet.SwapChain->GetBackBufferRenderTargetView(), Vector4());
+            CommandList.ClearRenderTargetView(Packet.SwapChain->GetRenderTargetView(), Vector4());
         }
     }
 }

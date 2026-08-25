@@ -257,6 +257,8 @@ public:
     }
 
 private:
+    bool HasPendingWork() const;
+
     void ConditionalSplitCommandBuffer();
     void ForceFlushCommandPool();
     

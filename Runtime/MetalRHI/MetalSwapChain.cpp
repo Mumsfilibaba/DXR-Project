@@ -49,20 +49,26 @@ void* FMetalSwapChainRHI::GetRHINativeHandle() const
     return (__bridge void*)MetalLayer;
 }
 
-void* FMetalSwapChainRHI::GetRHINativeBackBufferResourceFromIndex(uint32 Index) const
+void* FMetalSwapChainRHI::GetRHINativeResourceFromIndex(uint32 Index) const
 {
     UNREFERENCED_VARIABLE(Index);
     FRHITexture* Texture = BackBuffer.Get();
     return Texture ? Texture->GetRHINativeResource() : nullptr;
 }
 
-void* FMetalSwapChainRHI::GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 Index) const
+void* FMetalSwapChainRHI::GetRHINativeRenderTargetViewFromIndex(uint32 Index) const
 {
     UNREFERENCED_VARIABLE(Index);
     return nullptr;
 }
 
-void* FMetalSwapChainRHI::GetRHINativeBackBufferUnorderedAccessViewFromIndex(uint32 Index) const
+void* FMetalSwapChainRHI::GetRHINativeUnorderedAccessViewFromIndex(uint32 Index) const
+{
+    UNREFERENCED_VARIABLE(Index);
+    return nullptr;
+}
+
+void* FMetalSwapChainRHI::GetRHINativeShaderResourceViewFromIndex(uint32 Index) const
 {
     UNREFERENCED_VARIABLE(Index);
     return nullptr;
@@ -73,25 +79,24 @@ FRHITexture* FMetalSwapChainRHI::GetBackBuffer() const
     return BackBuffer.Get();
 }
 
-FRHITexture* FMetalSwapChainRHI::GetBackBufferResourceFromIndex(uint32 Index) const
+FRHIRenderTargetView* FMetalSwapChainRHI::GetRenderTargetView() const
 {
-    UNREFERENCED_VARIABLE(Index);
-    return BackBuffer.Get();
+    return nullptr;
 }
 
-uint32 FMetalSwapChainRHI::GetNumBackBufferResources() const
+FRHIUnorderedAccessView* FMetalSwapChainRHI::GetUnorderedAccessView() const
+{
+    return nullptr;
+}
+
+FRHIShaderResourceView* FMetalSwapChainRHI::GetShaderResourceView() const
+{
+    return nullptr;
+}
+
+uint32 FMetalSwapChainRHI::GetNumResources() const
 {
     return 1;
-}
-
-FRHIRenderTargetView* FMetalSwapChainRHI::GetBackBufferRenderTargetView() const
-{
-    return nullptr;
-}
-
-FRHIUnorderedAccessView* FMetalSwapChainRHI::GetBackBufferUnorderedAccessView() const
-{
-    return nullptr;
 }
 
 bool FMetalSwapChainRHI::IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const

@@ -53,6 +53,11 @@ template<> struct TVulkanRHIResourceType<FRHIBuffer>
     typedef FVulkanBufferRHI Type;
 };
 
+template<> struct TVulkanRHIResourceType<FRHITexture>
+{
+    typedef FVulkanTextureRHI Type;
+};
+
 template<> struct TVulkanRHIResourceType<FRHIQuery>
 {
     typedef FVulkanQueryRHI Type;

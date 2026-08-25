@@ -43,15 +43,6 @@ public:
     // Convert ERHIResourceState to Vulkan pipeline-stage flags
     static VkPipelineStageFlags2KHR ResourceStateToPipelineStageFlags(ERHIResourceState ResourceState);
 
-    static FVulkanTextureRHI*       ResourceCast(FRHITexture* Texture);
-    static const FVulkanTextureRHI* ResourceCast(const FRHITexture* Texture);
-    
-    static FVulkanUnorderedAccessViewRHI*       ResourceCast(FRHIUnorderedAccessView* UnorderedAccessView);
-    static const FVulkanUnorderedAccessViewRHI* ResourceCast(const FRHIUnorderedAccessView* UnorderedAccessView);
-    
-    static FVulkanRenderTargetViewRHI*       ResourceCast(FRHIRenderTargetView* RenderTargetView);
-    static const FVulkanRenderTargetViewRHI* ResourceCast(const FRHIRenderTargetView* RenderTargetView);
-
     static FVulkanAccelerationStructure*       ResourceCast(FRHIRayTracingAccelerationStructure* AccelerationStructure);
     static const FVulkanAccelerationStructure* ResourceCast(const FRHIRayTracingAccelerationStructure* AccelerationStructure);
 

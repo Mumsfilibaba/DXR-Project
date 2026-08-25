@@ -52,6 +52,11 @@ template<> struct TD3D12RHIResourceType<FRHIBuffer>
     typedef FD3D12BufferRHI Type;
 };
 
+template<> struct TD3D12RHIResourceType<FRHITexture>
+{
+    typedef FD3D12TextureRHI Type;
+};
+
 template<> struct TD3D12RHIResourceType<FRHIQuery>
 {
     typedef FD3D12QueryRHI Type;

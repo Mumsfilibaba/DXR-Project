@@ -705,6 +705,11 @@ NODISCARD constexpr DXGI_USAGE ConvertSwapChainUsage(ESwapChainUsageFlags Usage)
     {
         Result |= DXGI_USAGE_UNORDERED_ACCESS;
     }
+    
+    if (IsEnumFlagSet(Usage, ESwapChainUsageFlags::ShaderResource))
+    {
+        Result |= DXGI_USAGE_SHADER_INPUT;
+    }
 
     return Result;
 }

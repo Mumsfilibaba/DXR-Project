@@ -24,6 +24,16 @@ void* FMetalTextureRHI::GetRHINativeResource() const
     return reinterpret_cast<void*>(GetMTLTexture());
 }
 
+FRHIDescriptorHandle FMetalTextureRHI::GetBindlessSRVHandle() const
+{
+    return FRHIDescriptorHandle();
+}
+
+FRHIDescriptorHandle FMetalTextureRHI::GetBindlessUAVHandle() const
+{
+    return FRHIDescriptorHandle();
+}
+
 FRHIShaderResourceView* FMetalTextureRHI::GetShaderResourceView() const
 {
     return ShaderResourceView.Get();
@@ -42,16 +52,6 @@ FRHIRenderTargetView* FMetalTextureRHI::GetRenderTargetView() const
 FRHIDepthStencilView* FMetalTextureRHI::GetDepthStencilView() const
 {
     return DepthStencilView.Get();
-}
-
-FRHIDescriptorHandle FMetalTextureRHI::GetBindlessUAVHandle() const
-{
-    return FRHIDescriptorHandle();
-}
-
-FRHIDescriptorHandle FMetalTextureRHI::GetBindlessSRVHandle() const
-{
-    return FRHIDescriptorHandle();
 }
 
 bool FMetalTextureRHI::Initialize(ERHIResourceState InInitialAccess, const IRHITextureData* InInitialData)

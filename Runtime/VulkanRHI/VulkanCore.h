@@ -923,6 +923,11 @@ NODISCARD constexpr VkImageUsageFlags ConvertSwapChainUsage(ESwapChainUsageFlags
     {
         Result |= VK_IMAGE_USAGE_STORAGE_BIT;
     }
+    
+    if (IsEnumFlagSet(Usage, ESwapChainUsageFlags::ShaderResource))
+    {
+        Result |= VK_IMAGE_USAGE_SAMPLED_BIT;
+    }
 
     return Result;
 }

@@ -51,8 +51,10 @@ struct FD3D12RenderTargetCache
 {
     FD3D12RenderTargetCache()
         : RenderTargetViews()
+        , ViewVersions()
         , NumRenderTargets(0)
         , DepthStencilView(nullptr)
+        , DepthStencilViewVersion(0)
     {
         Clear();
     }
@@ -60,12 +62,16 @@ struct FD3D12RenderTargetCache
     void Clear()
     {
         Memory::Memzero(RenderTargetViews, sizeof(RenderTargetViews));
-        NumRenderTargets = 0;
-        DepthStencilView = nullptr;
+        Memory::Memzero(ViewVersions, sizeof(ViewVersions));
+        NumRenderTargets        = 0;
+        DepthStencilView        = nullptr;
+        DepthStencilViewVersion = 0;
     }
 
     FD3D12RenderTargetViewRHI* RenderTargetViews[D3D12_MAX_RENDER_TARGET_COUNT];
+    uint32                     ViewVersions[D3D12_MAX_RENDER_TARGET_COUNT];
     FD3D12DepthStencilViewRHI* DepthStencilView;
+    uint32                     DepthStencilViewVersion;
     uint32                     NumRenderTargets;
 };
 

@@ -644,7 +644,7 @@ bool RenderGraphUndefinedExternal_Test()
             TEST_CHECK(BackBuffer != nullptr);
 
             FRenderGraphRenderTargetView* BackBufferView = GraphBuilder.RegisterExternalRTV(BackBuffer,
-                SwapChain->GetBackBufferRenderTargetView(), "BackBufferRTV");
+                SwapChain->GetRenderTargetView(), "BackBufferRTV");
 
             TEST_CHECK(BackBufferView != nullptr);
 
@@ -695,7 +695,7 @@ bool RenderGraphUndefinedExternal_Test()
         TEST_CHECK(BackBuffer != nullptr);
 
         FRenderGraphRenderTargetView* BackBufferView = GraphBuilder.RegisterExternalRTV(BackBuffer,
-            SwapChain->GetBackBufferRenderTargetView(), "BackBufferRTV");
+            SwapChain->GetRenderTargetView(), "BackBufferRTV");
 
         TEST_CHECK(BackBufferView != nullptr);
 
@@ -737,7 +737,7 @@ bool RenderGraphUndefinedExternal_Test()
             TEST_CHECK(BackBuffer != nullptr);
 
             FRenderGraphRenderTargetView* BackBufferView = GraphBuilder.RegisterExternalRTV(BackBuffer,
-                SwapChain->GetBackBufferRenderTargetView(), "BackBufferRTV");
+                SwapChain->GetRenderTargetView(), "BackBufferRTV");
 
             TEST_CHECK(BackBufferView != nullptr);
 

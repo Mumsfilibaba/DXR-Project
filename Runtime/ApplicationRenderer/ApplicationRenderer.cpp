@@ -457,7 +457,7 @@ void FApplicationRenderer::Render(FRHICommandList& CommandList, FRHISwapChain* S
         return;
     }
 
-    FRHIRenderTargetView* BackBufferView = SwapChain->GetBackBufferRenderTargetView();
+    FRHIRenderTargetView* BackBufferView = SwapChain->GetRenderTargetView();
 
     for (const FWindowDrawState* WindowState : DrawableStates)
     {

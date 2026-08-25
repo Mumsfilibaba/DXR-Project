@@ -3,12 +3,14 @@
 
 class FRHIRenderTargetView;
 class FRHIUnorderedAccessView;
+class FRHIShaderResourceView;
 
 enum class ESwapChainUsageFlags : uint8
 {
     None            = 0,
     RenderTarget    = FLAG(1),
     UnorderedAccess = FLAG(2),
+    ShaderResource  = FLAG(3),
 };
 
 ENUM_CLASS_OPERATORS(ESwapChainUsageFlags);
@@ -20,6 +22,7 @@ NODISCARD constexpr const CHAR* ToString(ESwapChainUsageFlags Usage)
         case ESwapChainUsageFlags::None:            return "None";
         case ESwapChainUsageFlags::RenderTarget:    return "RenderTarget";
         case ESwapChainUsageFlags::UnorderedAccess: return "UnorderedAccess";
+        case ESwapChainUsageFlags::ShaderResource:  return "ShaderResource";
 
         default: return "Unknown";
     }
@@ -41,6 +44,7 @@ struct FRHISwapChainDesc
 
     NODISCARD constexpr bool IsRenderTarget()    const { return IsEnumFlagSet(Usage, ESwapChainUsageFlags::RenderTarget); }
     NODISCARD constexpr bool IsUnorderedAccess() const { return IsEnumFlagSet(Usage, ESwapChainUsageFlags::UnorderedAccess); }
+    NODISCARD constexpr bool IsShaderResource()  const { return IsEnumFlagSet(Usage, ESwapChainUsageFlags::ShaderResource); }
 
     void*                WindowHandle = nullptr;
     EFormat              ColorFormat  = EFormat::Unknown;
@@ -69,23 +73,33 @@ public:
     virtual void* GetRHINativeHandle() const = 0;
 
     /** @return D3D12: ID3D12Resource*. Vulkan: VkImage. Metal: id<MTLTexture>. Null: nullptr. */
-    virtual void* GetRHINativeBackBufferResourceFromIndex(uint32 Index) const = 0;
+    virtual void* GetRHINativeResourceFromIndex(uint32 Index) const = 0;
 
     /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE. Vulkan: VkImageView. Metal: nullptr. Null: nullptr. */
-    virtual void* GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 Index) const = 0;
+    virtual void* GetRHINativeRenderTargetViewFromIndex(uint32 Index) const = 0;
 
     /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE. Vulkan: VkImageView. Metal: nullptr. Null: nullptr. */
-    virtual void* GetRHINativeBackBufferUnorderedAccessViewFromIndex(uint32 Index) const = 0;
+    virtual void* GetRHINativeUnorderedAccessViewFromIndex(uint32 Index) const = 0;
 
-    virtual FRHITexture* GetBackBuffer()                              const = 0;
-    virtual FRHITexture* GetBackBufferResourceFromIndex(uint32 Index) const = 0;
-    virtual uint32       GetNumBackBufferResources()                  const = 0;
+    /** @return D3D12: D3D12_CPU_DESCRIPTOR_HANDLE. Vulkan: VkImageView. Metal: nullptr. Null: nullptr. */
+    virtual void* GetRHINativeShaderResourceViewFromIndex(uint32 Index) const = 0;
 
-    virtual FRHIRenderTargetView*    GetBackBufferRenderTargetView()    const = 0;
-    virtual FRHIUnorderedAccessView* GetBackBufferUnorderedAccessView() const = 0;
-    
+    /** @return The one texture that stands for every back-buffer image, re-pointed at the acquired image by AcquireNextBackBuffer */
+    virtual FRHITexture* GetBackBuffer() const = 0;
+
+    /** @return The back buffer's render-target view, or nullptr without ESwapChainUsageFlags::RenderTarget */
+    virtual FRHIRenderTargetView* GetRenderTargetView() const = 0;
+
+    /** @return The back buffer's unordered-access view, or nullptr without ESwapChainUsageFlags::UnorderedAccess */
+    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const = 0;
+
+    /** @return The back buffer's shader-resource view, or nullptr without ESwapChainUsageFlags::ShaderResource */
+    virtual FRHIShaderResourceView* GetShaderResourceView() const = 0;
+
+    /** @return The number of back-buffer images the swap chain holds, bounding the index the getters above take */
+    virtual uint32 GetNumResources() const = 0;
+
     virtual bool IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const = 0;
-
     virtual bool QueryDisplayHDRInfo(FRHIDisplayHDRInfo& OutInfo) const = 0;
 
     NODISCARD const FRHISwapChainDesc& GetDesc() const

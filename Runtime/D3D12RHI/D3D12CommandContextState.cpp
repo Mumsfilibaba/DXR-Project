@@ -1326,10 +1326,13 @@ void FD3D12CommandContextState::SetMeshletPipelineState(FD3D12MeshletPipelineSta
 
 void FD3D12CommandContextState::SetRenderTargets(FD3D12RenderTargetViewRHI* const* RenderTargets, uint32 NumRenderTargets, FD3D12DepthStencilViewRHI* DepthStencil)
 {
-    if (CommonGraphicsState.RenderTargetCache.DepthStencilView != DepthStencil)
+    const uint32 DepthStencilViewVersion = DepthStencil ? DepthStencil->GetDescriptorVersion() : 0;
+    if (CommonGraphicsState.RenderTargetCache.DepthStencilView        != DepthStencil ||
+        CommonGraphicsState.RenderTargetCache.DepthStencilViewVersion != DepthStencilViewVersion)
     {
-        CommonGraphicsState.RenderTargetCache.DepthStencilView = DepthStencil;
-        CommonGraphicsState.bBindRenderTargets = true;
+        CommonGraphicsState.RenderTargetCache.DepthStencilView        = DepthStencil;
+        CommonGraphicsState.RenderTargetCache.DepthStencilViewVersion = DepthStencilViewVersion;
+        CommonGraphicsState.bBindRenderTargets                        = true;
     }
 
     CHECK(NumRenderTargets < D3D12_MAX_RENDER_TARGET_COUNT);
@@ -1337,10 +1340,15 @@ void FD3D12CommandContextState::SetRenderTargets(FD3D12RenderTargetViewRHI* cons
 
     for (uint32 Index = 0; Index < NumRenderTargets; Index++)
     {
-        if (CommonGraphicsState.RenderTargetCache.RenderTargetViews[Index] != RenderTargets[Index])
+        FD3D12RenderTargetViewRHI* RenderTargetView = RenderTargets[Index];
+
+        const uint32 ViewVersion = RenderTargetView ? RenderTargetView->GetDescriptorVersion() : 0;
+        if (CommonGraphicsState.RenderTargetCache.RenderTargetViews[Index] != RenderTargetView ||
+            CommonGraphicsState.RenderTargetCache.ViewVersions[Index]      != ViewVersion)
         {
-            CommonGraphicsState.RenderTargetCache.RenderTargetViews[Index] = RenderTargets[Index];
-            CommonGraphicsState.bBindRenderTargets               = true;
+            CommonGraphicsState.RenderTargetCache.RenderTargetViews[Index] = RenderTargetView;
+            CommonGraphicsState.RenderTargetCache.ViewVersions[Index]      = ViewVersion;
+            CommonGraphicsState.bBindRenderTargets                         = true;
         }
     }
 }

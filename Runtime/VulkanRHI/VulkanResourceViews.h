@@ -3,7 +3,6 @@
 #include "VulkanRHI/VulkanLoader.h"
 #include "VulkanRHI/VulkanResource.h"
 
-class FVulkanSwapChainRHI;
 class FVulkanShaderResourceViewRHI;
 class FVulkanUnorderedAccessViewRHI;
 class FVulkanRenderTargetViewRHI;
@@ -22,6 +21,7 @@ public:
         StructuredBufferView,
         TypedBufferView,
         ImageView,
+        ExternalImageView,
         AccelerationStructureView,
     };
 
@@ -65,19 +65,15 @@ public:
     // IVulkanResourceRelocationListener Interface
     virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryLocation* NewMemoryLocation) override;
     
-    bool InitializeImageView(
-        VkImage InImage, 
-        VkFormat InFormat, 
-        VkImageViewType InImageViewType, 
-        VkImageAspectFlags InAspectMask, 
-        uint32 InBaseArrayLayer, 
-        uint32 InLayerCount, 
-        uint32 InBaseMipLevel, 
-        uint32 InLevelCount);
+    bool InitializeImageView(VkImage InImage, VkFormat InFormat, VkImageViewType InImageViewType, VkImageAspectFlags InAspectMask, 
+        uint32 InBaseArrayLayer, uint32 InLayerCount, uint32 InBaseMipLevel, uint32 InLevelCount);
 
     bool InitializeStructuredBufferView(VkBuffer InBuffer, VkDeviceSize InOffset, VkDeviceSize InRange, VkDeviceSize InViewOffset);
     bool InitializeTypedBufferView(VkBuffer InBuffer, VkFormat InFormat, VkDeviceSize InOffset, VkDeviceSize InRange, VkDeviceSize InViewOffset);
     bool InitializeAccelerationStructureView(VkAccelerationStructureKHR InAccelerationStructure);
+
+    void InitializeExternal(VkFormat InFormat, VkImageViewType InImageViewType, const VkImageSubresourceRange& InSubresourceRange);
+    void UpdateImageView(VkImage InImage, VkImageView InImageView);
 
     void RegisterToResource(FVulkanResource* InOwner);
     void UnregisterFromResource();
@@ -101,7 +97,7 @@ public:
 
     NODISCARD FORCEINLINE const FImageView& GetImageViewInfo() const
     {
-        CHECK(Type == EType::ImageView);
+        CHECK(IsImageView());
         return ImageViewInfo;
     }
 
@@ -116,16 +112,25 @@ public:
         return Type;
     }
 
+    NODISCARD FORCEINLINE bool IsImageView() const
+    {
+        return Type == EType::ImageView || Type == EType::ExternalImageView;
+    }
+
     NODISCARD FORCEINLINE void* GetRHINativeHandleForType() const
     {
         switch (Type)
         {
         case EType::ImageView:
+        case EType::ExternalImageView:
             return reinterpret_cast<void*>(ImageViewInfo.ImageView);
+
         case EType::TypedBufferView:
             return reinterpret_cast<void*>(TypedBufferInfo.BufferView);
+
         case EType::AccelerationStructureView:
             return reinterpret_cast<void*>(AccelerationStructureInfo.AccelerationStructure);
+            
         default:
             return nullptr;
         }
@@ -173,7 +178,6 @@ public:
 
     // FRHIShaderResourceView Interface
     virtual void* GetRHINativeHandle() const override final;
-
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
 
     // IVulkanResourceRelocationListener Interface
@@ -182,32 +186,14 @@ public:
     bool Initialize(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc);
 };
 
-class FVulkanUnorderedAccessViewBase : public FRHIUnorderedAccessView
-{
-protected:
-    FVulkanUnorderedAccessViewBase(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc)
-        : FRHIUnorderedAccessView(InResource, InDesc)
-    {
-    }
-
-    virtual ~FVulkanUnorderedAccessViewBase() = default;
-
-public:
-    virtual FVulkanUnorderedAccessViewRHI* GetUnorderedAccessViewInterface() const = 0;
-};
-
-class FVulkanUnorderedAccessViewRHI : public FVulkanUnorderedAccessViewBase, public FVulkanResourceView
+class FVulkanUnorderedAccessViewRHI : public FRHIUnorderedAccessView, public FVulkanResourceView
 {
 public:
     FVulkanUnorderedAccessViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InRHIDesc);
     virtual ~FVulkanUnorderedAccessViewRHI() = default;
 
-    // FVulkanUnorderedAccessViewBase Interface
-    virtual FVulkanUnorderedAccessViewRHI* GetUnorderedAccessViewInterface() const override final;
-
     // FRHIUnorderedAccessView Interface
     virtual void* GetRHINativeHandle() const override final;
-    
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
 
     // IVulkanResourceRelocationListener Interface
@@ -216,28 +202,11 @@ public:
     bool Initialize(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc);
 };
 
-class FVulkanRenderTargetViewBase : public FRHIRenderTargetView
-{
-protected:
-    FVulkanRenderTargetViewBase(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc)
-        : FRHIRenderTargetView(InResource, InDesc)
-    {
-    }
-
-    virtual ~FVulkanRenderTargetViewBase() = default;
-
-public:
-    virtual FVulkanRenderTargetViewRHI* GetRenderTargetViewInterface() const = 0;
-};
-
-class FVulkanRenderTargetViewRHI : public FVulkanRenderTargetViewBase, public FVulkanResourceView
+class FVulkanRenderTargetViewRHI : public FRHIRenderTargetView, public FVulkanResourceView
 {
 public:
     FVulkanRenderTargetViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource, const FRHIRenderTargetViewDesc& InRHIDesc);
     virtual ~FVulkanRenderTargetViewRHI() = default;
-
-    // FVulkanRenderTargetViewBase Interface
-    virtual FVulkanRenderTargetViewRHI* GetRenderTargetViewInterface() const override final;
 
     // FRHIRenderTargetView Interface
     virtual void* GetRHINativeHandle() const override final;

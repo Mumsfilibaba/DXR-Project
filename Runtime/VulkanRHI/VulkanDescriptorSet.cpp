@@ -374,6 +374,7 @@ void FVulkanDescriptorState::SetSRV(FVulkanShaderResourceViewRHI* ShaderResource
         switch(ShaderResourceView->GetType())
         {
             case FVulkanResourceView::EType::ImageView:
+            case FVulkanResourceView::EType::ExternalImageView:
             {
                 const FVulkanResourceView::FImageView& ImageViewInfo = ShaderResourceView->GetImageViewInfo();
                 DSBuilder.WriteSampledImage(BindingIndex, ImageViewInfo.ImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -433,6 +434,7 @@ void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAcce
         switch(UnorderedAccessView->GetType())
         {
             case FVulkanResourceView::EType::ImageView:
+            case FVulkanResourceView::EType::ExternalImageView:
             {
                 const FVulkanResourceView::FImageView& ImageViewInfo = UnorderedAccessView->GetImageViewInfo();
                 DSBuilder.WriteStorageImage(BindingIndex, ImageViewInfo.ImageView, VK_IMAGE_LAYOUT_GENERAL);

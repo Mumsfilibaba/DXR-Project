@@ -6,7 +6,7 @@
 #include "RHI/RHIStats.h"
 
 FD3D12TextureRHI::FD3D12TextureRHI(FD3D12Device* InDevice, const FRHITextureDesc& InTextureDesc)
-    : FD3D12TextureBase(InTextureDesc)
+    : FRHITexture(InTextureDesc)
     , FD3D12ResourceBase(InDevice)
     , ShaderResourceView(nullptr)
     , UnorderedAccessView(nullptr)
@@ -33,15 +33,20 @@ FD3D12TextureRHI::~FD3D12TextureRHI()
 #endif
 }
 
-FD3D12TextureRHI* FD3D12TextureRHI::GetTextureInterface() const
-{
-    return const_cast<FD3D12TextureRHI*>(this);
-}
-
 void* FD3D12TextureRHI::GetRHINativeResource() const
 {
     FD3D12Resource* Resource = ResourceStorage.GetResource();
     return Resource ? reinterpret_cast<void*>(Resource->GetD3D12Resource()) : nullptr;
+}
+
+FRHIDescriptorHandle FD3D12TextureRHI::GetBindlessSRVHandle() const
+{
+    return ShaderResourceView ? ShaderResourceView->GetBindlessHandle() : FRHIDescriptorHandle();
+}
+
+FRHIDescriptorHandle FD3D12TextureRHI::GetBindlessUAVHandle() const
+{
+    return UnorderedAccessView ? UnorderedAccessView->GetBindlessHandle() : FRHIDescriptorHandle();
 }
 
 FRHIShaderResourceView* FD3D12TextureRHI::GetShaderResourceView() const
@@ -62,16 +67,6 @@ FRHIRenderTargetView* FD3D12TextureRHI::GetRenderTargetView() const
 FRHIDepthStencilView* FD3D12TextureRHI::GetDepthStencilView() const
 {
     return DepthStencilView.Get();
-}
-
-FRHIDescriptorHandle FD3D12TextureRHI::GetBindlessSRVHandle() const
-{
-    return ShaderResourceView ? ShaderResourceView->GetBindlessHandle() : FRHIDescriptorHandle();
-}
-
-FRHIDescriptorHandle FD3D12TextureRHI::GetBindlessUAVHandle() const
-{
-    return UnorderedAccessView ? UnorderedAccessView->GetBindlessHandle() : FRHIDescriptorHandle();
 }
 
 bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIResourceState InInitialAccess, const IRHITextureData* InInitialData)
@@ -852,6 +847,73 @@ bool FD3D12TextureRHI::InitializeSamplerFeedbackMap(ERHIResourceState InInitialA
     D3D12_ERROR("Sampler feedback is not available in this SDK configuration");
     return false;
 #endif
+}
+
+bool FD3D12TextureRHI::InitializeSwapChainTexture()
+{
+    const DXGI_FORMAT BackBufferFormat = ConvertFormat(Desc.Format);
+
+    if (Desc.IsRenderTarget())
+    {
+        D3D12_RENDER_TARGET_VIEW_DESC D3D12ViewDesc = {};
+        D3D12ViewDesc.Format               = BackBufferFormat;
+        D3D12ViewDesc.ViewDimension        = D3D12_RTV_DIMENSION_TEXTURE2D;
+        D3D12ViewDesc.Texture2D.MipSlice   = 0;
+        D3D12ViewDesc.Texture2D.PlaneSlice = 0;
+
+        if (!RenderTargetView)
+        {
+            const FRHIRenderTargetViewDesc ViewDesc = FRHIRenderTargetViewDesc::CreateTexture2D(Desc.Format, 0);
+
+            FD3D12RenderTargetViewRHIRef NewView = new FD3D12RenderTargetViewRHI(GetDevice(), GetDevice()->GetRenderTargetOfflineDescriptorHeap(), this, ViewDesc);
+            RenderTargetView = NewView;
+        }
+
+        RenderTargetView->InitializeExternal(D3D12ViewDesc);
+    }
+
+    if (Desc.IsUnorderedAccessTexture())
+    {
+        D3D12_UNORDERED_ACCESS_VIEW_DESC D3D12ViewDesc = {};
+        D3D12ViewDesc.Format               = BackBufferFormat;
+        D3D12ViewDesc.ViewDimension        = D3D12_UAV_DIMENSION_TEXTURE2D;
+        D3D12ViewDesc.Texture2D.MipSlice   = 0;
+        D3D12ViewDesc.Texture2D.PlaneSlice = 0;
+
+        if (!UnorderedAccessView)
+        {
+            const FRHIUnorderedAccessViewDesc ViewDesc = FRHIUnorderedAccessViewDesc::CreateTexture2D(Desc.Format, 0);
+
+            FD3D12UnorderedAccessViewRHIRef NewView = new FD3D12UnorderedAccessViewRHI(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), this, ViewDesc);
+            UnorderedAccessView = NewView;
+        }
+
+        UnorderedAccessView->InitializeExternal(D3D12ViewDesc);
+    }
+
+    if (Desc.IsShaderResourceTexture())
+    {
+        D3D12_SHADER_RESOURCE_VIEW_DESC D3D12ViewDesc = {};
+        D3D12ViewDesc.Format                        = BackBufferFormat;
+        D3D12ViewDesc.Shader4ComponentMapping       = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        D3D12ViewDesc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE2D;
+        D3D12ViewDesc.Texture2D.MipLevels           = 1;
+        D3D12ViewDesc.Texture2D.MostDetailedMip     = 0;
+        D3D12ViewDesc.Texture2D.PlaneSlice          = 0;
+        D3D12ViewDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+        if (!ShaderResourceView)
+        {
+            const FRHIShaderResourceViewDesc ViewDesc = FRHIShaderResourceViewDesc::CreateTexture2D(Desc.Format, 0, 1);
+
+            FD3D12ShaderResourceViewRHIRef NewView = new FD3D12ShaderResourceViewRHI(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), this, ViewDesc);
+            ShaderResourceView = NewView;
+        }
+
+        ShaderResourceView->InitializeExternal(D3D12ViewDesc);
+    }
+
+    return true;
 }
 
 void FD3D12TextureRHI::SetDebugName(const String& InName)

@@ -295,6 +295,16 @@ public:
         return nullptr;
     }
 
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final
+    {
+        return FRHIDescriptorHandle();
+    }
+
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final
     {
         return ShaderResourceView.Get();
@@ -315,16 +325,6 @@ public:
         return DepthStencilView.Get();
     }
 
-    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final
-    {
-        return FRHIDescriptorHandle();
-    }
-
-    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final
-    {
-        return FRHIDescriptorHandle();
-    }
-
     virtual void SetDebugName(const String& InDebugName) override final
     {
         DebugName = InDebugName;
@@ -339,6 +339,12 @@ public:
     {
         Desc.Extent.X = int32(InWidth);
         Desc.Extent.Y = int32(InHeight);
+    }
+
+    void UpdateSwapChainTexture(EFormat InFormat, uint32 InWidth, uint32 InHeight)
+    {
+        Desc.Format = InFormat;
+        Resize(InWidth, InHeight);
     }
 
 private:
@@ -438,6 +444,7 @@ class FNullSwapChainRHI : public FRHISwapChain
 public:
     static constexpr uint32 kNumBackBuffers = 2;
 
+public:
     FNullSwapChainRHI(const FRHISwapChainDesc& InSwapChainDesc)
         : FRHISwapChain(InSwapChainDesc)
         , BackBufferIndex(0)
@@ -460,44 +467,49 @@ public:
         return nullptr;
     }
 
-    virtual void* GetRHINativeBackBufferResourceFromIndex(uint32 /*Index*/) const override final
+    virtual void* GetRHINativeResourceFromIndex(uint32 /*Index*/) const override final
     {
         return nullptr;
     }
 
-    virtual void* GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 /*Index*/) const override final
+    virtual void* GetRHINativeRenderTargetViewFromIndex(uint32 /*Index*/) const override final
     {
         return nullptr;
     }
 
-    virtual void* GetRHINativeBackBufferUnorderedAccessViewFromIndex(uint32 /*Index*/) const override final
+    virtual void* GetRHINativeUnorderedAccessViewFromIndex(uint32 /*Index*/) const override final
+    {
+        return nullptr;
+    }
+
+    virtual void* GetRHINativeShaderResourceViewFromIndex(uint32 /*Index*/) const override final
     {
         return nullptr;
     }
 
     virtual FRHITexture* GetBackBuffer() const override final
     {
-        return BackBufferProxy.Get();
+        return BackBuffer.Get();
     }
 
-    virtual FRHITexture* GetBackBufferResourceFromIndex(uint32 Index) const override final
+    virtual FRHIRenderTargetView* GetRenderTargetView() const override final
     {
-        return (Index < kNumBackBuffers) ? BackBuffers[Index].Get() : nullptr;
+        return BackBuffer ? BackBuffer->GetRenderTargetView() : nullptr;
     }
 
-    virtual uint32 GetNumBackBufferResources() const override final
+    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final
+    {
+        return BackBuffer ? BackBuffer->GetUnorderedAccessView() : nullptr;
+    }
+
+    virtual FRHIShaderResourceView* GetShaderResourceView() const override final
+    {
+        return BackBuffer ? BackBuffer->GetShaderResourceView() : nullptr;
+    }
+
+    virtual uint32 GetNumResources() const override final
     {
         return kNumBackBuffers;
-    }
-
-    virtual FRHIRenderTargetView* GetBackBufferRenderTargetView() const override final
-    {
-        return BackBufferProxy ? BackBufferProxy->GetRenderTargetView() : nullptr;
-    }
-
-    virtual FRHIUnorderedAccessView* GetBackBufferUnorderedAccessView() const override final
-    {
-        return BackBufferProxy ? BackBufferProxy->GetUnorderedAccessView() : nullptr;
     }
 
     virtual bool IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const override final
@@ -551,26 +563,36 @@ public:
 private:
     void AllocateBackBuffers()
     {
+        if (BackBuffer)
+        {
+            BackBuffer->UpdateSwapChainTexture(Desc.ColorFormat, Desc.Width, Desc.Height);
+            return;
+        }
+
+        ETextureUsageFlags BackBufferUsageFlags = ETextureUsageFlags::Presentable;
+
+        if (Desc.IsRenderTarget())
+        {
+            BackBufferUsageFlags |= ETextureUsageFlags::RenderTarget;
+        }
+
+        if (Desc.IsUnorderedAccess())
+        {
+            BackBufferUsageFlags |= ETextureUsageFlags::UnorderedAccessTexture;
+        }
+
+        if (Desc.IsShaderResource())
+        {
+            BackBufferUsageFlags |= ETextureUsageFlags::ShaderResourceTexture;
+        }
+
         const FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(Desc.ColorFormat,
-            Desc.Width, Desc.Height, 1, 1, ETextureUsageFlags::Presentable | ETextureUsageFlags::RenderTarget);
+            Desc.Width, Desc.Height, 1, 1, BackBufferUsageFlags);
 
-        if (BackBufferProxy)
-        {
-            BackBufferProxy->Resize(Desc.Width, Desc.Height);
-        }
-        else
-        {
-            BackBufferProxy = new FNullTextureRHI(BackBufferDesc);
-        }
-
-        for (uint32 Index = 0; Index < kNumBackBuffers; ++Index)
-        {
-            BackBuffers[Index] = new FNullTextureRHI(BackBufferDesc);
-        }
+        BackBuffer = new FNullTextureRHI(BackBufferDesc);
     }
 
-    TSharedRef<FNullTextureRHI> BackBufferProxy;
-    TSharedRef<FNullTextureRHI> BackBuffers[kNumBackBuffers];
+    TSharedRef<FNullTextureRHI> BackBuffer;
     uint32                      BackBufferIndex;
 };
 

@@ -702,7 +702,7 @@ bool FD3D12DeviceRHI::InitializeDeviceFeatureSupport()
     // Baseline Defaults
     // -------------------------------------------------------------------------------------------
 
-    RHI::DefaultSwapChainFormat = GetD3D12DefaultBackBufferFormat();
+    RHI::DefaultSwapChainFormat = FD3D12SwapChainRHI::GetDefaultBackBufferFormat();
 
     RHI::bSupportsGeometryShaders                       = true; // Geometry Shaders are always supported
     RHI::bSupportsTessellation                          = true; // Tessellation is always supported

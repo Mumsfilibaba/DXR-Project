@@ -75,36 +75,6 @@ ERHIType FVulkanDeviceRHI::GetRHIType() const
 
 FVulkanDeviceRHI* FVulkanDeviceRHI::VulkanDeviceRHI = nullptr;
 
-FVulkanTextureRHI* FVulkanDeviceRHI::ResourceCast(FRHITexture* Texture)
-{
-    if (Texture)
-    {
-        return static_cast<FVulkanTextureBase*>(Texture)->GetTextureInterface();
-    }
-
-    return nullptr;
-}
-
-FVulkanRenderTargetViewRHI* FVulkanDeviceRHI::ResourceCast(FRHIRenderTargetView* RenderTargetView)
-{
-    if (RenderTargetView)
-    {
-        return static_cast<FVulkanRenderTargetViewBase*>(RenderTargetView)->GetRenderTargetViewInterface();
-    }
-
-    return nullptr;
-}
-
-FVulkanUnorderedAccessViewRHI* FVulkanDeviceRHI::ResourceCast(FRHIUnorderedAccessView* UnorderedAccessView)
-{
-    if (UnorderedAccessView)
-    {
-        return static_cast<FVulkanUnorderedAccessViewBase*>(UnorderedAccessView)->GetUnorderedAccessViewInterface();
-    }
-
-    return nullptr;
-}
-
 FVulkanAccelerationStructure* FVulkanDeviceRHI::ResourceCast(FRHIRayTracingAccelerationStructure* AccelerationStructure)
 {
     if (!AccelerationStructure)
@@ -155,36 +125,6 @@ const FVulkanAccelerationStructure* FVulkanDeviceRHI::ResourceCast(const FRHIRay
         default:
             return nullptr;
     }
-}
-
-const FVulkanTextureRHI* FVulkanDeviceRHI::ResourceCast(const FRHITexture* Texture)
-{
-    if (Texture)
-    {
-        return static_cast<const FVulkanTextureBase*>(Texture)->GetTextureInterface();
-    }
-
-    return nullptr;
-}
-
-const FVulkanRenderTargetViewRHI* FVulkanDeviceRHI::ResourceCast(const FRHIRenderTargetView* RenderTargetView)
-{
-    if (RenderTargetView)
-    {
-        return static_cast<const FVulkanRenderTargetViewBase*>(RenderTargetView)->GetRenderTargetViewInterface();
-    }
-
-    return nullptr;
-}
-
-const FVulkanUnorderedAccessViewRHI* FVulkanDeviceRHI::ResourceCast(const FRHIUnorderedAccessView* UnorderedAccessView)
-{
-    if (UnorderedAccessView)
-    {
-        return static_cast<const FVulkanUnorderedAccessViewBase*>(UnorderedAccessView)->GetUnorderedAccessViewInterface();
-    }
-
-    return nullptr;
 }
 
 FVulkanDeviceRHI::FVulkanDeviceRHI()

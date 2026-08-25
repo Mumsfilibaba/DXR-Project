@@ -24,9 +24,9 @@ FVulkanResourceView::~FVulkanResourceView()
     UnregisterFromResource();
     FreeBindlessHandle();
 
-    if (Type == EType::ImageView)
+    if (IsImageView())
     {
-        if (VULKAN_CHECK_HANDLE(ImageViewInfo.ImageView))
+        if (Type == EType::ImageView && VULKAN_CHECK_HANDLE(ImageViewInfo.ImageView))
         {
         #if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
             GetDevice()->GetRenderPassCache().OnReleaseImageView(ImageViewInfo.ImageView);
@@ -215,6 +215,30 @@ bool FVulkanResourceView::InitializeAccelerationStructureView(VkAccelerationStru
     return true;
 }
 
+void FVulkanResourceView::InitializeExternal(VkFormat InFormat, VkImageViewType InImageViewType, const VkImageSubresourceRange& InSubresourceRange)
+{
+    CHECK(Type == EType::None || Type == EType::ExternalImageView);
+
+    Type = EType::ExternalImageView;
+
+    ImageViewInfo.Image            = VK_NULL_HANDLE;
+    ImageViewInfo.ImageView        = VK_NULL_HANDLE;
+    ImageViewInfo.ImageViewType    = InImageViewType;
+    ImageViewInfo.Format           = InFormat;
+    ImageViewInfo.Flags            = 0;
+    ImageViewInfo.SubresourceRange = InSubresourceRange;
+}
+
+void FVulkanResourceView::UpdateImageView(VkImage InImage, VkImageView InImageView)
+{
+    CHECK(Type == EType::ExternalImageView);
+
+    ImageViewInfo.Image     = InImage;
+    ImageViewInfo.ImageView = InImageView;
+
+    IncrementDescriptorVersion();
+}
+
 FRHIDescriptorHandle FVulkanResourceView::EnsureBindlessHandle(EDescriptorType InType, bool bWritable) const
 {
     FVulkanBindlessDescriptorManager* BindlessManager = GetDevice()->GetBindlessDescriptorManager();
@@ -244,6 +268,7 @@ FRHIDescriptorHandle FVulkanResourceView::EnsureBindlessHandle(EDescriptorType I
     switch (Type)
     {
         case EType::ImageView:
+        case EType::ExternalImageView:
         {
             const VkImageLayout Layout = bWritable
                 ? VK_IMAGE_LAYOUT_GENERAL
@@ -305,6 +330,7 @@ void FVulkanResourceView::RefreshBindlessIfBound()
     switch (Type)
     {
         case EType::ImageView:
+        case EType::ExternalImageView:
         {
             const VkImageLayout Layout = bBindlessIsWritable
                 ? VK_IMAGE_LAYOUT_GENERAL
@@ -368,7 +394,7 @@ void FVulkanResourceView::SetDebugName(const String& InName)
 {
     if (!InName.IsEmpty())
     {
-        if (Type == EType::ImageView)
+        if (IsImageView())
         {
             VulkanSetObjectName(GetDevice()->GetVkDevice(), InName.Data(), ImageViewInfo.ImageView, VK_OBJECT_TYPE_IMAGE_VIEW);
         }
@@ -669,14 +695,9 @@ bool FVulkanShaderResourceViewRHI::Initialize(FRHIResource* InResource, const FR
 }
 
 FVulkanUnorderedAccessViewRHI::FVulkanUnorderedAccessViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InRHIDesc)
-    : FVulkanUnorderedAccessViewBase(InResource, InRHIDesc)
+    : FRHIUnorderedAccessView(InResource, InRHIDesc)
     , FVulkanResourceView(InDevice)
 {
-}
-
-FVulkanUnorderedAccessViewRHI* FVulkanUnorderedAccessViewRHI::GetUnorderedAccessViewInterface() const
-{
-    return const_cast<FVulkanUnorderedAccessViewRHI*>(this);
 }
 
 FRHIDescriptorHandle FVulkanUnorderedAccessViewRHI::GetBindlessHandle() const
@@ -945,7 +966,7 @@ bool FVulkanUnorderedAccessViewRHI::Initialize(FRHIResource* InResource, const F
 }
 
 FVulkanRenderTargetViewRHI::FVulkanRenderTargetViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource, const FRHIRenderTargetViewDesc& InRHIDesc)
-    : FVulkanRenderTargetViewBase(InResource, InRHIDesc)
+    : FRHIRenderTargetView(InResource, InRHIDesc)
     , FVulkanResourceView(InDevice)
 {
 }
@@ -955,16 +976,11 @@ void* FVulkanRenderTargetViewRHI::GetRHINativeHandle() const
     return GetRHINativeHandleForType();
 }
 
-FVulkanRenderTargetViewRHI* FVulkanRenderTargetViewRHI::GetRenderTargetViewInterface() const
-{
-    return const_cast<FVulkanRenderTargetViewRHI*>(this);
-}
-
 void FVulkanRenderTargetViewRHI::OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryLocation* NewMemoryLocation)
 {
     FVulkanResourceView::OnResourceRelocated(RelocatedResource, NewMemoryLocation);
 
-    if (NewMemoryLocation)
+    if (NewMemoryLocation && Type == EType::ImageView)
     {
         FVulkanTextureRHI* VulkanTexture = static_cast<FVulkanTextureRHI*>(RelocatedResource);
 
@@ -1132,7 +1148,7 @@ void FVulkanDepthStencilViewRHI::OnResourceRelocated(FVulkanResource* RelocatedR
 {
     FVulkanResourceView::OnResourceRelocated(RelocatedResource, NewMemoryLocation);
 
-    if (NewMemoryLocation)
+    if (NewMemoryLocation && Type == EType::ImageView)
     {
         FVulkanTextureRHI* VulkanTexture = static_cast<FVulkanTextureRHI*>(RelocatedResource);
 

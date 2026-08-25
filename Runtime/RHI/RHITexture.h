@@ -331,13 +331,23 @@ public:
     /** @return D3D12: ID3D12Resource*. Vulkan: VkImage. Metal: id<MTLTexture>. Null: nullptr. */
     virtual void* GetRHINativeResource() const = 0;
 
-    virtual FRHIShaderResourceView*  GetShaderResourceView()  const = 0;
-    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const = 0;
-    virtual FRHIRenderTargetView*    GetRenderTargetView()    const = 0;
-    virtual FRHIDepthStencilView*    GetDepthStencilView()    const = 0;
-
-    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const = 0;
+    /** @brief Answers the bindless slot the shader-resource view's descriptor sits in, allocating it on the first call */
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const = 0;
+
+    /** @brief Answers the bindless slot the unordered-access view's descriptor sits in, allocating it on the first call */
+    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const = 0;
+
+    /** @brief Answers the view made with the texture, or nullptr without ShaderResourceTexture usage or with NoDefaultSRV */
+    virtual FRHIShaderResourceView* GetShaderResourceView() const = 0;
+
+    /** @brief Answers the view made with the texture, or nullptr without UnorderedAccessTexture usage or with NoDefaultUAV */
+    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const = 0;
+
+    /** @brief Answers the view made with the texture, or nullptr without RenderTarget usage or with NoDefaultRTV */
+    virtual FRHIRenderTargetView* GetRenderTargetView() const = 0;
+
+    /** @brief Answers the view made with the texture, or nullptr without DepthStencil usage or with NoDefaultDSV */
+    virtual FRHIDepthStencilView* GetDepthStencilView() const = 0;
 
     virtual void SetDebugName(const String& InName) = 0;
     virtual void GetDebugName(String& OutDebugName) const = 0;

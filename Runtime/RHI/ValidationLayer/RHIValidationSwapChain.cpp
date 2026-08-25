@@ -22,19 +22,24 @@ void* FRHIValidationSwapChain::GetRHINativeHandle() const
     return SwapChain->GetRHINativeHandle();
 }
 
-void* FRHIValidationSwapChain::GetRHINativeBackBufferResourceFromIndex(uint32 Index) const
+void* FRHIValidationSwapChain::GetRHINativeResourceFromIndex(uint32 Index) const
 {
-    return SwapChain->GetRHINativeBackBufferResourceFromIndex(Index);
+    return SwapChain->GetRHINativeResourceFromIndex(Index);
 }
 
-void* FRHIValidationSwapChain::GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 Index) const
+void* FRHIValidationSwapChain::GetRHINativeRenderTargetViewFromIndex(uint32 Index) const
 {
-    return SwapChain->GetRHINativeBackBufferRenderTargetViewFromIndex(Index);
+    return SwapChain->GetRHINativeRenderTargetViewFromIndex(Index);
 }
 
-void* FRHIValidationSwapChain::GetRHINativeBackBufferUnorderedAccessViewFromIndex(uint32 Index) const
+void* FRHIValidationSwapChain::GetRHINativeUnorderedAccessViewFromIndex(uint32 Index) const
 {
-    return SwapChain->GetRHINativeBackBufferUnorderedAccessViewFromIndex(Index);
+    return SwapChain->GetRHINativeUnorderedAccessViewFromIndex(Index);
+}
+
+void* FRHIValidationSwapChain::GetRHINativeShaderResourceViewFromIndex(uint32 Index) const
+{
+    return SwapChain->GetRHINativeShaderResourceViewFromIndex(Index);
 }
 
 FRHITexture* FRHIValidationSwapChain::GetBackBuffer() const
@@ -42,24 +47,24 @@ FRHITexture* FRHIValidationSwapChain::GetBackBuffer() const
     return SwapChain->GetBackBuffer();
 }
 
-FRHITexture* FRHIValidationSwapChain::GetBackBufferResourceFromIndex(uint32 Index) const
+FRHIRenderTargetView* FRHIValidationSwapChain::GetRenderTargetView() const
 {
-    return SwapChain->GetBackBufferResourceFromIndex(Index);
+    return SwapChain->GetRenderTargetView();
 }
 
-uint32 FRHIValidationSwapChain::GetNumBackBufferResources() const
+FRHIUnorderedAccessView* FRHIValidationSwapChain::GetUnorderedAccessView() const
 {
-    return SwapChain->GetNumBackBufferResources();
+    return SwapChain->GetUnorderedAccessView();
 }
 
-FRHIRenderTargetView* FRHIValidationSwapChain::GetBackBufferRenderTargetView() const
+FRHIShaderResourceView* FRHIValidationSwapChain::GetShaderResourceView() const
 {
-    return SwapChain->GetBackBufferRenderTargetView();
+    return SwapChain->GetShaderResourceView();
 }
 
-FRHIUnorderedAccessView* FRHIValidationSwapChain::GetBackBufferUnorderedAccessView() const
+uint32 FRHIValidationSwapChain::GetNumResources() const
 {
-    return SwapChain->GetBackBufferUnorderedAccessView();
+    return SwapChain->GetNumResources();
 }
 
 bool FRHIValidationSwapChain::IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const

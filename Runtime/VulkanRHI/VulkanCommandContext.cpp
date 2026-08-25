@@ -364,6 +364,23 @@ FVulkanBufferState& FVulkanCommandContext::RetrievePendingBufferState(FVulkanBuf
     return LocalState;
 }
 
+bool FVulkanCommandContext::HasPendingWork() const
+{
+    if (!CommandBuffer)
+    {
+        return false;
+    }
+
+    if (CommandBuffer->GetNumCommands() > 0 || BarrierBatcher.HasPendingBarriers()
+        || (Commands && Commands->HasPendingSemaphores()))
+    {
+        return true;
+    }
+
+    return !PendingImageBarriers.IsEmpty() || !PendingBufferBarriers.IsEmpty()
+        || !PendingImageStates.IsEmpty()   || !PendingBufferStates.IsEmpty();
+}
+
 void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQueries)
 {
     CHECK(CommandBuffer != nullptr);
@@ -374,21 +391,7 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQu
 
     CommandBuffer->InsertEndTimestamp(TimestampQueryAllocator);
 
-    const bool bHasPendingState = 
-        !PendingImageBarriers.IsEmpty() || !PendingBufferBarriers.IsEmpty() ||
-        !PendingImageStates.IsEmpty() || !PendingBufferStates.IsEmpty();
-
-    const uint32 NumCommands = CommandBuffer->GetNumCommands();
-
-#if DEBUG_BUILD
-    const uint32 CommandBudget = static_cast<uint32>(CVarMaxCommandsPerCommandBuffer.GetValue());
-    if (NumCommands > (CommandBudget * 2))
-    {
-        VULKAN_WARNING("Command-buffer closed with %u commands against a budget of %u - a recording path is likely missing a ConditionalSplitCommandBuffer() call", NumCommands, CommandBudget);
-    }
-#endif
-
-    if (NumCommands == 0 && !bHasPendingState && !Commands->HasPendingSemaphores())
+    if (!HasPendingWork())
     {
         CommandBuffer->End();
         CommandPool->RecycleBuffer(CommandBuffer);
@@ -1058,7 +1061,7 @@ void FVulkanCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessVie
     ConditionalSplitCommandBuffer();
 
     const FVulkanResourceView::EType Type = VulkanUnorderedAccessView->GetType();
-    if (Type == FVulkanResourceView::EType::ImageView)
+    if (VulkanUnorderedAccessView->IsImageView())
     {
         VkClearColorValue VulkanClearColor;
         Memory::Memcpy(VulkanClearColor.float32, ClearColor.XYZW, sizeof(VulkanClearColor.float32));
@@ -1106,7 +1109,7 @@ void FVulkanCommandContext::ClearUnorderedAccessViewUint(FRHIUnorderedAccessView
     ConditionalSplitCommandBuffer();
 
     const FVulkanResourceView::EType Type = VulkanUnorderedAccessView->GetType();
-    if (Type == FVulkanResourceView::EType::ImageView)
+    if (VulkanUnorderedAccessView->IsImageView())
     {
         VkClearColorValue VulkanClearColor;
         Memory::Memcpy(VulkanClearColor.uint32, Values, sizeof(VulkanClearColor.uint32));
@@ -2963,7 +2966,7 @@ void FVulkanCommandContext::TransitionImageLayout(FVulkanUnorderedAccessViewRHI*
 {
     CHECK(View != nullptr);
 
-    if (View->GetType() != FVulkanResourceView::EType::ImageView)
+    if (!View->IsImageView())
     {
         return;
     }
@@ -2994,7 +2997,7 @@ void FVulkanCommandContext::RequireBufferState(FVulkanUnorderedAccessViewRHI* Vi
 {
     CHECK(View != nullptr);
 
-    if (View->GetType() == FVulkanResourceView::EType::ImageView)
+    if (View->IsImageView())
     {
         return;
     }
@@ -3009,7 +3012,7 @@ void FVulkanCommandContext::TransitionImageLayout(FVulkanShaderResourceViewRHI* 
 {
     CHECK(View != nullptr);
 
-    if (View->GetType() != FVulkanResourceView::EType::ImageView)
+    if (!View->IsImageView())
     {
         return;
     }
@@ -3412,8 +3415,16 @@ void FVulkanCommandContext::AcquireNextBackBuffer(FRHISwapChain* InSwapChain)
 {
     FVulkanSwapChainRHI* VulkanSwapChain = FVulkanDeviceRHI::ResourceCast(InSwapChain);
 
+    CHECK(!IsInsideRenderPass());
+
+    if (HasPendingWork())
+    {
+        SplitCommandBuffer(false, false);
+    }
+
     const bool     bHasCommands = IsRecording() && !NeedsCommandBuffer();
     const VkResult Result       = VulkanSwapChain->AcquireNextBackBuffer(bHasCommands ? &GetCommands() : nullptr);
+
     if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
     {
         VULKAN_WARNING("FVulkanCommandContext::AcquireNextBackBuffer failed (%s)", ToString(Result));

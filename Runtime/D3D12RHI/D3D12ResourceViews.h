@@ -6,7 +6,6 @@
 #include "D3D12RHI/D3D12Resource.h"
 
 class FD3D12OfflineDescriptorHeap;
-class FD3D12SwapChainRHI;
 
 typedef TSharedRef<class FD3D12ConstantBufferView>     FD3D12ConstantBufferViewRef;
 typedef TSharedRef<class FD3D12ShaderResourceViewRHI>  FD3D12ShaderResourceViewRHIRef;
@@ -33,6 +32,15 @@ NODISCARD uint64 GetBufferViewElementSize(const FRHIBufferDesc& BufferDesc, cons
     }
 }
 
+enum class ED3D12DescriptorOwnership : uint8
+{
+    /** The view allocated its own descriptor and frees it back to the offline heap when it dies */
+    Owned,
+
+    /** The descriptor belongs to the swap chain, which bakes one per back buffer and frees them itself */
+    External,
+};
+
 class FD3D12View : public FD3D12DeviceChild, public ID3D12ResourceRelocationListener
 {
 public:
@@ -45,58 +53,31 @@ public:
     bool AllocateHandle();
     void InvalidateAndFreeHandle();
 
+    void UpdateDescriptor(FD3D12Resource* InResource, FD3D12OfflineDescriptor InDescriptor);
+    void ReleaseDescriptor();
+
     void RegisterWithResource(FD3D12ResourceBase* InOwner);
     void UnregisterFromResource();
 
-    NODISCARD FORCEINLINE bool IsValid() const
-    {
-        return Descriptor;
-    }
+    NODISCARD FORCEINLINE bool IsValid() const { return Descriptor; }
+    NODISCARD FORCEINLINE bool IsRegisteredWithResource(const FD3D12ResourceBase* Resource) const { return OwnerResource == Resource; }
 
-    NODISCARD FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const
-    {
-        return Descriptor.Handle;
-    }
-
-    NODISCARD FORCEINLINE const FD3D12Resource* GetViewResource() const 
-    { 
-        return ViewResource.Get(); 
-    }
-
-    NODISCARD FORCEINLINE FD3D12Resource* GetViewResource()
-    {
-        return ViewResource.Get();
-    }
-
-    NODISCARD FORCEINLINE FD3D12ResidencyHandle* GetResourceResidencyHandle() const
-    {
-        FD3D12Resource* Resource = ViewResource.Get();
-        return Resource ? Resource->GetResidencyHandle() : nullptr;
-    }
+    NODISCARD FORCEINLINE FRHIDescriptorHandle        GetCachedBindlessHandle()    const { return BindlessHandle; }
+    NODISCARD FORCEINLINE uint32                      GetDescriptorVersion()       const { return DescriptorVersion; }
+    NODISCARD FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle()           const { return Descriptor.Handle; }
+    NODISCARD FORCEINLINE FD3D12Resource*             GetViewResource()                  { return ViewResource.Get(); }
+    NODISCARD FORCEINLINE const FD3D12Resource*       GetViewResource()            const { return ViewResource.Get(); }
+    NODISCARD FORCEINLINE FD3D12ResidencyHandle*      GetResourceResidencyHandle() const { return ViewResource.Get() ? ViewResource->GetResidencyHandle() : nullptr; }
 
     NODISCARD FORCEINLINE void ReleaseViewResource()
     {
         ViewResource = nullptr;
     }
 
-    NODISCARD FORCEINLINE uint32 GetDescriptorVersion() const
-    {
-        return DescriptorVersion;
-    }
-
-    NODISCARD FORCEINLINE bool IsRegisteredWithResource(const FD3D12ResourceBase* Resource) const
-    {
-        return OwnerResource == Resource;
-    }
-
-    NODISCARD FORCEINLINE FRHIDescriptorHandle GetCachedBindlessHandle() const
-    {
-        return BindlessHandle;
-    }
-
 protected:
     FRHIDescriptorHandle EnsureBindlessHandle(EDescriptorType InType) const;
     void IncrementDescriptorVersion();
+    void InitializeExternal();
 
     FD3D12ResourceRef            ViewResource;
     FD3D12OfflineDescriptorHeap& OfflineHeap;
@@ -104,6 +85,7 @@ protected:
     FD3D12ResourceBase*          OwnerResource;
     uint32                       DescriptorVersion;
     mutable FRHIDescriptorHandle BindlessHandle;
+    ED3D12DescriptorOwnership    DescriptorOwnership;
 };
 
 class FD3D12ConstantBufferView : public FD3D12View, public FRefCountedBase
@@ -145,6 +127,7 @@ public:
     // ID3D12ResourceRelocationListener Interface
     virtual void OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
 
+    void InitializeExternal(const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
     bool Initialize(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
     bool UpdateView(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
 
@@ -166,21 +149,7 @@ enum class ED3D12UnorderedAccessViewType : uint8
     SamplerFeedback = 1,
 };
 
-class FD3D12UnorderedAccessViewBase : public FRHIUnorderedAccessView
-{
-protected:
-    FD3D12UnorderedAccessViewBase(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc)
-        : FRHIUnorderedAccessView(InResource, InDesc)
-    {
-    }
-
-    virtual ~FD3D12UnorderedAccessViewBase() = default;
-
-public:
-    virtual class FD3D12UnorderedAccessViewRHI* GetUnorderedAccessViewInterface() const = 0;
-};
-
-class FD3D12UnorderedAccessViewRHI : public FD3D12UnorderedAccessViewBase, public FD3D12View
+class FD3D12UnorderedAccessViewRHI : public FRHIUnorderedAccessView, public FD3D12View
 {
 public:
     FD3D12UnorderedAccessViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InRHIDesc);
@@ -190,12 +159,10 @@ public:
     virtual void* GetRHINativeHandle() const override final;
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
 
-    // FD3D12UnorderedAccessViewBase Interface
-    virtual FD3D12UnorderedAccessViewRHI* GetUnorderedAccessViewInterface() const override;
-
     // ID3D12ResourceRelocationListener Interface
     virtual void OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
 
+    void InitializeExternal(const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
     bool Initialize(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
     bool UpdateView(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
 
@@ -231,21 +198,7 @@ private:
     ED3D12UnorderedAccessViewType    ViewType;
 };
 
-class FD3D12RenderTargetViewBase : public FRHIRenderTargetView
-{
-protected:
-    FD3D12RenderTargetViewBase(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc)
-        : FRHIRenderTargetView(InResource, InDesc)
-    {
-    }
-
-    virtual ~FD3D12RenderTargetViewBase() = default;
-
-public:
-    virtual FD3D12RenderTargetViewRHI* GetRenderTargetViewInterface() const = 0;
-};
-
-class FD3D12RenderTargetViewRHI : public FD3D12RenderTargetViewBase, public FD3D12View
+class FD3D12RenderTargetViewRHI : public FRHIRenderTargetView, public FD3D12View
 {
 public:
     FD3D12RenderTargetViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource, const FRHIRenderTargetViewDesc& InRHIDesc);
@@ -254,12 +207,10 @@ public:
     // FRHIRenderTargetView Interface
     virtual void* GetRHINativeHandle() const override final;
 
-    // FD3D12RenderTargetViewBase Interface
-    virtual FD3D12RenderTargetViewRHI* GetRenderTargetViewInterface() const override;
-
     // ID3D12ResourceRelocationListener Interface
     virtual void OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
 
+    void InitializeExternal(const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
     bool Initialize(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
     bool UpdateView(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
 
@@ -284,6 +235,7 @@ public:
     // ID3D12ResourceRelocationListener Interface
     virtual void OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
 
+    void InitializeExternal(const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
     bool Initialize(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
     bool UpdateView(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
 

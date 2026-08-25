@@ -744,6 +744,13 @@ FRHISwapChain* FRHIValidationDevice::CreateSwapChain(const FRHISwapChainDesc& In
         return nullptr;
     }
 
+    if (InSwapChainDesc.Usage == ESwapChainUsageFlags::ShaderResource)
+    {
+        RHI_VALIDATION_ERROR("CreateSwapChain: ESwapChainUsageFlags::ShaderResource cannot be the only usage, since no "
+            "backend can present an image it is only able to sample. Combine it with RenderTarget or UnorderedAccess.");
+        return nullptr;
+    }
+
     FRHISwapChain* SwapChain = TrackLiveResource(Device->CreateSwapChain(InSwapChainDesc));
     if (!SwapChain)
     {

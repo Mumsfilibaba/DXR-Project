@@ -650,7 +650,10 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolve
 
 void FD3D12CommandContext::SplitCommandList(bool bFlushAllocator, bool bWaitForQueue)
 {
-    FinishCommandList(bFlushAllocator, false);
+    if (CommandList)
+    {
+        FinishCommandList(bFlushAllocator, false);
+    }
 
     if (bWaitForQueue)
     {
@@ -663,7 +666,10 @@ void FD3D12CommandContext::SplitCommandList(bool bFlushAllocator, bool bWaitForQ
 
 void FD3D12CommandContext::SplitCommandListAndResetState(bool bFlushAllocator, bool bWaitForQueue)
 {
-    FinishCommandList(bFlushAllocator, false);
+    if (CommandList)
+    {
+        FinishCommandList(bFlushAllocator, false);
+    }
 
     if (bWaitForQueue)
     {

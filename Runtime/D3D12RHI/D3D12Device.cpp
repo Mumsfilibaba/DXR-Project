@@ -1566,6 +1566,11 @@ bool FD3D12Device::SupportsSwapChainFormat(DXGI_FORMAT DXGIFormat, ESwapChainUsa
         RequiredSupport1 |= D3D12_FORMAT_SUPPORT1_TYPED_UNORDERED_ACCESS_VIEW;
     }
 
+    if (IsEnumFlagSet(Usage, ESwapChainUsageFlags::ShaderResource))
+    {
+        RequiredSupport1 |= D3D12_FORMAT_SUPPORT1_SHADER_SAMPLE;
+    }
+
     return (FormatSupport.Support1 & RequiredSupport1) == RequiredSupport1;
 }
 
