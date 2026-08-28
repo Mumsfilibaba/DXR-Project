@@ -8,11 +8,24 @@
 #include "ApplicationRendererTests.h"
 #include "ConsoleCommandLineTests.h"
 #include "ConsoleTests.h"
+#include "ControlTests.h"
+#include "DockingTests.h"
 #include "EditableTextTests.h"
 #include "FontTests.h"
+#include "GizmoTests.h"
+#include "GraphTests.h"
+#include "ImageDrawTests.h"
+#include "InteractionTests.h"
 #include "LayoutTests.h"
+#include "MenuTests.h"
+#include "OutputLogTests.h"
 #include "DrawTests.h"
+#include "StyleTests.h"
+#include "TextLayoutTests.h"
+#include "ToolBarTests.h"
 #include "UIDrawDataTests.h"
+#include "VectorDrawTests.h"
+#include "WindowTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -56,6 +69,92 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("UIDrawDataRoundedBox", UIDrawDataRoundedBox_Test());
     RUN_TEST("UIDrawDataText", UIDrawDataText_Test());
     RUN_TEST("UIDrawDataClipCulling", UIDrawDataClipCulling_Test());
+
+    RUN_TEST("CornerRadiiTypes", CornerRadiiTypes_Test());
+    RUN_TEST("VectorDrawCommands", VectorDrawCommands_Test());
+    RUN_TEST("VectorDrawPolyline", VectorDrawPolyline_Test());
+    RUN_TEST("VectorDrawConvexPolygon", VectorDrawConvexPolygon_Test());
+    RUN_TEST("VectorDrawCircles", VectorDrawCircles_Test());
+    RUN_TEST("VectorDrawBezier", VectorDrawBezier_Test());
+    RUN_TEST("VectorDrawPerCornerRounding", VectorDrawPerCornerRounding_Test());
+    RUN_TEST("VectorDrawBoxOutline", VectorDrawBoxOutline_Test());
+    RUN_TEST("VectorDrawClipCulling", VectorDrawClipCulling_Test());
+
+    RUN_TEST("ImageBrush", ImageBrush_Test());
+    RUN_TEST("ImageDrawQuad", ImageDrawQuad_Test());
+    RUN_TEST("ImageNineSlice", ImageNineSlice_Test());
+    RUN_TEST("ImageBatching", ImageBatching_Test());
+
+    RUN_TEST("StyleDefaults", StyleDefaults_Test());
+    RUN_TEST("StyleControlColor", StyleControlColor_Test());
+    RUN_TEST("StyleOverride", StyleOverride_Test());
+
+    RUN_TEST("TextLayoutBasics", TextLayoutBasics_Test());
+    RUN_TEST("TextLayoutNewlines", TextLayoutNewlines_Test());
+    RUN_TEST("TextLayoutWrapping", TextLayoutWrapping_Test());
+    RUN_TEST("TextLayoutHitTesting", TextLayoutHitTesting_Test());
+    RUN_TEST("TextLayoutDraw", TextLayoutDraw_Test());
+
+    RUN_TEST("InteractionState", InteractionState_Test());
+    RUN_TEST("InteractionClick", InteractionClick_Test());
+    RUN_TEST("InteractionCapture", InteractionCapture_Test());
+    RUN_TEST("InteractionKeyboard", InteractionKeyboard_Test());
+
+    RUN_TEST("ButtonControl", ButtonControl_Test());
+    RUN_TEST("CheckBoxControl", CheckBoxControl_Test());
+    RUN_TEST("SliderControl", SliderControl_Test());
+    RUN_TEST("SpinBoxControl", SpinBoxControl_Test());
+    RUN_TEST("ScrollBarControl", ScrollBarControl_Test());
+    RUN_TEST("ScrollBoxScrollBar", ScrollBoxScrollBar_Test());
+    RUN_TEST("OverlayControl", OverlayControl_Test());
+    RUN_TEST("SpacerSeparatorControl", SpacerSeparatorControl_Test());
+
+    RUN_TEST("MenuStackPlacement", MenuStackPlacement_Test());
+    RUN_TEST("MenuStackDepth", MenuStackDepth_Test());
+    RUN_TEST("MenuItemLayout", MenuItemLayout_Test());
+    RUN_TEST("MenuItemActivation", MenuItemActivation_Test());
+    RUN_TEST("MenuKeyboard", MenuKeyboard_Test());
+    RUN_TEST("MenuBarSwitching", MenuBarSwitching_Test());
+    RUN_TEST("ToolTipService", ToolTipService_Test());
+    RUN_TEST("ComboBoxControl", ComboBoxControl_Test());
+
+    RUN_TEST("TitleBarMetrics", TitleBarMetrics_Test());
+    RUN_TEST("TitleBarRegions", TitleBarRegions_Test());
+    RUN_TEST("CaptionButtons", CaptionButtons_Test());
+    RUN_TEST("FloatingWindow", FloatingWindow_Test());
+
+    RUN_TEST("DockNodeMinimumSize", DockNodeMinimumSize_Test());
+    RUN_TEST("DockNodeCollapse", DockNodeCollapse_Test());
+    RUN_TEST("SplitterLayout", SplitterLayout_Test());
+    RUN_TEST("SplitterDrag", SplitterDrag_Test());
+    RUN_TEST("SplitterSeededDesc", SplitterSeededDesc_Test());
+    RUN_TEST("TabStripReorder", TabStripReorder_Test());
+    RUN_TEST("TabStripTearOut", TabStripTearOut_Test());
+    RUN_TEST("DockingAreaDockUndock", DockingAreaDockUndock_Test());
+    RUN_TEST("DockingAreaHitTest", DockingAreaHitTest_Test());
+    RUN_TEST("DockingAreaPersistence", DockingAreaPersistence_Test());
+    RUN_TEST("DockDragState", DockDragState_Test());
+
+    RUN_TEST("RichTextLayout", RichTextLayout_Test());
+    RUN_TEST("RichTextSelection", RichTextSelection_Test());
+    RUN_TEST("RichTextSearch", RichTextSearch_Test());
+    RUN_TEST("LogViewLogging", LogViewLogging_Test());
+    RUN_TEST("LogViewFiltering", LogViewFiltering_Test());
+    RUN_TEST("LogViewAutoScroll", LogViewAutoScroll_Test());
+
+    RUN_TEST("ToolBarComposition", ToolBarComposition_Test());
+    RUN_TEST("ToolBarInteraction", ToolBarInteraction_Test());
+    RUN_TEST("ToolBarDropDown", ToolBarDropDown_Test());
+
+    RUN_TEST("GraphModelEditing", GraphModelEditing_Test());
+    RUN_TEST("GraphLayoutLayered", GraphLayoutLayered_Test());
+    RUN_TEST("GraphCanvasView", GraphCanvasView_Test());
+    RUN_TEST("GraphCanvasInteraction", GraphCanvasInteraction_Test());
+
+    RUN_TEST("GizmoProjection", GizmoProjection_Test());
+    RUN_TEST("GizmoHitTest", GizmoHitTest_Test());
+    RUN_TEST("GizmoDrag", GizmoDrag_Test());
+    RUN_TEST("GizmoModes", GizmoModes_Test());
 
     RUN_TEST("ApplicationRendererWindowPass", ApplicationRendererWindowPass_Test());
     RUN_TEST("ApplicationRendererWindowLifetime", ApplicationRendererWindowLifetime_Test());

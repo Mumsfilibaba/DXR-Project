@@ -21,7 +21,7 @@ public:
      */
     void SetContent(const TSharedPtr<FVisualElement>& InContent);
 
-    /** @brief The single child of this element, which may be null. */
+    /** @return The single child of this element, which is null when none has been set. */
     NODISCARD FORCEINLINE const TSharedPtr<FVisualElement>& GetContent() const
     {
         return Content;
@@ -34,7 +34,7 @@ public:
      */
     void SetPadding(const FMargin& InPadding);
 
-    /** @brief The space between this element's bounds and its child. */
+    /** @return The space between this element's bounds and its child, in pixels on each side. */
     NODISCARD FORCEINLINE const FMargin& GetPadding() const
     {
         return Padding;

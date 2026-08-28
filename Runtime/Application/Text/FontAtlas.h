@@ -61,7 +61,12 @@ public:
      */
     NODISCARD const FGlyph& GetGlyph(CHAR Character) const;
 
-    /** @brief The pixels, RGBA8 with white color and the coverage in alpha, as FTextureFactory expects. */
+    /**
+     * @brief Gets the rasterized pixels, in the RGBA8 layout FTextureFactory expects.
+     *
+     * @return The pixels, white with the glyph coverage in alpha, in tightly packed rows of GetWidth()
+     * texels, and only meaningful once IsValid() reports true.
+     */
     NODISCARD FORCEINLINE const uint8* GetPixels() const
     {
         return Pixels.Data();
@@ -92,19 +97,28 @@ public:
         return Descent;
     }
 
-    /** @brief Distance from the baseline up to the top of a capital, measured off the rasterized 'H'. */
+    /**
+     * @brief Gets how tall a capital is.
+     *
+     * @return The distance in pixels from the baseline up to the top of the rasterized 'H', falling back
+     * to the ascent when that glyph did not rasterize.
+     */
     NODISCARD FORCEINLINE int32 GetCapHeight() const
     {
         return CapHeight;
     }
 
-    /** @brief Bumped by every Build, so a renderer can tell that its texture went stale. */
+    /**
+     * @brief Gets the counter a renderer watches to tell that its texture went stale.
+     *
+     * @return The revision, bumped by every Build that succeeded.
+     */
     NODISCARD FORCEINLINE uint64 GetRevision() const
     {
         return Revision;
     }
 
-    /** @brief True when Build succeeded and there are pixels to upload. */
+    /** @return True when a Build succeeded and there are pixels to upload, so the atlas can be drawn from. */
     NODISCARD FORCEINLINE bool IsValid() const
     {
         return !Pixels.IsEmpty();

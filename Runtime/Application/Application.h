@@ -23,6 +23,15 @@ public:
      */
     static bool Initialize();
 
+    /**
+     * @brief Creates the singleton over a platform application the caller already made, which is what
+     * lets a headless harness drive the real input, focus and capture paths with no platform behind them.
+     *
+     * @param InPlatformApplication The platform application to route messages through.
+     * @return True if the singleton was created, otherwise false.
+     */
+    static bool Initialize(const TSharedPtr<IPlatformApplication>& InPlatformApplication);
+
     /** @brief Releases the singleton FApplication and everything Initialize allocated behind it. */
     static void Release();
 
@@ -48,21 +57,18 @@ public:
     }
 
     /**
-     * @brief Measures and arranges the element tree of a window, from the origin of its client area.
-     *
-     * The layout is client-relative because that is the space the renderer projects from. The screen
-     * position of the window stays with the platform, and the cursor is brought into this space before
-     * it is tested against an element.
+     * @brief Measures and arranges the element tree of a window, from the origin of its client area. The
+     * layout is client-relative because that is the space the renderer projects from, so the screen
+     * position of the window stays with the platform and the cursor is brought into this space before it
+     * is tested against an element.
      *
      * @param InWindow The window to lay out.
      */
     static void LayoutWindow(const TSharedPtr<FWindow>& InWindow);
 
     /**
-     * @brief The shape the leaf-most element on a path asks for.
-     *
-     * Leaf-most, so a field inside a panel wins over the panel. Static and pure, so the resolution can
-     * be checked without a platform application behind it.
+     * @brief The shape the leaf-most element on a path asks for, so a field inside a panel wins over the
+     * panel. Static and pure, so the resolution can be checked without a platform application behind it.
      *
      * @param Path The path under the cursor, ordered from the window down to the leaf.
      * @return The shape to apply, which is the arrow when nothing on the path has an opinion.
@@ -124,9 +130,8 @@ public:
 
     /**
      * @brief Records every visible window into the renderer, using the layout produced by the last Tick.
-     *
-     * Does nothing when no renderer is registered, which is how the headless tests and any run without
-     * an RHI device behave.
+     * Does nothing when no renderer is registered, which is how the headless tests and any run without an
+     * RHI device behave.
      */
     void DrawWindows();
 
@@ -137,7 +142,7 @@ public:
      */
     void SetRenderer(const TSharedPtr<IApplicationRenderer>& InRenderer);
 
-    /** @brief The renderer the windows record into, or null when none is registered. */
+    /** @return The renderer the windows record into, or null when none is registered. */
     NODISCARD FORCEINLINE TSharedPtr<IApplicationRenderer> GetRenderer() const
     {
         return Renderer;
@@ -329,10 +334,9 @@ public:
     void SetFocusElements(const FElementPath& NewFocusPath);
 
     /**
-     * @brief Hands the keyboard to the deepest element on a cursor path that wants it, if any.
-     *
-     * Focus stays where it is when the path resolves to an ancestor of whatever is focused, so clicking
-     * the chrome around a focused field does not take the keyboard away from it.
+     * @brief Hands the keyboard to the deepest element on a cursor path that wants it, if any. Focus stays
+     * where it is when the path resolves to an ancestor of whatever is focused, so clicking the chrome
+     * around a focused field does not take the keyboard away from it.
      *
      * @param CursorPath The path under the cursor, ordered from the window down to the element hit.
      */
@@ -374,6 +378,12 @@ public:
      * @return A shared pointer to the FWindow under the cursor, or nullptr if none.
      */
     TSharedPtr<FWindow> FindWindowUnderCursor() const;
+
+    /** @return Every window registered and not yet destroyed, menu popups and floating windows included. */
+    NODISCARD FORCEINLINE const TArray<TSharedPtr<FWindow>>& GetWindows() const
+    {
+        return Windows;
+    }
 
     /**
      * @brief Retrieves a path of elements currently under the mouse cursor.

@@ -35,7 +35,7 @@ bool UIDrawDataLayerOrder_Test()
     TEST_EXPECT_EQ(DrawData.GetIndices().Size(), 6);
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 1);
     TEST_EXPECT_EQ(DrawData.GetBatches()[0].IndexCount, 6);
-    TEST_EXPECT(DrawData.GetBatches()[0].Atlas == nullptr);
+    TEST_EXPECT(DrawData.GetBatches()[0].Texture.Atlas == nullptr);
 
     TEST_SECTION("The quad spans the bounds of the command");
     TEST_EXPECT(DrawData.GetVertices()[0].Position == Vector2(10.0f, 20.0f));
@@ -260,7 +260,7 @@ bool UIDrawDataRoundedBox_Test()
     TEST_EXPECT_EQ(DrawData.GetIndices().Size(), OutlineCount * 3);
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 1);
     TEST_EXPECT_EQ(DrawData.GetBatches()[0].IndexCount, OutlineCount * 3);
-    TEST_EXPECT(DrawData.GetBatches()[0].Atlas == nullptr);
+    TEST_EXPECT(DrawData.GetBatches()[0].Texture.Atlas == nullptr);
 
     TEST_SECTION("The fan turns around the middle of the bounds");
     TEST_EXPECT(DrawData.GetVertices()[0].Position == Vector2(50.0f, 10.0f));
@@ -350,7 +350,7 @@ bool UIDrawDataText_Test()
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 8);
     TEST_EXPECT_EQ(DrawData.GetIndices().Size(), 12);
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 1);
-    TEST_EXPECT(DrawData.GetBatches()[0].Atlas == Font->GetAtlas());
+    TEST_EXPECT(DrawData.GetBatches()[0].Texture.Atlas == Font->GetAtlas());
 
     TEST_SECTION("Whitespace advances the pen without adding a quad");
     FDrawCommandList SpacedList;
@@ -443,9 +443,9 @@ bool UIDrawDataText_Test()
     DrawData.BuildFromCommandList(MixedList);
 
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 3);
-    TEST_EXPECT(DrawData.GetBatches()[0].Atlas == nullptr);
-    TEST_EXPECT(DrawData.GetBatches()[1].Atlas == Font->GetAtlas());
-    TEST_EXPECT(DrawData.GetBatches()[2].Atlas == nullptr);
+    TEST_EXPECT(DrawData.GetBatches()[0].Texture.Atlas == nullptr);
+    TEST_EXPECT(DrawData.GetBatches()[1].Texture.Atlas == Font->GetAtlas());
+    TEST_EXPECT(DrawData.GetBatches()[2].Texture.Atlas == nullptr);
 
     TEST_END();
 }

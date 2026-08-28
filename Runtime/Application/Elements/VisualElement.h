@@ -46,6 +46,15 @@ public:
     virtual bool IsWindow() const;
 
     /**
+     * @brief Whether the element answers mouse input rather than only drawing.
+     *
+     * A title bar asks this of its descendants to work out which parts of the caption stay clickable
+     * instead of dragging the window.
+     * @return True if the element is an FInteractiveElement, false otherwise.
+     */
+    virtual bool IsInteractive() const;
+
+    /**
      * @brief Whether this element takes every mouse event in its window while it is up.
      *
      * @return True while the element is modal over its window.
@@ -226,9 +235,11 @@ public:
      * @brief Recomputes and caches the desired size of this element and every descendant. Run this before
      * Tick, because a container sizes its slots from the cached child sizes.
      *
+     * An element whose children are sized from something outside the tree overrides this to read that
+     * something first, since by the time ComputeDesiredSize runs the children have already been measured.
      * @return The desired size of this element.
      */
-    IntVector2 PrepareDesiredSize();
+    virtual IntVector2 PrepareDesiredSize();
 
     /**
      * @brief The size cached by the last PrepareDesiredSize call.

@@ -170,19 +170,28 @@ public:
         return Key;
     }
 
-    /** @brief The position in screen space, which is the space the platform delivers the event in. */
+    /** @return Where the cursor was, in the screen space the platform delivers the event in. */
     NODISCARD const IntVector2& GetScreenPosition() const
     {
         return ScreenPosition;
     }
 
-    /** @brief The position in the space the elements were arranged in, which is the client area of the window under the cursor. */
+    /**
+     * @brief Gets where the cursor was, in the space the elements were arranged in.
+     *
+     * @return The screen position less the origin of the client area of the window under the cursor.
+     */
     NODISCARD IntVector2 GetClientPosition() const
     {
         return ScreenPosition - ClientOrigin;
     }
 
-    /** @brief The raw delta a high-precision event carries, which is a movement rather than a position. */
+    /**
+     * @brief Gets the raw delta a high-precision event carries, which is a movement rather than a
+     * position. Only a HighPrecisionMouse event holds one, so asking any other kind fails a check.
+     *
+     * @return The movement the device reported, which is a relative delta and not a screen coordinate.
+     */
     NODISCARD const IntVector2& GetHighPrecisionDelta() const
     {
         CHECK(GetEventType() == EInputEventType::HighPrecisionMouse);

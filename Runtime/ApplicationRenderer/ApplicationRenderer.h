@@ -15,6 +15,7 @@ struct FWindowDrawState
         : Window()
         , Commands()
         , DrawData()
+        , SwapChain(nullptr)
         , VertexBuffer(nullptr)
         , IndexBuffer(nullptr)
         , VertexCapacity(0)
@@ -23,12 +24,13 @@ struct FWindowDrawState
     }
 
     TWeakPtr<FWindow> Window;
-    FDrawCommandList         Commands;
-    FUIDrawData              DrawData;
-    FRHIBufferRef            VertexBuffer;
-    FRHIBufferRef            IndexBuffer;
-    int32                    VertexCapacity;
-    int32                    IndexCapacity;
+    FDrawCommandList  Commands;
+    FUIDrawData       DrawData;
+    FRHISwapChain*    SwapChain;
+    FRHIBufferRef     VertexBuffer;
+    FRHIBufferRef     IndexBuffer;
+    int32             VertexCapacity;
+    int32             IndexCapacity;
 };
 
 class APPLICATIONRENDERER_API FApplicationRenderer final : public IApplicationRenderer
@@ -60,14 +62,39 @@ public:
      */
     void Render(FRHICommandList& CommandList, FRHISwapChain* SwapChain);
 
+    /**
+     * @brief Binds a window to the swap chain its contents are presented through.
+     *
+     * @param InWindow  The window to bind.
+     * @param SwapChain The swap chain, or null to unbind.
+     */
+    void RegisterWindowSwapChain(const TSharedPtr<FWindow>& InWindow, FRHISwapChain* SwapChain);
+
+    /**
+     * @brief Records one window into its own registered swap chain, acquiring its back buffer first. A
+     * window lays itself out from its own top left corner, so its geometry only lands where the user sees
+     * it when it is composited onto the surface belonging to it rather than onto another window's, and the
+     * back buffer is acquired and left in the render target state whether or not there is anything to
+     * draw, so the caller can transition it to Present and present unconditionally.
+     *
+     * @param CommandList The list to record into.
+     * @param InWindow    The window to record.
+     * @param LoadAction  Clear for a window the UI owns outright, Load to composite over a rendered scene.
+     */
+    void RenderWindowToSwapChain(FRHICommandList& CommandList, const TSharedPtr<FWindow>& InWindow, EAttachmentLoadAction LoadAction);
+
 private:
+    FWindowDrawState*       FindWindowState(const TSharedPtr<FWindow>& InWindow);
     FWindowDrawState*       FindOrAddWindowState(const TSharedPtr<FWindow>& InWindow);
     bool                    PreparePipelineState(EFormat OutputFormat);
     bool                    PrepareGeometry(FRHICommandList& CommandList, FWindowDrawState& WindowState);
     FRHIShaderResourceView* PrepareAtlasTexture(FRHICommandList& CommandList, const FFontAtlas* Atlas);
+    FRHIShaderResourceView* PrepareBrushTexture(FRHICommandList& CommandList, FRHITexture* Texture);
+    void                    PrepareBatchTextures(FRHICommandList& CommandList, const FUIDrawData& DrawData);
     void                    RenderWindow(FRHICommandList& CommandList, const FWindowDrawState& WindowState);
     FRHIShaderResourceView* GetWhiteShaderResourceView() const;
     FRHIShaderResourceView* GetAtlasShaderResourceView(const FFontAtlas* Atlas) const;
+    FRHIShaderResourceView* GetBatchShaderResourceView(const FUITextureHandle& Texture) const;
 
     TArray<FWindowDrawState>     WindowStates;
     FRHIVertexShaderRef          VShader;

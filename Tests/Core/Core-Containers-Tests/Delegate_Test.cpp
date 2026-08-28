@@ -10,84 +10,81 @@
 #include <Core/Delegates/Event.h>
 #include <Core/Containers/String.h>
 
-namespace
+static int32 AddOne(int32 Num)
 {
-    static int32 AddOne(int32 Num)
-    {
-        return Num + 1;
-    }
-
-    static int32 AddPayload(int32 Num, int32 Payload)
-    {
-        return Num + Payload;
-    }
-
-    static int32 GVoidCounter = 0;
-    static void VoidStatic(int32)
-    {
-        ++GVoidCounter;
-    }
-
-    static int32 GTupleSum = 0;
-    static void TupleFunc(int32 N0, int32 N1, int32 N2, int32 N3)
-    {
-        GTupleSum = N0 + N1 + N2 + N3;
-    }
-
-    struct FReceiver
-    {
-        int32 MemberAdd(int32 Num)
-        {
-            LastValue = Num;
-            ++CallCount;
-            return Num + 2;
-        }
-
-        int32 ConstAdd(int32 Num) const
-        {
-            ++CallCount;
-            return Num + 3;
-        }
-
-        void MemberVoid(int32 Num)
-        {
-            LastValue = Num;
-            ++CallCount;
-        }
-
-        void ConstVoid(int32) const
-        {
-            ++CallCount;
-        }
-
-        int32 LastValue = 0;
-        mutable int32 CallCount = 0;
-    };
-
-    struct FVBase
-    {
-        virtual ~FVBase() = default;
-        int32 Func(int32 Num)
-        {
-            return Num + 3;
-        }
-
-        int32 ConstFunc(int32 Num) const
-        {
-            return Num + 4;
-        }
-
-        virtual int32 VirtualFunc(int32 Num) = 0;
-    };
-
-    struct FVDerived : public FVBase
-    {
-        virtual int32 VirtualFunc(int32 Num) override final
-        {
-            return Num + 5;
-        }
-    };
+    return Num + 1;
 }
+
+static int32 AddPayload(int32 Num, int32 Payload)
+{
+    return Num + Payload;
+}
+
+static int32 GVoidCounter = 0;
+static void VoidStatic(int32)
+{
+    ++GVoidCounter;
+}
+
+static int32 GTupleSum = 0;
+static void TupleFunc(int32 N0, int32 N1, int32 N2, int32 N3)
+{
+    GTupleSum = N0 + N1 + N2 + N3;
+}
+
+struct FReceiver
+{
+    int32 MemberAdd(int32 Num)
+    {
+        LastValue = Num;
+        ++CallCount;
+        return Num + 2;
+    }
+
+    int32 ConstAdd(int32 Num) const
+    {
+        ++CallCount;
+        return Num + 3;
+    }
+
+    void MemberVoid(int32 Num)
+    {
+        LastValue = Num;
+        ++CallCount;
+    }
+
+    void ConstVoid(int32) const
+    {
+        ++CallCount;
+    }
+
+    int32 LastValue = 0;
+    mutable int32 CallCount = 0;
+};
+
+struct FVBase
+{
+    virtual ~FVBase() = default;
+    int32 Func(int32 Num)
+    {
+        return Num + 3;
+    }
+
+    int32 ConstFunc(int32 Num) const
+    {
+        return Num + 4;
+    }
+
+    virtual int32 VirtualFunc(int32 Num) = 0;
+};
+
+struct FVDerived : public FVBase
+{
+    virtual int32 VirtualFunc(int32 Num) override final
+    {
+        return Num + 5;
+    }
+};
 
 DECLARE_EVENT(FSomeEvent, FEventDispatcher, int32);
 

@@ -26,9 +26,8 @@ struct FBoxSlot
     }
 
     /**
-     * @brief Sets the share of the leftover space this slot takes.
-     *
-     * A coefficient of zero sizes the slot to the child's desired size instead.
+     * @brief Sets the share of the leftover space this slot takes. A coefficient of zero sizes the slot to
+     * the child's desired size instead.
      *
      * @param InFillCoefficient The share, relative to the other filling slots.
      * @return This slot, so the setters can be chained.
@@ -63,7 +62,11 @@ struct FBoxSlot
         return *this;
     }
 
-    /** @brief True when this slot takes a share of the leftover space. */
+    /**
+     * @brief Gets whether the slot takes a share of the leftover space rather than its child's size.
+     *
+     * @return True when the fill coefficient is above zero.
+     */
     NODISCARD FORCEINLINE bool IsFillSlot() const
     {
         return FillCoefficient > 0.0f;
@@ -98,7 +101,7 @@ public:
     /** @brief Drops every slot, so the box can be refilled. */
     void ClearSlots();
 
-    /** @brief The number of slots in the box. */
+    /** @return How many slots the box holds, counting those whose element is null. */
     NODISCARD FORCEINLINE int32 GetNumSlots() const
     {
         return Slots.Size();

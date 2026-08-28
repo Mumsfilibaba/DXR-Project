@@ -19,6 +19,12 @@ enum class EVerticalAlignment : uint8
     Bottom,
 };
 
+enum class EOrientation : uint8
+{
+    Horizontal,
+    Vertical,
+};
+
 struct FMargin
 {
     FMargin()
@@ -53,13 +59,13 @@ struct FMargin
     {
     }
 
-    /** @brief The space the margin takes on the horizontal axis. */
+    /** @return The left and right amounts added together, the space the margin takes horizontally. */
     NODISCARD FORCEINLINE int32 GetTotalHorizontal() const
     {
         return Left + Right;
     }
 
-    /** @brief The space the margin takes on the vertical axis. */
+    /** @return The top and bottom amounts added together, the space the margin takes vertically. */
     NODISCARD FORCEINLINE int32 GetTotalVertical() const
     {
         return Top + Bottom;
@@ -83,6 +89,78 @@ struct FMargin
 
 struct FRectangle
 {
+    /**
+     * @brief Places a child of a known size inside a rectangle. Fill on an axis hands the child the whole
+     * extent, and every other value shrinks the child to the size it asked for and moves it to the named edge,
+     * never growing it past the space available.
+     *
+     * @param Bounds              The rectangle to place the child in.
+     * @param DesiredSize         The size the child asked for.
+     * @param HorizontalAlignment How the child is placed on the horizontal axis.
+     * @param VerticalAlignment   How the child is placed on the vertical axis.
+     * @return The rectangle the child occupies.
+     */
+    NODISCARD static FORCEINLINE FRectangle AlignInBounds(
+        const FRectangle&    Bounds,
+        const IntVector2&    DesiredSize,
+        EHorizontalAlignment HorizontalAlignment,
+        EVerticalAlignment   VerticalAlignment)
+    {
+        FRectangle Result = Bounds;
+
+        switch (HorizontalAlignment)
+        {
+            case EHorizontalAlignment::Left:
+            {
+                Result.Width = Math::Min(DesiredSize.X, Bounds.Width);
+                break;
+            }
+            case EHorizontalAlignment::Center:
+            {
+                Result.Width      = Math::Min(DesiredSize.X, Bounds.Width);
+                Result.Position.X = Bounds.Position.X + ((Bounds.Width - Result.Width) / 2);
+                break;
+            }
+            case EHorizontalAlignment::Right:
+            {
+                Result.Width      = Math::Min(DesiredSize.X, Bounds.Width);
+                Result.Position.X = Bounds.GetRight() - Result.Width;
+                break;
+            }
+            default:
+            {
+                break;
+            }
+        }
+
+        switch (VerticalAlignment)
+        {
+            case EVerticalAlignment::Top:
+            {
+                Result.Height = Math::Min(DesiredSize.Y, Bounds.Height);
+                break;
+            }
+            case EVerticalAlignment::Center:
+            {
+                Result.Height     = Math::Min(DesiredSize.Y, Bounds.Height);
+                Result.Position.Y = Bounds.Position.Y + ((Bounds.Height - Result.Height) / 2);
+                break;
+            }
+            case EVerticalAlignment::Bottom:
+            {
+                Result.Height     = Math::Min(DesiredSize.Y, Bounds.Height);
+                Result.Position.Y = Bounds.GetBottom() - Result.Height;
+                break;
+            }
+            default:
+            {
+                break;
+            }
+        }
+
+        return Result;
+    }
+
     /** @brief Default constructor initializes width and height to zero. */
     FRectangle()
         : Width(0)
@@ -109,22 +187,34 @@ struct FRectangle
         return Point.X >= Position.X && Point.Y >= Position.Y && Point.X <= (Position.X + Width) && Point.Y <= (Position.Y + Height);
     }
 
-    /** @brief The coordinate one past the right edge. */
+    /** @return The coordinate one past the right edge, which is the left edge plus the width. */
     NODISCARD FORCEINLINE int32 GetRight() const
     {
         return Position.X + Width;
     }
 
-    /** @brief The coordinate one past the bottom edge. */
+    /** @return The coordinate one past the bottom edge, which is the top edge plus the height. */
     NODISCARD FORCEINLINE int32 GetBottom() const
     {
         return Position.Y + Height;
     }
 
-    /** @brief True when the rectangle covers no pixels. */
+    /** @return True when either extent is zero or negative, so the rectangle covers no pixels. */
     NODISCARD FORCEINLINE bool IsEmpty() const
     {
         return Width <= 0 || Height <= 0;
+    }
+
+    /** @return The center of the rectangle, with each half rounded down by the integer division. */
+    NODISCARD FORCEINLINE IntVector2 GetCenter() const
+    {
+        return IntVector2(Position.X + (Width / 2), Position.Y + (Height / 2));
+    }
+
+    /** @return The extent of the rectangle, the width and the height without the position. */
+    NODISCARD FORCEINLINE IntVector2 GetSize() const
+    {
+        return IntVector2(Width, Height);
     }
 
     /**

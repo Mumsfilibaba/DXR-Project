@@ -61,6 +61,25 @@ bool IniFile_Test()
         TEST_EXPECT(!Ini.GetString("Missing", "Width", Value));
     }
 
+    TEST_SECTION("A section header that appears twice reopens the section rather than replacing it");
+    {
+        FIniFile Ini = ParseIni(
+            "[Renderer]\n"
+            "Width = 1280\n"
+            "[Audio]\n"
+            "Volume = 0.5\n"
+            "[Renderer]\n"
+            "Height = 720\n");
+
+        TEST_EXPECT_EQ(Ini.Sections.Size(), 2);
+
+        String Value;
+        TEST_EXPECT(Ini.GetString("Renderer", "Width", Value));
+        TEST_EXPECT(Value == "1280");
+        TEST_EXPECT(Ini.GetString("Renderer", "Height", Value));
+        TEST_EXPECT(Value == "720");
+    }
+
     TEST_SECTION("Keys before any header land in the global section");
     {
         FIniFile Ini = ParseIni(
@@ -214,6 +233,73 @@ bool IniFile_Test()
 
         // Setting a key that was never in the file fails rather than creating it
         TEST_EXPECT(!Ini.SetString("Values", "NotPresent", String("Value")));
+    }
+
+    TEST_SECTION("The set-or-add setters author a file that starts out empty");
+    {
+        FIniFile Ini;
+
+        Ini.SetOrAddString("Layout", "Kind", String("Split"));
+        Ini.SetOrAddInt("Layout", "NumNodes", 3);
+        Ini.SetOrAddFloat("Layout", "Fraction", 0.25f);
+        Ini.SetOrAddBool("Layout", "Collapsed", true);
+
+        TEST_EXPECT_EQ(Ini.Sections.Size(), 1);
+
+        // The section carries its own name, which is what a dump writes the header from
+        FIniSection* Section = Ini.Sections.Find("Layout");
+        TEST_EXPECT(Section != nullptr);
+        TEST_EXPECT(Section->Name == "Layout");
+
+        String Value;
+        TEST_EXPECT(Ini.GetString("Layout", "Kind", Value));
+        TEST_EXPECT(Value == "Split");
+
+        int32 NumNodes = 0;
+        TEST_EXPECT(Ini.GetInt("Layout", "NumNodes", NumNodes));
+        TEST_EXPECT_EQ(NumNodes, 3);
+
+        float Fraction = 0.0f;
+        TEST_EXPECT(Ini.GetFloat("Layout", "Fraction", Fraction));
+        TEST_EXPECT_EQ(Fraction, 0.25f);
+
+        bool bCollapsed = false;
+        TEST_EXPECT(Ini.GetBool("Layout", "Collapsed", bCollapsed));
+        TEST_EXPECT_EQ(bCollapsed, true);
+    }
+
+    TEST_SECTION("A set-or-add over a parsed key changes it without adding a second one");
+    {
+        FIniFile Ini = ParseIni(
+            "[Values]\n"
+            "StringValue = Original\n");
+
+        Ini.SetOrAddString("Values", "StringValue", String("Changed"));
+
+        TEST_EXPECT_EQ(Ini.Sections.Size(), 1);
+        TEST_EXPECT_EQ(Ini.Sections.Find("Values")->Values.Size(), 1);
+
+        String Value;
+        TEST_EXPECT(Ini.GetString("Values", "StringValue", Value));
+        TEST_EXPECT(Value == "Changed");
+
+        // The value read from disk is left alone, so a restore still reaches it
+        Ini.Sections.Find("Values")->Restore();
+        TEST_EXPECT(Ini.GetString("Values", "StringValue", Value));
+        TEST_EXPECT(Value == "Original");
+    }
+
+    TEST_SECTION("An authored file parses back from its own dump");
+    {
+        FIniFile Ini;
+        Ini.SetOrAddInt("Layout", "Version", 1);
+        Ini.SetOrAddString("Node0", "Kind", String("Tabs"));
+
+        String Dumped;
+        Ini.DumpToString(Dumped);
+
+        FIniFile Reparsed = ParseIni(*Dumped);
+        TEST_EXPECT(Reparsed.Sections == Ini.Sections);
     }
 
     TEST_SECTION("Restore and SaveCurrent");

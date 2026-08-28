@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Math/Color.h"
+#include "Application/Draw/DrawTypes.h"
 #include "Application/Elements/CompoundElement.h"
 
 class APPLICATION_API FBorder final : public FCompoundElement
@@ -9,8 +10,10 @@ public:
     {
         FDesc()
             : BackgroundColor(0.0f, 0.0f, 0.0f, 0.0f)
+            , BorderColor(0.0f, 0.0f, 0.0f, 0.0f)
             , Padding()
             , CornerRadius(0.0f)
+            , BorderThickness(0.0f)
             , MinHeight(0)
             , Cursor(ECursor::None)
             , bHasCursor(false)
@@ -32,11 +35,13 @@ public:
         }
 
         FFloatColor                BackgroundColor;
+        FFloatColor                BorderColor;
         FMargin                    Padding;
-        float                      CornerRadius;
+        FCornerRadii               CornerRadius;
+        float                      BorderThickness;
         int32                      MinHeight;
         ECursor                    Cursor;
-        bool                       bHasCursor;
+        bool                       bHasCursor : 1;
         TSharedPtr<FVisualElement> Content;
     };
 
@@ -66,10 +71,23 @@ public:
      */
     void SetBackgroundColor(const FFloatColor& InBackgroundColor);
 
-    /** @brief The fill drawn behind the child. */
+    /** @return The fill color drawn behind the child, whose zero alpha means nothing is drawn. */
     NODISCARD FORCEINLINE const FFloatColor& GetBackgroundColor() const
     {
         return BackgroundColor;
+    }
+
+    /**
+     * @brief Sets the stroke drawn inward from the edge, which needs a thickness to show.
+     *
+     * @param InBorderColor The stroke color. A zero alpha draws nothing.
+     */
+    void SetBorderColor(const FFloatColor& InBorderColor);
+
+    /** @return The stroke color drawn inward from the edge, whose zero alpha means nothing is drawn. */
+    NODISCARD FORCEINLINE const FFloatColor& GetBorderColor() const
+    {
+        return BorderColor;
     }
 
     /**
@@ -77,12 +95,25 @@ public:
      *
      * @param InCornerRadius The radius in pixels, clamped when drawn to half the shorter side.
      */
-    void SetCornerRadius(float InCornerRadius);
+    void SetCornerRadius(const FCornerRadii& InCornerRadius);
 
-    /** @brief How far the fill is rounded at each corner, in pixels. */
-    NODISCARD FORCEINLINE float GetCornerRadius() const
+    /** @return The corner radii of the fill in pixels, clamped when drawn to half the shorter side. */
+    NODISCARD FORCEINLINE const FCornerRadii& GetCornerRadius() const
     {
         return CornerRadius;
+    }
+
+    /**
+     * @brief Sets how wide the stroke is.
+     *
+     * @param InBorderThickness The width in pixels. Zero draws no stroke.
+     */
+    void SetBorderThickness(float InBorderThickness);
+
+    /** @return The width of the stroke in pixels, where zero draws no stroke. */
+    NODISCARD FORCEINLINE float GetBorderThickness() const
+    {
+        return BorderThickness;
     }
 
     /**
@@ -92,7 +123,7 @@ public:
      */
     void SetMinHeight(int32 InMinHeight);
 
-    /** @brief The least height the border is measured at, in pixels. */
+    /** @return The least height in pixels the border measures at, zero leaving it as tall as its content. */
     NODISCARD FORCEINLINE int32 GetMinHeight() const
     {
         return MinHeight;
@@ -109,9 +140,11 @@ public:
     void ClearCursor();
 
 private:
-    FFloatColor BackgroundColor;
-    float       CornerRadius;
-    int32       MinHeight;
-    ECursor     Cursor;
-    bool        bHasCursor;
+    FFloatColor  BackgroundColor;
+    FFloatColor  BorderColor;
+    FCornerRadii CornerRadius;
+    float        BorderThickness;
+    int32        MinHeight;
+    ECursor      Cursor;
+    bool         bHasCursor;
 };

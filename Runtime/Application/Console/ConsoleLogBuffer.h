@@ -26,6 +26,7 @@ struct FConsoleLogLine
 class APPLICATION_API FConsoleLogBuffer final : public IOutputDevice
 {
 public:
+
     /** @brief Matches the limit the ImGui console used. */
     static constexpr int32 DefaultMaxLines = 100;
 
@@ -39,8 +40,6 @@ public:
 
 public:
     explicit FConsoleLogBuffer(int32 InMaxLines = DefaultMaxLines);
-
-    /** @brief Unregisters from the logger, so a destroyed buffer is never left registered. */
     virtual ~FConsoleLogBuffer();
 
     // IOutputDevice Interface
@@ -63,10 +62,10 @@ public:
      */
     void GetSnapshot(TArray<FConsoleLogLine>& OutLines) const;
 
-    /** @brief The number of lines currently held. */
+    /** @return How many lines are currently held, which is never more than the cap. */
     NODISCARD int32 GetNumLines() const;
 
-    /** @brief The number of lines the buffer keeps before dropping the oldest. */
+    /** @return The line cap, which is how many lines the buffer keeps before dropping the oldest. */
     NODISCARD FORCEINLINE int32 GetMaxLines() const
     {
         return MaxLines;
@@ -79,7 +78,12 @@ public:
      */
     void SetMaxLines(int32 InMaxLines);
 
-    /** @brief Bumped on every add and every clear, so the view can skip a rebuild when nothing changed. */
+    /**
+     * @brief Gets the counter the view watches to tell that the lines changed, so it can skip a rebuild
+     * when nothing did.
+     *
+     * @return The revision, bumped by every line added and every clear.
+     */
     NODISCARD uint64 GetRevision() const;
 
 private:

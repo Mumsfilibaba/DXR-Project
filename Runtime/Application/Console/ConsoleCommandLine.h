@@ -12,7 +12,7 @@ struct FConsoleWordRange
     {
     }
 
-    /** @brief True when the range covers no characters. */
+    /** @return True when the length is zero or less, so the range covers no characters. */
     NODISCARD FORCEINLINE bool IsEmpty() const
     {
         return Length <= 0;
@@ -58,7 +58,7 @@ public:
      */
     void SetText(const String& InText);
 
-    /** @brief The line as it currently reads. */
+    /** @return The line as it currently reads. */
     NODISCARD FORCEINLINE const String& GetText() const
     {
         return Text;
@@ -71,13 +71,18 @@ public:
      */
     void SetTextCursorPosition(int32 InTextCursorPosition);
 
-    /** @brief The text cursor index, in [0, Length]. */
+    /** @return Where the text cursor sits, as an index in [0, Length]. */
     NODISCARD FORCEINLINE int32 GetTextCursorPosition() const
     {
         return TextCursorPosition;
     }
 
-    /** @brief Finds the word the text cursor sits at the end of, scanning back to a separator. */
+    /**
+     * @brief Finds the word the text cursor sits at the end of, scanning back to a separator.
+     *
+     * @return The range ending at the text cursor, which is empty when the text cursor follows a
+     * separator or sits at the start of the line.
+     */
     NODISCARD FConsoleWordRange FindWordRangeAtTextCursor() const;
 
     /**
@@ -89,19 +94,24 @@ public:
     /** @brief Drops the candidate list and the selection. */
     void InvalidateCandidates();
 
-    /** @brief The console objects whose names start with the word at the text cursor. */
+    /**
+     * @brief Gets the candidates the last refresh found.
+     *
+     * @return The console objects whose names start with the word at the text cursor, ignoring case,
+     * each paired with its name, and empty when nothing matched.
+     */
     NODISCARD FORCEINLINE const TArray<TPair<IConsoleObject*, String>>& GetCandidates() const
     {
         return Candidates;
     }
 
-    /** @brief The index of the selected candidate, or InvalidIndex when none is selected. */
+    /** @return The candidate the arrow keys picked, as an index, or InvalidIndex when none is selected. */
     NODISCARD FORCEINLINE int32 GetSelectedCandidateIndex() const
     {
         return SelectedCandidateIndex;
     }
 
-    /** @brief True when the candidate list is not empty. */
+    /** @return True when anything matched the word at the text cursor, so the candidate list is not empty. */
     NODISCARD FORCEINLINE bool HasCandidates() const
     {
         return !Candidates.IsEmpty();
@@ -142,7 +152,7 @@ public:
     /** @brief Drops the candidate list and the history walk, as toggling the console does. */
     void Reset();
 
-    /** @brief The index into the command history being shown, or InvalidIndex when not walking. */
+    /** @return The index into the command history being shown, or InvalidIndex when not walking. */
     NODISCARD FORCEINLINE int32 GetHistoryIndex() const
     {
         return HistoryIndex;

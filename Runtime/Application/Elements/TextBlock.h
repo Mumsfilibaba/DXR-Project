@@ -9,17 +9,9 @@ class APPLICATION_API FTextBlock final : public FVisualElement
 public:
     struct FDesc
     {
-        FDesc()
-            : Text()
-            , Font(nullptr)
-            , ColorAndOpacity(FFloatColor::White)
-            , Margin()
-        {
-        }
-
         String                Text;
-        TSharedPtr<IFontFace> Font;
-        FFloatColor           ColorAndOpacity;
+        TSharedPtr<IFontFace> Font = nullptr;
+        FFloatColor           ColorAndOpacity = FFloatColor::White;
         FMargin               Margin;
     };
 
@@ -48,7 +40,7 @@ public:
      */
     void SetText(const String& InText);
 
-    /** @brief The text this element draws. */
+    /** @return The text this element draws. */
     NODISCARD FORCEINLINE const String& GetText() const
     {
         return Text;

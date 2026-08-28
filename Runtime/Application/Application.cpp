@@ -214,8 +214,6 @@ TSharedPtr<FApplication> FApplication::Application = nullptr;
 
 bool FApplication::Initialize()
 {
-    FInputMapper::Get().Initialize();
-
     TSharedPtr<IPlatformApplication> PlatformApplication = FPlatformApplication::Create();
     if (!PlatformApplication)
     {
@@ -223,8 +221,20 @@ bool FApplication::Initialize()
         return false;
     }
 
-    Application = MakeSharedPtr<FApplication>(PlatformApplication);
-    PlatformApplication->SetMessageHandler(Application);
+    return Initialize(PlatformApplication);
+}
+
+bool FApplication::Initialize(const TSharedPtr<IPlatformApplication>& InPlatformApplication)
+{
+    if (!InPlatformApplication)
+    {
+        return false;
+    }
+
+    FInputMapper::Get().Initialize();
+
+    Application = MakeSharedPtr<FApplication>(InPlatformApplication);
+    InPlatformApplication->SetMessageHandler(Application);
 
 #if APPLICATION_ENABLE_INPUT_LOGGING
     if (FInputLogger::IsEnabled())

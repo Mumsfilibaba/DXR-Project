@@ -6,86 +6,83 @@
 #include <Core/Containers/Optional.h>
 #include <Core/Memory/Memory.h>
 
-namespace
+// Non-trivial, heap-owning type to exercise Optional with real construction/copy/move/destruction.
+struct FHeavy
 {
-    // Non-trivial, heap-owning type to exercise Optional with real construction/copy/move/destruction.
-    struct FHeavy
+    enum { SizeInBytes = 256 };
+
+    FHeavy()
     {
-        enum { SizeInBytes = 256 };
+        Pointer = Memory::Malloc(SizeInBytes);
+    }
 
-        FHeavy()
-        {
-            Pointer = Memory::Malloc(SizeInBytes);
-        }
-
-        FHeavy(int32 InValue)
-            : Value(InValue)
-        {
-            Pointer = Memory::Malloc(SizeInBytes);
-            Memory::Memset(Pointer, static_cast<uint8>(Value), SizeInBytes);
-        }
-
-        FHeavy(const FHeavy& Other)
-            : Value(Other.Value)
-        {
-            Pointer = Memory::Malloc(SizeInBytes);
-            Memory::Memcpy(Pointer, Other.Pointer, SizeInBytes);
-        }
-
-        FHeavy(FHeavy&& Other)
-            : Pointer(Other.Pointer)
-            , Value(Other.Value)
-        {
-            Other.Pointer = nullptr;
-            Other.Value   = 0;
-        }
-
-        ~FHeavy()
-        {
-            Memory::Free(Pointer);
-            Pointer = nullptr;
-            Value   = 0;
-        }
-
-        FHeavy& operator=(const FHeavy& RHS)
-        {
-            Memory::Free(Pointer);
-            Pointer = Memory::Malloc(SizeInBytes);
-            Memory::Memcpy(Pointer, RHS.Pointer, SizeInBytes);
-            Value = RHS.Value;
-            return *this;
-        }
-
-        FHeavy& operator=(FHeavy&& RHS)
-        {
-            Memory::Free(Pointer);
-            Pointer     = RHS.Pointer;
-            Value       = RHS.Value;
-            RHS.Pointer = nullptr;
-            RHS.Value   = 0;
-            return *this;
-        }
-
-        bool operator==(int32 RHS) const noexcept
-        {
-            return Value == RHS;
-        }
-
-        void* Pointer = nullptr;
-        int32 Value   = 0;
-    };
-
-    // Move-only type to ensure Optional supports non-copyable payloads.
-    struct FMoveOnly
+    FHeavy(int32 InValue)
+        : Value(InValue)
     {
-        FMoveOnly() = default;
-        ~FMoveOnly() = default;
-        FMoveOnly(FMoveOnly&&) = default;
-        FMoveOnly& operator=(FMoveOnly&&) = default;
-        FMoveOnly(const FMoveOnly&) = delete;
-        FMoveOnly& operator=(const FMoveOnly&) = delete;
-    };
-}
+        Pointer = Memory::Malloc(SizeInBytes);
+        Memory::Memset(Pointer, static_cast<uint8>(Value), SizeInBytes);
+    }
+
+    FHeavy(const FHeavy& Other)
+        : Value(Other.Value)
+    {
+        Pointer = Memory::Malloc(SizeInBytes);
+        Memory::Memcpy(Pointer, Other.Pointer, SizeInBytes);
+    }
+
+    FHeavy(FHeavy&& Other)
+        : Pointer(Other.Pointer)
+        , Value(Other.Value)
+    {
+        Other.Pointer = nullptr;
+        Other.Value   = 0;
+    }
+
+    ~FHeavy()
+    {
+        Memory::Free(Pointer);
+        Pointer = nullptr;
+        Value   = 0;
+    }
+
+    FHeavy& operator=(const FHeavy& RHS)
+    {
+        Memory::Free(Pointer);
+        Pointer = Memory::Malloc(SizeInBytes);
+        Memory::Memcpy(Pointer, RHS.Pointer, SizeInBytes);
+        Value = RHS.Value;
+        return *this;
+    }
+
+    FHeavy& operator=(FHeavy&& RHS)
+    {
+        Memory::Free(Pointer);
+        Pointer     = RHS.Pointer;
+        Value       = RHS.Value;
+        RHS.Pointer = nullptr;
+        RHS.Value   = 0;
+        return *this;
+    }
+
+    bool operator==(int32 RHS) const noexcept
+    {
+        return Value == RHS;
+    }
+
+    void* Pointer = nullptr;
+    int32 Value   = 0;
+};
+
+// Move-only type to ensure Optional supports non-copyable payloads.
+struct FMoveOnly
+{
+    FMoveOnly() = default;
+    ~FMoveOnly() = default;
+    FMoveOnly(FMoveOnly&&) = default;
+    FMoveOnly& operator=(FMoveOnly&&) = default;
+    FMoveOnly(const FMoveOnly&) = delete;
+    FMoveOnly& operator=(const FMoveOnly&) = delete;
+};
 
 bool TOptional_Test()
 {

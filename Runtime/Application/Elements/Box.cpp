@@ -72,61 +72,7 @@ void FBox::ClearSlots()
 
 FRectangle FBox::ArrangeInSlot(const FRectangle& SlotBounds, const IntVector2& ChildDesiredSize, const FBoxSlot& Slot)
 {
-    const FRectangle Available = SlotBounds.Deflate(Slot.Padding);
-
-    FRectangle Result = Available;
-
-    switch (Slot.HorizontalAlignment)
-    {
-        case EHorizontalAlignment::Left:
-        {
-            Result.Width = Math::Min(ChildDesiredSize.X, Available.Width);
-            break;
-        }
-        case EHorizontalAlignment::Center:
-        {
-            Result.Width      = Math::Min(ChildDesiredSize.X, Available.Width);
-            Result.Position.X = Available.Position.X + ((Available.Width - Result.Width) / 2);
-            break;
-        }
-        case EHorizontalAlignment::Right:
-        {
-            Result.Width      = Math::Min(ChildDesiredSize.X, Available.Width);
-            Result.Position.X = Available.GetRight() - Result.Width;
-            break;
-        }
-        default:
-        {
-            break;
-        }
-    }
-
-    switch (Slot.VerticalAlignment)
-    {
-        case EVerticalAlignment::Top:
-        {
-            Result.Height = Math::Min(ChildDesiredSize.Y, Available.Height);
-            break;
-        }
-        case EVerticalAlignment::Center:
-        {
-            Result.Height     = Math::Min(ChildDesiredSize.Y, Available.Height);
-            Result.Position.Y = Available.Position.Y + ((Available.Height - Result.Height) / 2);
-            break;
-        }
-        case EVerticalAlignment::Bottom:
-        {
-            Result.Height     = Math::Min(ChildDesiredSize.Y, Available.Height);
-            Result.Position.Y = Available.GetBottom() - Result.Height;
-            break;
-        }
-        default:
-        {
-            break;
-        }
-    }
-
-    return Result;
+    return FRectangle::AlignInBounds(SlotBounds.Deflate(Slot.Padding), ChildDesiredSize, Slot.HorizontalAlignment, Slot.VerticalAlignment);
 }
 
 int32 FBox::CountFillSlots() const
@@ -214,7 +160,6 @@ void FVerticalBox::OnArrange(const FRectangle& AllottedBounds)
         {
             FillSlotsSeen++;
 
-            // The last filling slot absorbs the rounding remainder so the slots always add up
             if (FillSlotsSeen == NumFillSlots)
             {
                 SlotHeight = RemainingHeight - DistributedFill;
@@ -314,7 +259,6 @@ void FHorizontalBox::OnArrange(const FRectangle& AllottedBounds)
         {
             FillSlotsSeen++;
 
-            // The last filling slot absorbs the rounding remainder so the slots always add up
             if (FillSlotsSeen == NumFillSlots)
             {
                 SlotWidth = RemainingWidth - DistributedFill;

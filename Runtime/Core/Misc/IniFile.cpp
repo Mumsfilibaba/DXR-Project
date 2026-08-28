@@ -29,7 +29,6 @@ static bool ReadIniFile(const String& Filename, TArray<CHAR>& OutText)
     return File::ReadTextFile(FileHandle.Get(), OutText);
 }
 
-// Returns the path when 'Line' is an include directive, and nullptr when it is anything else
 static CHAR* ParseIncludeDirective(CHAR* Line)
 {
     constexpr SIZE_T DirectiveLength = 7; // 'include'
@@ -38,7 +37,7 @@ static CHAR* ParseIncludeDirective(CHAR* Line)
         return nullptr;
     }
 
-    // The keyword has to be a word of its own, so 'includes' is still an ordinary key
+    // The keyword has to be a word of its own, so 'includes' is still an ordinary key.
     CHAR* PathStart = Line + DirectiveLength;
     if (*PathStart != ' ' && *PathStart != '\"')
     {
@@ -47,7 +46,7 @@ static CHAR* ParseIncludeDirective(CHAR* Line)
 
     Parse::ParseWhiteSpace(&PathStart);
 
-    // A quoted path keeps its spaces, an unquoted one ends at the first space
+    // A quoted path keeps its spaces, an unquoted one ends at the first space.
     if (*PathStart == '\"')
     {
         ++PathStart;
@@ -93,7 +92,6 @@ static void ParseIniInclude(FIniFile& OutFile, const CHAR* IncludePath, FIniPars
         return;
     }
 
-    // The included file resolves its own includes against its own directory
     const String PreviousDirectory = Context.BaseDirectory;
     Context.BaseDirectory = File::GetDirectoryOf(ResolvedPath);
     Context.IncludeStack.Add(ResolvedPath);
@@ -106,7 +104,6 @@ static void ParseIniInclude(FIniFile& OutFile, const CHAR* IncludePath, FIniPars
 
 static void ParseIniText(FIniFile& OutFile, TArray<CHAR>& InText, FIniParseContext& Context)
 {
-    // Remove all carriage returns if there are any (Easier to process)
     InText.Remove('\r');
 
     FIniSection* CurrentSection = nullptr;
@@ -140,7 +137,7 @@ static void ParseIniText(FIniFile& OutFile, TArray<CHAR>& InText, FIniParseConte
                 CHAR* SectionStart = LineStart;
                 *SectionEnd = '\0';
                 
-                FIniSection& Section = OutFile.Sections.FindOrAdd(SectionStart, FIniSection(SectionStart));
+                FIniSection& Section = OutFile.FindOrAddSection(SectionStart);
                 CurrentSection = &Section;
             }
         }
@@ -163,10 +160,10 @@ static void ParseIniText(FIniFile& OutFile, TArray<CHAR>& InText, FIniParseConte
                 Parse::ParseWhiteSpace(&LineStart);
 
                 // Find the end of the value, the line is already null-terminated so the
-                // value ends at the line terminator unless something closes it earlier
+                // value ends at the line terminator unless something closes it earlier.
                 CHAR* Value = LineStart;
 
-                // Special case for string-values, these end at the closing quote and keep inner spaces
+                // Special case for string-values, these end at the closing quote and keep inner spaces.
                 if (*Value == '\"')
                 {
                     Value++;
@@ -186,7 +183,7 @@ static void ParseIniText(FIniFile& OutFile, TArray<CHAR>& InText, FIniParseConte
                 // If there are no section, use the global one
                 if (!CurrentSection)
                 {
-                    FIniSection& Section = OutFile.Sections.FindOrAdd("");
+                    FIniSection& Section = OutFile.FindOrAddSection("");
                     CurrentSection = &Section;
                 }
 
@@ -203,7 +200,7 @@ static void ParseIniText(FIniFile& OutFile, TArray<CHAR>& InText, FIniParseConte
             else if (CHAR* IncludePath = ParseIncludeDirective(LineStart))
             {
                 // The included file parses into this same file, starting at the global section,
-                // so it can neither see nor change the section this line sits in
+                // so it can neither see nor change the section this line sits in.
                 ParseIniInclude(OutFile, IncludePath, Context);
             }
         }
@@ -284,6 +281,41 @@ bool FIniFile::SetFloat(const CHAR* SectionName, const CHAR* Name, float NewValu
 bool FIniFile::SetBool(const CHAR* SectionName, const CHAR* Name, bool bNewValue)
 {
     return SetString(SectionName, Name, TTypeToString<bool>::ToString(bNewValue));
+}
+
+FIniSection& FIniFile::FindOrAddSection(const CHAR* SectionName)
+{
+    FIniSection& Section = Sections.FindOrAdd(SectionName);
+    Section.Name = SectionName;
+    return Section;
+}
+
+void FIniFile::SetOrAddString(const CHAR* SectionName, const CHAR* Name, const String& NewValue)
+{
+    FIniSection& Section = FindOrAddSection(SectionName);
+    if (FIniValue* Value = Section.Values.Find(Name))
+    {
+        Value->CurrentValue = NewValue;
+    }
+    else
+    {
+        Section.Values.Add(Name, FIniValue(NewValue));
+    }
+}
+
+void FIniFile::SetOrAddInt(const CHAR* SectionName, const CHAR* Name, int32 NewValue)
+{
+    SetOrAddString(SectionName, Name, TTypeToString<int32>::ToString(NewValue));
+}
+
+void FIniFile::SetOrAddFloat(const CHAR* SectionName, const CHAR* Name, float NewValue)
+{
+    SetOrAddString(SectionName, Name, TTypeToString<float>::ToString(NewValue));
+}
+
+void FIniFile::SetOrAddBool(const CHAR* SectionName, const CHAR* Name, bool bNewValue)
+{
+    SetOrAddString(SectionName, Name, TTypeToString<bool>::ToString(bNewValue));
 }
 
 bool FIniFile::GetString(const CHAR* SectionName, const CHAR* Name, String& OutValue)

@@ -121,7 +121,7 @@ static int32 FindVertex(const FUIDrawData& DrawData, const Vector2& Position)
 
 static int32 FindBatchDrawingVertex(const FUIDrawData& DrawData, int32 VertexIndex)
 {
-    const TArray<uint16>& Indices = DrawData.GetIndices();
+    const TArray<uint32>& Indices = DrawData.GetIndices();
 
     for (int32 BatchIndex = 0; BatchIndex < DrawData.GetBatches().Size(); ++BatchIndex)
     {
@@ -435,7 +435,7 @@ bool ConsoleCandidateHighlight_Test()
 
     if (InputFillIndex != FDrawCommandList::InvalidIndex)
     {
-        TEST_EXPECT(CommandList[InputFillIndex].CornerRadius > 0.0f);
+        TEST_EXPECT(CommandList[InputFillIndex].CornerRadius.GetLargest() > 0.0f);
         TEST_EXPECT_EQ(CommandList[InputFillIndex].Bounds.Position.X, ConsoleBounds.Position.X + GExpectedRowInset);
     }
 
@@ -608,8 +608,8 @@ bool ConsoleInputChrome_Test()
     TEST_EXPECT_EQ(ConsoleBounds.GetRight() - InputBounds.GetRight(), GExpectedRowInset);
 
     TEST_SECTION("The corners are rounded far enough to be seen, and not so far it becomes a capsule");
-    TEST_EXPECT(CommandList[InputBoxIndex].CornerRadius >= 8.0f);
-    TEST_EXPECT(CommandList[InputBoxIndex].CornerRadius <= static_cast<float>(InputBounds.Height) * 0.5f);
+    TEST_EXPECT(CommandList[InputBoxIndex].CornerRadius.GetLargest() >= 8.0f);
+    TEST_EXPECT(CommandList[InputBoxIndex].CornerRadius.GetLargest() <= static_cast<float>(InputBounds.Height) * 0.5f);
 
     TEST_SECTION("The scrolled area stops above the padding, so a log line never runs into the field");
     TEST_EXPECT(Console->GetScrollBox()->GetContentRectangle().GetBottom() <= InputBounds.Position.Y - GExpectedInputPadding);
@@ -752,7 +752,7 @@ bool ConsoleInputFieldSurvives_Test()
     const int32 CenterVertex = FindVertex(DrawData, FanCenter);
 
     TEST_SECTION("Its geometry survives the translation into triangles");
-    TEST_EXPECT(CommandList[InputBoxIndex].CornerRadius > 0.0f);
+    TEST_EXPECT(CommandList[InputBoxIndex].CornerRadius.GetLargest() > 0.0f);
     TEST_EXPECT(CenterVertex >= 0);
 
     if (CenterVertex < 0)

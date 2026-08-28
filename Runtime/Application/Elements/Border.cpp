@@ -16,7 +16,9 @@ TSharedPtr<FBorder> FBorder::Create(const FDesc& Desc)
 FBorder::FBorder()
     : FCompoundElement()
     , BackgroundColor(0.0f, 0.0f, 0.0f, 0.0f)
-    , CornerRadius(0.0f)
+    , BorderColor(0.0f, 0.0f, 0.0f, 0.0f)
+    , CornerRadius()
+    , BorderThickness(0.0f)
     , MinHeight(0)
     , Cursor(ECursor::None)
     , bHasCursor(false)
@@ -28,7 +30,9 @@ FBorder::~FBorder() = default;
 void FBorder::Initialize(const FDesc& Desc)
 {
     BackgroundColor = Desc.BackgroundColor;
+    BorderColor     = Desc.BorderColor;
     CornerRadius    = Desc.CornerRadius;
+    BorderThickness = Desc.BorderThickness;
     MinHeight       = Desc.MinHeight;
     Cursor          = Desc.Cursor;
     bHasCursor      = Desc.bHasCursor;
@@ -50,6 +54,11 @@ int32 FBorder::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& O
         OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, BackgroundColor, CornerRadius);
     }
 
+    if (BorderColor.A > 0.0f && BorderThickness > 0.0f)
+    {
+        OutCommandList.AddBoxOutline(LayerId, AllottedGeometry.Bounds, BorderColor, BorderThickness, CornerRadius);
+    }
+
     return FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId);
 }
 
@@ -58,9 +67,19 @@ void FBorder::SetBackgroundColor(const FFloatColor& InBackgroundColor)
     BackgroundColor = InBackgroundColor;
 }
 
-void FBorder::SetCornerRadius(float InCornerRadius)
+void FBorder::SetBorderColor(const FFloatColor& InBorderColor)
+{
+    BorderColor = InBorderColor;
+}
+
+void FBorder::SetCornerRadius(const FCornerRadii& InCornerRadius)
 {
     CornerRadius = InCornerRadius;
+}
+
+void FBorder::SetBorderThickness(float InBorderThickness)
+{
+    BorderThickness = InBorderThickness;
 }
 
 bool FBorder::GetCursor(ECursor& OutCursor) const

@@ -1,0 +1,372 @@
+#include "ToolBarTests.h"
+#include "StubPlatformApplication.h"
+
+#include "TestCommon/TestHarness.h"
+#include "TestCommon/TestMacros.h"
+
+#include <Core/Containers/SharedPtr.h>
+#include <Application/Draw/DrawCommandList.h>
+#include <Application/Elements/ToolBar.h>
+#include <Application/Input/Keys.h>
+#include <Application/Menus/Menu.h>
+#include <Application/Menus/MenuItem.h>
+#include <Application/Menus/MenuStack.h>
+#include <Application/Menus/ToolTipService.h>
+#include <Application/Style/UIStyle.h>
+#include <Application/Text/FixedWidthFontFace.h>
+
+/** @brief An eight by sixteen face, so every measurement in these tests is exact. */
+static TSharedPtr<IFontFace> CreateFont()
+{
+    return MakeSharedPtr<FFixedWidthFontFace>(8, 16);
+}
+
+/** @brief A brush over a texture that is never sampled, because nothing here rasterizes. */
+static FUIBrush MakeIcon()
+{
+    return FUIBrush(reinterpret_cast<FRHITexture*>(0x10));
+}
+
+/** @brief Takes the menu stack and the tool tip down while the application is still standing. */
+class FScopedToolBarTestServices
+{
+public:
+    FScopedToolBarTestServices() = default;
+
+    ~FScopedToolBarTestServices()
+    {
+        FMenuStack::Shutdown();
+        FToolTipService::Shutdown();
+    }
+
+    FScopedToolBarTestServices(const FScopedToolBarTestServices&) = delete;
+    FScopedToolBarTestServices& operator=(const FScopedToolBarTestServices&) = delete;
+};
+
+/** @brief A menu of plainly labelled rows, which is all a dropdown needs to have something to open. */
+static TSharedPtr<FMenu> CreateMenu(const TSharedPtr<IFontFace>& Font, const TArray<String>& Labels)
+{
+    TSharedPtr<FMenu> Menu = FMenu::Create();
+    for (const String& Label : Labels)
+    {
+        FMenuItem::FDesc Desc;
+        Desc.SetLabel(Label).SetFont(Font);
+
+        Menu->AddItem(FMenuItem::Create(Desc));
+    }
+
+    return Menu;
+}
+
+/** @brief Measures and arranges an element on its own, the way a window would. */
+static void LayoutElement(const TSharedPtr<FVisualElement>& Element, const FRectangle& Bounds)
+{
+    Element->PrepareDesiredSize();
+    Element->Tick(Bounds);
+}
+
+static FCursorEvent MakeMoveEvent(const IntVector2& ClientPosition)
+{
+    return FCursorEvent(EInputEventType::MouseMoved, ClientPosition, IntVector2(0, 0), FModifierKeyState());
+}
+
+static FCursorEvent MakeButtonEvent(EInputEventType Type, const IntVector2& ClientPosition)
+{
+    return FCursorEvent(Type, Keys::MouseButtonLeft, ClientPosition, IntVector2(0, 0), FModifierKeyState(), Type == EInputEventType::MouseButtonDown);
+}
+
+/** @brief Presses and releases in the middle of an element, which is one click end to end. */
+static void ClickElement(const TSharedPtr<FVisualElement>& Element)
+{
+    const IntVector2 Center = Element->GetContentRectangle().GetCenter();
+
+    Element->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, Center));
+    Element->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, Center));
+}
+
+/** @brief Counts how many commands of a type the list holds. */
+static int32 CountCommands(const FDrawCommandList& CommandList, EDrawCommandType Type)
+{
+    int32 Count = 0;
+    for (const FDrawCommand& Command : CommandList.GetCommands())
+    {
+        Count += Command.Type == Type ? 1 : 0;
+    }
+
+    return Count;
+}
+
+/** @brief Draws an element that has already been arranged. */
+static void DrawElement(const TSharedPtr<FVisualElement>& Element, FDrawCommandList& OutCommandList)
+{
+    Element->OnDraw(FDrawGeometry(Element->GetContentRectangle(), 1.0f), OutCommandList, 0);
+}
+
+bool ToolBarComposition_Test()
+{
+    TEST_BEGIN();
+
+    const TSharedPtr<IFontFace> Font = CreateFont();
+
+    FToolBar::FDesc Desc;
+    Desc.Font = Font;
+
+    TSharedPtr<FToolBar> ToolBar = FToolBar::Create(Desc);
+
+    TSharedPtr<FToolBarButton> Save = ToolBar->AddButton(FToolBarItemDesc().SetLabel("Save"), FOnClicked());
+    TSharedPtr<FToolBarButton> Undo = ToolBar->AddButton(FToolBarItemDesc().SetIcon(MakeIcon()), FOnClicked());
+    ToolBar->AddSeparator();
+    TSharedPtr<FToolBarButton> Grid = ToolBar->AddToggle(FToolBarItemDesc().SetLabel("Grid"), ECheckBoxState::Unchecked, FOnCheckStateChanged());
+    TSharedPtr<FMenuAnchor>    View = ToolBar->AddDropDown(FToolBarItemDesc().SetLabel("View"), nullptr);
+
+    TEST_SECTION("The entries are listed in the order they were added, rules included");
+    TEST_EXPECT_EQ(ToolBar->GetNumItems(), 5);
+    TEST_EXPECT(ToolBar->GetItems()[0].Type == EToolBarItemType::Button);
+    TEST_EXPECT(ToolBar->GetItems()[2].Type == EToolBarItemType::Separator);
+    TEST_EXPECT(ToolBar->GetItems()[3].Type == EToolBarItemType::Toggle);
+    TEST_EXPECT(ToolBar->GetItems()[4].Type == EToolBarItemType::DropDown);
+
+    TEST_SECTION("A rule is not an entry a caller can reach, and a dropdown is the button rather than its anchor");
+    TEST_EXPECT(ToolBar->GetButton(2) == nullptr);
+    TEST_EXPECT_EQ(ToolBar->GetButton(0), Save);
+    TEST_EXPECT_EQ(ToolBar->GetItems()[4].Element, StaticCastSharedPtr<FVisualElement>(View));
+    TEST_EXPECT_EQ(ToolBar->GetButton(4)->GetLabel(), String("View"));
+
+    TEST_SECTION("Entries can be found by the label they show");
+    TEST_EXPECT_EQ(ToolBar->FindButton("Grid"), Grid);
+    TEST_EXPECT(ToolBar->FindButton("Missing") == nullptr);
+
+    TEST_SECTION("An entry is as wide as what it shows, and as tall as a row whatever that is");
+    LayoutElement(ToolBar, FRectangle(IntVector2(0, 0), 400, 40));
+
+    // Six either side of the contents, four eight-pixel characters, and a row is taller than a line of text
+    TEST_EXPECT_EQ(Save->GetCachedDesiredSize(), IntVector2(44, 24));
+    TEST_EXPECT_EQ(Undo->GetCachedDesiredSize(), IntVector2(28, 24));
+
+    TEST_SECTION("A dropdown reserves the room its arrow is drawn in");
+    TEST_EXPECT_EQ(ToolBar->GetButton(4)->GetCachedDesiredSize(), IntVector2(56, 24));
+
+    TEST_SECTION("An entry showing both an icon and a label is as wide as the two and the gap between them");
+    TSharedPtr<FToolBar> IconAndLabel = FToolBar::Create(Desc);
+    TSharedPtr<FToolBarButton> Both   = IconAndLabel->AddButton(FToolBarItemDesc().SetIcon(MakeIcon()).SetLabel("Save"), FOnClicked());
+
+    LayoutElement(IconAndLabel, FRectangle(IntVector2(0, 0), 400, 40));
+    TEST_EXPECT_EQ(Both->GetCachedDesiredSize(), IntVector2(64, 24));
+
+    TEST_SECTION("The strip runs left to right, spaced, inside its own padding");
+    TEST_EXPECT_EQ(Save->GetContentRectangle().Position.X, 4);
+    TEST_EXPECT_EQ(Undo->GetContentRectangle().Position.X, 50);
+    TEST_EXPECT_EQ(Grid->GetContentRectangle().Position.X, 83);
+    TEST_EXPECT_EQ(ToolBar->GetButton(4)->GetContentRectangle().Position.X, 129);
+
+    TEST_SECTION("Every entry is the same height and centred, however tall the strip is");
+    TEST_EXPECT_EQ(Save->GetContentRectangle().Height, 24);
+    TEST_EXPECT_EQ(Save->GetContentRectangle().Position.Y, 8);
+    TEST_EXPECT_EQ(Grid->GetContentRectangle().Position.Y, 8);
+
+    TEST_SECTION("A rule stops short of the strip's full height, so it reads as a divider rather than a wall");
+    const FRectangle RuleBounds = ToolBar->GetItems()[2].Element->GetContentRectangle();
+    TEST_EXPECT_EQ(RuleBounds.Position.X, 80);
+    TEST_EXPECT_EQ(RuleBounds.Position.Y, 5);
+    TEST_EXPECT_EQ(RuleBounds.Height, 30);
+
+    TEST_SECTION("The strip asks for what its entries add up to, plus the gaps and its own padding");
+    TEST_EXPECT_EQ(ToolBar->GetCachedDesiredSize(), IntVector2(189, 28));
+
+    TEST_SECTION("A vertical strip stacks its entries down and gives them all one width");
+    FToolBar::FDesc VerticalDesc;
+    VerticalDesc.Font        = Font;
+    VerticalDesc.Orientation = EOrientation::Vertical;
+
+    TSharedPtr<FToolBar>       Vertical = FToolBar::Create(VerticalDesc);
+    TSharedPtr<FToolBarButton> First    = Vertical->AddButton(FToolBarItemDesc().SetLabel("One"), FOnClicked());
+    TSharedPtr<FToolBarButton> Second   = Vertical->AddButton(FToolBarItemDesc().SetLabel("Two"), FOnClicked());
+
+    LayoutElement(Vertical, FRectangle(IntVector2(0, 0), 120, 200));
+
+    TEST_EXPECT_EQ(First->GetContentRectangle().Position, IntVector2(4, 2));
+    TEST_EXPECT_EQ(Second->GetContentRectangle().Position, IntVector2(4, 28));
+    TEST_EXPECT_EQ(First->GetContentRectangle().Width, 112);
+    TEST_EXPECT_EQ(Second->GetContentRectangle().Width, 112);
+
+    TEST_SECTION("Clearing drops the entries and the anchors with them");
+    ToolBar->ClearItems();
+    TEST_EXPECT_EQ(ToolBar->GetNumItems(), 0);
+    TEST_EXPECT(ToolBar->GetAnchors().IsEmpty());
+    TEST_EXPECT(ToolBar->FindButton("Grid") == nullptr);
+
+    TEST_END();
+}
+
+bool ToolBarInteraction_Test()
+{
+    TEST_BEGIN();
+
+    FScopedStubApplication     Application;
+    FScopedToolBarTestServices MenuServices;
+
+    const TSharedPtr<IFontFace> Font = CreateFont();
+
+    int32          ClickCount   = 0;
+    int32          ChangeCount  = 0;
+    ECheckBoxState ReportedState = ECheckBoxState::Undetermined;
+
+    FToolBar::FDesc Desc;
+    Desc.Font = Font;
+
+    TSharedPtr<FToolBar> ToolBar = FToolBar::Create(Desc);
+
+    TSharedPtr<FToolBarButton> Save = ToolBar->AddButton(
+        FToolBarItemDesc().SetLabel("Save").SetToolTipText("Save the scene"),
+        FOnClicked::CreateLambda([&ClickCount]() { ClickCount++; }));
+
+    TSharedPtr<FToolBarButton> Grid = ToolBar->AddToggle(
+        FToolBarItemDesc().SetLabel("Grid"),
+        ECheckBoxState::Unchecked,
+        FOnCheckStateChanged::CreateLambda([&ChangeCount, &ReportedState](ECheckBoxState NewState)
+        {
+            ChangeCount++;
+            ReportedState = NewState;
+        }));
+
+    LayoutElement(ToolBar, FRectangle(IntVector2(0, 0), 400, 40));
+
+    TEST_SECTION("A button fires once per click and holds nothing afterwards");
+    ClickElement(Save);
+    TEST_EXPECT_EQ(ClickCount, 1);
+    TEST_EXPECT(!Save->IsHighlighted());
+
+    TEST_SECTION("A toggle latches on the first click and lets go on the second");
+    ClickElement(Grid);
+    TEST_EXPECT(Grid->IsChecked());
+    TEST_EXPECT(Grid->IsHighlighted());
+    TEST_EXPECT_EQ(ChangeCount, 1);
+    TEST_EXPECT(ReportedState == ECheckBoxState::Checked);
+
+    ClickElement(Grid);
+    TEST_EXPECT(!Grid->IsChecked());
+    TEST_EXPECT_EQ(ChangeCount, 2);
+    TEST_EXPECT(ReportedState == ECheckBoxState::Unchecked);
+
+    TEST_SECTION("A state pushed in by a host does not report back out");
+    Grid->SetCheckState(ECheckBoxState::Checked);
+    TEST_EXPECT(Grid->IsChecked());
+    TEST_EXPECT_EQ(ChangeCount, 2);
+
+    TEST_SECTION("A disabled entry ignores the click");
+    Save->SetEnabled(false);
+    ClickElement(Save);
+    TEST_EXPECT_EQ(ClickCount, 1);
+    Save->SetEnabled(true);
+
+    TEST_SECTION("An idle strip is its background and nothing else, so the icons carry it");
+    Grid->SetCheckState(ECheckBoxState::Unchecked);
+
+    // A release leaves the cursor where it was, so both entries are still hovered from the clicks above
+    Save->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+    Grid->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+
+    FDrawCommandList IdleList;
+    DrawElement(ToolBar, IdleList);
+    TEST_EXPECT_EQ(CountCommands(IdleList, EDrawCommandType::Box), 1);
+    TEST_EXPECT_EQ(CountCommands(IdleList, EDrawCommandType::Text), 2);
+
+    TEST_SECTION("Hovering lights the entry under the cursor, and latching lights it for good");
+    Save->OnMouseEntered(MakeMoveEvent(Save->GetContentRectangle().GetCenter()));
+
+    FDrawCommandList HoveredList;
+    DrawElement(ToolBar, HoveredList);
+    TEST_EXPECT_EQ(CountCommands(HoveredList, EDrawCommandType::Box), 2);
+
+    Save->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+    Grid->SetCheckState(ECheckBoxState::Checked);
+
+    FDrawCommandList CheckedList;
+    DrawElement(ToolBar, CheckedList);
+    TEST_EXPECT_EQ(CountCommands(CheckedList, EDrawCommandType::Box), 2);
+
+    TEST_SECTION("An entry with a tip asks for one when the cursor arrives and drops it when it leaves");
+    FToolTipService& ToolTips = FToolTipService::Get();
+
+    Save->OnMouseEntered(MakeMoveEvent(Save->GetContentRectangle().GetCenter()));
+    TEST_EXPECT(ToolTips.IsPending());
+    TEST_EXPECT_EQ(ToolTips.GetOwner(), StaticCastSharedPtr<FVisualElement>(Save));
+
+    Save->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+    TEST_EXPECT(!ToolTips.IsPending());
+
+    TEST_SECTION("An entry with no tip never asks for one");
+    Grid->OnMouseEntered(MakeMoveEvent(Grid->GetContentRectangle().GetCenter()));
+    TEST_EXPECT(!ToolTips.IsPending());
+    Grid->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+
+    TEST_END();
+}
+
+bool ToolBarDropDown_Test()
+{
+    TEST_BEGIN();
+
+    FScopedStubApplication     Application;
+    FScopedToolBarTestServices MenuServices;
+
+    const TSharedPtr<IFontFace> Font   = CreateFont();
+    TSharedPtr<FWindow>         Window = Application.CreateWindow(IntVector2(800, 600), IntVector2(0, 0));
+
+    FToolBar::FDesc Desc;
+    Desc.Font           = Font;
+    Desc.bHasBackground = false;
+
+    TSharedPtr<FToolBar>    ToolBar    = FToolBar::Create(Desc);
+    TSharedPtr<FMenuAnchor> ViewAnchor = ToolBar->AddDropDown(FToolBarItemDesc().SetLabel("View"), CreateMenu(Font, { "Wireframe", "Lit" }));
+    TSharedPtr<FMenuAnchor> SnapAnchor = ToolBar->AddDropDown(FToolBarItemDesc().SetLabel("Snap"), CreateMenu(Font, { "Ten", "Twenty" }));
+
+    Window->SetContent(ToolBar);
+    FApplication::LayoutWindow(Window);
+
+    TSharedPtr<FToolBarButton> ViewButton = ToolBar->GetButton(0);
+    TSharedPtr<FToolBarButton> SnapButton = ToolBar->GetButton(1);
+
+    TEST_SECTION("Nothing is open until a dropdown is clicked");
+    TEST_EXPECT(!ToolBar->IsAnyMenuOpen());
+    TEST_EXPECT(!ViewButton->IsHighlighted());
+
+    TEST_SECTION("Clicking one opens its menu directly under the entry");
+    ClickElement(ViewButton);
+    TEST_EXPECT(ViewAnchor->IsOpen());
+    TEST_EXPECT(ToolBar->IsAnyMenuOpen());
+    TEST_EXPECT_EQ(FMenuStack::Get().GetDepth(), 1);
+
+    const FRectangle ButtonBounds = ViewButton->GetContentRectangle();
+    TEST_EXPECT_EQ(ViewAnchor->GetMenuWindow()->GetPosition(), IntVector2(ButtonBounds.Position.X, ButtonBounds.GetBottom()));
+
+    TEST_SECTION("The open entry stays lit, so it is clear which menu belongs to which entry");
+    TEST_EXPECT(ViewButton->IsHighlighted());
+    TEST_EXPECT(!SnapButton->IsHighlighted());
+
+    TEST_SECTION("With one open, hovering a sibling switches to it rather than stacking a second");
+    SnapButton->OnMouseEntered(MakeMoveEvent(SnapButton->GetContentRectangle().GetCenter()));
+    TEST_EXPECT(!ViewAnchor->IsOpen());
+    TEST_EXPECT(SnapAnchor->IsOpen());
+    TEST_EXPECT_EQ(FMenuStack::Get().GetDepth(), 1);
+
+    TEST_SECTION("Clicking the open entry closes it again");
+    ClickElement(SnapButton);
+    TEST_EXPECT(!SnapAnchor->IsOpen());
+    TEST_EXPECT(!ToolBar->IsAnyMenuOpen());
+
+    TEST_SECTION("A dropdown draws an arrow, and only a dropdown does");
+    FDrawCommandList CommandList;
+    DrawElement(ToolBar, CommandList);
+    TEST_EXPECT_EQ(CountCommands(CommandList, EDrawCommandType::ConvexPolygon), 2);
+
+    TEST_SECTION("Closing the bar takes whatever it had open down with it");
+    ViewAnchor->Open();
+    TEST_EXPECT(ToolBar->IsAnyMenuOpen());
+
+    ToolBar->CloseActiveMenu();
+    TEST_EXPECT(!ToolBar->IsAnyMenuOpen());
+    TEST_EXPECT_EQ(FMenuStack::Get().GetDepth(), 0);
+
+    TEST_END();
+}

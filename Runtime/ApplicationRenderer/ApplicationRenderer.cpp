@@ -34,19 +34,25 @@ static String DescribeRectangle(const FRectangle& Rectangle)
     return String::Printf("(%d, %d, %d x %d)", Rectangle.Position.X, Rectangle.Position.Y, Rectangle.Width, Rectangle.Height);
 }
 
+static const CHAR* DescribeBatchTexture(const FUITextureHandle& Texture)
+{
+    if (Texture.Atlas)
+    {
+        return "atlas";
+    }
+
+    return Texture.Texture ? "image" : "white";
+}
+
 static void DumpWindowDrawData(const FWindow& Window, const FDrawCommandList& Commands, const FUIDrawData& DrawData)
 {
-    LOG_INFO("[FApplicationRenderer]: Draw data for '%s': %d commands (%d box, %d text, %d line, %d clip push, %d clip pop), %d vertices, %d indices, %d batches",
-        *Window.GetTitle(),
-        Commands.Size(),
-        Commands.CountCommandsOfType(EDrawCommandType::Box),
-        Commands.CountCommandsOfType(EDrawCommandType::Text),
-        Commands.CountCommandsOfType(EDrawCommandType::Line),
-        Commands.CountCommandsOfType(EDrawCommandType::ClipPush),
-        Commands.CountCommandsOfType(EDrawCommandType::ClipPop),
-        DrawData.GetVertices().Size(),
-        DrawData.GetIndices().Size(),
-        DrawData.GetBatches().Size());
+    LOG_INFO("[FApplicationRenderer]: Draw data for '%s': %d commands (%d box, %d outline, %d text, %d line, %d polyline, %d polygon, %d image, %d clip push, %d clip pop), %d vertices, %d indices, %d batches",
+        *Window.GetTitle(), Commands.Size(), Commands.CountCommandsOfType(EDrawCommandType::Box),
+        Commands.CountCommandsOfType(EDrawCommandType::BoxOutline), Commands.CountCommandsOfType(EDrawCommandType::Text),
+        Commands.CountCommandsOfType(EDrawCommandType::Line), Commands.CountCommandsOfType(EDrawCommandType::Polyline),
+        Commands.CountCommandsOfType(EDrawCommandType::ConvexPolygon), Commands.CountCommandsOfType(EDrawCommandType::Image),
+        Commands.CountCommandsOfType(EDrawCommandType::ClipPush), Commands.CountCommandsOfType(EDrawCommandType::ClipPop),
+        DrawData.GetVertices().Size(), DrawData.GetIndices().Size(), DrawData.GetBatches().Size());
 
     if (DrawData.GetVertices().Size() >= FUIDrawData::MaxVertexCount)
     {
@@ -58,11 +64,8 @@ static void DumpWindowDrawData(const FWindow& Window, const FDrawCommandList& Co
     {
         const FUIDrawBatch& Batch = Batches[Index];
         LOG_INFO("[FApplicationRenderer]:   Batch %d: %s, scissor %s, indices %d to %d",
-            Index,
-            Batch.Atlas ? "atlas" : "white",
-            Batch.bIsClipped ? *DescribeRectangle(Batch.ScissorRectangle) : "none",
-            Batch.IndexOffset,
-            Batch.IndexOffset + Batch.IndexCount);
+            Index, DescribeBatchTexture(Batch.Texture), Batch.bIsClipped ? *DescribeRectangle(Batch.ScissorRectangle) : "none",
+            Batch.IndexOffset, Batch.IndexOffset + Batch.IndexCount);
     }
 }
 
@@ -180,10 +183,9 @@ bool FApplicationRenderer::InitializeRHI()
         return false;
     }
 
-    // Boxes and glyphs share one shader, so a box samples a single white texel instead of branching
     const uint8 WhiteTexel[] = { 255, 255, 255, 255 };
-
     WhiteTexture = FTextureFactory::Get().LoadFromMemory(WhiteTexel, 1, 1, ETextureFactoryFlags::None, EFormat::R8G8B8A8_Unorm);
+
     if (!WhiteTexture)
     {
         return false;
@@ -270,6 +272,19 @@ void FApplicationRenderer::OnWindowDestroyed(const TSharedPtr<FWindow>& InWindow
             return;
         }
     }
+}
+
+FWindowDrawState* FApplicationRenderer::FindWindowState(const TSharedPtr<FWindow>& InWindow)
+{
+    for (FWindowDrawState& WindowState : WindowStates)
+    {
+        if (WindowState.Window == InWindow)
+        {
+            return &WindowState;
+        }
+    }
+
+    return nullptr;
 }
 
 FWindowDrawState* FApplicationRenderer::FindOrAddWindowState(const TSharedPtr<FWindow>& InWindow)
@@ -359,7 +374,7 @@ bool FApplicationRenderer::PrepareGeometry(FRHICommandList& CommandList, FWindow
         const int32 NewCapacity = IndexCount + GIndexGrowth;
 
         const FRHIBufferDesc IndexBufferDesc = FRHIBufferDesc::CreateIndexBuffer(
-            sizeof(uint16), static_cast<uint32>(NewCapacity), EBufferFlags::Default | EBufferFlags::CopyDest);
+            sizeof(uint32), static_cast<uint32>(NewCapacity), EBufferFlags::Default | EBufferFlags::CopyDest);
 
         FRHIBufferRef NewIndexBuffer = RHI::CreateBuffer(IndexBufferDesc, ERHIResourceState::GenericRead, nullptr);
         if (!NewIndexBuffer)
@@ -383,7 +398,7 @@ bool FApplicationRenderer::PrepareGeometry(FRHICommandList& CommandList, FWindow
     CommandList.UpdateBuffer(WindowState.VertexBuffer.Get(), 
         FBufferRegion(0, VertexCount * sizeof(FUIVertex)), DrawData.GetVertices().Data());
     CommandList.UpdateBuffer(WindowState.IndexBuffer.Get(), 
-        FBufferRegion(0, IndexCount * sizeof(uint16)), DrawData.GetIndices().Data());
+        FBufferRegion(0, IndexCount * sizeof(uint32)), DrawData.GetIndices().Data());
 
     const FRHITransitionBarrierDesc ToGenericRead[] =
     {
@@ -428,6 +443,56 @@ FRHIShaderResourceView* FApplicationRenderer::PrepareAtlasTexture(FRHICommandLis
     return AtlasTexture->GetShaderResourceView();
 }
 
+FRHIShaderResourceView* FApplicationRenderer::PrepareBrushTexture(FRHICommandList& CommandList, FRHITexture* Texture)
+{
+    if (!Texture)
+    {
+        return GetWhiteShaderResourceView();
+    }
+
+    if (Texture->GetDesc().TrackingMode != ERHIResourceStateTrackingMode::Static)
+    {
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Texture, ERHIResourceState::PixelShaderResource));
+    }
+
+    FRHIShaderResourceView* TextureView = Texture->GetShaderResourceView();
+    return TextureView ? TextureView : GetWhiteShaderResourceView();
+}
+
+void FApplicationRenderer::PrepareBatchTextures(FRHICommandList& CommandList, const FUIDrawData& DrawData)
+{
+    for (const FUIDrawBatch& Batch : DrawData.GetBatches())
+    {
+        if (Batch.Texture.Atlas)
+        {
+            PrepareAtlasTexture(CommandList, Batch.Texture.Atlas);
+        }
+        else if (Batch.Texture.Texture)
+        {
+            PrepareBrushTexture(CommandList, Batch.Texture.Texture);
+        }
+    }
+}
+
+FRHIShaderResourceView* FApplicationRenderer::GetBatchShaderResourceView(const FUITextureHandle& Texture) const
+{
+    if (Texture.Atlas)
+    {
+        return GetAtlasShaderResourceView(Texture.Atlas);
+    }
+
+    if (Texture.Texture)
+    {
+        FRHIShaderResourceView* TextureView = Texture.Texture->GetShaderResourceView();
+        if (TextureView)
+        {
+            return TextureView;
+        }
+    }
+
+    return GetWhiteShaderResourceView();
+}
+
 void FApplicationRenderer::Render(FRHICommandList& CommandList, FRHISwapChain* SwapChain)
 {
     if (!SwapChain || WindowStates.IsEmpty())
@@ -438,6 +503,11 @@ void FApplicationRenderer::Render(FRHICommandList& CommandList, FRHISwapChain* S
     TArray<FWindowDrawState*> DrawableStates;
     for (FWindowDrawState& WindowState : WindowStates)
     {
+        if (WindowState.SwapChain)
+        {
+            continue;
+        }
+
         if (WindowState.Window.IsValid() && !WindowState.DrawData.IsEmpty())
         {
             if (PrepareGeometry(CommandList, WindowState))
@@ -461,16 +531,68 @@ void FApplicationRenderer::Render(FRHICommandList& CommandList, FRHISwapChain* S
 
     for (const FWindowDrawState* WindowState : DrawableStates)
     {
-        for (const FUIDrawBatch& Batch : WindowState->DrawData.GetBatches())
-        {
-            PrepareAtlasTexture(CommandList, Batch.Atlas);
-        }
+        PrepareBatchTextures(CommandList, WindowState->DrawData);
     }
 
     FRHIBeginRenderPassDesc RenderPassDesc({ FRHIRenderTargetAttachment(BackBufferView, EAttachmentLoadAction::Load) }, 1);
     CommandList.BeginRenderPass(RenderPassDesc);
 
     for (const FWindowDrawState* WindowState : DrawableStates)
+    {
+        RenderWindow(CommandList, *WindowState);
+    }
+
+    CommandList.EndRenderPass();
+}
+
+void FApplicationRenderer::RegisterWindowSwapChain(const TSharedPtr<FWindow>& InWindow, FRHISwapChain* SwapChain)
+{
+    if (!InWindow)
+    {
+        return;
+    }
+
+    if (FWindowDrawState* WindowState = FindOrAddWindowState(InWindow))
+    {
+        WindowState->SwapChain = SwapChain;
+    }
+}
+
+void FApplicationRenderer::RenderWindowToSwapChain(FRHICommandList& CommandList, const TSharedPtr<FWindow>& InWindow, EAttachmentLoadAction LoadAction)
+{
+    if (!InWindow)
+    {
+        return;
+    }
+
+    FWindowDrawState* WindowState = FindWindowState(InWindow);
+    if (!WindowState || !WindowState->SwapChain)
+    {
+        return;
+    }
+
+    FRHISwapChain* SwapChain = WindowState->SwapChain;
+    CommandList.AcquireNextBackBuffer(SwapChain);
+
+    if (LoadAction == EAttachmentLoadAction::Clear)
+    {
+        FRHITexture* BackBuffer = SwapChain->GetBackBuffer();
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::Undefined, ERHIResourceState::RenderTarget));
+    }
+
+    const bool bHasGeometry = !WindowState->DrawData.IsEmpty()
+        && PrepareGeometry(CommandList, *WindowState)
+        && PreparePipelineState(SwapChain->GetDesc().ColorFormat);
+
+    if (bHasGeometry)
+    {
+        PrepareBatchTextures(CommandList, WindowState->DrawData);
+    }
+
+    FRHIBeginRenderPassDesc RenderPassDesc({ FRHIRenderTargetAttachment(SwapChain->GetRenderTargetView(), LoadAction) }, 1);
+    CommandList.BeginRenderPass(RenderPassDesc);
+
+    if (bHasGeometry)
     {
         RenderWindow(CommandList, *WindowState);
     }
@@ -513,7 +635,7 @@ void FApplicationRenderer::RenderWindow(FRHICommandList& CommandList, const FWin
     CommandList.SetGraphicsPipelineState(PipelineState.Get());
     CommandList.SetViewport(FViewportRegion(FramebufferW, FramebufferH, 0.0f, 0.0f, 0.0f, 1.0f));
     CommandList.SetVertexBuffers(MakeArrayView(&WindowState.VertexBuffer, 1), 0);
-    CommandList.SetIndexBuffer(WindowState.IndexBuffer.Get(), EIndexFormat::uint16);
+    CommandList.SetIndexBuffer(WindowState.IndexBuffer.Get(), EIndexFormat::uint32);
     CommandList.SetBlendFactor(Vector4{ 0.0f, 0.0f, 0.0f, 0.0f });
     CommandList.SetSamplerState(PShader.Get(), LinearSampler.Get(), 0);
     CommandList.SetShaderConstants(PShader.Get(), &Constants, 16);
@@ -548,7 +670,7 @@ void FApplicationRenderer::RenderWindow(FRHICommandList& CommandList, const FWin
             ScissorHeight = MaxY - MinY;
         }
 
-        FRHIShaderResourceView* TextureView = Batch.Atlas ? GetAtlasShaderResourceView(Batch.Atlas) : GetWhiteShaderResourceView();
+        FRHIShaderResourceView* TextureView = GetBatchShaderResourceView(Batch.Texture);
         if (!TextureView)
         {
             continue;

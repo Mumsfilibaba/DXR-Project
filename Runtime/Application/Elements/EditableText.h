@@ -24,28 +24,15 @@ class APPLICATION_API FEditableText final : public FVisualElement
 public:
     struct FDesc
     {
-        FDesc()
-            : Text()
-            , HintText()
-            , Font(nullptr)
-            , ForegroundColor(FFloatColor::White)
-            , HintColor(0.5f, 0.5f, 0.5f, 1.0f)
-            , TextCursorColor(FFloatColor::White)
-            , SelectionColor(0.26f, 0.59f, 0.98f, 0.35f)
-            , Padding(4, 2, 4, 2)
-            , TextCursorBlinkPeriod(1.2f)
-        {
-        }
-
         String                Text;
         String                HintText;
-        TSharedPtr<IFontFace> Font;
-        FFloatColor           ForegroundColor;
-        FFloatColor           HintColor;
-        FFloatColor           TextCursorColor;
-        FFloatColor           SelectionColor;
-        FMargin               Padding;
-        float                 TextCursorBlinkPeriod;
+        TSharedPtr<IFontFace> Font = nullptr;
+        FFloatColor           ForegroundColor = FFloatColor::White;
+        FFloatColor           HintColor = FFloatColor(0.5f, 0.5f, 0.5f, 1.0f);
+        FFloatColor           TextCursorColor = FFloatColor::White;
+        FFloatColor           SelectionColor = FFloatColor(0.26f, 0.59f, 0.98f, 0.35f);
+        FMargin               Padding = FMargin(4, 2, 4, 2);
+        float                 TextCursorBlinkPeriod = 1.2f;
     };
 
 public:
@@ -91,7 +78,7 @@ public:
     /** @brief Replaces the text and puts the text cursor at the end without firing OnTextChanged. */
     void SetTextSilently(const String& InText);
 
-    /** @brief The text currently being edited. */
+    /** @return The text currently being edited. */
     NODISCARD FORCEINLINE const String& GetText() const
     {
         return Text;
@@ -123,10 +110,18 @@ public:
      */
     void ReplaceRange(int32 Position, int32 Count, const StringView& InText);
 
-    /** @return True when a character was removed. */
+    /**
+     * @brief Removes the character before the text cursor and drops any selection.
+     *
+     * @return True when a character was removed, false when the text cursor is already at the start.
+     */
     bool DeleteBackward();
 
-    /** @return True when a character was removed. */
+    /**
+     * @brief Removes the character at the text cursor and drops any selection.
+     *
+     * @return True when a character was removed, false when the text cursor is already at the end.
+     */
     bool DeleteForward();
 
     /**
@@ -136,7 +131,7 @@ public:
      */
     void SetTextCursorPosition(int32 InTextCursorPosition);
 
-    /** @brief The text cursor index, in [0, Length]. */
+    /** @return Where the text cursor sits, as an index in [0, Length]. */
     NODISCARD FORCEINLINE int32 GetTextCursorPosition() const
     {
         return TextCursorPosition;
@@ -150,19 +145,44 @@ public:
      */
     void MoveTextCursorLeft(bool bExtendSelection = false);
 
-    /** @brief Moves the text cursor one character right, stopping at the end. */
+    /**
+     * @brief Moves the text cursor one character right, stopping at the end.
+     *
+     * @param bExtendSelection Keeps the selection anchor where it is, so the selection grows or shrinks.
+     * Otherwise the selection collapses onto the text cursor.
+     */
     void MoveTextCursorRight(bool bExtendSelection = false);
 
-    /** @brief Moves the text cursor in front of the first character. */
+    /**
+     * @brief Moves the text cursor in front of the first character.
+     *
+     * @param bExtendSelection Keeps the selection anchor where it is, so the selection grows or shrinks.
+     * Otherwise the selection collapses onto the text cursor.
+     */
     void MoveTextCursorToStart(bool bExtendSelection = false);
 
-    /** @brief Moves the text cursor past the last character. */
+    /**
+     * @brief Moves the text cursor past the last character.
+     *
+     * @param bExtendSelection Keeps the selection anchor where it is, so the selection grows or shrinks.
+     * Otherwise the selection collapses onto the text cursor.
+     */
     void MoveTextCursorToEnd(bool bExtendSelection = false);
 
-    /** @brief Moves the text cursor to the start of the word to its left, stopping at the start. */
+    /**
+     * @brief Moves the text cursor to the start of the word to its left, stopping at the start.
+     *
+     * @param bExtendSelection Keeps the selection anchor where it is, so the selection grows or shrinks.
+     * Otherwise the selection collapses onto the text cursor.
+     */
     void MoveTextCursorWordLeft(bool bExtendSelection = false);
 
-    /** @brief Moves the text cursor to the end of the word to its right, stopping at the end. */
+    /**
+     * @brief Moves the text cursor to the end of the word to its right, stopping at the end.
+     *
+     * @param bExtendSelection Keeps the selection anchor where it is, so the selection grows or shrinks.
+     * Otherwise the selection collapses onto the text cursor.
+     */
     void MoveTextCursorWordRight(bool bExtendSelection = false);
 
     /**
@@ -181,16 +201,16 @@ public:
      */
     NODISCARD int32 FindWordBoundaryRight(int32 From) const;
 
-    /** @brief True when the anchor and the text cursor sit apart, so a range is selected. */
+    /** @return True when a range is selected, which is when the anchor and the text cursor sit apart. */
     NODISCARD bool HasSelection() const;
 
-    /** @brief The first selected index, which equals the text cursor when nothing is selected. */
+    /** @return The first selected index, which equals the text cursor when nothing is selected. */
     NODISCARD int32 GetSelectionStart() const;
 
-    /** @brief One past the last selected index. */
+    /** @return One past the last selected index, where the selection ends. */
     NODISCARD int32 GetSelectionEnd() const;
 
-    /** @brief The selected text, or an empty string when nothing is selected. */
+    /** @return The text inside the selection, or an empty string when nothing is selected. */
     NODISCARD String GetSelectedText() const;
 
     /** @brief Selects the whole text and leaves the text cursor at the end. */
@@ -199,7 +219,11 @@ public:
     /** @brief Drops the selection, leaving the text cursor where it is. */
     void ClearSelection();
 
-    /** @return True when a selected range was removed. */
+    /**
+     * @brief Removes the selected range, leaving the text cursor where the selection started.
+     *
+     * @return True when a selected range was removed, false when nothing was selected.
+     */
     bool DeleteSelection();
 
     /** @brief Puts the selection on the system clipboard, or the whole text when nothing is selected. */
@@ -218,25 +242,33 @@ public:
      */
     void SetFont(const TSharedPtr<IFontFace>& InFont);
 
-    /** @brief Fires whenever the text changes for any reason other than a silent set. */
+    /** @return The delegate, which fires whenever the text changes for any reason other than a silent set. */
     NODISCARD FORCEINLINE FOnTextChangedDelegate& GetOnTextChanged()
     {
         return OnTextChanged;
     }
 
-    /** @brief Fires when Enter is pressed and the interceptor did not claim it. */
+    /** @return The delegate, which fires when Enter is pressed and the interceptor did not claim it. */
     NODISCARD FORCEINLINE FOnTextCommittedDelegate& GetOnTextCommitted()
     {
         return OnTextCommitted;
     }
 
-    /** @brief Runs before the default editing behavior on every key down, so an owner can claim keys. */
+    /**
+     * @brief Gets the delegate an owner claims keys with.
+     *
+     * @return The delegate, which runs before the default editing behavior on every key down.
+     */
     NODISCARD FORCEINLINE FOnEditableTextKeyDownDelegate& GetOnKeyDownInterceptor()
     {
         return OnKeyDownInterceptor;
     }
 
-    /** @brief True while this element holds keyboard focus, which is what shows the text cursor. */
+    /**
+     * @brief Gets whether this element holds keyboard focus, which is what shows the text cursor.
+     *
+     * @return True while it is focused.
+     */
     NODISCARD FORCEINLINE bool HasKeyboardFocus() const
     {
         return bHasKeyboardFocus;
@@ -252,7 +284,7 @@ public:
      */
     NODISCARD bool IsTextCursorVisibleAt(double ElapsedSeconds) const;
 
-    /** @brief How long one blink lasts, in seconds. Zero leaves the text cursor solid. */
+    /** @return How long one text cursor blink lasts, in seconds, where zero leaves the cursor solid. */
     NODISCARD FORCEINLINE float GetTextCursorBlinkPeriod() const
     {
         return TextCursorBlinkPeriod;

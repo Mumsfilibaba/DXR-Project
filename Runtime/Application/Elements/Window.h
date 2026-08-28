@@ -19,41 +19,28 @@ DECLARE_DELEGATE(FOnWindowFocusChanged);
 class APPLICATION_API FWindow final : public FVisualElement
 {
 public:
-
     struct FDesc
     {
-        /** @brief Default constructor initializes default window parameters. */
-        FDesc()
-            : Title()
-            , ParentWindow(nullptr)
-            , Size()
-            , Position()
-            , StyleFlags(EWindowStyleFlags::Default)
-            , bActivateOnShow(true)
-            , bAcceptsInput(true)
-        {
-        }
-
         /** @brief The title of the window. */
-        String Title;     
-        
+        String Title;
+
         /** @brief Optional parent/owner window (used for owned popup/tool windows). */
-        TSharedPtr<FWindow> ParentWindow;
+        TSharedPtr<FWindow> ParentWindow = nullptr;
 
         /** @brief The size of the window (width, height). */
-        IntVector2 Size;      
-        
+        IntVector2 Size;
+
         /** @brief The position of the window (x, y). */
-        IntVector2 Position;  
-        
+        IntVector2 Position;
+
         /** @brief Style flags for the window. */
-        EWindowStyleFlags StyleFlags;
+        EWindowStyleFlags StyleFlags = EWindowStyleFlags::Default;
 
         /** @brief Should the window be activated when we show the window. */
-        bool bActivateOnShow;
+        bool bActivateOnShow : 1 = true;
 
         /** @brief False makes the window transparent to hit-testing, so input resolves to whatever is behind it. */
-        bool bAcceptsInput;
+        bool bAcceptsInput : 1 = true;
     };
 
 public:

@@ -1,14 +1,20 @@
 #include "Application/Elements/ScrollBox.h"
+#include "Application/Elements/ScrollBar.h"
+#include "Application/ElementPath.h"
 #include "Application/Draw/DrawCommandList.h"
 #include "Core/Math/Math.h"
 
 TSharedPtr<FScrollBox> FScrollBox::Create()
 {
-    return MakeSharedPtr<FScrollBox>();
+    TSharedPtr<FScrollBox> NewScrollBox = MakeSharedPtr<FScrollBox>();
+    NewScrollBox->Initialize();
+    return NewScrollBox;
 }
 
 FScrollBox::FScrollBox()
     : FCompoundElement()
+    , ScrollBar(nullptr)
+    , ScrollBarVisibility(EScrollBarVisibility::Auto)
     , ScrollOffset(0)
     , ScrollAmountPerWheelStep(DefaultScrollAmountPerWheelStep)
     , ContentHeight(0)
@@ -19,13 +25,27 @@ FScrollBox::FScrollBox()
 
 FScrollBox::~FScrollBox() = default;
 
+void FScrollBox::Initialize()
+{
+    FScrollBar::FDesc BarDesc;
+    BarDesc.Orientation     = EOrientation::Vertical;
+    BarDesc.OnOffsetChanged = FOnScrollBarOffsetChanged::CreateRaw(this, &FScrollBox::SetScrollOffset);
+
+    ScrollBar = FScrollBar::Create(BarDesc);
+    ScrollBar->SetParentElement(AsWeakPtr());
+}
+
 IntVector2 FScrollBox::ComputeDesiredSize() const
 {
-    // A scroll box takes whatever it is given vertically, so it asks only for its own padding
     IntVector2 DesiredSize(Padding.GetTotalHorizontal(), Padding.GetTotalVertical());
     if (Content)
     {
         DesiredSize.X += Content->GetCachedDesiredSize().X;
+    }
+
+    if (IsScrollBarVisible())
+    {
+        DesiredSize.X += ScrollBar->GetCachedDesiredSize().X;
     }
 
     return DesiredSize;
@@ -33,7 +53,7 @@ IntVector2 FScrollBox::ComputeDesiredSize() const
 
 void FScrollBox::OnArrange(const FRectangle& AllottedBounds)
 {
-    const FRectangle ViewBounds = AllottedBounds.Deflate(Padding);
+    const FRectangle ViewBounds = GetViewBounds(AllottedBounds);
 
     ViewHeight    = ViewBounds.Height;
     ContentHeight = Content ? Content->GetCachedDesiredSize().Y : 0;
@@ -53,14 +73,60 @@ void FScrollBox::OnArrange(const FRectangle& AllottedBounds)
         ChildBounds.Height      = Math::Max(ContentHeight, ViewBounds.Height);
         Content->Tick(ChildBounds);
     }
+
+    if (ScrollBar)
+    {
+        ScrollBar->SetScrollState(ContentHeight, ViewHeight, ScrollOffset);
+    }
+
+    if (IsScrollBarVisible())
+    {
+        const FRectangle Inner = AllottedBounds.Deflate(Padding);
+
+        FRectangle BarBounds = ViewBounds;
+        BarBounds.Width      = Inner.GetRight() - ViewBounds.GetRight();
+        BarBounds.Position.X = ViewBounds.GetRight();
+
+        ScrollBar->Tick(BarBounds);
+    }
+}
+
+void FScrollBox::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+{
+    FCompoundElement::GetChildren(OutChildren);
+
+    if (ScrollBar)
+    {
+        OutChildren.Add(ScrollBar);
+    }
 }
 
 int32 FScrollBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    OutCommandList.PushClip(LayerId, AllottedGeometry.Bounds.Deflate(Padding));
-    const int32 MaxLayerId = FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId);
+    OutCommandList.PushClip(LayerId, GetViewBounds(AllottedGeometry.Bounds));
+
+    int32 MaxLayerId = FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId);
     OutCommandList.PopClip(MaxLayerId);
+
+    if (IsScrollBarVisible())
+    {
+        const FDrawGeometry BarGeometry(ScrollBar->GetContentRectangle(), AllottedGeometry.Scale);
+        MaxLayerId = ScrollBar->OnDraw(BarGeometry, OutCommandList, MaxLayerId + 1);
+    }
+
     return MaxLayerId;
+}
+
+void FScrollBox::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
+{
+    if (IsScrollBarVisible() && ScrollBar->GetContentRectangle().EncapsulatesPoint(ClientPosition))
+    {
+        FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
+        ScrollBar->FindChildrenContainingPoint(ClientPosition, OutChildElements);
+        return;
+    }
+
+    FCompoundElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
 }
 
 FEventResponse FScrollBox::OnMouseScroll(const FCursorEvent& CursorEvent)
@@ -118,4 +184,31 @@ bool FScrollBox::IsScrolledToEnd() const
 void FScrollBox::SetScrollAmountPerWheelStep(int32 InAmount)
 {
     ScrollAmountPerWheelStep = Math::Max(1, InAmount);
+}
+
+void FScrollBox::SetScrollBarVisibility(EScrollBarVisibility InVisibility)
+{
+    ScrollBarVisibility = InVisibility;
+}
+
+bool FScrollBox::IsScrollBarVisible() const
+{
+    if (!ScrollBar || ScrollBarVisibility == EScrollBarVisibility::Never)
+    {
+        return false;
+    }
+
+    return ScrollBarVisibility == EScrollBarVisibility::Always || GetMaxScrollOffset() > 0;
+}
+
+FRectangle FScrollBox::GetViewBounds(const FRectangle& AllottedBounds) const
+{
+    FRectangle ViewBounds = AllottedBounds.Deflate(Padding);
+
+    if (IsScrollBarVisible())
+    {
+        ViewBounds.Width = Math::Max(ViewBounds.Width - ScrollBar->GetCachedDesiredSize().X, 0);
+    }
+
+    return ViewBounds;
 }

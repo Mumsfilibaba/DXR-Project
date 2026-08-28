@@ -6,26 +6,23 @@
 #include <Core/Containers/UniquePtr.h>
 #include <Core/Containers/Array.h>
 
-namespace
+struct FDeleterCalls
 {
-    struct FDeleterCalls
+    static int32& Count()
     {
-        static int32& Count()
-        {
-            static int32 GCount = 0;
-            return GCount;
-        }
-    };
+        static int32 GCount = 0;
+        return GCount;
+    }
+};
 
-    struct FDeleter
+struct FDeleter
+{
+    FORCEINLINE void Call(FInstanced* Pointer) noexcept
     {
-        FORCEINLINE void Call(FInstanced* Pointer) noexcept
-        {
-            FDeleterCalls::Count()++;
-            delete Pointer;
-        }
-    };
-}
+        FDeleterCalls::Count()++;
+        delete Pointer;
+    }
+};
 
 bool TUniquePtr_Test()
 {

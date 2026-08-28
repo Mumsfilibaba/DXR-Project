@@ -97,6 +97,14 @@ struct CORE_API FIniFile
     /** @return Looks up a value from the section with 'SectionName' and returns nullptr if not found */
     FIniValue* FindValue(const CHAR* SectionName, const CHAR* Name);
 
+    /**
+     * @brief Looks up a section, adding an empty one when it is not already there.
+     *
+     * @param SectionName The section to look for.
+     * @return The section, whose Name always matches 'SectionName'.
+     */
+    FIniSection& FindOrAddSection(const CHAR* SectionName);
+
      /** @brief Set a string from the Engine config */
     bool SetString(const CHAR* SectionName, const CHAR* Name, const String& NewValue);
 
@@ -108,6 +116,45 @@ struct CORE_API FIniFile
 
      /** @brief Set a boolean from the Engine config */
     bool SetBool(const CHAR* SectionName, const CHAR* Name, bool bNewValue);
+
+    /**
+     * @brief Sets a string, creating the section and the key when either is missing.
+     *
+     * The Set functions above refuse a key that is not already there, which suits a config file read from
+     * disk before it is edited. A file authored from nothing has nothing to find, and needs these instead.
+     *
+     * @param SectionName The section to write into.
+     * @param Name        The key to write.
+     * @param NewValue    The value to store.
+     */
+    void SetOrAddString(const CHAR* SectionName, const CHAR* Name, const String& NewValue);
+
+    /**
+     * @brief Sets an int, creating the section and the key when either is missing.
+     *
+     * @param SectionName The section to write into.
+     * @param Name        The key to write.
+     * @param NewValue    The value to store.
+     */
+    void SetOrAddInt(const CHAR* SectionName, const CHAR* Name, int32 NewValue);
+
+    /**
+     * @brief Sets a float, creating the section and the key when either is missing.
+     *
+     * @param SectionName The section to write into.
+     * @param Name        The key to write.
+     * @param NewValue    The value to store.
+     */
+    void SetOrAddFloat(const CHAR* SectionName, const CHAR* Name, float NewValue);
+
+    /**
+     * @brief Sets a boolean, creating the section and the key when either is missing.
+     *
+     * @param SectionName The section to write into.
+     * @param Name        The key to write.
+     * @param bNewValue   The value to store.
+     */
+    void SetOrAddBool(const CHAR* SectionName, const CHAR* Name, bool bNewValue);
 
      /** @brief Retrieve a string from the Engine config */
     bool GetString(const CHAR* SectionName, const CHAR* Name, String& OutValue);

@@ -178,8 +178,9 @@ function TargetBuildRules(Name)
             LogInfo("TargetType=Program")
 
             -- A Program owns its own main(), so Launch is never injected and there is no
-            -- separate Standalone executable to generate.
-            if self.Kind == "SharedLib" or self.Kind == "WindowedApp" then
+            -- separate Standalone executable to generate. WindowedApp is left alone, because a
+            -- Program that opens windows needs a bundle and cannot be a console app.
+            if self.Kind == "SharedLib" then
                 self.Kind = "ConsoleApp"
             end
 

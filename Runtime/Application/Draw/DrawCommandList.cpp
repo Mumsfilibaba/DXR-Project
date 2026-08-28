@@ -1,7 +1,10 @@
 #include "Application/Draw/DrawCommandList.h"
+#include "Core/Math/Math.h"
 
 FDrawCommandList::FDrawCommandList()
     : Commands()
+    , Points()
+    , ScratchPoints()
     , ClipStack()
     , EmptyClipRectangle()
     , UnmatchedPopCount(0)
@@ -10,7 +13,7 @@ FDrawCommandList::FDrawCommandList()
 
 FDrawCommandList::~FDrawCommandList() = default;
 
-void FDrawCommandList::AddBox(int32 LayerId, const FRectangle& Bounds, const FFloatColor& Tint, float CornerRadius)
+void FDrawCommandList::AddBox(int32 LayerId, const FRectangle& Bounds, const FFloatColor& Tint, const FCornerRadii& CornerRadius)
 {
     FDrawCommand& Command = Commands.Emplace();
     Command.Type         = EDrawCommandType::Box;
@@ -18,6 +21,22 @@ void FDrawCommandList::AddBox(int32 LayerId, const FRectangle& Bounds, const FFl
     Command.Tint         = Tint;
     Command.LayerId      = LayerId;
     Command.CornerRadius = CornerRadius;
+}
+
+void FDrawCommandList::AddBoxOutline(int32 LayerId, const FRectangle& Bounds, const FFloatColor& Tint, float Thickness, const FCornerRadii& CornerRadius)
+{
+    if (Thickness <= 0.0f)
+    {
+        return;
+    }
+
+    FDrawCommand& Command = Commands.Emplace();
+    Command.Type         = EDrawCommandType::BoxOutline;
+    Command.Bounds       = Bounds;
+    Command.Tint         = Tint;
+    Command.LayerId      = LayerId;
+    Command.CornerRadius = CornerRadius;
+    Command.Thickness    = Thickness;
 }
 
 void FDrawCommandList::AddText(int32 LayerId, const FRectangle& Bounds, const String& InText, const IFontFace* Font, const FFloatColor& Tint)
@@ -38,6 +57,142 @@ void FDrawCommandList::AddLine(int32 LayerId, const FRectangle& Bounds, const FF
     Command.Bounds  = Bounds;
     Command.Tint    = Tint;
     Command.LayerId = LayerId;
+}
+
+void FDrawCommandList::AddLine(int32 LayerId, const Vector2& Start, const Vector2& End, const FFloatColor& Tint, float Thickness)
+{
+    const Vector2 LinePoints[2] = { Start, End };
+    AddPolyline(LayerId, TArrayView<const Vector2>(LinePoints, 2), Tint, Thickness, false);
+}
+
+void FDrawCommandList::AddPolyline(int32 LayerId, TArrayView<const Vector2> InPoints, const FFloatColor& Tint, float Thickness, bool bClosed)
+{
+    if (InPoints.Size() < 2 || Thickness <= 0.0f)
+    {
+        return;
+    }
+
+    FDrawCommand& Command = Commands.Emplace();
+    Command.Type      = EDrawCommandType::Polyline;
+    Command.Tint      = Tint;
+    Command.LayerId   = LayerId;
+    Command.Thickness = Thickness;
+    Command.bIsClosed = bClosed;
+
+    StorePoints(Command, InPoints);
+}
+
+void FDrawCommandList::AddConvexPolygon(int32 LayerId, TArrayView<const Vector2> InPoints, const FFloatColor& Tint)
+{
+    if (InPoints.Size() < 3)
+    {
+        return;
+    }
+
+    FDrawCommand& Command = Commands.Emplace();
+    Command.Type    = EDrawCommandType::ConvexPolygon;
+    Command.Tint    = Tint;
+    Command.LayerId = LayerId;
+
+    StorePoints(Command, InPoints);
+}
+
+void FDrawCommandList::AddTriangle(int32 LayerId, const Vector2& A, const Vector2& B, const Vector2& C, const FFloatColor& Tint)
+{
+    const Vector2 Corners[3] = { A, B, C };
+    AddConvexPolygon(LayerId, TArrayView<const Vector2>(Corners, 3), Tint);
+}
+
+void FDrawCommandList::AddCircle(int32 LayerId, const Vector2& Center, float Radius, const FFloatColor& Tint, float Thickness, int32 Segments)
+{
+    if (Radius <= 0.0f)
+    {
+        return;
+    }
+
+    const int32 SegmentCount = ResolveCircleSegments(Radius, Math::Constants::TwoPI, Segments);
+
+    BuildArcPoints(Center, Radius, 0.0f, Math::Constants::TwoPI - (Math::Constants::TwoPI / static_cast<float>(SegmentCount)), SegmentCount - 1);
+    AddPolyline(LayerId, ScratchPoints, Tint, Thickness, true);
+}
+
+void FDrawCommandList::AddCircleFilled(int32 LayerId, const Vector2& Center, float Radius, const FFloatColor& Tint, int32 Segments)
+{
+    if (Radius <= 0.0f)
+    {
+        return;
+    }
+
+    const int32 SegmentCount = ResolveCircleSegments(Radius, Math::Constants::TwoPI, Segments);
+
+    BuildArcPoints(Center, Radius, 0.0f, Math::Constants::TwoPI - (Math::Constants::TwoPI / static_cast<float>(SegmentCount)), SegmentCount - 1);
+    AddConvexPolygon(LayerId, ScratchPoints, Tint);
+}
+
+void FDrawCommandList::AddArc(int32 LayerId, const Vector2& Center, float Radius, float StartAngle, float EndAngle, const FFloatColor& Tint, float Thickness, int32 Segments)
+{
+    if (Radius <= 0.0f)
+    {
+        return;
+    }
+
+    const int32 SegmentCount = ResolveCircleSegments(Radius, Math::Abs(EndAngle - StartAngle), Segments);
+
+    BuildArcPoints(Center, Radius, StartAngle, EndAngle, SegmentCount);
+    AddPolyline(LayerId, ScratchPoints, Tint, Thickness, false);
+}
+
+void FDrawCommandList::AddArcFilled(int32 LayerId, const Vector2& Center, float Radius, float StartAngle, float EndAngle, const FFloatColor& Tint, int32 Segments)
+{
+    if (Radius <= 0.0f)
+    {
+        return;
+    }
+
+    const int32 SegmentCount = ResolveCircleSegments(Radius, Math::Abs(EndAngle - StartAngle), Segments);
+
+    BuildArcPoints(Center, Radius, StartAngle, EndAngle, SegmentCount);
+
+    ScratchPoints.Insert(0, Center);
+    AddConvexPolygon(LayerId, ScratchPoints, Tint);
+}
+
+void FDrawCommandList::AddBezier(int32 LayerId, const Vector2& P0, const Vector2& P1, const Vector2& P2, const Vector2& P3, const FFloatColor& Tint, float Thickness, int32 Segments)
+{
+    int32 SegmentCount = Segments;
+    if (SegmentCount <= 0)
+    {
+        const float ControlLength = (P1 - P0).GetLength() + (P2 - P1).GetLength() + (P3 - P2).GetLength();
+        SegmentCount = Math::Clamp(static_cast<int32>(ControlLength * 0.25f), MinBezierSegments, MaxBezierSegments);
+    }
+
+    ScratchPoints.Clear();
+    ScratchPoints.Reserve(SegmentCount + 1);
+
+    for (int32 Index = 0; Index <= SegmentCount; ++Index)
+    {
+        const float T        = static_cast<float>(Index) / static_cast<float>(SegmentCount);
+        const float OneMinus = 1.0f - T;
+
+        const float W0 = OneMinus * OneMinus * OneMinus;
+        const float W1 = 3.0f * OneMinus * OneMinus * T;
+        const float W2 = 3.0f * OneMinus * T * T;
+        const float W3 = T * T * T;
+
+        ScratchPoints.Add(Vector2((P0.X * W0) + (P1.X * W1) + (P2.X * W2) + (P3.X * W3), (P0.Y * W0) + (P1.Y * W1) + (P2.Y * W2) + (P3.Y * W3)));
+    }
+
+    AddPolyline(LayerId, ScratchPoints, Tint, Thickness, false);
+}
+
+void FDrawCommandList::AddImage(int32 LayerId, const FRectangle& Bounds, const FUIBrush& Brush, const FFloatColor& Tint)
+{
+    FDrawCommand& Command = Commands.Emplace();
+    Command.Type    = EDrawCommandType::Image;
+    Command.Bounds  = Bounds;
+    Command.Tint    = Tint;
+    Command.LayerId = LayerId;
+    Command.Brush   = Brush;
 }
 
 void FDrawCommandList::PushClip(int32 LayerId, const FRectangle& ClipRectangle)
@@ -70,8 +225,20 @@ void FDrawCommandList::PopClip(int32 LayerId)
 void FDrawCommandList::Reset()
 {
     Commands.Clear();
+    Points.Clear();
+    ScratchPoints.Clear();
     ClipStack.Clear();
     UnmatchedPopCount = 0;
+}
+
+TArrayView<const Vector2> FDrawCommandList::GetCommandPoints(const FDrawCommand& Command) const
+{
+    if (Command.PointCount <= 0)
+    {
+        return TArrayView<const Vector2>();
+    }
+
+    return TArrayView<const Vector2>(Points.Data() + Command.PointOffset, Command.PointCount);
 }
 
 int32 FDrawCommandList::CountCommandsOfType(EDrawCommandType Type) const
@@ -100,4 +267,43 @@ int32 FDrawCommandList::FindTextCommand(const StringView& InText) const
     }
 
     return InvalidIndex;
+}
+
+void FDrawCommandList::StorePoints(FDrawCommand& Command, TArrayView<const Vector2> InPoints)
+{
+    Command.PointOffset = Points.Size();
+    Command.PointCount  = InPoints.Size();
+
+    Points.Reserve(Points.Size() + InPoints.Size());
+    for (const Vector2& Point : InPoints)
+    {
+        Points.Add(Point);
+    }
+}
+
+void FDrawCommandList::BuildArcPoints(const Vector2& Center, float Radius, float StartAngle, float EndAngle, int32 Segments)
+{
+    ScratchPoints.Clear();
+
+    const int32 PointCount = Math::Max(Segments, 1) + 1;
+    ScratchPoints.Reserve(PointCount);
+
+    const float AngleStep = (EndAngle - StartAngle) / static_cast<float>(Math::Max(Segments, 1));
+
+    for (int32 Index = 0; Index < PointCount; ++Index)
+    {
+        const float Angle = StartAngle + (AngleStep * static_cast<float>(Index));
+        ScratchPoints.Add(Vector2(Center.X + (Radius * Math::Cos(Angle)), Center.Y + (Radius * Math::Sin(Angle))));
+    }
+}
+
+int32 FDrawCommandList::ResolveCircleSegments(float Radius, float AngleSweep, int32 RequestedSegments)
+{
+    if (RequestedSegments > 0)
+    {
+        return Math::Clamp(RequestedSegments, MinCircleSegments, MaxCircleSegments);
+    }
+
+    const float ArcLength = Radius * Math::Max(Math::Abs(AngleSweep), 0.0001f);
+    return Math::Clamp(static_cast<int32>(ArcLength * 0.35f), MinCircleSegments, MaxCircleSegments);
 }

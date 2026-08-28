@@ -1,6 +1,18 @@
 #pragma once
 #include "Application/Elements/CompoundElement.h"
 
+enum class EScrollBarVisibility : uint8
+{
+    /** @brief Shown only while there is something to scroll, which is what a log view wants. */
+    Auto,
+
+    /** @brief Always shown, so the content never shifts sideways as it grows past the view. */
+    Always,
+
+    /** @brief Never shown, leaving the wheel as the only way to scroll. */
+    Never,
+};
+
 class APPLICATION_API FScrollBox final : public FCompoundElement
 {
 public:
@@ -13,10 +25,15 @@ public:
     FScrollBox();
     virtual ~FScrollBox();
 
+    /** @brief Builds the scroll bar the box hosts, which needs the box to already be shared. */
+    void Initialize();
+
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
+    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
+    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override;
     virtual FEventResponse OnMouseScroll(const FCursorEvent& CursorEvent) override;
 
     /**
@@ -39,16 +56,25 @@ public:
      */
     void SetScrollOffset(int32 InScrollOffset);
 
-    /** @brief The current offset from the top of the content, in pixels. */
+    /** @return How far the content is scrolled, as an offset from its top in pixels. */
     NODISCARD FORCEINLINE int32 GetScrollOffset() const
     {
         return ScrollOffset;
     }
 
-    /** @brief The largest offset that still shows content, given the current view and content size. */
+    /**
+     * @brief Gets the far end of the scrollable range, measured on the last arrange.
+     *
+     * @return How far the content overhangs the view, in pixels, or zero when it fits.
+     */
     NODISCARD int32 GetMaxScrollOffset() const;
 
-    /** @brief True when the bottom of the content is flush with the bottom of the view. */
+    /**
+     * @brief Gets whether the view sits at the far end of the content.
+     *
+     * @return True when the bottom of the content is flush with the bottom of the view, which content
+     * that fits always is.
+     */
     NODISCARD bool IsScrolledToEnd() const;
 
     /**
@@ -58,10 +84,34 @@ public:
      */
     void SetScrollAmountPerWheelStep(int32 InAmount);
 
+    /**
+     * @brief Sets when the scroll bar is drawn beside the content.
+     *
+     * @param InVisibility The rule to apply.
+     */
+    void SetScrollBarVisibility(EScrollBarVisibility InVisibility);
+
+    /**
+     * @brief Gets whether the scroll bar is drawn beside the content.
+     *
+     * @return True when the bar is drawn, which for Auto means there is something to scroll.
+     */
+    NODISCARD bool IsScrollBarVisible() const;
+
+    /** @return The scroll bar the box hosts, which a caller can style but does not own. */
+    NODISCARD FORCEINLINE const TSharedPtr<class FScrollBar>& GetScrollBar() const
+    {
+        return ScrollBar;
+    }
+
 private:
-    int32 ScrollOffset;
-    int32 ScrollAmountPerWheelStep;
-    int32 ContentHeight;
-    int32 ViewHeight;
-    bool  bIsScrollToEndPending : 1;
+    NODISCARD FRectangle GetViewBounds(const FRectangle& AllottedBounds) const;
+
+    TSharedPtr<class FScrollBar> ScrollBar;
+    EScrollBarVisibility         ScrollBarVisibility;
+    int32                        ScrollOffset;
+    int32                        ScrollAmountPerWheelStep;
+    int32                        ContentHeight;
+    int32                        ViewHeight;
+    bool                         bIsScrollToEndPending : 1;
 };

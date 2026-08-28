@@ -27,6 +27,11 @@ bool FVisualElement::IsWindow() const
     return false;
 }
 
+bool FVisualElement::IsInteractive() const
+{
+    return false;
+}
+
 bool FVisualElement::CapturesAllInput() const
 {
     return false;

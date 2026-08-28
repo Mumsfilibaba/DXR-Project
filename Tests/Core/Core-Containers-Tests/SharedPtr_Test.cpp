@@ -9,57 +9,54 @@
 #include <Core/Containers/Array.h>
 #include <Core/Threading/Atomic/AtomicInt.h>
 
-namespace
+struct FBase
 {
-    struct FBase
-    {
-        virtual ~FBase() = default;
-        int32 X = 1;
-    };
+    virtual ~FBase() = default;
+    int32 X = 1;
+};
 
-    struct FDerived : public FBase
-    {
-        int32 Y = 2;
-    };
+struct FDerived : public FBase
+{
+    int32 Y = 2;
+};
 
-    struct FShared : public TSharedFromThis<FShared>
-    {
-        int32 Value = 42;
-    };
+struct FShared : public TSharedFromThis<FShared>
+{
+    int32 Value = 42;
+};
 
-    struct FTestRefCounted : public IRefCounted
+struct FTestRefCounted : public IRefCounted
+{
+    virtual int32 AddRef() const override
     {
-        virtual int32 AddRef() const override
+        ++Refs;
+        return Refs.Load();
+    }
+
+    virtual int32 Release() const override
+    {
+        const int32 Count = --Refs;
+        if (Count < 1)
         {
-            ++Refs;
-            return Refs.Load();
+            delete this;
         }
 
-        virtual int32 Release() const override
-        {
-            const int32 Count = --Refs;
-            if (Count < 1)
-            {
-                delete this;
-            }
+        return Count;
+    }
 
-            return Count;
-        }
-
-        virtual int32 GetRefCount() const override
-        {
-            return Refs.Load();
-        }
-
-        int32 Tag = 7;
-        mutable AtomicInt32 Refs = 1;
-    };
-
-    struct FTestRefCountedDerived : public FTestRefCounted
+    virtual int32 GetRefCount() const override
     {
-        int32 Extra = 21;
-    };
-}
+        return Refs.Load();
+    }
+
+    int32 Tag = 7;
+    mutable AtomicInt32 Refs = 1;
+};
+
+struct FTestRefCountedDerived : public FTestRefCounted
+{
+    int32 Extra = 21;
+};
 
 bool TSharedPtr_Test()
 {

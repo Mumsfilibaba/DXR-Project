@@ -5,63 +5,60 @@
 
 #include <Core/Containers/Function.h>
 
-namespace
+static int32 FreeAdd(int32 First, int32 Second)
 {
-    static int32 FreeAdd(int32 First, int32 Second)
+    return First + Second;
+}
+
+static int32 FreeNegate(int32 First, int32 Second)
+{
+    return -(First + Second);
+}
+
+static int32 Free4(int32 First, int32 Second, int32 Third, int32 Fourth)
+{
+    return First + Second + Third + Fourth;
+}
+
+struct FFunctor
+{
+    int32 operator()(int32 First, int32 Second) const
+    {
+        return (First * Second) + Bias;
+    }
+
+    int32 Bias = 0;
+};
+
+struct FObject
+{
+    int32 Add(int32 First, int32 Second)
     {
         return First + Second;
     }
 
-    static int32 FreeNegate(int32 First, int32 Second)
+    int32 ConstAdd(int32 First, int32 Second) const
     {
-        return -(First + Second);
+        return First + Second;
     }
+};
 
-    static int32 Free4(int32 First, int32 Second, int32 Third, int32 Fourth)
+struct FVirtualBase
+{
+    virtual ~FVirtualBase() = default;
+    virtual int32 Scale(int32 In) const
     {
-        return First + Second + Third + Fourth;
+        return In;
     }
+};
 
-    struct FFunctor
+struct FVirtualDerived : public FVirtualBase
+{
+    virtual int32 Scale(int32 In) const override
     {
-        int32 operator()(int32 First, int32 Second) const
-        {
-            return (First * Second) + Bias;
-        }
-
-        int32 Bias = 0;
-    };
-
-    struct FObject
-    {
-        int32 Add(int32 First, int32 Second)
-        {
-            return First + Second;
-        }
-
-        int32 ConstAdd(int32 First, int32 Second) const
-        {
-            return First + Second;
-        }
-    };
-
-    struct FVirtualBase
-    {
-        virtual ~FVirtualBase() = default;
-        virtual int32 Scale(int32 In) const
-        {
-            return In;
-        }
-    };
-
-    struct FVirtualDerived : public FVirtualBase
-    {
-        virtual int32 Scale(int32 In) const override
-        {
-            return In * 2;
-        }
-    };
-}
+        return In * 2;
+    }
+};
 
 bool TFunction_Test()
 {

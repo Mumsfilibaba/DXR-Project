@@ -4,20 +4,17 @@
 
 #include "TestCommon/TestMacros.h"
 
-namespace
+static const FVertexAttributeInfo* FindElement(const FVertexDeclaration& Declaration, EVertexElement Element)
 {
-    const FVertexAttributeInfo* FindElement(const FVertexDeclaration& Declaration, EVertexElement Element)
+    for (const FVertexAttributeInfo& Attribute : Declaration.GetAttributes())
     {
-        for (const FVertexAttributeInfo& Attribute : Declaration.GetAttributes())
+        if (Attribute.Element == Element)
         {
-            if (Attribute.Element == Element)
-            {
-                return &Attribute;
-            }
+            return &Attribute;
         }
-
-        return nullptr;
     }
+
+    return nullptr;
 }
 
 bool VertexDeclaration_Test()

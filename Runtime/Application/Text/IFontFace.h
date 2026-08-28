@@ -16,16 +16,26 @@ struct IFontFace
      */
     virtual const FFontAtlas* GetAtlas() const = 0;
 
-    /** @brief Baseline to baseline distance in pixels. */
+    /**
+     * @brief Gets the distance from one baseline to the next.
+     *
+     * @return The distance in pixels, which carries the gap the face asks for between two lines and is
+     * therefore not the height of the glyphs themselves.
+     */
     virtual int32 GetLineHeight() const = 0;
 
-    /** @brief Distance from the baseline up to the top of the tallest glyph, in pixels. */
+    /** @return How far the tallest glyph reaches above the baseline, in pixels, as a positive value. */
     virtual int32 GetAscent() const = 0;
 
-    /** @brief Distance from the baseline down to the lowest glyph, as a positive value. */
+    /** @return How far the lowest glyph reaches below the baseline, in pixels, as a positive value. */
     virtual int32 GetDescent() const = 0;
 
-    /** @brief Distance from the baseline up to the top of a capital, which is what the eye reads as the top of a line. */
+    /**
+     * @brief Gets how far a capital reaches above the baseline, which is what the eye reads as the top
+     * of a line.
+     *
+     * @return The distance in pixels, which is never more than the ascent.
+     */
     virtual int32 GetCapHeight() const = 0;
 
     /**
@@ -86,13 +96,27 @@ struct IFontFace
         return Math::Clamp(BaselineY - GetAscent(), 0, Math::Max(0, AvailableHeight - GetTextBandHeight()));
     }
 
-    /** @brief The height of the text cursor, which is the capitals with the descent added above and below. */
+    /**
+     * @brief Gets how tall the text cursor is drawn, which is the capitals with the descent added above
+     * and below.
+     *
+     * @param AvailableHeight The height of the rectangle the text is drawn into.
+     * @return The height in pixels, cut down to the available height when it does not fit.
+     */
     NODISCARD int32 GetTextCursorHeight(int32 AvailableHeight) const
     {
         return Math::Min(GetCapHeight() + (GetDescent() * 2), AvailableHeight);
     }
 
-    /** @brief How far down the text cursor starts inside a rectangle, which centres it. */
+    /**
+     * @brief Gets how far down the text cursor starts inside a rectangle. Placed off the same baseline
+     * the glyphs are, so that it runs from one descent above the capitals to one descent below the
+     * baseline and cannot drift away from the text it sits in.
+     *
+     * @param AvailableHeight The height of the rectangle the text is drawn into.
+     * @return The offset from the top of the rectangle in pixels, clamped so the whole cursor stays
+     * inside it.
+     */
     NODISCARD int32 GetTextCursorOffset(int32 AvailableHeight) const
     {
         const int32 BaselineY = GetTextBandOffset(AvailableHeight) + GetAscent();

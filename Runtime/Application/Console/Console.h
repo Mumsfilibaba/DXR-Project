@@ -29,26 +29,14 @@ class APPLICATION_API FConsole final : public FCompoundElement
 public:
     struct FDesc
     {
-        FDesc()
-            : Font(nullptr)
-            , TextAreaHeight(384)
-            , BackgroundColor(0.1f, 0.1f, 0.1f, 0.85f)
-            , InputBackgroundColor(0.04f, 0.04f, 0.04f, 0.85f)
-            , SelectedCandidateColor(0.3f, 0.3f, 0.3f, 1.0f)
-            , CandidateDetailColor(0.85f, 0.85f, 0.85f, 1.0f)
-            , MaxLogLines(FConsoleLogBuffer::DefaultMaxLines)
-            , bRegisterWithLogger(true)
-        {
-        }
-
-        TSharedPtr<IFontFace> Font;
-        int32                 TextAreaHeight;
-        FFloatColor           BackgroundColor;
-        FFloatColor           InputBackgroundColor;
-        FFloatColor           SelectedCandidateColor;
-        FFloatColor           CandidateDetailColor;
-        int32                 MaxLogLines;
-        bool                  bRegisterWithLogger;
+        TSharedPtr<IFontFace> Font = nullptr;
+        int32                 TextAreaHeight = 384;
+        FFloatColor           BackgroundColor = FFloatColor(0.1f, 0.1f, 0.1f, 0.85f);
+        FFloatColor           InputBackgroundColor = FFloatColor(0.04f, 0.04f, 0.04f, 0.85f);
+        FFloatColor           SelectedCandidateColor = FFloatColor(0.3f, 0.3f, 0.3f, 1.0f);
+        FFloatColor           CandidateDetailColor = FFloatColor(0.85f, 0.85f, 0.85f, 1.0f);
+        int32                 MaxLogLines = FConsoleLogBuffer::DefaultMaxLines;
+        bool                  bRegisterWithLogger : 1 = true;
     };
 
 public:
@@ -90,37 +78,47 @@ public:
      */
     void SetIsOpen(bool bInIsOpen);
 
-    /** @brief True while the console is showing. */
+    /** @return True while the console is open, showing and taking the input. */
     NODISCARD FORCEINLINE bool IsOpen() const
     {
         return bIsOpen;
     }
 
-    /** @brief The headless model behind the input line. */
+    /** @return The model behind the input line, holding the text, the candidates and the history walk. */
     NODISCARD FORCEINLINE FConsoleCommandLine& GetCommandLine()
     {
         return CommandLine;
     }
 
-    /** @brief The log the console shows and commands report to. */
+    /** @return The log the console shows, which is also the device an executed command reports to. */
     NODISCARD FORCEINLINE FConsoleLogBuffer& GetLogBuffer()
     {
         return LogBuffer;
     }
 
-    /** @brief The element that edits the command line. */
+    /** @return The input field the command line is edited through, which an open console also focuses. */
     NODISCARD FORCEINLINE const TSharedPtr<FEditableText>& GetInput() const
     {
         return Input;
     }
 
-    /** @brief The scroll box holding either the candidates or the log. */
+    /**
+     * @brief Gets the scroll box above the input field.
+     *
+     * @return The scroll box, which owns the viewport the candidate rows or the log lines are scrolled
+     * inside.
+     */
     NODISCARD FORCEINLINE const TSharedPtr<FScrollBox>& GetScrollBox() const
     {
         return ScrollBox;
     }
 
-    /** @brief The box the candidate rows and log lines are placed in. */
+    /**
+     * @brief Gets the box the rows are placed in.
+     *
+     * @return The box, holding the candidate rows while a candidate list is showing and the log lines
+     * otherwise.
+     */
     NODISCARD FORCEINLINE const TSharedPtr<FVerticalBox>& GetScrollContent() const
     {
         return ScrollContent;

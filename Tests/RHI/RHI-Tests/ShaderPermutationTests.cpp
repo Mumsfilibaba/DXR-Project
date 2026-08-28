@@ -4,53 +4,50 @@
 
 #include "TestCommon/TestMacros.h"
 
-namespace
+class FTestBoolA : SHADER_PERMUTATION_BOOL("TEST_BOOL_A");
+class FTestBoolB : SHADER_PERMUTATION_BOOL("TEST_BOOL_B");
+class FTestCount : SHADER_PERMUTATION_INT("TEST_COUNT", 3);
+class FTestRange : SHADER_PERMUTATION_RANGE_INT("TEST_RANGE", 2, 4);
+
+enum class ETestMode : uint8
 {
-    class FTestBoolA : SHADER_PERMUTATION_BOOL("TEST_BOOL_A");
-    class FTestBoolB : SHADER_PERMUTATION_BOOL("TEST_BOOL_B");
-    class FTestCount : SHADER_PERMUTATION_INT("TEST_COUNT", 3);
-    class FTestRange : SHADER_PERMUTATION_RANGE_INT("TEST_RANGE", 2, 4);
+    First  = 0,
+    Second = 1,
+    Third  = 2,
+    Count,
+};
 
-    enum class ETestMode : uint8
+class FTestMode : SHADER_PERMUTATION_ENUM("TEST_MODE", ETestMode);
+
+/** @brief A dimension that raises the shader model itself, the FBindless shape. */
+class FTestRaisesModel : public FShaderPermutationBool
+{
+    SHADER_PERMUTATION_DEFINE("TEST_RAISES_MODEL");
+
+public:
+    static void ModifyCompilationEnvironment(Type Value, FShaderCompilationEnvironment& Environment)
     {
-        First  = 0,
-        Second = 1,
-        Third  = 2,
-        Count,
-    };
-
-    class FTestMode : SHADER_PERMUTATION_ENUM("TEST_MODE", ETestMode);
-
-    /** @brief A dimension that raises the shader model itself, the FBindless shape. */
-    class FTestRaisesModel : public FShaderPermutationBool
-    {
-        SHADER_PERMUTATION_DEFINE("TEST_RAISES_MODEL");
-
-    public:
-        static void ModifyCompilationEnvironment(Type Value, FShaderCompilationEnvironment& Environment)
+        if (Value)
         {
-            if (Value)
-            {
-                Environment.RequireShaderModel(EShaderModel::SM_6_6);
-            }
+            Environment.RequireShaderModel(EShaderModel::SM_6_6);
         }
-    };
-
-    using FInnerPermutation = TShaderPermutation<FTestBoolA, FTestBoolB>;
-    using FOuterPermutation = TShaderPermutation<FInnerPermutation, FTestCount, FTestRaisesModel>;
-
-    const FShaderDefine* FindDefine(const FShaderCompilationEnvironment& Environment, const CHAR* Name)
-    {
-        for (const FShaderDefine& Define : Environment.Defines)
-        {
-            if (Define.Define == Name)
-            {
-                return &Define;
-            }
-        }
-
-        return nullptr;
     }
+};
+
+using FInnerPermutation = TShaderPermutation<FTestBoolA, FTestBoolB>;
+using FOuterPermutation = TShaderPermutation<FInnerPermutation, FTestCount, FTestRaisesModel>;
+
+static const FShaderDefine* FindDefine(const FShaderCompilationEnvironment& Environment, const CHAR* Name)
+{
+    for (const FShaderDefine& Define : Environment.Defines)
+    {
+        if (Define.Define == Name)
+        {
+            return &Define;
+        }
+    }
+
+    return nullptr;
 }
 
 bool ShaderPermutation_Test()
