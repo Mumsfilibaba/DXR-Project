@@ -16,9 +16,18 @@
 #include "Engine/EngineUI/Editor/EditorStatsWidget.h"
 #include "Engine/EngineUI/Editor/EditorAboutWidget.h"
 #include "Engine/EngineUI/Editor/EditorActorFactory.h"
+#include "Engine/EngineUI/EditorUI/EditorShell.h"
+#include "Engine/EngineUI/EditorUI/EditorStyle.h"
+#include "Engine/EngineUI/EditorUI/Panels/EditorViewportPanel.h"
 #include "Engine/World/Components/CameraComponent.h"
 #include "RendererCore/RenderSettings.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
+
+static TAutoConsoleVariable<bool> CVarUseCustomEditorUI(
+    "Engine.UseCustomEditorUI",
+    "True builds the editor from the Application element library, false falls back to the ImGui editor",
+    false,
+    EConsoleVariableFlags::Default);
 
 FEditorEngine::FEditorEngine()
     : FEngine()
@@ -44,8 +53,11 @@ FEditorEngine::FEditorEngine()
     , RHIInfoWidget(nullptr)
     , StatsWidget(nullptr)
     , AboutWidget(nullptr)
+    , EditorShell(nullptr)
+    , ViewportHost(nullptr)
     , ViewportImage(nullptr)
     , ViewportImageSize()
+    , bUseCustomEditorUI(false)
     , bPendingPickAdditive(false)
     , bPendingRectPickAdditive(false)
 {
@@ -64,7 +76,18 @@ bool FEditorEngine::Init()
 
     ActorRemovedDelegateHandle = GetWorld()->GetOnActorRemovedEvent().AddRaw(this, &FEditorEngine::OnActorRemoved);
 
-    if (IImguiPlugin::IsEnabled())
+    bUseCustomEditorUI = CVarUseCustomEditorUI.GetValue();
+    if (bUseCustomEditorUI)
+    {
+        EditorShell = MakeSharedPtr<FEditorShell>(this);
+        if (!EditorShell->Initialize())
+        {
+            return false;
+        }
+
+        ViewportHost = EditorShell->GetViewportPanel().Get();
+    }
+    else if (IImguiPlugin::IsEnabled())
     {
         DockspaceWidget        = MakeSharedPtr<FEditorDockspaceWidget>(this);
         OutputLogWidget        = MakeSharedPtr<FEditorOutputLogWidget>();
@@ -83,6 +106,14 @@ bool FEditorEngine::Init()
 
         ViewportWidget = MakeSharedPtr<FEditorViewportWidget>(this);
         ViewportWidget->SetViewport(GetViewport());
+
+        ViewportHost = ViewportWidget.Get();
+    }
+
+    if (!ViewportHost)
+    {
+        LOG_ERROR("[FEditorEngine]: The editor needs a viewport host, and neither UI stack was built");
+        return false;
     }
 
     if (!CreateViewportRenderTarget())
@@ -95,6 +126,11 @@ bool FEditorEngine::Init()
 
 bool FEditorEngine::InitPostRenderer()
 {
+    if (bUseCustomEditorUI)
+    {
+        return EditorShell->InitPostRenderer();
+    }
+
     // Load fonts
     if (!EditorFonts::Initialize())
     {
@@ -113,6 +149,14 @@ void FEditorEngine::Release()
     {
         GetWorld()->GetOnActorRemovedEvent().Unbind(ActorRemovedDelegateHandle);
         ActorRemovedDelegateHandle.Reset();
+    }
+
+    ViewportHost = nullptr;
+
+    if (EditorShell)
+    {
+        EditorShell->Release();
+        EditorShell.Reset();
     }
 
     if (IImguiPlugin::IsEnabled())
@@ -166,10 +210,7 @@ void FEditorEngine::Tick(float DeltaTime)
                 const EEditorPickPurpose Purpose = ConsumePickPurpose(PickResult.RequestId);
                 if (Purpose == EEditorPickPurpose::ContextMenu)
                 {
-                    if (ViewportWidget)
-                    {
-                        ViewportWidget->OnContextMenuPickResult(PickResult, PickedActor);
-                    }
+                    ViewportHost->OnContextMenuPickResult(PickResult, PickedActor);
                 }
                 else if (PickedActor)
                 {
@@ -219,7 +260,12 @@ void FEditorEngine::Tick(float DeltaTime)
 
     DrainPendingDestroyActors();
 
-    const IntVector2 Size = ViewportWidget->GetViewportSize();
+    if (EditorShell)
+    {
+        EditorShell->Tick(DeltaTime);
+    }
+
+    const IntVector2 Size = ViewportHost->GetViewportSize();
     if (ViewportImageSize != Size)
     {
         CreateViewportRenderTarget();
@@ -240,10 +286,7 @@ bool FEditorEngine::StartPlay()
         IImguiPlugin::Get().ClearGamepadAnalogState();
     }
 
-    if (ViewportWidget)
-    {
-        ViewportWidget->ResetInputState();
-    }
+    ViewportHost->ResetInputState();
 
     if (const TSharedPtr<FSceneViewport> Viewport = GetSceneViewport())
     {
@@ -286,10 +329,7 @@ void FEditorEngine::StopPlay()
         IImguiPlugin::Get().ClearGamepadAnalogState();
     }
 
-    if (ViewportWidget)
-    {
-        ViewportWidget->ResetInputState();
-    }
+    ViewportHost->ResetInputState();
 
     Snapshot.Restore(GetWorld());
     Snapshot.Reset();
@@ -300,11 +340,11 @@ FSceneRenderPacket FEditorEngine::BuildRenderPacket()
     TRACE_FUNCTION_SCOPE();
 
     FSceneRenderPacket Packet = FEngine::BuildRenderPacket();
-    Packet.View.Scene                = GetWorld()->GetSceneInterface();
-    Packet.View.RenderTarget         = ViewportImage.Get();
-    Packet.View.DebugView              = ViewportWidget->GetDebugView();
-    Packet.View.SecondaryDebugView     = ViewportWidget->GetSecondaryDebugView();
-    Packet.View.DebugViewChannelMask   = ViewportWidget->GetDebugViewChannelMask();
+    Packet.View.Scene                  = GetWorld()->GetSceneInterface();
+    Packet.View.RenderTarget           = ViewportImage.Get();
+    Packet.View.DebugView              = ViewportHost->GetDebugView();
+    Packet.View.SecondaryDebugView     = ViewportHost->GetSecondaryDebugView();
+    Packet.View.DebugViewChannelMask   = ViewportHost->GetDebugViewChannelMask();
     Packet.View.bEditorOverlaysEnabled = IsEditing();
 
     FCameraComponent* ViewCamera = GetActiveViewportCamera();
@@ -315,7 +355,7 @@ FSceneRenderPacket FEditorEngine::BuildRenderPacket()
     }
 
     const bool bCameraChanged = ViewCamera != LastViewportCamera;
-    Packet.View.bCameraCut = bCameraChanged || ViewportWidget->ConsumeCameraCut();
+    Packet.View.bCameraCut = bCameraChanged || ViewportHost->ConsumeCameraCut();
     LastViewportCamera = ViewCamera;
 
     // Resolve the editor selection to stable ObjectIDs on the main thread so the render thread never reads live editor state.
@@ -345,7 +385,7 @@ FCameraComponent* FEditorEngine::GetActiveViewportCamera() const
         }
     }
 
-    return ViewportWidget ? ViewportWidget->GetViewCamera() : nullptr;
+    return ViewportHost ? ViewportHost->GetViewCamera() : nullptr;
 }
 
 void FEditorEngine::SetSelectedActor(FActor* InActor)
@@ -510,9 +550,14 @@ EEditorPickPurpose FEditorEngine::ConsumePickPurpose(uint64 RequestId)
 
 void FEditorEngine::OnActorRemoved(FActor* RemovedActor)
 {
-    if (ViewportWidget)
+    if (ViewportHost)
     {
-        ViewportWidget->OnActorRemoved(RemovedActor);
+        ViewportHost->OnActorRemoved(RemovedActor);
+    }
+
+    if (EditorShell)
+    {
+        EditorShell->OnActorRemoved(RemovedActor);
     }
 
     RemoveSelectedActor(RemovedActor);
@@ -546,7 +591,7 @@ void FEditorEngine::DrainPendingDestroyActors()
 
 bool FEditorEngine::CreateViewportRenderTarget()
 {
-    const IntVector2 Size = ViewportWidget->GetViewportSize();
+    const IntVector2 Size = ViewportHost->GetViewportSize();
     if (Size.X == 0 || Size.Y == 0)
     {
         return ViewportImage != nullptr;
@@ -562,7 +607,7 @@ bool FEditorEngine::CreateViewportRenderTarget()
         ViewportImage = NewViewportImage;
         ViewportImage->SetDebugName("Editor Viewport Image");
 
-        ViewportWidget->SetViewportImage(ViewportImage);
+        ViewportHost->SetViewportImage(ViewportImage);
 
         RenderSettings::ChangeRenderResolution(Size.X, Size.Y);
 

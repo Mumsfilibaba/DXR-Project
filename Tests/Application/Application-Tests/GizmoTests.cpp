@@ -223,7 +223,7 @@ bool GizmoHitTest_Test()
 
     TEST_SECTION("The gizmo reaches as far as it needs to for the size it wants on screen");
     TEST_EXPECT(IsNearly(Gizmo->GetScreenFactor(), 0.4f));
-    TEST_EXPECT(Gizmo->IsVisible());
+    TEST_EXPECT(Gizmo->IsProjected());
 
     TEST_SECTION("An axis pointing at the camera is culled, and so are the planes standing edge-on");
     TEST_EXPECT(Gizmo->IsAxisVisible(0));
@@ -301,7 +301,7 @@ bool GizmoHitTest_Test()
     Gizmo->SetCamera(MakeFrontView(), MakePerspective(), false);
     Gizmo->SetTransform(Matrix4::Translation(Vector3(0.0f, 0.0f, -30.0f)));
 
-    TEST_EXPECT(!Gizmo->IsVisible());
+    TEST_EXPECT(!Gizmo->IsProjected());
 
     Gizmo->OnMouseMove(MakeMoveEvent(IntVector2(400, 300)));
     TEST_EXPECT(Gizmo->GetHoveredHandle() == EGizmoHandle::None);
@@ -312,7 +312,7 @@ bool GizmoHitTest_Test()
 
     TEST_SECTION("Back in front of the camera it draws again");
     Gizmo->SetTransform(Matrix4::Identity());
-    TEST_EXPECT(Gizmo->IsVisible());
+    TEST_EXPECT(Gizmo->IsProjected());
 
     FDrawCommandList VisibleList;
     Gizmo->OnDraw(FDrawGeometry(Gizmo->GetContentRectangle(), 1.0f), VisibleList, 0);

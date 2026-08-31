@@ -24,6 +24,7 @@ public:
 
 private:
     FElapsedTime FrameTimer;
+    uint64       FrameCounter;
 };
 
 extern FEngineLoop GEngineLoop;

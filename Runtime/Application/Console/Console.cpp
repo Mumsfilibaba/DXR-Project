@@ -490,7 +490,7 @@ void FConsole::AddCandidateRow(const TPair<IConsoleObject*, String>& Candidate, 
     const FConsoleCandidateText RowText  = GetCandidateText(Candidate);
     const FFloatColor           RowColor = bIsSelected ? FFloatColor::White : CandidateDetailColor;
 
-    const auto MakeCell = [this](const String& CellText, const FFloatColor& CellColor, int32 ColumnWidth)
+    const auto CreateCell = [this](const String& CellText, const FFloatColor& CellColor, int32 ColumnWidth)
     {
         FTextBlock::FDesc CellDesc;
         CellDesc.Text            = CellText;
@@ -501,11 +501,11 @@ void FConsole::AddCandidateRow(const TPair<IConsoleObject*, String>& Candidate, 
     };
 
     TSharedPtr<FHorizontalBox> Row = FHorizontalBox::Create();
-    Row->AddSlot(MakeCell(RowText.Name, RowColor, Columns.NameWidth));
-    Row->AddSlot(MakeCell(RowText.Value, CandidateDetailColor, Columns.ValueWidth));
-    Row->AddSlot(MakeCell(RowText.Type, CandidateDetailColor, Columns.TypeWidth));
-    Row->AddSlot(MakeCell(RowText.SetBy, CandidateDetailColor, Columns.SetByWidth));
-    Row->AddSlot(MakeCell(RowText.Help, CandidateDetailColor, 0));
+    Row->AddSlot(CreateCell(RowText.Name, RowColor, Columns.NameWidth));
+    Row->AddSlot(CreateCell(RowText.Value, CandidateDetailColor, Columns.ValueWidth));
+    Row->AddSlot(CreateCell(RowText.Type, CandidateDetailColor, Columns.TypeWidth));
+    Row->AddSlot(CreateCell(RowText.SetBy, CandidateDetailColor, Columns.SetByWidth));
+    Row->AddSlot(CreateCell(RowText.Help, CandidateDetailColor, 0));
 
     FBorder::FDesc SelectionDesc;
     SelectionDesc.BackgroundColor = bIsSelected ? SelectedCandidateColor : FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);

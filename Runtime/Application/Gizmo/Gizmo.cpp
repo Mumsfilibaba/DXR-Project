@@ -46,12 +46,12 @@ static FFloatColor GetSelectionColor()
     return FFloatColor(1.0f, 0.78f, 0.16f, 1.0f);
 }
 
-static EGizmoHandle MakeHandle(EGizmoHandle First, int32 Offset)
+static EGizmoHandle CreateHandle(EGizmoHandle First, int32 Offset)
 {
     return static_cast<EGizmoHandle>(static_cast<uint8>(First) + static_cast<uint8>(Offset));
 }
 
-static Matrix4 MakeAxisAngleRotation(const Vector3& Axis, float AngleRadians)
+static Matrix4 CreateAxisAngleRotation(const Vector3& Axis, float AngleRadians)
 {
     const Vector3 RotatedX = Vector3(1.0f, 0.0f, 0.0f).GetRotated(Axis, AngleRadians);
     const Vector3 RotatedY = Vector3(0.0f, 1.0f, 0.0f).GetRotated(Axis, AngleRadians);
@@ -122,7 +122,7 @@ FGizmo::FGizmo()
     , Readout()
     , ScreenFactor(1.0f)
     , bIsOrthographic(false)
-    , bIsVisible(true)
+    , bIsProjected(true)
     , OnTransformChangedDelegate()
     , OnDragStartedDelegate()
     , OnDragFinishedDelegate()
@@ -166,7 +166,7 @@ int32 FGizmo::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& Ou
 {
     UNREFERENCED_VARIABLE(AllottedGeometry);
 
-    if (!bIsVisible)
+    if (!bIsProjected)
     {
         return LayerId;
     }
@@ -210,7 +210,7 @@ FEventResponse FGizmo::OnMouseMove(const FCursorEvent& CursorEvent)
 
 FEventResponse FGizmo::OnMouseButtonDown(const FCursorEvent& CursorEvent)
 {
-    if (CursorEvent.GetKey() != Keys::MouseButtonLeft || !bIsVisible)
+    if (CursorEvent.GetKey() != Keys::MouseButtonLeft || !bIsProjected)
     {
         return FEventResponse::Unhandled();
     }
@@ -342,7 +342,7 @@ void FGizmo::UpdateContext()
     ScreenFactor = FGizmoMath::ComputeScreenFactor(ViewProjectionMatrix, CameraRight, Pivot, SizeInClipSpace);
 
     Vector2 PivotClient;
-    bIsVisible = FGizmoMath::WorldToClient(ViewProjectionMatrix, GetContentRectangle(), Pivot, PivotClient);
+    bIsProjected = FGizmoMath::WorldToClient(ViewProjectionMatrix, GetContentRectangle(), Pivot, PivotClient);
 
     if (IsDragging())
     {
@@ -397,7 +397,7 @@ void FGizmo::ComputeAxisVisibility()
 
 EGizmoHandle FGizmo::HitTest(const IntVector2& ClientPosition) const
 {
-    if (!bIsVisible)
+    if (!bIsProjected)
     {
         return EGizmoHandle::None;
     }
@@ -454,7 +454,7 @@ EGizmoHandle FGizmo::HitTest(const IntVector2& ClientPosition) const
             if (Depth < NearestDepth)
             {
                 NearestDepth  = Depth;
-                NearestHandle = MakeHandle(EGizmoHandle::RotateX, AxisIndex);
+                NearestHandle = CreateHandle(EGizmoHandle::RotateX, AxisIndex);
             }
         }
 
@@ -491,7 +491,7 @@ EGizmoHandle FGizmo::HitTest(const IntVector2& ClientPosition) const
             Vector2 Quad[4];
             if (bPlaneVisible[AxisIndex] && GetPlaneQuad(AxisIndex, Quad) && FGizmoMath::IsPointOverQuad(Point, Quad, FGizmoMath::PlaneGrabPadding))
             {
-                return MakeHandle(EGizmoHandle::TranslateYZ, AxisIndex);
+                return CreateHandle(EGizmoHandle::TranslateYZ, AxisIndex);
             }
         }
     }
@@ -508,7 +508,7 @@ EGizmoHandle FGizmo::HitTest(const IntVector2& ClientPosition) const
 
         if (FGizmoMath::DistanceToSegment(Point, Start, End) <= FGizmoMath::AxisGrabDistance)
         {
-            return MakeHandle(bIsTranslate ? EGizmoHandle::TranslateX : EGizmoHandle::ScaleX, AxisIndex);
+            return CreateHandle(bIsTranslate ? EGizmoHandle::TranslateX : EGizmoHandle::ScaleX, AxisIndex);
         }
     }
 
@@ -741,7 +741,7 @@ void FGizmo::UpdateDrag(const IntVector2& ClientPosition)
         }
 
         const Vector3 RotationAxis = IsRotateHandle(ActiveHandle) && AxisIndex >= 0 ? Axes[AxisIndex] : ViewDirection;
-        const Matrix4 Rotation     = MakeAxisAngleRotation(RotationAxis, Applied);
+        const Matrix4 Rotation     = CreateAxisAngleRotation(RotationAxis, Applied);
 
         const Matrix4 AboutPivot = Matrix4::Translation(-DragPlanePoint) * Rotation * Matrix4::Translation(DragPlanePoint);
 
@@ -828,7 +828,7 @@ void FGizmo::DrawTranslate(FDrawCommandList& OutCommandList, int32 LayerId) cons
             continue;
         }
 
-        const FFloatColor Color = GetHandleColor(MakeHandle(EGizmoHandle::TranslateYZ, AxisIndex), AxisIndex);
+        const FFloatColor Color = GetHandleColor(CreateHandle(EGizmoHandle::TranslateYZ, AxisIndex), AxisIndex);
 
         FFloatColor FillColor = Color;
         FillColor.A *= GIZMO_PLANE_OPACITY;
@@ -847,7 +847,7 @@ void FGizmo::DrawTranslate(FDrawCommandList& OutCommandList, int32 LayerId) cons
             continue;
         }
 
-        const FFloatColor Color = GetHandleColor(MakeHandle(EGizmoHandle::TranslateX, AxisIndex), AxisIndex);
+        const FFloatColor Color = GetHandleColor(CreateHandle(EGizmoHandle::TranslateX, AxisIndex), AxisIndex);
         OutCommandList.AddLine(LayerId + 1, Start, End, Color, GIZMO_SHAFT_THICKNESS);
 
         const Vector2 Along  = (End - Start).GetNormalized();
@@ -876,7 +876,7 @@ void FGizmo::DrawRotate(FDrawCommandList& OutCommandList, int32 LayerId) const
             continue;
         }
 
-        const FFloatColor Color = GetHandleColor(MakeHandle(EGizmoHandle::RotateX, AxisIndex), AxisIndex);
+        const FFloatColor Color = GetHandleColor(CreateHandle(EGizmoHandle::RotateX, AxisIndex), AxisIndex);
         OutCommandList.AddPolyline(LayerId + 1, Points, Color, GIZMO_RING_THICKNESS, true);
     }
 
@@ -931,7 +931,7 @@ void FGizmo::DrawScale(FDrawCommandList& OutCommandList, int32 LayerId) const
             continue;
         }
 
-        const FFloatColor Color = GetHandleColor(MakeHandle(EGizmoHandle::ScaleX, AxisIndex), AxisIndex);
+        const FFloatColor Color = GetHandleColor(CreateHandle(EGizmoHandle::ScaleX, AxisIndex), AxisIndex);
         OutCommandList.AddLine(LayerId + 1, Start, End, Color, GIZMO_SHAFT_THICKNESS);
 
         const FRectangle Knob(

@@ -143,6 +143,14 @@ public:
     NODISCARD bool IsPanelDocked(const String& PanelId) const;
 
     /**
+     * @brief Gets whether a panel's content is on screen, which a docked panel behind another tab is not.
+     *
+     * @param PanelId The panel to look for.
+     * @return True when the tree holds it and it is the front tab of its strip.
+     */
+    NODISCARD bool IsPanelVisible(const String& PanelId) const;
+
+    /**
      * @brief Gets every id the area knows about, whether or not the tree holds it.
      *
      * @return The registered ids, in no order the caller should rely on.

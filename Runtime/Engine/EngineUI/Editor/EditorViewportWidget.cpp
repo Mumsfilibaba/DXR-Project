@@ -1551,6 +1551,14 @@ void FEditorViewportWidget::ResetInputState()
     PendingCameraInput        = FEditorCameraInputState();
 }
 
+void FEditorViewportWidget::FocusOnActor(FActor* Actor)
+{
+    if (Actor && CameraController)
+    {
+        CameraController->FocusOn(Actor);
+    }
+}
+
 bool FEditorViewportWidget::ComputeViewportPixel(const ImVec2& ImageMin, const ImVec2& ImageSize, uint32& OutPixelX, uint32& OutPixelY) const
 {
     const ImVec2 MousePos = ImGui::GetMousePos();

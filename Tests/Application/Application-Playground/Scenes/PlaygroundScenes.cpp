@@ -13,6 +13,7 @@ void CreatePlaygroundScenes(const FPlaygroundFonts& Fonts, TArray<FPlaygroundSce
     OutScenes.Add(CreateToolBarScene(Fonts));
     OutScenes.Add(CreateNodeGraphScene(Fonts));
     OutScenes.Add(CreateGizmoScene(Fonts));
+    OutScenes.Add(CreateEditorElementsScene(Fonts));
     OutScenes.Add(CreateConsoleScene(Fonts));
     OutScenes.Add(CreateTextScene(Fonts));
 }

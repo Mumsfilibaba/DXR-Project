@@ -45,7 +45,7 @@ struct APPLICATION_API FDockNode
      * @param InTabIds The panels, in tab order.
      * @return The new node.
      */
-    NODISCARD static FDockNode MakeTabs(const TArray<String>& InTabIds);
+    NODISCARD static FDockNode CreateTabs(const TArray<String>& InTabIds);
 
     /**
      * @brief Builds a split of two children, sharing their space evenly.
@@ -55,7 +55,7 @@ struct APPLICATION_API FDockNode
      * @param Second        The child at the right or the bottom.
      * @return The new node.
      */
-    NODISCARD static FDockNode MakeSplit(EDockSplitOrientation InOrientation, const FDockNode& First, const FDockNode& Second);
+    NODISCARD static FDockNode CreateSplit(EDockSplitOrientation InOrientation, const FDockNode& First, const FDockNode& Second);
 
     FDockNode();
     FDockNode(const FDockNode& Other);

@@ -8,9 +8,15 @@
 #include <Application/Draw/DrawCommandList.h>
 #include <Application/Elements/Button.h>
 #include <Application/Elements/CheckBox.h>
+#include <Application/Elements/EditableText.h>
+#include <Application/Elements/Expander.h>
+#include <Application/Elements/Histogram.h>
+#include <Application/Elements/NumericEntry.h>
 #include <Application/Elements/Overlay.h>
+#include <Application/Elements/ProgressBar.h>
 #include <Application/Elements/ScrollBar.h>
 #include <Application/Elements/ScrollBox.h>
+#include <Application/Elements/SearchBox.h>
 #include <Application/Elements/Separator.h>
 #include <Application/Elements/Slider.h>
 #include <Application/Elements/Spacer.h>
@@ -739,6 +745,534 @@ bool SpacerSeparatorControl_Test()
     TEST_EXPECT(InsetLine != nullptr);
     TEST_EXPECT_EQ(InsetLine->Bounds.Position.X, 10);
     TEST_EXPECT_EQ(InsetLine->Bounds.Width, 180);
+
+    TEST_END();
+}
+
+bool ExpanderControl_Test()
+{
+    TEST_BEGIN();
+
+    constexpr int32 HeaderHeight = 20;
+
+    const FMargin ContentPadding(12, 4, 4, 4);
+
+    TArray<bool> StateChanges;
+
+    FTextBlock::FDesc ContentDesc;
+    ContentDesc.Text = "Body";
+    ContentDesc.Font = CreateFont();
+
+    TSharedPtr<FTextBlock> Content = FTextBlock::Create(ContentDesc);
+
+    FExpander::FDesc Desc;
+    Desc.Label          = "Section";
+    Desc.Font           = CreateFont();
+    Desc.Content        = Content;
+    Desc.bIsExpanded    = false;
+    Desc.HeaderHeight   = HeaderHeight;
+    Desc.ContentPadding = ContentPadding;
+    Desc.OnStateChanged = FOnExpanderStateChanged::CreateLambda([&StateChanges](bool bNewState) { StateChanges.Add(bNewState); });
+
+    TSharedPtr<FExpander> Expander = FExpander::Create(Desc);
+    LayoutElement(Expander, FRectangle(IntVector2(0, 0), 200, 100));
+
+    TEST_SECTION("A closed section asks only for the height of its header");
+    const IntVector2 ClosedSize = Expander->GetCachedDesiredSize();
+    TEST_EXPECT_EQ(ClosedSize.Y, HeaderHeight);
+
+    TEST_SECTION("The content is measured even while the section is closed, so opening it needs no further pass");
+    TEST_EXPECT_EQ(Content->GetCachedDesiredSize().X, 4 * 8);
+    TEST_EXPECT_EQ(Content->GetCachedDesiredSize().Y, 16);
+
+    TEST_SECTION("Clicking the header opens the section and reports the state it moved to, once");
+    Expander->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(20, 10)));
+
+    TEST_EXPECT(Expander->IsExpanded());
+    TEST_EXPECT_EQ(StateChanges.Size(), 1);
+    TEST_EXPECT(StateChanges[0]);
+
+    TEST_SECTION("An open one asks for the header, the content and the content padding together");
+    Expander->PrepareDesiredSize();
+
+    const IntVector2 OpenSize = Expander->GetCachedDesiredSize();
+    TEST_EXPECT_EQ(OpenSize.Y, HeaderHeight + Content->GetCachedDesiredSize().Y + ContentPadding.GetTotalVertical());
+    TEST_EXPECT_EQ(OpenSize.X, Math::Max(ClosedSize.X, Content->GetCachedDesiredSize().X + ContentPadding.GetTotalHorizontal()));
+
+    TEST_SECTION("Clicking it again closes the section");
+    Expander->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(20, 10)));
+
+    TEST_EXPECT(!Expander->IsExpanded());
+    TEST_EXPECT_EQ(StateChanges.Size(), 2);
+    TEST_EXPECT(!StateChanges[1]);
+
+    TEST_SECTION("A press below the header leaves the section as it was");
+    Expander->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(20, 60)));
+
+    TEST_EXPECT(!Expander->IsExpanded());
+    TEST_EXPECT_EQ(StateChanges.Size(), 2);
+
+    TEST_SECTION("Setting the state it already holds fires nothing, and setting the other one fires once");
+    Expander->SetExpanded(false);
+    TEST_EXPECT_EQ(StateChanges.Size(), 2);
+
+    Expander->SetExpanded(true);
+    TEST_EXPECT(Expander->IsExpanded());
+    TEST_EXPECT_EQ(StateChanges.Size(), 3);
+
+    TEST_SECTION("Setting the content takes its parent over, and the children hand it back");
+    TSharedPtr<FTextBlock> Replacement = FTextBlock::Create(ContentDesc);
+    Expander->SetContent(Replacement);
+
+    TArray<TSharedPtr<FVisualElement>> Children;
+    Expander->GetChildren(Children);
+
+    TEST_EXPECT_EQ(Children.Size(), 1);
+    TEST_EXPECT(Children[0] == StaticCastSharedPtr<FVisualElement>(Replacement));
+    TEST_EXPECT(Expander->GetContent() == StaticCastSharedPtr<FVisualElement>(Replacement));
+    TEST_EXPECT(Replacement->GetParentElement().Get() == Expander.Get());
+
+    TEST_SECTION("The label the header shows can be replaced afterwards");
+    Expander->SetLabel("Renamed");
+    TEST_EXPECT(Expander->GetLabel() == String("Renamed"));
+
+    TEST_END();
+}
+
+bool SearchBoxControl_Test()
+{
+    TEST_BEGIN();
+
+    const FRectangle Bounds(IntVector2(0, 0), 200, 24);
+
+    TArray<String> Changes;
+
+    FSearchBox::FDesc Desc;
+    Desc.HintText      = "Search";
+    Desc.Font          = CreateFont();
+    Desc.OnTextChanged = FOnSearchTextChanged::CreateLambda([&Changes](const String& NewText) { Changes.Add(NewText); });
+
+    TSharedPtr<FSearchBox> SearchBox = FSearchBox::Create(Desc);
+    LayoutElement(SearchBox, Bounds);
+
+    TEST_SECTION("A new box holds nothing, so there is no clear button to press");
+    TEST_EXPECT(SearchBox->IsEmpty());
+    TEST_EXPECT(SearchBox->GetText().IsEmpty());
+    TEST_EXPECT(SearchBox->GetClearButtonRectangle(Bounds).IsEmpty());
+
+    TEST_SECTION("The magnifier is left out of the layout while the description carried no brush for it");
+    TEST_EXPECT(SearchBox->GetSearchIconRectangle(Bounds).IsEmpty());
+
+    TEST_SECTION("The line the text is typed into is a child of the box");
+    TArray<TSharedPtr<FVisualElement>> Children;
+    SearchBox->GetChildren(Children);
+
+    TEST_EXPECT(SearchBox->GetEditor() != nullptr);
+    TEST_EXPECT_EQ(Children.Size(), 1);
+    TEST_EXPECT(Children[0] == StaticCastSharedPtr<FVisualElement>(SearchBox->GetEditor()));
+
+    TEST_SECTION("Setting the text fills the field and reports what it now holds");
+    SearchBox->SetText("Mesh");
+
+    TEST_EXPECT(!SearchBox->IsEmpty());
+    TEST_EXPECT(SearchBox->GetText() == String("Mesh"));
+    TEST_EXPECT_EQ(Changes.Size(), 1);
+    TEST_EXPECT(Changes[0] == String("Mesh"));
+
+    TEST_SECTION("The clear button becomes real once there is text to clear, and sits inside the field");
+    const FRectangle ClearBounds = SearchBox->GetClearButtonRectangle(Bounds);
+    TEST_EXPECT(!ClearBounds.IsEmpty());
+    TEST_EXPECT(ClearBounds.GetRight() <= Bounds.GetRight());
+
+    TEST_SECTION("Clicking it empties the field and reports that too");
+    SearchBox->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, ClearBounds.GetCenter()));
+
+    TEST_EXPECT(SearchBox->IsEmpty());
+    TEST_EXPECT_EQ(Changes.Size(), 2);
+    TEST_EXPECT(Changes[1].IsEmpty());
+    TEST_EXPECT(SearchBox->GetClearButtonRectangle(Bounds).IsEmpty());
+
+    TEST_SECTION("Clearing it outright does the same without the click");
+    SearchBox->SetText("Material");
+    TEST_EXPECT(!SearchBox->IsEmpty());
+    TEST_EXPECT_EQ(Changes.Size(), 3);
+
+    SearchBox->ClearText();
+    TEST_EXPECT(SearchBox->IsEmpty());
+    TEST_EXPECT_EQ(Changes.Size(), 4);
+    TEST_EXPECT(Changes[3].IsEmpty());
+
+    TEST_END();
+}
+
+bool NumericEntryControl_Test()
+{
+    TEST_BEGIN();
+
+    const FRectangle Bounds(IntVector2(0, 0), 120, 24);
+    const int32      Travel = FNumericEntryFloat::ScrubThreshold + 7;
+
+    TArray<float> FloatChanges;
+
+    FNumericEntryFloat::FDesc FloatDesc;
+    FloatDesc.Label          = "X";
+    FloatDesc.Font           = CreateFont();
+    FloatDesc.MinValue       = -100.0f;
+    FloatDesc.MaxValue       = 100.0f;
+    FloatDesc.Step           = 0.5f;
+    FloatDesc.OnValueChanged = FNumericEntryFloat::FOnValueChanged::CreateLambda([&FloatChanges](float NewValue) { FloatChanges.Add(NewValue); });
+
+    TSharedPtr<FNumericEntryFloat> FloatEntry = FNumericEntryFloat::Create(FloatDesc);
+    LayoutElement(FloatEntry, Bounds);
+
+    TEST_SECTION("A value pushed in from the host is clamped to the range and reports nothing back");
+    FloatEntry->SetValue(500.0f);
+    TEST_EXPECT_EQ(FloatEntry->GetValue(), 100.0f);
+
+    FloatEntry->SetValue(-500.0f);
+    TEST_EXPECT_EQ(FloatEntry->GetValue(), -100.0f);
+
+    FloatEntry->SetValue(0.0f);
+    TEST_EXPECT_EQ(FloatEntry->GetValue(), 0.0f);
+    TEST_EXPECT_EQ(FloatChanges.Size(), 0);
+
+    TEST_SECTION("A drag past the scrub threshold moves the value by the travel times the step, and reports it");
+    DragThrough(FloatEntry, IntVector2(40, 12), { IntVector2(40 + Travel, 12) });
+
+    const float ScrubbedValue = static_cast<float>(Travel) * FloatDesc.Step;
+    TEST_EXPECT(Math::Abs(FloatEntry->GetValue() - ScrubbedValue) < 0.001f);
+    TEST_EXPECT_EQ(FloatChanges.Size(), 1);
+    TEST_EXPECT(Math::Abs(FloatChanges[0] - ScrubbedValue) < 0.001f);
+    TEST_EXPECT(!FloatEntry->IsScrubbing());
+
+    TEST_SECTION("A drag shorter than the threshold is a click rather than a scrub, so the value stands still");
+    DragThrough(FloatEntry, IntVector2(40, 12), { IntVector2(40 + FNumericEntryFloat::ScrubThreshold - 1, 12) });
+
+    TEST_EXPECT(Math::Abs(FloatEntry->GetValue() - ScrubbedValue) < 0.001f);
+    TEST_EXPECT_EQ(FloatChanges.Size(), 1);
+
+    TEST_SECTION("The coloured tag takes the label width at the left, and the value the room beside it");
+    const FRectangle LabelBounds = FloatEntry->GetLabelRectangle(Bounds);
+    TEST_EXPECT_EQ(LabelBounds.Position.X, Bounds.Position.X);
+    TEST_EXPECT_EQ(LabelBounds.Width, FloatDesc.LabelWidth);
+    TEST_EXPECT_EQ(LabelBounds.Height, Bounds.Height);
+
+    const FRectangle EditorBounds = FloatEntry->GetEditorRectangle(Bounds);
+    TEST_EXPECT_EQ(EditorBounds.Position.X, LabelBounds.GetRight() + FNumericEntryFloat::TextInset);
+    TEST_EXPECT_EQ(EditorBounds.GetRight(), Bounds.GetRight() - FNumericEntryFloat::TextInset);
+    TEST_EXPECT_EQ(EditorBounds.Height, Bounds.Height);
+
+    TEST_SECTION("Hiding the tag empties its rectangle and hands the value the whole field");
+    FNumericEntryFloat::FDesc HiddenDesc;
+    HiddenDesc.Font       = CreateFont();
+    HiddenDesc.bShowLabel = false;
+
+    TSharedPtr<FNumericEntryFloat> Hidden = FNumericEntryFloat::Create(HiddenDesc);
+    LayoutElement(Hidden, Bounds);
+
+    TEST_EXPECT(Hidden->GetLabelRectangle(Bounds).IsEmpty());
+    TEST_EXPECT_EQ(Hidden->GetEditorRectangle(Bounds).Position.X, Bounds.Position.X + FNumericEntryFloat::TextInset);
+
+    TEST_SECTION("The field never asks to be narrower than its minimum width");
+    TEST_EXPECT_EQ(Hidden->GetCachedDesiredSize().X, FNumericEntryFloat::MinWidth);
+    TEST_EXPECT(FloatEntry->GetCachedDesiredSize().X >= FNumericEntryFloat::MinWidth);
+
+    TEST_SECTION("An integer field is the same thing counting in whole steps");
+    TArray<int32> IntChanges;
+
+    FNumericEntryInt::FDesc IntDesc;
+    IntDesc.Label          = "Y";
+    IntDesc.Font           = CreateFont();
+    IntDesc.MinValue       = -100;
+    IntDesc.MaxValue       = 100;
+    IntDesc.Step           = 2;
+    IntDesc.OnValueChanged = FNumericEntryInt::FOnValueChanged::CreateLambda([&IntChanges](int32 NewValue) { IntChanges.Add(NewValue); });
+
+    TSharedPtr<FNumericEntryInt> IntEntry = FNumericEntryInt::Create(IntDesc);
+    LayoutElement(IntEntry, Bounds);
+
+    IntEntry->SetValue(1000);
+    TEST_EXPECT_EQ(IntEntry->GetValue(), 100);
+
+    IntEntry->SetValue(0);
+    TEST_EXPECT_EQ(IntChanges.Size(), 0);
+
+    DragThrough(IntEntry, IntVector2(40, 12), { IntVector2(40 + Travel, 12) });
+
+    TEST_EXPECT_EQ(IntEntry->GetValue(), Travel * IntDesc.Step);
+    TEST_EXPECT_EQ(IntChanges.Size(), 1);
+    TEST_EXPECT_EQ(IntChanges[0], Travel * IntDesc.Step);
+    TEST_EXPECT(IntEntry->GetCachedDesiredSize().X >= FNumericEntryInt::MinWidth);
+
+    TEST_SECTION("A maximum set below the minimum is raised to it, so the range holds the one value");
+    FNumericEntryInt::FDesc InvertedDesc;
+    InvertedDesc.Font     = CreateFont();
+    InvertedDesc.MinValue = 5;
+    InvertedDesc.MaxValue = 1;
+    InvertedDesc.Value    = 0;
+
+    TSharedPtr<FNumericEntryInt> Inverted = FNumericEntryInt::Create(InvertedDesc);
+    TEST_EXPECT_EQ(Inverted->GetValue(), 5);
+
+    Inverted->SetValue(1000);
+    TEST_EXPECT_EQ(Inverted->GetValue(), 5);
+
+    Inverted->SetValue(-1000);
+    TEST_EXPECT_EQ(Inverted->GetValue(), 5);
+
+    TEST_SECTION("Enter on the line of text reads the typed value back and reports it");
+    FloatEntry->SetValue(0.0f);
+    const int32 ChangesBeforeCommit = FloatChanges.Size();
+
+    FloatEntry->GetEditor()->SetText("12.5");
+    FloatEntry->GetEditor()->OnKeyDown(FKeyEvent(EInputEventType::KeyDown, Keys::Enter, FModifierKeyState(), false, true));
+
+    TEST_EXPECT(Math::Abs(FloatEntry->GetValue() - 12.5f) < 0.001f);
+    TEST_EXPECT_EQ(FloatChanges.Size(), ChangesBeforeCommit + 1);
+
+    TEST_SECTION("Committing rewrites the line in the form the field formats values in");
+    TEST_EXPECT(FloatEntry->GetEditor()->GetText() == String("12.500"));
+
+    TEST_SECTION("A typed value outside the range is clamped the same way a pushed one is");
+    FloatEntry->GetEditor()->SetText("999");
+    FloatEntry->GetEditor()->OnKeyDown(FKeyEvent(EInputEventType::KeyDown, Keys::Enter, FModifierKeyState(), false, true));
+
+    TEST_EXPECT_EQ(FloatEntry->GetValue(), 100.0f);
+
+    TEST_SECTION("Committing a value the field already holds reports nothing");
+    const int32 ChangesBeforeRepeat = FloatChanges.Size();
+
+    FloatEntry->GetEditor()->SetText("100");
+    FloatEntry->GetEditor()->OnKeyDown(FKeyEvent(EInputEventType::KeyDown, Keys::Enter, FModifierKeyState(), false, true));
+
+    TEST_EXPECT_EQ(FloatEntry->GetValue(), 100.0f);
+    TEST_EXPECT_EQ(FloatChanges.Size(), ChangesBeforeRepeat);
+
+    TEST_SECTION("Text that names no number parses as zero, which the range then clamps");
+    FloatEntry->GetEditor()->SetText("not a number");
+    FloatEntry->GetEditor()->OnKeyDown(FKeyEvent(EInputEventType::KeyDown, Keys::Enter, FModifierKeyState(), false, true));
+
+    TEST_EXPECT_EQ(FloatEntry->GetValue(), 0.0f);
+
+    TEST_SECTION("An integer line commits the same way, and the step does not quantize what was typed");
+    IntEntry->SetValue(0);
+    const int32 IntChangesBeforeCommit = IntChanges.Size();
+
+    IntEntry->GetEditor()->SetText("7");
+    IntEntry->GetEditor()->OnKeyDown(FKeyEvent(EInputEventType::KeyDown, Keys::Enter, FModifierKeyState(), false, true));
+
+    TEST_EXPECT_EQ(IntEntry->GetValue(), 7);
+    TEST_EXPECT_EQ(IntChanges.Size(), IntChangesBeforeCommit + 1);
+    TEST_EXPECT(IntEntry->GetEditor()->GetText() == String("7"));
+
+    TEST_END();
+}
+
+bool ProgressBarControl_Test()
+{
+    TEST_BEGIN();
+
+    constexpr int32 PreferredHeight = 20;
+
+    const FRectangle Bounds(IntVector2(0, 0), 200, PreferredHeight);
+
+    FProgressBar::FDesc Desc;
+    Desc.Percent         = 0.25f;
+    Desc.PreferredHeight = PreferredHeight;
+
+    TSharedPtr<FProgressBar> ProgressBar = FProgressBar::Create(Desc);
+    LayoutElement(ProgressBar, Bounds);
+
+    TEST_SECTION("The bar asks for its preferred height and leaves the width to whatever holds it");
+    TEST_EXPECT_EQ(ProgressBar->GetCachedDesiredSize().Y, PreferredHeight);
+    TEST_EXPECT_EQ(ProgressBar->GetCachedDesiredSize().X, 0);
+
+    TEST_SECTION("A percent pushed in from outside is clamped between empty and full");
+    ProgressBar->SetPercent(-1.0f);
+    TEST_EXPECT_EQ(ProgressBar->GetPercent(), 0.0f);
+
+    ProgressBar->SetPercent(4.0f);
+    TEST_EXPECT_EQ(ProgressBar->GetPercent(), 1.0f);
+
+    TEST_SECTION("The fill is drawn over the track and takes the share of it the percent names");
+    ProgressBar->SetPercent(0.25f);
+
+    FDrawCommandList QuarterCommands;
+    DrawElement(ProgressBar, QuarterCommands);
+
+    TEST_EXPECT_EQ(CountCommands(QuarterCommands, EDrawCommandType::Box), 2);
+
+    const FDrawCommand* Track = FindFirstBox(QuarterCommands);
+    TEST_EXPECT(Track != nullptr);
+    TEST_EXPECT_EQ(Track->Bounds.Width, Bounds.Width);
+
+    TEST_EXPECT_EQ(QuarterCommands[1].Bounds.Width, Bounds.Width / 4);
+    TEST_EXPECT_EQ(QuarterCommands[1].Bounds.Position.X, Bounds.Position.X);
+    TEST_EXPECT_EQ(QuarterCommands[1].Bounds.Height, Bounds.Height);
+
+    TEST_SECTION("A bar at zero percent draws no fill at all");
+    ProgressBar->SetPercent(0.0f);
+
+    FDrawCommandList EmptyCommands;
+    DrawElement(ProgressBar, EmptyCommands);
+    TEST_EXPECT_EQ(CountCommands(EmptyCommands, EDrawCommandType::Box), 1);
+
+    TEST_SECTION("A new fill color is the one that reaches the command list");
+    ProgressBar->SetPercent(0.5f);
+    ProgressBar->SetFillColor(FFloatColor::Red);
+
+    FDrawCommandList RedCommands;
+    DrawElement(ProgressBar, RedCommands);
+
+    TEST_EXPECT_EQ(CountCommands(RedCommands, EDrawCommandType::Box), 2);
+    TEST_EXPECT(RedCommands[1].Tint == FFloatColor::Red);
+
+    TEST_SECTION("The overlay text waits for a font before there is anything to draw it with");
+    ProgressBar->SetOverlayText("50%");
+    TEST_EXPECT(ProgressBar->GetOverlayText() == String("50%"));
+
+    FDrawCommandList FontlessCommands;
+    DrawElement(ProgressBar, FontlessCommands);
+    TEST_EXPECT_EQ(CountCommands(FontlessCommands, EDrawCommandType::Text), 0);
+
+    FProgressBar::FDesc LabelledDesc;
+    LabelledDesc.Percent         = 0.5f;
+    LabelledDesc.OverlayText     = "50%";
+    LabelledDesc.Font            = CreateFont();
+    LabelledDesc.PreferredHeight = PreferredHeight;
+
+    TSharedPtr<FProgressBar> Labelled = FProgressBar::Create(LabelledDesc);
+    LayoutElement(Labelled, Bounds);
+
+    FDrawCommandList LabelledCommands;
+    DrawElement(Labelled, LabelledCommands);
+    TEST_EXPECT_EQ(CountCommands(LabelledCommands, EDrawCommandType::Text), 1);
+
+    TEST_END();
+}
+
+bool HistogramControl_Test()
+{
+    TEST_BEGIN();
+
+    constexpr int32 Capacity = 4;
+
+    const FUIStyle&  Style  = FUIStyle::GetDefault();
+    const FRectangle Bounds(IntVector2(0, 0), 200, 64);
+
+    FHistogram::FDesc Desc;
+    Desc.Capacity        = Capacity;
+    Desc.PreferredHeight = Bounds.Height;
+    Desc.MinValue        = 0.0f;
+    Desc.MaxValue        = 0.0f;
+    Desc.bAutoScale      = true;
+
+    TSharedPtr<FHistogram> Histogram = FHistogram::Create(Desc);
+    LayoutElement(Histogram, Bounds);
+
+    TEST_SECTION("A new strip holds nothing and reads back nothing");
+    TEST_EXPECT_EQ(Histogram->GetNumSamples(), 0);
+    TEST_EXPECT_EQ(Histogram->GetLatest(), 0.0f);
+    TEST_EXPECT_EQ(Histogram->GetAverage(), 0.0f);
+    TEST_EXPECT_EQ(Histogram->GetMaximum(), 0.0f);
+    TEST_EXPECT_EQ(Histogram->GetHoveredSample(), FHistogram::InvalidSampleIndex);
+
+    TEST_SECTION("Samples are appended one after another until the buffer is full");
+    for (int32 Index = 0; Index < Capacity; ++Index)
+    {
+        Histogram->AddSample(static_cast<float>(Index + 1));
+    }
+
+    TEST_EXPECT_EQ(Histogram->GetNumSamples(), Capacity);
+    TEST_EXPECT_EQ(Histogram->GetSample(0), 1.0f);
+    TEST_EXPECT_EQ(Histogram->GetLatest(), static_cast<float>(Capacity));
+
+    TEST_SECTION("Past the capacity the oldest is dropped rather than the count growing");
+    Histogram->AddSample(static_cast<float>(Capacity + 1));
+
+    TEST_EXPECT_EQ(Histogram->GetNumSamples(), Capacity);
+    TEST_EXPECT_EQ(Histogram->GetSample(0), 2.0f);
+    TEST_EXPECT_EQ(Histogram->GetLatest(), 5.0f);
+
+    TEST_SECTION("The mean and the largest are read off what is still held");
+    TEST_EXPECT(Math::Abs(Histogram->GetAverage() - 3.5f) < 0.001f);
+    TEST_EXPECT_EQ(Histogram->GetMaximum(), 5.0f);
+
+    TEST_SECTION("An index outside what is held reads back zero");
+    TEST_EXPECT_EQ(Histogram->GetSample(-1), 0.0f);
+    TEST_EXPECT_EQ(Histogram->GetSample(Capacity), 0.0f);
+
+    TEST_SECTION("Clearing drops every sample and leaves the strip reading back nothing");
+    Histogram->Clear();
+
+    TEST_EXPECT_EQ(Histogram->GetNumSamples(), 0);
+    TEST_EXPECT_EQ(Histogram->GetSample(0), 0.0f);
+    TEST_EXPECT_EQ(Histogram->GetLatest(), 0.0f);
+
+    TEST_SECTION("With auto-scaling on the bars stand against the tallest sample held rather than against the range");
+    Histogram->AddSample(5.0f);
+    Histogram->AddSample(10.0f);
+
+    FDrawCommandList AutoScaledCommands;
+    DrawElement(Histogram, AutoScaledCommands);
+
+    TArray<int32> AutoScaledBars;
+    for (const FDrawCommand& Command : AutoScaledCommands.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::Box && Command.Tint == Style.Colors.Accent)
+        {
+            AutoScaledBars.Add(Command.Bounds.Height);
+        }
+    }
+
+    TEST_EXPECT_EQ(AutoScaledBars.Size(), 2);
+    TEST_EXPECT_EQ(AutoScaledBars[1], Bounds.Height);
+    TEST_EXPECT_EQ(AutoScaledBars[0], Bounds.Height / 2);
+
+    TEST_SECTION("A draw puts the strip down first and then one bar for every sample held");
+    Histogram->AddSample(7.5f);
+
+    FDrawCommandList BarCommands;
+    DrawElement(Histogram, BarCommands);
+
+    TEST_EXPECT_EQ(Histogram->GetNumSamples(), 3);
+    TEST_EXPECT_EQ(CountCommands(BarCommands, EDrawCommandType::Box), 1 + Histogram->GetNumSamples());
+
+    TEST_SECTION("With auto-scaling off the same samples stand against the range that was set instead");
+    Histogram->SetAutoScale(false);
+    Histogram->SetRange(0.0f, 20.0f);
+
+    FDrawCommandList RangedCommands;
+    DrawElement(Histogram, RangedCommands);
+
+    int32 TallestRangedBar = 0;
+    for (const FDrawCommand& Command : RangedCommands.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::Box && Command.Tint == Style.Colors.Accent)
+        {
+            TallestRangedBar = Math::Max(TallestRangedBar, Command.Bounds.Height);
+        }
+    }
+
+    TEST_EXPECT_EQ(TallestRangedBar, Bounds.Height / 2);
+
+    TEST_SECTION("A maximum set below the minimum is raised to it, so the range collapses and no bar has any height");
+    Histogram->SetRange(20.0f, 10.0f);
+
+    FDrawCommandList CollapsedCommands;
+    DrawElement(Histogram, CollapsedCommands);
+    TEST_EXPECT_EQ(CountCommands(CollapsedCommands, EDrawCommandType::Box), 1);
+
+    TEST_SECTION("Moving over a bar names it, and leaving the strip puts that back");
+    Histogram->OnMouseMove(MakeMoveEvent(IntVector2(75, 30)));
+    TEST_EXPECT_EQ(Histogram->GetHoveredSample(), 1);
+
+    Histogram->OnMouseMove(MakeMoveEvent(IntVector2(900, 30)));
+    TEST_EXPECT_EQ(Histogram->GetHoveredSample(), FHistogram::InvalidSampleIndex);
+
+    Histogram->OnMouseMove(MakeMoveEvent(IntVector2(75, 30)));
+    Histogram->OnMouseLeft(MakeMoveEvent(IntVector2(75, 30)));
+    TEST_EXPECT_EQ(Histogram->GetHoveredSample(), FHistogram::InvalidSampleIndex);
 
     TEST_END();
 }

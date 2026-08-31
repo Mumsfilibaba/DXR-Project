@@ -51,6 +51,7 @@ FPlaygroundScene CreateOutputLogScene(const FPlaygroundFonts& Fonts);
 FPlaygroundScene CreateToolBarScene(const FPlaygroundFonts& Fonts);
 FPlaygroundScene CreateNodeGraphScene(const FPlaygroundFonts& Fonts);
 FPlaygroundScene CreateGizmoScene(const FPlaygroundFonts& Fonts);
+FPlaygroundScene CreateEditorElementsScene(const FPlaygroundFonts& Fonts);
 FPlaygroundScene CreateConsoleScene(const FPlaygroundFonts& Fonts);
 
 NODISCARD TSharedPtr<FConsole> GetPlaygroundConsole();

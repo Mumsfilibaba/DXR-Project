@@ -30,7 +30,6 @@ enum class EToolBarItemType : uint8
     Custom,
 };
 
-/** @brief What one entry shows, which is an icon, a label or both. */
 struct FToolBarItemDesc
 {
     FToolBarItemDesc()
@@ -125,6 +124,13 @@ public:
      * @param InState The state to move to.
      */
     void SetCheckState(ECheckBoxState InState);
+
+    /**
+     * @brief Sets the text the entry shows, which is how a transport control switches between Play and Stop.
+     *
+     * @param InLabel The text to show, empty for an icon-only entry.
+     */
+    void SetLabel(const String& InLabel);
 
     /**
      * @brief Sets what a click on the entry does.

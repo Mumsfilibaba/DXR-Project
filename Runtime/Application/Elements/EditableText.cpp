@@ -435,6 +435,11 @@ bool FEditableText::SupportsKeyboardFocus() const
     return true;
 }
 
+bool FEditableText::WantsTextInput() const
+{
+    return true;
+}
+
 void FEditableText::SetText(const String& InText)
 {
     Text               = InText;

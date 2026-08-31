@@ -71,6 +71,7 @@ public:
     virtual FEventResponse OnFocusLost() override;
     virtual bool GetCursor(ECursor& OutCursor) const override;
     virtual bool SupportsKeyboardFocus() const override;
+    virtual bool WantsTextInput() const override;
 
     /** @brief Replaces the text, clamps the text cursor and fires OnTextChanged. */
     void SetText(const String& InText);

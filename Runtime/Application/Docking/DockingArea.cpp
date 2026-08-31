@@ -321,7 +321,7 @@ void FDockingArea::DockPanel(const String& PanelId, const String& TargetPanelId,
 
     if (Root.IsEmpty())
     {
-        Root = FDockNode::MakeTabs({ PanelId });
+        Root = FDockNode::CreateTabs({ PanelId });
         RequestRebuild();
         return;
     }
@@ -439,6 +439,17 @@ TArray<String> FDockingArea::GetDockedPanelIds() const
 bool FDockingArea::IsPanelDocked(const String& PanelId) const
 {
     return Root.FindTabsNode(PanelId) != nullptr;
+}
+
+bool FDockingArea::IsPanelVisible(const String& PanelId) const
+{
+    const FDockNode* Node = Root.FindTabsNode(PanelId);
+    if (!Node || !Node->TabIds.IsValidIndex(Node->ActiveTabIndex))
+    {
+        return false;
+    }
+
+    return Node->TabIds[Node->ActiveTabIndex] == PanelId;
 }
 
 TArray<String> FDockingArea::GetRegisteredPanelIds() const
@@ -679,15 +690,15 @@ void FDockingArea::DockAgainstNode(FDockNode& TargetNode, const String& PanelId,
     const bool bIsLeading    = Direction == EDockDirection::Left || Direction == EDockDirection::Top;
 
     const FDockNode ExistingNode = TargetNode;
-    const FDockNode NewNode      = FDockNode::MakeTabs({ PanelId });
+    const FDockNode NewNode      = FDockNode::CreateTabs({ PanelId });
 
     const EDockSplitOrientation Orientation = Direction == EDockDirection::Center
         ? TargetNode.Orientation
         : (bIsHorizontal ? EDockSplitOrientation::Horizontal : EDockSplitOrientation::Vertical);
 
     TargetNode = bIsLeading
-        ? FDockNode::MakeSplit(Orientation, NewNode, ExistingNode)
-        : FDockNode::MakeSplit(Orientation, ExistingNode, NewNode);
+        ? FDockNode::CreateSplit(Orientation, NewNode, ExistingNode)
+        : FDockNode::CreateSplit(Orientation, ExistingNode, NewNode);
 }
 
 void FDockingArea::OnTabActivated(const String& PanelId)

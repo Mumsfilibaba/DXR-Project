@@ -96,8 +96,15 @@ static void LogStartupInformation()
     LOG_INFO("ProjectDir=%s", *Paths::GetProjectDir());
 }
 
+static TAutoConsoleVariable<int32> CVarExitAfterFrames(
+    "Engine.ExitAfterFrames",
+    "Requests exit once this many frames have been submitted, which is what makes a headless boot check possible. Zero runs until closed",
+    0,
+    EConsoleVariableFlags::Default);
+
 FEngineLoop::FEngineLoop()
     : FrameTimer()
+    , FrameCounter(0)
 {
 }
 
@@ -342,6 +349,14 @@ void FEngineLoop::Tick()
     FMemoryPagePool::Get().Tick();
     FPlatformEventPool::Get().Tick();
     FFrameProfiler::Get().Tick();
+
+    ++FrameCounter;
+
+    const int32 ExitAfterFrames = CVarExitAfterFrames.GetValue();
+    if (ExitAfterFrames > 0 && FrameCounter >= static_cast<uint64>(ExitAfterFrames))
+    {
+        RequestEngineExit("Engine.ExitAfterFrames reached");
+    }
 }
 
 void FEngineLoop::Release()

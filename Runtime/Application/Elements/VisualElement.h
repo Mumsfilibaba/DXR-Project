@@ -64,6 +64,14 @@ public:
     /** @brief Whether a click on this element should hand it the keyboard. The default is false. */
     virtual bool SupportsKeyboardFocus() const;
 
+    /**
+     * @brief Whether a keystroke reaching this element would be typed into it, which is what tells an
+     * application-level shortcut to stand aside rather than swallow the character.
+     *
+     * @return True for a field being edited, and false for everything else.
+     */
+    virtual bool WantsTextInput() const;
+
     /** @brief The element that takes the keyboard when this one is focused, which is itself unless overridden. */
     virtual TSharedPtr<FVisualElement> GetFocusTarget();
 

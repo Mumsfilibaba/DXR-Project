@@ -6,8 +6,10 @@
 
 #include <Core/Containers/SharedPtr.h>
 #include <Application/Draw/DrawCommandList.h>
+#include <Application/Elements/Spacer.h>
 #include <Application/Input/Keys.h>
 #include <Application/Menus/ComboBox.h>
+#include <Application/Menus/DragDropService.h>
 #include <Application/Menus/Menu.h>
 #include <Application/Menus/MenuAnchor.h>
 #include <Application/Menus/MenuBar.h>
@@ -17,13 +19,11 @@
 #include <Application/Style/UIStyle.h>
 #include <Application/Text/FixedWidthFontFace.h>
 
-/** @brief An eight by sixteen face, so every measurement in these tests is exact. */
 static TSharedPtr<IFontFace> CreateFont()
 {
     return MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 }
 
-/** @brief Takes the menu stack and the tool tip down while the application is still standing. */
 class FScopedMenuTestServices
 {
 public:
@@ -39,7 +39,6 @@ public:
     FScopedMenuTestServices& operator=(const FScopedMenuTestServices&) = delete;
 };
 
-/** @brief A menu of plainly labelled rows, which is enough for the placement and navigation tests. */
 static TSharedPtr<FMenu> CreateMenu(const TSharedPtr<IFontFace>& Font, const TArray<String>& Labels)
 {
     TSharedPtr<FMenu> Menu = FMenu::Create();
@@ -52,6 +51,15 @@ static TSharedPtr<FMenu> CreateMenu(const TSharedPtr<IFontFace>& Font, const TAr
     }
 
     return Menu;
+}
+
+static TSharedPtr<FVisualElement> CreateDropTarget(const FRectangle& ScreenBounds)
+{
+    TSharedPtr<FSpacer> Target = FSpacer::Create(ScreenBounds.GetSize());
+    Target->PrepareDesiredSize();
+    Target->Tick(ScreenBounds);
+
+    return Target;
 }
 
 static FCursorEvent MakeMoveEvent(const IntVector2& ClientPosition)
@@ -69,7 +77,6 @@ static FKeyEvent MakeKeyEvent(FKey Key)
     return FKeyEvent(EInputEventType::KeyDown, Key, FModifierKeyState(), false, true);
 }
 
-/** @brief Presses and releases in the middle of an element, which is one click end to end. */
 static void ClickElement(const TSharedPtr<FVisualElement>& Element)
 {
     const IntVector2 Center = Element->GetContentRectangle().GetCenter();
@@ -78,7 +85,6 @@ static void ClickElement(const TSharedPtr<FVisualElement>& Element)
     Element->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, Center));
 }
 
-/** @brief Counts how many commands of a type the list holds. */
 static int32 CountCommands(const FDrawCommandList& CommandList, EDrawCommandType Type)
 {
     int32 Count = 0;
@@ -93,13 +99,11 @@ static int32 CountCommands(const FDrawCommandList& CommandList, EDrawCommandType
     return Count;
 }
 
-/** @brief Draws an element that has already been arranged. */
 static void DrawElement(const TSharedPtr<FVisualElement>& Element, FDrawCommandList& OutCommandList)
 {
     Element->OnDraw(FDrawGeometry(Element->GetContentRectangle(), 1.0f), OutCommandList, 0);
 }
 
-/** @brief The menu at the top of the stack, which every test reaches for to check what opened. */
 static TSharedPtr<FMenu> GetTopMenu()
 {
     const TArray<TSharedPtr<FWindow>>& OpenMenus = FMenuStack::Get().GetOpenMenus();
@@ -727,6 +731,137 @@ bool ComboBoxControl_Test()
     ComboBox->SetOptions({ "One", "Two" });
     TEST_EXPECT_EQ(ComboBox->GetSelectedIndex(), -1);
     TEST_EXPECT(ComboBox->GetSelectedText() == String("None"));
+
+    TEST_END();
+}
+
+bool DragDropService_Test()
+{
+    TEST_BEGIN();
+
+    FDragDropService& DragDrop = FDragDropService::Get();
+
+    int32      DropCount    = 0;
+    String     DroppedType;
+    IntVector2 DropPosition = IntVector2(0, 0);
+
+    TSharedPtr<FVisualElement> Accepting = CreateDropTarget(FRectangle(IntVector2(100, 100), 200, 100));
+    TSharedPtr<FVisualElement> Refusing  = CreateDropTarget(FRectangle(IntVector2(400, 100), 200, 100));
+
+    DragDrop.RegisterTarget(Accepting, FOnDragDropped::CreateLambda([&](const FDragDropPayload& Payload, const IntVector2& ScreenPosition)
+    {
+        DropCount++;
+        DroppedType  = Payload.TypeId;
+        DropPosition = ScreenPosition;
+    }), FOnDragOver());
+
+    DragDrop.RegisterTarget(Refusing, FOnDragDropped(), FOnDragOver::CreateLambda([](const FDragDropPayload&) -> bool
+    {
+        return false;
+    }));
+
+    FDragDropPayload AssetPayload;
+    AssetPayload.TypeId      = "Asset";
+    AssetPayload.DisplayText = "Rock.mesh";
+
+    TEST_SECTION("A payload naming no type is not a drag, so beginning one is ignored");
+    FDragDropPayload Anonymous;
+    Anonymous.DisplayText = "Something";
+
+    DragDrop.BeginDrag(Anonymous, IntVector2(150, 150));
+    TEST_EXPECT(!DragDrop.IsDragging());
+    TEST_EXPECT(!DragDrop.HasTarget());
+
+    TEST_SECTION("A payload naming one starts the drag and is remembered with where the cursor was");
+    DragDrop.BeginDrag(AssetPayload, IntVector2(150, 150));
+    TEST_EXPECT(DragDrop.IsDragging());
+    TEST_EXPECT(DragDrop.GetPayload().TypeId == String("Asset"));
+    TEST_EXPECT(DragDrop.GetPayload().DisplayText == String("Rock.mesh"));
+    TEST_EXPECT_EQ(DragDrop.GetScreenPosition(), IntVector2(150, 150));
+    TEST_EXPECT(DragDrop.HasTarget());
+
+    TEST_SECTION("Moving the drag re-resolves the target as the cursor passes over one");
+    DragDrop.UpdateDrag(IntVector2(700, 400));
+    TEST_EXPECT_EQ(DragDrop.GetScreenPosition(), IntVector2(700, 400));
+    TEST_EXPECT(!DragDrop.HasTarget());
+
+    DragDrop.UpdateDrag(IntVector2(200, 150));
+    TEST_EXPECT(DragDrop.HasTarget());
+
+    TEST_SECTION("A target that will not take the payload is passed over rather than picked");
+    DragDrop.UpdateDrag(IntVector2(500, 150));
+    TEST_EXPECT(!DragDrop.HasTarget());
+
+    TEST_SECTION("Ending the drag hands the payload and the release point to the target under the cursor");
+    DragDrop.EndDrag(IntVector2(220, 160));
+    TEST_EXPECT_EQ(DropCount, 1);
+    TEST_EXPECT(DroppedType == String("Asset"));
+    TEST_EXPECT_EQ(DropPosition, IntVector2(220, 160));
+    TEST_EXPECT(!DragDrop.IsDragging());
+    TEST_EXPECT(!DragDrop.HasTarget());
+
+    TEST_SECTION("Ending it over nothing drops nothing and still ends the drag");
+    DragDrop.BeginDrag(AssetPayload, IntVector2(150, 150));
+    DragDrop.EndDrag(IntVector2(900, 900));
+    TEST_EXPECT_EQ(DropCount, 1);
+    TEST_EXPECT(!DragDrop.IsDragging());
+
+    TEST_SECTION("Cancelling ends the drag without firing anything");
+    DragDrop.BeginDrag(AssetPayload, IntVector2(150, 150));
+    TEST_EXPECT(DragDrop.IsDragging());
+
+    DragDrop.CancelDrag();
+    TEST_EXPECT(!DragDrop.IsDragging());
+    TEST_EXPECT(!DragDrop.HasTarget());
+    TEST_EXPECT_EQ(DropCount, 1);
+
+    TEST_SECTION("A target that has been forgotten is no longer found under the cursor");
+    DragDrop.UnregisterTarget(Accepting);
+    DragDrop.BeginDrag(AssetPayload, IntVector2(150, 150));
+    TEST_EXPECT(!DragDrop.HasTarget());
+
+    DragDrop.EndDrag(IntVector2(150, 150));
+    TEST_EXPECT_EQ(DropCount, 1);
+
+    TEST_SECTION("A target that has since been destroyed is skipped rather than followed");
+    int32 SurvivorDropCount = 0;
+
+    TSharedPtr<FVisualElement> Survivor = CreateDropTarget(FRectangle(IntVector2(100, 100), 200, 100));
+    TSharedPtr<FVisualElement> Doomed   = CreateDropTarget(FRectangle(IntVector2(100, 100), 200, 100));
+
+    DragDrop.RegisterTarget(Survivor, FOnDragDropped::CreateLambda([&SurvivorDropCount](const FDragDropPayload&, const IntVector2&)
+    {
+        SurvivorDropCount++;
+    }), FOnDragOver());
+
+    DragDrop.RegisterTarget(Doomed, FOnDragDropped(), FOnDragOver());
+    Doomed.Reset();
+
+    DragDrop.BeginDrag(AssetPayload, IntVector2(150, 150));
+    TEST_EXPECT(DragDrop.HasTarget());
+
+    DragDrop.EndDrag(IntVector2(150, 150));
+    TEST_EXPECT_EQ(SurvivorDropCount, 1);
+
+    TEST_SECTION("The ghost is drawn only while a drag is in flight, and offset from the cursor");
+    FDrawCommandList IdleCommands;
+    DragDrop.DrawDragVisual(IdleCommands, 0);
+    TEST_EXPECT(IdleCommands.IsEmpty());
+
+    DragDrop.BeginDrag(AssetPayload, IntVector2(150, 150));
+
+    FDrawCommandList DragCommands;
+    DragDrop.DrawDragVisual(DragCommands, 0);
+    TEST_EXPECT(!DragCommands.IsEmpty());
+    TEST_EXPECT_EQ(CountCommands(DragCommands, EDrawCommandType::Box), 1);
+    TEST_EXPECT_EQ(CountCommands(DragCommands, EDrawCommandType::Text), 1);
+
+    if (!DragCommands.IsEmpty())
+    {
+        TEST_EXPECT_EQ(DragCommands[0].Bounds.Position, IntVector2(150, 150) + IntVector2(FDragDropService::DragVisualCursorOffset, FDragDropService::DragVisualCursorOffset));
+    }
+
+    FDragDropService::Release();
 
     TEST_END();
 }

@@ -4,13 +4,14 @@
 #include "Application/Elements/Viewport.h"
 #include "Engine/EngineUI/Editor/EditorGuizmo.h"
 #include "Engine/EngineUI/Editor/EditorCameraController.h"
+#include "Engine/EngineUI/EditorUI/IEditorViewportHost.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
 
 class FActor;
 class FCameraComponent;
 class FEditorEngine;
 
-class FEditorViewportWidget
+class FEditorViewportWidget final : public IEditorViewportHost
 {
 public:
     enum class EGizmoPlacement
@@ -20,24 +21,27 @@ public:
     };
 
     FEditorViewportWidget(FEditorEngine* InEditorEngine);
-    ~FEditorViewportWidget();
+    virtual ~FEditorViewportWidget();
 
     void Draw();
 
-    void OnActorRemoved(FActor* Actor);
-    void OnContextMenuPickResult(const FEditorPickResult& Result, FActor* PickedActor);
+    // IEditorViewportHost Interface
+    virtual void OnActorRemoved(FActor* Actor) override final;
+    virtual void OnContextMenuPickResult(const FEditorPickResult& Result, FActor* PickedActor) override final;
 
-    bool ConsumeCameraCut();
-    void ResetInputState();
+    virtual bool ConsumeCameraCut() override final;
+    virtual void ResetInputState() override final;
+    virtual void FocusOnActor(FActor* Actor) override final;
+
+    virtual void SetViewportImage(FRHITextureRef InViewportImage) override final;
+
+    virtual IntVector2                          GetViewportSize() const override final;
+    virtual FSceneRenderView::EDebugView        GetDebugView() const override final;
+    virtual FSceneRenderView::EDebugView        GetSecondaryDebugView() const override final;
+    virtual FSceneRenderView::EDebugViewChannel GetDebugViewChannelMask() const override final;
+    virtual FCameraComponent*                   GetViewCamera() const override final;
 
     void SetViewport(const TSharedPtr<FViewport>& InViewport);
-    void SetViewportImage(FRHITextureRef InViewportImage);
-
-    IntVector2                          GetViewportSize() const;
-    FSceneRenderView::EDebugView        GetDebugView() const;
-    FSceneRenderView::EDebugView        GetSecondaryDebugView() const;
-    FSceneRenderView::EDebugViewChannel GetDebugViewChannelMask() const;
-    FCameraComponent*                   GetViewCamera() const;
 
     ImVec2 GetViewportImageMin() const
     {

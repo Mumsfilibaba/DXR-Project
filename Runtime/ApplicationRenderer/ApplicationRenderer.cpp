@@ -79,10 +79,8 @@ FApplicationRenderer::FApplicationRenderer()
     , BlendState(nullptr)
     , LinearSampler(nullptr)
     , PipelineState(nullptr)
-    , WhiteTexture(nullptr)
-    , AtlasTexture(nullptr)
-    , UploadedAtlas(nullptr)
-    , UploadedAtlasRevision(0)
+    , DefaultTexture(nullptr)
+    , AtlasTextures()
     , PipelineStateFormat(EFormat::Unknown)
 {
 }
@@ -184,14 +182,14 @@ bool FApplicationRenderer::InitializeRHI()
     }
 
     const uint8 WhiteTexel[] = { 255, 255, 255, 255 };
-    WhiteTexture = FTextureFactory::Get().LoadFromMemory(WhiteTexel, 1, 1, ETextureFactoryFlags::None, EFormat::R8G8B8A8_Unorm);
+    DefaultTexture = FTextureFactory::Get().LoadFromMemory(WhiteTexel, 1, 1, ETextureFactoryFlags::None, EFormat::R8G8B8A8_Unorm);
 
-    if (!WhiteTexture)
+    if (!DefaultTexture)
     {
         return false;
     }
 
-    WhiteTexture->SetDebugName("ApplicationUI WhiteTexture");
+    DefaultTexture->SetDebugName("ApplicationUI DefaultTexture");
     return true;
 }
 
@@ -206,12 +204,10 @@ void FApplicationRenderer::ReleaseRHI()
     BlendState.Reset();
     LinearSampler.Reset();
     PipelineState.Reset();
-    WhiteTexture.Reset();
-    AtlasTexture.Reset();
+    DefaultTexture.Reset();
+    AtlasTextures.Clear();
 
-    UploadedAtlas         = nullptr;
-    UploadedAtlasRevision = 0;
-    PipelineStateFormat   = EFormat::Unknown;
+    PipelineStateFormat = EFormat::Unknown;
 }
 
 FDrawCommandList* FApplicationRenderer::BeginWindow(const TSharedPtr<FWindow>& InWindow)
@@ -414,10 +410,11 @@ FRHIShaderResourceView* FApplicationRenderer::PrepareAtlasTexture(FRHICommandLis
 {
     if (!Atlas || !Atlas->IsValid())
     {
-        return WhiteTexture ? WhiteTexture->GetShaderResourceView() : nullptr;
+        return GetDefaultShaderResourceView();
     }
 
-    if (!AtlasTexture || UploadedAtlas != Atlas || UploadedAtlasRevision != Atlas->GetRevision())
+    FAtlasEntry* Entry = AtlasTextures.Find(Atlas);
+    if (!Entry || Entry->Revision != Atlas->GetRevision())
     {
         FRHITextureRef NewAtlasTexture = FTextureFactory::Get().LoadFromMemory(Atlas->GetPixels(), 
             static_cast<uint32>(Atlas->GetWidth()), static_cast<uint32>(Atlas->GetHeight()),
@@ -425,29 +422,34 @@ FRHIShaderResourceView* FApplicationRenderer::PrepareAtlasTexture(FRHICommandLis
 
         if (!NewAtlasTexture)
         {
-            return WhiteTexture ? WhiteTexture->GetShaderResourceView() : nullptr;
+            return GetDefaultShaderResourceView();
         }
 
         NewAtlasTexture->SetDebugName("ApplicationUI FontAtlas");
 
-        AtlasTexture          = NewAtlasTexture;
-        UploadedAtlas         = Atlas;
-        UploadedAtlasRevision = Atlas->GetRevision();
+        AtlasTextures.Add(Atlas, FAtlasEntry{ NewAtlasTexture, Atlas->GetRevision() });
+
+        Entry = AtlasTextures.Find(Atlas);
+        if (!Entry)
+        {
+            return GetDefaultShaderResourceView();
+        }
     }
 
-    if (AtlasTexture->GetDesc().TrackingMode != ERHIResourceStateTrackingMode::Static)
+    FRHITexture* EntryTexture = Entry->Texture.Get();
+    if (EntryTexture->GetDesc().TrackingMode != ERHIResourceStateTrackingMode::Static)
     {
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(AtlasTexture.Get(), ERHIResourceState::PixelShaderResource));
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(EntryTexture, ERHIResourceState::PixelShaderResource));
     }
 
-    return AtlasTexture->GetShaderResourceView();
+    return EntryTexture->GetShaderResourceView();
 }
 
 FRHIShaderResourceView* FApplicationRenderer::PrepareBrushTexture(FRHICommandList& CommandList, FRHITexture* Texture)
 {
     if (!Texture)
     {
-        return GetWhiteShaderResourceView();
+        return GetDefaultShaderResourceView();
     }
 
     if (Texture->GetDesc().TrackingMode != ERHIResourceStateTrackingMode::Static)
@@ -456,7 +458,7 @@ FRHIShaderResourceView* FApplicationRenderer::PrepareBrushTexture(FRHICommandLis
     }
 
     FRHIShaderResourceView* TextureView = Texture->GetShaderResourceView();
-    return TextureView ? TextureView : GetWhiteShaderResourceView();
+    return TextureView ? TextureView : GetDefaultShaderResourceView();
 }
 
 void FApplicationRenderer::PrepareBatchTextures(FRHICommandList& CommandList, const FUIDrawData& DrawData)
@@ -490,7 +492,7 @@ FRHIShaderResourceView* FApplicationRenderer::GetBatchShaderResourceView(const F
         }
     }
 
-    return GetWhiteShaderResourceView();
+    return GetDefaultShaderResourceView();
 }
 
 void FApplicationRenderer::Render(FRHICommandList& CommandList, FRHISwapChain* SwapChain)
@@ -682,17 +684,17 @@ void FApplicationRenderer::RenderWindow(FRHICommandList& CommandList, const FWin
     }
 }
 
-FRHIShaderResourceView* FApplicationRenderer::GetWhiteShaderResourceView() const
+FRHIShaderResourceView* FApplicationRenderer::GetDefaultShaderResourceView() const
 {
-    return WhiteTexture ? WhiteTexture->GetShaderResourceView() : nullptr;
+    return DefaultTexture ? DefaultTexture->GetShaderResourceView() : nullptr;
 }
 
 FRHIShaderResourceView* FApplicationRenderer::GetAtlasShaderResourceView(const FFontAtlas* Atlas) const
 {
-    if (AtlasTexture && UploadedAtlas == Atlas)
+    if (const FAtlasEntry* Entry = AtlasTextures.Find(Atlas))
     {
-        return AtlasTexture->GetShaderResourceView();
+        return Entry->Texture->GetShaderResourceView();
     }
 
-    return GetWhiteShaderResourceView();
+    return GetDefaultShaderResourceView();
 }

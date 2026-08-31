@@ -16,9 +16,11 @@
 #include "GraphTests.h"
 #include "ImageDrawTests.h"
 #include "InteractionTests.h"
+#include "ItemViewTests.h"
 #include "LayoutTests.h"
 #include "MenuTests.h"
 #include "OutputLogTests.h"
+#include "PropertyTableTests.h"
 #include "DrawTests.h"
 #include "StyleTests.h"
 #include "TextLayoutTests.h"
@@ -108,6 +110,24 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("ScrollBoxScrollBar", ScrollBoxScrollBar_Test());
     RUN_TEST("OverlayControl", OverlayControl_Test());
     RUN_TEST("SpacerSeparatorControl", SpacerSeparatorControl_Test());
+    RUN_TEST("ExpanderControl", ExpanderControl_Test());
+    RUN_TEST("SearchBoxControl", SearchBoxControl_Test());
+    RUN_TEST("NumericEntryControl", NumericEntryControl_Test());
+    RUN_TEST("ProgressBarControl", ProgressBarControl_Test());
+    RUN_TEST("HistogramControl", HistogramControl_Test());
+
+    RUN_TEST("TreeViewModel", TreeViewModel_Test());
+    RUN_TEST("TreeViewSelection", TreeViewSelection_Test());
+    RUN_TEST("TreeViewFiltering", TreeViewFiltering_Test());
+    RUN_TEST("TreeViewKeyboard", TreeViewKeyboard_Test());
+    RUN_TEST("TreeViewScrolling", TreeViewScrolling_Test());
+    RUN_TEST("TileViewLayout", TileViewLayout_Test());
+    RUN_TEST("TileViewSelection", TileViewSelection_Test());
+
+    RUN_TEST("PropertyTableRows", PropertyTableRows_Test());
+    RUN_TEST("PropertyTableColumnDrag", PropertyTableColumnDrag_Test());
+    RUN_TEST("PropertyTableToolTips", PropertyTableToolTips_Test());
+    RUN_TEST("PropertyTableLayout", PropertyTableLayout_Test());
 
     RUN_TEST("MenuStackPlacement", MenuStackPlacement_Test());
     RUN_TEST("MenuStackDepth", MenuStackDepth_Test());
@@ -117,6 +137,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("MenuBarSwitching", MenuBarSwitching_Test());
     RUN_TEST("ToolTipService", ToolTipService_Test());
     RUN_TEST("ComboBoxControl", ComboBoxControl_Test());
+    RUN_TEST("DragDropService", DragDropService_Test());
 
     RUN_TEST("TitleBarMetrics", TitleBarMetrics_Test());
     RUN_TEST("TitleBarRegions", TitleBarRegions_Test());

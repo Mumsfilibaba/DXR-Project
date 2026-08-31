@@ -8,3 +8,4 @@ bool MenuKeyboard_Test();
 bool MenuBarSwitching_Test();
 bool ToolTipService_Test();
 bool ComboBoxControl_Test();
+bool DragDropService_Test();

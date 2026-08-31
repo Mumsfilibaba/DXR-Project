@@ -19,7 +19,9 @@ class FEditorRenderGraphWidget;
 class FEditorRHIInfoWidget;
 class FEditorStatsWidget;
 class FEditorAboutWidget;
+class FEditorShell;
 class FCameraComponent;
+struct IEditorViewportHost;
 
 enum class EEditorPickPurpose : uint8
 {
@@ -61,6 +63,9 @@ public:
     const TSharedPtr<FEditorStatsWidget>&            GetStatsWidget()            const { return StatsWidget; }
     const TSharedPtr<FEditorAboutWidget>&            GetAboutWidget()            const { return AboutWidget; }
 
+    const TSharedPtr<FEditorShell>& GetEditorShell() const { return EditorShell; }
+    bool IsUsingCustomEditorUI() const { return bUseCustomEditorUI; }
+
     void SetSelectedActor(FActor* InActor);
     void SetSelectedActors(const TArray<FActor*>& InActors);
     void AddSelectedActor(FActor* InActor);
@@ -97,6 +102,12 @@ public:
         return SelectedActors;
     }
 
+    /** @return The viewport of whichever UI stack was built, which is never null once Init has succeeded. */
+    NODISCARD FORCEINLINE IEditorViewportHost* GetViewportHost() const
+    {
+        return ViewportHost;
+    }
+
 private:
     static constexpr EFormat ViewportImageFormat = EFormat::R8G8B8A8_Unorm;
 
@@ -128,9 +139,12 @@ private:
     TSharedPtr<FEditorRHIInfoWidget>          RHIInfoWidget;
     TSharedPtr<FEditorStatsWidget>            StatsWidget;
     TSharedPtr<FEditorAboutWidget>            AboutWidget;
+    TSharedPtr<FEditorShell>                  EditorShell;
+    IEditorViewportHost*                      ViewportHost;
     FRHITextureRef                            ViewportImage;
     IntVector2                                ViewportImageSize;
     FWorldSnapshot                            Snapshot;
+    bool                                      bUseCustomEditorUI;
     bool                                      bPendingPickAdditive;
     bool                                      bPendingRectPickAdditive;
 };

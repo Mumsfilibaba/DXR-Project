@@ -159,6 +159,11 @@ void FToolBarButton::SetCheckState(ECheckBoxState InState)
     CheckState = InState;
 }
 
+void FToolBarButton::SetLabel(const String& InLabel)
+{
+    Label = InLabel;
+}
+
 void FToolBarButton::SetOnClicked(const FOnClicked& InOnClicked)
 {
     OnClickedDelegate = InOnClicked;

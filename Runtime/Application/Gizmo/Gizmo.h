@@ -188,14 +188,10 @@ public:
         return ScreenFactor;
     }
 
-    /**
-     * @brief Gets whether the gizmo is drawn, which it is not while the pivot is behind the camera.
-     *
-     * @return True while the pivot projects, and false when nothing is drawn and nothing can be grabbed.
-     */
-    NODISCARD FORCEINLINE bool IsVisible() const
+    /** @return True while the pivot projects in front of the camera, and false when nothing is drawn and nothing can be grabbed. */
+    NODISCARD FORCEINLINE bool IsProjected() const
     {
-        return bIsVisible;
+        return bIsProjected;
     }
 
     /**
@@ -285,7 +281,7 @@ private:
     String                   Readout;
     float                    ScreenFactor;
     bool                     bIsOrthographic;
-    bool                     bIsVisible;
+    bool                     bIsProjected;
     bool                     bAxisVisible[3];
     bool                     bAxisFlipped[3];
     bool                     bPlaneVisible[3];

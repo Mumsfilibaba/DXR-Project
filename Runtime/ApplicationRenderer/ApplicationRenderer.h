@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Containers/Map.h"
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Draw/UIDrawData.h"
 #include "Application/IApplicationRenderer.h"
@@ -84,6 +85,12 @@ public:
     void RenderWindowToSwapChain(FRHICommandList& CommandList, const TSharedPtr<FWindow>& InWindow, EAttachmentLoadAction LoadAction);
 
 private:
+    struct FAtlasEntry
+    {
+        FRHITextureRef Texture;
+        uint64         Revision;
+    };
+
     FWindowDrawState*       FindWindowState(const TSharedPtr<FWindow>& InWindow);
     FWindowDrawState*       FindOrAddWindowState(const TSharedPtr<FWindow>& InWindow);
     bool                    PreparePipelineState(EFormat OutputFormat);
@@ -92,22 +99,20 @@ private:
     FRHIShaderResourceView* PrepareBrushTexture(FRHICommandList& CommandList, FRHITexture* Texture);
     void                    PrepareBatchTextures(FRHICommandList& CommandList, const FUIDrawData& DrawData);
     void                    RenderWindow(FRHICommandList& CommandList, const FWindowDrawState& WindowState);
-    FRHIShaderResourceView* GetWhiteShaderResourceView() const;
+    FRHIShaderResourceView* GetDefaultShaderResourceView() const;
     FRHIShaderResourceView* GetAtlasShaderResourceView(const FFontAtlas* Atlas) const;
     FRHIShaderResourceView* GetBatchShaderResourceView(const FUITextureHandle& Texture) const;
 
-    TArray<FWindowDrawState>     WindowStates;
-    FRHIVertexShaderRef          VShader;
-    FRHIPixelShaderRef           PShader;
-    FRHIInputLayoutRef           InputLayout;
-    FRHIDepthStencilStateRef     DepthStencilState;
-    FRHIRasterizerStateRef       RasterizerState;
-    FRHIBlendStateRef            BlendState;
-    FRHISamplerStateRef          LinearSampler;
-    FRHIGraphicsPipelineStateRef PipelineState;
-    FRHITextureRef               WhiteTexture;
-    FRHITextureRef               AtlasTexture;
-    const FFontAtlas*            UploadedAtlas;
-    uint64                       UploadedAtlasRevision;
-    EFormat                      PipelineStateFormat;
+    TArray<FWindowDrawState>             WindowStates;
+    FRHIVertexShaderRef                  VShader;
+    FRHIPixelShaderRef                   PShader;
+    FRHIInputLayoutRef                   InputLayout;
+    FRHIDepthStencilStateRef             DepthStencilState;
+    FRHIRasterizerStateRef               RasterizerState;
+    FRHIBlendStateRef                    BlendState;
+    FRHISamplerStateRef                  LinearSampler;
+    FRHIGraphicsPipelineStateRef         PipelineState;
+    FRHITextureRef                       DefaultTexture;
+    TMap<const FFontAtlas*, FAtlasEntry> AtlasTextures;
+    EFormat                              PipelineStateFormat;
 };

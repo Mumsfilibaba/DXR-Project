@@ -21,7 +21,7 @@ FDockNode& FDockNode::operator=(const FDockNode& Other) = default;
 
 FDockNode& FDockNode::operator=(FDockNode&& Other) = default;
 
-FDockNode FDockNode::MakeTabs(const TArray<String>& InTabIds)
+FDockNode FDockNode::CreateTabs(const TArray<String>& InTabIds)
 {
     FDockNode Node;
     Node.Kind   = EDockNodeKind::Tabs;
@@ -29,7 +29,7 @@ FDockNode FDockNode::MakeTabs(const TArray<String>& InTabIds)
     return Node;
 }
 
-FDockNode FDockNode::MakeSplit(EDockSplitOrientation InOrientation, const FDockNode& First, const FDockNode& Second)
+FDockNode FDockNode::CreateSplit(EDockSplitOrientation InOrientation, const FDockNode& First, const FDockNode& Second)
 {
     FDockNode Node;
     Node.Kind        = EDockNodeKind::Split;

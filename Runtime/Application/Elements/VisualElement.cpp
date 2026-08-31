@@ -42,6 +42,11 @@ bool FVisualElement::SupportsKeyboardFocus() const
     return false;
 }
 
+bool FVisualElement::WantsTextInput() const
+{
+    return false;
+}
+
 TSharedPtr<FVisualElement> FVisualElement::GetFocusTarget()
 {
     return AsSharedPtr();
