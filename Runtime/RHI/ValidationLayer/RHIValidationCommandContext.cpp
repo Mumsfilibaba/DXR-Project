@@ -2167,6 +2167,18 @@ bool FRHIValidationCommandContext::ValidateTransitionBarrierDesc(const FRHITrans
             return false;
         }
 
+        if (!Device->IsLiveResource(Buffer))
+        {
+            const String Destroyed = Device->DescribeDestroyedResource(Buffer);
+
+            RHI_VALIDATION_ERROR("TransitionBarrier names a buffer at %p that the device no longer holds (%s), so it was "
+                "destroyed while this command list still referenced it. A command list stores a resource without taking a "
+                "reference, so the caller has to keep it alive until the list has executed.",
+                reinterpret_cast<const void*>(Buffer),
+                Destroyed.IsEmpty() ? "destroyed too long ago to name" : *Destroyed);
+            return false;
+        }
+
         const FRHIBufferDesc& BufferDesc = Buffer->GetDesc();
 
         Resource     = Buffer;
@@ -2209,7 +2221,6 @@ bool FRHIValidationCommandContext::ValidateTransitionBarrierDesc(const FRHITrans
         }
     }
 
-    // The tracking mode decides what a barrier is allowed to declare
     switch (TrackingMode)
     {
         case ERHIResourceStateTrackingMode::Unknown:
@@ -2222,7 +2233,6 @@ bool FRHIValidationCommandContext::ValidateTransitionBarrierDesc(const FRHITrans
 
         case ERHIResourceStateTrackingMode::Static:
         {
-            // Changing the mode is how a resource leaves Static, so that stays allowed
             if (!Desc.IsTrackingModeChange())
             {
                 RHI_VALIDATION_ERROR("%s: A Static resource never changes state, so it cannot be transitioned. Give it a "
@@ -2236,7 +2246,6 @@ bool FRHIValidationCommandContext::ValidateTransitionBarrierDesc(const FRHITrans
 
         case ERHIResourceStateTrackingMode::Tracked:
         {
-            // The split factories require both states, and a mode change names the baseline it leaves behind
             if (Desc.BeforeState != Desc.AfterState && !Desc.IsSplit() && !Desc.IsTrackingModeChange())
             {
                 RHI_VALIDATION_ERROR("%s: A Tracked resource has its before-state inferred from the state the backend "
@@ -2251,8 +2260,6 @@ bool FRHIValidationCommandContext::ValidateTransitionBarrierDesc(const FRHITrans
 
         case ERHIResourceStateTrackingMode::Manual:
         {
-            // A Manual resource has no tracked state to compare against, so the declared before-state is taken
-            // verbatim. FRHIValidationStateTracker is what catches it being wrong
             break;
         }
     }
@@ -2338,7 +2345,6 @@ bool FRHIValidationCommandContext::ValidateTransitionBarrierDesc(const FRHITrans
         return false;
     }
 
-    // A split begin leaves the resource mid-transition, so only the matching end moves the tracked state
     if (!bIsSplitBegin)
     {
         return StateTracker->ApplyTransition(Desc);

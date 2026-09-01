@@ -4,6 +4,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Modules/ModuleManager.h"
+#include "Application/Application.h"
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Elements/Window.h"
 #include "Application/Text/FontAtlas.h"
@@ -71,6 +72,7 @@ static void DumpWindowDrawData(const FWindow& Window, const FDrawCommandList& Co
 
 FApplicationRenderer::FApplicationRenderer()
     : WindowStates()
+    , FrameCounter(0)
     , VShader(nullptr)
     , PShader(nullptr)
     , InputLayout(nullptr)
@@ -195,7 +197,10 @@ bool FApplicationRenderer::InitializeRHI()
 
 void FApplicationRenderer::ReleaseRHI()
 {
+    ReleaseWindowSurfaces();
+
     WindowStates.Clear();
+    ReleaseRetiredBuffers(true);
     VShader.Reset();
     PShader.Reset();
     InputLayout.Reset();
@@ -264,6 +269,7 @@ void FApplicationRenderer::OnWindowDestroyed(const TSharedPtr<FWindow>& InWindow
     {
         if (WindowStates[Index].Window == InWindow)
         {
+            RetireWindowBuffers(WindowStates[Index]);
             WindowStates.RemoveAt(Index);
             return;
         }
@@ -295,6 +301,7 @@ FWindowDrawState* FApplicationRenderer::FindOrAddWindowState(const TSharedPtr<FW
 
         if (!WindowState.Window.IsValid())
         {
+            RetireWindowBuffers(WindowState);
             WindowStates.RemoveAt(Index);
         }
     }
@@ -361,6 +368,11 @@ bool FApplicationRenderer::PrepareGeometry(FRHICommandList& CommandList, FWindow
 
         NewVertexBuffer->SetDebugName("ApplicationUI VertexBuffer");
 
+        if (WindowState.VertexBuffer)
+        {
+            RetiredBuffers.Add(FRetiredBuffer{ Move(WindowState.VertexBuffer), FrameCounter });
+        }
+
         WindowState.VertexBuffer   = NewVertexBuffer;
         WindowState.VertexCapacity = NewCapacity;
     }
@@ -379,6 +391,12 @@ bool FApplicationRenderer::PrepareGeometry(FRHICommandList& CommandList, FWindow
         }
 
         NewIndexBuffer->SetDebugName("ApplicationUI IndexBuffer");
+
+        if (WindowState.IndexBuffer)
+        {
+            RetiredBuffers.Add(FRetiredBuffer{ Move(WindowState.IndexBuffer), FrameCounter });
+        }
+
         WindowState.IndexBuffer   = NewIndexBuffer;
         WindowState.IndexCapacity = NewCapacity;
     }
@@ -602,6 +620,163 @@ void FApplicationRenderer::RenderWindowToSwapChain(FRHICommandList& CommandList,
     CommandList.EndRenderPass();
 }
 
+void FApplicationRenderer::SyncWindowSurfaces(const TSharedPtr<FWindow>& PrimaryWindow)
+{
+    ++FrameCounter;
+    ReleaseRetiredBuffers(false);
+
+    const TArray<TSharedPtr<FWindow>>& Windows = FApplication::Get().GetWindows();
+
+    for (int32 Index = WindowSurfaces.Size() - 1; Index >= 0; --Index)
+    {
+        if (Windows.Contains(WindowSurfaces[Index].Window))
+        {
+            continue;
+        }
+
+        FRHICommandListExecutor::Get().WaitForGPU();
+        WindowSurfaces.RemoveAt(Index);
+
+        ReleaseRetiredBuffers(true);
+    }
+
+    for (const TSharedPtr<FWindow>& CurrentWindow : Windows)
+    {
+        if (CurrentWindow == PrimaryWindow)
+        {
+            continue;
+        }
+
+        const bool bHasSurface = WindowSurfaces.ContainsWithPredicate([&CurrentWindow](const FWindowSurface& Surface)
+        {
+            return Surface.Window == CurrentWindow;
+        });
+
+        if (bHasSurface)
+        {
+            continue;
+        }
+
+        const IntVector2 WindowSize = CurrentWindow->GetSize();
+
+        FRHISwapChainDesc SwapChainDesc;
+        SwapChainDesc.WindowHandle = CurrentWindow->GetPlatformWindow()->GetPlatformHandle();
+        SwapChainDesc.Width        = static_cast<uint16>(Math::Max(WindowSize.X, 1));
+        SwapChainDesc.Height       = static_cast<uint16>(Math::Max(WindowSize.Y, 1));
+        SwapChainDesc.ColorFormat  = EFormat::Unknown;
+        SwapChainDesc.ColorSpace   = EColorSpace::Unknown;
+        SwapChainDesc.Usage        = ESwapChainUsageFlags::RenderTarget;
+        SwapChainDesc.bFramePacing = false;
+
+        FRHISwapChainRef SwapChain = RHI::CreateSwapChain(SwapChainDesc);
+        if (!SwapChain)
+        {
+            LOG_ERROR("[FApplicationRenderer]: Failed to create a swap chain for a window");
+            continue;
+        }
+
+        FWindowSurface Surface;
+        Surface.Window            = CurrentWindow;
+        Surface.SwapChain         = SwapChain;
+        Surface.Size              = WindowSize;
+        Surface.DeferredShowState = CurrentWindow->ShowOnCreate() ? EDeferredShowState::None : EDeferredShowState::AwaitingPresent;
+
+        WindowSurfaces.Add(Surface);
+
+        RegisterWindowSwapChain(CurrentWindow, SwapChain.Get());
+    }
+}
+
+void FApplicationRenderer::RenderWindowSurfaces(FRHICommandList& CommandList)
+{
+    for (FWindowSurface& Surface : WindowSurfaces)
+    {
+        const IntVector2 WindowSize = Surface.Window->GetSize();
+        if (WindowSize != Surface.Size && WindowSize.X > 0 && WindowSize.Y > 0)
+        {
+            Surface.Size = WindowSize;
+            CommandList.ResizeSwapChain(Surface.SwapChain.Get(), static_cast<uint32>(WindowSize.X), static_cast<uint32>(WindowSize.Y));
+        }
+
+        RenderWindowToSwapChain(CommandList, Surface.Window, EAttachmentLoadAction::Clear);
+    }
+}
+
+void FApplicationRenderer::PresentWindowSurfaces(FRHICommandList& CommandList)
+{
+    for (FWindowSurface& Surface : WindowSurfaces)
+    {
+        FRHITexture* BackBuffer = Surface.SwapChain->GetBackBuffer();
+        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::RenderTarget, ERHIResourceState::Present));
+
+        CommandList.PresentSwapChain(Surface.SwapChain.Get(), false);
+
+        switch (Surface.DeferredShowState)
+        {
+            case EDeferredShowState::AwaitingPresent:
+            {
+                Surface.DeferredShowState = EDeferredShowState::PresentRecorded;
+                break;
+            }
+
+            case EDeferredShowState::PresentRecorded:
+            {
+                Surface.Window->Show(Surface.Window->ActivateOnShow());
+                Surface.DeferredShowState = EDeferredShowState::None;
+                break;
+            }
+
+            default:
+            {
+                break;
+            }
+        }
+    }
+}
+
+void FApplicationRenderer::ReleaseWindowSurfaces()
+{
+    for (const FWindowSurface& Surface : WindowSurfaces)
+    {
+        RegisterWindowSwapChain(Surface.Window, nullptr);
+    }
+
+    WindowSurfaces.Clear();
+}
+
+void FApplicationRenderer::RetireWindowBuffers(FWindowDrawState& WindowState)
+{
+    if (WindowState.VertexBuffer)
+    {
+        RetiredBuffers.Add(FRetiredBuffer{ Move(WindowState.VertexBuffer), FrameCounter });
+    }
+
+    if (WindowState.IndexBuffer)
+    {
+        RetiredBuffers.Add(FRetiredBuffer{ Move(WindowState.IndexBuffer), FrameCounter });
+    }
+
+    WindowState.VertexCapacity = 0;
+    WindowState.IndexCapacity  = 0;
+}
+
+void FApplicationRenderer::ReleaseRetiredBuffers(bool bReleaseEverything)
+{
+    if (bReleaseEverything)
+    {
+        RetiredBuffers.Clear();
+        return;
+    }
+
+    for (int32 Index = RetiredBuffers.Size() - 1; Index >= 0; --Index)
+    {
+        if ((FrameCounter - RetiredBuffers[Index].Frame) >= NumRetiredFrames)
+        {
+            RetiredBuffers.RemoveAt(Index);
+        }
+    }
+}
+
 void FApplicationRenderer::RenderWindow(FRHICommandList& CommandList, const FWindowDrawState& WindowState)
 {
     TWeakPtr<FWindow>   WeakWindow = WindowState.Window;
@@ -617,11 +792,11 @@ void FApplicationRenderer::RenderWindow(FRHICommandList& CommandList, const FWin
         return;
     }
 
-    const float DPIScale       = Math::Max(1.0f, Window->GetWindowDPIScale());
-    const float LogicalWidth   = static_cast<float>(WindowSize.X);
-    const float LogicalHeight  = static_cast<float>(WindowSize.Y);
-    const float FramebufferW   = LogicalWidth * DPIScale;
-    const float FramebufferH   = LogicalHeight * DPIScale;
+    const float DPIScale      = Math::Max(1.0f, Window->GetWindowDPIScale());
+    const float LogicalWidth  = static_cast<float>(WindowSize.X);
+    const float LogicalHeight = static_cast<float>(WindowSize.Y);
+    const float FramebufferW  = LogicalWidth * DPIScale;
+    const float FramebufferH  = LogicalHeight * DPIScale;
 
     const float Matrix[4][4] =
     {

@@ -21,6 +21,15 @@ struct FUIStyleColors
         , ControlHovered(0.27f, 0.29f, 0.34f, 1.0f)
         , ControlPressed(0.16f, 0.17f, 0.21f, 1.0f)
         , ControlDisabled(0.16f, 0.16f, 0.18f, 1.0f)
+        , MenuBarItemHovered(0.27f, 0.29f, 0.34f, 1.0f)
+        , MenuBarItemActive(0.25f, 0.55f, 0.95f, 1.0f)
+        , MenuBackground(0.13f, 0.13f, 0.16f, 1.0f)
+        , MenuBorder(0.32f, 0.33f, 0.38f, 1.0f)
+        , MenuInnerBorder(0.20f, 0.21f, 0.24f, 1.0f)
+        , MenuItemHovered(0.25f, 0.55f, 0.95f, 1.0f)
+        , MenuItemShortcut(0.45f, 0.46f, 0.50f, 1.0f)
+        , MenuSeparator(106.0f / 255.0f, 106.0f / 255.0f, 106.0f / 255.0f, 1.0f)
+        , MenuSectionText(160.0f / 255.0f, 160.0f / 255.0f, 160.0f / 255.0f, 1.0f)
         , Border(0.32f, 0.33f, 0.38f, 1.0f)
         , Text(0.90f, 0.91f, 0.94f, 1.0f)
         , TextDisabled(0.45f, 0.46f, 0.50f, 1.0f)
@@ -35,6 +44,15 @@ struct FUIStyleColors
     FFloatColor ControlHovered;
     FFloatColor ControlPressed;
     FFloatColor ControlDisabled;
+    FFloatColor MenuBarItemHovered;
+    FFloatColor MenuBarItemActive;
+    FFloatColor MenuBackground;
+    FFloatColor MenuBorder;
+    FFloatColor MenuInnerBorder;
+    FFloatColor MenuItemHovered;
+    FFloatColor MenuItemShortcut;
+    FFloatColor MenuSeparator;
+    FFloatColor MenuSectionText;
     FFloatColor Border;
     FFloatColor Text;
     FFloatColor TextDisabled;
@@ -51,6 +69,7 @@ struct FUIStyleMetrics
         , RowHeight(24)
         , ScrollBarThickness(12)
         , SeparatorThickness(1)
+        , MenuSeparatorThickness(2)
     {
     }
 
@@ -60,6 +79,7 @@ struct FUIStyleMetrics
     int32   RowHeight;
     int32   ScrollBarThickness;
     int32   SeparatorThickness;
+    int32   MenuSeparatorThickness;
 };
 
 struct APPLICATION_API FUIStyle

@@ -90,7 +90,15 @@ FEventResponse FInteractiveElement::OnKeyDown(const FKeyEvent& KeyEvent)
 
 FEventResponse FInteractiveElement::OnFocusLost()
 {
-    CancelPress();
+    const TSharedPtr<FVisualElement> Captor = FApplication::IsInitialized() 
+        ? FApplication::Get().GetMouseCaptor()
+        : nullptr;
+
+    if (Captor.Get() != this)
+    {
+        CancelPress();
+    }
+
     return FEventResponse::Unhandled();
 }
 

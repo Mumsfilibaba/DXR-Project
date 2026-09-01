@@ -41,6 +41,12 @@ public:
 
         /** @brief False makes the window transparent to hit-testing, so input resolves to whatever is behind it. */
         bool bAcceptsInput : 1 = true;
+
+        /**
+         * @brief False leaves the window hidden once it is created, so it can be shown when its first frame
+         * has reached the screen rather than while its surface is still empty.
+         */
+        bool bShowOnCreate : 1 = true;
     };
 
 public:
@@ -366,6 +372,12 @@ public:
         return bAcceptsInput;
     }
 
+    /** @return False when the window is left hidden on creation, waiting to be shown once it has content. */
+    NODISCARD FORCEINLINE bool ShowOnCreate() const
+    {
+        return bShowOnCreate;
+    }
+
 private:
     String                      Title;
     FOnWindowClosed             OnWindowClosedDelegate;
@@ -375,8 +387,9 @@ private:
     IntVector2                  CachedPosition;
     IntVector2                  CachedSize;
     EWindowStyleFlags           StyleFlags;
-    bool                        bActivateOnShow;
-    bool                        bAcceptsInput;
+    bool                        bActivateOnShow : 1;
+    bool                        bAcceptsInput : 1;
+    bool                        bShowOnCreate : 1;
     TSharedPtr<FVisualElement>  Overlay;
     TSharedPtr<FVisualElement>  Content;
     TSharedRef<IPlatformWindow> PlatformWindow;

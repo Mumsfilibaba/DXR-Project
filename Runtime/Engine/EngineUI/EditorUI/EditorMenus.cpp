@@ -13,6 +13,8 @@
 #include "Application/Menus/MenuBar.h"
 #include "Application/Menus/MenuItem.h"
 
+static constexpr int32 GMenuMinWidth = 220;
+
 FEditorMenus::FEditorMenus(FEditorEngine* InEditorEngine, const TSharedPtr<FEditorPanelRegistry>& InRegistry)
     : EditorEngine(InEditorEngine)
     , Registry(InRegistry)
@@ -47,6 +49,34 @@ void FEditorMenus::BuildFileMenu(const TSharedPtr<FMenuBar>& Bar)
     const TSharedPtr<IFontFace>& Font = FEditorStyle::GetFonts().Body;
 
     TSharedPtr<FMenu> Menu = FMenu::Create();
+    Menu->SetMinDesiredWidth(GMenuMinWidth);
+
+    Menu->AddSection("Open", Font);
+
+    FMenuItem::FDesc NewLevel;
+    NewLevel.Label        = "New Level";
+    NewLevel.ShortcutText = "Ctrl+N";
+    NewLevel.Font         = Font;
+
+    Menu->AddItem(FMenuItem::Create(NewLevel));
+
+    FMenuItem::FDesc OpenLevel;
+    OpenLevel.Label        = "Open Level";
+    OpenLevel.ShortcutText = "Ctrl+O";
+    OpenLevel.Font         = Font;
+
+    Menu->AddItem(FMenuItem::Create(OpenLevel));
+
+    Menu->AddSection("Save", Font);
+
+    FMenuItem::FDesc SaveAll;
+    SaveAll.Label        = "Save All";
+    SaveAll.ShortcutText = "Ctrl+Shift+S";
+    SaveAll.Font         = Font;
+
+    Menu->AddItem(FMenuItem::Create(SaveAll));
+
+    Menu->AddSection("Exit", Font);
 
     FMenuItem::FDesc Exit;
     Exit.Label        = "Exit";
@@ -67,6 +97,7 @@ void FEditorMenus::BuildEditMenu(const TSharedPtr<FMenuBar>& Bar)
     const TSharedPtr<IFontFace>& Font = FEditorStyle::GetFonts().Body;
 
     TSharedPtr<FMenu> Menu = FMenu::Create();
+    Menu->SetMinDesiredWidth(GMenuMinWidth);
 
     FMenuItem::FDesc PlayDesc;
     PlayDesc.Label        = "Play";
@@ -120,6 +151,20 @@ void FEditorMenus::BuildEditMenu(const TSharedPtr<FMenuBar>& Bar)
     });
 
     Menu->AddItem(FMenuItem::Create(ClearDesc));
+
+    Menu->AddSection("Settings", Font);
+
+    FMenuItem::FDesc ProjectSettings;
+    ProjectSettings.Label = "Project Settings";
+    ProjectSettings.Font  = Font;
+
+    Menu->AddItem(FMenuItem::Create(ProjectSettings));
+
+    FMenuItem::FDesc EditorPreferences;
+    EditorPreferences.Label = "Editor Preferences";
+    EditorPreferences.Font  = Font;
+
+    Menu->AddItem(FMenuItem::Create(EditorPreferences));
 
     Bar->AddMenu("Edit", Font, Menu);
 }
@@ -218,8 +263,11 @@ void FEditorMenus::BuildWindowsMenu(const TSharedPtr<FMenuBar>& Bar)
     const TSharedPtr<IFontFace>& Font = FEditorStyle::GetFonts().Body;
 
     TSharedPtr<FMenu> Menu = FMenu::Create();
+    Menu->SetMinDesiredWidth(GMenuMinWidth);
 
     WindowItems.Clear();
+
+    Menu->AddSection("Windows", Font);
 
     for (const TSharedPtr<FEditorPanel>& Panel : Registry->GetPanels())
     {
@@ -249,6 +297,9 @@ void FEditorMenus::BuildHelpMenu(const TSharedPtr<FMenuBar>& Bar)
     const TSharedPtr<IFontFace>& Font = FEditorStyle::GetFonts().Body;
 
     TSharedPtr<FMenu> Menu = FMenu::Create();
+    Menu->SetMinDesiredWidth(GMenuMinWidth);
+
+    Menu->AddSection("About", Font);
 
     FMenuItem::FDesc AboutDesc;
     AboutDesc.Label       = "About";

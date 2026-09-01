@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Containers/Array.h"
 #include "Core/Containers/Map.h"
 #include "Core/Containers/Set.h"
 #include "RHI/RHIDevice.h"
@@ -85,22 +86,50 @@ public:
     NODISCARD FRHIValidationSwapChain* FindSwapChainForBackBuffer(const FRHIResource* Texture) const;
     NODISCARD FRHIValidationSwapChain* FindValidationSwapChain(const FRHIResource* Resource) const;
 
+    /**
+     * @return True if the device created the resource and has not destroyed it since. A swap chain's back
+     * buffer is not created through the device, so it never counts as live.
+     */
+    NODISCARD bool IsLiveResource(const FRHIResource* Resource) const;
+
+    /**
+     * @return The identity the resource carried when the device destroyed it, or an empty string once it has
+     * fallen out of the window of recent destructions. Only a dangling pointer can be described this way, so
+     * a caller has to have established that the resource is not live.
+     */
+    NODISCARD String DescribeDestroyedResource(const FRHIResource* Resource) const;
+
 private:
+
+    /** @brief How far back a dangling pointer can still be named */
+    static constexpr int32 NumRememberedDestructions = 64;
+
+    struct FDestroyedResource
+    {
+        const FRHIResource* Resource;
+        String              Identity;
+    };
 
     template<typename ResourceType>
     ResourceType* TrackLiveResource(ResourceType* Resource)
     {
         if (Resource)
         {
+            TScopedLock Lock(LiveResourcesCS);
             LiveResources.Add(Resource);
         }
 
         return Resource;
     }
 
+    void RememberDestroyedResource(const FRHIResource* Resource);
+
     FRHIDevice*                                              Device;
     FRHIValidationStateTracker                               StateTracker;
+    mutable FCriticalSection                                 LiveResourcesCS;
     TSet<FRHIResource*>                                      LiveResources;
+    TArray<FDestroyedResource>                               DestroyedResources;
+    int32                                                    NextDestroyedResource;
     TMap<IRHICommandContext*, FRHIValidationCommandContext*> RealContextToValidationContextMap;
     TMap<const FRHIResource*, FRHIValidationSwapChain*>      BackBufferToSwapChain;
 };

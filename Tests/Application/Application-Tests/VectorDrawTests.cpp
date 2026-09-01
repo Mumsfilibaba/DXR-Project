@@ -496,6 +496,19 @@ bool VectorDrawBoxOutline_Test()
     TEST_EXPECT(IsNearly(Extent.MinX, 0.0f));
     TEST_EXPECT(IsNearly(Extent.MaxX, 100.0f));
 
+    TEST_SECTION("A one pixel outline lands on the outermost row rather than straddling the edge");
+    FDrawCommandList HairlineList;
+    HairlineList.AddBoxOutline(0, FRectangle(IntVector2(0, 0), 100, 40), FFloatColor::White, 1.0f);
+    DrawData.BuildFromCommandList(HairlineList);
+
+    const FGeometryExtent HairlineExtent = MeasureGeometry(DrawData);
+    TEST_EXPECT(HairlineExtent.MinX >= -GTolerance);
+    TEST_EXPECT(HairlineExtent.MinY >= -GTolerance);
+    TEST_EXPECT(HairlineExtent.MaxX <= 100.0f + GTolerance);
+    TEST_EXPECT(HairlineExtent.MaxY <= 40.0f + GTolerance);
+    TEST_EXPECT(IsNearly(HairlineExtent.MinX, 0.0f));
+    TEST_EXPECT(IsNearly(HairlineExtent.MaxY, 40.0f));
+
     TEST_SECTION("A rounded outline follows the same corners the fill does");
     FDrawCommandList RoundedList;
     RoundedList.AddBoxOutline(0, FRectangle(IntVector2(0, 0), 100, 40), FFloatColor::White, 2.0f, FCornerRadii(6.0f));

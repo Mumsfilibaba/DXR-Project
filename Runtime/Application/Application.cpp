@@ -910,7 +910,10 @@ void FApplication::CreateWindow(const TSharedPtr<FWindow>& InWindow)
         InWindow->SetPlatformWindow(PlatformWindow);
         Windows.Add(InWindow);
 
-        PlatformWindow->Show(InWindow->ActivateOnShow());
+        if (InWindow->ShowOnCreate() || !Renderer)
+        {
+            PlatformWindow->Show(InWindow->ActivateOnShow());
+        }
     }
 }
 

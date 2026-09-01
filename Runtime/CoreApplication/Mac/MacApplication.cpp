@@ -57,6 +57,26 @@ static CGFloat NormalizeWheelDetent(CGFloat Delta)
     return (Delta > 0.0) ? 1.0 : ((Delta < 0.0) ? -1.0 : 0.0);
 }
 
+static void PerformTitleBarDoubleClickAction(NSWindow* Window)
+{
+    NSUserDefaults* Defaults = [NSUserDefaults standardUserDefaults];
+
+    NSString* Action = [Defaults stringForKey:@"AppleActionOnDoubleClick"];
+    if (!Action)
+    {
+        Action = [Defaults boolForKey:@"AppleMiniaturizeOnDoubleClick"] ? @"Minimize" : @"Maximize";
+    }
+
+    if ([Action isEqualToString:@"Minimize"])
+    {
+        [Window miniaturize:Window];
+    }
+    else if (![Action isEqualToString:@"None"])
+    {
+        [Window zoom:Window];
+    }
+}
+
 FMacApplication* GMacApplication = nullptr;
 
 TSharedPtr<IPlatformApplication> FMacApplication::Create()
@@ -820,7 +840,16 @@ NSEvent* FMacApplication::OnNSEvent(NSEvent* Event)
         TSharedRef<FMacWindow> MacWindow = FindWindowFromNSWindow(EventWindow);
         if (MacWindow && MacWindow->HitTestTitleBar(Event.locationInWindow))
         {
-            return Event;
+            if (Event.clickCount >= 2)
+            {
+                PerformTitleBarDoubleClickAction(EventWindow);
+            }
+            else
+            {
+                [EventWindow performWindowDragWithEvent:Event];
+            }
+
+            return nullptr;
         }
     }
 

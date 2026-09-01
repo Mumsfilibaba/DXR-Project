@@ -4,6 +4,7 @@
 #include "TestCommon/TestMacros.h"
 
 #include <Application/Application.h>
+#include <Application/ElementPath.h>
 #include <Application/Layout/LayoutTypes.h>
 #include <Application/Text/FixedWidthFontFace.h>
 #include <Application/Elements/Box.h>
@@ -411,6 +412,45 @@ bool ScrollBoxClamping_Test()
 
     TEST_EXPECT_EQ(ShortScrollBox->GetMaxScrollOffset(), 0);
     TEST_EXPECT(ShortScrollBox->IsScrolledToEnd());
+
+    TEST_END();
+}
+
+bool ScrollBoxHitTestClipping_Test()
+{
+    TEST_BEGIN();
+
+    TSharedPtr<IFontFace> Font = CreateTestFont();
+
+    TSharedPtr<FVerticalBox> Content = FVerticalBox::Create();
+    for (int32 Index = 0; Index < 10; ++Index)
+    {
+        Content->AddSlot(CreateTextBlock("Line", Font));
+    }
+
+    TSharedPtr<FScrollBox> ScrollBox = FScrollBox::Create();
+    ScrollBox->SetContent(Content);
+
+    ScrollBox->PrepareDesiredSize();
+    ScrollBox->Tick(FRectangle(IntVector2(0, 100), 200, 100));
+    ScrollBox->ScrollToEnd();
+    ScrollBox->Tick(FRectangle(IntVector2(0, 100), 200, 100));
+
+    TEST_SECTION("Scrolling to the end leaves the content reaching above the view");
+    TEST_EXPECT_EQ(ScrollBox->GetScrollOffset(), 60);
+    TEST_EXPECT_EQ(Content->GetContentRectangle().Position.Y, 40);
+    TEST_EXPECT(Content->GetContentRectangle().EncapsulatesPoint(IntVector2(10, 50)));
+
+    TEST_SECTION("A point inside the view finds the content");
+    FElementPath InsidePath;
+    ScrollBox->FindChildrenContainingPoint(IntVector2(10, 150), InsidePath);
+    TEST_EXPECT(InsidePath.Contains(StaticCastSharedPtr<FVisualElement>(ScrollBox)));
+    TEST_EXPECT(InsidePath.Contains(StaticCastSharedPtr<FVisualElement>(Content)));
+
+    TEST_SECTION("The scrolled-out overflow answers for nothing, so what is arranged there stays reachable");
+    FElementPath OverflowPath;
+    ScrollBox->FindChildrenContainingPoint(IntVector2(10, 50), OverflowPath);
+    TEST_EXPECT(OverflowPath.IsEmpty());
 
     TEST_END();
 }

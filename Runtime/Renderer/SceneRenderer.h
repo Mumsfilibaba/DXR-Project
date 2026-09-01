@@ -235,7 +235,7 @@ private:
 #endif
 
     void BuildAndExecuteSceneGraph(const FSceneRenderView& SceneRenderView, FScene* Scene, const TArray<uint32>& SelectedObjectIDs);
- 
+
     // RenderPasses and Resources 
     FFrameResources                  Resources; 
     FFrameCounterState               FrameCounter;

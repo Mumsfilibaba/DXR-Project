@@ -2,11 +2,8 @@
 #include "Application/Application.h"
 #include "Core/Math/Math.h"
 
-TSharedPtr<FWindow> Popups::Open(
-    const TSharedPtr<FWindow>&        ParentWindow,
-    const FRectangle&                 Bounds,
-    const TSharedPtr<FVisualElement>& Content,
-    bool                              bAcceptsInput)
+TSharedPtr<FWindow> Popups::Open(const TSharedPtr<FWindow>& ParentWindow, const FRectangle& Bounds,
+    const TSharedPtr<FVisualElement>& Content, bool bAcceptsInput)
 {
     if (!Content || !ParentWindow || !FApplication::IsInitialized())
     {
@@ -21,6 +18,7 @@ TSharedPtr<FWindow> Popups::Open(
     Desc.StyleFlags      = EWindowStyleFlags::TopMost | EWindowStyleFlags::NoTaskBarIcon | EWindowStyleFlags::Opaque;
     Desc.bActivateOnShow = false;
     Desc.bAcceptsInput   = bAcceptsInput;
+    Desc.bShowOnCreate   = false;
 
     TSharedPtr<FWindow> PopupWindow = FWindow::Create(Desc);
     PopupWindow->SetContent(Content);

@@ -119,14 +119,18 @@ int32 FScrollBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
 
 void FScrollBox::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
 {
+    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
+
     if (IsScrollBarVisible() && ScrollBar->GetContentRectangle().EncapsulatesPoint(ClientPosition))
     {
-        FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
         ScrollBar->FindChildrenContainingPoint(ClientPosition, OutChildElements);
         return;
     }
 
-    FCompoundElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
+    if (Content && GetViewBounds(GetContentRectangle()).EncapsulatesPoint(ClientPosition))
+    {
+        Content->FindChildrenContainingPoint(ClientPosition, OutChildElements);
+    }
 }
 
 FEventResponse FScrollBox::OnMouseScroll(const FCursorEvent& CursorEvent)

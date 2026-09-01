@@ -135,7 +135,7 @@ public:
 
 private:
     NODISCARD static FRectangle ComputePointBounds(TArrayView<const Vector2> Points, float Thickness);
-    static void BuildRoundedBoxOutline(const FRectangle& Bounds, const FCornerRadii& Radius, TArray<Vector2>& OutPoints);
+    static void BuildRoundedBoxOutline(const FRectangle& Bounds, const FCornerRadii& Radius, TArray<Vector2>& OutPoints, float Inset = 0.0f);
 
     NODISCARD bool IsCulledByClip(const FRectangle& Bounds) const;
 

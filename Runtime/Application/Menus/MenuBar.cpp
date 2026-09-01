@@ -43,13 +43,13 @@ int32 FMenuBarButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
     const EInteractionState State   = GetInteractionState();
     const bool              bIsOpen = Anchor && Anchor->IsOpen();
 
-    if (bIsOpen)
+    if (bIsOpen || State == EInteractionState::Pressed)
     {
-        OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Colors.Accent, FCornerRadii(Style.Metrics.CornerRadius));
+        OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Colors.MenuBarItemActive);
     }
-    else if (State == EInteractionState::Hovered || State == EInteractionState::Pressed)
+    else if (State == EInteractionState::Hovered)
     {
-        OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Colors.ControlHovered, FCornerRadii(Style.Metrics.CornerRadius));
+        OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Colors.MenuBarItemHovered);
     }
 
     if (Font && !Label.IsEmpty())

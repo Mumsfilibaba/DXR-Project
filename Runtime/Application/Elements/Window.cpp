@@ -27,6 +27,7 @@ FWindow::FWindow()
     , StyleFlags(EWindowStyleFlags::None)
     , bActivateOnShow(true)
     , bAcceptsInput(true)
+    , bShowOnCreate(true)
     , Overlay()
     , Content()
     , PlatformWindow(nullptr)
@@ -46,6 +47,7 @@ void FWindow::Initialize(const FDesc& Desc)
     ParentWindow = Desc.ParentWindow;
     bActivateOnShow     = Desc.bActivateOnShow;
     bAcceptsInput       = Desc.bAcceptsInput;
+    bShowOnCreate       = Desc.bShowOnCreate;
 
     // Windows should always receive focus, if the OS puts focus on the platform-window
     FVisualElement::SetActivationPolicy(EElementActivationPolicy::AutoFocusOnWindowActivate);

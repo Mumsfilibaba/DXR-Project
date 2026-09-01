@@ -250,19 +250,19 @@ void FEditorShell::OnPanelClosed(const String& PanelId)
 
 FDockNode FEditorShell::BuildDefaultLayout()
 {
-    FDockNode Right = FDockNode::MakeSplit(EDockSplitOrientation::Vertical,
-        FDockNode::MakeTabs({ "SceneHierarchy" }), FDockNode::MakeTabs({ "Properties" }));
+    FDockNode Right = FDockNode::CreateSplit(EDockSplitOrientation::Vertical,
+        FDockNode::CreateTabs({ "SceneHierarchy" }), FDockNode::CreateTabs({ "Properties" }));
     Right.ChildFractions = { 0.55f, 0.45f };
 
-    FDockNode Centre = FDockNode::MakeSplit(EDockSplitOrientation::Horizontal,
-        FDockNode::MakeTabs({ "RendererSettings", "Stats", "RHIInfo", "About" }), FDockNode::MakeTabs({ "Viewport" }));
+    FDockNode Centre = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal,
+        FDockNode::CreateTabs({ "RendererSettings", "Stats", "RHIInfo", "About" }), FDockNode::CreateTabs({ "Viewport" }));
     Centre.ChildFractions = { 0.24f, 0.76f };
 
-    FDockNode Upper = FDockNode::MakeSplit(EDockSplitOrientation::Horizontal, Centre, Right);
+    FDockNode Upper = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, Centre, Right);
     Upper.ChildFractions = { 0.78f, 0.22f };
 
-    FDockNode Root = FDockNode::MakeSplit(EDockSplitOrientation::Vertical,
-        Upper, FDockNode::MakeTabs({ "OutputLog", "ContentBrowser", "GPUProfiler", "FrameProfiler", "RenderGraph" }));
+    FDockNode Root = FDockNode::CreateSplit(EDockSplitOrientation::Vertical,
+        Upper, FDockNode::CreateTabs({ "OutputLog", "ContentBrowser", "GPUProfiler", "FrameProfiler", "RenderGraph" }));
     Root.ChildFractions = { 0.72f, 0.28f };
 
     return Root;

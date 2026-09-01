@@ -84,11 +84,62 @@ public:
      */
     void RenderWindowToSwapChain(FRHICommandList& CommandList, const TSharedPtr<FWindow>& InWindow, EAttachmentLoadAction LoadAction);
 
+    /**
+     * @brief Gives every window the application has opened beside the primary one a surface of its own, and
+     * hands back the surfaces belonging to windows that have since closed. This runs before the windows draw,
+     * because a window that gained its surface afterwards would be composited onto the primary one instead.
+     *
+     * @param PrimaryWindow The window the caller presents through a swap chain of its own, which is skipped.
+     */
+    void SyncWindowSurfaces(const TSharedPtr<FWindow>& PrimaryWindow);
+
+    /**
+     * @brief Records every window holding a surface of its own, resizing the surface to its window first.
+     *
+     * @param CommandList The list to record into.
+     */
+    void RenderWindowSurfaces(FRHICommandList& CommandList);
+
+    /**
+     * @brief Presents every window holding a surface of its own, pairing the acquire RenderWindowSurfaces did.
+     *
+     * @param CommandList The list to record into.
+     */
+    void PresentWindowSurfaces(FRHICommandList& CommandList);
+
 private:
+    static constexpr uint64 NumRetiredFrames = 3;
+
+    enum class EDeferredShowState : uint8
+    {
+        // The window is already visible, either because it was created that way or because it has been shown
+        None = 0,
+
+        // Created hidden, and no present naming its surface has been recorded yet
+        AwaitingPresent,
+
+        // A present has been recorded, and the list carrying it is dispatched at the end of this frame
+        PresentRecorded,
+    };
+    
     struct FAtlasEntry
     {
         FRHITextureRef Texture;
         uint64         Revision;
+    };
+
+    struct FWindowSurface
+    {
+        TSharedPtr<FWindow> Window;
+        FRHISwapChainRef    SwapChain;
+        IntVector2          Size;
+        EDeferredShowState  DeferredShowState = EDeferredShowState::None;
+    };
+
+    struct FRetiredBuffer
+    {
+        FRHIBufferRef Buffer;
+        uint64        Frame;
     };
 
     FWindowDrawState*       FindWindowState(const TSharedPtr<FWindow>& InWindow);
@@ -102,8 +153,14 @@ private:
     FRHIShaderResourceView* GetDefaultShaderResourceView() const;
     FRHIShaderResourceView* GetAtlasShaderResourceView(const FFontAtlas* Atlas) const;
     FRHIShaderResourceView* GetBatchShaderResourceView(const FUITextureHandle& Texture) const;
+    void                    ReleaseWindowSurfaces();
+    void                    RetireWindowBuffers(FWindowDrawState& WindowState);
+    void                    ReleaseRetiredBuffers(bool bReleaseEverything);
 
     TArray<FWindowDrawState>             WindowStates;
+    TArray<FWindowSurface>               WindowSurfaces;
+    TArray<FRetiredBuffer>               RetiredBuffers;
+    uint64                               FrameCounter;
     FRHIVertexShaderRef                  VShader;
     FRHIPixelShaderRef                   PShader;
     FRHIInputLayoutRef                   InputLayout;

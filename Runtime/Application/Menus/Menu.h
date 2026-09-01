@@ -31,6 +31,14 @@ public:
     void AddSeparator();
 
     /**
+     * @brief Appends a caption naming the group of rows below it, drawn upper case with a rule beside it.
+     *
+     * @param Label The caption.
+     * @param Font  The face the caption is measured and drawn with.
+     */
+    void AddSection(const String& Label, const TSharedPtr<IFontFace>& Font);
+
+    /**
      * @brief Appends anything that is not a row, such as a search field at the head of the menu.
      *
      * @param Element The element to add.

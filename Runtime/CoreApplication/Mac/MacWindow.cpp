@@ -95,6 +95,8 @@ bool FMacWindow::Initialize(const FPlatformWindowDesc& InDesc)
             return;
         }
 
+        CocoaWindow.IsTransientPopup = bIsTransientPopup ? YES : NO;
+
         const NSWindowLevel WindowLevel = (InDesc.Style & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None ? NSFloatingWindowLevel : NSNormalWindowLevel;
         [CocoaWindow setLevel:WindowLevel];
 
@@ -736,6 +738,16 @@ bool FMacWindow::HitTestTitleBar(NSPoint LocationInWindow) const
     if (!CocoaWindow || (StyleParams & EWindowStyleFlags::CustomTitleBar) == EWindowStyleFlags::None)
     {
         return false;
+    }
+
+    const NSWindowButton StandardButtons[] = { NSWindowCloseButton, NSWindowMiniaturizeButton, NSWindowZoomButton };
+    for (NSWindowButton ButtonKind : StandardButtons)
+    {
+        NSButton* Button = [CocoaWindow standardWindowButton:ButtonKind];
+        if (Button && !Button.isHidden && NSPointInRect(LocationInWindow, [Button convertRect:Button.bounds toView:nil]))
+        {
+            return false;
+        }
     }
 
     const NSRect     ContentRect = [CocoaWindow contentRectForFrameRect:CocoaWindow.frame];

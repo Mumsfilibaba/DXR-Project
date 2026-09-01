@@ -54,7 +54,7 @@ public:
         /** @brief The text the row is named by. */
         String Label;
 
-        /** @brief Right-aligned accelerator hint, drawn but not bound. */
+        /** @brief Right-aligned accelerator hint, drawn upper case and not bound. */
         String ShortcutText;
 
         /** @brief Drawn in the gutter, and only while no check mark is taking it. */
@@ -80,6 +80,9 @@ public:
 
     /** @brief The square reserved on the left for a check mark or an icon, in pixels. */
     static constexpr int32 GutterWidth = 20;
+
+    /** @brief The height every row takes unless its face is taller than that, in pixels. */
+    static constexpr int32 RowHeight = 26;
 
     /** @brief The space held between the label and whatever is right-aligned beside it, in pixels. */
     static constexpr int32 ShortcutGap = 24;
@@ -184,6 +187,11 @@ private:
 class APPLICATION_API FMenuSeparator final : public FVisualElement
 {
 public:
+
+    /** @brief The inset the rule is held back from either edge by, in pixels. */
+    static constexpr int32 InsetX = 20;
+
+public:
     static TSharedPtr<FMenuSeparator> Create();
 
 public:
@@ -193,4 +201,52 @@ public:
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
+};
+
+class APPLICATION_API FMenuSectionHeader final : public FVisualElement
+{
+public:
+
+    /** @brief The inset the caption starts at and the rule beside it ends at, in pixels. */
+    static constexpr int32 InsetX = 20;
+
+    /** @brief The space held between the caption and the rule beside it, in pixels. */
+    static constexpr int32 LabelGap = 12;
+
+public:
+
+    /**
+     * @brief Creates a header naming the group of rows below it.
+     *
+     * @param Label The caption, which is drawn upper case.
+     * @param Font  The face the caption is measured and drawn with.
+     * @return The new header.
+     */
+    NODISCARD static TSharedPtr<FMenuSectionHeader> Create(const String& Label, const TSharedPtr<IFontFace>& Font);
+
+public:
+    FMenuSectionHeader();
+    virtual ~FMenuSectionHeader();
+
+    /**
+     * @brief Initializes the header with the caption it names its group by.
+     *
+     * @param InLabel The caption, which is folded to upper case here rather than on every draw.
+     * @param InFont  The face the caption is measured and drawn with.
+     */
+    void Initialize(const String& InLabel, const TSharedPtr<IFontFace>& InFont);
+
+    // FVisualElement Interface
+    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
+
+    /** @return The caption as it is drawn, which is upper case whatever the header was given. */
+    NODISCARD FORCEINLINE const String& GetLabel() const
+    {
+        return Label;
+    }
+
+private:
+    String                Label;
+    TSharedPtr<IFontFace> Font;
 };

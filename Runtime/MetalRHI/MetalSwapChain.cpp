@@ -18,7 +18,8 @@
 
 - (BOOL)mouseDownCanMoveWindow
 {
-    return YES;
+    // See FCocoaWindowView.
+    return NO;
 }
 
 @end

@@ -1583,15 +1583,16 @@ void FSceneRenderer::RecordApplicationUI()
         return;
     }
 
-    TSharedPtr<FSceneViewport> SceneViewport = FEngine::Get() ? FEngine::Get()->GetSceneViewport() : nullptr;
-    if (!SceneViewport)
-    {
-        return;
-    }
+    ApplicationRenderer->SyncWindowSurfaces(FEngine::Get() ? FEngine::Get()->GetEngineWindow() : nullptr);
 
     FApplication::Get().DrawWindows();
 
-    ApplicationRenderer->Render(UICommandList, SceneViewport->GetRHISwapChain().Get());
+    if (TSharedPtr<FSceneViewport> SceneViewport = FEngine::Get() ? FEngine::Get()->GetSceneViewport() : nullptr)
+    {
+        ApplicationRenderer->Render(UICommandList, SceneViewport->GetRHISwapChain().Get());
+    }
+
+    ApplicationRenderer->RenderWindowSurfaces(UICommandList);
 }
 
 void FSceneRenderer::SubmitUIAndPresent(const FSceneRenderPacket& Packet)
@@ -1619,6 +1620,11 @@ void FSceneRenderer::SubmitUIAndPresent(const FSceneRenderPacket& Packet)
         FRHITexture* BackBuffer = Packet.SwapChain->GetBackBuffer();
         UICommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::RenderTarget, ERHIResourceState::Present));
         UICommandList.PresentSwapChain(Packet.SwapChain.Get(), GVSyncEnabled);
+    }
+
+    if (ApplicationRenderer)
+    {
+        ApplicationRenderer->PresentWindowSurfaces(UICommandList);
     }
 
     UICommandList.EndFrame();

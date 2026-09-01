@@ -5,27 +5,6 @@
 #include "CoreApplication/Mac/MacApplication.h"
 #include "CoreApplication/Mac/MacWindow.h"
 
-static void PerformTitleBarDoubleClickAction(FCocoaWindow* CocoaWindow)
-{
-    NSUserDefaults* Defaults = [NSUserDefaults standardUserDefaults];
-
-    NSString* Action = [Defaults stringForKey:@"AppleActionOnDoubleClick"];
-    if (!Action)
-    {
-        // The key that predates the string form, and still the only one set on some systems.
-        Action = [Defaults boolForKey:@"AppleMiniaturizeOnDoubleClick"] ? @"Minimize" : @"Maximize";
-    }
-
-    if ([Action isEqualToString:@"Minimize"])
-    {
-        [CocoaWindow miniaturize:CocoaWindow];
-    }
-    else if (![Action isEqualToString:@"None"])
-    {
-        [CocoaWindow zoom:CocoaWindow];
-    }
-}
-
 @implementation FCocoaWindow
 
 - (instancetype)initWithContentRect:(NSRect)ContentRect styleMask:(NSWindowStyleMask)StyleMask backing:(NSBackingStoreType)BackingStoreType defer:(BOOL)Flag
@@ -39,32 +18,31 @@ static void PerformTitleBarDoubleClickAction(FCocoaWindow* CocoaWindow)
     return self;
 }
 
-// Allow the window to become the key window (i.e., receive keyboard input)
 - (BOOL)canBecomeKeyWindow
 {
-    return YES;
+    return !self.IsTransientPopup;
 }
 
 - (BOOL)canBecomeMainWindow
 {
-    return YES;
+    return !self.IsTransientPopup;
 }
 
 - (void)keyDown:(NSEvent*)Event
 {
-    // Intentionally left empty for now
+    // Intentionally left empty for now.
 }
 
 - (void)keyUp:(NSEvent*)Event
 {
-    // Intentionally left empty for now
+    // Intentionally left empty for now.
 }
 
 - (void)windowWillClose:(NSNotification*)Notification
 {
     @autoreleasepool
     {
-        // Remove the window's delegate to prevent further messages
+        // Remove the window's delegate to prevent further messages.
         [self setDelegate:nil];
     }
 
@@ -141,7 +119,7 @@ static void PerformTitleBarDoubleClickAction(FCocoaWindow* CocoaWindow)
     {
         if ([NSApp isHidden] == NO)
         {
-            // Order the window to the front of its level to ensure it is visible to the user
+            // Order the window to the front of its level to ensure it is visible to the user.
             [self orderFront:nil];
         }
 
@@ -220,38 +198,14 @@ static void PerformTitleBarDoubleClickAction(FCocoaWindow* CocoaWindow)
     return YES;
 }
 
+- (BOOL)mouseDownCanMoveWindow
+{
+    return NO;
+}
+
 - (void)mouseDown:(NSEvent*)Event
 {
-    @autoreleasepool
-    {
-        FCocoaWindow* CocoaWindow = [[self window] isKindOfClass:[FCocoaWindow class]] ? (FCocoaWindow*)[self window] : nil;
-        if (CocoaWindow)
-        {
-            if (GMacApplication)
-            {
-                TSharedRef<FMacWindow> Window = GMacApplication->FindWindowFromNSWindow(CocoaWindow);
-                if (Window && Window->HitTestTitleBar(Event.locationInWindow))
-                {
-                    if (Event.clickCount >= 2)
-                    {
-                        PerformTitleBarDoubleClickAction(CocoaWindow);
-                    }
-                    else
-                    {
-                        [CocoaWindow performWindowDragWithEvent:Event];
-                    }
-
-                    return;
-                }
-            }
-
-            [CocoaWindow mouseDown:Event];
-        }
-        else
-        {
-            [super mouseDown:Event];
-        }
-    }
+    // Swallowed on purpose.
 }
 
 - (void)mouseUp:(NSEvent*)Event

@@ -53,6 +53,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("BoxSlotAlignment", BoxSlotAlignment_Test());
     RUN_TEST("ScrollBoxClamping", ScrollBoxClamping_Test());
     RUN_TEST("ScrollBoxScrollIntoView", ScrollBoxScrollIntoView_Test());
+    RUN_TEST("ScrollBoxHitTestClipping", ScrollBoxHitTestClipping_Test());
     RUN_TEST("WindowLayoutOrigin", WindowLayoutOrigin_Test());
     RUN_TEST("WindowOverlayMeasure", WindowOverlayMeasure_Test());
 
@@ -135,6 +136,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("MenuItemActivation", MenuItemActivation_Test());
     RUN_TEST("MenuKeyboard", MenuKeyboard_Test());
     RUN_TEST("MenuBarSwitching", MenuBarSwitching_Test());
+    RUN_TEST("MenuBarInTitleBar", MenuBarInTitleBar_Test());
     RUN_TEST("ToolTipService", ToolTipService_Test());
     RUN_TEST("ComboBoxControl", ComboBoxControl_Test());
     RUN_TEST("DragDropService", DragDropService_Test());

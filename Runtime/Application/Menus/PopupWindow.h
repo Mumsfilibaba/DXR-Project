@@ -12,11 +12,8 @@ struct APPLICATION_API Popups
      * @param bAcceptsInput False makes the popup transparent to the cursor, which a tool tip needs.
      * @return The window, or null when there is no application to create it in.
      */
-    NODISCARD static TSharedPtr<FWindow> Open(
-        const TSharedPtr<FWindow>&        ParentWindow,
-        const FRectangle&                 Bounds,
-        const TSharedPtr<FVisualElement>& Content,
-        bool                              bAcceptsInput = true);
+    NODISCARD static TSharedPtr<FWindow> Open(const TSharedPtr<FWindow>& ParentWindow, const FRectangle& Bounds,
+        const TSharedPtr<FVisualElement>& Content, bool bAcceptsInput = true);
 
     /**
      * @brief Closes a popup window.

@@ -47,6 +47,7 @@ static bool ValidateOutputFormatsSampleCount(const CHAR* Caller, FRHIDevice* Dev
 FRHIValidationDevice::FRHIValidationDevice(FRHIDevice* InRealRHI)
     : FRHIDevice()
     , Device(InRealRHI)
+    , NextDestroyedResource(0)
 {
 }
 
@@ -67,12 +68,56 @@ FRHIValidationDevice::~FRHIValidationDevice()
     delete Device;
     Device = nullptr;
 
+    TScopedLock Lock(LiveResourcesCS);
+
     for (FRHIResource* Resource : LiveResources)
     {
         RHI_VALIDATION_ERROR("Resource still alive after RHI device teardown: %s", *RHIValidationInternal::GetResourceIdentity(Resource));
     }
 
     LiveResources.Clear();
+}
+
+bool FRHIValidationDevice::IsLiveResource(const FRHIResource* Resource) const
+{
+    if (!Resource)
+    {
+        return false;
+    }
+
+    TScopedLock Lock(LiveResourcesCS);
+    return LiveResources.Contains(const_cast<FRHIResource*>(Resource));
+}
+
+String FRHIValidationDevice::DescribeDestroyedResource(const FRHIResource* Resource) const
+{
+    TScopedLock Lock(LiveResourcesCS);
+
+    for (const FDestroyedResource& Destroyed : DestroyedResources)
+    {
+        if (Destroyed.Resource == Resource)
+        {
+            return Destroyed.Identity;
+        }
+    }
+
+    return String();
+}
+
+void FRHIValidationDevice::RememberDestroyedResource(const FRHIResource* Resource)
+{
+    FDestroyedResource Destroyed;
+    Destroyed.Resource = Resource;
+    Destroyed.Identity = GetResourceIdentity(Resource);
+
+    if (DestroyedResources.Size() < NumRememberedDestructions)
+    {
+        DestroyedResources.Add(Move(Destroyed));
+        return;
+    }
+
+    DestroyedResources[NextDestroyedResource] = Move(Destroyed);
+    NextDestroyedResource = (NextDestroyedResource + 1) % NumRememberedDestructions;
 }
 
 void FRHIValidationDevice::BeginFrame()
@@ -2061,7 +2106,12 @@ void FRHIValidationDevice::EnqueueResourceDeletion(FRHIResource* Resource)
     }
 
     StateTracker.UnregisterResource(Resource);
-    LiveResources.Remove(Resource);
+
+    {
+        TScopedLock Lock(LiveResourcesCS);
+        RememberDestroyedResource(Resource);
+        LiveResources.Remove(Resource);
+    }
 
     if (FRHIValidationSwapChain* ValidationSwapChain = FindValidationSwapChain(Resource))
     {

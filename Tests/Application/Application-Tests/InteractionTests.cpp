@@ -219,15 +219,28 @@ bool InteractionCapture_Test()
     TEST_EXPECT_EQ(Element->ClickCount, 1);
     TEST_EXPECT(Element->IsHovered());
 
-    TEST_SECTION("Losing focus mid-press abandons it rather than leaving the button stuck down");
+    TEST_SECTION("Losing focus mid-press leaves the press alone, because holding the capture says it is running");
     Harness.PressMouseButton(Window);
     TEST_EXPECT(Element->IsPressed());
 
     Element->OnFocusLost();
-    TEST_EXPECT(!Element->IsPressed());
-    TEST_EXPECT(!Harness.GetApplication().HasMouseCapture());
+    TEST_EXPECT(Element->IsPressed());
+    TEST_EXPECT(Harness.GetApplication().HasMouseCapture());
 
     Harness.ReleaseMouseButton();
+    TEST_EXPECT(!Element->IsPressed());
+    TEST_EXPECT(!Harness.GetApplication().HasMouseCapture());
+    TEST_EXPECT_EQ(Element->ClickCount, 2);
+
+    TEST_SECTION("A press the capture has left is abandoned rather than leaving the button stuck down");
+    Harness.PressMouseButton(Window);
+    Harness.GetApplication().ReleaseMouseCapture();
+
+    Element->OnFocusLost();
+    TEST_EXPECT(!Element->IsPressed());
+
+    Harness.ReleaseMouseButton();
+    TEST_EXPECT_EQ(Element->ClickCount, 2);
 
     TEST_END();
 }

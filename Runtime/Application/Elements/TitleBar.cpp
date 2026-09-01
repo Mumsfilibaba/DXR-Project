@@ -1,6 +1,7 @@
 #include "Application/Application.h"
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Elements/Box.h"
+#include "Application/Elements/Overlay.h"
 #include "Application/Elements/Spacer.h"
 #include "Application/Elements/TextBlock.h"
 #include "Application/Elements/TitleBar.h"
@@ -208,7 +209,6 @@ void FTitleBar::Initialize(const FDesc& Desc)
 
     TitleLabel = FTextBlock::Create(LabelDesc);
 
-    Panel->AddSlot(TitleLabel).SetVerticalAlignment(EVerticalAlignment::Center).SetPadding(FMargin(0, 0, TITLE_ICON_MARGIN, 0));
     Panel->AddSlot(Desc.Content);
     Panel->AddSlot(FSpacer::CreateHorizontal(0)).SetFillCoefficient(1.0f);
 
@@ -230,7 +230,11 @@ void FTitleBar::Initialize(const FDesc& Desc)
     TrailingSpacer = FSpacer::CreateHorizontal(0);
     Panel->AddSlot(TrailingSpacer);
 
-    SetContent(Panel);
+    TSharedPtr<FOverlay> Layers = FOverlay::Create();
+    Layers->AddSlot(TitleLabel).SetHorizontalAlignment(EHorizontalAlignment::Center).SetVerticalAlignment(EVerticalAlignment::Center);
+    Layers->AddSlot(Panel);
+
+    SetContent(Layers);
 }
 
 IntVector2 FTitleBar::PrepareDesiredSize()

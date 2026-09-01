@@ -218,19 +218,17 @@ void FUIDrawData::AddBoxOutline(const FDrawCommand& Command)
 
     GetOrOpenBatch(FUITextureHandle());
 
-    const FCornerRadii Radius = Command.CornerRadius.ClampToBounds(Command.Bounds);
+    const float HalfThickness = Command.Thickness * 0.5f;
 
-    const float      HalfThickness = Command.Thickness * 0.5f;
-    const int32      Inset         = static_cast<int32>(HalfThickness);
-    const FRectangle PathBounds    = Command.Bounds.Deflate(FMargin(Inset, Inset, Inset, Inset));
-
-    if (PathBounds.IsEmpty())
+    if (Command.Thickness >= static_cast<float>(Math::Min(Command.Bounds.Width, Command.Bounds.Height)))
     {
         AddQuad(Command.Bounds, Vector2(0.0f, 0.0f), Vector2(1.0f, 1.0f), Command.Tint.ToColor().ToPackedRGBA());
         return;
     }
 
-    BuildRoundedBoxOutline(PathBounds, Radius.ClampToBounds(PathBounds), ScratchPoints);
+    const FCornerRadii Radius = Command.CornerRadius.ClampToBounds(Command.Bounds);
+
+    BuildRoundedBoxOutline(Command.Bounds, Radius, ScratchPoints, HalfThickness);
     AddPolyline(ScratchPoints, Command.Thickness, true, Command.Tint.ToColor().ToPackedRGBA());
 }
 
@@ -535,21 +533,22 @@ void FUIDrawData::AddQuad(const FRectangle& Bounds, const Vector2& MinTexCoord, 
     Batches.Last().IndexCount += 6;
 }
 
-void FUIDrawData::BuildRoundedBoxOutline(const FRectangle& Bounds, const FCornerRadii& Radius, TArray<Vector2>& OutPoints)
+void FUIDrawData::BuildRoundedBoxOutline(const FRectangle& Bounds, const FCornerRadii& Radius, TArray<Vector2>& OutPoints, float Inset)
 {
     OutPoints.Clear();
 
-    const float MinX = static_cast<float>(Bounds.Position.X);
-    const float MinY = static_cast<float>(Bounds.Position.Y);
-    const float MaxX = static_cast<float>(Bounds.GetRight());
-    const float MaxY = static_cast<float>(Bounds.GetBottom());
+    const float MinX = static_cast<float>(Bounds.Position.X) + Inset;
+    const float MinY = static_cast<float>(Bounds.Position.Y) + Inset;
+    const float MaxX = static_cast<float>(Bounds.GetRight()) - Inset;
+    const float MaxY = static_cast<float>(Bounds.GetBottom()) - Inset;
 
+    // Offsetting a rounded rectangle inward takes the same amount off every corner as it does off every side
     const float CornerRadius[4] = 
     {
-        Radius.TopLeft,
-        Radius.TopRight,
-        Radius.BottomRight,
-        Radius.BottomLeft
+        Math::Max(Radius.TopLeft - Inset, 0.0f),
+        Math::Max(Radius.TopRight - Inset, 0.0f),
+        Math::Max(Radius.BottomRight - Inset, 0.0f),
+        Math::Max(Radius.BottomLeft - Inset, 0.0f)
     };
 
     const Vector2 CornerPoint[4] =

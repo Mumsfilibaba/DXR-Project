@@ -26,7 +26,7 @@ FMenu::~FMenu() = default;
 void FMenu::Initialize()
 {
     SetContent(Panel);
-    SetPadding(FMargin(1, 4, 1, 4));
+    SetPadding(FMargin(0, 10, 0, 10));
 }
 
 IntVector2 FMenu::ComputeDesiredSize() const
@@ -38,12 +38,13 @@ IntVector2 FMenu::ComputeDesiredSize() const
 
 int32 FMenu::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    const FUIStyle&    Style  = FUIStyle::GetDefault();
-    const FRectangle   Bounds = AllottedGeometry.Bounds;
-    const FCornerRadii Radii(Style.Metrics.CornerRadius);
+    const FUIStyle&  Style  = FUIStyle::GetDefault();
+    const FRectangle Bounds = AllottedGeometry.Bounds;
 
-    OutCommandList.AddBox(LayerId, Bounds, Style.Colors.PanelBackground, Radii);
-    OutCommandList.AddBoxOutline(LayerId, Bounds, Style.Colors.Border, 1.0f, Radii);
+    OutCommandList.AddBox(LayerId, Bounds, Style.Colors.MenuBackground);
+    OutCommandList.AddBoxOutline(LayerId, Bounds, Style.Colors.MenuBorder, 1.0f);
+
+    OutCommandList.AddBoxOutline(LayerId, Bounds.Deflate(FMargin(1, 1, 1, 1)), Style.Colors.MenuInnerBorder, 1.0f);
 
     return FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId + 1);
 }
@@ -124,6 +125,11 @@ void FMenu::AddItem(const TSharedPtr<FMenuItem>& Item)
 void FMenu::AddSeparator()
 {
     Panel->AddSlot(FMenuSeparator::Create()).SetHorizontalAlignment(EHorizontalAlignment::Fill);
+}
+
+void FMenu::AddSection(const String& Label, const TSharedPtr<IFontFace>& Font)
+{
+    Panel->AddSlot(FMenuSectionHeader::Create(Label, Font)).SetHorizontalAlignment(EHorizontalAlignment::Fill);
 }
 
 void FMenu::AddCustomEntry(const TSharedPtr<FVisualElement>& Element)

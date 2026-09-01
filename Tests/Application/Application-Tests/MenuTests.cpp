@@ -7,6 +7,7 @@
 #include <Core/Containers/SharedPtr.h>
 #include <Application/Draw/DrawCommandList.h>
 #include <Application/Elements/Spacer.h>
+#include <Application/Elements/TitleBar.h>
 #include <Application/Input/Keys.h>
 #include <Application/Menus/ComboBox.h>
 #include <Application/Menus/DragDropService.h>
@@ -83,6 +84,20 @@ static void ClickElement(const TSharedPtr<FVisualElement>& Element)
 
     Element->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, Center));
     Element->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, Center));
+}
+
+/** @brief True when any published rectangle covers a point, which is what the platform asks at hit-test time. */
+static bool IsPointInteractive(const FWindowTitleBarRegions& Regions, const IntVector2& Point)
+{
+    for (const FWindowRect& Rect : Regions.InteractiveRects)
+    {
+        if (Rect.Contains(Point))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 static int32 CountCommands(const FDrawCommandList& CommandList, EDrawCommandType Type)
@@ -263,8 +278,8 @@ bool MenuItemLayout_Test()
     Plain->PrepareDesiredSize();
 
     const int32 LabelWidth = 4 * 8;
-    TEST_EXPECT_EQ(Plain->GetCachedDesiredSize().X, 12 + FMenuItem::GutterWidth + LabelWidth);
-    TEST_EXPECT_EQ(Plain->GetCachedDesiredSize().Y, Style.Metrics.RowHeight);
+    TEST_EXPECT_EQ(Plain->GetCachedDesiredSize().X, 28 + FMenuItem::GutterWidth + LabelWidth);
+    TEST_EXPECT_EQ(Plain->GetCachedDesiredSize().Y, FMenuItem::RowHeight);
 
     TEST_SECTION("A shortcut hint widens the row by the gap and its own width");
     FMenuItem::FDesc ShortcutDesc;
@@ -274,6 +289,14 @@ bool MenuItemLayout_Test()
     TSharedPtr<FMenuItem> WithShortcut = FMenuItem::Create(ShortcutDesc);
     WithShortcut->PrepareDesiredSize();
     TEST_EXPECT_EQ(WithShortcut->GetCachedDesiredSize().X, Plain->GetCachedDesiredSize().X + FMenuItem::ShortcutGap + (6 * 8));
+
+    TEST_SECTION("The hint is drawn upper case, whatever case the accelerator was named in");
+    WithShortcut->Tick(FRectangle(IntVector2(0, 0), 200, 26));
+
+    FDrawCommandList ShortcutCommands;
+    DrawElement(WithShortcut, ShortcutCommands);
+    TEST_EXPECT_EQ(CountCommands(ShortcutCommands, EDrawCommandType::Text), 2);
+    TEST_EXPECT_EQ(ShortcutCommands.GetCommands()[1].Text, String("CTRL+O"));
 
     TEST_SECTION("A submenu widens the row by the arrow it has to draw");
     FMenuItem::FDesc SubMenuDesc;
@@ -338,15 +361,63 @@ bool MenuItemLayout_Test()
     TEST_SECTION("A separator is a rule across the middle of its own row");
     TSharedPtr<FMenuSeparator> Separator = FMenuSeparator::Create();
     Separator->PrepareDesiredSize();
-    TEST_EXPECT_EQ(Separator->GetCachedDesiredSize().Y, Style.Metrics.SeparatorThickness + 6);
+    TEST_EXPECT_EQ(Separator->GetCachedDesiredSize().Y, Style.Metrics.MenuSeparatorThickness + 8);
 
-    Separator->Tick(FRectangle(IntVector2(0, 0), 160, 7));
+    Separator->Tick(FRectangle(IntVector2(0, 0), 160, Separator->GetCachedDesiredSize().Y));
 
     FDrawCommandList SeparatorCommands;
     DrawElement(Separator, SeparatorCommands);
     TEST_EXPECT_EQ(CountCommands(SeparatorCommands, EDrawCommandType::Box), 1);
-    TEST_EXPECT_EQ(SeparatorCommands.GetCommands()[0].Bounds.Height, Style.Metrics.SeparatorThickness);
-    TEST_EXPECT_EQ(SeparatorCommands.GetCommands()[0].Bounds.Width, 160 - 12);
+    TEST_EXPECT_EQ(SeparatorCommands.GetCommands()[0].Bounds.Height, Style.Metrics.MenuSeparatorThickness);
+    TEST_EXPECT_EQ(SeparatorCommands.GetCommands()[0].Bounds.Width, 160 - 40);
+
+    TEST_SECTION("A section header takes the taller of its caption and the rule, plus the same padding");
+    TSharedPtr<FMenuSectionHeader> Header = FMenuSectionHeader::Create("Open", Font);
+    Header->PrepareDesiredSize();
+    TEST_EXPECT_EQ(Header->GetCachedDesiredSize().Y, Math::Max(Font->GetLineHeight(), Style.Metrics.MenuSeparatorThickness) + 8);
+
+    TEST_SECTION("It draws its caption upper case, whatever case it was given");
+    TEST_EXPECT_EQ(Header->GetLabel(), String("OPEN"));
+
+    const int32 HeaderHeight = Header->GetCachedDesiredSize().Y;
+    Header->Tick(FRectangle(IntVector2(0, 0), 160, HeaderHeight));
+
+    FDrawCommandList HeaderCommands;
+    DrawElement(Header, HeaderCommands);
+    TEST_EXPECT_EQ(CountCommands(HeaderCommands, EDrawCommandType::Text), 1);
+    TEST_EXPECT_EQ(CountCommands(HeaderCommands, EDrawCommandType::Box), 1);
+
+    TEST_SECTION("The caption sits at the same inset the rule is held back by");
+    const FDrawCommand& CaptionCommand = HeaderCommands.GetCommands()[0];
+    TEST_EXPECT_EQ(CaptionCommand.Type, EDrawCommandType::Text);
+    TEST_EXPECT_EQ(CaptionCommand.Bounds.Position.X, FMenuSectionHeader::InsetX);
+
+    TEST_SECTION("The rule runs to the right of the caption only, and stops at the far inset");
+    const int32         CaptionWidth = Font->MeasureWidth(StringView("OPEN", 4));
+    const FDrawCommand& RuleCommand  = HeaderCommands.GetCommands()[1];
+    TEST_EXPECT_EQ(RuleCommand.Type, EDrawCommandType::Box);
+    TEST_EXPECT_EQ(RuleCommand.Bounds.Position.X, FMenuSectionHeader::InsetX + CaptionWidth + FMenuSectionHeader::LabelGap);
+    TEST_EXPECT_EQ(RuleCommand.Bounds.GetRight(), 160 - FMenuSectionHeader::InsetX);
+    TEST_EXPECT_EQ(RuleCommand.Bounds.Height, Style.Metrics.MenuSeparatorThickness);
+
+    TEST_SECTION("A menu is a fill behind two rings, the darker one immediately inside the brighter");
+    TSharedPtr<FMenu> Chrome = CreateMenu(Font, { "Open" });
+    Chrome->PrepareDesiredSize();
+    Chrome->Tick(FRectangle(IntVector2(0, 0), 160, 80));
+
+    FDrawCommandList ChromeCommands;
+    DrawElement(Chrome, ChromeCommands);
+    TEST_EXPECT_EQ(CountCommands(ChromeCommands, EDrawCommandType::BoxOutline), 2);
+
+    const FDrawCommand& OuterRing = ChromeCommands.GetCommands()[1];
+    const FDrawCommand& InnerRing = ChromeCommands.GetCommands()[2];
+    TEST_EXPECT_EQ(OuterRing.Type, EDrawCommandType::BoxOutline);
+    TEST_EXPECT_EQ(InnerRing.Type, EDrawCommandType::BoxOutline);
+
+    TEST_EXPECT_EQ(OuterRing.Bounds, FRectangle(IntVector2(0, 0), 160, 80));
+    TEST_EXPECT_EQ(InnerRing.Bounds, FRectangle(IntVector2(1, 1), 158, 78));
+    TEST_EXPECT(OuterRing.Tint == Style.Colors.MenuBorder);
+    TEST_EXPECT(InnerRing.Tint == Style.Colors.MenuInnerBorder);
 
     TEST_END();
 }
@@ -431,6 +502,47 @@ bool MenuItemActivation_Test()
     GetTopMenu()->SetHighlightedIndex(0);
     GetTopMenu()->ActivateHighlighted();
     TEST_EXPECT_EQ(Stack.GetDepth(), 0);
+
+    TEST_SECTION("A window activating mid-click does not swallow the click, because the press is still held");
+    int32 ExitCount = 0;
+
+    FMenuItem::FDesc ExitDesc;
+    ExitDesc.SetLabel("Exit").SetFont(Font);
+    ExitDesc.OnActivated = FOnMenuItemActivated::CreateLambda([&ExitCount]() { ExitCount++; });
+
+    TSharedPtr<FMenuItem> ExitRow  = FMenuItem::Create(ExitDesc);
+    TSharedPtr<FMenu>     ExitMenu = FMenu::Create();
+    ExitMenu->AddItem(ExitRow);
+
+    Stack.PushMenu(Window, FRectangle(IntVector2(10, 10), 40, 24), EMenuPlacement::BelowLeftAligned, ExitMenu);
+
+    const IntVector2 ExitCenter = ExitRow->GetContentRectangle().GetCenter();
+    ExitRow->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, ExitCenter));
+    TEST_EXPECT(ExitRow->IsPressed());
+    TEST_EXPECT(FApplication::Get().GetMouseCaptor().Get() == ExitRow.Get());
+
+    ExitRow->OnFocusLost();
+    TEST_EXPECT(ExitRow->IsPressed());
+
+    ExitRow->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, ExitCenter));
+    TEST_EXPECT_EQ(ExitCount, 1);
+    TEST_EXPECT_EQ(Stack.GetDepth(), 0);
+
+    TEST_SECTION("A press the capture has moved off is still cancelled, which is what focus loss is there for");
+    TSharedPtr<FMenu> PairMenu = CreateMenu(Font, { "First", "Second" });
+    Stack.PushMenu(Window, FRectangle(IntVector2(10, 10), 40, 24), EMenuPlacement::BelowLeftAligned, PairMenu);
+
+    const TSharedPtr<FMenuItem>& First  = PairMenu->GetItems()[0];
+    const TSharedPtr<FMenuItem>& Second = PairMenu->GetItems()[1];
+
+    First->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, First->GetContentRectangle().GetCenter()));
+    Second->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, Second->GetContentRectangle().GetCenter()));
+
+    First->OnFocusLost();
+    TEST_EXPECT(!First->IsPressed());
+    TEST_EXPECT(Second->IsPressed());
+
+    Stack.DismissAll();
 
     TEST_END();
 }
@@ -519,6 +631,33 @@ bool MenuKeyboard_Test()
     TEST_EXPECT(Stack.HandleKeyDown(MakeKeyEvent(Keys::Escape)));
     TEST_EXPECT_EQ(Stack.GetDepth(), 0);
 
+    TEST_SECTION("A section header is chrome, so it is neither a row nor somewhere the highlight can land");
+    TSharedPtr<FMenu> Sectioned = FMenu::Create();
+    Sectioned->AddSection("Open", Font);
+
+    FMenuItem::FDesc FirstRow;
+    FirstRow.SetLabel("New Level").SetFont(Font);
+    Sectioned->AddItem(FMenuItem::Create(FirstRow));
+
+    Sectioned->AddSection("Exit", Font);
+
+    FMenuItem::FDesc SecondRow;
+    SecondRow.SetLabel("Exit").SetFont(Font);
+    Sectioned->AddItem(FMenuItem::Create(SecondRow));
+
+    TEST_EXPECT_EQ(Sectioned->GetItems().Size(), 2);
+
+    Sectioned->OnKeyDown(MakeKeyEvent(Keys::Down));
+    TEST_EXPECT_EQ(Sectioned->GetHighlightedIndex(), 0);
+    TEST_EXPECT_EQ(Sectioned->GetItems()[0]->GetLabel(), String("New Level"));
+
+    Sectioned->OnKeyDown(MakeKeyEvent(Keys::Down));
+    TEST_EXPECT_EQ(Sectioned->GetHighlightedIndex(), 1);
+    TEST_EXPECT_EQ(Sectioned->GetItems()[1]->GetLabel(), String("Exit"));
+
+    Sectioned->OnKeyDown(MakeKeyEvent(Keys::Down));
+    TEST_EXPECT_EQ(Sectioned->GetHighlightedIndex(), 0);
+
     TEST_SECTION("With nothing open the stack leaves the key for whoever else wants it");
     TEST_EXPECT(!Stack.HandleKeyDown(MakeKeyEvent(Keys::Escape)));
 
@@ -578,6 +717,59 @@ bool MenuBarSwitching_Test()
 
     FMenuStack::Get().DismissAll();
     TEST_EXPECT(!FileAnchor->IsOpen());
+
+    TEST_END();
+}
+
+bool MenuBarInTitleBar_Test()
+{
+    TEST_BEGIN();
+
+    FScopedStubApplication  Application;
+    FScopedMenuTestServices MenuServices;
+
+    const TSharedPtr<IFontFace> Font   = CreateFont();
+    TSharedPtr<FWindow>         Window = Application.CreateWindow(IntVector2(800, 600), IntVector2(0, 0), EWindowStyleFlags::Default | EWindowStyleFlags::CustomTitleBar);
+
+    // macOS draws its own buttons at the leading edge and leaves the rest of the strip to the application
+    FWindowTitleBarMetrics Metrics;
+    Metrics.Height       = 28.0f;
+    Metrics.LeadingInset = 78.0f;
+    static_cast<FStubPlatformWindow&>(*Window->GetPlatformWindow()).SetTitleBarMetrics(Metrics);
+
+    TSharedPtr<FMenuBar>    MenuBar    = FMenuBar::Create();
+    TSharedPtr<FMenuAnchor> FileAnchor = MenuBar->AddMenu("File", Font, CreateMenu(Font, { "Exit" }));
+    TSharedPtr<FMenuAnchor> EditAnchor = MenuBar->AddMenu("Edit", Font, CreateMenu(Font, { "Undo", "Redo" }));
+
+    FTitleBar::FDesc Desc;
+    Desc.SetTitle("DXR Engine").SetFont(Font).SetContent(MenuBar);
+
+    TSharedPtr<FTitleBar> TitleBar = FTitleBar::Create(Desc);
+    Window->SetContent(TitleBar);
+    FApplication::LayoutWindow(Window);
+
+    TSharedPtr<FMenuBarButton> FileButton = StaticCastSharedPtr<FMenuBarButton>(FileAnchor->GetContent());
+    TSharedPtr<FMenuBarButton> EditButton = StaticCastSharedPtr<FMenuBarButton>(EditAnchor->GetContent());
+
+    TEST_SECTION("The row starts after the inset the platform reserved for its own buttons");
+    TEST_EXPECT_EQ(FileButton->GetContentRectangle().Position.X, 78);
+
+    const FWindowTitleBarRegions& Published = static_cast<FStubPlatformWindow&>(*Window->GetPlatformWindow()).GetTitleBarRegions();
+
+    TEST_SECTION("Both entries are published as clickable, or the platform drags the window instead of pressing them");
+    TEST_EXPECT_EQ(Published.InteractiveRects.Size(), 2);
+    TEST_EXPECT(IsPointInteractive(Published, FileButton->GetContentRectangle().GetCenter()));
+    TEST_EXPECT(IsPointInteractive(Published, EditButton->GetContentRectangle().GetCenter()));
+
+    TEST_SECTION("Every point an entry covers is clickable, not just its middle");
+    const FRectangle FileBounds = FileButton->GetContentRectangle();
+    TEST_EXPECT(IsPointInteractive(Published, FileBounds.Position));
+    TEST_EXPECT(IsPointInteractive(Published, IntVector2(FileBounds.GetRight() - 1, FileBounds.GetBottom() - 1)));
+
+    TEST_SECTION("The inset the platform owns is left to it, and the gap after the row drags the window");
+    TEST_EXPECT(!IsPointInteractive(Published, IntVector2(40, 14)));
+    TEST_EXPECT(Published.CaptionRect.Contains(IntVector2(600, 14)));
+    TEST_EXPECT(!IsPointInteractive(Published, IntVector2(600, 14)));
 
     TEST_END();
 }

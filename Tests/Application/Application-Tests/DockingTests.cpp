@@ -158,25 +158,25 @@ bool DockNodeMinimumSize_Test()
     TEST_BEGIN();
 
     TEST_SECTION("A leaf is a panel with a strip over it");
-    const FDockNode Leaf = FDockNode::MakeTabs({ "Outliner" });
+    const FDockNode Leaf = FDockNode::CreateTabs({ "Outliner" });
 
     TEST_EXPECT_EQ(Leaf.ComputeMinimumSize().X, FDockMetrics::MinimumPanelWidth);
     TEST_EXPECT_EQ(Leaf.ComputeMinimumSize().Y, FDockMetrics::MinimumPanelHeight + FDockMetrics::TabStripHeight);
 
     TEST_SECTION("A row adds its children's widths and the handle between them, and takes the taller one");
-    const FDockNode Row = FDockNode::MakeSplit(EDockSplitOrientation::Horizontal, Leaf, Leaf);
+    const FDockNode Row = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, Leaf, Leaf);
 
     TEST_EXPECT_EQ(Row.ComputeMinimumSize().X, FDockMetrics::MinimumPanelWidth * 2 + FDockMetrics::SplitterThickness);
     TEST_EXPECT_EQ(Row.ComputeMinimumSize().Y, Leaf.ComputeMinimumSize().Y);
 
     TEST_SECTION("A column does the same the other way round");
-    const FDockNode Column = FDockNode::MakeSplit(EDockSplitOrientation::Vertical, Leaf, Leaf);
+    const FDockNode Column = FDockNode::CreateSplit(EDockSplitOrientation::Vertical, Leaf, Leaf);
 
     TEST_EXPECT_EQ(Column.ComputeMinimumSize().X, FDockMetrics::MinimumPanelWidth);
     TEST_EXPECT_EQ(Column.ComputeMinimumSize().Y, Leaf.ComputeMinimumSize().Y * 2 + FDockMetrics::SplitterThickness);
 
     TEST_SECTION("Nesting accumulates, so an outer drag cannot squeeze an inner panel out of existence");
-    const FDockNode Nested = FDockNode::MakeSplit(EDockSplitOrientation::Horizontal, Leaf, Column);
+    const FDockNode Nested = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, Leaf, Column);
 
     TEST_EXPECT_EQ(Nested.ComputeMinimumSize().X, FDockMetrics::MinimumPanelWidth * 2 + FDockMetrics::SplitterThickness);
     TEST_EXPECT_EQ(Nested.ComputeMinimumSize().Y, Column.ComputeMinimumSize().Y);
@@ -192,11 +192,11 @@ bool DockNodeCollapse_Test()
 {
     TEST_BEGIN();
 
-    const FDockNode Outliner = FDockNode::MakeTabs({ "Outliner" });
-    const FDockNode Details  = FDockNode::MakeTabs({ "Details" });
+    const FDockNode Outliner = FDockNode::CreateTabs({ "Outliner" });
+    const FDockNode Details  = FDockNode::CreateTabs({ "Details" });
 
     TEST_SECTION("An emptied leaf is dropped and the split of one that leaves becomes its other child");
-    FDockNode Row = FDockNode::MakeSplit(EDockSplitOrientation::Horizontal, Outliner, Details);
+    FDockNode Row = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, Outliner, Details);
     Row.Children[0].TabIds.Clear();
     Row.CollapseDegenerateNodes();
 
@@ -205,8 +205,8 @@ bool DockNodeCollapse_Test()
     TEST_EXPECT_EQ(Row.TabIds[0], String("Details"));
 
     TEST_SECTION("A split whose child splits the same way absorbs it rather than nesting");
-    FDockNode Inner = FDockNode::MakeSplit(EDockSplitOrientation::Horizontal, Outliner, Details);
-    FDockNode Outer = FDockNode::MakeSplit(EDockSplitOrientation::Horizontal, Inner, FDockNode::MakeTabs({ "Content" }));
+    FDockNode Inner = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, Outliner, Details);
+    FDockNode Outer = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, Inner, FDockNode::CreateTabs({ "Content" }));
 
     Outer.CollapseDegenerateNodes();
 
@@ -222,7 +222,7 @@ bool DockNodeCollapse_Test()
     TEST_EXPECT(Math::Abs(Outer.ChildFractions[2] - 0.50f) < 0.0001f);
 
     TEST_SECTION("A child splitting the other way is left alone, because it is a real nesting");
-    FDockNode Mixed = FDockNode::MakeSplit(EDockSplitOrientation::Horizontal, FDockNode::MakeSplit(EDockSplitOrientation::Vertical, Outliner, Details), FDockNode::MakeTabs({ "Content" }));
+    FDockNode Mixed = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, FDockNode::CreateSplit(EDockSplitOrientation::Vertical, Outliner, Details), FDockNode::CreateTabs({ "Content" }));
     Mixed.CollapseDegenerateNodes();
 
     TEST_EXPECT_EQ(Mixed.Children.Size(), 2);
@@ -230,7 +230,7 @@ bool DockNodeCollapse_Test()
     TEST_EXPECT_EQ(Mixed.Children[0].Orientation, EDockSplitOrientation::Vertical);
 
     TEST_SECTION("Emptying everything leaves an empty leaf rather than a split with no children");
-    FDockNode Everything = FDockNode::MakeSplit(EDockSplitOrientation::Vertical, Outliner, Details);
+    FDockNode Everything = FDockNode::CreateSplit(EDockSplitOrientation::Vertical, Outliner, Details);
     Everything.Children[0].TabIds.Clear();
     Everything.Children[1].TabIds.Clear();
     Everything.CollapseDegenerateNodes();
@@ -239,10 +239,10 @@ bool DockNodeCollapse_Test()
     TEST_EXPECT(Everything.IsEmpty());
 
     TEST_SECTION("A collapse that empties two levels does not leave a rung behind");
-    FDockNode Deep = FDockNode::MakeSplit(
+    FDockNode Deep = FDockNode::CreateSplit(
         EDockSplitOrientation::Horizontal,
-        FDockNode::MakeSplit(EDockSplitOrientation::Vertical, Outliner, Details),
-        FDockNode::MakeTabs({ "Content" }));
+        FDockNode::CreateSplit(EDockSplitOrientation::Vertical, Outliner, Details),
+        FDockNode::CreateTabs({ "Content" }));
 
     Deep.Children[0].Children[0].TabIds.Clear();
     Deep.CollapseDegenerateNodes();
@@ -262,7 +262,7 @@ bool DockNodeCollapse_Test()
     TEST_EXPECT(Math::Abs(Total - 1.0f) < 0.0001f);
 
     TEST_SECTION("An active index left past the end of a shortened tab list is pulled back");
-    FDockNode Stack = FDockNode::MakeTabs({ "Outliner", "Details" });
+    FDockNode Stack = FDockNode::CreateTabs({ "Outliner", "Details" });
     Stack.ActiveTabIndex = 1;
     Stack.TabIds.RemoveAt(1);
     Stack.CollapseDegenerateNodes();
@@ -965,7 +965,7 @@ bool DockingAreaPersistence_Test()
     TEST_EXPECT(Math::Abs(SplitChildren[0]->GetContentRectangle().Width - 239) <= 2);
 
     TEST_SECTION("A saved id nobody registered is dropped rather than leaving a tab with no panel");
-    FDockNode WithStranger = FDockNode::MakeSplit(EDockSplitOrientation::Horizontal, FDockNode::MakeTabs({ "Outliner" }), FDockNode::MakeTabs({ "Profiler" }));
+    FDockNode WithStranger = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, FDockNode::CreateTabs({ "Outliner" }), FDockNode::CreateTabs({ "Profiler" }));
 
     Fixture.Area->RestoreLayout(WithStranger);
 
