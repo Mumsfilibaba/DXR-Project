@@ -233,6 +233,72 @@ bool UIDrawDataClipCulling_Test()
     TEST_END();
 }
 
+bool UIDrawDataSiblingClips_Test()
+{
+    TEST_BEGIN();
+
+    FUIDrawData DrawData;
+
+    const FRectangle LeftRegion(IntVector2(0, 0), 100, 100);
+    const FRectangle RightRegion(IntVector2(200, 0), 100, 100);
+
+    TEST_SECTION("Two disjoint regions opened on the same layer each keep their own contents");
+
+    FDrawCommandList SiblingList;
+    SiblingList.PushClip(0, LeftRegion);
+    SiblingList.AddBox(0, FRectangle(IntVector2(10, 10), 20, 20), FFloatColor::White);
+    SiblingList.AddBox(1, FRectangle(IntVector2(10, 40), 20, 20), FFloatColor::White);
+    SiblingList.PopClip(1);
+
+    SiblingList.PushClip(0, RightRegion);
+    SiblingList.AddBox(0, FRectangle(IntVector2(210, 10), 20, 20), FFloatColor::White);
+    SiblingList.AddBox(1, FRectangle(IntVector2(210, 40), 20, 20), FFloatColor::White);
+    SiblingList.PopClip(1);
+
+    DrawData.BuildFromCommandList(SiblingList);
+
+    TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 16);
+
+    TEST_SECTION("Every batch is scissored to the region its own geometry was recorded under");
+    for (const FUIDrawBatch& Batch : DrawData.GetBatches())
+    {
+        TEST_EXPECT(Batch.bIsClipped);
+        TEST_EXPECT(Batch.ScissorRectangle == LeftRegion || Batch.ScissorRectangle == RightRegion);
+    }
+
+    TEST_SECTION("Closing a region no longer leaks the one beneath it onto a later sibling");
+
+    FDrawCommandList NestedList;
+    NestedList.PushClip(0, LeftRegion);
+    NestedList.PushClip(0, FRectangle(IntVector2(0, 0), 40, 40));
+    NestedList.AddBox(1, FRectangle(IntVector2(5, 5), 10, 10), FFloatColor::White);
+    NestedList.PopClip(1);
+    NestedList.PopClip(1);
+
+    NestedList.PushClip(0, RightRegion);
+    NestedList.AddBox(2, FRectangle(IntVector2(210, 10), 20, 20), FFloatColor::White);
+    NestedList.PopClip(2);
+
+    DrawData.BuildFromCommandList(NestedList);
+
+    TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 8);
+
+    TEST_SECTION("A nested region is still intersected with its parent when it is recorded");
+    FDrawCommandList IntersectedList;
+    IntersectedList.PushClip(0, FRectangle(IntVector2(0, 0), 100, 100));
+    IntersectedList.PushClip(0, FRectangle(IntVector2(50, 50), 100, 100));
+    IntersectedList.AddBox(1, FRectangle(IntVector2(60, 60), 10, 10), FFloatColor::White);
+    IntersectedList.PopClip(1);
+    IntersectedList.PopClip(1);
+
+    DrawData.BuildFromCommandList(IntersectedList);
+
+    TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 1);
+    TEST_EXPECT_EQ(DrawData.GetBatches()[0].ScissorRectangle, FRectangle(IntVector2(50, 50), 50, 50));
+
+    TEST_END();
+}
+
 bool UIDrawDataRoundedBox_Test()
 {
     TEST_BEGIN();

@@ -11,8 +11,9 @@ FUIDrawData::FUIDrawData()
     : Vertices()
     , Indices()
     , Batches()
-    , ClipStack()
     , ScratchPoints()
+    , ActiveClipRectangle()
+    , bHasActiveClip(false)
 {
 }
 
@@ -23,8 +24,10 @@ void FUIDrawData::Reset()
     Vertices.Clear();
     Indices.Clear();
     Batches.Clear();
-    ClipStack.Clear();
     ScratchPoints.Clear();
+
+    ActiveClipRectangle = FRectangle();
+    bHasActiveClip      = false;
 }
 
 void FUIDrawData::BuildFromCommandList(const FDrawCommandList& CommandList)
@@ -58,6 +61,10 @@ void FUIDrawData::BuildFromCommandList(const FDrawCommandList& CommandList)
     for (int32 SortedIndex = 0; SortedIndex < SortedIndices.Size(); ++SortedIndex)
     {
         const FDrawCommand& Command = Commands[SortedIndices[SortedIndex]];
+
+        ActiveClipRectangle = Command.ClipRectangle;
+        bHasActiveClip      = Command.bIsClipped;
+
         switch (Command.Type)
         {
             case EDrawCommandType::Box:
@@ -126,18 +133,8 @@ void FUIDrawData::BuildFromCommandList(const FDrawCommandList& CommandList)
             }
 
             case EDrawCommandType::ClipPush:
-            {
-                ClipStack.Add(Command.Bounds);
-                break;
-            }
-
             case EDrawCommandType::ClipPop:
             {
-                if (!ClipStack.IsEmpty())
-                {
-                    ClipStack.RemoveAt(ClipStack.LastIndex());
-                }
-
                 break;
             }
         }
@@ -146,7 +143,7 @@ void FUIDrawData::BuildFromCommandList(const FDrawCommandList& CommandList)
 
 bool FUIDrawData::IsCulledByClip(const FRectangle& Bounds) const
 {
-    if (ClipStack.IsEmpty())
+    if (!bHasActiveClip)
     {
         return false;
     }
@@ -158,7 +155,7 @@ bool FUIDrawData::IsCulledByClip(const FRectangle& Bounds) const
         return false;
     }
 
-    return ClipStack.Last().Intersect(Bounds).IsEmpty();
+    return ActiveClipRectangle.Intersect(Bounds).IsEmpty();
 }
 
 FRectangle FUIDrawData::ComputePointBounds(TArrayView<const Vector2> Points, float Thickness)
@@ -644,8 +641,8 @@ void FUIDrawData::AddRoundedBox(const FRectangle& Bounds, const FCornerRadii& Ra
 
 FUIDrawBatch& FUIDrawData::GetOrOpenBatch(const FUITextureHandle& Texture)
 {
-    const bool       bIsClipped       = !ClipStack.IsEmpty();
-    const FRectangle ScissorRectangle = bIsClipped ? ClipStack.Last() : FRectangle();
+    const bool       bIsClipped       = bHasActiveClip;
+    const FRectangle ScissorRectangle = bIsClipped ? ActiveClipRectangle : FRectangle();
 
     if (!Batches.IsEmpty())
     {

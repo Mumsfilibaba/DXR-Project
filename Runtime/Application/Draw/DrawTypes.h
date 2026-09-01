@@ -214,6 +214,8 @@ struct FDrawCommand
         , Font(nullptr)
         , LayerId(0)
         , CornerRadius()
+        , ClipRectangle()
+        , bIsClipped(false)
         , Brush()
         , PointOffset(0)
         , PointCount(0)
@@ -229,6 +231,12 @@ struct FDrawCommand
     const IFontFace* Font;
     int32            LayerId;
     FCornerRadii     CornerRadius;
+
+    /** @brief The region in force when the command was recorded, already intersected with its ancestors. */
+    FRectangle ClipRectangle;
+
+    /** @brief True when a region was open, since an empty ClipRectangle is the region that draws nothing. */
+    bool bIsClipped;
 
     /** @brief What an Image command samples, and unset for every other type. */
     FUIBrush Brush;

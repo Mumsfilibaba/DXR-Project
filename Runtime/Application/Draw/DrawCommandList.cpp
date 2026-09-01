@@ -13,13 +13,26 @@ FDrawCommandList::FDrawCommandList()
 
 FDrawCommandList::~FDrawCommandList() = default;
 
-void FDrawCommandList::AddBox(int32 LayerId, const FRectangle& Bounds, const FFloatColor& Tint, const FCornerRadii& CornerRadius)
+FDrawCommand& FDrawCommandList::EmplaceCommand(EDrawCommandType Type, int32 LayerId)
 {
     FDrawCommand& Command = Commands.Emplace();
-    Command.Type         = EDrawCommandType::Box;
+    Command.Type       = Type;
+    Command.LayerId    = LayerId;
+    Command.bIsClipped = !ClipStack.IsEmpty();
+
+    if (Command.bIsClipped)
+    {
+        Command.ClipRectangle = ClipStack.Last();
+    }
+
+    return Command;
+}
+
+void FDrawCommandList::AddBox(int32 LayerId, const FRectangle& Bounds, const FFloatColor& Tint, const FCornerRadii& CornerRadius)
+{
+    FDrawCommand& Command = EmplaceCommand(EDrawCommandType::Box, LayerId);
     Command.Bounds       = Bounds;
     Command.Tint         = Tint;
-    Command.LayerId      = LayerId;
     Command.CornerRadius = CornerRadius;
 }
 
@@ -30,33 +43,27 @@ void FDrawCommandList::AddBoxOutline(int32 LayerId, const FRectangle& Bounds, co
         return;
     }
 
-    FDrawCommand& Command = Commands.Emplace();
-    Command.Type         = EDrawCommandType::BoxOutline;
+    FDrawCommand& Command = EmplaceCommand(EDrawCommandType::BoxOutline, LayerId);
     Command.Bounds       = Bounds;
     Command.Tint         = Tint;
-    Command.LayerId      = LayerId;
     Command.CornerRadius = CornerRadius;
     Command.Thickness    = Thickness;
 }
 
 void FDrawCommandList::AddText(int32 LayerId, const FRectangle& Bounds, const String& InText, const IFontFace* Font, const FFloatColor& Tint)
 {
-    FDrawCommand& Command = Commands.Emplace();
-    Command.Type    = EDrawCommandType::Text;
-    Command.Bounds  = Bounds;
-    Command.Tint    = Tint;
-    Command.Text    = InText;
-    Command.Font    = Font;
-    Command.LayerId = LayerId;
+    FDrawCommand& Command = EmplaceCommand(EDrawCommandType::Text, LayerId);
+    Command.Bounds = Bounds;
+    Command.Tint   = Tint;
+    Command.Text   = InText;
+    Command.Font   = Font;
 }
 
 void FDrawCommandList::AddLine(int32 LayerId, const FRectangle& Bounds, const FFloatColor& Tint)
 {
-    FDrawCommand& Command = Commands.Emplace();
-    Command.Type    = EDrawCommandType::Line;
-    Command.Bounds  = Bounds;
-    Command.Tint    = Tint;
-    Command.LayerId = LayerId;
+    FDrawCommand& Command = EmplaceCommand(EDrawCommandType::Line, LayerId);
+    Command.Bounds = Bounds;
+    Command.Tint   = Tint;
 }
 
 void FDrawCommandList::AddLine(int32 LayerId, const Vector2& Start, const Vector2& End, const FFloatColor& Tint, float Thickness)
@@ -72,10 +79,8 @@ void FDrawCommandList::AddPolyline(int32 LayerId, TArrayView<const Vector2> InPo
         return;
     }
 
-    FDrawCommand& Command = Commands.Emplace();
-    Command.Type      = EDrawCommandType::Polyline;
+    FDrawCommand& Command = EmplaceCommand(EDrawCommandType::Polyline, LayerId);
     Command.Tint      = Tint;
-    Command.LayerId   = LayerId;
     Command.Thickness = Thickness;
     Command.bIsClosed = bClosed;
 
@@ -89,10 +94,8 @@ void FDrawCommandList::AddConvexPolygon(int32 LayerId, TArrayView<const Vector2>
         return;
     }
 
-    FDrawCommand& Command = Commands.Emplace();
-    Command.Type    = EDrawCommandType::ConvexPolygon;
-    Command.Tint    = Tint;
-    Command.LayerId = LayerId;
+    FDrawCommand& Command = EmplaceCommand(EDrawCommandType::ConvexPolygon, LayerId);
+    Command.Tint = Tint;
 
     StorePoints(Command, InPoints);
 }
@@ -187,12 +190,10 @@ void FDrawCommandList::AddBezier(int32 LayerId, const Vector2& P0, const Vector2
 
 void FDrawCommandList::AddImage(int32 LayerId, const FRectangle& Bounds, const FUIBrush& Brush, const FFloatColor& Tint)
 {
-    FDrawCommand& Command = Commands.Emplace();
-    Command.Type    = EDrawCommandType::Image;
-    Command.Bounds  = Bounds;
-    Command.Tint    = Tint;
-    Command.LayerId = LayerId;
-    Command.Brush   = Brush;
+    FDrawCommand& Command = EmplaceCommand(EDrawCommandType::Image, LayerId);
+    Command.Bounds = Bounds;
+    Command.Tint   = Tint;
+    Command.Brush  = Brush;
 }
 
 void FDrawCommandList::PushClip(int32 LayerId, const FRectangle& ClipRectangle)

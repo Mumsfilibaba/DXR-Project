@@ -139,6 +139,8 @@ private:
 
     NODISCARD bool IsCulledByClip(const FRectangle& Bounds) const;
 
+    FUIDrawBatch& GetOrOpenBatch(const FUITextureHandle& Texture);
+
     void AddBox(const FDrawCommand& Command);
     void AddBoxOutline(const FDrawCommand& Command);
     void AddText(const FDrawCommand& Command);
@@ -148,11 +150,10 @@ private:
     void AddQuad(const FRectangle& Bounds, const Vector2& MinTexCoord, const Vector2& MaxTexCoord, uint32 PackedColor);
     void AddRoundedBox(const FRectangle& Bounds, const FCornerRadii& Radius, uint32 PackedColor);
 
-    FUIDrawBatch& GetOrOpenBatch(const FUITextureHandle& Texture);
-
     TArray<FUIVertex>    Vertices;
     TArray<uint32>       Indices;
     TArray<FUIDrawBatch> Batches;
-    TArray<FRectangle>   ClipStack;
     TArray<Vector2>      ScratchPoints;
+    FRectangle           ActiveClipRectangle;
+    bool                 bHasActiveClip;
 };

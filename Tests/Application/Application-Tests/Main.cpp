@@ -72,6 +72,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("UIDrawDataRoundedBox", UIDrawDataRoundedBox_Test());
     RUN_TEST("UIDrawDataText", UIDrawDataText_Test());
     RUN_TEST("UIDrawDataClipCulling", UIDrawDataClipCulling_Test());
+    RUN_TEST("UIDrawDataSiblingClips", UIDrawDataSiblingClips_Test());
 
     RUN_TEST("CornerRadiiTypes", CornerRadiiTypes_Test());
     RUN_TEST("VectorDrawCommands", VectorDrawCommands_Test());

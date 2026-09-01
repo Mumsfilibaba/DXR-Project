@@ -136,7 +136,7 @@ int32 FSplitter::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
         if (Child && Child->IsVisible())
         {
             const FDrawGeometry ChildGeometry(Child->GetContentRectangle(), AllottedGeometry.Scale);
-            NextLayerId = Math::Max(NextLayerId, Child->OnDraw(ChildGeometry, OutCommandList, LayerId));
+            NextLayerId = Child->OnDraw(ChildGeometry, OutCommandList, NextLayerId + 1);
         }
     }
 

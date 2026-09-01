@@ -271,6 +271,7 @@ public:
 private:
     NODISCARD static int32 ResolveCircleSegments(float Radius, float AngleSweep, int32 RequestedSegments);
 
+    FDrawCommand& EmplaceCommand(EDrawCommandType Type, int32 LayerId);
     void StorePoints(FDrawCommand& Command, TArrayView<const Vector2> InPoints);
     void BuildArcPoints(const Vector2& Center, float Radius, float StartAngle, float EndAngle, int32 Segments);
 
