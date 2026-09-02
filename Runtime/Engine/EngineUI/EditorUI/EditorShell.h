@@ -27,16 +27,16 @@ public:
     ~FEditorShell();
 
     /**
-     * @brief Loads the style, builds the panels and puts the tree in the engine window.
+     * @brief Loads the style and the icon atlas, builds the panels and puts the tree in the engine window.
      *
      * @return True when the whole tree was built.
      */
     bool Initialize();
 
     /**
-     * @brief Loads whatever needs a live RHI, which is the icon atlas.
+     * @brief Loads whatever needs the renderer rather than the bare RHI, which is nothing today.
      *
-     * @return True when the atlas was built.
+     * @return True, always.
      */
     bool InitPostRenderer();
 

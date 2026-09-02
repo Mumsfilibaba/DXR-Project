@@ -114,10 +114,10 @@ bool ButtonControl_Test()
     TSharedPtr<FButton> Button = FButton::Create(Desc);
     Button->PrepareDesiredSize();
 
-    TEST_SECTION("The label and the padding decide the width, and the row height the height");
+    TEST_SECTION("The label and the button padding decide the width, and the button height the height");
     const IntVector2 DesiredSize = Button->GetCachedDesiredSize();
-    TEST_EXPECT_EQ(DesiredSize.X, (4 * 8) + Style.Metrics.ControlPadding.GetTotalHorizontal());
-    TEST_EXPECT_EQ(DesiredSize.Y, Math::Max(16 + Style.Metrics.ControlPadding.GetTotalVertical(), Style.Metrics.RowHeight));
+    TEST_EXPECT_EQ(DesiredSize.X, (4 * 8) + Style.Metrics.ButtonPadding.GetTotalHorizontal());
+    TEST_EXPECT_EQ(DesiredSize.Y, Math::Max(16 + Style.Metrics.ButtonPadding.GetTotalVertical(), Style.Metrics.ButtonHeight));
 
     TEST_SECTION("Clicking it fires the delegate once");
     Button->Tick(FRectangle(IntVector2(10, 10), 120, 32));
@@ -144,7 +144,7 @@ bool ButtonControl_Test()
 
     const FDrawCommand* NormalBox = FindFirstBox(NormalCommands);
     TEST_EXPECT(NormalBox != nullptr);
-    TEST_EXPECT(NormalBox->Tint == Style.Colors.ControlNormal);
+    TEST_EXPECT(NormalBox->Tint == Style.Colors.ButtonNormal);
 
     Button->OnMouseEntered(MakeMoveEvent(IntVector2(50, 20)));
 
@@ -153,7 +153,7 @@ bool ButtonControl_Test()
 
     const FDrawCommand* HoveredBox = FindFirstBox(HoveredCommands);
     TEST_EXPECT(HoveredBox != nullptr);
-    TEST_EXPECT(HoveredBox->Tint == Style.Colors.ControlHovered);
+    TEST_EXPECT(HoveredBox->Tint == Style.Colors.ButtonHovered);
 
     TEST_SECTION("The label is drawn inside the fill, centred by default");
     TEST_EXPECT_EQ(CountCommands(NormalCommands, EDrawCommandType::Text), 1);
@@ -169,7 +169,7 @@ bool ButtonControl_Test()
 
     TSharedPtr<FButton> IconButton = FButton::Create(ContentDesc);
     IconButton->PrepareDesiredSize();
-    TEST_EXPECT_EQ(IconButton->GetCachedDesiredSize().X, (2 * 8) + Style.Metrics.ControlPadding.GetTotalHorizontal());
+    TEST_EXPECT_EQ(IconButton->GetCachedDesiredSize().X, (2 * 8) + Style.Metrics.ButtonPadding.GetTotalHorizontal());
     TEST_EXPECT(IconButton->GetText().IsEmpty());
 
     TEST_SECTION("The keyboard activates it the way a click does");

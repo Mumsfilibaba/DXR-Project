@@ -29,6 +29,9 @@ struct ENGINE_API FEditorStyle
     /** @brief The height of one row in a tree, a list or a property table. */
     static constexpr int32 RowHeight = 22;
 
+    /** @brief The height of a button, which is the body font's 18px plus ImGui's 4px above and below. */
+    static constexpr int32 ButtonHeight = 26;
+
     /** @brief The edge length of an icon square in a tool bar or a tree row. */
     static constexpr int32 IconSize = 16;
 

@@ -58,10 +58,8 @@ public:
      * @param InImage    The render target, drawn first and never interactive.
      * @param InViewport The element the game reads its input from, which declines everything while editing.
      * @param InGizmo    The transform handles, which get first refusal on every click.
-     * @param InToolBar  The debug-view strip pinned to the top-left, or null for no strip.
      */
-    void SetLayers(const TSharedPtr<FEditorViewportImage>& InImage, const TSharedPtr<FViewport>& InViewport,
-        const TSharedPtr<FGizmo>& InGizmo, const TSharedPtr<FVisualElement>& InToolBar);
+    void SetLayers(const TSharedPtr<FEditorViewportImage>& InImage, const TSharedPtr<FViewport>& InViewport, const TSharedPtr<FGizmo>& InGizmo);
 
     /** @brief Forgets any button held and any drag in progress, which entering or leaving play needs. */
     void ResetInputState();
@@ -99,7 +97,6 @@ private:
     TSharedPtr<FEditorViewportImage>           Image;
     TSharedPtr<FViewport>                      HostViewport;
     TSharedPtr<FGizmo>                         Gizmo;
-    TSharedPtr<FVisualElement>                 ToolBar;
     TUniquePtr<struct FEditorCameraInputState> CameraInput;
     IntVector2                                 LastCursorPosition;
     IntVector2                                 MarqueeStartPosition;

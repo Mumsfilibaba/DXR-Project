@@ -132,7 +132,7 @@ void FDragDropService::UnregisterTarget(const TWeakPtr<FVisualElement>& Target)
     }
 }
 
-void FDragDropService::DrawDragVisual(FDrawCommandList& OutCommandList, int32 LayerId) const
+void FDragDropService::DrawDragVisual(FDrawCommandList& OutCommandList, int32 LayerId, const IntVector2& ClientOrigin) const
 {
     if (!IsDragging())
     {
@@ -150,7 +150,7 @@ void FDragDropService::DrawDragVisual(FDrawCommandList& OutCommandList, int32 La
     FRectangle Ghost;
     Ghost.Width    = (DragVisualPadding * 2) + IconExtent + TextWidth;
     Ghost.Height   = (DragVisualPadding * 2) + Math::Max(TextHeight, bHasIcon ? DragVisualIconSize : 0);
-    Ghost.Position = ScreenPosition + IntVector2(DragVisualCursorOffset, DragVisualCursorOffset);
+    Ghost.Position = (ScreenPosition - ClientOrigin) + IntVector2(DragVisualCursorOffset, DragVisualCursorOffset);
 
     const FCornerRadii Radii(Style.Metrics.CornerRadius);
     OutCommandList.AddBox(LayerId, Ghost, Style.Colors.PanelBackground, Radii);

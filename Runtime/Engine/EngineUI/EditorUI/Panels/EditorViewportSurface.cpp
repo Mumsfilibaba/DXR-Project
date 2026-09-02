@@ -24,7 +24,6 @@ FEditorViewportSurface::FEditorViewportSurface()
     , Image(nullptr)
     , HostViewport(nullptr)
     , Gizmo(nullptr)
-    , ToolBar(nullptr)
     , CameraInput(MakeUniquePtr<FEditorCameraInputState>())
     , LastCursorPosition()
     , MarqueeStartPosition()
@@ -42,12 +41,11 @@ FEditorViewportSurface::~FEditorViewportSurface()
 }
 
 void FEditorViewportSurface::SetLayers(const TSharedPtr<FEditorViewportImage>& InImage, const TSharedPtr<FViewport>& InViewport,
-    const TSharedPtr<FGizmo>& InGizmo, const TSharedPtr<FVisualElement>& InToolBar)
+    const TSharedPtr<FGizmo>& InGizmo)
 {
     Image        = InImage;
     HostViewport = InViewport;
     Gizmo        = InGizmo;
-    ToolBar      = InToolBar;
 
     const TWeakPtr<FVisualElement> Self = AsWeakPtr();
 
@@ -64,11 +62,6 @@ void FEditorViewportSurface::SetLayers(const TSharedPtr<FEditorViewportImage>& I
     if (Gizmo)
     {
         Gizmo->SetParentElement(Self);
-    }
-
-    if (ToolBar)
-    {
-        ToolBar->SetParentElement(Self);
     }
 }
 
@@ -100,18 +93,6 @@ void FEditorViewportSurface::OnArrange(const FRectangle& AllottedBounds)
     {
         Gizmo->Tick(AllottedBounds);
     }
-
-    if (ToolBar)
-    {
-        const IntVector2 Desired = ToolBar->GetCachedDesiredSize();
-
-        FRectangle Bounds;
-        Bounds.Position = AllottedBounds.Position + IntVector2(8, 8);
-        Bounds.Width    = Math::Min(Desired.X, Math::Max(0, AllottedBounds.Width - 16));
-        Bounds.Height   = Math::Min(Desired.Y, Math::Max(0, AllottedBounds.Height - 16));
-
-        ToolBar->Tick(Bounds);
-    }
 }
 
 void FEditorViewportSurface::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
@@ -130,11 +111,6 @@ void FEditorViewportSurface::GetChildren(TArray<TSharedPtr<FVisualElement>>& Out
     {
         OutChildren.Add(Gizmo);
     }
-
-    if (ToolBar)
-    {
-        OutChildren.Add(ToolBar);
-    }
 }
 
 void FEditorViewportSurface::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
@@ -149,11 +125,6 @@ void FEditorViewportSurface::FindChildrenContainingPoint(const IntVector2& Clien
     if (Gizmo && Gizmo->IsVisible() && Gizmo->IsProjected() && Gizmo->GetContentRectangle().EncapsulatesPoint(ClientPosition))
     {
         Gizmo->FindChildrenContainingPoint(ClientPosition, OutChildElements);
-    }
-
-    if (ToolBar && ToolBar->IsVisible() && ToolBar->GetContentRectangle().EncapsulatesPoint(ClientPosition))
-    {
-        ToolBar->FindChildrenContainingPoint(ClientPosition, OutChildElements);
     }
 }
 
@@ -171,11 +142,6 @@ int32 FEditorViewportSurface::OnDraw(const FDrawGeometry& AllottedGeometry, FDra
     if (Gizmo && Gizmo->IsVisible() && Gizmo->IsProjected())
     {
         CurrentLayer = Gizmo->OnDraw(FDrawGeometry(Gizmo->GetContentRectangle(), AllottedGeometry.Scale), OutCommandList, CurrentLayer) + 1;
-    }
-
-    if (ToolBar && ToolBar->IsVisible())
-    {
-        CurrentLayer = ToolBar->OnDraw(FDrawGeometry(ToolBar->GetContentRectangle(), AllottedGeometry.Scale), OutCommandList, CurrentLayer) + 1;
     }
 
     if (bMarqueeActive)
@@ -414,13 +380,13 @@ FEventResponse FEditorViewportSurface::OnKeyDown(const FKeyEvent& KeyEvent)
 
         if (Key == Keys::D)
         {
-            CameraInput->MoveAxis.X = 1.0f;
+            CameraInput->MoveAxis.X = -1.0f;
             return FEventResponse::Handled();
         }
 
         if (Key == Keys::A)
         {
-            CameraInput->MoveAxis.X = -1.0f;
+            CameraInput->MoveAxis.X = 1.0f;
             return FEventResponse::Handled();
         }
 

@@ -97,7 +97,7 @@ private:
 
     void UpdateGizmoFromSelection();
     void UpdateGizmoCamera();
-    void RefreshTransportItems();
+    void RefreshToolBarState();
     void ShowContextMenu();
     void SelectSpawnedActor(FActor* SpawnedActor);
     NODISCARD bool ComputeFallbackPlacement(const Vector2& Ndc, Vector3& OutLocation) const;
@@ -107,7 +107,7 @@ private:
     NODISCARD Vector3 GetActorGizmoPoint(FActor* Actor) const;
 
     NODISCARD TSharedPtr<FToolBar> BuildToolBar();
-    NODISCARD TSharedPtr<FComboBox> BuildDebugViewCombo();
+    NODISCARD int32 ComputeViewButtonWidth() const;
     NODISCARD TSharedPtr<FComboBox> BuildSecondaryDebugViewCombo();
     NODISCARD TSharedPtr<FVisualElement> BuildCameraMenu();
     NODISCARD TSharedPtr<FVisualElement> BuildViewOptionsMenu();
@@ -119,10 +119,17 @@ private:
     TSharedPtr<FEditorViewportImage>    Image;
     TSharedPtr<FGizmo>                  Gizmo;
     TSharedPtr<FToolBar>                DebugViewBar;
-    TSharedPtr<FComboBox>               DebugViewCombo;
     TSharedPtr<FComboBox>               SecondaryDebugViewCombo;
+    TSharedPtr<FToolBarButton>          TranslateItem;
+    TSharedPtr<FToolBarButton>          RotateItem;
+    TSharedPtr<FToolBarButton>          ScaleItem;
+    TSharedPtr<FToolBarButton>          CenterItem;
+    TSharedPtr<FToolBarButton>          PivotItem;
+    TSharedPtr<FToolBarButton>          LocalItem;
+    TSharedPtr<FToolBarButton>          WorldItem;
     TSharedPtr<FToolBarButton>          PlayItem;
     TSharedPtr<FToolBarButton>          PauseItem;
+    TSharedPtr<FToolBarButton>          ViewItem;
     FRHITextureRef                      ViewportImage;
     IntVector2                          CachedViewportSize;
     Matrix4                             ContextMenuViewProjectionInverse;

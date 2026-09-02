@@ -5,7 +5,10 @@
 #include "TestCommon/TestMacros.h"
 
 #include <Core/Containers/SharedPtr.h>
+#include <Core/Math/Math.h>
 #include <Application/Draw/DrawCommandList.h>
+#include <Application/Draw/UIDrawData.h>
+#include <Application/Elements/SearchBox.h>
 #include <Application/Elements/ToolBar.h>
 #include <Application/Input/Keys.h>
 #include <Application/Menus/Menu.h>
@@ -100,6 +103,21 @@ static int32 CountCommands(const FDrawCommandList& CommandList, EDrawCommandType
 static void DrawElement(const TSharedPtr<FVisualElement>& Element, FDrawCommandList& OutCommandList)
 {
     Element->OnDraw(FDrawGeometry(Element->GetContentRectangle(), 1.0f), OutCommandList, 0);
+}
+
+static FFloatColor FindFillColor(const FDrawCommandList& CommandList, const TSharedPtr<FVisualElement>& Element)
+{
+    const FRectangle Bounds = Element->GetContentRectangle();
+
+    for (const FDrawCommand& Command : CommandList.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::Box && Command.Bounds == Bounds)
+        {
+            return Command.Tint;
+        }
+    }
+
+    return FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
 }
 
 bool ToolBarComposition_Test()
@@ -259,31 +277,59 @@ bool ToolBarInteraction_Test()
     TEST_EXPECT_EQ(ClickCount, 1);
     Save->SetEnabled(true);
 
-    TEST_SECTION("An idle strip is its background and nothing else, so the icons carry it");
+    TEST_SECTION("An idle entry carries a fill of its own, so a strip of them reads as buttons before it is touched");
     Grid->SetCheckState(ECheckBoxState::Unchecked);
 
     // A release leaves the cursor where it was, so both entries are still hovered from the clicks above
     Save->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
     Grid->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
 
+    const FUIStyle& Style = FUIStyle::GetDefault();
+
     FDrawCommandList IdleList;
     DrawElement(ToolBar, IdleList);
-    TEST_EXPECT_EQ(CountCommands(IdleList, EDrawCommandType::Box), 1);
-    TEST_EXPECT_EQ(CountCommands(IdleList, EDrawCommandType::Text), 2);
 
-    TEST_SECTION("Hovering lights the entry under the cursor, and latching lights it for good");
+    TEST_EXPECT_EQ(CountCommands(IdleList, EDrawCommandType::Box), 3);
+    TEST_EXPECT_EQ(CountCommands(IdleList, EDrawCommandType::Text), 2);
+    TEST_EXPECT(FindFillColor(IdleList, Save) == Style.Colors.ButtonNormal);
+    TEST_EXPECT(FindFillColor(IdleList, Grid) == Style.Colors.ButtonNormal);
+
+    TEST_SECTION("Hovering lifts the fill of the entry under the cursor and leaves its neighbours alone");
     Save->OnMouseEntered(MakeMoveEvent(Save->GetContentRectangle().GetCenter()));
 
     FDrawCommandList HoveredList;
     DrawElement(ToolBar, HoveredList);
-    TEST_EXPECT_EQ(CountCommands(HoveredList, EDrawCommandType::Box), 2);
+    TEST_EXPECT(FindFillColor(HoveredList, Save) == Style.Colors.ButtonHovered);
+    TEST_EXPECT(FindFillColor(HoveredList, Grid) == Style.Colors.ButtonNormal);
 
+    TEST_SECTION("Latching switches the fill to the accent, and hovering a latched entry brightens it");
     Save->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
     Grid->SetCheckState(ECheckBoxState::Checked);
 
     FDrawCommandList CheckedList;
     DrawElement(ToolBar, CheckedList);
-    TEST_EXPECT_EQ(CountCommands(CheckedList, EDrawCommandType::Box), 2);
+    TEST_EXPECT(FindFillColor(CheckedList, Grid) == Style.Colors.Accent);
+
+    Grid->OnMouseEntered(MakeMoveEvent(Grid->GetContentRectangle().GetCenter()));
+
+    FDrawCommandList CheckedHoveredList;
+    DrawElement(ToolBar, CheckedHoveredList);
+    TEST_EXPECT(FindFillColor(CheckedHoveredList, Grid) == Style.Colors.AccentHovered);
+
+    Grid->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+
+    TEST_SECTION("A plain button can be lit from outside, which is how a set of them reads as a radio group");
+    TEST_EXPECT(!Save->IsHighlighted());
+
+    Save->SetHighlighted(true);
+    TEST_EXPECT(Save->IsHighlighted());
+
+    FDrawCommandList LitList;
+    DrawElement(ToolBar, LitList);
+    TEST_EXPECT(FindFillColor(LitList, Save) == Style.Colors.Accent);
+
+    Save->SetHighlighted(false);
+    TEST_EXPECT(!Save->IsHighlighted());
 
     TEST_SECTION("An entry with a tip asks for one when the cursor arrives and drops it when it leaves");
     FToolTipService& ToolTips = FToolTipService::Get();
@@ -299,6 +345,189 @@ bool ToolBarInteraction_Test()
     Grid->OnMouseEntered(MakeMoveEvent(Grid->GetContentRectangle().GetCenter()));
     TEST_EXPECT(!ToolTips.IsPending());
     Grid->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+
+    TEST_END();
+}
+
+bool ToolBarGroups_Test()
+{
+    TEST_BEGIN();
+
+    const TSharedPtr<IFontFace> Font  = CreateFont();
+    const FUIStyle&             Style = FUIStyle::GetDefault();
+    const float                 Radius = Style.Metrics.ButtonCornerRadius;
+
+    FToolBar::FDesc Desc;
+    Desc.Font        = Font;
+    Desc.ItemSpacing = 8;
+
+    TSharedPtr<FToolBar> ToolBar = FToolBar::Create(Desc);
+
+    ToolBar->BeginGroup();
+    TSharedPtr<FToolBarButton> Move = ToolBar->AddButton(FToolBarItemDesc().SetLabel("Move").SetMinWidth(80), FOnClicked());
+    TSharedPtr<FToolBarButton> Turn = ToolBar->AddButton(FToolBarItemDesc().SetLabel("Turn").SetMinWidth(60), FOnClicked());
+    TSharedPtr<FToolBarButton> Size = ToolBar->AddButton(FToolBarItemDesc().SetLabel("Size").SetMinWidth(60), FOnClicked());
+    ToolBar->EndGroup();
+
+    ToolBar->BeginGroup();
+    TSharedPtr<FToolBarButton> Local = ToolBar->AddButton(FToolBarItemDesc().SetLabel("Local").SetMinWidth(70), FOnClicked());
+    TSharedPtr<FToolBarButton> World = ToolBar->AddButton(FToolBarItemDesc().SetLabel("World").SetMinWidth(70), FOnClicked());
+    ToolBar->EndGroup();
+
+    TSharedPtr<FToolBarButton> Loose = ToolBar->AddButton(FToolBarItemDesc().SetLabel("Loose"), FOnClicked());
+
+    TEST_SECTION("Only the outer ends of a group are rounded, so the run reads as one pill");
+    TEST_EXPECT(Move->GetCornerRadius() == FCornerRadii::Left(Radius));
+    TEST_EXPECT(Turn->GetCornerRadius().IsZero());
+    TEST_EXPECT(Size->GetCornerRadius() == FCornerRadii::Right(Radius));
+
+    TEST_SECTION("A pair rounds both of its entries, since neither of them is in the middle");
+    TEST_EXPECT(Local->GetCornerRadius() == FCornerRadii::Left(Radius));
+    TEST_EXPECT(World->GetCornerRadius() == FCornerRadii::Right(Radius));
+
+    TEST_SECTION("An entry outside a group keeps every corner rounded");
+    TEST_EXPECT(Loose->GetCornerRadius() == FCornerRadii(Radius));
+
+    TEST_SECTION("A minimum width is honoured however narrow the label is");
+    LayoutElement(ToolBar, FRectangle(IntVector2(0, 0), 600, 40));
+
+    TEST_EXPECT_EQ(Move->GetContentRectangle().Width, 80);
+    TEST_EXPECT_EQ(Turn->GetContentRectangle().Width, 60);
+    TEST_EXPECT_EQ(Loose->GetContentRectangle().Width, 52);
+
+    TEST_SECTION("A group's entries sit flush, and the gap only comes back between groups");
+    TEST_EXPECT_EQ(Turn->GetContentRectangle().Position.X, Move->GetContentRectangle().GetRight());
+    TEST_EXPECT_EQ(Size->GetContentRectangle().Position.X, Turn->GetContentRectangle().GetRight());
+    TEST_EXPECT_EQ(World->GetContentRectangle().Position.X, Local->GetContentRectangle().GetRight());
+
+    TEST_EXPECT_EQ(Local->GetContentRectangle().Position.X - Size->GetContentRectangle().GetRight(), 8);
+    TEST_EXPECT_EQ(Loose->GetContentRectangle().Position.X - World->GetContentRectangle().GetRight(), 8);
+
+    TEST_SECTION("A fixed-width entry centres its label rather than leaving it against the leading edge");
+    FDrawCommandList CommandList;
+    DrawElement(ToolBar, CommandList);
+
+    int32 MoveLabelLeft = -1;
+    for (const FDrawCommand& Command : CommandList.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::Text && Command.Text == String("Move"))
+        {
+            MoveLabelLeft = Command.Bounds.Position.X;
+        }
+    }
+
+    TEST_EXPECT_EQ(MoveLabelLeft, Move->GetContentRectangle().Position.X + 24);
+
+    TEST_SECTION("Clearing the bar closes whatever group was open, so the next build starts clean");
+    ToolBar->BeginGroup();
+    ToolBar->ClearItems();
+
+    ToolBar->BeginGroup();
+    TSharedPtr<FToolBarButton> Rebuilt = ToolBar->AddButton(FToolBarItemDesc().SetLabel("One"), FOnClicked());
+    ToolBar->EndGroup();
+
+    TEST_EXPECT_EQ(ToolBar->GetNumItems(), 1);
+    TEST_EXPECT(Rebuilt->GetCornerRadius() == FCornerRadii(Radius));
+
+    TEST_END();
+}
+
+bool ToolBarFlexibleSpace_Test()
+{
+    TEST_BEGIN();
+
+    const TSharedPtr<IFontFace> Font = CreateFont();
+
+    FToolBar::FDesc Desc;
+    Desc.Font = Font;
+
+    TEST_SECTION("A field given a share of the leftover width is stretched well past what its hint asks for");
+
+    FSearchBox::FDesc SearchDesc;
+    SearchDesc.HintText = "Filter";
+    SearchDesc.Font     = Font;
+
+    TSharedPtr<FSearchBox> SearchBox = FSearchBox::Create(SearchDesc);
+
+    TSharedPtr<FToolBar>       Filtered = FToolBar::Create(Desc);
+    TSharedPtr<FToolBarButton> Clear    = Filtered->AddButton(FToolBarItemDesc().SetLabel("Clear"), FOnClicked());
+
+    Filtered->AddWidget(SearchBox, 1.0f);
+    Filtered->AddFlexibleSpace();
+
+    TEST_EXPECT_EQ(Filtered->GetNumItems(), 3);
+    TEST_EXPECT(Filtered->GetItems()[1].Type == EToolBarItemType::Custom);
+    TEST_EXPECT(Filtered->GetItems()[2].Type == EToolBarItemType::FlexibleSpace);
+
+    LayoutElement(Filtered, FRectangle(IntVector2(0, 0), 400, 40));
+
+    const IntVector2 Intrinsic = SearchBox->GetCachedDesiredSize();
+    const FRectangle Field     = SearchBox->GetContentRectangle();
+
+    TEST_EXPECT(Intrinsic.X > 0);
+    TEST_EXPECT(Field.Width > Intrinsic.X);
+
+    TEST_SECTION("A sized entry beside it keeps the width it asked for");
+    TEST_EXPECT_EQ(Clear->GetContentRectangle().Width, Clear->GetCachedDesiredSize().X);
+
+    TEST_SECTION("Two spaces either side of a group leave it the same distance from each of its neighbours");
+
+    TSharedPtr<FToolBar>       Centred = FToolBar::Create(Desc);
+    TSharedPtr<FToolBarButton> Head    = Centred->AddButton(FToolBarItemDesc().SetLabel("Head"), FOnClicked());
+
+    Centred->AddFlexibleSpace();
+
+    TSharedPtr<FToolBarButton> Play  = Centred->AddButton(FToolBarItemDesc().SetLabel("Play"), FOnClicked());
+    TSharedPtr<FToolBarButton> Pause = Centred->AddButton(FToolBarItemDesc().SetLabel("Pause"), FOnClicked());
+
+    Centred->AddFlexibleSpace();
+
+    TSharedPtr<FToolBarButton> Tail = Centred->AddButton(FToolBarItemDesc().SetLabel("Tail"), FOnClicked());
+
+    LayoutElement(Centred, FRectangle(IntVector2(0, 0), 500, 40));
+
+    const int32 LeadingGap  = Play->GetContentRectangle().Position.X - Head->GetContentRectangle().GetRight();
+    const int32 TrailingGap = Tail->GetContentRectangle().Position.X - Pause->GetContentRectangle().GetRight();
+
+    TEST_EXPECT(LeadingGap > 0);
+    TEST_EXPECT(Math::Abs(LeadingGap - TrailingGap) <= 1);
+
+    const int32 TransportLeft   = Play->GetContentRectangle().Position.X;
+    const int32 TransportRight  = Pause->GetContentRectangle().GetRight();
+    const int32 TransportCentre = (TransportLeft + TransportRight) / 2;
+
+    TEST_EXPECT(Math::Abs(TransportCentre - 250) <= 1);
+
+    TEST_SECTION("The trailing entry is pushed against the far edge, inside the strip's own padding");
+    TEST_EXPECT_EQ(Tail->GetContentRectangle().GetRight(), 500 - 4);
+
+    TEST_SECTION("A stretched field still reaches the draw data, rather than collapsing to nothing");
+
+    FDrawCommandList CommandList;
+    DrawElement(Filtered, CommandList);
+
+    TEST_EXPECT(CountCommands(CommandList, EDrawCommandType::Box) >= 2);
+    TEST_EXPECT(CountCommands(CommandList, EDrawCommandType::BoxOutline) >= 1);
+    TEST_EXPECT_EQ(CountCommands(CommandList, EDrawCommandType::Text), 2);
+
+    FUIDrawData DrawData;
+    DrawData.BuildFromCommandList(CommandList);
+
+    TEST_EXPECT(!DrawData.IsEmpty());
+
+    TEST_SECTION("The field's own background survives the clip and the layer sort intact");
+
+    const Vector2 FieldCentre(
+        (static_cast<float>(Field.Position.X) + static_cast<float>(Field.GetRight())) * 0.5f,
+        (static_cast<float>(Field.Position.Y) + static_cast<float>(Field.GetBottom())) * 0.5f);
+
+    bool bFoundField = false;
+    for (const FUIVertex& Vertex : DrawData.GetVertices())
+    {
+        bFoundField |= Vertex.Position == FieldCentre;
+    }
+
+    TEST_EXPECT(bFoundField);
 
     TEST_END();
 }

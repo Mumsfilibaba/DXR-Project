@@ -4,11 +4,62 @@
 #include "Core/Math/Color.h"
 #include "Core/Math/Vector2.h"
 #include "Application/Elements/VisualElement.h"
+#include "Application/Style/UIStyle.h"
 
 enum class EGraphPinDirection : uint8
 {
     Input,
     Output,
+};
+
+/** @brief How far a muted node fades when the style leaves its muted colors at their defaults. */
+constexpr float GRAPH_NODE_MUTED_OPACITY = 0.45f;
+
+/**
+ * @brief Fades a color the way a muted node dims by default.
+ *
+ * @param Color The color to fade.
+ * @return The color with its alpha scaled by the muted factor.
+ */
+NODISCARD FORCEINLINE FFloatColor GraphMutedColor(const FFloatColor& Color)
+{
+    return FFloatColor(Color.R, Color.G, Color.B, Color.A * GRAPH_NODE_MUTED_OPACITY);
+}
+
+struct FGraphNodeStyle
+{
+    /** @brief The fill behind the pin rows. */
+    FFloatColor Body = FUIStyle::GetDefault().Colors.PanelBackground;
+
+    /** @brief The stroke around the node, which selecting it replaces with the accent. */
+    FFloatColor Border = FUIStyle::GetDefault().Colors.Border;
+
+    /** @brief The color of the title and of every pin label. */
+    FFloatColor Text = FUIStyle::GetDefault().Colors.Text;
+
+    /** @brief The fill of a node flagged muted, which is how a culled pass reads. */
+    FFloatColor MutedBody = GraphMutedColor(FUIStyle::GetDefault().Colors.PanelBackground);
+
+    /** @brief The stroke of a muted node. */
+    FFloatColor MutedBorder = GraphMutedColor(FUIStyle::GetDefault().Colors.Border);
+
+    /** @brief The title and pin label color of a muted node. */
+    FFloatColor MutedText = GraphMutedColor(FUIStyle::GetDefault().Colors.Text);
+
+    /** @brief The stroke around a pin circle, left transparent to draw the circle unstroked. */
+    FFloatColor PinOutline = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+    /** @brief How far the corners are rounded, in graph space, so the radius tracks zoom. */
+    float CornerRadius = FUIStyle::GetDefault().Metrics.CornerRadius;
+
+    /**
+     * @brief What a muted node's title tint and pin tints are scaled by, since those colors come from the
+     * node rather than from here. A style that gives muted nodes a palette of their own sets this to one.
+     */
+    float MutedTintOpacity = GRAPH_NODE_MUTED_OPACITY;
+
+    /** @brief True to stack the inputs above the outputs in one column rather than pairing them into rows. */
+    bool bStackPinRows = false;
 };
 
 struct FGraphPin

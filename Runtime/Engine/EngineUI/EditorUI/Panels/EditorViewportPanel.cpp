@@ -31,13 +31,34 @@
 // Wide enough for the camera menu's captions and slider tracks to sit side by side without crowding
 constexpr int32 CAMERA_MENU_WIDTH = 260;
 
+// The gap ImGui leaves between two groups of the viewport strip, which the bar's own default of 2 leaves too tight
+constexpr int32 TOOLBAR_GROUP_GAP = 8;
+
+// The strip's own inset, which is ImGui's twelve either side and six above and below its 26px entries
+static const FMargin TOOLBAR_INSET = FMargin(12, 6, 12, 6);
+
+// ImGui's widths for the strip's entries, which are what keep the three radio groups reading as one row
+constexpr int32 TRANSLATION_BUTTON_WIDTH = 76;
+constexpr int32 ROTATE_BUTTON_WIDTH      = 56;
+constexpr int32 SCALE_BUTTON_WIDTH       = 52;
+constexpr int32 PLACEMENT_BUTTON_WIDTH   = 56;
+constexpr int32 ORIENTATION_BUTTON_WIDTH = 52;
+constexpr int32 PLAY_BUTTON_WIDTH        = 52;
+constexpr int32 PAUSE_BUTTON_WIDTH       = 56;
+constexpr int32 CAMERA_BUTTON_WIDTH      = 118;
+
+// How wide the view dropdown may grow to fit the longest debug view name before that name is left to clip
+constexpr int32 VIEW_BUTTON_MAX_WIDTH = 128;
+
+// What the view dropdown's label needs beyond the name itself, being the two insets and the arrow
+constexpr int32 VIEW_BUTTON_LABEL_OVERHEAD = 36;
+
 struct FDebugViewEntry
 {
     const CHAR*                  Label;
     FSceneRenderView::EDebugView View;
 };
 
-// Listed in the groups the ImGui viewport shows them in: the base views, then the CSM views, then the ray-tracing views.
 constexpr FDebugViewEntry DEBUG_VIEW_ENTRIES[] =
 {
     { "Lit",                         FSceneRenderView::EDebugView::None },
@@ -59,7 +80,14 @@ constexpr FDebugViewEntry DEBUG_VIEW_ENTRIES[] =
     { "Geometry Debug",              FSceneRenderView::EDebugView::RayTracingPrimaryID },
 };
 
-constexpr int32 NUM_DEBUG_VIEW_ENTRIES = static_cast<int32>(ARRAY_COUNT(DEBUG_VIEW_ENTRIES));
+constexpr int32 NUM_DEBUG_VIEW_ENTRIES       = static_cast<int32>(ARRAY_COUNT(DEBUG_VIEW_ENTRIES));
+constexpr int32 FIRST_SHADOW_DEBUG_VIEW      = 8;
+constexpr int32 FIRST_RAY_TRACING_DEBUG_VIEW = 11;
+
+static_assert(DEBUG_VIEW_ENTRIES[FIRST_SHADOW_DEBUG_VIEW].View == FSceneRenderView::EDebugView::ShadowCascades,
+    "The CSM group no longer starts where FIRST_SHADOW_DEBUG_VIEW says it does");
+static_assert(DEBUG_VIEW_ENTRIES[FIRST_RAY_TRACING_DEBUG_VIEW].View == FSceneRenderView::EDebugView::RayTracingReflectionsRaw,
+    "The ray-tracing group no longer starts where FIRST_RAY_TRACING_DEBUG_VIEW says it does");
 
 constexpr EEditorLightType PLACEABLE_LIGHT_TYPES[] =
 {
@@ -88,6 +116,12 @@ static int32 FindDebugViewIndex(FSceneRenderView::EDebugView InDebugView)
     return -1;
 }
 
+static const CHAR* FindDebugViewLabel(FSceneRenderView::EDebugView InDebugView)
+{
+    const int32 Index = FindDebugViewIndex(InDebugView);
+    return DEBUG_VIEW_ENTRIES[Index >= 0 ? Index : 0].Label;
+}
+
 FEditorViewportPanel::FEditorViewportPanel(FEditorEngine* InEditorEngine)
     : FEditorPanel(InEditorEngine, "Viewport", "Viewport")
     , CameraController(MakeUniquePtr<FEditorCameraController>())
@@ -95,10 +129,17 @@ FEditorViewportPanel::FEditorViewportPanel(FEditorEngine* InEditorEngine)
     , Image(nullptr)
     , Gizmo(nullptr)
     , DebugViewBar(nullptr)
-    , DebugViewCombo(nullptr)
     , SecondaryDebugViewCombo(nullptr)
+    , TranslateItem(nullptr)
+    , RotateItem(nullptr)
+    , ScaleItem(nullptr)
+    , CenterItem(nullptr)
+    , PivotItem(nullptr)
+    , LocalItem(nullptr)
+    , WorldItem(nullptr)
     , PlayItem(nullptr)
     , PauseItem(nullptr)
+    , ViewItem(nullptr)
     , ViewportImage(nullptr)
     , CachedViewportSize(0, 0)
     , ContextMenuViewProjectionInverse(Matrix4::Identity())
@@ -140,6 +181,10 @@ bool FEditorViewportPanel::Initialize()
     }
 
     DebugViewBar = BuildToolBar();
+    if (!DebugViewBar)
+    {
+        return false;
+    }
 
     Surface = FEditorViewportSurface::Create();
     if (!Surface)
@@ -147,7 +192,7 @@ bool FEditorViewportPanel::Initialize()
         return false;
     }
 
-    Surface->SetLayers(Image, EditorEngine->GetViewport(), Gizmo, DebugViewBar);
+    Surface->SetLayers(Image, EditorEngine->GetViewport(), Gizmo);
     Surface->OnClickedDelegate       = FOnViewportClicked::CreateRaw(this, &FEditorViewportPanel::OnViewportClicked);
     Surface->OnContextMenuDelegate   = FOnViewportContextMenu::CreateRaw(this, &FEditorViewportPanel::OnViewportContextMenu);
     Surface->OnMarqueeSelectDelegate = FOnViewportMarqueeSelect::CreateRaw(this, &FEditorViewportPanel::OnViewportMarqueeSelect);
@@ -158,7 +203,16 @@ bool FEditorViewportPanel::Initialize()
         SceneViewport->SetPlayerInputEnabled(false);
     }
 
-    Content = Surface;
+    TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
+    if (!Column)
+    {
+        return false;
+    }
+
+    Column->AddSlot(DebugViewBar);
+    Column->AddSlot(Surface).SetFillCoefficient(1.0f);
+
+    Content = Column;
     return true;
 }
 
@@ -166,13 +220,20 @@ void FEditorViewportPanel::Release()
 {
     if (Surface)
     {
-        Surface->SetLayers(nullptr, nullptr, nullptr, nullptr);
+        Surface->SetLayers(nullptr, nullptr, nullptr);
     }
 
+    ViewItem.Reset();
     PauseItem.Reset();
     PlayItem.Reset();
+    WorldItem.Reset();
+    LocalItem.Reset();
+    PivotItem.Reset();
+    CenterItem.Reset();
+    ScaleItem.Reset();
+    RotateItem.Reset();
+    TranslateItem.Reset();
     SecondaryDebugViewCombo.Reset();
-    DebugViewCombo.Reset();
     DebugViewBar.Reset();
     Gizmo.Reset();
     Image.Reset();
@@ -189,6 +250,8 @@ TSharedPtr<FToolBar> FEditorViewportPanel::BuildToolBar()
     FToolBar::FDesc Desc;
     Desc.Font           = FEditorStyle::GetFonts().Body;
     Desc.IconSize       = FEditorStyle::IconSize;
+    Desc.Padding        = TOOLBAR_INSET;
+    Desc.ItemSpacing    = TOOLBAR_GROUP_GAP;
     Desc.bHasBackground = true;
 
     TSharedPtr<FToolBar> Bar = FToolBar::Create(Desc);
@@ -197,93 +260,174 @@ TSharedPtr<FToolBar> FEditorViewportPanel::BuildToolBar()
         return nullptr;
     }
 
-    PlayItem = Bar->AddButton(FToolBarItemDesc().SetLabel("Play").SetToolTipText("Run the world in the editor"),
+    Bar->BeginGroup();
+
+    TranslateItem = Bar->AddButton(
+        FToolBarItemDesc().SetLabel("Translation").SetToolTipText("Translate the selection").SetMinWidth(TRANSLATION_BUTTON_WIDTH),
+        FOnClicked::CreateLambda([this]()
+        {
+            SetGizmoOperation(EGizmoOperation::Translate);
+        }));
+
+    RotateItem = Bar->AddButton(
+        FToolBarItemDesc().SetLabel("Rotate").SetToolTipText("Rotate the selection").SetMinWidth(ROTATE_BUTTON_WIDTH),
+        FOnClicked::CreateLambda([this]()
+        {
+            SetGizmoOperation(EGizmoOperation::Rotate);
+        }));
+
+    ScaleItem = Bar->AddButton(
+        FToolBarItemDesc().SetLabel("Scale").SetToolTipText("Scale the selection").SetMinWidth(SCALE_BUTTON_WIDTH),
+        FOnClicked::CreateLambda([this]()
+        {
+            SetGizmoOperation(EGizmoOperation::Scale);
+        }));
+
+    Bar->EndGroup();
+
+    Bar->BeginGroup();
+
+    CenterItem = Bar->AddButton(
+        FToolBarItemDesc().SetLabel("Center").SetToolTipText("Put the handles at the bounds centre").SetMinWidth(PLACEMENT_BUTTON_WIDTH),
+        FOnClicked::CreateLambda([this]()
+        {
+            SetGizmoPlacement(EEditorGizmoPlacement::Center);
+        }));
+
+    PivotItem = Bar->AddButton(
+        FToolBarItemDesc().SetLabel("Pivot").SetToolTipText("Put the handles at the pivot").SetMinWidth(PLACEMENT_BUTTON_WIDTH),
+        FOnClicked::CreateLambda([this]()
+        {
+            SetGizmoPlacement(EEditorGizmoPlacement::Pivot);
+        }));
+
+    Bar->EndGroup();
+
+    Bar->BeginGroup();
+
+    LocalItem = Bar->AddButton(
+        FToolBarItemDesc().SetLabel("Local").SetToolTipText("Align the handles to the selection").SetMinWidth(ORIENTATION_BUTTON_WIDTH),
+        FOnClicked::CreateLambda([this]()
+        {
+            SetGizmoMode(EGizmoMode::Local);
+        }));
+
+    WorldItem = Bar->AddButton(
+        FToolBarItemDesc().SetLabel("World").SetToolTipText("Align the handles to the world axes").SetMinWidth(ORIENTATION_BUTTON_WIDTH),
+        FOnClicked::CreateLambda([this]()
+        {
+            SetGizmoMode(EGizmoMode::World);
+        }));
+
+    Bar->EndGroup();
+
+    Bar->AddFlexibleSpace();
+
+    Bar->BeginGroup();
+
+    PlayItem = Bar->AddButton(
+        FToolBarItemDesc().SetLabel("Play").SetToolTipText("Run the world in the editor").SetMinWidth(PLAY_BUTTON_WIDTH),
         FOnClicked::CreateRaw(this, &FEditorViewportPanel::TogglePlay));
 
-    PauseItem = Bar->AddToggle(FToolBarItemDesc().SetLabel("Pause").SetToolTipText("Freeze the running world"), ECheckBoxState::Unchecked,
-        FOnCheckStateChanged::CreateLambda([this](ECheckBoxState)
+    PauseItem = Bar->AddButton(
+        FToolBarItemDesc().SetLabel("Pause").SetToolTipText("Freeze the running world").SetMinWidth(PAUSE_BUTTON_WIDTH),
+        FOnClicked::CreateLambda([this]()
         {
             EditorEngine->TogglePause();
-            RefreshTransportItems();
+            RefreshToolBarState();
         }));
 
-    RefreshTransportItems();
+    Bar->EndGroup();
 
-    Bar->AddSeparator();
+    Bar->AddFlexibleSpace();
 
-    Bar->AddToggle(FToolBarItemDesc().SetLabel("Move").SetToolTipText("Translate the selection"), ECheckBoxState::Checked,
-        FOnCheckStateChanged::CreateLambda([this](ECheckBoxState State)
-        {
-            if (State == ECheckBoxState::Checked)
-            {
-                SetGizmoOperation(EGizmoOperation::Translate);
-            }
-        }));
+    Bar->AddDropDown(
+        FToolBarItemDesc().SetLabel("Camera").SetToolTipText("Speeds, lens and framing").SetMinWidth(CAMERA_BUTTON_WIDTH),
+        BuildCameraMenu());
 
-    Bar->AddToggle(FToolBarItemDesc().SetLabel("Rotate").SetToolTipText("Rotate the selection"), ECheckBoxState::Unchecked,
-        FOnCheckStateChanged::CreateLambda([this](ECheckBoxState State)
-        {
-            if (State == ECheckBoxState::Checked)
-            {
-                SetGizmoOperation(EGizmoOperation::Rotate);
-            }
-        }));
+    Bar->AddDropDown(
+        FToolBarItemDesc().SetToolTipText("View mode, secondary view and channel mask").SetMinWidth(ComputeViewButtonWidth()),
+        BuildViewOptionsMenu());
 
-    Bar->AddToggle(FToolBarItemDesc().SetLabel("Scale").SetToolTipText("Scale the selection"), ECheckBoxState::Unchecked,
-        FOnCheckStateChanged::CreateLambda([this](ECheckBoxState State)
-        {
-            if (State == ECheckBoxState::Checked)
-            {
-                SetGizmoOperation(EGizmoOperation::Scale);
-            }
-        }));
+    ViewItem = Bar->GetItems().Last().Button;
 
-    Bar->AddSeparator();
-
-    Bar->AddToggle(FToolBarItemDesc().SetLabel("World").SetToolTipText("Align the handles to the world axes rather than to the selection"),
-        ECheckBoxState::Checked,
-        FOnCheckStateChanged::CreateLambda([this](ECheckBoxState State)
-        {
-            SetGizmoMode(State == ECheckBoxState::Checked ? EGizmoMode::World : EGizmoMode::Local);
-        }));
-
-    Bar->AddToggle(FToolBarItemDesc().SetLabel("Center").SetToolTipText("Put the handles at the bounds centre rather than at the pivot"),
-        GizmoPlacement == EEditorGizmoPlacement::Center ? ECheckBoxState::Checked : ECheckBoxState::Unchecked,
-        FOnCheckStateChanged::CreateLambda([this](ECheckBoxState State)
-        {
-            SetGizmoPlacement(State == ECheckBoxState::Checked ? EEditorGizmoPlacement::Center : EEditorGizmoPlacement::Pivot);
-        }));
-
-    Bar->AddSeparator();
-
-    Bar->AddDropDown(FToolBarItemDesc().SetLabel("Camera").SetToolTipText("Speeds, lens and framing"), BuildCameraMenu());
-
-    Bar->AddSeparator();
-
-    DebugViewCombo = BuildDebugViewCombo();
-    if (DebugViewCombo)
-    {
-        Bar->AddWidget(DebugViewCombo);
-    }
-
-    Bar->AddDropDown(FToolBarItemDesc().SetLabel("View").SetToolTipText("Split view and channel mask"), BuildViewOptionsMenu());
-
+    RefreshToolBarState();
     return Bar;
 }
 
-void FEditorViewportPanel::RefreshTransportItems()
+int32 FEditorViewportPanel::ComputeViewButtonWidth() const
 {
-    const bool bIsEditing = EditorEngine->IsEditing();
+    const TSharedPtr<IFontFace>& Font = FEditorStyle::GetFonts().Body;
+    if (!Font)
+    {
+        return VIEW_BUTTON_MAX_WIDTH;
+    }
+
+    int32 WidestLabel = 0;
+    for (const FDebugViewEntry& Entry : DEBUG_VIEW_ENTRIES)
+    {
+        WidestLabel = Math::Max(WidestLabel, Font->MeasureWidth(StringView(Entry.Label)));
+    }
+
+    return Math::Min(WidestLabel + VIEW_BUTTON_LABEL_OVERHEAD, VIEW_BUTTON_MAX_WIDTH);
+}
+
+void FEditorViewportPanel::RefreshToolBarState()
+{
+    const bool            bIsEditing = EditorEngine->IsEditing();
+    const EGizmoMode      Mode       = GetGizmoMode();
+    const EGizmoOperation Operation  = RequestedGizmoOperation;
+
+    if (TranslateItem)
+    {
+        TranslateItem->SetHighlighted(Operation == EGizmoOperation::Translate);
+    }
+
+    if (RotateItem)
+    {
+        RotateItem->SetHighlighted(Operation == EGizmoOperation::Rotate);
+    }
+
+    if (ScaleItem)
+    {
+        ScaleItem->SetHighlighted(Operation == EGizmoOperation::Scale);
+    }
+
+    if (CenterItem)
+    {
+        CenterItem->SetHighlighted(GizmoPlacement == EEditorGizmoPlacement::Center);
+    }
+
+    if (PivotItem)
+    {
+        PivotItem->SetHighlighted(GizmoPlacement == EEditorGizmoPlacement::Pivot);
+    }
+
+    if (LocalItem)
+    {
+        LocalItem->SetHighlighted(Mode == EGizmoMode::Local);
+    }
+
+    if (WorldItem)
+    {
+        WorldItem->SetHighlighted(Mode == EGizmoMode::World);
+    }
 
     if (PlayItem)
     {
         PlayItem->SetLabel(bIsEditing ? "Play" : "Stop");
+        PlayItem->SetHighlighted(!bIsEditing);
     }
 
     if (PauseItem)
     {
         PauseItem->SetEnabled(!bIsEditing);
-        PauseItem->SetCheckState(EditorEngine->IsPaused() ? ECheckBoxState::Checked : ECheckBoxState::Unchecked);
+        PauseItem->SetHighlighted(EditorEngine->IsPaused());
+    }
+
+    if (ViewItem)
+    {
+        ViewItem->SetLabel(FindDebugViewLabel(DebugView));
     }
 }
 
@@ -298,33 +442,7 @@ void FEditorViewportPanel::TogglePlay()
         EditorEngine->StopPlay();
     }
 
-    RefreshTransportItems();
-}
-
-TSharedPtr<FComboBox> FEditorViewportPanel::BuildDebugViewCombo()
-{
-    TArray<String> Options;
-    Options.Reserve(NUM_DEBUG_VIEW_ENTRIES);
-
-    for (const FDebugViewEntry& Entry : DEBUG_VIEW_ENTRIES)
-    {
-        Options.Add(Entry.Label);
-    }
-
-    FComboBox::FDesc Desc;
-    Desc.Options            = Options;
-    Desc.SelectedIndex      = FindDebugViewIndex(DebugView);
-    Desc.Font               = FEditorStyle::GetFonts().Body;
-    Desc.PlaceholderText    = "Lit";
-    Desc.OnSelectionChanged = FOnComboSelectionChanged::CreateLambda([this](int32 SelectedIndex)
-    {
-        if (SelectedIndex >= 0 && SelectedIndex < NUM_DEBUG_VIEW_ENTRIES)
-        {
-            SetDebugView(DEBUG_VIEW_ENTRIES[SelectedIndex].View);
-        }
-    });
-
-    return FComboBox::Create(Desc);
+    RefreshToolBarState();
 }
 
 TSharedPtr<FComboBox> FEditorViewportPanel::BuildSecondaryDebugViewCombo()
@@ -501,14 +619,57 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildViewOptionsMenu()
 
     Menu->SetMinDesiredWidth(CAMERA_MENU_WIDTH);
 
-    FTextBlock::FDesc SplitCaptionDesc;
-    SplitCaptionDesc.Text = "Split View";
-    SplitCaptionDesc.Font = Font;
+    Menu->AddSection("View Mode", Font);
 
-    TSharedPtr<FHorizontalBox> SplitCaptionRow = FHorizontalBox::Create();
-    SplitCaptionRow->AddSlot(FTextBlock::Create(SplitCaptionDesc)).SetPadding(FMargin(8, 4, 8, 0));
+    const auto AddDebugViewItem = [this, &Font](const TSharedPtr<FMenu>& Target, const FDebugViewEntry& Entry)
+    {
+        const FSceneRenderView::EDebugView View = Entry.View;
 
-    Menu->AddCustomEntry(SplitCaptionRow);
+        FMenuItem::FDesc ItemDesc;
+        ItemDesc.Label        = Entry.Label;
+        ItemDesc.Font         = Font;
+        ItemDesc.bIsCheckable = true;
+        ItemDesc.CheckState   = DebugView == View ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+        ItemDesc.OnActivated  = FOnMenuItemActivated::CreateLambda([this, View]()
+        {
+            SetDebugView(View);
+        });
+
+        Target->AddItem(FMenuItem::Create(ItemDesc));
+    };
+
+    for (int32 Index = 0; Index < FIRST_SHADOW_DEBUG_VIEW; ++Index)
+    {
+        AddDebugViewItem(Menu, DEBUG_VIEW_ENTRIES[Index]);
+    }
+
+    TSharedPtr<FMenu> ShadowMenu = FMenu::Create();
+    for (int32 Index = FIRST_SHADOW_DEBUG_VIEW; Index < FIRST_RAY_TRACING_DEBUG_VIEW; ++Index)
+    {
+        AddDebugViewItem(ShadowMenu, DEBUG_VIEW_ENTRIES[Index]);
+    }
+
+    FMenuItem::FDesc ShadowDesc;
+    ShadowDesc.Label   = "Shadow Debug";
+    ShadowDesc.Font    = Font;
+    ShadowDesc.SubMenu = ShadowMenu;
+
+    Menu->AddItem(FMenuItem::Create(ShadowDesc));
+
+    TSharedPtr<FMenu> RayTracingMenu = FMenu::Create();
+    for (int32 Index = FIRST_RAY_TRACING_DEBUG_VIEW; Index < NUM_DEBUG_VIEW_ENTRIES; ++Index)
+    {
+        AddDebugViewItem(RayTracingMenu, DEBUG_VIEW_ENTRIES[Index]);
+    }
+
+    FMenuItem::FDesc RayTracingDesc;
+    RayTracingDesc.Label   = "Ray Tracing";
+    RayTracingDesc.Font    = Font;
+    RayTracingDesc.SubMenu = RayTracingMenu;
+
+    Menu->AddItem(FMenuItem::Create(RayTracingDesc));
+
+    Menu->AddSection("Split View", Font);
 
     SecondaryDebugViewCombo = BuildSecondaryDebugViewCombo();
     if (SecondaryDebugViewCombo)
@@ -519,16 +680,7 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildViewOptionsMenu()
         Menu->AddCustomEntry(ComboRow);
     }
 
-    Menu->AddSeparator();
-
-    FTextBlock::FDesc ChannelCaptionDesc;
-    ChannelCaptionDesc.Text = "Channels";
-    ChannelCaptionDesc.Font = Font;
-
-    TSharedPtr<FHorizontalBox> ChannelCaptionRow = FHorizontalBox::Create();
-    ChannelCaptionRow->AddSlot(FTextBlock::Create(ChannelCaptionDesc)).SetPadding(FMargin(8, 4, 8, 0));
-
-    Menu->AddCustomEntry(ChannelCaptionRow);
+    Menu->AddSection("Channels", Font);
 
     struct FChannelEntry
     {
@@ -584,7 +736,7 @@ void FEditorViewportPanel::Tick(float DeltaTime)
         return;
     }
 
-    RefreshTransportItems();
+    RefreshToolBarState();
     Surface->SetPlayBorderVisible(!EditorEngine->IsEditing());
 
     const FRectangle Bounds = Surface->GetContentRectangle();
@@ -1179,9 +1331,5 @@ EEditorGizmoPlacement FEditorViewportPanel::GetGizmoPlacement() const
 void FEditorViewportPanel::SetDebugView(FSceneRenderView::EDebugView InDebugView)
 {
     DebugView = InDebugView;
-
-    if (DebugViewCombo)
-    {
-        DebugViewCombo->SetSelectedIndex(FindDebugViewIndex(InDebugView));
-    }
+    RefreshToolBarState();
 }

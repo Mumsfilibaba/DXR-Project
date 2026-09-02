@@ -61,7 +61,7 @@ int32 FOverlay::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& 
     int32 MaxLayerId = LayerId;
     for (const FOverlaySlot& Slot : Slots)
     {
-        if (!Slot.Element)
+        if (!Slot.Element || !Slot.Element->IsVisible())
         {
             continue;
         }
@@ -80,7 +80,12 @@ void FOverlay::FindChildrenContainingPoint(const IntVector2& ClientPosition, FEl
     for (int32 Index = Slots.Size() - 1; Index >= 0; --Index)
     {
         const FOverlaySlot& Slot = Slots[Index];
-        if (Slot.Element && Slot.Element->GetContentRectangle().EncapsulatesPoint(ClientPosition))
+        if (!Slot.Element || !Slot.Element->IsVisible())
+        {
+            continue;
+        }
+
+        if (Slot.Element->GetContentRectangle().EncapsulatesPoint(ClientPosition))
         {
             Slot.Element->FindChildrenContainingPoint(ClientPosition, OutChildElements);
             return;

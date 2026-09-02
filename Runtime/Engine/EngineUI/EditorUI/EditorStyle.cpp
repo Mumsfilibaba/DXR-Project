@@ -48,6 +48,9 @@ bool FEditorStyle::Initialize()
     GStyle.Colors.ControlHovered          = FromBytes(66, 66, 72);
     GStyle.Colors.ControlPressed          = FromBytes(43, 43, 48);
     GStyle.Colors.ControlDisabled         = FromBytes(41, 41, 44);
+    GStyle.Colors.ButtonNormal            = FromBytes(56, 56, 56);
+    GStyle.Colors.ButtonHovered           = FromBytes(87, 87, 87);
+    GStyle.Colors.ButtonPressed           = FromBytes(87, 87, 87);
     GStyle.Colors.MenuBarItemHovered      = FromBytes(87, 87, 87);
     GStyle.Colors.MenuBarItemActive       = FromBytes(9, 92, 176);
     GStyle.Colors.MenuBackground          = FromBytes(56, 56, 56);
@@ -61,12 +64,16 @@ bool FEditorStyle::Initialize()
     GStyle.Colors.Text                    = FromBytes(230, 230, 232);
     GStyle.Colors.TextDisabled            = FromBytes(115, 117, 122);
     GStyle.Colors.TextSelectionBackground = FromBytes(51, 107, 199);
-    GStyle.Colors.Accent                  = FromBytes(94, 94, 204);
+    GStyle.Colors.Accent                  = FromBytes(9, 92, 176);
+    GStyle.Colors.AccentHovered           = FromBytes(15, 110, 205);
 
     GStyle.Metrics.ControlPadding         = FMargin(10, 6, 10, 6);
+    GStyle.Metrics.ButtonPadding          = FMargin(12, 4, 12, 4);
     GStyle.Metrics.CornerRadius           = 4.0f;
+    GStyle.Metrics.ButtonCornerRadius     = 6.0f;
     GStyle.Metrics.BorderThickness        = 1.0f;
     GStyle.Metrics.RowHeight              = RowHeight;
+    GStyle.Metrics.ButtonHeight           = ButtonHeight;
     GStyle.Metrics.ScrollBarThickness     = 16;
     GStyle.Metrics.SeparatorThickness     = 1;
     GStyle.Metrics.MenuSeparatorThickness = 2;

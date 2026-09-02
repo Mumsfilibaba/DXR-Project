@@ -1,4 +1,5 @@
 #include "Engine/EngineUI/EditorUI/Panels/EditorPropertiesPanel.h"
+#include "Engine/EngineUI/EditorUI/EditorIcons.h"
 #include "Engine/EngineUI/EditorUI/EditorStyle.h"
 #include "Engine/EditorEngine.h"
 #include "Engine/World/Actors/Actor.h"
@@ -9,6 +10,7 @@
 #include "Engine/World/Components/PointLightComponent.h"
 #include "Engine/World/Components/StaticMeshComponent.h"
 #include "Engine/Resources/Material.h"
+#include "Application/Draw/DrawCommandList.h"
 #include "Application/Elements/Box.h"
 #include "Application/Elements/Button.h"
 #include "Application/Elements/CheckBox.h"
@@ -17,6 +19,7 @@
 #include "Application/Elements/ScrollBox.h"
 #include "Application/Elements/TextBlock.h"
 #include "Application/Menus/ComboBox.h"
+#include "Application/Style/UIStyle.h"
 
 static const FFloatColor GAxisColors[3] =
 {
@@ -39,12 +42,77 @@ static const CHAR* GMaterialTextureSlotNames[EMaterialTextureSlot::Count] =
 };
 
 static const CHAR* GNormalMapAxisLabels[2] = { "-Y (DirectX)", "+Y (OpenGL)" };
-static const CHAR* GRevertButtonLabel = "R";
+
+// The edge of the square the undo arrow is drawn in, which is a little under a row so the button reads as square
+constexpr int32 REVERT_GLYPH_SIZE = 12;
+
+// How thick the stroked fallback arc is, and how far past the arc's end its head reaches, both as a share of the square
+constexpr float REVERT_ARC_THICKNESS = 1.5f;
+constexpr float REVERT_HEAD_LENGTH   = 0.34f;
+constexpr float REVERT_HEAD_WIDTH    = 0.26f;
+
+// Where the fallback arc starts and stops, so it leaves a gap at the lower left for the head to fill
+constexpr float REVERT_ARC_START = Math::Constants::PI * 1.05f;
+constexpr float REVERT_ARC_END   = Math::Constants::PI * 2.0f;
+
+// A field shows four decimals, so anything closer than this is a value the user cannot have typed a difference into
+constexpr float REVERT_EPSILON = 0.00005f;
 
 static String FormatVector(const Vector3& Value)
 {
     return String::Printf("%.3f, %.3f, %.3f", Value.X, Value.Y, Value.Z);
 }
+
+class FRevertGlyph final : public FVisualElement
+{
+public:
+    static TSharedPtr<FRevertGlyph> Create()
+    {
+        return MakeSharedPtr<FRevertGlyph>();
+    }
+
+    FRevertGlyph()  = default;
+    ~FRevertGlyph() = default;
+
+    virtual IntVector2 ComputeDesiredSize() const override final
+    {
+        return IntVector2(REVERT_GLYPH_SIZE, REVERT_GLYPH_SIZE);
+    }
+
+    virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override final
+    {
+        const FRectangle  Bounds = AllottedGeometry.Bounds;
+        const FFloatColor Tint   = FUIStyle::GetDefault().Colors.Text;
+
+        if (FEditorIcons::Undo.IsValid())
+        {
+            OutCommandList.AddImage(LayerId, Bounds, FEditorIcons::Undo, Tint);
+            return LayerId;
+        }
+
+        const float Extent = static_cast<float>(Math::Min(Bounds.Width, Bounds.Height));
+        if (Extent <= 0.0f)
+        {
+            return LayerId;
+        }
+
+        const IntVector2 Middle = Bounds.GetCenter();
+        const Vector2    Center = Vector2(static_cast<float>(Middle.X), static_cast<float>(Middle.Y) + (Extent * 0.15f));
+        const float      Radius = Extent * 0.3f;
+
+        OutCommandList.AddArc(LayerId, Center, Radius, REVERT_ARC_START, REVERT_ARC_END, Tint, REVERT_ARC_THICKNESS);
+
+        const Vector2 Tail      = Center + Vector2(Math::Cos(REVERT_ARC_START), Math::Sin(REVERT_ARC_START)) * Radius;
+        const Vector2 Direction = Vector2(Math::Sin(REVERT_ARC_START), -Math::Cos(REVERT_ARC_START));
+        const Vector2 Across    = Vector2(-Direction.Y, Direction.X);
+        const Vector2 Tip       = Tail + (Direction * (Extent * REVERT_HEAD_LENGTH));
+        const Vector2 Left      = Tail + (Across * (Extent * REVERT_HEAD_WIDTH * 0.5f));
+        const Vector2 Right     = Tail - (Across * (Extent * REVERT_HEAD_WIDTH * 0.5f));
+
+        OutCommandList.AddTriangle(LayerId, Tip, Left, Right, Tint);
+        return LayerId;
+    }
+};
 
 FEditorPropertiesPanel::FEditorPropertiesPanel(FEditorEngine* InEditorEngine)
     : FEditorPanel(InEditorEngine, "Properties", "Properties")
@@ -52,6 +120,7 @@ FEditorPropertiesPanel::FEditorPropertiesPanel(FEditorEngine* InEditorEngine)
     , Column(nullptr)
     , LightDirectionText(nullptr)
     , VectorRows()
+    , RevertRows()
     , BuiltForActor(nullptr)
     , SelectedMaterialIndex(0)
     , bRebuildRequested(false)
@@ -86,6 +155,8 @@ void FEditorPropertiesPanel::Release()
     Column.Reset();
     LightDirectionText.Reset();
     VectorRows.Clear();
+    RevertRows.Clear();
+
     BuiltForActor         = nullptr;
     SelectedMaterialIndex = 0;
     bRebuildRequested     = false;
@@ -118,6 +189,7 @@ void FEditorPropertiesPanel::RebuildContent()
 {
     Column->ClearSlots();
     VectorRows.Clear();
+    RevertRows.Clear();
     LightDirectionText.Reset();
 
     bRebuildRequested = false;
@@ -132,7 +204,7 @@ void FEditorPropertiesPanel::RebuildContent()
 
     if (!Actor)
     {
-        Column->AddSlot(MakeTextRow("Nothing selected")).SetPadding(FMargin(8, 8, 8, 8));
+        Column->AddSlot(CreateTextRow("Nothing selected")).SetPadding(FMargin(8, 8, 8, 8));
         return;
     }
 
@@ -170,9 +242,8 @@ void FEditorPropertiesPanel::BuildTransformSection(const TSharedPtr<FVerticalBox
     TableDesc.Font = FEditorStyle::GetFonts().Body;
 
     TSharedPtr<FPropertyTable> Table = FPropertyTable::Create(TableDesc);
-
-    Table->AddRow("Name", MakeTextRow(Actor->GetName()));
-    Table->AddRow("Type", MakeTextRow(Actor->GetTypeLabel()));
+    Table->AddRow("Name", CreateTextRow(Actor->GetName()));
+    Table->AddRow("Type", CreateTextRow(Actor->GetTypeLabel()));
 
     const FActorTransform& Transform = Actor->GetTransform();
 
@@ -246,7 +317,7 @@ void FEditorPropertiesPanel::BuildStaticMeshSection(const TSharedPtr<FVerticalBo
     const int32 NumMaterials = Component->GetNumMaterials();
     SelectedMaterialIndex = Math::Clamp<int32>(SelectedMaterialIndex, 0, Math::Max<int32>(NumMaterials - 1, 0));
 
-    Table->AddRow("Material slots", MakeTextRow(String::Printf("%d", NumMaterials)));
+    Table->AddRow("Material slots", CreateTextRow(String::Printf("%d", NumMaterials)));
 
     if (NumMaterials > 1)
     {
@@ -266,7 +337,7 @@ void FEditorPropertiesPanel::BuildStaticMeshSection(const TSharedPtr<FVerticalBo
             }
         }
 
-        Table->AddRow("Material", MakeComboEditor(Options, SelectedMaterialIndex,
+        Table->AddRow("Material", CreateComboEditor(Options, SelectedMaterialIndex,
             TDelegate<void(int32)>::CreateLambda([this](int32 NewIndex)
             {
                 SelectedMaterialIndex = NewIndex;
@@ -361,7 +432,7 @@ void FEditorPropertiesPanel::AddMaterialTextureRows(const TSharedPtr<FPropertyTa
         }
 
         const IntVector3& Extent = Texture->GetDesc().Extent;
-        Table->AddRow(GMaterialTextureSlotNames[Slot], MakeTextRow(String::Printf("%d x %d", Extent.X, Extent.Y))).IndentLevel = 1;
+        Table->AddRow(GMaterialTextureSlotNames[Slot], CreateTextRow(String::Printf("%d x %d", Extent.X, Extent.Y))).IndentLevel = 1;
     }
 }
 
@@ -387,7 +458,7 @@ void FEditorPropertiesPanel::AddMaterialFlagRows(const TSharedPtr<FPropertyTable
         AxisOptions.Emplace(GNormalMapAxisLabels[0]);
         AxisOptions.Emplace(GNormalMapAxisLabels[1]);
 
-        Table->AddRow("Normal map axis", MakeComboEditor(AxisOptions, Material->IsNormalMapPositiveY() ? 1 : 0,
+        Table->AddRow("Normal map axis", CreateComboEditor(AxisOptions, Material->IsNormalMapPositiveY() ? 1 : 0,
             TDelegate<void(int32)>::CreateLambda([Material](int32 NewIndex)
             {
                 Material->SetNormalMapPositiveY(NewIndex == 1);
@@ -451,7 +522,6 @@ void FEditorPropertiesPanel::AddParallaxRows(const TSharedPtr<FPropertyTable>& T
             Material->SetParallaxHeightScale(Value);
         })).IndentLevel = 1;
 
-    // Either end of the range is written through the one setter, so the other end is read back as it stands
     AddFloatRow(Table, "Min layers", MaterialInfo.ParallaxMinLayers, 1.0f, 128.0f, 1.0f, 32.0f,
         TDelegate<void(float)>::CreateLambda([Material](float Value)
         {
@@ -600,7 +670,7 @@ void FEditorPropertiesPanel::AddLightDirectionRows(const TSharedPtr<FPropertyTab
             Actor->SetWorldTransform(NewWorldTransform);
         })).IndentLevel = 1;
 
-    LightDirectionText = MakeTextRow(FormatVector(Component->GetDirectionVector()));
+    LightDirectionText = CreateTextRow(FormatVector(Component->GetDirectionVector()));
     Table->AddRow("Direction", LightDirectionText).IndentLevel = 1;
 }
 
@@ -633,8 +703,7 @@ void FEditorPropertiesPanel::BuildCameraSection(const TSharedPtr<FVerticalBox>& 
     TableDesc.Font = FEditorStyle::GetFonts().Body;
 
     TSharedPtr<FPropertyTable> Table = FPropertyTable::Create(TableDesc);
-
-    Table->AddRow("Viewport size", MakeTextRow(String::Printf("%.0f x %.0f", Component->GetWidth(), Component->GetHeight())));
+    Table->AddRow("Viewport size", CreateTextRow(String::Printf("%.0f x %.0f", Component->GetWidth(), Component->GetHeight())));
 
     AddFloatRow(Table, "Field of view", Component->GetFieldOfView(), 40.0f, 120.0f, 0.1f, 60.0f,
         TDelegate<void(float)>::CreateLambda([Component](float Value)
@@ -773,7 +842,7 @@ FPropertyRow& FEditorPropertiesPanel::AddVectorRow(
 
     const Vector3 Default = *DefaultValue;
 
-    TSharedPtr<FVisualElement> RevertableRow = MakeRevertableRow(Row, FOnClicked::CreateLambda([this, RowIndex, Default]()
+    TSharedPtr<FVisualElement> RevertableRow = CreateRevertableRow(Row, FOnClicked::CreateLambda([this, RowIndex, Default]()
     {
         if (!VectorRows.IsValidIndex(RowIndex))
         {
@@ -787,6 +856,27 @@ FPropertyRow& FEditorPropertiesPanel::AddVectorRow(
         }
 
         Target.OnChanged.ExecuteIfBound(Default);
+    }),
+    FOnPropertyModified::CreateLambda([this, RowIndex, Default]() -> bool
+    {
+        if (!VectorRows.IsValidIndex(RowIndex))
+        {
+            return false;
+        }
+
+        const FVectorRow& Target = VectorRows[RowIndex];
+        for (int32 Axis = 0; Axis < 3; ++Axis)
+        {
+            const float Shown    = Target.Fields[Axis]->GetValue();
+            const float Expected = Target.bIsAngular ? Math::RadiansToDegrees(Default[Axis]) : Default[Axis];
+
+            if (Math::Abs(Shown - Expected) > REVERT_EPSILON)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }));
 
     FPropertyRow& NewRow = Table->AddRow(Label, RevertableRow);
@@ -804,12 +894,16 @@ FPropertyRow& FEditorPropertiesPanel::AddFloatRow(
     float                             DefaultValue,
     const TDelegate<void(float)>&     OnChanged)
 {
-    TSharedPtr<TNumericEntry<float>> Field = MakeFloatEditor(Value, MinValue, MaxValue, Step, OnChanged);
+    TSharedPtr<TNumericEntry<float>> Field = CreateFloatEditor(Value, MinValue, MaxValue, Step, OnChanged);
 
-    TSharedPtr<FVisualElement> Row = MakeRevertableRow(Field, FOnClicked::CreateLambda([Field, DefaultValue, OnChanged]()
+    TSharedPtr<FVisualElement> Row = CreateRevertableRow(Field, FOnClicked::CreateLambda([Field, DefaultValue, OnChanged]()
     {
         Field->SetValue(DefaultValue);
         OnChanged.ExecuteIfBound(Field->GetValue());
+    }),
+    FOnPropertyModified::CreateLambda([Field, DefaultValue]() -> bool
+    {
+        return Math::Abs(Field->GetValue() - DefaultValue) > REVERT_EPSILON;
     }));
 
     FPropertyRow& NewRow = Table->AddRow(Label, Row);
@@ -825,7 +919,7 @@ FPropertyRow& FEditorPropertiesPanel::AddBoolRow(
     const bool*                       DefaultValue,
     bool                              bIsEnabled)
 {
-    TSharedPtr<FCheckBox> Field = MakeBoolEditor(bValue, OnChanged);
+    TSharedPtr<FCheckBox> Field = CreateBoolEditor(bValue, OnChanged);
     Field->SetEnabled(bIsEnabled);
 
     if (!DefaultValue || !bIsEnabled)
@@ -834,10 +928,14 @@ FPropertyRow& FEditorPropertiesPanel::AddBoolRow(
     }
 
     const bool bDefaultValue = *DefaultValue;
-    TSharedPtr<FVisualElement> Row = MakeRevertableRow(Field, FOnClicked::CreateLambda([Field, bDefaultValue, OnChanged]()
+    TSharedPtr<FVisualElement> Row = CreateRevertableRow(Field, FOnClicked::CreateLambda([Field, bDefaultValue, OnChanged]()
     {
         Field->SetCheckState(bDefaultValue ? ECheckBoxState::Checked : ECheckBoxState::Unchecked);
         OnChanged.ExecuteIfBound(bDefaultValue);
+    }),
+    FOnPropertyModified::CreateLambda([Field, bDefaultValue]() -> bool
+    {
+        return Field->IsChecked() != bDefaultValue;
     }));
 
     FPropertyRow& NewRow = Table->AddRow(Label, Row);
@@ -886,6 +984,16 @@ void FEditorPropertiesPanel::RefreshValues()
         }
     }
 
+    for (const FRevertRow& Row : RevertRows)
+    {
+        if (!Row.Button || !Row.IsModified.IsBound())
+        {
+            continue;
+        }
+
+        Row.Button->SetVisibility(Row.IsModified.Execute() ? EVisibility::Visible : EVisibility::Hidden);
+    }
+
     if (LightDirectionText)
     {
         FActor* Actor = EditorEngine->GetSelectedActor();
@@ -896,22 +1004,33 @@ void FEditorPropertiesPanel::RefreshValues()
     }
 }
 
-TSharedPtr<FVisualElement> FEditorPropertiesPanel::MakeRevertableRow(const TSharedPtr<FVisualElement>& Editor, const TDelegate<void()>& OnRevert)
+TSharedPtr<FVisualElement> FEditorPropertiesPanel::CreateRevertableRow(const TSharedPtr<FVisualElement>& Editor, const TDelegate<void()>& OnRevert,
+    const FOnPropertyModified& IsModified)
 {
     FButton::FDesc ButtonDesc;
-    ButtonDesc.SetText(GRevertButtonLabel).SetFont(FEditorStyle::GetFonts().Body);
+    ButtonDesc.SetFont(FEditorStyle::GetFonts().Body);
 
+    ButtonDesc.Content   = FRevertGlyph::Create();
     ButtonDesc.Padding   = FMargin(4, 0, 4, 0);
     ButtonDesc.OnClicked = OnRevert;
 
+    TSharedPtr<FButton> Button = FButton::Create(ButtonDesc);
+    Button->SetVisibility(IsModified.IsBound() && !IsModified.Execute() ? EVisibility::Hidden : EVisibility::Visible);
+
+    FRevertRow Entry;
+    Entry.Button     = Button;
+    Entry.IsModified = IsModified;
+
+    RevertRows.Emplace(Entry);
+
     TSharedPtr<FHorizontalBox> Row = FHorizontalBox::Create();
     Row->AddSlot(Editor).SetFillCoefficient(1.0f);
-    Row->AddSlot(FButton::Create(ButtonDesc)).SetPadding(FMargin(4, 0, 0, 0));
+    Row->AddSlot(Button).SetPadding(FMargin(4, 0, 0, 0));
 
     return Row;
 }
 
-TSharedPtr<TNumericEntry<float>> FEditorPropertiesPanel::MakeFloatEditor(float Value, float Min, float Max, float Step, const TDelegate<void(float)>& OnChanged)
+TSharedPtr<TNumericEntry<float>> FEditorPropertiesPanel::CreateFloatEditor(float Value, float Min, float Max, float Step, const TDelegate<void(float)>& OnChanged)
 {
     TNumericEntry<float>::FDesc Desc;
     Desc.Value          = Value;
@@ -925,7 +1044,7 @@ TSharedPtr<TNumericEntry<float>> FEditorPropertiesPanel::MakeFloatEditor(float V
     return TNumericEntry<float>::Create(Desc);
 }
 
-TSharedPtr<TNumericEntry<int32>> FEditorPropertiesPanel::MakeIntEditor(int32 Value, int32 Min, int32 Max, const TDelegate<void(int32)>& OnChanged)
+TSharedPtr<TNumericEntry<int32>> FEditorPropertiesPanel::CreateIntEditor(int32 Value, int32 Min, int32 Max, const TDelegate<void(int32)>& OnChanged)
 {
     TNumericEntry<int32>::FDesc Desc;
     Desc.Value          = Value;
@@ -938,7 +1057,7 @@ TSharedPtr<TNumericEntry<int32>> FEditorPropertiesPanel::MakeIntEditor(int32 Val
     return TNumericEntry<int32>::Create(Desc);
 }
 
-TSharedPtr<FCheckBox> FEditorPropertiesPanel::MakeBoolEditor(bool bValue, const TDelegate<void(bool)>& OnChanged)
+TSharedPtr<FCheckBox> FEditorPropertiesPanel::CreateBoolEditor(bool bValue, const TDelegate<void(bool)>& OnChanged)
 {
     FCheckBox::FDesc Desc;
     Desc.InitialState = bValue ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
@@ -951,7 +1070,7 @@ TSharedPtr<FCheckBox> FEditorPropertiesPanel::MakeBoolEditor(bool bValue, const 
     return FCheckBox::Create(Desc);
 }
 
-TSharedPtr<FVisualElement> FEditorPropertiesPanel::MakeComboEditor(const TArray<String>& Options, int32 SelectedIndex, const TDelegate<void(int32)>& OnChanged)
+TSharedPtr<FVisualElement> FEditorPropertiesPanel::CreateComboEditor(const TArray<String>& Options, int32 SelectedIndex, const TDelegate<void(int32)>& OnChanged)
 {
     FComboBox::FDesc Desc;
     Desc.SetOptions(Options).SetFont(FEditorStyle::GetFonts().Body);
@@ -961,7 +1080,7 @@ TSharedPtr<FVisualElement> FEditorPropertiesPanel::MakeComboEditor(const TArray<
     return FComboBox::Create(Desc);
 }
 
-TSharedPtr<FTextBlock> FEditorPropertiesPanel::MakeTextRow(const String& Text)
+TSharedPtr<FTextBlock> FEditorPropertiesPanel::CreateTextRow(const String& Text)
 {
     FTextBlock::FDesc Desc;
     Desc.Text = Text;

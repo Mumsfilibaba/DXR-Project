@@ -692,7 +692,21 @@ bool FEditorSceneHierarchyPanel::Initialize()
         return false;
     }
 
+    FSearchBox::FDesc SearchDesc;
+    SearchDesc.HintText      = "Search actors";
+    SearchDesc.Font          = FEditorStyle::GetFonts().Body;
+    SearchDesc.SearchIcon    = FEditorIcons::Search;
+    SearchDesc.ClearIcon     = FEditorIcons::Close;
+    SearchDesc.OnTextChanged = FOnSearchTextChanged::CreateRaw(this, &FEditorSceneHierarchyPanel::OnSearchTextChanged);
+
+    SearchBox = FSearchBox::Create(SearchDesc);
+    if (!SearchBox)
+    {
+        return false;
+    }
+
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
+    Column->AddSlot(SearchBox).SetPadding(FMargin(4, 4, 4, 4));
     Column->AddSlot(ToolBar);
     Column->AddSlot(HierarchyView).SetFillCoefficient(1.0f);
 
@@ -715,18 +729,6 @@ TSharedPtr<FToolBar> FEditorSceneHierarchyPanel::BuildToolBar()
         return nullptr;
     }
 
-    FSearchBox::FDesc SearchDesc;
-    SearchDesc.HintText      = "Search actors";
-    SearchDesc.Font          = FEditorStyle::GetFonts().Body;
-    SearchDesc.SearchIcon    = FEditorIcons::Search;
-    SearchDesc.ClearIcon     = FEditorIcons::Close;
-    SearchDesc.OnTextChanged = FOnSearchTextChanged::CreateRaw(this, &FEditorSceneHierarchyPanel::OnSearchTextChanged);
-
-    SearchBox = FSearchBox::Create(SearchDesc);
-    Bar->AddWidget(SearchBox);
-
-    Bar->AddSeparator();
-
     Bar->AddButton(FToolBarItemDesc().SetLabel("Expand"), FOnClicked::CreateLambda([this]()
     {
         TreeView->ExpandAll();
@@ -736,6 +738,8 @@ TSharedPtr<FToolBar> FEditorSceneHierarchyPanel::BuildToolBar()
     {
         TreeView->CollapseAll();
     }));
+
+    Bar->AddFlexibleSpace();
 
     return Bar;
 }

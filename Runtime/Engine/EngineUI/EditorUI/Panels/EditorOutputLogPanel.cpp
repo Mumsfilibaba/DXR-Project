@@ -77,7 +77,7 @@ TSharedPtr<FToolBar> FEditorOutputLogPanel::BuildToolBar()
     SearchDesc.OnTextChanged = FOnSearchTextChanged::CreateRaw(this, &FEditorOutputLogPanel::OnSearchTextChanged);
 
     SearchBox = FSearchBox::Create(SearchDesc);
-    Bar->AddWidget(SearchBox);
+    Bar->AddWidget(SearchBox, 1.0f);
 
     FComboBox::FDesc SeverityDesc;
     SeverityDesc.Options            = { "Info", "Warning", "Error" };
@@ -110,6 +110,8 @@ TSharedPtr<FToolBar> FEditorOutputLogPanel::BuildToolBar()
     {
         LogView->Clear();
     }));
+
+    Bar->AddFlexibleSpace();
 
     return Bar;
 }

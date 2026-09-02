@@ -7,3 +7,4 @@ bool TreeViewKeyboard_Test();
 bool TreeViewScrolling_Test();
 bool TileViewLayout_Test();
 bool TileViewSelection_Test();
+bool TileViewDrag_Test();

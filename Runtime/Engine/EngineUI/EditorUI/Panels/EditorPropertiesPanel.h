@@ -24,6 +24,9 @@ DECLARE_DELEGATE(FOnVectorChanged, const Vector3& /*NewValue*/);
 /** @brief Called once a tick for the value a three-field row shows, on a row that follows the model. */
 DECLARE_RETURN_DELEGATE(FOnVectorRead, Vector3);
 
+/** @brief Called once a tick for whether a row still holds its default, which is what shows and hides its revert button. */
+DECLARE_RETURN_DELEGATE(FOnPropertyModified, bool);
+
 class ENGINE_API FEditorPropertiesPanel final : public FEditorPanel
 {
 public:
@@ -45,8 +48,16 @@ private:
         bool                             bIsAngular = false;
     };
 
+    struct FRevertRow
+    {
+        TSharedPtr<FVisualElement> Button;
+        FOnPropertyModified        IsModified;
+    };
+
     void RebuildContent();
     void RequestRebuild();
+    void RefreshValues();
+    void WriteVectorRow(int32 RowIndex);
 
     void BuildTransformSection(const TSharedPtr<FVerticalBox>& InColumn, FActor* Actor);
     void BuildStaticMeshSection(const TSharedPtr<FVerticalBox>& InColumn, FStaticMeshComponent* Component);
@@ -60,9 +71,6 @@ private:
     void AddParallaxRows(const TSharedPtr<FPropertyTable>& Table, FMaterial* Material);
     void AddLightDirectionRows(const TSharedPtr<FPropertyTable>& Table, FDirectionalLightComponent* Component);
     void AddCascadeRows(const TSharedPtr<FPropertyTable>& Table, FDirectionalLightComponent* Component);
-
-    void RefreshValues();
-    void WriteVectorRow(int32 RowIndex);
 
     FPropertyRow& AddVectorRow(
         const TSharedPtr<FPropertyTable>& Table,
@@ -92,17 +100,18 @@ private:
         const bool*                       DefaultValue = nullptr,
         bool                              bIsEnabled   = true);
 
-    NODISCARD TSharedPtr<FVisualElement> MakeRevertableRow(const TSharedPtr<FVisualElement>& Editor, const TDelegate<void()>& OnRevert);
-    NODISCARD TSharedPtr<TNumericEntry<float>> MakeFloatEditor(float Value, float Min, float Max, float Step, const TDelegate<void(float)>& OnChanged);
-    NODISCARD TSharedPtr<TNumericEntry<int32>> MakeIntEditor(int32 Value, int32 Min, int32 Max, const TDelegate<void(int32)>& OnChanged);
-    NODISCARD TSharedPtr<FCheckBox> MakeBoolEditor(bool bValue, const TDelegate<void(bool)>& OnChanged);
-    NODISCARD TSharedPtr<FVisualElement> MakeComboEditor(const TArray<String>& Options, int32 SelectedIndex, const TDelegate<void(int32)>& OnChanged);
-    NODISCARD TSharedPtr<FTextBlock> MakeTextRow(const String& Text);
+    NODISCARD TSharedPtr<FVisualElement> CreateRevertableRow(const TSharedPtr<FVisualElement>& Editor, const TDelegate<void()>& OnRevert, const FOnPropertyModified& IsModified);
+    NODISCARD TSharedPtr<TNumericEntry<float>> CreateFloatEditor(float Value, float Min, float Max, float Step, const TDelegate<void(float)>& OnChanged);
+    NODISCARD TSharedPtr<TNumericEntry<int32>> CreateIntEditor(int32 Value, int32 Min, int32 Max, const TDelegate<void(int32)>& OnChanged);
+    NODISCARD TSharedPtr<FCheckBox> CreateBoolEditor(bool bValue, const TDelegate<void(bool)>& OnChanged);
+    NODISCARD TSharedPtr<FVisualElement> CreateComboEditor(const TArray<String>& Options, int32 SelectedIndex, const TDelegate<void(int32)>& OnChanged);
+    NODISCARD TSharedPtr<FTextBlock> CreateTextRow(const String& Text);
 
     TSharedPtr<FScrollBox>   ScrollBox;
     TSharedPtr<FVerticalBox> Column;
     TSharedPtr<FTextBlock>   LightDirectionText;
     TArray<FVectorRow>       VectorRows;
+    TArray<FRevertRow>       RevertRows;
     FActor*                  BuiltForActor;
     int32                    SelectedMaterialIndex;
     bool                     bRebuildRequested;

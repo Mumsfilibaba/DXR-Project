@@ -61,6 +61,28 @@ struct FCornerRadii
         return FCornerRadii(0.0f, 0.0f, Radius, Radius);
     }
 
+    /**
+     * @brief Rounds the left two corners only, which is what the first button of a fused row wants.
+     *
+     * @param Radius How far the top-left and bottom-left corners are rounded, in pixels.
+     * @return The radii, with the right two corners left square.
+     */
+    NODISCARD static FORCEINLINE FCornerRadii Left(float Radius)
+    {
+        return FCornerRadii(Radius, 0.0f, 0.0f, Radius);
+    }
+
+    /**
+     * @brief Rounds the right two corners only, which is what the last button of a fused row wants.
+     *
+     * @param Radius How far the top-right and bottom-right corners are rounded, in pixels.
+     * @return The radii, with the left two corners left square.
+     */
+    NODISCARD static FORCEINLINE FCornerRadii Right(float Radius)
+    {
+        return FCornerRadii(0.0f, Radius, Radius, 0.0f);
+    }
+
     FCornerRadii()
         : TopLeft(0.0f)
         , TopRight(0.0f)

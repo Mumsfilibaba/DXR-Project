@@ -74,7 +74,7 @@ int32 FButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& O
     const FUIStyle&         Style = FUIStyle::GetDefault();
     const EInteractionState State = GetInteractionState();
 
-    OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.GetControlColor(State), CornerRadius);
+    OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.GetButtonColor(State, false), CornerRadius);
 
     if (bHasBorder)
     {

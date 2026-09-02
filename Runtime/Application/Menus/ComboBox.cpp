@@ -10,7 +10,7 @@ TSharedPtr<FComboBoxButton> FComboBoxButton::Create(const TSharedPtr<IFontFace>&
 {
     TSharedPtr<FComboBoxButton> NewButton = MakeSharedPtr<FComboBoxButton>();
     NewButton->Font = InFont;
-    NewButton->SetPadding(FMargin(6, 3, 6, 3));
+    NewButton->SetPadding(FUIStyle::GetDefault().Metrics.ButtonPadding);
     return NewButton;
 }
 
@@ -37,7 +37,7 @@ IntVector2 FComboBoxButton::ComputeDesiredSize() const
         DesiredSize.Y += Font->GetLineHeight();
     }
 
-    DesiredSize.Y = Math::Max(DesiredSize.Y, Style.Metrics.RowHeight);
+    DesiredSize.Y = Math::Max(DesiredSize.Y, Style.Metrics.ButtonHeight);
     return DesiredSize;
 }
 
@@ -46,10 +46,10 @@ int32 FComboBoxButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComman
     const FUIStyle&         Style  = FUIStyle::GetDefault();
     const EInteractionState State  = GetInteractionState();
     const FRectangle        Bounds = AllottedGeometry.Bounds;
-    const FCornerRadii      Radii(Style.Metrics.CornerRadius);
+    const FCornerRadii      Radii(Style.Metrics.ButtonCornerRadius);
+    const bool              bIsOpen = Anchor && Anchor->IsOpen();
 
-    OutCommandList.AddBox(LayerId, Bounds, Style.GetControlColor(State), Radii);
-    OutCommandList.AddBoxOutline(LayerId, Bounds, Style.Colors.Border, Style.Metrics.BorderThickness, Radii);
+    OutCommandList.AddBox(LayerId, Bounds, Style.GetButtonColor(State, bIsOpen), Radii);
 
     const FRectangle Inner = Bounds.Deflate(GetPadding());
 

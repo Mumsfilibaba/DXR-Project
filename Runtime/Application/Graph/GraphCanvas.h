@@ -43,7 +43,7 @@ public:
     /** @brief How close to a link the cursor has to be to pick it, in pixels. */
     static constexpr float LinkGrabDistance = 8.0f;
 
-    /** @brief The spacing of the finest grid lines, in graph space. */
+    /** @brief The spacing of the finest grid lines, in graph space, unless the desc names another. */
     static constexpr int32 GridSpacing = 24;
 
     /** @brief How far the cursor moves before a press on a node counts as a drag rather than a click. */
@@ -58,8 +58,29 @@ public:
         /** @brief The graph the canvas shows and edits, which can be swapped later. */
         TSharedPtr<FGraphModel> Model = nullptr;
 
+        /** @brief What every node is drawn with, apart from the title tint each one carries itself. */
+        FGraphNodeStyle NodeStyle;
+
+        /** @brief The fill behind the grid. */
+        FFloatColor BackgroundColor = FUIStyle::GetDefault().Colors.WindowBackground;
+
+        /**
+         * @brief The color every link is drawn with, left transparent to take the source pin's tint instead,
+         * which is how a graph that colors its pins by type shows what a link carries.
+         */
+        FFloatColor LinkColor = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+        /** @brief The spacing of the finest grid lines, in graph space. */
+        int32 GridSpacing = FGraphCanvas::GridSpacing;
+
         /** @brief True to draw the background grid, which a printed or embedded view turns off. */
         bool bShowGrid : 1 = true;
+
+        /**
+         * @brief True to run as a viewer: nodes still move, and the selection, the marquee, the pan and the
+         * zoom all work, but no link can be drawn and nothing can be deleted.
+         */
+        bool bIsViewer : 1 = false;
 
         /** @brief Builds the menu a right-click on empty canvas opens, given where in graph space it landed. */
         FOnGetGraphContextMenu OnGetContextMenu;
@@ -210,6 +231,18 @@ public:
         return SelectedLinkId;
     }
 
+    /** @return True while the canvas is a viewer, which moves and selects nodes but authors nothing. */
+    NODISCARD FORCEINLINE bool IsViewer() const
+    {
+        return bIsViewer;
+    }
+
+    /** @return What every node is drawn with, apart from the title tint each one carries itself. */
+    NODISCARD FORCEINLINE const FGraphNodeStyle& GetNodeStyle() const
+    {
+        return NodeStyle;
+    }
+
     NODISCARD FORCEINLINE float GetZoom() const
     {
         return Zoom;
@@ -274,6 +307,8 @@ protected:
 
 private:
     void RebuildElements();
+    void MeasureNodeElements();
+    void ArrangeNodeElements();
     void EndDrag(const IntVector2& ClientPosition);
 
     NODISCARD bool GetLinkCurve(const FGraphLink& Link, Vector2& OutStart, Vector2& OutStartControl, Vector2& OutEndControl, Vector2& OutEnd) const;
@@ -281,18 +316,25 @@ private:
 
     void DrawGrid(const FRectangle& Bounds, FDrawCommandList& OutCommandList, int32 LayerId) const;
     void DrawLinks(FDrawCommandList& OutCommandList, int32 LayerId) const;
+
+    NODISCARD FFloatColor ResolveLinkColor(const FGraphPin* FromPin) const;
+
     void OpenContextMenu(const FCursorEvent& CursorEvent);
 
     TSharedPtr<FGraphModel>                Model;
     TSharedPtr<IFontFace>                  Font;
     TArray<TSharedPtr<FGraphNodeElement>>  NodeElements;
     TArray<int32>                          SelectedNodeIds;
+    FGraphNodeStyle                        NodeStyle;
+    FFloatColor                            BackgroundColor;
+    FFloatColor                            LinkColor;
     FRectangle                             MarqueeBounds;
     Vector2                                Pan;
     Vector2                                DraggingToPosition;
     IntVector2                             DragAnchor;
     IntVector2                             LastDragPosition;
     float                                  Zoom;
+    int32                                  GridSpacingInGraphSpace;
     int32                                  SelectedLinkId;
     int32                                  DraggingFromPinId;
     int32                                  HoveredPinId;
@@ -300,6 +342,7 @@ private:
     int32                                  BuiltRevision;
     EGraphDragMode                         DragMode;
     bool                                   bShowGrid;
+    bool                                   bIsViewer;
     bool                                   bHasMovedSincePress;
     FOnGetGraphContextMenu                 OnGetContextMenuDelegate;
     FOnGraphSelectionChanged               OnSelectionChangedDelegate;

@@ -66,6 +66,59 @@ static FGraphNode MakeNode(const String& Title, const Vector2& Position, const S
     return Node;
 }
 
+static void DrawElement(const TSharedPtr<FVisualElement>& Element, FDrawCommandList& OutCommandList)
+{
+    Element->OnDraw(FDrawGeometry(Element->GetContentRectangle(), 1.0f), OutCommandList, 0);
+}
+
+static int32 CountCommands(const FDrawCommandList& CommandList, EDrawCommandType Type)
+{
+    int32 Count = 0;
+    for (const FDrawCommand& Command : CommandList.GetCommands())
+    {
+        Count += Command.Type == Type ? 1 : 0;
+    }
+
+    return Count;
+}
+
+static const FDrawCommand* FindBoxCommand(const FDrawCommandList& CommandList, const FRectangle& Bounds)
+{
+    for (const FDrawCommand& Command : CommandList.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::Box && Command.Bounds == Bounds)
+        {
+            return &Command;
+        }
+    }
+
+    return nullptr;
+}
+
+static FFloatColor FindOutlineColor(const FDrawCommandList& CommandList, const FRectangle& Bounds)
+{
+    for (const FDrawCommand& Command : CommandList.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::BoxOutline && Command.Bounds == Bounds)
+        {
+            return Command.Tint;
+        }
+    }
+
+    return FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
+}
+
+static int32 CountPolylinesTinted(const FDrawCommandList& CommandList, const FFloatColor& Tint)
+{
+    int32 Count = 0;
+    for (const FDrawCommand& Command : CommandList.GetCommands())
+    {
+        Count += (Command.Type == EDrawCommandType::Polyline && Command.Tint == Tint) ? 1 : 0;
+    }
+
+    return Count;
+}
+
 /** @brief A graph position in the client space the canvas was arranged in. */
 static IntVector2 GraphToClient(const TSharedPtr<FGraphCanvas>& Canvas, const Vector2& GraphPosition)
 {
@@ -363,6 +416,21 @@ bool GraphCanvasView_Test()
 
     TEST_EXPECT_EQ(Model->FindNode(FirstId)->Position, Vector2(0.0f, 0.0f));
 
+    TEST_SECTION("A layout run after the arrange pass leaves the rebuilt elements ready to draw");
+    Model->Clear();
+    const int32 RebuiltId = Model->AddNode(MakeNode("Rebuilt", Vector2(0.0f, 0.0f), "Texture"));
+
+    Canvas->AutoLayout();
+    Canvas->FitToNodes();
+
+    TSharedPtr<FGraphNodeElement> RebuiltElement = Canvas->FindNodeElement(RebuiltId);
+    TEST_EXPECT(RebuiltElement != nullptr);
+    TEST_EXPECT(!RebuiltElement->GetContentRectangle().IsEmpty());
+
+    FDrawCommandList RebuiltCommands;
+    DrawElement(Canvas, RebuiltCommands);
+    TEST_EXPECT(FindBoxCommand(RebuiltCommands, RebuiltElement->GetContentRectangle()) != nullptr);
+
     TEST_SECTION("A canvas with no model still measures and arranges");
     TSharedPtr<FGraphCanvas> Empty = FGraphCanvas::Create(FGraphCanvas::FDesc());
     LayoutElement(Empty, FRectangle(IntVector2(0, 0), 200, 200));
@@ -512,6 +580,225 @@ bool GraphCanvasInteraction_Test()
 
     TEST_EXPECT_EQ(Model->FindNode(FirstId)->Position, PositionBefore);
     TEST_EXPECT_EQ(Model->GetNodes().Size(), 1);
+
+    TEST_END();
+}
+
+bool GraphNodeStyle_Test()
+{
+    TEST_BEGIN();
+
+    const FFloatColor Body(0.10f, 0.11f, 0.12f, 1.0f);
+    const FFloatColor Border(0.30f, 0.31f, 0.32f, 1.0f);
+    const FFloatColor MutedBody(0.01f, 0.02f, 0.03f, 1.0f);
+    const FFloatColor MutedBorder(0.04f, 0.05f, 0.06f, 1.0f);
+    const FFloatColor PinOutline(0.90f, 0.10f, 0.10f, 1.0f);
+
+    TSharedPtr<FGraphModel> Model = MakeSharedPtr<FGraphModel>();
+    const int32 NormalId = Model->AddNode(MakeNode("Normal", Vector2(0.0f, 0.0f), "Texture"));
+
+    FGraphNode Muted = MakeNode("Muted", Vector2(0.0f, 200.0f), "Texture");
+    Muted.bIsMuted   = true;
+
+    const int32 MutedId = Model->AddNode(Muted);
+
+    FGraphCanvas::FDesc Desc;
+    Desc.Font                    = CreateFont();
+    Desc.Model                   = Model;
+    Desc.NodeStyle.Body          = Body;
+    Desc.NodeStyle.Border        = Border;
+    Desc.NodeStyle.MutedBody     = MutedBody;
+    Desc.NodeStyle.MutedBorder   = MutedBorder;
+    Desc.NodeStyle.PinOutline    = PinOutline;
+    Desc.NodeStyle.CornerRadius  = 6.0f;
+
+    TSharedPtr<FGraphCanvas> Canvas = FGraphCanvas::Create(Desc);
+    LayoutElement(Canvas, FRectangle(IntVector2(0, 0), 600, 400));
+
+    TEST_SECTION("The desc's style reaches every element the canvas builds");
+    TEST_EXPECT_EQ(Canvas->GetNodeStyle().CornerRadius, 6.0f);
+    TEST_EXPECT_EQ(Canvas->FindNodeElement(NormalId)->GetStyle().Body, Body);
+
+    FDrawCommandList CommandList;
+    DrawElement(Canvas->FindNodeElement(NormalId), CommandList);
+
+    const FRectangle NodeBounds = Canvas->FindNodeElement(NormalId)->GetContentRectangle();
+
+    TEST_SECTION("The body takes the style's fill, rounded on all four corners at the unzoomed radius");
+    const FDrawCommand* BodyCommand = FindBoxCommand(CommandList, NodeBounds);
+    TEST_EXPECT(BodyCommand != nullptr);
+    TEST_EXPECT_EQ(BodyCommand->Tint, Body);
+    TEST_EXPECT_EQ(BodyCommand->CornerRadius.TopLeft, 6.0f);
+    TEST_EXPECT_EQ(BodyCommand->CornerRadius.BottomLeft, 6.0f);
+
+    TEST_SECTION("The title bar meets the body square, so only its top corners are rounded");
+    const FRectangle    TitleBounds(NodeBounds.Position, NodeBounds.Width, FGraphNodeElement::TitleHeight);
+    const FDrawCommand* TitleCommand = FindBoxCommand(CommandList, TitleBounds);
+
+    TEST_EXPECT(TitleCommand != nullptr);
+    TEST_EXPECT_EQ(TitleCommand->CornerRadius.TopLeft, 6.0f);
+    TEST_EXPECT_EQ(TitleCommand->CornerRadius.TopRight, 6.0f);
+    TEST_EXPECT_EQ(TitleCommand->CornerRadius.BottomLeft, 0.0f);
+    TEST_EXPECT_EQ(TitleCommand->CornerRadius.BottomRight, 0.0f);
+
+    TEST_SECTION("The outline takes the style's border, and every pin is stroked with the outline color");
+    TEST_EXPECT_EQ(FindOutlineColor(CommandList, NodeBounds), Border);
+    TEST_EXPECT_EQ(CountPolylinesTinted(CommandList, PinOutline), 3);
+
+    TEST_SECTION("A muted node swaps to the second color set rather than fading the first");
+    FDrawCommandList MutedCommands;
+    DrawElement(Canvas->FindNodeElement(MutedId), MutedCommands);
+
+    const FRectangle    MutedBounds = Canvas->FindNodeElement(MutedId)->GetContentRectangle();
+    const FDrawCommand* MutedBox    = FindBoxCommand(MutedCommands, MutedBounds);
+
+    TEST_EXPECT(MutedBox != nullptr);
+    TEST_EXPECT_EQ(MutedBox->Tint, MutedBody);
+    TEST_EXPECT_EQ(FindOutlineColor(MutedCommands, MutedBounds), MutedBorder);
+
+    TEST_SECTION("The radius tracks the zoom, so a node twice the size is rounded twice as far");
+    Canvas->SetZoom(2.0f);
+    LayoutElement(Canvas, FRectangle(IntVector2(0, 0), 600, 400));
+
+    FDrawCommandList ZoomedCommands;
+    DrawElement(Canvas->FindNodeElement(NormalId), ZoomedCommands);
+
+    const FDrawCommand* ZoomedBody = FindBoxCommand(ZoomedCommands, Canvas->FindNodeElement(NormalId)->GetContentRectangle());
+    TEST_EXPECT(ZoomedBody != nullptr);
+    TEST_EXPECT_EQ(ZoomedBody->CornerRadius.TopLeft, 12.0f);
+
+    TEST_END();
+}
+
+bool GraphStackedPins_Test()
+{
+    TEST_BEGIN();
+
+    TSharedPtr<FGraphModel> Model = MakeSharedPtr<FGraphModel>();
+    const int32 NodeId = Model->AddNode(MakeNode("Pass", Vector2(0.0f, 0.0f), "Texture"));
+
+    FGraphCanvas::FDesc PairedDesc;
+    PairedDesc.Font  = CreateFont();
+    PairedDesc.Model = Model;
+
+    TSharedPtr<FGraphCanvas> Paired = FGraphCanvas::Create(PairedDesc);
+    LayoutElement(Paired, FRectangle(IntVector2(0, 0), 600, 400));
+
+    TEST_SECTION("Paired, an input and an output share a row, so two inputs and one output make two");
+    const int32 PairedHeight = Paired->FindNodeElement(NodeId)->GetCachedDesiredSize().Y;
+    TEST_EXPECT_EQ(PairedHeight, 72);
+
+    FGraphCanvas::FDesc StackedDesc;
+    StackedDesc.Font                    = CreateFont();
+    StackedDesc.Model                   = Model;
+    StackedDesc.NodeStyle.bStackPinRows = true;
+
+    TSharedPtr<FGraphCanvas> Stacked = FGraphCanvas::Create(StackedDesc);
+    LayoutElement(Stacked, FRectangle(IntVector2(0, 0), 600, 400));
+
+    TSharedPtr<FGraphNodeElement> Element = Stacked->FindNodeElement(NodeId);
+
+    TEST_SECTION("Stacked, every pin takes a row of its own, so the same node is a row taller");
+    TEST_EXPECT_EQ(Element->GetCachedDesiredSize().Y, PairedHeight + FGraphNodeElement::PinRowHeight);
+
+    TEST_SECTION("The inputs take the first rows and the output follows below both of them");
+    const FGraphNode* Node = Model->FindNode(NodeId);
+
+    Vector2 FirstInput(0.0f, 0.0f);
+    Vector2 SecondInput(0.0f, 0.0f);
+    Vector2 Output(0.0f, 0.0f);
+
+    TEST_EXPECT(Element->GetPinCenter(Node->Pins[0].PinId, FirstInput));
+    TEST_EXPECT(Element->GetPinCenter(Node->Pins[1].PinId, SecondInput));
+    TEST_EXPECT(Element->GetPinCenter(Node->Pins[2].PinId, Output));
+
+    TEST_EXPECT_EQ(SecondInput.Y - FirstInput.Y, static_cast<float>(FGraphNodeElement::PinRowHeight));
+    TEST_EXPECT_EQ(Output.Y - SecondInput.Y, static_cast<float>(FGraphNodeElement::PinRowHeight));
+    TEST_EXPECT(Output.X > SecondInput.X);
+
+    TEST_SECTION("A rule separates the two groups, drawn where the outputs begin");
+    FDrawCommandList CommandList;
+    DrawElement(Element, CommandList);
+
+    const FRectangle Bounds     = Element->GetContentRectangle();
+    bool             bFoundRule = false;
+
+    for (const FDrawCommand& Command : CommandList.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::Line && Command.Bounds.Position.Y == Bounds.Position.Y + FGraphNodeElement::TitleHeight + (FGraphNodeElement::PinRowHeight * 2))
+        {
+            bFoundRule = true;
+        }
+    }
+
+    TEST_EXPECT(bFoundRule);
+
+    TEST_SECTION("A node with only inputs has nothing to separate");
+    FGraphNode InputsOnly;
+    InputsOnly.Title    = "Sink";
+    InputsOnly.Position = Vector2(0.0f, 300.0f);
+    InputsOnly.Pins.Add(FGraphPin(EGraphPinDirection::Input, "A", "Texture", FFloatColor::White));
+
+    const int32 SinkId = Model->AddNode(InputsOnly);
+    LayoutElement(Stacked, FRectangle(IntVector2(0, 0), 600, 400));
+
+    FDrawCommandList SinkCommands;
+    DrawElement(Stacked->FindNodeElement(SinkId), SinkCommands);
+
+    TEST_EXPECT_EQ(CountCommands(SinkCommands, EDrawCommandType::Line), 0);
+
+    TEST_END();
+}
+
+bool GraphViewerMode_Test()
+{
+    TEST_BEGIN();
+
+    FScopedStubApplication Application;
+
+    TSharedPtr<FGraphModel> Model = MakeSharedPtr<FGraphModel>();
+    const int32 FirstId  = Model->AddNode(MakeNode("Source", Vector2(20.0f, 20.0f), "Texture"));
+    const int32 SecondId = Model->AddNode(MakeNode("Sink", Vector2(300.0f, 40.0f), "Texture"));
+
+    FGraphCanvas::FDesc Desc;
+    Desc.Font      = CreateFont();
+    Desc.Model     = Model;
+    Desc.bIsViewer = true;
+
+    TSharedPtr<FGraphCanvas> Canvas = FGraphCanvas::Create(Desc);
+    LayoutElement(Canvas, FRectangle(IntVector2(0, 0), 600, 400));
+
+    TEST_EXPECT(Canvas->IsViewer());
+
+    TEST_SECTION("A viewer still selects and still moves what it selected");
+    const IntVector2 SourceTitle(20 + 70, 20 + 12);
+    DragCanvas(Canvas, SourceTitle, SourceTitle + IntVector2(40, 25));
+
+    TEST_EXPECT(Canvas->IsNodeSelected(FirstId));
+    TEST_EXPECT_EQ(Model->FindNode(FirstId)->Position, Vector2(60.0f, 45.0f));
+
+    TEST_SECTION("A press on a pin drags the node it belongs to rather than pulling a link off it");
+    LayoutElement(Canvas, FRectangle(IntVector2(0, 0), 600, 400));
+
+    const IntVector2 SourceOutput = GetPinPosition(Canvas, FirstId, 2);
+    const IntVector2 SinkInput    = GetPinPosition(Canvas, SecondId, 0);
+
+    Canvas->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, Keys::MouseButtonLeft, SourceOutput));
+    TEST_EXPECT(Canvas->GetDragMode() != EGraphDragMode::Link);
+    TEST_EXPECT_EQ(Canvas->GetDraggingFromPin(), -1);
+
+    Canvas->OnMouseMove(MakeMoveEvent(SinkInput));
+    Canvas->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, Keys::MouseButtonLeft, SinkInput));
+
+    TEST_EXPECT(Model->GetLinks().IsEmpty());
+
+    TEST_SECTION("Delete leaves the graph alone, however much of it is selected");
+    LayoutElement(Canvas, FRectangle(IntVector2(0, 0), 600, 400));
+
+    Canvas->SetSelectedNodes({ FirstId, SecondId });
+    Canvas->OnKeyDown(MakeKeyEvent(Keys::Delete));
+
+    TEST_EXPECT_EQ(Model->GetNodes().Size(), 2);
 
     TEST_END();
 }

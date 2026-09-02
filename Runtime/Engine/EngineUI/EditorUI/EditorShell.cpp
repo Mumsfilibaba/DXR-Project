@@ -51,6 +51,12 @@ bool FEditorShell::Initialize()
 
     bStyleInitialized = true;
 
+    bIconsInitialized = FEditorIcons::Initialize();
+    if (!bIconsInitialized)
+    {
+        LOG_WARNING("[FEditorShell]: The icon atlas could not be built, so the editor runs without icons");
+    }
+
     FDockingArea::FDesc DockDesc;
     DockDesc.Font          = FEditorStyle::GetFonts().Body;
     DockDesc.bAllowTearOut = false;
@@ -112,12 +118,6 @@ bool FEditorShell::Initialize()
 
 bool FEditorShell::InitPostRenderer()
 {
-    bIconsInitialized = FEditorIcons::Initialize();
-    if (!bIconsInitialized)
-    {
-        LOG_WARNING("[FEditorShell]: The icon atlas could not be built, so the editor runs without icons");
-    }
-
     return true;
 }
 

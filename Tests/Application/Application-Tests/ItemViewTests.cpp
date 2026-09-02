@@ -600,6 +600,22 @@ bool TileViewLayout_Test()
     TileView->SetScrollOffset(30);
     TEST_EXPECT_EQ(TileView->GetScrollOffset(), 30);
 
+    TEST_SECTION("Scrolling to a tile moves the least it can to bring the whole tile into view");
+    TileView->ScrollToTile(5);
+    TEST_EXPECT_EQ(TileView->GetScrollOffset(), 70);
+
+    TileView->ScrollToTile(0);
+    TEST_EXPECT_EQ(TileView->GetScrollOffset(), 0);
+
+    TEST_SECTION("A tile already inside the view leaves the grid where it stands");
+    TileView->SetScrollOffset(30);
+    TileView->ScrollToTile(2);
+    TEST_EXPECT_EQ(TileView->GetScrollOffset(), 30);
+
+    TEST_SECTION("Scrolling to something that is not a tile does nothing");
+    TileView->ScrollToTile(99);
+    TEST_EXPECT_EQ(TileView->GetScrollOffset(), 30);
+
     TEST_SECTION("One wheel step moves the grid by the step the view is built with");
     TileView->SetScrollOffset(0);
 
@@ -728,6 +744,90 @@ bool TileViewSelection_Test()
 
     TileView->OnMouseLeft(MakeMoveEvent(IntVector2(900, 900)));
     TEST_EXPECT_EQ(TileView->GetHoveredTile(), FTileView::InvalidTileIndex);
+
+    TEST_END();
+}
+
+bool TileViewDrag_Test()
+{
+    TEST_BEGIN();
+
+    constexpr int32 TileSide    = 50;
+    constexpr int32 TileSpacing = 10;
+
+    int32 DragCount   = 0;
+    int32 DraggedTile = FTileView::InvalidTileIndex;
+
+    FTileView::FDesc Desc;
+    Desc.Font        = CreateFont();
+    Desc.TileSize    = IntVector2(TileSide, TileSide);
+    Desc.TileSpacing = TileSpacing;
+    Desc.IconSize    = 32;
+    Desc.OnDragDetected.BindLambda([&](int32 Index, const FCursorEvent&)
+    {
+        ++DragCount;
+        DraggedTile = Index;
+    });
+
+    TSharedPtr<FTileView> TileView = FTileView::Create(Desc);
+    TileView->SetItems(CreateTileItems(8));
+    LayoutElement(TileView, FRectangle(IntVector2(0, 0), 250, 100));
+
+    TEST_SECTION("Where a tile sits is the grid position it was laid out at");
+    const FRectangle FirstTile = TileView->GetTileBounds(0);
+    TEST_EXPECT_EQ(FirstTile.Position.X, 0);
+    TEST_EXPECT_EQ(FirstTile.Position.Y, 0);
+    TEST_EXPECT_EQ(FirstTile.Width, TileSide);
+    TEST_EXPECT_EQ(FirstTile.Height, TileSide);
+
+    const FRectangle SecondRowTile = TileView->GetTileBounds(4);
+    TEST_EXPECT_EQ(SecondRowTile.Position.X, 0);
+    TEST_EXPECT_EQ(SecondRowTile.Position.Y, TileSide + TileSpacing);
+
+    TEST_SECTION("A tile that is not there has no bounds to give back");
+    TEST_EXPECT_EQ(TileView->GetTileBounds(-1).Width, 0);
+    TEST_EXPECT_EQ(TileView->GetTileBounds(99).Width, 0);
+
+    TEST_SECTION("Moving without a press behind it is not a drag");
+    TileView->OnMouseMove(MakeMoveEvent(IntVector2(200, 80)));
+    TEST_EXPECT_EQ(DragCount, 0);
+
+    TEST_SECTION("A press followed by a move short of the threshold is still a click");
+    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(25, 25)));
+    TileView->OnMouseMove(MakeMoveEvent(IntVector2(25 + FTileView::DragThreshold, 25)));
+    TEST_EXPECT_EQ(DragCount, 0);
+
+    TEST_SECTION("One pixel past the threshold turns the press into a drag of the tile it started on");
+    TEST_EXPECT(TileView->OnMouseMove(MakeMoveEvent(IntVector2(25 + FTileView::DragThreshold + 1, 25))).IsEventHandled());
+    TEST_EXPECT_EQ(DragCount, 1);
+    TEST_EXPECT_EQ(DraggedTile, 0);
+
+    TEST_SECTION("The drag is raised once, not again for every move that follows");
+    TileView->OnMouseMove(MakeMoveEvent(IntVector2(145, 85)));
+    TEST_EXPECT_EQ(DragCount, 1);
+
+    TEST_SECTION("Releasing the button drops the press, so a later move is not a drag");
+    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(85, 25)));
+    TileView->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(85, 25)));
+    TileView->OnMouseMove(MakeMoveEvent(IntVector2(205, 85)));
+    TEST_EXPECT_EQ(DragCount, 1);
+
+    TEST_SECTION("A press that lands on no tile has nothing to drag");
+    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(245, 25)));
+    TileView->OnMouseMove(MakeMoveEvent(IntVector2(145, 85)));
+    TEST_EXPECT_EQ(DragCount, 1);
+
+    TEST_SECTION("The cursor leaving drops the press along with the hover");
+    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(25, 25)));
+    TileView->OnMouseLeft(MakeMoveEvent(IntVector2(900, 900)));
+    TileView->OnMouseMove(MakeMoveEvent(IntVector2(145, 85)));
+    TEST_EXPECT_EQ(DragCount, 1);
+
+    TEST_SECTION("A drag that starts on the second tile reports that tile");
+    TileView->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(85, 25)));
+    TileView->OnMouseMove(MakeMoveEvent(IntVector2(85, 60)));
+    TEST_EXPECT_EQ(DragCount, 2);
+    TEST_EXPECT_EQ(DraggedTile, 1);
 
     TEST_END();
 }

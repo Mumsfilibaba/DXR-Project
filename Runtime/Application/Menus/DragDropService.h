@@ -137,13 +137,14 @@ public:
     void UnregisterTarget(const TWeakPtr<FVisualElement>& Target);
 
     /**
-     * @brief Appends the ghost drawn under the cursor while a drag is in flight, and nothing when there
-     * is none. Placed in screen coordinates, so the caller is an overlay covering the desktop.
+     * @brief Appends the ghost drawn under the cursor while a drag is in flight, and nothing when there is none.
      *
      * @param OutCommandList The list to append to.
      * @param LayerId        The layer the ghost draws on, its contents one above.
+     * @param ClientOrigin   Where the drawing window's client area starts on screen, which is subtracted from the
+     *                       drag's screen position to land the ghost in that window's own coordinates.
      */
-    void DrawDragVisual(FDrawCommandList& OutCommandList, int32 LayerId) const;
+    void DrawDragVisual(FDrawCommandList& OutCommandList, int32 LayerId, const IntVector2& ClientOrigin = IntVector2(0, 0)) const;
 
 private:
     struct FTarget

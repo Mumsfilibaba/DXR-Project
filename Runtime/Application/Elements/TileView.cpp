@@ -21,16 +21,24 @@ FTileView::FTileView()
     , SelectedIndices()
     , Font(nullptr)
     , TileSize(80, 92)
+    , PressPosition()
     , TileSpacing(8)
     , IconSize(48)
+    , LabelInset(TILE_INNER_PADDING)
+    , CornerRadius(0.0f)
+    , IdleFill(0.0f, 0.0f, 0.0f, 0.0f)
+    , HoveredFill(FUIStyle::GetDefault().Colors.ControlHovered)
+    , SelectedFill(FUIStyle::GetDefault().Colors.TextSelectionBackground)
     , ScrollOffset(0)
     , ContentHeight(0)
     , ViewHeight(0)
     , HoveredIndex(InvalidTileIndex)
     , AnchorIndex(InvalidTileIndex)
+    , PressedIndex(InvalidTileIndex)
     , bAllowMultiSelect(true)
     , OnSelectionChangedDelegate()
     , OnItemActivatedDelegate()
+    , OnDragDetectedDelegate()
 {
 }
 
@@ -42,9 +50,15 @@ void FTileView::Initialize(const FDesc& Desc)
     TileSize                   = IntVector2(Math::Max(Desc.TileSize.X, 1), Math::Max(Desc.TileSize.Y, 1));
     TileSpacing                = Math::Max(Desc.TileSpacing, 0);
     IconSize                   = Math::Max(Desc.IconSize, 0);
+    LabelInset                 = Math::Max(Desc.LabelInset, 0);
+    CornerRadius               = Math::Max(Desc.CornerRadius, 0.0f);
+    IdleFill                   = Desc.IdleFill;
+    HoveredFill                = Desc.HoveredFill;
+    SelectedFill               = Desc.SelectedFill;
     bAllowMultiSelect          = Desc.bAllowMultiSelect;
     OnSelectionChangedDelegate = Desc.OnSelectionChanged;
     OnItemActivatedDelegate    = Desc.OnItemActivated;
+    OnDragDetectedDelegate     = Desc.OnDragDetected;
 }
 
 IntVector2 FTileView::ComputeDesiredSize() const
@@ -63,7 +77,7 @@ int32 FTileView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
 {
     const FUIStyle&    Style  = FUIStyle::GetDefault();
     const FRectangle   Bounds = AllottedGeometry.Bounds;
-    const FCornerRadii Radii(Style.Metrics.CornerRadius);
+    const FCornerRadii Radii  = FCornerRadii(CornerRadius);
 
     OutCommandList.PushClip(LayerId, Bounds);
 
@@ -83,37 +97,27 @@ int32 FTileView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
 
         const FTileItem& Item = Items[Index];
 
-        if (IsSelected(Index))
-        {
-            OutCommandList.AddBox(LayerId, Tile, Style.Colors.TextSelectionBackground, Radii);
-        }
-        else if (Index == HoveredIndex)
-        {
-            OutCommandList.AddBox(LayerId, Tile, Style.Colors.ControlHovered, Radii);
-        }
+        const FFloatColor Fill = IsSelected(Index) 
+            ? SelectedFill 
+            : (Index == HoveredIndex ? HoveredFill : IdleFill);
 
-        FRectangle IconBounds;
-        IconBounds.Width      = Math::Min(IconSize, Tile.Width);
-        IconBounds.Height     = Math::Min(IconSize, Tile.Height);
-        IconBounds.Position.X = Tile.Position.X + ((Tile.Width - IconBounds.Width) / 2);
-        IconBounds.Position.Y = Tile.Position.Y + TILE_INNER_PADDING;
+        if (Fill.A > 0.0f)
+        {
+            OutCommandList.AddBox(LayerId, Tile, Fill, Radii);
+        }
 
         if (Item.Icon.IsValid())
         {
-            OutCommandList.AddImage(LayerId + 1, IconBounds, Item.Icon, FFloatColor::White);
+            OutCommandList.AddImage(LayerId + 1, ComputeIconBounds(Tile), Item.Icon, FFloatColor::White);
             MaxLayerId = Math::Max(MaxLayerId, LayerId + 1);
         }
 
-        const int32 LabelTop = IconBounds.GetBottom() + TILE_ICON_LABEL_GAP;
-        if (Font && !Item.Label.IsEmpty() && LabelTop < Tile.GetBottom())
+        const FRectangle LabelBand = ComputeLabelBounds(Tile);
+        if (Font && !Item.Label.IsEmpty() && !LabelBand.IsEmpty())
         {
-            const String     LabelText = ElideLabel(Item.Label, Tile.Width - (TILE_INNER_PADDING * 2));
-            const IntVector2 LabelSize(Font->MeasureWidth(StringView(LabelText.Data(), LabelText.Length())), Font->GetLineHeight());
-
-            FRectangle LabelBounds = Tile;
-            LabelBounds.Position.Y = LabelTop;
-            LabelBounds.Height     = Tile.GetBottom() - LabelTop;
-            LabelBounds            = FRectangle::AlignInBounds(LabelBounds, LabelSize, EHorizontalAlignment::Center, EVerticalAlignment::Top);
+            const String     LabelText   = ElideLabel(Item.Label, LabelBand.Width);
+            const IntVector2 LabelSize   = IntVector2(Font->MeasureWidth(StringView(LabelText.Data(), LabelText.Length())), Font->GetLineHeight());
+            const FRectangle LabelBounds = FRectangle::AlignInBounds(LabelBand, LabelSize, EHorizontalAlignment::Center, EVerticalAlignment::Top);
 
             OutCommandList.AddText(LayerId + 2, LabelBounds, LabelText, Font.Get(), Style.Colors.Text);
             MaxLayerId = Math::Max(MaxLayerId, LayerId + 2);
@@ -141,13 +145,41 @@ FEventResponse FTileView::OnMouseButtonDown(const FCursorEvent& CursorEvent)
     const FModifierKeyState& Modifiers = CursorEvent.GetModifierKeys();
     SelectTile(Index, bAllowMultiSelect && Modifiers.IsShortcutChordDown(), bAllowMultiSelect && Modifiers.IsShiftDown());
 
+    PressedIndex  = Index;
+    PressPosition = CursorEvent.GetClientPosition();
+
     OnSelectionChangedDelegate.ExecuteIfBound(SelectedIndices);
     return FEventResponse::Handled();
+}
+
+FEventResponse FTileView::OnMouseButtonUp(const FCursorEvent& CursorEvent)
+{
+    if (CursorEvent.GetKey() != Keys::MouseButtonLeft)
+    {
+        return FEventResponse::Unhandled();
+    }
+
+    PressedIndex = InvalidTileIndex;
+    return FEventResponse::Unhandled();
 }
 
 FEventResponse FTileView::OnMouseMove(const FCursorEvent& CursorEvent)
 {
     HoveredIndex = FindTileAt(CursorEvent.GetClientPosition());
+
+    if (PressedIndex != InvalidTileIndex)
+    {
+        const IntVector2 Travel = CursorEvent.GetClientPosition() - PressPosition;
+        if (Math::Abs(Travel.X) > DragThreshold || Math::Abs(Travel.Y) > DragThreshold)
+        {
+            const int32 DraggedIndex = PressedIndex;
+            PressedIndex             = InvalidTileIndex;
+
+            OnDragDetectedDelegate.ExecuteIfBound(DraggedIndex, CursorEvent);
+            return FEventResponse::Handled();
+        }
+    }
+
     return FEventResponse::Unhandled();
 }
 
@@ -156,6 +188,7 @@ FEventResponse FTileView::OnMouseLeft(const FCursorEvent& CursorEvent)
     UNREFERENCED_VARIABLE(CursorEvent);
 
     HoveredIndex = InvalidTileIndex;
+    PressedIndex = InvalidTileIndex;
     return FEventResponse::Unhandled();
 }
 
@@ -207,6 +240,7 @@ void FTileView::SetItems(const TArray<FTileItem>& InItems)
 
     HoveredIndex = InvalidTileIndex;
     AnchorIndex  = InvalidTileIndex;
+    PressedIndex = InvalidTileIndex;
     ScrollOffset = 0;
 }
 
@@ -220,6 +254,21 @@ void FTileView::ClearSelection()
     SelectedIndices.Clear();
 
     AnchorIndex = InvalidTileIndex;
+
+    OnSelectionChangedDelegate.ExecuteIfBound(SelectedIndices);
+}
+
+void FTileView::SetSelection(int32 Index)
+{
+    if (Index < 0 || Index >= Items.Size())
+    {
+        return;
+    }
+
+    SelectedIndices.Clear();
+    SelectedIndices.Add(Index);
+
+    AnchorIndex = Index;
 
     OnSelectionChangedDelegate.ExecuteIfBound(SelectedIndices);
 }
@@ -242,6 +291,30 @@ void FTileView::SetScrollOffset(int32 InScrollOffset)
 int32 FTileView::GetMaxScrollOffset() const
 {
     return Math::Max(ContentHeight - ViewHeight, 0);
+}
+
+void FTileView::ScrollToTile(int32 Index)
+{
+    if (Index < 0 || Index >= Items.Size())
+    {
+        return;
+    }
+
+    const int32 AvailableWidth = GetContentRectangle().Width;
+    const int32 RowIndex       = Index / ResolveNumColumns(AvailableWidth);
+    const int32 TileTop        = RowIndex * (TileSize.Y + TileSpacing);
+    const int32 TileBottom     = TileTop + TileSize.Y;
+
+    if (TileTop < ScrollOffset)
+    {
+        ScrollOffset = TileTop;
+    }
+    else if (TileBottom > (ScrollOffset + ViewHeight))
+    {
+        ScrollOffset = TileBottom - ViewHeight;
+    }
+
+    ScrollOffset = Math::Clamp(ScrollOffset, 0, Math::Max(ComputeContentHeight(AvailableWidth) - ViewHeight, 0));
 }
 
 int32 FTileView::ResolveNumColumns(int32 AvailableWidth) const
@@ -273,6 +346,48 @@ FRectangle FTileView::ComputeTileBounds(int32 Index, const FRectangle& Bounds) c
     Tile.Position.X = Bounds.Position.X + (Column * (TileSize.X + TileSpacing));
     Tile.Position.Y = (Bounds.Position.Y + (Row * (TileSize.Y + TileSpacing))) - ScrollOffset;
     return Tile;
+}
+
+FRectangle FTileView::ComputeIconBounds(const FRectangle& Tile) const
+{
+    FRectangle IconBounds;
+    IconBounds.Width      = Math::Min(IconSize, Tile.Width);
+    IconBounds.Height     = Math::Min(IconSize, Tile.Height);
+    IconBounds.Position.X = Tile.Position.X + ((Tile.Width - IconBounds.Width) / 2);
+    IconBounds.Position.Y = Tile.Position.Y + TILE_INNER_PADDING;
+    return IconBounds;
+}
+
+FRectangle FTileView::ComputeLabelBounds(const FRectangle& Tile) const
+{
+    const int32 LabelTop = ComputeIconBounds(Tile).GetBottom() + TILE_ICON_LABEL_GAP;
+    if (LabelTop >= Tile.GetBottom())
+    {
+        return FRectangle();
+    }
+
+    FRectangle LabelBounds;
+    LabelBounds.Position.X = Tile.Position.X + LabelInset;
+    LabelBounds.Position.Y = LabelTop;
+    LabelBounds.Width      = Math::Max(Tile.Width - (LabelInset * 2), 0);
+    LabelBounds.Height     = Tile.GetBottom() - LabelTop;
+    return LabelBounds;
+}
+
+FRectangle FTileView::GetTileBounds(int32 Index) const
+{
+    if (Index < 0 || Index >= Items.Size())
+    {
+        return FRectangle();
+    }
+
+    return ComputeTileBounds(Index, GetContentRectangle());
+}
+
+FRectangle FTileView::GetTileLabelBounds(int32 Index) const
+{
+    const FRectangle Tile = GetTileBounds(Index);
+    return Tile.IsEmpty() ? FRectangle() : ComputeLabelBounds(Tile);
 }
 
 int32 FTileView::FindTileAt(const IntVector2& ClientPosition) const

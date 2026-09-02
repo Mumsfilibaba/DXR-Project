@@ -10,18 +10,15 @@
 #include <Engine/World/Components/StaticMeshComponent.h>
 #include <Engine/World/World.h>
 
-namespace
-{
-    constexpr float SpawnDistance = 2.0f;
-    constexpr float LaunchSpeed   = 15.0f;
-    constexpr float Gravity       = -20.0f;
-    constexpr float DespawnBelowY = -50.0f;
-    constexpr float RoughnessMin  = 0.05f;
-    constexpr float RoughnessMax  = 0.95f;
+constexpr float SpawnDistance = 2.0f;
+constexpr float LaunchSpeed   = 15.0f;
+constexpr float Gravity       = -20.0f;
+constexpr float DespawnBelowY = -50.0f;
+constexpr float RoughnessMin  = 0.05f;
+constexpr float RoughnessMax  = 0.95f;
 
-    TSharedPtr<FMesh> GProjectileSphereMesh;
-    FRandom           GProjectileRandom;
-}
+static TSharedPtr<FMesh> GProjectileSphereMesh;
+static FRandom           GProjectileRandom;
 
 void ReleaseProjectileMeshCache()
 {

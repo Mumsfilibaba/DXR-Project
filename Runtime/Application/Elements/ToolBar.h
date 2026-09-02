@@ -28,6 +28,9 @@ enum class EToolBarItemType : uint8
 
     /** @brief An element the caller built, which the bar only places. */
     Custom,
+
+    /** @brief Empty space that swallows whatever width the entries leave, which is what pushes a group off the left edge. */
+    FlexibleSpace,
 };
 
 struct FToolBarItemDesc
@@ -36,6 +39,7 @@ struct FToolBarItemDesc
         : Icon()
         , Label()
         , ToolTipText()
+        , MinWidth(0)
     {
     }
 
@@ -75,6 +79,18 @@ struct FToolBarItemDesc
         return *this;
     }
 
+    /**
+     * @brief Sets a width the entry will not shrink below, which is what makes a row of them line up.
+     *
+     * @param InMinWidth The width in pixels, or zero to size the entry to its content.
+     * @return This desc, so the setters can be chained.
+     */
+    FORCEINLINE FToolBarItemDesc& SetMinWidth(int32 InMinWidth)
+    {
+        MinWidth = InMinWidth;
+        return *this;
+    }
+
     /** @brief The icon drawn ahead of the label, which is invalid for a text-only entry. */
     FUIBrush Icon;
 
@@ -83,6 +99,9 @@ struct FToolBarItemDesc
 
     /** @brief The tip shown once the cursor has rested, which is empty for an entry with no tip. */
     String ToolTipText;
+
+    /** @brief A width the entry will not shrink below, or zero to size it to its content. */
+    int32 MinWidth;
 };
 
 class APPLICATION_API FToolBarButton final : public FInteractiveElement
@@ -146,6 +165,39 @@ public:
      */
     void SetOnStateChanged(const FOnCheckStateChanged& InOnStateChanged);
 
+    /**
+     * @brief Lights a plain button from outside, which is how a set of them reads as a radio group without latching.
+     *
+     * @param bInIsHighlighted True to draw the entry lit.
+     */
+    void SetHighlighted(bool bInIsHighlighted);
+
+    /**
+     * @brief Sets how far each of the entry's corners is rounded, which is what fuses a group into one pill.
+     *
+     * @param InCornerRadius The four radii, in pixels.
+     */
+    void SetCornerRadius(const FCornerRadii& InCornerRadius);
+
+    /**
+     * @brief Sets a width the entry will not shrink below.
+     *
+     * @param InMinWidth The width in pixels, or zero to size the entry to its content.
+     */
+    void SetMinWidth(int32 InMinWidth);
+
+    /** @return The four radii of the entry's fill, in pixels. */
+    NODISCARD FORCEINLINE const FCornerRadii& GetCornerRadius() const
+    {
+        return CornerRadius;
+    }
+
+    /** @return The width the entry will not shrink below, or zero when it sizes to its content. */
+    NODISCARD FORCEINLINE int32 GetMinWidth() const
+    {
+        return MinWidth;
+    }
+
     /** @return The latched state of the entry, which only a toggle moves as it is clicked. */
     NODISCARD FORCEINLINE ECheckBoxState GetCheckState() const
     {
@@ -176,7 +228,10 @@ public:
         return ToolTipText;
     }
 
-    /** @return True for a dropdown whose menu is open, and for a toggle in any state but Unchecked. */
+    /**
+     * @return True for a dropdown whose menu is open, a toggle in any state but Unchecked, and a plain button
+     * SetHighlighted has lit.
+     */
     NODISCARD bool IsHighlighted() const;
 
 protected:
@@ -185,7 +240,8 @@ protected:
     virtual void OnClicked() override;
 
 private:
-    NODISCARD FRectangle GetIconBounds(const FRectangle& Bounds) const;
+    NODISCARD int32 ComputeContentWidth() const;
+    NODISCARD FRectangle GetIconBounds(const FRectangle& Bounds, int32 LeadingOffset) const;
 
     void DrawArrow(const FRectangle& Bounds, FDrawCommandList& OutCommandList, int32 LayerId, const FFloatColor& Tint) const;
 
@@ -195,7 +251,10 @@ private:
     TSharedPtr<IFontFace> Font;
     EToolBarItemType      ItemType;
     ECheckBoxState        CheckState;
+    FCornerRadii          CornerRadius;
     int32                 IconSize;
+    int32                 MinWidth;
+    bool                  bIsHighlighted;
     FOnClicked            OnClickedDelegate;
     FOnCheckStateChanged  OnStateChangedDelegate;
     FToolBar*             OwnerBar;
@@ -324,15 +383,35 @@ public:
      */
     TSharedPtr<FMenuAnchor> AddDropDown(const FToolBarItemDesc& Item, const TSharedPtr<FVisualElement>& MenuContent);
 
+    /**
+     * @brief Opens a run of entries that are fused into one pill.
+     *
+     * Entries appended until EndGroup sit flush against each other, and EndGroup rounds only the two outer ends, so
+     * the run reads as a single segmented control rather than as separate buttons. Groups do not nest.
+     */
+    void BeginGroup();
+
+    /** @brief Closes the run BeginGroup opened and rounds its outer ends. */
+    void EndGroup();
+
     /** @brief Appends a rule between groups, which runs across the strip. */
     void AddSeparator();
 
     /**
+     * @brief Appends empty space that grows to take whatever the sized entries leave over.
+     *
+     * Two of these around a group centre it, and one before a group pushes that group to the far edge. The strip has
+     * to be stretched rather than sized to its content for there to be anything left over to take.
+     */
+    void AddFlexibleSpace();
+
+    /**
      * @brief Appends an element the caller built, for the combo box or search field a strip sometimes carries.
      *
-     * @param Widget The element to place.
+     * @param Widget       The element to place.
+     * @param FillCoefficient How much of the leftover width to take, or zero to size the element to its content.
      */
-    void AddWidget(const TSharedPtr<FVisualElement>& Widget);
+    void AddWidget(const TSharedPtr<FVisualElement>& Widget, float FillCoefficient = 0.0f);
 
     /** @brief Drops every entry, so the bar can be refilled. */
     void ClearItems();
@@ -389,7 +468,7 @@ public:
     }
 
 private:
-    void AppendSlot(const TSharedPtr<FVisualElement>& Element, const TSharedPtr<FToolBarButton>& Button, EToolBarItemType Type);
+    FBoxSlot& AppendSlot(const TSharedPtr<FVisualElement>& Element, const TSharedPtr<FToolBarButton>& Button, EToolBarItemType Type);
 
     TSharedPtr<FBox>                Panel;
     TArray<FToolBarEntry>           Items;
@@ -398,5 +477,6 @@ private:
     EOrientation                    Orientation;
     int32                           IconSize;
     int32                           ItemSpacing;
+    int32                           GroupStartIndex;
     bool                            bHasBackground;
 };

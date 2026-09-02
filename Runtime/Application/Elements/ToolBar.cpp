@@ -1,5 +1,6 @@
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Elements/Separator.h"
+#include "Application/Elements/Spacer.h"
 #include "Application/Elements/ToolBar.h"
 #include "Application/Menus/ToolTipService.h"
 #include "Application/Style/UIStyle.h"
@@ -18,13 +19,17 @@ constexpr int32 TOOLBAR_RULE_INSET = 3;
 
 TSharedPtr<FToolBarButton> FToolBarButton::Create(const FToolBarItemDesc& Item, EToolBarItemType InType, const TSharedPtr<IFontFace>& InFont, int32 InIconSize)
 {
+    const FUIStyle& Style = FUIStyle::GetDefault();
+
     TSharedPtr<FToolBarButton> NewButton = MakeSharedPtr<FToolBarButton>();
-    NewButton->Icon        = Item.Icon;
-    NewButton->Label       = Item.Label;
-    NewButton->ToolTipText = Item.ToolTipText;
-    NewButton->Font        = InFont;
-    NewButton->ItemType    = InType;
-    NewButton->IconSize    = InIconSize;
+    NewButton->Icon         = Item.Icon;
+    NewButton->Label        = Item.Label;
+    NewButton->ToolTipText  = Item.ToolTipText;
+    NewButton->Font         = InFont;
+    NewButton->ItemType     = InType;
+    NewButton->IconSize     = InIconSize;
+    NewButton->MinWidth     = Item.MinWidth;
+    NewButton->CornerRadius = FCornerRadii(Style.Metrics.ButtonCornerRadius);
     NewButton->SetPadding(FMargin(TOOLBAR_ITEM_PADDING, 2, TOOLBAR_ITEM_PADDING, 2));
     return NewButton;
 }
@@ -37,7 +42,10 @@ FToolBarButton::FToolBarButton()
     , Font(nullptr)
     , ItemType(EToolBarItemType::Button)
     , CheckState(ECheckBoxState::Unchecked)
+    , CornerRadius(FUIStyle::GetDefault().Metrics.ButtonCornerRadius)
     , IconSize(0)
+    , MinWidth(0)
+    , bIsHighlighted(false)
     , OnClickedDelegate()
     , OnStateChangedDelegate()
     , OwnerBar(nullptr)
@@ -51,26 +59,20 @@ IntVector2 FToolBarButton::ComputeDesiredSize() const
 {
     const FMargin& Inset = GetPadding();
 
-    IntVector2 ContentSize(0, 0);
+    IntVector2 ContentSize(ComputeContentWidth(), 0);
     if (Icon.IsValid())
     {
-        ContentSize.X += IconSize;
         ContentSize.Y = Math::Max(ContentSize.Y, IconSize);
     }
 
     if (Font && !Label.IsEmpty())
     {
-        ContentSize.X += (Icon.IsValid() ? TOOLBAR_ICON_SPACING : 0) + Font->MeasureWidth(StringView(Label.Data(), Label.Length()));
         ContentSize.Y = Math::Max(ContentSize.Y, Font->GetLineHeight());
     }
 
-    if (ItemType == EToolBarItemType::DropDown)
-    {
-        ContentSize.X += TOOLBAR_ARROW_WIDTH;
-    }
-
     IntVector2 DesiredSize(ContentSize.X + Inset.GetTotalHorizontal(), ContentSize.Y + Inset.GetTotalVertical());
-    DesiredSize.Y = Math::Max(DesiredSize.Y, FUIStyle::GetDefault().Metrics.RowHeight);
+    DesiredSize.X = Math::Max(DesiredSize.X, MinWidth);
+    DesiredSize.Y = Math::Max(DesiredSize.Y, FUIStyle::GetDefault().Metrics.ButtonHeight);
     return DesiredSize;
 }
 
@@ -80,19 +82,13 @@ int32 FToolBarButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
     const EInteractionState State  = GetInteractionState();
     const FRectangle&       Bounds = AllottedGeometry.Bounds;
 
-    if (IsHighlighted())
-    {
-        OutCommandList.AddBox(LayerId, Bounds, Style.Colors.Accent, FCornerRadii(Style.Metrics.CornerRadius));
-    }
-    else if (State == EInteractionState::Hovered || State == EInteractionState::Pressed)
-    {
-        OutCommandList.AddBox(LayerId, Bounds, Style.GetControlColor(State), FCornerRadii(Style.Metrics.CornerRadius));
-    }
+    OutCommandList.AddBox(LayerId, Bounds, Style.GetButtonColor(State, IsHighlighted()), CornerRadius);
 
-    const FFloatColor TextColor  = Style.GetTextColor(State);
-    const FRectangle  Inner      = Bounds.Deflate(GetPadding());
-    const FRectangle  IconBounds = GetIconBounds(Bounds);
-    const int32       ArrowRoom  = ItemType == EToolBarItemType::DropDown ? TOOLBAR_ARROW_WIDTH : 0;
+    const FFloatColor TextColor     = Style.GetTextColor(State);
+    const FRectangle  Inner         = Bounds.Deflate(GetPadding());
+    const int32       ArrowRoom     = ItemType == EToolBarItemType::DropDown ? TOOLBAR_ARROW_WIDTH : 0;
+    const int32       LeadingOffset = ArrowRoom > 0 ? 0 : Math::Max(Inner.Width - ComputeContentWidth(), 0) / 2;
+    const FRectangle  IconBounds    = GetIconBounds(Bounds, LeadingOffset);
 
     if (Icon.IsValid())
     {
@@ -101,7 +97,7 @@ int32 FToolBarButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
 
     if (Font && !Label.IsEmpty())
     {
-        const int32      LabelLeft   = Icon.IsValid() ? IconBounds.GetRight() + TOOLBAR_ICON_SPACING : Inner.Position.X;
+        const int32      LabelLeft   = Icon.IsValid() ? IconBounds.GetRight() + TOOLBAR_ICON_SPACING : Inner.Position.X + LeadingOffset;
         const FRectangle LabelBounds = FRectangle(IntVector2(LabelLeft, Inner.Position.Y), Math::Max(Inner.GetRight() - ArrowRoom - LabelLeft, 0), Inner.Height);
 
         OutCommandList.AddText(LayerId, LabelBounds, Label, Font.Get(), TextColor);
@@ -174,6 +170,21 @@ void FToolBarButton::SetOnStateChanged(const FOnCheckStateChanged& InOnStateChan
     OnStateChangedDelegate = InOnStateChanged;
 }
 
+void FToolBarButton::SetHighlighted(bool bInIsHighlighted)
+{
+    bIsHighlighted = bInIsHighlighted;
+}
+
+void FToolBarButton::SetCornerRadius(const FCornerRadii& InCornerRadius)
+{
+    CornerRadius = InCornerRadius;
+}
+
+void FToolBarButton::SetMinWidth(int32 InMinWidth)
+{
+    MinWidth = Math::Max(InMinWidth, 0);
+}
+
 bool FToolBarButton::IsHighlighted() const
 {
     if (ItemType == EToolBarItemType::DropDown)
@@ -181,7 +192,12 @@ bool FToolBarButton::IsHighlighted() const
         return Anchor && Anchor->IsOpen();
     }
 
-    return ItemType == EToolBarItemType::Toggle && CheckState != ECheckBoxState::Unchecked;
+    if (ItemType == EToolBarItemType::Toggle)
+    {
+        return CheckState != ECheckBoxState::Unchecked;
+    }
+
+    return bIsHighlighted;
 }
 
 void FToolBarButton::OnClicked()
@@ -214,7 +230,28 @@ void FToolBarButton::OnClicked()
     OnClickedDelegate.ExecuteIfBound();
 }
 
-FRectangle FToolBarButton::GetIconBounds(const FRectangle& Bounds) const
+int32 FToolBarButton::ComputeContentWidth() const
+{
+    int32 ContentWidth = 0;
+    if (Icon.IsValid())
+    {
+        ContentWidth += IconSize;
+    }
+
+    if (Font && !Label.IsEmpty())
+    {
+        ContentWidth += (Icon.IsValid() ? TOOLBAR_ICON_SPACING : 0) + Font->MeasureWidth(StringView(Label.Data(), Label.Length()));
+    }
+
+    if (ItemType == EToolBarItemType::DropDown)
+    {
+        ContentWidth += TOOLBAR_ARROW_WIDTH;
+    }
+
+    return ContentWidth;
+}
+
+FRectangle FToolBarButton::GetIconBounds(const FRectangle& Bounds, int32 LeadingOffset) const
 {
     if (!Icon.IsValid())
     {
@@ -222,7 +259,7 @@ FRectangle FToolBarButton::GetIconBounds(const FRectangle& Bounds) const
     }
 
     const FRectangle Inner = Bounds.Deflate(GetPadding());
-    return FRectangle(IntVector2(Inner.Position.X, Inner.Position.Y + ((Inner.Height - IconSize) / 2)), IconSize, IconSize);
+    return FRectangle(IntVector2(Inner.Position.X + LeadingOffset, Inner.Position.Y + ((Inner.Height - IconSize) / 2)), IconSize, IconSize);
 }
 
 void FToolBarButton::DrawArrow(const FRectangle& Bounds, FDrawCommandList& OutCommandList, int32 LayerId, const FFloatColor& Tint) const
@@ -230,9 +267,9 @@ void FToolBarButton::DrawArrow(const FRectangle& Bounds, FDrawCommandList& OutCo
     const float CenterX = static_cast<float>(Bounds.GetRight()) - (TOOLBAR_ARROW_WIDTH * 0.5f);
     const float CenterY = static_cast<float>(Bounds.Position.Y) + (Bounds.Height * 0.5f);
 
-    const Vector2 Left (CenterX - TOOLBAR_ARROW_EXTENT, CenterY - (TOOLBAR_ARROW_EXTENT * 0.5f));
-    const Vector2 Right(CenterX + TOOLBAR_ARROW_EXTENT, CenterY - (TOOLBAR_ARROW_EXTENT * 0.5f));
-    const Vector2 Tip  (CenterX, CenterY + (TOOLBAR_ARROW_EXTENT * 0.5f));
+    const Vector2 Left  = Vector2(CenterX - TOOLBAR_ARROW_EXTENT, CenterY - (TOOLBAR_ARROW_EXTENT * 0.5f));
+    const Vector2 Right = Vector2(CenterX + TOOLBAR_ARROW_EXTENT, CenterY - (TOOLBAR_ARROW_EXTENT * 0.5f));
+    const Vector2 Tip   = Vector2(CenterX, CenterY + (TOOLBAR_ARROW_EXTENT * 0.5f));
 
     OutCommandList.AddTriangle(LayerId, Left, Right, Tip, Tint);
 }
@@ -253,6 +290,7 @@ FToolBar::FToolBar()
     , Orientation(EOrientation::Horizontal)
     , IconSize(0)
     , ItemSpacing(0)
+    , GroupStartIndex(-1)
     , bHasBackground(true)
 {
 }
@@ -327,17 +365,69 @@ TSharedPtr<FMenuAnchor> FToolBar::AddDropDown(const FToolBarItemDesc& Item, cons
     return NewAnchor;
 }
 
+void FToolBar::BeginGroup()
+{
+    CHECK(GroupStartIndex < 0);
+    GroupStartIndex = Items.Size();
+}
+
+void FToolBar::EndGroup()
+{
+    CHECK(GroupStartIndex >= 0);
+
+    const int32 FirstIndex = GroupStartIndex;
+    const int32 LastIndex  = Items.Size() - 1;
+    GroupStartIndex        = -1;
+
+    if (LastIndex <= FirstIndex)
+    {
+        return;
+    }
+
+    const float        Radius        = FUIStyle::GetDefault().Metrics.ButtonCornerRadius;
+    const bool         bIsHorizontal = Orientation == EOrientation::Horizontal;
+    const FCornerRadii LeadingRadii  = bIsHorizontal ? FCornerRadii::Left(Radius) : FCornerRadii::Top(Radius);
+    const FCornerRadii TrailingRadii = bIsHorizontal ? FCornerRadii::Right(Radius) : FCornerRadii::Bottom(Radius);
+
+    for (int32 Index = FirstIndex; Index <= LastIndex; ++Index)
+    {
+        if (const TSharedPtr<FToolBarButton>& Button = Items[Index].Button)
+        {
+            if (Index == FirstIndex)
+            {
+                Button->SetCornerRadius(LeadingRadii);
+            }
+            else if (Index == LastIndex)
+            {
+                Button->SetCornerRadius(TrailingRadii);
+            }
+            else
+            {
+                Button->SetCornerRadius(FCornerRadii());
+            }
+        }
+    }
+}
+
 void FToolBar::AddSeparator()
 {
     TSharedPtr<FSeparator> Rule = Orientation == EOrientation::Horizontal ? FSeparator::CreateVertical() : FSeparator::CreateHorizontal();
     AppendSlot(Rule, nullptr, EToolBarItemType::Separator);
 }
 
-void FToolBar::AddWidget(const TSharedPtr<FVisualElement>& Widget)
+void FToolBar::AddFlexibleSpace()
+{
+    const bool bIsHorizontal = Orientation == EOrientation::Horizontal;
+
+    TSharedPtr<FSpacer> Space = bIsHorizontal ? FSpacer::CreateHorizontal(0) : FSpacer::CreateVertical(0);
+    AppendSlot(Space, nullptr, EToolBarItemType::FlexibleSpace).SetFillCoefficient(1.0f);
+}
+
+void FToolBar::AddWidget(const TSharedPtr<FVisualElement>& Widget, float FillCoefficient)
 {
     if (Widget)
     {
-        AppendSlot(Widget, nullptr, EToolBarItemType::Custom);
+        AppendSlot(Widget, nullptr, EToolBarItemType::Custom).SetFillCoefficient(FillCoefficient);
     }
 }
 
@@ -348,6 +438,8 @@ void FToolBar::ClearItems()
     Panel->ClearSlots();
     Items.Clear();
     Anchors.Clear();
+
+    GroupStartIndex = -1;
 }
 
 void FToolBar::CloseActiveMenu()
@@ -414,10 +506,12 @@ TSharedPtr<FToolBarButton> FToolBar::FindButton(const String& InLabel) const
     return nullptr;
 }
 
-void FToolBar::AppendSlot(const TSharedPtr<FVisualElement>& Element, const TSharedPtr<FToolBarButton>& Button, EToolBarItemType Type)
+FBoxSlot& FToolBar::AppendSlot(const TSharedPtr<FVisualElement>& Element, const TSharedPtr<FToolBarButton>& Button, EToolBarItemType Type)
 {
-    const bool  bIsSeparator = Type == EToolBarItemType::Separator;
-    const int32 LeadingGap   = Items.IsEmpty() ? 0 : ItemSpacing;
+    const bool  bIsSeparator   = Type == EToolBarItemType::Separator;
+    const bool  bIsInsideGroup = GroupStartIndex >= 0 && Items.Size() > GroupStartIndex;
+    const bool  bWantsGap      = !bIsInsideGroup && !Items.IsEmpty() && Type != EToolBarItemType::FlexibleSpace && Items.Last().Type != EToolBarItemType::FlexibleSpace;
+    const int32 LeadingGap     = bWantsGap ? ItemSpacing : 0;
 
     FBoxSlot& Slot = Panel->AddSlot(Element);
     if (Orientation == EOrientation::Horizontal)
@@ -437,4 +531,5 @@ void FToolBar::AppendSlot(const TSharedPtr<FVisualElement>& Element, const TShar
     Entry.Type    = Type;
 
     Items.Add(Entry);
+    return Slot;
 }

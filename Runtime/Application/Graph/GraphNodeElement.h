@@ -47,6 +47,19 @@ public:
     void SetZoom(float InZoom);
 
     /**
+     * @brief Sets what the node is drawn with, which the canvas pushes in as it builds the element.
+     *
+     * @param InStyle The colors, the corner radius and the pin arrangement.
+     */
+    void SetStyle(const FGraphNodeStyle& InStyle);
+
+    /** @return What the node is drawn with, which is the canvas' style until one is pushed in. */
+    NODISCARD FORCEINLINE const FGraphNodeStyle& GetStyle() const
+    {
+        return Style;
+    }
+
+    /**
      * @brief Marks the node as one of the selected ones, which draws it with an accent border.
      *
      * @param bInIsSelected True while the node is selected.
@@ -101,11 +114,15 @@ public:
     }
 
 private:
+    void DrawPinSeparator(const FRectangle& Bounds, FDrawCommandList& OutCommandList, int32 LayerId, const FFloatColor& Color) const;
+
     NODISCARD FRectangle GetTitleBounds(const FRectangle& Bounds) const;
     NODISCARD int32 Scaled(int32 GraphSpaceLength) const;
     NODISCARD int32 CountPinRows() const;
+    NODISCARD int32 CountPins(EGraphPinDirection Direction) const;
 
     FGraphNode            Node;
+    FGraphNodeStyle       Style;
     TSharedPtr<IFontFace> Font;
     TArray<Vector2>       PinCenters;
     float                 Zoom;

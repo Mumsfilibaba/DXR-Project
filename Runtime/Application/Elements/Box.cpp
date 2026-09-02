@@ -27,7 +27,7 @@ int32 FBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
     int32 MaxLayerId = LayerId;
     for (const FBoxSlot& Slot : Slots)
     {
-        if (!Slot.Element)
+        if (!Slot.Element || !Slot.Element->IsVisible())
         {
             continue;
         }

@@ -4,6 +4,7 @@
 #include "Core/Delegates/Delegate.h"
 #include "Application/Draw/DrawTypes.h"
 #include "Application/Elements/VisualElement.h"
+#include "Application/Style/UIStyle.h"
 #include "Application/Text/IFontFace.h"
 
 struct FTileItem
@@ -24,6 +25,9 @@ DECLARE_DELEGATE(FOnTileSelectionChanged, const TArray<int32>& /*SelectedIndices
 /** @brief Called when a tile is double clicked, which is what opens the thing it stands for. */
 DECLARE_DELEGATE(FOnTileActivated, int32 /*Index*/);
 
+/** @brief Called once the cursor has moved far enough with a tile pressed to mean a drag rather than a click. */
+DECLARE_DELEGATE(FOnTileDragDetected, int32 /*Index*/, const FCursorEvent& /*CursorEvent*/);
+
 class APPLICATION_API FTileView final : public FVisualElement
 {
 public:
@@ -33,6 +37,9 @@ public:
 
     /** @brief The index reported while the cursor is over no tile. */
     static constexpr int32 InvalidTileIndex = -1;
+
+    /** @brief How far the cursor has to travel with the left button held on a tile before it means a drag, in pixels. */
+    static constexpr int32 DragThreshold = 4;
 
 public:
     struct FDesc
@@ -49,6 +56,21 @@ public:
         /** @brief The side of the icon square drawn in the upper part of a tile, in pixels. */
         int32 IconSize = 48;
 
+        /** @brief How far the label band is inset from the tile's sides, in pixels, which is what the label elides to. */
+        int32 LabelInset = 4;
+
+        /** @brief How far a tile's corners are rounded, in pixels, or zero to leave them square. */
+        float CornerRadius = 0.0f;
+
+        /** @brief The fill of a tile that is neither hovered nor selected, transparent to leave the card unfilled. */
+        FFloatColor IdleFill = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+        /** @brief The fill of the tile under the cursor. */
+        FFloatColor HoveredFill = FUIStyle::GetDefault().Colors.ControlHovered;
+
+        /** @brief The fill of a selected tile, which wins over the hovered fill. */
+        FFloatColor SelectedFill = FUIStyle::GetDefault().Colors.TextSelectionBackground;
+
         /** @brief True to let a chord or a shift click select more than one tile at a time. */
         bool bAllowMultiSelect = true;
 
@@ -57,6 +79,9 @@ public:
 
         /** @brief Fired when a tile is double clicked. */
         FOnTileActivated OnItemActivated;
+
+        /** @brief Fired once a press on a tile has turned into a drag. */
+        FOnTileDragDetected OnDragDetected;
     };
 
 public:
@@ -78,6 +103,7 @@ public:
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseLeft(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseDoubleClick(const FCursorEvent& CursorEvent) override;
@@ -99,6 +125,13 @@ public:
 
     /** @brief Drops the selection, firing the selection delegate when there was one to drop. */
     void ClearSelection();
+
+    /**
+     * @brief Selects one tile on its own, which is how a host lights the item it has just created.
+     *
+     * @param Index The tile to select, ignored when it is not one of the items shown.
+     */
+    void SetSelection(int32 Index);
 
     /** @return The selected indices, which is empty when nothing is selected. */
     NODISCARD FORCEINLINE const TArray<int32>& GetSelection() const
@@ -147,17 +180,50 @@ public:
      */
     NODISCARD int32 GetMaxScrollOffset() const;
 
+    /**
+     * @brief Scrolls the least it can to bring a tile fully into view, which is what an item selected from
+     * outside the grid or one just added at its end needs.
+     *
+     * @param Index The tile to bring into view, ignored when it is not a tile.
+     */
+    void ScrollToTile(int32 Index);
+
     /** @return The tile under the cursor, or InvalidTileIndex when the cursor is over none. */
     NODISCARD FORCEINLINE int32 GetHoveredTile() const
     {
         return HoveredIndex;
     }
 
+    /**
+     * @brief Where a tile sits, which a rename field placed over its label and a drop highlight both need.
+     *
+     * @param Index The tile to measure.
+     * @return The tile's bounds in client coordinates, scrolling included, or an empty rectangle for a bad index.
+     */
+    NODISCARD FRectangle GetTileBounds(int32 Index) const;
+
+    /**
+     * @brief Where a tile's label band sits, which is where a rename field goes.
+     *
+     * @param Index The tile to measure.
+     * @return The band's bounds in client coordinates, or an empty rectangle for a bad index.
+     */
+    NODISCARD FRectangle GetTileLabelBounds(int32 Index) const;
+
+    /**
+     * @brief The tile at a point, which a drop handler needs to resolve what was dropped on.
+     *
+     * @param ClientPosition The point to test, in client coordinates.
+     * @return The tile under the point, or InvalidTileIndex when the point is over none.
+     */
+    NODISCARD int32 FindTileAt(const IntVector2& ClientPosition) const;
+
 private:
     NODISCARD int32 ResolveNumColumns(int32 AvailableWidth) const;
     NODISCARD int32 ComputeContentHeight(int32 AvailableWidth) const;
     NODISCARD FRectangle ComputeTileBounds(int32 Index, const FRectangle& Bounds) const;
-    NODISCARD int32 FindTileAt(const IntVector2& ClientPosition) const;
+    NODISCARD FRectangle ComputeIconBounds(const FRectangle& Tile) const;
+    NODISCARD FRectangle ComputeLabelBounds(const FRectangle& Tile) const;
     NODISCARD String ElideLabel(const String& InLabel, int32 MaxWidth) const;
 
     void SelectTile(int32 Index, bool bToggle, bool bExtend);
@@ -166,14 +232,22 @@ private:
     TArray<int32>           SelectedIndices;
     TSharedPtr<IFontFace>   Font;
     IntVector2              TileSize;
+    IntVector2              PressPosition;
     int32                   TileSpacing;
     int32                   IconSize;
+    int32                   LabelInset;
+    float                   CornerRadius;
+    FFloatColor             IdleFill;
+    FFloatColor             HoveredFill;
+    FFloatColor             SelectedFill;
     int32                   ScrollOffset;
     int32                   ContentHeight;
     int32                   ViewHeight;
     int32                   HoveredIndex;
     int32                   AnchorIndex;
+    int32                   PressedIndex;
     bool                    bAllowMultiSelect;
     FOnTileSelectionChanged OnSelectionChangedDelegate;
     FOnTileActivated        OnItemActivatedDelegate;
+    FOnTileDragDetected     OnDragDetectedDelegate;
 };

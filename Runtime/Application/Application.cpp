@@ -5,6 +5,7 @@
 #include "Application/Input/InputMapper.h"
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Elements/VisualElement.h"
+#include "Application/Menus/DragDropService.h"
 #include "Core/Math/Math.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/ConsoleManager.h"
@@ -1012,6 +1013,9 @@ void FApplication::DrawWindows()
         return;
     }
 
+    FDragDropService& DragDrop = FDragDropService::Get();
+
+    const TSharedPtr<FWindow> GhostWindow = DragDrop.IsDragging() ? FindWindowUnderCursor() : nullptr;
     for (const TSharedPtr<FWindow>& CurrentWindow : Windows)
     {
         if (!CurrentWindow->IsVisible())
@@ -1022,7 +1026,12 @@ void FApplication::DrawWindows()
         if (FDrawCommandList* CommandList = Renderer->BeginWindow(CurrentWindow))
         {
             const FDrawGeometry WindowGeometry(CurrentWindow->GetContentRectangle(), CurrentWindow->GetWindowDPIScale());
-            CurrentWindow->OnDraw(WindowGeometry, *CommandList, 0);
+
+            const int32 TopLayerId = CurrentWindow->OnDraw(WindowGeometry, *CommandList, 0);
+            if (CurrentWindow == GhostWindow)
+            {
+                DragDrop.DrawDragVisual(*CommandList, TopLayerId + 1, CurrentWindow->GetPosition());
+            }
 
             Renderer->EndWindow(CurrentWindow);
         }

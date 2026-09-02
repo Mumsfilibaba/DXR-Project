@@ -125,6 +125,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("TreeViewScrolling", TreeViewScrolling_Test());
     RUN_TEST("TileViewLayout", TileViewLayout_Test());
     RUN_TEST("TileViewSelection", TileViewSelection_Test());
+    RUN_TEST("TileViewDrag", TileViewDrag_Test());
 
     RUN_TEST("PropertyTableRows", PropertyTableRows_Test());
     RUN_TEST("PropertyTableColumnDrag", PropertyTableColumnDrag_Test());
@@ -168,12 +169,17 @@ int main(int Argc, const CHAR* Argv[])
 
     RUN_TEST("ToolBarComposition", ToolBarComposition_Test());
     RUN_TEST("ToolBarInteraction", ToolBarInteraction_Test());
+    RUN_TEST("ToolBarGroups", ToolBarGroups_Test());
+    RUN_TEST("ToolBarFlexibleSpace", ToolBarFlexibleSpace_Test());
     RUN_TEST("ToolBarDropDown", ToolBarDropDown_Test());
 
     RUN_TEST("GraphModelEditing", GraphModelEditing_Test());
     RUN_TEST("GraphLayoutLayered", GraphLayoutLayered_Test());
     RUN_TEST("GraphCanvasView", GraphCanvasView_Test());
     RUN_TEST("GraphCanvasInteraction", GraphCanvasInteraction_Test());
+    RUN_TEST("GraphNodeStyle", GraphNodeStyle_Test());
+    RUN_TEST("GraphStackedPins", GraphStackedPins_Test());
+    RUN_TEST("GraphViewerMode", GraphViewerMode_Test());
 
     RUN_TEST("GizmoProjection", GizmoProjection_Test());
     RUN_TEST("GizmoHitTest", GizmoHitTest_Test());

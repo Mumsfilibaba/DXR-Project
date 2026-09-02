@@ -36,6 +36,23 @@ const FFloatColor& FUIStyle::GetControlColor(EInteractionState State) const
     }
 }
 
+const FFloatColor& FUIStyle::GetButtonColor(EInteractionState State, bool bIsSelected) const
+{
+    if (State == EInteractionState::Disabled)
+    {
+        return Colors.ControlDisabled;
+    }
+
+    const bool bIsLit = State == EInteractionState::Hovered || State == EInteractionState::Pressed;
+
+    if (bIsSelected)
+    {
+        return bIsLit ? Colors.AccentHovered : Colors.Accent;
+    }
+
+    return bIsLit ? (State == EInteractionState::Pressed ? Colors.ButtonPressed : Colors.ButtonHovered) : Colors.ButtonNormal;
+}
+
 const FFloatColor& FUIStyle::GetTextColor(EInteractionState State) const
 {
     return State == EInteractionState::Disabled ? Colors.TextDisabled : Colors.Text;
