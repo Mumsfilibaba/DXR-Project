@@ -24,7 +24,6 @@
 
 @end
 
-
 FMetalSwapChainRHI::FMetalSwapChainRHI(FMetalDevice* InDevice, const FRHISwapChainDesc& SwapChainDesc)
     : FRHISwapChain(SwapChainDesc)
     , FMetalDeviceChild(InDevice)
@@ -37,7 +36,6 @@ FMetalSwapChainRHI::FMetalSwapChainRHI(FMetalDevice* InDevice, const FRHISwapCha
 
 FMetalSwapChainRHI::~FMetalSwapChainRHI()
 {
-    // The view is a UI object and needs to be released on the main-thread
     FMacThreadManager::Get().MainThreadDispatch(^
     {
         [MetalView release];
@@ -130,29 +128,40 @@ bool FMetalSwapChainRHI::Initialize()
         Frame.origin.x    = 0;
         Frame.origin.y    = 0;
         
+        FCocoaWindow* CocoaWindow = reinterpret_cast<FCocoaWindow*>(Desc.WindowHandle);
+
         MetalView = [[FMetalWindowView alloc] initWithFrame:Frame];
         [MetalView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [MetalView setWantsLayer:YES];
-        
-        const CGFloat BackgroundColor[] = { 0.0, 0.0, 0.0, 0.0 }; 
+
         NewMetalLayer = [CAMetalLayer new];
-        NewMetalLayer.edgeAntialiasingMask    = 0;
-        NewMetalLayer.masksToBounds           = YES;
-        NewMetalLayer.backgroundColor         = CGColorCreate(CGColorSpaceCreateDeviceRGB(), BackgroundColor);
-        NewMetalLayer.presentsWithTransaction = NO;
-        NewMetalLayer.anchorPoint             = CGPointMake(0.5, 0.5);
-        NewMetalLayer.frame                   = Frame;
-        NewMetalLayer.magnificationFilter     = kCAFilterNearest;
-        NewMetalLayer.minificationFilter      = kCAFilterNearest;
+        NewMetalLayer.edgeAntialiasingMask       = 0;
+        NewMetalLayer.masksToBounds              = YES;
+        NewMetalLayer.backgroundColor            = CocoaWindow.backgroundColor.CGColor;
+        NewMetalLayer.presentsWithTransaction    = NO;
+        NewMetalLayer.anchorPoint                = CGPointMake(0.5, 0.5);
+        NewMetalLayer.frame                      = Frame;
+        NewMetalLayer.magnificationFilter        = kCAFilterNearest;
+        NewMetalLayer.minificationFilter         = kCAFilterNearest;
+        NewMetalLayer.contentsGravity            = kCAGravityResize;
+        NewMetalLayer.drawableSize               = CGSizeMake(Desc.Width, Desc.Height);
+        NewMetalLayer.autoresizingMask           = kCALayerWidthSizable | kCALayerHeightSizable;
+        NewMetalLayer.needsDisplayOnBoundsChange = YES;
+
+        NewMetalLayer.actions = @{
+            @"bounds"   : [NSNull null],
+            @"position" : [NSNull null],
+            @"contents" : [NSNull null],
+        };
 
         [NewMetalLayer setDevice:GetDevice()->GetMTLDevice()];
         [NewMetalLayer setFramebufferOnly:NO];
         [NewMetalLayer removeAllAnimations];
 
         [MetalView setLayer:NewMetalLayer];
+        [MetalView setLayerContentsRedrawPolicy:NSViewLayerContentsRedrawDuringViewResize];
         [MetalView retain];
-        
-        FCocoaWindow* CocoaWindow = reinterpret_cast<FCocoaWindow*>(Desc.WindowHandle);
+
         [CocoaWindow setContentView:MetalView];
         [CocoaWindow makeFirstResponder:MetalView];
 
@@ -164,12 +173,9 @@ bool FMetalSwapChainRHI::Initialize()
         return false;
     }
 
-    // Set the metallayer
     MetalLayer = NewMetalLayer;
 
-    // Create BackBuffer
     const ETextureUsageFlags Flags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable;
-
     FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(Desc.ColorFormat, Desc.Width, Desc.Height, 1, 1, Flags);
     BackBuffer = new FMetalTextureRHI(GetDevice(), BackBufferDesc);
     BackBuffer->SetSwapChain(this);
@@ -190,11 +196,11 @@ bool FMetalSwapChainRHI::Resize(uint32 InWidth, uint32 InHeight)
                 MetalLayer.drawableSize = CGSizeMake(InWidth, InHeight);
             }
         }, NSDefaultRunLoopMode, true);
-        
+
         Desc.Width  = uint16(InWidth);
         Desc.Height = uint16(InHeight);
     }
-    
+
     return true;
 }
 
@@ -207,7 +213,7 @@ bool FMetalSwapChainRHI::Present(bool bVerticalSync)
     {
         MetalLayer.displaySyncEnabled = bVerticalSync;
     }
-    
+
     id<MTLDrawable> CurrentDrawable = GetDrawable();
     if (CurrentDrawable)
     {
@@ -215,22 +221,22 @@ bool FMetalSwapChainRHI::Present(bool bVerticalSync)
         [Drawable release];
         Drawable = nullptr;
     }
-        
+
     return true;
 }
 
 void FMetalSwapChainRHI::AcquireNextBackBuffer()
 {
     SCOPED_AUTORELEASE_POOL();
-    
+
     if (Drawable)
     {
         return;
     }
-    
+
     CAMetalLayer* MetalLayer = GetMetalLayer();
     Drawable = [MetalLayer nextDrawable];
-    
+
     if (Drawable)
     {
         [Drawable retain];
@@ -245,7 +251,7 @@ id<CAMetalDrawable> FMetalSwapChainRHI::GetDrawable()
 id<MTLTexture> FMetalSwapChainRHI::GetDrawableTexture()
 {
     SCOPED_AUTORELEASE_POOL();
-    
+
     id<CAMetalDrawable> CurrentDrawable = GetDrawable();
     return CurrentDrawable ? CurrentDrawable.texture : nil;
 }

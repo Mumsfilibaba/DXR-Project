@@ -125,6 +125,18 @@ void FConsoleCommandLine::MoveSelectionUp()
     }
 }
 
+void FConsoleCommandLine::SetSelectedCandidateIndex(int32 Index)
+{
+    const int32 NewIndex = (Index >= 0 && Index < Candidates.Size()) ? Index : InvalidIndex;
+    if (NewIndex == SelectedCandidateIndex)
+    {
+        return;
+    }
+
+    SelectedCandidateIndex = NewIndex;
+    bSelectionChanged      = true;
+}
+
 void FConsoleCommandLine::MoveSelectionDown()
 {
     if (Candidates.IsEmpty())

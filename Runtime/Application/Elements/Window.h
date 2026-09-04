@@ -47,6 +47,13 @@ public:
          * has reached the screen rather than while its surface is still empty.
          */
         bool bShowOnCreate : 1 = true;
+
+        /**
+         * @brief True when something other than the application renderer owns this window's swap chain, which
+         * an ImGui viewport does. A second swap chain on one native window fights the first for the surface,
+         * so the renderer leaves such a window alone.
+         */
+        bool bHasExternalSurface : 1 = false;
     };
 
 public:
@@ -372,10 +379,28 @@ public:
         return bAcceptsInput;
     }
 
+    /** @return True when something other than the application renderer owns this window's swap chain. */
+    NODISCARD FORCEINLINE bool HasExternalSurface() const
+    {
+        return bHasExternalSurface;
+    }
+
     /** @return False when the window is left hidden on creation, waiting to be shown once it has content. */
     NODISCARD FORCEINLINE bool ShowOnCreate() const
     {
         return bShowOnCreate;
+    }
+
+    /** @return True when the window has been resized since it was last arranged, so its content is the wrong size. */
+    NODISCARD FORCEINLINE bool IsLayoutStale() const
+    {
+        return bLayoutIsStale;
+    }
+
+    /** @brief Marks the window as arranged at its current size. */
+    FORCEINLINE void ClearLayoutIsStale()
+    {
+        bLayoutIsStale = false;
     }
 
 private:
@@ -390,6 +415,8 @@ private:
     bool                        bActivateOnShow : 1;
     bool                        bAcceptsInput : 1;
     bool                        bShowOnCreate : 1;
+    bool                        bHasExternalSurface : 1;
+    bool                        bLayoutIsStale : 1;
     TSharedPtr<FVisualElement>  Overlay;
     TSharedPtr<FVisualElement>  Content;
     TSharedRef<IPlatformWindow> PlatformWindow;

@@ -137,6 +137,45 @@ bool ApplicationRendererWindowPass_Test()
     TEST_END();
 }
 
+bool ApplicationRendererExternalSurface_Test()
+{
+    TEST_BEGIN();
+
+    TSharedPtr<FApplication>             Application = CreateStubApplication();
+    TSharedPtr<FStubApplicationRenderer> Renderer    = MakeSharedPtr<FStubApplicationRenderer>();
+
+    Application->SetRenderer(Renderer);
+
+    TEST_SECTION("A window's surface is the renderer's unless the window says otherwise");
+    TSharedPtr<FWindow> Owned = CreateStubWindow(Application, IntVector2(400, 300));
+    TEST_EXPECT(!Owned->HasExternalSurface());
+
+    TEST_SECTION("An ImGui viewport says otherwise, which is what keeps a second swap chain off its native window");
+    FWindow::FDesc ExternalDesc;
+    ExternalDesc.Title               = "Viewport";
+    ExternalDesc.Size                = IntVector2(400, 300);
+    ExternalDesc.bHasExternalSurface = true;
+
+    TSharedPtr<FWindow> External = FWindow::Create(ExternalDesc);
+    Application->CreateWindow(External);
+
+    TEST_EXPECT(External->HasExternalSurface());
+
+    TEST_SECTION("It is a window like any other otherwise, so it is still registered and still drawn");
+    TEST_EXPECT_EQ(Application->GetWindows().Size(), 2);
+
+    Application->Tick(0.0f);
+    Application->DrawWindows();
+
+    TEST_EXPECT_EQ(Renderer->BeginCount, 2);
+    TEST_EXPECT_EQ(Renderer->EndCount, 2);
+
+    Application->DestroyWindow(External);
+    Application->DestroyWindow(Owned);
+
+    TEST_END();
+}
+
 bool ApplicationRendererWindowLifetime_Test()
 {
     TEST_BEGIN();

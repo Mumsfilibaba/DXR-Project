@@ -1,5 +1,4 @@
 #include "Engine/EngineUI/EditorUI/Panels/EditorRendererSettingsPanel.h"
-#include "Engine/EngineUI/EditorUI/EditorIcons.h"
 #include "Engine/EngineUI/EditorUI/EditorStyle.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Application/Elements/Box.h"
@@ -155,14 +154,9 @@ bool FEditorRendererSettingsPanel::Initialize()
 
     ScrollBox->SetContent(Column);
 
-    FSearchBox::FDesc SearchDesc;
-    SearchDesc.HintText      = "Filter settings";
-    SearchDesc.Font          = FEditorStyle::GetFonts().Body;
-    SearchDesc.SearchIcon    = FEditorIcons::Search;
-    SearchDesc.ClearIcon     = FEditorIcons::Close;
-    SearchDesc.OnTextChanged = FOnSearchTextChanged::CreateRaw(this, &FEditorRendererSettingsPanel::OnSearchTextChanged);
+    SearchBox = FSearchBox::Create(FEditorStyle::MakeSearchBoxDesc("Search Settings",
+        FOnSearchTextChanged::CreateRaw(this, &FEditorRendererSettingsPanel::OnSearchTextChanged)));
 
-    SearchBox = FSearchBox::Create(SearchDesc);
 
     TSharedPtr<FVerticalBox> Layout = FVerticalBox::Create();
     Layout->AddSlot(SearchBox).SetPadding(FMargin(4, 4, 4, 4));

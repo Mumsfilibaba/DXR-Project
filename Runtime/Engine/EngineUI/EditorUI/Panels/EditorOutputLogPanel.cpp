@@ -1,11 +1,15 @@
 #include "Engine/EngineUI/EditorUI/Panels/EditorOutputLogPanel.h"
-#include "Engine/EngineUI/EditorUI/EditorIcons.h"
 #include "Engine/EngineUI/EditorUI/EditorStyle.h"
 #include "Application/Elements/Box.h"
+#include "Application/Elements/FractionWidthBox.h"
 #include "Application/Elements/LogView.h"
 #include "Application/Elements/SearchBox.h"
 #include "Application/Elements/ToolBar.h"
 #include "Application/Menus/ComboBox.h"
+
+// The share of the tool bar the log filter takes, floored so it stays usable in a narrow panel
+constexpr float LOG_SEARCH_FRACTION = 0.25f;
+constexpr int32 LOG_SEARCH_MIN      = 120;
 
 static const ELogSeverity GSeverityOptions[] =
 {
@@ -69,15 +73,10 @@ TSharedPtr<FToolBar> FEditorOutputLogPanel::BuildToolBar()
         return nullptr;
     }
 
-    FSearchBox::FDesc SearchDesc;
-    SearchDesc.HintText      = "Filter";
-    SearchDesc.Font          = FEditorStyle::GetFonts().Body;
-    SearchDesc.SearchIcon    = FEditorIcons::Search;
-    SearchDesc.ClearIcon     = FEditorIcons::Close;
-    SearchDesc.OnTextChanged = FOnSearchTextChanged::CreateRaw(this, &FEditorOutputLogPanel::OnSearchTextChanged);
+    SearchBox = FSearchBox::Create(FEditorStyle::MakeSearchBoxDesc("Search Log",
+        FOnSearchTextChanged::CreateRaw(this, &FEditorOutputLogPanel::OnSearchTextChanged)));
 
-    SearchBox = FSearchBox::Create(SearchDesc);
-    Bar->AddWidget(SearchBox, 1.0f);
+    Bar->AddWidget(FFractionWidthBox::Create(SearchBox, LOG_SEARCH_FRACTION, LOG_SEARCH_MIN), 1.0f);
 
     FComboBox::FDesc SeverityDesc;
     SeverityDesc.Options            = { "Info", "Warning", "Error" };

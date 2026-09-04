@@ -9,6 +9,9 @@ bool RichTextSelection_Test();
 /** @brief Searches for a substring spanning runs and lines, and checks the matches found. */
 bool RichTextSearch_Test();
 
+/** @brief Draws a long document behind a clip and counts the lines that survived the culling. */
+bool RichTextCulling_Test();
+
 /** @brief Feeds the view through IOutputDevice and checks the ring buffer and the runs it builds. */
 bool LogViewLogging_Test();
 

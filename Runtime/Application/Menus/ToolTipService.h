@@ -12,6 +12,9 @@ enum class EToolTipPlacement : uint8
 
     /** @brief Under the element that asked for it, left edges flush. A hint about a control. */
     BelowAnchor,
+
+    /** @brief Right of the element that asked for it, top edges flush, flipping to its left when there is no room. */
+    RightOfAnchor,
 };
 
 class APPLICATION_API FToolTip final : public FCompoundElement
@@ -95,6 +98,9 @@ public:
     /** @brief The gap between the cursor and a following tip, in pixels. */
     static constexpr int32 CursorOffset = 16;
 
+    /** @brief The gap between the element a tip describes and the tip itself, in pixels. */
+    static constexpr int32 AnchorGap = 2;
+
     /**
      * @brief Gets the process-wide service, which is what every element requests a tip through.
      *
@@ -119,12 +125,18 @@ public:
      * @param Content      The element to show.
      * @param Placement    Whether the tip follows the cursor or sits under the element.
      * @param DelaySeconds How long the cursor has to rest before it appears.
+     * @param AnchorBounds The rectangle to place the tip flush against, in screen coordinates. An empty
+     *                     one measures the owner instead and leaves AnchorGap between the two, which is
+     *                     what a caller wanting the element it hovered passes. A row inside a list gives
+     *                     the list's rectangle here, so the tip clears the whole list rather than landing
+     *                     on top of it, and grows the rectangle itself when it wants a gap.
      */
     void RequestToolTip(
         const TSharedPtr<FVisualElement>& Owner,
         const TSharedPtr<FVisualElement>& Content,
         EToolTipPlacement                 Placement    = EToolTipPlacement::FollowCursor,
-        float                             DelaySeconds = DefaultDelay);
+        float                             DelaySeconds = DefaultDelay,
+        const FRectangle&                 AnchorBounds = FRectangle());
 
     /**
      * @brief Asks for a plain text tip, which is what almost every caller wants.
@@ -189,10 +201,15 @@ private:
 
     NODISCARD FRectangle ResolveBounds(const IntVector2& ToolTipSize) const;
 
+    NODISCARD FRectangle ResolveAnchorBounds() const;
+
+    NODISCARD bool HasAnchorBoundsOverride() const;
+
     TSharedPtr<FVisualElement> Owner;
     TSharedPtr<FVisualElement> Content;
     TSharedPtr<FWindow>        ToolTipWindow;
     EToolTipPlacement          Placement;
+    FRectangle                 AnchorBounds;
     IntVector2                 CursorPosition;
     float                      RequestedDelay;
     float                      RemainingSeconds;

@@ -207,6 +207,61 @@ bool ConsoleCandidateSelection_Test()
     TEST_END();
 }
 
+bool ConsoleCandidateDirectSelection_Test()
+{
+    TEST_BEGIN();
+
+    RegisterConsoleTestVariables();
+
+    FConsoleCommandLine CommandLine;
+    CommandLine.SetText("Test.Console.");
+    CommandLine.SetTextCursorPosition(13);
+    CommandLine.RefreshCandidates();
+
+    const int32 NumCandidates = CommandLine.GetCandidates().Size();
+    TEST_EXPECT(NumCandidates >= 4);
+
+    TEST_SECTION("Picking a candidate selects it and raises the flag");
+    CommandLine.SetSelectedCandidateIndex(2);
+    TEST_EXPECT_EQ(CommandLine.GetSelectedCandidateIndex(), 2);
+    TEST_EXPECT(CommandLine.ConsumeSelectionChanged());
+
+    TEST_SECTION("Picking the same candidate again leaves the flag clear");
+    CommandLine.SetSelectedCandidateIndex(2);
+    TEST_EXPECT_EQ(CommandLine.GetSelectedCandidateIndex(), 2);
+    TEST_EXPECT(!CommandLine.ConsumeSelectionChanged());
+
+    TEST_SECTION("An index past the end selects nothing rather than the last candidate");
+    CommandLine.SetSelectedCandidateIndex(NumCandidates);
+    TEST_EXPECT_EQ(CommandLine.GetSelectedCandidateIndex(), FConsoleCommandLine::InvalidIndex);
+
+    TEST_SECTION("A negative index selects nothing");
+    CommandLine.SetSelectedCandidateIndex(1);
+    CommandLine.SetSelectedCandidateIndex(-5);
+    TEST_EXPECT_EQ(CommandLine.GetSelectedCandidateIndex(), FConsoleCommandLine::InvalidIndex);
+
+    TEST_SECTION("A pick the arrow keys can then walk on from");
+    CommandLine.SetSelectedCandidateIndex(0);
+    CommandLine.MoveSelectionDown();
+    TEST_EXPECT_EQ(CommandLine.GetSelectedCandidateIndex(), 1);
+
+    TEST_SECTION("Tab completes whatever the mouse picked");
+    CommandLine.SetSelectedCandidateIndex(0);
+
+    const String FirstCandidateName = CommandLine.GetCandidates()[0].Second;
+
+    TEST_EXPECT(CommandLine.AcceptCompletion());
+    TEST_EXPECT_EQ(CommandLine.GetText(), FirstCandidateName);
+
+    TEST_SECTION("Picking into an empty list selects nothing");
+    FConsoleCommandLine EmptyLine;
+    EmptyLine.SetSelectedCandidateIndex(0);
+    TEST_EXPECT_EQ(EmptyLine.GetSelectedCandidateIndex(), FConsoleCommandLine::InvalidIndex);
+    TEST_EXPECT(!EmptyLine.ConsumeSelectionChanged());
+
+    TEST_END();
+}
+
 bool ConsoleCompletion_Test()
 {
     TEST_BEGIN();

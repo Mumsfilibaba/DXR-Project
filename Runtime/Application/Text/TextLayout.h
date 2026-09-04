@@ -32,6 +32,27 @@ struct FTextRun
     FFloatColor      BackgroundTint;
 };
 
+struct FTextRange
+{
+    FTextRange()
+        : Start(0)
+        , End(0)
+    {
+    }
+
+    FTextRange(int32 InStart, int32 InEnd)
+        : Start(InStart)
+        , End(InEnd)
+    {
+    }
+
+    /** @brief The index of the first character, into the concatenated text. */
+    int32 Start;
+
+    /** @brief The index one past the last character. */
+    int32 End;
+};
+
 struct FTextLine
 {
     FTextLine()
@@ -149,6 +170,15 @@ public:
     NODISCARD int32 FindLineIndexForCharacter(int32 CharacterIndex) const;
 
     /**
+     * @brief Gathers the rectangles a set of ranges covers, one per line each of them crosses, walking the
+     * lines once however many ranges there are.
+     *
+     * @param Ranges        The ranges to cover, ordered by start and not overlapping.
+     * @param OutRectangles Receives the rectangles, relative to the top-left of the layout, and is appended to.
+     */
+    void GatherRangeRectangles(const TArray<FTextRange>& Ranges, TArray<FRectangle>& OutRectangles) const;
+
+    /**
      * @brief The span of the concatenated text a line covers, which is what a selection is clipped to.
      *
      * @param LineIndex The line to measure.
@@ -158,8 +188,13 @@ public:
      */
     NODISCARD bool GetLineCharacterRange(int32 LineIndex, int32& OutStart, int32& OutEnd) const;
 
-    /** @return The text of every run concatenated, which is the string the indices refer to. */
-    NODISCARD String GetText() const;
+    /**
+     * @brief Gets the text every index refers to, concatenating the runs on the first call after they change
+     * and handing back the same string until they change again.
+     *
+     * @return The text of every run concatenated.
+     */
+    NODISCARD const String& GetText() const;
 
     /**
      * @brief Emits the wrapped text.
@@ -183,8 +218,10 @@ private:
     TArray<FTextRun>  Runs;
     TArray<int32>     RunSourceOffsets;
     TArray<FTextLine> Lines;
+    mutable String    CachedText;
     IntVector2        CachedSize;
     int32             CachedWrapWidth;
     int32             SourceLength;
     int32             PendingLineWidth;
+    mutable bool      bIsTextCacheValid;
 };

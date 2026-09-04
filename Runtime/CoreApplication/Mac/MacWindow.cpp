@@ -38,7 +38,6 @@ static NSWindowStyleMask GetCocoaWindowStyle(EWindowStyleFlags InStyle)
         WindowStyle |= NSWindowStyleMaskMiniaturizable;
     }
 
-    // The content view spans the whole frame so the application can draw over the caption.
     if ((InStyle & EWindowStyleFlags::CustomTitleBar) != EWindowStyleFlags::None)
     {
         WindowStyle |= NSWindowStyleMaskFullSizeContentView;
@@ -57,6 +56,7 @@ FMacWindow::FMacWindow(FMacApplication* InApplication)
     : FRefCountedBase()
     , Application(InApplication)
     , CocoaWindow(nullptr)
+    , ParentCocoaWindow(nullptr)
     , CocoaWindowView(nullptr)
     , StyleParams(EWindowStyleFlags::None)
     , bAcceptsInput(true)
@@ -164,8 +164,12 @@ bool FMacWindow::Initialize(const FPlatformWindowDesc& InDesc)
         {
             [CocoaWindow setHasShadow: YES];
         }
-        
-        NSColor* BackGroundColor = [NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f];
+
+        NSColor* BackGroundColor = [NSColor colorWithSRGBRed:InDesc.BackgroundColor.R
+                                                      green:InDesc.BackgroundColor.G
+                                                       blue:InDesc.BackgroundColor.B
+                                                      alpha:1.0f];
+
         CocoaWindowView = [[FCocoaWindowView alloc] initWithFrame:WindowRect];
         
         [CocoaWindow setReleasedWhenClosed:NO];
@@ -179,10 +183,7 @@ bool FMacWindow::Initialize(const FPlatformWindowDesc& InDesc)
         if (InDesc.ParentWindow)
         {
             FMacWindow* ParentMacWindow = static_cast<FMacWindow*>(InDesc.ParentWindow);
-            if (FCocoaWindow* ParentCocoaWindow = ParentMacWindow->GetCocoaWindow())
-            {
-                [ParentCocoaWindow addChildWindow:CocoaWindow ordered:NSWindowAbove];
-            }
+            ParentCocoaWindow = ParentMacWindow->GetCocoaWindow();
         }
 
         if ((InDesc.Style & EWindowStyleFlags::NoTaskBarIcon) == EWindowStyleFlags::None)
@@ -236,6 +237,11 @@ void FMacWindow::Show(bool bFocus)
         
         if (CocoaWindow)
         {
+            if (ParentCocoaWindow && ![CocoaWindow parentWindow])
+            {
+                [ParentCocoaWindow addChildWindow:CocoaWindow ordered:NSWindowAbove];
+            }
+
             [CocoaWindow setIsVisible:YES];
 
             if (bFocus)

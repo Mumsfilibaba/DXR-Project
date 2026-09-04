@@ -5,19 +5,44 @@
 #include "VulkanRHI/Mac/VulkanPlatformMac.h"
 #include <QuartzCore/QuartzCore.h>
 
+static NSScreen* FindScreenForWindow(FCocoaWindow* CocoaWindow)
+{
+    if (NSScreen* Screen = CocoaWindow.screen)
+    {
+        return Screen;
+    }
+
+    const NSRect WindowFrame = CocoaWindow.frame;
+
+    NSScreen* BestScreen = nil;
+    CGFloat   BestArea   = 0.0;
+
+    for (NSScreen* Screen in [NSScreen screens])
+    {
+        const NSRect  Intersection = NSIntersectionRect(WindowFrame, Screen.frame);
+        const CGFloat Area         = Intersection.size.width * Intersection.size.height;
+
+        if (Area > BestArea)
+        {
+            BestArea   = Area;
+            BestScreen = Screen;
+        }
+    }
+
+    return BestScreen ? BestScreen : [NSScreen mainScreen];
+}
+
 #if VK_KHR_surface
 VkResult VulkanPlatformMac::CreateSurface(VkInstance Instance, void* WindowHandle, VkSurfaceKHR* OutSurface)
 {
     SCOPED_AUTORELEASE_POOL();
-    
+
     FCocoaWindow* CocoaWindow = reinterpret_cast<FCocoaWindow*>(WindowHandle);
 
-    // Set the MetalView as the new ContentView
     __block bool bResult;
     __block CAMetalLayer* MetalLayer;
     FMacThreadManager::Get().MainThreadDispatch(^
     {
-        // Create a metal layer and set it as the layer on the view
         MetalLayer = [CAMetalLayer layer];
         if (!MetalLayer)
         {
@@ -25,19 +50,30 @@ VkResult VulkanPlatformMac::CreateSurface(VkInstance Instance, void* WindowHandl
             bResult = false;
             return;
         }
-        
-        // Set BackgroundColor to black
-        CGColorRef BackgroundColor = CGColorGetConstantColor(kCGColorBlack);
-        [MetalLayer setBackgroundColor:BackgroundColor];
 
-        NSScreen* Screen = CocoaWindow.screen ? CocoaWindow.screen : [NSScreen mainScreen];
+        [MetalLayer setBackgroundColor:CocoaWindow.backgroundColor.CGColor];
+
+        NSScreen* Screen = FindScreenForWindow(CocoaWindow);
         [MetalLayer setContentsScale:Screen.backingScaleFactor];
 
-        // Create a new MetalWindowView instead of the standard CocoaView (Use the same frame)
         FCocoaWindowView* CocoaWindowView = CocoaWindow.contentView;
+        [MetalLayer setFrame:CocoaWindowView.bounds];
+        [MetalLayer setAutoresizingMask:kCALayerWidthSizable | kCALayerHeightSizable];
+        [MetalLayer setNeedsDisplayOnBoundsChange:YES];
+        [MetalLayer setMasksToBounds:YES];
+
+        [MetalLayer setActions:@{
+            @"bounds"   : [NSNull null],
+            @"position" : [NSNull null],
+            @"contents" : [NSNull null],
+        }];
+
+        [MetalLayer setContentsGravity:kCAGravityResize];
+
         [CocoaWindowView setLayer:MetalLayer];
         [CocoaWindowView setWantsLayer:YES];
-        
+        [CocoaWindowView setLayerContentsRedrawPolicy:NSViewLayerContentsRedrawDuringViewResize];
+
         bResult = true;
     }, NSDefaultRunLoopMode, true);
     
@@ -46,7 +82,6 @@ VkResult VulkanPlatformMac::CreateSurface(VkInstance Instance, void* WindowHandl
         return VK_ERROR_INITIALIZATION_FAILED;
     }
 
-    // Create the vulkan surface
 #if VK_EXT_metal_surface
     VkMetalSurfaceCreateInfoEXT MetalSurfaceCreateInfo;
     Memory::Memzero(&MetalSurfaceCreateInfo);

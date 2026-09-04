@@ -9,6 +9,7 @@
 #include "Application/Elements/Box.h"
 #include "Application/Elements/Button.h"
 #include "Application/Elements/EditableText.h"
+#include "Application/Elements/FractionWidthBox.h"
 #include "Application/Elements/Overlay.h"
 #include "Application/Elements/SearchBox.h"
 #include "Application/Elements/Spacer.h"
@@ -138,88 +139,6 @@ private:
     FUIBrush    Brush;
     FFloatColor Tint;
     int32       Size;
-};
-
-class FFractionWidthBox final : public FVisualElement
-{
-public:
-    static TSharedPtr<FFractionWidthBox> Create(const TSharedPtr<FVisualElement>& InChild, float InFraction, int32 InMinWidth)
-    {
-        TSharedPtr<FFractionWidthBox> NewBox = MakeSharedPtr<FFractionWidthBox>();
-        NewBox->Child     = InChild;
-        NewBox->Fraction  = InFraction;
-        NewBox->MinWidth  = InMinWidth;
-
-        if (InChild)
-        {
-            InChild->SetParentElement(NewBox->AsWeakPtr());
-        }
-
-        return NewBox;
-    }
-
-    FFractionWidthBox()
-        : Child(nullptr)
-        , Fraction(1.0f)
-        , MinWidth(0)
-    {
-    }
-
-    virtual ~FFractionWidthBox() = default;
-
-    virtual IntVector2 ComputeDesiredSize() const override final
-    {
-        return Child ? Child->GetCachedDesiredSize() : IntVector2(0, 0);
-    }
-
-    virtual void OnArrange(const FRectangle& AllottedBounds) override final
-    {
-        if (!Child)
-        {
-            return;
-        }
-
-        const int32 Share = static_cast<int32>(static_cast<float>(AllottedBounds.Width) * Fraction);
-
-        FRectangle ChildBounds = AllottedBounds;
-        ChildBounds.Width      = Math::Min(AllottedBounds.Width, Math::Max(MinWidth, Share));
-
-        Child->Tick(ChildBounds);
-    }
-
-    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override final
-    {
-        if (Child)
-        {
-            OutChildren.Add(Child);
-        }
-    }
-
-    virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override final
-    {
-        if (!Child)
-        {
-            return LayerId;
-        }
-
-        const FDrawGeometry ChildGeometry(Child->GetContentRectangle(), AllottedGeometry.Scale);
-        return Child->OnDraw(ChildGeometry, OutCommandList, LayerId + 1);
-    }
-
-    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override final
-    {
-        FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
-
-        if (Child)
-        {
-            Child->FindChildrenContainingPoint(ClientPosition, OutChildElements);
-        }
-    }
-
-private:
-    TSharedPtr<FVisualElement> Child;
-    float                      Fraction;
-    int32                      MinWidth;
 };
 
 class FEditorContentBrowserView final : public FVisualElement
@@ -800,14 +719,9 @@ bool FEditorContentBrowserPanel::Initialize()
 
 TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildFolderColumn()
 {
-    FSearchBox::FDesc SearchDesc;
-    SearchDesc.HintText      = "Search Paths";
-    SearchDesc.Font          = FEditorStyle::GetFonts().Body;
-    SearchDesc.SearchIcon    = FEditorIcons::Search;
-    SearchDesc.ClearIcon     = FEditorIcons::Close;
-    SearchDesc.OnTextChanged = FOnSearchTextChanged::CreateRaw(this, &FEditorContentBrowserPanel::OnFolderSearchTextChanged);
+    FolderSearchBox = FSearchBox::Create(FEditorStyle::MakeSearchBoxDesc("Search Paths",
+        FOnSearchTextChanged::CreateRaw(this, &FEditorContentBrowserPanel::OnFolderSearchTextChanged)));
 
-    FolderSearchBox = FSearchBox::Create(SearchDesc);
     if (!FolderSearchBox)
     {
         return nullptr;
@@ -862,14 +776,9 @@ TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildContentColumn()
         return nullptr;
     }
 
-    FSearchBox::FDesc SearchDesc;
-    SearchDesc.HintText      = "Search Content";
-    SearchDesc.Font          = FEditorStyle::GetFonts().Body;
-    SearchDesc.SearchIcon    = FEditorIcons::Search;
-    SearchDesc.ClearIcon     = FEditorIcons::Close;
-    SearchDesc.OnTextChanged = FOnSearchTextChanged::CreateRaw(this, &FEditorContentBrowserPanel::OnContentSearchTextChanged);
+    ContentSearchBox = FSearchBox::Create(FEditorStyle::MakeSearchBoxDesc("Search Content",
+        FOnSearchTextChanged::CreateRaw(this, &FEditorContentBrowserPanel::OnContentSearchTextChanged)));
 
-    ContentSearchBox = FSearchBox::Create(SearchDesc);
     if (!ContentSearchBox)
     {
         return nullptr;

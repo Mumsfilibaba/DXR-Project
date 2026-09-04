@@ -707,6 +707,11 @@ void FEditableText::SetFont(const TSharedPtr<IFontFace>& InFont)
     Font = InFont;
 }
 
+void FEditableText::SetHintColor(const FFloatColor& InHintColor)
+{
+    HintColor = InHintColor;
+}
+
 void FEditableText::NotifyTextChanged()
 {
     ResetTextCursorBlink();

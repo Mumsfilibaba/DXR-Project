@@ -14,6 +14,7 @@ public:
             , Padding()
             , CornerRadius(0.0f)
             , BorderThickness(0.0f)
+            , MinWidth(0)
             , MinHeight(0)
             , Cursor(ECursor::None)
             , bHasCursor(false)
@@ -39,6 +40,7 @@ public:
         FMargin                    Padding;
         FCornerRadii               CornerRadius;
         float                      BorderThickness;
+        int32                      MinWidth;
         int32                      MinHeight;
         ECursor                    Cursor;
         bool                       bHasCursor : 1;
@@ -117,6 +119,20 @@ public:
     }
 
     /**
+     * @brief Sets the least width the border is measured at, which is how a border is held to a fixed size
+     * inside a box that would otherwise size it to its content.
+     *
+     * @param InMinWidth The minimum width in pixels. Zero leaves the border as wide as its content.
+     */
+    void SetMinWidth(int32 InMinWidth);
+
+    /** @return The least width in pixels the border measures at, zero leaving it as wide as its content. */
+    NODISCARD FORCEINLINE int32 GetMinWidth() const
+    {
+        return MinWidth;
+    }
+
+    /**
      * @brief Sets the least height the border is measured at.
      *
      * @param InMinHeight The minimum height in pixels. Zero leaves the border as tall as its content.
@@ -144,6 +160,7 @@ private:
     FFloatColor  BorderColor;
     FCornerRadii CornerRadius;
     float        BorderThickness;
+    int32        MinWidth;
     int32        MinHeight;
     ECursor      Cursor;
     bool         bHasCursor;

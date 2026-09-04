@@ -111,6 +111,14 @@ public:
         return SelectedCandidateIndex;
     }
 
+    /**
+     * @brief Picks a candidate directly, as the mouse does when it moves across the list.
+     *
+     * @param Index The candidate to select, or InvalidIndex to select nothing. An index outside the
+     * candidate list selects nothing rather than clamping, so a stale index cannot pick a neighbour.
+     */
+    void SetSelectedCandidateIndex(int32 Index);
+
     /** @return True when anything matched the word at the text cursor, so the candidate list is not empty. */
     NODISCARD FORCEINLINE bool HasCandidates() const
     {

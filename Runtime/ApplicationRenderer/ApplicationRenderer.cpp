@@ -7,6 +7,7 @@
 #include "Application/Application.h"
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Elements/Window.h"
+#include "Application/Style/UIStyle.h"
 #include "Application/Text/FontAtlas.h"
 #include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
@@ -609,7 +610,10 @@ void FApplicationRenderer::RenderWindowToSwapChain(FRHICommandList& CommandList,
         PrepareBatchTextures(CommandList, WindowState->DrawData);
     }
 
-    FRHIBeginRenderPassDesc RenderPassDesc({ FRHIRenderTargetAttachment(SwapChain->GetRenderTargetView(), LoadAction) }, 1);
+    const FRHIRenderTargetAttachment Attachment(SwapChain->GetRenderTargetView(), LoadAction,
+        EAttachmentStoreAction::Store, FUIStyle::GetDefault().Colors.WindowBackground);
+
+    FRHIBeginRenderPassDesc RenderPassDesc({ Attachment }, 1);
     CommandList.BeginRenderPass(RenderPassDesc);
 
     if (bHasGeometry)
@@ -643,6 +647,11 @@ void FApplicationRenderer::SyncWindowSurfaces(const TSharedPtr<FWindow>& Primary
     for (const TSharedPtr<FWindow>& CurrentWindow : Windows)
     {
         if (CurrentWindow == PrimaryWindow)
+        {
+            continue;
+        }
+
+        if (CurrentWindow->HasExternalSurface())
         {
             continue;
         }

@@ -841,6 +841,33 @@ bool ToolTipService_Test()
     const FRectangle OwnerBounds = FMenuStack::GetScreenBounds(Owner);
     TEST_EXPECT_EQ(ToolTips.GetToolTipWindow()->GetPosition(), IntVector2(OwnerBounds.Position.X, OwnerBounds.GetBottom() + 2));
 
+    TEST_SECTION("A tip placed to the side sits right of the element with their top edges flush");
+    ToolTips.DismissToolTip();
+    ToolTips.RequestTextToolTip(Owner, "Opens the file", Font, EToolTipPlacement::RightOfAnchor, 0.0f);
+    ToolTips.Tick(0.1f);
+    TEST_EXPECT(ToolTips.IsShowing());
+
+    TEST_EXPECT_EQ(ToolTips.GetToolTipWindow()->GetPosition(),
+        IntVector2(OwnerBounds.GetRight() + FToolTipService::AnchorGap, OwnerBounds.Position.Y));
+
+    TEST_SECTION("With no room on that side it flips to the other, rather than sliding back over the element");
+    TSharedPtr<FWindow> EdgeWindow = Application.CreateWindow(IntVector2(400, 200), IntVector2(1800, 50));
+    TSharedPtr<FMenu>   EdgeOwner  = CreateMenu(Font, { "Hover me" });
+
+    EdgeWindow->SetContent(EdgeOwner);
+    FApplication::LayoutWindow(EdgeWindow);
+
+    ToolTips.DismissToolTip();
+    ToolTips.RequestTextToolTip(EdgeOwner, "Opens the file", Font, EToolTipPlacement::RightOfAnchor, 0.0f);
+    ToolTips.Tick(0.1f);
+    TEST_EXPECT(ToolTips.IsShowing());
+
+    const FRectangle EdgeBounds  = FMenuStack::GetScreenBounds(EdgeOwner);
+    const IntVector2 EdgeTipSize = ToolTips.GetToolTipWindow()->GetSize();
+
+    TEST_EXPECT_EQ(ToolTips.GetToolTipWindow()->GetPosition(),
+        IntVector2(EdgeBounds.Position.X - FToolTipService::AnchorGap - EdgeTipSize.X, EdgeBounds.Position.Y));
+
     TEST_SECTION("In the corner it is pulled back onto the monitor");
     ToolTips.DismissToolTip();
     ToolTips.NotifyCursorMoved(IntVector2(1910, 1070));

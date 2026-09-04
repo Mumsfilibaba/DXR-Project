@@ -116,6 +116,7 @@ private:
 
     FMacApplication*         Application;
     FCocoaWindow*            CocoaWindow;
+    FCocoaWindow*            ParentCocoaWindow;
     FCocoaWindowView*        CocoaWindowView;
     IntVector2               Position;
     EWindowStyleFlags        StyleParams;

@@ -243,6 +243,14 @@ public:
      */
     void SetFont(const TSharedPtr<IFontFace>& InFont);
 
+    /**
+     * @brief Sets the color of the hint shown in place of the text while the field is empty, which an owner
+     * driving a focused and an unfocused look has to change as focus moves.
+     *
+     * @param InHintColor The new hint color.
+     */
+    void SetHintColor(const FFloatColor& InHintColor);
+
     /** @return The delegate, which fires whenever the text changes for any reason other than a silent set. */
     NODISCARD FORCEINLINE FOnTextChangedDelegate& GetOnTextChanged()
     {

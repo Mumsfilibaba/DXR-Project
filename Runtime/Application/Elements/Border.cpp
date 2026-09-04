@@ -19,6 +19,7 @@ FBorder::FBorder()
     , BorderColor(0.0f, 0.0f, 0.0f, 0.0f)
     , CornerRadius()
     , BorderThickness(0.0f)
+    , MinWidth(0)
     , MinHeight(0)
     , Cursor(ECursor::None)
     , bHasCursor(false)
@@ -33,6 +34,7 @@ void FBorder::Initialize(const FDesc& Desc)
     BorderColor     = Desc.BorderColor;
     CornerRadius    = Desc.CornerRadius;
     BorderThickness = Desc.BorderThickness;
+    MinWidth        = Desc.MinWidth;
     MinHeight       = Desc.MinHeight;
     Cursor          = Desc.Cursor;
     bHasCursor      = Desc.bHasCursor;
@@ -43,6 +45,7 @@ void FBorder::Initialize(const FDesc& Desc)
 IntVector2 FBorder::ComputeDesiredSize() const
 {
     IntVector2 DesiredSize = FCompoundElement::ComputeDesiredSize();
+    DesiredSize.X          = Math::Max(DesiredSize.X, MinWidth);
     DesiredSize.Y          = Math::Max(DesiredSize.Y, MinHeight);
     return DesiredSize;
 }
@@ -91,6 +94,11 @@ bool FBorder::GetCursor(ECursor& OutCursor) const
 
     OutCursor = Cursor;
     return true;
+}
+
+void FBorder::SetMinWidth(int32 InMinWidth)
+{
+    MinWidth = InMinWidth;
 }
 
 void FBorder::SetMinHeight(int32 InMinHeight)

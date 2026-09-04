@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/IRefCounted.h"
+#include "Core/Math/Color.h"
 #include "Core/Math/IntVector2.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/String.h"
@@ -173,6 +174,7 @@ struct FPlatformWindowDesc
         , Height(720)
         , Position(0, 0)
         , Style(EWindowStyleFlags::Default)
+        , BackgroundColor(FFloatColor::Black)
         , ParentWindow(nullptr)
         , bAcceptsInput(true)
     {
@@ -192,6 +194,12 @@ struct FPlatformWindowDesc
 
     /** @brief Style flags controlling the appearance and behavior of the window. */
     EWindowStyleFlags Style;
+
+    /**
+     * @brief What the window shows wherever the renderer has not painted, which is the newly exposed band
+     * during a resize and the whole window before the first frame reaches the screen.
+     */
+    FFloatColor BackgroundColor;
 
     /** @brief Pointer to a parent window, if this is a child window. */
     IPlatformWindow* ParentWindow;

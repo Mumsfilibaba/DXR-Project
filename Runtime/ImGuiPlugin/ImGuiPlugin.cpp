@@ -758,13 +758,14 @@ void FImGuiPlugin::OnCreatePlatformWindow(ImGuiViewport* Viewport)
     const EWindowStyleFlags WindowStyle = GetWindowStyleFromImGuiViewportFlags(Viewport->Flags);
 
     FWindow::FDesc WindowDesc;
-    WindowDesc.Title           = GetImGuiViewportPlatformTitle(Viewport);
-    WindowDesc.Size            = IntVector2(static_cast<int32>(Viewport->Size.x), static_cast<int32>(Viewport->Size.y));
-    WindowDesc.Position        = IntVector2(static_cast<int32>(Viewport->Pos.x), static_cast<int32>(Viewport->Pos.y));
-    WindowDesc.StyleFlags      = WindowStyle;
-    WindowDesc.ParentWindow    = ParentWindow;
-    WindowDesc.bActivateOnShow = !(Viewport->Flags & ImGuiViewportFlags_NoFocusOnAppearing);
-    WindowDesc.bAcceptsInput   = !(Viewport->Flags & ImGuiViewportFlags_NoInputs);
+    WindowDesc.Title               = GetImGuiViewportPlatformTitle(Viewport);
+    WindowDesc.Size                = IntVector2(static_cast<int32>(Viewport->Size.x), static_cast<int32>(Viewport->Size.y));
+    WindowDesc.Position            = IntVector2(static_cast<int32>(Viewport->Pos.x), static_cast<int32>(Viewport->Pos.y));
+    WindowDesc.StyleFlags          = WindowStyle;
+    WindowDesc.ParentWindow        = ParentWindow;
+    WindowDesc.bActivateOnShow     = !(Viewport->Flags & ImGuiViewportFlags_NoFocusOnAppearing);
+    WindowDesc.bAcceptsInput       = !(Viewport->Flags & ImGuiViewportFlags_NoInputs);
+    WindowDesc.bHasExternalSurface = true;
 
     ViewportData->Window = FWindow::Create(WindowDesc);
     CHECK(ViewportData->Window != nullptr);

@@ -1,5 +1,4 @@
 #include "Engine/EngineUI/EditorUI/Panels/EditorSceneHierarchyPanel.h"
-#include "Engine/EngineUI/EditorUI/EditorIcons.h"
 #include "Engine/EngineUI/EditorUI/EditorStyle.h"
 #include "Engine/EngineUI/EditorUI/IEditorViewportHost.h"
 #include "Engine/EngineUI/Editor/EditorActorFactory.h"
@@ -692,14 +691,9 @@ bool FEditorSceneHierarchyPanel::Initialize()
         return false;
     }
 
-    FSearchBox::FDesc SearchDesc;
-    SearchDesc.HintText      = "Search actors";
-    SearchDesc.Font          = FEditorStyle::GetFonts().Body;
-    SearchDesc.SearchIcon    = FEditorIcons::Search;
-    SearchDesc.ClearIcon     = FEditorIcons::Close;
-    SearchDesc.OnTextChanged = FOnSearchTextChanged::CreateRaw(this, &FEditorSceneHierarchyPanel::OnSearchTextChanged);
+    SearchBox = FSearchBox::Create(FEditorStyle::MakeSearchBoxDesc("Search Actors",
+        FOnSearchTextChanged::CreateRaw(this, &FEditorSceneHierarchyPanel::OnSearchTextChanged)));
 
-    SearchBox = FSearchBox::Create(SearchDesc);
     if (!SearchBox)
     {
         return false;

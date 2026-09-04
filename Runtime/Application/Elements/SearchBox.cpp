@@ -28,6 +28,7 @@ FSearchBox::FSearchBox()
     , SearchIcon()
     , ClearIcon()
     , Padding(6, 3, 6, 3)
+    , Style()
     , IconSize(14)
     , bIsHovered(false)
     , OnTextChangedDelegate()
@@ -41,14 +42,17 @@ void FSearchBox::Initialize(const FDesc& Desc)
     SearchIcon            = Desc.SearchIcon;
     ClearIcon             = Desc.ClearIcon;
     Padding               = Desc.Padding;
+    Style                 = Desc.Style;
     IconSize              = Math::Max(0, Desc.IconSize);
     OnTextChangedDelegate = Desc.OnTextChanged;
 
     FEditableText::FDesc EditorDesc;
     EditorDesc.HintText        = Desc.HintText;
     EditorDesc.Font            = Desc.Font;
-    EditorDesc.ForegroundColor = FUIStyle::GetDefault().Colors.Text;
-    EditorDesc.HintColor       = FUIStyle::GetDefault().Colors.TextDisabled;
+    EditorDesc.ForegroundColor = Style.Text;
+    EditorDesc.HintColor       = Style.HintNormal;
+    EditorDesc.TextCursorColor = Style.Text;
+    EditorDesc.SelectionColor  = Style.Selection;
     EditorDesc.Padding         = FMargin();
 
     Editor = FEditableText::Create(EditorDesc);
@@ -76,11 +80,6 @@ IntVector2 FSearchBox::ComputeDesiredSize() const
         DesiredSize.Y += IconSize;
     }
 
-    if (SearchIcon.IsValid())
-    {
-        DesiredSize.X += IconSize + SEARCH_BOX_ICON_SPACING;
-    }
-
     DesiredSize.X += IconSize + SEARCH_BOX_ICON_SPACING;
     return DesiredSize;
 }
@@ -89,6 +88,7 @@ void FSearchBox::OnArrange(const FRectangle& AllottedBounds)
 {
     if (Editor)
     {
+        Editor->SetHintColor(Editor->HasKeyboardFocus() ? Style.HintFocused : Style.HintNormal);
         Editor->Tick(GetEditorRectangle(AllottedBounds));
     }
 }
@@ -119,16 +119,18 @@ void FSearchBox::FindChildrenContainingPoint(const IntVector2& ClientPosition, F
 
 int32 FSearchBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    const FUIStyle&    Style        = FUIStyle::GetDefault();
-    const FCornerRadii CornerRadius = FCornerRadii(Style.Metrics.CornerRadius);
+    const FCornerRadii CornerRadius = FCornerRadii(Style.CornerRadius);
 
-    OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Colors.ControlNormal, CornerRadius);
-    OutCommandList.AddBoxOutline(LayerId, AllottedGeometry.Bounds, Style.Colors.Border, Style.Metrics.BorderThickness, CornerRadius);
+    const bool        bHasFocus   = Editor && Editor->HasKeyboardFocus();
+    const FFloatColor BorderColor = bHasFocus ? Style.BorderFocused : (bIsHovered ? Style.BorderHovered : Style.BorderNormal);
+
+    OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Fill, CornerRadius);
+    OutCommandList.AddBoxOutline(LayerId, AllottedGeometry.Bounds, BorderColor, Style.BorderThickness, CornerRadius);
 
     const FRectangle IconBounds = GetSearchIconRectangle(AllottedGeometry.Bounds);
     if (!IconBounds.IsEmpty())
     {
-        OutCommandList.AddImage(LayerId, IconBounds, SearchIcon, Style.Colors.TextDisabled);
+        OutCommandList.AddImage(LayerId, IconBounds, SearchIcon, bHasFocus ? Style.IconFocused : Style.IconNormal);
     }
 
     int32 NextLayerId = LayerId;
@@ -141,7 +143,7 @@ int32 FSearchBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
     const FRectangle ClearBounds = GetClearButtonRectangle(AllottedGeometry.Bounds);
     if (!ClearBounds.IsEmpty())
     {
-        const FFloatColor& ClearTint = bIsHovered ? Style.Colors.Text : Style.Colors.TextDisabled;
+        const FFloatColor& ClearTint = bIsHovered ? Style.IconFocused : Style.IconNormal;
 
         if (ClearIcon.IsValid())
         {
@@ -225,28 +227,17 @@ bool FSearchBox::IsEmpty() const
 
 FRectangle FSearchBox::GetSearchIconRectangle(const FRectangle& Bounds) const
 {
-    if (!SearchIcon.IsValid())
+    if (!SearchIcon.IsValid() || !IsEmpty())
     {
         return FRectangle();
     }
 
-    const FRectangle Inner = Bounds.Deflate(Padding);
-    const int32      Side  = Math::Min(IconSize, Inner.Height);
-
-    return FRectangle(IntVector2(Inner.Position.X, Inner.Position.Y + ((Inner.Height - Side) / 2)), Side, Side);
+    return GetIconRectangle(Bounds);
 }
 
 FRectangle FSearchBox::GetClearButtonRectangle(const FRectangle& Bounds) const
 {
-    if (IsEmpty())
-    {
-        return FRectangle();
-    }
-
-    const FRectangle Inner = Bounds.Deflate(Padding);
-    const int32      Side  = Math::Min(IconSize, Inner.Height);
-
-    return FRectangle(IntVector2(Inner.GetRight() - Side, Inner.Position.Y + ((Inner.Height - Side) / 2)), Side, Side);
+    return IsEmpty() ? FRectangle() : GetIconRectangle(Bounds);
 }
 
 void FSearchBox::HandleTextChanged(const String& InText)
@@ -256,22 +247,24 @@ void FSearchBox::HandleTextChanged(const String& InText)
 
 FRectangle FSearchBox::GetEditorRectangle(const FRectangle& Bounds) const
 {
-    const FRectangle Inner       = Bounds.Deflate(Padding);
-    const FRectangle IconBounds  = GetSearchIconRectangle(Bounds);
-    const FRectangle ClearBounds = GetClearButtonRectangle(Bounds);
+    const FRectangle Inner      = Bounds.Deflate(Padding);
+    const FRectangle IconBounds = GetIconRectangle(Bounds);
 
-    int32 Left  = Inner.Position.X;
-    int32 Right = Inner.GetRight();
+    const int32 Right = Inner.GetRight();
+    int32       Left  = Inner.Position.X;
 
     if (!IconBounds.IsEmpty())
     {
         Left = IconBounds.GetRight() + SEARCH_BOX_ICON_SPACING;
     }
 
-    if (!ClearBounds.IsEmpty())
-    {
-        Right = ClearBounds.Position.X - SEARCH_BOX_ICON_SPACING;
-    }
-
     return FRectangle(IntVector2(Left, Inner.Position.Y), Math::Max(0, Right - Left), Inner.Height);
+}
+
+FRectangle FSearchBox::GetIconRectangle(const FRectangle& Bounds) const
+{
+    const FRectangle Inner = Bounds.Deflate(Padding);
+    const int32      Side  = Math::Min(IconSize, Inner.Height);
+
+    return FRectangle(IntVector2(Inner.Position.X, Inner.Position.Y + ((Inner.Height - Side) / 2)), Side, Side);
 }

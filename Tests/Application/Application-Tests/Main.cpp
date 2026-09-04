@@ -163,6 +163,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("RichTextLayout", RichTextLayout_Test());
     RUN_TEST("RichTextSelection", RichTextSelection_Test());
     RUN_TEST("RichTextSearch", RichTextSearch_Test());
+    RUN_TEST("RichTextCulling", RichTextCulling_Test());
     RUN_TEST("LogViewLogging", LogViewLogging_Test());
     RUN_TEST("LogViewFiltering", LogViewFiltering_Test());
     RUN_TEST("LogViewAutoScroll", LogViewAutoScroll_Test());
@@ -187,6 +188,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("GizmoModes", GizmoModes_Test());
 
     RUN_TEST("ApplicationRendererWindowPass", ApplicationRendererWindowPass_Test());
+    RUN_TEST("ApplicationRendererExternalSurface", ApplicationRendererExternalSurface_Test());
     RUN_TEST("ApplicationRendererWindowLifetime", ApplicationRendererWindowLifetime_Test());
 
     RUN_TEST("EditableTextEditing", EditableTextEditing_Test());
@@ -203,6 +205,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("ConsoleWordRange", ConsoleWordRange_Test());
     RUN_TEST("ConsoleCandidates", ConsoleCandidates_Test());
     RUN_TEST("ConsoleCandidateSelection", ConsoleCandidateSelection_Test());
+    RUN_TEST("ConsoleCandidateDirectSelection", ConsoleCandidateDirectSelection_Test());
     RUN_TEST("ConsoleCompletion", ConsoleCompletion_Test());
     RUN_TEST("ConsoleHistory", ConsoleHistory_Test());
     RUN_TEST("ConsoleSubmit", ConsoleSubmit_Test());

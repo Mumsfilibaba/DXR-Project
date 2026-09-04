@@ -3,6 +3,7 @@
 #include "Core/Delegates/Delegate.h"
 #include "Application/Draw/DrawTypes.h"
 #include "Application/Elements/VisualElement.h"
+#include "Application/Style/UIStyle.h"
 #include "Application/Text/IFontFace.h"
 
 /** @brief Called whenever the search text changes, which is every keystroke and every clear. */
@@ -25,11 +26,14 @@ public:
         /** @brief The glyph the clear button draws, replaced by a drawn cross while no texture is set. */
         FUIBrush ClearIcon;
 
-        /** @brief The side of the icon and the clear button squares, in pixels. */
+        /** @brief The side of the square the two icons share, in pixels. */
         int32 IconSize = 14;
 
         /** @brief The space between the field's bounds and its contents. */
         FMargin Padding = FMargin(6, 3, 6, 3);
+
+        /** @brief The frame the text is typed into, which defaults to the shipped control look. */
+        FInputFrameStyle Style;
 
         /** @brief Fired whenever the search text changes. */
         FOnSearchTextChanged OnTextChanged;
@@ -88,15 +92,17 @@ public:
     }
 
     /**
-     * @brief The square the magnifier is drawn in.
+     * @brief The square the magnifier is drawn in, which is the one the clear button takes over as soon as
+     * there is text to clear.
      *
      * @param Bounds The rectangle the box was arranged into.
-     * @return The square, which is empty when the description carried no search icon.
+     * @return The square, which is empty while the field holds text or the description carried no search icon.
      */
     NODISCARD FRectangle GetSearchIconRectangle(const FRectangle& Bounds) const;
 
     /**
-     * @brief The square a click empties the field in.
+     * @brief The square a click empties the field in, which is the one the magnifier holds while the field
+     * is empty.
      *
      * @param Bounds The rectangle the box was arranged into.
      * @return The square, which is empty while the field holds no text.
@@ -107,11 +113,13 @@ private:
     void HandleTextChanged(const String& InText);
 
     NODISCARD FRectangle GetEditorRectangle(const FRectangle& Bounds) const;
+    NODISCARD FRectangle GetIconRectangle(const FRectangle& Bounds) const;
 
     TSharedPtr<class FEditableText> Editor;
     FUIBrush                       SearchIcon;
     FUIBrush                       ClearIcon;
     FMargin                        Padding;
+    FInputFrameStyle               Style;
     int32                          IconSize;
     bool                           bIsHovered;
     FOnSearchTextChanged           OnTextChangedDelegate;

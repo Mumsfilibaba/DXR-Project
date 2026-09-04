@@ -449,11 +449,11 @@ bool FWindowsApplication::RegisterWindowClass()
     WNDCLASSA WindowClass;
     Memory::Memzero(&WindowClass);
 
-    WindowClass.style         = CS_DBLCLKS | CS_HREDRAW | CS_OWNDC;
+    WindowClass.style         = CS_DBLCLKS | CS_OWNDC;
     WindowClass.hInstance     = InstanceHandle;
     WindowClass.hIcon         = Icon;
     WindowClass.lpszClassName = FWindowsWindow::GetClassName();
-    WindowClass.hbrBackground = static_cast<HBRUSH>(::GetStockObject(BLACK_BRUSH));
+    WindowClass.hbrBackground = nullptr;
     WindowClass.hCursor       = nullptr;
     WindowClass.lpfnWndProc   = &FWindowsApplication::WindowProc;
 
@@ -642,6 +642,11 @@ LRESULT FWindowsApplication::ProcessMessage(HWND WindowHandle, UINT Message, WPA
             }
 
             break;
+        }
+
+        case WM_ERASEBKGND:
+        {
+            return TRUE;
         }
 
         case WM_SETCURSOR:

@@ -10,6 +10,7 @@
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "Application/Application.h"
+#include "Application/Style/UIStyle.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "Engine/Engine.h"
 #if EDITOR_BUILD
@@ -663,8 +664,9 @@ void FSceneRenderer::RenderThread_BeginSceneCommandList(const FSceneRenderPacket
         FRHITexture* BackBuffer = Packet.SwapChain->GetBackBuffer();
         if (Packet.View.RenderTarget != BackBuffer)
         {
+            const FFloatColor& Background = FUIStyle::GetDefault().Colors.WindowBackground;
             CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::Undefined, ERHIResourceState::RenderTarget));
-            CommandList.ClearRenderTargetView(Packet.SwapChain->GetRenderTargetView(), Vector4());
+            CommandList.ClearRenderTargetView(Packet.SwapChain->GetRenderTargetView(), Vector4(Background.R, Background.G, Background.B, Background.A));
         }
     }
 }

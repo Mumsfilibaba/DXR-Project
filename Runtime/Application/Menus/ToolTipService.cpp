@@ -134,6 +134,7 @@ FToolTipService::FToolTipService()
     , Content(nullptr)
     , ToolTipWindow(nullptr)
     , Placement(EToolTipPlacement::FollowCursor)
+    , AnchorBounds()
     , CursorPosition()
     , RequestedDelay(DefaultDelay)
     , RemainingSeconds(0.0f)
@@ -150,7 +151,8 @@ void FToolTipService::RequestToolTip(
     const TSharedPtr<FVisualElement>& InOwner,
     const TSharedPtr<FVisualElement>& InContent,
     EToolTipPlacement                 InPlacement,
-    float                             DelaySeconds)
+    float                             DelaySeconds,
+    const FRectangle&                 InAnchorBounds)
 {
     if (!InOwner || !InContent)
     {
@@ -165,6 +167,7 @@ void FToolTipService::RequestToolTip(
     Owner            = InOwner;
     Content          = InContent;
     Placement        = InPlacement;
+    AnchorBounds     = InAnchorBounds;
     RequestedDelay   = Math::Max(DelaySeconds, 0.0f);
     RemainingSeconds = RequestedDelay;
 }
@@ -220,6 +223,7 @@ void FToolTipService::DismissToolTip()
     Owner            = nullptr;
     Content          = nullptr;
     ToolTipWindow    = nullptr;
+    AnchorBounds     = FRectangle();
     RemainingSeconds = 0.0f;
     bIsShowing       = false;
 }
@@ -277,15 +281,49 @@ FRectangle FToolTipService::ResolveBounds(const IntVector2& ToolTipSize) const
 {
     FRectangle Bounds(IntVector2(), ToolTipSize.X, ToolTipSize.Y);
 
-    if (Placement == EToolTipPlacement::BelowAnchor)
+    const int32 Gap = HasAnchorBoundsOverride() ? 0 : AnchorGap;
+
+    switch (Placement)
     {
-        const FRectangle AnchorBounds = FMenuStack::GetScreenBounds(Owner);
-        Bounds.Position = IntVector2(AnchorBounds.Position.X, AnchorBounds.GetBottom() + 2);
-    }
-    else
-    {
-        Bounds.Position = CursorPosition + IntVector2(CursorOffset, CursorOffset);
+        case EToolTipPlacement::BelowAnchor:
+        {
+            const FRectangle Anchor = ResolveAnchorBounds();
+            Bounds.Position = IntVector2(Anchor.Position.X, Anchor.GetBottom() + Gap);
+            break;
+        }
+
+        case EToolTipPlacement::RightOfAnchor:
+        {
+            const FRectangle Anchor = ResolveAnchorBounds();
+            Bounds.Position = IntVector2(Anchor.GetRight() + Gap, Anchor.Position.Y);
+
+            const FRectangle WorkArea = Popups::FindWorkArea(Anchor.Position);
+            const int32      FlippedX = Anchor.Position.X - Gap - ToolTipSize.X;
+
+            if (Bounds.GetRight() > WorkArea.GetRight() && FlippedX >= WorkArea.Position.X)
+            {
+                Bounds.Position.X = FlippedX;
+            }
+
+            break;
+        }
+
+        default:
+        {
+            Bounds.Position = CursorPosition + IntVector2(CursorOffset, CursorOffset);
+            break;
+        }
     }
 
     return Popups::ClampToWorkArea(Bounds);
+}
+
+FRectangle FToolTipService::ResolveAnchorBounds() const
+{
+    return HasAnchorBoundsOverride() ? AnchorBounds : FMenuStack::GetScreenBounds(Owner);
+}
+
+bool FToolTipService::HasAnchorBoundsOverride() const
+{
+    return AnchorBounds.Width > 0 && AnchorBounds.Height > 0;
 }

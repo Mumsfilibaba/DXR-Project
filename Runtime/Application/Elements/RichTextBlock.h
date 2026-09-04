@@ -13,6 +13,7 @@ public:
     {
         TArray<FTextRun>    Runs;
         FMargin             Margin;
+        int32               WrapWidth = 0;
         bool                bIsSelectable : 1 = true;
         bool                bAutoWrapText : 1 = true;
         FOnSelectionChanged OnSelectionChanged;
@@ -45,6 +46,15 @@ public:
      * @param InRuns The runs, in reading order.
      */
     void SetRuns(const TArray<FTextRun>& InRuns);
+
+    /**
+     * @brief Replaces the text and the search together, which finds the matches once rather than once for the
+     * new text and again for the new search.
+     *
+     * @param InRuns       The runs, in reading order.
+     * @param InSearchText The text to look for. An empty string clears the search.
+     */
+    void SetRunsAndSearchText(const TArray<FTextRun>& InRuns, const String& InSearchText);
 
     /**
      * @brief Appends one run to the end of the text.
@@ -132,8 +142,8 @@ protected:
 
 private:
     void RefreshLayout(int32 AvailableWidth) const;
-    void GatherRangeRectangles(int32 StartIndex, int32 EndIndex, TArray<FRectangle>& OutRectangles) const;
     void RefreshSearchMatches();
+    void GatherRangeRectangles(const TArray<FTextRange>& Ranges, TArray<FRectangle>& OutRectangles) const;
 
     NODISCARD FRectangle GetTextBounds() const;
 
@@ -141,6 +151,8 @@ private:
     FMargin             Margin;
     String              SearchText;
     TArray<int32>       SearchMatches;
+    TArray<FTextRange>  SearchRanges;
+    int32               WrapWidth;
     int32               SelectionAnchor;
     int32               SelectionCursor;
     bool                bIsSelectable;

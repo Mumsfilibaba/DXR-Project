@@ -78,6 +78,24 @@ static const FDrawCommand* FindFirstBox(const FDrawCommandList& CommandList)
     return nullptr;
 }
 
+static FUIBrush MakeIcon()
+{
+    return FUIBrush(reinterpret_cast<FRHITexture*>(0x10));
+}
+
+static FFloatColor FindFirstOutlineColor(const FDrawCommandList& CommandList)
+{
+    for (const FDrawCommand& Command : CommandList.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::BoxOutline)
+        {
+            return Command.Tint;
+        }
+    }
+
+    return FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
+}
+
 /** @brief Counts how many commands of a type the list holds. */
 static int32 CountCommands(const FDrawCommandList& CommandList, EDrawCommandType Type)
 {
@@ -847,9 +865,18 @@ bool SearchBoxControl_Test()
 
     TArray<String> Changes;
 
+    FInputFrameStyle FrameStyle;
+    FrameStyle.Fill          = FFloatColor(0.05f, 0.05f, 0.05f, 1.0f);
+    FrameStyle.BorderNormal  = FFloatColor(0.20f, 0.20f, 0.20f, 1.0f);
+    FrameStyle.BorderHovered = FFloatColor(0.30f, 0.30f, 0.30f, 1.0f);
+    FrameStyle.BorderFocused = FFloatColor(0.40f, 0.40f, 0.40f, 1.0f);
+
     FSearchBox::FDesc Desc;
     Desc.HintText      = "Search";
     Desc.Font          = CreateFont();
+    Desc.SearchIcon    = MakeIcon();
+    Desc.ClearIcon     = MakeIcon();
+    Desc.Style         = FrameStyle;
     Desc.OnTextChanged = FOnSearchTextChanged::CreateLambda([&Changes](const String& NewText) { Changes.Add(NewText); });
 
     TSharedPtr<FSearchBox> SearchBox = FSearchBox::Create(Desc);
@@ -860,16 +887,24 @@ bool SearchBoxControl_Test()
     TEST_EXPECT(SearchBox->GetText().IsEmpty());
     TEST_EXPECT(SearchBox->GetClearButtonRectangle(Bounds).IsEmpty());
 
-    TEST_SECTION("The magnifier is left out of the layout while the description carried no brush for it");
-    TEST_EXPECT(SearchBox->GetSearchIconRectangle(Bounds).IsEmpty());
+    TEST_SECTION("The magnifier holds the left square of an empty field");
+    const FRectangle IconBounds = SearchBox->GetSearchIconRectangle(Bounds);
+    TEST_EXPECT(!IconBounds.IsEmpty());
+    TEST_EXPECT_EQ(IconBounds.Position.X, Bounds.Position.X + Desc.Padding.Left);
 
-    TEST_SECTION("The line the text is typed into is a child of the box");
+    TEST_SECTION("The line the text is typed into is a child of the box, and starts past that square");
     TArray<TSharedPtr<FVisualElement>> Children;
     SearchBox->GetChildren(Children);
 
     TEST_EXPECT(SearchBox->GetEditor() != nullptr);
     TEST_EXPECT_EQ(Children.Size(), 1);
     TEST_EXPECT(Children[0] == StaticCastSharedPtr<FVisualElement>(SearchBox->GetEditor()));
+
+    const FRectangle EmptyEditorBounds = SearchBox->GetEditor()->GetContentRectangle();
+    TEST_EXPECT(EmptyEditorBounds.Position.X > IconBounds.GetRight());
+
+    TEST_SECTION("Nothing is reserved at the right, so the text runs to the far padding");
+    TEST_EXPECT_EQ(EmptyEditorBounds.GetRight(), Bounds.GetRight() - Desc.Padding.Right);
 
     TEST_SECTION("Setting the text fills the field and reports what it now holds");
     SearchBox->SetText("Mesh");
@@ -879,10 +914,15 @@ bool SearchBoxControl_Test()
     TEST_EXPECT_EQ(Changes.Size(), 1);
     TEST_EXPECT(Changes[0] == String("Mesh"));
 
-    TEST_SECTION("The clear button becomes real once there is text to clear, and sits inside the field");
+    TEST_SECTION("The clear button takes over the very square the magnifier held, which goes away");
     const FRectangle ClearBounds = SearchBox->GetClearButtonRectangle(Bounds);
     TEST_EXPECT(!ClearBounds.IsEmpty());
-    TEST_EXPECT(ClearBounds.GetRight() <= Bounds.GetRight());
+    TEST_EXPECT(ClearBounds == IconBounds);
+    TEST_EXPECT(SearchBox->GetSearchIconRectangle(Bounds).IsEmpty());
+
+    TEST_SECTION("Swapping the two leaves the line of text where it was");
+    LayoutElement(SearchBox, Bounds);
+    TEST_EXPECT(SearchBox->GetEditor()->GetContentRectangle() == EmptyEditorBounds);
 
     TEST_SECTION("Clicking it empties the field and reports that too");
     SearchBox->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, ClearBounds.GetCenter()));
@@ -901,6 +941,39 @@ bool SearchBoxControl_Test()
     TEST_EXPECT(SearchBox->IsEmpty());
     TEST_EXPECT_EQ(Changes.Size(), 4);
     TEST_EXPECT(Changes[3].IsEmpty());
+
+    TEST_SECTION("The frame is filled from the description rather than the process-wide style");
+    FDrawCommandList NormalList;
+    DrawElement(SearchBox, NormalList);
+
+    const FDrawCommand* FrameFill = FindFirstBox(NormalList);
+    TEST_EXPECT(FrameFill != nullptr);
+    TEST_EXPECT(FrameFill->Tint == FrameStyle.Fill);
+
+    TEST_SECTION("An untouched field carries the normal stroke");
+    TEST_EXPECT(FindFirstOutlineColor(NormalList) == FrameStyle.BorderNormal);
+
+    TEST_SECTION("The cursor resting over it replaces that with the hovered one");
+    SearchBox->OnMouseEntered(MakeMoveEvent(Bounds.GetCenter()));
+
+    FDrawCommandList HoveredList;
+    DrawElement(SearchBox, HoveredList);
+    TEST_EXPECT(FindFirstOutlineColor(HoveredList) == FrameStyle.BorderHovered);
+
+    TEST_SECTION("Focus outranks hover, so the focused stroke wins while typing lands here");
+    SearchBox->GetEditor()->OnFocusGained();
+
+    FDrawCommandList FocusedList;
+    DrawElement(SearchBox, FocusedList);
+    TEST_EXPECT(FindFirstOutlineColor(FocusedList) == FrameStyle.BorderFocused);
+
+    TEST_SECTION("Losing both puts the normal stroke back");
+    SearchBox->GetEditor()->OnFocusLost();
+    SearchBox->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+
+    FDrawCommandList IdleList;
+    DrawElement(SearchBox, IdleList);
+    TEST_EXPECT(FindFirstOutlineColor(IdleList) == FrameStyle.BorderNormal);
 
     TEST_END();
 }

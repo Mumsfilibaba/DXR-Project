@@ -10,10 +10,12 @@ FTextLayout::FTextLayout()
     , Runs()
     , RunSourceOffsets()
     , Lines()
+    , CachedText()
     , CachedSize(0, 0)
     , CachedWrapWidth(0)
     , SourceLength(0)
     , PendingLineWidth(0)
+    , bIsTextCacheValid(true)
 {
 }
 
@@ -28,7 +30,8 @@ void FTextLayout::AppendRun(const FTextRun& Run)
     RunSourceOffsets.Clear();
     Lines.Clear();
 
-    CachedSize = IntVector2(0, 0);
+    CachedSize        = IntVector2(0, 0);
+    bIsTextCacheValid = false;
 }
 
 void FTextLayout::Clear()
@@ -37,10 +40,13 @@ void FTextLayout::Clear()
     Runs.Clear();
     RunSourceOffsets.Clear();
     Lines.Clear();
-    CachedSize       = IntVector2(0, 0);
-    CachedWrapWidth  = 0;
-    SourceLength     = 0;
-    PendingLineWidth = 0;
+    CachedText.Clear();
+
+    CachedSize        = IntVector2(0, 0);
+    CachedWrapWidth   = 0;
+    SourceLength      = 0;
+    PendingLineWidth  = 0;
+    bIsTextCacheValid = true;
 }
 
 void FTextLayout::WrapToWidth(int32 WrapWidth)
@@ -356,6 +362,80 @@ FRectangle FTextLayout::GetCharacterBounds(int32 CharacterIndex) const
     return FRectangle(IntVector2(0, 0), 0, Lines.IsEmpty() ? 0 : Lines[0].Height);
 }
 
+void FTextLayout::GatherRangeRectangles(const TArray<FTextRange>& Ranges, TArray<FRectangle>& OutRectangles) const
+{
+    if (Ranges.IsEmpty())
+    {
+        return;
+    }
+
+    int32 LineTop    = 0;
+    int32 FirstRange = 0;
+
+    for (const FTextLine& Line : Lines)
+    {
+        if (Line.RunCount <= 0)
+        {
+            LineTop += Line.Height;
+            continue;
+        }
+
+        const int32 LastRunIndex = Line.FirstRunIndex + Line.RunCount - 1;
+        const int32 LineStart    = RunSourceOffsets[Line.FirstRunIndex];
+        const int32 LineEnd      = RunSourceOffsets[LastRunIndex] + Runs[LastRunIndex].Text.Length();
+
+        while (FirstRange < Ranges.Size() && Ranges[FirstRange].End <= LineStart)
+        {
+            FirstRange++;
+        }
+
+        if (FirstRange >= Ranges.Size())
+        {
+            break;
+        }
+
+        const auto MeasureOffsetOnLine = [this, &Line](int32 CharacterIndex) -> int32
+        {
+            int32 RunLeft = 0;
+            for (int32 Index = 0; Index < Line.RunCount; ++Index)
+            {
+                const int32     RunIndex  = Line.FirstRunIndex + Index;
+                const FTextRun& Run       = Runs[RunIndex];
+                const int32     RunStart  = RunSourceOffsets[RunIndex];
+                const int32     RunLength = Run.Text.Length();
+
+                if (CharacterIndex <= RunStart + RunLength)
+                {
+                    const int32 OffsetInRun = Math::Clamp(CharacterIndex - RunStart, 0, RunLength);
+                    return RunLeft + (Run.Font ? Run.Font->MeasureWidth(StringView(Run.Text.Data(), OffsetInRun)) : 0);
+                }
+
+                RunLeft += MeasureRun(Run);
+            }
+
+            return RunLeft;
+        };
+
+        for (int32 Index = FirstRange; Index < Ranges.Size() && Ranges[Index].Start < LineEnd; ++Index)
+        {
+            const int32 SpanStart = Math::Max(Ranges[Index].Start, LineStart);
+            const int32 SpanEnd   = Math::Min(Ranges[Index].End, LineEnd);
+
+            if (SpanStart >= SpanEnd)
+            {
+                continue;
+            }
+
+            const int32 Left  = MeasureOffsetOnLine(SpanStart);
+            const int32 Right = MeasureOffsetOnLine(SpanEnd);
+
+            OutRectangles.Emplace(IntVector2(Left, LineTop), Right - Left, Line.Height);
+        }
+
+        LineTop += Line.Height;
+    }
+}
+
 int32 FTextLayout::FindLineIndexForCharacter(int32 CharacterIndex) const
 {
     for (int32 LineIndex = 0; LineIndex < Lines.Size(); ++LineIndex)
@@ -394,34 +474,59 @@ bool FTextLayout::GetLineCharacterRange(int32 LineIndex, int32& OutStart, int32&
     }
 
     const int32 LastRunIndex = Line.FirstRunIndex + Line.RunCount - 1;
-
     OutStart = RunSourceOffsets[Line.FirstRunIndex];
     OutEnd   = RunSourceOffsets[LastRunIndex] + Runs[LastRunIndex].Text.Length();
     return true;
 }
 
-String FTextLayout::GetText() const
+const String& FTextLayout::GetText() const
 {
-    String Result;
-    for (const FTextRun& Run : SourceRuns)
+    if (bIsTextCacheValid)
     {
-        Result.Append(Run.Text);
+        return CachedText;
     }
 
-    return Result;
+    CachedText.Clear();
+    CachedText.Reserve(SourceLength);
+
+    for (const FTextRun& Run : SourceRuns)
+    {
+        CachedText.Append(Run.Text);
+    }
+
+    bIsTextCacheValid = true;
+    return CachedText;
 }
 
 int32 FTextLayout::Draw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    const IntVector2 Origin = AllottedGeometry.Bounds.Position;
+    const IntVector2 Origin        = AllottedGeometry.Bounds.Position;
+    const FRectangle ClipRectangle = OutCommandList.GetCurrentClipRectangle();
+    const bool       bIsClipped    = !ClipRectangle.IsEmpty();
+    const int32      VisibleTop    = ClipRectangle.Position.Y;
+    const int32      VisibleBottom = ClipRectangle.GetBottom();
 
-    int32 LineTop     = 0;
-    int32 HighestLayer = LayerId;
+    int32 HighestLayer = Lines.IsEmpty() ? LayerId : LayerId + 1;
+    int32 LineTop      = 0;
 
     for (const FTextLine& Line : Lines)
     {
-        int32 RunLeft = 0;
+        if (bIsClipped)
+        {
+            const int32 LineBottom = Origin.Y + LineTop + Line.Height;
+            if (LineBottom <= VisibleTop)
+            {
+                LineTop += Line.Height;
+                continue;
+            }
 
+            if ((Origin.Y + LineTop) >= VisibleBottom)
+            {
+                break;
+            }
+        }
+
+        int32 RunLeft = 0;
         for (int32 Index = 0; Index < Line.RunCount; ++Index)
         {
             const FTextRun&  Run       = Runs[Line.FirstRunIndex + Index];
@@ -442,7 +547,6 @@ int32 FTextLayout::Draw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
         }
 
         LineTop += Line.Height;
-        HighestLayer = LayerId + 1;
     }
 
     return HighestLayer;

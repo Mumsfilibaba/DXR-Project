@@ -6,6 +6,7 @@
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Elements/VisualElement.h"
 #include "Application/Menus/DragDropService.h"
+#include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/ConsoleManager.h"
@@ -25,9 +26,11 @@ IMPLEMENT_ENGINE_MODULE(IModule, Application);
 //    along the element path until an element handles the event. In practice, this means
 //    that the window will receive the event last, and the leaf child-element will receive the
 //    event first.
+//
 //  - FLeafLastPolicy: Send the event to the last element first and then send the events
 //    backward along the element path until an element handles the event. In practice, this means
 //    that the window will receive the event first and then propagate to the rest of the elements.
+//
 //  - FDirectPolicy: Send the events only to the first element in the element path. In practice,
 //    this means that the window receives the event, and then the propagation stops there. This
 //    policy gives a single element the chance to process the event and stops even if the element
@@ -881,18 +884,18 @@ void FApplication::CreateWindow(const TSharedPtr<FWindow>& InWindow)
     }
     
     FPlatformWindowDesc WindowDesc;
-    WindowDesc.Title         = InWindow->GetTitle();
-    WindowDesc.Style         = InWindow->GetStyle();
-    WindowDesc.Position      = InWindow->GetPosition();
-    WindowDesc.bAcceptsInput = InWindow->GetAcceptsInput();
-    
+    WindowDesc.Title           = InWindow->GetTitle();
+    WindowDesc.Style           = InWindow->GetStyle();
+    WindowDesc.Position        = InWindow->GetPosition();
+    WindowDesc.Width           = InWindow->GetWidth();
+    WindowDesc.Height          = InWindow->GetHeight();
+    WindowDesc.BackgroundColor = FUIStyle::GetDefault().Colors.WindowBackground;
+    WindowDesc.bAcceptsInput   = InWindow->GetAcceptsInput();
+
     if (TSharedPtr<FWindow> ParentWindow = InWindow->GetParentWindow())
     {
         WindowDesc.ParentWindow = ParentWindow->GetPlatformWindow().Get();
     }
-
-    WindowDesc.Width  = InWindow->GetWidth();
-    WindowDesc.Height = InWindow->GetHeight();
 
     const IntVector2 WindowSize(static_cast<int32>(WindowDesc.Width), static_cast<int32>(WindowDesc.Height));
     if (!IsWindowReachable(MonitorInfos, WindowDesc.Position, WindowSize))
@@ -1004,6 +1007,8 @@ void FApplication::LayoutWindow(const TSharedPtr<FWindow>& InWindow)
     // A container sizes its slots from the cached child sizes, so the tree is measured before it is arranged
     InWindow->PrepareDesiredSize();
     InWindow->Tick(WindowRectangle);
+
+    InWindow->ClearLayoutIsStale();
 }
 
 void FApplication::DrawWindows()
@@ -1021,6 +1026,11 @@ void FApplication::DrawWindows()
         if (!CurrentWindow->IsVisible())
         {
             continue;
+        }
+
+        if (CurrentWindow->IsLayoutStale())
+        {
+            LayoutWindow(CurrentWindow);
         }
 
         if (FDrawCommandList* CommandList = Renderer->BeginWindow(CurrentWindow))
@@ -1183,7 +1193,8 @@ void FApplication::SetFocusElement(const TSharedPtr<FVisualElement>& FocusElemen
 
 void FApplication::SetFocusElements(const FElementPath& NewFocusPath)
 {
-    // First we need to go through all the elements that currently have focus and notify elements that is not in the new element-path that they have lost focus
+    // First we need to go through all the elements that currently have focus and
+    // notify elements that is not in the new element-path that they have lost focus.
     for (int32 Index = 0; Index < FocusPath.Size(); Index++)
     {
         const TSharedPtr<FVisualElement>& CurrentElement = FocusPath[Index];
@@ -1193,7 +1204,8 @@ void FApplication::SetFocusElements(const FElementPath& NewFocusPath)
         }
     }
 
-    // Then go through all the elements in the new element-path and notify them that they have gained focus, as long as they are not a part of the old path
+    // Then go through all the elements in the new element-path and notify them that
+    // they have gained focus, as long as they are not a part of the old path.
     for (int32 Index = 0; Index < NewFocusPath.Size(); Index++)
     {
         const TSharedPtr<FVisualElement>& CurrentElement = NewFocusPath[Index];
@@ -1208,7 +1220,6 @@ void FApplication::SetFocusElements(const FElementPath& NewFocusPath)
 
 void FApplication::SetFocusFromCursorPath(const FElementPath& CursorPath)
 {
-    // Leaf-first, so a field inside a panel takes the keyboard rather than the panel
     for (int32 Index = CursorPath.LastIndex(); Index >= 0; --Index)
     {
         const TSharedPtr<FVisualElement>& Element = CursorPath[Index];

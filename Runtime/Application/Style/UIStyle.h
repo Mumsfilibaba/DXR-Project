@@ -157,3 +157,42 @@ struct APPLICATION_API FUIStyle
     const IFontFace* NormalFont;
     const IFontFace* MonospaceFont;
 };
+
+struct FInputFrameStyle
+{
+    /** @brief The fill behind the line of text. */
+    FFloatColor Fill = FUIStyle::GetDefault().Colors.ControlNormal;
+
+    /** @brief The stroke around a field that is neither hovered nor focused. */
+    FFloatColor BorderNormal = FUIStyle::GetDefault().Colors.Border;
+
+    /** @brief The stroke the cursor resting over the field replaces the normal one with. */
+    FFloatColor BorderHovered = FUIStyle::GetDefault().Colors.Border;
+
+    /** @brief The stroke a focused field carries, which is what marks where typing lands. */
+    FFloatColor BorderFocused = FUIStyle::GetDefault().Colors.Accent;
+
+    /** @brief The color of the text being edited. */
+    FFloatColor Text = FUIStyle::GetDefault().Colors.Text;
+
+    /** @brief The color of the hint shown in place of the text while the field is empty. */
+    FFloatColor HintNormal = FUIStyle::GetDefault().Colors.TextDisabled;
+
+    /** @brief The hint color of a focused field, which ImGui brightens slightly. */
+    FFloatColor HintFocused = FUIStyle::GetDefault().Colors.TextDisabled;
+
+    /** @brief The fill behind selected text. */
+    FFloatColor Selection = FUIStyle::GetDefault().Colors.TextSelectionBackground;
+
+    /** @brief The tint of an icon sitting inside a field that is neither hovered nor focused. */
+    FFloatColor IconNormal = FUIStyle::GetDefault().Colors.TextDisabled;
+
+    /** @brief The tint an icon takes once the field is focused or the cursor is resting over the icon. */
+    FFloatColor IconFocused = FUIStyle::GetDefault().Colors.Text;
+
+    /** @brief The width of the stroke in pixels, where zero draws no stroke. */
+    float BorderThickness = FUIStyle::GetDefault().Metrics.BorderThickness;
+
+    /** @brief How far the corners are rounded, in pixels, a large value giving ImGui's pill. */
+    float CornerRadius = FUIStyle::GetDefault().Metrics.CornerRadius;
+};

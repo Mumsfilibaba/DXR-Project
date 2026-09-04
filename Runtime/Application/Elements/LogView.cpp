@@ -118,7 +118,7 @@ void FLogView::SetMinimumSeverity(ELogSeverity InMinimumSeverity)
     }
 
     MinimumSeverity = InMinimumSeverity;
-    RebuildLayout();
+    bLayoutIsStale  = true;
 }
 
 void FLogView::SetSearchText(const String& InSearchText, bool bInFilterToMatches)
@@ -130,8 +130,7 @@ void FLogView::SetSearchText(const String& InSearchText, bool bInFilterToMatches
 
     SearchText       = InSearchText;
     bFilterToMatches = bInFilterToMatches;
-
-    RebuildLayout();
+    bLayoutIsStale   = true;
 }
 
 void FLogView::SetAutoScroll(bool bInAutoScroll)
@@ -168,7 +167,7 @@ void FLogView::Clear()
     }
 
     Lines.Clear();
-    RebuildLayout();
+    bLayoutIsStale = true;
 }
 
 void FLogView::SelectAll()
@@ -196,7 +195,7 @@ void FLogView::SetMaxLineCount(int32 InMaxLineCount)
 
     if (Lines.Size() != NumLinesBefore)
     {
-        RebuildLayout();
+        bLayoutIsStale = true;
     }
 }
 
@@ -256,7 +255,7 @@ void FLogView::DrainPendingLines()
     }
 
     TrimToMaxLineCount();
-    RebuildLayout();
+    bLayoutIsStale = true;
 
     if (bAutoScroll && bWasAtBottom)
     {
@@ -284,14 +283,14 @@ void FLogView::RebuildLayout()
         const FFloatColor Color = FConsoleLogBuffer::GetSeverityColor(Line.Severity);
         if (bShowSeverityPrefix)
         {
-            Runs.Add(FTextRun(GetSeverityPrefix(Line.Severity), Font.Get(), Color));
+            Runs.Emplace(GetSeverityPrefix(Line.Severity), Font.Get(), Color);
         }
 
-        Runs.Add(FTextRun(Line.Message + "\n", Font.Get(), Color));
+        Runs.Emplace(Line.Message, Font.Get(), Color);
+        Runs.Emplace("\n", Font.Get(), Color);
     }
 
-    TextBlock->SetRuns(Runs);
-    TextBlock->SetSearchText(SearchText);
+    TextBlock->SetRunsAndSearchText(Runs, SearchText);
 }
 
 bool FLogView::IsLineVisible(const FLogLine& Line) const

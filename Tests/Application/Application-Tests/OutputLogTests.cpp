@@ -15,13 +15,11 @@
 #include <Application/Style/UIStyle.h>
 #include <Application/Text/FixedWidthFontFace.h>
 
-/** @brief An eight by sixteen face, so every measurement in these tests is exact. */
 static TSharedPtr<IFontFace> CreateFont()
 {
     return MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 }
 
-/** @brief Measures and arranges an element on its own, the way a window would. */
 static void LayoutElement(const TSharedPtr<FVisualElement>& Element, const FRectangle& Bounds)
 {
     Element->PrepareDesiredSize();
@@ -38,7 +36,6 @@ static FCursorEvent MakeMoveEvent(const IntVector2& ClientPosition)
     return FCursorEvent(EInputEventType::MouseMoved, ClientPosition, IntVector2(0, 0), FModifierKeyState());
 }
 
-/** @brief Presses at one point, drags to another and lets go, which is one selection gesture. */
 static void DragSelection(const TSharedPtr<FRichTextBlock>& Block, const IntVector2& From, const IntVector2& To)
 {
     Block->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, From, true));
@@ -46,7 +43,6 @@ static void DragSelection(const TSharedPtr<FRichTextBlock>& Block, const IntVect
     Block->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, To, false));
 }
 
-/** @brief A block holding one run per string, alternating colour so a selection has a boundary to cross. */
 static TSharedPtr<FRichTextBlock> MakeBlock(const TSharedPtr<IFontFace>& Font, const TArray<String>& Texts, bool bAutoWrapText = false)
 {
     const FUIStyle& Style = FUIStyle::GetDefault();
@@ -62,7 +58,6 @@ static TSharedPtr<FRichTextBlock> MakeBlock(const TSharedPtr<IFontFace>& Font, c
     return FRichTextBlock::Create(Desc);
 }
 
-/** @brief How many boxes were emitted, which is how a highlight is counted without a rasterizer. */
 static int32 CountBoxes(const FDrawCommandList& CommandList)
 {
     int32 NumBoxes = 0;
@@ -74,7 +69,17 @@ static int32 CountBoxes(const FDrawCommandList& CommandList)
     return NumBoxes;
 }
 
-/** @brief Draws an element into a fresh list, which is what the highlight counts are read from. */
+static int32 CountTexts(const FDrawCommandList& CommandList)
+{
+    int32 NumTexts = 0;
+    for (const FDrawCommand& Command : CommandList.GetCommands())
+    {
+        NumTexts += Command.Type == EDrawCommandType::Text ? 1 : 0;
+    }
+
+    return NumTexts;
+}
+
 static void DrawElement(const TSharedPtr<FVisualElement>& Element, FDrawCommandList& OutCommandList)
 {
     const FDrawGeometry Geometry(Element->GetContentRectangle(), 1.0f);
@@ -138,6 +143,46 @@ bool RichTextLayout_Test()
 
     TEST_EXPECT_EQ(Block->GetLayout().GetCharacterCount(), 0);
     TEST_EXPECT(!Block->HasSelection());
+
+    TEST_END();
+}
+
+bool RichTextCulling_Test()
+{
+    TEST_BEGIN();
+
+    const TSharedPtr<IFontFace> Font = CreateFont();
+
+    String LongText;
+    for (int32 Index = 0; Index < 100; ++Index)
+    {
+        LongText += String::Printf("line %d\n", Index);
+    }
+
+    TSharedPtr<FRichTextBlock> Block = MakeBlock(Font, { LongText });
+    LayoutElement(Block, FRectangle(IntVector2(0, 0), 400, 100 * 16));
+
+    TEST_SECTION("With nothing clipping it every line is drawn");
+    FDrawCommandList Unclipped;
+    DrawElement(Block, Unclipped);
+
+    TEST_EXPECT_EQ(CountTexts(Unclipped), 100);
+
+    TEST_SECTION("Behind a clip only the lines it leaves open are, so scrolling costs the view not the document");
+    FDrawCommandList Clipped;
+    Clipped.PushClip(0, FRectangle(IntVector2(0, 0), 400, 3 * 16));
+    DrawElement(Block, Clipped);
+    Clipped.PopClip(1);
+
+    TEST_EXPECT_EQ(CountTexts(Clipped), 3);
+
+    TEST_SECTION("A clip part way down draws the band it covers rather than the lines above it");
+    FDrawCommandList Scrolled;
+    Scrolled.PushClip(0, FRectangle(IntVector2(0, 50 * 16), 400, 4 * 16));
+    DrawElement(Block, Scrolled);
+    Scrolled.PopClip(1);
+
+    TEST_EXPECT_EQ(CountTexts(Scrolled), 4);
 
     TEST_END();
 }
@@ -346,16 +391,20 @@ bool LogViewLogging_Test()
 
     TEST_EXPECT_EQ(LogView->GetLines()[2].Severity, ELogSeverity::Info);
 
-    TEST_SECTION("The text carries the severity prefix and its colour");
+    TEST_SECTION("The text carries the severity prefix and its colour, and the break is a run of its own");
     const TArray<FTextRun>& Runs = LogView->GetTextBlock()->GetLayout().GetSourceRuns();
 
-    TEST_EXPECT_EQ(Runs.Size(), 6);
+    TEST_EXPECT_EQ(Runs.Size(), 9);
     TEST_EXPECT_EQ(Runs[0].Text, String("[Info] "));
-    TEST_EXPECT_EQ(Runs[1].Text, String("engine started\n"));
-    TEST_EXPECT_EQ(Runs[2].Text, String("[Warning] "));
+    TEST_EXPECT_EQ(Runs[1].Text, String("engine started"));
+    TEST_EXPECT_EQ(Runs[2].Text, String("\n"));
+    TEST_EXPECT_EQ(Runs[3].Text, String("[Warning] "));
 
-    TEST_EXPECT_EQ(Runs[2].Tint, FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Warning));
     TEST_EXPECT_EQ(Runs[3].Tint, FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Warning));
+    TEST_EXPECT_EQ(Runs[4].Tint, FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Warning));
+
+    TEST_SECTION("Which still reads back as one line per message");
+    TEST_EXPECT_EQ(LogView->GetTextBlock()->GetText(), String("[Info] engine started\n[Warning] shader cache cold\n[Info] plain\n"));
 
     TEST_SECTION("Past the cap the oldest lines are dropped");
     LogView->Log("fourth");
@@ -375,6 +424,7 @@ bool LogViewLogging_Test()
 
     TEST_SECTION("Clearing empties both the lines and the text");
     LogView->Clear();
+    LogView->Flush();
 
     TEST_EXPECT_EQ(LogView->GetNumLines(), 0);
     TEST_EXPECT_EQ(LogView->GetTextBlock()->GetText(), String());
@@ -428,7 +478,9 @@ bool LogViewFiltering_Test()
     TEST_EXPECT_EQ(LogView->GetNumLines(), 4);
     TEST_EXPECT_EQ(LogView->GetVisibleMessages()[0], String("texture missing"));
 
-    TEST_SECTION("Which is what the text was rebuilt from");
+    TEST_SECTION("Which is what the text is rebuilt from, once the frame that asked for it comes round");
+    LogView->Flush();
+
     TEST_EXPECT(!LogView->GetTextBlock()->GetText().Contains("loading level"));
     TEST_EXPECT(LogView->GetTextBlock()->GetText().Contains("device lost"));
 
@@ -442,6 +494,7 @@ bool LogViewFiltering_Test()
 
     TEST_SECTION("A search that only highlights leaves every line showing");
     LogView->SetSearchText("loading", false);
+    LogView->Flush();
 
     TEST_EXPECT_EQ(LogView->GetNumVisibleLines(), 4);
     TEST_EXPECT_EQ(LogView->GetTextBlock()->GetSearchMatches().Size(), 2);
@@ -474,6 +527,25 @@ bool LogViewFiltering_Test()
     TEST_EXPECT_EQ(LogView->GetNumLines(), 5);
     TEST_EXPECT_EQ(LogView->GetNumVisibleLines(), 1);
 
+    TEST_SECTION("Typing a word is one rebuild at the end of the frame rather than one for every letter");
+    LogView->SetMinimumSeverity(ELogSeverity::Info);
+    LogView->SetSearchText("", false);
+    LogView->Flush();
+
+    const String SettledText = LogView->GetTextBlock()->GetText();
+    LogView->SetSearchText("l", true);
+    LogView->SetSearchText("lo", true);
+    LogView->SetSearchText("loa", true);
+
+    TEST_EXPECT_EQ(LogView->GetTextBlock()->GetText(), SettledText);
+
+    TEST_SECTION("And what it settles on is what the last keystroke asked for");
+    LogView->Flush();
+
+    TEST_EXPECT_EQ(LogView->GetNumVisibleLines(), 2);
+    TEST_EXPECT_EQ(LogView->GetTextBlock()->GetSearchMatches().Size(), 2);
+    TEST_EXPECT(!LogView->GetTextBlock()->GetText().Contains("device lost"));
+
     TEST_END();
 }
 
@@ -491,7 +563,6 @@ bool LogViewAutoScroll_Test()
 
     TSharedPtr<FLogView> LogView = FLogView::Create(Desc);
 
-    // Two lines fit, so anything past that is what the view has to scroll to keep up with
     const FRectangle Bounds(IntVector2(0, 0), 400, 40);
     LayoutElement(LogView, Bounds);
 

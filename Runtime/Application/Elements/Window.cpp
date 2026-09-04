@@ -28,6 +28,8 @@ FWindow::FWindow()
     , bActivateOnShow(true)
     , bAcceptsInput(true)
     , bShowOnCreate(true)
+    , bHasExternalSurface(false)
+    , bLayoutIsStale(false)
     , Overlay()
     , Content()
     , PlatformWindow(nullptr)
@@ -48,8 +50,8 @@ void FWindow::Initialize(const FDesc& Desc)
     bActivateOnShow     = Desc.bActivateOnShow;
     bAcceptsInput       = Desc.bAcceptsInput;
     bShowOnCreate       = Desc.bShowOnCreate;
+    bHasExternalSurface = Desc.bHasExternalSurface;
 
-    // Windows should always receive focus, if the OS puts focus on the platform-window
     FVisualElement::SetActivationPolicy(EElementActivationPolicy::AutoFocusOnWindowActivate);
 }
 
@@ -185,6 +187,8 @@ void FWindow::OnWindowResize(const IntVector2& InSize)
     if (CachedSize != InSize)
     {
         SetSize(InSize);
+
+        bLayoutIsStale = true;
 
         OnWindowResizedDelegate.ExecuteIfBound(InSize);
     }

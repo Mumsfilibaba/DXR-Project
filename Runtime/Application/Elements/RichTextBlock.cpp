@@ -18,6 +18,8 @@ FRichTextBlock::FRichTextBlock()
     , Margin()
     , SearchText()
     , SearchMatches()
+    , SearchRanges()
+    , WrapWidth(0)
     , SelectionAnchor(0)
     , SelectionCursor(0)
     , bIsSelectable(true)
@@ -31,6 +33,7 @@ FRichTextBlock::~FRichTextBlock() = default;
 void FRichTextBlock::Initialize(const FDesc& Desc)
 {
     Margin                     = Desc.Margin;
+    WrapWidth                  = Math::Max(0, Desc.WrapWidth);
     bIsSelectable              = Desc.bIsSelectable;
     bAutoWrapText              = Desc.bAutoWrapText;
     OnSelectionChangedDelegate = Desc.OnSelectionChanged;
@@ -60,10 +63,7 @@ int32 FRichTextBlock::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
     RefreshLayout(TextBounds.Width);
 
     TArray<FRectangle> Rectangles;
-    for (int32 MatchStart : SearchMatches)
-    {
-        GatherRangeRectangles(MatchStart, MatchStart + SearchText.Length(), Rectangles);
-    }
+    GatherRangeRectangles(SearchRanges, Rectangles);
 
     for (const FRectangle& Rectangle : Rectangles)
     {
@@ -72,8 +72,11 @@ int32 FRichTextBlock::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
 
     if (HasSelection())
     {
+        TArray<FTextRange> SelectionRanges;
+        SelectionRanges.Emplace(GetSelectionStart(), GetSelectionEnd());
+
         Rectangles.Clear();
-        GatherRangeRectangles(GetSelectionStart(), GetSelectionEnd(), Rectangles);
+        GatherRangeRectangles(SelectionRanges, Rectangles);
 
         for (const FRectangle& Rectangle : Rectangles)
         {
@@ -138,6 +141,20 @@ void FRichTextBlock::SetRuns(const TArray<FTextRun>& InRuns)
     RefreshSearchMatches();
 }
 
+void FRichTextBlock::SetRunsAndSearchText(const TArray<FTextRun>& InRuns, const String& InSearchText)
+{
+    Layout.Clear();
+    for (const FTextRun& Run : InRuns)
+    {
+        Layout.AppendRun(Run);
+    }
+
+    ClearSelection();
+
+    SearchText = InSearchText;
+    RefreshSearchMatches();
+}
+
 void FRichTextBlock::AppendRun(const FTextRun& Run)
 {
     Layout.AppendRun(Run);
@@ -150,6 +167,7 @@ void FRichTextBlock::ClearRuns()
 
     ClearSelection();
     SearchMatches.Clear();
+    SearchRanges.Clear();
 }
 
 void FRichTextBlock::SetSearchText(const String& InSearchText)
@@ -254,78 +272,58 @@ void FRichTextBlock::OnDragged(const FCursorEvent& CursorEvent)
 
 void FRichTextBlock::RefreshLayout(int32 AvailableWidth) const
 {
-    const int32 WrapWidth = bAutoWrapText ? Math::Max(0, AvailableWidth) : 0;
-    if (Layout.GetWrapWidth() == WrapWidth && !Layout.GetLines().IsEmpty())
+    const int32 TargetWrapWidth = (WrapWidth > 0) ? WrapWidth : (bAutoWrapText ? Math::Max(0, AvailableWidth) : 0);
+    if (Layout.GetWrapWidth() == TargetWrapWidth && !Layout.GetLines().IsEmpty())
     {
         return;
     }
 
-    Layout.WrapToWidth(WrapWidth);
+    Layout.WrapToWidth(TargetWrapWidth);
 }
 
-void FRichTextBlock::GatherRangeRectangles(int32 StartIndex, int32 EndIndex, TArray<FRectangle>& OutRectangles) const
+void FRichTextBlock::GatherRangeRectangles(const TArray<FTextRange>& Ranges, TArray<FRectangle>& OutRectangles) const
 {
-    if (StartIndex >= EndIndex)
+    const int32 FirstRectangle = OutRectangles.Size();
+    Layout.GatherRangeRectangles(Ranges, OutRectangles);
+
+    const IntVector2 Origin = GetTextBounds().Position;
+    for (int32 Index = FirstRectangle; Index < OutRectangles.Size(); ++Index)
     {
-        return;
-    }
-
-    const FRectangle TextBounds = GetTextBounds();
-    for (int32 LineIndex = 0; LineIndex < Layout.GetLines().Size(); ++LineIndex)
-    {
-        int32 LineStart = 0;
-        int32 LineEnd   = 0;
-
-        if (!Layout.GetLineCharacterRange(LineIndex, LineStart, LineEnd))
-        {
-            continue;
-        }
-
-        const int32 SpanStart = Math::Max(StartIndex, LineStart);
-        const int32 SpanEnd   = Math::Min(EndIndex, LineEnd);
-
-        if (SpanStart >= SpanEnd)
-        {
-            continue;
-        }
-
-        const FRectangle FirstBounds = Layout.GetCharacterBounds(SpanStart);
-        const FRectangle LastBounds  = Layout.GetCharacterBounds(SpanEnd - 1);
-
-        FRectangle Rectangle;
-        Rectangle.Position = TextBounds.Position + FirstBounds.Position;
-        Rectangle.Width    = LastBounds.GetRight() - FirstBounds.Position.X;
-        Rectangle.Height   = Math::Max(FirstBounds.Height, LastBounds.Height);
-
-        OutRectangles.Add(Rectangle);
+        OutRectangles[Index].Position += Origin;
     }
 }
 
 void FRichTextBlock::RefreshSearchMatches()
 {
     SearchMatches.Clear();
+    SearchRanges.Clear();
 
     if (SearchText.IsEmpty())
     {
         return;
     }
 
-    const String Text        = Layout.GetText();
-    const int32  MatchLength = SearchText.Length();
+    const String& Text        = Layout.GetText();
+    const int32   MatchLength = SearchText.Length();
+    const int32   TextLength  = Text.Length();
 
-    for (int32 Index = 0; Index + MatchLength <= Text.Length(); ++Index)
+    if (MatchLength <= 0 || TextLength < MatchLength)
     {
-        bool bIsMatch = true;
-        for (int32 Offset = 0; Offset < MatchLength && bIsMatch; ++Offset)
+        return;
+    }
+
+    for (int32 Index = Text.Find(SearchText.Data(), 0); Index >= 0 && Index + MatchLength <= TextLength;)
+    {
+        SearchMatches.Add(Index);
+        SearchRanges.Emplace(Index, Index + MatchLength);
+
+        const int32 NextIndex = Index + MatchLength;
+        if (NextIndex + MatchLength > TextLength)
         {
-            bIsMatch = Text[Index + Offset] == SearchText[Offset];
+            break;
         }
 
-        if (bIsMatch)
-        {
-            SearchMatches.Add(Index);
-            Index += MatchLength - 1;
-        }
+        Index = Text.Find(SearchText.Data(), NextIndex);
     }
 }
 
