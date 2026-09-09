@@ -2,14 +2,6 @@
 
 static FUIStyle GDefaultStyle;
 
-FUIStyle::FUIStyle()
-    : Colors()
-    , Metrics()
-    , NormalFont(nullptr)
-    , MonospaceFont(nullptr)
-{
-}
-
 const FUIStyle& FUIStyle::GetDefault()
 {
     return GDefaultStyle;

@@ -6,6 +6,8 @@
 #include "Core/Math/Math.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 
+constexpr uint8 LOG_VIEW_ALL_SEVERITIES = 0x7;
+
 TSharedPtr<FLogView> FLogView::Create(const FDesc& Desc)
 {
     TSharedPtr<FLogView> NewView = MakeSharedPtr<FLogView>();
@@ -23,7 +25,7 @@ FLogView::FLogView()
     , PendingLines()
     , Lines()
     , SearchText()
-    , MinimumSeverity(ELogSeverity::Info)
+    , VisibleSeverities(LOG_VIEW_ALL_SEVERITIES)
     , MaxLineCount(DefaultMaxLineCount)
     , bFilterToMatches(false)
     , bAutoScroll(true)
@@ -42,9 +44,10 @@ void FLogView::Initialize(const FDesc& Desc)
 {
     Font                = Desc.Font;
     MaxLineCount        = Math::Max(1, Desc.MaxLineCount);
-    MinimumSeverity     = Desc.MinimumSeverity;
     bAutoScroll         = Desc.bAutoScroll;
     bShowSeverityPrefix = Desc.bShowSeverityPrefix;
+
+    SetMinimumSeverity(Desc.MinimumSeverity);
 
     FRichTextBlock::FDesc TextDesc;
     TextDesc.Margin        = FMargin(6, 4);
@@ -110,15 +113,30 @@ void FLogView::UnregisterFromLogger()
     }
 }
 
-void FLogView::SetMinimumSeverity(ELogSeverity InMinimumSeverity)
+void FLogView::SetSeverityVisible(ELogSeverity Severity, bool bIsVisible)
 {
-    if (MinimumSeverity == InMinimumSeverity)
+    const uint8 Bit  = GetSeverityBit(Severity);
+    const uint8 Mask = bIsVisible ? (VisibleSeverities | Bit) : static_cast<uint8>(VisibleSeverities & ~Bit);
+
+    if (VisibleSeverities == Mask)
     {
         return;
     }
 
-    MinimumSeverity = InMinimumSeverity;
-    bLayoutIsStale  = true;
+    VisibleSeverities = Mask;
+    bLayoutIsStale    = true;
+}
+
+bool FLogView::IsSeverityVisible(ELogSeverity Severity) const
+{
+    return (VisibleSeverities & GetSeverityBit(Severity)) != 0;
+}
+
+void FLogView::SetMinimumSeverity(ELogSeverity InMinimumSeverity)
+{
+    SetSeverityVisible(ELogSeverity::Info, ELogSeverity::Info >= InMinimumSeverity);
+    SetSeverityVisible(ELogSeverity::Warning, ELogSeverity::Warning >= InMinimumSeverity);
+    SetSeverityVisible(ELogSeverity::Error, ELogSeverity::Error >= InMinimumSeverity);
 }
 
 void FLogView::SetSearchText(const String& InSearchText, bool bInFilterToMatches)
@@ -295,7 +313,7 @@ void FLogView::RebuildLayout()
 
 bool FLogView::IsLineVisible(const FLogLine& Line) const
 {
-    if (Line.Severity < MinimumSeverity)
+    if (!IsSeverityVisible(Line.Severity))
     {
         return false;
     }
@@ -329,5 +347,20 @@ const CHAR* FLogView::GetSeverityPrefix(ELogSeverity Severity)
 
         default:
             return "[Info] ";
+    }
+}
+
+uint8 FLogView::GetSeverityBit(ELogSeverity Severity)
+{
+    switch (Severity)
+    {
+        case ELogSeverity::Warning:
+            return 0x2;
+
+        case ELogSeverity::Error:
+            return 0x4;
+
+        default:
+            return 0x1;
     }
 }

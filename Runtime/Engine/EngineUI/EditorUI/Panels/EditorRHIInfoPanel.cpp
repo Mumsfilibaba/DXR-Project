@@ -109,10 +109,7 @@ bool FEditorRHIInfoPanel::Initialize()
 
 bool FEditorRHIInfoPanel::BuildOverview(const TSharedPtr<FVerticalBox>& InColumn)
 {
-    FPropertyTable::FDesc TableDesc;
-    TableDesc.Font = FEditorStyle::GetFonts().Body;
-
-    TSharedPtr<FPropertyTable> Table = FPropertyTable::Create(TableDesc);
+    TSharedPtr<FPropertyTable> Table = FPropertyTable::Create(FEditorStyle::MakeDataTableDesc());
     if (!Table)
     {
         return false;
@@ -134,10 +131,7 @@ bool FEditorRHIInfoPanel::BuildOverview(const TSharedPtr<FVerticalBox>& InColumn
 
 bool FEditorRHIInfoPanel::BuildCounters(const TSharedPtr<FVerticalBox>& InColumn)
 {
-    FPropertyTable::FDesc TableDesc;
-    TableDesc.Font = FEditorStyle::GetFonts().Body;
-
-    TSharedPtr<FPropertyTable> Table = FPropertyTable::Create(TableDesc);
+    TSharedPtr<FPropertyTable> Table = FPropertyTable::Create(FEditorStyle::MakeDataTableDesc());
     if (!Table)
     {
         return false;
@@ -251,22 +245,12 @@ void FEditorRHIInfoPanel::RebuildDetailSections()
     DetailSections.Clear();
     DetailSections.Reserve(ScratchGroups.Size());
 
-    FPropertyTable::FDesc TableDesc;
-    TableDesc.Font = FEditorStyle::GetFonts().Body;
-
     for (const CHAR* GroupName : ScratchGroups)
     {
         FStatGroupSection GroupSection;
         GroupSection.GroupName = GroupName;
-        GroupSection.Table     = FPropertyTable::Create(TableDesc);
-
-        FExpander::FDesc ExpanderDesc;
-        ExpanderDesc.Label       = GroupName;
-        ExpanderDesc.Font        = FEditorStyle::GetFonts().BodyBold;
-        ExpanderDesc.Content     = GroupSection.Table;
-        ExpanderDesc.bIsExpanded = false;
-
-        GroupSection.Section = FExpander::Create(ExpanderDesc);
+        GroupSection.Table     = FPropertyTable::Create(FEditorStyle::MakeDataTableDesc());
+        GroupSection.Section   = FExpander::Create(FEditorStyle::MakeExpanderDesc(GroupName, GroupSection.Table, false));
 
         DetailsColumn->AddSlot(GroupSection.Section);
         DetailSections.Emplace(GroupSection);

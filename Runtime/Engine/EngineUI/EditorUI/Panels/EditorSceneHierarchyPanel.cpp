@@ -9,10 +9,12 @@
 #include "Application/Application.h"
 #include "Application/ElementPath.h"
 #include "Application/Draw/DrawCommandList.h"
+#include "Engine/World/ActorFilter.h"
+#include "Engine/EngineUI/EditorUI/EditorIcons.h"
+#include "Application/Elements/Border.h"
 #include "Application/Elements/Box.h"
 #include "Application/Elements/EditableText.h"
 #include "Application/Elements/SearchBox.h"
-#include "Application/Elements/ToolBar.h"
 #include "Application/Elements/TreeView.h"
 #include "Application/Input/Keys.h"
 #include "Application/Menus/DragDropService.h"
@@ -20,11 +22,17 @@
 #include "Application/Menus/MenuItem.h"
 #include "Application/Menus/MenuStack.h"
 
-// Kept from the ImGui outliner so both editor stacks name an actor drag the same thing
 static const CHAR* GActorDragDropPayloadId = "SCENE_HIERARCHY_ACTOR";
+static const CHAR* GFilterTypeLabel = "Filter";
 
-// The stroke the row under the cursor is outlined with while a drag is over it, in pixels
 constexpr float DROP_INDICATOR_THICKNESS = 2.0f;
+
+constexpr int32 HIERARCHY_ROW_HEIGHT = 30;
+
+constexpr int32 HIERARCHY_TYPE_COLUMN_WIDTH = 120;
+
+constexpr int32 HIERARCHY_HEADER_HEIGHT  = 42;
+constexpr int32 HIERARCHY_HEADER_PADDING = 4;
 
 static const EEditorLightType GPlaceableLightTypes[] =
 {
@@ -45,9 +53,21 @@ DECLARE_DELEGATE(FOnHierarchyRenameCommitted, const TSharedPtr<FTreeItem>& /*Ite
 /** @brief Called with the dragged rows once they were dropped, whose target is null for the space below the rows. */
 DECLARE_DELEGATE(FOnHierarchyItemsDropped, const TArray<TSharedPtr<FTreeItem>>& /*Items*/, const TSharedPtr<FTreeItem>& /*TargetItem*/);
 
+static FHierarchyNode* GetItemNode(const TSharedPtr<FTreeItem>& Item)
+{
+    return Item ? static_cast<FHierarchyNode*>(Item->UserData) : nullptr;
+}
+
 static FActor* GetItemActor(const TSharedPtr<FTreeItem>& Item)
 {
-    return Item ? static_cast<FActor*>(Item->UserData) : nullptr;
+    const FHierarchyNode* Node = GetItemNode(Item);
+    return Node ? Node->Actor : nullptr;
+}
+
+static FActorFilter* GetItemFilter(const TSharedPtr<FTreeItem>& Item)
+{
+    const FHierarchyNode* Node = GetItemNode(Item);
+    return Node ? Node->Filter : nullptr;
 }
 
 static bool CanAttachActorTo(FActor* DraggedActor, FActor* TargetActor)
@@ -63,6 +83,50 @@ static bool CanAttachActorTo(FActor* DraggedActor, FActor* TargetActor)
     }
 
     return DraggedActor->GetParentActor() != TargetActor;
+}
+
+static bool CanReparentFilterTo(FActorFilter* DraggedFilter, FActorFilter* TargetFilter)
+{
+    if (!DraggedFilter || DraggedFilter == TargetFilter)
+    {
+        return false;
+    }
+
+    if (TargetFilter && TargetFilter->IsDescendantOf(DraggedFilter))
+    {
+        return false;
+    }
+
+    return DraggedFilter->GetParentFilter() != TargetFilter;
+}
+
+static bool CanDropItemOn(const TSharedPtr<FTreeItem>& Item, const TSharedPtr<FTreeItem>& TargetItem)
+{
+    FActor*       TargetActor  = GetItemActor(TargetItem);
+    FActorFilter* TargetFilter = GetItemFilter(TargetItem);
+
+    if (FActorFilter* Filter = GetItemFilter(Item))
+    {
+        return !TargetActor && CanReparentFilterTo(Filter, TargetFilter);
+    }
+
+    FActor* Actor = GetItemActor(Item);
+    if (!Actor)
+    {
+        return false;
+    }
+
+    if (TargetActor)
+    {
+        return CanAttachActorTo(Actor, TargetActor);
+    }
+
+    if (TargetFilter)
+    {
+        return Actor->GetFilter() != TargetFilter;
+    }
+
+    return Actor->GetParentActor() != nullptr || Actor->GetFilter() != nullptr;
 }
 
 static IntVector2 ScreenToClient(const TSharedPtr<FVisualElement>& Element, const IntVector2& ScreenPosition)
@@ -348,7 +412,6 @@ int32 FEditorSceneHierarchyView::OnDraw(const FDrawGeometry& AllottedGeometry, F
     const FUIStyle& Style = FUIStyle::GetDefault();
 
     int32 MaxLayerId = LayerId;
-
     if (TreeView)
     {
         const FDrawGeometry TreeGeometry(TreeView->GetContentRectangle(), AllottedGeometry.Scale);
@@ -356,6 +419,7 @@ int32 FEditorSceneHierarchyView::OnDraw(const FDrawGeometry& AllottedGeometry, F
     }
 
     MaxLayerId += 1;
+
     OutCommandList.PushClip(MaxLayerId, AllottedGeometry.Bounds);
 
     if (bIsDragging && bIsCursorInsideView && TreeView)
@@ -375,6 +439,7 @@ int32 FEditorSceneHierarchyView::OnDraw(const FDrawGeometry& AllottedGeometry, F
             const FCornerRadii Radii(Style.Metrics.CornerRadius);
 
             MaxLayerId += 1;
+
             OutCommandList.AddBox(MaxLayerId, FieldBounds, Style.Colors.WindowBackground, Radii);
             OutCommandList.AddBoxOutline(MaxLayerId, FieldBounds, Style.Colors.Accent, Style.Metrics.BorderThickness, Radii);
 
@@ -419,6 +484,7 @@ FEventResponse FEditorSceneHierarchyView::OnMouseButtonDown(const FCursorEvent& 
     const TSharedPtr<FTreeItem> Item           = TreeView ? TreeView->FindItemAt(ClientPosition) : nullptr;
 
     OnContextMenu.ExecuteIfBound(Item, CursorEvent.GetScreenPosition());
+
     return FEventResponse::Handled();
 }
 
@@ -460,7 +526,6 @@ FEventResponse FEditorSceneHierarchyView::OnMouseButtonUp(const FCursorEvent& Cu
 FEventResponse FEditorSceneHierarchyView::OnKeyDown(const FKeyEvent& KeyEvent)
 {
     const FKey Key = KeyEvent.GetKey();
-
     if (Key == Keys::Escape && bIsDragging)
     {
         if (FApplication::IsInitialized())
@@ -624,17 +689,9 @@ void FEditorSceneHierarchyView::ClearDragState()
 
 bool FEditorSceneHierarchyView::CanDropOn(const TSharedPtr<FTreeItem>& TargetItem) const
 {
-    FActor* TargetActor = GetItemActor(TargetItem);
-
     for (const TSharedPtr<FTreeItem>& Item : DraggedItems)
     {
-        FActor* Actor = GetItemActor(Item);
-        if (!Actor)
-        {
-            continue;
-        }
-
-        if (TargetActor ? CanAttachActorTo(Actor, TargetActor) : (Actor->GetParentActor() != nullptr))
+        if (CanDropItemOn(Item, TargetItem))
         {
             return true;
         }
@@ -648,8 +705,10 @@ FEditorSceneHierarchyPanel::FEditorSceneHierarchyPanel(FEditorEngine* InEditorEn
     , HierarchyView(nullptr)
     , TreeView(nullptr)
     , SearchBox(nullptr)
-    , ToolBar(nullptr)
+    , Nodes()
     , ItemsByActor()
+    , ItemsByFilter()
+    , SelectedFilter(nullptr)
     , WorldRevision(0)
     , bIsSyncingSelection(false)
 {
@@ -662,11 +721,16 @@ FEditorSceneHierarchyPanel::~FEditorSceneHierarchyPanel()
 bool FEditorSceneHierarchyPanel::Initialize()
 {
     FTreeView::FDesc TreeDesc;
-    TreeDesc.Font               = FEditorStyle::GetFonts().Body;
-    TreeDesc.bAllowMultiSelect  = true;
-    TreeDesc.OnSelectionChanged = FOnTreeSelectionChanged::CreateRaw(this, &FEditorSceneHierarchyPanel::OnTreeSelectionChanged);
-    TreeDesc.OnItemActivated    = FOnTreeItemActivated::CreateRaw(this, &FEditorSceneHierarchyPanel::OnTreeItemActivated);
-    TreeDesc.OnDragDetected     = FOnTreeItemDragDetected::CreateRaw(this, &FEditorSceneHierarchyPanel::OnTreeDragDetected);
+    TreeDesc.Font                = FEditorStyle::GetFonts().Body;
+    TreeDesc.RowHeight           = HIERARCHY_ROW_HEIGHT;
+    TreeDesc.TypeColumnWidth     = HIERARCHY_TYPE_COLUMN_WIDTH;
+    TreeDesc.bAlternateRowColors = true;
+    TreeDesc.bAllowMultiSelect   = true;
+    TreeDesc.OnSelectionChanged  = FOnTreeSelectionChanged::CreateRaw(this, &FEditorSceneHierarchyPanel::OnTreeSelectionChanged);
+    TreeDesc.OnItemActivated     = FOnTreeItemActivated::CreateRaw(this, &FEditorSceneHierarchyPanel::OnTreeItemActivated);
+    TreeDesc.OnDragDetected      = FOnTreeItemDragDetected::CreateRaw(this, &FEditorSceneHierarchyPanel::OnTreeDragDetected);
+
+    FEditorStyle::ApplyTreeViewArrows(TreeDesc);
 
     TreeView = FTreeView::Create(TreeDesc);
     if (!TreeView)
@@ -685,12 +749,6 @@ bool FEditorSceneHierarchyPanel::Initialize()
     HierarchyView->OnRenameCommitted = FOnHierarchyRenameCommitted::CreateRaw(this, &FEditorSceneHierarchyPanel::OnRenameCommitted);
     HierarchyView->OnItemsDropped    = FOnHierarchyItemsDropped::CreateRaw(this, &FEditorSceneHierarchyPanel::OnItemsDropped);
 
-    ToolBar = BuildToolBar();
-    if (!ToolBar)
-    {
-        return false;
-    }
-
     SearchBox = FSearchBox::Create(FEditorStyle::MakeSearchBoxDesc("Search Actors",
         FOnSearchTextChanged::CreateRaw(this, &FEditorSceneHierarchyPanel::OnSearchTextChanged)));
 
@@ -699,43 +757,20 @@ bool FEditorSceneHierarchyPanel::Initialize()
         return false;
     }
 
+    FBorder::FDesc HeaderDesc;
+    HeaderDesc.Content         = SearchBox;
+    HeaderDesc.BackgroundColor = FUIStyle::GetDefault().Header.Fill;
+    HeaderDesc.Padding         = FMargin(HIERARCHY_HEADER_PADDING);
+    HeaderDesc.MinHeight       = HIERARCHY_HEADER_HEIGHT;
+
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
-    Column->AddSlot(SearchBox).SetPadding(FMargin(4, 4, 4, 4));
-    Column->AddSlot(ToolBar);
+    Column->AddSlot(FBorder::Create(HeaderDesc));
     Column->AddSlot(HierarchyView).SetFillCoefficient(1.0f);
 
     Content = Column;
 
     RebuildTree();
     return true;
-}
-
-TSharedPtr<FToolBar> FEditorSceneHierarchyPanel::BuildToolBar()
-{
-    FToolBar::FDesc Desc;
-    Desc.Font           = FEditorStyle::GetFonts().Body;
-    Desc.IconSize       = FEditorStyle::IconSize;
-    Desc.bHasBackground = true;
-
-    TSharedPtr<FToolBar> Bar = FToolBar::Create(Desc);
-    if (!Bar)
-    {
-        return nullptr;
-    }
-
-    Bar->AddButton(FToolBarItemDesc().SetLabel("Expand"), FOnClicked::CreateLambda([this]()
-    {
-        TreeView->ExpandAll();
-    }));
-
-    Bar->AddButton(FToolBarItemDesc().SetLabel("Collapse"), FOnClicked::CreateLambda([this]()
-    {
-        TreeView->CollapseAll();
-    }));
-
-    Bar->AddFlexibleSpace();
-
-    return Bar;
 }
 
 TSharedPtr<FMenu> FEditorSceneHierarchyPanel::BuildRowContextMenu()
@@ -748,7 +783,21 @@ TSharedPtr<FMenu> FEditorSceneHierarchyPanel::BuildRowContextMenu()
         return nullptr;
     }
 
-    const int32 SelectedCount = EditorEngine->GetSelectedActors().Size();
+    const int32 SelectedCount     = EditorEngine->GetSelectedActors().Size();
+    const bool  bHasActorSelected = SelectedCount > 0;
+    const bool  bHasFilterOnly    = !bHasActorSelected && SelectedFilter != nullptr;
+
+    FActorFilter* ContextFilter = GetContextFilter();
+
+    FMenuItem::FDesc AddFilterDesc;
+    AddFilterDesc.Label       = "Add Filter";
+    AddFilterDesc.Font        = Font;
+    AddFilterDesc.OnActivated = FOnMenuItemActivated::CreateLambda([this, ContextFilter]()
+    {
+        AddFilter(ContextFilter);
+    });
+
+    Menu->AddItem(FMenuItem::Create(AddFilterDesc));
 
     FMenuItem::FDesc RenameDesc;
     RenameDesc.Label        = "Rename";
@@ -757,14 +806,16 @@ TSharedPtr<FMenu> FEditorSceneHierarchyPanel::BuildRowContextMenu()
     RenameDesc.OnActivated  = FOnMenuItemActivated::CreateLambda([this]()
     {
         FActor* Actor = EditorEngine->GetSelectedActor();
-        if (TSharedPtr<FTreeItem>* Item = Actor ? ItemsByActor.Find(Actor) : nullptr)
+
+        TSharedPtr<FTreeItem>* Item = Actor ? ItemsByActor.Find(Actor) : (SelectedFilter ? ItemsByFilter.Find(SelectedFilter) : nullptr);
+        if (Item)
         {
             HierarchyView->BeginRename(*Item);
         }
     });
 
     TSharedPtr<FMenuItem> RenameItem = FMenuItem::Create(RenameDesc);
-    RenameItem->SetEnabled(SelectedCount == 1);
+    RenameItem->SetEnabled(SelectedCount == 1 || bHasFilterOnly);
 
     Menu->AddItem(RenameItem);
 
@@ -775,10 +826,9 @@ TSharedPtr<FMenu> FEditorSceneHierarchyPanel::BuildRowContextMenu()
     DeleteDesc.OnActivated  = FOnMenuItemActivated::CreateRaw(this, &FEditorSceneHierarchyPanel::OnDeleteRequested);
 
     TSharedPtr<FMenuItem> DeleteItem = FMenuItem::Create(DeleteDesc);
-    DeleteItem->SetEnabled(SelectedCount > 0);
+    DeleteItem->SetEnabled(bHasActorSelected || bHasFilterOnly);
 
     Menu->AddItem(DeleteItem);
-
     Menu->AddSeparator();
 
     if (TSharedPtr<FMenu> PlaceActorMenu = BuildPlaceActorMenu(EditorEngine))
@@ -804,8 +854,11 @@ void FEditorSceneHierarchyPanel::Release()
     HierarchyView.Reset();
     TreeView.Reset();
     SearchBox.Reset();
-    ToolBar.Reset();
     ItemsByActor.Clear();
+    ItemsByFilter.Clear();
+    Nodes.Clear();
+
+    SelectedFilter = nullptr;
 
     FEditorPanel::Release();
 }
@@ -823,6 +876,13 @@ uint64 FEditorSceneHierarchyPanel::ComputeWorldRevision() const
     {
         Revision = Revision * 31 + THash<String>::GetHash(Actor->GetName());
         Revision = Revision * 31 + reinterpret_cast<uint64>(Actor->GetParentActor());
+        Revision = Revision * 31 + reinterpret_cast<uint64>(Actor->GetFilter());
+    }
+
+    for (FActorFilter* Filter : World->GetActorFilters())
+    {
+        Revision = Revision * 31 + THash<String>::GetHash(Filter->GetName());
+        Revision = Revision * 31 + reinterpret_cast<uint64>(Filter->GetParentFilter());
     }
 
     return Revision;
@@ -845,14 +905,24 @@ void FEditorSceneHierarchyPanel::Tick(float /*DeltaTime*/)
 void FEditorSceneHierarchyPanel::RebuildTree()
 {
     ItemsByActor.Clear();
+    ItemsByFilter.Clear();
+    Nodes.Clear();
 
     TArray<TSharedPtr<FTreeItem>> Roots;
 
     if (FWorld* World = EditorEngine->GetWorld())
     {
+        for (FActorFilter* Filter : World->GetActorFilters())
+        {
+            if (!Filter->GetParentFilter())
+            {
+                AddFilterItem(Filter, nullptr, Roots);
+            }
+        }
+
         for (FActor* Actor : World->GetActors())
         {
-            if (!Actor->GetParentActor())
+            if (!Actor->GetParentActor() && !Actor->GetFilter())
             {
                 AddActorItem(Actor, nullptr, Roots);
             }
@@ -863,10 +933,57 @@ void FEditorSceneHierarchyPanel::RebuildTree()
     SyncSelectionFromEngine();
 }
 
+TSharedPtr<FTreeItem> FEditorSceneHierarchyPanel::CreateItem(const String& Label, FActor* Actor, FActorFilter* Filter)
+{
+    TUniquePtr<FHierarchyNode>& Node = Nodes.Emplace(new FHierarchyNode());
+    Node->Actor  = Actor;
+    Node->Filter = Filter;
+
+    TSharedPtr<FTreeItem> Item = FTreeItem::Create(Label, Node.Get());
+    Item->bIsExpanded = true;
+
+    return Item;
+}
+
+void FEditorSceneHierarchyPanel::AddFilterItem(FActorFilter* Filter, const TSharedPtr<FTreeItem>& ParentItem, TArray<TSharedPtr<FTreeItem>>& OutRoots)
+{
+    TSharedPtr<FTreeItem> Item = CreateItem(Filter->GetName(), nullptr, Filter);
+    Item->TypeLabel    = GFilterTypeLabel;
+    Item->Icon         = FEditorIcons::FolderSmall;
+    Item->ExpandedIcon = FEditorIcons::FolderOpenSmall;
+
+    if (ParentItem)
+    {
+        ParentItem->AddChild(Item);
+    }
+    else
+    {
+        OutRoots.Emplace(Item);
+    }
+
+    ItemsByFilter.Add(Filter, Item);
+
+    for (FActorFilter* Child : Filter->GetChildFilters())
+    {
+        AddFilterItem(Child, Item, OutRoots);
+    }
+
+    if (FWorld* World = EditorEngine->GetWorld())
+    {
+        for (FActor* Actor : World->GetActors())
+        {
+            if (Actor->GetFilter() == Filter && !Actor->GetParentActor())
+            {
+                AddActorItem(Actor, Item, OutRoots);
+            }
+        }
+    }
+}
+
 void FEditorSceneHierarchyPanel::AddActorItem(FActor* Actor, const TSharedPtr<FTreeItem>& ParentItem, TArray<TSharedPtr<FTreeItem>>& OutRoots)
 {
-    TSharedPtr<FTreeItem> Item = FTreeItem::Create(Actor->GetName(), Actor);
-    Item->bIsExpanded = true;
+    TSharedPtr<FTreeItem> Item = CreateItem(Actor->GetName(), Actor, nullptr);
+    Item->TypeLabel = Actor->GetTypeLabel();
 
     if (ParentItem)
     {
@@ -901,6 +1018,18 @@ void FEditorSceneHierarchyPanel::SyncSelectionFromEngine()
         }
     }
 
+    if (Selection.IsEmpty() && SelectedFilter)
+    {
+        if (TSharedPtr<FTreeItem>* Item = ItemsByFilter.Find(SelectedFilter))
+        {
+            Selection.Emplace(*Item);
+        }
+        else
+        {
+            SelectedFilter = nullptr;
+        }
+    }
+
     if (Selection.Size() == TreeView->GetSelection().Size())
     {
         bool bIsSame = true;
@@ -927,11 +1056,17 @@ void FEditorSceneHierarchyPanel::OnTreeSelectionChanged(const TArray<TSharedPtr<
     TArray<FActor*> Actors;
     Actors.Reserve(Selection.Size());
 
+    SelectedFilter = nullptr;
+
     for (const TSharedPtr<FTreeItem>& Item : Selection)
     {
-        if (FActor* Actor = static_cast<FActor*>(Item->UserData))
+        if (FActor* Actor = GetItemActor(Item))
         {
             Actors.Emplace(Actor);
+        }
+        else if (FActorFilter* Filter = GetItemFilter(Item))
+        {
+            SelectedFilter = Filter;
         }
     }
 
@@ -944,7 +1079,7 @@ void FEditorSceneHierarchyPanel::OnTreeSelectionChanged(const TArray<TSharedPtr<
 
 void FEditorSceneHierarchyPanel::OnTreeItemActivated(const TSharedPtr<FTreeItem>& Item)
 {
-    if (FActor* Actor = static_cast<FActor*>(Item->UserData))
+    if (FActor* Actor = GetItemActor(Item))
     {
         if (IEditorViewportHost* Host = EditorEngine->GetViewportHost())
         {
@@ -977,6 +1112,17 @@ void FEditorSceneHierarchyPanel::OnRowContextMenu(const TSharedPtr<FTreeItem>& I
             EditorEngine->SetSelectedActor(Actor);
         }
     }
+    else if (TreeView)
+    {
+        TArray<TSharedPtr<FTreeItem>> Selection;
+        if (Item)
+        {
+            Selection.Emplace(Item);
+        }
+
+        TreeView->SetSelection(Selection);
+        OnTreeSelectionChanged(Selection);
+    }
 
     TSharedPtr<FMenu> Menu = BuildRowContextMenu();
     if (!Menu)
@@ -996,46 +1142,109 @@ void FEditorSceneHierarchyPanel::OnRowContextMenu(const TSharedPtr<FTreeItem>& I
 void FEditorSceneHierarchyPanel::OnDeleteRequested()
 {
     const TArray<FActor*> SelectedActors = EditorEngine->GetSelectedActors();
-    if (SelectedActors.IsEmpty())
+    if (!SelectedActors.IsEmpty())
+    {
+        EditorEngine->RequestDeleteActors(SelectedActors);
+        return;
+    }
+
+    if (FWorld* World = SelectedFilter ? EditorEngine->GetWorld() : nullptr)
+    {
+        World->DestroyActorFilter(SelectedFilter);
+
+        SelectedFilter = nullptr;
+        WorldRevision  = 0;
+    }
+}
+
+void FEditorSceneHierarchyPanel::AddFilter(FActorFilter* ParentFilter)
+{
+    FWorld* World = EditorEngine->GetWorld();
+    if (!World)
     {
         return;
     }
 
-    EditorEngine->RequestDeleteActors(SelectedActors);
+    String Name("New Filter");
+    for (int32 Suffix = 1; World->FindActorFilter(Name, ParentFilter); ++Suffix)
+    {
+        Name = String::Printf("New Filter %d", Suffix);
+    }
+
+    if (!World->CreateActorFilter(Name, ParentFilter))
+    {
+        return;
+    }
+
+    WorldRevision = 0;
+}
+
+FActorFilter* FEditorSceneHierarchyPanel::GetContextFilter() const
+{
+    if (SelectedFilter)
+    {
+        return SelectedFilter;
+    }
+
+    FActor* Actor = EditorEngine->GetSelectedActor();
+    return Actor ? Actor->GetFilter() : nullptr;
 }
 
 void FEditorSceneHierarchyPanel::OnRenameCommitted(const TSharedPtr<FTreeItem>& Item, const String& NewName)
 {
-    FActor* Actor = GetItemActor(Item);
-    if (!Actor || NewName.IsEmpty())
+    if (NewName.IsEmpty())
     {
         return;
     }
 
-    Actor->SetName(NewName);
+    if (FActor* Actor = GetItemActor(Item))
+    {
+        Actor->SetName(NewName);
+    }
+    else if (FActorFilter* Filter = GetItemFilter(Item))
+    {
+        Filter->SetName(NewName);
+        WorldRevision = 0;
+    }
 }
 
 void FEditorSceneHierarchyPanel::OnItemsDropped(const TArray<TSharedPtr<FTreeItem>>& Items, const TSharedPtr<FTreeItem>& TargetItem)
 {
-    FActor* TargetActor = GetItemActor(TargetItem);
+    FWorld* World = EditorEngine->GetWorld();
+    if (!World)
+    {
+        return;
+    }
+
+    FActor*       TargetActor  = GetItemActor(TargetItem);
+    FActorFilter* TargetFilter = GetItemFilter(TargetItem);
 
     for (const TSharedPtr<FTreeItem>& Item : Items)
     {
-        FActor* Actor = GetItemActor(Item);
-        if (!Actor)
+        if (!CanDropItemOn(Item, TargetItem))
         {
             continue;
         }
 
-        if (!TargetActor)
+        if (FActorFilter* Filter = GetItemFilter(Item))
         {
-            Actor->DetachFromParent(EAttachmentRule::KeepWorld);
+            World->SetActorFilterParent(Filter, TargetFilter);
+            continue;
         }
-        else if (CanAttachActorTo(Actor, TargetActor))
+
+        FActor* Actor = GetItemActor(Item);
+        if (TargetActor)
         {
             Actor->AttachToActor(TargetActor, EAttachmentRule::KeepWorld);
         }
+        else
+        {
+            Actor->DetachFromParent(EAttachmentRule::KeepWorld);
+            Actor->SetFilter(TargetFilter);
+        }
     }
+
+    WorldRevision = 0;
 }
 
 void FEditorSceneHierarchyPanel::OnActorRemoved(FActor* Actor)

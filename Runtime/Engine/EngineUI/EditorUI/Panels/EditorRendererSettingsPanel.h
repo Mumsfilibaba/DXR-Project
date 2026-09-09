@@ -21,6 +21,15 @@ enum class ERendererSettingKind : uint8
     ComboValues,
 };
 
+struct FRendererSubsection
+{
+    /** @brief The name of the nested section, which matches the Section of the settings it holds. */
+    const CHAR* Section;
+
+    /** @brief The name of the section it hangs inside. */
+    const CHAR* ParentSection;
+};
+
 struct FRendererSetting
 {
     const CHAR*          Section;

@@ -3,7 +3,6 @@
 #include "Application/Draw/DrawCommandList.h"
 #include "Core/Math/Math.h"
 
-constexpr int32 EXPANDER_HEADER_INSET       = 4;
 constexpr int32 EXPANDER_DISCLOSURE_SIZE    = 8;
 constexpr int32 EXPANDER_DISCLOSURE_SPACING = 4;
 
@@ -46,9 +45,14 @@ FExpander::FExpander()
     , Font(nullptr)
     , Label()
     , ContentPadding(12, 4, 4, 4)
+    , Style()
+    , ExpandedArrow()
+    , CollapsedArrow()
+    , ArrowSize(16)
     , HeaderHeight(FUIStyle::GetDefault().Metrics.RowHeight)
     , bIsExpanded(true)
     , bIsHeaderHovered(false)
+    , bDrawBottomBorderWhenClosed(true)
     , OnStateChangedDelegate()
 {
 }
@@ -57,19 +61,24 @@ FExpander::~FExpander() = default;
 
 void FExpander::Initialize(const FDesc& Desc)
 {
-    Label                  = Desc.Label;
-    Font                   = Desc.Font;
-    ContentPadding         = Desc.ContentPadding;
-    HeaderHeight           = Math::Max(1, Desc.HeaderHeight);
-    bIsExpanded            = Desc.bIsExpanded;
-    OnStateChangedDelegate = Desc.OnStateChanged;
+    Label                       = Desc.Label;
+    Font                        = Desc.Font;
+    ContentPadding              = Desc.ContentPadding;
+    Style                       = Desc.Style;
+    ExpandedArrow               = Desc.ExpandedArrow;
+    CollapsedArrow              = Desc.CollapsedArrow;
+    ArrowSize                   = Math::Max(1, Desc.ArrowSize);
+    HeaderHeight                = Math::Max(1, Desc.HeaderHeight);
+    bIsExpanded                 = Desc.bIsExpanded;
+    bDrawBottomBorderWhenClosed = Desc.bDrawBottomBorderWhenClosed;
+    OnStateChangedDelegate      = Desc.OnStateChanged;
 
     SetContent(Desc.Content);
 }
 
 IntVector2 FExpander::ComputeDesiredSize() const
 {
-    int32 HeaderWidth = (EXPANDER_HEADER_INSET * 2) + EXPANDER_DISCLOSURE_SIZE + EXPANDER_DISCLOSURE_SPACING;
+    int32 HeaderWidth = Style.FramePadding.GetTotalHorizontal() + GetArrowExtent() + EXPANDER_DISCLOSURE_SPACING;
     if (Font && !Label.IsEmpty())
     {
         HeaderWidth += Font->MeasureWidth(StringView(Label.Data(), Label.Length()));
@@ -122,30 +131,47 @@ void FExpander::FindChildrenContainingPoint(const IntVector2& ClientPosition, FE
 
 int32 FExpander::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    const FUIStyle&  Style        = FUIStyle::GetDefault();
+    const FUIStyle&  DefaultStyle = FUIStyle::GetDefault();
     const FRectangle HeaderBounds = GetHeaderBounds(AllottedGeometry.Bounds);
 
-    const FFloatColor& HeaderFill = bIsHeaderHovered ? Style.Colors.ControlHovered : Style.Colors.ControlNormal;
-    OutCommandList.AddBox(LayerId, HeaderBounds, HeaderFill, FCornerRadii(Style.Metrics.CornerRadius));
+    OutCommandList.AddBox(LayerId, HeaderBounds, Style.Fill, FCornerRadii(Style.CornerRadius));
 
-    const IntVector2 DisclosurePosition(
-        HeaderBounds.Position.X + EXPANDER_HEADER_INSET,
-        HeaderBounds.Position.Y + ((HeaderBounds.Height - EXPANDER_DISCLOSURE_SIZE) / 2));
+    const FUIBrush&  ArrowBrush  = bIsExpanded ? ExpandedArrow : CollapsedArrow;
+    const int32      ArrowExtent = GetArrowExtent();
+    const IntVector2 ArrowPosition(
+        HeaderBounds.Position.X + Style.FramePadding.Left,
+        HeaderBounds.Position.Y + ((HeaderBounds.Height - ArrowExtent) / 2));
 
-    const FRectangle DisclosureBounds(DisclosurePosition, EXPANDER_DISCLOSURE_SIZE, EXPANDER_DISCLOSURE_SIZE);
-    DrawDisclosureTriangle(OutCommandList, LayerId + 1, DisclosureBounds, bIsExpanded, Style.Colors.Text);
+    const FRectangle ArrowBounds(ArrowPosition, ArrowExtent, ArrowExtent);
+    if (ArrowBrush.IsValid())
+    {
+        OutCommandList.AddImage(LayerId + 1, ArrowBounds, ArrowBrush, Style.ArrowTint);
+    }
+    else
+    {
+        DrawDisclosureTriangle(OutCommandList, LayerId + 1, ArrowBounds, bIsExpanded, Style.ArrowTint);
+    }
 
     if (Font && !Label.IsEmpty())
     {
-        const int32      LabelLeft = DisclosureBounds.GetRight() + EXPANDER_DISCLOSURE_SPACING;
+        const int32      LabelLeft  = ArrowBounds.GetRight() + EXPANDER_DISCLOSURE_SPACING;
+        const int32      LabelRight = HeaderBounds.GetRight() - Style.FramePadding.Right;
         const IntVector2 LabelPosition(LabelLeft, HeaderBounds.Position.Y + Font->GetTextBandOffset(HeaderBounds.Height));
-        const FRectangle LabelBounds(LabelPosition, Math::Max(HeaderBounds.GetRight() - EXPANDER_HEADER_INSET - LabelLeft, 0), Font->GetTextBandHeight());
+        const FRectangle LabelBounds(LabelPosition, Math::Max(LabelRight - LabelLeft, 0), Font->GetTextBandHeight());
 
-        OutCommandList.AddText(LayerId + 1, LabelBounds, Label, Font.Get(), Style.Colors.Text);
+        OutCommandList.AddText(LayerId + 1, LabelBounds, Label, Font.Get(), DefaultStyle.Colors.Text);
     }
 
     if (!bIsExpanded || !Content)
     {
+        if (bDrawBottomBorderWhenClosed && Style.BorderThickness > 0.0f)
+        {
+            const int32      Thickness = Math::Max(1, static_cast<int32>(Style.BorderThickness));
+            const FRectangle BorderBounds(IntVector2(HeaderBounds.Position.X, HeaderBounds.GetBottom() - Thickness), HeaderBounds.Width, Thickness);
+
+            OutCommandList.AddBox(LayerId + 1, BorderBounds, Style.BottomBorder);
+        }
+
         return LayerId + 1;
     }
 
@@ -211,4 +237,10 @@ void FExpander::SetLabel(const String& InLabel)
 FRectangle FExpander::GetHeaderBounds(const FRectangle& AllottedBounds) const
 {
     return FRectangle(AllottedBounds.Position, AllottedBounds.Width, Math::Min(HeaderHeight, AllottedBounds.Height));
+}
+
+int32 FExpander::GetArrowExtent() const
+{
+    const bool bHasBrush = ExpandedArrow.IsValid() || CollapsedArrow.IsValid();
+    return bHasBrush ? ArrowSize : EXPANDER_DISCLOSURE_SIZE;
 }

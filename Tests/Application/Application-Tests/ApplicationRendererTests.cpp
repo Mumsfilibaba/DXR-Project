@@ -55,13 +55,31 @@ public:
         bWindowWasStillAlive = InWindow && InWindow->GetPlatformWindow()->IsValid();
     }
 
+    virtual FRHITextureRef RenderElementToTexture(const TSharedPtr<FVisualElement>&, const IntVector2&, float) override final
+    {
+        return nullptr;
+    }
+
+    virtual void RetireTexture(const FRHITextureRef&) override final
+    {
+    }
+
+    virtual void SetPrimaryWindow(const TSharedPtr<FWindow>&) override final
+    {
+    }
+
+    virtual FRHISwapChainRef GetWindowSwapChain(const TSharedPtr<FWindow>&) const override final
+    {
+        return nullptr;
+    }
+
     FDrawCommandList Commands;
     int32            BeginCount;
     int32            EndCount;
     int32            DestroyedCount;
     int32            LastCommandCount;
-    FWindow*  LastBeginWindow;
-    FWindow*  LastDestroyedWindow;
+    FWindow*         LastBeginWindow;
+    FWindow*         LastDestroyedWindow;
     bool             bRefuseWindows;
     bool             bWindowWasStillAlive;
 };

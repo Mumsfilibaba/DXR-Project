@@ -5,7 +5,7 @@
 #include "Core/Math/Math.h"
 
 // Below this a direction is treated as degenerate, which is what a repeated point in a polyline produces
-static constexpr float GDirectionEpsilon = 1.0e-4f;
+constexpr float DIRECTION_EPSILON = 1.0e-4f;
 
 FUIDrawData::FUIDrawData()
     : Vertices()
@@ -409,12 +409,12 @@ void FUIDrawData::AddPolyline(TArrayView<const Vector2> Points, float Thickness,
         float   Scale = HalfThickness;
 
         const float MiterLength = Miter.GetLength();
-        if (MiterLength > GDirectionEpsilon)
+        if (MiterLength > DIRECTION_EPSILON)
         {
             Miter = Miter * (1.0f / MiterLength);
 
             const float CosHalfAngle = Miter.DotProduct(IncomingNormal);
-            if (CosHalfAngle > GDirectionEpsilon)
+            if (CosHalfAngle > DIRECTION_EPSILON)
             {
                 Scale = Math::Min(HalfThickness / CosHalfAngle, HalfThickness * MiterLimit);
             }

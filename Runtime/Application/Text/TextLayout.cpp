@@ -3,7 +3,7 @@
 #include "Application/Text/IFontFace.h"
 #include "Core/Math/Math.h"
 
-static constexpr int32 GFallbackLineHeight = 1;
+constexpr int32 FALLBACK_LINE_HEIGHT = 1;
 
 FTextLayout::FTextLayout()
     : SourceRuns()
@@ -153,7 +153,7 @@ void FTextLayout::FinishLine()
     }
 
     Line.Width    = Width;
-    Line.Height   = Math::Max(Height, GFallbackLineHeight);
+    Line.Height   = Math::Max(Height, FALLBACK_LINE_HEIGHT);
     Line.Baseline = Baseline;
 }
 

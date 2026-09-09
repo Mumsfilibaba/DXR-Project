@@ -6,6 +6,7 @@
 #include "Application/ElementPath.h"
 #include "Application/Docking/Splitter.h"
 #include "Application/Draw/DrawCommandList.h"
+#include "Application/Elements/Border.h"
 #include "Application/Elements/Box.h"
 #include "Application/Elements/Button.h"
 #include "Application/Elements/EditableText.h"
@@ -22,28 +23,28 @@
 #include "Application/Menus/MenuItem.h"
 #include "Application/Menus/MenuStack.h"
 
-// Kept from the ImGui browser so both editor stacks name the same drag the same thing
 static const CHAR* GItemDragDropPayloadId   = "CB_MOVE_ITEM";
 static const CHAR* GFolderDragDropPayloadId = "CB_MOVE_FOLDER";
+static const CHAR* GNewFolderName           = "New folder";
 
-// The stroke a row or a tile is outlined with while a drag is over it, in pixels
 constexpr float DROP_INDICATOR_THICKNESS = 2.0f;
+constexpr float FOLDER_PANEL_FRACTION    = 0.3f;
 
-// The left panel's share of the split at its default width of three hundred, and the least either side takes
-constexpr float FOLDER_PANEL_FRACTION = 0.3f;
-constexpr int32 FOLDER_PANEL_MIN      = 200;
-constexpr int32 CONTENT_PANEL_MIN     = 250;
+constexpr int32 FOLDER_PANEL_MIN  = 200;
+constexpr int32 CONTENT_PANEL_MIN = 250;
 
-// The ring of empty space around each column's contents, in pixels
 constexpr int32 COLUMN_PADDING = 4;
 constexpr int32 CONTENT_INSET  = 8;
 
-// The gap the breadcrumb trail leaves between its entries, and the size of the arrows in it, in pixels
 constexpr int32 BREADCRUMB_GAP            = 6;
 constexpr int32 BREADCRUMB_SEPARATOR_SIZE = 12;
 constexpr int32 BREADCRUMB_NAV_SIZE       = 16;
+constexpr int32 BREADCRUMB_FIELD_PADDING  = 4;
+constexpr float BREADCRUMB_FIELD_CORNER   = 4.0f;
 
-// One tile card, matching the ImGui browser down to the label band the larger icon leaves
+constexpr int32 FOLDER_HEADER_HEIGHT = 42;
+constexpr int32 FOLDER_ROW_HEIGHT    = 24;
+
 constexpr int32 TILE_WIDTH       = 132;
 constexpr int32 TILE_HEIGHT      = 158;
 constexpr int32 TILE_SPACING     = 8;
@@ -51,12 +52,8 @@ constexpr int32 TILE_ICON_SIZE   = 110;
 constexpr int32 TILE_LABEL_INSET = 8;
 constexpr float TILE_CORNER      = 6.0f;
 
-// The share of the header the content filter takes, floored so it stays usable in a narrow panel
 constexpr float CONTENT_SEARCH_FRACTION = 0.25f;
 constexpr int32 CONTENT_SEARCH_MIN      = 120;
-
-// What a folder made from the context menu is called before it is renamed
-static const CHAR* GNewFolderName = "New folder";
 
 /** @brief Called with the target under a point, which is InvalidTarget when the point is over none. */
 DECLARE_RETURN_DELEGATE(FOnBrowserHitTest, int32, const IntVector2& /*ClientPosition*/);
@@ -728,11 +725,14 @@ TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildFolderColumn()
     }
 
     FTreeView::FDesc TreeDesc;
-    TreeDesc.Font               = FEditorStyle::GetFonts().Body;
-    TreeDesc.RowHeight          = FEditorStyle::RowHeight;
-    TreeDesc.bAllowMultiSelect  = false;
-    TreeDesc.OnSelectionChanged = FOnTreeSelectionChanged::CreateRaw(this, &FEditorContentBrowserPanel::OnFolderSelectionChanged);
-    TreeDesc.OnDragDetected     = FOnTreeItemDragDetected::CreateRaw(this, &FEditorContentBrowserPanel::OnFolderDragDetected);
+    TreeDesc.Font                = FEditorStyle::GetFonts().Body;
+    TreeDesc.RowHeight           = FOLDER_ROW_HEIGHT;
+    TreeDesc.bAllowMultiSelect   = false;
+    TreeDesc.bHighlightAncestors = true;
+    TreeDesc.OnSelectionChanged  = FOnTreeSelectionChanged::CreateRaw(this, &FEditorContentBrowserPanel::OnFolderSelectionChanged);
+    TreeDesc.OnDragDetected      = FOnTreeItemDragDetected::CreateRaw(this, &FEditorContentBrowserPanel::OnFolderDragDetected);
+
+    FEditorStyle::ApplyTreeViewArrows(TreeDesc);
 
     FolderTree = FTreeView::Create(TreeDesc);
     if (!FolderTree)
@@ -761,8 +761,14 @@ TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildFolderColumn()
         return nullptr;
     }
 
+    FBorder::FDesc HeaderDesc;
+    HeaderDesc.Content         = FolderSearchBox;
+    HeaderDesc.BackgroundColor = FUIStyle::GetDefault().Header.Fill;
+    HeaderDesc.Padding         = FMargin(COLUMN_PADDING);
+    HeaderDesc.MinHeight       = FOLDER_HEADER_HEIGHT;
+
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
-    Column->AddSlot(FolderSearchBox).SetPadding(FMargin(COLUMN_PADDING, COLUMN_PADDING, COLUMN_PADDING, COLUMN_PADDING));
+    Column->AddSlot(FBorder::Create(HeaderDesc));
     Column->AddSlot(TreeWrapper).SetFillCoefficient(1.0f);
 
     return Column;
@@ -881,12 +887,20 @@ TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildBreadcrumbBar()
         return nullptr;
     }
 
+    FBorder::FDesc FieldDesc;
+    FieldDesc.Content         = BreadcrumbBar;
+    FieldDesc.BackgroundColor = Style.Colors.InputFieldFill;
+    FieldDesc.BorderColor     = Style.Colors.InputFieldBorder;
+    FieldDesc.BorderThickness = Style.Metrics.BorderThickness;
+    FieldDesc.CornerRadius    = FCornerRadii(BREADCRUMB_FIELD_CORNER);
+    FieldDesc.Padding         = FMargin(BREADCRUMB_FIELD_PADDING);
+
     TSharedPtr<FHorizontalBox> Row = FHorizontalBox::Create();
     Row->AddSlot(BackButton).SetVerticalAlignment(EVerticalAlignment::Center);
     Row->AddSlot(FSpacer::CreateHorizontal(COLUMN_PADDING));
     Row->AddSlot(ForwardButton).SetVerticalAlignment(EVerticalAlignment::Center);
     Row->AddSlot(FSpacer::CreateHorizontal(CONTENT_INSET));
-    Row->AddSlot(BreadcrumbBar).SetFillCoefficient(1.0f).SetVerticalAlignment(EVerticalAlignment::Center);
+    Row->AddSlot(FBorder::Create(FieldDesc)).SetFillCoefficient(1.0f).SetVerticalAlignment(EVerticalAlignment::Center);
 
     return Row;
 }
@@ -1016,8 +1030,9 @@ void FEditorContentBrowserPanel::RebuildTree()
         TSharedPtr<FTreeItem> Build(FEntry& Entry, FEntryPath& InPath) const
         {
             TSharedPtr<FTreeItem> Item = FTreeItem::Create(Entry.Name);
-            Item->Icon        = FEditorIcons::FolderSmall;
-            Item->bIsExpanded = true;
+            Item->Icon         = FEditorIcons::FolderSmall;
+            Item->ExpandedIcon = FEditorIcons::FolderOpenSmall;
+            Item->bIsExpanded  = true;
 
             Paths->Add(Item.Get(), InPath);
 

@@ -2,6 +2,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/Math/Vector3.h"
 #include "Application/Elements/NumericEntry.h"
+#include "Application/Elements/PropertyTable.h"
 #include "Engine/EngineUI/EditorUI/EditorPanel.h"
 
 class FActor;
@@ -11,21 +12,16 @@ class FDirectionalLightComponent;
 class FLightComponent;
 class FLightProbeComponent;
 class FMaterial;
-class FPropertyTable;
 class FScrollBox;
 class FStaticMeshComponent;
 class FTextBlock;
 class FVerticalBox;
-struct FPropertyRow;
 
 /** @brief Called with the vector a three-field row moved to. */
 DECLARE_DELEGATE(FOnVectorChanged, const Vector3& /*NewValue*/);
 
 /** @brief Called once a tick for the value a three-field row shows, on a row that follows the model. */
 DECLARE_RETURN_DELEGATE(FOnVectorRead, Vector3);
-
-/** @brief Called once a tick for whether a row still holds its default, which is what shows and hides its revert button. */
-DECLARE_RETURN_DELEGATE(FOnPropertyModified, bool);
 
 class ENGINE_API FEditorPropertiesPanel final : public FEditorPanel
 {
@@ -46,18 +42,13 @@ private:
         FOnVectorChanged                 OnChanged;
         FOnVectorRead                    OnRead;
         bool                             bIsAngular = false;
-    };
-
-    struct FRevertRow
-    {
-        TSharedPtr<FVisualElement> Button;
-        FOnPropertyModified        IsModified;
+        bool                             bIsUniform = false;
     };
 
     void RebuildContent();
     void RequestRebuild();
     void RefreshValues();
-    void WriteVectorRow(int32 RowIndex);
+    void WriteVectorRow(int32 RowIndex, int32 DrivingAxis);
 
     void BuildTransformSection(const TSharedPtr<FVerticalBox>& InColumn, FActor* Actor);
     void BuildStaticMeshSection(const TSharedPtr<FVerticalBox>& InColumn, FStaticMeshComponent* Component);
@@ -80,7 +71,8 @@ private:
         const FOnVectorChanged&           OnChanged,
         bool                              bIsAngular   = false,
         const Vector3*                    DefaultValue = nullptr,
-        const FOnVectorRead&              OnRead       = FOnVectorRead());
+        const FOnVectorRead&              OnRead       = FOnVectorRead(),
+        bool                              bAllowUniform = false);
 
     FPropertyRow& AddFloatRow(
         const TSharedPtr<FPropertyTable>& Table,
@@ -100,7 +92,6 @@ private:
         const bool*                       DefaultValue = nullptr,
         bool                              bIsEnabled   = true);
 
-    NODISCARD TSharedPtr<FVisualElement> CreateRevertableRow(const TSharedPtr<FVisualElement>& Editor, const TDelegate<void()>& OnRevert, const FOnPropertyModified& IsModified);
     NODISCARD TSharedPtr<TNumericEntry<float>> CreateFloatEditor(float Value, float Min, float Max, float Step, const TDelegate<void(float)>& OnChanged);
     NODISCARD TSharedPtr<TNumericEntry<int32>> CreateIntEditor(int32 Value, int32 Min, int32 Max, const TDelegate<void(int32)>& OnChanged);
     NODISCARD TSharedPtr<FCheckBox> CreateBoolEditor(bool bValue, const TDelegate<void(bool)>& OnChanged);
@@ -111,7 +102,6 @@ private:
     TSharedPtr<FVerticalBox> Column;
     TSharedPtr<FTextBlock>   LightDirectionText;
     TArray<FVectorRow>       VectorRows;
-    TArray<FRevertRow>       RevertRows;
     FActor*                  BuiltForActor;
     int32                    SelectedMaterialIndex;
     bool                     bRebuildRequested;

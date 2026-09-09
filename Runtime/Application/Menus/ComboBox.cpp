@@ -43,22 +43,25 @@ IntVector2 FComboBoxButton::ComputeDesiredSize() const
 
 int32 FComboBoxButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    const FUIStyle&         Style  = FUIStyle::GetDefault();
-    const EInteractionState State  = GetInteractionState();
-    const FRectangle        Bounds = AllottedGeometry.Bounds;
-    const FCornerRadii      Radii(Style.Metrics.ButtonCornerRadius);
+    const FUIStyle&         Style   = FUIStyle::GetDefault();
+    const EInteractionState State   = GetInteractionState();
+    const FRectangle        Bounds  = AllottedGeometry.Bounds;
+    const FCornerRadii      Radii(Style.Metrics.CornerRadius);
     const bool              bIsOpen = Anchor && Anchor->IsOpen();
+    const bool              bIsLit  = bIsOpen || State == EInteractionState::Hovered || State == EInteractionState::Pressed;
 
-    OutCommandList.AddBox(LayerId, Bounds, Style.GetButtonColor(State, bIsOpen), Radii);
+    OutCommandList.AddBox(LayerId, Bounds, Style.ComboBox.Fill, Radii);
+    OutCommandList.AddBoxOutline(LayerId, Bounds, bIsLit ? Style.Colors.InputFieldBorderHovered : Style.Colors.InputFieldBorder, Style.Metrics.BorderThickness, Radii);
 
-    const FRectangle Inner = Bounds.Deflate(GetPadding());
+    const FRectangle   Inner     = Bounds.Deflate(GetPadding());
+    const FFloatColor& TextColor = State == EInteractionState::Disabled ? Style.Colors.TextDisabled : (bIsLit ? Style.ComboBox.TextHovered : Style.ComboBox.Text);
 
     if (Font && !Label.IsEmpty())
     {
         FRectangle TextBounds = Inner;
         TextBounds.Width      = Math::Max(Inner.Width - COMBO_ARROW_WIDTH, 0);
 
-        OutCommandList.AddText(LayerId, TextBounds, Label, Font.Get(), Style.GetTextColor(State));
+        OutCommandList.AddText(LayerId, TextBounds, Label, Font.Get(), TextColor);
     }
 
     const float Right = static_cast<float>(Inner.GetRight()) - 4.0f;
@@ -71,7 +74,7 @@ int32 FComboBoxButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComman
         Vector2(Right,        Mid - 2.5f),
     };
 
-    OutCommandList.AddPolyline(LayerId, TArrayView<const Vector2>(Arrow, ARRAY_COUNT(Arrow)), Style.GetTextColor(State), 1.5f);
+    OutCommandList.AddPolyline(LayerId, TArrayView<const Vector2>(Arrow, ARRAY_COUNT(Arrow)), Style.ComboBox.Arrow, 1.5f);
     return LayerId;
 }
 

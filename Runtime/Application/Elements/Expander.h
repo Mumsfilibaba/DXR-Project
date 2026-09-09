@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/String.h"
 #include "Core/Delegates/Delegate.h"
+#include "Application/Draw/DrawTypes.h"
 #include "Application/Elements/VisualElement.h"
 #include "Application/Style/UIStyle.h"
 #include "Application/Text/IFontFace.h"
@@ -30,6 +31,21 @@ public:
 
         /** @brief The space kept around the content, whose left side is what reads as the indent. */
         FMargin ContentPadding = FMargin(12, 4, 4, 4);
+
+        /** @brief The look of the header bar, which defaults to the shared header style. */
+        FUIHeaderStyle Style = FUIStyle::GetDefault().Header;
+
+        /** @brief Drawn at the left of an open header, an unset brush falling back to a drawn triangle. */
+        FUIBrush ExpandedArrow;
+
+        /** @brief Drawn at the left of a closed header, an unset brush falling back to a drawn triangle. */
+        FUIBrush CollapsedArrow;
+
+        /** @brief The size the arrow brush is drawn at, in pixels, which is square. */
+        int32 ArrowSize = 16;
+
+        /** @brief Whether a closed section draws the rule that separates it from the next one. */
+        bool bDrawBottomBorderWhenClosed = true;
 
         /** @brief Fired with the state the section moved to. */
         FOnExpanderStateChanged OnStateChanged;
@@ -101,13 +117,19 @@ public:
 
 private:
     NODISCARD FRectangle GetHeaderBounds(const FRectangle& AllottedBounds) const;
+    NODISCARD int32 GetArrowExtent() const;
 
     TSharedPtr<FVisualElement> Content;
     TSharedPtr<IFontFace>      Font;
     String                     Label;
     FMargin                    ContentPadding;
+    FUIHeaderStyle             Style;
+    FUIBrush                   ExpandedArrow;
+    FUIBrush                   CollapsedArrow;
+    int32                      ArrowSize;
     int32                      HeaderHeight;
     bool                       bIsExpanded;
     bool                       bIsHeaderHovered;
+    bool                       bDrawBottomBorderWhenClosed;
     FOnExpanderStateChanged    OnStateChangedDelegate;
 };

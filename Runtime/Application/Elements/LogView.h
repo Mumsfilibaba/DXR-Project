@@ -73,17 +73,28 @@ public:
     void UnregisterFromLogger();
 
     /**
-     * @brief Hides every line below a severity, rebuilding the text from the ones that remain.
+     * @brief Shows or hides one severity, leaving the other two as they were. The three verbosities filter
+     * independently, so hiding warnings does not touch the errors above them.
+     *
+     * @param Severity  The severity to show or hide.
+     * @param bIsVisible True to show its lines.
+     */
+    void SetSeverityVisible(ELogSeverity Severity, bool bIsVisible);
+
+    /**
+     * @brief Gets whether one severity's lines are shown.
+     *
+     * @param Severity The severity to test.
+     * @return True while its lines are shown.
+     */
+    NODISCARD bool IsSeverityVisible(ELogSeverity Severity) const;
+
+    /**
+     * @brief Hides every line below a severity, which is the threshold form of the per-severity mask.
      *
      * @param InMinimumSeverity The least severity still shown.
      */
     void SetMinimumSeverity(ELogSeverity InMinimumSeverity);
-
-    /** @return The least severity still shown, below which lines are hidden. */
-    NODISCARD FORCEINLINE ELogSeverity GetMinimumSeverity() const
-    {
-        return MinimumSeverity;
-    }
 
     /**
      * @brief Highlights matching substrings and, when filtering, hides lines with no match.
@@ -176,6 +187,7 @@ public:
 
 private:
     NODISCARD static const CHAR* GetSeverityPrefix(ELogSeverity Severity);
+    NODISCARD static uint8 GetSeverityBit(ELogSeverity Severity);
 
     void DrainPendingLines();
     void RebuildLayout();
@@ -190,7 +202,7 @@ private:
     TArray<FLogLine>           PendingLines;
     TArray<FLogLine>           Lines;
     String                     SearchText;
-    ELogSeverity               MinimumSeverity;
+    uint8                      VisibleSeverities;
     int32                      MaxLineCount;
     bool                       bFilterToMatches        : 1;
     bool                       bAutoScroll             : 1;

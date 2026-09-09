@@ -38,8 +38,14 @@ struct APPLICATION_API FTreeItem : public TSharedFromThis<FTreeItem>
     /** @brief The text the node's row shows. */
     String Label;
 
+    /** @brief Drawn right-aligned in a column of its own, dimmed, or empty for no second column. */
+    String TypeLabel;
+
     /** @brief Drawn ahead of the label whenever it has a texture. */
     FUIBrush Icon;
+
+    /** @brief Replaces Icon while the node is open, for a node whose icon shows its state. */
+    FUIBrush ExpandedIcon;
 
     /** @brief Whatever the host hung off the node, which the node does not own. */
     void* UserData = nullptr;
@@ -78,7 +84,28 @@ public:
         int32 RowHeight = FUIStyle::GetDefault().Metrics.RowHeight;
 
         /** @brief How far one level of depth shifts a row's contents to the right, in pixels. */
-        int32 IndentPerLevel = 16;
+        int32 IndentPerLevel = FUIStyle::GetDefault().TreeRow.IndentPerLevel;
+
+        /** @brief The look of the rows, which defaults to the shared tree row style. */
+        FUITreeRowStyle Style = FUIStyle::GetDefault().TreeRow;
+
+        /** @brief Drawn on an open row that has children, an unset brush falling back to a drawn triangle. */
+        FUIBrush ExpandedArrow;
+
+        /** @brief Drawn on a closed row that has children, an unset brush falling back to a drawn triangle. */
+        FUIBrush CollapsedArrow;
+
+        /** @brief The size the arrow brush is drawn at, in pixels, which is square. */
+        int32 ArrowSize = 16;
+
+        /** @brief How wide the column holding the type labels is, in pixels, where zero draws no column. */
+        int32 TypeColumnWidth = 0;
+
+        /** @brief Whether every second row takes the alternate fill, which is what makes a long list readable. */
+        bool bAlternateRowColors = false;
+
+        /** @brief Whether the rows on the path down to the selected one are marked, so a deep selection is findable. */
+        bool bHighlightAncestors = false;
 
         /** @brief True to let a chord click or a shift click put more than one row in the selection. */
         bool bAllowMultiSelect = true;
@@ -255,11 +282,10 @@ private:
 
     static void SetSubtreeExpanded(const TArray<TSharedPtr<FTreeItem>>& Items, bool bExpanded);
 
-    void RebuildVisibleRows() const;
-    void AppendVisibleRows(const TArray<TSharedPtr<FTreeItem>>& Items) const;
-
     NODISCARD bool MatchesFilterText(const TSharedPtr<FTreeItem>& Item) const;
     NODISCARD bool PassesFilter(const TSharedPtr<FTreeItem>& Item) const;
+    NODISCARD bool IsAncestorOfSelection(const TSharedPtr<FTreeItem>& Item) const;
+    NODISCARD int32 GetArrowExtent() const;
     NODISCARD FRectangle ComputeRowBounds(const FRectangle& ViewBounds, int32 RowIndex) const;
     NODISCARD FRectangle ComputeDisclosureBounds(const FRectangle& RowBounds, int32 Depth) const;
     NODISCARD int32 ComputeRowExtent(const TSharedPtr<FTreeItem>& Item) const;
@@ -269,6 +295,8 @@ private:
     NODISCARD int32 GetCurrentRowIndex() const;
     NODISCARD int32 GetMaxScrollOffset() const;
 
+    void RebuildVisibleRows() const;
+    void AppendVisibleRows(const TArray<TSharedPtr<FTreeItem>>& Items) const;
     void ApplySelectionFromClick(int32 RowIndex, const FModifierKeyState& Modifiers);
     void SelectSingleRow(int32 RowIndex);
     void MoveSelection(int32 Delta);
@@ -280,8 +308,13 @@ private:
     TArray<TSharedPtr<FTreeItem>>         Selection;
     mutable TArray<TSharedPtr<FTreeItem>> VisibleRows;
     TSharedPtr<IFontFace>                 Font;
+    FUITreeRowStyle                       Style;
+    FUIBrush                              ExpandedArrow;
+    FUIBrush                              CollapsedArrow;
     String                                FilterText;
     IntVector2                            PressPosition;
+    int32                                 ArrowSize;
+    int32                                 TypeColumnWidth;
     int32                                 RowHeight;
     int32                                 IndentPerLevel;
     int32                                 ScrollOffset;
@@ -289,6 +322,8 @@ private:
     int32                                 AnchorRowIndex;
     int32                                 HoveredRowIndex;
     int32                                 PressedRowIndex;
+    bool                                  bAlternateRowColors;
+    bool                                  bHighlightAncestors;
     bool                                  bAllowMultiSelect;
     mutable bool                          bRowsDirty;
     FOnTreeSelectionChanged               OnSelectionChangedDelegate;

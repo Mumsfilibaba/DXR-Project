@@ -6,7 +6,7 @@
 #include "RHI/RHICommandList.h"
 
 /** @brief How many bytes one texel of the atlas takes, which only ever holds RGBA8. */
-static constexpr int32 GBytesPerTexel = 4;
+constexpr int32 BYTES_PER_TEXEL = 4;
 
 FUIAtlas::FUIAtlas()
     : Pixels()
@@ -46,7 +46,7 @@ FUIBrush FUIAtlas::Add(const uint8* InPixels, int32 Width, int32 Height)
         return FUIBrush();
     }
 
-    const int32 RequiredBytes = UsedHeight * AtlasSize * GBytesPerTexel;
+    const int32 RequiredBytes = UsedHeight * AtlasSize * BYTES_PER_TEXEL;
     if (Pixels.Size() < RequiredBytes)
     {
         const int32 PreviousBytes = Pixels.Size();
@@ -55,10 +55,10 @@ FUIBrush FUIAtlas::Add(const uint8* InPixels, int32 Width, int32 Height)
         Memory::Memzero(Pixels.Data() + PreviousBytes, static_cast<uint64>(RequiredBytes - PreviousBytes));
     }
 
-    const int64 SourceRowBytes = static_cast<int64>(Width) * GBytesPerTexel;
+    const int64 SourceRowBytes = static_cast<int64>(Width) * BYTES_PER_TEXEL;
     for (int32 Row = 0; Row < Height; ++Row)
     {
-        uint8* Destination = Pixels.Data() + ((static_cast<int64>(Y + Row) * AtlasSize) + X) * GBytesPerTexel;
+        uint8* Destination = Pixels.Data() + ((static_cast<int64>(Y + Row) * AtlasSize) + X) * BYTES_PER_TEXEL;
         Memory::Memcpy(Destination, InPixels + static_cast<int64>(Row) * SourceRowBytes, SourceRowBytes);
     }
 
@@ -89,7 +89,7 @@ bool FUIAtlas::Build()
     CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Texture.Get(), ERHIResourceState::CopyDest));
 
     const FTextureRegion2D Region(static_cast<uint32>(AtlasSize), static_cast<uint32>(UsedHeight), 0, 0);
-    CommandList.UpdateTexture2D(Texture.Get(), Region, 0, Pixels.Data(), static_cast<uint32>(AtlasSize * GBytesPerTexel));
+    CommandList.UpdateTexture2D(Texture.Get(), Region, 0, Pixels.Data(), static_cast<uint32>(AtlasSize * BYTES_PER_TEXEL));
 
     CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Texture.Get(), ERHIResourceState::PixelShaderResource));
 

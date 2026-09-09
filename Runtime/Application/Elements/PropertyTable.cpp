@@ -7,19 +7,48 @@
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
 
-/** @brief The space kept between a column edge and what the column holds, in pixels. */
-constexpr int32 PROPERTY_TABLE_CELL_INSET = 4;
+constexpr int32 PROPERTY_TABLE_CELL_INSET        = 4;
+constexpr int32 PROPERTY_TABLE_ACCESSORY_SPACING = 12;
+constexpr int32 PROPERTY_TABLE_REVERT_GLYPH_SIZE = 12;
 
-/** @brief How much brighter an alternate row is than the panel behind it. */
-constexpr float PROPERTY_TABLE_ALTERNATE_ROW_LIGHTEN = 0.025f;
+constexpr float PROPERTY_TABLE_REVERT_ARC_THICKNESS = 1.5f;
+constexpr float PROPERTY_TABLE_REVERT_HEAD_LENGTH   = 0.34f;
+constexpr float PROPERTY_TABLE_REVERT_HEAD_WIDTH    = 0.26f;
+constexpr float PROPERTY_TABLE_REVERT_ARC_START     = Math::Constants::PI * 1.05f;
+constexpr float PROPERTY_TABLE_REVERT_ARC_END       = Math::Constants::PI * 2.0f;
 
-static FFloatColor GetAlternateRowColor(const FFloatColor& PanelColor)
+static void DrawRevertArrow(FDrawCommandList& OutCommandList, int32 LayerId, const FRectangle& Bounds, const FUIBrush& Icon, const FFloatColor& Tint)
 {
-    return FFloatColor(
-        PanelColor.R + PROPERTY_TABLE_ALTERNATE_ROW_LIGHTEN,
-        PanelColor.G + PROPERTY_TABLE_ALTERNATE_ROW_LIGHTEN,
-        PanelColor.B + PROPERTY_TABLE_ALTERNATE_ROW_LIGHTEN,
-        PanelColor.A);
+    if (Icon.IsValid())
+    {
+        OutCommandList.AddImage(LayerId, Bounds, Icon, Tint);
+        return;
+    }
+
+    const float Extent = static_cast<float>(Math::Min(Bounds.Width, Bounds.Height));
+    if (Extent <= 0.0f)
+    {
+        return;
+    }
+
+    const IntVector2 Middle = Bounds.GetCenter();
+    const Vector2    Center = Vector2(static_cast<float>(Middle.X), static_cast<float>(Middle.Y) + (Extent * 0.15f));
+    const float      Radius = Extent * 0.3f;
+
+    OutCommandList.AddArc(LayerId, Center, Radius, PROPERTY_TABLE_REVERT_ARC_START, PROPERTY_TABLE_REVERT_ARC_END, Tint, PROPERTY_TABLE_REVERT_ARC_THICKNESS);
+
+    const Vector2 Tail = Center + Vector2(Math::Cos(PROPERTY_TABLE_REVERT_ARC_START), Math::Sin(PROPERTY_TABLE_REVERT_ARC_START)) * Radius;
+    const Vector2 Head = Tail + Vector2(0.0f, Extent * PROPERTY_TABLE_REVERT_HEAD_LENGTH);
+    const float   Half = Extent * PROPERTY_TABLE_REVERT_HEAD_WIDTH * 0.5f;
+
+    const Vector2 Corners[3] =
+    {
+        Vector2(Tail.X - Half, Tail.Y),
+        Vector2(Tail.X + Half, Tail.Y),
+        Vector2(Head.X, Head.Y),
+    };
+
+    OutCommandList.AddConvexPolygon(LayerId, TArrayView<const Vector2>(Corners, 3), Tint);
 }
 
 TSharedPtr<FPropertyTable> FPropertyTable::Create(const FDesc& Desc)
@@ -33,13 +62,16 @@ FPropertyTable::FPropertyTable()
     : FVisualElement()
     , Rows()
     , Font(nullptr)
+    , Style()
+    , RevertIcon()
     , DragOrigin()
     , LabelColumnFraction(0.4f)
     , DragStartFraction(0.4f)
     , RowHeight(FUIStyle::GetDefault().Metrics.RowHeight)
     , IndentPerLevel(12)
     , HoveredRowIndex(InvalidRowIndex)
-    , bAlternateRowColors(true)
+    , bShowRevertColumn(false)
+    , bAlternateRowColors(false)
     , bIsDraggingDivider(false)
     , bIsDividerHovered(false)
 {
@@ -50,8 +82,11 @@ FPropertyTable::~FPropertyTable() = default;
 void FPropertyTable::Initialize(const FDesc& Desc)
 {
     Font                = Desc.Font;
+    Style               = Desc.Style;
+    RevertIcon          = Desc.RevertIcon;
     RowHeight           = Math::Max(1, Desc.RowHeight);
     IndentPerLevel      = Math::Max(0, Desc.IndentPerLevel);
+    bShowRevertColumn   = Desc.bShowRevertColumn;
     bAlternateRowColors = Desc.bAlternateRowColors;
 
     SetLabelColumnFraction(Desc.LabelColumnFraction);
@@ -59,16 +94,23 @@ void FPropertyTable::Initialize(const FDesc& Desc)
 
 IntVector2 FPropertyTable::ComputeDesiredSize() const
 {
-    return IntVector2(0, Rows.Size() * RowHeight);
+    return IntVector2(0, GetTotalRowHeight());
 }
 
 void FPropertyTable::OnArrange(const FRectangle& AllottedBounds)
 {
-    const int32 DividerX = AllottedBounds.Position.X + GetDividerOffset(AllottedBounds);
+    const int32 DividerX    = AllottedBounds.Position.X + GetDividerOffset(AllottedBounds);
+    const int32 EditorRight = GetEditorColumnRight(AllottedBounds);
 
     for (int32 Index = 0; Index < Rows.Size(); ++Index)
     {
         const FPropertyRow& Row = Rows[Index];
+
+        if (Row.LabelAccessory)
+        {
+            Row.LabelAccessory->Tick(GetLabelAccessoryRectangle(Index, AllottedBounds));
+        }
+
         if (!Row.Editor)
         {
             continue;
@@ -78,8 +120,10 @@ void FPropertyTable::OnArrange(const FRectangle& AllottedBounds)
         if (!Row.bIsHeader)
         {
             EditorBounds.Position.X = DividerX + PROPERTY_TABLE_CELL_INSET;
-            EditorBounds.Width      = Math::Max(0, AllottedBounds.GetRight() - PROPERTY_TABLE_CELL_INSET - EditorBounds.Position.X);
+            EditorBounds.Width      = Math::Max(0, EditorRight - PROPERTY_TABLE_CELL_INSET - EditorBounds.Position.X);
         }
+
+        EditorBounds = EditorBounds.Deflate(FMargin(0, Style.CellPadding.Top, 0, Style.CellPadding.Bottom));
 
         Row.Editor->Tick(EditorBounds);
     }
@@ -92,6 +136,11 @@ void FPropertyTable::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren
         if (Row.Editor)
         {
             OutChildren.Add(Row.Editor);
+        }
+
+        if (Row.LabelAccessory)
+        {
+            OutChildren.Add(Row.LabelAccessory);
         }
     }
 }
@@ -111,14 +160,19 @@ void FPropertyTable::FindChildrenContainingPoint(const IntVector2& ClientPositio
         {
             Row.Editor->FindChildrenContainingPoint(ClientPosition, OutChildElements);
         }
+
+        if (Row.LabelAccessory)
+        {
+            Row.LabelAccessory->FindChildrenContainingPoint(ClientPosition, OutChildElements);
+        }
     }
 }
 
 int32 FPropertyTable::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    const FUIStyle&   Style             = FUIStyle::GetDefault();
-    const FFloatColor AlternateRowColor = GetAlternateRowColor(Style.Colors.PanelBackground);
-    const int32       DividerX          = AllottedGeometry.Bounds.Position.X + GetDividerOffset(AllottedGeometry.Bounds);
+    const FUIStyle& DefaultStyle = FUIStyle::GetDefault();
+    const int32     DividerX     = AllottedGeometry.Bounds.Position.X + GetDividerOffset(AllottedGeometry.Bounds);
+    const int32     LineWidth    = Math::Max(1, DefaultStyle.Metrics.SeparatorThickness);
 
     for (int32 Index = 0; Index < Rows.Size(); ++Index)
     {
@@ -127,36 +181,52 @@ int32 FPropertyTable::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
 
         if (Row.bIsHeader)
         {
-            OutCommandList.AddBox(LayerId, RowBounds, Style.Colors.ControlNormal);
+            OutCommandList.AddBox(LayerId, RowBounds, DefaultStyle.Header.Fill);
         }
-        else if (bAlternateRowColors && (Index % 2) == 1)
+        else if (Index == HoveredRowIndex)
         {
-            OutCommandList.AddBox(LayerId, RowBounds, AlternateRowColor);
+            OutCommandList.AddBox(LayerId, RowBounds, Style.HoveredRowFill);
         }
+        else
+        {
+            const bool bIsAlternate = bAlternateRowColors && (Index % 2) == 1;
+            OutCommandList.AddBox(LayerId, RowBounds, bIsAlternate ? Style.AlternateRowFill : Style.RowFill);
+        }
+
+        const FRectangle RuleBounds(IntVector2(RowBounds.Position.X, RowBounds.GetBottom() - LineWidth), RowBounds.Width, LineWidth);
+        OutCommandList.AddBox(LayerId, RuleBounds, Style.GridLine);
 
         if (Font && !Row.Label.IsEmpty())
         {
-            const int32 LabelRight = Row.bIsHeader ? RowBounds.GetRight() : DividerX;
+            OutCommandList.AddText(LayerId, GetLabelRectangle(Index, AllottedGeometry.Bounds), Row.Label, Font.Get(), DefaultStyle.Colors.Text);
+        }
 
-            FRectangle LabelBounds;
-            LabelBounds.Position.X = RowBounds.Position.X + PROPERTY_TABLE_CELL_INSET + (Row.IndentLevel * IndentPerLevel);
-            LabelBounds.Position.Y = RowBounds.Position.Y + Font->GetTextBandOffset(RowBounds.Height);
-            LabelBounds.Width      = Math::Max(0, LabelRight - PROPERTY_TABLE_CELL_INSET - LabelBounds.Position.X);
-            LabelBounds.Height     = Font->GetTextBandHeight();
-
-            OutCommandList.AddText(LayerId, LabelBounds, Row.Label, Font.Get(), Style.Colors.Text);
+        if (IsRowModified(Index))
+        {
+            const FRectangle RevertBounds = GetRevertRectangle(Index, AllottedGeometry.Bounds);
+            DrawRevertArrow(OutCommandList, LayerId, RevertBounds, RevertIcon, DefaultStyle.Colors.Text);
         }
     }
 
     if (!Rows.IsEmpty())
     {
+        const int32 RowsHeight = Math::Min(AllottedGeometry.Bounds.Height, GetTotalRowHeight());
+
         FRectangle DividerLine = AllottedGeometry.Bounds;
         DividerLine.Position.X = DividerX;
-        DividerLine.Width      = Style.Metrics.SeparatorThickness;
-        DividerLine.Height     = Math::Min(DividerLine.Height, Rows.Size() * RowHeight);
+        DividerLine.Width      = LineWidth;
+        DividerLine.Height     = RowsHeight;
 
         const bool bIsDividerActive = bIsDraggingDivider || bIsDividerHovered;
-        OutCommandList.AddLine(LayerId, DividerLine, bIsDividerActive ? Style.Colors.Accent : Style.Colors.Border);
+        OutCommandList.AddBox(LayerId, DividerLine, bIsDividerActive ? DefaultStyle.Colors.Accent : Style.GridLine);
+
+        if (bShowRevertColumn)
+        {
+            FRectangle RevertLine = DividerLine;
+            RevertLine.Position.X = GetEditorColumnRight(AllottedGeometry.Bounds);
+
+            OutCommandList.AddBox(LayerId, RevertLine, Style.GridLine);
+        }
     }
 
     int32 NextLayerId = LayerId;
@@ -167,6 +237,12 @@ int32 FPropertyTable::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
             const FDrawGeometry EditorGeometry(Row.Editor->GetContentRectangle(), AllottedGeometry.Scale);
             NextLayerId = Math::Max(NextLayerId, Row.Editor->OnDraw(EditorGeometry, OutCommandList, LayerId + 1));
         }
+
+        if (Row.LabelAccessory && Row.LabelAccessory->IsVisible())
+        {
+            const FDrawGeometry AccessoryGeometry(Row.LabelAccessory->GetContentRectangle(), AllottedGeometry.Scale);
+            NextLayerId = Math::Max(NextLayerId, Row.LabelAccessory->OnDraw(AccessoryGeometry, OutCommandList, LayerId + 1));
+        }
     }
 
     return NextLayerId;
@@ -174,7 +250,21 @@ int32 FPropertyTable::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
 
 FEventResponse FPropertyTable::OnMouseButtonDown(const FCursorEvent& CursorEvent)
 {
-    if (CursorEvent.GetKey() != Keys::MouseButtonLeft || !IsPointOnDivider(CursorEvent.GetClientPosition()))
+    if (CursorEvent.GetKey() != Keys::MouseButtonLeft)
+    {
+        return FEventResponse::Unhandled();
+    }
+
+    const IntVector2 Position = CursorEvent.GetClientPosition();
+
+    const int32 RowIndex = FindRowAtPoint(Position);
+    if (RowIndex != InvalidRowIndex && IsRowModified(RowIndex) && GetRevertRectangle(RowIndex, GetContentRectangle()).EncapsulatesPoint(Position))
+    {
+        Rows[RowIndex].OnRevert.ExecuteIfBound();
+        return FEventResponse::Handled();
+    }
+
+    if (!IsPointOnDivider(Position))
     {
         return FEventResponse::Unhandled();
     }
@@ -274,6 +364,18 @@ FPropertyRow& FPropertyTable::AddHeaderRow(const String& Label)
     return NewRow;
 }
 
+void FPropertyTable::SetRowLabelAccessory(int32 Index, const TSharedPtr<FVisualElement>& Accessory)
+{
+    CHECK(Index >= 0 && Index < Rows.Size());
+
+    Rows[Index].LabelAccessory = Accessory;
+
+    if (Accessory)
+    {
+        Accessory->SetParentElement(AsWeakPtr());
+    }
+}
+
 void FPropertyTable::ClearRows()
 {
     ClearHoveredRow();
@@ -302,7 +404,7 @@ FRectangle FPropertyTable::GetRowRectangle(int32 Index, const FRectangle& Bounds
         return FRectangle();
     }
 
-    return FRectangle(IntVector2(Bounds.Position.X, Bounds.Position.Y + (Index * RowHeight)), Bounds.Width, RowHeight);
+    return FRectangle(IntVector2(Bounds.Position.X, Bounds.Position.Y + GetRowOffset(Index)), Bounds.Width, GetRowHeight(Index));
 }
 
 FRectangle FPropertyTable::GetDividerRectangle(const FRectangle& Bounds) const
@@ -313,7 +415,7 @@ FRectangle FPropertyTable::GetDividerRectangle(const FRectangle& Bounds) const
     }
 
     const int32 DividerX = Bounds.Position.X + GetDividerOffset(Bounds);
-    const int32 Height   = Math::Min(Bounds.Height, Rows.Size() * RowHeight);
+    const int32 Height   = Math::Min(Bounds.Height, GetTotalRowHeight());
 
     return FRectangle(IntVector2(DividerX - (DividerGrabWidth / 2), Bounds.Position.Y), DividerGrabWidth, Height);
 }
@@ -326,8 +428,122 @@ int32 FPropertyTable::FindRowAtPoint(const IntVector2& ClientPosition) const
         return InvalidRowIndex;
     }
 
-    const int32 Index = (ClientPosition.Y - Bounds.Position.Y) / RowHeight;
-    return (Index >= 0 && Index < Rows.Size()) ? Index : InvalidRowIndex;
+    const int32 Offset = ClientPosition.Y - Bounds.Position.Y;
+
+    int32 Top = 0;
+    for (int32 Index = 0; Index < Rows.Size(); ++Index)
+    {
+        const int32 Bottom = Top + GetRowHeight(Index);
+        if (Offset < Bottom)
+        {
+            return Index;
+        }
+
+        Top = Bottom;
+    }
+
+    return InvalidRowIndex;
+}
+
+int32 FPropertyTable::GetRowHeight(int32 Index) const
+{
+    if (Index < 0 || Index >= Rows.Size())
+    {
+        return 0;
+    }
+
+    const int32 Override = Rows[Index].HeightOverride;
+    return Override > 0 ? Override : RowHeight;
+}
+
+int32 FPropertyTable::GetRowOffset(int32 Index) const
+{
+    int32 Offset = 0;
+    for (int32 Row = 0; Row < Index && Row < Rows.Size(); ++Row)
+    {
+        Offset += GetRowHeight(Row);
+    }
+
+    return Offset;
+}
+
+int32 FPropertyTable::GetTotalRowHeight() const
+{
+    return GetRowOffset(Rows.Size());
+}
+
+int32 FPropertyTable::GetEditorColumnRight(const FRectangle& Bounds) const
+{
+    const int32 Right = Bounds.GetRight();
+    if (!bShowRevertColumn)
+    {
+        return Right;
+    }
+
+    return Math::Max(Bounds.Position.X, Right - Style.RevertColumnWidth);
+}
+
+FRectangle FPropertyTable::GetLabelRectangle(int32 Index, const FRectangle& Bounds) const
+{
+    if (Index < 0 || Index >= Rows.Size())
+    {
+        return FRectangle();
+    }
+
+    const FPropertyRow& Row        = Rows[Index];
+    const FRectangle    RowBounds  = GetRowRectangle(Index, Bounds);
+    const int32         LabelRight = Row.bIsHeader ? RowBounds.GetRight() : (Bounds.Position.X + GetDividerOffset(Bounds));
+
+    FRectangle LabelBounds;
+    LabelBounds.Position.X = RowBounds.Position.X + Style.LabelIndent + (Row.IndentLevel * IndentPerLevel);
+    LabelBounds.Position.Y = RowBounds.Position.Y + (Font ? Font->GetTextBandOffset(RowBounds.Height) : 0);
+    LabelBounds.Width      = Math::Max(0, LabelRight - Style.CellPadding.Right - LabelBounds.Position.X);
+    LabelBounds.Height     = Font ? Font->GetTextBandHeight() : RowBounds.Height;
+
+    return LabelBounds;
+}
+
+FRectangle FPropertyTable::GetLabelAccessoryRectangle(int32 Index, const FRectangle& Bounds) const
+{
+    if (Index < 0 || Index >= Rows.Size() || !Rows[Index].LabelAccessory)
+    {
+        return FRectangle();
+    }
+
+    const FRectangle RowBounds   = GetRowRectangle(Index, Bounds);
+    const FRectangle LabelBounds = GetLabelRectangle(Index, Bounds);
+    const IntVector2 Desired     = Rows[Index].LabelAccessory->ComputeDesiredSize();
+
+    const int32 TextWidth = Font ? Font->MeasureWidth(StringView(Rows[Index].Label.Data(), Rows[Index].Label.Length())) : 0;
+    const int32 Left      = LabelBounds.Position.X + TextWidth + PROPERTY_TABLE_ACCESSORY_SPACING;
+
+    return FRectangle(IntVector2(Left, RowBounds.Position.Y + ((RowBounds.Height - Desired.Y) / 2)), Desired.X, Desired.Y);
+}
+
+FRectangle FPropertyTable::GetRevertRectangle(int32 Index, const FRectangle& Bounds) const
+{
+    if (!bShowRevertColumn || Index < 0 || Index >= Rows.Size())
+    {
+        return FRectangle();
+    }
+
+    const FRectangle RowBounds = GetRowRectangle(Index, Bounds);
+    const int32      Extent    = Math::Min(PROPERTY_TABLE_REVERT_GLYPH_SIZE, Math::Min(Style.RevertColumnWidth, RowBounds.Height));
+    const int32      ColumnX   = GetEditorColumnRight(Bounds);
+    const IntVector2 Position  = IntVector2(ColumnX + ((Style.RevertColumnWidth - Extent) / 2), RowBounds.Position.Y + ((RowBounds.Height - Extent) / 2));
+
+    return FRectangle(Position, Extent, Extent);
+}
+
+bool FPropertyTable::IsRowModified(int32 Index) const
+{
+    if (!bShowRevertColumn || Index < 0 || Index >= Rows.Size())
+    {
+        return false;
+    }
+
+    const FPropertyRow& Row = Rows[Index];
+    return !Row.bIsHeader && Row.IsModified.IsBound() && Row.IsModified.Execute();
 }
 
 void FPropertyTable::UpdateHoveredRow(const IntVector2& ClientPosition)

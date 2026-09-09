@@ -7,7 +7,7 @@
 #include "Core/Platform/PlatformTime.h"
 
 /** @brief The share of a blink the text cursor is drawn for, which is ImGui's 0.8s out of 1.2s. */
-static constexpr double GTextCursorVisibleFraction = 2.0 / 3.0;
+constexpr double TEXT_CURSOR_VISIBLE_FRACTION = 2.0 / 3.0;
 
 TSharedPtr<FEditableText> FEditableText::Create(const FDesc& Desc)
 {
@@ -149,7 +149,7 @@ bool FEditableText::IsTextCursorVisibleAt(double ElapsedSeconds) const
     }
 
     const double BlinkPeriod = static_cast<double>(TextCursorBlinkPeriod);
-    return Math::FMod(ElapsedSeconds, BlinkPeriod) < (BlinkPeriod * GTextCursorVisibleFraction);
+    return Math::FMod(ElapsedSeconds, BlinkPeriod) < (BlinkPeriod * TEXT_CURSOR_VISIBLE_FRACTION);
 }
 
 void FEditableText::ResetTextCursorBlink()

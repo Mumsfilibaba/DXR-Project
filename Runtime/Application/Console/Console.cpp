@@ -3,32 +3,17 @@
 #include "Application/Input/Keys.h"
 #include "Core/Math/Math.h"
 
-/** @brief The space between the columns of a candidate row, in pixels. */
-static constexpr int32 GCandidateColumnSpacing = 10;
+constexpr int32 CANDIDATE_COLUMN_SPACING   = 10;
+constexpr int32 CANDIDATE_NAME_MIN_WIDTH   = 30;
+constexpr int32 CANDIDATE_VALUE_MIN_WIDTH  = 20;
+constexpr int32 CONSOLE_HORIZONTAL_PADDING = 10;
 
-/** @brief The least the name column is given, before the spacing, so short names still separate. */
-static constexpr int32 GCandidateNameMinWidth = 30;
+constexpr float INPUT_CORNER_RADIUS = 8.0f;
 
-/** @brief The least the value column is given, before the spacing. */
-static constexpr int32 GCandidateValueMinWidth = 20;
-
-/** @brief The inset of the console content from either edge, in pixels, carried by the rows themselves. */
-static constexpr int32 GConsoleHorizontalPadding = 10;
-
-/** @brief How far the input field is rounded at its corners. */
-static constexpr float GInputCornerRadius = 8.0f;
-
-/** @brief The space above and below the input field, matching the dummies around the ImGui one. */
-static constexpr int32 GInputVerticalPadding = 6;
-
-/** @brief The space between the glyphs and the edge of the input field, the way ImGui frames a field. */
-static constexpr int32 GInputFramePadding = 4;
-
-/** @brief The same for a candidate row, which the ImGui console gave a 20 pixel selectable. */
-static constexpr int32 GCandidateRowPadding = 2;
-
-/** @brief What a row and the field fall back to without a face, so scrolling does not put every row at the top. */
-static constexpr int32 GFallbackBoxHeight = 20;
+constexpr int32 INPUT_VERTICAL_PADDING = 6;
+constexpr int32 INPUT_FRAME_PADDING    = 4;
+constexpr int32 CANDIDATE_ROW_PADDING  = 2;
+constexpr int32 FALLBACK_BOX_HEIGHT    = 20;
 
 struct FConsoleCandidateText
 {
@@ -185,7 +170,7 @@ void FConsole::Initialize(const FDesc& Desc)
     InputBackgroundDesc.BackgroundColor = Desc.InputBackgroundColor;
     InputBackgroundDesc.Padding         = FMargin(10, 0);
     InputBackgroundDesc.MinHeight       = GetInputFieldHeight();
-    InputBackgroundDesc.CornerRadius    = GInputCornerRadius;
+    InputBackgroundDesc.CornerRadius    = INPUT_CORNER_RADIUS;
     InputBackgroundDesc.Content         = Input;
 
     InputBackgroundDesc.SetCursor(ECursor::TextInput);
@@ -196,7 +181,7 @@ void FConsole::Initialize(const FDesc& Desc)
     RootBox->AddSlot(ScrollBox).SetFillCoefficient(1.0f);
     RootBox->AddSlot(InputBackground)
         .SetVerticalAlignment(EVerticalAlignment::Bottom)
-        .SetPadding(FMargin(GConsoleHorizontalPadding, GInputVerticalPadding));
+        .SetPadding(FMargin(CONSOLE_HORIZONTAL_PADDING, INPUT_VERTICAL_PADDING));
 
     FBorder::FDesc BackgroundDesc;
     BackgroundDesc.BackgroundColor = Desc.BackgroundColor;
@@ -448,24 +433,24 @@ void FConsole::AddLogLine(const FConsoleLogLine& Line)
 
     ScrollContent->AddSlot(FTextBlock::Create(TextDesc))
         .SetHorizontalAlignment(EHorizontalAlignment::Left)
-        .SetPadding(FMargin(GConsoleHorizontalPadding, 0));
+        .SetPadding(FMargin(CONSOLE_HORIZONTAL_PADDING, 0));
 }
 
 int32 FConsole::GetCandidateRowHeight() const
 {
-    return Font ? Font->GetTextBandHeight() + (GCandidateRowPadding * 2) : GFallbackBoxHeight;
+    return Font ? Font->GetTextBandHeight() + (CANDIDATE_ROW_PADDING * 2) : FALLBACK_BOX_HEIGHT;
 }
 
 int32 FConsole::GetInputFieldHeight() const
 {
-    return Font ? Font->GetTextBandHeight() + (GInputFramePadding * 2) : GFallbackBoxHeight;
+    return Font ? Font->GetTextBandHeight() + (INPUT_FRAME_PADDING * 2) : FALLBACK_BOX_HEIGHT;
 }
 
 FConsoleCandidateColumns FConsole::ComputeCandidateColumns() const
 {
     FConsoleCandidateColumns Columns;
-    Columns.NameWidth  = GCandidateNameMinWidth;
-    Columns.ValueWidth = GCandidateValueMinWidth;
+    Columns.NameWidth  = CANDIDATE_NAME_MIN_WIDTH;
+    Columns.ValueWidth = CANDIDATE_VALUE_MIN_WIDTH;
 
     for (const TPair<IConsoleObject*, String>& Candidate : CommandLine.GetCandidates())
     {
@@ -477,10 +462,10 @@ FConsoleCandidateColumns FConsole::ComputeCandidateColumns() const
     Columns.TypeWidth  = GetTypeColumnWidth(Font);
     Columns.SetByWidth = GetSetByColumnWidth(Font);
 
-    Columns.NameWidth  += GCandidateColumnSpacing;
-    Columns.ValueWidth += GCandidateColumnSpacing;
-    Columns.TypeWidth  += GCandidateColumnSpacing;
-    Columns.SetByWidth += GCandidateColumnSpacing;
+    Columns.NameWidth  += CANDIDATE_COLUMN_SPACING;
+    Columns.ValueWidth += CANDIDATE_COLUMN_SPACING;
+    Columns.TypeWidth  += CANDIDATE_COLUMN_SPACING;
+    Columns.SetByWidth += CANDIDATE_COLUMN_SPACING;
 
     return Columns;
 }
@@ -509,7 +494,7 @@ void FConsole::AddCandidateRow(const TPair<IConsoleObject*, String>& Candidate, 
 
     FBorder::FDesc SelectionDesc;
     SelectionDesc.BackgroundColor = bIsSelected ? SelectedCandidateColor : FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
-    SelectionDesc.Padding         = FMargin(GConsoleHorizontalPadding, 0);
+    SelectionDesc.Padding         = FMargin(CONSOLE_HORIZONTAL_PADDING, 0);
     SelectionDesc.MinHeight       = GetCandidateRowHeight();
     SelectionDesc.Content         = Row;
 

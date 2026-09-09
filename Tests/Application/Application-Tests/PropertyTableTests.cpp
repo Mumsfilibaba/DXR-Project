@@ -300,10 +300,12 @@ bool PropertyTableLayout_Test()
     TEST_EXPECT(Table->GetRowRectangle(-1, Bounds).IsEmpty());
     TEST_EXPECT(Table->GetRowRectangle(Table->GetNumRows(), Bounds).IsEmpty());
 
-    TEST_SECTION("An editor is arranged into the right column, on the row that holds it");
+    TEST_SECTION("An editor is arranged into the right column, on the row that holds it, inset by the cell padding");
     const FRectangle LocationRowBounds = Table->GetRowRectangle(1, Bounds);
-    TEST_EXPECT_EQ(LocationEditor->GetContentRectangle().Position.Y, LocationRowBounds.Position.Y);
-    TEST_EXPECT_EQ(LocationEditor->GetContentRectangle().Height, LocationRowBounds.Height);
+    const FMargin&   CellPadding       = FUIStyle::GetDefault().PropertyTable.CellPadding;
+
+    TEST_EXPECT_EQ(LocationEditor->GetContentRectangle().Position.Y, LocationRowBounds.Position.Y + CellPadding.Top);
+    TEST_EXPECT_EQ(LocationEditor->GetContentRectangle().Height, LocationRowBounds.Height - CellPadding.GetTotalVertical());
     TEST_EXPECT(LocationEditor->GetContentRectangle().Position.X >= Table->GetDividerRectangle(Bounds).GetRight());
     TEST_EXPECT(LocationEditor->GetContentRectangle().GetRight() <= Bounds.GetRight());
 

@@ -19,10 +19,7 @@ FEditorAboutPanel::~FEditorAboutPanel()
 
 bool FEditorAboutPanel::Initialize()
 {
-    FPropertyTable::FDesc TableDesc;
-    TableDesc.Font = FEditorStyle::GetFonts().Body;
-
-    Table = FPropertyTable::Create(TableDesc);
+    Table = FPropertyTable::Create(FEditorStyle::MakeDataTableDesc());
     if (!Table)
     {
         return false;

@@ -8,30 +8,23 @@
 static FEditorFonts GFonts;
 static FUIStyle     GStyle;
 
-static constexpr int32 GBodyPixelHeight      = 18;
-static constexpr int32 GTitlePixelHeight     = 18;
-static constexpr int32 GMonospacePixelHeight = 14;
+constexpr int32 BODY_PIXEL_HEIGHT      = 18;
+constexpr int32 TITLE_PIXEL_HEIGHT     = 18;
+constexpr int32 MONOSPACE_PIXEL_HEIGHT = 14;
 
-/** @brief The width of the stroke around an input field, in pixels, which runs heavier than a panel's. */
-static constexpr float GInputFieldBorderThickness = 2.0f;
+constexpr float INPUT_FIELD_BORDER_THICKNESS = 2.0f;
+constexpr float SEARCH_FIELD_CORNER_RADIUS   = 16.0f;
+constexpr float CONSOLE_FIELD_CORNER_RADIUS  = 4.0f;
 
-/** @brief How far a search field's corners are rounded, in pixels, which is far enough to close into a pill. */
-static constexpr float GSearchFieldCornerRadius = 16.0f;
+constexpr int32 INPUT_FIELD_PADDING_X = 12;
+constexpr int32 INPUT_FIELD_PADDING_Y = 6;
 
-/** @brief How far the console field's corners are rounded, in pixels, which stays square enough to read as a line. */
-static constexpr float GConsoleFieldCornerRadius = 4.0f;
+constexpr float TOOL_TIP_BORDER_THICKNESS = 2.0f;
 
-/** @brief The space between an input field's left or right edge and its contents, in pixels. */
-static constexpr int32 GInputFieldPaddingX = 12;
-
-/** @brief The space between an input field's top or bottom edge and its contents, in pixels. */
-static constexpr int32 GInputFieldPaddingY = 6;
-
-/** @brief The width of the stroke around a rich tool tip, in pixels. */
-static constexpr float GToolTipBorderThickness = 2.0f;
-
-/** @brief The space between a rich tool tip's edges and its contents, in pixels, matching ImGui's window padding. */
-static constexpr int32 GToolTipPadding = 4;
+constexpr int32 TOOL_TIP_PADDING        = 4;
+constexpr int32 SECTION_HEADER_HEIGHT   = 34;
+constexpr int32 SECTION_CONTENT_INDENT  = 12;
+constexpr int32 SECTION_CONTENT_SPACING = 6;
 
 static FFloatColor FromBytes(int32 R, int32 G, int32 B)
 {
@@ -54,10 +47,10 @@ static TSharedPtr<IFontFace> LoadFace(const CHAR* Filename, int32 PixelHeight)
 
 bool FEditorStyle::Initialize()
 {
-    GFonts.Body      = LoadFace("segoeui.ttf", GBodyPixelHeight);
-    GFonts.BodyBold  = LoadFace("segoeuib.ttf", GBodyPixelHeight);
-    GFonts.Title     = LoadFace("segoeui.ttf", GTitlePixelHeight);
-    GFonts.Monospace = LoadFace("consola.ttf", GMonospacePixelHeight);
+    GFonts.Body      = LoadFace("segoeui.ttf", BODY_PIXEL_HEIGHT);
+    GFonts.BodyBold  = LoadFace("segoeuib.ttf", BODY_PIXEL_HEIGHT);
+    GFonts.Title     = LoadFace("segoeui.ttf", TITLE_PIXEL_HEIGHT);
+    GFonts.Monospace = LoadFace("consola.ttf", MONOSPACE_PIXEL_HEIGHT);
 
     if (!GFonts.Body || !GFonts.BodyBold || !GFonts.Title || !GFonts.Monospace)
     {
@@ -195,8 +188,8 @@ TSharedPtr<FVisualElement> FEditorStyle::MakeToolTipFrame(const TSharedPtr<FVisu
     FBorder::FDesc FrameDesc;
     FrameDesc.BackgroundColor = GetToolTipColor();
     FrameDesc.BorderColor     = GetToolTipBorderColor();
-    FrameDesc.BorderThickness = GToolTipBorderThickness;
-    FrameDesc.Padding         = FMargin(GToolTipPadding);
+    FrameDesc.BorderThickness = TOOL_TIP_BORDER_THICKNESS;
+    FrameDesc.Padding         = FMargin(TOOL_TIP_PADDING);
     FrameDesc.Content         = Content;
 
     return FBorder::Create(FrameDesc);
@@ -205,9 +198,6 @@ TSharedPtr<FVisualElement> FEditorStyle::MakeToolTipFrame(const TSharedPtr<FVisu
 FInputFrameStyle FEditorStyle::GetInputFrameStyle()
 {
     FInputFrameStyle FrameStyle;
-    FrameStyle.Fill            = FromBytes(15, 15, 15);
-    FrameStyle.BorderNormal    = FromBytes(51, 51, 51);
-    FrameStyle.BorderHovered   = FromBytes(74, 74, 74);
     FrameStyle.BorderFocused   = FromBytes(9, 92, 176);
     FrameStyle.Text            = FFloatColor::White;
     FrameStyle.HintNormal      = FromBytes(76, 76, 76);
@@ -215,15 +205,15 @@ FInputFrameStyle FEditorStyle::GetInputFrameStyle()
     FrameStyle.Selection       = FromBytes(0, 112, 224);
     FrameStyle.IconNormal      = FromBytes(192, 192, 192);
     FrameStyle.IconFocused     = FFloatColor::White;
-    FrameStyle.BorderThickness = GInputFieldBorderThickness;
-    FrameStyle.CornerRadius    = GSearchFieldCornerRadius;
+    FrameStyle.BorderThickness = INPUT_FIELD_BORDER_THICKNESS;
+    FrameStyle.CornerRadius    = SEARCH_FIELD_CORNER_RADIUS;
     return FrameStyle;
 }
 
 FInputFrameStyle FEditorStyle::GetConsoleInputFrameStyle()
 {
     FInputFrameStyle FrameStyle = GetInputFrameStyle();
-    FrameStyle.CornerRadius     = GConsoleFieldCornerRadius;
+    FrameStyle.CornerRadius     = CONSOLE_FIELD_CORNER_RADIUS;
     return FrameStyle;
 }
 
@@ -235,8 +225,50 @@ FSearchBox::FDesc FEditorStyle::MakeSearchBoxDesc(const String& Hint, const FOnS
     Desc.SearchIcon    = FEditorIcons::Search;
     Desc.ClearIcon     = FEditorIcons::Close;
     Desc.IconSize      = IconSize;
-    Desc.Padding       = FMargin(GInputFieldPaddingX, GInputFieldPaddingY);
+    Desc.Padding       = FMargin(INPUT_FIELD_PADDING_X, INPUT_FIELD_PADDING_Y);
     Desc.Style         = GetInputFrameStyle();
     Desc.OnTextChanged = OnChanged;
     return Desc;
+}
+
+FExpander::FDesc FEditorStyle::MakeExpanderDesc(const String& Label, const TSharedPtr<FVisualElement>& Content, bool bIsExpanded)
+{
+    FExpander::FDesc Desc;
+    Desc.Label          = Label;
+    Desc.Font           = GFonts.BodyBold;
+    Desc.Content        = Content;
+    Desc.bIsExpanded    = bIsExpanded;
+    Desc.HeaderHeight   = SECTION_HEADER_HEIGHT;
+    Desc.ExpandedArrow  = FEditorIcons::CollapseArrowDown;
+    Desc.CollapsedArrow = FEditorIcons::CollapseArrowRight;
+    Desc.ArrowSize      = IconSize;
+    Desc.ContentPadding = FMargin(SECTION_CONTENT_INDENT, 0, 0, SECTION_CONTENT_SPACING);
+    return Desc;
+}
+
+FPropertyTable::FDesc FEditorStyle::MakePropertyTableDesc(float LabelColumnFraction)
+{
+    FPropertyTable::FDesc Desc;
+    Desc.Font                = GFonts.Body;
+    Desc.RowHeight           = RowHeight;
+    Desc.LabelColumnFraction = LabelColumnFraction;
+    Desc.RevertIcon          = FEditorIcons::Undo;
+    Desc.bShowRevertColumn   = true;
+    return Desc;
+}
+
+FPropertyTable::FDesc FEditorStyle::MakeDataTableDesc()
+{
+    FPropertyTable::FDesc Desc;
+    Desc.Font                = GFonts.Body;
+    Desc.RowHeight           = RowHeight;
+    Desc.bAlternateRowColors = true;
+    return Desc;
+}
+
+void FEditorStyle::ApplyTreeViewArrows(FTreeView::FDesc& OutDesc)
+{
+    OutDesc.ExpandedArrow  = FEditorIcons::CollapseArrowDown;
+    OutDesc.CollapsedArrow = FEditorIcons::CollapseArrowRight;
+    OutDesc.ArrowSize      = IconSize;
 }

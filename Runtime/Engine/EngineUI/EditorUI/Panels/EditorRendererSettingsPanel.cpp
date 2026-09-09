@@ -128,6 +128,28 @@ static const FRendererSetting GRendererSettings[] =
 #undef SETTING_COMBO
 #undef SETTING_COMBO_VALUES
 
+static const FRendererSubsection GRendererSubsections[] =
+{
+    { "Cascaded Shadow Maps",    "Shadows"     },
+    { "Point-light Shadow Maps", "Shadows"     },
+    { "Reflections",             "Ray Tracing" },
+};
+
+constexpr float RENDERER_SETTINGS_LABEL_FRACTION = 0.62f;
+
+static const CHAR* FindParentSection(const CHAR* Section)
+{
+    for (const FRendererSubsection& Subsection : GRendererSubsections)
+    {
+        if (String(Subsection.Section) == Section)
+        {
+            return Subsection.ParentSection;
+        }
+    }
+
+    return nullptr;
+}
+
 FEditorRendererSettingsPanel::FEditorRendererSettingsPanel(FEditorEngine* InEditorEngine)
     : FEditorPanel(InEditorEngine, "RendererSettings", "Renderer Settings")
     , ScrollBox(nullptr)
@@ -196,6 +218,15 @@ void FEditorRendererSettingsPanel::RebuildSections()
 
     FConsoleManager& ConsoleManager = FConsoleManager::Get();
 
+    struct FSectionBox
+    {
+        const CHAR*              Name;
+        TSharedPtr<FVerticalBox> Box;
+    };
+
+    const bool bStartExpanded = !FilterText.IsEmpty();
+    TArray<FSectionBox> SectionBoxes;
+
     const CHAR*                CurrentSection = nullptr;
     TSharedPtr<FPropertyTable> CurrentTable   = nullptr;
 
@@ -220,19 +251,37 @@ void FEditorRendererSettingsPanel::RebuildSections()
 
         if (!CurrentSection || String(CurrentSection) != Setting.Section)
         {
-            FPropertyTable::FDesc TableDesc;
-            TableDesc.Font = FEditorStyle::GetFonts().Body;
-
-            CurrentTable   = FPropertyTable::Create(TableDesc);
+            CurrentTable   = FPropertyTable::Create(FEditorStyle::MakePropertyTableDesc(RENDERER_SETTINGS_LABEL_FRACTION));
             CurrentSection = Setting.Section;
 
-            FExpander::FDesc ExpanderDesc;
-            ExpanderDesc.Label       = Setting.Section;
-            ExpanderDesc.Font        = FEditorStyle::GetFonts().BodyBold;
-            ExpanderDesc.Content     = CurrentTable;
-            ExpanderDesc.bIsExpanded = true;
+            TSharedPtr<FVerticalBox> SectionBox = FVerticalBox::Create();
+            SectionBox->AddSlot(CurrentTable);
 
-            Column->AddSlot(FExpander::Create(ExpanderDesc));
+            TSharedPtr<FExpander> Section = FExpander::Create(FEditorStyle::MakeExpanderDesc(Setting.Section, SectionBox, bStartExpanded));
+
+            // A subsection is content of the section above it, so it indents and collapses with it
+            const CHAR*              ParentName = FindParentSection(Setting.Section);
+            TSharedPtr<FVerticalBox> ParentBox  = nullptr;
+
+            for (const FSectionBox& Candidate : SectionBoxes)
+            {
+                if (ParentName && String(Candidate.Name) == ParentName)
+                {
+                    ParentBox = Candidate.Box;
+                    break;
+                }
+            }
+
+            if (ParentBox)
+            {
+                ParentBox->AddSlot(Section);
+            }
+            else
+            {
+                Column->AddSlot(Section);
+            }
+
+            SectionBoxes.Emplace(FSectionBox{ Setting.Section, SectionBox });
         }
 
         FPropertyRow& Row = CurrentTable->AddRow(Setting.Label, Editor);

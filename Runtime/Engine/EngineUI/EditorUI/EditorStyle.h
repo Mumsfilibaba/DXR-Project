@@ -1,6 +1,9 @@
 #pragma once
 #include "Core/Containers/SharedPtr.h"
+#include "Application/Elements/Expander.h"
+#include "Application/Elements/PropertyTable.h"
 #include "Application/Elements/SearchBox.h"
+#include "Application/Elements/TreeView.h"
 #include "Application/Style/UIStyle.h"
 #include "Application/Text/IFontFace.h"
 
@@ -118,4 +121,41 @@ struct ENGINE_API FEditorStyle
      * @return The description, ready to hand to FSearchBox::Create.
      */
     NODISCARD static FSearchBox::FDesc MakeSearchBoxDesc(const String& Hint, const FOnSearchTextChanged& OnChanged);
+
+    /**
+     * @brief Builds the description a collapsible editor section is created from. The arrow brushes come
+     * from the icon atlas, which is built after the style is installed and so cannot be part of it.
+     *
+     * @param Label       The text the header shows.
+     * @param Content     The element shown below the header while the section is open.
+     * @param bIsExpanded True to start with the content shown.
+     * @return The description, ready to hand to FExpander::Create.
+     */
+    NODISCARD static FExpander::FDesc MakeExpanderDesc(const String& Label, const TSharedPtr<FVisualElement>& Content, bool bIsExpanded = false);
+
+    /**
+     * @brief Builds the description an editor property table is created from, so the face, the revert
+     * icon and the revert column are set here rather than repeated at every call site.
+     *
+     * @param LabelColumnFraction The share of the width the label column takes.
+     * @return The description, ready to hand to FPropertyTable::Create.
+     */
+    NODISCARD static FPropertyTable::FDesc MakePropertyTableDesc(float LabelColumnFraction);
+
+    /**
+     * @brief Builds the description a read-only editor table is created from. Nothing in one is editable,
+     * so it keeps no revert column and alternates its rows instead, which is what makes a long run of
+     * counters readable.
+     *
+     * @return The description, ready to hand to FPropertyTable::Create.
+     */
+    NODISCARD static FPropertyTable::FDesc MakeDataTableDesc();
+
+    /**
+     * @brief Fills in the arrow brushes a tree's rows draw their disclosure with, which the icon atlas
+     * holds and the style cannot.
+     *
+     * @param OutDesc The description to fill, whose other fields are left alone.
+     */
+    static void ApplyTreeViewArrows(FTreeView::FDesc& OutDesc);
 };

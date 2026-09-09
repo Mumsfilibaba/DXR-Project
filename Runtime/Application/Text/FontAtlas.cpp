@@ -10,8 +10,8 @@
 #include <stb_truetype.h>
 
 // The atlas is square and doubles until every glyph fits, so a large pixel height still packs
-static constexpr int32 GMinAtlasSize = 128;
-static constexpr int32 GMaxAtlasSize = 4096;
+constexpr int32 MIN_ATLAS_SIZE = 128;
+constexpr int32 MAX_ATLAS_SIZE = 4096;
 
 static const FGlyph GEmptyGlyph;
 
@@ -126,7 +126,7 @@ bool FFontAtlas::Build(const TArray<uint8>& InFontData, int32 InPixelHeight)
     Descent    = Math::CeilToInt(static_cast<float>(-UnscaledDescent) * PackState->ScaleFactor);
     LineHeight = Math::CeilToInt(static_cast<float>(UnscaledAscent - UnscaledDescent + UnscaledLineGap) * PackState->ScaleFactor);
 
-    for (int32 AtlasSize = GMinAtlasSize; AtlasSize <= GMaxAtlasSize; AtlasSize *= 2)
+    for (int32 AtlasSize = MIN_ATLAS_SIZE; AtlasSize <= MAX_ATLAS_SIZE; AtlasSize *= 2)
     {
         if (PackAtSize(AtlasSize, AtlasSize))
         {
@@ -138,7 +138,7 @@ bool FFontAtlas::Build(const TArray<uint8>& InFontData, int32 InPixelHeight)
         }
     }
 
-    LOG_ERROR("[FFontAtlas]: Failed to pack the font at %d pixels into an atlas of at most %d texels", PixelHeight, GMaxAtlasSize);
+    LOG_ERROR("[FFontAtlas]: Failed to pack the font at %d pixels into an atlas of at most %d texels", PixelHeight, MAX_ATLAS_SIZE);
 
     Reset();
     return false;
@@ -260,7 +260,7 @@ bool FFontAtlas::RasterizePage(int32 PageIndex) const
     const int32 PackedSize = Width;
     Pages.Add(PageIndex, MakeUniquePtr<FPage>());
 
-    for (int32 AtlasSize = PackedSize * 2; AtlasSize <= GMaxAtlasSize; AtlasSize *= 2)
+    for (int32 AtlasSize = PackedSize * 2; AtlasSize <= MAX_ATLAS_SIZE; AtlasSize *= 2)
     {
         if (MutableThis->PackAtSize(AtlasSize, AtlasSize))
         {
@@ -269,7 +269,7 @@ bool FFontAtlas::RasterizePage(int32 PageIndex) const
         }
     }
 
-    LOG_ERROR("[FFontAtlas]: Failed to grow past %d texels for codepoint page %d, which will draw as spaces", GMaxAtlasSize, PageIndex);
+    LOG_ERROR("[FFontAtlas]: Failed to grow past %d texels for codepoint page %d, which will draw as spaces", MAX_ATLAS_SIZE, PageIndex);
 
     UnpackablePages.Add(PageIndex);
 

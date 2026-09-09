@@ -90,11 +90,8 @@ bool FEditorGPUProfilerPanel::Initialize()
         return false;
     }
 
-    FPropertyTable::FDesc TableDesc;
-    TableDesc.Font = FEditorStyle::GetFonts().Body;
-
-    PassTable               = FPropertyTable::Create(TableDesc);
-    PipelineStatisticsTable = FPropertyTable::Create(TableDesc);
+    PassTable               = FPropertyTable::Create(FEditorStyle::MakeDataTableDesc());
+    PipelineStatisticsTable = FPropertyTable::Create(FEditorStyle::MakeDataTableDesc());
 
     if (!PassTable || !PipelineStatisticsTable)
     {
@@ -103,13 +100,7 @@ bool FEditorGPUProfilerPanel::Initialize()
 
     BuildPipelineStatisticsRows();
 
-    FExpander::FDesc StatisticsDesc;
-    StatisticsDesc.Label       = "Pipeline Statistics";
-    StatisticsDesc.Font        = FEditorStyle::GetFonts().BodyBold;
-    StatisticsDesc.Content     = PipelineStatisticsTable;
-    StatisticsDesc.bIsExpanded = false;
-
-    TSharedPtr<FExpander> StatisticsSection = FExpander::Create(StatisticsDesc);
+    TSharedPtr<FExpander> StatisticsSection = FExpander::Create(FEditorStyle::MakeExpanderDesc("Pipeline Statistics", PipelineStatisticsTable, false));
     if (!StatisticsSection)
     {
         return false;

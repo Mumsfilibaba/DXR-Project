@@ -7,7 +7,6 @@
 #include "Application/Elements/TextBlock.h"
 #include "Core/Templates/CString.h"
 
-// The groups the RHI Info panel owns, so the two panels between them show every group exactly once.
 static const CHAR* const GRHIOwnedGroups[] =
 {
     "RHI",
@@ -149,22 +148,12 @@ void FEditorStatsPanel::RebuildSections()
     Sections.Clear();
     Sections.Reserve(ScratchGroups.Size());
 
-    FPropertyTable::FDesc TableDesc;
-    TableDesc.Font = FEditorStyle::GetFonts().Body;
-
     for (const CHAR* GroupName : ScratchGroups)
     {
         FStatGroupSection GroupSection;
         GroupSection.GroupName = GroupName;
-        GroupSection.Table     = FPropertyTable::Create(TableDesc);
-
-        FExpander::FDesc ExpanderDesc;
-        ExpanderDesc.Label       = GroupName;
-        ExpanderDesc.Font        = FEditorStyle::GetFonts().BodyBold;
-        ExpanderDesc.Content     = GroupSection.Table;
-        ExpanderDesc.bIsExpanded = true;
-
-        GroupSection.Section = FExpander::Create(ExpanderDesc);
+        GroupSection.Table     = FPropertyTable::Create(FEditorStyle::MakeDataTableDesc());
+        GroupSection.Section   = FExpander::Create(FEditorStyle::MakeExpanderDesc(GroupName, GroupSection.Table, true));
 
         Column->AddSlot(GroupSection.Section);
         Sections.Emplace(GroupSection);

@@ -1,9 +1,14 @@
 #pragma once
 #include "Core/Containers/Array.h"
 #include "Core/Containers/String.h"
+#include "Application/Draw/DrawTypes.h"
+#include "Application/Elements/Button.h"
 #include "Application/Elements/VisualElement.h"
 #include "Application/Style/UIStyle.h"
 #include "Application/Text/IFontFace.h"
+
+/** @brief Called once a tick for whether a row still holds its default, which is what shows and hides its revert arrow. */
+DECLARE_RETURN_DELEGATE(FOnPropertyModified, bool);
 
 struct FPropertyRow
 {
@@ -16,11 +21,23 @@ struct FPropertyRow
     /** @brief The element the right column holds, which is null for a heading. */
     TSharedPtr<FVisualElement> Editor;
 
+    /** @brief Placed just past the label at its desired size, which is where a per-row toggle goes. */
+    TSharedPtr<FVisualElement> LabelAccessory;
+
     /** @brief Whether the row is a heading, which spans both columns. */
     bool bIsHeader = false;
 
     /** @brief How many levels the label is moved right by, which is what nests a struct's fields. */
     int32 IndentLevel = 0;
+
+    /** @brief How tall the row is, in pixels, where zero takes the table's height instead. */
+    int32 HeightOverride = 0;
+
+    /** @brief Polled each frame to decide whether the revert arrow is drawn, an unbound delegate never drawing it. */
+    FOnPropertyModified IsModified;
+
+    /** @brief Fired when the arrow is clicked, which is what puts the row back to its default. */
+    FOnClicked OnRevert;
 };
 
 class APPLICATION_API FPropertyTable final : public FVisualElement
@@ -40,8 +57,21 @@ public:
         /** @brief How far one indent level moves a label right, in pixels. */
         int32 IndentPerLevel = 12;
 
-        /** @brief Whether every second row is filled a shade lighter than the panel behind it. */
-        bool bAlternateRowColors = true;
+        /** @brief The look of the rows and the rules between them, defaulting to the shared table style. */
+        FUIPropertyTableStyle Style = FUIStyle::GetDefault().PropertyTable;
+
+        /** @brief Drawn in the revert column, an unset brush falling back to a stroked arc and head. */
+        FUIBrush RevertIcon;
+
+        /**
+         * @brief Whether the table keeps a column at its right edge for the revert arrows. ImGui reserves the
+         * column whether or not a row fills it, so the editors of a table with one revertable row all end at
+         * the same place.
+         */
+        bool bShowRevertColumn = false;
+
+        /** @brief Whether every second row is filled with the alternate shade rather than the normal one. */
+        bool bAlternateRowColors = false;
     };
 
 public:
@@ -101,6 +131,14 @@ public:
      */
     FPropertyRow& AddHeaderRow(const String& Label);
 
+    /**
+     * @brief Places an element beside a row's label, which is what puts the uniform lock next to Scale.
+     *
+     * @param Index     The row to place it on, which has to name a row.
+     * @param Accessory The element to place, a null one clearing whatever the row carried.
+     */
+    void SetRowLabelAccessory(int32 Index, const TSharedPtr<FVisualElement>& Accessory);
+
     /** @brief Drops every row, so the table can be refilled. */
     void ClearRows();
 
@@ -159,18 +197,29 @@ public:
 private:
     NODISCARD int32 GetDividerOffset(const FRectangle& Bounds) const;
     NODISCARD bool IsPointOnDivider(const IntVector2& ClientPosition) const;
+    NODISCARD int32 GetRowHeight(int32 Index) const;
+    NODISCARD int32 GetRowOffset(int32 Index) const;
+    NODISCARD int32 GetTotalRowHeight() const;
+    NODISCARD int32 GetEditorColumnRight(const FRectangle& Bounds) const;
+    NODISCARD FRectangle GetLabelRectangle(int32 Index, const FRectangle& Bounds) const;
+    NODISCARD FRectangle GetLabelAccessoryRectangle(int32 Index, const FRectangle& Bounds) const;
+    NODISCARD FRectangle GetRevertRectangle(int32 Index, const FRectangle& Bounds) const;
+    NODISCARD bool IsRowModified(int32 Index) const;
 
     void UpdateHoveredRow(const IntVector2& ClientPosition);
     void ClearHoveredRow();
 
     TArray<FPropertyRow>  Rows;
     TSharedPtr<IFontFace> Font;
+    FUIPropertyTableStyle Style;
+    FUIBrush              RevertIcon;
     IntVector2            DragOrigin;
     float                 LabelColumnFraction;
     float                 DragStartFraction;
     int32                 RowHeight;
     int32                 IndentPerLevel;
     int32                 HoveredRowIndex;
+    bool                  bShowRevertColumn;
     bool                  bAlternateRowColors;
     bool                  bIsDraggingDivider;
     bool                  bIsDividerHovered;
