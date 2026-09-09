@@ -18,6 +18,7 @@ FMenuItem::FMenuItem()
     , ShortcutText()
     , Icon()
     , Font(nullptr)
+    , HighlightFill(FUIStyle::GetDefault().Colors.MenuItemHovered)
     , CheckState(ECheckBoxState::Unchecked)
     , bIsCheckable(false)
     , bIsHighlighted(false)
@@ -76,7 +77,7 @@ int32 FMenuItem::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
 
     if (bIsHighlighted || State == EInteractionState::Hovered || State == EInteractionState::Pressed)
     {
-        OutCommandList.AddBox(LayerId, Bounds, Style.Colors.MenuItemHovered);
+        OutCommandList.AddBox(LayerId, Bounds, HighlightFill);
     }
 
     const FFloatColor TextColor = Style.GetTextColor(State);
@@ -190,6 +191,11 @@ void FMenuItem::SetCheckState(ECheckBoxState InCheckState)
 void FMenuItem::SetHighlighted(bool bInIsHighlighted)
 {
     bIsHighlighted = bInIsHighlighted;
+}
+
+void FMenuItem::SetHighlightFill(const FFloatColor& InHighlightFill)
+{
+    HighlightFill = InHighlightFill;
 }
 
 void FMenuItem::Activate()

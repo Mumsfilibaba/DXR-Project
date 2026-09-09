@@ -33,6 +33,7 @@ public:
         FFloatColor           SelectionColor = FFloatColor(0.26f, 0.59f, 0.98f, 0.35f);
         FMargin               Padding = FMargin(4, 2, 4, 2);
         float                 TextCursorBlinkPeriod = 1.2f;
+        EHorizontalAlignment  TextAlignment = EHorizontalAlignment::Left;
     };
 
 public:
@@ -302,15 +303,14 @@ public:
 private:
     void NotifyTextChanged();
 
+    NODISCARD FRectangle GetTextBounds(const FRectangle& Bounds) const;
     NODISCARD int32 GetTextBandHeight() const;
     NODISCARD int32 GetTextBandTop(const FRectangle& TextBounds) const;
+    NODISCARD int32 FindTextCursorPositionAt(const IntVector2& ClientPosition) const;
+    NODISCARD double GetSecondsSinceTextCursorBlinkReset() const;
 
     void MoveTextCursor(int32 NewTextCursorPosition, bool bExtendSelection);
-
-    NODISCARD int32 FindTextCursorPositionAt(const IntVector2& ClientPosition) const;
     void ResetTextCursorBlink();
-
-    NODISCARD double GetSecondsSinceTextCursorBlinkReset() const;
 
     String                         Text;
     String                         HintText;
@@ -320,6 +320,7 @@ private:
     FFloatColor                    TextCursorColor;
     FFloatColor                    SelectionColor;
     FMargin                        Padding;
+    EHorizontalAlignment           TextAlignment;
     FOnTextChangedDelegate         OnTextChanged;
     FOnTextCommittedDelegate       OnTextCommitted;
     FOnEditableTextKeyDownDelegate OnKeyDownInterceptor;

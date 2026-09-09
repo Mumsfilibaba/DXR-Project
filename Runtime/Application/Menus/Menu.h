@@ -84,9 +84,22 @@ public:
      */
     void SetMinDesiredWidth(int32 InMinDesiredWidth);
 
+    /**
+     * @brief Replaces the fill and the stroke the menu draws itself with, which a combo box uses so its list
+     * reads as part of the field rather than as one of the application menus. The single stroke stands in for
+     * both of the ones a menu otherwise carries.
+     *
+     * @param InFill   The fill behind the rows.
+     * @param InBorder The stroke around them.
+     */
+    void SetChrome(const FFloatColor& InFill, const FFloatColor& InBorder);
+
 private:
     TSharedPtr<FVerticalBox>      Panel;
     TArray<TSharedPtr<FMenuItem>> Items;
+    FFloatColor                   ChromeFill;
+    FFloatColor                   ChromeBorder;
     int32                         HighlightedIndex;
     int32                         MinDesiredWidth;
+    bool                          bHasChrome;
 };

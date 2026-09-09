@@ -54,6 +54,15 @@ public:
         /** @brief The share of the width the label column takes, clamped when it is applied. */
         float LabelColumnFraction = 0.4f;
 
+        /**
+         * @brief How wide the label column is, in pixels, which ImGui holds fixed rather than letting it
+         * follow the width of the panel. Zero hands the column back to LabelColumnFraction.
+         */
+        int32 LabelColumnWidth = 0;
+
+        /** @brief How far an editor sits from the divider, in pixels. */
+        int32 EditorColumnInset = 16;
+
         /** @brief How far one indent level moves a label right, in pixels. */
         int32 IndentPerLevel = 12;
 
@@ -169,6 +178,12 @@ public:
         return LabelColumnFraction;
     }
 
+    /** @return How wide the label column is held, in pixels, or zero while it follows the fraction instead. */
+    NODISCARD FORCEINLINE int32 GetLabelColumnWidth() const
+    {
+        return LabelColumnWidth;
+    }
+
     /**
      * @brief The rectangle one row occupies.
      *
@@ -205,6 +220,7 @@ private:
     NODISCARD FRectangle GetLabelAccessoryRectangle(int32 Index, const FRectangle& Bounds) const;
     NODISCARD FRectangle GetRevertRectangle(int32 Index, const FRectangle& Bounds) const;
     NODISCARD bool IsRowModified(int32 Index) const;
+    NODISCARD int32 FindRevertRowAtPoint(const IntVector2& ClientPosition) const;
 
     void UpdateHoveredRow(const IntVector2& ClientPosition);
     void ClearHoveredRow();
@@ -216,9 +232,14 @@ private:
     IntVector2            DragOrigin;
     float                 LabelColumnFraction;
     float                 DragStartFraction;
+    int32                 LabelColumnWidth;
+    int32                 DragStartWidth;
+    int32                 EditorColumnInset;
     int32                 RowHeight;
     int32                 IndentPerLevel;
     int32                 HoveredRowIndex;
+    int32                 HoveredRevertRow;
+    int32                 PressedRevertRow;
     bool                  bShowRevertColumn;
     bool                  bAlternateRowColors;
     bool                  bIsDraggingDivider;

@@ -131,6 +131,15 @@ struct FUIPropertyTableStyle
     /** @brief The rules between rows and between columns. */
     FFloatColor GridLine = FFloatColor(26.0f / 255.0f, 26.0f / 255.0f, 26.0f / 255.0f, 1.0f);
 
+    /** @brief The revert arrow on a row the cursor is away from. */
+    FFloatColor RevertGlyph = FFloatColor(220.0f / 255.0f, 220.0f / 255.0f, 220.0f / 255.0f, 1.0f);
+
+    /** @brief The revert arrow the cursor is over. */
+    FFloatColor RevertGlyphHovered = FFloatColor(160.0f / 255.0f, 160.0f / 255.0f, 160.0f / 255.0f, 1.0f);
+
+    /** @brief The revert arrow being pressed. */
+    FFloatColor RevertGlyphPressed = FFloatColor(130.0f / 255.0f, 130.0f / 255.0f, 130.0f / 255.0f, 1.0f);
+
     /** @brief The space between a cell's edges and its contents. */
     FMargin CellPadding = FMargin(6, 4, 6, 4);
 
@@ -163,6 +172,33 @@ struct FUIComboBoxStyle
 
     /** @brief The fill behind the row of the list that is currently chosen. */
     FFloatColor SelectionFill = FFloatColor(0.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
+};
+
+struct FUICheckBoxStyle
+{
+    /** @brief The fill inside the box, which stays dark whether or not the box is ticked. */
+    FFloatColor Fill = FFloatColor(15.0f / 255.0f, 15.0f / 255.0f, 15.0f / 255.0f, 1.0f);
+
+    /** @brief The tick, and the dash an undetermined box carries in its place. */
+    FFloatColor CheckMark = FFloatColor(166.0f / 255.0f, 166.0f / 255.0f, 166.0f / 255.0f, 1.0f);
+
+    /** @brief The border of a box the cursor is away from. */
+    FFloatColor Border = FFloatColor(60.0f / 255.0f, 60.0f / 255.0f, 60.0f / 255.0f, 1.0f);
+
+    /** @brief The border of a box the cursor is over. */
+    FFloatColor BorderHovered = FFloatColor(100.0f / 255.0f, 100.0f / 255.0f, 100.0f / 255.0f, 1.0f);
+
+    /** @brief The border of a box being pressed. */
+    FFloatColor BorderPressed = FFloatColor(130.0f / 255.0f, 130.0f / 255.0f, 130.0f / 255.0f, 1.0f);
+
+    /** @brief How thick that border is drawn, in pixels. */
+    float BorderThickness = 2.0f;
+};
+
+struct FUINumericEntryStyle
+{
+    /** @brief The fill from the field's left edge to the value, which is what makes a ranged field read as a slider. */
+    FFloatColor TrackFill = FFloatColor(133.0f / 255.0f, 133.0f / 255.0f, 133.0f / 255.0f, 1.0f);
 };
 
 struct FUIAxisColors
@@ -316,6 +352,12 @@ struct APPLICATION_API FUIStyle
 
     /** @brief The look of a field that opens a list of values. */
     FUIComboBoxStyle ComboBox;
+
+    /** @brief The look of a numeric field, including the track a ranged one fills. */
+    FUINumericEntryStyle NumericEntry;
+
+    /** @brief The look of a box that is ticked. */
+    FUICheckBoxStyle CheckBox;
 
     /** @brief The look of one row in a tree or a list. */
     FUITreeRowStyle TreeRow;

@@ -10,3 +10,4 @@ bool EditableTextCommandChord_Test();
 bool EditableTextCaretBlink_Test();
 bool EditableTextBandAlignment_Test();
 bool EditableTextDraw_Test();
+bool EditableTextAlignment_Test();

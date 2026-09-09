@@ -15,7 +15,7 @@ FCheckBox::FCheckBox()
     : FInteractiveElement()
     , LabelText(nullptr)
     , CheckState(ECheckBoxState::Unchecked)
-    , BoxSize(16)
+    , BoxSize(static_cast<int32>(static_cast<float>(FUIStyle::GetDefault().Metrics.RowHeight) * 0.8f))
     , LabelSpacing(8)
     , bIsTriState(false)
     , OnStateChangedDelegate()
@@ -85,14 +85,22 @@ int32 FCheckBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
 
     const FRectangle Box = FRectangle::AlignInBounds(AllottedGeometry.Bounds, IntVector2(BoxSize, BoxSize), EHorizontalAlignment::Left, EVerticalAlignment::Center);
 
-    const bool         bIsSet   = CheckState != ECheckBoxState::Unchecked;
-    const FFloatColor  BoxColor = bIsSet && IsEnabled() ? Style.Colors.Accent : Style.GetControlColor(State);
     const FCornerRadii BoxRadii = FCornerRadii(Math::Min(Style.Metrics.CornerRadius, static_cast<float>(BoxSize) * 0.25f));
 
-    OutCommandList.AddBox(LayerId, Box, BoxColor, BoxRadii);
-    OutCommandList.AddBoxOutline(LayerId, Box, Style.Colors.Border, Style.Metrics.BorderThickness, BoxRadii);
+    FFloatColor BorderColor = Style.CheckBox.Border;
+    if (State == EInteractionState::Pressed)
+    {
+        BorderColor = Style.CheckBox.BorderPressed;
+    }
+    else if (State == EInteractionState::Hovered)
+    {
+        BorderColor = Style.CheckBox.BorderHovered;
+    }
 
-    const FFloatColor MarkColor = Style.GetTextColor(State);
+    OutCommandList.AddBox(LayerId, Box, Style.CheckBox.Fill, BoxRadii);
+    OutCommandList.AddBoxOutline(LayerId, Box, BorderColor, Style.CheckBox.BorderThickness, BoxRadii);
+
+    const FFloatColor MarkColor = IsEnabled() ? Style.CheckBox.CheckMark : Style.Colors.TextDisabled;
     if (CheckState == ECheckBoxState::Checked)
     {
         const float Left   = static_cast<float>(Box.Position.X);

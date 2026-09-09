@@ -16,8 +16,11 @@ FMenu::FMenu()
     : FCompoundElement()
     , Panel(FVerticalBox::Create())
     , Items()
+    , ChromeFill()
+    , ChromeBorder()
     , HighlightedIndex(-1)
     , MinDesiredWidth(0)
+    , bHasChrome(false)
 {
 }
 
@@ -41,10 +44,18 @@ int32 FMenu::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& Out
     const FUIStyle&  Style  = FUIStyle::GetDefault();
     const FRectangle Bounds = AllottedGeometry.Bounds;
 
-    OutCommandList.AddBox(LayerId, Bounds, Style.Colors.MenuBackground);
-    OutCommandList.AddBoxOutline(LayerId, Bounds, Style.Colors.MenuBorder, 1.0f);
+    if (bHasChrome)
+    {
+        OutCommandList.AddBox(LayerId, Bounds, ChromeFill);
+        OutCommandList.AddBoxOutline(LayerId, Bounds, ChromeBorder, 1.0f);
+    }
+    else
+    {
+        OutCommandList.AddBox(LayerId, Bounds, Style.Colors.MenuBackground);
+        OutCommandList.AddBoxOutline(LayerId, Bounds, Style.Colors.MenuBorder, 1.0f);
 
-    OutCommandList.AddBoxOutline(LayerId, Bounds.Deflate(FMargin(1, 1, 1, 1)), Style.Colors.MenuInnerBorder, 1.0f);
+        OutCommandList.AddBoxOutline(LayerId, Bounds.Deflate(FMargin(1, 1, 1, 1)), Style.Colors.MenuInnerBorder, 1.0f);
+    }
 
     return FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId + 1);
 }
@@ -199,4 +210,11 @@ void FMenu::ActivateHighlighted()
 void FMenu::SetMinDesiredWidth(int32 InMinDesiredWidth)
 {
     MinDesiredWidth = Math::Max(InMinDesiredWidth, 0);
+}
+
+void FMenu::SetChrome(const FFloatColor& InFill, const FFloatColor& InBorder)
+{
+    ChromeFill   = InFill;
+    ChromeBorder = InBorder;
+    bHasChrome   = true;
 }

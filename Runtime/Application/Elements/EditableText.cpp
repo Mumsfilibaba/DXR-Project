@@ -30,6 +30,7 @@ FEditableText::FEditableText()
     , TextCursorColor(FFloatColor::White)
     , SelectionColor(0.26f, 0.59f, 0.98f, 0.35f)
     , Padding(4, 2, 4, 2)
+    , TextAlignment(EHorizontalAlignment::Left)
     , OnTextChanged()
     , OnTextCommitted()
     , OnKeyDownInterceptor()
@@ -54,13 +55,12 @@ void FEditableText::Initialize(const FDesc& Desc)
     TextCursorColor       = Desc.TextCursorColor;
     SelectionColor        = Desc.SelectionColor;
     Padding               = Desc.Padding;
+    TextAlignment         = Desc.TextAlignment;
     TextCursorBlinkPeriod = Math::Max(0.0f, Desc.TextCursorBlinkPeriod);
     TextCursorPosition    = Text.Length();
     SelectionAnchor       = TextCursorPosition;
 
     ResetTextCursorBlink();
-
-    // An editable line takes keyboard focus whenever its window becomes active
     SetActivationPolicy(EElementActivationPolicy::AutoFocusOnWindowActivate);
 }
 
@@ -71,11 +71,29 @@ IntVector2 FEditableText::ComputeDesiredSize() const
         return IntVector2(Padding.GetTotalHorizontal(), Padding.GetTotalVertical());
     }
 
-    // The hint is measured too, so an empty line does not collapse narrower than its placeholder
     const int32 TextWidth = Font->MeasureWidth(StringView(Text.Data(), Text.Length()));
     const int32 HintWidth = Font->MeasureWidth(StringView(HintText.Data(), HintText.Length()));
 
     return IntVector2(Math::Max(TextWidth, HintWidth) + Padding.GetTotalHorizontal(), GetTextBandHeight() + Padding.GetTotalVertical());
+}
+
+FRectangle FEditableText::GetTextBounds(const FRectangle& Bounds) const
+{
+    FRectangle TextBounds = Bounds.Deflate(Padding);
+    if (TextAlignment == EHorizontalAlignment::Left || TextAlignment == EHorizontalAlignment::Fill || !Font)
+    {
+        return TextBounds;
+    }
+
+    const String& Displayed = Text.IsEmpty() ? HintText : Text;
+
+    const int32 TextWidth = Font->MeasureWidth(StringView(Displayed.Data(), Displayed.Length()));
+    const int32 Slack     = Math::Max(0, TextBounds.Width - TextWidth);
+
+    TextBounds.Position.X += TextAlignment == EHorizontalAlignment::Center ? (Slack / 2) : Slack;
+    TextBounds.Width       = TextWidth;
+
+    return TextBounds;
 }
 
 int32 FEditableText::GetTextBandHeight() const
@@ -90,7 +108,7 @@ int32 FEditableText::GetTextBandTop(const FRectangle& TextBounds) const
 
 int32 FEditableText::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    const FRectangle TextBounds = AllottedGeometry.Bounds.Deflate(Padding);
+    const FRectangle TextBounds = GetTextBounds(AllottedGeometry.Bounds);
 
     if (HasSelection() && Font)
     {
@@ -732,7 +750,7 @@ void FEditableText::MoveTextCursor(int32 NewTextCursorPosition, bool bExtendSele
 
 int32 FEditableText::FindTextCursorPositionAt(const IntVector2& ClientPosition) const
 {
-    const FRectangle TextBounds = GetContentRectangle().Deflate(Padding);
+    const FRectangle TextBounds = GetTextBounds(GetContentRectangle());
     const int32      OffsetX    = ClientPosition.X - TextBounds.Position.X;
 
     return Font->FindCharacterIndexAtOffset(StringView(Text.Data(), Text.Length()), OffsetX);

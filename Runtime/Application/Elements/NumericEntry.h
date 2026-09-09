@@ -162,6 +162,19 @@ public:
         /** @brief Whether the value is written out at only the decimals it needs rather than at a fixed three. */
         bool bDynamicPrecision = false;
 
+        /**
+         * @brief Whether the field fills from its left edge to where the value sits between MinValue and
+         * MaxValue, which is the shape ImGui's slider takes. A field left at the unbounded default range
+         * draws no track, so this only takes effect once a range is set.
+         */
+        bool bShowFillTrack = false;
+
+        /** @brief Where the value sits across the field, which a filled track wants centred. */
+        EHorizontalAlignment TextAlignment = EHorizontalAlignment::Left;
+
+        /** @brief Whether the field only reports a value, which stops it scrubbing and taking the caret. */
+        bool bIsReadOnly = false;
+
         /** @brief Fired every time the value moves, which during a scrub is every frame the cursor moves. */
         FOnValueChanged OnValueChanged;
     };
@@ -259,6 +272,7 @@ public:
     NODISCARD FRectangle GetEditorRectangle(const FRectangle& Bounds) const;
 
 private:
+    NODISCARD bool HasFillTrack() const;
     NODISCARD T SanitizeValue(T InValue) const;
     NODISCARD String FormatValue() const;
 
@@ -282,6 +296,8 @@ private:
     int32                     LabelWidth;
     bool                      bShowLabel;
     bool                      bDynamicPrecision;
+    bool                      bShowFillTrack;
+    bool                      bIsReadOnly;
     bool                      bIsScrubbing;
     bool                      bHasScrubbed;
     FOnValueChanged           OnValueChangedDelegate;
@@ -313,6 +329,8 @@ TNumericEntry<T>::TNumericEntry()
     , LabelWidth(14)
     , bShowLabel(true)
     , bDynamicPrecision(false)
+    , bShowFillTrack(false)
+    , bIsReadOnly(false)
     , bIsScrubbing(false)
     , bHasScrubbed(false)
     , OnValueChangedDelegate()
@@ -333,6 +351,8 @@ void TNumericEntry<T>::Initialize(const FDesc& Desc)
     LabelWidth             = Math::Max(0, Desc.LabelWidth);
     bShowLabel             = Desc.bShowLabel;
     bDynamicPrecision      = Desc.bDynamicPrecision;
+    bShowFillTrack         = Desc.bShowFillTrack;
+    bIsReadOnly            = Desc.bIsReadOnly;
     OnValueChangedDelegate = Desc.OnValueChanged;
 
     Value = SanitizeValue(Desc.Value);
@@ -342,6 +362,7 @@ void TNumericEntry<T>::Initialize(const FDesc& Desc)
     EditorDesc.Font            = Desc.Font;
     EditorDesc.ForegroundColor = FUIStyle::GetDefault().Colors.Text;
     EditorDesc.Padding         = FMargin();
+    EditorDesc.TextAlignment   = Desc.TextAlignment;
 
     Editor = FEditableText::Create(EditorDesc);
     Editor->SetParentElement(AsWeakPtr());
@@ -404,6 +425,20 @@ int32 TNumericEntry<T>::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComma
     const FCornerRadii CornerRadius = FCornerRadii(Style.Metrics.CornerRadius);
 
     OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Colors.InputFieldFill, CornerRadius);
+
+    if (HasFillTrack())
+    {
+        const float Fraction = Math::Clamp(static_cast<float>(Value - MinValue) / static_cast<float>(MaxValue - MinValue), 0.0f, 1.0f);
+
+        FRectangle Filled = AllottedGeometry.Bounds;
+        Filled.Width      = static_cast<int32>(static_cast<float>(Filled.Width) * Fraction);
+
+        if (Filled.Width > 0)
+        {
+            OutCommandList.AddBox(LayerId, Filled, Style.NumericEntry.TrackFill, CornerRadius);
+        }
+    }
+
     OutCommandList.AddBoxOutline(LayerId, AllottedGeometry.Bounds, Style.Colors.InputFieldBorder, Style.Metrics.BorderThickness, CornerRadius);
 
     if (AccentEdge.A > 0.0f && AllottedGeometry.Bounds.Height > (AccentEdgeInset * 2))
@@ -448,7 +483,7 @@ int32 TNumericEntry<T>::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComma
 template<typename T>
 FEventResponse TNumericEntry<T>::OnMouseButtonDown(const FCursorEvent& CursorEvent)
 {
-    if (CursorEvent.GetKey() != Keys::MouseButtonLeft)
+    if (bIsReadOnly || CursorEvent.GetKey() != Keys::MouseButtonLeft)
     {
         return FEventResponse::Unhandled();
     }
@@ -516,7 +551,7 @@ FEventResponse TNumericEntry<T>::OnMouseMove(const FCursorEvent& CursorEvent)
 template<typename T>
 bool TNumericEntry<T>::GetCursor(ECursor& OutCursor) const
 {
-    if (Editor && Editor->HasKeyboardFocus())
+    if (bIsReadOnly || (Editor && Editor->HasKeyboardFocus()))
     {
         return false;
     }
@@ -530,6 +565,15 @@ void TNumericEntry<T>::SetValue(T InValue)
 {
     Value = SanitizeValue(InValue);
     UpdateEditorText();
+}
+
+template<typename T>
+bool TNumericEntry<T>::HasFillTrack() const
+{
+    return bShowFillTrack
+        && MaxValue > MinValue
+        && MinValue > TNumericLimits<T>::Lowest()
+        && MaxValue < TNumericLimits<T>::Max();
 }
 
 template<typename T>

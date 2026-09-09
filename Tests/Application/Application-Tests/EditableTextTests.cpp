@@ -792,3 +792,73 @@ bool EditableTextDraw_Test()
 
     TEST_END();
 }
+
+bool EditableTextAlignment_Test()
+{
+    TEST_BEGIN();
+
+    TSharedPtr<IFontFace> Font = MakeSharedPtr<FFixedWidthFontFace>(8, 16);
+
+    const FRectangle Bounds(IntVector2(0, 0), 200, 16);
+
+    FEditableText::FDesc Desc;
+    Desc.Text                  = "Hello";
+    Desc.Font                  = Font;
+    Desc.Padding               = FMargin(0);
+    Desc.TextAlignment         = EHorizontalAlignment::Center;
+    Desc.TextCursorBlinkPeriod = 0.0f;
+
+    TSharedPtr<FEditableText> Centered = FEditableText::Create(Desc);
+    Centered->PrepareDesiredSize();
+    Centered->Tick(Bounds);
+
+    TEST_SECTION("Centred text is drawn in the middle of the space rather than against its left edge");
+    FDrawCommandList CommandList;
+    Centered->OnDraw(FDrawGeometry(Centered->GetContentRectangle(), 1.0f), CommandList, 0);
+
+    const int32 ExpectedLeft = (200 - (5 * 8)) / 2;
+    TEST_EXPECT_EQ(CommandList[0].Bounds.Position.X, ExpectedLeft);
+
+    TEST_SECTION("The text cursor follows the text, so it lands beside the character it sits in front of");
+    Centered->OnFocusGained();
+    Centered->SetTextCursorPosition(3);
+
+    CommandList.Reset();
+    Centered->OnDraw(FDrawGeometry(Centered->GetContentRectangle(), 1.0f), CommandList, 0);
+
+    TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::Line), 1);
+    TEST_EXPECT_EQ(CommandList[1].Bounds.Position.X, ExpectedLeft + (3 * 8));
+
+    TEST_SECTION("Hit testing follows it too, so a click over a character lands on that character");
+    Centered->OnMouseButtonDown(CreateMouseButtonEvent(IntVector2(ExpectedLeft + (2 * 8) + 1, 8), true));
+    Centered->OnMouseButtonUp(CreateMouseButtonEvent(IntVector2(ExpectedLeft + (2 * 8) + 1, 8), false));
+
+    TEST_EXPECT_EQ(Centered->GetTextCursorPosition(), 2);
+
+    TEST_SECTION("Right aligned text ends where the space does");
+    Desc.TextAlignment = EHorizontalAlignment::Right;
+
+    TSharedPtr<FEditableText> RightAligned = FEditableText::Create(Desc);
+    RightAligned->PrepareDesiredSize();
+    RightAligned->Tick(Bounds);
+
+    CommandList.Reset();
+    RightAligned->OnDraw(FDrawGeometry(RightAligned->GetContentRectangle(), 1.0f), CommandList, 0);
+
+    TEST_EXPECT_EQ(CommandList[0].Bounds.Position.X, 200 - (5 * 8));
+
+    TEST_SECTION("Text wider than the space is left where it is rather than pushed off the front");
+    Desc.Text          = "A line far wider than two hundred pixels can hold";
+    Desc.TextAlignment = EHorizontalAlignment::Center;
+
+    TSharedPtr<FEditableText> Overflowing = FEditableText::Create(Desc);
+    Overflowing->PrepareDesiredSize();
+    Overflowing->Tick(Bounds);
+
+    CommandList.Reset();
+    Overflowing->OnDraw(FDrawGeometry(Overflowing->GetContentRectangle(), 1.0f), CommandList, 0);
+
+    TEST_EXPECT_EQ(CommandList[0].Bounds.Position.X, 0);
+
+    TEST_END();
+}

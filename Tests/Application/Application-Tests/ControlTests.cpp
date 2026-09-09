@@ -215,9 +215,11 @@ bool CheckBoxControl_Test()
     TSharedPtr<FCheckBox> CheckBox = FCheckBox::Create(Desc);
     LayoutElement(CheckBox, FRectangle(IntVector2(0, 0), 200, 20));
 
+    const int32 BoxSize = Desc.BoxSize;
+
     TEST_SECTION("The box, the gap and the label together decide the width");
-    TEST_EXPECT_EQ(CheckBox->GetCachedDesiredSize().X, 16 + 8 + (7 * 8));
-    TEST_EXPECT_EQ(CheckBox->GetCachedDesiredSize().Y, 16);
+    TEST_EXPECT_EQ(CheckBox->GetCachedDesiredSize().X, BoxSize + 8 + (7 * 8));
+    TEST_EXPECT_EQ(CheckBox->GetCachedDesiredSize().Y, BoxSize);
 
     TEST_SECTION("A two-state box flips between checked and unchecked");
     TEST_EXPECT(CheckBox->GetCheckState() == ECheckBoxState::Unchecked);
@@ -275,8 +277,8 @@ bool CheckBoxControl_Test()
 
     TEST_SECTION("The box keeps its square at the left edge whatever the label does");
     const FRectangle BoxBounds = CheckBox->GetBoxBounds();
-    TEST_EXPECT_EQ(BoxBounds.Width, 16);
-    TEST_EXPECT_EQ(BoxBounds.Height, 16);
+    TEST_EXPECT_EQ(BoxBounds.Width, BoxSize);
+    TEST_EXPECT_EQ(BoxBounds.Height, BoxSize);
     TEST_EXPECT_EQ(BoxBounds.Position.X, 0);
 
     TEST_END();
@@ -1137,6 +1139,78 @@ bool NumericEntryControl_Test()
     TEST_EXPECT_EQ(IntEntry->GetValue(), 7);
     TEST_EXPECT_EQ(IntChanges.Size(), IntChangesBeforeCommit + 1);
     TEST_EXPECT(IntEntry->GetEditor()->GetText() == String("7"));
+
+    TEST_SECTION("A ranged field asked for a track fills from its left edge to where the value sits");
+    FNumericEntryFloat::FDesc TrackDesc;
+    TrackDesc.Font           = CreateFont();
+    TrackDesc.MinValue       = 0.0f;
+    TrackDesc.MaxValue       = 1.0f;
+    TrackDesc.Value          = 0.25f;
+    TrackDesc.bShowLabel     = false;
+    TrackDesc.bShowFillTrack = true;
+    TrackDesc.TextAlignment  = EHorizontalAlignment::Center;
+
+    TSharedPtr<FNumericEntryFloat> Track = FNumericEntryFloat::Create(TrackDesc);
+    LayoutElement(Track, Bounds);
+
+    FDrawCommandList QuarterCommands;
+    DrawElement(Track, QuarterCommands);
+
+    TEST_EXPECT_EQ(CountCommands(QuarterCommands, EDrawCommandType::Box), 2);
+    TEST_EXPECT_EQ(QuarterCommands.GetCommands()[1].Bounds.Width, Bounds.Width / 4);
+
+    Track->SetValue(1.0f);
+
+    FDrawCommandList FullCommands;
+    DrawElement(Track, FullCommands);
+    TEST_EXPECT_EQ(FullCommands.GetCommands()[1].Bounds.Width, Bounds.Width);
+
+    TEST_SECTION("A value at the bottom of the range leaves nothing to fill, so the track is not drawn");
+    Track->SetValue(0.0f);
+
+    FDrawCommandList EmptyCommands;
+    DrawElement(Track, EmptyCommands);
+    TEST_EXPECT_EQ(CountCommands(EmptyCommands, EDrawCommandType::Box), 1);
+
+    TEST_SECTION("A field left at the unbounded default range has nothing to fill against and draws no track");
+    FNumericEntryFloat::FDesc UnboundedDesc;
+    UnboundedDesc.Font           = CreateFont();
+    UnboundedDesc.bShowLabel     = false;
+    UnboundedDesc.bShowFillTrack = true;
+
+    TSharedPtr<FNumericEntryFloat> Unbounded = FNumericEntryFloat::Create(UnboundedDesc);
+    LayoutElement(Unbounded, Bounds);
+
+    FDrawCommandList UnboundedCommands;
+    DrawElement(Unbounded, UnboundedCommands);
+    TEST_EXPECT_EQ(CountCommands(UnboundedCommands, EDrawCommandType::Box), 1);
+
+    TEST_SECTION("A read-only field neither scrubs nor opens its line, and offers no drag cursor");
+    TArray<float> ReadOnlyChanges;
+
+    FNumericEntryFloat::FDesc ReadOnlyDesc;
+    ReadOnlyDesc.Font           = CreateFont();
+    ReadOnlyDesc.MinValue       = -100.0f;
+    ReadOnlyDesc.MaxValue       = 100.0f;
+    ReadOnlyDesc.Step           = 0.5f;
+    ReadOnlyDesc.bIsReadOnly    = true;
+    ReadOnlyDesc.OnValueChanged = FNumericEntryFloat::FOnValueChanged::CreateLambda([&ReadOnlyChanges](float NewValue) { ReadOnlyChanges.Add(NewValue); });
+
+    TSharedPtr<FNumericEntryFloat> ReadOnly = FNumericEntryFloat::Create(ReadOnlyDesc);
+    LayoutElement(ReadOnly, Bounds);
+
+    DragThrough(ReadOnly, IntVector2(40, 12), { IntVector2(40 + Travel, 12) });
+
+    TEST_EXPECT_EQ(ReadOnly->GetValue(), 0.0f);
+    TEST_EXPECT_EQ(ReadOnlyChanges.Size(), 0);
+    TEST_EXPECT(!ReadOnly->IsScrubbing());
+
+    ECursor ReadOnlyCursor = ECursor::Arrow;
+    TEST_EXPECT(!ReadOnly->GetCursor(ReadOnlyCursor));
+
+    TEST_SECTION("A host still writes it, which is how a reported value keeps up with the model");
+    ReadOnly->SetValue(12.5f);
+    TEST_EXPECT(Math::Abs(ReadOnly->GetValue() - 12.5f) < 0.001f);
 
     TEST_END();
 }

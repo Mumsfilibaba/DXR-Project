@@ -138,9 +138,10 @@ struct ENGINE_API FEditorStyle
      * icon and the revert column are set here rather than repeated at every call site.
      *
      * @param LabelColumnFraction The share of the width the label column takes.
+     * @param LabelColumnWidth    How wide that column is held instead, in pixels, zero leaving it to the fraction.
      * @return The description, ready to hand to FPropertyTable::Create.
      */
-    NODISCARD static FPropertyTable::FDesc MakePropertyTableDesc(float LabelColumnFraction);
+    NODISCARD static FPropertyTable::FDesc MakePropertyTableDesc(float LabelColumnFraction, int32 LabelColumnWidth = 0);
 
     /**
      * @brief Builds the description a read-only editor table is created from. Nothing in one is editable,

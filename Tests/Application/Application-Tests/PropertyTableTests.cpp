@@ -194,6 +194,52 @@ bool PropertyTableColumnDrag_Test()
     TEST_END();
 }
 
+bool PropertyTableFixedColumn_Test()
+{
+    TEST_BEGIN();
+
+    FPropertyTable::FDesc Desc;
+    Desc.Font                = CreateFont();
+    Desc.RowHeight           = 20;
+    Desc.LabelColumnFraction = 0.5f;
+    Desc.LabelColumnWidth    = 80;
+
+    TSharedPtr<FPropertyTable> Table = FPropertyTable::Create(Desc);
+    Table->AddRow("Location", nullptr);
+    Table->AddRow("Rotation", nullptr);
+
+    TEST_SECTION("A fixed width takes precedence over the fraction and stays put as the table is resized");
+    const FRectangle Narrow(IntVector2(0, 0), 200, 40);
+    LayoutElement(Table, Narrow);
+    TEST_EXPECT_EQ(Table->GetDividerRectangle(Narrow).Position.X, 80 - (FPropertyTable::DividerGrabWidth / 2));
+
+    const FRectangle Wide(IntVector2(0, 0), 400, 40);
+    LayoutElement(Table, Wide);
+    TEST_EXPECT_EQ(Table->GetDividerRectangle(Wide).Position.X, 80 - (FPropertyTable::DividerGrabWidth / 2));
+
+    TEST_SECTION("Dragging it moves the width in pixels rather than reaching for the fraction");
+    TEST_EXPECT(Table->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(80, 20))).IsEventHandled());
+
+    Table->OnMouseMove(MakeMoveEvent(IntVector2(120, 20)));
+    TEST_EXPECT_EQ(Table->GetLabelColumnWidth(), 120);
+    TEST_EXPECT_EQ(Table->GetLabelColumnFraction(), 0.5f);
+
+    Table->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(120, 20)));
+
+    TEST_SECTION("The drag is held inside the same span of the width the fraction is");
+    TEST_EXPECT(Table->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(120, 20))).IsEventHandled());
+
+    Table->OnMouseMove(MakeMoveEvent(IntVector2(4000, 20)));
+    TEST_EXPECT_EQ(Table->GetLabelColumnWidth(), Math::RoundToInt(400.0f * FPropertyTable::MaxLabelColumnFraction));
+
+    Table->OnMouseMove(MakeMoveEvent(IntVector2(-4000, 20)));
+    TEST_EXPECT_EQ(Table->GetLabelColumnWidth(), Math::RoundToInt(400.0f * FPropertyTable::MinLabelColumnFraction));
+
+    Table->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(-4000, 20)));
+
+    TEST_END();
+}
+
 bool PropertyTableToolTips_Test()
 {
     TEST_BEGIN();

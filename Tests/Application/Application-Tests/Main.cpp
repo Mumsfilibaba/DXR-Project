@@ -130,6 +130,7 @@ int main(int Argc, const CHAR* Argv[])
 
     RUN_TEST("PropertyTableRows", PropertyTableRows_Test());
     RUN_TEST("PropertyTableColumnDrag", PropertyTableColumnDrag_Test());
+    RUN_TEST("PropertyTableFixedColumn", PropertyTableFixedColumn_Test());
     RUN_TEST("PropertyTableToolTips", PropertyTableToolTips_Test());
     RUN_TEST("PropertyTableLayout", PropertyTableLayout_Test());
 
@@ -209,6 +210,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("EditableTextCaretBlink", EditableTextCaretBlink_Test());
     RUN_TEST("EditableTextBandAlignment", EditableTextBandAlignment_Test());
     RUN_TEST("EditableTextDraw", EditableTextDraw_Test());
+    RUN_TEST("EditableTextAlignment", EditableTextAlignment_Test());
 
     RUN_TEST("ConsoleWordRange", ConsoleWordRange_Test());
     RUN_TEST("ConsoleCandidates", ConsoleCandidates_Test());

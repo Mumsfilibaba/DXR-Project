@@ -24,7 +24,7 @@ public:
             : Text()
             , Font(nullptr)
             , InitialState(ECheckBoxState::Unchecked)
-            , BoxSize(16)
+            , BoxSize(static_cast<int32>(static_cast<float>(FUIStyle::GetDefault().Metrics.RowHeight) * 0.8f))
             , LabelSpacing(8)
             , bIsTriState(false)
             , OnStateChanged()
@@ -65,7 +65,7 @@ public:
         /** @brief The state the box starts in. */
         ECheckBoxState InitialState;
 
-        /** @brief The side of the square the check mark is drawn in, in pixels. */
+        /** @brief The side of the square the check mark is drawn in, in pixels, which tracks the row height. */
         int32 BoxSize;
 
         /** @brief The gap between the box and its label, in pixels. */

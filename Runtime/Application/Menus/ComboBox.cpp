@@ -3,8 +3,8 @@
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
 
-// The square the arrow is drawn in, at the trailing edge of the button
-constexpr int32 COMBO_ARROW_WIDTH = 16;
+constexpr int32 COMBO_ARROW_WIDTH      = 16;
+constexpr float COMBO_ARROW_HALF_WIDTH = 6.0f;
 
 TSharedPtr<FComboBoxButton> FComboBoxButton::Create(const TSharedPtr<IFontFace>& InFont)
 {
@@ -64,17 +64,15 @@ int32 FComboBoxButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComman
         OutCommandList.AddText(LayerId, TextBounds, Label, Font.Get(), TextColor);
     }
 
-    const float Right = static_cast<float>(Inner.GetRight()) - 4.0f;
-    const float Mid   = static_cast<float>(Inner.Position.Y) + (static_cast<float>(Inner.Height) * 0.5f);
+    const float CenterX = static_cast<float>(Bounds.GetRight()) - (static_cast<float>(Bounds.Height) * 0.5f);
+    const float CenterY = static_cast<float>(Bounds.Position.Y) + (static_cast<float>(Bounds.Height) * 0.5f);
 
-    const Vector2 Arrow[] =
-    {
-        Vector2(Right - 9.0f, Mid - 2.5f),
-        Vector2(Right - 4.5f, Mid + 2.5f),
-        Vector2(Right,        Mid - 2.5f),
-    };
+    OutCommandList.AddTriangle(LayerId,
+        Vector2(CenterX - COMBO_ARROW_HALF_WIDTH, CenterY - (COMBO_ARROW_HALF_WIDTH * 0.5f)),
+        Vector2(CenterX + COMBO_ARROW_HALF_WIDTH, CenterY - (COMBO_ARROW_HALF_WIDTH * 0.5f)),
+        Vector2(CenterX,                          CenterY + (COMBO_ARROW_HALF_WIDTH * 0.5f)),
+        Style.ComboBox.Arrow);
 
-    OutCommandList.AddPolyline(LayerId, TArrayView<const Vector2>(Arrow, ARRAY_COUNT(Arrow)), Style.ComboBox.Arrow, 1.5f);
     return LayerId;
 }
 
@@ -198,7 +196,10 @@ bool FComboBox::IsMenuOpen() const
 
 TSharedPtr<FVisualElement> FComboBox::BuildMenu()
 {
+    const FUIStyle& Style = FUIStyle::GetDefault();
+
     TSharedPtr<FMenu> Menu = FMenu::Create();
+    Menu->SetChrome(Style.ComboBox.PopupFill, Style.ComboBox.PopupBorder);
 
     for (int32 Index = 0; Index < Options.Size(); ++Index)
     {
@@ -213,7 +214,10 @@ TSharedPtr<FVisualElement> FComboBox::BuildMenu()
             SetSelectedIndex(Index);
         });
 
-        Menu->AddItem(FMenuItem::Create(ItemDesc));
+        TSharedPtr<FMenuItem> Item = FMenuItem::Create(ItemDesc);
+        Item->SetHighlightFill(Style.ComboBox.SelectionFill);
+
+        Menu->AddItem(Item);
     }
 
     Menu->SetMinDesiredWidth(GetContentRectangle().Width);

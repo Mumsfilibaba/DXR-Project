@@ -20,8 +20,8 @@ constexpr int32 INPUT_FIELD_PADDING_X = 12;
 constexpr int32 INPUT_FIELD_PADDING_Y = 6;
 
 constexpr float TOOL_TIP_BORDER_THICKNESS = 2.0f;
-
 constexpr int32 TOOL_TIP_PADDING        = 4;
+
 constexpr int32 SECTION_HEADER_HEIGHT   = 34;
 constexpr int32 SECTION_CONTENT_INDENT  = 12;
 constexpr int32 SECTION_CONTENT_SPACING = 6;
@@ -246,12 +246,13 @@ FExpander::FDesc FEditorStyle::MakeExpanderDesc(const String& Label, const TShar
     return Desc;
 }
 
-FPropertyTable::FDesc FEditorStyle::MakePropertyTableDesc(float LabelColumnFraction)
+FPropertyTable::FDesc FEditorStyle::MakePropertyTableDesc(float LabelColumnFraction, int32 LabelColumnWidth)
 {
     FPropertyTable::FDesc Desc;
     Desc.Font                = GFonts.Body;
     Desc.RowHeight           = RowHeight;
     Desc.LabelColumnFraction = LabelColumnFraction;
+    Desc.LabelColumnWidth    = LabelColumnWidth;
     Desc.RevertIcon          = FEditorIcons::Undo;
     Desc.bShowRevertColumn   = true;
     return Desc;

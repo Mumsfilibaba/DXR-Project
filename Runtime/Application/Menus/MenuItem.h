@@ -136,6 +136,14 @@ public:
         return bIsHighlighted;
     }
 
+    /**
+     * @brief Replaces the fill drawn behind a hovered or highlighted row, which a combo box uses so its list
+     * selects in its own accent.
+     *
+     * @param InHighlightFill The new fill.
+     */
+    void SetHighlightFill(const FFloatColor& InHighlightFill);
+
     /** @brief Chooses the row as a click would, opening its submenu or firing its delegate. */
     void Activate();
 
@@ -177,6 +185,7 @@ private:
     String                     ShortcutText;
     FUIBrush                   Icon;
     TSharedPtr<IFontFace>      Font;
+    FFloatColor                HighlightFill;
     ECheckBoxState             CheckState;
     bool                       bIsCheckable;
     bool                       bIsHighlighted;
