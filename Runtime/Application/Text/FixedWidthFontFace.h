@@ -13,11 +13,10 @@ public:
     virtual int32 GetAscent() const override final;
     virtual int32 GetDescent() const override final;
     virtual int32 GetCapHeight() const override final;
-    virtual int32 GetCharacterAdvance(CHAR Character) const override final;
-    virtual int32 MeasureWidth(const StringView& Text) const override final;
-    virtual int32 FindCharacterIndexAtOffset(const StringView& Text, int32 OffsetX) const override final;
+    virtual const FShapedRun& ShapeText(const StringView& Text) const override final;
 
 private:
-    int32 CharacterAdvance;
-    int32 LineHeight;
+    int32              CharacterAdvance;
+    int32              LineHeight;
+    mutable FShapedRun ShapedRun;
 };

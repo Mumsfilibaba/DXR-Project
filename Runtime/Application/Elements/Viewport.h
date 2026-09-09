@@ -1,5 +1,6 @@
 #pragma once
 #include "Application/IViewport.h"
+#include "Application/Draw/DrawTypes.h"
 #include "Application/Elements/VisualElement.h"
 
 enum class EViewportPositionSpace
@@ -27,6 +28,7 @@ public:
 
     // FVisualElement Interface
     virtual void Tick(const FRectangle& AssignedBounds) override final;
+    virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override final;
 
     virtual FEventResponse OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent) override final;
     virtual FEventResponse OnKeyDown(const FKeyEvent& KeyEvent) override final;
@@ -47,6 +49,24 @@ public:
     void SetViewportInterface(const TSharedPtr<IViewport>& InViewportInterface)
     {
         ViewportInterface = InViewportInterface;
+    }
+
+    /**
+     * @brief Points the viewport at the texture the scene is rendered into, which it then draws across its
+     * own bounds. The scene renders offscreen and the UI composites it, so without a brush here the window
+     * has nothing of the scene in it at all.
+     *
+     * @param InBrush The brush to sample, which draws a black fill while it holds no texture.
+     */
+    void SetSceneBrush(const FUIBrush& InBrush)
+    {
+        SceneBrush = InBrush;
+    }
+
+    /** @return The brush the scene is sampled from, which holds no texture before the first render target exists. */
+    NODISCARD FORCEINLINE const FUIBrush& GetSceneBrush() const
+    {
+        return SceneBrush;
     }
 
     TSharedPtr<IViewport> GetViewportInterface()
@@ -89,6 +109,7 @@ public:
 
 private:
     TSharedPtr<IViewport> ViewportInterface;
+    FUIBrush              SceneBrush;
     IntVector2            Position;
     IntVector2            Size;
 };

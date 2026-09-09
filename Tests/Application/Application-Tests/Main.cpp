@@ -65,6 +65,7 @@ int main(int Argc, const CHAR* Argv[])
 
     RUN_TEST("FontAtlasPacking", FontAtlasPacking_Test());
     RUN_TEST("FontGlyphLookup", FontGlyphLookup_Test());
+    RUN_TEST("FontKerning", FontKerning_Test());
     RUN_TEST("FontMeasurement", FontMeasurement_Test());
 
     RUN_TEST("UIDrawDataLayerOrder", UIDrawDataLayerOrder_Test());
@@ -158,7 +159,14 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("DockingAreaDockUndock", DockingAreaDockUndock_Test());
     RUN_TEST("DockingAreaHitTest", DockingAreaHitTest_Test());
     RUN_TEST("DockingAreaPersistence", DockingAreaPersistence_Test());
+    RUN_TEST("DockingAreaTabReorder", DockingAreaTabReorder_Test());
     RUN_TEST("DockDragState", DockDragState_Test());
+    RUN_TEST("DockWindowManagerTearOut", DockWindowManagerTearOut_Test());
+    RUN_TEST("DockDecoratorDrag", DockDecoratorDrag_Test());
+    RUN_TEST("DockDecoratorSnapshot", DockDecoratorSnapshot_Test());
+    RUN_TEST("DockDropPreview", DockDropPreview_Test());
+    RUN_TEST("DockHostNativeDrag", DockHostNativeDrag_Test());
+    RUN_TEST("DockLayoutFileMultiWindow", DockLayoutFileMultiWindow_Test());
 
     RUN_TEST("RichTextLayout", RichTextLayout_Test());
     RUN_TEST("RichTextSelection", RichTextSelection_Test());

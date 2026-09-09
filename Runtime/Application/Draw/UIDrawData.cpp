@@ -242,35 +242,37 @@ void FUIDrawData::AddText(const FDrawCommand& Command)
         return;
     }
 
+    const FShapedRun& ShapedRun = Command.Font->ShapeText(StringView(Command.Text.Data(), Command.Text.Length()));
     GetOrOpenBatch(FUITextureHandle(Atlas));
 
     const float  AtlasWidth  = static_cast<float>(Atlas->GetWidth());
     const float  AtlasHeight = static_cast<float>(Atlas->GetHeight());
     const uint32 PackedColor = Command.Tint.ToColor().ToPackedRGBA();
 
-    int32       PenX      = Command.Bounds.Position.X;
+    const int32 PenX      = Command.Bounds.Position.X;
     const int32 BaselineY = Command.Bounds.Position.Y + Command.Font->GetTextBandOffset(Command.Bounds.Height) + Command.Font->GetAscent();
 
-    for (int32 Index = 0; Index < Command.Text.Length(); ++Index)
+    for (const FShapedGlyph& Shaped : ShapedRun.Glyphs)
     {
-        const FGlyph& Glyph = Atlas->GetGlyph(Command.Text[Index]);
-        if (!Glyph.AtlasRectangle.IsEmpty())
+        if (!Shaped.Glyph || Shaped.Glyph->AtlasRectangle.IsEmpty())
         {
-            const FRectangle GlyphBounds(IntVector2(PenX + Glyph.BearingX, BaselineY + Glyph.BearingY),
-                Glyph.AtlasRectangle.Width, Glyph.AtlasRectangle.Height);
-
-            const Vector2 MinTexCoord(
-                static_cast<float>(Glyph.AtlasRectangle.Position.X) / AtlasWidth,
-                static_cast<float>(Glyph.AtlasRectangle.Position.Y) / AtlasHeight);
-
-            const Vector2 MaxTexCoord(
-                static_cast<float>(Glyph.AtlasRectangle.GetRight()) / AtlasWidth,
-                static_cast<float>(Glyph.AtlasRectangle.GetBottom()) / AtlasHeight);
-
-            AddQuad(GlyphBounds, MinTexCoord, MaxTexCoord, PackedColor);
+            continue;
         }
 
-        PenX += Glyph.Advance;
+        const FGlyph& Glyph = *Shaped.Glyph;
+
+        const FRectangle GlyphBounds(IntVector2(PenX + Shaped.Offset + Glyph.BearingX, BaselineY + Glyph.BearingY),
+            Glyph.AtlasRectangle.Width, Glyph.AtlasRectangle.Height);
+
+        const Vector2 MinTexCoord(
+            static_cast<float>(Glyph.AtlasRectangle.Position.X) / AtlasWidth,
+            static_cast<float>(Glyph.AtlasRectangle.Position.Y) / AtlasHeight);
+
+        const Vector2 MaxTexCoord(
+            static_cast<float>(Glyph.AtlasRectangle.GetRight()) / AtlasWidth,
+            static_cast<float>(Glyph.AtlasRectangle.GetBottom()) / AtlasHeight);
+
+        AddQuad(GlyphBounds, MinTexCoord, MaxTexCoord, PackedColor);
     }
 }
 

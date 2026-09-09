@@ -2,8 +2,12 @@
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Modules/ModuleManager.h"
+#include "Core/Platform/PlatformTime.h"
+#include "Core/Tasks/Tasks.h"
+#include "Core/Time/Timespan.h"
 #include "Application/Application.h"
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Elements/Window.h"
@@ -17,7 +21,6 @@
 
 IMPLEMENT_ENGINE_MODULE(IModule, ApplicationRenderer);
 
-// The geometry is grown in blocks so a window that gains a few glyphs does not reallocate every frame
 static constexpr int32 GVertexGrowth = 4096;
 static constexpr int32 GIndexGrowth  = 8192;
 
@@ -25,6 +28,28 @@ static TAutoConsoleVariable<int32> CVarDumpDrawData(
     "ApplicationRenderer.DumpDrawData",
     "Logs the commands, geometry and batches of every window for this many frames, counting itself back down to zero",
     0);
+
+static TAutoConsoleVariable<bool> CVarPaintTiming(
+    "ApplicationRenderer.PaintTiming",
+    "Logs what the per-frame UI rebuild costs each window, averaged over the reporting interval",
+    false,
+    EConsoleVariableFlags::Default);
+
+static bool GVSyncEnabled = false;
+static FAutoConsoleVariableRef CVarVSyncEnabled(
+    "Renderer.Feature.VerticalSync",
+    "Enables Vertical-Sync",
+    GVSyncEnabled,
+    EConsoleVariableFlags::Default);
+
+static constexpr int32 GPaintTimingFrames = 120;
+static constexpr EFormat GSnapshotFormat = EFormat::R8G8B8A8_Unorm;
+
+static float ToMillisecondsSince(uint64 StartTime)
+{
+    const uint64 Elapsed = FPlatformTime::QueryPerformanceCounter() - StartTime;
+    return static_cast<float>((static_cast<double>(Elapsed) * 1000.0) / static_cast<double>(FPlatformTime::QueryPerformanceFrequency()));
+}
 
 struct FApplicationUIConstants
 {
@@ -73,7 +98,13 @@ static void DumpWindowDrawData(const FWindow& Window, const FDrawCommandList& Co
 
 FApplicationRenderer::FApplicationRenderer()
     : WindowStates()
+    , RetiredTextures()
+    , CommandList()
+    , ResizeCommandList()
+    , GPUProfiler(nullptr)
+    , LastFrameFinishedEvent(nullptr)
     , FrameCounter(0)
+    , bHasOpenFrame(false)
     , VShader(nullptr)
     , PShader(nullptr)
     , InputLayout(nullptr)
@@ -159,10 +190,10 @@ bool FApplicationRenderer::InitializeRHI()
     BlendStateDesc.bIndependentBlendEnable        = false;
     BlendStateDesc.NumRenderTargets               = 1;
     BlendStateDesc.RenderTargets[0].bBlendEnable  = true;
-    BlendStateDesc.RenderTargets[0].SrcBlend      = EBlendType::SrcAlpha;
-    BlendStateDesc.RenderTargets[0].SrcBlendAlpha = EBlendType::InvSrcAlpha;
+    BlendStateDesc.RenderTargets[0].SrcBlend      = EBlendType::One;
+    BlendStateDesc.RenderTargets[0].SrcBlendAlpha = EBlendType::One;
     BlendStateDesc.RenderTargets[0].DstBlend      = EBlendType::InvSrcAlpha;
-    BlendStateDesc.RenderTargets[0].DstBlendAlpha = EBlendType::Zero;
+    BlendStateDesc.RenderTargets[0].DstBlendAlpha = EBlendType::InvSrcAlpha;
     BlendStateDesc.RenderTargets[0].BlendOp       = EBlendOp::Add;
     BlendStateDesc.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
 
@@ -198,10 +229,25 @@ bool FApplicationRenderer::InitializeRHI()
 
 void FApplicationRenderer::ReleaseRHI()
 {
+    if (LastFrameFinishedEvent)
+    {
+        LastFrameFinishedEvent->Wait(FTimespan::Infinity());
+        FPlatformEvent::Recycle(LastFrameFinishedEvent);
+        LastFrameFinishedEvent = nullptr;
+    }
+
+    CommandList.Reset();
+    ResizeCommandList.Reset();
+
+    bHasOpenFrame = false;
+    GPUProfiler   = nullptr;
+
     ReleaseWindowSurfaces();
 
     WindowStates.Clear();
-    ReleaseRetiredBuffers(true);
+
+    ReleaseRetiredResources(true);
+
     VShader.Reset();
     PShader.Reset();
     InputLayout.Reset();
@@ -231,6 +277,8 @@ FDrawCommandList* FApplicationRenderer::BeginWindow(const TSharedPtr<FWindow>& I
 
     WindowState->Commands.Reset();
     WindowState->DrawData.Reset();
+
+    WindowState->WalkStartTime = FPlatformTime::QueryPerformanceCounter();
     return &WindowState->Commands;
 }
 
@@ -245,7 +293,15 @@ void FApplicationRenderer::EndWindow(const TSharedPtr<FWindow>& InWindow)
     {
         if (WindowState.Window == InWindow)
         {
+            WindowState.Stats.ElementWalkTime = ToMillisecondsSince(WindowState.WalkStartTime);
+
+            const uint64 BuildStartTime = FPlatformTime::QueryPerformanceCounter();
             WindowState.DrawData.BuildFromCommandList(WindowState.Commands);
+
+            WindowState.Stats.GeometryBuildTime = ToMillisecondsSince(BuildStartTime);
+            WindowState.Stats.CommandCount      = WindowState.Commands.GetCommands().Size();
+            WindowState.Stats.VertexCount       = WindowState.DrawData.GetVertices().Size();
+            WindowState.Stats.BatchCount        = WindowState.DrawData.GetBatches().Size();
 
             const int32 NumFramesToDump = CVarDumpDrawData.GetValue();
             if (NumFramesToDump > 0)
@@ -257,6 +313,47 @@ void FApplicationRenderer::EndWindow(const TSharedPtr<FWindow>& InWindow)
             return;
         }
     }
+}
+
+void FApplicationRenderer::ReportPaintStats(FWindowDrawState& WindowState)
+{
+    if (!CVarPaintTiming.GetValue())
+    {
+        WindowState.TimedFrameCount = 0;
+        return;
+    }
+
+    FUIPaintStats& Total = WindowState.AccumulatedStats;
+    const FUIPaintStats& Frame = WindowState.Stats;
+
+    if (WindowState.TimedFrameCount == 0)
+    {
+        Total = FUIPaintStats();
+    }
+
+    Total.ElementWalkTime   += Frame.ElementWalkTime;
+    Total.GeometryBuildTime += Frame.GeometryBuildTime;
+    Total.BufferUploadTime  += Frame.BufferUploadTime;
+    Total.CommandCount      += Frame.CommandCount;
+    Total.VertexCount       += Frame.VertexCount;
+    Total.BatchCount        += Frame.BatchCount;
+
+    if (++WindowState.TimedFrameCount < GPaintTimingFrames)
+    {
+        return;
+    }
+
+    const TSharedPtr<FWindow> Window = WindowState.Window.ToSharedPtr();
+    const float               Frames = static_cast<float>(WindowState.TimedFrameCount);
+
+    LOG_INFO("[FApplicationRenderer]: '%s' paint over %d frames: walk %.3f ms, build %.3f ms, upload %.3f ms, total %.3f ms (%d commands, %d vertices, %d batches)",
+        Window ? *Window->GetTitle() : "<closed>", WindowState.TimedFrameCount, Total.ElementWalkTime / Frames,
+        Total.GeometryBuildTime / Frames, Total.BufferUploadTime / Frames, Total.GetTotalTime() / Frames,
+        WindowState.TimedFrameCount > 0 ? Total.CommandCount / WindowState.TimedFrameCount : 0,
+        WindowState.TimedFrameCount > 0 ? Total.VertexCount / WindowState.TimedFrameCount : 0,
+        WindowState.TimedFrameCount > 0 ? Total.BatchCount / WindowState.TimedFrameCount : 0);
+
+    WindowState.TimedFrameCount = 0;
 }
 
 void FApplicationRenderer::OnWindowDestroyed(const TSharedPtr<FWindow>& InWindow)
@@ -342,18 +439,21 @@ bool FApplicationRenderer::PreparePipelineState(EFormat OutputFormat)
     return true;
 }
 
-bool FApplicationRenderer::PrepareGeometry(FRHICommandList& CommandList, FWindowDrawState& WindowState)
+bool FApplicationRenderer::PrepareGeometry(FRHICommandList& InCommandList, FWindowDrawState& WindowState)
 {
     const FUIDrawData& DrawData = WindowState.DrawData;
 
     const int32 VertexCount = DrawData.GetVertices().Size();
     const int32 IndexCount  = DrawData.GetIndices().Size();
 
+    WindowState.Stats.BufferUploadTime = 0.0f;
+
     if (VertexCount <= 0 || IndexCount <= 0)
     {
         return false;
-    } 
+    }
 
+    const uint64 UploadStartTime = FPlatformTime::QueryPerformanceCounter();
     if (!WindowState.VertexBuffer || VertexCount > WindowState.VertexCapacity)
     {
         const int32 NewCapacity = VertexCount + GVertexGrowth;
@@ -408,11 +508,11 @@ bool FApplicationRenderer::PrepareGeometry(FRHICommandList& CommandList, FWindow
         FRHITransitionBarrierDesc::CreateBuffer(WindowState.IndexBuffer.Get(), ERHIResourceState::GenericRead, ERHIResourceState::CopyDest),
     };
 
-    CommandList.TransitionBarrier(ToCopyDest);
+    InCommandList.TransitionBarrier(ToCopyDest);
 
-    CommandList.UpdateBuffer(WindowState.VertexBuffer.Get(), 
+    InCommandList.UpdateBuffer(WindowState.VertexBuffer.Get(), 
         FBufferRegion(0, VertexCount * sizeof(FUIVertex)), DrawData.GetVertices().Data());
-    CommandList.UpdateBuffer(WindowState.IndexBuffer.Get(), 
+    InCommandList.UpdateBuffer(WindowState.IndexBuffer.Get(), 
         FBufferRegion(0, IndexCount * sizeof(uint32)), DrawData.GetIndices().Data());
 
     const FRHITransitionBarrierDesc ToGenericRead[] =
@@ -421,11 +521,15 @@ bool FApplicationRenderer::PrepareGeometry(FRHICommandList& CommandList, FWindow
         FRHITransitionBarrierDesc::CreateBuffer(WindowState.IndexBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::GenericRead),
     };
 
-    CommandList.TransitionBarrier(ToGenericRead);
+    InCommandList.TransitionBarrier(ToGenericRead);
+
+    WindowState.Stats.BufferUploadTime = ToMillisecondsSince(UploadStartTime);
+
+    ReportPaintStats(WindowState);
     return true;
 }
 
-FRHIShaderResourceView* FApplicationRenderer::PrepareAtlasTexture(FRHICommandList& CommandList, const FFontAtlas* Atlas)
+FRHIShaderResourceView* FApplicationRenderer::PrepareAtlasTexture(FRHICommandList& InCommandList, const FFontAtlas* Atlas)
 {
     if (!Atlas || !Atlas->IsValid())
     {
@@ -458,13 +562,13 @@ FRHIShaderResourceView* FApplicationRenderer::PrepareAtlasTexture(FRHICommandLis
     FRHITexture* EntryTexture = Entry->Texture.Get();
     if (EntryTexture->GetDesc().TrackingMode != ERHIResourceStateTrackingMode::Static)
     {
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(EntryTexture, ERHIResourceState::PixelShaderResource));
+        InCommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(EntryTexture, ERHIResourceState::PixelShaderResource));
     }
 
     return EntryTexture->GetShaderResourceView();
 }
 
-FRHIShaderResourceView* FApplicationRenderer::PrepareBrushTexture(FRHICommandList& CommandList, FRHITexture* Texture)
+FRHIShaderResourceView* FApplicationRenderer::PrepareBrushTexture(FRHICommandList& InCommandList, FRHITexture* Texture)
 {
     if (!Texture)
     {
@@ -473,24 +577,24 @@ FRHIShaderResourceView* FApplicationRenderer::PrepareBrushTexture(FRHICommandLis
 
     if (Texture->GetDesc().TrackingMode != ERHIResourceStateTrackingMode::Static)
     {
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Texture, ERHIResourceState::PixelShaderResource));
+        InCommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Texture, ERHIResourceState::PixelShaderResource));
     }
 
     FRHIShaderResourceView* TextureView = Texture->GetShaderResourceView();
     return TextureView ? TextureView : GetDefaultShaderResourceView();
 }
 
-void FApplicationRenderer::PrepareBatchTextures(FRHICommandList& CommandList, const FUIDrawData& DrawData)
+void FApplicationRenderer::PrepareBatchTextures(FRHICommandList& InCommandList, const FUIDrawData& DrawData)
 {
     for (const FUIDrawBatch& Batch : DrawData.GetBatches())
     {
         if (Batch.Texture.Atlas)
         {
-            PrepareAtlasTexture(CommandList, Batch.Texture.Atlas);
+            PrepareAtlasTexture(InCommandList, Batch.Texture.Atlas);
         }
         else if (Batch.Texture.Texture)
         {
-            PrepareBrushTexture(CommandList, Batch.Texture.Texture);
+            PrepareBrushTexture(InCommandList, Batch.Texture.Texture);
         }
     }
 }
@@ -514,58 +618,6 @@ FRHIShaderResourceView* FApplicationRenderer::GetBatchShaderResourceView(const F
     return GetDefaultShaderResourceView();
 }
 
-void FApplicationRenderer::Render(FRHICommandList& CommandList, FRHISwapChain* SwapChain)
-{
-    if (!SwapChain || WindowStates.IsEmpty())
-    {
-        return;
-    }
-
-    TArray<FWindowDrawState*> DrawableStates;
-    for (FWindowDrawState& WindowState : WindowStates)
-    {
-        if (WindowState.SwapChain)
-        {
-            continue;
-        }
-
-        if (WindowState.Window.IsValid() && !WindowState.DrawData.IsEmpty())
-        {
-            if (PrepareGeometry(CommandList, WindowState))
-            {
-                DrawableStates.Add(&WindowState);
-            }
-        }
-    }
-
-    if (DrawableStates.IsEmpty())
-    {
-        return;
-    }
-
-    if (!PreparePipelineState(SwapChain->GetDesc().ColorFormat))
-    {
-        return;
-    }
-
-    FRHIRenderTargetView* BackBufferView = SwapChain->GetRenderTargetView();
-
-    for (const FWindowDrawState* WindowState : DrawableStates)
-    {
-        PrepareBatchTextures(CommandList, WindowState->DrawData);
-    }
-
-    FRHIBeginRenderPassDesc RenderPassDesc({ FRHIRenderTargetAttachment(BackBufferView, EAttachmentLoadAction::Load) }, 1);
-    CommandList.BeginRenderPass(RenderPassDesc);
-
-    for (const FWindowDrawState* WindowState : DrawableStates)
-    {
-        RenderWindow(CommandList, *WindowState);
-    }
-
-    CommandList.EndRenderPass();
-}
-
 void FApplicationRenderer::RegisterWindowSwapChain(const TSharedPtr<FWindow>& InWindow, FRHISwapChain* SwapChain)
 {
     if (!InWindow)
@@ -579,7 +631,7 @@ void FApplicationRenderer::RegisterWindowSwapChain(const TSharedPtr<FWindow>& In
     }
 }
 
-void FApplicationRenderer::RenderWindowToSwapChain(FRHICommandList& CommandList, const TSharedPtr<FWindow>& InWindow, EAttachmentLoadAction LoadAction)
+void FApplicationRenderer::RenderWindowToSwapChain(FRHICommandList& InCommandList, const TSharedPtr<FWindow>& InWindow, EAttachmentLoadAction LoadAction)
 {
     if (!InWindow)
     {
@@ -593,44 +645,107 @@ void FApplicationRenderer::RenderWindowToSwapChain(FRHICommandList& CommandList,
     }
 
     FRHISwapChain* SwapChain = WindowState->SwapChain;
-    CommandList.AcquireNextBackBuffer(SwapChain);
+    InCommandList.AcquireNextBackBuffer(SwapChain);
 
     if (LoadAction == EAttachmentLoadAction::Clear)
     {
         FRHITexture* BackBuffer = SwapChain->GetBackBuffer();
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::Undefined, ERHIResourceState::RenderTarget));
+        InCommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::Undefined, ERHIResourceState::RenderTarget));
     }
 
     const bool bHasGeometry = !WindowState->DrawData.IsEmpty()
-        && PrepareGeometry(CommandList, *WindowState)
+        && PrepareGeometry(InCommandList, *WindowState)
         && PreparePipelineState(SwapChain->GetDesc().ColorFormat);
 
     if (bHasGeometry)
     {
-        PrepareBatchTextures(CommandList, WindowState->DrawData);
+        PrepareBatchTextures(InCommandList, WindowState->DrawData);
     }
 
     const FRHIRenderTargetAttachment Attachment(SwapChain->GetRenderTargetView(), LoadAction,
         EAttachmentStoreAction::Store, FUIStyle::GetDefault().Colors.WindowBackground);
 
     FRHIBeginRenderPassDesc RenderPassDesc({ Attachment }, 1);
-    CommandList.BeginRenderPass(RenderPassDesc);
+    InCommandList.BeginRenderPass(RenderPassDesc);
 
     if (bHasGeometry)
     {
-        RenderWindow(CommandList, *WindowState);
+        RenderWindow(InCommandList, *WindowState);
     }
 
-    CommandList.EndRenderPass();
+    InCommandList.EndRenderPass();
 }
 
-void FApplicationRenderer::SyncWindowSurfaces(const TSharedPtr<FWindow>& PrimaryWindow)
+const FApplicationRenderer::FWindowSurface* FApplicationRenderer::FindWindowSurface(const TSharedPtr<FWindow>& InWindow) const
+{
+    for (const FWindowSurface& Surface : WindowSurfaces)
+    {
+        if (Surface.Window == InWindow)
+        {
+            return &Surface;
+        }
+    }
+
+    return nullptr;
+}
+
+bool FApplicationRenderer::AddWindowSurface(const TSharedPtr<FWindow>& InWindow)
+{
+    const bool bIsPrimary = (PrimaryWindow == InWindow);
+
+    const IntVector2 WindowSize = InWindow->GetSize();
+
+    FRHISwapChainDesc SwapChainDesc;
+    SwapChainDesc.WindowHandle = InWindow->GetPlatformWindow()->GetPlatformHandle();
+    SwapChainDesc.Width        = static_cast<uint16>(Math::Max(WindowSize.X, 1));
+    SwapChainDesc.Height       = static_cast<uint16>(Math::Max(WindowSize.Y, 1));
+    SwapChainDesc.ColorFormat  = EFormat::Unknown;
+    SwapChainDesc.ColorSpace   = EColorSpace::Unknown;
+    SwapChainDesc.Usage        = ESwapChainUsageFlags::RenderTarget;
+    SwapChainDesc.bFramePacing = bIsPrimary;
+
+    FRHISwapChainRef SwapChain = RHI::CreateSwapChain(SwapChainDesc);
+    if (!SwapChain)
+    {
+        LOG_ERROR("[FApplicationRenderer]: Failed to create a swap chain for a window");
+        return false;
+    }
+
+    FWindowSurface Surface;
+    Surface.Window            = InWindow;
+    Surface.SwapChain         = SwapChain;
+    Surface.Size              = WindowSize;
+    Surface.DeferredShowState = InWindow->ShowOnCreate() ? EDeferredShowState::None : EDeferredShowState::AwaitingPresent;
+    Surface.bIsPrimary        = bIsPrimary;
+
+    WindowSurfaces.Add(Surface);
+
+    RegisterWindowSwapChain(InWindow, SwapChain.Get());
+    return true;
+}
+
+void FApplicationRenderer::SetPrimaryWindow(const TSharedPtr<FWindow>& InWindow)
+{
+    PrimaryWindow = InWindow;
+
+    if (InWindow && !InWindow->HasExternalSurface() && !FindWindowSurface(InWindow))
+    {
+        AddWindowSurface(InWindow);
+    }
+}
+
+FRHISwapChainRef FApplicationRenderer::GetWindowSwapChain(const TSharedPtr<FWindow>& InWindow) const
+{
+    const FWindowSurface* Surface = FindWindowSurface(InWindow);
+    return Surface ? Surface->SwapChain : nullptr;
+}
+
+void FApplicationRenderer::SyncWindowSurfaces()
 {
     ++FrameCounter;
-    ReleaseRetiredBuffers(false);
+    ReleaseRetiredResources(false);
 
     const TArray<TSharedPtr<FWindow>>& Windows = FApplication::Get().GetWindows();
-
     for (int32 Index = WindowSurfaces.Size() - 1; Index >= 0; --Index)
     {
         if (Windows.Contains(WindowSurfaces[Index].Window))
@@ -641,84 +756,41 @@ void FApplicationRenderer::SyncWindowSurfaces(const TSharedPtr<FWindow>& Primary
         FRHICommandListExecutor::Get().WaitForGPU();
         WindowSurfaces.RemoveAt(Index);
 
-        ReleaseRetiredBuffers(true);
+        ReleaseRetiredResources(true);
     }
 
     for (const TSharedPtr<FWindow>& CurrentWindow : Windows)
     {
-        if (CurrentWindow == PrimaryWindow)
-        {
-            continue;
-        }
-
         if (CurrentWindow->HasExternalSurface())
         {
             continue;
         }
 
-        const bool bHasSurface = WindowSurfaces.ContainsWithPredicate([&CurrentWindow](const FWindowSurface& Surface)
-        {
-            return Surface.Window == CurrentWindow;
-        });
-
-        if (bHasSurface)
+        if (FindWindowSurface(CurrentWindow))
         {
             continue;
         }
 
-        const IntVector2 WindowSize = CurrentWindow->GetSize();
-
-        FRHISwapChainDesc SwapChainDesc;
-        SwapChainDesc.WindowHandle = CurrentWindow->GetPlatformWindow()->GetPlatformHandle();
-        SwapChainDesc.Width        = static_cast<uint16>(Math::Max(WindowSize.X, 1));
-        SwapChainDesc.Height       = static_cast<uint16>(Math::Max(WindowSize.Y, 1));
-        SwapChainDesc.ColorFormat  = EFormat::Unknown;
-        SwapChainDesc.ColorSpace   = EColorSpace::Unknown;
-        SwapChainDesc.Usage        = ESwapChainUsageFlags::RenderTarget;
-        SwapChainDesc.bFramePacing = false;
-
-        FRHISwapChainRef SwapChain = RHI::CreateSwapChain(SwapChainDesc);
-        if (!SwapChain)
-        {
-            LOG_ERROR("[FApplicationRenderer]: Failed to create a swap chain for a window");
-            continue;
-        }
-
-        FWindowSurface Surface;
-        Surface.Window            = CurrentWindow;
-        Surface.SwapChain         = SwapChain;
-        Surface.Size              = WindowSize;
-        Surface.DeferredShowState = CurrentWindow->ShowOnCreate() ? EDeferredShowState::None : EDeferredShowState::AwaitingPresent;
-
-        WindowSurfaces.Add(Surface);
-
-        RegisterWindowSwapChain(CurrentWindow, SwapChain.Get());
+        AddWindowSurface(CurrentWindow);
     }
 }
 
-void FApplicationRenderer::RenderWindowSurfaces(FRHICommandList& CommandList)
+void FApplicationRenderer::RenderWindowSurfaces(FRHICommandList& InCommandList)
 {
     for (FWindowSurface& Surface : WindowSurfaces)
     {
-        const IntVector2 WindowSize = Surface.Window->GetSize();
-        if (WindowSize != Surface.Size && WindowSize.X > 0 && WindowSize.Y > 0)
-        {
-            Surface.Size = WindowSize;
-            CommandList.ResizeSwapChain(Surface.SwapChain.Get(), static_cast<uint32>(WindowSize.X), static_cast<uint32>(WindowSize.Y));
-        }
-
-        RenderWindowToSwapChain(CommandList, Surface.Window, EAttachmentLoadAction::Clear);
+        ReconcileSurfaceSize(InCommandList, Surface);
+        RenderWindowToSwapChain(InCommandList, Surface.Window, EAttachmentLoadAction::Clear);
     }
 }
 
-void FApplicationRenderer::PresentWindowSurfaces(FRHICommandList& CommandList)
+void FApplicationRenderer::PresentWindowSurfaces(FRHICommandList& InCommandList)
 {
     for (FWindowSurface& Surface : WindowSurfaces)
     {
         FRHITexture* BackBuffer = Surface.SwapChain->GetBackBuffer();
-        CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::RenderTarget, ERHIResourceState::Present));
-
-        CommandList.PresentSwapChain(Surface.SwapChain.Get(), false);
+        InCommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::RenderTarget, ERHIResourceState::Present));
+        InCommandList.PresentSwapChain(Surface.SwapChain.Get(), Surface.bIsPrimary && GVSyncEnabled);
 
         switch (Surface.DeferredShowState)
         {
@@ -743,6 +815,137 @@ void FApplicationRenderer::PresentWindowSurfaces(FRHICommandList& CommandList)
     }
 }
 
+void FApplicationRenderer::BeginFrame()
+{
+    CHECK_MAIN_THREAD();
+
+    SyncWindowSurfaces();
+
+    CommandList.BeginFrame();
+    bHasOpenFrame = true;
+}
+
+void FApplicationRenderer::RecordWindows()
+{
+    CHECK_MAIN_THREAD();
+
+    RHI_EVENT_SCOPE(CommandList, "UI Render");
+    TRACE_SCOPE("Record UI");
+
+#if SUPPORT_VARIABLE_RATE_SHADING
+    if (RHISupportsVariableRateShading())
+    {
+        CommandList.SetShadingRate(EShadingRate::VRS_1x1);
+        CommandList.SetShadingRateImage(nullptr);
+    }
+#endif
+
+    FApplication::Get().DrawWindows();
+
+    RenderWindowSurfaces(CommandList);
+}
+
+void FApplicationRenderer::EndFrameAndPresent()
+{
+    CHECK_MAIN_THREAD();
+
+    if (!bHasOpenFrame)
+    {
+        return;
+    }
+
+    bHasOpenFrame = false;
+
+    if (GPUProfiler)
+    {
+        GPUProfiler->EndGPUFrame(CommandList);
+    }
+
+    PresentWindowSurfaces(CommandList);
+
+    CommandList.EndFrame();
+    CommandList.FlushDeletedResources();
+
+    {
+        TRACE_SCOPE("ExecuteCommandList");
+
+        if (LastFrameFinishedEvent)
+        {
+            LastFrameFinishedEvent->Wait(FTimespan::Infinity());
+            FPlatformEvent::Recycle(LastFrameFinishedEvent);
+            LastFrameFinishedEvent = nullptr;
+        }
+
+        LastFrameFinishedEvent = FPlatformEvent::Create(false);
+        if (LastFrameFinishedEvent)
+        {
+            CommandList.SetEvent(LastFrameFinishedEvent);
+        }
+
+        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    }
+}
+
+void FApplicationRenderer::RedrawWindow(const TSharedPtr<FWindow>& InWindow)
+{
+    CHECK_MAIN_THREAD();
+
+    FWindowSurface* Surface = InWindow ? FindRedrawableSurface(InWindow) : nullptr;
+    if (!Surface)
+    {
+        return;
+    }
+
+    TRACE_SCOPE("Redraw Window");
+
+    FApplication::Get().DrawWindow(InWindow);
+
+    ResizeCommandList.BeginFrame();
+
+    {
+        RHI_EVENT_SCOPE(ResizeCommandList, "Resize Redraw");
+
+        RedrawWindowSurface(ResizeCommandList, *Surface);
+    }
+
+    ResizeCommandList.EndFrame();
+    ResizeCommandList.FlushDeletedResources();
+
+    FRHICommandListExecutor::Get().ExecuteCommandList(ResizeCommandList);
+    FRHICommandListExecutor::Get().WaitForGPU();
+}
+
+FApplicationRenderer::FWindowSurface* FApplicationRenderer::FindRedrawableSurface(const TSharedPtr<FWindow>& InWindow)
+{
+    const int32 Index = WindowSurfaces.FindWithPredicate([&InWindow](const FWindowSurface& Surface)
+    {
+        return Surface.Window == InWindow && Surface.DeferredShowState == EDeferredShowState::None;
+    });
+
+    return Index != TArray<FWindowSurface>::InvalidIndex ? &WindowSurfaces[Index] : nullptr;
+}
+
+void FApplicationRenderer::RedrawWindowSurface(FRHICommandList& InCommandList, FWindowSurface& Surface)
+{
+    ReconcileSurfaceSize(InCommandList, Surface);
+
+    RenderWindowToSwapChain(InCommandList, Surface.Window, EAttachmentLoadAction::Clear);
+
+    FRHITexture* BackBuffer = Surface.SwapChain->GetBackBuffer();
+    InCommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::RenderTarget, ERHIResourceState::Present));
+    InCommandList.PresentSwapChain(Surface.SwapChain.Get(), false);
+}
+
+void FApplicationRenderer::ReconcileSurfaceSize(FRHICommandList& InCommandList, FWindowSurface& Surface)
+{
+    const IntVector2 WindowSize = Surface.Window->GetSize();
+    if (WindowSize != Surface.Size && WindowSize.X > 0 && WindowSize.Y > 0)
+    {
+        Surface.Size = WindowSize;
+        InCommandList.ResizeSwapChain(Surface.SwapChain.Get(), static_cast<uint32>(WindowSize.X), static_cast<uint32>(WindowSize.Y));
+    }
+}
+
 void FApplicationRenderer::ReleaseWindowSurfaces()
 {
     for (const FWindowSurface& Surface : WindowSurfaces)
@@ -751,6 +954,7 @@ void FApplicationRenderer::ReleaseWindowSurfaces()
     }
 
     WindowSurfaces.Clear();
+    PrimaryWindow.Reset();
 }
 
 void FApplicationRenderer::RetireWindowBuffers(FWindowDrawState& WindowState)
@@ -769,11 +973,12 @@ void FApplicationRenderer::RetireWindowBuffers(FWindowDrawState& WindowState)
     WindowState.IndexCapacity  = 0;
 }
 
-void FApplicationRenderer::ReleaseRetiredBuffers(bool bReleaseEverything)
+void FApplicationRenderer::ReleaseRetiredResources(bool bReleaseEverything)
 {
     if (bReleaseEverything)
     {
         RetiredBuffers.Clear();
+        RetiredTextures.Clear();
         return;
     }
 
@@ -784,12 +989,29 @@ void FApplicationRenderer::ReleaseRetiredBuffers(bool bReleaseEverything)
             RetiredBuffers.RemoveAt(Index);
         }
     }
+
+    for (int32 Index = RetiredTextures.Size() - 1; Index >= 0; --Index)
+    {
+        if ((FrameCounter - RetiredTextures[Index].Frame) >= NumRetiredFrames)
+        {
+            RetiredTextures.RemoveAt(Index);
+        }
+    }
 }
 
-void FApplicationRenderer::RenderWindow(FRHICommandList& CommandList, const FWindowDrawState& WindowState)
+void FApplicationRenderer::RetireTexture(const FRHITextureRef& Texture)
+{
+    if (Texture)
+    {
+        RetiredTextures.Add(FRetiredTexture{ Texture, FrameCounter });
+    }
+}
+
+void FApplicationRenderer::RenderWindow(FRHICommandList& InCommandList, const FWindowDrawState& WindowState)
 {
     TWeakPtr<FWindow>   WeakWindow = WindowState.Window;
     TSharedPtr<FWindow> Window     = WeakWindow.ToSharedPtr();
+
     if (!Window)
     {
         return;
@@ -801,9 +1023,13 @@ void FApplicationRenderer::RenderWindow(FRHICommandList& CommandList, const FWin
         return;
     }
 
-    const float DPIScale      = Math::Max(1.0f, Window->GetWindowDPIScale());
-    const float LogicalWidth  = static_cast<float>(WindowSize.X);
-    const float LogicalHeight = static_cast<float>(WindowSize.Y);
+    RenderDrawData(InCommandList, WindowState, WindowSize, Math::Max(1.0f, Window->GetWindowDPIScale()));
+}
+
+void FApplicationRenderer::RenderDrawData(FRHICommandList& InCommandList, const FWindowDrawState& WindowState, const IntVector2& LogicalSize, float DPIScale)
+{
+    const float LogicalWidth  = static_cast<float>(LogicalSize.X);
+    const float LogicalHeight = static_cast<float>(LogicalSize.Y);
     const float FramebufferW  = LogicalWidth * DPIScale;
     const float FramebufferH  = LogicalHeight * DPIScale;
 
@@ -818,13 +1044,13 @@ void FApplicationRenderer::RenderWindow(FRHICommandList& CommandList, const FWin
     FApplicationUIConstants Constants;
     Memory::Memcpy(&Constants.ProjectionMatrix, Matrix, sizeof(Matrix));
 
-    CommandList.SetGraphicsPipelineState(PipelineState.Get());
-    CommandList.SetViewport(FViewportRegion(FramebufferW, FramebufferH, 0.0f, 0.0f, 0.0f, 1.0f));
-    CommandList.SetVertexBuffers(MakeArrayView(&WindowState.VertexBuffer, 1), 0);
-    CommandList.SetIndexBuffer(WindowState.IndexBuffer.Get(), EIndexFormat::uint32);
-    CommandList.SetBlendFactor(Vector4{ 0.0f, 0.0f, 0.0f, 0.0f });
-    CommandList.SetSamplerState(PShader.Get(), LinearSampler.Get(), 0);
-    CommandList.SetShaderConstants(PShader.Get(), &Constants, 16);
+    InCommandList.SetGraphicsPipelineState(PipelineState.Get());
+    InCommandList.SetViewport(FViewportRegion(FramebufferW, FramebufferH, 0.0f, 0.0f, 0.0f, 1.0f));
+    InCommandList.SetVertexBuffers(MakeArrayView(&WindowState.VertexBuffer, 1), 0);
+    InCommandList.SetIndexBuffer(WindowState.IndexBuffer.Get(), EIndexFormat::uint32);
+    InCommandList.SetBlendFactor(Vector4{ 0.0f, 0.0f, 0.0f, 0.0f });
+    InCommandList.SetSamplerState(PShader.Get(), LinearSampler.Get(), 0);
+    InCommandList.SetShaderConstants(PShader.Get(), &Constants, 16);
 
     for (const FUIDrawBatch& Batch : WindowState.DrawData.GetBatches())
     {
@@ -862,10 +1088,79 @@ void FApplicationRenderer::RenderWindow(FRHICommandList& CommandList, const FWin
             continue;
         }
 
-        CommandList.SetShaderResourceView(PShader.Get(), TextureView, 0);
-        CommandList.SetScissorRect(FScissorRegion(ScissorWidth, ScissorHeight, ScissorX, ScissorY));
-        CommandList.DrawIndexedInstanced(static_cast<uint32>(Batch.IndexCount), 1, static_cast<uint32>(Batch.IndexOffset), 0, 0);
+        InCommandList.SetShaderResourceView(PShader.Get(), TextureView, 0);
+        InCommandList.SetScissorRect(FScissorRegion(ScissorWidth, ScissorHeight, ScissorX, ScissorY));
+        InCommandList.DrawIndexedInstanced(static_cast<uint32>(Batch.IndexCount), 1, static_cast<uint32>(Batch.IndexOffset), 0, 0);
     }
+}
+
+FRHITextureRef FApplicationRenderer::RenderElementToTexture(const TSharedPtr<FVisualElement>& Element, const IntVector2& Size, float DPIScale)
+{
+    if (!Element || Size.X <= 0 || Size.Y <= 0)
+    {
+        return nullptr;
+    }
+
+    const float ClampedScale = Math::Max(1.0f, DPIScale);
+
+    FWindowDrawState SnapshotState;
+    Element->OnDraw(FDrawGeometry(FRectangle(IntVector2(0, 0), Size.X, Size.Y), ClampedScale), SnapshotState.Commands, 0);
+    SnapshotState.DrawData.BuildFromCommandList(SnapshotState.Commands);
+
+    if (SnapshotState.DrawData.IsEmpty())
+    {
+        return nullptr;
+    }
+
+    const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
+    const FClearValue ClearValue(GSnapshotFormat, 0.0f, 0.0f, 0.0f, 0.0f);
+
+    const FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(GSnapshotFormat,
+        static_cast<uint32>(static_cast<float>(Size.X) * ClampedScale),
+        static_cast<uint32>(static_cast<float>(Size.Y) * ClampedScale),
+        1, 1, UsageFlags, ClearValue, ERHIResourceStateTrackingMode::Tracked);
+
+    FRHITextureRef Texture = RHI::CreateTexture(TextureDesc, ERHIResourceState::RenderTarget);
+    if (!Texture)
+    {
+        LOG_ERROR("[FApplicationRenderer]: Failed to create a %d x %d texture to snapshot an element into", Size.X, Size.Y);
+        return nullptr;
+    }
+
+    Texture->SetDebugName("ApplicationUI ElementSnapshot");
+
+    FRHIRenderTargetViewRef RenderTargetView = RHI::CreateRenderTargetView(Texture.Get(),
+        FRHIRenderTargetViewDesc::CreateTexture2D(GSnapshotFormat, 0));
+
+    if (!RenderTargetView)
+    {
+        return nullptr;
+    }
+
+    FRHICommandList SnapshotCommandList;
+
+    if (!PrepareGeometry(SnapshotCommandList, SnapshotState) || !PreparePipelineState(GSnapshotFormat))
+    {
+        return nullptr;
+    }
+
+    PrepareBatchTextures(SnapshotCommandList, SnapshotState.DrawData);
+
+    const FRHIRenderTargetAttachment Attachment(RenderTargetView.Get(), EAttachmentLoadAction::Clear,
+        EAttachmentStoreAction::Store, FFloatColor(0.0f, 0.0f, 0.0f, 0.0f));
+
+    FRHIBeginRenderPassDesc RenderPassDesc({ Attachment }, 1);
+    SnapshotCommandList.BeginRenderPass(RenderPassDesc);
+
+    RenderDrawData(SnapshotCommandList, SnapshotState, Size, ClampedScale);
+
+    SnapshotCommandList.EndRenderPass();
+    SnapshotCommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(Texture.Get(), ERHIResourceState::PixelShaderResource));
+
+    FRHICommandListExecutor::Get().ExecuteCommandList(SnapshotCommandList);
+
+    RetireWindowBuffers(SnapshotState);
+    return Texture;
 }
 
 FRHIShaderResourceView* FApplicationRenderer::GetDefaultShaderResourceView() const

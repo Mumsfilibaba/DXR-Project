@@ -71,12 +71,19 @@ public:
 
     /**
      * @brief Build the by-value description of this frame's scene render (main thread).
-     * The base fills the target swap-chain; subclasses fill the view (output target, debug views)
-     * and any marshalled editor state (selection ObjectIDs).
+     *
+     * @return The packet, which a subclass fills with the view it wants rendered, the target it wants
+     *         rendered into and any marshalled editor state.
      */
     virtual FSceneRenderPacket BuildRenderPacket();
 
     virtual void Exit() { }
+
+    /** @return The texture the scene is rendered into, which the UI composites, or null before the first one exists. */
+    NODISCARD FORCEINLINE FRHITexture* GetViewportImage() const
+    {
+        return ViewportImage.Get();
+    }
 
     /** @brief Returns the current world */
     FWorld* GetWorld() const
@@ -114,7 +121,29 @@ public:
     /** @brief Base material */
     TSharedPtr<FMaterial> BaseMaterial;
 
+protected:
+    /**
+     * @brief Creates the render target the scene is drawn into at whatever size GetSceneRenderSize reports,
+     * and hands it to the element that draws it. Called once during Init and again whenever that size
+     * changes, so a caller only has to reach for it when driving the size from somewhere else.
+     *
+     * @return True when a target exists afterwards, including when a zero size left the previous one in place.
+     */
+    bool CreateViewportRenderTarget();
+
+    /** @return The size the scene should render at, in pixels, which is zero while nothing has been laid out yet. */
+    virtual IntVector2 GetSceneRenderSize() const;
+
+    /**
+     * @brief Points whatever draws the scene at the render target it was just given.
+     *
+     * @param InViewportImage The render target, recreated whenever the render size changes.
+     */
+    virtual void SetSceneRenderTarget(const FRHITextureRef& InViewportImage);
+
 private:
+    static constexpr EFormat ViewportImageFormat = EFormat::R8G8B8A8_Unorm;
+
     bool CreateEngineWindow();
     bool CreateEngineViewport();
     bool CreateSceneViewport();
@@ -128,6 +157,8 @@ private:
     TSharedPtr<FWindow>        EngineWindow;
     TSharedPtr<FViewport>      EngineViewport;
     TSharedPtr<FSceneViewport> SceneViewport;
+    FRHITextureRef             ViewportImage;
+    IntVector2                 ViewportImageSize;
 
     static FEngine* Engine;
 };

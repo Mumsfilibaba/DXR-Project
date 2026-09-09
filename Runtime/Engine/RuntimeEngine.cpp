@@ -93,10 +93,9 @@ FSceneRenderPacket FRuntimeEngine::BuildRenderPacket()
 {
     TRACE_FUNCTION_SCOPE();
 
-    // Render directly to the BackBuffer.
     FSceneRenderPacket Packet = FEngine::BuildRenderPacket();
     Packet.View.Scene        = GetWorld()->GetSceneInterface();
-    Packet.View.RenderTarget = GetSceneViewport()->GetRHISwapChain()->GetBackBuffer();
+    Packet.View.RenderTarget = GetViewportImage();
 
     if (FCameraComponent* Camera = GetWorld()->GetActiveCamera())
     {

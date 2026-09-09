@@ -22,7 +22,7 @@ struct FPassResources
     FRHITexture* CascadeIndexBuffer      = nullptr;
     FRHITexture* ReducedDepthBuffer0     = nullptr;
     FRHITexture* ReducedDepthBuffer1     = nullptr;
-    FRHITexture* BackBuffer              = nullptr;
+    FRHITexture* SceneOutput             = nullptr;
     FRHITexture* ShadowCascades          = nullptr;
     FRHITexture* PointLightShadowMaps    = nullptr;
     FRHITexture* RayTracingOutput        = nullptr;

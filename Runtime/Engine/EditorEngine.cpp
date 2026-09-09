@@ -20,7 +20,6 @@
 #include "Engine/EngineUI/EditorUI/EditorStyle.h"
 #include "Engine/EngineUI/EditorUI/Panels/EditorViewportPanel.h"
 #include "Engine/World/Components/CameraComponent.h"
-#include "RendererCore/RenderSettings.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
 
 static TAutoConsoleVariable<bool> CVarUseCustomEditorUI(
@@ -55,8 +54,6 @@ FEditorEngine::FEditorEngine()
     , AboutWidget(nullptr)
     , EditorShell(nullptr)
     , ViewportHost(nullptr)
-    , ViewportImage(nullptr)
-    , ViewportImageSize()
     , bUseCustomEditorUI(false)
     , bPendingPickAdditive(false)
     , bPendingRectPickAdditive(false)
@@ -264,12 +261,6 @@ void FEditorEngine::Tick(float DeltaTime)
     {
         EditorShell->Tick(DeltaTime);
     }
-
-    const IntVector2 Size = ViewportHost->GetViewportSize();
-    if (ViewportImageSize != Size)
-    {
-        CreateViewportRenderTarget();
-    }
 }
 
 bool FEditorEngine::StartPlay()
@@ -341,7 +332,7 @@ FSceneRenderPacket FEditorEngine::BuildRenderPacket()
 
     FSceneRenderPacket Packet = FEngine::BuildRenderPacket();
     Packet.View.Scene                  = GetWorld()->GetSceneInterface();
-    Packet.View.RenderTarget           = ViewportImage.Get();
+    Packet.View.RenderTarget           = GetViewportImage();
     Packet.View.DebugView              = ViewportHost->GetDebugView();
     Packet.View.SecondaryDebugView     = ViewportHost->GetSecondaryDebugView();
     Packet.View.DebugViewChannelMask   = ViewportHost->GetDebugViewChannelMask();
@@ -589,33 +580,17 @@ void FEditorEngine::DrainPendingDestroyActors()
     }
 }
 
-bool FEditorEngine::CreateViewportRenderTarget()
+IntVector2 FEditorEngine::GetSceneRenderSize() const
 {
-    const IntVector2 Size = ViewportHost->GetViewportSize();
-    if (Size.X == 0 || Size.Y == 0)
+    // The scene fills whichever panel hosts it rather than the window, and that panel reports nothing until
+    // it has been laid out at least once.
+    return ViewportHost ? ViewportHost->GetViewportSize() : IntVector2(0, 0);
+}
+
+void FEditorEngine::SetSceneRenderTarget(const FRHITextureRef& InViewportImage)
+{
+    if (ViewportHost)
     {
-        return ViewportImage != nullptr;
-    }
-
-    const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
-    const FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FEditorEngine::ViewportImageFormat,
-        Size.X, Size.Y, 1, 1, UsageFlags, FClearValue(), ERHIResourceStateTrackingMode::Tracked);
-
-    FRHITextureRef NewViewportImage = RHI::CreateTexture(TextureDesc, ERHIResourceState::RenderTarget);
-    if (NewViewportImage)
-    {
-        ViewportImage = NewViewportImage;
-        ViewportImage->SetDebugName("Editor Viewport Image");
-
-        ViewportHost->SetViewportImage(ViewportImage);
-
-        RenderSettings::ChangeRenderResolution(Size.X, Size.Y);
-
-        ViewportImageSize = Size;
-        return true;
-    }
-    else
-    {
-        return false;
+        ViewportHost->SetViewportImage(InViewportImage);
     }
 }

@@ -5,6 +5,7 @@
 #include "Core/Math/Math.h"
 #include "Core/Misc/Paths.h"
 #include "Application/Application.h"
+#include "Application/IApplicationRenderer.h"
 #include "Application/Elements/Window.h"
 #include "Application/Elements/Viewport.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
@@ -97,6 +98,8 @@ FEngine::FEngine()
     , EngineWindow(nullptr)
     , EngineViewport(nullptr)
     , SceneViewport(nullptr)
+    , ViewportImage(nullptr)
+    , ViewportImageSize()
 {
 }
 
@@ -120,6 +123,12 @@ bool FEngine::CreateEngineWindow()
     EngineWindow = FWindow::Create(WindowDesc);
 
     FApplication::Get().CreateWindow(EngineWindow);
+
+    if (TSharedPtr<IApplicationRenderer> Renderer = FApplication::Get().GetRenderer())
+    {
+        Renderer->SetPrimaryWindow(EngineWindow);
+    }
+
     return true;
 }
 
@@ -162,11 +171,53 @@ bool FEngine::CreateSceneViewport()
     }
 
     EngineViewport->SetViewportInterface(SceneViewport);
+    return true;
+}
 
-    // Communicate the render resolution to the renderer
-    FRHISwapChainRef SwapChain = SceneViewport->GetRHISwapChain();
-    RenderSettings::ChangeRenderResolution(SwapChain->GetDesc().Width, SwapChain->GetDesc().Height);
+IntVector2 FEngine::GetSceneRenderSize() const
+{
+    return EngineWindow ? EngineWindow->GetSize() : IntVector2(0, 0);
+}
 
+void FEngine::SetSceneRenderTarget(const FRHITextureRef& InViewportImage)
+{
+    if (EngineViewport)
+    {
+        EngineViewport->SetSceneBrush(FUIBrush(InViewportImage.Get()));
+    }
+}
+
+bool FEngine::CreateViewportRenderTarget()
+{
+    const IntVector2 Size = GetSceneRenderSize();
+    if (Size.X == 0 || Size.Y == 0)
+    {
+        return ViewportImage != nullptr;
+    }
+
+    const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
+    const FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FEngine::ViewportImageFormat,
+        Size.X, Size.Y, 1, 1, UsageFlags, FClearValue(), ERHIResourceStateTrackingMode::Tracked);
+
+    FRHITextureRef NewViewportImage = RHI::CreateTexture(TextureDesc, ERHIResourceState::RenderTarget);
+    if (!NewViewportImage)
+    {
+        return false;
+    }
+
+    if (TSharedPtr<IApplicationRenderer> Renderer = FApplication::Get().GetRenderer())
+    {
+        Renderer->RetireTexture(ViewportImage);
+    }
+
+    ViewportImage = NewViewportImage;
+    ViewportImage->SetDebugName("Viewport Image");
+
+    SetSceneRenderTarget(ViewportImage);
+
+    RenderSettings::ChangeRenderResolution(Size.X, Size.Y);
+
+    ViewportImageSize = Size;
     return true;
 }
 
@@ -179,14 +230,8 @@ void FEngine::OnEngineWindowMoved(const IntVector2& /* NewScreenPosition */)
 {
 }
 
-void FEngine::OnEngineWindowResized(const IntVector2& NewScreenSize)
+void FEngine::OnEngineWindowResized(const IntVector2& /* NewScreenSize */)
 {
-    IRendererModule* RendererModule = IRendererModule::Get();
-    RendererModule->ResizeSwapChain(SceneViewport->GetRHISwapChain(), NewScreenSize.X, NewScreenSize.Y);
-
-#ifndef EDITOR_BUILD
-    RenderSettings::ChangeRenderResolution(NewScreenSize.X, NewScreenSize.Y);
-#endif
 }
 
 bool FEngine::Init()
@@ -297,6 +342,8 @@ bool FEngine::Init()
         return false;
     }
 
+    CreateViewportRenderTarget();
+
     if (IImguiPlugin::IsEnabled())
     {
         IImguiPlugin::Get().SetMainViewport(EngineViewport);
@@ -358,6 +405,11 @@ void FEngine::Tick(float DeltaTime)
 {
     TRACE_FUNCTION_SCOPE();
 
+    if (ViewportImageSize != GetSceneRenderSize())
+    {
+        CreateViewportRenderTarget();
+    }
+
     if (SceneViewport)
     {
         SceneViewport->Tick();
@@ -382,13 +434,7 @@ void FEngine::Tick(float DeltaTime)
 
 FSceneRenderPacket FEngine::BuildRenderPacket()
 {
-    FSceneRenderPacket Packet;
-    if (SceneViewport)
-    {
-        Packet.SwapChain = SceneViewport->GetRHISwapChain();
-    }
-
-    return Packet;
+    return FSceneRenderPacket();
 }
 
 void FEngine::Release()

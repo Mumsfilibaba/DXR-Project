@@ -1,5 +1,7 @@
 #include "Application/Application.h"
 #include "Application/Docking/DockDragState.h"
+#include "Application/Docking/DockLayoutFile.h"
+#include "Application/Docking/DockWindowManager.h"
 #include "Application/Docking/DockingArea.h"
 #include "Application/Docking/Splitter.h"
 #include "Application/Docking/TabStrip.h"
@@ -7,170 +9,18 @@
 #include "Application/Elements/Box.h"
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
-#include "Core/Misc/IniFile.h"
-#include "Core/Templates/CString.h"
 
-// The section every saved layout starts with, and the prefix each node section is named by
-constexpr const CHAR* LAYOUT_SECTION      = "Layout";
-constexpr const CHAR* LAYOUT_NODE_PREFIX  = "Node";
-constexpr int32       LAYOUT_FILE_VERSION = 1;
+constexpr int32 DROP_INDICATOR_INSET   = 2;
+constexpr int32 DROP_ZONE_CHIP_SIZE    = 96;
+constexpr int32 DROP_ZONE_CHIP_GAP     = 8;
+constexpr int32 DROP_ZONE_CHIP_MINIMUM = 12;
 
-// How far the drop indicator is inset from the leaf it covers, so the leaf beneath stays readable
-constexpr int32 DROP_INDICATOR_INSET = 2;
-
-static void SplitList(const String& Value, TArray<String>& OutTokens)
-{
-    String Token;
-    for (int32 Index = 0; Index < Value.Length(); ++Index)
-    {
-        const CHAR Character = Value[Index];
-        if (Character == ',')
-        {
-            if (!Token.IsEmpty())
-            {
-                OutTokens.Add(Token);
-            }
-
-            Token.Clear();
-            continue;
-        }
-
-        Token.Append(Character);
-    }
-
-    if (!Token.IsEmpty())
-    {
-        OutTokens.Add(Token);
-    }
-}
-
-static String JoinList(const TArray<String>& Tokens)
-{
-    String Result;
-    for (int32 Index = 0; Index < Tokens.Size(); ++Index)
-    {
-        if (Index > 0)
-        {
-            Result.Append(',');
-        }
-
-        Result.Append(Tokens[Index]);
-    }
-
-    return Result;
-}
-
-static int32 WriteNode(FIniFile& File, const FDockNode& Node, int32& InOutNextIndex)
-{
-    const int32 NodeIndex = InOutNextIndex++;
-
-    TArray<String> ChildIndices;
-    if (Node.Kind == EDockNodeKind::Split)
-    {
-        for (const FDockNode& Child : Node.Children)
-        {
-            ChildIndices.Add(String::Printf("%d", WriteNode(File, Child, InOutNextIndex)));
-        }
-    }
-
-    const String SectionName = String::Printf("%s%d", LAYOUT_NODE_PREFIX, NodeIndex);
-    if (Node.Kind == EDockNodeKind::Split)
-    {
-        TArray<String> Fractions;
-        for (float Fraction : Node.ChildFractions)
-        {
-            Fractions.Add(String::Printf("%.6f", Fraction));
-        }
-
-        File.SetOrAddString(SectionName.Data(), "Kind", String("Split"));
-        File.SetOrAddString(SectionName.Data(), "Orientation", String(Node.Orientation == EDockSplitOrientation::Horizontal ? "Horizontal" : "Vertical"));
-        File.SetOrAddString(SectionName.Data(), "Children", JoinList(ChildIndices));
-        File.SetOrAddString(SectionName.Data(), "Fractions", JoinList(Fractions));
-    }
-    else
-    {
-        File.SetOrAddString(SectionName.Data(), "Kind", String("Tabs"));
-        File.SetOrAddString(SectionName.Data(), "Tabs", JoinList(Node.TabIds));
-        File.SetOrAddInt(SectionName.Data(), "ActiveTab", Node.ActiveTabIndex);
-    }
-
-    return NodeIndex;
-}
-
-static bool ReadNode(FIniFile& File, int32 NodeIndex, int32 NumNodes, int32 Depth, FDockNode& OutNode)
-{
-    if (NodeIndex < 0 || NodeIndex >= NumNodes || Depth > NumNodes)
-    {
-        return false;
-    }
-
-    const String SectionName = String::Printf("%s%d", LAYOUT_NODE_PREFIX, NodeIndex);
-
-    String Kind;
-    if (!File.GetString(SectionName.Data(), "Kind", Kind))
-    {
-        return false;
-    }
-
-    if (Kind == "Tabs")
-    {
-        OutNode.Kind = EDockNodeKind::Tabs;
-
-        String Tabs;
-        File.GetString(SectionName.Data(), "Tabs", Tabs);
-        SplitList(Tabs, OutNode.TabIds);
-
-        int32 ActiveTab = 0;
-        File.GetInt(SectionName.Data(), "ActiveTab", ActiveTab);
-
-        OutNode.ActiveTabIndex = ActiveTab;
-        return true;
-    }
-
-    OutNode.Kind = EDockNodeKind::Split;
-
-    String Orientation;
-    File.GetString(SectionName.Data(), "Orientation", Orientation);
-
-    OutNode.Orientation = Orientation == "Vertical" ? EDockSplitOrientation::Vertical : EDockSplitOrientation::Horizontal;
-
-    String Children;
-    File.GetString(SectionName.Data(), "Children", Children);
-
-    TArray<String> ChildIndices;
-    SplitList(Children, ChildIndices);
-
-    for (const String& ChildIndex : ChildIndices)
-    {
-        FDockNode ChildNode;
-        if (!ReadNode(File, CString::Atoi(ChildIndex.Data()), NumNodes, Depth + 1, ChildNode))
-        {
-            return false;
-        }
-
-        OutNode.Children.Add(ChildNode);
-    }
-
-    String Fractions;
-    File.GetString(SectionName.Data(), "Fractions", Fractions);
-
-    TArray<String> FractionTokens;
-    SplitList(Fractions, FractionTokens);
-
-    if (FractionTokens.Size() == OutNode.Children.Size())
-    {
-        for (const String& Token : FractionTokens)
-        {
-            OutNode.ChildFractions.Add(CString::Atof(Token.Data()));
-        }
-    }
-    else
-    {
-        OutNode.NormalizeFractions();
-    }
-
-    return true;
-}
+constexpr float DROP_ZONE_CHIP_GRAY       = 0.10f;
+constexpr float DROP_ZONE_CHIP_OPACITY    = 0.55f;
+constexpr float DROP_ZONE_HOVER_GRAY      = 0.22f;
+constexpr float DROP_ZONE_HOVER_OPACITY   = 0.85f;
+constexpr float DROP_ZONE_GHOST_OPACITY   = 0.75f;
+constexpr float DROP_ZONE_LANDING_OPACITY = 0.20f;
 
 TSharedPtr<FDockingArea> FDockingArea::Create(const FDesc& Desc)
 {
@@ -186,6 +36,7 @@ FDockingArea::FDockingArea()
     , Leaves()
     , Font(nullptr)
     , bAllowTearOut(true)
+    , bIsDropTarget(true)
     , bNeedsRebuild(false)
     , OnPanelTornOutDelegate()
     , OnPanelClosedDelegate()
@@ -204,10 +55,14 @@ void FDockingArea::Initialize(const FDesc& Desc)
 {
     Font                   = Desc.Font;
     bAllowTearOut          = Desc.bAllowTearOut;
+    bIsDropTarget          = Desc.bIsDropTarget;
     OnPanelTornOutDelegate = Desc.OnPanelTornOut;
     OnPanelClosedDelegate  = Desc.OnPanelClosed;
 
-    FDockDragState::Get().RegisterArea(this);
+    if (bIsDropTarget)
+    {
+        FDockDragState::Get().RegisterArea(this);
+    }
 }
 
 IntVector2 FDockingArea::PrepareDesiredSize()
@@ -222,8 +77,7 @@ int32 FDockingArea::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
     OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Colors.WindowBackground);
 
     const int32 NextLayerId = FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId + 1);
-    DrawDropIndicator(OutCommandList, NextLayerId);
-    return NextLayerId + 2;
+    return DrawDropZones(OutCommandList, NextLayerId) + 1;
 }
 
 void FDockingArea::RegisterPanel(const String& PanelId, const String& Label, const TSharedPtr<FVisualElement>& Panel)
@@ -267,46 +121,24 @@ void FDockingArea::RestoreLayout(const FDockNode& RootNode)
 
 bool FDockingArea::SaveLayoutToFile(const String& Filename) const
 {
-    FIniFile File;
-    File.Filename = Filename;
+    FDockWindowLayout Layout;
+    Layout.Root = Root;
 
-    int32 NextIndex = 0;
-    WriteNode(File, Root, NextIndex);
+    TArray<FDockWindowLayout> Windows;
+    Windows.Add(Layout);
 
-    File.SetOrAddInt(LAYOUT_SECTION, "Version", LAYOUT_FILE_VERSION);
-    File.SetOrAddInt(LAYOUT_SECTION, "NumNodes", NextIndex);
-    File.SetOrAddInt(LAYOUT_SECTION, "Root", 0);
-
-    return File.WriteToFile();
+    return FDockLayoutFile::Save(Filename, Windows);
 }
 
 bool FDockingArea::RestoreLayoutFromFile(const String& Filename)
 {
-    FIniFile File;
-    if (!File.LoadFromFile(Filename))
+    TArray<FDockWindowLayout> Windows;
+    if (!FDockLayoutFile::Load(Filename, Windows))
     {
         return false;
     }
 
-    int32 Version = 0;
-    if (!File.GetInt(LAYOUT_SECTION, "Version", Version) || Version != LAYOUT_FILE_VERSION)
-    {
-        return false;
-    }
-
-    int32 NumNodes  = 0;
-    int32 RootIndex = 0;
-
-    File.GetInt(LAYOUT_SECTION, "NumNodes", NumNodes);
-    File.GetInt(LAYOUT_SECTION, "Root", RootIndex);
-
-    FDockNode RestoredRoot;
-    if (!ReadNode(File, RootIndex, NumNodes, 0, RestoredRoot))
-    {
-        return false;
-    }
-
-    RestoreLayout(RestoredRoot);
+    RestoreLayout(Windows[0].Root);
     return true;
 }
 
@@ -365,6 +197,69 @@ void FDockingArea::UndockPanel(const String& PanelId)
     RequestRebuild();
 }
 
+void FDockingArea::GatherDropZones(const IntVector2& ClientPosition, TArray<FDropZone>& OutZones) const
+{
+    OutZones.Clear();
+
+    const int32 LeafIndex = FindLeafAt(ClientPosition);
+    if (LeafIndex < 0)
+    {
+        if (Root.IsEmpty())
+        {
+            FDropZone WholeArea;
+            WholeArea.Bounds = GetContentRectangle();
+
+            OutZones.Add(WholeArea);
+        }
+
+        return;
+    }
+
+    const FLeafGeometry& Leaf = Leaves[LeafIndex];
+
+    const FDockNode* Node = Root.FindByPath(Leaf.Path);
+    if (!Node || Node->TabIds.IsEmpty() || !Leaf.Column)
+    {
+        return;
+    }
+
+    const String& TargetPanelId = Node->TabIds[Math::Clamp(Node->ActiveTabIndex, 0, Node->TabIds.Size() - 1)];
+    if (Leaf.Strip)
+    {
+        FDropZone StripZone;
+        StripZone.Bounds        = Leaf.Strip->GetContentRectangle();
+        StripZone.TargetPanelId = TargetPanelId;
+
+        OutZones.Add(StripZone);
+    }
+
+    const FRectangle LeafBounds = Leaf.Column->GetContentRectangle();
+
+    const int32 ChipSize = Math::Min(DROP_ZONE_CHIP_SIZE, (Math::Min(LeafBounds.Width, LeafBounds.Height) - (2 * DROP_ZONE_CHIP_GAP)) / 3);
+    if (ChipSize < DROP_ZONE_CHIP_MINIMUM)
+    {
+        return;
+    }
+
+    const IntVector2 Center = LeafBounds.GetCenter();
+    const int32      Reach  = (ChipSize / 2) + DROP_ZONE_CHIP_GAP;
+
+    const auto AddChip = [&](const IntVector2& Position, EDockDirection Direction)
+    {
+        FDropZone Chip;
+        Chip.Bounds        = FRectangle(Position, ChipSize, ChipSize);
+        Chip.TargetPanelId = TargetPanelId;
+        Chip.Direction     = Direction;
+
+        OutZones.Add(Chip);
+    };
+
+    AddChip(IntVector2(Center.X - Reach - ChipSize, Center.Y - (ChipSize / 2)),   EDockDirection::Left);
+    AddChip(IntVector2(Center.X + Reach,            Center.Y - (ChipSize / 2)),   EDockDirection::Right);
+    AddChip(IntVector2(Center.X - (ChipSize / 2),   Center.Y - Reach - ChipSize), EDockDirection::Top);
+    AddChip(IntVector2(Center.X - (ChipSize / 2),   Center.Y + Reach),            EDockDirection::Bottom);
+}
+
 bool FDockingArea::HitTestDropTarget(const IntVector2& ScreenPosition, String& OutTargetPanelId, EDockDirection& OutDirection) const
 {
     OutTargetPanelId.Clear();
@@ -387,26 +282,20 @@ bool FDockingArea::HitTestDropTarget(const IntVector2& ScreenPosition, String& O
         return false;
     }
 
-    const int32 LeafIndex = FindLeafAt(ClientPosition);
-    if (LeafIndex < 0)
+    TArray<FDropZone> Zones;
+    GatherDropZones(ClientPosition, Zones);
+
+    for (const FDropZone& Zone : Zones)
     {
-        return Root.IsEmpty();
+        if (Zone.Bounds.EncapsulatesPoint(ClientPosition))
+        {
+            OutTargetPanelId = Zone.TargetPanelId;
+            OutDirection     = Zone.Direction;
+            return true;
+        }
     }
 
-    const FLeafGeometry& Leaf = Leaves[LeafIndex];
-
-    const FDockNode* Node = Root.FindByPath(Leaf.Path);
-    if (!Node || Node->TabIds.IsEmpty())
-    {
-        return false;
-    }
-
-    OutTargetPanelId = Node->TabIds[Math::Clamp(Node->ActiveTabIndex, 0, Node->TabIds.Size() - 1)];
-
-    const bool bIsOverStrip = Leaf.Strip && Leaf.Strip->GetContentRectangle().EncapsulatesPoint(ClientPosition);
-    OutDirection            = bIsOverStrip ? EDockDirection::Center : ResolveDirection(Leaf.Column->GetContentRectangle(), ClientPosition);
-
-    return true;
+    return false;
 }
 
 void FDockingArea::SetActivePanel(const String& PanelId)
@@ -510,6 +399,12 @@ TSharedPtr<FVisualElement> FDockingArea::BuildNode(FDockNode& Node, const TArray
         StripDesc.OnTabActivated = FOnTabActivated::CreateRaw(this, &FDockingArea::OnTabActivated);
         StripDesc.OnTabClosed    = FOnTabClosed::CreateRaw(this, &FDockingArea::OnTabClosed);
 
+        const TArray<int32> LeafPath = Path;
+        StripDesc.OnTabReordered     = FOnTabReordered::CreateLambda([this, LeafPath](const String& PanelId, int32 NewIndex)
+        {
+            OnTabReordered(LeafPath, PanelId, NewIndex);
+        });
+
         if (bAllowTearOut)
         {
             StripDesc.OnTabDragDetached = FOnTabDragDetached::CreateRaw(this, &FDockingArea::OnTabDetached);
@@ -582,50 +477,9 @@ int32 FDockingArea::FindLeafAt(const IntVector2& ClientPosition) const
     return -1;
 }
 
-EDockDirection FDockingArea::ResolveDirection(const FRectangle& Bounds, const IntVector2& ClientPosition)
+FRectangle FDockingArea::ComputeDropBounds(const String& TargetPanelId, EDockDirection Direction) const
 {
-    if (Bounds.IsEmpty())
-    {
-        return EDockDirection::Center;
-    }
-
-    const int32 EdgeWidth  = Math::Max(1, Math::RoundToInt(static_cast<float>(Bounds.Width) * EdgeZoneFraction));
-    const int32 EdgeHeight = Math::Max(1, Math::RoundToInt(static_cast<float>(Bounds.Height) * EdgeZoneFraction));
-    const int32 FromLeft   = ClientPosition.X - Bounds.Position.X;
-    const int32 FromRight  = Bounds.GetRight() - ClientPosition.X;
-    const int32 FromTop    = ClientPosition.Y - Bounds.Position.Y;
-    const int32 FromBottom = Bounds.GetBottom() - ClientPosition.Y;
-
-    const bool bIsNearLeft   = FromLeft < EdgeWidth;
-    const bool bIsNearRight  = FromRight < EdgeWidth;
-    const bool bIsNearTop    = FromTop < EdgeHeight;
-    const bool bIsNearBottom = FromBottom < EdgeHeight;
-
-    if (!bIsNearLeft && !bIsNearRight && !bIsNearTop && !bIsNearBottom)
-    {
-        return EDockDirection::Center;
-    }
-
-    const int32 HorizontalDistance = Math::Min(FromLeft, FromRight);
-    const int32 VerticalDistance   = Math::Min(FromTop, FromBottom);
-
-    if ((bIsNearLeft || bIsNearRight) && (!bIsNearTop && !bIsNearBottom || HorizontalDistance <= VerticalDistance))
-    {
-        return FromLeft <= FromRight ? EDockDirection::Left : EDockDirection::Right;
-    }
-
-    return FromTop <= FromBottom ? EDockDirection::Top : EDockDirection::Bottom;
-}
-
-void FDockingArea::DrawDropIndicator(FDrawCommandList& OutCommandList, int32 LayerId) const
-{
-    const FDockDragState& DragState = FDockDragState::Get();
-    if (!DragState.IsDragging() || DragState.GetTargetArea() != this)
-    {
-        return;
-    }
-
-    const FDockNode* TargetNode = DragState.GetTargetPanelId().IsEmpty() ? &Root : Root.FindTabsNode(DragState.GetTargetPanelId());
+    const FDockNode* TargetNode = TargetPanelId.IsEmpty() ? &Root : Root.FindTabsNode(TargetPanelId);
 
     FRectangle LeafBounds = GetContentRectangle();
     for (const FLeafGeometry& Leaf : Leaves)
@@ -640,41 +494,119 @@ void FDockingArea::DrawDropIndicator(FDrawCommandList& OutCommandList, int32 Lay
     LeafBounds = LeafBounds.Deflate(FMargin(DROP_INDICATOR_INSET, DROP_INDICATOR_INSET));
     if (LeafBounds.IsEmpty())
     {
-        return;
+        return FRectangle();
     }
 
-    FRectangle IndicatorBounds = LeafBounds;
-    switch (DragState.GetTargetDirection())
+    FRectangle DropBounds = LeafBounds;
+    switch (Direction)
     {
         case EDockDirection::Left:
-            IndicatorBounds.Width = LeafBounds.Width / 2;
+            DropBounds.Width = LeafBounds.Width / 2;
             break;
 
         case EDockDirection::Right:
-            IndicatorBounds.Width = LeafBounds.Width / 2;
-            IndicatorBounds.Position.X += LeafBounds.Width - IndicatorBounds.Width;
+            DropBounds.Width = LeafBounds.Width / 2;
+            DropBounds.Position.X += LeafBounds.Width - DropBounds.Width;
             break;
 
         case EDockDirection::Top:
-            IndicatorBounds.Height = LeafBounds.Height / 2;
+            DropBounds.Height = LeafBounds.Height / 2;
             break;
 
         case EDockDirection::Bottom:
-            IndicatorBounds.Height = LeafBounds.Height / 2;
-            IndicatorBounds.Position.Y += LeafBounds.Height - IndicatorBounds.Height;
+            DropBounds.Height = LeafBounds.Height / 2;
+            DropBounds.Position.Y += LeafBounds.Height - DropBounds.Height;
             break;
 
         case EDockDirection::Center:
             break;
     }
 
+    return DropBounds;
+}
+
+bool FDockingArea::GetDropPreviewBounds(const String& TargetPanelId, EDockDirection Direction, FRectangle& OutBounds) const
+{
+    OutBounds = FRectangle();
+
+    if (!FApplication::IsInitialized())
+    {
+        return false;
+    }
+
+    TSharedPtr<FWindow> Window = FApplication::Get().FindWindow(const_cast<FDockingArea*>(this)->AsSharedPtr());
+    if (!Window)
+    {
+        return false;
+    }
+
+    const FRectangle DropBounds = ComputeDropBounds(TargetPanelId, Direction);
+    if (DropBounds.IsEmpty())
+    {
+        return false;
+    }
+
+    OutBounds = DropBounds;
+    OutBounds.Position += Window->GetPosition();
+
+    return true;
+}
+
+int32 FDockingArea::DrawDropZones(FDrawCommandList& OutCommandList, int32 LayerId) const
+{
+    const FDockDragState& DragState = FDockDragState::Get();
+    if (!bIsDropTarget || !DragState.IsDragging() || !FApplication::IsInitialized())
+    {
+        return LayerId;
+    }
+
+    TSharedPtr<FWindow> Window = FApplication::Get().FindWindow(const_cast<FDockingArea*>(this)->AsSharedPtr());
+    if (!Window)
+    {
+        return LayerId;
+    }
+
+    const IntVector2 ClientPosition = DragState.GetCursorPosition() - Window->GetPosition();
+    if (!GetContentRectangle().EncapsulatesPoint(ClientPosition))
+    {
+        return LayerId;
+    }
+
     const FUIStyle& Style = FUIStyle::GetDefault();
+    if (DragState.GetTargetArea() == this)
+    {
+        const FRectangle LandingBounds = ComputeDropBounds(DragState.GetTargetPanelId(), DragState.GetTargetDirection());
+        if (!LandingBounds.IsEmpty())
+        {
+            FRHITexture* const Ghost = FDockWindowManager::IsInitialized() ? FDockWindowManager::Get().GetDropPreviewTexture() : nullptr;
+            if (Ghost)
+            {
+                OutCommandList.AddImage(LayerId, LandingBounds, FUIBrush(Ghost), FFloatColor(1.0f, 1.0f, 1.0f, DROP_ZONE_GHOST_OPACITY));
+            }
+            else
+            {
+                OutCommandList.AddBox(LayerId, LandingBounds, FFloatColor(DROP_ZONE_HOVER_GRAY, DROP_ZONE_HOVER_GRAY, DROP_ZONE_HOVER_GRAY, DROP_ZONE_LANDING_OPACITY));
+            }
 
-    FFloatColor FillColor = Style.Colors.Accent;
-    FillColor.A           = 0.25f;
+            OutCommandList.AddBoxOutline(LayerId, LandingBounds, Style.Colors.Accent, Style.Metrics.BorderThickness);
+        }
+    }
 
-    OutCommandList.AddBox(LayerId, IndicatorBounds, FillColor);
-    OutCommandList.AddBoxOutline(LayerId + 1, IndicatorBounds, Style.Colors.Accent, Style.Metrics.BorderThickness);
+    TArray<FDropZone> Zones;
+    GatherDropZones(ClientPosition, Zones);
+
+    const int32 ChipLayerId = LayerId + 1;
+    for (const FDropZone& Zone : Zones)
+    {
+        const bool  bIsHovered = Zone.Bounds.EncapsulatesPoint(ClientPosition);
+        const float Gray       = bIsHovered ? DROP_ZONE_HOVER_GRAY : DROP_ZONE_CHIP_GRAY;
+        const float Opacity    = bIsHovered ? DROP_ZONE_HOVER_OPACITY : DROP_ZONE_CHIP_OPACITY;
+
+        OutCommandList.AddBox(ChipLayerId, Zone.Bounds, FFloatColor(Gray, Gray, Gray, Opacity));
+        OutCommandList.AddBoxOutline(ChipLayerId, Zone.Bounds, Style.Colors.Border, Style.Metrics.BorderThickness);
+    }
+
+    return ChipLayerId;
 }
 
 void FDockingArea::DockAgainstNode(FDockNode& TargetNode, const String& PanelId, EDockDirection Direction)
@@ -728,37 +660,54 @@ void FDockingArea::OnTabClosed(const String& PanelId)
     OnPanelClosedDelegate.ExecuteIfBound(PanelId);
 }
 
-IntVector2 FDockingArea::ToScreenPosition(const IntVector2& ClientPosition) const
+void FDockingArea::OnTabReordered(const TArray<int32>& Path, const String& PanelId, int32 NewIndex)
 {
-    if (!FApplication::IsInitialized())
+    FDockNode* TabsNode = Root.FindByPath(Path);
+    if (!TabsNode || TabsNode->Kind != EDockNodeKind::Tabs)
     {
-        return ClientPosition;
+        return;
     }
 
-    TSharedPtr<FWindow> Window = FApplication::Get().FindWindow(const_cast<FDockingArea*>(this)->AsSharedPtr());
-    return Window ? ClientPosition + Window->GetPosition() : ClientPosition;
+    const int32 FromIndex = TabsNode->TabIds.Find(PanelId);
+    if (!TabsNode->TabIds.IsValidIndex(FromIndex))
+    {
+        return;
+    }
+
+    const int32 ToIndex = Math::Clamp(NewIndex, 0, TabsNode->TabIds.Size() - 1);
+    if (FromIndex == ToIndex)
+    {
+        return;
+    }
+
+    const String ActivePanelId = TabsNode->TabIds.IsValidIndex(TabsNode->ActiveTabIndex)
+        ? TabsNode->TabIds[TabsNode->ActiveTabIndex]
+        : String();
+
+    TabsNode->TabIds.RemoveAt(FromIndex);
+    TabsNode->TabIds.Insert(ToIndex, PanelId);
+
+    const int32 ActiveIndex = TabsNode->TabIds.Find(ActivePanelId);
+    if (TabsNode->TabIds.IsValidIndex(ActiveIndex))
+    {
+        TabsNode->ActiveTabIndex = ActiveIndex;
+    }
 }
 
-void FDockingArea::OnTabDetached(const String& PanelId, const IntVector2& ClientPosition)
+void FDockingArea::OnTabDetached(const String& PanelId, const IntVector2& /* ClientPosition */, const IntVector2& ScreenPosition)
 {
-    const IntVector2 ScreenPosition = ToScreenPosition(ClientPosition);
-
     FDockDragState::Get().BeginDrag(PanelId, this, ScreenPosition);
     OnPanelTornOutDelegate.ExecuteIfBound(PanelId, ScreenPosition);
 }
 
-void FDockingArea::OnTabDragMoved(const String& PanelId, const IntVector2& ClientPosition)
+void FDockingArea::OnTabDragMoved(const String& /* PanelId */, const IntVector2& /* ClientPosition */, const IntVector2& ScreenPosition)
 {
-    UNREFERENCED_VARIABLE(PanelId);
-
-    FDockDragState::Get().UpdateDrag(ToScreenPosition(ClientPosition));
+    FDockDragState::Get().UpdateDrag(ScreenPosition);
 }
 
-void FDockingArea::OnTabDragFinished(const String& PanelId, const IntVector2& ClientPosition)
+void FDockingArea::OnTabDragFinished(const String& /* PanelId */, const IntVector2& /* ClientPosition */, const IntVector2& ScreenPosition)
 {
-    UNREFERENCED_VARIABLE(PanelId);
-
-    FDockDragState::Get().UpdateDrag(ToScreenPosition(ClientPosition));
+    FDockDragState::Get().UpdateDrag(ScreenPosition);
     FDockDragState::Get().EndDrag();
 }
 

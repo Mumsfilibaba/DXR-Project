@@ -88,6 +88,8 @@ FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle, HICON InIco
     , bIsTrackingMouse(false)
     , bDeferredMessagesEnabled(false)
     , bIsApplicationActive(true)
+    , bIsInModalSizeLoop(false)
+    , ModalInteraction(EWindowInteraction::Resize)
     , Messages()
     , MessagesCS()
     , WindowsMessageListeners()
@@ -696,7 +698,81 @@ LRESULT FWindowsApplication::ProcessMessage(HWND WindowHandle, UINT Message, WPA
         {
             if (TSharedRef<FWindowsWindow> MsgWindow = GetWindowsWindowFromHWND(WindowHandle))
             {
-                MessageHandler->OnWindowResizing(MsgWindow);
+                const RECT* ProposedRect = reinterpret_cast<const RECT*>(lParam);
+
+                RECT WindowRect = {};
+                RECT ClientRect = {};
+                ::GetWindowRect(WindowHandle, &WindowRect);
+                ::GetClientRect(WindowHandle, &ClientRect);
+
+                const LONG BorderWidth  = (WindowRect.right  - WindowRect.left) - (ClientRect.right  - ClientRect.left);
+                const LONG BorderHeight = (WindowRect.bottom - WindowRect.top)  - (ClientRect.bottom - ClientRect.top);
+
+                const LONG ProposedWidth  = (ProposedRect->right  - ProposedRect->left) - BorderWidth;
+                const LONG ProposedHeight = (ProposedRect->bottom - ProposedRect->top)  - BorderHeight;
+
+                MessageHandler->OnWindowResizing(MsgWindow,
+                    static_cast<uint32>(ProposedWidth  > 0 ? ProposedWidth  : 0),
+                    static_cast<uint32>(ProposedHeight > 0 ? ProposedHeight : 0));
+            }
+
+            break;
+        }
+
+        case WM_SYSCOMMAND:
+        {
+            switch (wParam & 0xfff0)
+            {
+                case SC_MOVE:
+                {
+                    ModalInteraction = EWindowInteraction::Move;
+                    break;
+                }
+
+                case SC_SIZE:
+                {
+                    ModalInteraction = EWindowInteraction::Resize;
+                    break;
+                }
+            }
+
+            break;
+        }
+
+        case WM_ENTERSIZEMOVE:
+        {
+            if (TSharedRef<FWindowsWindow> MsgWindow = GetWindowsWindowFromHWND(WindowHandle))
+            {
+                bIsInModalSizeLoop = true;
+                MessageHandler->BeginWindowInteraction(MsgWindow, ModalInteraction);
+            }
+
+            break;
+        }
+
+        case WM_EXITSIZEMOVE:
+        {
+            if (TSharedRef<FWindowsWindow> MsgWindow = GetWindowsWindowFromHWND(WindowHandle))
+            {
+                bIsInModalSizeLoop = false;
+                MessageHandler->EndWindowInteraction(MsgWindow, ModalInteraction);
+
+                ModalInteraction = EWindowInteraction::Resize;
+            }
+
+            break;
+        }
+
+        case WM_PAINT:
+        {
+            if (!bIsInModalSizeLoop)
+            {
+                break;
+            }
+
+            if (TSharedRef<FWindowsWindow> MsgWindow = GetWindowsWindowFromHWND(WindowHandle))
+            {
+                MessageHandler->OnOSPaint(MsgWindow);
             }
 
             break;
@@ -705,15 +781,36 @@ LRESULT FWindowsApplication::ProcessMessage(HWND WindowHandle, UINT Message, WPA
         case WM_DPICHANGED:
         {
             const RECT* SuggestedRect = reinterpret_cast<const RECT*>(lParam);
-            ::SetWindowPos(WindowHandle, nullptr, SuggestedRect->left, SuggestedRect->top, SuggestedRect->right - SuggestedRect->left,
-                SuggestedRect->bottom - SuggestedRect->top, SWP_NOZORDER | SWP_NOACTIVATE);
+            ::SetWindowPos(WindowHandle, nullptr, SuggestedRect->left, SuggestedRect->top, 
+                SuggestedRect->right - SuggestedRect->left,
+                SuggestedRect->bottom - SuggestedRect->top, 
+                SWP_NOZORDER | SWP_NOACTIVATE);
+
+            return 0;
+        }
+
+        case WM_MOVE:
+        {
+            if (bIsInModalSizeLoop)
+            {
+                if (TSharedRef<FWindowsWindow> MsgWindow = GetWindowsWindowFromHWND(WindowHandle))
+                {
+                    const int32 PositionX = static_cast<int32>(static_cast<int16>(LOWORD(lParam)));
+                    const int32 PositionY = static_cast<int32>(static_cast<int16>(HIWORD(lParam)));
+
+                    MessageHandler->OnWindowMoved(MsgWindow, PositionX, PositionY);
+                }
+            }
+            else
+            {
+                DeferWindowMessage(WindowHandle, Message, wParam, lParam);
+            }
 
             return 0;
         }
 
         case WM_DESTROY:
         case WM_CLOSE:
-        case WM_MOVE:
         case WM_MOUSELEAVE:
         case WM_SETFOCUS:
         case WM_KILLFOCUS:
@@ -745,14 +842,7 @@ LRESULT FWindowsApplication::ProcessMessage(HWND WindowHandle, UINT Message, WPA
         case WM_DISPLAYCHANGE:
         case WM_SETTINGCHANGE:
         {
-            FWindowsDeferredMessage DeferredMsg;
-            DeferredMsg.Window       = GetWindowsWindowFromHWND(WindowHandle);
-            DeferredMsg.WindowHandle = WindowHandle;
-            DeferredMsg.MessageType  = Message;
-            DeferredMsg.wParam       = wParam;
-            DeferredMsg.lParam       = lParam;
-
-            DeferMessage(DeferredMsg);
+            DeferWindowMessage(WindowHandle, Message, wParam, lParam);
             return 0;
         }
 
@@ -973,6 +1063,18 @@ void FWindowsApplication::ProcessWindowResizeMessage(const FWindowsDeferredMessa
 
         MessageHandler->OnWindowResized(Message.Window, Width, Height);
     }
+}
+
+void FWindowsApplication::DeferWindowMessage(HWND WindowHandle, UINT Message, WPARAM wParam, LPARAM lParam)
+{
+    FWindowsDeferredMessage DeferredMsg;
+    DeferredMsg.Window       = GetWindowsWindowFromHWND(WindowHandle);
+    DeferredMsg.WindowHandle = WindowHandle;
+    DeferredMsg.MessageType  = Message;
+    DeferredMsg.wParam       = wParam;
+    DeferredMsg.lParam       = lParam;
+
+    DeferMessage(DeferredMsg);
 }
 
 void FWindowsApplication::ProcessWindowMoveMessage(const FWindowsDeferredMessage& Message)

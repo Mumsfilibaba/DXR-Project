@@ -1,12 +1,15 @@
 #pragma once
 #include "Core/Containers/Map.h"
+#include "Core/Platform/PlatformEvent.h"
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Draw/UIDrawData.h"
+#include "Application/Draw/UIPaintStats.h"
 #include "Application/IApplicationRenderer.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHIShader.h"
+#include "RHI/RHICommandList.h"
+#include "RendererCore/Interfaces/IGPUProfiler.h"
 
-class FRHICommandList;
 class FFontAtlas;
 class FWindow;
 
@@ -21,6 +24,10 @@ struct FWindowDrawState
         , IndexBuffer(nullptr)
         , VertexCapacity(0)
         , IndexCapacity(0)
+        , Stats()
+        , AccumulatedStats()
+        , WalkStartTime(0)
+        , TimedFrameCount(0)
     {
     }
 
@@ -32,6 +39,10 @@ struct FWindowDrawState
     FRHIBufferRef     IndexBuffer;
     int32             VertexCapacity;
     int32             IndexCapacity;
+    FUIPaintStats     Stats;
+    FUIPaintStats     AccumulatedStats;
+    uint64            WalkStartTime;
+    int32             TimedFrameCount;
 };
 
 class APPLICATIONRENDERER_API FApplicationRenderer final : public IApplicationRenderer
@@ -44,6 +55,10 @@ public:
     virtual FDrawCommandList* BeginWindow(const TSharedPtr<FWindow>& InWindow) override final;
     virtual void EndWindow(const TSharedPtr<FWindow>& InWindow) override final;
     virtual void OnWindowDestroyed(const TSharedPtr<FWindow>& InWindow) override final;
+    virtual FRHITextureRef RenderElementToTexture(const TSharedPtr<FVisualElement>& Element, const IntVector2& Size, float DPIScale) override final;
+    virtual void RetireTexture(const FRHITextureRef& Texture) override final;
+    virtual void SetPrimaryWindow(const TSharedPtr<FWindow>& InWindow) override final;
+    virtual FRHISwapChainRef GetWindowSwapChain(const TSharedPtr<FWindow>& InWindow) const override final;
 
     /**
     * @brief Compiles the shaders and creates the state objects and the white texel the renderer draws with.
@@ -56,56 +71,47 @@ public:
     void ReleaseRHI();
 
     /**
-     * @brief Records everything gathered since the last call as an overlay on the swap chain back buffer.
+     * @brief Names the profiler the frame boundary is reported to, which the renderer does not own. The
+     * closing half of the measure is recorded here because the UI list is the last one a frame submits,
+     * while the opening half is recorded by whoever submits the first.
      *
-     * @param CommandList The list to record into.
-     * @param SwapChain   The swap chain owning the back buffer to composite onto.
+     * @param InGPUProfiler The profiler, or null to stop reporting.
      */
-    void Render(FRHICommandList& CommandList, FRHISwapChain* SwapChain);
+    void SetGPUProfiler(IGPUProfiler* InGPUProfiler)
+    {
+        GPUProfiler = InGPUProfiler;
+    }
 
     /**
-     * @brief Binds a window to the swap chain its contents are presented through.
-     *
-     * @param InWindow  The window to bind.
-     * @param SwapChain The swap chain, or null to unbind.
+     * @brief Opens the frame, reconciling the set of surfaces against the set of windows first, since a
+     * window that gained its surface after the windows drew would have nothing to present through.
      */
-    void RegisterWindowSwapChain(const TSharedPtr<FWindow>& InWindow, FRHISwapChain* SwapChain);
+    void BeginFrame();
+
+    /** @brief Lays out and records every window into the surface belonging to it. */
+    void RecordWindows();
+
+    /** @return The list the frame records into, which is only valid between BeginFrame and EndFrameAndPresent. */
+    NODISCARD FORCEINLINE FRHICommandList& GetCommandList()
+    {
+        return CommandList;
+    }
 
     /**
-     * @brief Records one window into its own registered swap chain, acquiring its back buffer first. A
-     * window lays itself out from its own top left corner, so its geometry only lands where the user sees
-     * it when it is composited onto the surface belonging to it rather than onto another window's, and the
-     * back buffer is acquired and left in the render target state whether or not there is anything to
-     * draw, so the caller can transition it to Present and present unconditionally.
-     *
-     * @param CommandList The list to record into.
-     * @param InWindow    The window to record.
-     * @param LoadAction  Clear for a window the UI owns outright, Load to composite over a rendered scene.
+     * @brief Presents every surface and submits the frame, then holds the calling thread until the frame
+     * before it has left the GPU, which is what keeps exactly one frame in flight.
      */
-    void RenderWindowToSwapChain(FRHICommandList& CommandList, const TSharedPtr<FWindow>& InWindow, EAttachmentLoadAction LoadAction);
+    void EndFrameAndPresent();
 
     /**
-     * @brief Gives every window the application has opened beside the primary one a surface of its own, and
-     * hands back the surfaces belonging to windows that have since closed. This runs before the windows draw,
-     * because a window that gained its surface afterwards would be composited onto the primary one instead.
+     * @brief Repaints one window at its current size on a list of its own and flushes it, leaving the frame
+     * the loop is recording untouched, so a live resize shows each step of the drag rather than one frame in
+     * however many the platform takes over. Does nothing for a window still waiting on its first present,
+     * since stepping its deferred show along would put it on screen before the frame loop means to.
      *
-     * @param PrimaryWindow The window the caller presents through a swap chain of its own, which is skipped.
+     * @param InWindow The window to repaint, which is expected to already carry the size being painted.
      */
-    void SyncWindowSurfaces(const TSharedPtr<FWindow>& PrimaryWindow);
-
-    /**
-     * @brief Records every window holding a surface of its own, resizing the surface to its window first.
-     *
-     * @param CommandList The list to record into.
-     */
-    void RenderWindowSurfaces(FRHICommandList& CommandList);
-
-    /**
-     * @brief Presents every window holding a surface of its own, pairing the acquire RenderWindowSurfaces did.
-     *
-     * @param CommandList The list to record into.
-     */
-    void PresentWindowSurfaces(FRHICommandList& CommandList);
+    void RedrawWindow(const TSharedPtr<FWindow>& InWindow);
 
 private:
     static constexpr uint64 NumRetiredFrames = 3;
@@ -134,6 +140,7 @@ private:
         FRHISwapChainRef    SwapChain;
         IntVector2          Size;
         EDeferredShowState  DeferredShowState = EDeferredShowState::None;
+        bool                bIsPrimary        = false;
     };
 
     struct FRetiredBuffer
@@ -142,25 +149,50 @@ private:
         uint64        Frame;
     };
 
+    struct FRetiredTexture
+    {
+        FRHITextureRef Texture;
+        uint64         Frame;
+    };
+
     FWindowDrawState*       FindWindowState(const TSharedPtr<FWindow>& InWindow);
     FWindowDrawState*       FindOrAddWindowState(const TSharedPtr<FWindow>& InWindow);
+    const FWindowSurface*   FindWindowSurface(const TSharedPtr<FWindow>& InWindow) const;
+    bool                    AddWindowSurface(const TSharedPtr<FWindow>& InWindow);
+    void                    SyncWindowSurfaces();
+    void                    RegisterWindowSwapChain(const TSharedPtr<FWindow>& InWindow, FRHISwapChain* SwapChain);
+    void                    RenderWindowToSwapChain(FRHICommandList& InCommandList, const TSharedPtr<FWindow>& InWindow, EAttachmentLoadAction LoadAction);
+    void                    RenderWindowSurfaces(FRHICommandList& InCommandList);
+    void                    PresentWindowSurfaces(FRHICommandList& InCommandList);
+    FWindowSurface*         FindRedrawableSurface(const TSharedPtr<FWindow>& InWindow);
+    void                    RedrawWindowSurface(FRHICommandList& InCommandList, FWindowSurface& Surface);
     bool                    PreparePipelineState(EFormat OutputFormat);
-    bool                    PrepareGeometry(FRHICommandList& CommandList, FWindowDrawState& WindowState);
-    FRHIShaderResourceView* PrepareAtlasTexture(FRHICommandList& CommandList, const FFontAtlas* Atlas);
-    FRHIShaderResourceView* PrepareBrushTexture(FRHICommandList& CommandList, FRHITexture* Texture);
-    void                    PrepareBatchTextures(FRHICommandList& CommandList, const FUIDrawData& DrawData);
-    void                    RenderWindow(FRHICommandList& CommandList, const FWindowDrawState& WindowState);
+    bool                    PrepareGeometry(FRHICommandList& InCommandList, FWindowDrawState& WindowState);
+    FRHIShaderResourceView* PrepareAtlasTexture(FRHICommandList& InCommandList, const FFontAtlas* Atlas);
+    FRHIShaderResourceView* PrepareBrushTexture(FRHICommandList& InCommandList, FRHITexture* Texture);
+    void                    PrepareBatchTextures(FRHICommandList& InCommandList, const FUIDrawData& DrawData);
+    void                    RenderWindow(FRHICommandList& InCommandList, const FWindowDrawState& WindowState);
+    void                    RenderDrawData(FRHICommandList& InCommandList, const FWindowDrawState& WindowState, const IntVector2& LogicalSize, float DPIScale);
     FRHIShaderResourceView* GetDefaultShaderResourceView() const;
     FRHIShaderResourceView* GetAtlasShaderResourceView(const FFontAtlas* Atlas) const;
     FRHIShaderResourceView* GetBatchShaderResourceView(const FUITextureHandle& Texture) const;
     void                    ReleaseWindowSurfaces();
     void                    RetireWindowBuffers(FWindowDrawState& WindowState);
-    void                    ReleaseRetiredBuffers(bool bReleaseEverything);
+    void                    ReleaseRetiredResources(bool bReleaseEverything);
+    void                    ReconcileSurfaceSize(FRHICommandList& InCommandList, FWindowSurface& Surface);
+    void                    ReportPaintStats(FWindowDrawState& WindowState);
 
     TArray<FWindowDrawState>             WindowStates;
     TArray<FWindowSurface>               WindowSurfaces;
+    TWeakPtr<FWindow>                    PrimaryWindow;
     TArray<FRetiredBuffer>               RetiredBuffers;
+    TArray<FRetiredTexture>              RetiredTextures;
+    FRHICommandList                      CommandList;
+    FRHICommandList                      ResizeCommandList;
+    IGPUProfiler*                        GPUProfiler;
+    IPlatformEvent*                      LastFrameFinishedEvent;
     uint64                               FrameCounter;
+    bool                                 bHasOpenFrame;
     FRHIVertexShaderRef                  VShader;
     FRHIPixelShaderRef                   PShader;
     FRHIInputLayoutRef                   InputLayout;

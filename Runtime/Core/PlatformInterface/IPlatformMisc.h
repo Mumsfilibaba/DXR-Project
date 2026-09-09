@@ -38,6 +38,17 @@ struct IPlatformMisc
     {
         return EAssertDialogResult::Abort;
     }
+
+    /**
+     * @brief Install the process-wide crash handler, which logs a symbolicated report before the process dies.
+     *
+     * Called once the log file exists and never again, since the second call would have nothing to install
+     * over. The report is produced on a thread that did not crash, so it is safe for it to allocate and to
+     * take the output device lock.
+     */
+    static FORCEINLINE void InstallCrashHandler()
+    {
+    }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

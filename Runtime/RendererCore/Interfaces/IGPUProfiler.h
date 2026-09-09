@@ -3,6 +3,8 @@
 #include "Core/Containers/StaticArray.h"
 #include "RHI/RHIQuery.h"
 
+class FRHICommandList;
+
 #define NUM_GPU_PROFILER_SAMPLES (200)
 
 struct FGPUProfileSample
@@ -131,6 +133,21 @@ struct IGPUProfiler
     virtual void Enable()  = 0;
     virtual void Disable() = 0;
     virtual void Reset()   = 0;
+
+    /**
+     * @brief Opens the frame the reported GPU time is measured over.
+     *
+     * @param CommandList The list the opening timestamp is written on, which is the first one the frame submits.
+     */
+    virtual void BeginGPUFrame(FRHICommandList& CommandList) = 0;
+
+    /**
+     * @brief Closes the frame opened by BeginGPUFrame, which need not be on the same list, since the measure
+     * spans every submission the frame makes rather than any one of them.
+     *
+     * @param CommandList The list the closing timestamp is written on, which is the last one the frame submits.
+     */
+    virtual void EndGPUFrame(FRHICommandList& CommandList) = 0;
 
     virtual void EnablePipelineStatistics()  = 0;
     virtual void DisablePipelineStatistics() = 0;

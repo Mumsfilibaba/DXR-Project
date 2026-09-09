@@ -15,22 +15,43 @@ DECLARE_DELEGATE(FOnPanelTornOut, const String& /*PanelId*/, const IntVector2& /
 /** @brief Called when a panel's tab was closed. */
 DECLARE_DELEGATE(FOnPanelClosed, const String& /*PanelId*/);
 
+struct FDropZone
+{
+    /** @brief Where it is, in the client coordinates of the area that gathered it. */
+    FRectangle Bounds;
+
+    /** @brief The panel a drop here lands against, empty when the area holds none to land against. */
+    String TargetPanelId;
+
+    /** @brief Which side of that panel it takes, or Center to join it as a tab. */
+    EDockDirection Direction = EDockDirection::Center;
+};
+
 class APPLICATION_API FDockingArea final : public FCompoundElement
 {
 public:
     struct FDesc
     {
+        /** @brief The face every tab label is drawn with. */
         TSharedPtr<IFontFace> Font = nullptr;
-        bool                  bAllowTearOut : 1 = true;
-        FOnPanelTornOut       OnPanelTornOut;
-        FOnPanelClosed        OnPanelClosed;
+
+        /** @brief Whether a drag far enough off a tab strip detaches the tab instead of reordering it. */
+        bool bAllowTearOut : 1 = true;
+
+        /**
+         * @brief False keeps the area out of drop-target hit-testing and leaves it drawing no drop zones,
+         * which the decorator an in-flight drag follows the cursor with needs, since it would otherwise
+         * resolve as a target for its own drag.
+         */
+        bool bIsDropTarget : 1 = true;
+
+        /** @brief Fired once a drag leaves a tab strip, which is what starts a dock drag. */
+        FOnPanelTornOut OnPanelTornOut;
+
+        /** @brief Fired when a panel's tab is closed. */
+        FOnPanelClosed OnPanelClosed;
     };
     
-public:
-
-    /** @brief How far into a node an edge drop zone reaches, as a share of its width or height. */
-    static constexpr float EdgeZoneFraction = 0.25f;
-
 public:
     static TSharedPtr<FDockingArea> Create(const FDesc& Desc);
 
@@ -115,14 +136,37 @@ public:
     void UndockPanel(const String& PanelId);
 
     /**
-     * @brief Finds the drop target under a point, which is a panel plus which edge or the center.
+     * @brief Gathers the zones a drop can land in for where the cursor is, which is the tab strip of the
+     * panel under it followed by the four direction chips over that panel. Hit-testing and drawing both
+     * come through here, so what the user aims at is what a drop resolves against.
+     *
+     * @param ClientPosition Where the cursor is, in client coordinates.
+     * @param OutZones       Filled with the zones, the tab strip first. Empty when the cursor is over no
+     *                       panel, except for an area holding none at all, which offers the whole of itself.
+     */
+    void GatherDropZones(const IntVector2& ClientPosition, TArray<FDropZone>& OutZones) const;
+
+    /**
+     * @brief Finds the drop zone under a point, which is a panel plus which side of it or the center. The
+     * middle of a panel is in no zone, so a drop there lands nowhere rather than joining it as a tab.
      *
      * @param ScreenPosition  Where the cursor is, in screen coordinates.
      * @param OutTargetPanelId The panel the drop would be placed against.
      * @param OutDirection     Which side of it, or Center to drop it in as a tab.
-     * @return True when the point is over a panel of this area.
+     * @return True when the point is inside a zone of this area.
      */
     NODISCARD bool HitTestDropTarget(const IntVector2& ScreenPosition, String& OutTargetPanelId, EDockDirection& OutDirection) const;
+
+    /**
+     * @brief Gets where a drop resolved against this area would put the panel, which is what the drag
+     * places its preview over.
+     *
+     * @param TargetPanelId The panel the drop would land against, empty when it would target the root.
+     * @param Direction     Which side of that panel it would land on.
+     * @param OutBounds     Set to the rectangle, in screen coordinates.
+     * @return True when the area is in a window and the rectangle is not empty.
+     */
+    NODISCARD bool GetDropPreviewBounds(const String& TargetPanelId, EDockDirection Direction, FRectangle& OutBounds) const;
 
     /**
      * @brief Shows the tab whose panel this is, opening whichever strip holds it.
@@ -201,22 +245,20 @@ private:
         TSharedPtr<FVisualElement> Panel;
     };
 
-    NODISCARD static EDockDirection ResolveDirection(const FRectangle& Bounds, const IntVector2& ClientPosition);
-
     TSharedPtr<FVisualElement> BuildNode(FDockNode& Node, const TArray<int32>& Path);
     void RequestRebuild();
 
     NODISCARD int32 FindLeafAt(const IntVector2& ClientPosition) const;
-    NODISCARD IntVector2 ToScreenPosition(const IntVector2& ClientPosition) const;
+    NODISCARD FRectangle ComputeDropBounds(const String& TargetPanelId, EDockDirection Direction) const;
 
-    void DrawDropIndicator(FDrawCommandList& OutCommandList, int32 LayerId) const;
+    NODISCARD int32 DrawDropZones(FDrawCommandList& OutCommandList, int32 LayerId) const;
     void DockAgainstNode(FDockNode& TargetNode, const String& PanelId, EDockDirection Direction);
-
     void OnTabActivated(const String& PanelId);
     void OnTabClosed(const String& PanelId);
-    void OnTabDetached(const String& PanelId, const IntVector2& ClientPosition);
-    void OnTabDragMoved(const String& PanelId, const IntVector2& ClientPosition);
-    void OnTabDragFinished(const String& PanelId, const IntVector2& ClientPosition);
+    void OnTabReordered(const TArray<int32>& Path, const String& PanelId, int32 NewIndex);
+    void OnTabDetached(const String& PanelId, const IntVector2& ClientPosition, const IntVector2& ScreenPosition);
+    void OnTabDragMoved(const String& PanelId, const IntVector2& ClientPosition, const IntVector2& ScreenPosition);
+    void OnTabDragFinished(const String& PanelId, const IntVector2& ClientPosition, const IntVector2& ScreenPosition);
     void OnSplitterFractionsChanged(const TArray<int32>& Path, const TArray<float>& Fractions);
 
     FDockNode                 Root;
@@ -224,6 +266,7 @@ private:
     TArray<FLeafGeometry>     Leaves;
     TSharedPtr<IFontFace>     Font;
     bool                      bAllowTearOut;
+    bool                      bIsDropTarget;
     bool                      bNeedsRebuild;
     FOnPanelTornOut           OnPanelTornOutDelegate;
     FOnPanelClosed            OnPanelClosedDelegate;

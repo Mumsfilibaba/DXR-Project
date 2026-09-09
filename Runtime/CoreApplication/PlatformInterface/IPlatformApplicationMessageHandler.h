@@ -7,6 +7,15 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct IPlatformWindow;
 
+enum class EWindowInteraction : uint8
+{
+    /** @brief The user is dragging a window border or corner. */
+    Resize,
+
+    /** @brief The user is dragging the window by its title bar. */
+    Move,
+};
+
 struct IPlatformApplicationMessageHandler
 {
     virtual ~IPlatformApplicationMessageHandler() = default;
@@ -192,12 +201,57 @@ struct IPlatformApplicationMessageHandler
     }
     
     /**
-     * @brief Called when a window is in the process of being resized.
+     * @brief Called when a window is about to be resized, before the new size has reached the window itself.
      * 
      * @param Window The window that is being resized.
+     * @param Width The client width the window is being resized to.
+     * @param Height The client height the window is being resized to.
      * @return true if the event was handled, false otherwise.
      */
-    virtual bool OnWindowResizing(const TSharedRef<IPlatformWindow>& Window)
+    virtual bool OnWindowResizing(const TSharedRef<IPlatformWindow>& Window, uint32 Width, uint32 Height)
+    {
+        return false;
+    }
+
+    /**
+     * @brief Called when the OS asks for a window to be painted from inside a modal resize or move loop, where
+     * the OS owns the message pump and the deferred event path will not run until the loop ends. The window
+     * already carries the size being painted, so this carries none. Windows is the only platform that raises
+     * it, and that is the shape of the two platforms rather than a gap: a modal loop there runs on the thread
+     * the engine ticks from, so nothing else can paint until it returns, whereas macOS runs its tracking loop
+     * on the Cocoa thread and leaves the engine thread free to keep producing frames throughout. The handler
+     * that answers this, and the inline repaint behind it, are therefore unreachable on macOS by design.
+     *
+     * @param Window The window the OS wants painted.
+     * @return true if the event was handled, false otherwise.
+     */
+    virtual bool OnOSPaint(const TSharedRef<IPlatformWindow>& Window)
+    {
+        return false;
+    }
+
+    /**
+     * @brief Called when the OS takes the message pump over to run a window drag or resize, which on Windows
+     * is what makes OnOSPaint the only repaint that will happen until it gives the pump back. macOS raises
+     * the same pair, but only the Cocoa thread is taken, so the engine keeps ticking.
+     *
+     * @param Window      The window the interaction is on.
+     * @param Interaction Which kind of interaction started.
+     * @return true if the event was handled, false otherwise.
+     */
+    virtual bool BeginWindowInteraction(const TSharedRef<IPlatformWindow>& Window, EWindowInteraction Interaction)
+    {
+        return false;
+    }
+
+    /**
+     * @brief Called when the OS gives the message pump back.
+     *
+     * @param Window      The window the interaction was on.
+     * @param Interaction Which kind of interaction ended.
+     * @return true if the event was handled, false otherwise.
+     */
+    virtual bool EndWindowInteraction(const TSharedRef<IPlatformWindow>& Window, EWindowInteraction Interaction)
     {
         return false;
     }

@@ -6,6 +6,7 @@
 #include <dlfcn.h>
 #include <execinfo.h>
 #include <mach/mach.h>
+#include <mach/mach_vm.h>
 #include <CoreFoundation/CoreFoundation.h>
 
 #define LOAD_FUNCTION(Function, LibraryHandle) \
@@ -183,6 +184,103 @@ int32 FMacPlatformStackTrace::CaptureStackTrace(uint64* StackTrace, int32 MaxDep
     return ActualDepth;
 }
 
+static bool ReadProcessMemory(uint64 Address, void* OutBuffer, uint64 Size)
+{
+    mach_vm_size_t BytesRead = 0;
+
+    const kern_return_t Result = ::mach_vm_read_overwrite(
+        ::mach_task_self(),
+        static_cast<mach_vm_address_t>(Address),
+        static_cast<mach_vm_size_t>(Size),
+        reinterpret_cast<mach_vm_address_t>(OutBuffer),
+        &BytesRead);
+
+    return (Result == KERN_SUCCESS) && (BytesRead == Size);
+}
+
+int32 FMacPlatformStackTrace::CaptureThreadStackTrace(const FThreadStackContext& ThreadContext, uint64* StackTrace, int32 MaxDepth)
+{
+    if (!StackTrace || (MaxDepth <= 0) || !ThreadContext.ThreadHandle)
+    {
+        return 0;
+    }
+
+    const thread_t Thread = static_cast<thread_t>(ThreadContext.ThreadHandle);
+
+    uint64 ProgramCounter = 0;
+    uint64 LinkRegister   = 0;
+    uint64 FramePointer   = 0;
+
+#if PLATFORM_ARCHITECTURE_ARM64
+    arm_thread_state64_t   ThreadState = {};
+    mach_msg_type_number_t StateCount  = ARM_THREAD_STATE64_COUNT;
+    if (::thread_get_state(Thread, ARM_THREAD_STATE64, reinterpret_cast<thread_state_t>(&ThreadState), &StateCount) != KERN_SUCCESS)
+    {
+        return 0;
+    }
+
+    ProgramCounter = arm_thread_state64_get_pc(ThreadState);
+    LinkRegister   = arm_thread_state64_get_lr(ThreadState);
+    FramePointer   = arm_thread_state64_get_fp(ThreadState);
+#else
+    x86_thread_state64_t   ThreadState = {};
+    mach_msg_type_number_t StateCount  = x86_THREAD_STATE64_COUNT;
+    if (::thread_get_state(Thread, x86_THREAD_STATE64, reinterpret_cast<thread_state_t>(&ThreadState), &StateCount) != KERN_SUCCESS)
+    {
+        return 0;
+    }
+
+    ProgramCounter = ThreadState.__rip;
+    FramePointer   = ThreadState.__rbp;
+#endif
+
+    int32 CurrentDepth = 0;
+    StackTrace[CurrentDepth++] = ProgramCounter;
+
+    if (LinkRegister && (LinkRegister != ProgramCounter) && (CurrentDepth < MaxDepth))
+    {
+        StackTrace[CurrentDepth++] = LinkRegister;
+    }
+
+    while ((CurrentDepth < MaxDepth) && FramePointer)
+    {
+        struct FStackFrame
+        {
+            uint64 CallerFramePointer;
+            uint64 ReturnAddress;
+        } Frame = {};
+
+        if ((FramePointer & (sizeof(uint64) - 1)) != 0)
+        {
+            break;
+        }
+
+        if (!ReadProcessMemory(FramePointer, &Frame, sizeof(Frame)))
+        {
+            break;
+        }
+
+        if (!Frame.ReturnAddress)
+        {
+            break;
+        }
+
+        if (Frame.ReturnAddress != StackTrace[CurrentDepth - 1])
+        {
+            StackTrace[CurrentDepth++] = Frame.ReturnAddress;
+        }
+
+        if (Frame.CallerFramePointer <= FramePointer)
+        {
+            break;
+        }
+
+        FramePointer = Frame.CallerFramePointer;
+    }
+
+    return CurrentDepth;
+}
+
 static void SymbolicateWithCoreSymbolication(uint64 Address, FStackTraceEntry& OutStackTraceEntry)
 {
     if (!CSIsNull(GSymbolicator))
@@ -190,7 +288,6 @@ static void SymbolicateWithCoreSymbolication(uint64 Address, FStackTraceEntry& O
         CSSourceInfoRef Symbol = CSSymbolicatorGetSourceInfoWithAddressAtTime(GSymbolicator, (vm_address_t)Address, kCSNow);
         if(!CSIsNull(Symbol))
         {
-            // Any of these can come back null for an address without full debug information
             CopySymbolString(OutStackTraceEntry.Filename, CSSourceInfoGetPath(Symbol));
 
             CSSymbolRef FunctionSymbol = CSSourceInfoGetSymbol(Symbol);

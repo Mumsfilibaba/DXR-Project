@@ -184,7 +184,7 @@ FPassResources PassResourceSync::Create(const FRenderGraphPassResources& GraphRe
     Result.CascadeIndexBuffer      = ResolveTexture(GraphResources, Context.CascadeIndexBuffer);
     Result.ReducedDepthBuffer0     = ResolveTexture(GraphResources, Context.ReducedDepthBuffer0);
     Result.ReducedDepthBuffer1     = ResolveTexture(GraphResources, Context.ReducedDepthBuffer1);
-    Result.BackBuffer              = ResolveTexture(GraphResources, Context.BackBuffer);
+    Result.SceneOutput             = ResolveTexture(GraphResources, Context.SceneOutput);
     Result.ShadowCascades          = ResolveTexture(GraphResources, Context.ShadowCascades);
     Result.PointLightShadowMaps    = ResolveTexture(GraphResources, Context.PointLightShadowMaps);
     Result.RayTracingOutput        = ResolveTexture(GraphResources, Context.RayTracingOutput);

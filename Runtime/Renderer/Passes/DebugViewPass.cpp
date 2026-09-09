@@ -63,9 +63,9 @@ static void DeclareDebugViewSources(FRenderGraphPassBuilder& PassBuilder, const 
         ReadIfValid(Context.ReflectionMoments[ReflectionIndex]);
     }
 
-    if (Context.BackBuffer)
+    if (Context.SceneOutput)
     {
-        PassBuilder.WriteTexture(Context.BackBuffer, ERHIResourceState::RenderTarget);
+        PassBuilder.WriteTexture(Context.SceneOutput, ERHIResourceState::RenderTarget);
     }
 }
 

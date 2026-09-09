@@ -14,20 +14,6 @@ class FPlaygroundShell;
 class FWindow;
 struct FConsoleToggleHandler;
 
-struct FPlaygroundSurface
-{
-    FPlaygroundSurface()
-        : Window(nullptr)
-        , SwapChain(nullptr)
-        , Size()
-    {
-    }
-
-    TSharedPtr<FWindow> Window;
-    FRHISwapChainRef    SwapChain;
-    IntVector2          Size;
-};
-
 class FPlaygroundLoop
 {
 public:
@@ -44,19 +30,11 @@ private:
     bool LoadFonts();
     bool CreateMainWindow();
     void AttachConsole();
-    void SyncSurfaces();
-    void SyncSurfaceSize(FPlaygroundSurface& Surface);
-
-    NODISCARD FRHISwapChainRef CreateSwapChain(const TSharedPtr<FWindow>& InWindow) const;
-
-    void RenderSurface(FPlaygroundSurface& Surface);
     void OnMainWindowClosed();
 
     FElapsedTime                      FrameTimer;
-    FRHICommandList                   CommandList;
     FPlaygroundFonts                  Fonts;
     TArray<FPlaygroundScene>          Scenes;
-    TArray<FPlaygroundSurface>        Surfaces;
     TSharedPtr<FWindow>               MainWindow;
     TSharedPtr<FPlaygroundShell>      Shell;
     TSharedPtr<FApplicationRenderer>  Renderer;

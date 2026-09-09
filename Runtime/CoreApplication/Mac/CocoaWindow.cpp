@@ -53,22 +53,26 @@
     }
 }
 
-- (NSSize)windowWillResize:(NSWindow*)Sender toSize:(NSSize)FrameSize
-{
-    if (GMacApplication)
-    {
-        TSharedRef<FMacWindow> Window = GMacApplication->FindWindowFromNSWindow(self);
-        GMacApplication->OnWindowWillResize(Window);
-    }
-    
-    return FrameSize;
-}
-
 - (void)windowDidResize:(NSNotification*)Notification
 {
     if (GMacApplication)
     {
-        TSharedRef<FMacWindow> Window = GMacApplication->FindWindowFromNSWindow(self);
+        GMacApplication->DeferEvent(Notification);
+    }
+}
+
+- (void)windowWillStartLiveResize:(NSNotification*)Notification
+{
+    if (GMacApplication)
+    {
+        GMacApplication->DeferEvent(Notification);
+    }
+}
+
+- (void)windowDidEndLiveResize:(NSNotification*)Notification
+{
+    if (GMacApplication)
+    {
         GMacApplication->DeferEvent(Notification);
     }
 }

@@ -1,7 +1,5 @@
-#include "Core/Misc/CoreDelegates.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Tasks/Tasks.h"
-#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
-#include "ImGuiPlugin/ImGuiExtensions.h"
 #include "Renderer/SceneRenderer.h"
 #include "Renderer/RendererModule.h"
 #include "Renderer/Performance/GPUProfiler.h"
@@ -26,8 +24,6 @@ FRendererModule::FRendererModule()
 
 FRendererModule::~FRendererModule()
 {
-    CoreDelegates::PreEngineInitDelegate.Unbind(PreEngineInitHandle);
-
     for (FScene* Scene : Scenes)
     {
         delete Scene;
@@ -38,40 +34,29 @@ FRendererModule::~FRendererModule()
 
 bool FRendererModule::Load()
 {
-    PreEngineInitHandle = CoreDelegates::PreEngineInitDelegate.AddLambda([]()
-    {
-        if (IImguiPlugin::IsEnabled())
-        {
-            ImGuiContext* Context = IImguiPlugin::Get().GetImGuiContext();
-            ImGui::SetCurrentContext(Context);
-        }
-        else
-        {
-            CHECK(false);
-        }
-    });
-
     return true;
 }
 
 bool FRendererModule::Initialize()
 {
-    if (!Renderer)
-    {
-        Renderer = new FSceneRenderer();
-        return Renderer->Initialize();
-    }
-    else
+    if (Renderer)
     {
         LOG_WARNING("Renderer is already initialized");
         return false;
     }
+
+    Renderer = new FSceneRenderer();
+    if (!Renderer->Initialize())
+    {
+        return false;
+    }
+
+    return true;
 }
 
 void FRendererModule::Release()
 {
-    // Drain the pipeline without presenting.
-    DiscardPendingFrame();
+    FinishPreviousFrame();
 
     // Release GPU profiler
     FGPUProfiler::Get().Release();
@@ -102,43 +87,10 @@ void FRendererModule::FinishPreviousFrame()
         return;
     }
 
-    if (Renderer)
-    {
-        PendingSceneTask.Wait();
-
-        // Dispatch the UI/present command list recorded last frame.
-        Renderer->SubmitUIAndPresent(PendingPacket);
-    }
-
-    PendingSceneTask = FTaskHandle();
-    PendingPacket    = FSceneRenderPacket();
-    bHasPendingFrame = false;
-}
-
-void FRendererModule::DiscardPendingFrame()
-{
-    CHECK_MAIN_THREAD();
-
-    if (!bHasPendingFrame)
-    {
-        return;
-    }
-
     PendingSceneTask.Wait();
 
     PendingSceneTask = FTaskHandle();
-    PendingPacket    = FSceneRenderPacket();
     bHasPendingFrame = false;
-}
-
-void FRendererModule::RecordUI()
-{
-    CHECK_MAIN_THREAD();
-
-    if (Renderer)
-    {
-        Renderer->RecordUI();
-    }
 }
 
 void FRendererModule::KickSceneRender(FSceneRenderPacket&& Packet)
@@ -150,8 +102,6 @@ void FRendererModule::KickSceneRender(FSceneRenderPacket&& Packet)
         return;
     }
 
-    // Keep the packet so FinishPreviousFrame can present the same swap-chain next frame.
-    PendingPacket    = Packet;
     bHasPendingFrame = true;
 
     PendingSceneTask = Tasks::LaunchOnRenderThread("SceneRender",
@@ -223,14 +173,6 @@ bool FRendererModule::PollEditorObjectPickRectResult(IScene* Scene, TArray<uint3
     OutObjectIDs.Clear();
     return false;
 #endif
-}
- 
-void FRendererModule::ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace)
-{
-    if (Renderer)
-    {
-        Renderer->ResizeSwapChain(SwapChain, Width, Height, Format, ColorSpace);
-    }
 }
 
 IScene* FRendererModule::CreateScene(FWorld* World)

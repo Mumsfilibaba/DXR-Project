@@ -15,7 +15,9 @@
 #include "Core/Misc/Paths.h"
 #include "Core/Misc/BuildInfo.h"
 #include "Core/Misc/FileOutputDevice.h"
+#include "Core/Platform/PlatformMisc.h"
 #include "Application/Application.h"
+#include "ApplicationRenderer/ApplicationRenderer.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Platform/PlatformConsoleWindow.h"
@@ -32,6 +34,19 @@
 IMPLEMENT_ENGINE_MODULE(IModule, Launch);
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+static bool GSynchronousResize = true;
+static FAutoConsoleVariableRef CVarSynchronousResize(
+    "Renderer.Feature.SynchronousResize",
+    "Repaints a window inline while it is being resized, instead of leaving the new area blank until the frame loop catches up",
+    GSynchronousResize,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<int32> CVarExitAfterFrames(
+    "Engine.ExitAfterFrames",
+    "Requests exit once this many frames have been submitted, which is what makes a headless boot check possible. Zero runs until closed",
+    0,
+    EConsoleVariableFlags::Default);
 
 struct FDebuggerOutputDevice : public IOutputDevice
 {
@@ -96,15 +111,11 @@ static void LogStartupInformation()
     LOG_INFO("ProjectDir=%s", *Paths::GetProjectDir());
 }
 
-static TAutoConsoleVariable<int32> CVarExitAfterFrames(
-    "Engine.ExitAfterFrames",
-    "Requests exit once this many frames have been submitted, which is what makes a headless boot check possible. Zero runs until closed",
-    0,
-    EConsoleVariableFlags::Default);
-
 FEngineLoop::FEngineLoop()
-    : FrameTimer()
+    : UIRenderer(nullptr)
+    , FrameTimer()
     , FrameCounter(0)
+    , bIsRedrawingForResize(false)
 {
 }
 
@@ -172,6 +183,9 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
     {
         return -1;
     }
+
+    // The earliest point a report has somewhere to go, and everything below here is worth having covered.
+    FPlatformMisc::InstallCrashHandler();
 
     if (!CommandLine::Initialize(Args, NumArgs))
     {
@@ -259,6 +273,39 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
     return 0;
 }
 
+bool FEngineLoop::CreateApplicationRenderer()
+{
+    UIRenderer = MakeSharedPtr<FApplicationRenderer>();
+    if (!UIRenderer || !UIRenderer->InitializeRHI())
+    {
+        return false;
+    }
+
+    FApplication::Get().SetRenderer(UIRenderer);
+    FApplication::Get().SetOnWindowLiveResize(FOnWindowLiveResize::CreateRaw(this, &FEngineLoop::RedrawWindowDuringResize));
+    return true;
+}
+
+void FEngineLoop::RedrawWindowDuringResize(const TSharedPtr<FWindow>& Window)
+{
+    if (!UIRenderer || !GSynchronousResize || bIsRedrawingForResize)
+    {
+        return;
+    }
+
+    bIsRedrawingForResize = true;
+
+    if (IRendererModule* RendererModule = IRendererModule::Get())
+    {
+        RendererModule->FinishPreviousFrame();
+    }
+
+    UIRenderer->EndFrameAndPresent();
+    UIRenderer->RedrawWindow(Window);
+
+    bIsRedrawingForResize = false;
+}
+
 int32 FEngineLoop::Init()
 {
     // Initialize ImGui (Currently Required)
@@ -266,6 +313,12 @@ int32 FEngineLoop::Init()
     if (!ImguiPlugin)
     {
         LOG_ERROR("Failed to load ImGuiPlugin");
+        return -1;
+    }
+
+    if (!CreateApplicationRenderer())
+    {
+        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create the UI renderer");
         return -1;
     }
 
@@ -288,6 +341,8 @@ int32 FEngineLoop::Init()
         FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create Renderer");
         return -1;
     }
+
+    UIRenderer->SetGPUProfiler(&RendererModule->GetGPUProfiler());
 
     FShaderCompiler::Get().LogCompileStats();
 
@@ -336,11 +391,21 @@ void FEngineLoop::Tick()
     IRendererModule* RendererModule = IRendererModule::Get();
     RendererModule->FinishPreviousFrame();
 
+    UIRenderer->EndFrameAndPresent();
+
     FApplication::Get().ProcessDeferredEvents();
 
     FEngine::Get()->Tick(DeltaTime);
 
-    RendererModule->RecordUI();
+    UIRenderer->BeginFrame();
+    UIRenderer->RecordWindows();
+
+    if (IImguiPlugin::IsEnabled())
+    {
+        IImguiPlugin::Get().Draw(UIRenderer->GetCommandList());
+        IImguiPlugin::Get().DrawViewports(UIRenderer->GetCommandList());
+    }
+
     RendererModule->Tick();
 
     FSceneRenderPacket Packet = FEngine::Get()->BuildRenderPacket();
@@ -363,9 +428,11 @@ void FEngineLoop::Release()
 {
     TRACE_FUNCTION_SCOPE();
 
+    FApplication::Get().SetOnWindowLiveResize(FOnWindowLiveResize());
+
     if (IRendererModule* RendererModule = IRendererModule::Get())
     {
-        RendererModule->DiscardPendingFrame();
+        RendererModule->FinishPreviousFrame();
     }
 
     if (FRHICommandListExecutor::IsInitialized())
@@ -383,6 +450,13 @@ void FEngineLoop::Release()
     if (IImguiPlugin::IsEnabled())
     {
         FModuleManager::Get().UnloadModule("ImGuiPlugin");
+    }
+
+    if (UIRenderer)
+    {
+        FApplication::Get().SetRenderer(nullptr);
+        UIRenderer->ReleaseRHI();
+        UIRenderer.Reset();
     }
 
     // Release all RHI resources

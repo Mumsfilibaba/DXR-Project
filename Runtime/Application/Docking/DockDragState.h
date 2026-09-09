@@ -1,9 +1,37 @@
 #pragma once
+#include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/UniquePtr.h"
+#include "Core/Delegates/Delegate.h"
 #include "Application/Docking/DockNode.h"
 
 class FDockingArea;
+class FDrawCommandList;
+class FVisualElement;
+
+struct FDockDragPanel
+{
+    /** @brief The panel being dragged. */
+    String PanelId;
+
+    /** @brief The text its tab shows, which is also the caption of any window built for it. */
+    String Label;
+
+    /** @brief Its content, which no area holds while the drag does. */
+    TSharedPtr<FVisualElement> Content;
+
+    /** @brief The area it was torn out of, which is null once that area has gone. */
+    FDockingArea* SourceArea = nullptr;
+};
+
+/** @brief Called at tear-out, which is what puts the panel on screen as something to drag. */
+DECLARE_DELEGATE(FOnDockDragBegan, const FDockDragPanel& /*Panel*/, const IntVector2& /*ScreenPosition*/);
+
+/** @brief Called when a drag was let go where no area is, which is what floats a panel into a window of its own. */
+DECLARE_DELEGATE(FOnDockDropOutside, const FDockDragPanel& /*Panel*/, const IntVector2& /*ScreenPosition*/);
+
+/** @brief Called once a drag is over however it ended, which is what takes down whatever tear-out put up. */
+DECLARE_DELEGATE(FOnDockDragEnded);
 
 class APPLICATION_API FDockDragState
 {
@@ -31,10 +59,12 @@ public:
     ~FDockDragState();
 
     /**
-     * @brief Starts a drag, which is what a torn-out tab does instead of docking straight away.
+     * @brief Starts a drag, taking the panel out of its area as it does, so what follows the cursor is the
+     * panel itself rather than a stand-in for it. The rebuild the source area is left owing is deferred, so
+     * the tab still dispatching the event that got here outlives the call.
      *
      * @param PanelId        The panel being dragged.
-     * @param SourceArea     The area it came from, so a drop back into it knows what to undock.
+     * @param SourceArea     The area it came from, which a cancel hands it back to.
      * @param ScreenPosition Where the cursor was, in screen coordinates.
      */
     void BeginDrag(const String& PanelId, FDockingArea* SourceArea, const IntVector2& ScreenPosition);
@@ -47,13 +77,17 @@ public:
     void UpdateDrag(const IntVector2& ScreenPosition);
 
     /**
-     * @brief Ends the drag, docking into the last valid target and leaving the panel alone when there is
-     * none. A drop into an area other than the one it came from carries the panel's registration across,
-     * because an area can only dock an id it knows about.
+     * @brief Ends the drag, docking the panel into the last valid target and telling whoever listens when
+     * there is none. The drag carries the panel's registration with it, so the target is handed a panel it
+     * does not have to already know about.
      */
     void EndDrag();
 
-    /** @brief Ends the drag without docking anything, which is what Escape does. */
+    /**
+     * @brief Ends the drag and puts the panel back where it was torn out of, which is only reachable from a
+     * teardown now that Escape commits the drop like a release does. A source area that has since gone
+     * leaves nowhere to put it back.
+     */
     void CancelDrag();
 
     /**
@@ -70,13 +104,52 @@ public:
      */
     void UnregisterArea(FDockingArea* Area);
 
+    /**
+     * @brief Sets what is told that a tear-out has happened, which is what gives the drag something visible
+     * to follow the cursor. Nothing else puts the panel on screen while it is in flight.
+     *
+     * @param InOnDragBegan The delegate to call.
+     */
+    void SetOnDragBegan(const FOnDockDragBegan& InOnDragBegan);
+
+    /**
+     * @brief Sets what is told about a drop that landed on no area at all. The panel is already out of its
+     * area by then, so a drop into nowhere with nobody listening is the one path that loses it.
+     *
+     * @param InOnDropOutside The delegate to call.
+     */
+    void SetOnDropOutside(const FOnDockDropOutside& InOnDropOutside);
+
+    /**
+     * @brief Sets what is told that a drag is over, whichever exit it took. Called after the drop has been
+     * committed, so a listener taking down what it put up at tear-out can still be read from until then.
+     *
+     * @param InOnDragEnded The delegate to call.
+     */
+    void SetOnDragEnded(const FOnDockDragEnded& InOnDragEnded);
+
     /** @return The panel being dragged, or an empty string when no drag is in flight. */
     NODISCARD FORCEINLINE const String& GetDraggedPanelId() const
     {
         return DraggedPanelId;
     }
 
-    /** @return True while a drag is in flight. */
+    /** @return The text the ghost shows, which falls back to the panel id when the area had no label for it. */
+    NODISCARD FORCEINLINE const String& GetDraggedPanelLabel() const
+    {
+        return DraggedPanelLabel;
+    }
+
+    /** @return The area the drag started in, or null once it has ended. */
+    NODISCARD FORCEINLINE FDockingArea* GetSourceArea() const
+    {
+        return SourceArea;
+    }
+
+    /** @return The panel in flight, whose id is empty when no drag is in flight. */
+    NODISCARD FDockDragPanel GetDraggedPanel() const;
+
+    /** @return True while a panel torn out of an area is in flight. */
     NODISCARD FORCEINLINE bool IsDragging() const
     {
         return !DraggedPanelId.IsEmpty();
@@ -115,13 +188,18 @@ public:
 private:
     void ClearTarget();
 
-    String                DraggedPanelId;
-    FDockingArea*         SourceArea;
-    FDockingArea*         TargetArea;
-    String                TargetPanelId;
-    EDockDirection        TargetDirection;
-    IntVector2            CursorPosition;
-    TArray<FDockingArea*> RegisteredAreas;
+    String                     DraggedPanelId;
+    String                     DraggedPanelLabel;
+    TSharedPtr<FVisualElement> DraggedPanelContent;
+    FDockingArea*              SourceArea;
+    FDockingArea*              TargetArea;
+    String                     TargetPanelId;
+    EDockDirection             TargetDirection;
+    IntVector2                 CursorPosition;
+    TArray<FDockingArea*>      RegisteredAreas;
+    FOnDockDragBegan           OnDragBeganDelegate;
+    FOnDockDropOutside         OnDropOutsideDelegate;
+    FOnDockDragEnded           OnDragEndedDelegate;
 
     static TUniquePtr<FDockDragState> DockDragState;
 };

@@ -1,4 +1,5 @@
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Application/Draw/DrawCommandList.h"
 #include "Application/Elements/Viewport.h"
 #include "Application/Elements/Window.h"
 
@@ -16,6 +17,7 @@ TSharedPtr<FViewport> FViewport::Create(const FDesc& Desc)
 FViewport::FViewport()
     : FVisualElement()
     , ViewportInterface(nullptr)
+    , SceneBrush()
     , Position()
     , Size()
 {
@@ -28,6 +30,16 @@ FViewport::~FViewport()
 void FViewport::Initialize(const FDesc& Desc)
 {
     ViewportInterface = Desc.ViewportInterface;
+}
+
+int32 FViewport::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
+{
+    if (SceneBrush.IsValid())
+    {
+        OutCommandList.AddImage(LayerId, AllottedGeometry.Bounds, SceneBrush, FFloatColor(1.0f, 1.0f, 1.0f, 1.0f));
+    }
+
+    return LayerId;
 }
 
 void FViewport::SetPosition(const IntVector2& InPosition, EViewportPositionSpace InSpace)

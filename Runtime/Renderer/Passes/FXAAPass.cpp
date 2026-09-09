@@ -221,7 +221,7 @@ void FFXAAPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, const FSce
         [&Context](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(Context.SceneTarget, ERHIResourceState::PixelShaderResource);
-            PassBuilder.SetRenderTarget(0, Context.BackBuffer, EAttachmentLoadAction::DontCare);
+            PassBuilder.SetRenderTarget(0, Context.SceneOutput, EAttachmentLoadAction::DontCare);
         },
         [this, Context](FRHICommandList& PassCommandList, const FRenderGraphPassResources& PassResources)
         {

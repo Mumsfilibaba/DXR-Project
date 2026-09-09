@@ -50,5 +50,7 @@ float4 PSMain(FPSInput Input) : SV_Target
 {
     // A box samples the white texel and a glyph samples coverage from alpha, so one path covers both
     float4 OutColor = Input.Color * Texture0.Sample(Sampler0, Input.TexCoord);
-    return OutColor;
+
+    // Premultiplied, so the blend adds the source outright and a render target holds a usable alpha
+    return float4(OutColor.rgb * OutColor.a, OutColor.a);
 }

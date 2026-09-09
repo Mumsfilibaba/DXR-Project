@@ -69,6 +69,8 @@ struct FWindowsPlatformMisc final : public IPlatformMisc
     #endif
     }
 
+    static void InstallCrashHandler();
+
     static FORCEINLINE int32 GetLastErrorString(String& OutErrorString)
     {
         const int32 LastError = ::GetLastError();

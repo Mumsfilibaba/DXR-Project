@@ -6,6 +6,8 @@
 #include "Application/Draw/DrawTypes.h"
 #include "Application/Elements/VisualElement.h"
 
+class FWindow;
+
 struct FDragDropPayload
 {
     /** @return True when the payload names a type, which every drag in flight does. */
@@ -165,10 +167,13 @@ private:
 
     NODISCARD int32 FindTargetAt(const IntVector2& InScreenPosition) const;
 
+    void OnWindowPainting(const TSharedPtr<FWindow>& Window);
+
     FDragDropPayload Payload;
     IntVector2       ScreenPosition;
     TArray<FTarget>  Targets;
     int32            TargetIndex;
+    FDelegateHandle  OnWindowPaintingHandle;
 
     static TUniquePtr<FDragDropService> DragDropService;
 };

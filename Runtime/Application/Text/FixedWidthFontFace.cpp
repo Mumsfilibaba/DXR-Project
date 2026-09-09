@@ -35,24 +35,19 @@ int32 FFixedWidthFontFace::GetCapHeight() const
     return GetAscent();
 }
 
-int32 FFixedWidthFontFace::GetCharacterAdvance(CHAR /*Character*/) const
+const FShapedRun& FFixedWidthFontFace::ShapeText(const StringView& Text) const
 {
-    return CharacterAdvance;
-}
+    ShapedRun.Glyphs.Clear();
+    ShapedRun.Glyphs.Reserve(Text.Length());
 
-int32 FFixedWidthFontFace::MeasureWidth(const StringView& Text) const
-{
-    return Text.Length() * CharacterAdvance;
-}
-
-int32 FFixedWidthFontFace::FindCharacterIndexAtOffset(const StringView& Text, int32 OffsetX) const
-{
-    if (OffsetX <= 0)
+    for (int32 Index = 0; Index < Text.Length(); ++Index)
     {
-        return 0;
+        FShapedGlyph& Shaped = ShapedRun.Glyphs.Emplace();
+        Shaped.Offset      = Index * CharacterAdvance;
+        Shaped.Advance     = CharacterAdvance;
+        Shaped.SourceIndex = Index;
     }
 
-    // Round to the nearest boundary so a click on the right half of a glyph lands after it
-    const int32 Index = (OffsetX + (CharacterAdvance / 2)) / CharacterAdvance;
-    return Math::Clamp(Index, 0, Text.Length());
+    ShapedRun.Width = Text.Length() * CharacterAdvance;
+    return ShapedRun;
 }

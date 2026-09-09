@@ -13,6 +13,7 @@ public:
         , Title()
         , StyleFlags(EWindowStyleFlags::Default)
         , DPIScale(1.0f)
+        , Opacity(1.0f)
         , bAcceptsInput(true)
         , bIsDestroyed(false)
         , bIsMinimized(false)
@@ -76,7 +77,8 @@ public:
     virtual FWindowTitleBarMetrics GetTitleBarMetrics() const override final { return TitleBarMetrics; }
     virtual void SetTitleBarRegions(const FWindowTitleBarRegions& InRegions) override final { TitleBarRegions = InRegions; }
 
-    virtual void SetWindowOpacity(float) override final {}
+    virtual void SetWindowOpacity(float InOpacity) override final { Opacity = InOpacity; }
+
     virtual void SetAcceptsInput(bool bInAcceptsInput) override final { bAcceptsInput = bInAcceptsInput; }
     virtual bool GetAcceptsInput() const override final { return bAcceptsInput; }
 
@@ -84,12 +86,11 @@ public:
     virtual void* GetPlatformHandle() const override final { return nullptr; }
 
     void SetWindowDPIScale(float InDPIScale) { DPIScale = InDPIScale; }
-
-    /** @brief Poses as a platform whose chrome has the given height and insets, so a title bar test can be either OS. */
     void SetTitleBarMetrics(const FWindowTitleBarMetrics& InMetrics) { TitleBarMetrics = InMetrics; }
 
-    /** @brief What the last SetTitleBarRegions call was handed, which is the whole platform contract a title bar has to meet. */
     const FWindowTitleBarRegions& GetTitleBarRegions() const { return TitleBarRegions; }
+
+    float GetWindowOpacity() const { return Opacity; }
 
 private:
     FWindowShape           Shape;
@@ -98,6 +99,7 @@ private:
     FWindowTitleBarMetrics TitleBarMetrics;
     FWindowTitleBarRegions TitleBarRegions;
     float                  DPIScale;
+    float                  Opacity;
     bool                   bAcceptsInput;
     bool                   bIsDestroyed;
     bool                   bIsMinimized;

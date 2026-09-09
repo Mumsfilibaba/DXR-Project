@@ -8,6 +8,7 @@
 #include "CoreApplication/Windows/WindowsCursor.h"
 #include "CoreApplication/PlatformInterface/InputCodes.h"
 #include "CoreApplication/PlatformInterface/IPlatformApplication.h"
+#include "CoreApplication/PlatformInterface/IPlatformApplicationMessageHandler.h"
 
 struct FWindowsDeferredMessage
 {
@@ -122,14 +123,12 @@ private:
     static BOOL    EnumerateMonitorsProc(HMONITOR Monitor, HDC DeviceContext, LPRECT ClipRect, LPARAM lParam);
 
     BOOL EnumerateMonitors(HMONITOR Monitor, HDC DeviceContext, LPRECT ClipRect, LPARAM Data);
-
     bool RegisterWindowClass();
     bool RegisterRawInputDevices(HWND Window);
     bool UnregisterRawInputDevices();
-
     LRESULT ProcessRawInput(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
     LRESULT ProcessMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
-
+    void DeferWindowMessage(HWND WindowHandle, UINT Message, WPARAM wParam, LPARAM lParam);
     void ProcessDeferredMessage(const FWindowsDeferredMessage& Message);
     void ProcessWindowHoverMessage(const FWindowsDeferredMessage& Message);
     void ProcessWindowResizeMessage(const FWindowsDeferredMessage& Message);
@@ -145,6 +144,8 @@ private:
     bool                                           bIsTrackingMouse;
     bool                                           bDeferredMessagesEnabled;
     bool                                           bIsApplicationActive;
+    bool                                           bIsInModalSizeLoop;
+    EWindowInteraction                             ModalInteraction;
     TArray<FWindowsDeferredMessage>                Messages;
     FCriticalSection                               MessagesCS;
     TArray<TSharedPtr<IWindowsMessageListener>>    WindowsMessageListeners;

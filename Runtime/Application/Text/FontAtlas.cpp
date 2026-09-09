@@ -13,24 +13,76 @@
 static constexpr int32 GMinAtlasSize = 128;
 static constexpr int32 GMaxAtlasSize = 4096;
 
+static const FGlyph GEmptyGlyph;
+
+struct FFontAtlas::FPage
+{
+    FPage()
+        : Glyphs()
+    {
+        Glyphs.Resize(CodepointsPerPage);
+    }
+
+    TArray<FGlyph> Glyphs;
+};
+
+struct FFontAtlas::FPackState
+{
+    FPackState()
+        : FontInfo()
+        , Context()
+        , ScaleFactor(0.0f)
+        , bIsPacking(false)
+    {
+    }
+
+    ~FPackState()
+    {
+        Close();
+    }
+
+    void Close()
+    {
+        if (bIsPacking)
+        {
+            stbtt_PackEnd(&Context);
+            bIsPacking = false;
+        }
+    }
+
+    stbtt_fontinfo     FontInfo;
+    stbtt_pack_context Context;
+    float              ScaleFactor;
+    bool               bIsPacking;
+};
+
 FFontAtlas::FFontAtlas()
     : Pixels()
-    , Glyphs()
+    , FontData()
+    , PixelHeight(0)
     , Width(0)
     , Height(0)
     , LineHeight(0)
     , Ascent(0)
     , Descent(0)
     , CapHeight(0)
+    , Coverage()
+    , Pages()
+    , UnpackablePages()
+    , PackState()
     , Revision(0)
 {
 }
 
 FFontAtlas::~FFontAtlas() = default;
 
-bool FFontAtlas::Build(const TArray<uint8>& FontData, int32 PixelHeight)
+void FFontAtlas::Reset()
 {
+    PackState.Reset();
+    Pages.Clear();
+    UnpackablePages.Clear();
     Pixels.Clear(true);
+    Coverage.Clear(true);
 
     Width      = 0;
     Height     = 0;
@@ -38,48 +90,46 @@ bool FFontAtlas::Build(const TArray<uint8>& FontData, int32 PixelHeight)
     Ascent     = 0;
     Descent    = 0;
     CapHeight  = 0;
+}
 
-    for (FGlyph& Glyph : Glyphs)
-    {
-        Glyph = FGlyph();
-    }
+bool FFontAtlas::Build(const TArray<uint8>& InFontData, int32 InPixelHeight)
+{
+    Reset();
+
+    FontData    = InFontData;
+    PixelHeight = InPixelHeight;
 
     if (FontData.IsEmpty() || PixelHeight <= 0)
     {
         return false;
     }
 
-    stbtt_fontinfo FontInfo;
+    TUniquePtr<FPackState> NewPackState = MakeUniquePtr<FPackState>();
+
     const int32 FontOffset = stbtt_GetFontOffsetForIndex(FontData.Data(), 0);
-    if (FontOffset < 0 || !stbtt_InitFont(&FontInfo, FontData.Data(), FontOffset))
+    if (FontOffset < 0 || !stbtt_InitFont(&NewPackState->FontInfo, FontData.Data(), FontOffset))
     {
         LOG_ERROR("[FFontAtlas]: Failed to parse the font data");
         return false;
     }
 
-    const float ScaleFactor = stbtt_ScaleForPixelHeight(&FontInfo, static_cast<float>(PixelHeight));
+    NewPackState->ScaleFactor = stbtt_ScaleForPixelHeight(&NewPackState->FontInfo, static_cast<float>(PixelHeight));
+
+    PackState = ::Move(NewPackState);
 
     int32 UnscaledAscent  = 0;
     int32 UnscaledDescent = 0;
     int32 UnscaledLineGap = 0;
-    stbtt_GetFontVMetrics(&FontInfo, &UnscaledAscent, &UnscaledDescent, &UnscaledLineGap);
+    stbtt_GetFontVMetrics(&PackState->FontInfo, &UnscaledAscent, &UnscaledDescent, &UnscaledLineGap);
 
-    Ascent  = Math::CeilToInt(static_cast<float>(UnscaledAscent) * ScaleFactor);
-    Descent = Math::CeilToInt(static_cast<float>(-UnscaledDescent) * ScaleFactor);
-
-    // The gap belongs between the lines rather than inside them, which is what stb documents
-    LineHeight = Math::CeilToInt(static_cast<float>(UnscaledAscent - UnscaledDescent + UnscaledLineGap) * ScaleFactor);
+    Ascent     = Math::CeilToInt(static_cast<float>(UnscaledAscent) * PackState->ScaleFactor);
+    Descent    = Math::CeilToInt(static_cast<float>(-UnscaledDescent) * PackState->ScaleFactor);
+    LineHeight = Math::CeilToInt(static_cast<float>(UnscaledAscent - UnscaledDescent + UnscaledLineGap) * PackState->ScaleFactor);
 
     for (int32 AtlasSize = GMinAtlasSize; AtlasSize <= GMaxAtlasSize; AtlasSize *= 2)
     {
-        if (PackAtSize(FontData, PixelHeight, AtlasSize, AtlasSize))
+        if (PackAtSize(AtlasSize, AtlasSize))
         {
-            Width  = AtlasSize;
-            Height = AtlasSize;
-
-            // Measured off a rasterized capital rather than read from OS/2, which stb does not parse.
-            // A face whose 'H' did not rasterize falls back to the ascent, which only costs the optical
-            // centring its correction rather than placing the text anywhere wrong.
             const int32 MeasuredCapHeight = -GetGlyph('H').BearingY;
             CapHeight = (MeasuredCapHeight > 0 && MeasuredCapHeight <= Ascent) ? MeasuredCapHeight : Ascent;
 
@@ -89,39 +139,157 @@ bool FFontAtlas::Build(const TArray<uint8>& FontData, int32 PixelHeight)
     }
 
     LOG_ERROR("[FFontAtlas]: Failed to pack the font at %d pixels into an atlas of at most %d texels", PixelHeight, GMaxAtlasSize);
+
+    Reset();
     return false;
 }
 
-bool FFontAtlas::PackAtSize(const TArray<uint8>& FontData, int32 PixelHeight, int32 InWidth, int32 InHeight)
+bool FFontAtlas::PackPage(int32 PageIndex) const
 {
-    const int32 TexelCount = InWidth * InHeight;
+    const int32 FirstOfPage = PageIndex * CodepointsPerPage;
+    const int32 RangeStart  = Math::Max(FirstOfPage, FirstCodepoint);
+    const int32 RangeCount  = (FirstOfPage + CodepointsPerPage) - RangeStart;
 
-    TArray<uint8> Coverage;
-    Coverage.Resize(TexelCount);
+    TArray<stbtt_packedchar> PackedGlyphs;
+    PackedGlyphs.Resize(RangeCount);
 
-    Memory::Memzero(Coverage.Data(), static_cast<uint64>(TexelCount));
-
-    stbtt_pack_context PackContext;
-    if (!stbtt_PackBegin(&PackContext, Coverage.Data(), InWidth, InHeight, 0, 1, nullptr))
-    {
-        return false;
-    }
-
-    TStaticArray<stbtt_packedchar, GlyphCount> PackedGlyphs;
     const int32 PackResult = stbtt_PackFontRange(
-        &PackContext,
+        &PackState->Context,
         FontData.Data(),
         0,
         static_cast<float>(PixelHeight),
-        FirstCodepoint,
-        GlyphCount,
+        RangeStart,
+        RangeCount,
         PackedGlyphs.Data());
-
-    stbtt_PackEnd(&PackContext);
 
     if (!PackResult)
     {
         return false;
+    }
+
+    TUniquePtr<FPage> NewPage = MakeUniquePtr<FPage>();
+
+    for (int32 Index = 0; Index < RangeCount; ++Index)
+    {
+        const stbtt_packedchar& PackedGlyph = PackedGlyphs[Index];
+
+        FGlyph& Glyph = NewPage->Glyphs[(RangeStart - FirstOfPage) + Index];
+        Glyph.AtlasRectangle = FRectangle(
+            IntVector2(static_cast<int32>(PackedGlyph.x0), static_cast<int32>(PackedGlyph.y0)),
+            static_cast<int32>(PackedGlyph.x1) - static_cast<int32>(PackedGlyph.x0),
+            static_cast<int32>(PackedGlyph.y1) - static_cast<int32>(PackedGlyph.y0));
+
+        Glyph.BearingX = Math::RoundToInt(PackedGlyph.xoff);
+        Glyph.BearingY = Math::RoundToInt(PackedGlyph.yoff);
+        Glyph.Advance  = Math::RoundToInt(PackedGlyph.xadvance);
+    }
+
+    Pages.Add(PageIndex, ::Move(NewPage));
+    return true;
+}
+
+bool FFontAtlas::PackAtSize(int32 InWidth, int32 InHeight)
+{
+    TArray<int32> PageIndices;
+    for (const auto& Page : Pages)
+    {
+        PageIndices.Add(Page.First);
+    }
+
+    if (!PageIndices.Contains(0))
+    {
+        PageIndices.Add(0);
+    }
+
+    PageIndices.Sort();
+
+    PackState->Close();
+    Pages.Clear();
+
+    const int32 TexelCount = InWidth * InHeight;
+
+    Coverage.Resize(TexelCount);
+    Memory::Memzero(Coverage.Data(), static_cast<uint64>(TexelCount));
+
+    if (!stbtt_PackBegin(&PackState->Context, Coverage.Data(), InWidth, InHeight, 0, 1, nullptr))
+    {
+        return false;
+    }
+
+    PackState->bIsPacking = true;
+
+    Width  = InWidth;
+    Height = InHeight;
+
+    for (int32 PageIndex : PageIndices)
+    {
+        if (!PackPage(PageIndex))
+        {
+            PackState->Close();
+            Pages.Clear();
+            return false;
+        }
+    }
+
+    ExpandCoverage();
+    return true;
+}
+
+bool FFontAtlas::RasterizePage(int32 PageIndex) const
+{
+    if (UnpackablePages.Contains(PageIndex))
+    {
+        return false;
+    }
+
+    FFontAtlas* MutableThis = const_cast<FFontAtlas*>(this);
+    if (PackPage(PageIndex))
+    {
+        MutableThis->ExpandCoverage();
+
+        ++Revision;
+        return true;
+    }
+
+    TArray<int32> PackedPages;
+    for (const auto& Page : Pages)
+    {
+        PackedPages.Add(Page.First);
+    }
+
+    const int32 PackedSize = Width;
+    Pages.Add(PageIndex, MakeUniquePtr<FPage>());
+
+    for (int32 AtlasSize = PackedSize * 2; AtlasSize <= GMaxAtlasSize; AtlasSize *= 2)
+    {
+        if (MutableThis->PackAtSize(AtlasSize, AtlasSize))
+        {
+            ++Revision;
+            return true;
+        }
+    }
+
+    LOG_ERROR("[FFontAtlas]: Failed to grow past %d texels for codepoint page %d, which will draw as spaces", GMaxAtlasSize, PageIndex);
+
+    UnpackablePages.Add(PageIndex);
+
+    for (int32 PackedPageIndex : PackedPages)
+    {
+        Pages.Add(PackedPageIndex, MakeUniquePtr<FPage>());
+    }
+
+    MutableThis->PackAtSize(PackedSize, PackedSize);
+
+    ++Revision;
+    return false;
+}
+
+void FFontAtlas::ExpandCoverage()
+{
+    const int32 TexelCount = Width * Height;
+    if (TexelCount <= 0)
+    {
+        return;
     }
 
     Pixels.Resize(TexelCount * 4);
@@ -135,32 +303,72 @@ bool FFontAtlas::PackAtSize(const TArray<uint8>& FontData, int32 PixelHeight, in
         DstTexel[3] = Coverage[Index];
         DstTexel += 4;
     }
-
-    for (int32 Index = 0; Index < GlyphCount; ++Index)
-    {
-        const stbtt_packedchar& PackedGlyph = PackedGlyphs[Index];
-
-        FGlyph& Glyph = Glyphs[Index];
-        Glyph.AtlasRectangle = FRectangle(
-            IntVector2(static_cast<int32>(PackedGlyph.x0), static_cast<int32>(PackedGlyph.y0)),
-            static_cast<int32>(PackedGlyph.x1) - static_cast<int32>(PackedGlyph.x0),
-            static_cast<int32>(PackedGlyph.y1) - static_cast<int32>(PackedGlyph.y0));
-
-        Glyph.BearingX = Math::RoundToInt(PackedGlyph.xoff);
-        Glyph.BearingY = Math::RoundToInt(PackedGlyph.yoff);
-        Glyph.Advance  = Math::RoundToInt(PackedGlyph.xadvance);
-    }
-
-    return true;
 }
 
-const FGlyph& FFontAtlas::GetGlyph(CHAR Character) const
+const FGlyph* FFontAtlas::FindGlyph(int32 Codepoint) const
 {
-    const int32 Codepoint = static_cast<int32>(static_cast<uint8>(Character));
-    if (Codepoint < FirstCodepoint || Codepoint >= LastCodepoint)
+    if (Codepoint < FirstCodepoint || Codepoint >= MaxCodepoint || !PackState || !PackState->bIsPacking)
     {
-        return Glyphs[0];
+        return nullptr;
     }
 
-    return Glyphs[Codepoint - FirstCodepoint];
+    const int32 PageIndex = Codepoint / CodepointsPerPage;
+    if (!Pages.Contains(PageIndex) && !RasterizePage(PageIndex))
+    {
+        return nullptr;
+    }
+
+    const TUniquePtr<FPage>* Page = Pages.Find(PageIndex);
+    if (!Page)
+    {
+        return nullptr;
+    }
+
+    const FGlyph& Glyph = (*Page)->Glyphs[Codepoint % CodepointsPerPage];
+    return (Glyph.Advance > 0 || !Glyph.AtlasRectangle.IsEmpty()) ? &Glyph : nullptr;
+}
+
+const FGlyph& FFontAtlas::GetGlyph(int32 Codepoint) const
+{
+    if (const FGlyph* Glyph = FindGlyph(Codepoint))
+    {
+        return *Glyph;
+    }
+
+    if (Codepoint != ' ')
+    {
+        if (const FGlyph* Space = FindGlyph(' '))
+        {
+            return *Space;
+        }
+    }
+
+    return GEmptyGlyph;
+}
+
+int32 FFontAtlas::GetKerning(int32 Codepoint, int32 NextCodepoint) const
+{
+    if (!PackState || !PackState->bIsPacking)
+    {
+        return 0;
+    }
+
+    stbtt_fontinfo& FontInfo = PackState->FontInfo;
+
+    int32 UnscaledKerning = stbtt_GetCodepointKernAdvance(&FontInfo, Codepoint, NextCodepoint);
+    if (UnscaledKerning == 0 && FontInfo.kern && FontInfo.gpos)
+    {
+        const int32 GposOffset = FontInfo.gpos;
+
+        FontInfo.gpos    = 0;
+        UnscaledKerning  = stbtt_GetCodepointKernAdvance(&FontInfo, Codepoint, NextCodepoint);
+        FontInfo.gpos    = GposOffset;
+    }
+
+    if (UnscaledKerning == 0)
+    {
+        return 0;
+    }
+
+    return Math::RoundToInt(static_cast<float>(UnscaledKerning) * PackState->ScaleFactor);
 }

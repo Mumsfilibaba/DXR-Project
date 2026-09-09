@@ -108,10 +108,12 @@ public:
         return ViewportHost;
     }
 
-private:
-    static constexpr EFormat ViewportImageFormat = EFormat::R8G8B8A8_Unorm;
+protected:
+    // FEngine Interface
+    virtual IntVector2 GetSceneRenderSize() const override final;
+    virtual void SetSceneRenderTarget(const FRHITextureRef& InViewportImage) override final;
 
-    bool CreateViewportRenderTarget();
+private:
     void OnActorRemoved(FActor* RemovedActor);
     void DrainPendingDestroyActors();
 
@@ -141,8 +143,6 @@ private:
     TSharedPtr<FEditorAboutWidget>            AboutWidget;
     TSharedPtr<FEditorShell>                  EditorShell;
     IEditorViewportHost*                      ViewportHost;
-    FRHITextureRef                            ViewportImage;
-    IntVector2                                ViewportImageSize;
     FWorldSnapshot                            Snapshot;
     bool                                      bUseCustomEditorUI;
     bool                                      bPendingPickAdditive;

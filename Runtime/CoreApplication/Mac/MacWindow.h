@@ -89,6 +89,16 @@ public:
         return reinterpret_cast<void*>(CocoaWindow);
     }
 
+    /**
+     * @brief Tests whether a point is on the strip along an edge or corner that a resize is dragged from.
+     * A window carrying a custom title bar publishes a caption reaching the top of its frame, so the caption
+     * has to give way to this or the top edge can never be grabbed.
+     *
+     * @param LocationInWindow Where the cursor is, in the window coordinates an NSEvent carries.
+     * @return True when the point is within the border thickness of an edge.
+     */
+    bool HitTestResizeBorder(NSPoint LocationInWindow) const;
+
     bool HitTestTitleBar(NSPoint LocationInWindow) const;
 
     FORCEINLINE FCocoaWindow* GetCocoaWindow() const

@@ -108,10 +108,10 @@ static void RefreshReadout()
 
 static void ApplyDefaultLayout()
 {
-    FDockNode Details = FDockNode::MakeTabs({ "Details", "Materials" });
-    FDockNode Right   = FDockNode::MakeSplit(EDockSplitOrientation::Vertical, Details, FDockNode::MakeTabs({ "Output" }));
+    FDockNode Details = FDockNode::CreateTabs({ "Details", "Materials" });
+    FDockNode Right   = FDockNode::CreateSplit(EDockSplitOrientation::Vertical, Details, FDockNode::CreateTabs({ "Output" }));
 
-    GDockingArea->RestoreLayout(FDockNode::MakeSplit(EDockSplitOrientation::Horizontal, FDockNode::MakeTabs({ "Outliner" }), Right));
+    GDockingArea->RestoreLayout(FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, FDockNode::CreateTabs({ "Outliner" }), Right));
     RefreshReadout();
 }
 

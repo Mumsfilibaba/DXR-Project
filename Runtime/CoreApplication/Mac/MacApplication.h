@@ -326,7 +326,6 @@ public:
     void UpdateWindowUnderCursor();
 
     void OnWindowDestroyed(const TSharedRef<FMacWindow>& Window);
-    void OnWindowWillResize(const TSharedRef<FMacWindow>& Window);
     void CloseWindow(const TSharedRef<FMacWindow>& Window);
 
     void RefreshScreenCache();
@@ -353,7 +352,8 @@ private:
     void ProcessModfierKey(EMacModifierKey::Type MacModifierKey, uint64 ModifierKeyFlags, uint64 PreviousModifierKeyFlags);
     void ProcessWindowResized(const FDeferredMacEvent& DeferredEvent);
     void ProcessWindowMoved(const FDeferredMacEvent& DeferredEvent);
-
+    NSPoint UpdateCursorFromDeferredEvent(const FDeferredMacEvent& DeferredEvent);
+    void DeferWindowInteraction(const TSharedRef<FMacWindow>& Window, NSNotificationName Name);
     void ClampCursorToConfinement();
 
     id                                             LocalEventMonitor;

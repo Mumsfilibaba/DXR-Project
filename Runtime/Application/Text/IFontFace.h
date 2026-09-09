@@ -1,8 +1,48 @@
 #pragma once
+#include "Core/Containers/Array.h"
 #include "Core/Containers/StringView.h"
 #include "Core/Math/Math.h"
 
 class FFontAtlas;
+struct FGlyph;
+
+struct FShapedGlyph
+{
+    FShapedGlyph()
+        : Offset(0)
+        , Advance(0)
+        , SourceIndex(0)
+        , Glyph(nullptr)
+    {
+    }
+
+    /** @brief The pen position of this glyph's origin, relative to the start of the run. */
+    int32 Offset;
+
+    /** @brief How far the pen moves over this glyph, with the kerning against the one after it folded in. */
+    int32 Advance;
+
+    /** @brief The index in the source text this glyph came from. */
+    int32 SourceIndex;
+
+    /** @brief The glyph in the atlas, which is null for a face that has none to draw from. */
+    const FGlyph* Glyph;
+};
+
+struct FShapedRun
+{
+    FShapedRun()
+        : Glyphs()
+        , Width(0)
+    {
+    }
+
+    /** @brief The glyphs in the order they are drawn, one for every character of the source text. */
+    TArray<FShapedGlyph> Glyphs;
+
+    /** @brief How far the pen moved over the whole run, in pixels. */
+    int32 Width;
+};
 
 struct IFontFace
 {
@@ -39,20 +79,24 @@ struct IFontFace
     virtual int32 GetCapHeight() const = 0;
 
     /**
-     * @brief Horizontal advance of a single character in pixels.
+     * @brief Positions the glyphs of a run, applying the kerning between each pair. The one place a pen is
+     * walked over text, so that measuring, hit-testing and drawing cannot disagree about where a glyph
+     * sits, which they would the moment any of them summed per-character advances that kerning corrects.
      *
-     * @param Character The character to measure.
-     * @return The advance in pixels.
+     * @param Text The text to shape.
+     * @return The positioned glyphs, cached on the face so that asking twice in a frame costs a lookup.
+     * The reference is good until the next call, and holding one across frames is not.
      */
-    virtual int32 GetCharacterAdvance(CHAR Character) const = 0;
+    virtual const FShapedRun& ShapeText(const StringView& Text) const = 0;
 
     /**
-     * @brief Width in pixels of the text laid out on a single line.
-     *
      * @param Text The text to measure.
-     * @return The width in pixels.
+     * @return The width in pixels of the text laid out on a single line.
      */
-    virtual int32 MeasureWidth(const StringView& Text) const = 0;
+    NODISCARD int32 MeasureWidth(const StringView& Text) const
+    {
+        return ShapeText(Text).Width;
+    }
 
     /**
      * @brief Finds the character position closest to a horizontal offset, which is what maps a click to a position in the text.
@@ -61,7 +105,52 @@ struct IFontFace
      * @param OffsetX The offset from the start of the text, in pixels.
      * @return The index of the closest position in the text.
      */
-    virtual int32 FindCharacterIndexAtOffset(const StringView& Text, int32 OffsetX) const = 0;
+    NODISCARD int32 FindCharacterIndexAtOffset(const StringView& Text, int32 OffsetX) const
+    {
+        if (OffsetX <= 0)
+        {
+            return 0;
+        }
+
+        for (const FShapedGlyph& Shaped : ShapeText(Text).Glyphs)
+        {
+            // Break at the half-glyph so a click on the right half of a character lands after it
+            if (OffsetX < Shaped.Offset + (Shaped.Advance / 2))
+            {
+                return Shaped.SourceIndex;
+            }
+        }
+
+        return Text.Length();
+    }
+
+    /**
+     * @brief Gets where one character of a run sits and how much room it takes, which is what places a
+     * caret on it.
+     *
+     * @param Text           The text the character belongs to.
+     * @param CharacterIndex The index of the character, which may be one past the last for the caret that
+     *                       sits at the end of the text.
+     * @param OutOffset      Set to the distance from the start of the run to the character, in pixels.
+     * @param OutAdvance     Set to how far the pen moves over the character, in pixels, and to zero for
+     *                       the position past the end.
+     */
+    void GetCharacterPlacement(const StringView& Text, int32 CharacterIndex, int32& OutOffset, int32& OutAdvance) const
+    {
+        const FShapedRun& Run = ShapeText(Text);
+
+        if (CharacterIndex >= Run.Glyphs.Size())
+        {
+            OutOffset  = Run.Width;
+            OutAdvance = 0;
+            return;
+        }
+
+        const int32 ClampedIndex = Math::Max(CharacterIndex, 0);
+
+        OutOffset  = Run.Glyphs[ClampedIndex].Offset;
+        OutAdvance = Run.Glyphs[ClampedIndex].Advance;
+    }
 
     /**
      * @brief The height of the band the glyphs occupy, which is the ascent and the descent together.

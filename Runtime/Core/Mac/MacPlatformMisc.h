@@ -27,6 +27,8 @@ struct FMacPlatformMisc final : public IPlatformMisc
 
     static EAssertDialogResult ShowAssertDialog(const CHAR* Title, const CHAR* Message);
 
+    static void InstallCrashHandler();
+
     static FORCEINLINE void MemoryBarrier() 
     {
         __sync_synchronize();

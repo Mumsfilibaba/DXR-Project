@@ -424,7 +424,7 @@ bool UIDrawDataText_Test()
     DrawData.BuildFromCommandList(SpacedList);
 
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 8);
-    TEST_EXPECT(DrawData.GetVertices()[4].Position.X > DrawData.GetVertices()[0].Position.X + Font->GetCharacterAdvance('A'));
+    TEST_EXPECT(DrawData.GetVertices()[4].Position.X > DrawData.GetVertices()[0].Position.X + Font->ShapeText(StringView("A")).Width);
 
     TEST_SECTION("The texture coordinates stay inside the atlas");
     for (const FUIVertex& Vertex : DrawData.GetVertices())

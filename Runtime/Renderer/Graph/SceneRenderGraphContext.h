@@ -31,7 +31,7 @@ struct FSceneRenderGraphContext
     FRenderGraphTexture*                  CascadeIndexBuffer                     = nullptr;
     FRenderGraphTexture*                  ReducedDepthBuffer0                    = nullptr;
     FRenderGraphTexture*                  ReducedDepthBuffer1                    = nullptr;
-    FRenderGraphTexture*                  BackBuffer                             = nullptr;
+    FRenderGraphTexture*                  SceneOutput                            = nullptr;
     FRenderGraphTexture*                  ShadowCascades                         = nullptr;
     FRenderGraphTexture*                  PointLightShadowMaps                   = nullptr;
     FRenderGraphTexture*                  RayTracingOutput                       = nullptr;
@@ -74,8 +74,6 @@ struct FSceneRenderGraphContext
     FRenderGraphBuffer*                   SkyboxVertexBuffer                     = nullptr;
     FRenderGraphBuffer*                   SkyboxIndexBuffer                      = nullptr;
     FRenderGraphRenderTargetView*         SceneTargetRenderTargetView            = nullptr;
-    FRenderGraphRenderTargetView*         BackBufferRenderTargetView             = nullptr;
-    FRenderGraphUnorderedAccessView*      BackBufferUnorderedAccessView          = nullptr;
     FRenderGraphDepthStencilView*         GBufferDepthReadOnlyDSV                = nullptr;
     FRenderGraphDepthStencilView*         ShadowCascadeDSVs[NUM_SHADOW_CASCADES] = {};
     FRenderGraphDepthStencilView*         ShadowCascadesCombinedDSV              = nullptr;

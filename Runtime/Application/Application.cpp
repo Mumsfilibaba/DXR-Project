@@ -3,6 +3,7 @@
 #include "Application/InputLogger.h"
 #include "Application/Input/Keys.h"
 #include "Application/Input/InputMapper.h"
+#include "Application/Docking/DockDragState.h"
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Elements/VisualElement.h"
 #include "Application/Menus/DragDropService.h"
@@ -11,6 +12,7 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Modules/ModuleManager.h"
+#include "Core/Tasks/Tasks.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/PlatformInterface/IPlatformInputDevice.h"
@@ -270,6 +272,9 @@ FApplication::FApplication(TSharedPtr<IPlatformApplication> InPlatformApplicatio
     , Renderer()
     , InputHandlers()
     , OnMonitorConfigChangedEvent()
+    , OnWindowInteractionEvent()
+    , InteractingWindow()
+    , WindowInteraction(EWindowInteraction::Resize)
     , FocusWindow()
     , MouseCaptor()
     , LastCursorPosition()
@@ -436,8 +441,8 @@ bool FApplication::OnMouseMove(int32 MouseX, int32 MouseY)
         return false;
     }
 
-    bIsCursorPositionValid = true;
     LastCursorPosition     = CursorPosition;
+    bIsCursorPositionValid = true;
 
     const FCursorEvent CursorEvent(EInputEventType::MouseMoved, CursorPosition, GetClientOrigin(), PlatformApplication->GetModifierKeyState());
 
@@ -499,7 +504,7 @@ bool FApplication::OnMouseButtonDown(const TSharedRef<IPlatformWindow>& Platform
 {
     PressedMouseButtons.Add(Button);
 
-    // Set the mouse capture when the mouse is pressed
+    // Set the mouse capture when the mouse is pressed.
     PlatformApplication->SetCapture(PlatformWindow);
     bIsTrackingCursor = true;
 
@@ -741,11 +746,74 @@ bool FApplication::OnWindowResized(const TSharedRef<IPlatformWindow>& PlatformWi
     return bResult;
 }
 
-bool FApplication::OnWindowResizing(const TSharedRef<IPlatformWindow>&)
+bool FApplication::OnWindowResizing(const TSharedRef<IPlatformWindow>& /* PlatformWindow */, uint32 /* Width */, uint32 /* Height */)
 {
-    // We wait for the GPU here to avoid weird resizing behavior
+    if (!Tasks::IsInMainThread())
+    {
+        return false;
+    }
+
     FRHICommandListExecutor::Get().WaitForGPU();
     return true;
+}
+
+bool FApplication::OnOSPaint(const TSharedRef<IPlatformWindow>& PlatformWindow)
+{
+    if (!OnWindowLiveResizeDelegate.IsBound() || !Tasks::IsInMainThread())
+    {
+        return false;
+    }
+
+    TSharedPtr<FWindow> Window = FindWindowFromPlatformWindow(PlatformWindow);
+    if (!Window)
+    {
+        return false;
+    }
+
+    const IntVector2 ClientSize(static_cast<int32>(PlatformWindow->GetWidth()), static_cast<int32>(PlatformWindow->GetHeight()));
+    if (ClientSize.X <= 0 || ClientSize.Y <= 0)
+    {
+        return false;
+    }
+
+    Window->OnWindowResize(ClientSize);
+
+    OnWindowLiveResizeDelegate.Execute(Window);
+    return true;
+}
+
+bool FApplication::BeginWindowInteraction(const TSharedRef<IPlatformWindow>& PlatformWindow, EWindowInteraction Interaction)
+{
+    TSharedPtr<FWindow> Window = FindWindowFromPlatformWindow(PlatformWindow);
+    if (!Window)
+    {
+        return false;
+    }
+
+    InteractingWindow = Window;
+    WindowInteraction = Interaction;
+
+    OnWindowInteractionEvent.Broadcast(Window, Interaction, true);
+    return true;
+}
+
+bool FApplication::EndWindowInteraction(const TSharedRef<IPlatformWindow>& PlatformWindow, EWindowInteraction Interaction)
+{
+    TSharedPtr<FWindow> Window = FindWindowFromPlatformWindow(PlatformWindow);
+    InteractingWindow.Reset();
+
+    if (!Window)
+    {
+        return false;
+    }
+
+    OnWindowInteractionEvent.Broadcast(Window, Interaction, false);
+    return true;
+}
+
+TSharedPtr<FWindow> FApplication::GetInteractingWindow()
+{
+    return InteractingWindow.ToSharedPtr();
 }
 
 bool FApplication::OnWindowMoved(const TSharedRef<IPlatformWindow>& PlatformWindow, int32 x, int32 y)
@@ -768,7 +836,7 @@ bool FApplication::OnWindowFocusLost(const TSharedRef<IPlatformWindow>& Platform
 
     if (TSharedPtr<FWindow> Window = FindWindowFromPlatformWindow(PlatformWindow))
     {
-        // A focus-lost for the outgoing window can arrive after the incoming one gained focus
+        // A focus-lost for the outgoing window can arrive after the incoming one gained focus.
         if (FocusWindow.Get() == Window.Get())
         {
             FocusWindow = nullptr;
@@ -789,8 +857,8 @@ bool FApplication::OnWindowFocusGained(const TSharedRef<IPlatformWindow>& Platfo
     if (TSharedPtr<FWindow> Window = FindWindowFromPlatformWindow(PlatformWindow))
     {
         TSharedPtr<FVisualElement> FocusElement = Window;
+        TSharedPtr<FVisualElement> Overlay      = Window->GetOverlay();
 
-        TSharedPtr<FVisualElement> Overlay = Window->GetOverlay();
         if (Overlay && Overlay->IsVisible() && Overlay->CapturesAllInput())
         {
             FocusElement = Overlay->GetFocusTarget();
@@ -828,13 +896,9 @@ bool FApplication::OnWindowClosed(const TSharedRef<IPlatformWindow>& PlatformWin
 
 bool FApplication::OnMonitorConfigurationChange()
 {
-    // Invalidate the cached monitor-information.
     bIsMonitorInfoValid = false;
-
-    // First update the cached monitor-information.
     UpdateMonitorInfo();
 
-    // Then notify listeners that the monitor configuration has changed.
     OnMonitorConfigChangedEvent.Broadcast();
     return true;
 }
@@ -865,7 +929,7 @@ void FApplication::CreateWindow(const TSharedPtr<FWindow>& InWindow)
         return;
     }
 
-    // Find the primary monitor
+    // Find the primary monitor.
     int32 PrimaryMonitorIndex = -1;
     for (int32 Index = 0; Index < MonitorInfos.Size(); Index++)
     {
@@ -945,7 +1009,6 @@ void FApplication::DestroyWindow(const TSharedPtr<FWindow>& DestroyedWindow)
 
         if (PlatformWindow == PlatformApplication->GetCapture())
         {
-            // Give capture back to the first window so that we'll still receive the mouse-up event.
             TSharedPtr<FWindow> NextWindow = Windows[0];
             PlatformApplication->SetCapture(NextWindow->GetPlatformWindow());
         }
@@ -955,7 +1018,6 @@ void FApplication::DestroyWindow(const TSharedPtr<FWindow>& DestroyedWindow)
 void FApplication::Tick(float Delta)
 {
     ProcessEvents();
-
     ProcessDeferredEvents();
 
     PlatformApplication->Tick(Delta);
@@ -1004,10 +1066,8 @@ void FApplication::LayoutWindow(const TSharedPtr<FWindow>& InWindow)
     WindowRectangle.Width    = InWindow->GetSize().X;
     WindowRectangle.Height   = InWindow->GetSize().Y;
 
-    // A container sizes its slots from the cached child sizes, so the tree is measured before it is arranged
     InWindow->PrepareDesiredSize();
     InWindow->Tick(WindowRectangle);
-
     InWindow->ClearLayoutIsStale();
 }
 
@@ -1018,39 +1078,54 @@ void FApplication::DrawWindows()
         return;
     }
 
-    FDragDropService& DragDrop = FDragDropService::Get();
-
-    const TSharedPtr<FWindow> GhostWindow = DragDrop.IsDragging() ? FindWindowUnderCursor() : nullptr;
     for (const TSharedPtr<FWindow>& CurrentWindow : Windows)
     {
-        if (!CurrentWindow->IsVisible())
-        {
-            continue;
-        }
+        RecordWindow(CurrentWindow);
+    }
+}
 
-        if (CurrentWindow->IsLayoutStale())
-        {
-            LayoutWindow(CurrentWindow);
-        }
+void FApplication::DrawWindow(const TSharedPtr<FWindow>& InWindow)
+{
+    if (!Renderer || !InWindow)
+    {
+        return;
+    }
 
-        if (FDrawCommandList* CommandList = Renderer->BeginWindow(CurrentWindow))
-        {
-            const FDrawGeometry WindowGeometry(CurrentWindow->GetContentRectangle(), CurrentWindow->GetWindowDPIScale());
+    RecordWindow(InWindow);
+}
 
-            const int32 TopLayerId = CurrentWindow->OnDraw(WindowGeometry, *CommandList, 0);
-            if (CurrentWindow == GhostWindow)
-            {
-                DragDrop.DrawDragVisual(*CommandList, TopLayerId + 1, CurrentWindow->GetPosition());
-            }
+void FApplication::RecordWindow(const TSharedPtr<FWindow>& InWindow)
+{
+    if (!InWindow->IsVisible())
+    {
+        return;
+    }
 
-            Renderer->EndWindow(CurrentWindow);
-        }
+    if (InWindow->IsLayoutStale())
+    {
+        LayoutWindow(InWindow);
+    }
+
+    if (FDrawCommandList* CommandList = Renderer->BeginWindow(InWindow))
+    {
+        const FDrawGeometry WindowGeometry = FDrawGeometry(InWindow->GetContentRectangle(), InWindow->GetWindowDPIScale());
+
+        const int32 TopLayerId = InWindow->OnDraw(WindowGeometry, *CommandList, 0);
+        OnWindowPaintingEvent.Broadcast(InWindow);
+
+        InWindow->PaintDeferred(*CommandList, TopLayerId + 1);
+        Renderer->EndWindow(InWindow);
     }
 }
 
 void FApplication::SetRenderer(const TSharedPtr<IApplicationRenderer>& InRenderer)
 {
     Renderer = InRenderer;
+}
+
+void FApplication::SetOnWindowLiveResize(const FOnWindowLiveResize& InOnWindowLiveResize)
+{
+    OnWindowLiveResizeDelegate = InOnWindowLiveResize;
 }
 
 void FApplication::ProcessEvents()

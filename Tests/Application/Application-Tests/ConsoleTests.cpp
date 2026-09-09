@@ -980,7 +980,9 @@ bool ConsoleInWindow_Test()
     TEST_EXPECT(Console->GetContentRectangle().EncapsulatesPoint(InputBounds.Position));
 
     FDrawCommandList CommandList;
-    Window->OnDraw(FDrawGeometry(Window->GetContentRectangle(), 1.0f), CommandList, 0);
+    const int32      TopLayerId = Window->OnDraw(FDrawGeometry(Window->GetContentRectangle(), 1.0f), CommandList, 0);
+
+    Window->PaintDeferred(CommandList, TopLayerId + 1);
 
     TEST_SECTION("The focused input line draws its caret");
     TEST_EXPECT(CommandList.CountCommandsOfType(EDrawCommandType::Line) > 0);
@@ -990,7 +992,8 @@ bool ConsoleInWindow_Test()
     FApplication::LayoutWindow(Window);
 
     CommandList.Reset();
-    Window->OnDraw(FDrawGeometry(Window->GetContentRectangle(), 1.0f), CommandList, 0);
+    const int32 RedrawTopLayerId = Window->OnDraw(FDrawGeometry(Window->GetContentRectangle(), 1.0f), CommandList, 0);
+    Window->PaintDeferred(CommandList, RedrawTopLayerId + 1);
 
     const int32 TypedIndex     = CommandList.FindTextCommand("Test.Console.");
     const int32 CandidateIndex = CommandList.FindTextCommand("Test.Console.Int");

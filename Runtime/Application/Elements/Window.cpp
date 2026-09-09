@@ -24,6 +24,7 @@ FWindow::FWindow()
     , OnWindowFocusChangedDelegate()
     , CachedPosition()
     , CachedSize()
+    , CachedOpacity(1.0f)
     , StyleFlags(EWindowStyleFlags::None)
     , bActivateOnShow(true)
     , bAcceptsInput(true)
@@ -92,10 +93,53 @@ int32 FWindow::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& O
 
     if (Overlay && Overlay->IsVisible())
     {
-        const FDrawGeometry OverlayGeometry(Overlay->GetContentRectangle(), AllottedGeometry.Scale);
-        MaxLayerId = Overlay->OnDraw(OverlayGeometry, OutCommandList, MaxLayerId + 1);
+        QueueDeferredPainting(Overlay, FDrawGeometry(Overlay->GetContentRectangle(), AllottedGeometry.Scale));
     }
 
+    return MaxLayerId;
+}
+
+void FWindow::QueueDeferredPainting(const TSharedPtr<FVisualElement>& Element, const FDrawGeometry& Geometry) const
+{
+    if (!Element)
+    {
+        return;
+    }
+
+    FDeferredPaint& NewPaint = DeferredPaints.Emplace();
+    NewPaint.Element  = Element;
+    NewPaint.Geometry = Geometry;
+}
+
+void FWindow::QueueDeferredPainting(const FOnDeferredPaint& OnPaint) const
+{
+    if (!OnPaint.IsBound())
+    {
+        return;
+    }
+
+    FDeferredPaint& NewPaint = DeferredPaints.Emplace();
+    NewPaint.OnPaint = OnPaint;
+}
+
+int32 FWindow::PaintDeferred(FDrawCommandList& OutCommandList, int32 LayerId) const
+{
+    int32 MaxLayerId = LayerId;
+
+    for (int32 Index = 0; Index < DeferredPaints.Size(); ++Index)
+    {
+        const FDeferredPaint& Paint = DeferredPaints[Index];
+        if (Paint.Element)
+        {
+            MaxLayerId = Paint.Element->OnDraw(Paint.Geometry, OutCommandList, MaxLayerId + 1);
+        }
+        else if (Paint.OnPaint.IsBound())
+        {
+            MaxLayerId = Paint.OnPaint.Execute(OutCommandList, MaxLayerId + 1);
+        }
+    }
+
+    DeferredPaints.Clear();
     return MaxLayerId;
 }
 
@@ -123,7 +167,6 @@ void FWindow::FindChildrenContainingPoint(const IntVector2& ClientPosition, FEle
             OutParentElements.Add(CurrentVisibility, AsSharedPtr());
 
             const bool bIsOverlayModal = Overlay && Overlay->IsVisible() && Overlay->CapturesAllInput();
-
             if (Content && !bIsOverlayModal)
             {
                 Content->FindChildrenContainingPoint(ClientPosition, OutParentElements);
@@ -419,6 +462,11 @@ void FWindow::SetPlatformWindow(const TSharedRef<IPlatformWindow>& InPlatformWin
         
         StyleFlags    = PlatformWindow->GetStyle();
         bAcceptsInput = PlatformWindow->GetAcceptsInput();
+
+        if (CachedOpacity < 1.0f)
+        {
+            PlatformWindow->SetWindowOpacity(CachedOpacity);
+        }
     }
 }
 
@@ -432,8 +480,15 @@ void FWindow::SetFocus()
 
 void FWindow::SetOpacity(float Alpha)
 {
+    CachedOpacity = Alpha;
+
     if (PlatformWindow)
     {
         PlatformWindow->SetWindowOpacity(Alpha);
     }
+}
+
+float FWindow::GetOpacity() const
+{
+    return CachedOpacity;
 }

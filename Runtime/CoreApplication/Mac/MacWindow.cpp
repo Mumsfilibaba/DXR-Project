@@ -7,6 +7,10 @@
 #include "CoreApplication/Mac/CocoaWindow.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
+// How far in from an edge a press still starts a resize, which matches the strip AppKit draws the resize
+// cursor over
+constexpr CGFloat RESIZE_BORDER_THICKNESS = 5.0;
+
 static NSWindowStyleMask GetCocoaWindowStyle(EWindowStyleFlags InStyle)
 {
     const EWindowStyleFlags DecorationMask =
@@ -737,6 +741,23 @@ void FMacWindow::SetTitleBarRegions(const FWindowTitleBarRegions& InRegions)
 {
     SCOPED_LOCK(TitleBarRegionsCS);
     TitleBarRegions = InRegions;
+}
+
+bool FMacWindow::HitTestResizeBorder(NSPoint LocationInWindow) const
+{
+    if (!CocoaWindow)
+    {
+        return false;
+    }
+
+    const NSRect ContentRect = [CocoaWindow contentRectForFrameRect:CocoaWindow.frame];
+
+    const bool bIsNearLeft   = LocationInWindow.x < RESIZE_BORDER_THICKNESS;
+    const bool bIsNearRight  = LocationInWindow.x > (ContentRect.size.width - RESIZE_BORDER_THICKNESS);
+    const bool bIsNearBottom = LocationInWindow.y < RESIZE_BORDER_THICKNESS;
+    const bool bIsNearTop    = LocationInWindow.y > (ContentRect.size.height - RESIZE_BORDER_THICKNESS);
+
+    return bIsNearLeft || bIsNearRight || bIsNearBottom || bIsNearTop;
 }
 
 bool FMacWindow::HitTestTitleBar(NSPoint LocationInWindow) const

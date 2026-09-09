@@ -1,5 +1,9 @@
 #pragma once
+#include "Core/Containers/SharedPtr.h"
 #include "Core/Time/ElapsedTime.h"
+
+class FApplicationRenderer;
+class FWindow;
 
 class FEngineLoop
 {
@@ -23,8 +27,13 @@ public:
     void Release();
 
 private:
-    FElapsedTime FrameTimer;
-    uint64       FrameCounter;
+    bool CreateApplicationRenderer();
+    void RedrawWindowDuringResize(const TSharedPtr<FWindow>& Window);
+
+    TSharedPtr<FApplicationRenderer> UIRenderer;
+    FElapsedTime                     FrameTimer;
+    uint64                           FrameCounter;
+    bool                             bIsRedrawingForResize;
 };
 
 extern FEngineLoop GEngineLoop;

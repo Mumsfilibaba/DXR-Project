@@ -5,6 +5,7 @@
 
 class FActor;
 class FDockingArea;
+class FDockInputHandler;
 class FEditorEngine;
 class FEditorFooterPanel;
 class FEditorInputHandler;
@@ -90,6 +91,7 @@ private:
     TSharedPtr<FEditorFooterPanel>   Footer;
     TSharedPtr<FVerticalBox>         Root;
     TSharedPtr<FMenuInputHandler>    MenuInputHandler;
+    TSharedPtr<FDockInputHandler>    DockInputHandler;
     TSharedPtr<FEditorInputHandler>  EditorInputHandler;
     bool                             bStyleInitialized;
     bool                             bIconsInitialized;

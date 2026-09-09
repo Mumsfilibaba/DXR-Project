@@ -220,7 +220,7 @@ void FFinalCompositePass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, 
                 PassBuilder.ReadTexture(Context.SelectionRing, ERHIResourceState::PixelShaderResource);
             }
 
-            PassBuilder.SetRenderTarget(0, Context.BackBuffer, EAttachmentLoadAction::Load);
+            PassBuilder.SetRenderTarget(0, Context.SceneOutput, EAttachmentLoadAction::Load);
         },
         [this, Context](FRHICommandList& PassCommandList, const FRenderGraphPassResources& PassResources)
         {

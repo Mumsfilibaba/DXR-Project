@@ -1,3 +1,4 @@
+#include "Application/Application.h"
 #include "Application/Menus/DragDropService.h"
 #include "Application/Menus/MenuStack.h"
 #include "Application/Draw/DrawCommandList.h"
@@ -32,6 +33,7 @@ FDragDropService::FDragDropService()
     , ScreenPosition()
     , Targets()
     , TargetIndex(InvalidTargetIndex)
+    , OnWindowPaintingHandle()
 {
 }
 
@@ -46,6 +48,11 @@ void FDragDropService::BeginDrag(const FDragDropPayload& InPayload, const IntVec
 
     Payload        = InPayload;
     ScreenPosition = InScreenPosition;
+
+    if (!OnWindowPaintingHandle.IsValid() && FApplication::IsInitialized())
+    {
+        OnWindowPaintingHandle = FApplication::Get().GetOnWindowPaintingEvent().AddRaw(this, &FDragDropService::OnWindowPainting);
+    }
 
     UpdateDrag(InScreenPosition);
 }
@@ -87,6 +94,31 @@ void FDragDropService::CancelDrag()
     Payload = FDragDropPayload();
 
     TargetIndex = InvalidTargetIndex;
+
+    if (OnWindowPaintingHandle.IsValid())
+    {
+        if (FApplication::IsInitialized())
+        {
+            FApplication::Get().GetOnWindowPaintingEvent().Unbind(OnWindowPaintingHandle);
+        }
+
+        OnWindowPaintingHandle = FDelegateHandle();
+    }
+}
+
+void FDragDropService::OnWindowPainting(const TSharedPtr<FWindow>& Window)
+{
+    if (!IsDragging() || !Window || Window != FApplication::Get().FindWindowUnderCursor())
+    {
+        return;
+    }
+
+    const IntVector2 ClientOrigin = Window->GetPosition();
+    Window->QueueDeferredPainting(FOnDeferredPaint::CreateLambda([this, ClientOrigin](FDrawCommandList& OutCommandList, int32 LayerId)
+    {
+        DrawDragVisual(OutCommandList, LayerId, ClientOrigin);
+        return LayerId + 1;
+    }));
 }
 
 void FDragDropService::RegisterTarget(const TWeakPtr<FVisualElement>& Target, const FOnDragDropped& OnDropped, const FOnDragOver& OnOver)

@@ -504,7 +504,12 @@ void FWindowsWindow::SetStyle(EWindowStyleFlags InStyle)
     FWindowShape CurrentShape;
     GetWindowShape(CurrentShape);
 
-    const FWindowsWindowStyle NewStyle = GetWindowsWindowStyle(InStyle);
+    FWindowsWindowStyle NewStyle = GetWindowsWindowStyle(InStyle);
+    if ((::GetWindowLongA(Window, GWL_EXSTYLE) & WS_EX_LAYERED) != 0)
+    {
+        NewStyle.StyleEx |= WS_EX_LAYERED;
+    }
+
     if (NewStyle != Style)
     {
         ::SetWindowLong(Window, GWL_STYLE, NewStyle.Style);

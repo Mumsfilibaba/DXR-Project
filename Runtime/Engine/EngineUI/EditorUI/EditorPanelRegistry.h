@@ -90,6 +90,9 @@ public:
 private:
     bool Add(const TSharedPtr<FEditorPanel>& Panel);
 
+    NODISCARD bool IsPanelDocked(const String& PanelId) const;
+    NODISCARD bool IsPanelVisible(const String& PanelId) const;
+
     FEditorEngine*                    EditorEngine;
     TSharedPtr<FDockingArea>          DockingArea;
     TArray<TSharedPtr<FEditorPanel>>  Panels;

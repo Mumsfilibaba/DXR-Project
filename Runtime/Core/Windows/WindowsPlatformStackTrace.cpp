@@ -51,16 +51,9 @@ void FWindowsPlatformStackTrace::ReleaseSymbols()
     }
 }
 
-int32 FWindowsPlatformStackTrace::CaptureStackTrace(uint64* StackTrace, int32 MaxDepth)
+// StackWalk64 advances the context it is given, so the caller has to hand over a copy it can afford to lose
+static int32 WalkStack(HANDLE ThreadHandle, CONTEXT& Context, uint64* StackTrace, int32 MaxDepth)
 {
-    if (!InitializeSymbols())
-    {
-        return 0;
-    }
-
-    CONTEXT Context;
-    ::RtlCaptureContext(&Context);
-
     STACKFRAME64 StackFrame64;
     Memory::Memzero(&StackFrame64);
 
@@ -80,9 +73,8 @@ int32 FWindowsPlatformStackTrace::CaptureStackTrace(uint64* StackTrace, int32 Ma
 #endif
 
     HANDLE ProcessHandle = ::GetCurrentProcess();
-    HANDLE ThreadHandle = ::GetCurrentThread();
-    int32  CurrentDepth = 0;
-    
+    int32  CurrentDepth  = 0;
+
     // Reset last error
     ::SetLastError(0);
 
@@ -109,6 +101,40 @@ int32 FWindowsPlatformStackTrace::CaptureStackTrace(uint64* StackTrace, int32 Ma
         StackTrace[CurrentDepth++] = 0;
     }
 
+    return Depth;
+}
+
+int32 FWindowsPlatformStackTrace::CaptureStackTrace(uint64* StackTrace, int32 MaxDepth)
+{
+    if (!InitializeSymbols())
+    {
+        return 0;
+    }
+
+    CONTEXT Context;
+    ::RtlCaptureContext(&Context);
+
+    const int32 Depth = WalkStack(::GetCurrentThread(), Context, StackTrace, MaxDepth);
+
+    ReleaseSymbols();
+    return Depth;
+}
+
+int32 FWindowsPlatformStackTrace::CaptureThreadStackTrace(const FThreadStackContext& ThreadContext, uint64* StackTrace, int32 MaxDepth)
+{
+    if (!ThreadContext.ThreadHandle || !ThreadContext.RegisterState)
+    {
+        return 0;
+    }
+
+    if (!InitializeSymbols())
+    {
+        return 0;
+    }
+
+    CONTEXT Context = *reinterpret_cast<const CONTEXT*>(ThreadContext.RegisterState);
+    const int32 Depth = WalkStack(reinterpret_cast<HANDLE>(ThreadContext.ThreadHandle), Context, StackTrace, MaxDepth);
+
     ReleaseSymbols();
     return Depth;
 }
@@ -131,7 +157,6 @@ void FWindowsPlatformStackTrace::GetStackTraceEntryFromAddress(uint64 Address, F
     Symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
     Symbol->MaxNameLen   = FStackTraceEntry::MaxNameLength;
 
-    // Get function name.
     if (::SymFromAddr(ProcessHandle, Address, nullptr, Symbol))
     {
         int32 Offset = 0;

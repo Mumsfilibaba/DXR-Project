@@ -9,13 +9,6 @@
 #include "Core/Tasks/Tasks.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
-#include "Application/Application.h"
-#include "Application/Style/UIStyle.h"
-#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
-#include "Engine/Engine.h"
-#if EDITOR_BUILD
-    #include "Engine/EditorEngine.h"
-#endif
 #include "Engine/Resources/Model.h"
 #include "Renderer/Shaders/MaterialBindless.h"
 #include "Renderer/SceneRenderer.h"
@@ -170,13 +163,6 @@ static FAutoConsoleVariableRef CVarDrawLightProbes(
     GDrawLightProbes,
     EConsoleVariableFlags::Default);
 
-static bool GVSyncEnabled = false;
-static FAutoConsoleVariableRef CVarVSyncEnabled(
-    "Renderer.Feature.VerticalSync",
-    "Enables Vertical-Sync",
-    GVSyncEnabled,
-    EConsoleVariableFlags::Default);
-
 static bool GFrustumCullEnabled = true;
 static FAutoConsoleVariableRef CVarFrustumCullEnabled(
     "Renderer.Feature.FrustumCulling",
@@ -241,8 +227,6 @@ FSceneRenderer::FSceneRenderer()
     , RayTracingReflectionsPass(nullptr)
     , ReflectionDenoisePass(nullptr)
     , RayTracingPrimaryDebugPass(nullptr)
-    , LastFrameFinishedEvent(nullptr)
-    , ApplicationRenderer(nullptr)
     , TimestampQueries(nullptr)
     , CommandList()
 #if SUPPORT_VARIABLE_RATE_SHADING
@@ -257,24 +241,7 @@ FSceneRenderer::~FSceneRenderer()
 {
     FRHICommandListExecutor::Get().WaitForGPU();
 
-    if (LastFrameFinishedEvent)
-    {
-        FPlatformEvent::Recycle(LastFrameFinishedEvent);
-        LastFrameFinishedEvent = nullptr;
-    }
-
     CommandList.Reset();
-
-    if (FApplication::IsInitialized())
-    {
-        FApplication::Get().SetRenderer(nullptr);
-    }
-
-    if (ApplicationRenderer)
-    {
-        ApplicationRenderer->ReleaseRHI();
-        ApplicationRenderer.Reset();
-    }
 
     SAFE_DELETE(DepthPrePass);
     SAFE_DELETE(BasePass);
@@ -461,13 +428,6 @@ bool FSceneRenderer::Initialize()
         }
     }
 
-    ApplicationRenderer = MakeSharedPtr<FApplicationRenderer>();
-    if (!ApplicationRenderer->InitializeRHI())
-    {
-        return false;
-    }
-
-    FApplication::Get().SetRenderer(ApplicationRenderer);
     return true;
 }
 
@@ -621,7 +581,7 @@ bool FSceneRenderer::InitializeRenderPasses()
     return true;
 }
 
-void FSceneRenderer::RenderThread_BeginSceneCommandList(const FSceneRenderPacket& Packet)
+void FSceneRenderer::RenderThread_BeginSceneCommandList()
 {
     CHECK_RENDER_THREAD();
 
@@ -633,42 +593,8 @@ void FSceneRenderer::RenderThread_BeginSceneCommandList(const FSceneRenderPacket
     CommandList.BeginFrame();
     CommandList.PushEvent("Frame");
 
-    {
-        TRACE_SCOPE("Resize SwapChains");
-
-        TArray<FSwapChainResizeInfo> ResizeRequests;
-        {
-            TScopedLock Lock(SwapChainsToResizeCS);
-            ResizeRequests = ::Move(SwapChainsToResize);
-            SwapChainsToResize.Clear();
-        }
-
-        for (const FSwapChainResizeInfo& ResizeInfo : ResizeRequests)
-        {
-            if (ResizeInfo.HasPendingChange())
-            {
-                CommandList.ResizeSwapChain(ResizeInfo.SwapChain.Get(), ResizeInfo.Width, ResizeInfo.Height, ResizeInfo.Format, ResizeInfo.ColorSpace);
-            }
-        }
-    }
-
     // Begin capture GPU FrameTime
     FGPUProfiler::Get().BeginGPUFrame(CommandList);
-
-    if (Packet.SwapChain)
-    {
-        TRACE_SCOPE("Prepare SwapChain");
-
-        CommandList.AcquireNextBackBuffer(Packet.SwapChain.Get());
-
-        FRHITexture* BackBuffer = Packet.SwapChain->GetBackBuffer();
-        if (Packet.View.RenderTarget != BackBuffer)
-        {
-            const FFloatColor& Background = FUIStyle::GetDefault().Colors.WindowBackground;
-            CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::Undefined, ERHIResourceState::RenderTarget));
-            CommandList.ClearRenderTargetView(Packet.SwapChain->GetRenderTargetView(), Vector4(Background.R, Background.G, Background.B, Background.A));
-        }
-    }
 }
 
 void FSceneRenderer::RenderThread_RenderSceneFrame(const FSceneRenderPacket& Packet)
@@ -677,7 +603,7 @@ void FSceneRenderer::RenderThread_RenderSceneFrame(const FSceneRenderPacket& Pac
 
     FScene* CurrentScene = static_cast<FScene*>(Packet.View.Scene);
 
-    RenderThread_BeginSceneCommandList(Packet);
+    RenderThread_BeginSceneCommandList();
 
     if (CurrentScene)
     {
@@ -1548,150 +1474,6 @@ bool FSceneRenderer::PollEditorObjectPickRectResult(FScene* Scene, TArray<uint32
     OutObjectIDs.Clear();
     return false;
 #endif
-}
-
-void FSceneRenderer::RecordUI()
-{
-    CHECK_MAIN_THREAD();
-
-    RHI_EVENT_SCOPE(UICommandList, "UI Render");
-
-    {
-        TRACE_SCOPE("Record UI");
-
-        GPU_TRACE_SCOPE(UICommandList, "UI Render");
-
-    #if SUPPORT_VARIABLE_RATE_SHADING
-        if (RHISupportsVariableRateShading())
-        {
-            UICommandList.SetShadingRate(EShadingRate::VRS_1x1);
-            UICommandList.SetShadingRateImage(nullptr);
-        }
-    #endif
-
-        if (IImguiPlugin::IsEnabled())
-        {
-            IImguiPlugin::Get().Draw(UICommandList);
-        }
-
-        RecordApplicationUI();
-    }
-}
-
-void FSceneRenderer::RecordApplicationUI()
-{
-    if (!ApplicationRenderer)
-    {
-        return;
-    }
-
-    ApplicationRenderer->SyncWindowSurfaces(FEngine::Get() ? FEngine::Get()->GetEngineWindow() : nullptr);
-
-    FApplication::Get().DrawWindows();
-
-    if (TSharedPtr<FSceneViewport> SceneViewport = FEngine::Get() ? FEngine::Get()->GetSceneViewport() : nullptr)
-    {
-        ApplicationRenderer->Render(UICommandList, SceneViewport->GetRHISwapChain().Get());
-    }
-
-    ApplicationRenderer->RenderWindowSurfaces(UICommandList);
-}
-
-void FSceneRenderer::SubmitUIAndPresent(const FSceneRenderPacket& Packet)
-{
-    CHECK_MAIN_THREAD();
-
-    {
-        RHI_EVENT_SCOPE(UICommandList, "UI Viewports");
-        TRACE_SCOPE("Render UI Viewports");
-
-        GPU_TRACE_SCOPE(UICommandList, "UI Viewports");
-
-        if (IImguiPlugin::IsEnabled())
-        {
-            IImguiPlugin::Get().DrawViewports(UICommandList);
-        }
-    }
-
-    FGPUProfiler::Get().EndGPUFrame(UICommandList);
-
-    if (Packet.SwapChain)
-    {
-        TRACE_SCOPE("Present SwapChain");
-
-        FRHITexture* BackBuffer = Packet.SwapChain->GetBackBuffer();
-        UICommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::RenderTarget, ERHIResourceState::Present));
-        UICommandList.PresentSwapChain(Packet.SwapChain.Get(), GVSyncEnabled);
-    }
-
-    if (ApplicationRenderer)
-    {
-        ApplicationRenderer->PresentWindowSurfaces(UICommandList);
-    }
-
-    UICommandList.EndFrame();
-
-    UICommandList.FlushDeletedResources();
-
-    {
-        TRACE_SCOPE("ExecuteCommandList");
-
-        if (LastFrameFinishedEvent)
-        {
-            LastFrameFinishedEvent->Wait(FTimespan::Infinity());
-            FPlatformEvent::Recycle(LastFrameFinishedEvent);
-            LastFrameFinishedEvent = nullptr;
-        }
-
-        LastFrameFinishedEvent = FPlatformEvent::Create(false);
-        if (LastFrameFinishedEvent)
-        {
-            UICommandList.SetEvent(LastFrameFinishedEvent);
-        }
-
-        FRHICommandListExecutor::Get().ExecuteCommandList(UICommandList);
-    }
-}
-
-void FSceneRenderer::ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth, uint32 InHeight, EFormat InFormat, EColorSpace InColorSpace)
-{
-    if (!SwapChain)
-    {
-        return;
-    }
-
-    // Queued from the main thread (window/ImGui resize callbacks); consumed on the render thread.
-    TScopedLock Lock(SwapChainsToResizeCS);
-
-    for (FSwapChainResizeInfo& Existing : SwapChainsToResize)
-    {
-        if (Existing.SwapChain == SwapChain)
-        {
-            if (InWidth  > 0u)
-            {
-                Existing.Width = InWidth;
-            }
-
-            if (InHeight > 0u)
-            {
-                Existing.Height = InHeight;
-            }
-
-            if (InFormat != EFormat::Unknown)
-            {
-                Existing.Format = InFormat;
-            }
-
-            if (InColorSpace != EColorSpace::Unknown)
-            {
-                Existing.ColorSpace = InColorSpace;
-            }
-
-            return;
-        }
-    }
-
-    SwapChainsToResize.Emplace(SwapChain, InWidth, InHeight, InFormat, InColorSpace);
 }
 
 void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)

@@ -3,9 +3,6 @@
 #include "Core/Platform/PlatformEvent.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Containers/Queue.h"
-#include "Application/Events.h"
-#include "Application/InputHandler.h"
-#include "ApplicationRenderer/ApplicationRenderer.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/World.h"
 #include "Engine/Resources/Model.h"
@@ -122,31 +119,6 @@ private:
     uint32       FrameIndex;
 };
 
-struct FSwapChainResizeInfo
-{
-    FSwapChainResizeInfo() = default;
-
-    FSwapChainResizeInfo(FRHISwapChainRef InSwapChain, uint32 InWidth, uint32 InHeight, EFormat InFormat = EFormat::Unknown, EColorSpace InColorSpace = EColorSpace::Unknown)
-        : SwapChain(InSwapChain)
-        , Width(InWidth)
-        , Height(InHeight)
-        , Format(InFormat)
-        , ColorSpace(InColorSpace)
-    {
-    }
-
-    NODISCARD bool HasPendingChange() const
-    {
-        return Width != 0u || Height != 0u || Format != EFormat::Unknown || ColorSpace != EColorSpace::Unknown;
-    }
-
-    FRHISwapChainRef SwapChain  = nullptr;
-    uint32           Width      = 0;                    // 0 == keep current
-    uint32           Height     = 0;                    // 0 == keep current
-    EFormat          Format     = EFormat::Unknown;     // Unknown == keep current
-    EColorSpace      ColorSpace = EColorSpace::Unknown; // Unknown == keep current
-};
-
 class FSceneRenderer
 {
 public:
@@ -160,22 +132,12 @@ public:
     void RenderThread_RenderSceneFrame(const FSceneRenderPacket& Packet);
     void RenderThread_PrepareResources(const FSceneRenderView& SceneRenderView, FScene* Scene);
 
-    // Records ImGui draw data into the UI command list.
-    void RecordUI();
-
-    // Records the Application element library on top of the ImGui pass.
-    void RecordApplicationUI();
-
-    // Dispatches the UI command list plus present for the frame described by Packet.
-    void SubmitUIAndPresent(const FSceneRenderPacket& Packet);
-
     void RequestEditorObjectPick(FScene* Scene, uint32 PixelX, uint32 PixelY, uint64 RequestId);
     bool PollEditorObjectPickResult(FScene* Scene, FEditorPickResult& OutResult);
 
     void RequestEditorObjectPickRect(FScene* Scene, uint32 MinX, uint32 MinY, uint32 MaxX, uint32 MaxY);
     bool PollEditorObjectPickRectResult(FScene* Scene, TArray<uint32>& OutObjectIDs);
- 
-    void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth, uint32 InHeight, EFormat InFormat = EFormat::Unknown, EColorSpace InColorSpace = EColorSpace::Unknown); 
+
     void ResizeResources(uint32 InWidth, uint32 InHeight);
 
     uint32 GetRenderWidth() const
@@ -228,7 +190,7 @@ private:
     bool CreateRayTracingResources(uint32 Width, uint32 Height);
 
     void RenderThread_PrepareCameraData(const FSceneRenderView& SceneRenderView, FScene* Scene);
-    void RenderThread_BeginSceneCommandList(const FSceneRenderPacket& Packet);
+    void RenderThread_BeginSceneCommandList();
     void RenderThread_RenderSceneView(const FSceneRenderView& SceneRenderView, const TArray<uint32>& SelectedObjectIDs);
 #if EDITOR_BUILD
     void RenderThread_ProcessEditorObjectPickRequests(FRHICommandList& InCommandList, FFrameResources& InResources, FScene* CurrentScene);
@@ -274,18 +236,13 @@ private:
     FReflectionDenoisePass*          ReflectionDenoisePass;
     FRayTracingPrimaryDebugPass*     RayTracingPrimaryDebugPass;
     bool                             bRayTracingWasActive = false; // tracks the RT active->inactive edge for BLAS teardown
-    IPlatformEvent*                  LastFrameFinishedEvent;
-    TSharedPtr<FApplicationRenderer> ApplicationRenderer;
     FRHIQueryRef                     TimestampQueries;
     FRHICommandList                  CommandList;
-    FRHICommandList                  UICommandList;
 #if SUPPORT_VARIABLE_RATE_SHADING
     FRHITextureRef                   ShadingImage;
     FRHIComputePipelineStateRef      ShadingRatePipeline;
     FRHIComputeShaderRef             ShadingRateShader;
 #endif
-    TArray<FSwapChainResizeInfo>     SwapChainsToResize;
-    FCriticalSection                 SwapChainsToResizeCS;
 
 #if EDITOR_BUILD
     struct FEditorObjectPickRequest

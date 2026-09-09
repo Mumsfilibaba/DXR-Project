@@ -14,7 +14,6 @@
 class FWorld;
 class FRHITexture;
 struct IGPUProfiler;
-typedef TSharedRef<class FRHISwapChain> FRHISwapChainRef;
 
 struct FSceneRenderView
 {
@@ -67,7 +66,6 @@ ENUM_CLASS_OPERATORS(FSceneRenderView::EDebugViewChannel);
 struct FSceneRenderPacket
 {
     FSceneRenderView View;
-    FRHISwapChainRef SwapChain = nullptr;
     TArray<uint32>   SelectedObjectIDs;
     uint64           FrameIndex = 0;
 };
@@ -101,27 +99,12 @@ public:
     virtual void Tick() = 0;
 
     /**
-     * @brief Main thread: Finish the previously kicked frame.
-     * Waits for the in-flight scene-render task (its scene command list is already on the RHI FIFO),
-     * then dispatches the UI/present command list recorded for that frame. Keeps one GPU frame in
-     * flight. A no-op if no frame is pending (first frame / after a flush).
+     * @brief Main thread: Wait for the in-flight scene-render task, whose command list is already on the
+     * RHI FIFO, so the render thread no longer touches any of the resources the frame named. Keeps exactly
+     * one scene frame in flight. A no-op if no frame is pending, which is the case on the first tick and
+     * after a flush.
      */
     virtual void FinishPreviousFrame() = 0;
-
-    /**
-     * @brief Main thread: Drain the previously kicked frame without presenting it.
-     * Waits for the in-flight scene-render task (so the render thread no longer touches any
-     * resources) and clears the pending-frame state, but does NOT dispatch the UI/present command
-     * list. Used at shutdown when the window/surface is being torn down and the owed frame is unseen.
-     * A no-op if no frame is pending.
-     */
-    virtual void DiscardPendingFrame() = 0;
-
-    /**
-     * @brief Main thread: Record ImGui draw data for the current frame into the UI command list.
-     * Kept on the main thread so editor multi-viewport OS-window callbacks stay on the main thread.
-     */
-    virtual void RecordUI() = 0;
 
     /**
      * @brief Main thread: Kick the scene render for the current frame onto the render thread.
@@ -129,7 +112,7 @@ public:
      * list and dispatches it to the RHI FIFO. Returns immediately so the main thread can advance.
      */
     virtual void KickSceneRender(FSceneRenderPacket&& Packet) = 0;
- 
+
     /** @brief Request an async editor pick at the given pixel (in render target space). */
     virtual void RequestEditorObjectPick(IScene* Scene, uint32 PixelX, uint32 PixelY, uint64 RequestId) = 0;
  
@@ -141,14 +124,6 @@ public:
 
     /** @brief Poll for a completed editor rectangle pick. Returns true if a result was produced, filling in every unique ObjectID found. */
     virtual bool PollEditorObjectPickRectResult(IScene* Scene, TArray<uint32>& OutObjectIDs) = 0;
- 
-    /**
-     * @brief Queue an extent/format/color-space change for a swap-chain. The change is coalesced 
-     * with any other pending request for the same swap-chain and applied as a single RHI command 
-     * at the start of the next frame.
-     */
-    virtual void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth, uint32 InHeight, 
-        EFormat InFormat = EFormat::Unknown, EColorSpace InColorSpace = EColorSpace::Unknown) = 0; 
 
     /** @brief Release the Renderer from the EngineLoop */
     virtual void Release() = 0;

@@ -11,6 +11,9 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/Paths.h"
 #include "Core/Platform/PlatformFile.h"
+#include "Application/Docking/DockInputHandler.h"
+#include "Application/Docking/DockLayoutFile.h"
+#include "Application/Docking/DockWindowManager.h"
 #include "Application/Docking/DockingArea.h"
 #include "Application/Elements/Box.h"
 #include "Application/Elements/Separator.h"
@@ -59,7 +62,7 @@ bool FEditorShell::Initialize()
 
     FDockingArea::FDesc DockDesc;
     DockDesc.Font          = FEditorStyle::GetFonts().Body;
-    DockDesc.bAllowTearOut = false;
+    DockDesc.bAllowTearOut = true;
     DockDesc.OnPanelClosed = FOnPanelClosed::CreateRaw(this, &FEditorShell::OnPanelClosed);
 
     DockingArea = FDockingArea::Create(DockDesc);
@@ -67,6 +70,12 @@ bool FEditorShell::Initialize()
     {
         return false;
     }
+
+    FDockWindowManager::FDesc HostDesc;
+    HostDesc.MainArea = DockingArea;
+    HostDesc.AreaDesc = DockDesc;
+
+    FDockWindowManager::Get().Initialize(HostDesc);
 
     Registry = MakeSharedPtr<FEditorPanelRegistry>(EditorEngine, DockingArea);
     if (!Registry->RegisterAll())
@@ -112,6 +121,7 @@ bool FEditorShell::Initialize()
     EngineWindow->SetContent(Root);
 
     MenuInputHandler   = FMenuInputHandler::Register();
+    DockInputHandler   = FDockInputHandler::Register();
     EditorInputHandler = FEditorInputHandler::Register(EditorEngine, Registry);
     return true;
 }
@@ -140,13 +150,46 @@ bool FEditorShell::RestoreLayout()
         }
     }
 
-    return DockingArea->RestoreLayoutFromFile(LayoutFilename);
+    TArray<FDockWindowLayout> Windows;
+    if (!FDockLayoutFile::Load(LayoutFilename, Windows))
+    {
+        return false;
+    }
+
+    DockingArea->RestoreLayout(Windows[0].Root);
+
+    TArray<FDockWindowLayout> Hosts;
+    for (int32 Index = 1; Index < Windows.Size(); ++Index)
+    {
+        Hosts.Add(Windows[Index]);
+    }
+
+    FDockWindowManager::Get().RestoreHostLayouts(Hosts);
+    return true;
 }
 
 void FEditorShell::SaveLayout()
 {
+    FDockWindowLayout MainLayout;
+    MainLayout.Root = DockingArea->SaveLayout();
+
+    if (TSharedPtr<FWindow> EngineWindow = EditorEngine ? EditorEngine->GetEngineWindow() : nullptr)
+    {
+        MainLayout.Title    = EngineWindow->GetTitle();
+        MainLayout.Position = EngineWindow->GetPosition();
+        MainLayout.Size     = EngineWindow->GetSize();
+    }
+
+    TArray<FDockWindowLayout> Windows;
+    Windows.Add(MainLayout);
+
+    if (FDockWindowManager::IsInitialized())
+    {
+        Windows.Append(FDockWindowManager::Get().SaveHostLayouts());
+    }
+
     const String LayoutFilename = GetLayoutFilename();
-    if (!DockingArea->SaveLayoutToFile(LayoutFilename))
+    if (!FDockLayoutFile::Save(LayoutFilename, Windows))
     {
         return;
     }
@@ -167,6 +210,12 @@ void FEditorShell::Release()
         EditorInputHandler.Reset();
     }
 
+    if (DockInputHandler)
+    {
+        FDockInputHandler::Unregister(DockInputHandler);
+        DockInputHandler.Reset();
+    }
+
     if (MenuInputHandler)
     {
         FMenuInputHandler::Unregister(MenuInputHandler);
@@ -177,6 +226,8 @@ void FEditorShell::Release()
     {
         SaveLayout();
     }
+
+    FDockWindowManager::Shutdown();
 
     if (TSharedPtr<FWindow> EngineWindow = EditorEngine ? EditorEngine->GetEngineWindow() : nullptr)
     {
@@ -210,6 +261,11 @@ void FEditorShell::Release()
 void FEditorShell::Tick(float DeltaTime)
 {
     FMenuInputHandler::Tick(DeltaTime);
+
+    if (FDockWindowManager::IsInitialized())
+    {
+        FDockWindowManager::Get().Tick();
+    }
 
     if (Registry)
     {

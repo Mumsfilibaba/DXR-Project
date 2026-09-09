@@ -115,7 +115,7 @@ FEventResponse FTab::OnMouseButtonUp(const FCursorEvent& CursorEvent)
     const FEventResponse Response = FInteractiveElement::OnMouseButtonUp(CursorEvent);
     if (bWasPressed && OwnerStrip)
     {
-        OwnerStrip->OnTabReleased(this, CursorEvent.GetClientPosition());
+        OwnerStrip->OnTabReleased(this, CursorEvent.GetClientPosition(), CursorEvent.GetScreenPosition());
     }
 
     return Response;
@@ -154,7 +154,7 @@ void FTab::OnDragged(const FCursorEvent& CursorEvent)
 {
     if (OwnerStrip)
     {
-        OwnerStrip->OnTabDragged(this, CursorEvent.GetClientPosition());
+        OwnerStrip->OnTabDragged(this, CursorEvent.GetClientPosition(), CursorEvent.GetScreenPosition());
     }
 }
 
@@ -351,11 +351,11 @@ void FTabStrip::OnTabPressed(FTab* Tab, const IntVector2& ClientPosition)
     OnTabActivatedDelegate.ExecuteIfBound(Tab->GetPanelId());
 }
 
-void FTabStrip::OnTabDragged(FTab* Tab, const IntVector2& ClientPosition)
+void FTabStrip::OnTabDragged(FTab* Tab, const IntVector2& ClientPosition, const IntVector2& ScreenPosition)
 {
     if (!DetachedPanelId.IsEmpty())
     {
-        OnTabDragMovedDelegate.ExecuteIfBound(DetachedPanelId, ClientPosition);
+        OnTabDragMovedDelegate.ExecuteIfBound(DetachedPanelId, ClientPosition, ScreenPosition);
         return;
     }
 
@@ -375,7 +375,7 @@ void FTabStrip::OnTabDragged(FTab* Tab, const IntVector2& ClientPosition)
         DetachedPanelId = DraggedPanelId;
         DraggedPanelId.Clear();
 
-        OnTabDragDetachedDelegate.ExecuteIfBound(DetachedPanelId, ClientPosition);
+        OnTabDragDetachedDelegate.ExecuteIfBound(DetachedPanelId, ClientPosition, ScreenPosition);
         return;
     }
 
@@ -393,7 +393,7 @@ void FTabStrip::OnTabDragged(FTab* Tab, const IntVector2& ClientPosition)
     }
 }
 
-void FTabStrip::OnTabReleased(FTab* Tab, const IntVector2& ClientPosition)
+void FTabStrip::OnTabReleased(FTab* Tab, const IntVector2& ClientPosition, const IntVector2& ScreenPosition)
 {
     UNREFERENCED_VARIABLE(Tab);
 
@@ -407,7 +407,7 @@ void FTabStrip::OnTabReleased(FTab* Tab, const IntVector2& ClientPosition)
     const String FinishedPanelId = DetachedPanelId;
     DetachedPanelId.Clear();
 
-    OnTabDragFinishedDelegate.ExecuteIfBound(FinishedPanelId, ClientPosition);
+    OnTabDragFinishedDelegate.ExecuteIfBound(FinishedPanelId, ClientPosition, ScreenPosition);
 }
 
 void FTabStrip::OnTabClicked(FTab* Tab)

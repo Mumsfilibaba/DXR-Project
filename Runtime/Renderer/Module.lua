@@ -8,11 +8,7 @@ RendererModule.bUsePrecompiledHeaders = true
 RendererModule.AddModules({
     "Core",
     "CoreApplication",
-    "Application",
-    "ApplicationRenderer",
     "RHI",
     "Engine",
     "RendererCore",
-    "ImGui",
-    "ImGuiPlugin",
 })

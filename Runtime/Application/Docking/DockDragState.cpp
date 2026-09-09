@@ -30,12 +30,17 @@ void FDockDragState::Shutdown()
 
 FDockDragState::FDockDragState()
     : DraggedPanelId()
+    , DraggedPanelLabel()
+    , DraggedPanelContent(nullptr)
     , SourceArea(nullptr)
     , TargetArea(nullptr)
     , TargetPanelId()
     , TargetDirection(EDockDirection::Center)
     , CursorPosition()
     , RegisteredAreas()
+    , OnDragBeganDelegate()
+    , OnDropOutsideDelegate()
+    , OnDragEndedDelegate()
 {
 }
 
@@ -48,9 +53,27 @@ void FDockDragState::BeginDrag(const String& PanelId, FDockingArea* InSourceArea
         return;
     }
 
-    DraggedPanelId = PanelId;
-    SourceArea     = InSourceArea;
-    CursorPosition = ScreenPosition;
+    DraggedPanelId      = PanelId;
+    DraggedPanelLabel   = PanelId;
+    DraggedPanelContent = nullptr;
+    SourceArea          = InSourceArea;
+    CursorPosition      = ScreenPosition;
+
+    if (InSourceArea)
+    {
+        String                     Label;
+        TSharedPtr<FVisualElement> Panel;
+
+        if (InSourceArea->GetPanelRegistration(PanelId, Label, Panel))
+        {
+            DraggedPanelLabel   = Label.IsEmpty() ? PanelId : Label;
+            DraggedPanelContent = Panel;
+        }
+
+        InSourceArea->UnregisterPanel(PanelId);
+    }
+
+    OnDragBeganDelegate.ExecuteIfBound(GetDraggedPanel(), ScreenPosition);
 
     UpdateDrag(ScreenPosition);
 }
@@ -88,46 +111,65 @@ void FDockDragState::EndDrag()
         return;
     }
 
-    const String         PanelId   = DraggedPanelId;
-    FDockingArea* const  Area      = TargetArea;
-    FDockingArea* const  Origin    = SourceArea;
-    const String         TargetId  = TargetPanelId;
-    const EDockDirection Direction = TargetDirection;
+    const FDockDragPanel Panel        = GetDraggedPanel();
+    FDockingArea* const  Area         = TargetArea;
+    const String         TargetId     = TargetPanelId;
+    const EDockDirection Direction    = TargetDirection;
+    const IntVector2     DropPosition = CursorPosition;
 
     DraggedPanelId.Clear();
+    DraggedPanelLabel.Clear();
+    DraggedPanelContent = nullptr;
 
     SourceArea = nullptr;
 
     ClearTarget();
 
-    if (!Area)
+    if (Area)
     {
-        return;
+        Area->RegisterPanel(Panel.PanelId, Panel.Label, Panel.Content);
+        Area->DockPanel(Panel.PanelId, TargetId, Direction);
+    }
+    else
+    {
+        OnDropOutsideDelegate.ExecuteIfBound(Panel, DropPosition);
     }
 
-    if (Origin && Origin != Area)
-    {
-        String                     Label;
-        TSharedPtr<FVisualElement> Panel;
-
-        if (Origin->GetPanelRegistration(PanelId, Label, Panel))
-        {
-            Area->RegisterPanel(PanelId, Label, Panel);
-        }
-
-        Origin->UnregisterPanel(PanelId);
-    }
-
-    Area->DockPanel(PanelId, TargetId, Direction);
+    OnDragEndedDelegate.ExecuteIfBound();
 }
 
 void FDockDragState::CancelDrag()
 {
+    const bool bWasDragging = IsDragging();
+    if (bWasDragging && SourceArea)
+    {
+        SourceArea->RegisterPanel(DraggedPanelId, DraggedPanelLabel, DraggedPanelContent);
+        SourceArea->DockPanel(DraggedPanelId, String(), EDockDirection::Center);
+    }
+
     DraggedPanelId.Clear();
+    DraggedPanelLabel.Clear();
+    DraggedPanelContent = nullptr;
 
     SourceArea = nullptr;
 
     ClearTarget();
+
+    if (bWasDragging)
+    {
+        OnDragEndedDelegate.ExecuteIfBound();
+    }
+}
+
+FDockDragPanel FDockDragState::GetDraggedPanel() const
+{
+    FDockDragPanel Panel;
+    Panel.PanelId    = DraggedPanelId;
+    Panel.Label      = DraggedPanelLabel;
+    Panel.Content    = DraggedPanelContent;
+    Panel.SourceArea = SourceArea;
+
+    return Panel;
 }
 
 void FDockDragState::RegisterArea(FDockingArea* Area)
@@ -151,6 +193,21 @@ void FDockDragState::UnregisterArea(FDockingArea* Area)
     {
         ClearTarget();
     }
+}
+
+void FDockDragState::SetOnDragBegan(const FOnDockDragBegan& InOnDragBegan)
+{
+    OnDragBeganDelegate = InOnDragBegan;
+}
+
+void FDockDragState::SetOnDropOutside(const FOnDockDropOutside& InOnDropOutside)
+{
+    OnDropOutsideDelegate = InOnDropOutside;
+}
+
+void FDockDragState::SetOnDragEnded(const FOnDockDragEnded& InOnDragEnded)
+{
+    OnDragEndedDelegate = InOnDragEnded;
 }
 
 void FDockDragState::ClearTarget()

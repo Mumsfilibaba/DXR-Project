@@ -12,6 +12,15 @@
 /** @brief Event triggered when the monitor configuration changes (e.g., adding or removing displays). */
 DECLARE_EVENT(FOnMonitorConfigChangedEvent, FApplication);
 
+/** @brief Delegate called to repaint a window while it is being resized, after the window carries the new size. */
+DECLARE_DELEGATE(FOnWindowLiveResize, const TSharedPtr<FWindow>& /*Window*/);
+
+/** @brief Event raised on both edges of an OS-driven window drag or resize. */
+DECLARE_EVENT(FOnWindowInteractionEvent, FApplication, const TSharedPtr<FWindow>& /*Window*/, EWindowInteraction /*Interaction*/, bool /*bIsBeginning*/);
+
+/** @brief Event raised once a window's tree is drawn, for anything painting over it without being in it. */
+DECLARE_EVENT(FOnWindowPaintingEvent, FApplication, const TSharedPtr<FWindow>& /*Window*/);
+
 class APPLICATION_API FApplication : public IPlatformApplicationMessageHandler , public TSharedFromThis<FApplication>
 {
 public:
@@ -98,7 +107,10 @@ public:
     virtual bool OnHighPrecisionMouseInput(int32 MouseX, int32 MouseY) override final;
 
     virtual bool OnWindowResized(const TSharedRef<IPlatformWindow>& Window, uint32 Width, uint32 Height) override final;
-    virtual bool OnWindowResizing(const TSharedRef<IPlatformWindow>& Window) override final;
+    virtual bool OnWindowResizing(const TSharedRef<IPlatformWindow>& Window, uint32 Width, uint32 Height) override final;
+    virtual bool OnOSPaint(const TSharedRef<IPlatformWindow>& Window) override final;
+    virtual bool BeginWindowInteraction(const TSharedRef<IPlatformWindow>& Window, EWindowInteraction Interaction) override final;
+    virtual bool EndWindowInteraction(const TSharedRef<IPlatformWindow>& Window, EWindowInteraction Interaction) override final;
     virtual bool OnWindowMoved(const TSharedRef<IPlatformWindow>& Window, int32 MouseX, int32 MouseY) override final;
     virtual bool OnWindowFocusLost(const TSharedRef<IPlatformWindow>& Window) override final;
     virtual bool OnWindowFocusGained(const TSharedRef<IPlatformWindow>& Window) override final;
@@ -136,11 +148,58 @@ public:
     void DrawWindows();
 
     /**
+     * @brief Records a single window into the renderer, laying it out first when its layout is stale, for a
+     * repaint of one window outside the frame the others are recorded in.
+     *
+     * @param InWindow The window to record, which is ignored when it is hidden or no renderer is registered.
+     */
+    void DrawWindow(const TSharedPtr<FWindow>& InWindow);
+
+    /**
      * @brief Sets the renderer the windows record into.
      *
      * @param InRenderer The renderer, or null to stop drawing.
      */
     void SetRenderer(const TSharedPtr<IApplicationRenderer>& InRenderer);
+
+    /**
+     * @brief Sets the delegate called on the main thread to repaint a window the OS has asked for while it owns
+     * the message pump, which is where a repaint scoped to a live resize is driven from. The window already
+     * carries the new size when it runs. Only called from the platform paths that already run on the main
+     * thread, since the delegate reads the element tree.
+     *
+     * @param InOnWindowLiveResize The delegate to set, or an unbound one to stop being called.
+     */
+    void SetOnWindowLiveResize(const FOnWindowLiveResize& InOnWindowLiveResize);
+
+    /** @return The event raised on both edges of an OS-driven window drag or resize. */
+    NODISCARD FORCEINLINE FOnWindowInteractionEvent& GetOnWindowInteractionEvent()
+    {
+        return OnWindowInteractionEvent;
+    }
+
+    /**
+     * @return The event raised once a window's tree is drawn and before the deferred paints are drained,
+     * which is where a subscriber calls FWindow::QueueDeferredPainting to paint over that window.
+     */
+    NODISCARD FORCEINLINE FOnWindowPaintingEvent& GetOnWindowPaintingEvent()
+    {
+        return OnWindowPaintingEvent;
+    }
+
+    /** @return The window the OS is running a modal drag or resize loop for, or null when there is none. */
+    NODISCARD TSharedPtr<FWindow> GetInteractingWindow();
+
+    /**
+     * @brief Gets what the OS is currently doing to a window, which only means anything while
+     * GetInteractingWindow reports one.
+     *
+     * @return The kind of the interaction in progress.
+     */
+    NODISCARD FORCEINLINE EWindowInteraction GetWindowInteraction() const
+    {
+        return WindowInteraction;
+    }
 
     /** @return The renderer the windows record into, or null when none is registered. */
     NODISCARD FORCEINLINE TSharedPtr<IApplicationRenderer> GetRenderer() const
@@ -452,6 +511,7 @@ private:
     void ResolveMouseDispatchPath(FElementPath& OutPath);
     void UpdateCursor();
     IntVector2 GetClientOrigin();
+    void RecordWindow(const TSharedPtr<FWindow>& InWindow);
 
     TSharedPtr<IPlatformApplication>   PlatformApplication;
     TSet<EKeyboardKeyName::Type>       PressedKeys;
@@ -463,6 +523,11 @@ private:
     TSharedPtr<IApplicationRenderer>   Renderer;
     TArray<TSharedPtr<FInputHandler>>  InputHandlers;
     FOnMonitorConfigChangedEvent       OnMonitorConfigChangedEvent;
+    FOnWindowLiveResize                OnWindowLiveResizeDelegate;
+    FOnWindowInteractionEvent          OnWindowInteractionEvent;
+    FOnWindowPaintingEvent             OnWindowPaintingEvent;
+    TWeakPtr<FWindow>                  InteractingWindow;
+    EWindowInteraction                 WindowInteraction;
     TWeakPtr<FWindow>                  FocusWindow;
     TWeakPtr<FVisualElement>           MouseCaptor;
     IntVector2                         LastCursorPosition;

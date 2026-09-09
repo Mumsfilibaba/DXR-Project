@@ -1,5 +1,6 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Application/Application.h"
+#include "Application/IApplicationRenderer.h"
 #include "Application/Elements/Viewport.h"
 #include "Engine/World/Actors/PlayerInput.h"
 #include "Engine/World/Components/CameraComponent.h"
@@ -52,25 +53,18 @@ bool FSceneViewport::InitializeRHI()
         return false;
     }
 
-    const IntVector2 WindowSize = Window->GetSize();
-    FRHISwapChainDesc SwapChainDesc;
-    SwapChainDesc.Width        = static_cast<uint16>(WindowSize.X);
-    SwapChainDesc.Height       = static_cast<uint16>(WindowSize.Y);
-    SwapChainDesc.WindowHandle = Window->GetPlatformWindow()->GetPlatformHandle();
-    SwapChainDesc.ColorFormat  = EFormat::Unknown;
-    SwapChainDesc.ColorSpace   = EColorSpace::Unknown;
-    SwapChainDesc.Usage        = ESwapChainUsageFlags::RenderTarget;
-    SwapChainDesc.bFramePacing = true;
-
-    FRHISwapChainRef NewSwapChain = RHI::CreateSwapChain(SwapChainDesc);
-    if (!NewSwapChain)
+    TSharedPtr<IApplicationRenderer> Renderer = FApplication::Get().GetRenderer();
+    if (!Renderer)
     {
-        DEBUG_BREAK();
+        LOG_ERROR("[FSceneViewport]: No application renderer to take the window's swap chain from");
         return false;
     }
-    else
+
+    RHISwapChain = Renderer->GetWindowSwapChain(Window);
+    if (!RHISwapChain)
     {
-        RHISwapChain = NewSwapChain;
+        LOG_ERROR("[FSceneViewport]: The application renderer holds no surface for the host window");
+        return false;
     }
 
     return true;
@@ -78,7 +72,6 @@ bool FSceneViewport::InitializeRHI()
 
 void FSceneViewport::ReleaseRHI()
 {
-    CHECK(RHISwapChain->GetRefCount() == 1);
     RHISwapChain.Reset();
 }
 

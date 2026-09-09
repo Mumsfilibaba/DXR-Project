@@ -13,6 +13,7 @@
 #include "Engine/EngineUI/EditorUI/Panels/EditorStatsPanel.h"
 #include "Engine/EngineUI/EditorUI/Panels/EditorViewportPanel.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Application/Docking/DockWindowManager.h"
 #include "Application/Docking/DockingArea.h"
 
 FEditorPanelRegistry::FEditorPanelRegistry(FEditorEngine* InEditorEngine, const TSharedPtr<FDockingArea>& InDockingArea)
@@ -128,17 +129,37 @@ void FEditorPanelRegistry::Release()
     DockingArea.Reset();
 }
 
+bool FEditorPanelRegistry::IsPanelDocked(const String& PanelId) const
+{
+    if (DockingArea && DockingArea->IsPanelDocked(PanelId))
+    {
+        return true;
+    }
+
+    return FDockWindowManager::IsInitialized() && FDockWindowManager::Get().IsPanelDockedAnywhere(PanelId);
+}
+
+bool FEditorPanelRegistry::IsPanelVisible(const String& PanelId) const
+{
+    if (DockingArea && DockingArea->IsPanelVisible(PanelId))
+    {
+        return true;
+    }
+
+    return FDockWindowManager::IsInitialized() && FDockWindowManager::Get().IsPanelVisibleAnywhere(PanelId);
+}
+
 void FEditorPanelRegistry::Tick(float DeltaTime)
 {
     for (const TSharedPtr<FEditorPanel>& Panel : Panels)
     {
-        const bool bIsVisible = DockingArea && DockingArea->IsPanelVisible(Panel->GetPanelId());
+        const bool bIsVisible = IsPanelVisible(Panel->GetPanelId());
         if (bIsVisible != Panel->IsVisible())
         {
             Panel->OnVisibilityChanged(bIsVisible);
         }
 
-        Panel->SetOpen(DockingArea && DockingArea->IsPanelDocked(Panel->GetPanelId()));
+        Panel->SetOpen(IsPanelDocked(Panel->GetPanelId()));
         Panel->Tick(DeltaTime);
     }
 }
@@ -156,6 +177,12 @@ void FEditorPanelRegistry::ShowPanel(const String& PanelId)
     TSharedPtr<FEditorPanel> Panel = FindPanel(PanelId);
     if (!Panel || !DockingArea)
     {
+        return;
+    }
+
+    if (FDockWindowManager::IsInitialized() && FDockWindowManager::Get().FocusPanelInHost(PanelId))
+    {
+        Panel->SetOpen(true);
         return;
     }
 

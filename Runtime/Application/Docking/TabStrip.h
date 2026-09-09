@@ -10,9 +10,9 @@ class FTabStrip;
 DECLARE_DELEGATE(FOnTabActivated, const String& /*PanelId*/);
 DECLARE_DELEGATE(FOnTabClosed, const String& /*PanelId*/);
 DECLARE_DELEGATE(FOnTabReordered, const String& /*PanelId*/, int32 /*NewIndex*/);
-DECLARE_DELEGATE(FOnTabDragDetached, const String& /*PanelId*/, const IntVector2& /*ClientPosition*/);
-DECLARE_DELEGATE(FOnTabDragMoved, const String& /*PanelId*/, const IntVector2& /*ClientPosition*/);
-DECLARE_DELEGATE(FOnTabDragFinished, const String& /*PanelId*/, const IntVector2& /*ClientPosition*/);
+DECLARE_DELEGATE(FOnTabDragDetached, const String& /*PanelId*/, const IntVector2& /*ClientPosition*/, const IntVector2& /*ScreenPosition*/);
+DECLARE_DELEGATE(FOnTabDragMoved, const String& /*PanelId*/, const IntVector2& /*ClientPosition*/, const IntVector2& /*ScreenPosition*/);
+DECLARE_DELEGATE(FOnTabDragFinished, const String& /*PanelId*/, const IntVector2& /*ClientPosition*/, const IntVector2& /*ScreenPosition*/);
 
 class APPLICATION_API FTab final : public FInteractiveElement
 {
@@ -192,20 +192,24 @@ public:
     void OnTabPressed(FTab* Tab, const IntVector2& ClientPosition);
 
     /**
-     * @brief Reports the cursor moving while a tab is held, which reorders it or tears it out.
+     * @brief Reports the cursor moving while a tab is held, which reorders it or tears it out. The strip needs
+     * the client position for its own geometry and the listener needs the screen position, because a torn-out
+     * panel leaves the window the client position is measured against.
      *
      * @param Tab            The tab held.
-     * @param ClientPosition Where the cursor is now.
+     * @param ClientPosition Where the cursor is now, relative to the window the strip is in.
+     * @param ScreenPosition Where the cursor is now, in screen space.
      */
-    void OnTabDragged(FTab* Tab, const IntVector2& ClientPosition);
+    void OnTabDragged(FTab* Tab, const IntVector2& ClientPosition, const IntVector2& ScreenPosition);
 
     /**
      * @brief Reports a tab being let go, which settles whatever the drag was doing.
      *
      * @param Tab            The tab released.
-     * @param ClientPosition Where the cursor was when it was let go.
+     * @param ClientPosition Where the cursor was, relative to the window the strip is in.
+     * @param ScreenPosition Where the cursor was, in screen space.
      */
-    void OnTabReleased(FTab* Tab, const IntVector2& ClientPosition);
+    void OnTabReleased(FTab* Tab, const IntVector2& ClientPosition, const IntVector2& ScreenPosition);
 
     /**
      * @brief Reports a completed click on a tab, which activates it or closes it.

@@ -346,8 +346,7 @@ FRectangle FTextLayout::GetCharacterBounds(int32 CharacterIndex) const
 
                 if (Run.Font)
                 {
-                    PrefixWidth = Run.Font->MeasureWidth(StringView(Run.Text.Data(), OffsetInRun));
-                    Advance     = OffsetInRun < RunLength ? Run.Font->GetCharacterAdvance(Run.Text[OffsetInRun]) : 0;
+                    Run.Font->GetCharacterPlacement(StringView(Run.Text.Data(), RunLength), OffsetInRun, PrefixWidth, Advance);
                 }
 
                 return FRectangle(IntVector2(RunLeft + PrefixWidth, LineTop), Advance, Line.Height);

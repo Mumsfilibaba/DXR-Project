@@ -20,6 +20,7 @@ LaunchModule.AddModules({
     "Core",
     "CoreApplication",
     "Application",
+    "ApplicationRenderer",
     "RHI",
     "Renderer",
     "RendererCore",

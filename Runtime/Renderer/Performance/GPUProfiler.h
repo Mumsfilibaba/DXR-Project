@@ -38,6 +38,9 @@ public:
     virtual void Disable() override final;
     virtual void Reset()   override final;
 
+    virtual void BeginGPUFrame(FRHICommandList& CmdList) override final;
+    virtual void EndGPUFrame(FRHICommandList& CmdList)   override final;
+
     virtual void EnablePipelineStatistics()    override final;
     virtual void DisablePipelineStatistics()   override final;
     virtual bool IsPipelineStatisticsEnabled() const override final;
@@ -61,12 +64,6 @@ public:
     
     /** @brief Releases all query objects */
     void Release();
-
-    /** @brief Start the GPU frame */
-    void BeginGPUFrame(FRHICommandList& CmdList);
-
-    /** @brief End the GPU frame */
-    void EndGPUFrame(FRHICommandList& CmdList);
 
     /** @brief Begin a GPU scope */
     void BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name);

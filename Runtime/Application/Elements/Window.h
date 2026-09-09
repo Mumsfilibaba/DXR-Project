@@ -2,6 +2,7 @@
 #include "Core/Containers/String.h"
 #include "Core/Delegates/Delegate.h"
 #include "CoreApplication/PlatformInterface/IPlatformWindow.h"
+#include "Application/Draw/DrawTypes.h"
 #include "Application/Elements/VisualElement.h"
 
 /** @brief Delegate called when the window is moved. */
@@ -15,6 +16,9 @@ DECLARE_DELEGATE(FOnWindowClosed);
 
 /** @brief Delegate called when the window focus state changes. */
 DECLARE_DELEGATE(FOnWindowFocusChanged);
+
+/** @brief Called to append the draw commands of something painting above the content pass rather than in it. */
+DECLARE_RETURN_DELEGATE(FOnDeferredPaint, int32, FDrawCommandList& /*OutCommandList*/, int32 /*LayerId*/);
 
 class APPLICATION_API FWindow final : public FVisualElement
 {
@@ -217,6 +221,33 @@ public:
     void SetContent(const TSharedPtr<FVisualElement>& InContent);
 
     /**
+     * @brief Asks for a subtree to be painted after the whole content pass, above its siblings. Called from
+     * inside a draw, and the queue is emptied by the drain that follows it, so it is asked for every frame.
+     *
+     * @param Element  The element to paint.
+     * @param Geometry The geometry to paint it with, in the same space the content pass used.
+     */
+    void QueueDeferredPainting(const TSharedPtr<FVisualElement>& Element, const FDrawGeometry& Geometry) const;
+
+    /**
+     * @brief Asks for draw commands to be appended after the whole content pass, for something that paints
+     * above the tree without being in it.
+     *
+     * @param OnPaint What to call, handed the layer to draw on and returning the highest layer it used.
+     */
+    void QueueDeferredPainting(const FOnDeferredPaint& OnPaint) const;
+
+    /**
+     * @brief Paints everything queued during the content pass, in the order it was asked for, and empties
+     * the queue.
+     *
+     * @param OutCommandList The list to append to.
+     * @param LayerId        The layer the first of them draws on.
+     * @return The highest layer any of them drew on.
+     */
+    int32 PaintDeferred(FDrawCommandList& OutCommandList, int32 LayerId) const;
+
+    /**
      * @brief Shows the window, optionally setting focus to it.
      *
      * @param bFocus If true, sets focus to this window when displaying it.
@@ -302,11 +333,14 @@ public:
     void SetFocus();
     
     /**
-     * @brief Sets the opacity of the platform window.
-     * 
+     * @brief Sets the opacity of the platform window, remembering it so a window created later still gets it.
+     *
      * @param Alpha The opacity value between 0.0 (fully transparent) and 1.0 (fully opaque).
      */
     void SetOpacity(float Alpha);
+
+    /** @return The opacity last asked for, whether or not a platform window existed to receive it. */
+    NODISCARD float GetOpacity() const;
 
     /**
      * @brief Controls whether the window takes part in hit-testing.
@@ -404,21 +438,30 @@ public:
     }
 
 private:
-    String                      Title;
-    FOnWindowClosed             OnWindowClosedDelegate;
-    FOnWindowMoved              OnWindowMovedDelegate;
-    FOnWindowResized            OnWindowResizedDelegate;
-    FOnWindowFocusChanged       OnWindowFocusChangedDelegate;
-    IntVector2                  CachedPosition;
-    IntVector2                  CachedSize;
-    EWindowStyleFlags           StyleFlags;
-    bool                        bActivateOnShow : 1;
-    bool                        bAcceptsInput : 1;
-    bool                        bShowOnCreate : 1;
-    bool                        bHasExternalSurface : 1;
-    bool                        bLayoutIsStale : 1;
-    TSharedPtr<FVisualElement>  Overlay;
-    TSharedPtr<FVisualElement>  Content;
-    TSharedRef<IPlatformWindow> PlatformWindow;
-    TSharedPtr<FWindow>         ParentWindow;
+    struct FDeferredPaint
+    {
+        TSharedPtr<FVisualElement> Element;
+        FDrawGeometry              Geometry;
+        FOnDeferredPaint           OnPaint;
+    };
+
+    String                         Title;
+    FOnWindowClosed                OnWindowClosedDelegate;
+    FOnWindowMoved                 OnWindowMovedDelegate;
+    FOnWindowResized               OnWindowResizedDelegate;
+    FOnWindowFocusChanged          OnWindowFocusChangedDelegate;
+    IntVector2                     CachedPosition;
+    IntVector2                     CachedSize;
+    float                          CachedOpacity;
+    EWindowStyleFlags              StyleFlags;
+    bool                           bActivateOnShow : 1;
+    bool                           bAcceptsInput : 1;
+    bool                           bShowOnCreate : 1;
+    bool                           bHasExternalSurface : 1;
+    bool                           bLayoutIsStale : 1;
+    TSharedPtr<FVisualElement>     Overlay;
+    TSharedPtr<FVisualElement>     Content;
+    TSharedRef<IPlatformWindow>    PlatformWindow;
+    TSharedPtr<FWindow>            ParentWindow;
+    mutable TArray<FDeferredPaint> DeferredPaints;
 };

@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/SharedPtr.h"
+#include "Core/Containers/StaticArray.h"
 #include "Core/Containers/String.h"
 #include "Application/Text/FontAtlas.h"
 #include "Application/Text/IFontFace.h"
@@ -27,10 +28,27 @@ public:
     virtual int32 GetAscent() const override final;
     virtual int32 GetDescent() const override final;
     virtual int32 GetCapHeight() const override final;
-    virtual int32 GetCharacterAdvance(CHAR Character) const override final;
-    virtual int32 MeasureWidth(const StringView& Text) const override final;
-    virtual int32 FindCharacterIndexAtOffset(const StringView& Text, int32 OffsetX) const override final;
+    virtual const FShapedRun& ShapeText(const StringView& Text) const override final;
 
 private:
+    static constexpr int32 ShapedRunCacheSize = 64;
+
+    struct FCachedRun
+    {
+        FCachedRun()
+            : Text()
+            , Run()
+            , Revision(0)
+        {
+        }
+
+        String     Text;
+        FShapedRun Run;
+        uint64     Revision;
+    };
+
+    void ShapeRun(const StringView& Text, FShapedRun& OutRun) const;
+
     FFontAtlas Atlas;
+    mutable TStaticArray<FCachedRun, ShapedRunCacheSize> ShapedRuns;
 };

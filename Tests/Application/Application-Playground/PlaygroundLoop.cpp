@@ -148,10 +148,8 @@ static bool LoadPlaygroundModules()
 
 FPlaygroundLoop::FPlaygroundLoop()
     : FrameTimer()
-    , CommandList()
     , Fonts()
     , Scenes()
-    , Surfaces()
     , MainWindow(nullptr)
     , Shell(nullptr)
     , Renderer(nullptr)
@@ -321,8 +319,9 @@ bool FPlaygroundLoop::CreateMainWindow()
 
     FApplication::Get().CreateWindow(MainWindow);
 
-    SyncSurfaces();
-    if (Surfaces.IsEmpty())
+    Renderer->SetPrimaryWindow(MainWindow);
+
+    if (!Renderer->GetWindowSwapChain(MainWindow))
     {
         LOG_ERROR("[FPlaygroundLoop]: Failed to create the swap chain");
         return false;
@@ -343,89 +342,6 @@ void FPlaygroundLoop::AttachConsole()
 
     ConsoleToggleHandler = MakeSharedPtr<FConsoleToggleHandler>();
     FApplication::Get().RegisterInputHandler(ConsoleToggleHandler);
-}
-
-FRHISwapChainRef FPlaygroundLoop::CreateSwapChain(const TSharedPtr<FWindow>& InWindow) const
-{
-    const IntVector2 WindowSize = InWindow->GetSize();
-
-    FRHISwapChainDesc SwapChainDesc;
-    SwapChainDesc.WindowHandle = InWindow->GetPlatformWindow()->GetPlatformHandle();
-    SwapChainDesc.Width        = static_cast<uint16>(Math::Max(WindowSize.X, 1));
-    SwapChainDesc.Height       = static_cast<uint16>(Math::Max(WindowSize.Y, 1));
-    SwapChainDesc.ColorFormat  = EFormat::Unknown;
-    SwapChainDesc.ColorSpace   = EColorSpace::Unknown;
-    SwapChainDesc.Usage        = ESwapChainUsageFlags::RenderTarget;
-    SwapChainDesc.bFramePacing = InWindow == MainWindow;
-
-    return RHI::CreateSwapChain(SwapChainDesc);
-}
-
-void FPlaygroundLoop::SyncSurfaces()
-{
-    const TArray<TSharedPtr<FWindow>>& Windows = FApplication::Get().GetWindows();
-
-    for (int32 Index = Surfaces.Size() - 1; Index >= 0; --Index)
-    {
-        if (!Windows.Contains(Surfaces[Index].Window))
-        {
-            FRHICommandListExecutor::Get().WaitForGPU();
-            Renderer->RegisterWindowSwapChain(Surfaces[Index].Window, nullptr);
-            Surfaces.RemoveAt(Index);
-        }
-    }
-
-    for (const TSharedPtr<FWindow>& CurrentWindow : Windows)
-    {
-        const bool bHasSurface = Surfaces.ContainsWithPredicate([&CurrentWindow](const FPlaygroundSurface& Surface)
-        {
-            return Surface.Window == CurrentWindow;
-        });
-
-        if (bHasSurface)
-        {
-            continue;
-        }
-
-        FPlaygroundSurface Surface;
-        Surface.Window    = CurrentWindow;
-        Surface.Size      = CurrentWindow->GetSize();
-        Surface.SwapChain = CreateSwapChain(CurrentWindow);
-
-        if (!Surface.SwapChain)
-        {
-            LOG_ERROR("[FPlaygroundLoop]: Failed to create a swap chain for a window");
-            continue;
-        }
-
-        Renderer->RegisterWindowSwapChain(CurrentWindow, Surface.SwapChain.Get());
-        Surfaces.Add(Surface);
-    }
-}
-
-void FPlaygroundLoop::SyncSurfaceSize(FPlaygroundSurface& Surface)
-{
-    const IntVector2 WindowSize = Surface.Window->GetSize();
-    if (WindowSize == Surface.Size || WindowSize.X <= 0 || WindowSize.Y <= 0)
-    {
-        return;
-    }
-
-    Surface.Size = WindowSize;
-    CommandList.ResizeSwapChain(Surface.SwapChain.Get(), static_cast<uint32>(WindowSize.X), static_cast<uint32>(WindowSize.Y));
-}
-
-void FPlaygroundLoop::RenderSurface(FPlaygroundSurface& Surface)
-{
-    SyncSurfaceSize(Surface);
-
-    Renderer->RenderWindowToSwapChain(CommandList, Surface.Window, EAttachmentLoadAction::Clear);
-
-    FRHISwapChain* SwapChain = Surface.SwapChain.Get();
-    FRHITexture*   BackBuffer = SwapChain->GetBackBuffer();
-
-    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::RenderTarget, ERHIResourceState::Present));
-    CommandList.PresentSwapChain(SwapChain, true);
 }
 
 void FPlaygroundLoop::OnMainWindowClosed()
@@ -452,25 +368,9 @@ void FPlaygroundLoop::Tick()
 
     FApplication::Get().ProcessDeferredEvents();
 
-    SyncSurfaces();
-    if (Surfaces.IsEmpty())
-    {
-        return;
-    }
-
-    CommandList.BeginFrame();
-
-    FApplication::Get().DrawWindows();
-
-    for (FPlaygroundSurface& Surface : Surfaces)
-    {
-        RenderSurface(Surface);
-    }
-
-    CommandList.EndFrame();
-    CommandList.FlushDeletedResources();
-
-    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    Renderer->BeginFrame();
+    Renderer->RecordWindows();
+    Renderer->EndFrameAndPresent();
 
     FMemoryPagePool::Get().Tick();
     FPlatformEventPool::Get().Tick();
@@ -510,7 +410,6 @@ void FPlaygroundLoop::Release()
     Scenes.Clear();
     Fonts = FPlaygroundFonts();
     MainWindow.Reset();
-    Surfaces.Clear();
 
     if (bIsRHIInitialized)
     {

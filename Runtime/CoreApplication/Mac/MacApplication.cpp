@@ -52,6 +52,9 @@
 
 @end
 
+NSNotificationName const GWindowWillStartDragNotification = @"DXRWindowWillStartDrag";
+NSNotificationName const GWindowDidEndDragNotification    = @"DXRWindowDidEndDrag";
+
 static CGFloat NormalizeWheelDetent(CGFloat Delta)
 {
     return (Delta > 0.0) ? 1.0 : ((Delta < 0.0) ? -1.0 : 0.0);
@@ -820,6 +823,17 @@ void FMacApplication::DeferEvent(NSObject* EventObject)
     }
 }
 
+void FMacApplication::DeferWindowInteraction(const TSharedRef<FMacWindow>& Window, NSNotificationName Name)
+{
+    FDeferredMacEvent NewDeferredEvent;
+    NewDeferredEvent.NotificationName = [Name retain];
+    NewDeferredEvent.Window           = Window;
+    NewDeferredEvent.MouseLocation    = [NSEvent mouseLocation];
+
+    TScopedLock Lock(DeferredEventsCS);
+    DeferredEvents.Emplace(Move(NewDeferredEvent));
+}
+
 NSEvent* FMacApplication::OnNSEvent(NSEvent* Event)
 {
     NSWindow* EventWindow = [Event window];
@@ -838,6 +852,17 @@ NSEvent* FMacApplication::OnNSEvent(NSEvent* Event)
     if (Event.type == NSEventTypeLeftMouseDown)
     {
         TSharedRef<FMacWindow> MacWindow = FindWindowFromNSWindow(EventWindow);
+
+        const NSWindowStyleMask StyleMask   = EventWindow.styleMask;
+        const bool              bIsSizeable = (StyleMask & NSWindowStyleMaskResizable) != 0 &&
+                                              (StyleMask & NSWindowStyleMaskFullScreen) == 0 &&
+                                              !EventWindow.isZoomed;
+
+        if (MacWindow && bIsSizeable && MacWindow->HitTestResizeBorder(Event.locationInWindow))
+        {
+            return Event;
+        }
+
         if (MacWindow && MacWindow->HitTestTitleBar(Event.locationInWindow))
         {
             if (Event.clickCount >= 2)
@@ -846,7 +871,11 @@ NSEvent* FMacApplication::OnNSEvent(NSEvent* Event)
             }
             else
             {
+                DeferWindowInteraction(MacWindow, GWindowWillStartDragNotification);
+
                 [EventWindow performWindowDragWithEvent:Event];
+
+                DeferWindowInteraction(MacWindow, GWindowDidEndDragNotification);
             }
 
             return nullptr;
@@ -939,11 +968,6 @@ void FMacApplication::OnWindowDestroyed(const TSharedRef<FMacWindow>& Window)
     }
 }
 
-void FMacApplication::OnWindowWillResize(const TSharedRef<FMacWindow>& Window)
-{
-    MessageHandler->OnWindowResizing(Window);
-}
-
 void FMacApplication::CloseWindow(const TSharedRef<FMacWindow>& Window)
 {
     TScopedLock Lock(ClosedWindowsCS);
@@ -1016,6 +1040,11 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& DeferredEven
     
     if (DeferredEvent.NotificationName)
     {
+        if (DeferredEvent.CocoaWindow && !DeferredEvent.Window)
+        {
+            return;
+        }
+
         NSNotificationName NotificationName = DeferredEvent.NotificationName;
         if (NotificationName == NSWindowDidMoveNotification)
         {
@@ -1024,6 +1053,24 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& DeferredEven
         else if (NotificationName == NSWindowDidResizeNotification)
         {
             ProcessWindowResized(DeferredEvent);
+        }
+        else if (NotificationName == NSWindowWillStartLiveResizeNotification)
+        {
+            MessageHandler->BeginWindowInteraction(DeferredEvent.Window, EWindowInteraction::Resize);
+        }
+        else if (NotificationName == NSWindowDidEndLiveResizeNotification)
+        {
+            MessageHandler->EndWindowInteraction(DeferredEvent.Window, EWindowInteraction::Resize);
+        }
+        else if (NotificationName == GWindowWillStartDragNotification)
+        {
+            UpdateCursorFromDeferredEvent(DeferredEvent);
+            MessageHandler->BeginWindowInteraction(DeferredEvent.Window, EWindowInteraction::Move);
+        }
+        else if (NotificationName == GWindowDidEndDragNotification)
+        {
+            UpdateCursorFromDeferredEvent(DeferredEvent);
+            MessageHandler->EndWindowInteraction(DeferredEvent.Window, EWindowInteraction::Move);
         }
         else if (NotificationName == NSWindowDidMiniaturizeNotification)
         {
@@ -1143,11 +1190,17 @@ void FMacApplication::ProcessMouseMoveEvent(const FDeferredMacEvent& DeferredEve
         return;
     }
 
+    const NSPoint CursorPosition = UpdateCursorFromDeferredEvent(DeferredEvent);
+    MessageHandler->OnMouseMove(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
+}
+
+NSPoint FMacApplication::UpdateCursorFromDeferredEvent(const FDeferredMacEvent& DeferredEvent)
+{
     const NSPoint MouseLocation  = DeferredEvent.MouseLocation;
     const NSPoint CursorPosition = ConvertCocoaPointToEngine(MouseLocation.x, MouseLocation.y);
-    MacCursor->UpdateCursorPosition(IntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y)));
 
-    MessageHandler->OnMouseMove(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
+    MacCursor->UpdateCursorPosition(IntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y)));
+    return CursorPosition;
 }
 
 void FMacApplication::ProcessMouseButtonEvent(const FDeferredMacEvent& DeferredEvent)
@@ -1165,7 +1218,7 @@ void FMacApplication::ProcessMouseButtonEvent(const FDeferredMacEvent& DeferredE
             MessageHandler->OnMouseButtonDown(DeferredEvent.Window, CurrentMouseButton, GetModifierKeyState());
         }
 
-        // Save the mousebutton to handle double-click events
+        // Save the mousebutton to handle double-click events.
         LastPressedButton = CurrentMouseButton;
     }
     else
@@ -1200,6 +1253,7 @@ void FMacApplication::ProcessMouseScrollEvent(const FDeferredMacEvent& DeferredE
     {
         MessageHandler->OnMouseScrolled(ScrollDeltaX, EScrollAxis::Horizontal);
     }
+
     if (Math::Abs(ScrollDeltaY) > 0.0f)
     {
         MessageHandler->OnMouseScrolled(ScrollDeltaY, EScrollAxis::Vertical);
@@ -1242,9 +1296,7 @@ void FMacApplication::ProcessKeyEvent(const FDeferredMacEvent& DeferredEvent)
 
 void FMacApplication::ProcessUpdatedModfierFlags(const FDeferredMacEvent& DeferredEvent)
 {
-    // NSUinteger seems to be defined as a unsigned long, which would be equal to a uint64 on macOS
     const uint64 ModifierFlags = DeferredEvent.ModifierFlags;
-
     if (DeferredEvent.EventType != NSEventTypeFlagsChanged)
     {
         constexpr uint64 DeviceIndependentFlags = static_cast<uint64>(NSEventModifierFlagDeviceIndependentFlagsMask);
@@ -1273,8 +1325,8 @@ void FMacApplication::ProcessUpdatedModfierFlags(const FDeferredMacEvent& Deferr
 
 void FMacApplication::ProcessModfierKey(EMacModifierKey::Type MacModifierKey, uint64 ModifierKeyFlags, uint64 PreviousModifierKeyFlags)
 {
-    // Quick access to the modifer key masks. The values for these can be found inside the IOKit/hidsystem/ev_keymap.h
-    // header but we have redefined them here to avoid including IOKit.
+    // Quick access to the modifer key masks. The values for these can be found inside the 
+    // IOKit/hidsystem/ev_keymap.h header but we have redefined them here to avoid including IOKit.
     static constexpr uint64 ModifierKeyMask[] =
     {
         0x00000001, // LeftCtrl
@@ -1340,9 +1392,8 @@ void FMacApplication::ProcessModfierKey(EMacModifierKey::Type MacModifierKey, ui
 
 void FMacApplication::ProcessWindowResized(const FDeferredMacEvent& DeferredEvent)
 {
-    MessageHandler->OnWindowResizing(DeferredEvent.Window);
-
     CHECK(DeferredEvent.bHasContentFrame);
+    CHECK(DeferredEvent.Window);
 
     // Convert the coordinates to the generic ones that are expected
     NSRect ContentFrame = DeferredEvent.ContentFrame;
@@ -1358,13 +1409,15 @@ void FMacApplication::ProcessWindowResized(const FDeferredMacEvent& DeferredEven
         MessageHandler->OnWindowMoved(DeferredEvent.Window, PositionX, PositionY);
         DeferredEvent.Window->SetCachedPosition(IntVector2(PositionX, PositionY));
     }
-    
+
+    MessageHandler->OnWindowResizing(DeferredEvent.Window, uint32(ContentFrame.size.width), uint32(ContentFrame.size.height));
     MessageHandler->OnWindowResized(DeferredEvent.Window, uint32(ContentFrame.size.width), uint32(ContentFrame.size.height));
 }
 
 void FMacApplication::ProcessWindowMoved(const FDeferredMacEvent& DeferredEvent)
 {
     CHECK(DeferredEvent.bHasContentFrame);
+    CHECK(DeferredEvent.Window);
 
     NSRect ContentFrame = DeferredEvent.ContentFrame;
     ContentFrame = FMacApplication::ConvertCocoaRectToEngine(ContentFrame.size.width, ContentFrame.size.height, ContentFrame.origin.x, ContentFrame.origin.y);

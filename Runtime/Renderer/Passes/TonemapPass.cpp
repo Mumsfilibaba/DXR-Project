@@ -193,7 +193,7 @@ void FTonemapPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, const F
     FRenderGraphTexture* OutputGraphTexture = Context.TonemappedTarget;
     if (OutputTarget != nullptr)
     {
-        OutputGraphTexture = Context.BackBuffer;
+        OutputGraphTexture = Context.SceneOutput;
     }
 
     GraphBuilder.AddPass("Tonemap", ERenderGraphPassFlags::Raster, true,

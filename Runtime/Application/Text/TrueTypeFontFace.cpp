@@ -1,8 +1,26 @@
 #include "Application/Text/TrueTypeFontFace.h"
 #include "Core/Filesystem/File.h"
 #include "Core/Math/Math.h"
+#include "Core/Memory/Memory.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformFile.h"
+
+static FORCEINLINE int32 ToCodepoint(CHAR Character)
+{
+    return static_cast<int32>(static_cast<uint8>(Character));
+}
+
+static uint64 HashText(const StringView& Text)
+{
+    uint64 Hash = 14695981039346656037ull;
+    for (int32 Index = 0; Index < Text.Length(); ++Index)
+    {
+        Hash ^= static_cast<uint64>(static_cast<uint8>(Text[Index]));
+        Hash *= 1099511628211ull;
+    }
+
+    return Hash;
+}
 
 TSharedPtr<FTrueTypeFontFace> FTrueTypeFontFace::CreateFromFile(const String& Filename, int32 PixelHeight)
 {
@@ -34,6 +52,7 @@ TSharedPtr<FTrueTypeFontFace> FTrueTypeFontFace::CreateFromFile(const String& Fi
 
 FTrueTypeFontFace::FTrueTypeFontFace()
     : Atlas()
+    , ShapedRuns()
 {
 }
 
@@ -64,43 +83,57 @@ int32 FTrueTypeFontFace::GetCapHeight() const
     return Atlas.GetCapHeight();
 }
 
-int32 FTrueTypeFontFace::GetCharacterAdvance(CHAR Character) const
+const FShapedRun& FTrueTypeFontFace::ShapeText(const StringView& Text) const
 {
-    return Atlas.GetGlyph(Character).Advance;
+    FCachedRun& Cached = ShapedRuns[static_cast<int32>(HashText(Text) % ShapedRunCacheSize)];
+
+    const bool bIsHit = Cached.Revision == Atlas.GetRevision()
+        && Cached.Text.Length() == Text.Length()
+        && Memory::Memcmp(Cached.Text.Data(), Text.Data(), static_cast<uint64>(Text.Length())) == 0;
+
+    if (bIsHit)
+    {
+        return Cached.Run;
+    }
+
+    ShapeRun(Text, Cached.Run);
+
+    Cached.Text     = String(Text.Data(), Text.Length());
+    Cached.Revision = Atlas.GetRevision();
+    return Cached.Run;
 }
 
-int32 FTrueTypeFontFace::MeasureWidth(const StringView& Text) const
+void FTrueTypeFontFace::ShapeRun(const StringView& Text, FShapedRun& OutRun) const
 {
-    // A proportional face has to sum the advances, since there is no single character width to scale by
-    int32 Width = 0;
+    OutRun.Glyphs.Clear();
+    OutRun.Width = 0;
+
     for (int32 Index = 0; Index < Text.Length(); ++Index)
     {
-        Width += Atlas.GetGlyph(Text[Index]).Advance;
+        Atlas.GetGlyph(ToCodepoint(Text[Index]));
     }
 
-    return Width;
-}
-
-int32 FTrueTypeFontFace::FindCharacterIndexAtOffset(const StringView& Text, int32 OffsetX) const
-{
-    if (OffsetX <= 0)
-    {
-        return 0;
-    }
+    OutRun.Glyphs.Reserve(Text.Length());
 
     int32 Pen = 0;
     for (int32 Index = 0; Index < Text.Length(); ++Index)
     {
-        const int32 Advance = Atlas.GetGlyph(Text[Index]).Advance;
+        const int32 Codepoint = ToCodepoint(Text[Index]);
+        const FGlyph& Glyph   = Atlas.GetGlyph(Codepoint);
 
-        // Break at the half-glyph so a click on the right half of a character lands after it
-        if (OffsetX < Pen + (Advance / 2))
+        FShapedGlyph& Shaped = OutRun.Glyphs.Emplace();
+        Shaped.Offset      = Pen;
+        Shaped.SourceIndex = Index;
+        Shaped.Glyph       = &Glyph;
+        Shaped.Advance     = Glyph.Advance;
+
+        if (Index + 1 < Text.Length())
         {
-            return Index;
+            Shaped.Advance += Atlas.GetKerning(Codepoint, ToCodepoint(Text[Index + 1]));
         }
 
-        Pen += Advance;
+        Pen += Shaped.Advance;
     }
 
-    return Text.Length();
+    OutRun.Width = Pen;
 }

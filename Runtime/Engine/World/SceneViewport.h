@@ -27,6 +27,7 @@ public:
     virtual FEventResponse OnFocusLost() override;
     virtual FEventResponse OnFocusGained() override;
 
+    /** @return The swap chain the host window is presented through, which the UI renderer owns, or null before InitializeRHI. */
     virtual FRHISwapChainRef GetRHISwapChain() const override
     {
         return RHISwapChain;

@@ -19,19 +19,14 @@ public:
     virtual void Tick()       override final;
 
     virtual void FinishPreviousFrame() override final;
-    virtual void DiscardPendingFrame() override final;
 
-    virtual void RecordUI() override final;
-    
     virtual void KickSceneRender(FSceneRenderPacket&& Packet) override final;
- 
+
     virtual void RequestEditorObjectPick(IScene* Scene, uint32 PixelX, uint32 PixelY, uint64 RequestId) override final;
     virtual bool PollEditorObjectPickResult(IScene* Scene, FEditorPickResult& OutResult)                override final;
 
     virtual void RequestEditorObjectPickRect(IScene* Scene, uint32 MinX, uint32 MinY, uint32 MaxX, uint32 MaxY) override final;
     virtual bool PollEditorObjectPickRectResult(IScene* Scene, TArray<uint32>& OutObjectIDs)                    override final;
- 
-    virtual void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 Width, uint32 Height, EFormat Format = EFormat::Unknown, EColorSpace ColorSpace = EColorSpace::Unknown) override final; 
 
     // Creates and adds a scene to the list of scenes
     virtual IScene* CreateScene(FWorld* World) override final;
@@ -52,10 +47,8 @@ public:
     }
 
 private:
-    FSceneRenderer*    Renderer;
-    TArray<FScene*>    Scenes;
-    FTaskHandle        PendingSceneTask;
-    FSceneRenderPacket PendingPacket;
-    FDelegateHandle    PreEngineInitHandle; // Delegate that is called to properly initialize ImGui for this module
-    bool               bHasPendingFrame;
+    FSceneRenderer* Renderer;
+    TArray<FScene*> Scenes;
+    FTaskHandle     PendingSceneTask;
+    bool            bHasPendingFrame;
 };
