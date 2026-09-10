@@ -262,6 +262,12 @@ struct FUITreeRowStyle
     /** @brief The tint of the disclosure arrow on a row that has children. */
     FFloatColor ArrowTint = FFloatColor(101.0f / 255.0f, 101.0f / 255.0f, 101.0f / 255.0f, 1.0f);
 
+    /** @brief The fill behind the column captions, matching the shared header fill. */
+    FFloatColor HeaderFill = FFloatColor(47.0f / 255.0f, 47.0f / 255.0f, 47.0f / 255.0f, 1.0f);
+
+    /** @brief The rule under the column captions. */
+    FFloatColor HeaderSeparator = FFloatColor(26.0f / 255.0f, 26.0f / 255.0f, 26.0f / 255.0f, 1.0f);
+
     /** @brief How far one level of depth moves a row's contents right, in pixels. */
     int32 IndentPerLevel = 18;
 };
@@ -283,17 +289,35 @@ struct FUIScrollBarStyle
 
 struct FUITabStyle
 {
-    /** @brief The fill of a tab that is not the active one. */
-    FFloatColor Fill = FFloatColor(21.0f / 255.0f, 21.0f / 255.0f, 21.0f / 255.0f, 1.0f);
+    /** @brief The fill of a tab, which is the window fill so a tab reads as a button on it. */
+    FFloatColor Fill = FFloatColor(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
 
-    /** @brief The fill of an inactive tab the cursor is over. */
-    FFloatColor FillHovered = FFloatColor(33.0f / 255.0f, 33.0f / 255.0f, 33.0f / 255.0f, 1.0f);
+    /** @brief The fill of a tab the cursor is over. */
+    FFloatColor FillHovered = FFloatColor(46.0f / 255.0f, 46.0f / 255.0f, 46.0f / 255.0f, 1.0f);
 
-    /** @brief The fill of the active tab, which matches the panel below it so the two read as one surface. */
+    /** @brief The fill of the active tab, which matches Fill because the strip is what marks it. */
     FFloatColor FillActive = FFloatColor(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
 
-    /** @brief The fill of the strip behind the tabs, which runs darker so the active tab stands out of it. */
+    /** @brief The fill of the strip behind the tabs, which runs darker so the tabs stand off it. */
     FFloatColor StripFill = FFloatColor(21.0f / 255.0f, 21.0f / 255.0f, 21.0f / 255.0f, 1.0f);
+
+    /** @brief The rule under the active tab, which is what marks it now that the fills match. */
+    FFloatColor ActiveStrip = FFloatColor(0.0f, 122.0f / 255.0f, 204.0f / 255.0f, 1.0f);
+
+    /** @brief The fill behind the close cross while the cursor is on the cross itself. */
+    FFloatColor CloseHovered = FFloatColor(70.0f / 255.0f, 70.0f / 255.0f, 70.0f / 255.0f, 1.0f);
+
+    /** @brief How thick the rule under the active tab is, in pixels. */
+    int32 ActiveStripThickness = 2;
+
+    /** @brief The gap either side of a tab, which is what detaches it from its neighbour. */
+    int32 Spacing = 2;
+
+    /** @brief How far a tab is inset from the top of the strip, in pixels. */
+    int32 TopInset = 3;
+
+    /** @brief How far the top corners of a tab are rounded, in pixels. */
+    float CornerRadius = 4.0f;
 };
 
 struct FUIStyleMetrics

@@ -606,9 +606,15 @@ bool TabStripReorder_Test()
     TEST_EXPECT(FindTab(Strip, "Outliner")->IsActive());
     TEST_EXPECT(!FindTab(Strip, "Details")->IsActive());
 
-    TEST_SECTION("The tabs are laid out end to end, each as wide as its label needs");
-    TEST_EXPECT_EQ(FindTab(Strip, "Outliner")->GetContentRectangle().Position.X, 0);
-    TEST_EXPECT_EQ(FindTab(Strip, "Details")->GetContentRectangle().Position.X, FindTab(Strip, "Outliner")->GetContentRectangle().GetRight());
+    TEST_SECTION("The tabs are laid out left to right with a gap between them, each as wide as its label needs");
+    const int32 TabSpacing = FUIStyle::GetDefault().Tab.Spacing;
+
+    TEST_EXPECT_EQ(FindTab(Strip, "Outliner")->GetContentRectangle().Position.X, TabSpacing);
+    TEST_EXPECT_EQ(FindTab(Strip, "Details")->GetContentRectangle().Position.X,
+        FindTab(Strip, "Outliner")->GetContentRectangle().GetRight() + TabSpacing);
+
+    TEST_SECTION("A tab is inset from the top of the strip, so the strip shows around it");
+    TEST_EXPECT_EQ(FindTab(Strip, "Outliner")->GetContentRectangle().Position.Y, FUIStyle::GetDefault().Tab.TopInset);
 
     TEST_SECTION("Pressing a tab shows it, so a drag starts from the panel it is about to move");
     const TSharedPtr<FTab> DetailsTab = FindTab(Strip, "Details");
@@ -628,7 +634,7 @@ bool TabStripReorder_Test()
     TEST_EXPECT_EQ(ReorderedIndex, 0);
 
     TEST_SECTION("The moved tab is arranged where it now sits rather than where it was");
-    TEST_EXPECT_EQ(DetailsTab->GetContentRectangle().Position.X, 0);
+    TEST_EXPECT_EQ(DetailsTab->GetContentRectangle().Position.X, TabSpacing);
 
     TEST_SECTION("Letting go ends the drag");
     DetailsTab->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, DetailsTab->GetContentRectangle().GetCenter(), false));
@@ -646,12 +652,20 @@ bool TabStripReorder_Test()
     TEST_SECTION("Clicking the cross closes the panel, and clicking the label does not");
     const TSharedPtr<FTab> OutlinerTab = FindTab(Strip, "Outliner");
 
-    Strip->OnTabPressed(OutlinerTab.Get(), OutlinerTab->GetContentRectangle().Position + IntVector2(4, 4));
-    Strip->OnTabClicked(OutlinerTab.Get());
+    const IntVector2 LabelPoint = OutlinerTab->GetContentRectangle().Position + IntVector2(4, 4);
+    const IntVector2 CrossPoint = OutlinerTab->GetCloseButtonRectangle().GetCenter();
+
+    Strip->OnTabPressed(OutlinerTab.Get(), LabelPoint);
+    Strip->OnTabReleased(OutlinerTab.Get(), LabelPoint, LabelPoint);
     TEST_EXPECT(ClosedPanelId.IsEmpty());
 
-    Strip->OnTabPressed(OutlinerTab.Get(), OutlinerTab->GetCloseButtonRectangle().GetCenter());
-    Strip->OnTabClicked(OutlinerTab.Get());
+    TEST_SECTION("Pressing the cross and letting go elsewhere does not close it either");
+    Strip->OnTabPressed(OutlinerTab.Get(), CrossPoint);
+    Strip->OnTabReleased(OutlinerTab.Get(), LabelPoint, LabelPoint);
+    TEST_EXPECT(ClosedPanelId.IsEmpty());
+
+    Strip->OnTabPressed(OutlinerTab.Get(), CrossPoint);
+    Strip->OnTabReleased(OutlinerTab.Get(), CrossPoint, CrossPoint);
     TEST_EXPECT_EQ(ClosedPanelId, String("Outliner"));
 
     TEST_SECTION("Removing the active tab hands the panel to its neighbour");

@@ -205,7 +205,7 @@ void FMenuItem::Activate()
         return;
     }
 
-    if (SubMenu)
+    if (SubMenu && !OnActivatedDelegate.IsBound())
     {
         OpenSubMenu();
         return;

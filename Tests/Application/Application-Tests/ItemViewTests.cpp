@@ -528,6 +528,100 @@ bool TreeViewScrolling_Test()
     TEST_END();
 }
 
+bool TreeViewColumnsAndIndent_Test()
+{
+    TEST_BEGIN();
+
+    constexpr int32 RowHeight    = 20;
+    constexpr int32 HeaderHeight = 24;
+    constexpr int32 NumRows      = 20;
+    constexpr int32 ViewHeight   = 100;
+
+    FTreeView::FDesc Desc;
+    Desc.Font              = CreateFont();
+    Desc.RowHeight         = RowHeight;
+    Desc.HeaderHeight      = HeaderHeight;
+    Desc.LabelColumnHeader = "Item Label";
+    Desc.TypeColumnHeader  = "Type";
+    Desc.TypeColumnWidth   = 60;
+
+    const TArray<TSharedPtr<FTreeItem>> Rows = CreateLeafRows(NumRows);
+
+    TSharedPtr<FTreeView> TreeView = FTreeView::Create(Desc);
+    TreeView->SetRootItems(Rows);
+    LayoutElement(TreeView, FRectangle(IntVector2(0, 0), 200, ViewHeight));
+
+    TEST_SECTION("The header takes its height off the band the rows scroll in");
+    TreeView->OnMouseScroll(MakeScrollEvent(-100.0f));
+    TEST_EXPECT_EQ(TreeView->GetScrollOffset(), (NumRows * RowHeight) - (ViewHeight - HeaderHeight));
+
+    TreeView->ScrollToItem(Rows[0]);
+    TEST_EXPECT_EQ(TreeView->GetScrollOffset(), 0);
+
+    TEST_SECTION("The first row starts below the header rather than at the top of the view");
+    TEST_EXPECT_EQ(TreeView->GetItemRowBounds(Rows[0]).Position.Y, HeaderHeight);
+
+    TEST_SECTION("A click on the header selects nothing, and one just below it takes the first row");
+    TEST_EXPECT(!TreeView->FindItemAt(IntVector2(10, HeaderHeight / 2)));
+    TEST_EXPECT(TreeView->FindItemAt(IntVector2(10, HeaderHeight + 1)) == Rows[0]);
+
+    TEST_SECTION("A view with no captions keeps its rows hard against the top");
+    Desc.LabelColumnHeader.Clear();
+    Desc.TypeColumnHeader.Clear();
+
+    TSharedPtr<FTreeView> BareView = FTreeView::Create(Desc);
+    BareView->SetRootItems(CreateLeafRows(NumRows));
+    LayoutElement(BareView, FRectangle(IntVector2(0, 0), 200, ViewHeight));
+
+    TEST_EXPECT_EQ(BareView->GetItemRowBounds(BareView->GetVisibleRows()[0]).Position.Y, 0);
+
+    BareView->OnMouseScroll(MakeScrollEvent(-100.0f));
+    TEST_EXPECT_EQ(BareView->GetScrollOffset(), (NumRows * RowHeight) - ViewHeight);
+
+    TEST_SECTION("Rows at one depth line up whether or not each of them carries an icon");
+    TSharedPtr<FTreeItem> Filter    = FTreeItem::Create("Filter");
+    TSharedPtr<FTreeItem> LooseItem = FTreeItem::Create("Loose");
+    TSharedPtr<FTreeItem> Child     = FTreeItem::Create("Child");
+
+    Filter->Icon = FUIBrush(reinterpret_cast<FRHITexture*>(0x10));
+    Filter->AddChild(Child);
+
+    FTreeView::FDesc IndentDesc;
+    IndentDesc.Font           = CreateFont();
+    IndentDesc.RowHeight      = RowHeight;
+    IndentDesc.IndentPerLevel = 18;
+
+    TSharedPtr<FTreeView> IndentView = FTreeView::Create(IndentDesc);
+    IndentView->SetRootItems({ Filter, LooseItem });
+    IndentView->SetItemExpanded(Filter, true);
+    LayoutElement(IndentView, FRectangle(IntVector2(0, 0), 200, ViewHeight));
+
+    const int32 FilterLabelX = IndentView->GetItemLabelBounds(Filter).Position.X;
+    const int32 LooseLabelX  = IndentView->GetItemLabelBounds(LooseItem).Position.X;
+    const int32 ChildLabelX  = IndentView->GetItemLabelBounds(Child).Position.X;
+
+    TEST_EXPECT_EQ(LooseLabelX, FilterLabelX);
+
+    TEST_SECTION("A child indents a full level past the parent it hangs off");
+    TEST_EXPECT_EQ(ChildLabelX, FilterLabelX + IndentDesc.IndentPerLevel);
+
+    TEST_SECTION("A view where nothing has an icon reserves no column for one");
+    TSharedPtr<FTreeItem> PlainParent = FTreeItem::Create("Parent");
+    TSharedPtr<FTreeItem> PlainChild  = FTreeItem::Create("Child");
+    PlainParent->AddChild(PlainChild);
+
+    TSharedPtr<FTreeView> PlainView = FTreeView::Create(IndentDesc);
+    PlainView->SetRootItems({ PlainParent });
+    PlainView->SetItemExpanded(PlainParent, true);
+    LayoutElement(PlainView, FRectangle(IntVector2(0, 0), 200, ViewHeight));
+
+    TEST_EXPECT(PlainView->GetItemLabelBounds(PlainParent).Position.X < FilterLabelX);
+    TEST_EXPECT_EQ(PlainView->GetItemLabelBounds(PlainChild).Position.X,
+        PlainView->GetItemLabelBounds(PlainParent).Position.X + IndentDesc.IndentPerLevel);
+
+    TEST_END();
+}
+
 bool TileViewLayout_Test()
 {
     TEST_BEGIN();

@@ -69,7 +69,7 @@ public:
         /** @brief True to draw the check mark in the gutter once the state leaves Unchecked. */
         bool bIsCheckable : 1;
 
-        /** @brief Non-null draws the arrow and opens on hover rather than activating. */
+        /** @brief Non-null draws the arrow and opens on hover, a click activating instead wherever OnActivated is bound. */
         TSharedPtr<FVisualElement> SubMenu;
 
         /** @brief Fired when the item is chosen, after the menus have closed. */
@@ -160,7 +160,7 @@ public:
         return Label;
     }
 
-    /** @return True when the item was given a submenu, so it opens one rather than activating. */
+    /** @return True when the item was given a submenu, which it draws an arrow for and opens on hover. */
     NODISCARD FORCEINLINE bool HasSubMenu() const
     {
         return SubMenu != nullptr;

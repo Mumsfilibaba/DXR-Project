@@ -11,8 +11,8 @@ constexpr int32 TAB_HORIZONTAL_PADDING = 12;
 constexpr int32 TAB_CLOSE_WIDTH        = 18;
 
 // Half the side of the cross drawn in the close button
-constexpr float TAB_CLOSE_EXTENT    = 3.5f;
-constexpr float TAB_CLOSE_THICKNESS = 1.0f;
+constexpr float TAB_CLOSE_EXTENT    = 4.0f;
+constexpr float TAB_CLOSE_THICKNESS = 1.5f;
 
 TSharedPtr<FTab> FTab::Create(const String& InPanelId, const String& InLabel, const TSharedPtr<IFontFace>& InFont, bool bInIsClosable)
 {
@@ -32,6 +32,7 @@ FTab::FTab()
     , OwnerStrip(nullptr)
     , bIsClosable(false)
     , bIsActive(false)
+    , bIsCloseHovered(false)
 {
 }
 
@@ -56,7 +57,15 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
     }
 
     const FFloatColor& Fill = bIsActive ? Style.Tab.FillActive : (IsHovered() ? Style.Tab.FillHovered : Style.Tab.Fill);
-    OutCommandList.AddBox(LayerId, Bounds, Fill);
+    OutCommandList.AddBox(LayerId, Bounds, Fill, FCornerRadii::Top(Style.Tab.CornerRadius));
+
+    if (bIsActive)
+    {
+        const FRectangle StripBounds(IntVector2(Bounds.Position.X, Bounds.GetBottom() - Style.Tab.ActiveStripThickness),
+            Bounds.Width, Style.Tab.ActiveStripThickness);
+
+        OutCommandList.AddBox(LayerId + 1, StripBounds, Style.Tab.ActiveStrip);
+    }
 
     if (Font)
     {
@@ -73,18 +82,35 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
     {
         const FRectangle CloseBounds = GetCloseButtonRectangle();
 
+        if (bIsCloseHovered)
+        {
+            OutCommandList.AddBox(LayerId + 1, CloseBounds, Style.Tab.CloseHovered, FCornerRadii(Style.Tab.CornerRadius));
+        }
+
         const float CenterX = static_cast<float>(CloseBounds.Position.X) + static_cast<float>(CloseBounds.Width) * 0.5f;
         const float CenterY = static_cast<float>(CloseBounds.Position.Y) + static_cast<float>(CloseBounds.Height) * 0.5f;
 
-        const FFloatColor& CrossColor = bIsActive ? Style.Colors.Text : Style.Colors.TextDisabled;
+        const FFloatColor& CrossColor = (bIsActive || IsHovered()) ? Style.Colors.Text : Style.Colors.TextDisabled;
 
-        OutCommandList.AddLine(LayerId + 1, Vector2(CenterX - TAB_CLOSE_EXTENT, CenterY - TAB_CLOSE_EXTENT),
+        OutCommandList.AddLine(LayerId + 2, Vector2(CenterX - TAB_CLOSE_EXTENT, CenterY - TAB_CLOSE_EXTENT),
             Vector2(CenterX + TAB_CLOSE_EXTENT, CenterY + TAB_CLOSE_EXTENT), CrossColor, TAB_CLOSE_THICKNESS);
-        OutCommandList.AddLine(LayerId + 1, Vector2(CenterX + TAB_CLOSE_EXTENT, CenterY - TAB_CLOSE_EXTENT),
+        OutCommandList.AddLine(LayerId + 2, Vector2(CenterX + TAB_CLOSE_EXTENT, CenterY - TAB_CLOSE_EXTENT),
             Vector2(CenterX - TAB_CLOSE_EXTENT, CenterY + TAB_CLOSE_EXTENT), CrossColor, TAB_CLOSE_THICKNESS);
     }
 
-    return LayerId + 2;
+    return LayerId + 3;
+}
+
+FEventResponse FTab::OnMouseMove(const FCursorEvent& CursorEvent)
+{
+    bIsCloseHovered = bIsClosable && GetCloseButtonRectangle().EncapsulatesPoint(CursorEvent.GetClientPosition());
+    return FInteractiveElement::OnMouseMove(CursorEvent);
+}
+
+FEventResponse FTab::OnMouseLeft(const FCursorEvent& CursorEvent)
+{
+    bIsCloseHovered = false;
+    return FInteractiveElement::OnMouseLeft(CursorEvent);
 }
 
 FEventResponse FTab::OnMouseButtonDown(const FCursorEvent& CursorEvent)
@@ -130,15 +156,10 @@ FRectangle FTab::GetCloseButtonRectangle() const
     }
 
     const FRectangle& Bounds = GetContentRectangle();
-    return FRectangle(IntVector2(Bounds.GetRight() - TAB_HORIZONTAL_PADDING - TAB_CLOSE_WIDTH, Bounds.Position.Y), TAB_CLOSE_WIDTH, Bounds.Height);
-}
+    const int32       Inset  = Math::Max((Bounds.Height - TAB_CLOSE_WIDTH) / 2, 0);
 
-void FTab::OnClicked()
-{
-    if (OwnerStrip)
-    {
-        OwnerStrip->OnTabClicked(this);
-    }
+    return FRectangle(IntVector2(Bounds.GetRight() - TAB_HORIZONTAL_PADDING - TAB_CLOSE_WIDTH, Bounds.Position.Y + Inset),
+        TAB_CLOSE_WIDTH, TAB_CLOSE_WIDTH);
 }
 
 void FTab::OnDragged(const FCursorEvent& CursorEvent)
@@ -192,10 +213,12 @@ void FTabStrip::Initialize(const FDesc& Desc)
 
 IntVector2 FTabStrip::ComputeDesiredSize() const
 {
+    const FUITabStyle& TabStyle = FUIStyle::GetDefault().Tab;
+
     IntVector2 DesiredSize(0, FDockMetrics::TabStripHeight);
     for (const TSharedPtr<FTab>& Tab : Tabs)
     {
-        DesiredSize.X += Tab->GetCachedDesiredSize().X;
+        DesiredSize.X += Tab->GetCachedDesiredSize().X + TabStyle.Spacing;
     }
 
     return DesiredSize;
@@ -203,13 +226,16 @@ IntVector2 FTabStrip::ComputeDesiredSize() const
 
 void FTabStrip::OnArrange(const FRectangle& AllottedBounds)
 {
-    int32 Offset = AllottedBounds.Position.X;
+    const FUITabStyle& TabStyle = FUIStyle::GetDefault().Tab;
+
+    int32 Offset = AllottedBounds.Position.X + TabStyle.Spacing;
     for (const TSharedPtr<FTab>& Tab : Tabs)
     {
         const int32 TabWidth = Tab->GetCachedDesiredSize().X;
-        Tab->Tick(FRectangle(IntVector2(Offset, AllottedBounds.Position.Y), TabWidth, AllottedBounds.Height));
+        Tab->Tick(FRectangle(IntVector2(Offset, AllottedBounds.Position.Y + TabStyle.TopInset),
+            TabWidth, Math::Max(AllottedBounds.Height - TabStyle.TopInset, 0)));
 
-        Offset += TabWidth;
+        Offset += TabWidth + TabStyle.Spacing;
     }
 }
 
@@ -386,7 +412,16 @@ void FTabStrip::OnTabDragged(FTab* Tab, const IntVector2& ClientPosition, const 
 
 void FTabStrip::OnTabReleased(FTab* Tab, const IntVector2& ClientPosition, const IntVector2& ScreenPosition)
 {
-    UNREFERENCED_VARIABLE(Tab);
+    if (Tab && Tab->IsClosable() && DetachedPanelId.IsEmpty())
+    {
+        const FRectangle CloseBounds = Tab->GetCloseButtonRectangle();
+        if (CloseBounds.EncapsulatesPoint(DragOrigin) && CloseBounds.EncapsulatesPoint(ClientPosition))
+        {
+            DraggedPanelId.Clear();
+            OnTabClosedDelegate.ExecuteIfBound(Tab->GetPanelId());
+            return;
+        }
+    }
 
     DraggedPanelId.Clear();
 
@@ -399,19 +434,6 @@ void FTabStrip::OnTabReleased(FTab* Tab, const IntVector2& ClientPosition, const
     DetachedPanelId.Clear();
 
     OnTabDragFinishedDelegate.ExecuteIfBound(FinishedPanelId, ClientPosition, ScreenPosition);
-}
-
-void FTabStrip::OnTabClicked(FTab* Tab)
-{
-    if (!Tab)
-    {
-        return;
-    }
-
-    if (Tab->IsClosable() && Tab->GetCloseButtonRectangle().EncapsulatesPoint(DragOrigin))
-    {
-        OnTabClosedDelegate.ExecuteIfBound(Tab->GetPanelId());
-    }
 }
 
 const String& FTabStrip::GetActivePanelId() const

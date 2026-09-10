@@ -101,6 +101,18 @@ public:
         /** @brief How wide the column holding the type labels is, in pixels, where zero draws no column. */
         int32 TypeColumnWidth = 0;
 
+        /** @brief The caption over the label column, where two empty captions draw no header at all. */
+        String LabelColumnHeader;
+
+        /** @brief The caption over the type column, drawn only when TypeColumnWidth is not zero. */
+        String TypeColumnHeader;
+
+        /** @brief How tall the header is, in pixels. */
+        int32 HeaderHeight = FUIStyle::GetDefault().Metrics.RowHeight;
+
+        /** @brief Whether the view carries a bar down its right edge once the rows outrun it. */
+        bool bShowScrollBar = false;
+
         /** @brief Whether every second row takes the alternate fill, which is what makes a long list readable. */
         bool bAlternateRowColors = false;
 
@@ -148,6 +160,8 @@ public:
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual void OnArrange(const FRectangle& AllottedBounds) override;
+    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
+    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override;
@@ -286,6 +300,7 @@ private:
     NODISCARD bool PassesFilter(const TSharedPtr<FTreeItem>& Item) const;
     NODISCARD bool IsAncestorOfSelection(const TSharedPtr<FTreeItem>& Item) const;
     NODISCARD int32 GetArrowExtent() const;
+    NODISCARD int32 GetHeaderExtent() const;
     NODISCARD FRectangle ComputeRowBounds(const FRectangle& ViewBounds, int32 RowIndex) const;
     NODISCARD FRectangle ComputeDisclosureBounds(const FRectangle& RowBounds, int32 Depth) const;
     NODISCARD int32 ComputeRowExtent(const TSharedPtr<FTreeItem>& Item) const;
@@ -303,18 +318,23 @@ private:
     void CollapseOrMoveToParent();
     void ExpandOrMoveToFirstChild();
     void ScrollRowIntoView(int32 RowIndex);
+    void OnScrollBarMoved(int32 NewOffset);
 
     TArray<TSharedPtr<FTreeItem>>         RootItems;
     TArray<TSharedPtr<FTreeItem>>         Selection;
     mutable TArray<TSharedPtr<FTreeItem>> VisibleRows;
     TSharedPtr<IFontFace>                 Font;
+    TSharedPtr<class FScrollBar>          ScrollBar;
     FUITreeRowStyle                       Style;
     FUIBrush                              ExpandedArrow;
     FUIBrush                              CollapsedArrow;
     String                                FilterText;
+    String                                LabelColumnHeader;
+    String                                TypeColumnHeader;
     IntVector2                            PressPosition;
     int32                                 ArrowSize;
     int32                                 TypeColumnWidth;
+    int32                                 HeaderHeight;
     int32                                 RowHeight;
     int32                                 IndentPerLevel;
     int32                                 ScrollOffset;
@@ -326,6 +346,7 @@ private:
     bool                                  bHighlightAncestors;
     bool                                  bAllowMultiSelect;
     mutable bool                          bRowsDirty;
+    mutable bool                          bReserveIconColumn;
     FOnTreeSelectionChanged               OnSelectionChangedDelegate;
     FOnTreeItemActivated                  OnItemActivatedDelegate;
     FOnTreeItemExpansionChanged           OnExpansionChangedDelegate;

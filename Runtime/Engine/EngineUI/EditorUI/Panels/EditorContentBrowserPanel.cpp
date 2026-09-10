@@ -1,5 +1,6 @@
 #include "Engine/EngineUI/EditorUI/Panels/EditorContentBrowserPanel.h"
 #include "Engine/EngineUI/EditorUI/EditorConfirmDialog.h"
+#include "Engine/EngineUI/EditorUI/EditorErrorDialog.h"
 #include "Engine/EngineUI/EditorUI/EditorIcons.h"
 #include "Engine/EngineUI/EditorUI/EditorStyle.h"
 #include "Application/Application.h"
@@ -727,6 +728,7 @@ TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildFolderColumn()
     FTreeView::FDesc TreeDesc;
     TreeDesc.Font                = FEditorStyle::GetFonts().Body;
     TreeDesc.RowHeight           = FOLDER_ROW_HEIGHT;
+    TreeDesc.bShowScrollBar      = true;
     TreeDesc.bAllowMultiSelect   = false;
     TreeDesc.bHighlightAncestors = true;
     TreeDesc.OnSelectionChanged  = FOnTreeSelectionChanged::CreateRaw(this, &FEditorContentBrowserPanel::OnFolderSelectionChanged);
@@ -1097,6 +1099,7 @@ void FEditorContentBrowserPanel::RefreshTiles()
         }
     }
 
+    TileView->SetFilterText(ContentFilterText);
     TileView->SetItems(Items);
 
     if (EmptyStateText)
@@ -1477,14 +1480,21 @@ void FEditorContentBrowserPanel::PasteEntries()
 
 void FEditorContentBrowserPanel::MoveEntries(const FEntryPath& SourceParentPath, const TArray<int32>& ChildIndices, const FEntryPath& TargetPath)
 {
+    if (ChildIndices.IsEmpty() || SourceParentPath == TargetPath)
+    {
+        return;
+    }
+
     if (!CanMoveInto(SourceParentPath, ChildIndices, TargetPath))
     {
+        ReportFailure("Could not move these items into that folder", CollectEntryNames(SourceParentPath, ChildIndices));
         return;
     }
 
     TArray<FEntry>* Source = FindChildArray(SourceParentPath);
     if (!Source)
     {
+        ReportFailure("Could not find the folder these items came from", CollectEntryNames(SourceParentPath, ChildIndices));
         return;
     }
 
@@ -1504,10 +1514,16 @@ void FEditorContentBrowserPanel::MoveEntries(const FEntryPath& SourceParentPath,
     TArray<FEntry>* Target = FindChildArray(TargetPath);
     if (!Target)
     {
+        TArray<String> FailedNames;
+        FailedNames.Reserve(Moved.Size());
+
         for (FEntry& Entry : Moved)
         {
+            FailedNames.Emplace(Entry.Name);
             Source->Emplace(Move(Entry));
         }
+
+        ReportFailure("Could not move these items, so they were left where they were", FailedNames);
     }
     else
     {
@@ -1616,6 +1632,43 @@ bool FEditorContentBrowserPanel::CanMoveInto(const FEntryPath& SourceParentPath,
     }
 
     return true;
+}
+
+TArray<String> FEditorContentBrowserPanel::CollectEntryNames(const FEntryPath& ParentPath, const TArray<int32>& ChildIndices)
+{
+    TArray<String> Names;
+
+    const TArray<FEntry>* Children = FindChildArray(ParentPath);
+    if (!Children)
+    {
+        return Names;
+    }
+
+    Names.Reserve(ChildIndices.Size());
+    for (const int32 ChildIndex : ChildIndices)
+    {
+        if (Children->IsValidIndex(ChildIndex))
+        {
+            Names.Emplace((*Children)[ChildIndex].Name);
+        }
+    }
+
+    return Names;
+}
+
+void FEditorContentBrowserPanel::ReportFailure(const String& Message, const TArray<String>& FailedNames)
+{
+    if (FailedNames.IsEmpty())
+    {
+        return;
+    }
+
+    FEditorErrorDialog::FDesc Desc;
+    Desc.Title   = "Content Browser";
+    Desc.Message = Message;
+    Desc.Details = FailedNames;
+
+    FEditorErrorDialog::Open(GridWrapper, Desc);
 }
 
 TSharedPtr<FMenu> FEditorContentBrowserPanel::BuildContextMenu(bool bIsFolderPanel)

@@ -1,6 +1,7 @@
 #include "Engine/EngineUI/EditorUI/Panels/EditorRendererSettingsPanel.h"
 #include "Engine/EngineUI/EditorUI/EditorStyle.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "RHI/RHI.h"
 #include "Application/Elements/Box.h"
 #include "Application/Elements/CheckBox.h"
 #include "Application/Elements/Expander.h"
@@ -8,6 +9,7 @@
 #include "Application/Elements/PropertyTable.h"
 #include "Application/Elements/ScrollBox.h"
 #include "Application/Elements/SearchBox.h"
+#include "Application/Elements/TextBlock.h"
 #include "Application/Menus/ComboBox.h"
 
 static const CHAR* const GCascadeResolutions[]      = { "512", "1024", "2048", "4096" };
@@ -24,20 +26,39 @@ static const CHAR* const GFilterFunctions[]    = { "Grid", "Poisson Disk", "Voge
 static const CHAR* const GReflectionSamplers[] = { "White noise", "Halton", "Blue noise" };
 static const CHAR* const GTonemappers[]        = { "Default", "ACES", "Reinhard", "Uncharted 2" };
 
+// The section whose rows the capability line above them explains
+static const CHAR* const GRayTracingSection = "Ray Tracing";
+
+static String DescribeRayTracingSupport()
+{
+    if (!RHI::bSupportsRayTracing)
+    {
+        return "Not supported";
+    }
+
+    return String::Printf("Tier %s, inline %s, SER %s",
+        ToString(RHI::RayTracingTier),
+        RHI::bSupportsInlineRayTracing ? "yes" : "no",
+        RHI::bSupportsShaderExecutionReordering ? "yes" : "no");
+}
+
 #define SETTING_BOOL(Section, Label, Name) \
-    { Section, Label, Name, ERendererSettingKind::Bool, 0.0f, 0.0f, 0.0f, nullptr, nullptr, 0 }
+    { Section, Label, Name, ERendererSettingKind::Bool, 0.0f, 0.0f, 0.0f, nullptr, nullptr, 0, nullptr }
+
+#define SETTING_BOOL_GATED(Section, Label, Name, Predicate) \
+    { Section, Label, Name, ERendererSettingKind::Bool, 0.0f, 0.0f, 0.0f, nullptr, nullptr, 0, Predicate }
 
 #define SETTING_INT(Section, Label, Name, Min, Max) \
-    { Section, Label, Name, ERendererSettingKind::Int, float(Min), float(Max), 1.0f, nullptr, nullptr, 0 }
+    { Section, Label, Name, ERendererSettingKind::Int, float(Min), float(Max), 1.0f, nullptr, nullptr, 0, nullptr }
 
 #define SETTING_FLOAT(Section, Label, Name, Min, Max, Step) \
-    { Section, Label, Name, ERendererSettingKind::Float, Min, Max, Step, nullptr, nullptr, 0 }
+    { Section, Label, Name, ERendererSettingKind::Float, Min, Max, Step, nullptr, nullptr, 0, nullptr }
 
 #define SETTING_COMBO(Section, Label, Name, Items) \
-    { Section, Label, Name, ERendererSettingKind::Combo, 0.0f, 0.0f, 0.0f, Items, nullptr, int32(ARRAY_COUNT(Items)) }
+    { Section, Label, Name, ERendererSettingKind::Combo, 0.0f, 0.0f, 0.0f, Items, nullptr, int32(ARRAY_COUNT(Items)), nullptr }
 
 #define SETTING_COMBO_VALUES(Section, Label, Name, Items, Values) \
-    { Section, Label, Name, ERendererSettingKind::ComboValues, 0.0f, 0.0f, 0.0f, Items, Values, int32(ARRAY_COUNT(Items)) }
+    { Section, Label, Name, ERendererSettingKind::ComboValues, 0.0f, 0.0f, 0.0f, Items, Values, int32(ARRAY_COUNT(Items)), nullptr }
 
 static const FRendererSetting GRendererSettings[] =
 {
@@ -79,12 +100,18 @@ static const FRendererSetting GRendererSettings[] =
     SETTING_FLOAT("SSAO", "Radius",      "Renderer.SSAO.Radius", 0.01f, 1.0f, 0.01f),
     SETTING_FLOAT("SSAO", "Bias",        "Renderer.SSAO.Bias", 0.01f, 1.0f, 0.01f),
 
-    SETTING_BOOL("Ray Tracing", "Enable ray tracing",                "Renderer.Feature.RayTracing"),
-    SETTING_BOOL("Ray Tracing", "Use local shader bindings",         "Renderer.RayTracing.EnableLocalShaderBindings"),
-    SETTING_BOOL("Ray Tracing", "Inline reflections (RayQuery)",     "Renderer.RayTracing.InlineReflections"),
-    SETTING_BOOL("Ray Tracing", "Shader Execution Reordering",       "Renderer.RayTracing.SER"),
-    SETTING_BOOL("Ray Tracing", "BLAS compaction",                   "Renderer.RayTracing.Compaction"),
-    SETTING_BOOL("Ray Tracing", "Acceleration-structure disk cache", "Renderer.RayTracing.ASCache"),
+    SETTING_BOOL_GATED("Ray Tracing", "Enable ray tracing",                "Renderer.Feature.RayTracing",
+        []() { return RHI::bSupportsRayTracing; }),
+    SETTING_BOOL_GATED("Ray Tracing", "Use local shader bindings",         "Renderer.RayTracing.EnableLocalShaderBindings",
+        []() { return RHI::bSupportsRayTracing; }),
+    SETTING_BOOL_GATED("Ray Tracing", "Inline reflections (RayQuery)",     "Renderer.RayTracing.InlineReflections",
+        []() { return RHI::bSupportsInlineRayTracing; }),
+    SETTING_BOOL_GATED("Ray Tracing", "Shader Execution Reordering",       "Renderer.RayTracing.SER",
+        []() { return RHI::bSupportsShaderExecutionReordering; }),
+    SETTING_BOOL_GATED("Ray Tracing", "BLAS compaction",                   "Renderer.RayTracing.Compaction",
+        []() { return RHI::bSupportsRayTracing; }),
+    SETTING_BOOL_GATED("Ray Tracing", "Acceleration-structure disk cache", "Renderer.RayTracing.ASCache",
+        []() { return RHI::bSupportsRayTracing; }),
 
     SETTING_BOOL ("Reflections", "Enable",                       "Renderer.RayTracing.Reflections.Enable"),
     SETTING_FLOAT("Reflections", "Indirect specular strength",   "Renderer.Reflections.IndirectSpecularStrength", 0.0f, 4.0f, 0.01f),
@@ -282,10 +309,27 @@ void FEditorRendererSettingsPanel::RebuildSections()
             }
 
             SectionBoxes.Emplace(FSectionBox{ Setting.Section, SectionBox });
+
+            if (String(Setting.Section) == GRayTracingSection)
+            {
+                FTextBlock::FDesc SupportDesc;
+                SupportDesc.Text = DescribeRayTracingSupport();
+                SupportDesc.Font = FEditorStyle::GetFonts().Monospace;
+
+                CurrentTable->AddRow("Hardware support", FTextBlock::Create(SupportDesc)).ToolTipText =
+                    "What this RHI reports, which is what decides whether the rows below it do anything";
+            }
         }
 
+        const bool bIsSupported = !Setting.IsSupported || Setting.IsSupported();
+
         FPropertyRow& Row = CurrentTable->AddRow(Setting.Label, Editor);
-        Row.ToolTipText   = Setting.CVarName;
+        Row.ToolTipText   = bIsSupported ? String(Setting.CVarName) : String::Printf("%s (not supported by this RHI)", Setting.CVarName);
+
+        if (!bIsSupported && Setting.Kind == ERendererSettingKind::Bool)
+        {
+            StaticCastSharedPtr<FCheckBox>(Editor)->SetEnabled(false);
+        }
 
         FSettingRow Entry;
         Entry.Setting  = &Setting;

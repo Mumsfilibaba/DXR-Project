@@ -42,6 +42,9 @@ struct FRendererSetting
     const CHAR* const*   Options;
     const int32*         OptionValues;
     int32                NumOptions;
+
+    /** @brief Polled as the panel builds, a null predicate leaving the row enabled. */
+    bool               (*IsSupported)();
 };
 
 class ENGINE_API FEditorRendererSettingsPanel final : public FEditorPanel

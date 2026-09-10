@@ -11,7 +11,6 @@
 #include "Application/Draw/DrawCommandList.h"
 #include "Engine/World/ActorFilter.h"
 #include "Engine/EngineUI/EditorUI/EditorIcons.h"
-#include "Application/Elements/Border.h"
 #include "Application/Elements/Box.h"
 #include "Application/Elements/EditableText.h"
 #include "Application/Elements/SearchBox.h"
@@ -31,7 +30,6 @@ constexpr int32 HIERARCHY_ROW_HEIGHT = 30;
 
 constexpr int32 HIERARCHY_TYPE_COLUMN_WIDTH = 120;
 
-constexpr int32 HIERARCHY_HEADER_HEIGHT  = 42;
 constexpr int32 HIERARCHY_HEADER_PADDING = 4;
 
 static const EEditorLightType GPlaceableLightTypes[] =
@@ -724,6 +722,9 @@ bool FEditorSceneHierarchyPanel::Initialize()
     TreeDesc.Font                = FEditorStyle::GetFonts().Body;
     TreeDesc.RowHeight           = HIERARCHY_ROW_HEIGHT;
     TreeDesc.TypeColumnWidth     = HIERARCHY_TYPE_COLUMN_WIDTH;
+    TreeDesc.LabelColumnHeader   = "Item Label";
+    TreeDesc.TypeColumnHeader    = "Type";
+    TreeDesc.bShowScrollBar      = true;
     TreeDesc.bAlternateRowColors = true;
     TreeDesc.bAllowMultiSelect   = true;
     TreeDesc.OnSelectionChanged  = FOnTreeSelectionChanged::CreateRaw(this, &FEditorSceneHierarchyPanel::OnTreeSelectionChanged);
@@ -757,14 +758,8 @@ bool FEditorSceneHierarchyPanel::Initialize()
         return false;
     }
 
-    FBorder::FDesc HeaderDesc;
-    HeaderDesc.Content         = SearchBox;
-    HeaderDesc.BackgroundColor = FUIStyle::GetDefault().Header.Fill;
-    HeaderDesc.Padding         = FMargin(HIERARCHY_HEADER_PADDING);
-    HeaderDesc.MinHeight       = HIERARCHY_HEADER_HEIGHT;
-
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
-    Column->AddSlot(FBorder::Create(HeaderDesc));
+    Column->AddSlot(SearchBox).SetPadding(FMargin(HIERARCHY_HEADER_PADDING));
     Column->AddSlot(HierarchyView).SetFillCoefficient(1.0f);
 
     Content = Column;
@@ -797,8 +792,6 @@ TSharedPtr<FMenu> FEditorSceneHierarchyPanel::BuildRowContextMenu()
         AddFilter(ContextFilter);
     });
 
-    Menu->AddItem(FMenuItem::Create(AddFilterDesc));
-
     FMenuItem::FDesc RenameDesc;
     RenameDesc.Label        = "Rename";
     RenameDesc.ShortcutText = "F2";
@@ -817,8 +810,6 @@ TSharedPtr<FMenu> FEditorSceneHierarchyPanel::BuildRowContextMenu()
     TSharedPtr<FMenuItem> RenameItem = FMenuItem::Create(RenameDesc);
     RenameItem->SetEnabled(SelectedCount == 1 || bHasFilterOnly);
 
-    Menu->AddItem(RenameItem);
-
     FMenuItem::FDesc DeleteDesc;
     DeleteDesc.Label        = SelectedCount > 1 ? String::Printf("Delete %d Actors", SelectedCount) : String("Delete");
     DeleteDesc.ShortcutText = "Del";
@@ -828,20 +819,163 @@ TSharedPtr<FMenu> FEditorSceneHierarchyPanel::BuildRowContextMenu()
     TSharedPtr<FMenuItem> DeleteItem = FMenuItem::Create(DeleteDesc);
     DeleteItem->SetEnabled(bHasActorSelected || bHasFilterOnly);
 
+    const bool bHasParent = EditorEngine->GetSelectedActors().ContainsWithPredicate([](FActor* Actor)
+    {
+        return Actor && Actor->GetParentActor() != nullptr;
+    });
+
+    FMenuItem::FDesc DetachDesc;
+    DetachDesc.Label       = "Detach from Parent";
+    DetachDesc.Font        = Font;
+    DetachDesc.OnActivated = FOnMenuItemActivated::CreateLambda([this]()
+    {
+        for (FActor* Actor : EditorEngine->GetSelectedActors())
+        {
+            Actor->DetachFromParent(EAttachmentRule::KeepWorld);
+        }
+
+        WorldRevision = 0;
+    });
+
+    TSharedPtr<FMenuItem> DetachItem = FMenuItem::Create(DetachDesc);
+    DetachItem->SetEnabled(bHasParent);
+
+    FMenuItem::FDesc CopyDesc;
+    CopyDesc.Label        = "Copy";
+    CopyDesc.ShortcutText = "Ctrl+C";
+    CopyDesc.Font         = Font;
+
+    TSharedPtr<FMenuItem> CopyItem = FMenuItem::Create(CopyDesc);
+    CopyItem->SetEnabled(false);
+
+    FMenuItem::FDesc PasteDesc;
+    PasteDesc.Label        = "Paste";
+    PasteDesc.ShortcutText = "Ctrl+V";
+    PasteDesc.Font         = Font;
+
+    TSharedPtr<FMenuItem> PasteItem = FMenuItem::Create(PasteDesc);
+    PasteItem->SetEnabled(false);
+
+    Menu->AddSection("Create", Font);
+
+    if (TSharedPtr<FMenu> AddActorMenu = BuildPlaceActorMenu(EditorEngine))
+    {
+        FMenuItem::FDesc AddActorDesc;
+        AddActorDesc.Label   = "Add Actor";
+        AddActorDesc.Font    = Font;
+        AddActorDesc.SubMenu = AddActorMenu;
+
+        Menu->AddItem(FMenuItem::Create(AddActorDesc));
+    }
+
+    Menu->AddItem(FMenuItem::Create(AddFilterDesc));
+
+    Menu->AddSection("Common", Font);
+
     Menu->AddItem(DeleteItem);
+    Menu->AddItem(RenameItem);
+
+    if (TSharedPtr<FMenu> MoveToFilterMenu = BuildMoveToFilterMenu())
+    {
+        FMenuItem::FDesc MoveToDesc;
+        MoveToDesc.Label   = "Move To Filter";
+        MoveToDesc.Font    = Font;
+        MoveToDesc.SubMenu = MoveToFilterMenu;
+
+        TSharedPtr<FMenuItem> MoveToItem = FMenuItem::Create(MoveToDesc);
+        MoveToItem->SetEnabled(bHasActorSelected || bHasFilterOnly);
+
+        Menu->AddItem(MoveToItem);
+    }
+
+    Menu->AddItem(DetachItem);
+    Menu->AddItem(CopyItem);
+    Menu->AddItem(PasteItem);
+
+    return Menu;
+}
+
+TSharedPtr<FMenu> FEditorSceneHierarchyPanel::BuildMoveToFilterMenu()
+{
+    FWorld* World = EditorEngine->GetWorld();
+    if (!World)
+    {
+        return nullptr;
+    }
+
+    TSharedPtr<FMenu> Menu = FMenu::Create();
+    if (!Menu)
+    {
+        return nullptr;
+    }
+
+    FMenuItem::FDesc NoneDesc;
+    NoneDesc.Label       = "None";
+    NoneDesc.Font        = FEditorStyle::GetFonts().Body;
+    NoneDesc.OnActivated = FOnMenuItemActivated::CreateLambda([this]()
+    {
+        MoveSelectionToFilter(nullptr);
+    });
+
+    Menu->AddItem(FMenuItem::Create(NoneDesc));
     Menu->AddSeparator();
 
-    if (TSharedPtr<FMenu> PlaceActorMenu = BuildPlaceActorMenu(EditorEngine))
+    for (FActorFilter* Filter : World->GetActorFilters())
     {
-        FMenuItem::FDesc PlaceDesc;
-        PlaceDesc.Label   = "Place Actor";
-        PlaceDesc.Font    = Font;
-        PlaceDesc.SubMenu = PlaceActorMenu;
-
-        Menu->AddItem(FMenuItem::Create(PlaceDesc));
+        if (Filter && !Filter->GetParentFilter())
+        {
+            AddMoveToFilterItems(Menu, Filter);
+        }
     }
 
     return Menu;
+}
+
+void FEditorSceneHierarchyPanel::AddMoveToFilterItems(const TSharedPtr<FMenu>& Menu, FActorFilter* Filter)
+{
+    FMenuItem::FDesc Desc;
+    Desc.Label       = Filter->GetName();
+    Desc.Font        = FEditorStyle::GetFonts().Body;
+    Desc.OnActivated = FOnMenuItemActivated::CreateLambda([this, Filter]()
+    {
+        MoveSelectionToFilter(Filter);
+    });
+
+    const TArray<FActorFilter*>& Children = Filter->GetChildFilters();
+    if (!Children.IsEmpty())
+    {
+        TSharedPtr<FMenu> SubMenu = FMenu::Create();
+        for (FActorFilter* Child : Children)
+        {
+            AddMoveToFilterItems(SubMenu, Child);
+        }
+
+        Desc.SubMenu = SubMenu;
+    }
+
+    Menu->AddItem(FMenuItem::Create(Desc));
+}
+
+void FEditorSceneHierarchyPanel::MoveSelectionToFilter(FActorFilter* Filter)
+{
+    FWorld* World = EditorEngine->GetWorld();
+    if (!World)
+    {
+        return;
+    }
+
+    if (SelectedFilter && EditorEngine->GetSelectedActors().IsEmpty())
+    {
+        World->SetActorFilterParent(SelectedFilter, Filter);
+    }
+
+    for (FActor* Actor : EditorEngine->GetSelectedActors())
+    {
+        Actor->DetachFromParent(EAttachmentRule::KeepWorld);
+        Actor->SetFilter(Filter);
+    }
+
+    WorldRevision = 0;
 }
 
 void FEditorSceneHierarchyPanel::Release()

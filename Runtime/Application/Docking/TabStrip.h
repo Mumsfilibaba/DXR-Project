@@ -37,6 +37,8 @@ public:
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseLeft(const FCursorEvent& CursorEvent) override;
 
     /**
      * @brief Tells the tab which strip it belongs to, which the strip does as it builds it.
@@ -86,7 +88,6 @@ public:
 protected:
 
     // FInteractiveElement Interface
-    virtual void OnClicked() override;
     virtual void OnDragged(const FCursorEvent& CursorEvent) override;
 
 private:
@@ -96,6 +97,7 @@ private:
     FTabStrip*            OwnerStrip;
     bool                  bIsClosable;
     bool                  bIsActive;
+    bool                  bIsCloseHovered;
 };
 
 class APPLICATION_API FTabStrip final : public FVisualElement
@@ -203,20 +205,14 @@ public:
     void OnTabDragged(FTab* Tab, const IntVector2& ClientPosition, const IntVector2& ScreenPosition);
 
     /**
-     * @brief Reports a tab being let go, which settles whatever the drag was doing.
+     * @brief Reports a tab being let go, which closes it when both ends of the click landed on its cross
+     * and otherwise settles whatever the drag was doing.
      *
      * @param Tab            The tab released.
      * @param ClientPosition Where the cursor was, relative to the window the strip is in.
      * @param ScreenPosition Where the cursor was, in screen space.
      */
     void OnTabReleased(FTab* Tab, const IntVector2& ClientPosition, const IntVector2& ScreenPosition);
-
-    /**
-     * @brief Reports a completed click on a tab, which activates it or closes it.
-     *
-     * @param Tab The tab clicked.
-     */
-    void OnTabClicked(FTab* Tab);
 
     /** @return The tabs the strip holds, in the order they are laid out along the strip. */
     NODISCARD FORCEINLINE const TArray<TSharedPtr<FTab>>& GetTabs() const
@@ -248,10 +244,10 @@ public:
     }
 
 private:
-    void MoveTab(int32 FromIndex, int32 ToIndex);
-
     NODISCARD int32 FindTabIndexAt(int32 PositionX) const;
     NODISCARD int32 FindTabIndex(const FTab* Tab) const;
+
+    void MoveTab(int32 FromIndex, int32 ToIndex);
 
     TSharedPtr<IFontFace>    Font;
     TArray<TSharedPtr<FTab>> Tabs;

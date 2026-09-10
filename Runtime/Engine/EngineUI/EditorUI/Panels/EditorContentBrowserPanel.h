@@ -61,6 +61,9 @@ private:
 
     NODISCARD bool HasClipboardContent() const;
     NODISCARD bool CanMoveInto(const FEntryPath& SourceParentPath, const TArray<int32>& ChildIndices, const FEntryPath& TargetPath) const;
+    NODISCARD TArray<String> CollectEntryNames(const FEntryPath& ParentPath, const TArray<int32>& ChildIndices);
+
+    void ReportFailure(const String& Message, const TArray<String>& FailedNames);
 
     NODISCARD TSharedPtr<FVisualElement> BuildFolderColumn();
     NODISCARD TSharedPtr<FVisualElement> BuildContentColumn();

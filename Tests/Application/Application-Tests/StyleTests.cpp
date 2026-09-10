@@ -30,10 +30,11 @@ bool StyleDefaults_Test()
     TEST_EXPECT(Style.ScrollBar.GrabActive.R > Style.ScrollBar.Grab.R);
     TEST_EXPECT(Style.ScrollBar.CornerRadius > 0.0f);
 
-    TEST_SECTION("A dock tab lightens as it goes from idle through hovered to active, and the strip stays behind them all");
+    TEST_SECTION("A dock tab lightens on hover but not when active, which the strip under it marks instead");
     TEST_EXPECT(Style.Tab.FillHovered.R > Style.Tab.Fill.R);
-    TEST_EXPECT(Style.Tab.FillActive.R > Style.Tab.FillHovered.R);
+    TEST_EXPECT_EQ(Style.Tab.FillActive.R, Style.Tab.Fill.R);
     TEST_EXPECT(Style.Tab.StripFill.R <= Style.Tab.Fill.R);
+    TEST_EXPECT(Style.Tab.ActiveStrip.B > Style.Tab.ActiveStrip.R);
 
     TEST_SECTION("The metrics leave room for a line of text inside a control");
     TEST_EXPECT(Style.Metrics.RowHeight > 16);

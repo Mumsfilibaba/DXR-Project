@@ -123,6 +123,20 @@ public:
         return Items;
     }
 
+    /**
+     * @brief Sets the run of a label to draw highlighted, which the host keeps in step with whatever
+     * it filtered the tiles by.
+     *
+     * @param InFilter The text to match, compared without regard to case. An empty filter highlights nothing.
+     */
+    void SetFilterText(const String& InFilter);
+
+    /** @return The run of a label drawn highlighted, which is empty when nothing is highlighted. */
+    NODISCARD FORCEINLINE const String& GetFilterText() const
+    {
+        return FilterText;
+    }
+
     /** @brief Drops the selection, firing the selection delegate when there was one to drop. */
     void ClearSelection();
 
@@ -230,6 +244,7 @@ private:
     TArray<FTileItem>       Items;
     TArray<int32>           SelectedIndices;
     TSharedPtr<IFontFace>   Font;
+    String                  FilterText;
     IntVector2              TileSize;
     IntVector2              PressPosition;
     int32                   TileSpacing;

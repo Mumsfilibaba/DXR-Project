@@ -125,6 +125,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("TreeViewFiltering", TreeViewFiltering_Test());
     RUN_TEST("TreeViewKeyboard", TreeViewKeyboard_Test());
     RUN_TEST("TreeViewScrolling", TreeViewScrolling_Test());
+    RUN_TEST("TreeViewColumnsAndIndent", TreeViewColumnsAndIndent_Test());
     RUN_TEST("TileViewLayout", TileViewLayout_Test());
     RUN_TEST("TileViewSelection", TileViewSelection_Test());
     RUN_TEST("TileViewDrag", TileViewDrag_Test());

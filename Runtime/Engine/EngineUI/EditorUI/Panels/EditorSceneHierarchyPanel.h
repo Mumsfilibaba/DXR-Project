@@ -46,8 +46,11 @@ private:
     void OnRenameCommitted(const TSharedPtr<FTreeItem>& Item, const String& NewName);
     void OnItemsDropped(const TArray<TSharedPtr<FTreeItem>>& Items, const TSharedPtr<FTreeItem>& TargetItem);
     void AddFilter(FActorFilter* ParentFilter);
+    void AddMoveToFilterItems(const TSharedPtr<FMenu>& Menu, FActorFilter* Filter);
+    void MoveSelectionToFilter(FActorFilter* Filter);
 
     NODISCARD TSharedPtr<FMenu> BuildRowContextMenu();
+    NODISCARD TSharedPtr<FMenu> BuildMoveToFilterMenu();
     NODISCARD uint64 ComputeWorldRevision() const;
     NODISCARD TSharedPtr<FTreeItem> CreateItem(const String& Label, FActor* Actor, FActorFilter* Filter);
     NODISCARD FActorFilter* GetContextFilter() const;

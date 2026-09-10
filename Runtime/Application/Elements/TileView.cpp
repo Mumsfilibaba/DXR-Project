@@ -2,6 +2,7 @@
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Input/Keys.h"
 #include "Application/Style/UIStyle.h"
+#include "Application/Text/TextLayout.h"
 #include "Core/Math/Math.h"
 
 constexpr int32 TILE_INNER_PADDING  = 4;
@@ -19,6 +20,7 @@ FTileView::FTileView()
     , Items()
     , SelectedIndices()
     , Font(nullptr)
+    , FilterText()
     , TileSize(80, 92)
     , PressPosition()
     , TileSpacing(8)
@@ -118,7 +120,18 @@ int32 FTileView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
             const IntVector2 LabelSize   = IntVector2(Font->MeasureWidth(StringView(LabelText.Data(), LabelText.Length())), Font->GetLineHeight());
             const FRectangle LabelBounds = FRectangle::AlignInBounds(LabelBand, LabelSize, EHorizontalAlignment::Center, EVerticalAlignment::Top);
 
-            OutCommandList.AddText(LayerId + 2, LabelBounds, LabelText, Font.Get(), Style.Colors.Text);
+            // Matching the elided label rather than the whole one, so a match in the elided tail draws plain
+            const int32 MatchOffset = FilterText.IsEmpty() ? String::InvalidIndex : LabelText.Find(FilterText, EStringCaseType::NoCase);
+            if (MatchOffset == String::InvalidIndex)
+            {
+                OutCommandList.AddText(LayerId + 2, LabelBounds, LabelText, Font.Get(), Style.Colors.Text);
+            }
+            else
+            {
+                DrawTextWithSearchHighlight(OutCommandList, LayerId + 1, LabelBounds, LabelText, MatchOffset, FilterText.Length(),
+                    Font.Get(), Style.Colors.Text);
+            }
+
             MaxLayerId = Math::Max(MaxLayerId, LayerId + 2);
         }
     }
@@ -241,6 +254,11 @@ void FTileView::SetItems(const TArray<FTileItem>& InItems)
     AnchorIndex  = InvalidTileIndex;
     PressedIndex = InvalidTileIndex;
     ScrollOffset = 0;
+}
+
+void FTileView::SetFilterText(const String& InFilter)
+{
+    FilterText = InFilter;
 }
 
 void FTileView::ClearSelection()

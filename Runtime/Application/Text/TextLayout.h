@@ -8,6 +8,22 @@
 struct IFontFace;
 class FDrawCommandList;
 
+/**
+ * @brief Draws a label with the run a search matched boxed behind it, splitting the label into up to
+ * three runs.
+ *
+ * @param OutCommandList The list to append to.
+ * @param LayerId        The layer the box goes on, the runs going one above it.
+ * @param LabelBounds    Where the label starts, at the height of one text band.
+ * @param Label          The label to draw, whose matched run takes the highlight colors.
+ * @param MatchOffset    Where the match starts in the label, in characters.
+ * @param MatchLength    How long the match is, in characters.
+ * @param Font           The face the label is measured and drawn with.
+ * @param TextColor      The color the runs either side of the match take.
+ */
+APPLICATION_API void DrawTextWithSearchHighlight(FDrawCommandList& OutCommandList, int32 LayerId, const FRectangle& LabelBounds,
+    const String& Label, int32 MatchOffset, int32 MatchLength, const IFontFace* Font, const FFloatColor& TextColor);
+
 struct FTextRun
 {
     FTextRun()

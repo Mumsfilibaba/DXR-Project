@@ -1,7 +1,49 @@
 #include "Application/Text/TextLayout.h"
 #include "Application/Draw/DrawCommandList.h"
+#include "Application/Style/UIStyle.h"
 #include "Application/Text/IFontFace.h"
 #include "Core/Math/Math.h"
+
+// How far the highlight box is grown past the run it sits behind, in pixels
+constexpr int32 TEXT_SEARCH_HIGHLIGHT_PADDING = 1;
+
+void DrawTextWithSearchHighlight(FDrawCommandList& OutCommandList, int32 LayerId, const FRectangle& LabelBounds,
+    const String& Label, int32 MatchOffset, int32 MatchLength, const IFontFace* Font, const FFloatColor& TextColor)
+{
+    if (!Font)
+    {
+        return;
+    }
+
+    const FUITreeRowStyle& Style     = FUIStyle::GetDefault().TreeRow;
+    const StringView       LabelView(Label.Data(), Label.Length());
+
+    const int32 MatchLeft  = Font->MeasureWidth(StringView(LabelView.Data(), MatchOffset));
+    const int32 MatchWidth = Font->MeasureWidth(StringView(LabelView.Data() + MatchOffset, MatchLength));
+
+    const FRectangle HighlightBounds(
+        IntVector2(LabelBounds.Position.X + MatchLeft - TEXT_SEARCH_HIGHLIGHT_PADDING, LabelBounds.Position.Y - TEXT_SEARCH_HIGHLIGHT_PADDING),
+        MatchWidth + TEXT_SEARCH_HIGHLIGHT_PADDING * 2,
+        LabelBounds.Height + TEXT_SEARCH_HIGHLIGHT_PADDING * 2);
+
+    OutCommandList.AddBox(LayerId, HighlightBounds, Style.SearchHighlight);
+
+    FRectangle RunBounds = LabelBounds;
+    if (MatchOffset > 0)
+    {
+        OutCommandList.AddText(LayerId + 1, RunBounds, Label.SubString(0, MatchOffset), Font, TextColor);
+    }
+
+    RunBounds.Position.X = LabelBounds.Position.X + MatchLeft;
+    OutCommandList.AddText(LayerId + 1, RunBounds, Label.SubString(MatchOffset, MatchLength), Font, Style.SearchHighlightText);
+
+    const int32 SuffixOffset = MatchOffset + MatchLength;
+    if (SuffixOffset < Label.Length())
+    {
+        RunBounds.Position.X = LabelBounds.Position.X + MatchLeft + MatchWidth;
+        OutCommandList.AddText(LayerId + 1, RunBounds, Label.SubString(SuffixOffset, Label.Length() - SuffixOffset), Font, TextColor);
+    }
+}
 
 constexpr int32 FALLBACK_LINE_HEIGHT = 1;
 

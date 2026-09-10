@@ -1,6 +1,9 @@
 #include "Application/Elements/TreeView.h"
 #include "Application/Application.h"
+#include "Application/ElementPath.h"
+#include "Application/Elements/ScrollBar.h"
 #include "Application/Draw/DrawCommandList.h"
+#include "Application/Text/TextLayout.h"
 #include "Core/Math/Math.h"
 
 constexpr int32 TREE_DISCLOSURE_SIZE    = 8;
@@ -9,9 +12,9 @@ constexpr int32 TREE_DISCLOSURE_SPACING = 4;
 constexpr int32 TREE_ICON_SIZE    = 16;
 constexpr int32 TREE_ICON_SPACING = 4;
 
-constexpr float TREE_HOVER_OPACITY = 0.5f;
+constexpr int32 TREE_HEADER_PADDING = 4;
 
-constexpr int32 TREE_SEARCH_HIGHLIGHT_PADDING = 1;
+constexpr float TREE_HOVER_OPACITY = 0.5f;
 
 static void DrawDisclosureTriangle(FDrawCommandList& OutCommandList, int32 LayerId, const FRectangle& Bounds, bool bIsExpanded, const FFloatColor& Tint)
 {
@@ -95,13 +98,17 @@ FTreeView::FTreeView()
     , Selection()
     , VisibleRows()
     , Font(nullptr)
+    , ScrollBar(nullptr)
     , Style()
     , ExpandedArrow()
     , CollapsedArrow()
     , FilterText()
+    , LabelColumnHeader()
+    , TypeColumnHeader()
     , PressPosition()
     , ArrowSize(16)
     , TypeColumnWidth(0)
+    , HeaderHeight(FUIStyle::GetDefault().Metrics.RowHeight)
     , RowHeight(FUIStyle::GetDefault().Metrics.RowHeight)
     , IndentPerLevel(FUIStyle::GetDefault().TreeRow.IndentPerLevel)
     , ScrollOffset(0)
@@ -113,6 +120,7 @@ FTreeView::FTreeView()
     , bHighlightAncestors(false)
     , bAllowMultiSelect(true)
     , bRowsDirty(true)
+    , bReserveIconColumn(false)
     , OnSelectionChangedDelegate()
     , OnItemActivatedDelegate()
     , OnExpansionChangedDelegate()
@@ -130,6 +138,9 @@ void FTreeView::Initialize(const FDesc& Desc)
     CollapsedArrow             = Desc.CollapsedArrow;
     ArrowSize                  = Math::Max(1, Desc.ArrowSize);
     TypeColumnWidth            = Math::Max(0, Desc.TypeColumnWidth);
+    LabelColumnHeader          = Desc.LabelColumnHeader;
+    TypeColumnHeader           = Desc.TypeColumnHeader;
+    HeaderHeight               = Math::Max(0, Desc.HeaderHeight);
     RowHeight                  = Math::Max(1, Desc.RowHeight);
     IndentPerLevel             = Math::Max(0, Desc.IndentPerLevel);
     bAlternateRowColors        = Desc.bAlternateRowColors;
@@ -139,6 +150,19 @@ void FTreeView::Initialize(const FDesc& Desc)
     OnItemActivatedDelegate    = Desc.OnItemActivated;
     OnExpansionChangedDelegate = Desc.OnExpansionChanged;
     OnDragDetectedDelegate     = Desc.OnDragDetected;
+
+    if (Desc.bShowScrollBar)
+    {
+        FScrollBar::FDesc BarDesc;
+        BarDesc.Orientation     = EOrientation::Vertical;
+        BarDesc.OnOffsetChanged = FOnScrollBarOffsetChanged::CreateRaw(this, &FTreeView::OnScrollBarMoved);
+
+        ScrollBar = FScrollBar::Create(BarDesc);
+        if (ScrollBar)
+        {
+            ScrollBar->SetParentElement(AsWeakPtr());
+        }
+    }
 }
 
 IntVector2 FTreeView::ComputeDesiredSize() const
@@ -151,7 +175,7 @@ IntVector2 FTreeView::ComputeDesiredSize() const
         Width = Math::Max(Width, ComputeRowExtent(Row));
     }
 
-    return IntVector2(Width, Rows.Size() * RowHeight);
+    return IntVector2(Width, GetHeaderExtent() + (Rows.Size() * RowHeight));
 }
 
 void FTreeView::OnArrange(const FRectangle& AllottedBounds)
@@ -160,15 +184,73 @@ void FTreeView::OnArrange(const FRectangle& AllottedBounds)
 
     ViewHeight   = AllottedBounds.Height;
     ScrollOffset = Math::Clamp(ScrollOffset, 0, GetMaxScrollOffset());
+
+    if (ScrollBar)
+    {
+        const int32 HeaderExtent = GetHeaderExtent();
+        const int32 Thickness    = FUIStyle::GetDefault().Metrics.ScrollBarThickness;
+
+        ScrollBar->SetScrollState(GetVisibleRows().Size() * RowHeight, ViewHeight - HeaderExtent, ScrollOffset);
+        ScrollBar->Tick(FRectangle(IntVector2(AllottedBounds.GetRight() - Thickness, AllottedBounds.Position.Y + HeaderExtent),
+            Thickness, Math::Max(AllottedBounds.Height - HeaderExtent, 0)));
+    }
+}
+
+void FTreeView::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+{
+    if (ScrollBar)
+    {
+        OutChildren.Add(ScrollBar);
+    }
+}
+
+void FTreeView::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
+{
+    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
+
+    if (ScrollBar && ScrollBar->IsScrollable() && ScrollBar->GetContentRectangle().EncapsulatesPoint(ClientPosition))
+    {
+        ScrollBar->FindChildrenContainingPoint(ClientPosition, OutChildElements);
+    }
 }
 
 int32 FTreeView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
     const FRectangle& Bounds = AllottedGeometry.Bounds;
-    OutCommandList.PushClip(LayerId, Bounds);
 
     const TArray<TSharedPtr<FTreeItem>>& Rows        = GetVisibleRows();
     const int32                          TypeColumnX = Bounds.GetRight() - TypeColumnWidth;
+
+    const int32 HeaderExtent = GetHeaderExtent();
+    if (HeaderExtent > 0)
+    {
+        const FRectangle HeaderBounds(Bounds.Position, Bounds.Width, HeaderExtent);
+        OutCommandList.AddBox(LayerId, HeaderBounds, Style.HeaderFill);
+
+        if (Font)
+        {
+            const int32 CaptionY = Bounds.Position.Y + Font->GetTextBandOffset(HeaderExtent);
+            const int32 LabelX   = Bounds.Position.X + TREE_HEADER_PADDING;
+
+            OutCommandList.AddText(LayerId + 1,
+                FRectangle(IntVector2(LabelX, CaptionY), Math::Max(TypeColumnX - LabelX, 0), Font->GetTextBandHeight()),
+                LabelColumnHeader, Font.Get(), Style.SecondaryText);
+
+            if (TypeColumnWidth > 0 && !TypeColumnHeader.IsEmpty())
+            {
+                OutCommandList.AddText(LayerId + 1,
+                    FRectangle(IntVector2(TypeColumnX, CaptionY), TypeColumnWidth, Font->GetTextBandHeight()),
+                    TypeColumnHeader, Font.Get(), Style.SecondaryText);
+            }
+        }
+
+        const float SeparatorY = static_cast<float>(HeaderBounds.GetBottom());
+        OutCommandList.AddLine(LayerId + 1, Vector2(static_cast<float>(Bounds.Position.X), SeparatorY),
+            Vector2(static_cast<float>(Bounds.GetRight()), SeparatorY), Style.HeaderSeparator, 1.0f);
+    }
+
+    OutCommandList.PushClip(LayerId, FRectangle(IntVector2(Bounds.Position.X, Bounds.Position.Y + HeaderExtent),
+        Bounds.Width, Math::Max(Bounds.Height - HeaderExtent, 0)));
 
     const bool bHasFocus = FApplication::IsInitialized() && FApplication::Get().GetFocusElementLeaf().Get() == this;
 
@@ -232,8 +314,6 @@ int32 FTreeView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
             const IntVector2 LabelPosition(PenX, RowBounds.Position.Y + Font->GetTextBandOffset(RowHeight));
             const FRectangle LabelBounds(LabelPosition, Math::Max(LabelRight - PenX, 0), Font->GetTextBandHeight());
 
-            const StringView LabelView(Item->Label.Data(), Item->Label.Length());
-
             const int32 MatchOffset = FilterText.IsEmpty() ? String::InvalidIndex : Item->Label.Find(FilterText, EStringCaseType::NoCase);
             if (MatchOffset == String::InvalidIndex)
             {
@@ -241,32 +321,8 @@ int32 FTreeView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
             }
             else
             {
-                const int32 MatchLength = FilterText.Length();
-                const int32 MatchLeft   = Font->MeasureWidth(StringView(LabelView.Data(), MatchOffset));
-                const int32 MatchWidth  = Font->MeasureWidth(StringView(LabelView.Data() + MatchOffset, MatchLength));
-
-                const FRectangle HighlightBounds(
-                    IntVector2(LabelBounds.Position.X + MatchLeft - TREE_SEARCH_HIGHLIGHT_PADDING, LabelBounds.Position.Y - TREE_SEARCH_HIGHLIGHT_PADDING),
-                    MatchWidth + TREE_SEARCH_HIGHLIGHT_PADDING * 2,
-                    LabelBounds.Height + TREE_SEARCH_HIGHLIGHT_PADDING * 2);
-
-                OutCommandList.AddBox(LayerId + 1, HighlightBounds, Style.SearchHighlight);
-
-                FRectangle RunBounds = LabelBounds;
-                if (MatchOffset > 0)
-                {
-                    OutCommandList.AddText(LayerId + 2, RunBounds, Item->Label.SubString(0, MatchOffset), Font.Get(), Style.LabelText);
-                }
-
-                RunBounds.Position.X = LabelBounds.Position.X + MatchLeft;
-                OutCommandList.AddText(LayerId + 2, RunBounds, Item->Label.SubString(MatchOffset, MatchLength), Font.Get(), Style.SearchHighlightText);
-
-                const int32 SuffixOffset = MatchOffset + MatchLength;
-                if (SuffixOffset < Item->Label.Length())
-                {
-                    RunBounds.Position.X = LabelBounds.Position.X + MatchLeft + MatchWidth;
-                    OutCommandList.AddText(LayerId + 2, RunBounds, Item->Label.SubString(SuffixOffset, Item->Label.Length() - SuffixOffset), Font.Get(), Style.LabelText);
-                }
+                DrawTextWithSearchHighlight(OutCommandList, LayerId + 1, LabelBounds, Item->Label, MatchOffset, FilterText.Length(),
+                    Font.Get(), Style.LabelText);
             }
         }
 
@@ -280,7 +336,15 @@ int32 FTreeView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
     }
 
     OutCommandList.PopClip(LayerId + 2);
-    return LayerId + 2;
+
+    int32 MaxLayerId = LayerId + 2;
+    if (ScrollBar && ScrollBar->IsScrollable())
+    {
+        const FDrawGeometry BarGeometry(ScrollBar->GetContentRectangle(), AllottedGeometry.Scale);
+        MaxLayerId = ScrollBar->OnDraw(BarGeometry, OutCommandList, MaxLayerId + 1);
+    }
+
+    return MaxLayerId;
 }
 
 FEventResponse FTreeView::OnMouseButtonDown(const FCursorEvent& CursorEvent)
@@ -386,6 +450,12 @@ FEventResponse FTreeView::OnMouseScroll(const FCursorEvent& CursorEvent)
 
     const int32 Delta = static_cast<int32>(CursorEvent.GetScrollDelta() * static_cast<float>(RowsPerWheelStep * RowHeight));
     ScrollOffset = Math::Clamp(ScrollOffset - Delta, 0, MaxScrollOffset);
+
+    if (ScrollBar)
+    {
+        ScrollBar->SetOffset(ScrollOffset);
+    }
+
     return FEventResponse::Handled();
 }
 
@@ -569,6 +639,16 @@ void FTreeView::RebuildVisibleRows() const
 
     VisibleRows.Clear();
     AppendVisibleRows(RootItems);
+
+    bReserveIconColumn = false;
+    for (const TSharedPtr<FTreeItem>& Row : VisibleRows)
+    {
+        if (Row->Icon.IsValid() || Row->ExpandedIcon.IsValid())
+        {
+            bReserveIconColumn = true;
+            break;
+        }
+    }
 }
 
 void FTreeView::AppendVisibleRows(const TArray<TSharedPtr<FTreeItem>>& Items) const
@@ -627,7 +707,7 @@ bool FTreeView::PassesFilter(const TSharedPtr<FTreeItem>& Item) const
 
 FRectangle FTreeView::ComputeRowBounds(const FRectangle& ViewBounds, int32 RowIndex) const
 {
-    const IntVector2 Position(ViewBounds.Position.X, ViewBounds.Position.Y + (RowIndex * RowHeight) - ScrollOffset);
+    const IntVector2 Position(ViewBounds.Position.X, ViewBounds.Position.Y + GetHeaderExtent() + (RowIndex * RowHeight) - ScrollOffset);
     return FRectangle(Position, ViewBounds.Width, RowHeight);
 }
 
@@ -643,7 +723,7 @@ int32 FTreeView::ComputeRowExtent(const TSharedPtr<FTreeItem>& Item) const
 {
     int32 Extent = (Item->GetDepth() * IndentPerLevel) + GetArrowExtent() + TREE_DISCLOSURE_SPACING;
 
-    if (Item->Icon.IsValid() || Item->ExpandedIcon.IsValid())
+    if (bReserveIconColumn)
     {
         Extent += TREE_ICON_SIZE + TREE_ICON_SPACING;
     }
@@ -660,7 +740,7 @@ int32 FTreeView::ComputeLabelStartX(const FRectangle& RowBounds, const TSharedPt
 {
     int32 LabelStartX = ComputeDisclosureBounds(RowBounds, Item->GetDepth()).GetRight() + TREE_DISCLOSURE_SPACING;
 
-    if (Item->Icon.IsValid() || Item->ExpandedIcon.IsValid())
+    if (bReserveIconColumn)
     {
         LabelStartX += TREE_ICON_SIZE + TREE_ICON_SPACING;
     }
@@ -693,6 +773,11 @@ int32 FTreeView::GetArrowExtent() const
     return bHasBrush ? ArrowSize : TREE_DISCLOSURE_SIZE;
 }
 
+int32 FTreeView::GetHeaderExtent() const
+{
+    return (LabelColumnHeader.IsEmpty() && TypeColumnHeader.IsEmpty()) ? 0 : HeaderHeight;
+}
+
 int32 FTreeView::FindRowAt(const IntVector2& ClientPosition) const
 {
     const FRectangle& Bounds = GetContentRectangle();
@@ -701,8 +786,14 @@ int32 FTreeView::FindRowAt(const IntVector2& ClientPosition) const
         return InvalidRowIndex;
     }
 
-    const int32 RowIndex = (ClientPosition.Y - Bounds.Position.Y + ScrollOffset) / RowHeight;
-    return RowIndex >= 0 && RowIndex < GetVisibleRows().Size() ? RowIndex : InvalidRowIndex;
+    const int32 LocalY = ClientPosition.Y - Bounds.Position.Y - GetHeaderExtent();
+    if (LocalY < 0)
+    {
+        return InvalidRowIndex;
+    }
+
+    const int32 RowIndex = (LocalY + ScrollOffset) / RowHeight;
+    return RowIndex < GetVisibleRows().Size() ? RowIndex : InvalidRowIndex;
 }
 
 int32 FTreeView::FindRowIndex(const TSharedPtr<FTreeItem>& Item) const
@@ -731,7 +822,12 @@ int32 FTreeView::GetCurrentRowIndex() const
 
 int32 FTreeView::GetMaxScrollOffset() const
 {
-    return Math::Max(0, (GetVisibleRows().Size() * RowHeight) - ViewHeight);
+    return Math::Max(0, (GetVisibleRows().Size() * RowHeight) - (ViewHeight - GetHeaderExtent()));
+}
+
+void FTreeView::OnScrollBarMoved(int32 NewOffset)
+{
+    ScrollOffset = Math::Clamp(NewOffset, 0, GetMaxScrollOffset());
 }
 
 void FTreeView::ApplySelectionFromClick(int32 RowIndex, const FModifierKeyState& Modifiers)
@@ -852,17 +948,23 @@ void FTreeView::ExpandOrMoveToFirstChild()
 
 void FTreeView::ScrollRowIntoView(int32 RowIndex)
 {
-    const int32 RowTop    = RowIndex * RowHeight;
-    const int32 RowBottom = RowTop + RowHeight;
+    const int32 RowTop     = RowIndex * RowHeight;
+    const int32 RowBottom  = RowTop + RowHeight;
+    const int32 BandHeight = ViewHeight - GetHeaderExtent();
 
     if (RowTop < ScrollOffset)
     {
         ScrollOffset = RowTop;
     }
-    else if (RowBottom > (ScrollOffset + ViewHeight))
+    else if (RowBottom > (ScrollOffset + BandHeight))
     {
-        ScrollOffset = RowBottom - ViewHeight;
+        ScrollOffset = RowBottom - BandHeight;
     }
 
     ScrollOffset = Math::Clamp(ScrollOffset, 0, GetMaxScrollOffset());
+
+    if (ScrollBar)
+    {
+        ScrollBar->SetOffset(ScrollOffset);
+    }
 }
