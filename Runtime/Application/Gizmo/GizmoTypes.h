@@ -44,6 +44,11 @@ enum class EGizmoHandle : uint8
     ScaleY,
     ScaleZ,
 
+    /** @brief The quad spanning the two axes that are not named, scaling in that plane. */
+    ScaleYZ,
+    ScaleZX,
+    ScaleXY,
+
     /** @brief The knob at the pivot, scaling all three axes together. */
     ScaleUniform,
 };
@@ -93,7 +98,7 @@ NODISCARD FORCEINLINE bool IsRotateHandle(EGizmoHandle Handle)
  * @brief Gets whether a handle belongs to the scale set.
  *
  * @param Handle The handle to test.
- * @return True for one of the three axis knobs or the knob at the pivot.
+ * @return True for one of the three axis knobs, the three plane quads or the knob at the pivot.
  */
 NODISCARD FORCEINLINE bool IsScaleHandle(EGizmoHandle Handle)
 {
@@ -127,10 +132,13 @@ NODISCARD FORCEINLINE int32 GetHandleAxis(EGizmoHandle Handle)
 
         // A plane handle is named for the axis it is normal to, which is the one it does not span
         case EGizmoHandle::TranslateYZ:
+        case EGizmoHandle::ScaleYZ:
             return 0;
         case EGizmoHandle::TranslateZX:
+        case EGizmoHandle::ScaleZX:
             return 1;
         case EGizmoHandle::TranslateXY:
+        case EGizmoHandle::ScaleXY:
             return 2;
 
         default:

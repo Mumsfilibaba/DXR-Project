@@ -422,6 +422,9 @@ static const CHAR* GetHandleName(EGizmoHandle Handle)
         case EGizmoHandle::ScaleX:          return "Scale X";
         case EGizmoHandle::ScaleY:          return "Scale Y";
         case EGizmoHandle::ScaleZ:          return "Scale Z";
+        case EGizmoHandle::ScaleYZ:         return "Scale YZ";
+        case EGizmoHandle::ScaleZX:         return "Scale ZX";
+        case EGizmoHandle::ScaleXY:         return "Scale XY";
         case EGizmoHandle::ScaleUniform:    return "Scale uniform";
         default:                            return "nothing";
     }
@@ -549,9 +552,9 @@ static TSharedPtr<FVisualElement> MakeGizmoControls(const FPlaygroundFonts& Font
 
     const FOperationEntry Operations[] =
     {
-        { "Translate", "Axes, plane quads and the square at the pivot",     EGizmoOperation::Translate },
+        { "Translate", "Arrows, plane quads and the sphere at the pivot",   EGizmoOperation::Translate },
         { "Rotate",    "Three rings and the outer one facing the camera",   EGizmoOperation::Rotate    },
-        { "Scale",     "A knob per axis, and the one at the pivot for all", EGizmoOperation::Scale     },
+        { "Scale",     "A knob per axis, plane quads and the one at the pivot for all", EGizmoOperation::Scale },
         { "Universal", "Every knob scales all three axes together",         EGizmoOperation::UniversalScale },
     };
 

@@ -91,6 +91,7 @@ private:
     void OnViewportClicked(const IntVector2& ImagePosition, bool bAdditive);
     void OnViewportContextMenu(const IntVector2& ImagePosition, const IntVector2& ScreenPosition);
     void OnViewportMarqueeSelect(const IntVector2& ImageMin, const IntVector2& ImageMax, bool bAdditive);
+    void OnGizmoDragStarted(EGizmoHandle Handle);
     void OnGizmoTransformChanged(const Matrix4& NewTransform, const Matrix4& Delta);
     void OnGizmoDragFinished(const Matrix4& TransformAtDragStart, const Matrix4& Transform);
     NODISCARD bool OnViewportShortcut(const struct FKeyEvent& KeyEvent);
@@ -142,4 +143,6 @@ private:
     FSceneRenderView::EDebugViewChannel DebugViewChannelMask;
     EEditorGizmoPlacement               GizmoPlacement;
     EGizmoOperation                     RequestedGizmoOperation;
+    TArray<FActor*>                     DragActors;
+    TArray<Matrix4>                     DragStartTransforms;
 };

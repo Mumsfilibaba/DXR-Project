@@ -13,6 +13,7 @@
 #include "Engine/World/Components/LightProbeComponent.h"
 #include "Engine/World/Components/PointLightComponent.h"
 #include "Engine/World/Components/StaticMeshComponent.h"
+#include "Core/Containers/Set.h"
 #include "Application/Application.h"
 #include "Application/Elements/Box.h"
 #include "Application/Elements/CheckBox.h"
@@ -122,6 +123,19 @@ static const CHAR* FindDebugViewLabel(FSceneRenderView::EDebugView InDebugView)
     return DEBUG_VIEW_ENTRIES[Index >= 0 ? Index : 0].Label;
 }
 
+static bool HasSelectedAncestor(const TSet<FActor*>& SelectionLookup, FActor* Actor)
+{
+    for (FActor* Parent = Actor->GetParentActor(); Parent; Parent = Parent->GetParentActor())
+    {
+        if (SelectionLookup.Contains(Parent))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 FEditorViewportPanel::FEditorViewportPanel(FEditorEngine* InEditorEngine)
     : FEditorPanel(InEditorEngine, "Viewport", "Viewport")
     , CameraController(MakeUniquePtr<FEditorCameraController>())
@@ -171,6 +185,7 @@ bool FEditorViewportPanel::Initialize()
     GizmoDesc.Operation          = EGizmoOperation::Translate;
     GizmoDesc.Mode               = EGizmoMode::World;
     GizmoDesc.Font               = FEditorStyle::GetFonts().Body;
+    GizmoDesc.OnDragStarted      = FOnGizmoDragStarted::CreateRaw(this, &FEditorViewportPanel::OnGizmoDragStarted);
     GizmoDesc.OnTransformChanged = FOnGizmoTransformChanged::CreateRaw(this, &FEditorViewportPanel::OnGizmoTransformChanged);
     GizmoDesc.OnDragFinished     = FOnGizmoDragFinished::CreateRaw(this, &FEditorViewportPanel::OnGizmoDragFinished);
 
@@ -835,17 +850,47 @@ Vector3 FEditorViewportPanel::GetActorGizmoPoint(FActor* Actor) const
     return ActorModel.GetTranslation();
 }
 
-void FEditorViewportPanel::OnGizmoTransformChanged(const Matrix4& /*NewTransform*/, const Matrix4& Delta)
+void FEditorViewportPanel::OnGizmoDragStarted(EGizmoHandle /*Handle*/)
 {
     const TArray<FActor*>& Selection = EditorEngine->GetSelectedActors();
+
+    DragActors.Clear();
+    DragStartTransforms.Clear();
+    DragActors.Reserve(Selection.Size());
+    DragStartTransforms.Reserve(Selection.Size());
+
+    TSet<FActor*> SelectionLookup;
     for (FActor* Actor : Selection)
     {
+        if (Actor)
+        {
+            SelectionLookup.Add(Actor);
+        }
+    }
+
+    for (FActor* Actor : Selection)
+    {
+        if (!Actor || HasSelectedAncestor(SelectionLookup, Actor))
+        {
+            continue;
+        }
+
+        DragActors.Emplace(Actor);
+        DragStartTransforms.Emplace(Actor->GetWorldTransform().GetTransformMatrix());
+    }
+}
+
+void FEditorViewportPanel::OnGizmoTransformChanged(const Matrix4& /*NewTransform*/, const Matrix4& Delta)
+{
+    for (int32 Index = 0; Index < DragActors.Size(); ++Index)
+    {
+        FActor* Actor = DragActors[Index];
         if (!Actor)
         {
             continue;
         }
 
-        Actor->SetWorldTransformMatrix(Actor->GetWorldTransform().GetTransformMatrix() * Delta);
+        Actor->SetWorldTransformMatrix(DragStartTransforms[Index] * Delta);
 
         if (FCameraComponent* CameraComponent = Actor->GetComponentOfType<FCameraComponent>())
         {
@@ -856,6 +901,9 @@ void FEditorViewportPanel::OnGizmoTransformChanged(const Matrix4& /*NewTransform
 
 void FEditorViewportPanel::OnGizmoDragFinished(const Matrix4& /*TransformAtDragStart*/, const Matrix4& /*Transform*/)
 {
+    DragActors.Clear();
+    DragStartTransforms.Clear();
+
     UpdateGizmoFromSelection();
 }
 
@@ -1122,6 +1170,13 @@ bool FEditorViewportPanel::ComputeFallbackPlacement(const Vector2& Ndc, Vector3&
 void FEditorViewportPanel::OnActorRemoved(FActor* Actor)
 {
     CameraController->OnActorRemoved(Actor);
+
+    const int32 DragIndex = DragActors.Find(Actor);
+    if (DragIndex != TArray<FActor*>::InvalidIndex)
+    {
+        DragActors.RemoveAt(DragIndex, 1);
+        DragStartTransforms.RemoveAt(DragIndex, 1);
+    }
 }
 
 void FEditorViewportPanel::OnContextMenuPickResult(const FEditorPickResult& Result, FActor* PickedActor)

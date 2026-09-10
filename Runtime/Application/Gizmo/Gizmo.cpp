@@ -4,46 +4,47 @@
 #include "Application/Input/Keys.h"
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Templates/NumericLimits.h"
 
-// Where an axis shaft starts, as a fraction of the gizmo's reach, so it clears the handle at the pivot
-constexpr float GIZMO_SHAFT_START = 0.16f;
+static TAutoConsoleVariable<float> CVarGizmoSize(
+    "Editor.Gizmo.Size",
+    "Scales the transform gizmo, where one is the size the editor ships with",
+    1.2f,
+    EConsoleVariableFlags::Default);
 
-// The arrowhead a translate axis ends in, in pixels
-constexpr float GIZMO_ARROW_LENGTH     = 13.0f;
-constexpr float GIZMO_ARROW_HALF_WIDTH = 5.0f;
-
-// The square a scale axis ends in, in pixels
-constexpr float GIZMO_KNOB_HALF_SIZE = 5.0f;
-
-// How thick the shafts, the rings and the outlines are drawn
+constexpr float GIZMO_SHAFT_START       = 0.16f;
+constexpr float GIZMO_ARROW_LENGTH      = 13.0f;
+constexpr float GIZMO_ARROW_HALF_WIDTH  = 5.0f;
+constexpr float GIZMO_CONE_SHADE        = 0.72f;
+constexpr float GIZMO_KNOB_HALF_SIZE    = 6.0f;
 constexpr float GIZMO_SHAFT_THICKNESS   = 3.0f;
-constexpr float GIZMO_RING_THICKNESS    = 2.5f;
+constexpr float GIZMO_RING_THICKNESS    = 4.0f;
 constexpr float GIZMO_OUTLINE_THICKNESS = 1.0f;
+constexpr float GIZMO_PLANE_OPACITY     = 0.32f;
+constexpr float GIZMO_WEDGE_OPACITY     = 0.28f;
+constexpr float GIZMO_MINIMUM_SCALE     = 0.001f;
 
-// How opaque the fill of a plane handle and of the rotation wedge is
-constexpr float GIZMO_PLANE_OPACITY = 0.32f;
-constexpr float GIZMO_WEDGE_OPACITY = 0.28f;
-
-// A scale can be dragged small but never through zero, which would leave a matrix nothing can undo
-constexpr float GIZMO_MINIMUM_SCALE = 0.001f;
-
-// How far the readout sits from the pivot, in pixels
 constexpr int32 GIZMO_READOUT_OFFSET = 16;
 
 static FFloatColor GetAxisColor(int32 AxisIndex)
 {
     switch (AxisIndex)
     {
-        case 0:  return FFloatColor(0.85f, 0.24f, 0.28f, 1.0f);
-        case 1:  return FFloatColor(0.36f, 0.76f, 0.30f, 1.0f);
-        default: return FFloatColor(0.26f, 0.52f, 0.94f, 1.0f);
+        case 0:  return FFloatColor(204.0f / 255.0f,  39.0f / 255.0f,  39.0f / 255.0f, 1.0f);
+        case 1:  return FFloatColor(103.0f / 255.0f, 168.0f / 255.0f,   0.0f / 255.0f, 1.0f);
+        default: return FFloatColor( 44.0f / 255.0f, 126.0f / 255.0f, 239.0f / 255.0f, 1.0f);
     }
 }
 
 static FFloatColor GetSelectionColor()
 {
-    return FFloatColor(1.0f, 0.78f, 0.16f, 1.0f);
+    return FFloatColor(1.0f, 1.0f, 0.0f, 1.0f);
+}
+
+static FFloatColor GetScreenSpaceColor()
+{
+    return FFloatColor(0.78f, 0.78f, 0.80f, 1.0f);
 }
 
 static EGizmoHandle CreateHandle(EGizmoHandle First, int32 Offset)
@@ -119,6 +120,8 @@ FGizmo::FGizmo()
     , DragLastAngle(0.0f)
     , DragTotalAngle(0.0f)
     , DragStartLength(1.0f)
+    , DragStartLengthU(1.0f)
+    , DragStartLengthV(1.0f)
     , Readout()
     , ScreenFactor(1.0f)
     , bIsOrthographic(false)
@@ -339,7 +342,8 @@ void FGizmo::UpdateContext()
     const Vector3 ToPivot = Pivot - CameraPosition;
     ViewDirection = (bIsOrthographic || ToPivot.GetLength() < Math::Constants::CmpThreshold) ? CameraForward : ToPivot.GetNormalized();
 
-    ScreenFactor = FGizmoMath::ComputeScreenFactor(ViewProjectionMatrix, CameraRight, Pivot, SizeInClipSpace);
+    const float SizeScale = Math::Clamp(CVarGizmoSize.GetValue(), SizeScaleMin, SizeScaleMax);
+    ScreenFactor = FGizmoMath::ComputeScreenFactor(ViewProjectionMatrix, CameraRight, Pivot, SizeInClipSpace * SizeScale);
 
     Vector2 PivotClient;
     bIsProjected = FGizmoMath::WorldToClient(ViewProjectionMatrix, GetContentRectangle(), Pivot, PivotClient);
@@ -411,8 +415,6 @@ EGizmoHandle FGizmo::HitTest(const IntVector2& ClientPosition) const
         return EGizmoHandle::None;
     }
 
-    const bool bIsOverCenter = Math::Abs(Point.X - PivotClient.X) <= CenterHandleSize && Math::Abs(Point.Y - PivotClient.Y) <= CenterHandleSize;
-
     if (Operation == EGizmoOperation::Rotate)
     {
         EGizmoHandle NearestHandle = EGizmoHandle::None;
@@ -478,21 +480,22 @@ EGizmoHandle FGizmo::HitTest(const IntVector2& ClientPosition) const
         return EGizmoHandle::None;
     }
 
-    const bool bIsTranslate = Operation == EGizmoOperation::Translate;
+    const bool bIsTranslate  = Operation == EGizmoOperation::Translate;
+    const bool bIsOverCenter = bIsTranslate
+        ? (Point - PivotClient).GetLengthSquared() <= (CenterHandleSize * CenterHandleSize)
+        : (Math::Abs(Point.X - PivotClient.X) <= CenterHandleSize && Math::Abs(Point.Y - PivotClient.Y) <= CenterHandleSize);
+
     if (bIsOverCenter)
     {
         return bIsTranslate ? EGizmoHandle::TranslateScreen : EGizmoHandle::ScaleUniform;
     }
 
-    if (bIsTranslate)
+    for (int32 AxisIndex = 0; AxisIndex < 3; ++AxisIndex)
     {
-        for (int32 AxisIndex = 0; AxisIndex < 3; ++AxisIndex)
+        Vector2 Quad[4];
+        if (bPlaneVisible[AxisIndex] && GetPlaneQuad(AxisIndex, Quad) && FGizmoMath::IsPointOverQuad(Point, Quad, FGizmoMath::PlaneGrabPadding))
         {
-            Vector2 Quad[4];
-            if (bPlaneVisible[AxisIndex] && GetPlaneQuad(AxisIndex, Quad) && FGizmoMath::IsPointOverQuad(Point, Quad, FGizmoMath::PlaneGrabPadding))
-            {
-                return CreateHandle(EGizmoHandle::TranslateYZ, AxisIndex);
-            }
+            return CreateHandle(bIsTranslate ? EGizmoHandle::TranslateYZ : EGizmoHandle::ScaleYZ, AxisIndex);
         }
     }
 
@@ -596,6 +599,9 @@ void FGizmo::GetDragPlane(EGizmoHandle Handle, Vector3& OutPoint, Vector3& OutNo
         case EGizmoHandle::RotateX:
         case EGizmoHandle::RotateY:
         case EGizmoHandle::RotateZ:
+        case EGizmoHandle::ScaleYZ:
+        case EGizmoHandle::ScaleZX:
+        case EGizmoHandle::ScaleXY:
         {
             OutNormal = Axes[AxisIndex];
             break;
@@ -659,9 +665,16 @@ void FGizmo::BeginDrag(EGizmoHandle Handle, const IntVector2& ClientPosition)
     }
     else
     {
-        // A scale is the ratio of how far along the axis the cursor is now to how far it was grabbed
-        const float GrabbedAt = (DragStartHit - DragPlanePoint).DotProduct(DragAxis);
+        const Vector3 Grabbed = DragStartHit - DragPlanePoint;
+
+        const float GrabbedAt = Grabbed.DotProduct(DragAxis);
         DragStartLength = Math::Abs(GrabbedAt) > Math::Constants::CmpThreshold ? GrabbedAt : ScreenFactor;
+
+        const float GrabbedAlongU = Grabbed.DotProduct(DragBasisU);
+        const float GrabbedAlongV = Grabbed.DotProduct(DragBasisV);
+
+        DragStartLengthU = Math::Abs(GrabbedAlongU) > Math::Constants::CmpThreshold ? GrabbedAlongU : ScreenFactor;
+        DragStartLengthV = Math::Abs(GrabbedAlongV) > Math::Constants::CmpThreshold ? GrabbedAlongV : ScreenFactor;
     }
 
     if (FApplication::IsInitialized())
@@ -753,6 +766,10 @@ void FGizmo::UpdateDrag(const IntVector2& ClientPosition)
         return;
     }
 
+    const bool bIsPlane = ActiveHandle == EGizmoHandle::ScaleYZ
+        || ActiveHandle == EGizmoHandle::ScaleZX
+        || ActiveHandle == EGizmoHandle::ScaleXY;
+
     float Factor = 1.0f;
     if (ActiveHandle == EGizmoHandle::ScaleUniform)
     {
@@ -776,6 +793,19 @@ void FGizmo::UpdateDrag(const IntVector2& ClientPosition)
     {
         ScaleVector = Vector3(Factor, Factor, Factor);
         Readout     = String::Printf("%.3f", Factor);
+    }
+    else if (bIsPlane)
+    {
+        const int32 IndexU = (AxisIndex + 1) % 3;
+        const int32 IndexV = (AxisIndex + 2) % 3;
+
+        const Vector3 Along  = Hit - DragPlanePoint;
+        const float   AlongU = Math::Max(FGizmoMath::SnapValue(Along.DotProduct(DragBasisU) / DragStartLengthU, Snap.ScaleSnap), GIZMO_MINIMUM_SCALE);
+        const float   AlongV = Math::Max(FGizmoMath::SnapValue(Along.DotProduct(DragBasisV) / DragStartLengthV, Snap.ScaleSnap), GIZMO_MINIMUM_SCALE);
+
+        ScaleVector[IndexU] = AlongU;
+        ScaleVector[IndexV] = AlongV;
+        Readout             = String::Printf("%s %.3f  %s %.3f", AxisNames[IndexU], AlongU, AxisNames[IndexV], AlongV);
     }
     else
     {
@@ -850,14 +880,20 @@ void FGizmo::DrawTranslate(FDrawCommandList& OutCommandList, int32 LayerId) cons
         const FFloatColor Color = GetHandleColor(CreateHandle(EGizmoHandle::TranslateX, AxisIndex), AxisIndex);
         OutCommandList.AddLine(LayerId + 1, Start, End, Color, GIZMO_SHAFT_THICKNESS);
 
-        const Vector2 Along  = (End - Start).GetNormalized();
+        const Vector2 Along = (End - Start).GetNormalized();
         const Vector2 Side(-Along.Y, Along.X);
-        const Vector2 Base   = End - (Along * GIZMO_ARROW_LENGTH);
+        const Vector2 Base = End - (Along * GIZMO_ARROW_LENGTH);
 
-        OutCommandList.AddTriangle(LayerId + 2, End, Base + (Side * GIZMO_ARROW_HALF_WIDTH), Base - (Side * GIZMO_ARROW_HALF_WIDTH), Color);
+        FFloatColor ShadeColor = Color;
+        ShadeColor.R *= GIZMO_CONE_SHADE;
+        ShadeColor.G *= GIZMO_CONE_SHADE;
+        ShadeColor.B *= GIZMO_CONE_SHADE;
+
+        OutCommandList.AddTriangle(LayerId + 2, End, Base + (Side * GIZMO_ARROW_HALF_WIDTH), Base, Color);
+        OutCommandList.AddTriangle(LayerId + 2, End, Base, Base - (Side * GIZMO_ARROW_HALF_WIDTH), ShadeColor);
     }
 
-    DrawCenterHandle(OutCommandList, LayerId + 2, EGizmoHandle::TranslateScreen);
+    DrawCenterHandle(OutCommandList, LayerId + 2, EGizmoHandle::TranslateScreen, true);
 }
 
 void FGizmo::DrawRotate(FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -923,6 +959,23 @@ void FGizmo::DrawScale(FDrawCommandList& OutCommandList, int32 LayerId) const
 {
     for (int32 AxisIndex = 0; AxisIndex < 3; ++AxisIndex)
     {
+        Vector2 Quad[4];
+        if (!bPlaneVisible[AxisIndex] || !GetPlaneQuad(AxisIndex, Quad))
+        {
+            continue;
+        }
+
+        const FFloatColor Color = GetHandleColor(CreateHandle(EGizmoHandle::ScaleYZ, AxisIndex), AxisIndex);
+
+        FFloatColor FillColor = Color;
+        FillColor.A *= GIZMO_PLANE_OPACITY;
+
+        OutCommandList.AddConvexPolygon(LayerId, MakeArrayView<const Vector2>(Quad, 4), FillColor);
+        OutCommandList.AddPolyline(LayerId + 1, MakeArrayView<const Vector2>(Quad, 4), Color, GIZMO_OUTLINE_THICKNESS, true);
+    }
+
+    for (int32 AxisIndex = 0; AxisIndex < 3; ++AxisIndex)
+    {
         Vector2 Start;
         Vector2 End;
 
@@ -942,7 +995,7 @@ void FGizmo::DrawScale(FDrawCommandList& OutCommandList, int32 LayerId) const
         OutCommandList.AddBox(LayerId + 2, Knob, Color);
     }
 
-    DrawCenterHandle(OutCommandList, LayerId + 2, EGizmoHandle::ScaleUniform);
+    DrawCenterHandle(OutCommandList, LayerId + 2, EGizmoHandle::ScaleUniform, false);
 
     if (Operation != EGizmoOperation::UniversalScale)
     {
@@ -956,7 +1009,7 @@ void FGizmo::DrawScale(FDrawCommandList& OutCommandList, int32 LayerId) const
     }
 }
 
-void FGizmo::DrawCenterHandle(FDrawCommandList& OutCommandList, int32 LayerId, EGizmoHandle Handle) const
+void FGizmo::DrawCenterHandle(FDrawCommandList& OutCommandList, int32 LayerId, EGizmoHandle Handle, bool bDrawAsSphere) const
 {
     Vector2 PivotClient;
     if (!FGizmoMath::WorldToClient(ViewProjectionMatrix, GetContentRectangle(), Pivot, PivotClient))
@@ -964,15 +1017,22 @@ void FGizmo::DrawCenterHandle(FDrawCommandList& OutCommandList, int32 LayerId, E
         return;
     }
 
-    const FRectangle Bounds(
-        IntVector2(static_cast<int32>(PivotClient.X - CenterHandleSize), static_cast<int32>(PivotClient.Y - CenterHandleSize)),
-        static_cast<int32>(CenterHandleSize * 2.0f),
-        static_cast<int32>(CenterHandleSize * 2.0f));
-
     const FFloatColor Color = GetHandleColor(Handle, -1);
 
     FFloatColor FillColor = Color;
     FillColor.A *= GIZMO_PLANE_OPACITY;
+
+    if (bDrawAsSphere)
+    {
+        OutCommandList.AddCircleFilled(LayerId, PivotClient, CenterHandleSize, FillColor);
+        OutCommandList.AddCircle(LayerId, PivotClient, CenterHandleSize, Color, GIZMO_OUTLINE_THICKNESS);
+        return;
+    }
+
+    const FRectangle Bounds(
+        IntVector2(static_cast<int32>(PivotClient.X - CenterHandleSize), static_cast<int32>(PivotClient.Y - CenterHandleSize)),
+        static_cast<int32>(CenterHandleSize * 2.0f),
+        static_cast<int32>(CenterHandleSize * 2.0f));
 
     OutCommandList.AddBox(LayerId, Bounds, FillColor);
     OutCommandList.AddBoxOutline(LayerId, Bounds, Color, GIZMO_OUTLINE_THICKNESS);
@@ -1007,7 +1067,7 @@ FFloatColor FGizmo::GetHandleColor(EGizmoHandle Handle, int32 AxisIndex) const
         return GetSelectionColor();
     }
 
-    FFloatColor Color = AxisIndex >= 0 ? GetAxisColor(AxisIndex) : FFloatColor(0.78f, 0.78f, 0.80f, 1.0f);
+    FFloatColor Color = AxisIndex >= 0 ? GetAxisColor(AxisIndex) : GetScreenSpaceColor();
     if (IsDragging())
     {
         Color.A *= 0.35f;

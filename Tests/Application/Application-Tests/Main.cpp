@@ -196,6 +196,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("GizmoProjection", GizmoProjection_Test());
     RUN_TEST("GizmoHitTest", GizmoHitTest_Test());
     RUN_TEST("GizmoDrag", GizmoDrag_Test());
+    RUN_TEST("GizmoDeltaContract", GizmoDeltaContract_Test());
     RUN_TEST("GizmoModes", GizmoModes_Test());
 
     RUN_TEST("ApplicationRendererWindowPass", ApplicationRendererWindowPass_Test());

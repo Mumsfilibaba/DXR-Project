@@ -21,6 +21,10 @@ public:
     /** @brief How much of clip space the gizmo spans, which is what keeps it one size on screen. */
     static constexpr float SizeInClipSpace = 0.1f;
 
+    /** @brief The range Editor.Gizmo.Size is clamped into, so a typo cannot make the gizmo unusable. */
+    static constexpr float SizeScaleMin = 0.5f;
+    static constexpr float SizeScaleMax = 3.0f;
+
     /** @brief An axis whose projected length falls below this is pointing at the camera, so it is culled. */
     static constexpr float AxisVisibilityLimit = 0.02f;
 
@@ -28,14 +32,14 @@ public:
     static constexpr float PlaneVisibilityLimit = 0.0025f;
 
     /** @brief Where a plane handle starts and ends along each of the two axes it spans. */
-    static constexpr float PlaneHandleStart = 0.3f;
-    static constexpr float PlaneHandleEnd   = 0.7f;
+    static constexpr float PlaneHandleStart = 0.18f;
+    static constexpr float PlaneHandleEnd   = 0.48f;
 
-    /** @brief The half-extent of the square at the pivot, in pixels. */
+    /** @brief The half-extent of the handle at the pivot, in pixels, being a radius or a half-side. */
     static constexpr float CenterHandleSize = 9.0f;
 
     /** @brief The radius of the outer ring, as a multiple of the gizmo's reach. */
-    static constexpr float OuterRingScale = 1.35f;
+    static constexpr float OuterRingScale = 1.15f;
 
     /** @brief How many segments a rotation ring is drawn and picked as. */
     static constexpr int32 RingSegments = 64;
@@ -249,7 +253,7 @@ private:
     void DrawTranslate(FDrawCommandList& OutCommandList, int32 LayerId) const;
     void DrawRotate(FDrawCommandList& OutCommandList, int32 LayerId) const;
     void DrawScale(FDrawCommandList& OutCommandList, int32 LayerId) const;
-    void DrawCenterHandle(FDrawCommandList& OutCommandList, int32 LayerId, EGizmoHandle Handle) const;
+    void DrawCenterHandle(FDrawCommandList& OutCommandList, int32 LayerId, EGizmoHandle Handle, bool bDrawAsSphere) const;
     void DrawReadout(FDrawCommandList& OutCommandList, int32 LayerId) const;
 
     Matrix4                  ViewMatrix;
@@ -278,6 +282,8 @@ private:
     float                    DragLastAngle;
     float                    DragTotalAngle;
     float                    DragStartLength;
+    float                    DragStartLengthU;
+    float                    DragStartLengthV;
     String                   Readout;
     float                    ScreenFactor;
     bool                     bIsOrthographic;
