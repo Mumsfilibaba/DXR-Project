@@ -3,16 +3,15 @@
 #include "Application/Draw/DrawCommandList.h"
 #include "Core/Math/Math.h"
 
-// The side of the box a disclosure triangle is drawn in, and the gap between it and what follows
 constexpr int32 TREE_DISCLOSURE_SIZE    = 8;
 constexpr int32 TREE_DISCLOSURE_SPACING = 4;
 
-// The side of an item's icon, and the gap between it and the label
 constexpr int32 TREE_ICON_SIZE    = 16;
 constexpr int32 TREE_ICON_SPACING = 4;
 
-// How far the fill behind the hovered row is faded, so a selected row underneath still reads as selected
 constexpr float TREE_HOVER_OPACITY = 0.5f;
+
+constexpr int32 TREE_SEARCH_HIGHLIGHT_PADDING = 1;
 
 static void DrawDisclosureTriangle(FDrawCommandList& OutCommandList, int32 LayerId, const FRectangle& Bounds, bool bIsExpanded, const FFloatColor& Tint)
 {
@@ -236,16 +235,39 @@ int32 FTreeView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
             const StringView LabelView(Item->Label.Data(), Item->Label.Length());
 
             const int32 MatchOffset = FilterText.IsEmpty() ? String::InvalidIndex : Item->Label.Find(FilterText, EStringCaseType::NoCase);
-            if (MatchOffset != String::InvalidIndex)
+            if (MatchOffset == String::InvalidIndex)
             {
-                const int32 MatchLeft  = Font->MeasureWidth(StringView(LabelView.Data(), MatchOffset));
-                const int32 MatchWidth = Font->MeasureWidth(StringView(LabelView.Data() + MatchOffset, FilterText.Length()));
-
-                const FRectangle HighlightBounds(IntVector2(PenX + MatchLeft, RowBounds.Position.Y), MatchWidth, RowBounds.Height);
-                OutCommandList.AddBox(LayerId + 1, HighlightBounds, Style.SearchHighlight);
+                OutCommandList.AddText(LayerId + 2, LabelBounds, Item->Label, Font.Get(), Style.LabelText);
             }
+            else
+            {
+                const int32 MatchLength = FilterText.Length();
+                const int32 MatchLeft   = Font->MeasureWidth(StringView(LabelView.Data(), MatchOffset));
+                const int32 MatchWidth  = Font->MeasureWidth(StringView(LabelView.Data() + MatchOffset, MatchLength));
 
-            OutCommandList.AddText(LayerId + 2, LabelBounds, Item->Label, Font.Get(), Style.LabelText);
+                const FRectangle HighlightBounds(
+                    IntVector2(LabelBounds.Position.X + MatchLeft - TREE_SEARCH_HIGHLIGHT_PADDING, LabelBounds.Position.Y - TREE_SEARCH_HIGHLIGHT_PADDING),
+                    MatchWidth + TREE_SEARCH_HIGHLIGHT_PADDING * 2,
+                    LabelBounds.Height + TREE_SEARCH_HIGHLIGHT_PADDING * 2);
+
+                OutCommandList.AddBox(LayerId + 1, HighlightBounds, Style.SearchHighlight);
+
+                FRectangle RunBounds = LabelBounds;
+                if (MatchOffset > 0)
+                {
+                    OutCommandList.AddText(LayerId + 2, RunBounds, Item->Label.SubString(0, MatchOffset), Font.Get(), Style.LabelText);
+                }
+
+                RunBounds.Position.X = LabelBounds.Position.X + MatchLeft;
+                OutCommandList.AddText(LayerId + 2, RunBounds, Item->Label.SubString(MatchOffset, MatchLength), Font.Get(), Style.SearchHighlightText);
+
+                const int32 SuffixOffset = MatchOffset + MatchLength;
+                if (SuffixOffset < Item->Label.Length())
+                {
+                    RunBounds.Position.X = LabelBounds.Position.X + MatchLeft + MatchWidth;
+                    OutCommandList.AddText(LayerId + 2, RunBounds, Item->Label.SubString(SuffixOffset, Item->Label.Length() - SuffixOffset), Font.Get(), Style.LabelText);
+                }
+            }
         }
 
         if (Font && TypeColumnWidth > 0 && !Item->TypeLabel.IsEmpty())

@@ -67,6 +67,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("FontGlyphLookup", FontGlyphLookup_Test());
     RUN_TEST("FontKerning", FontKerning_Test());
     RUN_TEST("FontMeasurement", FontMeasurement_Test());
+    RUN_TEST("FontElision", FontElision_Test());
 
     RUN_TEST("UIDrawDataLayerOrder", UIDrawDataLayerOrder_Test());
     RUN_TEST("UIDrawDataBatching", UIDrawDataBatching_Test());

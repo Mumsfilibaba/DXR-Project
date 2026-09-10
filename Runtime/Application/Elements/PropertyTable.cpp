@@ -205,7 +205,10 @@ int32 FPropertyTable::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
 
         if (Font && !Row.Label.IsEmpty())
         {
-            OutCommandList.AddText(LayerId, GetLabelRectangle(Index, AllottedGeometry.Bounds), Row.Label, Font.Get(), DefaultStyle.Colors.Text);
+            const FRectangle LabelBounds = GetLabelRectangle(Index, AllottedGeometry.Bounds);
+            const String     LabelText   = Font->ElideText(StringView(Row.Label.Data(), Row.Label.Length()), LabelBounds.Width);
+
+            OutCommandList.AddText(LayerId, LabelBounds, LabelText, Font.Get(), DefaultStyle.Colors.Text);
         }
 
         if (IsRowModified(Index))
@@ -611,6 +614,20 @@ int32 FPropertyTable::FindRevertRowAtPoint(const IntVector2& ClientPosition) con
     return GetRevertRectangle(RowIndex, GetContentRectangle()).EncapsulatesPoint(ClientPosition) ? RowIndex : InvalidRowIndex;
 }
 
+const String& FPropertyTable::GetElidedLabel(int32 Index) const
+{
+    static const String EmptyLabel;
+
+    const String& Label = Rows[Index].Label;
+    if (!Font || Label.IsEmpty())
+    {
+        return EmptyLabel;
+    }
+
+    const int32 LabelWidth = GetLabelRectangle(Index, GetContentRectangle()).Width;
+    return Font->MeasureWidth(StringView(Label.Data(), Label.Length())) > LabelWidth ? Label : EmptyLabel;
+}
+
 void FPropertyTable::UpdateHoveredRow(const IntVector2& ClientPosition)
 {
     const int32 RowIndex = FindRowAtPoint(ClientPosition);
@@ -622,12 +639,21 @@ void FPropertyTable::UpdateHoveredRow(const IntVector2& ClientPosition)
     ClearHoveredRow();
     HoveredRowIndex = RowIndex;
 
-    if (RowIndex == InvalidRowIndex || Rows[RowIndex].ToolTipText.IsEmpty())
+    if (RowIndex == InvalidRowIndex)
     {
         return;
     }
 
-    FToolTipService::Get().RequestTextToolTip(AsSharedPtr(), Rows[RowIndex].ToolTipText, Font);
+    const String& ToolTipText = Rows[RowIndex].ToolTipText.IsEmpty()
+        ? GetElidedLabel(RowIndex)
+        : Rows[RowIndex].ToolTipText;
+
+    if (ToolTipText.IsEmpty())
+    {
+        return;
+    }
+
+    FToolTipService::Get().RequestTextToolTip(AsSharedPtr(), ToolTipText, Font);
 }
 
 void FPropertyTable::ClearHoveredRow()

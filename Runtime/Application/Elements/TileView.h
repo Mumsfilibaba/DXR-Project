@@ -224,7 +224,6 @@ private:
     NODISCARD FRectangle ComputeTileBounds(int32 Index, const FRectangle& Bounds) const;
     NODISCARD FRectangle ComputeIconBounds(const FRectangle& Tile) const;
     NODISCARD FRectangle ComputeLabelBounds(const FRectangle& Tile) const;
-    NODISCARD String ElideLabel(const String& InLabel, int32 MaxWidth) const;
 
     void SelectTile(int32 Index, bool bToggle, bool bExtend);
 

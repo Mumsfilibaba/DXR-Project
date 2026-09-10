@@ -11,7 +11,7 @@ constexpr int32 TOOLBAR_ITEM_PADDING = 6;
 constexpr int32 TOOLBAR_ICON_SPACING = 4;
 
 // The room a dropdown arrow takes after the label, and half the width of the arrow itself
-constexpr int32 TOOLBAR_ARROW_WIDTH  = 12;
+constexpr int32 TOOLBAR_ARROW_WIDTH  = 14;
 constexpr float TOOLBAR_ARROW_EXTENT = 3.5f;
 
 // How far short of the strip's full height a rule between groups stops

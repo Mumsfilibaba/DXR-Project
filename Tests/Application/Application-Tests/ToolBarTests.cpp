@@ -162,7 +162,7 @@ bool ToolBarComposition_Test()
     TEST_EXPECT_EQ(Undo->GetCachedDesiredSize(), IntVector2(28, 24));
 
     TEST_SECTION("A dropdown reserves the room its arrow is drawn in");
-    TEST_EXPECT_EQ(ToolBar->GetButton(4)->GetCachedDesiredSize(), IntVector2(56, 24));
+    TEST_EXPECT_EQ(ToolBar->GetButton(4)->GetCachedDesiredSize(), IntVector2(58, 24));
 
     TEST_SECTION("An entry showing both an icon and a label is as wide as the two and the gap between them");
     TSharedPtr<FToolBar> IconAndLabel = FToolBar::Create(Desc);
@@ -189,7 +189,7 @@ bool ToolBarComposition_Test()
     TEST_EXPECT_EQ(RuleBounds.Height, 30);
 
     TEST_SECTION("The strip asks for what its entries add up to, plus the gaps and its own padding");
-    TEST_EXPECT_EQ(ToolBar->GetCachedDesiredSize(), IntVector2(189, 28));
+    TEST_EXPECT_EQ(ToolBar->GetCachedDesiredSize(), IntVector2(191, 28));
 
     TEST_SECTION("A vertical strip stacks its entries down and gives them all one width");
     FToolBar::FDesc VerticalDesc;

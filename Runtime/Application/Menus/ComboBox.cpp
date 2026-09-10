@@ -61,7 +61,7 @@ int32 FComboBoxButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComman
         FRectangle TextBounds = Inner;
         TextBounds.Width      = Math::Max(Inner.Width - COMBO_ARROW_WIDTH, 0);
 
-        OutCommandList.AddText(LayerId, TextBounds, Label, Font.Get(), TextColor);
+        OutCommandList.AddText(LayerId, TextBounds, Font->ElideText(StringView(Label.Data(), Label.Length()), TextBounds.Width), Font.Get(), TextColor);
     }
 
     const float CenterX = static_cast<float>(Bounds.GetRight()) - (static_cast<float>(Bounds.Height) * 0.5f);

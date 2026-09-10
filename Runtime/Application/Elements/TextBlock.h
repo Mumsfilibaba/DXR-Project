@@ -13,6 +13,7 @@ public:
         TSharedPtr<IFontFace> Font = nullptr;
         FFloatColor           ColorAndOpacity = FFloatColor::White;
         FMargin               Margin;
+        ETextOverflow         Overflow = ETextOverflow::Overflow;
     };
 
 public:
@@ -72,4 +73,5 @@ private:
     TSharedPtr<IFontFace> Font;
     FFloatColor           ColorAndOpacity;
     FMargin               Margin;
+    ETextOverflow         Overflow;
 };

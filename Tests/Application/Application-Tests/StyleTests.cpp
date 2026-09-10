@@ -25,8 +25,19 @@ bool StyleDefaults_Test()
     TEST_EXPECT(Style.Colors.ControlHovered.R > Style.Colors.ControlNormal.R);
     TEST_EXPECT(Style.Colors.ControlPressed.R < Style.Colors.ControlNormal.R);
 
+    TEST_SECTION("A scroll bar's thumb carries against its track, and grabbing it lightens it further");
+    TEST_EXPECT(Style.ScrollBar.Grab.R > Style.ScrollBar.Track.R);
+    TEST_EXPECT(Style.ScrollBar.GrabActive.R > Style.ScrollBar.Grab.R);
+    TEST_EXPECT(Style.ScrollBar.CornerRadius > 0.0f);
+
+    TEST_SECTION("A dock tab lightens as it goes from idle through hovered to active, and the strip stays behind them all");
+    TEST_EXPECT(Style.Tab.FillHovered.R > Style.Tab.Fill.R);
+    TEST_EXPECT(Style.Tab.FillActive.R > Style.Tab.FillHovered.R);
+    TEST_EXPECT(Style.Tab.StripFill.R <= Style.Tab.Fill.R);
+
     TEST_SECTION("The metrics leave room for a line of text inside a control");
     TEST_EXPECT(Style.Metrics.RowHeight > 16);
+    TEST_EXPECT(Style.Metrics.FrameHeight >= Style.Metrics.RowHeight);
     TEST_EXPECT(Style.Metrics.ButtonHeight > 16);
     TEST_EXPECT(Style.Metrics.BorderThickness > 0.0f);
     TEST_EXPECT(Style.Metrics.ScrollBarThickness > 0);

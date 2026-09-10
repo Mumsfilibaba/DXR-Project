@@ -107,7 +107,7 @@ int32 FSpinBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& 
     const FUIStyle&         Style = FUIStyle::GetDefault();
     const EInteractionState State = GetInteractionState();
 
-    OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Colors.PanelBackground, CornerRadius);
+    OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Colors.ControlNormal, CornerRadius);
 
     if (MinValue > -TNumericLimits<float>::Max() && MaxValue < TNumericLimits<float>::Max() && MaxValue > MinValue)
     {

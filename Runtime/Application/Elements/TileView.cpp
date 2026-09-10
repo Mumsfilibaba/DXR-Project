@@ -4,9 +4,8 @@
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
 
-constexpr int32       TILE_INNER_PADDING  = 4;
-constexpr int32       TILE_ICON_LABEL_GAP = 4;
-constexpr const CHAR* TILE_LABEL_ELLIPSIS = "..";
+constexpr int32 TILE_INNER_PADDING  = 4;
+constexpr int32 TILE_ICON_LABEL_GAP = 4;
 
 TSharedPtr<FTileView> FTileView::Create(const FDesc& Desc)
 {
@@ -115,7 +114,7 @@ int32 FTileView::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
         const FRectangle LabelBand = ComputeLabelBounds(Tile);
         if (Font && !Item.Label.IsEmpty() && !LabelBand.IsEmpty())
         {
-            const String     LabelText   = ElideLabel(Item.Label, LabelBand.Width);
+            const String     LabelText   = Font->ElideText(StringView(Item.Label.Data(), Item.Label.Length()), LabelBand.Width);
             const IntVector2 LabelSize   = IntVector2(Font->MeasureWidth(StringView(LabelText.Data(), LabelText.Length())), Font->GetLineHeight());
             const FRectangle LabelBounds = FRectangle::AlignInBounds(LabelBand, LabelSize, EHorizontalAlignment::Center, EVerticalAlignment::Top);
 
@@ -407,29 +406,6 @@ int32 FTileView::FindTileAt(const IntVector2& ClientPosition) const
     }
 
     return InvalidTileIndex;
-}
-
-String FTileView::ElideLabel(const String& InLabel, int32 MaxWidth) const
-{
-    if (!Font || MaxWidth <= 0)
-    {
-        return InLabel;
-    }
-
-    if (Font->MeasureWidth(StringView(InLabel.Data(), InLabel.Length())) <= MaxWidth)
-    {
-        return InLabel;
-    }
-
-    const int32 EllipsisWidth = Font->MeasureWidth(StringView(TILE_LABEL_ELLIPSIS));
-
-    int32 NumCharacters = InLabel.Length();
-    while (NumCharacters > 0 && (Font->MeasureWidth(StringView(InLabel.Data(), NumCharacters)) + EllipsisWidth) > MaxWidth)
-    {
-        --NumCharacters;
-    }
-
-    return InLabel.SubString(0, NumCharacters) + TILE_LABEL_ELLIPSIS;
 }
 
 void FTileView::SelectTile(int32 Index, bool bToggle, bool bExtend)

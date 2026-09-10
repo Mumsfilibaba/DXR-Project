@@ -74,7 +74,7 @@ int32 FSlider::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& O
     }
 
     const FCornerRadii GrooveRadii(static_cast<float>(Math::Min(Groove.Width, Groove.Height)) * 0.5f);
-    OutCommandList.AddBox(LayerId, Groove, Style.Colors.PanelBackground, GrooveRadii);
+    OutCommandList.AddBox(LayerId, Groove, Style.Colors.ControlNormal, GrooveRadii);
 
     FRectangle Filled = Groove;
     if (Orientation == EOrientation::Horizontal)

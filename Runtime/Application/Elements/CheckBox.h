@@ -24,7 +24,7 @@ public:
             : Text()
             , Font(nullptr)
             , InitialState(ECheckBoxState::Unchecked)
-            , BoxSize(static_cast<int32>(static_cast<float>(FUIStyle::GetDefault().Metrics.RowHeight) * 0.8f))
+            , BoxSize(static_cast<int32>(static_cast<float>(FUIStyle::GetDefault().Metrics.FrameHeight) * 0.8f))
             , LabelSpacing(8)
             , bIsTriState(false)
             , OnStateChanged()

@@ -25,6 +25,12 @@ enum class EOrientation : uint8
     Vertical,
 };
 
+enum class ETextOverflow : uint8
+{
+    Overflow,
+    Elide,
+};
+
 struct FMargin
 {
     FMargin()

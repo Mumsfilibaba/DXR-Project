@@ -26,7 +26,7 @@ struct FUIStyleColors
     /** @brief The fill a control lifts to while the cursor rests on it. */
     FFloatColor ControlHovered = FFloatColor(0.27f, 0.29f, 0.34f, 1.0f);
 
-    /** @brief The fill a control sinks to while it is held down. */
+    /** @brief The fill a control takes while it is held down. */
     FFloatColor ControlPressed = FFloatColor(0.16f, 0.17f, 0.21f, 1.0f);
 
     /** @brief The fill of a control that cannot be interacted with. */
@@ -80,6 +80,9 @@ struct FUIStyleColors
     /** @brief The stroke around anything the other border colors do not name. */
     FFloatColor Border = FFloatColor(0.32f, 0.33f, 0.38f, 1.0f);
 
+    /** @brief The fill a splitter handle takes once the cursor is over it, which is what answers the grab. */
+    FFloatColor SeparatorHovered = FFloatColor(0.40f, 0.41f, 0.46f, 1.0f);
+
     /** @brief The color nearly all text is drawn in. */
     FFloatColor Text = FFloatColor(0.90f, 0.91f, 0.94f, 1.0f);
 
@@ -126,7 +129,7 @@ struct FUIPropertyTableStyle
     FFloatColor AlternateRowFill = FFloatColor(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
 
     /** @brief The fill behind the row the cursor rests on. */
-    FFloatColor HoveredRowFill = FFloatColor(48.0f / 255.0f, 48.0f / 255.0f, 48.0f / 255.0f, 1.0f);
+    FFloatColor HoveredRowFill = FFloatColor(47.0f / 255.0f, 47.0f / 255.0f, 47.0f / 255.0f, 1.0f);
 
     /** @brief The rules between rows and between columns. */
     FFloatColor GridLine = FFloatColor(26.0f / 255.0f, 26.0f / 255.0f, 26.0f / 255.0f, 1.0f);
@@ -188,8 +191,8 @@ struct FUICheckBoxStyle
     /** @brief The border of a box the cursor is over. */
     FFloatColor BorderHovered = FFloatColor(100.0f / 255.0f, 100.0f / 255.0f, 100.0f / 255.0f, 1.0f);
 
-    /** @brief The border of a box being pressed. */
-    FFloatColor BorderPressed = FFloatColor(130.0f / 255.0f, 130.0f / 255.0f, 130.0f / 255.0f, 1.0f);
+    /** @brief The border of a box being pressed, which lights rather than lifting so the box reads as armed. */
+    FFloatColor BorderPressed = FFloatColor(0.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
 
     /** @brief How thick that border is drawn, in pixels. */
     float BorderThickness = 2.0f;
@@ -251,13 +254,46 @@ struct FUITreeRowStyle
     FFloatColor SecondaryText = FFloatColor(122.0f / 255.0f, 122.0f / 255.0f, 122.0f / 255.0f, 1.0f);
 
     /** @brief The fill behind the run of a name a search matched. */
-    FFloatColor SearchHighlight = FFloatColor(13.0f / 255.0f, 59.0f / 255.0f, 105.0f / 255.0f, 1.0f);
+    FFloatColor SearchHighlight = FFloatColor(139.0f / 255.0f, 194.0f / 255.0f, 74.0f / 255.0f, 1.0f);
+
+    /** @brief The color that run is drawn in, which has to carry against the highlight rather than the row. */
+    FFloatColor SearchHighlightText = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     /** @brief The tint of the disclosure arrow on a row that has children. */
     FFloatColor ArrowTint = FFloatColor(101.0f / 255.0f, 101.0f / 255.0f, 101.0f / 255.0f, 1.0f);
 
     /** @brief How far one level of depth moves a row's contents right, in pixels. */
     int32 IndentPerLevel = 18;
+};
+
+struct FUIScrollBarStyle
+{
+    /** @brief The fill behind the whole bar. */
+    FFloatColor Track = FFloatColor(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
+
+    /** @brief The fill of the thumb at rest. */
+    FFloatColor Grab = FFloatColor(87.0f / 255.0f, 87.0f / 255.0f, 87.0f / 255.0f, 1.0f);
+
+    /** @brief The fill of the thumb the cursor is over or dragging, which does not sink further on the press. */
+    FFloatColor GrabActive = FFloatColor(127.0f / 255.0f, 127.0f / 255.0f, 127.0f / 255.0f, 1.0f);
+
+    /** @brief How far the track's and the thumb's corners are rounded, in pixels. */
+    float CornerRadius = 12.0f;
+};
+
+struct FUITabStyle
+{
+    /** @brief The fill of a tab that is not the active one. */
+    FFloatColor Fill = FFloatColor(21.0f / 255.0f, 21.0f / 255.0f, 21.0f / 255.0f, 1.0f);
+
+    /** @brief The fill of an inactive tab the cursor is over. */
+    FFloatColor FillHovered = FFloatColor(33.0f / 255.0f, 33.0f / 255.0f, 33.0f / 255.0f, 1.0f);
+
+    /** @brief The fill of the active tab, which matches the panel below it so the two read as one surface. */
+    FFloatColor FillActive = FFloatColor(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
+
+    /** @brief The fill of the strip behind the tabs, which runs darker so the active tab stands out of it. */
+    FFloatColor StripFill = FFloatColor(21.0f / 255.0f, 21.0f / 255.0f, 21.0f / 255.0f, 1.0f);
 };
 
 struct FUIStyleMetrics
@@ -279,6 +315,13 @@ struct FUIStyleMetrics
 
     /** @brief How tall one row in a tree, a list or a table is, in pixels. */
     int32 RowHeight = 24;
+
+    /**
+     * @brief How tall the frame of an editable control is, in pixels. This runs taller than a row
+     * because a row only has to hold a line of text while a frame has to hold one with padding
+     * around it.
+     */
+    int32 FrameHeight = 24;
 
     /** @brief How tall a button is, which is taller than a row so a strip of them does not read as a list. */
     int32 ButtonHeight = 24;
@@ -361,6 +404,12 @@ struct APPLICATION_API FUIStyle
 
     /** @brief The look of one row in a tree or a list. */
     FUITreeRowStyle TreeRow;
+
+    /** @brief The look of the bar a scrollable view puts along its edge. */
+    FUIScrollBarStyle ScrollBar;
+
+    /** @brief The look of the tabs a dock node puts along its top. */
+    FUITabStyle Tab;
 
     /** @brief The colors the three spatial axes are drawn in. */
     FUIAxisColors AxisColors;

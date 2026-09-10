@@ -23,12 +23,13 @@ struct TNumericEntryTraits<float>
     /**
      * @brief Writes the value out for the line of text it is edited in.
      *
-     * @param Value The value to format.
-     * @return The value at three decimal places.
+     * @param Value     The value to format.
+     * @param Precision How many decimal places to write.
+     * @return The value at the given number of decimal places.
      */
-    NODISCARD static FORCEINLINE String Format(float Value)
+    NODISCARD static FORCEINLINE String Format(float Value, int32 Precision)
     {
-        return String::Printf("%.3f", Value);
+        return String::Printf("%.*f", Precision, Value);
     }
 
     /**
@@ -83,18 +84,20 @@ struct TNumericEntryTraits<int32>
     /**
      * @brief Writes the value out for the line of text it is edited in.
      *
-     * @param Value The value to format.
+     * @param Value     The value to format.
+     * @param Precision Ignored, an integer having no decimals to place.
      * @return The value in decimal.
      */
-    NODISCARD static FORCEINLINE String Format(int32 Value)
+    NODISCARD static FORCEINLINE String Format(int32 Value, int32 Precision)
     {
+        UNREFERENCED_VARIABLE(Precision);
         return String::Printf("%d", Value);
     }
 
     /** @return The value in decimal, an integer having no decimals to drop. */
     NODISCARD static FORCEINLINE String FormatDynamic(int32 Value)
     {
-        return Format(Value);
+        return Format(Value, 0);
     }
 
     /**
@@ -159,7 +162,10 @@ public:
         /** @brief Drawn after the value, which is what puts a degree sign on an angle. */
         String Suffix;
 
-        /** @brief Whether the value is written out at only the decimals it needs rather than at a fixed three. */
+        /** @brief How many decimal places the value is written out at, which a float field ignores while bDynamicPrecision is set. */
+        int32 Precision = 3;
+
+        /** @brief Whether the value is written out at only the decimals it needs rather than at Precision. */
         bool bDynamicPrecision = false;
 
         /**
@@ -294,6 +300,7 @@ private:
     T                         ScrubStartValue;
     IntVector2                ScrubStartPosition;
     int32                     LabelWidth;
+    int32                     Precision;
     bool                      bShowLabel;
     bool                      bDynamicPrecision;
     bool                      bShowFillTrack;
@@ -327,6 +334,7 @@ TNumericEntry<T>::TNumericEntry()
     , ScrubStartValue(T(0))
     , ScrubStartPosition()
     , LabelWidth(14)
+    , Precision(3)
     , bShowLabel(true)
     , bDynamicPrecision(false)
     , bShowFillTrack(false)
@@ -349,6 +357,7 @@ void TNumericEntry<T>::Initialize(const FDesc& Desc)
     MaxValue               = Math::Max(Desc.MaxValue, Desc.MinValue);
     Step                   = Desc.Step;
     LabelWidth             = Math::Max(0, Desc.LabelWidth);
+    Precision              = Math::Max(0, Desc.Precision);
     bShowLabel             = Desc.bShowLabel;
     bDynamicPrecision      = Desc.bDynamicPrecision;
     bShowFillTrack         = Desc.bShowFillTrack;
@@ -378,7 +387,7 @@ IntVector2 TNumericEntry<T>::ComputeDesiredSize() const
 {
     IntVector2 DesiredSize = Editor ? Editor->GetCachedDesiredSize() : IntVector2(0, 0);
     DesiredSize.X += TextInset * 2;
-    DesiredSize.Y = Math::Max(DesiredSize.Y, FUIStyle::GetDefault().Metrics.RowHeight);
+    DesiredSize.Y = Math::Max(DesiredSize.Y, FUIStyle::GetDefault().Metrics.FrameHeight);
 
     if (bShowLabel)
     {
@@ -474,7 +483,9 @@ int32 TNumericEntry<T>::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComma
     if (Editor && Editor->IsVisible())
     {
         const FDrawGeometry EditorGeometry(Editor->GetContentRectangle(), AllottedGeometry.Scale);
+        OutCommandList.PushClip(LayerId, AllottedGeometry.Bounds);
         NextLayerId = Math::Max(NextLayerId, Editor->OnDraw(EditorGeometry, OutCommandList, LayerId));
+        OutCommandList.PopClip(NextLayerId);
     }
 
     return NextLayerId;
@@ -606,7 +617,7 @@ FRectangle TNumericEntry<T>::GetEditorRectangle(const FRectangle& Bounds) const
 template<typename T>
 String TNumericEntry<T>::FormatValue() const
 {
-    String Text = bDynamicPrecision ? TNumericEntryTraits<T>::FormatDynamic(Value) : TNumericEntryTraits<T>::Format(Value);
+    String Text = bDynamicPrecision ? TNumericEntryTraits<T>::FormatDynamic(Value) : TNumericEntryTraits<T>::Format(Value, Precision);
     if (!Suffix.IsEmpty())
     {
         Text += Suffix;

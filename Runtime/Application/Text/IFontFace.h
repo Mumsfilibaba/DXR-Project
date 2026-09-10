@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/Array.h"
+#include "Core/Containers/String.h"
 #include "Core/Containers/StringView.h"
 #include "Core/Math/Math.h"
 
@@ -46,6 +47,9 @@ struct FShapedRun
 
 struct IFontFace
 {
+    /** @brief The dots that stand in for the characters an elided string drops. */
+    static constexpr const CHAR* Ellipsis = "..";
+
     virtual ~IFontFace() = default;
 
     /**
@@ -99,6 +103,44 @@ struct IFontFace
     }
 
     /**
+     * @brief Cuts text down to a width, ending it with the ellipsis when characters had to go.
+     *
+     * @param Text     The text to fit.
+     * @param MaxWidth The width to fit it into, in pixels.
+     * @return The text unchanged when it already fits, otherwise its leading characters with the
+     * ellipsis appended, and empty when the width cannot hold even the ellipsis.
+     */
+    NODISCARD String ElideText(const StringView& Text, int32 MaxWidth) const
+    {
+        if (MaxWidth <= 0)
+        {
+            return String();
+        }
+
+        const int32 EllipsisWidth = MeasureWidth(StringView(Ellipsis));
+
+        const FShapedRun& Run = ShapeText(Text);
+        if (Run.Width <= MaxWidth)
+        {
+            return String(Text.Data(), Text.Length());
+        }
+
+        const int32 Budget = MaxWidth - EllipsisWidth;
+        if (Budget <= 0)
+        {
+            return String();
+        }
+
+        int32 NumCharacters = 0;
+        while (NumCharacters < Run.Glyphs.Size() && Run.Glyphs[NumCharacters].Offset <= Budget)
+        {
+            ++NumCharacters;
+        }
+
+        return String(Text.Data(), Math::Max(0, NumCharacters - 1)) + Ellipsis;
+    }
+
+    /**
      * @brief Finds the character position closest to a horizontal offset, which is what maps a click to a position in the text.
      *
      * @param Text    The text to measure against.
@@ -114,7 +156,6 @@ struct IFontFace
 
         for (const FShapedGlyph& Shaped : ShapeText(Text).Glyphs)
         {
-            // Break at the half-glyph so a click on the right half of a character lands after it
             if (OffsetX < Shaped.Offset + (Shaped.Advance / 2))
             {
                 return Shaped.SourceIndex;
@@ -147,7 +188,6 @@ struct IFontFace
         }
 
         const int32 ClampedIndex = Math::Max(CharacterIndex, 0);
-
         OutOffset  = Run.Glyphs[ClampedIndex].Offset;
         OutAdvance = Run.Glyphs[ClampedIndex].Advance;
     }

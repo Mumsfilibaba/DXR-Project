@@ -299,6 +299,27 @@ bool PropertyTableToolTips_Test()
     Table->ClearRows();
     TEST_EXPECT(!ToolTips.IsPending());
 
+    TEST_SECTION("A label too long for its column falls back to raising its own full text");
+    FPropertyTable::FDesc NarrowDesc;
+    NarrowDesc.Font                = Font;
+    NarrowDesc.RowHeight           = 20;
+    NarrowDesc.LabelColumnFraction = 0.5f;
+
+    TSharedPtr<FPropertyTable> Narrow = FPropertyTable::Create(NarrowDesc);
+
+    Narrow->AddRow("Ambient occlusion strength", nullptr);
+    Narrow->AddRow("Scale", nullptr);
+
+    LayoutElement(Narrow, FRectangle(IntVector2(0, 0), 200, 40));
+
+    Narrow->OnMouseMove(MakeMoveEvent(IntVector2(20, 10)));
+    TEST_EXPECT(ToolTips.IsPending());
+    TEST_EXPECT_EQ(ToolTips.GetOwner(), StaticCastSharedPtr<FVisualElement>(Narrow));
+
+    TEST_SECTION("A label that fits still explains itself, so only the cut ones raise a tip");
+    Narrow->OnMouseMove(MakeMoveEvent(IntVector2(20, 30)));
+    TEST_EXPECT(!ToolTips.IsPending());
+
     TEST_END();
 }
 

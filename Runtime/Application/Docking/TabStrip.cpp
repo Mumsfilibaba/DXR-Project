@@ -14,9 +14,6 @@ constexpr int32 TAB_CLOSE_WIDTH        = 18;
 constexpr float TAB_CLOSE_EXTENT    = 3.5f;
 constexpr float TAB_CLOSE_THICKNESS = 1.0f;
 
-// How thick the line under the active tab is
-constexpr int32 TAB_ACTIVE_UNDERLINE = 2;
-
 TSharedPtr<FTab> FTab::Create(const String& InPanelId, const String& InLabel, const TSharedPtr<IFontFace>& InFont, bool bInIsClosable)
 {
     TSharedPtr<FTab> NewTab = MakeSharedPtr<FTab>();
@@ -58,14 +55,8 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
         return LayerId;
     }
 
-    const FFloatColor& Fill = bIsActive ? Style.Colors.PanelBackground : Style.GetControlColor(GetInteractionState());
+    const FFloatColor& Fill = bIsActive ? Style.Tab.FillActive : (IsHovered() ? Style.Tab.FillHovered : Style.Tab.Fill);
     OutCommandList.AddBox(LayerId, Bounds, Fill);
-
-    if (bIsActive)
-    {
-        const FRectangle UnderlineBounds(IntVector2(Bounds.Position.X, Bounds.GetBottom() - TAB_ACTIVE_UNDERLINE), Bounds.Width, TAB_ACTIVE_UNDERLINE);
-        OutCommandList.AddBox(LayerId + 1, UnderlineBounds, Style.Colors.Accent);
-    }
 
     if (Font)
     {
@@ -75,7 +66,7 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
         const FRectangle LabelBounds(IntVector2(Bounds.Position.X + TAB_HORIZONTAL_PADDING, Bounds.Position.Y + (Bounds.Height - LabelHeight) / 2),
             LabelWidth, LabelHeight);
 
-        OutCommandList.AddText(LayerId + 2, LabelBounds, Label, Font.Get(), Style.GetTextColor(GetInteractionState()));
+        OutCommandList.AddText(LayerId + 1, LabelBounds, Label, Font.Get(), Style.GetTextColor(GetInteractionState()));
     }
 
     if (bIsClosable)
@@ -87,13 +78,13 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
 
         const FFloatColor& CrossColor = bIsActive ? Style.Colors.Text : Style.Colors.TextDisabled;
 
-        OutCommandList.AddLine(LayerId + 2, Vector2(CenterX - TAB_CLOSE_EXTENT, CenterY - TAB_CLOSE_EXTENT),
+        OutCommandList.AddLine(LayerId + 1, Vector2(CenterX - TAB_CLOSE_EXTENT, CenterY - TAB_CLOSE_EXTENT),
             Vector2(CenterX + TAB_CLOSE_EXTENT, CenterY + TAB_CLOSE_EXTENT), CrossColor, TAB_CLOSE_THICKNESS);
-        OutCommandList.AddLine(LayerId + 2, Vector2(CenterX + TAB_CLOSE_EXTENT, CenterY - TAB_CLOSE_EXTENT),
+        OutCommandList.AddLine(LayerId + 1, Vector2(CenterX + TAB_CLOSE_EXTENT, CenterY - TAB_CLOSE_EXTENT),
             Vector2(CenterX - TAB_CLOSE_EXTENT, CenterY + TAB_CLOSE_EXTENT), CrossColor, TAB_CLOSE_THICKNESS);
     }
 
-    return LayerId + 3;
+    return LayerId + 2;
 }
 
 FEventResponse FTab::OnMouseButtonDown(const FCursorEvent& CursorEvent)
@@ -234,7 +225,7 @@ int32 FTabStrip::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
 {
     const FUIStyle& Style = FUIStyle::GetDefault();
 
-    OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Colors.WindowBackground);
+    OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Tab.StripFill);
 
     int32 NextLayerId = LayerId + 1;
     for (const TSharedPtr<FTab>& Tab : Tabs)

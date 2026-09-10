@@ -109,6 +109,7 @@ private:
         float                             MaxValue,
         float                             Step,
         float                             DefaultValue,
+        int32                             Precision,
         const TDelegate<void(float)>&     OnChanged);
 
     FPropertyRow& AddBoolRow(
@@ -119,9 +120,14 @@ private:
         const bool*                       DefaultValue = nullptr,
         bool                              bIsEnabled   = true);
 
+    FPropertyRow& AddTextRow(
+        const TSharedPtr<FPropertyTable>& Table,
+        const String&                     Label,
+        const String&                     Text);
+
     NODISCARD TSharedPtr<FPropertyTable> CreateTable();
     NODISCARD TSharedPtr<FSeparatorText> CreateSectionLabel(const String& Label);
-    NODISCARD TSharedPtr<TNumericEntry<float>> CreateFloatEditor(float Value, float Min, float Max, float Step, const TDelegate<void(float)>& OnChanged);
+    NODISCARD TSharedPtr<TNumericEntry<float>> CreateFloatEditor(float Value, float Min, float Max, float Step, int32 Precision, const TDelegate<void(float)>& OnChanged);
     NODISCARD TSharedPtr<TNumericEntry<int32>> CreateIntEditor(int32 Value, int32 Min, int32 Max, const TDelegate<void(int32)>& OnChanged);
     NODISCARD TSharedPtr<FCheckBox> CreateBoolEditor(bool bValue, const TDelegate<void(bool)>& OnChanged);
     NODISCARD TSharedPtr<FVisualElement> CreateComboEditor(const TArray<String>& Options, int32 SelectedIndex, const TDelegate<void(int32)>& OnChanged);

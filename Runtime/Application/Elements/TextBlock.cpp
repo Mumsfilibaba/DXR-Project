@@ -18,6 +18,7 @@ FTextBlock::FTextBlock()
     , Font(nullptr)
     , ColorAndOpacity(FFloatColor::White)
     , Margin()
+    , Overflow(ETextOverflow::Overflow)
 {
 }
 
@@ -29,6 +30,7 @@ void FTextBlock::Initialize(const FDesc& Desc)
     Font            = Desc.Font;
     ColorAndOpacity = Desc.ColorAndOpacity;
     Margin          = Desc.Margin;
+    Overflow        = Desc.Overflow;
 }
 
 IntVector2 FTextBlock::ComputeDesiredSize() const
@@ -46,7 +48,16 @@ int32 FTextBlock::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
 {
     if (!Text.IsEmpty())
     {
-        OutCommandList.AddText(LayerId, AllottedGeometry.Bounds.Deflate(Margin), Text, Font.Get(), ColorAndOpacity);
+        const FRectangle TextBounds = AllottedGeometry.Bounds.Deflate(Margin);
+        if (Overflow == ETextOverflow::Elide && Font)
+        {
+            const String Elided = Font->ElideText(StringView(Text.Data(), Text.Length()), TextBounds.Width);
+            OutCommandList.AddText(LayerId, TextBounds, Elided, Font.Get(), ColorAndOpacity);
+        }
+        else
+        {
+            OutCommandList.AddText(LayerId, TextBounds, Text, Font.Get(), ColorAndOpacity);
+        }
     }
 
     return LayerId;

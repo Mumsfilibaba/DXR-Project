@@ -23,7 +23,7 @@ public:
         FFloatColor FillColor = FUIStyle::GetDefault().Colors.Accent;
 
         /** @brief The color the whole track is drawn in, behind the fill. */
-        FFloatColor BackgroundColor = FUIStyle::GetDefault().Colors.ControlPressed;
+        FFloatColor BackgroundColor = FUIStyle::GetDefault().Colors.ControlNormal;
 
         /** @brief The color the overlay text is drawn in. */
         FFloatColor TextColor = FUIStyle::GetDefault().Colors.Text;
@@ -32,7 +32,7 @@ public:
         int32 PreferredHeight = 16;
 
         /** @brief How far each corner of the track is rounded, in pixels. */
-        FCornerRadii CornerRadius;
+        FCornerRadii CornerRadius = FCornerRadii(FUIStyle::GetDefault().Metrics.CornerRadius);
     };
 
 public:

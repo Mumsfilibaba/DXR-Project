@@ -45,16 +45,19 @@ int32 FScrollBar::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
     const FUIStyle&  Style = FUIStyle::GetDefault();
     const FRectangle Track = ComputeTrackBounds(AllottedGeometry.Bounds);
 
-    const FCornerRadii TrackRadii(static_cast<float>(Math::Min(Track.Width, Track.Height)) * 0.5f);
-    OutCommandList.AddBox(LayerId, Track, Style.Colors.PanelBackground, TrackRadii);
+    const FCornerRadii TrackRadii(Style.ScrollBar.CornerRadius);
+    OutCommandList.AddBox(LayerId, Track, Style.ScrollBar.Track, TrackRadii);
 
     if (!IsScrollable())
     {
         return LayerId;
     }
 
-    const FRectangle Thumb = ComputeThumbBounds(AllottedGeometry.Bounds);
-    OutCommandList.AddBox(LayerId, Thumb, Style.GetControlColor(GetInteractionState()), TrackRadii);
+    const bool         bIsGrabbed = IsHovered() || IsPressed();
+    const FRectangle   Thumb      = ComputeThumbBounds(AllottedGeometry.Bounds);
+    const FFloatColor& ThumbFill  = bIsGrabbed ? Style.ScrollBar.GrabActive : Style.ScrollBar.Grab;
+
+    OutCommandList.AddBox(LayerId, Thumb, ThumbFill, TrackRadii);
 
     return LayerId;
 }

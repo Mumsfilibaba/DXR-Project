@@ -248,3 +248,41 @@ bool FontMeasurement_Test()
 
     TEST_END();
 }
+
+bool FontElision_Test()
+{
+    TEST_BEGIN();
+
+    TSharedPtr<FTrueTypeFontFace> Font = CreateTrueTypeFont();
+    TEST_EXPECT(Font != nullptr);
+    if (!Font)
+    {
+        TEST_END();
+    }
+
+    const StringView Text("Ambient occlusion");
+
+    const int32 FullWidth     = Font->MeasureWidth(Text);
+    const int32 EllipsisWidth = Font->MeasureWidth(StringView(IFontFace::Ellipsis));
+
+    TEST_SECTION("Text that already fits comes back untouched, whatever room is left over");
+    TEST_EXPECT_EQ(Font->ElideText(Text, FullWidth), String("Ambient occlusion"));
+    TEST_EXPECT_EQ(Font->ElideText(Text, FullWidth + 100), String("Ambient occlusion"));
+
+    TEST_SECTION("Text that does not fit is cut down and ends in the ellipsis");
+    const int32  Budget = FullWidth / 2;
+    const String Elided = Font->ElideText(Text, Budget);
+
+    TEST_EXPECT(Elided.Length() < Text.Length());
+    TEST_EXPECT(Elided.EndsWith(IFontFace::Ellipsis));
+
+    TEST_SECTION("What comes back stays inside the width it was given");
+    TEST_EXPECT(Font->MeasureWidth(StringView(Elided.Data(), Elided.Length())) <= Budget);
+
+    TEST_SECTION("A width that cannot hold even the ellipsis comes back empty rather than overrunning");
+    TEST_EXPECT(Font->ElideText(Text, EllipsisWidth).IsEmpty());
+    TEST_EXPECT(Font->ElideText(Text, 0).IsEmpty());
+    TEST_EXPECT(Font->ElideText(Text, -10).IsEmpty());
+
+    TEST_END();
+}

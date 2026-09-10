@@ -1052,6 +1052,10 @@ bool NumericEntryControl_Test()
     TEST_EXPECT_EQ(Hidden->GetCachedDesiredSize().X, FNumericEntryFloat::MinWidth);
     TEST_EXPECT(FloatEntry->GetCachedDesiredSize().X >= FNumericEntryFloat::MinWidth);
 
+    TEST_SECTION("The field asks for a frame rather than a row, so a line of text cannot hang out of it");
+    TEST_EXPECT_EQ(Hidden->GetCachedDesiredSize().Y, FUIStyle::GetDefault().Metrics.FrameHeight);
+    TEST_EXPECT(Hidden->GetCachedDesiredSize().Y >= CreateFont()->GetTextBandHeight());
+
     TEST_SECTION("An integer field is the same thing counting in whole steps");
     TArray<int32> IntChanges;
 

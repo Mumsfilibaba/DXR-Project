@@ -221,6 +221,7 @@ private:
     NODISCARD FRectangle GetRevertRectangle(int32 Index, const FRectangle& Bounds) const;
     NODISCARD bool IsRowModified(int32 Index) const;
     NODISCARD int32 FindRevertRowAtPoint(const IntVector2& ClientPosition) const;
+    NODISCARD const String& GetElidedLabel(int32 Index) const;
 
     void UpdateHoveredRow(const IntVector2& ClientPosition);
     void ClearHoveredRow();

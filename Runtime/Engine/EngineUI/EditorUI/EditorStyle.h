@@ -33,6 +33,9 @@ struct ENGINE_API FEditorStyle
     /** @brief The height of one row in a tree, a list or a property table. */
     static constexpr int32 RowHeight = 22;
 
+    /** @brief The height of an input field's frame, which is the body font's 18px plus ImGui's 6px above and below. */
+    static constexpr int32 FrameHeight = 30;
+
     /** @brief The height of a button, which is the body font's 18px plus ImGui's 4px above and below. */
     static constexpr int32 ButtonHeight = 26;
 
@@ -60,18 +63,6 @@ struct ENGINE_API FEditorStyle
 
     /** @return The palette and metrics the editor installed, which is the process-wide default. */
     NODISCARD static const FUIStyle& GetStyle();
-
-    /** @return The fill behind a dock tab strip and the seams between panels. */
-    NODISCARD static FFloatColor GetSeamColor();
-
-    /** @return The fill of a tab that is not the active one. */
-    NODISCARD static FFloatColor GetInactiveTabColor();
-
-    /** @return The fill of a row a selection covers. */
-    NODISCARD static FFloatColor GetSelectionColor();
-
-    /** @return The fill of every second row in a table, which is what makes long lists readable. */
-    NODISCARD static FFloatColor GetAlternateRowColor();
 
     /** @return The fill of the console strip along the bottom of the window. */
     NODISCARD static FFloatColor GetFooterColor();

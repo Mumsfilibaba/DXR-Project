@@ -37,7 +37,7 @@ public:
         FFloatColor BarColor = FUIStyle::GetDefault().Colors.Accent;
 
         /** @brief The color the strip is drawn in behind the bars. */
-        FFloatColor BackgroundColor = FUIStyle::GetDefault().Colors.ControlPressed;
+        FFloatColor BackgroundColor = FUIStyle::GetDefault().Colors.ControlNormal;
 
         /** @brief How tall the strip asks to be, in pixels. */
         int32 PreferredHeight = 64;

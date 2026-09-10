@@ -148,7 +148,7 @@ int32 FSplitter::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
             continue;
         }
 
-        const FFloatColor& Tint = HandleIndex == ActiveHandleIndex ? Style.Colors.Accent : Style.Colors.Border;
+        const FFloatColor& Tint = HandleIndex == ActiveHandleIndex ? Style.Colors.Accent : Style.Colors.SeparatorHovered;
         OutCommandList.AddBox(NextLayerId, GetHandleRectangle(HandleIndex), Tint);
     }
 

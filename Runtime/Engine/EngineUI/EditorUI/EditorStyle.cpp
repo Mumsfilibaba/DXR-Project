@@ -59,10 +59,10 @@ bool FEditorStyle::Initialize()
     }
 
     GStyle.Colors.WindowBackground        = FromBytes(36, 36, 36);
-    GStyle.Colors.PanelBackground         = FromBytes(30, 30, 31);
-    GStyle.Colors.ControlNormal           = FromBytes(51, 51, 55);
-    GStyle.Colors.ControlHovered          = FromBytes(66, 66, 72);
-    GStyle.Colors.ControlPressed          = FromBytes(43, 43, 48);
+    GStyle.Colors.PanelBackground         = FromBytes(23, 23, 26);
+    GStyle.Colors.ControlNormal           = FromBytes(33, 33, 36);
+    GStyle.Colors.ControlHovered          = FromBytes(46, 46, 51);
+    GStyle.Colors.ControlPressed          = FromBytes(51, 51, 59);
     GStyle.Colors.ControlDisabled         = FromBytes(41, 41, 44);
     GStyle.Colors.ButtonNormal            = FromBytes(56, 56, 56);
     GStyle.Colors.ButtonHovered           = FromBytes(87, 87, 87);
@@ -77,9 +77,10 @@ bool FEditorStyle::Initialize()
     GStyle.Colors.MenuSeparator           = FromBytes(106, 106, 106);
     GStyle.Colors.MenuSectionText         = FromBytes(160, 160, 160);
     GStyle.Colors.Border                  = FromBytes(21, 21, 21);
+    GStyle.Colors.SeparatorHovered        = FromBytes(56, 56, 56);
     GStyle.Colors.Text                    = FromBytes(230, 230, 232);
     GStyle.Colors.TextDisabled            = FromBytes(115, 117, 122);
-    GStyle.Colors.TextSelectionBackground = FromBytes(51, 107, 199);
+    GStyle.Colors.TextSelectionBackground = FromBytes(0, 112, 224);
     GStyle.Colors.Accent                  = FromBytes(9, 92, 176);
     GStyle.Colors.AccentHovered           = FromBytes(15, 110, 205);
 
@@ -89,6 +90,7 @@ bool FEditorStyle::Initialize()
     GStyle.Metrics.ButtonCornerRadius     = 6.0f;
     GStyle.Metrics.BorderThickness        = 1.0f;
     GStyle.Metrics.RowHeight              = RowHeight;
+    GStyle.Metrics.FrameHeight            = FrameHeight;
     GStyle.Metrics.ButtonHeight           = ButtonHeight;
     GStyle.Metrics.ScrollBarThickness     = 16;
     GStyle.Metrics.SeparatorThickness     = 1;
@@ -121,26 +123,6 @@ const FEditorFonts& FEditorStyle::GetFonts()
 const FUIStyle& FEditorStyle::GetStyle()
 {
     return FUIStyle::GetDefault();
-}
-
-FFloatColor FEditorStyle::GetSeamColor()
-{
-    return FromBytes(21, 21, 21);
-}
-
-FFloatColor FEditorStyle::GetInactiveTabColor()
-{
-    return FromBytes(26, 26, 27);
-}
-
-FFloatColor FEditorStyle::GetSelectionColor()
-{
-    return FromBytes(51, 76, 122);
-}
-
-FFloatColor FEditorStyle::GetAlternateRowColor()
-{
-    return FromBytes(34, 34, 36);
 }
 
 FFloatColor FEditorStyle::GetFooterColor()
@@ -213,6 +195,8 @@ FInputFrameStyle FEditorStyle::GetInputFrameStyle()
 FInputFrameStyle FEditorStyle::GetConsoleInputFrameStyle()
 {
     FInputFrameStyle FrameStyle = GetInputFrameStyle();
+    FrameStyle.HintNormal       = FromBytes(77, 77, 77);
+    FrameStyle.HintFocused      = FromBytes(99, 99, 99);
     FrameStyle.CornerRadius     = CONSOLE_FIELD_CORNER_RADIUS;
     return FrameStyle;
 }
@@ -250,7 +234,7 @@ FPropertyTable::FDesc FEditorStyle::MakePropertyTableDesc(float LabelColumnFract
 {
     FPropertyTable::FDesc Desc;
     Desc.Font                = GFonts.Body;
-    Desc.RowHeight           = RowHeight;
+    Desc.RowHeight           = FrameHeight + Desc.Style.CellPadding.GetTotalVertical();
     Desc.LabelColumnFraction = LabelColumnFraction;
     Desc.LabelColumnWidth    = LabelColumnWidth;
     Desc.RevertIcon          = FEditorIcons::Undo;

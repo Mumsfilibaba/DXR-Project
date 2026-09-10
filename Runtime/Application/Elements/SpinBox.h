@@ -30,7 +30,7 @@ public:
             , Padding(FUIStyle::GetDefault().Metrics.ControlPadding)
             , CornerRadius(FUIStyle::GetDefault().Metrics.CornerRadius)
             , MinWidth(64)
-            , MinHeight(FUIStyle::GetDefault().Metrics.RowHeight)
+            , MinHeight(FUIStyle::GetDefault().Metrics.FrameHeight)
             , OnValueChanged()
             , OnValueCommitted()
         {
