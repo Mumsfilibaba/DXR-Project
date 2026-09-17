@@ -16,9 +16,6 @@
 // How far apart the header row holds its controls
 constexpr int32 RENDERGRAPH_HEADER_SPACING = 8;
 
-// The inset the header row is held off the panel edge by
-constexpr int32 RENDERGRAPH_HEADER_INSET = 6;
-
 // The legend box, at the sizes the ImGui window draws it at
 constexpr int32 RENDERGRAPH_LEGEND_WIDTH         = 286;
 constexpr int32 RENDERGRAPH_LEGEND_PADDING       = 8;
@@ -234,7 +231,7 @@ bool FEditorRenderGraphPanel::Initialize()
         .SetPadding(FMargin(RENDERGRAPH_LEGEND_INSET, RENDERGRAPH_LEGEND_INSET, RENDERGRAPH_LEGEND_INSET, RENDERGRAPH_LEGEND_INSET));
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
-    Column->AddSlot(HeaderRow).SetPadding(FMargin(RENDERGRAPH_HEADER_INSET, RENDERGRAPH_HEADER_INSET, RENDERGRAPH_HEADER_INSET, RENDERGRAPH_HEADER_INSET));
+    Column->AddSlot(HeaderRow).SetPadding(FMargin(0, 0, 0, FEditorStyle::ItemSpacing));
     Column->AddSlot(CanvasArea).SetFillCoefficient(1.0f);
 
     Content = Column;

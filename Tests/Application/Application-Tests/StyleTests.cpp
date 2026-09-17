@@ -3,7 +3,10 @@
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
 
+#include <Application/Menus/PopupWindow.h>
 #include <Application/Style/UIStyle.h>
+#include <CoreApplication/Platform/PlatformApplicationMisc.h>
+#include <RHI/RHI.h>
 
 bool StyleDefaults_Test()
 {
@@ -30,11 +33,79 @@ bool StyleDefaults_Test()
     TEST_EXPECT(Style.ScrollBar.GrabActive.R > Style.ScrollBar.Grab.R);
     TEST_EXPECT(Style.ScrollBar.CornerRadius > 0.0f);
 
-    TEST_SECTION("A dock tab lightens on hover but not when active, which the strip under it marks instead");
-    TEST_EXPECT(Style.Tab.FillHovered.R > Style.Tab.Fill.R);
-    TEST_EXPECT_EQ(Style.Tab.FillActive.R, Style.Tab.Fill.R);
-    TEST_EXPECT(Style.Tab.StripFill.R <= Style.Tab.Fill.R);
+    TEST_SECTION("A dock tab paints nothing at rest, so a pill appears on hover and lifts further still when active");
+    TEST_EXPECT_EQ(Style.Tab.Fill.A, 0.0f);
+    TEST_EXPECT(Style.Tab.FillHovered.R > Style.Tab.StripFill.R);
+    TEST_EXPECT(Style.Tab.FillActive.R > Style.Tab.FillHovered.R);
     TEST_EXPECT(Style.Tab.ActiveStrip.B > Style.Tab.ActiveStrip.R);
+
+    TEST_SECTION("That pill floats inside the strip, so it is rounded, held off both edges and parted from its neighbour");
+    TEST_EXPECT(Style.Tab.CornerRadius > 0.0f);
+    TEST_EXPECT(Style.Tab.Spacing > 0);
+    TEST_EXPECT(Style.Tab.TopInset > 0);
+    TEST_EXPECT(Style.Tab.BottomInset > 0);
+    TEST_EXPECT_EQ(Style.Tab.SeparatorThickness, 0);
+
+    TEST_SECTION("Every tab opens at the same width at least, wide enough that the floor is the label's room rather than the chrome's");
+    TEST_EXPECT(Style.Tab.MinWidth > 0);
+    TEST_EXPECT(Style.Tab.MinWidth > 2 * (Style.Tab.HorizontalPadding + Style.Tab.CloseSize));
+
+    TEST_SECTION("A close button fits inside the pill with room to spare, and its glyph centres inside itself");
+    TEST_EXPECT(Style.Tab.CloseSize < Style.Tab.StripHeight - Style.Tab.TopInset - Style.Tab.BottomInset);
+    TEST_EXPECT(Style.Tab.CloseIconSize <= Style.Tab.CloseSize - 4);
+    TEST_EXPECT_EQ((Style.Tab.CloseSize - Style.Tab.CloseIconSize) % 2, 0);
+
+    TEST_SECTION("The label is lifted off the pill's centre line, by a nudge small enough to stay a correction");
+    TEST_EXPECT(Style.Tab.LabelOffsetY < 0);
+    TEST_EXPECT(Style.Tab.LabelOffsetY > -Style.Tab.TopInset);
+
+    TEST_SECTION("It sits nearer the pill's edge than the label does, at the same remove a menu row's highlight keeps");
+    TEST_EXPECT(Style.Tab.CloseInset > 0);
+    TEST_EXPECT(Style.Tab.CloseInset < Style.Tab.HorizontalPadding);
+    TEST_EXPECT_EQ(Style.Tab.CloseInset, Style.Menu.ItemHighlightInset);
+
+    TEST_SECTION("The accent under the active pill is thick enough for its curve to show and fades out before either end");
+    TEST_EXPECT(Style.Tab.ActiveStripThickness > 0);
+    TEST_EXPECT(static_cast<float>(Style.Tab.ActiveStripThickness) < Style.Tab.CornerRadius);
+    TEST_EXPECT(Style.Tab.ActiveStripFadeWidth > static_cast<float>(Style.Tab.ActiveStripThickness));
+
+    TEST_SECTION("The bar that scrolls an overflowing strip is a hairline, and comes in faster than it goes out");
+    TEST_EXPECT(Style.Tab.ScrollBarThickness > 0);
+    TEST_EXPECT(Style.Tab.ScrollBarThickness < Style.Tab.BottomInset + Style.Tab.TopInset);
+    TEST_EXPECT(Style.Tab.ScrollBarFadeInDuration > 0.0f);
+    TEST_EXPECT(Style.Tab.ScrollBarFadeOutDuration > Style.Tab.ScrollBarFadeInDuration);
+
+    TEST_SECTION("A menu bar entry lifts on hover and lifts further while its menu is open");
+    TEST_EXPECT(Style.MenuBar.ItemActive.R > Style.MenuBar.ItemHovered.R);
+    TEST_EXPECT(Style.MenuBar.Height > 0);
+
+    TEST_SECTION("Its highlight is held inside the strip and rounded, so it reads as a pill rather than a flat fill");
+    TEST_EXPECT(Style.MenuBar.ItemInset > 0);
+    TEST_EXPECT(Style.MenuBar.ItemCornerRadius > 0.0f);
+    TEST_EXPECT(Style.MenuBar.ItemPadding.GetTotalVertical() < Style.MenuBar.Height);
+
+    TEST_SECTION("Its entries are parted by the same gap the tabs keep, and its pill is rounded to match theirs");
+    TEST_EXPECT(Style.MenuBar.ItemSpacing > 0);
+    TEST_EXPECT_EQ(Style.MenuBar.ItemSpacing, Style.Tab.Spacing);
+    TEST_EXPECT_EQ(Style.MenuBar.ItemCornerRadius, Style.Tab.CornerRadius);
+
+    TEST_SECTION("A tab stands a little taller than a menu entry, and a menu row matches the entry it drops from");
+    TEST_EXPECT(Style.Tab.StripHeight > Style.MenuBar.Height);
+    TEST_EXPECT_EQ(Style.Menu.RowHeight, Style.MenuBar.Height - (2 * Style.MenuBar.ItemInset));
+
+    TEST_SECTION("Every menu opens at the same width at least, however narrow the rows in it measure");
+    TEST_EXPECT(Style.Menu.MinWidth > 0);
+    TEST_EXPECT(Style.Menu.MinWidth > Style.MenuBar.Height);
+
+    TEST_SECTION("An open menu reads against the surface behind it, and a shortcut reads quieter than the entry it belongs to");
+    TEST_EXPECT(Style.Menu.Border.R > Style.Menu.Background.R);
+    TEST_EXPECT(Style.Menu.ItemShortcut.R < Style.Colors.Text.R);
+    TEST_EXPECT(Style.Menu.SectionText.R < Style.Colors.Text.R);
+
+    TEST_SECTION("Its rows carry the same inset pill the strip's entries do, inside a panel rounded wider than they are");
+    TEST_EXPECT(Style.Menu.ItemHighlightInset > 0);
+    TEST_EXPECT(Style.Menu.ItemCornerRadius > 0.0f);
+    TEST_EXPECT(Style.Menu.CornerRadius > Style.Menu.ItemCornerRadius);
 
     TEST_SECTION("The metrics leave room for a line of text inside a control");
     TEST_EXPECT(Style.Metrics.RowHeight > 16);
@@ -111,6 +182,51 @@ bool StyleOverride_Test()
     FUIStyle::ResetDefault();
     TEST_EXPECT(FUIStyle::GetDefault().Colors.Accent == FUIStyle().Colors.Accent);
     TEST_EXPECT_EQ(FUIStyle::GetDefault().Metrics.RowHeight, FUIStyle().Metrics.RowHeight);
+
+    TEST_END();
+}
+
+bool PopupCornerRounding_Test()
+{
+    TEST_BEGIN();
+
+    const bool bWasSupported = RHI::bSupportsTransparentSwapChain;
+
+    TEST_SECTION("The theme keeps the radii it was given, whatever the RHI can do with a surface");
+    RHI::bSupportsTransparentSwapChain = false;
+    FUIStyle::SetDefault(FUIStyle());
+
+    TEST_EXPECT_EQ(FUIStyle::GetDefault().Menu.CornerRadius, FUIStyle().Menu.CornerRadius);
+    TEST_EXPECT_EQ(FUIStyle::GetDefault().Metrics.CornerRadius, FUIStyle().Metrics.CornerRadius);
+
+    TEST_SECTION("Which matters because the same radius rounds check boxes and combo fields, not only popups");
+    TEST_EXPECT(FUIStyle::GetDefault().Metrics.CornerRadius > 0.0f);
+    TEST_EXPECT_EQ(FUIStyle::GetDefault().Menu.ItemCornerRadius, FUIStyle().Menu.ItemCornerRadius);
+    TEST_EXPECT_EQ(FUIStyle::GetDefault().Tab.CornerRadius, FUIStyle().Tab.CornerRadius);
+    TEST_EXPECT_EQ(FUIStyle::GetDefault().MenuBar.ItemCornerRadius, FUIStyle().MenuBar.ItemCornerRadius);
+
+    TEST_SECTION("A platform that rounds windows itself wins, because that needs no transparent surface at all");
+    if (FPlatformApplicationMisc::SupportsRoundedWindowCorners())
+    {
+        RHI::bSupportsTransparentSwapChain = true;
+        TEST_EXPECT(Popups::ResolveCornerRounding() == EPopupCornerRounding::System);
+
+        RHI::bSupportsTransparentSwapChain = false;
+        TEST_EXPECT(Popups::ResolveCornerRounding() == EPopupCornerRounding::System);
+    }
+    else
+    {
+        TEST_SECTION("Without one, a popup draws its own corners wherever the RHI can carry alpha to the desktop");
+        RHI::bSupportsTransparentSwapChain = true;
+        TEST_EXPECT(Popups::ResolveCornerRounding() == EPopupCornerRounding::Content);
+
+        TEST_SECTION("And where it cannot, there is nothing left to round a popup with");
+        RHI::bSupportsTransparentSwapChain = false;
+        TEST_EXPECT(Popups::ResolveCornerRounding() == EPopupCornerRounding::None);
+    }
+
+    RHI::bSupportsTransparentSwapChain = bWasSupported;
+    FUIStyle::ResetDefault();
 
     TEST_END();
 }

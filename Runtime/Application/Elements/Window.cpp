@@ -2,6 +2,7 @@
 #include "CoreApplication/PlatformInterface/IPlatformWindow.h"
 #include "Application/Application.h"
 #include "Application/Draw/DrawCommandList.h"
+#include "Application/Elements/MenuHost.h"
 #include "Application/Elements/Window.h"
 
 TSharedPtr<FWindow> FWindow::Create(const FDesc& Desc)
@@ -32,6 +33,7 @@ FWindow::FWindow()
     , bHasExternalSurface(false)
     , bLayoutIsStale(false)
     , Overlay()
+    , MenuHost()
     , Content()
     , PlatformWindow(nullptr)
 {
@@ -69,6 +71,11 @@ void FWindow::Tick(const FRectangle& AssignedBounds)
     {
         Overlay->Tick(AssignedBounds);
     }
+
+    if (MenuHost)
+    {
+        MenuHost->Tick(AssignedBounds);
+    }
 }
 
 bool FWindow::IsWindow() const
@@ -94,6 +101,11 @@ int32 FWindow::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& O
     if (Overlay && Overlay->IsVisible())
     {
         QueueDeferredPainting(Overlay, FDrawGeometry(Overlay->GetContentRectangle(), AllottedGeometry.Scale));
+    }
+
+    if (MenuHost && MenuHost->IsVisible() && !MenuHost->IsEmpty())
+    {
+        QueueDeferredPainting(MenuHost, FDrawGeometry(MenuHost->GetContentRectangle(), AllottedGeometry.Scale));
     }
 
     return MaxLayerId;
@@ -154,6 +166,11 @@ void FWindow::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
     {
         OutChildren.Add(Overlay);
     }
+
+    if (MenuHost)
+    {
+        OutChildren.Add(MenuHost);
+    }
 }
 
 void FWindow::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutParentElements)
@@ -175,6 +192,11 @@ void FWindow::FindChildrenContainingPoint(const IntVector2& ClientPosition, FEle
             if (Overlay)
             {
                 Overlay->FindChildrenContainingPoint(ClientPosition, OutParentElements);
+            }
+
+            if (MenuHost)
+            {
+                MenuHost->FindChildrenContainingPoint(ClientPosition, OutParentElements);
             }
         }
     }
@@ -324,6 +346,25 @@ void FWindow::SetContent(const TSharedPtr<FVisualElement>& InContent)
     {
         Content->SetParentElement(AsWeakPtr());
     }
+}
+
+TSharedPtr<FMenuHost> FWindow::GetMenuHost() const
+{
+    return MenuHost;
+}
+
+TSharedPtr<FMenuHost> FWindow::GetOrCreateMenuHost()
+{
+    if (!MenuHost)
+    {
+        MenuHost = FMenuHost::Create();
+        MenuHost->SetParentElement(AsWeakPtr());
+
+        const IntVector2 Size = GetSize();
+        MenuHost->Tick(FRectangle(IntVector2(), Size.X, Size.Y));
+    }
+
+    return MenuHost;
 }
 
 void FWindow::Show(bool bFocus)

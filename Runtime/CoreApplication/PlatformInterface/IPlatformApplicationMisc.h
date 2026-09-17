@@ -31,6 +31,12 @@ struct IPlatformApplicationMisc
     {
         return false;
     }
+
+    /** @return True when the platform rounds a window's corners itself, so its content must draw them square. */
+    static FORCEINLINE bool SupportsRoundedWindowCorners()
+    {
+        return false;
+    }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

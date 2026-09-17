@@ -15,6 +15,7 @@ public:
         int32                     Thickness = FUIStyle::GetDefault().Metrics.ScrollBarThickness;
         int32                     MinThumbLength = 24;
         FMargin                   TrackPadding = FMargin(2);
+        FUIScrollBarStyle         Style = FUIStyle::GetDefault().ScrollBar;
         FOnScrollBarOffsetChanged OnOffsetChanged;
     };
 
@@ -85,15 +86,37 @@ public:
      */
     NODISCARD FRectangle GetThumbBounds() const;
 
+    /**
+     * @brief Scales the alpha of everything the bar draws, which is how an overlay bar fades in and out.
+     *
+     * @param InOpacity The multiplier, clamped into zero to one.
+     */
+    void SetOpacity(float InOpacity);
+
+    /** @return The multiplier applied to the alpha of the track and the thumb. */
+    NODISCARD FORCEINLINE float GetOpacity() const
+    {
+        return Opacity;
+    }
+
+    /** @return The look the bar draws itself with. */
+    NODISCARD FORCEINLINE const FUIScrollBarStyle& GetStyle() const
+    {
+        return Style;
+    }
+
 protected:
 
     // FInteractiveElement Interface
     virtual void OnDragged(const FCursorEvent& CursorEvent) override;
 
+    virtual bool IsPressable() const override { return false; }
+
 private:
     NODISCARD FRectangle ComputeTrackBounds(const FRectangle& Bounds) const;
     NODISCARD FRectangle ComputeThumbBounds(const FRectangle& Bounds) const;
     NODISCARD int32 GetThumbTravel(const FRectangle& Bounds) const;
+    NODISCARD FFloatColor ApplyOpacity(const FFloatColor& Color) const;
 
     void ApplyOffset(int32 InOffset);
     void SetOffsetFromPosition(const IntVector2& ClientPosition);
@@ -102,9 +125,11 @@ private:
     int32                     Thickness;
     int32                     MinThumbLength;
     FMargin                   TrackPadding;
+    FUIScrollBarStyle         Style;
     int32                     ContentLength;
     int32                     ViewLength;
     int32                     Offset;
     int32                     ThumbGrabOffset;
+    float                     Opacity;
     FOnScrollBarOffsetChanged OnOffsetChangedDelegate;
 };

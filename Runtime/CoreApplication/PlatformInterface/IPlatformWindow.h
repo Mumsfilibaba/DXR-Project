@@ -41,6 +41,9 @@ enum class EWindowStyleFlags : uint16
     /** @brief The application draws the title bar, and the client area extends over the caption. */
     CustomTitleBar = FLAG(9),
 
+    /** @brief The window asks the platform to round its corners, which not every platform can do. */
+    RoundedCorners = FLAG(10),
+
     /** @brief A default combination of style flags for most standard windows. */
     Default = Titled | Maximizable | Minimizable | Resizable | Closable | Opaque
 };

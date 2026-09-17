@@ -45,6 +45,7 @@ public:
     // FEditorPanel Interface
     virtual bool Initialize() override final;
     virtual void Release() override final;
+    virtual void Tick(float DeltaTime) override final;
 
     /** @return How many lines the filters currently admit, which is what the footer counter shows. */
     NODISCARD int32 GetNumVisibleLines() const;
@@ -73,5 +74,6 @@ private:
     TSharedPtr<FSearchBox>            SearchBox;
     TSharedPtr<FToolBar>              ToolBar;
     TSharedPtr<FEditorLogContextArea> LogArea;
+    TSharedPtr<class FButton>         FilterButton;
     TSharedPtr<FMenuAnchor>           FilterAnchor;
 };

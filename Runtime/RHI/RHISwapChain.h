@@ -28,6 +28,25 @@ NODISCARD constexpr const CHAR* ToString(ESwapChainUsageFlags Usage)
     }
 }
 
+enum class ESwapChainFlags : uint8
+{
+    None        = 0,
+    Transparent = FLAG(1),
+};
+
+ENUM_CLASS_OPERATORS(ESwapChainFlags);
+
+NODISCARD constexpr const CHAR* ToString(ESwapChainFlags Flags)
+{
+    switch (Flags)
+    {
+        case ESwapChainFlags::None:        return "None";
+        case ESwapChainFlags::Transparent: return "Transparent";
+
+        default: return "Unknown";
+    }
+}
+
 struct FRHISwapChainDesc
 {
     constexpr FRHISwapChainDesc() noexcept = default;
@@ -45,6 +64,7 @@ struct FRHISwapChainDesc
     NODISCARD constexpr bool IsRenderTarget()    const { return IsEnumFlagSet(Usage, ESwapChainUsageFlags::RenderTarget); }
     NODISCARD constexpr bool IsUnorderedAccess() const { return IsEnumFlagSet(Usage, ESwapChainUsageFlags::UnorderedAccess); }
     NODISCARD constexpr bool IsShaderResource()  const { return IsEnumFlagSet(Usage, ESwapChainUsageFlags::ShaderResource); }
+    NODISCARD constexpr bool IsTransparent()     const { return IsEnumFlagSet(Flags, ESwapChainFlags::Transparent); }
 
     void*                WindowHandle = nullptr;
     EFormat              ColorFormat  = EFormat::Unknown;
@@ -52,6 +72,7 @@ struct FRHISwapChainDesc
     uint16               Height       = 0;
     bool                 bFramePacing = false;
     ESwapChainUsageFlags Usage        = ESwapChainUsageFlags::RenderTarget;
+    ESwapChainFlags      Flags        = ESwapChainFlags::None;
     EColorSpace          ColorSpace   = EColorSpace::Unknown;
     FRHIHDRMetadata      HDRMetadata  = {};
 };

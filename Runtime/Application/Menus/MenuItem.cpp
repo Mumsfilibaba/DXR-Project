@@ -18,7 +18,7 @@ FMenuItem::FMenuItem()
     , ShortcutText()
     , Icon()
     , Font(nullptr)
-    , HighlightFill(FUIStyle::GetDefault().Colors.MenuItemHovered)
+    , Style(FUIStyle::GetDefault().Menu)
     , CheckState(ECheckBoxState::Unchecked)
     , bIsCheckable(false)
     , bIsHighlighted(false)
@@ -35,6 +35,7 @@ void FMenuItem::Initialize(const FDesc& Desc)
     ShortcutText        = Desc.ShortcutText.ToUpper();
     Icon                = Desc.Icon;
     Font                = Desc.Font;
+    Style               = Desc.Style;
     CheckState          = Desc.CheckState;
     bIsCheckable        = Desc.bIsCheckable;
     SubMenu             = Desc.SubMenu;
@@ -66,21 +67,21 @@ IntVector2 FMenuItem::ComputeDesiredSize() const
         Width += ShortcutGap + ArrowWidth;
     }
 
-    return IntVector2(Width, Math::Max(Height, RowHeight));
+    return IntVector2(Width, Math::Max(Height, Style.RowHeight));
 }
 
 int32 FMenuItem::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    const FUIStyle&         Style  = FUIStyle::GetDefault();
     const EInteractionState State  = GetInteractionState();
     const FRectangle        Bounds = AllottedGeometry.Bounds;
 
     if (bIsHighlighted || State == EInteractionState::Hovered || State == EInteractionState::Pressed)
     {
-        OutCommandList.AddBox(LayerId, Bounds, HighlightFill);
+        const FRectangle Highlight = Bounds.Deflate(FMargin(Style.ItemHighlightInset, 1, Style.ItemHighlightInset, 1));
+        OutCommandList.AddBox(LayerId, Highlight, Style.ItemHovered, FCornerRadii(Style.ItemCornerRadius));
     }
 
-    const FFloatColor TextColor = Style.GetTextColor(State);
+    const FFloatColor TextColor = FUIStyle::GetDefault().GetTextColor(State);
     const FRectangle  Inner     = Bounds.Deflate(GetPadding());
     const int32       MidY      = Inner.Position.Y + (Inner.Height / 2);
 
@@ -129,7 +130,7 @@ int32 FMenuItem::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
         ShortcutBounds.Position.X = Inner.GetRight() - ShortcutWidth - (SubMenu ? ArrowWidth : 0);
         ShortcutBounds.Width      = ShortcutWidth;
 
-        OutCommandList.AddText(LayerId, ShortcutBounds, ShortcutText, Font.Get(), Style.Colors.MenuItemShortcut);
+        OutCommandList.AddText(LayerId, ShortcutBounds, ShortcutText, Font.Get(), Style.ItemShortcut);
     }
 
     if (SubMenu)
@@ -160,13 +161,10 @@ FEventResponse FMenuItem::OnMouseEntered(const FCursorEvent& CursorEvent)
 
     FMenuStack& Stack = FMenuStack::Get();
 
-    if (FApplication::IsInitialized())
+    const int32 OwnDepth = Stack.GetOwningMenuDepth(AsSharedPtr());
+    if (OwnDepth > 0)
     {
-        const int32 OwnDepth = Stack.GetMenuDepth(FApplication::Get().FindWindow(AsSharedPtr()));
-        if (OwnDepth > 0)
-        {
-            Stack.DismissToDepth(OwnDepth);
-        }
+        Stack.DismissToDepth(OwnDepth);
     }
 
     if (SubMenu)
@@ -193,9 +191,14 @@ void FMenuItem::SetHighlighted(bool bInIsHighlighted)
     bIsHighlighted = bInIsHighlighted;
 }
 
+void FMenuItem::SetStyle(const FUIMenuStyle& InStyle)
+{
+    Style = InStyle;
+}
+
 void FMenuItem::SetHighlightFill(const FFloatColor& InHighlightFill)
 {
-    HighlightFill = InHighlightFill;
+    Style.ItemHovered = InHighlightFill;
 }
 
 void FMenuItem::Activate()
@@ -222,15 +225,12 @@ void FMenuItem::SetOnActivated(const FOnMenuItemActivated& InOnActivated)
 
 void FMenuItem::OpenSubMenu()
 {
-    if (!SubMenu || !FApplication::IsInitialized())
+    if (!SubMenu)
     {
         return;
     }
 
-    if (TSharedPtr<FWindow> OwningWindow = FApplication::Get().FindWindow(AsSharedPtr()))
-    {
-        FMenuStack::Get().PushMenu(OwningWindow, FMenuStack::GetScreenBounds(AsSharedPtr()), EMenuPlacement::RightOfTopAligned, SubMenu);
-    }
+    FMenuStack::Get().PushMenu(AsSharedPtr(), FMenuStack::GetScreenBounds(AsSharedPtr()), EMenuPlacement::RightOfTopAligned, SubMenu);
 }
 
 void FMenuItem::OnClicked()
@@ -245,6 +245,7 @@ TSharedPtr<FMenuSeparator> FMenuSeparator::Create()
 
 FMenuSeparator::FMenuSeparator()
     : FVisualElement()
+    , Style(FUIStyle::GetDefault().Menu)
 {
 }
 
@@ -257,18 +258,21 @@ IntVector2 FMenuSeparator::ComputeDesiredSize() const
 
 int32 FMenuSeparator::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    const FUIStyle& Style = FUIStyle::GetDefault();
-
     FRectangle Line = AllottedGeometry.Bounds.Deflate(FMargin(InsetX, 0, InsetX, 0));
-    Line.Height     = Style.Metrics.MenuSeparatorThickness;
+    Line.Height     = FUIStyle::GetDefault().Metrics.MenuSeparatorThickness;
     Line.Position.Y = AllottedGeometry.Bounds.Position.Y + ((AllottedGeometry.Bounds.Height - Line.Height) / 2);
 
     if (!Line.IsEmpty())
     {
-        OutCommandList.AddBox(LayerId, Line, Style.Colors.MenuSeparator);
+        OutCommandList.AddBox(LayerId, Line, Style.Separator);
     }
 
     return LayerId;
+}
+
+void FMenuSeparator::SetStyle(const FUIMenuStyle& InStyle)
+{
+    Style = InStyle;
 }
 
 TSharedPtr<FMenuSectionHeader> FMenuSectionHeader::Create(const String& Label, const TSharedPtr<IFontFace>& Font)
@@ -282,6 +286,7 @@ FMenuSectionHeader::FMenuSectionHeader()
     : FVisualElement()
     , Label()
     , Font(nullptr)
+    , Style(FUIStyle::GetDefault().Menu)
 {
 }
 
@@ -311,7 +316,6 @@ IntVector2 FMenuSectionHeader::ComputeDesiredSize() const
 
 int32 FMenuSectionHeader::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    const FUIStyle&  Style  = FUIStyle::GetDefault();
     const FRectangle Bounds = AllottedGeometry.Bounds;
 
     int32 LineLeft = Bounds.Position.X + InsetX;
@@ -322,18 +326,23 @@ int32 FMenuSectionHeader::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCom
         LabelBounds.Position.X += InsetX;
         LabelBounds.Width       = Math::Max(Bounds.Width - (InsetX * 2), 0);
 
-        OutCommandList.AddText(LayerId, LabelBounds, Label, Font.Get(), Style.Colors.MenuSectionText);
+        OutCommandList.AddText(LayerId, LabelBounds, Label, Font.Get(), Style.SectionText);
 
         LineLeft += Font->MeasureWidth(StringView(Label.Data(), Label.Length())) + LabelGap;
     }
 
-    FRectangle Line(IntVector2(LineLeft, 0), Bounds.GetRight() - InsetX - LineLeft, Style.Metrics.MenuSeparatorThickness);
+    FRectangle Line(IntVector2(LineLeft, 0), Bounds.GetRight() - InsetX - LineLeft, FUIStyle::GetDefault().Metrics.MenuSeparatorThickness);
     Line.Position.Y = Bounds.Position.Y + ((Bounds.Height - Line.Height) / 2);
 
     if (!Line.IsEmpty())
     {
-        OutCommandList.AddBox(LayerId, Line, Style.Colors.MenuSeparator);
+        OutCommandList.AddBox(LayerId, Line, Style.Separator);
     }
 
     return LayerId;
+}
+
+void FMenuSectionHeader::SetStyle(const FUIMenuStyle& InStyle)
+{
+    Style = InStyle;
 }

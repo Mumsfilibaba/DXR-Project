@@ -5,6 +5,8 @@
 #include "Application/Draw/DrawTypes.h"
 #include "Application/Elements/VisualElement.h"
 
+class FMenuHost;
+
 /** @brief Delegate called when the window is moved. */
 DECLARE_DELEGATE(FOnWindowMoved, const IntVector2&);
 
@@ -219,6 +221,17 @@ public:
      * @param InContent The content element to set.
      */
     void SetContent(const TSharedPtr<FVisualElement>& InContent);
+
+    /** @return The element open menus are drawn in, or null while none has been opened in this window. */
+    NODISCARD TSharedPtr<FMenuHost> GetMenuHost() const;
+
+    /**
+     * @brief Gets the element open menus are drawn in, which sits above the overlay and takes the cursor
+     * before it does.
+     *
+     * @return The host, created on the first call.
+     */
+    NODISCARD TSharedPtr<FMenuHost> GetOrCreateMenuHost();
 
     /**
      * @brief Asks for a subtree to be painted after the whole content pass, above its siblings. Called from
@@ -460,6 +473,7 @@ private:
     bool                           bHasExternalSurface : 1;
     bool                           bLayoutIsStale : 1;
     TSharedPtr<FVisualElement>     Overlay;
+    TSharedPtr<FMenuHost>          MenuHost;
     TSharedPtr<FVisualElement>     Content;
     TSharedRef<IPlatformWindow>    PlatformWindow;
     TSharedPtr<FWindow>            ParentWindow;

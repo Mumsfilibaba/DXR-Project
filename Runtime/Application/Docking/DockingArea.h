@@ -3,7 +3,9 @@
 #include "Core/Containers/String.h"
 #include "Core/Delegates/Delegate.h"
 #include "Application/Docking/DockNode.h"
+#include "Application/Draw/DrawTypes.h"
 #include "Application/Elements/CompoundElement.h"
+#include "Application/Style/UIStyle.h"
 #include "Application/Text/IFontFace.h"
 
 class FSplitter;
@@ -34,6 +36,12 @@ public:
     {
         /** @brief The face every tab label is drawn with. */
         TSharedPtr<IFontFace> Font = nullptr;
+
+        /** @brief The look of every tab strip the area builds, which defaults to the shared tab style. */
+        FUITabStyle TabStyle = FUIStyle::GetDefault().Tab;
+
+        /** @brief The glyph every close button draws, which falls back to a drawn cross while no texture is set. */
+        FUIBrush TabCloseIcon;
 
         /** @brief Whether a drag far enough off a tab strip detaches the tab instead of reordering it. */
         bool bAllowTearOut : 1 = true;
@@ -265,6 +273,8 @@ private:
     TMap<String, FPanelEntry> PanelsById;
     TArray<FLeafGeometry>     Leaves;
     TSharedPtr<IFontFace>     Font;
+    FUITabStyle               TabStyle;
+    FUIBrush                  TabCloseIcon;
     bool                      bAllowTearOut;
     bool                      bIsDropTarget;
     bool                      bNeedsRebuild;

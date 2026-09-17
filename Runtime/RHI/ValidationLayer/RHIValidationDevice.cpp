@@ -802,6 +802,12 @@ FRHISwapChain* FRHIValidationDevice::CreateSwapChain(const FRHISwapChainDesc& In
         return nullptr;
     }
 
+    if (InSwapChainDesc.IsTransparent() && !SwapChain->GetDesc().IsTransparent())
+    {
+        RHI_VALIDATION_WARNING("CreateSwapChain: ESwapChainFlags::Transparent was requested but the backend could not "
+            "honour it, so the surface will present opaque.");
+    }
+
     FRHIValidationSwapChain* ValidationSwapChain = TrackLiveResource(new FRHIValidationSwapChain(SwapChain, &StateTracker));
     if (FRHITexture* BackBuffer = ValidationSwapChain->GetBackBuffer())
     {

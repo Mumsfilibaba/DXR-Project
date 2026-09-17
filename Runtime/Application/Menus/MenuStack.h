@@ -5,6 +5,35 @@
 #include "Application/Elements/Window.h"
 #include "Application/Menus/MenuTypes.h"
 
+typedef TSharedPtr<struct FMenuLayer> FMenuHandle;
+
+struct FMenuLayer
+{
+    FMenuLayer()
+        : HostWindow(nullptr)
+        , MenuWindow(nullptr)
+        , Content(nullptr)
+        , ScreenBounds()
+        , bIsInline(true)
+    {
+    }
+
+    /** @brief The window the menu is drawn in, which owns the popup instead when there is one. */
+    TSharedPtr<FWindow> HostWindow;
+
+    /** @brief The popup the menu was given because it did not fit its host, and null while it is inline. */
+    TSharedPtr<FWindow> MenuWindow;
+
+    /** @brief The menu itself. */
+    TSharedPtr<FVisualElement> Content;
+
+    /** @brief Where the menu ended up, in screen coordinates. */
+    FRectangle ScreenBounds;
+
+    /** @brief Whether the menu is drawn inside its host rather than in a popup window. */
+    bool bIsInline;
+};
+
 class APPLICATION_API FMenuStack
 {
 public:
@@ -38,18 +67,20 @@ public:
     FMenuStack& operator=(const FMenuStack&) = delete;
 
     /**
-     * @brief Opens a menu in its own popup window, closing any sibling already open at that depth. The
-     * depth comes from the parent: opening from a window that is itself an open menu makes the new one its
-     * child and closes everything deeper, and opening from anything else closes the lot first.
+     * @brief Opens a menu, closing any sibling already open at that depth. The depth comes from the anchor:
+     * an anchor that sits inside an open menu makes the new one its child and closes everything deeper, and
+     * an anchor anywhere else closes the lot first. The menu is drawn inside its host window whenever it
+     * fits there, which rounds its corners without needing a transparent surface, and only falls back to a
+     * popup window when it does not.
      *
-     * @param ParentWindow  The window the popup belongs to, which keeps activation.
+     * @param AnchorElement The element the menu is opened from, which decides both depth and host window.
      * @param AnchorBounds  The rectangle to place against, in screen coordinates.
      * @param Placement     Where to put the menu relative to the anchor.
      * @param MenuContent   The menu to show.
-     * @return The popup window, so a caller can track its lifetime.
+     * @return A handle to the open menu, or null when it could not be opened.
      */
-    TSharedPtr<FWindow> PushMenu(
-        const TSharedPtr<FWindow>&        ParentWindow,
+    FMenuHandle PushMenu(
+        const TSharedPtr<FVisualElement>& AnchorElement,
         const FRectangle&                 AnchorBounds,
         EMenuPlacement                    Placement,
         const TSharedPtr<FVisualElement>& MenuContent);
@@ -86,23 +117,32 @@ public:
     NODISCARD int32 GetDepth() const;
 
     /**
-     * @brief Whether a window is one of the open menus.
+     * @brief Whether a menu is still open.
      *
-     * @param MenuWindow The window to look for.
+     * @param Menu The menu to look for.
      * @return True when it is still open.
      */
-    NODISCARD bool IsMenuOpen(const TSharedPtr<FWindow>& MenuWindow) const;
+    NODISCARD bool IsMenuOpen(const FMenuHandle& Menu) const;
 
     /**
-     * @brief The depth a menu window sits at, counting the outermost as one.
+     * @brief The depth a menu sits at, counting the outermost as one.
      *
-     * @param MenuWindow The window to look for.
-     * @return Its depth, or zero when it is not a menu.
+     * @param Menu The menu to look for.
+     * @return Its depth, or zero when it is not open.
      */
-    NODISCARD int32 GetMenuDepth(const TSharedPtr<FWindow>& MenuWindow) const;
+    NODISCARD int32 GetMenuDepth(const FMenuHandle& Menu) const;
 
-    /** @return The windows the open menus are shown in, outermost first. */
-    NODISCARD FORCEINLINE const TArray<TSharedPtr<FWindow>>& GetOpenMenus() const
+    /**
+     * @brief The depth of the deepest open menu an element sits inside, which is what a row dismisses to
+     * before it opens a submenu of its own.
+     *
+     * @param Element The element to look up.
+     * @return Its owning menu's depth, or zero when it is in no menu.
+     */
+    NODISCARD int32 GetOwningMenuDepth(const TSharedPtr<FVisualElement>& Element) const;
+
+    /** @return The open menus, outermost first. */
+    NODISCARD FORCEINLINE const TArray<FMenuHandle>& GetOpenMenus() const
     {
         return OpenMenus;
     }
@@ -135,7 +175,7 @@ public:
 
     /**
      * @brief Routes a key to the deepest open menu, which is how menus are navigated without focus. A menu
-     * window is shown without activation, so keys arrive at the window that opened it, and a host offers
+     * is shown without taking activation, so keys arrive at the window that opened it, and a host offers
      * them here first and only handles them itself when no menu wanted them.
      *
      * @param KeyEvent The key that went down.
@@ -167,11 +207,17 @@ private:
         float                      RemainingSeconds;
     };
 
-    NODISCARD FRectangle ResolveBounds(const FRectangle& AnchorBounds, const IntVector2& MenuSize, EMenuPlacement Placement) const;
-    NODISCARD int32 FindMenuIndex(const TSharedPtr<FWindow>& MenuWindow) const;
+    NODISCARD FRectangle ResolveBounds(const FRectangle& AnchorBounds, const IntVector2& MenuSize, EMenuPlacement Placement,
+        int32 ContentTopInset, const FRectangle& ClampArea) const;
+    NODISCARD int32 FindMenuIndex(const FMenuHandle& Menu) const;
 
-    TArray<TSharedPtr<FWindow>> OpenMenus;
-    FPendingSubMenu             PendingSubMenu;
+    // The deepest open menu the anchor sits inside, which is the menu the new one becomes a child of
+    NODISCARD int32 FindParentIndex(const TSharedPtr<FVisualElement>& AnchorElement) const;
+
+    void CloseLayer(const FMenuHandle& Menu);
+
+    TArray<FMenuHandle> OpenMenus;
+    FPendingSubMenu     PendingSubMenu;
 
     static TUniquePtr<FMenuStack> MenuStack;
 };

@@ -18,6 +18,15 @@ bool SplitterSeededDesc_Test();
 /** @brief Activates, reorders and closes tabs in a strip. */
 bool TabStripReorder_Test();
 
+/** @brief Overflows a strip and checks it clips, scrolls and fades its bar in rather than shrinking its tabs. */
+bool TabStripScroll_Test();
+
+/** @brief Restyles one strip through its description and checks the process default is untouched. */
+bool TabStripStyle_Test();
+
+/** @brief Checks the width a tab is held out to, and that a title too long for it still measures its own. */
+bool TabMinimumWidth_Test();
+
 /** @brief Drags a tab clear of its strip and checks the tear-out threshold. */
 bool TabStripTearOut_Test();
 

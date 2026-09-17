@@ -19,6 +19,7 @@ public:
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnKeyDown(const FKeyEvent& KeyEvent) override;
+    virtual void SetOuterCornerRadius(float InCornerRadius) override;
 
     /**
      * @brief Appends a row to the column.
@@ -78,28 +79,35 @@ public:
     void ActivateHighlighted();
 
     /**
-     * @brief Sets the width every row is stretched to, which a combo box uses to match its button.
+     * @brief Sets the width every row is stretched to, which a combo box uses to match its button and is
+     * the only way to come out narrower than the style's floor, which a menu that never calls this takes.
      *
      * @param InMinDesiredWidth The width in pixels, or zero to size to the widest row.
      */
     void SetMinDesiredWidth(int32 InMinDesiredWidth);
 
     /**
-     * @brief Replaces the fill and the stroke the menu draws itself with, which a combo box uses so its list
-     * reads as part of the field rather than as one of the application menus. The single stroke stands in for
-     * both of the ones a menu otherwise carries.
+     * @brief Replaces the look of the menu, of every entry already in it and of every entry appended
+     * afterwards, which a combo box uses so its list reads as part of the field rather than as one of the
+     * application menus. A caller dressing one row differently has to do that after the AddItem that hands
+     * it this style.
      *
-     * @param InFill   The fill behind the rows.
-     * @param InBorder The stroke around them.
+     * @param InStyle The look to draw with.
      */
-    void SetChrome(const FFloatColor& InFill, const FFloatColor& InBorder);
+    void SetStyle(const FUIMenuStyle& InStyle);
+
+    /** @return The look the menu and its entries draw themselves with. */
+    NODISCARD FORCEINLINE const FUIMenuStyle& GetStyle() const
+    {
+        return Style;
+    }
 
 private:
-    TSharedPtr<FVerticalBox>      Panel;
-    TArray<TSharedPtr<FMenuItem>> Items;
-    FFloatColor                   ChromeFill;
-    FFloatColor                   ChromeBorder;
-    int32                         HighlightedIndex;
-    int32                         MinDesiredWidth;
-    bool                          bHasChrome;
+    TSharedPtr<FVerticalBox>               Panel;
+    TArray<TSharedPtr<FMenuItem>>          Items;
+    TArray<TSharedPtr<FMenuSeparator>>     Separators;
+    TArray<TSharedPtr<FMenuSectionHeader>> Sections;
+    FUIMenuStyle                           Style;
+    int32                                  HighlightedIndex;
+    int32                                  MinDesiredWidth;
 };

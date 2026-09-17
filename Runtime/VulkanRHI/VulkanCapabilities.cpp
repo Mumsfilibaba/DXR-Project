@@ -524,6 +524,12 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     RHI::bSupportsSamplerFeedback    = false;
     RHI::SamplerFeedbackTier         = ESamplerFeedbackTier::NotSupported;
 
+#if PLATFORM_MACOS
+    RHI::bSupportsTransparentSwapChain = true;
+#else
+    RHI::bSupportsTransparentSwapChain = false;
+#endif
+
     RHI::bSupportsProgrammableSamplePositions = false;
     RHI::SamplePositionsTier                  = ESamplePositionsTier::NotSupported;
     RHI::MaxSamplePositionGridWidth           = 0;

@@ -225,6 +225,23 @@ public:
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const;
 
     /**
+     * @brief Rounds the outline the element draws around itself, which a popup sets on its content when the
+     * surface it landed on came back opaque and a rounded corner would show the clear colour rather than the
+     * desktop behind it. An element that draws no outline of its own leaves this alone.
+     *
+     * @param InCornerRadius The radius to round by, in pixels.
+     */
+    virtual void SetOuterCornerRadius(float InCornerRadius);
+
+    /**
+     * @brief Gets how far the element holds its content below its own top edge, which a submenu is placed
+     * by so that its first row lines up with the row that opened it rather than its outline doing.
+     *
+     * @return The inset in pixels, which is zero for an element that holds its content flush.
+     */
+    virtual int32 GetContentTopInset() const;
+
+    /**
      * @brief Adds all parent elements to an element path.
      *
      * @param OutParentElements The path to populate, from the window down to this element, which ends up last.

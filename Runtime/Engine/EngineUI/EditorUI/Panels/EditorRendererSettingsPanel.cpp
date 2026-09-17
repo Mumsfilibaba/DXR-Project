@@ -208,7 +208,7 @@ bool FEditorRendererSettingsPanel::Initialize()
 
 
     TSharedPtr<FVerticalBox> Layout = FVerticalBox::Create();
-    Layout->AddSlot(SearchBox).SetPadding(FMargin(4, 4, 4, 4));
+    Layout->AddSlot(SearchBox).SetPadding(FMargin(0, 0, 0, FEditorStyle::ItemSpacing));
     Layout->AddSlot(ScrollBox).SetFillCoefficient(1.0f);
 
     Content = Layout;

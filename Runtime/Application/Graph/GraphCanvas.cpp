@@ -956,9 +956,5 @@ void FGraphCanvas::OpenContextMenu(const FCursorEvent& CursorEvent)
         return;
     }
 
-    TSharedPtr<FWindow> OwningWindow = FApplication::Get().FindWindow(AsSharedPtr());
-    if (OwningWindow)
-    {
-        FMenuStack::Get().PushMenu(OwningWindow, FRectangle(CursorEvent.GetScreenPosition(), 0, 0), EMenuPlacement::AtCursor, Menu);
-    }
+    FMenuStack::Get().PushMenu(AsSharedPtr(), FRectangle(CursorEvent.GetScreenPosition(), 0, 0), EMenuPlacement::AtCursor, Menu);
 }

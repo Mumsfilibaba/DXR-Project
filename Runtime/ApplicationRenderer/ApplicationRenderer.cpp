@@ -21,6 +21,12 @@
 
 IMPLEMENT_ENGINE_MODULE(IModule, ApplicationRenderer);
 
+static TAutoConsoleVariable<bool> CVarUIAntiAliasing(
+    "UI.AntiAliasing",
+    "True lays a one pixel soft edge over curved user interface geometry",
+    true,
+    EConsoleVariableFlags::Default);
+
 static constexpr int32 GVertexGrowth = 4096;
 static constexpr int32 GIndexGrowth  = 8192;
 
@@ -296,6 +302,8 @@ void FApplicationRenderer::EndWindow(const TSharedPtr<FWindow>& InWindow)
             WindowState.Stats.ElementWalkTime = ToMillisecondsSince(WindowState.WalkStartTime);
 
             const uint64 BuildStartTime = FPlatformTime::QueryPerformanceCounter();
+
+            WindowState.DrawData.SetAntiAliasingEnabled(CVarUIAntiAliasing.GetValue());
             WindowState.DrawData.BuildFromCommandList(WindowState.Commands);
 
             WindowState.Stats.GeometryBuildTime = ToMillisecondsSince(BuildStartTime);
@@ -662,8 +670,12 @@ void FApplicationRenderer::RenderWindowToSwapChain(FRHICommandList& InCommandLis
         PrepareBatchTextures(InCommandList, WindowState->DrawData);
     }
 
+    const FFloatColor ClearColor = SwapChain->GetDesc().IsTransparent()
+        ? FFloatColor(0.0f, 0.0f, 0.0f, 0.0f)
+        : FUIStyle::GetDefault().Colors.WindowBackground;
+
     const FRHIRenderTargetAttachment Attachment(SwapChain->GetRenderTargetView(), LoadAction,
-        EAttachmentStoreAction::Store, FUIStyle::GetDefault().Colors.WindowBackground);
+        EAttachmentStoreAction::Store, ClearColor);
 
     FRHIBeginRenderPassDesc RenderPassDesc({ Attachment }, 1);
     InCommandList.BeginRenderPass(RenderPassDesc);
@@ -704,6 +716,11 @@ bool FApplicationRenderer::AddWindowSurface(const TSharedPtr<FWindow>& InWindow)
     SwapChainDesc.Usage        = ESwapChainUsageFlags::RenderTarget;
     SwapChainDesc.bFramePacing = bIsPrimary;
 
+    if ((InWindow->GetStyle() & EWindowStyleFlags::Opaque) == EWindowStyleFlags::None)
+    {
+        SwapChainDesc.Flags |= ESwapChainFlags::Transparent;
+    }
+
     FRHISwapChainRef SwapChain = RHI::CreateSwapChain(SwapChainDesc);
     if (!SwapChain)
     {
@@ -727,7 +744,11 @@ bool FApplicationRenderer::AddWindowSurface(const TSharedPtr<FWindow>& InWindow)
 void FApplicationRenderer::SetPrimaryWindow(const TSharedPtr<FWindow>& InWindow)
 {
     PrimaryWindow = InWindow;
+    EnsureWindowSurface(InWindow);
+}
 
+void FApplicationRenderer::EnsureWindowSurface(const TSharedPtr<FWindow>& InWindow)
+{
     if (InWindow && !InWindow->HasExternalSurface() && !FindWindowSurface(InWindow))
     {
         AddWindowSurface(InWindow);
@@ -781,6 +802,8 @@ void FApplicationRenderer::RenderWindowSurfaces(FRHICommandList& InCommandList)
     {
         ReconcileSurfaceSize(InCommandList, Surface);
         RenderWindowToSwapChain(InCommandList, Surface.Window, EAttachmentLoadAction::Clear);
+
+        Surface.bIsRendered = true;
     }
 }
 
@@ -788,6 +811,13 @@ void FApplicationRenderer::PresentWindowSurfaces(FRHICommandList& InCommandList)
 {
     for (FWindowSurface& Surface : WindowSurfaces)
     {
+        if (!Surface.bIsRendered)
+        {
+            continue;
+        }
+
+        Surface.bIsRendered = false;
+
         FRHITexture* BackBuffer = Surface.SwapChain->GetBackBuffer();
         InCommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateTexture(BackBuffer, ERHIResourceState::RenderTarget, ERHIResourceState::Present));
         InCommandList.PresentSwapChain(Surface.SwapChain.Get(), Surface.bIsPrimary && GVSyncEnabled);

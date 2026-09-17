@@ -13,8 +13,6 @@
 #include "Application/Menus/MenuBar.h"
 #include "Application/Menus/MenuItem.h"
 
-static constexpr int32 GMenuMinWidth = 220;
-
 FEditorMenus::FEditorMenus(FEditorEngine* InEditorEngine, const TSharedPtr<FEditorPanelRegistry>& InRegistry)
     : EditorEngine(InEditorEngine)
     , Registry(InRegistry)
@@ -49,7 +47,6 @@ void FEditorMenus::BuildFileMenu(const TSharedPtr<FMenuBar>& Bar)
     const TSharedPtr<IFontFace>& Font = FEditorStyle::GetFonts().Body;
 
     TSharedPtr<FMenu> Menu = FMenu::Create();
-    Menu->SetMinDesiredWidth(GMenuMinWidth);
 
     Menu->AddSection("Open", Font);
 
@@ -97,7 +94,8 @@ void FEditorMenus::BuildEditMenu(const TSharedPtr<FMenuBar>& Bar)
     const TSharedPtr<IFontFace>& Font = FEditorStyle::GetFonts().Body;
 
     TSharedPtr<FMenu> Menu = FMenu::Create();
-    Menu->SetMinDesiredWidth(GMenuMinWidth);
+
+    Menu->AddSection("Play", Font);
 
     FMenuItem::FDesc PlayDesc;
     PlayDesc.Label        = "Play";
@@ -118,7 +116,8 @@ void FEditorMenus::BuildEditMenu(const TSharedPtr<FMenuBar>& Bar)
 
     PlayItem = FMenuItem::Create(PlayDesc);
     Menu->AddItem(PlayItem);
-    Menu->AddSeparator();
+
+    Menu->AddSection("Create", Font);
 
     if (TSharedPtr<FMenu> PlaceActorMenu = BuildPlaceActorMenu())
     {
@@ -128,8 +127,9 @@ void FEditorMenus::BuildEditMenu(const TSharedPtr<FMenuBar>& Bar)
         PlaceDesc.SubMenu = PlaceActorMenu;
 
         Menu->AddItem(FMenuItem::Create(PlaceDesc));
-        Menu->AddSeparator();
     }
+
+    Menu->AddSection("Selection", Font);
 
     FMenuItem::FDesc DeleteDesc;
     DeleteDesc.Label        = "Delete Selection";
@@ -179,6 +179,8 @@ TSharedPtr<FMenu> FEditorMenus::BuildPlaceActorMenu()
         return nullptr;
     }
 
+    Menu->AddSection("Primitives", Font);
+
     for (uint8 Index = 0; Index < static_cast<uint8>(EEditorPrimitiveType::Count); ++Index)
     {
         const EEditorPrimitiveType Type = static_cast<EEditorPrimitiveType>(Index);
@@ -194,7 +196,7 @@ TSharedPtr<FMenu> FEditorMenus::BuildPlaceActorMenu()
         Menu->AddItem(FMenuItem::Create(Desc));
     }
 
-    Menu->AddSeparator();
+    Menu->AddSection("Lights", Font);
 
     static const EEditorLightType LightTypes[] =
     {
@@ -220,7 +222,7 @@ TSharedPtr<FMenu> FEditorMenus::BuildPlaceActorMenu()
         Menu->AddItem(FMenuItem::Create(Desc));
     }
 
-    Menu->AddSeparator();
+    Menu->AddSection("Camera", Font);
 
     FMenuItem::FDesc CameraDesc;
     CameraDesc.Label       = "Camera";
@@ -263,7 +265,6 @@ void FEditorMenus::BuildWindowsMenu(const TSharedPtr<FMenuBar>& Bar)
     const TSharedPtr<IFontFace>& Font = FEditorStyle::GetFonts().Body;
 
     TSharedPtr<FMenu> Menu = FMenu::Create();
-    Menu->SetMinDesiredWidth(GMenuMinWidth);
 
     WindowItems.Clear();
 
@@ -297,7 +298,6 @@ void FEditorMenus::BuildHelpMenu(const TSharedPtr<FMenuBar>& Bar)
     const TSharedPtr<IFontFace>& Font = FEditorStyle::GetFonts().Body;
 
     TSharedPtr<FMenu> Menu = FMenu::Create();
-    Menu->SetMinDesiredWidth(GMenuMinWidth);
 
     Menu->AddSection("About", Font);
 

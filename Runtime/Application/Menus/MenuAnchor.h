@@ -19,6 +19,7 @@ public:
             : Content(nullptr)
             , MenuContent(nullptr)
             , Placement(EMenuPlacement::BelowLeftAligned)
+            , AnchorInset()
             , OnGetMenuContent()
             , OnOpenChanged()
         {
@@ -56,6 +57,9 @@ public:
 
         /** @brief Where the menu is placed relative to the anchor. */
         EMenuPlacement Placement;
+
+        /** @brief How far the anchor's own fill is held inside its bounds, so the menu meets what is drawn. */
+        FMargin AnchorInset;
 
         /** @brief Consulted before every open, and takes precedence over MenuContent. */
         FOnGetMenuContent OnGetMenuContent;
@@ -109,18 +113,32 @@ public:
     void SetMenuContent(const TSharedPtr<FVisualElement>& InMenuContent);
 
     /**
-     * @brief Gets the window the open menu lives in, noticing first that the stack may have closed it.
+     * @brief Sets how far the anchor's own fill is held inside its bounds, so the menu meets what is drawn.
      *
-     * @return The window, or null while the menu is closed.
+     * @param InAnchorInset The inset to deflate the anchor's bounds by before the menu is placed.
      */
-    NODISCARD TSharedPtr<FWindow> GetMenuWindow() const;
+    void SetAnchorInset(const FMargin& InAnchorInset);
+
+    /** @return How far the anchor's bounds are deflated before the menu is placed against them. */
+    NODISCARD FORCEINLINE const FMargin& GetAnchorInset() const
+    {
+        return AnchorInset;
+    }
+
+    /**
+     * @brief Gets the menu this anchor opened, noticing first that the stack may have closed it.
+     *
+     * @return The menu, or null while it is closed.
+     */
+    NODISCARD FMenuHandle GetMenu() const;
 
 private:
     void SyncOpenState() const;
 
-    TSharedPtr<FVisualElement>  MenuContent;
-    EMenuPlacement              Placement;
-    FOnGetMenuContent           OnGetMenuContentDelegate;
-    FOnMenuOpenChanged          OnOpenChangedDelegate;
-    mutable TSharedPtr<FWindow> MenuWindow;
+    TSharedPtr<FVisualElement> MenuContent;
+    EMenuPlacement             Placement;
+    FMargin                    AnchorInset;
+    FOnGetMenuContent          OnGetMenuContentDelegate;
+    FOnMenuOpenChanged         OnOpenChangedDelegate;
+    mutable FMenuHandle        Menu;
 };

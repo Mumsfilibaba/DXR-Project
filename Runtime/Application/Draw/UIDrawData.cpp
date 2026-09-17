@@ -4,16 +4,28 @@
 #include "Application/Text/IFontFace.h"
 #include "Core/Math/Math.h"
 
-// Below this a direction is treated as degenerate, which is what a repeated point in a polyline produces
 constexpr float DIRECTION_EPSILON = 1.0e-4f;
+
+constexpr uint32 PACKED_ALPHA_MASK = 0xff000000u;
+constexpr uint32 PACKED_COLOR_MASK = 0x00ffffffu;
+
+static uint32 PackColorWithAlphaScale(uint32 PackedColor, float Scale)
+{
+    const float  Alpha  = static_cast<float>((PackedColor & PACKED_ALPHA_MASK) >> 24);
+    const uint32 Scaled = static_cast<uint32>(Math::Clamp(Math::RoundToInt(Alpha * Scale), 0, 255));
+
+    return (PackedColor & PACKED_COLOR_MASK) | (Scaled << 24);
+}
 
 FUIDrawData::FUIDrawData()
     : Vertices()
     , Indices()
     , Batches()
     , ScratchPoints()
+    , ScratchOffsets()
     , ActiveClipRectangle()
     , bHasActiveClip(false)
+    , bAntiAliasingEnabled(true)
 {
 }
 
@@ -25,9 +37,15 @@ void FUIDrawData::Reset()
     Indices.Clear();
     Batches.Clear();
     ScratchPoints.Clear();
+    ScratchOffsets.Clear();
 
     ActiveClipRectangle = FRectangle();
     bHasActiveClip      = false;
+}
+
+void FUIDrawData::SetAntiAliasingEnabled(bool bEnabled)
+{
+    bAntiAliasingEnabled = bEnabled;
 }
 
 void FUIDrawData::BuildFromCommandList(const FDrawCommandList& CommandList)
@@ -108,6 +126,16 @@ void FUIDrawData::BuildFromCommandList(const FDrawCommandList& CommandList)
                 break;
             }
 
+            case EDrawCommandType::RoundedBottomBar:
+            {
+                if (!IsCulledByClip(Command.Bounds))
+                {
+                    AddRoundedBottomBar(Command);
+                }
+
+                break;
+            }
+
             case EDrawCommandType::Polyline:
             {
                 const TArrayView<const Vector2> Points = CommandList.GetCommandPoints(Command);
@@ -148,8 +176,6 @@ bool FUIDrawData::IsCulledByClip(const FRectangle& Bounds) const
         return false;
     }
 
-    // Bounds with no extent are left to the geometry itself, which either draws nothing or, in the case
-    // of text, still draws the glyphs the caller measured for a rectangle it never widened.
     if (Bounds.IsEmpty())
     {
         return false;
@@ -356,22 +382,149 @@ void FUIDrawData::AddImage(const FDrawCommand& Command)
     }
 }
 
-void FUIDrawData::AddPolyline(TArrayView<const Vector2> Points, float Thickness, bool bClosed, uint32 PackedColor)
+void FUIDrawData::AddRoundedBottomBar(const FDrawCommand& Command)
 {
+    if (Command.Bounds.IsEmpty() || Command.Thickness <= 0.0f)
+    {
+        return;
+    }
+
+    const FCornerRadii Radius = Command.CornerRadius.ClampToBounds(Command.Bounds);
+
+    const float Left        = static_cast<float>(Command.Bounds.Position.X);
+    const float Right       = static_cast<float>(Command.Bounds.GetRight());
+    const float Bottom      = static_cast<float>(Command.Bounds.GetBottom());
+    const float Thickness   = Math::Min(Command.Thickness, static_cast<float>(Command.Bounds.Height));
+    const float Top         = Bottom - Thickness;
+    const float LeftCenter  = Left + Radius.BottomLeft;
+    const float RightCenter = Right - Radius.BottomRight;
+
+    const float LeftTip = (Thickness < Radius.BottomLeft)
+        ? LeftCenter - Math::Sqrt(Thickness * ((2.0f * Radius.BottomLeft) - Thickness))
+        : Left;
+
+    const float RightTip = (Thickness < Radius.BottomRight)
+        ? RightCenter + Math::Sqrt(Thickness * ((2.0f * Radius.BottomRight) - Thickness))
+        : Right;
+
+    const float BarWidth = RightTip - LeftTip;
+    if (BarWidth <= 0.0f)
+    {
+        return;
+    }
+
+    const int32 ColumnCount  = Math::Clamp(Math::CeilToInt(BarWidth * 0.5f), MinBarColumns, MaxBarColumns);
+    const int32 RowsPerColumn = bAntiAliasingEnabled ? 3 : 2;
+
+    if (Vertices.Size() + ((ColumnCount + 1) * RowsPerColumn) > MaxVertexCount)
+    {
+        return;
+    }
+
+    GetOrOpenBatch(FUITextureHandle());
+
+    const uint32 BaseVertex = static_cast<uint32>(Vertices.Size());
+    const float  FadeWidth  = Math::Min(Command.FadeWidth, BarWidth * 0.5f);
+    const float  HalfFringe = FringeWidth * 0.5f;
+
+    for (int32 ColumnIndex = 0; ColumnIndex <= ColumnCount; ++ColumnIndex)
+    {
+        const float X = LeftTip + (BarWidth * (static_cast<float>(ColumnIndex) / static_cast<float>(ColumnCount)));
+
+        float ColumnBottom = Bottom;
+        float CosineSlope  = 1.0f;
+
+        if (X < LeftCenter)
+        {
+            const float Offset = LeftCenter - X;
+            const float Height = Math::Sqrt(Math::Max((Radius.BottomLeft * Radius.BottomLeft) - (Offset * Offset), 0.0f));
+
+            ColumnBottom = (Bottom - Radius.BottomLeft) + Height;
+            CosineSlope  = Radius.BottomLeft > 0.0f ? (Height / Radius.BottomLeft) : 1.0f;
+        }
+        else if (X > RightCenter)
+        {
+            const float Offset = X - RightCenter;
+            const float Height = Math::Sqrt(Math::Max((Radius.BottomRight * Radius.BottomRight) - (Offset * Offset), 0.0f));
+
+            ColumnBottom = (Bottom - Radius.BottomRight) + Height;
+            CosineSlope  = Radius.BottomRight > 0.0f ? (Height / Radius.BottomRight) : 1.0f;
+        }
+
+        const float EdgeDistance = Math::Min(X - LeftTip, RightTip - X);
+
+        FFloatColor ColumnTint = Command.Tint;
+        ColumnTint.A *= (FadeWidth > 0.0f) ? Math::Clamp(EdgeDistance / FadeWidth, 0.0f, 1.0f) : 1.0f;
+
+        const uint32 PackedColor   = ColumnTint.ToColor().ToPackedRGBA();
+        const float  ClampedBottom = Math::Max(ColumnBottom, Top);
+
+        if (!bAntiAliasingEnabled)
+        {
+            EmplaceVertex(Vector2(X, Top), PackedColor);
+            EmplaceVertex(Vector2(X, ClampedBottom), PackedColor);
+            continue;
+        }
+
+        const float Drop = HalfFringe / Math::Max(CosineSlope, 0.1f);
+        EmplaceVertex(Vector2(X, Top), PackedColor);
+        EmplaceVertex(Vector2(X, Math::Max(ClampedBottom - Drop, Top)), PackedColor);
+        EmplaceVertex(Vector2(X, ClampedBottom + Drop), PackedColor & PACKED_COLOR_MASK);
+    }
+
+    for (int32 ColumnIndex = 0; ColumnIndex < ColumnCount; ++ColumnIndex)
+    {
+        const uint32 LeadingTop = BaseVertex + static_cast<uint32>(ColumnIndex * RowsPerColumn);
+        const uint32 NextTop    = LeadingTop + static_cast<uint32>(RowsPerColumn);
+
+        Indices.Add(LeadingTop);
+        Indices.Add(NextTop);
+        Indices.Add(NextTop + 1);
+        Indices.Add(LeadingTop);
+        Indices.Add(NextTop + 1);
+        Indices.Add(LeadingTop + 1);
+
+        if (bAntiAliasingEnabled)
+        {
+            Indices.Add(LeadingTop + 1);
+            Indices.Add(NextTop + 1);
+            Indices.Add(NextTop + 2);
+            Indices.Add(LeadingTop + 1);
+            Indices.Add(NextTop + 2);
+            Indices.Add(LeadingTop + 2);
+        }
+    }
+
+    Batches.Last().IndexCount += ColumnCount * (bAntiAliasingEnabled ? 12 : 6);
+}
+
+void FUIDrawData::EmplaceVertex(const Vector2& Position, uint32 PackedColor)
+{
+    FUIVertex& Vertex = Vertices.Emplace();
+    Vertex.Position   = Position;
+    Vertex.TexCoord   = Vector2(0.5f, 0.5f);
+    Vertex.Color      = PackedColor;
+}
+
+void FUIDrawData::EmplaceFillVertex(const Vector2& Position, const FRectangle& Bounds, uint32 PackedColor)
+{
+    const float MinX = static_cast<float>(Bounds.Position.X);
+    const float MinY = static_cast<float>(Bounds.Position.Y);
+    const float MaxX = static_cast<float>(Bounds.GetRight());
+    const float MaxY = static_cast<float>(Bounds.GetBottom());
+
+    FUIVertex& Vertex = Vertices.Emplace();
+    Vertex.Position   = Position;
+    Vertex.TexCoord   = Vector2((Position.X - MinX) / (MaxX - MinX), (Position.Y - MinY) / (MaxY - MinY));
+    Vertex.Color      = PackedColor;
+}
+
+void FUIDrawData::BuildMiterOffsets(TArrayView<const Vector2> Points, bool bClosed, TArray<Vector2>& OutOffsets)
+{
+    OutOffsets.Clear();
+
     const int32 PointCount = Points.Size();
-    if (PointCount < 2 || Thickness <= 0.0f)
-    {
-        return;
-    }
-
-    if (Vertices.Size() + (PointCount * 2) > MaxVertexCount)
-    {
-        return;
-    }
-
-    const float  HalfThickness = Thickness * 0.5f;
-    const int32  SegmentCount  = bClosed ? PointCount : PointCount - 1;
-    const uint32 BaseVertex    = static_cast<uint32>(Vertices.Size());
+    OutOffsets.Reserve(PointCount);
 
     for (int32 Index = 0; Index < PointCount; ++Index)
     {
@@ -406,7 +559,7 @@ void FUIDrawData::AddPolyline(TArrayView<const Vector2> Points, float Thickness,
         }
 
         Vector2 Miter = IncomingNormal + OutgoingNormal;
-        float   Scale = HalfThickness;
+        float   Scale = 1.0f;
 
         const float MiterLength = Miter.GetLength();
         if (MiterLength > DIRECTION_EPSILON)
@@ -416,7 +569,7 @@ void FUIDrawData::AddPolyline(TArrayView<const Vector2> Points, float Thickness,
             const float CosHalfAngle = Miter.DotProduct(IncomingNormal);
             if (CosHalfAngle > DIRECTION_EPSILON)
             {
-                Scale = Math::Min(HalfThickness / CosHalfAngle, HalfThickness * MiterLimit);
+                Scale = Math::Min(1.0f / CosHalfAngle, MiterLimit);
             }
         }
         else
@@ -424,35 +577,123 @@ void FUIDrawData::AddPolyline(TArrayView<const Vector2> Points, float Thickness,
             Miter = IncomingNormal;
         }
 
-        const Vector2 Offset = Miter * Scale;
+        OutOffsets.Add(Miter * Scale);
+    }
+}
 
-        FUIVertex& Outer = Vertices.Emplace();
-        Outer.Position   = Points[Index] + Offset;
-        Outer.TexCoord   = Vector2(0.5f, 0.5f);
-        Outer.Color      = PackedColor;
+float FUIDrawData::ComputeWindingSign(TArrayView<const Vector2> Points)
+{
+    const int32 PointCount = Points.Size();
 
-        FUIVertex& Inner = Vertices.Emplace();
-        Inner.Position   = Points[Index] - Offset;
-        Inner.TexCoord   = Vector2(0.5f, 0.5f);
-        Inner.Color      = PackedColor;
+    float DoubleArea = 0.0f;
+    for (int32 Index = 0; Index < PointCount; ++Index)
+    {
+        const Vector2& Current = Points[Index];
+        const Vector2& Next    = Points[(Index + 1) % PointCount];
+
+        DoubleArea += (Current.X * Next.Y) - (Next.X * Current.Y);
+    }
+
+    return DoubleArea > 0.0f ? -1.0f : 1.0f;
+}
+
+void FUIDrawData::AddPolyline(TArrayView<const Vector2> Points, float Thickness, bool bClosed, uint32 PackedColor)
+{
+    const int32 PointCount = Points.Size();
+    if (PointCount < 2 || Thickness <= 0.0f)
+    {
+        return;
+    }
+
+    const int32 RowsPerPoint = bAntiAliasingEnabled ? 4 : 2;
+    if (Vertices.Size() + (PointCount * RowsPerPoint) > MaxVertexCount)
+    {
+        return;
+    }
+
+    const float  HalfThickness = Thickness * 0.5f;
+    const int32  SegmentCount  = bClosed ? PointCount : PointCount - 1;
+    const uint32 BaseVertex    = static_cast<uint32>(Vertices.Size());
+
+    BuildMiterOffsets(Points, bClosed, ScratchOffsets);
+
+    if (!bAntiAliasingEnabled)
+    {
+        for (int32 Index = 0; Index < PointCount; ++Index)
+        {
+            const Vector2 Offset = ScratchOffsets[Index] * HalfThickness;
+
+            FUIVertex& Outer = Vertices.Emplace();
+            Outer.Position   = Points[Index] + Offset;
+            Outer.TexCoord   = Vector2(0.5f, 0.5f);
+            Outer.Color      = PackedColor;
+
+            FUIVertex& Inner = Vertices.Emplace();
+            Inner.Position   = Points[Index] - Offset;
+            Inner.TexCoord   = Vector2(0.5f, 0.5f);
+            Inner.Color      = PackedColor;
+        }
+
+        for (int32 Segment = 0; Segment < SegmentCount; ++Segment)
+        {
+            const uint32 CurrentOuter = BaseVertex + static_cast<uint32>(Segment * 2);
+            const uint32 CurrentInner = CurrentOuter + 1;
+            const uint32 NextOuter    = BaseVertex + static_cast<uint32>(((Segment + 1) % PointCount) * 2);
+            const uint32 NextInner    = NextOuter + 1;
+
+            Indices.Add(CurrentOuter);
+            Indices.Add(NextOuter);
+            Indices.Add(NextInner);
+            Indices.Add(CurrentOuter);
+            Indices.Add(NextInner);
+            Indices.Add(CurrentInner);
+        }
+
+        Batches.Last().IndexCount += SegmentCount * 6;
+        return;
+    }
+
+    const float HalfFringe  = FringeWidth * 0.5f;
+    const bool  bIsHairline = Thickness <= FringeWidth;
+    const float CoreExtent  = bIsHairline ? 0.0f : (HalfThickness - HalfFringe);
+    const float EdgeExtent  = bIsHairline ? HalfFringe : (HalfThickness + HalfFringe);
+
+    const uint32 CoreColor  = bIsHairline
+        ? PackColorWithAlphaScale(PackedColor, Thickness / FringeWidth)
+        : PackedColor;
+
+    const uint32 ClearColor = PackedColor & PACKED_COLOR_MASK;
+
+    for (int32 Index = 0; Index < PointCount; ++Index)
+    {
+        const Vector2& Miter = ScratchOffsets[Index];
+
+        const Vector2 CoreOffset = Miter * CoreExtent;
+        const Vector2 EdgeOffset = Miter * EdgeExtent;
+
+        EmplaceVertex(Points[Index] + EdgeOffset, ClearColor);
+        EmplaceVertex(Points[Index] + CoreOffset, CoreColor);
+        EmplaceVertex(Points[Index] - CoreOffset, CoreColor);
+        EmplaceVertex(Points[Index] - EdgeOffset, ClearColor);
     }
 
     for (int32 Segment = 0; Segment < SegmentCount; ++Segment)
     {
-        const uint32 CurrentOuter = BaseVertex + static_cast<uint32>(Segment * 2);
-        const uint32 CurrentInner = CurrentOuter + 1;
-        const uint32 NextOuter    = BaseVertex + static_cast<uint32>(((Segment + 1) % PointCount) * 2);
-        const uint32 NextInner    = NextOuter + 1;
+        const uint32 Current = BaseVertex + static_cast<uint32>(Segment * 4);
+        const uint32 Next    = BaseVertex + static_cast<uint32>(((Segment + 1) % PointCount) * 4);
 
-        Indices.Add(CurrentOuter);
-        Indices.Add(NextOuter);
-        Indices.Add(NextInner);
-        Indices.Add(CurrentOuter);
-        Indices.Add(NextInner);
-        Indices.Add(CurrentInner);
+        for (uint32 Row = 0; Row < 3; ++Row)
+        {
+            Indices.Add(Current + Row);
+            Indices.Add(Next + Row);
+            Indices.Add(Next + Row + 1);
+            Indices.Add(Current + Row);
+            Indices.Add(Next + Row + 1);
+            Indices.Add(Current + Row + 1);
+        }
     }
 
-    Batches.Last().IndexCount += SegmentCount * 6;
+    Batches.Last().IndexCount += SegmentCount * 18;
 }
 
 void FUIDrawData::AddConvexPolygon(TArrayView<const Vector2> Points, uint32 PackedColor)
@@ -463,29 +704,69 @@ void FUIDrawData::AddConvexPolygon(TArrayView<const Vector2> Points, uint32 Pack
         return;
     }
 
-    if (Vertices.Size() + PointCount > MaxVertexCount)
+    const int32 RingCount = bAntiAliasingEnabled ? 2 : 1;
+    if (Vertices.Size() + (PointCount * RingCount) > MaxVertexCount)
     {
         return;
     }
 
     const uint32 BaseVertex = static_cast<uint32>(Vertices.Size());
 
+    if (!bAntiAliasingEnabled)
+    {
+        for (int32 Index = 0; Index < PointCount; ++Index)
+        {
+            EmplaceVertex(Points[Index], PackedColor);
+        }
+
+        for (int32 Index = 2; Index < PointCount; ++Index)
+        {
+            Indices.Add(BaseVertex);
+            Indices.Add(BaseVertex + static_cast<uint32>(Index - 1));
+            Indices.Add(BaseVertex + static_cast<uint32>(Index));
+        }
+
+        Batches.Last().IndexCount += (PointCount - 2) * 3;
+        return;
+    }
+
+    const uint32 ClearColor = PackedColor & PACKED_COLOR_MASK;
+    const float  HalfFringe = FringeWidth * 0.5f;
+    const float  Winding    = ComputeWindingSign(Points);
+
+    BuildMiterOffsets(Points, true, ScratchOffsets);
+
     for (int32 Index = 0; Index < PointCount; ++Index)
     {
-        FUIVertex& Vertex = Vertices.Emplace();
-        Vertex.Position   = Points[Index];
-        Vertex.TexCoord   = Vector2(0.5f, 0.5f);
-        Vertex.Color      = PackedColor;
+        const Vector2 Outward = ScratchOffsets[Index] * (Winding * HalfFringe);
+
+        EmplaceVertex(Points[Index] - Outward, PackedColor);
+        EmplaceVertex(Points[Index] + Outward, ClearColor);
     }
 
     for (int32 Index = 2; Index < PointCount; ++Index)
     {
         Indices.Add(BaseVertex);
-        Indices.Add(BaseVertex + static_cast<uint32>(Index - 1));
-        Indices.Add(BaseVertex + static_cast<uint32>(Index));
+        Indices.Add(BaseVertex + static_cast<uint32>((Index - 1) * 2));
+        Indices.Add(BaseVertex + static_cast<uint32>(Index * 2));
     }
 
-    Batches.Last().IndexCount += (PointCount - 2) * 3;
+    for (int32 Index = 0; Index < PointCount; ++Index)
+    {
+        const uint32 Inner     = BaseVertex + static_cast<uint32>(Index * 2);
+        const uint32 Outer     = Inner + 1;
+        const uint32 NextInner = BaseVertex + static_cast<uint32>(((Index + 1) % PointCount) * 2);
+        const uint32 NextOuter = NextInner + 1;
+
+        Indices.Add(Inner);
+        Indices.Add(Outer);
+        Indices.Add(NextOuter);
+        Indices.Add(Inner);
+        Indices.Add(NextOuter);
+        Indices.Add(NextInner);
+    }
+
+    Batches.Last().IndexCount += ((PointCount - 2) * 3) + (PointCount * 6);
 }
 
 void FUIDrawData::AddQuad(const FRectangle& Bounds, const Vector2& MinTexCoord, const Vector2& MaxTexCoord, uint32 PackedColor)
@@ -541,7 +822,6 @@ void FUIDrawData::BuildRoundedBoxOutline(const FRectangle& Bounds, const FCorner
     const float MaxX = static_cast<float>(Bounds.GetRight()) - Inset;
     const float MaxY = static_cast<float>(Bounds.GetBottom()) - Inset;
 
-    // Offsetting a rounded rectangle inward takes the same amount off every corner as it does off every side
     const float CornerRadius[4] = 
     {
         Math::Max(Radius.TopLeft - Inset, 0.0f),
@@ -604,7 +884,8 @@ void FUIDrawData::AddRoundedBox(const FRectangle& Bounds, const FCornerRadii& Ra
         return;
     }
 
-    if (Vertices.Size() + OutlineCount + 1 > MaxVertexCount)
+    const int32 RingCount = bAntiAliasingEnabled ? 2 : 1;
+    if (Vertices.Size() + (OutlineCount * RingCount) + 1 > MaxVertexCount)
     {
         return;
     }
@@ -621,24 +902,59 @@ void FUIDrawData::AddRoundedBox(const FRectangle& Bounds, const FCornerRadii& Ra
     Center.TexCoord   = Vector2(0.5f, 0.5f);
     Center.Color      = PackedColor;
 
+    if (!bAntiAliasingEnabled)
+    {
+        for (int32 OutlineIndex = 0; OutlineIndex < OutlineCount; ++OutlineIndex)
+        {
+            EmplaceFillVertex(ScratchPoints[OutlineIndex], Bounds, PackedColor);
+        }
+
+        for (int32 OutlineIndex = 0; OutlineIndex < OutlineCount; ++OutlineIndex)
+        {
+            Indices.Add(CenterVertex);
+            Indices.Add(CenterVertex + 1 + static_cast<uint32>(OutlineIndex));
+            Indices.Add(CenterVertex + 1 + static_cast<uint32>((OutlineIndex + 1) % OutlineCount));
+        }
+
+        Batches.Last().IndexCount += OutlineCount * 3;
+        return;
+    }
+
+    const uint32 ClearColor = PackedColor & PACKED_COLOR_MASK;
+    const float  HalfFringe = FringeWidth * 0.5f;
+    const float  Winding    = ComputeWindingSign(ScratchPoints);
+
+    BuildMiterOffsets(ScratchPoints, true, ScratchOffsets);
+
     for (int32 OutlineIndex = 0; OutlineIndex < OutlineCount; ++OutlineIndex)
     {
         const Vector2& Position = ScratchPoints[OutlineIndex];
+        const Vector2  Outward  = ScratchOffsets[OutlineIndex] * (Winding * HalfFringe);
 
-        FUIVertex& Vertex = Vertices.Emplace();
-        Vertex.Position   = Position;
-        Vertex.TexCoord   = Vector2((Position.X - MinX) / (MaxX - MinX), (Position.Y - MinY) / (MaxY - MinY));
-        Vertex.Color      = PackedColor;
+        EmplaceFillVertex(Position - Outward, Bounds, PackedColor);
+        EmplaceFillVertex(Position + Outward, Bounds, ClearColor);
     }
 
     for (int32 OutlineIndex = 0; OutlineIndex < OutlineCount; ++OutlineIndex)
     {
+        const uint32 Inner     = CenterVertex + 1 + static_cast<uint32>(OutlineIndex * 2);
+        const uint32 Outer     = Inner + 1;
+        const uint32 NextInner = CenterVertex + 1 + static_cast<uint32>(((OutlineIndex + 1) % OutlineCount) * 2);
+        const uint32 NextOuter = NextInner + 1;
+
         Indices.Add(CenterVertex);
-        Indices.Add(CenterVertex + 1 + static_cast<uint32>(OutlineIndex));
-        Indices.Add(CenterVertex + 1 + static_cast<uint32>((OutlineIndex + 1) % OutlineCount));
+        Indices.Add(Inner);
+        Indices.Add(NextInner);
+
+        Indices.Add(Inner);
+        Indices.Add(Outer);
+        Indices.Add(NextOuter);
+        Indices.Add(Inner);
+        Indices.Add(NextOuter);
+        Indices.Add(NextInner);
     }
 
-    Batches.Last().IndexCount += OutlineCount * 3;
+    Batches.Last().IndexCount += OutlineCount * 9;
 }
 
 FUIDrawBatch& FUIDrawData::GetOrOpenBatch(const FUITextureHandle& Texture)

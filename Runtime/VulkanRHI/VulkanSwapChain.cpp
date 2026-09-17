@@ -101,6 +101,7 @@ FVulkanSwapChain::FVulkanSwapChain(FVulkanDevice* InDevice)
 	, BufferIndex(0)
 	, BufferCount(0)
 	, Format{ VK_FORMAT_UNDEFINED, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR }
+	, CompositeAlpha(VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
 	, GraphicsQueueFamilyIndex(InDevice ? InDevice->GetQueueIndexFromType(EVulkanCommandQueueType::Graphics) : 0)
 	, PresentQueueFamilyIndex(InDevice ? InDevice->GetQueueIndexFromType(EVulkanCommandQueueType::Present) : 0)
 {
@@ -295,8 +296,26 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
 		VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR : Capabilities.currentTransform;
 
 	// Composite alpha
-	const VkCompositeAlphaFlagBitsKHR CompositeAlpha = [](VkCompositeAlphaFlagsKHR Supported) -> VkCompositeAlphaFlagBitsKHR
+	const VkCompositeAlphaFlagBitsKHR SelectedCompositeAlpha = [](VkCompositeAlphaFlagsKHR Supported, bool bIsTransparent) -> VkCompositeAlphaFlagBitsKHR
 	{
+		const VkCompositeAlphaFlagBitsKHR TransparentPreferences[] =
+		{
+			VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
+			VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
+			VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR
+		};
+
+		if (bIsTransparent)
+		{
+			for (VkCompositeAlphaFlagBitsKHR CurrentFlag : TransparentPreferences)
+			{
+				if (Supported & CurrentFlag)
+				{
+					return CurrentFlag;
+				}
+			}
+		}
+
 		const VkCompositeAlphaFlagBitsKHR Preferences[] =
 		{
 			VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
@@ -314,7 +333,7 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
 		}
 
 		return VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-	}(Capabilities.supportedCompositeAlpha);
+	}(Capabilities.supportedCompositeAlpha, CreateInfo.bIsTransparent);
 
 	// Ensure that all the image usage flags are supported
 	const VkImageUsageFlags SupportedUsage = Capabilities.supportedUsageFlags;
@@ -343,7 +362,7 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
 	SwapChainCreateInfo.queueFamilyIndexCount = 0;
 	SwapChainCreateInfo.pQueueFamilyIndices   = nullptr;
 	SwapChainCreateInfo.preTransform          = PreTransform;
-	SwapChainCreateInfo.compositeAlpha        = CompositeAlpha;
+	SwapChainCreateInfo.compositeAlpha        = SelectedCompositeAlpha;
 	SwapChainCreateInfo.presentMode           = SelectedPresentMode;
 	SwapChainCreateInfo.clipped               = VK_TRUE;
 
@@ -362,8 +381,9 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
 		return false;
 	}
 
-	Extent = CurrentExtent;
-	Format = SelectedFormat;
+	Extent         = CurrentExtent;
+	Format         = SelectedFormat;
+	CompositeAlpha = SelectedCompositeAlpha;
 	return true;
 }
 
@@ -846,6 +866,7 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
 	SwapChainCreateInfo.Format            = Desc.ColorFormat;
 	SwapChainCreateInfo.Usage             = Desc.Usage;
 	SwapChainCreateInfo.bVerticalSync     = CVarEnableVSync.GetValue();
+	SwapChainCreateInfo.bIsTransparent    = Desc.IsTransparent();
 
 	// NOTE: Create a temporary SwapChain, keeping old alive until success
     FVulkanSwapChainRef NewSwapChainResource = new FVulkanSwapChain(GetDevice());
@@ -873,6 +894,12 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
         // Update the size of the viewport to the actual swapchain size
         Desc.Width  = static_cast<uint16>(SwapChainExtent.width);
         Desc.Height = static_cast<uint16>(SwapChainExtent.height);
+    }
+
+    if (Desc.IsTransparent() && !SwapChainResource->IsTransparent())
+    {
+        VULKAN_WARNING("The surface supports no non-opaque composite alpha, so the SwapChain will present opaque");
+        Desc.Flags &= ~ESwapChainFlags::Transparent;
     }
 
     PendingAcquireSemaphore.Reset();

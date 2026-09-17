@@ -112,6 +112,17 @@ bool FInteractiveElement::IsInteractive() const
     return true;
 }
 
+bool FInteractiveElement::GetCursor(ECursor& OutCursor) const
+{
+    if (!bIsEnabled || !bIsHovered || !IsPressable())
+    {
+        return false;
+    }
+
+    OutCursor = ECursor::Hand;
+    return true;
+}
+
 void FInteractiveElement::SetEnabled(bool bInIsEnabled)
 {
     if (bIsEnabled == bInIsEnabled)
@@ -142,6 +153,11 @@ EInteractionState FInteractiveElement::GetInteractionState() const
     }
 
     return bIsHovered ? EInteractionState::Hovered : EInteractionState::Normal;
+}
+
+bool FInteractiveElement::IsPressable() const
+{
+    return true;
 }
 
 void FInteractiveElement::OnClicked()

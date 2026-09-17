@@ -10,6 +10,10 @@
 
 class FD3D12CommandContext;
 
+#if D3D12_ENABLE_COMPOSITION
+class FD3D12Composition;
+#endif
+
 typedef TSharedRef<class FD3D12SwapChainRHI> FD3D12SwapChainRHIRef;
 
 class FD3D12SwapChainRHI : public FRHISwapChain, public FD3D12DeviceChild
@@ -72,16 +76,19 @@ private:
     bool ApplyHDRMetadata();
     void ApplySettingsChanges();
 
-    TComPtr<IDXGISwapChain3> SwapChain;
-    TComPtr<IDXGISwapChain4> SwapChain4;
-    FD3D12CommandContext*    CommandContext;
-    FD3D12TextureRHIRef      BackBuffer;
-    TArray<FBackBufferData>  BackBuffers;
-    HWND                     Hwnd;
-    HANDLE                   SwapChainWaitableObject;
-    EColorSpace              CurrentColorSpace;
-    uint32                   Flags;
-    uint32                   NumBackBuffers;
-    uint32                   ActiveFrameLatency;
-    uint32                   BackBufferIndex;
+    TComPtr<IDXGISwapChain3>      SwapChain;
+    TComPtr<IDXGISwapChain4>      SwapChain4;
+#if D3D12_ENABLE_COMPOSITION
+    TSharedRef<FD3D12Composition> Composition;
+#endif
+    FD3D12CommandContext*         CommandContext;
+    FD3D12TextureRHIRef           BackBuffer;
+    TArray<FBackBufferData>       BackBuffers;
+    HWND                          Hwnd;
+    HANDLE                        SwapChainWaitableObject;
+    EColorSpace                   CurrentColorSpace;
+    uint32                        Flags;
+    uint32                        NumBackBuffers;
+    uint32                        ActiveFrameLatency;
+    uint32                        BackBufferIndex;
 };

@@ -74,7 +74,7 @@ bool FEditorFrameProfilerPanel::Initialize()
     ScrollBox->SetContent(Column);
 
     TSharedPtr<FVerticalBox> Root = FVerticalBox::Create();
-    Root->AddSlot(ToolBar);
+    Root->AddSlot(ToolBar).SetPadding(FMargin(0, 0, 0, FEditorStyle::ItemSpacing));
     Root->AddSlot(ScrollBox).SetFillCoefficient(1.0f);
 
     Content = Root;

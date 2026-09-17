@@ -1,16 +1,12 @@
 #include "Application/Application.h"
-#include "Application/Docking/DockNode.h"
 #include "Application/Docking/TabStrip.h"
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/ElementPath.h"
+#include "Application/Elements/ScrollBar.h"
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
+#include "Core/Platform/PlatformTime.h"
 
-// The space either side of a tab label, and the room the close cross takes after it
-constexpr int32 TAB_HORIZONTAL_PADDING = 12;
-constexpr int32 TAB_CLOSE_WIDTH        = 18;
-
-// Half the side of the cross drawn in the close button
 constexpr float TAB_CLOSE_EXTENT    = 4.0f;
 constexpr float TAB_CLOSE_THICKNESS = 1.5f;
 
@@ -29,6 +25,8 @@ FTab::FTab()
     , PanelId()
     , Label()
     , Font(nullptr)
+    , Style(FUIStyle::GetDefault().Tab)
+    , CloseIcon()
     , OwnerStrip(nullptr)
     , bIsClosable(false)
     , bIsActive(false)
@@ -41,41 +39,57 @@ FTab::~FTab() = default;
 IntVector2 FTab::ComputeDesiredSize() const
 {
     const int32 LabelWidth = Font ? Font->MeasureWidth(StringView(Label)) : 0;
-    const int32 CloseWidth = bIsClosable ? TAB_CLOSE_WIDTH : 0;
+    const int32 PillHeight = Math::Max(Style.StripHeight - Style.TopInset - Style.BottomInset, 0);
 
-    return IntVector2(LabelWidth + CloseWidth + TAB_HORIZONTAL_PADDING * 2, FDockMetrics::TabStripHeight);
+    const int32 TrailingWidth = bIsClosable
+        ? Style.LabelCloseGap + Style.CloseSize + Style.CloseInset
+        : Style.HorizontalPadding;
+
+    const int32 PillWidth = Style.HorizontalPadding + LabelWidth + TrailingWidth;
+    return IntVector2(Math::Max(PillWidth, Style.MinWidth), PillHeight);
 }
 
 int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    const FUIStyle&   Style  = FUIStyle::GetDefault();
-    const FRectangle& Bounds = AllottedGeometry.Bounds;
+    const FUIStyleColors& Colors = FUIStyle::GetDefault().Colors;
+    const FRectangle&     Bounds = AllottedGeometry.Bounds;
 
     if (Bounds.IsEmpty())
     {
         return LayerId;
     }
 
-    const FFloatColor& Fill = bIsActive ? Style.Tab.FillActive : (IsHovered() ? Style.Tab.FillHovered : Style.Tab.Fill);
-    OutCommandList.AddBox(LayerId, Bounds, Fill, FCornerRadii::Top(Style.Tab.CornerRadius));
+    if (bIsActive || IsHovered())
+    {
+        const FFloatColor& Fill = bIsActive ? Style.FillActive : Style.FillHovered;
+        OutCommandList.AddBox(LayerId, Bounds, Fill, FCornerRadii(Style.CornerRadius));
+    }
+
+    if (Style.SeparatorThickness > 0)
+    {
+        const FRectangle SeparatorBounds(IntVector2(Bounds.GetRight() - Style.SeparatorThickness, Bounds.Position.Y),
+            Style.SeparatorThickness, Bounds.Height);
+
+        OutCommandList.AddBox(LayerId, SeparatorBounds, Style.Separator);
+    }
 
     if (bIsActive)
     {
-        const FRectangle StripBounds(IntVector2(Bounds.Position.X, Bounds.GetBottom() - Style.Tab.ActiveStripThickness),
-            Bounds.Width, Style.Tab.ActiveStripThickness);
-
-        OutCommandList.AddBox(LayerId + 1, StripBounds, Style.Tab.ActiveStrip);
+        OutCommandList.AddRoundedBottomBar(LayerId + 1, Bounds, FCornerRadii(Style.CornerRadius),
+            static_cast<float>(Style.ActiveStripThickness), Style.ActiveStrip, Style.ActiveStripFadeWidth);
     }
 
     if (Font)
     {
         const int32 LabelWidth  = Font->MeasureWidth(StringView(Label));
         const int32 LabelHeight = Font->GetLineHeight();
+        const int32 LabelY      = Bounds.Position.Y + ((Bounds.Height - LabelHeight) / 2) + Style.LabelOffsetY;
 
-        const FRectangle LabelBounds(IntVector2(Bounds.Position.X + TAB_HORIZONTAL_PADDING, Bounds.Position.Y + (Bounds.Height - LabelHeight) / 2),
+        const FRectangle LabelBounds(IntVector2(Bounds.Position.X + Style.HorizontalPadding, LabelY),
             LabelWidth, LabelHeight);
 
-        OutCommandList.AddText(LayerId + 1, LabelBounds, Label, Font.Get(), Style.GetTextColor(GetInteractionState()));
+        const FFloatColor& LabelColor = bIsActive ? Colors.Text : Colors.TextDisabled;
+        OutCommandList.AddText(LayerId + 1, LabelBounds, Label, Font.Get(), LabelColor);
     }
 
     if (bIsClosable)
@@ -84,18 +98,28 @@ int32 FTab::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutC
 
         if (bIsCloseHovered)
         {
-            OutCommandList.AddBox(LayerId + 1, CloseBounds, Style.Tab.CloseHovered, FCornerRadii(Style.Tab.CornerRadius));
+            OutCommandList.AddBox(LayerId + 1, CloseBounds, Style.CloseHovered, FCornerRadii(Style.CloseCornerRadius));
         }
 
-        const float CenterX = static_cast<float>(CloseBounds.Position.X) + static_cast<float>(CloseBounds.Width) * 0.5f;
-        const float CenterY = static_cast<float>(CloseBounds.Position.Y) + static_cast<float>(CloseBounds.Height) * 0.5f;
+        const FFloatColor& CrossColor = (bIsActive || IsHovered()) ? Colors.Text : Colors.TextDisabled;
 
-        const FFloatColor& CrossColor = (bIsActive || IsHovered()) ? Style.Colors.Text : Style.Colors.TextDisabled;
+        if (CloseIcon.IsValid())
+        {
+            const int32      Inset      = Math::Max((Style.CloseSize - Style.CloseIconSize) / 2, 0);
+            const FRectangle IconBounds = CloseBounds.Deflate(FMargin(Inset));
 
-        OutCommandList.AddLine(LayerId + 2, Vector2(CenterX - TAB_CLOSE_EXTENT, CenterY - TAB_CLOSE_EXTENT),
-            Vector2(CenterX + TAB_CLOSE_EXTENT, CenterY + TAB_CLOSE_EXTENT), CrossColor, TAB_CLOSE_THICKNESS);
-        OutCommandList.AddLine(LayerId + 2, Vector2(CenterX + TAB_CLOSE_EXTENT, CenterY - TAB_CLOSE_EXTENT),
-            Vector2(CenterX - TAB_CLOSE_EXTENT, CenterY + TAB_CLOSE_EXTENT), CrossColor, TAB_CLOSE_THICKNESS);
+            OutCommandList.AddImage(LayerId + 2, IconBounds, CloseIcon, CrossColor);
+        }
+        else
+        {
+            const float CenterX = static_cast<float>(CloseBounds.Position.X) + static_cast<float>(CloseBounds.Width) * 0.5f;
+            const float CenterY = static_cast<float>(CloseBounds.Position.Y) + static_cast<float>(CloseBounds.Height) * 0.5f;
+
+            OutCommandList.AddLine(LayerId + 2, Vector2(CenterX - TAB_CLOSE_EXTENT, CenterY - TAB_CLOSE_EXTENT),
+                Vector2(CenterX + TAB_CLOSE_EXTENT, CenterY + TAB_CLOSE_EXTENT), CrossColor, TAB_CLOSE_THICKNESS);
+            OutCommandList.AddLine(LayerId + 2, Vector2(CenterX + TAB_CLOSE_EXTENT, CenterY - TAB_CLOSE_EXTENT),
+                Vector2(CenterX - TAB_CLOSE_EXTENT, CenterY + TAB_CLOSE_EXTENT), CrossColor, TAB_CLOSE_THICKNESS);
+        }
     }
 
     return LayerId + 3;
@@ -148,6 +172,16 @@ void FTab::SetActive(bool bInIsActive)
     bIsActive = bInIsActive;
 }
 
+void FTab::SetStyle(const FUITabStyle& InStyle)
+{
+    Style = InStyle;
+}
+
+void FTab::SetCloseIcon(const FUIBrush& InCloseIcon)
+{
+    CloseIcon = InCloseIcon;
+}
+
 FRectangle FTab::GetCloseButtonRectangle() const
 {
     if (!bIsClosable)
@@ -156,10 +190,10 @@ FRectangle FTab::GetCloseButtonRectangle() const
     }
 
     const FRectangle& Bounds = GetContentRectangle();
-    const int32       Inset  = Math::Max((Bounds.Height - TAB_CLOSE_WIDTH) / 2, 0);
+    const int32       Inset  = Math::Max((Bounds.Height - Style.CloseSize) / 2, 0);
 
-    return FRectangle(IntVector2(Bounds.GetRight() - TAB_HORIZONTAL_PADDING - TAB_CLOSE_WIDTH, Bounds.Position.Y + Inset),
-        TAB_CLOSE_WIDTH, TAB_CLOSE_WIDTH);
+    return FRectangle(IntVector2(Bounds.GetRight() - Style.CloseInset - Style.CloseSize, Bounds.Position.Y + Inset),
+        Style.CloseSize, Style.CloseSize);
 }
 
 void FTab::OnDragged(const FCursorEvent& CursorEvent)
@@ -180,11 +214,22 @@ TSharedPtr<FTabStrip> FTabStrip::Create(const FDesc& Desc)
 FTabStrip::FTabStrip()
     : FVisualElement()
     , Font(nullptr)
+    , Style(FUIStyle::GetDefault().Tab)
+    , CloseIcon()
     , Tabs()
+    , ScrollBar(nullptr)
     , ActivePanelId()
     , DraggedPanelId()
     , DetachedPanelId()
     , DragOrigin()
+    , ScrollOffset(0)
+    , ScrollAmountPerWheelStep(DefaultScrollAmountPerWheelStep)
+    , ContentWidth(0)
+    , ViewWidth(0)
+    , FadeStartCounter(FPlatformTime::QueryPerformanceCounter())
+    , FadeStartOpacity(0.0f)
+    , ScrollBarOpacity(0.0f)
+    , bIsCursorOver(false)
     , bAllowReorder(true)
     , bAllowTearOut(true)
     , OnTabActivatedDelegate()
@@ -201,6 +246,8 @@ FTabStrip::~FTabStrip() = default;
 void FTabStrip::Initialize(const FDesc& Desc)
 {
     Font                      = Desc.Font;
+    Style                     = Desc.Style;
+    CloseIcon                 = Desc.CloseIcon;
     bAllowReorder             = Desc.bAllowReorder;
     bAllowTearOut             = Desc.bAllowTearOut;
     OnTabActivatedDelegate    = Desc.OnTabActivated;
@@ -209,16 +256,30 @@ void FTabStrip::Initialize(const FDesc& Desc)
     OnTabDragDetachedDelegate = Desc.OnTabDragDetached;
     OnTabDragMovedDelegate    = Desc.OnTabDragMoved;
     OnTabDragFinishedDelegate = Desc.OnTabDragFinished;
+
+    FUIScrollBarStyle BarStyle = FUIStyle::GetDefault().ScrollBar;
+    BarStyle.Track.A   = 0.0f;
+    BarStyle.CornerRadius = static_cast<float>(Style.ScrollBarThickness) * 0.5f;
+
+    FScrollBar::FDesc BarDesc;
+    BarDesc.Orientation     = EOrientation::Horizontal;
+    BarDesc.Thickness       = Style.ScrollBarThickness;
+    BarDesc.MinThumbLength  = 24;
+    BarDesc.TrackPadding    = FMargin(0);
+    BarDesc.Style           = BarStyle;
+    BarDesc.OnOffsetChanged = FOnScrollBarOffsetChanged::CreateRaw(this, &FTabStrip::SetScrollOffset);
+
+    ScrollBar = FScrollBar::Create(BarDesc);
+    ScrollBar->SetParentElement(AsWeakPtr());
+    ScrollBar->SetOpacity(0.0f);
 }
 
 IntVector2 FTabStrip::ComputeDesiredSize() const
 {
-    const FUITabStyle& TabStyle = FUIStyle::GetDefault().Tab;
-
-    IntVector2 DesiredSize(0, FDockMetrics::TabStripHeight);
+    IntVector2 DesiredSize(Tabs.IsEmpty() ? 0 : Style.Spacing, Style.StripHeight);
     for (const TSharedPtr<FTab>& Tab : Tabs)
     {
-        DesiredSize.X += Tab->GetCachedDesiredSize().X + TabStyle.Spacing;
+        DesiredSize.X += Tab->GetCachedDesiredSize().X + Style.Spacing;
     }
 
     return DesiredSize;
@@ -226,17 +287,22 @@ IntVector2 FTabStrip::ComputeDesiredSize() const
 
 void FTabStrip::OnArrange(const FRectangle& AllottedBounds)
 {
-    const FUITabStyle& TabStyle = FUIStyle::GetDefault().Tab;
+    const int32 TabHeight = Math::Max(AllottedBounds.Height - Style.TopInset - Style.BottomInset, 0);
 
-    int32 Offset = AllottedBounds.Position.X + TabStyle.Spacing;
+    ContentWidth = ComputeDesiredSize().X;
+    ViewWidth    = AllottedBounds.Width;
+    ScrollOffset = Math::Clamp(ScrollOffset, 0, GetMaxScrollOffset());
+
+    int32 Offset = (AllottedBounds.Position.X + Style.Spacing) - ScrollOffset;
     for (const TSharedPtr<FTab>& Tab : Tabs)
     {
         const int32 TabWidth = Tab->GetCachedDesiredSize().X;
-        Tab->Tick(FRectangle(IntVector2(Offset, AllottedBounds.Position.Y + TabStyle.TopInset),
-            TabWidth, Math::Max(AllottedBounds.Height - TabStyle.TopInset, 0)));
+        Tab->Tick(FRectangle(IntVector2(Offset, AllottedBounds.Position.Y + Style.TopInset), TabWidth, TabHeight));
 
-        Offset += TabWidth + TabStyle.Spacing;
+        Offset += TabWidth + Style.Spacing;
     }
+
+    UpdateScrollBar(AllottedBounds);
 }
 
 void FTabStrip::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
@@ -245,13 +311,18 @@ void FTabStrip::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) con
     {
         OutChildren.Add(Tab);
     }
+
+    if (ScrollBar)
+    {
+        OutChildren.Add(ScrollBar);
+    }
 }
 
 int32 FTabStrip::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    const FUIStyle& Style = FUIStyle::GetDefault();
+    OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.StripFill);
 
-    OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Tab.StripFill);
+    OutCommandList.PushClip(LayerId, AllottedGeometry.Bounds);
 
     int32 NextLayerId = LayerId + 1;
     for (const TSharedPtr<FTab>& Tab : Tabs)
@@ -263,12 +334,31 @@ int32 FTabStrip::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
         }
     }
 
+    if (ScrollBar && ScrollBar->GetOpacity() > 0.0f && GetMaxScrollOffset() > 0)
+    {
+        const FDrawGeometry BarGeometry(ScrollBar->GetContentRectangle(), AllottedGeometry.Scale);
+        NextLayerId = ScrollBar->OnDraw(BarGeometry, OutCommandList, NextLayerId + 1);
+    }
+
+    OutCommandList.PopClip(NextLayerId);
+
     return NextLayerId;
 }
 
 void FTabStrip::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
 {
     FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
+
+    if (!GetContentRectangle().EncapsulatesPoint(ClientPosition))
+    {
+        return;
+    }
+
+    if (ScrollBar && GetMaxScrollOffset() > 0 && ScrollBar->GetContentRectangle().EncapsulatesPoint(ClientPosition))
+    {
+        ScrollBar->FindChildrenContainingPoint(ClientPosition, OutChildElements);
+        return;
+    }
 
     for (const TSharedPtr<FTab>& Tab : Tabs)
     {
@@ -279,9 +369,116 @@ void FTabStrip::FindChildrenContainingPoint(const IntVector2& ClientPosition, FE
     }
 }
 
+FEventResponse FTabStrip::OnMouseScroll(const FCursorEvent& CursorEvent)
+{
+    if (GetMaxScrollOffset() <= 0)
+    {
+        return FEventResponse::Unhandled();
+    }
+
+    const int32 Delta = Math::RoundToInt(CursorEvent.GetScrollDelta() * static_cast<float>(ScrollAmountPerWheelStep));
+    SetScrollOffset(ScrollOffset - Delta);
+
+    return FEventResponse::Handled();
+}
+
+FEventResponse FTabStrip::OnMouseEntered(const FCursorEvent& CursorEvent)
+{
+    SetCursorOver(true);
+    return FVisualElement::OnMouseEntered(CursorEvent);
+}
+
+FEventResponse FTabStrip::OnMouseLeft(const FCursorEvent& CursorEvent)
+{
+    SetCursorOver(false);
+    return FVisualElement::OnMouseLeft(CursorEvent);
+}
+
+void FTabStrip::SetScrollOffset(int32 InScrollOffset)
+{
+    ScrollOffset = Math::Clamp(InScrollOffset, 0, GetMaxScrollOffset());
+}
+
+int32 FTabStrip::GetMaxScrollOffset() const
+{
+    return Math::Max(0, ContentWidth - ViewWidth);
+}
+
+void FTabStrip::ScrollTabIntoView(const String& PanelId)
+{
+    int32 Offset = Style.Spacing;
+    for (const TSharedPtr<FTab>& Tab : Tabs)
+    {
+        const int32 TabWidth = Tab->GetCachedDesiredSize().X;
+        if (Tab->GetPanelId() == PanelId)
+        {
+            if (Offset < ScrollOffset)
+            {
+                ScrollOffset = Offset;
+            }
+            else if ((Offset + TabWidth) > (ScrollOffset + ViewWidth))
+            {
+                ScrollOffset = (Offset + TabWidth) - ViewWidth;
+            }
+
+            ScrollOffset = Math::Clamp(ScrollOffset, 0, GetMaxScrollOffset());
+            return;
+        }
+
+        Offset += TabWidth + Style.Spacing;
+    }
+}
+
+void FTabStrip::SetCursorOver(bool bInIsCursorOver)
+{
+    if (bIsCursorOver == bInIsCursorOver)
+    {
+        return;
+    }
+
+    bIsCursorOver    = bInIsCursorOver;
+    FadeStartOpacity = ScrollBarOpacity;
+    FadeStartCounter = FPlatformTime::QueryPerformanceCounter();
+}
+
+double FTabStrip::GetSecondsSinceFadeStart() const
+{
+    const uint64 Now = FPlatformTime::QueryPerformanceCounter();
+    return static_cast<double>(Now - FadeStartCounter) / static_cast<double>(FPlatformTime::QueryPerformanceFrequency());
+}
+
+void FTabStrip::UpdateScrollBar(const FRectangle& AllottedBounds)
+{
+    if (!ScrollBar)
+    {
+        return;
+    }
+
+    const float Target   = bIsCursorOver ? 1.0f : 0.0f;
+    const float Duration = bIsCursorOver ? Style.ScrollBarFadeInDuration : Style.ScrollBarFadeOutDuration;
+
+    if (Duration > 0.0f)
+    {
+        const float Progress = Math::Clamp(static_cast<float>(GetSecondsSinceFadeStart()) / Duration, 0.0f, 1.0f);
+        ScrollBarOpacity     = Math::Lerp(FadeStartOpacity, Target, Progress);
+    }
+    else
+    {
+        ScrollBarOpacity = Target;
+    }
+
+    ScrollBar->SetOpacity(ScrollBarOpacity);
+    ScrollBar->SetScrollState(ContentWidth, ViewWidth, ScrollOffset);
+
+    const int32 BarTop = AllottedBounds.GetBottom() - Style.ScrollBarThickness;
+    ScrollBar->Tick(FRectangle(IntVector2(AllottedBounds.Position.X, BarTop), AllottedBounds.Width, Style.ScrollBarThickness));
+}
+
 void FTabStrip::AddTab(const String& PanelId, const String& Label, bool bIsClosable)
 {
     TSharedPtr<FTab> Tab = FTab::Create(PanelId, Label, Font, bIsClosable);
+    Tab->SetStyle(Style);
+    Tab->SetCloseIcon(CloseIcon);
     Tab->SetOwner(this);
     Tab->SetParentElement(AsWeakPtr());
 
@@ -291,6 +488,8 @@ void FTabStrip::AddTab(const String& PanelId, const String& Label, bool bIsClosa
     {
         SetActiveTab(PanelId);
     }
+
+    ScrollTabIntoView(PanelId);
 }
 
 void FTabStrip::RemoveTab(const String& PanelId)
@@ -337,6 +536,8 @@ void FTabStrip::SetActiveTab(const String& PanelId)
     {
         Tab->SetActive(Tab->GetPanelId() == PanelId);
     }
+
+    ScrollTabIntoView(PanelId);
 }
 
 void FTabStrip::ClearTabs()

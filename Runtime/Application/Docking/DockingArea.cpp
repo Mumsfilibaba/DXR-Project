@@ -54,6 +54,8 @@ FDockingArea::~FDockingArea()
 void FDockingArea::Initialize(const FDesc& Desc)
 {
     Font                   = Desc.Font;
+    TabStyle               = Desc.TabStyle;
+    TabCloseIcon           = Desc.TabCloseIcon;
     bAllowTearOut          = Desc.bAllowTearOut;
     bIsDropTarget          = Desc.bIsDropTarget;
     OnPanelTornOutDelegate = Desc.OnPanelTornOut;
@@ -395,6 +397,8 @@ TSharedPtr<FVisualElement> FDockingArea::BuildNode(FDockNode& Node, const TArray
     {
         FTabStrip::FDesc StripDesc;
         StripDesc.Font           = Font;
+        StripDesc.Style          = TabStyle;
+        StripDesc.CloseIcon      = TabCloseIcon;
         StripDesc.bAllowTearOut  = bAllowTearOut;
         StripDesc.OnTabActivated = FOnTabActivated::CreateRaw(this, &FDockingArea::OnTabActivated);
         StripDesc.OnTabClosed    = FOnTabClosed::CreateRaw(this, &FDockingArea::OnTabClosed);

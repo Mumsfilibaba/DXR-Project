@@ -51,7 +51,15 @@ VkResult VulkanPlatformMac::CreateSurface(VkInstance Instance, void* WindowHandl
             return;
         }
 
-        [MetalLayer setBackgroundColor:CocoaWindow.backgroundColor.CGColor];
+        if ([CocoaWindow isOpaque])
+        {
+            [MetalLayer setBackgroundColor:CocoaWindow.backgroundColor.CGColor];
+        }
+        else
+        {
+            [MetalLayer setOpaque:NO];
+            [MetalLayer setBackgroundColor:nil];
+        }
 
         NSScreen* Screen = FindScreenForWindow(CocoaWindow);
         [MetalLayer setContentsScale:Screen.backingScaleFactor];

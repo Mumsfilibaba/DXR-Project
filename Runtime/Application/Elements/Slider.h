@@ -183,6 +183,8 @@ protected:
     // FInteractiveElement Interface
     virtual void OnDragged(const FCursorEvent& CursorEvent) override;
 
+    virtual bool IsPressable() const override { return false; }
+
 private:
     NODISCARD float SanitizeValue(float InValue) const;
 

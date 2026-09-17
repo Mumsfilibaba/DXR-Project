@@ -96,8 +96,17 @@ public:
     /** @brief The most segments a rounded corner is tessellated into, whatever its radius. */
     static constexpr int32 MaxCornerSegments = 12;
 
+    /** @brief The fewest columns a rounded bottom bar is tessellated into. */
+    static constexpr int32 MinBarColumns = 8;
+
+    /** @brief The most columns a rounded bottom bar is tessellated into, whatever its width. */
+    static constexpr int32 MaxBarColumns = 64;
+
     /** @brief How far a miter join may stretch past the stroke half-width before it is cut back. */
     static constexpr float MiterLimit = 4.0f;
+
+    /** @brief How wide the soft edge laid over a curved silhouette is, in pixels. */
+    static constexpr float FringeWidth = 1.0f;
 
 public:
     FUIDrawData();
@@ -112,6 +121,19 @@ public:
 
     /** @brief Drops every vertex, index and batch so the data can be built again. */
     void Reset();
+
+    /**
+     * @brief Turns the soft edge on curved geometry on or off.
+     *
+     * @param bEnabled True to emit the fringe, false to emit the bare silhouette.
+     */
+    void SetAntiAliasingEnabled(bool bEnabled);
+
+    /** @return True while curved geometry is emitted with a soft edge. */
+    NODISCARD FORCEINLINE bool IsAntiAliasingEnabled() const
+    {
+        return bAntiAliasingEnabled;
+    }
 
     NODISCARD FORCEINLINE const TArray<FUIVertex>& GetVertices() const
     {
@@ -135,7 +157,10 @@ public:
 
 private:
     NODISCARD static FRectangle ComputePointBounds(TArrayView<const Vector2> Points, float Thickness);
+    NODISCARD static float ComputeWindingSign(TArrayView<const Vector2> Points);
+
     static void BuildRoundedBoxOutline(const FRectangle& Bounds, const FCornerRadii& Radius, TArray<Vector2>& OutPoints, float Inset = 0.0f);
+    static void BuildMiterOffsets(TArrayView<const Vector2> Points, bool bClosed, TArray<Vector2>& OutOffsets);
 
     NODISCARD bool IsCulledByClip(const FRectangle& Bounds) const;
 
@@ -145,15 +170,20 @@ private:
     void AddBoxOutline(const FDrawCommand& Command);
     void AddText(const FDrawCommand& Command);
     void AddImage(const FDrawCommand& Command);
+    void AddRoundedBottomBar(const FDrawCommand& Command);
     void AddPolyline(TArrayView<const Vector2> Points, float Thickness, bool bClosed, uint32 PackedColor);
     void AddConvexPolygon(TArrayView<const Vector2> Points, uint32 PackedColor);
     void AddQuad(const FRectangle& Bounds, const Vector2& MinTexCoord, const Vector2& MaxTexCoord, uint32 PackedColor);
     void AddRoundedBox(const FRectangle& Bounds, const FCornerRadii& Radius, uint32 PackedColor);
+    void EmplaceVertex(const Vector2& Position, uint32 PackedColor);
+    void EmplaceFillVertex(const Vector2& Position, const FRectangle& Bounds, uint32 PackedColor);
 
     TArray<FUIVertex>    Vertices;
     TArray<uint32>       Indices;
     TArray<FUIDrawBatch> Batches;
     TArray<Vector2>      ScratchPoints;
+    TArray<Vector2>      ScratchOffsets;
     FRectangle           ActiveClipRectangle;
     bool                 bHasActiveClip;
+    bool                 bAntiAliasingEnabled;
 };

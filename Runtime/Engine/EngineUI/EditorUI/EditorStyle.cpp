@@ -8,13 +8,13 @@
 static FEditorFonts GFonts;
 static FUIStyle     GStyle;
 
-constexpr int32 BODY_PIXEL_HEIGHT      = 18;
-constexpr int32 TITLE_PIXEL_HEIGHT     = 18;
+constexpr int32 BODY_PIXEL_HEIGHT      = 20;
+constexpr int32 TITLE_PIXEL_HEIGHT     = 20;
 constexpr int32 MONOSPACE_PIXEL_HEIGHT = 14;
 
-constexpr float INPUT_FIELD_BORDER_THICKNESS = 2.0f;
-constexpr float SEARCH_FIELD_CORNER_RADIUS   = 16.0f;
-constexpr float CONSOLE_FIELD_CORNER_RADIUS  = 4.0f;
+constexpr float INPUT_FIELD_BORDER_THICKNESS = 1.0f;
+constexpr float SEARCH_FIELD_CORNER_RADIUS   = 6.0f;
+constexpr float CONSOLE_FIELD_CORNER_RADIUS  = 6.0f;
 
 constexpr int32 INPUT_FIELD_PADDING_X = 12;
 constexpr int32 INPUT_FIELD_PADDING_Y = 6;
@@ -67,15 +67,6 @@ bool FEditorStyle::Initialize()
     GStyle.Colors.ButtonNormal            = FromBytes(56, 56, 56);
     GStyle.Colors.ButtonHovered           = FromBytes(87, 87, 87);
     GStyle.Colors.ButtonPressed           = FromBytes(87, 87, 87);
-    GStyle.Colors.MenuBarItemHovered      = FromBytes(87, 87, 87);
-    GStyle.Colors.MenuBarItemActive       = FromBytes(9, 92, 176);
-    GStyle.Colors.MenuBackground          = FromBytes(56, 56, 56);
-    GStyle.Colors.MenuBorder              = FromBytes(63, 63, 63);
-    GStyle.Colors.MenuInnerBorder         = FromBytes(50, 50, 50);
-    GStyle.Colors.MenuItemHovered         = FromBytes(0, 112, 224);
-    GStyle.Colors.MenuItemShortcut        = FromBytes(175, 175, 175);
-    GStyle.Colors.MenuSeparator           = FromBytes(106, 106, 106);
-    GStyle.Colors.MenuSectionText         = FromBytes(160, 160, 160);
     GStyle.Colors.Border                  = FromBytes(21, 21, 21);
     GStyle.Colors.SeparatorHovered        = FromBytes(56, 56, 56);
     GStyle.Colors.Text                    = FromBytes(230, 230, 232);
@@ -94,7 +85,17 @@ bool FEditorStyle::Initialize()
     GStyle.Metrics.ButtonHeight           = ButtonHeight;
     GStyle.Metrics.ScrollBarThickness     = 16;
     GStyle.Metrics.SeparatorThickness     = 1;
-    GStyle.Metrics.MenuSeparatorThickness = 2;
+    GStyle.Metrics.MenuSeparatorThickness = 1;
+
+    GStyle.MenuBar.ItemHovered            = FromBytes(87, 87, 87);
+    GStyle.MenuBar.ItemActive             = FromBytes(104, 104, 104);
+
+    GStyle.Menu.Background                = FromBytes(56, 56, 56);
+    GStyle.Menu.Border                    = FromBytes(63, 63, 63);
+    GStyle.Menu.ItemHovered               = FromBytes(0, 112, 224);
+    GStyle.Menu.ItemShortcut              = FromBytes(175, 175, 175);
+    GStyle.Menu.Separator                 = FromBytes(106, 106, 106);
+    GStyle.Menu.SectionText               = FromBytes(160, 160, 160);
 
     GStyle.NormalFont    = GFonts.Body.Get();
     GStyle.MonospaceFont = GFonts.Monospace.Get();

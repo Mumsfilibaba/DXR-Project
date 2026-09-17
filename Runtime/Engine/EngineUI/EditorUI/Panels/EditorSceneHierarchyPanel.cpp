@@ -30,8 +30,6 @@ constexpr int32 HIERARCHY_ROW_HEIGHT = 30;
 
 constexpr int32 HIERARCHY_TYPE_COLUMN_WIDTH = 120;
 
-constexpr int32 HIERARCHY_HEADER_PADDING = 4;
-
 static const EEditorLightType GPlaceableLightTypes[] =
 {
     EEditorLightType::Point,
@@ -163,6 +161,8 @@ static TSharedPtr<FMenu> BuildPlaceActorMenu(FEditorEngine* EditorEngine)
         return nullptr;
     }
 
+    Menu->AddSection("Primitives", Font);
+
     for (uint8 Index = 0; Index < static_cast<uint8>(EEditorPrimitiveType::Count); ++Index)
     {
         const EEditorPrimitiveType Type = static_cast<EEditorPrimitiveType>(Index);
@@ -181,7 +181,7 @@ static TSharedPtr<FMenu> BuildPlaceActorMenu(FEditorEngine* EditorEngine)
         Menu->AddItem(FMenuItem::Create(Desc));
     }
 
-    Menu->AddSeparator();
+    Menu->AddSection("Lights", Font);
 
     FWorld* World = EditorEngine->GetWorld();
     for (const EEditorLightType Type : GPlaceableLightTypes)
@@ -209,7 +209,7 @@ static TSharedPtr<FMenu> BuildPlaceActorMenu(FEditorEngine* EditorEngine)
         Menu->AddItem(Item);
     }
 
-    Menu->AddSeparator();
+    Menu->AddSection("Camera", Font);
 
     FMenuItem::FDesc CameraDesc;
     CameraDesc.Label       = "Camera";
@@ -759,7 +759,7 @@ bool FEditorSceneHierarchyPanel::Initialize()
     }
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
-    Column->AddSlot(SearchBox).SetPadding(FMargin(HIERARCHY_HEADER_PADDING));
+    Column->AddSlot(SearchBox).SetPadding(FMargin(0, 0, 0, FEditorStyle::ItemSpacing));
     Column->AddSlot(HierarchyView).SetFillCoefficient(1.0f);
 
     Content = Column;
@@ -909,16 +909,21 @@ TSharedPtr<FMenu> FEditorSceneHierarchyPanel::BuildMoveToFilterMenu()
         return nullptr;
     }
 
+    const TSharedPtr<IFontFace>& Font = FEditorStyle::GetFonts().Body;
+
+    Menu->AddSection("Clear", Font);
+
     FMenuItem::FDesc NoneDesc;
     NoneDesc.Label       = "None";
-    NoneDesc.Font        = FEditorStyle::GetFonts().Body;
+    NoneDesc.Font        = Font;
     NoneDesc.OnActivated = FOnMenuItemActivated::CreateLambda([this]()
     {
         MoveSelectionToFilter(nullptr);
     });
 
     Menu->AddItem(FMenuItem::Create(NoneDesc));
-    Menu->AddSeparator();
+
+    Menu->AddSection("Filters", Font);
 
     for (FActorFilter* Filter : World->GetActorFilters())
     {

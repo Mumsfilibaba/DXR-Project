@@ -5,7 +5,6 @@
 #include "Application/ElementPath.h"
 #include "Application/Elements/Box.h"
 #include "Application/Elements/Button.h"
-#include "Application/Elements/FractionWidthBox.h"
 #include "Application/Elements/Image.h"
 #include "Application/Elements/LogView.h"
 #include "Application/Elements/SearchBox.h"
@@ -18,11 +17,11 @@
 #include "Application/Menus/MenuItem.h"
 #include "Application/Menus/MenuStack.h"
 
-constexpr float LOG_SEARCH_FRACTION = 0.25f;
-constexpr int32 LOG_SEARCH_MIN      = 120;
+constexpr float LOG_SEARCH_FILL = 1.0f / 3.0f;
 
-constexpr int32 LOG_FILTER_MENU_WIDTH = 180;
-constexpr int32 LOG_FILTER_BUTTON_GAP = 4;
+constexpr int32 LOG_TOOLBAR_GAP = 8;
+
+constexpr int32 LOG_FILTER_FACE_GAP = 4;
 
 FEditorLogContextArea::FEditorLogContextArea()
     : FCompoundElement()
@@ -93,7 +92,7 @@ bool FEditorOutputLogPanel::Initialize()
     }
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
-    Column->AddSlot(ToolBar);
+    Column->AddSlot(ToolBar).SetPadding(FMargin(0, 0, 0, FEditorStyle::ItemSpacing));
     Column->AddSlot(LogArea).SetFillCoefficient(1.0f);
 
     Content = Column;
@@ -105,6 +104,7 @@ TSharedPtr<FToolBar> FEditorOutputLogPanel::BuildToolBar()
     FToolBar::FDesc Desc;
     Desc.Font           = FEditorStyle::GetFonts().Body;
     Desc.IconSize       = FEditorStyle::IconSize;
+    Desc.ItemSpacing    = LOG_TOOLBAR_GAP;
     Desc.bHasBackground = true;
 
     TSharedPtr<FToolBar> Bar = FToolBar::Create(Desc);
@@ -116,7 +116,7 @@ TSharedPtr<FToolBar> FEditorOutputLogPanel::BuildToolBar()
     SearchBox = FSearchBox::Create(FEditorStyle::MakeSearchBoxDesc("Search Log",
         FOnSearchTextChanged::CreateRaw(this, &FEditorOutputLogPanel::OnSearchTextChanged)));
 
-    Bar->AddWidget(FFractionWidthBox::Create(SearchBox, LOG_SEARCH_FRACTION, LOG_SEARCH_MIN), 1.0f);
+    Bar->AddWidget(SearchBox, LOG_SEARCH_FILL);
     Bar->AddWidget(BuildFilterButton());
     Bar->AddFlexibleSpace();
 
@@ -144,23 +144,24 @@ TSharedPtr<FVisualElement> FEditorOutputLogPanel::BuildFilterButton()
 
     TSharedPtr<FHorizontalBox> Face = FHorizontalBox::Create();
     Face->AddSlot(MakeGlyph(FEditorIcons::Filter)).SetVerticalAlignment(EVerticalAlignment::Center);
-    Face->AddSlot(FSpacer::CreateHorizontal(LOG_FILTER_BUTTON_GAP));
+    Face->AddSlot(FSpacer::CreateHorizontal(LOG_FILTER_FACE_GAP));
     Face->AddSlot(FTextBlock::Create(LabelDesc)).SetVerticalAlignment(EVerticalAlignment::Center);
-    Face->AddSlot(FSpacer::CreateHorizontal(LOG_FILTER_BUTTON_GAP));
+    Face->AddSlot(FSpacer::CreateHorizontal(LOG_FILTER_FACE_GAP));
     Face->AddSlot(MakeGlyph(FEditorIcons::DownArrow)).SetVerticalAlignment(EVerticalAlignment::Center);
 
     FButton::FDesc ButtonDesc;
-    ButtonDesc.Font    = FEditorStyle::GetFonts().Body;
-    ButtonDesc.Content = Face;
+    ButtonDesc.Font     = FEditorStyle::GetFonts().Body;
+    ButtonDesc.Content  = Face;
+    ButtonDesc.bIsGhost = true;
 
-    TSharedPtr<FButton> Button = FButton::Create(ButtonDesc);
-    if (!Button)
+    FilterButton = FButton::Create(ButtonDesc);
+    if (!FilterButton)
     {
         return nullptr;
     }
 
     FMenuAnchor::FDesc AnchorDesc;
-    AnchorDesc.Content   = Button;
+    AnchorDesc.Content   = FilterButton;
     AnchorDesc.Placement = EMenuPlacement::BelowLeftAligned;
 
     AnchorDesc.OnGetMenuContent.BindRaw(this, &FEditorOutputLogPanel::BuildFilterMenu);
@@ -171,12 +172,22 @@ TSharedPtr<FVisualElement> FEditorOutputLogPanel::BuildFilterButton()
         return nullptr;
     }
 
-    Button->SetOnClicked(FOnClicked::CreateLambda([this]()
+    FilterButton->SetOnClicked(FOnClicked::CreateLambda([this]()
     {
         FilterAnchor->Toggle();
     }));
 
     return FilterAnchor;
+}
+
+void FEditorOutputLogPanel::Tick(float DeltaTime)
+{
+    FEditorPanel::Tick(DeltaTime);
+
+    if (FilterButton && FilterAnchor)
+    {
+        FilterButton->SetHighlighted(FilterAnchor->IsOpen());
+    }
 }
 
 TSharedPtr<FVisualElement> FEditorOutputLogPanel::BuildFilterMenu()
@@ -209,8 +220,6 @@ TSharedPtr<FVisualElement> FEditorOutputLogPanel::BuildFilterMenu()
     AddSeverityToggle("Warnings", ELogSeverity::Warning);
     AddSeverityToggle("Errors", ELogSeverity::Error);
 
-    Menu->SetMinDesiredWidth(LOG_FILTER_MENU_WIDTH);
-
     return Menu;
 }
 
@@ -225,6 +234,7 @@ void FEditorOutputLogPanel::Release()
     SearchBox.Reset();
     ToolBar.Reset();
     LogArea.Reset();
+    FilterButton.Reset();
     FilterAnchor.Reset();
 
     FEditorPanel::Release();
@@ -258,6 +268,8 @@ void FEditorOutputLogPanel::OnLogContextMenu(const IntVector2& ScreenPosition)
         Menu->AddItem(FMenuItem::Create(ItemDesc));
     };
 
+    Menu->AddSection("Copy", FEditorStyle::GetFonts().Body);
+
     AddCommand("Select All", FOnMenuItemActivated::CreateLambda([this]()
     {
         LogView->SelectAll();
@@ -274,7 +286,7 @@ void FEditorOutputLogPanel::OnLogContextMenu(const IntVector2& ScreenPosition)
         LogView->CopyToClipboard();
     }));
 
-    Menu->AddSeparator();
+    Menu->AddSection("Search", FEditorStyle::GetFonts().Body);
 
     AddCommand("Find", FOnMenuItemActivated::CreateLambda([this]()
     {
@@ -284,17 +296,14 @@ void FEditorOutputLogPanel::OnLogContextMenu(const IntVector2& ScreenPosition)
         }
     }));
 
-    Menu->AddSeparator();
+    Menu->AddSection("Log", FEditorStyle::GetFonts().Body);
 
     AddCommand("Clear Log", FOnMenuItemActivated::CreateLambda([this]()
     {
         LogView->Clear();
     }));
 
-    if (TSharedPtr<FWindow> OwningWindow = FApplication::Get().FindWindow(LogArea))
-    {
-        FMenuStack::Get().PushMenu(OwningWindow, FRectangle(ScreenPosition, 0, 0), EMenuPlacement::AtCursor, Menu);
-    }
+    FMenuStack::Get().PushMenu(LogArea, FRectangle(ScreenPosition, 0, 0), EMenuPlacement::AtCursor, Menu);
 }
 
 int32 FEditorOutputLogPanel::GetNumVisibleLines() const

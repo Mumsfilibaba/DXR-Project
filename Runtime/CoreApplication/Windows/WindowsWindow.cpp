@@ -68,6 +68,11 @@ static FWindowsWindowStyle GetWindowsWindowStyle(EWindowStyleFlags Style)
 		NewStyleEx |= WS_EX_TOPMOST;
     }
 
+    if ((Style & EWindowStyleFlags::Opaque) == EWindowStyleFlags::None)
+    {
+		NewStyleEx |= WS_EX_NOREDIRECTIONBITMAP;
+    }
+
 	return FWindowsWindowStyle(NewStyle, NewStyleEx);
 }
 
@@ -136,6 +141,14 @@ bool FWindowsWindow::Initialize(const FPlatformWindowDesc& InDesc)
             ::EnableMenuItem(::GetSystemMenu(Window, FALSE), SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
         }
     }
+
+#if PLATFORM_WINDOWS_11
+    if ((InDesc.Style & EWindowStyleFlags::RoundedCorners) != EWindowStyleFlags::None)
+    {
+        DWM_WINDOW_CORNER_PREFERENCE CornerPreference = DWMWCP_ROUNDSMALL;
+        ::DwmSetWindowAttribute(Window, DWMWA_WINDOW_CORNER_PREFERENCE, &CornerPreference, sizeof(CornerPreference));
+    }
+#endif
 
     StyleParams   = InDesc.Style;
     Style         = NewStyle;
@@ -505,6 +518,8 @@ void FWindowsWindow::SetStyle(EWindowStyleFlags InStyle)
     GetWindowShape(CurrentShape);
 
     FWindowsWindowStyle NewStyle = GetWindowsWindowStyle(InStyle);
+    NewStyle.StyleEx = (NewStyle.StyleEx & ~WS_EX_NOREDIRECTIONBITMAP) | (Style.StyleEx & WS_EX_NOREDIRECTIONBITMAP);
+
     if ((::GetWindowLongA(Window, GWL_EXSTYLE) & WS_EX_LAYERED) != 0)
     {
         NewStyle.StyleEx |= WS_EX_LAYERED;

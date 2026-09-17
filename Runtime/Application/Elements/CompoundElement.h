@@ -13,6 +13,7 @@ public:
     virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override;
+    virtual int32 GetContentTopInset() const override { return Padding.Top; }
 
     /**
      * @brief Sets the single child of this element and makes it the child's parent.

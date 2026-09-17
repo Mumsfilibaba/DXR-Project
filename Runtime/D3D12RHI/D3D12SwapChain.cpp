@@ -2,6 +2,7 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "D3D12RHI/D3D12RHI.h"
 #include "D3D12RHI/D3D12SwapChain.h"
+#include "D3D12RHI/D3D12Composition.h"
 #include "D3D12RHI/D3D12DeviceDebug.h"
 
 static TAutoConsoleVariable<int32> CVarSwapChainBackBufferCount(
@@ -81,6 +82,9 @@ FD3D12SwapChainRHI::FD3D12SwapChainRHI(FD3D12Device* InDevice, FD3D12CommandCont
     : FD3D12DeviceChild(InDevice)
     , FRHISwapChain(InSwapChainDesc)
     , SwapChain(nullptr)
+#if D3D12_ENABLE_COMPOSITION
+    , Composition(nullptr)
+#endif
     , CommandContext(InCommandContext)
     , BackBuffer(nullptr)
     , BackBuffers()
@@ -96,8 +100,14 @@ FD3D12SwapChainRHI::FD3D12SwapChainRHI(FD3D12Device* InDevice, FD3D12CommandCont
 
 FD3D12SwapChainRHI::~FD3D12SwapChainRHI()
 {
+#if D3D12_ENABLE_COMPOSITION
+    const bool bHasFullscreenState = SwapChain.IsValid() && !Composition;
+#else
+    const bool bHasFullscreenState = SwapChain.IsValid();
+#endif
+
     BOOL FullscreenState;
-    if (SwapChain)
+    if (bHasFullscreenState)
     {
         HRESULT Result = SwapChain->GetFullscreenState(&FullscreenState, nullptr);
         if (SUCCEEDED(Result))
@@ -108,6 +118,10 @@ FD3D12SwapChainRHI::~FD3D12SwapChainRHI()
             }
         }
     }
+
+#if D3D12_ENABLE_COMPOSITION
+    Composition.Reset();
+#endif
 
     if (SwapChainWaitableObject)
     {
@@ -237,6 +251,18 @@ bool FD3D12SwapChainRHI::Initialize(FD3D12CommandContext* InCommandContext)
 
     const uint32 NumSwapChainBuffers = Math::Clamp<int32>(CVarSwapChainBackBufferCount.GetValue(), 2, 8);
 
+#if D3D12_ENABLE_COMPOSITION
+    const bool bUseComposition = Desc.IsTransparent() && GD3D12SupportsComposition;
+#else
+    const bool bUseComposition = false;
+#endif
+
+    if (Desc.IsTransparent() && !bUseComposition)
+    {
+        D3D12_WARNING("[FD3D12SwapChainRHI]: DirectComposition unavailable, falling back to an opaque swap chain");
+        SetEnumFlag(Desc.Flags, ESwapChainFlags::Transparent, false);
+    }
+
     DXGI_SWAP_CHAIN_DESC1 SwapChainDesc = {};
     SwapChainDesc.Width              = Desc.Width;
     SwapChainDesc.Height             = Desc.Height;
@@ -247,7 +273,7 @@ bool FD3D12SwapChainRHI::Initialize(FD3D12CommandContext* InCommandContext)
     SwapChainDesc.SampleDesc.Quality = 0;
     SwapChainDesc.Scaling            = DXGI_SCALING_STRETCH;
     SwapChainDesc.SwapEffect         = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-    SwapChainDesc.AlphaMode          = DXGI_ALPHA_MODE_IGNORE;
+    SwapChainDesc.AlphaMode          = bUseComposition ? DXGI_ALPHA_MODE_PREMULTIPLIED : DXGI_ALPHA_MODE_IGNORE;
     SwapChainDesc.Flags              = Flags;
 
     DXGI_SWAP_CHAIN_FULLSCREEN_DESC FullscreenDesc = {};
@@ -264,7 +290,10 @@ bool FD3D12SwapChainRHI::Initialize(FD3D12CommandContext* InCommandContext)
     CHECK(CommandQueue != nullptr);
 
     TComPtr<IDXGISwapChain1> DXGISwapChain1;
-    HRESULT Result = Factory->CreateSwapChainForHwnd(CommandQueue, Hwnd, &SwapChainDesc, &FullscreenDesc, nullptr, &DXGISwapChain1);
+    HRESULT Result = bUseComposition
+        ? Factory->CreateSwapChainForComposition(CommandQueue, &SwapChainDesc, nullptr, &DXGISwapChain1)
+        : Factory->CreateSwapChainForHwnd(CommandQueue, Hwnd, &SwapChainDesc, &FullscreenDesc, nullptr, &DXGISwapChain1);
+
     if (SUCCEEDED(Result))
     {
         Result = DXGISwapChain1.GetAs<IDXGISwapChain3>(&SwapChain);
@@ -273,6 +302,20 @@ bool FD3D12SwapChainRHI::Initialize(FD3D12CommandContext* InCommandContext)
             D3D12_ERROR_CRITICAL("[FD3D12SwapChainRHI]: FAILED to retrieve IDXGISwapChain3");
             return false;
         }
+
+    #if D3D12_ENABLE_COMPOSITION
+        if (bUseComposition)
+        {
+            FD3D12CompositionRef NewComposition = new FD3D12Composition(GetDevice());
+            if (!NewComposition->Initialize(Hwnd, DXGISwapChain1.Get()))
+            {
+                D3D12_ERROR_CRITICAL("[FD3D12SwapChainRHI]: FAILED to bind the SwapChain to a composition visual");
+                return false;
+            }
+
+            Composition = NewComposition;
+        }
+    #endif
 
         // Optional: only needed for SetHDRMetaData. Absence downgrades HDR output, not correctness.
         if (FAILED(DXGISwapChain1.GetAs<IDXGISwapChain4>(&SwapChain4)))

@@ -213,7 +213,7 @@ void FEditorPropertiesPanel::RebuildContent()
 
     if (!Actor)
     {
-        Column->AddSlot(CreateDisabledTextRow("No selection")).SetPadding(FMargin(8, 8, 8, 8));
+        Column->AddSlot(CreateDisabledTextRow("No selection"));
         return;
     }
 

@@ -20,6 +20,7 @@ public:
             , ShortcutText()
             , Icon()
             , Font(nullptr)
+            , Style(FUIStyle::GetDefault().Menu)
             , CheckState(ECheckBoxState::Unchecked)
             , bIsCheckable(false)
             , SubMenu(nullptr)
@@ -63,6 +64,9 @@ public:
         /** @brief The face the row is measured and drawn with. */
         TSharedPtr<IFontFace> Font;
 
+        /** @brief The look of the row, which defaults to the shared menu style and is replaced by the menu it is added to. */
+        FUIMenuStyle Style;
+
         /** @brief The state the check mark starts in, which only a checkable row draws. */
         ECheckBoxState CheckState;
 
@@ -80,9 +84,6 @@ public:
 
     /** @brief The square reserved on the left for a check mark or an icon, in pixels. */
     static constexpr int32 GutterWidth = 20;
-
-    /** @brief The height every row takes unless its face is taller than that, in pixels. */
-    static constexpr int32 RowHeight = 26;
 
     /** @brief The space held between the label and whatever is right-aligned beside it, in pixels. */
     static constexpr int32 ShortcutGap = 24;
@@ -137,8 +138,21 @@ public:
     }
 
     /**
-     * @brief Replaces the fill drawn behind a hovered or highlighted row, which a combo box uses so its list
-     * selects in its own accent.
+     * @brief Replaces the whole look of the row, which the menu holding it does as it takes the row in.
+     *
+     * @param InStyle The look to draw with.
+     */
+    void SetStyle(const FUIMenuStyle& InStyle);
+
+    /** @return The look the row draws itself with. */
+    NODISCARD FORCEINLINE const FUIMenuStyle& GetStyle() const
+    {
+        return Style;
+    }
+
+    /**
+     * @brief Replaces the fill drawn behind a hovered or highlighted row, leaving the rest of the look alone.
+     * A row added to a menu takes that menu's style, so this has to follow the AddItem rather than lead it.
      *
      * @param InHighlightFill The new fill.
      */
@@ -185,7 +199,7 @@ private:
     String                     ShortcutText;
     FUIBrush                   Icon;
     TSharedPtr<IFontFace>      Font;
-    FFloatColor                HighlightFill;
+    FUIMenuStyle               Style;
     ECheckBoxState             CheckState;
     bool                       bIsCheckable;
     bool                       bIsHighlighted;
@@ -198,7 +212,7 @@ class APPLICATION_API FMenuSeparator final : public FVisualElement
 public:
 
     /** @brief The inset the rule is held back from either edge by, in pixels. */
-    static constexpr int32 InsetX = 20;
+    static constexpr int32 InsetX = 8;
 
 public:
     static TSharedPtr<FMenuSeparator> Create();
@@ -210,6 +224,16 @@ public:
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
+
+    /**
+     * @brief Replaces the look of the rule, which the menu holding it does as it appends it.
+     *
+     * @param InStyle The look to draw with.
+     */
+    void SetStyle(const FUIMenuStyle& InStyle);
+
+private:
+    FUIMenuStyle Style;
 };
 
 class APPLICATION_API FMenuSectionHeader final : public FVisualElement
@@ -249,6 +273,13 @@ public:
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
 
+    /**
+     * @brief Replaces the look of the caption and the rule beside it, which the menu does as it appends them.
+     *
+     * @param InStyle The look to draw with.
+     */
+    void SetStyle(const FUIMenuStyle& InStyle);
+
     /** @return The caption as it is drawn, which is upper case whatever the header was given. */
     NODISCARD FORCEINLINE const String& GetLabel() const
     {
@@ -258,4 +289,5 @@ public:
 private:
     String                Label;
     TSharedPtr<IFontFace> Font;
+    FUIMenuStyle          Style;
 };

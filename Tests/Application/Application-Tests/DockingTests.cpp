@@ -7,6 +7,7 @@
 #include <Core/Containers/SharedPtr.h>
 #include <Core/Misc/ConsoleManager.h>
 #include <Core/Misc/IniFile.h>
+#include <Core/Misc/Paths.h>
 #include <Application/Docking/DockDragState.h>
 #include <Application/Docking/DockLayoutFile.h>
 #include <Application/Docking/DockNode.h>
@@ -15,9 +16,12 @@
 #include <Application/Docking/Splitter.h>
 #include <Application/Docking/TabStrip.h>
 #include <Application/Draw/DrawCommandList.h>
+#include <Application/ElementPath.h>
+#include <Application/Elements/ScrollBar.h>
 #include <Application/Elements/TextBlock.h>
 #include <Application/Input/Keys.h>
 #include <Application/Text/FixedWidthFontFace.h>
+#include <Application/Text/TrueTypeFontFace.h>
 
 static TSharedPtr<IFontFace> CreateFont()
 {
@@ -47,6 +51,11 @@ static FCursorEvent MakeButtonEvent(EInputEventType Type, const IntVector2& Clie
 static FCursorEvent MakeMoveEvent(const IntVector2& ClientPosition)
 {
     return FCursorEvent(EInputEventType::MouseMoved, ClientPosition, IntVector2(0, 0), FModifierKeyState());
+}
+
+static FCursorEvent MakeScrollEvent(float Delta, EScrollAxis Axis = EScrollAxis::Vertical)
+{
+    return FCursorEvent(EInputEventType::MouseScrolled, FModifierKeyState(), Delta, Axis);
 }
 
 static void DragSplitterHandle(const TSharedPtr<FSplitter>& Splitter, int32 HandleIndex, const IntVector2& Delta)
@@ -86,6 +95,38 @@ static TSharedPtr<FTabStrip> FindStrip(const TSharedPtr<FDockingArea>& Area)
     Children[0]->GetChildren(ColumnChildren);
 
     return ColumnChildren.IsEmpty() ? nullptr : StaticCastSharedPtr<FTabStrip>(ColumnChildren[0]);
+}
+
+static void DrawElement(const TSharedPtr<FVisualElement>& Element, FDrawCommandList& OutCommandList)
+{
+    Element->OnDraw(FDrawGeometry(Element->GetContentRectangle(), 1.0f), OutCommandList, 0);
+}
+
+static int32 CountCommands(const FDrawCommandList& CommandList, EDrawCommandType Type)
+{
+    int32 Count = 0;
+    for (const FDrawCommand& Command : CommandList.GetCommands())
+    {
+        if (Command.Type == Type)
+        {
+            Count++;
+        }
+    }
+
+    return Count;
+}
+
+static const FDrawCommand* FindCommand(const FDrawCommandList& CommandList, EDrawCommandType Type)
+{
+    for (const FDrawCommand& Command : CommandList.GetCommands())
+    {
+        if (Command.Type == Type)
+        {
+            return &Command;
+        }
+    }
+
+    return nullptr;
 }
 
 static TArray<String> GetTabOrder(const TSharedPtr<FTabStrip>& Strip)
@@ -606,15 +647,61 @@ bool TabStripReorder_Test()
     TEST_EXPECT(FindTab(Strip, "Outliner")->IsActive());
     TEST_EXPECT(!FindTab(Strip, "Details")->IsActive());
 
-    TEST_SECTION("The tabs are laid out left to right with a gap between them, each as wide as its label needs");
+    TEST_SECTION("The tabs are laid out left to right at the style's spacing, each as wide as its label needs");
     const int32 TabSpacing = FUIStyle::GetDefault().Tab.Spacing;
 
     TEST_EXPECT_EQ(FindTab(Strip, "Outliner")->GetContentRectangle().Position.X, TabSpacing);
     TEST_EXPECT_EQ(FindTab(Strip, "Details")->GetContentRectangle().Position.X,
         FindTab(Strip, "Outliner")->GetContentRectangle().GetRight() + TabSpacing);
 
-    TEST_SECTION("A tab is inset from the top of the strip, so the strip shows around it");
-    TEST_EXPECT_EQ(FindTab(Strip, "Outliner")->GetContentRectangle().Position.Y, FUIStyle::GetDefault().Tab.TopInset);
+    TEST_SECTION("A tab floats inside the strip, held off the top and the bottom by the style's insets");
+    const FUITabStyle& TabStyle = FUIStyle::GetDefault().Tab;
+
+    TEST_EXPECT_EQ(FDockMetrics::TabStripHeight, TabStyle.StripHeight);
+    TEST_EXPECT_EQ(FindTab(Strip, "Outliner")->GetContentRectangle().Position.Y, TabStyle.TopInset);
+    TEST_EXPECT_EQ(FindTab(Strip, "Outliner")->GetContentRectangle().Height,
+        FDockMetrics::TabStripHeight - TabStyle.TopInset - TabStyle.BottomInset);
+
+    TEST_SECTION("Its close button is held off the trailing edge by the close inset, not by the label's padding");
+    const FRectangle OutlinerBounds = FindTab(Strip, "Outliner")->GetContentRectangle();
+    const FRectangle OutlinerClose  = FindTab(Strip, "Outliner")->GetCloseButtonRectangle();
+
+    TEST_EXPECT_EQ(OutlinerBounds.GetRight() - OutlinerClose.GetRight(), TabStyle.CloseInset);
+    TEST_EXPECT_EQ(OutlinerClose.Width, TabStyle.CloseSize);
+    TEST_EXPECT(OutlinerClose.Position.X > OutlinerBounds.Position.X + TabStyle.HorizontalPadding);
+
+    TEST_SECTION("Its label is centred in the pill and then lifted by the style's nudge, so it reads level with the cross");
+    FDrawCommandList LabelCommands;
+    DrawElement(FindTab(Strip, "Outliner"), LabelCommands);
+
+    const FDrawCommand* Label = FindCommand(LabelCommands, EDrawCommandType::Text);
+    TEST_EXPECT(Label != nullptr);
+
+    if (Label)
+    {
+        TEST_EXPECT_EQ(Label->Bounds.Position.Y,
+            OutlinerBounds.Position.Y + ((OutlinerBounds.Height - Font->GetLineHeight()) / 2) + TabStyle.LabelOffsetY);
+        TEST_EXPECT(Label->Bounds.GetCenter().Y < OutlinerClose.GetCenter().Y);
+    }
+
+    TEST_SECTION("A hovered tab puts the hand under the cursor, over its close button as much as over its label");
+    const TSharedPtr<FTab> HoveredTab = FindTab(Strip, "Outliner");
+
+    ECursor Cursor = ECursor::Arrow;
+    TEST_EXPECT(!HoveredTab->GetCursor(Cursor));
+
+    HoveredTab->OnMouseEntered(MakeMoveEvent(OutlinerBounds.GetCenter()));
+    TEST_EXPECT(HoveredTab->GetCursor(Cursor));
+    TEST_EXPECT(Cursor == ECursor::Hand);
+
+    HoveredTab->OnMouseMove(MakeMoveEvent(OutlinerClose.GetCenter()));
+    TEST_EXPECT(HoveredTab->GetCursor(Cursor));
+
+    TEST_SECTION("The strip behind them has no opinion, so the gap between two tabs keeps the arrow");
+    HoveredTab->OnMouseLeft(MakeMoveEvent(IntVector2(900, 900)));
+
+    TEST_EXPECT(!HoveredTab->GetCursor(Cursor));
+    TEST_EXPECT(!Strip->GetCursor(Cursor));
 
     TEST_SECTION("Pressing a tab shows it, so a drag starts from the panel it is about to move");
     const TSharedPtr<FTab> DetailsTab = FindTab(Strip, "Details");
@@ -692,6 +779,354 @@ bool TabStripReorder_Test()
     Fixed->OnTabDragged(SecondTab.Get(), IntVector2(2, 10), IntVector2(2, 10));
 
     TEST_EXPECT_EQ(GetTabOrder(Fixed)[0], String("First"));
+
+    TEST_END();
+}
+
+bool TabStripScroll_Test()
+{
+    TEST_BEGIN();
+
+    FScopedStubApplication Application;
+    FUIStyle::ResetDefault();
+
+    const TSharedPtr<IFontFace> Font     = CreateFont();
+    const FUITabStyle&          TabStyle = FUIStyle::GetDefault().Tab;
+
+    FTabStrip::FDesc Desc;
+    Desc.Font = Font;
+
+    TSharedPtr<FTabStrip> Strip = FTabStrip::Create(Desc);
+    for (int32 Index = 0; Index < 12; ++Index)
+    {
+        const String PanelId = String::Printf("Panel%d", Index);
+        Strip->AddTab(PanelId, PanelId, true);
+    }
+
+    TEST_SECTION("A strip wide enough for every tab has nothing to scroll");
+    LayoutElement(Strip, FRectangle(IntVector2(0, 0), 4000, FDockMetrics::TabStripHeight));
+
+    TEST_EXPECT_EQ(Strip->GetMaxScrollOffset(), 0);
+    TEST_EXPECT_EQ(Strip->GetScrollOffset(), 0);
+
+    TEST_SECTION("The desired width budgets the gap before the first tab as well as the one after each");
+    const int32 ContentWidth = Strip->ComputeDesiredSize().X;
+
+    int32 ExpectedWidth = TabStyle.Spacing;
+    for (const TSharedPtr<FTab>& Tab : Strip->GetTabs())
+    {
+        ExpectedWidth += Tab->GetCachedDesiredSize().X + TabStyle.Spacing;
+    }
+
+    TEST_EXPECT_EQ(ContentWidth, ExpectedWidth);
+    TEST_EXPECT_EQ(Strip->GetTabs().Last()->GetContentRectangle().GetRight() + TabStyle.Spacing, ContentWidth);
+
+    TEST_SECTION("Narrowing it past the content leaves exactly the overflow to scroll through");
+    const int32 ViewWidth = 300;
+    LayoutElement(Strip, FRectangle(IntVector2(0, 0), ViewWidth, FDockMetrics::TabStripHeight));
+
+    TEST_EXPECT_EQ(Strip->GetMaxScrollOffset(), ContentWidth - ViewWidth);
+
+    TEST_SECTION("Scrolling shifts every tab by the offset, leading gap and all");
+    const int32 FirstTabStart = Strip->GetTabs()[0]->GetContentRectangle().Position.X;
+
+    Strip->SetScrollOffset(50);
+    LayoutElement(Strip, FRectangle(IntVector2(0, 0), ViewWidth, FDockMetrics::TabStripHeight));
+
+    TEST_EXPECT_EQ(Strip->GetScrollOffset(), 50);
+    TEST_EXPECT_EQ(Strip->GetTabs()[0]->GetContentRectangle().Position.X, FirstTabStart - 50);
+
+    TEST_SECTION("An offset past either end is clamped rather than running the tabs off the strip");
+    Strip->SetScrollOffset(-100);
+    TEST_EXPECT_EQ(Strip->GetScrollOffset(), 0);
+
+    Strip->SetScrollOffset(100000);
+    TEST_EXPECT_EQ(Strip->GetScrollOffset(), Strip->GetMaxScrollOffset());
+
+    TEST_SECTION("The wheel scrolls sideways on either axis, since the strip has only the one to give");
+    Strip->SetScrollOffset(200);
+
+    TEST_EXPECT(Strip->OnMouseScroll(MakeScrollEvent(1.0f)).IsEventHandled());
+    TEST_EXPECT_EQ(Strip->GetScrollOffset(), 200 - FTabStrip::DefaultScrollAmountPerWheelStep);
+
+    TEST_EXPECT(Strip->OnMouseScroll(MakeScrollEvent(-1.0f, EScrollAxis::Horizontal)).IsEventHandled());
+    TEST_EXPECT_EQ(Strip->GetScrollOffset(), 200);
+
+    TEST_SECTION("Activating a tab off the leading end pulls it flush against that edge");
+    Strip->SetScrollOffset(Strip->GetMaxScrollOffset());
+    LayoutElement(Strip, FRectangle(IntVector2(0, 0), ViewWidth, FDockMetrics::TabStripHeight));
+
+    Strip->SetActiveTab("Panel0");
+    LayoutElement(Strip, FRectangle(IntVector2(0, 0), ViewWidth, FDockMetrics::TabStripHeight));
+
+    TEST_EXPECT_EQ(Strip->GetScrollOffset(), TabStyle.Spacing);
+    TEST_EXPECT_EQ(Strip->GetTabs()[0]->GetContentRectangle().Position.X, 0);
+
+    TEST_SECTION("One off the trailing end comes just far enough to show, rather than all the way to the stop");
+    Strip->SetActiveTab("Panel11");
+    LayoutElement(Strip, FRectangle(IntVector2(0, 0), ViewWidth, FDockMetrics::TabStripHeight));
+
+    TEST_EXPECT_EQ(Strip->GetTabs().Last()->GetContentRectangle().GetRight(), ViewWidth);
+    TEST_EXPECT_EQ(Strip->GetScrollOffset(), Strip->GetMaxScrollOffset() - TabStyle.Spacing);
+
+    TEST_SECTION("A tab already in view is left where it is");
+    const int32 SettledOffset = Strip->GetScrollOffset();
+
+    Strip->SetActiveTab("Panel11");
+    TEST_EXPECT_EQ(Strip->GetScrollOffset(), SettledOffset);
+
+    TEST_SECTION("The strip clips itself, so a tab scrolled past the end stops painting outside it");
+    FDrawCommandList ScrolledCommands;
+    DrawElement(Strip, ScrolledCommands);
+
+    TEST_EXPECT_EQ(CountCommands(ScrolledCommands, EDrawCommandType::ClipPush), 1);
+    TEST_EXPECT_EQ(CountCommands(ScrolledCommands, EDrawCommandType::ClipPop), 1);
+    TEST_EXPECT_EQ(FindCommand(ScrolledCommands, EDrawCommandType::ClipPush)->Bounds, Strip->GetContentRectangle());
+
+    TEST_SECTION("It stops answering for a point out there too, so the tab cannot be clicked through the panel below");
+    FElementPath OutsidePath;
+    Strip->FindChildrenContainingPoint(IntVector2(ViewWidth + 40, TabStyle.TopInset + 4), OutsidePath);
+    TEST_EXPECT(OutsidePath.GetElements().IsEmpty());
+
+    FElementPath InsidePath;
+    Strip->FindChildrenContainingPoint(Strip->GetTabs().Last()->GetContentRectangle().GetCenter(), InsidePath);
+    TEST_EXPECT(!InsidePath.GetElements().IsEmpty());
+
+    TEST_SECTION("The bar it scrolls with lies along the bottom of the strip, thin enough to leave the pills alone");
+    const TSharedPtr<FScrollBar>& ScrollBar = Strip->GetScrollBar();
+    TEST_EXPECT(ScrollBar != nullptr);
+    TEST_EXPECT(ScrollBar->GetOrientation() == EOrientation::Horizontal);
+
+    const FRectangle BarBounds = ScrollBar->GetContentRectangle();
+    TEST_EXPECT_EQ(BarBounds.Height, TabStyle.ScrollBarThickness);
+    TEST_EXPECT_EQ(BarBounds.GetBottom(), Strip->GetContentRectangle().GetBottom());
+    TEST_EXPECT(ScrollBar->IsScrollable());
+
+    TEST_SECTION("Its track is cleared away, so what fades in over the strip is the thumb on its own");
+    TEST_EXPECT_EQ(ScrollBar->GetStyle().Track.A, 0.0f);
+    TEST_EXPECT(ScrollBar->GetStyle().Grab.A > 0.0f);
+
+    TEST_SECTION("It is invisible until the cursor arrives, and dragging it scrolls the tabs");
+    TEST_EXPECT_EQ(ScrollBar->GetOpacity(), 0.0f);
+
+    ScrollBar->SetOffset(0);
+    ScrollBar->SetOpacity(1.0f);
+    ScrollBar->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(BarBounds.GetRight() - 1, BarBounds.Position.Y), true));
+
+    TEST_EXPECT_EQ(Strip->GetScrollOffset(), Strip->GetMaxScrollOffset());
+
+    TEST_SECTION("An opacity outside zero to one is clamped rather than blowing the alpha out");
+    ScrollBar->SetOpacity(4.0f);
+    TEST_EXPECT_EQ(ScrollBar->GetOpacity(), 1.0f);
+
+    ScrollBar->SetOpacity(-1.0f);
+    TEST_EXPECT_EQ(ScrollBar->GetOpacity(), 0.0f);
+
+    TEST_SECTION("A strip everything fits in hides the bar and hands the wheel back to whatever is behind it");
+    LayoutElement(Strip, FRectangle(IntVector2(0, 0), 4000, FDockMetrics::TabStripHeight));
+
+    TEST_EXPECT_EQ(Strip->GetScrollOffset(), 0);
+    TEST_EXPECT(!Strip->OnMouseScroll(MakeScrollEvent(1.0f)).IsEventHandled());
+
+    FDrawCommandList FittedCommands;
+    DrawElement(Strip, FittedCommands);
+    TEST_EXPECT_EQ(CountCommands(FittedCommands, EDrawCommandType::ClipPush), 1);
+
+    TEST_END();
+}
+
+bool TabStripStyle_Test()
+{
+    TEST_BEGIN();
+
+    FScopedStubApplication Application;
+    FUIStyle::ResetDefault();
+
+    const TSharedPtr<IFontFace> Font = CreateFont();
+
+    FUITabStyle TabStyle;
+    TabStyle.Fill               = FFloatColor(0.90f, 0.10f, 0.10f, 1.0f);
+    TabStyle.FillActive         = FFloatColor(0.10f, 0.90f, 0.10f, 1.0f);
+    TabStyle.StripFill          = FFloatColor(0.10f, 0.10f, 0.90f, 1.0f);
+    TabStyle.Separator          = FFloatColor(0.90f, 0.90f, 0.10f, 1.0f);
+    TabStyle.Spacing            = 6;
+    TabStyle.TopInset           = 5;
+    TabStyle.BottomInset        = 3;
+    TabStyle.CornerRadius       = 9.0f;
+    TabStyle.StripHeight        = 44;
+    TabStyle.HorizontalPadding  = 20;
+    TabStyle.SeparatorThickness = 3;
+    TabStyle.CloseInset         = 7;
+    TabStyle.MinWidth           = 0;
+
+    FTabStrip::FDesc Desc;
+    Desc.Font  = Font;
+    Desc.Style = TabStyle;
+
+    TSharedPtr<FTabStrip> Strip = FTabStrip::Create(Desc);
+    Strip->AddTab("Outliner", "Outliner", true);
+    Strip->AddTab("Details", "Details", true);
+
+    Strip->PrepareDesiredSize();
+
+    TEST_SECTION("The strip asks for the height the description named rather than the shipped one");
+    TEST_EXPECT_EQ(Strip->GetCachedDesiredSize().Y, TabStyle.StripHeight);
+    TEST_EXPECT(TabStyle.StripHeight != FUIStyle::GetDefault().Tab.StripHeight);
+
+    Strip->Tick(FRectangle(IntVector2(0, 0), 600, TabStyle.StripHeight));
+
+    TEST_SECTION("Its tabs take that description's spacing, inset and padding too");
+    const TSharedPtr<FTab> OutlinerTab = FindTab(Strip, "Outliner");
+    const TSharedPtr<FTab> DetailsTab  = FindTab(Strip, "Details");
+
+    TEST_EXPECT_EQ(OutlinerTab->GetContentRectangle().Position.X, TabStyle.Spacing);
+    TEST_EXPECT_EQ(OutlinerTab->GetContentRectangle().Position.Y, TabStyle.TopInset);
+    TEST_EXPECT_EQ(OutlinerTab->GetContentRectangle().Height, TabStyle.StripHeight - TabStyle.TopInset - TabStyle.BottomInset);
+    TEST_EXPECT_EQ(DetailsTab->GetContentRectangle().Position.X, OutlinerTab->GetContentRectangle().GetRight() + TabStyle.Spacing);
+
+    TEST_SECTION("With the floor turned off, a closable tab pays the padding on its leading edge and the close inset on its trailing one");
+    const int32 LabelWidth = Font->MeasureWidth(StringView("Outliner", 8));
+    TEST_EXPECT_EQ(OutlinerTab->GetContentRectangle().Width,
+        TabStyle.HorizontalPadding + LabelWidth + TabStyle.LabelCloseGap + TabStyle.CloseSize + TabStyle.CloseInset);
+
+    TEST_EXPECT_EQ(OutlinerTab->GetContentRectangle().GetRight() - OutlinerTab->GetCloseButtonRectangle().GetRight(),
+        TabStyle.CloseInset);
+
+    TEST_SECTION("The strip fills itself in the description's colour");
+    FDrawCommandList StripCommands;
+    DrawElement(Strip, StripCommands);
+
+    TEST_EXPECT(!StripCommands.GetCommands().IsEmpty());
+    TEST_EXPECT_EQ(StripCommands.GetCommands()[0].Type, EDrawCommandType::Box);
+    TEST_EXPECT(StripCommands.GetCommands()[0].Tint == TabStyle.StripFill);
+
+    TEST_SECTION("A resting tab paints no fill at all, so the rule the description turned back on comes first");
+    FDrawCommandList InactiveCommands;
+    DrawElement(DetailsTab, InactiveCommands);
+
+    TEST_EXPECT(!DetailsTab->IsActive());
+
+    for (const FDrawCommand& Command : InactiveCommands.GetCommands())
+    {
+        TEST_EXPECT(!(Command.Tint == TabStyle.Fill));
+    }
+
+    const FDrawCommand& Rule = InactiveCommands.GetCommands()[0];
+    TEST_EXPECT_EQ(Rule.Type, EDrawCommandType::Box);
+    TEST_EXPECT(Rule.Tint == TabStyle.Separator);
+    TEST_EXPECT_EQ(Rule.Bounds.Width, TabStyle.SeparatorThickness);
+    TEST_EXPECT_EQ(Rule.Bounds.GetRight(), DetailsTab->GetContentRectangle().GetRight());
+
+    TEST_SECTION("The active one takes the active fill from the same description, rounded on every corner");
+    TEST_EXPECT(OutlinerTab->IsActive());
+
+    FDrawCommandList ActiveCommands;
+    DrawElement(OutlinerTab, ActiveCommands);
+
+    const FDrawCommand& Pill = ActiveCommands.GetCommands()[0];
+    TEST_EXPECT(Pill.Tint == TabStyle.FillActive);
+    TEST_EXPECT_EQ(Pill.CornerRadius.TopLeft, TabStyle.CornerRadius);
+    TEST_EXPECT_EQ(Pill.CornerRadius.BottomRight, TabStyle.CornerRadius);
+
+    TEST_SECTION("Its accent is a band cut from that same pill, so it carries the pill's bounds and radius rather than its own");
+    const FDrawCommand* Accent = FindCommand(ActiveCommands, EDrawCommandType::RoundedBottomBar);
+    TEST_EXPECT(Accent != nullptr);
+
+    if (Accent)
+    {
+        TEST_EXPECT(Accent->Tint == TabStyle.ActiveStrip);
+        TEST_EXPECT_EQ(Accent->Bounds, OutlinerTab->GetContentRectangle());
+        TEST_EXPECT_EQ(Accent->CornerRadius.BottomLeft, TabStyle.CornerRadius);
+        TEST_EXPECT_EQ(Accent->Thickness, static_cast<float>(TabStyle.ActiveStripThickness));
+        TEST_EXPECT_EQ(Accent->FadeWidth, TabStyle.ActiveStripFadeWidth);
+    }
+
+    TEST_SECTION("A resting tab has no accent at all");
+    TEST_EXPECT_EQ(CountCommands(InactiveCommands, EDrawCommandType::RoundedBottomBar), 0);
+
+    TEST_SECTION("With no close brush to hand, the cross is drawn as two strokes");
+    TEST_EXPECT_EQ(CountCommands(ActiveCommands, EDrawCommandType::Polyline), 2);
+    TEST_EXPECT_EQ(CountCommands(ActiveCommands, EDrawCommandType::Image), 0);
+
+    TEST_SECTION("A strip given one draws the glyph instead, centred in the button at the style's size");
+    FTabStrip::FDesc IconDesc;
+    IconDesc.Font      = Font;
+    IconDesc.Style     = TabStyle;
+    IconDesc.CloseIcon = FUIBrush(reinterpret_cast<FRHITexture*>(0x10));
+
+    TSharedPtr<FTabStrip> Iconed = FTabStrip::Create(IconDesc);
+    Iconed->AddTab("Outliner", "Outliner", true);
+
+    LayoutElement(Iconed, FRectangle(IntVector2(0, 0), 600, TabStyle.StripHeight));
+
+    const TSharedPtr<FTab> IconedTab = FindTab(Iconed, "Outliner");
+
+    FDrawCommandList IconCommands;
+    DrawElement(IconedTab, IconCommands);
+
+    TEST_EXPECT_EQ(CountCommands(IconCommands, EDrawCommandType::Polyline), 0);
+    TEST_EXPECT_EQ(CountCommands(IconCommands, EDrawCommandType::Image), 1);
+
+    const FDrawCommand& Glyph = IconCommands.GetCommands().Last();
+    TEST_EXPECT_EQ(Glyph.Type, EDrawCommandType::Image);
+    TEST_EXPECT_EQ(Glyph.Bounds.Width, TabStyle.CloseIconSize);
+    TEST_EXPECT_EQ(Glyph.Bounds.Height, TabStyle.CloseIconSize);
+    TEST_EXPECT_EQ(Glyph.Bounds.GetCenter(), IconedTab->GetCloseButtonRectangle().GetCenter());
+
+    TEST_SECTION("None of it touched the process-wide style, so the next strip is the shipped one");
+    TEST_EXPECT(FUIStyle::GetDefault().Tab.Fill == FUITabStyle().Fill);
+    TEST_EXPECT(FUIStyle::GetDefault().Tab.StripFill == FUITabStyle().StripFill);
+
+    FTabStrip::FDesc PlainDesc;
+    PlainDesc.Font = Font;
+
+    TSharedPtr<FTabStrip> Plain = FTabStrip::Create(PlainDesc);
+    Plain->AddTab("Plain", "Plain", true);
+    Plain->PrepareDesiredSize();
+
+    TEST_EXPECT_EQ(Plain->GetCachedDesiredSize().Y, FUIStyle::GetDefault().Tab.StripHeight);
+
+    TEST_END();
+}
+
+bool TabMinimumWidth_Test()
+{
+    TEST_BEGIN();
+
+    FScopedStubApplication Application;
+    FUIStyle::ResetDefault();
+
+    const TSharedPtr<IFontFace> Font     = CreateFont();
+    const FUITabStyle&          TabStyle = FUIStyle::GetDefault().Tab;
+
+    FTabStrip::FDesc Desc;
+    Desc.Font = Font;
+
+    TSharedPtr<FTabStrip> Strip = FTabStrip::Create(Desc);
+    Strip->AddTab("About", "About", true);
+    Strip->AddTab("Content Browser", "Content Browser", true);
+
+    LayoutElement(Strip, FRectangle(IntVector2(0, 0), 900, FDockMetrics::TabStripHeight));
+
+    TEST_SECTION("A short title is padded out to the style's floor rather than shrinking to its label");
+    TEST_EXPECT_EQ(FindTab(Strip, "About")->GetCachedDesiredSize().X, TabStyle.MinWidth);
+
+    TEST_SECTION("A title the floor cannot hold still takes the room it measures");
+    TEST_EXPECT(FindTab(Strip, "Content Browser")->GetCachedDesiredSize().X > TabStyle.MinWidth);
+
+    TEST_SECTION("The floor is cut to the editor's own titles, so a middling one reaches it and the longest runs past");
+    TSharedPtr<FTrueTypeFontFace> Body = FTrueTypeFontFace::CreateFromFile(Paths::GetAssetDir() + "/Editor/Fonts/segoeui.ttf", 20);
+    TEST_EXPECT(Body != nullptr);
+
+    if (Body)
+    {
+        const int32 Chrome           = TabStyle.HorizontalPadding + TabStyle.LabelCloseGap + TabStyle.CloseSize + TabStyle.CloseInset;
+        const int32 FrameProfiler    = Chrome + Body->MeasureWidth(StringView("Frame Profiler", 14));
+        const int32 RendererSettings = Chrome + Body->MeasureWidth(StringView("Renderer Settings", 17));
+
+        TEST_EXPECT(FrameProfiler <= TabStyle.MinWidth);
+        TEST_EXPECT(RendererSettings > TabStyle.MinWidth);
+    }
 
     TEST_END();
 }

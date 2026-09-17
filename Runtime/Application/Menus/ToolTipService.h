@@ -29,6 +29,7 @@ public:
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
+    virtual void SetOuterCornerRadius(float InCornerRadius) override;
 
     /**
      * @brief Sets the text the tip shows.
@@ -46,6 +47,7 @@ public:
 private:
     String                Text;
     TSharedPtr<IFontFace> Font;
+    float                 CornerRadius;
 };
 
 class APPLICATION_API FToolTipHost final : public FCompoundElement
@@ -183,10 +185,16 @@ public:
         return Owner;
     }
 
-    /** @return The window the tip is shown in, or null while no tip is up. */
+    /** @return The window the tip was given because it did not fit its host, or null in every other case. */
     NODISCARD FORCEINLINE const TSharedPtr<FWindow>& GetToolTipWindow() const
     {
         return ToolTipWindow;
+    }
+
+    /** @return Where the shown tip ended up, in screen coordinates, or an empty rectangle when none is up. */
+    NODISCARD FORCEINLINE const FRectangle& GetToolTipBounds() const
+    {
+        return ToolTipBounds;
     }
 
     /**
@@ -198,18 +206,20 @@ public:
 
 private:
     void ShowToolTip();
+    void MoveToolTip();
 
     NODISCARD FRectangle ResolveBounds(const IntVector2& ToolTipSize) const;
-
     NODISCARD FRectangle ResolveAnchorBounds() const;
-
     NODISCARD bool HasAnchorBoundsOverride() const;
 
     TSharedPtr<FVisualElement> Owner;
     TSharedPtr<FVisualElement> Content;
+    TSharedPtr<FWindow>        HostWindow;
     TSharedPtr<FWindow>        ToolTipWindow;
     EToolTipPlacement          Placement;
     FRectangle                 AnchorBounds;
+    FRectangle                 ClampArea;
+    FRectangle                 ToolTipBounds;
     IntVector2                 CursorPosition;
     float                      RequestedDelay;
     float                      RemainingSeconds;

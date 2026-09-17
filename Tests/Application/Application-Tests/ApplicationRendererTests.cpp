@@ -9,6 +9,9 @@
 #include <Application/Draw/DrawCommandList.h>
 #include <Application/Elements/Border.h>
 #include <Application/Elements/Window.h>
+#include <Application/Menus/Menu.h>
+#include <Application/Menus/PopupWindow.h>
+#include <Application/Style/UIStyle.h>
 
 class FStubApplicationRenderer final : public IApplicationRenderer
 {
@@ -18,9 +21,11 @@ public:
         , BeginCount(0)
         , EndCount(0)
         , DestroyedCount(0)
+        , EnsuredCount(0)
         , LastCommandCount(0)
         , LastBeginWindow(nullptr)
         , LastDestroyedWindow(nullptr)
+        , LastEnsuredWindow(nullptr)
         , bRefuseWindows(false)
         , bWindowWasStillAlive(false)
     {
@@ -68,6 +73,12 @@ public:
     {
     }
 
+    virtual void EnsureWindowSurface(const TSharedPtr<FWindow>& InWindow) override final
+    {
+        ++EnsuredCount;
+        LastEnsuredWindow = InWindow.Get();
+    }
+
     virtual FRHISwapChainRef GetWindowSwapChain(const TSharedPtr<FWindow>&) const override final
     {
         return nullptr;
@@ -77,9 +88,11 @@ public:
     int32            BeginCount;
     int32            EndCount;
     int32            DestroyedCount;
+    int32            EnsuredCount;
     int32            LastCommandCount;
     FWindow*         LastBeginWindow;
     FWindow*         LastDestroyedWindow;
+    FWindow*         LastEnsuredWindow;
     bool             bRefuseWindows;
     bool             bWindowWasStillAlive;
 };
@@ -230,6 +243,47 @@ bool ApplicationRendererWindowLifetime_Test()
 
     Application->DestroyWindow(First);
     TEST_EXPECT_EQ(Renderer->DestroyedCount, 2);
+
+    TEST_END();
+}
+
+bool ApplicationRendererPopupSurface_Test()
+{
+    TEST_BEGIN();
+
+    FScopedStubApplication Application;
+
+    FUIStyle::ResetDefault();
+
+    const float         MenuRadius     = FUIStyle::GetDefault().Menu.CornerRadius;
+    TSharedPtr<FWindow> Parent         = Application.CreateWindow(IntVector2(800, 600));
+    const float         ExpectedRadius = (Popups::ResolveCornerRounding() == EPopupCornerRounding::Content) ? MenuRadius : 0.0f;
+
+    TEST_SECTION("With no renderer at all a popup still opens, and its content rounds by what the platform and RHI allow");
+    TSharedPtr<FMenu>   NoRendererContent = FMenu::Create();
+    TSharedPtr<FWindow> NoRendererPopup   = Popups::Open(Parent, FRectangle(IntVector2(0, 0), 200, 100), NoRendererContent);
+
+    TEST_EXPECT(NoRendererPopup != nullptr);
+    TEST_EXPECT_EQ(NoRendererContent->GetStyle().CornerRadius, ExpectedRadius);
+
+    Popups::Close(NoRendererPopup);
+
+    TEST_SECTION("A renderer holding no surface for it is the same answer, since only a surface can say it fell back");
+    TSharedPtr<FStubApplicationRenderer> Renderer = MakeSharedPtr<FStubApplicationRenderer>();
+    Application.GetApplication().SetRenderer(Renderer);
+
+    TSharedPtr<FMenu>   NoSurfaceContent = FMenu::Create();
+    TSharedPtr<FWindow> NoSurfacePopup   = Popups::Open(Parent, FRectangle(IntVector2(0, 0), 200, 100), NoSurfaceContent);
+
+    TEST_EXPECT(NoSurfacePopup != nullptr);
+    TEST_EXPECT_EQ(NoSurfaceContent->GetStyle().CornerRadius, ExpectedRadius);
+
+    TEST_SECTION("It is asked for the surface up front all the same, so the answer is there before anything draws");
+    TEST_EXPECT_EQ(Renderer->EnsuredCount, 1);
+    TEST_EXPECT(Renderer->LastEnsuredWindow == NoSurfacePopup.Get());
+
+    Popups::Close(NoSurfacePopup);
+    Application.GetApplication().SetRenderer(nullptr);
 
     TEST_END();
 }

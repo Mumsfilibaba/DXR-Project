@@ -19,6 +19,8 @@ FButton::FButton()
     , VerticalContentAlignment(EVerticalAlignment::Center)
     , MinHeight(0)
     , bHasBorder(false)
+    , bIsGhost(false)
+    , bIsHighlighted(false)
     , OnClickedDelegate()
 {
 }
@@ -32,6 +34,7 @@ void FButton::Initialize(const FDesc& Desc)
     VerticalContentAlignment   = Desc.VerticalContentAlignment;
     MinHeight                  = Desc.MinHeight;
     bHasBorder                 = Desc.bHasBorder;
+    bIsGhost                   = Desc.bIsGhost;
     OnClickedDelegate          = Desc.OnClicked;
 
     SetPadding(Desc.Padding);
@@ -74,7 +77,21 @@ int32 FButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& O
     const FUIStyle&         Style = FUIStyle::GetDefault();
     const EInteractionState State = GetInteractionState();
 
-    OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.GetButtonColor(State, false), CornerRadius);
+    if (bIsGhost)
+    {
+        if (bIsHighlighted || State == EInteractionState::Pressed)
+        {
+            OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Colors.ButtonHovered, CornerRadius);
+        }
+        else if (State == EInteractionState::Hovered)
+        {
+            OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Colors.ButtonNormal, CornerRadius);
+        }
+    }
+    else
+    {
+        OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.GetButtonColor(State, false), CornerRadius);
+    }
 
     if (bHasBorder)
     {
@@ -92,6 +109,11 @@ int32 FButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& O
 void FButton::SetOnClicked(const FOnClicked& InOnClicked)
 {
     OnClickedDelegate = InOnClicked;
+}
+
+void FButton::SetHighlighted(bool bInIsHighlighted)
+{
+    bIsHighlighted = bInIsHighlighted;
 }
 
 void FButton::SetText(const String& InText)

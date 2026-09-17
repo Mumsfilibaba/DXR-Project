@@ -30,6 +30,9 @@ enum class EDrawCommandType : uint8
     /** A textured axis-aligned rectangle. */
     Image,
 
+    /** The bottom band of a rounded rectangle, narrowed by its corners and faded out at either end. */
+    RoundedBottomBar,
+
     /** Opens a clip region. A well formed list matches every push with exactly one pop. */
     ClipPush,
 
@@ -242,6 +245,7 @@ struct FDrawCommand
         , PointOffset(0)
         , PointCount(0)
         , Thickness(0.0f)
+        , FadeWidth(0.0f)
         , bIsClosed(false)
     {
     }
@@ -269,8 +273,11 @@ struct FDrawCommand
     /** @brief How many points the command uses, which is zero for every other type. */
     int32 PointCount;
 
-    /** @brief The stroke width in pixels, used by BoxOutline and Polyline. */
+    /** @brief The stroke width in pixels, used by BoxOutline and Polyline, and the band height for RoundedBottomBar. */
     float Thickness;
+
+    /** @brief How far in from either end a RoundedBottomBar runs from no alpha to full, in pixels. */
+    float FadeWidth;
 
     /** @brief True when a polyline joins its last point back to its first. */
     bool bIsClosed;

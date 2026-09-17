@@ -16,11 +16,11 @@ FMenu::FMenu()
     : FCompoundElement()
     , Panel(FVerticalBox::Create())
     , Items()
-    , ChromeFill()
-    , ChromeBorder()
+    , Separators()
+    , Sections()
+    , Style(FUIStyle::GetDefault().Menu)
     , HighlightedIndex(-1)
-    , MinDesiredWidth(0)
-    , bHasChrome(false)
+    , MinDesiredWidth(-1)
 {
 }
 
@@ -34,28 +34,20 @@ void FMenu::Initialize()
 
 IntVector2 FMenu::ComputeDesiredSize() const
 {
-    IntVector2 DesiredSize = FCompoundElement::ComputeDesiredSize();
-    DesiredSize.X          = Math::Max(DesiredSize.X, MinDesiredWidth);
+    IntVector2  DesiredSize = FCompoundElement::ComputeDesiredSize();
+    const int32 MinWidth    = (MinDesiredWidth >= 0) ? MinDesiredWidth : Style.MinWidth;
+
+    DesiredSize.X = Math::Max(DesiredSize.X, MinWidth);
     return DesiredSize;
 }
 
 int32 FMenu::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    const FUIStyle&  Style  = FUIStyle::GetDefault();
-    const FRectangle Bounds = AllottedGeometry.Bounds;
+    const FRectangle   Bounds = AllottedGeometry.Bounds;
+    const FCornerRadii Radii(Style.CornerRadius);
 
-    if (bHasChrome)
-    {
-        OutCommandList.AddBox(LayerId, Bounds, ChromeFill);
-        OutCommandList.AddBoxOutline(LayerId, Bounds, ChromeBorder, 1.0f);
-    }
-    else
-    {
-        OutCommandList.AddBox(LayerId, Bounds, Style.Colors.MenuBackground);
-        OutCommandList.AddBoxOutline(LayerId, Bounds, Style.Colors.MenuBorder, 1.0f);
-
-        OutCommandList.AddBoxOutline(LayerId, Bounds.Deflate(FMargin(1, 1, 1, 1)), Style.Colors.MenuInnerBorder, 1.0f);
-    }
+    OutCommandList.AddBox(LayerId, Bounds, Style.Background, Radii);
+    OutCommandList.AddBoxOutline(LayerId, Bounds, Style.Border, 1.0f, Radii);
 
     return FCompoundElement::OnDraw(AllottedGeometry, OutCommandList, LayerId + 1);
 }
@@ -129,18 +121,28 @@ void FMenu::AddItem(const TSharedPtr<FMenuItem>& Item)
         return;
     }
 
+    Item->SetStyle(Style);
+
     Items.Add(Item);
     Panel->AddSlot(Item).SetHorizontalAlignment(EHorizontalAlignment::Fill);
 }
 
 void FMenu::AddSeparator()
 {
-    Panel->AddSlot(FMenuSeparator::Create()).SetHorizontalAlignment(EHorizontalAlignment::Fill);
+    TSharedPtr<FMenuSeparator> Separator = FMenuSeparator::Create();
+    Separator->SetStyle(Style);
+
+    Separators.Add(Separator);
+    Panel->AddSlot(Separator).SetHorizontalAlignment(EHorizontalAlignment::Fill);
 }
 
 void FMenu::AddSection(const String& Label, const TSharedPtr<IFontFace>& Font)
 {
-    Panel->AddSlot(FMenuSectionHeader::Create(Label, Font)).SetHorizontalAlignment(EHorizontalAlignment::Fill);
+    TSharedPtr<FMenuSectionHeader> Header = FMenuSectionHeader::Create(Label, Font);
+    Header->SetStyle(Style);
+
+    Sections.Add(Header);
+    Panel->AddSlot(Header).SetHorizontalAlignment(EHorizontalAlignment::Fill);
 }
 
 void FMenu::AddCustomEntry(const TSharedPtr<FVisualElement>& Element)
@@ -155,6 +157,8 @@ void FMenu::ClearEntries()
 {
     Panel->ClearSlots();
     Items.Clear();
+    Separators.Clear();
+    Sections.Clear();
     HighlightedIndex = -1;
 }
 
@@ -212,9 +216,27 @@ void FMenu::SetMinDesiredWidth(int32 InMinDesiredWidth)
     MinDesiredWidth = Math::Max(InMinDesiredWidth, 0);
 }
 
-void FMenu::SetChrome(const FFloatColor& InFill, const FFloatColor& InBorder)
+void FMenu::SetStyle(const FUIMenuStyle& InStyle)
 {
-    ChromeFill   = InFill;
-    ChromeBorder = InBorder;
-    bHasChrome   = true;
+    Style = InStyle;
+
+    for (const TSharedPtr<FMenuItem>& Item : Items)
+    {
+        Item->SetStyle(Style);
+    }
+
+    for (const TSharedPtr<FMenuSeparator>& Separator : Separators)
+    {
+        Separator->SetStyle(Style);
+    }
+
+    for (const TSharedPtr<FMenuSectionHeader>& Section : Sections)
+    {
+        Section->SetStyle(Style);
+    }
+}
+
+void FMenu::SetOuterCornerRadius(float InCornerRadius)
+{
+    Style.CornerRadius = InCornerRadius;
 }

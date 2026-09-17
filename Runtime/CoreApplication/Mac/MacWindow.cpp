@@ -93,6 +93,7 @@ bool FMacWindow::Initialize(const FPlatformWindowDesc& InDesc)
 
         const NSRect WindowRect = FMacApplication::ConvertEngineRectToCocoa(Width, Height, PositionX, PositionY);
         CocoaWindow = [[FCocoaWindow alloc] initWithContentRect:WindowRect styleMask:WindowStyle backing:NSBackingStoreBuffered defer:NO];
+
         if (!CocoaWindow)
         {
             LOG_ERROR("[FMacWindow]: Failed to create NSWindow");
@@ -101,7 +102,10 @@ bool FMacWindow::Initialize(const FPlatformWindowDesc& InDesc)
 
         CocoaWindow.IsTransientPopup = bIsTransientPopup ? YES : NO;
 
-        const NSWindowLevel WindowLevel = (InDesc.Style & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None ? NSFloatingWindowLevel : NSNormalWindowLevel;
+        const NSWindowLevel WindowLevel = (InDesc.Style & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None 
+            ? NSFloatingWindowLevel 
+            : NSNormalWindowLevel;
+
         [CocoaWindow setLevel:WindowLevel];
 
         bAcceptsInput = InDesc.bAcceptsInput;
@@ -159,20 +163,14 @@ bool FMacWindow::Initialize(const FPlatformWindowDesc& InDesc)
 
         CocoaWindow.collectionBehavior = Behavior;
 
-        if ((InDesc.Style & EWindowStyleFlags::Opaque) == EWindowStyleFlags::None)
-        {
-            [CocoaWindow setOpaque:NO];
-            [CocoaWindow setHasShadow:NO];
-        }
-        else
-        {
-            [CocoaWindow setHasShadow: YES];
-        }
+        const bool bIsOpaque = (InDesc.Style & EWindowStyleFlags::Opaque) != EWindowStyleFlags::None;
 
-        NSColor* BackGroundColor = [NSColor colorWithSRGBRed:InDesc.BackgroundColor.R
-                                                      green:InDesc.BackgroundColor.G
-                                                       blue:InDesc.BackgroundColor.B
-                                                      alpha:1.0f];
+        [CocoaWindow setOpaque:bIsOpaque ? YES : NO];
+        [CocoaWindow setHasShadow:YES];
+
+        NSColor* BackGroundColor = bIsOpaque
+            ? [NSColor colorWithSRGBRed:InDesc.BackgroundColor.R green:InDesc.BackgroundColor.G blue:InDesc.BackgroundColor.B alpha:1.0f]
+            : [NSColor clearColor];
 
         CocoaWindowView = [[FCocoaWindowView alloc] initWithFrame:WindowRect];
         

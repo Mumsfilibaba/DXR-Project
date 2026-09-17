@@ -58,6 +58,7 @@ public:
     virtual FRHITextureRef RenderElementToTexture(const TSharedPtr<FVisualElement>& Element, const IntVector2& Size, float DPIScale) override final;
     virtual void RetireTexture(const FRHITextureRef& Texture) override final;
     virtual void SetPrimaryWindow(const TSharedPtr<FWindow>& InWindow) override final;
+    virtual void EnsureWindowSurface(const TSharedPtr<FWindow>& InWindow) override final;
     virtual FRHISwapChainRef GetWindowSwapChain(const TSharedPtr<FWindow>& InWindow) const override final;
 
     /**
@@ -141,6 +142,7 @@ private:
         IntVector2          Size;
         EDeferredShowState  DeferredShowState = EDeferredShowState::None;
         bool                bIsPrimary        = false;
+        bool                bIsRendered       = false;
     };
 
     struct FRetiredBuffer

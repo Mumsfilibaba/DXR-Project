@@ -8,12 +8,13 @@
 {
     self = [super initWithFrame:frameRect];
     CHECK(self != nil);
+    self.IsOpaqueSurface = YES;
     return self;
 }
 
 - (BOOL)isOpaque
 {
-    return YES;
+    return self.IsOpaqueSurface;
 }
 
 - (BOOL)mouseDownCanMoveWindow
@@ -130,14 +131,18 @@ bool FMetalSwapChainRHI::Initialize()
         
         FCocoaWindow* CocoaWindow = reinterpret_cast<FCocoaWindow*>(Desc.WindowHandle);
 
+        const BOOL bIsOpaqueSurface = Desc.IsTransparent() ? NO : YES;
+
         MetalView = [[FMetalWindowView alloc] initWithFrame:Frame];
         [MetalView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [MetalView setWantsLayer:YES];
+        [MetalView setIsOpaqueSurface:bIsOpaqueSurface];
 
         NewMetalLayer = [CAMetalLayer new];
         NewMetalLayer.edgeAntialiasingMask       = 0;
         NewMetalLayer.masksToBounds              = YES;
-        NewMetalLayer.backgroundColor            = CocoaWindow.backgroundColor.CGColor;
+        NewMetalLayer.opaque                     = bIsOpaqueSurface;
+        NewMetalLayer.backgroundColor            = bIsOpaqueSurface ? CocoaWindow.backgroundColor.CGColor : nil;
         NewMetalLayer.presentsWithTransaction    = NO;
         NewMetalLayer.anchorPoint                = CGPointMake(0.5, 0.5);
         NewMetalLayer.frame                      = Frame;

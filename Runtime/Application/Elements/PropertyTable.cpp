@@ -390,13 +390,19 @@ FEventResponse FPropertyTable::OnMouseLeft(const FCursorEvent& CursorEvent)
 
 bool FPropertyTable::GetCursor(ECursor& OutCursor) const
 {
-    if (!bIsDraggingDivider && !bIsDividerHovered)
+    if (bIsDraggingDivider || bIsDividerHovered)
     {
-        return false;
+        OutCursor = ECursor::ResizeEW;
+        return true;
     }
 
-    OutCursor = ECursor::ResizeEW;
-    return true;
+    if (HoveredRevertRow != InvalidRowIndex)
+    {
+        OutCursor = ECursor::Hand;
+        return true;
+    }
+
+    return false;
 }
 
 FPropertyRow& FPropertyTable::AddRow(const String& Label, const TSharedPtr<FVisualElement>& Editor)

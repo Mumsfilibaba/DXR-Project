@@ -62,6 +62,8 @@ protected:
     // FInteractiveElement Interface
     virtual void OnDragged(const FCursorEvent& CursorEvent) override;
 
+    virtual bool IsPressable() const override { return false; }
+
 private:
     NODISCARD FRectangle GetSquareRectangle(const FRectangle& Bounds) const;
     NODISCARD FRectangle GetHueBarRectangle(const FRectangle& Bounds) const;

@@ -72,9 +72,11 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("UIDrawDataLayerOrder", UIDrawDataLayerOrder_Test());
     RUN_TEST("UIDrawDataBatching", UIDrawDataBatching_Test());
     RUN_TEST("UIDrawDataRoundedBox", UIDrawDataRoundedBox_Test());
+    RUN_TEST("UIDrawDataRoundedBottomBar", UIDrawDataRoundedBottomBar_Test());
     RUN_TEST("UIDrawDataText", UIDrawDataText_Test());
     RUN_TEST("UIDrawDataClipCulling", UIDrawDataClipCulling_Test());
     RUN_TEST("UIDrawDataSiblingClips", UIDrawDataSiblingClips_Test());
+    RUN_TEST("UIDrawDataAntiAliasing", UIDrawDataAntiAliasing_Test());
 
     RUN_TEST("CornerRadiiTypes", CornerRadiiTypes_Test());
     RUN_TEST("VectorDrawCommands", VectorDrawCommands_Test());
@@ -94,6 +96,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("StyleDefaults", StyleDefaults_Test());
     RUN_TEST("StyleControlColor", StyleControlColor_Test());
     RUN_TEST("StyleOverride", StyleOverride_Test());
+    RUN_TEST("PopupCornerRounding", PopupCornerRounding_Test());
 
     RUN_TEST("TextLayoutBasics", TextLayoutBasics_Test());
     RUN_TEST("TextLayoutNewlines", TextLayoutNewlines_Test());
@@ -107,6 +110,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("InteractionKeyboard", InteractionKeyboard_Test());
 
     RUN_TEST("ButtonControl", ButtonControl_Test());
+    RUN_TEST("GhostButtonControl", GhostButtonControl_Test());
     RUN_TEST("CheckBoxControl", CheckBoxControl_Test());
     RUN_TEST("SliderControl", SliderControl_Test());
     RUN_TEST("SpinBoxControl", SpinBoxControl_Test());
@@ -116,6 +120,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("SpacerSeparatorControl", SpacerSeparatorControl_Test());
     RUN_TEST("ExpanderControl", ExpanderControl_Test());
     RUN_TEST("SearchBoxControl", SearchBoxControl_Test());
+    RUN_TEST("SearchBoxClearStyle", SearchBoxClearStyle_Test());
     RUN_TEST("NumericEntryControl", NumericEntryControl_Test());
     RUN_TEST("ProgressBarControl", ProgressBarControl_Test());
     RUN_TEST("HistogramControl", HistogramControl_Test());
@@ -132,6 +137,7 @@ int main(int Argc, const CHAR* Argv[])
 
     RUN_TEST("PropertyTableRows", PropertyTableRows_Test());
     RUN_TEST("PropertyTableColumnDrag", PropertyTableColumnDrag_Test());
+    RUN_TEST("PropertyTableRevertCursor", PropertyTableRevertCursor_Test());
     RUN_TEST("PropertyTableFixedColumn", PropertyTableFixedColumn_Test());
     RUN_TEST("PropertyTableToolTips", PropertyTableToolTips_Test());
     RUN_TEST("PropertyTableLayout", PropertyTableLayout_Test());
@@ -139,9 +145,13 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("MenuStackPlacement", MenuStackPlacement_Test());
     RUN_TEST("MenuStackDepth", MenuStackDepth_Test());
     RUN_TEST("MenuItemLayout", MenuItemLayout_Test());
+    RUN_TEST("MenuStyle", MenuStyle_Test());
+    RUN_TEST("MenuMinimumWidth", MenuMinimumWidth_Test());
     RUN_TEST("MenuItemActivation", MenuItemActivation_Test());
     RUN_TEST("MenuKeyboard", MenuKeyboard_Test());
     RUN_TEST("MenuBarSwitching", MenuBarSwitching_Test());
+    RUN_TEST("MenuBarHighlight", MenuBarHighlight_Test());
+    RUN_TEST("MenuBarTallStrip", MenuBarTallStrip_Test());
     RUN_TEST("MenuBarInTitleBar", MenuBarInTitleBar_Test());
     RUN_TEST("ToolTipService", ToolTipService_Test());
     RUN_TEST("ComboBoxControl", ComboBoxControl_Test());
@@ -158,6 +168,9 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("SplitterDrag", SplitterDrag_Test());
     RUN_TEST("SplitterSeededDesc", SplitterSeededDesc_Test());
     RUN_TEST("TabStripReorder", TabStripReorder_Test());
+    RUN_TEST("TabStripScroll", TabStripScroll_Test());
+    RUN_TEST("TabStripStyle", TabStripStyle_Test());
+    RUN_TEST("TabMinimumWidth", TabMinimumWidth_Test());
     RUN_TEST("TabStripTearOut", TabStripTearOut_Test());
     RUN_TEST("DockingAreaDockUndock", DockingAreaDockUndock_Test());
     RUN_TEST("DockingAreaHitTest", DockingAreaHitTest_Test());
@@ -202,6 +215,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("ApplicationRendererWindowPass", ApplicationRendererWindowPass_Test());
     RUN_TEST("ApplicationRendererExternalSurface", ApplicationRendererExternalSurface_Test());
     RUN_TEST("ApplicationRendererWindowLifetime", ApplicationRendererWindowLifetime_Test());
+    RUN_TEST("ApplicationRendererPopupSurface", ApplicationRendererPopupSurface_Test());
 
     RUN_TEST("EditableTextEditing", EditableTextEditing_Test());
     RUN_TEST("EditableTextCursor", EditableTextCursor_Test());

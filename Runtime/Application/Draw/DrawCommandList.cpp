@@ -196,6 +196,21 @@ void FDrawCommandList::AddImage(int32 LayerId, const FRectangle& Bounds, const F
     Command.Brush  = Brush;
 }
 
+void FDrawCommandList::AddRoundedBottomBar(int32 LayerId, const FRectangle& Bounds, const FCornerRadii& CornerRadius, float Thickness, const FFloatColor& Tint, float FadeWidth)
+{
+    if (Thickness <= 0.0f)
+    {
+        return;
+    }
+
+    FDrawCommand& Command = EmplaceCommand(EDrawCommandType::RoundedBottomBar, LayerId);
+    Command.Bounds       = Bounds;
+    Command.Tint         = Tint;
+    Command.CornerRadius = CornerRadius;
+    Command.Thickness    = Thickness;
+    Command.FadeWidth    = Math::Max(FadeWidth, 0.0f);
+}
+
 void FDrawCommandList::PushClip(int32 LayerId, const FRectangle& ClipRectangle)
 {
     const FRectangle Resolved = ClipStack.IsEmpty() ? ClipRectangle : ClipStack.Last().Intersect(ClipRectangle);

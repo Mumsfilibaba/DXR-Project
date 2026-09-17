@@ -153,6 +153,7 @@ bool VectorDrawPolyline_Test()
     TEST_BEGIN();
 
     FUIDrawData DrawData;
+    DrawData.SetAntiAliasingEnabled(false);
 
     TEST_SECTION("An open two-point stroke is one quad, whatever its angle");
     FDrawCommandList LineList;
@@ -238,6 +239,7 @@ bool VectorDrawConvexPolygon_Test()
     TEST_BEGIN();
 
     FUIDrawData DrawData;
+    DrawData.SetAntiAliasingEnabled(false);
 
     TEST_SECTION("A triangle is three vertices and one face");
     FDrawCommandList TriangleList;
@@ -286,6 +288,7 @@ bool VectorDrawCircles_Test()
     TEST_BEGIN();
 
     FUIDrawData DrawData;
+    DrawData.SetAntiAliasingEnabled(false);
 
     TEST_SECTION("A filled circle is one fan with the segment count it was asked for");
     FDrawCommandList FilledList;
@@ -360,6 +363,7 @@ bool VectorDrawBezier_Test()
     TEST_BEGIN();
 
     FUIDrawData DrawData;
+    DrawData.SetAntiAliasingEnabled(false);
 
     TEST_SECTION("A bezier is flattened into the number of segments it was asked for");
     FDrawCommandList CurveList;
@@ -413,6 +417,7 @@ bool VectorDrawPerCornerRounding_Test()
     TEST_BEGIN();
 
     FUIDrawData DrawData;
+    DrawData.SetAntiAliasingEnabled(false);
 
     const FRectangle Bounds(IntVector2(0, 0), 100, 40);
 
@@ -476,6 +481,7 @@ bool VectorDrawBoxOutline_Test()
     TEST_BEGIN();
 
     FUIDrawData DrawData;
+    DrawData.SetAntiAliasingEnabled(false);
 
     TEST_SECTION("A square outline is a closed four-point ring");
     FDrawCommandList OutlineList;
@@ -532,6 +538,7 @@ bool VectorDrawClipCulling_Test()
     TEST_BEGIN();
 
     FUIDrawData DrawData;
+    DrawData.SetAntiAliasingEnabled(false);
 
     TEST_SECTION("A stroke that misses the region is dropped rather than scissored away");
     const Vector2 FarPath[2] = { Vector2(500.0f, 500.0f), Vector2(600.0f, 600.0f) };

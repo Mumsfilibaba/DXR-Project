@@ -33,6 +33,10 @@ class FD3D12TextureAllocator;
 class FD3D12UploadHeapAllocator;
 class FD3D12CommandContext;
 
+#if D3D12_ENABLE_COMPOSITION
+struct IDCompositionDevice;
+#endif
+
 typedef TSharedRef<FD3D12Device>  FD3D12DeviceRef;
 typedef TSharedRef<FD3D12Adapter> FD3D12AdapterRef;
 
@@ -148,6 +152,9 @@ public:
     ID3D12CommandQueue*              GetD3D12CommandQueue(ED3D12CommandQueueType QueueType);
     FD3D12Queue*                     GetQueue(ED3D12CommandQueueType QueueType);
     FD3D12QueryHeapManager*          GetQueryHeapManager(EQueryType QueryType);
+#if D3D12_ENABLE_COMPOSITION
+    IDCompositionDevice*             GetCompositionDevice();
+#endif
     FD3D12QueryHeap*                 ObtainQueryHeap(D3D12_QUERY_HEAP_TYPE HeapType);
     void                             RecycleQueryHeap(FD3D12QueryHeap* Heap);
     bool                             QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount, uint32& OutQuality);
@@ -278,55 +285,58 @@ private:
     uint32                           NodeMask;
     uint32                           NodeCount;
 
-    TComPtr<ID3D12Device>     D3D12Device;
+    TComPtr<ID3D12Device>        D3D12Device;
 #if D3D12_USE_ID3D12DEVICE_1
-    TComPtr<ID3D12Device1>    D3D12Device1;
+    TComPtr<ID3D12Device1>       D3D12Device1;
 #endif
 #if D3D12_USE_ID3D12DEVICE_2
-    TComPtr<ID3D12Device2>    D3D12Device2;
+    TComPtr<ID3D12Device2>       D3D12Device2;
 #endif
 #if D3D12_USE_ID3D12DEVICE_3
-    TComPtr<ID3D12Device3>    D3D12Device3;
+    TComPtr<ID3D12Device3>       D3D12Device3;
 #endif
 #if D3D12_USE_ID3D12DEVICE_4
-    TComPtr<ID3D12Device4>    D3D12Device4;
+    TComPtr<ID3D12Device4>       D3D12Device4;
 #endif
 #if D3D12_USE_ID3D12DEVICE_5
-    TComPtr<ID3D12Device5>    D3D12Device5;
+    TComPtr<ID3D12Device5>       D3D12Device5;
 #endif
 #if D3D12_USE_ID3D12DEVICE_6
-    TComPtr<ID3D12Device6>    D3D12Device6;
+    TComPtr<ID3D12Device6>       D3D12Device6;
 #endif
 #if D3D12_USE_ID3D12DEVICE_7
-    TComPtr<ID3D12Device7>    D3D12Device7;
+    TComPtr<ID3D12Device7>       D3D12Device7;
 #endif
 #if D3D12_USE_ID3D12DEVICE_8
-    TComPtr<ID3D12Device8>    D3D12Device8;
+    TComPtr<ID3D12Device8>       D3D12Device8;
 #endif
 #if D3D12_USE_ID3D12DEVICE_9
-    TComPtr<ID3D12Device9>    D3D12Device9;
+    TComPtr<ID3D12Device9>       D3D12Device9;
 #endif
 #if D3D12_USE_ID3D12DEVICE_10
-    TComPtr<ID3D12Device10>   D3D12Device10;
+    TComPtr<ID3D12Device10>      D3D12Device10;
 #endif
 #if D3D12_USE_ID3D12DEVICE_11
-    TComPtr<ID3D12Device11>   D3D12Device11;
+    TComPtr<ID3D12Device11>      D3D12Device11;
 #endif
 #if D3D12_USE_ID3D12DEVICE_12
-    TComPtr<ID3D12Device12>   D3D12Device12;
+    TComPtr<ID3D12Device12>      D3D12Device12;
 #endif
 #if D3D12_USE_ID3D12DEVICE_13
-    TComPtr<ID3D12Device13>   D3D12Device13;
+    TComPtr<ID3D12Device13>      D3D12Device13;
 #endif
 #if D3D12_USE_ID3D12DEVICE_14
-    TComPtr<ID3D12Device14>   D3D12Device14;
+    TComPtr<ID3D12Device14>      D3D12Device14;
 #endif
 #if D3D12_USE_DEBUG_MESSAGE_CALLBACK
-    TComPtr<ID3D12InfoQueue1> DebugInfoQueue;
-    DWORD                     DebugMessageCallbackCookie;
+    TComPtr<ID3D12InfoQueue1>    DebugInfoQueue;
+    DWORD                        DebugMessageCallbackCookie;
+#endif
+#if D3D12_ENABLE_COMPOSITION
+    TComPtr<IDCompositionDevice> CompositionDevice;
 #endif
 
-    HANDLE               DeviceRemovedEvent;
-    HANDLE               DeviceRemovedWait;
-    TComPtr<ID3D12Fence> DeviceRemovedFence;
+    HANDLE                       DeviceRemovedEvent;
+    HANDLE                       DeviceRemovedWait;
+    TComPtr<ID3D12Fence>         DeviceRemovedFence;
 };

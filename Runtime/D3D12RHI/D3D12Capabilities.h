@@ -17,6 +17,7 @@ extern D3D12RHI_API bool GD3D12SupportGPUUploadHeaps;
 extern D3D12RHI_API bool GD3D12SupportDynamicDepthBias;
 extern D3D12RHI_API bool GD3D12SupportsBindless;
 extern D3D12RHI_API bool GD3D12SupportEnhancedBarriers;
+extern D3D12RHI_API bool GD3D12SupportsComposition;
 
 // -------------------------------------------------------------------------------------------
 // Ray Tracing feature support (backend-native mirrors of the agnostic RHI::bSupports* flags)

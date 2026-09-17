@@ -8,7 +8,7 @@ TSharedPtr<FMenuBarButton> FMenuBarButton::Create(const String& InLabel, const T
     TSharedPtr<FMenuBarButton> NewButton = MakeSharedPtr<FMenuBarButton>();
     NewButton->Label = InLabel;
     NewButton->Font  = InFont;
-    NewButton->SetPadding(FMargin(8, 3, 8, 3));
+    NewButton->SetPadding(NewButton->Style.ItemPadding);
     return NewButton;
 }
 
@@ -16,6 +16,7 @@ FMenuBarButton::FMenuBarButton()
     : FInteractiveElement()
     , Label()
     , Font(nullptr)
+    , Style(FUIStyle::GetDefault().MenuBar)
     , OwnerBar(nullptr)
     , Anchor(nullptr)
 {
@@ -34,27 +35,31 @@ IntVector2 FMenuBarButton::ComputeDesiredSize() const
         DesiredSize.Y += Font->GetLineHeight();
     }
 
+    DesiredSize.Y = Math::Max(DesiredSize.Y, Style.Height - (2 * Style.ItemInset));
     return DesiredSize;
 }
 
 int32 FMenuBarButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    const FUIStyle&         Style   = FUIStyle::GetDefault();
     const EInteractionState State   = GetInteractionState();
     const bool              bIsOpen = Anchor && Anchor->IsOpen();
 
+    const FRectangle&  Highlight = AllottedGeometry.Bounds;
+    const FCornerRadii Radii(Style.ItemCornerRadius);
+
     if (bIsOpen || State == EInteractionState::Pressed)
     {
-        OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Colors.MenuBarItemActive);
+        OutCommandList.AddBox(LayerId, Highlight, Style.ItemActive, Radii);
     }
     else if (State == EInteractionState::Hovered)
     {
-        OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Colors.MenuBarItemHovered);
+        OutCommandList.AddBox(LayerId, Highlight, Style.ItemHovered, Radii);
     }
 
     if (Font && !Label.IsEmpty())
     {
-        OutCommandList.AddText(LayerId, AllottedGeometry.Bounds.Deflate(GetPadding()), Label, Font.Get(), Style.GetTextColor(State));
+        const FFloatColor& TextColor = FUIStyle::GetDefault().GetTextColor(State);
+        OutCommandList.AddText(LayerId, AllottedGeometry.Bounds.Deflate(GetPadding()), Label, Font.Get(), TextColor);
     }
 
     return LayerId;
@@ -78,6 +83,12 @@ void FMenuBarButton::SetOwner(FMenuBar* InOwnerBar, FMenuAnchor* InAnchor)
     Anchor   = InAnchor;
 }
 
+void FMenuBarButton::SetStyle(const FUIMenuBarStyle& InStyle)
+{
+    Style = InStyle;
+    SetPadding(Style.ItemPadding);
+}
+
 void FMenuBarButton::OnClicked()
 {
     if (Anchor)
@@ -97,6 +108,8 @@ FMenuBar::FMenuBar()
     : FCompoundElement()
     , Panel(FHorizontalBox::Create())
     , Anchors()
+    , Buttons()
+    , Style(FUIStyle::GetDefault().MenuBar)
 {
 }
 
@@ -107,9 +120,17 @@ void FMenuBar::Initialize()
     SetContent(Panel);
 }
 
+IntVector2 FMenuBar::ComputeDesiredSize() const
+{
+    IntVector2 DesiredSize = FCompoundElement::ComputeDesiredSize();
+    DesiredSize.Y          = Math::Max(DesiredSize.Y, Style.Height);
+    return DesiredSize;
+}
+
 TSharedPtr<FMenuAnchor> FMenuBar::AddMenu(const String& Label, const TSharedPtr<IFontFace>& Font, const TSharedPtr<FVisualElement>& MenuContent)
 {
     TSharedPtr<FMenuBarButton> Button = FMenuBarButton::Create(Label, Font);
+    Button->SetStyle(Style);
 
     FMenuAnchor::FDesc Desc;
     Desc.Content     = Button;
@@ -120,7 +141,9 @@ TSharedPtr<FMenuAnchor> FMenuBar::AddMenu(const String& Label, const TSharedPtr<
     Button->SetOwner(this, Anchor.Get());
 
     Anchors.Add(Anchor);
-    Panel->AddSlot(Anchor).SetVerticalAlignment(EVerticalAlignment::Fill);
+    Buttons.Add(Button);
+    const int32 LeadingGap = Panel->GetNumSlots() > 0 ? Style.ItemSpacing : 0;
+    Panel->AddSlot(Anchor).SetVerticalAlignment(EVerticalAlignment::Center).SetPadding(FMargin(LeadingGap, 0, 0, 0));
 
     return Anchor;
 }
@@ -164,4 +187,19 @@ void FMenuBar::OnButtonHovered(FMenuAnchor* HoveredAnchor)
 
     CloseActiveMenu();
     HoveredAnchor->Open();
+}
+
+void FMenuBar::SetStyle(const FUIMenuBarStyle& InStyle)
+{
+    Style = InStyle;
+
+    for (const TSharedPtr<FMenuBarButton>& Button : Buttons)
+    {
+        Button->SetStyle(Style);
+    }
+
+    for (int32 Index = 0; Index < Panel->GetNumSlots(); ++Index)
+    {
+        Panel->GetSlot(Index).SetPadding(FMargin(Index > 0 ? Style.ItemSpacing : 0, 0, 0, 0));
+    }
 }

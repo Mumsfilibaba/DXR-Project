@@ -83,6 +83,20 @@ static FUIBrush MakeIcon()
     return FUIBrush(reinterpret_cast<FRHITexture*>(0x10));
 }
 
+static const FDrawCommand* FindLastBox(const FDrawCommandList& CommandList)
+{
+    const FDrawCommand* Last = nullptr;
+    for (const FDrawCommand& Command : CommandList.GetCommands())
+    {
+        if (Command.Type == EDrawCommandType::Box)
+        {
+            Last = &Command;
+        }
+    }
+
+    return Last;
+}
+
 static FFloatColor FindFirstOutlineColor(const FDrawCommandList& CommandList)
 {
     for (const FDrawCommand& Command : CommandList.GetCommands())
@@ -194,6 +208,90 @@ bool ButtonControl_Test()
     Button->OnKeyDown(FKeyEvent(EInputEventType::KeyDown, Keys::Space, FModifierKeyState(), false, true));
     TEST_EXPECT_EQ(ClickCount, 2);
 
+    TEST_SECTION("A hovered button puts the hand under the cursor, and a disabled one leaves the arrow");
+    ECursor Cursor = ECursor::Arrow;
+    TEST_EXPECT(Button->IsHovered());
+    TEST_EXPECT(Button->GetCursor(Cursor));
+    TEST_EXPECT(Cursor == ECursor::Hand);
+
+    Button->SetEnabled(false);
+    TEST_EXPECT(!Button->GetCursor(Cursor));
+    Button->SetEnabled(true);
+
+    TEST_SECTION("So does one the cursor is nowhere near");
+    Button->OnMouseLeft(MakeMoveEvent(IntVector2(900, 900)));
+    TEST_EXPECT(!Button->GetCursor(Cursor));
+
+    TEST_END();
+}
+
+bool GhostButtonControl_Test()
+{
+    TEST_BEGIN();
+
+    FUIStyle::ResetDefault();
+
+    const FUIStyle& Style = FUIStyle::GetDefault();
+
+    FButton::FDesc Desc;
+    Desc.SetText("Filter").SetFont(CreateFont());
+    Desc.bIsGhost = true;
+
+    TSharedPtr<FButton> Ghost = FButton::Create(Desc);
+    LayoutElement(Ghost, FRectangle(IntVector2(10, 10), 120, 32));
+
+    TEST_SECTION("A ghost paints no fill at rest, so the strip behind it shows through");
+    FDrawCommandList RestCommands;
+    DrawElement(Ghost, RestCommands);
+
+    TEST_EXPECT_EQ(CountCommands(RestCommands, EDrawCommandType::Box), 0);
+    TEST_EXPECT_EQ(CountCommands(RestCommands, EDrawCommandType::Text), 1);
+
+    TEST_SECTION("Hovering it brings up the fill an ordinary button wears at rest");
+    Ghost->OnMouseEntered(MakeMoveEvent(IntVector2(50, 20)));
+
+    FDrawCommandList HoveredCommands;
+    DrawElement(Ghost, HoveredCommands);
+
+    const FDrawCommand* HoveredFill = FindFirstBox(HoveredCommands);
+    TEST_EXPECT(HoveredFill != nullptr);
+    TEST_EXPECT(HoveredFill->Tint == Style.Colors.ButtonNormal);
+
+    TEST_SECTION("Pressing it takes the next step up rather than sinking, since there is nothing below to sink to");
+    Ghost->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(50, 20)));
+
+    FDrawCommandList PressedCommands;
+    DrawElement(Ghost, PressedCommands);
+    TEST_EXPECT(FindFirstBox(PressedCommands)->Tint == Style.Colors.ButtonHovered);
+
+    Ghost->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(50, 20)));
+    Ghost->OnMouseLeft(MakeMoveEvent(IntVector2(900, 900)));
+
+    TEST_SECTION("Holding it highlighted keeps that fill with the cursor away, which is how an open menu reads");
+    Ghost->SetHighlighted(true);
+    TEST_EXPECT(Ghost->IsHighlighted());
+
+    FDrawCommandList HighlightedCommands;
+    DrawElement(Ghost, HighlightedCommands);
+    TEST_EXPECT(FindFirstBox(HighlightedCommands)->Tint == Style.Colors.ButtonHovered);
+
+    Ghost->SetHighlighted(false);
+
+    FDrawCommandList ClearedCommands;
+    DrawElement(Ghost, ClearedCommands);
+    TEST_EXPECT_EQ(CountCommands(ClearedCommands, EDrawCommandType::Box), 0);
+
+    TEST_SECTION("An ordinary button is unaffected and still fills at rest");
+    FButton::FDesc PlainDesc;
+    PlainDesc.SetText("Filter").SetFont(CreateFont());
+
+    TSharedPtr<FButton> Plain = FButton::Create(PlainDesc);
+    LayoutElement(Plain, FRectangle(IntVector2(10, 10), 120, 32));
+
+    FDrawCommandList PlainCommands;
+    DrawElement(Plain, PlainCommands);
+    TEST_EXPECT(FindFirstBox(PlainCommands)->Tint == Style.Colors.ButtonNormal);
+
     TEST_END();
 }
 
@@ -280,6 +378,16 @@ bool CheckBoxControl_Test()
     TEST_EXPECT_EQ(BoxBounds.Width, BoxSize);
     TEST_EXPECT_EQ(BoxBounds.Height, BoxSize);
     TEST_EXPECT_EQ(BoxBounds.Position.X, 0);
+
+    TEST_SECTION("The hand follows the whole row rather than the square, since the label toggles it too");
+    ECursor Cursor = ECursor::Arrow;
+
+    CheckBox->OnMouseEntered(MakeMoveEvent(IntVector2(150, 10)));
+    TEST_EXPECT(CheckBox->GetCursor(Cursor));
+    TEST_EXPECT(Cursor == ECursor::Hand);
+
+    CheckBox->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+    TEST_EXPECT(!CheckBox->GetCursor(Cursor));
 
     TEST_END();
 }
@@ -384,6 +492,14 @@ bool SliderControl_Test()
     Slider->SetEnabled(false);
     Slider->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(10, 10)));
     TEST_EXPECT_EQ(Slider->GetValue(), 50.0f);
+
+    TEST_SECTION("The handle is dragged rather than pressed, so hovering it offers no shape of its own");
+    Slider->SetEnabled(true);
+    Slider->OnMouseEntered(MakeMoveEvent(IntVector2(50, 10)));
+
+    ECursor Cursor = ECursor::Arrow;
+    TEST_EXPECT(Slider->IsHovered());
+    TEST_EXPECT(!Slider->GetCursor(Cursor));
 
     TEST_END();
 }
@@ -555,6 +671,13 @@ bool ScrollBarControl_Test()
     Horizontal->SetScrollState(400, 200, 200);
     TEST_EXPECT_EQ(Horizontal->GetThumbBounds().Width, 100);
     TEST_EXPECT_EQ(Horizontal->GetThumbBounds().GetRight(), 200);
+
+    TEST_SECTION("The thumb is dragged rather than pressed, so hovering the bar offers no shape of its own");
+    ScrollBar->OnMouseEntered(MakeMoveEvent(IntVector2(6, 20)));
+
+    ECursor Cursor = ECursor::Arrow;
+    TEST_EXPECT(ScrollBar->IsHovered());
+    TEST_EXPECT(!ScrollBar->GetCursor(Cursor));
 
     TEST_END();
 }
@@ -856,6 +979,24 @@ bool ExpanderControl_Test()
     Expander->SetLabel("Renamed");
     TEST_EXPECT(Expander->GetLabel() == String("Renamed"));
 
+    TEST_SECTION("Only the header is pressable, so only the header carries the hand");
+    ECursor Cursor = ECursor::Arrow;
+    TEST_EXPECT(!Expander->GetCursor(Cursor));
+
+    Expander->OnMouseEntered(MakeMoveEvent(IntVector2(20, 10)));
+    TEST_EXPECT(Expander->GetCursor(Cursor));
+    TEST_EXPECT(Cursor == ECursor::Hand);
+
+    TEST_SECTION("Crossing between the header and the body inside the element is followed either way");
+    Expander->OnMouseMove(MakeMoveEvent(IntVector2(20, 60)));
+    TEST_EXPECT(!Expander->GetCursor(Cursor));
+
+    Expander->OnMouseMove(MakeMoveEvent(IntVector2(20, 10)));
+    TEST_EXPECT(Expander->GetCursor(Cursor));
+
+    Expander->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+    TEST_EXPECT(!Expander->GetCursor(Cursor));
+
     TEST_END();
 }
 
@@ -889,7 +1030,7 @@ bool SearchBoxControl_Test()
     TEST_EXPECT(SearchBox->GetText().IsEmpty());
     TEST_EXPECT(SearchBox->GetClearButtonRectangle(Bounds).IsEmpty());
 
-    TEST_SECTION("The magnifier holds the left square of an empty field");
+    TEST_SECTION("The magnifier holds the left square of the field");
     const FRectangle IconBounds = SearchBox->GetSearchIconRectangle(Bounds);
     TEST_EXPECT(!IconBounds.IsEmpty());
     TEST_EXPECT_EQ(IconBounds.Position.X, Bounds.Position.X + Desc.Padding.Left);
@@ -916,15 +1057,21 @@ bool SearchBoxControl_Test()
     TEST_EXPECT_EQ(Changes.Size(), 1);
     TEST_EXPECT(Changes[0] == String("Mesh"));
 
-    TEST_SECTION("The clear button takes over the very square the magnifier held, which goes away");
+    TEST_SECTION("The clear button takes the right square, and the magnifier keeps the left one it had");
     const FRectangle ClearBounds = SearchBox->GetClearButtonRectangle(Bounds);
     TEST_EXPECT(!ClearBounds.IsEmpty());
-    TEST_EXPECT(ClearBounds == IconBounds);
-    TEST_EXPECT(SearchBox->GetSearchIconRectangle(Bounds).IsEmpty());
+    TEST_EXPECT_EQ(ClearBounds.GetRight(), Bounds.GetRight() - Desc.Padding.Right);
+    TEST_EXPECT_EQ(ClearBounds.Position.Y, IconBounds.Position.Y);
+    TEST_EXPECT_EQ(ClearBounds.Height, IconBounds.Height);
+    TEST_EXPECT(ClearBounds.Position.X > IconBounds.GetRight());
+    TEST_EXPECT(SearchBox->GetSearchIconRectangle(Bounds) == IconBounds);
 
-    TEST_SECTION("Swapping the two leaves the line of text where it was");
+    TEST_SECTION("The line of text gives up the room the clear button now takes, and keeps where it starts");
     LayoutElement(SearchBox, Bounds);
-    TEST_EXPECT(SearchBox->GetEditor()->GetContentRectangle() == EmptyEditorBounds);
+
+    const FRectangle FilledEditorBounds = SearchBox->GetEditor()->GetContentRectangle();
+    TEST_EXPECT_EQ(FilledEditorBounds.Position.X, EmptyEditorBounds.Position.X);
+    TEST_EXPECT(FilledEditorBounds.GetRight() < ClearBounds.Position.X);
 
     TEST_SECTION("Clicking it empties the field and reports that too");
     SearchBox->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, ClearBounds.GetCenter()));
@@ -976,6 +1123,77 @@ bool SearchBoxControl_Test()
     FDrawCommandList IdleList;
     DrawElement(SearchBox, IdleList);
     TEST_EXPECT(FindFirstOutlineColor(IdleList) == FrameStyle.BorderNormal);
+
+    TEST_SECTION("An empty box has no clear button, so its right edge offers no shape");
+    ECursor Cursor = ECursor::Arrow;
+    SearchBox->OnMouseMove(MakeMoveEvent(IntVector2(Bounds.GetRight() - Desc.Padding.Right - 4, 12)));
+    TEST_EXPECT(!SearchBox->GetCursor(Cursor));
+
+    TEST_SECTION("Once there is text to clear, the cross carries the hand and the line of text does not");
+    SearchBox->SetText("Mesh");
+
+    SearchBox->OnMouseMove(MakeMoveEvent(SearchBox->GetClearButtonRectangle(Bounds).GetCenter()));
+    TEST_EXPECT(SearchBox->GetCursor(Cursor));
+    TEST_EXPECT(Cursor == ECursor::Hand);
+
+    SearchBox->OnMouseMove(MakeMoveEvent(SearchBox->GetEditor()->GetContentRectangle().GetCenter()));
+    TEST_EXPECT(!SearchBox->GetCursor(Cursor));
+
+    TEST_END();
+}
+
+bool SearchBoxClearStyle_Test()
+{
+    TEST_BEGIN();
+
+    FUIStyle::ResetDefault();
+
+    const FRectangle Bounds(IntVector2(0, 0), 200, 24);
+
+    FInputFrameStyle FrameStyle;
+    FrameStyle.ClearHovered      = FFloatColor(0.90f, 0.10f, 0.10f, 1.0f);
+    FrameStyle.ClearCornerRadius = 9.0f;
+
+    FSearchBox::FDesc Desc;
+    Desc.Font       = CreateFont();
+    Desc.SearchIcon = MakeIcon();
+    Desc.Style      = FrameStyle;
+
+    TSharedPtr<FSearchBox> SearchBox = FSearchBox::Create(Desc);
+    SearchBox->SetText("Mesh");
+    LayoutElement(SearchBox, Bounds);
+
+    const FRectangle ClearBounds = SearchBox->GetClearButtonRectangle(Bounds);
+    TEST_EXPECT(!ClearBounds.IsEmpty());
+
+    TEST_SECTION("The clear button paints nothing behind it until the cursor is on the button itself");
+    SearchBox->OnMouseEntered(MakeMoveEvent(Bounds.Position));
+    SearchBox->OnMouseMove(MakeMoveEvent(Bounds.Position));
+
+    FDrawCommandList ElsewhereList;
+    DrawElement(SearchBox, ElsewhereList);
+    TEST_EXPECT_EQ(CountCommands(ElsewhereList, EDrawCommandType::Box), 1);
+
+    TEST_SECTION("Resting on it adds a pill in the description's own colour and radius, not the process-wide one");
+    SearchBox->OnMouseMove(MakeMoveEvent(ClearBounds.GetCenter()));
+
+    FDrawCommandList HoveredList;
+    DrawElement(SearchBox, HoveredList);
+    TEST_EXPECT_EQ(CountCommands(HoveredList, EDrawCommandType::Box), 2);
+
+    const FDrawCommand* Pill = FindLastBox(HoveredList);
+    TEST_EXPECT(Pill != nullptr);
+    TEST_EXPECT_EQ(Pill->Bounds, ClearBounds);
+    TEST_EXPECT(Pill->Tint == FrameStyle.ClearHovered);
+    TEST_EXPECT(Pill->CornerRadius == FCornerRadii(9.0f));
+    TEST_EXPECT(FInputFrameStyle().ClearCornerRadius != FrameStyle.ClearCornerRadius);
+
+    TEST_SECTION("Leaving the field takes the pill away again");
+    SearchBox->OnMouseLeft(MakeMoveEvent(IntVector2(400, 400)));
+
+    FDrawCommandList LeftList;
+    DrawElement(SearchBox, LeftList);
+    TEST_EXPECT_EQ(CountCommands(LeftList, EDrawCommandType::Box), 1);
 
     TEST_END();
 }

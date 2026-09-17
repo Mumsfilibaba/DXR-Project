@@ -41,33 +41,6 @@ struct FUIStyleColors
     /** @brief The fill a button takes while it is held down. */
     FFloatColor ButtonPressed = FFloatColor(0.34f, 0.34f, 0.34f, 1.0f);
 
-    /** @brief The fill behind a menu bar entry the cursor rests on. */
-    FFloatColor MenuBarItemHovered = FFloatColor(0.27f, 0.29f, 0.34f, 1.0f);
-
-    /** @brief The fill behind the menu bar entry whose menu is open. */
-    FFloatColor MenuBarItemActive = FFloatColor(0.25f, 0.55f, 0.95f, 1.0f);
-
-    /** @brief The fill of an open menu. */
-    FFloatColor MenuBackground = FFloatColor(0.13f, 0.13f, 0.16f, 1.0f);
-
-    /** @brief The stroke around an open menu. */
-    FFloatColor MenuBorder = FFloatColor(0.32f, 0.33f, 0.38f, 1.0f);
-
-    /** @brief The second stroke drawn a pixel inside the first, which is what gives a menu its bevel. */
-    FFloatColor MenuInnerBorder = FFloatColor(0.20f, 0.21f, 0.24f, 1.0f);
-
-    /** @brief The fill behind the menu entry the cursor rests on. */
-    FFloatColor MenuItemHovered = FFloatColor(0.25f, 0.55f, 0.95f, 1.0f);
-
-    /** @brief The color of the key combination shown at an entry's right edge. */
-    FFloatColor MenuItemShortcut = FFloatColor(0.45f, 0.46f, 0.50f, 1.0f);
-
-    /** @brief The rule between two runs of menu entries. */
-    FFloatColor MenuSeparator = FFloatColor(106.0f / 255.0f, 106.0f / 255.0f, 106.0f / 255.0f, 1.0f);
-
-    /** @brief The color of the heading naming a run of menu entries. */
-    FFloatColor MenuSectionText = FFloatColor(160.0f / 255.0f, 160.0f / 255.0f, 160.0f / 255.0f, 1.0f);
-
     /** @brief The fill behind an editable line of text, which runs darker than anything around it. */
     FFloatColor InputFieldFill = FFloatColor(15.0f / 255.0f, 15.0f / 255.0f, 15.0f / 255.0f, 1.0f);
 
@@ -287,22 +260,85 @@ struct FUIScrollBarStyle
     float CornerRadius = 12.0f;
 };
 
+struct FUIMenuBarStyle
+{
+    /** @brief The fill behind an entry the cursor rests on. */
+    FFloatColor ItemHovered = FFloatColor(0.27f, 0.29f, 0.34f, 1.0f);
+
+    /** @brief The fill behind the entry whose menu is open. */
+    FFloatColor ItemActive = FFloatColor(0.34f, 0.36f, 0.41f, 1.0f);
+
+    /** @brief The least height the strip takes, in pixels. */
+    int32 Height = 38;
+
+    /** @brief The space between an entry's bounds and its label. */
+    FMargin ItemPadding = FMargin(10, 4, 10, 4);
+
+    /** @brief How much shorter than the strip an entry stands, top and bottom, in pixels. */
+    int32 ItemInset = 4;
+
+    /** @brief The gap held between two adjacent entries, in pixels. */
+    int32 ItemSpacing = 4;
+
+    /** @brief How far the highlight's corners are rounded, in pixels. */
+    float ItemCornerRadius = 6.0f;
+};
+
+struct FUIMenuStyle
+{
+    /** @brief The fill of an open menu. */
+    FFloatColor Background = FFloatColor(0.13f, 0.13f, 0.16f, 1.0f);
+
+    /** @brief The single stroke around an open menu. */
+    FFloatColor Border = FFloatColor(0.32f, 0.33f, 0.38f, 1.0f);
+
+    /** @brief The fill behind the entry the cursor rests on. */
+    FFloatColor ItemHovered = FFloatColor(0.25f, 0.55f, 0.95f, 1.0f);
+
+    /** @brief The color of the key combination shown at an entry's right edge. */
+    FFloatColor ItemShortcut = FFloatColor(0.45f, 0.46f, 0.50f, 1.0f);
+
+    /** @brief The rule between two runs of entries. */
+    FFloatColor Separator = FFloatColor(106.0f / 255.0f, 106.0f / 255.0f, 106.0f / 255.0f, 1.0f);
+
+    /** @brief The color of the heading naming a run of entries. */
+    FFloatColor SectionText = FFloatColor(160.0f / 255.0f, 160.0f / 255.0f, 160.0f / 255.0f, 1.0f);
+
+    /** @brief The height every row takes unless its face is taller than that, in pixels. */
+    int32 RowHeight = 30;
+
+    /** @brief The width a menu is held out to even when every row in it is narrower, in pixels. */
+    int32 MinWidth = 226;
+
+    /** @brief How far an entry's highlight is held back from either edge of the row, in pixels. */
+    int32 ItemHighlightInset = 4;
+
+    /** @brief How far the highlight's corners are rounded, in pixels. */
+    float ItemCornerRadius = 4.0f;
+
+    /** @brief How far the corners of the menu itself are rounded, in pixels. */
+    float CornerRadius = 6.0f;
+};
+
 struct FUITabStyle
 {
-    /** @brief The fill of a tab, which is the window fill so a tab reads as a button on it. */
-    FFloatColor Fill = FFloatColor(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
+    /** @brief The fill of a resting tab, which is clear so the strip shows straight through it. */
+    FFloatColor Fill = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
 
     /** @brief The fill of a tab the cursor is over. */
-    FFloatColor FillHovered = FFloatColor(46.0f / 255.0f, 46.0f / 255.0f, 46.0f / 255.0f, 1.0f);
+    FFloatColor FillHovered = FFloatColor(38.0f / 255.0f, 38.0f / 255.0f, 38.0f / 255.0f, 1.0f);
 
-    /** @brief The fill of the active tab, which matches Fill because the strip is what marks it. */
-    FFloatColor FillActive = FFloatColor(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
+    /** @brief The fill of the active tab, which lifts furthest off the strip. */
+    FFloatColor FillActive = FFloatColor(48.0f / 255.0f, 48.0f / 255.0f, 48.0f / 255.0f, 1.0f);
 
-    /** @brief The fill of the strip behind the tabs, which runs darker so the tabs stand off it. */
-    FFloatColor StripFill = FFloatColor(21.0f / 255.0f, 21.0f / 255.0f, 21.0f / 255.0f, 1.0f);
+    /** @brief The fill of the strip behind the tabs, which shows wherever the tabs run out. */
+    FFloatColor StripFill = FFloatColor(24.0f / 255.0f, 24.0f / 255.0f, 24.0f / 255.0f, 1.0f);
 
-    /** @brief The rule under the active tab, which is what marks it now that the fills match. */
+    /** @brief The rule under the active tab, which marks it a second time in the accent. */
     FFloatColor ActiveStrip = FFloatColor(0.0f, 122.0f / 255.0f, 204.0f / 255.0f, 1.0f);
+
+    /** @brief The rule on a tab's trailing edge, which is off by default while the pills carry the separation. */
+    FFloatColor Separator = FFloatColor(43.0f / 255.0f, 43.0f / 255.0f, 43.0f / 255.0f, 1.0f);
 
     /** @brief The fill behind the close cross while the cursor is on the cross itself. */
     FFloatColor CloseHovered = FFloatColor(70.0f / 255.0f, 70.0f / 255.0f, 70.0f / 255.0f, 1.0f);
@@ -310,14 +346,59 @@ struct FUITabStyle
     /** @brief How thick the rule under the active tab is, in pixels. */
     int32 ActiveStripThickness = 2;
 
-    /** @brief The gap either side of a tab, which is what detaches it from its neighbour. */
-    int32 Spacing = 2;
+    /** @brief How far in from either end that rule fades away, in pixels. */
+    float ActiveStripFadeWidth = 16.0f;
+
+    /** @brief The gap either side of a tab, which is what holds two pills apart now that no rule does. */
+    int32 Spacing = 4;
 
     /** @brief How far a tab is inset from the top of the strip, in pixels. */
-    int32 TopInset = 3;
+    int32 TopInset = 4;
 
-    /** @brief How far the top corners of a tab are rounded, in pixels. */
-    float CornerRadius = 4.0f;
+    /** @brief How far a tab is inset from the bottom of the strip, in pixels. */
+    int32 BottomInset = 4;
+
+    /** @brief How far a tab's corners are rounded, in pixels. */
+    float CornerRadius = 6.0f;
+
+    /** @brief How far the close button's corners are rounded, which runs tighter than the tab's own. */
+    float CloseCornerRadius = 4.0f;
+
+    /** @brief The height of the strip, in pixels. */
+    int32 StripHeight = 40;
+
+    /** @brief The width a tab is held out to even when its label is shorter than that, in pixels. */
+    int32 MinWidth = 140;
+
+    /** @brief The space either side of a tab's label, in pixels. */
+    int32 HorizontalPadding = 12;
+
+    /** @brief How far the label is nudged off the tab's centre line, in pixels, negative being up. */
+    int32 LabelOffsetY = -2;
+
+    /** @brief The gap between a tab's label and its close button, in pixels. */
+    int32 LabelCloseGap = 6;
+
+    /** @brief The side of the square the close button fills, in pixels. */
+    int32 CloseSize = 22;
+
+    /** @brief How far the close button is held off the tab's trailing edge, in pixels. */
+    int32 CloseInset = 4;
+
+    /** @brief The side of the glyph centred in that square, in pixels. */
+    int32 CloseIconSize = 16;
+
+    /** @brief The width of the rule between two tabs, which is off while the pills carry the separation. */
+    int32 SeparatorThickness = 0;
+
+    /** @brief How thick the scroll bar under the tabs is, in pixels. */
+    int32 ScrollBarThickness = 3;
+
+    /** @brief How long the scroll bar takes to appear once the cursor is over the strip, in seconds. */
+    float ScrollBarFadeInDuration = 0.1f;
+
+    /** @brief How long it takes to fade away again once the cursor leaves, which is deliberately the slower of the two. */
+    float ScrollBarFadeOutDuration = 0.6f;
 };
 
 struct FUIStyleMetrics
@@ -356,8 +437,8 @@ struct FUIStyleMetrics
     /** @brief The width of the rule a separator draws, in pixels. */
     int32 SeparatorThickness = 1;
 
-    /** @brief The width of the rule a menu separator draws, which runs heavier than an ordinary one. */
-    int32 MenuSeparatorThickness = 2;
+    /** @brief The width of the rule a menu separator draws, in pixels. */
+    int32 MenuSeparatorThickness = 1;
 };
 
 struct APPLICATION_API FUIStyle
@@ -435,6 +516,12 @@ struct APPLICATION_API FUIStyle
     /** @brief The look of the tabs a dock node puts along its top. */
     FUITabStyle Tab;
 
+    /** @brief The look of the strip of drop-down titles along the top of the window. */
+    FUIMenuBarStyle MenuBar;
+
+    /** @brief The look of an open drop-down or context menu. */
+    FUIMenuStyle Menu;
+
     /** @brief The colors the three spatial axes are drawn in. */
     FUIAxisColors AxisColors;
 
@@ -477,9 +564,15 @@ struct FInputFrameStyle
     /** @brief The tint an icon takes once the field is focused or the cursor is resting over the icon. */
     FFloatColor IconFocused = FUIStyle::GetDefault().Colors.Text;
 
+    /** @brief The pill drawn behind the clear button while the cursor rests on the button itself. */
+    FFloatColor ClearHovered = FUIStyle::GetDefault().Colors.ControlHovered;
+
     /** @brief The width of the stroke in pixels, where zero draws no stroke. */
     float BorderThickness = FUIStyle::GetDefault().Metrics.BorderThickness;
 
-    /** @brief How far the corners are rounded, in pixels, a large value giving ImGui's pill. */
+    /** @brief How far the corners are rounded, in pixels. */
     float CornerRadius = FUIStyle::GetDefault().Metrics.CornerRadius;
+
+    /** @brief How far the clear button's hover pill is rounded, in pixels. */
+    float ClearCornerRadius = 4.0f;
 };

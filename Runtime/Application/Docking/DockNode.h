@@ -31,7 +31,7 @@ struct FDockMetrics
     static constexpr int32 MinimumPanelHeight = 60;
 
     /** @brief The height of a tab strip, which every Tabs node carries on top of its panel. */
-    static constexpr int32 TabStripHeight = 26;
+    static constexpr int32 TabStripHeight = 40;
 
     /** @brief How wide the draggable handle between two split children is. */
     static constexpr int32 SplitterThickness = 4;

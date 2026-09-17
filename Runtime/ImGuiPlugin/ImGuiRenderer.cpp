@@ -729,6 +729,11 @@ void FImGuiRenderer::OnCreateWindow(ImGuiViewport* Viewport)
     SwapChainDesc.Width        = static_cast<uint16>(Math::Max(1.0f, Viewport->Size.x));
     SwapChainDesc.Height       = static_cast<uint16>(Math::Max(1.0f, Viewport->Size.y));
 
+    if ((ViewportData->Window->GetStyle() & EWindowStyleFlags::Opaque) == EWindowStyleFlags::None)
+    {
+        SwapChainDesc.Flags |= ESwapChainFlags::Transparent;
+    }
+
     ViewportData->SwapChain = RHI::CreateSwapChain(SwapChainDesc);
     if (!ViewportData->SwapChain)
     {

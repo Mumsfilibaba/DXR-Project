@@ -61,7 +61,9 @@ public:
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseEntered(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent) override;
     virtual FEventResponse OnMouseLeft(const FCursorEvent& CursorEvent) override;
+    virtual bool GetCursor(ECursor& OutCursor) const override;
 
     /**
      * @brief Replaces the search text and fires the change delegate.
@@ -92,17 +94,16 @@ public:
     }
 
     /**
-     * @brief The square the magnifier is drawn in, which is the one the clear button takes over as soon as
-     * there is text to clear.
+     * @brief The square the magnifier is drawn in, which is held at the leading edge whether or not the
+     * field has text in it.
      *
      * @param Bounds The rectangle the box was arranged into.
-     * @return The square, which is empty while the field holds text or the description carried no search icon.
+     * @return The square, which is empty when the description carried no search icon.
      */
     NODISCARD FRectangle GetSearchIconRectangle(const FRectangle& Bounds) const;
 
     /**
-     * @brief The square a click empties the field in, which is the one the magnifier holds while the field
-     * is empty.
+     * @brief The square a click empties the field in, which sits at the trailing edge opposite the magnifier.
      *
      * @param Bounds The rectangle the box was arranged into.
      * @return The square, which is empty while the field holds no text.
@@ -122,5 +123,6 @@ private:
     FInputFrameStyle               Style;
     int32                          IconSize;
     bool                           bIsHovered;
+    bool                           bIsClearHovered;
     FOnSearchTextChanged           OnTextChangedDelegate;
 };

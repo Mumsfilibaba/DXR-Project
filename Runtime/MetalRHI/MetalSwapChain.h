@@ -12,6 +12,7 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 typedef TSharedRef<class FMetalSwapChainRHI> FMetalSwapChainRef;
 
 @interface FMetalWindowView : FCocoaWindowView
+@property (nonatomic, assign) BOOL IsOpaqueSurface;
 @end
 
 class FMetalSwapChainRHI : public FRHISwapChain, public FMetalDeviceChild

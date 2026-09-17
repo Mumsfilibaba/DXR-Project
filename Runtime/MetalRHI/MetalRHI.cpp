@@ -46,6 +46,8 @@ FMetalDeviceRHI::FMetalDeviceRHI()
 
     RHI::bSupportsSamplerFeedback            = false;
     RHI::SamplerFeedbackTier                 = ESamplerFeedbackTier::NotSupported;
+
+    RHI::bSupportsTransparentSwapChain        = true;
 }
 
 FMetalDeviceRHI::~FMetalDeviceRHI()

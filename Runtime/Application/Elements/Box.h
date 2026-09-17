@@ -107,7 +107,24 @@ public:
         return Slots.Size();
     }
 
+    /**
+     * @brief Reads one of the slots.
+     *
+     * @param Index The slot to read, which must be in range.
+     * @return The slot at that index.
+     */
     NODISCARD FORCEINLINE const FBoxSlot& GetSlot(int32 Index) const
+    {
+        return Slots[Index];
+    }
+
+    /**
+     * @brief Reaches a slot so its padding and alignment can be changed after it was added.
+     *
+     * @param Index The slot to reach, which must be in range.
+     * @return The slot at that index.
+     */
+    NODISCARD FORCEINLINE FBoxSlot& GetSlot(int32 Index)
     {
         return Slots[Index];
     }

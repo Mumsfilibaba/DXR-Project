@@ -1,6 +1,7 @@
 #pragma once
 
 bool ButtonControl_Test();
+bool GhostButtonControl_Test();
 bool CheckBoxControl_Test();
 bool SliderControl_Test();
 bool SpinBoxControl_Test();
@@ -10,6 +11,7 @@ bool OverlayControl_Test();
 bool SpacerSeparatorControl_Test();
 bool ExpanderControl_Test();
 bool SearchBoxControl_Test();
+bool SearchBoxClearStyle_Test();
 bool NumericEntryControl_Test();
 bool ProgressBarControl_Test();
 bool HistogramControl_Test();

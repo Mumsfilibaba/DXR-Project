@@ -12,9 +12,10 @@ FMenuAnchor::FMenuAnchor()
     : FCompoundElement()
     , MenuContent(nullptr)
     , Placement(EMenuPlacement::BelowLeftAligned)
+    , AnchorInset()
     , OnGetMenuContentDelegate()
     , OnOpenChangedDelegate()
-    , MenuWindow(nullptr)
+    , Menu(nullptr)
 {
 }
 
@@ -24,6 +25,7 @@ void FMenuAnchor::Initialize(const FDesc& Desc)
 {
     MenuContent              = Desc.MenuContent;
     Placement                = Desc.Placement;
+    AnchorInset              = Desc.AnchorInset;
     OnGetMenuContentDelegate = Desc.OnGetMenuContent;
     OnOpenChangedDelegate    = Desc.OnOpenChanged;
 
@@ -43,14 +45,10 @@ void FMenuAnchor::Open()
         return;
     }
 
-    TSharedPtr<FWindow> OwningWindow = FApplication::Get().FindWindow(AsSharedPtr());
-    if (!OwningWindow)
-    {
-        return;
-    }
+    const FRectangle AnchorBounds = FMenuStack::GetScreenBounds(AsSharedPtr()).Deflate(AnchorInset);
 
-    MenuWindow = FMenuStack::Get().PushMenu(OwningWindow, FMenuStack::GetScreenBounds(AsSharedPtr()), Placement, Content);
-    if (MenuWindow)
+    Menu = FMenuStack::Get().PushMenu(AsSharedPtr(), AnchorBounds, Placement, Content);
+    if (Menu)
     {
         OnOpenChangedDelegate.ExecuteIfBound(true);
     }
@@ -64,9 +62,9 @@ void FMenuAnchor::Close()
     }
 
     FMenuStack& Stack = FMenuStack::Get();
-    Stack.DismissToDepth(Stack.GetMenuDepth(MenuWindow) - 1);
+    Stack.DismissToDepth(Stack.GetMenuDepth(Menu) - 1);
 
-    MenuWindow = nullptr;
+    Menu = nullptr;
     OnOpenChangedDelegate.ExecuteIfBound(false);
 }
 
@@ -85,7 +83,7 @@ void FMenuAnchor::Toggle()
 bool FMenuAnchor::IsOpen() const
 {
     SyncOpenState();
-    return MenuWindow != nullptr;
+    return Menu != nullptr;
 }
 
 void FMenuAnchor::SetPlacement(EMenuPlacement InPlacement)
@@ -98,17 +96,22 @@ void FMenuAnchor::SetMenuContent(const TSharedPtr<FVisualElement>& InMenuContent
     MenuContent = InMenuContent;
 }
 
-TSharedPtr<FWindow> FMenuAnchor::GetMenuWindow() const
+void FMenuAnchor::SetAnchorInset(const FMargin& InAnchorInset)
+{
+    AnchorInset = InAnchorInset;
+}
+
+FMenuHandle FMenuAnchor::GetMenu() const
 {
     SyncOpenState();
-    return MenuWindow;
+    return Menu;
 }
 
 void FMenuAnchor::SyncOpenState() const
 {
-    if (MenuWindow && !FMenuStack::Get().IsMenuOpen(MenuWindow))
+    if (Menu && !FMenuStack::Get().IsMenuOpen(Menu))
     {
-        MenuWindow = nullptr;
+        Menu = nullptr;
         OnOpenChangedDelegate.ExecuteIfBound(false);
     }
 }

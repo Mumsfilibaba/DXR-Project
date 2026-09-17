@@ -567,7 +567,7 @@ bool ToolBarDropDown_Test()
     TEST_EXPECT_EQ(FMenuStack::Get().GetDepth(), 1);
 
     const FRectangle ButtonBounds = ViewButton->GetContentRectangle();
-    TEST_EXPECT_EQ(ViewAnchor->GetMenuWindow()->GetPosition(), IntVector2(ButtonBounds.Position.X, ButtonBounds.GetBottom()));
+    TEST_EXPECT_EQ(ViewAnchor->GetMenu()->ScreenBounds.Position, IntVector2(ButtonBounds.Position.X, ButtonBounds.GetBottom()));
 
     TEST_SECTION("The open entry stays lit, so it is clear which menu belongs to which entry");
     TEST_EXPECT(ViewButton->IsHighlighted());

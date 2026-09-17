@@ -31,16 +31,22 @@ struct ENGINE_API FEditorStyle
     static constexpr int32 FooterHeight = 40;
 
     /** @brief The height of one row in a tree, a list or a property table. */
-    static constexpr int32 RowHeight = 22;
+    static constexpr int32 RowHeight = 24;
 
-    /** @brief The height of an input field's frame, which is the body font's 18px plus ImGui's 6px above and below. */
-    static constexpr int32 FrameHeight = 30;
+    /** @brief The height of an input field's frame, which is the body font's 20px plus ImGui's 6px above and below. */
+    static constexpr int32 FrameHeight = 32;
 
-    /** @brief The height of a button, which is the body font's 18px plus ImGui's 4px above and below. */
-    static constexpr int32 ButtonHeight = 26;
+    /** @brief The height of a button, which is the body font's 20px plus ImGui's 4px above and below. */
+    static constexpr int32 ButtonHeight = 28;
 
     /** @brief The edge length of an icon square in a tool bar or a tree row. */
     static constexpr int32 IconSize = 16;
+
+    /** @brief The inset held around a docked panel's content, in pixels. */
+    static constexpr int32 PanelPadding = 8;
+
+    /** @brief The gap between a panel's header band and the body under it, in pixels. */
+    static constexpr int32 ItemSpacing = 6;
 
     /** @brief How wide a rich tool tip is allowed to grow, in pixels. */
     static constexpr int32 ToolTipMaxWidth = 420;

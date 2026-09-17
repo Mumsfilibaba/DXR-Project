@@ -65,6 +65,7 @@ public:
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual bool GetCursor(ECursor& OutCursor) const override;
+    virtual void SetOuterCornerRadius(float InCornerRadius) override;
 
     /**
      * @brief Sets the fill drawn behind the child.

@@ -17,6 +17,7 @@
 #include "Application/Application.h"
 #include "Application/Elements/Box.h"
 #include "Application/Elements/CheckBox.h"
+#include "Application/Elements/Overlay.h"
 #include "Application/Elements/Slider.h"
 #include "Application/Elements/TextBlock.h"
 #include "Application/Elements/ToolBar.h"
@@ -173,6 +174,145 @@ FEditorViewportPanel::~FEditorViewportPanel()
 {
 }
 
+TSharedPtr<FViewportTransportLayer> FViewportTransportLayer::Create(const TSharedPtr<FToolBar>& InTransport, const TSharedPtr<FToolBar>& InBar)
+{
+    TSharedPtr<FViewportTransportLayer> NewLayer = MakeSharedPtr<FViewportTransportLayer>();
+    NewLayer->Transport = InTransport;
+    NewLayer->Bar       = InBar;
+
+    if (InTransport)
+    {
+        InTransport->SetParentElement(NewLayer->AsWeakPtr());
+    }
+
+    return NewLayer;
+}
+
+FViewportTransportLayer::FViewportTransportLayer()
+    : FVisualElement()
+    , Transport(nullptr)
+    , Bar(nullptr)
+{
+}
+
+FViewportTransportLayer::~FViewportTransportLayer() = default;
+
+IntVector2 FViewportTransportLayer::ComputeDesiredSize() const
+{
+    return Transport ? Transport->GetCachedDesiredSize() : IntVector2();
+}
+
+void FViewportTransportLayer::OnArrange(const FRectangle& AllottedBounds)
+{
+    if (!Transport)
+    {
+        return;
+    }
+
+    const IntVector2 Size = Transport->GetCachedDesiredSize();
+
+    const int32 MinX = GetLeadingRight(AllottedBounds) + TOOLBAR_GROUP_GAP;
+    const int32 MaxX = GetTrailingLeft(AllottedBounds) - TOOLBAR_GROUP_GAP - Size.X;
+
+    if (MinX > MaxX)
+    {
+        Transport->SetVisibility(EVisibility::Hidden);
+
+        SetContentRectangle(FRectangle());
+        return;
+    }
+
+    Transport->SetVisibility(EVisibility::Visible);
+
+    const int32 CenteredX = AllottedBounds.Position.X + ((AllottedBounds.Width - Size.X) / 2);
+    const int32 PositionX = Math::Clamp(CenteredX, MinX, MaxX);
+    const int32 PositionY = AllottedBounds.Position.Y + ((AllottedBounds.Height - Size.Y) / 2);
+
+    const FRectangle TransportBounds(IntVector2(PositionX, PositionY), Size.X, Size.Y);
+
+    Transport->Tick(TransportBounds);
+    SetContentRectangle(TransportBounds);
+}
+
+void FViewportTransportLayer::GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const
+{
+    if (Transport)
+    {
+        OutChildren.Add(Transport);
+    }
+}
+
+int32 FViewportTransportLayer::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
+{
+    if (!Transport || !Transport->IsVisible())
+    {
+        return LayerId;
+    }
+
+    const FDrawGeometry TransportGeometry(Transport->GetContentRectangle(), AllottedGeometry.Scale);
+    return Transport->OnDraw(TransportGeometry, OutCommandList, LayerId);
+}
+
+void FViewportTransportLayer::FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements)
+{
+    FVisualElement::FindChildrenContainingPoint(ClientPosition, OutChildElements);
+
+    if (Transport && Transport->IsVisible())
+    {
+        Transport->FindChildrenContainingPoint(ClientPosition, OutChildElements);
+    }
+}
+
+int32 FViewportTransportLayer::GetLeadingRight(const FRectangle& AllottedBounds) const
+{
+    int32 Right = AllottedBounds.Position.X;
+    if (!Bar)
+    {
+        return Right;
+    }
+
+    for (const FToolBarEntry& Entry : Bar->GetItems())
+    {
+        if (Entry.Type == EToolBarItemType::FlexibleSpace)
+        {
+            break;
+        }
+
+        if (Entry.Element)
+        {
+            Right = Math::Max(Right, Entry.Element->GetContentRectangle().GetRight());
+        }
+    }
+
+    return Right;
+}
+
+int32 FViewportTransportLayer::GetTrailingLeft(const FRectangle& AllottedBounds) const
+{
+    int32 Left = AllottedBounds.GetRight();
+    if (!Bar)
+    {
+        return Left;
+    }
+
+    bool bIsPastSpace = false;
+    for (const FToolBarEntry& Entry : Bar->GetItems())
+    {
+        if (Entry.Type == EToolBarItemType::FlexibleSpace)
+        {
+            bIsPastSpace = true;
+            continue;
+        }
+
+        if (bIsPastSpace && Entry.Element)
+        {
+            Left = Math::Min(Left, Entry.Element->GetContentRectangle().Position.X);
+        }
+    }
+
+    return Left;
+}
+
 bool FEditorViewportPanel::Initialize()
 {
     Image = FEditorViewportImage::Create();
@@ -201,6 +341,14 @@ bool FEditorViewportPanel::Initialize()
         return false;
     }
 
+    TransportBar = BuildTransportBar();
+    if (!TransportBar)
+    {
+        return false;
+    }
+
+    RefreshToolBarState();
+
     Surface = FEditorViewportSurface::Create();
     if (!Surface)
     {
@@ -224,7 +372,16 @@ bool FEditorViewportPanel::Initialize()
         return false;
     }
 
-    Column->AddSlot(DebugViewBar);
+    TSharedPtr<FOverlay> Strip = FOverlay::Create();
+    if (!Strip)
+    {
+        return false;
+    }
+
+    Strip->AddSlot(DebugViewBar);
+    Strip->AddSlot(FViewportTransportLayer::Create(TransportBar, DebugViewBar));
+
+    Column->AddSlot(Strip);
     Column->AddSlot(Surface).SetFillCoefficient(1.0f);
 
     Content = Column;
@@ -249,6 +406,7 @@ void FEditorViewportPanel::Release()
     RotateItem.Reset();
     TranslateItem.Reset();
     SecondaryDebugViewCombo.Reset();
+    TransportBar.Reset();
     DebugViewBar.Reset();
     Gizmo.Reset();
     Image.Reset();
@@ -258,6 +416,11 @@ void FEditorViewportPanel::Release()
     CameraController.Reset();
 
     FEditorPanel::Release();
+}
+
+FMargin FEditorViewportPanel::GetContentPadding() const
+{
+    return FMargin();
 }
 
 TSharedPtr<FToolBar> FEditorViewportPanel::BuildToolBar()
@@ -338,6 +501,33 @@ TSharedPtr<FToolBar> FEditorViewportPanel::BuildToolBar()
 
     Bar->AddFlexibleSpace();
 
+    Bar->AddDropDown(
+        FToolBarItemDesc().SetLabel("Camera").SetToolTipText("Speeds, lens and framing").SetMinWidth(CAMERA_BUTTON_WIDTH),
+        BuildCameraMenu());
+
+    Bar->AddDropDown(
+        FToolBarItemDesc().SetToolTipText("View mode, secondary view and channel mask").SetMinWidth(ComputeViewButtonWidth()),
+        BuildViewOptionsMenu());
+
+    ViewItem = Bar->GetItems().Last().Button;
+    return Bar;
+}
+
+TSharedPtr<FToolBar> FEditorViewportPanel::BuildTransportBar()
+{
+    FToolBar::FDesc Desc;
+    Desc.Font           = FEditorStyle::GetFonts().Body;
+    Desc.IconSize       = FEditorStyle::IconSize;
+    Desc.Padding        = FMargin();
+    Desc.ItemSpacing    = TOOLBAR_GROUP_GAP;
+    Desc.bHasBackground = false;
+
+    TSharedPtr<FToolBar> Bar = FToolBar::Create(Desc);
+    if (!Bar)
+    {
+        return nullptr;
+    }
+
     Bar->BeginGroup();
 
     PlayItem = Bar->AddButton(
@@ -354,19 +544,6 @@ TSharedPtr<FToolBar> FEditorViewportPanel::BuildToolBar()
 
     Bar->EndGroup();
 
-    Bar->AddFlexibleSpace();
-
-    Bar->AddDropDown(
-        FToolBarItemDesc().SetLabel("Camera").SetToolTipText("Speeds, lens and framing").SetMinWidth(CAMERA_BUTTON_WIDTH),
-        BuildCameraMenu());
-
-    Bar->AddDropDown(
-        FToolBarItemDesc().SetToolTipText("View mode, secondary view and channel mask").SetMinWidth(ComputeViewButtonWidth()),
-        BuildViewOptionsMenu());
-
-    ViewItem = Bar->GetItems().Last().Button;
-
-    RefreshToolBarState();
     return Bar;
 }
 
@@ -530,6 +707,8 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildCameraMenu()
 
     FEditorCameraController* Camera = CameraController.Get();
 
+    Menu->AddSection("Movement", Font);
+
     AddSliderRow("Move", FEditorCameraController::MinMoveSpeed, FEditorCameraController::MaxMoveSpeed, Camera->GetMoveSpeed(), 1,
         FOnSliderValueChanged::CreateLambda([this](float NewValue)
         {
@@ -554,7 +733,7 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildCameraMenu()
             CameraController->SetPanSpeed(NewValue);
         }));
 
-    Menu->AddSeparator();
+    Menu->AddSection("Lens", Font);
 
     AddSliderRow("FOV", 20.0f, 120.0f, Camera->GetFieldOfView(), 0,
         FOnSliderValueChanged::CreateLambda([this](float NewValue)
@@ -574,7 +753,7 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildCameraMenu()
             CameraController->SetFarPlane(NewValue);
         }));
 
-    Menu->AddSeparator();
+    Menu->AddSection("Actions", Font);
 
     FMenuItem::FDesc ResetDesc;
     ResetDesc.Label       = "Reset";
@@ -987,19 +1166,13 @@ void FEditorViewportPanel::ShowContextMenu()
         return;
     }
 
-    TSharedPtr<FWindow> OwningWindow = FApplication::Get().FindWindow(Surface);
-    if (!OwningWindow)
-    {
-        return;
-    }
-
     TSharedPtr<FMenu> Menu = BuildContextMenu();
     if (!Menu)
     {
         return;
     }
 
-    FMenuStack::Get().PushMenu(OwningWindow, FRectangle(ContextMenuScreenPosition, 0, 0), EMenuPlacement::AtCursor, Menu);
+    FMenuStack::Get().PushMenu(Surface, FRectangle(ContextMenuScreenPosition, 0, 0), EMenuPlacement::AtCursor, Menu);
 }
 
 TSharedPtr<FMenu> FEditorViewportPanel::BuildContextMenu()
@@ -1012,6 +1185,8 @@ TSharedPtr<FMenu> FEditorViewportPanel::BuildContextMenu()
         return nullptr;
     }
 
+    Menu->AddSection("Create", Font);
+
     FMenuItem::FDesc PlaceDesc;
     PlaceDesc.Label   = "Place Actor";
     PlaceDesc.Font    = Font;
@@ -1019,7 +1194,7 @@ TSharedPtr<FMenu> FEditorViewportPanel::BuildContextMenu()
 
     Menu->AddItem(FMenuItem::Create(PlaceDesc));
 
-    Menu->AddSeparator();
+    Menu->AddSection("Selection", Font);
 
     FMenuItem::FDesc FocusDesc;
     FocusDesc.Label        = "Focus Selected";

@@ -145,6 +145,15 @@ int32 FVisualElement::OnDraw(const FDrawGeometry& /*AllottedGeometry*/, FDrawCom
     return LayerId;
 }
 
+void FVisualElement::SetOuterCornerRadius(float /*InCornerRadius*/)
+{
+}
+
+int32 FVisualElement::GetContentTopInset() const
+{
+    return 0;
+}
+
 IntVector2 FVisualElement::PrepareDesiredSize()
 {
     TArray<TSharedPtr<FVisualElement>> Children;

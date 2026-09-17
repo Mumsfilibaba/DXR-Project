@@ -30,6 +30,13 @@ public:
      */
     void SetOwner(FMenuBar* InOwnerBar, FMenuAnchor* InAnchor);
 
+    /**
+     * @brief Replaces the look of the entry, which also resets its padding to the one the style carries.
+     *
+     * @param InStyle The look to draw with.
+     */
+    void SetStyle(const FUIMenuBarStyle& InStyle);
+
     /** @return The text the button is named by. */
     NODISCARD FORCEINLINE const String& GetLabel() const
     {
@@ -44,9 +51,9 @@ protected:
 private:
     String                Label;
     TSharedPtr<IFontFace> Font;
-
-    FMenuBar*    OwnerBar;
-    FMenuAnchor* Anchor;
+    FUIMenuBarStyle       Style;
+    FMenuBar*             OwnerBar;
+    FMenuAnchor*          Anchor;
 };
 
 class APPLICATION_API FMenuBar final : public FCompoundElement
@@ -57,6 +64,9 @@ public:
 public:
     FMenuBar();
     virtual ~FMenuBar();
+
+    // FVisualElement Interface
+    virtual IntVector2 ComputeDesiredSize() const override;
 
     /** @brief Puts the row of buttons in place, which cannot happen before the bar has a shared reference. */
     void Initialize();
@@ -90,7 +100,23 @@ public:
      */
     void OnButtonHovered(FMenuAnchor* HoveredAnchor);
 
+    /**
+     * @brief Replaces the look of the strip and of the entries already on it, which every entry added
+     * afterwards takes too.
+     *
+     * @param InStyle The look to draw with.
+     */
+    void SetStyle(const FUIMenuBarStyle& InStyle);
+
+    /** @return The look the strip and its entries draw themselves with. */
+    NODISCARD FORCEINLINE const FUIMenuBarStyle& GetStyle() const
+    {
+        return Style;
+    }
+
 private:
-    TSharedPtr<FHorizontalBox>      Panel;
-    TArray<TSharedPtr<FMenuAnchor>> Anchors;
+    TSharedPtr<FHorizontalBox>         Panel;
+    TArray<TSharedPtr<FMenuAnchor>>    Anchors;
+    TArray<TSharedPtr<FMenuBarButton>> Buttons;
+    FUIMenuBarStyle                    Style;
 };

@@ -490,6 +490,13 @@ struct RHI
     static RHI_API void DumpCapabilities();
 
     // -------------------------------------------------------------------------------------------
+    // Transparent Surfaces
+    // -------------------------------------------------------------------------------------------
+
+    /** Whether the backend can present a surface with per-pixel alpha. A surface still has to be asked for one, and only the swap chain it produced can say whether the request survived. */
+    static RHI_API bool bSupportsTransparentSwapChain;
+
+    // -------------------------------------------------------------------------------------------
     // Variable Rate Shading (VRS)
     // -------------------------------------------------------------------------------------------
 

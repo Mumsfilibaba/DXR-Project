@@ -70,6 +70,14 @@ struct IApplicationRenderer
     virtual void SetPrimaryWindow(const TSharedPtr<FWindow>& InWindow) = 0;
 
     /**
+     * @brief Gives a window its surface now rather than at the start of the next frame, so a caller that has
+     * to know how the surface came back can ask before anything has drawn.
+     *
+     * @param InWindow The window to give a surface to.
+     */
+    virtual void EnsureWindowSurface(const TSharedPtr<FWindow>& InWindow) = 0;
+
+    /**
      * @brief Hands out the swap chain a window is presented through, which the renderer owns, so a caller
      * that has to name the same back buffer borrows it rather than creating a second one.
      *

@@ -198,8 +198,13 @@ TSharedPtr<FVisualElement> FComboBox::BuildMenu()
 {
     const FUIStyle& Style = FUIStyle::GetDefault();
 
+    FUIMenuStyle ListStyle = Style.Menu;
+    ListStyle.Background   = Style.ComboBox.PopupFill;
+    ListStyle.Border       = Style.ComboBox.PopupBorder;
+    ListStyle.ItemHovered  = Style.ComboBox.SelectionFill;
+
     TSharedPtr<FMenu> Menu = FMenu::Create();
-    Menu->SetChrome(Style.ComboBox.PopupFill, Style.ComboBox.PopupBorder);
+    Menu->SetStyle(ListStyle);
 
     for (int32 Index = 0; Index < Options.Size(); ++Index)
     {
@@ -214,10 +219,7 @@ TSharedPtr<FVisualElement> FComboBox::BuildMenu()
             SetSelectedIndex(Index);
         });
 
-        TSharedPtr<FMenuItem> Item = FMenuItem::Create(ItemDesc);
-        Item->SetHighlightFill(Style.ComboBox.SelectionFill);
-
-        Menu->AddItem(Item);
+        Menu->AddItem(FMenuItem::Create(ItemDesc));
     }
 
     Menu->SetMinDesiredWidth(GetContentRectangle().Width);

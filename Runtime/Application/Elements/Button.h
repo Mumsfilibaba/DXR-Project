@@ -23,6 +23,7 @@ public:
             , VerticalContentAlignment(EVerticalAlignment::Center)
             , MinHeight(FUIStyle::GetDefault().Metrics.ButtonHeight)
             , bHasBorder(false)
+            , bIsGhost(false)
             , OnClicked()
             , Content(nullptr)
         {
@@ -72,6 +73,13 @@ public:
         EVerticalAlignment         VerticalContentAlignment;
         int32                      MinHeight;
         bool                       bHasBorder : 1;
+
+        /**
+         * @brief True paints no fill at rest, so the frame only appears once the cursor arrives, which is
+         * what a button sitting on a tool bar rather than on a panel wants.
+         */
+        bool bIsGhost : 1;
+
         FOnClicked                 OnClicked;
         TSharedPtr<FVisualElement> Content;
     };
@@ -112,6 +120,21 @@ public:
     /** @return The label the button draws, which is empty for a button carrying content of its own. */
     NODISCARD const String& GetText() const;
 
+    /**
+     * @brief Holds a ghost button lit while something it owns is showing, which is what keeps a drop-down's
+     * button from vanishing once the cursor has moved off it and onto the menu. An ordinary button draws
+     * from its interaction state alone and ignores this.
+     *
+     * @param bInIsHighlighted True to draw the button as though the cursor were on it.
+     */
+    void SetHighlighted(bool bInIsHighlighted);
+
+    /** @return True while the button is held lit, whether or not it is a ghost that would act on it. */
+    NODISCARD FORCEINLINE bool IsHighlighted() const
+    {
+        return bIsHighlighted;
+    }
+
     /** @return The corner radii of the fill in pixels, clamped when drawn to half the shorter side. */
     NODISCARD FORCEINLINE const FCornerRadii& GetCornerRadius() const
     {
@@ -130,5 +153,7 @@ private:
     EVerticalAlignment           VerticalContentAlignment;
     int32                        MinHeight;
     bool                         bHasBorder;
+    bool                         bIsGhost;
+    bool                         bIsHighlighted;
     FOnClicked                   OnClickedDelegate;
 };

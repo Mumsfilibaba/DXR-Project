@@ -35,10 +35,10 @@ static TAutoConsoleVariable<bool> CVarImGuiEnableImGuiDelegates(
 
 static EWindowStyleFlags GetWindowStyleFromImGuiViewportFlags(ImGuiViewportFlags Flags)
 {
-    EWindowStyleFlags WindowStyleFlags = EWindowStyleFlags::None;
+    EWindowStyleFlags WindowStyleFlags = EWindowStyleFlags::Opaque;
     if ((Flags & ImGuiViewportFlags_NoDecoration) == ImGuiViewportFlags_None)
     {
-        WindowStyleFlags = EWindowStyleFlags::Titled | EWindowStyleFlags::Minimizable | EWindowStyleFlags::Maximizable | EWindowStyleFlags::Resizable | EWindowStyleFlags::Closable;
+        WindowStyleFlags |= EWindowStyleFlags::Titled | EWindowStyleFlags::Minimizable | EWindowStyleFlags::Maximizable | EWindowStyleFlags::Resizable | EWindowStyleFlags::Closable;
     }
     if (Flags & ImGuiViewportFlags_NoTaskBarIcon)
     {

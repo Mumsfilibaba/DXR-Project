@@ -1,6 +1,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "D3D12RHI/D3D12Capabilities.h"
 #include "D3D12RHI/D3D12Device.h"
+#include "D3D12RHI/D3D12Loader.h"
 #include "D3D12RHI/D3D12RHI.h"
 #include "D3D12RHI/D3D12SwapChain.h"
 
@@ -46,6 +47,7 @@ D3D12RHI_API bool GD3D12SupportGPUUploadHeaps   = false;
 D3D12RHI_API bool GD3D12SupportDynamicDepthBias = false;
 D3D12RHI_API bool GD3D12SupportsBindless        = false;
 D3D12RHI_API bool GD3D12SupportEnhancedBarriers = false;
+D3D12RHI_API bool GD3D12SupportsComposition     = false;
 
 // -------------------------------------------------------------------------------------------
 // Ray Tracing feature support (backend-native mirrors of the agnostic RHI::bSupports* flags)
@@ -158,6 +160,7 @@ D3D12RHI_API void DumpD3D12Capabilities()
     LOG_INFO("[D3D12RHI]   Dynamic Depth Bias                    : %s", YesNo(GD3D12SupportDynamicDepthBias));
     LOG_INFO("[D3D12RHI]   Pipeline Cache                        : %s", YesNo(GD3D12SupportPipelineCache));
     LOG_INFO("[D3D12RHI]   Pipeline Stream                       : %s", YesNo(GD3D12SupportPipelineStream));
+    LOG_INFO("[D3D12RHI]   DirectComposition                     : %s", YesNo(GD3D12SupportsComposition));
 
     LOG_INFO("[D3D12RHI]   Resource Binding Tier                 : %d", static_cast<int32>(GD3D12ResourceBindingTier));
     LOG_INFO("[D3D12RHI]   Resource Heap Tier                    : %d", static_cast<int32>(GD3D12ResourceHeapTier));
@@ -210,6 +213,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
     GD3D12SupportDynamicDepthBias          = false;
     GD3D12SupportsBindless                 = false;
     GD3D12SupportEnhancedBarriers          = false;
+    GD3D12SupportsComposition              = false;
 
     GD3D12SupportsInlineRayTracing                        = false;
     GD3D12SupportsOpacityMicromap                         = false;
@@ -631,6 +635,14 @@ void FD3D12Device::QueryDeviceFeatureSupport()
     }
 
     // -------------------------------------------------------------------------------------------
+    // DirectComposition
+    // -------------------------------------------------------------------------------------------
+
+    #if D3D12_ENABLE_COMPOSITION
+        GD3D12SupportsComposition = (D3D12::DCompositionCreateDevice != nullptr);
+    #endif
+
+    // -------------------------------------------------------------------------------------------
     // VirtualAddress
     // -------------------------------------------------------------------------------------------
 
@@ -723,6 +735,8 @@ bool FD3D12DeviceRHI::InitializeDeviceFeatureSupport()
 
     RHI::bSupportsSamplerFeedback    = false;
     RHI::SamplerFeedbackTier         = ESamplerFeedbackTier::NotSupported;
+
+    RHI::bSupportsTransparentSwapChain = GD3D12SupportsComposition;
 
     RHI::bSupportsDrawIndirect               = true;
     RHI::bSupportsDrawIndirectCount          = true;

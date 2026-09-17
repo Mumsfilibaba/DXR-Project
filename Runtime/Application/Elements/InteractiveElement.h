@@ -18,6 +18,7 @@ public:
     virtual FEventResponse OnFocusLost() override;
     virtual bool SupportsKeyboardFocus() const override;
     virtual bool IsInteractive() const override;
+    virtual bool GetCursor(ECursor& OutCursor) const override;
 
     /**
      * @brief Enables or disables the element, which stops it responding and selects the disabled fill.
@@ -57,9 +58,12 @@ public:
     NODISCARD EInteractionState GetInteractionState() const;
 
 protected:
+
+    virtual bool IsPressable() const;
+    virtual bool AcceptsPressFromKey(FKey Key) const;
+
     virtual void OnClicked();
     virtual void OnInteractionStateChanged();
-    virtual bool AcceptsPressFromKey(FKey Key) const;
     virtual void OnDragged(const FCursorEvent& CursorEvent);
 
     void BeginPress();

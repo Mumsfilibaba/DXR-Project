@@ -1,6 +1,8 @@
 #include "Application/Menus/MenuStack.h"
 #include "Application/Menus/PopupWindow.h"
 #include "Application/Application.h"
+#include "Application/ElementPath.h"
+#include "Application/Elements/MenuHost.h"
 #include "Application/Input/Keys.h"
 #include "Core/Containers/UniquePtr.h"
 #include "Core/Math/Math.h"
@@ -53,21 +55,39 @@ FMenuStack::~FMenuStack()
     DismissAll();
 }
 
-TSharedPtr<FWindow> FMenuStack::PushMenu(
-    const TSharedPtr<FWindow>&        ParentWindow,
+FMenuHandle FMenuStack::PushMenu(
+    const TSharedPtr<FVisualElement>& AnchorElement,
     const FRectangle&                 AnchorBounds,
     EMenuPlacement                    Placement,
     const TSharedPtr<FVisualElement>& MenuContent)
 {
-    if (!MenuContent || !ParentWindow || !FApplication::IsInitialized())
+    if (!MenuContent || !AnchorElement || !FApplication::IsInitialized())
     {
         return nullptr;
     }
 
     PendingSubMenu = FPendingSubMenu();
 
-    const int32 ParentIndex = FindMenuIndex(ParentWindow);
+    const int32 ParentIndex = FindParentIndex(AnchorElement);
     DismissToDepth(ParentIndex + 1);
+
+    TSharedPtr<FWindow> HostWindow;
+    bool                bParentIsWindowed = false;
+
+    if (ParentIndex >= 0)
+    {
+        HostWindow        = OpenMenus[ParentIndex]->HostWindow;
+        bParentIsWindowed = !OpenMenus[ParentIndex]->bIsInline;
+    }
+    else
+    {
+        HostWindow = FApplication::Get().FindWindow(AnchorElement);
+    }
+
+    if (!HostWindow)
+    {
+        return nullptr;
+    }
 
     MenuContent->PrepareDesiredSize();
 
@@ -77,16 +97,37 @@ TSharedPtr<FWindow> FMenuStack::PushMenu(
         return nullptr;
     }
 
-    const FRectangle MenuBounds = ResolveBounds(AnchorBounds, MenuSize, Placement);
+    const IntVector2 HostSize = HostWindow->GetSize();
+    const FRectangle HostArea(HostWindow->GetPosition(), HostSize.X, HostSize.Y);
 
-    TSharedPtr<FWindow> MenuWindow = Popups::Open(ParentWindow, MenuBounds, MenuContent);
-    if (!MenuWindow)
+    const bool bFitsInHost = MenuSize.X <= HostArea.Width && MenuSize.Y <= HostArea.Height;
+    const bool bIsInline   = bFitsInHost && !bParentIsWindowed;
+
+    const FRectangle ClampArea  = bIsInline ? HostArea : Popups::FindWorkArea(AnchorBounds.Position);
+    const FRectangle MenuBounds = ResolveBounds(AnchorBounds, MenuSize, Placement, MenuContent->GetContentTopInset(), ClampArea);
+
+    FMenuHandle Menu   = MakeSharedPtr<FMenuLayer>();
+    Menu->HostWindow   = HostWindow;
+    Menu->Content      = MenuContent;
+    Menu->ScreenBounds = MenuBounds;
+    Menu->bIsInline    = bIsInline;
+
+    if (bIsInline)
     {
-        return nullptr;
+        const FRectangle ClientBounds(MenuBounds.Position - HostArea.Position, MenuBounds.Width, MenuBounds.Height);
+        HostWindow->GetOrCreateMenuHost()->AddChild(MenuContent, ClientBounds);
+    }
+    else
+    {
+        Menu->MenuWindow = Popups::Open(HostWindow, MenuBounds, MenuContent);
+        if (!Menu->MenuWindow)
+        {
+            return nullptr;
+        }
     }
 
-    OpenMenus.Add(MenuWindow);
-    return MenuWindow;
+    OpenMenus.Add(Menu);
+    return Menu;
 }
 
 void FMenuStack::DismissTop()
@@ -111,10 +152,10 @@ void FMenuStack::DismissToDepth(int32 Depth)
 
     while (OpenMenus.Size() > Target)
     {
-        TSharedPtr<FWindow> MenuWindow = OpenMenus.Last();
+        FMenuHandle Menu = OpenMenus.Last();
         OpenMenus.Pop();
 
-        Popups::Close(MenuWindow);
+        CloseLayer(Menu);
     }
 }
 
@@ -125,12 +166,9 @@ bool FMenuStack::DismissOnClickOutside(const IntVector2& ScreenPosition)
         return false;
     }
 
-    for (const TSharedPtr<FWindow>& MenuWindow : OpenMenus)
+    for (const FMenuHandle& Menu : OpenMenus)
     {
-        const IntVector2 Position = MenuWindow->GetPosition();
-        const IntVector2 Size     = MenuWindow->GetSize();
-
-        if (FRectangle(Position, Size.X, Size.Y).EncapsulatesPoint(ScreenPosition))
+        if (Menu->ScreenBounds.EncapsulatesPoint(ScreenPosition))
         {
             return false;
         }
@@ -150,14 +188,19 @@ int32 FMenuStack::GetDepth() const
     return OpenMenus.Size();
 }
 
-bool FMenuStack::IsMenuOpen(const TSharedPtr<FWindow>& MenuWindow) const
+bool FMenuStack::IsMenuOpen(const FMenuHandle& Menu) const
 {
-    return FindMenuIndex(MenuWindow) >= 0;
+    return FindMenuIndex(Menu) >= 0;
 }
 
-int32 FMenuStack::GetMenuDepth(const TSharedPtr<FWindow>& MenuWindow) const
+int32 FMenuStack::GetMenuDepth(const FMenuHandle& Menu) const
 {
-    return FindMenuIndex(MenuWindow) + 1;
+    return FindMenuIndex(Menu) + 1;
+}
+
+int32 FMenuStack::GetOwningMenuDepth(const TSharedPtr<FVisualElement>& Element) const
+{
+    return FindParentIndex(Element) + 1;
 }
 
 void FMenuStack::ScheduleSubMenu(
@@ -203,7 +246,7 @@ bool FMenuStack::HandleKeyDown(const FKeyEvent& KeyEvent)
         return true;
     }
 
-    if (TSharedPtr<FVisualElement> TopContent = OpenMenus.Last()->GetContent())
+    if (TSharedPtr<FVisualElement> TopContent = OpenMenus.Last()->Content)
     {
         return TopContent->OnKeyDown(KeyEvent).IsEventHandled();
     }
@@ -227,19 +270,12 @@ void FMenuStack::Tick(float DeltaSeconds)
     const FPendingSubMenu Pending = PendingSubMenu;
     PendingSubMenu                = FPendingSubMenu();
 
-    if (FApplication::IsInitialized())
-    {
-        if (TSharedPtr<FWindow> OwningWindow = FApplication::Get().FindWindow(Pending.Item))
-        {
-            PushMenu(OwningWindow, Pending.AnchorBounds, EMenuPlacement::RightOfTopAligned, Pending.Content);
-        }
-    }
+    PushMenu(Pending.Item, Pending.AnchorBounds, EMenuPlacement::RightOfTopAligned, Pending.Content);
 }
 
-FRectangle FMenuStack::ResolveBounds(const FRectangle& AnchorBounds, const IntVector2& MenuSize, EMenuPlacement Placement) const
+FRectangle FMenuStack::ResolveBounds(const FRectangle& AnchorBounds, const IntVector2& MenuSize, EMenuPlacement Placement,
+    int32 ContentTopInset, const FRectangle& ClampArea) const
 {
-    const FRectangle WorkArea = Popups::FindWorkArea(AnchorBounds.Position);
-
     FRectangle Result = FRectangle(IntVector2(), MenuSize.X, MenuSize.Y);
     switch (Placement)
     {
@@ -247,12 +283,12 @@ FRectangle FMenuStack::ResolveBounds(const FRectangle& AnchorBounds, const IntVe
         {
             Result.Position = IntVector2(AnchorBounds.Position.X, AnchorBounds.GetBottom());
 
-            if (Result.GetBottom() > WorkArea.GetBottom() && (AnchorBounds.Position.Y - MenuSize.Y) >= WorkArea.Position.Y)
+            if (Result.GetBottom() > ClampArea.GetBottom() && (AnchorBounds.Position.Y - MenuSize.Y) >= ClampArea.Position.Y)
             {
                 Result.Position.Y = AnchorBounds.Position.Y - MenuSize.Y;
             }
 
-            if (Result.GetRight() > WorkArea.GetRight())
+            if (Result.GetRight() > ClampArea.GetRight())
             {
                 Result.Position.X = AnchorBounds.GetRight() - MenuSize.X;
             }
@@ -261,9 +297,9 @@ FRectangle FMenuStack::ResolveBounds(const FRectangle& AnchorBounds, const IntVe
         }
         case EMenuPlacement::RightOfTopAligned:
         {
-            Result.Position = IntVector2(AnchorBounds.GetRight(), AnchorBounds.Position.Y);
+            Result.Position = IntVector2(AnchorBounds.GetRight(), AnchorBounds.Position.Y - ContentTopInset);
 
-            if (Result.GetRight() > WorkArea.GetRight() && (AnchorBounds.Position.X - MenuSize.X) >= WorkArea.Position.X)
+            if (Result.GetRight() > ClampArea.GetRight() && (AnchorBounds.Position.X - MenuSize.X) >= ClampArea.Position.X)
             {
                 Result.Position.X = AnchorBounds.Position.X - MenuSize.X;
             }
@@ -274,12 +310,12 @@ FRectangle FMenuStack::ResolveBounds(const FRectangle& AnchorBounds, const IntVe
         {
             Result.Position = AnchorBounds.Position;
 
-            if (Result.GetBottom() > WorkArea.GetBottom() && (AnchorBounds.Position.Y - MenuSize.Y) >= WorkArea.Position.Y)
+            if (Result.GetBottom() > ClampArea.GetBottom() && (AnchorBounds.Position.Y - MenuSize.Y) >= ClampArea.Position.Y)
             {
                 Result.Position.Y = AnchorBounds.Position.Y - MenuSize.Y;
             }
 
-            if (Result.GetRight() > WorkArea.GetRight() && (AnchorBounds.Position.X - MenuSize.X) >= WorkArea.Position.X)
+            if (Result.GetRight() > ClampArea.GetRight() && (AnchorBounds.Position.X - MenuSize.X) >= ClampArea.Position.X)
             {
                 Result.Position.X = AnchorBounds.Position.X - MenuSize.X;
             }
@@ -288,26 +324,70 @@ FRectangle FMenuStack::ResolveBounds(const FRectangle& AnchorBounds, const IntVe
         }
     }
 
-    Result.Position.X = Math::Clamp(Result.Position.X, WorkArea.Position.X, Math::Max(WorkArea.Position.X, WorkArea.GetRight() - MenuSize.X));
-    Result.Position.Y = Math::Clamp(Result.Position.Y, WorkArea.Position.Y, Math::Max(WorkArea.Position.Y, WorkArea.GetBottom() - MenuSize.Y));
+    Result.Position.X = Math::Clamp(Result.Position.X, ClampArea.Position.X, Math::Max(ClampArea.Position.X, ClampArea.GetRight() - MenuSize.X));
+    Result.Position.Y = Math::Clamp(Result.Position.Y, ClampArea.Position.Y, Math::Max(ClampArea.Position.Y, ClampArea.GetBottom() - MenuSize.Y));
 
     return Result;
 }
 
-int32 FMenuStack::FindMenuIndex(const TSharedPtr<FWindow>& MenuWindow) const
+int32 FMenuStack::FindMenuIndex(const FMenuHandle& Menu) const
 {
-    if (!MenuWindow)
+    if (!Menu)
     {
         return -1;
     }
 
     for (int32 Index = 0; Index < OpenMenus.Size(); ++Index)
     {
-        if (OpenMenus[Index] == MenuWindow)
+        if (OpenMenus[Index] == Menu)
         {
             return Index;
         }
     }
 
     return -1;
+}
+
+int32 FMenuStack::FindParentIndex(const TSharedPtr<FVisualElement>& AnchorElement) const
+{
+    if (!AnchorElement || OpenMenus.IsEmpty())
+    {
+        return -1;
+    }
+
+    FElementPath AnchorPath(EVisibility::Hidden | EVisibility::Visible);
+    AnchorElement->FindParentElements(AnchorPath);
+
+    for (int32 Index = OpenMenus.Size() - 1; Index >= 0; --Index)
+    {
+        if (AnchorPath.Contains(OpenMenus[Index]->Content))
+        {
+            return Index;
+        }
+    }
+
+    return -1;
+}
+
+void FMenuStack::CloseLayer(const FMenuHandle& Menu)
+{
+    if (!Menu)
+    {
+        return;
+    }
+
+    if (Menu->bIsInline)
+    {
+        if (Menu->HostWindow)
+        {
+            if (TSharedPtr<FMenuHost> Host = Menu->HostWindow->GetMenuHost())
+            {
+                Host->RemoveChild(Menu->Content);
+            }
+        }
+    }
+    else
+    {
+        Popups::Close(Menu->MenuWindow);
+    }
 }

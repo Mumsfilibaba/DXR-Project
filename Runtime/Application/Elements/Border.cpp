@@ -80,6 +80,11 @@ void FBorder::SetCornerRadius(const FCornerRadii& InCornerRadius)
     CornerRadius = InCornerRadius;
 }
 
+void FBorder::SetOuterCornerRadius(float InCornerRadius)
+{
+    CornerRadius = FCornerRadii(InCornerRadius);
+}
+
 void FBorder::SetBorderThickness(float InBorderThickness)
 {
     BorderThickness = InBorderThickness;

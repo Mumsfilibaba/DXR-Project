@@ -182,6 +182,18 @@ public:
     void AddImage(int32 LayerId, const FRectangle& Bounds, const FUIBrush& Brush, const FFloatColor& Tint);
 
     /**
+     * @brief Appends the bottom band of a rounded rectangle, with either end fading out.
+     *
+     * @param LayerId      The layer to draw on.
+     * @param Bounds       The rounded rectangle the band is cut from.
+     * @param CornerRadius The rectangle's corners, which decide where the band narrows.
+     * @param Thickness    How tall the band is, measured up from the rectangle's bottom edge.
+     * @param Tint         The band's color where it runs at full strength.
+     * @param FadeWidth    How far in from either edge the alpha runs from nothing to full, in pixels.
+     */
+    void AddRoundedBottomBar(int32 LayerId, const FRectangle& Bounds, const FCornerRadii& CornerRadius, float Thickness, const FFloatColor& Tint, float FadeWidth);
+
+    /**
      * @brief Opens a clip region, intersected with whatever region is already open.
      *
      * @param LayerId       The layer the region belongs to.

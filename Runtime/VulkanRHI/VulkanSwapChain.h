@@ -43,6 +43,7 @@ struct FVulkanSwapChainCreateInfo
     ESwapChainUsageFlags Usage             = ESwapChainUsageFlags::RenderTarget;
     uint32               BufferCount       = 2;
     bool                 bVerticalSync     = true;
+    bool                 bIsTransparent    = false;
 };
 
 class FVulkanSwapChain : public FVulkanDeviceChild, public FRefCountedBase
@@ -68,16 +69,18 @@ public:
     bool               HasSeparatePresentQueue()     const { return GraphicsQueueFamilyIndex != PresentQueueFamilyIndex; }
     uint32             GetGraphicsQueueFamilyIndex() const { return GraphicsQueueFamilyIndex; }
     uint32             GetPresentQueueFamilyIndex()  const { return PresentQueueFamilyIndex; }
+    bool               IsTransparent()               const { return CompositeAlpha != VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR; }
 
 private:
-    VkResult           PresentResult;
-    VkSwapchainKHR     SwapChain;
-    VkExtent2D         Extent;
-    uint32             BufferIndex;
-    uint32             BufferCount;
-    VkSurfaceFormatKHR Format;
-    uint32             GraphicsQueueFamilyIndex = 0;
-    uint32             PresentQueueFamilyIndex  = 0;
+    VkResult                     PresentResult;
+    VkSwapchainKHR               SwapChain;
+    VkExtent2D                   Extent;
+    uint32                       BufferIndex;
+    uint32                       BufferCount;
+    VkSurfaceFormatKHR           Format;
+    VkCompositeAlphaFlagBitsKHR  CompositeAlpha;
+    uint32                       GraphicsQueueFamilyIndex;
+    uint32                       PresentQueueFamilyIndex;
 };
 
 class FVulkanSwapChainRHI final : public FRHISwapChain, public FVulkanDeviceChild

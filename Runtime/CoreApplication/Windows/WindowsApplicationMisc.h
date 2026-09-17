@@ -10,4 +10,5 @@ struct COREAPPLICATION_API FWindowsApplicationMisc final : public IPlatformAppli
     }
 
     static void PumpMessages(bool bUntilEmpty);
+    static bool SupportsRoundedWindowCorners();
 };

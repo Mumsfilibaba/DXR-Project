@@ -201,12 +201,29 @@ FEventResponse FExpander::OnMouseEntered(const FCursorEvent& CursorEvent)
     return FEventResponse::Unhandled();
 }
 
+FEventResponse FExpander::OnMouseMove(const FCursorEvent& CursorEvent)
+{
+    bIsHeaderHovered = GetHeaderBounds(GetContentRectangle()).EncapsulatesPoint(CursorEvent.GetClientPosition());
+    return FEventResponse::Unhandled();
+}
+
 FEventResponse FExpander::OnMouseLeft(const FCursorEvent& CursorEvent)
 {
     UNREFERENCED_VARIABLE(CursorEvent);
 
     bIsHeaderHovered = false;
     return FEventResponse::Unhandled();
+}
+
+bool FExpander::GetCursor(ECursor& OutCursor) const
+{
+    if (!bIsHeaderHovered)
+    {
+        return false;
+    }
+
+    OutCursor = ECursor::Hand;
+    return true;
 }
 
 void FExpander::SetContent(const TSharedPtr<FVisualElement>& InContent)

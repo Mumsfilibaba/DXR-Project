@@ -3,6 +3,7 @@
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
 
+#include <Core/Math/Math.h>
 #include <Core/Misc/Paths.h>
 #include <Application/Draw/DrawCommandList.h>
 #include <Application/Draw/UIDrawData.h>
@@ -303,7 +304,9 @@ bool UIDrawDataRoundedBox_Test()
 {
     TEST_BEGIN();
 
+    // Counted and measured against the bare silhouette, which the fringe would both inflate and widen
     FUIDrawData DrawData;
+    DrawData.SetAntiAliasingEnabled(false);
 
     const FRectangle Bounds(IntVector2(0, 0), 100, 20);
 
@@ -381,6 +384,114 @@ bool UIDrawDataRoundedBox_Test()
 
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 4);
     TEST_EXPECT_EQ(DrawData.GetIndices().Size(), 6);
+
+    TEST_END();
+}
+
+bool UIDrawDataRoundedBottomBar_Test()
+{
+    TEST_BEGIN();
+
+    FUIDrawData DrawData;
+    DrawData.SetAntiAliasingEnabled(false);
+
+    const FRectangle Bounds(IntVector2(0, 0), 120, 28);
+
+    constexpr float Radius    = 6.0f;
+    constexpr float Thickness = 3.0f;
+    constexpr float FadeWidth = 8.0f;
+    constexpr float Tolerance = 0.01f;
+
+    FDrawCommandList BarList;
+    BarList.AddRoundedBottomBar(0, Bounds, FCornerRadii(Radius), Thickness, FFloatColor::White, FadeWidth);
+    DrawData.BuildFromCommandList(BarList);
+
+    TEST_SECTION("The band is a strip of column quads, so it carries two vertices and six indices per column");
+    TEST_EXPECT(!DrawData.IsEmpty());
+    TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 1);
+    TEST_EXPECT(DrawData.GetBatches()[0].Texture.Atlas == nullptr);
+
+    const int32 VertexCount = DrawData.GetVertices().Size();
+    TEST_EXPECT_EQ(VertexCount % 2, 0);
+    TEST_EXPECT_EQ(DrawData.GetIndices().Size(), ((VertexCount / 2) - 1) * 6);
+    TEST_EXPECT_EQ(DrawData.GetBatches()[0].IndexCount, DrawData.GetIndices().Size());
+
+    TEST_SECTION("It sits against the bottom of the rectangle and never rises above the band's own height");
+    for (const FUIVertex& Vertex : DrawData.GetVertices())
+    {
+        TEST_EXPECT(Vertex.Position.Y >= 28.0f - Thickness - Tolerance);
+        TEST_EXPECT(Vertex.Position.Y <= 28.0f + Tolerance);
+    }
+
+    TEST_SECTION("The corner cuts it short of either edge, since the arc swallows the band before the rectangle ends");
+    float MinX = 1000.0f;
+    float MaxX = -1000.0f;
+
+    for (const FUIVertex& Vertex : DrawData.GetVertices())
+    {
+        MinX = Math::Min(MinX, Vertex.Position.X);
+        MaxX = Math::Max(MaxX, Vertex.Position.X);
+    }
+
+    TEST_EXPECT(MinX > 0.0f);
+    TEST_EXPECT(MaxX < 120.0f);
+    TEST_EXPECT(MinX < Radius);
+    TEST_EXPECT(MaxX > 120.0f - Radius);
+
+    TEST_SECTION("Each end tapers into the curve, so the first column is shorter than one in the middle");
+    const int32 ColumnCount  = VertexCount / 2;
+    const int32 MiddleColumn = ColumnCount / 2;
+
+    const float FirstHeight  = DrawData.GetVertices()[1].Position.Y - DrawData.GetVertices()[0].Position.Y;
+    const float LastHeight   = DrawData.GetVertices()[VertexCount - 1].Position.Y - DrawData.GetVertices()[VertexCount - 2].Position.Y;
+    const float MiddleHeight = DrawData.GetVertices()[(MiddleColumn * 2) + 1].Position.Y - DrawData.GetVertices()[MiddleColumn * 2].Position.Y;
+
+    TEST_EXPECT(FirstHeight < MiddleHeight);
+    TEST_EXPECT(LastHeight < MiddleHeight);
+    TEST_EXPECT(Math::Abs(MiddleHeight - Thickness) < Tolerance);
+
+    TEST_SECTION("The alpha ramps from nothing at either end to full in the middle");
+    TEST_EXPECT_EQ(DrawData.GetVertices()[0].Color >> 24, 0u);
+    TEST_EXPECT_EQ(DrawData.GetVertices()[VertexCount - 1].Color >> 24, 0u);
+    TEST_EXPECT_EQ(DrawData.GetVertices()[MiddleColumn * 2].Color >> 24, 255u);
+
+    TEST_SECTION("Both vertices of one column share a colour, so the fade runs along the band and not across it");
+    for (int32 ColumnIndex = 0; ColumnIndex < ColumnCount; ++ColumnIndex)
+    {
+        TEST_EXPECT_EQ(DrawData.GetVertices()[ColumnIndex * 2].Color, DrawData.GetVertices()[(ColumnIndex * 2) + 1].Color);
+    }
+
+    TEST_SECTION("Asked for no fade, the band runs at full strength from end to end");
+    FDrawCommandList SolidList;
+    SolidList.AddRoundedBottomBar(0, Bounds, FCornerRadii(Radius), Thickness, FFloatColor::White, 0.0f);
+    DrawData.BuildFromCommandList(SolidList);
+
+    for (const FUIVertex& Vertex : DrawData.GetVertices())
+    {
+        TEST_EXPECT_EQ(Vertex.Color >> 24, 255u);
+    }
+
+    TEST_SECTION("With square corners the band is a plain rectangle spanning the full width");
+    FDrawCommandList SquareList;
+    SquareList.AddRoundedBottomBar(0, Bounds, FCornerRadii(), Thickness, FFloatColor::White, 0.0f);
+    DrawData.BuildFromCommandList(SquareList);
+
+    for (const FUIVertex& Vertex : DrawData.GetVertices())
+    {
+        const bool bIsTop = Vertex.Position.Y <= 28.0f - Thickness + Tolerance;
+        TEST_EXPECT(bIsTop || Vertex.Position.Y >= 28.0f - Tolerance);
+        TEST_EXPECT(Vertex.Position.X >= -Tolerance && Vertex.Position.X <= 120.0f + Tolerance);
+    }
+
+    TEST_EXPECT(Math::Abs(DrawData.GetVertices()[0].Position.X) < Tolerance);
+    TEST_EXPECT(Math::Abs(DrawData.GetVertices().Last().Position.X - 120.0f) < Tolerance);
+
+    TEST_SECTION("A band with no thickness draws nothing at all");
+    FDrawCommandList ThinList;
+    ThinList.AddRoundedBottomBar(0, Bounds, FCornerRadii(Radius), 0.0f, FFloatColor::White, FadeWidth);
+    DrawData.BuildFromCommandList(ThinList);
+
+    TEST_EXPECT(DrawData.IsEmpty());
 
     TEST_END();
 }
@@ -512,6 +623,160 @@ bool UIDrawDataText_Test()
     TEST_EXPECT(DrawData.GetBatches()[0].Texture.Atlas == nullptr);
     TEST_EXPECT(DrawData.GetBatches()[1].Texture.Atlas == Font->GetAtlas());
     TEST_EXPECT(DrawData.GetBatches()[2].Texture.Atlas == nullptr);
+
+    TEST_END();
+}
+
+bool UIDrawDataAntiAliasing_Test()
+{
+    TEST_BEGIN();
+
+    constexpr float Tolerance  = 0.01f;
+    constexpr float HalfFringe = FUIDrawData::FringeWidth * 0.5f;
+
+    FUIDrawData DrawData;
+
+    TEST_SECTION("It is on by default, and turning it off is what the counting tests rely on");
+    TEST_EXPECT(DrawData.IsAntiAliasingEnabled());
+
+    DrawData.SetAntiAliasingEnabled(false);
+    TEST_EXPECT(!DrawData.IsAntiAliasingEnabled());
+
+    DrawData.SetAntiAliasingEnabled(true);
+
+    TEST_SECTION("A square box is still the plain quad, since an axis-aligned edge already rasterizes crisp");
+    FDrawCommandList SquareList;
+    SquareList.AddBox(0, FRectangle(IntVector2(0, 0), 100, 20), FFloatColor::White);
+    DrawData.BuildFromCommandList(SquareList);
+
+    TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 4);
+    TEST_EXPECT_EQ(DrawData.GetIndices().Size(), 6);
+
+    TEST_SECTION("A rounded box gains a second ring, so it is two vertices and nine indices per outline point");
+    const FRectangle Bounds(IntVector2(0, 0), 100, 20);
+
+    FDrawCommandList RoundedList;
+    RoundedList.AddBox(0, Bounds, FFloatColor::White, 3.0f);
+    DrawData.BuildFromCommandList(RoundedList);
+
+    const int32 OutlineCount = 4 * (4 + 1);
+
+    TEST_EXPECT_EQ(DrawData.GetVertices().Size(), (OutlineCount * 2) + 1);
+    TEST_EXPECT_EQ(DrawData.GetIndices().Size(), OutlineCount * 9);
+    TEST_EXPECT_EQ(DrawData.GetBatches()[0].IndexCount, OutlineCount * 9);
+
+    TEST_SECTION("The inner ring carries the fill's alpha and the outer one carries none, which is what softens the edge");
+    for (int32 OutlineIndex = 0; OutlineIndex < OutlineCount; ++OutlineIndex)
+    {
+        const FUIVertex& Inner = DrawData.GetVertices()[1 + (OutlineIndex * 2)];
+        const FUIVertex& Outer = DrawData.GetVertices()[2 + (OutlineIndex * 2)];
+
+        TEST_EXPECT_EQ(Inner.Color >> 24, 0xffu);
+        TEST_EXPECT_EQ(Outer.Color >> 24, 0x00u);
+
+        const float Separation = (Outer.Position - Inner.Position).GetLength();
+        TEST_EXPECT(Separation >= FUIDrawData::FringeWidth - Tolerance);
+        TEST_EXPECT(Separation <= FUIDrawData::FringeWidth * FUIDrawData::MiterLimit);
+    }
+
+    TEST_SECTION("The rings straddle the silhouette, so the fringe is added rather than eaten out of the fill");
+    float InnerMinX = Bounds.GetRight();
+    float OuterMinX = Bounds.GetRight();
+
+    for (int32 OutlineIndex = 0; OutlineIndex < OutlineCount; ++OutlineIndex)
+    {
+        InnerMinX = Math::Min(InnerMinX, DrawData.GetVertices()[1 + (OutlineIndex * 2)].Position.X);
+        OuterMinX = Math::Min(OuterMinX, DrawData.GetVertices()[2 + (OutlineIndex * 2)].Position.X);
+    }
+
+    TEST_EXPECT(Math::Abs(InnerMinX - HalfFringe) <= Tolerance);
+    TEST_EXPECT(Math::Abs(OuterMinX + HalfFringe) <= Tolerance);
+
+    TEST_SECTION("A stroke gains a fringe either side, so it is four vertices per point and eighteen indices per segment");
+    FDrawCommandList LineList;
+    LineList.AddLine(0, Vector2(0.0f, 10.0f), Vector2(100.0f, 10.0f), FFloatColor::White, 4.0f);
+    DrawData.BuildFromCommandList(LineList);
+
+    TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 2 * 4);
+    TEST_EXPECT_EQ(DrawData.GetIndices().Size(), 18);
+
+    TEST_SECTION("The clear rows are the outermost two and the opaque core sits between them at the nominal width");
+    TEST_EXPECT_EQ(DrawData.GetVertices()[0].Color >> 24, 0x00u);
+    TEST_EXPECT_EQ(DrawData.GetVertices()[1].Color >> 24, 0xffu);
+    TEST_EXPECT_EQ(DrawData.GetVertices()[2].Color >> 24, 0xffu);
+    TEST_EXPECT_EQ(DrawData.GetVertices()[3].Color >> 24, 0x00u);
+
+    TEST_EXPECT(Math::Abs(DrawData.GetVertices()[0].Position.Y - (12.0f + HalfFringe)) <= Tolerance);
+    TEST_EXPECT(Math::Abs(DrawData.GetVertices()[1].Position.Y - (12.0f - HalfFringe)) <= Tolerance);
+    TEST_EXPECT(Math::Abs(DrawData.GetVertices()[3].Position.Y - (8.0f - HalfFringe)) <= Tolerance);
+
+    TEST_SECTION("A stroke thinner than the fringe collapses its core and pays for the width in alpha instead");
+    FDrawCommandList HairlineList;
+    HairlineList.AddLine(0, Vector2(0.0f, 10.0f), Vector2(100.0f, 10.0f), FFloatColor::White, 0.5f);
+    DrawData.BuildFromCommandList(HairlineList);
+
+    TEST_EXPECT_EQ(DrawData.GetVertices()[1].Color >> 24, 0x80u);
+    TEST_EXPECT_EQ(DrawData.GetVertices()[0].Color >> 24, 0x00u);
+    TEST_EXPECT(Math::Abs(DrawData.GetVertices()[1].Position.Y - 10.0f) <= Tolerance);
+    TEST_EXPECT(Math::Abs(DrawData.GetVertices()[2].Position.Y - 10.0f) <= Tolerance);
+    TEST_EXPECT(Math::Abs(DrawData.GetVertices()[0].Position.Y - (10.0f + HalfFringe)) <= Tolerance);
+
+    TEST_SECTION("A convex polygon keeps its fan and has the fringe stitched around the outside of it");
+    const Vector2 Quad[4] =
+    {
+        Vector2(0.0f, 0.0f),
+        Vector2(10.0f, 0.0f),
+        Vector2(10.0f, 10.0f),
+        Vector2(0.0f, 10.0f),
+    };
+
+    FDrawCommandList QuadList;
+    QuadList.AddConvexPolygon(0, TArrayView<const Vector2>(Quad, 4), FFloatColor::White);
+    DrawData.BuildFromCommandList(QuadList);
+
+    TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 4 * 2);
+    TEST_EXPECT_EQ(DrawData.GetIndices().Size(), (2 * 3) + (4 * 6));
+
+    TEST_EXPECT_EQ(DrawData.GetVertices()[0].Color >> 24, 0xffu);
+    TEST_EXPECT_EQ(DrawData.GetVertices()[1].Color >> 24, 0x00u);
+
+    TEST_SECTION("The accent bar hangs a clear row under the arc, which is the only edge of it that curves");
+    const FRectangle BarBounds(IntVector2(0, 0), 120, 28);
+
+    FDrawCommandList BarList;
+    BarList.AddRoundedBottomBar(0, BarBounds, FCornerRadii(6.0f), 3.0f, FFloatColor::White, 0.0f);
+    DrawData.BuildFromCommandList(BarList);
+
+    TEST_EXPECT_EQ(DrawData.GetVertices().Size() % 3, 0);
+
+    const int32 ColumnCount = (DrawData.GetVertices().Size() / 3) - 1;
+    TEST_EXPECT(ColumnCount >= FUIDrawData::MinBarColumns);
+    TEST_EXPECT_EQ(DrawData.GetIndices().Size(), ColumnCount * 12);
+
+    for (int32 ColumnIndex = 0; ColumnIndex <= ColumnCount; ++ColumnIndex)
+    {
+        const FUIVertex& Bottom = DrawData.GetVertices()[(ColumnIndex * 3) + 1];
+        const FUIVertex& Fringe = DrawData.GetVertices()[(ColumnIndex * 3) + 2];
+
+        TEST_EXPECT_EQ(Bottom.Color >> 24, 0xffu);
+        TEST_EXPECT_EQ(Fringe.Color >> 24, 0x00u);
+        TEST_EXPECT(Fringe.Position.Y > Bottom.Position.Y);
+    }
+
+    TEST_SECTION("Away from the corners it straddles the underside, so the band keeps the depth it was asked for");
+    const FUIVertex& MiddleBottom = DrawData.GetVertices()[((ColumnCount / 2) * 3) + 1];
+    const FUIVertex& MiddleFringe = DrawData.GetVertices()[((ColumnCount / 2) * 3) + 2];
+
+    const float BarUnderside = static_cast<float>(BarBounds.GetBottom());
+    TEST_EXPECT(Math::Abs(MiddleBottom.Position.Y - (BarUnderside - HalfFringe)) <= Tolerance);
+    TEST_EXPECT(Math::Abs(MiddleFringe.Position.Y - (BarUnderside + HalfFringe)) <= Tolerance);
+
+    TEST_SECTION("Turning it off gives back exactly the geometry the counting tests were written against");
+    DrawData.SetAntiAliasingEnabled(false);
+    DrawData.BuildFromCommandList(RoundedList);
+
+    TEST_EXPECT_EQ(DrawData.GetVertices().Size(), OutlineCount + 1);
+    TEST_EXPECT_EQ(DrawData.GetIndices().Size(), OutlineCount * 3);
 
     TEST_END();
 }

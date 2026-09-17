@@ -31,6 +31,7 @@ FSearchBox::FSearchBox()
     , Style()
     , IconSize(14)
     , bIsHovered(false)
+    , bIsClearHovered(false)
     , OnTextChangedDelegate()
 {
 }
@@ -143,7 +144,12 @@ int32 FSearchBox::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
     const FRectangle ClearBounds = GetClearButtonRectangle(AllottedGeometry.Bounds);
     if (!ClearBounds.IsEmpty())
     {
-        const FFloatColor& ClearTint = bIsHovered ? Style.IconFocused : Style.IconNormal;
+        if (bIsClearHovered)
+        {
+            OutCommandList.AddBox(NextLayerId, ClearBounds, Style.ClearHovered, FCornerRadii(Style.ClearCornerRadius));
+        }
+
+        const FFloatColor& ClearTint = bIsClearHovered ? Style.IconFocused : Style.IconNormal;
 
         if (ClearIcon.IsValid())
         {
@@ -190,12 +196,32 @@ FEventResponse FSearchBox::OnMouseEntered(const FCursorEvent& CursorEvent)
     return FEventResponse::Unhandled();
 }
 
+FEventResponse FSearchBox::OnMouseMove(const FCursorEvent& CursorEvent)
+{
+    const FRectangle ClearBounds = GetClearButtonRectangle(GetContentRectangle());
+    bIsClearHovered = !ClearBounds.IsEmpty() && ClearBounds.EncapsulatesPoint(CursorEvent.GetClientPosition());
+
+    return FEventResponse::Unhandled();
+}
+
 FEventResponse FSearchBox::OnMouseLeft(const FCursorEvent& CursorEvent)
 {
     UNREFERENCED_VARIABLE(CursorEvent);
 
-    bIsHovered = false;
+    bIsHovered      = false;
+    bIsClearHovered = false;
     return FEventResponse::Unhandled();
+}
+
+bool FSearchBox::GetCursor(ECursor& OutCursor) const
+{
+    if (!bIsClearHovered)
+    {
+        return false;
+    }
+
+    OutCursor = ECursor::Hand;
+    return true;
 }
 
 void FSearchBox::SetText(const String& InText)
@@ -227,7 +253,7 @@ bool FSearchBox::IsEmpty() const
 
 FRectangle FSearchBox::GetSearchIconRectangle(const FRectangle& Bounds) const
 {
-    if (!SearchIcon.IsValid() || !IsEmpty())
+    if (!SearchIcon.IsValid())
     {
         return FRectangle();
     }
@@ -237,7 +263,15 @@ FRectangle FSearchBox::GetSearchIconRectangle(const FRectangle& Bounds) const
 
 FRectangle FSearchBox::GetClearButtonRectangle(const FRectangle& Bounds) const
 {
-    return IsEmpty() ? FRectangle() : GetIconRectangle(Bounds);
+    if (IsEmpty())
+    {
+        return FRectangle();
+    }
+
+    const FRectangle Inner = Bounds.Deflate(Padding);
+    const int32      Side  = Math::Min(IconSize, Inner.Height);
+
+    return FRectangle(IntVector2(Inner.GetRight() - Side, Inner.Position.Y + ((Inner.Height - Side) / 2)), Side, Side);
 }
 
 void FSearchBox::HandleTextChanged(const String& InText)
@@ -248,14 +282,20 @@ void FSearchBox::HandleTextChanged(const String& InText)
 FRectangle FSearchBox::GetEditorRectangle(const FRectangle& Bounds) const
 {
     const FRectangle Inner      = Bounds.Deflate(Padding);
-    const FRectangle IconBounds = GetIconRectangle(Bounds);
+    const FRectangle IconBounds = GetSearchIconRectangle(Bounds);
 
-    const int32 Right = Inner.GetRight();
-    int32       Left  = Inner.Position.X;
+    int32 Right = Inner.GetRight();
+    int32 Left  = Inner.Position.X;
 
     if (!IconBounds.IsEmpty())
     {
         Left = IconBounds.GetRight() + SEARCH_BOX_ICON_SPACING;
+    }
+
+    const FRectangle ClearBounds = GetClearButtonRectangle(Bounds);
+    if (!ClearBounds.IsEmpty())
+    {
+        Right = ClearBounds.Position.X - SEARCH_BOX_ICON_SPACING;
     }
 
     return FRectangle(IntVector2(Left, Inner.Position.Y), Math::Max(0, Right - Left), Inner.Height);

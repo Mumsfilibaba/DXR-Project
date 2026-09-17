@@ -305,6 +305,8 @@ protected:
     virtual void OnDragged(const FCursorEvent& CursorEvent) override;
     virtual bool AcceptsPressFromKey(FKey Key) const override;
 
+    virtual bool IsPressable() const override { return false; }
+
 private:
     void RebuildElements();
     void MeasureNodeElements();

@@ -51,6 +51,12 @@ public:
      */
     virtual void OnVisibilityChanged(bool bInIsVisible);
 
+    /**
+     * @return The inset held between the tab strip and the panel's own content, which the viewport
+     * overrides to nothing so its surface reaches the edges.
+     */
+    NODISCARD virtual FMargin GetContentPadding() const;
+
     /** @return True while the panel is the front tab of its docked node, so its content is on screen. */
     NODISCARD FORCEINLINE bool IsVisible() const
     {

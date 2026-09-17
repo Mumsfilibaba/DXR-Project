@@ -50,7 +50,7 @@ void FLogView::Initialize(const FDesc& Desc)
     SetMinimumSeverity(Desc.MinimumSeverity);
 
     FRichTextBlock::FDesc TextDesc;
-    TextDesc.Margin        = FMargin(6, 4);
+    TextDesc.Margin        = FMargin(12, 8);
     TextDesc.bIsSelectable = true;
     TextDesc.bAutoWrapText = true;
 

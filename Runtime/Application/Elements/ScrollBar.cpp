@@ -16,10 +16,12 @@ FScrollBar::FScrollBar()
     , Thickness(12)
     , MinThumbLength(24)
     , TrackPadding()
+    , Style(FUIStyle::GetDefault().ScrollBar)
     , ContentLength(0)
     , ViewLength(0)
     , Offset(0)
     , ThumbGrabOffset(0)
+    , Opacity(1.0f)
     , OnOffsetChangedDelegate()
 {
 }
@@ -32,6 +34,7 @@ void FScrollBar::Initialize(const FDesc& Desc)
     Thickness               = Math::Max(Desc.Thickness, 1);
     MinThumbLength          = Math::Max(Desc.MinThumbLength, 1);
     TrackPadding            = Desc.TrackPadding;
+    Style                   = Desc.Style;
     OnOffsetChangedDelegate = Desc.OnOffsetChanged;
 }
 
@@ -42,11 +45,10 @@ IntVector2 FScrollBar::ComputeDesiredSize() const
 
 int32 FScrollBar::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
 {
-    const FUIStyle&  Style = FUIStyle::GetDefault();
     const FRectangle Track = ComputeTrackBounds(AllottedGeometry.Bounds);
 
-    const FCornerRadii TrackRadii(Style.ScrollBar.CornerRadius);
-    OutCommandList.AddBox(LayerId, Track, Style.ScrollBar.Track, TrackRadii);
+    const FCornerRadii TrackRadii(Style.CornerRadius);
+    OutCommandList.AddBox(LayerId, Track, ApplyOpacity(Style.Track), TrackRadii);
 
     if (!IsScrollable())
     {
@@ -55,11 +57,24 @@ int32 FScrollBar::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList
 
     const bool         bIsGrabbed = IsHovered() || IsPressed();
     const FRectangle   Thumb      = ComputeThumbBounds(AllottedGeometry.Bounds);
-    const FFloatColor& ThumbFill  = bIsGrabbed ? Style.ScrollBar.GrabActive : Style.ScrollBar.Grab;
+    const FFloatColor& ThumbFill  = bIsGrabbed ? Style.GrabActive : Style.Grab;
 
-    OutCommandList.AddBox(LayerId, Thumb, ThumbFill, TrackRadii);
+    OutCommandList.AddBox(LayerId, Thumb, ApplyOpacity(ThumbFill), TrackRadii);
 
     return LayerId;
+}
+
+void FScrollBar::SetOpacity(float InOpacity)
+{
+    Opacity = Math::Clamp(InOpacity, 0.0f, 1.0f);
+}
+
+FFloatColor FScrollBar::ApplyOpacity(const FFloatColor& Color) const
+{
+    FFloatColor Result = Color;
+    Result.A *= Opacity;
+
+    return Result;
 }
 
 FEventResponse FScrollBar::OnMouseButtonDown(const FCursorEvent& CursorEvent)

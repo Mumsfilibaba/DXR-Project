@@ -156,6 +156,7 @@ RHI_API void RHI::DumpCapabilities()
     // -------------------------------------------------------------------------------------------
     // Shader / Pipeline Features
     // -------------------------------------------------------------------------------------------
+
     LOG_INFO("[RHI] Max Shader Model                          : %s", ToString(RHI::MaxShaderModel));
     LOG_INFO("[RHI] Geometry Shaders                          : %s", YesNo(RHI::bSupportsGeometryShaders));
     LOG_INFO("[RHI] Tessellation                              : %s", YesNo(RHI::bSupportsTessellation));
@@ -166,6 +167,7 @@ RHI_API void RHI::DumpCapabilities()
     // -------------------------------------------------------------------------------------------
     // View Instancing
     // -------------------------------------------------------------------------------------------
+
     LOG_INFO("[RHI] View Instancing                           : %s", YesNo(RHI::bSupportsViewInstancing));
     LOG_INFO("[RHI]   Max View Instances                      : %u", RHI::MaxViewInstanceCount);
 
@@ -179,8 +181,15 @@ RHI_API void RHI::DumpCapabilities()
     RHI::DumpRayTracingCapabilities();
     
     // -------------------------------------------------------------------------------------------
+    // Transparent Surfaces
+    // -------------------------------------------------------------------------------------------
+
+    LOG_INFO("[RHI] Transparent SwapChain                     : %s", YesNo(RHI::bSupportsTransparentSwapChain));
+
+    // -------------------------------------------------------------------------------------------
     // Variable Rate Shading (VRS)
     // -------------------------------------------------------------------------------------------
+
     LOG_INFO("[RHI] Variable Rate Shading                     : %s", YesNo(RHI::bSupportsVRS));
     LOG_INFO("[RHI]   Tier                                    : %s", ToString(RHI::ShadingRateTier));
     LOG_INFO("[RHI]   Shading Rate Image Tile Size            : %u", RHI::ShadingRateImageTileSize);
@@ -188,12 +197,14 @@ RHI_API void RHI::DumpCapabilities()
     // -------------------------------------------------------------------------------------------
     // Sampler Feedback
     // -------------------------------------------------------------------------------------------
+
     LOG_INFO("[RHI] Sampler Feedback                          : %s", YesNo(RHI::bSupportsSamplerFeedback));
     LOG_INFO("[RHI]   Tier                                    : %s", ToString(RHI::SamplerFeedbackTier));
 
     // -------------------------------------------------------------------------------------------
     // Programmable Sample Positions
     // -------------------------------------------------------------------------------------------
+
     LOG_INFO("[RHI] Programmable Sample Positions             : %s", YesNo(RHI::bSupportsProgrammableSamplePositions));
     LOG_INFO("[RHI]   Tier                                    : %s", ToString(RHI::SamplePositionsTier));
     LOG_INFO("[RHI]   Max Grid Size                           : %ux%u", RHI::MaxSamplePositionGridWidth, RHI::MaxSamplePositionGridHeight);
@@ -202,11 +213,13 @@ RHI_API void RHI::DumpCapabilities()
     // -------------------------------------------------------------------------------------------
     // Depth Bounds Test
     // -------------------------------------------------------------------------------------------
+
     LOG_INFO("[RHI] Depth Bounds Test                         : %s", YesNo(RHI::bSupportsDepthBoundsTest));
 
     // -------------------------------------------------------------------------------------------
     // Draw Indirect
     // -------------------------------------------------------------------------------------------
+
     LOG_INFO("[RHI] DrawIndirect                              : %s", YesNo(RHI::bSupportsDrawIndirect));
     LOG_INFO("[RHI]   DrawIndirectCount                       : %s", YesNo(RHI::bSupportsDrawIndirectCount));
     LOG_INFO("[RHI]   DispatchIndirect                        : %s", YesNo(RHI::bSupportsDispatchIndirect));
@@ -218,37 +231,29 @@ RHI_API void RHI::DumpCapabilities()
     // -------------------------------------------------------------------------------------------
     // Texture / Image Limits
     // -------------------------------------------------------------------------------------------
-    LOG_INFO("[RHI] Texture / Image Limits:");
 
+    LOG_INFO("[RHI] Texture / Image Limits:");
     LOG_INFO("[RHI]   Texture1D:  MaxWidth                    : %u", RHI::MaxTexture1DSize);
     LOG_INFO("[RHI]               MaxArrayLayers              : %u", RHI::MaxTexture1DArrayLayers);
-    
     LOG_INFO("[RHI]   Texture2D:  MaxSize (W/H)               : %u", RHI::MaxTexture2DSize);
     LOG_INFO("[RHI]               MaxArrayLayers              : %u", RHI::MaxTexture2DArrayLayers);
-    
     LOG_INFO("[RHI]   Texture3D:  MaxWidth                    : %u", RHI::MaxTexture3DWidth);
     LOG_INFO("[RHI]               MaxHeight                   : %u", RHI::MaxTexture3DHeight);
     LOG_INFO("[RHI]               MaxDepth                    : %u", RHI::MaxTexture3DDepth);
-    
     LOG_INFO("[RHI]   CubeTexure: MaxFaceResolution           : %u", RHI::MaxCubeTextureSize);
     LOG_INFO("[RHI]               MaxCubeArrayCount           : %u", RHI::MaxCubeArrayCount);
 
     // -------------------------------------------------------------------------------------------
     // Buffer / Memory Limits
     // -------------------------------------------------------------------------------------------
+
     LOG_INFO("[RHI] Buffer / Memory Limits:");
-    
     LOG_INFO("[RHI]   MaxBufferSize                           : %llu", static_cast<uint64>(RHI::MaxBufferSize)); 
-    
     LOG_INFO("[RHI]   ConstantBuffer:   MaxSize               : %u", RHI::MaxConstantBufferSize); 
-    
     LOG_INFO("[RHI]   StorageBuffer:    MaxSize               : %llu", static_cast<uint64>(RHI::MaxStorageBufferSize));
-    
     LOG_INFO("[RHI]   StructuredBuffer: MinStride             : %u", RHI::StructuredBufferMinStride);
     LOG_INFO("[RHI]                     MaxStride             : %u", RHI::StructuredBufferMaxStride);
-
     LOG_INFO("[RHI]   RawBuffer:        RequiredAlignment     : %u", RHI::RawBufferRequiredAlignment);
-
     LOG_INFO("[RHI] --------------------------------------------------------------------------------------------");
 }
 

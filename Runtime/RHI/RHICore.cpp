@@ -90,6 +90,12 @@ RHI_API bool   RHI::bSupportsShaderBindingTableDescriptors                     =
 RHI_API bool   RHI::bSupportsToolsVisualization                                = false;
 
 // -------------------------------------------------------------------------------------------
+// Transparent Surfaces
+// -------------------------------------------------------------------------------------------
+
+RHI_API bool   RHI::bSupportsTransparentSwapChain                              = false;
+
+// -------------------------------------------------------------------------------------------
 // Variable Rate Shading
 // -------------------------------------------------------------------------------------------
 

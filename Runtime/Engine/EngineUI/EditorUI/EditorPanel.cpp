@@ -1,4 +1,5 @@
 #include "Engine/EngineUI/EditorUI/EditorPanel.h"
+#include "Engine/EngineUI/EditorUI/EditorStyle.h"
 
 FEditorPanel::FEditorPanel(FEditorEngine* InEditorEngine, const String& InPanelId, const String& InLabel)
     : EditorEngine(InEditorEngine)
@@ -17,6 +18,11 @@ FEditorPanel::~FEditorPanel()
 void FEditorPanel::Release()
 {
     Content.Reset();
+}
+
+FMargin FEditorPanel::GetContentPadding() const
+{
+    return FMargin(FEditorStyle::PanelPadding);
 }
 
 void FEditorPanel::Tick(float /*DeltaTime*/)

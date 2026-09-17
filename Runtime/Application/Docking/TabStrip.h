@@ -1,8 +1,10 @@
 #pragma once
 #include "Core/Containers/String.h"
 #include "Core/Delegates/Delegate.h"
+#include "Application/Draw/DrawTypes.h"
 #include "Application/Elements/InteractiveElement.h"
 #include "Application/Elements/VisualElement.h"
+#include "Application/Style/UIStyle.h"
 #include "Application/Text/IFontFace.h"
 
 class FTabStrip;
@@ -55,6 +57,20 @@ public:
     void SetActive(bool bInIsActive);
 
     /**
+     * @brief Replaces the look of the tab, which the strip holding it does as it builds it.
+     *
+     * @param InStyle The look to draw and measure with.
+     */
+    void SetStyle(const FUITabStyle& InStyle);
+
+    /**
+     * @brief Sets the glyph the close button draws, which falls back to a drawn cross while no texture is set.
+     *
+     * @param InCloseIcon The brush to draw.
+     */
+    void SetCloseIcon(const FUIBrush& InCloseIcon);
+
+    /**
      * @brief Gets where the close cross sits, in the space the tab was arranged in.
      *
      * @return The rectangle, which is empty for a tab that cannot be closed.
@@ -94,6 +110,8 @@ private:
     String                PanelId;
     String                Label;
     TSharedPtr<IFontFace> Font;
+    FUITabStyle           Style;
+    FUIBrush              CloseIcon;
     FTabStrip*            OwnerStrip;
     bool                  bIsClosable;
     bool                  bIsActive;
@@ -107,6 +125,12 @@ public:
     {
         /** @brief The face every tab label is drawn with. */
         TSharedPtr<IFontFace> Font = nullptr;
+
+        /** @brief The look of the tabs, which defaults to the shared tab style. */
+        FUITabStyle Style = FUIStyle::GetDefault().Tab;
+
+        /** @brief The glyph every close button draws, which falls back to a drawn cross while no texture is set. */
+        FUIBrush CloseIcon;
 
         /** @brief Whether a tab can be dragged into a new position within the strip. */
         bool bAllowReorder : 1 = true;
@@ -138,6 +162,9 @@ public:
     /** @brief How far off the strip a drag has to go before the panel is torn out, in pixels. */
     static constexpr int32 TearOutDistance = 24;
 
+    /** @brief How far one notch of the wheel scrolls the strip sideways, in pixels. */
+    static constexpr int32 DefaultScrollAmountPerWheelStep = 60;
+
 public:
     static TSharedPtr<FTabStrip> Create(const FDesc& Desc);
 
@@ -146,7 +173,7 @@ public:
     virtual ~FTabStrip();
 
     /**
-     * @brief Initializes the strip with the specified parameters.
+     * @brief Initializes the strip with the specified parameters, and builds the scroll bar it hosts.
      *
      * @param Desc Initialization parameters.
      */
@@ -158,6 +185,38 @@ public:
     virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
     virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override;
+    virtual FEventResponse OnMouseScroll(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseEntered(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseLeft(const FCursorEvent& CursorEvent) override;
+
+    /**
+     * @brief Scrolls to an absolute offset, clamped into the scrollable range.
+     *
+     * @param InScrollOffset How far along the tabs to scroll, in pixels from the leading edge.
+     */
+    void SetScrollOffset(int32 InScrollOffset);
+
+    /** @return How far the strip has been scrolled from its leading edge, in pixels. */
+    NODISCARD FORCEINLINE int32 GetScrollOffset() const
+    {
+        return ScrollOffset;
+    }
+
+    /** @return The content width less the view width, or zero while every tab already fits. */
+    NODISCARD int32 GetMaxScrollOffset() const;
+
+    /**
+     * @brief Scrolls the least distance that brings a tab fully into view, doing nothing when it already is.
+     *
+     * @param PanelId The panel whose tab to reveal. An unknown id is ignored.
+     */
+    void ScrollTabIntoView(const String& PanelId);
+
+    /** @return The bar drawn under the tabs, which only shows itself while they overflow. */
+    NODISCARD FORCEINLINE const TSharedPtr<class FScrollBar>& GetScrollBar() const
+    {
+        return ScrollBar;
+    }
 
     /**
      * @brief Appends a tab at the far end.
@@ -243,24 +302,44 @@ public:
         return DetachedPanelId;
     }
 
+    /** @return The look the strip and its tabs draw themselves with. */
+    NODISCARD FORCEINLINE const FUITabStyle& GetStyle() const
+    {
+        return Style;
+    }
+
 private:
     NODISCARD int32 FindTabIndexAt(int32 PositionX) const;
     NODISCARD int32 FindTabIndex(const FTab* Tab) const;
+    NODISCARD double GetSecondsSinceFadeStart() const;
 
     void MoveTab(int32 FromIndex, int32 ToIndex);
+    void UpdateScrollBar(const FRectangle& AllottedBounds);
+    void SetCursorOver(bool bInIsCursorOver);
 
-    TSharedPtr<IFontFace>    Font;
-    TArray<TSharedPtr<FTab>> Tabs;
-    String                   ActivePanelId;
-    String                   DraggedPanelId;
-    String                   DetachedPanelId;
-    IntVector2               DragOrigin;
-    bool                     bAllowReorder;
-    bool                     bAllowTearOut;
-    FOnTabActivated          OnTabActivatedDelegate;
-    FOnTabClosed             OnTabClosedDelegate;
-    FOnTabReordered          OnTabReorderedDelegate;
-    FOnTabDragDetached       OnTabDragDetachedDelegate;
-    FOnTabDragMoved          OnTabDragMovedDelegate;
-    FOnTabDragFinished       OnTabDragFinishedDelegate;
+    TSharedPtr<IFontFace>        Font;
+    FUITabStyle                  Style;
+    FUIBrush                     CloseIcon;
+    TArray<TSharedPtr<FTab>>     Tabs;
+    TSharedPtr<class FScrollBar> ScrollBar;
+    String                       ActivePanelId;
+    String                       DraggedPanelId;
+    String                       DetachedPanelId;
+    IntVector2                   DragOrigin;
+    int32                        ScrollOffset;
+    int32                        ScrollAmountPerWheelStep;
+    int32                        ContentWidth;
+    int32                        ViewWidth;
+    uint64                       FadeStartCounter;
+    float                        FadeStartOpacity;
+    float                        ScrollBarOpacity;
+    bool                         bIsCursorOver;
+    bool                         bAllowReorder;
+    bool                         bAllowTearOut;
+    FOnTabActivated              OnTabActivatedDelegate;
+    FOnTabClosed                 OnTabClosedDelegate;
+    FOnTabReordered              OnTabReorderedDelegate;
+    FOnTabDragDetached           OnTabDragDetachedDelegate;
+    FOnTabDragMoved              OnTabDragMovedDelegate;
+    FOnTabDragFinished           OnTabDragFinishedDelegate;
 };

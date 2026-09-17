@@ -15,6 +15,7 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Application/Docking/DockWindowManager.h"
 #include "Application/Docking/DockingArea.h"
+#include "Application/Elements/Border.h"
 
 FEditorPanelRegistry::FEditorPanelRegistry(FEditorEngine* InEditorEngine, const TSharedPtr<FDockingArea>& InDockingArea)
     : EditorEngine(InEditorEngine)
@@ -38,7 +39,19 @@ bool FEditorPanelRegistry::Add(const TSharedPtr<FEditorPanel>& Panel)
         return false;
     }
 
-    DockingArea->RegisterPanel(Panel->GetPanelId(), Panel->GetLabel(), Panel->GetContent());
+    const FMargin ContentPadding = Panel->GetContentPadding();
+
+    TSharedPtr<FVisualElement> Content = Panel->GetContent();
+    if (Content && (ContentPadding.GetTotalHorizontal() > 0 || ContentPadding.GetTotalVertical() > 0))
+    {
+        FBorder::FDesc FrameDesc;
+        FrameDesc.Padding = ContentPadding;
+        FrameDesc.Content = Content;
+
+        Content = FBorder::Create(FrameDesc);
+    }
+
+    DockingArea->RegisterPanel(Panel->GetPanelId(), Panel->GetLabel(), Content);
     Panels.Add(Panel);
     return true;
 }

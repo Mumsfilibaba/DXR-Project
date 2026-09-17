@@ -16,6 +16,11 @@
 #include "D3D12RHI/D3D12CommandContext.h"
 #include "D3D12RHI/D3D12Query.h"
 #include "D3D12RHI/D3D12RHI.h"
+
+#if D3D12_ENABLE_COMPOSITION
+    #include <dcomp.h>
+#endif
+
 #include "D3D12RHI/D3D12DeviceDebug.h"
 
 static TAutoConsoleVariable<bool> CVarBreakOnError(
@@ -1579,6 +1584,21 @@ ID3D12CommandQueue* FD3D12Device::GetD3D12CommandQueue(ED3D12CommandQueueType Qu
     FD3D12Queue* Queue = GetQueue(QueueType);
     return Queue ? Queue->GetD3D12CommandQueue() : nullptr;
 }
+
+#if D3D12_ENABLE_COMPOSITION
+IDCompositionDevice* FD3D12Device::GetCompositionDevice()
+{
+    if (!CompositionDevice && GD3D12SupportsComposition)
+    {
+        if (FAILED(D3D12::DCompositionCreateDevice(nullptr, IID_PPV_ARGS(&CompositionDevice))))
+        {
+            D3D12_WARNING("[FD3D12Device]: FAILED to create a DirectComposition device, so transparent surfaces will present opaque");
+        }
+    }
+
+    return CompositionDevice.Get();
+}
+#endif
 
 FD3D12Queue* FD3D12Device::GetQueue(ED3D12CommandQueueType QueueType)
 {

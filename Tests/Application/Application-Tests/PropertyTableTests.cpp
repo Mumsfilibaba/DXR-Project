@@ -194,6 +194,57 @@ bool PropertyTableColumnDrag_Test()
     TEST_END();
 }
 
+bool PropertyTableRevertCursor_Test()
+{
+    TEST_BEGIN();
+
+    bool bLocationModified = true;
+
+    FPropertyTable::FDesc Desc;
+    Desc.Font                = CreateFont();
+    Desc.RowHeight           = 20;
+    Desc.LabelColumnFraction = 0.5f;
+    Desc.bShowRevertColumn   = true;
+
+    TSharedPtr<FPropertyTable> Table = FPropertyTable::Create(Desc);
+
+    Table->AddRow("Location", nullptr).IsModified = FOnPropertyModified::CreateLambda([&bLocationModified]() { return bLocationModified; });
+    Table->AddRow("Rotation", nullptr);
+
+    const FRectangle Bounds(IntVector2(0, 0), 200, 40);
+    LayoutElement(Table, Bounds);
+
+    const int32 RevertCenterX = Bounds.GetRight() - (Desc.Style.RevertColumnWidth / 2);
+
+    TEST_SECTION("The arrow on a modified row is a small button, so the hand appears over it");
+    ECursor Cursor = ECursor::Arrow;
+
+    Table->OnMouseMove(MakeMoveEvent(IntVector2(RevertCenterX, 10)));
+    TEST_EXPECT(Table->GetCursor(Cursor));
+    TEST_EXPECT(Cursor == ECursor::Hand);
+
+    TEST_SECTION("A row that never reports itself modified draws no arrow, so the same column keeps the plain shape");
+    Table->OnMouseMove(MakeMoveEvent(IntVector2(RevertCenterX, 30)));
+    TEST_EXPECT(!Table->GetCursor(Cursor));
+
+    TEST_SECTION("So does the first row once it matches its default again");
+    bLocationModified = false;
+    Table->OnMouseMove(MakeMoveEvent(IntVector2(RevertCenterX, 10)));
+    TEST_EXPECT(!Table->GetCursor(Cursor));
+
+    TEST_SECTION("A drag on the divider keeps the resize shape as it passes over an arrow on its way");
+    bLocationModified = true;
+    Table->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, IntVector2(100, 10)));
+    Table->OnMouseMove(MakeMoveEvent(IntVector2(RevertCenterX, 10)));
+
+    TEST_EXPECT(Table->GetCursor(Cursor));
+    TEST_EXPECT(Cursor == ECursor::ResizeEW);
+
+    Table->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, IntVector2(RevertCenterX, 10)));
+
+    TEST_END();
+}
+
 bool PropertyTableFixedColumn_Test()
 {
     TEST_BEGIN();

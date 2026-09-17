@@ -20,6 +20,39 @@ enum class EEditorGizmoPlacement
     Pivot
 };
 
+class ENGINE_API FViewportTransportLayer final : public FVisualElement
+{
+public:
+
+    /**
+     * @brief Overlays a group on a strip, centred on the strip as a whole rather than on the space its
+     * neighbours leave, which two flexible spaces can only do when the clusters flanking them match.
+     *
+     * @param InTransport The group to centre, which the layer arranges and hides on its own.
+     * @param InBar       The strip underneath, whose arranged entries give the edges to clamp against.
+     * @return The layer, to be added to the overlay above the strip.
+     */
+    static TSharedPtr<FViewportTransportLayer> Create(const TSharedPtr<FToolBar>& InTransport, const TSharedPtr<FToolBar>& InBar);
+
+public:
+    FViewportTransportLayer();
+    virtual ~FViewportTransportLayer();
+
+    // FVisualElement Interface
+    virtual IntVector2 ComputeDesiredSize() const override;
+    virtual void OnArrange(const FRectangle& AllottedBounds) override;
+    virtual void GetChildren(TArray<TSharedPtr<FVisualElement>>& OutChildren) const override;
+    virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
+    virtual void FindChildrenContainingPoint(const IntVector2& ClientPosition, FElementPath& OutChildElements) override;
+
+private:
+    NODISCARD int32 GetLeadingRight(const FRectangle& AllottedBounds) const;
+    NODISCARD int32 GetTrailingLeft(const FRectangle& AllottedBounds) const;
+
+    TSharedPtr<FToolBar> Transport;
+    TSharedPtr<FToolBar> Bar;
+};
+
 class ENGINE_API FEditorViewportPanel final : public FEditorPanel, public IEditorViewportHost
 {
 public:
@@ -30,6 +63,7 @@ public:
     virtual bool Initialize() override final;
     virtual void Release() override final;
     virtual void Tick(float DeltaTime) override final;
+    virtual FMargin GetContentPadding() const override final;
 
     // IEditorViewportHost Interface
     virtual void OnActorRemoved(FActor* Actor) override final;
@@ -101,13 +135,13 @@ private:
     void RefreshToolBarState();
     void ShowContextMenu();
     void SelectSpawnedActor(FActor* SpawnedActor);
-    NODISCARD bool ComputeFallbackPlacement(const Vector2& Ndc, Vector3& OutLocation) const;
 
+    NODISCARD bool ComputeFallbackPlacement(const Vector2& Ndc, Vector3& OutLocation) const;
     NODISCARD EGizmoOperation ResolveGizmoOperation(const TArray<FActor*>& Selection) const;
     NODISCARD Vector3 ComputeGizmoLocation(const TArray<FActor*>& Selection) const;
     NODISCARD Vector3 GetActorGizmoPoint(FActor* Actor) const;
-
     NODISCARD TSharedPtr<FToolBar> BuildToolBar();
+    NODISCARD TSharedPtr<FToolBar> BuildTransportBar();
     NODISCARD int32 ComputeViewButtonWidth() const;
     NODISCARD TSharedPtr<FComboBox> BuildSecondaryDebugViewCombo();
     NODISCARD TSharedPtr<FVisualElement> BuildCameraMenu();
@@ -120,6 +154,7 @@ private:
     TSharedPtr<FEditorViewportImage>    Image;
     TSharedPtr<FGizmo>                  Gizmo;
     TSharedPtr<FToolBar>                DebugViewBar;
+    TSharedPtr<FToolBar>                TransportBar;
     TSharedPtr<FComboBox>               SecondaryDebugViewCombo;
     TSharedPtr<FToolBarButton>          TranslateItem;
     TSharedPtr<FToolBarButton>          RotateItem;

@@ -852,9 +852,9 @@ TSharedPtr<FVisualElement> FEditorContentBrowserPanel::BuildContentColumn()
     TSharedPtr<FFractionWidthBox> SearchBand = FFractionWidthBox::Create(ContentSearchBox, CONTENT_SEARCH_FRACTION, CONTENT_SEARCH_MIN);
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
-    Column->AddSlot(Breadcrumbs).SetPadding(FMargin(CONTENT_INSET, COLUMN_PADDING, CONTENT_INSET, COLUMN_PADDING));
-    Column->AddSlot(SearchBand).SetPadding(FMargin(CONTENT_INSET, 0, CONTENT_INSET, COLUMN_PADDING));
-    Column->AddSlot(GridArea).SetPadding(FMargin(CONTENT_INSET, 0, CONTENT_INSET, CONTENT_INSET)).SetFillCoefficient(1.0f);
+    Column->AddSlot(Breadcrumbs).SetPadding(FMargin(0, 0, 0, COLUMN_PADDING));
+    Column->AddSlot(SearchBand).SetPadding(FMargin(0, 0, 0, COLUMN_PADDING));
+    Column->AddSlot(GridArea).SetFillCoefficient(1.0f);
 
     return Column;
 }

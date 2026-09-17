@@ -15,6 +15,9 @@ PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER D3D12::D3D12CreateVersion
 PFN_PIXBeginEventOnCommandList                         D3D12::PIXBeginEventOnCommandList                    = nullptr;
 PFN_PIXEndEventOnCommandList                           D3D12::PIXEndEventOnCommandList                      = nullptr;
 DxcCreateInstanceProc                                  D3D12::DxcCreateInstance                             = nullptr;
+#if D3D12_ENABLE_COMPOSITION
+PFN_DCOMPOSITION_CREATE_DEVICE                         D3D12::DCompositionCreateDevice                      = nullptr;
+#endif
 
 #define D3D12_LOAD_FUNCTION(Function, LibraryHandle) \
 do \
@@ -31,6 +34,9 @@ void* D3D12::DXGILibrary  = nullptr;
 void* D3D12::D3D12Library = nullptr;
 void* D3D12::PIXLibrary   = nullptr;
 void* D3D12::DXCLibrary   = nullptr;
+#if D3D12_ENABLE_COMPOSITION
+void* D3D12::DCompLibrary = nullptr;
+#endif
 
 bool D3D12::Initialize(bool bEnablePIX)
 {
@@ -74,6 +80,21 @@ bool D3D12::Initialize(bool bEnablePIX)
     D3D12_LOAD_FUNCTION(D3D12CreateVersionedRootSignatureDeserializer, D3D12Library);
 
     D3D12_LOAD_FUNCTION(DxcCreateInstance, DXCLibrary);
+
+#if D3D12_ENABLE_COMPOSITION
+    DCompLibrary = FPlatformLibrary::LoadDynamicLib("dcomp");
+    if (DCompLibrary)
+    {
+        D3D12_INFO("Loaded dcomp.dll");
+
+        D3D12::DCompositionCreateDevice = FPlatformLibrary::LoadSymbol<PFN_DCOMPOSITION_CREATE_DEVICE>("DCompositionCreateDevice", DCompLibrary);
+    }
+
+    if (!D3D12::DCompositionCreateDevice)
+    {
+        D3D12_INFO("DirectComposition NOT found, so a transparent swap chain will present opaque");
+    }
+#endif
 
     if (bEnablePIX)
     {
@@ -120,6 +141,14 @@ void D3D12::Release()
         DXCLibrary = nullptr;
 	}
 
+#if D3D12_ENABLE_COMPOSITION
+    if (DCompLibrary)
+    {
+        FPlatformLibrary::FreeDynamicLib(DCompLibrary);
+        DCompLibrary = nullptr;
+    }
+#endif
+
     D3D12::CreateDXGIFactory2                            = nullptr;
     D3D12::DXGIGetDebugInterface1                        = nullptr;
     D3D12::D3D12CreateDevice                             = nullptr;
@@ -131,4 +160,7 @@ void D3D12::Release()
     D3D12::PIXBeginEventOnCommandList                    = nullptr;
     D3D12::PIXEndEventOnCommandList                      = nullptr;
     D3D12::DxcCreateInstance                             = nullptr;
+#if D3D12_ENABLE_COMPOSITION
+    D3D12::DCompositionCreateDevice                      = nullptr;
+#endif
 }

@@ -159,7 +159,6 @@ FEventResponse FColorPicker::OnMouseButtonDown(const FCursorEvent& CursorEvent)
         return FInteractiveElement::OnMouseButtonDown(CursorEvent);
     }
 
-    // Which region the press started in owns the whole drag, so sliding off the square does not grab the bar
     bIsDraggingHue = GetHueBarRectangle(GetContentRectangle()).EncapsulatesPoint(CursorEvent.GetClientPosition());
 
     ApplyCursor(CursorEvent.GetClientPosition());
