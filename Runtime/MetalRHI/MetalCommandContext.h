@@ -164,6 +164,11 @@ public:
         return ComputeEncoder;
     }
 
+    void SetGraphicsBuffer(EShaderVisibility::Type ShaderStage, id<MTLBuffer> Buffer, NSUInteger Offset, uint8 Slot);
+    void SetGraphicsTexture(EShaderVisibility::Type ShaderStage, id<MTLTexture> Texture, uint8 Slot);
+    void SetGraphicsSampler(EShaderVisibility::Type ShaderStage, id<MTLSamplerState> Sampler, uint8 Slot);
+    void SetGraphicsBytes(EShaderVisibility::Type ShaderStage, const void* Bytes, NSUInteger Length, uint8 Slot);
+
 private:
     void PrepareForDraw();
     void PrepareForDispatch();

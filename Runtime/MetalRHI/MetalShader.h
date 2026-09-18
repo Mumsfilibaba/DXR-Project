@@ -1,6 +1,7 @@
 #pragma once
 #include "RHI/RHIResources.h"
 #include "RHI/RHIShader.h"
+#include "RHI/MSLShaderBindings.h"
 #include "MetalRHI/MetalDeviceChild.h"
 #include "MetalRHI/MetalDevice.h"
 
@@ -56,12 +57,18 @@ public:
         return Visibility;
     }
 
+    const TArray<FMSLShaderBinding>& GetBindings() const
+    {
+        return Bindings;
+    }
+
 protected:
-    id<MTLLibrary>          Library;
-    NSString*               FunctionName;
-    EShaderVisibility::Type Visibility;
+    id<MTLLibrary>            Library;
+    NSString*                 FunctionName;
+    EShaderVisibility::Type   Visibility;
     // TODO: Release the function after pipeline creation once every consumer retains it.
-    id<MTLFunction>         Function;
+    id<MTLFunction>           Function;
+    TArray<FMSLShaderBinding> Bindings;
 };
 
 class FMetalVertexShaderRHI : public FRHIVertexShader, public FMetalShader

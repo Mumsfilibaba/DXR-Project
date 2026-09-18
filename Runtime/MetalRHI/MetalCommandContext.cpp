@@ -870,4 +870,84 @@ void FMetalCommandContext::PopEvent()
     }
 }
 
+void FMetalCommandContext::SetGraphicsBuffer(EShaderVisibility::Type ShaderStage, id<MTLBuffer> Buffer, NSUInteger Offset, uint8 Slot)
+{
+    if (ShaderStage == EShaderVisibility::Vertex)
+    {
+        [GraphicsEncoder setVertexBuffer:Buffer offset:Offset atIndex:Slot];
+    }
+    else if (ShaderStage == EShaderVisibility::Pixel)
+    {
+        [GraphicsEncoder setFragmentBuffer:Buffer offset:Offset atIndex:Slot];
+    }
+    else if (ShaderStage == EShaderVisibility::Mesh)
+    {
+        [GraphicsEncoder setMeshBuffer:Buffer offset:Offset atIndex:Slot];
+    }
+    else if (ShaderStage == EShaderVisibility::Amplification)
+    {
+        [GraphicsEncoder setObjectBuffer:Buffer offset:Offset atIndex:Slot];
+    }
+}
+
+void FMetalCommandContext::SetGraphicsTexture(EShaderVisibility::Type ShaderStage, id<MTLTexture> Texture, uint8 Slot)
+{
+    if (ShaderStage == EShaderVisibility::Vertex)
+    {
+        [GraphicsEncoder setVertexTexture:Texture atIndex:Slot];
+    }
+    else if (ShaderStage == EShaderVisibility::Pixel)
+    {
+        [GraphicsEncoder setFragmentTexture:Texture atIndex:Slot];
+    }
+    else if (ShaderStage == EShaderVisibility::Mesh)
+    {
+        [GraphicsEncoder setMeshTexture:Texture atIndex:Slot];
+    }
+    else if (ShaderStage == EShaderVisibility::Amplification)
+    {
+        [GraphicsEncoder setObjectTexture:Texture atIndex:Slot];
+    }
+}
+
+void FMetalCommandContext::SetGraphicsSampler(EShaderVisibility::Type ShaderStage, id<MTLSamplerState> Sampler, uint8 Slot)
+{
+    if (ShaderStage == EShaderVisibility::Vertex)
+    {
+        [GraphicsEncoder setVertexSamplerState:Sampler atIndex:Slot];
+    }
+    else if (ShaderStage == EShaderVisibility::Pixel)
+    {
+        [GraphicsEncoder setFragmentSamplerState:Sampler atIndex:Slot];
+    }
+    else if (ShaderStage == EShaderVisibility::Mesh)
+    {
+        [GraphicsEncoder setMeshSamplerState:Sampler atIndex:Slot];
+    }
+    else if (ShaderStage == EShaderVisibility::Amplification)
+    {
+        [GraphicsEncoder setObjectSamplerState:Sampler atIndex:Slot];
+    }
+}
+
+void FMetalCommandContext::SetGraphicsBytes(EShaderVisibility::Type ShaderStage, const void* Bytes, NSUInteger Length, uint8 Slot)
+{
+    if (ShaderStage == EShaderVisibility::Vertex)
+    {
+        [GraphicsEncoder setVertexBytes:Bytes length:Length atIndex:Slot];
+    }
+    else if (ShaderStage == EShaderVisibility::Pixel)
+    {
+        [GraphicsEncoder setFragmentBytes:Bytes length:Length atIndex:Slot];
+    }
+    else if (ShaderStage == EShaderVisibility::Mesh)
+    {
+        [GraphicsEncoder setMeshBytes:Bytes length:Length atIndex:Slot];
+    }
+    else if (ShaderStage == EShaderVisibility::Amplification)
+    {
+        [GraphicsEncoder setObjectBytes:Bytes length:Length atIndex:Slot];
+    }
+}
+
 ENABLE_UNREFERENCED_VARIABLE_WARNING

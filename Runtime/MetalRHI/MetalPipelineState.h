@@ -128,41 +128,29 @@ private:
     bool             bLogicOpEnable;
 };
 
-struct FMetalResourceBinding
-{
-    FMetalResourceBinding() = default;
-
-    FMetalResourceBinding(uint8 InBinding)
-        : Binding(InBinding)
-    {
-    }
-
-    uint8 Binding = 0;
-};
-
 struct FMetalPipelineBindingLayout
 {
+public:
+    static constexpr uint8 InvalidSlot = UINT8_MAX;
+
+public:
     FMetalPipelineBindingLayout();
     ~FMetalPipelineBindingLayout();
 
     void Reset();
-    void Collect(NSArray<id<MTLBinding>>* Bindings, EShaderVisibility::Type ShaderStage, bool bSkipVertexStreams);
 
-    uint32 GetBufferBinding(EShaderVisibility::Type ShaderVisibility, uint32 BufferIndex) const
-    {
-        return BufferBindings[ShaderVisibility][BufferIndex];
-    }
+    void Collect(const TArray<FMSLShaderBinding>& ShaderBindings, EShaderVisibility::Type ShaderStage);
 
-    uint32 GetNumBuffers(EShaderVisibility::Type ShaderVisibility) const
-    {
-        return NumBuffers[ShaderVisibility];
-    }
+    uint8 GetSlot(EShaderVisibility::Type ShaderVisibility, EMSLBindingType BindingType, uint32 RegisterIndex) const;
 
-    TArray<FMetalResourceBinding>                 VertexBuffers;
-    TStaticArray<uint8, MAX_CONSTANT_BUFFERS>     BufferBindings[EShaderVisibility::Count];
-    TStaticArray<uint8, EShaderVisibility::Count> NumBuffers;
-    TArray<FMetalResourceBinding>                 TextureBindings[EShaderVisibility::Count];
-    TArray<FMetalResourceBinding>                 SamplerBindings[EShaderVisibility::Count];
+private:
+    TStaticArray<uint8, MAX_CONSTANT_BUFFERS> ConstantBuffers[EShaderVisibility::Count];
+    TStaticArray<uint8, MAX_SRVS>             ShaderResourceBuffers[EShaderVisibility::Count];
+    TStaticArray<uint8, MAX_SRVS>             ShaderResourceTextures[EShaderVisibility::Count];
+    TStaticArray<uint8, MAX_UAVS>             UnorderedAccessBuffers[EShaderVisibility::Count];
+    TStaticArray<uint8, MAX_UAVS>             UnorderedAccessTextures[EShaderVisibility::Count];
+    TStaticArray<uint8, MAX_SAMPLER_STATES>   Samplers[EShaderVisibility::Count];
+    uint8                                     ShaderConstants[EShaderVisibility::Count];
 };
 
 class FMetalGraphicsPipelineStateRHI : public FRHIGraphicsPipelineState, public FMetalDeviceChild
@@ -183,14 +171,10 @@ public:
     FMetalDepthStencilStateRHI* GetMetalDepthStencilState() const { return DepthStencilState.Get(); }
     FMetalRasterizerStateRHI*   GetMetalRasterizerState()   const { return RasterizerState.Get(); }
 
-    uint32 GetBufferBinding(EShaderVisibility::Type ShaderVisibility, uint32 BufferIndex) const
-    {
-        return Bindings.GetBufferBinding(ShaderVisibility, BufferIndex);
-    }
 
-    uint32 GetNumBuffers(EShaderVisibility::Type ShaderVisibility) const
+    const FMetalPipelineBindingLayout& GetBindings() const
     {
-        return Bindings.GetNumBuffers(ShaderVisibility);
+        return Bindings;
     }
 
     id<MTLRenderPipelineState> GetMTLPipelineState() const
@@ -227,14 +211,10 @@ public:
 
     bool Initialize(const FRHIComputePipelineStateDesc& InDesc);
 
-    uint32 GetBufferBinding(uint32 BufferIndex) const
-    {
-        return Bindings.GetBufferBinding(EShaderVisibility::Compute, BufferIndex);
-    }
 
-    uint32 GetNumBuffers() const
+    const FMetalPipelineBindingLayout& GetBindings() const
     {
-        return Bindings.GetNumBuffers(EShaderVisibility::Compute);
+        return Bindings;
     }
 
     id<MTLComputePipelineState> GetMTLPipelineState() const
@@ -270,14 +250,10 @@ public:
     FMetalDepthStencilStateRHI* GetMetalDepthStencilState() const { return DepthStencilState.Get(); }
     FMetalRasterizerStateRHI*   GetMetalRasterizerState()   const { return RasterizerState.Get(); }
 
-    uint32 GetBufferBinding(EShaderVisibility::Type ShaderVisibility, uint32 BufferIndex) const
+    /** @return The HLSL register to MSL slot table for every stage in this pipeline. */
+    const FMetalPipelineBindingLayout& GetBindings() const
     {
-        return Bindings.GetBufferBinding(ShaderVisibility, BufferIndex);
-    }
-
-    uint32 GetNumBuffers(EShaderVisibility::Type ShaderVisibility) const
-    {
-        return Bindings.GetNumBuffers(ShaderVisibility);
+        return Bindings;
     }
 
     id<MTLRenderPipelineState> GetMTLPipelineState() const

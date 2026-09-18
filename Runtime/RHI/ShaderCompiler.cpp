@@ -9,10 +9,14 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/CRC.h"
 #include "RHI/RHI.h"
+#include "RHI/MSLShaderBindings.h"
 #include "RHI/ShaderCompiler.h"
 #include "RHI/ShaderStats.h"
 
 #include <spirv_cross_c.h>
+
+// HLSL space1 holds the 32-bit root constants. Mirrors VULKAN_SHADER_CONSTANTS_SET.
+#define MSL_SHADER_CONSTANTS_SET (1)
 
 static TAutoConsoleVariable<bool> CVarShaderDebug(
     "RHI.ShaderCompiler.Debug",
@@ -58,6 +62,135 @@ enum class EDXCPart : uint32
     PipelineStateValidation = DXC_FOURCC('P', 'S', 'V', '0'),
     RuntimeData             = DXC_FOURCC('R', 'D', 'A', 'T'),
     ShaderHash              = DXC_FOURCC('H', 'A', 'S', 'H'),
+};
+
+struct FMSLReflectedResource
+{
+    spvc_variable_id Id;
+    EMSLBindingType  BindingType;
+    uint8            RegisterIndex;
+};
+
+class FScopedCompileTimer
+{
+public:
+    FScopedCompileTimer(AtomicInt64& InNumCompiles, AtomicInt64& InTotalTimeNS)
+        : NumCompiles(InNumCompiles)
+        , TotalTimeNS(InTotalTimeNS)
+        , StartTime(FPlatformTime::QueryPerformanceCounter())
+    {
+    }
+
+    ~FScopedCompileTimer()
+    {
+        const uint64 Elapsed = FPlatformTime::QueryPerformanceCounter() - StartTime;
+        const double Seconds = static_cast<double>(Elapsed) / static_cast<double>(FPlatformTime::QueryPerformanceFrequency());
+
+        NumCompiles.Add(1);
+        TotalTimeNS.Add(static_cast<int64>(Seconds * 1000.0 * 1000.0 * 1000.0));
+    }
+
+private:
+    AtomicInt64& NumCompiles;
+    AtomicInt64& TotalTimeNS;
+    uint64       StartTime;
+};
+
+class FRecordingIncludeHandler final : public IDxcIncludeHandler
+{
+public:
+    FRecordingIncludeHandler(IDxcIncludeHandler* InInnerHandler, TArray<String>& InRecordedIncludes)
+        : InnerHandler(InInnerHandler)
+        , RecordedIncludes(InRecordedIncludes)
+    {
+    }
+
+    virtual HRESULT LoadSource(LPCWSTR Filename, IDxcBlob** ppIncludeSource) override final
+    {
+        const HRESULT Result = InnerHandler->LoadSource(Filename, ppIncludeSource);
+        if (SUCCEEDED(Result) && Filename)
+        {
+            const String IncludePath = WideToChar(WString(Filename));
+            if (!RecordedIncludes.Contains(IncludePath))
+            {
+                RecordedIncludes.Emplace(IncludePath);
+            }
+        }
+
+        return Result;
+    }
+
+    virtual ULONG AddRef()  override final { return 1; }
+    virtual ULONG Release() override final { return 1; }
+
+    virtual HRESULT QueryInterface(REFIID Riid, LPVOID* ppvObject) override final
+    {
+        if (!ppvObject)
+        {
+            return E_INVALIDARG;
+        }
+
+        if (Riid == __uuidof(IUnknown) || Riid == __uuidof(IDxcIncludeHandler))
+        {
+            *ppvObject = reinterpret_cast<LPVOID>(this);
+            AddRef();
+            return S_OK;
+        }
+
+        *ppvObject = nullptr;
+        return E_NOINTERFACE;
+    }
+
+private:
+    IDxcIncludeHandler* InnerHandler;
+    TArray<String>&     RecordedIncludes;
+};
+
+class FShaderBlob final : public IDxcBlob, public FRefCountedBase
+{
+public:
+    FShaderBlob(LPCVOID InData, SIZE_T InSize)
+        : Data(nullptr)
+        , Size(InSize)
+    {
+        Data = Memory::Malloc(Size);
+        Memory::Memcpy(Data, InData, Size);
+    }
+
+    ~FShaderBlob()
+    {
+        Memory::Free(Data);
+    }
+
+    virtual SIZE_T GetBufferSize()    override final { return Size; }
+    virtual LPVOID GetBufferPointer() override final { return Data; }
+
+    virtual ULONG AddRef()  override final { return static_cast<ULONG>(FRefCountedBase::AddRef()); }
+    virtual ULONG Release() override final { return static_cast<ULONG>(FRefCountedBase::Release()); }
+
+    virtual HRESULT QueryInterface(REFIID Riid, LPVOID* ppvObject) override final
+    {
+        if (!ppvObject)
+        {
+            return E_INVALIDARG;
+        }
+
+        *ppvObject = nullptr;
+
+        // TODO: Could be ID3DBlob as well possibly, however, should not be needed for now
+        if (Riid == __uuidof(IUnknown) || Riid == __uuidof(IDxcBlob))
+        {
+            *ppvObject = reinterpret_cast<LPVOID>(this);
+            AddRef();
+            return S_OK;
+        }
+
+        return E_NOINTERFACE;
+    }
+
+private:
+    LPVOID Data;
+    SIZE_T Size;
 };
 
 static LPCWSTR GetShaderStageString(EShaderStage Stage)
@@ -228,127 +361,104 @@ static void BuildCompileDefines(const FShaderCompileInfo& CompileInfo, TArray<WS
     }
 }
 
-class FScopedCompileTimer
+static void HashWideString(uint64& OutHash, LPCWSTR Text)
 {
-public:
-    FScopedCompileTimer(AtomicInt64& InNumCompiles, AtomicInt64& InTotalTimeNS)
-        : NumCompiles(InNumCompiles)
-        , TotalTimeNS(InTotalTimeNS)
-        , StartTime(FPlatformTime::QueryPerformanceCounter())
+    for (LPCWSTR Character = Text; Character && *Character; ++Character)
     {
+        HashCombine(OutHash, static_cast<uint32>(*Character));
     }
+}
 
-    ~FScopedCompileTimer()
-    {
-        const uint64 Elapsed = FPlatformTime::QueryPerformanceCounter() - StartTime;
-        const double Seconds = static_cast<double>(Elapsed) / static_cast<double>(FPlatformTime::QueryPerformanceFrequency());
-
-        NumCompiles.Add(1);
-        TotalTimeNS.Add(static_cast<int64>(Seconds * 1000.0 * 1000.0 * 1000.0));
-    }
-
-private:
-    AtomicInt64& NumCompiles;
-    AtomicInt64& TotalTimeNS;
-    uint64       StartTime;
-};
-
-class FRecordingIncludeHandler final : public IDxcIncludeHandler
+static bool IsStorageBufferReadOnly(spvc_compiler Compiler, spvc_variable_id Id, bool& bOutIsReadOnly)
 {
-public:
-    FRecordingIncludeHandler(IDxcIncludeHandler* InInnerHandler, TArray<String>& InRecordedIncludes)
-        : InnerHandler(InInnerHandler)
-        , RecordedIncludes(InRecordedIncludes)
+    size_t               NumDecorations = 0;
+    const SpvDecoration* Decorations    = nullptr;
+    if (spvc_compiler_get_buffer_block_decorations(Compiler, Id, &Decorations, &NumDecorations) != SPVC_SUCCESS)
     {
+        return false;
     }
 
-    virtual HRESULT LoadSource(LPCWSTR Filename, IDxcBlob** ppIncludeSource) override final
+    bOutIsReadOnly = false;
+    for (size_t Index = 0; Index < NumDecorations; Index++)
     {
-        const HRESULT Result = InnerHandler->LoadSource(Filename, ppIncludeSource);
-        if (SUCCEEDED(Result) && Filename)
+        if (Decorations[Index] == SpvDecorationNonWritable)
         {
-            const String IncludePath = WideToChar(WString(Filename));
-            if (!RecordedIncludes.Contains(IncludePath))
+            bOutIsReadOnly = true;
+            break;
+        }
+    }
+
+    return true;
+}
+
+static bool GatherMSLResources(spvc_compiler Compiler, spvc_resources Resources, spvc_resource_type ResourceType, TArray<FMSLReflectedResource>& OutResources)
+{
+    size_t                         NumReflected = 0;
+    const spvc_reflected_resource* Reflected    = nullptr;
+    if (spvc_resources_get_resource_list_for_type(Resources, ResourceType, &Reflected, &NumReflected) != SPVC_SUCCESS)
+    {
+        LOG_ERROR("[FShaderCompiler]: Failed to reflect resource type %d", static_cast<int32>(ResourceType));
+        return false;
+    }
+
+    for (size_t Index = 0; Index < NumReflected; Index++)
+    {
+        const spvc_variable_id Id       = Reflected[Index].id;
+        const uint32           SetIndex = spvc_compiler_get_decoration(Compiler, Id, SpvDecorationDescriptorSet);
+        const uint32           Register = spvc_compiler_get_decoration(Compiler, Id, SpvDecorationBinding);
+
+        EMSLBindingType BindingType = EMSLBindingType::Unknown;
+        switch (ResourceType)
+        {
+            case SPVC_RESOURCE_TYPE_SEPARATE_IMAGE:
+                BindingType = EMSLBindingType::ShaderResourceTexture;
+                break;
+
+            case SPVC_RESOURCE_TYPE_STORAGE_IMAGE:
+                BindingType = EMSLBindingType::UnorderedAccessTexture;
+                break;
+
+            case SPVC_RESOURCE_TYPE_SEPARATE_SAMPLERS:
+                BindingType = EMSLBindingType::Sampler;
+                break;
+
+            case SPVC_RESOURCE_TYPE_PUSH_CONSTANT:
+                BindingType = EMSLBindingType::ShaderConstants;
+                break;
+
+            case SPVC_RESOURCE_TYPE_UNIFORM_BUFFER:
+                BindingType = (SetIndex == MSL_SHADER_CONSTANTS_SET) ? EMSLBindingType::ShaderConstants : EMSLBindingType::ConstantBuffer;
+                break;
+
+            case SPVC_RESOURCE_TYPE_STORAGE_BUFFER:
             {
-                RecordedIncludes.Emplace(IncludePath);
+                bool bIsReadOnly = false;
+                if (!IsStorageBufferReadOnly(Compiler, Id, bIsReadOnly))
+                {
+                    LOG_ERROR("[FShaderCompiler]: Failed to read buffer block decorations for storage buffer at register %u", Register);
+                    return false;
+                }
+
+                BindingType = bIsReadOnly ? EMSLBindingType::ShaderResourceBuffer : EMSLBindingType::UnorderedAccessBuffer;
+                break;
             }
+
+            default:
+                LOG_ERROR("[FShaderCompiler]: Unhandled resource type %d", static_cast<int32>(ResourceType));
+                return false;
         }
 
-        return Result;
-    }
-
-    virtual ULONG AddRef()  override final { return 1; }
-    virtual ULONG Release() override final { return 1; }
-
-    virtual HRESULT QueryInterface(REFIID Riid, LPVOID* ppvObject) override final
-    {
-        if (!ppvObject)
+        if (Register > UINT8_MAX)
         {
-            return E_INVALIDARG;
+            LOG_ERROR("[FShaderCompiler]: %s register %u is out of range for an MSL binding table", ToString(BindingType), Register);
+            return false;
         }
 
-        if (Riid == __uuidof(IUnknown) || Riid == __uuidof(IDxcIncludeHandler))
-        {
-            *ppvObject = reinterpret_cast<LPVOID>(this);
-            AddRef();
-            return S_OK;
-        }
-
-        *ppvObject = nullptr;
-        return E_NOINTERFACE;
+        OutResources.Emplace(FMSLReflectedResource{ Id, BindingType, static_cast<uint8>(Register) });
     }
 
-private:
-    IDxcIncludeHandler* InnerHandler;
-    TArray<String>&     RecordedIncludes;
-};
-
-class FShaderBlob final : public IDxcBlob, public FRefCountedBase
-{
-public:
-    FShaderBlob(LPCVOID InData, SIZE_T InSize)
-        : Data(nullptr)
-        , Size(InSize)
-    {
-        Data = Memory::Malloc(Size);
-        Memory::Memcpy(Data, InData, Size);
-    }
-
-    ~FShaderBlob()
-    {
-        Memory::Free(Data);
-    }
-
-    virtual SIZE_T GetBufferSize()    override final { return Size; }
-    virtual LPVOID GetBufferPointer() override final { return Data; }
-
-    virtual ULONG AddRef()  override final { return static_cast<ULONG>(FRefCountedBase::AddRef()); }
-    virtual ULONG Release() override final { return static_cast<ULONG>(FRefCountedBase::Release()); }
-
-    virtual HRESULT QueryInterface(REFIID Riid, LPVOID* ppvObject) override final
-    {
-        if (!ppvObject)
-        {
-            return E_INVALIDARG;
-        }
-
-        *ppvObject = nullptr;
-
-        // TODO: Could be ID3DBlob as well possibly, however, should not be needed for now
-        if (Riid == __uuidof(IUnknown) || Riid == __uuidof(IDxcBlob))
-        {
-            *ppvObject = reinterpret_cast<LPVOID>(this);
-            AddRef();
-            return S_OK;
-        }
-
-        return E_NOINTERFACE;
-    }
-
-private:
-    LPVOID Data;
-    SIZE_T Size;
-};
+    return true;
+}
 
 FShaderCompiler* FShaderCompiler::ShaderCompiler = nullptr;
 
@@ -495,14 +605,6 @@ bool FShaderCompiler::CompileFromSource(const String& ShaderSource, const FShade
     return Compile(ShaderSource, "", CompileInfo, OutByteCode, OutDependencies);
 }
 
-static void HashWideString(uint64& OutHash, LPCWSTR Text)
-{
-    for (LPCWSTR Character = Text; Character && *Character; ++Character)
-    {
-        HashCombine(OutHash, static_cast<uint32>(*Character));
-    }
-}
-
 uint64 FShaderCompiler::ComputeCompileHash(const String& SourceFile, const FShaderCompileInfo& CompileInfo) const
 {
     uint64 Hash = THash<String>::GetHash(SourceFile);
@@ -513,6 +615,7 @@ uint64 FShaderCompiler::ComputeCompileHash(const String& SourceFile, const FShad
     HashCombine(Hash, CompileInfo.OutputLanguage);
     HashCombine(Hash, DXCVersionMajor);
     HashCombine(Hash, DXCVersionMinor);
+    HashCombine(Hash, FMSLShaderHeader::ExpectedVersion);
 
     const WString WideShaderIncludeDir = CharToWide(AssetPath + "/Shaders");
 
@@ -950,6 +1053,46 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
         return false;
     }
 
+    spvc_resources Resources = nullptr;
+    Result = spvc_compiler_create_shader_resources(CompilerMSL, &Resources);
+    if (Result != SPVC_SUCCESS)
+    {
+        LOG_ERROR("[FShaderCompiler]: Failed to reflect the shader resources");
+        DEBUG_BREAK();
+        return false;
+    }
+
+    static constexpr spvc_resource_type ReflectedTypes[] =
+    {
+        SPVC_RESOURCE_TYPE_UNIFORM_BUFFER,
+        SPVC_RESOURCE_TYPE_STORAGE_BUFFER,
+        SPVC_RESOURCE_TYPE_SEPARATE_IMAGE,
+        SPVC_RESOURCE_TYPE_STORAGE_IMAGE,
+        SPVC_RESOURCE_TYPE_SEPARATE_SAMPLERS,
+        SPVC_RESOURCE_TYPE_PUSH_CONSTANT,
+    };
+
+    TArray<FMSLReflectedResource> ReflectedResources;
+    for (const spvc_resource_type ResourceType : ReflectedTypes)
+    {
+        if (!GatherMSLResources(CompilerMSL, Resources, ResourceType, ReflectedResources))
+        {
+            spvc_context_destroy(Context);
+            DEBUG_BREAK();
+            return false;
+        }
+    }
+
+    // DXC numbers a Vulkan binding after the HLSL register, so b0 and u0 both land on set 0 binding 0.
+    // SPIRV-Cross answers that collision by emitting one `constant void*` argument that every alias
+    // casts out of, which Metal rejects the moment one of them needs the device address space. Handing
+    // every resource its own binding first is what keeps the aliasing path from triggering at all.
+    for (int32 Index = 0; Index < ReflectedResources.Size(); Index++)
+    {
+        spvc_compiler_set_decoration(CompilerMSL, ReflectedResources[Index].Id, SpvDecorationBinding, static_cast<unsigned>(Index));
+        spvc_compiler_set_decoration(CompilerMSL, ReflectedResources[Index].Id, SpvDecorationDescriptorSet, 0);
+    }
+
     const CHAR* MSLSource = nullptr;
     Result = spvc_compiler_compile(CompilerMSL, &MSLSource);
     if (Result != SPVC_SUCCESS)
@@ -959,18 +1102,64 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const String& FilePath, const FS
         return false;
     }
 
-    // Create a new array
+    // The MSL argument tables are only settled once the source exists, so the slots are read back here
+    // and shipped with the source. Nothing in MSL records the HLSL register, so without this table the
+    // RHI has no way to tell which argument a given b#, t#, u# or s# ended up as.
+    TArray<FMSLShaderBinding> Bindings;
+    Bindings.Reserve(ReflectedResources.Size());
+
+    for (const FMSLReflectedResource& ReflectedResource : ReflectedResources)
+    {
+        const unsigned Slot = spvc_compiler_msl_get_automatic_resource_binding(CompilerMSL, ReflectedResource.Id);
+
+        // An unused resource is stripped from the MSL and owns no slot. It stays out of the table and
+        // the RHI simply never binds that register.
+        if (Slot == ~0u)
+        {
+            continue;
+        }
+
+        if (Slot > UINT8_MAX)
+        {
+            LOG_ERROR("[FShaderCompiler]: %s register %u resolved to MSL slot %u, which exceeds the binding table",
+                ToString(ReflectedResource.BindingType), ReflectedResource.RegisterIndex, Slot);
+            spvc_context_destroy(Context);
+            DEBUG_BREAK();
+            return false;
+        }
+
+        Bindings.Emplace(FMSLShaderBinding{ ReflectedResource.BindingType, ReflectedResource.RegisterIndex, static_cast<uint8>(Slot), 0 });
+    }
+
     const uint32 SourceLength = CString::Strlen(MSLSource);
-    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(MSLSource), (SourceLength + 1) * sizeof(uint8));
-    NewShader[SourceLength] = 0;
+
+    FMSLShaderHeader Header;
+    Header.Magic       = FMSLShaderHeader::ExpectedMagic;
+    Header.Version     = FMSLShaderHeader::ExpectedVersion;
+    Header.NumBindings = static_cast<uint32>(Bindings.Size());
+    Header.SourceSize  = SourceLength;
+
+    const int32 BindingsSize = Bindings.Size() * sizeof(FMSLShaderBinding);
+
+    TArray<uint8> NewShader;
+    NewShader.Resize(static_cast<int32>(sizeof(FMSLShaderHeader)) + BindingsSize + static_cast<int32>(SourceLength));
+
+    Memory::Memcpy(NewShader.Data(), &Header, sizeof(FMSLShaderHeader));
+    if (BindingsSize > 0)
+    {
+        Memory::Memcpy(NewShader.Data() + sizeof(FMSLShaderHeader), Bindings.Data(), BindingsSize);
+    }
+
+    Memory::Memcpy(NewShader.Data() + sizeof(FMSLShaderHeader) + BindingsSize, MSLSource, SourceLength);
 
     // Now we can destroy the context
     spvc_context_destroy(Context);
 
-    // Dump the metal file to disk
+    // Dump the metal file to disk. Only the source goes out, so the dump stays compilable by hand.
     if (!FilePath.IsEmpty())
     {
-        if (!DumpContentToFile(NewShader, FilePath + "_" + ToString(CompileInfo.ShaderStage) + ".metal"))
+        const TArray<uint8> SourceOnly(NewShader.Data() + sizeof(FMSLShaderHeader) + BindingsSize, static_cast<int32>(SourceLength));
+        if (!DumpContentToFile(SourceOnly, FilePath + "_" + ToString(CompileInfo.ShaderStage) + ".metal"))
         {
             DEBUG_BREAK();
             return false;

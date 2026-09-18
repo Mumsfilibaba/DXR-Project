@@ -377,8 +377,7 @@ private:
     void BindComputeSamplers();
     void BindComputeShaderConstants();
 
-    uint32 GetBoundBufferBinding(EShaderVisibility::Type ShaderStage, uint32 BufferIndex) const;
-    uint32 GetBoundNumBuffers(EShaderVisibility::Type ShaderStage) const;
+    const FMetalPipelineBindingLayout* GetBoundLayout(EShaderVisibility::Type ShaderStage) const;
 
     FMetalCommandContext& Context;
 

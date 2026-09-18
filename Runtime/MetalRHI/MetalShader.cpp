@@ -18,11 +18,18 @@ FMetalShader::~FMetalShader()
 
 bool FMetalShader::Initialize(const TArray<uint8>& InCode)
 {
+    TArrayView<const uint8> Source;
+    if (!ParseMSLShaderByteCode(InCode, Bindings, Source))
+    {
+        LOG_ERROR("Shader bytecode is not a valid MSL blob");
+        return false;
+    }
+
     @autoreleasepool
     {
         // Shader bytecode is not null-terminated, so construct the source with its explicit length.
-        const CHAR* CodeString = reinterpret_cast<const CHAR*>(InCode.Data());
-        const int32 CodeLength = InCode.Size();
+        const CHAR* CodeString = reinterpret_cast<const CHAR*>(Source.Data());
+        const int32 CodeLength = Source.Size();
         
         const String SourceString(CodeString, CodeLength);
         

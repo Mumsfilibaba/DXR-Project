@@ -3,9 +3,11 @@
 #include "TestCommon/TestMacros.h"
 
 #include <Core/Misc/ConsoleManager.h>
+#include <Core/Misc/Paths.h>
 #include <RHI/RHI.h>
 #include <RHI/RHICommandList.h>
 #include <RHI/RHIResources.h>
+#include <RHI/ShaderCompiler.h>
 
 static void SetConsoleVariable(const CHAR* VariableName, bool bValue)
 {
@@ -285,6 +287,46 @@ static bool ProbePipelineObjects()
     TEST_END();
 }
 
+static bool ProbeShaders()
+{
+    TEST_BEGIN();
+
+    TEST_SECTION("Compile a shader with colliding HLSL registers");
+
+    if (!FShaderCompiler::Initialize(Paths::GetAssetDir()))
+    {
+        TEST_EXPECT(false);
+        TEST_END();
+    }
+
+    TArray<uint8> ByteCode;
+    const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+    const bool bCompiled = FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/CascadeMatrixGen.hlsl", CompileInfo, ByteCode);
+    TEST_EXPECT(bCompiled);
+
+    if (bCompiled)
+    {
+        TEST_SECTION("The backend accepts the compiled shader");
+
+        FRHIComputeShaderRef ComputeShader = RHI::CreateComputeShader(ByteCode);
+        TEST_EXPECT(ComputeShader != nullptr);
+
+        if (ComputeShader)
+        {
+            TEST_SECTION("A pipeline resolves the shader's bindings");
+
+            FRHIComputePipelineStateDesc PipelineDesc;
+            PipelineDesc.Shader = ComputeShader.Get();
+
+            FRHIComputePipelineStateRef PipelineState = RHI::CreateComputePipelineState(PipelineDesc);
+            TEST_EXPECT(PipelineState != nullptr);
+        }
+    }
+
+    FShaderCompiler::Destroy();
+    TEST_END();
+}
+
 static bool BootRHI(ERHIType ExpectedType)
 {
     TEST_BEGIN();
@@ -299,6 +341,7 @@ static bool BootRHI(ERHIType ExpectedType)
     const bool bInitialized = RHI::Initialize();
     TEST_EXPECT(bInitialized);
     TEST_EXPECT(RHI::Device != nullptr);
+
     if (bInitialized && RHI::Device)
     {
         TEST_EXPECT_EQ(RHI::Device->GetRHIType(), ExpectedType);
@@ -312,6 +355,11 @@ static bool BootRHI(ERHIType ExpectedType)
         TEST_EXPECT(ProbeTextures());
         TEST_EXPECT(ProbeCreateAndDestroy());
         TEST_EXPECT(ProbePipelineObjects());
+
+        if (ExpectedType != ERHIType::Null)
+        {
+            TEST_EXPECT(ProbeShaders());
+        }
 
         if (FRHICommandListExecutor::IsInitialized())
         {

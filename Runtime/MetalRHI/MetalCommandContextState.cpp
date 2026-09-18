@@ -5,6 +5,8 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
+static constexpr uint8 InvalidMSLSlot = FMetalPipelineBindingLayout::InvalidSlot;
+
 FMetalCommandContextState::FMetalCommandContextState(FMetalDevice* InDevice, FMetalCommandContext& InContext)
     : FMetalDeviceChild(InDevice)
     , Context(InContext)
@@ -448,13 +450,13 @@ void FMetalCommandContextState::BindGraphicsResources(EShaderVisibility::Type Sh
 {
     CHECK(ShaderStage != EShaderVisibility::Compute);
 
-    id<MTLRenderCommandEncoder> Encoder = Context.GetGraphicsEncoder();
-    if (Encoder == nil)
+    if (Context.GetGraphicsEncoder() == nil)
     {
         return;
     }
 
-    if (GraphicsState.PipelineState == nullptr && GraphicsState.MeshletPipelineState == nullptr)
+    const FMetalPipelineBindingLayout* Layout = GetBoundLayout(ShaderStage);
+    if (!Layout)
     {
         return;
     }
@@ -476,26 +478,15 @@ void FMetalCommandContextState::BindGraphicsResources(EShaderVisibility::Type Sh
     {
         for (uint8 Index = 0; Index < CBVCache.NumBuffers[ShaderStage]; Index++)
         {
+            const uint8 Slot = Layout->GetSlot(ShaderStage, EMSLBindingType::ConstantBuffer, Index);
+            if (Slot == InvalidMSLSlot)
+            {
+                continue;
+            }
+
             FMetalBufferRHI* Buffer = CBVCache.ConstantBuffers[ShaderStage][Index];
             id<MTLBuffer>    MTLBufferHandle = Buffer ? Buffer->GetMTLBuffer() : nil;
-
-            const uint32 SlotIndex = GetBoundBufferBinding(ShaderStage, Index);
-            if (ShaderStage == EShaderVisibility::Vertex)
-            {
-                [Encoder setVertexBuffer:MTLBufferHandle offset:0 atIndex:SlotIndex];
-            }
-            else if (ShaderStage == EShaderVisibility::Pixel)
-            {
-                [Encoder setFragmentBuffer:MTLBufferHandle offset:0 atIndex:SlotIndex];
-            }
-            else if (ShaderStage == EShaderVisibility::Mesh)
-            {
-                [Encoder setMeshBuffer:MTLBufferHandle offset:0 atIndex:SlotIndex];
-            }
-            else if (ShaderStage == EShaderVisibility::Amplification)
-            {
-                [Encoder setObjectBuffer:MTLBufferHandle offset:0 atIndex:SlotIndex];
-            }
+            Context.SetGraphicsBuffer(ShaderStage, MTLBufferHandle, 0, Slot);
         }
 
         CBVCache.ClearResourcesDirty(ShaderStage);
@@ -506,23 +497,21 @@ void FMetalCommandContextState::BindGraphicsResources(EShaderVisibility::Type Sh
         for (uint8 Index = 0; Index < SRVCache.NumViews[ShaderStage]; Index++)
         {
             FMetalShaderResourceViewRHI* View = SRVCache.ResourceViews[ShaderStage][Index];
-            id<MTLTexture> MTLTextureHandle   = View ? View->GetMTLTexture() : nil;
 
-            if (ShaderStage == EShaderVisibility::Vertex)
+            const uint8 BufferSlot = Layout->GetSlot(ShaderStage, EMSLBindingType::ShaderResourceBuffer, Index);
+            if (BufferSlot != InvalidMSLSlot)
             {
-                [Encoder setVertexTexture:MTLTextureHandle atIndex:Index];
+                id<MTLBuffer> MTLBufferHandle = View ? View->GetMTLBuffer() : nil;
+                const NSUInteger Offset = View ? View->GetBufferOffset() : 0;
+                Context.SetGraphicsBuffer(ShaderStage, MTLBufferHandle, Offset, BufferSlot);
+                continue;
             }
-            else if (ShaderStage == EShaderVisibility::Pixel)
+
+            const uint8 TextureSlot = Layout->GetSlot(ShaderStage, EMSLBindingType::ShaderResourceTexture, Index);
+            if (TextureSlot != InvalidMSLSlot)
             {
-                [Encoder setFragmentTexture:MTLTextureHandle atIndex:Index];
-            }
-            else if (ShaderStage == EShaderVisibility::Mesh)
-            {
-                [Encoder setMeshTexture:MTLTextureHandle atIndex:Index];
-            }
-            else if (ShaderStage == EShaderVisibility::Amplification)
-            {
-                [Encoder setObjectTexture:MTLTextureHandle atIndex:Index];
+                id<MTLTexture> MTLTextureHandle = View ? View->GetMTLTexture() : nil;
+                Context.SetGraphicsTexture(ShaderStage, MTLTextureHandle, TextureSlot);
             }
         }
 
@@ -534,23 +523,21 @@ void FMetalCommandContextState::BindGraphicsResources(EShaderVisibility::Type Sh
         for (uint8 Index = 0; Index < UAVCache.NumViews[ShaderStage]; Index++)
         {
             FMetalUnorderedAccessViewRHI* View = UAVCache.ResourceViews[ShaderStage][Index];
-            id<MTLTexture> MTLTextureHandle    = View ? View->GetMTLTexture() : nil;
 
-            if (ShaderStage == EShaderVisibility::Vertex)
+            const uint8 BufferSlot = Layout->GetSlot(ShaderStage, EMSLBindingType::UnorderedAccessBuffer, Index);
+            if (BufferSlot != InvalidMSLSlot)
             {
-                [Encoder setVertexTexture:MTLTextureHandle atIndex:MAX_SRVS + Index];
+                id<MTLBuffer> MTLBufferHandle = View ? View->GetMTLBuffer() : nil;
+                const NSUInteger Offset = View ? View->GetBufferOffset() : 0;
+                Context.SetGraphicsBuffer(ShaderStage, MTLBufferHandle, Offset, BufferSlot);
+                continue;
             }
-            else if (ShaderStage == EShaderVisibility::Pixel)
+
+            const uint8 TextureSlot = Layout->GetSlot(ShaderStage, EMSLBindingType::UnorderedAccessTexture, Index);
+            if (TextureSlot != InvalidMSLSlot)
             {
-                [Encoder setFragmentTexture:MTLTextureHandle atIndex:MAX_SRVS + Index];
-            }
-            else if (ShaderStage == EShaderVisibility::Mesh)
-            {
-                [Encoder setMeshTexture:MTLTextureHandle atIndex:MAX_SRVS + Index];
-            }
-            else if (ShaderStage == EShaderVisibility::Amplification)
-            {
-                [Encoder setObjectTexture:MTLTextureHandle atIndex:MAX_SRVS + Index];
+                id<MTLTexture> MTLTextureHandle = View ? View->GetMTLTexture() : nil;
+                Context.SetGraphicsTexture(ShaderStage, MTLTextureHandle, TextureSlot);
             }
         }
 
@@ -562,8 +549,13 @@ void FMetalCommandContextState::BindGraphicsSamplers(EShaderVisibility::Type Sha
 {
     CHECK(ShaderStage != EShaderVisibility::Compute);
 
-    id<MTLRenderCommandEncoder> Encoder = Context.GetGraphicsEncoder();
-    if (Encoder == nil)
+    if (Context.GetGraphicsEncoder() == nil)
+    {
+        return;
+    }
+
+    const FMetalPipelineBindingLayout* Layout = GetBoundLayout(ShaderStage);
+    if (!Layout)
     {
         return;
     }
@@ -576,25 +568,15 @@ void FMetalCommandContextState::BindGraphicsSamplers(EShaderVisibility::Type Sha
 
     for (uint8 Index = 0; Index < Cache.NumSamplers[ShaderStage]; Index++)
     {
+        const uint8 Slot = Layout->GetSlot(ShaderStage, EMSLBindingType::Sampler, Index);
+        if (Slot == InvalidMSLSlot)
+        {
+            continue;
+        }
+
         FMetalSamplerStateRHI* SamplerState = Cache.SamplerStates[ShaderStage][Index];
         id<MTLSamplerState>    MTLSampler   = SamplerState ? SamplerState->GetMTLSamplerState() : nil;
-
-        if (ShaderStage == EShaderVisibility::Vertex)
-        {
-            [Encoder setVertexSamplerState:MTLSampler atIndex:Index];
-        }
-        else if (ShaderStage == EShaderVisibility::Pixel)
-        {
-            [Encoder setFragmentSamplerState:MTLSampler atIndex:Index];
-        }
-        else if (ShaderStage == EShaderVisibility::Mesh)
-        {
-            [Encoder setMeshSamplerState:MTLSampler atIndex:Index];
-        }
-        else if (ShaderStage == EShaderVisibility::Amplification)
-        {
-            [Encoder setObjectSamplerState:MTLSampler atIndex:Index];
-        }
+        Context.SetGraphicsSampler(ShaderStage, MTLSampler, Slot);
     }
 
     Cache.ClearResourcesDirty(ShaderStage);
@@ -604,8 +586,13 @@ void FMetalCommandContextState::BindGraphicsShaderConstants(EShaderVisibility::T
 {
     CHECK(ShaderStage != EShaderVisibility::Compute);
 
-    id<MTLRenderCommandEncoder> Encoder = Context.GetGraphicsEncoder();
-    if (Encoder == nil)
+    if (Context.GetGraphicsEncoder() == nil)
+    {
+        return;
+    }
+
+    const FMetalPipelineBindingLayout* Layout = GetBoundLayout(ShaderStage);
+    if (!Layout)
     {
         return;
     }
@@ -617,62 +604,47 @@ void FMetalCommandContextState::BindGraphicsShaderConstants(EShaderVisibility::T
         return;
     }
 
+    const uint8 Slot = Layout->GetSlot(ShaderStage, EMSLBindingType::ShaderConstants, 0);
+    if (Slot == InvalidMSLSlot)
+    {
+        return;
+    }
+
     const NSUInteger ByteLength = NumConstants * sizeof(uint32);
-
-    const uint32 SlotIndex = GetBoundNumBuffers(ShaderStage);
-
-    if (ShaderStage == EShaderVisibility::Vertex)
-    {
-        [Encoder setVertexBytes:Cache.Constants[ShaderStage] length:ByteLength atIndex:SlotIndex];
-    }
-    else if (ShaderStage == EShaderVisibility::Pixel)
-    {
-        [Encoder setFragmentBytes:Cache.Constants[ShaderStage] length:ByteLength atIndex:SlotIndex];
-    }
-    else if (ShaderStage == EShaderVisibility::Mesh)
-    {
-        [Encoder setMeshBytes:Cache.Constants[ShaderStage] length:ByteLength atIndex:SlotIndex];
-    }
-    else if (ShaderStage == EShaderVisibility::Amplification)
-    {
-        [Encoder setObjectBytes:Cache.Constants[ShaderStage] length:ByteLength atIndex:SlotIndex];
-    }
+    Context.SetGraphicsBytes(ShaderStage, Cache.Constants[ShaderStage], ByteLength, Slot);
 }
 
-uint32 FMetalCommandContextState::GetBoundBufferBinding(EShaderVisibility::Type ShaderStage, uint32 BufferIndex) const
+const FMetalPipelineBindingLayout* FMetalCommandContextState::GetBoundLayout(EShaderVisibility::Type ShaderStage) const
 {
+    if (ShaderStage == EShaderVisibility::Compute)
+    {
+        FMetalComputePipelineStateRHI* Pipeline = ComputeState.PipelineState.Get();
+        return Pipeline ? &Pipeline->GetBindings() : nullptr;
+    }
+
     if (FMetalMeshletPipelineStateRHI* MeshletPipeline = GraphicsState.MeshletPipelineState.Get())
     {
-        return MeshletPipeline->GetBufferBinding(ShaderStage, BufferIndex);
+        return &MeshletPipeline->GetBindings();
     }
 
     if (FMetalGraphicsPipelineStateRHI* Pipeline = GraphicsState.PipelineState.Get())
     {
-        return Pipeline->GetBufferBinding(ShaderStage, BufferIndex);
+        return &Pipeline->GetBindings();
     }
 
-    return 0;
-}
-
-uint32 FMetalCommandContextState::GetBoundNumBuffers(EShaderVisibility::Type ShaderStage) const
-{
-    if (FMetalMeshletPipelineStateRHI* MeshletPipeline = GraphicsState.MeshletPipelineState.Get())
-    {
-        return MeshletPipeline->GetNumBuffers(ShaderStage);
-    }
-
-    if (FMetalGraphicsPipelineStateRHI* Pipeline = GraphicsState.PipelineState.Get())
-    {
-        return Pipeline->GetNumBuffers(ShaderStage);
-    }
-
-    return 0;
+    return nullptr;
 }
 
 void FMetalCommandContextState::BindComputeResources()
 {
     id<MTLComputeCommandEncoder> Encoder = Context.GetComputeEncoder();
     if (Encoder == nil)
+    {
+        return;
+    }
+
+    const FMetalPipelineBindingLayout* Layout = GetBoundLayout(EShaderVisibility::Compute);
+    if (!Layout)
     {
         return;
     }
@@ -685,9 +657,15 @@ void FMetalCommandContextState::BindComputeResources()
     {
         for (uint8 Index = 0; Index < CBVCache.NumBuffers[EShaderVisibility::Compute]; Index++)
         {
+            const uint8 Slot = Layout->GetSlot(EShaderVisibility::Compute, EMSLBindingType::ConstantBuffer, Index);
+            if (Slot == InvalidMSLSlot)
+            {
+                continue;
+            }
+
             FMetalBufferRHI* Buffer = CBVCache.ConstantBuffers[EShaderVisibility::Compute][Index];
             id<MTLBuffer>    MTLBufferHandle = Buffer ? Buffer->GetMTLBuffer() : nil;
-            [Encoder setBuffer:MTLBufferHandle offset:0 atIndex:Index];
+            [Encoder setBuffer:MTLBufferHandle offset:0 atIndex:Slot];
         }
 
         CBVCache.ClearResourcesDirty(EShaderVisibility::Compute);
@@ -698,8 +676,22 @@ void FMetalCommandContextState::BindComputeResources()
         for (uint8 Index = 0; Index < SRVCache.NumViews[EShaderVisibility::Compute]; Index++)
         {
             FMetalShaderResourceViewRHI* View = SRVCache.ResourceViews[EShaderVisibility::Compute][Index];
-            id<MTLTexture> MTLTextureHandle   = View ? View->GetMTLTexture() : nil;
-            [Encoder setTexture:MTLTextureHandle atIndex:Index];
+
+            const uint8 BufferSlot = Layout->GetSlot(EShaderVisibility::Compute, EMSLBindingType::ShaderResourceBuffer, Index);
+            if (BufferSlot != InvalidMSLSlot)
+            {
+                id<MTLBuffer> MTLBufferHandle = View ? View->GetMTLBuffer() : nil;
+                const NSUInteger Offset = View ? View->GetBufferOffset() : 0;
+                [Encoder setBuffer:MTLBufferHandle offset:Offset atIndex:BufferSlot];
+                continue;
+            }
+
+            const uint8 TextureSlot = Layout->GetSlot(EShaderVisibility::Compute, EMSLBindingType::ShaderResourceTexture, Index);
+            if (TextureSlot != InvalidMSLSlot)
+            {
+                id<MTLTexture> MTLTextureHandle = View ? View->GetMTLTexture() : nil;
+                [Encoder setTexture:MTLTextureHandle atIndex:TextureSlot];
+            }
         }
 
         SRVCache.ClearResourcesDirty(EShaderVisibility::Compute);
@@ -710,8 +702,22 @@ void FMetalCommandContextState::BindComputeResources()
         for (uint8 Index = 0; Index < UAVCache.NumViews[EShaderVisibility::Compute]; Index++)
         {
             FMetalUnorderedAccessViewRHI* View = UAVCache.ResourceViews[EShaderVisibility::Compute][Index];
-            id<MTLTexture> MTLTextureHandle    = View ? View->GetMTLTexture() : nil;
-            [Encoder setTexture:MTLTextureHandle atIndex:MAX_SRVS + Index];
+
+            const uint8 BufferSlot = Layout->GetSlot(EShaderVisibility::Compute, EMSLBindingType::UnorderedAccessBuffer, Index);
+            if (BufferSlot != InvalidMSLSlot)
+            {
+                id<MTLBuffer> MTLBufferHandle = View ? View->GetMTLBuffer() : nil;
+                const NSUInteger Offset = View ? View->GetBufferOffset() : 0;
+                [Encoder setBuffer:MTLBufferHandle offset:Offset atIndex:BufferSlot];
+                continue;
+            }
+
+            const uint8 TextureSlot = Layout->GetSlot(EShaderVisibility::Compute, EMSLBindingType::UnorderedAccessTexture, Index);
+            if (TextureSlot != InvalidMSLSlot)
+            {
+                id<MTLTexture> MTLTextureHandle = View ? View->GetMTLTexture() : nil;
+                [Encoder setTexture:MTLTextureHandle atIndex:TextureSlot];
+            }
         }
 
         UAVCache.ClearResourcesDirty(EShaderVisibility::Compute);
@@ -726,6 +732,12 @@ void FMetalCommandContextState::BindComputeSamplers()
         return;
     }
 
+    const FMetalPipelineBindingLayout* Layout = GetBoundLayout(EShaderVisibility::Compute);
+    if (!Layout)
+    {
+        return;
+    }
+
     FMetalSamplerStateCache& Cache = CommonState.SamplerStateCache;
     if (!Cache.IsResourcesDirty(EShaderVisibility::Compute))
     {
@@ -734,9 +746,15 @@ void FMetalCommandContextState::BindComputeSamplers()
 
     for (uint8 Index = 0; Index < Cache.NumSamplers[EShaderVisibility::Compute]; Index++)
     {
+        const uint8 Slot = Layout->GetSlot(EShaderVisibility::Compute, EMSLBindingType::Sampler, Index);
+        if (Slot == InvalidMSLSlot)
+        {
+            continue;
+        }
+
         FMetalSamplerStateRHI* SamplerState = Cache.SamplerStates[EShaderVisibility::Compute][Index];
         id<MTLSamplerState>    MTLSampler   = SamplerState ? SamplerState->GetMTLSamplerState() : nil;
-        [Encoder setSamplerState:MTLSampler atIndex:Index];
+        [Encoder setSamplerState:MTLSampler atIndex:Slot];
     }
 
     Cache.ClearResourcesDirty(EShaderVisibility::Compute);
@@ -750,6 +768,12 @@ void FMetalCommandContextState::BindComputeShaderConstants()
         return;
     }
 
+    const FMetalPipelineBindingLayout* Layout = GetBoundLayout(EShaderVisibility::Compute);
+    if (!Layout)
+    {
+        return;
+    }
+
     FMetalShaderConstantsCache& Cache = CommonState.ShaderConstantsCache;
     const uint32 NumConstants = Cache.NumConstants[EShaderVisibility::Compute];
     if (NumConstants == 0)
@@ -757,8 +781,14 @@ void FMetalCommandContextState::BindComputeShaderConstants()
         return;
     }
 
+    const uint8 Slot = Layout->GetSlot(EShaderVisibility::Compute, EMSLBindingType::ShaderConstants, 0);
+    if (Slot == InvalidMSLSlot)
+    {
+        return;
+    }
+
     const NSUInteger ByteLength = NumConstants * sizeof(uint32);
-    [Encoder setBytes:Cache.Constants[EShaderVisibility::Compute] length:ByteLength atIndex:MAX_CONSTANT_BUFFERS];
+    [Encoder setBytes:Cache.Constants[EShaderVisibility::Compute] length:ByteLength atIndex:Slot];
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING
