@@ -69,7 +69,7 @@ struct FWindowsPlatformMisc final : public IPlatformMisc
     #endif
     }
 
-    static void InstallCrashHandler();
+    static CORE_API void InstallCrashHandler();
 
     static FORCEINLINE int32 GetLastErrorString(String& OutErrorString)
     {

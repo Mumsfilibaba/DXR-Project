@@ -483,6 +483,16 @@ FD3D12ResourceState& FD3D12CommandContext::RetrievePendingResourceState(FD3D12Re
     return LocalState;
 }
 
+void FD3D12CommandContext::SeedTrackedResourceState(FD3D12Resource* Resource, D3D12_RESOURCE_STATES CreationState)
+{
+    if (!Resource || !Resource->RequiresResourceStateTracking())
+    {
+        return;
+    }
+
+    RetrievePendingResourceState(Resource).SetState(CreationState);
+}
+
 void FD3D12CommandContext::AddPendingBarrier(FD3D12Resource* Resource, D3D12_RESOURCE_STATES DesiredState, uint32 Subresource)
 {
     FD3D12PendingBarrier PendingBarrier;
@@ -1497,7 +1507,8 @@ void FD3D12CommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegio
     uint8*       WritePtr = reinterpret_cast<uint8*>(ResourceStorage.GetMappedBaseAddress());
     const uint8* Source = reinterpret_cast<const uint8*>(SrcData);
     
-    for (uint64 y = 0; y < NumRows; y++)
+    const uint32 SrcNumRows = D3D12CalculateRegionNumRows(Dst->GetDesc().Format, TextureRegion.Height);
+    for (uint64 y = 0; y < Math::Min<uint64>(NumRows, SrcNumRows); y++)
     {
         Memory::Memcpy(WritePtr, Source, SrcRowPitch);
         
@@ -1570,13 +1581,15 @@ void FD3D12CommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegio
     uint8* WritePtr = reinterpret_cast<uint8*>(ResourceStorage.GetMappedBaseAddress());
     const uint8* Source = reinterpret_cast<const uint8*>(SrcData);
 
+    const uint32 SrcNumRows = Math::Min<uint32>(NumRows, D3D12CalculateRegionNumRows(Dst->GetDesc().Format, TextureRegion.Height));
+
     const uint32 DstSlicePitch = PlacedSubresourceFootprint.Footprint.RowPitch * NumRows;
     for (uint32 z = 0; z < TextureRegion.Depth; z++)
     {
         const uint8* SliceSource = Source + z * SrcDepthPitch;
         uint8* SliceDest = WritePtr + z * DstSlicePitch;
 
-        for (uint32 y = 0; y < NumRows; y++)
+        for (uint32 y = 0; y < SrcNumRows; y++)
         {
             Memory::Memcpy(SliceDest, SliceSource, SrcRowPitch);
 
@@ -2125,6 +2138,7 @@ void FD3D12CommandContext::ApplyTrackingModeChange(FD3D12TextureRHI* Texture, co
     {
     case ED3D12ResourceStateMode::SingleState:
         Resource->SetDefaultState(AfterState);
+        Resource->GetResourceState().SetState(AfterState);
         break;
 
     case ED3D12ResourceStateMode::MultipleStates:
@@ -3135,24 +3149,6 @@ void FD3D12CommandContext::PrepareShaderBindingTableForDispatch(FD3D12ShaderBind
     const uint32 NumLocalTableDescriptors   = ShaderBindingTable->GetNumPendingLocalTableDescriptors();
     const uint32 NumLocalSamplerDescriptors = ShaderBindingTable->GetNumPendingLocalSamplerDescriptors();
 
-    if (NumLocalTableDescriptors > 0)
-    {
-        FD3D12LocalDescriptorHeap& ResourceHeap = ContextState.GetDescriptorCache().GetResourceHeap();
-        if (!ResourceHeap.HasSpace(NumLocalTableDescriptors))
-        {
-            ResourceHeap.Realloc();
-        }
-    }
-
-    if (NumLocalSamplerDescriptors > 0)
-    {
-        FD3D12LocalDescriptorHeap& SamplerHeap = ContextState.GetDescriptorCache().GetSamplerHeap();
-        if (!SamplerHeap.HasSpace(NumLocalSamplerDescriptors))
-        {
-            SamplerHeap.Realloc();
-        }
-    }
-
     ContextState.BindRayTracingState();
 
     if (NumLocalTableDescriptors > 0 || NumLocalSamplerDescriptors > 0)
@@ -3160,7 +3156,39 @@ void FD3D12CommandContext::PrepareShaderBindingTableForDispatch(FD3D12ShaderBind
         FD3D12LocalDescriptorHeap& ResourceHeap = ContextState.GetDescriptorCache().GetResourceHeap();
         FD3D12LocalDescriptorHeap& SamplerHeap  = ContextState.GetDescriptorCache().GetSamplerHeap();
 
-        ShaderBindingTable->ResolveLocalDescriptorTables(*this, ResourceHeap, SamplerHeap);
+        const bool bNeedsResourceSpace = NumLocalTableDescriptors > 0 && !ResourceHeap.HasSpace(NumLocalTableDescriptors);
+        const bool bNeedsSamplerSpace  = NumLocalSamplerDescriptors > 0 && !SamplerHeap.HasSpace(NumLocalSamplerDescriptors);
+
+        if (bNeedsResourceSpace || bNeedsSamplerSpace)
+        {
+            if (bNeedsResourceSpace && !ResourceHeap.Realloc())
+            {
+                SplitCommandListForDescriptorHeapRollover();
+                ResourceHeap.Realloc();
+            }
+
+            if (bNeedsSamplerSpace && !SamplerHeap.Realloc())
+            {
+                SplitCommandListForDescriptorHeapRollover();
+                SamplerHeap.Realloc();
+            }
+
+            ContextState.BindRayTracingState();
+        }
+
+        const bool bHasResourceSpace = NumLocalTableDescriptors == 0 || ResourceHeap.HasSpace(NumLocalTableDescriptors);
+        const bool bHasSamplerSpace  = NumLocalSamplerDescriptors == 0 || SamplerHeap.HasSpace(NumLocalSamplerDescriptors);
+
+        if (bHasResourceSpace && bHasSamplerSpace)
+        {
+            ShaderBindingTable->ResolveLocalDescriptorTables(*this, ResourceHeap, SamplerHeap);
+        }
+        else
+        {
+            D3D12_ERROR("Not enough descriptor space for the local shader records (%u resource, %u sampler). Skipping the local table resolve",
+                NumLocalTableDescriptors, NumLocalSamplerDescriptors);
+        }
+
         BarrierBatcher.FlushBarriers(GetCommandList());
     }
 }

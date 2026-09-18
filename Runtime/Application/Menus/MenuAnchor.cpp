@@ -39,15 +39,15 @@ void FMenuAnchor::Open()
         return;
     }
 
-    TSharedPtr<FVisualElement> Content = OnGetMenuContentDelegate.IsBound() ? OnGetMenuContentDelegate.Execute() : MenuContent;
-    if (!Content)
+    TSharedPtr<FVisualElement> ContentToShow = OnGetMenuContentDelegate.IsBound() ? OnGetMenuContentDelegate.Execute() : MenuContent;
+    if (!ContentToShow)
     {
         return;
     }
 
     const FRectangle AnchorBounds = FMenuStack::GetScreenBounds(AsSharedPtr()).Deflate(AnchorInset);
 
-    Menu = FMenuStack::Get().PushMenu(AsSharedPtr(), AnchorBounds, Placement, Content);
+    Menu = FMenuStack::Get().PushMenu(AsSharedPtr(), AnchorBounds, Placement, ContentToShow);
     if (Menu)
     {
         OnOpenChangedDelegate.ExecuteIfBound(true);

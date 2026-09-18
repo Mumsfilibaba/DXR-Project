@@ -231,11 +231,10 @@ bool MenuStackPlacement_Test()
     TEST_EXPECT_EQ(LongDrop->ScreenBounds.Position.Y, 0);
     TEST_EXPECT_EQ(LongDrop->MenuWindow->GetPosition(), LongDrop->ScreenBounds.Position);
 
-    TEST_SECTION("That popup is borderless, on top, out of the task bar and asks the platform to round it");
+    TEST_SECTION("That popup is borderless, on top and out of the task bar");
     const EWindowStyleFlags StyleFlags = LongDrop->MenuWindow->GetPlatformWindow()->GetStyle();
     TEST_EXPECT((StyleFlags & EWindowStyleFlags::TopMost) == EWindowStyleFlags::TopMost);
     TEST_EXPECT((StyleFlags & EWindowStyleFlags::NoTaskBarIcon) == EWindowStyleFlags::NoTaskBarIcon);
-    TEST_EXPECT((StyleFlags & EWindowStyleFlags::RoundedCorners) == EWindowStyleFlags::RoundedCorners);
     TEST_EXPECT((StyleFlags & EWindowStyleFlags::Titled) == EWindowStyleFlags::None);
     Stack.DismissAll();
 

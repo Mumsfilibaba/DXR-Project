@@ -58,8 +58,8 @@ bool FEditorStyle::Initialize()
         return false;
     }
 
-    GStyle.Colors.WindowBackground        = FromBytes(36, 36, 36);
-    GStyle.Colors.PanelBackground         = FromBytes(23, 23, 26);
+    GStyle.Colors.WindowBackground        = FromBytes(24, 24, 27);
+    GStyle.Colors.PanelBackground         = FromBytes(24, 24, 27);
     GStyle.Colors.ControlNormal           = FromBytes(33, 33, 36);
     GStyle.Colors.ControlHovered          = FromBytes(46, 46, 51);
     GStyle.Colors.ControlPressed          = FromBytes(51, 51, 59);
@@ -86,6 +86,15 @@ bool FEditorStyle::Initialize()
     GStyle.Metrics.ScrollBarThickness     = 16;
     GStyle.Metrics.SeparatorThickness     = 1;
     GStyle.Metrics.MenuSeparatorThickness = 1;
+
+    GStyle.Panel.Fill                     = FromBytes(30, 30, 33);
+    GStyle.Panel.Border                   = FromBytes(48, 48, 54);
+    GStyle.Panel.BorderFocused            = FromBytes(9, 92, 176);
+    GStyle.Panel.CornerRadius             = 8.0f;
+    GStyle.Panel.BorderThickness          = 1.0f;
+    GStyle.Panel.Gap                      = 6;
+
+    GStyle.Tab.StripFill                  = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
 
     GStyle.MenuBar.ItemHovered            = FromBytes(87, 87, 87);
     GStyle.MenuBar.ItemActive             = FromBytes(104, 104, 104);

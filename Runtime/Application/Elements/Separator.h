@@ -12,7 +12,7 @@ public:
         EOrientation Orientation = EOrientation::Horizontal;
         int32        Thickness = FUIStyle::GetDefault().Metrics.SeparatorThickness;
         FMargin      Padding;
-        FFloatColor  Color = FUIStyle::GetDefault().Colors.Border;
+        FFloatColor  Color = FUIStyle::GetDefault().Panel.Border;
     };
 
 public:

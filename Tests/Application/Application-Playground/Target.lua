@@ -26,6 +26,10 @@ ApplicationPlayground.Kind       = "WindowedApp"
 
 ApplicationPlayground.AddModules(PlaygroundModules)
 
+ApplicationPlayground.AddIncludeDirs({
+    _SCRIPT_DIR
+})
+
 if IsPlatformMac() then
     ApplicationPlayground.AddFrameworks({
         "AppKit"

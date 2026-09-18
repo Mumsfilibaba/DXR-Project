@@ -304,7 +304,6 @@ bool UIDrawDataRoundedBox_Test()
 {
     TEST_BEGIN();
 
-    // Counted and measured against the bare silhouette, which the fringe would both inflate and widen
     FUIDrawData DrawData;
     DrawData.SetAntiAliasingEnabled(false);
 
@@ -719,7 +718,7 @@ bool UIDrawDataAntiAliasing_Test()
     TEST_EXPECT_EQ(DrawData.GetVertices()[0].Color >> 24, 0x00u);
     TEST_EXPECT(Math::Abs(DrawData.GetVertices()[1].Position.Y - 10.0f) <= Tolerance);
     TEST_EXPECT(Math::Abs(DrawData.GetVertices()[2].Position.Y - 10.0f) <= Tolerance);
-    TEST_EXPECT(Math::Abs(DrawData.GetVertices()[0].Position.Y - (10.0f + HalfFringe)) <= Tolerance);
+    TEST_EXPECT(Math::Abs(DrawData.GetVertices()[0].Position.Y - (10.0f + FUIDrawData::FringeWidth)) <= Tolerance);
 
     TEST_SECTION("A convex polygon keeps its fan and has the fringe stitched around the outside of it");
     const Vector2 Quad[4] =

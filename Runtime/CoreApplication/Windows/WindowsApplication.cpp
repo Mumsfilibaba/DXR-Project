@@ -403,7 +403,11 @@ void FWindowsApplication::CloseWindow(const TSharedRef<FWindowsWindow>& Window)
 
 LRESULT FWindowsApplication::WindowProc(HWND WindowHandle, UINT Message, WPARAM wParam, LPARAM lParam)
 {
-    CHECK(GWindowsApplication != nullptr);
+    if (!GWindowsApplication)
+    {
+        return ::DefWindowProc(WindowHandle, Message, wParam, lParam);
+    }
+
     return GWindowsApplication->ProcessMessage(WindowHandle, Message, wParam, lParam);
 }
 
@@ -641,6 +645,39 @@ LRESULT FWindowsApplication::ProcessMessage(HWND WindowHandle, UINT Message, WPA
                     // and swallow the clicks meant for the menu buttons drawn in it.
                     return HTCLIENT;
                 }
+            }
+
+            break;
+        }
+
+        case WM_NCLBUTTONDOWN:
+        {
+            if (wParam == HTMAXBUTTON)
+            {
+                return 0;
+            }
+
+            break;
+        }
+
+        case WM_NCLBUTTONUP:
+        {
+            if (wParam == HTMAXBUTTON)
+            {
+                const LONG_PTR UserData = ::GetWindowLongPtrA(WindowHandle, GWLP_USERDATA);
+                if (FWindowsWindow* MsgWindow = reinterpret_cast<FWindowsWindow*>(UserData))
+                {
+                    if (MsgWindow->IsMaximized())
+                    {
+                        MsgWindow->Restore();
+                    }
+                    else
+                    {
+                        MsgWindow->Maximize();
+                    }
+                }
+
+                return 0;
             }
 
             break;
@@ -1058,6 +1095,11 @@ void FWindowsApplication::ProcessWindowResizeMessage(const FWindowsDeferredMessa
 {
     if (Message.Window)
     {
+        if (Message.wParam == SIZE_MINIMIZED)
+        {
+            return;
+        }
+
         uint32 Width  = static_cast<uint32>(LOWORD(Message.lParam));
         uint32 Height = static_cast<uint32>(HIWORD(Message.lParam));
 

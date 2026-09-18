@@ -1,10 +1,12 @@
 #include "DrawTests.h"
+#include "UISnapshot.h"
 
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
 
 #include <Application/Console/ConsoleLogBuffer.h>
 #include <Application/Draw/DrawCommandList.h>
+#include <Application/Draw/UIDrawData.h>
 #include <Application/Text/FixedWidthFontFace.h>
 #include <Application/Elements/Border.h>
 #include <Application/Elements/Box.h>
@@ -70,6 +72,93 @@ bool DrawCommandList_Test()
 
     TEST_EXPECT(CommandList.IsEmpty());
     TEST_EXPECT(CommandList.IsClipStackBalanced());
+
+    TEST_END();
+}
+
+static int32 CountCoveredPixels(const FSnapshotImage& Image, const IntVector2& Start, const IntVector2& End)
+{
+    int32 Covered = 0;
+    for (int32 Y = Start.Y; Y <= End.Y; ++Y)
+    {
+        for (int32 X = Start.X; X <= End.X; ++X)
+        {
+            if (Image.GetPixel(X, Y) != 0)
+            {
+                ++Covered;
+            }
+        }
+    }
+
+    return Covered;
+}
+
+static FSnapshotImage RasterizeCommands(const FDrawCommandList& CommandList, int32 Width, int32 Height)
+{
+    FUIDrawData DrawData;
+    DrawData.BuildFromCommandList(CommandList);
+
+    FSnapshotImage Image;
+    Image.Initialize(Width, Height, 0);
+
+    RasterizeDrawData(DrawData, Image);
+    return Image;
+}
+
+bool HairlineCoverage_Test()
+{
+    TEST_BEGIN();
+
+    constexpr float Hairline = 1.0f;
+
+    TEST_SECTION("A horizontal hairline on an integer coordinate covers pixels");
+    {
+        FDrawCommandList CommandList;
+        CommandList.AddLine(0, Vector2(4.0f, 8.0f), Vector2(28.0f, 8.0f), FFloatColor::White, Hairline);
+
+        const FSnapshotImage Image = RasterizeCommands(CommandList, 32, 16);
+        TEST_EXPECT(Image.IsValid());
+        TEST_EXPECT(CountCoveredPixels(Image, IntVector2(4, 6), IntVector2(27, 9)) > 0);
+    }
+
+    TEST_SECTION("A vertical hairline on an integer coordinate covers pixels");
+    {
+        FDrawCommandList CommandList;
+        CommandList.AddLine(0, Vector2(8.0f, 4.0f), Vector2(8.0f, 28.0f), FFloatColor::White, Hairline);
+
+        const FSnapshotImage Image = RasterizeCommands(CommandList, 16, 32);
+        TEST_EXPECT(CountCoveredPixels(Image, IntVector2(6, 4), IntVector2(9, 27)) > 0);
+    }
+
+    TEST_SECTION("A closed axis-aligned hairline outline covers pixels on every side");
+    {
+        const Vector2 Corners[] =
+        {
+            Vector2(6.0f, 6.0f),
+            Vector2(26.0f, 6.0f),
+            Vector2(26.0f, 26.0f),
+            Vector2(6.0f, 26.0f),
+        };
+
+        FDrawCommandList CommandList;
+        CommandList.AddPolyline(0, MakeArrayView(Corners, 4), FFloatColor::White, Hairline, true);
+
+        const FSnapshotImage Image = RasterizeCommands(CommandList, 32, 32);
+
+        TEST_EXPECT(CountCoveredPixels(Image, IntVector2(7, 5), IntVector2(25, 7)) > 0);
+        TEST_EXPECT(CountCoveredPixels(Image, IntVector2(7, 25), IntVector2(25, 27)) > 0);
+        TEST_EXPECT(CountCoveredPixels(Image, IntVector2(5, 7), IntVector2(7, 25)) > 0);
+        TEST_EXPECT(CountCoveredPixels(Image, IntVector2(25, 7), IntVector2(27, 25)) > 0);
+    }
+
+    TEST_SECTION("A diagonal hairline still covers pixels");
+    {
+        FDrawCommandList CommandList;
+        CommandList.AddLine(0, Vector2(4.0f, 4.0f), Vector2(28.0f, 28.0f), FFloatColor::White, Hairline);
+
+        const FSnapshotImage Image = RasterizeCommands(CommandList, 32, 32);
+        TEST_EXPECT(CountCoveredPixels(Image, IntVector2(4, 4), IntVector2(27, 27)) > 0);
+    }
 
     TEST_END();
 }

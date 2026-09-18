@@ -81,11 +81,11 @@ private:
     void AddShadowRows(const TSharedPtr<FPropertyTable>& Table, FLightComponent* Component);
     void AddLightDirectionRows(const TSharedPtr<FPropertyTable>& Table, FDirectionalLightComponent* Component);
     void AddCascadeRows(const TSharedPtr<FPropertyTable>& Table, FDirectionalLightComponent* Component);
-    void AddSection(const TSharedPtr<FVerticalBox>& InColumn, const String& Label, const TSharedPtr<FPropertyTable>& Table);
+    void AddSection(const TSharedPtr<FVerticalBox>& InColumn, const String& SectionLabel, const TSharedPtr<FPropertyTable>& Table);
 
     FPropertyRow& AddVectorRow(
         const TSharedPtr<FPropertyTable>& Table,
-        const String&                     Label,
+        const String&                     RowLabel,
         const Vector3&                    Value,
         float                             Step,
         const FOnVectorChanged&           OnChanged,
@@ -96,14 +96,14 @@ private:
 
     FPropertyRow& AddColorRow(
         const TSharedPtr<FPropertyTable>& Table,
-        const String&                     Label,
+        const String&                     RowLabel,
         const FFloatColor&                Value,
         const FFloatColor*                DefaultValue,
         const FOnColorChanged&            OnChanged);
 
     FPropertyRow& AddFloatRow(
         const TSharedPtr<FPropertyTable>& Table,
-        const String&                     Label,
+        const String&                     RowLabel,
         float                             Value,
         float                             MinValue,
         float                             MaxValue,
@@ -114,7 +114,7 @@ private:
 
     FPropertyRow& AddBoolRow(
         const TSharedPtr<FPropertyTable>& Table,
-        const String&                     Label,
+        const String&                     RowLabel,
         bool                              bValue,
         const TDelegate<void(bool)>&      OnChanged,
         const bool*                       DefaultValue = nullptr,
@@ -122,11 +122,11 @@ private:
 
     FPropertyRow& AddTextRow(
         const TSharedPtr<FPropertyTable>& Table,
-        const String&                     Label,
+        const String&                     RowLabel,
         const String&                     Text);
 
     NODISCARD TSharedPtr<FPropertyTable> CreateTable();
-    NODISCARD TSharedPtr<FSeparatorText> CreateSectionLabel(const String& Label);
+    NODISCARD TSharedPtr<FSeparatorText> CreateSectionLabel(const String& SectionLabel);
     NODISCARD TSharedPtr<TNumericEntry<float>> CreateFloatEditor(float Value, float Min, float Max, float Step, int32 Precision, const TDelegate<void(float)>& OnChanged);
     NODISCARD TSharedPtr<TNumericEntry<int32>> CreateIntEditor(int32 Value, int32 Min, int32 Max, const TDelegate<void(int32)>& OnChanged);
     NODISCARD TSharedPtr<FCheckBox> CreateBoolEditor(bool bValue, const TDelegate<void(bool)>& OnChanged);

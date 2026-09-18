@@ -148,8 +148,23 @@ int32 FSplitter::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
             continue;
         }
 
-        const FFloatColor& Tint = HandleIndex == ActiveHandleIndex ? Style.Colors.Accent : Style.Colors.SeparatorHovered;
-        OutCommandList.AddBox(NextLayerId, GetHandleRectangle(HandleIndex), Tint);
+        const FFloatColor& Tint   = HandleIndex == ActiveHandleIndex ? Style.Colors.Accent : Style.Colors.SeparatorHovered;
+        const FRectangle   Handle = GetHandleRectangle(HandleIndex);
+
+        FRectangle Hint = Handle;
+        if (Orientation == EDockSplitOrientation::Horizontal)
+        {
+            Hint.Width      = Math::Min(Style.Metrics.SplitterHintThickness, Handle.Width);
+            Hint.Position.X = Handle.Position.X + ((Handle.Width - Hint.Width) / 2);
+        }
+        else
+        {
+            Hint.Height     = Math::Min(Style.Metrics.SplitterHintThickness, Handle.Height);
+            Hint.Position.Y = Handle.Position.Y + ((Handle.Height - Hint.Height) / 2);
+        }
+
+        const FCornerRadii Radius(static_cast<float>(Math::Min(Hint.Width, Hint.Height)) * 0.5f);
+        OutCommandList.AddBox(NextLayerId, Hint, Tint, Radius);
     }
 
     return NextLayerId + 1;

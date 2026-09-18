@@ -20,6 +20,7 @@
 #include "LayoutTests.h"
 #include "MenuTests.h"
 #include "OutputLogTests.h"
+#include "PanelChromeTests.h"
 #include "PropertyTableTests.h"
 #include "DrawTests.h"
 #include "StyleTests.h"
@@ -58,6 +59,7 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("WindowOverlayMeasure", WindowOverlayMeasure_Test());
 
     RUN_TEST("DrawCommandList", DrawCommandList_Test());
+    RUN_TEST("HairlineCoverage", HairlineCoverage_Test());
     RUN_TEST("DrawClipNesting", DrawClipNesting_Test());
     RUN_TEST("BorderDraw", BorderDraw_Test());
     RUN_TEST("BoxLayerSequencing", BoxLayerSequencing_Test());
@@ -183,6 +185,13 @@ int main(int Argc, const CHAR* Argv[])
     RUN_TEST("DockDropPreview", DockDropPreview_Test());
     RUN_TEST("DockHostNativeDrag", DockHostNativeDrag_Test());
     RUN_TEST("DockLayoutFileMultiWindow", DockLayoutFileMultiWindow_Test());
+
+    RUN_TEST("PanelChromeGeometry", PanelChromeGeometry_Test());
+    RUN_TEST("PanelChromeGap", PanelChromeGap_Test());
+    RUN_TEST("SplitterHintThickness", SplitterHintThickness_Test());
+    RUN_TEST("TabStripBlendsIntoPanel", TabStripBlendsIntoPanel_Test());
+    RUN_TEST("PanelChromeFocusStroke", PanelChromeFocusStroke_Test());
+    RUN_TEST("PanelChromeSnapshots", PanelChromeSnapshots_Test());
 
     RUN_TEST("RichTextLayout", RichTextLayout_Test());
     RUN_TEST("RichTextSelection", RichTextSelection_Test());

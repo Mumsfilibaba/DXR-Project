@@ -401,6 +401,29 @@ void FRayTracingReflectionsPass::Record(FRHICommandList& CommandList, FFrameReso
     FRHITexture*       DiffuseCube  = nullptr;
     FRHITexture*       SpecularCube = nullptr;
 
+    const CHAR* MissingResource = nullptr;
+    if (!TraceTarget)
+    {
+        MissingResource = bDenoise ? "ReflectionTrace" : "RayTracingOutput";
+    }
+    else if (!Resources.RayTracingSceneConstantsBuffer)
+    {
+        MissingResource = "RayTracingSceneConstantsBuffer";
+    }
+
+    if (MissingResource)
+    {
+        static bool bLoggedMissingResource = false;
+
+        if (!bLoggedMissingResource)
+        {
+            LOG_WARNING("[RayTracingReflections]: %s has not been allocated. Skipping the RT reflection pass", MissingResource);
+            bLoggedMissingResource = true;
+        }
+
+        return;
+    }
+
     {
         FRayTracingSceneConstantsHLSL Constants;
         Constants.FrameIndex = GetRenderer()->GetFrameCounter().GetFrameIndex();
@@ -415,12 +438,15 @@ void FRayTracingReflectionsPass::Record(FRHICommandList& CommandList, FFrameReso
                 Constants.NumSkyLightMips = SkyLight->SpecularCubeMap->GetDesc().NumMipLevels;
             }
         }
-        else if (Scene->GetSkybox())
+        else if (FSceneSkybox* Skybox = Scene->GetSkybox())
         {
-            DiffuseCube  = Scene->GetSkybox()->CubeMap.Get();
-            SpecularCube = Scene->GetSkybox()->CubeMap.Get();
+            if (Skybox->CubeMap)
+            {
+                DiffuseCube  = Skybox->CubeMap.Get();
+                SpecularCube = Skybox->CubeMap.Get();
 
-            Constants.NumSkyLightMips = Scene->GetSkybox()->CubeMap->GetDesc().NumMipLevels;
+                Constants.NumSkyLightMips = Skybox->CubeMap->GetDesc().NumMipLevels;
+            }
         }
 
         Constants.SunDirection = Resources.DirectionalLightData.Direction;
@@ -464,7 +490,10 @@ void FRayTracingReflectionsPass::Record(FRHICommandList& CommandList, FFrameReso
 
         if (FSceneSkybox* Skybox = Scene->GetSkybox())
         {
-            CommandList.SetShaderResourceView(Shader, Skybox->CubeMap->GetShaderResourceView(), 1);
+            if (Skybox->CubeMap)
+            {
+                CommandList.SetShaderResourceView(Shader, Skybox->CubeMap->GetShaderResourceView(), 1);
+            }
         }
 
         CommandList.SetShaderResourceView(Shader, Resources.GBuffer[EGBufferIndex::Normal]->GetShaderResourceView(), 2);
@@ -554,7 +583,7 @@ void FRayTracingReflectionsPass::Record(FRHICommandList& CommandList, FFrameReso
         return;
     }
 
-    const uint32 NumHitGroupRecords = Resources.RayTracingHitGroupBindings.Size();
+    const uint32 NumHitGroupRecords = Math::Max<uint32>(static_cast<uint32>(Resources.RayTracingHitGroupBindings.Size()), 1u);
     if (!ActiveShaderBindingTable || NumHitGroupRecords > ActiveCapacity)
     {
         FRHIShaderBindingTableDesc SBTDesc = FRHIShaderBindingTableDesc(ActivePipeline, 1, 1, 0, NumHitGroupRecords);
@@ -575,6 +604,11 @@ void FRayTracingReflectionsPass::Record(FRHICommandList& CommandList, FFrameReso
     for (const TArray<FRHIHitGroupLocalShaderBinding>& Record : Resources.RayTracingHitGroupBindings)
     {
         CommandList.SetHitRecordLocalShaderBindings(ShaderBindingTable, ERayTracingShaderRecordKind::HitGroup, RecordIndex++, Record.Data(), Record.Size());
+    }
+
+    if (RecordIndex == 0)
+    {
+        CommandList.SetHitRecordLocalShaderBindings(ShaderBindingTable, ERayTracingShaderRecordKind::HitGroup, 0, nullptr, 0);
     }
 
     CommandList.BuildShaderBindingTable(ShaderBindingTable);

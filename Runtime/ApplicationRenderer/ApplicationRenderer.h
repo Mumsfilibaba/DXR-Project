@@ -174,7 +174,7 @@ private:
     FRHIShaderResourceView* PrepareBrushTexture(FRHICommandList& InCommandList, FRHITexture* Texture);
     void                    PrepareBatchTextures(FRHICommandList& InCommandList, const FUIDrawData& DrawData);
     void                    RenderWindow(FRHICommandList& InCommandList, const FWindowDrawState& WindowState);
-    void                    RenderDrawData(FRHICommandList& InCommandList, const FWindowDrawState& WindowState, const IntVector2& LogicalSize, float DPIScale);
+    void                    RenderDrawData(FRHICommandList& InCommandList, const FWindowDrawState& WindowState, const IntVector2& GeometrySize, float SupersampleScale);
     FRHIShaderResourceView* GetDefaultShaderResourceView() const;
     FRHIShaderResourceView* GetAtlasShaderResourceView(const FFontAtlas* Atlas) const;
     FRHIShaderResourceView* GetBatchShaderResourceView(const FUITextureHandle& Texture) const;

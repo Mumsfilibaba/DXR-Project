@@ -195,12 +195,12 @@ void FEditorFrameProfilerPanel::RefreshThreads()
 
         for (int32 ThreadIndex = 0; ThreadIndex < ThreadInfos.Size(); ++ThreadIndex)
         {
-            const String Label       = ResolveThreadName(ThreadInfos[ThreadIndex], ThreadIndex);
+            const String ThreadLabel = ResolveThreadName(ThreadInfos[ThreadIndex], ThreadIndex);
             const bool   bIsExpanded = FThreadManager::Get().IsMainThread(ThreadInfos[ThreadIndex].ThreadHandle);
 
             FThreadSection ThreadSection;
             ThreadSection.Table   = FPropertyTable::Create(FEditorStyle::MakeDataTableDesc());
-            ThreadSection.Section = FExpander::Create(FEditorStyle::MakeExpanderDesc(Label, ThreadSection.Table, bIsExpanded));
+            ThreadSection.Section = FExpander::Create(FEditorStyle::MakeExpanderDesc(ThreadLabel, ThreadSection.Table, bIsExpanded));
 
             ThreadsColumn->AddSlot(ThreadSection.Section);
             ThreadSections.Emplace(ThreadSection);

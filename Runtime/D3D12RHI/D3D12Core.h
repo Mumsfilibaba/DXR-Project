@@ -693,7 +693,7 @@ NODISCARD constexpr bool IsStencilFormat(DXGI_FORMAT Format)
     }
 }
 
-NODISCARD constexpr DXGI_USAGE ConvertSwapChainUsage(ESwapChainUsageFlags Usage)
+NODISCARD constexpr DXGI_USAGE D3D12ConvertSwapChainUsage(ESwapChainUsageFlags Usage)
 {
     DXGI_USAGE Result = 0;
     if (IsEnumFlagSet(Usage, ESwapChainUsageFlags::RenderTarget))
@@ -1846,4 +1846,9 @@ NODISCARD constexpr uint32 D3D12CalculateSubresource(uint32 MipSlice, uint32 Arr
 NODISCARD constexpr uint32 D3D12CalculateSubresourceCount(uint32 MipLevels, uint32 ArraySize, uint32 PlaneCount) noexcept
 {
     return MipLevels * ArraySize * PlaneCount;
+}
+
+NODISCARD constexpr uint32 D3D12CalculateRegionNumRows(EFormat Format, uint32 Height) noexcept
+{
+    return IsBlockCompressed(Format) ? Math::DivideByMultiple<uint32>(Height, 4u) : Height;
 }

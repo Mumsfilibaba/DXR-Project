@@ -8,6 +8,7 @@
 #include "Application/Elements/Window.h"
 #include "Application/Style/UIStyle.h"
 #include "Core/Math/Math.h"
+#include "Core/Platform/PlatformTime.h"
 
 // What a caption button asks for when the platform has no opinion, which is the Windows 11 shape
 constexpr int32 CAPTION_BUTTON_WIDTH  = 46;
@@ -25,6 +26,8 @@ constexpr int32 TITLE_ICON_MARGIN = 8;
 // Close is the one button that has to read as destructive before it is pressed
 static const FFloatColor GCloseHoveredColor(0.77f, 0.16f, 0.16f, 1.0f);
 static const FFloatColor GClosePressedColor(0.60f, 0.12f, 0.12f, 1.0f);
+
+constexpr float CAPTION_HOVER_FADE_SECONDS = 0.12f;
 
 static FWindowRect ToWindowRect(const FRectangle& Rectangle)
 {
@@ -47,6 +50,8 @@ FCaptionButton::FCaptionButton()
     : FInteractiveElement()
     , Kind(ECaptionButtonKind::Close)
     , ButtonSize(CAPTION_BUTTON_WIDTH, CAPTION_BUTTON_HEIGHT)
+    , HoverFadeStartAlpha(0.0f)
+    , HoverFadeStartCounter(FPlatformTime::QueryPerformanceCounter())
 {
 }
 
@@ -55,6 +60,45 @@ FCaptionButton::~FCaptionButton() = default;
 IntVector2 FCaptionButton::ComputeDesiredSize() const
 {
     return ButtonSize;
+}
+
+void FCaptionButton::RestartHoverFade()
+{
+    HoverFadeStartAlpha   = GetHoverFillAlpha();
+    HoverFadeStartCounter = FPlatformTime::QueryPerformanceCounter();
+}
+
+double FCaptionButton::GetSecondsSinceHoverFadeStart() const
+{
+    const uint64 Now = FPlatformTime::QueryPerformanceCounter();
+    return static_cast<double>(Now - HoverFadeStartCounter) / static_cast<double>(FPlatformTime::QueryPerformanceFrequency());
+}
+
+float FCaptionButton::GetHoverFillAlpha() const
+{
+    const EInteractionState State  = GetInteractionState();
+    const bool              bIsLit = (State == EInteractionState::Hovered) || (State == EInteractionState::Pressed);
+    const float             Target = bIsLit ? 1.0f : 0.0f;
+
+    if constexpr (CAPTION_HOVER_FADE_SECONDS <= 0.0f)
+    {
+        return Target;
+    }
+
+    const float Progress = Math::Clamp(static_cast<float>(GetSecondsSinceHoverFadeStart()) / CAPTION_HOVER_FADE_SECONDS, 0.0f, 1.0f);
+    return Math::Lerp(HoverFadeStartAlpha, Target, Progress);
+}
+
+FEventResponse FCaptionButton::OnMouseEntered(const FCursorEvent& CursorEvent)
+{
+    RestartHoverFade();
+    return FInteractiveElement::OnMouseEntered(CursorEvent);
+}
+
+FEventResponse FCaptionButton::OnMouseLeft(const FCursorEvent& CursorEvent)
+{
+    RestartHoverFade();
+    return FInteractiveElement::OnMouseLeft(CursorEvent);
 }
 
 int32 FCaptionButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const
@@ -68,13 +112,19 @@ int32 FCaptionButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
         return LayerId;
     }
 
-    if (State != EInteractionState::Normal)
+    const bool  bShowsPressed = State == EInteractionState::Pressed;
+    const bool  bIsLit        = bShowsPressed || (State == EInteractionState::Hovered);
+    const float FillAlpha     = bShowsPressed ? 1.0f : GetHoverFillAlpha();
+
+    if (bIsLit || FillAlpha > 0.0f)
     {
-        FFloatColor Fill = Style.GetControlColor(State);
+        FFloatColor Fill = Style.GetControlColor(bShowsPressed ? EInteractionState::Pressed : EInteractionState::Hovered);
         if (Kind == ECaptionButtonKind::Close)
         {
-            Fill = State == EInteractionState::Pressed ? GClosePressedColor : GCloseHoveredColor;
+            Fill = bShowsPressed ? GClosePressedColor : GCloseHoveredColor;
         }
+
+        Fill.A *= FillAlpha;
 
         OutCommandList.AddBox(LayerId, Bounds, Fill);
     }
@@ -116,6 +166,12 @@ int32 FCaptionButton::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommand
     }
 
     return LayerId + 2;
+}
+
+bool FCaptionButton::GetCursor(ECursor& OutCursor) const
+{
+    OutCursor = ECursor::Arrow;
+    return true;
 }
 
 void FCaptionButton::SetButtonSize(const IntVector2& InSize)
@@ -261,7 +317,7 @@ int32 FTitleBar::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList&
 {
     const FUIStyle& Style = FUIStyle::GetDefault();
 
-    OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Colors.PanelBackground);
+    OutCommandList.AddBox(LayerId, AllottedGeometry.Bounds, Style.Colors.WindowBackground);
 
     if (Icon.IsValid() && IconSpacer)
     {
@@ -298,12 +354,14 @@ void FTitleBar::RefreshMetrics()
 
     if (LeadingSpacer)
     {
-        LeadingSpacer->SetSize(IntVector2(Math::CeilToInt(Metrics.LeadingInset), 0));
+        const int32 LeadingInset = Math::Max(Math::CeilToInt(Metrics.LeadingInset), FUIStyle::GetDefault().Metrics.TitleBarLeadingInset);
+        LeadingSpacer->SetSize(IntVector2(LeadingInset, 0));
     }
 
     if (TrailingSpacer)
     {
-        TrailingSpacer->SetSize(IntVector2(Math::CeilToInt(Metrics.TrailingInset), 0));
+        const float TrailingReserve = bShowCaptionButtons ? 0.0f : Metrics.TrailingInset;
+        TrailingSpacer->SetSize(IntVector2(Math::CeilToInt(TrailingReserve), 0));
     }
 
     if (bShowCaptionButtons)
@@ -332,7 +390,6 @@ void FTitleBar::PublishRegions()
             if (Button->GetKind() == ECaptionButtonKind::Maximize)
             {
                 Regions.MaximizeButtonRect = ToWindowRect(Button->GetContentRectangle());
-                break;
             }
         }
     }

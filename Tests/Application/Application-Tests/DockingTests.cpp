@@ -83,18 +83,7 @@ static TSharedPtr<FTab> FindTab(const TSharedPtr<FTabStrip>& Strip, const String
 
 static TSharedPtr<FTabStrip> FindStrip(const TSharedPtr<FDockingArea>& Area)
 {
-    TArray<TSharedPtr<FVisualElement>> Children;
-    Area->GetChildren(Children);
-
-    if (Children.IsEmpty())
-    {
-        return nullptr;
-    }
-
-    TArray<TSharedPtr<FVisualElement>> ColumnChildren;
-    Children[0]->GetChildren(ColumnChildren);
-
-    return ColumnChildren.IsEmpty() ? nullptr : StaticCastSharedPtr<FTabStrip>(ColumnChildren[0]);
+    return Area->FindPanelTabStrip(String());
 }
 
 static void DrawElement(const TSharedPtr<FVisualElement>& Element, FDrawCommandList& OutCommandList)
@@ -1449,11 +1438,18 @@ bool DockingAreaPersistence_Test()
     TArray<TSharedPtr<FVisualElement>> RootChildren;
     ResizedRestore.Area->GetChildren(RootChildren);
 
+    TArray<TSharedPtr<FVisualElement>> OutsetChildren;
+    RootChildren[0]->GetChildren(OutsetChildren);
+
     TArray<TSharedPtr<FVisualElement>> SplitChildren;
-    RootChildren[0]->GetChildren(SplitChildren);
+    OutsetChildren[0]->GetChildren(SplitChildren);
 
     TEST_EXPECT_EQ(SplitChildren.Size(), 2);
-    TEST_EXPECT(Math::Abs(SplitChildren[0]->GetContentRectangle().Width - 239) <= 2);
+
+    const int32 Gap       = FUIStyle::GetDefault().Panel.Gap;
+    const int32 Divisible = 800 - (2 * Gap) - Gap;
+
+    TEST_EXPECT(Math::Abs(SplitChildren[0]->GetContentRectangle().Width - static_cast<int32>(Divisible * 0.3f)) <= 2);
 
     TEST_SECTION("A saved id nobody registered is dropped rather than leaving a tab with no panel");
     FDockNode WithStranger = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, FDockNode::CreateTabs({ "Outliner" }), FDockNode::CreateTabs({ "Profiler" }));

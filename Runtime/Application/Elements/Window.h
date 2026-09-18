@@ -472,6 +472,7 @@ private:
     bool                           bShowOnCreate : 1;
     bool                           bHasExternalSurface : 1;
     bool                           bLayoutIsStale : 1;
+    bool                           bCachedIsMaximized : 1;
     TSharedPtr<FVisualElement>     Overlay;
     TSharedPtr<FMenuHost>          MenuHost;
     TSharedPtr<FVisualElement>     Content;

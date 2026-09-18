@@ -37,6 +37,9 @@ public:
     // FVisualElement Interface
     virtual IntVector2 ComputeDesiredSize() const override;
     virtual int32 OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandList& OutCommandList, int32 LayerId) const override;
+    virtual bool GetCursor(ECursor& OutCursor) const override;
+    virtual FEventResponse OnMouseEntered(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseLeft(const FCursorEvent& CursorEvent) override;
 
     /**
      * @brief Sets the size the button asks for, which follows the window's DPI.
@@ -57,8 +60,34 @@ protected:
     virtual void OnClicked() override;
 
 private:
+    /**
+     * @brief Starts the hover fade again from whatever alpha it had reached.
+     *
+     * Called before the base class takes the state change, so the alpha it captures is the one the
+     * fade was at when the cursor moved rather than the one it is heading for.
+     */
+    void RestartHoverFade();
+
+    /** @return Seconds since the hover last changed. */
+    NODISCARD double GetSecondsSinceHoverFadeStart() const;
+
+    /**
+     * @return The alpha the hover fill should draw at, interpolated from the alpha held when the
+     *         hover last changed towards the one the current state calls for.
+     *
+     * Derived from a timestamp rather than accumulated per tick so that the first draw after the
+     * cursor arrives is already correct, without waiting on a tick to hand it a delta.
+     */
+    NODISCARD float GetHoverFillAlpha() const;
+
     ECaptionButtonKind Kind;
     IntVector2         ButtonSize;
+
+    /** @brief The alpha the hover fill held when the hover last changed, which the fade starts from. */
+    float HoverFadeStartAlpha;
+
+    /** @brief When the hover last changed, which the fade is measured from. */
+    uint64 HoverFadeStartCounter;
 };
 
 class APPLICATION_API FTitleBar final : public FCompoundElement

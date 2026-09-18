@@ -343,10 +343,10 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     {
                         if (NumMaterials > 1)
                         {
-                            const TArray<const CHAR*>& MaterialLabelText = GetMaterialLabels(MeshComponent, NumMaterials);
+                            const TArray<const CHAR*>& ComboLabels = GetMaterialLabels(MeshComponent, NumMaterials);
 
                             const int32 SelectedMaterialIndex0 = 0;
-                            EditorWidgets::DrawComboProperty("Material", SelectedMaterialIndex, MaterialLabelText.Data(), MaterialLabelText.Size(), &SelectedMaterialIndex0);
+                            EditorWidgets::DrawComboProperty("Material", SelectedMaterialIndex, ComboLabels.Data(), ComboLabels.Size(), &SelectedMaterialIndex0);
                         }
 
                         // Albedo

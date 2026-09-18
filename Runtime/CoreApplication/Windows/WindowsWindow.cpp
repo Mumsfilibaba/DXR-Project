@@ -6,10 +6,13 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include <dwmapi.h>
 
-// The size a single caption button occupies at 100% scaling, from Microsoft's title bar design guidance.
-// Only reached when DWM cannot answer, which it cannot before the window is first shown.
 constexpr float CAPTION_BUTTON_WIDTH_DIPS  = 46.0f;
 constexpr float CAPTION_BUTTON_HEIGHT_DIPS = 32.0f;
+
+static bool HasNonClientFrame(EWindowStyleFlags Style)
+{
+	return (Style & EWindowStyleFlags::CustomTitleBar) == EWindowStyleFlags::None;
+}
 
 static FWindowsWindowStyle GetWindowsWindowStyle(EWindowStyleFlags Style)
 {
@@ -104,11 +107,14 @@ bool FWindowsWindow::Initialize(const FPlatformWindowDesc& InDesc)
     const FWindowsWindowStyle NewStyle = GetWindowsWindowStyle(InDesc.Style);
 
     RECT ClientRect = { 0, 0, static_cast<LONG>(InDesc.Width), static_cast<LONG>(InDesc.Height) };
+    if (HasNonClientFrame(InDesc.Style))
+    {
 #if PLATFORM_WINDOWS_10_ANNIVERSARY
-    ::AdjustWindowRectExForDpi(&ClientRect, NewStyle.Style, false, NewStyle.StyleEx, USER_DEFAULT_SCREEN_DPI);
+        ::AdjustWindowRectExForDpi(&ClientRect, NewStyle.Style, false, NewStyle.StyleEx, USER_DEFAULT_SCREEN_DPI);
 #else
-    ::AdjustWindowRectEx(&ClientRect, NewStyle.Style, false, NewStyle.StyleEx);
+        ::AdjustWindowRectEx(&ClientRect, NewStyle.Style, false, NewStyle.StyleEx);
 #endif
+    }
 
     int32 PositionX  = InDesc.Position.X;
     int32 PositionY  = InDesc.Position.Y;
@@ -143,9 +149,11 @@ bool FWindowsWindow::Initialize(const FPlatformWindowDesc& InDesc)
     }
 
 #if PLATFORM_WINDOWS_11
-    if ((InDesc.Style & EWindowStyleFlags::RoundedCorners) != EWindowStyleFlags::None)
+    if (FPlatformApplicationMisc::SupportsRoundedWindowCorners())
     {
-        DWM_WINDOW_CORNER_PREFERENCE CornerPreference = DWMWCP_ROUNDSMALL;
+        const bool bIsTransient = (NewStyle.Style & WS_POPUP) != 0;
+
+        DWM_WINDOW_CORNER_PREFERENCE CornerPreference = bIsTransient ? DWMWCP_ROUNDSMALL : DWMWCP_ROUND;
         ::DwmSetWindowAttribute(Window, DWMWA_WINDOW_CORNER_PREFERENCE, &CornerPreference, sizeof(CornerPreference));
     }
 #endif
@@ -232,10 +240,7 @@ void FWindowsWindow::Restore()
 
     if (IsValid())
     {
-        if (::IsIconic(Window))
-        {
-            ::ShowWindow(Window, SW_RESTORE);
-        }
+        ::ShowWindow(Window, SW_RESTORE);
     }
 }
 
@@ -379,12 +384,15 @@ void FWindowsWindow::SetWindowPos(int32 x, int32 y)
 
     RECT BorderRect = { static_cast<LONG>(x), static_cast<LONG>(y), static_cast<LONG>(x), static_cast<LONG>(y) };
 
+    if (HasNonClientFrame(StyleParams))
+    {
 #if PLATFORM_WINDOWS_10_ANNIVERSARY
-    const uint32 WindowDPI = ::GetDpiForWindow(Window);
-    ::AdjustWindowRectExForDpi(&BorderRect, Style.Style, false, Style.StyleEx, WindowDPI);
+        const uint32 WindowDPI = ::GetDpiForWindow(Window);
+        ::AdjustWindowRectExForDpi(&BorderRect, Style.Style, false, Style.StyleEx, WindowDPI);
 #else
-    ::AdjustWindowRectEx(&BorderRect, Style.Style, false, Style.StyleEx);
+        ::AdjustWindowRectEx(&BorderRect, Style.Style, false, Style.StyleEx);
 #endif
+    }
 
     ::SetWindowPos(Window, nullptr, BorderRect.left, BorderRect.top, 0, 0, SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER);
 }
@@ -397,12 +405,15 @@ void FWindowsWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
     }
 
     RECT ClientRect = { 0, 0, static_cast<LONG>(Shape.Width), static_cast<LONG>(Shape.Height) };
+    if (HasNonClientFrame(StyleParams))
+    {
 #if PLATFORM_WINDOWS_10_ANNIVERSARY
-    const uint32 WindowDPI = ::GetDpiForWindow(Window);
-    ::AdjustWindowRectExForDpi(&ClientRect, Style.Style, false, Style.StyleEx, WindowDPI);
+        const uint32 WindowDPI = ::GetDpiForWindow(Window);
+        ::AdjustWindowRectExForDpi(&ClientRect, Style.Style, false, Style.StyleEx, WindowDPI);
 #else
-    ::AdjustWindowRectEx(&ClientRect, Style.Style, false, Style.StyleEx);
+        ::AdjustWindowRectEx(&ClientRect, Style.Style, false, Style.StyleEx);
 #endif
+    }
 
     int32  PositionX = 0;
     int32  PositionY = 0;

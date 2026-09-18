@@ -457,6 +457,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
     {
         // Resource was created in COPY_DEST; no COMMON->COPY_DEST fixup needed.
         InCommandContext->StartContext();
+        InCommandContext->SeedTrackedResourceState(GetResource(), D3D12CreateState);
 
         CHECK(IsTextureCube(Desc.Dimension) || !Desc.IsTexture3D() || Desc.NumArraySlices == 1);
 
@@ -796,6 +797,8 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, ERHIRe
 
     if (ResolvedStateMode != ED3D12ResourceStateMode::MultipleStates)
     {
+        GetResource()->GetResourceState().SetState(RequestedInitialState);
+
         Desc.TrackingMode = ConvertResourceStateMode(ResolvedStateMode);
         GetResource()->SetResourceStateMode(ResolvedStateMode);
     }

@@ -200,10 +200,10 @@ TSharedPtr<FVisualElement> FEditorOutputLogPanel::BuildFilterMenu()
 
     Menu->AddSection("Verbosity", FEditorStyle::GetFonts().Body);
 
-    const auto AddSeverityToggle = [this, &Menu](const CHAR* Label, ELogSeverity Severity)
+    const auto AddSeverityToggle = [this, &Menu](const CHAR* ItemLabel, ELogSeverity Severity)
     {
         FMenuItem::FDesc ItemDesc;
-        ItemDesc.Label        = Label;
+        ItemDesc.Label        = ItemLabel;
         ItemDesc.Font         = FEditorStyle::GetFonts().Body;
         ItemDesc.bIsCheckable = true;
         ItemDesc.CheckState   = LogView->IsSeverityVisible(Severity) ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
@@ -258,10 +258,10 @@ void FEditorOutputLogPanel::OnLogContextMenu(const IntVector2& ScreenPosition)
         return;
     }
 
-    const auto AddCommand = [&Menu](const CHAR* Label, const TDelegate<void()>& OnActivated)
+    const auto AddCommand = [&Menu](const CHAR* ItemLabel, const TDelegate<void()>& OnActivated)
     {
         FMenuItem::FDesc ItemDesc;
-        ItemDesc.Label       = Label;
+        ItemDesc.Label       = ItemLabel;
         ItemDesc.Font        = FEditorStyle::GetFonts().Body;
         ItemDesc.OnActivated = OnActivated;
 

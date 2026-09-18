@@ -1,6 +1,8 @@
 #pragma once
 #include "Core/Windows/Windows.h"
 #include "Core/PlatformInterface/IPlatformFileSystem.h"
+#include "Core/Platform/CriticalSection.h"
+#include "Core/Threading/ScopedLock.h"
 
 class CORE_API FWindowsFileHandle : public IPlatformFile
 {
@@ -50,9 +52,10 @@ private:
     void GarbageCollectCompleted();
     void FreePendingWrite(FPendingWrite* PendingWrite);
 
-    HANDLE                 FileHandle;
-    int64                  WriteOffset;
-    TArray<FPendingWrite*> PendingWrites;
+    HANDLE                   FileHandle;
+    int64                    WriteOffset;
+    TArray<FPendingWrite*>   PendingWrites;
+    mutable FCriticalSection PendingWritesCS;
 };
 
 struct CORE_API FWindowsPlatformFile : public IPlatformFileSystem

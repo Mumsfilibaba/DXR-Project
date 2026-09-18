@@ -128,7 +128,7 @@ private:
     void OnGizmoDragStarted(EGizmoHandle Handle);
     void OnGizmoTransformChanged(const Matrix4& NewTransform, const Matrix4& Delta);
     void OnGizmoDragFinished(const Matrix4& TransformAtDragStart, const Matrix4& Transform);
-    NODISCARD bool OnViewportShortcut(const struct FKeyEvent& KeyEvent);
+    NODISCARD bool OnViewportShortcut(const class FKeyEvent& KeyEvent);
 
     void UpdateGizmoFromSelection();
     void UpdateGizmoCamera();

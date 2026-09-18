@@ -17,8 +17,13 @@ struct FUIStyleColors
     /** @brief The fill behind a window's whole client area. */
     FFloatColor WindowBackground = FFloatColor(0.09f, 0.09f, 0.11f, 1.0f);
 
-    /** @brief The fill behind a panel, which reads a step lighter than the window it is docked in. */
-    FFloatColor PanelBackground = FFloatColor(0.13f, 0.13f, 0.16f, 1.0f);
+    /**
+     * @brief The fill behind a panel.
+     *
+     * This matches the window background so a shell reads as one backdrop with panels laid on it.
+     * A panel's own surface is FUIPanelChromeStyle::Fill, which sits a step off this.
+     */
+    FFloatColor PanelBackground = FFloatColor(0.09f, 0.09f, 0.11f, 1.0f);
 
     /** @brief The fill of a control that is neither hovered nor pressed. */
     FFloatColor ControlNormal = FFloatColor(0.20f, 0.21f, 0.25f, 1.0f);
@@ -331,8 +336,13 @@ struct FUITabStyle
     /** @brief The fill of the active tab, which lifts furthest off the strip. */
     FFloatColor FillActive = FFloatColor(48.0f / 255.0f, 48.0f / 255.0f, 48.0f / 255.0f, 1.0f);
 
-    /** @brief The fill of the strip behind the tabs, which shows wherever the tabs run out. */
-    FFloatColor StripFill = FFloatColor(24.0f / 255.0f, 24.0f / 255.0f, 24.0f / 255.0f, 1.0f);
+    /**
+     * @brief The fill of the strip behind the tabs, which shows wherever the tabs run out.
+     *
+     * Transparent by default so a strip at the top of a docked panel lets the panel's own rounded
+     * fill through instead of squaring off its top corners.
+     */
+    FFloatColor StripFill = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
 
     /** @brief The rule under the active tab, which marks it a second time in the accent. */
     FFloatColor ActiveStrip = FFloatColor(0.0f, 122.0f / 255.0f, 204.0f / 255.0f, 1.0f);
@@ -401,6 +411,33 @@ struct FUITabStyle
     float ScrollBarFadeOutDuration = 0.6f;
 };
 
+struct FUIPanelChromeStyle
+{
+    /**
+     * @brief The fill of a docked panel, which sits a single step off the window background
+     * so a panel reads as a card laid on the backdrop rather than as a different surface.
+     */
+    FFloatColor Fill = FFloatColor(0.12f, 0.12f, 0.14f, 1.0f);
+
+    /** @brief The one thin stroke around that card. */
+    FFloatColor Border = FFloatColor(0.19f, 0.19f, 0.22f, 1.0f);
+
+    /** @brief The stroke the card carries while it holds the focus. */
+    FFloatColor BorderFocused = FFloatColor(0.25f, 0.55f, 0.95f, 1.0f);
+
+    /** @brief How far the card's corners are rounded, in pixels. */
+    float CornerRadius = 8.0f;
+
+    /** @brief How thick that stroke is drawn, in pixels. */
+    float BorderThickness = 1.0f;
+
+    /**
+     * @brief How much backdrop is left between two neighbouring cards, in pixels. This is also
+     * the width of the splitter handle, since the gap is what a drag grabs.
+     */
+    int32 Gap = 6;
+};
+
 struct FUIStyleMetrics
 {
     /** @brief The space between a control's bounds and its contents. */
@@ -439,6 +476,17 @@ struct FUIStyleMetrics
 
     /** @brief The width of the rule a menu separator draws, in pixels. */
     int32 MenuSeparatorThickness = 1;
+
+    /** @brief How thick the pill hinting at a grabbable splitter handle is, in pixels. */
+    int32 SplitterHintThickness = 4;
+
+    /**
+     * @brief How far the contents of a title bar are held off its leading edge, in pixels.
+     *
+     * This is a floor rather than the whole inset, so a platform that reserves more of the leading edge
+     * for its own caption buttons still gets what it asked for.
+     */
+    int32 TitleBarLeadingInset = 8;
 };
 
 struct APPLICATION_API FUIStyle
@@ -491,6 +539,9 @@ struct APPLICATION_API FUIStyle
 
     /** @brief The sizes and spacings every widget lays out to. */
     FUIStyleMetrics Metrics;
+
+    /** @brief The look of the card a docked panel is drawn as. */
+    FUIPanelChromeStyle Panel;
 
     /** @brief The look of a collapsible section's header bar. */
     FUIHeaderStyle Header;

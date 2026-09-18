@@ -284,6 +284,8 @@ bool FWindowsAsyncFileHandle::WriteAsync(const uint8* Src, uint32 BytesToWrite)
     CHECK(Src != nullptr);
     CHECK(BytesToWrite > 0);
 
+    SCOPED_LOCK(PendingWritesCS);
+
     GarbageCollectCompleted();
 
     FPendingWrite* Pending = new FPendingWrite();
@@ -324,17 +326,24 @@ bool FWindowsAsyncFileHandle::WriteAsync(const uint8* Src, uint32 BytesToWrite)
 
 void FWindowsAsyncFileHandle::WaitForPendingWrites()
 {
-    for (FPendingWrite* Pending : PendingWrites)
+    TArray<FPendingWrite*> WritesToWaitFor;
+    {
+        SCOPED_LOCK(PendingWritesCS);
+        WritesToWaitFor = Move(PendingWrites);
+        PendingWrites.Clear();
+    }
+
+    for (FPendingWrite* Pending : WritesToWaitFor)
     {
         ::WaitForSingleObject(Pending->CompletionEvent, INFINITE);
         FreePendingWrite(Pending);
     }
-
-    PendingWrites.Clear();
 }
 
 bool FWindowsAsyncFileHandle::HasPendingWrites() const
 {
+    SCOPED_LOCK(PendingWritesCS);
+
     const_cast<FWindowsAsyncFileHandle*>(this)->GarbageCollectCompleted();
     return !PendingWrites.IsEmpty();
 }

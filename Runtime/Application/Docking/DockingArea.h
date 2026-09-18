@@ -187,6 +187,18 @@ public:
     NODISCARD TArray<String> GetDockedPanelIds() const;
 
     /**
+     * @brief Finds the strip a docked panel's tab sits in.
+     *
+     * The area already knows which strip belongs to which leaf, so asking it is both cheaper and
+     * steadier than walking the element tree, whose shape is an implementation detail of how a
+     * leaf is framed.
+     *
+     * @param PanelId The panel whose strip is wanted. An empty string returns the first strip there is.
+     * @return The strip, or null when the tree holds no such panel.
+     */
+    NODISCARD TSharedPtr<FTabStrip> FindPanelTabStrip(const String& PanelId) const;
+
+    /**
      * @brief Gets whether a panel sits in the tree.
      *
      * @param PanelId The panel to look for.
@@ -233,11 +245,13 @@ private:
         FLeafGeometry()
             : Strip(nullptr)
             , Column(nullptr)
+            , Frame(nullptr)
         {
         }
 
         TSharedPtr<FTabStrip>      Strip;
         TSharedPtr<FVisualElement> Column;
+        TSharedPtr<FVisualElement> Frame;
         TArray<int32>              Path;
     };
 
@@ -252,14 +266,15 @@ private:
         String                     Label;
         TSharedPtr<FVisualElement> Panel;
     };
+    
+    NODISCARD int32 FindLeafAt(const IntVector2& ClientPosition) const;
+    NODISCARD FRectangle ComputeDropBounds(const String& TargetPanelId, EDockDirection Direction) const;
+    NODISCARD const FVisualElement* FindFocusedFrame() const;
+    NODISCARD int32 DrawDropZones(FDrawCommandList& OutCommandList, int32 LayerId) const;
 
     TSharedPtr<FVisualElement> BuildNode(FDockNode& Node, const TArray<int32>& Path);
     void RequestRebuild();
 
-    NODISCARD int32 FindLeafAt(const IntVector2& ClientPosition) const;
-    NODISCARD FRectangle ComputeDropBounds(const String& TargetPanelId, EDockDirection Direction) const;
-
-    NODISCARD int32 DrawDropZones(FDrawCommandList& OutCommandList, int32 LayerId) const;
     void DockAgainstNode(FDockNode& TargetNode, const String& PanelId, EDockDirection Direction);
     void OnTabActivated(const String& PanelId);
     void OnTabClosed(const String& PanelId);

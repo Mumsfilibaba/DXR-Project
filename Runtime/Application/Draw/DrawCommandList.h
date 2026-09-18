@@ -97,6 +97,33 @@ public:
     void AddConvexPolygon(int32 LayerId, TArrayView<const Vector2> Points, const FFloatColor& Tint);
 
     /**
+     * @brief Appends the rounded frame of a panel so that it survives whatever the panel's content paints.
+     *
+     * Rounding a panel by filling a rounded rectangle underneath it does not work once the content
+     * paints edge to edge, which a viewport image, a tree row fill or a tab strip all do: the square
+     * content simply covers the rounded corners again. Clipping cannot fix it either, because the clip
+     * stack is a rectangular scissor.
+     *
+     * So the frame is drawn from the outside in, on a layer above the content. Each corner gets a wedge
+     * of backdrop filling the gap between the arc and the square corner, which cuts the content back to
+     * the rounded silhouette, and a single stroke follows around the whole edge.
+     *
+     * @param LayerId      The layer to draw on, which must be above the content being framed.
+     * @param Bounds       The panel rectangle to frame.
+     * @param CornerRadius How far each corner is rounded, in pixels.
+     * @param Thickness    The stroke width in pixels. Zero draws the wedges but no stroke.
+     * @param BorderTint   The stroke color.
+     * @param BackdropTint The color the corner wedges are filled with, which is what shows around the panel.
+     */
+    void AddPanelChrome(
+        int32               LayerId,
+        const FRectangle&   Bounds,
+        const FCornerRadii& CornerRadius,
+        float               Thickness,
+        const FFloatColor&  BorderTint,
+        const FFloatColor&  BackdropTint);
+
+    /**
      * @brief Appends a filled triangle. Shorthand for a three-point convex polygon.
      *
      * @param LayerId The layer to draw on.

@@ -32,6 +32,7 @@ FWindow::FWindow()
     , bShowOnCreate(true)
     , bHasExternalSurface(false)
     , bLayoutIsStale(false)
+    , bCachedIsMaximized(false)
     , Overlay()
     , MenuHost()
     , Content()
@@ -255,6 +256,11 @@ void FWindow::OnWindowResize(const IntVector2& InSize)
 
         bLayoutIsStale = true;
 
+        if (PlatformWindow)
+        {
+            bCachedIsMaximized = PlatformWindow->IsMaximized();
+        }
+
         OnWindowResizedDelegate.ExecuteIfBound(InSize);
     }
 }
@@ -416,12 +422,12 @@ bool FWindow::IsMinimized() const
 
 bool FWindow::IsMaximized() const
 {
-    if (PlatformWindow)
+    if (PlatformWindow && PlatformWindow->IsValid())
     {
         return PlatformWindow->IsMaximized();
     }
 
-    return false;
+    return bCachedIsMaximized;
 }
 
 float FWindow::GetWindowDPIScale() const

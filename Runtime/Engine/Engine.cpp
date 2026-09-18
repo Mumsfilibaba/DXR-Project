@@ -100,6 +100,8 @@ FEngine::FEngine()
     , SceneViewport(nullptr)
     , ViewportImage(nullptr)
     , ViewportImageSize()
+    , PendingViewportImageSize()
+    , ViewportResizeSettleTime(0.0f)
 {
 }
 
@@ -219,6 +221,40 @@ bool FEngine::CreateViewportRenderTarget()
 
     ViewportImageSize = Size;
     return true;
+}
+
+void FEngine::UpdateViewportRenderTarget(float DeltaTime)
+{
+    const IntVector2 RenderSize = GetSceneRenderSize();
+    if (RenderSize == ViewportImageSize)
+    {
+        PendingViewportImageSize = RenderSize;
+        ViewportResizeSettleTime = 0.0f;
+        return;
+    }
+
+    if (!ViewportImage)
+    {
+        CreateViewportRenderTarget();
+
+        PendingViewportImageSize = ViewportImageSize;
+        ViewportResizeSettleTime = 0.0f;
+        return;
+    }
+
+    if (RenderSize != PendingViewportImageSize)
+    {
+        PendingViewportImageSize = RenderSize;
+        ViewportResizeSettleTime = 0.0f;
+        return;
+    }
+
+    ViewportResizeSettleTime += DeltaTime;
+    if (ViewportResizeSettleTime >= ViewportResizeSettleDelay)
+    {
+        CreateViewportRenderTarget();
+        ViewportResizeSettleTime = 0.0f;
+    }
 }
 
 void FEngine::OnEngineWindowClosed()
@@ -405,10 +441,7 @@ void FEngine::Tick(float DeltaTime)
 {
     TRACE_FUNCTION_SCOPE();
 
-    if (ViewportImageSize != GetSceneRenderSize())
-    {
-        CreateViewportRenderTarget();
-    }
+    UpdateViewportRenderTarget(DeltaTime);
 
     if (SceneViewport)
     {

@@ -159,6 +159,14 @@ bool FEditorShell::RestoreLayout()
 
     DockingArea->RestoreLayout(Windows[0].Root);
 
+    if (Windows[0].bIsMaximized)
+    {
+        if (TSharedPtr<FWindow> EngineWindow = EditorEngine ? EditorEngine->GetEngineWindow() : nullptr)
+        {
+            EngineWindow->Maximize();
+        }
+    }
+
     TArray<FDockWindowLayout> Hosts;
     for (int32 Index = 1; Index < Windows.Size(); ++Index)
     {
@@ -176,9 +184,10 @@ void FEditorShell::SaveLayout()
 
     if (TSharedPtr<FWindow> EngineWindow = EditorEngine ? EditorEngine->GetEngineWindow() : nullptr)
     {
-        MainLayout.Title    = EngineWindow->GetTitle();
-        MainLayout.Position = EngineWindow->GetPosition();
-        MainLayout.Size     = EngineWindow->GetSize();
+        MainLayout.Title        = EngineWindow->GetTitle();
+        MainLayout.Position     = EngineWindow->GetPosition();
+        MainLayout.Size         = EngineWindow->GetSize();
+        MainLayout.bIsMaximized = EngineWindow->IsMaximized();
     }
 
     TArray<FDockWindowLayout> Windows;

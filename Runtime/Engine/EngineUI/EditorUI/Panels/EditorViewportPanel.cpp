@@ -675,11 +675,11 @@ TSharedPtr<FVisualElement> FEditorViewportPanel::BuildCameraMenu()
 
     Menu->SetMinDesiredWidth(CAMERA_MENU_WIDTH);
 
-    const auto AddSliderRow = [&Menu, &Font](const CHAR* Label, float MinValue, float MaxValue, float Value,
+    const auto AddSliderRow = [&Menu, &Font](const CHAR* RowLabel, float MinValue, float MaxValue, float Value,
         int32 Precision, const FOnSliderValueChanged& OnValueChanged)
     {
         FTextBlock::FDesc CaptionDesc;
-        CaptionDesc.Text = Label;
+        CaptionDesc.Text = RowLabel;
         CaptionDesc.Font = Font;
 
         FSlider::FDesc SliderDesc;

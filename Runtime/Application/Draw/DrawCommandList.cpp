@@ -100,6 +100,61 @@ void FDrawCommandList::AddConvexPolygon(int32 LayerId, TArrayView<const Vector2>
     StorePoints(Command, InPoints);
 }
 
+void FDrawCommandList::AddPanelChrome(
+    int32               LayerId,
+    const FRectangle&   Bounds,
+    const FCornerRadii& CornerRadius,
+    float               Thickness,
+    const FFloatColor&  BorderTint,
+    const FFloatColor&  BackdropTint)
+{
+    if (Bounds.IsEmpty())
+    {
+        return;
+    }
+
+    const FCornerRadii Clamped = CornerRadius.ClampToBounds(Bounds);
+
+    const float Left   = static_cast<float>(Bounds.Position.X);
+    const float Top    = static_cast<float>(Bounds.Position.Y);
+    const float Right  = static_cast<float>(Bounds.GetRight());
+    const float Bottom = static_cast<float>(Bounds.GetBottom());
+
+    struct FCorner
+    {
+        Vector2 Point;
+        Vector2 ArcCenter;
+        float   Radius;
+        float   StartAngle;
+        float   EndAngle;
+    };
+
+    const FCorner Corners[4] =
+    {
+        { Vector2(Left,  Top),    Vector2(Left  + Clamped.TopLeft,     Top    + Clamped.TopLeft),     Clamped.TopLeft,     -Math::Constants::HalfPI, -Math::Constants::PI     },
+        { Vector2(Right, Top),    Vector2(Right - Clamped.TopRight,    Top    + Clamped.TopRight),    Clamped.TopRight,    -Math::Constants::HalfPI,  0.0f          },
+        { Vector2(Right, Bottom), Vector2(Right - Clamped.BottomRight, Bottom - Clamped.BottomRight), Clamped.BottomRight,  0.0f,           Math::Constants::HalfPI },
+        { Vector2(Left,  Bottom), Vector2(Left  + Clamped.BottomLeft,  Bottom - Clamped.BottomLeft),  Clamped.BottomLeft,   Math::Constants::HalfPI,  Math::Constants::PI     },
+    };
+
+    for (const FCorner& Corner : Corners)
+    {
+        if (Corner.Radius <= 0.0f)
+        {
+            continue;
+        }
+
+        const int32 Segments = ResolveCircleSegments(Corner.Radius, Math::Abs(Corner.EndAngle - Corner.StartAngle), 0);
+
+        BuildArcPoints(Corner.ArcCenter, Corner.Radius, Corner.StartAngle, Corner.EndAngle, Segments);
+        ScratchPoints.Insert(0, Corner.Point);
+
+        AddConvexPolygon(LayerId, ScratchPoints, BackdropTint);
+    }
+
+    AddBoxOutline(LayerId, Bounds, BorderTint, Thickness, Clamped);
+}
+
 void FDrawCommandList::AddTriangle(int32 LayerId, const Vector2& A, const Vector2& B, const Vector2& C, const FFloatColor& Tint)
 {
     const Vector2 Corners[3] = { A, B, C };

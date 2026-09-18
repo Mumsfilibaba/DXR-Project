@@ -235,9 +235,9 @@ void FEditorPropertiesPanel::RebuildContent()
     {
         BuildDirectionalLightSection(Column, Component);
     }
-    else if (FLightComponent* Component = Actor->GetComponentOfType<FLightComponent>())
+    else if (FLightComponent* LightComponent = Actor->GetComponentOfType<FLightComponent>())
     {
-        BuildPointLightSection(Column, Component);
+        BuildPointLightSection(Column, LightComponent);
     }
 
     if (FCameraComponent* Component = Actor->GetComponentOfType<FCameraComponent>())
@@ -848,7 +848,7 @@ void FEditorPropertiesPanel::BuildLightProbeSection(const TSharedPtr<FVerticalBo
 
 FPropertyRow& FEditorPropertiesPanel::AddVectorRow(
     const TSharedPtr<FPropertyTable>& Table,
-    const String&                     Label,
+    const String&                     RowLabel,
     const Vector3&                    Value,
     float                             Step,
     const FOnVectorChanged&           OnChanged,
@@ -891,7 +891,7 @@ FPropertyRow& FEditorPropertiesPanel::AddVectorRow(
 
     VectorRows.Emplace(Entry);
 
-    FPropertyRow& NewRow = Table->AddRow(Label, Row);
+    FPropertyRow& NewRow = Table->AddRow(RowLabel, Row);
 
     if (bAllowUniform)
     {
@@ -959,7 +959,7 @@ FPropertyRow& FEditorPropertiesPanel::AddVectorRow(
 
 FPropertyRow& FEditorPropertiesPanel::AddColorRow(
     const TSharedPtr<FPropertyTable>& Table,
-    const String&                     Label,
+    const String&                     RowLabel,
     const FFloatColor&                Value,
     const FFloatColor*                DefaultValue,
     const FOnColorChanged&            OnChanged)
@@ -1042,7 +1042,7 @@ FPropertyRow& FEditorPropertiesPanel::AddColorRow(
 
     ColorRows.Emplace(Entry);
 
-    FPropertyRow& NewRow = Table->AddRow(Label, Row);
+    FPropertyRow& NewRow = Table->AddRow(RowLabel, Row);
 
     if (!DefaultValue)
     {
@@ -1093,7 +1093,7 @@ FPropertyRow& FEditorPropertiesPanel::AddColorRow(
 
 FPropertyRow& FEditorPropertiesPanel::AddFloatRow(
     const TSharedPtr<FPropertyTable>& Table,
-    const String&                     Label,
+    const String&                     RowLabel,
     float                             Value,
     float                             MinValue,
     float                             MaxValue,
@@ -1104,7 +1104,7 @@ FPropertyRow& FEditorPropertiesPanel::AddFloatRow(
 {
     TSharedPtr<TNumericEntry<float>> Field = CreateFloatEditor(Value, MinValue, MaxValue, Step, Precision, OnChanged);
 
-    FPropertyRow& NewRow = Table->AddRow(Label, Field);
+    FPropertyRow& NewRow = Table->AddRow(RowLabel, Field);
     NewRow.ToolTipText   = String::Printf("Default %.4f", DefaultValue);
 
     NewRow.OnRevert = FOnClicked::CreateLambda([Field, DefaultValue, OnChanged]()
@@ -1123,7 +1123,7 @@ FPropertyRow& FEditorPropertiesPanel::AddFloatRow(
 
 FPropertyRow& FEditorPropertiesPanel::AddBoolRow(
     const TSharedPtr<FPropertyTable>& Table,
-    const String&                     Label,
+    const String&                     RowLabel,
     bool                              bValue,
     const TDelegate<void(bool)>&      OnChanged,
     const bool*                       DefaultValue,
@@ -1132,7 +1132,7 @@ FPropertyRow& FEditorPropertiesPanel::AddBoolRow(
     TSharedPtr<FCheckBox> Field = CreateBoolEditor(bValue, OnChanged);
     Field->SetEnabled(bIsEnabled);
 
-    FPropertyRow& NewRow = Table->AddRow(Label, Field);
+    FPropertyRow& NewRow = Table->AddRow(RowLabel, Field);
 
     if (!DefaultValue || !bIsEnabled)
     {
@@ -1157,9 +1157,9 @@ FPropertyRow& FEditorPropertiesPanel::AddBoolRow(
     return NewRow;
 }
 
-FPropertyRow& FEditorPropertiesPanel::AddTextRow(const TSharedPtr<FPropertyTable>& Table, const String& Label, const String& Text)
+FPropertyRow& FEditorPropertiesPanel::AddTextRow(const TSharedPtr<FPropertyTable>& Table, const String& RowLabel, const String& Text)
 {
-    FPropertyRow& NewRow  = Table->AddRow(Label, CreateTextRow(Text));
+    FPropertyRow& NewRow  = Table->AddRow(RowLabel, CreateTextRow(Text));
     NewRow.HeightOverride = TEXT_ROW_HEIGHT;
     return NewRow;
 }
@@ -1253,18 +1253,18 @@ TSharedPtr<FPropertyTable> FEditorPropertiesPanel::CreateTable()
     return FPropertyTable::Create(FEditorStyle::MakePropertyTableDesc(PROPERTIES_LABEL_FRACTION, PROPERTIES_LABEL_COLUMN_WIDTH));
 }
 
-TSharedPtr<FSeparatorText> FEditorPropertiesPanel::CreateSectionLabel(const String& Label)
+TSharedPtr<FSeparatorText> FEditorPropertiesPanel::CreateSectionLabel(const String& SectionLabel)
 {
     FSeparatorText::FDesc Desc;
-    Desc.Text = Label;
+    Desc.Text = SectionLabel;
     Desc.Font = FEditorStyle::GetFonts().Body;
 
     return FSeparatorText::Create(Desc);
 }
 
-void FEditorPropertiesPanel::AddSection(const TSharedPtr<FVerticalBox>& InColumn, const String& Label, const TSharedPtr<FPropertyTable>& Table)
+void FEditorPropertiesPanel::AddSection(const TSharedPtr<FVerticalBox>& InColumn, const String& SectionLabel, const TSharedPtr<FPropertyTable>& Table)
 {
-    InColumn->AddSlot(FExpander::Create(FEditorStyle::MakeExpanderDesc(Label, Table, true)));
+    InColumn->AddSlot(FExpander::Create(FEditorStyle::MakeExpanderDesc(SectionLabel, Table, true)));
 }
 
 TSharedPtr<TNumericEntry<float>> FEditorPropertiesPanel::CreateFloatEditor(float Value, float Min, float Max, float Step, int32 Precision, const TDelegate<void(float)>& OnChanged)

@@ -162,6 +162,8 @@ public:
 
     void AliasingBarrier(FD3D12Resource* ResourceAfter, ID3D12Resource* ResourceBefore = nullptr);
 
+    void SeedTrackedResourceState(FD3D12Resource* Resource, D3D12_RESOURCE_STATES CreationState);
+
 #if D3D12_VALIDATE_CONTEXT_THREAD_OWNERSHIP
     void AcquireOwnership();
     void ReleaseOwnership();

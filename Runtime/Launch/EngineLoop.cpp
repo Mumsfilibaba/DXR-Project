@@ -447,16 +447,16 @@ void FEngineLoop::Release()
 
     FEngine::Destroy();
 
-    if (IImguiPlugin::IsEnabled())
-    {
-        FModuleManager::Get().UnloadModule("ImGuiPlugin");
-    }
-
     if (UIRenderer)
     {
         FApplication::Get().SetRenderer(nullptr);
         UIRenderer->ReleaseRHI();
         UIRenderer.Reset();
+    }
+
+    if (IImguiPlugin::IsEnabled())
+    {
+        FModuleManager::Get().UnloadModule("ImGuiPlugin");
     }
 
     // Release all RHI resources

@@ -1,4 +1,5 @@
 #include "ApplicationRenderer/ApplicationRenderer.h"
+#include "ApplicationRenderer/UIScreenshot.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/ConsoleManager.h"
@@ -914,6 +915,8 @@ void FApplicationRenderer::EndFrameAndPresent()
 
         FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
     }
+
+    UIScreenshot::Tick();
 }
 
 void FApplicationRenderer::RedrawWindow(const TSharedPtr<FWindow>& InWindow)
@@ -1053,20 +1056,20 @@ void FApplicationRenderer::RenderWindow(FRHICommandList& InCommandList, const FW
         return;
     }
 
-    RenderDrawData(InCommandList, WindowState, WindowSize, Math::Max(1.0f, Window->GetWindowDPIScale()));
+    RenderDrawData(InCommandList, WindowState, WindowSize, 1.0f);
 }
 
-void FApplicationRenderer::RenderDrawData(FRHICommandList& InCommandList, const FWindowDrawState& WindowState, const IntVector2& LogicalSize, float DPIScale)
+void FApplicationRenderer::RenderDrawData(FRHICommandList& InCommandList, const FWindowDrawState& WindowState, const IntVector2& GeometrySize, float SupersampleScale)
 {
-    const float LogicalWidth  = static_cast<float>(LogicalSize.X);
-    const float LogicalHeight = static_cast<float>(LogicalSize.Y);
-    const float FramebufferW  = LogicalWidth * DPIScale;
-    const float FramebufferH  = LogicalHeight * DPIScale;
+    const float GeometryWidth  = static_cast<float>(GeometrySize.X);
+    const float GeometryHeight = static_cast<float>(GeometrySize.Y);
+    const float FramebufferW   = GeometryWidth * SupersampleScale;
+    const float FramebufferH   = GeometryHeight * SupersampleScale;
 
     const float Matrix[4][4] =
     {
-        { 2.0f / LogicalWidth,  0.0f,                 0.0f, 0.0f },
-        { 0.0f,                -2.0f / LogicalHeight, 0.0f, 0.0f },
+        { 2.0f / GeometryWidth,  0.0f,                  0.0f, 0.0f },
+        { 0.0f,                 -2.0f / GeometryHeight, 0.0f, 0.0f },
         { 0.0f,                 0.0f,                 0.5f, 0.0f },
         { -1.0f,                1.0f,                 0.5f, 1.0f },
     };
@@ -1096,10 +1099,10 @@ void FApplicationRenderer::RenderDrawData(FRHICommandList& InCommandList, const 
 
         if (Batch.bIsClipped)
         {
-            const float MinX = Math::Max(0.0f, static_cast<float>(Batch.ScissorRectangle.Position.X) * DPIScale);
-            const float MinY = Math::Max(0.0f, static_cast<float>(Batch.ScissorRectangle.Position.Y) * DPIScale);
-            const float MaxX = Math::Min(FramebufferW, static_cast<float>(Batch.ScissorRectangle.GetRight()) * DPIScale);
-            const float MaxY = Math::Min(FramebufferH, static_cast<float>(Batch.ScissorRectangle.GetBottom()) * DPIScale);
+            const float MinX = Math::Max(0.0f, static_cast<float>(Batch.ScissorRectangle.Position.X) * SupersampleScale);
+            const float MinY = Math::Max(0.0f, static_cast<float>(Batch.ScissorRectangle.Position.Y) * SupersampleScale);
+            const float MaxX = Math::Min(FramebufferW, static_cast<float>(Batch.ScissorRectangle.GetRight()) * SupersampleScale);
+            const float MaxY = Math::Min(FramebufferH, static_cast<float>(Batch.ScissorRectangle.GetBottom()) * SupersampleScale);
 
             if (MaxX <= MinX || MaxY <= MinY)
             {
@@ -1142,7 +1145,10 @@ FRHITextureRef FApplicationRenderer::RenderElementToTexture(const TSharedPtr<FVi
         return nullptr;
     }
 
-    const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
+    const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget |
+                                          ETextureUsageFlags::ShaderResourceTexture |
+                                          ETextureUsageFlags::CopySource;
+
     const FClearValue ClearValue(GSnapshotFormat, 0.0f, 0.0f, 0.0f, 0.0f);
 
     const FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(GSnapshotFormat,

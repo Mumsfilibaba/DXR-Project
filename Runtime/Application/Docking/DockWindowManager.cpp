@@ -340,10 +340,11 @@ TArray<FDockWindowLayout> FDockWindowManager::SaveHostLayouts() const
         }
 
         FDockWindowLayout Layout;
-        Layout.Title    = Host.Window->GetTitle();
-        Layout.Position = Host.Window->GetPosition();
-        Layout.Size     = Host.Window->GetSize();
-        Layout.Root     = Host.Area->SaveLayout();
+        Layout.Title        = Host.Window->GetTitle();
+        Layout.Position     = Host.Window->GetPosition();
+        Layout.Size         = Host.Window->GetSize();
+        Layout.bIsMaximized = Host.Window->IsMaximized();
+        Layout.Root         = Host.Area->SaveLayout();
 
         Layouts.Add(Layout);
     }
@@ -397,6 +398,15 @@ void FDockWindowManager::RestoreHostLayouts(const TArray<FDockWindowLayout>& Lay
         if (Area)
         {
             Area->RestoreLayout(Layout.Root);
+
+            if (Layout.bIsMaximized)
+            {
+                const int32 HostIndex = FindHostByArea(Area.Get());
+                if (HostIndex >= 0 && Hosts[HostIndex].Window)
+                {
+                    Hosts[HostIndex].Window->Maximize();
+                }
+            }
         }
     }
 }

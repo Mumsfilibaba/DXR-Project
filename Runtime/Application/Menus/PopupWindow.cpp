@@ -31,7 +31,7 @@ TSharedPtr<FWindow> Popups::Open(const TSharedPtr<FWindow>& ParentWindow, const 
     Desc.ParentWindow    = ParentWindow;
     Desc.Size            = IntVector2(Bounds.Width, Bounds.Height);
     Desc.Position        = Bounds.Position;
-    Desc.StyleFlags      = EWindowStyleFlags::TopMost | EWindowStyleFlags::NoTaskBarIcon | EWindowStyleFlags::RoundedCorners;
+    Desc.StyleFlags      = EWindowStyleFlags::TopMost | EWindowStyleFlags::NoTaskBarIcon;
     Desc.bActivateOnShow = false;
     Desc.bAcceptsInput   = bAcceptsInput;
     Desc.bShowOnCreate   = false;

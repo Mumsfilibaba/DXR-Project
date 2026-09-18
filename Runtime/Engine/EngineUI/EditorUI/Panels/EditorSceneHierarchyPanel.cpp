@@ -1072,13 +1072,13 @@ void FEditorSceneHierarchyPanel::RebuildTree()
     SyncSelectionFromEngine();
 }
 
-TSharedPtr<FTreeItem> FEditorSceneHierarchyPanel::CreateItem(const String& Label, FActor* Actor, FActorFilter* Filter)
+TSharedPtr<FTreeItem> FEditorSceneHierarchyPanel::CreateItem(const String& ItemLabel, FActor* Actor, FActorFilter* Filter)
 {
-    TUniquePtr<FHierarchyNode>& Node = Nodes.Emplace(new FHierarchyNode());
+    TSharedPtr<FHierarchyNode>& Node = Nodes.Emplace(new FHierarchyNode());
     Node->Actor  = Actor;
     Node->Filter = Filter;
 
-    TSharedPtr<FTreeItem> Item = FTreeItem::Create(Label, Node.Get());
+    TSharedPtr<FTreeItem> Item = FTreeItem::Create(ItemLabel, Node.Get());
     Item->bIsExpanded = true;
 
     return Item;

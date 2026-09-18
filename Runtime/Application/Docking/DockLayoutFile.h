@@ -16,6 +16,9 @@ struct APPLICATION_API FDockWindowLayout
     /** @brief The client size the window had, zero when the file carried none. */
     IntVector2 Size;
 
+    /** @brief Whether the window was maximized, which restores on top of the size it had before that. */
+    bool bIsMaximized;
+
     /** @brief The tree the window's area held. */
     FDockNode Root;
 };

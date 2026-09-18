@@ -656,7 +656,7 @@ void FUIDrawData::AddPolyline(TArrayView<const Vector2> Points, float Thickness,
     const float HalfFringe  = FringeWidth * 0.5f;
     const bool  bIsHairline = Thickness <= FringeWidth;
     const float CoreExtent  = bIsHairline ? 0.0f : (HalfThickness - HalfFringe);
-    const float EdgeExtent  = bIsHairline ? HalfFringe : (HalfThickness + HalfFringe);
+    const float EdgeExtent  = bIsHairline ? FringeWidth : (HalfThickness + HalfFringe);
 
     const uint32 CoreColor  = bIsHairline
         ? PackColorWithAlphaScale(PackedColor, Thickness / FringeWidth)

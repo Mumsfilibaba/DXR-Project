@@ -1122,10 +1122,10 @@ void FEditorContentBrowserPanel::RefreshBreadcrumbs()
 
     BreadcrumbBar->ClearSlots();
 
-    const auto AddCrumb = [&](const String& Label, const FEntryPath& Path)
+    const auto AddCrumb = [&](const String& CrumbLabel, const FEntryPath& Path)
     {
         FButton::FDesc Desc;
-        Desc.SetText(Label).SetFont(FEditorStyle::GetFonts().Body);
+        Desc.SetText(CrumbLabel).SetFont(FEditorStyle::GetFonts().Body);
         Desc.Padding   = FMargin(8, 2, 8, 2);
         Desc.OnClicked = FOnClicked::CreateLambda([this, Path]()
         {
@@ -1839,10 +1839,10 @@ void FEditorContentBrowserPanel::OnTileDragDetected(int32 Index, const FCursorEv
         DragChildIndices.Add(VisibleChildIndices[Index]);
     }
 
-    const String& Label       = TileView->GetItems()[Index].Label;
+    const String& ItemLabel   = TileView->GetItems()[Index].Label;
     const String  DisplayText = DragChildIndices.Size() > 1
-        ? String::Printf("%s +%d", Label.Data(), DragChildIndices.Size() - 1)
-        : Label;
+        ? String::Printf("%s +%d", ItemLabel.Data(), DragChildIndices.Size() - 1)
+        : ItemLabel;
 
     GridWrapper->BeginDrag(DisplayText, CursorEvent);
 }
@@ -2104,8 +2104,8 @@ String FEditorContentBrowserPanel::GetTileLabel(int32 Target) const
         return String();
     }
 
-    const String& Label = Items[Target].Label;
-    const int32   Dot   = Label.FindLastChar('.');
+    const String& ItemLabel = Items[Target].Label;
+    const int32   Dot       = ItemLabel.FindLastChar('.');
 
-    return (Dot != String::InvalidIndex) ? Label.SubString(0, Dot) : Label;
+    return (Dot != String::InvalidIndex) ? ItemLabel.SubString(0, Dot) : ItemLabel;
 }
